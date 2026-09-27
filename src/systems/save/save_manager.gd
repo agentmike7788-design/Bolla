@@ -1,60 +1,476 @@
 extends Node
-## Autoload SaveManager – new game, save, load (docs §5).
+## Autoload SaveManager – new game, save, load (docs/VERTICAL_SLICE_DESIGN.md §5).
+## File <save_dir>/slot_<n>.json = {"format_version", "meta", "data": JSON.from_native(state)},
+## state = {autoloads: {TimeManager, GameState}, nodes: {<save_id>: {...}}} from group "saveable".
+## Handles the quick_save / quick_load actions itself (slot 1). PROCESS_MODE_ALWAYS.
 
-# STUB – contract from docs/VERTICAL_SLICE_DESIGN.md. Owner replaces bodies, never signatures.
+## Internal: the world announced itself (EventBus.world_ready) or waiting timed out (null).
+signal _world_arrived(world: Node)
 
 const WORLD_SCENE := "res://src/world/graveyard/graveyard.tscn"
 const FORMAT_VERSION := 1
+const DEFAULT_SAVE_DIR := "user://saves"
+const AUTOSAVE_SLOT := 0
+const QUICK_SLOT := 1
+const SAVEABLE_GROUP := &"saveable"
+## Autoload states in the save, applied in this order.
+const AUTOLOADS: PackedStringArray = ["TimeManager", "GameState"]
+const PAUSE_MENU := &"pause"
+const DEFAULT_WORLD_TIMEOUT_SEC := 10.0
 
-var save_dir: String = "user://saves"
+const TEXT_SAVED := "Gespeichert."
+const TEXT_CANNOT_SAVE := "Speichern gerade nicht möglich."
+const TEXT_SAVE_FAILED := "Speichern fehlgeschlagen."
+const TEXT_NO_QUICKSAVE := "Kein Schnellspeicherstand."
+const TEXT_NO_SAVE := "Kein Spielstand vorhanden."
+const TEXT_CORRUPT := "Spielstand ist beschädigt."
+const TEXT_WORLD_FAILED := "Die Welt konnte nicht geladen werden."
+
+var save_dir: String = DEFAULT_SAVE_DIR
 var is_loading: bool = false
+## Real seconds a scene change may take until EventBus.world_ready (tests lower it).
+var world_ready_timeout_sec: float = DEFAULT_WORLD_TIMEOUT_SEC
 
+## Last world announced via EventBus.world_ready (may be freed – check is_instance_valid).
+var _world: Node
+## True from the scene change of new_game()/load_game() until the world is set up.
+var _transition: bool = false
+## Bumped by reset(): coroutines of an older generation stop after their await.
+var _generation: int = 0
+## Identifies the current world wait so a stale timeout cannot end a newer wait.
+var _wait_token: int = 0
+
+
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	EventBus.world_ready.connect(_on_world_ready)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"quick_save"):
+		get_viewport().set_input_as_handled()
+		_quick_save()
+	elif event.is_action_pressed(&"quick_load"):
+		get_viewport().set_input_as_handled()
+		_quick_load()
+
+
+## Coroutine: reset autoloads → change scene → world_ready → new_game_started → clock runs.
 func new_game(scene_path: String = WORLD_SCENE) -> void:
-	push_warning("STUB save_manager.gd.new_game")
+	if _transition:
+		push_warning("[SaveManager] new_game ignored – a scene change is already running")
+		return
+	if not ResourceLoader.exists(scene_path, "PackedScene"):
+		push_warning("[SaveManager] new_game: scene '%s' not found" % scene_path)
+		_notify(TEXT_WORLD_FAILED)
+		return
+	var generation := _generation
+	_begin_transition()
+	TimeManager.reset()
+	GameState.reset()
+	var world := await _change_world(scene_path)
+	if generation != _generation:
+		return
+	_transition = false
+	if world == null:
+		_notify(TEXT_WORLD_FAILED)
+		return
+	EventBus.new_game_started.emit()
+	TimeManager.running = true
+	TimeManager.emit_refresh()
 
 
 func save_game(slot: int) -> Error:
-	push_warning("STUB save_manager.gd.save_game")
-	return ERR_UNAVAILABLE
+	if slot < 0:
+		push_warning("[SaveManager] invalid slot %d" % slot)
+		return ERR_INVALID_PARAMETER
+	if _transition or is_loading:
+		push_warning("[SaveManager] save_game(%d) refused during a scene change" % slot)
+		return ERR_BUSY
+	var err := DirAccess.make_dir_recursive_absolute(save_dir)
+	if err != OK:
+		push_warning("[SaveManager] cannot create '%s': %s" % [save_dir, error_string(err)])
+		return err
+	var doc := {"format_version": FORMAT_VERSION, "meta": _make_meta(), "data": JSON.from_native(collect_state())}
+	var path := _slot_path(slot)
+	var tmp_path := path + ".tmp"
+	var file := FileAccess.open(tmp_path, FileAccess.WRITE)
+	if file == null:
+		err = FileAccess.get_open_error()
+		push_warning("[SaveManager] cannot write '%s': %s" % [tmp_path, error_string(err)])
+		return err
+	var written := file.store_string(JSON.stringify(doc, "\t", true, true))
+	file.close()
+	# Write-then-rename: a crash while writing never destroys the previous save.
+	err = DirAccess.rename_absolute(tmp_path, path) if written else ERR_FILE_CANT_WRITE
+	if err != OK:
+		push_warning("[SaveManager] saving slot %d failed: %s" % [slot, error_string(err)])
+		DirAccess.remove_absolute(tmp_path)
+		return err
+	EventBus.game_saved.emit(slot)
+	return OK
 
 
+## Coroutine (callers need not await). Invalid/missing file → warning + notification, no change.
 func load_game(slot: int) -> Error:
-	push_warning("STUB save_manager.gd.load_game")
-	return ERR_UNAVAILABLE
+	if _transition:
+		push_warning("[SaveManager] load_game(%d) ignored – a scene change is already running" % slot)
+		return ERR_BUSY
+	var doc := {}
+	var err := _read_doc(slot, doc)
+	var scene_path := ""
+	if err == OK:
+		scene_path = (doc.meta as Dictionary).scene
+		if not ResourceLoader.exists(scene_path, "PackedScene"):
+			err = ERR_FILE_MISSING_DEPENDENCIES
+	if err != OK:
+		push_warning("[SaveManager] cannot load slot %d: %s" % [slot, error_string(err)])
+		_notify(TEXT_NO_SAVE if err == ERR_FILE_NOT_FOUND else TEXT_CORRUPT)
+		return err
+	var state: Dictionary = doc.state
+	var generation := _generation
+	is_loading = true
+	_begin_transition()
+	_apply_autoloads(state.autoloads)
+	var world := await _change_world(scene_path)
+	if generation != _generation:
+		return ERR_BUSY
+	if world == null:
+		is_loading = false
+		_transition = false
+		_notify(TEXT_WORLD_FAILED)
+		return ERR_TIMEOUT
+	_apply_nodes(state.nodes)
+	_post_load()
+	is_loading = false
+	_transition = false
+	TimeManager.running = true
+	TimeManager.emit_refresh()
+	var graveyard := get_tree().get_first_node_in_group(&"graveyard")
+	if graveyard != null and graveyard.has_method("broadcast_state"):
+		graveyard.call("broadcast_state")
+	EventBus.game_loaded.emit(slot)
+	return OK
 
 
+## False while loading, while a modal other than the pause menu is open, while the player
+## is busy (timed action) and when no world is loaded.
 func can_save() -> bool:
-	push_warning("STUB save_manager.gd.can_save")
-	return false
+	if is_loading or _transition:
+		return false
+	if not is_instance_valid(_world) or not _world.is_inside_tree():
+		return false
+	if UIState.is_modal() and UIState.top() != PAUSE_MENU:
+		return false
+	var player := get_tree().get_first_node_in_group(&"player")
+	if player != null and player.has_method("is_busy") and bool(player.call("is_busy")):
+		return false
+	return true
 
 
 func has_save(slot: int) -> bool:
-	push_warning("STUB save_manager.gd.has_save")
-	return false
+	return slot >= 0 and FileAccess.file_exists(_slot_path(slot))
 
 
 func delete_save(slot: int) -> void:
-	push_warning("STUB save_manager.gd.delete_save")
+	if has_save(slot):
+		DirAccess.remove_absolute(_slot_path(slot))
 
 
+## {exists, day, minute_of_day, saved_unix, game_version}; exists = readable save of this format.
 func get_slot_info(slot: int) -> Dictionary:
-	push_warning("STUB save_manager.gd.get_slot_info")
-	return {}
+	var info := {"exists": false, "day": 0, "minute_of_day": 0, "saved_unix": 0, "game_version": ""}
+	var doc := {}
+	if _read_doc(slot, doc, false) != OK:
+		return info
+	var meta: Dictionary = doc.meta
+	info.exists = true
+	info.day = int(meta.day)
+	info.minute_of_day = int(meta.minute_of_day)
+	info.saved_unix = int(meta.saved_unix)
+	info.game_version = String(meta.game_version)
+	return info
 
 
+## Slot with the latest saved_unix (ties → higher slot), -1 if there is none.
 func newest_slot() -> int:
-	push_warning("STUB save_manager.gd.newest_slot")
-	return 0
+	var best := -1
+	var best_time := -1
+	for slot: int in _slots_on_disk():
+		var info := get_slot_info(slot)
+		if not info.exists:
+			continue
+		var saved: int = info.saved_unix
+		if saved > best_time or (saved == best_time and slot > best):
+			best = slot
+			best_time = saved
+	return best
 
 
+## Exactly the "data" part of a save file (before JSON.from_native).
 func collect_state() -> Dictionary:
-	push_warning("STUB save_manager.gd.collect_state")
-	return {}
+	var autoloads := {}
+	for autoload_name: String in AUTOLOADS:
+		autoloads[autoload_name] = (_autoload(autoload_name).call("save_state") as Dictionary).duplicate(true)
+	var nodes := {}
+	for node: Node in _saveables():
+		var id := _save_id(node)
+		if nodes.has(id):
+			push_warning("[SaveManager] duplicate save_id '%s' (%s) not saved" % [id, node.get_path()])
+			continue
+		if not node.has_method("save_state"):
+			push_warning("[SaveManager] saveable '%s' has no save_state()" % id)
+			continue
+		nodes[id] = (node.call("save_state") as Dictionary).duplicate(true)
+	return {"autoloads": autoloads, "nodes": nodes}
 
 
+## Applies a collected state to the current world (no file, no scene change):
+## autoloads silently, then load_state() by save_order, then post_load() for all.
 func apply_state(data: Dictionary) -> void:
-	push_warning("STUB save_manager.gd.apply_state")
+	_apply_autoloads(_sub_dict(data, "autoloads"))
+	_apply_nodes(_sub_dict(data, "nodes"))
+	_post_load()
 
 
 func reset() -> void:
-	pass
+	save_dir = DEFAULT_SAVE_DIR
+	is_loading = false
+	world_ready_timeout_sec = DEFAULT_WORLD_TIMEOUT_SEC
+	_transition = false
+	_world = null
+	_generation += 1
+	_wait_token += 1
+
+
+func _quick_save() -> void:
+	if not can_save():
+		_notify(TEXT_CANNOT_SAVE)
+		return
+	if save_game(QUICK_SLOT) == OK:
+		_notify(TEXT_SAVED, &"info")
+	else:
+		_notify(TEXT_SAVE_FAILED)
+
+
+func _quick_load() -> void:
+	if _transition:
+		return
+	if not has_save(QUICK_SLOT):
+		_notify(TEXT_NO_QUICKSAVE)
+		return
+	load_game(QUICK_SLOT)
+
+
+func _on_world_ready(world: Node) -> void:
+	_world = world
+	_world_arrived.emit(world)
+
+
+## Closes UI, lifts every pause and stops the clock before a scene change.
+func _begin_transition() -> void:
+	_transition = true
+	UIState.clear()
+	TimeManager.clear_pauses()
+	TimeManager.running = false
+	get_tree().paused = false
+
+
+## Changes the scene and waits for its EventBus.world_ready. Returns null on failure/timeout.
+func _change_world(scene_path: String) -> Node:
+	_wait_token += 1
+	var token := _wait_token
+	var old_world := _world if is_instance_valid(_world) and _world.is_inside_tree() else null
+	var err := get_tree().change_scene_to_file(scene_path)
+	if err != OK:
+		push_warning("[SaveManager] cannot change scene to '%s': %s" % [scene_path, error_string(err)])
+		return null
+	# A world added without change_scene (e.g. in tests) would survive the scene change
+	# and duplicate every save_id – take it out of the tree right away.
+	if old_world != null and old_world.is_inside_tree():
+		old_world.get_parent().remove_child(old_world)
+		old_world.queue_free()
+	_world = null
+	get_tree().create_timer(world_ready_timeout_sec, true).timeout.connect(func() -> void:
+		if token == _wait_token:
+			_world_arrived.emit(null))
+	var world: Node = await _world_arrived
+	if token == _wait_token:
+		_wait_token += 1
+	if world == null:
+		push_warning("[SaveManager] '%s' sent no world_ready within %.1f s" % [scene_path, world_ready_timeout_sec])
+	return world
+
+
+func _apply_autoloads(autoloads: Dictionary) -> void:
+	for autoload_name: String in AUTOLOADS:
+		var data: Variant = autoloads.get(autoload_name)
+		if data is Dictionary:
+			_autoload(autoload_name).call("load_state", data)
+		else:
+			push_warning("[SaveManager] no saved state for autoload %s" % autoload_name)
+	for key: Variant in autoloads:
+		if not String(key) in AUTOLOADS:
+			push_warning("[SaveManager] saved state for unknown autoload '%s' ignored" % key)
+
+
+func _apply_nodes(nodes: Dictionary) -> void:
+	var seen := {}
+	for node: Node in _saveables():
+		var id := _save_id(node)
+		seen[id] = true
+		var data: Variant = nodes.get(id)
+		if not data is Dictionary:
+			push_warning("[SaveManager] no saved state for '%s' – keeps its default state" % id)
+		elif not node.has_method("load_state"):
+			push_warning("[SaveManager] saveable '%s' has no load_state()" % id)
+		else:
+			node.call("load_state", data)
+	for key: Variant in nodes:
+		if not seen.has(String(key)):
+			push_warning("[SaveManager] saved state for unknown save_id '%s' ignored" % key)
+
+
+func _post_load() -> void:
+	for node: Node in _saveables():
+		if node.has_method("post_load"):
+			node.call("post_load")
+
+
+## Saveable nodes with a save_id, sorted by save_order, then save_id, then tree order.
+func _saveables() -> Array[Node]:
+	var out: Array[Node] = []
+	var tree_index := {}
+	for node: Node in get_tree().get_nodes_in_group(SAVEABLE_GROUP):
+		if node.is_queued_for_deletion():
+			continue
+		if _save_id(node) == "":
+			push_warning("[SaveManager] saveable %s has no save_id – skipped" % node.get_path())
+			continue
+		tree_index[node] = out.size()
+		out.append(node)
+	out.sort_custom(func(a: Node, b: Node) -> bool:
+		if _save_order(a) != _save_order(b):
+			return _save_order(a) < _save_order(b)
+		if _save_id(a) != _save_id(b):
+			return _save_id(a) < _save_id(b)
+		return int(tree_index[a]) < int(tree_index[b]))
+	return out
+
+
+func _save_id(node: Node) -> String:
+	var id: Variant = node.get("save_id")
+	return String(id) if id is String or id is StringName else ""
+
+
+func _save_order(node: Node) -> int:
+	var order: Variant = node.get("save_order")
+	return int(order) if order is int or order is float else 0
+
+
+func _autoload(autoload_name: String) -> Node:
+	return get_tree().root.get_node(autoload_name)
+
+
+func _make_meta() -> Dictionary:
+	return {
+		"game_version": str(ProjectSettings.get_setting("application/config/version", "")),
+		"day": TimeManager.day,
+		"minute_of_day": TimeManager.minute_of_day,
+		"saved_unix": int(Time.get_unix_time_from_system()),
+		"scene": _world_scene_path(),
+	}
+
+
+func _world_scene_path() -> String:
+	if is_instance_valid(_world) and _world.scene_file_path != "":
+		return _world.scene_file_path
+	var scene := get_tree().current_scene
+	if scene != null and scene.scene_file_path != "":
+		return scene.scene_file_path
+	return WORLD_SCENE
+
+
+func _slot_path(slot: int) -> String:
+	return save_dir.path_join("slot_%d.json" % slot)
+
+
+## Slot numbers of files named slot_<n>.json in save_dir.
+func _slots_on_disk() -> Array[int]:
+	var out: Array[int] = []
+	if not DirAccess.dir_exists_absolute(save_dir):
+		return out
+	for file_name: String in DirAccess.get_files_at(save_dir):
+		if not (file_name.begins_with("slot_") and file_name.ends_with(".json")):
+			continue
+		var number := file_name.trim_prefix("slot_").trim_suffix(".json")
+		if number.is_valid_int() and str(int(number)) == number and int(number) >= 0:
+			out.append(int(number))
+	return out
+
+
+## Reads and validates a save file into out = {meta, state}. decode_data=false skips "data".
+func _read_doc(slot: int, out: Dictionary, decode_data: bool = true) -> Error:
+	if slot < 0:
+		return ERR_INVALID_PARAMETER
+	var path := _slot_path(slot)
+	if not FileAccess.file_exists(path):
+		return ERR_FILE_NOT_FOUND
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return FileAccess.get_open_error()
+	var json := JSON.new()
+	if json.parse(file.get_as_text()) != OK or not json.data is Dictionary:
+		return ERR_PARSE_ERROR
+	var doc: Dictionary = json.data
+	var version: Variant = doc.get("format_version")
+	if not (version is float or version is int) or float(version) != FORMAT_VERSION:
+		return ERR_FILE_UNRECOGNIZED
+	if not _is_valid_meta(doc.get("meta")):
+		return ERR_FILE_CORRUPT
+	out["meta"] = doc.meta
+	if decode_data:
+		var state := _decode_state(doc.get("data"))
+		if state.is_empty():
+			return ERR_FILE_CORRUPT
+		out["state"] = state
+	return OK
+
+
+func _is_valid_meta(meta: Variant) -> bool:
+	if not meta is Dictionary:
+		return false
+	var m: Dictionary = meta
+	for key: String in ["day", "minute_of_day", "saved_unix"]:
+		if not (m.get(key) is float or m.get(key) is int):
+			return false
+	return m.get("scene") is String and m.get("game_version") is String
+
+
+## JSON.to_native of the "data" part (never objects); {} unless it yields {autoloads, nodes}.
+func _decode_state(data: Variant) -> Dictionary:
+	# JSON.to_native logs engine errors on malformed input – check the envelope first.
+	if not data is Dictionary:
+		return {}
+	var envelope: Dictionary = data
+	if envelope.get("type") != "Dictionary" or not envelope.get("args") is Array or (envelope.args as Array).size() % 2 != 0:
+		return {}
+	var state: Variant = JSON.to_native(envelope, false)
+	if not state is Dictionary:
+		return {}
+	var d: Dictionary = state
+	if not d.get("autoloads") is Dictionary or not d.get("nodes") is Dictionary:
+		return {}
+	return d
+
+
+func _sub_dict(data: Dictionary, key: String) -> Dictionary:
+	var value: Variant = data.get(key, {})
+	if value is Dictionary:
+		return value
+	push_warning("[SaveManager] state part '%s' is not a Dictionary" % key)
+	return {}
+
+
+func _notify(text: String, kind: StringName = &"warning") -> void:
+	EventBus.notification_requested.emit(text, kind)

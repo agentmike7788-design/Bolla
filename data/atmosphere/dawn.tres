@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="AtmospherePreset" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/world/atmosphere/atmosphere_preset.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Morgendämmerung"
+sun_color = Color(0.98, 0.83, 0.7, 1)
+sun_energy = 1.1
+sun_rotation_deg = Vector3(-16, 62, 0)
+sun_shadow_opacity = 0.66
+background_color = Color(0.46, 0.52, 0.6, 1)
+ambient_color = Color(0.46, 0.54, 0.7, 1)
+ambient_energy = 0.64
+fog_color = Color(0.6, 0.66, 0.7, 1)
+fog_density = 0.006
+volumetric_fog_density = 0.013
+volumetric_fog_albedo = Color(0.78, 0.82, 0.84, 1)
+volumetric_fog_emission = Color(0, 0, 0, 1)
+exposure = 1.0
+glow_intensity = 0.45
+saturation = 0.9
+warm_light_scale = 0.5

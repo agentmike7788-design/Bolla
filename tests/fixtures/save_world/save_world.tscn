@@ -1,0 +1,27 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://tests/fixtures/save_world/save_world.gd" id="1_world"]
+[ext_resource type="Script" path="res://tests/fixtures/save_world/fake_player.gd" id="2_player"]
+[ext_resource type="Script" path="res://tests/fixtures/save_world/fake_graveyard.gd" id="3_graveyard"]
+[ext_resource type="Script" path="res://tests/fixtures/save_world/saveable_probe.gd" id="4_probe"]
+
+[node name="SaveWorld" type="Node3D"]
+script = ExtResource("1_world")
+
+[node name="Player" type="Node" parent="." groups=["player", "saveable"]]
+script = ExtResource("2_player")
+save_id = "player"
+save_order = 100
+start_count = 5
+
+[node name="Graveyard" type="Node" parent="." groups=["graveyard", "saveable"]]
+script = ExtResource("3_graveyard")
+save_id = "graveyard"
+save_order = 10
+start_count = 0
+
+[node name="Early" type="Node" parent="." groups=["saveable"]]
+script = ExtResource("4_probe")
+save_id = "early"
+save_order = 0
+start_count = 2
