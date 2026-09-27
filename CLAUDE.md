@@ -24,3 +24,13 @@ godot --headless --path . --import
 godot --headless --path . -s res://tests/run_tests.gd
 ```
 In der Cloud ist Godot nicht vorinstalliert: Linux-Build von github.com/godotengine/godot/releases (4.7.2-stable) in den Scratch-Ordner laden. Blender headless: `pip install bpy==5.0.1` (Python 3.11) in ein venv.
+
+## Asset-Pipeline & Screenshots (Kurz)
+```
+python tools/blender/build_all.py                                            # Assets (bpy 5.x)
+godot --headless --path . --import
+tools/godot_run.sh -s res://src/world/art_prototype/art_prototype_builder.gd # Szene aus layout.json (braucht echten Renderer)
+tools/godot_run.sh --resolution 1280x720 -- --capture=/abs/dir [--shots=01,05]
+tools/godot_run.sh -s res://src/debug/asset_preview.gd -- --out=/abs/dir [--filter=name]
+```
+Cloud: `apt-get install mesa-vulkan-drivers` für Software-Vulkan (lavapipe); ein kompletter Screenshot-Satz dauert ~15 min.

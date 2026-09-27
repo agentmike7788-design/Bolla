@@ -1,0 +1,6 @@
+01_day_perspective  draw_calls=171  objects=217  primitives=420048
+02_day_orthographic  draw_calls=185  objects=248  primitives=241886
+03_night_perspective  draw_calls=164  objects=205  primitives=417220
+04_night_orthographic  draw_calls=183  objects=248  primitives=241886
+05_day_closeup  draw_calls=150  objects=168  primitives=590450
+06_night_closeup  draw_calls=139  objects=157  primitives=583926
