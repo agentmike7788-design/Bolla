@@ -2,6 +2,9 @@ extends TestCase
 ## W1: the generated world graveyard.tscn (§4) – contract nodes, every layout id, waypoints,
 ## colliders, unique save ids, the carter walking data/npc/carter_schedule.tres, the
 ## time-driven atmosphere, flat ground under plots and the player's belt lantern.
+## Phase 3 (docs/PHASE3_DESIGN.md §4, §10, W-Welt): 12 plots in 3 sections, every obstacle /
+## tending spot / system node, no obstacle on a station or the path, the build mask matches
+## the layout, passages walkable once cleared, bounds + extra_walls, camera bounds.
 
 const TIMEOUT := 60.0
 const WORLD := "res://src/world/graveyard/graveyard.tscn"
@@ -16,6 +19,20 @@ const FOLIAGE_SHADER := "res://assets/shaders/painted_foliage.gdshader"
 const FOLIAGE_MATERIAL := "res://assets/materials/mat_foliage.tres"
 ## Physics layer of the temporary foliage collision copies (UI-01 line-of-sight check).
 const FOLIAGE_PROBE_LAYER := 1 << 19
+const BUILD_MASK := "res://src/world/graveyard/build_mask.res"
+const Ctx := preload("res://src/world/graveyard/graveyard_build_context.gd")
+const Phase3 := preload("res://src/world/graveyard/graveyard_build_phase3.gd")
+## Systems/<name>: [class, identity group, save_id ("" = not saved), save_order] (§3.1).
+const P3_SYSTEMS := {
+	"Expansion": ["ExpansionManager", "expansion", "expansion", 5],
+	"Cleanliness": ["CleanlinessManager", "cleanliness", "cleanliness", 12],
+	"Decorations": ["DecorationManager", "decorations", "decorations", 15],
+	"BuildMode": ["BuildMode", "build_mode", "", 0],
+	"GrassClearMask": ["GrassClearMask", "", "", 0],
+	"CemeteryScore": ["CemeteryScore", "cemetery_score", "", 0],
+	"Reputation": ["Reputation", "reputation", "", 0],
+	"Ghosts": ["GhostManager", "ghosts", "ghosts", 30],
+}
 
 var layout: Dictionary
 var world: WorldRoot
@@ -33,7 +50,8 @@ func test_contract_nodes() -> void:
 	assert_not_null(world, "root is a WorldRoot")
 	for path: String in ["WorldEnvironment", "Sun", "Atmosphere", "Ground", "GroundCollision", "Colliders",
 			"Systems/CorpseManager", "Systems/Graveyard", "Entities", "Decor", "Waypoints", "Corpses",
-			"Player", "CameraRig", "CameraRig/Camera3D", "UI"]:
+			"Player", "CameraRig", "CameraRig/Camera3D", "UI",
+			"Decor/Placed", "Decor/Ghosts", "Decor/Birches", "Entities/notice_board"]:
 		assert_true(world.has_node(path), "node '%s'" % path)
 	assert_true(world.is_world_ready, "world_ready announced")
 	assert_eq(world.corpse_manager, world.get_node("Systems/CorpseManager"))
@@ -72,8 +90,15 @@ func test_every_layout_id_exists() -> void:
 		assert_eq(plot.grave_id, p.id)
 		assert_false(plot.is_old)
 		_assert_at(plot, _v2(p.pos), p.id)
-		assert_eq(world.graveyard.get_grave(p.id).state, GraveRecord.State.EMPTY)
-	assert_eq(layout.plots.size(), 6, "plot_01..plot_06")
+		assert_eq(plot.section_id, StringName(p.section), p.id + " section")
+		var want := GraveRecord.State.EMPTY if p.section == "yard" else GraveRecord.State.LOCKED
+		assert_eq(world.graveyard.get_grave(p.id).state, want, p.id + " state at the start")
+		assert_true(_section_rect(p.section).has_point(_v2(p.pos)), p.id + " inside its section")
+	assert_eq(layout.plots.size(), 12, "plot_01..plot_12")
+	for i: int in range(1, 7):
+		assert_has(world.graveyard.plots_in_section(&"yard"), "plot_%02d" % i)
+	assert_eq(world.graveyard.plots_in_section(&"east"), PackedStringArray(["plot_07", "plot_08", "plot_09"]))
+	assert_eq(world.graveyard.plots_in_section(&"north"), PackedStringArray(["plot_10", "plot_11", "plot_12"]))
 	for g: Dictionary in layout.old_graves:
 		var old := world.get_node_by_layout_id(g.id) as GravePlot
 		assert_not_null(old, g.id)
@@ -224,15 +249,26 @@ func test_atmosphere_is_time_driven() -> void:
 		assert_eq(atmo.blend_presets[i].resource_path, "res://data/atmosphere/%s.tres" % layout.atmosphere.blend_presets[i])
 	var day := load("res://data/atmosphere/day.tres") as AtmospherePreset
 	var night := load("res://data/atmosphere/night.tres") as AtmospherePreset
+	var deep := load("res://data/atmosphere/deep_night.tres") as AtmospherePreset
+	# Phase 3 §2.8: deep night 22:30–03:00 between the approved night keyframes.
+	assert_eq(layout.atmosphere.blend_presets, ["deep_night", "deep_night", "night", "dawn", "day", "day", "dusk", "night", "deep_night"])
+	assert_eq(layout.atmosphere.blend_minutes, [0, 180, 270, 330, 480, 1020, 1140, 1260, 1350])
 	var sun := world.get_node("Sun") as DirectionalLight3D
 	TimeManager.load_state({"day": 1, "minute_of_day": 720})
 	await tree.process_frame
 	assert_almost(sun.light_energy, day.sun_energy, 0.001, "noon = day preset (hold keyframes)")
-	TimeManager.load_state({"day": 1, "minute_of_day": 1380})
+	TimeManager.load_state({"day": 1, "minute_of_day": 1260})
 	await tree.process_frame
-	assert_almost(sun.light_energy, night.sun_energy, 0.001, "23:00 = night")
+	assert_almost(sun.light_energy, night.sun_energy, 0.001, "21:00 = night")
 	var lantern := world.get_player().find_child("Lantern", true, false) as OmniLight3D
 	assert_almost(lantern.get_meta("scale", 0.0), night.warm_light_scale, 0.001, "belt lantern scaled by the atmosphere")
+	for minute: int in [1380, 30, 180]:
+		TimeManager.load_state({"day": 1, "minute_of_day": minute})
+		await tree.process_frame
+		assert_almost(sun.light_energy, deep.sun_energy, 0.001, "%02d:%02d = deep night" % [minute / 60, minute % 60])
+	TimeManager.load_state({"day": 1, "minute_of_day": 270})
+	await tree.process_frame
+	assert_almost(sun.light_energy, night.sun_energy, 0.001, "04:30 = night again")
 
 
 func test_warm_light_shadows_follow_the_mood() -> void:
@@ -282,12 +318,17 @@ func test_ground_is_flat_under_plots_and_stations() -> void:
 				hi = maxf(hi, h)
 		assert_true(hi - lo < FLAT_TOLERANCE, "%s flat (%.4f m)" % [p.id, hi - lo])
 		assert_almost(plot.global_position.y, world.ground_height(Vector2(plot.global_position.x, plot.global_position.z)), 0.005, p.id)
-	var table := world.get_node_by_layout_id("morgue_table") as Node3D
-	var heights: Array[float] = []
-	for corner: Vector3 in [Vector3(-1.0, 0, -0.4), Vector3(1.0, 0, -0.4), Vector3(-1.0, 0, 0.4), Vector3(1.0, 0, 0.4)]:
-		var w := table.global_transform * corner
-		heights.append(world.ground_height(Vector2(w.x, w.z)))
-	assert_true(heights.max() - heights.min() < FLAT_TOLERANCE, "table legs on flat ground")
+	# Stations: the collider footprint is flat (Phase 3 re-export: the moved workbench too).
+	for id: String in ["morgue_table", "workbench", "dropoff"]:
+		var station := world.get_node_by_layout_id(id) as Node3D
+		var box: Array = layout.colliders[{"morgue_table": "ph_prop_morgue_table", "workbench": "ph_prop_workbench",
+				"dropoff": "ph_prop_dropoff_bier"}[id]][0].size
+		var heights: Array[float] = []
+		for sx: float in [-0.5, 0.0, 0.5]:
+			for sz: float in [-0.5, 0.0, 0.5]:
+				var w := station.global_transform * Vector3(sx * float(box[0]), 0, sz * float(box[2]))
+				heights.append(world.ground_height(Vector2(w.x, w.z)))
+		assert_true(heights.max() - heights.min() < FLAT_TOLERANCE, "%s on flat ground (%.4f m)" % [id, heights.max() - heights.min()])
 
 
 func test_ground_collision_matches_the_painted_ground() -> void:
@@ -507,7 +548,7 @@ func test_foliage_never_hides_the_player_at_interaction_spots() -> void:
 func _interaction_spots() -> Dictionary:
 	var out := {}
 	for id: String in ["plot_01", "plot_02", "plot_03", "plot_04", "plot_05", "plot_06", "morgue_table", "workbench",
-			"res_wood", "res_stone", "hut_door", "dropoff"]:
+			"res_wood", "res_stone", "hut_door", "dropoff", "plot_07", "plot_08", "plot_09", "plot_10", "plot_11", "plot_12"]:
 		out[id] = (world.get_node_by_layout_id(id) as Node3D).global_position
 	for id: StringName in [&"dropoff", &"evening_spot"]:
 		out["waypoint_" + String(id)] = world.get_waypoint(id)
@@ -615,6 +656,266 @@ func _uniform_default(code: String, uniform_name: String) -> float:
 	return m.get_string(1).to_float() if m != null else 0.0
 
 
+# --- Phase 3 (docs/PHASE3_DESIGN.md §3.1, §4, §10) -------------------------------------------
+
+## §3.1: every system node with its class, groups and save_id / save_order; containers.
+func test_phase3_system_nodes() -> void:
+	for node_name: String in P3_SYSTEMS:
+		var want: Array = P3_SYSTEMS[node_name]
+		var node := world.get_node_or_null("Systems/" + node_name)
+		assert_not_null(node, "Systems/" + node_name)
+		if node == null:
+			continue
+		assert_eq(node.get_script().get_global_name(), want[0], node_name)
+		if want[1] != "":
+			assert_true(node.is_in_group(StringName(want[1])), "%s in group %s" % [node_name, want[1]])
+		if want[2] != "":
+			assert_true(node.is_in_group(&"saveable"), node_name + " saveable")
+			assert_eq([node.get("save_id"), node.get("save_order")], [want[2], want[3]], node_name + " save id / order")
+		else:
+			assert_false(node.is_in_group(&"saveable"), node_name + " derived, not saved")
+	assert_eq(world.get_node("Systems").get_child(0).name, "Expansion", "§3.1 order: Expansion first")
+	var ids: Array = []
+	for n: Node in SaveStateCollector.saveables(tree):
+		if world.get_node("Systems").is_ancestor_of(n):
+			ids.append(String(n.get("save_id")))
+	assert_eq(ids, ["corpse_manager", "expansion", "graveyard", "cleanliness", "decorations", "ghosts"], "load order")
+	var decorations := world.get_node("Systems/Decorations") as DecorationManager
+	assert_eq(decorations.mask.resource_path, BUILD_MASK)
+	assert_eq(decorations.get_node(decorations.container_path), world.get_node("Decor/Placed"))
+	assert_eq((world.get_node("Systems/GrassClearMask") as GrassClearMask).mask, decorations.mask)
+	var ghosts := world.get_node("Systems/Ghosts") as GhostManager
+	assert_eq(ghosts.get_node(ghosts.container_path), world.get_node("Decor/Ghosts"))
+	assert_eq(ghosts.ghost_scene.resource_path, "res://src/entities/ghost/ghost.tscn")
+	# Sections: only the yard is open, the Ostwiese is workable, the Birkenhang waits for it.
+	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
+	assert_true(expansion.is_unlocked(&"yard"))
+	assert_false(expansion.is_unlocked(&"east"))
+	assert_false(expansion.is_unlocked(&"north"))
+	assert_eq(expansion.block_reason(&"east"), "")
+	assert_ne(expansion.block_reason(&"north"), "")
+
+
+## 21 obstacles (Ostwiese 10, Birkenhang 11) with model, collision and footprint in their
+## section; none on a station, a plot of the old yard, the path or a waypoint.
+func test_phase3_obstacles() -> void:
+	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
+	var all := Phase3.obstacles(layout)
+	assert_eq(all.size(), 21)
+	var kinds := {}
+	for o: Dictionary in all:
+		var node := world.get_node_or_null("Entities/" + String(o.id)) as ClearableObstacle
+		assert_not_null(node, o.id)
+		if node == null:
+			continue
+		assert_eq([node.obstacle_id, node.section_id, node.kind], [o.id, StringName(o.section), StringName(o.kind)], o.id)
+		_assert_at(node, _v2(o.pos), o.id)
+		assert_true(_section_rect(o.section).grow(0.05).has_point(_v2(o.pos)), o.id + " inside its section")
+		assert_true(expansion.obstacle(o.id) == node, o.id + " known to the ExpansionManager")
+		assert_false(node.cleared, o.id + " stands at the start")
+		assert_true((node.get_node("Model") as Node3D).visible, o.id + " model")
+		var body := node.get_node("Collision") as StaticBody3D
+		assert_eq(body.collision_layer, 1, o.id)
+		for shape: Node in body.get_children():
+			assert_false((shape as CollisionShape3D).disabled, o.id + " blocks while standing")
+		if o.kind == "fence_gap":
+			assert_false((node.get_node("Repaired") as Node3D).visible, o.id + " repaired fence hidden")
+			for shape: Node in node.get_node("RepairedCollision").get_children():
+				assert_true((shape as CollisionShape3D).disabled, o.id + " repaired collision off")
+		var key := "%s/%s" % [o.section, o.kind]
+		kinds[key] = int(kinds.get(key, 0)) + 1
+		var rect := node.world_rect()
+		for ent: Dictionary in layout.entities:
+			if ent.type != "npc":
+				assert_false(rect.grow(0.6).has_point(_v2(ent.pos)), "%s clear of %s" % [o.id, ent.id])
+		for p: Dictionary in layout.plots.filter(func(pl: Dictionary) -> bool: return pl.section == "yard") + layout.old_graves:
+			assert_false(rect.grow(1.0).has_point(_v2(p.pos)), "%s clear of %s" % [o.id, p.id])
+		for id: String in layout.waypoints:
+			if not id.begins_with("_"):
+				assert_false(rect.grow(0.5).has_point(_v2(layout.waypoints[id])), "%s clear of waypoint %s" % [o.id, id])
+		for k: int in 60:
+			assert_false(rect.has_point(_on_polyline(layout.path.points, k / 59.0)), o.id + " off the earth path")
+	assert_eq(kinds, {"east/bramble": 4, "east/rubble": 3, "east/fence_gap": 3, "north/hedge": 1, "north/bramble": 3,
+			"north/rubble": 2, "north/stump": 2, "north/fence_gap": 3})
+	assert_eq(expansion.progress(&"east"), Vector2i(0, 10))
+	assert_eq(expansion.progress(&"north"), Vector2i(0, 11))
+	assert_true((world.get_node("Entities/obs_e_01") as ClearableObstacle).world_rect().grow(0.3).has_point(Vector2(11.5, -2.2)),
+			"the bramble obs_e_01 blocks the passage")
+
+
+## §2.4: 22 area spots (yard 12 with 4 leaves under the oak, east 5, north 5 with 2 leaves) +
+## one weeds spot per plot on its mound = 34; a new game's start values only in the yard.
+func test_phase3_tending_spots() -> void:
+	var clean := world.get_node("Systems/Cleanliness") as CleanlinessManager
+	assert_eq(clean.spot_ids().size(), 34)
+	var counts := {}
+	var started := 0
+	for d: Dictionary in layout.dirt_spots:
+		var spot := world.get_node_or_null("Entities/" + String(d.id)) as DirtSpot
+		assert_not_null(spot, d.id)
+		if spot == null:
+			continue
+		assert_eq([spot.spot_id, spot.section_id, spot.kind, spot.grave_id], [d.id, StringName(d.section), StringName(d.kind), ""], d.id)
+		assert_almost(spot.start_progress, float(d.start), 0.0001, d.id)
+		_assert_at(spot, _v2(d.pos), d.id)
+		assert_almost(spot.global_position.y, world.ground_height(_v2(d.pos)), 0.01, d.id + " on the ground")
+		assert_true(_section_rect(d.section).has_point(_v2(d.pos)), d.id + " inside its section")
+		var key := "%s/%s" % [d.section, d.kind]
+		counts[key] = int(counts.get(key, 0)) + 1
+		if float(d.start) > 0.0:
+			started += 1
+			assert_eq(d.section, "yard", d.id)
+			assert_eq(d.kind, "weeds", d.id + ": no rake on day 1")
+			assert_true(float(d.start) >= 1.2 and float(d.start) <= 2.4, d.id + " level 1–2")
+	assert_eq(counts, {"yard/weeds": 8, "yard/leaves": 4, "east/weeds": 5, "north/weeds": 3, "north/leaves": 2})
+	assert_eq(started, 6, "§1.3 day 1: six spots in the old yard")
+	for p: Dictionary in layout.plots:
+		var spot := world.get_node_or_null("Entities/dirt_" + String(p.id)) as DirtSpot
+		assert_not_null(spot, "dirt_" + p.id)
+		if spot == null:
+			continue
+		assert_eq([spot.grave_id, spot.section_id, spot.kind], [p.id, StringName(p.section), &"weeds"], spot.name)
+		assert_eq((spot.get_node("Interactable") as Interactable).priority, int(layout.grave_dirt.priority), spot.name + " wins over the grave info")
+		var plot := world.get_node_by_layout_id(p.id) as GravePlot
+		var local := plot.to_local(spot.global_position)
+		assert_true(plot.footprint.has_point(Vector2(local.x, local.z)), spot.name + " on the plot")
+		assert_true(local.y > 0.1 and local.y < 0.45, "%s on the mound (%.2f m)" % [spot.name, local.y])
+
+
+## §4.3: the baked mask has the contract size and matches a fresh bake of the layout; spot
+## checks for sections, blocked plots / stations / trees / fence, grave ring and routes.
+func test_phase3_build_mask_matches_layout() -> void:
+	var mask := load(BUILD_MASK) as BuildMask
+	assert_eq([mask.origin, mask.size, mask.cell], [Vector2(-11.5, -20.0), Vector2i(66, 60), 0.5])
+	assert_eq(mask.cells.size(), 66 * 60)
+	var ctx := Ctx.new(tree)
+	ctx.layout = layout
+	var shapes := Phase3.mask_shapes(ctx)
+	var diff := 0
+	var per_section := {}
+	for cz: int in mask.size.y:
+		for cx: int in mask.size.x:
+			var c := Vector2i(cx, cz)
+			var p := mask.cell_to_world(c)
+			if Phase3.mask_value(p, mask.cell * 0.5, shapes) != mask.flags_at(c):
+				diff += 1
+			var s := mask.section_at(c)
+			per_section[s] = int(per_section.get(s, 0)) + 1
+			if s != 0:
+				assert_true(_section_rect(["", "yard", "east", "north"][s]).has_point(p), "cell %s in section %d" % [c, s])
+	assert_eq(diff, 0, "build_mask.res is up to date with the layout (rebuild graveyard.tscn)")
+	for s: int in [1, 2, 3]:
+		assert_true(int(per_section.get(s, 0)) > 200, "section %d buildable cells: %d" % [s, per_section.get(s, 0)])
+	for p: Dictionary in layout.plots + layout.old_graves:
+		assert_eq(mask.flags_at(mask.world_to_cell(_v2(p.pos))), BuildMask.BLOCKED, p.id + " blocked")
+	for p: Dictionary in layout.plots:
+		var plot := world.get_node_by_layout_id(p.id) as GravePlot
+		var ring_cells := 0
+		var centre := mask.world_to_cell(_v2(p.pos))
+		for dz: int in range(-5, 6):
+			for dx: int in range(-4, 6):
+				var c := centre + Vector2i(dx, dz)
+				var local := plot.to_local(Vector3(mask.cell_to_world(c).x, 0, mask.cell_to_world(c).y))
+				if mask.flags_at(c) & BuildMask.GRAVE_RING:
+					ring_cells += 1
+					assert_false(plot.footprint.has_point(Vector2(local.x, local.z)), "%s: ring cell %s not on the plot" % [p.id, c])
+		assert_true(ring_cells >= 6, "%s grave ring (%d cells)" % [p.id, ring_cells])
+		var foot := plot.global_transform * Vector3(0, 0, plot.footprint.end.y + 0.55)
+		assert_true(mask.flags_at(mask.world_to_cell(Vector2(foot.x, foot.z))) & BuildMask.ROUTE, p.id + " foot-end strip")
+	for p: Vector2 in [Vector2(0.0, 4.0), Vector2(-0.8, 0.5), Vector2(10.8, -2.2), Vector2(12.3, -2.2), Vector2(4.5, -12.2)]:
+		assert_true(mask.flags_at(mask.world_to_cell(p)) & BuildMask.ROUTE, "route at %s" % p)
+	for p: Vector2 in [_v2(layout.hut.pos), _v2(layout.tree.pos), Vector2(16.0, 9.5), Vector2(21.3, 0.0), Vector2(1.0, -11.9),
+			_v2(layout.birches[1].pos), _v2(layout.notice_board.pos)]:
+		assert_eq(mask.flags_at(mask.world_to_cell(p)), BuildMask.BLOCKED, "blocked at %s" % p)
+	for ent: Dictionary in layout.entities:
+		if ent.type != "npc":
+			assert_eq(mask.flags_at(mask.world_to_cell(_v2(ent.pos))), BuildMask.BLOCKED, ent.id + " blocked")
+	# Obstacles are not baked (runtime blockers): their centres keep their section.
+	assert_eq(mask.section_at(mask.world_to_cell(Vector2(19.4, 2.4))), 2, "obs_e_03 not baked")
+	assert_eq(mask.section_at(mask.world_to_cell(Vector2(9.6, -14.0))), 3, "obs_n_05 not baked")
+
+
+## The passage into the Ostwiese and the hedge gap into the Birkenhang let the gravekeeper
+## through once cleared; repaired fence gaps stay closed; the tp waypoints are free.
+func test_phase3_passages_walkable_once_cleared() -> void:
+	await tree.physics_frame
+	await tree.physics_frame
+	var passage := [Vector2(10.4, -2.2), Vector2(11.5, -2.2), Vector2(12.6, -2.2)]
+	var hedge := [Vector2(4.5, -11.2), Vector2(4.5, -12.4), Vector2(4.5, -13.6)]
+	assert_false(_capsule_free(passage[2]), "bramble obs_e_01 blocks the passage")
+	assert_false(_capsule_free(hedge[1]), "the thorn hedge blocks the Birkenhang")
+	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
+	assert_true(expansion.unlock(&"east"))
+	assert_true(expansion.unlock(&"north"))
+	for i: int in 3:
+		await tree.physics_frame
+	for p: Vector2 in passage + hedge:
+		assert_true(_capsule_free(p), "walkable at %s once cleared" % p)
+	for r: Dictionary in layout.fence.ruins:
+		assert_false(_capsule_free(_v2(r.pos)), "%s repaired: the fence is closed" % r.obstacle)
+	for id: String in ["tp_east", "tp_north"]:
+		assert_true(_capsule_free(_v2(layout.waypoints[id])), id + " free")
+	for id: String in ["plot_07", "plot_10"]:
+		assert_eq(world.graveyard.get_grave(id).state, GraveRecord.State.EMPTY, id + " unlocked")
+
+
+## §4.1: walkable bounds + the two extra walls, camera bounds, trees moved out of the sections.
+func test_phase3_bounds_and_camera() -> void:
+	var wb: Dictionary = layout.walkable_bounds
+	assert_eq([wb.min, wb.max], [[-11.2, -20.3], [21.2, 25.2]])
+	var bounds := world.get_node("Colliders/Bounds")
+	var t := float(wb.wall_thickness)
+	assert_almost((bounds.get_node("East") as Node3D).position.x, 21.2 + t * 0.5, 0.001)
+	assert_almost((bounds.get_node("North") as Node3D).position.z, -20.3 - t * 0.5, 0.001)
+	for k: int in [1, 2]:
+		assert_true(bounds.has_node("Extra_%d" % k), "extra wall %d" % k)
+	await tree.physics_frame
+	await tree.physics_frame
+	var space := world.get_world_3d().direct_space_state
+	for ray: Array in [[Vector3(-6.0, 1.0, -11.0), Vector3(-6.0, 1.0, -14.0)], [Vector3(9.5, 1.0, 16.0), Vector3(13.0, 1.0, 16.0)]]:
+		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(ray[0], ray[1], 1))
+		assert_false(hit.is_empty(), "extra wall between %s and %s" % ray)
+	var rig := world.get_node("CameraRig") as CameraRig
+	assert_eq([rig.bounds_min, rig.bounds_max], [Vector2(-7.0, -16.0), Vector2(17.0, 23.0)])
+	assert_eq([rig.zoom_min, rig.zoom_max], [12.0, 24.0])
+	for tr: Dictionary in layout.background_trees + layout.forest.trees:
+		for s: Dictionary in layout.sections:
+			assert_false(_section_rect(s.id).grow(0.5).has_point(_v2(tr.pos)), "tree %s outside section %s" % [tr.pos, s.id])
+	var inside := 0
+	for b: Dictionary in layout.birches:
+		if _section_rect("north").has_point(_v2(b.pos)):
+			inside += 1
+	assert_eq([layout.birches.size(), inside], [6, 2], "6 birches, 2 in the Birkenhang")
+	assert_eq(world.get_node("Decor/Birches").get_child_count(), 6)
+	assert_true(world.has_node("Colliders/Birch_01"))
+	# The ground covers the camera's view: 56 × 64 m, south / west edge unchanged.
+	assert_eq([layout.ground.size, layout.ground.center], [[56.0, 64.0], [4.0, 2.5]])
+	var shape := world.get_node("GroundCollision/Shape") as CollisionShape3D
+	var hm := shape.shape as HeightMapShape3D
+	var cell := float(layout.ground.cell)
+	var lo := Vector2(shape.position.x, shape.position.z) - Vector2(hm.map_width - 1, hm.map_depth - 1) * cell * 0.5
+	var hi := lo + Vector2(hm.map_width - 1, hm.map_depth - 1) * cell
+	assert_almost(lo.x, -24.0, 0.2, "west edge")
+	assert_almost(hi.x, 32.0, 0.2, "east edge")
+	assert_almost(lo.y, -29.5, 0.2, "north edge")
+	assert_almost(hi.y, 34.5, 0.2, "south edge")
+
+
+## §4.1: the notice board at the gate shows the cemetery rating and the reputation.
+func test_phase3_notice_board() -> void:
+	var board := world.get_node("Entities/notice_board") as NoticeBoard
+	_assert_at(board, _v2(layout.notice_board.pos), "notice board")
+	assert_eq(board.get_node("Model").scene_file_path, "res://assets/models/props/ph_prop_notice_board.glb")
+	assert_true(world.has_node("Colliders/notice_board"))
+	assert_not_null(board.label)
+	var score := world.get_node("Systems/CemeteryScore") as CemeteryScore
+	var rep := world.get_node("Systems/Reputation") as Reputation
+	assert_eq(board.label.text, NoticeBoard.board_text(score.rating(), rep.tier()))
+	rep.change(60 - rep.value(), "test")
+	assert_true(board.label.text.contains("Ruf: Geschätzt"), board.label.text)
+	assert_true(board.label.text.contains("„Verwahrlost“"), board.label.text)
+
+
 # --- helpers ----------------------------------------------------------------------------------
 
 func _at(npc: Npc, minute: int) -> void:
@@ -657,3 +958,39 @@ func _assert_at(node: Node3D, pos: Vector2, message: String) -> void:
 
 func _v2(a: Array) -> Vector2:
 	return Vector2(float(a[0]), float(a[1]))
+
+
+func _section_rect(id: String) -> Rect2:
+	for s: Dictionary in layout.sections:
+		if s.id == id:
+			var r: Array = s.rect
+			return Rect2(r[0], r[1], r[2] - r[0], r[3] - r[1])
+	return Rect2()
+
+
+## Point at fraction t of the arc length of a layout polyline (XZ).
+func _on_polyline(raw: Array, t: float) -> Vector2:
+	var pts: Array[Vector2] = []
+	for p: Array in raw:
+		pts.append(_v2(p))
+	var total := 0.0
+	for k: int in range(1, pts.size()):
+		total += pts[k].distance_to(pts[k - 1])
+	var s := t * total
+	for k: int in range(1, pts.size()):
+		var seg := pts[k].distance_to(pts[k - 1])
+		if s <= seg:
+			return pts[k - 1].lerp(pts[k], s / seg)
+		s -= seg
+	return pts.back()
+
+
+## The player's capsule fits at world XZ `p` (on the ground) without touching a world body.
+func _capsule_free(p: Vector2) -> bool:
+	var capsule := world.get_player().get_node("Collision") as CollisionShape3D
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = capsule.shape
+	query.collision_mask = 1
+	query.exclude = [world.get_player().get_rid()]
+	query.transform = Transform3D(Basis.IDENTITY, Vector3(p.x, world.ground_height(p) + 0.1, p.y)) * capsule.transform
+	return world.get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()

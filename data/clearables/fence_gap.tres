@@ -1,6 +1,9 @@
-[gd_resource type="Resource" script_class="ClearableData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ClearableData" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://src/systems/expansion/clearable_data.gd" id="1"]
+
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_fence_iron_broken.glb" id="m1"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_fence_iron.glb" id="m2"]
 
 [resource]
 script = ExtResource("1")
@@ -11,3 +14,5 @@ minutes = 30
 animation = &"dig"
 cost = Dictionary[StringName, int]({&"wood": 2, &"iron_fittings": 1})
 yield_items = Dictionary[StringName, int]({})
+model = ExtResource("m1")
+repaired_model = ExtResource("m2")

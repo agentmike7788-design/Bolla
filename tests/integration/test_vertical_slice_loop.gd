@@ -136,11 +136,14 @@ func test_day_two_delivery_with_valuables_and_decision() -> void:
 	table.request_shroud()
 	assert_false(second.shrouded, "shroud locked until the decision")
 	var coins := player.inventory.count(&"coin")
+	# Phase 3: the world has a Reputation node (new game 25, day-2 drift) – taking valuables
+	# costs EconomyConfig.valuables_reputation on top of whatever it is now.
+	var rep_before := GameState.get_stat(&"reputation")
 	table.decide_valuables(true)
 	assert_eq(second.valuables_decision, CorpseRecord.DECISION_TAKEN)
 	assert_eq(player.inventory.count(&"coin"), coins + second.valuables_coins)
 	assert_eq(GameState.get_stat(&"valuables_taken"), 1)
-	assert_eq(GameState.get_stat(&"reputation"), economy.valuables_reputation)
+	assert_eq(GameState.get_stat(&"reputation"), rep_before + economy.valuables_reputation)
 	table.request_shroud()
 	assert_true(second.shrouded)
 	var plot := world.get_node_by_layout_id("plot_02") as GravePlot
@@ -149,14 +152,16 @@ func test_day_two_delivery_with_valuables_and_decision() -> void:
 	plot.interact(player)
 	player.inventory.add_item(&"gravestone_simple", 1)
 	coins = player.inventory.count(&"coin")
+	var rep_tier := (world.get_node("Systems/Reputation") as Reputation).tier()
 	plot.interact(player)
 	var grave := graveyard.get_grave("plot_02")
 	var expected := economy.quality_buried + economy.quality_shroud + economy.marker_quality[&"gravestone_simple"] \
 			+ economy.quality_examined + _fresh_points(second) + economy.valuables_taken_malus
 	assert_eq(grave.quality, clampi(expected, economy.quality_min, economy.quality_max))
-	var payment := int(tables.get_cause(second.cause_id).base_payment) + floori(grave.quality * economy.payment_per_quality)
+	var payment := maxi(0, int(tables.get_cause(second.cause_id).base_payment) + floori(grave.quality * economy.payment_per_quality)
+			+ ReputationRules.pay_bonus(rep_tier, null))
 	assert_eq(player.inventory.count(&"coin"), coins + payment)
-	assert_eq(GameState.reputation_label(), ReputationRules.label(ReputationRules.tier(economy.valuables_reputation, null)))
+	assert_eq(GameState.reputation_label(), ReputationRules.label(ReputationRules.tier(GameState.get_stat(&"reputation"), null)))
 
 
 func test_skipped_delivery_at_an_occupied_bier() -> void:

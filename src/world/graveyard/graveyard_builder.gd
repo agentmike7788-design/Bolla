@@ -9,7 +9,8 @@ extends SceneTree
 ## ground mesh, OmniLights at light_* markers (layout "lights"), persistent groups.
 ## This script assembles the world tree; the parts live in preloaded helpers next to it
 ## (graveyard_build_*.gd): context (layout, ground heights, placing), colliders, entities,
-## decor and grass.
+## decor, grass and the Phase-3 parts (systems, obstacles, tending spots, notice board, birches,
+## build mask – docs/PHASE3_DESIGN.md §4).
 
 ## Helper scripts are preloaded (no class_name) – see the autoload note below.
 const Ctx := preload("res://src/world/graveyard/graveyard_build_context.gd")
@@ -17,6 +18,7 @@ const Colliders := preload("res://src/world/graveyard/graveyard_build_colliders.
 const Entities := preload("res://src/world/graveyard/graveyard_build_entities.gd")
 const Decor := preload("res://src/world/graveyard/graveyard_build_decor.gd")
 const Grass := preload("res://src/world/graveyard/graveyard_build_grass.gd")
+const Phase3 := preload("res://src/world/graveyard/graveyard_build_phase3.gd")
 const InteriorBuild := preload("res://src/world/hut_interior/hut_interior_build.gd")
 const InteriorBuilder := preload("res://src/world/hut_interior/hut_interior_builder.gd")
 const LAYOUT_PATH := "res://data/world/graveyard_layout.json"
@@ -60,6 +62,7 @@ func _run() -> void:
 	layout = JSON.parse_string(FileAccess.get_file_as_string(LAYOUT_PATH))
 	_ctx.cell = float(layout.ground.cell)
 	_ctx.build_height_lookup()
+	Phase3.bake_mask(_ctx)
 	Grass.save(Grass.build(_ctx))
 	InteriorBuilder.save_scene(InteriorBuild.build(InteriorBuild.load_layout()))
 	_save(_build_world(), OUT_SCENE)
@@ -127,12 +130,18 @@ func _build_world() -> Node:
 		Entities.build_plot(_ctx, entities, plot, false)
 	for ent: Dictionary in layout.entities:
 		Entities.build_entity(_ctx, entities, ent)
+	Phase3.build_obstacles(_ctx, entities)
+	Phase3.build_dirt_spots(_ctx, entities)
+	Phase3.build_notice_board(_ctx, entities)
 
 	var decor := _ctx.group(scene_root, "Decor")
 	var old := _ctx.group(decor, "OldGraves")
 	for g: Dictionary in layout.old_graves:
 		Entities.build_plot(_ctx, old, g, true)
 	Decor.build_decor(_ctx, decor)
+	Phase3.build_birches(_ctx, decor)
+	Phase3.build_passages(_ctx, decor.get_node("Fence"))
+	Phase3.build_systems(_ctx, systems, decor)
 
 	Entities.build_waypoints(_ctx, _ctx.group(scene_root, "Waypoints"))
 	_ctx.group(scene_root, "Corpses")

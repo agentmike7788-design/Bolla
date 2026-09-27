@@ -1,6 +1,8 @@
-[gd_resource type="Resource" script_class="ClearableData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ClearableData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://src/systems/expansion/clearable_data.gd" id="1"]
+
+[ext_resource type="PackedScene" path="res://assets/models/environment/ph_env_stump.glb" id="m1"]
 
 [resource]
 script = ExtResource("1")
@@ -11,3 +13,4 @@ minutes = 60
 animation = &"dig"
 cost = Dictionary[StringName, int]({})
 yield_items = Dictionary[StringName, int]({&"wood": 2})
+model = ExtResource("m1")

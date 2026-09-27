@@ -107,12 +107,15 @@ func _ground_receives_shadows_only() -> void:
 		(mesh as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
-## Foliage meshes go to FOLIAGE_LAYER only, and every warm light of the world stops casting
-## shadows from that layer (see FOLIAGE_LAYER). Runtime for the same reason as above.
+## Foliage meshes (Decor, and the brambles / thorn hedge among the Phase-3 obstacles in
+## Entities) go to FOLIAGE_LAYER only, and every warm light of the world stops casting shadows
+## from that layer (see FOLIAGE_LAYER). Runtime for the same reason as above.
 func _foliage_out_of_warm_shadows() -> void:
-	var decor := get_node_or_null(DECOR)
-	if decor != null:
-		for node: Node in decor.find_children("*", "MeshInstance3D", true, false):
+	for path: NodePath in [DECOR, ENTITIES]:
+		var parent := get_node_or_null(path)
+		if parent == null:
+			continue
+		for node: Node in parent.find_children("*", "MeshInstance3D", true, false):
 			var mesh := node as MeshInstance3D
 			if _has_foliage(mesh):
 				mesh.layers = FOLIAGE_LAYER
