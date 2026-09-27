@@ -152,6 +152,17 @@ dialogue_choice_4={
 3d_physics/layer_4="interactable"
 3d_physics/layer_5="corpse"
 
+[shader_globals]
+
+occlusion_target={
+"type": "vec3",
+"value": Vector3(0, -1000, 0)
+}
+occlusion_radius={
+"type": "float",
+"value": 1.6
+}
+
 [rendering]
 
 lights_and_shadows/directional_shadow/size=8192

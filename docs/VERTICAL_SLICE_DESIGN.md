@@ -33,7 +33,7 @@ Gameplay-Werte sind **Vorschläge**; der Benutzer prüft sie beim Vertical-Slice
 12. **Hüttentür**: vor 18:00 **„Ausruhen bis 18:00"**; ab 18:00 (oder nach Mitternacht vor 06:00) **„Schlafen bis 06:00"** → Tageszusammenfassung → **Autosave**.
 13. **Speichern/Laden**: F5/F9 (Schnellspeicher), Esc-Menü, Titelbildschirm „Fortsetzen / Neues Spiel / Beenden".
 
-**Slice-Ende:** Nach dem 6. vollendeten Grab: Flag `slice_complete`, keine Lieferungen mehr, **Abschluss-Panel** (Tage, Bestattungen, Friedhofsqualität, Stufe, Ruf). Ziel: Stufe „Würdevoll" (≥ 45 = Schnitt ≥ 7,5 pro Grab).
+**Slice-Ende:** Nach dem 6. vollendeten Grab: Flag `slice_complete`, keine Lieferungen mehr, **Abschluss-Panel** (Tage, Bestattungen, Friedhofsqualität, Stufe, Ruf). Ziel: Stufe „Würdevoll" (≥ 50, ≈ 8,3 pro Grab).
 
 ## 2. Spielwerte (Vorschläge, alle in `data/`)
 
@@ -79,7 +79,7 @@ Startinventar (bei *Neues Spiel*): 5 Münzen, 2 Holz, 1 Leinen (`PlayerConfig.st
 | Wertsachen liegen gelassen / genommen | +1 / −2 |
 Qualität = Summe, geklemmt 0…10. **Bezahlung** = `base_payment(Todesursache)` (2–4) + `floor(Qualität × 0,5)`.
 Wertsachen: 5–8 Münzen (pro Leiche beim Generieren festgelegt), Ruf −1.
-**Friedhofsqualität** = Summe der Qualitäten aller vollendeten Gräber (alte Gräber zählen **0**). Stufen: Verwahrlost < 10 ≤ Ordentlich < 25 ≤ Gepflegt < 45 ≤ Würdevoll.
+**Friedhofsqualität** = Summe der Qualitäten aller vollendeten Gräber (alte Gräber zählen **0**). Stufen (v3, nach Playthrough-Review): Verwahrlost < 15 ≤ Ordentlich < 32 ≤ Gepflegt < 50 ≤ Würdevoll – ohne Leichentuch, mit Holzkreuzen oder bei dreimaligem Wertsachen-Raub wird „Würdevoll" verfehlt.
 Ruf (`GameState.stats.reputation`, Start 0): ≥ 0 „Geachtet", −1…−2 „Unauffällig", ≤ −3 „Verrufen" (Anzeige im Inventar-Panel; Kutscher reagiert).
 
 *Nachrechnung Tag 1:* 5 Münzen − 3 (1 Leinen) = 2 → Qualität 9 (ohne Wertsachen) → +3+4 = **9 Münzen**. Tag 2 (Wertsachen): liegen lassen 9−6+(3+5)=11 · nehmen 9−6+6+(3+3)=15 → Raub lohnt kurzfristig (+4), kostet Qualität/Ruf.
@@ -87,7 +87,7 @@ Ruf (`GameState.stats.reputation`, Start 0): ≥ 0 „Geachtet", −1…−2 „
 ### 2.5 Leichen (`data/corpses/corpse_tables.tres`, Klasse `CorpseTables`)
 - **Lieferung** um `delivery_minute = 460` (07:40), einmal pro Tag, nur wenn **(a)** die Ablage frei ist **und (b)** `freie Grabstellen (EMPTY/DUG) > nicht bestattete Leichen`. Sonst: keine Leiche (keine Warteschlange), `stats.missed_deliveries += 1`, Flag `delivery_skipped` = Tag, Kutscher-Dialog „Die Bahre ist noch belegt …". Nach `slice_complete`: keine Lieferungen.
 - **Verfall**: `base_decay_per_hour = 0.05` × `decay_mult` der Todesursache (0,75–1,5), berechnet aus der **Differenz der Spielminuten** (nie Ticks zählen), stoppt bei Bestattung, Minimum 0. Stufen: Frisch ≥ 0,6 · Welk · Verwesend < 0,3.
-- **Merkmale**: `valuables` (Wertsachen, Chance 0,35, hat Entscheidung), `letter` (Brief), `tattoo`, `strange_wound` (Geheimnis-Andeutung) – außer `valuables` nur Erzähltext. `forced_traits_by_day`: Tag 1 = keine (Tutorial), Tag 2 = `valuables`.
+- **Merkmale**: `valuables` (Wertsachen, Chance 0,35, hat Entscheidung), `letter` (Brief), `tattoo`, `strange_wound` (Geheimnis-Andeutung) – außer `valuables` nur Erzähltext. `forced_traits_by_day` (v3): Tag 1 = keine (Tutorial), Tag 2 = `valuables`, Tag 3 = `strange_wound`, Tag 4 = `valuables`+`letter`, Tag 5 = `valuables`+`tattoo`, ab Tag 6 zufällig – so erscheint die Moral-Entscheidung 3× und „Verrufen" ist erreichbar.
 - **Determinismus**: Seed = `day × 7919 + 17 + 104729 × spawn_index_of_day`; nur lokaler `RandomNumberGenerator`.
 
 ## 3. Architektur
