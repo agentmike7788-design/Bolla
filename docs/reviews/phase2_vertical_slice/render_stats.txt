@@ -1,0 +1,10 @@
+01_day_overview  camera_tris=473238 (primitives 135792 + grass 337446)  shadow_live=106298  shadow_static=106298  frame_total≈579536  draw_calls=178 (camera 122)  objects=287  carter=(15.8, -0.0375, 32.6) visible=false
+02_day_kutschweg  camera_tris=376170 (primitives 116700 + grass 259470)  shadow_live=104238  shadow_static=104238  frame_total≈480408  draw_calls=132 (camera 85)  objects=240  carter=(15.8, -0.0375, 32.6) visible=false
+03_carter_arrival  camera_tris=207150 (primitives 79116 + grass 128034)  shadow_live=125824  shadow_static=125824  frame_total≈332974  draw_calls=122 (camera 57)  objects=202  carter=(1.22307, -0.044359, 12.04061) visible=true
+04_morgue_table  camera_tris=220334 (primitives 101480 + grass 118854)  shadow_live=55770  shadow_static=55770  frame_total≈276104  draw_calls=76 (camera 45)  objects=92  carter=(1.75, -0.014228, 8.4) visible=true
+05_open_pit  camera_tris=191826 (primitives 96948 + grass 94878)  shadow_live=111252  shadow_static=111252  frame_total≈303078  draw_calls=108 (camera 46)  objects=160  carter=(1.75, -0.014228, 8.4) visible=true
+06_grave_cross  camera_tris=171690 (primitives 87072 + grass 84618)  shadow_live=106298  shadow_static=106298  frame_total≈277988  draw_calls=106 (camera 43)  objects=160  carter=(15.8, -0.0375, 32.6) visible=false
+07_night_hut  camera_tris=316270 (primitives 90118 + grass 226152)  shadow_live=119626  shadow_static=63122  frame_total≈435896  draw_calls=156 (camera 80)  objects=188  carter=(15.8, -0.0375, 32.6) visible=false
+08_night_gate  camera_tris=243802 (primitives 76942 + grass 166860)  shadow_live=164864  shadow_static=93598  frame_total≈408666  draw_calls=200 (camera 65)  objects=261  carter=(-1.4, 0.010464, 10.7) visible=true
+09_night_hut_door  camera_tris=305312 (primitives 88502 + grass 216810)  shadow_live=121416  shadow_static=61882  frame_total≈426728  draw_calls=157 (camera 82)  objects=183  carter=(15.8, -0.0375, 32.6) visible=false
+10_day_start  camera_tris=308112 (primitives 89682 + grass 218430)  shadow_live=145408  shadow_static=145408  frame_total≈453520  draw_calls=144 (camera 80)  objects=231  carter=(15.8, -0.0375, 32.6) visible=false

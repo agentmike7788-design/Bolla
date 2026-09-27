@@ -4,7 +4,7 @@
 |---|---|---|---|---|
 | G0 | Projektsetup | ✅ **PASSED** | 27.09.2026 | ✅ „Phase 0 freigegeben" (27.09.2026) |
 | G1 | Art Direction | ✅ **PASSED** (Runde 1) | 27.09.2026 | ✅ „Art Direction freigegeben" (27.09.2026) |
-| G2 | Vertical Slice | 🔵 IN ARBEIT | 27.09.2026 | – |
+| G2 | Vertical Slice | 🟡 **PENDING USER REVIEW** | 27.09.2026 | ausstehend – „Vertical Slice freigegeben." |
 
 **ART STYLE LOCK:** ✅ **ACTIVE** seit 27.09.2026 (Referenz: `src/world/art_prototype/`, Screenshots `docs/reviews/phase1_round1/`). Keine grundlegende Stiländerung ohne Benutzerfreigabe.
 
@@ -18,6 +18,44 @@
 | Hauptszene startet, Autoloads aktiv | ✅ PASS |
 | Blender 5.0.1 (bpy, headless) → .glb Export | ✅ PASS |
 | .glb Import in Godot 4.7.2 (Achsen Z-up → Y-up korrekt) | ✅ PASS |
+
+## G2 – QA-Protokoll Vertical Slice (Agent 19)
+
+Screenshots: `docs/reviews/phase2_vertical_slice/` (Software-Renderer, 1280×720). Assets: `docs/reviews/phase2_assets/`.
+
+### Abdeckung der Vertical-Slice-Anforderungen
+| Anforderung | Umsetzung | Status |
+|---|---|---|
+| Spieler, Bewegung, Kamera, Interaktion | Totengräber mit Rig + 6 Animationen, feste 2.5D-Kamera (Perspektive 30°/45°), E/Q-Interaktion mit Fokus-Logik | ✅ |
+| Friedhof, Gräber, Grabsteine, Friedhofsbereich, kleines Gebäude | Freigegebene Komposition + 6 freie Grabstellen, Hütte, Tisch, Werkbank, Zaun/Tor | ✅ |
+| Leiche: Ankunft, aufnehmen, untersuchen, Zustand anzeigen | Kutscher liefert 07:40 auf die Bahre; Untersuchungs-Panel (Todesursache, Frische, Merkmale, Wertsachen-Entscheidung) | ✅ |
+| Bestattung: Grab vorbereiten, Leiche hinbringen, bestatten | Grab ausheben → tragen → bestatten → Grabzeichen → Qualität/Bezahlung | ✅ |
+| NPC mit Position, Tagesroutine, Dialog, Interaktion | Leichenkutscher Osric Faulhaber: 9-Phasen-Tagesplan, 20-Knoten-Dialog, Leinen-Handel | ✅ |
+| Welt: kleiner Friedhof, angrenzender Bereich, Tag/Nacht | Friedhof + „Kutschweg" nach Hollerbrück; Tageszeit mit Dämmerungen und Laternen | ✅ |
+| Systeme: Inventar, Ressourcen, einfaches Crafting, Speichern, Laden | 16 Slots + Münzen; Holz/Stein/Leinen; 3 Rezepte; Autosave + Schnellspeicher, Titel „Fortsetzen" | ✅ |
+| Debug-System (Zeit, Teleport, Ressourcen, Leiche/NPC spawnen, Quest-Reset …) | F1-Konsole, 15+ Befehle, in Release-Builds deaktiviert | ✅ |
+
+### Tests & Prüfungen
+| Prüfung | Ergebnis |
+|---|---|
+| Automatische Tests (`tests/run_tests.gd`, 26 Dateien) | ✅ **735 / 735 PASS** |
+| Integrationstest kompletter Loop inkl. Speichern → Laden (identischer Zustand) | ✅ |
+| Save/Load-Review: ~80 Roundtrips an allen kritischen Momenten | ✅ keine Blocker |
+| Korrektheits-Review inkl. Zufalls-Fuzzer (API + echte Eingaben, 1 200 Schritte) | ✅ 0 Invarianten-Verletzungen, 0 Engine-Fehler |
+| Playthrough-Bot: 7 Strategien × 6 Tage | ✅ alle erreichen das Slice-Ende, keine Softlocks |
+| Architektur-/Regel-Review | ✅ nur kleine Befunde (behoben / dokumentiert) |
+| Performance: Draw Calls 138–283, Kamera-Dreiecke ≤ 473 k, 2 Schattenlichter, CPU ~0,5 ms/Frame | ✅ im Budget (GPU-FPS: nur auf Benutzer-PC messbar) |
+| UI/UX-Review: Kontraste ≥ 4,5:1, Deutsch korrekt, Zielzeile bei jedem Schritt korrekt | ✅ |
+| Review-Befunde | 5 schwere + 28 kleine gefunden → 31 behoben mit Regressionstests, 2 begründet offen (s. u.) |
+| Refactoring: 10 übergroße Skripte aufgeteilt, verhaltensneutral (735 → 735, Builder-Ausgabe identisch) | ✅ |
+
+### Bekannte Punkte / Restposten
+- **PERF-02** Gras-LOD nicht aktiv: die LOD-Stufe dünnt das freigegebene Gras sichtbar aus; Budget wird auch so eingehalten.
+- **GP-03** Münzen häufen sich ab Tag 2 an (einzige Ausgabe: Leinen) → Designentscheidung Wirtschaft (Phase 10).
+- Figuren-Rig ohne Ellbogen/Knie (starre Teile, bewusst einfach); keine Musik/Sounds (Agent 17 inaktiv).
+- Platzhalter-Schrift (Godot-Standard); Titelbildschirm schlicht.
+- `corpse_manager.gd` (464) und `player.gd` (380) liegen noch über der 300-Zeilen-Richtlinie (Rest = öffentliche API + Zustand; weitere Aufteilung erst mit Zustands-Komponenten).
+- Hinweis zur Lieferung wird bei belegter Bahre doppelt angezeigt (HUD-Hinweis + Meldung, gleicher Text).
 
 ## G1 – QA-Protokoll Runde 1 (Agent 19)
 
