@@ -98,8 +98,9 @@ func try_daily_delivery(day: int) -> CorpseRecord:
 ## try_daily_delivery checked at world time `now_total` (the time of the triggering signal).
 ## The corpse arrived at the day's delivery minute – also when the check runs later, inside a
 ## skip (rest, timed action) – but never after now, and has decayed since then.
-## Without any EMPTY/DUG plot the cemetery is full for good (graves are never emptied again):
-## the carter brings nothing more, which is no missed delivery.
+## When every remaining EMPTY/DUG plot is already reserved by a corpse waiting for burial, the
+## cemetery is full for good (graves are never emptied again): the carter brings nothing more,
+## which is no missed delivery. Only an occupied bier counts as a missed delivery.
 func _deliver(day: int, now_total: int) -> CorpseRecord:
 	if day <= _last_delivery_day:
 		return get_record(_last_delivery_id) if day == _last_delivery_day else null
@@ -425,10 +426,11 @@ func _free_plot_count() -> int:
 	return int(graveyard.call("free_plot_count"))
 
 
-## A graveyard exists and has no EMPTY/DUG plot left – and never gets one back.
+## A graveyard exists and no plot is left for a new corpse – and none ever comes back.
 func _cemetery_full() -> bool:
 	var graveyard := _first_in_group(GRAVEYARD_GROUP)
-	return graveyard != null and graveyard.has_method("free_plot_count") and int(graveyard.call("free_plot_count")) <= 0
+	return graveyard != null and graveyard.has_method("free_plot_count") \
+			and int(graveyard.call("free_plot_count")) <= unburied_count()
 
 
 func _take_spawn_index(day: int) -> int:

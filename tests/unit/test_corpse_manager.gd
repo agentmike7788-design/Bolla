@@ -265,16 +265,18 @@ func test_delivery_skipped_when_dropoff_occupied() -> void:
 	assert_eq(events, [["skipped", 1, CorpseManager.REASON_OCCUPIED], ["note", CorpseManager.NOTE_SKIPPED % CorpseManager.REASON_OCCUPIED, &"warning"]])
 
 
+## Lead decision (GP-04 follow-up): when every free plot is already reserved by a waiting corpse,
+## the cemetery is full for good – no delivery, and it is NOT a missed delivery (quiet stop).
 func test_delivery_needs_more_free_plots_than_unburied_corpses() -> void:
 	graveyard.free_plots = 1
 	manager.spawn_corpse(null, Transform3D.IDENTITY, &"ground")
 	events.clear()
 	assert_null(manager.try_daily_delivery(1), "1 free plot, 1 unburied corpse")
-	assert_eq(events[0], ["skipped", 1, CorpseManager.REASON_NO_PLOT])
+	assert_eq(events, [], "quiet stop, no skip signal")
 	graveyard.free_plots = 2
 	assert_not_null(manager.try_daily_delivery(2), "2 free plots, 1 unburied corpse")
-	assert_eq(GameState.get_stat(&"missed_deliveries"), 1)
-	assert_eq(GameState.get_flag(&"delivery_skipped"), 1, "flag keeps the day of the last skip")
+	assert_eq(GameState.get_stat(&"missed_deliveries"), 0)
+	assert_false(GameState.has_flag(&"delivery_skipped"))
 
 
 ## GP-04: every plot filled or marked – no plot can ever be freed, so the carter brings nothing
