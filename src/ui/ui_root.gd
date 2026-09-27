@@ -15,7 +15,7 @@ const PANEL_INVENTORY := &"inventory"
 const DEBUG_MODAL := &"debug"
 const ACTION_TITLE := &"title"
 const ACTION_QUIT := &"quit"
-## Panel id -> script (docs §7 contexts).
+## Panel id -> script (docs §7 contexts; chest and grave_register: docs §11).
 const PANEL_SCRIPTS: Dictionary[StringName, Script] = {
 	&"inventory": preload("res://src/ui/panels/inventory_panel.gd"),
 	&"corpse_exam": preload("res://src/ui/panels/corpse_exam_panel.gd"),
@@ -24,6 +24,8 @@ const PANEL_SCRIPTS: Dictionary[StringName, Script] = {
 	&"day_summary": preload("res://src/ui/panels/day_summary_panel.gd"),
 	&"slice_summary": preload("res://src/ui/panels/slice_summary_panel.gd"),
 	&"pause": preload("res://src/ui/panels/pause_menu.gd"),
+	&"chest": preload("res://src/ui/panels/chest_panel.gd"),
+	&"grave_register": preload("res://src/ui/panels/grave_register_panel.gd"),
 }
 
 ## Called for "Beenden" (tests replace it).

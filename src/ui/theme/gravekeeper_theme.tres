@@ -10,7 +10,10 @@
 ; HudClockLabel, HudDimLabel, PromptLabel, KeyLabel, CountLabel, WindowPanel, HudPanel,
 ; CardPanel, SectionPanel, SlotPanel, KeyCapPanel, DimPanel, DebugPanel, NoteInfo,
 ; NoteReward, NoteWarning, AccentButton, DangerButton, ChoiceButton, CloseButton,
-; FreshBar, WiltedBar, DecayBar, DayIcon (colours for the sun/moon icon).
+; FreshBar, WiltedBar, DecayBar, DayIcon (colours for the sun/moon icon), SlotButton (chest
+; slots), grave register book: LedgerPanel (leather cover), LedgerPagePanel (parchment page),
+; LedgerHeadPanel, LedgerRowPanel (ruled lines), LedgerTitleLabel, LedgerHeadLabel,
+; LedgerWarnLabel, LedgerCloseButton, LedgerScrollBar, LedgerOrnament (ink/rule/margin colours).
 [gd_resource type="Theme" format=3]
 
 [sub_resource type="StyleBoxFlat" id="sb_window"]
@@ -509,6 +512,146 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
+[sub_resource type="StyleBoxFlat" id="sb_slot_hover"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.098, 0.118, 0.149, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.72, 0.5, 0.23, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="sb_slot_pressed"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.949, 0.663, 0.231, 0.16)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.949, 0.663, 0.231, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="sb_ledger_cover"]
+content_margin_left = 16.0
+content_margin_top = 16.0
+content_margin_right = 16.0
+content_margin_bottom = 16.0
+bg_color = Color(0.2, 0.133, 0.094, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 3
+border_color = Color(0.42, 0.31, 0.22, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.5)
+shadow_size = 16
+shadow_offset = Vector2(0, 5)
+
+[sub_resource type="StyleBoxFlat" id="sb_ledger_page"]
+content_margin_left = 40.0
+content_margin_top = 26.0
+content_margin_right = 40.0
+content_margin_bottom = 24.0
+bg_color = Color(0.871, 0.8, 0.651, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.608, 0.486, 0.325, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0.106, 0.071, 0.047, 0.35)
+shadow_size = 4
+
+[sub_resource type="StyleBoxFlat" id="sb_ledger_head"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+draw_center = false
+border_width_bottom = 3
+border_color = Color(0.36, 0.2, 0.08, 0.85)
+
+[sub_resource type="StyleBoxFlat" id="sb_ledger_row"]
+content_margin_left = 8.0
+content_margin_top = 9.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+draw_center = false
+border_width_bottom = 2
+border_color = Color(0.541, 0.42, 0.271, 0.42)
+
+[sub_resource type="StyleBoxFlat" id="sb_ledger_close"]
+content_margin_left = 12.0
+content_margin_top = 4.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+bg_color = Color(0.36, 0.2, 0.08, 0.0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.541, 0.42, 0.271, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="sb_ledger_close_hover"]
+content_margin_left = 12.0
+content_margin_top = 4.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+bg_color = Color(0.36, 0.2, 0.08, 0.14)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.36, 0.2, 0.08, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="sb_ledger_scroll"]
+bg_color = Color(0.541, 0.42, 0.271, 0.18)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="sb_ledger_grabber"]
+bg_color = Color(0.541, 0.42, 0.271, 0.8)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="sb_ledger_grabber_hover"]
+bg_color = Color(0.36, 0.2, 0.08, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
 [sub_resource type="StyleBoxEmpty" id="sb_empty"]
 
 [resource]
@@ -643,6 +786,42 @@ NoteReward/base_type = &"PanelContainer"
 NoteReward/styles/panel = SubResource("sb_note_reward")
 NoteWarning/base_type = &"PanelContainer"
 NoteWarning/styles/panel = SubResource("sb_note_warning")
+LedgerCloseButton/base_type = &"Button"
+LedgerCloseButton/colors/font_color = Color(0.38, 0.3, 0.21, 1)
+LedgerCloseButton/colors/font_focus_color = Color(0.36, 0.2, 0.08, 1)
+LedgerCloseButton/colors/font_hover_color = Color(0.36, 0.2, 0.08, 1)
+LedgerCloseButton/colors/font_pressed_color = Color(0.36, 0.2, 0.08, 1)
+LedgerCloseButton/font_sizes/font_size = 20
+LedgerCloseButton/styles/focus = SubResource("sb_empty")
+LedgerCloseButton/styles/hover = SubResource("sb_ledger_close_hover")
+LedgerCloseButton/styles/normal = SubResource("sb_ledger_close")
+LedgerCloseButton/styles/pressed = SubResource("sb_ledger_close_hover")
+LedgerHeadLabel/base_type = &"Label"
+LedgerHeadLabel/colors/font_color = Color(0.36, 0.2, 0.08, 1)
+LedgerHeadLabel/font_sizes/font_size = 19
+LedgerHeadPanel/base_type = &"PanelContainer"
+LedgerHeadPanel/styles/panel = SubResource("sb_ledger_head")
+LedgerOrnament/colors/ink = Color(0.36, 0.2, 0.08, 0.85)
+LedgerOrnament/colors/margin = Color(0.549, 0.184, 0.169, 0.45)
+LedgerOrnament/colors/rule = Color(0.541, 0.42, 0.271, 0.9)
+LedgerPagePanel/base_type = &"PanelContainer"
+LedgerPagePanel/styles/panel = SubResource("sb_ledger_page")
+LedgerPanel/base_type = &"PanelContainer"
+LedgerPanel/styles/panel = SubResource("sb_ledger_cover")
+LedgerRowPanel/base_type = &"PanelContainer"
+LedgerRowPanel/styles/panel = SubResource("sb_ledger_row")
+LedgerScrollBar/base_type = &"VScrollBar"
+LedgerScrollBar/styles/grabber = SubResource("sb_ledger_grabber")
+LedgerScrollBar/styles/grabber_highlight = SubResource("sb_ledger_grabber_hover")
+LedgerScrollBar/styles/grabber_pressed = SubResource("sb_ledger_grabber_hover")
+LedgerScrollBar/styles/scroll = SubResource("sb_ledger_scroll")
+LedgerScrollBar/styles/scroll_focus = SubResource("sb_ledger_scroll")
+LedgerTitleLabel/base_type = &"Label"
+LedgerTitleLabel/colors/font_color = Color(0.3, 0.165, 0.063, 1)
+LedgerTitleLabel/font_sizes/font_size = 36
+LedgerWarnLabel/base_type = &"Label"
+LedgerWarnLabel/colors/font_color = Color(0.549, 0.184, 0.169, 1)
+LedgerWarnLabel/font_sizes/font_size = 22
 Panel/styles/panel = SubResource("sb_window")
 PanelContainer/styles/panel = SubResource("sb_window")
 ProgressBar/colors/font_color = Color(0.91, 0.863, 0.753, 1)
@@ -663,6 +842,13 @@ RichTextLabel/styles/focus = SubResource("sb_empty")
 RichTextLabel/styles/normal = SubResource("sb_empty")
 SectionPanel/base_type = &"PanelContainer"
 SectionPanel/styles/panel = SubResource("sb_section")
+SlotButton/base_type = &"Button"
+SlotButton/styles/disabled = SubResource("sb_slot")
+SlotButton/styles/focus = SubResource("sb_btn_focus")
+SlotButton/styles/hover = SubResource("sb_slot_hover")
+SlotButton/styles/hover_pressed = SubResource("sb_slot_pressed")
+SlotButton/styles/normal = SubResource("sb_slot")
+SlotButton/styles/pressed = SubResource("sb_slot_pressed")
 SlotPanel/base_type = &"PanelContainer"
 SlotPanel/styles/panel = SubResource("sb_slot")
 SubheaderLabel/base_type = &"Label"

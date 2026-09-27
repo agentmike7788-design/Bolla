@@ -1,7 +1,7 @@
 extends Node
 ## QA director (started by src/ui/tools/ui_screenshots.gd): renders every UI screen over the
-## frozen art prototype (HUD day/night, reward card, all panels, dialogue, debug console,
-## icon sheet, title screen) with test doubles. A Node so it may use the autoloads.
+## frozen art prototype (HUD day/night, reward card, all panels incl. the hut's chest and
+## grave register, dialogue, debug console, icon sheet, title screen) with test doubles. A Node so it may use the autoloads.
 
 const BACKDROP := "res://src/world/art_prototype/art_prototype.tscn"
 const UI_SCENE := "res://src/ui/ui_root.tscn"
@@ -107,6 +107,8 @@ func _run() -> void:
 	await _shot("15_icons", _icons)
 	await _shot("17_slice_summary_after_reward", _slice_after_reward)
 	await _shot("18_hud_slice_complete", _hud_complete)
+	await _shot("20_chest", _chest)
+	await _shot("21_grave_register", _grave_register)
 	_backdrop.queue_free()
 	_ui.queue_free()
 	await get_tree().process_frame
@@ -351,6 +353,38 @@ func _hud_complete() -> void:
 	_set_time(7, 600)
 	GameState.set_flag(&"slice_complete", true)
 	_ui.hud.refresh_all()
+
+
+## Hut chest: storage with a few stacks next to the filled bag.
+func _chest() -> void:
+	_atmosphere(1)
+	_set_time(2, 1230)
+	EventBus.cemetery_quality_changed.emit(24, &"orderly")
+	var storage := Inventory.new()
+	storage.name = "ChestStorage"
+	for entry: Array in [[&"wood", 24], [&"stone", 12], [&"linen", 3], [&"gravestone_simple", 1], [&"shroud", 2]]:
+		storage.add_item(entry[0], entry[1])
+	_ui.add_child(storage)
+	_extra = storage
+	_ui.open_panel(&"chest", {"storage": storage, "inventory": _inv, "chest": storage})
+
+
+## Grave register at the desk: four burials.
+func _grave_register() -> void:
+	_atmosphere(1)
+	_set_time(4, 1250)
+	EventBus.cemetery_quality_changed.emit(24, &"orderly")
+	var entries: Array[Dictionary] = [
+		{"name": "Hedwig Rabenstein", "age": 67, "cause_label": "Ertrunken im Mühlteich", "day_buried": 1,
+				"grave_id": "plot_03", "quality": 9, "marker_label": "Grabstein"},
+		{"name": "Egbert Kornblum", "age": 54, "cause_label": "Fieber", "day_buried": 2,
+				"grave_id": "plot_01", "quality": 6, "marker_label": "Holzkreuz"},
+		{"name": "Margarete Eschenbach", "age": 31, "cause_label": "Vom Pferd getreten", "day_buried": 3,
+				"grave_id": "plot_05", "quality": 7, "marker_label": "Holzkreuz"},
+		{"name": "Anselm Grauwert", "age": 78, "cause_label": "Altersschwäche", "day_buried": 3,
+				"grave_id": "plot_02", "quality": 2, "marker_label": ""},
+	]
+	_ui.open_panel(&"grave_register", {"entries": entries, "total": 24, "rating": &"orderly"})
 
 
 func _title_warning() -> void:
