@@ -49,17 +49,39 @@ Regel: Ein Feature = ein Ordner, z. B. `src/entities/corpse/corpse.tscn`, `corps
 6. **Saveable-Vertrag** (ab Phase 2): Jedes speicherbare Objekt ist in Gruppe `saveable` und implementiert `save_state() -> Dictionary` / `load_state(data: Dictionary)`. SaveManager sammelt diese → JSON in `user://saves/` mit Versionsnummer für Migrationen.
 7. **Debug abschaltbar** – Debug-Code prüft `GameConfig.debug_enabled`; in Release-Exports automatisch aus (`OS.is_debug_build()`).
 
-## 4. Aktueller Stand (Phase 0)
+## 4. Aktueller Stand (Phase 1 – Art-Direction-Prototyp)
 
-| Datei | Zweck |
+| Datei / Ordner | Zweck |
 |---|---|
-| `src/core/event_bus.gd` | Globaler Signal-Hub (Autoload `EventBus`) |
-| `src/core/game_config.gd` | Version, Debug-Flag (Autoload `GameConfig`) |
-| `src/boot/main.tscn/.gd` | Startszene, beweist sauberen Start |
-| `tests/run_tests.gd` | Smoke-Tests (Main-Szene, Input-Map, Autoloads) |
+| `src/core/event_bus.gd`, `game_config.gd` | Autoloads (Signale, Version, Debug-Flag) |
+| `src/core/import/asset_post_import.gd` | Import-Script für jede `.glb`: Blender-Materialname → `res://assets/materials/<name>.tres` (als Importer-Default in `project.godot`) |
+| `src/boot/main.tscn/.gd` | Startszene → wechselt zu `start_scene` (Phase 1: Art-Prototyp) |
+| `assets/shaders/painted.gdshader` | Stil-Shader „Gemaltes Diorama" (Vertex-Paint + Pinselrauschen + weiches Licht + Randlicht, optional Wind/Laubränder) |
+| `assets/shaders/grass.gdshader` | Gras-MultiMesh mit Wind, Boden-Normale |
+| `assets/materials/` | Geteilte Materialien: `mat_painted`, `mat_foliage`, `mat_ground`, `mat_grass`, `mat_emissive_warm` |
+| `src/world/atmosphere/` | `AtmospherePreset` (Resource), `AtmosphereController`, `flicker_light.gd` |
+| `data/atmosphere/day.tres`, `night.tres` | Licht-/Nebel-Stimmungen (alle Werte hier, nicht im Code) |
+| `src/world/camera/camera_rig.gd` | Feste 2.5D-Kamera, Perspektive ↔ orthografisch mit gleichem Bildausschnitt |
+| `src/entities/player/player_proto.*` | Prototyp-Figur (nur Laufen, für Kamera-/Maßstabsprüfung) |
+| `data/art_prototype/layout.json` | **Einzige Quelle** für das Prototyp-Layout (von Blender *und* Godot gelesen) |
+| `src/world/art_prototype/art_prototype_builder.gd` | Erzeugt `art_prototype.tscn` + `grass_multimesh.res` aus dem Layout |
+| `src/debug/screenshot_capture.gd` | Automatische Screenshot-Serie inkl. Render-Statistik |
+| `src/debug/asset_preview.gd` | QA: rendert jedes Modell einzeln |
+| `tools/blender/*.py` | Prozedurale Asset-Generatoren (`build_all.py`) |
+| `tools/godot_run.sh` | Godot mit echtem Renderer in virtuellem Display (Builder, Screenshots) |
 
-Input-Map: `move_up/down/left/right` (WASD + Pfeile), `interact` (E), `debug_toggle` (F1).
+Input-Map: `move_*` (WASD + Pfeile), `interact` (E), `debug_toggle` (F1), `camera_zoom_in/out` (Mausrad, +/−), `proto_toggle_camera` (C), `proto_toggle_time` (N).
 Physik-Layer: 1 world, 2 player, 3 npc, 4 interactable, 5 corpse.
+
+### Asset-Pipeline (Befehle)
+
+```
+python tools/blender/build_all.py                       # alle Assets (bpy / Blender 5.x)
+godot --headless --path . --import                      # Import (Materialzuordnung automatisch)
+tools/godot_run.sh -s res://src/world/art_prototype/art_prototype_builder.gd   # Szene neu erzeugen
+tools/godot_run.sh -- --capture=/abs/pfad [--shots=01,05]                       # Screenshots
+```
+Hinweis: Der Szenen-Builder braucht einen echten Renderer (nicht `--headless`), weil MultiMesh-Daten sonst verworfen werden.
 
 ## 5. Tests
 

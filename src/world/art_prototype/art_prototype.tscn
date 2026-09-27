@@ -1,0 +1,328 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/world/art_prototype/art_prototype.gd" id="1_ehdq2"]
+[ext_resource type="Script" path="res://src/world/atmosphere/atmosphere_controller.gd" id="2_vfptc"]
+[ext_resource type="Script" path="res://src/world/atmosphere/atmosphere_preset.gd" id="3_q2ral"]
+[ext_resource type="Resource" path="res://data/atmosphere/day.tres" id="4_joytu"]
+[ext_resource type="Resource" path="res://data/atmosphere/night.tres" id="5_q3a1s"]
+[ext_resource type="PackedScene" path="res://assets/models/environment/ph_env_ground.glb" id="6_ycwc7"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_grave_mound_fresh.glb" id="7_pcn2q"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_gravestone_cross.glb" id="8_qqbal"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_grave_mound_grassy.glb" id="9_gm6yw"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_gravestone_round.glb" id="10_fssib"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_gravestone_obelisk.glb" id="11_3og87"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_grave_mound_sunken.glb" id="12_pganb"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_gravestone_slab_old.glb" id="13_e2qpn"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_fence_iron.glb" id="14_2sf0c"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_gate_post.glb" id="15_bk1ef"]
+[ext_resource type="PackedScene" path="res://assets/models/buildings/ph_bld_gravekeeper_hut.glb" id="16_iyc1e"]
+[ext_resource type="Script" path="res://src/world/atmosphere/flicker_light.gd" id="17_p8mft"]
+[ext_resource type="PackedScene" path="res://assets/models/environment/ph_env_tree_old_oak.glb" id="18_dsvt6"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_lantern_post.glb" id="19_1durf"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_shovel.glb" id="20_ayjuv"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_candle_cluster.glb" id="21_conu5"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_crate.glb" id="22_40tw7"]
+[ext_resource type="MultiMesh" path="res://src/world/art_prototype/grass_multimesh.res" id="23_05pps"]
+[ext_resource type="PackedScene" path="res://src/entities/player/player_proto.tscn" id="24_26i6t"]
+[ext_resource type="Script" path="res://src/entities/player/player_proto.gd" id="25_ifftr"]
+[ext_resource type="Script" path="res://src/world/camera/camera_rig.gd" id="26_jprl4"]
+
+[sub_resource type="Environment" id="Environment_n2qj7"]
+background_mode = 1
+ambient_light_source = 2
+tonemap_mode = 4
+ssao_enabled = true
+ssao_radius = 1.2
+ssao_intensity = 1.8
+glow_enabled = true
+glow_bloom = 0.04
+fog_enabled = true
+fog_sky_affect = 0.5
+fog_height = 0.4
+fog_height_density = 0.12
+volumetric_fog_enabled = true
+volumetric_fog_anisotropy = 0.3
+volumetric_fog_length = 48.0
+volumetric_fog_ambient_inject = 0.35
+adjustment_enabled = true
+
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_ittod"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_f3vx7"]
+font_size = 20
+outline_size = 6
+outline_color = Color(0, 0, 0, 0.8)
+
+[node name="ArtPrototype" type="Node3D" unique_id=2006523089]
+script = ExtResource("1_ehdq2")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=465067450]
+environment = SubResource("Environment_n2qj7")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=430901265]
+light_angular_distance = 1.2
+shadow_enabled = true
+shadow_blur = 1.6
+directional_shadow_mode = 1
+directional_shadow_max_distance = 55.0
+
+[node name="Atmosphere" type="Node" parent="." unique_id=116138460 node_paths=PackedStringArray("world_environment", "sun")]
+script = ExtResource("2_vfptc")
+presets = Array[ExtResource("3_q2ral")]([ExtResource("4_joytu"), ExtResource("5_q3a1s")])
+world_environment = NodePath("../WorldEnvironment")
+sun = NodePath("../Sun")
+
+[node name="Ground" type="Node3D" parent="." unique_id=489276814 instance=ExtResource("6_ycwc7")]
+
+[node name="GroundCollision" type="StaticBody3D" parent="." unique_id=612632821]
+
+[node name="Shape" type="CollisionShape3D" parent="GroundCollision" unique_id=436022424]
+shape = SubResource("WorldBoundaryShape3D_ittod")
+
+[node name="Graves" type="Node3D" parent="." unique_id=1629389108]
+
+[node name="Grave_01" type="Node3D" parent="Graves" unique_id=1786298225]
+transform = Transform3D(0.99939084, 0, 0.034899496, 0, 1, 0, -0.034899496, 0, 0.99939084, 2.6, -0.006001426, -3.6)
+
+[node name="Mound" type="Node3D" parent="Graves/Grave_01" unique_id=384709788 instance=ExtResource("7_pcn2q")]
+
+[node name="Stone" type="Node3D" parent="Graves/Grave_01" unique_id=14790795 instance=ExtResource("8_qqbal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.12)
+
+[node name="Grave_02" type="Node3D" parent="Graves" unique_id=691197595]
+transform = Transform3D(0.9975641, 0, -0.06975647, 0, 1, 0, 0.06975647, 0, 0.9975641, 4.4, -0.0071108323, -3.8)
+
+[node name="Mound" type="Node3D" parent="Graves/Grave_02" unique_id=1327341357 instance=ExtResource("9_gm6yw")]
+
+[node name="Stone" type="Node3D" parent="Graves/Grave_02" unique_id=1071039244 instance=ExtResource("10_fssib")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.12)
+
+[node name="Grave_03" type="Node3D" parent="Graves" unique_id=1020020639]
+transform = Transform3D(0.9945219, 0, 0.104528464, 0, 1, 0, -0.104528464, 0, 0.9945219, 6.3, -0.023288531, -3.4)
+
+[node name="Mound" type="Node3D" parent="Graves/Grave_03" unique_id=221730400 instance=ExtResource("9_gm6yw")]
+
+[node name="Stone" type="Node3D" parent="Graves/Grave_03" unique_id=1771625088 instance=ExtResource("11_3og87")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.12)
+
+[node name="Grave_04" type="Node3D" parent="Graves" unique_id=1491519332]
+transform = Transform3D(0.9986295, 0, -0.05233596, 0, 1, 0, 0.05233596, 0, 0.9986295, 2.9, -0.012365931, 1)
+
+[node name="Mound" type="Node3D" parent="Graves/Grave_04" unique_id=1282930628 instance=ExtResource("12_pganb")]
+
+[node name="Stone" type="Node3D" parent="Graves/Grave_04" unique_id=1385756787 instance=ExtResource("13_e2qpn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.12)
+
+[node name="Grave_05" type="Node3D" parent="Graves" unique_id=1234654329]
+transform = Transform3D(0.9986295, 0, 0.05233596, 0, 1, 0, -0.05233596, 0, 0.9986295, 4.8, -0.009524812, 0.8)
+
+[node name="Mound" type="Node3D" parent="Graves/Grave_05" unique_id=1240145022 instance=ExtResource("9_gm6yw")]
+
+[node name="Stone" type="Node3D" parent="Graves/Grave_05" unique_id=1244398673 instance=ExtResource("10_fssib")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.12)
+
+[node name="Grave_06" type="Node3D" parent="Graves" unique_id=768867818]
+transform = Transform3D(0.99026805, 0, -0.1391731, 0, 1, 0, 0.1391731, 0, 0.99026805, 6.7, -0.013626498, 1.3)
+
+[node name="Mound" type="Node3D" parent="Graves/Grave_06" unique_id=1404444872 instance=ExtResource("12_pganb")]
+
+[node name="Stone" type="Node3D" parent="Graves/Grave_06" unique_id=1816477539 instance=ExtResource("8_qqbal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.12)
+
+[node name="Grave_07" type="Node3D" parent="Graves" unique_id=1233326750]
+transform = Transform3D(0.9848077, 0, 0.17364818, 0, 1, 0, -0.17364818, 0, 0.9848077, -3.4, -0.000581682, 4.4)
+
+[node name="Mound" type="Node3D" parent="Graves/Grave_07" unique_id=140715948 instance=ExtResource("9_gm6yw")]
+
+[node name="Stone" type="Node3D" parent="Graves/Grave_07" unique_id=1925220624 instance=ExtResource("13_e2qpn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.12)
+
+[node name="Grave_08" type="Node3D" parent="Graves" unique_id=516911534]
+transform = Transform3D(0.9702957, 0, 0.2419219, 0, 1, 0, -0.2419219, 0, 0.9702957, -5.2, 0.020364871, 5.6)
+
+[node name="Mound" type="Node3D" parent="Graves/Grave_08" unique_id=638154135 instance=ExtResource("7_pcn2q")]
+
+[node name="Stone" type="Node3D" parent="Graves/Grave_08" unique_id=676478320 instance=ExtResource("10_fssib")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.12)
+
+[node name="Fence" type="Node3D" parent="." unique_id=671265635]
+
+[node name="prop_fence_iron" type="Node3D" parent="Fence" unique_id=495314470 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.5, 0.030146677, 9.6)
+
+[node name="@Node3D@2" type="Node3D" parent="Fence" unique_id=453036524 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 0.009475061, 9.6)
+
+[node name="@Node3D@3" type="Node3D" parent="Fence" unique_id=1843238073 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0.015990552, 9.6)
+
+[node name="@Node3D@4" type="Node3D" parent="Fence" unique_id=519194561 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 0.031320255, 9.6)
+
+[node name="@Node3D@5" type="Node3D" parent="Fence" unique_id=1465464047 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, -0.005054563, 9.6)
+
+[node name="@Node3D@6" type="Node3D" parent="Fence" unique_id=1257404020 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(0.5500002, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.00046512857, 9.6)
+
+[node name="@Node3D@7" type="Node3D" parent="Fence" unique_id=1748999127 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, -0.011918269, 9.6)
+
+[node name="@Node3D@8" type="Node3D" parent="Fence" unique_id=1519633075 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.6, -0.032383684, 9.6)
+
+[node name="@Node3D@9" type="Node3D" parent="Fence" unique_id=2087436144 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.6, -0.042847577, 9.6)
+
+[node name="@Node3D@10" type="Node3D" parent="Fence" unique_id=687954957 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.6, -0.030684065, 9.6)
+
+[node name="@Node3D@11" type="Node3D" parent="Fence" unique_id=14971181 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(0.4499998, 0, 0, 0, 1, 0, 0, 0, 1, 10.6, -0.01659421, 9.6)
+
+[node name="@Node3D@12" type="Node3D" parent="Fence" unique_id=1371607230 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 11.5, -0.020412687, 9.6)
+
+[node name="@Node3D@13" type="Node3D" parent="Fence" unique_id=1508454182 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 11.5, 0.009057917, 7.6000004)
+
+[node name="@Node3D@14" type="Node3D" parent="Fence" unique_id=1719446816 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 11.5, 0.014410682, 5.6000004)
+
+[node name="@Node3D@15" type="Node3D" parent="Fence" unique_id=186282868 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 11.5, -0.0081471335, 3.6000004)
+
+[node name="@Node3D@16" type="Node3D" parent="Fence" unique_id=1778674135 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 11.5, -0.0046390006, 1.6000004)
+
+[node name="@Node3D@17" type="Node3D" parent="Fence" unique_id=297261209 instance=ExtResource("14_2sf0c")]
+transform = Transform3D(-1.3113425e-08, 0, 1, 0, 1, 0, -0.3000002, 0, -4.371139e-08, 11.5, -0.017584918, -0.39999962)
+
+[node name="prop_gate_post" type="Node3D" parent="Fence" unique_id=2131282871 instance=ExtResource("15_bk1ef")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.024475494, 9.6)
+
+[node name="@Node3D@18" type="Node3D" parent="Fence" unique_id=749138694 instance=ExtResource("15_bk1ef")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, -0.011918269, 9.6)
+
+[node name="Hut" type="Node3D" parent="." unique_id=666629476 instance=ExtResource("16_iyc1e")]
+transform = Transform3D(0.95105654, 0, 0.309017, 0, 1, 0, -0.309017, 0, 0.95105654, -5.6, 0.012389825, -7.2)
+
+[node name="Light_lantern" type="OmniLight3D" parent="Hut" unique_id=1123885147 groups=["warm_lights"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.12, 1.9617306, 1.94)
+light_color = Color(1, 0.68235296, 0.33333334, 1)
+light_energy = 2.6
+shadow_enabled = true
+shadow_blur = 1.5
+omni_range = 8.0
+omni_attenuation = 1.4
+script = ExtResource("17_p8mft")
+metadata/base_energy = 2.6
+
+[node name="Light_window" type="OmniLight3D" parent="Hut" unique_id=1898881357 groups=["warm_lights"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.85, 1.7617306, 1.16)
+light_color = Color(1, 0.6117647, 0.27058825, 1)
+shadow_blur = 1.5
+omni_range = 4.0
+omni_attenuation = 1.4
+metadata/base_energy = 1.0
+
+[node name="Tree" type="Node3D" parent="." unique_id=103466602 instance=ExtResource("18_dsvt6")]
+transform = Transform3D(0.76604444, 0, 0.6427876, 0, 1, 0, -0.6427876, 0, 0.76604444, -7.6, 0.008954813, 3.2)
+
+[node name="BackgroundTrees" type="Node3D" parent="." unique_id=1094093426]
+
+[node name="env_tree_old_oak" type="Node3D" parent="BackgroundTrees" unique_id=1316745058 instance=ExtResource("18_dsvt6")]
+transform = Transform3D(-0.57500005, 0, 0.9959292, 0, 1.15, 0, -0.9959292, 0, -0.57500005, -12.5, -0.011567402, -9.5)
+
+[node name="@Node3D@19" type="Node3D" parent="BackgroundTrees" unique_id=1208863771 instance=ExtResource("18_dsvt6")]
+transform = Transform3D(-0.44462606, 0, -1.2216004, 0, 1.3, 0, 1.2216004, 0, -0.44462606, 11.5, 0.0038841811, -11)
+
+[node name="@Node3D@20" type="Node3D" parent="BackgroundTrees" unique_id=781669174 instance=ExtResource("18_dsvt6")]
+transform = Transform3D(0.9848077, 0, 0.17364818, 0, 1, 0, -0.17364818, 0, 0.9848077, 13.5, 0.025181966, 3.5)
+
+[node name="@Node3D@21" type="Node3D" parent="BackgroundTrees" unique_id=360230675 instance=ExtResource("18_dsvt6")]
+transform = Transform3D(0.5999999, 0, -1.0392306, 0, 1.2, 0, 1.0392306, 0, 0.5999999, -13, -0.0038772966, 9)
+
+[node name="@Node3D@22" type="Node3D" parent="BackgroundTrees" unique_id=835448767 instance=ExtResource("18_dsvt6")]
+transform = Transform3D(0.47882822, 0, 1.3155696, 0, 1.4, 0, -1.3155696, 0, 0.47882822, 3, 0.0029706326, -14.5)
+
+[node name="LanternPost" type="Node3D" parent="." unique_id=88799572 instance=ExtResource("19_1durf")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 0.0116158575, 5.2)
+
+[node name="Light_lantern" type="OmniLight3D" parent="LanternPost" unique_id=2084549200 groups=["warm_lights"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.52, 1.5541145, 0)
+light_color = Color(1, 0.68235296, 0.33333334, 1)
+light_energy = 2.6
+shadow_enabled = true
+shadow_blur = 1.5
+omni_range = 8.0
+omni_attenuation = 1.4
+script = ExtResource("17_p8mft")
+metadata/base_energy = 2.6
+
+[node name="Props" type="Node3D" parent="." unique_id=1787725370]
+
+[node name="prop_shovel" type="Node3D" parent="Props" unique_id=321889148 instance=ExtResource("20_ayjuv")]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -3.3, -0.006150297, -5.4)
+
+[node name="prop_candle_cluster" type="Node3D" parent="Props" unique_id=719833367 instance=ExtResource("21_conu5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, -0.0027850738, -2.3)
+
+[node name="Light_candle" type="OmniLight3D" parent="Props/prop_candle_cluster" unique_id=823860248 groups=["warm_lights"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -0.03)
+light_color = Color(1, 0.627451, 0.2509804, 1)
+light_energy = 0.8
+shadow_blur = 1.5
+omni_range = 2.6
+omni_attenuation = 1.4
+script = ExtResource("17_p8mft")
+metadata/base_energy = 0.8
+
+[node name="@Node3D@23" type="Node3D" parent="Props" unique_id=1539986616 instance=ExtResource("21_conu5")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -5.6, -0.0005324146, 4.6)
+
+[node name="Light_candle" type="OmniLight3D" parent="Props/@Node3D@23" unique_id=565439343 groups=["warm_lights"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -0.03)
+light_color = Color(1, 0.627451, 0.2509804, 1)
+light_energy = 0.8
+shadow_blur = 1.5
+omni_range = 2.6
+omni_attenuation = 1.4
+script = ExtResource("17_p8mft")
+metadata/base_energy = 0.8
+
+[node name="prop_crate" type="Node3D" parent="Props" unique_id=951396835 instance=ExtResource("22_40tw7")]
+transform = Transform3D(0.9781476, 0, 0.2079117, 0, 1, 0, -0.2079117, 0, 0.9781476, -7.8, 0.015692804, -5.3)
+
+[node name="Grass" type="MultiMeshInstance3D" parent="." unique_id=1100547371]
+cast_shadow = 0
+multimesh = ExtResource("23_05pps")
+
+[node name="Player" type="CharacterBody3D" parent="." unique_id=89826163 instance=ExtResource("24_26i6t")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 0.1, 6)
+collision_layer = 2
+script = ExtResource("25_ifftr")
+
+[node name="CameraRig" type="Node3D" parent="." unique_id=1801828065 node_paths=PackedStringArray("target")]
+script = ExtResource("26_jprl4")
+target = NodePath("../Player")
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig" unique_id=372156189]
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1471415845]
+
+[node name="Title" type="Label" parent="HUD" unique_id=1856604376]
+offset_left = 24.0
+offset_top = 18.0
+offset_right = 24.0
+offset_bottom = 18.0
+text = "ART-DIRECTION-PROTOTYP  ·  Phase 1  ·  Platzhalter-Assets"
+label_settings = SubResource("LabelSettings_f3vx7")
+
+[node name="Hint" type="Label" parent="HUD" unique_id=1230383660]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -48.0
+label_settings = SubResource("LabelSettings_f3vx7")

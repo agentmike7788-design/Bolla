@@ -1,0 +1,31 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/entities/player/player_proto.gd" id="1_b3pb6"]
+[ext_resource type="PackedScene" path="res://assets/models/characters/ph_chr_gravekeeper.glb" id="2_0sb47"]
+[ext_resource type="Script" path="res://src/world/atmosphere/flicker_light.gd" id="3_ovwv7"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_xi4uq"]
+radius = 0.3
+height = 1.7
+
+[node name="Player" type="CharacterBody3D" unique_id=89826163]
+collision_layer = 2
+script = ExtResource("1_b3pb6")
+
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=618708931]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+shape = SubResource("CapsuleShape3D_xi4uq")
+
+[node name="Model" type="Node3D" parent="." unique_id=1901536853]
+
+[node name="Gravekeeper" type="Node3D" parent="Model" unique_id=798192883 instance=ExtResource("2_0sb47")]
+
+[node name="Light_lantern" type="OmniLight3D" parent="Model/Gravekeeper" unique_id=1032170257 groups=["warm_lights"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.31, 0.727772, 0.097)
+light_color = Color(1, 0.72156864, 0.4, 1)
+light_energy = 0.9
+shadow_blur = 1.5
+omni_range = 3.5
+omni_attenuation = 1.4
+script = ExtResource("3_ovwv7")
+metadata/base_energy = 0.9

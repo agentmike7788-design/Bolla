@@ -2,7 +2,7 @@
 
 2.5D Fantasy Graveyard Management / Adventure / RPG – Godot 4.7 + Blender.
 
-**Status:** Phase 0 (Projektsetup) – wartet auf Freigabe. Siehe [`docs/QUALITY_GATE_STATUS.md`](docs/QUALITY_GATE_STATUS.md).
+**Status:** Phase 1 (Art Direction) – in Vorbereitung. Siehe [`docs/QUALITY_GATE_STATUS.md`](docs/QUALITY_GATE_STATUS.md).
 
 ## Öffnen
 1. Godot **4.7.2** installieren (godotengine.org).

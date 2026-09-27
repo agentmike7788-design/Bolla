@@ -4,8 +4,8 @@ Regel: **BAUE → TESTE → ZEIGE → WARTE AUF FREIGABE.** Keine Phase startet 
 
 | Phase | Inhalt | Status |
 |---|---|---|
-| 0 | Projektsetup | ✅ gebaut & getestet – **wartet auf Freigabe** |
-| 1 | Art-Direction-Prototyp | ⏸ geplant (siehe ART_DIRECTION.md §8) |
+| 0 | Projektsetup | ✅ freigegeben (27.09.2026) |
+| 1 | Art-Direction-Prototyp | ▶ in Vorbereitung (siehe ART_DIRECTION.md §8) |
 | 2 | Vertical Slice | ⏸ geplant (unten) |
 | 3 | Friedhof vollständig ausbauen | – |
 | 4 | Leichensystem erweitern | – |

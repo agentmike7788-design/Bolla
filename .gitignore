@@ -13,3 +13,6 @@ export_credentials.cfg
 Thumbs.db
 .vscode/
 *.tmp
+# Python
+__pycache__/
+*.pyc

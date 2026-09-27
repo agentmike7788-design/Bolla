@@ -1,6 +1,6 @@
 # Art Direction Document
 
-Status: **ENTWURF – Stil NICHT festgelegt. ART STYLE LOCK = INACTIVE**
+Status: **Richtung A gewählt (27.09.2026) – Prototyp in Prüfung. ART STYLE LOCK = INACTIVE**
 Verantwortlich: Agent 04 (Art Director) · Finale Entscheidung: Benutzer
 
 ## 1. Ziel
@@ -10,7 +10,9 @@ Eine eigene, sofort wiedererkennbare Optik für einen melancholisch-gemütlichen
 
 Arbeitsmotto der Identität: **„Moos & Kerzenwachs"** – kalte, feuchte Welt (Moos, Nebel, Stein) gegen warmes, menschliches Licht (Laternen, Kerzen, Fenster).
 
-## 2. Vorschlag Stil-Richtungen (Benutzer wählt)
+## 2. Stil-Richtungen
+
+**Benutzerentscheidung 27.09.2026: A – „Gemaltes Diorama".** B und C sind verworfen.
 
 | | A – „Gemaltes Diorama" (Empfehlung) | B – „Holzschnitt / Scherenschnitt" | C – „Clean Low-Poly" |
 |---|---|---|---|
@@ -20,7 +22,7 @@ Arbeitsmotto der Identität: **„Moos & Kerzenwachs"** – kalte, feuchte Welt 
 | Wirkung | Märchenbuch, gemütlich-düster | Folklore, grafisch, ungewöhnlich | Freundlich, gut lesbar, günstig in Produktion |
 | Produktionsaufwand | mittel | mittel–hoch (Shader) | niedrig |
 
-## 3. Farbpalette (Vorschlag für Richtung A)
+## 3. Farbpalette (Richtung A)
 
 | Rolle | Farbe | Hex |
 |---|---|---|
@@ -39,7 +41,8 @@ Regel: Übernatürliches ist die **einzige** Quelle gesättigter kalter Farbe �
 
 - 3D-Welt, **Perspektivkamera mit kleinem FOV (~30°)**, ca. 50° Neigung, fester Blickwinkel (keine Rotation im Vertical Slice).
   → wirkt wie 2.5D-Diorama, behält aber Tiefe & Parallaxe.
-- Alternative: **orthografisch** (flacher, „brettspielartiger"). Wird im Prototyp per Schalter vergleichbar gemacht.
+- Alternative: **orthografisch** (flacher, „brettspielartiger").
+- **Benutzerentscheidung 27.09.2026:** beide im Prototyp vergleichen (Taste C). Finale Wahl nach Screenshot-Review.
 - Kamera folgt dem Spieler weich (Lerp), leichter Zoom-Bereich.
 
 ## 5. Charakter-Proportionen (Vorschlag)
@@ -90,3 +93,14 @@ Regel: Übernatürliches ist die **einzige** Quelle gesättigter kalter Farbe �
 6. STOPP – Benutzerprüfung. Bei Kritik: Änderungsschleife. Bei Freigabe: ART STYLE LOCK = ACTIVE.
 
 **Hinweis:** Alle Assets in Phase 1 sind Prototypen (`ph_`-Präfix), bis der Benutzer sie ausdrücklich akzeptiert.
+
+## 9. Technische Umsetzung des Stils (Prototyp)
+
+| Baustein | Umsetzung |
+|---|---|
+| „Gemalte" Farbe | Vertex-Paint aus Blender-Scripts (Grundfarbe + Rauschen + Fake-AO + Oberlicht) statt vieler Texturen |
+| Pinselstruktur | Welt-Raum-Rauschen im Shader `assets/shaders/painted.gdshader` (triplanar) |
+| Licht | weicher, „gewickelter" Terminator + dezenter Randlicht-Saum (lesbare Silhouetten nachts) |
+| Gras | MultiMesh-Büschel mit Wind, nutzen Boden-Normale → verschmelzen mit dem Boden |
+| Atmosphäre | AgX-Tonemapping, SSAO, Glow, Höhen- + Volumennebel; Tag/Nacht als Presets in `data/atmosphere/` |
+| Warme Lichter | an Blender-Markern (`light_*`) automatisch gesetzt, Werte in `data/art_prototype/layout.json` |
