@@ -1,0 +1,726 @@
+{
+	"data": {
+		"args": [
+			"s:autoloads",
+			{
+				"args": [
+					"s:TimeManager",
+					{
+						"args": [
+							"s:day",
+							"i:2",
+							"s:minute_of_day",
+							"i:1155"
+						],
+						"type": "Dictionary"
+					},
+					"s:GameState",
+					{
+						"args": [
+							"s:flags",
+							{
+								"args": [],
+								"type": "Dictionary"
+							},
+							"s:stats",
+							{
+								"args": [
+									"sn:burials",
+									"i:1",
+									"sn:valuables_taken",
+									"i:0",
+									"sn:reputation",
+									"i:0",
+									"sn:missed_deliveries",
+									"i:0",
+									"sn:days_played",
+									"i:0"
+								],
+								"type": "Dictionary"
+							}
+						],
+						"type": "Dictionary"
+					}
+				],
+				"type": "Dictionary"
+			},
+			"s:nodes",
+			{
+				"args": [
+					"s:corpse_manager",
+					{
+						"args": [
+							"s:corpses",
+							[
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0001",
+										"s:seed",
+										"i:7936",
+										"s:display_name",
+										"s:Cordula Brenneisen",
+										"s:age",
+										"i:31",
+										"s:cause_id",
+										"sn:fever",
+										"s:traits",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										true,
+										"s:shrouded",
+										true,
+										"s:valuables_coins",
+										"i:0",
+										"s:valuables_decision",
+										"sn:",
+										"s:freshness",
+										"f:0.9",
+										"s:freshness_at_burial",
+										"f:0.9",
+										"s:last_decay_total",
+										"i:580",
+										"s:location",
+										"sn:buried",
+										"s:position",
+										{
+											"args": [
+												-1.600000023841858,
+												0.8455460667610168,
+												-5.400000095367432
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.31415927410126",
+										"s:grave_id",
+										"s:plot_01",
+										"s:arrival_total_minutes",
+										"i:460",
+										"s:buried_day",
+										"i:1"
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0002",
+										"s:seed",
+										"i:15855",
+										"s:display_name",
+										"s:Frieda Mühlhauser",
+										"s:age",
+										"i:65",
+										"s:cause_id",
+										"sn:old_age",
+										"s:traits",
+										{
+											"args": [
+												"sn:valuables"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										false,
+										"s:shrouded",
+										false,
+										"s:valuables_coins",
+										"i:8",
+										"s:valuables_decision",
+										"sn:",
+										"s:freshness",
+										"f:0.565625",
+										"s:freshness_at_burial",
+										"f:-1.0",
+										"s:last_decay_total",
+										"i:2595",
+										"s:location",
+										"sn:dropoff",
+										"s:position",
+										{
+											"args": [
+												4.400000095367432,
+												0.5057660937309265,
+												8.300000190734863
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.0",
+										"s:grave_id",
+										"s:",
+										"s:arrival_total_minutes",
+										"i:1900",
+										"s:buried_day",
+										"i:0"
+									],
+									"type": "Dictionary"
+								}
+							],
+							"s:next_serial",
+							"i:3",
+							"s:last_delivery_day",
+							"i:2",
+							"s:last_delivery_id",
+							"s:corpse_0002",
+							"s:spawn_counts",
+							{
+								"args": [
+									"i:1",
+									"i:1",
+									"i:2",
+									"i:1"
+								],
+								"type": "Dictionary"
+							}
+						],
+						"type": "Dictionary"
+					},
+					"s:graveyard",
+					{
+						"args": [
+							"s:graves",
+							[
+								{
+									"args": [
+										"s:id",
+										"s:plot_01",
+										"s:state",
+										"i:3",
+										"s:corpse_id",
+										"s:corpse_0001",
+										"s:marker_id",
+										"sn:wooden_cross",
+										"s:quality",
+										"i:7",
+										"s:breakdown",
+										[
+											{
+												"args": [
+													"s:label",
+													"s:Bestattet",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Leichentuch",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Holzkreuz",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Frisch",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Untersucht",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											}
+										]
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:plot_02",
+										"s:state",
+										"i:0",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[]
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:plot_03",
+										"s:state",
+										"i:0",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[]
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:plot_04",
+										"s:state",
+										"i:0",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[]
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:plot_05",
+										"s:state",
+										"i:0",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[]
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:plot_06",
+										"s:state",
+										"i:0",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[]
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:old_01",
+										"s:state",
+										"i:4",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[]
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:old_02",
+										"s:state",
+										"i:4",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[]
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:old_03",
+										"s:state",
+										"i:4",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[]
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:old_04",
+										"s:state",
+										"i:4",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[]
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:old_05",
+										"s:state",
+										"i:4",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[]
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:old_06",
+										"s:state",
+										"i:4",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[]
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:old_07",
+										"s:state",
+										"i:4",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[]
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:old_08",
+										"s:state",
+										"i:4",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[]
+									],
+									"type": "Dictionary"
+								}
+							]
+						],
+						"type": "Dictionary"
+					},
+					"s:npc_carter",
+					{
+						"args": [],
+						"type": "Dictionary"
+					},
+					"s:res_stone",
+					{
+						"args": [
+							"s:remaining",
+							"i:4",
+							"s:last_reset_day",
+							"i:2"
+						],
+						"type": "Dictionary"
+					},
+					"s:res_wood",
+					{
+						"args": [
+							"s:remaining",
+							"i:6",
+							"s:last_reset_day",
+							"i:2"
+						],
+						"type": "Dictionary"
+					},
+					"s:hut_chest",
+					{
+						"args": [
+							"s:storage",
+							{
+								"args": [
+									"s:slots",
+									[
+										{
+											"args": [
+												"s:id",
+												"sn:wood",
+												"s:amount",
+												"i:7"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [
+												"s:id",
+												"sn:stone",
+												"s:amount",
+												"i:3"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [
+												"s:id",
+												"sn:linen",
+												"s:amount",
+												"i:2"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"s:currency",
+									{
+										"args": [],
+										"type": "Dictionary"
+									}
+								],
+								"type": "Dictionary"
+							}
+						],
+						"type": "Dictionary"
+					},
+					"s:player",
+					{
+						"args": [
+							"s:position",
+							{
+								"args": [
+									-0.8999999761581421,
+									0.0,
+									-199.0
+								],
+								"type": "Vector3"
+							},
+							"s:rot_y",
+							"f:-3.14159250259399",
+							"s:in_interior",
+							true,
+							"s:inventory",
+							{
+								"args": [
+									"s:slots",
+									[
+										{
+											"args": [
+												"s:id",
+												"sn:linen",
+												"s:amount",
+												"i:1"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [
+												"s:id",
+												"sn:wood",
+												"s:amount",
+												"i:2"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"s:currency",
+									{
+										"args": [
+											"sn:coin",
+											"i:11"
+										],
+										"type": "Dictionary"
+									}
+								],
+								"type": "Dictionary"
+							}
+						],
+						"type": "Dictionary"
+					}
+				],
+				"type": "Dictionary"
+			}
+		],
+		"type": "Dictionary"
+	},
+	"format_version": 1,
+	"meta": {
+		"day": 2,
+		"game_version": "0.2.0-phase2",
+		"minute_of_day": 1155,
+		"saved_unix": 1790536619,
+		"scene": "res://src/world/graveyard/graveyard.tscn"
+	}
+}
