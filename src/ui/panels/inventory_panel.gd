@@ -60,7 +60,9 @@ func _on_closed() -> void:
 
 func _refresh() -> void:
 	UIKit.clear_children(_grid)
-	var slots: Array[Dictionary] = _inventory.get_slots() if is_instance_valid(_inventory) else []
+	var slots: Array[Dictionary] = []
+	if is_instance_valid(_inventory):
+		slots = _inventory.get_slots()
 	var total := maxi(slots.size(), _inventory.slot_count if is_instance_valid(_inventory) else DEFAULT_SLOTS)
 	for i: int in total:
 		_grid.add_child(_make_slot(slots[i] if i < slots.size() else {}))
