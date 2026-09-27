@@ -2,7 +2,8 @@ class_name CorpseManager
 extends Node
 ## Owns all CorpseRecords and their nodes (WorldRoot/Systems/CorpseManager).
 ## Groups corpse_manager + saveable. Delivers the daily corpse (docs §2.5) on time_tick /
-## time_skipped and applies decay on hour_changed / time_skipped from total-minute deltas.
+## time_skipped – a corpse delivered inside a skip arrived at the delivery minute – and applies
+## decay on hour_changed / time_skipped as a function of the minutes since arrival.
 ## _ready only wires signals and data – corpses appear via delivery, spawn_corpse or load_state.
 
 const GROUP := &"corpse_manager"
@@ -23,6 +24,11 @@ const STAT_REPUTATION := &"reputation"
 const PLACE_LOCATIONS: Array[StringName] = [CorpseRecord.LOCATION_DROPOFF, CorpseRecord.LOCATION_TABLE, CorpseRecord.LOCATION_GROUND]
 const MINUTES_PER_HOUR := 60
 const MINUTES_PER_DAY := 1440
+## Freshness at arrival (CorpseGenerator sets it); decay is measured from arrival_total_minutes.
+const START_FRESHNESS := 1.0
+## Freshness is kept on a grid of 1 / FRESHNESS_RESOLUTION: exact threshold times land exactly
+## on the threshold, and the 14-digit floats of JSON.from_native save it bit-exactly.
+const FRESHNESS_RESOLUTION := 1000000.0
 
 const REASON_OCCUPIED := "Die Bahre ist noch belegt."
 const REASON_NO_PLOT := "Es gibt keine freie Grabstelle."
@@ -38,7 +44,7 @@ const NOTE_SKIPPED := "Heute keine Leiche: %s"
 
 ## Generation tables; null = Database.corpse_tables() (resolved in _ready or on first use).
 var tables: CorpseTables
-## Reputation cost of taken valuables; null = Database.config(&"economy_config").
+## Reputation cost of taken valuables and the freshness stages; null = EconomyConfig.resolve().
 var economy: EconomyConfig
 
 ## id -> record, in spawn order.
@@ -86,6 +92,15 @@ func get_corpse_node(id: String) -> Corpse:
 ## never after slice_complete. Repeated calls for the same day return that day's corpse.
 ## Returns null when skipped.
 func try_daily_delivery(day: int) -> CorpseRecord:
+	return _deliver(day, TimeManager.total_minutes())
+
+
+## try_daily_delivery checked at world time `now_total` (the time of the triggering signal).
+## The corpse arrived at the day's delivery minute – also when the check runs later, inside a
+## skip (rest, timed action) – but never after now, and has decayed since then.
+## Without any EMPTY/DUG plot the cemetery is full for good (graves are never emptied again):
+## the carter brings nothing more, which is no missed delivery.
+func _deliver(day: int, now_total: int) -> CorpseRecord:
 	if day <= _last_delivery_day:
 		return get_record(_last_delivery_id) if day == _last_delivery_day else null
 	_last_delivery_day = day
@@ -95,6 +110,8 @@ func try_daily_delivery(day: int) -> CorpseRecord:
 	var t := _tables()
 	if t == null:
 		push_warning("[CorpseManager] delivery on day %d without corpse tables" % day)
+		return null
+	if _cemetery_full():
 		return null
 	var dropoff := _first_in_group(DROPOFF_GROUP)
 	var reason := ""
@@ -110,7 +127,8 @@ func try_daily_delivery(day: int) -> CorpseRecord:
 		return null
 	var at: Transform3D = dropoff.call("slot_transform") if dropoff.has_method("slot_transform") else Transform3D.IDENTITY
 	var record := CorpseGenerator.generate(CorpseGenerator.seed_for(day, _take_spawn_index(day)), t, day)
-	record = spawn_corpse(record, at, CorpseRecord.LOCATION_DROPOFF)
+	var arrival := mini(now_total, (day - 1) * MINUTES_PER_DAY + t.delivery_minute)
+	record = _spawn(record, at, CorpseRecord.LOCATION_DROPOFF, arrival, now_total)
 	if record != null:
 		_last_delivery_id = record.id
 	return record
@@ -119,6 +137,12 @@ func try_daily_delivery(day: int) -> CorpseRecord:
 ## Adds a corpse at `at` (world transform). record null = generated for TimeManager.day
 ## with the next spawn index (debug). An empty record.id gets the next serial id.
 func spawn_corpse(record: CorpseRecord = null, at: Transform3D = Transform3D.IDENTITY, location: StringName = &"dropoff") -> CorpseRecord:
+	var now := TimeManager.total_minutes()
+	return _spawn(record, at, location, now, now)
+
+
+## spawn_corpse with the arrival at `arrival_total`, decayed up to `now_total`.
+func _spawn(record: CorpseRecord, at: Transform3D, location: StringName, arrival_total: int, now_total: int) -> CorpseRecord:
 	if not location in PLACE_LOCATIONS:
 		push_warning("[CorpseManager] cannot spawn a corpse at location '%s'" % location)
 		return null
@@ -134,9 +158,9 @@ func spawn_corpse(record: CorpseRecord = null, at: Transform3D = Transform3D.IDE
 	elif _records.has(record.id):
 		push_warning("[CorpseManager] corpse '%s' exists already" % record.id)
 		return null
-	var now := TimeManager.total_minutes()
-	record.arrival_total_minutes = now
-	record.last_decay_total = now
+	record.arrival_total_minutes = arrival_total
+	record.last_decay_total = arrival_total
+	_decay_record(record, now_total)
 	record.location = location
 	record.grave_id = ""
 	_store_transform(record, at)
@@ -331,42 +355,49 @@ func post_load() -> void:
 # --- time ---
 
 func _on_time_tick(day: int, minute_of_day: int) -> void:
-	_check_delivery(day, minute_of_day)
+	_check_delivery((day - 1) * MINUTES_PER_DAY + minute_of_day)
 
 
 func _on_time_skipped(_from_total: int, to_total: int) -> void:
 	_apply_decay(to_total)
-	_check_delivery(_div(to_total, MINUTES_PER_DAY) + 1, to_total % MINUTES_PER_DAY)
+	_check_delivery(to_total)
 
 
 func _on_hour_changed(day: int, hour: int) -> void:
 	_apply_decay((day - 1) * MINUTES_PER_DAY + hour * MINUTES_PER_HOUR)
 
 
-func _check_delivery(day: int, minute_of_day: int) -> void:
+func _check_delivery(now_total: int) -> void:
+	var day := _div(now_total, MINUTES_PER_DAY) + 1
 	if not is_inside_tree() or day <= _last_delivery_day:
 		return
 	var t := _tables()
-	if t != null and minute_of_day >= t.delivery_minute:
-		try_daily_delivery(day)
+	if t != null and now_total % MINUTES_PER_DAY >= t.delivery_minute:
+		_deliver(day, now_total)
 
 
-## Decays every unburied corpse up to `now_total`; corpse_updated only on a stage change.
+## Decays every unburied corpse up to `now_total`; corpse_updated only on a stage change
+## (stages from the same EconomyConfig as the grave quality).
 func _apply_decay(now_total: int) -> void:
+	var cfg := _economy()
 	for record: CorpseRecord in _records.values():
 		if record.location == CorpseRecord.LOCATION_BURIED:
 			continue
-		var stage := record.freshness_stage()
-		if _decay_record(record, now_total) and record.freshness_stage() != stage:
+		var stage := CorpseRecord.stage_for(record.freshness, cfg)
+		if _decay_record(record, now_total) and CorpseRecord.stage_for(record.freshness, cfg) != stage:
 			EventBus.corpse_updated.emit(record.id)
 
 
-## freshness -= base_decay_per_hour * decay_mult * hours since last_decay_total (min 0).
+## Docs §2.5: freshness = START_FRESHNESS - base_decay_per_hour * decay_mult * hours since
+## arrival (min 0), in one expression from the total-minute difference – no float error adds
+## up over the hourly steps – snapped to the FRESHNESS_RESOLUTION grid. Nothing before
+## last_decay_total (burial stops decay: buried corpses are not decayed any more).
 func _decay_record(record: CorpseRecord, now_total: int) -> bool:
-	var minutes := now_total - record.last_decay_total
-	if minutes <= 0:
+	if now_total <= record.last_decay_total:
 		return false
-	record.freshness = maxf(0.0, record.freshness - _decay_per_hour(record) * minutes / float(MINUTES_PER_HOUR))
+	var minutes := maxi(0, now_total - record.arrival_total_minutes)
+	var value := maxf(0.0, START_FRESHNESS - _decay_per_hour(record) * minutes / float(MINUTES_PER_HOUR))
+	record.freshness = roundf(value * FRESHNESS_RESOLUTION) / FRESHNESS_RESOLUTION
 	record.last_decay_total = now_total
 	return true
 
@@ -392,6 +423,12 @@ func _free_plot_count() -> int:
 	if graveyard == null or not graveyard.has_method("free_plot_count"):
 		return 0
 	return int(graveyard.call("free_plot_count"))
+
+
+## A graveyard exists and has no EMPTY/DUG plot left – and never gets one back.
+func _cemetery_full() -> bool:
+	var graveyard := _first_in_group(GRAVEYARD_GROUP)
+	return graveyard != null and graveyard.has_method("free_plot_count") and int(graveyard.call("free_plot_count")) <= 0
 
 
 func _take_spawn_index(day: int) -> int:
@@ -512,9 +549,7 @@ func _tables() -> CorpseTables:
 
 func _economy() -> EconomyConfig:
 	if economy == null:
-		economy = Database.config(&"economy_config") as EconomyConfig
-		if economy == null:
-			economy = EconomyConfig.new()
+		economy = EconomyConfig.resolve()
 	return economy
 
 

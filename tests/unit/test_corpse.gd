@@ -179,9 +179,37 @@ func test_real_tables_content() -> void:
 	assert_almost(float(real.get_trait(&"valuables").chance), 0.35)
 	assert_eq(real.forced_traits_by_day.get(1), PackedStringArray())
 	assert_eq(real.forced_traits_by_day.get(2), PackedStringArray(["valuables"]))
+	assert_eq(real.forced_traits_by_day.get(3), PackedStringArray(["strange_wound"]))
+	assert_eq(real.forced_traits_by_day.get(4), PackedStringArray(["valuables", "letter"]))
+	assert_eq(real.forced_traits_by_day.get(5), PackedStringArray(["valuables", "tattoo"]))
+	assert_false(real.forced_traits_by_day.has(6), "day 6+ is random (v3)")
 	assert_almost(real.base_decay_per_hour, 0.05)
 	assert_eq(real.delivery_minute, 460)
 	assert_eq([real.valuables_coins_min, real.valuables_coins_max], [5, 8])
+
+
+## GP-01 (§2.5 v3): the six slice deliveries of the real tables offer the valuables choice
+## three times (days 2, 4, 5) and show every narrative trait, the strange wound on day 3.
+func test_real_tables_slice_corpses_days_1_to_6() -> void:
+	var real := load(REAL_TABLES) as CorpseTables
+	var by_day: Dictionary = {}
+	var seen: Dictionary = {}
+	for day: int in range(1, 7):
+		var r := CorpseGenerator.generate(CorpseGenerator.seed_for(day, 0), real, day)
+		by_day[day] = r.traits
+		for t: StringName in r.traits:
+			seen[t] = int(seen.get(t, 0)) + 1
+		if r.has_trait(&"valuables"):
+			assert_true(r.valuables_coins >= real.valuables_coins_min and r.valuables_coins <= real.valuables_coins_max,
+					"day %d coins %d" % [day, r.valuables_coins])
+	assert_eq(by_day[1], [], "day 1 tutorial")
+	assert_eq(by_day[2], [&"valuables"])
+	assert_eq(by_day[3], [&"strange_wound"], "mystery hint")
+	assert_eq(by_day[4], [&"valuables", &"letter"])
+	assert_eq(by_day[5], [&"valuables", &"tattoo"])
+	assert_eq(int(seen.get(&"valuables", 0)), 3, "three thefts possible -> reputation -3 reachable: %s" % str(by_day))
+	for t: StringName in [&"letter", &"tattoo", &"strange_wound"]:
+		assert_true(int(seen.get(t, 0)) >= 1, "%s appears in days 1-6" % t)
 
 
 func test_database_serves_real_tables() -> void:
@@ -208,6 +236,21 @@ func test_freshness_stage_thresholds() -> void:
 	for c: Array in cases:
 		r.freshness = c[0]
 		assert_eq(r.freshness_stage(), c[1], "freshness %s" % str(c[0]))
+
+
+## ARCH-06: one threshold rule for a given config; freshness_stage() uses the game config.
+func test_stage_for_uses_the_given_config() -> void:
+	var custom := EconomyConfig.new()
+	custom.fresh_good_threshold = 0.9
+	custom.fresh_bad_threshold = 0.5
+	var cases := [[0.9, &"fresh"], [0.89, &"wilted"], [0.5, &"wilted"], [0.49, &"decaying"]]
+	for c: Array in cases:
+		assert_eq(CorpseRecord.stage_for(c[0], custom), c[1], "freshness %s" % str(c[0]))
+	var r := CorpseRecord.new()
+	r.freshness = 0.7
+	assert_eq(r.freshness_stage(), CorpseRecord.stage_for(0.7, EconomyConfig.resolve()))
+	assert_eq(EconomyConfig.resolve(custom), custom, "an injected config wins")
+	assert_eq(EconomyConfig.resolve(), Database.config(&"economy_config"), "else the data file")
 
 
 func test_needs_valuables_decision() -> void:
