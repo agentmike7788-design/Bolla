@@ -47,9 +47,9 @@ Ein Abschnitt wird **automatisch freigegeben**, sobald alle seine Hindernisse ge
 | 2 | Osric erzählt von der Ostwiese („Die Gemeinde hätte nichts dagegen …"), verkauft **Eisenbeschläge** und **Blumensamen**. Rezept Rechen. Erstes Jäten. | „Unkraut jäten (2 Stellen)" |
 | 3–4 | Erste Zier (Beet, Holzbank). Durchgang zur Ostwiese roden. Ruf steigt auf „Geachtet". | „Ostwiese freilegen: 3/10" |
 | 5–6 | Alter Hof voll (6 Gräber). Ostwiese fertig → `plot_07…09`. | „Neue Grabstellen auf der Ostwiese" |
-| 7–8 | Qualität ≥ 50 → Birkenhang bearbeitbar. Ruf „Geschätzt" → **zwei Leichen pro Morgen** (zweite Bahre). | „Birkenhang: erst die Dornenhecke" |
-| 9–11 | Birkenhang frei, letzte Gräber, Grabzeichen aufwerten, Nachtbesuche bei unruhigen Geistern. | „Friedhof: Ehrwürdig ab 100" |
-| ~11–12 | Alle 12 Grabstellen vollendet → **Phasenziel** | – |
+| 7–8 | Qualität ≥ 50 → Birkenhang bearbeitbar. Ruf „Geschätzt" → bessere Bezahlung und Pflegegeld (weiterhin **eine Leiche pro Tag**, Benutzerentscheidung). | „Birkenhang: erst die Dornenhecke" |
+| 9–13 | Birkenhang frei, letzte Gräber, Grabzeichen aufwerten, Nachtbesuche bei unruhigen Geistern. | „Friedhof: Ehrwürdig ab 100" |
+| ~14 | Alle 12 Grabstellen vollendet → **Phasenziel** | – |
 
 **Phasenende:** Sind alle 12 (nicht alten) Grabstellen `MARKED` und kein Abschnitt gesperrt: Flag `cemetery_complete`, Signal `cemetery_completed`, Abschluss-Panel (Variante „Der Friedhof ist vollendet": Tage, Bestattungen, Qualität + Stufe, Zier, Pflege, Ruf + Stufe, zufriedene Geister). Das Spiel läuft danach frei weiter (Pflege, Zier, Geister); Lieferungen enden still, weil kein Grab mehr frei ist (bestehende Regel §2.5 b). **Gate-Ziel:** Stufe „Ehrwürdig" (≥ 100) erreichbar, „Würdevoll" auch bei nachlässiger Pflege.
 
@@ -152,21 +152,20 @@ Eigener Wert **0…100** in `GameState.stats.reputation` (Dialog-Bedingungen `st
 | Verrufen | `disreputable` | 0 | −2 | 0 | nur an ungeraden Tagen, 1 |
 | Unauffällig | `unremarkable` | 15 | ±0 | 1 | 1/Tag |
 | Geachtet | `respected` | 35 | +1 | 2 | 1/Tag |
-| Geschätzt | `esteemed` | 55 | +2 | 3 | **2/Tag** |
-| Gerühmt | `renowned` | 80 | +3 | 4 | 2/Tag |
+| Geschätzt | `esteemed` | 55 | +2 | 3 | 1/Tag |
+| Gerühmt | `renowned` | 80 | +3 | 4 | 1/Tag |
 
 - **Täglicher Drift** (bei `day_started`, genau einmal je Tag, Merker-Flag `rep_last_day`): `ziel = clamp(20 + round(0.6 × Friedhofsqualität), 0, 100)`; `Ruf += clamp(round((ziel − Ruf) × 0.34), −6, +6)`. Der Ruf folgt also der Qualität **mit Verzögerung** (2–4 Tage).
 - **Ereignisse** (vom auslösenden System direkt über `Reputation.change`, nicht über Signal-Listener): Grab vollendet mit Qualität ≥ 8: +2 · ≤ 3: −3 · Wertsachen genommen: −8 (`EconomyConfig.valuables_reputation`, bisher −1) · verpasste Lieferung (Bahren belegt): −4 · Grabzeichen aufgewertet: +1 · Abschnitt freigelegt: +4.
 - **Pflegegeld** wird bei `day_started` nach dem Drift in das Spielerinventar gezahlt (`payment_received(n, "Pflegegeld der Gemeinde")`) und in der Tageszusammenfassung gezeigt.
 - **Bezahlung** = `base_payment(Todesursache)` + `floor(Qualität × 0,5)` + Ruf-Bonus, nie < 0.
-*Nachrechnung Ruf (Richtwert):* T1 26 · T2 29 · T3 33 · T4 38 (Geachtet) · T5 44 · T6 50 · T7 56 (Geschätzt → ab T8 zwei Leichen) · T10 ≈ 68 · Ende ≈ 75–82.
+*Nachrechnung Ruf (Richtwert):* T1 26 · T2 29 · T3 33 · T4 38 (Geachtet) · T5 44 · T6 50 · T7 56 (Geschätzt) · T10 ≈ 68 · Ende ≈ 75–82.
 *Nachrechnung Münzen (12 Bestattungen):* Einnahmen ≈ 12 × 9 + Pflegegeld ≈ 25 + Geistergaben ≤ 24 ≈ 150; Ausgaben Leichentücher 12 × 6 = 72, Freilegen 18, Zier nach Wahl 20–40 → Münzen sind endlich gebunden (mildert GP-03), ohne Zwang.
 
 ### 2.7 Lieferungen (Änderung zu Phase-2 §2.5)
-- Anzahl je Tag = `ReputationRules.deliveries_on(day, tier)`; jede Leiche braucht eine **freie Bahre** (`dropoff`, neu `dropoff_2`) **und** `freie Grabstellen > nicht bestattete Leichen`. Die zweite Leiche hat `spawn_index_of_day = 1` (Seed-Formel unverändert), gleiche Ankunftszeit 07:40.
+- Anzahl je Tag = `ReputationRules.deliveries_on(day, tier)`; höchstens **1 Leiche pro Tag** in jeder Stufe (Benutzerentscheidung 27.09.2026; bei Verrufen nur an ungeraden Tagen). Sie braucht die **freie Bahre** (`dropoff`) **und** `freie Grabstellen > nicht bestattete Leichen`. Keine zweite Bahre.
 - Fehlt nur eine Bahre: Versäumnis (einmal je Tag: `missed_deliveries += Anzahl`, Ruf −4, Flag `delivery_skipped`). Fehlt Platz (b): still, wie bisher. Verrufen an geraden Tagen: still, Osric-Dialog erklärt es.
 - **`slice_complete` beendet keine Lieferungen mehr** (CorpseManager, Npc, ObjectiveResolver prüfen es nicht mehr). Gesperrte Grabstellen (`LOCKED`) zählen nie als frei.
-- Osrics Karren zeigt die erste Leiche des Tages (zweite: Polishing, nicht Pflicht).
 
 ### 2.8 Geister (`data/config/ghost_config.tres` – `GhostConfig`, `data/ghosts/ghost_lines.tres` – `GhostLines`)
 - **Wer:** je `MARKED`-Grab ein Geist, sobald die Nacht **nach** der Vollendung beginnt (`completed_day < heute` oder vollendet vor 21:00 desselben Tages). Migrierte Gräber (`completed_day = 0`) sofort.
@@ -371,7 +370,7 @@ func enter() -> bool                               # nur draußen, Hände frei, 
 func exit() -> void; func toggle() -> void
 func available() -> Array[StringName]              # DECOR-Items im Inventar (Reihenfolge = Bauleiste)
 func select(decor_id: StringName) -> void; func rotate() -> void
-func cursor_cell() -> Vector2i                     # Zelle bei Spielerposition + Blickrichtung × cursor_distance
+func cursor_cell() -> Vector2i                     # Zelle unter dem Mauszeiger (Raycast Kamera → Bodenebene y=0, Layer Boden), geklemmt auf max. cursor_reach (8 m) um den Spieler; ohne Mausbewegung seit Eintritt / außerhalb Reichweite: Zelle vor der Figur (Fallback, Tastatur)
 func cursor_reason() -> StringName                 # can_place am Cursor
 func focused_placement() -> DecorPlacement         # Deko unter dem Cursor (Abbauen)
 func confirm_place() -> bool; func confirm_remove() -> bool   # TimedAction 5 Min, nicht abbrechbar durch Drehen
@@ -488,11 +487,13 @@ Neue Ordner → Schlüssel: `data/sections` (`id`), `data/clearables` (`id`), `d
 | Aktion | Taste | Wirkung |
 |---|---|---|
 | `build_mode` | B | Baumodus an/aus |
-| `build_rotate` | R | Vorschau drehen (90°) |
+| `build_rotate` | R / Mausrad | Vorschau drehen (90°) |
+| `build_place` | Linke Maustaste (oder E) | Aufstellen an der Mauszelle |
+| `build_remove_mouse` | Rechte Maustaste (oder X) | Deko unter dem Mauszeiger abbauen |
 | `build_remove` | X | Deko unter dem Cursor abbauen |
 | `hotbar_1…8` | 1–8 | Deko in der Bauleiste wählen (Dialog nutzt weiter `dialogue_choice_1..4` – nie gleichzeitig aktiv) |
 | `cemetery_overview` | U | Friedhofsübersicht (Panel) |
-Im Baumodus: [E] = aufstellen, Esc = Baumodus verlassen (vor dem Pause-Menü).
+Im Baumodus: **Maus wählt die Zelle** (Benutzerentscheidung), Linksklick/[E] = aufstellen, Rechtsklick/[X] = abbauen, Esc = Baumodus verlassen (vor dem Pause-Menü).
 Shader-Globals: `grass_clear_mask` (`sampler2D`, Standard 1×1 schwarz `assets/shaders/grass_clear_default.png`), `grass_clear_rect` (`vec4` Ursprung.xz, Größe.xz; Standard `(0,0,0,0)` = aus → Art-Prototyp unverändert). Texel 0,25 m über die Bau-Maske; 1 = Gras ausblenden (Hindernis steht / Deko steht). `grass.gdshader` skaliert Büschel mit Maskenwert 1 auf 0 (weicher Rand 1 Texel).
 
 ---
@@ -509,14 +510,14 @@ Die Ostwiese braucht ~10 m östlich des Zauns, der Birkenhang ~8 m nördlich; di
 | `east` | 11,5…21,5 · −12,0…9,6 | `plot_07` (13,8, −7,0) · `plot_08` (16,2, −7,0) · `plot_09` (18,6, −7,0) | Süd [[11,5, 9,6], [21,5, 9,6]] intakt · Ost x = 21,5 mit Lücken `obs_e_gap_1` (21,5, −4,0), `obs_e_gap_2` (21,5, 4,0) · Nord z = −12 mit `obs_e_gap_3` (17,0, −12,0) |
 | `north` | −2,0…11,5 · −20,0…−12,0 | `plot_10` (2,6, −16,2) · `plot_11` (5,0, −16,2) · `plot_12` (7,4, −16,2) | Nord z = −20 mit Lücken (1,0 / 8,0), West x = −2 mit Lücke (−2,0, −16,0), Ost x = 11,5 intakt; Zugang von Süden: **Dornenhecke** `obs_n_hedge` (4,5, −12,4), 4 m breit, zwischen alten Zaunstücken z = −12 (x −2…2,5 und 6,5…11,5) |
 - Hindernis-Ids: `obs_e_01…07` (Gestrüpp/Steine, genaue Lage W-Welt, dürfen über späteren Grabstellen liegen), `obs_e_gap_1…3`, `obs_n_hedge`, `obs_n_01…07`, `obs_n_gap_1…3`.
-- Zweite Bahre `dropoff_2` bei (6,9, 8,3), rot_y 0. Friedhofstafel `notice_board` bei (−1,4, 8,8) (Label3D mit der Stufe).
+- Friedhofstafel `notice_board` bei (−1,4, 8,8) (Label3D mit der Stufe).
 - Hintergrundbäume in den neuen Abschnitten werden versetzt: (11,5, −11) → (23,5, −13,5) · (13,5, 3,5) → (24,5, 2,0) · (17,5, −5,5) → (25,5, −6,0) · (3,0, −18) → (3,5, −23,5) · (12,5, −18,5) → (14,5, −16,0). Neu: 6 Birken (`ph_env_birch`), 2 innerhalb des Birkenhangs, 4 dahinter.
 - `walkable_bounds`: min [−11,2, −20,3], max [21,2, 25,2] + **neu** `extra_walls` (gleiche Höhe/Dicke): [[−11,2, −12,5], [−2,0, −12,5]] (hinter der Hütte) und [[11,2, 9,9], [11,2, 25,2]] (Wald östlich des Kutschwegs bleibt gesperrt).
 - `camera_bounds`: min [−7,0, −16,0], max [17,0, 23,0] (Zoom unverändert 12–24).
 
 ### 4.2 Layout-Schema-Erweiterungen (`data/world/graveyard_layout.json`)
 `sections: [{id, rect: [x0, z0, x1, z1]}]` · `plots[].section` · `clearables: [{id, kind, section, pos, rot_y, footprint: [x, z, w, d]}]` · `dirt_spots: [{id, pos, section, kind, start}]` (Grabstellen erzeugt der Builder selbst: `dirt_<plot_id>` am Hügel) · `fence.ruins: [{pos, rot_y, obstacle}]` · `fence.passages` · `build: {cell: 0.5, route_width: 1.5, grave_ring: 0.5, station_margin: 0.6}` · `birches` · `extra_walls` · `atmosphere` (Stützstellen §2.8).
-Neue Szenenknoten: `Entities/<obs_…>` (ClearableObstacle), `Entities/<dirt_…>` (DirtSpot), `Entities/dropoff_2`, `Entities/notice_board`, `Decor/Placed` (Container DecorationManager), `Decor/Ghosts` (Container GhostManager), `Systems/*` (§3.1).
+Neue Szenenknoten: `Entities/<obs_…>` (ClearableObstacle), `Entities/<dirt_…>` (DirtSpot), `Entities/notice_board`, `Decor/Placed` (Container DecorationManager), `Decor/Ghosts` (Container GhostManager), `Systems/*` (§3.1).
 
 ### 4.3 Bau-Maske (gebacken, `src/world/graveyard/build_mask.res`)
 Raster 0,5 m über x −11,5…21,5, z −20…9,6 (66 × 60 Zellen). Pro Zelle: Abschnitts-Index (1/2/3) oder 0 = **gesperrt** für: Grabplatz-Footprints (`GravePlot.footprint`, alte Gräber), Gebäude + 0,6 m, Stationen (+ `station_margin`), Bäume, Zaun, feste Kollisionen, Bahren, Wegweiser. `GRAVE_RING` = 0,5 m-Ring um Grabplätze. `ROUTE` = Erdweg (Breite 1,5 m), Kutscher-Route, Zugang 1,0 m vor jeder Station, Streifen vor dem Grab-Fußende, Durchgänge. Hindernisse sind **nicht** gebacken (Laufzeit-Sperre über `ClearableObstacle.world_rect()`, solange nicht geräumt). Gras wird auch unter Hindernissen gebacken und über `grass_clear_mask` ausgeblendet → nach dem Roden erscheint Gras (sichtbarer Erfolg).
@@ -651,7 +652,7 @@ Regeln wie Phase 2 §9 (Framework, Fixtures statt fremder Moduldaten, Fehler-Log
 | p3_14 | Friedhofsübersicht (U) |
 | p3_15 | Werkbank mit Zier- und Werkzeug-Rezepten |
 | p3_16 | Belohnungskarte mit Ruf-Zeile + Tageszusammenfassung mit Pflegegeld |
-| p3_17 | Morgens: zwei Leichen auf zwei Bahren, Osric |
+| p3_17 | Morgens: Osric liefert bei Ruf „Geschätzt" (Tageszusammenfassung mit Ruf-Bonus) |
 | p3_18 | Friedhofstafel am Tor + Abschluss-Panel „Der Friedhof ist vollendet" |
 Plus Asset-Tafeln `docs/reviews/phase3_assets/` (`asset_preview.gd --filter=…`) und Performance-Tabelle je Motiv.
 
@@ -665,10 +666,10 @@ Plus Asset-Tafeln `docs/reviews/phase3_assets/` (`asset_preview.gd --filter=…`
 Abhängigkeiten: W1-Agents nutzen nur Stubs/Datenklassen anderer Module; P2 und P4 lesen `CleanlinessManager`/`DecorationManager` nur über die Gruppen-API. P5 liefert zuerst `ph_chr_ghost`, `ph_env_weeds_*`, `ph_deco_*` (Blocker für W2-Screenshots).
 
 ## 13. Nicht in Phase 3
-Jahreszeiten und Wetter (Laub fällt ganzjährig unter Bäumen) · Gräber wiederverwenden, exhumieren, Grabstellen verlegen · freies Platzieren ohne Raster, Mausplatzierung, Kamera drehen · Gebäude bauen (Phase 6) · Gras mähen/nachwachsen außer über die Maske · Geister-Quests, Geister-Dialogbäume, Geister als Gegner oder Helfer, Nekromantie (Phasen 13–15) · neue NPCs, Dorf, Kirche · Zaun-/Tor-Upgrades, verschließbares Tor · Kräuter- oder Blumenanbau als Wirtschaftssystem · zweites Karren-Modell / zwei Leichen auf dem Karren (Polishing) · Musik und Sound (Agent 17 inaktiv) · Controller, Lokalisierung · Änderungen an den freigegebenen Presets `day/night/dawn/dusk` und am Hütten-Innenraum.
+Jahreszeiten und Wetter (Laub fällt ganzjährig unter Bäumen) · Gräber wiederverwenden, exhumieren, Grabstellen verlegen · freies Platzieren ohne Raster, Kamera drehen · Gebäude bauen (Phase 6) · Gras mähen/nachwachsen außer über die Maske · Geister-Quests, Geister-Dialogbäume, Geister als Gegner oder Helfer, Nekromantie (Phasen 13–15) · neue NPCs, Dorf, Kirche · Zaun-/Tor-Upgrades, verschließbares Tor · Kräuter- oder Blumenanbau als Wirtschaftssystem · mehr als eine Leiche pro Tag · Musik und Sound (Agent 17 inaktiv) · Controller, Lokalisierung · Änderungen an den freigegebenen Presets `day/night/dawn/dusk` und am Hütten-Innenraum.
 
-## 14. Offene Fragen an den Benutzer (max. 4)
-1. **Geistergabe:** Einmalig 2 Münzen je zufriedenem Geist – passt das, oder sollen Geister **nur** Hinweise geben (keine Belohnung)?
-2. **Zwei Leichen pro Morgen ab Ruf „Geschätzt"** (zweite Bahre am Tor) – gewünscht, oder bei einer Leiche pro Tag bleiben (Phase 3 dauert dann ~14 statt ~11 Spieltage)?
-3. **Bauen per Tastatur:** Die Vorschau steht auf der Rasterzelle vor der Figur (wie [E]-Interaktion). Reicht das, oder soll die Maus die Zelle wählen können?
-4. **Namen:** neue Friedhofsstufe „Ehrwürdig" (ab 100) und Ruf-Stufen „Verrufen · Unauffällig · Geachtet · Geschätzt · Gerühmt"; neues Spiel startet „Unauffällig" (bisher „Geachtet", Phase-2-Stände behalten „Geachtet"). Einverstanden?
+## 14. Benutzerentscheidungen (27.09.2026, bindend)
+1. **Geistergabe:** Ja – einmalig 2 Münzen je zufriedenem Geist (max. 24).
+2. **Lieferungen:** Bleibt bei **einer Leiche pro Tag** in allen Ruf-Stufen (keine zweite Bahre); Phasenziel ≈ Tag 14.
+3. **Bauen:** **Mausplatzierung** – der Mauszeiger wählt die Rasterzelle (Vorschau folgt), Linksklick stellt auf, Rechtsklick baut ab, R/Mausrad dreht; Tastatur-Fallback (Zelle vor der Figur, [E]/[X]) bleibt.
+4. **Namen:** bestätigt – Ruf „Verrufen · Unauffällig · Geachtet · Geschätzt · Gerühmt", Friedhofsstufe „Ehrwürdig" ab 100, neues Spiel startet „Unauffällig".
