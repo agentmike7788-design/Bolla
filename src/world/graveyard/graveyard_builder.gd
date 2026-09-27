@@ -279,7 +279,9 @@ func _build_world() -> Node:
 	sun.shadow_enabled = true
 	sun.shadow_blur = 1.6
 	sun.light_angular_distance = 1.2
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	# One cascade: the fixed 45° camera sees nothing nearer than ~10 m (zoom_min), so the first
+	# of the prototype's two splits (0.5–6 m) stayed empty and wasted half the atlas (PERF-03).
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	sun.directional_shadow_max_distance = 55.0
 	_add(scene_root, sun)
 	_add(scene_root, _build_atmosphere(env_node, sun))

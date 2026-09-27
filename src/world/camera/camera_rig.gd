@@ -31,6 +31,10 @@ func _ready() -> void:
 	_focus = _clamped(target.global_position if target else global_position)
 	_apply_projection()
 	_update_transform()
+	# A load (and a new game) places the player after this _ready: jump there instead of
+	# sweeping across the map from the scene's start position (SL-2).
+	EventBus.game_loaded.connect(_on_world_placed.unbind(1))
+	EventBus.new_game_started.connect(_on_world_placed)
 
 
 func _process(delta: float) -> void:
@@ -62,6 +66,11 @@ func snap() -> void:
 	if target:
 		_focus = _clamped(target.global_position)
 	_update_transform()
+
+
+func _on_world_placed() -> void:
+	if is_inside_tree() and is_instance_valid(target) and target.is_inside_tree():
+		snap()
 
 
 ## The focus point for `p` (bounds applied when enabled).

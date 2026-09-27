@@ -215,6 +215,42 @@ func test_plot_dig_moves_the_player_out_of_the_pit() -> void:
 	assert_false(plot.footprint.grow(plot.eject_margin * 0.99).has_point(Vector2(local.x, local.z)), "player outside the pit")
 
 
+## C4: plots stand 2.4 m apart along X – the +X exit would put the player into the finished
+## neighbour's mound, so they leave the pit to the nearest free side (+Z here).
+func test_plot_dig_exit_avoids_the_neighbouring_grave() -> void:
+	var mound := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(1.12, 0.38, 2.0)
+	shape.shape = box
+	mound.add_child(shape)
+	world.add_child(mound)
+	mound.global_position = plot.global_position + Vector3(2.4, 0.19, -0.01)
+	await tree.physics_frame
+	await tree.physics_frame
+	player.global_position = plot.global_position + Vector3(1.0, 0, 0.2)
+	plot.interact(player)
+	assert_eq(graveyard.get_grave("plot_01").state, DUG)
+	var local := plot.to_local(player.global_position)
+	var area := plot.footprint.grow(plot.eject_margin)
+	assert_almost(local.x, 1.0, 0.001, "moved straight to the +Z side")
+	assert_almost(local.z, area.end.y, 0.001, str(local))
+	for i: int in 10:
+		await tree.physics_frame
+	var settled := plot.to_local(player.global_position)
+	assert_almost(settled.x, local.x, 0.02, "not pushed sideways by the neighbour")
+	assert_almost(settled.z, local.z, 0.02, "not pushed sideways by the neighbour")
+	assert_true(absf(player.global_position.y) < 0.05, "not standing on the mound (y %.3f)" % player.global_position.y)
+
+
+func test_plot_dig_exit_keeps_the_nearest_free_side() -> void:
+	player.global_position = plot.global_position + Vector3(1.4, 0, 0.1)
+	plot.interact(player)
+	var local := plot.to_local(player.global_position)
+	assert_almost(local.x, plot.footprint.grow(plot.eject_margin).end.x, 0.001, "nothing next to it: +X is nearest")
+	assert_almost(local.z, 0.1, 0.001)
+
+
 func test_plot_dig_blocked_while_carrying() -> void:
 	var c := _spawn(&"dropoff")
 	corpses.pick_up(c.id, player)
@@ -404,6 +440,19 @@ func test_table_examine_is_not_cancellable() -> void:
 	Input.action_release(&"move_up")
 	assert_true(player.is_busy(), "movement does not cancel a panel action")
 	player.cancel_timed_action()
+
+
+## UI-07: once examined the prompt no longer asks for the examination.
+func test_table_prompt_after_the_examination() -> void:
+	var c := _on_table()
+	assert_eq(table.get_interaction_prompt(player), "[E] Leiche untersuchen")
+	table.request_examine()
+	assert_true(c.examined)
+	assert_eq(table.get_interaction_prompt(player), "[E] Leiche ansehen")
+	assert_true(table.can_interact(player), "the panel still opens (shroud, valuables, pick up)")
+	var other := _spawn(&"ground", Vector3(3, 0, 3))
+	corpses.pick_up(other.id, player)
+	assert_eq(table.get_interaction_prompt(player), "Der Tisch ist belegt")
 
 
 func test_table_shroud() -> void:
@@ -683,6 +732,62 @@ func test_npc_turns_to_the_player_but_the_cart_stays() -> void:
 	player.global_position = Vector3(-20, 0, -20)
 	npc.refresh()
 	assert_almost(model.rotation.y, 0.0, 0.001, "player gone: looks ahead again")
+
+
+## SL-1: the standing heading follows from the clock alone – straight after a load (no walk
+## seen) he faces the way he came in (b → c = +X), and the cart stays behind the dialogue spot.
+func test_npc_standing_heading_comes_from_the_clock() -> void:
+	var npc := await _npc()
+	TimeManager.load_state({"day": 1, "minute_of_day": 500})
+	npc.load_state(npc.save_state())
+	assert_almost(npc.rotation.y, PI * 0.5, 0.001, "arrival heading without having walked")
+	TimeManager.load_state({"day": 1, "minute_of_day": 700})
+	npc.load_state({})
+	assert_almost(npc.rotation.y, PI * 0.5, 0.001, "a later phase at the same spot keeps it")
+	assert_true(npc.cart.global_position.x > npc.global_position.x, "cart in front, on the arrival side")
+
+
+## ARCH-02: the debug console's "npc carter here" calls debug_teleport – he stands there
+## until his next schedule phase, then the clock takes over again.
+func test_npc_debug_teleport_holds_until_the_next_phase() -> void:
+	var npc := await _npc()
+	TimeManager.load_state({"day": 1, "minute_of_day": 500})
+	npc.refresh()
+	player.global_position = Vector3(0, 0, 4)
+	npc.debug_teleport(Vector3(2, 0, 4))
+	assert_true(npc.global_position.is_equal_approx(Vector3(2, 0, 4)), str(npc.global_position))
+	await _settle()
+	assert_true(npc.global_position.is_equal_approx(Vector3(2, 0, 4)), "held while _process runs")
+	assert_false(npc.is_walking())
+	assert_true(npc.interactable.enabled, "still his dialogue phase")
+	var in_cart := npc.cart_shape.global_transform.affine_inverse() * player.global_position
+	var half := (npc.cart_shape.shape as BoxShape3D).size * 0.5 + Vector3(0.3, 0.0, 0.3)
+	assert_true(absf(in_cart.x) > half.x or absf(in_cart.z) > half.z, "the cart does not land on the player %s" % in_cart)
+	var model := npc.get_node("Model") as Node3D
+	var look := Vector3.BACK.rotated(Vector3.UP, npc.rotation.y + model.rotation.y)
+	assert_almost(look.dot((player.global_position - npc.global_position).normalized()), 1.0, 0.01, "faces the player")
+	TimeManager.load_state({"day": 1, "minute_of_day": 650})
+	npc.refresh()
+	assert_true(npc.global_position.is_equal_approx(Vector3(2, 0, 4)), "same phase: still there")
+	TimeManager.load_state({"day": 1, "minute_of_day": 700})
+	npc.refresh()
+	assert_true(npc.global_position.is_equal_approx(Vector3(10, 0, 10)), "next phase: back on the schedule")
+	TimeManager.load_state({"day": 1, "minute_of_day": 500})
+	npc.debug_teleport(Vector3(2, 0, 4))
+	npc.load_state({})
+	assert_true(npc.global_position.is_equal_approx(Vector3(10, 0, 10)), "a load drops the hold")
+
+
+func test_debug_console_brings_the_npc() -> void:
+	var npc := await _npc()
+	TimeManager.load_state({"day": 1, "minute_of_day": 500})
+	npc.refresh()
+	player.global_position = Vector3(0, 0, 4)
+	player.rotation.y = 0.0
+	var result := Debug.execute("npc carter here")
+	assert_true(result.ok, String(result.text))
+	assert_true(player.global_position.is_equal_approx(Vector3(0, 0, 4)), "the player stays")
+	assert_true(npc.global_position.is_equal_approx(Vector3(0, 0, 4 + DebugConsole.NPC_OFFSET)), str(npc.global_position))
 
 
 func test_npc_walk_animation_speed_scale() -> void:

@@ -4,9 +4,12 @@ extends Area3D
 ## Child of the player: layer 0, mask 8 (Interactables), monitoring only (set in _init).
 ## Its CollisionShape3D (scene) is a ~1.4 m sphere slightly in front of the player.
 ## Ranking of get_overlapping_areas(): disabled Interactables and those whose target gives
-## an empty prompt are skipped; highest priority wins, equal priorities by the lowest
+## an empty prompt are skipped; targets in front of the player (facing ≥ front_cone_cos) beat
+## those behind; among them the highest priority wins, equal priorities by the lowest
 ## distance − facing_weight × facing, where facing is the cosine between this node's +Z
 ## (the player's front) and the direction to the Interactable, both flattened to XZ.
+## (GP-05: the carter's large reach box behind the player must not take the focus from the
+## corpse on the bier the player faces – turning to him gives it back.)
 ## Runs before its parent's physics step, so the player reads a fresh focus.
 
 signal focus_changed(interactable: Interactable)
@@ -19,6 +22,11 @@ const EPSILON := 0.0001
 @export var facing_weight: float = 0.75
 ## Metres the current focus is favoured by, so two nearly equal targets do not flicker.
 @export var focus_bias: float = 0.1
+## Cosine of the half angle of the front cone (0 = the half space ahead). Priority only ranks
+## within the same side: a target outside the cone never beats one inside it. The current
+## focus keeps counting as in front down to front_cone_cos − focus_cone_bias (no flicker).
+@export var front_cone_cos: float = 0.0
+@export var focus_cone_bias: float = 0.1
 
 var focused: Interactable
 ## Passed to the targets' get_interaction_prompt(); nearest Player ancestor, may stay null.
@@ -62,19 +70,24 @@ func best_candidate() -> Interactable:
 		return null
 	var best: Interactable = null
 	var best_score := INF
+	var best_in_front := false
 	for area: Area3D in get_overlapping_areas():
 		var candidate := area as Interactable
 		if candidate == null or not candidate.enabled or candidate.is_queued_for_deletion():
 			continue
 		if candidate.prompt_for(player) == "":
 			continue
+		var cone := front_cone_cos
 		var score := score_of(candidate)
 		if candidate.get_instance_id() == _focused_id:
 			score -= focus_bias
-		if best == null or candidate.priority > best.priority \
-				or (candidate.priority == best.priority and score < best_score):
+			cone -= focus_cone_bias
+		var in_front := facing_of(candidate) >= cone
+		if best == null or (in_front and not best_in_front) or (in_front == best_in_front
+				and (candidate.priority > best.priority or (candidate.priority == best.priority and score < best_score))):
 			best = candidate
 			best_score = score
+			best_in_front = in_front
 	return best
 
 
@@ -82,13 +95,20 @@ func best_candidate() -> Interactable:
 func score_of(candidate: Node3D) -> float:
 	var to := candidate.global_position - global_position
 	to.y = 0.0
+	return to.length() - facing_weight * facing_of(candidate)
+
+
+## Cosine between the player's front (+Z) and the direction to `candidate`, on XZ; a target
+## on top of the detector (or an undefined front) counts as straight ahead (1).
+func facing_of(candidate: Node3D) -> float:
+	var to := candidate.global_position - global_position
+	to.y = 0.0
 	var distance := to.length()
 	var forward := global_basis.z
 	forward.y = 0.0
-	var facing := 1.0
-	if distance > EPSILON and forward.length_squared() > EPSILON:
-		facing = forward.normalized().dot(to / distance)
-	return distance - facing_weight * facing
+	if distance <= EPSILON or forward.length_squared() <= EPSILON:
+		return 1.0
+	return forward.normalized().dot(to / distance)
 
 
 func _find_player() -> Player:

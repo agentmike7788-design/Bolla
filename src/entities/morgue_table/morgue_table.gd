@@ -15,6 +15,8 @@ const ANIM := &"interact"
 
 const PROMPT_PUT_DOWN := "[E] Leiche ablegen"
 const PROMPT_EXAMINE := "[E] Leiche untersuchen"
+## After the examination the panel still offers shroud, valuables and pick up (UI-07).
+const PROMPT_VIEW := "[E] Leiche ansehen"
 const PROMPT_OCCUPIED := "Der Tisch ist belegt"
 const LABEL_EXAMINE := "Untersuchen"
 const LABEL_SHROUD := "Leichentuch anlegen"
@@ -50,10 +52,12 @@ func can_interact(player: Player) -> bool:
 
 
 func get_interaction_prompt(player: Player) -> String:
-	var occupied := corpse_id != ""
+	var record := _table_record()
 	if player != null and _is_carrying(player):
-		return PROMPT_OCCUPIED if occupied else PROMPT_PUT_DOWN
-	return PROMPT_EXAMINE if occupied else ""
+		return PROMPT_OCCUPIED if record != null else PROMPT_PUT_DOWN
+	if record == null:
+		return ""
+	return PROMPT_VIEW if record.examined else PROMPT_EXAMINE
 
 
 func interact(player: Player) -> void:

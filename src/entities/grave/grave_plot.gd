@@ -22,6 +22,8 @@ const ROLE_MARKER := "marker:"
 const ROLE_OLD := "old"
 const OLD_STONE_PATH := "res://assets/models/props/ph_prop_gravestone_%s.glb"
 const OLD_MOUND_PATH := "res://assets/models/props/ph_prop_grave_mound_%s.glb"
+## Gap (m) between the ground and the capsule when testing an exit spot for obstacles.
+const EXIT_CLEARANCE := 0.1
 
 const PROMPT_DIG := "[E] Grab ausheben (%d Min)"
 const PROMPT_BURY := "[E] Bestatten (%d Min)"
@@ -204,7 +206,9 @@ func _finish_marker(id: StringName, inv: Inventory) -> void:
 		graveyard.place_marker(grave_id, id, inv)
 
 
-## Keeps the player out of the new pit collision: moves them to the nearest footprint edge.
+## Keeps the player out of the new pit collision: moves them to the nearest edge of the grown
+## footprint where their capsule is free of world bodies – plots stand 2.4 m apart along X,
+## so a ±X exit can lie inside the neighbour's mound or pit (C4). None free: the nearer ±Z exit.
 func _move_out(player: Player) -> void:
 	if not is_instance_valid(player) or not player.is_inside_tree():
 		return
@@ -215,11 +219,29 @@ func _move_out(player: Player) -> void:
 		return
 	var exits: Array[Vector2] = [Vector2(area.position.x, p.y), Vector2(area.end.x, p.y),
 			Vector2(p.x, area.position.y), Vector2(p.x, area.end.y)]
-	var best := exits[0]
+	var best := exits[2] if exits[2].distance_squared_to(p) < exits[3].distance_squared_to(p) else exits[3]
+	exits.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.distance_squared_to(p) < b.distance_squared_to(p))
 	for e: Vector2 in exits:
-		if e.distance_squared_to(p) < best.distance_squared_to(p):
+		if _exit_is_free(player, to_global(Vector3(e.x, local.y, e.y))):
 			best = e
+			break
 	player.global_position = to_global(Vector3(best.x, local.y, best.y))
+
+
+## Whether the player's capsule, standing at `spot` (lifted by EXIT_CLEARANCE off the ground),
+## touches no world body (layer 1) other than this plot's own collision.
+func _exit_is_free(player: Player, spot: Vector3) -> bool:
+	var capsule := player.get_node_or_null(^"Collision") as CollisionShape3D
+	if capsule == null or capsule.shape == null:
+		return true
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = capsule.shape
+	query.collision_mask = Player.WORLD_MASK
+	query.transform = Transform3D(Basis.IDENTITY, spot + Vector3(0.0, EXIT_CLEARANCE, 0.0)) * capsule.transform
+	var own := get_node_or_null(^"Collision") as CollisionObject3D
+	if own != null:
+		query.exclude = [own.get_rid()]
+	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
 
 
 # --- visuals & collision ------------------------------------------------------------------

@@ -23,6 +23,10 @@ const INPUT_DEADZONE_SQ := 0.0001
 const MOVING_SPEED := 0.1
 ## A valid drop transform must never equal Transform3D() (= invalid): lifted by this (m).
 const IDENTITY_NUDGE := 0.001
+## Global shader uniform (project.godot) of the foliage occlusion cutout: leaves between the
+## camera and this point fade out (painted_foliage.gdshader). Far below the world = no cutout.
+const OCCLUSION_TARGET := &"occlusion_target"
+const OCCLUSION_OFF := Vector3(0.0, -1000.0, 0.0)
 ## Absorbs float drift of the summed frame deltas when converting progress to whole minutes.
 const MINUTE_EPSILON := 0.000001
 
@@ -43,6 +47,9 @@ const MINUTE_EPSILON := 0.000001
 @export var waddle_speed: float = 9.0
 @export var waddle_settle: float = 8.0
 @export var waddle_bob: float = 0.04
+## Chest height (m above the feet) the foliage cutout keeps visible: tree crowns between the
+## camera and this point fade out, nothing below it is cut (UI-01).
+@export var occlusion_height: float = 1.1
 
 var config: PlayerConfig
 var actions: ActionConfig
@@ -108,6 +115,17 @@ func _exit_tree() -> void:
 	cancel_timed_action()
 	if _shown_prompt != "":
 		_report_focus(0, "", false)
+	RenderingServer.global_shader_parameter_set(OCCLUSION_TARGET, OCCLUSION_OFF)
+
+
+## Every rendered frame: the foliage cutout follows the chest (see occlusion_height).
+func _process(_delta: float) -> void:
+	RenderingServer.global_shader_parameter_set(OCCLUSION_TARGET, occlusion_point())
+
+
+## World point the foliage occlusion cutout keeps visible (the chest).
+func occlusion_point() -> Vector3:
+	return global_position + Vector3(0.0, occlusion_height, 0.0)
 
 
 func _physics_process(delta: float) -> void:

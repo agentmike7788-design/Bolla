@@ -7,6 +7,9 @@ extends Node3D
 ## speed the cycle was made for; afterwards entry.animation. Hidden entries hide the NPC and
 ## switch its Interactable and collision off. The handcart (Cart) shows while with_cart;
 ## Cargo (a corpse on the cart) until the day's delivery – or all day when it was skipped.
+## Standing heading: the waypoint's facing, else the direction of the walk that ended there –
+## both follow from the clock, so a load shows him exactly as walking in did (SL-1).
+## debug_teleport() (debug console) holds him at a spot until the next schedule phase.
 
 const GROUP := &"npc"
 const PROMPT_TALK := "[E] Mit %s reden"
@@ -58,6 +61,10 @@ var _heading: float = 0.0
 ## Extra yaw of the figure (Model) towards a nearby player; the cart keeps its place.
 var _look: float = 0.0
 var _model: Node3D
+## debug_teleport(): the phase it holds for (null = none), the spot and the heading.
+var _held_entry: ScheduleEntry
+var _held_position: Vector3
+var _held_heading: float = 0.0
 
 
 func _init() -> void:
@@ -118,7 +125,7 @@ func is_present() -> bool:
 
 
 func is_walking() -> bool:
-	return entry != null and entry.travel_minutes > 0 and progress < 1.0
+	return entry != null and entry.travel_minutes > 0 and progress < 1.0 and _held_entry == null
 
 
 ## Metres per real second along the current path (0 while standing or the clock is stopped).
@@ -135,6 +142,26 @@ func save_state() -> Dictionary:
 
 
 func load_state(_data: Dictionary) -> void:
+	_held_entry = null
+	refresh()
+
+
+## Debug console ("npc <id> here"): stands at `world_pos` (on the ground) for the rest of the
+## current schedule phase, then the clock takes over again. He faces the nearest player – with
+## the cart turned to his side, so it never lands on them.
+func debug_teleport(world_pos: Vector3) -> void:
+	var sched := _schedule()
+	if sched == null or sched.entries.is_empty():
+		push_warning("[Npc] %s: no schedule – debug_teleport ignored" % name)
+		return
+	_held_entry = ScheduleResolver.entry_at(sched, int(TimeManager.get_minute_f()))
+	_held_position = _on_ground(world_pos)
+	_held_heading = rotation.y
+	var player := get_tree().get_first_node_in_group(&"player") as Node3D if is_inside_tree() else null
+	if player != null:
+		var to := _flat(player.global_position - _held_position)
+		if to.length_squared() > EPSILON:
+			_held_heading = atan2(to.x, to.z) + (PI * 0.5 if _held_entry != null and _held_entry.with_cart else 0.0)
 	refresh()
 
 
@@ -147,15 +174,19 @@ func _update(delta: float) -> void:
 	if entry == null:
 		return
 	progress = ScheduleResolver.progress(entry, minute_f)
+	if _held_entry != null and _held_entry != entry:
+		_held_entry = null
 	var path := _path(entry)
 	var sample := _sample(path, progress)
-	global_position = sample[0]
+	global_position = sample[0] if _held_entry == null else _held_position
 	var dir: Vector3 = sample[1]
 	_set_state(entry.visible, entry.visible and entry.dialogue_id != &"", entry.visible and entry.with_cart)
 	cargo.visible = _with_cart and _has_cargo()
 	# The root (and with it the cart) turns with the path; only the figure turns to a player.
 	var heading := _heading
-	if is_walking() and dir.length_squared() > EPSILON:
+	if _held_entry != null:
+		heading = _held_heading
+	elif is_walking() and dir.length_squared() > EPSILON:
 		heading = atan2(dir.x, dir.z)
 	elif not is_walking():
 		heading = _waypoint_yaw(heading)
@@ -188,14 +219,36 @@ func _look_yaw(heading: float) -> float:
 	return wrapf(atan2(to.x, to.z) - heading, -PI, PI)
 
 
-## Standing: the waypoint's facing (layout waypoint_facing), else keep the arrival heading.
+## Standing: the waypoint's facing (layout waypoint_facing), else the arrival heading, else
+## `current`.
 func _waypoint_yaw(current: float) -> float:
 	var w := _world()
 	if w != null and w.has_method(&"get_waypoint_facing") and not entry.path.is_empty():
 		var yaw := float(w.call(&"get_waypoint_facing", StringName(entry.path[entry.path.size() - 1])))
 		if not is_nan(yaw):
 			return yaw
-	return current
+	var arrival := _arrival_yaw(entry)
+	return arrival if not is_nan(arrival) else current
+
+
+## Heading (rad) of the last path segment of the walk that brought the NPC to where `e` stands:
+## the entries before `e` (wrapping) that stand at the same waypoint are skipped. NAN if the
+## phase before is no walk to that waypoint.
+func _arrival_yaw(e: ScheduleEntry) -> float:
+	var entries := _schedule().entries
+	var index := entries.find(e)
+	if index < 0 or e.path.is_empty():
+		return NAN
+	var spot := e.path[e.path.size() - 1]
+	for k: int in range(1, entries.size()):
+		var before := entries[(index - k + entries.size()) % entries.size()]
+		if before.path.is_empty() or before.path[before.path.size() - 1] != spot:
+			return NAN
+		if before.path.size() >= 2:
+			var points: PackedVector3Array = _path(before).points
+			var dir := _flat(points[points.size() - 1] - points[points.size() - 2])
+			return atan2(dir.x, dir.z) if dir.length_squared() > EPSILON else NAN
+	return NAN
 
 
 func _set_state(present: bool, talkable: bool, with_cart: bool) -> void:
@@ -216,7 +269,8 @@ func _set_state(present: bool, talkable: bool, with_cart: bool) -> void:
 func _update_animation() -> void:
 	if _anim == null:
 		return
-	var wanted := entry.animation
+	# Held by debug_teleport in the middle of a walk: he waits (idle) instead of walking on the spot.
+	var wanted := entry.animation if _held_entry == null or entry.travel_minutes == 0 else ANIM_IDLE
 	var designed := 0.0
 	if is_walking():
 		wanted = ANIM_PUSH if entry.with_cart else ANIM_WALK
