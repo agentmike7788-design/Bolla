@@ -104,6 +104,13 @@
   "grave_dirt": {"_comment": "Grabstelle dirt_<plot_id>: plot-lokal (x, z) auf dem Hügel ph_prop_grave_mound_fresh (Höhe aus dem Mesh), Interactable-Priorität über der Grab-Info (10) – sonst nie fokussierbar.",
     "local": [0.0, 0.3], "mound_inset": 0.03, "priority": 11},
   "notice_board": {"pos": [-1.5, 8.7], "rot_y": 8.0, "asset": "ph_prop_notice_board"},
+  "overgrowth": {"_comment": "Reine Kulisse der gesperrten Abschnitte (verwildert, ohne Kollision): verschwindet, sobald der Abschnitt freigelegt ist (WorldRoot).",
+    "assets": ["ph_env_weeds_3", "ph_env_weeds_2", "ph_env_weeds_3", "ph_env_leaves_2", "ph_env_bush", "ph_env_weeds_3"],
+    "scale": {"ph_env_bush": [0.5, 0.75], "default": [1.15, 1.6]},
+    "_bush": "Niedrige Büsche kollidieren (Zylinder, Radius × scale) – WorldRoot schaltet die Kollision mit der Kulisse ab.",
+    "bush_radius": 0.45,
+    "seed": 31, "margin": 0.7, "keep_out_obstacle": 1.3, "keep_out_spot": 0.9, "keep_out_fence": 0.6,
+    "sections": [{"id": "east", "count": 24}, {"id": "north", "count": 18}]},
   "entities": [
     {"id": "morgue_table", "type": "morgue_table", "pos": [-1.6, -5.4], "rot_y": 18.0, "params": {}},
     {"id": "workbench", "type": "workbench", "pos": [-2.5, -8.4], "rot_y": 108.0, "params": {"station": "workbench"}},

@@ -32,7 +32,8 @@ class WarningLog extends Logger:
 
 
 const TIMEOUT := 120.0
-const TEST_SAVES := "user://test_saves_v1"
+## Per-process save folder (TestCase.user_dir): parallel runs share user:// (flaky slots).
+var TEST_SAVES := TestCase.user_dir("test_saves_v1")
 const SLOT := 7
 const RESAVE_SLOT := 8
 const NEW_PLOTS: PackedStringArray = ["plot_07", "plot_08", "plot_09", "plot_10", "plot_11", "plot_12"]
@@ -50,6 +51,7 @@ func before_each() -> void:
 func after_each() -> void:
 	OS.remove_logger(warnings)
 	_delete_saves()
+	TestCase.remove_user_dir(TEST_SAVES)
 
 
 func test_fixtures_are_format_v1() -> void:

@@ -215,6 +215,68 @@ static func build_passages(ctx: Ctx, fence: Node3D) -> void:
 		Colliders.collider(ctx, PASSAGE_ASSET, ctx.ground_xform(Ctx.v2(p.pos), float(p.rot_y)), String(p.id))
 
 
+## Scenery of the locked sections (layout "overgrowth"): tall weeds and leaf litter scattered
+## (seeded) between the obstacles, no collision, no shadow; Decor/Overgrowth/<section> is hidden
+## by WorldRoot once the section is unlocked.
+static func build_overgrowth(ctx: Ctx, decor: Node3D) -> void:
+	var layout := ctx.layout
+	var cfg: Dictionary = layout.overgrowth
+	var root := ctx.group(decor, "Overgrowth")
+	var avoid: Array[Dictionary] = []
+	for o: Dictionary in obstacles(layout):
+		avoid.append({"c": Ctx.v2(o.pos), "r": float(cfg.keep_out_obstacle) * (0.5 if o.kind == FENCE_GAP else 1.0)})
+	for d: Dictionary in layout.dirt_spots:
+		avoid.append({"c": Ctx.v2(d.pos), "r": float(cfg.keep_out_spot)})
+	for b: Dictionary in layout.birches:
+		avoid.append({"c": Ctx.v2(b.pos), "r": 0.6})
+	var fences: Array = []
+	for seg: Array in layout.fence.segments:
+		fences.append([Ctx.v2(seg[0]), Ctx.v2(seg[1])])
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(cfg.seed)
+	for s: Dictionary in cfg.sections:
+		var group := ctx.group(root, String(s.id))
+		var rect := Rect2()
+		for sec: Dictionary in layout.sections:
+			if sec.id == s.id:
+				rect = Rect2(sec.rect[0], sec.rect[1], sec.rect[2] - sec.rect[0], sec.rect[3] - sec.rect[1]).grow(-float(cfg.margin))
+		var placed := 0
+		var tries := 0
+		var body: StaticBody3D = null
+		while placed < int(s.count) and tries < 2000:
+			tries += 1
+			var p := Vector2(rng.randf_range(rect.position.x, rect.end.x), rng.randf_range(rect.position.y, rect.end.y))
+			if avoid.any(func(a: Dictionary) -> bool: return p.distance_to(a.c) < float(a.r)):
+				continue
+			if fences.any(func(f: Array) -> bool: return _dist_to_polyline(p, f) < float(cfg.keep_out_fence)):
+				continue
+			placed += 1
+			var asset: String = cfg.assets[rng.randi() % cfg.assets.size()]
+			var range_s: Array = cfg.scale.get(asset, cfg.scale.default)
+			var scale := rng.randf_range(float(range_s[0]), float(range_s[1]))
+			var inst := ctx.place(asset, group, p, rng.randf() * 360.0, "%s_%02d" % [asset.trim_prefix("ph_env_"), placed])
+			inst.scale = Vector3.ONE * scale
+			if asset == "ph_env_bush":
+				if body == null:
+					body = StaticBody3D.new()
+					body.name = "Collision"
+					body.collision_layer = Ctx.WORLD_LAYER
+					body.collision_mask = 0
+					ctx.add(group, body)
+				var shape := CollisionShape3D.new()
+				shape.name = "Shape_%02d" % placed
+				var cyl := CylinderShape3D.new()
+				cyl.radius = float(cfg.bush_radius) * scale
+				cyl.height = 1.0
+				shape.shape = cyl
+				shape.position = Vector3(p.x, ctx.ground_height(p) + 0.5, p.y)
+				ctx.add(body, shape)
+			else:
+				for mesh: Node in inst.find_children("*", "GeometryInstance3D", true, false):
+					(mesh as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			avoid.append({"c": p, "r": 0.8})
+
+
 # --- build mask (§4.3) ------------------------------------------------------------------------
 
 ## Bakes and saves the BuildMask: per cell the section order (1 yard, 2 east, 3 north) or 0 =

@@ -4,7 +4,8 @@ extends TestCase
 ## round trip through a file. Pure data – no world (loading into the real world:
 ## tests/integration/test_saves_v1_load.gd).
 
-const TEST_DIR := "user://test_save_migration"
+## Per-process save folder (TestCase.user_dir): parallel runs share user:// (flaky slots).
+var TEST_DIR := TestCase.user_dir("test_save_migration")
 const SLOT := 3
 const NEW_NODES: PackedStringArray = ["expansion", "cleanliness", "decorations", "ghosts"]
 const V1_NODES: PackedStringArray = ["corpse_manager", "graveyard", "npc_carter", "res_stone", "res_wood", "hut_chest", "player"]

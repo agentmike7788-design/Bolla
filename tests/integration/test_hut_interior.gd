@@ -4,7 +4,8 @@ extends TestCase
 ## fade, teleport, camera profile, suns), in_interior through save / load, the chest storage
 ## round trip, the grave register entries and the interior lighting by night and by day.
 
-const TEST_SAVES := "user://test_saves"
+## Per-process save folder (TestCase.user_dir): parallel runs share user:// (flaky slots).
+var TEST_SAVES := TestCase.user_dir("test_saves")
 const SLOT_INSIDE := 96
 const SLOT_OUTSIDE := 95
 const INTERIOR_LAYOUT := "res://data/world/hut_interior_layout.json"
@@ -37,6 +38,7 @@ func after_each() -> void:
 	EventBus.screen_fade_requested.disconnect(_on_fade)
 	for slot: int in [SLOT_INSIDE, SLOT_OUTSIDE, 0]:
 		SaveManager.delete_save(slot)
+	TestCase.remove_user_dir(TEST_SAVES)
 
 
 # --- scene & layout -------------------------------------------------------------------------

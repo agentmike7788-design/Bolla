@@ -397,7 +397,7 @@ func test_carter_at_the_bier_after_a_load_faces_his_arrival() -> void:
 func test_camera_is_on_the_player_right_after_a_load() -> void:
 	tree.root.remove_child(world)  # one world at a time (plot ids are global)
 	world.free()
-	SaveManager.save_dir = "user://test_saves"
+	SaveManager.save_dir = TestCase.user_dir("test_saves")  # per process: parallel runs share user://
 	SaveManager.new_game()
 	assert_true(await wait_for_signal(EventBus.new_game_started, 20.0), "new game")
 	var player := (tree.current_scene as WorldRoot).get_player()
@@ -412,6 +412,7 @@ func test_camera_is_on_the_player_right_after_a_load() -> void:
 	assert_true(rig.camera.global_position.distance_to(at_load) < 0.1,
 			"no sweep: the camera already frames the player (%.2f m off)" % rig.camera.global_position.distance_to(at_load))
 	SaveManager.delete_save(97)
+	TestCase.remove_user_dir(SaveManager.save_dir)
 
 
 ## GP-05: 07:40-10:00 the carter stands west of the bier; a player at the bier's west end facing

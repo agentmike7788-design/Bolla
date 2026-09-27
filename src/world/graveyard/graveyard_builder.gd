@@ -140,6 +140,7 @@ func _build_world() -> Node:
 		Entities.build_plot(_ctx, old, g, true)
 	Decor.build_decor(_ctx, decor)
 	Phase3.build_birches(_ctx, decor)
+	Phase3.build_overgrowth(_ctx, decor)
 	Phase3.build_passages(_ctx, decor.get_node("Fence"))
 	Phase3.build_systems(_ctx, systems, decor)
 

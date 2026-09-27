@@ -4,7 +4,8 @@ extends Node3D
 ## ph_prop_notice_board ("Model", in the scene) and a Label3D ("Label", added in _ready) on its
 ## marker label_board, showing the cemetery rating (CemeteryScore, group cemetery_score) and the
 ## village reputation (Reputation, group reputation). Refreshes on cemetery_quality_changed,
-## reputation_changed, world_ready and game_loaded. Presentation only: not saved, no interaction.
+## reputation_changed, world_ready, game_loaded and new_game_started.
+## Presentation only: not saved, no interaction.
 ## STUB (W-Welt) → implemented in W2; this marker line stays for test_phase3_scaffold.
 
 const MARKER := "label_board"
@@ -28,6 +29,9 @@ func _ready() -> void:
 	EventBus.reputation_changed.connect(_on_changed.unbind(4))
 	EventBus.world_ready.connect(_on_changed.unbind(1))
 	EventBus.game_loaded.connect(_on_changed.unbind(1))
+	# Reputation sets the start value on new_game_started without reputation_changed (its
+	# Systems node connected first, so the value is already set here).
+	EventBus.new_game_started.connect(refresh)
 	refresh()
 
 

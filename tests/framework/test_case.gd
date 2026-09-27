@@ -75,6 +75,22 @@ func wait_for_signal(sig: Signal, timeout_sec: float = 5.0) -> bool:
 	return fired[0]
 
 
+## Save directory for a test file, unique to this Godot process. Every worktree of the project
+## shares one user:// folder, so two test runs at the same time (parallel agents) would
+## otherwise overwrite and delete each other's slots mid-test.
+static func user_dir(base: String) -> String:
+	return "user://%s_%d" % [base, OS.get_process_id()]
+
+
+## Removes a user_dir() folder with the files directly in it (after_each / after_all).
+static func remove_user_dir(dir: String) -> void:
+	if not DirAccess.dir_exists_absolute(dir):
+		return
+	for f: String in DirAccess.get_files_at(dir):
+		DirAccess.remove_absolute(dir.path_join(f))
+	DirAccess.remove_absolute(dir)
+
+
 ## Instantiates a scene under the test tree root and waits until it is ready.
 func add_scene(path: String) -> Node:
 	var node := (load(path) as PackedScene).instantiate()

@@ -8,7 +8,8 @@ extends TestCase
 ## digging needs free hands (§3.4 "Tragen erlaubt: Tisch, offenes Grab, NPC, Q").
 
 const TIMEOUT := 120.0
-const TEST_SAVES := "user://test_saves"
+## Per-process save folder (TestCase.user_dir): parallel runs share user:// (flaky slots).
+var TEST_SAVES := TestCase.user_dir("test_saves")
 const ROUNDTRIP_SLOT := 98
 const SLOTS: Array[int] = [0, 1, ROUNDTRIP_SLOT]
 ## TimeManager start of a new game (data/config/time_config.tres): 06:30.
@@ -44,6 +45,7 @@ func after_each() -> void:
 	EventBus.ui_panel_requested.disconnect(_on_panel)
 	EventBus.delivery_skipped.disconnect(_on_skipped)
 	_delete_saves()
+	TestCase.remove_user_dir(TEST_SAVES)
 
 
 func test_full_loop_day_one_and_save_roundtrip() -> void:
