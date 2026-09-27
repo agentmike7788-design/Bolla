@@ -109,11 +109,12 @@ Ruf (`GameState.stats.reputation`, Start 0): ≥ 0 „Geachtet", −1…−2 „
 |---|---|
 | **Lead** | `project.godot`, `src/core/*`, `src/boot/*`, `tests/run_tests.gd`, `tests/framework/*`, `tests/fixtures/*`, alle **Datenklassen** (unten ✦), `docs/*`, `CLAUDE.md` |
 | **M1 Inventar/Crafting** | `src/systems/inventory/inventory.gd`, `src/systems/crafting/crafting_system.gd`, `data/items/*`, `data/recipes/*`, `tests/unit/test_inventory.gd`, `test_crafting.gd` |
-| **M2 Zeit/Status/Speichern** | `src/systems/time/time_manager.gd`, `src/systems/game_state/game_state.gd`, `src/systems/save/save_manager.gd`, `src/world/atmosphere/*` (Erweiterung, Prototyp-kompatibel), `data/config/time_config.tres`, `data/atmosphere/dawn.tres`, `dusk.tres`, `tests/unit/test_time.gd`, `test_game_state.gd`, `test_save.gd`, `test_atmosphere.gd` |
+| **M2 Zeit/Status/Speichern** | `tests/fixtures/save_world/*`, `src/systems/time/time_manager.gd`, `src/systems/game_state/game_state.gd`, `src/systems/save/save_manager.gd`, `src/world/atmosphere/*` (Erweiterung, Prototyp-kompatibel), `data/config/time_config.tres`, `data/atmosphere/dawn.tres`, `dusk.tres`, `tests/unit/test_time.gd`, `test_game_state.gd`, `test_save.gd`, `test_atmosphere.gd` |
 | **M3 Leichen/Gräber** | `src/systems/corpse/{corpse_record,corpse_generator,corpse_manager}.gd`, `src/systems/graveyard/{grave_record,grave_quality,cemetery_rating,graveyard}.gd`, `data/corpses/corpse_tables.tres`, `data/config/economy_config.tres`, `tests/unit/test_corpse.gd`, `test_corpse_manager.gd`, `test_grave_quality.gd`, `test_cemetery_rating.gd`, `test_graveyard.gd` |
 | **M4 Dialog/NPC-Logik** | `src/systems/dialogue/dialogue_runner.gd`, `src/systems/npc/schedule_resolver.gd`, `data/dialogue/*`, `data/npc/*`, `tests/unit/test_dialogue.gd`, `test_schedule.gd` |
 | **M5 Spieler/Interaktion** | `src/components/{interactable,interaction_detector}.gd`, `src/entities/player/{player.gd,player.tscn}`, `data/config/player_config.tres`, `action_config.tres`, `tests/unit/test_interaction.gd`, `test_player.gd` |
-| **M6 Assets** | `tools/blender/*` (außer Boden-Generator), `assets/models/**`, `art_source/**`, `tests/unit/test_assets.gd` |
+| **M6a Figuren/Rig** | `tools/blender/lib_painted.py`, `build_all.py`, `asset_character.py`, `asset_carter.py`, `rig.py`, `assets/models/characters/**`, `art_source/blender/characters/**`, `tests/unit/test_assets_characters.gd` |
+| **M6b Requisiten/Items** | `tools/blender/asset_props_slice.py`, `asset_items.py`, zugehörige `assets/models/{props,environment,items}/**` + `art_source/**`, `tests/unit/test_assets_props.gd`, `docs/reviews/phase2_assets/*` |
 | **W1 Welt/Entitäten** (Welle 2) | `src/entities/{corpse,grave,morgue_table,workbench,dropoff,resource_node,npc,hut_door}/*`, `src/world/graveyard/*`, `data/world/graveyard_layout.json`, `tools/blender/asset_ground_graveyard.py`, `tests/integration/test_vertical_slice_loop.gd`, `test_graveyard_world.gd` |
 | **W2 UI/Debug** (Welle 2) | `src/ui/**`, `assets/ui/**`, `src/debug/*` (außer `asset_preview.gd`, `screenshot_capture.gd`), `tests/unit/test_objective.gd`, `tests/integration/test_ui.gd` |
 | **Eingefroren** | `src/world/art_prototype/*`, `src/entities/player/player_proto.*`, `data/art_prototype/*` (Stil-Referenz) |
@@ -300,7 +301,7 @@ func choose(index: int) -> void                                  # führt action
 func is_finished() -> bool
 static func check_condition(cond: String, context: Dictionary) -> bool
 static func apply_action(action: String, context: Dictionary) -> void
-# Bedingungen: has_item:<id>:<n> · flag:<name> · !flag:<name> · stat_gte:<name>:<n> · stat_lt:<name>:<n> · time_between:<a>:<b> · flag_eq:<name>:<wert>
+# Bedingungen: has_item:<id>:<n> · flag:<name> · !flag:<name> · stat_gte:<name>:<n> · stat_lt:<name>:<n> · time_between:<a>:<b> · flag_eq:<name>:<wert> · flag_today:<name> (Flag-Wert == TimeManager.day)
 # Aktionen:   set_flag:<name>[:<wert>] · clear_flag:<name> · take_item:<id>:<n> · give_item:<id>:<n> · stat_add:<name>:<n> · notify:<Text>
 # Knoten mit unerfüllten conditions werden übersprungen → fallback_next (Kette), start_node ist der Einstieg
 class_name ScheduleResolver extends RefCounted
@@ -331,7 +332,7 @@ var instant_actions: bool = false     # Tests: Aktionen sofort fertig (Spielzeit
 func is_busy() -> bool                # TimedAction läuft
 func attach_carried(node: Node3D, id: String) -> void   # rein mechanisch: an CarrySocket, Interactables des Knotens aus
 func detach_carried() -> Node3D                          # löst vom Socket (Aufrufer hängt um), Interactables an
-func start_timed_action(label: String, game_minutes: int, on_done: Callable, cancellable: bool = true) -> bool
+func start_timed_action(label: String, game_minutes: int, on_done: Callable, cancellable: bool = true, animation: StringName = &"interact") -> bool
 func cancel_timed_action() -> void    # verbrauchte Minuten bleiben verbraucht, on_done wird NICHT aufgerufen
 func apply_start_inventory() -> void  # aus config.start_items (nur bei new_game_started)
 func drop_position() -> Transform3D   # gültige Ablage vor dem Spieler (0,8 m), sonst an den Füßen; Transform3D() + ungültig → Warnung
@@ -436,7 +437,7 @@ Icons: `src/ui/tools/icon_renderer.gd` rendert Item-Modelle → `assets/ui/icons
 | `ph_prop_wood_pile`, `ph_prop_stone_rubble`, `ph_prop_cross_wood`, `ph_prop_signpost`, `ph_prop_fallen_log`, `ph_env_bush` | Ressourcen, Grabzeichen, Kutschweg |
 | `ph_item_log`, `ph_item_stone`, `ph_item_linen`, `ph_item_coin`, `ph_item_shroud` | Item-Modelle (Icons) |
 - **Rig**: starre Gewichtung, Knochen `root, hips, spine, head, arm_l, arm_r, leg_l, leg_r`, Armature-Objekt heißt `Armature`. Aktionen mit Suffix `-loop` werden in Godot geloopt und ohne Suffix importiert (`&"idle"`, `&"walk"` …). Export: Armature als Wurzel, Aktionen als NLA-Spuren, `export_animation_mode='ACTIONS'`. Godot-Pfade: `<glb>/AnimationPlayer`, `<glb>/Armature/Skeleton3D`.
-- Test `test_assets.gd`: alle Modelle vorhanden, Charaktere haben die Animationen, `-loop`-Animationen haben `loop_mode != NONE`, Dreiecksbudgets aus ASSET_GUIDELINES.
+- Tests `test_assets_characters.gd` / `test_assets_props.gd`: alle Modelle vorhanden, Charaktere haben die Animationen, `-loop`-Animationen haben `loop_mode != NONE`, Dreiecksbudgets aus ASSET_GUIDELINES.
 
 ## 9. Tests
 **Framework** (`tests/framework/test_case.gd`, Runner `tests/run_tests.gd`):

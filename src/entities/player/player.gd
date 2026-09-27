@@ -31,7 +31,7 @@ func detach_carried() -> Node3D:
 	return null
 
 
-func start_timed_action(label: String, game_minutes: int, on_done: Callable, cancellable: bool = true) -> bool:
+func start_timed_action(label: String, game_minutes: int, on_done: Callable, cancellable: bool = true, animation: StringName = &"interact") -> bool:
 	push_warning("STUB Player.start_timed_action")
 	return false
 
