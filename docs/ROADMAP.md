@@ -48,3 +48,7 @@ Gebaut in kleinen, einzeln getesteten Meilensteinen (je ein Git-Commit):
 | 2.10 | Integration, Regressionstest, Performance-Messung, Präsentation | 01, 19, 20 | Voller Durchlauf |
 
 Debug-Funktionen im Vertical Slice: Zeit ändern, Teleport, Ressourcen hinzufügen, Leiche spawnen, NPC spawnen. (Gegner/Quests/Gebäude-Platzieren erst mit den jeweiligen Systemen.)
+
+## PHASE 3 – FRIEDHOF AUSBAU (Plan)
+
+Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe): **`docs/PHASE3_DESIGN.md`** – Abschnitte Ostwiese/Birkenhang (12 Grabstellen), Zier & Baumodus, Pflege, Ruf, Geister, Migration der Phase-2-Stände, Wellenplan W0–W3.
