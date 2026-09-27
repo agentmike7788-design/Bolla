@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="StoryCorpseData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/story/story_corpse_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"s2_hemmerling"
+order = 2
+earliest_day = 9
+display_name = "Jost Hemmerling"
+age = 41
+cause_id = &"drowned_millpond"
+traits = Array[StringName]([&"tattoo"])
+valuables_coins = 0
+look = 0
+finds = Array[StringName]([&"f_s2_jacket", &"f_s2_wrists", &"f_s2_key"])
+arrival_note = "Aus dem Mühlteich. Jost war früher Fährmann, bevor sie die Moorfähre zugemacht haben."
+is_finale = false

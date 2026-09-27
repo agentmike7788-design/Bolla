@@ -4,7 +4,7 @@ extends RefCounted
 ## slot paths, the write-then-rename of a save document, reading a slot back into {meta, state}
 ## with format / meta / data checks, and listing the slots on disk. Stateless – no scene tree.
 
-## Phase 3: v2 (docs/PHASE3_DESIGN.md §5). Versions MIN_FORMAT_VERSION…FORMAT_VERSION are read;
+## Phase 3: v2 (docs/PHASE3_DESIGN.md §5), Phase 4: v3 (docs/PHASE4_DESIGN.md §5). Versions MIN_FORMAT_VERSION…FORMAT_VERSION are read;
 ## older states are upgraded by SaveMigration after decode_state.
 const FORMAT_VERSION := SaveMigration.CURRENT
 const MIN_FORMAT_VERSION := 1

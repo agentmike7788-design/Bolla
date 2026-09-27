@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ExamConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/corpse/exam_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+steps = Array[Dictionary]([{"id": &"clothing", "label": "Kleidung", "verb": "Kleidung durchsehen", "minutes": 10}, {"id": &"hands", "label": "Hände & Arme", "verb": "Hände & Arme ansehen", "minutes": 10}, {"id": &"wounds", "label": "Wunden & Haut", "verb": "Wunden & Haut prüfen", "minutes": 15}, {"id": &"pockets", "label": "Taschen & Säume", "verb": "Taschen & Säume durchsuchen", "minutes": 10}])
+locked_by_dress = Array[StringName]([&"clothing", &"pockets"])
+nothing_text = "Nichts Auffälliges."
+trait_steps = Dictionary[StringName, StringName]({&"valuables": &"pockets", &"letter": &"pockets", &"tattoo": &"hands", &"strange_wound": &"wounds"})

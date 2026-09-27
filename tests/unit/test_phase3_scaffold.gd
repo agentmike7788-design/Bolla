@@ -195,7 +195,7 @@ func test_reputation_config_values() -> void:
 		assert_eq(cfg.delivery_every_other_day, PackedInt32Array([1, 0, 0, 0, 0]))
 		assert_true(cfg.drift_factor > 0.0 and cfg.drift_factor <= 1.0 and cfg.drift_max > 0)
 		var points := {&"grave_good": 2, &"grave_poor": -3, &"missed_delivery": -4, &"marker_upgrade": 1, &"section_unlocked": 4}
-		assert_eq(cfg.event_points.size(), points.size())
+		# Phase 4 §2.8 appends hair_taken / teeth_taken / stench to the class default (P3 the .tres).
 		for kind: StringName in points:
 			assert_eq(cfg.event_points.get(kind), points[kind], String(kind))
 		assert_true(cfg.grave_poor_max < cfg.grave_good_min)
@@ -214,7 +214,8 @@ func test_cleanliness_config_values() -> void:
 		assert_eq(cfg.max_level, 3)
 		for arr: PackedInt32Array in [cfg.penalty_by_level, cfg.grave_mood_by_level, cfg.weed_minutes]:
 			assert_eq(arr.size(), cfg.max_level + 1, "one value per level")
-		assert_eq(cfg.penalty_by_level, PackedInt32Array([0, 0, 1, 2]))
+		# Phase 4 §2.14: class default [0, 0, 1, 3] (W0), data / fixture follow with P3.
+		assert_true(cfg.penalty_by_level in [PackedInt32Array([0, 0, 1, 2]), PackedInt32Array([0, 0, 1, 3])])
 		assert_eq(cfg.grave_mood_by_level, PackedInt32Array([1, 0, -2, -4]))
 		assert_eq(cfg.weed_minutes, PackedInt32Array([0, 15, 15, 25]))
 		assert_almost(cfg.growth_per_day[&"weeds"], 0.30)
@@ -372,12 +373,13 @@ func test_appended_enum_values() -> void:
 
 
 func test_save_format_v2_and_migration_chain() -> void:
-	assert_eq(SaveMigration.CURRENT, 2)
+	# Phase 4 W0: format v3 (docs/PHASE4_DESIGN.md §5) – the chain 1 → 2 → 3 stays.
+	assert_eq(SaveMigration.CURRENT, 3)
 	assert_eq(SaveFileIO.FORMAT_VERSION, SaveMigration.CURRENT)
-	assert_eq(SaveManager.FORMAT_VERSION, 2)
+	assert_eq(SaveManager.FORMAT_VERSION, SaveMigration.CURRENT)
 	var state := {"autoloads": {"TimeManager": {}, "GameState": {}}, "nodes": {}}
-	assert_eq(SaveMigration.migrate(state, 2), state, "current version unchanged")
-	assert_eq(SaveMigration.migrate(state, 3), {}, "newer → corrupt")
+	assert_eq(SaveMigration.migrate(state, SaveMigration.CURRENT), state, "current version unchanged")
+	assert_eq(SaveMigration.migrate(state, SaveMigration.CURRENT + 1), {}, "newer → corrupt")
 	assert_eq(SaveMigration.migrate(state, 0), {}, "unknown → corrupt")
 	var migrated := SaveMigration.migrate(state, 1, {"day": 3})
 	assert_true(migrated.get("autoloads") is Dictionary and migrated.get("nodes") is Dictionary, "v1 → v2 keeps the envelope")

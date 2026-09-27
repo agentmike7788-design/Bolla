@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="InsightData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/insight_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"i_not_lorenz"
+order = 5
+title = "Nicht Lorenz"
+question = "Wer liegt im Mantel?"
+text = "Der Tote aus dem Moor trägt Lorenz' Mantel, aber Kaspar Dorns Hände. Dorn stand als Fünfter auf der Liste. Lorenz hat ihm den Mantel gegeben und sich für tot erklären lassen. Er lebt – irgendwo unter dem Hügel."
+requires = Array[StringName]([&"c_soft_hands", &"c_buckle", &"c_page_list"])
+sets_flag = &"insight_not_lorenz"
+optional = false
+rename_story = &"s5_moor"
+rename_to = "Kaspar Dorn"

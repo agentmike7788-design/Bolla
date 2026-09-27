@@ -15,3 +15,12 @@ extends Resource
 ## Maximum decor points this section contributes (§2.3).
 @export var decor_cap: int = 9
 @export_multiline var unlock_text: String = ""
+# Phase 4 (docs/PHASE4_DESIGN.md §2.10, §3.4)
+## GameState flag required before this section can be worked on (&"" = none), e.g. has_elder_key.
+@export var requires_flag: StringName = &""
+## Dimmed obstacle text while requires_flag is missing ("Das Pförtchen ist verschlossen.").
+@export var requires_flag_text: String = ""
+## Counts for the Phase-3 goal cemetery_complete (elder: false).
+@export var counts_for_cemetery: bool = true
+## Chapter completed by filling this section (elder: &"six_pits").
+@export var chapter: StringName = &""

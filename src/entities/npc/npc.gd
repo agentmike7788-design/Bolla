@@ -26,6 +26,11 @@ const EPSILON := 0.0001
 @export var save_order: int = 20
 @export var npc_id: StringName
 @export var model: PackedScene
+## Phase 4 (docs/PHASE4_DESIGN.md §3.4) – STUB (P3): flag missing → like activity home
+## (invisible, no prompt). Not evaluated yet.
+@export var requires_flag: StringName = &""
+## STUB (P3): lantern (OmniLight without shadow, group warm_lights) at this marker.
+@export var lantern_marker: StringName = &""
 @export_group("Animation")
 ## Ground speed (m/s) at which the walk / push_cart cycles do not slide (rig notes, M6a).
 @export var walk_anim_speed: float = 1.65

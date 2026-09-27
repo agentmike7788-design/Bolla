@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="DecayVisualConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/entities/corpse/decay_visual_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+overlay_by_stage = Dictionary[StringName, float]({&"fresh": 0.0, &"wilted": 0.35, &"decaying": 0.7, &"rotten": 1.0})
+washed_reduction = 0.15
+flies_by_stage = Dictionary[StringName, int]({&"fresh": 0, &"wilted": 4, &"decaying": 8, &"rotten": 10})
+wisps_by_stage = Dictionary[StringName, int]({&"fresh": 0, &"wilted": 0, &"decaying": 3, &"rotten": 5})
+smoke_particles = 3
+stain_color = Color(0.556863, 0.603922, 0.494118, 1)
+wisp_color = Color(0.66, 0.65, 0.48, 0.3)
+smoke_color = Color(0.72, 0.7, 0.66, 0.3)
+visibility_range = 22.0
+max_emitting = 3

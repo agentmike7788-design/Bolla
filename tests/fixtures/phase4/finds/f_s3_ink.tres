@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="FindData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/corpse/find_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"f_s3_ink"
+step = &"hands"
+label = "Tinte"
+text = "Tinte an Daumen und Zeigefinger. Sie hat viel geschrieben, zuletzt."
+lost_text = "Die Haut ist fleckig geworden. Was dort war, lässt sich nicht mehr erkennen."
+min_freshness = 0.3
+trait_id = &""
+cause_id = &""
+story_only = true
+clue_id = &""
+sets_flag = &""

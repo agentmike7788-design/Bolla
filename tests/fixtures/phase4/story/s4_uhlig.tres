@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="StoryCorpseData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/story/story_corpse_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"s4_uhlig"
+order = 4
+earliest_day = 16
+display_name = "Bartel Uhlig"
+age = 72
+cause_id = &"fall_hayloft"
+traits = Array[StringName]([&"tattoo"])
+valuables_coins = 0
+look = 2
+finds = Array[StringName]([&"f_s4_collar", &"f_s4_scar", &"f_s4_token"])
+arrival_note = "Der alte Uhlig. Vom Heuboden, sagen sie. Mit zweiundsiebzig steigt man da nicht mehr hinauf."
+is_finale = false

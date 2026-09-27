@@ -55,7 +55,7 @@ func test_fuzz_v1_fixtures() -> void:
 
 func test_version_and_meta_are_rejected_cleanly() -> void:
 	var doc: Dictionary = JSON.parse_string(await _make_v2_save())
-	for v: Variant in [3, 99, 0, -1, 2.5, "2", null, true]:
+	for v: Variant in [SaveFileIO.FORMAT_VERSION + 1, 99, 0, -1, 2.5, "2", null, true]:
 		var d := doc.duplicate(true)
 		d.format_version = v
 		var err := await _load_doc(d, "format_version %s" % v)

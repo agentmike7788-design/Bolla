@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_trader_lorenz"
+title = "Ilse über Lorenz"
+text = "Lorenz? Er hat mir nie etwas verkauft. Er hat mir Tee gekocht und gefragt, wer im Dorf die Kranken besucht. Dann hat er aufgeschrieben, was ich sagte."
+kind = &"talk"
+order = 17

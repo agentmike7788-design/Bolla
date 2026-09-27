@@ -225,6 +225,12 @@ func plots_in_section(section_id: StringName) -> PackedStringArray:
 	return out
 
 
+## STUB (P1) – Phase 4 §3.4: grave ids of the plots in sections with counts_for_cemetery
+## (W0: every plot).
+func plots_counting_for_cemetery() -> PackedStringArray:
+	return PackedStringArray(_graves.keys())
+
+
 ## Section of the plot of `grave_id` (&"" = no plot in this world).
 func section_of(grave_id: String) -> StringName:
 	return _plot_sections.get(grave_id, &"")

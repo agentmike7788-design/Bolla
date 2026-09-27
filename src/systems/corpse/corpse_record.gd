@@ -20,6 +20,18 @@ const DECISION_NONE := &""
 const DECISION_TAKEN := &"taken"
 const DECISION_LEFT := &"left"
 const DECISIONS: Array[StringName] = [DECISION_NONE, DECISION_TAKEN, DECISION_LEFT]
+# Phase 4 (docs/PHASE4_DESIGN.md §3.4, W0) – examination steps, stage, dress, harvest kinds.
+const STEP_CLOTHING := &"clothing"
+const STEP_HANDS := &"hands"
+const STEP_WOUNDS := &"wounds"
+const STEP_POCKETS := &"pockets"
+const STEPS: Array[StringName] = [STEP_CLOTHING, STEP_HANDS, STEP_WOUNDS, STEP_POCKETS]
+const STAGE_ROTTEN := &"rotten"
+const DRESS_NONE := &""
+const DRESS_SHROUD := &"shroud"
+const DRESS_GOWN := &"gown"
+const HARVEST_HAIR := &"hair"
+const HARVEST_TEETH := &"teeth"
 
 var id: String = ""
 var seed: int = 0
@@ -41,10 +53,56 @@ var grave_id: String = ""
 var arrival_total_minutes: int = 0
 ## Game day of the burial (CorpseManager.mark_buried; 0 = not buried / older save).
 var buried_day: int = 0
+# Phase 4 (§3.4). W0 declares the fields; P1 adds them to to_dict / from_dict (missing = default).
+var story_id: StringName = &""
+## Finished examination steps (STEPS).
+var exam_done: Array[StringName] = []
+## FindData ids in the order they were revealed / lost.
+var finds_revealed: Array[StringName] = []
+var finds_lost: Array[StringName] = []
+## Traits whose find was revealed (set by CorpseCare).
+var traits_revealed: Array[StringName] = []
+var washed: bool = false
+## DRESS_*; shrouded == (dress != DRESS_NONE) is kept in sync by whoever dresses (compatibility).
+var dress: StringName = &""
+var laid_out: bool = false
+## HARVEST_* kinds taken.
+var harvested: Array[StringName] = []
+## Juniper windows [start, end, start, end …] in total minutes.
+var balm_windows: PackedInt32Array = []
+## "Es riecht streng." already shown for this corpse.
+var stench_noted: bool = false
 
 
 func has_trait(t: StringName) -> bool:
 	return traits.has(t)
+
+
+# --- Phase 4 helpers (W0; P1 owns them from W1 on) ---------------------------------------------
+
+func is_step_done(step: StringName) -> bool:
+	return exam_done.has(step)
+
+
+## All four STEPS done.
+func is_fully_examined() -> bool:
+	for step: StringName in STEPS:
+		if not exam_done.has(step):
+			return false
+	return true
+
+
+func is_dressed() -> bool:
+	return dress != DRESS_NONE
+
+
+## washed ∧ dressed ∧ laid out.
+func is_fully_prepared() -> bool:
+	return washed and is_dressed() and laid_out
+
+
+func is_harvested(kind: StringName) -> bool:
+	return harvested.has(kind)
 
 
 ## Empty until the corpse has been examined.

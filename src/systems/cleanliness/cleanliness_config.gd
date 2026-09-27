@@ -7,8 +7,9 @@ extends Resource
 ## ± factor per spot, fixed from hash(spot_id).
 @export var growth_jitter: float = 0.25
 @export var max_level: int = 3
-## Cemetery quality penalty per spot by level 0..3.
-@export var penalty_by_level: PackedInt32Array = [0, 0, 1, 2]
+## Cemetery quality penalty per spot by level 0..3 (Phase 4 §2.14: [0, 0, 1, 3] as class
+## default; data/config/cleanliness_config.tres is P3's and still [0, 0, 1, 2] until W1).
+@export var penalty_by_level: PackedInt32Array = [0, 0, 1, 3]
 ## Ghost mood points of a grave's own spot by level 0..3.
 @export var grave_mood_by_level: PackedInt32Array = [1, 0, -2, -4]
 ## Weeding minutes by level 0..3 (by hand).

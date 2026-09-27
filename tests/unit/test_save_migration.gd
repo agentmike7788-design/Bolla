@@ -75,14 +75,14 @@ func test_reputation_table() -> void:
 
 # --- version chain ----------------------------------------------------------------------------
 
-func test_current_version_is_two() -> void:
-	assert_eq(SaveMigration.CURRENT, 2)
+func test_current_version_is_three() -> void:
+	assert_eq(SaveMigration.CURRENT, 3)
 	assert_eq(SaveFileIO.FORMAT_VERSION, SaveMigration.CURRENT)
 
 
 func test_unknown_or_newer_versions_are_rejected() -> void:
 	var f := _fixture("slot_day3")
-	for version: int in [-1, 0, 3, 99]:
+	for version: int in [-1, 0, SaveMigration.CURRENT + 1, 99]:
 		assert_eq(SaveMigration.migrate(f.state, version, f.meta), {}, "version %d" % version)
 
 
@@ -235,7 +235,7 @@ func test_v2_round_trip_is_identical() -> void:
 func test_newer_version_file_is_rejected() -> void:
 	assert_eq(Phase3Fixtures.install_save_v1("slot_day3", TEST_DIR, SLOT), OK)
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
-	doc.format_version = 3
+	doc.format_version = SaveFileIO.FORMAT_VERSION + 1
 	_write_doc(doc)
 	assert_eq(_read_slot().err, ERR_FILE_UNRECOGNIZED)
 	assert_true(SaveFileIO.is_newer_version(TEST_DIR, SLOT))

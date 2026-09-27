@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="InsightData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/insight_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"i_ferry"
+order = 3
+title = "Die Nachtfähre"
+question = "Was verbindet die Tätowierten?"
+text = "Anker und Schlange: das Zeichen der alten Moorfährleute. Lorenz bezahlte Nachtfahrten über das Moor. Er wollte die Gezeichneten fortbringen. Nicht alle kamen an."
+requires = Array[StringName]([&"c_anchor_snake", &"c_ferry_jacket", &"c_ferry_token"])
+sets_flag = &"insight_ferry"
+optional = false
+rename_story = &""
+rename_to = ""

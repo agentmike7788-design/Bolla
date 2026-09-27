@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="UtilizationConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/utilization/utilization_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+kinds = Dictionary[StringName, Dictionary]({&"hair": {"label": "Haar", "verb": "Zopf abschneiden", "minutes": 10, "tool": &"shears", "item": &"hair_braid", "min_freshness": 0.3, "low_freshness_text": "Das Haar ist zu brüchig.", "reputation_event": &"hair_taken", "piety_event": &"hair_taken", "done_text": "Du schneidest den Zopf ab. Er ist schwerer, als du dachtest."}, &"teeth": {"label": "Zähne", "verb": "Zähne nehmen", "minutes": 15, "tool": &"pliers", "item": &"teeth_pouch", "min_freshness": 0.0, "low_freshness_text": "", "reputation_event": &"teeth_taken", "piety_event": &"teeth_taken", "done_text": "Du nimmst, was der Zahnbrecher in der Stadt bezahlt. Du siehst dabei nicht hin."}})
+sell_prices = Dictionary[StringName, int]({&"hair_braid": 4, &"teeth_pouch": 5})
+tool_items = Array[StringName]([&"shears", &"pliers"])

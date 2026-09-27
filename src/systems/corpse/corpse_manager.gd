@@ -327,6 +327,29 @@ func unburied_count() -> int:
 	return count
 
 
+# --- Phase 4 (docs/PHASE4_DESIGN.md §3.4) – STUB (P1) ------------------------------------------
+
+## corpse_updated for changes made by CorpseCare (W0: emits only).
+func notify_changed(id: String) -> void:
+	if _records.has(id):
+		EventBus.corpse_updated.emit(id)
+
+
+## STUB (P1) – StoryCorpseData ids delivered so far (saved as "story_delivered").
+func story_delivered() -> PackedStringArray:
+	return PackedStringArray()
+
+
+## STUB (P1) – day of the last story delivery (0 = none).
+func story_last_day() -> int:
+	return 0
+
+
+## STUB (P1) – debug: delivers `story_id` now (same rules except the day); null if refused.
+func deliver_story_now(_story_id: StringName) -> CorpseRecord:
+	return null
+
+
 func save_state() -> Dictionary:
 	return CorpseSaveCodec.write(_records, _next_serial, _last_delivery_day, _last_delivery_ids, _spawn_counts)
 

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PrepConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/corpse/prep_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+wash_minutes = 15
+wash_tool = &"scrub_brush"
+dress = Dictionary[StringName, Dictionary]({&"shroud": {"item": &"shroud", "minutes": 10}, &"gown": {"item": &"burial_gown", "minutes": 15}})
+lay_out_minutes = 10
+lay_out_tool = &"comb"
+balm_item = &"juniper"
+balm_minutes = 10
+balm_factor = 0.25
+balm_window_minutes = 1080
+balm_max_windows = 4

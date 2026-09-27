@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_buckle"
+title = "Die Schnalle „K. D.\""
+text = "Eine Gürtelschnalle, die nicht zum Mantel passt. Eingeritzt: K. D."
+kind = &"object"
+order = 13

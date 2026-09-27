@@ -12,3 +12,8 @@ extends Resource
 ## Trait lines of content ghosts: letter, tattoo, strange_wound (2 each).
 @export var by_trait: Dictionary[StringName, PackedStringArray] = {}
 @export var gift: String = "Der Geist deutet ins Moos – zwei Münzen."
+# Phase 4 (docs/PHASE4_DESIGN.md §2.9)
+## Lines of content / calm story ghosts by StoryCorpseData.id (2 each).
+@export var by_story: Dictionary[StringName, PackedStringArray] = {}
+## Lines by piety tier (devout, hardhearted: 2 each).
+@export var by_piety: Dictionary[StringName, PackedStringArray] = {}

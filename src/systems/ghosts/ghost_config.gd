@@ -21,3 +21,5 @@ extends Resource
 @export var repeat_minutes: int = 60
 @export var bubble_seconds: float = 4.0
 @export var gift_coins: int = 2
+## Phase 4 §2.9: mood points per harvested kind (hair / teeth) – reason "robbed".
+@export var robbed_mood: int = -5

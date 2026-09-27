@@ -17,6 +17,11 @@ const CLEARABLE_DIR := "res://data/clearables"
 const DECOR_DIR := "res://data/decor"
 const GHOST_DIR := "res://data/ghosts"
 const GHOST_LINES := &"ghost_lines"
+# Phase 4 (docs/PHASE4_DESIGN.md §3.5)
+const FIND_DIR := "res://data/finds"
+const STORY_DIR := "res://data/story"
+const CLUE_DIR := "res://data/journal/clues"
+const INSIGHT_DIR := "res://data/journal/insights"
 
 var _items: Dictionary = {}       # StringName -> ItemData
 var _recipes: Dictionary = {}     # StringName -> RecipeData
@@ -27,6 +32,10 @@ var _sections: Dictionary = {}    # StringName -> SectionData
 var _clearables: Dictionary = {}  # StringName -> ClearableData
 var _decors: Dictionary = {}      # StringName -> DecorData
 var _ghosts: Dictionary = {}      # StringName (file name) -> Resource
+var _finds: Dictionary = {}       # StringName -> FindData
+var _stories: Dictionary = {}     # StringName -> StoryCorpseData
+var _clues: Dictionary = {}       # StringName -> ClueData
+var _insights: Dictionary = {}    # StringName -> InsightData
 var _icons: Dictionary = {}       # StringName -> Texture2D
 var _placeholder: Texture2D
 
@@ -49,6 +58,10 @@ func reload() -> void:
 	_ghosts.clear()
 	for path: String in _resource_files(GHOST_DIR):
 		_ghosts[StringName(path.get_file().get_basename())] = load(path)
+	_finds = _load_dir(FIND_DIR, "id")
+	_stories = _load_dir(STORY_DIR, "id")
+	_clues = _load_dir(CLUE_DIR, "id")
+	_insights = _load_dir(INSIGHT_DIR, "id")
 
 
 func item(id: StringName) -> Resource:
@@ -131,6 +144,48 @@ func ghost_lines() -> Resource:
 	return _ghosts.get(GHOST_LINES)
 
 
+# --- Phase 4 ---------------------------------------------------------------------------------
+
+## data/finds/<id>.tres (FindData), null if unknown.
+func find(id: StringName) -> Resource:
+	return _finds.get(id)
+
+
+## All finds, sorted by id.
+func finds() -> Array:
+	return _sorted(_finds.values(), "id")
+
+
+## data/story/<id>.tres (StoryCorpseData), null if unknown.
+func story_corpse(id: StringName) -> Resource:
+	return _stories.get(id)
+
+
+## All story corpses, sorted by `order`.
+func story_corpses() -> Array:
+	return _sorted(_stories.values(), "order")
+
+
+## data/journal/clues/<id>.tres (ClueData), null if unknown.
+func clue(id: StringName) -> Resource:
+	return _clues.get(id)
+
+
+## All clues, sorted by `order`.
+func clues() -> Array:
+	return _sorted(_clues.values(), "order")
+
+
+## data/journal/insights/<id>.tres (InsightData), null if unknown.
+func insight(id: StringName) -> Resource:
+	return _insights.get(id)
+
+
+## All insights, sorted by `order`.
+func insights() -> Array:
+	return _sorted(_insights.values(), "order")
+
+
 func corpse_tables() -> Resource:
 	return load(CORPSE_TABLES) if ResourceLoader.exists(CORPSE_TABLES) else null
 
@@ -152,6 +207,20 @@ func _placeholder_icon() -> Texture2D:
 		img.fill_rect(Rect2i(8, 8, 48, 48), Color(0.95, 0.66, 0.23))
 		_placeholder = ImageTexture.create_from_image(img)
 	return _placeholder
+
+
+## Sorted by `key` (int keys numerically, then by id for ties; String keys lexically).
+static func _sorted(values: Array, key: String) -> Array:
+	var out := values.duplicate()
+	out.sort_custom(func(a: Resource, b: Resource) -> bool:
+		var ka: Variant = a.get(key)
+		var kb: Variant = b.get(key)
+		if ka is int and kb is int:
+			if ka != kb:
+				return ka < kb
+			return String(a.get("id")) < String(b.get("id"))
+		return String(ka) < String(kb))
+	return out
 
 
 func _load_dir(dir: String, key_property: String) -> Dictionary:

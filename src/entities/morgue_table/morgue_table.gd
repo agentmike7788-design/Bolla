@@ -132,6 +132,38 @@ func request_pick_up() -> void:
 		_manager().pick_up(record.id, player)
 
 
+# --- Phase 4 panel calls (docs/PHASE4_DESIGN.md §3.4) – STUB (P2) ------------------------------
+# request_examine() becomes request_exam_step(&"clothing"), request_shroud() request_dress(&"shroud").
+
+func request_exam_step(_step: StringName) -> void:
+	pass
+
+
+## "Gründlich untersuchen": all open steps as one timed action, then CorpseCare.exam_all.
+func request_exam_all() -> void:
+	pass
+
+
+func request_wash() -> void:
+	pass
+
+
+func request_dress(_kind: StringName) -> void:
+	pass
+
+
+func request_lay_out() -> void:
+	pass
+
+
+func request_balm() -> void:
+	pass
+
+
+func request_harvest(_kind: StringName) -> void:
+	pass
+
+
 ## The model's slot_corpse marker (the corpse is parented to it with identity transform).
 func slot_node() -> Node3D:
 	var slot := find_child(SLOT_NAME, true, false) as Node3D

@@ -66,6 +66,25 @@ signal ghost_spoke(grave_id: String, mood: StringName, text: String)
 ## 21:30 on / 04:30 off.
 signal ghost_night_changed(active: bool)
 
+# Phase 4 (docs/PHASE4_DESIGN.md §3.3) – in addition to corpse_updated; listeners never change
+# game state (the changing system calls the others directly).
+# Examination, preparation, harvesting (CorpseCare)
+signal exam_step_done(corpse_id: String, step: StringName, revealed: Array[StringName], lost: Array[StringName])
+## action: &"wash", &"dress", &"lay_out", &"balm"
+signal corpse_prepared(corpse_id: String, action: StringName)
+signal corpse_harvested(corpse_id: String, kind: StringName, item_id: StringName)
+# Story (CorpseManager / StoryDirector)
+signal story_corpse_arrived(story_id: StringName, corpse_id: String)
+## &"six_pits" (Graveyard)
+signal chapter_completed(chapter_id: StringName)
+# Piety (Piety)
+signal piety_changed(value: int, tier: StringName, delta: int, reason: String)
+# Journal (JournalManager)
+signal clue_found(clue_id: StringName, corpse_id: String)
+signal insight_unlocked(insight_id: StringName)
+# Night trader (NightTrade): one trade in the panel (coins positive = income).
+signal trader_trade(coins: int, sold: Dictionary, bought: Dictionary)
+
 # UI
 signal ui_panel_requested(panel: StringName, context: Dictionary)
 signal ui_modal_changed(open: bool)

@@ -1,11 +1,15 @@
 class_name SaveMigration
 extends RefCounted
 ## Upgrades a decoded save state ({autoloads, nodes}) to the CURRENT format
-## (docs/PHASE3_DESIGN.md §5.2, §3.4 "Speichern"). Applied by SaveFileIO.read_doc after
+## (docs/PHASE3_DESIGN.md §5.2, §3.4 "Speichern"; docs/PHASE4_DESIGN.md §5.2: chain 1→2→3). Applied by SaveFileIO.read_doc after
 ## decode_state; the normal load path follows and the next save writes CURRENT.
 ## Pure: never touches the scene tree or an autoload, never changes its input.
 
-const CURRENT := 2
+const CURRENT := 3
+## Save ids of the Phase-4 system nodes that get an empty state in migrate_2_to_3 (§3.1, §5.2
+## steps 4–5). Used by P6 once the nodes exist in the world (W0: not yet inserted – an unknown
+## save_id would warn).
+const V3_EMPTY_NODES: PackedStringArray = ["journal", "night_trade", "npc_trader"]
 
 ## Save ids of the Phase-3 system nodes that get an empty state ({} = their default state,
 ## docs/PHASE3_DESIGN.md §3.1, §5.2 step 4). Reputation keeps its value in GameState, the
@@ -30,6 +34,8 @@ static func migrate(state: Dictionary, from_version: int, meta: Dictionary = {})
 	var out := state
 	if from_version <= 1:
 		out = migrate_1_to_2(out, meta)
+	if from_version <= 2:
+		out = migrate_2_to_3(out, meta)
 	return out
 
 
@@ -71,6 +77,13 @@ static func migrate_1_to_2(state: Dictionary, meta: Dictionary) -> Dictionary:
 		(corpses as Dictionary)["last_delivery_ids"] = [last] if last != "" else []
 	# 7. Player, TimeManager, resources, chest, hut: unchanged.
 	return out
+
+
+## STUB (P6) – docs/PHASE4_DESIGN.md §5.2 steps 1–7 on a deep copy of a v2 state. W0:
+## identity (fail-safe: a v2 save loads exactly as in Phase 3, every new field keeps its
+## default because every from_dict / load_state tolerates missing keys).
+static func migrate_2_to_3(state: Dictionary, _meta: Dictionary) -> Dictionary:
+	return state.duplicate(true)
 
 
 ## ReputationRules.migrate_v1 (§3.4): 0 → 40, −1 → 31, −2 → 22, −3 → 13, clamped 0…100.

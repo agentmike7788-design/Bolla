@@ -31,7 +31,8 @@ static func arrival_total(day: int, now_total: int, tables: CorpseTables) -> int
 
 
 ## A graveyard exists and no plot is left for a new corpse – and none ever comes back.
-static func is_cemetery_full(graveyard: Node, unburied: int) -> bool:
+## Phase 4 (§2.11): `reserved` = pending story corpses – STUB (P1): not yet counted.
+static func is_cemetery_full(graveyard: Node, unburied: int, _reserved: int = 0) -> bool:
 	return graveyard != null and graveyard.has_method("free_plot_count") \
 			and int(graveyard.call("free_plot_count")) <= unburied
 

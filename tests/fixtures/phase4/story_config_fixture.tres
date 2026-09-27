@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="StoryConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/story/story_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+min_gap_days = 2
+key_fallback_day = 12
+key_flag = &"has_elder_key"
+key_clue = &"c_elder_key"
+chapter_section = &"elder"
+finale_story = &"s5_moor"
+key_fallback_text = "An der Bahre hängt ein rostiger Schlüssel an einer Schnur. Osric: ‚Lag an der alten Fährstelle.'"
+reserve_note = "Heute nichts. Aber halt eine Grube frei."

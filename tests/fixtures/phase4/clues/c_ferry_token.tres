@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_ferry_token"
+title = "Die Fährmarke"
+text = "‚Moorfähre – Nachtfahrt – frei.' Auf der Rückseite: ‚L. A. zahlt.'"
+kind = &"object"
+order = 11

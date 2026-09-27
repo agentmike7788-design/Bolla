@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="FindData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/corpse/find_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"f_cause_poisoned"
+step = &"wounds"
+label = "Todesursache"
+text = "Ein Hauch von Bittermandel, der schon jetzt verfliegt."
+lost_text = "Was die ersten Stunden noch gezeigt hätten, ist vergangen."
+min_freshness = 0.6
+trait_id = &""
+cause_id = &"poisoned"
+story_only = false
+clue_id = &""
+sets_flag = &""
