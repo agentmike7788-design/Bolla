@@ -266,11 +266,11 @@ func test_total_quality_and_rating() -> void:
 
 func test_old_graves_count_old_grave_quality() -> void:
 	var custom := economy.duplicate() as EconomyConfig
-	custom.old_grave_quality = 4
+	custom.old_grave_quality = 6
 	graveyard.economy = custom
-	assert_eq(graveyard.total_quality(), 4)
+	assert_eq(graveyard.total_quality(), 6)
 	_complete("plot_01", _corpse(true, true), &"gravestone_simple")
-	assert_eq(graveyard.total_quality(), 13)
+	assert_eq(graveyard.total_quality(), 15)
 	assert_eq(graveyard.rating(), &"orderly")
 
 

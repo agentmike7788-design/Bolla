@@ -360,7 +360,8 @@ func test_appended_enum_values() -> void:
 			ItemData.Category.DECOR, ItemData.Category.TOOL], [0, 1, 2, 3, 4])
 	assert_eq(RecipeData.new().category, &"grave")
 	for r: RecipeData in Database.recipes():
-		assert_eq(r.category, &"grave", "existing recipe %s" % r.id)
+		if r.id in [&"shroud", &"wooden_cross", &"gravestone_simple"]:
+			assert_eq(r.category, &"grave", "existing recipe %s" % r.id)
 
 
 func test_save_format_v2_and_migration_chain() -> void:

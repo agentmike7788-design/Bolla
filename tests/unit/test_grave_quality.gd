@@ -195,10 +195,10 @@ func test_real_economy_config_matches_defaults() -> void:
 	var defaults := EconomyConfig.new()
 	assert_not_null(real)
 	for prop: Dictionary in defaults.get_property_list():
-		if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE and prop.name != "rating_thresholds":
+		if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
 			assert_eq(real.get(prop.name), defaults.get(prop.name), String(prop.name))
-	assert_eq(real.rating_thresholds, PackedInt32Array([15, 32, 50]), "v3 thresholds")
-	assert_eq(defaults.rating_thresholds, PackedInt32Array([10, 25, 45]), "class default unchanged")
+	assert_eq(real.rating_thresholds, PackedInt32Array([15, 32, 50, 100]), "Phase 3 thresholds (§2.5)")
+	assert_eq(real.valuables_reputation, -8, "Phase 3 reputation scale (§2.6)")
 	assert_true(Database.config(&"economy_config") is EconomyConfig)
 
 

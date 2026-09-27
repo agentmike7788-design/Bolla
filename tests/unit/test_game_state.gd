@@ -1,7 +1,7 @@
 extends TestCase
 ## M2: GameState – flags, stats, reputation label, reset, save/load (§3.4, §2.4).
+## Phase 3 (P3): the label follows ReputationRules on the 0…100 scale (docs/PHASE3_DESIGN.md §2.6).
 
-const ECONOMY_FIXTURE := "res://tests/fixtures/economy_config_fixture.tres"
 const STAT_KEYS: Array[StringName] = [&"burials", &"valuables_taken", &"reputation", &"missed_deliveries", &"days_played"]
 
 
@@ -80,28 +80,35 @@ func test_add_and_get_stat() -> void:
 
 
 func test_reputation_label_default_thresholds() -> void:
-	var cases := {5: "Geachtet", 0: "Geachtet", -1: "Unauffällig", -2: "Unauffällig", -3: "Verrufen", -9: "Verrufen"}
+	var cases := {-9: "Verrufen", 0: "Verrufen", 14: "Verrufen", 15: "Unauffällig", 25: "Unauffällig", 34: "Unauffällig",
+			35: "Geachtet", 54: "Geachtet", 55: "Geschätzt", 79: "Geschätzt", 80: "Gerühmt", 100: "Gerühmt"}
 	for rep: int in cases:
 		GameState.stats[&"reputation"] = rep
 		assert_eq(GameState.reputation_label(), cases[rep], "reputation %d" % rep)
 
 
-func test_reputation_label_uses_economy_config() -> void:
-	var econ := (load(ECONOMY_FIXTURE) as EconomyConfig).duplicate() as EconomyConfig
-	econ.reputation_thresholds = PackedInt32Array([-2, -5])
-	GameState.economy = econ
-	var cases := {-1: "Geachtet", -2: "Unauffällig", -4: "Unauffällig", -5: "Verrufen"}
+func test_reputation_label_uses_reputation_config() -> void:
+	var cfg := Phase3Fixtures.reputation_config().duplicate() as ReputationConfig
+	cfg.tier_thresholds = PackedInt32Array([10, 20, 30, 40])
+	GameState.reputation_config = cfg
+	var cases := {9: "Verrufen", 10: "Unauffällig", 20: "Geachtet", 30: "Geschätzt", 40: "Gerühmt"}
 	for rep: int in cases:
 		GameState.stats[&"reputation"] = rep
 		assert_eq(GameState.reputation_label(), cases[rep], "reputation %d" % rep)
 
 
 func test_reputation_label_survives_broken_thresholds() -> void:
-	var econ := EconomyConfig.new()
-	econ.reputation_thresholds = PackedInt32Array([0])
-	GameState.economy = econ
-	GameState.stats[&"reputation"] = -3
-	assert_eq(GameState.reputation_label(), "Verrufen", "falls back to default thresholds")
+	var cfg := ReputationConfig.new()
+	cfg.tier_thresholds = PackedInt32Array([0])
+	GameState.reputation_config = cfg
+	GameState.stats[&"reputation"] = 40
+	assert_eq(GameState.reputation_label(), "Geachtet", "falls back to default thresholds")
+
+
+func test_reputation_default_stat_stays_zero() -> void:
+	# DEFAULT_STATS unchanged (reset = 0); a new game sets start_value via Reputation (§3.4).
+	GameState.reset()
+	assert_eq(GameState.get_stat(&"reputation"), 0)
 
 
 func test_reset_clears_everything() -> void:
@@ -109,12 +116,12 @@ func test_reset_clears_everything() -> void:
 	GameState.set_flag(&"x", 1)
 	GameState.add_stat(&"burials", 2)
 	GameState.add_stat(&"custom", 1)
-	GameState.economy = EconomyConfig.new()
+	GameState.reputation_config = ReputationConfig.new()
 	GameState.reset()
 	assert_eq(GameState.flags, {})
 	assert_eq(GameState.get_stat(&"burials"), 0)
 	assert_false(GameState.stats.has(&"custom"))
-	assert_null(GameState.economy, "config re-resolved lazily")
+	assert_null(GameState.reputation_config, "config re-resolved lazily")
 	assert_true(is_same(flags_ref, GameState.flags), "cleared in place")
 
 

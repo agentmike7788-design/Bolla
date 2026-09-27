@@ -81,10 +81,11 @@ func test_database_finds_all_recipes() -> void:
 		&"shroud": ["Leichentuch", {&"linen": 2}, 20],
 		&"wooden_cross": ["Holzkreuz", {&"wood": 3}, 30],
 		&"gravestone_simple": ["Grabstein", {&"stone": 4, &"wood": 1}, 60],
+		&"rake": ["Rechen", {&"wood": 3}, 20],
 	}
 	var workbench := Database.recipes(&"workbench")
-	assert_eq(workbench.size(), 3)
-	assert_eq(Database.recipes().size(), 3)
+	assert_eq(workbench.size(), 4)
+	assert_eq(Database.recipes().size(), 4)
 	for id: StringName in expected:
 		var spec: Array = expected[id]
 		var r := _recipe(id)

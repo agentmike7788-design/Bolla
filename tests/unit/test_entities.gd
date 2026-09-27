@@ -573,7 +573,7 @@ func test_table_valuables_decision_gates_the_shroud() -> void:
 	assert_eq(c.valuables_decision, CorpseRecord.DECISION_TAKEN)
 	assert_eq(inv.count(&"coin"), 6)
 	assert_eq(GameState.get_stat(&"valuables_taken"), 1)
-	assert_eq(GameState.get_stat(&"reputation"), -1)
+	assert_eq(GameState.get_stat(&"reputation"), corpses.economy.valuables_reputation)
 	table.decide_valuables(false)
 	assert_eq(_last_note(), [MorgueTable.TEXT_NO_DECISION, &"warning"])
 	assert_eq(c.valuables_decision, CorpseRecord.DECISION_TAKEN, "final")

@@ -412,6 +412,9 @@ func test_hud_quality_and_next_tier() -> void:
 	assert_eq(ui.hud.next_tier_label.text, "Gepflegt ab %d" % thresholds[1])
 	EventBus.cemetery_quality_changed.emit(50, &"dignified")
 	assert_eq(ui.hud.quality_text(), "50 · Würdevoll")
+	assert_eq(ui.hud.next_tier_label.text, "Ehrwürdig ab %d" % thresholds[3])
+	EventBus.cemetery_quality_changed.emit(thresholds[3], &"venerable")
+	assert_eq(ui.hud.quality_text(), "%d · Ehrwürdig" % thresholds[3])
 	assert_false(ui.hud.next_tier_label.visible, "top tier: no next tier")
 
 
@@ -557,7 +560,7 @@ func test_inventory_panel_slots_coins_reputation() -> void:
 	assert_eq(slots[1], {"id": &"linen", "amount": 1})
 	assert_eq(slots[2], {})
 	assert_eq(panel.coins_text(), "5", "coins outside the slots")
-	assert_eq(panel.reputation_text(), "Geachtet (0)")
+	assert_eq(panel.reputation_text(), "Verrufen (0)")
 	var first := panel._grid.get_child(0) as Control
 	assert_true(first.tooltip_text.begins_with("Holz\n"), first.tooltip_text)
 	assert_true(first.tooltip_text.contains("Scheite"), "description in the tooltip")
@@ -719,7 +722,7 @@ func test_crafting_rows_have_need_and_reasons() -> void:
 	inv.add_item(&"wood", 1)
 	ui.open_panel(&"crafting", _contexts()[&"crafting"])
 	var panel := ui.get_panel(&"crafting") as CraftingPanel
-	assert_eq(panel.recipe_ids(), [&"shroud", &"wooden_cross", &"gravestone_simple"], "quick to slow")
+	assert_eq(panel.recipe_ids(), [&"rake", &"shroud", &"wooden_cross", &"gravestone_simple"], "quick to slow")
 	assert_true(panel.craft_button(&"shroud").disabled)
 	assert_eq(panel.reason_text(&"shroud"), "Fehlt: 1 Leinen")
 	assert_false(panel.craft_button(&"wooden_cross").disabled)
@@ -789,7 +792,7 @@ func test_slice_summary_goal() -> void:
 	assert_eq(panel.days_label.text, "6")
 	assert_eq(panel.burials_label.text, "6")
 	assert_eq(panel.total_label.text, "48 · Würdevoll")
-	assert_eq(panel.reputation_label.text, "Geachtet (0)")
+	assert_eq(panel.reputation_label.text, "Verrufen (0)")
 	var goal := (Database.config(&"economy_config") as EconomyConfig).rating_thresholds[2]
 	var reached := "Ziel „Würdevoll“ (ab %d) erreicht." % goal
 	assert_eq(panel.goal_label.text, reached if 48 >= goal else "Ziel „Würdevoll“ (ab %d) verfehlt – es fehlen %d Punkte." % [goal, goal - 48])

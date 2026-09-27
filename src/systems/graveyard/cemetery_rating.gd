@@ -1,18 +1,21 @@
 class_name CemeteryRating
 extends RefCounted
-## Cemetery rating tiers (docs §2.4): thresholds from EconomyConfig.rating_thresholds.
+## Cemetery rating tiers (docs/PHASE3_DESIGN.md §2.5): thresholds from EconomyConfig.rating_thresholds.
 
 const NEGLECTED := &"neglected"
 const ORDERLY := &"orderly"
 const TENDED := &"tended"
 const DIGNIFIED := &"dignified"
+## Phase 3: new top tier (appended), from 100.
+const VENERABLE := &"venerable"
 ## Ascending tiers; tier i + 1 starts at rating_thresholds[i].
-const TIERS: Array[StringName] = [NEGLECTED, ORDERLY, TENDED, DIGNIFIED]
+const TIERS: Array[StringName] = [NEGLECTED, ORDERLY, TENDED, DIGNIFIED, VENERABLE]
 const LABELS: Dictionary[StringName, String] = {
 	NEGLECTED: "Verwahrlost",
 	ORDERLY: "Ordentlich",
 	TENDED: "Gepflegt",
 	DIGNIFIED: "Würdevoll",
+	VENERABLE: "Ehrwürdig",
 }
 
 
@@ -29,7 +32,7 @@ static func rating(total: int, config: EconomyConfig) -> StringName:
 	return TIERS[tier]
 
 
-## German label ("Verwahrlost" … "Würdevoll"); "" for unknown ids.
+## German label ("Verwahrlost" … "Ehrwürdig"); "" for unknown ids.
 static func label(rating_id: StringName) -> String:
 	if not LABELS.has(rating_id):
 		if rating_id != &"":

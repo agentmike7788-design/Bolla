@@ -1,6 +1,7 @@
 extends TestCase
-## M3: CemeteryRating tiers. Fixture = EconomyConfig class defaults (10 / 25 / 45); the real
-## data (§2.4 v3) uses 15 / 32 / 50 and is checked against a recomputed slice playthrough.
+## M3 / Phase 3 (P3): CemeteryRating tiers. Fixture = EconomyConfig class defaults
+## (15 / 32 / 50 / 100, docs/PHASE3_DESIGN.md §2.5); the real data uses the same values and is
+## checked against a recomputed slice playthrough (the slice tiers stay unchanged below 100).
 
 const REAL_ECONOMY := "res://data/config/economy_config.tres"
 const REAL_TABLES := "res://data/corpses/corpse_tables.tres"
@@ -16,8 +17,8 @@ func before_each() -> void:
 
 
 func test_tiers_at_boundaries() -> void:
-	var cases := [[-5, &"neglected"], [0, &"neglected"], [9, &"neglected"], [10, &"orderly"], [24, &"orderly"],
-			[25, &"tended"], [44, &"tended"], [45, &"dignified"], [60, &"dignified"]]
+	var cases := [[-5, &"neglected"], [0, &"neglected"], [14, &"neglected"], [15, &"orderly"], [31, &"orderly"],
+			[32, &"tended"], [49, &"tended"], [50, &"dignified"], [99, &"dignified"], [100, &"venerable"], [150, &"venerable"]]
 	for c: Array in cases:
 		assert_eq(CemeteryRating.rating(c[0], config), c[1], "total %d" % c[0])
 
@@ -27,6 +28,15 @@ func test_labels() -> void:
 	assert_eq(CemeteryRating.label(&"orderly"), "Ordentlich")
 	assert_eq(CemeteryRating.label(&"tended"), "Gepflegt")
 	assert_eq(CemeteryRating.label(&"dignified"), "Würdevoll")
+	assert_eq(CemeteryRating.label(&"venerable"), "Ehrwürdig")
+	assert_eq(CemeteryRating.label(CemeteryRating.VENERABLE), "Ehrwürdig")
+
+
+func test_five_tiers_venerable_appended() -> void:
+	assert_eq(Array(CemeteryRating.TIERS), [&"neglected", &"orderly", &"tended", &"dignified", &"venerable"])
+	assert_eq(CemeteryRating.VENERABLE, &"venerable")
+	assert_eq(CemeteryRating.LABELS.size(), CemeteryRating.TIERS.size())
+	assert_eq(EconomyConfig.new().rating_thresholds, PackedInt32Array([15, 32, 50, 100]))
 
 
 func test_unknown_label_is_empty() -> void:
@@ -36,32 +46,37 @@ func test_unknown_label_is_empty() -> void:
 
 func test_custom_thresholds() -> void:
 	var custom := config.duplicate() as EconomyConfig
-	custom.rating_thresholds = PackedInt32Array([1, 2, 3])
+	custom.rating_thresholds = PackedInt32Array([1, 2, 3, 4])
 	assert_eq(CemeteryRating.rating(0, custom), &"neglected")
 	assert_eq(CemeteryRating.rating(1, custom), &"orderly")
 	assert_eq(CemeteryRating.rating(2, custom), &"tended")
 	assert_eq(CemeteryRating.rating(3, custom), &"dignified")
+	assert_eq(CemeteryRating.rating(4, custom), &"venerable")
 
 
 func test_invalid_thresholds_fall_back_to_defaults() -> void:
 	var broken := config.duplicate() as EconomyConfig
 	broken.rating_thresholds = PackedInt32Array([5])
 	assert_eq(CemeteryRating.rating(9, broken), &"neglected")
-	assert_eq(CemeteryRating.rating(45, broken), &"dignified")
-	assert_eq(CemeteryRating.rating(30, null), &"tended", "null config -> defaults")
+	assert_eq(CemeteryRating.rating(50, broken), &"dignified")
+	var phase2 := config.duplicate() as EconomyConfig
+	phase2.rating_thresholds = PackedInt32Array([15, 32, 50])
+	assert_eq(CemeteryRating.rating(100, phase2), &"venerable", "three Phase-2 thresholds -> defaults")
+	assert_eq(CemeteryRating.rating(40, null), &"tended", "null config -> defaults")
 
 
 func test_every_rating_has_a_label() -> void:
-	for total: int in [0, 10, 25, 45]:
+	for total: int in [0, 15, 32, 50, 100]:
 		assert_true(CemeteryRating.label(CemeteryRating.rating(total, config)) != "")
 
 
-# --- real data (§2.4 v3): Verwahrlost < 15 <= Ordentlich < 32 <= Gepflegt < 50 <= Würdevoll ---
+# --- real data (§2.5): Verwahrlost < 15 <= Ordentlich < 32 <= Gepflegt < 50 <= Würdevoll < 100 <= Ehrwürdig ---
 
 func test_real_config_tiers_at_boundaries() -> void:
 	var real := load(REAL_ECONOMY) as EconomyConfig
-	assert_eq(real.rating_thresholds, PackedInt32Array([15, 32, 50]))
-	var cases := [[14, &"neglected"], [15, &"orderly"], [31, &"orderly"], [32, &"tended"], [49, &"tended"], [50, &"dignified"]]
+	assert_eq(real.rating_thresholds, PackedInt32Array([15, 32, 50, 100]))
+	var cases := [[14, &"neglected"], [15, &"orderly"], [31, &"orderly"], [32, &"tended"], [49, &"tended"], [50, &"dignified"],
+			[99, &"dignified"], [100, &"venerable"]]
 	for c: Array in cases:
 		assert_eq(CemeteryRating.rating(c[0], real), c[1], "total %d" % c[0])
 

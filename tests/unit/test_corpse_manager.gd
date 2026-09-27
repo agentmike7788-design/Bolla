@@ -313,7 +313,7 @@ func test_real_slice_three_thefts_reach_verrufen_and_the_carter_remark() -> void
 			manager.decide_valuables(r.id, true, inv)
 	assert_eq(choices, 3, "valuables on days 2, 4 and 5")
 	assert_eq(GameState.get_stat(&"valuables_taken"), 3)
-	assert_eq(GameState.get_stat(&"reputation"), -3)
+	assert_eq(GameState.get_stat(&"reputation"), 3 * manager.economy.valuables_reputation)
 	assert_eq(GameState.reputation_label(), "Verrufen")
 	GameState.set_flag(&"met_carter")
 	TimeManager.minute_of_day = 465
@@ -743,7 +743,7 @@ func test_decide_valuables_take() -> void:
 	assert_eq(inv.count(&"coin"), r.valuables_coins)
 	assert_eq(inv.count(&"coin"), 6)
 	assert_eq(GameState.get_stat(&"valuables_taken"), 1)
-	assert_eq(GameState.get_stat(&"reputation"), -1)
+	assert_eq(GameState.get_stat(&"reputation"), economy.valuables_reputation)
 	assert_eq(events, [["updated", r.id]])
 	manager.decide_valuables(r.id, false, inv)
 	manager.decide_valuables(r.id, true, inv)

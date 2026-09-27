@@ -18,12 +18,13 @@ extends Resource
 @export_group("Payment & reputation")
 ## payment = base_payment(cause) + floor(quality * payment_per_quality)
 @export var payment_per_quality: float = 0.5
-@export var valuables_reputation: int = -1
+## Reputation change for taking valuables (Phase 3 §2.6: 0…100 scale).
+@export var valuables_reputation: int = -8
 @export_group("Cemetery rating")
 @export var old_grave_quality: int = 0
-## Totals at which the rating becomes orderly / tended / dignified.
-@export var rating_thresholds: PackedInt32Array = [10, 25, 45]
-## Reputation at or below which the label becomes "Unauffällig" / "Verrufen".
+## Cemetery quality at which the rating becomes orderly / tended / dignified / venerable (§2.5).
+@export var rating_thresholds: PackedInt32Array = [15, 32, 50, 100]
+## Phase 2 only: declared, no longer read (reputation tiers: ReputationConfig, Phase 3 §2.6).
 @export var reputation_thresholds: PackedInt32Array = [-1, -3]
 
 

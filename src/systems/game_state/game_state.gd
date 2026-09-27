@@ -3,14 +3,11 @@ extends Node
 ## flags: StringName -> bool/int/float/String. stats: StringName -> int (default keys below).
 
 const DEFAULT_STATS: Array[StringName] = [&"burials", &"valuables_taken", &"reputation", &"missed_deliveries", &"days_played"]
-const LABEL_RESPECTED := "Geachtet"
-const LABEL_UNREMARKABLE := "Unauffällig"
-const LABEL_DISREPUTABLE := "Verrufen"
 
 var flags: Dictionary = {}
 var stats: Dictionary = {}
-## Reputation thresholds source; null = data/config/economy_config.tres (resolved lazily).
-var economy: EconomyConfig
+## Reputation tier source; null = data/config/reputation_config.tres (resolved lazily).
+var reputation_config: ReputationConfig
 
 
 func _ready() -> void:
@@ -53,23 +50,15 @@ func get_stat(stat: StringName) -> int:
 	return int(stats.get(stat, 0))
 
 
-## "Geachtet" / "Unauffällig" / "Verrufen" from EconomyConfig.reputation_thresholds.
+## Tier label of stats.reputation (0…100, Phase 3 §2.6): "Verrufen" … "Gerühmt".
 func reputation_label() -> String:
-	var thresholds := _economy().reputation_thresholds
-	if thresholds.size() < 2:
-		thresholds = EconomyConfig.new().reputation_thresholds
-	var rep := get_stat(&"reputation")
-	if rep <= thresholds[1]:
-		return LABEL_DISREPUTABLE
-	if rep <= thresholds[0]:
-		return LABEL_UNREMARKABLE
-	return LABEL_RESPECTED
+	return ReputationRules.label(ReputationRules.tier(get_stat(&"reputation"), _reputation_config()))
 
 
 ## No flags, all default stats 0. Dictionaries are cleared in place (references stay valid).
 func reset() -> void:
 	_clear_values()
-	economy = null
+	reputation_config = null
 
 
 func save_state() -> Dictionary:
@@ -100,7 +89,9 @@ func _clear_values() -> void:
 		stats[key] = 0
 
 
-func _economy() -> EconomyConfig:
-	if economy == null:
-		economy = EconomyConfig.resolve()
-	return economy
+func _reputation_config() -> ReputationConfig:
+	if reputation_config == null:
+		reputation_config = Database.config(&"reputation_config") as ReputationConfig
+		if reputation_config == null:
+			reputation_config = ReputationConfig.new()
+	return reputation_config

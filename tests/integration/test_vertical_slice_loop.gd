@@ -156,7 +156,7 @@ func test_day_two_delivery_with_valuables_and_decision() -> void:
 	assert_eq(grave.quality, clampi(expected, economy.quality_min, economy.quality_max))
 	var payment := int(tables.get_cause(second.cause_id).base_payment) + floori(grave.quality * economy.payment_per_quality)
 	assert_eq(player.inventory.count(&"coin"), coins + payment)
-	assert_eq(GameState.reputation_label(), "Unauffällig")
+	assert_eq(GameState.reputation_label(), ReputationRules.label(ReputationRules.tier(economy.valuables_reputation, null)))
 
 
 func test_skipped_delivery_at_an_occupied_bier() -> void:
