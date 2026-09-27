@@ -4,7 +4,7 @@
 |---|---|---|---|---|
 | G0 | Projektsetup | ✅ **PASSED** | 27.09.2026 | ✅ „Phase 0 freigegeben" (27.09.2026) |
 | G1 | Art Direction | ✅ **PASSED** (Runde 1) | 27.09.2026 | ✅ „Art Direction freigegeben" (27.09.2026) |
-| G2 | Vertical Slice | 🔴 **FAILED – Änderungsrunde 1** (Benutzer: „die Leichen und der Mann, der die Leichen bringt, verschönern") | 27.09.2026 | ausstehend |
+| G2 | Vertical Slice | 🔴 **FAILED – Änderungsrunde 1** (Benutzer: „die Leichen und der Mann, der die Leichen bringt, verschönern" + „den Main Character auch verschönern" – Verfeinerung innerhalb des Art Style Lock auf ausdrücklichen Benutzerwunsch) | 27.09.2026 | ausstehend |
 
 **ART STYLE LOCK:** ✅ **ACTIVE** seit 27.09.2026 (Referenz: `src/world/art_prototype/`, Screenshots `docs/reviews/phase1_round1/`). Keine grundlegende Stiländerung ohne Benutzerfreigabe.
 
