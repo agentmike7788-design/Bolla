@@ -52,3 +52,17 @@ Debug-Funktionen im Vertical Slice: Zeit ändern, Teleport, Ressourcen hinzufüg
 ## PHASE 3 – FRIEDHOF AUSBAU (Plan)
 
 Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe): **`docs/PHASE3_DESIGN.md`** – Abschnitte Ostwiese/Birkenhang (12 Grabstellen), Zier & Baumodus, Pflege, Ruf, Geister, Migration der Phase-2-Stände, Wellenplan W0–W3.
+
+## PHASE 4 – LEICHENSYSTEM (Plan)
+
+Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe): **`docs/PHASE4_DESIGN.md`**. Inhalt:
+- Untersuchung in 4 Schritten, deren Funde durch Verfall verloren gehen können
+- Merkbuch (J) mit Hinweisen und Erkenntnissen und erster Erzählfaden „Was geschah mit Lorenz Aschau?" mit 5 Geschichts-Leichen
+- Herrichten (waschen, einkleiden, aufbahren, räuchern)
+- Verwertung (Haar, Zähne, Wertsachen) über den Hohlstein
+- Moralwert „Pietät" (sanft, ohne HUD-Anzeige)
+- deutlicherer Verfall mit gemalten Fliegen und Schwaden
+- Holunderwinkel mit 6 neuen Grabstellen und Kapitelende „Sechs Gruben"
+- Balancing-Übertrag: „Ehrwürdig" verlangt Zier und Pflege
+- Save-Format v3 mit Migration der Phase-3-Stände
+- Wellenplan W0–W3 und 4 offene Fragen (§14)
