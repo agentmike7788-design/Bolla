@@ -1,0 +1,151 @@
+class_name HudBuilder
+extends RefCounted
+## Widget builders for the permanent HUD (GameHud, docs §7): the clock panel (day, clock,
+## sun/moon, objective, delivery notice), the resource panel (item chips + cemetery quality)
+## and the bottom column (timed-action bar + interaction prompt). Static: each builder adds
+## its nodes to the HUD and stores the widgets in the HUD's public fields; GameHud keeps the
+## signal wiring and the updates. Layout values come from the HUD's exports.
+
+
+static func build_clock_panel(hud: GameHud) -> void:
+	var panel := UIKit.panel(&"HudPanel")
+	panel.name = "ClockPanel"
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.position = Vector2(hud.margin, hud.margin)
+	panel.custom_minimum_size.x = hud.top_panel_width
+	hud.add_child(panel)
+	var box := UIKit.vbox(6)
+	panel.add_child(box)
+	var row := UIKit.hbox(14)
+	hud.day_icon = DayIcon.new()
+	hud.day_icon.custom_minimum_size = Vector2(52, 52)
+	row.add_child(hud.day_icon)
+	var texts := UIKit.vbox(0)
+	hud.day_label = UIKit.label("", &"HudDimLabel")
+	hud.clock_label = UIKit.label("", &"HudClockLabel")
+	texts.add_child(hud.day_label)
+	texts.add_child(hud.clock_label)
+	row.add_child(texts)
+	box.add_child(row)
+	box.add_child(UIKit.separator())
+	var objective_row := UIKit.hbox(10)
+	var marker := UIKit.label("◆", &"AccentLabel")
+	marker.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	objective_row.add_child(marker)
+	hud.objective_label = UIKit.label("", &"HudLabel", true)
+	hud.objective_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hud.objective_label.custom_minimum_size.x = hud.top_panel_width - 80.0
+	objective_row.add_child(hud.objective_label)
+	box.add_child(objective_row)
+	hud.notice_label = UIKit.label("", &"WarningLabel", true)
+	hud.notice_label.custom_minimum_size.x = hud.top_panel_width - 40.0
+	hud.notice_label.visible = false
+	box.add_child(hud.notice_label)
+
+
+## Returns the chips: item id -> {chip: Control, count: Label, caption: Label (crafted items only)}.
+static func build_resource_panel(hud: GameHud) -> Dictionary[StringName, Dictionary]:
+	var chip_map: Dictionary[StringName, Dictionary] = {}
+	var panel := UIKit.panel(&"HudPanel")
+	panel.name = "ResourcePanel"
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.anchor_left = 1.0
+	panel.anchor_right = 1.0
+	panel.offset_left = -hud.margin
+	panel.offset_right = -hud.margin
+	panel.offset_top = hud.margin
+	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	hud.add_child(panel)
+	var box := UIKit.vbox(8)
+	panel.add_child(box)
+	var chips := UIKit.hbox(20)
+	chips.alignment = BoxContainer.ALIGNMENT_END
+	box.add_child(chips)
+	for id: StringName in item_order():
+		var chip := UIKit.hbox(6)
+		chip.mouse_filter = Control.MOUSE_FILTER_PASS
+		chip.tooltip_text = UIKit.item_name(id)
+		chip.add_child(UIKit.icon(Database.icon(id), hud.icon_edge))
+		var count := UIKit.label("0", &"HudLabel")
+		count.custom_minimum_size.x = 26.0
+		chip.add_child(count)
+		var entry := {"chip": chip, "count": count}
+		if not id in GameHud.BASE_ITEMS:
+			# Crafted items: their name under the icon (shroud and linen look alike).
+			var column := UIKit.vbox(0)
+			column.mouse_filter = Control.MOUSE_FILTER_PASS
+			column.tooltip_text = chip.tooltip_text
+			column.add_child(chip)
+			var caption := UIKit.label(UIKit.item_name(id), &"HudCaptionLabel")
+			caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			column.add_child(caption)
+			entry = {"chip": column, "count": count, "caption": caption}
+		var holder: Control = entry.chip
+		# Top-aligned, so captioned and plain chips keep their icons on one line.
+		holder.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		chips.add_child(holder)
+		holder.visible = id in GameHud.BASE_ITEMS
+		chip_map[id] = entry
+	var quality_row := UIKit.hbox(10)
+	quality_row.alignment = BoxContainer.ALIGNMENT_END
+	hud.quality_caption = UIKit.label(GameHud.TEXT_QUALITY_CAPTION, &"HudDimLabel")
+	quality_row.add_child(hud.quality_caption)
+	hud.quality_label = UIKit.label("", &"HudLabel")
+	quality_row.add_child(hud.quality_label)
+	hud.next_tier_label = UIKit.label("", &"HudDimLabel")
+	quality_row.add_child(hud.next_tier_label)
+	box.add_child(quality_row)
+	return chip_map
+
+
+static func build_bottom(hud: GameHud) -> void:
+	var column := UIKit.vbox(12)
+	column.name = "BottomColumn"
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.anchor_left = 0.5
+	column.anchor_right = 0.5
+	column.anchor_top = 1.0
+	column.anchor_bottom = 1.0
+	column.offset_bottom = -hud.margin * 2.0
+	column.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	column.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	column.alignment = BoxContainer.ALIGNMENT_END
+	hud.add_child(column)
+	hud.action_panel = UIKit.panel(&"HudPanel")
+	hud.action_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.action_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var action_box := UIKit.vbox(6)
+	hud.action_label = UIKit.label("", &"HudLabel")
+	hud.action_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	action_box.add_child(hud.action_label)
+	hud.action_bar = UIKit.bar()
+	hud.action_bar.custom_minimum_size = Vector2(hud.action_bar_width, 20.0)
+	action_box.add_child(hud.action_bar)
+	hud.action_panel.add_child(action_box)
+	hud.action_panel.visible = false
+	column.add_child(hud.action_panel)
+	hud.prompt_panel = UIKit.panel(&"HudPanel")
+	hud.prompt_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.prompt_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var prompt_row := UIKit.hbox(12)
+	hud.prompt_key = UIKit.keycap(GameHud.KEY_INTERACT)
+	hud.prompt_key.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	prompt_row.add_child(hud.prompt_key)
+	hud.prompt_label = UIKit.label("", &"PromptLabel")
+	prompt_row.add_child(hud.prompt_label)
+	hud.prompt_panel.add_child(prompt_row)
+	hud.prompt_panel.visible = false
+	column.add_child(hud.prompt_panel)
+
+
+## Base items first, then every crafted item (sorted by id).
+static func item_order() -> Array[StringName]:
+	var out: Array[StringName] = GameHud.BASE_ITEMS.duplicate()
+	var crafted: Array[StringName] = []
+	for item: Resource in Database.items():
+		var data := item as ItemData
+		if data != null and data.category == ItemData.Category.CRAFTED and not data.id in out:
+			crafted.append(data.id)
+	crafted.sort()
+	out.append_array(crafted)
+	return out

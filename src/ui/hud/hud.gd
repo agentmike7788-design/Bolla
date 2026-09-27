@@ -7,6 +7,7 @@ extends Control
 ## Notifications and the reward card are separate overlay nodes (NotificationStack,
 ## RewardCard). Updates from EventBus + inventory.changed; refresh_all() pulls
 ## everything (UIRoot calls it on world_ready / game_loaded / new_game_started).
+## The widgets are built by HudBuilder; this script wires the signals and updates them.
 
 const BASE_ITEMS: Array[StringName] = [&"coin", &"wood", &"stone", &"linen"]
 const CORPSE_MANAGER_GROUP := &"corpse_manager"
@@ -57,9 +58,9 @@ var _skipped_day: int = 0
 func _init() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_build_clock_panel()
-	_build_resource_panel()
-	_build_bottom()
+	HudBuilder.build_clock_panel(self)
+	_chips = HudBuilder.build_resource_panel(self)
+	HudBuilder.build_bottom(self)
 
 
 func _ready() -> void:
@@ -190,136 +191,6 @@ func action_ratio() -> float:
 	return action_bar.value
 
 
-# --- building -----------------------------------------------------------------------------
-
-func _build_clock_panel() -> void:
-	var panel := UIKit.panel(&"HudPanel")
-	panel.name = "ClockPanel"
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.position = Vector2(margin, margin)
-	panel.custom_minimum_size.x = top_panel_width
-	add_child(panel)
-	var box := UIKit.vbox(6)
-	panel.add_child(box)
-	var row := UIKit.hbox(14)
-	day_icon = DayIcon.new()
-	day_icon.custom_minimum_size = Vector2(52, 52)
-	row.add_child(day_icon)
-	var texts := UIKit.vbox(0)
-	day_label = UIKit.label("", &"HudDimLabel")
-	clock_label = UIKit.label("", &"HudClockLabel")
-	texts.add_child(day_label)
-	texts.add_child(clock_label)
-	row.add_child(texts)
-	box.add_child(row)
-	box.add_child(UIKit.separator())
-	var objective_row := UIKit.hbox(10)
-	var marker := UIKit.label("◆", &"AccentLabel")
-	marker.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	objective_row.add_child(marker)
-	objective_label = UIKit.label("", &"HudLabel", true)
-	objective_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	objective_label.custom_minimum_size.x = top_panel_width - 80.0
-	objective_row.add_child(objective_label)
-	box.add_child(objective_row)
-	notice_label = UIKit.label("", &"WarningLabel", true)
-	notice_label.custom_minimum_size.x = top_panel_width - 40.0
-	notice_label.visible = false
-	box.add_child(notice_label)
-
-
-func _build_resource_panel() -> void:
-	var panel := UIKit.panel(&"HudPanel")
-	panel.name = "ResourcePanel"
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.anchor_left = 1.0
-	panel.anchor_right = 1.0
-	panel.offset_left = -margin
-	panel.offset_right = -margin
-	panel.offset_top = margin
-	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	add_child(panel)
-	var box := UIKit.vbox(8)
-	panel.add_child(box)
-	var chips := UIKit.hbox(20)
-	chips.alignment = BoxContainer.ALIGNMENT_END
-	box.add_child(chips)
-	for id: StringName in _item_order():
-		var chip := UIKit.hbox(6)
-		chip.mouse_filter = Control.MOUSE_FILTER_PASS
-		chip.tooltip_text = UIKit.item_name(id)
-		chip.add_child(UIKit.icon(Database.icon(id), icon_edge))
-		var count := UIKit.label("0", &"HudLabel")
-		count.custom_minimum_size.x = 26.0
-		chip.add_child(count)
-		var entry := {"chip": chip, "count": count}
-		if not id in BASE_ITEMS:
-			# Crafted items: their name under the icon (shroud and linen look alike).
-			var column := UIKit.vbox(0)
-			column.mouse_filter = Control.MOUSE_FILTER_PASS
-			column.tooltip_text = chip.tooltip_text
-			column.add_child(chip)
-			var caption := UIKit.label(UIKit.item_name(id), &"HudCaptionLabel")
-			caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			column.add_child(caption)
-			entry = {"chip": column, "count": count, "caption": caption}
-		var holder: Control = entry.chip
-		# Top-aligned, so captioned and plain chips keep their icons on one line.
-		holder.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-		chips.add_child(holder)
-		holder.visible = id in BASE_ITEMS
-		_chips[id] = entry
-	var quality_row := UIKit.hbox(10)
-	quality_row.alignment = BoxContainer.ALIGNMENT_END
-	quality_caption = UIKit.label(TEXT_QUALITY_CAPTION, &"HudDimLabel")
-	quality_row.add_child(quality_caption)
-	quality_label = UIKit.label("", &"HudLabel")
-	quality_row.add_child(quality_label)
-	next_tier_label = UIKit.label("", &"HudDimLabel")
-	quality_row.add_child(next_tier_label)
-	box.add_child(quality_row)
-
-
-func _build_bottom() -> void:
-	var column := UIKit.vbox(12)
-	column.name = "BottomColumn"
-	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.anchor_left = 0.5
-	column.anchor_right = 0.5
-	column.anchor_top = 1.0
-	column.anchor_bottom = 1.0
-	column.offset_bottom = -margin * 2.0
-	column.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	column.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	column.alignment = BoxContainer.ALIGNMENT_END
-	add_child(column)
-	action_panel = UIKit.panel(&"HudPanel")
-	action_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	action_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	var action_box := UIKit.vbox(6)
-	action_label = UIKit.label("", &"HudLabel")
-	action_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	action_box.add_child(action_label)
-	action_bar = UIKit.bar()
-	action_bar.custom_minimum_size = Vector2(action_bar_width, 20.0)
-	action_box.add_child(action_bar)
-	action_panel.add_child(action_box)
-	action_panel.visible = false
-	column.add_child(action_panel)
-	prompt_panel = UIKit.panel(&"HudPanel")
-	prompt_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	prompt_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	var prompt_row := UIKit.hbox(12)
-	prompt_key = UIKit.keycap(KEY_INTERACT)
-	prompt_key.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	prompt_row.add_child(prompt_key)
-	prompt_label = UIKit.label("", &"PromptLabel")
-	prompt_row.add_child(prompt_label)
-	prompt_panel.add_child(prompt_row)
-	prompt_panel.visible = false
-	column.add_child(prompt_panel)
-
-
 # --- updates ------------------------------------------------------------------------------
 
 func _refresh_clock(day: int, minute_of_day: int) -> void:
@@ -333,18 +204,6 @@ func _refresh_resources() -> void:
 		var count := _inventory.count(id) if is_instance_valid(_inventory) else 0
 		(_chips[id].count as Label).text = str(count)
 		(_chips[id].chip as Control).visible = id in BASE_ITEMS or count > 0
-
-
-func _item_order() -> Array[StringName]:
-	var out: Array[StringName] = BASE_ITEMS.duplicate()
-	var crafted: Array[StringName] = []
-	for item: Resource in Database.items():
-		var data := item as ItemData
-		if data != null and data.category == ItemData.Category.CRAFTED and not data.id in out:
-			crafted.append(data.id)
-	crafted.sort()
-	out.append_array(crafted)
-	return out
 
 
 func _show_notice(text: String, day: int) -> void:
