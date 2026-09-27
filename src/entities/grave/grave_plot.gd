@@ -7,7 +7,8 @@ extends Node3D
 ## hands; a choice panel when both marker types are in the inventory). The Graveyard owns the
 ## records; this node only starts the timed actions and calls it.
 ## Optional child "Collision" (StaticBody3D, added by the world builder): its shapes carry the
-## meta "role" (pit, mound, marker:<id>, old) and are enabled for the matching state.
+## meta "role" (pit, mound, marker:<id>, old) and are enabled for the matching state
+## (visual and colliders: grave_plot_visuals.gd).
 
 const GROUP := &"grave_plot"
 const GRAVEYARD_GROUP := &"graveyard"
@@ -72,14 +73,15 @@ var marker_id: StringName = &""
 
 @onready var interactable: Interactable = get_node_or_null(^"Interactable") as Interactable
 
-var _visual: Node3D
-var _visual_key: String = ""
+## Builds the state visual and toggles the colliders (grave_plot_visuals.gd).
+var _visuals: GravePlotVisuals
 ## Player of the last marker-choice request (request_marker runs the action for them).
 var _player: Player
 
 
 func _init() -> void:
 	add_to_group(GROUP, true)
+	_visuals = GravePlotVisuals.new(self)
 
 
 func _ready() -> void:
@@ -256,75 +258,12 @@ func _on_grave_state_changed(id: String, new_state: int) -> void:
 
 
 func _apply_visual() -> void:
-	var key := "%d:%s" % [state, marker_id]
-	if key == _visual_key and _visual != null:
-		return
-	_visual_key = key
-	if _visual != null:
-		remove_child(_visual)
-		_visual.queue_free()
-	_visual = Node3D.new()
-	_visual.name = "Visual"
-	add_child(_visual)
-	move_child(_visual, 0)
-	var roles: PackedStringArray = []
-	match state:
-		GraveRecord.State.EMPTY:
-			_add_model(empty_model, Vector3.ZERO)
-		GraveRecord.State.DUG:
-			_add_model(pit_model, Vector3.ZERO)
-			roles.append(ROLE_PIT)
-		GraveRecord.State.FILLED, GraveRecord.State.MARKED:
-			_add_model(mound_model, mound_offset)
-			roles.append(ROLE_MOUND)
-			if state == GraveRecord.State.MARKED and marker_models.has(marker_id):
-				_add_model(marker_models[marker_id], marker_offset)
-				roles.append(ROLE_MARKER + String(marker_id))
-		GraveRecord.State.OLD:
-			_add_model(_load_scene(OLD_MOUND_PATH % old_mound), Vector3.ZERO)
-			_add_model(_load_scene(OLD_STONE_PATH % old_stone), old_stone_offset)
-			roles.append(ROLE_OLD)
-	_update_collision(roles)
-
-
-func _add_model(scene: PackedScene, offset: Vector3) -> void:
-	if scene == null:
-		return
-	var inst := scene.instantiate() as Node3D
-	inst.position = offset
-	_visual.add_child(inst)
-
-
-func _load_scene(path: String) -> PackedScene:
-	if not ResourceLoader.exists(path):
-		push_warning("[GravePlot] %s: model '%s' not found" % [grave_id, path])
-		return null
-	return load(path) as PackedScene
-
-
-## Enables the builder-made collision shapes whose "role" meta is in `roles`.
-func _update_collision(roles: PackedStringArray) -> void:
-	var body := get_node_or_null(^"Collision")
-	if body == null:
-		return
-	for shape: Node in body.get_children():
-		if shape is CollisionShape3D:
-			var role := String(shape.get_meta(ROLE_META, ""))
-			shape.set_deferred(&"disabled", not role in roles)
+	_visuals.apply()
 
 
 ## Shapes that are active for the current state (for tests / debugging).
 func active_collision_roles() -> PackedStringArray:
-	var out: PackedStringArray = []
-	var body := get_node_or_null(^"Collision")
-	if body == null:
-		return out
-	for shape: Node in body.get_children():
-		if shape is CollisionShape3D and not (shape as CollisionShape3D).disabled:
-			var role := String(shape.get_meta(ROLE_META, ""))
-			if not role in out:
-				out.append(role)
-	return out
+	return GravePlotVisuals.active_roles(self)
 
 
 # --- lookups ------------------------------------------------------------------------------

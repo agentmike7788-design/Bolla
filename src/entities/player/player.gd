@@ -7,7 +7,8 @@ extends CharacterBody3D
 ## UIState has a modal open. [E] uses the focused Interactable, [Q] puts a carried corpse
 ## down through the CorpseManager. Timed actions pause the clock (&"action") and
 ## fast-forward it while the progress bar fills. Values: data/config/player_config.tres,
-## data/config/action_config.tres.
+## data/config/action_config.tres. Helpers: player_action_runner.gd (timed actions),
+## player_carry.gd (carried Interactables, drop probe), player_animator.gd (rig / waddle).
 
 enum State { FREE, CARRYING, LOCKED }
 
@@ -78,14 +79,21 @@ class TimedAction:
 	var advanced: int = 0
 
 
-var _action: TimedAction
-var _anim: AnimationPlayer
+## Timed-action runner (player_action_runner.gd); _action forwards to its running action.
+var _runner := PlayerActionRunner.new()
+var _action: TimedAction:
+	get:
+		return _runner.current
+## Animation driver (player_animator.gd, created in _ready); _anim = the rig's AnimationPlayer.
+var _animator: PlayerAnimator
+var _anim: AnimationPlayer:
+	get:
+		return _animator.anim if _animator != null else null
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
-var _walk_time: float = 0.0
 var _modal: bool = false
 var _has_carried: bool = false
-## Interactables of the carried node that attach_carried switched off (restored on detach).
-var _disabled_interactables: Array[Interactable] = []
+## Switches the carried node's Interactables off and back on (player_carry.gd).
+var _carry := PlayerCarry.new()
 ## Last reported interaction focus (EventBus.interaction_focus_changed).
 var _shown_id: int = 0
 var _shown_prompt: String = ""
@@ -102,8 +110,8 @@ func _ready() -> void:
 	if actions == null:
 		actions = ActionConfig.new()
 	inventory.slot_count = config.inventory_slots
-	_anim = _find_animation_player()
-	_attach_lantern()
+	_animator = PlayerAnimator.new(self)
+	_animator.attach_lantern()
 	_modal = UIState.is_modal()
 	EventBus.ui_modal_changed.connect(_on_ui_modal_changed)
 	EventBus.new_game_started.connect(apply_start_inventory)
@@ -179,7 +187,7 @@ func attach_carried(node: Node3D, id: String) -> void:
 	carried = node
 	carried_id = id
 	_has_carried = true
-	_disable_interactables(node)
+	_carry.disable_interactables(node)
 	_refresh_state()
 
 
@@ -209,9 +217,7 @@ func start_timed_action(label: String, game_minutes: int, on_done: Callable, can
 	action.cancellable = cancellable
 	action.animation = animation
 	action.duration = 0.0 if instant_actions else maxf(actions.real_seconds_for(action.minutes), 0.0)
-	_action = action
-	TimeManager.push_pause(ACTION_PAUSE)
-	EventBus.timed_action_started.emit(label, action.duration)
+	_runner.start(action)
 	if instant_actions:
 		_tick_action(0.0)
 	else:
@@ -221,11 +227,7 @@ func start_timed_action(label: String, game_minutes: int, on_done: Callable, can
 
 ## Stops the running action: minutes already advanced stay, on_done is NOT called.
 func cancel_timed_action() -> void:
-	if _action == null:
-		return
-	_action = null
-	TimeManager.pop_pause(ACTION_PAUSE)
-	EventBus.timed_action_finished.emit(false)
+	_runner.cancel()
 
 
 ## Replaces the inventory with config.start_items (connected to EventBus.new_game_started).
@@ -243,19 +245,7 @@ func apply_start_inventory() -> void:
 func drop_position() -> Transform3D:
 	if not is_inside_tree():
 		return Transform3D()
-	var forward := _forward()
-	var basis := Basis(Vector3.UP, atan2(forward.x, forward.z))
-	for spot: Vector3 in [global_position + forward * config.drop_distance, global_position]:
-		var hit := _ground_below(spot)
-		if hit.is_empty():
-			continue
-		var xform := Transform3D(basis, hit.position as Vector3)
-		if not _drop_space_free(xform):
-			continue
-		if xform.is_equal_approx(Transform3D()):
-			xform.origin.y += IDENTITY_NUDGE
-		return xform
-	return Transform3D()
+	return PlayerCarry.drop_position(self)
 
 
 ## {position: Vector3, rot_y: float, inventory: Inventory.save_state()}. The carried corpse
@@ -373,140 +363,18 @@ func _check_carried() -> void:
 
 
 func _forget_carried() -> void:
-	_restore_interactables()
+	_carry.restore_interactables()
 	carried = null
 	carried_id = ""
 	_has_carried = false
 	_refresh_state()
 
 
-func _disable_interactables(node: Node) -> void:
-	for area: Interactable in _interactables_under(node):
-		if area.enabled and not area in _disabled_interactables:
-			area.enabled = false
-			area.set_deferred(&"monitorable", false)
-			_disabled_interactables.append(area)
-
-
-func _restore_interactables() -> void:
-	for area: Interactable in _disabled_interactables:
-		if is_instance_valid(area):
-			area.enabled = true
-			area.set_deferred(&"monitorable", true)
-	_disabled_interactables.clear()
-
-
-func _interactables_under(node: Node) -> Array[Interactable]:
-	var out: Array[Interactable] = []
-	if node is Interactable:
-		out.append(node as Interactable)
-	for child: Node in node.get_children():
-		out.append_array(_interactables_under(child))
-	return out
-
-
-# --- timed actions ------------------------------------------------------------------------
+# --- timed actions & presentation ---------------------------------------------------------
 
 func _tick_action(delta: float) -> void:
-	var action := _action
-	action.elapsed = minf(action.elapsed + maxf(delta, 0.0), action.duration)
-	var ratio := action.elapsed / action.duration if action.duration > 0.0 else 1.0
-	_advance_action_to(action, floori(action.minutes * ratio + MINUTE_EPSILON))
-	if _action != action:
-		return  # a time listener cancelled it
-	EventBus.timed_action_progress.emit(ratio)
-	if ratio >= 1.0:
-		_complete_action(action)
-
-
-## Advances the clock to `minutes` of the action (whole minutes, never backwards).
-func _advance_action_to(action: TimedAction, minutes: int) -> void:
-	var step := mini(minutes, action.minutes) - action.advanced
-	if step <= 0:
-		return
-	action.advanced += step
-	TimeManager.advance(step)
-
-
-func _complete_action(action: TimedAction) -> void:
-	_advance_action_to(action, action.minutes)
-	if _action != action:
-		return
-	_action = null
-	TimeManager.pop_pause(ACTION_PAUSE)
-	EventBus.timed_action_finished.emit(true)
-	if action.on_done.is_valid():
-		action.on_done.call()
-	elif not action.on_done.is_null():
-		push_warning("[Player] on_done of '%s' is no longer valid" % action.label)
-
-
-# --- presentation -------------------------------------------------------------------------
-
-func _forward() -> Vector3:
-	var forward := global_basis.z
-	forward.y = 0.0
-	return forward.normalized() if forward.length_squared() > INPUT_DEADZONE_SQ else Vector3.BACK
-
-
-func _ground_below(spot: Vector3) -> Dictionary:
-	var query := PhysicsRayQueryParameters3D.create(spot + Vector3.UP * drop_step_up,
-			spot + Vector3.DOWN * drop_step_down, WORLD_MASK, [get_rid()])
-	return get_world_3d().direct_space_state.intersect_ray(query)
-
-
-func _drop_space_free(xform: Transform3D) -> bool:
-	var box := BoxShape3D.new()
-	box.size = drop_box_size
-	var query := PhysicsShapeQueryParameters3D.new()
-	query.shape = box
-	query.transform = Transform3D(xform.basis, xform.origin + Vector3.UP * (drop_box_size.y * 0.5 + drop_box_clearance))
-	query.collision_mask = WORLD_MASK
-	query.exclude = [get_rid()]
-	query.collide_with_bodies = true
-	query.collide_with_areas = false
-	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
-
-
-func _find_animation_player() -> AnimationPlayer:
-	var found := model.find_children("*", "AnimationPlayer", true, false)
-	return found[0] as AnimationPlayer if not found.is_empty() else null
-
-
-## Moves the Lantern light onto the rig's light_lantern marker, so it swings with the hips.
-func _attach_lantern() -> void:
-	var lantern := model.get_node_or_null(^"Lantern") as Node3D
-	var marker := model.find_child("light_lantern", true, false) as Node3D
-	if lantern != null and marker != null:
-		lantern.reparent(marker, false)
-		lantern.transform = Transform3D.IDENTITY
+	_runner.tick(delta)
 
 
 func _update_animation(delta: float) -> void:
-	var moving := Vector2(velocity.x, velocity.z).length() > MOVING_SPEED
-	if _anim == null:
-		_waddle(delta, moving and not is_busy())
-		return
-	var wanted := _wanted_animation(moving)
-	if wanted != &"" and (_anim.current_animation != wanted or not _anim.is_playing()):
-		_anim.play(wanted, anim_blend)
-
-
-func _wanted_animation(moving: bool) -> StringName:
-	if is_busy() and _anim.has_animation(_action.animation):
-		return _action.animation
-	var wanted := &"idle"
-	if _is_carrying():
-		wanted = &"carry_walk" if moving else &"carry_idle"
-	elif moving:
-		wanted = &"walk"
-	return wanted if _anim.has_animation(wanted) else &""
-
-
-func _waddle(delta: float, moving: bool) -> void:
-	if moving:
-		_walk_time += delta * waddle_speed
-	else:
-		_walk_time = lerpf(_walk_time, roundf(_walk_time / PI) * PI, clampf(waddle_settle * delta, 0.0, 1.0))
-	model.rotation.z = sin(_walk_time) * deg_to_rad(waddle_deg)
-	model.position.y = absf(sin(_walk_time)) * waddle_bob
+	_animator.update(delta, _action, _is_carrying())
