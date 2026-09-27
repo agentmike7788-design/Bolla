@@ -1,6 +1,6 @@
 # Technical Architecture Document
 
-Status: **ENTWURF – wartet auf Freigabe (Gate 0)**
+Status: **Phase 2 (Vertical Slice)** – G0 freigegeben, G1 freigegeben (Art Style Lock). Detail-Vertrag: `docs/VERTICAL_SLICE_DESIGN.md`.
 Verantwortlich: Agent 08 (Godot Core), Agent 01 (Lead)
 
 ## 1. Technologie
@@ -19,25 +19,26 @@ Verantwortlich: Agent 08 (Godot Core), Agent 01 (Lead)
 ## 2. Verzeichnisstruktur
 
 ```
-project.godot          Engine-Konfiguration (Input-Map, Autoloads, Physik-Layer)
+project.godot          Engine-Konfiguration (Input-Map, Autoloads, Physik-Layer, Shader-Globals)
 CLAUDE.md              Arbeitsregeln für KI-Sessions (Kurzfassung)
 docs/                  Single Source of Truth (von Godot ignoriert)
 src/                   Gesamter Spielcode, nach FEATURE gruppiert (Szene + Script zusammen)
-  core/                Autoloads: EventBus, GameConfig (später SaveManager, TimeManager)
-  boot/                Startszene
-  systems/             Spielsysteme ohne eigene Weltpräsenz (save, time, inventory, crafting …)
-  entities/            Alles, was in der Welt existiert (player, npc, corpse, grave …)
-  world/               Level-/Gebietsszenen (graveyard, village …)
-  ui/                  HUD, Menüs
-  debug/               Debug-Konsole/-Overlay (nur Debug-Builds)
-data/                  Balancing & Inhalte als Godot-Resources (.tres) – keine Zahlen im Code
-assets/                Importierte Assets (glb, png, ogg, Fonts)
-art_source/            Blender-Quelldateien, Referenzen, Concepts (von Godot ignoriert)
-tests/                 Headless-Testrunner
-tools/                 Blender-Export-/Generator-Scripts, Build-Scripts (von Godot ignoriert)
+  core/                Autoloads ohne Spiellogik: EventBus, GameConfig, Database, UIState; import/ (glb-Post-Import)
+  boot/                Startszene → Titelbildschirm
+  systems/             Spielsysteme: time, game_state, save, inventory, crafting, corpse, graveyard, dialogue, npc
+  components/          Wiederverwendbare Komponenten (Interactable, InteractionDetector)
+  entities/            Alles mit Weltpräsenz: player, corpse, grave, morgue_table, workbench, dropoff, resource_node, npc, hut_door
+  world/               Weltszenen: graveyard/ (Vertical Slice), art_prototype/ (eingefroren), camera/, atmosphere/
+  ui/                  UIRoot, HUD, Panels, Dialogbox, Titel, Theme, Tools (Icons, Screenshots)
+  debug/               Debug-Konsole (nur Debug-Builds), Asset-Vorschau, Screenshot-Serie
+data/                  Balancing & Inhalte als Resources (.tres) und Layout-JSON (nur Build-Zeit)
+assets/                Importierte Assets (glb, Shader, Materialien, Icons)
+art_source/            Blender-Quelldateien (von Godot ignoriert)
+tests/                 framework/, unit/, integration/, fixtures/ – Runner tests/run_tests.gd
+tools/                 Blender-Generatoren, godot_run.sh (von Godot ignoriert)
 ```
 
-Regel: Ein Feature = ein Ordner, z. B. `src/entities/corpse/corpse.tscn`, `corpse.gd`, `corpse_data.gd`.
+Regel: Ein Feature = ein Ordner, z. B. `src/entities/corpse/corpse.tscn` + `corpse.gd`.
 
 ## 3. Architekturprinzipien
 
@@ -49,29 +50,22 @@ Regel: Ein Feature = ein Ordner, z. B. `src/entities/corpse/corpse.tscn`, `corps
 6. **Saveable-Vertrag** (ab Phase 2): Jedes speicherbare Objekt ist in Gruppe `saveable` und implementiert `save_state() -> Dictionary` / `load_state(data: Dictionary)`. SaveManager sammelt diese → JSON in `user://saves/` mit Versionsnummer für Migrationen.
 7. **Debug abschaltbar** – Debug-Code prüft `GameConfig.debug_enabled`; in Release-Exports automatisch aus (`OS.is_debug_build()`).
 
-## 4. Aktueller Stand (Phase 1 – Art-Direction-Prototyp)
+## 4. Aktueller Stand (Phase 2 – Vertical Slice)
 
-| Datei / Ordner | Zweck |
-|---|---|
-| `src/core/event_bus.gd`, `game_config.gd` | Autoloads (Signale, Version, Debug-Flag) |
-| `src/core/import/asset_post_import.gd` | Import-Script für jede `.glb`: Blender-Materialname → `res://assets/materials/<name>.tres` (als Importer-Default in `project.godot`) |
-| `src/boot/main.tscn/.gd` | Startszene → wechselt zu `start_scene` (Phase 1: Art-Prototyp) |
-| `assets/shaders/painted.gdshader` | Stil-Shader „Gemaltes Diorama" (Vertex-Paint + Pinselrauschen + weiches Licht + Randlicht, optional Wind/Laubränder) |
-| `assets/shaders/grass.gdshader` | Gras-MultiMesh mit Wind, Boden-Normale |
-| `assets/materials/` | Geteilte Materialien: `mat_painted`, `mat_foliage`, `mat_ground`, `mat_grass`, `mat_emissive_warm` |
-| `src/world/atmosphere/` | `AtmospherePreset` (Resource), `AtmosphereController`, `flicker_light.gd` |
-| `data/atmosphere/day.tres`, `night.tres` | Licht-/Nebel-Stimmungen (alle Werte hier, nicht im Code) |
-| `src/world/camera/camera_rig.gd` | Feste 2.5D-Kamera, Perspektive ↔ orthografisch mit gleichem Bildausschnitt |
-| `src/entities/player/player_proto.*` | Prototyp-Figur (nur Laufen, für Kamera-/Maßstabsprüfung) |
-| `data/art_prototype/layout.json` | **Einzige Quelle** für das Prototyp-Layout (von Blender *und* Godot gelesen) |
-| `src/world/art_prototype/art_prototype_builder.gd` | Erzeugt `art_prototype.tscn` + `grass_multimesh.res` aus dem Layout |
-| `src/debug/screenshot_capture.gd` | Automatische Screenshot-Serie inkl. Render-Statistik |
-| `src/debug/asset_preview.gd` | QA: rendert jedes Modell einzeln |
-| `tools/blender/*.py` | Prozedurale Asset-Generatoren (`build_all.py`) |
-| `tools/godot_run.sh` | Godot mit echtem Renderer in virtuellem Display (Builder, Screenshots) |
+| Bereich | Dateien | Kurz |
+|---|---|---|
+| Autoloads | `EventBus`, `GameConfig`, `Database`, `UIState`, `TimeManager`, `GameState`, `SaveManager`, `Debug` | Reihenfolge und Verträge: VERTICAL_SLICE_DESIGN.md §3.1 |
+| Zeit & Atmosphäre | `src/systems/time/`, `src/world/atmosphere/`, `data/atmosphere/*.tres` | Spieluhr mit Pause-Gründen; Stimmung folgt der Uhrzeit (Halte-Stützstellen) |
+| Speichern | `src/systems/save/save_manager.gd` | Slots 0 (Autosave) / 1 (Schnell); typtreu via `JSON.from_native`; feste Lade-Reihenfolge |
+| Kern-Loop | `src/systems/{corpse,graveyard,inventory,crafting}/` | Leichen (deterministisch), Gräber, Qualität, Bezahlung, Inventar, Rezepte |
+| NPC & Dialog | `src/systems/{npc,dialogue}/`, `data/npc/`, `data/dialogue/` | Tagesablauf deterministisch aus der Uhrzeit; Dialog-Minisprache |
+| Spieler | `src/entities/player/`, `src/components/` | Bewegung, Tragen, zeitgeraffte Aktionen, Interaktions-Fokus |
+| Welt | `src/world/graveyard/` (+ Builder aus `data/world/graveyard_layout.json`) | Friedhof + Kutschweg, Entitäten, Kollisionen, Wegpunkte |
+| UI | `src/ui/` | HUD, 7 Panels, Dialogbox, Titel, Theme, Icons |
+| Stil | `assets/shaders/`, `assets/materials/` | Maler-Shader (gesperrt), Gras, Laub |
 
-Input-Map: `move_*` (WASD + Pfeile), `interact` (E), `debug_toggle` (F1), `camera_zoom_in/out` (Mausrad, +/−), `proto_toggle_camera` (C), `proto_toggle_time` (N).
-Physik-Layer: 1 world, 2 player, 3 npc, 4 interactable, 5 corpse.
+Input-Map: `move_*` (WASD + Pfeile), `interact` (E), `drop` (Q), `inventory` (I), `pause` (Esc), `quick_save` (F5), `quick_load` (F9), `dialogue_choice_1..4` (1–4), `debug_toggle` (F1), `camera_zoom_in/out` (Mausrad, +/−); nur Art-Prototyp: `proto_toggle_camera` (C), `proto_toggle_time` (N).
+Physik-Layer: 1 world, 2 player, 3 npc, 4 interactable, 5 corpse. Shader-Globals: `occlusion_target`, `occlusion_radius` (Laub-Freistellung um den Spieler).
 
 ### Asset-Pipeline (Befehle)
 
@@ -79,7 +73,7 @@ Physik-Layer: 1 world, 2 player, 3 npc, 4 interactable, 5 corpse.
 python tools/blender/build_all.py                       # alle Assets (bpy / Blender 5.x)
 godot --headless --path . --import                      # Import (Materialzuordnung automatisch)
 tools/godot_run.sh -s res://src/world/art_prototype/art_prototype_builder.gd   # Szene neu erzeugen
-tools/godot_run.sh -- --capture=/abs/pfad [--shots=01,05]                       # Screenshots (Art-Prototyp)
+tools/godot_run.sh res://src/world/art_prototype/art_prototype.tscn -- --capture=/abs/pfad [--shots=01,05]   # Screenshots Art-Prototyp (Szene direkt starten – Boot führt zum Titel)
 python tools/blender/asset_ground_graveyard.py                                   # Friedhofs-Boden aus data/world/graveyard_layout.json
 tools/godot_run.sh -s res://src/world/graveyard/graveyard_builder.gd             # graveyard.tscn + grass.scn + ground_shape.res
 tools/godot_run.sh --resolution 1280x720 -s res://src/world/graveyard/graveyard_shots.gd -- --out=/abs/dir [--shots=01,03]

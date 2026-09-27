@@ -117,6 +117,7 @@ Ruf (`GameState.stats.reputation`, Start 0): ≥ 0 „Geachtet", −1…−2 „
 | **M6b Requisiten/Items** | `tools/blender/asset_props_slice.py`, `asset_items.py`, zugehörige `assets/models/{props,environment,items}/**` + `art_source/**`, `tests/unit/test_assets_props.gd`, `docs/reviews/phase2_assets/*` |
 | **W1 Welt/Entitäten** (Welle 2) | `src/entities/{corpse,grave,morgue_table,workbench,dropoff,resource_node,npc,hut_door}/*`, `src/world/graveyard/*`, `data/world/graveyard_layout.json`, `tools/blender/asset_ground_graveyard.py`, `tests/integration/test_vertical_slice_loop.gd`, `test_graveyard_world.gd` |
 | **W2 UI/Debug** (Welle 2) | `src/ui/**`, `assets/ui/**`, `src/debug/*` (außer `asset_preview.gd`, `screenshot_capture.gd`), `tests/unit/test_objective.gd`, `tests/integration/test_ui.gd` |
+| **Nachträge (Lead-genehmigt)** | W1: `src/world/camera/camera_rig.gd` (optionale Bounds, Prototyp unverändert), `tests/unit/test_entities.gd`; W2: `tests/unit/test_ui.gd` + `tests/integration/test_ui_flow.gd` (statt `tests/integration/test_ui.gd`), `src/ui/tools/*` |
 | **Eingefroren** | `src/world/art_prototype/*`, `src/entities/player/player_proto.*`, `data/art_prototype/*` (Stil-Referenz) |
 
 ✦ **Datenklassen (vom Lead fertig implementiert, nur Felder):** `ItemData`, `RecipeData`, `TimeConfig`, `PlayerConfig`, `ActionConfig`, `EconomyConfig`, `CorpseTables`, `DialogueData`, `DialogueNode`, `DialogueChoice`, `ScheduleEntry`, `NpcSchedule`, `AtmospherePreset` (existiert).

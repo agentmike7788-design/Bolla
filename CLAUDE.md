@@ -32,7 +32,9 @@ In der Cloud ist Godot nicht vorinstalliert: Linux-Build von github.com/godoteng
 python tools/blender/build_all.py                                            # Assets (bpy 5.x)
 godot --headless --path . --import
 tools/godot_run.sh -s res://src/world/art_prototype/art_prototype_builder.gd # Szene aus layout.json (braucht echten Renderer)
-tools/godot_run.sh --resolution 1280x720 -- --capture=/abs/dir [--shots=01,05]
+tools/godot_run.sh --resolution 1280x720 res://src/world/art_prototype/art_prototype.tscn -- --capture=/abs/dir [--shots=01,05]
+tools/godot_run.sh --resolution 1280x720 -s res://src/world/graveyard/graveyard_shots.gd -- --out=/abs/dir   # Vertical-Slice-Welt
+tools/godot_run.sh -s res://src/world/graveyard/graveyard_builder.gd   # graveyard.tscn neu erzeugen
 tools/godot_run.sh -s res://src/debug/asset_preview.gd -- --out=/abs/dir [--filter=name]
 ```
 Cloud: `apt-get install mesa-vulkan-drivers` für Software-Vulkan (lavapipe); ein kompletter Screenshot-Satz dauert ~15 min.
