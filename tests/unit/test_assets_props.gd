@@ -19,6 +19,9 @@ const CENTRE_EPS := 0.06
 ## name -> [category, min size, max size, footprint centred on the pivot, triangle budget]
 const MODELS := {
 	"ph_prop_corpse": ["props", Vector3(1.6, 0.2, 0.45), Vector3(1.8, 0.36, 0.7), true, BUDGET_PROP],
+	"ph_prop_corpse_02": ["props", Vector3(1.6, 0.2, 0.45), Vector3(1.8, 0.36, 0.7), true, BUDGET_PROP],
+	"ph_prop_corpse_03": ["props", Vector3(1.6, 0.2, 0.45), Vector3(1.8, 0.36, 0.7), true, BUDGET_PROP],
+	"ph_prop_corpse_04": ["props", Vector3(1.6, 0.2, 0.45), Vector3(1.8, 0.36, 0.7), true, BUDGET_PROP],
 	"ph_prop_corpse_shrouded": ["props", Vector3(1.6, 0.18, 0.4), Vector3(1.8, 0.35, 0.7), true, BUDGET_PROP],
 	"ph_prop_handcart": ["props", Vector3(1.0, 0.8, 2.0), Vector3(1.45, 1.05, 2.45), false, BUDGET_PROP],
 	"ph_prop_morgue_table": ["props", Vector3(1.9, 0.83, 0.75), Vector3(2.15, 0.92, 0.9), true, BUDGET_PROP],
@@ -38,6 +41,8 @@ const MODELS := {
 	"ph_item_coin": ["items", Vector3(0.1, 0.04, 0.1), Vector3(0.45, 0.3, 0.45), true, BUDGET_PROP],
 	"ph_item_shroud": ["items", Vector3(0.1, 0.04, 0.1), Vector3(0.45, 0.3, 0.45), true, BUDGET_PROP],
 }
+## Plain corpse looks (Corpse.plain_variants order); variant 0 keeps the original name.
+const CORPSE_VARIANTS: Array[String] = ["ph_prop_corpse", "ph_prop_corpse_02", "ph_prop_corpse_03", "ph_prop_corpse_04"]
 ## Markers each model must carry (glTF empties -> Node3D); every other model carries none.
 const MARKERS := {
 	"ph_prop_morgue_table": ["slot_corpse"],
@@ -191,12 +196,44 @@ func test_corpse_variants_match_and_fit_the_stations() -> void:
 	var corpse := _size("ph_prop_corpse")
 	var shrouded := _size("ph_prop_corpse_shrouded")
 	assert_almost(shrouded.x, corpse.x, 0.1, "same length")
-	assert_true(corpse.x > corpse.z * 2.0, "corpse lies along X")
 	assert_true(shrouded.x > shrouded.z * 2.0, "shrouded corpse lies along X")
-	for station: String in ["ph_prop_morgue_table", "ph_prop_dropoff_bier"]:
-		var s := _size(station)
-		assert_true(corpse.x <= s.x and shrouded.x <= s.x, "corpse fits the length of " + station)
-		assert_true(corpse.z <= s.z and shrouded.z <= s.z, "corpse fits the width of " + station)
+	for name: String in CORPSE_VARIANTS:
+		var v := _size(name)
+		assert_almost(v.x, corpse.x, 0.05, name + " has the length of variant 0")
+		assert_almost(v.z, corpse.z, 0.06, name + " has the width of variant 0")
+		assert_true(v.x > v.z * 2.0, name + " lies along X")
+		for station: String in ["ph_prop_morgue_table", "ph_prop_dropoff_bier"]:
+			var s := _size(station)
+			assert_true(v.x <= s.x and shrouded.x <= s.x, "%s fits the length of %s" % [name, station])
+			assert_true(v.z <= s.z and shrouded.z <= s.z, "%s fits the width of %s" % [name, station])
+
+
+func test_corpse_variants_lie_head_at_plus_x() -> void:
+	# Head and folded arms at +X: the upper body is wider than the legs; the boots at -X.
+	for name: String in CORPSE_VARIANTS + ["ph_prop_corpse_shrouded"]:
+		var inst := _load(name)
+		var head_half := 0.0
+		var feet_half := 0.0
+		for p: Vector3 in _vertices(inst):
+			if p.x > 0.15:
+				head_half = maxf(head_half, absf(p.z))
+			elif p.x < -0.15:
+				feet_half = maxf(feet_half, absf(p.z))
+		assert_true(head_half > feet_half, "%s: shoulders (+X) wider than legs (%f vs %f)" % [name, head_half, feet_half])
+		inst.free()
+
+
+func test_corpse_variants_look_different() -> void:
+	# Distinct clothes: the mean vertex colour of every pair of looks differs clearly.
+	var means: Array[Color] = []
+	for name: String in CORPSE_VARIANTS:
+		means.append(_mean_colour(name))
+	for i: int in means.size():
+		for j: int in range(i + 1, means.size()):
+			var a := means[i]
+			var b := means[j]
+			var d := Vector3(a.r - b.r, a.g - b.g, a.b - b.b).length()
+			assert_true(d > 0.02, "%s vs %s look alike (colour distance %f)" % [CORPSE_VARIANTS[i], CORPSE_VARIANTS[j], d])
 
 
 func test_grave_plot_marks_a_1x2_plot() -> void:
@@ -363,6 +400,21 @@ func _is_pit_far_wall(p: Vector3) -> bool:
 
 func _is_pit_rim(p: Vector3) -> bool:
 	return p.y > 0.065 and p.y < 0.14 and absf(p.x) < 0.66 and absf(p.z) < 1.16
+
+
+## Mean vertex colour of a model (all surfaces).
+func _mean_colour(name: String) -> Color:
+	var inst := _load(name)
+	var sum := Vector3.ZERO
+	var count := 0
+	for mi: MeshInstance3D in _meshes(inst):
+		for i: int in mi.mesh.get_surface_count():
+			for c: Color in mi.mesh.surface_get_arrays(i)[Mesh.ARRAY_COLOR] as PackedColorArray:
+				sum += Vector3(c.r, c.g, c.b)
+				count += 1
+	inst.free()
+	var m := sum / maxf(1.0, float(count))
+	return Color(m.x, m.y, m.z)
 
 
 ## Mean vertex-colour luminance of the vertices matching `pick`, -1 if none match.

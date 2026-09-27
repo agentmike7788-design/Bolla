@@ -1,6 +1,6 @@
 """Vertical-slice props (Phase 2, contract section 8), 'Gemaltes Diorama' style.
 
-Corpse (+ shrouded), handcart, morgue table, workbench, drop-off bier, grave plot
+Corpse (four plain looks + shrouded), handcart, morgue table, workbench, drop-off bier, grave plot
 (empty / open pit), wood pile, stone rubble, wooden cross, signpost, fallen log
 and a bush.  Front = -Y (Blender) = +Z (Godot), pivot bottom centre, 1 unit = 1 m.
 
@@ -48,12 +48,7 @@ LINEN = L.hexc("#D2C8AE")
 LINEN_DIRTY = L.hexc("#B5AA8E")
 ROPE = L.hexc("#8C7650")
 STRING = L.hexc("#B9A77E")
-SKIN = L.hexc("#A3AA90")          # pale grey-green
-SKIN_DARK = L.hexc("#879078")
-HAIR = L.hexc("#433C33")
-SHIRT = L.hexc("#776F5E")
-JACKET = L.hexc("#54493D")
-TROUSER = L.hexc("#3F3B35")
+SKIN = L.hexc("#76816F")          # pale grey-green (the painted shader lifts it to a pale ash)
 BOOT = L.hexc("#2E2620")
 LEATHER = L.hexc("#3B2E24")
 
@@ -204,130 +199,808 @@ def _clods(n: int, xr, yr, color, r=(0.03, 0.06), z: float = 0.02, seed: int = 0
     return out
 
 
-# --- corpse ------------------------------------------------------------------
+# --- corpses -------------------------------------------------------------------
+# Four plain looks from one body kit (ph_prop_corpse = variant 0, _02 .. _04) plus the
+# shrouded body. All lie on the back along X (head at +X, face up = +Z), ~1.72 m long and
+# ~0.6 m wide with the footprint centred, so every look sits the same on the slot_corpse of
+# table, bier and handcart. Peaceful, never gory: closed eyes, folded hands, tidy clothes.
+# Same proportion family as the characters: big head, big hands, big boots.
 
-def corpse():
-    """Body on its back along X (head +X): stylised like the characters (big head,
-    hands and boots), worn muted clothes, pale grey-green skin, hands folded on the chest."""
-    L.reset(200)
-    pk = {"zrange": CORPSE_ZR}
-    parts = []
-    # head (face up), grey hair over the crown, big nose, closed sunken eyes
-    head = L.prim("sphere", loc=(0.7, 0, 0.125), radius=0.135, segments=12, ring_count=8, scale=(1.0, 0.9, 0.93))
-    L.jitter(head, 0.006, 4.0, 1)
-    parts.append(_finish_obj(head, SKIN, var=0.08, ao=0.3, seed=1, **pk))
-    hair = L.prim("sphere", loc=(0.77, 0, 0.115), radius=0.125, segments=12, ring_count=7, scale=(0.72, 1.0, 0.92))
-    L.jitter(hair, 0.014, 5.0, 2)
-    parts.append(_finish_obj(hair, HAIR, var=0.22, seed=2, **pk))
-    parts.append(L.part("sphere", L.scale_c(SKIN_DARK, 0.9), loc=(0.683, 0, 0.245), radius=0.036, segments=8,
-                        ring_count=5, scale=(1.25, 0.85, 0.8), paint_kw=pk))
-    for sy in (-1, 1):
-        parts.append(L.part("sphere", L.scale_c(SKIN_DARK, 0.62), loc=(0.726, sy * 0.055, 0.232), radius=0.024,
-                            segments=8, ring_count=4, scale=(0.6, 1.0, 0.3), paint_kw=pk))
-    # torso: faded jacket over a shirt, belt, trousers
-    parts.append(_rbox((0.3, 0, 0.12), (0.235, 0.2, 0.1), JACKET, bev=0.07, seg=2, seed=3, var=0.16, hue_shift=EARTH,
-                       **pk))
-    parts.append(_rbox((0.43, 0, 0.212), (0.1, 0.05, 0.012), SHIRT, bev=0.008, seg=1, seed=4, **pk))
-    for sy in (-1, 1):  # lapels
-        parts.append(L.part("cube", L.scale_c(JACKET, 0.72), loc=(0.45, sy * 0.06, 0.214), rot=(0, 0, sy * -28),
-                            scale=(0.1, 0.018, 0.01), paint_kw=pk))
-    parts.append(_rbox((0.535, 0, 0.16), (0.035, 0.1, 0.045), SHIRT, bev=0.015, seg=1, seed=5, **pk))  # collar
-    parts.append(_rbox((0.075, 0, 0.115), (0.03, 0.19, 0.095), LEATHER, bev=0.015, seg=1, seed=6, **pk))
-    parts.append(_rbox((-0.02, 0, 0.1), (0.12, 0.18, 0.085), TROUSER, bev=0.045, seed=7, **pk))
-    for sy in (-1, 1):
-        # narrow legs, big boots with the toes up (slightly splayed)
-        parts.append(_stick((-0.06, sy * 0.09, 0.09), (-0.72, sy * 0.11, 0.075), 0.07, TROUSER, r1=0.058,
-                            verts=10, seed=8, var=0.15, hue_shift=EARTH, **pk))
-        parts.append(_rbox((-0.79, sy * 0.115, 0.11), (0.065, 0.065, 0.11), BOOT, bev=0.035, seed=9,
-                           rot=(sy * 12, 0, 0), **pk))
-        # arms: upper arm along the side, forearm folded over the chest
-        sh, el, wr = (0.5, sy * 0.225, 0.13), (0.27, sy * 0.255, 0.11), (0.3, sy * 0.075, 0.225)
-        parts.append(_stick(sh, el, 0.062, JACKET, r1=0.055, verts=8, seed=10, hue_shift=EARTH, **pk))
-        parts.append(_stick(el, wr, 0.055, JACKET, r1=0.05, verts=8, seed=11, hue_shift=EARTH, **pk))
-    parts.append(_rbox((-0.36, 0.1, 0.14), (0.06, 0.05, 0.01), L.hexc("#5A5246"), bev=0.006, seg=1, seed=14,
-                       **pk))  # knee patch
-    # big pale hands, right over left
-    parts.append(L.part("sphere", SKIN, loc=(0.3, 0.035, 0.232), radius=0.06, segments=8, ring_count=5,
-                        scale=(1.1, 0.95, 0.48), jit=0.004, seed=12, paint_kw=pk))
-    parts.append(L.part("sphere", SKIN, loc=(0.315, -0.03, 0.256), radius=0.06, segments=8, ring_count=5,
-                        scale=(1.1, 0.95, 0.48), rot=(0, 0, 20), jit=0.004, seed=13, paint_kw=pk))
-    obj = L.join(parts, "ph_prop_corpse")
-    _center_xy(obj)
-    L.finish(obj, "ph_prop_corpse", "props", 50)
+SKIN_ASH = L.hexc("#6A6874")      # lilac-grey hollows (eye sockets)
+SKIN_WARM = L.hexc("#858A74")     # ashen highlights (cheeks, nose, knuckles)
+LIP = L.hexc("#76696A")
+LASH = L.hexc("#3E3733")
+BRASS = L.hexc("#8E7F55")         # dull, never shiny
+CORPSE_SMOOTH = 80.0              # smooth-shading angle: soft limbs, only the soles stay crisp
+
+HEAD_C = Vector((0.725, 0.0, 0.132))
+HEAD_R = 0.135
+HEAD_S = Vector((1.07, 0.93, 0.95))
+# Ring angles of body lofts (degrees, 0 = +Y side, 90 = top): dense on the visible top.
+ANG = (0, 22, 42, 60, 75, 90, 105, 120, 138, 158, 180, 270)
+# Torso outline: x, y centre, z centre, half width, top, bottom (bottom = z centre: lies flat)
+TORSO = [(-0.15, 0.0, 0.09, 0.150, 0.056, 0.09), (-0.07, 0.0, 0.10, 0.172, 0.078, 0.10),
+         (0.03, 0.0, 0.10, 0.168, 0.086, 0.10), (0.13, 0.0, 0.10, 0.178, 0.097, 0.10),
+         (0.24, 0.0, 0.105, 0.19, 0.106, 0.105), (0.35, 0.0, 0.105, 0.198, 0.112, 0.105),
+         (0.44, 0.0, 0.105, 0.198, 0.103, 0.105), (0.5, 0.0, 0.1, 0.18, 0.085, 0.1),
+         (0.545, 0.0, 0.1, 0.118, 0.062, 0.095), (0.575, 0.0, 0.1, 0.07, 0.048, 0.09)]
+# Folded hands on the belly (the upper hand comes from the +Y wrist)
+WRIST = {1: Vector((0.262, 0.078, 0.238)), -1: Vector((0.25, -0.082, 0.226))}
+LEG_X = (-0.07, -0.25, -0.43, -0.685)
 
 
-def _loft_x(sections, verts: int = 14, wrinkle: float = 0.0, seed: int = 0, name: str = "loft"):
-    """Closed loft along X through elliptic sections (x, half_width, top, bottom).
-    The section sits on the ground: bottom half flattened, z of the lowest point = 0."""
+def _frame(normal, ref) -> Matrix:
+    """4x4 rotation whose local z = normal and local x = ref (made orthogonal)."""
+    z = Vector(normal).normalized()
+    x = Vector(ref) - z * Vector(ref).dot(z)
+    x.normalize()
+    return Matrix((x, z.cross(x), z)).transposed().to_4x4()
+
+
+def _shade(c, co, up: float = 0.5, var: float = 0.08, ao: float = 0.3, top: float = 0.1, freq: float = 3.0,
+           seed: int = 0):
+    """Painted-look colour at a vertex: noise, fake AO over the body height, top light
+    (`up` = vertex normal z, so the light is as smooth as the shading)."""
+    n = noise.noise(co * freq + Vector((seed * 3.7, seed * 1.9, seed * 5.3)))
+    h = max(0.0, min(1.0, co.z / CORPSE_ZR[1]))
+    return L.scale_c(c, (1.0 + n * var) * (1.0 - ao * (1.0 - h) ** 2) * (1.0 + top * max(0.0, up)))
+
+
+def _paint_poly(obj, fn) -> None:
+    """Vertex-paint every face corner with fn(co, poly, vertex_index) -> sRGB: colour zones follow
+    the faces (crisp seams between clothes), soft variation inside."""
+    me = obj.data
+    attr = me.color_attributes.get("Col") or me.color_attributes.new("Col", "FLOAT_COLOR", "CORNER")
+    me.color_attributes.active_color = attr
+    for poly in me.polygons:
+        for li in poly.loop_indices:
+            vi = me.loops[li].vertex_index
+            c = fn(me.vertices[vi].co, poly, vi)
+            attr.data[li].color = (L._to_lin(c[0]), L._to_lin(c[1]), L._to_lin(c[2]), 1.0)
+
+
+def _cloth(obj, fn, var: float = 0.12, ao: float = 0.3, top: float = 0.2, freq: float = 4.0, seed: int = 0):
+    """Paint with a zone function fn(co, poly) -> base colour, shaded; shared painted material."""
+    vn = obj.data.vertices
+    _paint_poly(obj, lambda co, poly, vi: _shade(fn(co, poly), co, vn[vi].normal.z, var, ao, top, freq, seed))
+    L.set_mat(obj, L.MAT_PAINTED)
+    return obj
+
+
+def _flat(color):
+    return lambda co, poly: color
+
+
+def _blob(kind: str, half, pos, normal=(0, 0, 1), ref=(1, 0, 0), color=(1, 1, 1), fn=None, jit: float = 0.0,
+          seed: int = 0, var: float = 0.08, ao: float = 0.3, top: float = 0.1, **kw):
+    """Primitive scaled by `half` in a local frame (local z = normal, local x = ref), moved to pos.
+    fn(local_co, poly) -> base colour paints in local coordinates (lash lines, lip seams ...)."""
+    o = L.prim(kind, scale=half, **kw)
+    if jit > 0:
+        L.jitter(o, jit, 40.0, seed)
+    local = [v.co.copy() for v in o.data.vertices]
+    o.data.transform(Matrix.Translation(Vector(pos)) @ _frame(normal, ref))
+    if fn is None:
+        return _cloth(o, _flat(color), var=var, ao=ao, top=top, seed=seed)
+    vn = o.data.vertices
+    _paint_poly(o, lambda co, poly, vi: _shade(fn(local[vi], poly), co, vn[vi].normal.z, var, ao, top, 4.0, seed))
+    L.set_mat(o, L.MAT_PAINTED)
+    return o
+
+
+def _tube(points, radii, sides: int = 6, hint=(0, 0, 1), caps=(True, True), name: str = "tube"):
+    """Tube along a polyline with a radius per point (limbs, sleeves, fingers).
+    caps = (start, end): hidden ends (inside the torso, a boot ...) stay open."""
+    pts = [Vector(p) for p in points]
+    n = len(pts)
+    h = Vector(hint)
     bm = bmesh.new()
     rings = []
-    for (x, hw, top, bot) in sections:
-        ring = []
-        for j in range(verts):
-            a = j / verts * math.tau
-            c, s = math.cos(a), math.sin(a)
-            r = 1.0 + wrinkle * (noise.noise(Vector((x * 7.0, c * 2.0, s * 2.0 + seed))) +
-                                 0.6 * math.sin(a * 3.0 + x * 23.0))
-            z = bot + (top if s > 0 else bot) * s
-            ring.append(bm.verts.new((x, hw * c * r, max(0.0, z * (r if s > 0 else 1.0)))))
-        rings.append(ring)
-    for k in range(len(rings) - 1):
-        for j in range(verts):
-            bm.faces.new((rings[k][j], rings[k][(j + 1) % verts], rings[k + 1][(j + 1) % verts], rings[k + 1][j]))
-    bm.faces.new(list(reversed(rings[0])))
-    bm.faces.new(rings[-1])
-    return _link(bm, name)
+    for i, p in enumerate(pts):
+        t = (pts[min(i + 1, n - 1)] - pts[max(i - 1, 0)]).normalized()
+        b1 = (h - t * h.dot(t)).normalized()
+        b2 = t.cross(b1).normalized()
+        rings.append([bm.verts.new(p + (b1 * math.cos(a) + b2 * math.sin(a)) * radii[i])
+                      for a in (j / sides * math.tau for j in range(sides))])
+    for i in range(n - 1):
+        r0, r1 = rings[i], rings[i + 1]
+        for j in range(sides):
+            bm.faces.new((r0[j], r0[(j + 1) % sides], r1[(j + 1) % sides], r1[j]))
+    if caps[0]:
+        bm.faces.new(list(reversed(rings[0])))
+    if caps[1]:
+        bm.faces.new(rings[-1])
+    return _raw(bm, name)
 
 
-# Shroud outline: x, half width, top, bottom (m) - feet at -X, head at +X
-SHROUD = [(-0.865, 0.05, 0.05, 0.04), (-0.83, 0.1, 0.1, 0.06), (-0.76, 0.125, 0.12, 0.07),
-          (-0.66, 0.12, 0.085, 0.065), (-0.45, 0.13, 0.075, 0.07), (-0.2, 0.16, 0.085, 0.075),
-          (0.02, 0.2, 0.1, 0.08), (0.2, 0.23, 0.12, 0.085), (0.4, 0.25, 0.125, 0.085),
-          (0.53, 0.225, 0.11, 0.08), (0.6, 0.11, 0.085, 0.07), (0.66, 0.1, 0.09, 0.075),
-          (0.75, 0.11, 0.1, 0.08), (0.83, 0.085, 0.08, 0.065), (0.87, 0.03, 0.03, 0.03)]
+def _raw(bm, name: str):
+    """bmesh -> mesh object, keeping the winding as built (open sheets and tubes point outwards)."""
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    obj = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(obj)
+    return obj
 
 
-def _shroud_section(x: float):
-    """Interpolated outline (half width, top, bottom) at x."""
-    for a, b in zip(SHROUD, SHROUD[1:]):
-        if a[0] <= x <= b[0]:
+def _sec(secs, x: float):
+    """Loft section (y centre, z centre, half width, top, bottom) interpolated at x (clamped)."""
+    if x <= secs[0][0]:
+        return secs[0][1:]
+    for a, b in zip(secs, secs[1:]):
+        if x <= b[0]:
             t = (x - a[0]) / (b[0] - a[0])
-            return tuple(a[i] + (b[i] - a[i]) * t for i in (1, 2, 3))
-    return SHROUD[0][1:]
+            return tuple(a[i] + (b[i] - a[i]) * t for i in range(1, 6))
+    return secs[-1][1:]
+
+
+def _on_loft(secs, x: float, a_deg: float, lift: float = 0.0, fold=None) -> Vector:
+    """Point on a loft surface at x and ring angle a (degrees), pushed out by lift."""
+    yc, zc, hw, top, bot = _sec(secs, x)
+    a = math.radians(a_deg)
+    c, s = math.cos(a), math.sin(a)
+    f = fold(x, a) if fold else 1.0
+    rz = (top * f if s >= 0 else bot) + lift
+    return Vector((x, yc + (hw * f + lift) * c, zc + rz * s))
+
+
+def _loft_angle(secs, co) -> float:
+    """Ring angle (degrees 0..360) of a point relative to the loft section at its x."""
+    yc, zc, hw, top, bot = _sec(secs, co.x)
+    dz = co.z - zc
+    return math.degrees(math.atan2(dz / (top if dz >= 0 else bot), (co.y - yc) / hw)) % 360.0
+
+
+def _loft(secs, angles=ANG, fold=None, caps=(True, True), name: str = "loft"):
+    """Loft along X through the sections, rings at the given angles; faces point outwards."""
+    bm = bmesh.new()
+    rings = [[bm.verts.new(_on_loft(secs, s[0], a, 0.0, fold)) for a in angles] for s in secs]
+    n = len(angles)
+    for k in range(len(rings) - 1):
+        for j in range(n):
+            bm.faces.new((rings[k][j], rings[k][(j + 1) % n], rings[k + 1][(j + 1) % n], rings[k + 1][j]))
+    if caps[0]:
+        bm.faces.new(list(reversed(rings[0])))
+    if caps[1]:
+        bm.faces.new(rings[-1])
+    return _raw(bm, name)
+
+
+def _patch(secs, xs, angs, lift: float, fold=None, keep=None, x_of=None, name: str = "patch"):
+    """A cloth layer on a loft (belt, lapel, waistcoat, shawl): grid over the x values and ring
+    angles (a list, or angs(x) -> list of the same length), `lift` above the surface.
+    keep(x, a) -> False leaves a cell out; x_of(x, a) -> x shapes a hem. Faces point outwards."""
+    bm = bmesh.new()
+    rows = [angs(x) if callable(angs) else angs for x in xs]
+    grid = [[bm.verts.new(_on_loft(secs, x_of(x, a) if x_of else x, a, lift, fold)) for a in row]
+            for x, row in zip(xs, rows)]
+    for i in range(len(xs) - 1):
+        for j in range(len(rows[i]) - 1):
+            if keep is None or keep((xs[i] + xs[i + 1]) / 2, (rows[i][j] + rows[i][j + 1]) / 2):
+                bm.faces.new((grid[i][j], grid[i][j + 1], grid[i + 1][j + 1], grid[i + 1][j]))
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
+    return _raw(bm, name)
+
+
+def _sheet(xs, ys, height, name: str = "sheet"):
+    """Cloth sheet over a grid (x rows, y columns) at height(x, y) (aprons over the legs)."""
+    bm = bmesh.new()
+    grid = [[bm.verts.new((x, y, height(x, y))) for y in ys] for x in xs]
+    step = 1 if xs[-1] > xs[0] else -1
+    for i in range(len(xs) - 1):
+        for j in range(len(ys) - 1):
+            q = (grid[i][j], grid[i + 1][j], grid[i + 1][j + 1], grid[i][j + 1])
+            bm.faces.new(q if step > 0 else tuple(reversed(q)))
+    return _raw(bm, name)
+
+
+# --- head ----------------------------------------------------------------------
+
+def _face_pt(u: float, v: float, lift: float = 0.0) -> Vector:
+    """Point on the head: u = degrees from the nose towards the crown (+X), v = towards +Y."""
+    ur, vr = math.radians(u), math.radians(v)
+    d = Vector((math.sin(ur) * math.cos(vr), math.sin(vr), math.cos(ur) * math.cos(vr)))
+    return HEAD_C + Vector((d.x * HEAD_S.x, d.y * HEAD_S.y, d.z * HEAD_S.z)) * (HEAD_R * _head_shape(d) + lift)
+
+
+def _face_n(u: float, v: float) -> Vector:
+    p = _face_pt(u, v) - HEAD_C
+    return Vector((p.x / HEAD_S.x ** 2, p.y / HEAD_S.y ** 2, p.z / HEAD_S.z ** 2)).normalized()
+
+
+def _head_dir(p) -> Vector:
+    d = Vector(p) - HEAD_C
+    return Vector((d.x / HEAD_S.x, d.y / HEAD_S.y, d.z / HEAD_S.z)).normalized()
+
+
+def _uv(d) -> tuple:
+    """Unit direction (head space) -> (u, v) in degrees."""
+    return math.degrees(math.atan2(d.x, d.z)), math.degrees(math.asin(max(-1.0, min(1.0, d.y))))
+
+
+def _head_shape(d: Vector) -> float:
+    """Radius factor of the sculpted head: soft chin, narrower jaw, brow, flat resting back."""
+    u, v = _uv(d)
+    r = 1.0 + 0.08 * math.exp(-((u + 50.0) / 13.0) ** 2) * max(0.0, 1.0 - abs(d.y) * 2.2)
+    r -= 0.06 * max(0.0, -d.x) * abs(d.y)
+    r += 0.03 * math.exp(-((u - 24.0) / 9.0) ** 2) * max(0.0, 1.0 - abs(d.y) * 1.5)
+    r -= 0.07 * max(0.0, -d.z - 0.55)
+    return r
+
+
+def _skin_at(co):
+    """Base skin colour: pale grey-green with ashen highlights and lilac-grey eye hollows."""
+    c = L.mix(SKIN, SKIN_WARM, max(0.0, noise.noise(co * 9.0 + Vector((3, 1, 7)))) * 0.9)
+    for sy in (-1, 1):
+        k = math.exp(-((co - _face_pt(15, 25 * sy, -0.01)).length / 0.034) ** 2)
+        c = L.mix(c, SKIN_ASH, 0.65 * k)
+        k = math.exp(-((co - _face_pt(-10, 38 * sy)).length / 0.04) ** 2)
+        c = L.mix(c, SKIN_WARM, 0.6 * k)
+    return c
+
+
+def _skin_fn(co, poly):
+    return _skin_at(co)
+
+
+def _zone_head(parts, zones, segs: int = 14, rings: int = 9, seed: int = 1) -> None:
+    """Sculpted head sphere (pole = nose, crown = +X). zones = [(keep(u, v), colour, lift, locks,
+    streak)]: hair, beard or a headscarf painted onto the faces where keep() and pushed out
+    (vertices whose faces all belong to a zone), with painted strands; later zones win."""
+    o = L.prim("sphere", radius=1.0, segments=segs, ring_count=rings)
+    me = o.data
+    for v in me.vertices:
+        d = v.co.normalized()
+        v.co = HEAD_C + Vector((d.x * HEAD_S.x, d.y * HEAD_S.y, d.z * HEAD_S.z)) * HEAD_R * _head_shape(d)
+    fz = []
+    for poly in me.polygons:
+        u, v = _uv(_head_dir(poly.center))
+        z = -1
+        for i, zone in enumerate(zones):
+            if zone[0](u, v):
+                z = i
+        fz.append(z)
+    around = {}
+    for poly in me.polygons:
+        for vi in poly.vertices:
+            around.setdefault(vi, []).append(fz[poly.index])
+    off = Vector((seed * 1.3, seed * 2.1, 0.0))
+    for v in me.vertices:
+        zs = around[v.index]
+        if min(zs) >= 0:
+            lift = min(zones[z][2] for z in zs)
+            locks = zones[zs[0]][3]
+            n = (v.co - HEAD_C).normalized()
+            v.co += n * (lift + locks * noise.noise(n * 4.0 + off))
+
+    def zone_fn(co, poly):
+        z = fz[poly.index]
+        if z < 0:
+            return _skin_at(co)
+        d = co - HEAD_C
+        s = math.sin(math.atan2(d.y, d.z) * 9.0 + d.x * 14.0)
+        return L.scale_c(zones[z][1], 1.0 - zones[z][4] * max(0.0, s) ** 3)
+    parts.append(_cloth(o, zone_fn, var=0.08, ao=0.25, top=0.1, freq=7.0, seed=seed))
+
+
+def _face(parts, brow_color, brow_r: float = 0.0075, ears: bool = True) -> None:
+    """A gentle face: closed lids with lash lines, soft nose, closed lips, ears, relaxed brows."""
+    for sy in (-1, 1):
+        # closed lid: a soft bulge in the socket, a calm curved lash line below it
+        parts.append(_blob("sphere", (0.017, 0.031, 0.012), _face_pt(15, 25 * sy, -0.003), _face_n(15, 25 * sy),
+                           (1, 0, 0), color=L.mix(SKIN, SKIN_ASH, 0.12), segments=6, ring_count=4, ao=0.1, top=0.05))
+        lash = [_face_pt(u, v * sy, 0.006) for u, v in ((12, 13), (8.5, 25), (12, 37))]
+        parts.append(_cloth(_tube(lash, (0.0035, 0.0045, 0.0035), 3, hint=(0, 0, 1), caps=(False, False)),
+                            _flat(LASH), var=0.05, ao=0.0, top=0.0))
+        pts = [_face_pt(u, v * sy, 0.002) for u, v in ((29, 11), (32, 24), (29, 38))]
+        parts.append(_cloth(_tube(pts, (brow_r * 0.8, brow_r, brow_r * 0.7), 4, hint=(1, 0, 0), caps=(False, False)),
+                            _flat(brow_color), var=0.15, ao=0.1))
+        if ears:
+            parts.append(_blob("ico", (0.038, 0.026, 0.012), _face_pt(2, 82 * sy, -0.006), _face_n(2, 88 * sy),
+                               (1, 0, 0), color=L.mix(SKIN, SKIN_ASH, 0.2), subdivisions=1, ao=0.2))
+    # nose: soft and a little big, like the living characters'
+    parts.append(_blob("sphere", (0.038, 0.022, 0.021), _face_pt(-4, 0, 0.004), _face_n(-4, 0), (1, 0, 0),
+                       fn=lambda lc, poly: L.mix(SKIN, SKIN_ASH, 0.3) if lc.x < -0.03 else L.mix(SKIN, SKIN_WARM, 0.6),
+                       segments=8, ring_count=4, ao=0.08))
+    # lips: closed, muted mauve with a darker seam
+    parts.append(_blob("sphere", (0.01, 0.028, 0.008), _face_pt(-27, 0, -0.002), _face_n(-27, 0), (1, 0, 0),
+                       fn=lambda lc, poly: L.scale_c(LIP, 0.75) if abs(lc.x) < 0.004 else L.mix(LIP, SKIN, 0.3),
+                       segments=6,
+                       ring_count=3, ao=0.08))
+
+
+# --- body ----------------------------------------------------------------------
+
+def _torso(parts, zone, fold=None, seed: int = 3, var: float = 0.12) -> None:
+    """zone(x, ring angle, co) -> colour, decided per face (crisp seams between clothes)."""
+    body = _loft(TORSO, ANG, fold=fold, caps=(False, False), name="torso")
+    parts.append(_cloth(body, lambda co, poly: zone(poly.center.x, _loft_angle(TORSO, poly.center), co), var=var,
+                        seed=seed))
+
+
+def _torso_fold(x: float, a: float) -> float:
+    """Soft cloth folds: creases from the armpits, a pinch at the waist."""
+    s = math.sin(a)
+    f = 1.0 + 0.016 * math.sin(a * 5.0 + x * 21.0) * max(0.0, s)
+    f -= 0.03 * math.exp(-((x - 0.04) / 0.04) ** 2)
+    return f
+
+
+def _crease(co, x0: float, x1: float, freq: float, depth: float) -> float:
+    """Brightness of painted crease bands between x0 and x1."""
+    if co.x < x0 or co.x > x1:
+        return 1.0
+    return 1.0 - depth * max(0.0, math.sin(co.x * freq + co.y * 9.0)) ** 6
+
+
+def _arm_pts(sy: int):
+    sh = Vector((0.475, sy * 0.19, 0.125))
+    el = Vector((0.215, sy * 0.238, 0.088))
+    mid_f = Vector((0.232, sy * 0.172, 0.182))
+    return sh, sh.lerp(el, 0.5) + Vector((0, sy * 0.012, 0)), el, mid_f, WRIST[sy]
+
+
+def _arms(parts, sleeve, cuff=None, rolled: bool = False, patch=None, seed: int = 10) -> None:
+    """Upper arms along the sides, forearms folded onto the belly. rolled = bare forearms."""
+    for sy in (-1, 1):
+        sh, mid, el, mid_f, w = _arm_pts(sy)
+        if rolled:  # sleeve rolled up above the elbow, skin below
+            parts.append(_cloth(_tube((sh, mid, el), (0.062, 0.058, 0.064), 6, caps=(False, True)),
+                                lambda co, poly, el=el: L.scale_c(sleeve, 0.85 if (co - el).length < 0.04 else 1.0),
+                                seed=seed))
+            parts.append(_cloth(_tube((el, mid_f, w), (0.045, 0.042, 0.037), 6, caps=(False, False)), _skin_fn,
+                                var=0.05, ao=0.22, seed=seed + 1))
+        else:
+            def sleeve_fn(co, poly, w=w, el=el):
+                if cuff is not None and (co - w).length < 0.032:
+                    return cuff
+                return L.scale_c(sleeve, _crease(co, el.x - 0.05, el.x + 0.05, 90.0, 0.2))
+            parts.append(_cloth(_tube((sh, mid, el, mid_f, w), (0.062, 0.058, 0.054, 0.05, 0.047), 6,
+                                      caps=(False, True)), sleeve_fn, seed=seed))
+        if patch is not None and sy > 0:  # a darned patch on the elbow
+            parts.append(_blob("ico", (0.04, 0.034, 0.012), el + Vector((0.0, 0.035, 0.024)), (0, 0.8, 0.6),
+                               (1, 0, 0), color=patch, subdivisions=1, jit=0.002, seed=seed + 3))
+
+
+def _hands(parts, lift: float = 0.0) -> None:
+    """Big pale hands folded on the belly: the right over the left, fingers across."""
+    up = Vector((0, 0, lift))
+    m = Matrix.Translation(WRIST[1] + Vector((0.012, -0.052, 0.022)) + up) @ _frame((0.05, 0.12, 1.0),
+                                                                                    (0.22, -1.0, 0.0))
+    r = m.to_3x3()
+    parts.append(_blob("sphere", (0.046, 0.037, 0.018), m @ Vector(), r @ Vector((0, 0, 1)), r @ Vector((1, 0, 0)),
+                       color=SKIN, segments=6, ring_count=4, ao=0.18))
+    for i, off in enumerate((-0.024, -0.008, 0.008, 0.023)):
+        ln = 0.052 - abs(off) * 0.5
+        pts = (m @ Vector((0.03, off, 0.004)), m @ Vector((0.03 + ln * 0.6, off * 1.05, 0.0)),
+               m @ Vector((0.03 + ln, off * 1.1, -0.018)))
+        parts.append(_cloth(_tube(pts, (0.0105, 0.0098, 0.0085), 4, hint=r @ Vector((0, 0, 1)), caps=(False, True)),
+                            lambda co, poly: _skin_at(co), var=0.05, ao=0.18, seed=40 + i))
+    thumb = (m @ Vector((-0.01, -0.036, 0.0)), m @ Vector((0.02, -0.05, 0.006)), m @ Vector((0.045, -0.052, 0.006)))
+    parts.append(_cloth(_tube(thumb, (0.013, 0.012, 0.0105), 5, hint=r @ Vector((0, 0, 1)), caps=(False, True)),
+                        _skin_fn, var=0.05, ao=0.18, seed=44))
+    # lower hand (from the -Y wrist), its fingers peeking out under the upper wrist
+    m2 = Matrix.Translation(WRIST[-1] + Vector((0.008, 0.055, 0.004)) + up) @ _frame((0.0, -0.1, 1.0),
+                                                                                     (-0.1, 1.0, 0.0))
+    r2 = m2.to_3x3()
+    parts.append(_blob("sphere", (0.046, 0.036, 0.017), m2 @ Vector(), r2 @ Vector((0, 0, 1)),
+                       r2 @ Vector((1, 0, 0)), color=SKIN, segments=6, ring_count=4, ao=0.18))
+    parts.append(_blob("sphere", (0.03, 0.036, 0.012), m2 @ Vector((0.062, 0.0, -0.004)), r2 @ Vector((0, 0, 1)),
+                       r2 @ Vector((1, 0, 0)),
+                       fn=lambda lc, poly: L.scale_c(SKIN, 0.88 if abs(abs(lc.y) - 0.012) < 0.005 else 1.0),
+                       segments=6, ring_count=3, ao=0.2))
+
+
+def _leg_pts(sy: int):
+    ys = (0.088, 0.094, 0.1, 0.108)
+    zs = (0.1, 0.096, 0.094, 0.078)
+    return [Vector((x, sy * y, z)) for x, y, z in zip(LEG_X, ys, zs)]
+
+
+LEG_R = (0.086, 0.076, 0.068, 0.056)
+
+
+def _legs(parts, trouser, patch=None, seed: int = 20) -> None:
+    for sy in (-1, 1):
+        def fn(co, poly):
+            return L.scale_c(trouser, _crease(co, -0.48, -0.36, 80.0, 0.16) * _crease(co, -0.7, -0.6, 95.0, 0.18))
+        parts.append(_cloth(_tube(_leg_pts(sy), LEG_R, 6, caps=(False, False)), fn, seed=seed + sy))
+        if patch is not None and sy < 0:  # a sewn-on knee patch
+            parts.append(_blob("ico", (0.05, 0.043, 0.012), _leg_pts(sy)[2] + Vector((0.0, 0.0, 0.064)),
+                               (0, -0.15, 1), (1, 0, 0), color=patch, subdivisions=1, jit=0.002, seed=seed + 5))
+
+
+def _boots(parts, color, small: bool = False, seed: int = 30) -> None:
+    """Big boots, toes up and splayed a little; worn lighter at the toe cap. small = shoes."""
+    for sy in (-1, 1):
+        y = sy * (0.112 if not small else 0.1)
+        if not small:
+            parts.append(_cloth(_tube(((-0.66, y, 0.078), (-0.755, y, 0.084)), (0.06, 0.063), 7, caps=(False, False)),
+                                _flat(color), var=0.12, seed=seed))
+        c = Vector((-0.785 if not small else -0.765, y + sy * 0.012, 0.125 if not small else 0.1))
+        half = (0.115, 0.06, 0.058) if not small else (0.085, 0.047, 0.045)
+        toe_up = Vector((0.0, sy * 0.2, 1.0))
+
+        def boot(lc, poly, h=half[0]):
+            return L.scale_c(color, 1.0 + 0.5 * max(0.0, lc.x / h - 0.35))
+        parts.append(_blob("sphere", half, c, (-1, 0, 0), toe_up, fn=boot, segments=7, ring_count=4, jit=0.002,
+                           seed=seed + 1, ao=0.25))
+        parts.append(_blob("sphere", (half[0] * 1.03, half[1] * 1.05, 0.012), c + Vector((-half[2] - 0.004, 0, 0)),
+                           (-1, 0, 0), toe_up, color=L.scale_c(color, 0.6), segments=6, ring_count=2, ao=0.2))
+
+
+def _neck(parts) -> None:
+    parts.append(_cloth(_tube(((0.53, 0, 0.112), (0.6, 0, 0.12), (0.64, 0, 0.122)), (0.056, 0.054, 0.05), 6,
+                              caps=(False, False)), _skin_fn, var=0.05, ao=0.25, seed=5))
+
+
+def _buttons(parts, xs, color, lift: float = 0.004, r: float = 0.011) -> None:
+    for x in xs:
+        parts.append(_blob("cyl", (r, r, 0.004), _on_loft(TORSO, x, 90.0, lift, _torso_fold), (0, 0, 1), (1, 0, 0),
+                           color=color, vertices=4 if x < 0.1 else 5, ao=0.0, top=0.3))
+
+
+def _sprig(parts, base: Vector, direction: Vector, seed: int = 0, n: int = 3) -> None:
+    """A small sprig of heather: a thin stem with tiny muted mauve blossoms and two leaves."""
+    d = direction.normalized()
+    side = d.cross(Vector((0, 0, 1))).normalized()
+    stem = (base, base + d * 0.06 + side * 0.006, base + d * 0.12 - side * 0.004)
+    parts.append(_cloth(_tube(stem, (0.004, 0.0035, 0.003), 4, caps=(False, False)), _flat(L.hexc("#5A5A40")),
+                        ao=0.0, seed=seed))
+    for i in range(n):
+        t = 0.4 + 0.6 * i / max(1, n - 1)
+        p = base + d * (0.12 * t) + side * (0.011 * (1 if i % 2 else -1)) + Vector((0, 0, 0.004))
+        col = L.mix(L.hexc("#77627B"), L.hexc("#938093"), (i % 3) / 2.0)
+        parts.append(_blob("ico", (0.012, 0.009, 0.008), p, (0, 0, 1), d, color=col, subdivisions=1, jit=0.002,
+                           seed=seed + i, ao=0.0, top=0.2))
+    for k in (-1, 1):
+        parts.append(_blob("sphere", (0.02, 0.006, 0.003), base + d * 0.03 + side * k * 0.012, (0, 0, 1),
+                           d + side * k * 0.6, color=L.hexc("#566444"), segments=4, ring_count=3, ao=0.0))
+
+
+def _corpse_done(parts, name: str) -> None:
+    obj = L.join(parts, name)
+    _center_xy(obj)
+    L.finish(obj, name, "props", CORPSE_SMOOTH)
+
+
+# --- the four looks --------------------------------------------------------------
+
+def corpse():
+    """Variant 0 - farmhand: open brown work jacket with lapels and a darned elbow over an
+    oatmeal shirt (buttons), leather belt with an iron buckle, dark trousers with a knee patch,
+    muted rust neckerchief, tousled brown hair, big worn boots."""
+    L.reset(200)
+    jacket, jacket_d = L.hexc("#5C4B3B"), L.hexc("#47392D")
+    shirt, trouser = L.hexc("#857F6B"), L.hexc("#45423A")
+    hair = L.hexc("#54412F")
+    parts = []
+    _zone_head(parts, [(lambda u, v: u > 40 or (abs(v) > 60 and u > 14) or abs(u) > 125, hair, 0.013, 0.012, 0.16)])
+    _face(parts, L.scale_c(hair, 0.9))
+    _neck(parts)
+
+    def half_open(x):
+        return 14.0 if x < 0.36 else 14.0 + (x - 0.36) * 120.0
+
+    def zone(x, a, co):
+        if x < 0.02 and abs(a - 90.0) < 30.0:
+            return trouser
+        if abs(a - 90.0) < half_open(x) and x >= 0.02:
+            return shirt if x > 0.075 else LEATHER
+        return L.scale_c(jacket, _crease(co, 0.1, 0.46, 60.0, 0.12))
+    _torso(parts, zone, _torso_fold)
+    for sy in (-1, 1):  # lapels along the opening, widening to the shoulders
+        def lapel(x, sy=sy):
+            a = 90.0 - sy * half_open(x)
+            return (a - 17.0, a + 1.0) if sy > 0 else (a - 1.0, a + 17.0)
+        parts.append(_cloth(_patch(TORSO, (0.3, 0.38, 0.46, 0.54), lapel, 0.01, _torso_fold, name="lapel"),
+                            _flat(jacket_d), seed=6))
+    parts.append(_cloth(_patch(TORSO, (0.02, 0.075), (70, 90, 110), 0.006, _torso_fold, name="belt"),
+                        _flat(LEATHER), seed=7))
+    parts.append(_blob("cube", (0.02, 0.028, 0.006), _on_loft(TORSO, 0.047, 90.0, 0.012, _torso_fold), color=IRON,
+                       top=0.3, ao=0.0))
+    _buttons(parts, (0.13, 0.37, 0.45), L.hexc("#5A5346"))
+    kerchief = L.hexc("#5E4334")
+    parts.append(_cloth(_patch(TORSO, (0.52, 0.55, 0.578), (15, 50, 90, 130, 165), 0.012, name="kerchief"),
+                        _flat(kerchief), seed=8))
+    parts.append(_blob("ico", (0.03, 0.026, 0.012), _on_loft(TORSO, 0.515, 90.0, 0.014), (0, 0, 1), (1, 0, 0),
+                       color=L.scale_c(kerchief, 0.9), subdivisions=1, jit=0.002, seed=9))
+    _arms(parts, jacket, cuff=shirt, patch=L.hexc("#6C604C"))
+    _hands(parts)
+    _legs(parts, trouser, patch=L.hexc("#666050"))
+    _boots(parts, BOOT)
+    _corpse_done(parts, "ph_prop_corpse")
+
+
+def corpse_02():
+    """Variant 1 - old woman: long slate-plum dress, knitted shawl over the shoulders with a
+    fringed hem, pale lace collar, faded headscarf knotted under the chin with grey hair at the
+    brow, a sprig of heather in the folded hands, small black shoes."""
+    L.reset(202)
+    dress, shawl = L.hexc("#4A4452"), L.hexc("#5F4E40")
+    scarf, grey = L.hexc("#7E6A4A"), L.hexc("#9A958B")
+    parts = []
+    _zone_head(parts, [(lambda u, v: u > 32 or abs(v) > 56 or u < -95, scarf, 0.026, 0.008, 0.1),
+                       (lambda u, v: 32 < u < 46 and abs(v) < 44, grey, 0.01, 0.004, 0.2)])
+    _face(parts, L.hexc("#857F75"), brow_r=0.006, ears=False)
+    for sy in (-1, 1):  # scarf ends tied under the chin, lying on the collar
+        parts.append(_blob("sphere", (0.04, 0.02, 0.007), (0.548, sy * 0.034, 0.2), (0, sy * 0.3, 1),
+                           (-1, sy * 0.45, 0), color=L.scale_c(scarf, 0.92), segments=6, ring_count=3, jit=0.002,
+                           seed=5 + sy))
+    parts.append(_blob("ico", (0.026, 0.03, 0.02), (0.592, 0.0, 0.198), (0, 0, 1), (1, 0, 0), color=scarf,
+                       subdivisions=1, jit=0.003, seed=7))
+    _neck(parts)
+    _torso(parts, lambda x, a, co: L.scale_c(dress, _crease(co, 0.1, 0.45, 55.0, 0.1)), _torso_fold)
+    parts.append(_cloth(_patch(TORSO, (0.52, 0.548, 0.572), (20, 55, 90, 125, 160), 0.01, name="lace"),
+                        _flat(L.hexc("#BDB5A0")), seed=8))
+
+    def shawl_keep(x, a):
+        d = abs(a - 90.0)
+        return x > 0.31 - d * 0.0012 and not (x > 0.42 and d < (x - 0.42) * 300.0)
+    xs = (0.2, 0.26, 0.33, 0.4, 0.46, 0.51, 0.545)
+    angs = (-5, 20, 45, 68, 90, 112, 135, 160, 185)
+    sh = _patch(TORSO, xs, angs, 0.014, _torso_fold, keep=shawl_keep, name="shawl")
+    for v in sh.data.vertices:  # zig-zag fringe along the lower edge
+        if v.co.x < 0.27:
+            v.co.x -= 0.012 * (1.0 + math.sin(v.co.y * 90.0))
+    parts.append(_cloth(sh, lambda co, poly: L.scale_c(shawl, 0.8 if co.x < 0.25 else
+                                                        1.0 - 0.1 * max(0.0, math.sin(co.x * 160.0)) ** 4), seed=9))
+    _arms(parts, dress, cuff=L.scale_c(dress, 0.8))
+    _hands(parts, lift=0.012)
+    _sprig(parts, Vector((0.245, 0.03, 0.285)), Vector((1.0, -0.35, 0.05)), seed=11)
+    # long skirt over both legs: drapes between the knees, folds along the length, wavy hem
+    skirt_secs = [(-0.1, 0.0, 0.1, 0.182, 0.075, 0.1), (-0.3, 0.0, 0.097, 0.2, 0.07, 0.097),
+                  (-0.5, 0.0, 0.092, 0.198, 0.062, 0.092), (-0.7, 0.0, 0.086, 0.195, 0.058, 0.086),
+                  (-0.735, 0.0, 0.085, 0.2, 0.05, 0.085)]
+
+    def skirt_fold(x, a):
+        s = math.sin(a)
+        dip = 0.22 * math.exp(-(math.cos(a) / 0.28) ** 2) * max(0.0, -x - 0.2) / 0.55
+        return 1.0 + 0.035 * math.sin(a * 11.0 + x * 5.0) * s - dip * s
+    skirt = _loft(skirt_secs, (0, 16, 34, 52, 70, 90, 110, 128, 146, 164, 180, 270), fold=skirt_fold,
+                  caps=(False, True), name="skirt")
+    for v in skirt.data.vertices:
+        if v.co.x < -0.72:
+            v.co.x += 0.012 * math.sin(v.co.y * 60.0)
+    parts.append(_cloth(skirt, lambda co, poly: L.scale_c(dress, 0.84 if poly.center.x < -0.72 else 1.0), seed=12))
+    for sy in (-1, 1):  # dark stockings between hem and shoes
+        parts.append(_cloth(_tube(((-0.7, sy * 0.1, 0.075), (-0.76, sy * 0.1, 0.075)), (0.04, 0.04), 6,
+                                  caps=(False, False)), _flat(L.hexc("#2F2B2E")), seed=13))
+    _boots(parts, L.hexc("#2A2422"), small=True)
+    _corpse_done(parts, "ph_prop_corpse_02")
+
+
+def corpse_03():
+    """Variant 2 - old man: bald crown with a white fringe, full white beard resting on the
+    chest, moustache, bushy brows, cream shirt, moss-green waistcoat with dull brass buttons
+    and a watch chain, dark trousers, old boots."""
+    L.reset(203)
+    shirt, vest = L.hexc("#9C9582"), L.hexc("#45503E")
+    trouser, beard = L.hexc("#3B3935"), L.hexc("#A09B8E")
+    parts = []
+    _zone_head(parts, [(lambda u, v: (abs(v) > 55 and 16 < u < 150) or abs(u) > 130, beard, 0.012, 0.012, 0.12),
+                       (lambda u, v: -125 < u < -16 and not (u > -40 and abs(v) < 16) and abs(v) < 82, beard, 0.02,
+                        0.01, 0.12)])
+    _face(parts, beard, brow_r=0.011)
+    # the beard flows from the chin over the throat onto the chest in wavy locks
+    secs = [(0.47, 0.0, 0.186, 0.036, 0.012, 0.008), (0.5, 0.0, 0.192, 0.05, 0.017, 0.012),
+            (0.535, 0.0, 0.198, 0.058, 0.02, 0.016), (0.572, 0.0, 0.205, 0.062, 0.022, 0.02),
+            (0.61, 0.0, 0.203, 0.062, 0.022, 0.02)]
+    fl = _loft(secs, (0, 30, 60, 90, 120, 150, 180), fold=lambda x, a: 1.0 + 0.28 * math.sin(a * 6.0 + x * 30.0) *
+               max(0.0, math.sin(a)), caps=(True, False), name="beard")
+    for v in fl.data.vertices:  # three soft wavy points at the tip
+        if v.co.x < 0.48:
+            v.co.x -= 0.018 * max(0.0, math.cos(v.co.y / 0.042 * math.pi * 1.5)) ** 2
+    L.jitter(fl, 0.004, 25.0, 7)
+    def locks(co, poly):
+        return L.scale_c(beard, 1.0 - 0.24 * max(0.0, math.sin(co.y * 170.0 + co.x * 40.0)) ** 2)
+    parts.append(_cloth(fl, locks, var=0.12, seed=8))
+    for sy in (-1, 1):
+        pts = (_face_pt(-15, 3 * sy, 0.008), _face_pt(-18, 18 * sy, 0.01), _face_pt(-29, 30 * sy, 0.008))
+        parts.append(_cloth(_tube(pts, (0.014, 0.012, 0.007), 4, caps=(False, True)), _flat(beard), seed=9))
+    _neck(parts)
+
+    def zone(x, a, co):
+        if x < 0.01 and abs(a - 90.0) < 40.0:
+            return trouser
+        return L.scale_c(shirt, _crease(co, 0.1, 0.46, 60.0, 0.1))
+    _torso(parts, zone, _torso_fold)
+
+    def neckline(x):  # half opening of the V (degrees) - closed below the chest
+        return 2.0 + max(0.0, x - 0.24) * 170.0
+    xs = (-0.02, 0.08, 0.2, 0.31, 0.42, 0.51)
+    for sy in (-1, 1):  # two front panels meeting at the buttons, pointed hem at the front
+        def angs(x, sy=sy):
+            inner = 90.0 - sy * neckline(x)
+            outer = -8.0 if sy > 0 else 188.0
+            lo, hi = (outer, inner) if sy > 0 else (inner, outer)
+            return [lo + (hi - lo) * k / 5.0 for k in range(6)]
+
+        def hem(x, a):
+            return x - 0.045 * max(0.0, 1.0 - abs(a - 90.0) / 60.0) if x < 0.0 else x
+        parts.append(_cloth(_patch(TORSO, xs, angs, 0.01, _torso_fold, x_of=hem, name="waistcoat"),
+                            lambda co, poly: L.scale_c(vest, 1.0 - 0.1 * max(0.0, math.sin(co.x * 55.0)) ** 6),
+                            seed=10))
+    _buttons(parts, (0.0, 0.07, 0.14), BRASS, lift=0.014, r=0.01)
+    chain = [_on_loft(TORSO, 0.07 - 0.03 * math.sin(t * math.pi), 90.0 - 40.0 * t, 0.016, _torso_fold)
+             for t in (0.0, 0.25, 0.5, 0.75, 1.0)]
+    parts.append(_cloth(_tube(chain, [0.0045] * 5, 4, caps=(False, False)), _flat(BRASS), top=0.3, seed=11))
+    _arms(parts, shirt, cuff=L.scale_c(shirt, 1.08))
+    _hands(parts)
+    _legs(parts, trouser)
+    _boots(parts, L.hexc("#352B24"))
+    _corpse_done(parts, "ph_prop_corpse_03")
+
+
+def corpse_04():
+    """Variant 3 - young miller: blue-grey linen shirt with the sleeves rolled up, big
+    flour-dusted apron from chest to knees, his flat cap resting under the folded hands,
+    ginger-brown hair, light boots."""
+    L.reset(204)
+    shirt, apron = L.hexc("#687078"), L.hexc("#7F7661")
+    trouser, cap = L.hexc("#54483B"), L.hexc("#4D4843")
+    flour = L.hexc("#A9A393")
+    parts = []
+    _zone_head(parts, [(lambda u, v: u > 42 - 8 * math.sin(math.radians(v) * 3.0) or (abs(v) > 64 and u > 12)
+                        or abs(u) > 125, L.hexc("#77553A"), 0.015, 0.016, 0.18)])
+    _face(parts, L.hexc("#6A4C33"))
+    _neck(parts)
+
+    def zone(x, a, co):
+        if x < 0.01 and abs(a - 90.0) < 40.0:
+            return trouser
+        return L.scale_c(shirt, _crease(co, 0.1, 0.46, 60.0, 0.1))
+    _torso(parts, zone, _torso_fold)
+    parts.append(_cloth(_patch(TORSO, (0.53, 0.56, 0.58), (20, 55, 90, 125, 160), 0.01, name="collar"),
+                        _flat(L.scale_c(shirt, 1.1)), seed=13))
+    _buttons(parts, (0.42, 0.49), L.hexc("#5E5E58"))
+
+    def dusted(co, poly):
+        return L.mix(apron, flour, 0.55 * max(0.0, noise.noise(co * 14.0)))
+    parts.append(_cloth(_patch(TORSO, (0.0, 0.13, 0.26, 0.37), (42, 62, 78, 90, 102, 118, 138), 0.012, _torso_fold,
+                               name="apron_bib"), dusted, var=0.1, seed=14))
+    for sy in (-1, 1):  # neck straps
+        pts = (_on_loft(TORSO, 0.36, 90 - sy * 44, 0.012), _on_loft(TORSO, 0.47, 90 - sy * 55, 0.012),
+               _on_loft(TORSO, 0.555, 90 - sy * 70, 0.014))
+        parts.append(_cloth(_tube(pts, (0.007, 0.007, 0.007), 4, caps=(False, False)), _flat(apron), seed=15))
+
+    def over_legs(x, y):  # cloth over both thighs, sagging between them, falling soft at the sides
+        t = min(1.0, max(0.0, -x / 0.42))
+        r = LEG_R[0] + (LEG_R[2] - LEG_R[0]) * t
+        top = 0.098 + r
+        d = abs(y)
+        if d < 0.095:
+            z = top - 5.5 * (0.095 - d) ** 2
+        else:
+            z = top - 4.0 * (d - 0.095) ** 2 - 2.5 * max(0.0, d - 0.14) ** 1.4
+        return z + 0.012 + 0.006 * math.sin(y * 60.0 + x * 7.0)
+    xs = (0.03, -0.1, -0.22, -0.34, -0.44)
+    ys = (-0.18, -0.14, -0.095, -0.05, 0.0, 0.05, 0.095, 0.14, 0.18)
+    sk = _sheet(xs, ys, over_legs, name="apron")
+    for v in sk.data.vertices:  # frayed, wavy hem
+        if v.co.x < -0.43:
+            v.co.x += 0.012 * math.sin(v.co.y * 80.0)
+    parts.append(_cloth(sk, lambda co, poly: dusted(co, poly) if poly.center.x > -0.41 else L.scale_c(apron, 0.86),
+                        var=0.1, seed=16))
+    # flat cap on the chest, under the folded hands
+    cp = Vector((0.262, 0.0, 0.222))
+    top = L.prim("cyl", radius=0.078, depth=0.026, vertices=9)
+    L.jitter(top, 0.005, 30.0, 17)
+    top.data.transform(Matrix.Translation(cp) @ Matrix.Rotation(math.radians(-6), 4, "Y"))
+    parts.append(_cloth(top, lambda co, poly: L.scale_c(cap, 1.0 - 0.1 * max(0.0, math.sin(co.x * 150.0)) ** 4),
+                        var=0.15, seed=17))
+    parts.append(_blob("sphere", (0.05, 0.078, 0.009), cp + Vector((0.085, 0.0, -0.008)), (0.1, 0, 1), (1, 0, 0),
+                       color=L.scale_c(cap, 0.85), segments=7, ring_count=3))
+    _arms(parts, shirt, rolled=True)
+    _hands(parts, lift=0.012)
+    _legs(parts, trouser)
+    _boots(parts, L.hexc("#4A3C31"))
+    for o in parts:  # a dusting of flour on everything facing up
+        _tint_up(o, flour, amount=0.3, min_up=0.6, freq=9.0, seed=18)
+    _corpse_done(parts, "ph_prop_corpse_04")
+
+
+# --- shrouded ------------------------------------------------------------------
+
+# Wrapped body outline (feet at -X, head at +X): x, half width, height. Lies flat on its back.
+SHROUD = [(-0.866, 0.05, 0.11), (-0.84, 0.115, 0.19), (-0.79, 0.132, 0.215), (-0.735, 0.125, 0.165),
+          (-0.67, 0.108, 0.12), (-0.58, 0.12, 0.128), (-0.47, 0.134, 0.14), (-0.37, 0.14, 0.145),
+          (-0.25, 0.152, 0.152), (-0.13, 0.172, 0.162), (-0.02, 0.19, 0.175), (0.08, 0.19, 0.168),
+          (0.18, 0.205, 0.198), (0.27, 0.218, 0.214), (0.36, 0.235, 0.212), (0.44, 0.24, 0.2),
+          (0.5, 0.222, 0.182), (0.545, 0.145, 0.142), (0.585, 0.102, 0.122), (0.63, 0.11, 0.17),
+          (0.7, 0.12, 0.222), (0.78, 0.115, 0.218), (0.84, 0.088, 0.172), (0.874, 0.042, 0.1)]
+SHROUD_SECS = [(x, 0.0, h * 0.4, hw, h * 0.6, h * 0.4) for x, hw, h in SHROUD]
+SHROUD_ANG = (0, 14, 28, 42, 55, 67, 79, 90, 101, 113, 125, 138, 152, 166, 180, 225, 270, 315)
+SHROUD_LINEN = L.hexc("#C2B89F")   # a touch darker than the folded linen: reads as cloth, not glare
+SHROUD_DIRTY = L.hexc("#A3987F")
+ROPES = (-0.665, 0.075, 0.585)     # ankles, waist, neck
+WRAP_K = 34.0                       # the linen strip winds round every ~18 cm
+
+
+def _shroud_fold(x: float, a: float) -> float:
+    """Wrapped linen: toes, folded hands and the face show through, the ropes cinch the
+    cloth, the strip edges overlap (soft saw-tooth), small wrinkles everywhere."""
+    c, s = math.cos(a), math.sin(a)
+    up = max(0.0, s)
+    f = 1.0
+    if x < -0.72:  # two toe bumps
+        k = min(1.0, (-0.72 - x) / 0.05) * (1.0 - max(0.0, (-0.83 - x) / 0.04))
+        f += 0.42 * k * up * (math.exp(-((c - 0.42) / 0.26) ** 2) + math.exp(-((c + 0.42) / 0.26) ** 2) - 0.55)
+    f += 0.28 * math.exp(-((x - 0.26) / 0.06) ** 2) * math.exp(-(c / 0.4) ** 2) * up          # folded hands
+    f += 0.2 * math.exp(-((x - 0.7) / 0.03) ** 2) * math.exp(-(c / 0.18) ** 2) * up          # nose
+    f += 0.1 * max(0.0, -s) * abs(c) * (1.0 if -0.72 < x < 0.54 else 0.3)                      # cloth pooling
+    f += 0.05 * math.exp(-((x - 0.62) / 0.02) ** 2) * math.exp(-(c / 0.3) ** 2) * up          # chin
+    for xr in ROPES:
+        f -= 0.07 * math.exp(-((x - xr) / 0.018) ** 2)
+    ph = (x * WRAP_K + a * 1.2) / math.tau
+    f += 0.014 * math.sin(ph * math.tau) * up + 0.012 * math.sin(x * 61.0 + a * 3.0) * up
+    return f
+
+
+def _shroud_paint(co, poly):
+    """Pale linen, dustier towards the feet and the ground, soft shade bands along the winding."""
+    yc, zc, hw, top, bot = _sec(SHROUD_SECS, co.x)
+    a = math.atan2((co.z - zc) / (top if co.z >= zc else bot), co.y / max(hw, 1e-3))
+    ph = (co.x * WRAP_K + a * 1.2) / math.tau
+    c = L.mix(SHROUD_LINEN, SHROUD_DIRTY, max(0.0, min(1.0, (-0.45 - co.x) / 0.4)) * 0.7)
+    c = L.mix(c, SHROUD_DIRTY, max(0.0, noise.noise(co * 6.0 + Vector((4, 2, 9)))) * 0.8)
+    return L.scale_c(c, 1.0 - 0.1 * max(0.0, math.sin(ph * math.tau)) ** 2)
+
+
+def _wrap_edges(parts, seed: int = 70) -> None:
+    """The overlapping edges of the wound linen strip: a slightly raised, frayed ribbon running
+    diagonally over the body between the ropes, light on its top, shadowed where it steps down."""
+    for i, x0 in enumerate((-0.52, -0.33, -0.14, 0.24, 0.42)):
+        bm = bmesh.new()
+        rows = []
+        for k, a in enumerate(range(-10, 200, 21)):
+            xc = x0 + 0.11 * (a - 90.0) / 100.0 + 0.004 * math.sin(k * 2.3 + i)
+            fray = 0.004 * ((k % 2) * 2 - 1)
+            rows.append((bm.verts.new(_on_loft(SHROUD_SECS, xc - 0.022, a, 0.013, _shroud_fold)),
+                         bm.verts.new(_on_loft(SHROUD_SECS, xc + 0.014 + fray, a, 0.003, _shroud_fold))))
+        for (a0, b0), (a1, b1) in zip(rows, rows[1:]):
+            bm.faces.new((a0, a1, b1, b0))
+        rib = _raw(bm, "wrap_edge")
+        parts.append(_cloth(rib, lambda co, poly: L.scale_c(SHROUD_LINEN, 0.97) if poly.normal.x < 0.25 else
+                            L.scale_c(SHROUD_DIRTY, 0.8), var=0.08, ao=0.3, top=0.15, seed=seed + i))
 
 
 def corpse_shrouded():
-    """The same body wrapped in pale linen, tied with rope at ankles, waist and neck."""
+    """A body wrapped in pale linen: the strip winds round in soft overlapping bands, the toes,
+    folded hands and a hint of the face show through; tied with rope at ankles, waist and neck,
+    knots with frayed loose ends, a sprig of heather tucked under the waist rope."""
     L.reset(201)
-    body = _loft_x(SHROUD, verts=16, wrinkle=0.045, seed=3, name="shroud")
-    L.jitter(body, 0.008, 6.0, 4)
-    L.paint(body, LINEN, var=0.12, ao=0.42, top=0.1, zrange=CORPSE_ZR, noise_freq=3.0, hue_shift=LINEN_DIRTY, seed=5)
-
-    def bands(co):  # the edges of the diagonal wrapping, every ~17 cm
-        ph = co.x * 37.0 + math.atan2(co.z - 0.08, co.y) * 1.3
-        return 1.0 - 0.16 * max(0.0, math.sin(ph)) ** 8
-    _modulate(body, bands)
-    L.set_mat(body, L.MAT_PAINTED)
-    parts = [body]
-    for i, x in enumerate((-0.7, 0.06, 0.585)):
-        hw, top, bot = _shroud_section(x)
-        pts = []
-        for j in range(14):
-            a = j / 14 * math.tau
-            s = math.sin(a)
-            z = bot + (top if s > 0 else bot) * s
-            pts.append((x + 0.01 * math.sin(a * 2 + i), (hw + 0.008) * math.cos(a) * 0.98,
-                        max(0.012, z * (1.0 + 0.1 * max(0.0, s)) + 0.006)))
-        rope = _path_tube(pts, 0.013, 5, closed=True, hint=(1, 0, 0), name="rope")
-        parts.append(_finish_obj(rope, ROPE, var=0.2, ao=0.2, seed=10 + i))
-        knot_z = bot + top + 0.012
-        parts.append(L.part("ico", ROPE, loc=(x, 0.02, knot_z), radius=0.024, subdivisions=1, jit=0.006, seed=20 + i))
-        for k in (-1, 1):  # loose rope ends
-            parts.append(_stick((x, 0.02, knot_z), (x + k * 0.07, 0.07 + 0.03 * k, knot_z - 0.03), 0.009, ROPE,
-                                verts=4, seed=30 + i))
-    obj = L.join(parts, "ph_prop_corpse_shrouded")
-    _center_xy(obj)
-    L.finish(obj, "ph_prop_corpse_shrouded", "props", 50)
+    body = _loft(SHROUD_SECS, SHROUD_ANG, fold=_shroud_fold, name="shroud")
+    L.jitter(body, 0.004, 9.0, 4)
+    parts = [_cloth(body, _shroud_paint, var=0.06, ao=0.4, top=0.12, freq=5.0, seed=5)]
+    _wrap_edges(parts)
+    # the linen gathered and twisted shut above the head, a few frayed threads
+    parts.append(_blob("ico", (0.024, 0.036, 0.026), (0.868, 0.0, 0.052), (1, 0, 0.3), (0, 0, 1), color=SHROUD_DIRTY,
+                       subdivisions=1, jit=0.004, seed=60, ao=0.2))
+    for i, (dy, dz) in enumerate(((-0.022, 0.045), (0.02, 0.058), (0.004, 0.07))):
+        parts.append(_blob("cone", (0.012, 0.01, 0.018), (0.882, dy, dz), (1, dy * 6.0, 0.2 + dz), (0, 0, 1),
+                           color=L.mix(SHROUD_LINEN, SHROUD_DIRTY, 0.6), vertices=4, jit=0.002, seed=61 + i, ao=0.1))
+    for i, xr in enumerate(ROPES):
+        wob = (0.006, -0.005, 0.004)[i]
+        angs = (-12, 10, 32, 55, 78, 100, 124, 148, 170, 192)
+        pts = [_on_loft(SHROUD_SECS, xr + wob * math.sin(math.radians(a) * 2.0), a, 0.009, _shroud_fold)
+               for a in angs]
+        parts.append(_cloth(_tube(pts, [0.011] * len(pts), 4, hint=(1, 0, 0), caps=(False, False)),
+                            lambda co, poly: L.scale_c(ROPE, 1.0 - 0.18 * max(0.0, math.sin(co.y * 140.0)) ** 2),
+                            var=0.15, ao=0.15, top=0.25, seed=10 + i))
+        knot = _on_loft(SHROUD_SECS, xr, 108.0, 0.016, _shroud_fold)
+        parts.append(_blob("ico", (0.024, 0.02, 0.016), knot, (0, -0.3, 1), (1, 0, 0), color=L.scale_c(ROPE, 0.92),
+                           subdivisions=1, jit=0.004, seed=20 + i, ao=0.1, top=0.25))
+        for k in ((-1, 1) if i == 1 else (1,)):  # loose ends, frayed tips
+            e1 = knot + Vector((k * 0.03, -0.045, -0.018))
+            e2 = knot + Vector((k * 0.05, -0.075 - 0.01 * k, -0.07))
+            parts.append(_cloth(_tube((knot, e1, e2), (0.009, 0.0085, 0.008), 4, caps=(False, False)), _flat(ROPE),
+                                var=0.15, ao=0.15, top=0.25, seed=30 + i))
+            parts.append(_blob("cone", (0.013, 0.013, 0.018), e2 + (e2 - e1).normalized() * 0.014, e2 - e1,
+                               (0, 0, 1), color=L.mix(ROPE, STRING, 0.5), vertices=4, jit=0.002, seed=40 + i, ao=0.1))
+    # a sprig of heather tucked under the waist rope, pointing to the heart
+    _sprig(parts, _on_loft(SHROUD_SECS, 0.06, 92.0, 0.012, _shroud_fold), Vector((1.0, 0.2, 0.12)), seed=50, n=4)
+    _corpse_done(parts, "ph_prop_corpse_shrouded")
 
 
 # --- stations ----------------------------------------------------------------
@@ -985,8 +1658,8 @@ def bush():
     L.finish(obj, "ph_env_bush", "environment", 50)
 
 
-ASSETS = (corpse, corpse_shrouded, handcart, morgue_table, workbench, dropoff_bier, grave_plot_empty, grave_pit,
-          wood_pile, stone_rubble, cross_wood, signpost, fallen_log, bush)
+ASSETS = (corpse, corpse_02, corpse_03, corpse_04, corpse_shrouded, handcart, morgue_table, workbench,
+          dropoff_bier, grave_plot_empty, grave_pit, wood_pile, stone_rubble, cross_wood, signpost, fallen_log, bush)
 
 
 def build(names=None):
