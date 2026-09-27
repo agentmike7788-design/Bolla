@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DecorData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/decoration/decor_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"decor_lantern"
+display_name = "Grablaterne"
+footprint = Vector2i(1, 1)
+zier = 3
+zier_divisor = 1
+counted_max = 6
+place_max = 6
+walkable = false
+allow_route = false
+allow_grave_ring = true
+suppresses_dirt = false
+ghost_bonus_radius = 3.0
+collider_size = Vector3(0.2, 0.9, 0.2)

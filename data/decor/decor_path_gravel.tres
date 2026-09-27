@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DecorData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/decoration/decor_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"decor_path_gravel"
+display_name = "Kiesplatte"
+footprint = Vector2i(1, 1)
+zier = 1
+zier_divisor = 4
+counted_max = 24
+place_max = 0
+walkable = true
+allow_route = true
+allow_grave_ring = false
+suppresses_dirt = true
+ghost_bonus_radius = 0.0
+collider_size = Vector3(0, 0, 0)

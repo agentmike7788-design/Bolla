@@ -719,7 +719,8 @@ func test_crafting_rows_have_need_and_reasons() -> void:
 	inv.add_item(&"wood", 1)
 	ui.open_panel(&"crafting", _contexts()[&"crafting"])
 	var panel := ui.get_panel(&"crafting") as CraftingPanel
-	assert_eq(panel.recipe_ids(), [&"shroud", &"wooden_cross", &"gravestone_simple"], "quick to slow")
+	var grave_ids := panel.recipe_ids().filter(func(id: StringName) -> bool: return (Database.recipe(id) as RecipeData).category == &"grave")
+	assert_eq(grave_ids, [&"shroud", &"wooden_cross", &"gravestone_simple"], "quick to slow (grave recipes)")
 	assert_true(panel.craft_button(&"shroud").disabled)
 	assert_eq(panel.reason_text(&"shroud"), "Fehlt: 1 Leinen")
 	assert_false(panel.craft_button(&"wooden_cross").disabled)

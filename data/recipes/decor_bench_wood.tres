@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/crafting/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"decor_bench_wood"
+display_name = "Holzbank"
+inputs = Dictionary[StringName, int]({
+&"wood": 4
+})
+output_id = &"decor_bench_wood"
+output_amount = 1
+craft_minutes = 40
+station = &"workbench"
+category = &"decor"

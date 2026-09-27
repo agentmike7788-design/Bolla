@@ -30,6 +30,8 @@ var profile: CameraProfile
 var _focus: Vector3
 ## The rig's own framing, captured when the first profile replaces it.
 var _own: CameraProfile
+## Phase 3: the mouse wheel rotates the build preview while build mode is on – no zoom then.
+var _zoom_locked: bool = false
 
 
 func _ready() -> void:
@@ -40,6 +42,7 @@ func _ready() -> void:
 	# sweeping across the map from the scene's start position (SL-2).
 	EventBus.game_loaded.connect(_on_world_placed.unbind(1))
 	EventBus.new_game_started.connect(_on_world_placed)
+	EventBus.build_mode_changed.connect(_on_build_mode_changed)
 
 
 func _process(delta: float) -> void:
@@ -49,6 +52,8 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _zoom_locked:
+		return
 	if event.is_action_pressed("camera_zoom_in"):
 		set_distance(distance - zoom_step)
 	elif event.is_action_pressed("camera_zoom_out"):
@@ -91,6 +96,10 @@ func snap() -> void:
 	if target:
 		_focus = _clamped(target.global_position)
 	_update_transform()
+
+
+func _on_build_mode_changed(active: bool) -> void:
+	_zoom_locked = active
 
 
 func _on_world_placed() -> void:

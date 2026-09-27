@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/crafting/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"decor_path_gravel"
+display_name = "Kiesplatte"
+inputs = Dictionary[StringName, int]({
+&"stone": 2
+})
+output_id = &"decor_path_gravel"
+output_amount = 4
+craft_minutes = 20
+station = &"workbench"
+category = &"decor"

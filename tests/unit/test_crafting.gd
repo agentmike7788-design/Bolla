@@ -81,10 +81,17 @@ func test_database_finds_all_recipes() -> void:
 		&"shroud": ["Leichentuch", {&"linen": 2}, 20],
 		&"wooden_cross": ["Holzkreuz", {&"wood": 3}, 30],
 		&"gravestone_simple": ["Grabstein", {&"stone": 4, &"wood": 1}, 60],
+		# Phase 3 decor (P2, §2.2): [name, inputs, minutes, output_amount]
+		&"decor_bench_wood": ["Holzbank", {&"wood": 4}, 40, 1],
+		&"decor_bench_stone": ["Steinbank", {&"stone": 6}, 60, 1],
+		&"decor_flowerbed": ["Blumenbeet", {&"wood": 1, &"seeds": 2}, 20, 1],
+		&"decor_grave_vase": ["Grabvase", {&"stone": 1, &"seeds": 1}, 15, 1],
+		&"decor_lantern": ["Grablaterne", {&"wood": 2, &"iron_fittings": 1}, 30, 1],
+		&"decor_path_gravel": ["Kiesplatte", {&"stone": 2}, 20, 4],
 	}
 	var workbench := Database.recipes(&"workbench")
-	assert_eq(workbench.size(), 3)
-	assert_eq(Database.recipes().size(), 3)
+	assert_eq(workbench.size(), expected.size())
+	assert_eq(Database.recipes().size(), expected.size())
 	for id: StringName in expected:
 		var spec: Array = expected[id]
 		var r := _recipe(id)
@@ -94,14 +101,18 @@ func test_database_finds_all_recipes() -> void:
 		assert_eq(r.display_name, spec[0], "%s display_name" % id)
 		assert_eq(r.inputs, spec[1], "%s inputs" % id)
 		assert_eq(r.output_id, id, "%s output" % id)
-		assert_eq(r.output_amount, 1)
+		assert_eq(r.output_amount, spec[3] if spec.size() > 3 else 1)
+		assert_eq(r.category, &"decor" if String(id).begins_with("decor_") else &"grave", "%s category" % id)
 		assert_eq(r.craft_minutes, spec[2], "%s minutes" % id)
 		assert_eq(r.station, &"workbench")
 		assert_true(r in workbench)
 		assert_eq(r.resource_path, "res://data/recipes/%s.tres" % id, "file name = id")
 		for input: StringName in r.inputs:
 			assert_eq(typeof(input), TYPE_STRING_NAME)
-			assert_true(Database.has_item(input), "%s input %s is a known item" % [id, input])
+			# seeds / iron_fittings are P6's data items (W1, merged separately) – until then the
+			# Phase-3 item fixture stands in for them.
+			var known := Database.has_item(input) or (Phase3Fixtures.NEW_ITEM_IDS.has(input) and Phase3Fixtures.item(input) != null)
+			assert_true(known, "%s input %s is a known item" % [id, input])
 		assert_true(Database.has_item(r.output_id), "%s output is a known item" % id)
 	assert_eq(Database.recipes(&"anvil"), [], "no recipes for other stations")
 

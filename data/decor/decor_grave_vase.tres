@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DecorData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/decoration/decor_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"decor_grave_vase"
+display_name = "Grabvase"
+footprint = Vector2i(1, 1)
+zier = 1
+zier_divisor = 1
+counted_max = 12
+place_max = 0
+walkable = false
+allow_route = false
+allow_grave_ring = true
+suppresses_dirt = false
+ghost_bonus_radius = 1.8
+collider_size = Vector3(0, 0, 0)

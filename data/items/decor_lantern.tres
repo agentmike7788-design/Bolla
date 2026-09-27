@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"decor_lantern"
+display_name = "Grablaterne"
+description = "Ein Licht am Pfahl, das nachts über die Gräber wacht. Warm, wo sonst nur Nebel ist."
+category = 3
+max_stack = 6
