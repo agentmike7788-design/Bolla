@@ -1,8 +1,9 @@
 class_name CorpseDeliveryRules
 extends RefCounted
-## Daily delivery rules (docs §2.5), used by CorpseManager: when a delivery is due, when it is
-## refused (occupied bier, no free plot, cemetery full), its arrival minute and the report of a
-## skipped delivery. Stateless – the manager keeps the delivery bookkeeping.
+## Daily delivery rules (docs §2.5, Phase 3 §2.7), used by CorpseManager: when a delivery is
+## due, when it is refused (occupied bier, no free plot, cemetery full), the free biers, its
+## arrival minute and the report of a skipped delivery. Stateless – the manager keeps the
+## delivery bookkeeping (and calls the reputation event of a missed delivery).
 
 const FLAG_DELIVERY_SKIPPED := &"delivery_skipped"
 const STAT_MISSED := &"missed_deliveries"
@@ -59,19 +60,24 @@ static func slot_transform(dropoff: Node) -> Transform3D:
 	return dropoff.call("slot_transform") if dropoff.has_method("slot_transform") else Transform3D.IDENTITY
 
 
-## Stat missed_deliveries, flag delivery_skipped, delivery_skipped + a warning notification.
-static func report_skip(day: int, reason: String) -> void:
-	GameState.add_stat(STAT_MISSED, 1)
+## Stat missed_deliveries (+ count corpses), flag delivery_skipped, delivery_skipped + a
+## warning notification.
+static func report_skip(day: int, reason: String, count: int = 1) -> void:
+	GameState.add_stat(STAT_MISSED, maxi(count, 1))
 	GameState.set_flag(FLAG_DELIVERY_SKIPPED, day)
 	EventBus.delivery_skipped.emit(day, reason)
 	EventBus.notification_requested.emit(NOTE_SKIPPED % reason, &"warning")
 
 
+## The free biers among `dropoffs` (all nodes of group &"dropoff"), in the given order.
+static func free_dropoffs(dropoffs: Array[Node]) -> Array[Node]:
+	var out: Array[Node] = []
+	for dropoff: Node in dropoffs:
+		if is_instance_valid(dropoff) and dropoff.has_method("is_free") and bool(dropoff.call("is_free")):
+			out.append(dropoff)
+	return out
+
+
 @warning_ignore("integer_division")
-## STUB (P1) – Phase 3: the free biers among `dropoffs` (all nodes of group &"dropoff").
-static func free_dropoffs(_dropoffs: Array[Node]) -> Array[Node]:
-	return []
-
-
 static func _div(a: int, b: int) -> int:
 	return a / b

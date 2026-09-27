@@ -14,8 +14,7 @@ var marker_id: StringName = &""
 var quality: int = 0
 ## [{label: String, points: int}] from GraveQuality.breakdown (empty until MARKED).
 var breakdown: Array = []
-## Phase 3: TimeManager.day of place_marker (0 = migrated / unknown). STUB (P1): not yet set,
-## saved or loaded – P1 adds it to place_marker, to_dict and from_dict.
+## Phase 3: TimeManager.day of place_marker (0 = migrated / unknown).
 var completed_day: int = 0
 
 
@@ -27,6 +26,7 @@ func to_dict() -> Dictionary:
 		"marker_id": marker_id,
 		"quality": quality,
 		"breakdown": breakdown.duplicate(true),
+		"completed_day": completed_day,
 	}
 
 
@@ -38,6 +38,7 @@ static func from_dict(d: Dictionary) -> GraveRecord:
 	r.corpse_id = _to_str(d.get("corpse_id"), r.corpse_id)
 	r.marker_id = StringName(_to_str(d.get("marker_id"), ""))
 	r.quality = _to_int(d.get("quality"), r.quality)
+	r.completed_day = maxi(0, _to_int(d.get("completed_day"), r.completed_day))
 	var entries: Variant = d.get("breakdown", [])
 	if entries is Array:
 		for entry: Variant in entries:

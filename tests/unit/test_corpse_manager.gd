@@ -1,6 +1,7 @@
 extends TestCase
-## M3: CorpseManager – spawning, delivery rules (§2.5), decay, carrying, examination,
-## shroud, valuables, burial, save/load. Uses test doubles for Dropoff, Graveyard and Player.
+## M3: CorpseManager – spawning, delivery rules (§2.5; Phase 3 §2.7: deliveries per tier, a
+## free bier per corpse, missed deliveries, no end at slice_complete), decay, carrying,
+## examination, shroud, valuables, burial, save/load. Uses test doubles for Dropoff, Graveyard and Player.
 
 const FIXTURE_TABLES := "res://tests/fixtures/corpse_tables_fixture.tres"
 const FIXTURE_ECONOMY := "res://tests/fixtures/economy_config_fixture.tres"
@@ -22,6 +23,40 @@ class DropoffDouble extends Node3D:
 
 	func slot_transform() -> Transform3D:
 		return slot
+
+
+## Dropoff that is occupied while a dropoff corpse lies on its slot (like the real Dropoff,
+## but per bier).
+class BierDouble extends DropoffDouble:
+	func is_free() -> bool:
+		var m := get_tree().get_first_node_in_group(&"corpse_manager") as CorpseManager
+		for r: CorpseRecord in m.records():
+			if r.location == &"dropoff" and r.position.is_equal_approx(slot.origin):
+				return false
+		return is_open
+
+
+## CorpseManager with a fixed number of deliveries per day (instead of the reputation tier).
+class DueManager extends CorpseManager:
+	var due: int = 1
+
+	func deliveries_due(_day: int) -> int:
+		return due
+
+
+## Reputation (group "reputation"): fixed tier, records change / event calls.
+class ReputationDouble extends Reputation:
+	var fixed_tier: StringName = &""
+	var calls: Array = []
+
+	func tier() -> StringName:
+		return fixed_tier
+
+	func change(delta: int, reason: String) -> void:
+		calls.append(["change", delta, reason])
+
+	func event(kind: StringName, reason: String) -> void:
+		calls.append(["event", kind, reason])
 
 
 ## Graveyard (group "graveyard"): only free_plot_count().
@@ -336,12 +371,12 @@ func test_delivery_skipped_without_dropoff() -> void:
 	assert_eq(events[0], ["skipped", 1, CorpseManager.REASON_NO_DROPOFF])
 
 
-func test_no_delivery_after_slice_complete() -> void:
+## Phase 3 §2.7: slice_complete no longer ends the deliveries (only a full cemetery does).
+func test_slice_complete_no_longer_stops_deliveries() -> void:
 	GameState.set_flag(&"slice_complete", true)
-	assert_null(manager.try_daily_delivery(3))
-	assert_eq(manager.records(), [])
-	assert_eq(GameState.get_stat(&"missed_deliveries"), 0, "not a missed delivery")
-	assert_eq(events, [])
+	assert_not_null(manager.try_daily_delivery(3))
+	assert_eq(manager.records().size(), 1)
+	assert_eq(GameState.get_stat(&"missed_deliveries"), 0)
 
 
 func test_delivery_once_per_day() -> void:
@@ -908,7 +943,7 @@ func test_load_state_replaces_everything() -> void:
 	assert_eq(manager.records(), [])
 	assert_eq(manager.unburied_count(), 0)
 	assert_eq(container.get_child_count(), 0)
-	assert_eq(manager.save_state(), {"corpses": [], "next_serial": 1, "last_delivery_day": 0, "last_delivery_id": "", "spawn_counts": {}})
+	assert_eq(manager.save_state(), {"corpses": [], "next_serial": 1, "last_delivery_day": 0, "last_delivery_ids": [], "spawn_counts": {}})
 	assert_not_null(manager.try_daily_delivery(1), "delivery possible again")
 
 
@@ -976,6 +1011,141 @@ func test_put_down_after_load_detaches_the_group_player() -> void:
 	assert_eq(manager.get_corpse_node(r.id).get_parent(), container)
 
 
+# --- Phase 3 deliveries (P1, §2.7) ---
+
+func test_deliveries_follow_the_reputation_tier_and_never_exceed_one() -> void:
+	var cfg := Phase3Fixtures.reputation_config()
+	manager.reputation_config = cfg
+	var rep := _reputation(&"renowned")
+	for t: StringName in ReputationRules.TIERS:
+		rep.fixed_tier = t
+		for day: int in [2, 3]:
+			var due := manager.deliveries_due(day)
+			assert_eq(due, maxi(0, ReputationRules.deliveries_on(day, t, cfg)), "%s day %d" % [t, day])
+			assert_true(due <= 1, "one corpse per day in every tier (§14.2)")
+	var real := load("res://data/config/reputation_config.tres") as ReputationConfig
+	assert_eq(Array(real.deliveries_per_day), [1, 1, 1, 1, 1], "data: one corpse per day")
+	rep.fixed_tier = &"esteemed"
+	assert_not_null(manager.try_daily_delivery(1))
+	assert_eq(manager.deliveries_of(1).size(), 1, "esteemed: still one")
+
+
+func test_deliveries_due_without_reputation_node_is_one() -> void:
+	assert_eq(manager.deliveries_due(2), 1)
+	assert_eq(manager.deliveries_due(3), 1)
+
+
+func test_no_delivery_due_is_quiet() -> void:
+	var m := _due_manager(0)
+	assert_null(m.try_daily_delivery(2), "e.g. disreputable on an even day")
+	assert_eq(m.records(), [])
+	assert_eq(GameState.get_stat(&"missed_deliveries"), 0, "not a missed delivery")
+	assert_false(GameState.has_flag(&"delivery_skipped"))
+	assert_eq(events, [])
+	m.due = 1
+	assert_not_null(m.try_daily_delivery(3), "the next due day delivers again")
+
+
+func test_each_corpse_needs_a_free_bier() -> void:
+	dropoff.remove_from_group(&"dropoff")
+	var first := _bier(Transform3D(Basis.IDENTITY, Vector3(1, 0, 1)))
+	var second := _bier(Transform3D(Basis.IDENTITY, Vector3(5, 0, 1)))
+	var m := _due_manager(2)
+	var r := m.try_daily_delivery(1)
+	var list := m.deliveries_of(1)
+	assert_eq(list.size(), 2)
+	assert_eq(r, list[0], "try_daily_delivery = the first corpse of the day")
+	assert_eq([list[0].position, list[1].position], [first.slot.origin, second.slot.origin], "one per bier")
+	assert_eq(list[1].seed, CorpseGenerator.seed_for(1, 1), "second spawn index")
+	assert_eq(GameState.get_stat(&"missed_deliveries"), 0)
+
+
+func test_missed_delivery_counts_the_corpses_and_costs_reputation_once() -> void:
+	var rep := _reputation(&"unremarkable")
+	dropoff.is_open = false
+	var m := _due_manager(2)
+	assert_null(m.try_daily_delivery(4))
+	assert_null(m.try_daily_delivery(4))
+	assert_eq(GameState.get_stat(&"missed_deliveries"), 2, "both corpses missed, once per day")
+	assert_eq(GameState.get_flag(&"delivery_skipped"), 4)
+	assert_eq(rep.calls, [["event", &"missed_delivery", CorpseManager.REASON_MISSED]])
+	assert_eq(events, [["skipped", 4, CorpseManager.REASON_OCCUPIED], ["note", CorpseManager.NOTE_SKIPPED % CorpseManager.REASON_OCCUPIED, &"warning"]])
+
+
+func test_second_corpse_missed_when_only_one_bier_is_free() -> void:
+	dropoff.remove_from_group(&"dropoff")
+	_bier(SLOT)
+	var rep := _reputation(&"unremarkable")
+	var m := _due_manager(2)
+	assert_not_null(m.try_daily_delivery(1))
+	assert_eq(m.deliveries_of(1).size(), 1)
+	assert_eq(GameState.get_stat(&"missed_deliveries"), 1, "the rest counts")
+	assert_eq(rep.calls.size(), 1)
+
+
+func test_no_reputation_cost_without_plot_or_dropoff() -> void:
+	var rep := _reputation(&"unremarkable")
+	graveyard.free_plots = 0
+	assert_null(manager.try_daily_delivery(1), "cemetery full: quiet")
+	dropoff.remove_from_group(&"dropoff")
+	graveyard.free_plots = 6
+	assert_null(manager.try_daily_delivery(2))
+	assert_eq(GameState.get_stat(&"missed_deliveries"), 1, "no bier at all is still reported")
+	assert_eq(rep.calls, [], "only an occupied bier costs reputation")
+
+
+func test_deliveries_of_earlier_days() -> void:
+	var one := manager.try_daily_delivery(1)
+	var two := manager.try_daily_delivery(2)
+	assert_eq(manager.deliveries_of(2), [two])
+	assert_eq(manager.deliveries_of(1), [one], "earlier day: generated for that day")
+	assert_eq(manager.deliveries_of(3), [])
+	assert_eq(manager.deliveries_of(0), [])
+	assert_null(manager.try_daily_delivery(1), "no delivery for an earlier day")
+
+
+func test_save_writes_last_delivery_ids_and_reads_the_v1_field() -> void:
+	var r := manager.try_daily_delivery(1)
+	var saved := manager.save_state()
+	assert_eq(saved.last_delivery_ids, [r.id])
+	assert_false(saved.has("last_delivery_id"), "v2 format")
+	var v1 := _json_round_trip(saved)
+	v1.erase("last_delivery_ids")
+	v1["last_delivery_id"] = r.id
+	manager.load_state(v1)
+	assert_eq(manager.try_daily_delivery(1).id, r.id, "v1 last_delivery_id read as fallback")
+	assert_eq(manager.save_state().last_delivery_ids, [r.id])
+	v1["last_delivery_id"] = ""
+	manager.load_state(v1)
+	assert_eq(manager.save_state().last_delivery_ids, [])
+	assert_eq(CorpseSaveCodec.read_delivery_ids({"last_delivery_ids": ["a", "", "a", 3, "b"]}), ["a", "b"] as Array[String])
+
+
+func test_valuables_go_through_the_reputation_api() -> void:
+	var rep := _reputation(&"unremarkable")
+	var r := _spawn(&"fever", [&"valuables"])
+	manager.examine(r.id)
+	manager.decide_valuables(r.id, true, _inventory())
+	assert_eq(rep.calls, [["change", economy.valuables_reputation, CorpseManager.REASON_VALUABLES]])
+	assert_eq(GameState.get_stat(&"reputation"), 0, "the Reputation node owns the value")
+	assert_eq(GameState.get_stat(&"valuables_taken"), 1)
+
+
+func test_free_dropoffs_and_report_skip_count() -> void:
+	var busy := DropoffDouble.new()
+	busy.is_open = false
+	var plain := Node.new()
+	var list: Array[Node] = [busy, dropoff, plain]
+	assert_eq(CorpseDeliveryRules.free_dropoffs(list), [dropoff] as Array[Node])
+	assert_eq(CorpseDeliveryRules.free_dropoffs([] as Array[Node]), [] as Array[Node])
+	busy.free()
+	plain.free()
+	CorpseDeliveryRules.report_skip(3, "x", 3)
+	assert_eq(GameState.get_stat(&"missed_deliveries"), 3)
+	CorpseDeliveryRules.report_skip(4, "x")
+	assert_eq(GameState.get_stat(&"missed_deliveries"), 4, "default 1")
+
+
 # --- helpers ---
 
 ## dropoff (delivered), table, ground (examined, shrouded, valuables taken), buried, carried.
@@ -1010,6 +1180,37 @@ func _spawn(cause: StringName, traits: Array[StringName] = [], location: StringN
 ## Freshness lost per hour by `r` with the fixture tables.
 func _rate(r: CorpseRecord) -> float:
 	return tables.base_decay_per_hour * float(tables.get_cause(r.cause_id).get("decay_mult", 1.0))
+
+
+## Replaces the fixture manager by one with a fixed number of deliveries per day.
+func _due_manager(due: int) -> DueManager:
+	world.remove_child(manager)
+	_orphans.append(manager)
+	var m := DueManager.new()
+	m.due = due
+	m.name = "CorpseManager"
+	m.tables = tables
+	m.economy = economy
+	m.container_path = ^"../Corpses"
+	world.add_child(m)
+	manager = m
+	return m
+
+
+func _reputation(tier: StringName) -> ReputationDouble:
+	var rep := ReputationDouble.new()
+	rep.fixed_tier = tier
+	world.add_child(rep)
+	return rep
+
+
+## Extra bier in group "dropoff" that is occupied while a corpse lies on its slot.
+func _bier(at: Transform3D) -> BierDouble:
+	var bier := BierDouble.new()
+	bier.slot = at
+	bier.add_to_group(&"dropoff")
+	world.add_child(bier)
+	return bier
 
 
 func _new_manager() -> CorpseManager:

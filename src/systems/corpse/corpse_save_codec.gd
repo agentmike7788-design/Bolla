@@ -6,7 +6,7 @@ extends RefCounted
 
 ## The save entry: corpses in spawn order plus the delivery bookkeeping.
 static func write(records: Dictionary[String, CorpseRecord], next_serial: int, last_delivery_day: int,
-		last_delivery_id: String, spawn_counts: Dictionary[int, int]) -> Dictionary:
+		last_delivery_ids: Array[String], spawn_counts: Dictionary[int, int]) -> Dictionary:
 	var corpses: Array = []
 	for record: CorpseRecord in records.values():
 		corpses.append(record.to_dict())
@@ -17,7 +17,7 @@ static func write(records: Dictionary[String, CorpseRecord], next_serial: int, l
 		"corpses": corpses,
 		"next_serial": next_serial,
 		"last_delivery_day": last_delivery_day,
-		"last_delivery_id": last_delivery_id,
+		"last_delivery_ids": last_delivery_ids.duplicate(),
 		"spawn_counts": counts,
 	}
 
@@ -48,6 +48,22 @@ static func read_spawn_counts(data: Dictionary, into: Dictionary[int, int]) -> v
 		var count := to_int((counts as Dictionary)[key], 0)
 		if day >= 0 and count > 0:
 			into[day] = count
+
+
+## Corpse ids of the last delivery day: data.last_delivery_ids (format v2), else the v1 field
+## last_delivery_id ("" = none). Empty and duplicate ids are dropped.
+static func read_delivery_ids(data: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	var list: Variant = data.get("last_delivery_ids")
+	if list is Array:
+		for entry: Variant in list:
+			if (entry is String or entry is StringName) and String(entry) != "" and not String(entry) in out:
+				out.append(String(entry))
+		return out
+	var single := read_string(data, "last_delivery_id")
+	if single != "":
+		out.append(single)
+	return out
 
 
 ## String value of data[key]; "" when missing or no String / StringName.

@@ -17,7 +17,6 @@ const PROMPT_TALK := "[E] Mit %s reden"
 const ANIM_WALK := &"walk"
 const ANIM_PUSH := &"push_cart"
 const ANIM_IDLE := &"idle"
-const FLAG_SLICE_COMPLETE := &"slice_complete"
 const FLAG_DELIVERY_SKIPPED := &"delivery_skipped"
 const CART_SLOT := "slot_corpse"
 ## Below this (m) a path segment has no direction.
@@ -248,7 +247,8 @@ func _update_animation() -> void:
 	_anim.speed_scale = ground_speed() / designed if designed > 0.0 else 1.0
 
 
-## Corpse on the cart: on the way in before the delivery minute, or all day after a skipped one.
+## Corpse on the cart: on the way in before the delivery minute, or all day after a skipped one
+## – not on a day without delivery (cemetery full, disreputable on an even day).
 ## Swaps the cargo model to the look of the corpse that is delivered on `day` (deterministic seed).
 func _show_cargo_for(day: int) -> void:
 	_cargo_day = day
@@ -271,11 +271,19 @@ func _show_cargo_for(day: int) -> void:
 
 
 func _has_cargo() -> bool:
-	if GameState.has_flag(FLAG_SLICE_COMPLETE) or _tables == null or _cemetery_full():
+	if _tables == null or _cemetery_full() or _deliveries_due(TimeManager.day) <= 0:
 		return false
 	if TimeManager.minute_of_day < _tables.delivery_minute:
 		return true
 	return GameState.get_flag(FLAG_DELIVERY_SKIPPED, 0) == TimeManager.day
+
+
+## CorpseManager.deliveries_due (1 without a manager that knows it).
+func _deliveries_due(day: int) -> int:
+	var manager := get_tree().get_first_node_in_group(&"corpse_manager")
+	if manager == null or not manager.has_method(&"deliveries_due"):
+		return 1
+	return int(manager.call(&"deliveries_due", day))
 
 
 ## Same rule as CorpseManager: no plot left for a new corpse means no more deliveries.

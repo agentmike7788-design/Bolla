@@ -1007,6 +1007,118 @@ func test_hut_door_enter_prompt_and_corpse_stays_outside() -> void:
 	assert_not_null(interior)
 
 
+# --- Phase 3 (P1): locked plots, marker upgrade, obstacles, carter --------------------------
+
+func test_locked_plot_has_no_visual_prompt_or_collision() -> void:
+	var east := _instance(PLOT_SCENE, Vector3(12, 0, 0)) as GravePlot
+	east.grave_id = "plot_07"
+	east.section_id = &"east"
+	graveyard.load_state({})
+	graveyard.broadcast_state()
+	assert_eq(graveyard.get_grave("plot_07").state, GraveRecord.State.LOCKED)
+	assert_eq(east.state, GraveRecord.State.LOCKED)
+	assert_eq(_visual_models(east), [], "no stakes before the section is unlocked")
+	assert_eq(east.get_interaction_prompt(player), "")
+	assert_false(east.can_interact(player))
+	assert_false(east.interactable.enabled)
+	await _settle()
+	assert_false(east.interactable.monitorable)
+	graveyard.unlock_section(&"east")
+	assert_eq(east.state, EMPTY)
+	assert_eq(_visual_models(east), ["res://assets/models/props/ph_prop_grave_plot_empty.glb"])
+	assert_true(east.interactable.enabled)
+	await _settle()
+	assert_true(east.interactable.monitorable)
+
+
+func test_plot_marker_upgrade() -> void:
+	_fill_plot()
+	inv.add_item(&"wooden_cross", 1)
+	plot.interact(player)
+	var grave := graveyard.get_grave("plot_01")
+	var before := grave.quality
+	var coins := inv.count(&"coin")
+	assert_false(plot.can_interact(player), "no gravestone yet")
+	inv.add_item(&"gravestone_simple", 1)
+	assert_eq(plot.get_interaction_prompt(player), "[E] Grabstein statt Holzkreuz setzen (10 Min)")
+	assert_true(plot.can_interact(player))
+	var minute := TimeManager.minute_of_day
+	plot.interact(player)
+	assert_eq(TimeManager.minute_of_day, minute + 10, "10 game minutes")
+	assert_eq(grave.marker_id, &"gravestone_simple")
+	assert_eq(grave.quality, before + 2)
+	assert_eq(inv.count(&"coin"), coins, "no second payment")
+	assert_eq(inv.count(&"gravestone_simple"), 0)
+	assert_eq(_visual_models(plot)[1], "res://assets/models/props/ph_prop_gravestone_round.glb", "new marker model")
+	assert_eq(plot.get_interaction_prompt(player), "Grab von Bert Moor – Qualität %d/10" % grave.quality)
+	assert_false(plot.can_interact(player))
+
+
+func test_obstacle_prompts_and_clearing() -> void:
+	var expansion := ExpansionManager.new()
+	world.add_child(expansion)
+	var bramble := _obstacle("obs_e_01", &"east", &"bramble", Vector3(-8, 0, 0))
+	var gap := _obstacle("obs_e_gap_1", &"east", &"fence_gap", Vector3(-8, 0, 4))
+	var hedge := _obstacle("obs_n_hedge", &"north", &"hedge", Vector3(8, 0, 4))
+	expansion.collect_obstacles()
+	assert_eq(bramble.interactable.priority, 8)
+	assert_eq(bramble.get_interaction_prompt(player), "[E] Brombeergestrüpp roden (30 Min) → +1 Holz")
+	assert_eq(hedge.get_interaction_prompt(player), "Erst die Ostwiese freilegen")
+	assert_false(hedge.can_interact(player))
+	assert_true(gap.get_interaction_prompt(player).begins_with("Fehlt: 2 Holz, 1 "), gap.get_interaction_prompt(player))
+	assert_false(gap.can_interact(player))
+	inv.add_item(&"wood", 2)
+	inv.add_item(&"iron_fittings", 1)
+	assert_true(gap.get_interaction_prompt(player).begins_with("[E] Zaunlücke reparieren (30 Min) · 2 Holz, 1 "))
+	var minute := TimeManager.minute_of_day
+	assert_true(bramble.can_interact(player))
+	bramble.interact(player)
+	assert_eq(TimeManager.minute_of_day, minute + 30)
+	assert_true(expansion.is_cleared("obs_e_01"))
+	assert_eq(inv.count(&"wood"), 3)
+	assert_eq(_last_note(), ["+1 Holz", &"reward"])
+	assert_eq(bramble.get_interaction_prompt(player), "")
+	assert_false(bramble.can_interact(player))
+	var c := _spawn(&"ground", Vector3(-3, 0, 3))
+	corpses.pick_up(c.id, player)
+	assert_eq(gap.get_interaction_prompt(player), Player.TEXT_HANDS_FULL)
+	assert_false(gap.can_interact(player))
+
+
+func test_obstacle_prompt_without_room() -> void:
+	var expansion := ExpansionManager.new()
+	world.add_child(expansion)
+	var rubble := _obstacle("obs_e_02", &"east", &"rubble", Vector3(-8, 0, 0))
+	expansion.collect_obstacles()
+	var full := FullInventory.new()
+	full.name = "Inventory"
+	var old := player.get_node("Inventory")
+	player.remove_child(old)
+	old.free()
+	player.add_child(full)
+	player.inventory = full
+	assert_eq(rubble.get_interaction_prompt(player), "Kein Platz im Inventar")
+	assert_false(rubble.can_interact(player))
+
+
+func test_npc_cargo_after_slice_complete() -> void:
+	var npc := await _npc()
+	GameState.set_flag(&"slice_complete", true)
+	TimeManager.load_state({"day": 2, "minute_of_day": 440})
+	npc.refresh()
+	assert_true(npc.cargo.visible, "Phase 3: slice_complete no longer ends the deliveries")
+
+
+func _obstacle(id: String, section: StringName, kind: StringName, at: Vector3) -> ClearableObstacle:
+	var o := (load("res://src/entities/clearable/clearable.tscn") as PackedScene).instantiate() as ClearableObstacle
+	o.obstacle_id = id
+	o.section_id = section
+	o.kind = kind
+	o.position = at
+	world.add_child(o)
+	return o
+
+
 # --- helpers ----------------------------------------------------------------------------------
 
 func _instance(path: String, at: Vector3) -> Node3D:

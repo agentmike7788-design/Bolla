@@ -5,7 +5,7 @@ extends TestCase
 ## enum values, Database folders, save format v2 + migration chain, and the W1 fixtures.
 
 ## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
-const IMPLEMENTED: PackedStringArray = ["DecorPlacement", "BuildGrid", "DecorationManager", "BuildMode", "BuildCursor",
+const IMPLEMENTED: PackedStringArray = ["ExpansionManager", "ClearableObstacle", "DecorPlacement", "BuildGrid", "DecorationManager", "BuildMode", "BuildCursor",
 		"GrassClearMask", "PlacedDecor"]
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
@@ -30,6 +30,7 @@ const STUBS := {
 	"res://src/systems/save/save_migration.gd": "SaveMigration",
 	"res://src/entities/notice_board/notice_board.gd": "NoticeBoard",
 }
+## Stub classes whose owner has filled them in (W1) – no "## STUB (" marker any more.
 ## Contract methods per stub class (§3.4) – a rename breaks this list.
 const METHODS := {
 	"ExpansionManager": ["sections", "is_unlocked", "unlocked_indices", "block_reason", "is_cleared", "obstacle_ids",
