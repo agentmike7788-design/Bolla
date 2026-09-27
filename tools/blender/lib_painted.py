@@ -5,6 +5,8 @@ Every asset script builds its geometry procedurally, paints vertex colours
 named materials (mapped to Godot materials on import) and writes:
   art_source/blender/<category>/<name>.blend
   assets/models/<category>/<name>.glb
+Rigged characters use rig.py (shared 8-bone rig, rigid skinning, procedural
+actions) and export_rigged() instead of finish()/export().
 
 Run:  python tools/blender/build_all.py   (needs the `bpy` module, Blender 5.x)
 """
@@ -231,6 +233,43 @@ def export(obj, name: str, category: str) -> None:
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(blend_dir, name + ".blend"), compress=True)
     tris = sum(len(p.vertices) - 2 for p in obj.data.polygons)
     print(f"[asset] {category}/{name}  tris={tris}")
+
+
+def export_rigged(armature, name: str, category: str) -> None:
+    """Save .blend source and export .glb for a rigged character (see rig.py).
+    The armature is the glTF root; every action becomes its own NLA track and is
+    exported as one animation (names ending in -loop are looped by Godot)."""
+    blend_dir = os.path.join(ROOT, "art_source", "blender", category)
+    glb_dir = os.path.join(ROOT, "assets", "models", category)
+    os.makedirs(blend_dir, exist_ok=True)
+    os.makedirs(glb_dir, exist_ok=True)
+    ad = armature.animation_data or armature.animation_data_create()
+    on_track = {s.action for t in ad.nla_tracks for s in t.strips}
+    for act in sorted(bpy.data.actions, key=lambda a: a.name):
+        act.use_fake_user = True
+        if act in on_track:
+            continue
+        ad.action = act  # assign (binds the action slot), then push down onto its own track
+        track = ad.nla_tracks.new()
+        track.name = act.name
+        track.strips.new(act.name, int(act.frame_range[0]), act)
+        track.mute = True  # the .blend opens in rest pose (unmuted strips would blend all actions)
+        ad.action = None
+    bpy.ops.object.select_all(action="DESELECT")
+    armature.select_set(True)
+    for child in armature.children_recursive:
+        child.select_set(True)
+    bpy.context.view_layer.objects.active = armature
+    bpy.ops.export_scene.gltf(
+        filepath=os.path.join(glb_dir, name + ".glb"), export_format="GLB",
+        use_selection=True, export_apply=True, export_yup=True,
+        export_vertex_color="ACTIVE", export_animation_mode="ACTIONS",
+        export_force_sampling=True,
+    )
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(blend_dir, name + ".blend"), compress=True)
+    meshes = [c for c in armature.children_recursive if c.type == "MESH"]
+    tris = sum(len(p.vertices) - 2 for m in meshes for p in m.data.polygons)
+    print(f"[asset] {category}/{name}  tris={tris}  actions={sorted(a.name for a in bpy.data.actions)}")
 
 
 def marker(parent, name: str, loc) -> None:
