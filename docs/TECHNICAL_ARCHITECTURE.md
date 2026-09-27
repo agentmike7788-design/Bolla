@@ -91,7 +91,7 @@ godot --headless --path . --quit-after 5                 # Start-Test der Haupts
 
 Ab Phase 2: Framework `tests/framework/test_case.gd` + Runner `tests/run_tests.gd` (Autoload-Reset pro Test, Fehler-Logger, Watchdog, Exit 0/1/2); Tests pro Modul in `tests/unit/test_<modul>.gd`, Integration in `tests/integration/`; Details in VERTICAL_SLICE_DESIGN.md §9.
 
-## 6. Performance-Budget (Startwerte, werden in Phase 1 gemessen)
+## 6. Performance-Budget
 
 | Größe | Budget Vertical Slice |
 |---|---|
@@ -100,3 +100,15 @@ Ab Phase 2: Framework `tests/framework/test_case.gd` + Runner `tests/run_tests.g
 | Schattenwerfende Lichter | 1 Directional + max. 4 Omni/Spot gleichzeitig |
 | Aktive NPCs | ≤ 10 |
 | Dreiecke sichtbar | < 500 k (Hinweis: `RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME` zählt pro MultiMesh nur eine Instanz – Gras wird separat gerechnet, siehe `graveyard_shots.gd`) |
+
+### Messung Vertical Slice (nach Fix-Welle, 1280×720, Software-Renderer, `graveyard_shots.gd`)
+
+| Wert | Tag | Nacht | Budget |
+|---|---|---|---|
+| Draw Calls | 138 – 175 | 200 – 283 | < 1 000 ✅ |
+| Kamera-Dreiecke inkl. Gras | 172 k – 473 k | 244 k – 316 k | < 500 k ✅ |
+| Frame gesamt inkl. Schattenpässe | 276 k – 580 k | 409 k – 436 k | (kein eigenes Budget; Übersicht bei Zoom 30 = 580 k) |
+| Schattenwerfende Punktlichter | 0 | 2 | ≤ 4 ✅ |
+| CPU pro Frame (Skripte + Engine, headless) | ~0,4 – 0,55 ms | | 16,6 ms ✅ |
+| Neues Spiel / Laden / Speichern | 423 ms / 39 ms / < 1 ms | | |
+Echte GPU-FPS: nur auf dem Benutzer-PC messbar (Volumennebel, SSAO, MSAA 2×, weiche Schatten).

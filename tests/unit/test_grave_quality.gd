@@ -57,7 +57,7 @@ func test_each_factor_of_the_table() -> void:
 	assert_eq(GraveQuality.breakdown(examined, &"", config)[1], {"label": "Untersucht", "points": 1})
 	var left := _corpse()
 	left.valuables_decision = &"left"
-	assert_eq(GraveQuality.breakdown(left, &"", config)[1], {"label": "Wertsachen belassen", "points": 1})
+	assert_eq(GraveQuality.breakdown(left, &"", config)[1], {"label": "Wertsachen liegen gelassen", "points": 1})
 	var taken := _corpse()
 	taken.valuables_decision = &"taken"
 	assert_eq(GraveQuality.breakdown(taken, &"", config)[1], {"label": "Wertsachen genommen", "points": -2})

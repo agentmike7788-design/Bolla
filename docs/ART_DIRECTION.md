@@ -105,3 +105,10 @@ Regel: Übernatürliches ist die **einzige** Quelle gesättigter kalter Farbe �
 | Gras | MultiMesh-Büschel mit Wind, nutzen Boden-Normale → verschmelzen mit dem Boden |
 | Atmosphäre | AgX-Tonemapping, SSAO, Glow, Höhen- + Volumennebel; Tag/Nacht als Presets in `data/atmosphere/` |
 | Warme Lichter | an Blender-Markern (`light_*`) automatisch gesetzt, Werte in `data/art_prototype/layout.json` |
+
+## 10. Lesbarkeit & Performance (Vertical Slice, ohne Stiländerung)
+
+- **Laub-Freistellung:** Laub zwischen Kamera und Totengräber blendet in einer blättrig-geditherten Scheibe aus (Radius 1,6 m um den Spieler, nur oberhalb Brusthöhe). Schatten bleiben unverändert. Shader: `assets/shaders/painted_foliage.gdshader`.
+- **Shader-Aufteilung:** `painted.gdshader` (statisch, ohne `TIME`) und `painted_foliage.gdshader` (Wind, Blatt-Ränder, Freistellung) teilen `painted_common.gdshaderinc` – identischer Look, aber statische Laternen-Schatten werden nicht mehr jeden Frame neu berechnet.
+- **Sonne:** eine orthogonale Schatten-Kaskade statt zwei (schärfere Kronenschatten, halbe Kosten). Laternen werfen keine Laub-Schatten (Render-Layer 2).
+- Tages-Stimmungen: Morgen- und Abenddämmerung (`data/atmosphere/dawn.tres`, `dusk.tres`) ergänzen die freigegebenen Tag/Nacht-Presets – **Benutzerprüfung beim Vertical-Slice-Gate**.

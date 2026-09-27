@@ -77,7 +77,7 @@ Startinventar (bei *Neues Spiel*): 5 Münzen, 2 Holz, 1 Leinen (`PlayerConfig.st
 | Frische bei Bestattung ≥ 0,6 / < 0,3 | +1 / −1 |
 | Untersucht | +1 |
 | Wertsachen liegen gelassen / genommen | +1 / −2 |
-Qualität = Summe, geklemmt 0…10. **Bezahlung** = `base_payment(Todesursache)` (2–4) + `floor(Qualität × 0,5)`.
+Qualität = Summe, geklemmt 0…10 (Aufschlüsselungs-Label u. a. „Wertsachen liegen gelassen"). **Bezahlung** = `base_payment(Todesursache)` (2–4) + `floor(Qualität × 0,5)`.
 Wertsachen: 5–8 Münzen (pro Leiche beim Generieren festgelegt), Ruf −1.
 **Friedhofsqualität** = Summe der Qualitäten aller vollendeten Gräber (alte Gräber zählen **0**). Stufen (v3, nach Playthrough-Review): Verwahrlost < 15 ≤ Ordentlich < 32 ≤ Gepflegt < 50 ≤ Würdevoll – ohne Leichentuch, mit Holzkreuzen oder bei dreimaligem Wertsachen-Raub wird „Würdevoll" verfehlt.
 Ruf (`GameState.stats.reputation`, Start 0): ≥ 0 „Geachtet", −1…−2 „Unauffällig", ≤ −3 „Verrufen" (Anzeige im Inventar-Panel; Kutscher reagiert).
@@ -322,7 +322,7 @@ func get_target() -> Node
 class_name InteractionDetector extends Area3D   # am Spieler, layer 0, mask 8; bewertet get_overlapping_areas() jeden Physik-Frame
 signal focus_changed(interactable: Interactable)
 var focused: Interactable
-# Wertung: höchste priority, dann Distanz + Blickrichtung. Prioritäten: NPC 30, Leiche 20, Grab 10, Stationen 5
+# Wertung (v3): Ziele im Blickkegel vor dem Spieler (cos ≥ front_cone_cos = 0, aktueller Fokus +0,1) schlagen Ziele dahinter; innerhalb derselben Seite höchste priority, dann Distanz + Blickrichtung. Prioritäten: NPC 30, Leiche 20, Grab 10, Stationen 5
 class_name Player extends CharacterBody3D   # Gruppen &"player", &"saveable"; save_id "player", save_order 100
 enum State { FREE, CARRYING, LOCKED }
 var config: PlayerConfig; var actions: ActionConfig; var state: State
@@ -337,6 +337,7 @@ func start_timed_action(label: String, game_minutes: int, on_done: Callable, can
 func cancel_timed_action() -> void    # verbrauchte Minuten bleiben verbraucht, on_done wird NICHT aufgerufen
 func apply_start_inventory() -> void  # aus config.start_items (nur bei new_game_started)
 func drop_position() -> Transform3D   # gültige Ablage vor dem Spieler (0,8 m), sonst an den Füßen; Transform3D() + ungültig → Warnung
+func occlusion_point() -> Vector3     # Brusthöhe (occlusion_height 1,1); setzt jeden Frame den Shader-Global occlusion_target (Laub-Freistellung)
 func save_state() -> Dictionary; func load_state(data: Dictionary) -> void
 # Tragen erlaubt: Tisch (ablegen), offenes Grab (bestatten), NPC (reden), Q (ablegen). Sonst Prompt "Hände frei nötig – [Q] ablegen".
 # Timed Action: push_pause(&"action"), Spielzeit rückt proportional zum Fortschritt vor, am Ende Rest + on_done; Bewegung bricht ab (wenn cancellable).
@@ -376,6 +377,7 @@ Graveyard (WorldRoot)
 | `src/entities/player/player.tscn` | CharacterBody3D / `Player` | – | `player`, `saveable` |
 | `src/ui/ui_root.tscn` | CanvasLayer / `UIRoot` | – | `ui_root` |
 
+`Npc.debug_teleport(world_pos)` hält den NPC bis zur nächsten Tagesplan-Phase an einer Stelle (Debug). `MorgueTable`-Prompt nach der Untersuchung: „[E] Leiche ansehen".
 `WorldRoot`: `var corpse_manager: CorpseManager; var graveyard: Graveyard; var is_world_ready: bool; func get_waypoint(id: StringName) -> Vector3; func get_player() -> Player; func get_node_by_layout_id(id: String) -> Node`. Sendet `EventBus.world_ready(self)` deferred nach `_ready`.
 Kollisionen: Layer 1 world. Spieler: Layer 2, Maske 1|4 (world, npc). NPC-Körper: Layer 3. Interactables: Layer 4. Leichen haben keinen Körper.
 

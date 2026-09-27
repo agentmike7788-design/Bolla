@@ -286,11 +286,21 @@ func _update_animation() -> void:
 
 ## Corpse on the cart: on the way in before the delivery minute, or all day after a skipped one.
 func _has_cargo() -> bool:
-	if GameState.has_flag(FLAG_SLICE_COMPLETE) or _tables == null:
+	if GameState.has_flag(FLAG_SLICE_COMPLETE) or _tables == null or _cemetery_full():
 		return false
 	if TimeManager.minute_of_day < _tables.delivery_minute:
 		return true
 	return GameState.get_flag(FLAG_DELIVERY_SKIPPED, 0) == TimeManager.day
+
+
+## Same rule as CorpseManager: no plot left for a new corpse means no more deliveries.
+func _cemetery_full() -> bool:
+	var graveyard := get_tree().get_first_node_in_group(&"graveyard")
+	var manager := get_tree().get_first_node_in_group(&"corpse_manager")
+	if graveyard == null or manager == null or not graveyard.has_method(&"free_plot_count") \
+			or not manager.has_method(&"unburied_count"):
+		return false
+	return int(graveyard.call(&"free_plot_count")) <= int(manager.call(&"unburied_count"))
 
 
 # --- path -----------------------------------------------------------------------------------

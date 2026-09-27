@@ -7,7 +7,7 @@ const LABEL_SHROUD := "Leichentuch"
 const LABEL_FRESH := "Frisch"
 const LABEL_DECAYING := "Verwesend"
 const LABEL_EXAMINED := "Untersucht"
-const LABEL_VALUABLES_LEFT := "Wertsachen belassen"
+const LABEL_VALUABLES_LEFT := "Wertsachen liegen gelassen"
 const LABEL_VALUABLES_TAKEN := "Wertsachen genommen"
 ## Marker labels when the item database does not know the marker.
 const MARKER_LABELS: Dictionary[StringName, String] = {&"wooden_cross": "Holzkreuz", &"gravestone_simple": "Grabstein"}
