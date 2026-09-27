@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="GhostLines" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/ghosts/ghost_lines.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+content = PackedStringArray("content_0", "content_1", "content_2", "content_3", "content_4", "content_5", "content_6", "content_7")
+calm = PackedStringArray("calm_0", "calm_1", "calm_2")
+by_reason = Dictionary[StringName, PackedStringArray]({&"weeds": PackedStringArray("weeds_0", "weeds_1", "weeds_2"), &"valuables": PackedStringArray("valuables_0", "valuables_1", "valuables_2"), &"cold": PackedStringArray("cold_0", "cold_1", "cold_2"), &"cross": PackedStringArray("cross_0", "cross_1", "cross_2"), &"waited": PackedStringArray("waited_0", "waited_1", "waited_2"), &"bare": PackedStringArray("bare_0", "bare_1", "bare_2")})
+by_trait = Dictionary[StringName, PackedStringArray]({&"letter": PackedStringArray("letter_0", "letter_1"), &"tattoo": PackedStringArray("tattoo_0", "tattoo_1"), &"strange_wound": PackedStringArray("strange_wound_0", "strange_wound_1")})
+gift = "Der Geist deutet ins Moos – zwei Münzen."

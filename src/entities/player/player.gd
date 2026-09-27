@@ -250,6 +250,12 @@ func drop_position() -> Transform3D:
 	return PlayerCarry.drop_position(self)
 
 
+## STUB (P2) – Phase 3 §3.4 build-mode hook: suppresses the interaction focus and the
+## gravekeeper's [E]/[Q]; movement stays.
+func set_build_mode(_active: bool) -> void:
+	pass
+
+
 ## Inside / outside the hut; always announces EventBus.interior_changed so camera, sun and
 ## environment follow (also after a load that did not change the value).
 func set_in_interior(value: bool) -> void:

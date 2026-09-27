@@ -33,10 +33,38 @@ signal corpse_updated(corpse_id: String)
 signal corpse_buried(corpse_id: String, grave_id: String)
 signal grave_state_changed(grave_id: String, state: int)
 signal grave_completed(grave_id: String, corpse_id: String, quality: int, breakdown: Array)
+## From Phase 3 on only CemeteryScore emits it (graves + decor − dirt), only on change.
 signal cemetery_quality_changed(total: int, rating: StringName)
 signal payment_received(amount: int, reason: String)
 signal delivery_skipped(day: int, reason: String)
+## Phase 2 only: declared, no longer emitted from Phase 3 on (docs/PHASE3_DESIGN.md §3.3).
 signal slice_completed
+
+# Cemetery expansion (ExpansionManager) – Phase 3 §3.3
+signal obstacle_cleared(obstacle_id: String, section_id: StringName)
+signal section_progress_changed(section_id: StringName, done: int, total: int)
+## After Graveyard.unlock_section.
+signal section_unlocked(section_id: StringName)
+# Graves (Graveyard) – Phase 3
+## Marker upgraded (MARKED → MARKED with a better marker).
+signal grave_quality_changed(grave_id: String, quality: int)
+## Phase goal (§1.3): every non-old grave MARKED and no section locked.
+signal cemetery_completed
+# Decor & build mode (DecorationManager, BuildMode)
+## placed = true: set up, false: removed.
+signal decor_changed(uid: String, decor_id: StringName, placed: bool)
+signal build_mode_changed(active: bool)
+# Tending (CleanlinessManager)
+## Only when a spot's level changes.
+signal dirt_changed(spot_id: String, level: int)
+## dirty_spots = level ≥ 2; bundled (at most once per action / time skip).
+signal cleanliness_changed(penalty: int, dirty_spots: int)
+# Reputation (Reputation)
+signal reputation_changed(value: int, tier: StringName, delta: int, reason: String)
+# Ghosts (GhostManager)
+signal ghost_spoke(grave_id: String, mood: StringName, text: String)
+## 21:30 on / 04:30 off.
+signal ghost_night_changed(active: bool)
 
 # UI
 signal ui_panel_requested(panel: StringName, context: Dictionary)

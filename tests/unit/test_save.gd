@@ -123,7 +123,7 @@ func test_save_file_format() -> void:
 	assert_false(FileAccess.file_exists(path + ".tmp"), "temp file renamed")
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(path))
 	assert_eq(_sorted_keys(doc), ["data", "format_version", "meta"])
-	assert_eq(doc.format_version, 1)
+	assert_eq(doc.format_version, SaveFileIO.FORMAT_VERSION)
 	var meta: Dictionary = doc.meta
 	assert_eq(_sorted_keys(meta), ["day", "game_version", "minute_of_day", "saved_unix", "scene"])
 	assert_eq(meta.game_version, ProjectSettings.get_setting("application/config/version"))
@@ -403,7 +403,7 @@ func test_load_rejects_bad_files() -> void:
 	var cases: Array = [
 		["{ not json", ERR_PARSE_ERROR],
 		["[1, 2]", ERR_PARSE_ERROR],
-		[_with(good, "format_version", 2), ERR_FILE_UNRECOGNIZED],
+		[_with(good, "format_version", SaveFileIO.FORMAT_VERSION + 1), ERR_FILE_UNRECOGNIZED],
 		[_with(good, "format_version", "1"), ERR_FILE_UNRECOGNIZED],
 		[_with(good, "meta", null), ERR_FILE_CORRUPT],
 		[_with(good, "meta", _with(good.meta, "day", "eins")), ERR_FILE_CORRUPT],

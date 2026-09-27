@@ -63,6 +63,11 @@ static func payment(corpse: CorpseRecord, quality: int, tables: CorpseTables, co
 
 
 ## Display name of a grave marker item ("Holzkreuz", "Grabstein").
+## STUB (P1) – Phase 3 §2.6: {base, quality, reputation, total}; total never < 0.
+static func payment_parts(_corpse: CorpseRecord, _quality: int, _tables: CorpseTables, _config: EconomyConfig, _rep_tier: StringName, _rep: ReputationConfig) -> Dictionary:
+	return {}
+
+
 static func _marker_label(marker_id: StringName) -> String:
 	if Database.has_item(marker_id):
 		var item := Database.item(marker_id) as ItemData

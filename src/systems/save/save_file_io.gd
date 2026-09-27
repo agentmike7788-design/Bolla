@@ -4,7 +4,10 @@ extends RefCounted
 ## slot paths, the write-then-rename of a save document, reading a slot back into {meta, state}
 ## with format / meta / data checks, and listing the slots on disk. Stateless – no scene tree.
 
-const FORMAT_VERSION := 1
+## Phase 3: v2 (docs/PHASE3_DESIGN.md §5). Versions MIN_FORMAT_VERSION…FORMAT_VERSION are read;
+## older states are upgraded by SaveMigration after decode_state.
+const FORMAT_VERSION := SaveMigration.CURRENT
+const MIN_FORMAT_VERSION := 1
 
 
 static func slot_path(save_dir: String, slot: int) -> String:
@@ -83,13 +86,16 @@ static func read_doc(save_dir: String, slot: int, out: Dictionary, decode_data: 
 		return ERR_PARSE_ERROR
 	var doc: Dictionary = json.data
 	var version: Variant = doc.get("format_version")
-	if not (version is float or version is int) or float(version) != FORMAT_VERSION:
+	if not (version is float or version is int) or float(version) != roundf(float(version)) \
+			or int(version) < MIN_FORMAT_VERSION or int(version) > FORMAT_VERSION:
 		return ERR_FILE_UNRECOGNIZED
 	if not is_valid_meta(doc.get("meta")):
 		return ERR_FILE_CORRUPT
 	out["meta"] = doc.meta
 	if decode_data:
 		var state := decode_state(doc.get("data"))
+		if not state.is_empty() and int(version) < FORMAT_VERSION:
+			state = SaveMigration.migrate(state, int(version), doc.meta)
 		if state.is_empty():
 			return ERR_FILE_CORRUPT
 		out["state"] = state

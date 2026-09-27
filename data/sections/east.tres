@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SectionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/expansion/section_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"east"
+display_name = "Ostwiese"
+order = 2
+starts_unlocked = false
+requires_section = &""
+requires_rating = &""
+decor_cap = 9
+unlock_text = "Die Ostwiese ist freigelegt – 3 neue Grabstellen."

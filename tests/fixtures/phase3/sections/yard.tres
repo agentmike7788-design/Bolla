@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SectionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/expansion/section_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"yard"
+display_name = "Alter Hof"
+order = 1
+starts_unlocked = true
+requires_section = &""
+requires_rating = &""
+decor_cap = 12
+unlock_text = ""

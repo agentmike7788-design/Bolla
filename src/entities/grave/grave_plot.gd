@@ -42,6 +42,9 @@ const NAME_UNKNOWN := "Unbekannt"
 
 @export var grave_id: String = ""
 @export var is_old: bool = false
+## Phase 3 – STUB (P1): section of this plot; plots of a locked section are LOCKED
+## (no visuals, no collision, no prompt).
+@export var section_id: StringName = &"yard"
 @export_group("Old grave")
 ## Layout variants of an old grave: ph_prop_gravestone_<old_stone>, ph_prop_grave_mound_<old_mound>.
 @export var old_stone: String = ""

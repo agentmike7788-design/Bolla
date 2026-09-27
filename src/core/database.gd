@@ -11,12 +11,22 @@ const NPC_DIR := "res://data/npc"
 const CONFIG_DIR := "res://data/config"
 const CORPSE_TABLES := "res://data/corpses/corpse_tables.tres"
 const ICON_DIR := "res://assets/ui/icons"
+# Phase 3 (docs/PHASE3_DESIGN.md §3.5)
+const SECTION_DIR := "res://data/sections"
+const CLEARABLE_DIR := "res://data/clearables"
+const DECOR_DIR := "res://data/decor"
+const GHOST_DIR := "res://data/ghosts"
+const GHOST_LINES := &"ghost_lines"
 
 var _items: Dictionary = {}       # StringName -> ItemData
 var _recipes: Dictionary = {}     # StringName -> RecipeData
 var _dialogues: Dictionary = {}   # StringName -> DialogueData
 var _schedules: Dictionary = {}   # StringName -> NpcSchedule
 var _configs: Dictionary = {}     # StringName -> Resource
+var _sections: Dictionary = {}    # StringName -> SectionData
+var _clearables: Dictionary = {}  # StringName -> ClearableData
+var _decors: Dictionary = {}      # StringName -> DecorData
+var _ghosts: Dictionary = {}      # StringName (file name) -> Resource
 var _icons: Dictionary = {}       # StringName -> Texture2D
 var _placeholder: Texture2D
 
@@ -33,6 +43,12 @@ func reload() -> void:
 	_configs.clear()
 	for path: String in _resource_files(CONFIG_DIR):
 		_configs[StringName(path.get_file().get_basename())] = load(path)
+	_sections = _load_dir(SECTION_DIR, "id")
+	_clearables = _load_dir(CLEARABLE_DIR, "id")
+	_decors = _load_dir(DECOR_DIR, "id")
+	_ghosts.clear()
+	for path: String in _resource_files(GHOST_DIR):
+		_ghosts[StringName(path.get_file().get_basename())] = load(path)
 
 
 func item(id: StringName) -> Resource:
@@ -75,6 +91,44 @@ func config(name: StringName) -> Resource:
 	if not _configs.has(name):
 		push_warning("[Database] unknown config '%s'" % name)
 	return _configs.get(name)
+
+
+## data/sections/<id>.tres (SectionData), null if unknown.
+func section(id: StringName) -> Resource:
+	return _sections.get(id)
+
+
+## All sections, sorted by `order`.
+func sections() -> Array:
+	var out: Array = _sections.values()
+	out.sort_custom(func(a: Resource, b: Resource) -> bool: return int(a.get("order")) < int(b.get("order")))
+	return out
+
+
+## data/clearables/<kind>.tres (ClearableData), null if unknown.
+func clearable(id: StringName) -> Resource:
+	return _clearables.get(id)
+
+
+## data/decor/<item_id>.tres (DecorData), null if unknown.
+func decor(id: StringName) -> Resource:
+	return _decors.get(id)
+
+
+## All decor kinds, sorted by id.
+func decors() -> Array:
+	var out: Array = _decors.values()
+	out.sort_custom(func(a: Resource, b: Resource) -> bool: return String(a.get("id")) < String(b.get("id")))
+	return out
+
+
+func has_decor(id: StringName) -> bool:
+	return _decors.has(id)
+
+
+## data/ghosts/ghost_lines.tres (GhostLines), null while missing.
+func ghost_lines() -> Resource:
+	return _ghosts.get(GHOST_LINES)
 
 
 func corpse_tables() -> Resource:

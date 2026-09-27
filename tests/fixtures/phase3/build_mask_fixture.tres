@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="BuildMask" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/decoration/build_mask.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+origin = Vector2(0, 0)
+cell = 0.5
+size = Vector2i(12, 8)
+cells = PackedByteArray(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 17, 17, 17, 17, 1, 2, 2, 2, 2, 2, 2, 1, 17, 0, 0, 17, 1, 2, 2, 2, 2, 2, 2, 1, 17, 0, 0, 17, 1, 2, 2, 2, 2, 2, 2, 1, 17, 17, 17, 17, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 33, 33, 33, 33, 33, 33, 34, 34, 34, 34, 34, 34)

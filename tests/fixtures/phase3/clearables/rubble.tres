@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ClearableData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/expansion/clearable_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"rubble"
+display_name = "Feldsteinhaufen"
+verb = "räumen"
+minutes = 40
+animation = &"dig"
+cost = Dictionary[StringName, int]({})
+yield_items = Dictionary[StringName, int]({&"stone": 2})

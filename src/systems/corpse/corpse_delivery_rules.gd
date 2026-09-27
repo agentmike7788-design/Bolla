@@ -68,5 +68,10 @@ static func report_skip(day: int, reason: String) -> void:
 
 
 @warning_ignore("integer_division")
+## STUB (P1) – Phase 3: the free biers among `dropoffs` (all nodes of group &"dropoff").
+static func free_dropoffs(_dropoffs: Array[Node]) -> Array[Node]:
+	return []
+
+
 static func _div(a: int, b: int) -> int:
 	return a / b

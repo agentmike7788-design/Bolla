@@ -10,3 +10,5 @@ extends Resource
 ## Game minutes the craft takes (runs as a timed action).
 @export var craft_minutes: int = 30
 @export var station: StringName = &"workbench"
+## Workbench group (Phase 3 §2.2): &"grave", &"decor" or &"tool".
+@export var category: StringName = &"grave"

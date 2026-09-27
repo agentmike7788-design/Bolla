@@ -173,6 +173,28 @@ func load_state(data: Dictionary) -> void:
 		_graves[grave.id] = grave
 
 
+# --- Phase 3 (docs/PHASE3_DESIGN.md §3.4 "Gräber") – STUB (P1) --------------------------------
+
+## LOCKED → EMPTY for the plots of `section_id`; grave_state_changed per plot; count.
+func unlock_section(_section_id: StringName) -> int:
+	return 0
+
+
+func plots_in_section(_section_id: StringName) -> PackedStringArray:
+	return PackedStringArray()
+
+
+## Markers with a higher marker_quality than the current one that `inv` holds.
+func upgrade_options(_grave_id: String, _inv: Inventory) -> Array[StringName]:
+	return []
+
+
+## MARKED → MARKED with a better marker: quality difference, 0 = refused; grave_quality_changed,
+## reputation +1, no second payment.
+func upgrade_marker(_grave_id: String, _marker_id: StringName, _inv: Inventory) -> int:
+	return 0
+
+
 func _on_world_ready(world: Node) -> void:
 	if world != null and world.is_ancestor_of(self):
 		broadcast_state()

@@ -4,7 +4,8 @@ extends RefCounted
 ## to_dict() keeps native types for JSON.from_native saves; from_dict() also accepts
 ## plain JSON values (floats for ints, Strings for StringNames).
 
-enum State { EMPTY, DUG, FILLED, MARKED, OLD }
+## LOCKED (Phase 3): plot of a section not yet unlocked – appended, saved ints unchanged.
+enum State { EMPTY, DUG, FILLED, MARKED, OLD, LOCKED }
 
 var id: String = ""
 var state: State = State.EMPTY
@@ -13,6 +14,9 @@ var marker_id: StringName = &""
 var quality: int = 0
 ## [{label: String, points: int}] from GraveQuality.breakdown (empty until MARKED).
 var breakdown: Array = []
+## Phase 3: TimeManager.day of place_marker (0 = migrated / unknown). STUB (P1): not yet set,
+## saved or loaded – P1 adds it to place_marker, to_dict and from_dict.
+var completed_day: int = 0
 
 
 func to_dict() -> Dictionary:

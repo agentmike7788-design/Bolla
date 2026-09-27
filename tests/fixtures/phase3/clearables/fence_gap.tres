@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ClearableData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/expansion/clearable_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"fence_gap"
+display_name = "Zaunlücke"
+verb = "reparieren"
+minutes = 30
+animation = &"dig"
+cost = Dictionary[StringName, int]({&"wood": 2, &"iron_fittings": 1})
+yield_items = Dictionary[StringName, int]({})

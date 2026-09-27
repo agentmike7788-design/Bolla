@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SectionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/expansion/section_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"north"
+display_name = "Birkenhang"
+order = 3
+starts_unlocked = false
+requires_section = &"east"
+requires_rating = &"dignified"
+decor_cap = 9
+unlock_text = "Der Birkenhang ist freigelegt – 3 neue Grabstellen."

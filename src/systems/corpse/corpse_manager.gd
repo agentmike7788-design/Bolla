@@ -99,6 +99,11 @@ func try_daily_delivery(day: int) -> CorpseRecord:
 ## When every remaining EMPTY/DUG plot is already reserved by a corpse waiting for burial, the
 ## cemetery is full for good (graves are never emptied again): the carter brings nothing more,
 ## which is no missed delivery. Only an occupied bier counts as a missed delivery.
+## STUB (P1) – Phase 3 §3.4: the corpses delivered on `day` (up to ReputationRules.deliveries_on).
+func deliveries_of(_day: int) -> Array[CorpseRecord]:
+	return []
+
+
 func _deliver(day: int, now_total: int) -> CorpseRecord:
 	if day <= _last_delivery_day:
 		return get_record(_last_delivery_id) if day == _last_delivery_day else null
