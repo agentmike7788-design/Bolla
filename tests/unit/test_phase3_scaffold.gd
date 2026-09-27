@@ -51,6 +51,8 @@ const METHODS := {
 	"Ghost": ["bind", "set_mood", "set_fade", "say", "can_interact", "get_interaction_prompt", "interact"],
 	"SaveMigration": ["migrate", "migrate_1_to_2"],
 }
+## Stubs whose owner has filled them in (W1 hand-over) – no "## STUB (" marker any more.
+const IMPLEMENTED: PackedStringArray = ["SaveMigration"]  # P6
 ## Stub methods added to existing classes (owner in the comment).
 const EXISTING_STUBS := {
 	"res://src/systems/graveyard/graveyard.gd": ["unlock_section", "plots_in_section", "upgrade_options", "upgrade_marker"],  # P1
@@ -92,7 +94,8 @@ func test_stub_scripts_load_with_their_class_names() -> void:
 		assert_true(script.can_instantiate(), path + " parses")
 		var cls: String = STUBS[path]
 		assert_eq(global.get(cls), path, "class_name %s → %s" % [cls, path])
-		assert_true(script.source_code.contains("## STUB ("), cls + " is marked as stub")
+		if not cls in IMPLEMENTED:
+			assert_true(script.source_code.contains("## STUB ("), cls + " is marked as stub")
 		var names := {}
 		for m: Dictionary in script.get_script_method_list():
 			names[String(m.name)] = true

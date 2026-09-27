@@ -10,6 +10,8 @@ const ITEMS := {
 	&"shroud": ["Leichentuch", ItemData.Category.CRAFTED, 10],
 	&"wooden_cross": ["Holzkreuz", ItemData.Category.CRAFTED, 5],
 	&"gravestone_simple": ["Grabstein", ItemData.Category.CRAFTED, 5],
+	&"iron_fittings": ["Eisenbeschlag", ItemData.Category.RESOURCE, 20],   # Phase 3 (P6)
+	&"seeds": ["Blumensamen", ItemData.Category.RESOURCE, 20],   # Phase 3 (P6)
 }
 
 

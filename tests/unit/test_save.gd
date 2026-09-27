@@ -403,7 +403,9 @@ func test_load_rejects_bad_files() -> void:
 	var cases: Array = [
 		["{ not json", ERR_PARSE_ERROR],
 		["[1, 2]", ERR_PARSE_ERROR],
-		[_with(good, "format_version", SaveFileIO.FORMAT_VERSION + 1), ERR_FILE_UNRECOGNIZED],
+		[_with(good, "format_version", SaveFileIO.FORMAT_VERSION + 1), ERR_FILE_UNRECOGNIZED, "Spielstand aus einer neueren Version."],
+		[_with(good, "format_version", 0), ERR_FILE_UNRECOGNIZED],
+		[_with(good, "format_version", 1.5), ERR_FILE_UNRECOGNIZED],
 		[_with(good, "format_version", "1"), ERR_FILE_UNRECOGNIZED],
 		[_with(good, "meta", null), ERR_FILE_CORRUPT],
 		[_with(good, "meta", _with(good.meta, "day", "eins")), ERR_FILE_CORRUPT],
@@ -417,7 +419,8 @@ func test_load_rejects_bad_files() -> void:
 		_write_file("slot_4.json", c[0] if c[0] is String else JSON.stringify(c[0]))
 		var err: Error = await SaveManager.load_game(4)
 		assert_eq(err, c[1], "case %s" % str(c[0]).left(60))
-		assert_eq(notes, [["Spielstand ist beschädigt.", &"warning"]])
+		var text: String = c[2] if c.size() > 2 else "Spielstand ist beschädigt."
+		assert_eq(notes, [[text, &"warning"]], "case %s" % str(c[0]).left(60))
 		assert_false(SaveManager.is_loading)
 	assert_eq(tree.current_scene, world, "world untouched")
 	assert_eq(TimeManager.minute_of_day, 400, "state untouched")

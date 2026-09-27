@@ -1,22 +1,54 @@
 extends TestCase
-## Lead / W0 (docs/PHASE3_DESIGN.md §5.2, §12): every Phase-2 save fixture (format v1,
+## Lead / W0 + P6 (docs/PHASE3_DESIGN.md §5.2, §12): every Phase-2 save fixture (format v1,
 ## tests/fixtures/saves_v1/) loads through the real SaveManager into the real world without
-## engine errors, and the next save writes format v2. The v1 → v2 content migration itself
-## (reputation scale, flags, LOCKED plots, empty Phase-3 node states) is P6's
-## (test_save_migration.gd / test_phase2_save_upgrade.gd); this only guards that loading works.
+## engine errors and without "no saved state" warnings, arrives migrated (reputation scale,
+## flags, LOCKED new plots once the world has them) and the next save writes format v2.
+## The migration table itself: tests/unit/test_save_migration.gd.
+
+## Records push_warning() messages (warnings never fail a test on their own).
+class WarningLog extends Logger:
+	var messages: PackedStringArray = []
+	var _mutex := Mutex.new()
+
+	func _log_error(_function: String, _file: String, _line: int, code: String, rationale: String,
+			_editor_notify: bool, error_type: int, _script_backtrace: Array[ScriptBacktrace]) -> void:
+		if error_type != ERROR_TYPE_WARNING:
+			return
+		_mutex.lock()
+		messages.append(code + " " + rationale)
+		_mutex.unlock()
+
+	func _log_message(_message: String, _error: bool) -> void:
+		pass
+
+	func containing(text: String) -> PackedStringArray:
+		_mutex.lock()
+		var out: PackedStringArray = []
+		for m: String in messages:
+			if m.contains(text):
+				out.append(m)
+		_mutex.unlock()
+		return out
+
 
 const TIMEOUT := 120.0
 const TEST_SAVES := "user://test_saves_v1"
 const SLOT := 7
 const RESAVE_SLOT := 8
+const NEW_PLOTS: PackedStringArray = ["plot_07", "plot_08", "plot_09", "plot_10", "plot_11", "plot_12"]
+
+var warnings: WarningLog
 
 
 func before_each() -> void:
 	SaveManager.save_dir = TEST_SAVES
 	_delete_saves()
+	warnings = WarningLog.new()
+	OS.add_logger(warnings)
 
 
 func after_each() -> void:
+	OS.remove_logger(warnings)
 	_delete_saves()
 
 
@@ -48,6 +80,10 @@ func test_day3_loads() -> void:
 		if r.location == CorpseRecord.LOCATION_TABLE:
 			on_table += 1
 	assert_eq(on_table, 1, "corpse on the table")
+	assert_eq(GameState.get_stat(&"reputation"), 40, "v1 0 → 40 'Geachtet'")
+	assert_false(GameState.has_flag(&"vs_finished"))
+	assert_eq(GameState.get_flag(&"rep_last_day"), 3, "no second drift on the load day")
+	_check_migrated_world()
 	await _resave_is_v2()
 
 
@@ -60,8 +96,11 @@ func test_day7_complete_loads() -> void:
 			marked += 1
 	assert_eq(marked, 6)
 	assert_eq(GameState.get_stat(&"burials"), 6)
-	# Until P6's migration: the Phase-2 values come through unchanged (fail-safe stub).
-	assert_true(GameState.has_flag(&"slice_complete") or GameState.has_flag(&"vs_finished"), "slice flag or its migration")
+	assert_false(GameState.has_flag(&"slice_complete"), "slice_complete no longer stops deliveries")
+	assert_true(GameState.get_flag(&"vs_finished"), "migrated to vs_finished")
+	assert_eq(GameState.get_stat(&"reputation"), 22, "v1 −2 → 22 'Unauffällig'")
+	assert_eq(GameState.get_flag(&"rep_last_day"), 7)
+	_check_migrated_world()
 	await _resave_is_v2()
 
 
@@ -72,6 +111,8 @@ func test_interior_loads() -> void:
 	assert_true(player.in_interior, "gravekeeper inside the hut")
 	var chest := world.get_node("HutInterior/Entities/chest") as Chest
 	assert_eq([chest.storage.count(&"wood"), chest.storage.count(&"stone"), chest.storage.count(&"linen")], [7, 3, 2])
+	assert_eq(GameState.get_stat(&"reputation"), 40)
+	_check_migrated_world()
 	await _resave_is_v2()
 
 
@@ -83,6 +124,20 @@ func _load(name: String) -> void:
 	assert_eq(err, OK, name + " loads")
 	assert_true(tree.current_scene is WorldRoot, name + " world")
 	TimeManager.running = false
+
+
+## After loading a v1 save: no system node fell back to its default with a warning, every new
+## plot the world has is LOCKED (§5.2 step 5), and the migrated graves keep their states.
+func _check_migrated_world() -> void:
+	assert_eq(warnings.containing("no saved state"), PackedStringArray(), "every saveable got a state")
+	var graveyard := _graveyard()
+	for id: String in NEW_PLOTS:
+		var grave := graveyard.get_grave(id)
+		if grave != null:
+			assert_eq(grave.state, GraveRecord.State.LOCKED, id + " locked after a v1 load")
+	for g: GraveRecord in graveyard.graves():
+		if g.state == GraveRecord.State.MARKED:
+			assert_eq(g.completed_day, 0, g.id + ": ghost from the first night on")
 
 
 func _graveyard() -> Graveyard:
