@@ -1,6 +1,7 @@
 # Art Direction Document
 
-Status: **Richtung A gewählt (27.09.2026) – Prototyp in Prüfung. ART STYLE LOCK = INACTIVE**
+Status: **FREIGEGEBEN (27.09.2026) – ART STYLE LOCK = ACTIVE**
+Referenz-Szene: `src/world/art_prototype/art_prototype.tscn` · Referenz-Screenshots: `docs/reviews/phase1_round1/`
 Verantwortlich: Agent 04 (Art Director) · Finale Entscheidung: Benutzer
 
 ## 1. Ziel
@@ -42,7 +43,7 @@ Regel: Übernatürliches ist die **einzige** Quelle gesättigter kalter Farbe �
 - 3D-Welt, **Perspektivkamera mit kleinem FOV (~30°)**, ca. 50° Neigung, fester Blickwinkel (keine Rotation im Vertical Slice).
   → wirkt wie 2.5D-Diorama, behält aber Tiefe & Parallaxe.
 - Alternative: **orthografisch** (flacher, „brettspielartiger").
-- **Benutzerentscheidung 27.09.2026:** beide im Prototyp vergleichen (Taste C). Finale Wahl nach Screenshot-Review.
+- **Benutzerentscheidung 27.09.2026:** beide verglichen, Art Direction freigegeben → Standard = **Perspektive, FOV 30°, Neigung 45°**; Orthografisch bleibt als Debug-Option.
 - Kamera folgt dem Spieler weich (Lerp), leichter Zoom-Bereich.
 
 ## 5. Charakter-Proportionen (Vorschlag)

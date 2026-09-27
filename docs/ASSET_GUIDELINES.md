@@ -1,6 +1,7 @@
 # Asset Guidelines
 
-Status: **ENTWURF – wird nach Art-Direction-Freigabe verbindlich (Art Style Lock)**
+Status: **VERBINDLICH – ART STYLE LOCK ACTIVE (27.09.2026)**
+Alle neuen Assets nutzen `tools/blender/lib_painted.py` (Vertex-Paint-Stil, Palette aus ART_DIRECTION.md §3) und die geteilten Materialien.
 Verantwortlich: Agent 04 (Art Director), Agent 05 (Blender), Agent 20 (Integration)
 
 ## Pipeline

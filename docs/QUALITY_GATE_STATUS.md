@@ -3,10 +3,10 @@
 | Gate | Phase | Status | Datum | Freigabe durch Benutzer |
 |---|---|---|---|---|
 | G0 | Projektsetup | ✅ **PASSED** | 27.09.2026 | ✅ „Phase 0 freigegeben" (27.09.2026) |
-| G1 | Art Direction | 🟡 **PENDING USER REVIEW** (Runde 1) | 27.09.2026 | ausstehend |
-| G2 | Vertical Slice | ⚪ nicht gestartet | – | – |
+| G1 | Art Direction | ✅ **PASSED** (Runde 1) | 27.09.2026 | ✅ „Art Direction freigegeben" (27.09.2026) |
+| G2 | Vertical Slice | 🔵 IN ARBEIT | 27.09.2026 | – |
 
-**ART STYLE LOCK:** INACTIVE
+**ART STYLE LOCK:** ✅ **ACTIVE** seit 27.09.2026 (Referenz: `src/world/art_prototype/`, Screenshots `docs/reviews/phase1_round1/`). Keine grundlegende Stiländerung ohne Benutzerfreigabe.
 
 ## G0 – QA-Protokoll (Agent 19)
 
@@ -50,7 +50,7 @@ Screenshots: `docs/reviews/phase1_round1/` (Software-Renderer, 1280×720).
 | Frage | Entscheidung |
 |---|---|
 | Stil-Richtung | **A – Gemaltes Diorama** |
-| Kamera | **Beide im Prototyp vergleichen** (finale Wahl nach Review) |
+| Kamera | Beide verglichen; Freigabe ohne Gegenwunsch → **Perspektive (FOV 30°, 45° Neigung) als Standard**, Orthografisch bleibt per Debug umschaltbar |
 | Plattform | **Nur PC** |
 | Blender | **Lokal vorhanden, 5.x** → .blend-Quellen werden mitgeliefert |
 | Git LFS | später (noch kleine Dateien) |

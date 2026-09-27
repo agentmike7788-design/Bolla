@@ -5,8 +5,8 @@ Regel: **BAUE → TESTE → ZEIGE → WARTE AUF FREIGABE.** Keine Phase startet 
 | Phase | Inhalt | Status |
 |---|---|---|
 | 0 | Projektsetup | ✅ freigegeben (27.09.2026) |
-| 1 | Art-Direction-Prototyp | 🟡 gebaut & getestet – **wartet auf Freigabe** (Runde 1) |
-| 2 | Vertical Slice | ⏸ geplant (unten) |
+| 1 | Art-Direction-Prototyp | ✅ freigegeben (27.09.2026) – ART STYLE LOCK aktiv |
+| 2 | Vertical Slice | ▶ in Arbeit (Design: VERTICAL_SLICE_DESIGN.md) |
 | 3 | Friedhof vollständig ausbauen | – |
 | 4 | Leichensystem erweitern | – |
 | 5 | Crafting und Ressourcen | – |
