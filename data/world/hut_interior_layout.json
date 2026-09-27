@@ -4,6 +4,9 @@
   "door_inside": [-0.9, 1.4],
   "spawn_inside": [-0.9, 1.0],
   "walkway": 0.9,
+  "_camera": "Innenraum-Kamera (CameraRig-Profil, docs §11): Fokus-Grenzen raumlokal [x, z]; Distanz/Zoom in data/config/interior_config.tres. sun_rotation_deg = weiche Innenraum-Sonne (nur drinnen sichtbar).",
+  "camera_bounds": {"min": [-0.5, -0.3], "max": [0.5, 0.3]},
+  "sun_rotation_deg": [-60.0, 25.0, 0.0],
   "items": [
     {"asset": "ph_int_rug", "pos": [-0.3, 0.2], "rot_y": 3.0, "mount": "flat"},
     {"asset": "ph_int_bed", "pos": [-1.745, -0.755], "rot_y": 90.0, "mount": "floor", "interact": "bed", "use_pos": [-0.7, -0.75]},

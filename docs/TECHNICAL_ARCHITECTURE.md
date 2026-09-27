@@ -27,8 +27,8 @@ src/                   Gesamter Spielcode, nach FEATURE gruppiert (Szene + Scrip
   boot/                Startszene → Titelbildschirm
   systems/             Spielsysteme: time, game_state, save, inventory, crafting, corpse, graveyard, dialogue, npc
   components/          Wiederverwendbare Komponenten (Interactable, InteractionDetector)
-  entities/            Alles mit Weltpräsenz: player, corpse, grave, morgue_table, workbench, dropoff, resource_node, npc, hut_door
-  world/               Weltszenen: graveyard/ (Vertical Slice), art_prototype/ (eingefroren), camera/, atmosphere/
+  entities/            Alles mit Weltpräsenz: player, corpse, grave, morgue_table, workbench, dropoff, resource_node, npc, hut_door, bed, stove, chest, desk, interior_door
+  world/               Weltszenen: graveyard/ (Vertical Slice), hut_interior/ (Innenraum, §11), art_prototype/ (eingefroren), camera/, atmosphere/
   ui/                  UIRoot, HUD, Panels, Dialogbox, Titel, Theme, Tools (Icons, Screenshots)
   debug/               Debug-Konsole (nur Debug-Builds), Asset-Vorschau, Screenshot-Serie
 data/                  Balancing & Inhalte als Resources (.tres) und Layout-JSON (nur Build-Zeit)
@@ -61,8 +61,17 @@ Regel: Ein Feature = ein Ordner, z. B. `src/entities/corpse/corpse.tscn` + `corp
 | NPC & Dialog | `src/systems/{npc,dialogue}/`, `data/npc/`, `data/dialogue/` | Tagesablauf deterministisch aus der Uhrzeit; Dialog-Minisprache |
 | Spieler | `src/entities/player/`, `src/components/` | Bewegung, Tragen, zeitgeraffte Aktionen, Interaktions-Fokus |
 | Welt | `src/world/graveyard/` (+ Builder aus `data/world/graveyard_layout.json`) | Friedhof + Kutschweg, Entitäten, Kollisionen, Wegpunkte |
+| Hütte innen (Runde 2) | `src/world/hut_interior/`, `data/world/hut_interior_layout.json`, `data/config/interior_config.tres` | Eigene Innenraum-Szene, Portal, Kamera-Profil, Innenlicht (siehe unten) |
 | UI | `src/ui/` | HUD, 7 Panels, Dialogbox, Titel, Theme, Icons |
 | Stil | `assets/shaders/`, `assets/materials/` | Maler-Shader (gesperrt), Gras, Laub |
+
+### Hütten-Innenraum & Portal (Änderungsrunde 2, VERTICAL_SLICE_DESIGN §11)
+- **Szene** `src/world/hut_interior/hut_interior.tscn` (Wurzel `HutInterior`, Gruppe `hut_interior`) wird von `hut_interior_builder.gd` (headless möglich) aus `data/world/hut_interior_layout.json` erzeugt; `graveyard_builder.gd` baut sie mit und instanziert sie **fern der Außenwelt** bei `hut_interior.origin` = (0, 0, −200). Inhalt: `Room` (+ Fenster-/Laternenlichter an den Markern), `Furniture/`, `Entities/` (`bed`, `chest`, `desk`, `stove` mit Modell als Kind `Model` und Marker `UsePos`, `interior_door`), `Colliders/` (Boden, vier Wände – die Tür wird nur per [E] benutzt –, Boden- und Wandstücke), `Spawn`, eine eigene `Sun` (nur drinnen sichtbar) und `Lighting` (`InteriorLighting`).
+- **Portal**: `HutDoor` (Gruppe `hut_door`, am Marker `door_outside`) „[E] Hütte betreten" – mit Leiche „Leiche draußen ablegen" (gesperrt); `InteriorDoor` „[E] Hinausgehen". `HutPortal.travel()` sendet `EventBus.screen_fade_requested(fade_seconds)` (UI: `ScreenFade`), teleportiert zur Mitte der Blende und ruft `Player.set_in_interior()` → `EventBus.interior_changed(inside)`. Die Welt läuft weiter (keine Pause, kein Szenenwechsel).
+- **Ansicht**: `HutInterior.apply_view()` (auf `interior_changed`) setzt das `CameraRig`-Profil (`CameraProfile`: Distanz 9 m, Zoom 7–11, Fokus-Grenzen des Raums, eigenes `Environment` ohne Nebel) und tauscht Außen- und Innensonne. `clear_profile()` stellt Außen-Zoom/-Grenzen wieder her. `Player.save_state()` enthält `in_interior`; `load_state()` meldet es erneut → nach dem Laden stimmt die Kamera.
+- **Licht**: `InteriorLighting` blendet nach `InteriorConfig.daylight(minute)` Fenster (Nacht #8fa2d0/0,35 → Tag #ffe2b0/1,3, ohne Schatten), Hängelaterne (1,1 mit Schatten → 0,3), Kerzen (0,5 → aus), Umgebungslicht und Innensonne (Tag 0,9). Der Ofen (`Light_fire`) ist ein `warm_lights`-Licht mit Meta `min_scale` (Tag 1,6 / Nacht 3,0; `flicker_light.gd`, `warm_shadow_governor.gd`).
+- **Truhe/Register**: `Chest` (saveable `hut_chest`, eigenes `Inventory` 16 Slots) → Panel `&"chest"`; `Desk.register_entries()` baut die Register-Zeilen aus Graveyard + CorpseRecords (`CorpseRecord.buried_day`, von `mark_buried` gesetzt) → Panel `&"grave_register"`.
+- **Screenshots**: `graveyard_shots.gd -- --out=/abs/dir --round2` (world_01…06, siehe `docs/reviews/phase2_round2/`).
 
 Input-Map: `move_*` (WASD + Pfeile), `interact` (E), `drop` (Q), `inventory` (I), `pause` (Esc), `quick_save` (F5), `quick_load` (F9), `dialogue_choice_1..4` (1–4), `debug_toggle` (F1), `camera_zoom_in/out` (Mausrad, +/−); nur Art-Prototyp: `proto_toggle_camera` (C), `proto_toggle_time` (N).
 Physik-Layer: 1 world, 2 player, 3 npc, 4 interactable, 5 corpse. Shader-Globals: `occlusion_target`, `occlusion_radius` (Laub-Freistellung um den Spieler).
@@ -75,7 +84,8 @@ godot --headless --path . --import                      # Import (Materialzuordn
 tools/godot_run.sh -s res://src/world/art_prototype/art_prototype_builder.gd   # Szene neu erzeugen
 tools/godot_run.sh res://src/world/art_prototype/art_prototype.tscn -- --capture=/abs/pfad [--shots=01,05]   # Screenshots Art-Prototyp (Szene direkt starten – Boot führt zum Titel)
 python tools/blender/asset_ground_graveyard.py                                   # Friedhofs-Boden aus data/world/graveyard_layout.json
-tools/godot_run.sh -s res://src/world/graveyard/graveyard_builder.gd             # graveyard.tscn + grass.scn + ground_shape.res
+tools/godot_run.sh -s res://src/world/graveyard/graveyard_builder.gd             # graveyard.tscn + grass.scn + ground_shape.res (+ hut_interior.tscn)
+godot --headless --path . -s res://src/world/hut_interior/hut_interior_builder.gd # nur hut_interior.tscn
 tools/godot_run.sh --resolution 1280x720 -s res://src/world/graveyard/graveyard_shots.gd -- --out=/abs/dir [--shots=01,03]
 tools/godot_run.sh -s res://src/ui/tools/icon_renderer.gd                        # Item-Icons
 ```

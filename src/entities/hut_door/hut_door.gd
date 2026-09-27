@@ -1,120 +1,53 @@
 class_name HutDoor
 extends Node3D
-## Rest until evening / sleep until morning (+ day summary and autosave in slot 0).
-## Times come from TimeConfig: "rest" from wake_minute until rest_until_minute, "sleep" from
-## sleep_from_minute (or after midnight before wake_minute).
-## Day summary ("today" = since the last sleep or the new game): the baselines are GameState
-## flags day_burials_base / day_coins_base, written on every sleep (missing = new game: 0
-## burials, the start coins). coins_today is the net change of the player's coins.
+## Portal into the hut (docs §11, group hut_door): at the hut's door_outside marker, facing
+## away from the hut (+Z). "[E] Hütte betreten" fades, puts the gravekeeper at the interior's
+## spawn (group hut_interior) and switches the camera. A carried corpse stays outside:
+## prompt "Leiche draußen ablegen", entry refused. Resting and sleeping moved to the Bed.
 
-const MODE_REST := &"rest"
-const MODE_SLEEP := &"sleep"
-const SUMMARY_PANEL := &"day_summary"
-const STAT_DAYS := &"days_played"
-const STAT_BURIALS := &"burials"
-const FLAG_BURIALS_BASE := &"day_burials_base"
-const FLAG_COINS_BASE := &"day_coins_base"
-const COIN_ITEM := &"coin"
-const GRAVEYARD_GROUP := &"graveyard"
-const MINUTES_PER_HOUR := 60
-
-const PROMPT_REST := "[E] Ausruhen bis %s"
-const PROMPT_SLEEP := "[E] Schlafen bis %s"
-const TEXT_RESTED := "Du ruhst dich bis %s aus."
-const TEXT_AUTOSAVED := "Automatisch gespeichert."
-const TEXT_AUTOSAVE_FAILED := "Automatisches Speichern fehlgeschlagen."
+const GROUP := &"hut_door"
+const PROMPT_ENTER := "[E] Hütte betreten"
+const TEXT_CORPSE_OUTSIDE := "Leiche draußen ablegen"
+## Where the gravekeeper appears when leaving (door-local, in front of the door).
+const EXIT_OFFSET := Vector3(0.0, 0.0, 0.15)
 
 @onready var interactable: Interactable = get_node_or_null(^"Interactable") as Interactable
 
 
-## &"rest", &"sleep" or &"" (nothing offered right now).
-func mode() -> StringName:
-	var cfg := TimeManager.config
-	var minute := TimeManager.minute_of_day
-	if minute >= cfg.sleep_from_minute or minute < cfg.wake_minute:
-		return MODE_SLEEP
-	if minute < cfg.rest_until_minute:
-		return MODE_REST
-	return &""
+func _init() -> void:
+	add_to_group(GROUP)
 
 
 func can_interact(player: Player) -> bool:
-	return player != null and not player.is_busy() and not _is_carrying(player) and mode() != &""
+	return player != null and not player.is_busy() and not _is_carrying(player) \
+			and _interior() != null and not HutPortal.is_travelling(player)
 
 
 func get_interaction_prompt(player: Player) -> String:
-	var current := mode()
-	if current == &"":
+	if _interior() == null:
 		return ""
 	if player != null and _is_carrying(player):
-		return Player.TEXT_HANDS_FULL
-	var cfg := TimeManager.config
-	if current == MODE_REST:
-		return PROMPT_REST % _clock(cfg.rest_until_minute)
-	return PROMPT_SLEEP % _clock(cfg.wake_minute)
+		return TEXT_CORPSE_OUTSIDE
+	return PROMPT_ENTER
 
 
 func interact(player: Player) -> void:
 	if not can_interact(player):
 		return
-	if mode() == MODE_REST:
-		rest()
-	else:
-		sleep(player)
+	var interior := _interior()
+	HutPortal.travel(player, interior.spawn_transform(), true, interior.config.fade_seconds)
 
 
-## Skips to rest_until_minute (deliveries and decay run through the time signals).
-func rest() -> void:
-	var target := TimeManager.config.rest_until_minute
-	TimeManager.advance(TimeManager.minutes_until(target))
-	EventBus.notification_requested.emit(TEXT_RESTED % _clock(target), &"info")
+## Where a gravekeeper leaving the hut stands: in front of the door, facing away from it.
+func exit_transform() -> Transform3D:
+	var xform := global_transform if is_inside_tree() else transform
+	return Transform3D(xform.basis.orthonormalized(), xform * EXIT_OFFSET)
 
 
-## Skips to the next wake_minute, counts the day, shows the day summary, autosaves (slot 0).
-func sleep(player: Player) -> void:
-	var cfg := TimeManager.config
-	var ended_day := TimeManager.day if TimeManager.minute_of_day >= cfg.wake_minute else maxi(TimeManager.day - 1, 1)
-	TimeManager.advance(TimeManager.minutes_until(cfg.wake_minute))
-	GameState.add_stat(STAT_DAYS, 1)
-	var summary := day_summary(player)
-	summary["day"] = ended_day
-	GameState.set_flag(FLAG_BURIALS_BASE, GameState.get_stat(STAT_BURIALS))
-	GameState.set_flag(FLAG_COINS_BASE, _coins(player))
-	EventBus.ui_panel_requested.emit(SUMMARY_PANEL, summary)
-	if SaveManager.save_game(SaveManager.AUTOSAVE_SLOT) == OK:
-		EventBus.notification_requested.emit(TEXT_AUTOSAVED, &"info")
-	else:
-		EventBus.notification_requested.emit(TEXT_AUTOSAVE_FAILED, &"warning")
-
-
-## {day, burials_today, coins_today, total, rating} relative to the last sleep.
-func day_summary(player: Player) -> Dictionary:
-	var graveyard := get_tree().get_first_node_in_group(GRAVEYARD_GROUP) as Graveyard if is_inside_tree() else null
-	var total := graveyard.total_quality() if graveyard != null else 0
-	var burials_base: Variant = GameState.get_flag(FLAG_BURIALS_BASE, 0)
-	var coins_base: Variant = GameState.get_flag(FLAG_COINS_BASE, _start_coins(player))
-	return {
-		"day": TimeManager.day,
-		"burials_today": GameState.get_stat(STAT_BURIALS) - int(burials_base),
-		"coins_today": _coins(player) - int(coins_base),
-		"total": total,
-		"rating": graveyard.rating() if graveyard != null else CemeteryRating.NEGLECTED,
-	}
-
-
-static func _coins(player: Player) -> int:
-	return player.inventory.count(COIN_ITEM) if player != null else 0
-
-
-static func _start_coins(player: Player) -> int:
-	if player == null or player.config == null:
-		return 0
-	return int(player.config.start_items.get(COIN_ITEM, 0))
-
-
-@warning_ignore("integer_division")
-static func _clock(minute: int) -> String:
-	return "%02d:%02d" % [minute / MINUTES_PER_HOUR, minute % MINUTES_PER_HOUR]
+func _interior() -> HutInterior:
+	if not is_inside_tree():
+		return null
+	return get_tree().get_first_node_in_group(HutInterior.GROUP) as HutInterior
 
 
 static func _is_carrying(player: Player) -> bool:

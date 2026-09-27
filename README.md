@@ -13,7 +13,7 @@
 | Taste | Aktion |
 |---|---|
 | **WASD** / Pfeile | Laufen |
-| **E** | Interagieren (aufheben, ablegen, untersuchen, graben, bestatten, reden …) |
+| **E** | Interagieren (aufheben, ablegen, untersuchen, graben, bestatten, reden, Hütte betreten/verlassen, schlafen, Truhe, Grabregister …) |
 | **Q** | Getragene Leiche ablegen |
 | **I** | Inventar |
 | **1–4** | Dialog-Antwort wählen |

@@ -61,6 +61,8 @@ var carried: Node3D
 var carried_id: String = ""
 ## Tests: timed actions finish inside start_timed_action (game time still advances).
 var instant_actions: bool = false
+## True while the gravekeeper is inside the hut (docs §11) – set by the portal, saved.
+var in_interior: bool = false
 
 @onready var model: Node3D = $Model
 @onready var carry_socket: Node3D = $CarrySocket
@@ -248,10 +250,17 @@ func drop_position() -> Transform3D:
 	return PlayerCarry.drop_position(self)
 
 
-## {position: Vector3, rot_y: float, inventory: Inventory.save_state()}. The carried corpse
-## is not saved here – CorpseManager.post_load() re-attaches it.
+## Inside / outside the hut; always announces EventBus.interior_changed so camera, sun and
+## environment follow (also after a load that did not change the value).
+func set_in_interior(value: bool) -> void:
+	in_interior = value
+	EventBus.interior_changed.emit(value)
+
+
+## {position: Vector3, rot_y: float, in_interior: bool, inventory: Inventory.save_state()}.
+## The carried corpse is not saved here – CorpseManager.post_load() re-attaches it.
 func save_state() -> Dictionary:
-	return {"position": position, "rot_y": rotation.y, "inventory": inventory.save_state()}
+	return {"position": position, "rot_y": rotation.y, "in_interior": in_interior, "inventory": inventory.save_state()}
 
 
 ## Replaces the state; stops any timed action and forgets the carried node (its owner, the
@@ -267,6 +276,8 @@ func load_state(data: Dictionary) -> void:
 	if saved_rot is float or saved_rot is int:
 		rotation = Vector3(0.0, float(saved_rot), 0.0)
 	velocity = Vector3.ZERO
+	var saved_inside: Variant = data.get("in_interior", false)
+	set_in_interior(saved_inside is bool and bool(saved_inside))
 	var saved_inventory: Variant = data.get("inventory")
 	inventory.load_state(saved_inventory if saved_inventory is Dictionary else {})
 

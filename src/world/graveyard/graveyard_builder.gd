@@ -17,6 +17,8 @@ const Colliders := preload("res://src/world/graveyard/graveyard_build_colliders.
 const Entities := preload("res://src/world/graveyard/graveyard_build_entities.gd")
 const Decor := preload("res://src/world/graveyard/graveyard_build_decor.gd")
 const Grass := preload("res://src/world/graveyard/graveyard_build_grass.gd")
+const InteriorBuild := preload("res://src/world/hut_interior/hut_interior_build.gd")
+const InteriorBuilder := preload("res://src/world/hut_interior/hut_interior_builder.gd")
 const LAYOUT_PATH := "res://data/world/graveyard_layout.json"
 const OUT_SCENE := "res://src/world/graveyard/graveyard.tscn"
 const OUT_GRASS := Grass.OUT_GRASS
@@ -59,6 +61,7 @@ func _run() -> void:
 	_ctx.cell = float(layout.ground.cell)
 	_ctx.build_height_lookup()
 	Grass.save(Grass.build(_ctx))
+	InteriorBuilder.save_scene(InteriorBuild.build(InteriorBuild.load_layout()))
 	_save(_build_world(), OUT_SCENE)
 	print("BUILD OK")
 	quit()
@@ -139,6 +142,7 @@ func _build_world() -> Node:
 	player.transform = _ctx.ground_xform(Ctx.v2(layout.player_start.pos), float(layout.player_start.rot_y))
 	_ctx.add(scene_root, player)
 	_build_camera(player)
+	_build_interior()
 	var ui := (load(UI_SCENE) as PackedScene).instantiate()
 	ui.name = "UI"
 	_ctx.add(scene_root, ui)
@@ -182,6 +186,16 @@ func _build_camera(player: Node3D) -> void:
 	cam.current = true
 	_ctx.add(rig, cam)
 	rig.set("target", player)
+
+
+## The hut interior scene (§11) far from the graveyard; it swaps the camera profile and suns.
+func _build_interior() -> void:
+	var interior := (load(InteriorBuilder.OUT_SCENE) as PackedScene).instantiate() as Node3D
+	interior.name = "HutInterior"
+	interior.position = Ctx.v3(layout.hut_interior.origin)
+	interior.set("camera_rig_path", NodePath("../CameraRig"))
+	interior.set("outdoor_sun_path", NodePath("../Sun"))
+	_ctx.add(scene_root, interior)
 
 
 func _make_environment() -> Environment:

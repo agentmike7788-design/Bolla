@@ -39,6 +39,8 @@ var position: Vector3 = Vector3.ZERO
 var rot_y: float = 0.0
 var grave_id: String = ""
 var arrival_total_minutes: int = 0
+## Game day of the burial (CorpseManager.mark_buried; 0 = not buried / older save).
+var buried_day: int = 0
 
 
 func has_trait(t: StringName) -> bool:
@@ -93,6 +95,7 @@ func to_dict() -> Dictionary:
 		"rot_y": rot_y,
 		"grave_id": grave_id,
 		"arrival_total_minutes": arrival_total_minutes,
+		"buried_day": buried_day,
 	}
 
 
@@ -119,6 +122,7 @@ static func from_dict(d: Dictionary) -> CorpseRecord:
 	r.rot_y = _to_float(d.get("rot_y"), r.rot_y)
 	r.grave_id = _to_str(d.get("grave_id"), r.grave_id)
 	r.arrival_total_minutes = _to_int(d.get("arrival_total_minutes"), r.arrival_total_minutes)
+	r.buried_day = _to_int(d.get("buried_day"), r.buried_day)
 	return r
 
 

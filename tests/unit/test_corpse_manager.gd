@@ -512,6 +512,7 @@ func test_buried_corpse_stops_decaying() -> void:
 	EventBus.hour_changed.emit(2, 5)
 	assert_almost(r.freshness, at_burial)
 	assert_almost(r.freshness_at_burial, 0.9)
+	assert_eq(r.buried_day, TimeManager.day, "burial day for the grave register (§11)")
 
 
 ## C6: freshness comes from the minutes since arrival in one expression (no accumulated float

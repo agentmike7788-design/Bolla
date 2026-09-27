@@ -21,6 +21,11 @@ signal interaction_focus_changed(prompt: String, enabled: bool)
 signal timed_action_started(label: String, duration_sec: float)
 signal timed_action_progress(ratio: float)
 signal timed_action_finished(completed: bool)
+## Hut interior (§11): the player now is inside (true) / outside the hut – Player.set_in_interior
+## (portal, load). Listeners switch presentation only (camera profile, sun, environment).
+signal interior_changed(inside: bool)
+## Short black fade-out-and-in over `duration` seconds, black at the midpoint (portal; UI draws it).
+signal screen_fade_requested(duration: float)
 
 # Corpses & graves (CorpseManager, Graveyard)
 signal corpse_arrived(corpse_id: String)

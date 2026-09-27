@@ -182,12 +182,12 @@ func test_sleep_autosaves_and_resources_refill() -> void:
 	wood.interact(player)
 	assert_eq(wood.remaining, 4)
 	assert_eq(player.inventory.count(&"wood"), start_wood + 2)
-	var door := world.get_node_by_layout_id("hut_door") as HutDoor
-	assert_eq(door.get_interaction_prompt(player), "[E] Ausruhen bis 18:00")
+	var bed := world.get_node("HutInterior/Entities/bed") as Bed
+	assert_eq(bed.get_interaction_prompt(player), "[E] Ausruhen bis 18:00")
 	TimeManager.set_time(1, 19 * 60)
-	assert_eq(door.get_interaction_prompt(player), "[E] Schlafen bis 06:00")
+	assert_eq(bed.get_interaction_prompt(player), "[E] Schlafen bis 06:00")
 	assert_false(SaveManager.has_save(0))
-	door.interact(player)
+	bed.interact(player)
 	assert_eq([TimeManager.day, TimeManager.minute_of_day], [2, 360])
 	assert_eq(GameState.get_stat(&"days_played"), 1)
 	assert_eq(panels.back()[0], &"day_summary")

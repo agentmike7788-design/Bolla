@@ -21,6 +21,9 @@ func teleport_player(p: Node3D, pos: Vector3) -> void:
 	p.global_position = pos
 	if p is CharacterBody3D:
 		(p as CharacterBody3D).velocity = Vector3.ZERO
+	# Every tp target lies outdoors: leave the hut view (camera profile, suns – docs §11).
+	if p.get(&"in_interior") == true and p.has_method(&"set_in_interior"):
+		p.call(&"set_in_interior", false)
 	var rig := camera_rig()
 	if rig != null:
 		rig.snap()

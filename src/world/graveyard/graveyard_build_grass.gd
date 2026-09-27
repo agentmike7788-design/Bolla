@@ -137,7 +137,7 @@ static func _keep_out(ctx: Ctx) -> Dictionary:
 		hidden.append({"c": Ctx.v2(t.pos) + Vector2(0.0, -float(cfg.hidden_crown_offset) * s),
 				"r": float(cfg.hidden_crown_radius) * s})
 	var hut := Ctx.v2(layout.hut.pos)
-	var hut_rect := Rect2(-2.2, -1.9 - float(cfg.hidden_hut_depth), 4.4, float(cfg.hidden_hut_depth))
+	var hut_rect := Rect2(-2.9, -2.4 - float(cfg.hidden_hut_depth), 5.8, float(cfg.hidden_hut_depth))
 	return {"lines": lines, "circles": circles, "rects": rects, "hidden": hidden,
 			"hidden_rects": [{"pos": hut, "rot": float(layout.hut.rot_y), "rect": hut_rect}]}
 

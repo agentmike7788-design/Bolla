@@ -1,6 +1,6 @@
 extends TestCase
 ## W1: world entities (§4) – Corpse, GravePlot, MorgueTable, Workbench, Dropoff, ResourceNode,
-## Npc, HutDoor: prompts, can_interact and interact per state, on a small hand-built world
+## Npc, HutDoor, Bed: prompts, can_interact and interact per state, on a small hand-built world
 ## with the real CorpseManager / Graveyard (fixture tables & economy), the real player scene
 ## (FakeInventory) and instant timed actions.
 
@@ -15,6 +15,8 @@ const DROPOFF_SCENE := "res://src/entities/dropoff/dropoff.tscn"
 const RESOURCE_SCENE := "res://src/entities/resource_node/resource_node.tscn"
 const NPC_SCENE := "res://src/entities/npc/npc.tscn"
 const DOOR_SCENE := "res://src/entities/hut_door/hut_door.tscn"
+const BED_SCENE := "res://src/entities/bed/bed.tscn"
+const INTERIOR_SCENE := "res://src/world/hut_interior/hut_interior.tscn"
 const CORPSE_SCENE := "res://src/entities/corpse/corpse.tscn"
 ## Plain corpse looks in variant order (Corpse.plain_variants, picked by posmod(seed, 4)).
 const CORPSE_VARIANTS: Array[String] = [
@@ -916,28 +918,28 @@ func test_npc_cargo_until_delivery() -> void:
 	assert_eq(npc.save_state(), {})
 
 
-# --- HutDoor ----------------------------------------------------------------------------------
+# --- Bed (former HutDoor rest / sleep, docs §11) ----------------------------------------------
 
-func test_hut_door_rest() -> void:
-	var door := _instance(DOOR_SCENE, Vector3(-3, 0, 3)) as HutDoor
+func test_bed_rest() -> void:
+	var bed := _instance(BED_SCENE, Vector3(-3, 0, 3)) as Bed
 	await tree.process_frame
-	assert_eq(door.interactable.priority, 5)
-	assert_eq(door.get_interaction_prompt(player), "[E] Ausruhen bis 18:00")
-	assert_true(door.can_interact(player))
-	door.interact(player)
+	assert_eq(bed.interactable.priority, 5)
+	assert_eq(bed.get_interaction_prompt(player), "[E] Ausruhen bis 18:00")
+	assert_true(bed.can_interact(player))
+	bed.interact(player)
 	assert_eq([TimeManager.day, TimeManager.minute_of_day], [1, 1080])
-	assert_eq(door.get_interaction_prompt(player), "[E] Schlafen bis 06:00")
+	assert_eq(bed.get_interaction_prompt(player), "[E] Schlafen bis 06:00")
 
 
-func test_hut_door_sleep_summary_and_autosave() -> void:
+func test_bed_sleep_summary_and_autosave() -> void:
 	SaveManager.save_dir = TEST_SAVES
 	SaveManager.delete_save(0)
-	var door := _instance(DOOR_SCENE, Vector3(-3, 0, 3)) as HutDoor
+	var bed := _instance(BED_SCENE, Vector3(-3, 0, 3)) as Bed
 	await tree.process_frame
 	TimeManager.set_time(1, 19 * 60)
 	GameState.add_stat(&"burials", 2)
 	inv.add_item(&"coin", 9)
-	door.interact(player)
+	bed.interact(player)
 	assert_eq([TimeManager.day, TimeManager.minute_of_day], [2, 360])
 	assert_eq(GameState.get_stat(&"days_played"), 1)
 	assert_eq(panels.size(), 1)
@@ -948,33 +950,61 @@ func test_hut_door_sleep_summary_and_autosave() -> void:
 	# The next day counts from the new baseline.
 	GameState.add_stat(&"burials", 1)
 	TimeManager.set_time(2, 20 * 60)
-	door.interact(player)
+	bed.interact(player)
 	assert_eq(panels[1][1].day, 2)
 	assert_eq(panels[1][1].burials_today, 1)
 	assert_eq(panels[1][1].coins_today, 0)
 	assert_eq(GameState.get_stat(&"days_played"), 2)
 
 
-func test_hut_door_sleep_after_midnight() -> void:
+func test_bed_sleep_after_midnight() -> void:
 	SaveManager.save_dir = TEST_SAVES
-	var door := _instance(DOOR_SCENE, Vector3(-3, 0, 3)) as HutDoor
+	var bed := _instance(BED_SCENE, Vector3(-3, 0, 3)) as Bed
 	await tree.process_frame
 	TimeManager.set_time(2, 60)
-	assert_eq(door.get_interaction_prompt(player), "[E] Schlafen bis 06:00")
-	door.interact(player)
+	assert_eq(bed.get_interaction_prompt(player), "[E] Schlafen bis 06:00")
+	bed.interact(player)
 	assert_eq([TimeManager.day, TimeManager.minute_of_day], [2, 360])
 	assert_eq(panels[0][1].day, 1, "the night belongs to the previous day")
 
 
-func test_hut_door_blocked_while_carrying() -> void:
-	var door := _instance(DOOR_SCENE, Vector3(-3, 0, 3)) as HutDoor
+func test_bed_blocked_while_carrying() -> void:
+	var bed := _instance(BED_SCENE, Vector3(-3, 0, 3)) as Bed
 	await tree.process_frame
 	var c := _spawn(&"dropoff")
 	corpses.pick_up(c.id, player)
-	assert_eq(door.get_interaction_prompt(player), Player.TEXT_HANDS_FULL)
-	assert_false(door.can_interact(player))
-	door.interact(player)
+	assert_eq(bed.get_interaction_prompt(player), Player.TEXT_HANDS_FULL)
+	assert_false(bed.can_interact(player))
+	bed.interact(player)
 	assert_eq(TimeManager.minute_of_day, START_MINUTE)
+
+
+# --- HutDoor (portal outside, docs §11) --------------------------------------------------------
+
+func test_hut_door_needs_an_interior() -> void:
+	var door := _instance(DOOR_SCENE, Vector3(-3, 0, 3)) as HutDoor
+	await tree.process_frame
+	assert_eq(door.interactable.priority, 5)
+	assert_true(door.is_in_group(&"hut_door"))
+	assert_eq(door.get_interaction_prompt(player), "", "no interior in this world: nothing offered")
+	assert_false(door.can_interact(player))
+
+
+func test_hut_door_enter_prompt_and_corpse_stays_outside() -> void:
+	var door := _instance(DOOR_SCENE, Vector3(-3, 0, 3)) as HutDoor
+	var interior := _instance(INTERIOR_SCENE, Vector3(0, 0, -200)) as HutInterior
+	await tree.process_frame
+	assert_eq(door.get_interaction_prompt(player), "[E] Hütte betreten")
+	assert_true(door.can_interact(player))
+	var c := _spawn(&"dropoff")
+	corpses.pick_up(c.id, player)
+	assert_eq(door.get_interaction_prompt(player), "Leiche draußen ablegen")
+	assert_false(door.can_interact(player), "no corpse in the hut")
+	var before := player.global_position
+	door.interact(player)
+	assert_eq(player.global_position, before, "entry refused")
+	assert_false(player.in_interior)
+	assert_not_null(interior)
 
 
 # --- helpers ----------------------------------------------------------------------------------

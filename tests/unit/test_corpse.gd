@@ -271,7 +271,7 @@ func test_needs_valuables_decision() -> void:
 func test_dict_round_trip_all_fields() -> void:
 	var r := _full_record()
 	var d := r.to_dict()
-	assert_eq(d.keys().size(), 18, "every field is saved")
+	assert_eq(d.keys().size(), 19, "every field is saved (buried_day: §11 register)")
 	var back := CorpseRecord.from_dict(d)
 	assert_eq(back.to_dict(), d)
 	assert_true(back.cause_id is StringName)
@@ -358,4 +358,5 @@ func _full_record() -> CorpseRecord:
 	r.rot_y = 1.25
 	r.grave_id = ""
 	r.arrival_total_minutes = 1900
+	r.buried_day = 3
 	return r

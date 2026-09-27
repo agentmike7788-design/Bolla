@@ -2,6 +2,7 @@ class_name CameraRig
 extends Node3D
 ## Fixed-angle 2.5D follow camera. Switchable between a narrow-FOV perspective
 ## ("diorama") and an orthographic projection with matching framing.
+## set_profile() swaps in a place framing (hut interior: distance, bounds, own environment).
 
 signal projection_changed(orthographic: bool)
 
@@ -24,7 +25,11 @@ signal projection_changed(orthographic: bool)
 
 @onready var camera: Camera3D = $Camera3D
 
+## Active place profile (set_profile), null = the rig's own framing (outdoors).
+var profile: CameraProfile
 var _focus: Vector3
+## The rig's own framing, captured when the first profile replaces it.
+var _own: CameraProfile
 
 
 func _ready() -> void:
@@ -61,6 +66,26 @@ func toggle_projection() -> void:
 	projection_changed.emit(orthographic)
 
 
+## Switches to a place profile (distance, zoom range, bounds, environment); the rig's own
+## framing is kept and comes back with clear_profile(). Snap afterwards after a teleport.
+func set_profile(value: CameraProfile) -> void:
+	if value == null:
+		clear_profile()
+		return
+	if profile == null:
+		_own = _capture()
+	profile = value
+	_apply(value)
+
+
+## Back to the rig's own framing (and the zoom it had) – no-op without a profile.
+func clear_profile() -> void:
+	if profile == null:
+		return
+	profile = null
+	_apply(_own)
+
+
 ## Jump to the target immediately (used after teleports and for screenshots).
 func snap() -> void:
 	if target:
@@ -78,6 +103,32 @@ func _clamped(p: Vector3) -> Vector3:
 	if not bounds_enabled:
 		return p
 	return Vector3(clampf(p.x, bounds_min.x, bounds_max.x), p.y, clampf(p.z, bounds_min.y, bounds_max.y))
+
+
+func _capture() -> CameraProfile:
+	var own := CameraProfile.new()
+	own.distance = distance
+	own.zoom_min = zoom_min
+	own.zoom_max = zoom_max
+	own.bounds_enabled = bounds_enabled
+	own.bounds_min = bounds_min
+	own.bounds_max = bounds_max
+	if camera:
+		own.environment = camera.environment
+		own.attributes = camera.attributes
+	return own
+
+
+func _apply(p: CameraProfile) -> void:
+	zoom_min = p.zoom_min
+	zoom_max = p.zoom_max
+	bounds_enabled = p.bounds_enabled
+	bounds_min = p.bounds_min
+	bounds_max = p.bounds_max
+	if camera:
+		camera.environment = p.environment
+		camera.attributes = p.attributes
+	set_distance(p.distance)
 
 
 func _apply_projection() -> void:

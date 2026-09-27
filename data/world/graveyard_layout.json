@@ -45,12 +45,12 @@
   ],
   "entities": [
     {"id": "morgue_table", "type": "morgue_table", "pos": [-1.6, -5.4], "rot_y": 18.0, "params": {}},
-    {"id": "workbench", "type": "workbench", "pos": [-2.8, -8.3], "rot_y": 108.0, "params": {"station": "workbench"}},
+    {"id": "workbench", "type": "workbench", "pos": [-2.5, -8.4], "rot_y": 108.0, "params": {"station": "workbench"}},
     {"id": "res_wood", "type": "resource_node", "pos": [-1.2, -9.4], "rot_y": 100.0,
       "params": {"save_id": "res_wood", "item_id": "wood", "daily_amount": 6, "model": "ph_prop_wood_pile", "action_label": "Holz sammeln"}},
-    {"id": "res_stone", "type": "resource_node", "pos": [-9.0, -6.9], "rot_y": 25.0,
+    {"id": "res_stone", "type": "resource_node", "pos": [-9.35, -6.8], "rot_y": 25.0,
       "params": {"save_id": "res_stone", "item_id": "stone", "daily_amount": 4, "model": "ph_prop_stone_rubble", "action_label": "Steine sammeln"}},
-    {"id": "hut_door", "type": "hut_door", "pos": [-5.4, -4.8], "rot_y": 18.0, "params": {}},
+    {"id": "hut_door", "type": "hut_door", "pos": [-5.671, -4.506], "rot_y": 18.0, "params": {}},
     {"id": "dropoff", "type": "dropoff", "pos": [4.4, 8.3], "rot_y": 0.0, "params": {}},
     {"id": "npc_carter", "type": "npc", "pos": [15.8, 32.6], "rot_y": 0.0,
       "params": {"save_id": "npc_carter", "npc_id": "carter", "model": "ph_chr_carter"}}
@@ -80,10 +80,10 @@
     "gate_posts": [[-0.4, 9.6], [2.6, 9.6]]
   },
   "props": [
-    {"asset": "ph_prop_shovel", "pos": [-3.3, -5.4], "rot_y": 30.0},
+    {"asset": "ph_prop_shovel", "pos": [-2.0, -6.8], "rot_y": 30.0},
     {"asset": "ph_prop_candle_cluster", "pos": [2.2, -2.3], "rot_y": 0.0},
     {"asset": "ph_prop_candle_cluster", "pos": [-5.6, 4.6], "rot_y": 90.0},
-    {"asset": "ph_prop_crate", "pos": [-7.8, -5.3], "rot_y": 12.0}
+    {"asset": "ph_prop_crate", "pos": [-8.2, -4.9], "rot_y": 12.0}
   ],
   "background_trees": [
     {"pos": [-12.5, -9.5], "rot_y": 120.0, "scale": 1.15},
@@ -153,14 +153,15 @@
   "lights": {
     "_comment": "Warme Lichter an Blender-Markern: '<asset>/<marker>' (Werte wie im Prototyp). energy = Basiswert, vom Atmosphären-Preset skaliert.",
     "ph_bld_gravekeeper_hut/light_lantern": {"color": "#ffae55", "energy": 2.6, "range": 8.0, "shadow": true, "flicker": true},
-    "ph_bld_gravekeeper_hut/light_window": {"color": "#ff9c45", "energy": 1.0, "range": 4.0, "shadow": false, "flicker": false},
+    "ph_bld_gravekeeper_hut/light_window_1": {"color": "#ff9c45", "energy": 1.0, "range": 4.0, "shadow": false, "flicker": false},
+    "ph_bld_gravekeeper_hut/light_window_2": {"color": "#ff9c45", "energy": 1.0, "range": 4.0, "shadow": false, "flicker": false},
     "ph_prop_lantern_post/light_lantern": {"color": "#ffae55", "energy": 2.6, "range": 8.0, "shadow": true, "flicker": true},
     "ph_prop_candle_cluster/light_candle": {"color": "#ffa040", "energy": 0.8, "range": 2.6, "shadow": false, "flicker": true},
     "ph_chr_gravekeeper/light_lantern": {"color": "#ffb866", "energy": 0.9, "range": 3.5, "shadow": false, "flicker": true}
   },
   "colliders": {
     "_comment": "Statische Kollision (Layer 1) je Asset, lokal zum platzierten Modell. shape box: size [x,y,z]; cylinder: radius + height. offset = Mittelpunkt.",
-    "ph_bld_gravekeeper_hut": [{"shape": "box", "size": [3.7, 3.0, 3.3], "offset": [0.0, 1.5, 0.0]}],
+    "ph_bld_gravekeeper_hut": [{"shape": "box", "size": [5.1, 3.0, 4.1], "offset": [0.0, 1.5, 0.0]}],
     "ph_env_tree_old_oak": [{"shape": "cylinder", "radius": 0.6, "height": 3.0, "offset": [0.15, 1.5, -0.05]}],
     "ph_env_bush": [{"shape": "cylinder", "radius": 0.45, "height": 0.8, "offset": [0.0, 0.4, 0.0]}],
     "ph_prop_gravestone_cross": [{"shape": "box", "size": [0.6, 1.3, 0.3], "offset": [0.03, 0.65, 0.0]}],
@@ -186,5 +187,6 @@
   },
   "walkable_bounds": {"min": [-11.2, -12.5], "max": [11.2, 25.2], "wall_height": 3.0, "wall_thickness": 1.0},
   "camera_bounds": {"min": [-7.0, -8.0], "max": [7.0, 23.0], "distance": 22.0, "zoom_min": 12.0, "zoom_max": 24.0},
-  "player_start": {"pos": [-4.4, -3.6], "rot_y": 0.0}
+  "player_start": {"pos": [-4.4, -3.6], "rot_y": 0.0},
+  "hut_interior": {"_comment": "Innenraum-Szene (docs §11, src/world/hut_interior/hut_interior.tscn) fern der Außenwelt; hut_door steht am Marker door_outside der Hütte.", "origin": [0.0, 0.0, -200.0]}
 }

@@ -40,6 +40,8 @@ var player: Node
 @onready var dialogue_box: DialogueBox = $Root/DialogueBox
 @onready var notifications: NotificationStack = $Root/Overlay/Notifications
 @onready var reward_card: RewardCard = $Root/Overlay/RewardCard
+## Black portal fade over everything (created in _ready, docs §11).
+var screen_fade: ScreenFade
 
 ## Open UI, bottom → top: panel ids and &"dialogue".
 var _stack: Array[StringName] = []
@@ -63,6 +65,8 @@ func _ready() -> void:
 	EventBus.new_game_started.connect(_on_game_refresh)
 	EventBus.ui_modal_changed.connect(_on_ui_modal_changed)
 	dialogue_box.closed.connect(_on_dialogue_closed)
+	screen_fade = ScreenFade.new()
+	root_control.add_child(screen_fade)
 	_bind_player(get_tree().get_first_node_in_group(PLAYER_GROUP))
 	_update_dim()
 

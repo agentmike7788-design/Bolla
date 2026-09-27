@@ -319,10 +319,14 @@ func test_decor_and_grass() -> void:
 		tufts += mmi.multimesh.instance_count
 	assert_true(tufts > 5000, "grass (%d tufts)" % tufts)
 	var hut_lights := decor.get_node("Hut").find_children("Light_*", "OmniLight3D", true, false)
-	assert_eq(hut_lights.size(), 2, "hut lantern + window")
+	assert_eq(hut_lights.size(), 3, "hut lantern + two windows (§11)")
+	var interior := world.get_node("HutInterior")
 	var shadowed := 0
 	for l: Node in world.find_children("Light_*", "OmniLight3D", true, false):
-		assert_true(l.is_in_group(&"warm_lights") and l.has_meta("base_energy"), "light grouped: " + l.name)
+		assert_true(l.has_meta("base_energy"), "light has a base energy: " + l.name)
+		# Interior lights follow InteriorLighting (meta interior_role); the stove fire is warm.
+		assert_true(l.is_in_group(&"warm_lights") or (interior.is_ancestor_of(l) and l.has_meta(&"interior_role")),
+				"light grouped: " + l.name)
 		if bool(l.get_meta("casts_shadow", (l as Light3D).shadow_enabled)):
 			shadowed += 1
 	assert_true(shadowed <= 4, "shadowed lights within budget (%d)" % shadowed)

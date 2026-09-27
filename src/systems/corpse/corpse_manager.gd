@@ -259,6 +259,7 @@ func mark_buried(id: String, grave_id: String) -> void:
 	record.location = CorpseRecord.LOCATION_BURIED
 	record.grave_id = grave_id
 	record.freshness_at_burial = record.freshness
+	record.buried_day = TimeManager.day
 	if record.needs_valuables_decision():
 		record.valuables_decision = CorpseRecord.DECISION_LEFT
 	_free_node(id)

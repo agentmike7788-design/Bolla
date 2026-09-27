@@ -8,6 +8,8 @@ extends Node
 const GROUP := &"warm_lights"
 const META_AUTHORED := &"casts_shadow"
 const META_SCALE := &"scale"
+## A light that never dims below this share (flicker_light.gd, the hut stove) counts with it.
+const META_MIN_SCALE := &"min_scale"
 
 @export var min_scale: float = 0.4
 
@@ -23,6 +25,7 @@ func apply() -> void:
 			continue
 		if not light.has_meta(META_AUTHORED):
 			light.set_meta(META_AUTHORED, light.shadow_enabled)
-		var wanted := bool(light.get_meta(META_AUTHORED)) and float(light.get_meta(META_SCALE, 1.0)) >= min_scale
+		var scale := maxf(float(light.get_meta(META_SCALE, 1.0)), float(light.get_meta(META_MIN_SCALE, 0.0)))
+		var wanted := bool(light.get_meta(META_AUTHORED)) and scale >= min_scale
 		if light.shadow_enabled != wanted:
 			light.shadow_enabled = wanted
