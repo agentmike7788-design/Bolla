@@ -458,3 +458,14 @@ Plus: Tag-2-Lieferung mit Wertsachen, übersprungene Lieferung bei belegter Abla
 
 ## 10. Nicht im Slice
 Dorf, Quests, Kampf, Gegner, Krypten, Auferstehung, Gebäudebau, Musik/Sound (Agent 17 inaktiv), Controller-Unterstützung, Lokalisierung.
+
+## 11. Änderungsrunde 2 – Hütte & Innenraum (Benutzerwunsch 27.09.2026)
+
+Benutzerentscheidungen: **eigene Innenraum-Szene**, **größere Hütte (~5 × 4 m)**, Einrichtung **Bett (Schlafen), Ofen mit Feuerlicht, Kiste als Lager, Grabregister am Schreibtisch** + schöne Ausstattung/Deko.
+
+**Technik:** `src/world/hut_interior/hut_interior.tscn` ist eine eigene Szene mit eigener Kamera, die der Welt-Builder **fern der Außenwelt** (Ursprung bei (0, 0, −200)) in `graveyard.tscn` instanziert. Betreten = Überblendung, Spieler-Teleport, Kamerawechsel – die Welt (Uhr, Kutscher, Leichen) läuft weiter, kein Zustandsverlust, Speichern auch drinnen.
+- **Außen:** `ph_bld_gravekeeper_hut` neu, Grundfläche ~5 × 4 m, Tür vorne (−Y Blender / +Z Godot), Marker `door_outside` (vor der Tür, Boden), `light_lantern`, `light_window` (mehrere Fenster erlaubt: `light_window_*`).
+- **Innen-Assets** (`assets/models/interior/`): `ph_int_room` (Boden, Wände, Balken, Fenster mit warmem Licht, Türrahmen; Marker `door_inside`, `spawn_inside`, `light_*`), `ph_int_bed`, `ph_int_stove` (Marker `light_fire`), `ph_int_table`, `ph_int_chair`, `ph_int_desk` (+ Grabregister-Buch), `ph_int_chest`, `ph_int_shelf` (Krüge, Bücher), `ph_int_rug`, Deko: Kräuterbündel, Kleiderhaken mit Ersatzhut, Kerzen, Bild, Besen, Eimer, Waschschüssel, schlafende Katze.
+- **Entitäten:** `HutDoor` → Portal außen „[E] Hütte betreten" (nicht mit Leiche: „Leiche draußen ablegen"); `InteriorDoor` innen „[E] Hinausgehen"; `Bed` übernimmt Ausruhen/Schlafen (bisherige HutDoor-Logik, TimeConfig-Zeiten); `Stove` (Feuerlicht, flackert, Teil von `warm_lights`, eigener Skalierungsfaktor auch tagsüber); `Chest` (Gruppe `saveable`, save_id `hut_chest`, eigenes `Inventory` 16 Slots) → `ui_panel_requested(&"chest", {storage: Inventory, inventory: Inventory, chest: Node})`; `Desk` → `ui_panel_requested(&"grave_register", {entries: Array[Dictionary], total: int, rating: StringName})`, Eintrag `{name, age, cause_label, day_buried, grave_id, quality, marker_label}` (aus Graveyard + CorpseManager-Records).
+- **Kamera/Portal:** `CameraRig` bekommt ein Innenraum-Profil (Distanz ~9 m, gleiche 45°/30°, Bounds des Raums); Spieler-Zustand `in_interior` wird gespeichert (Player.save_state), nach dem Laden richtige Kamera.
+- **UI:** Panels `&"chest"` (zwei Raster, Klick verschiebt Stapel atomar, Umschalt = ganze Menge) und `&"grave_register"` (Buchseiten-Look, Liste + Summe/Stufe).
