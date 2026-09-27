@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TimeConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/time/time_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+seconds_per_game_minute = 0.5
+start_day = 1
+start_minute = 390
+night_start_minute = 1260
+night_end_minute = 330
+rest_until_minute = 1080
+sleep_from_minute = 1080
+wake_minute = 360
