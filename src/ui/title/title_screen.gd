@@ -2,7 +2,9 @@ class_name TitleScreen
 extends Control
 ## Title screen (docs §7): Fortsetzen (SaveManager.newest_slot(), hidden without a save),
 ## Neues Spiel (SaveManager.new_game()), Beenden. Buttons lock after a choice; a failure
-## notification from SaveManager unlocks them again and is shown below.
+## notification from SaveManager unlocks them again and is shown below. Other notifications
+## (e.g. F5/F9 without a world or quicksave, docs §5) appear as toasts top right – the title
+## has no HUD.
 
 const GAME_TITLE := "The Last Gravekeeper"
 const TAGLINE := "Tod ist Handwerk, nicht Horror."
@@ -18,6 +20,8 @@ const TEXT_STARTING := "Die Nacht senkt sich …"
 @export_file("*.tscn") var world_scene: String = SAVE_MANAGER.WORLD_SCENE
 @export var left_margin: float = 170.0
 @export var button_width: float = 440.0
+@export var toast_margin: float = 28.0
+@export var toast_width: float = 460.0
 
 ## Called for "Beenden" (tests replace it).
 var quit_handler: Callable = _quit_game
@@ -25,6 +29,8 @@ var continue_button: Button
 var new_game_button: Button
 var quit_button: Button
 var status_label: Label
+## Toasts for EventBus.notification_requested while no choice is running.
+var notifications: NotificationStack
 ## Slot "Fortsetzen" loads (-1 = none).
 var continue_slot: int = -1
 
@@ -64,9 +70,23 @@ func _init() -> void:
 	version.offset_right = -28.0
 	version.offset_bottom = -20.0
 	add_child(version)
+	notifications = NotificationStack.new()
+	notifications.name = "Notifications"
+	notifications.entry_width = toast_width
+	notifications.anchor_left = 1.0
+	notifications.anchor_right = 1.0
+	notifications.offset_left = -toast_margin - toast_width
+	notifications.offset_right = -toast_margin
+	notifications.offset_top = toast_margin
+	notifications.offset_bottom = toast_margin
+	notifications.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	add_child(notifications)
 
 
 func _ready() -> void:
+	# The title routes notifications itself (status line while busy, toast otherwise).
+	if EventBus.notification_requested.is_connected(notifications.push):
+		EventBus.notification_requested.disconnect(notifications.push)
 	EventBus.notification_requested.connect(_on_notification)
 	refresh()
 
@@ -118,11 +138,21 @@ func _on_quit_pressed() -> void:
 	quit_handler.call()
 
 
-## SaveManager reports failures as warnings: show them and unlock the buttons.
+## Texts of the toasts currently shown (oldest first).
+func notification_texts() -> PackedStringArray:
+	return notifications.texts()
+
+
+## SaveManager reports failures of a running choice as warnings: show them below the
+## buttons and unlock them. Everything else becomes a toast.
 func _on_notification(text: String, kind: StringName) -> void:
-	if _busy and kind == &"warning" and is_inside_tree():
+	if not is_inside_tree():
+		return
+	if _busy and kind == &"warning":
 		status_label.text = text
 		_set_busy(false)
+	elif not _busy:
+		notifications.push(text, kind)
 
 
 func _quit_game() -> void:

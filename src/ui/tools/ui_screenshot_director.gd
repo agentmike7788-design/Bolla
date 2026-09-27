@@ -105,10 +105,13 @@ func _run() -> void:
 	await _shot("13_dialogue_shop", _dialogue.bind(3))
 	await _shot("14_debug_console", _debug)
 	await _shot("15_icons", _icons)
+	await _shot("17_slice_summary_after_reward", _slice_after_reward)
+	await _shot("18_hud_slice_complete", _hud_complete)
 	_backdrop.queue_free()
 	_ui.queue_free()
 	await get_tree().process_frame
 	await _shot("16_title", _title)
+	await _shot("19_title_warning", _title_warning)
 	_cleanup_saves()
 	get_tree().quit()
 
@@ -334,6 +337,30 @@ func _icons() -> void:
 func _title() -> void:
 	var title := (load(TITLE_SCENE) as PackedScene).instantiate()
 	get_tree().root.add_child(title)
+
+
+## The last grave: reward card, then the slice summary opens at once (card must wait).
+func _slice_after_reward() -> void:
+	await _reward()
+	_ui.open_panel(&"slice_summary", {"days": 6, "burials": 6, "total": 30, "rating": &"tended", "reputation": 0})
+
+
+## After "Weiterspielen": objective line with the goal missed (graves total 15).
+func _hud_complete() -> void:
+	_atmosphere(0)
+	_set_time(7, 600)
+	GameState.set_flag(&"slice_complete", true)
+	_ui.hud.refresh_all()
+
+
+func _title_warning() -> void:
+	for node: Node in get_tree().root.get_children():
+		if node is TitleScreen:
+			node.queue_free()
+	await get_tree().process_frame
+	_title()
+	await get_tree().process_frame
+	EventBus.notification_requested.emit(SaveManager.TEXT_NO_QUICKSAVE, &"warning")
 
 
 func _cleanup_saves() -> void:

@@ -69,10 +69,12 @@ func close() -> void:
 	context = {}
 
 
-## Re-reads the context objects and updates every control.
+## Re-reads the context objects and updates every control. If that disabled or removed
+## the focused button, keyboard focus moves on to focus_default() (deferred).
 func refresh() -> void:
 	if is_open:
 		_refresh()
+		_ensure_focus.call_deferred()
 
 
 ## Gives keyboard focus to the first enabled button (only while the panel is shown).
@@ -82,6 +84,23 @@ func focus_default() -> void:
 	var target := UIKit.first_focusable(self)
 	if target != null and target.is_visible_in_tree():
 		target.grab_focus()
+
+
+## Keeps keyboard focus usable: when nothing has focus or this panel's focused control is
+## disabled / hidden, focus_default() picks the next sensible one. Focus elsewhere (e.g. the
+## debug console) is left alone; while an action runs nothing moves (every action button is
+## disabled then, and _on_action_finished() refocuses).
+func _ensure_focus() -> void:
+	if not is_open or action_running or not is_visible_in_tree():
+		return
+	var focus_owner := get_viewport().gui_get_focus_owner()
+	if focus_owner != null:
+		if not is_ancestor_of(focus_owner):
+			return
+		var button := focus_owner as BaseButton
+		if focus_owner.is_visible_in_tree() and (button == null or not button.disabled):
+			return
+	focus_default()
 
 
 ## Emits close_requested (UIRoot pops the modal and calls close()).

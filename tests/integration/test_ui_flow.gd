@@ -135,10 +135,51 @@ func test_slice_summary_back_to_title() -> void:
 		if (button as Button).text == SliceSummaryPanel.TEXT_TITLE_SCREEN:
 			to_title = button
 	assert_not_null(to_title)
+	# UI-02: the safe action has the default focus, "Zum Titel" asks once like the pause menu.
+	var resume: Button = null
+	for button: Node in panel.find_children("*", "Button", true, false):
+		if (button as Button).text == SliceSummaryPanel.TEXT_CONTINUE:
+			resume = button
+	assert_eq(ui.get_viewport().gui_get_focus_owner(), resume, "Weiterspielen focused")
+	to_title.pressed.emit()
+	await wait_frames(2)
+	assert_eq(tree.current_scene.scene_file_path, SAVE_WORLD, "first press only asks")
+	assert_true(to_title.text.contains("wirklich"), to_title.text)
 	to_title.pressed.emit()
 	await wait_frames(2)
 	assert_eq(tree.current_scene.scene_file_path, TITLE_SCENE)
 	assert_false(UIState.is_modal())
+
+
+## UI-02: one ui_accept on the freshly opened slice summary never leaves the world.
+func test_slice_summary_accept_keeps_playing() -> void:
+	await _new_game()
+	var ui := await add_scene(UI_SCENE) as UIRoot
+	EventBus.ui_panel_requested.emit(&"slice_summary", {"days": 6, "burials": 6, "total": 30, "rating": &"tended", "reputation": 0})
+	await wait_frames(1)
+	var focused := ui.get_viewport().gui_get_focus_owner() as Button
+	assert_not_null(focused)
+	focused.pressed.emit()
+	await wait_frames(2)
+	assert_eq(tree.current_scene.scene_file_path, SAVE_WORLD, "still in the world")
+	assert_false(ui.is_open(&"slice_summary"), "Weiterspielen closed the summary")
+
+
+## ARCH-01: F9/F5 on the title screen (no world, no quicksave) show a visible warning.
+func test_title_shows_quick_save_warnings() -> void:
+	var title := await _title()
+	for action: StringName in [&"quick_load", &"quick_save"]:
+		for pressed: bool in [true, false]:
+			var ev := InputEventAction.new()
+			ev.action = action
+			ev.pressed = pressed
+			tree.root.push_input(ev)
+	await wait_frames(1)
+	var shown := title.notification_texts()
+	assert_true(SaveManager.TEXT_NO_QUICKSAVE in shown, str(shown))
+	assert_true(SaveManager.TEXT_CANNOT_SAVE in shown, str(shown))
+	assert_true(title.notifications.is_visible_in_tree())
+	assert_false(title.new_game_button.disabled, "a warning does not lock the menu")
 
 
 # --- helpers --------------------------------------------------------------------------------

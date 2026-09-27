@@ -3,14 +3,15 @@ extends RefCounted
 ## Pure: the current objective line for the HUD (docs §1, §7).
 ## Reads only its arguments plus static game data (time config, corpse tables, recipes,
 ## economy config) – never live game state. Priority:
-##   1. slice complete
-##   2. the carried corpse (table → examine → dig → bury)
+##   1. slice complete (wording depends on whether the goal rating was reached)
+##   2. the carried corpse (table → examine → dig → bury; an occupied table is skipped)
 ##   3. a buried grave without marker (FILLED)
 ##   4. another unburied corpse (table before ground before dropoff)
 ##   5. idle: wait for the carter / rest / sleep, by clock time
 
 const TEXT_WAIT_CARTER := "Der Leichenkutscher kommt gegen %s"
 const TEXT_TO_TABLE := "Leiche zum Leichentisch bringen"
+const TEXT_TABLE_BUSY := "Tisch belegt – Leiche mit [Q] ablegen"
 const TEXT_EXAMINE := "Leiche untersuchen"
 const TEXT_DECIDE := "Über die Wertsachen entscheiden"
 const TEXT_SHROUD := "Leichentuch anlegen (+%d Qualität)"
@@ -22,6 +23,11 @@ const TEXT_MARKER_CRAFT := "Grabzeichen setzen (Werkbank: %s = %s)"
 const TEXT_REST := "Feierabend – Ausruhen an der Hüttentür"
 const TEXT_SLEEP := "Feierabend – Schlafen an der Hüttentür"
 const TEXT_COMPLETE := "Alle Gräber vollendet – der Friedhof ruht in Würde"
+const TEXT_COMPLETE_MISSED := "Alle Gräber vollendet – Stufe „%s“ (Ziel „%s“ verfehlt)"
+## Slice goal (docs §1), same as SliceSummaryPanel.GOAL_RATING.
+const GOAL_RATING := &"dignified"
+const LOCATION_TABLE := &"table"
+const LOCATION_CARRIED := &"carried"
 
 const FLAG_SLICE_COMPLETE := &"slice_complete"
 const SHROUD_ITEM := &"shroud"
@@ -35,21 +41,27 @@ const LOCATION_ORDER: Array[StringName] = [&"carried", &"table", &"ground", &"dr
 
 static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], inv: Inventory, minute_of_day: int, flags: Dictionary) -> String:
 	if _flag(flags, FLAG_SLICE_COMPLETE):
-		return TEXT_COMPLETE
+		return _complete_step(graves)
 	var active := _active_corpse(corpses)
-	if active != null and active.location == &"carried":
-		return _corpse_step(active, graves, inv)
+	var table_taken := _table_taken_by_other(corpses, active)
+	if active != null and active.location == LOCATION_CARRIED:
+		return _corpse_step(active, graves, inv, table_taken)
 	if _has_state(graves, GraveRecord.State.FILLED):
 		return _marker_step(inv)
 	if active != null:
-		return _corpse_step(active, graves, inv)
+		return _corpse_step(active, graves, inv, table_taken)
 	return _idle_step(minute_of_day)
 
 
-## Next step for one unburied corpse.
-static func _corpse_step(corpse: CorpseRecord, graves: Array[GraveRecord], inv: Inventory) -> String:
-	if not corpse.examined:
-		return TEXT_EXAMINE if corpse.location == &"table" else TEXT_TO_TABLE
+## Next step for one unburied corpse. `table_taken`: another corpse lies on the table.
+static func _corpse_step(corpse: CorpseRecord, graves: Array[GraveRecord], inv: Inventory, table_taken: bool = false) -> String:
+	if not corpse.examined and corpse.location == LOCATION_TABLE:
+		return TEXT_EXAMINE
+	if not corpse.examined and not table_taken:
+		return TEXT_TO_TABLE
+	if not corpse.examined and corpse.location == LOCATION_CARRIED and not _has_state(graves, GraveRecord.State.DUG):
+		# The table is occupied and digging needs free hands.
+		return TEXT_TABLE_BUSY
 	# The decision is made at the table; burying elsewhere leaves the valuables (M3).
 	if corpse.location == &"table" and corpse.needs_valuables_decision():
 		return TEXT_DECIDE
@@ -60,6 +72,23 @@ static func _corpse_step(corpse: CorpseRecord, graves: Array[GraveRecord], inv: 
 	if _has_state(graves, GraveRecord.State.EMPTY):
 		return TEXT_DIG
 	return TEXT_NO_PLOT
+
+
+## Reached the goal rating (sum as Graveyard.total_quality()) → TEXT_COMPLETE, else the tier.
+static func _complete_step(graves: Array[GraveRecord]) -> String:
+	var economy := _economy()
+	var total := 0
+	for grave: GraveRecord in graves:
+		if grave == null:
+			continue
+		if grave.state == GraveRecord.State.MARKED:
+			total += grave.quality
+		elif grave.state == GraveRecord.State.OLD:
+			total += economy.old_grave_quality
+	var rating := CemeteryRating.rating(total, economy)
+	if CemeteryRating.TIERS.find(rating) >= CemeteryRating.TIERS.find(GOAL_RATING):
+		return TEXT_COMPLETE
+	return TEXT_COMPLETE_MISSED % [CemeteryRating.label(rating), CemeteryRating.label(GOAL_RATING)]
 
 
 static func _marker_step(inv: Inventory) -> String:
@@ -100,6 +129,14 @@ static func _active_corpse(corpses: Array[CorpseRecord]) -> CorpseRecord:
 			best = corpse
 			best_rank = rank
 	return best
+
+
+## True when a corpse other than `corpse` lies on the table.
+static func _table_taken_by_other(corpses: Array[CorpseRecord], corpse: CorpseRecord) -> bool:
+	for other: CorpseRecord in corpses:
+		if other != null and other != corpse and other.location == LOCATION_TABLE:
+			return true
+	return false
 
 
 static func _has_state(graves: Array[GraveRecord], state: GraveRecord.State) -> bool:

@@ -406,9 +406,10 @@ func test_hud_timed_action_bar() -> void:
 
 func test_hud_quality_and_next_tier() -> void:
 	await _setup()
-	EventBus.cemetery_quality_changed.emit(12, &"orderly")
-	assert_eq(ui.hud.quality_text(), "12 · Ordentlich")
-	assert_eq(ui.hud.next_tier_label.text, "Gepflegt ab 25")
+	var thresholds := (Database.config(&"economy_config") as EconomyConfig).rating_thresholds
+	EventBus.cemetery_quality_changed.emit(thresholds[0], &"orderly")
+	assert_eq(ui.hud.quality_text(), "%d · Ordentlich" % thresholds[0])
+	assert_eq(ui.hud.next_tier_label.text, "Gepflegt ab %d" % thresholds[1])
 	EventBus.cemetery_quality_changed.emit(50, &"dignified")
 	assert_eq(ui.hud.quality_text(), "50 · Würdevoll")
 	assert_false(ui.hud.next_tier_label.visible, "top tier: no next tier")
@@ -424,7 +425,8 @@ func test_hud_quality_pulled_from_graveyard() -> void:
 func test_hud_delivery_skipped_notice() -> void:
 	await _setup()
 	EventBus.delivery_skipped.emit(1, "Die Bahre ist noch belegt.")
-	assert_eq(ui.hud.notice_text(), "Heute keine Lieferung: Die Bahre ist noch belegt.")
+	# UI-09: same wording as CorpseManager's notification of the same skip.
+	assert_eq(ui.hud.notice_text(), "Heute keine Leiche: Die Bahre ist noch belegt.")
 	EventBus.day_started.emit(1)
 	assert_ne(ui.hud.notice_text(), "", "same day keeps it")
 	EventBus.day_started.emit(2)
@@ -788,9 +790,11 @@ func test_slice_summary_goal() -> void:
 	assert_eq(panel.burials_label.text, "6")
 	assert_eq(panel.total_label.text, "48 · Würdevoll")
 	assert_eq(panel.reputation_label.text, "Geachtet (0)")
-	assert_eq(panel.goal_label.text, "Ziel „Würdevoll“ (ab 45) erreicht.")
-	ui.open_panel(&"slice_summary", {"days": 7, "burials": 6, "total": 40, "rating": &"tended", "reputation": -1})
-	assert_eq(panel.goal_label.text, "Ziel „Würdevoll“ (ab 45) verfehlt – es fehlen 5 Punkte.")
+	var goal := (Database.config(&"economy_config") as EconomyConfig).rating_thresholds[2]
+	var reached := "Ziel „Würdevoll“ (ab %d) erreicht." % goal
+	assert_eq(panel.goal_label.text, reached if 48 >= goal else "Ziel „Würdevoll“ (ab %d) verfehlt – es fehlen %d Punkte." % [goal, goal - 48])
+	ui.open_panel(&"slice_summary", {"days": 7, "burials": 6, "total": goal - 5, "rating": &"tended", "reputation": -1})
+	assert_eq(panel.goal_label.text, "Ziel „Würdevoll“ (ab %d) verfehlt – es fehlen 5 Punkte." % goal)
 
 
 func test_pause_menu_without_world_or_saves() -> void:
@@ -1183,6 +1187,145 @@ func test_debug_quick_buttons_run_commands() -> void:
 		assert_true(String(entry[1]).split(" ")[0] in ["time", "day", "pause", "spawn", "npc", "give", "instant", "save", "load", "camera", "flags", "quality", "fps", "help"], str(entry))
 	(buttons[0] as Button).pressed.emit()
 	assert_eq(TimeManager.minute_of_day, 450, "07:30 button")
+
+
+# --- review fixes (cluster C) ---------------------------------------------------------------
+
+## UI-09: one term for the cemetery value in HUD, summaries and debug.
+func test_hud_uses_the_same_quality_term() -> void:
+	await _setup()
+	assert_eq(ui.hud.quality_caption_text(), DaySummaryPanel.TEXT_TOTAL)
+	assert_eq(ui.hud.quality_caption_text(), "Friedhofsqualität")
+	assert_eq(SliceSummaryPanel.TEXT_TOTAL, DaySummaryPanel.TEXT_TOTAL)
+	EventBus.delivery_skipped.emit(1, "")
+	assert_true(ui.hud.notice_text().begins_with("Heute keine Leiche"), ui.hud.notice_text())
+
+
+## UI-08: linen and shroud chips differ by more than the (similar) cloth icons.
+func test_hud_linen_and_shroud_are_distinguishable() -> void:
+	await _setup()
+	inv.add_item(&"shroud", 1)
+	assert_eq(ui.hud.resource_text(&"linen"), "1")
+	assert_eq(ui.hud.resource_text(&"shroud"), "1")
+	assert_eq(ui.hud.resource_caption(&"shroud"), "Leichentuch", "crafted chips carry their name")
+	assert_eq(ui.hud.resource_caption(&"wooden_cross"), "", "hidden chip: no caption")
+	assert_ne(ui.hud.resource_caption(&"linen"), ui.hud.resource_caption(&"shroud"))
+	inv.add_item(&"wooden_cross", 1)
+	assert_eq(ui.hud.resource_caption(&"wooden_cross"), "Holzkreuz")
+	await wait_frames(2)
+	var resources := (ui.hud.get_node("ResourcePanel") as Control).get_global_rect()
+	assert_true(resources.end.y < ui.notifications.get_global_rect().position.y, "captions keep the notifications free")
+
+
+## UI-03: the reward card never covers a modal panel – it waits and shows afterwards.
+func test_reward_card_waits_while_a_modal_is_open() -> void:
+	await _setup()
+	var ctx := _contexts()[&"slice_summary"]
+	corpses.list = [_record(&"buried")]
+	var card := ui.reward_card
+	card.show_seconds = 0.1
+	card.fade_time = 0.05
+	var breakdown := [{"label": "Bestattet", "points": 2}]
+	EventBus.grave_completed.emit("plot_06", "corpse_0001", 8, breakdown)
+	assert_true(card.visible)
+	ui.open_panel(&"slice_summary", ctx)
+	assert_false(card.visible, "hidden while the modal is open")
+	EventBus.payment_received.emit(7, "Bestattung")
+	await tree.create_timer(0.4).timeout
+	assert_false(card.visible)
+	ui.close_panel(&"slice_summary")
+	assert_true(card.visible, "shown again once the modal closed")
+	assert_eq(card.payment_text(), "+7 Münzen", "payment kept while hidden")
+	await tree.create_timer(0.4).timeout
+	assert_false(card.visible, "then fades normally")
+	# Completed while a modal is already open: shown only after it closed.
+	ui.open_panel(&"pause", {})
+	EventBus.grave_completed.emit("plot_05", "corpse_0001", 6, breakdown)
+	assert_false(card.visible)
+	ui.close_panel(&"pause")
+	assert_true(card.visible)
+	assert_eq(card.quality_text(), "6/10")
+
+
+## UI-06: the reward card sits in a free screen area – not over the centred player and the
+## grave above them, and not over the HUD panels or the notification column.
+func test_reward_card_leaves_player_and_hud_free() -> void:
+	# The headless window is not 16:9; lay the UI out at the base resolution of the game.
+	var size_before := tree.root.size
+	tree.root.size = Vector2i(1920, 1080)
+	await _check_reward_card_placement()
+	tree.root.size = size_before
+
+
+func _check_reward_card_placement() -> void:
+	await _setup()
+	corpses.list = [_record(&"buried")]
+	EventBus.grave_completed.emit("plot_01", "corpse_0001", 9,
+			[{"label": "Bestattet", "points": 2}, {"label": "Leichentuch", "points": 2}, {"label": "Grabstein", "points": 3},
+			{"label": "Frisch", "points": 1}, {"label": "Untersucht", "points": 1}])
+	EventBus.payment_received.emit(7, "Bestattung")
+	await wait_frames(2)
+	var card := ui.reward_card.get_global_rect()
+	var screen := ui.root_control.get_global_rect()
+	assert_true(screen.encloses(card), "on screen: %s in %s" % [card, screen])
+	var centre := screen.get_center()
+	# The camera centres the player; the plot being worked on is just above them on screen.
+	var player_and_grave := Rect2(centre.x - 200.0, centre.y - 280.0, 400.0, 400.0)
+	assert_false(card.intersects(player_and_grave), "card %s over the player/grave %s" % [card, player_and_grave])
+	for panel_name: String in ["ClockPanel", "ResourcePanel"]:
+		var hud_rect := (ui.hud.get_node(panel_name) as Control).get_global_rect()
+		assert_false(card.intersects(hud_rect), "card over %s" % panel_name)
+	var notes := ui.notifications.get_global_rect()
+	notes.size.y = maxf(notes.size.y, 400.0)
+	assert_false(card.intersects(notes), "card over the notification column")
+
+
+## UI-05: after an action disables the focused button, focus moves to an enabled control.
+func test_corpse_exam_focus_after_examine() -> void:
+	await _setup()
+	var record := _record(&"table")
+	var panel := await _open_exam(record)
+	assert_eq(ui.get_viewport().gui_get_focus_owner(), panel.examine_button)
+	# Order as in Player._complete_action: timed_action_finished, then on_done.
+	EventBus.timed_action_started.emit("Untersuchen", 1.5)
+	EventBus.timed_action_finished.emit(true)
+	record.examined = true
+	EventBus.corpse_updated.emit(record.id)
+	await wait_frames(2)
+	var focused := ui.get_viewport().gui_get_focus_owner() as Button
+	assert_not_null(focused, "focus kept inside the panel")
+	if focused == null:
+		return
+	assert_true(panel.is_ancestor_of(focused))
+	assert_false(focused.disabled, "focus on an enabled button, not '%s'" % focused.text)
+	assert_ne(focused, panel.take_button, "never on the irreversible valuables buttons")
+	assert_ne(focused, panel.leave_button)
+
+
+## UI-05: crafting rebuilds its rows – focus returns to the same recipe (or a sensible control).
+func test_crafting_focus_survives_the_rebuild() -> void:
+	await _setup()
+	inv.add_item(&"wood", 5)
+	inv.add_item(&"linen", 1)
+	ui.open_panel(&"crafting", _contexts()[&"crafting"])
+	var panel := ui.get_panel(&"crafting") as CraftingPanel
+	assert_false(panel.craft_button(&"shroud").disabled, "an earlier enabled row exists")
+	panel.craft_button(&"wooden_cross").grab_focus()
+	panel.craft_button(&"wooden_cross").pressed.emit()
+	EventBus.timed_action_started.emit("Holzkreuz herstellen", 1.5)
+	EventBus.timed_action_finished.emit(true)
+	inv.remove_item(&"wood", 3)
+	inv.add_item(&"wooden_cross", 1)
+	await wait_frames(2)
+	assert_eq(ui.get_viewport().gui_get_focus_owner(), panel.craft_button(&"wooden_cross"), "same recipe again")
+	inv.remove_item(&"wood", 4)
+	await wait_frames(2)
+	var focused := ui.get_viewport().gui_get_focus_owner() as Button
+	assert_not_null(focused, "focus not lost")
+	if focused == null:
+		return
+	assert_true(panel.is_ancestor_of(focused))
+	assert_false(focused.disabled)
 
 
 # --- helpers --------------------------------------------------------------------------------

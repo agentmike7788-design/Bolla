@@ -2,6 +2,7 @@ class_name SliceSummaryPanel
 extends UIPanel
 ## &"slice_summary" – context {days, burials, total, rating, reputation}.
 ## Requested by the Graveyard when the last grave is completed (slice_complete).
+## Default focus is "Weiterspielen"; "Zum Titel" asks once (like the pause menu).
 
 const TEXT_TITLE := "Der Friedhof ist vollendet"
 const TEXT_INTRO := "Jede Grabstelle ist belegt und trägt ihr Zeichen. Oben auf dem Hügel ist es still geworden – die gute Art von still."
@@ -15,6 +16,8 @@ const TEXT_GOAL_REACHED := "Ziel „%s“ (ab %d) erreicht."
 const TEXT_GOAL_MISSED := "Ziel „%s“ (ab %d) verfehlt – es fehlen %d Punkte."
 const TEXT_CONTINUE := "Weiterspielen"
 const TEXT_TITLE_SCREEN := "Zum Titel"
+const TEXT_CONFIRM := PauseMenu.TEXT_CONFIRM
+const ACTION_TITLE := &"title"
 const GOAL_RATING := &"dignified"
 
 @export var panel_width: float = 720.0
@@ -24,6 +27,11 @@ var burials_label: Label
 var total_label: Label
 var reputation_label: Label
 var goal_label: Label
+var title_button: Button
+var continue_button: Button
+
+## True while "Zum Titel" waits for its confirming second press.
+var _confirm_title: bool = false
 
 
 func _build() -> void:
@@ -47,16 +55,27 @@ func _build() -> void:
 	box.add_child(goal_label)
 	var bottom := UIKit.hbox(12)
 	bottom.add_child(UIKit.spacer())
-	var to_title := UIKit.button(TEXT_TITLE_SCREEN)
-	to_title.pressed.connect(action_requested.emit.bind(&"title"))
-	bottom.add_child(to_title)
-	var resume := UIKit.button(TEXT_CONTINUE, &"AccentButton")
-	resume.pressed.connect(request_close)
-	bottom.add_child(resume)
+	title_button = UIKit.button(TEXT_TITLE_SCREEN)
+	title_button.pressed.connect(_on_title_pressed)
+	bottom.add_child(title_button)
+	continue_button = UIKit.button(TEXT_CONTINUE, &"AccentButton")
+	continue_button.pressed.connect(request_close)
+	bottom.add_child(continue_button)
 	box.add_child(bottom)
 
 
+func _on_opened() -> void:
+	_confirm_title = false
+
+
+## The safe choice: one Enter keeps playing instead of leaving to the title.
+func focus_default() -> void:
+	if is_visible_in_tree() and continue_button != null and continue_button.is_visible_in_tree():
+		continue_button.grab_focus()
+
+
 func _refresh() -> void:
+	title_button.text = TEXT_CONFIRM % TEXT_TITLE_SCREEN if _confirm_title else TEXT_TITLE_SCREEN
 	var total := int(context.get("total", 0))
 	days_label.text = str(int(context.get("days", TimeManager.day)))
 	burials_label.text = str(int(context.get("burials", 0)))
@@ -76,6 +95,16 @@ func _goal_threshold() -> int:
 	var thresholds := _economy().rating_thresholds
 	var index := CemeteryRating.TIERS.find(GOAL_RATING) - 1
 	return thresholds[index] if index >= 0 and index < thresholds.size() else 0
+
+
+## First press asks ("wirklich? Ungespeichertes geht verloren."), the second one leaves.
+func _on_title_pressed() -> void:
+	if not _confirm_title:
+		_confirm_title = true
+		refresh()
+		return
+	_confirm_title = false
+	action_requested.emit(ACTION_TITLE)
 
 
 func _add_row(grid: GridContainer, caption: String) -> Label:
