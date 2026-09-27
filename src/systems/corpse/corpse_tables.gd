@@ -6,6 +6,10 @@ extends Resource
 
 @export var first_names: PackedStringArray = []
 @export var last_names: PackedStringArray = []
+## First names that belong to women – the corpse's look follows name and age (Corpse.variant_for_record).
+@export var female_first_names: PackedStringArray = []
+## From this age a man is shown with the "old man" look.
+@export var old_age: int = 60
 @export var age_min: int = 18
 @export var age_max: int = 88
 @export var causes: Array[Dictionary] = []

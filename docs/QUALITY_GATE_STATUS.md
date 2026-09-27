@@ -4,7 +4,7 @@
 |---|---|---|---|---|
 | G0 | Projektsetup | ✅ **PASSED** | 27.09.2026 | ✅ „Phase 0 freigegeben" (27.09.2026) |
 | G1 | Art Direction | ✅ **PASSED** (Runde 1) | 27.09.2026 | ✅ „Art Direction freigegeben" (27.09.2026) |
-| G2 | Vertical Slice | 🔴 **FAILED – Änderungsrunde 1** (Benutzer: „die Leichen und der Mann, der die Leichen bringt, verschönern" + „den Main Character auch verschönern" – Verfeinerung innerhalb des Art Style Lock auf ausdrücklichen Benutzerwunsch) | 27.09.2026 | ausstehend |
+| G2 | Vertical Slice | 🟡 **PENDING USER REVIEW – Änderungsrunde 1 umgesetzt** (Benutzer: „die Leichen und der Mann, der die Leichen bringt, verschönern" + „den Main Character auch verschönern" – Verfeinerung innerhalb des Art Style Lock auf ausdrücklichen Benutzerwunsch) | 27.09.2026 | ausstehend |
 
 **ART STYLE LOCK:** ✅ **ACTIVE** seit 27.09.2026 (Referenz: `src/world/art_prototype/`, Screenshots `docs/reviews/phase1_round1/`). Keine grundlegende Stiländerung ohne Benutzerfreigabe.
 
@@ -99,14 +99,14 @@ Alle Phase-1-Assets sind Prototypen (`ph_`-Präfix) und **nicht final**, bis der
 
 | Asset | Kategorie | Status |
 |---|---|---|
-| ph_chr_gravekeeper | Charakter | Prototyp – Rig (8 Knochen) + 6 Animationen, Optik unverändert |
-| ph_chr_carter | Charakter | Prototyp – Leichenkutscher Osric, Rig + 4 Animationen |
+| ph_chr_gravekeeper | Charakter | Prototyp – Rig + 6 Animationen; Änderungsrunde 1: Details verfeinert (Benutzerwunsch) |
+| ph_chr_carter | Charakter | Prototyp – Leichenkutscher Osric, Rig + 4 Animationen; Änderungsrunde 1 verfeinert |
 | ph_bld_gravekeeper_hut | Gebäude | Prototyp |
 | ph_env_ground, ph_env_tree_old_oak, ph_env_grass_tuft | Umgebung | Prototyp |
 | ph_prop_gravestone_cross / _round / _obelisk / _slab_old | Grabsteine | Prototyp |
 | ph_prop_grave_mound_fresh / _grassy / _sunken | Gräber | Prototyp |
 | ph_prop_lantern_post, ph_prop_candle_cluster, ph_prop_shovel, ph_prop_crate, ph_prop_fence_iron, ph_prop_gate_post | Props | Prototyp |
-| ph_prop_corpse, _corpse_shrouded, _handcart, _morgue_table, _workbench, _dropoff_bier, _grave_plot_empty, _grave_pit, _wood_pile, _stone_rubble, _cross_wood, _signpost, _fallen_log, ph_env_bush | Props (Phase 2) | Prototyp |
+| ph_prop_corpse (+ _02 Frau, _03 alter Mann, _04 Müller – Änderungsrunde 1), _corpse_shrouded, _handcart, _morgue_table, _workbench, _dropoff_bier, _grave_plot_empty, _grave_pit, _wood_pile, _stone_rubble, _cross_wood, _signpost, _fallen_log, ph_env_bush | Props (Phase 2) | Prototyp |
 | ph_item_log, _stone, _linen, _coin, _shroud | Item-Modelle (Icons) | Prototyp |
 | ph_env_ground_graveyard | Boden Vertical Slice (48×56 m, mit Kutschweg) | Prototyp |
 | Godot-Standardschrift | UI-Schrift | **Platzhalter** – Schriftwahl offen |

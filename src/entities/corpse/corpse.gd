@@ -62,7 +62,7 @@ func interact(player: Player) -> void:
 func refresh() -> void:
 	var record := _record()
 	var shrouded := record != null and record.shrouded
-	var variant := variant_for_seed(record.seed, plain_variants.size()) if record != null else 0
+	var variant := variant_for_record(record, _corpse_tables(), plain_variants.size()) if record != null else 0
 	if _model == null or shrouded != _model_shrouded or (not shrouded and variant != _model_variant):
 		_set_model(shrouded, variant)
 	var active := record != null and record.location in PICKABLE_LOCATIONS
@@ -78,6 +78,29 @@ func is_shrouded_visual() -> bool:
 ## Index of the plain look this corpse wears (also while shrouded: the look underneath).
 func visual_variant() -> int:
 	return _model_variant
+
+
+## Look indices of plain_variants: the look matches the person (name and age).
+const LOOK_FARMHAND := 0
+const LOOK_OLD_WOMAN := 1
+const LOOK_OLD_MAN := 2
+const LOOK_MILLER := 3
+
+
+## Plain look that fits the record: women (first name in tables.female_first_names) get the
+## woman look, men from tables.old_age the old-man look, other men farmhand or miller by seed.
+## Falls back to variant_for_seed without tables or with fewer than four looks.
+static func variant_for_record(record: CorpseRecord, tables: CorpseTables, count: int) -> int:
+	if record == null:
+		return 0
+	if tables == null or count < 4:
+		return variant_for_seed(record.seed, count)
+	var first_name := record.display_name.get_slice(" ", 0)
+	if first_name in tables.female_first_names:
+		return LOOK_OLD_WOMAN
+	if record.age >= tables.old_age:
+		return LOOK_OLD_MAN
+	return LOOK_FARMHAND if posmod(record.seed, 2) == 0 else LOOK_MILLER
 
 
 ## Deterministic plain look for a record seed: posmod(seed, count), 0 without variants.
@@ -107,6 +130,13 @@ func _plain_scene(variant: int) -> PackedScene:
 	if variant >= 0 and variant < plain_variants.size() and plain_variants[variant] != null:
 		return plain_variants[variant]
 	return plain_model
+
+
+func _corpse_tables() -> CorpseTables:
+	var manager := _manager()
+	if manager != null and manager.tables != null:
+		return manager.tables
+	return Database.corpse_tables() as CorpseTables
 
 
 func _record() -> CorpseRecord:

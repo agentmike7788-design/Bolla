@@ -6,6 +6,8 @@
 script = ExtResource("1")
 first_names = PackedStringArray("Anna", "Bert", "Clara", "Dietmar")
 last_names = PackedStringArray("Moor", "Esche", "Kalk")
+female_first_names = PackedStringArray("Anna", "Clara", "Hedwig", "Frieda")
+old_age = 60
 age_min = 20
 age_max = 80
 causes = Array[Dictionary]([{"id": &"fever", "label": "Fieber", "description": "Test", "weight": 1.0, "decay_mult": 1.0, "base_payment": 3}, {"id": &"drowned", "label": "Ertrunken", "description": "Test", "weight": 1.0, "decay_mult": 1.5, "base_payment": 4}])

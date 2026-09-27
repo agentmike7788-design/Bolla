@@ -53,6 +53,13 @@ var progress: float = 1.0
 
 var _anim: AnimationPlayer
 var _tables: CorpseTables
+## Day whose corpse the cart cargo currently shows (-1 = the scene's default model).
+var _cargo_day: int = -1
+## Plain corpse looks, same order as Corpse.plain_variants (cargo = the corpse he will deliver).
+const CARGO_LOOKS: PackedStringArray = [
+	"res://assets/models/props/ph_prop_corpse.glb", "res://assets/models/props/ph_prop_corpse_02.glb",
+	"res://assets/models/props/ph_prop_corpse_03.glb", "res://assets/models/props/ph_prop_corpse_04.glb",
+]
 var _present: bool = true
 var _talkable: bool = true
 var _with_cart: bool = true
@@ -184,6 +191,8 @@ func _update(delta: float) -> void:
 	var dir: Vector3 = sample[1]
 	_set_state(entry.visible, entry.visible and entry.dialogue_id != &"", entry.visible and entry.with_cart)
 	cargo.visible = _with_cart and _has_cargo()
+	if cargo.visible and _cargo_day != TimeManager.day:
+		_show_cargo_for(TimeManager.day)
 	# The root (and with it the cart) turns with the path; only the figure turns to a player.
 	var heading := _heading
 	if _held_entry != null:
@@ -240,6 +249,27 @@ func _update_animation() -> void:
 
 
 ## Corpse on the cart: on the way in before the delivery minute, or all day after a skipped one.
+## Swaps the cargo model to the look of the corpse that is delivered on `day` (deterministic seed).
+func _show_cargo_for(day: int) -> void:
+	_cargo_day = day
+	if _tables == null:
+		return
+	var record := CorpseGenerator.generate(CorpseGenerator.seed_for(day, 0), _tables, day)
+	var look := Corpse.variant_for_record(record, _tables, CARGO_LOOKS.size())
+	var scene := load(CARGO_LOOKS[look]) as PackedScene
+	if scene == null or cargo.scene_file_path == scene.resource_path:
+		return
+	var fresh := scene.instantiate() as Node3D
+	var parent := cargo.get_parent()
+	fresh.name = cargo.name
+	fresh.transform = cargo.transform
+	fresh.visible = cargo.visible
+	parent.add_child(fresh)
+	parent.move_child(fresh, cargo.get_index())
+	cargo.free()
+	cargo = fresh
+
+
 func _has_cargo() -> bool:
 	if GameState.has_flag(FLAG_SLICE_COMPLETE) or _tables == null or _cemetery_full():
 		return false

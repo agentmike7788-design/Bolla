@@ -218,18 +218,36 @@ func test_corpse_variant_for_seed_is_deterministic() -> void:
 	assert_eq(seen.size(), 4, "days 1-4 show four different looks (%s)" % [seen.keys()])
 
 
-func test_corpse_model_follows_the_record_seed() -> void:
-	for s: int in [0, 1, 2, 3, 6, 17, -5, CorpseGenerator.seed_for(3, 1)]:
-		var c := _spawn(&"ground", Vector3(2, 0, 2), false, s)
+## The look follows the person: woman -> headscarf dress, man from old_age -> white beard,
+## other men farmhand (even seed) or miller (odd seed).
+func test_corpse_model_follows_name_and_age() -> void:
+	var tables: CorpseTables = corpses.tables if corpses.tables != null else Database.corpse_tables() as CorpseTables
+	for case: Array in [["Hedwig Rabenstein", 67, 4, 1], ["Frieda Kalk", 24, 5, 1], ["Gottlieb Esche", 71, 2, 2],
+			["Ulrich Moor", 30, 2, 0], ["Ulrich Moor", 30, 3, 3], ["Sebald Kalk", 59, -5, 3]]:
+		var c := _spawn(&"ground", Vector3(2, 0, 2), false, case[2], case[0], case[1])
 		var node := corpses.get_corpse_node(c.id)
-		var want := posmod(s, CORPSE_VARIANTS.size())
-		assert_eq(node.visual_variant(), want, "seed %d -> variant %d" % [s, want])
-		assert_eq(node.get_node("Model").scene_file_path, CORPSE_VARIANTS[want], "seed %d model" % s)
+		assert_eq(node.visual_variant(), case[3], "%s (%d) -> look %d" % [case[0], case[1], case[3]])
+		assert_eq(node.get_node("Model").scene_file_path, CORPSE_VARIANTS[case[3]], "%s model" % case[0])
+		assert_eq(Corpse.variant_for_record(c, tables, 4), case[3])
 		assert_false(node.is_shrouded_visual())
 
 
+func test_every_generated_corpse_look_fits_name_and_age() -> void:
+	var tables := Database.corpse_tables() as CorpseTables
+	assert_true(tables.female_first_names.size() > 0)
+	for f: String in tables.female_first_names:
+		assert_has(tables.first_names, f, "female name %s is a first name" % f)
+	for day: int in range(1, 21):
+		var r := CorpseGenerator.generate(CorpseGenerator.seed_for(day, 0), tables, day)
+		var look := Corpse.variant_for_record(r, tables, 4)
+		var female := r.display_name.get_slice(" ", 0) in tables.female_first_names
+		assert_eq(look == Corpse.LOOK_OLD_WOMAN, female, "day %d %s" % [day, r.display_name])
+		if not female:
+			assert_eq(look == Corpse.LOOK_OLD_MAN, r.age >= tables.old_age, "day %d age %d" % [day, r.age])
+
+
 func test_corpse_variant_survives_shroud_swap() -> void:
-	var c := _spawn(&"ground", Vector3(2, 0, 2), false, 6)
+	var c := _spawn(&"ground", Vector3(2, 0, 2), false, 6, "Gottlieb Esche", 80)
 	var node := corpses.get_corpse_node(c.id)
 	assert_eq(node.get_node("Model").scene_file_path, CORPSE_VARIANTS[2])
 	inv.add_item(&"shroud", 1)
@@ -245,8 +263,8 @@ func test_corpse_variant_survives_shroud_swap() -> void:
 
 
 func test_corpse_variant_survives_save_and_load() -> void:
-	var plain := _spawn(&"ground", Vector3(2, 0, 2), false, 5)
-	var wrapped := _spawn(&"ground", Vector3(3, 0, 3), false, 7)
+	var plain := _spawn(&"ground", Vector3(2, 0, 2), false, 5, "Anna Moor", 40)
+	var wrapped := _spawn(&"ground", Vector3(3, 0, 3), false, 7, "Bert Kalk", 30)
 	inv.add_item(&"shroud", 1)
 	assert_true(corpses.apply_shroud(wrapped.id, inv))
 	# through JSON like a real save (seeds come back as floats)
@@ -254,11 +272,11 @@ func test_corpse_variant_survives_save_and_load() -> void:
 	corpses.load_state(state)
 	await tree.process_frame
 	var a := corpses.get_corpse_node(plain.id)
-	assert_eq(a.get_node("Model").scene_file_path, CORPSE_VARIANTS[1], "seed 5 -> variant 1 after load")
+	assert_eq(a.get_node("Model").scene_file_path, CORPSE_VARIANTS[1], "woman look after load")
 	assert_eq(a.visual_variant(), 1)
 	var b := corpses.get_corpse_node(wrapped.id)
 	assert_true(b.is_shrouded_visual(), "still shrouded after load")
-	assert_eq(b.visual_variant(), 3, "seed 7 -> variant 3 after load")
+	assert_eq(b.visual_variant(), 3, "young man, odd seed -> miller after load")
 
 
 # --- GravePlot --------------------------------------------------------------------------------
@@ -377,7 +395,7 @@ func test_plot_marker_prompts_and_single_marker() -> void:
 	var marker := plot.get_node("Visual").get_child(1) as Node3D
 	assert_true(marker.position.is_equal_approx(plot.marker_offset), "marker at the head end")
 	assert_true(marker.position.z < 0.0, "head = -Z")
-	assert_eq(plot.get_interaction_prompt(player), "Grab von Anna Moor – Qualität %d/10" % grave.quality)
+	assert_eq(plot.get_interaction_prompt(player), "Grab von Bert Moor – Qualität %d/10" % grave.quality)
 	assert_false(plot.can_interact(player))
 
 
@@ -974,10 +992,12 @@ func _settle() -> void:
 	await tree.process_frame
 
 
-func _spawn(location: StringName, at: Vector3 = Vector3.ZERO, valuables: bool = false, seed_value: int = 0) -> CorpseRecord:
+func _spawn(location: StringName, at: Vector3 = Vector3.ZERO, valuables: bool = false, seed_value: int = 0,
+		person: String = "Bert Moor", age: int = 30) -> CorpseRecord:
 	var r := CorpseRecord.new()
 	r.seed = seed_value
-	r.display_name = "Anna Moor"
+	r.display_name = person
+	r.age = age
 	r.cause_id = &"fever"
 	if valuables:
 		r.traits = [CorpseRecord.TRAIT_VALUABLES]
@@ -1076,3 +1096,17 @@ func _on_note(text: String, kind: StringName) -> void:
 
 func _on_dialogue(id: StringName, speaker: Node) -> void:
 	dialogues.append([id, speaker])
+
+
+## Round 1: the cart cargo shows the look of the corpse the carter delivers that day.
+func test_npc_cargo_shows_the_days_corpse() -> void:
+	var tables := Database.corpse_tables() as CorpseTables
+	var npc_node: Npc = load("res://src/entities/npc/npc.tscn").instantiate()
+	tree.root.add_child(npc_node)
+	await tree.process_frame
+	for day: int in [1, 2, 3, 4]:
+		npc_node.call("_show_cargo_for", day)
+		var r := CorpseGenerator.generate(CorpseGenerator.seed_for(day, 0), tables, day)
+		var want: String = Npc.CARGO_LOOKS[Corpse.variant_for_record(r, tables, 4)]
+		assert_eq(npc_node.cargo.scene_file_path, want, "day %d cargo" % day)
+	npc_node.queue_free()

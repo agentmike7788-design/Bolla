@@ -434,7 +434,7 @@ Icons: `src/ui/tools/icon_renderer.gd` rendert Item-Modelle → `assets/ui/icons
 |---|---|
 | `ph_chr_gravekeeper` (Rig + Animationen) | `idle-loop, walk-loop, carry_idle-loop, carry_walk-loop, dig-loop, interact` |
 | `ph_chr_carter` (gleiches Rig) | `idle-loop, walk-loop, push_cart-loop, talk-loop` |
-| `ph_prop_corpse`, `ph_prop_corpse_shrouded` | liegende Leiche / eingehüllt (Pivot Mitte, liegt entlang X) |
+| `ph_prop_corpse` (+ `_02` Frau, `_03` alter Mann, `_04` Müller), `ph_prop_corpse_shrouded` | liegende Leiche in 4 Looks / eingehüllt (Pivot Mitte, entlang X). Look = `Corpse.variant_for_record`: Vorname in `CorpseTables.female_first_names` → Frau; Mann ab `old_age` → alter Mann; sonst Knecht/Müller nach Seed. Osrics Karren zeigt die Leiche des Tages. |
 | `ph_prop_handcart`, `ph_prop_morgue_table`, `ph_prop_workbench`, `ph_prop_dropoff_bier` | Stationen (Marker `slot_corpse` wo eine Leiche liegt) |
 | `ph_prop_grave_plot_empty`, `ph_prop_grave_pit` | Pflöcke+Schnur / offenes Grab mit Erdhaufen |
 | `ph_prop_wood_pile`, `ph_prop_stone_rubble`, `ph_prop_cross_wood`, `ph_prop_signpost`, `ph_prop_fallen_log`, `ph_env_bush` | Ressourcen, Grabzeichen, Kutschweg |
