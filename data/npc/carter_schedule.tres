@@ -1,0 +1,79 @@
+[gd_resource type="Resource" script_class="NpcSchedule" format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1_s38po"]
+[ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2_xkmdj"]
+
+[sub_resource type="Resource" id="night_home"]
+script = ExtResource("1_s38po")
+activity = &"home"
+path = PackedStringArray("road_end")
+visible = false
+
+[sub_resource type="Resource" id="morning_arrive"]
+script = ExtResource("1_s38po")
+start_minute = 420
+travel_minutes = 40
+activity = &"walk"
+animation = &"push_cart"
+path = PackedStringArray("road_end", "road_mid", "gate_outside", "dropoff")
+with_cart = true
+
+[sub_resource type="Resource" id="morning_dropoff"]
+script = ExtResource("1_s38po")
+start_minute = 460
+path = PackedStringArray("dropoff")
+dialogue_id = &"carter"
+with_cart = true
+
+[sub_resource type="Resource" id="morning_leave"]
+script = ExtResource("1_s38po")
+start_minute = 600
+travel_minutes = 40
+activity = &"walk"
+animation = &"push_cart"
+path = PackedStringArray("dropoff", "gate_outside", "road_mid", "road_end")
+with_cart = true
+
+[sub_resource type="Resource" id="day_home"]
+script = ExtResource("1_s38po")
+start_minute = 640
+activity = &"home"
+path = PackedStringArray("road_end")
+visible = false
+
+[sub_resource type="Resource" id="evening_arrive"]
+script = ExtResource("1_s38po")
+start_minute = 1080
+travel_minutes = 30
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("road_end", "road_mid", "evening_spot")
+
+[sub_resource type="Resource" id="evening_smoke"]
+script = ExtResource("1_s38po")
+start_minute = 1110
+activity = &"smoke"
+animation = &"talk"
+path = PackedStringArray("evening_spot")
+dialogue_id = &"carter"
+
+[sub_resource type="Resource" id="evening_leave"]
+script = ExtResource("1_s38po")
+start_minute = 1260
+travel_minutes = 30
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("evening_spot", "road_mid", "road_end")
+
+[sub_resource type="Resource" id="late_home"]
+script = ExtResource("1_s38po")
+start_minute = 1290
+activity = &"home"
+path = PackedStringArray("road_end")
+visible = false
+
+[resource]
+script = ExtResource("2_xkmdj")
+npc_id = &"carter"
+display_name = "Osric Faulhaber"
+entries = Array[ExtResource("1_s38po")]([SubResource("night_home"), SubResource("morning_arrive"), SubResource("morning_dropoff"), SubResource("morning_leave"), SubResource("day_home"), SubResource("evening_arrive"), SubResource("evening_smoke"), SubResource("evening_leave"), SubResource("late_home")])
