@@ -79,7 +79,11 @@ Physik-Layer: 1 world, 2 player, 3 npc, 4 interactable, 5 corpse.
 python tools/blender/build_all.py                       # alle Assets (bpy / Blender 5.x)
 godot --headless --path . --import                      # Import (Materialzuordnung automatisch)
 tools/godot_run.sh -s res://src/world/art_prototype/art_prototype_builder.gd   # Szene neu erzeugen
-tools/godot_run.sh -- --capture=/abs/pfad [--shots=01,05]                       # Screenshots
+tools/godot_run.sh -- --capture=/abs/pfad [--shots=01,05]                       # Screenshots (Art-Prototyp)
+python tools/blender/asset_ground_graveyard.py                                   # Friedhofs-Boden aus data/world/graveyard_layout.json
+tools/godot_run.sh -s res://src/world/graveyard/graveyard_builder.gd             # graveyard.tscn + grass.scn + ground_shape.res
+tools/godot_run.sh --resolution 1280x720 -s res://src/world/graveyard/graveyard_shots.gd -- --out=/abs/dir [--shots=01,03]
+tools/godot_run.sh -s res://src/ui/tools/icon_renderer.gd                        # Item-Icons
 ```
 Hinweis: Der Szenen-Builder braucht einen echten Renderer (nicht `--headless`), weil MultiMesh-Daten sonst verworfen werden.
 
@@ -101,4 +105,4 @@ Ab Phase 2: Framework `tests/framework/test_case.gd` + Runner `tests/run_tests.g
 | Draw Calls | < 1 000 (MultiMesh für Gras/Kleinzeug) |
 | Schattenwerfende Lichter | 1 Directional + max. 4 Omni/Spot gleichzeitig |
 | Aktive NPCs | ≤ 10 |
-| Dreiecke sichtbar | < 500 k |
+| Dreiecke sichtbar | < 500 k (Hinweis: `RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME` zählt pro MultiMesh nur eine Instanz – Gras wird separat gerechnet, siehe `graveyard_shots.gd`) |

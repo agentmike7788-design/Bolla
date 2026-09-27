@@ -66,6 +66,13 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+	# A world being replaced (load / new game) leaves the tree before it is freed; stop
+	# listening so the old UI never reacts to the next world's signals.
+	for sig: Signal in [EventBus.ui_panel_requested, EventBus.dialogue_requested, EventBus.world_ready,
+			EventBus.game_loaded, EventBus.new_game_started, EventBus.ui_modal_changed]:
+		for c: Dictionary in sig.get_connections():
+			if c.callable.get_object() == self:
+				sig.disconnect(c.callable)
 	var open_now := _stack.duplicate()
 	_stack.clear()
 	for id: StringName in open_now:
@@ -272,11 +279,15 @@ func _on_dialogue_closed(_dialogue_id: StringName) -> void:
 
 
 func _on_world_ready(_world: Node) -> void:
+	if not is_inside_tree():
+		return
 	_bind_player(get_tree().get_first_node_in_group(PLAYER_GROUP))
 	hud.refresh_all()
 
 
 func _on_game_refresh() -> void:
+	if not is_inside_tree():
+		return
 	_bind_player(get_tree().get_first_node_in_group(PLAYER_GROUP))
 	hud.refresh_all()
 
