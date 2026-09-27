@@ -5,7 +5,7 @@ extends TestCase
 ## enum values, Database folders, save format v2 + migration chain, and the W1 fixtures.
 
 ## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
-const IMPLEMENTED: PackedStringArray = ["SaveMigration", "ExpansionManager", "ClearableObstacle", "DecorPlacement", "BuildGrid", "DecorationManager", "BuildMode", "BuildCursor",
+const IMPLEMENTED: PackedStringArray = ["GhostMood", "GhostManager", "Ghost", "SaveMigration", "ExpansionManager", "ClearableObstacle", "DecorPlacement", "BuildGrid", "DecorationManager", "BuildMode", "BuildCursor",
 		"GrassClearMask", "PlacedDecor"]
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
@@ -246,7 +246,7 @@ func test_ghost_lines_fixture() -> void:
 	for t: StringName in [&"letter", &"tattoo", &"strange_wound"]:
 		assert_eq(lines.by_trait[t].size(), 2, String(t))
 	assert_eq(GhostLines.new().gift, "Der Geist deutet ins Moos – zwei Münzen.")
-	assert_null(Database.ghost_lines(), "data/ghosts/ghost_lines.tres is P4's")
+	assert_true(Database.ghost_lines() is GhostLines, "data/ghosts/ghost_lines.tres (P4)")
 
 
 func test_sections_in_data_and_fixtures() -> void:

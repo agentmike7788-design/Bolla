@@ -238,7 +238,68 @@ func test_dawn_and_dusk_presets() -> void:
 	assert_true(dusk.sun_rotation_deg.y < day.sun_rotation_deg.y, "sun sets in the west")
 
 
+# --- Phase 3: deep night (P4, docs/PHASE3_DESIGN.md §1.4, §2.8) ---
+
+func test_approved_presets_unchanged() -> void:
+	# ART STYLE LOCK: day/night/dawn/dusk are approved – byte-identical to Gate G2.
+	var approved := {
+		"day": "8f9abdf863d1353fdbcaeceaf2a64779",
+		"night": "7710841af1d742427c54a2f9108ce216",
+		"dawn": "c0bce99ce8c1725b287094d3e40c3d0b",
+		"dusk": "0af2f68e49c20f8d36ef0a999a9aeb87",
+	}
+	for id: String in approved:
+		assert_eq(FileAccess.get_md5(DIR + id + ".tres"), approved[id], id + ".tres unchanged")
+
+
+func test_deep_night_preset() -> void:
+	var deep := load(DIR + "deep_night.tres") as AtmospherePreset
+	assert_not_null(deep)
+	assert_eq(deep.display_name, "Tiefe Nacht")
+	assert_almost(deep.sun_energy, 0.45, 0.0001, "moon 0.45")
+	assert_almost(deep.fog_density, 0.018, 0.0001)
+	assert_almost(deep.volumetric_fog_density, 0.04, 0.0001)
+	assert_true(deep.sun_rotation_deg.is_equal_approx(night.sun_rotation_deg), "moon does not move between night and deep night")
+	# More fog, colder and darker than the approved night – still readable.
+	assert_true(deep.fog_density > night.fog_density and deep.volumetric_fog_density > night.volumetric_fog_density, "more fog")
+	assert_true(deep.sun_energy < night.sun_energy)
+	var target := Color("#1F2A3A")
+	assert_true(_rgb_distance(deep.ambient_color, target) < _rgb_distance(night.ambient_color, target), "ambient towards #1F2A3A")
+	assert_true(deep.ambient_color.b > deep.ambient_color.r, "cold ambient")
+	assert_true(deep.ambient_energy >= 0.5, "stays readable")
+	var albedo := deep.volumetric_fog_albedo
+	assert_true(albedo.g > albedo.r and albedo.b > albedo.r and albedo.s < 0.35, "pale blue-green fog")
+	assert_true(deep.saturation <= night.saturation)
+	assert_almost(deep.warm_light_scale, night.warm_light_scale, 0.0001, "lanterns stay warm (contrast to the ghosts)")
+
+
+func test_contract_keyframes_with_deep_night() -> void:
+	var deep := load(DIR + "deep_night.tres") as AtmospherePreset
+	var keys: Array[AtmospherePreset] = [deep, deep, night, dawn, day, day, dusk, night, deep]
+	var minutes := PackedInt32Array([0, 180, 270, 330, 480, 1020, 1140, 1260, 1350])
+	var atmo := _make_blend(keys, minutes)
+	await wait_frames(1)
+	for i: int in minutes.size():
+		assert_eq(_fields(atmo.blend_at(minutes[i])), _fields(keys[i]), "keyframe %d" % minutes[i])
+	for minute: float in [1350.0, 1439.0, 30.0, 179.9]:
+		assert_eq(_fields(atmo.blend_at(minute)), _fields(deep), "deep night holds 22:30 … 03:00 (%s)" % minute)
+	var mid := atmo.blend_at(225.0)  # 03:00 → 04:30 back to night
+	assert_almost(mid.fog_density, lerpf(deep.fog_density, night.fog_density, 0.5), 0.00001)
+	var evening := atmo.blend_at(1305.0)  # 21:00 → 22:30 into deep night
+	assert_almost(evening.volumetric_fog_density, lerpf(night.volumetric_fog_density, deep.volumetric_fog_density, 0.5), 0.00001)
+	assert_true(evening.sun_rotation_deg.is_equal_approx(night.sun_rotation_deg), "no moon sweep")
+	for minute: float in [540.0, 900.0]:
+		assert_eq(_fields(atmo.blend_at(minute)), _fields(day), "day unchanged (%s)" % minute)
+	atmo.apply_time(60.0)
+	_assert_applied(atmo, deep, "applied at 01:00")
+
+
 # --- helpers ---
+
+func _rgb_distance(a: Color, b: Color) -> float:
+	return Vector3(a.r - b.r, a.g - b.g, a.b - b.b).length()
+
+
 
 func _make(fixed: Array[AtmospherePreset], time_driven: bool = false) -> AtmosphereController:
 	var root := Node3D.new()
