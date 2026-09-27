@@ -16,6 +16,11 @@ signal projection_changed(orthographic: bool)
 @export var follow_speed: float = 5.0
 @export var look_offset: Vector3 = Vector3(0, 0.8, 0)
 @export var orthographic: bool = false
+@export_group("Bounds")
+## Clamp the followed focus point to [bounds_min, bounds_max] on XZ (off for the prototype).
+@export var bounds_enabled: bool = false
+@export var bounds_min: Vector2 = Vector2(-10.0, -10.0)
+@export var bounds_max: Vector2 = Vector2(10.0, 10.0)
 
 @onready var camera: Camera3D = $Camera3D
 
@@ -23,14 +28,14 @@ var _focus: Vector3
 
 
 func _ready() -> void:
-	_focus = target.global_position if target else global_position
+	_focus = _clamped(target.global_position if target else global_position)
 	_apply_projection()
 	_update_transform()
 
 
 func _process(delta: float) -> void:
 	if target:
-		_focus = _focus.lerp(target.global_position, clampf(follow_speed * delta, 0.0, 1.0))
+		_focus = _focus.lerp(_clamped(target.global_position), clampf(follow_speed * delta, 0.0, 1.0))
 	_update_transform()
 
 
@@ -55,8 +60,15 @@ func toggle_projection() -> void:
 ## Jump to the target immediately (used after teleports and for screenshots).
 func snap() -> void:
 	if target:
-		_focus = target.global_position
+		_focus = _clamped(target.global_position)
 	_update_transform()
+
+
+## The focus point for `p` (bounds applied when enabled).
+func _clamped(p: Vector3) -> Vector3:
+	if not bounds_enabled:
+		return p
+	return Vector3(clampf(p.x, bounds_min.x, bounds_max.x), p.y, clampf(p.z, bounds_min.y, bounds_max.y))
 
 
 func _apply_projection() -> void:

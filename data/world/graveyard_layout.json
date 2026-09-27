@@ -1,0 +1,190 @@
+{
+  "_comment": "Vertical-Slice-Welt (docs/VERTICAL_SLICE_DESIGN.md §4). Godot-Koordinaten in Metern: x = Osten, z = Süden (zur Kamera). Friedhofsteil = freigegebene Art-Prototyp-Komposition (data/art_prototype/layout.json), ergänzt um Grabstellen, Stationen und den Kutschweg. Gelesen von tools/blender/asset_ground_graveyard.py (Boden) und src/world/graveyard/graveyard_builder.gd (Szene). Die Laufzeit liest diese Datei nicht.",
+  "ground": {
+    "size": [48.0, 56.1],
+    "center": [0.0, 6.45],
+    "cell": 0.3,
+    "_flatten": "Unter Grabstellen/Stationen wird der Boden geglättet (Kern flach, danach weicher Übergang).",
+    "flatten_falloff": 0.8,
+    "plot_flat_rect": [-1.05, -1.65, 1.95, 1.5],
+    "station_flat_margin": 0.35
+  },
+  "path": {
+    "width": 1.7,
+    "points": [[1.2, 13.0], [0.8, 8.0], [0.0, 4.0], [-0.8, 0.5], [-2.2, -2.8], [-4.2, -4.6]]
+  },
+  "road": {
+    "_comment": "Kutschweg vom Tor nach Südosten Richtung Hollerbrück (mit Radspuren).",
+    "width": 2.4,
+    "rut_offset": 0.55,
+    "points": [[1.1, 9.2], [1.2, 12.2], [1.9, 15.5], [3.3, 19.0], [6.2, 22.2], [9.1, 25.4], [12.0, 28.6], [15.0, 31.9], [17.6, 34.8]]
+  },
+  "hut": {"pos": [-5.6, -7.2], "rot_y": 18.0},
+  "tree": {"pos": [-7.6, 3.2], "rot_y": 40.0},
+  "lantern_posts": [
+    {"pos": [-1.6, 5.2], "rot_y": 0.0},
+    {"pos": [-3.0, 10.4], "rot_y": 0.0, "_comment": "Zweite Laterne (Abendplatz des Kutschers) ohne Schatten: die freigegebenen 2 Schattenlichter bleiben das Budget.", "light_overrides": {"light_lantern": {"shadow": false}}}
+  ],
+  "old_graves": [
+    {"id": "old_01", "pos": [2.6, -3.6], "rot_y": 2.0, "stone": "cross", "mound": "fresh"},
+    {"id": "old_02", "pos": [4.4, -3.8], "rot_y": -4.0, "stone": "round", "mound": "grassy"},
+    {"id": "old_03", "pos": [6.3, -3.4], "rot_y": 6.0, "stone": "obelisk", "mound": "grassy"},
+    {"id": "old_04", "pos": [2.9, 1.0], "rot_y": -3.0, "stone": "slab_old", "mound": "sunken"},
+    {"id": "old_05", "pos": [4.8, 0.8], "rot_y": 3.0, "stone": "round", "mound": "grassy"},
+    {"id": "old_06", "pos": [6.7, 1.3], "rot_y": -8.0, "stone": "cross", "mound": "sunken"},
+    {"id": "old_07", "pos": [-3.4, 4.4], "rot_y": 10.0, "stone": "slab_old", "mound": "grassy"},
+    {"id": "old_08", "pos": [-5.2, 5.6], "rot_y": 14.0, "stone": "round", "mound": "fresh"}
+  ],
+  "plots": [
+    {"id": "plot_01", "pos": [3.6, -8.2], "rot_y": 1.0},
+    {"id": "plot_02", "pos": [6.0, -8.3], "rot_y": -2.0},
+    {"id": "plot_03", "pos": [8.4, -8.2], "rot_y": 2.0},
+    {"id": "plot_04", "pos": [4.0, 5.0], "rot_y": -1.0},
+    {"id": "plot_05", "pos": [6.4, 5.1], "rot_y": 2.0},
+    {"id": "plot_06", "pos": [8.8, 5.0], "rot_y": -2.0}
+  ],
+  "entities": [
+    {"id": "morgue_table", "type": "morgue_table", "pos": [-1.6, -5.4], "rot_y": 18.0, "params": {}},
+    {"id": "workbench", "type": "workbench", "pos": [-2.8, -8.3], "rot_y": 108.0, "params": {"station": "workbench"}},
+    {"id": "res_wood", "type": "resource_node", "pos": [-1.2, -9.4], "rot_y": 100.0,
+      "params": {"save_id": "res_wood", "item_id": "wood", "daily_amount": 6, "model": "ph_prop_wood_pile", "action_label": "Holz sammeln"}},
+    {"id": "res_stone", "type": "resource_node", "pos": [-9.0, -6.9], "rot_y": 25.0,
+      "params": {"save_id": "res_stone", "item_id": "stone", "daily_amount": 4, "model": "ph_prop_stone_rubble", "action_label": "Steine sammeln"}},
+    {"id": "hut_door", "type": "hut_door", "pos": [-5.4, -4.8], "rot_y": 18.0, "params": {}},
+    {"id": "dropoff", "type": "dropoff", "pos": [4.4, 8.3], "rot_y": 0.0, "params": {}},
+    {"id": "npc_carter", "type": "npc", "pos": [15.8, 32.6], "rot_y": 0.0,
+      "params": {"save_id": "npc_carter", "npc_id": "carter", "model": "ph_chr_carter"}}
+  ],
+  "waypoints": {
+    "road_end": [15.8, 32.6],
+    "road_mid": [3.3, 19.0],
+    "gate_outside": [1.2, 12.2],
+    "dropoff": [1.75, 8.4],
+    "evening_spot": [-1.4, 10.7]
+  },
+  "waypoint_facing": {
+    "_comment": "Blickrichtung (rot_y in Grad, 0 = +Z/Kamera) eines NPC, der an diesem Wegpunkt steht und nicht mit dem Spieler redet.",
+    "evening_spot": 15.0
+  },
+  "signpost": {"pos": [-0.9, 15.4], "rot_y": -20.0, "text": "Hollerbrück", "font_size": 64, "pixel_size": 0.0021, "color": "#2a1f18", "surface_offset": 0.012},
+  "fallen_log": {"pos": [2.2, 26.5], "rot_y": 8.0},
+  "fence": {
+    "_comment": "Prototyp-Zaun (Süd mit Tor, Ost) – Ost- und Westseite für die größere Welt verlängert.",
+    "segments": [
+      [[-11.5, 9.6], [-0.4, 9.6]],
+      [[2.6, 9.6], [11.5, 9.6]],
+      [[11.5, 9.6], [11.5, -1.0]],
+      [[11.5, -1.0], [11.5, -12.0]],
+      [[-11.5, -1.0], [-11.5, 9.6]]
+    ],
+    "gate_posts": [[-0.4, 9.6], [2.6, 9.6]]
+  },
+  "props": [
+    {"asset": "ph_prop_shovel", "pos": [-3.3, -5.4], "rot_y": 30.0},
+    {"asset": "ph_prop_candle_cluster", "pos": [2.2, -2.3], "rot_y": 0.0},
+    {"asset": "ph_prop_candle_cluster", "pos": [-5.6, 4.6], "rot_y": 90.0},
+    {"asset": "ph_prop_crate", "pos": [-7.8, -5.3], "rot_y": 12.0}
+  ],
+  "background_trees": [
+    {"pos": [-12.5, -9.5], "rot_y": 120.0, "scale": 1.15},
+    {"pos": [11.5, -11.0], "rot_y": 250.0, "scale": 1.3},
+    {"pos": [13.5, 3.5], "rot_y": 10.0, "scale": 1.0},
+    {"pos": [-13.0, 9.0], "rot_y": 300.0, "scale": 1.2},
+    {"pos": [3.0, -18.0], "rot_y": 70.0, "scale": 1.4},
+    {"pos": [-17.0, -1.5], "rot_y": 200.0, "scale": 1.25},
+    {"pos": [17.5, -5.5], "rot_y": 160.0, "scale": 1.2},
+    {"pos": [-6.5, -17.5], "rot_y": 30.0, "scale": 1.3},
+    {"pos": [12.5, -18.5], "rot_y": 90.0, "scale": 1.2}
+  ],
+  "forest": {
+    "_comment": "Waldrand am Kutschweg.",
+    "trees": [
+      {"pos": [-8.2, 14.2], "rot_y": 15.0, "scale": 1.1},
+      {"pos": [-12.8, 18.0], "rot_y": 140.0, "scale": 1.25},
+      {"pos": [-9.4, 22.4], "rot_y": 260.0, "scale": 1.0},
+      {"pos": [-16.5, 13.0], "rot_y": 75.0, "scale": 1.2},
+      {"pos": [-14.0, 27.5], "rot_y": 200.0, "scale": 1.3},
+      {"pos": [8.6, 13.2], "rot_y": 310.0, "scale": 1.0},
+      {"pos": [12.6, 17.2], "rot_y": 45.0, "scale": 1.2},
+      {"pos": [16.5, 22.0], "rot_y": 120.0, "scale": 1.1},
+      {"pos": [18.0, 12.0], "rot_y": 280.0, "scale": 1.25},
+      {"pos": [-4.0, 33.5], "rot_y": 330.0, "scale": 1.15},
+      {"pos": [6.5, 33.5], "rot_y": 100.0, "scale": 1.1}
+    ],
+    "bushes": [
+      {"pos": [-4.6, 13.0], "rot_y": 10.0, "scale": 1.0},
+      {"pos": [-6.4, 18.4], "rot_y": 80.0, "scale": 1.2},
+      {"pos": [-4.2, 22.8], "rot_y": 160.0, "scale": 0.9},
+      {"pos": [-7.6, 25.2], "rot_y": 30.0, "scale": 1.1},
+      {"pos": [6.2, 12.6], "rot_y": 220.0, "scale": 1.0},
+      {"pos": [9.8, 19.8], "rot_y": 300.0, "scale": 1.15},
+      {"pos": [12.4, 23.2], "rot_y": 40.0, "scale": 1.0},
+      {"pos": [6.6, 27.6], "rot_y": 120.0, "scale": 1.1},
+      {"pos": [-1.8, 27.9], "rot_y": 250.0, "scale": 1.0},
+      {"pos": [-10.2, 10.8], "rot_y": 190.0, "scale": 0.9}
+    ]
+  },
+  "grass": {
+    "density": 4.8,
+    "seed": 7,
+    "chunk": 4.0,
+    "keep_out_radius_path": 1.2,
+    "keep_out_radius_road": 1.6,
+    "keep_out_building": 3.2,
+    "keep_out_route": 0.9,
+    "keep_out_station": 0.35,
+    "outer_density": 0.35,
+    "outer_margin": 3.0,
+    "_hidden": "Hinter Baumkronen und dem Hüttendach (von der Kamera aus verdeckt) weniger Büschel.",
+    "hidden_density": 0.3,
+    "hidden_crown_offset": 4.0,
+    "hidden_crown_radius": 3.0,
+    "hidden_hut_depth": 5.0,
+    "visibility_range": 50.0
+  },
+  "atmosphere": {
+    "_comment": "Zeitgesteuerte Stimmung mit Halte-Stützstellen (§4). presets = feste Presets für apply()/cycle() (Debug).",
+    "presets": ["day", "night"],
+    "blend_presets": ["night", "night", "dawn", "day", "day", "dusk", "night"],
+    "blend_minutes": [0, 240, 330, 480, 1020, 1140, 1260],
+    "_shadow": "Warme Lichter werfen Schatten erst ab diesem warm_light_scale (Tag 0,25 = aus; Budget).",
+    "shadow_min_warm_scale": 0.4
+  },
+  "lights": {
+    "_comment": "Warme Lichter an Blender-Markern: '<asset>/<marker>' (Werte wie im Prototyp). energy = Basiswert, vom Atmosphären-Preset skaliert.",
+    "ph_bld_gravekeeper_hut/light_lantern": {"color": "#ffae55", "energy": 2.6, "range": 8.0, "shadow": true, "flicker": true},
+    "ph_bld_gravekeeper_hut/light_window": {"color": "#ff9c45", "energy": 1.0, "range": 4.0, "shadow": false, "flicker": false},
+    "ph_prop_lantern_post/light_lantern": {"color": "#ffae55", "energy": 2.6, "range": 8.0, "shadow": true, "flicker": true},
+    "ph_prop_candle_cluster/light_candle": {"color": "#ffa040", "energy": 0.8, "range": 2.6, "shadow": false, "flicker": true},
+    "ph_chr_gravekeeper/light_lantern": {"color": "#ffb866", "energy": 0.9, "range": 3.5, "shadow": false, "flicker": true}
+  },
+  "colliders": {
+    "_comment": "Statische Kollision (Layer 1) je Asset, lokal zum platzierten Modell. shape box: size [x,y,z]; cylinder: radius + height. offset = Mittelpunkt.",
+    "ph_bld_gravekeeper_hut": [{"shape": "box", "size": [3.7, 3.0, 3.3], "offset": [0.0, 1.5, 0.0]}],
+    "ph_env_tree_old_oak": [{"shape": "cylinder", "radius": 0.6, "height": 3.0, "offset": [0.15, 1.5, -0.05]}],
+    "ph_env_bush": [{"shape": "cylinder", "radius": 0.45, "height": 0.8, "offset": [0.0, 0.4, 0.0]}],
+    "ph_prop_gravestone_cross": [{"shape": "box", "size": [0.6, 1.3, 0.3], "offset": [0.03, 0.65, 0.0]}],
+    "ph_prop_gravestone_round": [{"shape": "box", "size": [0.78, 1.0, 0.3], "offset": [0.0, 0.5, 0.0]}],
+    "ph_prop_gravestone_obelisk": [{"shape": "box", "size": [0.62, 2.0, 0.62], "offset": [0.0, 1.0, 0.0]}],
+    "ph_prop_gravestone_slab_old": [{"shape": "box", "size": [0.7, 0.9, 0.35], "offset": [0.05, 0.45, -0.07]}],
+    "ph_prop_cross_wood": [{"shape": "box", "size": [0.5, 1.0, 0.22], "offset": [0.03, 0.5, -0.02]}],
+    "ph_prop_grave_mound_fresh": [{"shape": "box", "size": [1.12, 0.38, 2.0], "offset": [0.0, 0.19, -0.11]}],
+    "ph_prop_grave_mound_grassy": [{"shape": "box", "size": [1.1, 0.2, 1.92], "offset": [0.0, 0.1, -0.1]}],
+    "ph_prop_grave_mound_sunken": [{"shape": "box", "size": [1.1, 0.15, 1.92], "offset": [0.0, 0.07, -0.1]}],
+    "ph_prop_grave_pit": [{"shape": "box", "size": [1.3, 0.6, 2.35], "offset": [0.0, 0.3, 0.0]}, {"shape": "box", "size": [0.8, 0.6, 1.6], "offset": [1.15, 0.3, 0.0]}],
+    "ph_prop_fence_iron": [{"shape": "box", "size": [2.0, 1.25, 0.14], "offset": [1.0, 0.62, 0.0]}],
+    "ph_prop_gate_post": [{"shape": "box", "size": [0.5, 1.85, 0.5], "offset": [0.0, 0.92, 0.0]}],
+    "ph_prop_lantern_post": [{"shape": "cylinder", "radius": 0.12, "height": 2.2, "offset": [0.0, 1.1, 0.0]}],
+    "ph_prop_crate": [{"shape": "box", "size": [0.72, 0.68, 0.72], "offset": [0.0, 0.34, 0.0]}],
+    "ph_prop_workbench": [{"shape": "box", "size": [1.82, 0.95, 0.8], "offset": [0.0, 0.47, 0.0]}],
+    "ph_prop_morgue_table": [{"shape": "box", "size": [2.05, 0.9, 0.86], "offset": [0.0, 0.45, 0.0]}],
+    "ph_prop_dropoff_bier": [{"shape": "box", "size": [2.06, 0.55, 0.78], "offset": [0.0, 0.27, 0.0]}],
+    "ph_prop_wood_pile": [{"shape": "box", "size": [1.38, 0.9, 0.95], "offset": [0.0, 0.45, 0.2]}],
+    "ph_prop_stone_rubble": [{"shape": "box", "size": [1.3, 0.55, 1.05], "offset": [0.0, 0.27, 0.0]}],
+    "ph_prop_fallen_log": [{"shape": "box", "size": [6.4, 1.0, 1.1], "offset": [-0.2, 0.5, 0.0]}],
+    "ph_prop_signpost": [{"shape": "cylinder", "radius": 0.15, "height": 2.0, "offset": [0.0, 1.0, 0.0]}]
+  },
+  "walkable_bounds": {"min": [-11.2, -12.5], "max": [11.2, 25.2], "wall_height": 3.0, "wall_thickness": 1.0},
+  "camera_bounds": {"min": [-7.0, -8.0], "max": [7.0, 23.0], "distance": 22.0, "zoom_min": 12.0, "zoom_max": 24.0},
+  "player_start": {"pos": [-4.4, -3.6], "rot_y": 0.0}
+}

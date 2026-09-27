@@ -1,6 +1,9 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://src/entities/dropoff/dropoff.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_dropoff_bier.glb" id="2"]
 
-[node name="Dropoff" type="Node3D"]
+[node name="Dropoff" type="Node3D" groups=["dropoff"]]
 script = ExtResource("1")
+
+[node name="Model" parent="." instance=ExtResource("2")]
