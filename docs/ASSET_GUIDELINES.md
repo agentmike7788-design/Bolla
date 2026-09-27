@@ -33,7 +33,7 @@ Skriptbasierte Assets: Generator-Script in `tools/blender/` (reproduzierbar, ver
 | Kleines Prop / Grabstein | 200 – 1 500 |
 | Baum | 2 000 – 6 000 |
 | Kleines Gebäude | 3 000 – 10 000 |
-| Charakter | 5 000 – 12 000 |
+| Charakter | 3 000 – 12 000 (freigegebener Totengräber: 3 030 – Ausnahme dokumentiert) |
 
 ## Materialien & Texturen
 

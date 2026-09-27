@@ -313,7 +313,7 @@ static func arrival_minute(entry: ScheduleEntry) -> int                         
 **Interaktion & Spieler (M5)**
 ```gdscript
 class_name Interactable extends Area3D   # collision_layer = 8 (Layer 4), mask 0, monitoring=false, monitorable=true
-@export var prompt: String = "Benutzen"; @export var priority: int = 0; @export var enabled := true
+@export var prompt: String = "Benutzen"; @export var enabled := true   # priority = native Area3D-Eigenschaft (NICHT neu deklarieren)
 @export var target_path: NodePath = ^".."
 # Ziel implementiert: can_interact(player: Player) -> bool; get_interaction_prompt(player: Player) -> String; interact(player: Player) -> void
 # Leerer Prompt = nicht fokussierbar. can_interact=false + Prompt = sichtbar gedimmt (Prompt enthält den Grund), E zeigt Warnung.
@@ -353,7 +353,7 @@ Scan per `ResourceLoader.list_directory()` (funktioniert auch in Exporten mit `.
 Erzeugt von `src/world/graveyard/graveyard_builder.gd` aus `data/world/graveyard_layout.json` (Schema unten). Laufzeit liest **kein** JSON.
 ```
 Graveyard (WorldRoot)
-├─ WorldEnvironment, Sun, Atmosphere (time_driven)
+├─ WorldEnvironment, Sun, Atmosphere (time_driven; Halte-Stützstellen, z. B. [night, night, dawn, day, day, dusk, night] @ [0, 240, 330, 480, 1020, 1140, 1260])
 ├─ Ground (ph_env_ground_graveyard), GroundCollision, Colliders/
 ├─ Systems/ CorpseManager, Graveyard
 ├─ Entities/ <layout-id>…   (GravePlot, MorgueTable, Workbench, Dropoff, ResourceNode, HutDoor, Npc)
@@ -401,7 +401,7 @@ func reset() -> void
 - **Datei** `<save_dir>/slot_<n>.json`: `{"format_version": 1, "meta": {game_version, day, minute_of_day, saved_unix, scene}, "data": <JSON.from_native(state)>}`. `state = {autoloads: {TimeManager, GameState}, nodes: {<save_id>: {...}}}` – innerhalb von `data` sind Vector3, int, StringName typtreu (`JSON.from_native/to_native`, ohne Objekte).
 - **Saveable-Vertrag**: Gruppe `saveable`, Eigenschaften `save_id: String`, `save_order: int`; Methoden `save_state()`, `load_state(data)` (ersetzt vollständig, idempotent), optional `post_load()`.
 - **Laden**: Datei lesen → `is_loading=true`, `UIState.clear()`, `TimeManager.clear_pauses()`, `get_tree().paused=false` → Autoload-Zustände still anwenden → `change_scene_to_file(meta.scene)` → `world_ready` abwarten → `load_state` je save_id **nach save_order** → `post_load()` für alle → `is_loading=false`, `running=true`, `emit_refresh()`, `Graveyard.broadcast_state()` → `game_loaded`.
-- **Welt-`_ready`** erzeugt nur Struktur/Standardzustand, **nie** Spielinhalt. Startinhalt (Startinventar, volle Ressourcen) nur auf `new_game_started`.
+- **Welt-`_ready`** erzeugt nur Struktur/Standardzustand, **nie** Spielinhalt. `Player.save_state` enthält das Inventar. Tisch/Ablage leiten ihre Belegung aus den CorpseRecords ab (nicht gespeichert). Nur `CorpseManager` hängt Leichen-Knoten um bzw. gibt sie frei (Entitäten rufen nie selbst `detach_carried`). Startinhalt (Startinventar, volle Ressourcen) nur auf `new_game_started`.
 - **Slots**: 0 = Autosave (Schlafen), 1 = Schnellspeicher (F5/F9, Pause-Menü). F5/F9 bei `can_save()==false` bzw. fehlender Datei → Warnung.
 
 ## 6. Debug-Konsole (W2, F1, nur `GameConfig.debug_enabled`)
@@ -436,6 +436,7 @@ Icons: `src/ui/tools/icon_renderer.gd` rendert Item-Modelle → `assets/ui/icons
 | `ph_prop_grave_plot_empty`, `ph_prop_grave_pit` | Pflöcke+Schnur / offenes Grab mit Erdhaufen |
 | `ph_prop_wood_pile`, `ph_prop_stone_rubble`, `ph_prop_cross_wood`, `ph_prop_signpost`, `ph_prop_fallen_log`, `ph_env_bush` | Ressourcen, Grabzeichen, Kutschweg |
 | `ph_item_log`, `ph_item_stone`, `ph_item_linen`, `ph_item_coin`, `ph_item_shroud` | Item-Modelle (Icons) |
+- **Marker-Konventionen**: `slot_corpse` (Tisch, Bahre, Karren): lokale +X-Achse = Längsachse der Leiche → Leiche mit Identitäts-Transform an den Marker hängen. `label_board` (Wegweiser): Vorderseite des Schilds für ein `Label3D`. `light_*`: Lichtpunkte (Welt-Builder hängt OmniLights an).
 - **Rig**: starre Gewichtung, Knochen `root, hips, spine, head, arm_l, arm_r, leg_l, leg_r`, Armature-Objekt heißt `Armature`. Aktionen mit Suffix `-loop` werden in Godot geloopt und ohne Suffix importiert (`&"idle"`, `&"walk"` …). Export: Armature als Wurzel, Aktionen als NLA-Spuren, `export_animation_mode='ACTIONS'`. Godot-Pfade: `<glb>/AnimationPlayer`, `<glb>/Armature/Skeleton3D`.
 - Tests `test_assets_characters.gd` / `test_assets_props.gd`: alle Modelle vorhanden, Charaktere haben die Animationen, `-loop`-Animationen haben `loop_mode != NONE`, Dreiecksbudgets aus ASSET_GUIDELINES.
 

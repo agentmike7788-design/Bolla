@@ -61,12 +61,15 @@ Alle Phase-1-Assets sind Prototypen (`ph_`-Präfix) und **nicht final**, bis der
 
 | Asset | Kategorie | Status |
 |---|---|---|
-| ph_chr_gravekeeper | Charakter | Prototyp (statische Pose, kein Rig) |
+| ph_chr_gravekeeper | Charakter | Prototyp – Rig (8 Knochen) + 6 Animationen, Optik unverändert |
+| ph_chr_carter | Charakter | Prototyp – Leichenkutscher Osric, Rig + 4 Animationen |
 | ph_bld_gravekeeper_hut | Gebäude | Prototyp |
 | ph_env_ground, ph_env_tree_old_oak, ph_env_grass_tuft | Umgebung | Prototyp |
 | ph_prop_gravestone_cross / _round / _obelisk / _slab_old | Grabsteine | Prototyp |
 | ph_prop_grave_mound_fresh / _grassy / _sunken | Gräber | Prototyp |
 | ph_prop_lantern_post, ph_prop_candle_cluster, ph_prop_shovel, ph_prop_crate, ph_prop_fence_iron, ph_prop_gate_post | Props | Prototyp |
+| ph_prop_corpse, _corpse_shrouded, _handcart, _morgue_table, _workbench, _dropoff_bier, _grave_plot_empty, _grave_pit, _wood_pile, _stone_rubble, _cross_wood, _signpost, _fallen_log, ph_env_bush | Props (Phase 2) | Prototyp |
+| ph_item_log, _stone, _linen, _coin, _shroud | Item-Modelle (Icons) | Prototyp |
 
 ## Bekannte Probleme
 
