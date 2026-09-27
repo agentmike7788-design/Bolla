@@ -20,9 +20,11 @@ Widerspruch → stoppen, Benutzer fragen. Aktuellen Stand immer zuerst in `docs/
 
 ## Tests
 ```
-godot --headless --path . --import
-godot --headless --path . -s res://tests/run_tests.gd
+godot --headless --path . --import                          # PFLICHT nach neuem Worktree und nach jedem Merge
+godot --headless --path . -s res://tests/run_tests.gd [-- --filter=<text>]   # Exit 0/1/2
 ```
+Tests: `tests/unit|integration/test_*.gd`, `extends TestCase`, Methoden `test_*`; Fixtures in `tests/fixtures/`.
+Phase 2: Vertrag = `docs/VERTICAL_SLICE_DESIGN.md` (Signaturen/Pfade/Signale fest, Besitz-Tabelle §3.2 beachten).
 In der Cloud ist Godot nicht vorinstalliert: Linux-Build von github.com/godotengine/godot/releases (4.7.2-stable) in den Scratch-Ordner laden. Blender headless: `pip install bpy==5.0.1` (Python 3.11) in ein venv.
 
 ## Asset-Pipeline & Screenshots (Kurz)

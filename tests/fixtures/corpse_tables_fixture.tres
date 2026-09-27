@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CorpseTables" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/corpse/corpse_tables.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+first_names = PackedStringArray("Anna", "Bert", "Clara", "Dietmar")
+last_names = PackedStringArray("Moor", "Esche", "Kalk")
+age_min = 20
+age_max = 80
+causes = Array[Dictionary]([{"id": &"fever", "label": "Fieber", "description": "Test", "weight": 1.0, "decay_mult": 1.0, "base_payment": 3}, {"id": &"drowned", "label": "Ertrunken", "description": "Test", "weight": 1.0, "decay_mult": 1.5, "base_payment": 4}])
+traits = Array[Dictionary]([{"id": &"valuables", "label": "Wertsachen", "reveal_text": "Test", "chance": 0.5}, {"id": &"letter", "label": "Brief", "reveal_text": "Test", "chance": 0.5}])
+forced_traits_by_day = Dictionary[int, PackedStringArray]({1: PackedStringArray(), 2: PackedStringArray("valuables")})
+base_decay_per_hour = 0.05
+delivery_minute = 460
+valuables_coins_min = 5
+valuables_coins_max = 8

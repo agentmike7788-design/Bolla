@@ -1,81 +1,170 @@
 extends SceneTree
-## Headless test runner.
-## Usage: godot --headless --path . -s res://tests/run_tests.gd   (exit code 0 = PASS)
+## Test runner (docs/VERTICAL_SLICE_DESIGN.md §9).
+##   godot --headless --path . -s res://tests/run_tests.gd [-- --filter=<text>]
+## Discovers tests/unit/test_*.gd and tests/integration/test_*.gd; every test_* method
+## runs on a fresh instance. Before each method the autoloads are reset; afterwards new
+## root children and the current scene are freed. Engine errors during a test fail it.
+## Exit codes: 0 = all passed, 1 = test failures, 2 = runner error / timeout / no tests.
 
-const PROTO := "res://src/world/art_prototype/art_prototype.tscn"
+const DIRS: PackedStringArray = ["res://tests/unit", "res://tests/integration"]
+const DEFAULT_TIMEOUT := 20.0
+const RESET_AUTOLOADS: PackedStringArray = ["TimeManager", "GameState", "SaveManager", "UIState"]
 
-var _failures: int = 0
+
+class ErrorCapture extends Logger:
+	var errors: PackedStringArray = []
+	var mutex := Mutex.new()
+
+	func _log_error(function: String, file: String, line: int, code: String, rationale: String,
+			_editor_notify: bool, error_type: int, _script_backtrace: Array[ScriptBacktrace]) -> void:
+		if error_type == ERROR_TYPE_WARNING:
+			return
+		mutex.lock()
+		errors.append("%s %s (%s:%d %s)" % [code, rationale, file.get_file(), line, function])
+		mutex.unlock()
+
+	func _log_message(_message: String, _error: bool) -> void:
+		pass
+
+	func take() -> PackedStringArray:
+		mutex.lock()
+		var out := errors.duplicate()
+		errors.clear()
+		mutex.unlock()
+		return out
+
+
+var _passed: int = 0
+var _failed: PackedStringArray = []
+var _capture := ErrorCapture.new()
+var _deadline_ms: int = 0
+var _running_label: String = ""
 
 
 func _initialize() -> void:
-	_test_project_setup()
-	_test_art_prototype()
-	print("RESULT: %s (%d failure(s))" % ["PASS" if _failures == 0 else "FAIL", _failures])
-	quit(1 if _failures > 0 else 0)
+	OS.add_logger(_capture)
+	_run.call_deferred()
 
 
-func _test_project_setup() -> void:
-	print("-- project setup")
-	_check(ProjectSettings.get_setting("application/run/main_scene") == "res://src/boot/main.tscn", "main scene configured")
-	_check(load("res://src/boot/main.tscn") is PackedScene, "main scene loads")
-	for action: String in ["move_up", "move_down", "move_left", "move_right", "interact", "debug_toggle",
-			"camera_zoom_in", "camera_zoom_out", "proto_toggle_camera", "proto_toggle_time"]:
-		_check(InputMap.has_action(action), "input action '%s' exists" % action)
-	_check(root.has_node("EventBus"), "EventBus autoload present")
-	_check(root.has_node("GameConfig"), "GameConfig autoload present")
+func _process(_delta: float) -> bool:
+	if _deadline_ms > 0 and Time.get_ticks_msec() > _deadline_ms:
+		printerr("TIMEOUT in ", _running_label)
+		print("RESULT: TIMEOUT (%s)" % _running_label)
+		quit(2)
+	return false
 
 
-func _test_art_prototype() -> void:
-	print("-- art prototype")
-	var ps := load(PROTO) as PackedScene
-	_check(ps != null, "prototype scene loads")
-	if ps == null:
+func _run() -> void:
+	await process_frame  # autoload _ready() has run after the first frame
+	var filter := ""
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with("--filter="):
+			filter = arg.trim_prefix("--filter=")
+	var files := _discover()
+	var ran := 0
+	for path: String in files:
+		if filter != "" and not path.contains(filter):
+			continue
+		ran += 1
+		await _run_file(path)
+	print("")
+	for f: String in _failed:
+		print("  FAILED: ", f)
+	if ran == 0 or _passed + _failed.size() == 0:
+		print("RESULT: NO TESTS")
+		quit(2)
 		return
-	var scene := ps.instantiate()
-	for path: String in ["WorldEnvironment", "Sun", "Atmosphere", "Ground", "Graves", "Fence", "Hut", "Tree",
-			"LanternPost", "Props", "Grass", "Player", "CameraRig/Camera3D", "HUD/Hint"]:
-		_check(scene.has_node(path), "node '%s' present" % path)
-	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/art_prototype/layout.json"))
-	_check(scene.get_node("Graves").get_child_count() == layout.graves.size(), "grave count matches layout")
-	var stones := {}
-	for g: Dictionary in layout.graves:
-		stones[g.stone] = true
-	_check(stones.size() >= 4, "at least 4 different gravestone types")
-	var atmo := scene.get_node("Atmosphere")
-	_check((atmo.get("presets") as Array).size() == 2, "day + night presets assigned")
-	_check(atmo.get("world_environment") != null and atmo.get("sun") != null, "atmosphere references resolved")
-	var lights := scene.find_children("Light_*", "OmniLight3D", true, false)
-	_check(lights.size() >= 5, "warm lights attached to markers (%d)" % lights.size())
-	var grouped := 0
-	for l: Node in lights:
-		if l.is_in_group("warm_lights") and l.has_meta("base_energy"):
-			grouped += 1
-	_check(grouped == lights.size(), "all warm lights grouped with base energy")
-	var shadowed := 0
-	for l: Node in lights:
-		if (l as Light3D).shadow_enabled:
-			shadowed += 1
-	_check(shadowed <= 4, "shadow-casting omni lights within budget (%d <= 4)" % shadowed)
-	var mm := (scene.get_node("Grass") as MultiMeshInstance3D).multimesh
-	_check(mm != null and mm.instance_count == int(layout.grass.count), "grass multimesh has %d tufts" % int(layout.grass.count))
-	_check((scene.get_node("CameraRig") as Node).get("target") != null, "camera follows player")
-	_check_materials(scene)
-	scene.free()
+	print("RESULT: %s (%d passed, %d failed)" % ["PASS" if _failed.is_empty() else "FAIL", _passed, _failed.size()])
+	quit(0 if _failed.is_empty() else 1)
 
 
-## Every mesh surface must use one of the shared project materials (import mapping works).
-func _check_materials(scene: Node) -> void:
-	var bad: PackedStringArray = []
-	for n: Node in scene.find_children("*", "MeshInstance3D", true, false):
-		var mesh := (n as MeshInstance3D).mesh
-		for i: int in mesh.get_surface_count():
-			var mat := mesh.surface_get_material(i)
-			if mat == null or not mat.resource_path.begins_with("res://assets/materials/"):
-				bad.append(n.name)
-	_check(bad.is_empty(), "all surfaces use shared materials %s" % ("" if bad.is_empty() else str(bad)))
+func _discover() -> PackedStringArray:
+	var files: PackedStringArray = []
+	for dir: String in DIRS:
+		if not DirAccess.dir_exists_absolute(dir):
+			continue
+		for f: String in DirAccess.get_files_at(dir):
+			if f.begins_with("test_") and f.ends_with(".gd"):
+				files.append(dir.path_join(f))
+	files.sort()
+	return files
 
 
-func _check(condition: bool, label: String) -> void:
-	print("  [%s] %s" % ["OK" if condition else "FAIL", label])
-	if not condition:
-		_failures += 1
+func _run_file(path: String) -> void:
+	_capture.take()
+	var script := load(path) as GDScript
+	var load_errors := _capture.take()
+	if script == null or not script.can_instantiate() or not load_errors.is_empty():
+		_failed.append("%s (script failed to load) %s" % [path, str(load_errors)])
+		return
+	var probe: Variant = script.new()
+	if not probe is TestCase:
+		_failed.append("%s (does not extend TestCase)" % path)
+		return
+	var timeout: float = DEFAULT_TIMEOUT
+	if script.get_script_constant_map().has("TIMEOUT"):
+		timeout = float(script.get_script_constant_map()["TIMEOUT"])
+	print("-- ", path.get_file())
+	var methods: PackedStringArray = []
+	for m: Dictionary in script.get_script_method_list():
+		var mname: String = m.name
+		if mname.begins_with("test_") and not mname in methods:
+			methods.append(mname)
+	var shared: TestCase = probe
+	shared.tree = self
+	if shared.has_method("before_all"):
+		await shared.call("before_all")
+	for mname: String in methods:
+		await _run_method(script, path, mname, timeout)
+	if shared.has_method("after_all"):
+		await shared.call("after_all")
+	_capture.take()
+
+
+func _run_method(script: GDScript, path: String, mname: String, timeout: float) -> void:
+	_reset_autoloads()
+	var before := root.get_children()
+	var t: TestCase = script.new()
+	t.tree = self
+	t._current = "%s::%s" % [path.get_file(), mname]
+	_running_label = t._current
+	_deadline_ms = Time.get_ticks_msec() + int(timeout * 1000.0)
+	_capture.take()
+	if t.has_method("before_each"):
+		await t.call("before_each")
+	await Callable(t, mname).call()
+	if t.has_method("after_each"):
+		await t.call("after_each")
+	_deadline_ms = 0
+	await _cleanup(before)
+	var errors := _capture.take()
+	if errors.size() > t._expected_errors:
+		for e: String in errors:
+			t._failures.append("engine error: " + e)
+	elif errors.size() < t._expected_errors:
+		t._failures.append("expected %d engine error(s), got %d" % [t._expected_errors, errors.size()])
+	if t._failures.is_empty():
+		_passed += 1
+		print("  [OK] ", mname)
+	else:
+		for msg: String in t._failures:
+			_failed.append("%s: %s" % [t._current, msg])
+		print("  [FAIL] ", mname, " — ", t._failures[0])
+
+
+func _reset_autoloads() -> void:
+	paused = false
+	for n: String in RESET_AUTOLOADS:
+		var node := root.get_node_or_null(n)
+		if node and node.has_method("reset"):
+			node.call("reset")
+
+
+func _cleanup(before: Array[Node]) -> void:
+	if current_scene:
+		unload_current_scene()
+	for child: Node in root.get_children():
+		if not child in before:
+			child.queue_free()
+	await process_frame
+	await process_frame

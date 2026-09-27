@@ -91,7 +91,7 @@ godot --headless --path . -s res://tests/run_tests.gd    # Smoke-/Unit-Tests, Ex
 godot --headless --path . --quit-after 5                 # Start-Test der Hauptszene
 ```
 
-Ab Phase 2: pro System eigene Testdatei `tests/test_<system>.gd`, Save/Load-Roundtrip-Tests, Regressionsliste in `QUALITY_GATE_STATUS.md`.
+Ab Phase 2: Framework `tests/framework/test_case.gd` + Runner `tests/run_tests.gd` (Autoload-Reset pro Test, Fehler-Logger, Watchdog, Exit 0/1/2); Tests pro Modul in `tests/unit/test_<modul>.gd`, Integration in `tests/integration/`; Details in VERTICAL_SLICE_DESIGN.md §9.
 
 ## 6. Performance-Budget (Startwerte, werden in Phase 1 gemessen)
 
