@@ -1,4 +1,5 @@
-"""Item models for UI icons (contract section 8): log, stone, linen bolt, coins, shroud.
+"""Item models for UI icons (contract section 8): log, stone, linen bolt, coins, shroud;
+Phase 3 (docs/PHASE3_DESIGN.md section 8): rake, flower seeds, iron fittings.
 
 Small (~0.3 m), centred on the origin, bottom at z = 0, front = -Y.  Rendered to
 assets/ui/icons/<id>.png by src/ui/tools/icon_renderer.gd (W2).  Same painted
@@ -10,10 +11,11 @@ import math
 import random
 
 import bpy  # noqa: F401  (must be imported before bmesh users)
-from mathutils import Matrix
+from mathutils import Matrix, Vector
 
 import lib_painted as L
 import asset_props_slice as P
+import asset_props_phase3 as D
 
 GOLD = L.hexc("#A08240")          # warm, dull gold - not emissive
 GOLD_DARK = L.hexc("#7C6533")
@@ -146,7 +148,100 @@ def item_shroud():
     L.finish(obj, "ph_item_shroud", "items", 40)
 
 
-ITEMS = (item_log, item_stone, item_linen, item_coin, item_shroud)
+def item_rake():
+    """Wooden garden rake lying on its back (icon scale): handle, a crossbar with seven pegged
+    tines pointing up, two braces.  Weathered wood, the tines a little lighter."""
+    L.reset(450)
+    parts = []
+    r = 0.011
+    parts.append(P._stick((-0.2, 0.0, r), (0.13, 0.0, r), r, L.mix(P.WOOD, P.WOOD_OLD, 0.4), r1=r * 0.95, verts=6, seed=1, ao=0.2,
+                          zrange=(0, 0.08)))
+    parts.append(L.part("sphere", P.WOOD_DARK, loc=(-0.2, 0.0, r), radius=r * 1.1, segments=6, ring_count=4))
+    parts.append(P._rbox((0.15, 0.0, 0.016), (0.016, 0.115, 0.014), P.WOOD_OLD, bev=0.005, seg=1, jit=0.002, seed=2,
+                         ao=0.2, zrange=(0, 0.08)))
+    for i in range(7):
+        y = -0.1 + i * 0.2 / 6
+        parts.append(P._stick((0.15, y, 0.026), (0.162, y, 0.07), 0.0055, P.WOOD_FRESH, r1=0.004, verts=5, seed=3 + i,
+                              ao=0.1, zrange=(0, 0.08)))
+    for sy in (-1, 1):
+        parts.append(P._stick((0.07, 0.0, r), (0.145, sy * 0.07, 0.018), 0.006, P.WOOD, verts=5, seed=12, ao=0.1))
+    for o in parts[:1]:
+        P._tint_up(o, L.hexc("#8C7650"), 0.3, 0.5, seed=4)       # worn grip
+    obj = L.join(parts, "ph_item_rake")
+    _yaw(obj, -28)
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_rake", "items", 40)
+
+
+def item_seeds():
+    """Small linen seed pouch tied with twine, a dried amber flower tucked under the tie,
+    seeds spilling out in front."""
+    L.reset(460)
+    prof = [(0.05, 0.0), (0.075, 0.012), (0.085, 0.04), (0.082, 0.075), (0.065, 0.105), (0.035, 0.125),
+            (0.03, 0.135), (0.042, 0.148), (0.04, 0.162), (0.022, 0.17)]
+    bag = D._lathe(prof, 12, "bag", cap_top=True, wobble=0.08, seed=3)
+    L.jitter(bag, 0.006, 25.0, 4)
+    L.paint(bag, P.LINEN_DIRTY, var=0.15, ao=0.4, zrange=(0, 0.17), hue_shift=P.EARTH, seed=5)
+    P._modulate(bag, lambda co: 1.0 - 0.08 * max(0.0, math.sin(co.z * 160.0)) ** 4)   # coarse weave
+    L.set_mat(bag, L.MAT_PAINTED)
+    parts = [bag]
+    tie = [(math.cos(a) * 0.036, math.sin(a) * 0.036, 0.13) for a in (j / 12 * math.tau for j in range(12))]
+    parts.append(P._finish_obj(P._path_tube(tie, 0.006, 4, closed=True), P.ROPE, ao=0.0, seed=6))
+    parts.append(P._stick((0.03, -0.02, 0.13), (0.07, -0.05, 0.08), 0.004, P.ROPE, verts=4, seed=7, ao=0.0))
+    parts.append(P._stick((0.0, -0.034, 0.125), (-0.035, -0.06, 0.215), 0.003, L.hexc("#7A7A48"), verts=3, seed=8,
+                          ao=0.0))
+    parts.append(D._flower_head(Vector((-0.035, -0.062, 0.218)), 0.03, D.FLOWER_AMBER, D.FLOWER_EYE["amber"], 9,
+                                tilt=(45.0, -10.0)))
+    for i in range(9):                                                # spilled seeds
+        a = random.uniform(-1.2, 1.2) - math.pi / 2
+        d = random.uniform(0.09, 0.15)
+        sd = L.prim("ico", loc=(math.cos(a) * d, math.sin(a) * d, 0.004), radius=0.008, subdivisions=1,
+                    scale=(1.6, 1.0, 0.6), rot=(0, 0, random.uniform(0, 180)))
+        parts.append(P._finish_obj(sd, L.scale_c(L.hexc("#5A4432"), random.uniform(0.85, 1.2)), var=0.1, ao=0.0,
+                                   top=0.3, seed=10 + i))
+    obj = L.join(parts, "ph_item_seeds")
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_seeds", "items", 45)
+
+
+def item_iron_fittings():
+    """A few blacksmith-made fittings: two bent corner irons and a flat strap with nail holes,
+    three square nails.  Dark iron with rust, not shiny."""
+    L.reset(470)
+    parts = []
+
+    def strap(p0, p1, w: float, t: float, seed: int):
+        d = Vector(p1) - Vector(p0)
+        o = L.prim("cube", loc=(0, 0, 0), scale=(d.length / 2, w / 2, t / 2))
+        L.bevel(o, t * 0.4, 1)
+        L.jitter(o, 0.0015, 40.0, seed)
+        rot = Vector((1, 0, 0)).rotation_difference(d.normalized()).to_matrix().to_4x4()
+        o.data.transform(Matrix.Translation((Vector(p0) + Vector(p1)) / 2) @ rot)
+        return P._finish_obj(o, P.IRON, var=0.3, ao=0.15, top=0.2, hue_shift=P.RUST, seed=seed)
+    parts.append(strap((-0.15, -0.06, 0.007), (0.13, -0.045, 0.007), 0.05, 0.012, 1))      # flat strap
+    for x in (-0.11, -0.01, 0.09):                                                          # nail holes
+        parts.append(L.part("cyl", L.hexc("#1E1E20"), loc=(x, -0.06 + (x + 0.15) * 0.054, 0.0135), radius=0.009,
+                            depth=0.002, vertices=6, paint_kw={"ao": 0.0}))
+    for k, (x, y, yaw) in enumerate(((-0.03, 0.045, 15.0), (0.1, 0.03, -40.0))):             # corner irons
+        a = math.radians(yaw)
+        dx, dy = math.cos(a), math.sin(a)
+        corner = Vector((x, y, 0.008))
+        parts.append(strap(corner - Vector((dx, dy, 0)) * 0.12, corner, 0.04, 0.012, 2 + k))
+        parts.append(strap(corner + Vector((0, 0, -0.004)), corner + Vector((0, 0, 0.085)), 0.04, 0.012, 4 + k))
+    for i, (x, y, yaw) in enumerate(((0.0, -0.13, 10.0), (0.06, -0.14, 70.0), (0.13, -0.11, 35.0))):  # nails
+        a = math.radians(yaw)
+        d = Vector((math.cos(a), math.sin(a), 0))
+        base = Vector((x, y, 0.006))
+        parts.append(P._stick(base - d * 0.035, base + d * 0.035, 0.004, P.IRON, r1=0.0015, verts=4, seed=7 + i,
+                              ao=0.0, hue_shift=P.RUST))
+        parts.append(L.part("cube", P.IRON, loc=base - d * 0.037, scale=(0.007, 0.007, 0.004), rot=(0, 0, yaw),
+                            paint_kw={"ao": 0.0}))
+    obj = L.join(parts, "ph_item_iron_fittings")
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_iron_fittings", "items", 30)
+
+
+ITEMS = (item_log, item_stone, item_linen, item_coin, item_shroud, item_rake, item_seeds, item_iron_fittings)
 
 
 def build(names=None):
