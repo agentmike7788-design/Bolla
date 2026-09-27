@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"shroud"
+display_name = "Leichentuch"
+description = "Sorgsam vernähtes Leinen. Wer eingehüllt in die Erde geht, geht nicht als Fremder."
+category = 1
+max_stack = 10
