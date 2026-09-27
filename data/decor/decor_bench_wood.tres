@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DecorData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/decoration/decor_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"decor_bench_wood"
+display_name = "Holzbank"
+footprint = Vector2i(3, 1)
+zier = 3
+zier_divisor = 1
+counted_max = 4
+place_max = 0
+walkable = false
+allow_route = false
+allow_grave_ring = false
+suppresses_dirt = false
+ghost_bonus_radius = 0.0
+collider_size = Vector3(1.4, 0.8, 0.45)

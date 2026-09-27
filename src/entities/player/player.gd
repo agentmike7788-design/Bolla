@@ -63,6 +63,8 @@ var carried_id: String = ""
 var instant_actions: bool = false
 ## True while the gravekeeper is inside the hut (docs §11) – set by the portal, saved.
 var in_interior: bool = false
+## Build mode (set_build_mode, Phase 3): no focus, no [E]/[Q]. Not saved.
+var build_mode: bool = false
 
 @onready var model: Node3D = $Model
 @onready var carry_socket: Node3D = $CarrySocket
@@ -250,10 +252,11 @@ func drop_position() -> Transform3D:
 	return PlayerCarry.drop_position(self)
 
 
-## STUB (P2) – Phase 3 §3.4 build-mode hook: suppresses the interaction focus and the
-## gravekeeper's [E]/[Q]; movement stays.
-func set_build_mode(_active: bool) -> void:
-	pass
+## Phase 3 §3.4 build-mode hook (BuildMode): while active the interaction focus is empty and
+## the gravekeeper's [E]/[Q] do nothing ([E] is also build_place); movement stays.
+func set_build_mode(active: bool) -> void:
+	build_mode = active
+	_update_focus_prompt()
 
 
 ## Inside / outside the hut; always announces EventBus.interior_changed so camera, sun and
@@ -313,7 +316,7 @@ func _try_interact() -> bool:
 
 ## Q: put the carried corpse on the ground via the CorpseManager (group corpse_manager).
 func _try_drop() -> bool:
-	if state == State.LOCKED or is_busy() or not _is_carrying():
+	if build_mode or state == State.LOCKED or is_busy() or not _is_carrying():
 		return false
 	var xform := drop_position()
 	if xform == Transform3D():
@@ -330,7 +333,7 @@ func _try_drop() -> bool:
 
 ## The detector's focus if the player may use it now (not LOCKED, not busy, enabled).
 func _usable_focus() -> Interactable:
-	if state == State.LOCKED or is_busy() or detector == null:
+	if build_mode or state == State.LOCKED or is_busy() or detector == null:
 		return null
 	var focus := detector.focused
 	if not is_instance_valid(focus) or not focus.enabled:

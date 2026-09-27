@@ -11,6 +11,13 @@ const ITEMS := {
 	&"wooden_cross": ["Holzkreuz", ItemData.Category.CRAFTED, 5],
 	&"gravestone_simple": ["Grabstein", ItemData.Category.CRAFTED, 5],
 	&"rake": ["Rechen", ItemData.Category.TOOL, 1],
+	# Phase 3 decor (P2, §2.2)
+	&"decor_bench_wood": ["Holzbank", ItemData.Category.DECOR, 5],
+	&"decor_bench_stone": ["Steinbank", ItemData.Category.DECOR, 5],
+	&"decor_flowerbed": ["Blumenbeet", ItemData.Category.DECOR, 5],
+	&"decor_grave_vase": ["Grabvase", ItemData.Category.DECOR, 10],
+	&"decor_lantern": ["Grablaterne", ItemData.Category.DECOR, 6],
+	&"decor_path_gravel": ["Kiesplatte", ItemData.Category.DECOR, 40],
 }
 
 

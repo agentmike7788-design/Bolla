@@ -4,6 +4,9 @@ extends TestCase
 ## EventBus signals, input actions (incl. mouse build bindings §3.6), shader globals, appended
 ## enum values, Database folders, save format v2 + migration chain, and the W1 fixtures.
 
+## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
+const IMPLEMENTED: PackedStringArray = ["DecorPlacement", "BuildGrid", "DecorationManager", "BuildMode", "BuildCursor",
+		"GrassClearMask", "PlacedDecor"]
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
 	"res://src/systems/expansion/expansion_manager.gd": "ExpansionManager",
@@ -92,7 +95,8 @@ func test_stub_scripts_load_with_their_class_names() -> void:
 		assert_true(script.can_instantiate(), path + " parses")
 		var cls: String = STUBS[path]
 		assert_eq(global.get(cls), path, "class_name %s → %s" % [cls, path])
-		assert_true(script.source_code.contains("## STUB ("), cls + " is marked as stub")
+		if not IMPLEMENTED.has(cls):
+			assert_true(script.source_code.contains("## STUB ("), cls + " is marked as stub")
 		var names := {}
 		for m: Dictionary in script.get_script_method_list():
 			names[String(m.name)] = true
@@ -297,8 +301,9 @@ func test_decor_fixtures() -> void:
 		assert_eq(Phase3Fixtures.item(id).category, ItemData.Category.DECOR, String(id))
 	assert_eq(Phase3Fixtures.item(&"rake").category, ItemData.Category.TOOL)
 	assert_eq(Phase3Fixtures.item(&"iron_fittings").max_stack, 20)
-	assert_eq(Database.decors(), [], "data/decor is P2's")
-	assert_false(Database.has_decor(&"decor_lantern"))
+	# data/decor is P2's (W1): it mirrors the fixtures.
+	assert_eq(Database.decors().size(), Phase3Fixtures.DECOR_IDS.size())
+	assert_true(Database.has_decor(&"decor_lantern"))
 
 
 func test_build_mask_fixture_and_helpers() -> void:
