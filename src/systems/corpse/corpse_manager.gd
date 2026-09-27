@@ -16,24 +16,22 @@ const ID_FORMAT := "corpse_%04d"
 const SHROUD_ITEM := &"shroud"
 const COIN_ITEM := &"coin"
 const FLAG_SLICE_COMPLETE := &"slice_complete"
-const FLAG_DELIVERY_SKIPPED := &"delivery_skipped"
-const STAT_MISSED := &"missed_deliveries"
+const FLAG_DELIVERY_SKIPPED := CorpseDeliveryRules.FLAG_DELIVERY_SKIPPED
+const STAT_MISSED := CorpseDeliveryRules.STAT_MISSED
 const STAT_VALUABLES_TAKEN := &"valuables_taken"
 const STAT_REPUTATION := &"reputation"
 ## Locations a corpse can be spawned at or put down to.
 const PLACE_LOCATIONS: Array[StringName] = [CorpseRecord.LOCATION_DROPOFF, CorpseRecord.LOCATION_TABLE, CorpseRecord.LOCATION_GROUND]
-const MINUTES_PER_HOUR := 60
-const MINUTES_PER_DAY := 1440
-## Freshness at arrival (CorpseGenerator sets it); decay is measured from arrival_total_minutes.
-const START_FRESHNESS := 1.0
-## Freshness is kept on a grid of 1 / FRESHNESS_RESOLUTION: exact threshold times land exactly
-## on the threshold, and the 14-digit floats of JSON.from_native save it bit-exactly.
-const FRESHNESS_RESOLUTION := 1000000.0
+const MINUTES_PER_HOUR := CorpseDecay.MINUTES_PER_HOUR
+const MINUTES_PER_DAY := CorpseDeliveryRules.MINUTES_PER_DAY
+## Decay rules: CorpseDecay; delivery rules: CorpseDeliveryRules (constants kept here as API).
+const START_FRESHNESS := CorpseDecay.START_FRESHNESS
+const FRESHNESS_RESOLUTION := CorpseDecay.FRESHNESS_RESOLUTION
 
-const REASON_OCCUPIED := "Die Bahre ist noch belegt."
-const REASON_NO_PLOT := "Es gibt keine freie Grabstelle."
-const REASON_NO_DROPOFF := "Es gibt keine Bahre für die Lieferung."
-const NOTE_SKIPPED := "Heute keine Leiche: %s"
+const REASON_OCCUPIED := CorpseDeliveryRules.REASON_OCCUPIED
+const REASON_NO_PLOT := CorpseDeliveryRules.REASON_NO_PLOT
+const REASON_NO_DROPOFF := CorpseDeliveryRules.REASON_NO_DROPOFF
+const NOTE_SKIPPED := CorpseDeliveryRules.NOTE_SKIPPED
 
 @export var save_id: String = "corpse_manager"
 @export var save_order: int = 0
@@ -112,23 +110,17 @@ func _deliver(day: int, now_total: int) -> CorpseRecord:
 	if t == null:
 		push_warning("[CorpseManager] delivery on day %d without corpse tables" % day)
 		return null
-	if _cemetery_full():
+	var graveyard := _first_in_group(GRAVEYARD_GROUP)
+	if CorpseDeliveryRules.is_cemetery_full(graveyard, unburied_count()):
 		return null
 	var dropoff := _first_in_group(DROPOFF_GROUP)
-	var reason := ""
-	if dropoff == null or not dropoff.has_method("is_free"):
-		push_warning("[CorpseManager] no dropoff node in group '%s'" % DROPOFF_GROUP)
-		reason = REASON_NO_DROPOFF
-	elif not bool(dropoff.call("is_free")):
-		reason = REASON_OCCUPIED
-	elif _free_plot_count() <= unburied_count():
-		reason = REASON_NO_PLOT
+	var reason := CorpseDeliveryRules.blocked_reason(dropoff, graveyard, unburied_count(), DROPOFF_GROUP)
 	if reason != "":
-		_skip_delivery(day, reason)
+		CorpseDeliveryRules.report_skip(day, reason)
 		return null
-	var at: Transform3D = dropoff.call("slot_transform") if dropoff.has_method("slot_transform") else Transform3D.IDENTITY
+	var at := CorpseDeliveryRules.slot_transform(dropoff)
 	var record := CorpseGenerator.generate(CorpseGenerator.seed_for(day, _take_spawn_index(day)), t, day)
-	var arrival := mini(now_total, (day - 1) * MINUTES_PER_DAY + t.delivery_minute)
+	var arrival := CorpseDeliveryRules.arrival_total(day, now_total, t)
 	record = _spawn(record, at, CorpseRecord.LOCATION_DROPOFF, arrival, now_total)
 	if record != null:
 		_last_delivery_id = record.id
@@ -164,7 +156,7 @@ func _spawn(record: CorpseRecord, at: Transform3D, location: StringName, arrival
 	_decay_record(record, now_total)
 	record.location = location
 	record.grave_id = ""
-	_store_transform(record, at)
+	CorpseNodePlacement.store_transform(record, at)
 	_records[record.id] = record
 	_create_node(record)
 	EventBus.corpse_arrived.emit(record.id)
@@ -211,9 +203,9 @@ func put_down(id: String, location: StringName, xform: Transform3D, parent: Node
 		node = _create_node(record, target)
 	if node == null:
 		return false
-	_place(node, target, xform)
+	CorpseNodePlacement.place(node, target, xform)
 	record.location = location
-	_store_transform(record, xform)
+	CorpseNodePlacement.store_transform(record, xform)
 	EventBus.corpse_updated.emit(id)
 	return true
 
@@ -282,19 +274,7 @@ func unburied_count() -> int:
 
 
 func save_state() -> Dictionary:
-	var corpses: Array = []
-	for record: CorpseRecord in _records.values():
-		corpses.append(record.to_dict())
-	var counts := {}
-	for day: int in _spawn_counts:
-		counts[day] = _spawn_counts[day]
-	return {
-		"corpses": corpses,
-		"next_serial": _next_serial,
-		"last_delivery_day": _last_delivery_day,
-		"last_delivery_id": _last_delivery_id,
-		"spawn_counts": counts,
-	}
+	return CorpseSaveCodec.write(_records, _next_serial, _last_delivery_day, _last_delivery_id, _spawn_counts)
 
 
 ## Replaces everything: old nodes are freed, nodes of all non-buried corpses are recreated
@@ -307,27 +287,11 @@ func load_state(data: Dictionary) -> void:
 	_records.clear()
 	_nodes.clear()
 	_spawn_counts.clear()
-	var corpses: Variant = data.get("corpses", [])
-	if corpses is Array:
-		for entry: Variant in corpses:
-			if not entry is Dictionary:
-				continue
-			var record := CorpseRecord.from_dict(entry as Dictionary)
-			if record.id == "" or _records.has(record.id):
-				push_warning("[CorpseManager] saved corpse without unique id skipped")
-				continue
-			_records[record.id] = record
-	_next_serial = maxi(1, _int(data.get("next_serial"), 1))
-	_last_delivery_day = maxi(0, _int(data.get("last_delivery_day"), 0))
-	var last_id: Variant = data.get("last_delivery_id", "")
-	_last_delivery_id = String(last_id) if last_id is String or last_id is StringName else ""
-	var counts: Variant = data.get("spawn_counts", {})
-	if counts is Dictionary:
-		for key: Variant in counts:
-			var day := _int(key, -1)
-			var count := _int((counts as Dictionary)[key], 0)
-			if day >= 0 and count > 0:
-				_spawn_counts[day] = count
+	CorpseSaveCodec.read_records(data, _records)
+	_next_serial = maxi(1, CorpseSaveCodec.to_int(data.get("next_serial"), 1))
+	_last_delivery_day = maxi(0, CorpseSaveCodec.to_int(data.get("last_delivery_day"), 0))
+	_last_delivery_id = CorpseSaveCodec.read_string(data, "last_delivery_id")
+	CorpseSaveCodec.read_spawn_counts(data, _spawn_counts)
 	for record: CorpseRecord in _records.values():
 		if record.location != CorpseRecord.LOCATION_BURIED:
 			_create_node(record)
@@ -369,11 +333,10 @@ func _on_hour_changed(day: int, hour: int) -> void:
 
 
 func _check_delivery(now_total: int) -> void:
-	var day := _div(now_total, MINUTES_PER_DAY) + 1
+	var day := CorpseDeliveryRules.day_of(now_total)
 	if not is_inside_tree() or day <= _last_delivery_day:
 		return
-	var t := _tables()
-	if t != null and now_total % MINUTES_PER_DAY >= t.delivery_minute:
+	if CorpseDeliveryRules.is_due(now_total, _tables()):
 		_deliver(day, now_total)
 
 
@@ -389,49 +352,17 @@ func _apply_decay(now_total: int) -> void:
 			EventBus.corpse_updated.emit(record.id)
 
 
-## Docs §2.5: freshness = START_FRESHNESS - base_decay_per_hour * decay_mult * hours since
-## arrival (min 0), in one expression from the total-minute difference – no float error adds
-## up over the hourly steps – snapped to the FRESHNESS_RESOLUTION grid. Nothing before
-## last_decay_total (burial stops decay: buried corpses are not decayed any more).
+## Freshness per CorpseDecay.freshness_at. Nothing before last_decay_total (burial stops
+## decay: buried corpses are not decayed any more).
 func _decay_record(record: CorpseRecord, now_total: int) -> bool:
 	if now_total <= record.last_decay_total:
 		return false
-	var minutes := maxi(0, now_total - record.arrival_total_minutes)
-	var value := maxf(0.0, START_FRESHNESS - _decay_per_hour(record) * minutes / float(MINUTES_PER_HOUR))
-	record.freshness = roundf(value * FRESHNESS_RESOLUTION) / FRESHNESS_RESOLUTION
+	record.freshness = CorpseDecay.freshness_at(record, now_total, CorpseDecay.decay_per_hour(record, _tables()))
 	record.last_decay_total = now_total
 	return true
 
 
-func _decay_per_hour(record: CorpseRecord) -> float:
-	var t := _tables()
-	if t == null:
-		return 0.0
-	return t.base_decay_per_hour * float(t.get_cause(record.cause_id).get("decay_mult", 1.0))
-
-
-# --- delivery helpers ---
-
-func _skip_delivery(day: int, reason: String) -> void:
-	GameState.add_stat(STAT_MISSED, 1)
-	GameState.set_flag(FLAG_DELIVERY_SKIPPED, day)
-	EventBus.delivery_skipped.emit(day, reason)
-	EventBus.notification_requested.emit(NOTE_SKIPPED % reason, &"warning")
-
-
-func _free_plot_count() -> int:
-	var graveyard := _first_in_group(GRAVEYARD_GROUP)
-	if graveyard == null or not graveyard.has_method("free_plot_count"):
-		return 0
-	return int(graveyard.call("free_plot_count"))
-
-
-## A graveyard exists and no plot is left for a new corpse – and none ever comes back.
-func _cemetery_full() -> bool:
-	var graveyard := _first_in_group(GRAVEYARD_GROUP)
-	return graveyard != null and graveyard.has_method("free_plot_count") \
-			and int(graveyard.call("free_plot_count")) <= unburied_count()
-
+# --- delivery bookkeeping ---
 
 func _take_spawn_index(day: int) -> int:
 	var index: int = _spawn_counts.get(day, 0)
@@ -492,42 +423,19 @@ func _create_node(record: CorpseRecord, parent: Node = null) -> Node3D:
 	if corpse_scene == null:
 		push_warning("[CorpseManager] corpse scene missing – '%s' has no node" % record.id)
 		return null
-	var instance := corpse_scene.instantiate()
-	var node := instance as Node3D
+	var node := CorpseNodePlacement.instantiate(corpse_scene, record)
 	if node == null:
-		push_warning("[CorpseManager] corpse scene root is no Node3D")
-		instance.free()
 		return null
-	node.name = record.id
-	node.set("corpse_id", record.id)
-	_place(node, parent if parent != null else _container(), _record_transform(record))
+	CorpseNodePlacement.place(node, parent if parent != null else _container(), CorpseNodePlacement.record_transform(record))
 	_nodes[record.id] = node
 	return node
-
-
-## Moves `node` under `target` so that it ends up at the world transform `xform`.
-func _place(node: Node3D, target: Node, xform: Transform3D) -> void:
-	var local := xform
-	var target_3d := target as Node3D
-	if target_3d != null and target_3d.is_inside_tree():
-		local = target_3d.global_transform.affine_inverse() * xform
-	var current := node.get_parent()
-	if current != null and current != target:
-		current.remove_child(node)
-	node.transform = local
-	if node.get_parent() == null:
-		target.add_child(node)
 
 
 func _free_node(id: String) -> void:
 	var node := _node(id)
 	_nodes.erase(id)
-	if node == null:
-		return
-	var parent := node.get_parent()
-	if parent != null:
-		parent.remove_child(node)
-	node.queue_free()
+	if node != null:
+		CorpseNodePlacement.free_node(node)
 
 
 func _container() -> Node:
@@ -554,27 +462,3 @@ func _economy() -> EconomyConfig:
 		economy = EconomyConfig.resolve()
 	return economy
 
-
-static func _record_transform(record: CorpseRecord) -> Transform3D:
-	return Transform3D(Basis(Vector3.UP, record.rot_y), record.position)
-
-
-static func _store_transform(record: CorpseRecord, xform: Transform3D) -> void:
-	record.position = xform.origin
-	record.rot_y = xform.basis.orthonormalized().get_euler().y
-
-
-## int from int / float / numeric String (plain JSON values), else fallback.
-static func _int(v: Variant, fallback: int) -> int:
-	if v is int:
-		return v
-	if v is float:
-		return roundi(v)
-	if v is String and (v as String).is_valid_float():
-		return roundi((v as String).to_float())
-	return fallback
-
-
-@warning_ignore("integer_division")
-static func _div(a: int, b: int) -> int:
-	return a / b

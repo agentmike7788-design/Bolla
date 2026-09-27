@@ -3,18 +3,19 @@ extends Node
 ## File <save_dir>/slot_<n>.json = {"format_version", "meta", "data": JSON.from_native(state)},
 ## state = {autoloads: {TimeManager, GameState}, nodes: {<save_id>: {...}}} from group "saveable".
 ## Handles the quick_save / quick_load actions itself (slot 1). PROCESS_MODE_ALWAYS.
+## Owns the world transition; file IO + validation: SaveFileIO, state gathering: SaveStateCollector.
 
 ## Internal: the world announced itself (EventBus.world_ready) or waiting timed out (null).
 signal _world_arrived(world: Node)
 
 const WORLD_SCENE := "res://src/world/graveyard/graveyard.tscn"
-const FORMAT_VERSION := 1
+const FORMAT_VERSION := SaveFileIO.FORMAT_VERSION
 const DEFAULT_SAVE_DIR := "user://saves"
 const AUTOSAVE_SLOT := 0
 const QUICK_SLOT := 1
-const SAVEABLE_GROUP := &"saveable"
+const SAVEABLE_GROUP := SaveStateCollector.SAVEABLE_GROUP
 ## Autoload states in the save, applied in this order.
-const AUTOLOADS: PackedStringArray = ["TimeManager", "GameState"]
+const AUTOLOADS: PackedStringArray = SaveStateCollector.AUTOLOADS
 const PAUSE_MENU := &"pause"
 const DEFAULT_WORLD_TIMEOUT_SEC := 10.0
 
@@ -87,25 +88,12 @@ func save_game(slot: int) -> Error:
 	if _transition or is_loading:
 		push_warning("[SaveManager] save_game(%d) refused during a scene change" % slot)
 		return ERR_BUSY
-	var err := DirAccess.make_dir_recursive_absolute(save_dir)
+	var err := SaveFileIO.ensure_dir(save_dir)
 	if err != OK:
-		push_warning("[SaveManager] cannot create '%s': %s" % [save_dir, error_string(err)])
 		return err
-	var doc := {"format_version": FORMAT_VERSION, "meta": _make_meta(), "data": JSON.from_native(collect_state())}
-	var path := _slot_path(slot)
-	var tmp_path := path + ".tmp"
-	var file := FileAccess.open(tmp_path, FileAccess.WRITE)
-	if file == null:
-		err = FileAccess.get_open_error()
-		push_warning("[SaveManager] cannot write '%s': %s" % [tmp_path, error_string(err)])
-		return err
-	var written := file.store_string(JSON.stringify(doc, "\t", true, true))
-	file.close()
-	# Write-then-rename: a crash while writing never destroys the previous save.
-	err = DirAccess.rename_absolute(tmp_path, path) if written else ERR_FILE_CANT_WRITE
+	var doc := SaveFileIO.make_doc(SaveFileIO.make_meta(_world_scene_path()), collect_state())
+	err = SaveFileIO.write_doc(save_dir, slot, doc)
 	if err != OK:
-		push_warning("[SaveManager] saving slot %d failed: %s" % [slot, error_string(err)])
-		DirAccess.remove_absolute(tmp_path)
 		return err
 	EventBus.game_saved.emit(slot)
 	return OK
@@ -117,7 +105,7 @@ func load_game(slot: int) -> Error:
 		push_warning("[SaveManager] load_game(%d) ignored – a scene change is already running" % slot)
 		return ERR_BUSY
 	var doc := {}
-	var err := _read_doc(slot, doc)
+	var err := SaveFileIO.read_doc(save_dir, slot, doc)
 	var scene_path := ""
 	if err == OK:
 		scene_path = (doc.meta as Dictionary).scene
@@ -131,7 +119,7 @@ func load_game(slot: int) -> Error:
 	var generation := _generation
 	is_loading = true
 	_begin_transition()
-	_apply_autoloads(state.autoloads)
+	SaveStateCollector.apply_autoloads(get_tree(), state.autoloads)
 	var world := await _change_world(scene_path)
 	if generation != _generation:
 		return ERR_BUSY
@@ -140,8 +128,8 @@ func load_game(slot: int) -> Error:
 		_transition = false
 		_notify(TEXT_WORLD_FAILED)
 		return ERR_TIMEOUT
-	_apply_nodes(state.nodes)
-	_post_load()
+	SaveStateCollector.apply_nodes(get_tree(), state.nodes)
+	SaveStateCollector.post_load(get_tree())
 	is_loading = false
 	_transition = false
 	TimeManager.running = true
@@ -169,19 +157,19 @@ func can_save() -> bool:
 
 
 func has_save(slot: int) -> bool:
-	return slot >= 0 and FileAccess.file_exists(_slot_path(slot))
+	return slot >= 0 and FileAccess.file_exists(SaveFileIO.slot_path(save_dir, slot))
 
 
 func delete_save(slot: int) -> void:
 	if has_save(slot):
-		DirAccess.remove_absolute(_slot_path(slot))
+		DirAccess.remove_absolute(SaveFileIO.slot_path(save_dir, slot))
 
 
 ## {exists, day, minute_of_day, saved_unix, game_version}; exists = readable save of this format.
 func get_slot_info(slot: int) -> Dictionary:
 	var info := {"exists": false, "day": 0, "minute_of_day": 0, "saved_unix": 0, "game_version": ""}
 	var doc := {}
-	if _read_doc(slot, doc, false) != OK:
+	if SaveFileIO.read_doc(save_dir, slot, doc, false) != OK:
 		return info
 	var meta: Dictionary = doc.meta
 	info.exists = true
@@ -196,7 +184,7 @@ func get_slot_info(slot: int) -> Dictionary:
 func newest_slot() -> int:
 	var best := -1
 	var best_time := -1
-	for slot: int in _slots_on_disk():
+	for slot: int in SaveFileIO.slots_on_disk(save_dir):
 		var info := get_slot_info(slot)
 		if not info.exists:
 			continue
@@ -209,28 +197,15 @@ func newest_slot() -> int:
 
 ## Exactly the "data" part of a save file (before JSON.from_native).
 func collect_state() -> Dictionary:
-	var autoloads := {}
-	for autoload_name: String in AUTOLOADS:
-		autoloads[autoload_name] = (_autoload(autoload_name).call("save_state") as Dictionary).duplicate(true)
-	var nodes := {}
-	for node: Node in _saveables():
-		var id := _save_id(node)
-		if nodes.has(id):
-			push_warning("[SaveManager] duplicate save_id '%s' (%s) not saved" % [id, node.get_path()])
-			continue
-		if not node.has_method("save_state"):
-			push_warning("[SaveManager] saveable '%s' has no save_state()" % id)
-			continue
-		nodes[id] = (node.call("save_state") as Dictionary).duplicate(true)
-	return {"autoloads": autoloads, "nodes": nodes}
+	return SaveStateCollector.collect(get_tree())
 
 
 ## Applies a collected state to the current world (no file, no scene change):
 ## autoloads silently, then load_state() by save_order, then post_load() for all.
 func apply_state(data: Dictionary) -> void:
-	_apply_autoloads(_sub_dict(data, "autoloads"))
-	_apply_nodes(_sub_dict(data, "nodes"))
-	_post_load()
+	SaveStateCollector.apply_autoloads(get_tree(), SaveStateCollector.sub_dict(data, "autoloads"))
+	SaveStateCollector.apply_nodes(get_tree(), SaveStateCollector.sub_dict(data, "nodes"))
+	SaveStateCollector.post_load(get_tree())
 
 
 func reset() -> void:
@@ -302,86 +277,6 @@ func _change_world(scene_path: String) -> Node:
 	return world
 
 
-func _apply_autoloads(autoloads: Dictionary) -> void:
-	for autoload_name: String in AUTOLOADS:
-		var data: Variant = autoloads.get(autoload_name)
-		if data is Dictionary:
-			_autoload(autoload_name).call("load_state", data)
-		else:
-			push_warning("[SaveManager] no saved state for autoload %s" % autoload_name)
-	for key: Variant in autoloads:
-		if not String(key) in AUTOLOADS:
-			push_warning("[SaveManager] saved state for unknown autoload '%s' ignored" % key)
-
-
-func _apply_nodes(nodes: Dictionary) -> void:
-	var seen := {}
-	for node: Node in _saveables():
-		var id := _save_id(node)
-		seen[id] = true
-		var data: Variant = nodes.get(id)
-		if not data is Dictionary:
-			push_warning("[SaveManager] no saved state for '%s' – keeps its default state" % id)
-		elif not node.has_method("load_state"):
-			push_warning("[SaveManager] saveable '%s' has no load_state()" % id)
-		else:
-			node.call("load_state", data)
-	for key: Variant in nodes:
-		if not seen.has(String(key)):
-			push_warning("[SaveManager] saved state for unknown save_id '%s' ignored" % key)
-
-
-func _post_load() -> void:
-	for node: Node in _saveables():
-		if node.has_method("post_load"):
-			node.call("post_load")
-
-
-## Saveable nodes with a save_id, sorted by save_order, then save_id, then tree order.
-func _saveables() -> Array[Node]:
-	var out: Array[Node] = []
-	var tree_index := {}
-	for node: Node in get_tree().get_nodes_in_group(SAVEABLE_GROUP):
-		if node.is_queued_for_deletion():
-			continue
-		if _save_id(node) == "":
-			push_warning("[SaveManager] saveable %s has no save_id – skipped" % node.get_path())
-			continue
-		tree_index[node] = out.size()
-		out.append(node)
-	out.sort_custom(func(a: Node, b: Node) -> bool:
-		if _save_order(a) != _save_order(b):
-			return _save_order(a) < _save_order(b)
-		if _save_id(a) != _save_id(b):
-			return _save_id(a) < _save_id(b)
-		return int(tree_index[a]) < int(tree_index[b]))
-	return out
-
-
-func _save_id(node: Node) -> String:
-	var id: Variant = node.get("save_id")
-	return String(id) if id is String or id is StringName else ""
-
-
-func _save_order(node: Node) -> int:
-	var order: Variant = node.get("save_order")
-	return int(order) if order is int or order is float else 0
-
-
-func _autoload(autoload_name: String) -> Node:
-	return get_tree().root.get_node(autoload_name)
-
-
-func _make_meta() -> Dictionary:
-	return {
-		"game_version": str(ProjectSettings.get_setting("application/config/version", "")),
-		"day": TimeManager.day,
-		"minute_of_day": TimeManager.minute_of_day,
-		"saved_unix": int(Time.get_unix_time_from_system()),
-		"scene": _world_scene_path(),
-	}
-
-
 func _world_scene_path() -> String:
 	if is_instance_valid(_world) and _world.scene_file_path != "":
 		return _world.scene_file_path
@@ -389,87 +284,6 @@ func _world_scene_path() -> String:
 	if scene != null and scene.scene_file_path != "":
 		return scene.scene_file_path
 	return WORLD_SCENE
-
-
-func _slot_path(slot: int) -> String:
-	return save_dir.path_join("slot_%d.json" % slot)
-
-
-## Slot numbers of files named slot_<n>.json in save_dir.
-func _slots_on_disk() -> Array[int]:
-	var out: Array[int] = []
-	if not DirAccess.dir_exists_absolute(save_dir):
-		return out
-	for file_name: String in DirAccess.get_files_at(save_dir):
-		if not (file_name.begins_with("slot_") and file_name.ends_with(".json")):
-			continue
-		var number := file_name.trim_prefix("slot_").trim_suffix(".json")
-		if number.is_valid_int() and str(int(number)) == number and int(number) >= 0:
-			out.append(int(number))
-	return out
-
-
-## Reads and validates a save file into out = {meta, state}. decode_data=false skips "data".
-func _read_doc(slot: int, out: Dictionary, decode_data: bool = true) -> Error:
-	if slot < 0:
-		return ERR_INVALID_PARAMETER
-	var path := _slot_path(slot)
-	if not FileAccess.file_exists(path):
-		return ERR_FILE_NOT_FOUND
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return FileAccess.get_open_error()
-	var json := JSON.new()
-	if json.parse(file.get_as_text()) != OK or not json.data is Dictionary:
-		return ERR_PARSE_ERROR
-	var doc: Dictionary = json.data
-	var version: Variant = doc.get("format_version")
-	if not (version is float or version is int) or float(version) != FORMAT_VERSION:
-		return ERR_FILE_UNRECOGNIZED
-	if not _is_valid_meta(doc.get("meta")):
-		return ERR_FILE_CORRUPT
-	out["meta"] = doc.meta
-	if decode_data:
-		var state := _decode_state(doc.get("data"))
-		if state.is_empty():
-			return ERR_FILE_CORRUPT
-		out["state"] = state
-	return OK
-
-
-func _is_valid_meta(meta: Variant) -> bool:
-	if not meta is Dictionary:
-		return false
-	var m: Dictionary = meta
-	for key: String in ["day", "minute_of_day", "saved_unix"]:
-		if not (m.get(key) is float or m.get(key) is int):
-			return false
-	return m.get("scene") is String and m.get("game_version") is String
-
-
-## JSON.to_native of the "data" part (never objects); {} unless it yields {autoloads, nodes}.
-func _decode_state(data: Variant) -> Dictionary:
-	# JSON.to_native logs engine errors on malformed input – check the envelope first.
-	if not data is Dictionary:
-		return {}
-	var envelope: Dictionary = data
-	if envelope.get("type") != "Dictionary" or not envelope.get("args") is Array or (envelope.args as Array).size() % 2 != 0:
-		return {}
-	var state: Variant = JSON.to_native(envelope, false)
-	if not state is Dictionary:
-		return {}
-	var d: Dictionary = state
-	if not d.get("autoloads") is Dictionary or not d.get("nodes") is Dictionary:
-		return {}
-	return d
-
-
-func _sub_dict(data: Dictionary, key: String) -> Dictionary:
-	var value: Variant = data.get(key, {})
-	if value is Dictionary:
-		return value
-	push_warning("[SaveManager] state part '%s' is not a Dictionary" % key)
-	return {}
 
 
 func _notify(text: String, kind: StringName = &"warning") -> void:
