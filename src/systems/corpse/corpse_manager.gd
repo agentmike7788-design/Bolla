@@ -1,9 +1,10 @@
 class_name CorpseManager
 extends Node
 ## Owns all CorpseRecords and their nodes (WorldRoot/Systems/CorpseManager).
-## Groups corpse_manager + saveable. Delivers the daily corpse (docs §2.5) on time_tick /
-## time_skipped – a corpse delivered inside a skip arrived at the delivery minute – and applies
-## decay on hour_changed / time_skipped as a function of the minutes since arrival.
+## Groups corpse_manager + saveable. Delivers the day's corpses (docs §2.5, Phase 3 §2.7: up
+## to ReputationRules.deliveries_on per day, one free bier each) on time_tick / time_skipped –
+## a corpse delivered inside a skip arrived at the delivery minute – and applies decay on
+## hour_changed / time_skipped as a function of the minutes since arrival.
 ## _ready only wires signals and data – corpses appear via delivery, spawn_corpse or load_state.
 
 const GROUP := &"corpse_manager"
@@ -11,11 +12,14 @@ const SAVEABLE_GROUP := &"saveable"
 const PLAYER_GROUP := &"player"
 const DROPOFF_GROUP := &"dropoff"
 const GRAVEYARD_GROUP := &"graveyard"
+const REPUTATION_GROUP := &"reputation"
+const EVENT_MISSED_DELIVERY := &"missed_delivery"
+const REASON_MISSED := "Lieferung verpasst"
+const REASON_VALUABLES := "Wertsachen genommen"
 const DEFAULT_CORPSE_SCENE := "res://src/entities/corpse/corpse.tscn"
 const ID_FORMAT := "corpse_%04d"
 const SHROUD_ITEM := &"shroud"
 const COIN_ITEM := &"coin"
-const FLAG_SLICE_COMPLETE := &"slice_complete"
 const FLAG_DELIVERY_SKIPPED := CorpseDeliveryRules.FLAG_DELIVERY_SKIPPED
 const STAT_MISSED := CorpseDeliveryRules.STAT_MISSED
 const STAT_VALUABLES_TAKEN := &"valuables_taken"
@@ -44,15 +48,17 @@ const NOTE_SKIPPED := CorpseDeliveryRules.NOTE_SKIPPED
 var tables: CorpseTables
 ## Reputation cost of taken valuables and the freshness stages; null = EconomyConfig.resolve().
 var economy: EconomyConfig
+## Deliveries per tier; null = Database.config(&"reputation_config").
+var reputation_config: ReputationConfig
 
 ## id -> record, in spawn order.
 var _records: Dictionary[String, CorpseRecord] = {}
 ## id -> corpse node (only for corpses that are not buried).
 var _nodes: Dictionary[String, Node3D] = {}
 var _next_serial: int = 1
-## Last day a delivery was attempted (0 = never) and the corpse it brought ("" = skipped).
+## Last day a delivery was attempted (0 = never) and the corpses it brought (empty = none).
 var _last_delivery_day: int = 0
-var _last_delivery_id: String = ""
+var _last_delivery_ids: Array[String] = []
 ## day -> number of corpses generated that day (spawn index of the next one).
 var _spawn_counts: Dictionary[int, int] = {}
 ## The player carrying a corpse (from pick_up / post_load).
@@ -86,50 +92,88 @@ func get_corpse_node(id: String) -> Corpse:
 	return _node(id) as Corpse
 
 
-## Docs §2.5: once per day; needs a free dropoff and more free plots than unburied corpses,
-## never after slice_complete. Repeated calls for the same day return that day's corpse.
-## Returns null when skipped.
+## Docs §2.5 / Phase 3 §2.7: once per day; each corpse needs a free dropoff and more free plots
+## than unburied corpses. Repeated calls for the same day return that day's first corpse.
+## Returns null when nothing was delivered (or for a day before the last delivery day).
 func try_daily_delivery(day: int) -> CorpseRecord:
-	return _deliver(day, TimeManager.total_minutes())
+	_deliver(day, TimeManager.total_minutes())
+	if day != _last_delivery_day:
+		return null
+	var list := deliveries_of(day)
+	return list[0] if not list.is_empty() else null
+
+
+## The corpses delivered on `day` (up to deliveries_due(day)), in delivery order. Exact for the
+## last delivery day; for earlier days the corpses generated for that day (seed of one of its
+## spawn indices – a debug spawn of that day counts as well).
+func deliveries_of(day: int) -> Array[CorpseRecord]:
+	var out: Array[CorpseRecord] = []
+	if day <= 0 or day > _last_delivery_day:
+		return out
+	if day == _last_delivery_day:
+		for id: String in _last_delivery_ids:
+			var record := get_record(id)
+			if record != null:
+				out.append(record)
+		return out
+	var seeds := {}
+	for index: int in _spawn_counts.get(day, 0):
+		seeds[CorpseGenerator.seed_for(day, index)] = true
+	for record: CorpseRecord in _records.values():
+		if seeds.has(record.seed):
+			out.append(record)
+	return out
+
+
+## Corpses the carter brings on `day`: ReputationRules.deliveries_on(day, tier) with the tier of
+## the node in group "reputation" (0 on even days while disreputable); 1 without that node.
+func deliveries_due(day: int) -> int:
+	var rep := _reputation()
+	if rep == null:
+		return 1
+	return maxi(0, ReputationRules.deliveries_on(day, rep.tier(), _reputation_config()))
 
 
 ## try_daily_delivery checked at world time `now_total` (the time of the triggering signal).
-## The corpse arrived at the day's delivery minute – also when the check runs later, inside a
-## skip (rest, timed action) – but never after now, and has decayed since then.
+## The corpses arrived at the day's delivery minute – also when the check runs later, inside a
+## skip (rest, timed action) – but never after now, and have decayed since then.
 ## When every remaining EMPTY/DUG plot is already reserved by a corpse waiting for burial, the
-## cemetery is full for good (graves are never emptied again): the carter brings nothing more,
-## which is no missed delivery. Only an occupied bier counts as a missed delivery.
-## STUB (P1) – Phase 3 §3.4: the corpses delivered on `day` (up to ReputationRules.deliveries_on).
-func deliveries_of(_day: int) -> Array[CorpseRecord]:
-	return []
-
-
-func _deliver(day: int, now_total: int) -> CorpseRecord:
+## cemetery is full for good (graves are never emptied again; LOCKED plots never count): the
+## carter brings nothing more, which is no missed delivery. No delivery due (disreputable on an
+## even day) is quiet as well. Only a missing free bier is a missed delivery: once per day,
+## missed_deliveries += the corpses left over, reputation event missed_delivery.
+func _deliver(day: int, now_total: int) -> void:
 	if day <= _last_delivery_day:
-		return get_record(_last_delivery_id) if day == _last_delivery_day else null
+		return
 	_last_delivery_day = day
-	_last_delivery_id = ""
-	if GameState.has_flag(FLAG_SLICE_COMPLETE):
-		return null
+	_last_delivery_ids.clear()
 	var t := _tables()
 	if t == null:
 		push_warning("[CorpseManager] delivery on day %d without corpse tables" % day)
-		return null
+		return
+	var due := deliveries_due(day)
 	var graveyard := _first_in_group(GRAVEYARD_GROUP)
-	if CorpseDeliveryRules.is_cemetery_full(graveyard, unburied_count()):
-		return null
-	var dropoff := _first_in_group(DROPOFF_GROUP)
-	var reason := CorpseDeliveryRules.blocked_reason(dropoff, graveyard, unburied_count(), DROPOFF_GROUP)
-	if reason != "":
-		CorpseDeliveryRules.report_skip(day, reason)
-		return null
-	var at := CorpseDeliveryRules.slot_transform(dropoff)
-	var record := CorpseGenerator.generate(CorpseGenerator.seed_for(day, _take_spawn_index(day)), t, day)
-	var arrival := CorpseDeliveryRules.arrival_total(day, now_total, t)
-	record = _spawn(record, at, CorpseRecord.LOCATION_DROPOFF, arrival, now_total)
-	if record != null:
-		_last_delivery_id = record.id
-	return record
+	var dropoffs: Array[Node] = []
+	if is_inside_tree():
+		dropoffs = get_tree().get_nodes_in_group(DROPOFF_GROUP)
+	for i: int in due:
+		if CorpseDeliveryRules.is_cemetery_full(graveyard, unburied_count()):
+			return
+		var free := CorpseDeliveryRules.free_dropoffs(dropoffs)
+		var dropoff: Node = free[0] if not free.is_empty() else (dropoffs[0] if not dropoffs.is_empty() else null)
+		var reason := CorpseDeliveryRules.blocked_reason(dropoff, graveyard, unburied_count(), DROPOFF_GROUP)
+		if reason != "":
+			CorpseDeliveryRules.report_skip(day, reason, due - i)
+			var rep := _reputation()
+			if reason == REASON_OCCUPIED and rep != null:
+				rep.event(EVENT_MISSED_DELIVERY, REASON_MISSED)
+			return
+		var at := CorpseDeliveryRules.slot_transform(dropoff)
+		var record := CorpseGenerator.generate(CorpseGenerator.seed_for(day, _take_spawn_index(day)), t, day)
+		var arrival := CorpseDeliveryRules.arrival_total(day, now_total, t)
+		record = _spawn(record, at, CorpseRecord.LOCATION_DROPOFF, arrival, now_total)
+		if record != null:
+			_last_delivery_ids.append(record.id)
 
 
 ## Adds a corpse at `at` (world transform). record null = generated for TimeManager.day
@@ -246,7 +290,11 @@ func decide_valuables(id: String, take: bool, inv: Inventory) -> void:
 			return
 		inv.add_item(COIN_ITEM, record.valuables_coins)
 		GameState.add_stat(STAT_VALUABLES_TAKEN, 1)
-		GameState.add_stat(STAT_REPUTATION, _economy().valuables_reputation)
+		var rep := _reputation()
+		if rep != null:
+			rep.change(_economy().valuables_reputation, REASON_VALUABLES)
+		else:
+			GameState.add_stat(STAT_REPUTATION, _economy().valuables_reputation)
 		record.valuables_decision = CorpseRecord.DECISION_TAKEN
 	else:
 		record.valuables_decision = CorpseRecord.DECISION_LEFT
@@ -280,7 +328,7 @@ func unburied_count() -> int:
 
 
 func save_state() -> Dictionary:
-	return CorpseSaveCodec.write(_records, _next_serial, _last_delivery_day, _last_delivery_id, _spawn_counts)
+	return CorpseSaveCodec.write(_records, _next_serial, _last_delivery_day, _last_delivery_ids, _spawn_counts)
 
 
 ## Replaces everything: old nodes are freed, nodes of all non-buried corpses are recreated
@@ -296,7 +344,7 @@ func load_state(data: Dictionary) -> void:
 	CorpseSaveCodec.read_records(data, _records)
 	_next_serial = maxi(1, CorpseSaveCodec.to_int(data.get("next_serial"), 1))
 	_last_delivery_day = maxi(0, CorpseSaveCodec.to_int(data.get("last_delivery_day"), 0))
-	_last_delivery_id = CorpseSaveCodec.read_string(data, "last_delivery_id")
+	_last_delivery_ids = CorpseSaveCodec.read_delivery_ids(data)
 	CorpseSaveCodec.read_spawn_counts(data, _spawn_counts)
 	for record: CorpseRecord in _records.values():
 		if record.location != CorpseRecord.LOCATION_BURIED:
@@ -455,6 +503,18 @@ func _container() -> Node:
 
 func _first_in_group(group: StringName) -> Node:
 	return get_tree().get_first_node_in_group(group) if is_inside_tree() else null
+
+
+func _reputation() -> Reputation:
+	return _first_in_group(REPUTATION_GROUP) as Reputation
+
+
+func _reputation_config() -> ReputationConfig:
+	if reputation_config == null:
+		reputation_config = Database.config(&"reputation_config") as ReputationConfig
+		if reputation_config == null:
+			reputation_config = ReputationConfig.new()
+	return reputation_config
 
 
 func _tables() -> CorpseTables:

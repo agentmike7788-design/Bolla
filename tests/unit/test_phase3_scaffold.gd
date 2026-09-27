@@ -27,6 +27,8 @@ const STUBS := {
 	"res://src/systems/save/save_migration.gd": "SaveMigration",
 	"res://src/entities/notice_board/notice_board.gd": "NoticeBoard",
 }
+## Stub classes whose owner has filled them in (W1) – no "## STUB (" marker any more.
+const IMPLEMENTED: Array[String] = ["ExpansionManager", "ClearableObstacle"]  # P1
 ## Contract methods per stub class (§3.4) – a rename breaks this list.
 const METHODS := {
 	"ExpansionManager": ["sections", "is_unlocked", "unlocked_indices", "block_reason", "is_cleared", "obstacle_ids",
@@ -92,7 +94,8 @@ func test_stub_scripts_load_with_their_class_names() -> void:
 		assert_true(script.can_instantiate(), path + " parses")
 		var cls: String = STUBS[path]
 		assert_eq(global.get(cls), path, "class_name %s → %s" % [cls, path])
-		assert_true(script.source_code.contains("## STUB ("), cls + " is marked as stub")
+		if not cls in IMPLEMENTED:
+			assert_true(script.source_code.contains("## STUB ("), cls + " is marked as stub")
 		var names := {}
 		for m: Dictionary in script.get_script_method_list():
 			names[String(m.name)] = true

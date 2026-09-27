@@ -2,10 +2,12 @@ class_name GravePlot
 extends Node3D
 ## One grave place (group grave_plot). Visual follows the GraveRecord state (grave_state_changed):
 ## EMPTY staked plot · DUG open pit · FILLED fresh mound · MARKED mound + marker at the head (−Z)
-## · OLD (is_old) the layout's stone + mound, no interaction.
+## · OLD (is_old) the layout's stone + mound, no interaction · LOCKED (section not yet unlocked,
+## Phase 3) nothing: no visual, no collision, no prompt.
 ## Interaction: dig (EMPTY, free hands) → bury (DUG, carrying) → place marker (FILLED, free
-## hands; a choice panel when both marker types are in the inventory). The Graveyard owns the
-## records; this node only starts the timed actions and calls it.
+## hands; a choice panel when both marker types are in the inventory) → upgrade the marker
+## (MARKED with a wooden cross and a better marker in the inventory, Phase 3). The Graveyard
+## owns the records; this node only starts the timed actions and calls it.
 ## Optional child "Collision" (StaticBody3D, added by the world builder): its shapes carry the
 ## meta "role" (pit, mound, marker:<id>, old) and are enabled for the matching state
 ## (visual and colliders: grave_plot_visuals.gd).
@@ -34,15 +36,17 @@ const PROMPT_MARKER_CHOICE := "[E] Grabzeichen setzen (%d Min)"
 const PROMPT_NO_MARKER := "Kein Grabzeichen – Werkbank"
 const PROMPT_CORPSE_HERE := "Hier liegt eine Leiche – erst wegtragen"
 const PROMPT_INFO := "Grab von %s – Qualität %d/%d"
+const PROMPT_UPGRADE := "[E] %s statt %s setzen (%d Min)"
 const LABEL_DIG := "Grab ausheben"
 const LABEL_BURY := "Bestatten"
 const LABEL_MARKER := "%s setzen"
+const LABEL_UPGRADE := "%s statt %s setzen"
 const TEXT_CANNOT_MARK := "Das Grabzeichen kann hier nicht gesetzt werden."
 const NAME_UNKNOWN := "Unbekannt"
 
 @export var grave_id: String = ""
 @export var is_old: bool = false
-## Phase 3 – STUB (P1): section of this plot; plots of a locked section are LOCKED
+## Phase 3: section of this plot; plots of a locked section are LOCKED
 ## (no visuals, no collision, no prompt).
 @export var section_id: StringName = &"yard"
 @export_group("Old grave")
@@ -89,6 +93,7 @@ func _init() -> void:
 
 func _ready() -> void:
 	EventBus.grave_state_changed.connect(_on_grave_state_changed)
+	EventBus.grave_quality_changed.connect(_on_grave_quality_changed)
 	if is_old:
 		state = GraveRecord.State.OLD
 		if interactable != null:
@@ -114,6 +119,8 @@ func can_interact(player: Player) -> bool:
 			return _is_carrying(player)
 		GraveRecord.State.FILLED:
 			return not _is_carrying(player) and not available_markers(player.inventory).is_empty()
+		GraveRecord.State.MARKED:
+			return not _is_carrying(player) and upgrade_marker_id(player.inventory) != &""
 	return false
 
 
@@ -143,6 +150,9 @@ func get_interaction_prompt(player: Player) -> String:
 				return PROMPT_MARKER_ONE % [_item_name(options[0]), _actions(player).marker_minutes]
 			return PROMPT_MARKER_CHOICE % _actions(player).marker_minutes
 		GraveRecord.State.MARKED:
+			var better := upgrade_marker_id(player.inventory if player != null else null)
+			if better != &"" and not carrying:
+				return PROMPT_UPGRADE % [_item_name(better), _item_name(grave.marker_id), _actions(player).marker_minutes]
 			return PROMPT_INFO % [_buried_name(grave), grave.quality, _economy().quality_max]
 	return ""
 
@@ -164,6 +174,10 @@ func interact(player: Player) -> void:
 			else:
 				_player = player
 				EventBus.ui_panel_requested.emit(MARKER_PANEL, {"grave_id": grave_id, "plot": self, "options": options})
+		GraveRecord.State.MARKED:
+			var better := upgrade_marker_id(player.inventory)
+			player.start_timed_action(LABEL_UPGRADE % [_item_name(better), _item_name(grave.marker_id)], actions.marker_minutes,
+					_finish_upgrade.bind(better, player.inventory), true, ANIM_MARKER)
 
 
 ## Marker-choice panel: places `id` (timed, not cancellable) for the player who asked.
@@ -186,6 +200,15 @@ func available_markers(inv: Inventory) -> Array[StringName]:
 		if inv.has(id):
 			out.append(id)
 	return out
+
+
+## The best marker in `inv` that upgrades this MARKED grave (Graveyard.upgrade_options), &"" = none.
+func upgrade_marker_id(inv: Inventory) -> StringName:
+	var graveyard := _graveyard()
+	if graveyard == null or inv == null:
+		return &""
+	var options := graveyard.upgrade_options(grave_id, inv)
+	return options.back() if not options.is_empty() else &""
 
 
 func _start_marker(player: Player, id: StringName, cancellable: bool) -> void:
@@ -249,6 +272,12 @@ func _exit_is_free(player: Player, spot: Vector3) -> bool:
 	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
 
 
+func _finish_upgrade(id: StringName, inv: Inventory) -> void:
+	var graveyard := _graveyard()
+	if graveyard != null and graveyard.upgrade_marker(grave_id, id, inv) <= 0:
+		EventBus.notification_requested.emit(TEXT_CANNOT_MARK, &"warning")
+
+
 # --- visuals & collision ------------------------------------------------------------------
 
 func _on_grave_state_changed(id: String, new_state: int) -> void:
@@ -260,8 +289,22 @@ func _on_grave_state_changed(id: String, new_state: int) -> void:
 	_apply_visual()
 
 
+## Marker upgrade: same state, new marker model.
+func _on_grave_quality_changed(id: String, _quality: int) -> void:
+	if id != grave_id or is_old:
+		return
+	var grave := _grave()
+	marker_id = grave.marker_id if grave != null else marker_id
+	_apply_visual()
+
+
+## Visual + colliders; a LOCKED plot also switches its Interactable off.
 func _apply_visual() -> void:
 	_visuals.apply()
+	if interactable != null and not is_old:
+		var open := state != GraveRecord.State.LOCKED
+		interactable.enabled = open
+		interactable.set_deferred(&"monitorable", open)
 
 
 ## Shapes that are active for the current state (for tests / debugging).

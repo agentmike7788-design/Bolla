@@ -53,21 +53,27 @@ static func compute(corpse: CorpseRecord, marker_id: StringName, config: Economy
 
 ## base_payment(cause) + floor(quality * payment_per_quality), never negative.
 static func payment(corpse: CorpseRecord, quality: int, tables: CorpseTables, config: EconomyConfig) -> int:
+	return int(payment_parts(corpse, quality, tables, config, &"", null).total)
+
+
+## Phase 3 §2.6: {base, quality, reputation, total} – base_payment(cause), floor(quality ×
+## payment_per_quality), ReputationRules.pay_bonus of `rep_tier` (0 without tier or config);
+## total = their sum, never < 0.
+static func payment_parts(corpse: CorpseRecord, quality: int, tables: CorpseTables, config: EconomyConfig, rep_tier: StringName, rep: ReputationConfig) -> Dictionary:
 	var cfg := _config(config)
 	var base := 0
 	if corpse != null and tables != null:
 		base = int(tables.get_cause(corpse.cause_id).get("base_payment", 0))
 	elif tables == null:
 		push_warning("[GraveQuality] payment without CorpseTables – no base payment")
-	return maxi(0, base + floori(quality * cfg.payment_per_quality))
+	var from_quality := floori(quality * cfg.payment_per_quality)
+	var bonus := 0
+	if rep != null and rep_tier != &"":
+		bonus = ReputationRules.pay_bonus(rep_tier, rep)
+	return {"base": base, "quality": from_quality, "reputation": bonus, "total": maxi(0, base + from_quality + bonus)}
 
 
 ## Display name of a grave marker item ("Holzkreuz", "Grabstein").
-## STUB (P1) – Phase 3 §2.6: {base, quality, reputation, total}; total never < 0.
-static func payment_parts(_corpse: CorpseRecord, _quality: int, _tables: CorpseTables, _config: EconomyConfig, _rep_tier: StringName, _rep: ReputationConfig) -> Dictionary:
-	return {}
-
-
 static func _marker_label(marker_id: StringName) -> String:
 	if Database.has_item(marker_id):
 		var item := Database.item(marker_id) as ItemData
