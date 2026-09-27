@@ -2,7 +2,8 @@ class_name RewardCard
 extends PanelContainer
 ## Parchment card shown on EventBus.grave_completed: the quality breakdown, the final
 ## quality and – from the payment_received that follows – the coins paid. Fades out
-## after `show_seconds`.
+## after `show_seconds`. Never drawn over a modal panel/dialogue: while UIState has a modal
+## open the card is held back (hidden) and shown for its full time once it closes.
 
 const TEXT_TITLE := "Grab vollendet"
 const TEXT_QUALITY := "Qualität"
@@ -25,6 +26,8 @@ var _payment: Label
 var _tween: Tween
 ## True between grave_completed and the payment that belongs to it.
 var _awaiting_payment: bool = false
+## True while a card is waiting for an open modal to close.
+var _held: bool = false
 
 
 func _init() -> void:
@@ -62,6 +65,7 @@ func _ready() -> void:
 	custom_minimum_size.x = card_width
 	EventBus.grave_completed.connect(_on_grave_completed)
 	EventBus.payment_received.connect(_on_payment_received)
+	EventBus.ui_modal_changed.connect(_on_ui_modal_changed)
 
 
 ## Shows the card for one completed grave (breakdown = [{label, points}]).
@@ -92,7 +96,12 @@ func set_payment(amount: int) -> void:
 
 ## True while the card waits for the payment of the grave it shows.
 func is_awaiting_payment() -> bool:
-	return visible and _awaiting_payment
+	return (visible or _held) and _awaiting_payment
+
+
+## True while a card waits (hidden) for an open modal to close.
+func is_held() -> bool:
+	return _held
 
 
 func line_texts() -> PackedStringArray:
@@ -118,6 +127,10 @@ func payment_text() -> String:
 func _restart() -> void:
 	if _tween != null and _tween.is_valid():
 		_tween.kill()
+	if UIState.is_modal():
+		_hold()
+		return
+	_held = false
 	visible = true
 	modulate.a = 1.0
 	_tween = create_tween()
@@ -126,9 +139,27 @@ func _restart() -> void:
 	_tween.tween_callback(_hide_card)
 
 
+## Hidden until the modal closes; the display time starts again afterwards.
+func _hold() -> void:
+	if _tween != null and _tween.is_valid():
+		_tween.kill()
+	_held = true
+	visible = false
+
+
 func _hide_card() -> void:
 	visible = false
+	_held = false
 	_awaiting_payment = false
+
+
+func _on_ui_modal_changed(open: bool) -> void:
+	if not is_inside_tree():
+		return
+	if open and visible:
+		_hold()
+	elif not open and _held and not UIState.is_modal():
+		_restart()
 
 
 func _on_grave_completed(_grave_id: String, corpse_id: String, quality: int, breakdown: Array) -> void:

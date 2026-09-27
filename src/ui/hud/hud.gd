@@ -1,7 +1,8 @@
 class_name GameHud
 extends Control
 ## Permanent HUD (docs §7): day + clock + sun/moon, objective line, delivery notice,
-## resources (coins/wood/stone/linen + crafted items when > 0), cemetery quality,
+## resources (coins/wood/stone/linen + crafted items when > 0, crafted ones with a name
+## caption so linen and shroud never look alike), cemetery quality,
 ## interaction prompt (dimmed when disabled) and the timed-action bar.
 ## Notifications and the reward card are separate overlay nodes (NotificationStack,
 ## RewardCard). Updates from EventBus + inventory.changed; refresh_all() pulls
@@ -14,11 +15,13 @@ const FLAG_DELIVERY_SKIPPED := &"delivery_skipped"
 const KEY_INTERACT := "E"
 const KEY_PREFIX := "[E]"
 const TEXT_DAY := "Tag %d"
-const TEXT_QUALITY_CAPTION := "Friedhof"
+## Same term as the day / slice summaries and the debug console.
+const TEXT_QUALITY_CAPTION := "Friedhofsqualität"
 const TEXT_QUALITY := "%d · %s"
 const TEXT_NEXT_TIER := "%s ab %d"
-const TEXT_NOTICE := "Heute keine Lieferung: %s"
-const TEXT_NOTICE_UNKNOWN := "Heute keine Lieferung – die Bahre war belegt oder kein Grab frei."
+## Same wording as CorpseManager's notification for the same skip.
+const TEXT_NOTICE := "Heute keine Leiche: %s"
+const TEXT_NOTICE_UNKNOWN := "Heute keine Leiche – die Bahre war belegt oder kein Grab frei."
 const TEXT_ACTION_RUNNING := "%s …"
 
 @export var margin: float = 28.0
@@ -31,6 +34,7 @@ var day_label: Label
 var day_icon: DayIcon
 var objective_label: Label
 var notice_label: Label
+var quality_caption: Label
 var quality_label: Label
 var next_tier_label: Label
 var prompt_panel: PanelContainer
@@ -40,7 +44,7 @@ var action_panel: PanelContainer
 var action_label: Label
 var action_bar: ProgressBar
 
-## item id -> {chip: Control, count: Label}
+## item id -> {chip: Control, count: Label, caption: Label (crafted items only)}
 var _chips: Dictionary[StringName, Dictionary] = {}
 var _inventory: Inventory
 var _prompt_text: String = ""
@@ -165,6 +169,19 @@ func resource_text(id: StringName) -> String:
 	return (_chips[id].count as Label).text if chip.visible else ""
 
 
+## Caption in front of the cemetery quality value.
+func quality_caption_text() -> String:
+	return quality_caption.text
+
+
+## Name caption under a chip ("" when the chip is hidden or has none).
+func resource_caption(id: StringName) -> String:
+	if not _chips.has(id) or not (_chips[id].chip as Control).visible:
+		return ""
+	var caption: Label = _chips[id].get("caption")
+	return caption.text if caption != null and caption.visible else ""
+
+
 func action_visible() -> bool:
 	return action_panel.visible
 
@@ -235,12 +252,27 @@ func _build_resource_panel() -> void:
 		var count := UIKit.label("0", &"HudLabel")
 		count.custom_minimum_size.x = 26.0
 		chip.add_child(count)
-		chips.add_child(chip)
-		chip.visible = id in BASE_ITEMS
-		_chips[id] = {"chip": chip, "count": count}
+		var entry := {"chip": chip, "count": count}
+		if not id in BASE_ITEMS:
+			# Crafted items: their name under the icon (shroud and linen look alike).
+			var column := UIKit.vbox(0)
+			column.mouse_filter = Control.MOUSE_FILTER_PASS
+			column.tooltip_text = chip.tooltip_text
+			column.add_child(chip)
+			var caption := UIKit.label(UIKit.item_name(id), &"HudCaptionLabel")
+			caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			column.add_child(caption)
+			entry = {"chip": column, "count": count, "caption": caption}
+		var holder: Control = entry.chip
+		# Top-aligned, so captioned and plain chips keep their icons on one line.
+		holder.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		chips.add_child(holder)
+		holder.visible = id in BASE_ITEMS
+		_chips[id] = entry
 	var quality_row := UIKit.hbox(10)
 	quality_row.alignment = BoxContainer.ALIGNMENT_END
-	quality_row.add_child(UIKit.label(TEXT_QUALITY_CAPTION, &"HudDimLabel"))
+	quality_caption = UIKit.label(TEXT_QUALITY_CAPTION, &"HudDimLabel")
+	quality_row.add_child(quality_caption)
 	quality_label = UIKit.label("", &"HudLabel")
 	quality_row.add_child(quality_label)
 	next_tier_label = UIKit.label("", &"HudDimLabel")

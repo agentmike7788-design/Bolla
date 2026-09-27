@@ -28,6 +28,8 @@ var _list: VBoxContainer
 var _inventory: Inventory
 ## recipe id -> {button: Button, reason: Label}
 var _rows: Dictionary[StringName, Dictionary] = {}
+## Recipe whose button had keyboard focus last (&"" = none since opening).
+var _focus_recipe: StringName = &""
 
 
 func _build() -> void:
@@ -47,6 +49,7 @@ func _build() -> void:
 
 
 func _on_opened() -> void:
+	_focus_recipe = &""
 	_inventory = _player_inventory()
 	if _inventory != null:
 		_inventory.changed.connect(refresh)
@@ -59,6 +62,11 @@ func _on_closed() -> void:
 
 
 func _refresh() -> void:
+	# The rows are rebuilt: remember which recipe's button had keyboard focus.
+	for id: StringName in _rows:
+		var old_button: Button = _rows[id].button
+		if is_instance_valid(old_button) and old_button.has_focus():
+			_focus_recipe = id
 	UIKit.clear_children(_list)
 	_rows.clear()
 	var recipes := Database.recipes(_station())
@@ -78,6 +86,16 @@ func _refresh() -> void:
 		var recipe := res as RecipeData
 		if recipe != null:
 			_list.add_child(_make_row(recipe))
+
+
+## After a rebuild (craft, inventory change) focus returns to the recipe used last, if it
+## can still be crafted; otherwise the first enabled button.
+func focus_default() -> void:
+	var again := craft_button(_focus_recipe)
+	if again != null and not again.disabled and again.is_visible_in_tree():
+		again.grab_focus()
+		return
+	super.focus_default()
 
 
 ## Why `recipe` cannot be crafted right now ("" = it can).
@@ -181,6 +199,7 @@ func _station() -> StringName:
 
 
 func _on_craft_pressed(recipe_id: StringName) -> void:
+	_focus_recipe = recipe_id
 	var recipe := Database.recipe(recipe_id) as RecipeData
 	if recipe == null or block_reason(recipe) != "":
 		return
