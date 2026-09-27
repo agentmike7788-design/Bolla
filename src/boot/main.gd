@@ -1,8 +1,8 @@
 extends Node
 ## Boot scene: prints version info, then hands over to the start scene.
 
-## Phase 1: the art-direction prototype. Later: title screen.
-@export_file("*.tscn") var start_scene: String = "res://src/world/art_prototype/art_prototype.tscn"
+## Title screen (Fortsetzen / Neues Spiel / Beenden).
+@export_file("*.tscn") var start_scene: String = "res://src/ui/title/title_screen.tscn"
 
 
 func _ready() -> void:
