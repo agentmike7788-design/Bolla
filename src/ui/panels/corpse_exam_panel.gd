@@ -5,6 +5,7 @@ extends UIPanel
 ## and the valuables decision. Buttons only call table.request_examine(),
 ## table.request_shroud(), table.decide_valuables(take) and table.request_pick_up().
 ## Closes itself when the corpse leaves the table.
+## The sections are built by CorpseExamSections; this script wires and refreshes them.
 
 const TEXT_AGE := "%d Jahre"
 const TEXT_CAUSE := "Todesursache"
@@ -70,106 +71,24 @@ var _traits_scroll: ScrollContainer
 func _build() -> void:
 	var box := UIKit.vbox(14)
 	add_child(box)
-	var head := UIKit.hbox(18)
-	title_label = UIKit.label("", &"HeaderLabel")
-	head.add_child(title_label)
-	age_label = UIKit.label("", &"DimLabel")
-	age_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	age_label.size_flags_vertical = Control.SIZE_SHRINK_END
-	head.add_child(age_label)
-	var close_x := UIKit.button(TEXT_CLOSE_X, &"CloseButton")
-	close_x.tooltip_text = TEXT_CLOSE
-	close_x.focus_mode = Control.FOCUS_NONE
-	close_x.pressed.connect(request_close)
-	close_x.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	head.add_child(close_x)
-	box.add_child(head)
-
-	var columns := UIKit.hbox(24)
-	box.add_child(columns)
-	var left := UIKit.vbox(14)
-	left.custom_minimum_size.x = column_width
-	columns.add_child(left)
-	var right := UIKit.vbox(10)
-	right.custom_minimum_size.x = column_width
-	columns.add_child(right)
-
-	var cause_section := UIKit.panel(&"SectionPanel")
-	var cause_box := UIKit.vbox(4)
-	cause_box.add_child(UIKit.label(TEXT_CAUSE, &"DimLabel"))
-	cause_label = UIKit.label("", &"SubheaderLabel")
-	cause_box.add_child(cause_label)
-	cause_text = UIKit.label("", &"", true)
-	cause_text.custom_minimum_size.x = column_width - 40.0
-	cause_box.add_child(cause_text)
-	cause_section.add_child(cause_box)
-	left.add_child(cause_section)
-
-	var condition := UIKit.panel(&"SectionPanel")
-	var condition_box := UIKit.vbox(10)
-	condition_box.add_child(UIKit.label(TEXT_CONDITION, &"DimLabel"))
-	var bar_row := UIKit.hbox(14)
-	freshness_bar = UIKit.bar(&"FreshBar")
-	freshness_bar.custom_minimum_size = Vector2(300.0, 22.0)
-	freshness_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	bar_row.add_child(freshness_bar)
-	freshness_label = UIKit.label("", &"")
-	bar_row.add_child(freshness_label)
-	condition_box.add_child(bar_row)
-	var status_row := UIKit.hbox(24)
-	examined_label = UIKit.label("", &"DimLabel")
-	status_row.add_child(examined_label)
-	shrouded_label = UIKit.label("", &"DimLabel")
-	status_row.add_child(shrouded_label)
-	condition_box.add_child(status_row)
-	condition.add_child(condition_box)
-	left.add_child(condition)
-
-	right.add_child(UIKit.label(TEXT_FINDINGS, &"DimLabel"))
-	findings_note = UIKit.label("", &"DimLabel", true)
-	findings_note.custom_minimum_size.x = column_width
-	right.add_child(findings_note)
-	_traits_scroll = ScrollContainer.new()
-	_traits_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_traits_scroll.custom_minimum_size = Vector2(column_width, findings_height)
-	traits_box = UIKit.vbox(10)
-	traits_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_traits_scroll.add_child(traits_box)
-	right.add_child(_traits_scroll)
-
-	decision_box = UIKit.vbox(8)
-	decision_box.add_child(UIKit.label(TEXT_VALUABLES_QUESTION, &"AccentLabel"))
-	take_button = UIKit.button("", &"DangerButton")
+	CorpseExamSections.build_header(self, box).pressed.connect(request_close)
+	var columns := CorpseExamSections.build_columns(self, box)
+	var left := columns[0]
+	var right := columns[1]
+	CorpseExamSections.build_cause(self, left)
+	CorpseExamSections.build_condition(self, left)
+	_traits_scroll = CorpseExamSections.build_findings(self, right)
+	CorpseExamSections.build_decision(self, left)
 	take_button.pressed.connect(_on_take_pressed)
-	decision_box.add_child(take_button)
-	leave_button = UIKit.button("", &"AccentButton")
 	leave_button.pressed.connect(_on_leave_pressed)
-	decision_box.add_child(leave_button)
-	left.add_child(decision_box)
-	decided_label = UIKit.label("", &"DimLabel")
-	left.add_child(decided_label)
 
 	_make_action_row(box)
 	box.add_child(UIKit.separator())
-	var buttons := UIKit.hbox(12)
-	examine_button = UIKit.button("")
+	CorpseExamSections.build_buttons(self, box)
 	examine_button.pressed.connect(_call_table.bind(&"request_examine"))
-	buttons.add_child(examine_button)
-	shroud_button = UIKit.button("")
 	shroud_button.pressed.connect(_call_table.bind(&"request_shroud"))
-	buttons.add_child(shroud_button)
-	pick_up_button = UIKit.button(TEXT_PICK_UP)
 	pick_up_button.pressed.connect(_on_pick_up_pressed)
-	buttons.add_child(pick_up_button)
-	reason_label = UIKit.label("", &"DimLabel", true)
-	reason_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	reason_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	reason_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	buttons.add_child(reason_label)
-	close_button = UIKit.button(TEXT_CLOSE)
 	close_button.pressed.connect(request_close)
-	buttons.add_child(close_button)
-	box.add_child(buttons)
 
 
 func _ready() -> void:
@@ -255,15 +174,7 @@ func _refresh_traits(record: CorpseRecord, tables: CorpseTables) -> void:
 		return
 	for trait_id: StringName in revealed:
 		var info: Dictionary = tables.get_trait(trait_id) if tables != null else {}
-		var card := UIKit.panel(&"CardPanel")
-		card.set_meta(&"trait_id", trait_id)
-		var card_box := UIKit.vbox(4)
-		card_box.add_child(UIKit.label(str(info.get("label", trait_id)), &"InkHeaderLabel"))
-		var text := UIKit.label(str(info.get("reveal_text", "")), &"InkLabel", true)
-		text.custom_minimum_size.x = column_width - 70.0
-		card_box.add_child(text)
-		card.add_child(card_box)
-		traits_box.add_child(card)
+		traits_box.add_child(CorpseExamSections.trait_card(trait_id, info, column_width))
 
 
 func _refresh_valuables(record: CorpseRecord) -> void:
