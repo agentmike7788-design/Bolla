@@ -1,0 +1,305 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1_0vtyj"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2_cdonk"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3_0t3rl"]
+
+[sub_resource type="Resource" id="choice_01"]
+script = ExtResource("2_cdonk")
+text = "Was macht ein Grab denn würdig?"
+next = &"intro_linen"
+
+[sub_resource type="Resource" id="node_intro"]
+script = ExtResource("1_0vtyj")
+id = &"intro"
+text = "Sieh an – ein lebendiges Gesicht hinter dem Tor. Das hatten wir hier oben lange nicht. Osric Faulhaber, Leichenkutscher von Hollerbrück. Jeden Morgen lege ich dir einen Toten auf die Bahre, du bringst ihn anständig unter die Erde, und die Gemeinde zahlt – je würdiger das Grab, desto besser."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_01")])
+conditions = Array[String](["!flag:met_carter"])
+fallback_next = &"slice_done"
+actions = Array[String](["set_flag:met_carter"])
+
+[sub_resource type="Resource" id="choice_02"]
+script = ExtResource("2_cdonk")
+text = "Und wenn ich mal nicht da bin?"
+next = &"intro_absent"
+
+[sub_resource type="Resource" id="choice_03"]
+script = ExtResource("2_cdonk")
+text = "Verstanden, Osric."
+next = &"remark_skipped"
+
+[sub_resource type="Resource" id="node_intro_linen"]
+script = ExtResource("1_0vtyj")
+id = &"intro_linen"
+text = "Ein Leichentuch zum Beispiel. Die Toten frieren nicht, aber die Hinterbliebenen schauen hin. Für ein Tuch brauchst du Leinen, und Leinen hat hier draußen nur einer: ich. Ich komme morgens gegen 07:40 mit der Fuhre und bleibe bis zehn, abends ab halb sieben stehe ich wieder am Tor – bis neun, dann ruft das Bett."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_02"), SubResource("choice_03")])
+
+[sub_resource type="Resource" id="choice_04"]
+script = ExtResource("2_cdonk")
+text = "Dann halte ich Platz frei."
+next = &"remark_skipped"
+
+[sub_resource type="Resource" id="node_intro_absent"]
+script = ExtResource("1_0vtyj")
+id = &"intro_absent"
+text = "Dann wartet die Leiche eben auf der Bahre. Das können sie gut. Aber ist die Bahre noch belegt, wenn ich komme, oder hast du kein freies Grab mehr, nehme ich den Nächsten wieder mit. Ich staple keine Toten, ich bin Kutscher, kein Lagerhaus."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_04")])
+
+[sub_resource type="Resource" id="choice_05"]
+script = ExtResource("2_cdonk")
+text = "Das freut mich zu hören."
+next = &"remark_skipped"
+
+[sub_resource type="Resource" id="node_slice_done"]
+script = ExtResource("1_0vtyj")
+id = &"slice_done"
+text = "Da drinnen liegt jetzt jeder, wie er liegen soll. In Hollerbrück sagen sie, der Friedhof sieht wieder aus wie einer. Der Pfarrer hat sogar gelächelt – ich dachte erst, er hätte Zahnweh."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_05")])
+conditions = Array[String](["flag:slice_complete"])
+fallback_next = &"greet_morning"
+
+[sub_resource type="Resource" id="choice_06"]
+script = ExtResource("2_cdonk")
+text = "Morgen, Osric."
+next = &"remark_skipped"
+
+[sub_resource type="Resource" id="node_greet_morning"]
+script = ExtResource("1_0vtyj")
+id = &"greet_morning"
+text = "Morgen, Totengräber. Noch am Leben? Gut. Einer von uns beiden muss es ja sein, und auf meine Fahrgäste ist da kein Verlass."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_06")])
+conditions = Array[String](["time_between:0:720"])
+fallback_next = &"greet_evening"
+
+[sub_resource type="Resource" id="choice_07"]
+script = ExtResource("2_cdonk")
+text = "Guten Abend, Osric."
+next = &"remark_skipped"
+
+[sub_resource type="Resource" id="node_greet_evening"]
+script = ExtResource("1_0vtyj")
+id = &"greet_evening"
+text = "Abend. Setz dich nicht zu nah, die Pfeife stinkt. Ich sage immer, sie hält die Geister fern – bisher hat sich jedenfalls keiner beschwert."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_07")])
+
+[sub_resource type="Resource" id="choice_08"]
+script = ExtResource("2_cdonk")
+text = "Das kommt nicht wieder vor."
+next = &"remark_rep"
+
+[sub_resource type="Resource" id="node_remark_skipped"]
+script = ExtResource("1_0vtyj")
+id = &"remark_skipped"
+text = "Die Bahre war noch belegt, als ich heute früh kam – oder dir fehlte ein freies Grab, such es dir aus. Ich habe die arme Seele wieder mitgenommen. Drei Meilen zurück, mit Gesellschaft, die nicht redet. Schaff Platz, dann bringe ich morgen wieder eine."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_08")])
+conditions = Array[String](["flag_today:delivery_skipped"])
+fallback_next = &"remark_rep"
+
+[sub_resource type="Resource" id="choice_09"]
+script = ExtResource("2_cdonk")
+text = "Die Leute reden viel."
+next = &"menu"
+
+[sub_resource type="Resource" id="choice_10"]
+script = ExtResource("2_cdonk")
+text = "Ich werde es besser machen."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_remark_rep"]
+script = ExtResource("1_0vtyj")
+id = &"remark_rep"
+text = "Man redet im Dorf, Totengräber. Von Ringen, die nicht mit ins Grab gegangen sind, und von Taschen, die hier oben leichter wurden. Ich sage nicht, dass ich es glaube. Ich sage nur: Ich muss mit den Leuten am Tisch sitzen."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_09"), SubResource("choice_10")])
+conditions = Array[String](["stat_lt:reputation:-2"])
+fallback_next = &"menu"
+
+[sub_resource type="Resource" id="choice_11"]
+script = ExtResource("2_cdonk")
+text = "Ich brauche Leinen."
+next = &"shop"
+
+[sub_resource type="Resource" id="choice_12"]
+script = ExtResource("2_cdonk")
+text = "Erzähl mir von Hollerbrück."
+next = &"village"
+
+[sub_resource type="Resource" id="choice_13"]
+script = ExtResource("2_cdonk")
+text = "Woran sterben eigentlich die Leute, die du bringst?"
+next = &"mystery"
+
+[sub_resource type="Resource" id="choice_14"]
+script = ExtResource("2_cdonk")
+text = "Das war alles. Mach's gut, Osric."
+next = &"goodbye_morning"
+
+[sub_resource type="Resource" id="node_menu"]
+script = ExtResource("1_0vtyj")
+id = &"menu"
+text = "Also – was brauchst du?"
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_11"), SubResource("choice_12"), SubResource("choice_13"), SubResource("choice_14")])
+
+[sub_resource type="Resource" id="choice_15"]
+script = ExtResource("2_cdonk")
+text = "Eine Elle, bitte. (3 Münzen)"
+next = &"shop_bought"
+conditions = Array[String](["has_item:coin:3"])
+actions = Array[String](["take_item:coin:3", "give_item:linen:1"])
+
+[sub_resource type="Resource" id="choice_16"]
+script = ExtResource("2_cdonk")
+text = "Zwei Ellen, bitte. (6 Münzen)"
+next = &"shop_bought"
+conditions = Array[String](["has_item:coin:6"])
+actions = Array[String](["take_item:coin:6", "give_item:linen:2"])
+
+[sub_resource type="Resource" id="choice_17"]
+script = ExtResource("2_cdonk")
+text = "Heute nicht."
+next = &"shop_leave"
+
+[sub_resource type="Resource" id="node_shop"]
+script = ExtResource("1_0vtyj")
+id = &"shop"
+text = "Gutes Leinen, fest gewebt, riecht nur ein bisschen nach Karren. Drei Münzen die Elle. Und handeln tu ich nicht, sonst hätte ich ja gar keine Freude mehr."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_15"), SubResource("choice_16"), SubResource("choice_17")])
+
+[sub_resource type="Resource" id="choice_18"]
+script = ExtResource("2_cdonk")
+text = "Ich nehme noch mehr."
+next = &"shop"
+conditions = Array[String](["has_item:coin:3"])
+
+[sub_resource type="Resource" id="choice_19"]
+script = ExtResource("2_cdonk")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_shop_bought"]
+script = ExtResource("1_0vtyj")
+id = &"shop_bought"
+text = "Bitte schön. Das letzte gute Leinen in drei Dörfern – behaupte ich jedenfalls, und bisher hat keiner nachgemessen."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_18"), SubResource("choice_19")])
+
+[sub_resource type="Resource" id="choice_20"]
+script = ExtResource("2_cdonk")
+text = "Etwas anderes …"
+next = &"menu"
+
+[sub_resource type="Resource" id="node_shop_leave"]
+script = ExtResource("1_0vtyj")
+id = &"shop_leave"
+text = "Auch recht. Leinen verdirbt nicht – im Gegensatz zu meiner übrigen Ware."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_20")])
+conditions = Array[String](["has_item:coin:3"])
+fallback_next = &"shop_poor"
+
+[sub_resource type="Resource" id="choice_21"]
+script = ExtResource("2_cdonk")
+text = "Ich komme wieder, wenn es klimpert."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_shop_poor"]
+script = ExtResource("1_0vtyj")
+id = &"shop_poor"
+text = "Leerer Beutel, was? Kenne ich. Die Gemeinde zahlt für jedes ordentliche Grab. Erst graben, dann kaufen – so herum läuft das Geschäft."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_21")])
+
+[sub_resource type="Resource" id="choice_22"]
+script = ExtResource("2_cdonk")
+text = "Und die Leute?"
+next = &"village_people"
+
+[sub_resource type="Resource" id="choice_23"]
+script = ExtResource("2_cdonk")
+text = "Klingt reizend."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_village"]
+script = ExtResource("1_0vtyj")
+id = &"village"
+text = "Hollerbrück? Drei Meilen den Kutschweg hinunter, hinter dem umgestürzten Baum. Ein Brunnen, eine Kirche und zwei Wirtshäuser – eins für die, die reden, und eins für die, die trinken. Ich gehe in beide, der Gerechtigkeit halber."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_22"), SubResource("choice_23")])
+
+[sub_resource type="Resource" id="choice_24"]
+script = ExtResource("2_cdonk")
+text = "Verschwunden?"
+next = &"village_vanished"
+
+[sub_resource type="Resource" id="choice_25"]
+script = ExtResource("2_cdonk")
+text = "Verstehe."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_village_people"]
+script = ExtResource("1_0vtyj")
+id = &"village_people"
+text = "Anständig, meistens. Sie zahlen für ihre Toten und fragen nicht, was hier oben mit ihnen geschieht. Seit der alte Totengräber verschwunden ist, kommt keiner mehr freiwillig den Hügel herauf. Du bist ihnen ein Rätsel. Ich auch, aber an mich haben sie sich gewöhnt."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_24"), SubResource("choice_25")])
+
+[sub_resource type="Resource" id="choice_26"]
+script = ExtResource("2_cdonk")
+text = "Seltsam."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_village_vanished"]
+script = ExtResource("1_0vtyj")
+id = &"village_vanished"
+text = "Eines Morgens stand die Hütte offen, die Schaufel lehnte am Tor, und von ihm keine Spur. Der Pfarrer sagt, er ist nach Süden gegangen. Der Pfarrer sagt viel."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_26")])
+
+[sub_resource type="Resource" id="choice_27"]
+script = ExtResource("2_cdonk")
+text = "Nur was?"
+next = &"mystery_more"
+
+[sub_resource type="Resource" id="choice_28"]
+script = ExtResource("2_cdonk")
+text = "Schon gut."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_mystery"]
+script = ExtResource("1_0vtyj")
+id = &"mystery"
+text = "Woran sie sterben? Fieber, Wasser, Alter – das Übliche. Nur …"
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_27"), SubResource("choice_28")])
+
+[sub_resource type="Resource" id="choice_29"]
+script = ExtResource("2_cdonk")
+text = "Ich werde genau hinsehen."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_mystery_more"]
+script = ExtResource("1_0vtyj")
+id = &"mystery_more"
+text = "Manche sind kälter, als sie sein dürften, selbst im Sommer. Und neulich hatte einer eine Wunde, die weder Messer noch Tier macht – jedenfalls keins, das ich kenne. Der Pfarrer sagt, ich soll nicht so viel denken. Also denke ich leise. Schau sie dir gut an, bevor du sie zudeckst."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_29")])
+
+[sub_resource type="Resource" id="choice_30"]
+script = ExtResource("2_cdonk")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="node_goodbye_morning"]
+script = ExtResource("1_0vtyj")
+id = &"goodbye_morning"
+text = "Ich muss weiter. Die Lebenden warten auch – nur nicht so geduldig wie deine Kundschaft."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_30")])
+conditions = Array[String](["time_between:0:720"])
+fallback_next = &"goodbye"
+
+[sub_resource type="Resource" id="choice_31"]
+script = ExtResource("2_cdonk")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="node_goodbye"]
+script = ExtResource("1_0vtyj")
+id = &"goodbye"
+text = "Geh schlafen, Totengräber. Und wenn es nachts am Zaun kratzt: Das ist der Wind. Sagt man jedenfalls."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_31")])
+
+[resource]
+script = ExtResource("3_0t3rl")
+id = &"carter"
+speaker_name = "Osric Faulhaber"
+start_node = &"intro"
+nodes = Array[ExtResource("1_0vtyj")]([SubResource("node_intro"), SubResource("node_intro_linen"), SubResource("node_intro_absent"), SubResource("node_slice_done"), SubResource("node_greet_morning"), SubResource("node_greet_evening"), SubResource("node_remark_skipped"), SubResource("node_remark_rep"), SubResource("node_menu"), SubResource("node_shop"), SubResource("node_shop_bought"), SubResource("node_shop_leave"), SubResource("node_shop_poor"), SubResource("node_village"), SubResource("node_village_people"), SubResource("node_village_vanished"), SubResource("node_mystery"), SubResource("node_mystery_more"), SubResource("node_goodbye_morning"), SubResource("node_goodbye")])
