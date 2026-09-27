@@ -101,7 +101,8 @@ Alle Phase-1-Assets sind Prototypen (`ph_`-Präfix) und **nicht final**, bis der
 |---|---|---|
 | ph_chr_gravekeeper | Charakter | Prototyp – Rig + 6 Animationen; Änderungsrunde 1: Details verfeinert (Benutzerwunsch) |
 | ph_chr_carter | Charakter | Prototyp – Leichenkutscher Osric, Rig + 4 Animationen; Änderungsrunde 1 verfeinert |
-| ph_bld_gravekeeper_hut | Gebäude | Prototyp |
+| ph_bld_gravekeeper_hut | Gebäude | Prototyp – Änderungsrunde 2: auf 5 × 4 m vergrößert, Schindeln/Moos/Kamin/Blumenkasten |
+| ph_int_room, ph_int_bed, _stove, _desk, _table, _chair, _chest, _shelf, _rug, _herbs, _coat_hook, _candles, _picture, _broom, _bucket, _washbasin, _cat | Innenraum Hütte (Änderungsrunde 2) | Prototyp |
 | ph_env_ground, ph_env_tree_old_oak, ph_env_grass_tuft | Umgebung | Prototyp |
 | ph_prop_gravestone_cross / _round / _obelisk / _slab_old | Grabsteine | Prototyp |
 | ph_prop_grave_mound_fresh / _grassy / _sunken | Gräber | Prototyp |
