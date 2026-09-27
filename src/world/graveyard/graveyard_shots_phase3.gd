@@ -27,6 +27,12 @@ const P3_SHOTS: Array[Dictionary] = [
 	{"name": "world_08_neglected_day", "stage": "neglected", "day": 5, "minute": 690, "focus": Vector2(5.5, 0.5), "distance": 26.0},
 	{"name": "world_09_overview_end", "stage": "", "day": 5, "minute": 660, "focus": Vector2(4.5, -4.5), "distance": 40.0},
 	{"name": "world_10_notice_board", "stage": "", "day": 5, "minute": 700, "focus": Vector2(-1.2, 8.2), "distance": 12.0},
+	# W3 (§11 p3_11 / p3_12): ghosts up close – content (stone, tended) next to restless (bare
+	# cross) – and a ghost speaking its hint. The weeds of "neglected" are tended again first.
+	{"name": "world_11_ghosts_close", "stage": "tended", "day": 5, "minute": 1350, "focus": Vector2(6.0, -7.8),
+			"distance": 12.0, "player": Vector2(6.0, -5.0)},
+	{"name": "world_12_ghost_speaks", "stage": "", "day": 5, "minute": 1352, "focus": Vector2(8.2, -7.8),
+			"distance": 10.0, "player": Vector2(8.0, -6.1), "after": "ghost_speaks"},
 	# §9 budget at the gameplay zoom limit (CameraRig zoom_max 24): full cemetery, day and night.
 	{"name": "perf_01_day_zoom_max", "stage": "", "day": 5, "minute": 690, "focus": Vector2(5.0, -3.0), "distance": 24.0},
 	{"name": "perf_02_night_zoom_max", "stage": "", "day": 5, "minute": 1335, "focus": Vector2(5.0, -3.0), "distance": 24.0,
@@ -125,6 +131,10 @@ func _run() -> void:
 		anchor.global_position = Vector3(focus.x, 0.0, focus.y)
 		rig.call(&"set_distance", float(shot.distance))
 		rig.call(&"snap")
+		if shot.has("after"):
+			for i: int in 5:
+				await process_frame
+			_after(world, String(shot.after))
 		for i: int in SETTLE_FRAMES:
 			await process_frame
 		var image := root.get_texture().get_image()
@@ -158,6 +168,8 @@ func _apply_stage(world: Node3D, stage: String) -> void:
 		"decorated":
 			_stage_graves(world)
 			_stage_decor(world)
+		"tended":
+			_system(world, "Cleanliness").call(&"load_state", {})
 		"neglected":
 			var clean := _system(world, "Cleanliness")
 			var spots := {}
@@ -170,6 +182,27 @@ func _apply_stage(world: Node3D, stage: String) -> void:
 			push_warning("[ShotsP3] unknown stage '%s'" % stage)
 	for i: int in 3:
 		await process_frame
+
+
+## Per-shot action after the clock is set (ghosts are bound by then).
+func _after(world: Node3D, action: String) -> void:
+	match action:
+		"ghost_speaks":
+			var ghosts := _system(world, "Ghosts")
+			ghosts.call(&"reselect")
+			var player := world.get_node(^"Player")
+			var best: Node3D = null
+			for g: Node3D in ghosts.call(&"active_ghosts"):
+				if best == null or g.global_position.distance_to(player.global_position) < best.global_position.distance_to(player.global_position):
+					best = g
+			if best == null:
+				push_warning("[ShotsP3] no ghost to speak")
+				return
+			var text := String(ghosts.call(&"listen", String(best.get("grave_id")), player))
+			best.call(&"say", text, 60.0)
+			print("[ShotsP3] %s says: %s" % [best.get("grave_id"), text])
+		_:
+			push_warning("[ShotsP3] unknown action '%s'" % action)
 
 
 ## Finishes the GRAVES through the real Graveyard API (dig → bury → marker), moods vary.

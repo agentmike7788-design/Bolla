@@ -35,8 +35,8 @@ static func apply_autoloads(tree: SceneTree, autoloads: Dictionary) -> void:
 		else:
 			push_warning("[SaveManager] no saved state for autoload %s" % autoload_name)
 	for key: Variant in autoloads:
-		if not String(key) in AUTOLOADS:
-			push_warning("[SaveManager] saved state for unknown autoload '%s' ignored" % key)
+		if not str(key) in AUTOLOADS:
+			push_warning("[SaveManager] saved state for unknown autoload '%s' ignored" % str(key))
 
 
 static func apply_nodes(tree: SceneTree, nodes: Dictionary) -> void:
@@ -52,8 +52,8 @@ static func apply_nodes(tree: SceneTree, nodes: Dictionary) -> void:
 		else:
 			node.call("load_state", data)
 	for key: Variant in nodes:
-		if not seen.has(String(key)):
-			push_warning("[SaveManager] saved state for unknown save_id '%s' ignored" % key)
+		if not seen.has(str(key)):
+			push_warning("[SaveManager] saved state for unknown save_id '%s' ignored" % str(key))
 
 
 static func post_load(tree: SceneTree) -> void:

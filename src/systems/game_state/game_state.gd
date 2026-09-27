@@ -79,7 +79,7 @@ func load_state(data: Dictionary) -> void:
 			if value is int or value is float:
 				stats[StringName(str(key))] = int(value)
 			else:
-				push_warning("[GameState] stat '%s': non-numeric value ignored" % key)
+				push_warning("[GameState] stat '%s': non-numeric value ignored" % str(key))
 
 
 func _clear_values() -> void:

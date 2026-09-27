@@ -65,9 +65,14 @@ func quality_lines() -> PackedStringArray:
 	return out
 
 
-## Where "tp east|north" goes: the first plot of the section, else its first obstacle.
+## Where "tp east|north" goes: the layout waypoint tp_<section> (free ground inside the section,
+## also while it is overgrown), else the first plot of the section, else its first obstacle.
 func section_position(section_id: StringName) -> Variant:
 	var tree := _tree()
+	var world := tree.current_scene
+	var marker := world.get_node_or_null(NodePath("Waypoints/tp_%s" % section_id)) as Node3D if world != null else null
+	if marker != null and marker.is_inside_tree():
+		return marker.global_position
 	var graveyard := tree.get_first_node_in_group(&"graveyard") as Graveyard
 	if graveyard != null:
 		var ids := graveyard.plots_in_section(section_id)

@@ -1,7 +1,7 @@
 class_name GraveRegisterPanel
 extends UIPanel
 ## &"grave_register" – context {entries: Array[Dictionary], total: int, rating: StringName}
-## (docs §11), entry {name, age, cause_label, day_buried, grave_id, quality, marker_label}.
+## (docs §11), entry {name, age, cause_label, day_buried, grave_id, quality, marker_label, mood?}.
 ## Read-only ledger page on the desk: a leather-bound parchment page with ruled lines,
 ## one line per burial (oldest first), blank ruled lines fill a short page, a long list
 ## scrolls (mouse wheel, ↑/↓, Bild↑/Bild↓). Footer: cemetery quality and its tier.
@@ -21,8 +21,9 @@ const TEXT_OVERVIEW := "Friedhofsübersicht [U]"
 ## UIRoot opens the cemetery overview on top (Phase 3 §7).
 const ACTION_OVERVIEW := &"cemetery_overview"
 ## Column headings and widths (1920 × 1080 base); the name column takes the rest.
-const COLUMNS: Array[String] = ["Tag", "Name (Alter)", "Todesursache", "Grab", "Grabzeichen", "Qualität"]
-const COLUMN_WIDTHS: PackedFloat32Array = [70.0, 330.0, 300.0, 100.0, 200.0, 120.0]
+## Phase 3 §7: „Stimmung“ of the ghost (entry "mood", only after listening; "–" otherwise).
+const COLUMNS: Array[String] = ["Tag", "Name (Alter)", "Todesursache", "Grab", "Grabzeichen", "Qualität", "Stimmung"]
+const COLUMN_WIDTHS: PackedFloat32Array = [70.0, 280.0, 250.0, 90.0, 180.0, 110.0, 140.0]
 const COLUMN_GAP := 16
 const NAME_COLUMN := 1
 const QUALITY_COLUMN := 5
@@ -188,6 +189,7 @@ static func cells(entry: Dictionary) -> PackedStringArray:
 		name_text = TEXT_NAME_AGE % [name_text, age]
 	var cause := str(entry.get("cause_label", "")).strip_edges()
 	var marker := str(entry.get("marker_label", "")).strip_edges()
+	var mood := str(entry.get("mood", "")).strip_edges()
 	return PackedStringArray([
 		str(int(entry.get("day_buried", 0))),
 		name_text,
@@ -195,6 +197,7 @@ static func cells(entry: Dictionary) -> PackedStringArray:
 		grave_label(str(entry.get("grave_id", ""))),
 		marker if marker != "" else TEXT_NONE,
 		TEXT_QUALITY % [int(entry.get("quality", 0)), _quality_max()],
+		mood if mood != "" else TEXT_NONE,
 	])
 
 
@@ -233,7 +236,9 @@ func _make_row(entry: Dictionary) -> PanelContainer:
 	row.custom_minimum_size.y = row_height
 	row.mouse_filter = Control.MOUSE_FILTER_PASS
 	if entry.is_empty():
-		row.add_child(_make_line(PackedStringArray(["", "", "", "", "", ""]), false))
+		var blank := PackedStringArray()
+		blank.resize(COLUMNS.size())
+		row.add_child(_make_line(blank, false))
 		return row
 	var texts := cells(entry)
 	var line := _make_line(texts, false)

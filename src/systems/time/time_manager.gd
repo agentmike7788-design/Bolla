@@ -138,9 +138,14 @@ func save_state() -> Dictionary:
 
 ## Silent: restores the clock without emitting any signal.
 func load_state(data: Dictionary) -> void:
-	day = maxi(1, int(data.get("day", config.start_day)))
-	minute_of_day = clampi(int(data.get("minute_of_day", config.start_minute)), 0, MINUTES_PER_DAY - 1)
+	day = maxi(1, _num(data.get("day"), config.start_day))
+	minute_of_day = clampi(_num(data.get("minute_of_day"), config.start_minute), 0, MINUTES_PER_DAY - 1)
 	_accum = 0.0
+
+
+## int of a saved number; anything else (damaged save) → `fallback` (QA-10).
+static func _num(v: Variant, fallback: int) -> int:
+	return int(v) if v is int or v is float else fallback
 
 
 func _load_config() -> TimeConfig:

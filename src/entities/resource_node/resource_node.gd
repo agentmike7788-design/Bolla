@@ -88,6 +88,13 @@ func load_state(data: Dictionary) -> void:
 		refill(TimeManager.day)
 
 
+## A save without this node's state (older / damaged save) keeps the default 0 – refill like a
+## load_state of an earlier day would (QA-08: otherwise the next save → load differs).
+func post_load() -> void:
+	if last_reset_day < TimeManager.day:
+		refill(TimeManager.day)
+
+
 func _finish_gather(inv: Inventory) -> void:
 	if remaining <= 0:
 		return

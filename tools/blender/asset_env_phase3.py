@@ -32,6 +32,12 @@ GRASS_TINT = L.hexc("#849355")      # the approved grass tuft colour
 GRASS_DRY = L.hexc("#7D7D4E")
 SPROUT = L.hexc("#8FA05A")
 WEED_LEAF = L.hexc("#6C7F45")
+# QA readability (W3): weeds read against the lawn through value contrast - brighter, yellower
+# sprouts, dark rank rosettes, dry straw / rust seed stalks and bare soil under them.
+SPROUT_BRIGHT = L.hexc("#A9B65B")
+WEED_DARK = L.hexc("#4A5B31")
+STRAW = L.hexc("#B89E5B")
+DOCK_RUST = L.hexc("#8C5734")
 BRAMBLE_CANE = L.hexc("#5E3F3A")
 BRAMBLE_LEAF = L.hexc("#3F5234")
 BERRY = L.hexc("#2E2430")
@@ -47,7 +53,10 @@ BIRCH_MARK = L.hexc("#3A3530")
 BIRCH_LEAF_A = L.hexc("#6B7F44")
 BIRCH_LEAF_B = L.hexc("#8C9A52")
 LITTER = [L.hexc("#B08A4A"), L.hexc("#8C6A40"), L.hexc("#7A5A3A"), L.hexc("#9A6A3C"), L.hexc("#A89048"),
-          L.hexc("#6A5236")]
+          L.hexc("#6A5236"), L.hexc("#C8923E"), L.hexc("#B0612F")]   # + bright ochre, rust (QA readability)
+MULCH_CORE = L.hexc("#4A3727")
+SOIL_CORE = L.mix(EARTH, P.EARTH_FRESH, 0.55)
+SOIL_EDGE = L.mix(GRASS_TINT, EARTH, 0.35)
 
 
 # --- helpers ---------------------------------------------------------------------
@@ -121,7 +130,7 @@ def _blades(tufts, color, seed: int, zr=(0.0, 0.4), hue=GRASS_DRY):
 
 
 def _rosette(cx: float, cy: float, n: int, length: float, width: float, color, seed: int, lift: float = 0.01,
-             serrate: bool = False):
+             serrate: bool = False, mat: str = L.MAT_GRASS):
     """Flat weed rosette (dandelion / plantain / thistle base): n leaves radiating on the ground,
     4 tris each (serrate: 6-vertex jagged outline)."""
     bm = bmesh.new()
@@ -137,10 +146,14 @@ def _rosette(cx: float, cy: float, n: int, length: float, width: float, color, s
                c + d * ln * 0.3 - s * width * k]
         vs = [bm.verts.new(p + Vector((0, 0, 0.012 * (j % 3 != 0)))) for j, p in enumerate(pts)]
         for j in range(1, 5):
-            bm.faces.new((vs[0], vs[j], vs[j + 1]))
+            if mat == L.MAT_GRASS:                                 # two-sided grass material
+                bm.faces.new((vs[0], vs[j], vs[j + 1]))
+            else:                                                  # cull_back: wind to face up
+                bm.faces.new((vs[0], vs[j + 1], vs[j]))
     o = P._raw(bm, "rosette")
-    L.paint(o, color, var=0.2, ao=0.25, top=0.0, zrange=(0.0, 0.15), hue_shift=GRASS_DRY, seed=seed)
-    L.set_mat(o, L.MAT_GRASS)
+    L.paint(o, color, var=0.2, ao=0.25, top=0.0, zrange=(0.0, 0.15), hue_shift=GRASS_DRY if mat == L.MAT_GRASS else None,
+            seed=seed)
+    L.set_mat(o, mat)
     return o
 
 
@@ -328,6 +341,49 @@ def hedge_thorn():
 
 # --- tending spots ------------------------------------------------------------------
 
+def _soil_patch(radius: float, core, edge, seed: int, segs: int = 16, lift: float = 0.006, squash: float = 0.86):
+    """QA readability (W3): flat, irregular patch of trampled / bare soil under a weedy spot.
+    Two vertex rings: the core colour in the middle, the edge colour (close to the grass) on the
+    ragged outline, so the patch fades into the lawn instead of reading as a decal (mat_painted)."""
+    rnd = random.Random(seed)
+    bm = bmesh.new()
+    centre = bm.verts.new((0.0, 0.0, lift + 0.004))
+    inner, outer = [], []
+    for i in range(segs):
+        a = i / segs * math.tau
+        r = radius * (0.78 + 0.34 * rnd.random())
+        inner.append(bm.verts.new((math.cos(a) * r * 0.55, math.sin(a) * r * 0.55 * squash, lift + 0.003)))
+        outer.append(bm.verts.new((math.cos(a) * r, math.sin(a) * r * squash, lift)))
+    for i in range(segs):
+        j = (i + 1) % segs
+        bm.faces.new((centre, inner[i], inner[j]))
+        bm.faces.new((inner[i], outer[i], outer[j], inner[j]))
+    o = P._raw(bm, "soil_patch")
+    me = o.data
+    attr = me.color_attributes.new("Col", "FLOAT_COLOR", "CORNER")
+    me.color_attributes.active_color = attr
+    for poly in me.polygons:
+        for li in poly.loop_indices:
+            v = me.vertices[me.loops[li].vertex_index].co
+            t = min(1.0, math.hypot(v.x, v.y / squash) / radius)
+            c = L.mix(core, edge, t ** 1.6)
+            f = 0.9 + 0.2 * noise.noise(Vector((v.x * 9.0 + seed, v.y * 9.0, 1.0)))
+            attr.data[li].color = (*[L._to_lin(min(1.0, ch * f)) for ch in c], 1.0)
+    L.set_mat(o, L.MAT_PAINTED)
+    return o
+
+
+def _stalk(parts, x: float, y: float, h: float, color, seed: int, head: float = 0.05):
+    """QA readability (W3): a dry seed stalk (plantain / dock) – a thin cane with a spiky head
+    that stands above the lawn and gives the spot a silhouette (mat_painted, lit on its own)."""
+    top = Vector((x + random.uniform(-0.03, 0.03), y + random.uniform(-0.03, 0.03), h))
+    parts.append(_cane([Vector((x, y, 0.0)), Vector((x, y, h * 0.5)), top], 0.006, 0.004, color, seed, sides=3,
+                       zr=(0.0, h)))
+    spike = L.prim("cone", loc=top + Vector((0, 0, head * 0.5)), radius1=0.014, depth=head, vertices=5)
+    L.jitter(spike, 0.003, 50.0, seed)
+    parts.append(P._finish_obj(spike, L.scale_c(color, 0.8), var=0.2, ao=0.2, top=0.2, seed=seed))
+
+
 def _spots(n: int, radius: float, min_d: float, seed: int):
     """n points in a disc, roughly evenly spread (dart throwing)."""
     rnd = random.Random(seed)
@@ -362,35 +418,47 @@ def _seedling(parts, x: float, y: float, h: float, seed: int):
     parts.append(o)
 
 
+def _grow(obj, f: float) -> None:
+    """Uniform scale about the pivot (QA readability: stages 2-3 slightly larger)."""
+    for v in obj.data.vertices:
+        v.co *= f
+
+
 def weeds_1():
-    """Stage 1 'sprießt': a few fresh sprouts and seedlings pushing through (~0.8 m patch)."""
+    """Stage 1 'sprießt': a few bright fresh sprouts and seedlings pushing through scuffed soil
+    (~0.8 m patch) - visible, but still quiet."""
     L.reset(630)
-    parts = []
-    spots = _spots(9, 0.38, 0.15, 630)
-    tufts = [(p, random.randint(3, 5), (0.06, 0.12), 0.011, 0.03) for p in spots[:6]]
-    parts.append(_blades(tufts, SPROUT, 1, zr=(0.0, 0.12), hue=None))
+    parts = [_soil_patch(0.27, L.mix(SOIL_CORE, SOIL_EDGE, 0.35), SOIL_EDGE, 632)]
+    spots = _spots(9, 0.34, 0.14, 630)
+    tufts = [(p, random.randint(3, 5), (0.07, 0.13), 0.012, 0.03) for p in spots[:6]]
+    parts.append(_blades(tufts, SPROUT_BRIGHT, 1, zr=(0.0, 0.13), hue=None))
     for i, (x, y) in enumerate(spots[4:]):
-        _seedling(parts, x, y, random.uniform(0.04, 0.07), 10 + i)
-    for i, (x, y) in enumerate(_spots(4, 0.4, 0.2, 631)):
-        parts.append(_rosette(x, y, 4, 0.05, 0.016, SPROUT, 20 + i, lift=0.004))
+        _seedling(parts, x, y, random.uniform(0.05, 0.08), 10 + i)
+    for i, (x, y) in enumerate(_spots(5, 0.32, 0.18, 631)):
+        parts.append(_rosette(x, y, 4, 0.085, 0.026, SPROUT_BRIGHT, 20 + i, lift=0.008, mat=L.MAT_PAINTED))
     obj = L.join(parts, "ph_env_weeds_1")
     P._center_xy(obj)
     L.finish(obj, "ph_env_weeds_1", "environment", 80)
 
 
 def weeds_2():
-    """Stage 2 'verunkrautet': weedy grass tufts and broad rosettes (dock, plantain), ~0.9 m."""
+    """Stage 2 'verunkrautet': weedy tufts, dark broad rosettes (dock, plantain) and dry straw
+    seed stalks over bare soil, ~1 m."""
     L.reset(640)
-    parts = []
-    spots = _spots(10, 0.42, 0.18, 640)
-    tufts = [(p, random.randint(5, 7), (0.14, 0.26), 0.014, 0.08) for p in spots[:5]]
-    parts.append(_blades(tufts, GRASS_TINT, 1, zr=(0.0, 0.28)))
+    parts = [_soil_patch(0.36, SOIL_CORE, SOIL_EDGE, 642)]
+    spots = _spots(10, 0.4, 0.18, 640)
+    tufts = [(p, random.randint(5, 7), (0.14, 0.24), 0.014, 0.08) for p in spots[:5]]
+    parts.append(_blades(tufts, L.mix(GRASS_TINT, SPROUT_BRIGHT, 0.4), 1, zr=(0.0, 0.26)))
     for i, (x, y) in enumerate(spots[5:]):
-        parts.append(_rosette(x, y, random.randint(5, 6), random.uniform(0.09, 0.13), 0.03, WEED_LEAF, 20 + i))
-    for i, (x, y) in enumerate(_spots(3, 0.3, 0.2, 641)):
+        parts.append(_rosette(x, y, random.randint(5, 6), random.uniform(0.1, 0.14), 0.034, WEED_DARK, 20 + i,
+                              mat=L.MAT_PAINTED))
+    for i, (x, y) in enumerate(_spots(3, 0.28, 0.2, 643)):
+        _stalk(parts, x, y, random.uniform(0.2, 0.24), STRAW, 40 + i, head=0.045)
+    for i, (x, y) in enumerate(_spots(2, 0.3, 0.2, 641)):
         _seedling(parts, x, y, random.uniform(0.05, 0.08), 30 + i)
     obj = L.join(parts, "ph_env_weeds_2")
     P._center_xy(obj)
+    _grow(obj, 1.1)
     L.finish(obj, "ph_env_weeds_2", "environment", 80)
 
 
@@ -446,21 +514,25 @@ def _dandelion(parts, x: float, y: float, h: float, seed: int, puff: bool):
 
 def weeds_3():
     """Stage 3 'verwildert' (clearly readable): tall thistles with purple heads, dandelions in
-    flower and in seed, rank grass tufts and broad rosettes (~1 m patch)."""
+    flower and in seed, rust dock stalks, rank grass and dark rosettes on trampled bare soil
+    (~1.1 m patch)."""
     L.reset(650)
-    parts = []
+    parts = [_soil_patch(0.42, L.scale_c(SOIL_CORE, 0.92), SOIL_EDGE, 652, segs=12)]
     _thistle(parts, -0.12, 0.08, 0.62, 1)
     _thistle(parts, 0.24, -0.18, 0.48, 2)
     _dandelion(parts, 0.28, 0.24, 0.2, 3, False)
     _dandelion(parts, -0.34, -0.2, 0.24, 4, True)
     _dandelion(parts, 0.02, -0.34, 0.17, 5, False)
-    spots = _spots(10, 0.46, 0.18, 650)
-    tufts = [(p, random.randint(6, 8), (0.2, 0.36), 0.016, 0.1) for p in spots[:7]]
-    parts.append(_blades(tufts, L.mix(GRASS_TINT, GRASS_DRY, 0.35), 6, zr=(0.0, 0.38)))
+    _stalk(parts, -0.3, 0.22, 0.42, DOCK_RUST, 7, head=0.09)
+    _stalk(parts, 0.1, 0.3, 0.36, DOCK_RUST, 8, head=0.08)
+    spots = _spots(10, 0.42, 0.18, 650)
+    tufts = [(p, random.randint(5, 7), (0.2, 0.34), 0.016, 0.1) for p in spots[:6]]
+    parts.append(_blades(tufts, L.mix(GRASS_TINT, GRASS_DRY, 0.45), 6, zr=(0.0, 0.36)))
     for i, (x, y) in enumerate(spots[5:]):
-        parts.append(_rosette(x, y, 6, random.uniform(0.11, 0.15), 0.035, WEED_LEAF, 20 + i))
+        parts.append(_rosette(x, y, 6, random.uniform(0.11, 0.15), 0.036, WEED_DARK, 20 + i, mat=L.MAT_PAINTED))
     obj = L.join(parts, "ph_env_weeds_3")
     P._center_xy(obj)
+    _grow(obj, 1.15)
     L.finish(obj, "ph_env_weeds_3", "environment", 80)
 
 
@@ -476,7 +548,7 @@ def _leaf(bm, x: float, y: float, z: float, size: float, yaw: float, curl: float
         bm.faces.new((vs[0], vs[j + 1], vs[j]))           # counter-clockwise from above: faces up
 
 
-def _litter(name: str, count: int, radius: float, heaps: int, seed: int):
+def _litter(name: str, count: int, radius: float, heaps: int, seed: int, size=(0.05, 0.08), mulch: float = 0.0):
     """Leaf litter spot: `count` flat leaves in ochre and browns, denser in the middle; with heaps,
     a quarter of them is piled on low dark cores where the wind drifted them together."""
     L.reset(seed)
@@ -496,7 +568,7 @@ def _litter(name: str, count: int, radius: float, heaps: int, seed: int):
             d = radius * random.random() ** 0.75
             x, y = math.cos(a) * d, math.sin(a) * d * 0.85
             z = 0.004 + random.uniform(0.0, 0.012) * (1.0 - d / radius)
-        _leaf(bm, x, y, z, random.uniform(0.05, 0.08), random.uniform(0, math.tau), random.uniform(0.004, 0.012))
+        _leaf(bm, x, y, z, random.uniform(*size), random.uniform(0, math.tau), random.uniform(0.006, 0.018))
         cols.append(L.scale_c(random.choice(LITTER), random.uniform(0.85, 1.12)))
     o = P._raw(bm, "litter")
     me = o.data
@@ -510,6 +582,8 @@ def _litter(name: str, count: int, radius: float, heaps: int, seed: int):
             attr.data[li].color = (*[L._to_lin(min(1.0, ch * f)) for ch in c], 1.0)
     L.set_mat(o, L.MAT_PAINTED)
     parts = [o]
+    if mulch > 0.0:                                                # QA readability: rotting leaves darken the ground
+        parts.append(_soil_patch(mulch, MULCH_CORE, L.mix(GRASS_TINT, LITTER[1], 0.45), seed + 7, segs=14, lift=0.002))
     for i, (px, py) in enumerate(piles):                           # dark cores under the piled leaves
         h = L.prim("ico", loc=(px, py, -0.005), radius=0.1, subdivisions=1, scale=(1.3, 1.0, 0.33))
         L.jitter(h, 0.012, 12.0, seed + i)
@@ -521,15 +595,15 @@ def _litter(name: str, count: int, radius: float, heaps: int, seed: int):
 
 
 def leaves_1():
-    _litter("ph_env_leaves_1", 40, 0.5, 0, 660)
+    _litter("ph_env_leaves_1", 40, 0.5, 0, 660, size=(0.06, 0.09))
 
 
 def leaves_2():
-    _litter("ph_env_leaves_2", 82, 0.62, 0, 661)
+    _litter("ph_env_leaves_2", 74, 0.62, 2, 661, size=(0.065, 0.1))
 
 
 def leaves_3():
-    _litter("ph_env_leaves_3", 108, 0.72, 3, 662)
+    _litter("ph_env_leaves_3", 88, 0.7, 3, 662, size=(0.07, 0.11), mulch=0.5)
 
 
 # --- birch --------------------------------------------------------------------------

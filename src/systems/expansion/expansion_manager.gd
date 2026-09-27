@@ -270,7 +270,16 @@ func post_load() -> void:
 	if graveyard == null:
 		return
 	for s: SectionData in sections():
-		if s.starts_unlocked or not _unlocked.has(s.id):
+		if s.starts_unlocked:
+			continue
+		# QA-05: every obstacle cleared but still locked (inconsistent / older save) would be a
+		# softlock – clear() only unlocks on the last obstacle. Unlock it now.
+		var p := progress(s.id)
+		if not _unlocked.has(s.id) and p.y > 0 and p.x >= p.y:
+			push_warning("[ExpansionManager] section '%s' has no obstacle left but is locked – unlocked" % s.id)
+			unlock(s.id)
+			continue
+		if not _unlocked.has(s.id):
 			continue
 		var locked := false
 		for grave_id: String in graveyard.plots_in_section(s.id):

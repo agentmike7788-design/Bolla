@@ -269,8 +269,10 @@ func test_desk_lists_the_burials() -> void:
 	assert_true(graveyard.bury("plot_05", filled.id))
 	desk.interact(player)
 	var ctx: Dictionary = panels.back()[1]
-	assert_eq(ctx.total, graveyard.total_quality())
-	assert_eq(ctx.rating, graveyard.rating())
+	# Phase 3 (QA-01): the register footer shows the cemetery quality (graves + decor − dirt).
+	var score := world.get_node("Systems/CemeteryScore") as CemeteryScore
+	assert_eq(ctx.total, score.total())
+	assert_eq(ctx.rating, score.rating())
 	var entries: Array = ctx.entries
 	assert_eq(entries.size(), 2, "one line per grave with a corpse (old graves excluded)")
 	var by_grave := {}

@@ -43,6 +43,10 @@ func _ready() -> void:
 	EventBus.time_skipped.connect(_on_time_skipped)
 	EventBus.time_tick.connect(_on_time_tick)
 	EventBus.new_game_started.connect(apply_start_state)
+	# QA-06: covered spots (gravel / flower bed) show and count as level 0 – refresh the shown
+	# levels when decor changes and after a load (decorations load after this node).
+	EventBus.decor_changed.connect(_on_cover_changed.unbind(3))
+	EventBus.game_loaded.connect(_on_cover_changed.unbind(1))
 
 
 ## (Re)collects the DirtSpot nodes of the tree; known progress is kept, new spots start at 0.
@@ -68,7 +72,12 @@ func spot_ids() -> PackedStringArray:
 	return PackedStringArray(_spots.keys())
 
 
+## Level of the spot; 0 while gravel / a flower bed covers it (§2.3 "unterdrückt Unkraut in
+## seinen Zellen" – the progress stays and shows again when the piece is removed).
 func level(spot_id: String) -> int:
+	var spot: DirtSpot = _spots.get(spot_id)
+	if spot != null and _suppressed(spot):
+		return 0
 	return DirtGrowth.level(progress(spot_id), _cfg())
 
 
@@ -252,6 +261,17 @@ func _on_time_skipped(_from_total: int, to_total: int) -> void:
 
 
 func _on_time_tick(_day: int, _minute_of_day: int) -> void:
+	_flush()
+
+
+## Shown level follows a covering piece placed / removed (derived, no progress changes).
+func _on_cover_changed() -> void:
+	for id: String in _spots:
+		var lvl := level(id)
+		if _spots[id].shown_level != lvl:
+			_spots[id].show_level(lvl)
+			_pending = true
+			EventBus.dirt_changed.emit(id, lvl)
 	_flush()
 
 

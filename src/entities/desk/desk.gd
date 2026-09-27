@@ -9,6 +9,8 @@ const PANEL := &"grave_register"
 const PROMPT_READ := "[E] Grabregister lesen"
 const GRAVEYARD_GROUP := &"graveyard"
 const CORPSE_MANAGER_GROUP := &"corpse_manager"
+const SCORE_GROUP := &"cemetery_score"
+const GHOSTS_GROUP := &"ghosts"
 const MINUTES_PER_DAY := 1440
 
 @onready var interactable: Interactable = get_node_or_null(^"Interactable") as Interactable
@@ -28,14 +30,25 @@ func interact(player: Player) -> void:
 
 
 ## {entries, total, rating} of the current world (empty register without the systems).
+## Phase 3: total / rating from CemeteryScore (graves + decor − dirt) when present; entries of
+## graves whose ghost was listened to carry "mood" (GhostMood label, §7 column „Stimmung“).
 func register_context() -> Dictionary:
 	var graveyard := _first(GRAVEYARD_GROUP) as Graveyard
 	var corpses := _first(CORPSE_MANAGER_GROUP) as CorpseManager
-	return {
-		"entries": register_entries(graveyard, corpses),
-		"total": graveyard.total_quality() if graveyard != null else 0,
-		"rating": graveyard.rating() if graveyard != null else CemeteryRating.NEGLECTED,
-	}
+	var score := _first(SCORE_GROUP) as CemeteryScore
+	var ghosts := _first(GHOSTS_GROUP) as GhostManager
+	var entries := register_entries(graveyard, corpses)
+	if ghosts != null:
+		for entry: Dictionary in entries:
+			var id := str(entry.grave_id)
+			if ghosts.was_heard(id) and ghosts.mood_of(id) != &"":
+				entry["mood"] = GhostMood.label(ghosts.mood_of(id))
+	var total := graveyard.total_quality() if graveyard != null else 0
+	var rating := graveyard.rating() if graveyard != null else CemeteryRating.NEGLECTED
+	if score != null:
+		total = score.total()
+		rating = score.rating()
+	return {"entries": entries, "total": total, "rating": rating}
 
 
 ## Entries of every FILLED / MARKED grave whose corpse record is known, in grave order.

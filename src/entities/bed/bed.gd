@@ -17,6 +17,7 @@ const FLAG_BURIALS_BASE := &"day_burials_base"
 const FLAG_COINS_BASE := &"day_coins_base"
 const COIN_ITEM := &"coin"
 const GRAVEYARD_GROUP := &"graveyard"
+const SCORE_GROUP := &"cemetery_score"
 const MINUTES_PER_HOUR := 60
 
 const PROMPT_REST := "[E] Ausruhen bis %s"
@@ -88,10 +89,17 @@ func sleep(player: Player) -> void:
 		EventBus.notification_requested.emit(TEXT_AUTOSAVE_FAILED, &"warning")
 
 
-## {day, burials_today, coins_today, total, rating} relative to the last sleep.
+## {day, burials_today, coins_today, total, rating} relative to the last sleep; total / rating
+## = the cemetery quality of CemeteryScore (Phase 3: graves + decor − dirt), without one the
+## Graveyard's graves-only value.
 func day_summary(player: Player) -> Dictionary:
 	var graveyard := get_tree().get_first_node_in_group(GRAVEYARD_GROUP) as Graveyard if is_inside_tree() else null
+	var score := get_tree().get_first_node_in_group(SCORE_GROUP) as CemeteryScore if is_inside_tree() else null
 	var total := graveyard.total_quality() if graveyard != null else 0
+	var rating := graveyard.rating() if graveyard != null else CemeteryRating.NEGLECTED
+	if score != null:
+		total = score.total()
+		rating = score.rating()
 	var burials_base: Variant = GameState.get_flag(FLAG_BURIALS_BASE, 0)
 	var coins_base: Variant = GameState.get_flag(FLAG_COINS_BASE, _start_coins(player))
 	return {
@@ -99,7 +107,7 @@ func day_summary(player: Player) -> Dictionary:
 		"burials_today": GameState.get_stat(STAT_BURIALS) - int(burials_base),
 		"coins_today": _coins(player) - int(coins_base),
 		"total": total,
-		"rating": graveyard.rating() if graveyard != null else CemeteryRating.NEGLECTED,
+		"rating": rating,
 	}
 
 

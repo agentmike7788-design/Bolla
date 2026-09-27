@@ -9,7 +9,7 @@ extends Node
 ## Other systems are only read through their groups: graveyard, corpse_manager, cleanliness
 ## (level of "dirt_<grave_id>"), decorations (ghost_bonus_at). Moods are recomputed on
 ## grave_state_changed, grave_quality_changed, dirt_changed and decor_changed.
-## Saved: {gifts: {grave_id: day}, heard: {grave_id: day}}. Ghost nodes, moods and the
+## Saved: {gifts: {grave_id: day}, heard: {grave_id: day}} (+ late, see save_state). Ghost nodes, moods and the
 ## "said within repeat_minutes" memory are not saved.
 
 const GROUP := &"ghosts"
@@ -50,7 +50,7 @@ var forced: bool = false
 ## grave_id -> day of the one-time gift / of the last listening.
 var _gifts: Dictionary[String, int] = {}
 var _heard: Dictionary[String, int] = {}
-## Graves completed at/after LATE_MINUTE this session (grave_id -> day); not saved.
+## Graves completed at/after LATE_MINUTE (grave_id -> day); saved while still relevant.
 var _late: Dictionary[String, int] = {}
 ## grave_id -> {total: int, text: String, mood: StringName, day: int, turn: int}
 var _said: Dictionary[String, Dictionary] = {}
@@ -189,14 +189,23 @@ func listen(grave_id: String, player: Player) -> String:
 	return text
 
 
+## {gifts, heard} (+ "late": {grave_id: day} while a grave finished after 21:00 is still
+## waiting for its first night – QA-04: otherwise a load lets its ghost walk that same night).
 func save_state() -> Dictionary:
-	return {"gifts": _gifts.duplicate(), "heard": _heard.duplicate()}
+	var out := {"gifts": _gifts.duplicate(), "heard": _heard.duplicate()}
+	var late := {}
+	for id: String in _late:
+		if _late[id] >= TimeManager.day - 1:
+			late[id] = _late[id]
+	if not late.is_empty():
+		out["late"] = late
+	return out
 
 
 func load_state(data: Dictionary) -> void:
 	_gifts = _read_days(data.get("gifts", {}))
 	_heard = _read_days(data.get("heard", {}))
-	_late.clear()
+	_late = _read_days(data.get("late", {}))
 	_said.clear()
 	_plots.clear()
 	_release_all()

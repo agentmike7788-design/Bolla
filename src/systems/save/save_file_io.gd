@@ -126,6 +126,108 @@ static func is_valid_meta(meta: Variant) -> bool:
 	return m.get("scene") is String and m.get("game_version") is String
 
 
+## Number of raw-number args of the JSON.from_native encoding of the math types (-1 = any count,
+## packed arrays).
+const NATIVE_MATH_ARGS := {
+	"Vector2": 2, "Vector2i": 2, "Rect2": 4, "Rect2i": 4, "Vector3": 3, "Vector3i": 3,
+	"Transform2D": 6, "Vector4": 4, "Vector4i": 4, "Plane": 4, "Quaternion": 4, "AABB": 6,
+	"Basis": 9, "Transform3D": 12, "Projection": 16, "Color": 4,
+	"PackedByteArray": -1, "PackedInt32Array": -1, "PackedInt64Array": -1,
+	"PackedFloat32Array": -1, "PackedFloat64Array": -1, "PackedVector2Array": -1,
+	"PackedVector3Array": -1, "PackedColorArray": -1, "PackedVector4Array": -1,
+}
+const NATIVE_PREFIXES := {"s:": "String", "sn:": "StringName", "np:": "NodePath", "i:": "int", "f:": "float"}
+const NATIVE_MAX_DEPTH := 64
+
+
+## True when `v` is a well-formed JSON.from_native encoding (full_objects = false) that
+## JSON.to_native decodes without engine errors: tagged strings, bool / null, raw arrays,
+## Dictionary / Array envelopes (typed containers only with matching element types) and the
+## math / packed types with raw numbers.
+static func is_native_json(v: Variant, depth: int = 0) -> bool:
+	if depth > NATIVE_MAX_DEPTH:
+		return false
+	if v == null or v is bool:
+		return true
+	if v is String:
+		return native_type_of(v) != ""
+	if v is Array:
+		for e: Variant in v:
+			if not is_native_json(e, depth + 1):
+				return false
+		return true
+	if not v is Dictionary:
+		return false  # raw numbers are not JSON-compliant for to_native
+	var d: Dictionary = v
+	var type: Variant = d.get("type")
+	var args: Variant = d.get("args")
+	if not type is String or not args is Array:
+		return false
+	var list: Array = args
+	for key: String in ["key_type", "value_type", "elem_type"]:
+		if d.has(key) and not _is_type_name(d[key]):
+			return false
+	match type:
+		"Dictionary":
+			if list.size() % 2 != 0:
+				return false
+			for i: int in list.size():
+				var want: Variant = d.get("key_type" if i % 2 == 0 else "value_type", "")
+				if not _native_elem_ok(list[i], want, depth):
+					return false
+			return true
+		"Array":
+			for e: Variant in list:
+				if not _native_elem_ok(e, d.get("elem_type", ""), depth):
+					return false
+			return true
+	if not NATIVE_MATH_ARGS.has(type):
+		return false
+	var count: int = NATIVE_MATH_ARGS[type]
+	if count >= 0 and list.size() != count:
+		return false
+	for e: Variant in list:
+		if not (e is float or e is int):
+			return false
+	return true
+
+
+## Variant type name an encoded value decodes to ("" = invalid string / not decodable).
+static func native_type_of(v: Variant) -> String:
+	if v == null:
+		return "Nil"
+	if v is bool:
+		return "bool"
+	if v is String:
+		for prefix: String in NATIVE_PREFIXES:
+			if (v as String).begins_with(prefix):
+				return NATIVE_PREFIXES[prefix]
+		return ""
+	if v is Array:
+		return "Array"
+	if v is Dictionary and (v as Dictionary).get("type") is String:
+		return (v as Dictionary).type
+	return ""
+
+
+## A builtin Variant type name ("int", "StringName" …) as used for typed containers.
+static func _is_type_name(v: Variant) -> bool:
+	if not v is String:
+		return false
+	for t: int in TYPE_MAX:
+		if type_string(t) == v:
+			return t != TYPE_OBJECT and t != TYPE_NIL
+	return false
+
+
+static func _native_elem_ok(e: Variant, want: Variant, depth: int) -> bool:
+	if not is_native_json(e, depth + 1):
+		return false
+	if want == null or (want is String and want == ""):
+		return true
+	return want is String and native_type_of(e) == want
+
+
 ## JSON.to_native of the "data" part (never objects); {} unless it yields {autoloads, nodes}.
 static func decode_state(data: Variant) -> Dictionary:
 	# JSON.to_native logs engine errors on malformed input – check the envelope first.
@@ -133,6 +235,9 @@ static func decode_state(data: Variant) -> Dictionary:
 		return {}
 	var envelope: Dictionary = data
 	if envelope.get("type") != "Dictionary" or not envelope.get("args") is Array or (envelope.args as Array).size() % 2 != 0:
+		return {}
+	# QA-07: a damaged value anywhere inside would make JSON.to_native log engine errors.
+	if not is_native_json(envelope):
 		return {}
 	var state: Variant = JSON.to_native(envelope, false)
 	if not state is Dictionary:

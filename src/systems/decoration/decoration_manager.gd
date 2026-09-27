@@ -4,7 +4,8 @@ extends Node
 ## save_id "decorations", save_order 15). Owns the placements and their PlacedDecor nodes under
 ## container_path (Decor/Placed); load_state re-creates the nodes (the world's _ready creates none).
 ## can_place checks, in this order: &"no_item" → &"limit" (place_max / max_placed) →
-## BuildGrid.check (&"blocked" … &"occupied") → &"player" (capsule inside the footprint) →
+## BuildGrid.check (&"blocked" … &"occupied") → &"dirt_spot" (QA-06: collider piece on a weeds
+## spot) → &"player" (capsule inside the footprint) →
 ## &"corpse" (corpse on the ground inside the footprint) → &"ok".
 ## Other systems read it through the group API: decor_score (CemeteryScore),
 ## suppresses_dirt_at (CleanlinessManager), ghost_bonus_at (GhostManager).
@@ -14,6 +15,11 @@ const REASON_NO_ITEM := &"no_item"
 const REASON_LIMIT := &"limit"
 const REASON_PLAYER := &"player"
 const REASON_CORPSE := &"corpse"
+## QA-06: a piece with a collider (bench, lantern) may not stand on a weeds / leaves spot – the
+## weeds would grow through it. Gravel / a flower bed covering the spot's centre is fine.
+const REASON_DIRT := &"dirt_spot"
+## Radius (m) of a dirt spot's clump (ph_env_weeds_3 / leaves_3) for REASON_DIRT.
+const DIRT_SPOT_RADIUS := 0.5
 const UID_PREFIX := "d_"
 const PLACED_SCENE := "res://src/entities/decor/placed_decor.tscn"
 ## Gravekeeper capsule radius (player.tscn) – a piece may not be placed on top of him.
@@ -113,6 +119,8 @@ func can_place(decor_id: StringName, cell: Vector2i, rot: int, inv: Inventory = 
 	if reason != BuildGrid.REASON_OK:
 		return reason
 	var rect := grid().footprint_rect(cell, d.footprint, rot)
+	if d.collider_size != Vector3.ZERO and _hits_dirt_spot(rect, d.suppresses_dirt):
+		return REASON_DIRT
 	if player != null and not d.walkable and _circle_hits_rect(_xz(player.global_position), PLAYER_RADIUS, rect):
 		return REASON_PLAYER
 	for p: Vector2 in ground_corpse_points():
@@ -267,6 +275,23 @@ func blockers() -> Array[Rect2]:
 	return out
 
 
+## True when `rect` touches a dirt spot's clump – unless `covers` and the spot's centre lies
+## inside `rect` (gravel / flower bed then cover it).
+func _hits_dirt_spot(rect: Rect2, covers: bool) -> bool:
+	if not is_inside_tree():
+		return false
+	for node: Node in get_tree().get_nodes_in_group(&"dirt_spot"):
+		if not node is Node3D or str(node.get(&"grave_id")) != "":
+			continue
+		var p := _xz((node as Node3D).global_position)
+		if not _circle_hits_rect(p, DIRT_SPOT_RADIUS, rect):
+			continue
+		if covers and rect.has_point(p):
+			continue
+		return true
+	return false
+
+
 ## World XZ positions of corpses lying on the ground (CorpseManager records).
 func ground_corpse_points() -> Array[Vector2]:
 	var out: Array[Vector2] = []
@@ -411,8 +436,10 @@ static func _xz(v: Vector3) -> Vector2:
 	return Vector2(v.x, v.z)
 
 
+## Number of a "d_<n>" uid; 0 for anything else (a damaged save – QA-10: no int overflow).
 static func _uid_num(uid: String) -> int:
-	return uid.trim_prefix(UID_PREFIX).to_int()
+	var digits := uid.trim_prefix(UID_PREFIX)
+	return digits.to_int() if digits.is_valid_int() and digits.length() <= 9 else 0
 
 
 static func _circle_hits_rect(c: Vector2, r: float, rect: Rect2) -> bool:

@@ -14,6 +14,7 @@ const REASONS: Dictionary[StringName, String] = {
 	&"locked_section": "Dieser Teil ist noch nicht freigelegt",
 	&"blocked": "Hier lässt sich nichts aufstellen",
 	&"occupied": "Hier steht schon etwas",
+	&"dirt_spot": "Hier wächst Unkraut – nur Kies oder Beet",
 	&"corpse": "Eine Leiche liegt im Weg",
 	&"no_item": "Keine Zier im Gepäck – an der Werkbank bauen",
 }

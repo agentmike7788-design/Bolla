@@ -29,10 +29,14 @@ func _init() -> void:
 func _ready() -> void:
 	EventBus.day_started.connect(_on_day_started)
 	EventBus.new_game_started.connect(_on_new_game_started)
+	EventBus.game_loaded.connect(_on_game_loaded)
 
 
+## GameState.stats.reputation, clamped to min_value…max_value (a damaged save cannot push it
+## out of range – QA-09).
 func value() -> int:
-	return GameState.get_stat(STAT)
+	var cfg := _cfg()
+	return clampi(GameState.get_stat(STAT), cfg.min_value, cfg.max_value)
 
 
 func tier() -> StringName:
@@ -93,6 +97,13 @@ func forecast() -> int:
 ## For the day summary: {day, drift, stipend, value, tier} of the last apply_daily ({} = none yet).
 func last_daily() -> Dictionary:
 	return _last_daily.duplicate()
+
+
+## A save with an out-of-range value (damaged / edited) is repaired silently.
+func _on_game_loaded(_slot: int) -> void:
+	if GameState.get_stat(STAT) != value():
+		push_warning("[Reputation] saved reputation %d out of range – clamped" % GameState.get_stat(STAT))
+		GameState.stats[STAT] = value()
 
 
 func _on_day_started(day: int) -> void:
