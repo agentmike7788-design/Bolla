@@ -55,6 +55,9 @@ var _with_cart: bool = true
 ## entry instance id -> {points: PackedVector3Array, lengths: PackedFloat32Array, total: float}
 var _paths: Dictionary = {}
 var _heading: float = 0.0
+## Extra yaw of the figure (Model) towards a nearby player; the cart keeps its place.
+var _look: float = 0.0
+var _model: Node3D
 
 
 func _init() -> void:
@@ -67,10 +70,10 @@ func _ready() -> void:
 		var inst := model.instantiate()
 		inst.name = "Model"
 		add_child(inst)
-	var model_node := get_node_or_null(^"Model")
+	_model = get_node_or_null(^"Model") as Node3D
 	var found: Array[Node] = []
-	if model_node != null:
-		found = model_node.find_children("*", "AnimationPlayer", true, false)
+	if _model != null:
+		found = _model.find_children("*", "AnimationPlayer", true, false)
 	_anim = found[0] as AnimationPlayer if not found.is_empty() else null
 	# The cargo lies on the cart's slot_corpse marker (+X = the corpse's long axis).
 	var slot := cart.find_child(CART_SLOT, true, false) as Node3D
@@ -150,25 +153,43 @@ func _update(delta: float) -> void:
 	var dir: Vector3 = sample[1]
 	_set_state(entry.visible, entry.visible and entry.dialogue_id != &"", entry.visible and entry.with_cart)
 	cargo.visible = _with_cart and _has_cargo()
-	var target := _heading
+	# The root (and with it the cart) turns with the path; only the figure turns to a player.
+	var heading := _heading
 	if is_walking() and dir.length_squared() > EPSILON:
-		target = atan2(dir.x, dir.z)
+		heading = atan2(dir.x, dir.z)
 	elif not is_walking():
-		target = _standing_yaw(target)
-	_heading = target if delta < 0.0 else lerp_angle(rotation.y, target, clampf(turn_speed * delta, 0.0, 1.0))
+		heading = _waypoint_yaw(heading)
+	var look := _look_yaw(heading)
+	if delta < 0.0:
+		_heading = heading
+		_look = look
+	else:
+		var k := clampf(turn_speed * delta, 0.0, 1.0)
+		_heading = lerp_angle(rotation.y, heading, k)
+		_look = lerp_angle(_look, look, k)
 	rotation = Vector3(0.0, _heading, 0.0)
+	if _model != null:
+		_model.rotation = Vector3(0.0, _look, 0.0)
 	_update_animation()
 
 
-## Standing: towards a nearby player when talkable, else the waypoint's facing (if any).
-func _standing_yaw(current: float) -> float:
-	if _talkable:
-		var player := get_tree().get_first_node_in_group(&"player") as Node3D
-		if player != null:
-			var to := player.global_position - global_position
-			to.y = 0.0
-			if to.length_squared() > EPSILON and to.length() < face_player_range:
-				return atan2(to.x, to.z)
+## Figure yaw relative to the root: towards a player closer than face_player_range while
+## standing at a dialogue spot, else 0.
+func _look_yaw(heading: float) -> float:
+	if is_walking() or not _talkable:
+		return 0.0
+	var player := get_tree().get_first_node_in_group(&"player") as Node3D
+	if player == null:
+		return 0.0
+	var to := player.global_position - global_position
+	to.y = 0.0
+	if to.length_squared() <= EPSILON or to.length() >= face_player_range:
+		return 0.0
+	return wrapf(atan2(to.x, to.z) - heading, -PI, PI)
+
+
+## Standing: the waypoint's facing (layout waypoint_facing), else keep the arrival heading.
+func _waypoint_yaw(current: float) -> float:
 	var w := _world()
 	if w != null and w.has_method(&"get_waypoint_facing") and not entry.path.is_empty():
 		var yaw := float(w.call(&"get_waypoint_facing", StringName(entry.path[entry.path.size() - 1])))

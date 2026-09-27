@@ -670,6 +670,21 @@ func test_npc_talk_allowed_while_carrying() -> void:
 	assert_eq(dialogues, [[&"carter", npc]])
 
 
+func test_npc_turns_to_the_player_but_the_cart_stays() -> void:
+	var npc := await _npc()
+	TimeManager.load_state({"day": 1, "minute_of_day": 450})
+	npc.refresh()
+	TimeManager.load_state({"day": 1, "minute_of_day": 500})
+	player.global_position = Vector3(10, 0, 12)
+	npc.refresh()
+	assert_almost(npc.rotation.y, PI * 0.5, 0.001, "root (and cart) keep the arrival heading")
+	var model := npc.get_node("Model") as Node3D
+	assert_almost(wrapf(npc.rotation.y + model.rotation.y, -PI, PI), 0.0, 0.001, "the figure faces the player (+Z)")
+	player.global_position = Vector3(-20, 0, -20)
+	npc.refresh()
+	assert_almost(model.rotation.y, 0.0, 0.001, "player gone: looks ahead again")
+
+
 func test_npc_walk_animation_speed_scale() -> void:
 	var npc := await _npc()
 	var anim := npc.find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer

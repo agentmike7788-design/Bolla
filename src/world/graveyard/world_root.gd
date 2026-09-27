@@ -27,10 +27,6 @@ func _ready() -> void:
 	if corpse_manager == null or graveyard == null:
 		push_warning("[WorldRoot] Systems/CorpseManager or Systems/Graveyard missing")
 	_ground_receives_shadows_only()
-	var shape_node := get_node_or_null(GROUND_SHAPE) as CollisionShape3D
-	if shape_node != null and shape_node.shape is HeightMapShape3D:
-		_heightmap = shape_node.shape as HeightMapShape3D
-		_heightmap_xform = _relative_xform(shape_node)
 	_announce.call_deferred()
 
 
@@ -65,9 +61,14 @@ func get_node_by_layout_id(id: String) -> Node:
 
 
 ## Height of the ground at world (x, z) from the ground collision heightmap (0 without one).
+## Usable before _ready (children, e.g. the NPC, place themselves during their own _ready).
 func ground_height(pos: Vector2) -> float:
 	if _heightmap == null:
-		return 0.0
+		var shape_node := get_node_or_null(GROUND_SHAPE) as CollisionShape3D
+		if shape_node == null or not shape_node.shape is HeightMapShape3D:
+			return 0.0
+		_heightmap = shape_node.shape as HeightMapShape3D
+		_heightmap_xform = _relative_xform(shape_node)
 	var local := _heightmap_xform.affine_inverse() * Vector3(pos.x, 0.0, pos.y)
 	var w := _heightmap.map_width
 	var d := _heightmap.map_depth
