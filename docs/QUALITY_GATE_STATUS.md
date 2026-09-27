@@ -4,7 +4,7 @@
 |---|---|---|---|---|
 | G0 | Projektsetup | ✅ **PASSED** | 27.09.2026 | ✅ „Phase 0 freigegeben" (27.09.2026) |
 | G1 | Art Direction | ✅ **PASSED** (Runde 1) | 27.09.2026 | ✅ „Art Direction freigegeben" (27.09.2026) |
-| G2 | Vertical Slice | 🟡 **PENDING USER REVIEW – Änderungsrunde 2 umgesetzt** (R1: Leichen, Kutscher, Hauptfigur verschönert; R2: Hütte 5 × 4 m verschönert + begehbarer, eingerichteter Innenraum mit Bett, Ofen, Truhe, Grabregister – Benutzerwunsch, innerhalb Art Style Lock; Bilder `docs/reviews/phase2_round2/`) | 27.09.2026 | ausstehend |
+| G2 | Vertical Slice | ✅ **PASSED** (nach Änderungsrunde 1: Leichen/Kutscher/Hauptfigur verschönert; Änderungsrunde 2: Hütte 5 × 4 m + begehbarer Innenraum mit Bett, Ofen, Truhe, Grabregister) | 27.09.2026 | ✅ „Vertical Slice freigegeben" (27.09.2026) |
 
 **ART STYLE LOCK:** ✅ **ACTIVE** seit 27.09.2026 (Referenz: `src/world/art_prototype/`, Screenshots `docs/reviews/phase1_round1/`). Keine grundlegende Stiländerung ohne Benutzerfreigabe.
 
