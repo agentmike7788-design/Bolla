@@ -25,3 +25,12 @@ extends Resource
 @export var rating_thresholds: PackedInt32Array = [10, 25, 45]
 ## Reputation at or below which the label becomes "Unauffällig" / "Verrufen".
 @export var reputation_thresholds: PackedInt32Array = [-1, -3]
+
+
+## The one lookup: `config` if given (injected), else data/config/economy_config.tres via
+## Database, else the class defaults.
+static func resolve(config: EconomyConfig = null) -> EconomyConfig:
+	if config != null:
+		return config
+	var data := Database.config(&"economy_config") as EconomyConfig
+	return data if data != null else EconomyConfig.new()

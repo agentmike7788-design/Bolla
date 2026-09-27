@@ -19,5 +19,5 @@ quality_max = 10
 payment_per_quality = 0.5
 valuables_reputation = -1
 old_grave_quality = 0
-rating_thresholds = PackedInt32Array(10, 25, 45)
+rating_thresholds = PackedInt32Array(15, 32, 50)
 reputation_thresholds = PackedInt32Array(-1, -3)

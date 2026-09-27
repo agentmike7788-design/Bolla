@@ -52,13 +52,18 @@ func revealed_traits() -> Array[StringName]:
 	return traits.duplicate()
 
 
-## &"fresh" (>= fresh_good_threshold), &"decaying" (< fresh_bad_threshold), else &"wilted".
-## Thresholds come from data/config/economy_config.tres (EconomyConfig defaults as fallback).
+## stage_for(freshness) with the game's config (data/config/economy_config.tres, else defaults).
 func freshness_stage() -> StringName:
-	var config := _economy()
-	if freshness >= config.fresh_good_threshold:
+	return stage_for(freshness, EconomyConfig.resolve())
+
+
+## &"fresh" (>= fresh_good_threshold), &"decaying" (< fresh_bad_threshold), else &"wilted".
+## The one threshold rule – GraveQuality's freshness points use it too.
+static func stage_for(value: float, config: EconomyConfig) -> StringName:
+	var cfg := EconomyConfig.resolve(config)
+	if value >= cfg.fresh_good_threshold:
 		return STAGE_FRESH
-	if freshness < config.fresh_bad_threshold:
+	if value < cfg.fresh_bad_threshold:
 		return STAGE_DECAYING
 	return STAGE_WILTED
 
@@ -115,11 +120,6 @@ static func from_dict(d: Dictionary) -> CorpseRecord:
 	r.grave_id = _to_str(d.get("grave_id"), r.grave_id)
 	r.arrival_total_minutes = _to_int(d.get("arrival_total_minutes"), r.arrival_total_minutes)
 	return r
-
-
-static func _economy() -> EconomyConfig:
-	var config := Database.config(&"economy_config") as EconomyConfig
-	return config if config != null else EconomyConfig.new()
 
 
 static func _to_str(v: Variant, fallback: String) -> String:

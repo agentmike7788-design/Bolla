@@ -4,6 +4,9 @@ extends TestCase
 
 const FIXTURE_TABLES := "res://tests/fixtures/corpse_tables_fixture.tres"
 const FIXTURE_ECONOMY := "res://tests/fixtures/economy_config_fixture.tres"
+const REAL_TABLES := "res://data/corpses/corpse_tables.tres"
+const REAL_ECONOMY := "res://data/config/economy_config.tres"
+const CARTER_DIALOGUE := "res://data/dialogue/carter.tres"
 const FakeInventory := preload("res://tests/fixtures/fake_inventory.gd")
 const SLOT := Transform3D(Basis(Vector3.UP, 0.5), Vector3(2, 0, 3))
 const CONTAINER_OFFSET := Vector3(10, 0, -4)
@@ -274,6 +277,51 @@ func test_delivery_needs_more_free_plots_than_unburied_corpses() -> void:
 	assert_eq(GameState.get_flag(&"delivery_skipped"), 1, "flag keeps the day of the last skip")
 
 
+## GP-04: every plot filled or marked – no plot can ever be freed, so the carter brings nothing
+## any more, quietly: no missed delivery, no skip flag/signal, no warning (bier state irrelevant).
+func test_no_delivery_and_no_miss_when_every_plot_is_used() -> void:
+	graveyard.free_plots = 0
+	manager.spawn_corpse(null, Transform3D.IDENTITY, &"ground")
+	events.clear()
+	assert_null(manager.try_daily_delivery(7))
+	assert_eq(manager.records().size(), 1)
+	assert_eq(GameState.get_stat(&"missed_deliveries"), 0)
+	assert_false(GameState.has_flag(&"delivery_skipped"))
+	assert_eq(events, [])
+	dropoff.is_open = false
+	EventBus.time_tick.emit(8, 460)
+	assert_eq(GameState.get_stat(&"missed_deliveries"), 0, "also with an occupied bier")
+	assert_eq(events, [])
+	assert_null(manager.try_daily_delivery(8), "idempotent per day")
+
+
+## GP-01: with the real tables the slice brings the valuables choice three times; taking all
+## three makes the gravekeeper "Verrufen" (-3) and the carter's reputation remark reachable.
+func test_real_slice_three_thefts_reach_verrufen_and_the_carter_remark() -> void:
+	manager.tables = load(REAL_TABLES) as CorpseTables
+	manager.economy = load(REAL_ECONOMY) as EconomyConfig
+	var inv := _inventory()
+	var choices := 0
+	for day: int in range(1, 7):
+		var r := manager.try_daily_delivery(day)
+		assert_not_null(r, "delivery day %d" % day)
+		manager.examine(r.id)
+		if r.needs_valuables_decision():
+			choices += 1
+			manager.decide_valuables(r.id, true, inv)
+	assert_eq(choices, 3, "valuables on days 2, 4 and 5")
+	assert_eq(GameState.get_stat(&"valuables_taken"), 3)
+	assert_eq(GameState.get_stat(&"reputation"), -3)
+	assert_eq(GameState.reputation_label(), "Verrufen")
+	GameState.set_flag(&"met_carter")
+	TimeManager.minute_of_day = 465
+	var runner := DialogueRunner.new()
+	runner.start(load(CARTER_DIALOGUE) as DialogueData, {"inventory": inv, "speaker": null})
+	assert_eq(runner.current_node().id, &"greet_morning")
+	runner.choose(0)
+	assert_eq(runner.current_node().id, &"remark_rep", "the carter reacts to the thefts")
+
+
 func test_delivery_skipped_without_graveyard() -> void:
 	graveyard.remove_from_group(&"graveyard")
 	assert_null(manager.try_daily_delivery(1))
@@ -329,12 +377,43 @@ func test_delivery_via_time_skipped_signal() -> void:
 	assert_eq(manager.records()[1].traits, [&"valuables"])
 
 
+## C1: resting over 07:40 delivers once – the corpse arrived at 07:40 and decayed since then.
 func test_rest_over_delivery_time_delivers_once() -> void:
 	TimeManager.advance(1080 - 390)
 	assert_eq(manager.records().size(), 1)
 	var r := manager.records()[0]
-	assert_eq(r.arrival_total_minutes, 1080)
-	assert_almost(r.freshness, 1.0, 0.0001, "no decay before arrival")
+	assert_eq(r.arrival_total_minutes, 460, "arrived at the delivery minute inside the rest")
+	assert_eq(r.last_decay_total, 1080)
+	assert_almost(r.freshness, 1.0 - _rate(r) * (1080 - 460) / 60.0, 0.00001, "decayed from 07:40 to 18:00")
+	assert_ne(r.freshness_stage(), &"fresh", "10 h 20 min on the bier")
+
+
+## C1: a timed action over 07:40 (07:10 -> 08:10) backdates the arrival to 07:40.
+func test_delivery_inside_a_short_skip_is_backdated() -> void:
+	TimeManager.advance(40)
+	assert_eq(manager.records(), [])
+	TimeManager.advance(60)
+	var r := manager.records()[0]
+	assert_eq(r.arrival_total_minutes, 460)
+	assert_eq(r.last_decay_total, 490)
+	assert_almost(r.freshness, 1.0 - _rate(r) * 30 / 60.0, 0.00001)
+	assert_eq(events.slice(0, 1), [["arrived", r.id]])
+
+
+## C1: a direct call before the delivery minute (tests, debug) never arrives in the future.
+func test_early_direct_delivery_arrives_now() -> void:
+	var r := manager.try_daily_delivery(1)
+	assert_eq(r.arrival_total_minutes, 390)
+	assert_eq(r.last_decay_total, 390)
+	assert_eq(r.freshness, 1.0)
+
+
+## C1: the fake time_skipped signal alone (TimeManager not moved) uses the signal's times.
+func test_delivery_via_skip_signal_uses_the_signal_times() -> void:
+	EventBus.time_skipped.emit(390, 1080)
+	var r := manager.records()[0]
+	assert_eq(r.arrival_total_minutes, 460)
+	assert_eq(r.last_decay_total, 1080)
 
 
 func test_ticks_before_delivery_minute_do_nothing() -> void:
@@ -431,6 +510,74 @@ func test_buried_corpse_stops_decaying() -> void:
 	EventBus.hour_changed.emit(2, 5)
 	assert_almost(r.freshness, at_burial)
 	assert_almost(r.freshness_at_burial, 0.9)
+
+
+## C6: freshness comes from the minutes since arrival in one expression (no accumulated float
+## error): after exactly 8 h a x1.0 corpse is still 0.6 "Frisch", after exactly 14 h 0.3 "Welk".
+func test_decay_hits_the_stage_thresholds_exactly() -> void:
+	TimeManager.advance(460 - 390)
+	var fever := _spawn(&"fever")
+	var drowned := _spawn(&"drowned")  # x1.5: 0.6 after 320 min, 0.3 after 560 min
+	TimeManager.advance(20)
+	for i: int in 5:
+		TimeManager.advance(60)
+	assert_true(drowned.freshness == 0.6, "x1.5 after 320 min: exactly 0.6, got %.17f" % drowned.freshness)
+	assert_eq(drowned.freshness_stage(), &"fresh")
+	TimeManager.advance(60)
+	TimeManager.advance(60)
+	TimeManager.advance(40)
+	assert_true(fever.freshness == 0.6, "x1.0 after 480 min: exactly 0.6, got %.17f" % fever.freshness)
+	assert_eq(fever.freshness_stage(), &"fresh")
+	TimeManager.advance(80)
+	assert_true(drowned.freshness == 0.3, "x1.5 after 560 min: exactly 0.3, got %.17f" % drowned.freshness)
+	assert_eq(drowned.freshness_stage(), &"wilted")
+
+
+## C6: a x1.0 corpse buried exactly 8 h after its 07:40 arrival keeps the "Frisch" bonus.
+func test_burial_on_the_fresh_threshold_gets_the_bonus() -> void:
+	TimeManager.advance(460 - 390)
+	var r := _spawn(&"fever")
+	for i: int in 8:
+		TimeManager.advance(60)
+	manager.mark_buried(r.id, "plot_01")
+	assert_true(r.freshness_at_burial >= economy.fresh_good_threshold, "got %.17f" % r.freshness_at_burial)
+	var labels: Array = []
+	for line: Dictionary in GraveQuality.breakdown(r, &"wooden_cross", economy):
+		labels.append(line.label)
+	assert_has(labels, "Frisch")
+	assert_eq(GraveQuality.compute(r, &"wooden_cross", economy), 2 + 1 + 1)
+
+
+## C2: the gameplay floats survive the save format (JSON.from_native writes 14 digits) bit-exactly,
+## so a load can never move freshness across a threshold (07:40 delivery + 20 min examination).
+func test_freshness_survives_the_json_save_format_exactly() -> void:
+	TimeManager.advance(460 - 390)
+	var r := manager.records()[0]
+	TimeManager.advance(20)
+	var threshold := _spawn(&"fever")
+	for i: int in 8:
+		TimeManager.advance(60)
+	manager.mark_buried(threshold.id, "plot_01")
+	var values := {r.id: r.freshness, threshold.id: threshold.freshness_at_burial}
+	manager.load_state(_json_round_trip(manager.save_state()))
+	assert_true(manager.get_record(r.id).freshness == values[r.id],
+			"%.17f -> %.17f" % [values[r.id], manager.get_record(r.id).freshness])
+	assert_true(manager.get_record(threshold.id).freshness_at_burial == values[threshold.id],
+			"%.17f -> %.17f" % [values[threshold.id], manager.get_record(threshold.id).freshness_at_burial])
+
+
+## ARCH-06: stage-change signals follow the injected EconomyConfig (the one GraveQuality uses).
+func test_stage_signals_follow_the_injected_economy() -> void:
+	var custom := economy.duplicate() as EconomyConfig
+	custom.fresh_good_threshold = 0.95
+	manager.economy = custom
+	var r := _spawn(&"fever")
+	events.clear()
+	EventBus.hour_changed.emit(1, 7)  # 30 min: 0.975
+	assert_eq(events, [])
+	EventBus.hour_changed.emit(1, 8)  # 90 min: 0.925 < 0.95
+	assert_eq(events, [["updated", r.id]], "wilted under the injected thresholds")
+	assert_eq(CorpseRecord.stage_for(r.freshness, custom), &"wilted")
 
 
 func test_mark_buried_applies_decay_until_now() -> void:
@@ -855,6 +1002,11 @@ func _spawn(cause: StringName, traits: Array[StringName] = [], location: StringN
 	r.traits = traits
 	r.valuables_coins = 6 if r.has_trait(&"valuables") else 0
 	return manager.spawn_corpse(r, at, location)
+
+
+## Freshness lost per hour by `r` with the fixture tables.
+func _rate(r: CorpseRecord) -> float:
+	return tables.base_decay_per_hour * float(tables.get_cause(r.cause_id).get("decay_mult", 1.0))
 
 
 func _new_manager() -> CorpseManager:

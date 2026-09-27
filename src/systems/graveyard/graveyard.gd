@@ -239,9 +239,7 @@ func _corpse_manager() -> CorpseManager:
 
 func _economy() -> EconomyConfig:
 	if economy == null:
-		economy = Database.config(&"economy_config") as EconomyConfig
-		if economy == null:
-			economy = EconomyConfig.new()
+		economy = EconomyConfig.resolve()
 	return economy
 
 

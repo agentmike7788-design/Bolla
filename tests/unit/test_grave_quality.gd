@@ -188,11 +188,26 @@ func test_missing_inputs_do_not_crash() -> void:
 	assert_eq(GraveQuality.payment(_corpse(), 4, null, config), 2, "no tables -> no base payment")
 
 
+## The data file equals the class defaults except the v3 rating thresholds (§2.4: 15 / 32 / 50).
+## The class default stays 10 / 25 / 45 – the fixture relies on it (test_cemetery_rating.gd).
 func test_real_economy_config_matches_defaults() -> void:
 	var real := load("res://data/config/economy_config.tres") as EconomyConfig
 	var defaults := EconomyConfig.new()
 	assert_not_null(real)
 	for prop: Dictionary in defaults.get_property_list():
-		if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
+		if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE and prop.name != "rating_thresholds":
 			assert_eq(real.get(prop.name), defaults.get(prop.name), String(prop.name))
+	assert_eq(real.rating_thresholds, PackedInt32Array([15, 32, 50]), "v3 thresholds")
+	assert_eq(defaults.rating_thresholds, PackedInt32Array([10, 25, 45]), "class default unchanged")
 	assert_true(Database.config(&"economy_config") is EconomyConfig)
+
+
+## ARCH-06: the quality's freshness line and the corpse's stage use the same comparison.
+func test_freshness_points_match_the_stage() -> void:
+	var custom := config.duplicate() as EconomyConfig
+	custom.fresh_good_threshold = 0.8
+	custom.fresh_bad_threshold = 0.5
+	var points := {&"fresh": custom.fresh_good_bonus, &"wilted": 0, &"decaying": custom.fresh_bad_malus}
+	for f: float in [1.0, 0.8, 0.79, 0.6, 0.5, 0.49, 0.0]:
+		var stage := CorpseRecord.stage_for(f, custom)
+		assert_eq(GraveQuality.compute(_corpse(f), &"", custom), custom.quality_buried + int(points[stage]), "freshness %s (%s)" % [str(f), stage])

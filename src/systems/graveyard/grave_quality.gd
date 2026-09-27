@@ -28,9 +28,10 @@ static func breakdown(corpse: CorpseRecord, marker_id: StringName, config: Econo
 	if cfg.marker_quality.has(marker_id):
 		out.append(_line(_marker_label(marker_id), cfg.marker_quality[marker_id]))
 	var fresh := corpse.freshness_at_burial if corpse.freshness_at_burial >= 0.0 else corpse.freshness
-	if fresh >= cfg.fresh_good_threshold:
+	var stage := CorpseRecord.stage_for(fresh, cfg)
+	if stage == CorpseRecord.STAGE_FRESH:
 		out.append(_line(LABEL_FRESH, cfg.fresh_good_bonus))
-	elif fresh < cfg.fresh_bad_threshold:
+	elif stage == CorpseRecord.STAGE_DECAYING:
 		out.append(_line(LABEL_DECAYING, cfg.fresh_bad_malus))
 	if corpse.examined:
 		out.append(_line(LABEL_EXAMINED, cfg.quality_examined))
