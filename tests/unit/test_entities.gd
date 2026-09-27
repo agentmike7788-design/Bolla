@@ -16,6 +16,13 @@ const RESOURCE_SCENE := "res://src/entities/resource_node/resource_node.tscn"
 const NPC_SCENE := "res://src/entities/npc/npc.tscn"
 const DOOR_SCENE := "res://src/entities/hut_door/hut_door.tscn"
 const CORPSE_SCENE := "res://src/entities/corpse/corpse.tscn"
+## Plain corpse looks in variant order (Corpse.plain_variants, picked by posmod(seed, 4)).
+const CORPSE_VARIANTS: Array[String] = [
+	"res://assets/models/props/ph_prop_corpse.glb",
+	"res://assets/models/props/ph_prop_corpse_02.glb",
+	"res://assets/models/props/ph_prop_corpse_03.glb",
+	"res://assets/models/props/ph_prop_corpse_04.glb",
+]
 const TEST_SAVES := "user://test_saves"
 const EMPTY := GraveRecord.State.EMPTY
 const DUG := GraveRecord.State.DUG
@@ -187,6 +194,71 @@ func test_corpse_model_swaps_when_shrouded() -> void:
 	await tree.process_frame
 	assert_true(node.is_shrouded_visual())
 	assert_eq(node.get_node("Model").scene_file_path, "res://assets/models/props/ph_prop_corpse_shrouded.glb")
+
+
+func test_corpse_plain_variants_exported() -> void:
+	var node := corpses.get_corpse_node(_spawn(&"ground").id)
+	assert_eq(node.plain_variants.size(), CORPSE_VARIANTS.size(), "four plain looks")
+	for i: int in CORPSE_VARIANTS.size():
+		assert_not_null(node.plain_variants[i], "variant %d set" % i)
+		if node.plain_variants[i] != null:
+			assert_eq(node.plain_variants[i].resource_path, CORPSE_VARIANTS[i], "variant %d" % i)
+	assert_eq(node.plain_model.resource_path, CORPSE_VARIANTS[0], "plain_model = variant 0")
+
+
+func test_corpse_variant_for_seed_is_deterministic() -> void:
+	assert_eq(Corpse.variant_for_seed(0, 4), 0)
+	assert_eq(Corpse.variant_for_seed(7, 4), 3)
+	assert_eq(Corpse.variant_for_seed(-1, 4), 3, "negative seeds wrap (posmod)")
+	assert_eq(Corpse.variant_for_seed(12345, 0), 0, "no variants -> plain_model")
+	# the generator's seeds (docs §2.5) spread over all looks within the first days
+	var seen := {}
+	for day: int in range(1, 5):
+		seen[Corpse.variant_for_seed(CorpseGenerator.seed_for(day, 0), 4)] = true
+	assert_eq(seen.size(), 4, "days 1-4 show four different looks (%s)" % [seen.keys()])
+
+
+func test_corpse_model_follows_the_record_seed() -> void:
+	for s: int in [0, 1, 2, 3, 6, 17, -5, CorpseGenerator.seed_for(3, 1)]:
+		var c := _spawn(&"ground", Vector3(2, 0, 2), false, s)
+		var node := corpses.get_corpse_node(c.id)
+		var want := posmod(s, CORPSE_VARIANTS.size())
+		assert_eq(node.visual_variant(), want, "seed %d -> variant %d" % [s, want])
+		assert_eq(node.get_node("Model").scene_file_path, CORPSE_VARIANTS[want], "seed %d model" % s)
+		assert_false(node.is_shrouded_visual())
+
+
+func test_corpse_variant_survives_shroud_swap() -> void:
+	var c := _spawn(&"ground", Vector3(2, 0, 2), false, 6)
+	var node := corpses.get_corpse_node(c.id)
+	assert_eq(node.get_node("Model").scene_file_path, CORPSE_VARIANTS[2])
+	inv.add_item(&"shroud", 1)
+	assert_true(corpses.apply_shroud(c.id, inv))
+	await tree.process_frame
+	assert_true(node.is_shrouded_visual())
+	assert_eq(node.get_node("Model").scene_file_path, "res://assets/models/props/ph_prop_corpse_shrouded.glb")
+	assert_eq(node.visual_variant(), 2, "the look underneath is kept")
+	assert_eq(node.get_children().filter(func(n: Node) -> bool: return n.name == &"Model").size(), 1, "one model")
+	corpses.examine(c.id)  # another corpse_updated: nothing changes
+	await tree.process_frame
+	assert_eq(node.get_node("Model").scene_file_path, "res://assets/models/props/ph_prop_corpse_shrouded.glb")
+
+
+func test_corpse_variant_survives_save_and_load() -> void:
+	var plain := _spawn(&"ground", Vector3(2, 0, 2), false, 5)
+	var wrapped := _spawn(&"ground", Vector3(3, 0, 3), false, 7)
+	inv.add_item(&"shroud", 1)
+	assert_true(corpses.apply_shroud(wrapped.id, inv))
+	# through JSON like a real save (seeds come back as floats)
+	var state: Dictionary = JSON.parse_string(JSON.stringify(corpses.save_state()))
+	corpses.load_state(state)
+	await tree.process_frame
+	var a := corpses.get_corpse_node(plain.id)
+	assert_eq(a.get_node("Model").scene_file_path, CORPSE_VARIANTS[1], "seed 5 -> variant 1 after load")
+	assert_eq(a.visual_variant(), 1)
+	var b := corpses.get_corpse_node(wrapped.id)
+	assert_true(b.is_shrouded_visual(), "still shrouded after load")
+	assert_eq(b.visual_variant(), 3, "seed 7 -> variant 3 after load")
 
 
 # --- GravePlot --------------------------------------------------------------------------------
@@ -902,8 +974,9 @@ func _settle() -> void:
 	await tree.process_frame
 
 
-func _spawn(location: StringName, at: Vector3 = Vector3.ZERO, valuables: bool = false) -> CorpseRecord:
+func _spawn(location: StringName, at: Vector3 = Vector3.ZERO, valuables: bool = false, seed_value: int = 0) -> CorpseRecord:
 	var r := CorpseRecord.new()
+	r.seed = seed_value
 	r.display_name = "Anna Moor"
 	r.cause_id = &"fever"
 	if valuables:
