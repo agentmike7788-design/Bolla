@@ -23,6 +23,16 @@ const MODELS: Dictionary[StringName, String] = {
 	&"shroud": "res://assets/models/items/ph_item_shroud.glb",
 	&"wooden_cross": "res://assets/models/props/ph_prop_cross_wood.glb",
 	&"gravestone_simple": "res://assets/models/props/ph_prop_gravestone_round.glb",
+	# Phase 3 (docs/PHASE3_DESIGN.md §8: decor icons from the models).
+	&"iron_fittings": "res://assets/models/items/ph_item_iron_fittings.glb",
+	&"seeds": "res://assets/models/items/ph_item_seeds.glb",
+	&"rake": "res://assets/models/items/ph_item_rake.glb",
+	&"decor_bench_wood": "res://assets/models/decor/ph_deco_bench_wood.glb",
+	&"decor_bench_stone": "res://assets/models/decor/ph_deco_bench_stone.glb",
+	&"decor_flowerbed": "res://assets/models/decor/ph_deco_flowerbed.glb",
+	&"decor_grave_vase": "res://assets/models/decor/ph_deco_grave_vase.glb",
+	&"decor_lantern": "res://assets/models/decor/ph_deco_lantern_small.glb",
+	&"decor_path_gravel": "res://assets/models/decor/ph_deco_path_gravel.glb",
 }
 
 var _filter: String = ""

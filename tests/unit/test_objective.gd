@@ -15,8 +15,6 @@ const MARKER := "Grabzeichen setzen"
 const MARKER_CRAFT := "Grabzeichen setzen (Werkbank: Holzkreuz = 3 Holz)"
 const REST := "Feierabend – Ausruhen an der Hüttentür"
 const SLEEP := "Feierabend – Schlafen an der Hüttentür"
-const COMPLETE := "Alle Gräber vollendet – der Friedhof ruht in Würde"
-const COMPLETE_MISSED := "Alle Gräber vollendet – Stufe „%s“ (Ziel „Würdevoll“ verfehlt)"
 const TABLE_BUSY := "Tisch belegt – Leiche mit [Q] ablegen"
 ## Daytime minute (12:00) where the idle line would be REST.
 const NOON := 720
@@ -148,43 +146,14 @@ func test_buried_corpses_are_ignored() -> void:
 	assert_eq(_objective([buried], [_grave(GraveRecord.State.MARKED)], NOON), REST)
 
 
-func test_slice_complete_wins() -> void:
-	# UI-04: COMPLETE only when the goal rating is reached (MARKED quality ≥ dignified threshold).
+## Phase 3 (§2.7): slice_complete is no longer read – the corpse chain goes on.
+func test_slice_complete_is_ignored() -> void:
 	var marked := _grave(GraveRecord.State.MARKED)
-	marked.quality = _dignified_threshold()
 	var graves: Array[GraveRecord] = [_grave(GraveRecord.State.FILLED), marked]
 	var corpses: Array[CorpseRecord] = [_corpse(&"carried")]
-	assert_eq(ObjectiveResolver.current(corpses, graves, _inv, NOON, {&"slice_complete": true}), COMPLETE)
-	assert_eq(ObjectiveResolver.current(corpses, graves, _inv, NOON, {"slice_complete": true}), COMPLETE, "String key")
-	assert_eq(ObjectiveResolver.current(corpses, graves, _inv, NOON, {&"slice_complete": false}), TO_TABLE)
-	assert_eq(ObjectiveResolver.current(corpses, graves, _inv, NOON, {&"delivery_skipped": 2}), TO_TABLE, "other flags irrelevant")
-
-
-## UI-04: after the slice the line reflects whether „Würdevoll“ was reached.
-func test_slice_complete_reflects_the_goal_rating() -> void:
-	var flags := {&"slice_complete": true}
-	var goal := _dignified_threshold()
-	var economy := Database.config(&"economy_config") as EconomyConfig
-	var a := _grave(GraveRecord.State.MARKED)
-	var b := _grave(GraveRecord.State.MARKED)
-	a.quality = goal - 1
-	var graves: Array[GraveRecord] = [a, b]
-	var tier := CemeteryRating.label(CemeteryRating.rating(goal - 1, economy))
-	assert_eq(ObjectiveResolver.current([], graves, _inv, NOON, flags), COMPLETE_MISSED % tier, "missed by one")
-	b.quality = 1
-	assert_eq(ObjectiveResolver.current([], graves, _inv, NOON, flags), COMPLETE, "exactly the threshold")
-	a.quality = 0
-	b.quality = 0
-	assert_eq(ObjectiveResolver.current([], graves, _inv, NOON, flags), COMPLETE_MISSED % CemeteryRating.label(&"neglected"))
-	var filled := _grave(GraveRecord.State.FILLED)
-	filled.quality = goal
-	assert_eq(ObjectiveResolver.current([], [filled], _inv, NOON, flags), COMPLETE_MISSED % CemeteryRating.label(&"neglected"),
-			"only completed (MARKED) graves count")
-	a.quality = goal - economy.old_grave_quality
-	var old := _grave(GraveRecord.State.OLD)
-	old.quality = 99
-	assert_eq(ObjectiveResolver.current([], [a, old], _inv, NOON, flags), COMPLETE,
-			"old graves count old_grave_quality like Graveyard.total_quality()")
+	assert_eq(ObjectiveResolver.current(corpses, graves, _inv, NOON, {&"slice_complete": true}), TO_TABLE)
+	assert_eq(ObjectiveResolver.current(corpses, graves, _inv, NOON, {"slice_complete": true}), TO_TABLE, "String key")
+	assert_eq(ObjectiveResolver.current([], [marked], _inv, NOON, {&"slice_complete": true}), REST, "idle as before")
 
 
 ## C5: a carried, unexamined corpse is not sent to a table another corpse occupies.
@@ -223,11 +192,6 @@ func test_is_pure() -> void:
 
 
 # --- helpers ------------------------------------------------------------------------------
-
-func _dignified_threshold() -> int:
-	var thresholds := (Database.config(&"economy_config") as EconomyConfig).rating_thresholds
-	return thresholds[CemeteryRating.TIERS.find(&"dignified") - 1]
-
 
 func _objective(corpses: Array, graves: Array, minute: int = NOON) -> String:
 	var typed_corpses: Array[CorpseRecord] = []

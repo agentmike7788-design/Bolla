@@ -17,6 +17,9 @@ const TEXT_QUALITY := "%d/%d"
 const TEXT_GRAVE := "Nr. %d"
 const TEXT_NONE := "–"
 const TEXT_UNKNOWN := "Unbekannt"
+const TEXT_OVERVIEW := "Friedhofsübersicht [U]"
+## UIRoot opens the cemetery overview on top (Phase 3 §7).
+const ACTION_OVERVIEW := &"cemetery_overview"
 ## Column headings and widths (1920 × 1080 base); the name column takes the rest.
 const COLUMNS: Array[String] = ["Tag", "Name (Alter)", "Todesursache", "Grab", "Grabzeichen", "Qualität"]
 const COLUMN_WIDTHS: PackedFloat32Array = [70.0, 330.0, 300.0, 100.0, 200.0, 120.0]
@@ -36,6 +39,7 @@ var subtitle_label: Label
 var footer_label: Label
 var empty_label: Label
 var close_button: Button
+var overview_button: Button
 var scroll: ScrollContainer
 
 var _rows: VBoxContainer
@@ -108,6 +112,9 @@ func _build() -> void:
 	close_button = UIKit.button(TEXT_CLOSE)
 	close_button.pressed.connect(request_close)
 	bottom.add_child(close_button)
+	overview_button = UIKit.button(TEXT_OVERVIEW)
+	overview_button.pressed.connect(func() -> void: action_requested.emit(ACTION_OVERVIEW))
+	bottom.add_child(overview_button)
 	box.add_child(bottom)
 
 

@@ -6,12 +6,17 @@ extends CanvasLayer
 ## closes the topmost panel/dialogue, else opens the pause menu (which also pauses the
 ## SceneTree); I toggles the inventory; E is swallowed while anything is open.
 ## Finds the player (group "player") on world_ready and hands it to the HUD.
+## Phase 3 (docs/PHASE3_DESIGN.md §7): U toggles the cemetery overview (context from
+## CemeteryStatus, also opened by the grave register's button); the day summary is completed
+## with stipend, reputation, dirty spots and the sections unlocked since the last summary.
 
 const GROUP := &"ui_root"
 const PLAYER_GROUP := &"player"
 const TITLE_SCENE := "res://src/ui/title/title_screen.tscn"
 const PANEL_PAUSE := &"pause"
 const PANEL_INVENTORY := &"inventory"
+const PANEL_OVERVIEW := &"cemetery_overview"
+const PANEL_DAY_SUMMARY := &"day_summary"
 const DEBUG_MODAL := &"debug"
 const ACTION_TITLE := &"title"
 const ACTION_QUIT := &"quit"
@@ -26,6 +31,7 @@ const PANEL_SCRIPTS: Dictionary[StringName, Script] = {
 	&"pause": preload("res://src/ui/panels/pause_menu.gd"),
 	&"chest": preload("res://src/ui/panels/chest_panel.gd"),
 	&"grave_register": preload("res://src/ui/panels/grave_register_panel.gd"),
+	&"cemetery_overview": preload("res://src/ui/panels/cemetery_overview_panel.gd"),
 }
 
 ## Called for "Beenden" (tests replace it).
@@ -42,6 +48,8 @@ var player: Node
 @onready var reward_card: RewardCard = $Root/Overlay/RewardCard
 ## Black portal fade over everything (created in _ready, docs §11).
 var screen_fade: ScreenFade
+## Phase-3 notifications (tier changes, stipend, ghost lines).
+var notices: Phase3Notices
 
 ## Open UI, bottom → top: panel ids and &"dialogue".
 var _stack: Array[StringName] = []
@@ -67,6 +75,9 @@ func _ready() -> void:
 	dialogue_box.closed.connect(_on_dialogue_closed)
 	screen_fade = ScreenFade.new()
 	root_control.add_child(screen_fade)
+	notices = Phase3Notices.new()
+	notices.name = "Phase3Notices"
+	add_child(notices)
 	_bind_player(get_tree().get_first_node_in_group(PLAYER_GROUP))
 	_update_dim()
 
@@ -102,6 +113,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed(&"inventory"):
 		_consume()
 		toggle_inventory()
+	elif event.is_action_pressed(PANEL_OVERVIEW):
+		_consume()
+		toggle_overview()
 	elif top() == DialogueBox.MODAL_ID and dialogue_box.handle_choice_input(event):
 		_consume()
 	elif not _stack.is_empty() and event.is_action_pressed(&"interact"):
@@ -122,6 +136,8 @@ func open_panel(panel: StringName, context: Dictionary) -> void:
 		UIState.push_modal(panel)
 	if panel == PANEL_PAUSE:
 		_hold_tree_pause()
+	if panel == PANEL_DAY_SUMMARY:
+		context = DaySummaryPanel.complete_context(context, get_tree() if is_inside_tree() else null, notices.take_unlocked() if notices != null else [] as Array[StringName])
 	node.open(context)
 	_update_visibility()
 
@@ -159,6 +175,19 @@ func toggle_inventory() -> void:
 		var inv: Variant = player.get(&"inventory") if is_instance_valid(player) else null
 		if inv is Inventory:
 			open_panel(PANEL_INVENTORY, {"inventory": inv})
+
+
+## U: opens the cemetery overview when nothing is open, closes it when it is on top.
+func toggle_overview() -> void:
+	if top() == PANEL_OVERVIEW:
+		close_panel(PANEL_OVERVIEW)
+	elif _stack.is_empty():
+		open_overview()
+
+
+## Opens the overview with a fresh snapshot of the systems (also on top of the register).
+func open_overview() -> void:
+	open_panel(PANEL_OVERVIEW, CemeteryStatus.overview_context(get_tree() if is_inside_tree() else null))
 
 
 ## Starts a dialogue with the player's inventory in the context.
@@ -273,6 +302,8 @@ func _on_panel_action(action: StringName) -> void:
 			go_to_title()
 		ACTION_QUIT:
 			quit_handler.call()
+		PANEL_OVERVIEW:
+			open_overview()
 
 
 func _on_dialogue_requested(dialogue_id: StringName, speaker: Node) -> void:

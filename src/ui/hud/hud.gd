@@ -8,6 +8,10 @@ extends Control
 ## RewardCard). Updates from EventBus + inventory.changed; refresh_all() pulls
 ## everything (UIRoot calls it on world_ready / game_loaded / new_game_started).
 ## The widgets are built by HudBuilder; this script wires the signals and updates them.
+## Phase 3 (docs/PHASE3_DESIGN.md §7): the quality block shows the cemetery quality of
+## CemeteryScore (tooltip: graves · decor · care), a reputation line (tier, trend arrow of
+## Reputation.forecast(), 0–100 bar; tooltip: effects) and, while BuildMode is active, the
+## build bar in place of the interaction prompt.
 
 const BASE_ITEMS: Array[StringName] = [&"coin", &"wood", &"stone", &"linen"]
 const CORPSE_MANAGER_GROUP := &"corpse_manager"
@@ -24,6 +28,10 @@ const TEXT_NEXT_TIER := "%s ab %d"
 const TEXT_NOTICE := "Heute keine Leiche: %s"
 const TEXT_NOTICE_UNKNOWN := "Heute keine Leiche – die Bahre war belegt oder kein Grab frei."
 const TEXT_ACTION_RUNNING := "%s …"
+const TEXT_REPUTATION_CAPTION := "Ruf"
+const BUILD_MODE_GROUP := &"build_mode"
+## Build-bar refresh while shown (the cursor moves with the mouse).
+const BUILD_SYNC_SECONDS := 0.1
 
 @export var margin: float = 28.0
 @export var top_panel_width: float = 560.0
@@ -44,6 +52,12 @@ var prompt_key: PanelContainer
 var action_panel: PanelContainer
 var action_label: Label
 var action_bar: ProgressBar
+var quality_row: HBoxContainer
+var reputation_row: HBoxContainer
+var reputation_label: Label
+var reputation_arrow: Label
+var reputation_meter: ReputationMeter
+var build_bar: BuildBar
 
 ## item id -> {chip: Control, count: Label, caption: Label (crafted items only)}
 var _chips: Dictionary[StringName, Dictionary] = {}
@@ -53,6 +67,9 @@ var _prompt_enabled: bool = false
 var _action_running: bool = false
 var _objective_dirty: bool = false
 var _skipped_day: int = 0
+var _build_active: bool = false
+var _build_sync_left: float = 0.0
+var _reputation_dirty: bool = false
 
 
 func _init() -> void:
@@ -77,7 +94,14 @@ func _ready() -> void:
 	EventBus.corpse_updated.connect(_mark_objective_dirty.unbind(1))
 	EventBus.corpse_buried.connect(_mark_objective_dirty.unbind(2))
 	EventBus.grave_state_changed.connect(_mark_objective_dirty.unbind(2))
-	EventBus.slice_completed.connect(_mark_objective_dirty)
+	EventBus.cemetery_completed.connect(_mark_objective_dirty)
+	EventBus.section_progress_changed.connect(_mark_objective_dirty.unbind(3))
+	EventBus.section_unlocked.connect(_mark_objective_dirty.unbind(1))
+	EventBus.cleanliness_changed.connect(_mark_objective_dirty.unbind(2))
+	EventBus.ghost_night_changed.connect(_mark_objective_dirty.unbind(1))
+	EventBus.ghost_spoke.connect(_mark_objective_dirty.unbind(3))
+	EventBus.reputation_changed.connect(_mark_reputation_dirty.unbind(4))
+	EventBus.build_mode_changed.connect(_on_build_mode_changed)
 	refresh_all()
 
 
@@ -99,12 +123,9 @@ func bind_player(player: Node) -> void:
 func refresh_all() -> void:
 	_refresh_clock(TimeManager.day, TimeManager.minute_of_day)
 	_refresh_resources()
-	var graveyard := _group_node(GRAVEYARD_GROUP)
-	if graveyard != null and graveyard.has_method(&"total_quality"):
-		var total := int(graveyard.call(&"total_quality"))
-		_on_quality_changed(total, CemeteryRating.rating(total, _economy()))
-	else:
-		_on_quality_changed(0, CemeteryRating.rating(0, _economy()))
+	var score := CemeteryStatus.score(get_tree() if is_inside_tree() else null)
+	_on_quality_changed(int(score.total), score.rating)
+	refresh_reputation()
 	# The flag (day of the skip) is saved, the reason is not: keep a live reason if known.
 	var skipped: Variant = GameState.get_flag(FLAG_DELIVERY_SKIPPED)
 	if (skipped is int or skipped is float) and int(skipped) == TimeManager.day:
@@ -118,8 +139,22 @@ func refresh_all() -> void:
 
 func refresh_objective() -> void:
 	_objective_dirty = false
+	var world := CemeteryStatus.objective_state(get_tree() if is_inside_tree() else null, _inventory)
 	objective_label.text = ObjectiveResolver.current(_records(), _graves(), _inventory,
-			TimeManager.minute_of_day, GameState.flags)
+			TimeManager.minute_of_day, GameState.flags, world)
+
+
+## Reputation line: tier, trend arrow (forecast of the next drift), bar, tooltip (§7).
+func refresh_reputation() -> void:
+	_reputation_dirty = false
+	var rep := CemeteryStatus.reputation(get_tree() if is_inside_tree() else null)
+	var forecast := int(rep.forecast)
+	reputation_label.text = str(rep.label)
+	reputation_arrow.text = Phase3Texts.arrow(forecast)
+	reputation_arrow.theme_type_variation = &"GoodLabel" if forecast > 0 else (&"WarningLabel" if forecast < 0 else &"HudDimLabel")
+	reputation_meter.value = int(rep.value)
+	reputation_meter.thresholds = _rep_config().tier_thresholds
+	reputation_row.tooltip_text = Phase3Texts.reputation_tooltip(rep)
 
 
 ## Interaction prompt ("" hides it). A leading "[E]" in the text is dropped (keycap shown).
@@ -152,6 +187,23 @@ func notice_text() -> String:
 
 func quality_text() -> String:
 	return quality_label.text
+
+
+## "Geachtet ▲"
+func reputation_text() -> String:
+	return "%s %s" % [reputation_label.text, reputation_arrow.text]
+
+
+func quality_tooltip() -> String:
+	return quality_row.tooltip_text
+
+
+func reputation_tooltip() -> String:
+	return reputation_row.tooltip_text
+
+
+func build_bar_visible() -> bool:
+	return build_bar.visible
 
 
 func prompt_text() -> String:
@@ -221,8 +273,38 @@ func _hide_notice() -> void:
 ## Prompt and action bar belong to the world: hidden while a panel/dialogue is open.
 func _apply_modal_visibility() -> void:
 	var modal := UIState.is_modal()
-	prompt_panel.visible = _prompt_text != "" and not modal
+	prompt_panel.visible = _prompt_text != "" and not modal and not _build_active
 	action_panel.visible = _action_running and not modal
+	var show_bar := _build_active and not modal
+	if show_bar and not build_bar.visible:
+		_build_sync_left = 0.0
+		build_bar.sync(_build_mode())
+	build_bar.visible = show_bar
+
+
+func _process(delta: float) -> void:
+	if not build_bar.visible:
+		return
+	_build_sync_left -= delta
+	if _build_sync_left <= 0.0:
+		_build_sync_left = BUILD_SYNC_SECONDS
+		build_bar.sync(_build_mode())
+
+
+func _build_mode() -> BuildMode:
+	return _group_node(BUILD_MODE_GROUP) as BuildMode
+
+
+func _on_build_mode_changed(active: bool) -> void:
+	_build_active = active
+	_apply_modal_visibility()
+
+
+func _mark_reputation_dirty() -> void:
+	if _reputation_dirty:
+		return
+	_reputation_dirty = true
+	refresh_reputation.call_deferred()
 
 
 func _mark_objective_dirty() -> void:
@@ -240,6 +322,7 @@ func _on_time_tick(day: int, minute_of_day: int) -> void:
 func _on_day_started(day: int) -> void:
 	if _skipped_day != 0 and _skipped_day != day:
 		_hide_notice()
+	_mark_reputation_dirty()
 
 
 func _on_inventory_changed() -> void:
@@ -251,6 +334,12 @@ func _on_quality_changed(total: int, rating: StringName) -> void:
 	quality_label.text = TEXT_QUALITY % [total, CemeteryRating.label(rating)]
 	next_tier_label.text = _next_tier_text(total)
 	next_tier_label.visible = next_tier_label.text != ""
+	var score := CemeteryStatus.score(get_tree() if is_inside_tree() else null)
+	if int(score.total) != total:
+		score = CemeteryStatus.breakdown_of(total, 0, 0, _economy())
+	quality_row.tooltip_text = Phase3Texts.quality_tooltip(score)
+	_mark_reputation_dirty()
+	_mark_objective_dirty()
 
 
 func _next_tier_text(total: int) -> String:
@@ -306,5 +395,9 @@ func _group_node(group: StringName) -> Node:
 
 
 func _economy() -> EconomyConfig:
-	var cfg := Database.config(&"economy_config") as EconomyConfig
-	return cfg if cfg != null else EconomyConfig.new()
+	return EconomyConfig.resolve()
+
+
+func _rep_config() -> ReputationConfig:
+	var cfg := Database.config(&"reputation_config") as ReputationConfig
+	return cfg if cfg != null else ReputationConfig.new()

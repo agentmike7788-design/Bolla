@@ -6,7 +6,8 @@ extends UIPanel
 const TEXT_TITLE := "Inventar"
 const TEXT_COINS := "Münzen"
 const TEXT_REPUTATION := "Ruf"
-const TEXT_REPUTATION_VALUE := "%s (%s)"
+## Tier + trend arrow (Phase 3 §7), no raw value.
+const TEXT_REPUTATION_VALUE := "%s %s"
 const TEXT_HINT := "[I] oder [Esc] schließen"
 const TOOLTIP_FORMAT := "%s\n%s"
 const COIN_ITEM := &"coin"
@@ -38,6 +39,7 @@ func _build() -> void:
 	coins.add_child(UIKit.spacer())
 	coins.add_child(UIKit.label(TEXT_REPUTATION, &"DimLabel"))
 	_reputation = UIKit.label("", &"SubheaderLabel")
+	_reputation.mouse_filter = Control.MOUSE_FILTER_STOP
 	coins.add_child(_reputation)
 	box.add_child(coins)
 	var hint := UIKit.label(TEXT_HINT, &"DimLabel")
@@ -67,7 +69,9 @@ func _refresh() -> void:
 	for i: int in total:
 		_grid.add_child(_make_slot(slots[i] if i < slots.size() else {}))
 	_coins.text = str(_inventory.count(COIN_ITEM) if is_instance_valid(_inventory) else 0)
-	_reputation.text = TEXT_REPUTATION_VALUE % [GameState.reputation_label(), UIKit.signed(GameState.get_stat(&"reputation"))]
+	var rep := CemeteryStatus.reputation(get_tree() if is_inside_tree() else null)
+	_reputation.text = TEXT_REPUTATION_VALUE % [str(rep.label), Phase3Texts.arrow(int(rep.forecast))]
+	_reputation.tooltip_text = Phase3Texts.reputation_tooltip(rep)
 
 
 ## Items shown in the grid, in slot order ({id, amount}).

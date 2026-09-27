@@ -88,6 +88,9 @@ static func build_resource_panel(hud: GameHud) -> Dictionary[StringName, Diction
 		chip_map[id] = entry
 	var quality_row := UIKit.hbox(10)
 	quality_row.alignment = BoxContainer.ALIGNMENT_END
+	# Hover target of the quality tooltip (Phase 3 §7); the labels ignore the mouse.
+	quality_row.mouse_filter = Control.MOUSE_FILTER_STOP
+	hud.quality_row = quality_row
 	hud.quality_caption = UIKit.label(GameHud.TEXT_QUALITY_CAPTION, &"HudDimLabel")
 	quality_row.add_child(hud.quality_caption)
 	hud.quality_label = UIKit.label("", &"HudLabel")
@@ -95,7 +98,25 @@ static func build_resource_panel(hud: GameHud) -> Dictionary[StringName, Diction
 	hud.next_tier_label = UIKit.label("", &"HudDimLabel")
 	quality_row.add_child(hud.next_tier_label)
 	box.add_child(quality_row)
+	box.add_child(build_reputation_row(hud))
 	return chip_map
+
+
+## "Ruf  Geachtet ▲" + slim 0–100 bar with tier ticks (Phase 3 §7); tooltip = the effects.
+static func build_reputation_row(hud: GameHud) -> Control:
+	var row := UIKit.hbox(10)
+	row.alignment = BoxContainer.ALIGNMENT_END
+	row.mouse_filter = Control.MOUSE_FILTER_STOP
+	hud.reputation_row = row
+	row.add_child(UIKit.label(GameHud.TEXT_REPUTATION_CAPTION, &"HudDimLabel"))
+	hud.reputation_label = UIKit.label("", &"HudLabel")
+	row.add_child(hud.reputation_label)
+	hud.reputation_arrow = UIKit.label("", &"HudDimLabel")
+	row.add_child(hud.reputation_arrow)
+	hud.reputation_meter = ReputationMeter.new()
+	hud.reputation_meter.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(hud.reputation_meter)
+	return row
 
 
 static func build_bottom(hud: GameHud) -> void:
@@ -136,6 +157,9 @@ static func build_bottom(hud: GameHud) -> void:
 	hud.prompt_panel.add_child(prompt_row)
 	hud.prompt_panel.visible = false
 	column.add_child(hud.prompt_panel)
+	hud.build_bar = BuildBar.new()
+	hud.build_bar.name = "BuildBar"
+	column.add_child(hud.build_bar)
 
 
 ## Base items first, then every crafted item (sorted by id).

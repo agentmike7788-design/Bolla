@@ -1,7 +1,10 @@
 class_name SliceSummaryPanel
 extends UIPanel
 ## &"slice_summary" – context {days, burials, total, rating, reputation}.
-## Requested by the Graveyard when the last grave is completed (slice_complete).
+## Requested by the Graveyard when the last grave is completed. Phase 3 (docs/PHASE3_DESIGN.md
+## §1.3, §7): variant &"cemetery" (Graveyard.summary_context()) adds {decor, dirt,
+## reputation_tier, content_ghosts} and measures the goal „Ehrwürdig“ (100) instead of
+## „Würdevoll“; reputation is shown as its tier (no raw value).
 ## Default focus is "Weiterspielen"; "Zum Titel" asks once (like the pause menu).
 
 const TEXT_TITLE := "Der Friedhof ist vollendet"
@@ -11,7 +14,10 @@ const TEXT_BURIALS := "Bestattungen"
 const TEXT_TOTAL := "Friedhofsqualität"
 const TEXT_TOTAL_VALUE := "%d · %s"
 const TEXT_REPUTATION := "Ruf"
-const TEXT_REPUTATION_VALUE := "%s (%s)"
+const TEXT_DECOR := "Zier"
+const TEXT_DIRT := "Pflege"
+const TEXT_GHOSTS := "Zufriedene Geister"
+const VARIANT_CEMETERY := &"cemetery"
 const TEXT_GOAL_REACHED := "Ziel „%s“ (ab %d) erreicht."
 const TEXT_GOAL_MISSED := "Ziel „%s“ (ab %d) verfehlt – es fehlen %d Punkte."
 const TEXT_CONTINUE := "Weiterspielen"
@@ -19,6 +25,7 @@ const TEXT_TITLE_SCREEN := "Zum Titel"
 const TEXT_CONFIRM := PauseMenu.TEXT_CONFIRM
 const ACTION_TITLE := &"title"
 const GOAL_RATING := &"dignified"
+const GOAL_RATING_CEMETERY := &"venerable"
 
 @export var panel_width: float = 720.0
 
@@ -26,6 +33,10 @@ var days_label: Label
 var burials_label: Label
 var total_label: Label
 var reputation_label: Label
+var decor_label: Label
+var dirt_label: Label
+var ghosts_label: Label
+var _captions: Dictionary[Label, Label] = {}
 var goal_label: Label
 var title_button: Button
 var continue_button: Button
@@ -48,7 +59,10 @@ func _build() -> void:
 	days_label = _add_row(grid, TEXT_DAYS)
 	burials_label = _add_row(grid, TEXT_BURIALS)
 	total_label = _add_row(grid, TEXT_TOTAL)
+	decor_label = _add_row(grid, TEXT_DECOR)
+	dirt_label = _add_row(grid, TEXT_DIRT)
 	reputation_label = _add_row(grid, TEXT_REPUTATION)
+	ghosts_label = _add_row(grid, TEXT_GHOSTS)
 	box.add_child(grid)
 	goal_label = UIKit.label("", &"AccentLabel", true)
 	goal_label.custom_minimum_size.x = panel_width - 80.0
@@ -80,9 +94,15 @@ func _refresh() -> void:
 	days_label.text = str(int(context.get("days", TimeManager.day)))
 	burials_label.text = str(int(context.get("burials", 0)))
 	total_label.text = TEXT_TOTAL_VALUE % [total, DaySummaryPanel.rating_label(context.get("rating", &""))]
-	reputation_label.text = TEXT_REPUTATION_VALUE % [GameState.reputation_label(), UIKit.signed(int(context.get("reputation", 0)))]
-	var goal := _goal_threshold()
-	var goal_name := CemeteryRating.label(GOAL_RATING)
+	var cemetery := StringName(str(context.get("variant", ""))) == VARIANT_CEMETERY
+	var tier := StringName(str(context.get("reputation_tier", "")))
+	reputation_label.text = ReputationRules.label(tier) if tier != &"" else GameState.reputation_label()
+	_show(decor_label, cemetery, UIKit.signed(int(context.get("decor", 0))))
+	_show(dirt_label, cemetery, UIKit.signed(-int(context.get("dirt", 0))))
+	_show(ghosts_label, cemetery, str(int(context.get("content_ghosts", 0))))
+	var goal_rating := GOAL_RATING_CEMETERY if cemetery else GOAL_RATING
+	var goal := _goal_threshold(goal_rating)
+	var goal_name := CemeteryRating.label(goal_rating)
 	if total >= goal:
 		goal_label.text = TEXT_GOAL_REACHED % [goal_name, goal]
 		goal_label.theme_type_variation = &"GoodLabel"
@@ -91,9 +111,9 @@ func _refresh() -> void:
 		goal_label.theme_type_variation = &"AccentLabel"
 
 
-func _goal_threshold() -> int:
+func _goal_threshold(goal_rating: StringName = GOAL_RATING) -> int:
 	var thresholds := _economy().rating_thresholds
-	var index := CemeteryRating.TIERS.find(GOAL_RATING) - 1
+	var index := CemeteryRating.TIERS.find(goal_rating) - 1
 	return thresholds[index] if index >= 0 and index < thresholds.size() else 0
 
 
@@ -107,8 +127,16 @@ func _on_title_pressed() -> void:
 	action_requested.emit(ACTION_TITLE)
 
 
+func _show(value_label: Label, shown: bool, text: String) -> void:
+	value_label.text = text if shown else ""
+	value_label.visible = shown
+	_captions[value_label].visible = shown
+
+
 func _add_row(grid: GridContainer, caption: String) -> Label:
-	grid.add_child(UIKit.label(caption, &"DimLabel"))
+	var cap := UIKit.label(caption, &"DimLabel")
+	grid.add_child(cap)
 	var value := UIKit.label("", &"SubheaderLabel")
 	grid.add_child(value)
+	_captions[value] = cap
 	return value

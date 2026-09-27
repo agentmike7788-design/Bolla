@@ -4,6 +4,9 @@ extends UIPanel
 ## player: Player}. One row per recipe of the station (Database.recipes(station)) with
 ## have/need per input; "Herstellen" is disabled with the reason, otherwise it calls
 ## workbench.request_craft(recipe_id).
+## Phase 3 (docs/PHASE3_DESIGN.md §7): recipes grouped „Grab“ / „Zier“ / „Werkzeug“
+## (RecipeData.category), decor recipes with „Zier +3 – zählt je Abschnitt bis zur Obergrenze“
+## (also the row tooltip); the list scrolls once it is taller than max_list_height.
 
 const TEXT_TITLE := "Werkbank"
 const TEXT_OWNED := "im Besitz: %d"
@@ -19,12 +22,16 @@ const TEXT_NO_ROOM := "Kein Platz im Inventar"
 const TEXT_NO_RECIPES := "Hier lässt sich nichts herstellen."
 const SHROUD_ITEM := &"shroud"
 const DEFAULT_STATION := &"workbench"
+const CATEGORY_ORDER: Array[StringName] = [&"grave", &"decor", &"tool"]
+const CATEGORY_LABELS: Dictionary[StringName, String] = {&"grave": "Grab", &"decor": "Zier", &"tool": "Werkzeug"}
 
 @export var panel_width: float = 900.0
 @export var output_icon_edge: float = 72.0
 @export var input_icon_edge: float = 30.0
+@export var max_list_height: float = 700.0
 
 var _list: VBoxContainer
+var _scroll: ScrollContainer
 var _inventory: Inventory
 ## recipe id -> {button: Button, reason: Label}
 var _rows: Dictionary[StringName, Dictionary] = {}
@@ -37,8 +44,12 @@ func _build() -> void:
 	var box := UIKit.vbox(14)
 	add_child(box)
 	_make_header(box, TEXT_TITLE)
+	_scroll = ScrollContainer.new()
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(_scroll)
 	_list = UIKit.vbox(12)
-	box.add_child(_list)
+	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll.add_child(_list)
 	_make_action_row(box)
 	var bottom := UIKit.hbox()
 	bottom.add_child(UIKit.spacer())
@@ -76,16 +87,42 @@ func _refresh() -> void:
 		var rb := b as RecipeData
 		if ra == null or rb == null:
 			return rb == null and ra != null
+		if _category_rank(ra.category) != _category_rank(rb.category):
+			return _category_rank(ra.category) < _category_rank(rb.category)
 		if ra.craft_minutes != rb.craft_minutes:
 			return ra.craft_minutes < rb.craft_minutes
 		return String(ra.id) < String(rb.id))
 	if recipes.is_empty():
 		_list.add_child(UIKit.label(TEXT_NO_RECIPES, &"DimLabel"))
+		_fit_scroll.call_deferred()
 		return
+	var categories := {}
 	for res: Resource in recipes:
 		var recipe := res as RecipeData
 		if recipe != null:
-			_list.add_child(_make_row(recipe))
+			categories[recipe.category] = true
+	var current := &"-"
+	for res: Resource in recipes:
+		var recipe := res as RecipeData
+		if recipe == null:
+			continue
+		if categories.size() > 1 and recipe.category != current:
+			current = recipe.category
+			_list.add_child(UIKit.label(CATEGORY_LABELS.get(current, String(current)), &"AccentLabel"))
+		_list.add_child(_make_row(recipe))
+	_fit_scroll.call_deferred()
+
+
+## Scroll height = list height, at most max_list_height.
+func _fit_scroll() -> void:
+	if _scroll == null or _list == null:
+		return
+	_scroll.custom_minimum_size.y = minf(_list.get_combined_minimum_size().y, max_list_height)
+
+
+static func _category_rank(category: StringName) -> int:
+	var i := CATEGORY_ORDER.find(category)
+	return i if i >= 0 else CATEGORY_ORDER.size()
 
 
 ## After a rebuild (craft, inventory change) focus returns to the recipe used last, if it
@@ -154,6 +191,10 @@ func _make_row(recipe: RecipeData) -> Control:
 	var use := _use_text(recipe.output_id)
 	if use != "":
 		details.append(use)
+	var decor_hint := Phase3Texts.recipe_decor_hint(Database.decor(recipe.output_id) as DecorData) if Database.has_decor(recipe.output_id) else ""
+	if decor_hint != "":
+		details.append(decor_hint)
+		section.tooltip_text = "%s\n%s" % [decor_hint, Phase3Texts.decor_tooltip(Database.decor(recipe.output_id) as DecorData)]
 	info.add_child(UIKit.label(" · ".join(details), &"DimLabel"))
 	row.add_child(info)
 	var action := UIKit.vbox(4)

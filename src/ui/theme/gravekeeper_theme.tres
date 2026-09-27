@@ -14,6 +14,8 @@
 ; slots), grave register book: LedgerPanel (leather cover), LedgerPagePanel (parchment page),
 ; LedgerHeadPanel, LedgerRowPanel (ruled lines), LedgerTitleLabel, LedgerHeadLabel,
 ; LedgerWarnLabel, LedgerCloseButton, LedgerScrollBar, LedgerOrnament (ink/rule/margin colours).
+; Phase 3: BuildSlotButton / BuildSlotSelected (build bar, amber frame = selected),
+; ReputationMeter (track/fill/tick/frame colours of the 0–100 reputation bar).
 [gd_resource type="Theme" format=3]
 
 [sub_resource type="StyleBoxFlat" id="sb_window"]
@@ -652,6 +654,24 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
+[sub_resource type="StyleBoxFlat" id="sb_slot_selected"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.141, 0.118, 0.094, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 3
+border_color = Color(0.949, 0.663, 0.231, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+shadow_color = Color(0.949, 0.663, 0.231, 0.18)
+shadow_size = 6
+
 [sub_resource type="StyleBoxEmpty" id="sb_empty"]
 
 [resource]
@@ -663,6 +683,18 @@ AccentButton/styles/hover = SubResource("sb_accent_hover")
 AccentButton/styles/normal = SubResource("sb_accent_normal")
 AccentLabel/base_type = &"Label"
 AccentLabel/colors/font_color = Color(0.949, 0.663, 0.231, 1)
+BuildSlotButton/base_type = &"Button"
+BuildSlotButton/styles/focus = SubResource("sb_empty")
+BuildSlotButton/styles/hover = SubResource("sb_slot_hover")
+BuildSlotButton/styles/hover_pressed = SubResource("sb_slot_pressed")
+BuildSlotButton/styles/normal = SubResource("sb_slot")
+BuildSlotButton/styles/pressed = SubResource("sb_slot_pressed")
+BuildSlotSelected/base_type = &"Button"
+BuildSlotSelected/styles/focus = SubResource("sb_empty")
+BuildSlotSelected/styles/hover = SubResource("sb_slot_selected")
+BuildSlotSelected/styles/hover_pressed = SubResource("sb_slot_selected")
+BuildSlotSelected/styles/normal = SubResource("sb_slot_selected")
+BuildSlotSelected/styles/pressed = SubResource("sb_slot_selected")
 Button/colors/font_color = Color(0.91, 0.863, 0.753, 1)
 Button/colors/font_disabled_color = Color(0.45, 0.43, 0.4, 1)
 Button/colors/font_focus_color = Color(0.95, 0.9, 0.8, 1)
@@ -833,6 +865,10 @@ ProgressBar/styles/fill = SubResource("sb_bar_fill")
 PromptLabel/base_type = &"Label"
 PromptLabel/colors/font_color = Color(0.95, 0.91, 0.82, 1)
 PromptLabel/font_sizes/font_size = 26
+ReputationMeter/colors/fill = Color(0.949, 0.663, 0.231, 1)
+ReputationMeter/colors/frame = Color(0.29, 0.22, 0.165, 1)
+ReputationMeter/colors/tick = Color(0.93, 0.88, 0.77, 0.75)
+ReputationMeter/colors/track = Color(0.063, 0.086, 0.122, 0.92)
 RichTextLabel/colors/default_color = Color(0.91, 0.863, 0.753, 1)
 RichTextLabel/font_sizes/bold_font_size = 22
 RichTextLabel/font_sizes/italics_font_size = 22

@@ -4,6 +4,8 @@ extends PanelContainer
 ## quality and – from the payment_received that follows – the coins paid. Fades out
 ## after `show_seconds`. Never drawn over a modal panel/dialogue: while UIState has a modal
 ## open the card is held back (hidden) and shown for its full time once it closes.
+## Phase 3 (docs/PHASE3_DESIGN.md §7): under the payment „Ruf Geachtet: +1 Münze“ (the tier's
+## pay bonus, when not 0) and „Ruf +2“ (the reputation event of this grave).
 
 const TEXT_TITLE := "Grab vollendet"
 const TEXT_QUALITY := "Qualität"
@@ -12,6 +14,9 @@ const PAYMENT_FORMAT := "+%d Münzen"
 const COIN_ITEM := &"coin"
 const CORPSE_MANAGER_GROUP := &"corpse_manager"
 const ICON_EDGE := 30.0
+const TEXT_REP_BONUS := "Ruf %s: %s %s"
+const TEXT_REP_CHANGE := "Ruf %s"
+const REPUTATION_GROUP := &"reputation"
 
 @export var show_seconds: float = 4.0
 @export var fade_time: float = 0.5
@@ -23,6 +28,10 @@ var _lines: VBoxContainer
 var _quality: Label
 var _payment_row: HBoxContainer
 var _payment: Label
+var _rep_bonus: Label
+var _rep_change: Label
+## True from the payment until the card hides: the grave's reputation event may follow.
+var _awaiting_reputation: bool = false
 var _tween: Tween
 ## True between grave_completed and the payment that belongs to it.
 var _awaiting_payment: bool = false
@@ -59,12 +68,21 @@ func _init() -> void:
 	_payment_row.add_child(_payment)
 	_payment_row.visible = false
 	box.add_child(_payment_row)
+	_rep_bonus = UIKit.label("", &"InkDimLabel")
+	_rep_bonus.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_rep_bonus.visible = false
+	box.add_child(_rep_bonus)
+	_rep_change = UIKit.label("", &"InkDimLabel")
+	_rep_change.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_rep_change.visible = false
+	box.add_child(_rep_change)
 
 
 func _ready() -> void:
 	custom_minimum_size.x = card_width
 	EventBus.grave_completed.connect(_on_grave_completed)
 	EventBus.payment_received.connect(_on_payment_received)
+	EventBus.reputation_changed.connect(_on_reputation_changed)
 	EventBus.ui_modal_changed.connect(_on_ui_modal_changed)
 
 
@@ -84,7 +102,10 @@ func show_grave(corpse_name: String, quality: int, breakdown: Array) -> void:
 		_lines.add_child(line)
 	_quality.text = QUALITY_FORMAT % [quality, _economy().quality_max]
 	_payment_row.visible = false
+	_rep_bonus.visible = false
+	_rep_change.visible = false
 	_awaiting_payment = true
+	_awaiting_reputation = false
 	_restart()
 
 
@@ -92,6 +113,27 @@ func set_payment(amount: int) -> void:
 	_payment.text = PAYMENT_FORMAT % amount
 	_payment_row.visible = true
 	_awaiting_payment = false
+	_awaiting_reputation = true
+	var rep := get_tree().get_first_node_in_group(REPUTATION_GROUP) as Reputation if is_inside_tree() else null
+	if rep != null:
+		var bonus := ReputationRules.pay_bonus(rep.tier(), rep.config)
+		_rep_bonus.text = TEXT_REP_BONUS % [ReputationRules.label(rep.tier()), UIKit.signed(bonus), "Münze" if absi(bonus) == 1 else "Münzen"]
+		_rep_bonus.visible = bonus != 0
+
+
+## „Ruf +2“ of the grave shown (the event right after its payment).
+func set_reputation_change(delta: int) -> void:
+	_awaiting_reputation = false
+	_rep_change.text = TEXT_REP_CHANGE % UIKit.signed(delta)
+	_rep_change.visible = delta != 0
+
+
+func reputation_texts() -> PackedStringArray:
+	var out := PackedStringArray()
+	for l: Label in [_rep_bonus, _rep_change]:
+		if l.visible:
+			out.append(l.text)
+	return out
 
 
 ## True while the card waits for the payment of the grave it shows.
@@ -151,6 +193,7 @@ func _hide_card() -> void:
 	visible = false
 	_held = false
 	_awaiting_payment = false
+	_awaiting_reputation = false
 
 
 func _on_ui_modal_changed(open: bool) -> void:
@@ -169,6 +212,11 @@ func _on_grave_completed(_grave_id: String, corpse_id: String, quality: int, bre
 func _on_payment_received(amount: int, _reason: String) -> void:
 	if is_awaiting_payment():
 		set_payment(amount)
+
+
+func _on_reputation_changed(_value: int, _tier: StringName, delta: int, _reason: String) -> void:
+	if _awaiting_reputation and (visible or _held):
+		set_reputation_change(delta)
 
 
 func _corpse_name(corpse_id: String) -> String:

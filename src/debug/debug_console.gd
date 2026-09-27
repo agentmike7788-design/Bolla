@@ -132,7 +132,7 @@ func execute(line: String) -> Dictionary:
 	var parts := text.split(" ", false)
 	var command := parts[0].to_lower()
 	var args := parts.slice(1)
-	if command == "clear":
+	if command == "clear" and args.is_empty():
 		log_label.clear()
 		return DebugCommands.result(true, "")
 	var result := _commands.run(command, args)

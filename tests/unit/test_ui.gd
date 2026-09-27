@@ -560,7 +560,7 @@ func test_inventory_panel_slots_coins_reputation() -> void:
 	assert_eq(slots[1], {"id": &"linen", "amount": 1})
 	assert_eq(slots[2], {})
 	assert_eq(panel.coins_text(), "5", "coins outside the slots")
-	assert_eq(panel.reputation_text(), "Verrufen (0)")
+	assert_eq(panel.reputation_text(), "Verrufen –", "Phase 3: tier + trend arrow, no raw value")
 	var first := panel._grid.get_child(0) as Control
 	assert_true(first.tooltip_text.begins_with("Holz\n"), first.tooltip_text)
 	assert_true(first.tooltip_text.contains("Scheite"), "description in the tooltip")
@@ -568,7 +568,11 @@ func test_inventory_panel_slots_coins_reputation() -> void:
 	assert_eq(panel.shown_slots()[2], {"id": &"stone", "amount": 3}, "live refresh")
 	GameState.add_stat(&"reputation", -3)
 	panel.refresh()
-	assert_eq(panel.reputation_text(), "Verrufen (−3)")
+	assert_eq(panel.reputation_text(), "Verrufen –")
+	GameState.stats[&"reputation"] = 40
+	panel.refresh()
+	assert_eq(panel.reputation_text(), "Geachtet –")
+	assert_true(panel._reputation.tooltip_text.begins_with("Ruf 40 von 100 · Geachtet"), panel._reputation.tooltip_text)
 	ui.close_top_panel()
 	inv.add_item(&"stone", 1)
 	assert_false(inv.changed.is_connected(panel.refresh), "disconnected when closed")
@@ -793,7 +797,8 @@ func test_slice_summary_goal() -> void:
 	assert_eq(panel.days_label.text, "6")
 	assert_eq(panel.burials_label.text, "6")
 	assert_eq(panel.total_label.text, "48 · Würdevoll")
-	assert_eq(panel.reputation_label.text, "Verrufen (0)")
+	assert_eq(panel.reputation_label.text, "Verrufen", "tier only (Phase 3)")
+	assert_false(panel.decor_label.visible, "Phase-2 context: no decor row")
 	var goal := (Database.config(&"economy_config") as EconomyConfig).rating_thresholds[2]
 	var reached := "Ziel „Würdevoll“ (ab %d) erreicht." % goal
 	assert_eq(panel.goal_label.text, reached if 48 >= goal else "Ziel „Würdevoll“ (ab %d) verfehlt – es fehlen %d Punkte." % [goal, goal - 48])
@@ -1138,7 +1143,7 @@ func test_debug_flags_quality_fps_instant() -> void:
 
 func test_debug_help_and_unknown() -> void:
 	var help := String(Debug.execute("help").text)
-	for command: String in ["time HH:MM", "day +N", "pause", "give <item>", "spawn corpse", "npc carter here", "tp <gate|hut|road|workbench|table>",
+	for command: String in ["time HH:MM", "day +N", "pause", "give <item>", "spawn corpse", "npc carter here", "tp <gate|hut|road|workbench|table|east|north>",
 			"save [slot]", "load [slot]", "camera ortho|persp", "flags clear", "quality", "fps", "instant on|off"]:
 		assert_true(help.contains(command), command)
 	var result := Debug.execute("dance")
