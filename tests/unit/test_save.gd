@@ -4,7 +4,8 @@ extends TestCase
 
 const WORLD := "res://tests/fixtures/save_world/save_world.tscn"
 const SILENT_WORLD := "res://tests/fixtures/save_world/silent_world.tscn"
-const TEST_DIR := "user://test_saves"
+## Per-process save folder (TestCase.user_dir): parallel runs share user:// (flaky slots).
+var TEST_DIR := TestCase.user_dir("test_saves")
 const Probe := preload("res://tests/fixtures/save_world/saveable_probe.gd")
 const READY_EVENTS: Array[String] = ["player:ready", "graveyard:ready", "early:ready", "world:ready", "world:world_ready"]
 

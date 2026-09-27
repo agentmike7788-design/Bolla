@@ -74,9 +74,20 @@ func show_at(decor: DecorData, cell: Vector2i, rot: int, is_valid: bool, mask: B
 	_apply_material(preview, _valid_mat if is_valid else _invalid_mat)
 	var size := BuildGrid.rotated_size(decor.footprint, rot)
 	var centre := mask.origin + (Vector2(cell) + Vector2(size) * 0.5) * mask.cell
-	preview.position = Vector3(centre.x, PREVIEW_LIFT, centre.y)
+	preview.position = Vector3(centre.x, ground_at(centre) + PREVIEW_LIFT, centre.y)
 	preview.rotation = Vector3(0.0, posmod(rot, 4) * PI * 0.5, 0.0)
 	update_grid(mask.world_to_cell(centre), mask)
+
+
+## Height of the painted ground at world XZ `p`: the first ancestor with ground_height()
+## (WorldRoot, W-Welt); 0 without one (tests).
+func ground_at(p: Vector2) -> float:
+	var n: Node = get_parent()
+	while n != null:
+		if n.has_method(&"ground_height"):
+			return float(n.call(&"ground_height", p))
+		n = n.get_parent()
+	return 0.0
 
 
 func hide_cursor() -> void:
@@ -97,7 +108,7 @@ func update_grid(center: Vector2i, mask: BuildMask) -> void:
 	mesh.surface_begin(Mesh.PRIMITIVE_LINES)
 	mesh.surface_set_color(Color(VALID_COLOR, GRID_ALPHA))
 	for p: Vector2 in lines:
-		mesh.surface_add_vertex(Vector3(p.x, GRID_LIFT, p.y))
+		mesh.surface_add_vertex(Vector3(p.x, ground_at(p) + GRID_LIFT, p.y))
 	mesh.surface_end()
 
 

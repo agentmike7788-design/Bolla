@@ -122,3 +122,20 @@ Ab Phase 2: Framework `tests/framework/test_case.gd` + Runner `tests/run_tests.g
 | CPU pro Frame (Skripte + Engine, headless) | ~0,4 – 0,55 ms | | 16,6 ms ✅ |
 | Neues Spiel / Laden / Speichern | 423 ms / 39 ms / < 1 ms | | |
 Echte GPU-FPS: nur auf dem Benutzer-PC messbar (Volumennebel, SSAO, MSAA 2×, weiche Schatten).
+
+### Messung Phase 3 – Welt (W-Welt, 1280×720, Software-Renderer lavapipe, `graveyard_shots_phase3.gd`)
+
+Welt 56 × 64 m, 12 Grabstellen (10 bestattet + 2 Phase-2-Staging), 59 Deko-Stücke (19 Zier + 40 Kies), 6 Geister nachts; Rohdaten `docs/reviews/phase3_wip/world_render_stats.txt`, `world_cpu_stats.txt`.
+
+| Wert | Tag | Nacht (Geister) | Budget §9 |
+|---|---|---|---|
+| Kamera-Dreiecke inkl. Gras, Spiel-Zoom max. 24 m (`perf_01…03`) | 448 k | 392 k – 459 k | < 500 k ✅ |
+| Kamera-Dreiecke, Übersicht 30–40 m (nur Screenshot, außerhalb des Spiel-Zooms) | 519 k – 536 k | 566 k | (Info) |
+| Gras | 16 635 Büschel in 238 Chunks (+33 % Fläche); sichtbar 197 k – 390 k Dreiecke | | `outer_density` 0,35, `visibility_range` 50 |
+| Draw Calls | 105 – 268 | 266 – 341 | < 1 000 ✅ |
+| Omni-Lichter sichtbar | 8 – 14 | 20 (Laternen + 6 Geister) | ≤ 24 ✅ |
+| Schattenwerfende Omni-Lichter | 0 | 2 | ≤ 4 ✅ (Laternen/Geister nie) |
+| CPU pro Frame (Skripte + Engine, headless, Uhr läuft, Median / Mittel) | 0,91 – 1,16 / 1,31 – 1,46 ms | 0,93 – 1,87 / 1,14 – 1,90 ms | < 1,5 ms Median ✅ (Mittel verrauscht: geteilter 4-Kern-Container, ±1 ms) |
+| Schlafen 18:00 → 06:00 (`advance 720`, einmalig) | 11 – 15 ms | | – |
+
+Hinweis: Die Pflegestellen-Modelle (Unkraut mit `mat_grass`, animiert) liegen wie Baumkronen auf Render-Layer 2 (keine Laternen-Würfelschatten), die Verwilderung der gesperrten Abschnitte wirft keine Schatten.

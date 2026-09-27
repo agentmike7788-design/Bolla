@@ -22,6 +22,8 @@ static func build_plot(ctx: Ctx, parent: Node, g: Dictionary, old: bool) -> void
 	plot.name = g.id
 	plot.set("grave_id", g.id)
 	plot.set("is_old", old)
+	if not old:
+		plot.set("section_id", StringName(g.get("section", "yard")))
 	plot.transform = ctx.ground_xform(Ctx.v2(g.pos), float(g.rot_y))
 	if old:
 		plot.set("old_stone", g.stone)

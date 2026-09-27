@@ -1,0 +1,3 @@
+day: process mean 1.431 / median 0.945 / worst 3.035 ms · physics 1.493 ms per frame · 8 game minutes passed · ghosts 0 · decor 59 · nodes 1972
+night_ghosts: process mean 1.144 / median 0.932 / worst 1.633 ms · physics 1.181 ms per frame · 8 game minutes passed · ghosts 6 · decor 59 · nodes 2044
+sleep 18:00 → 06:00 (advance 720): 13.06 ms once

@@ -352,7 +352,19 @@ func _create_node(p: DecorPlacement) -> Node3D:
 	var node := (load(PLACED_SCENE) as PackedScene).instantiate() as PlacedDecor
 	node.setup(decor(p.decor_id), p, mask)
 	parent.add_child(node)
+	node.position.y = _ground_height(parent, Vector2(node.position.x, node.position.z))
 	return node
+
+
+## Height of the painted ground under `p` (W-Welt): the first ancestor with ground_height()
+## (WorldRoot); 0 without one (tests, flat fixtures). The container sits at the world origin.
+static func _ground_height(from: Node, p: Vector2) -> float:
+	var n := from
+	while n != null:
+		if n.has_method(&"ground_height"):
+			return float(n.call(&"ground_height", p))
+		n = n.get_parent()
+	return 0.0
 
 
 func node_of(uid: String) -> Node3D:

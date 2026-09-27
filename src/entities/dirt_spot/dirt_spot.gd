@@ -16,6 +16,8 @@ const LABEL_LEAVES := "Laub harken"
 const PROMPT := "[E] %s (%d Min)"
 const PROMPT_NEEDS_RAKE := "Rechen nötig – Werkbank"
 const TEXT_DONE := "Gepflegt."
+## Render layer of swaying meshes (= WorldRoot.FOLIAGE_LAYER).
+const FOLIAGE_LAYER := 1 << 1
 
 @export var spot_id: String = ""
 @export var section_id: StringName = &""
@@ -56,6 +58,10 @@ func show_level(level: int) -> void:
 	if _model != null:
 		_model.name = "Model"
 		add_child(_model)
+		# The weeds sway (mat_grass uses TIME): keep them out of the warm lights' cached cube
+		# shadows like the tree crowns (render layer 2, see WorldRoot.FOLIAGE_LAYER / PERF-01).
+		for mesh: Node in _model.find_children("*", "GeometryInstance3D", true, false):
+			(mesh as GeometryInstance3D).layers = FOLIAGE_LAYER
 
 
 ## res:// path of the model for `level` of `spot_kind` ("" for an unknown kind).

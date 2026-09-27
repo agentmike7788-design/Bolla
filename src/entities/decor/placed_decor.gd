@@ -56,15 +56,15 @@ func setup(decor: DecorData, placement: DecorPlacement, mask: BuildMask) -> void
 
 ## Scene used for `decor` (null = placeholder box).
 static func model_scene(decor: DecorData, variant: int = 0) -> PackedScene:
+	if decor.id == &"decor_path_gravel" and variant % 2 == 1:
+		var alt := MODEL_DIR.path_join(GRAVEL_VARIANT + ".glb")
+		if ResourceLoader.exists(alt):
+			return load(alt) as PackedScene
 	if decor.model != null:
 		return decor.model
 	var file: String = MODEL_PATHS.get(decor.id, "")
 	if file == "":
 		return null
-	if decor.id == &"decor_path_gravel" and variant % 2 == 1:
-		var alt := MODEL_DIR.path_join(GRAVEL_VARIANT + ".glb")
-		if ResourceLoader.exists(alt):
-			return load(alt) as PackedScene
 	var path := MODEL_DIR.path_join(file + ".glb")
 	return load(path) as PackedScene if ResourceLoader.exists(path) else null
 

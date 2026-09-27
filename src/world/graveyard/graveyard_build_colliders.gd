@@ -103,7 +103,8 @@ static func build_ground_collision(ctx: Ctx) -> void:
 	ctx.add(body, shape)
 
 
-## Invisible walls around walkable_bounds (layer 1).
+## Invisible walls around walkable_bounds (layer 1), plus the layout "extra_walls" (same height
+## and thickness, centred on their line – Phase 3 §4.1).
 static func build_bounds(ctx: Ctx) -> void:
 	var cfg: Dictionary = ctx.layout.walkable_bounds
 	var lo := Ctx.v2(cfg.min)
@@ -130,6 +131,20 @@ static func build_bounds(ctx: Ctx) -> void:
 		box.size = walls[wall_name][1]
 		shape.shape = box
 		shape.position = walls[wall_name][0]
+		ctx.add(body, shape)
+	var k := 0
+	for seg: Array in ctx.layout.get("extra_walls", []):
+		k += 1
+		var a := Ctx.v2(seg[0])
+		var b := Ctx.v2(seg[1])
+		var d := b - a
+		var shape := CollisionShape3D.new()
+		shape.name = "Extra_%d" % k
+		var box := BoxShape3D.new()
+		box.size = Vector3(d.length() + t, h, t)
+		shape.shape = box
+		var mid2 := (a + b) * 0.5
+		shape.transform = Transform3D(Basis(Vector3.UP, atan2(-d.y, d.x)), Vector3(mid2.x, h * 0.5, mid2.y))
 		ctx.add(body, shape)
 
 

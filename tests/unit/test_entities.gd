@@ -25,7 +25,8 @@ const CORPSE_VARIANTS: Array[String] = [
 	"res://assets/models/props/ph_prop_corpse_03.glb",
 	"res://assets/models/props/ph_prop_corpse_04.glb",
 ]
-const TEST_SAVES := "user://test_saves"
+## Per-process save folder (TestCase.user_dir): parallel runs share user:// (flaky slots).
+var TEST_SAVES := TestCase.user_dir("test_saves")
 const EMPTY := GraveRecord.State.EMPTY
 const DUG := GraveRecord.State.DUG
 const FILLED := GraveRecord.State.FILLED
@@ -125,6 +126,7 @@ func after_each() -> void:
 	EventBus.dialogue_requested.disconnect(_on_dialogue)
 	if SaveManager.save_dir == TEST_SAVES:
 		SaveManager.delete_save(0)
+	TestCase.remove_user_dir(TEST_SAVES)
 
 
 # --- Corpse -----------------------------------------------------------------------------------

@@ -99,6 +99,14 @@ static func _keep_out(ctx: Ctx) -> Dictionary:
 		circles.append({"c": Ctx.v2(t.pos), "r": 1.0 * float(t.scale)})
 	for b: Dictionary in layout.forest.bushes:
 		circles.append({"c": Ctx.v2(b.pos), "r": 0.5 * float(b.scale)})
+	for b: Dictionary in layout.get("birches", []):
+		circles.append({"c": Ctx.v2(b.pos), "r": 0.35 * float(b.scale)})
+	if layout.has("notice_board"):
+		circles.append({"c": Ctx.v2(layout.notice_board.pos), "r": 0.5})
+	for pa: Dictionary in layout.fence.get("passages", []):
+		var dir := Vector2(1, 0).rotated(-deg_to_rad(float(pa.rot_y)))
+		circles.append({"c": Ctx.v2(pa.pos) + dir * 0.17, "r": 0.35})
+		circles.append({"c": Ctx.v2(pa.pos) + dir * (float(pa.width) - 0.17), "r": 0.35})
 	circles.append({"c": Ctx.v2(layout.hut.pos), "r": float(cfg.keep_out_building)})
 	for lp: Dictionary in layout.lantern_posts:
 		circles.append({"c": Ctx.v2(lp.pos), "r": 0.35})

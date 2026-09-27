@@ -1,0 +1,13 @@
+world_01_overview_day  camera_tris=535505 (primitives 217445 + grass 318060)  frame_total≈745400  draw_calls=240 (camera 152)  objects=545  omni_visible=8  omni_shadowed=0  ghosts=0
+world_02_east_uncleared  camera_tris=422047 (primitives 142813 + grass 279234)  frame_total≈632830  draw_calls=212 (camera 124)  objects=449  omni_visible=8  omni_shadowed=0  ghosts=0
+world_03_east_cleared  camera_tris=399572 (primitives 120338 + grass 279234)  frame_total≈586089  draw_calls=185 (camera 100)  objects=365  omni_visible=8  omni_shadowed=0  ghosts=0
+world_04_birkenhang  camera_tris=315680 (primitives 117716 + grass 197964)  frame_total≈413201  draw_calls=105 (camera 67)  objects=188  omni_visible=8  omni_shadowed=0  ghosts=0
+world_05_decorated_day  camera_tris=458776 (primitives 159886 + grass 298890)  frame_total≈644414  draw_calls=227 (camera 130)  objects=482  omni_visible=14  omni_shadowed=0  ghosts=0
+world_06_night_ghosts  camera_tris=566150 (primitives 176648 + grass 389502)  frame_total≈819796  draw_calls=341 (camera 168)  objects=585  omni_visible=20  omni_shadowed=2  ghosts=6
+world_07_deep_night_ghosts  camera_tris=566130 (primitives 176628 + grass 389502)  frame_total≈819776  draw_calls=341 (camera 168)  objects=585  omni_visible=20  omni_shadowed=2  ghosts=6
+world_08_neglected_day  camera_tris=466698 (primitives 167808 + grass 298890)  frame_total≈663255  draw_calls=254 (camera 142)  objects=541  omni_visible=14  omni_shadowed=0  ghosts=0
+world_09_overview_end  camera_tris=518967 (primitives 200907 + grass 318060)  frame_total≈714151  draw_calls=268 (camera 161)  objects=610  omni_visible=14  omni_shadowed=0  ghosts=0
+world_10_notice_board  camera_tris=186667 (primitives 124567 + grass 62100)  frame_total≈312871  draw_calls=162 (camera 59)  objects=293  omni_visible=14  omni_shadowed=0  ghosts=0
+perf_01_day_zoom_max  camera_tris=447813 (primitives 148275 + grass 299538)  frame_total≈625519  draw_calls=230 (camera 126)  objects=462  omni_visible=14  omni_shadowed=0  ghosts=0
+perf_02_night_zoom_max  camera_tris=459381 (primitives 159843 + grass 299538)  frame_total≈702476  draw_calls=300 (camera 134)  objects=526  omni_visible=20  omni_shadowed=2  ghosts=6
+perf_03_east_night_zoom_max  camera_tris=392048 (primitives 133874 + grass 258174)  frame_total≈582554  draw_calls=266 (camera 124)  objects=448  omni_visible=20  omni_shadowed=2  ghosts=6

@@ -1,14 +1,23 @@
 {
-  "_comment": "Vertical-Slice-Welt (docs/VERTICAL_SLICE_DESIGN.md §4). Godot-Koordinaten in Metern: x = Osten, z = Süden (zur Kamera). Friedhofsteil = freigegebene Art-Prototyp-Komposition (data/art_prototype/layout.json), ergänzt um Grabstellen, Stationen und den Kutschweg. Gelesen von tools/blender/asset_ground_graveyard.py (Boden) und src/world/graveyard/graveyard_builder.gd (Szene). Die Laufzeit liest diese Datei nicht.",
+  "_comment": "Welt Phase 3 (docs/PHASE3_DESIGN.md §4, Basis docs/VERTICAL_SLICE_DESIGN.md §4). Godot-Koordinaten in Metern: x = Osten, z = Süden (zur Kamera). Friedhofsteil = freigegebene Art-Prototyp-Komposition (data/art_prototype/layout.json), ergänzt um Grabstellen, Stationen und den Kutschweg. Gelesen von tools/blender/asset_ground_graveyard.py (Boden) und src/world/graveyard/graveyard_builder.gd (Szene). Die Laufzeit liest diese Datei nicht.",
   "ground": {
-    "size": [48.0, 56.1],
-    "center": [0.0, 6.45],
+    "_size": "Phase 3 (§4.1): 56 × 64 m, x −24…32, z −29,5…34,5 – Süd- und Westkante wie Phase 2.",
+    "size": [56.0, 64.0],
+    "center": [4.0, 2.5],
     "cell": 0.3,
     "_flatten": "Unter Grabstellen/Stationen wird der Boden geglättet (Kern flach, danach weicher Übergang).",
     "flatten_falloff": 0.8,
     "plot_flat_rect": [-1.05, -1.65, 1.95, 1.5],
     "station_flat_margin": 0.35
   },
+  "sections": [
+    {"id": "yard", "rect": [-11.5, -12.0, 11.5, 9.6]},
+    {"id": "east", "rect": [11.5, -12.0, 21.5, 9.6]},
+    {"id": "north", "rect": [-2.0, -20.0, 11.5, -12.0]}
+  ],
+  "build": {"_comment": "Bau-Maske (§4.3): Raster über x −11,5…21,5, z −20…9,6.", "origin": [-11.5, -20.0], "size": [66, 60],
+    "cell": 0.5, "route_width": 1.5, "grave_ring": 0.5, "station_margin": 0.6, "station_access": 1.0, "grave_foot_strip": 0.8,
+    "building_margin": 0.6, "tree_radius": 0.7, "fence_half_width": 0.3},
   "path": {
     "width": 1.7,
     "points": [[1.2, 13.0], [0.8, 8.0], [0.0, 4.0], [-0.8, 0.5], [-2.2, -2.8], [-4.2, -4.6]]
@@ -36,13 +45,72 @@
     {"id": "old_08", "pos": [-5.2, 5.6], "rot_y": 14.0, "stone": "round", "mound": "fresh"}
   ],
   "plots": [
-    {"id": "plot_01", "pos": [3.6, -8.2], "rot_y": 1.0},
-    {"id": "plot_02", "pos": [6.0, -8.3], "rot_y": -2.0},
-    {"id": "plot_03", "pos": [8.4, -8.2], "rot_y": 2.0},
-    {"id": "plot_04", "pos": [4.0, 5.0], "rot_y": -1.0},
-    {"id": "plot_05", "pos": [6.4, 5.1], "rot_y": 2.0},
-    {"id": "plot_06", "pos": [8.8, 5.0], "rot_y": -2.0}
+    {"id": "plot_01", "pos": [3.6, -8.2], "rot_y": 1.0, "section": "yard"},
+    {"id": "plot_02", "pos": [6.0, -8.3], "rot_y": -2.0, "section": "yard"},
+    {"id": "plot_03", "pos": [8.4, -8.2], "rot_y": 2.0, "section": "yard"},
+    {"id": "plot_04", "pos": [4.0, 5.0], "rot_y": -1.0, "section": "yard"},
+    {"id": "plot_05", "pos": [6.4, 5.1], "rot_y": 2.0, "section": "yard"},
+    {"id": "plot_06", "pos": [8.8, 5.0], "rot_y": -2.0, "section": "yard"},
+    {"id": "plot_07", "pos": [13.8, -7.0], "rot_y": 0.0, "section": "east"},
+    {"id": "plot_08", "pos": [16.2, -7.0], "rot_y": 0.0, "section": "east"},
+    {"id": "plot_09", "pos": [18.6, -7.0], "rot_y": 0.0, "section": "east"},
+    {"id": "plot_10", "pos": [2.6, -16.2], "rot_y": 0.0, "section": "north"},
+    {"id": "plot_11", "pos": [5.0, -16.2], "rot_y": 0.0, "section": "north"},
+    {"id": "plot_12", "pos": [7.4, -16.2], "rot_y": 0.0, "section": "north"}
   ],
+  "_clearables": "Hindernisse (§1.2, §2.1). footprint = lokales XZ-Rechteck [x, z, w, d] (Bau-Sperre + Gras-Maske). Zaunlücken: fence.ruins.",
+  "clearables": [
+    {"id": "obs_e_01", "kind": "bramble", "section": "east", "pos": [12.5, -2.2], "rot_y": 20.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
+    {"id": "obs_e_02", "kind": "bramble", "section": "east", "pos": [15.0, -6.6], "rot_y": 140.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
+    {"id": "obs_e_03", "kind": "bramble", "section": "east", "pos": [19.4, 2.4], "rot_y": 250.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
+    {"id": "obs_e_04", "kind": "bramble", "section": "east", "pos": [14.2, 5.8], "rot_y": 75.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
+    {"id": "obs_e_05", "kind": "rubble", "section": "east", "pos": [17.6, -3.2], "rot_y": 30.0, "footprint": [-0.8, -0.8, 1.6, 1.6]},
+    {"id": "obs_e_06", "kind": "rubble", "section": "east", "pos": [18.9, -7.2], "rot_y": 200.0, "footprint": [-0.8, -0.8, 1.6, 1.6]},
+    {"id": "obs_e_07", "kind": "rubble", "section": "east", "pos": [16.4, 3.4], "rot_y": 110.0, "footprint": [-0.8, -0.8, 1.6, 1.6]},
+    {"id": "obs_n_hedge", "kind": "hedge", "section": "north", "pos": [4.5, -12.4], "rot_y": 0.0, "footprint": [-2.0, -0.5, 4.0, 1.0]},
+    {"id": "obs_n_01", "kind": "bramble", "section": "north", "pos": [0.4, -13.9], "rot_y": 310.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
+    {"id": "obs_n_02", "kind": "bramble", "section": "north", "pos": [10.2, -18.6], "rot_y": 190.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
+    {"id": "obs_n_03", "kind": "bramble", "section": "north", "pos": [5.6, -16.2], "rot_y": 45.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
+    {"id": "obs_n_04", "kind": "rubble", "section": "north", "pos": [2.8, -18.8], "rot_y": 160.0, "footprint": [-0.8, -0.8, 1.6, 1.6]},
+    {"id": "obs_n_05", "kind": "rubble", "section": "north", "pos": [9.6, -14.0], "rot_y": 280.0, "footprint": [-0.8, -0.8, 1.6, 1.6]},
+    {"id": "obs_n_06", "kind": "stump", "section": "north", "pos": [7.6, -16.8], "rot_y": 60.0, "footprint": [-0.5, -0.5, 1.0, 1.0]},
+    {"id": "obs_n_07", "kind": "stump", "section": "north", "pos": [-0.6, -17.2], "rot_y": 220.0, "footprint": [-0.5, -0.5, 1.0, 1.0]}
+  ],
+  "_dirt_spots": "Pflegestellen (§2.4): 22 Flächenstellen; die Grabstellen dirt_<plot_id> erzeugt der Builder am Hügel (grave_dirt). start = start_progress (neues Spiel).",
+  "dirt_spots": [
+    {"id": "dirt_y01", "pos": [-9.8, 7.8], "section": "yard", "kind": "weeds", "start": 1.8},
+    {"id": "dirt_y02", "pos": [10.3, 8.2], "section": "yard", "kind": "weeds", "start": 2.2},
+    {"id": "dirt_y03", "pos": [10.2, -4.9], "section": "yard", "kind": "weeds", "start": 1.4},
+    {"id": "dirt_y04", "pos": [9.9, -11.0], "section": "yard", "kind": "weeds", "start": 2.4},
+    {"id": "dirt_y05", "pos": [0.9, -0.8], "section": "yard", "kind": "weeds", "start": 1.2},
+    {"id": "dirt_y06", "pos": [8.6, -1.0], "section": "yard", "kind": "weeds", "start": 1.6},
+    {"id": "dirt_y07", "pos": [-9.6, -2.6], "section": "yard", "kind": "weeds", "start": 0.0},
+    {"id": "dirt_y08", "pos": [1.6, -11.0], "section": "yard", "kind": "weeds", "start": 0.0},
+    {"id": "dirt_y09", "pos": [-8.9, 1.9], "section": "yard", "kind": "leaves", "start": 0.0},
+    {"id": "dirt_y10", "pos": [-6.1, 2.2], "section": "yard", "kind": "leaves", "start": 0.0},
+    {"id": "dirt_y11", "pos": [-8.8, 4.9], "section": "yard", "kind": "leaves", "start": 0.0},
+    {"id": "dirt_y12", "pos": [-7.2, 5.3], "section": "yard", "kind": "leaves", "start": 0.0},
+    {"id": "dirt_e01", "pos": [13.2, 1.2], "section": "east", "kind": "weeds", "start": 0.0},
+    {"id": "dirt_e02", "pos": [20.0, -1.2], "section": "east", "kind": "weeds", "start": 0.0},
+    {"id": "dirt_e03", "pos": [16.8, 7.6], "section": "east", "kind": "weeds", "start": 0.0},
+    {"id": "dirt_e04", "pos": [13.0, -10.4], "section": "east", "kind": "weeds", "start": 0.0},
+    {"id": "dirt_e05", "pos": [19.8, -10.0], "section": "east", "kind": "weeds", "start": 0.0},
+    {"id": "dirt_n01", "pos": [8.6, -12.9], "section": "north", "kind": "weeds", "start": 0.0},
+    {"id": "dirt_n02", "pos": [4.4, -19.0], "section": "north", "kind": "weeds", "start": 0.0},
+    {"id": "dirt_n03", "pos": [-0.8, -14.6], "section": "north", "kind": "weeds", "start": 0.0},
+    {"id": "dirt_n04", "pos": [-0.2, -18.6], "section": "north", "kind": "leaves", "start": 0.0},
+    {"id": "dirt_n05", "pos": [9.9, -16.3], "section": "north", "kind": "leaves", "start": 0.0}
+  ],
+  "grave_dirt": {"_comment": "Grabstelle dirt_<plot_id>: plot-lokal (x, z) auf dem Hügel ph_prop_grave_mound_fresh (Höhe aus dem Mesh), Interactable-Priorität über der Grab-Info (10) – sonst nie fokussierbar.",
+    "local": [0.0, 0.3], "mound_inset": 0.03, "priority": 11},
+  "notice_board": {"pos": [-1.5, 8.7], "rot_y": 8.0, "asset": "ph_prop_notice_board"},
+  "overgrowth": {"_comment": "Reine Kulisse der gesperrten Abschnitte (verwildert, ohne Kollision): verschwindet, sobald der Abschnitt freigelegt ist (WorldRoot).",
+    "assets": ["ph_env_weeds_3", "ph_env_weeds_2", "ph_env_weeds_3", "ph_env_leaves_2", "ph_env_bush", "ph_env_weeds_3"],
+    "scale": {"ph_env_bush": [0.5, 0.75], "default": [1.15, 1.6]},
+    "_bush": "Niedrige Büsche kollidieren (Zylinder, Radius × scale) – WorldRoot schaltet die Kollision mit der Kulisse ab.",
+    "bush_radius": 0.45,
+    "seed": 31, "margin": 0.7, "keep_out_obstacle": 1.3, "keep_out_spot": 0.9, "keep_out_fence": 0.6,
+    "sections": [{"id": "east", "count": 24}, {"id": "north", "count": 18}]},
   "entities": [
     {"id": "morgue_table", "type": "morgue_table", "pos": [-1.6, -5.4], "rot_y": 18.0, "params": {}},
     {"id": "workbench", "type": "workbench", "pos": [-2.5, -8.4], "rot_y": 108.0, "params": {"station": "workbench"}},
@@ -60,7 +128,9 @@
     "road_mid": [3.3, 19.0],
     "gate_outside": [1.2, 12.2],
     "dropoff": [1.75, 8.4],
-    "evening_spot": [-1.4, 10.7]
+    "evening_spot": [-1.4, 10.7],
+    "tp_east": [15.6, -1.0],
+    "tp_north": [4.5, -14.0]
   },
   "waypoint_facing": {
     "_comment": "Blickrichtung (rot_y in Grad, 0 = +Z/Kamera) eines NPC, der an diesem Wegpunkt steht und nicht mit dem Spieler redet.",
@@ -69,15 +139,42 @@
   "signpost": {"pos": [-0.9, 15.4], "rot_y": -20.0, "text": "Hollerbrück", "font_size": 64, "pixel_size": 0.0021, "color": "#2a1f18", "surface_offset": 0.012},
   "fallen_log": {"pos": [2.2, 26.5], "rot_y": 8.0},
   "fence": {
-    "_comment": "Prototyp-Zaun (Süd mit Tor, Ost) – Ost- und Westseite für die größere Welt verlängert.",
+    "_comment": "Prototyp-Zaun (Süd mit Tor, Ost) – Ost- und Westseite für die größere Welt verlängert. Phase 3: Ostwiese und Birkenhang eingezäunt, Lücken = ruins (Hindernis fence_gap), Durchgang Alter Hof → Ostwiese = passages.",
     "segments": [
       [[-11.5, 9.6], [-0.4, 9.6]],
       [[2.6, 9.6], [11.5, 9.6]],
       [[11.5, 9.6], [11.5, -1.0]],
-      [[11.5, -1.0], [11.5, -12.0]],
-      [[-11.5, -1.0], [-11.5, 9.6]]
+      [[11.5, -3.4], [11.5, -12.0]],
+      [[-11.5, -1.0], [-11.5, 9.6]],
+      [[11.5, 9.6], [21.5, 9.6]],
+      [[21.5, 9.6], [21.5, 5.0]],
+      [[21.5, 3.0], [21.5, -3.0]],
+      [[21.5, -5.0], [21.5, -12.0]],
+      [[11.5, -12.0], [16.0, -12.0]],
+      [[18.0, -12.0], [21.5, -12.0]],
+      [[-2.0, -12.0], [2.5, -12.0]],
+      [[6.5, -12.0], [11.5, -12.0]],
+      [[11.5, -12.0], [11.5, -20.0]],
+      [[-2.0, -20.0], [0.0, -20.0]],
+      [[2.0, -20.0], [7.0, -20.0]],
+      [[9.0, -20.0], [11.5, -20.0]],
+      [[-2.0, -12.0], [-2.0, -15.0]],
+      [[-2.0, -17.0], [-2.0, -20.0]]
     ],
-    "gate_posts": [[-0.4, 9.6], [2.6, 9.6]]
+    "gate_posts": [[-0.4, 9.6], [2.6, 9.6]],
+    "_ruins": "Zaunlücken (Hindernis fence_gap, 2 m): pos = Mitte, rot_y = Richtung der Zaunlinie (lokal +X); Modell ph_prop_fence_iron_broken, repariert ph_prop_fence_iron.",
+    "ruins": [
+      {"obstacle": "obs_e_gap_1", "section": "east", "pos": [21.5, -4.0], "rot_y": 90.0},
+      {"obstacle": "obs_e_gap_2", "section": "east", "pos": [21.5, 4.0], "rot_y": 90.0},
+      {"obstacle": "obs_e_gap_3", "section": "east", "pos": [17.0, -12.0], "rot_y": 0.0},
+      {"obstacle": "obs_n_gap_1", "section": "north", "pos": [1.0, -20.0], "rot_y": 0.0},
+      {"obstacle": "obs_n_gap_2", "section": "north", "pos": [8.0, -20.0], "rot_y": 0.0},
+      {"obstacle": "obs_n_gap_3", "section": "north", "pos": [-2.0, -16.0], "rot_y": 90.0}
+    ],
+    "_passages": "Offene Durchgänge (ph_prop_fence_passage, 2,4 m entlang lokal +X ab pos).",
+    "passages": [
+      {"id": "passage_east", "pos": [11.5, -1.0], "rot_y": 90.0, "width": 2.4}
+    ]
   },
   "props": [
     {"asset": "ph_prop_shovel", "pos": [-2.0, -6.8], "rot_y": 30.0},
@@ -87,14 +184,23 @@
   ],
   "background_trees": [
     {"pos": [-12.5, -9.5], "rot_y": 120.0, "scale": 1.15},
-    {"pos": [11.5, -11.0], "rot_y": 250.0, "scale": 1.3},
-    {"pos": [13.5, 3.5], "rot_y": 10.0, "scale": 1.0},
+    {"pos": [23.5, -13.5], "rot_y": 250.0, "scale": 1.3},
+    {"pos": [24.5, 2.0], "rot_y": 10.0, "scale": 1.0},
     {"pos": [-13.0, 9.0], "rot_y": 300.0, "scale": 1.2},
-    {"pos": [3.0, -18.0], "rot_y": 70.0, "scale": 1.4},
+    {"pos": [3.5, -23.5], "rot_y": 70.0, "scale": 1.4},
     {"pos": [-17.0, -1.5], "rot_y": 200.0, "scale": 1.25},
-    {"pos": [17.5, -5.5], "rot_y": 160.0, "scale": 1.2},
+    {"pos": [25.5, -6.0], "rot_y": 160.0, "scale": 1.2},
     {"pos": [-6.5, -17.5], "rot_y": 30.0, "scale": 1.3},
-    {"pos": [12.5, -18.5], "rot_y": 90.0, "scale": 1.2}
+    {"pos": [14.5, -16.0], "rot_y": 90.0, "scale": 1.2}
+  ],
+  "_birches": "Birkenhang (§4.1): 2 im Abschnitt, 4 dahinter.",
+  "birches": [
+    {"pos": [-1.0, -19.2], "rot_y": 30.0, "scale": 1.0},
+    {"pos": [10.6, -15.8], "rot_y": 200.0, "scale": 0.9},
+    {"pos": [-1.4, -22.2], "rot_y": 110.0, "scale": 1.1},
+    {"pos": [6.6, -22.0], "rot_y": 300.0, "scale": 1.05},
+    {"pos": [12.8, -21.4], "rot_y": 80.0, "scale": 0.95},
+    {"pos": [-4.8, -17.6], "rot_y": 160.0, "scale": 1.0}
   ],
   "forest": {
     "_comment": "Waldrand am Kutschweg.",
@@ -144,9 +250,10 @@
   },
   "atmosphere": {
     "_comment": "Zeitgesteuerte Stimmung mit Halte-Stützstellen (§4). presets = feste Presets für apply()/cycle() (Debug).",
-    "presets": ["day", "night"],
-    "blend_presets": ["night", "night", "dawn", "day", "day", "dusk", "night"],
-    "blend_minutes": [0, 240, 330, 480, 1020, 1140, 1260],
+    "presets": ["day", "night", "deep_night"],
+    "_blend": "Phase 3 §2.8: tiefe Nacht 22:30–03:00, night bis 04:30, Dämmerung 05:30.",
+    "blend_presets": ["deep_night", "deep_night", "night", "dawn", "day", "day", "dusk", "night", "deep_night"],
+    "blend_minutes": [0, 180, 270, 330, 480, 1020, 1140, 1260, 1350],
     "_shadow": "Warme Lichter werfen Schatten erst ab diesem warm_light_scale (Tag 0,25 = aus; Budget).",
     "shadow_min_warm_scale": 0.4
   },
@@ -183,10 +290,20 @@
     "ph_prop_wood_pile": [{"shape": "box", "size": [1.38, 0.9, 0.95], "offset": [0.0, 0.45, 0.2]}],
     "ph_prop_stone_rubble": [{"shape": "box", "size": [1.3, 0.55, 1.05], "offset": [0.0, 0.27, 0.0]}],
     "ph_prop_fallen_log": [{"shape": "box", "size": [6.4, 1.0, 1.1], "offset": [-0.2, 0.5, 0.0]}],
-    "ph_prop_signpost": [{"shape": "cylinder", "radius": 0.15, "height": 2.0, "offset": [0.0, 1.0, 0.0]}]
+    "ph_prop_signpost": [{"shape": "cylinder", "radius": 0.15, "height": 2.0, "offset": [0.0, 1.0, 0.0]}],
+    "ph_env_birch": [{"shape": "cylinder", "radius": 0.2, "height": 3.0, "offset": [0.0, 1.5, 0.0]}],
+    "ph_env_bramble": [{"shape": "cylinder", "radius": 0.85, "height": 1.2, "offset": [0.0, 0.6, 0.0]}],
+    "ph_prop_rubble_large": [{"shape": "cylinder", "radius": 0.7, "height": 0.7, "offset": [0.0, 0.35, 0.0]}],
+    "ph_env_stump": [{"shape": "cylinder", "radius": 0.4, "height": 0.55, "offset": [0.0, 0.27, 0.0]}],
+    "ph_env_hedge_thorn": [{"shape": "box", "size": [4.0, 1.6, 0.9], "offset": [0.0, 0.8, 0.0]}],
+    "ph_prop_fence_iron_broken": [{"shape": "box", "size": [2.0, 1.25, 0.3], "offset": [1.0, 0.62, 0.0]}],
+    "ph_prop_fence_passage": [{"shape": "box", "size": [0.4, 1.5, 0.4], "offset": [0.17, 0.75, 0.0]}, {"shape": "box", "size": [0.4, 1.5, 0.4], "offset": [2.23, 0.75, 0.0]}],
+    "ph_prop_notice_board": [{"shape": "box", "size": [1.3, 2.0, 0.2], "offset": [0.0, 1.0, 0.0]}]
   },
-  "walkable_bounds": {"min": [-11.2, -12.5], "max": [11.2, 25.2], "wall_height": 3.0, "wall_thickness": 1.0},
-  "camera_bounds": {"min": [-7.0, -8.0], "max": [7.0, 23.0], "distance": 22.0, "zoom_min": 12.0, "zoom_max": 24.0},
+  "walkable_bounds": {"min": [-11.2, -20.3], "max": [21.2, 25.2], "wall_height": 3.0, "wall_thickness": 1.0},
+  "_extra_walls": "Unsichtbare Wände (Höhe/Dicke wie walkable_bounds, mittig auf der Linie): hinter der Hütte, Wald östlich des Kutschwegs.",
+  "extra_walls": [[[-11.2, -12.5], [-2.0, -12.5]], [[11.2, 9.9], [11.2, 25.2]]],
+  "camera_bounds": {"min": [-7.0, -16.0], "max": [17.0, 23.0], "distance": 22.0, "zoom_min": 12.0, "zoom_max": 24.0},
   "player_start": {"pos": [-4.4, -3.6], "rot_y": 0.0},
   "hut_interior": {"_comment": "Innenraum-Szene (docs §11, src/world/hut_interior/hut_interior.tscn) fern der Außenwelt; hut_door steht am Marker door_outside der Hütte.", "origin": [0.0, 0.0, -200.0]}
 }

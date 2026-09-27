@@ -1,6 +1,8 @@
-[gd_resource type="Resource" script_class="DecorData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="DecorData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://src/systems/decoration/decor_data.gd" id="1"]
+
+[ext_resource type="PackedScene" path="res://assets/models/decor/ph_deco_bench_wood.glb" id="m1"]
 
 [resource]
 script = ExtResource("1")
@@ -17,3 +19,4 @@ allow_grave_ring = false
 suppresses_dirt = false
 ghost_bonus_radius = 0.0
 collider_size = Vector3(1.4, 0.8, 0.45)
+model = ExtResource("m1")

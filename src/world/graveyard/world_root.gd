@@ -13,6 +13,8 @@ const PLAYER := ^"Player"
 const GROUND_SHAPE := ^"GroundCollision/Shape"
 const GROUND := ^"Ground"
 const DECOR := ^"Decor"
+## Scenery of the locked Phase-3 sections, one child per section id (graveyard_build_phase3.gd).
+const OVERGROWTH := ^"Decor/Overgrowth"
 ## Render layer of meshes with foliage surfaces (tree crowns, bushes): the only painted material
 ## that sways (TIME in vertex()), which makes Godot redraw every shadow map in its range each
 ## frame. The warm lights (lanterns) leave this layer out of their shadow casters, so their
@@ -36,6 +38,8 @@ func _ready() -> void:
 		push_warning("[WorldRoot] Systems/CorpseManager or Systems/Graveyard missing")
 	_ground_receives_shadows_only()
 	_foliage_out_of_warm_shadows()
+	EventBus.section_unlocked.connect(_on_section_unlocked)
+	EventBus.game_loaded.connect(_on_game_loaded)
 	_announce.call_deferred()
 
 
@@ -107,12 +111,15 @@ func _ground_receives_shadows_only() -> void:
 		(mesh as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
-## Foliage meshes go to FOLIAGE_LAYER only, and every warm light of the world stops casting
-## shadows from that layer (see FOLIAGE_LAYER). Runtime for the same reason as above.
+## Foliage meshes (Decor, and the brambles / thorn hedge among the Phase-3 obstacles in
+## Entities) go to FOLIAGE_LAYER only, and every warm light of the world stops casting shadows
+## from that layer (see FOLIAGE_LAYER). Runtime for the same reason as above.
 func _foliage_out_of_warm_shadows() -> void:
-	var decor := get_node_or_null(DECOR)
-	if decor != null:
-		for node: Node in decor.find_children("*", "MeshInstance3D", true, false):
+	for path: NodePath in [DECOR, ENTITIES]:
+		var parent := get_node_or_null(path)
+		if parent == null:
+			continue
+		for node: Node in parent.find_children("*", "MeshInstance3D", true, false):
 			var mesh := node as MeshInstance3D
 			if _has_foliage(mesh):
 				mesh.layers = FOLIAGE_LAYER
@@ -132,8 +139,33 @@ static func _has_foliage(mesh: MeshInstance3D) -> bool:
 	return false
 
 
+## Shows the overgrowth of every section that is still locked (ExpansionManager, group
+## expansion; without one everything stays as built).
+func refresh_overgrowth() -> void:
+	var root := get_node_or_null(OVERGROWTH)
+	var expansion := get_tree().get_first_node_in_group(&"expansion") if is_inside_tree() else null
+	if root == null or expansion == null or not is_ancestor_of(expansion):
+		return
+	for child: Node in root.get_children():
+		var show := not bool(expansion.call(&"is_unlocked", StringName(child.name)))
+		(child as Node3D).visible = show
+		var body := child.get_node_or_null(^"Collision")
+		if body != null:
+			for shape: Node in body.get_children():
+				(shape as CollisionShape3D).set_deferred(&"disabled", not show)
+
+
+func _on_section_unlocked(_section_id: StringName) -> void:
+	refresh_overgrowth()
+
+
+func _on_game_loaded(_slot: int) -> void:
+	refresh_overgrowth()
+
+
 func _announce() -> void:
 	is_world_ready = true
+	refresh_overgrowth()
 	EventBus.world_ready.emit(self)
 
 
