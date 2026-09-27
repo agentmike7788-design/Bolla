@@ -3,5 +3,6 @@
 [ext_resource type="Script" path="res://src/debug/debug_console.gd" id="1"]
 
 [node name="Debug" type="CanvasLayer"]
+process_mode = 3
 layer = 100
 script = ExtResource("1")
