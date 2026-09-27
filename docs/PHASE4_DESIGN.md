@@ -4,7 +4,7 @@ Status: **v1 – Entwurf zur Benutzerfreigabe, danach verbindlich für die Umset
 Baut auf `docs/PHASE3_DESIGN.md` (Vertrag v1, freigegeben 27.09.2026) und `docs/VERTICAL_SLICE_DESIGN.md` (Vertrag v2) auf. Was dieses Dokument nicht ändert, gilt dort unverändert weiter.
 Gameplay-Werte sind **Vorschläge**; der Benutzer prüft sie beim Gate G4. ART STYLE LOCK „Gemaltes Diorama" ist aktiv: Phase 4 ändert den Stil nicht. Verfall, Fliegen und Geruch werden gemalt und angedeutet dargestellt, **ohne Gore**. Der freigegebene Maler-Shader (`painted.gdshader`, `painted_common.gdshaderinc`) bleibt unverändert.
 
-**Benutzerentscheidungen (verbindlich, 27.09.2026)**
+**Benutzerentscheidungen (verbindlich, 27.09.2026)** – dazu die Antworten auf die Vertragsfragen in §14 (Pietät, sichtbare Nachthändlerin, Holunderwinkel, Finale).
 - Inhalt, alle vier Teile:
   1. **Gründliche Untersuchung:** mehrere Schritte (Kleidung, Hände, Wunden, Taschen); die Funde erzählen mehr über die Toten.
   2. **Hinweise & Geheimnis:** Ein Merkbuch sammelt Hinweise aus Briefen, Tätowierungen und Wunden. Erster Erzählfaden: Was geschah mit dem letzten Totengräber?
@@ -34,7 +34,7 @@ Ankunft (07:40, Bahre) → zum Tisch tragen
   → UNTERSUCHEN in bis zu 4 Schritten: Kleidung · Hände & Arme · Wunden & Haut · Taschen & Säume
        └ Funde → Totenzettel im Merkbuch; Hinweise → Merkbuch (verknüpfen → Erkenntnis)
        └ Verfall: Funde mit Mindestfrische gehen verloren, wenn man zu lange wartet
-  → ENTSCHEIDEN: Wertsachen (wie Phase 2) · optional VERWERTEN: Haar / Zähne → Hohlstein → Münzen am Morgen
+  → ENTSCHEIDEN: Wertsachen (wie Phase 2) · optional VERWERTEN: Haar / Zähne → nachts an der Westmauer an **Ilse Kranich** verkaufen (Münzen sofort)
   → HERRICHTEN: waschen · einkleiden (Leichentuch / Totenhemd) · aufbahren · optional mit Wacholder räuchern
   → Grab ausheben → bestatten → Grabzeichen → Qualität + Bezahlung (neue Zeilen)
   → Pietät (still, innen) · Ruf (öffentlich) · Geister (nachts: zufrieden / beraubt / ungerichtet)
@@ -55,7 +55,7 @@ Einkleiden ist der Schnitt: Danach sind Kleidung und Taschen nicht mehr zugängl
 | Mit Wacholder räuchern | 10 | 1 `juniper` | Verfall × 0,25 für 18 h, kein Geruch |
 | Haar abschneiden | 10 | `shears` | Item `hair_braid` |
 | Zähne nehmen | 15 | `pliers` | Item `teeth_pouch` |
-| Hohlstein befüllen / leeren | 0 (Panel) | – | Münzen am nächsten Morgen |
+| Handel mit Ilse (nachts 23:00–03:00) | 0 (Dialog + Panel; Modal, die Zeit ruht) | – | Münzen sofort |
 *Begründung:* Phase 2 brauchte für Untersuchen + Tuch 30 Min. Gründlich untersuchen und voll herrichten dauert 85 Min (+55 Min). Ein Phase-3-Tag hat genug Luft dafür (Bot-Tag endete bei 12 Gräbern mit Freizeit). Ein Mensch muss aber zwischen Pflege, Zier und Sorgfalt wählen. Die gewohnte Kurzform (Kleidung + Taschen + Leichentuch, 30 Min) bleibt voll spielbar.
 
 ### 1.3 Tagesbogen (neues Spiel, 1 Leiche/Tag, Richtwert Mensch)
@@ -66,7 +66,7 @@ Die Mechaniken (Schritte, Herrichten, Verfall, Merkbuch) gelten **ab Tag 1**. De
 | 1 | Tutorial wie Phase 2. Das Panel zeigt 4 Schritte. Erste Notiz „[J] Merkbuch". | zufällig, keine Merkmale | „Untersuche die Leiche (Kleidung, Taschen …)" |
 | 2 | Osric (`p4_intro`): „Kleider, Hände, Wunden, Taschen", verkauft **Wacholder**. Rezepte Wurzelbürste, Kamm, Totenhemd. | Wertsachen (Phase 2) | „Herrichten: waschen, einkleiden, aufbahren" |
 | 3 | **Vorbote 1** | `strange_wound` → Hinweis *Das Zeichen* | – |
-| 4 | Morgens steckt ein **Zettel an der Hüttentür** (Abnehmer) → Hohlstein bekannt, Werkzeug liegt darin. **Vorbote 2** | Wertsachen + `letter` → *Ein Warnbrief* | „Etwas steckt an deiner Tür" |
+| 4 | Morgens steckt ein **Zettel an der Hüttentür** (Ilse Kranich) → ab dieser Nacht kommt sie um 23:00 an die Westmauer; beim ersten Treffen schenkt sie Schere und Zange. **Vorbote 2** | Wertsachen + `letter` → *Ein Warnbrief* | „Etwas steckt an deiner Tür" · 22:45 „Jemand wartet an der Westmauer" |
 | 5 | **Vorbote 3** | Wertsachen + `tattoo` → *Anker und Schlange* | – |
 | 6 | **S1 Marthe Quendel** | Geschichte | „Merkbuch: zwei Hinweise passen vielleicht zusammen" |
 | 7–8 | Phase 3 (Ostwiese, Birkenhang) | zufällig | – |
@@ -84,7 +84,7 @@ Die Mechaniken (Schritte, Herrichten, Verfall, Merkbuch) gelten **ab Tag 1**. De
 ### 1.4 Das Geheimnis
 
 **Gesamtbogen (Autorenwissen, Phase 18 entscheidet endgültig, hier nur Leitplanke):**
-Lorenz Aschau war 31 Jahre Totengräber von Hollerbrück. Vor gut einem Jahr verschwand er. Die Hütte stand offen, die Schaufel lehnte am Tor (Osric, Phase 2). Er hatte entdeckt, dass im Dorf Sterbende mit einem Zeichen „gezeichnet" werden: einem Kreis, von drei Linien durchbrochen, dem **Dreistrich**. Diese Toten finden keine Ruhe, der Hügel „behält" sie („Der Hügel erinnert sich", Phase 3). Lorenz warnte die Gezeichneten mit namenlosen Briefen. Mit den alten Moorfährleuten (Tätowierung Anker + Schlange) ließ er sie nachts über das Moor fortbringen. Nicht alle kamen an. Im Holunderwinkel hinter der Hütte hob er sechs Gruben aus: Holunder hält im Volksglauben Böses fern. Dann ließ er sich für tot erklären. Einem toten Fährmann zog er seinen Mantel an, er selbst stieg unter den Birkenhang hinab (Krypten, Phase 12). Wer zeichnet und wozu, bleibt Phase 13–18 vorbehalten. Wer am Hohlstein kauft, kannte Lorenz. Ob der Käufer Freund oder Feind ist, bleibt offen.
+Lorenz Aschau war 31 Jahre Totengräber von Hollerbrück. Vor gut einem Jahr verschwand er. Die Hütte stand offen, die Schaufel lehnte am Tor (Osric, Phase 2). Er hatte entdeckt, dass im Dorf Sterbende mit einem Zeichen „gezeichnet" werden: einem Kreis, von drei Linien durchbrochen, dem **Dreistrich**. Diese Toten finden keine Ruhe, der Hügel „behält" sie („Der Hügel erinnert sich", Phase 3). Lorenz warnte die Gezeichneten mit namenlosen Briefen. Mit den alten Moorfährleuten (Tätowierung Anker + Schlange) ließ er sie nachts über das Moor fortbringen. Nicht alle kamen an. Im Holunderwinkel hinter der Hütte hob er sechs Gruben aus: Holunder hält im Volksglauben Böses fern. Dann ließ er sich für tot erklären. Einem toten Fährmann zog er seinen Mantel an, er selbst stieg unter den Birkenhang hinab (Krypten, Phase 12). Wer zeichnet und wozu, bleibt Phase 13–18 vorbehalten. Die Nachthändlerin Ilse Kranich kannte Lorenz. Ob sie Freundin oder Feindin ist und was sie mit dem Gekauften tut, bleibt offen.
 
 **Phase-4-Ausschnitt (was der Spieler herausfinden kann):**
 1. Die Warnbriefe schrieb Lorenz selbst (*Wer die Warnbriefe schrieb*).
@@ -92,7 +92,7 @@ Lorenz Aschau war 31 Jahre Totengräber von Hollerbrück. Vor gut einem Jahr ver
 3. Die Fährleute mit Anker und Schlange brachten Gezeichnete nachts fort, Lorenz bezahlte (*Die Nachtfähre*).
 4. Nach Lorenz' Verschwinden schreibt dieselbe Hand weiter (*Die Hand schreibt weiter*).
 5. Der Tote aus dem Moor ist nicht Lorenz, sondern Kaspar Dorn. Lorenz lebt (*Nicht Lorenz*). Letzte Zeile: „Unter dem Birkenhang ist es nicht still." (Haken Phase 12).
-Optional für verwertende Spieler: *Holunderblüten* (Der Abnehmer kannte Lorenz). Die Toten tragen das Geheimnis. Beide Wege erzählen es, nur aus verschiedenen Blickwinkeln.
+Optional für alle, die mit Ilse reden: *Die Kranichfrau* (Ilse kannte Lorenz besser, als sie zugibt). Die Toten tragen das Geheimnis. Beide Wege erzählen es, nur aus verschiedenen Blickwinkeln.
 
 ---
 
@@ -205,19 +205,39 @@ Ursachen-Raten bleiben (0,75–1,5). Neu `moor_cold` 0,5 (nur S5, `weight 0`). *
 - **Geruch am Spieler:** Wer eine verwesende Leiche trägt, bekommt einmal je Leiche die Notiz „Es riecht streng." Keine weitere Wirkung.
 - Bestattete Leichen verfallen nicht weiter (unverändert). Gräber zeigen keinen Verfall.
 
-### 2.6 Verwertung & Hohlstein (`data/config/utilization_config.tres` – `UtilizationConfig`)
+### 2.6 Verwertung & Nachthändlerin (`data/config/utilization_config.tres` – `UtilizationConfig`, `data/config/trader_config.tres` – `TraderConfig`)
 | Art `kind` | Handlung | Min | Werkzeug | Item | Mindestfrische | Qualität | Ruf | Pietät | Geist (Stimmungswert) |
 |---|---|---|---|---|---|---|---|---|---|
 | `hair` | „Zopf abschneiden" | 10 | `shears` | `hair_braid` | 0,3 („Das Haar ist zu brüchig.") | −1 | −3 | −4 | −5 |
 | `teeth` | „Zähne nehmen" | 15 | `pliers` | `teeth_pouch` | – | −2 | −5 | −6 | −5 |
-| Wertsachen (Phase 2) | „Nehmen" | – | – | Münzen sofort | – | −2 (bestehend) | −8 (bestehend) | −6 | über Qualität |
-- Nur vor dem Einkleiden, je Art einmal je Leiche, nur wenn der Hohlstein bekannt ist (Flag `hollow_known`). Ohne Werkzeug erscheint der Knopf gedimmt: „Werkzeug fehlt (liegt im Hohlstein)". Vor dem Bekanntwerden gibt es keinen Knopf.
+| Wertsachen (Phase 2) | „Nehmen" | – | – | Münzen sofort (unverändert) | – | −2 (bestehend) | −8 (bestehend) | −6 | über Qualität |
+- Nur vor dem Einkleiden, je Art einmal je Leiche, nur wenn Ilse bekannt ist (Flag `trader_known`). Ohne Werkzeug erscheint der Knopf gedimmt: „Werkzeug fehlt – Ilse Kranich hat es." Vor dem Bekanntwerden gibt es keinen Knopf.
 - **Darstellung:** keine Animation am Körper. Die Figur beugt sich über den Tisch (`interact`), der Balken läuft, dann eine Zeile. Ton: „Du schneidest den Zopf ab. Er ist schwerer, als du dachtest." / „Du nimmst, was der Zahnbrecher in der Stadt bezahlt. Du siehst dabei nicht hin."
-- **Hohlstein** (Entity an der Westmauer, §4): „[E] Hohlstein öffnen" → Panel. Einlegen: `hair_braid` **4**, `teeth_pouch` **5** Münzen (`sell_prices`). Bei Pietät „Abgebrüht" oder tiefer +1 je Stück („Er kennt dich jetzt."). Die Auszahlung kommt am **nächsten Morgen 06:00** (`day_started`, idempotent über `last_payout_day`): Die Münzen liegen im Stein, „[E] Münzen nehmen (9)". Benachrichtigung „Im Hohlstein klimpert es." Keine anderen Waren, kein Rückkauf.
-- **Werkzeug:** Beim ersten Öffnen liegen `shears` und `pliers` im Stein (einmalig, `tools_given`). Sie lassen sich nicht herstellen.
-- **Abnehmer-Zettel** (Hinweise, §2.12): Zettel 1 am Tag 4 an der Hüttentür (macht den Stein bekannt). Zettel 2 nach der 4. eingelegten Ware, Zettel 3 nach der 8. (`note_thresholds [0, 4, 8]`).
-- **Wertsachen** bleiben wie in Phase 2: Münzen sofort, ohne Hohlstein. Sie zählen neu auch für die Pietät.
-*Begründung Folgen:* Eine voll verwertete Leiche (Haar + Zähne, dazu im Mittel 35 % Wertsachen) bringt ≈ 9–11 Münzen am Hohlstein plus ≈ 2,3 aus Wertsachen. Sie kostet ≈ 3–4 Qualität (≈ −2 Münzen Bezahlung), −8 Ruf (Wertsachen im Mittel −2,8 zusätzlich), −10 Pietät und einen unruhigen Geist. Rechnung §2.15.
+
+**Die Nachthändlerin – Ilse Kranich, „die Kranichfrau"**
+- *Wer:* groß und hager, Ende fünfzig. Grauer Reisemantel, Kapuze mit einer einzelnen Kranichfeder, geflochtene Kiepe auf dem Rücken. Darin: Haar für die Perückenmacher der Stadt, Zähne für die Zahnbrecher, Leinen aus Nachlässen. An der Kiepe steckt eine gepresste Holunderblüte. Sie trägt eine Laterne mit berußtem Glas. Sie feilscht nie und spricht leise. Die Toten nennt sie „die Stillen". Sie zieht seit Jahrzehnten nachts von Dorf zu Dorf über die Moorwege. Sie urteilt nicht, sie vergisst aber auch nichts. Melancholisch, höflich, ein wenig unheimlich, nie bedrohlich.
+- *Einführung:* Tag 4, 06:00 (erste Minute ≥ `intro_minute 360`, idempotent): Zettel an der Hüttentür → Flag `trader_known`, Hinweis `c_trader_note`. Text: „Wer den Toten etwas nimmt, braucht jemanden, der es abnimmt. Ich komme nach elf an die Westmauer. Frag nach Ilse. – I. K."
+- *Zeitplan* (`data/npc/trader_schedule.tres`, bestehendes `NpcSchedule`/`ScheduleResolver`, `Npc`-Entity): **jede Nacht**, erst ab `trader_known`:
+  - 22:40 Aufbruch am Waldrand `trader_far`, Weg über `trader_mid`, Ankunft 23:00 an `trader_spot`, außen an der Westmauer (`walk`, 20 Min)
+  - 23:00–03:00 steht sie am Mauerstück, die Laterne auf dem Stein (`idle`/`talk`, Dialog `trader`)
+  - 03:00–03:20 zurück, danach unsichtbar
+  - Um 22:45 kommt einmal je Nacht die leise Notiz „Jemand wartet an der Westmauer." (nur ab `trader_known`, nur draußen).
+- *Handel* (Panel `&"trader"` aus dem Dialog, **Münzen sofort**): Ankauf `hair_braid` **4**, `teeth_pouch` **5** (`sell_prices`), bei Pietät „Abgebrüht" oder tiefer +1 je Stück („Du bist verlässlich geworden."). Verkauf (kleiner Laden, Vorrat je Nacht): `linen` **2** Münzen (Osric 3, höchstens 3 je Nacht, „aus einem Nachlass – frag nicht, aus welchem"), `juniper` **1** Münze (Osric 2, höchstens 4 je Nacht). Kein Rückkauf, keine weiteren Waren. Wertsachen bleiben Münzen sofort am Tisch (Phase-2-Regel, freigegeben).
+- *Werkzeug:* Beim ersten Gespräch schenkt sie `shears` und `pliers` (einmalig, `tools_given`; volles Inventar → „Komm wieder, wenn du Platz hast."). Man kann sie nicht herstellen.
+- *Begründung „sofort":* Die Figur ist sichtbar, der Handel ist eine Begegnung. Wer verwerten will, muss nachts wach bleiben (Geisterzeit, 23:00) und mit Ware im Inventar zur Mauer gehen. Die Spannung kommt aus Nacht, Ort und ihren Worten, nicht aus einer Warteschlange. Eine Auszahlung am Morgen bräuchte zusätzlich eine Ablage, und eine zweite Buchführung wäre Aufwand ohne Gewinn.
+- *Reaktion auf die Pietät* (Begrüßung je Stufe, einmal je Nacht):
+  - Andächtig: „Du kommst mit leeren Händen. Das steht dir."
+  - Rücksichtsvoll: „Nur zum Reden? Auch gut. Die Nacht ist lang."
+  - Sachlich: „Guten Abend, Totengräber. Was bringen die Stillen heute?"
+  - Abgebrüht: „Du bist schneller geworden. Das geht vielen so."
+  - Hartherzig: „Du hast gelernt, nicht hinzusehen. Ich hab's dir nicht beigebracht."
+- *Geheimnis* (nur Andeutungen; der Phase-4-Ausschnitt §1.4 bleibt unverändert):
+  - Frage „Kanntest du den alten Totengräber?", verfügbar nach 3 Gesprächen in verschiedenen Nächten **oder** 4 Verkäufen. Antwort: „Lorenz? Er hat mir nie etwas verkauft. Er hat mir Tee gekocht und gefragt, wer im Dorf die Kranken besucht. Dann hat er aufgeschrieben, was ich sagte." → Hinweis `c_trader_lorenz`.
+  - Frage „Die mit dem Zeichen …?", nur mit Hinweis `c_mark`. Antwort: „Die mit dem Zeichen kaufe ich nicht. Die gehören schon jemandem. Frag mich nicht, wem." → Hinweis `c_trader_marked`.
+  - Nach *Nicht Lorenz* (Flag `insight_not_lorenz`): „Wenn er lebt, dann weiß er, warum er nicht zurückkommt. Stör ihn nicht beim Graben."
+  - Sie nennt keine Namen und verrät nichts über Lorenz' Aufenthalt.
+- **Kein Zwang und keine Strafe fürs Reden:** Wer nie verwertet, kann trotzdem mit ihr sprechen, Leinen und Wacholder kaufen und die optionale Erkenntnis finden. Ihr Laden ist ein kleiner Anreiz, nachts aufzubleiben.
+*Begründung Folgen:* Eine voll verwertete Leiche (Haar + Zähne, dazu im Mittel 35 % Wertsachen) bringt ≈ 9–11 Münzen bei Ilse plus ≈ 2,3 aus Wertsachen. Sie kostet ≈ 3–4 Qualität (≈ −2 Münzen Bezahlung), −8 Ruf (Wertsachen im Mittel −2,8 zusätzlich), −10 Pietät und einen unruhigen Geist. Rechnung §2.15. Verkaufen selbst ändert weder Pietät noch Ruf; das geschah schon am Tisch. Nach dem 3. Verkauf setzt `NightTrade` das Flag `trader_rumor`. Osric merkt dann einmal an: „Man sagt, nachts steht eine Frau mit einer Kiepe an deiner Mauer. Ich hab nichts gesagt."
 
 ### 2.7 Pietät – der Moralwert (`data/config/piety_config.tres` – `PietyConfig`)
 **Name (Vorschlag, Frage §14.1): „Pietät"** – die Achtung vor den Toten. Sie ist **innen** (nur der Spieler und die Toten wissen es), der Ruf ist **außen** (das Dorf).
@@ -244,15 +264,15 @@ Ursachen-Raten bleiben (0,75–1,5). Neu `moor_cold` 0,5 (nur S5, `weight 0`). *
 *Nachrechnung:* Der würdevolle Weg bringt je Leiche +3, dazu im Mittel +1,05 aus Wertsachen, zusammen ≈ +4. „Rücksichtsvoll" kommt um Tag 5, „Andächtig" um Tag 15. Voll verwerten kostet je Leiche ≈ −10 bis −12 (mit Herrichten −7 bis −9). „Abgebrüht" kommt nach 2 Leichen, „Hartherzig" nach ≈ 6. Wer einmal verwertet und dann aufhört, erholt sich um 1 je Tag und 4 je hergerichtete Leiche: Nach ≈ 3 Tagen ist er wieder „Sachlich" (sanft, keine Sackgasse).
 
 **Wirkung in Phase 4** (spürbar, nie sperrend):
-| Stufe | Geistergabe (§2.9) | Abnehmer | Osric | Geister-Zeilen |
+| Stufe | Geistergabe (§2.9) | Ilse (Ankauf, Begrüßung) | Osric | Geister-Zeilen |
 |---|---|---|---|---|
-| Hartherzig | keine („Die Geister deuten nicht mehr ins Moos.") | +1 je Stück | kühl, knapp | 1 von 4 gehörten Zeilen aus `by_piety.hardhearted` |
+| Hartherzig | keine („Die Geister deuten nicht mehr ins Moos.") | +1 je Stück, eigene Begrüßung | kühl, knapp | 1 von 4 gehörten Zeilen aus `by_piety.hardhearted` |
 | Abgebrüht | 2 | +1 je Stück | spitze Bemerkung (einmal je Stufe) | – |
 | Sachlich | 2 | ±0 | wie bisher | – |
 | Rücksichtsvoll | 2 | ±0 | warme Bemerkung | – |
 | Andächtig | **3** | ±0 | Dank, erzählt von Lorenz' Art (einmal) | 1 von 4 aus `by_piety.devout` |
 - **Keine** HUD-Anzeige (Begründung §7). Stufenwechsel → leise Benachrichtigung ohne Zahl („Du merkst, dass dir das nicht mehr schwerfällt." / „Du merkst, dass du leiser gehst.").
-- **Haken für Phase 13+ (nur API, heute ohne Wirkung):** `PietyRules.affinity(value)` → `&"soul"` (≥ 20) · `&"bone"` (≤ −20) · `&""`. Dazu die Statistiken `stats.prepared` / `stats.utilized` und die Zettel des Abnehmers. Später können Seelenkräfte (Geister als Helfer) an hohe, Knochenkräfte (Auferstehung/untote Arbeiter) an niedrige Pietät gebunden werden. Keine Phase-4-Logik liest `affinity`.
+- **Haken für Phase 13+ (nur API, heute ohne Wirkung):** `PietyRules.affinity(value)` → `&"soul"` (≥ 20) · `&"bone"` (≤ −20) · `&""`. Dazu die Statistiken `stats.prepared` / `stats.utilized` / `stats.trader_sales` und die Begegnungen mit Ilse Kranich. Später können Seelenkräfte (Geister als Helfer) an hohe, Knochenkräfte (Auferstehung/untote Arbeiter) an niedrige Pietät gebunden werden. Keine Phase-4-Logik liest `affinity`.
 - **Kein böses Ende:** Das Kapitelende ist in jeder Stufe gleich erreichbar, nur die Schlusszeile im Panel wechselt (5 Varianten).
 
 ### 2.8 Ruf – neue Ereignisse (`ReputationConfig.event_points`)
@@ -264,7 +284,7 @@ Ursachen-Raten bleiben (0,75–1,5). Neu `moor_cold` 0,5 (nur S5, `weight 0`). *
 - **Gründe** (neue Priorität): `robbed` (Haar/Zähne) → `weeds` → `valuables` → `cold` (ohne Kleidung) → **`unkempt`** (nicht gewaschen oder nicht aufgebahrt) → `cross` → `waited` (verwesend/verfallen bestattet) → `bare`.
 - **Geschichts-Geister** (S1–S5) bekommen als zufriedene und gleichmütige Geister eigene Zeilen (`GhostLines.by_story`, je 2). Das Merkbuch vermerkt beim Zuhören „Gehört: …" am Totenzettel.
 - **Gabe** je Pietät-Stufe (`PietyConfig.gift_by_tier = [0, 2, 2, 2, 3]`), weiter einmal je Grab.
-- Neue Zeilen (je 3, ≤ 90 Zeichen, P4): `robbed`: „Mir fehlt etwas. Ich weiß genau, was." · „Mein Zopf. Wo ist mein Zopf?" · „Du hast mir genommen, was mir gehörte. Nicht das Geld – mich." `unkempt`: „Ungewaschen in die Erde. Der Staub juckt noch." · „Meine Hände liegen irgendwie. Hat sie keiner gefaltet?" · „Mein Haar war mein Stolz. Nun liegt es wirr." `by_piety.devout` (2), `by_piety.hardhearted` (2, z. B. „Du riechst nach Hohlstein, Totengräber."). Geschichte (Beispiele): S1 „Die Briefe waren gut gemeint. Aber wer gießt dann die Gräber?" · S2 „Ich hab sie übers Moor gerudert, Nacht für Nacht. Die Letzte nicht." · S3 „Ich hatte gepackt. Ich war so nah am Fortgehen." · S4 „Wir haben geschworen, Lorenz und wir. Ich hab mich dran gehalten." · S5 „Ich trage einen fremden Mantel. Er war mir immer zu weit." / „Der Sechste ist noch nicht tot."
+- Neue Zeilen (je 3, ≤ 90 Zeichen, P4): `robbed`: „Mir fehlt etwas. Ich weiß genau, was." · „Mein Zopf. Wo ist mein Zopf?" · „Du hast mir genommen, was mir gehörte. Nicht das Geld – mich." `unkempt`: „Ungewaschen in die Erde. Der Staub juckt noch." · „Meine Hände liegen irgendwie. Hat sie keiner gefaltet?" · „Mein Haar war mein Stolz. Nun liegt es wirr." `by_piety.devout` (2), `by_piety.hardhearted` (2, z. B. „Du riechst nach Ilses Kiepe, Totengräber."). Geschichte (Beispiele): S1 „Die Briefe waren gut gemeint. Aber wer gießt dann die Gräber?" · S2 „Ich hab sie übers Moor gerudert, Nacht für Nacht. Die Letzte nicht." · S3 „Ich hatte gepackt. Ich war so nah am Fortgehen." · S4 „Wir haben geschworen, Lorenz und wir. Ich hab mich dran gehalten." · S5 „Ich trage einen fremden Mantel. Er war mir immer zu weit." / „Der Sechste ist noch nicht tot."
 
 ### 2.10 Holunderwinkel (neuer Abschnitt, `data/sections/elder.tres`, `data/clearables/*`)
 | # | id | Name | Grabstellen | Freilegen | Voraussetzung |
@@ -294,7 +314,7 @@ Geschichts-Leichen haben keine Wertsachen (`valuables_coins 0`, kein Merkmal). V
 2. **Reservierung:** Eine Zufallsleiche kommt nur, wenn `freie Grabstellen > nicht bestattete Leichen + ausstehende Geschichts-Leichen`. Eine Geschichts-Leiche braucht `freie > nicht bestattete`. Keine Zufallsleiche wegen Reservierung → still (kein Versäumnis). Osric: „Heute nichts. Aber halt eine Grube frei."
 3. Migrierte Stände holen auf: Die Geschichte beginnt am ersten Liefertag nach dem Laden, danach folgt alle 2 Tage die nächste Leiche.
 4. **Schlüssel-Rückfall:** Ab `key_fallback_day 12` bei `day_started` ohne `has_elder_key` setzt `StoryDirector` das Flag. Der Hinweis `c_elder_key` kommt ohne Zeile, dazu die Benachrichtigung „An der Bahre hängt ein rostiger Schlüssel an einer Schnur. Osric: ‚Lag an der alten Fährstelle.'" (Kein Softlock, auch nicht in migrierten Ständen, die schon voll sind.)
-5. **Zettel an der Tür** (`HollowStoneMarket.apply_morning`, P3): Ab `StoryConfig.hollow_note_day 4` wird bei `day_started` einmalig Flag `hollow_known` gesetzt, dazu Hinweis `c_buyer_note_1` und die Benachrichtigung „An deiner Hüttentür steckt ein Zettel."
+5. **Zettel an der Tür** (`NightTrade.apply_morning`, P3): Ab `TraderConfig.intro_day 4` wird bei der ersten Minute ≥ 06:00 einmalig Flag `trader_known` gesetzt, dazu Hinweis `c_trader_note` und die Benachrichtigung „An deiner Hüttentür steckt ein Zettel."
 6. S5 heißt im Register „Lorenz Aschau (?)". Mit der Erkenntnis *Nicht Lorenz* benennt das Merkbuch den Datensatz in **„Kaspar Dorn"** um (`InsightData.rename_story`).
 
 ### 2.12 Merkbuch (`data/journal/clues/<id>.tres` – `ClueData`, `data/journal/insights/<id>.tres` – `InsightData`)
@@ -318,8 +338,10 @@ Geschichts-Leichen haben keine Wertsachen (`valuables_coins 0`, kein Merkmal). V
 | `c_buckle` | Die Schnalle „K. D." | Gegenstand | S5 |
 | `c_soft_hands` | Hände ohne Schwielen | Zeichen | S5 |
 | `c_page_list` | Die Liste der Sechs | Seite | S5 |
-| `c_buyer_note_1…3` | Zettel des Abnehmers I–III | Zettel | Tür (Tag 4), 4. / 8. Ware |
-Abnehmer-Zettel: I „Für Haar und Zähne der Toten zahlt einer gut, der keine Fragen stellt. Leg sie in den hohlen Stein an der Westmauer. Das Werkzeug liegt schon drin. – Ein Freund des Hauses" · II „Du arbeitest sauber. Der vor dir hat nie verkauft. Er hat alles behalten, bis zuletzt." (mit gepresster Holunderblüte) · III „Die mit dem Zeichen lass in Ruhe. Die gehören schon jemandem."
+| `c_trader_note` | Ein Zettel an der Tür | Zettel | Tag 4, 06:00 |
+| `c_trader_lorenz` | Ilse über Lorenz | Gespräch | Dialog (3 Nächte geredet oder 4 Verkäufe) |
+| `c_trader_marked` | „Die gehören schon jemandem" | Gespräch | Dialog (braucht `c_mark`) |
+Ilses Zettel und Antworten: Texte in §2.6. `JournalManager.add_clue` setzt zusätzlich das Flag `clue_<id>`, damit Dialog-Bedingungen Hinweise abfragen können.
 
 **Erkenntnisse (5 + 1 optional)** – Verknüpfen = genau die geforderte Menge (2–3 Hinweise, Reihenfolge egal):
 | id | Titel (offene Frage vorher) | benötigt | Text | Flag |
@@ -329,7 +351,7 @@ Abnehmer-Zettel: I „Für Haar und Zähne der Toten zahlt einer gut, der keine 
 | `i_ferry` | Die Nachtfähre („Was verbindet die Tätowierten?") | `c_anchor_snake`, `c_ferry_jacket`, `c_ferry_token` | „Anker und Schlange: das Zeichen der alten Moorfährleute. Lorenz bezahlte Nachtfahrten über das Moor. Er wollte die Gezeichneten fortbringen. Nicht alle kamen an." | `insight_ferry` |
 | `i_still_writing` | Die Hand schreibt weiter („Wer schreibt jetzt?") | `c_letter_late`, `c_page_1` | „Ein Warnbrief, drei Wochen nach Lorenz' Verschwinden geschrieben – in seiner Hand. Entweder schreibt ein Toter, oder Lorenz ist nicht tot." | `insight_still_writing` |
 | `i_not_lorenz` | Nicht Lorenz („Wer liegt im Mantel?") | `c_soft_hands`, `c_buckle`, `c_page_list` | „Der Tote aus dem Moor trägt Lorenz' Mantel, aber Kaspar Dorns Hände. Dorn stand als Fünfter auf der Liste. Lorenz hat ihm den Mantel gegeben und sich für tot erklären lassen. Er lebt – irgendwo unter dem Hügel." | `insight_not_lorenz`, benennt S5 um |
-| `i_elder_buyer` *(optional)* | Holunderblüten („Wer kauft am Hohlstein?") | `c_buyer_note_2`, `c_elder_key` | „Der Abnehmer siegelt mit gepresster Holunderblüte – dasselbe Blatt wie auf Lorenz' Schlüssel. Wer am Hohlstein kauft, kannte den alten Totengräber gut." | `insight_elder_buyer` |
+| `i_kranich` *(optional)* | Die Kranichfrau („Wer ist Ilse Kranich?") | `c_trader_lorenz`, `c_elder_key` | „An Ilses Kiepe steckt eine gepresste Holunderblüte – dasselbe Blatt wie auf Lorenz' Schlüssel. Sie hat ihn besser gekannt, als sie zugibt." | `insight_kranich` |
 - Die offene Frage einer Erkenntnis erscheint, sobald **ein** geforderter Hinweis gefunden ist (Seite „Hinweise", Spalte „Offene Fragen"). Ein Fehlversuch ist kostenlos: „Diese Hinweise erzählen noch keine gemeinsame Geschichte." Er wird nicht gezählt.
 - Belohnung: Text, Flag (Osric-Dialoge), Zeile im Abschluss-Panel, Benachrichtigung „Erkenntnis: …". **Keine** Münzen und kein Ruf: Das Geheimnis ist Erzählung, kein Farmziel.
 - Zielzeile „Merkbuch: Hinweise passen zusammen", sobald alle Hinweise einer Erkenntnis da sind, diese aber noch nicht verknüpft ist (einmal je Erkenntnis bis zum Verknüpfen).
@@ -341,12 +363,12 @@ Abnehmer-Zettel: I „Für Haar und Zähne der Toten zahlt einer gut, der keine 
 | `scrub_brush` | Wurzelbürste | TOOL | 1 | Werkbank: 2 wood, 15 Min (`category tool`) |
 | `comb` | Holzkamm | TOOL | 1 | Werkbank: 1 wood, 10 Min (`tool`) |
 | `burial_gown` | Totenhemd | CRAFTED | 5 | Werkbank: 3 linen, 30 Min (`grave`) |
-| `juniper` | Wacholderzweige | RESOURCE | 10 | Osric, 2 Münzen |
-| `shears` | Schere | TOOL | 1 | Hohlstein (einmalig) |
-| `pliers` | Zange | TOOL | 1 | Hohlstein (einmalig) |
+| `juniper` | Wacholderzweige | RESOURCE | 10 | Osric 2 Münzen · Ilse 1 Münze (Vorrat 4/Nacht) |
+| `shears` | Schere | TOOL | 1 | Ilse, erstes Gespräch (einmalig) |
+| `pliers` | Zange | TOOL | 1 | Ilse, erstes Gespräch (einmalig) |
 | `hair_braid` | Zopf | GOODS | 10 | Verwertung |
 | `teeth_pouch` | Zahnsäckchen | GOODS | 10 | Verwertung |
-Neues Spiel: Startinventar unverändert (die Werkzeuge baut man an Tag 1–2 aus 3 Holz).
+Bestehend `linen`: zusätzlich bei Ilse 2 Münzen (Vorrat 3/Nacht). Neues Spiel: Startinventar unverändert (die Werkzeuge baut man an Tag 1–2 aus 3 Holz).
 
 ### 2.14 Balancing-Übertrag aus Phase 3 (Entscheidung)
 Gewählt wird **beides**: (a) Vernachlässigung kostet mehr, (b) „Ehrwürdig" bekommt eine ausdrückliche Bedingung.
@@ -359,8 +381,8 @@ Gewählt wird **beides**: (a) Vernachlässigung kostet mehr, (b) „Ehrwürdig" 
 | | würdevoll („reverent") | verwertend („harvester") |
 |---|---|---|
 | Bezahlung | 3 + floor(12 × 0,5) = 6 + Ruf-Bonus 2 (Geschätzt) = **11** | Q = 9 (Tuch, Stein, frisch, untersucht) − 3 = 6 → 3 + 3 + 0 (Unauffällig) = **6** |
-| Verwertung | – | Zopf 4 + Zähne 5 (+2 ab „Abgebrüht") + Wertsachen ≈ 2,3 = **≈ 13** |
-| Ausgaben | Totenhemd 9 oder Tuch 6, Wacholder gelegentlich 2 | Tuch 6 |
+| Verwertung | – | Zopf 4 + Zähne 5 bei Ilse (+2 ab „Abgebrüht") + Wertsachen ≈ 2,3 = **≈ 13** |
+| Ausgaben | Totenhemd 9 oder Tuch 6, Wacholder gelegentlich 2 (Ilse: Leinen 2, Wacholder 1 – wer nachts aufbleibt, spart) | Tuch 4 (Leinen bei Ilse) |
 | Netto je Leiche | ≈ +3 bis +5 | ≈ +13 |
 | Täglich dazu | Pflegegeld 3–4, Geistergabe 2–3 je neuem Grab | Pflegegeld 0–1, keine Gaben ab „Hartherzig" |
 | Ruf | steigt (Drift) | je Leiche −8 (−10,8 mit Wertsachen), Drift ≤ +6/Tag → pendelt um „Verrufen/Unauffällig" (15) |
@@ -378,7 +400,8 @@ Ergebnis: Verwerten bringt kurzfristig etwa das Doppelte, kostet aber Tempo, Pfl
 | `CorpseCare` | `CorpseCare` | `corpse_care` | – (Zustand steht im CorpseRecord) |
 | `Piety` | `Piety` | `piety` | – (Wert in `GameState.stats.piety`) |
 | `Journal` | `JournalManager` | `journal`, `saveable` | `journal` / **40** |
-| `HollowStoneMarket` | `HollowStoneMarket` | `hollow_stone_market`, `saveable` | `hollow_stone` / **45** |
+| `NightTrade` | `NightTrade` | `night_trade`, `saveable` | `night_trade` / **45** |
+| `Entities/npc_trader` | `Npc` (bestehend, `npc_id &"trader"`) | `npc`, `saveable` | `npc_trader` / 20 (wie Osric: Zustand aus der Uhrzeit abgeleitet) |
 Bestehende bleiben, auch `CorpseManager` (0), `Expansion` (5), `Graveyard` (10). `StoryDirector` ist eine reine Regelklasse ohne Knoten; ihren Zustand speichert der CorpseManager. Keine neuen Autoloads.
 
 ### 3.2 Module & Besitz (Phase 4)
@@ -387,16 +410,16 @@ Bestehende bleiben, auch `CorpseManager` (0), `Expansion` (5), `Graveyard` (10).
 | **Lead** (W0 + laufend) | `project.godot` (Input `journal`), `src/core/*` (EventBus, Database), alle **Datenklassen ✦**, alle **Stubs** (nur bis zur Übergabe), `tests/run_tests.gd`, `tests/framework/*`, `tests/fixtures/*` (inkl. **`saves_v2/*`**, `phase4/*`), `docs/*`, `CLAUDE.md` |
 | **P1 Leichen-Kern, Verfall & Geschichte** | `src/systems/corpse/{corpse_record,corpse_decay,corpse_manager,corpse_delivery_rules,corpse_save_codec,corpse_generator}.gd`, `src/systems/story/story_director.gd`, `src/systems/graveyard/{graveyard,grave_record}.gd`, `src/systems/expansion/expansion_manager.gd`, `data/corpses/corpse_tables.tres`, `data/story/*`, `data/config/story_config.tres`, `data/sections/elder.tres`, `data/clearables/{gate_small,elder_thicket,sunken_pit}.tres`, `tests/unit/{test_corpse,test_corpse_manager,test_story,test_expansion,test_graveyard}.gd` |
 | **P2 Untersuchung & Herrichten** | `src/systems/corpse/{corpse_exam,corpse_prep,corpse_care}.gd`, `src/entities/morgue_table/*`, `src/systems/graveyard/grave_quality.gd`, `data/config/{exam_config,prep_config,economy_config,action_config}.tres`, `data/finds/*`, **alle neuen** `data/items/*` und `data/recipes/*` (§2.13), `tests/unit/{test_corpse_exam,test_corpse_prep,test_grave_quality}.gd`, Zähl-Anpassungen in `test_inventory.gd`/`test_crafting.gd` (Lead-genehmigt) |
-| **P3 Pietät, Verwertung & Friedhofsstufe** | `src/systems/piety/{piety,piety_rules}.gd`, `src/systems/utilization/{utilization_rules,hollow_stone_market}.gd`, `src/entities/hollow_stone/*`, `src/systems/graveyard/{cemetery_rating,cemetery_score}.gd`, `src/systems/game_state/game_state.gd`, `data/config/{piety_config,utilization_config,reputation_config,cleanliness_config}.tres`, `tests/unit/{test_piety,test_utilization,test_cemetery_rating,test_cemetery_score,test_cleanliness,test_reputation,test_game_state}.gd` |
+| **P3 Pietät, Verwertung, Nachthändlerin & Friedhofsstufe** | `src/systems/piety/{piety,piety_rules}.gd`, `src/systems/utilization/{utilization_rules,night_trade}.gd`, `src/entities/npc/npc.gd` (nur `requires_flag`, Laterne, Osric-Verhalten unverändert – Lead-genehmigt), `data/npc/trader_schedule.tres`, `data/config/trader_config.tres`, `src/systems/graveyard/{cemetery_rating,cemetery_score}.gd`, `src/systems/game_state/game_state.gd`, `data/config/{piety_config,utilization_config,reputation_config,cleanliness_config}.tres`, `tests/unit/{test_piety,test_utilization,test_night_trade,test_cemetery_rating,test_cemetery_score,test_cleanliness,test_reputation,test_game_state}.gd` |
 | **P4 Verfall-Darstellung & Geister** | `src/entities/corpse/*` (inkl. neu `corpse_decay_visual.gd`), `assets/shaders/decay_overlay.gdshader`, `assets/materials/{mat_decay_overlay,mat_vfx_fly,mat_vfx_wisp,mat_vfx_smoke}.tres`, `src/systems/ghosts/{ghost_mood,ghost_manager}.gd`, `src/entities/ghost/*` (nur falls nötig), `data/config/{ghost_config,decay_visual_config}.tres`, `data/ghosts/ghost_lines.tres`, `tests/unit/{test_ghosts,test_decay_visual}.gd` |
-| **P5 Assets** | `tools/blender/{asset_props_phase4,asset_env_phase4,asset_corpses_phase4}.py`, `tools/blender/asset_items.py`, `tools/blender/build_all.py`, `tools/textures/paint_vfx.py` (neu, Pillow), `assets/models/**` (nur neue Phase-4-Dateien), `assets/vfx/*.png`, `art_source/blender/**` (Phase 4), `tests/unit/test_assets_phase4.gd`, `docs/reviews/phase4_assets/*` |
-| **P6 Merkbuch, Dialog & Speichern** | `src/systems/journal/{journal_manager,journal_rules}.gd`, `data/journal/**`, `src/systems/save/{save_migration,save_file_io,save_manager}.gd`, `src/systems/dialogue/dialogue_conditions.gd`, `data/dialogue/carter.tres`, `tests/unit/{test_journal,test_save,test_save_migration,test_dialogue}.gd`, `tests/integration/test_phase3_save_upgrade.gd` (neu) |
+| **P5 Assets** | `tools/blender/{asset_props_phase4,asset_env_phase4,asset_corpses_phase4,asset_trader}.py`, `assets/models/characters/ph_chr_kranich.glb`, `art_source/blender/characters/ph_chr_kranich.blend`, `tests/unit/test_assets_characters.gd` (nur + Eintrag Ilse), `tools/blender/asset_items.py`, `tools/blender/build_all.py`, `tools/textures/paint_vfx.py` (neu, Pillow), `assets/models/**` (nur neue Phase-4-Dateien), `assets/vfx/*.png`, `art_source/blender/**` (Phase 4), `tests/unit/test_assets_phase4.gd`, `docs/reviews/phase4_assets/*` |
+| **P6 Merkbuch, Dialog & Speichern** | `src/systems/journal/{journal_manager,journal_rules}.gd`, `data/journal/**`, `src/systems/save/{save_migration,save_file_io,save_manager}.gd`, `src/systems/dialogue/{dialogue_conditions,dialogue_actions,dialogue_syntax}.gd`, `data/dialogue/{carter,trader}.tres`, `tests/unit/{test_journal,test_save,test_save_migration,test_dialogue}.gd`, `tests/integration/test_phase3_save_upgrade.gd` (neu) |
 | **W-Welt** (W2) | `data/world/graveyard_layout.json`, `src/world/graveyard/*` (Builder, neu `graveyard_build_phase4.gd`, `world_root.gd`, `graveyard_shots_phase4.gd`), `src/world/camera/camera_rig.gd` (nur Grenzen), `tools/blender/asset_ground_graveyard.py` (nur falls nötig), `tests/integration/{test_graveyard_world,test_phase4_loop}.gd`, `docs/reviews/phase4_round1/*` |
 | **W-UI** (W2) | `src/ui/**`, `assets/ui/**`, `tools/ui/*` (neu: Merkbuch-Papier), `src/debug/*` (außer `asset_preview.gd`, `screenshot_capture.gd`), `tests/unit/{test_ui,test_objective,test_ui_phase3,test_ui_phase4}.gd`, `tests/integration/test_ui_flow.gd` |
 | **W3 QA** | `tests/integration/{phase3_bot.gd,phase4_bot.gd,test_phase3_playthrough.gd,test_phase4_playthrough.gd,test_phase4_qa.gd,test_save_fuzzer.gd}`, `docs/reviews/phase4_wip/*` |
 | **Eingefroren** | `src/world/art_prototype/*`, `src/entities/player/player_proto.*`, `data/art_prototype/*`, **`assets/shaders/painted.gdshader`, `painted_common.gdshaderinc`, `painted_foliage.gdshader`**, Presets `data/atmosphere/*`, `src/world/hut_interior/*` |
 
-✦ **Datenklassen (W0, Lead, nur Felder + kleine reine Helfer):** `ExamConfig`, `FindData`, `PrepConfig`, `UtilizationConfig`, `PietyConfig`, `StoryCorpseData`, `StoryConfig`, `ClueData`, `InsightData`, `DecayVisualConfig`. Dazu Erweiterungen: `ItemData.Category.GOODS`, `SectionData` (+ `requires_flag`, `requires_flag_text`, `counts_for_cemetery`, `chapter`), `EconomyConfig` (+ §2.4/§2.14-Felder), `GhostConfig` (+ `robbed_mood`), `GhostLines` (+ `by_story`, `by_piety`), `ReputationConfig.event_points` (Defaults), `CleanlinessConfig.penalty_by_level`-Default.
+✦ **Datenklassen (W0, Lead, nur Felder + kleine reine Helfer):** `ExamConfig`, `FindData`, `PrepConfig`, `UtilizationConfig`, `TraderConfig`, `PietyConfig`, `StoryCorpseData`, `StoryConfig`, `ClueData`, `InsightData`, `DecayVisualConfig`. Dazu Erweiterungen: `ItemData.Category.GOODS`, `SectionData` (+ `requires_flag`, `requires_flag_text`, `counts_for_cemetery`, `chapter`), `EconomyConfig` (+ §2.4/§2.14-Felder), `GhostConfig` (+ `robbed_mood`), `GhostLines` (+ `by_story`, `by_piety`), `ReputationConfig.event_points` (Defaults), `CleanlinessConfig.penalty_by_level`-Default.
 Bei nur fünf Agents übernimmt P1 zusätzlich P6.
 
 ### 3.2.1 Klassen → Dateien
@@ -408,14 +431,14 @@ Bei nur fünf Agents übernimmt P1 zusätzlich P6.
 | `StoryDirector` | `src/systems/story/story_director.gd` | Stub (P1) |
 | `PietyConfig` | `src/systems/piety/piety_config.gd` | ✦ |
 | `PietyRules`, `Piety` | `src/systems/piety/{piety_rules,piety}.gd` | Stub (P3) |
-| `UtilizationConfig` | `src/systems/utilization/utilization_config.gd` | ✦ |
-| `UtilizationRules`, `HollowStoneMarket` | `src/systems/utilization/{utilization_rules,hollow_stone_market}.gd` | Stub (P3) |
-| `HollowStone` | `src/entities/hollow_stone/hollow_stone.gd` + `.tscn` | Stub (P3) |
+| `UtilizationConfig`, `TraderConfig` | `src/systems/utilization/{utilization_config,trader_config}.gd` | ✦ |
+| `UtilizationRules`, `NightTrade` | `src/systems/utilization/{utilization_rules,night_trade}.gd` | Stub (P3) |
+| `Npc` (Erweiterung) | `src/entities/npc/npc.gd` | P3 |
 | `ClueData`, `InsightData` | `src/systems/journal/{clue_data,insight_data}.gd` | ✦ |
 | `JournalRules`, `JournalManager` | `src/systems/journal/{journal_rules,journal_manager}.gd` | Stub (P6) |
 | `DecayVisualConfig` | `src/entities/corpse/decay_visual_config.gd` | ✦ |
 | `CorpseDecayVisual` | `src/entities/corpse/corpse_decay_visual.gd` | Stub (P4) |
-| `JournalPanel`, `HollowStonePanel` | `src/ui/panels/{journal_panel,hollow_stone_panel}.gd` | W-UI |
+| `JournalPanel`, `TraderPanel` | `src/ui/panels/{journal_panel,trader_panel}.gd` | W-UI |
 
 ### 3.3 EventBus – neue Signale (Ergänzung `src/core/event_bus.gd`)
 ```gdscript
@@ -431,8 +454,8 @@ signal piety_changed(value: int, tier: StringName, delta: int, reason: String)
 # Merkbuch (JournalManager)
 signal clue_found(clue_id: StringName, corpse_id: String)
 signal insight_unlocked(insight_id: StringName)
-# Hohlstein (HollowStoneMarket)
-signal hollow_stone_paid(coins: int, day: int)
+# Nachthändlerin (NightTrade)
+signal trader_trade(coins: int, sold: Dictionary, bought: Dictionary)   # ein Handel im Panel (positiv = Einnahme)
 ```
 - `corpse_updated` bleibt das Sammelsignal für jede Änderung am Record. Die neuen Signale kommen **zusätzlich** (für Benachrichtigungen, Merkbuch-Hinweis, Belohnungskarte).
 - Regel wie Phase 3: **Listener ändern keinen Spielzustand.** Wer den Zustand ändert, ruft direkt auf (Gruppen-API): `CorpseCare` → `JournalManager.add_clue`, `Piety.event`, `Reputation.event`. `Graveyard.bury` → `Piety.event`. `ExpansionManager.unlock` → `JournalManager.add_clue(&"c_six_pits")`. `StoryDirector`-Rückfälle laufen bei `day_started` im CorpseManager (zeitgetrieben wie Lieferung und Verfall).
@@ -479,7 +502,7 @@ func deliver_story_now(story_id: StringName) -> CorpseRecord   # Debug; gleiche 
 # _deliver: 1) StoryDirector.due_story → Record aus StoryDirector.make_record, story_corpse_arrived + Benachrichtigung arrival_note
 #           2) sonst Zufallsleiche nur bei free_plots > unburied + StoryDirector.pending_count(...)
 #           3) Gestank am Tor (§2.5) vor der Lieferung prüfen, einmal je Tag (stench_day)
-# day_started: StoryDirector.daily_checks(day, has_elder_key, cfg) → Schlüssel-Rückfall (§2.11 Pkt. 4); den Tür-Zettel (Pkt. 5) macht HollowStoneMarket
+# day_started: StoryDirector.daily_checks(day, has_elder_key, cfg) → Schlüssel-Rückfall (§2.11 Pkt. 4); den Tür-Zettel (Pkt. 5) macht NightTrade
 # decide_valuables: + Piety.event(valuables_left/taken)
 # examine(id) (Phase-2-API, Debug/Tests): delegiert an CorpseCare.exam_all_instant(id), falls vorhanden; sonst Phase-2-Verhalten
 # apply_shroud(id, inv) (Phase-2-API): delegiert an CorpseCare.dress(id, &"shroud", inv), falls vorhanden
@@ -494,7 +517,7 @@ class_name StoryCorpseData extends Resource       # ✦ data/story/<id>.tres (§
 @export var finds: Array[StringName] = []           # FindData-ids (story_only)
 @export_multiline var arrival_note: String; @export var is_finale: bool = false
 class_name StoryConfig extends Resource             # ✦ data/config/story_config.tres
-@export var min_gap_days: int = 2; @export var key_fallback_day: int = 12; @export var hollow_note_day: int = 4
+@export var min_gap_days: int = 2; @export var key_fallback_day: int = 12
 @export var key_flag: StringName = &"has_elder_key"; @export var key_clue: StringName = &"c_elder_key"
 @export var chapter_section: StringName = &"elder"; @export var finale_story: StringName = &"s5_moor"
 @export_multiline var key_fallback_text: String; @export var reserve_note: String = "Heute nichts. Aber halt eine Grube frei."
@@ -602,24 +625,33 @@ func gift_coins() -> int; func buyer_bonus() -> int
 class_name UtilizationConfig extends Resource        # ✦ §2.6
 @export var kinds: Dictionary[StringName, Dictionary] = {}   # {hair: {label, verb, minutes, tool, item, min_freshness, reputation_event, piety_event, done_text}, teeth: {…}}
 @export var sell_prices: Dictionary[StringName, int] = {&"hair_braid": 4, &"teeth_pouch": 5}
-@export var payout_minute: int = 360
-@export var note_thresholds: PackedInt32Array = [0, 4, 8]
 @export var tool_items: Array[StringName] = [&"shears", &"pliers"]
+class_name TraderConfig extends Resource            # ✦ data/config/trader_config.tres (§2.6)
+@export var intro_day: int = 4; @export var intro_minute: int = 360; @export var notice_minute: int = 1365
+@export var shop: Dictionary[StringName, Dictionary] = {&"linen": {"price": 2, "per_night": 3}, &"juniper": {"price": 1, "per_night": 4}}
+@export var lorenz_after_talks: int = 3; @export var lorenz_after_sales: int = 4; @export var rumor_after_sales: int = 3
+@export_multiline var intro_note: String; @export var greetings: Dictionary[StringName, String] = {}   # je Pietät-Stufe
 class_name UtilizationRules extends RefCounted
 static func block_reason(record: CorpseRecord, kind: StringName, inv: Inventory, cfg: UtilizationConfig, known: bool) -> String   # "" = möglich; "-" = Knopf unsichtbar (nicht bekannt)
 static func sale_value(items: Dictionary, bonus_per_item: int, cfg: UtilizationConfig) -> int
-class_name HollowStoneMarket extends Node            # Systems/HollowStoneMarket
-func is_known() -> bool
-func deposit(item_id: StringName, amount: int, inv: Inventory) -> int     # eingelegt; nur sell_prices-Items
-func deposited() -> Dictionary; func pending_coins() -> int
-func collect(inv: Inventory) -> int                  # Münzen + beim ersten Mal Werkzeug (tools_given)
-func apply_morning(day: int) -> int                  # idempotent (last_payout_day): Tür-Zettel ab hollow_note_day (hollow_known, c_buyer_note_1), Wert berechnen, Ablage leeren, Zettel 2/3 nach sales (JournalManager.add_clue), hollow_stone_paid
+class_name NightTrade extends Node                  # Systems/NightTrade, Gruppen night_trade, saveable
+func is_known() -> bool; func is_present() -> bool   # Ilse steht gerade an trader_spot (über den Npc-Knoten npc_trader)
+func night_id() -> int                              # GhostManager.night_index-Logik: Nacht beginnt 12:00 → Vorrat/Begrüßung je Nacht
+func sell(item_id: StringName, amount: int, inv: Inventory) -> int      # Münzen sofort; nur sell_prices-Items; nur is_present; stats.trader_sales; trader_trade; Flag trader_rumor ab rumor_after_sales
+func quote(item_id: StringName, amount: int) -> int                      # Preis inkl. Pietät-Bonus
+func buy(item_id: StringName, amount: int, inv: Inventory) -> bool       # Laden: Münzen ab, Item rein, Vorrat der Nacht; atomar
+func stock_left(item_id: StringName) -> int
+func give_tools(inv: Inventory) -> bool             # einmalig (tools_given); vom Dialog-Knoten „erstes Treffen" über Aktion
+func note_talk() -> void                            # einmal je Nacht: talks +1 (für c_trader_lorenz)
+func apply_morning(day: int) -> void                # idempotent: Tür-Zettel ab intro_day (trader_known, c_trader_note)
 func save_state() -> Dictionary; func load_state(data: Dictionary) -> void
-class_name HollowStone extends Node3D               # Interactable Priorität 7; „[E] Hohlstein öffnen" → Panel &"hollow_stone"; unbekannt: kein Prompt
+# Npc (P3, Erweiterung, Osric unverändert): @export var requires_flag: StringName = &""   # Flag fehlt → wie activity home (unsichtbar, kein Prompt)
+#   @export var lantern_marker: StringName = &""   # Laterne am Marker (OmniLight ohne Schatten, Gruppe warm_lights)
+#   Cart-/Fracht-Logik nur, wenn der Zeitplan with_cart-Einträge hat (Ilse: nie)
 # CemeteryRating: + static func rating_gated(total: int, decor: int, dirt_penalty: int, config: EconomyConfig) -> StringName
 #                 + static func venerable_missing(decor: int, dirt_penalty: int, config: EconomyConfig) -> PackedStringArray
 # CemeteryScore.rating() nutzt rating_gated; breakdown() + {venerable_missing: PackedStringArray}
-# GameState.DEFAULT_STATS + &"piety", &"utilized", &"prepared"
+# GameState.DEFAULT_STATS + &"piety", &"utilized", &"prepared", &"trader_sales"
 ```
 
 **Verfall-Darstellung & Geister (P4)**
@@ -673,7 +705,9 @@ func sync_from_records() -> int                     # still: Hinweise aus finds_
 func save_state() -> Dictionary; func load_state(data: Dictionary) -> void; func post_load() -> void   # post_load → sync_from_records
 class_name SaveMigration  # CURRENT := 3; migrate: Kette 1→2→3; + static func migrate_2_to_3(state: Dictionary, meta: Dictionary) -> Dictionary
 # SaveFileIO.FORMAT_VERSION = 3; read_doc akzeptiert 1…3
-# DialogueConditions: stat_gte/stat_lt mit negativen Zahlen (Pietät) – Test; keine neue Syntax nötig
+# DialogueConditions: stat_gte/stat_lt mit negativen Zahlen (Pietät) – Test; + piety_tier:<id> (Stufe gleich), trader_talks_gte:<n>
+# DialogueActions (neu): open_panel:<id> (ui_panel_requested mit {speaker}) · add_clue:<id> (JournalManager) · trader_tools · trader_talked (NightTrade.note_talk)
+# data/dialogue/trader.tres: Begrüßung je Pietät-Stufe → Menü (Handeln · Wer bist du? · Kanntest du den alten Totengräber? · Die mit dem Zeichen …? · Gute Nacht); erstes Treffen: Vorstellung + Werkzeug
 ```
 
 ### 3.5 Database (Lead)
@@ -698,11 +732,11 @@ Im Merkbuch: Seiten über Reiter oder `[`/`]`, Hinweise per Mausklick wählen (h
 - 3 große Holundersträucher (`ph_env_elder_bush`) als Identität, einer über dem Pförtchen.
 - `camera_bounds.min` → [−10,0, −17,5]. `walkable_bounds` unverändert. `waypoints` + `tp_elder`.
 ### 4.2 Weitere Platzierungen
-- **Hohlstein** `hollow_stone` an der Westmauer (−11,0, −2,6), rot_y 90, Interactable-Punkt nach innen, nicht auf dem Weg. Er ist ab Tag 1 sichtbar, aber bis `hollow_known` ohne Prompt.
+- **Ilse Kranich** (`npc_trader`, Entity `npc`, Modell `ph_chr_kranich`, Zeitplan `trader_schedule`): Wegpunkte `trader_far` (−22,0, −14,0, Waldrand), `trader_mid` (−16,0, −6,0), `trader_spot` (−12,1, −2,6), außen vor der Westmauer, Blick nach Osten. Die Interaktion geht über die Mauer (Interactable-Radius so, dass der Spieler innen bei x ≈ −10,9 sprechen kann). Neben dem Spot liegt ein flacher Mauerstein als Laternenablage (Requisite `ph_prop_wall_ledge`). Der Weg außerhalb des Zauns braucht keine Kollision, und `walkable_bounds` bleibt unverändert (die Spielfigur kommt nicht hinaus).
 - **Waschschüssel** (`ph_prop_wash_basin` auf Holzbock) 1,1 m links vom Leichentisch, **Räucherschale** (`ph_prop_smoke_bowl`) auf der Tischkante: nur Requisiten. Die Rauchpartikel gehören zur Leiche (P4).
-- Die Bau-Maske wird mit dem Abschnitt `elder` (Index 4) neu gebacken. Hohlstein + 0,6 m gesperrt, Pförtchen = `ROUTE`.
+- Die Bau-Maske wird mit dem Abschnitt `elder` (Index 4) neu gebacken. Der Streifen innen vor `trader_spot` (1,2 m) = `ROUTE`, Pförtchen = `ROUTE`.
 ### 4.3 Layout-Schema-Ergänzungen
-`sections[]` + `elder` · `plots[]` + `h_01…06` (`section: "elder"`) · `clearables[]` + Pförtchen, Dickicht, Gruben, Lücke · `entities[]` + `hollow_stone`, Requisiten `wash_basin`, `smoke_bowl` · `elder_bushes[]` · `extra_walls` (Segment ersetzt). Neue Systemknoten §3.1 legt `graveyard_build_phase4.gd` an.
+`sections[]` + `elder` · `plots[]` + `h_01…06` (`section: "elder"`) · `clearables[]` + Pförtchen, Dickicht, Gruben, Lücke · `entities[]` + `npc_trader` (params `npc_id`, `schedule`, `requires_flag: trader_known`), Requisiten `wash_basin`, `smoke_bowl`, `wall_ledge` · `waypoints` + `trader_far/mid/spot` · `elder_bushes[]` · `extra_walls` (Segment ersetzt). Neue Systemknoten §3.1 legt `graveyard_build_phase4.gd` an.
 
 ---
 
@@ -711,14 +745,15 @@ Im Merkbuch: Seiten über Reiter oder `[`/`]`, Hinweise per Mausklick wählen (h
 ### 5.1 Format v3 (Ergänzungen)
 ```
 format_version: 3
-data.autoloads.GameState.stats   + piety:int (−100…100), utilized:int, prepared:int
-data.autoloads.GameState.flags   + p4_intro, hollow_known, has_elder_key, piety_last_day:int, piety_used_day:int,
+data.autoloads.GameState.stats   + piety:int (−100…100), utilized:int, prepared:int, trader_sales:int
+data.autoloads.GameState.flags   + p4_intro, trader_known, trader_rumor, clue_<id>, has_elder_key, piety_last_day:int, piety_used_day:int,
                                    six_pits_complete, insight_<id>, remark_piety_<tier>
 data.nodes.corpse_manager.corpses[] + story_id, exam_done[], finds_revealed[], finds_lost[], traits_revealed[], washed, dress, laid_out,
                                    harvested[], balm_windows[], stench_noted
 data.nodes.corpse_manager        + story_delivered: ["s1_quendel", …], story_last_day:int, stench_day:int
 data.nodes.journal               {"clues": {"c_mark": {"day": 3, "corpse": "corpse_0003", "count": 2}}, "insights": {"i_warnings": 7}, "unread": ["c_page_1"]}
-data.nodes.hollow_stone          {"deposit": {"hair_braid": 1}, "pending": 9, "tools_given": true, "sales": 3, "notes": 1, "last_payout_day": 8}
+data.nodes.night_trade           {"intro_done": true, "tools_given": true, "talks": 2, "last_talk_night": 7, "stock_night": 7, "stock_left": {"linen": 1, "juniper": 4}}
+data.nodes.npc_trader            {} (wie Osric: Position/Zustand aus der Uhrzeit)
 data.nodes.graveyard             Plots h_01…06 (v2: fehlen → Graveyard legt sie LOCKED an)
 ```
 Nicht gespeichert: CorpseCare, Pietät-Stufe (abgeleitet), Totenzettel (abgeleitet), offene Fragen, Verfall-Effekte, Merkbuch-Auswahl.
@@ -729,7 +764,7 @@ Nicht gespeichert: CorpseCare, Pietät-Stufe (abgeleitet), Totenzettel (abgeleit
 2. Jeder Record: `dress = "shroud"` wenn `shrouded`, sonst `""`. War er `examined`, dann `exam_done = alle 4`, `traits_revealed = traits` und `finds_revealed =` generische Funde seiner Merkmale **+ Ursachen-Detail** (Phase 2/3 hat alles auf einmal gezeigt; kein nachträglicher Verlust). Sonst leer. Übrige neue Felder Default. `story_id = ""`.
 3. `corpse_manager`: `story_delivered = []`, `story_last_day = 0`, `stench_day = meta.day` (kein Gestank-Abzug am Ladetag).
 4. `nodes.journal = {}` → `JournalManager.post_load` legt die Hinweise still aus den Records an (`sync_from_records`): Wer in Phase 3 ein Zeichen oder einen Brief gesehen hat, hat sie im Merkbuch.
-5. `nodes.hollow_stone = {}`. Flags: `piety_last_day = meta.day`. `hollow_known` bleibt unset: Liegt `meta.day ≥ 4`, kommt der Zettel beim nächsten `day_started`.
+5. `nodes.night_trade = {}`, `nodes.npc_trader = {}`, `stats.trader_sales = 0`. Flags: `piety_last_day = meta.day`; für jeden rückwirkend angelegten Hinweis setzt `sync_from_records` `clue_<id>`. `trader_known` bleibt unset: Liegt `meta.day ≥ 4`, kommt der Zettel am nächsten Morgen um 06:00 (bzw. sofort, wenn der Stand nach 06:00 geladen wird).
 6. Gräber unverändert: gespeicherte Qualität (≤ 10) bleibt, keine Neuberechnung. `h_01…06` fehlen → `LOCKED`.
 7. Spieler, Zeit, Inventar, Truhe, Zier, Pflege, Geister: unverändert. **Hinweis:** Die neue Abzugstabelle (§2.14) gilt beim Laden sofort. Ein vernachlässigter Phase-3-Stand kann dadurch einige Punkte verlieren. Die Tageszusammenfassung erklärt es einmalig („Die Gemeinde sieht verwilderte Gräber jetzt strenger.").
 **Fixtures (W0, Lead, vor jeder Code-Änderung mit Build `febd2c7` erzeugt, über `Phase3Bot` + echte Systeme):** `tests/fixtures/saves_v2/`
@@ -742,13 +777,13 @@ Dazu `make_v2_saves.gd` + `_driver.gd` (historisches Werkzeug, wie Phase 3). Lad
 ---
 
 ## 6. Debug-Konsole (W-UI) – neue Befehle
-`corpse fresh <0-1>` (Frische der Tisch-Leiche) · `corpse stage <fresh|wilted|decaying|rotten>` · `exam all` (ohne Zeit) · `prep all` · `harvest <hair|teeth>` · `piety <-100..100>` · `clue <id|all>` · `insight <id>` · `story <id|next>` (sofort liefern, gleiche Platzregeln) · `story list` · `hollow known` · `hollow pay` · `unlock elder` · `tp <elder|hollow>` · `decay row` (4 Leichen in den 4 Stufen am Tisch/Boden – Screenshot p4_02) · `quality` zeigt zusätzlich die Ehrwürdig-Bedingung.
+`corpse fresh <0-1>` (Frische der Tisch-Leiche) · `corpse stage <fresh|wilted|decaying|rotten>` · `exam all` (ohne Zeit) · `prep all` · `harvest <hair|teeth>` · `piety <-100..100>` · `clue <id|all>` · `insight <id>` · `story <id|next>` (sofort liefern, gleiche Platzregeln) · `story list` · `trader known` · `trader here` (Ilse sofort an den Spot, Zeitplan ignoriert bis 03:00) · `trader stock` (Vorrat auffüllen) · `unlock elder` · `tp <elder|trader>` · `decay row` (4 Leichen in den 4 Stufen am Tisch/Boden – Screenshot p4_02) · `quality` zeigt zusätzlich die Ehrwürdig-Bedingung.
 
 ## 7. UI (W-UI)
-- **Untersuchungs-Panel (erweitert, bestehendes `corpse_exam`):** Kopf und rechte Fundspalte bleiben. Die linke Spalte bekommt drei **Reiter**: *Untersuchen* · *Herrichten* · *Verwerten*. Der dritte Reiter erscheint erst mit `hollow_known`, als gedämpfter Reiter ohne Signalfarbe.
+- **Untersuchungs-Panel (erweitert, bestehendes `corpse_exam`):** Kopf und rechte Fundspalte bleiben. Die linke Spalte bekommt drei **Reiter**: *Untersuchen* · *Herrichten* · *Verwerten*. Der dritte Reiter erscheint erst mit `trader_known`, als gedämpfter Reiter ohne Signalfarbe.
   - *Untersuchen:* 4 Schritt-Knöpfe in einer Reihe („Kleidung · 10 Min", „✓", gesperrt mit Grund), darunter „Gründlich untersuchen (35 Min)". Zustand mit Frische-Balken und 4 Stufenstrichen. Darunter die Verlust-Vorhersage: „Hautzeichen noch ≈ 3 Std. lesbar" (`CorpseCare.next_loss`). Wertsachen-Entscheidung wie bisher, sobald `pockets` erledigt ist.
   - *Herrichten:* 3 Zeilen mit Folgen: „Waschen · 15 Min · Grabqualität +1" (ohne Bürste: „Wurzelbürste nötig – Werkbank"), Einkleiden mit Auswahl Leichentuch/Totenhemd und der Warnzeile zum Einkleiden, Aufbahren. Dazu „Mit Wacholder räuchern · 10 Min" (zeigt das laufende Fenster „geräuchert bis 04:10").
-  - *Verwerten:* Haar/Zähne als `DangerButton`, Folgenzeile („+1 Zopf (4 Münzen am Hohlstein) · Grabqualität −1 · Ruf −3 · Der Geist wird es wissen."). **Zweistufig:** Der erste Klick macht daraus „Wirklich? Noch einmal klicken". Nach 3 s fällt der Knopf zurück. Kein Fokus per Standard (wie die Wertsachen-Knöpfe).
+  - *Verwerten:* Haar/Zähne als `DangerButton`, Folgenzeile („+1 Zopf (Ilse zahlt 4) · Grabqualität −1 · Ruf −3 · Der Geist wird es wissen."). **Zweistufig:** Der erste Klick macht daraus „Wirklich? Noch einmal klicken". Nach 3 s fällt der Knopf zurück. Kein Fokus per Standard (wie die Wertsachen-Knöpfe).
   - *Fundkarten* (rechte Spalte): nach Schritt gruppiert. Karten mit Hinweis tragen einen Tintenstempel „→ Merkbuch". Verlorene Karten sind gedimmt mit `lost_text` und kleinem Welkblatt-Symbol. „Nichts Auffälliges." als schmale Zeile.
 - **Merkbuch-Panel** `&"journal"` (J), Pergament-Doppelseite (`ph_ui_journal_*`), 4 Reiter:
   - *Die Toten:* Liste (neueste oben), rechts der Totenzettel. S5 zeigt vor der Erkenntnis „Lorenz Aschau (?)".
@@ -756,10 +791,11 @@ Dazu `make_v2_saves.gd` + `_driver.gd` (historisches Werkzeug, wie Phase 3). Lad
   - *Erkenntnisse:* Tagebuchseiten in Reihenfolge.
   - *Ich:* Pietät-Satz (ohne Zahl), „Hergerichtet: 9 · Verwertet: 2".
   Kontext `{page: StringName}`. Ungelesenes trägt einen Punkt.
-- **HUD:** kleines Buch-Symbol neben dem Tagessymbol mit Zähler ungelesener Einträge („[J] Merkbuch · 2 neu"). **Keine Pietät-Anzeige.** *Begründung:* Der Ruf ist öffentlich und steht deshalb im HUD. Die Pietät ist ein innerer Wert. Die Welt soll sie spiegeln (Geister, Osric, Hohlstein), statt dass ein Balken zum Optimieren einlädt. Sichtbar ist sie im Merkbuch als Satz und bei Stufenwechseln als leise Notiz. Das passt zu „sanft".
-- **Hohlstein-Panel** `&"hollow_stone"`: Waren im Inventar mit Preis, „Hineinlegen" (einzeln/alle), Liste der eingelegten Waren, „Morgen früh liegt hier Geld." Bei `pending > 0` der Knopf „Münzen nehmen (9)". Beim ersten Öffnen: „Im Stein liegen eine Schere und eine Zange, in Sackleinen gewickelt."
+- **HUD:** kleines Buch-Symbol neben dem Tagessymbol mit Zähler ungelesener Einträge („[J] Merkbuch · 2 neu"). **Keine Pietät-Anzeige.** *Begründung:* Der Ruf ist öffentlich und steht deshalb im HUD. Die Pietät ist ein innerer Wert. Die Welt soll sie spiegeln (Geister, Osric, Ilse), statt dass ein Balken zum Optimieren einlädt. Sichtbar ist sie im Merkbuch als Satz und bei Stufenwechseln als leise Notiz. Das passt zu „sanft".
+- **Ilse im Dialog:** bestehende `DialogueBox` mit Sprechername „Ilse Kranich", Menüpunkt „Handeln" → Panel.
+- **Handels-Panel** `&"trader"` (Kontext `{speaker}`): links „Verkaufen" (Waren im Inventar mit Preis inkl. Bonus, „1 verkaufen" / „Alle verkaufen", Summe), rechts „Kaufen" (Leinen 2, Wacholder 1, „noch 3 heute Nacht"). Die Münzen buchen sofort, mit einer leisen Zeile von Ilse („Die Stillen danken es dir nicht. Ich schon."). Offene Panels halten die Zeit an (Modal wie jeder Dialog), Ilse geht also nie mitten im Handel.
 - **Belohnungskarte:** neue Qualitätszeilen (§2.4). Keine Pietät-Zahl.
-- **Tageszusammenfassung:** + Hohlstein-Auszahlung, neue Hinweise/Erkenntnisse, Leichen mit verlorenen Funden („Bei Jost Hemmerling kamst du zu spät für die Tätowierung.").
+- **Tageszusammenfassung:** + Einnahmen/Ausgaben bei Ilse (letzte Nacht), neue Hinweise/Erkenntnisse, Leichen mit verlorenen Funden („Bei Jost Hemmerling kamst du zu spät für die Tätowierung.").
 - **Zielzeile** (`ObjectiveResolver`, nach der Leichen-Kette, vor Phase-3-Zielen): Leiche auf dem Tisch und `next_loss ≤ 120 Min` → „Spuren verblassen – untersuchen oder räuchern" · Holunderwinkel aufschließen (Schlüssel da, ≤ 1 freie Stelle) · „Merkbuch: Hinweise passen zusammen" · „Eine Grube wartet noch" (Reservierung aktiv).
 - **Friedhofsübersicht / Qualitäts-Tooltip:** Ehrwürdig-Bedingung mit fehlenden Teilen. Holunderwinkel als 4. Abschnitt.
 - **Abschluss-Panel** Variante `&"six_pits"` (§1.3), Schlusszeile nach Pietät-Stufe und Erkenntnis *Nicht Lorenz*.
@@ -773,7 +809,8 @@ Dazu `make_v2_saves.gd` + `_driver.gd` (historisches Werkzeug, wie Phase 3). Lad
 | `ph_prop_layout_sprig` | Rosmarin-/Holunderzweig + Kerzenstumpf (ohne Licht) | ≤ 300 | Marker `sprig`, auf dem Brustkorb |
 | `ph_prop_wash_basin` | Zinnschüssel auf Holzbock, Tuch | ≤ 900 | – |
 | `ph_prop_smoke_bowl` | Tonschale mit Wacholder | ≤ 300 | Marker `smoke` |
-| `ph_prop_hollow_stone` | bemooster Grenzstein mit Loch und Deckelstein | ≤ 1 200 | Marker `coins` |
+| **`ph_chr_kranich`** | Ilse Kranich: groß (1,78–1,86 m), hager, grauer Reisemantel bis zum Boden, Kapuze mit einer Kranichfeder, Kiepe mit Holunderblüte, Laterne mit berußtem Glas in der linken Hand | ≤ 9 000 | **gemeinsames 8-Knochen-Rig** (`rig.py`, starr gewichtet, Root-Motion aus). Animationen `idle` (1,6–3,0 s), `walk` (0,6–1,0 s, ruhiger Schritt ~1,3 m/s), `talk` (1,6–3,0 s), `offer` (einmalig, 0,8–1,2 s: Münzen reichen). Marker `light_lantern` (Hand) |
+| `ph_prop_wall_ledge` | flacher Mauerstein als Laternenablage | ≤ 300 | – |
 | `ph_prop_gate_small`, `_gate_small_open` | rostiges Pförtchen zu / offen | ≤ 800 | gleiche Breite 1,2 m |
 | `ph_prop_pit_sunken` | eingesunkene, bewachsene Grube mit morschen Brettern | ≤ 900 | Footprint = Grabplatz |
 | `ph_env_elder_thicket` | Holunderdickicht (Hindernis) ~2 × 2 × 1,6 m | ≤ 2 500 | Laub-Shader |
@@ -783,7 +820,7 @@ Dazu `make_v2_saves.gd` + `_driver.gd` (historisches Werkzeug, wie Phase 3). Lad
 | `ph_vfx_stench_wisp.png` | gemalte, gekräuselte Schwade 128 × 128 | – | fahles Oliv, weiche Pinselkante, **nie** Grün-Türkis (reserviert für Übernatürliches) |
 | `ph_vfx_smoke_wisp.png` | Wacholderrauch 128 × 128 | – | warmes Grau |
 | `ph_ui_journal_spread`, `_journal_card`, `_ink_stamp`, `_wilted_leaf` (W-UI, `tools/ui/`) | Merkbuch-Papier, Karte, Stempel, Verlust-Symbol | – | Pergament wie das bestehende Theme, eigene Formensprache |
-Shader (P4): `assets/shaders/decay_overlay.gdshader` als `material_overlay` (blend_mul, Pinselrauschen aus `painted_common.gdshaderinc` **nur gelesen**). Uniforms `amount`, `stain_color`. Er malt fleckige, entsättigte Graugrün-Flächen und nichts Offenes, keine Wunden. Partikel: `CPUParticles3D`, Billboard, unshaded, `cast_shadow off`, im Nebel sichtbar. **Kein Abnehmer-NPC** (Frage §14.2).
+Shader (P4): `assets/shaders/decay_overlay.gdshader` als `material_overlay` (blend_mul, Pinselrauschen aus `painted_common.gdshaderinc` **nur gelesen**). Uniforms `amount`, `stain_color`. Er malt fleckige, entsättigte Graugrün-Flächen und nichts Offenes, keine Wunden. Partikel: `CPUParticles3D`, Billboard, unshaded, `cast_shadow off`, im Nebel sichtbar. Ilses Laterne: 1 OmniLight `#E8A55A`, Energie 0,4, Reichweite 3 m, **ohne Schatten** (warm, aber gedämpft neben dem kalten Geisterlicht).
 
 ## 9. Performance-Budget (Phase 4, Messung mit `graveyard_shots_phase4.gd`)
 | Größe | Budget | Begründung |
@@ -793,7 +830,8 @@ Shader (P4): `assets/shaders/decay_overlay.gdshader` als `material_overlay` (ble
 | Partikel gesamt | ≤ 60 (≤ 3 Leichen × [10 Fliegen + 5 Schwaden + 3 Rauch]) | `CPUParticles3D` (deterministisch, auch im Software-Renderer), `visibility_range_end 22 m`, außerhalb kein Prozess |
 | Transparente Überzeichnung | Schwade ≤ 0,6 × 0,6 m, Alpha ≤ 0,35 | Nebel + Geister sind schon transparent |
 | Kamera-Dreiecke inkl. Gras | < 500 k | Holunderwinkel ≈ +25 k |
-| Lichter | unverändert (≤ 4 Omni mit Schatten, ≤ 24 sichtbar) | keine neuen Lichter (Kerzenstumpf ohne Licht, Hohlstein ohne Licht) |
+| Lichter | ≤ 4 Omni mit Schatten (unverändert), ≤ 25 sichtbar | + 1 Laterne (Ilse, ohne Schatten); Kerzenstumpf ohne Licht |
+| Figuren | + 1 NPC (≤ 9 000 Dreiecke, 1 Skelett, 8 Knochen) | nur 23:00–03:00 sichtbar, außerhalb unsichtbar (kein Prozess) |
 | Geister | ≤ 18 berechtigt, ≤ 6 sichtbar | unverändert |
 | Skripte CPU/Frame (headless) | < 1,5 ms | Merkbuch/Journal ereignisgetrieben; Verfall-Tönung stündlich + bei Stufenwechsel; Partikel < 0,1 ms |
 | Spielstand | < 250 kB, Laden < 1 s | + Merkbuch ≈ 5 kB, + ≈ 0,5 kB je Leiche |
@@ -811,20 +849,20 @@ Regeln wie Phase 3 §10 (Fixtures statt fremder Moduldaten, Fehler-Logger, Watch
 | `test_corpse_exam.gd` | P2 | Kandidaten (generisch/Ursache/Geschichte, Ersetzung), Aufdecken vs. Verlieren an genau `min_freshness`, Sperre nach Einkleiden, Gründlich = Einzelschritte, `examined` nach 1. Schritt, `revealed_traits`, Wertsachen erst nach `pockets`, `next_loss` |
 | `test_corpse_prep.gd` | P2 | Reihenfolge-Regeln, Werkzeug/Item, Tuch vs. Hemd, `full_prep` genau einmal (+3 Pietät), Räuchern verlangsamt, Verwertung über CorpseCare (Item, Ruf, Pietät, Sperren, volles Inventar) |
 | `test_grave_quality.gd` (+) | P2 | alle neuen Zeilen, Maximum 13, Verfallen −2, Altgräber unverändert |
-| `test_piety.gd` | P3 | Stufen/Schwellen, Klemmen, Ereignisse, Erholung idempotent + nur ohne Verwertung, Gabe/Abnehmer je Stufe, `affinity` |
-| `test_utilization.gd` | P3 | Sperrgründe (unbekannt = unsichtbar), Tür-Zettel ab Tag 4 genau einmal, Hohlstein: Einlegen, Auszahlung am Morgen genau einmal (auch mit Laden), Bonus, Werkzeug einmalig, Zettel 2/3 nach Verkäufen, Save/Load |
+| `test_piety.gd` | P3 | Stufen/Schwellen, Klemmen, Ereignisse, Erholung idempotent + nur ohne Verwertung, Gabe/Ilse-Bonus je Stufe, `affinity` |
+| `test_utilization.gd` / `test_night_trade.gd` | P3 | Sperrgründe (unbekannt = unsichtbar); Tür-Zettel ab Tag 4, 06:00 genau einmal (auch mit Laden); Zeitplan: unsichtbar ohne `trader_known`, anwesend 23:00–03:00, Weg 22:40/03:00; Verkauf nur bei Anwesenheit, Münzen sofort, Pietät-Bonus; Laden atomar, Vorrat je Nacht (Reset nach 12:00, nicht beim Laden); Werkzeug einmalig (volles Inventar); Gesprächszähler je Nacht; `trader_rumor`; Save/Load; **Osric unverändert** (bestehende Npc-Tests grün) |
 | `test_cemetery_rating.gd` (+) / `test_cemetery_score.gd` (+) / `test_cleanliness.gd` (+) | P3 | Ehrwürdig-Bedingung (Zier/Abzug), `venerable_missing`, neue Abzugstabelle |
 | `test_decay_visual.gd` / `test_ghosts.gd` (+) | P4 | Überlagerung stetig je Frische, Partikelzahlen je Stufe, Räuchern ersetzt Schwaden durch Rauch, max. 3 emittierende; Kleidungs-/Aufbahr-Modelle; Gründe `robbed`/`unkempt` in Priorität, Beraubt-Abzug, Geschichts- und Pietät-Zeilen, Gabe 0/2/3 |
-| `test_journal.gd` | P6 | `add_clue` (erstmals/Zähler), `try_link` exakte Menge (auch falsche Reihenfolge ✓, Obermenge ✗), offene Fragen, `ready_insights`, Umbenennung S5, `sync_from_records` still + idempotent, Save/Load |
-| `test_save_migration.gd` (+) / `test_save.gd` (+) / `test_dialogue.gd` (+) | P6 | **alle vier v2-Fixtures und drei v1-Fixtures laden ohne Fehler/Warnungen**; Pietät aus Historie; `dress`/`exam_done`/Funde aus v2; Merkbuch rückwirkend; v3-Roundtrip identisch; Version 4 → abgelehnt; Osric: `p4_intro`, Wacholder-Handel, Pietät-Bemerkungen (negative Zahlen), Geschichts-Reaktionen |
-| `test_assets_phase4.gd` | P5 | Modelle vorhanden, Budgets §8, Marker (`sprig`, `smoke`, `coins`), geteilte Materialien, VFX-PNGs (Größe, Alpha) |
-| `test_ui_phase4.gd` | W-UI | Reiter und Sichtbarkeit von *Verwerten*, Schritt-Knöpfe + Gründe, Verlust-Hinweis, zweistufiger Verwerten-Knopf, Merkbuch (Seiten, Auswahl ≤ 3, Verknüpfen, Fehlversuch), Hohlstein-Panel, HUD-Zähler, Zielzeilen, Debug-Befehle |
+| `test_journal.gd` | P6 | `add_clue` (erstmals/Zähler, Flag `clue_<id>`), `try_link` exakte Menge (auch falsche Reihenfolge ✓, Obermenge ✗), offene Fragen, `ready_insights`, Umbenennung S5, `sync_from_records` still + idempotent, Save/Load |
+| `test_save_migration.gd` (+) / `test_save.gd` (+) / `test_dialogue.gd` (+) | P6 | **alle vier v2-Fixtures und drei v1-Fixtures laden ohne Fehler/Warnungen**; Pietät aus Historie; `dress`/`exam_done`/Funde aus v2; Merkbuch rückwirkend; v3-Roundtrip identisch; Version 4 → abgelehnt; Osric: `p4_intro`, Wacholder-Handel, Pietät-Bemerkungen (negative Zahlen), Geschichts-Reaktionen, Gerücht; **Ilse** (`trader.tres`): Begrüßung je Pietät-Stufe, erstes Treffen + Werkzeug, Fragen gesperrt/frei (3 Gespräche oder 4 Verkäufe; `c_mark`), neue Aktionen `open_panel`/`add_clue`/`trader_tools`/`trader_talked`, Knoten ohne Sackgasse |
+| `test_assets_phase4.gd` / `test_assets_characters.gd` (+ Ilse) | P5 | `ph_chr_kranich`: Höhe, 8 Knochen starr, 4 Animationen mit Längen, Gehgeschwindigkeit, Marker `light_lantern`; Modelle vorhanden, Budgets §8, Marker (`sprig`, `smoke`, `coins`), geteilte Materialien, VFX-PNGs (Größe, Alpha) |
+| `test_ui_phase4.gd` | W-UI | Reiter und Sichtbarkeit von *Verwerten*, Schritt-Knöpfe + Gründe, Verlust-Hinweis, zweistufiger Verwerten-Knopf, Merkbuch (Seiten, Auswahl ≤ 3, Verknüpfen, Fehlversuch), Handels-Panel (Preise, Bonus, Vorrat, nur bei Anwesenheit), HUD-Zähler, Zielzeilen, Debug-Befehle |
 
 **Integration**
-- `test_phase4_loop.gd` (W-Welt): Neues Spiel → Tag 1: Leiche → Kleidung + Taschen → Tuch → bestatten. Tag 3 bis 16:00 warten → Zeichen verloren → kein `c_mark`. Tag 4: Zettel → Hohlstein → Werkzeug → Zopf → einlegen → Tag 5 06:00 Auszahlung. S1 (Tag 6) voll untersuchen → `c_page_1` → `i_warnings` verknüpfen. Holunderwinkel per Schlüssel (S2) freilegen. S5 per Debug → `i_not_lorenz` → Umbenennung → Kapitelende. **Roundtrip** `collect_state()` identisch nach `save_game`/`load_game` an 4 Momenten: mitten in der Untersuchung (2 von 4 Schritten), während eines Räucherfensters, mit Ware im Hohlstein vor der Auszahlung, nach dem Kapitelende.
+- `test_phase4_loop.gd` (W-Welt): Neues Spiel → Tag 1: Leiche → Kleidung + Taschen → Tuch → bestatten. Tag 3 bis 16:00 warten → Zeichen verloren → kein `c_mark`. Tag 4: Zettel → Zopf abschneiden (Werkzeug erst nach dem Treffen: Knopf gedimmt) → 23:00 Ilse an der Westmauer → Dialog, Werkzeug → Handel: Zopf aus Tag 5 verkauft → Münzen sofort, Leinen gekauft. S1 (Tag 6) voll untersuchen → `c_page_1` → `i_warnings` verknüpfen. Holunderwinkel per Schlüssel (S2) freilegen. S5 per Debug → `i_not_lorenz` → Umbenennung → Kapitelende. **Roundtrip** `collect_state()` identisch nach `save_game`/`load_game` an 4 Momenten: mitten in der Untersuchung (2 von 4 Schritten), während eines Räucherfensters, nachts mit Ilse am Spot und halb verbrauchtem Vorrat, nach dem Kapitelende.
 - `test_phase3_save_upgrade.gd` (P6): `slot_p3_day14_complete.json` laden → Lieferungen ruhen → nächster `day_started`: Zettel + (Tag ≥ 12) Schlüssel-Rückfall → Holunderwinkel per Debug räumen → nächste Lieferung ist **S1** (Aufholen) → 2 Tage später S2.
-- `test_graveyard_world.gd` (+, W-Welt): 18 Plots, Abschnitt `elder`, Pförtchen/Gruben/Dickicht, Hohlstein, Requisiten, Bau-Maske Index 4, Pförtchen begehbar nach Öffnen, Kamera-Grenzen.
-- **Playthrough-Bot (W3):** `phase4_bot.gd` erweitert `Phase3Bot` um Untersuchungsschritte, Herrichten, Räuchern, Verwerten, Hohlstein und Verknüpfen.
+- `test_graveyard_world.gd` (+, W-Welt): 18 Plots, Abschnitt `elder`, Pförtchen/Gruben/Dickicht, `npc_trader` + Wegpunkte (Spot von innen erreichbar, Weg außerhalb frei), Requisiten, Bau-Maske Index 4, Pförtchen begehbar nach Öffnen, Kamera-Grenzen.
+- **Playthrough-Bot (W3):** `phase4_bot.gd` erweitert `Phase3Bot` um Untersuchungsschritte, Herrichten, Räuchern, Verwerten, nächtlichen Handel mit Ilse (Bot bleibt bis 23:15 wach, wenn er Ware hat) und Verknüpfen.
   - Phase-3-Strategien mit neuen Erwartungen (§2.14), 14 Tage.
   - Neue Strategien, 24 Tage (harvester 28):
     - `reverent`: gründlich, voll herrichten, verknüpft, verwertet nie. Erwartet: Kapitelende ≤ Tag 22, alle 5 Haupt-Erkenntnisse, Pietät „Andächtig".
@@ -851,8 +889,9 @@ Regeln wie Phase 3 §10 (Fixtures statt fremder Moduldaten, Fehler-Logger, Watch
 | p4_10 | Merkbuch *Hinweise*: 3 Karten gewählt, roter Faden, offene Fragen |
 | p4_11 | Erkenntnis „Wer die Warnbriefe schrieb" freigeschaltet |
 | p4_12 | Merkbuch *Ich* (Pietät-Satz ohne Zahl) |
-| p4_13 | Hohlstein an der Westmauer (Tag) + Hohlstein-Panel |
-| p4_14 | Morgens: Münzen im Hohlstein + Tageszusammenfassung mit Auszahlung |
+| p4_13 | Nacht 23:30: Ilse Kranich an der Westmauer, Laterne auf dem Mauerstein, Geister im Hintergrund |
+| p4_14 | Dialog mit Ilse (Begrüßung „Abgebrüht") + Handels-Panel (Verkaufen/Kaufen) |
+| p4_14b | Ilse nah: Modell-Tafel (idle, walk, talk, offer) |
 | p4_15 | Holunderwinkel vorher: Pförtchen, Dickicht, sechs eingesunkene Gruben |
 | p4_16 | Holunderwinkel belegt, Nacht, Geister, Holunder im Mondlicht |
 | p4_17 | Geister nebeneinander: beraubt (unruhig) vs. hergerichtet (zufrieden), Sprechblase „Mein Zopf …" |
@@ -868,20 +907,21 @@ Dazu Asset-Tafeln `docs/reviews/phase4_assets/` und eine Performance-Tabelle je 
 |---|---|---|---|
 | **W0** | Lead | **Zuerst v2-Fixtures mit Build `febd2c7`** (vor jeder Code-Änderung). Dann: Datenklassen ✦, Stubs mit exakten Signaturen, EventBus-Signale, Database-Ordner, Input `journal`, `Category.GOODS`, `SaveMigration.CURRENT = 3` mit `migrate_2_to_3` als Identität (fail-safe), Config-/Daten-Fixtures `tests/fixtures/phase4/` (+ `Phase4Fixtures`), `test_phase4_scaffold.gd`, `test_saves_v2_load.gd` | Import + alle Tests grün → Commit |
 | **W1** | P1, P2, P3, P4, P5, P6 (bei 5 Agents: P1 + P6) | Systeme mit Unit-Tests gegen Fixtures (ohne Welt), Assets + Asset-Tests, Migration, Texte (Funde, Hinweise, Erkenntnisse, Geister, Osric) | je Modul: Tests grün → Merge durch Lead, danach `--import` |
-| **W2** | W-Welt, W-UI (2 parallel) | Holunderwinkel, Hohlstein, Requisiten, Builder, Bau-Maske, Szene neu bauen, `test_phase4_loop`; Panel-Reiter, Merkbuch, Hohlstein-Panel, HUD, Zielzeilen, Debug, Icons | Integration + Roundtrips grün, Screenshots erstellt |
+| **W2** | W-Welt, W-UI (2 parallel) | Holunderwinkel, Ilses Wegpunkte + Spot + Mauerstein, Requisiten, Builder, Bau-Maske, Szene neu bauen, `test_phase4_loop`; Panel-Reiter, Merkbuch, Handels-Panel, Ilses Dialogbox-Einbindung, HUD, Zielzeilen, Debug, Icons | Integration + Roundtrips grün, Screenshots erstellt |
 | **W3** | QA (19), Art (04), Lead | Playthrough-Bot mit Phase-3-Erwartungen (§2.14) und Moral-Strategien (§10), Save-Fuzzer mit v2/v1, Performance, Stil-/Ton-Prüfung Verfall (kein Gore, Palette) und Verwertungstexte, Befunde beheben (Besitzer), Gate-Protokoll in `QUALITY_GATE_STATUS.md` | **STOPP – Benutzerprüfung G4** |
 Abhängigkeiten:
 - W1-Agents nutzen nur Stubs und Datenklassen anderer Module.
 - P2 ruft `UtilizationRules`, `Piety`, `JournalManager` und `CorpseManager.notify_changed` nur über die Gruppen-API/Stubs.
 - P4 liest den Record nur lesend.
-- P5 liefert zuerst `ph_prop_corpse_05/06`, `_gown`, VFX-PNGs, `ph_prop_hollow_stone`, `_pit_sunken` (Blocker für W2-Screenshots).
+- P5 liefert zuerst `ph_prop_corpse_05/06`, `_gown`, VFX-PNGs, **`ph_chr_kranich`** (Rig + 4 Animationen), `_pit_sunken` (Blocker für W2-Screenshots). Bis dahin nutzt `Npc` für Ilse den Osric-Rückfall mit grauer Tönung (nur für Tests, nie in Screenshots).
+- P3 (Ilses Logik, Zeitplan) und P6 (`trader.tres`, neue Dialog-Aktionen) stimmen die Aktions-Namen ab; sie stehen hier fest (§3.4).
 - Texte: P2 besitzt `data/finds/*`, P6 `data/journal/*` und `carter.tres`, P4 `ghost_lines.tres`, P1 `data/story/*`. Die Leittexte stehen in §2.2/§2.11/§2.12. Wer sie ändert, meldet es dem Lead.
 
 ## 13. Nicht in Phase 4
 - Ganze Leichen verkaufen (Anatomie), Körperteile oder Organe entnehmen, sichtbare Eingriffe, Blut, Gore
 - Exhumieren, Umbetten, Gräber wiederverwenden
 - Kühlkeller, Eishaus, zweiter Leichentisch, Leichenhalle (Gebäude: Phase 6)
-- Sichtbarer Abnehmer-NPC, Handel mit anderen Waren, Preisdynamik (Wirtschaft: Phase 10)
+- Weitere Händler, weitere Waren als bei Ilse (Zopf, Zähne; Leinen, Wacholder), Preisdynamik, Beziehungswert zu Ilse, Ilse bei Tag oder im Dorf (Wirtschaft: Phase 10, NPCs: Phase 8)
 - Angehörige, Trauerfeiern, Pfarrer, Totenwache (NPCs: Phase 8)
 - Quests, Aufträge (Phase 9)
 - Krypta unter dem Birkenhang (nur als Satz, Phase 12)
@@ -894,11 +934,11 @@ Abhängigkeiten:
 - Controller, Lokalisierung
 - Änderungen am Maler-Shader, an den Atmosphären-Presets und am Hütten-Innenraum
 
-## 14. Offene Fragen an den Benutzer (bitte entscheiden)
-1. **Name des Moralwerts:** „Pietät" (Vorschlag) oder „Gewissen" oder „Ehrfurcht"? Dazu die Stufen „Hartherzig · Abgebrüht · Sachlich · Rücksichtsvoll · Andächtig". Bestätigen oder umbenennen?
-2. **Abnehmer:** (a) unsichtbarer Käufer am **Hohlstein**, nur Zettel und Münzen (Vorschlag: eerie, keine neue Figur). (b) Eine sichtbare Nachthändlerin am Zaun (neue Figur mit Rig, Tagesplan und Dialog, deutlich mehr Aufwand). (c) Osric als Zwischenhändler (keine neuen Assets, aber er wird mitschuldig).
-3. **Holunderwinkel mit 6 neuen Grabstellen:** Ja (Vorschlag, trägt ≈ 7 neue Tage und das Kapitelende)? Oder keine neuen Gräber? Dann endet die Geschichte mit dem 12. Grab um Tag 14, S4/S5 rücken auf Tag 10/12, und Phase 4 bringt keine eigenen Tage.
-4. **Richtung des Finales:** „Der Tote aus dem Moor ist nicht Lorenz – er lebt" (Vorschlag, offener Haken für Krypta und Story)? Oder „Es ist wirklich Lorenz" (stiller, abgeschlossener, melancholischer)? Und passt der Name **Lorenz Aschau**?
+## 14. Benutzerentscheidungen (27.09.2026, bindend)
+1. **Moralwert:** heißt **„Pietät"**, mit den Stufen „Hartherzig · Abgebrüht · Sachlich · Rücksichtsvoll · Andächtig".
+2. **Abnehmer:** eine **sichtbare Nachthändlerin** als neue Figur statt des unsichtbaren Käufers. Umgesetzt als **Ilse Kranich** (§2.6, Modell `ph_chr_kranich`, jede Nacht 23:00–03:00 an der Westmauer, Münzen sofort, kleiner Laden).
+3. **Holunderwinkel** mit 6 neuen Grabstellen: **ja**.
+4. **Finale:** „Nicht Lorenz – er lebt". Der Name **Lorenz Aschau** ist bestätigt.
 
 ## W0-Notizen (Lead, Welle 0 – verbindlich für W1)
 *(folgt nach Welle 0)*

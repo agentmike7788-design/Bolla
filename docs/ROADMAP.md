@@ -59,10 +59,10 @@ Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe): **`docs/PHASE4_DESIGN.md`*
 - Untersuchung in 4 Schritten, deren Funde durch Verfall verloren gehen können
 - Merkbuch (J) mit Hinweisen und Erkenntnissen und erster Erzählfaden „Was geschah mit Lorenz Aschau?" mit 5 Geschichts-Leichen
 - Herrichten (waschen, einkleiden, aufbahren, räuchern)
-- Verwertung (Haar, Zähne, Wertsachen) über den Hohlstein
+- Verwertung (Haar, Zähne, Wertsachen) und Verkauf an die sichtbare Nachthändlerin Ilse Kranich
 - Moralwert „Pietät" (sanft, ohne HUD-Anzeige)
 - deutlicherer Verfall mit gemalten Fliegen und Schwaden
 - Holunderwinkel mit 6 neuen Grabstellen und Kapitelende „Sechs Gruben"
 - Balancing-Übertrag: „Ehrwürdig" verlangt Zier und Pflege
 - Save-Format v3 mit Migration der Phase-3-Stände
-- Wellenplan W0–W3 und 4 offene Fragen (§14)
+- Wellenplan W0–W3 und Benutzerentscheidungen (§14)
