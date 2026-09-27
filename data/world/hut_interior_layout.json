@@ -1,0 +1,26 @@
+{
+  "_comment": "Suggested furnishing of the hut interior (docs/VERTICAL_SLICE_DESIGN.md §11). Godot axes, room floor centre = (0, 0); x right, z towards the camera (the 45° camera looks north, -Z). pos = [x, z] of the model pivot (bottom centre), rot_y in degrees (model front +Z). mount: floor (stands on the floor, blocks walking), flat (rug, walkable), wall (hung on a wall, above head/furniture height), on (stands on another piece), hang (hangs from the tie beam); y = pivot height for wall/on/hang. interactive pieces carry an 'interact' id and 'use_pos' = where the gravekeeper stands to use them.",
+  "room": "ph_int_room",
+  "door_inside": [-0.9, 1.4],
+  "spawn_inside": [-0.9, 1.0],
+  "walkway": 0.9,
+  "items": [
+    {"asset": "ph_int_rug", "pos": [-0.3, 0.2], "rot_y": 3.0, "mount": "flat"},
+    {"asset": "ph_int_bed", "pos": [-1.745, -0.755], "rot_y": 90.0, "mount": "floor", "interact": "bed", "use_pos": [-0.7, -0.75]},
+    {"asset": "ph_int_cat", "pos": [-1.68, -0.55], "rot_y": 30.0, "mount": "on", "y": 0.62, "on": "ph_int_bed"},
+    {"asset": "ph_int_chest", "pos": [-2.0, 0.815], "rot_y": 90.0, "mount": "floor", "interact": "chest", "use_pos": [-1.21, 0.82]},
+    {"asset": "ph_int_broom", "pos": [-0.84, -1.54], "rot_y": 0.0, "mount": "floor"},
+    {"asset": "ph_int_bucket", "pos": [0.93, -1.55], "rot_y": 20.0, "mount": "floor"},
+    {"asset": "ph_int_desk", "pos": [0.1, -1.49], "rot_y": 0.0, "mount": "floor", "interact": "desk", "use_pos": [0.05, -0.69]},
+    {"asset": "ph_int_chair", "pos": [0.8, -0.86], "rot_y": 160.0, "mount": "floor"},
+    {"asset": "ph_int_stove", "pos": [1.72, -1.35], "rot_y": 0.0, "mount": "floor", "interact": "stove", "use_pos": [1.72, -0.28]},
+    {"asset": "ph_int_herbs", "pos": [1.4, -1.2], "rot_y": 0.0, "mount": "hang", "y": 1.735},
+    {"asset": "ph_int_table", "pos": [1.05, 0.75], "rot_y": -2.0, "mount": "floor"},
+    {"asset": "ph_int_chair", "pos": [1.05, 1.47], "rot_y": 185.0, "mount": "floor"},
+    {"asset": "ph_int_washbasin", "pos": [2.1, 1.4], "rot_y": -90.0, "mount": "floor"},
+    {"asset": "ph_int_shelf", "pos": [2.17, -0.3], "rot_y": -90.0, "mount": "wall", "y": 1.2},
+    {"asset": "ph_int_coat_hook", "pos": [2.16, 0.65], "rot_y": -90.0, "mount": "wall", "y": 0.9},
+    {"asset": "ph_int_picture", "pos": [-1.6, -1.78], "rot_y": 0.0, "mount": "wall", "y": 1.3},
+    {"asset": "ph_int_candles", "pos": [-2.19, -0.6], "rot_y": 90.0, "mount": "on", "y": 0.905, "on": "ph_int_room"}
+  ]
+}
