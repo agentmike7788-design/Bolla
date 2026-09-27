@@ -27,9 +27,16 @@ const P3_SHOTS: Array[Dictionary] = [
 	{"name": "world_08_neglected_day", "stage": "neglected", "day": 5, "minute": 690, "focus": Vector2(5.5, 0.5), "distance": 26.0},
 	{"name": "world_09_overview_end", "stage": "", "day": 5, "minute": 660, "focus": Vector2(4.5, -4.5), "distance": 40.0},
 	{"name": "world_10_notice_board", "stage": "", "day": 5, "minute": 700, "focus": Vector2(-1.2, 8.2), "distance": 12.0},
+	# §9 budget at the gameplay zoom limit (CameraRig zoom_max 24): full cemetery, day and night.
+	{"name": "perf_01_day_zoom_max", "stage": "", "day": 5, "minute": 690, "focus": Vector2(5.0, -3.0), "distance": 24.0},
+	{"name": "perf_02_night_zoom_max", "stage": "", "day": 5, "minute": 1335, "focus": Vector2(5.0, -3.0), "distance": 24.0,
+			"player": Vector2(6.0, -2.0)},
+	{"name": "perf_03_east_night_zoom_max", "stage": "", "day": 5, "minute": 30, "focus": Vector2(15.0, -4.0), "distance": 24.0,
+			"player": Vector2(16.0, -4.5)},
 ]
 ## Frames the CPU probe averages over (headless, --cpu).
 const CPU_FRAMES := 600
+const CPU_WARMUP := 300
 ## Decor for the "decorated" stage: [decor_id, world XZ wish, rot]. The nearest valid cell
 ## within SEARCH_RADIUS of the wish is used (the build mask / graves decide).
 const DECOR_WISHES: Array = [
@@ -257,38 +264,53 @@ func _light_counts(world: Node3D) -> Dictionary:
 	return {"omni": omni, "shadowed": shadowed, "ghosts": ghosts.size()}
 
 
-## Headless: the full world at night (12 graves incl. the Phase-2 ones, decor, ghosts) –
-## average process + physics time per frame over CPU_FRAMES with the clock running.
+## Headless: the full world (12 graves incl. the Phase-2 ones, decor, ghosts at night) with the
+## clock running (UI modals from the staging closed, no pauses) – after CPU_WARMUP frames the
+## mean / median / worst process + physics time per frame over CPU_FRAMES, plus the cost of one
+## night's sleep (TimeManager.advance 18:00 → 06:00: growth, drift, decay in one go).
 func _cpu_probe(world: Node3D) -> void:
 	await _apply_stage(world, "start")
 	await _apply_stage(world, "east_cleared")
 	await _apply_stage(world, "north_cleared")
 	await _apply_stage(world, "decorated")
 	var clock := root.get_node(^"TimeManager")
+	var ui_state := root.get_node(^"UIState")
 	var lines: PackedStringArray = []
 	for probe: Array in [["day", 2, 660], ["night_ghosts", 4, 1335]]:
+		ui_state.call(&"clear")
+		clock.call(&"clear_pauses")
 		clock.call(&"load_state", {"day": probe[1], "minute_of_day": probe[2]})
 		var player := world.get_node(^"Player") as Node3D
 		player.global_position = Vector3(7.0, _ground(world, Vector2(7.0, -1.8)), -1.8)
 		clock.set("running", true)
-		for i: int in 60:
+		for i: int in CPU_WARMUP:
 			await process_frame
-		var process := 0.0
+		var start_minute := int(clock.call(&"total_minutes"))
+		var samples: Array[float] = []
 		var physics := 0.0
-		var worst := 0.0
 		for i: int in CPU_FRAMES:
 			await process_frame
-			var p := Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0
-			process += p
+			samples.append(Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0)
 			physics += Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0
-			worst = maxf(worst, p)
 		clock.set("running", false)
+		var sum := 0.0
+		for v: float in samples:
+			sum += v
+		samples.sort()
 		var ghosts: Array = _system(world, "Ghosts").call(&"active_ghosts")
-		var line := "%s: process %.3f ms (worst %.3f) · physics %.3f ms per frame · ghosts %d · decor %d · objects %d" % [
-			probe[0], process / CPU_FRAMES, worst, physics / CPU_FRAMES, ghosts.size(),
+		var line := ("%s: process mean %.3f / median %.3f / worst %.3f ms · physics %.3f ms per frame · %d game minutes"
+				+ " passed · ghosts %d · decor %d · nodes %d") % [
+			probe[0], sum / CPU_FRAMES, samples[CPU_FRAMES / 2], samples.back(), physics / CPU_FRAMES,
+			int(clock.call(&"total_minutes")) - start_minute, ghosts.size(),
 			(_system(world, "Decorations").call(&"placements") as Array).size(), Performance.get_monitor(Performance.OBJECT_NODE_COUNT)]
 		print("[CPU] ", line)
 		lines.append(line)
+	clock.call(&"load_state", {"day": 5, "minute_of_day": 1080})
+	var t0 := Time.get_ticks_usec()
+	clock.call(&"advance", 720)
+	var sleep_line := "sleep 18:00 → 06:00 (advance 720): %.2f ms once" % ((Time.get_ticks_usec() - t0) / 1000.0)
+	print("[CPU] ", sleep_line)
+	lines.append(sleep_line)
 	var f := FileAccess.open(_out.path_join("cpu_stats.txt"), FileAccess.WRITE)
 	f.store_string("\n".join(lines) + "\n")
 	f.close()

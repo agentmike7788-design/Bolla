@@ -110,7 +110,7 @@ Alle Phase-1-Assets sind Prototypen (`ph_`-Präfix) und **nicht final**, bis der
 | ph_prop_lantern_post, ph_prop_candle_cluster, ph_prop_shovel, ph_prop_crate, ph_prop_fence_iron, ph_prop_gate_post | Props | Prototyp |
 | ph_prop_corpse (+ _02 Frau, _03 alter Mann, _04 Müller – Änderungsrunde 1), _corpse_shrouded, _handcart, _morgue_table, _workbench, _dropoff_bier, _grave_plot_empty, _grave_pit, _wood_pile, _stone_rubble, _cross_wood, _signpost, _fallen_log, ph_env_bush | Props (Phase 2) | Prototyp |
 | ph_item_log, _stone, _linen, _coin, _shroud | Item-Modelle (Icons) | Prototyp |
-| ph_env_ground_graveyard | Boden Vertical Slice (48×56 m, mit Kutschweg) | Prototyp |
+| ph_env_ground_graveyard | Boden Welt (Phase 3: 56×64 m, mit Kutschweg – W-Welt neu gebaut) | Prototyp |
 | ph_deco_bench_wood, _bench_stone, _flowerbed, _grave_vase, _lantern_small, _path_gravel, _path_gravel_02 | Zier (Phase 3, P5) | Prototyp – Vorschau `docs/reviews/phase3_wip/p5_*.jpg`, Benutzerprüfung offen |
 | ph_prop_fence_iron_broken, _fence_passage, _rubble_large, _notice_board | Props (Phase 3, P5) | Prototyp – Benutzerprüfung offen |
 | ph_env_bramble, _stump, _hedge_thorn, _weeds_1…3, _leaves_1…3, _birch | Umgebung / Hindernisse / Pflegestellen (Phase 3, P5) | Prototyp – Benutzerprüfung offen |
