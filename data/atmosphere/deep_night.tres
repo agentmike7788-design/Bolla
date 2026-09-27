@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="AtmospherePreset" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/world/atmosphere/atmosphere_preset.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Tiefe Nacht"
+sun_color = Color(0.56, 0.7, 0.9, 1)
+sun_energy = 0.45
+sun_rotation_deg = Vector3(-55, 160, 0)
+sun_shadow_opacity = 0.75
+background_color = Color(0.05, 0.075, 0.11, 1)
+ambient_color = Color(0.17, 0.24, 0.33, 1)
+ambient_energy = 0.6
+fog_color = Color(0.13, 0.18, 0.23, 1)
+fog_density = 0.018
+volumetric_fog_density = 0.04
+volumetric_fog_albedo = Color(0.52, 0.68, 0.66, 1)
+volumetric_fog_emission = Color(0, 0, 0, 1)
+exposure = 1.15
+glow_intensity = 0.9
+saturation = 0.84
+warm_light_scale = 1.0

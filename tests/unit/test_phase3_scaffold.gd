@@ -27,6 +27,8 @@ const STUBS := {
 	"res://src/systems/save/save_migration.gd": "SaveMigration",
 	"res://src/entities/notice_board/notice_board.gd": "NoticeBoard",
 }
+## Stubs whose owner has replaced the body (W1) – no longer carry the "## STUB (" marker.
+const FILLED := ["GhostMood", "GhostManager", "Ghost"]  # P4
 ## Contract methods per stub class (§3.4) – a rename breaks this list.
 const METHODS := {
 	"ExpansionManager": ["sections", "is_unlocked", "unlocked_indices", "block_reason", "is_cleared", "obstacle_ids",
@@ -92,7 +94,8 @@ func test_stub_scripts_load_with_their_class_names() -> void:
 		assert_true(script.can_instantiate(), path + " parses")
 		var cls: String = STUBS[path]
 		assert_eq(global.get(cls), path, "class_name %s → %s" % [cls, path])
-		assert_true(script.source_code.contains("## STUB ("), cls + " is marked as stub")
+		if not cls in FILLED:
+			assert_true(script.source_code.contains("## STUB ("), cls + " is marked as stub")
 		var names := {}
 		for m: Dictionary in script.get_script_method_list():
 			names[String(m.name)] = true
@@ -240,7 +243,7 @@ func test_ghost_lines_fixture() -> void:
 	for t: StringName in [&"letter", &"tattoo", &"strange_wound"]:
 		assert_eq(lines.by_trait[t].size(), 2, String(t))
 	assert_eq(GhostLines.new().gift, "Der Geist deutet ins Moos – zwei Münzen.")
-	assert_null(Database.ghost_lines(), "data/ghosts/ghost_lines.tres is P4's")
+	assert_true(Database.ghost_lines() is GhostLines, "data/ghosts/ghost_lines.tres (P4)")
 
 
 func test_sections_in_data_and_fixtures() -> void:

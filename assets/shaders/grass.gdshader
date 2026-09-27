@@ -12,9 +12,29 @@ uniform float wind_strength = 0.06;
 uniform float wind_speed = 1.6;
 uniform float wrap = 0.6;
 
+// Phase 3 (§3.6): 1 = hide the tuft (obstacle / decor stands there). 0.25 m texels over the
+// build mask; linear filtering gives the soft 1-texel edge. rect (origin.xz, size.xz) = 0: off.
+global uniform sampler2D grass_clear_mask : filter_linear;
+global uniform vec4 grass_clear_rect;
+
 varying vec3 world_pos;
 
+// Mask value at a world XZ position (0 outside the rect or while the mask is off).
+float grass_cleared(vec2 p) {
+	if (grass_clear_rect.z <= 0.0 || grass_clear_rect.w <= 0.0) {
+		return 0.0;
+	}
+	vec2 uv = (p - grass_clear_rect.xy) / grass_clear_rect.zw;
+	if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) {
+		return 0.0;
+	}
+	return textureLod(grass_clear_mask, uv, 0.0).r;
+}
+
 void vertex() {
+	// Scale the whole tuft around its root (instance origin) by the clear mask.
+	vec3 root = MODEL_MATRIX[3].xyz;
+	VERTEX *= 1.0 - clamp(grass_cleared(root.xz), 0.0, 1.0);
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float h = VERTEX.y * VERTEX.y * 6.0;
 	float t = TIME * wind_speed + world_pos.x * 0.7 + world_pos.z * 0.5;

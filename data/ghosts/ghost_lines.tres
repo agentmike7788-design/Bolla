@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="GhostLines" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/ghosts/ghost_lines.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+content = PackedStringArray("Die Erde liegt warm auf mir. Hab Dank, Totengräber.", "So still war es nie, als ich noch lebte. Das ist gut so.", "Du hast mich ordentlich zugedeckt. Mehr wünscht sich keiner.", "Mein Stein steht gerade. Das hätte meiner Mutter gefallen.", "Nachts hört man hier den Wind im Gras. Ich höre gern zu.", "Die Lebenden vergessen langsam. Du vergisst mich nicht, das spür ich.", "Ruhig liegt es sich hier. Wer hätte das gedacht.", "Der Hügel erinnert sich an mich. Das genügt.")
+calm = PackedStringArray("Es ist nicht schlecht hier. Nur ein wenig still.", "Ich warte. Worauf, weiß ich selbst nicht mehr.", "Die Nacht ist lang, wenn man nicht mehr müde wird.", "Man gewöhnt sich an alles. Sogar ans Totsein.")
+by_reason = Dictionary[StringName, PackedStringArray]({
+&"weeds": PackedStringArray("Das Unkraut kriecht mir in die Träume. Rupf es aus, ja?", "Disteln auf meinem Hügel. Als wär ich längst vergessen.", "Es wuchert über mir. Ich hatte es gern ordentlich."),
+&"valuables": PackedStringArray("Mein Beutel fehlt. Ich spür die leere Stelle noch am Saum.", "Du hast behalten, was mir gehörte. Die Toten zählen nach.", "Meine Taschen sind leer. Das war nicht recht von dir."),
+&"cold": PackedStringArray("Mir ist kalt. So bloß in die Erde – das war nicht recht.", "Kein Tuch um mich. Die Erde kratzt.", "Ein Leinentuch hätte gereicht. Nur ein bisschen Wärme."),
+&"cross": PackedStringArray("Holz verrottet. Dann weiß keiner mehr, wer hier liegt.", "Mein Kreuz neigt sich schon. Ein Stein hielte länger.", "Holz ist für Zäune. Für mich hätt ich mir Stein gewünscht."),
+&"waited": PackedStringArray("Du hast mich zu lange liegen lassen. Ich hab es gerochen.", "Zu lange auf der Bahre. Das vergisst man nicht, auch tot nicht.", "Ich kam spät unter die Erde. Die Fliegen waren schneller."),
+&"bare": PackedStringArray("Nicht eine Blume. Hat mich denn keiner gemocht?", "So kahl hier. Ein kleines Licht in der Nacht wär schön.", "Ein wenig Schmuck am Grab, und ich gäbe Ruhe.")
+})
+by_trait = Dictionary[StringName, PackedStringArray]({
+&"letter": PackedStringArray("Den Brief hab ich nie beantwortet. Ich kam trotzdem zurück.", "Jemand wollte nicht, dass ich nach Hollerbrück komme. Frag, wer."),
+&"tattoo": PackedStringArray("Anker und Schlange … ich war nicht der Einzige mit dem Zeichen.", "Das Meer war weit. Was mich herzog, liegt näher, als du glaubst."),
+&"strange_wound": PackedStringArray("Der Kreis über meinem Herzen brennt noch. Jede Nacht.", "Drei Linien, ein Kreis. Wer so zeichnet, ist noch nicht fertig.")
+})
+gift = "Der Geist deutet ins Moos – zwei Münzen."
