@@ -1,13 +1,20 @@
 """The gravekeeper (player). Stylised ~4.5 heads, hunched, long coat, shoulder
 cape, wide crooked hat, shovel strapped to the back, lantern on the belt.
 Front faces -Y (Blender) = +Z (Godot).
-ART STYLE LOCK: the geometry below is the approved Phase-1 model, unchanged –
-Phase 2 only adds the shared rig (rig.py, rigid skinning) and the actions
-idle-loop, walk-loop, carry_idle-loop, carry_walk-loop, dig-loop, interact."""
+ART STYLE LOCK: identity, silhouette, proportions and palette are the approved
+Phase-1 design. Gate G2 round 1 (user: "den main charackter ... verschönern")
+refines the forms only: rounder, more segments where the eye lands, a readable
+melancholic-kind face, layered ragged cape, scarf knot with fringe, coat seams,
+buttons, pockets and back slit, a proper lantern cage, D-grip shovel, laced
+boots with soles and richer painted colour. The shared rig (rig.py, rigid
+skinning), the joints and the actions idle-loop, walk-loop, carry_idle-loop,
+carry_walk-loop, dig-loop, interact are unchanged."""
 import math
+import random
 
-import bpy
-from mathutils import Vector
+import bpy  # must be imported before bmesh
+import bmesh
+from mathutils import Matrix, Vector
 
 import lib_painted as L
 import rig
@@ -16,19 +23,36 @@ NAME = "ph_chr_gravekeeper"
 
 COAT = L.hexc("#4B4038")
 COAT_DARK = L.hexc("#352D28")
+COAT_WARM = L.hexc("#5A463A")    # subtle warm hue shift on the coat's upper back
 CAPE = L.hexc("#3E4640")
+CAPE_MOSS = L.hexc("#4A5642")    # greener top layer
 SCARF = L.hexc("#B08A3E")
+SCARF_DARK = L.hexc("#8A6A2E")
 HAT = L.hexc("#3B3430")
+HAT_DUST = L.hexc("#5A524A")     # worn / dusty crown edges and brim rim
 HAT_BAND = L.hexc("#6A4A2F")
+PATCH = L.hexc("#4E4A40")
+THREAD = L.hexc("#857B6A")
 SKIN = L.hexc("#C8A383")
+BLUSH = L.hexc("#C0806A")
 BOOT = L.hexc("#2F2722")
+SOLE = L.hexc("#221C19")
+LACE = L.hexc("#7A6A55")
 TROUSER = L.hexc("#3F4441")
 IRON = L.hexc("#3A3C40")
+BRASS = L.hexc("#6E6250")        # dull, dark buckle metal (no second warm accent)
 WOOD = L.hexc("#6E5238")
+LEATHER = L.hexc("#2A2420")
 BEARD = L.hexc("#A39A8C")
+BROW = L.hexc("#C2BAAE")
+EYE = L.hexc("#1E1714")
+FEATHER = L.hexc("#454C4A")
+MUD = L.hexc("#6B5A48")          # palette: earth / paths (dusty hem, boots)
 
 HUNCH = -0.09   # forward lean of the upper body (towards -Y)
-WAIST_Z = 0.95  # coat below -> hips, above -> spine (seam between two coat rings, under the belt)
+WAIST_Z = 0.86  # coat below -> hips, above -> spine (the seam hides under the belt)
+LANTERN = Vector((0.31, HUNCH * 0.3 - 0.07, 0.727772))  # approved belt-lantern light position
+TAU = 2.0 * math.pi
 W = rig.weight
 
 
@@ -42,104 +66,616 @@ def _side(sx: int, bone: str) -> str:
     return bone + ("_l" if sx > 0 else "_r")  # +X = the character's left
 
 
+# --- private mesh helpers (rig.py / lib_painted.py stay untouched) ------------------
+
+def _obj(bm, name: str):
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    obj = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(obj)
+    return obj
+
+
+def _lathe(rings, n: int, name: str = "lathe", ring_fn=None, loop: bool = False):
+    """Surface of revolution around Z. rings: [(rx, ry, z, cy[, cx])] bottom -> top.
+    ring_fn(a, i) -> (dr, dz) shapes single vertices (folds, tatters, notches).
+    loop=False: capped at both ends (closed tube); loop=True: the profile is a closed
+    cross-section (a shell with thickness, e.g. the cape or the brim)."""
+    bm = bmesh.new()
+    vs = []
+    for i, ring in enumerate(rings):
+        rx, ry, z, cy = ring[:4]
+        cx = ring[4] if len(ring) > 4 else 0.0
+        row = []
+        for k in range(n):
+            a = TAU * k / n
+            dr, dz = ring_fn(a, i) if ring_fn else (0.0, 0.0)
+            row.append(bm.verts.new((cx + math.cos(a) * (rx + dr), cy + math.sin(a) * (ry + dr), z + dz)))
+        vs.append(row)
+    m = len(vs)
+    for i in range(m if loop else m - 1):
+        a, b = vs[i], vs[(i + 1) % m]
+        for k in range(n):
+            bm.faces.new((a[k], a[(k + 1) % n], b[(k + 1) % n], b[k]))
+    if not loop:
+        for row in (vs[0], vs[-1]):
+            c = bm.verts.new(sum((v.co for v in row), Vector()) / n)
+            for k in range(n):
+                bm.faces.new((c, row[k], row[(k + 1) % n]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    return _obj(bm, name)
+
+
+def _xf(obj, m: Matrix):
+    obj.data.transform(m)
+    return obj
+
+
+def _frame(origin, fwd, up) -> Matrix:
+    """Matrix mapping local X/Y/Z to (side, fwd, up) at origin (fwd, up need not be orthogonal)."""
+    y = Vector(fwd).normalized()
+    x = y.cross(Vector(up)).normalized()
+    z = x.cross(y)
+    m = Matrix((x, y, z)).transposed().to_4x4()
+    m.translation = Vector(origin)
+    return m
+
+
+def _tint(obj, fn) -> None:
+    """Post-paint pass: fn(co, normal) -> None | (rgb multiplier) | (target sRGB, weight)."""
+    me = obj.data
+    attr = me.color_attributes["Col"]
+    for poly in me.polygons:
+        for li in poly.loop_indices:
+            r = fn(me.vertices[me.loops[li].vertex_index].co, poly.normal)
+            if r is None:
+                continue
+            c = attr.data[li].color
+            if len(r) == 2:
+                tgt, w = r
+                w = min(1.0, max(0.0, w))
+                t = [L._to_lin(x) for x in tgt]
+                attr.data[li].color = (c[0] + (t[0] - c[0]) * w, c[1] + (t[1] - c[1]) * w,
+                                       c[2] + (t[2] - c[2]) * w, 1.0)
+            else:
+                attr.data[li].color = (c[0] * r[0], c[1] * r[1], c[2] * r[2], 1.0)
+
+
+def _tri(x: float) -> float:
+    """Triangle wave: 0 at integers, 1 halfway."""
+    f = x - math.floor(x)
+    return 1.0 - abs(2.0 * f - 1.0)
+
+
+def _smooth01(x: float) -> float:
+    x = min(1.0, max(0.0, x))
+    return x * x * (3.0 - 2.0 * x)
+
+
+def _adiff(a: float, b: float) -> float:
+    return abs((a - b + math.pi) % TAU - math.pi)
+
+
+# --- the long coat ---------------------------------------------------------------------
+
+def coat_r(z: float) -> tuple:
+    """(rx, ry, centre y) of the coat at height z (approved Phase-1 profile)."""
+    t = (z - 0.36) / 0.95
+    r = 0.34 - 0.12 * t
+    return r * (1.0 + 0.1 * (1 - t)), r * 0.78, HUNCH * t * t
+
+
+def _coat():
+    zs = [0.36, 0.41, 0.48, 0.56, 0.65, 0.75, 0.83, 0.855, 0.865, 0.9, 0.99, 1.08, 1.17,
+          1.25, 1.3, 1.345]
+    rings = []
+    for z in zs:
+        rx, ry, cy = coat_r(min(z, 1.31))
+        if z > 1.31:  # round the shoulders in under the cape
+            s = 1.0 - (z - 1.31) * 9.0
+            rx, ry = rx * s, ry * s
+        rings.append((rx, ry, z, cy))
+    front, back = -math.pi / 2, math.pi / 2
+    tatter = [random.uniform(-1, 1) for _ in range(64)]
+
+    def fn(a, i):
+        z = zs[i]
+        skirt = max(0.0, (0.86 - z) / 0.5)
+        dr = 0.012 * math.sin(a * 7.0 + 0.6) * skirt + 0.006 * math.sin(a * 13.0) * skirt   # soft folds
+        aa = a - TAU if a > math.pi else a
+        if z < 0.86 and -math.pi / 2 < aa < -math.pi / 2 + 0.42:  # the left panel overlaps the right
+            dr += 0.01
+        dz = 0.0
+        if i == 0:  # worn, slightly uneven hem; the coat opens at the front, slit at the back
+            dz = 0.012 * tatter[int(a / TAU * 32) % 64]
+            dz += 0.06 * max(0.0, 1.0 - _adiff(a, front) / 0.26)
+            dz += 0.05 * max(0.0, 1.0 - _adiff(a, back) / 0.2)
+        return dr, dz
+
+    coat = _lathe(rings, 32, "coat", fn)
+    L.jitter(coat, 0.01, 3.0, 4)
+    _painted(coat, COAT, var=0.18, ao=0.35, top=0.15, zrange=(0.36, 1.31), seed=5, hue_shift=COAT_DARK)
+
+    def shade(co, n):
+        a = math.atan2(co.y - coat_r(co.z)[2], co.x)
+        if co.z < 0.86 and _adiff(a, front) < 0.09:
+            return (0.5, 0.5, 0.5)                         # front opening seam
+        if co.z < 0.62 and _adiff(a, back) < 0.08:
+            return (0.45, 0.45, 0.45)                      # back slit
+        if _adiff(a, back) < 0.05 and co.z > 0.86:
+            return (0.8, 0.8, 0.8)                         # centre back seam
+        if co.z < 0.45:
+            return MUD, 0.35 * (0.45 - co.z) / 0.09        # dusty hem
+        if co.z > 1.0 and n.y > 0.2:
+            return COAT_WARM, 0.25                         # warm back under the cape
+        return None
+    _tint(coat, shade)
+    return coat
+
+
+def _on_coat(x_sign: float, z: float, a_deg: float, out: float = 0.0) -> Vector:
+    """Point on the coat surface at height z and angle a (0 = +X, -90 = front)."""
+    rx, ry, cy = coat_r(z)
+    a = math.radians(a_deg)
+    return Vector((math.cos(a) * (rx + out) * x_sign, cy + math.sin(a) * (ry + out), z))
+
+
 def build_mesh():
-    """Approved Phase-1 geometry; every part rigidly weighted to one bone.
-    Returns (mesh, lantern position) in model space (before grounding)."""
+    """Every part rigidly weighted to one bone. Returns (mesh, lantern position) in
+    model space; the soles stand exactly on z = 0 (grounding shift ~0)."""
     L.reset(80)
     parts = []
-    # boots (big) and thin legs
+
+    # --- boots with soles, laces, cuffs; thin trouser legs --------------------------
     for sx in (-1, 1):
-        parts.append(W(_side(sx, "leg"), L.part("sphere", BOOT, loc=(sx * 0.11, -0.05, 0.07), scale=(0.085, 0.16, 0.075),
-                                                segments=10, ring_count=6, jit=0.008, seed=1 + sx)))
-        parts.append(W(_side(sx, "leg"), _painted(L.tube((sx * 0.1, 0, 0.1), (sx * 0.1, 0, 0.56), 0.05), TROUSER, seed=3)))
-    # long coat: tapered tube, flared hem, hunched forward
-    coat = L.prim("cyl", loc=(0, 0, 0.88), radius=1.0, depth=1.0, vertices=16)
-    L.subdivide(coat, 3)
-    for v in coat.data.vertices:
-        t = v.co.z - 0.38  # 0 at hem, 1 at shoulders
-        v.co.z = 0.36 + t * 0.95
-        r = 0.34 - 0.12 * t
-        v.co.x *= r * (1.0 + 0.1 * (1 - t))
-        v.co.y *= r * 0.78
-        v.co.y += HUNCH * t * t
-    L.jitter(coat, 0.018, 3.0, 4)
-    parts.append(rig.weight_split_z(_painted(coat, COAT, var=0.18, ao=0.35, top=0.15, zrange=(0.36, 1.31), seed=5,
-                                             hue_shift=COAT_DARK), WAIST_Z, "hips", "spine"))
-    # coat front opening (dark strip) and belt
-    parts.append(W("hips", L.part("cube", COAT_DARK, loc=(0, HUNCH * 0.35 - 0.205, 0.66), scale=(0.025, 0.02, 0.3),
-                                  rot=(-6, 0, 0))))
-    parts.append(W("hips", L.part("torus", L.hexc("#2A2420"), loc=(0, HUNCH * 0.3, 0.86), major_radius=0.265,
-                                  minor_radius=0.025, major_segments=16, minor_segments=4, scale=(1, 0.8, 1))))
-    # ragged shoulder cape: reads from the top-down camera
-    cape = L.prim("cone", loc=(0, HUNCH, 1.2), radius1=0.36, radius2=0.12, depth=0.28, vertices=14)
-    for v in cape.data.vertices:
-        if v.co.z < 1.1:  # ragged hem
-            a = math.atan2(v.co.y - HUNCH, v.co.x)
-            v.co.z -= 0.04 * (0.5 + 0.5 * math.sin(a * 5.0))
-    L.jitter(cape, 0.015, 3.0, 13)
-    parts.append(W("spine", _painted(cape, CAPE, var=0.2, ao=0.25, top=0.2, seed=14)))
-    # scarf (the one warm accent on the character)
-    parts.append(W("spine", L.part("torus", SCARF, loc=(0, HUNCH - 0.01, 1.36), major_radius=0.12, minor_radius=0.05,
-                                   major_segments=14, minor_segments=6, jit=0.01, seed=6)))
-    parts.append(W("spine", L.part("cube", SCARF, loc=(0.07, HUNCH - 0.15, 1.2), scale=(0.045, 0.02, 0.14),
-                                   rot=(8, 0, -6), jit=0.008, seed=7)))
-    # arms hanging slightly forward, sleeves with cuffs, hands
+        leg = _side(sx, "leg")
+        x = sx * 0.11
+        foot = L.prim("sphere", loc=(x, -0.06, 0.075), scale=(0.085, 0.16, 0.07), segments=14, ring_count=8)
+        for v in foot.data.vertices:  # flat underside, round toe cap turning up a little
+            v.co.z = max(v.co.z, 0.03)
+            if v.co.y < -0.12:
+                v.co.z += (-(v.co.y + 0.12)) * 0.25
+        L.jitter(foot, 0.005, 4.0, 1 + sx)
+        parts.append(W(leg, _painted(foot, BOOT, var=0.14, top=0.3, seed=1 + sx)))
+        sole = L.prim("sphere", loc=(x, -0.057, 0.03), scale=(0.093, 0.168, 0.03), segments=14, ring_count=6)
+        for v in sole.data.vertices:
+            v.co.z = min(max(0.0, v.co.z), 0.036)
+            if v.co.y < -0.13:
+                v.co.z += (-(v.co.y + 0.13)) * 0.22     # sole follows the toe spring
+        parts.append(W(leg, _painted(sole, SOLE, var=0.1, ao=0.0, seed=2)))
+        shaft = L.prim("cyl", loc=(x, 0.0, 0.125), radius=0.058, depth=0.15, vertices=12)
+        L.taper(shaft, 0.05, 0.2, 1.12)
+        parts.append(W(leg, _painted(shaft, BOOT, var=0.14, ao=0.2, seed=3 + sx)))
+        parts.append(W(leg, L.part("torus", L.scale_c(BOOT, 1.25), loc=(x, 0.0, 0.2), major_radius=0.064,
+                                   minor_radius=0.014, major_segments=12, minor_segments=4, jit=0.004, seed=4)))
+        for k in range(2):  # criss-cross laces on the instep
+            ly, lz = -0.08 - 0.035 * k, 0.116 - 0.014 * k
+            for s in (-1, 1):
+                lace = L.prim("cube", loc=(x, ly, lz), scale=(0.035, 0.005, 0.004), rot=(-22, 0, s * 28))
+                parts.append(W(leg, _painted(lace, LACE, var=0.1, ao=0.0, top=0.3, seed=5)))
+        tr = L.tube((sx * 0.1, 0, 0.19), (sx * 0.1, 0, 0.62), 0.052, 12, r_end=0.058)
+        parts.append(W(leg, _painted(tr, TROUSER, var=0.15, seed=3)))
+
+    # --- long coat, belt with buckle, buttons, pockets ------------------------------
+    parts.append(rig.weight_split_z(_coat(), WAIST_Z, "hips", "spine"))
+    # front edge strip + back slit (a little proud, dark)
+    for z0, z1, a in ((0.4, 0.84, -90.0), (0.42, 0.62, 90.0)):
+        p0, p1 = _on_coat(1, z0, a, 0.004), _on_coat(1, z1, a, 0.004)
+        parts.append(W("hips", _painted(L.tube(p0, p1, 0.009, 6), COAT_DARK, var=0.1, ao=0.0, seed=17)))
+    belt_rings = []
+    for z, out in ((0.832, 0.010), (0.842, 0.018), (0.878, 0.018), (0.888, 0.010)):
+        rx, ry, cy = coat_r(z)
+        belt_rings.append((rx + out, ry + out, z, cy))
+    belt = _lathe(belt_rings, 40, "belt")
+    parts.append(W("hips", _painted(belt, LEATHER, var=0.2, ao=0.0, top=0.3, seed=18)))
+    bp = _on_coat(1, 0.86, -96, 0.026)
+    buckle = L.prim("torus", major_radius=0.034, minor_radius=0.007, major_segments=4, minor_segments=4,
+                    rot=(90, 45, 0), scale=(1.0, 1.0, 1.25))
+    _xf(buckle, Matrix.Translation(bp))
+    parts.append(W("hips", _painted(buckle, BRASS, var=0.25, ao=0.0, top=0.4, seed=19)))
+    for z in (0.52, 0.64, 0.76, 0.94, 1.02):  # buttons along the overlapping left panel
+        bone = "hips" if z < WAIST_Z else "spine"
+        p = _on_coat(1, z, -80, 0.012)
+        parts.append(W(bone, L.part("sphere", BRASS, loc=p, radius=0.014, segments=6, ring_count=4,
+                                    scale=(1, 0.55, 1), paint_kw={"ao": 0.0, "top": 0.5})))
+    for sx in (-1, 1):  # flap pockets on the hips (behind the lantern on the left)
+        a = -50.0 if sx < 0 else -40.0
+        p = _on_coat(sx, 0.7, a, 0.01)
+        flap = L.prim("cube", scale=(0.075, 0.012, 0.03))
+        L.bevel(flap, 0.006, 1)
+        nrm = Vector((p.x, (p.y - coat_r(0.7)[2]) * 1.6, 0.0)).normalized()
+        _xf(flap, Matrix.Translation(p) @ Vector((0, -1, 0)).rotation_difference(nrm).to_matrix().to_4x4()
+            @ Matrix.Rotation(math.radians(-8), 4, "X"))
+        parts.append(W("hips", _painted(flap, COAT_DARK, var=0.15, ao=0.0, top=0.3, seed=20)))
+
+    # --- ragged shoulder cape, two layers (reads from the top-down camera) ------------
+    cape_prof = ((1.05, 0.39), (1.12, 0.375), (1.19, 0.345), (1.25, 0.3), (1.3, 0.235), (1.335, 0.165),
+                 (1.355, 0.125))
+    cape_sy = 0.8
+
+    def cape_r(z):
+        """Outer x radius of the lower cape: draped over the shoulders, closing at the neck."""
+        for (z0, r0), (z1, r1) in zip(cape_prof, cape_prof[1:]):
+            if z <= z1:
+                return r0 + (r1 - r0) * (z - z0) / (z1 - z0)
+        return cape_prof[-1][1]
+
+    def cape(zs, extra, n_tat, depth, seed, name, n=40):
+        th = 0.016
+        prof = [(cape_r(z) + extra, z) for z in zs] + [(0.125 + extra * 0.3, 1.355)]
+        outer = [(r, r * cape_sy, z, HUNCH) for r, z in prof]
+        inner = [(r - th, (r - th) * cape_sy, z - th * 0.5, HUNCH) for r, z in reversed(prof)]
+        rings = outer + inner
+        m = len(rings)
+        rnd = random.Random(seed)
+        lens = [rnd.uniform(0.5, 1.0) for _ in range(n_tat)]
+        phase = rnd.uniform(0, 1)
+        z_hem = zs[0]
+
+        def fold(a, z):
+            return math.sin(a * 8.0 + seed) * max(0.0, 1.0 - (z - z_hem) / 0.22)
+
+        def fn(a, i):
+            f = 0.012 * fold(a, rings[i][2])   # draped folds
+            if i not in (0, m - 1):
+                return f, 0.0
+            u = a / TAU * n_tat + phase
+            k = int(math.floor(u)) % n_tat
+            v = _tri(u)                      # 0 between tatters, 1 at a tatter's point
+            return f + 0.01 * v, -depth * lens[k] * v ** 1.5
+        obj = _lathe(rings, n, name, fn, loop=True)
+        L.jitter(obj, 0.008, 3.5, seed)
+        return obj, fold
+
+    def cape_shade(fold, z_tip):
+        def fn(co, n):
+            f = 1.0 + 0.12 * fold(math.atan2(co.y - HUNCH, co.x), co.z)   # painted fold light/shadow
+            if co.z < z_tip:
+                f *= 0.74                                                  # frayed, darker tips
+            return (f, f, f * 1.02)
+        return fn
+    cape_lo, fold_lo = cape([1.05, 1.12, 1.19, 1.25, 1.3, 1.335], 0.0, 11, 0.075, 13, "cape")
+    _painted(cape_lo, CAPE, var=0.2, ao=0.3, top=0.2, seed=14, zrange=(0.98, 1.36))
+    _tint(cape_lo, cape_shade(fold_lo, 1.03))
+    parts.append(W("spine", cape_lo))
+    cape_hi, fold_hi = cape([1.17, 1.23, 1.29, 1.325], 0.02, 9, 0.05, 21, "capelet", 36)
+    _painted(cape_hi, CAPE_MOSS, var=0.22, ao=0.2, top=0.25, seed=22, zrange=(1.1, 1.36), hue_shift=CAPE)
+    _tint(cape_hi, cape_shade(fold_hi, 1.15))
+    parts.append(W("spine", cape_hi))
+
+    def on_cape(x, z, side, out=0.014):
+        """Point on the capelet surface (side -1 = front, +1 = back) + outward normal."""
+        rx = cape_r(z) + 0.02 + out
+        ry = rx * cape_sy
+        y = HUNCH + side * ry * math.sqrt(max(0.0, 1.0 - (x / rx) ** 2))
+        nrm = Vector((x / rx ** 2, (y - HUNCH) / ry ** 2, 0.25)).normalized()
+        return Vector((x, y, z)), nrm
+
+    # --- scarf: wrapped twice, knot and two fringed tails (the one warm accent) -------
+    for k, (rz, tilt, mr) in enumerate(((1.355, 6, 0.125), (1.39, -5, 0.115))):
+        ring = L.prim("torus", loc=(0, HUNCH - 0.01, rz), rot=(tilt, 3 * k, 0), major_radius=mr, minor_radius=0.05,
+                      major_segments=16, minor_segments=6, scale=(1.0, 0.92, 1.0))
+        L.jitter(ring, 0.008, 5.0, 6 + k)
+        parts.append(W("spine", _painted(ring, SCARF, var=0.14, ao=0.25, top=0.2, seed=6 + k,
+                                         hue_shift=L.mix(SCARF, SCARF_DARK, 0.6))))
+    knot_p = Vector((0.09, HUNCH - 0.115, 1.335))
+    knot = L.prim("sphere", loc=knot_p, radius=0.045, segments=12, ring_count=8, scale=(1.0, 0.8, 0.9))
+    L.jitter(knot, 0.006, 6.0, 8)
+    parts.append(W("spine", _painted(knot, SCARF, var=0.12, ao=0.0, top=0.25, seed=8)))
+
+    def tail(path, width, seed, fringe_col):
+        """A cloth strip along a polyline (list of points + side vector) with a fringe."""
+        bm = bmesh.new()
+        rows = []
+        for p, side, nrm in path:
+            p, side, nrm = Vector(p), Vector(side).normalized(), Vector(nrm).normalized()
+            rows.append([bm.verts.new(p + side * width * s + nrm * 0.008 * t)
+                         for s, t in ((-1, 1), (1, 1), (1, -1), (-1, -1))])
+        for a, b in zip(rows, rows[1:]):
+            for k in range(4):
+                bm.faces.new((a[k], a[(k + 1) % 4], b[(k + 1) % 4], b[k]))
+        bm.faces.new(rows[0])
+        bm.faces.new(list(reversed(rows[-1])))
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+        obj = _obj(bm, "scarf_tail")
+        L.jitter(obj, 0.004, 8.0, seed)
+        _painted(obj, SCARF, var=0.14, ao=0.0, top=0.2, seed=seed, hue_shift=L.mix(SCARF, SCARF_DARK, 0.5))
+        _tint(obj, lambda co, n: ((0.8, 0.8, 0.8) if int((co.x + co.y) * 60) % 3 == 0 else None))
+        out = [obj]
+        end, side, nrm = (Vector(x) for x in path[-1])
+        prev = Vector(path[-2][0])
+        down = (end - prev).normalized()
+        for f in range(5):  # fringe
+            s = (f / 4.0 - 0.5) * 2 * width * 0.85
+            a = end + side.normalized() * s
+            out.append(_painted(L.tube(a, a + down * (0.035 + 0.01 * (f % 2)), 0.0055, 4, r_end=0.003),
+                                fringe_col, var=0.1, ao=0.0, seed=seed + f))
+        return out
+    # front tail hangs from the knot over the cape, swinging a little to his left
+    front_path = [((0.1, HUNCH - 0.15, 1.315), (1, 0.1, 0.2), (0.2, -1, 0))]
+    for x, z in ((0.13, 1.25), (0.16, 1.18), (0.185, 1.115)):
+        p, nrm = on_cape(x, z, -1)
+        front_path.append((p, (1, -0.2, 0.1), nrm))
+    for o in tail(front_path, 0.04, 23, SCARF_DARK):
+        parts.append(W("spine", o))
+    # second tail tossed back over the left shoulder (reads when he walks away)
+    back_path = [((0.1, HUNCH + 0.05, 1.41), (0.3, -1, 0), (0.3, 0.2, 1))]
+    for x, z in ((0.13, 1.345), (0.15, 1.3), (0.165, 1.24), (0.175, 1.18), (0.18, 1.12)):
+        p, nrm = on_cape(x, z, 1)
+        back_path.append((p, (1, -0.3, 0), nrm))
+    for o in tail(back_path, 0.038, 24, SCARF_DARK):
+        parts.append(W("spine", o))
+
+    # --- arms: sleeves with turned-up cuffs, knobbly bare hands with thumbs -----------
     for sx in (-1, 1):
         bone = _side(sx, "arm")
         sh = Vector((sx * 0.25, HUNCH * 0.9, 1.22))
         wrist = Vector((sx * 0.31, HUNCH - 0.1, 0.8))
-        parts.append(W(bone, _painted(L.tube(sh, wrist, 0.065, 8, r_end=0.075), COAT, var=0.15, ao=0.2, seed=8)))
-        parts.append(W(bone, L.part("torus", COAT_DARK, loc=wrist, major_radius=0.07, minor_radius=0.02,
-                                    major_segments=10, minor_segments=4)))
-        parts.append(W(bone, L.part("sphere", SKIN, loc=wrist - Vector((0, 0.01, 0.06)), radius=0.052, segments=10,
-                                    ring_count=6, scale=(0.8, 1, 1.15), paint_kw={"ao": 0.2})))
-    # head: long nose, beard, eyes in the shadow of the hat
+        elbow = sh.lerp(wrist, 0.5) + Vector((sx * 0.012, 0.025, 0))
+        parts.append(W(bone, _painted(L.tube(sh - Vector((sx * 0.02, 0, 0.0)), elbow, 0.066, 12, r_end=0.066),
+                                      COAT, var=0.15, ao=0.2, seed=8)))
+        parts.append(W(bone, _painted(L.tube(elbow, wrist, 0.066, 12, r_end=0.076), COAT, var=0.15, ao=0.2, seed=9)))
+        parts.append(W(bone, L.part("sphere", COAT, loc=elbow, radius=0.066, segments=10, ring_count=5,
+                                    paint_kw={"ao": 0.2})))
+        cuff = L.tube(wrist + (wrist - elbow).normalized() * -0.02, wrist + (wrist - elbow).normalized() * 0.015,
+                      0.083, 12, r_end=0.088)
+        parts.append(W(bone, _painted(cuff, COAT_DARK, var=0.15, ao=0.0, top=0.3, seed=10)))
+        hand_c = wrist - Vector((0, 0.012, 0.062))
+        palm = L.prim("sphere", loc=hand_c, radius=0.05, segments=10, ring_count=7, scale=(0.72, 1.0, 1.12))
+        L.jitter(palm, 0.004, 12.0, 11 + sx)
+        parts.append(W(bone, _painted(palm, SKIN, ao=0.25, var=0.08, seed=11)))
+        fingers = L.prim("sphere", loc=hand_c + Vector((0, -0.012, -0.045)), radius=0.036, segments=8,
+                         ring_count=5, scale=(0.78, 1.1, 0.9))
+        L.jitter(fingers, 0.004, 14.0, 12 + sx)
+        parts.append(W(bone, _painted(fingers, L.mix(SKIN, BLUSH, 0.25), ao=0.2, var=0.08, seed=12)))
+        thumb = L.tube(hand_c + Vector((-sx * 0.022, -0.03, 0.02)), hand_c + Vector((-sx * 0.03, -0.06, -0.025)),
+                       0.015, 8, r_end=0.012)
+        parts.append(W(bone, _painted(thumb, SKIN, ao=0.0, var=0.06, seed=13)))
+        parts.append(W(bone, L.part("sphere", SKIN, loc=hand_c + Vector((-sx * 0.03, -0.06, -0.025)), radius=0.013,
+                                    segments=6, ring_count=4, paint_kw={"ao": 0.0})))
+
+    # --- head: melancholic-kind face that reads under the brim --------------------------
     head_c = Vector((0, HUNCH - 0.07, 1.5))
-    parts.append(W("head", L.part("sphere", SKIN, loc=head_c, radius=0.15, segments=14, ring_count=10,
-                                  scale=(0.95, 1, 1.08), paint_kw={"ao": 0.15, "var": 0.06})))
-    parts.append(W("head", L.part("cone", L.scale_c(SKIN, 0.92), loc=head_c + Vector((0, -0.19, -0.03)), radius1=0.05,
-                                  depth=0.18, vertices=10, rot=(78, 0, 0))))
-    parts.append(W("head", L.part("sphere", BEARD, loc=head_c + Vector((0, -0.1, -0.13)), radius=0.1, segments=12,
-                                  ring_count=8, scale=(0.95, 0.6, 0.8), jit=0.015, seed=9)))
+    head = L.prim("sphere", loc=head_c, radius=0.15, segments=20, ring_count=12, scale=(0.95, 1, 1.08))
+    for v in head.data.vertices:  # cheekbones, a slightly longer jaw
+        d = v.co - head_c
+        if d.y < -0.05 and -0.06 < d.z < 0.03:
+            v.co.x *= 1.0 + 0.08 * _smooth01((abs(d.x) - 0.04) / 0.06)
+        if d.z < -0.06:
+            v.co.z -= 0.012
+    _painted(head, SKIN, ao=0.15, var=0.06, seed=30, zrange=(head_c.z - 0.17, head_c.z + 0.16))
+
+    def face_tint(co, n):
+        d = co - head_c
+        for sx in (-1, 1):  # soft cheek blush and shadowed eye sockets
+            if (Vector((d.x - sx * 0.075, d.y + 0.12, d.z + 0.03))).length < 0.05:
+                return BLUSH, 0.45
+            if (Vector((d.x - sx * 0.058, d.y + 0.13, d.z - 0.035))).length < 0.04:
+                return (0.8, 0.74, 0.74)
+        return None
+    _tint(head, face_tint)
+    parts.append(W("head", head))
+    # long, droopy nose with a round tip and nostril wings
+    nb = head_c + Vector((0, -0.125, 0.03))
+    nm = head_c + Vector((0, -0.215, -0.015))
+    nt = head_c + Vector((0, -0.262, -0.05))
+    for a, b, r0, r1 in ((nb, nm, 0.034, 0.03), (nm, nt, 0.03, 0.026)):
+        parts.append(W("head", _painted(L.tube(a, b, r0, 12, r_end=r1), L.scale_c(SKIN, 0.95), ao=0.0, var=0.05,
+                                        seed=31)))
+    parts.append(W("head", L.part("sphere", L.mix(SKIN, BLUSH, 0.35), loc=nm, radius=0.031, segments=10,
+                                  ring_count=6, paint_kw={"ao": 0.0})))
+    parts.append(W("head", L.part("sphere", L.mix(SKIN, BLUSH, 0.5), loc=nt, radius=0.034, segments=12,
+                                  ring_count=8, scale=(1.05, 1.0, 0.95), paint_kw={"ao": 0.0, "var": 0.04})))
     for sx in (-1, 1):
-        parts.append(W("head", L.part("sphere", L.hexc("#1B1715"), loc=head_c + Vector((sx * 0.06, -0.135, 0.03)),
-                                      radius=0.02, segments=6, ring_count=4)))
-    # wide, floppy, crooked hat (low crown)
-    brim = L.prim("cyl", loc=head_c + Vector((0, 0, 0.11)), radius=0.38, depth=0.025, vertices=24)
-    L.subdivide(brim, 1)
+        parts.append(W("head", L.part("sphere", L.mix(SKIN, BLUSH, 0.3), loc=nt + Vector((sx * 0.026, 0.02, -0.006)),
+                                      radius=0.016, segments=8, ring_count=5, paint_kw={"ao": 0.0})))
+    for sx in (-1, 1):
+        ec = head_c + Vector((sx * 0.058, -0.128, 0.035))
+        # eyeball, a warm glint, a heavy drooping lid (kind, a little tired)
+        parts.append(W("head", L.part("sphere", EYE, loc=ec, radius=0.024, segments=10, ring_count=6,
+                                      paint_kw={"ao": 0.0, "top": 0.0, "var": 0.0})))
+        parts.append(W("head", L.part("sphere", (0.93, 0.9, 0.84), loc=ec + Vector((sx * 0.008, -0.021, -0.004)),
+                                      radius=0.0068, segments=6, ring_count=4,
+                                      paint_kw={"ao": 0.0, "top": 0.0, "var": 0.0})))
+        lid = L.prim("sphere", radius=0.0275, segments=10, ring_count=6)
+        for v in lid.data.vertices:
+            v.co.z = max(v.co.z, 0.002)
+        _xf(lid, Matrix.Translation(ec + Vector((0, 0.002, 0.001))) @ Matrix.Rotation(math.radians(sx * 14), 4, "Y")
+            @ Matrix.Rotation(math.radians(8), 4, "X"))
+        parts.append(W("head", _painted(lid, L.scale_c(SKIN, 0.9), ao=0.0, var=0.04, seed=32)))
+        # bushy brows, the inner ends raised (melancholic-kind)
+        brow = L.prim("sphere", radius=1.0, segments=10, ring_count=6, scale=(0.056, 0.024, 0.021))
+        L.jitter(brow, 0.005, 40.0, 33 + sx)
+        _xf(brow, Matrix.Translation(head_c + Vector((sx * 0.066, -0.146, 0.062)))
+            @ Matrix.Rotation(math.radians(sx * 16), 4, "Y") @ Matrix.Rotation(math.radians(sx * 12), 4, "Z"))
+        parts.append(W("head", _painted(brow, BROW, ao=0.0, var=0.12, top=0.3, seed=34)))
+        # ears and grey hair tufts poking out under the hat
+        parts.append(W("head", L.part("sphere", L.mix(SKIN, BLUSH, 0.2), loc=head_c + Vector((sx * 0.142, 0.0, 0.0)),
+                                      radius=0.035, segments=10, ring_count=6, scale=(0.45, 0.8, 1.2),
+                                      paint_kw={"ao": 0.0})))
+        for k, (dy, dz, ln) in enumerate(((0.03, 0.05, 0.07), (0.08, 0.04, 0.08), (0.12, 0.02, 0.06))):
+            root = head_c + Vector((sx * 0.13, dy, dz))
+            tip = root + Vector((sx * 0.05, 0.02, -ln))
+            parts.append(W("head", _painted(L.tube(root, tip, 0.024, 6, r_end=0.006), BEARD, ao=0.0, var=0.12,
+                                            seed=35 + k)))
+    for k, dx in enumerate((-0.06, 0.06)):  # short hair at the back (the scarf collar stays visible)
+        root = head_c + Vector((dx, 0.125, 0.045))
+        parts.append(W("head", _painted(L.tube(root, root + Vector((dx * 0.5, 0.04, -0.06)), 0.026, 6, r_end=0.007),
+                                        BEARD, ao=0.0, var=0.12, seed=38 + k)))
+    # full grey beard with a drooping moustache
+    beard = L.prim("sphere", loc=head_c + Vector((0, -0.095, -0.12)), radius=0.1, segments=14, ring_count=9,
+                   scale=(1.02, 0.66, 0.92))
+    for v in beard.data.vertices:  # a gentle point at the chin, fuller on the cheeks
+        d = v.co - (head_c + Vector((0, -0.095, -0.12)))
+        if d.z < -0.03:
+            v.co.x *= 1.0 - 0.35 * _smooth01((-d.z - 0.03) / 0.06)
+            v.co.z -= 0.02 * _smooth01((-d.z - 0.03) / 0.06)
+    L.jitter(beard, 0.013, 14.0, 9)
+    _painted(beard, BEARD, var=0.16, ao=0.35, top=0.3, seed=9)
+    _tint(beard, lambda co, n: (1.12, 1.12, 1.1) if n.z > 0.3 else None)
+    parts.append(W("head", beard))
+    for sx in (-1, 1):
+        mo = L.prim("sphere", radius=1.0, segments=10, ring_count=6, scale=(0.05, 0.022, 0.02))
+        L.jitter(mo, 0.004, 30.0, 40 + sx)
+        _xf(mo, Matrix.Translation(head_c + Vector((sx * 0.04, -0.19, -0.075)))
+            @ Matrix.Rotation(math.radians(sx * 30), 4, "Y") @ Matrix.Rotation(math.radians(sx * 18), 4, "Z"))
+        parts.append(W("head", _painted(mo, L.scale_c(BROW, 1.02), ao=0.0, var=0.1, top=0.3, seed=41)))
+
+    # --- wide, floppy, crooked hat with pinched crown, worn brim, patch and feather ------
+    hat_parts = []
+
+    def droop(x, y):
+        d = math.hypot(x, y) / 0.39
+        a = math.atan2(y, x)
+        return -0.072 * d * d * (0.6 + 0.4 * math.sin(a * 2.0 + 0.7)) + 0.008 * math.sin(a * 3.0 + 1.0) * d
+
+    brim_prof = [(0.15, 0.0), (0.27, 0.0), (0.365, 0.0), (0.385, 0.006), (0.396, 0.0), (0.39, -0.012),
+                 (0.36, -0.016), (0.27, -0.016), (0.15, -0.016)]
+    notch = [random.uniform(0, 1) for _ in range(64)]
+
+    def brim_fn(a, i):
+        if i in (3, 4, 5):  # worn edge: a few nicks and a wavy rim
+            k = int(a / TAU * 48) % 64
+            return -0.012 * max(0.0, notch[k] - 0.8) * 5.0, 0.0
+        return 0.0, 0.0
+    brim = _lathe([(r, r, z, 0.0) for r, z in brim_prof], 48, "brim", brim_fn, loop=True)
     for v in brim.data.vertices:
-        rel = Vector((v.co.x - head_c.x, v.co.y - head_c.y))
-        d = rel.length / 0.38
-        a = math.atan2(rel.y, rel.x)
-        v.co.z -= 0.07 * d * d * (0.6 + 0.4 * math.sin(a * 2.0 + 0.7))   # floppy droop
-    L.jitter(brim, 0.012, 3.0, 10)
-    crown = L.prim("cyl", loc=head_c + Vector((0, 0.01, 0.2)), radius=0.17, depth=0.18, vertices=12)
-    L.subdivide(crown, 2)
-    L.taper(crown, head_c.z + 0.11, head_c.z + 0.29, 0.72)
-    L.bend(crown, 0.08, head_c.z + 0.11, head_c.z + 0.3)
-    for v in crown.data.vertices:  # dented top
-        if v.co.z > head_c.z + 0.27:
-            v.co.z -= 0.03
-    L.jitter(crown, 0.012, 3.0, 11)
-    band = L.prim("cyl", loc=head_c + Vector((0, 0.01, 0.145)), radius=0.172, depth=0.045, vertices=12)
-    for o, c in ((brim, HAT), (crown, HAT), (band, HAT_BAND)):
-        parts.append(W("head", _painted(o, c, var=0.18, ao=0.1, top=0.22, seed=12)))
-    # shovel strapped diagonally to the back (blade up behind the left shoulder)
-    back_y = 0.24
-    parts.append(W("spine", _painted(L.tube((0.24, back_y - 0.04, 0.5), (-0.34, back_y + 0.05, 1.3), 0.022, 6), WOOD,
-                                     seed=15)))
-    blade = L.prim("cyl", loc=(-0.42, back_y + 0.06, 1.42), radius=0.1, depth=0.02, vertices=12,
-                   scale=(1.0, 1.0, 1.35), rot=(90, 36, 0))  # rounded spade
-    L.jitter(blade, 0.006, 5.0, 16)
-    parts.append(W("spine", _painted(blade, IRON, var=0.3, hue_shift=L.hexc("#6A4A3A"), seed=16)))
-    parts.append(W("spine", L.part("torus", L.hexc("#2A2420"), loc=(0, back_y * 0.5 + HUNCH * 0.5, 1.02), rot=(0, 34, 0),
-                                   major_radius=0.3, minor_radius=0.014, major_segments=16, minor_segments=4,
-                                   scale=(1, 0.75, 1))))
-    # lantern on the belt (right hip)
-    lp = Vector((0.31, HUNCH * 0.3 - 0.07, 0.72))
-    parts.append(W("hips", L.part("cube", IRON, loc=lp + Vector((0, 0, 0.07)), scale=(0.045, 0.045, 0.012))))
-    parts.append(W("hips", L.part("cube", IRON, loc=lp - Vector((0, 0, 0.07)), scale=(0.045, 0.045, 0.012))))
+        v.co.z += droop(v.co.x, v.co.y)
+    L.jitter(brim, 0.006, 3.0, 10)
+    _painted(brim, HAT, var=0.18, ao=0.0, top=0.22, seed=12)
+    _tint(brim, lambda co, n: (HAT_DUST, 0.55 * _smooth01((math.hypot(co.x, co.y) - 0.33) / 0.06))
+          if math.hypot(co.x, co.y) > 0.33 else None)
+    hat_parts.append(brim)
+    crown_prof = [(r, z * 0.93) for r, z in ((0.172, -0.01), (0.17, 0.04), (0.163, 0.09), (0.15, 0.13),
+                                              (0.135, 0.16), (0.118, 0.178), (0.09, 0.186), (0.05, 0.178),
+                                              (0.02, 0.17))]
+    pinch = (-math.pi / 2 - 0.5, -math.pi / 2 + 0.5)
+
+    def crown_fn(a, i):
+        top = max(0.0, (crown_prof[i][1] - 0.08) / 0.1)
+        dr = sum(-0.03 * top * max(0.0, 1.0 - _adiff(a, p) / 0.45) for p in pinch)
+        dz = -0.03 * top * math.sin(a) ** 2 * (crown_prof[i][0] < 0.1)  # front-to-back crease
+        return dr, dz
+    crown = _lathe([(r, r * 0.97, z, 0.01) for r, z in crown_prof], 32, "crown", crown_fn)
+    L.bend(crown, 0.08, 0.0, 0.19)
+    L.jitter(crown, 0.008, 4.0, 11)
+    _painted(crown, HAT, var=0.18, ao=0.12, top=0.05, seed=12, zrange=(0.0, 0.19))  # low top: no faceting
+    _tint(crown, lambda co, n: (HAT_DUST, 0.4) if n.z > 0.75 and co.z > 0.15 else None)
+    hat_parts.append(crown)
+    band = _lathe([(0.174, 0.169, 0.003, 0.01), (0.177, 0.172, 0.02, 0.01), (0.176, 0.171, 0.042, 0.01),
+                   (0.172, 0.167, 0.05, 0.01)], 32, "band")
+    L.bend(band, 0.08, 0.0, 0.19)
+    hat_parts.append(_painted(band, HAT_BAND, var=0.16, ao=0.0, top=0.3, seed=25))
+    # stitched patch on the front-right brim
+    px, py = -0.24, -0.16
+    pz = droop(px, py) + 0.009
+    slope = Vector((droop(px + 0.01, py) - droop(px - 0.01, py), droop(px, py + 0.01) - droop(px, py - 0.01))) / 0.02
+    pm = Matrix.Translation((px, py, pz)) @ Vector((0, 0, 1)).rotation_difference(
+        Vector((-slope.x, -slope.y, 1)).normalized()).to_matrix().to_4x4() @ Matrix.Rotation(0.4, 4, "Z")
+    patch = L.prim("cube", scale=(0.05, 0.042, 0.004))
+    hat_parts.append(_painted(_xf(patch, pm), PATCH, var=0.2, ao=0.0, top=0.2, seed=26))
+    for sx, sy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        for k in (-1, 1):
+            if sx:
+                loc = (sx * 0.05, k * 0.022, 0.005)
+                rot = 0
+            else:
+                loc = (k * 0.026, sy * 0.042, 0.005)
+                rot = 90
+            st = L.prim("cube", loc=loc, scale=(0.003, 0.009, 0.0025), rot=(0, 0, rot))
+            hat_parts.append(_painted(_xf(st, pm), THREAD, var=0.05, ao=0.0, top=0.0, seed=27))
+    # a crow feather tucked into the band on his left, sweeping back
+    fp = Vector((0.16, 0.06, 0.03))
+    fm = _frame(fp, (0.4, 1.0, 0.1), (0.3, -0.1, 1.0))
+    vane = L.prim("sphere", loc=(0, 0.11, 0), radius=1.0, segments=10, ring_count=8, scale=(0.028, 0.12, 0.006))
+    for v in vane.data.vertices:  # asymmetric, slightly curved vane
+        v.co.x += 0.25 * (v.co.y - 0.11) ** 2 * 3.0
+    hat_parts.append(_painted(_xf(vane, fm), FEATHER, var=0.2, ao=0.0, top=0.3, seed=28,
+                              hue_shift=L.hexc("#5E6660")))
+    _tint(hat_parts[-1], lambda co, n: (1.5, 1.5, 1.45) if (fm.inverted() @ co).y > 0.2 else None)
+    hat_parts.append(_painted(_xf(L.tube((0, -0.03, 0), (0, 0.23, 0), 0.0035, 4), fm), THREAD, var=0.05, ao=0.0,
+                              seed=29))
+    # the whole hat sits a little crooked on the head
+    hm = (Matrix.Translation(head_c + Vector((0, 0, 0.11))) @ Matrix.Rotation(math.radians(-8), 4, "X")
+          @ Matrix.Rotation(math.radians(4), 4, "Y"))
+    for o in hat_parts:
+        parts.append(W("head", _xf(o, hm)))
+
+    # --- shovel strapped diagonally to the back (blade up behind the right shoulder) --------
+    back_y = 0.25
+    g0 = Vector((0.25, back_y - 0.05, 0.49))
+    g1 = Vector((-0.34, back_y + 0.06, 1.3))
+    d = (g1 - g0).normalized()
+    parts.append(W("spine", _painted(L.tube(g0, g1, 0.021, 10), WOOD, var=0.22, seed=15, hue_shift=L.hexc("#5A4230"))))
+    # D-grip at the lower end
+    sm = _frame(g0, d, (0, 1, 0))
+    grip = L.prim("torus", loc=(0, -0.05, 0), major_radius=0.04, minor_radius=0.011, major_segments=12,
+                  minor_segments=4, rot=(0, 90, 0), scale=(1, 1.1, 1))
+    parts.append(W("spine", _painted(_xf(grip, sm), WOOD, var=0.2, ao=0.0, top=0.3, seed=16)))
+    parts.append(W("spine", _painted(_xf(L.tube((0, -0.012, 0), (0, 0.03, 0), 0.024, 8), sm), IRON, var=0.2, ao=0.0,
+                                     seed=16)))
+    # iron socket and a rounded spade blade (normal facing out of his back)
+    bm_ = _frame(g1, d, (0, 1, 0.0))
+    parts.append(W("spine", _painted(_xf(L.tube((0, -0.02, 0), (0, 0.08, 0), 0.024, 10, r_end=0.03), bm_), IRON,
+                                     var=0.25, ao=0.0, seed=17)))
+    outline = []
+    for k in range(17):
+        t = k / 16.0
+        a = math.pi * (1.0 - t)
+        outline.append((math.cos(a) * 0.1, 0.2 + math.sin(a) * 0.14))   # rounded point
+    outline = [(-0.105, 0.075), (-0.1, 0.2)] + outline[1:-1] + [(0.1, 0.2), (0.105, 0.075), (0.03, 0.07),
+                                                                  (-0.03, 0.07)]
+    bmb = bmesh.new()
+    top = [bmb.verts.new((x, y, 0.006)) for x, y in outline]
+    bot = [bmb.verts.new((x, y, -0.006)) for x, y in outline]
+    bmb.faces.new(top)
+    bmb.faces.new(list(reversed(bot)))
+    n_ = len(outline)
+    for k in range(n_):
+        bmb.faces.new((top[k], bot[k], bot[(k + 1) % n_], top[(k + 1) % n_]))
+    bmesh.ops.recalc_face_normals(bmb, faces=bmb.faces[:])
+    blade = _obj(bmb, "blade")
+    for v in blade.data.vertices:  # dished
+        v.co.z += 0.9 * v.co.x ** 2
+    L.jitter(blade, 0.003, 8.0, 16)
+    _xf(blade, bm_)
+    _painted(blade, IRON, var=0.3, ao=0.0, top=0.25, hue_shift=L.hexc("#6A4A3A"), seed=16)
+    parts.append(W("spine", blade))
+    # leather strap across the back and chest
+    strap = L.prim("torus", loc=(0, back_y * 0.5 + HUNCH * 0.5, 1.02), rot=(0, 34, 0), major_radius=0.3,
+                   minor_radius=0.012, major_segments=24, minor_segments=4, scale=(1, 0.76, 1))
+    parts.append(W("spine", _painted(strap, LEATHER, var=0.2, ao=0.0, top=0.3, seed=18)))
+
+    # --- lantern on the belt: caged glass, roof, handle, hook ------------------------------
+    lp = LANTERN
+    for dz_, sc in ((-0.068, (0.047, 0.047, 0.009)), (0.068, (0.047, 0.047, 0.009))):
+        plate = L.prim("cube", loc=lp + Vector((0, 0, dz_)), scale=sc)
+        L.bevel(plate, 0.004, 1)
+        parts.append(W("hips", _painted(plate, IRON, var=0.25, ao=0.0, top=0.35, seed=42)))
+    parts.append(W("hips", L.part("cone", IRON, loc=lp + Vector((0, 0, 0.095)), radius1=0.046, radius2=0.012,
+                                  depth=0.04, vertices=4, rot=(0, 0, 45), paint_kw={"ao": 0.0, "top": 0.4})))
+    parts.append(W("hips", L.part("cyl", IRON, loc=lp + Vector((0, 0, 0.12)), radius=0.013, depth=0.012,
+                                  vertices=8)))
+    for cx, cy in ((1, 1), (1, -1), (-1, 1), (-1, -1)):
+        parts.append(W("hips", _painted(L.tube(lp + Vector((cx * 0.039, cy * 0.039, -0.062)),
+                                               lp + Vector((cx * 0.039, cy * 0.039, 0.062)), 0.0055, 5), IRON,
+                                        var=0.2, ao=0.0, seed=43)))
+    for dz_ in (-0.02, 0.025):  # thin cage bars across the glass
+        for cx in (1, -1):
+            parts.append(W("hips", _painted(L.tube(lp + Vector((cx * 0.041, -0.039, dz_)),
+                                                   lp + Vector((cx * 0.041, 0.039, dz_)), 0.0035, 4), IRON,
+                                            var=0.2, ao=0.0, seed=44)))
+            parts.append(W("hips", _painted(L.tube(lp + Vector((-0.039, cx * 0.041, dz_)),
+                                                   lp + Vector((0.039, cx * 0.041, dz_)), 0.0035, 4), IRON,
+                                            var=0.2, ao=0.0, seed=44)))
     parts.append(W("hips", L.part("cube", (1, 1, 1), mat=L.MAT_EMISSIVE, loc=lp, scale=(0.035, 0.035, 0.06))))
+    parts.append(W("hips", L.part("torus", IRON, loc=lp + Vector((0, 0, 0.15)), rot=(90, 0, 90), major_radius=0.026,
+                                  minor_radius=0.004, major_segments=10, minor_segments=4)))
+    hook0 = _on_coat(1, 0.86, -18, 0.02)
+    parts.append(W("hips", _painted(L.tube(hook0, lp + Vector((0, 0, 0.165)), 0.005, 5), IRON, var=0.2, ao=0.0,
+                                    seed=45)))
+
     mesh = L.join(parts, rig.MESH)
     L.smooth(mesh, 55)
     return mesh, lp
@@ -234,6 +770,7 @@ ACTIONS = (  # (name, frames at 30 fps, pose function)
 def build():
     mesh, lp = build_mesh()
     dz = rig.ground(mesh)
+    assert abs(dz) < 1e-3, f"soles should stand on z = 0 (shift {dz})"  # keeps the approved lantern position
     arm = rig.build_armature(joints(dz))
     rig.bind(mesh, arm)
     rig.bone_marker(arm, "hips", "light_lantern", lp - Vector((0, 0, dz)))
