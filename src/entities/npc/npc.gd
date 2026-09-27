@@ -10,6 +10,7 @@ extends Node3D
 ## Standing heading: the waypoint's facing, else the direction of the walk that ended there –
 ## both follow from the clock, so a load shows him exactly as walking in did (SL-1).
 ## debug_teleport() (debug console) holds him at a spot until the next schedule phase.
+## Path sampling and heading evaluation: npc_pose.gd.
 
 const GROUP := &"npc"
 const PROMPT_TALK := "[E] Mit %s reden"
@@ -55,8 +56,8 @@ var _tables: CorpseTables
 var _present: bool = true
 var _talkable: bool = true
 var _with_cart: bool = true
-## entry instance id -> {points: PackedVector3Array, lengths: PackedFloat32Array, total: float}
-var _paths: Dictionary = {}
+## Path & pose evaluation (npc_pose.gd): polylines, sampling, standing / look headings.
+var _pose: NpcPose
 var _heading: float = 0.0
 ## Extra yaw of the figure (Model) towards a nearby player; the cart keeps its place.
 var _look: float = 0.0
@@ -70,6 +71,7 @@ var _held_heading: float = 0.0
 func _init() -> void:
 	add_to_group(GROUP, true)
 	add_to_group(&"saveable", true)
+	_pose = NpcPose.new(self)
 
 
 func _ready() -> void:
@@ -132,7 +134,7 @@ func is_walking() -> bool:
 func ground_speed() -> float:
 	if not is_walking() or not TimeManager.running or TimeManager.paused:
 		return 0.0
-	var path := _path(entry)
+	var path := _pose.path(entry)
 	return float(path.total) / (entry.travel_minutes * maxf(TimeManager.config.seconds_per_game_minute, EPSILON))
 
 
@@ -155,7 +157,7 @@ func debug_teleport(world_pos: Vector3) -> void:
 		push_warning("[Npc] %s: no schedule – debug_teleport ignored" % name)
 		return
 	_held_entry = ScheduleResolver.entry_at(sched, int(TimeManager.get_minute_f()))
-	_held_position = _on_ground(world_pos)
+	_held_position = _pose.on_ground(world_pos)
 	_held_heading = rotation.y
 	var player := get_tree().get_first_node_in_group(&"player") as Node3D if is_inside_tree() else null
 	if player != null:
@@ -176,8 +178,8 @@ func _update(delta: float) -> void:
 	progress = ScheduleResolver.progress(entry, minute_f)
 	if _held_entry != null and _held_entry != entry:
 		_held_entry = null
-	var path := _path(entry)
-	var sample := _sample(path, progress)
+	var path := _pose.path(entry)
+	var sample := _pose.sample(path, progress)
 	global_position = sample[0] if _held_entry == null else _held_position
 	var dir: Vector3 = sample[1]
 	_set_state(entry.visible, entry.visible and entry.dialogue_id != &"", entry.visible and entry.with_cart)
@@ -189,8 +191,8 @@ func _update(delta: float) -> void:
 	elif is_walking() and dir.length_squared() > EPSILON:
 		heading = atan2(dir.x, dir.z)
 	elif not is_walking():
-		heading = _waypoint_yaw(heading)
-	var look := _look_yaw(heading)
+		heading = _pose.waypoint_yaw(entry, heading)
+	var look := _pose.look_yaw(heading, not is_walking() and _talkable)
 	if delta < 0.0:
 		_heading = heading
 		_look = look
@@ -202,53 +204,6 @@ func _update(delta: float) -> void:
 	if _model != null:
 		_model.rotation = Vector3(0.0, _look, 0.0)
 	_update_animation()
-
-
-## Figure yaw relative to the root: towards a player closer than face_player_range while
-## standing at a dialogue spot, else 0.
-func _look_yaw(heading: float) -> float:
-	if is_walking() or not _talkable:
-		return 0.0
-	var player := get_tree().get_first_node_in_group(&"player") as Node3D
-	if player == null:
-		return 0.0
-	var to := player.global_position - global_position
-	to.y = 0.0
-	if to.length_squared() <= EPSILON or to.length() >= face_player_range:
-		return 0.0
-	return wrapf(atan2(to.x, to.z) - heading, -PI, PI)
-
-
-## Standing: the waypoint's facing (layout waypoint_facing), else the arrival heading, else
-## `current`.
-func _waypoint_yaw(current: float) -> float:
-	var w := _world()
-	if w != null and w.has_method(&"get_waypoint_facing") and not entry.path.is_empty():
-		var yaw := float(w.call(&"get_waypoint_facing", StringName(entry.path[entry.path.size() - 1])))
-		if not is_nan(yaw):
-			return yaw
-	var arrival := _arrival_yaw(entry)
-	return arrival if not is_nan(arrival) else current
-
-
-## Heading (rad) of the last path segment of the walk that brought the NPC to where `e` stands:
-## the entries before `e` (wrapping) that stand at the same waypoint are skipped. NAN if the
-## phase before is no walk to that waypoint.
-func _arrival_yaw(e: ScheduleEntry) -> float:
-	var entries := _schedule().entries
-	var index := entries.find(e)
-	if index < 0 or e.path.is_empty():
-		return NAN
-	var spot := e.path[e.path.size() - 1]
-	for k: int in range(1, entries.size()):
-		var before := entries[(index - k + entries.size()) % entries.size()]
-		if before.path.is_empty() or before.path[before.path.size() - 1] != spot:
-			return NAN
-		if before.path.size() >= 2:
-			var points: PackedVector3Array = _path(before).points
-			var dir := _flat(points[points.size() - 1] - points[points.size() - 2])
-			return atan2(dir.x, dir.z) if dir.length_squared() > EPSILON else NAN
-	return NAN
 
 
 func _set_state(present: bool, talkable: bool, with_cart: bool) -> void:
@@ -303,56 +258,7 @@ func _cemetery_full() -> bool:
 	return int(graveyard.call(&"free_plot_count")) <= int(manager.call(&"unburied_count"))
 
 
-# --- path -----------------------------------------------------------------------------------
-
-func _path(e: ScheduleEntry) -> Dictionary:
-	var key := e.get_instance_id()
-	if _paths.has(key):
-		return _paths[key]
-	var points := PackedVector3Array()
-	for id: String in e.path:
-		points.append(_waypoint(StringName(id)))
-	if points.is_empty():
-		points.append(global_position)
-	var lengths := PackedFloat32Array([0.0])
-	for k: int in range(1, points.size()):
-		lengths.append(lengths[k - 1] + _flat(points[k] - points[k - 1]).length())
-	var path := {"points": points, "lengths": lengths, "total": lengths[lengths.size() - 1]}
-	_paths[key] = path
-	return path
-
-
-## [position, direction] at `t` (0..1) of the path's arc length.
-func _sample(path: Dictionary, t: float) -> Array:
-	var points: PackedVector3Array = path.points
-	var lengths: PackedFloat32Array = path.lengths
-	var total: float = path.total
-	if points.size() == 1 or total <= EPSILON:
-		return [points[points.size() - 1], Vector3.ZERO]
-	var s := clampf(t, 0.0, 1.0) * total
-	for k: int in range(1, points.size()):
-		if s <= lengths[k] or k == points.size() - 1:
-			var seg := lengths[k] - lengths[k - 1]
-			var u := clampf((s - lengths[k - 1]) / seg, 0.0, 1.0) if seg > EPSILON else 1.0
-			var pos := points[k - 1].lerp(points[k], u)
-			return [_on_ground(pos), _flat(points[k] - points[k - 1]).normalized()]
-	return [points[points.size() - 1], Vector3.ZERO]
-
-
-func _on_ground(pos: Vector3) -> Vector3:
-	var w := _world()
-	if w != null and w.has_method(&"ground_height"):
-		pos.y = float(w.call(&"ground_height", Vector2(pos.x, pos.z)))
-	return pos
-
-
-func _waypoint(id: StringName) -> Vector3:
-	var w := _world()
-	if w == null:
-		push_warning("[Npc] %s: no world with waypoints" % name)
-		return global_position
-	return w.call(&"get_waypoint", id)
-
+# --- lookups -------------------------------------------------------------------------------
 
 func _world() -> Node:
 	if world == null:
@@ -370,4 +276,4 @@ func _schedule() -> NpcSchedule:
 
 
 static func _flat(v: Vector3) -> Vector3:
-	return Vector3(v.x, 0.0, v.z)
+	return NpcPose.flat(v)
