@@ -18,6 +18,8 @@ const ITEMS := {
 	&"decor_grave_vase": ["Grabvase", ItemData.Category.DECOR, 10],
 	&"decor_lantern": ["Grablaterne", ItemData.Category.DECOR, 6],
 	&"decor_path_gravel": ["Kiesplatte", ItemData.Category.DECOR, 40],
+	&"iron_fittings": ["Eisenbeschlag", ItemData.Category.RESOURCE, 20],   # Phase 3 (P6)
+	&"seeds": ["Blumensamen", ItemData.Category.RESOURCE, 20],   # Phase 3 (P6)
 }
 
 

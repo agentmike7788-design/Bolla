@@ -3,6 +3,8 @@ extends RefCounted
 ## Condition interpreter of the dialogue mini-language (docs/VERTICAL_SLICE_DESIGN.md §3.4),
 ## used by DialogueRunner – the syntax is documented in dialogue_runner.gd. Reads GameState,
 ## TimeManager and the context inventory; changes nothing. Stateless.
+## Phase 3 adds: day_gte:<n> (TimeManager.day >= n) · day_odd · day_even (odd-day deliveries
+## at "Verrufen", docs/PHASE3_DESIGN.md §2.7).
 
 enum _Result { FALSE, TRUE, INVALID }
 
@@ -70,6 +72,17 @@ static func _evaluate(text: String, context: Dictionary) -> _Result:
 				return _Result.INVALID
 			var value: Variant = GameState.get_flag(StringName(p[0]))
 			return _bool((value is int or value is float) and float(value) == float(TimeManager.day))
+		# Phase 3 (docs/PHASE3_DESIGN.md §1.3, §2.7): day of the game.
+		"day_gte":
+			var p := DialogueSyntax.parts(text, 1)
+			var n: Variant = DialogueSyntax.int_arg(p, 0, null)
+			if n == null:
+				return _Result.INVALID
+			return _bool(TimeManager.day >= int(n))
+		"day_odd", "day_even":
+			if text.contains(":"):
+				return _Result.INVALID
+			return _bool((TimeManager.day % 2 == 1) == (text == "day_odd"))
 	return _Result.INVALID
 
 

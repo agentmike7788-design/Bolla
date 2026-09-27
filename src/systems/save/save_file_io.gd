@@ -102,6 +102,20 @@ static func read_doc(save_dir: String, slot: int, out: Dictionary, decode_data: 
 	return OK
 
 
+## True when slot's file is readable JSON whose integral format_version is above
+## FORMAT_VERSION (written by a newer build – read_doc rejects it with ERR_FILE_UNRECOGNIZED).
+static func is_newer_version(save_dir: String, slot: int) -> bool:
+	var path := slot_path(save_dir, slot)
+	if slot < 0 or not FileAccess.file_exists(path):
+		return false
+	var json := JSON.new()
+	if json.parse(FileAccess.get_file_as_string(path)) != OK or not json.data is Dictionary:
+		return false
+	var version: Variant = (json.data as Dictionary).get("format_version")
+	return (version is float or version is int) and float(version) == roundf(float(version)) \
+			and int(version) > FORMAT_VERSION
+
+
 static func is_valid_meta(meta: Variant) -> bool:
 	if not meta is Dictionary:
 		return false

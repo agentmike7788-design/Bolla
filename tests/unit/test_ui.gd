@@ -866,6 +866,7 @@ func test_pause_save_refused_without_world() -> void:
 
 func test_dialogue_walks_carter_with_fake_inventory() -> void:
 	await _setup()
+	GameState.stats[&"reputation"] = 25  # Phase-3 new-game value; below 15 Osric remarks on "Verrufen" (P6)
 	var fake := FakeInventory.new()
 	fake.add_item(&"coin", 5)
 	tree.root.add_child(fake)
@@ -907,6 +908,7 @@ func test_dialogue_walks_carter_with_fake_inventory() -> void:
 
 func test_dialogue_choice_keys() -> void:
 	await _setup()
+	GameState.stats[&"reputation"] = 25  # Phase-3 new-game value; below 15 Osric remarks on "Verrufen" (P6)
 	ui.open_dialogue(&"carter", station)
 	_press(&"dialogue_choice_1")
 	assert_eq(ui.dialogue_box.choice_texts().size(), 2, "key 1 picked the only choice")

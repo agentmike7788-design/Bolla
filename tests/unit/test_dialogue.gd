@@ -1,6 +1,8 @@
 extends TestCase
 ## M4: DialogueRunner – conditions/actions mini-language, node skipping, choices – and the
-## carter's dialogue data (§1, §2.4, §2.5, §3.4).
+## carter's dialogue data (§1, §2.4, §2.5, §3.4). Phase 3 (P6, docs/PHASE3_DESIGN.md §1.3,
+## §2.2, §2.6, §2.7): day conditions, Ostwiese introduction, iron/seed shop, reputation remarks
+## on the 0…100 scale, odd-day deliveries at "Verrufen", migrated saves (vs_finished).
 
 const FakeInventory := preload("res://tests/fixtures/fake_inventory.gd")
 const CARTER_PATH := "res://data/dialogue/carter.tres"
@@ -9,9 +11,11 @@ const LINEN_FIXTURE := "res://tests/fixtures/items/linen.tres"
 const ITEM_FIXTURE_DIR := "res://tests/fixtures/items"
 const MORNING := 465   # 07:45
 const EVENING := 1140  # 19:00
+## A new game starts "Unauffällig" (docs/PHASE3_DESIGN.md §2.6); reset() leaves the stat at 0.
+const NEW_GAME_REPUTATION := 25
 
-const CONDITION_GRAMMAR := "^!?(has_item:[a-z_]+(:\\d+)?|flag:[a-z_]+|stat_gte:[a-z_]+:-?\\d+|stat_lt:[a-z_]+:-?\\d+|time_between:\\d+:\\d+|flag_eq:[a-z_]+:.*|flag_today:[a-z_]+)$"
-const ACTION_GRAMMAR := "^(set_flag:[a-z_]+(:.+)?|clear_flag:[a-z_]+|take_item:[a-z_]+:\\d+|give_item:[a-z_]+:\\d+|stat_add:[a-z_]+:-?\\d+|notify:.+)$"
+const CONDITION_GRAMMAR := "^!?(has_item:[a-z_]+(:\\d+)?|flag:[a-z_0-9]+|stat_gte:[a-z_]+:-?\\d+|stat_lt:[a-z_]+:-?\\d+|time_between:\\d+:\\d+|flag_eq:[a-z_]+:.*|flag_today:[a-z_]+|day_gte:\\d+|day_odd|day_even)$"
+const ACTION_GRAMMAR := "^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_]+|take_item:[a-z_]+:\\d+|give_item:[a-z_]+:\\d+|stat_add:[a-z_]+:-?\\d+|notify:.+)$"
 
 
 ## Inventory double with limited room: add_item keeps at most `room` items.
@@ -53,6 +57,7 @@ func before_each() -> void:
 	ended.clear()
 	EventBus.notification_requested.connect(_on_note)
 	EventBus.dialogue_ended.connect(_on_ended)
+	GameState.stats[&"reputation"] = NEW_GAME_REPUTATION
 
 
 func after_each() -> void:
@@ -297,7 +302,7 @@ func test_flag_today_malformed_is_false() -> void:
 # --- conditions: stats ---
 
 func test_stat_gte_and_stat_lt() -> void:
-	GameState.add_stat(&"reputation", -3)
+	GameState.stats[&"reputation"] = -3
 	assert_true(_check("stat_lt:reputation:-2"))
 	assert_false(_check("stat_gte:reputation:-2"))
 	assert_true(_check("stat_gte:reputation:-3"), "gte is inclusive")
@@ -341,6 +346,29 @@ func test_time_between_wraps_over_midnight() -> void:
 
 func test_time_between_malformed_is_false() -> void:
 	for cond: String in ["time_between:0", "time_between:a:b", "time_between", "time_between:07:00:12:00"]:
+		assert_false(_check(cond), cond)
+
+
+# --- conditions: day (Phase 3) ---
+
+func test_day_gte() -> void:
+	TimeManager.day = 2
+	assert_true(_check("day_gte:1"))
+	assert_true(_check("day_gte:2"), "inclusive")
+	assert_false(_check("day_gte:3"))
+	assert_true(_check("!day_gte:3"))
+
+
+func test_day_odd_and_even() -> void:
+	for day: int in [1, 2, 3, 14]:
+		TimeManager.day = day
+		assert_eq(_check("day_odd"), day % 2 == 1, "day %d odd" % day)
+		assert_eq(_check("day_even"), day % 2 == 0, "day %d even" % day)
+		assert_eq(_check("!day_odd"), day % 2 == 0, "day %d !odd" % day)
+
+
+func test_day_conditions_malformed_are_false() -> void:
+	for cond: String in ["day_gte", "day_gte:", "day_gte:x", "day_gte:1.5", "day_odd:1", "day_even:", "!day_gte:x"]:
 		assert_false(_check(cond), cond)
 
 
@@ -482,6 +510,7 @@ func test_item_actions_duck_typed_inventory() -> void:
 # --- actions: stats, notify, unknown ---
 
 func test_stat_add_action() -> void:
+	GameState.stats[&"reputation"] = 0
 	_apply("stat_add:reputation:-1")
 	_apply("stat_add:reputation:-1")
 	_apply("stat_add:burials:2")
@@ -871,9 +900,10 @@ func test_carter_price_texts_match_actions() -> void:
 				if action.begins_with("take_item:coin:"):
 					var price := action.get_slice(":", 2)
 					offers += 1
-					assert_true(c.text.contains("(%s Münzen)" % price), "price shown in '%s'" % c.text)
+					var shown := "(1 Münze)" if price == "1" else "(%s Münzen)" % price
+					assert_true(c.text.contains(shown), "price shown in '%s'" % c.text)
 					assert_has(c.conditions, "has_item:coin:" + price, "guarded by the price")
-	assert_eq(offers, 2, "1 and 2 Leinen")
+	assert_eq(offers, 6, "1 and 2 Leinen, 1 and 3 Eisenbeschläge, 1 and 4 Blumensamen")
 
 
 func test_carter_intro_mentions_schedule_times() -> void:
@@ -1019,6 +1049,7 @@ func test_carter_buy_two_linen_then_more() -> void:
 
 func test_carter_skipped_delivery_day() -> void:
 	GameState.set_flag(&"met_carter")
+	GameState.set_flag(&"p3_intro")
 	TimeManager.day = 3
 	GameState.set_flag(&"delivery_skipped", 3)
 	var r := _start_carter(MORNING, _inv())
@@ -1039,43 +1070,199 @@ func test_carter_skipped_delivery_day() -> void:
 
 func test_carter_bad_reputation() -> void:
 	GameState.set_flag(&"met_carter")
-	GameState.add_stat(&"reputation", -2)
+	GameState.stats[&"reputation"] = 15
 	var r := _start_carter(MORNING, _inv())
 	_go(r, &"remark_skipped")
-	assert_eq(_id(r), &"menu", "-2 is only 'Unauffällig'")
-	GameState.add_stat(&"reputation", -1)
+	assert_eq(_id(r), &"menu", "15 is only 'Unauffällig'")
+	GameState.stats[&"reputation"] = 14
 	r = _start_carter(MORNING, _inv())
 	_go(r, &"remark_skipped")
-	assert_eq(_id(r), &"remark_rep", "-3 = 'Verrufen'")
+	assert_eq(_id(r), &"remark_rep", "14 = 'Verrufen'")
 	assert_true(r.current_text().begins_with("Man redet im Dorf"))
-	assert_eq(r.available_choices().size(), 2)
-	_go(r, &"menu")
-	assert_eq(_id(r), &"menu")
+	assert_eq(r.available_choices().size(), 3)
+	_go(r, &"rep_odd_days")
+	assert_true(r.current_text().contains("ungeraden"), "explains the odd-day deliveries")
+	_go(r, &"p3_intro")
+	assert_eq(_id(r), &"menu", "day 1: no Ostwiese yet")
 
 
 func test_carter_skipped_day_and_bad_reputation_both_shown() -> void:
 	GameState.set_flag(&"met_carter")
 	GameState.set_flag(&"delivery_skipped", TimeManager.day)
-	GameState.add_stat(&"reputation", -4)
+	GameState.stats[&"reputation"] = 5
 	var r := _start_carter(MORNING, _inv())
 	_go(r, &"remark_skipped")
 	assert_eq(_id(r), &"remark_skipped")
 	_go(r, &"remark_rep")
 	assert_eq(_id(r), &"remark_rep")
+	_go(r, &"p3_intro")
+	assert_eq(_id(r), &"menu")
+
+
+func test_carter_after_migrated_slice() -> void:
+	# A Phase-2 save that finished the slice arrives with vs_finished (SaveMigration §5.2).
+	GameState.set_flag(&"met_carter")
+	GameState.set_flag(&"vs_finished")
+	TimeManager.day = 7
+	var r := _start_carter(EVENING, _inv())
+	assert_eq(_id(r), &"slice_done")
+	assert_true(r.current_text().contains("Alte Hof jetzt voll"), "leads over to the new sections")
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p3_intro", "then the Ostwiese")
+	assert_true(GameState.has_flag(&"p3_intro"))
+	_go(r, &"menu")
+	_go(r, &"goodbye_morning")
+	_go(r, &"")
+	assert_true(r.is_finished())
+	assert_eq(_id(_start_carter(EVENING, _inv())), &"greet_evening", "the praise only once")
+
+
+func test_carter_old_slice_flag_is_ignored() -> void:
+	GameState.set_flag(&"met_carter")
+	GameState.set_flag(&"slice_complete")
+	assert_eq(_id(_start_carter(EVENING, _inv())), &"greet_evening", "slice_done checks vs_finished")
+
+
+# --- Phase 3 (docs/PHASE3_DESIGN.md §1.3, §2.2, §2.6, §2.7) ---
+
+func test_carter_ostwiese_from_day_two() -> void:
+	GameState.set_flag(&"met_carter")
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "day 1: tutorial unchanged")
+	assert_false(GameState.has_flag(&"p3_intro"))
+	for c: DialogueChoice in r.available_choices():
+		assert_ne(c.next, &"shop_p3", "no iron shop before the introduction")
+	TimeManager.day = 2
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p3_intro")
+	assert_true(r.current_text().contains("Ostwiese"))
+	assert_true(r.current_text().contains("Gemeinde hätte nichts dagegen"))
+	assert_true(r.current_text().contains("Birkenhang"))
+	assert_true(GameState.has_flag(&"p3_intro"), "set on entry")
+	_go(r, &"p3_intro_tools")
+	for word: String in ["Eisenbeschläge", "Samen", "Rechen", "Werkbank"]:
+		assert_true(r.current_text().contains(word), word)
+	_go(r, &"menu")
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "introduction only once")
+	_go(r, &"shop_p3")
+	assert_eq(_id(r), &"shop_p3", "shop reachable from the menu afterwards")
+
+
+func test_carter_ostwiese_after_first_meeting_later() -> void:
+	TimeManager.day = 3
+	var r := _start_carter(MORNING, _inv())
+	assert_eq(_id(r), &"intro")
+	_go(r, &"intro_linen")
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p3_intro", "a first meeting after day 1 also tells of the Ostwiese")
+
+
+func test_carter_sells_iron_and_seeds() -> void:
+	GameState.set_flag(&"met_carter")
+	GameState.set_flag(&"p3_intro")
+	TimeManager.day = 2
+	var inv := _inv({&"coin": 14})
+	var r := _start_carter(MORNING, inv)
+	_go(r, &"remark_skipped")
+	_go(r, &"shop_p3")
+	assert_true(r.current_text().contains("drei Münzen"))
+	_go_action(r, "give_item:iron_fittings:3")
+	assert_eq(_id(r), &"shop_p3_bought")
+	assert_eq([inv.count(&"coin"), inv.count(&"iron_fittings")], [5, 3])
+	assert_eq(notes, [["+3 Eisenbeschlag", &"reward"]], "Database name")
+	_go(r, &"shop_p3")
+	assert_false(_has_action_choice(r, "give_item:iron_fittings:3"), "5 coins left")
+	_go_action(r, "give_item:seeds:4")
+	assert_eq([inv.count(&"coin"), inv.count(&"seeds")], [1, 4])
+	_go(r, &"shop_p3")
+	assert_eq(r.available_choices().size(), 2, "1 coin: one seed packet or leave")
+	_go_action(r, "give_item:seeds:1")
+	assert_eq([inv.count(&"coin"), inv.count(&"seeds")], [0, 5])
+	assert_eq(r.available_choices().size(), 1, "broke: only 'Danke.'")
+	_go(r, &"menu")
+	_go(r, &"shop_p3")
+	assert_eq(r.available_choices().size(), 1, "only 'Heute nicht.'")
+	_go(r, &"shop_p3_leave")
 	_go(r, &"menu")
 	assert_eq(_id(r), &"menu")
 
 
-func test_carter_after_slice_complete() -> void:
+func test_carter_disreputable_even_day_explains_odd_deliveries() -> void:
 	GameState.set_flag(&"met_carter")
-	GameState.set_flag(&"slice_complete")
-	var r := _start_carter(EVENING, _inv())
-	assert_eq(_id(r), &"slice_done")
+	GameState.set_flag(&"p3_intro")
+	GameState.stats[&"reputation"] = 10
+	TimeManager.day = 4
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"remark_no_delivery", "'Verrufen' on an even day: no corpse today")
+	assert_true(r.current_text().contains("ungeraden Tagen"))
+	_go(r, &"rep_odd_days")
+	_go(r, &"p3_intro")
+	assert_eq(_id(r), &"menu", "no second reputation lecture")
+	TimeManager.day = 5
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"remark_rep", "odd day: the corpse came, the gossip stays")
+	GameState.stats[&"reputation"] = 15
+	TimeManager.day = 6
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "'Unauffällig': deliveries every day")
+
+
+func test_carter_praise_once_per_tier() -> void:
+	GameState.set_flag(&"met_carter")
+	GameState.set_flag(&"p3_intro")
+	GameState.stats[&"reputation"] = 54
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "'Geachtet': nothing to say")
+	GameState.stats[&"reputation"] = 55
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"remark_esteemed", "'Geschätzt'")
+	_go(r, &"p3_intro")
+	assert_eq(_id(r), &"menu")
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "said once")
+	GameState.stats[&"reputation"] = 80
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"remark_renowned", "'Gerühmt'")
+	_go(r, &"p3_intro")
+	r = _start_carter(MORNING, _inv())
 	_go(r, &"remark_skipped")
 	assert_eq(_id(r), &"menu")
-	_go(r, &"goodbye_morning")
-	_go(r, &"")
-	assert_true(r.is_finished())
+
+
+func test_carter_renowned_skips_the_lower_praise() -> void:
+	GameState.set_flag(&"met_carter")
+	GameState.set_flag(&"p3_intro")
+	GameState.stats[&"reputation"] = 90
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"remark_renowned")
+	_go(r, &"p3_intro")
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "no stale 'Geschätzt' praise afterwards")
+
+
+func test_carter_cemetery_complete_once() -> void:
+	GameState.set_flag(&"met_carter")
+	GameState.set_flag(&"p3_intro")
+	GameState.set_flag(&"cemetery_complete")
+	var r := _start_carter(MORNING, _inv())
+	assert_eq(_id(r), &"cemetery_done")
+	assert_true(r.current_text().begins_with("Zwölf Gräber"))
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu")
+	assert_eq(_id(_start_carter(MORNING, _inv())), &"greet_morning", "only once")
 
 
 func test_carter_small_talk() -> void:

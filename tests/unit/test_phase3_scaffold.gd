@@ -5,7 +5,7 @@ extends TestCase
 ## enum values, Database folders, save format v2 + migration chain, and the W1 fixtures.
 
 ## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
-const IMPLEMENTED: PackedStringArray = ["ExpansionManager", "ClearableObstacle", "DecorPlacement", "BuildGrid", "DecorationManager", "BuildMode", "BuildCursor",
+const IMPLEMENTED: PackedStringArray = ["SaveMigration", "ExpansionManager", "ClearableObstacle", "DecorPlacement", "BuildGrid", "DecorationManager", "BuildMode", "BuildCursor",
 		"GrassClearMask", "PlacedDecor"]
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
@@ -55,6 +55,7 @@ const METHODS := {
 	"Ghost": ["bind", "set_mood", "set_fade", "say", "can_interact", "get_interaction_prompt", "interact"],
 	"SaveMigration": ["migrate", "migrate_1_to_2"],
 }
+## Stubs whose owner has filled them in (W1 hand-over) – no "## STUB (" marker any more.
 ## Stub methods added to existing classes (owner in the comment).
 const EXISTING_STUBS := {
 	"res://src/systems/graveyard/graveyard.gd": ["unlock_section", "plots_in_section", "upgrade_options", "upgrade_marker"],  # P1

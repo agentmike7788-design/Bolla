@@ -25,6 +25,7 @@ const TEXT_SAVE_FAILED := "Speichern fehlgeschlagen."
 const TEXT_NO_QUICKSAVE := "Kein Schnellspeicherstand."
 const TEXT_NO_SAVE := "Kein Spielstand vorhanden."
 const TEXT_CORRUPT := "Spielstand ist beschädigt."
+const TEXT_NEWER_VERSION := "Spielstand aus einer neueren Version."
 const TEXT_WORLD_FAILED := "Die Welt konnte nicht geladen werden."
 
 var save_dir: String = DEFAULT_SAVE_DIR
@@ -113,7 +114,7 @@ func load_game(slot: int) -> Error:
 			err = ERR_FILE_MISSING_DEPENDENCIES
 	if err != OK:
 		push_warning("[SaveManager] cannot load slot %d: %s" % [slot, error_string(err)])
-		_notify(TEXT_NO_SAVE if err == ERR_FILE_NOT_FOUND else TEXT_CORRUPT)
+		_notify(_load_error_text(err, slot))
 		return err
 	var state: Dictionary = doc.state
 	var generation := _generation
@@ -284,6 +285,15 @@ func _world_scene_path() -> String:
 	if scene != null and scene.scene_file_path != "":
 		return scene.scene_file_path
 	return WORLD_SCENE
+
+
+## Notification for a failed load: missing, from a newer build (docs/PHASE3_DESIGN.md §3.4) or corrupt.
+func _load_error_text(err: Error, slot: int) -> String:
+	if err == ERR_FILE_NOT_FOUND:
+		return TEXT_NO_SAVE
+	if err == ERR_FILE_UNRECOGNIZED and SaveFileIO.is_newer_version(save_dir, slot):
+		return TEXT_NEWER_VERSION
+	return TEXT_CORRUPT
 
 
 func _notify(text: String, kind: StringName = &"warning") -> void:
