@@ -167,15 +167,54 @@ func test_target_leaving_range_clears_focus() -> void:
 	assert_eq(focus_events, [_area(target), null])
 
 
+## Within the front cone priority comes first (GP-05 moved targets behind the player out of it).
 func test_higher_priority_beats_distance_and_facing() -> void:
 	var det := _detector()
 	var near := _target(Vector3(0, 0, 0.3), "Nah", 5)
-	var far := _target(Vector3(0, 0, -1.0), "Fern", 20)
+	var far := _target(Vector3(1.0, 0, 0.3), "Fern", 20)
 	await _physics()
-	assert_eq(det.focused, _area(far), "priority first")
+	assert_eq(det.focused, _area(far), "priority first (farther and to the side, still ahead)")
 	_area(far).priority = 0
 	await _physics()
 	assert_eq(det.focused, _area(near))
+
+
+## GP-05: the carter (NPC 30) behind the player must not take the focus from the corpse
+## (20) the player faces; turning around to him gives it back.
+func test_target_behind_never_beats_one_ahead() -> void:
+	var det := _detector()
+	var corpse := _target(Vector3(0, 0, 1.0), "Leiche aufheben", 20)
+	var npc := _target(Vector3(0, 0, -1.0), "Mit Osric reden", 30)
+	await _physics()
+	assert_eq(det.focused, _area(corpse), "what the player faces wins")
+	det.rotation.y = PI
+	await _physics()
+	assert_eq(det.focused, _area(npc), "turned to the NPC")
+
+
+func test_targets_behind_rank_by_priority_when_nothing_is_ahead() -> void:
+	var det := _detector()
+	var low := _target(Vector3(0, 0, -0.4), "Niedrig", 5)
+	var high := _target(Vector3(0.6, 0, -1.0), "Hoch", 30)
+	await _physics()
+	assert_eq(det.focused, _area(high), "only targets behind: priority, then distance")
+	_area(high).priority = 5
+	await _physics()
+	assert_eq(det.focused, _area(low))
+
+
+func test_front_cone_is_sticky_for_the_focus() -> void:
+	var det := _detector()
+	var side := _target(Vector3(1.0, 0, 0.05), "Seite", 5)
+	await _physics()
+	assert_eq(det.focused, _area(side))
+	var behind := _target(Vector3(-0.2, 0, -1.2), "Hinten", 30)
+	det.rotation.y = -0.1  # the focused target drifts just behind the side line (facing ≈ −0.05)
+	await _physics()
+	assert_eq(det.focused, _area(side), "still counts as ahead: no flip to the target behind")
+	det.rotation.y = -0.5
+	await _physics()
+	assert_eq(det.focused, _area(behind), "clearly behind now")
 
 
 func test_equal_priority_prefers_nearer() -> void:

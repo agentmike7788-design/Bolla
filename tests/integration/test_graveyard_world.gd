@@ -12,6 +12,10 @@ const ENTITY_CLASSES := {
 }
 ## Height tolerance (m): flat ground under plots and stations (pit floor 3-4 cm above ground).
 const FLAT_TOLERANCE := 0.01
+const FOLIAGE_SHADER := "res://assets/shaders/painted_foliage.gdshader"
+const FOLIAGE_MATERIAL := "res://assets/materials/mat_foliage.tres"
+## Physics layer of the temporary foliage collision copies (UI-01 line-of-sight check).
+const FOLIAGE_PROBE_LAYER := 1 << 19
 
 var layout: Dictionary
 var world: WorldRoot
@@ -327,6 +331,284 @@ func test_decor_and_grass() -> void:
 	assert_eq(rig.target, world.get_player())
 	assert_almost(rig.fov_deg, 30.0, 0.001)
 	assert_almost(rig.pitch_deg, 45.0, 0.001)
+
+
+# --- review fixes (Phase-2 slice, cluster B) --------------------------------------------------
+
+## SL-1: straight after a load at 08:20 (no walk seen) the carter stands as if he had walked
+## in – facing the way he came (gate_outside → dropoff), the cart inside the fence.
+func test_carter_at_the_bier_after_a_load_faces_his_arrival() -> void:
+	var npc := world.get_node_by_layout_id("npc_carter") as Npc
+	TimeManager.load_state({"day": 1, "minute_of_day": 500})
+	npc.load_state({})
+	await tree.process_frame
+	var dir := _flat(world.get_waypoint(&"dropoff") - world.get_waypoint(&"gate_outside"))
+	assert_almost(npc.rotation.y, atan2(dir.x, dir.z), 0.001, "arrival heading")
+	var fence_z := float(layout.fence.segments[0][0][1])
+	assert_true(npc.cart.global_position.z < fence_z - 0.5, "cart inside the graveyard (z %.2f)" % npc.cart.global_position.z)
+
+
+## SL-2 / C3: after loading a save made far from the start the camera is on the player at once.
+func test_camera_is_on_the_player_right_after_a_load() -> void:
+	tree.root.remove_child(world)  # one world at a time (plot ids are global)
+	world.free()
+	SaveManager.save_dir = "user://test_saves"
+	SaveManager.new_game()
+	assert_true(await wait_for_signal(EventBus.new_game_started, 20.0), "new game")
+	var player := (tree.current_scene as WorldRoot).get_player()
+	player.global_position = Vector3(8.8, 0.05, 7.2)
+	assert_eq(SaveManager.save_game(97), OK)
+	SaveManager.load_game(97)
+	assert_true(await wait_for_signal(EventBus.game_loaded, 20.0), "loaded")
+	var loaded := tree.current_scene as WorldRoot
+	var rig := loaded.get_node("CameraRig") as CameraRig
+	var at_load := rig.camera.global_position
+	rig.snap()
+	assert_true(rig.camera.global_position.distance_to(at_load) < 0.1,
+			"no sweep: the camera already frames the player (%.2f m off)" % rig.camera.global_position.distance_to(at_load))
+	SaveManager.delete_save(97)
+
+
+## GP-05: 07:40-10:00 the carter stands west of the bier; a player at the bier's west end facing
+## the corpse picks it up instead of talking to him – turning to him still talks.
+func test_corpse_on_the_bier_wins_the_focus_over_the_carter() -> void:
+	var npc := world.get_node_by_layout_id("npc_carter") as Npc
+	TimeManager.load_state({"day": 1, "minute_of_day": 490})
+	npc.refresh()
+	var dropoff := world.get_node_by_layout_id("dropoff") as Dropoff
+	var record := world.corpse_manager.spawn_corpse(null, dropoff.slot_transform(), &"dropoff")
+	var corpse_area := world.corpse_manager.get_corpse_node(record.id).get_node("Interactable")
+	var player := world.get_player()
+	var slot := dropoff.slot_transform().origin
+	for stand: Vector2 in [Vector2(3.0, 8.3), Vector2(3.1, 7.6)]:
+		var at := Vector3(stand.x, world.ground_height(stand), stand.y)
+		player.global_position = at
+		var to := _flat(slot - at)
+		player.rotation.y = atan2(to.x, to.z)
+		for i: int in 4:
+			await tree.physics_frame
+		assert_eq(player.detector.focused, corpse_area, "at %s facing the corpse" % stand)
+	var to_npc := _flat(npc.global_position - player.global_position)
+	player.rotation.y = atan2(to_npc.x, to_npc.z)
+	for i: int in 4:
+		await tree.physics_frame
+	assert_eq(player.detector.focused, npc.interactable, "facing the carter")
+
+
+## C4: digging plot_01 between it and the finished plot_02 must not put the player into
+## plot_02's mound (the +X exit lies inside it).
+func test_dig_exit_next_to_a_finished_grave_is_free() -> void:
+	var inv := world.get_player().inventory
+	world.graveyard.dig("plot_02")
+	var record := world.corpse_manager.spawn_corpse(null, (world.get_node_by_layout_id("plot_02") as Node3D).global_transform, &"ground")
+	world.graveyard.bury("plot_02", record.id)
+	inv.add_item(&"wooden_cross", 1)
+	world.graveyard.place_marker("plot_02", &"wooden_cross", inv)
+	for i: int in 3:
+		await tree.physics_frame
+	var plot := world.get_node_by_layout_id("plot_01") as GravePlot
+	var player := world.get_player()
+	player.instant_actions = true
+	player.global_position = plot.to_global(Vector3(1.0, 0.0, 0.2))
+	plot.interact(player)
+	assert_eq(world.graveyard.get_grave("plot_01").state, GraveRecord.State.DUG)
+	var placed := player.global_position
+	for i: int in 20:
+		await tree.physics_frame
+	assert_true(_flat(player.global_position - placed).length() < 0.05, "not shoved (moved %.2f m)" % _flat(player.global_position - placed).length())
+	assert_true(player.global_position.y - placed.y < 0.05, "not popped onto the mound (+%.2f m)" % (player.global_position.y - placed.y))
+
+
+## PERF-01: only foliage and grass may use TIME (an animated material makes every shadow map
+## in its range redraw each frame); the foliage is kept out of the lantern shadows.
+func test_only_foliage_and_grass_materials_are_animated() -> void:
+	for file: String in ResourceLoader.list_directory("res://assets/materials/"):
+		if not file.ends_with(".tres"):
+			continue
+		var mat := load("res://assets/materials/" + file) as ShaderMaterial
+		if mat == null:
+			continue
+		var animated := _shader_source(mat.shader.resource_path).contains("TIME")
+		assert_eq(animated, file in ["mat_foliage.tres", "mat_grass.tres"], "%s uses TIME: %s" % [file, animated])
+	assert_eq((load(FOLIAGE_MATERIAL) as ShaderMaterial).shader.resource_path, FOLIAGE_SHADER)
+	var foliage_layer := 1 << 1
+	var oak := world.get_node("Decor/Tree").find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+	assert_eq(oak.layers, foliage_layer, "tree (crown) on the foliage render layer")
+	var bush := world.get_node("Decor/Bushes").find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+	assert_eq(bush.layers, foliage_layer, "bush on the foliage render layer")
+	var hut := world.get_node("Decor/Hut").find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+	assert_eq(hut.layers, 1, "no foliage: default layer")
+	for path: String in ["Decor/Hut/Light_lantern", "Decor/LanternPosts/LanternPost_1/Light_lantern"]:
+		var lantern := world.get_node(path) as OmniLight3D
+		assert_eq(lantern.shadow_caster_mask & foliage_layer, 0, path + " casts no foliage shadows")
+		assert_ne(lantern.shadow_caster_mask & 1, 0, path + " still casts the rest")
+	assert_ne((world.get_node("Sun") as DirectionalLight3D).shadow_caster_mask & foliage_layer, 0, "the sun keeps tree shadows")
+
+
+## PERF-03: one sun cascade over the whole shadow distance – the nearest visible depth
+## (~10 m at zoom_min) never reached the first of two splits, which wasted half the atlas.
+func test_sun_shadow_uses_the_whole_atlas() -> void:
+	var sun := world.get_node("Sun") as DirectionalLight3D
+	assert_eq(sun.directional_shadow_mode, DirectionalLight3D.SHADOW_ORTHOGONAL)
+	assert_almost(sun.directional_shadow_max_distance, 55.0, 0.001, "same reach as approved")
+
+
+# --- foliage occlusion cutout (UI-01) ---------------------------------------------------------
+
+## From the gameplay camera (zoom min / default / max) the gravekeeper stays visible at every
+## interaction spot: each foliage surface the camera looks through on its way to his body lies
+## in the fully cut part of the cutout (reviewer's segment-vs-mesh check + the cutout geometry).
+func test_foliage_never_hides_the_player_at_interaction_spots() -> void:
+	var code := _shader_source(FOLIAGE_SHADER)
+	assert_true(code.contains("global uniform vec3 occlusion_target"), "the foliage shader has the cutout")
+	if not code.contains("global uniform vec3 occlusion_target"):
+		return
+	var cut := {"radius": float((ProjectSettings.get_setting("shader_globals/occlusion_radius") as Dictionary).value),
+			"softness": _uniform_default(code, "occlusion_softness"), "rise": _uniform_default(code, "occlusion_rise")}
+	# Chest height the player publishes as the cutout target (Player.occlusion_point()).
+	var chest := float(world.get_player().get(&"occlusion_height"))
+	var normals := _build_foliage_collision()
+	await tree.physics_frame
+	await tree.physics_frame
+	var rig := world.get_node("CameraRig") as CameraRig
+	var anchor := Node3D.new()
+	world.add_child(anchor)
+	rig.target = anchor
+	var hidden: PackedStringArray = []
+	var checked := 0
+	var door_leaves := 0
+	var spots := _interaction_spots()
+	for spot_name: String in spots:
+		for spot: Vector3 in _standing_spots(spots[spot_name]):
+			for zoom: float in [rig.zoom_min, 22.0, rig.zoom_max]:
+				anchor.global_position = spot
+				rig.set_distance(zoom)
+				rig.snap()
+				var eye := rig.camera.global_position
+				var target := spot + Vector3(0.0, chest, 0.0)
+				for body: Vector3 in [Vector3(0, 0.3, 0), Vector3(0, 1.1, 0), Vector3(0, 1.75, 0), Vector3(0.3, 1.1, 0), Vector3(-0.3, 1.1, 0)]:
+					checked += 1
+					for hit: Vector3 in _front_hits(normals, eye, spot + body):
+						if spot_name == "hut_door":
+							door_leaves += 1
+						var c := _occlusion_cut(hit, eye, target, cut)
+						if c < 0.999:
+							hidden.append("%s %s zoom %d body %s: leaf %s cut %.2f" % [spot_name, spot, zoom, body, hit, c])
+	assert_true(checked > 500, "checked %d lines of sight" % checked)
+	assert_true(door_leaves > 20, "the oak crown lies in front of the hut door (%d leaf hits)" % door_leaves)
+	assert_true(hidden.is_empty(), "%d hidden:\n%s" % [hidden.size(), "\n".join(hidden.slice(0, 12))])
+
+
+## Interaction spots (world XZ of the entity / waypoint) the player stands at.
+func _interaction_spots() -> Dictionary:
+	var out := {}
+	for id: String in ["plot_01", "plot_02", "plot_03", "plot_04", "plot_05", "plot_06", "morgue_table", "workbench",
+			"res_wood", "res_stone", "hut_door", "dropoff"]:
+		out[id] = (world.get_node_by_layout_id(id) as Node3D).global_position
+	for id: StringName in [&"dropoff", &"evening_spot"]:
+		out["waypoint_" + String(id)] = world.get_waypoint(id)
+	out["player_start"] = world.get_player().global_position
+	return out
+
+
+## The spot and 8 points 1.2 m around it where the player's capsule fits (no world body).
+func _standing_spots(centre: Vector3) -> Array[Vector3]:
+	var capsule := world.get_player().get_node("Collision") as CollisionShape3D
+	var space := world.get_world_3d().direct_space_state
+	var out: Array[Vector3] = []
+	for k: int in 9:
+		var p := centre if k == 0 else centre + Vector3(1.2, 0, 0).rotated(Vector3.UP, TAU * k / 8.0)
+		p.y = world.ground_height(Vector2(p.x, p.z))
+		var query := PhysicsShapeQueryParameters3D.new()
+		query.shape = capsule.shape
+		query.collision_mask = 1
+		query.transform = Transform3D(Basis.IDENTITY, p + Vector3(0, 0.1, 0)) * capsule.transform
+		if space.intersect_shape(query, 1).is_empty():
+			out.append(p)
+	return out
+
+
+## Collision copies (layer 20) of every foliage surface in Decor. Returns the outward normal
+## (from the vertex normals, world space) of each face by face index.
+func _build_foliage_collision() -> PackedVector3Array:
+	var faces := PackedVector3Array()
+	var normals := PackedVector3Array()
+	for node: Node in world.get_node("Decor").find_children("*", "MeshInstance3D", true, false):
+		var mi := node as MeshInstance3D
+		for s: int in mi.mesh.get_surface_count():
+			var mat := mi.get_active_material(s)
+			if mat == null or mat.resource_path != FOLIAGE_MATERIAL:
+				continue
+			var arrays := mi.mesh.surface_get_arrays(s)
+			var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+			var vnormals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+			var index: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+			var xf := mi.global_transform
+			for i: int in range(0, index.size(), 3):
+				var n := Vector3.ZERO
+				for j: int in 3:
+					faces.append(xf * verts[index[i + j]])
+					n += vnormals[index[i + j]]
+				normals.append((xf.basis * n).normalized())
+	var concave := ConcavePolygonShape3D.new()
+	concave.backface_collision = true
+	concave.set_faces(faces)
+	var body := StaticBody3D.new()
+	body.name = "FoliageProbe"
+	body.collision_layer = FOLIAGE_PROBE_LAYER
+	body.collision_mask = 0
+	var shape := CollisionShape3D.new()
+	shape.shape = concave
+	body.add_child(shape)
+	world.add_child(body)
+	return normals
+
+
+## Foliage faces the line of sight eye → point enters from their front (rendered) side.
+func _front_hits(normals: PackedVector3Array, eye: Vector3, point: Vector3) -> Array[Vector3]:
+	var space := world.get_world_3d().direct_space_state
+	var dir := (point - eye).normalized()
+	var out: Array[Vector3] = []
+	var from := eye
+	for guard: int in 64:
+		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(from, point, FOLIAGE_PROBE_LAYER))
+		if hit.is_empty():
+			break
+		var face := int(hit.face_index)
+		if face < 0 or normals[face].dot(dir) < 0.0:
+			out.append(hit.position)
+		from = (hit.position as Vector3) + dir * 0.005
+	return out
+
+
+## GDScript mirror of occlusion_cut() in painted_foliage.gdshader (0 = kept … 1 = fully cut).
+func _occlusion_cut(p: Vector3, eye: Vector3, target: Vector3, cut: Dictionary) -> float:
+	var axis := target - eye
+	var t := (p - eye).dot(axis) / axis.length_squared()
+	if t <= 0.0 or t >= 1.0:
+		return 0.0
+	var radius := float(cut.radius) * t
+	var d := p.distance_to(eye + axis * t)
+	var radial := 1.0 - smoothstep(radius * (1.0 - float(cut.softness)), radius, d)
+	return radial * smoothstep(target.y, target.y + float(cut.rise), p.y)
+
+
+## Shader code with its #include files inlined and // comments removed.
+func _shader_source(path: String) -> String:
+	var out: PackedStringArray = []
+	for line: String in FileAccess.get_file_as_string(path).split("\n"):
+		if line.strip_edges().begins_with("#include"):
+			out.append(_shader_source(line.get_slice("\"", 1)))
+		else:
+			out.append(line.get_slice("//", 0))
+	return "\n".join(out)
+
+
+func _uniform_default(code: String, uniform_name: String) -> float:
+	var re := RegEx.create_from_string("uniform\\s+float\\s+%s\\s*=\\s*([0-9.]+)" % uniform_name)
+	var m := re.search(code)
+	assert_not_null(m, "uniform %s has a default" % uniform_name)
+	return m.get_string(1).to_float() if m != null else 0.0
 
 
 # --- helpers ----------------------------------------------------------------------------------

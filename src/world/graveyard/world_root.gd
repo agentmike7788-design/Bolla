@@ -12,6 +12,14 @@ const WAYPOINTS := ^"Waypoints"
 const PLAYER := ^"Player"
 const GROUND_SHAPE := ^"GroundCollision/Shape"
 const GROUND := ^"Ground"
+const DECOR := ^"Decor"
+## Render layer of meshes with foliage surfaces (tree crowns, bushes): the only painted material
+## that sways (TIME in vertex()), which makes Godot redraw every shadow map in its range each
+## frame. The warm lights (lanterns) leave this layer out of their shadow casters, so their
+## cube shadows stay cached; the sun still gets the trees' shadows (PERF-01).
+const FOLIAGE_LAYER := 1 << 1
+const FOLIAGE_SHADER := "res://assets/shaders/painted_foliage.gdshader"
+const WARM_LIGHTS := &"warm_lights"
 
 var corpse_manager: CorpseManager
 var graveyard: Graveyard
@@ -27,6 +35,7 @@ func _ready() -> void:
 	if corpse_manager == null or graveyard == null:
 		push_warning("[WorldRoot] Systems/CorpseManager or Systems/Graveyard missing")
 	_ground_receives_shadows_only()
+	_foliage_out_of_warm_shadows()
 	_announce.call_deferred()
 
 
@@ -96,6 +105,31 @@ func _ground_receives_shadows_only() -> void:
 		return
 	for mesh: Node in ground.find_children("*", "GeometryInstance3D", true, false):
 		(mesh as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+## Foliage meshes go to FOLIAGE_LAYER only, and every warm light of the world stops casting
+## shadows from that layer (see FOLIAGE_LAYER). Runtime for the same reason as above.
+func _foliage_out_of_warm_shadows() -> void:
+	var decor := get_node_or_null(DECOR)
+	if decor != null:
+		for node: Node in decor.find_children("*", "MeshInstance3D", true, false):
+			var mesh := node as MeshInstance3D
+			if _has_foliage(mesh):
+				mesh.layers = FOLIAGE_LAYER
+	for node: Node in get_tree().get_nodes_in_group(WARM_LIGHTS):
+		if node is Light3D and is_ancestor_of(node):
+			var light := node as Light3D
+			light.shadow_caster_mask = light.shadow_caster_mask & ~FOLIAGE_LAYER
+
+
+static func _has_foliage(mesh: MeshInstance3D) -> bool:
+	if mesh.mesh == null:
+		return false
+	for i: int in mesh.mesh.get_surface_count():
+		var mat := mesh.get_active_material(i) as ShaderMaterial
+		if mat != null and mat.shader != null and mat.shader.resource_path == FOLIAGE_SHADER:
+			return true
+	return false
 
 
 func _announce() -> void:

@@ -142,6 +142,25 @@ func test_lantern_rides_on_rig_marker() -> void:
 	assert_true(lantern.transform.is_equal_approx(Transform3D.IDENTITY))
 
 
+## UI-01: the player is the target of the foliage occlusion cutout – their chest, every frame
+## (global shader uniform occlusion_target; the headless renderer cannot read it back).
+func test_publishes_the_occlusion_target() -> void:
+	var p := await _player(true, Vector3(2, 0, 3))
+	assert_true(p.has_method(&"occlusion_point"), "Player.occlusion_point()")
+	if not p.has_method(&"occlusion_point"):
+		return
+	assert_true(p.is_processing(), "updated every rendered frame")
+	var chest := float(p.get(&"occlusion_height"))
+	assert_true(chest > 0.9 and chest < 1.4, "chest height of the 1.77 m figure (%.2f)" % chest)
+	var point: Vector3 = p.call(&"occlusion_point")
+	assert_true(point.is_equal_approx(p.global_position + Vector3(0, chest, 0)), str(point))
+	var global: Variant = RenderingServer.global_shader_parameter_get(&"occlusion_target")
+	if global != null:
+		await tree.process_frame
+		assert_true((RenderingServer.global_shader_parameter_get(&"occlusion_target") as Vector3).is_equal_approx(point))
+	assert_true(ProjectSettings.has_setting("shader_globals/occlusion_target"), "global uniform declared (project.godot)")
+
+
 # --- movement -----------------------------------------------------------------------------
 
 func test_moves_with_move_speed() -> void:
