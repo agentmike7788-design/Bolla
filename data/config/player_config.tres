@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PlayerConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/entities/player/player_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+move_speed = 3.2
+carry_speed = 2.0
+turn_speed = 10.0
+inventory_slots = 16
+start_items = Dictionary[StringName, int]({
+&"coin": 5,
+&"linen": 1,
+&"wood": 2
+})
+drop_distance = 0.8
