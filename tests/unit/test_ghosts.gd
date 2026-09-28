@@ -12,7 +12,7 @@ const GHOST_SCENE := "res://src/entities/ghost/ghost.tscn"
 const PLAYER_SCENE := "res://src/entities/player/player.tscn"
 const SHADER := "res://assets/shaders/ghost.gdshader"
 const MATERIAL := "res://assets/materials/mat_ghost.tres"
-const REASONS: Array[StringName] = [&"robbed", &"weeds", &"valuables", &"cold", &"unkempt", &"cross", &"waited", &"bare"]
+const REASONS: Array[StringName] = [&"robbed", &"weeds", &"valuables", &"cold", &"unkempt", &"cross", &"nameless", &"waited", &"bare"]
 const STORIES: Array[StringName] = [&"s1_quendel", &"s2_hemmerling", &"s3_wernstein", &"s4_uhlig", &"s5_moor"]
 const TRAITS: Array[StringName] = [&"letter", &"tattoo", &"strange_wound"]
 const MARKED := GraveRecord.State.MARKED
@@ -673,7 +673,7 @@ func test_real_ghost_lines() -> void:
 	assert_not_null(real)
 	assert_eq(real.content.size(), 8, "8 thanks lines")
 	assert_true(real.calm.size() >= 3, "calm lines")
-	assert_eq(real.by_reason.size(), REASONS.size(), "8 reasons incl. robbed / unkempt")
+	assert_eq(real.by_reason.size(), REASONS.size(), "9 reasons incl. robbed / unkempt / nameless")
 	for reason: StringName in REASONS:
 		assert_eq(real.by_reason.get(reason, PackedStringArray()).size(), 3, String(reason))
 	assert_eq(real.by_trait.size(), TRAITS.size())

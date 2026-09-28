@@ -6,9 +6,10 @@ extends Resource
 @export var quality_buried: int = 2
 @export var quality_shroud: int = 2
 @export var quality_examined: int = 1
-## Phase 5 §2.5 adds the designed stone shapes stone_stele 3, stone_arch 4, stone_master 5
-## (StoneShapeData.id = marker_id) – P4 together with quality_max 19 (W0-Notizen 4).
-@export var marker_quality: Dictionary[StringName, int] = {&"wooden_cross": 1, &"gravestone_simple": 3}
+## Phase 5 §2.5: + the designed stone shapes stone_stele 3, stone_arch 4, stone_master 5
+## (StoneShapeData.id = marker_id; no items – set only at the grave via Stonemasonry).
+@export var marker_quality: Dictionary[StringName, int] = {&"wooden_cross": 1, &"gravestone_simple": 3,
+		&"stone_stele": 3, &"stone_arch": 4, &"stone_master": 5}
 @export var fresh_good_threshold: float = 0.6
 @export var fresh_good_bonus: int = 1
 @export var fresh_bad_threshold: float = 0.3
@@ -16,10 +17,9 @@ extends Resource
 @export var valuables_left_bonus: int = 1
 @export var valuables_taken_malus: int = -2
 @export var quality_min: int = 0
-## Phase 4 §2.4: 13 (2+1+3+1+3+1+1+1). Phase 5 §2.5: 19 (2+1+3+1+9+1+1+1) – P4 sets the default
-## and economy_config.tres together (W0 keeps 13: the "/13" texts and GhostMood tests). Graves
-## finished before keep their saved quality.
-@export var quality_max: int = 13
+## Phase 4 §2.4: 13 (2+1+3+1+3+1+1+1). Phase 5 §2.5: 19 (2+1+3+1+9+1+1+1: a gilded master stone
+## with a fitting inscription and an ornament). Graves finished before keep their saved quality.
+@export var quality_max: int = 19
 # Phase 4 (docs/PHASE4_DESIGN.md §2.4, §2.5)
 @export var quality_washed: int = 1
 @export var quality_laid_out: int = 1

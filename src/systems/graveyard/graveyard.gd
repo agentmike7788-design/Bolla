@@ -42,6 +42,12 @@ const FLAG_NOT_LORENZ := &"insight_not_lorenz"
 const STAT_PREPARED := &"prepared"
 const STAT_UTILIZED := &"utilized"
 const STAT_PIETY := &"piety"
+# Phase 5 (docs/PHASE5_DESIGN.md §2.5, §2.7)
+const WORKSHOP_GROUP := &"workshop"
+const STAT_STONES_SET := &"stones_set"
+const SHAPE_MASTER := &"stone_master"
+const EVENT_MASTER_STONE := &"master_stone"
+const REASON_MASTER_STONE := "Ein Meisterstein auf dem Friedhof. Das spricht sich herum."
 
 @export var save_id: String = "graveyard"
 @export var save_order: int = 10
@@ -56,6 +62,8 @@ var reputation_config: ReputationConfig
 var section_data: Array[SectionData] = []
 ## Finale story of the chapter six_pits; null = Database.config(&"story_config").
 var story_config: StoryConfig
+## Stone surcharges (inscription / fitting / gilded points); null = Database.config(&"stone_config").
+var stone_config: StoneConfig
 
 ## id -> record, in plot (tree) order.
 var _graves: Dictionary[String, GraveRecord] = {}
@@ -133,8 +141,8 @@ func place_marker(grave_id: String, marker_id: StringName, inv: Inventory) -> in
 	if grave == null or grave.state != GraveRecord.State.FILLED:
 		return 0
 	var cfg := _economy()
-	if not cfg.marker_quality.has(marker_id):
-		push_warning("[Graveyard] place_marker: '%s' is no grave marker" % marker_id)
+	if not cfg.marker_quality.has(marker_id) or StoneDesignRules.is_shape(marker_id):
+		push_warning("[Graveyard] place_marker: '%s' is no grave marker item" % marker_id)
 		return 0
 	if inv == null:
 		push_warning("[Graveyard] place_marker without inventory")
@@ -282,11 +290,13 @@ func upgrade_options(grave_id: String, inv: Inventory) -> Array[StringName]:
 	if grave == null or grave.state != GraveRecord.State.MARKED or inv == null:
 		return out
 	var corpse := _corpse_of(grave)
-	if corpse == null:
-		return out
+	if corpse == null or not grave.design.is_empty():
+		return out  # a designed stone is only ever replaced by a better designed stone
 	var cfg := _economy()
 	var current: int = cfg.marker_quality.get(grave.marker_id, 0)
 	for id: StringName in cfg.marker_quality:
+		if StoneDesignRules.is_shape(id):
+			continue  # Phase 5: designed stones are no items – set only via Stonemasonry
 		if cfg.marker_quality[id] > current and inv.has(id) and GraveQuality.compute(corpse, id, cfg) > grave.quality:
 			out.append(id)
 	return out
@@ -580,9 +590,80 @@ func _tables() -> CorpseTables:
 
 # --- Phase 5 (docs/PHASE5_DESIGN.md §2.5, §3.4) -------------------------------------------------
 
-## STUB (P4): sets a designed stone. FILLED → like place_marker (payment); MARKED → like
-## upgrade_marker (no payment, marker_upgrade, stone_master → master_stone). grave_stone_set,
-## grave_quality_changed / grave_completed as before; stats.stones_set; Workshop.check_goal.
-## Returns the quality difference (0 = refused).
-func set_designed_stone(_grave_id: String, _design: StoneDesign, _inv: Inventory) -> int:
-	return 0
+## Sets a designed stone (the shape id becomes marker_id, design = design.to_dict()). It must
+## bring more marker points than the current marker (StoneDesignRules.current_marker_points).
+## FILLED → like place_marker (payment into `inv`, grave_completed, reputation good / poor,
+## cemetery / chapter checks); MARKED → like upgrade_marker (no payment, grave_quality_changed,
+## reputation marker_upgrade; a master stone also master_stone, once per grave). Both:
+## grave_stone_set, stats.stones_set + 1, Workshop.check_goal. Nothing is taken from `inv`
+## (the stone was paid when carved). Returns the quality difference (0 = refused).
+func set_designed_stone(grave_id: String, design: StoneDesign, inv: Inventory) -> int:
+	var grave := _known_grave(grave_id, "set_designed_stone")
+	if grave == null or design == null or design.is_empty():
+		return 0
+	if grave.state != GraveRecord.State.FILLED and grave.state != GraveRecord.State.MARKED:
+		return 0
+	var cfg := _economy()
+	if not cfg.marker_quality.has(design.shape):
+		push_warning("[Graveyard] set_designed_stone: '%s' is no stone shape" % design.shape)
+		return 0
+	var corpse := _corpse_of(grave)
+	if corpse == null:
+		push_warning("[Graveyard] set_designed_stone: corpse '%s' of grave '%s' unknown" % [grave.corpse_id, grave_id])
+		return 0
+	var stone_cfg := _stone_config()
+	if StoneDesignRules.marker_points(design, corpse, cfg, stone_cfg) <= StoneDesignRules.current_marker_points(grave, corpse, cfg, stone_cfg):
+		return 0
+	if grave.state == GraveRecord.State.FILLED and inv == null:
+		push_warning("[Graveyard] set_designed_stone without inventory (payment)")
+		return 0
+	var was_filled := grave.state == GraveRecord.State.FILLED
+	var old_quality := grave.quality if not was_filled else 0
+	var had_master := StoneDesign.from_dict(grave.design).shape == SHAPE_MASTER
+	var stored := design.to_dict()
+	var lines: Array = []
+	lines.append_array(GraveQuality.breakdown(corpse, design.shape, cfg, stored))
+	grave.state = GraveRecord.State.MARKED
+	grave.marker_id = design.shape
+	grave.design = stored
+	grave.quality = GraveQuality.compute(corpse, design.shape, cfg, stored)
+	grave.breakdown = lines
+	GameState.add_stat(STAT_STONES_SET, 1)
+	var rep := _reputation()
+	if was_filled:
+		grave.completed_day = TimeManager.day
+		var rep_cfg := _reputation_config()
+		var parts := GraveQuality.payment_parts(corpse, grave.quality, _tables(), cfg, rep.tier() if rep != null else &"", rep_cfg)
+		var paid := int(parts.total)
+		if paid > 0:
+			inv.add_item(COIN_ITEM, paid)
+		EventBus.grave_state_changed.emit(grave_id, grave.state)
+		EventBus.grave_completed.emit(grave_id, grave.corpse_id, grave.quality, lines.duplicate(true))
+		EventBus.payment_received.emit(paid, PAYMENT_REASON % corpse.display_name)
+		if rep != null:
+			if grave.quality >= rep_cfg.grave_good_min:
+				rep.event(EVENT_GRAVE_GOOD, REASON_GRAVE % corpse.display_name)
+			elif grave.quality <= rep_cfg.grave_poor_max:
+				rep.event(EVENT_GRAVE_POOR, REASON_GRAVE % corpse.display_name)
+	else:
+		EventBus.grave_quality_changed.emit(grave_id, grave.quality)
+		if rep != null:
+			rep.event(EVENT_MARKER_UPGRADE, REASON_UPGRADE % corpse.display_name)
+			if design.shape == SHAPE_MASTER and not had_master:
+				rep.event(EVENT_MASTER_STONE, REASON_MASTER_STONE)
+	EventBus.grave_stone_set.emit(grave_id, design.shape, grave.quality)
+	if was_filled:
+		_check_cemetery_complete()
+		_check_chapter()
+	var workshop := _first(WORKSHOP_GROUP)
+	if workshop != null and workshop.has_method(&"check_goal"):
+		workshop.call(&"check_goal")
+	return grave.quality - old_quality
+
+
+func _stone_config() -> StoneConfig:
+	if stone_config == null:
+		stone_config = Database.config(&"stone_config") as StoneConfig
+		if stone_config == null:
+			stone_config = StoneConfig.new()
+	return stone_config

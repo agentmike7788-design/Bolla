@@ -116,7 +116,9 @@ func test_clamp_to_max() -> void:
 	r.examined = true
 	var lines := GraveQuality.breakdown(r, &"gravestone_simple", generous)
 	assert_eq(_sum(lines), 8 + 2 + 3 + 1 + 1, "breakdown is not clamped")
-	assert_eq(GraveQuality.compute(r, &"gravestone_simple", generous), 13, "Phase 4 §2.4: quality_max 13")
+	assert_eq(GraveQuality.compute(r, &"gravestone_simple", generous), 15, "not clamped below quality_max")
+	generous.quality_max = 13
+	assert_eq(GraveQuality.compute(r, &"gravestone_simple", generous), 13, "clamped to quality_max")
 
 
 func test_clamp_to_min() -> void:
@@ -235,8 +237,9 @@ func test_phase4_lines_in_order() -> void:
 	assert_eq(_sum(lines), 13)
 	assert_eq(GraveQuality.compute(r, &"gravestone_simple", _p4()), 13, "§2.4 maximum 13")
 	assert_eq(_p4().quality_max, 13)
-	assert_eq(EconomyConfig.new().quality_max, 13, "class default")
-	assert_eq((load("res://data/config/economy_config.tres") as EconomyConfig).quality_max, 13, "data")
+	# Phase 5 §2.5: class default and data are 19 (a gilded master stone), the Phase-4 fixture keeps 13.
+	assert_eq(EconomyConfig.new().quality_max, 19, "class default (Phase 5)")
+	assert_eq((load("res://data/config/economy_config.tres") as EconomyConfig).quality_max, 19, "data (Phase 5)")
 
 
 func test_phase4_each_new_line() -> void:

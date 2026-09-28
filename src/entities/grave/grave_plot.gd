@@ -42,6 +42,11 @@ const LABEL_BURY := "Bestatten"
 const LABEL_MARKER := "%s setzen"
 const LABEL_UPGRADE := "%s statt %s setzen"
 const TEXT_CANNOT_MARK := "Das Grabzeichen kann hier nicht gesetzt werden."
+# Phase 5 (docs/PHASE5_DESIGN.md §2.5, §3.4): a designed stone from the mason's rack.
+const STONEMASONRY_GROUP := &"stonemasonry"
+const PROMPT_SET_STONE := "[E] Gestalteten Stein setzen (%d Min)"
+const LABEL_SET_STONE := "Gestalteten Stein setzen"
+const TEXT_CANNOT_SET_STONE := "Der Stein passt hier nicht mehr."
 const NAME_UNKNOWN := "Unbekannt"
 
 @export var grave_id: String = ""
@@ -77,6 +82,8 @@ const NAME_UNKNOWN := "Unbekannt"
 ## Current visual state (GraveRecord.State).
 var state: int = GraveRecord.State.EMPTY
 var marker_id: StringName = &""
+## Phase 5: StoneDesign.to_dict of the grave ({} = none) – drives the designed-stone visual.
+var design: Dictionary = {}
 
 @onready var interactable: Interactable = get_node_or_null(^"Interactable") as Interactable
 
@@ -103,6 +110,7 @@ func _ready() -> void:
 		var grave := _grave()
 		state = grave.state if grave != null else GraveRecord.State.EMPTY
 		marker_id = grave.marker_id if grave != null else &""
+		design = grave.design.duplicate(true) if grave != null else {}
 	_apply_visual()
 
 
@@ -118,9 +126,9 @@ func can_interact(player: Player) -> bool:
 		GraveRecord.State.DUG:
 			return _is_carrying(player)
 		GraveRecord.State.FILLED:
-			return not _is_carrying(player) and not available_markers(player.inventory).is_empty()
+			return not _is_carrying(player) and (has_stone_to_set() or not available_markers(player.inventory).is_empty())
 		GraveRecord.State.MARKED:
-			return not _is_carrying(player) and upgrade_marker_id(player.inventory) != &""
+			return not _is_carrying(player) and (has_stone_to_set() or upgrade_marker_id(player.inventory) != &"")
 	return false
 
 
@@ -143,6 +151,8 @@ func get_interaction_prompt(player: Player) -> String:
 		GraveRecord.State.FILLED:
 			if carrying:
 				return Player.TEXT_HANDS_FULL
+			if has_stone_to_set():
+				return PROMPT_SET_STONE % _stone_config().set_minutes
 			var options := available_markers(player.inventory if player != null else null)
 			if options.is_empty():
 				return PROMPT_NO_MARKER
@@ -150,6 +160,8 @@ func get_interaction_prompt(player: Player) -> String:
 				return PROMPT_MARKER_ONE % [_item_name(options[0]), _actions(player).marker_minutes]
 			return PROMPT_MARKER_CHOICE % _actions(player).marker_minutes
 		GraveRecord.State.MARKED:
+			if has_stone_to_set() and not carrying:
+				return PROMPT_SET_STONE % _stone_config().set_minutes
 			var better := upgrade_marker_id(player.inventory if player != null else null)
 			if better != &"" and not carrying:
 				return PROMPT_UPGRADE % [_item_name(better), _item_name(grave.marker_id), _actions(player).marker_minutes]
@@ -162,6 +174,10 @@ func interact(player: Player) -> void:
 		return
 	var grave := _grave()
 	var actions := _actions(player)
+	if (grave.state == GraveRecord.State.FILLED or grave.state == GraveRecord.State.MARKED) and has_stone_to_set():
+		player.start_timed_action(LABEL_SET_STONE, _stone_config().set_minutes, _finish_set_stone.bind(player.inventory),
+				true, ANIM_MARKER)
+		return
 	match grave.state:
 		GraveRecord.State.EMPTY:
 			player.start_timed_action(LABEL_DIG, actions.dig_minutes, _finish_dig.bind(player), true, ANIM_DIG)
@@ -197,7 +213,7 @@ func available_markers(inv: Inventory) -> Array[StringName]:
 	if inv == null:
 		return out
 	for id: StringName in _economy().marker_quality:
-		if inv.has(id):
+		if not StoneDesignRules.is_shape(id) and inv.has(id):
 			out.append(id)
 	return out
 
@@ -272,6 +288,22 @@ func _exit_is_free(player: Player, spot: Vector3) -> bool:
 	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
 
 
+## Phase 5: a finished stone for this grave waits in the mason's rack and still is an improvement
+## (Stonemasonry.ready_for → fits_still). It takes precedence over inventory markers (§3.4).
+func has_stone_to_set() -> bool:
+	var masonry := _stonemasonry()
+	if masonry == null:
+		return false
+	var order := masonry.ready_for(grave_id)
+	return not order.is_empty() and bool(order.get("fits_still", false))
+
+
+func _finish_set_stone(inv: Inventory) -> void:
+	var masonry := _stonemasonry()
+	if masonry == null or masonry.set_stone(grave_id, inv) <= 0:
+		EventBus.notification_requested.emit(TEXT_CANNOT_SET_STONE, &"warning")
+
+
 func _finish_upgrade(id: StringName, inv: Inventory) -> void:
 	var graveyard := _graveyard()
 	if graveyard != null and graveyard.upgrade_marker(grave_id, id, inv) <= 0:
@@ -286,6 +318,7 @@ func _on_grave_state_changed(id: String, new_state: int) -> void:
 	state = new_state
 	var grave := _grave()
 	marker_id = grave.marker_id if grave != null else &""
+	design = grave.design.duplicate(true) if grave != null else {}
 	_apply_visual()
 
 
@@ -295,6 +328,7 @@ func _on_grave_quality_changed(id: String, _quality: int) -> void:
 		return
 	var grave := _grave()
 	marker_id = grave.marker_id if grave != null else marker_id
+	design = grave.design.duplicate(true) if grave != null else design
 	_apply_visual()
 
 
@@ -349,6 +383,15 @@ func _graveyard() -> Graveyard:
 
 func _manager() -> CorpseManager:
 	return get_tree().get_first_node_in_group(MANAGER_GROUP) as CorpseManager if is_inside_tree() else null
+
+
+func _stonemasonry() -> Stonemasonry:
+	return get_tree().get_first_node_in_group(STONEMASONRY_GROUP) as Stonemasonry if is_inside_tree() else null
+
+
+static func _stone_config() -> StoneConfig:
+	var cfg := Database.config(&"stone_config") as StoneConfig
+	return cfg if cfg != null else StoneConfig.new()
 
 
 func _first_player() -> Player:

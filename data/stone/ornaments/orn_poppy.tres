@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="OrnamentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/stone/ornament_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"orn_poppy"
+order = 2
+display_name = "Mohnkapsel"
+tooltip = "Für einen langen, ruhigen Schlaf."
+points = 1
+minutes = 25

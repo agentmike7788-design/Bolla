@@ -507,7 +507,7 @@ func test_grave_record_dict_round_trip() -> void:
 	g.completed_day = 6
 	var d := g.to_dict()
 	assert_eq(d, {"id": "plot_05", "state": 3, "corpse_id": "corpse_0003", "marker_id": &"gravestone_simple", "quality": 8,
-			"breakdown": [{"label": "Bestattet", "points": 2}, {"label": "Wertsachen genommen", "points": -2}], "completed_day": 6})
+			"breakdown": [{"label": "Bestattet", "points": 2}, {"label": "Wertsachen genommen", "points": -2}], "completed_day": 6, "design": {}})
 	assert_eq(GraveRecord.from_dict(d).to_dict(), d)
 	var plain: Dictionary = JSON.parse_string(JSON.stringify(d))
 	var back := GraveRecord.from_dict(plain)
