@@ -17,3 +17,7 @@ extends Resource
 @export var by_story: Dictionary[StringName, PackedStringArray] = {}
 ## Lines by piety tier (devout, hardhearted: 2 each).
 @export var by_piety: Dictionary[StringName, PackedStringArray] = {}
+## Gift text by coin count when it differs from `gift` (Pietät "Andächtig": 3 coins, §2.7).
+@export var gift_by_coins: Dictionary[int, String] = {}
+## Once per night when a content ghost would give but Pietät allows no gift (§2.7, §3.4).
+@export var no_gift: String = "Die Geister deuten nicht mehr ins Moos."

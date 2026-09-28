@@ -8,7 +8,8 @@ extends TestCase
 const IMPLEMENTED: PackedStringArray = ["PietyRules", "Piety", "UtilizationRules", "NightTrade",  # P3
 		"CorpseExam", "CorpsePrep", "CorpseCare",  # P2
 		"StoryDirector",  # P1
-		"JournalRules", "JournalManager"]  # P6
+		"JournalRules", "JournalManager",  # P6
+		"CorpseDecayVisual"]  # P4
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
 	# P1

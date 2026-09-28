@@ -1,0 +1,13 @@
+[gd_resource type="ShaderMaterial" load_steps=4 format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/decay_overlay.gdshader" id="1"]
+[ext_resource type="Texture2D" path="res://assets/materials/noise_brush.tres" id="2"]
+[ext_resource type="Texture2D" path="res://assets/materials/noise_patch.tres" id="3"]
+
+[resource]
+resource_name = "mat_decay_overlay"
+render_priority = 1
+shader = ExtResource("1")
+shader_parameter/brush_noise = ExtResource("2")
+shader_parameter/patch_noise = ExtResource("3")
+shader_parameter/stain_color = Color(0.556863, 0.603922, 0.494118, 1)

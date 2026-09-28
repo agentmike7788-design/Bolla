@@ -7,9 +7,11 @@ script = ExtResource("1")
 content = PackedStringArray("Die Erde liegt warm auf mir. Hab Dank, Totengräber.", "So still war es nie, als ich noch lebte. Das ist gut so.", "Du hast mich ordentlich zugedeckt. Mehr wünscht sich keiner.", "Mein Stein steht gerade. Das hätte meiner Mutter gefallen.", "Nachts hört man hier den Wind im Gras. Ich höre gern zu.", "Die Lebenden vergessen langsam. Du vergisst mich nicht, das spür ich.", "Ruhig liegt es sich hier. Wer hätte das gedacht.", "Der Hügel erinnert sich an mich. Das genügt.")
 calm = PackedStringArray("Es ist nicht schlecht hier. Nur ein wenig still.", "Ich warte. Worauf, weiß ich selbst nicht mehr.", "Die Nacht ist lang, wenn man nicht mehr müde wird.", "Man gewöhnt sich an alles. Sogar ans Totsein.")
 by_reason = Dictionary[StringName, PackedStringArray]({
+&"robbed": PackedStringArray("Mir fehlt etwas. Ich weiß genau, was.", "Mein Zopf. Wo ist mein Zopf?", "Du hast mir genommen, was mir gehörte. Nicht das Geld – mich."),
 &"weeds": PackedStringArray("Das Unkraut kriecht mir in die Träume. Rupf es aus, ja?", "Disteln auf meinem Hügel. Als wär ich längst vergessen.", "Es wuchert über mir. Ich hatte es gern ordentlich."),
 &"valuables": PackedStringArray("Mein Beutel fehlt. Ich spür die leere Stelle noch am Saum.", "Du hast behalten, was mir gehörte. Die Toten zählen nach.", "Meine Taschen sind leer. Das war nicht recht von dir."),
 &"cold": PackedStringArray("Mir ist kalt. So bloß in die Erde – das war nicht recht.", "Kein Tuch um mich. Die Erde kratzt.", "Ein Leinentuch hätte gereicht. Nur ein bisschen Wärme."),
+&"unkempt": PackedStringArray("Ungewaschen in die Erde. Der Staub juckt noch.", "Meine Hände liegen irgendwie. Hat sie keiner gefaltet?", "Mein Haar war mein Stolz. Nun liegt es wirr."),
 &"cross": PackedStringArray("Holz verrottet. Dann weiß keiner mehr, wer hier liegt.", "Mein Kreuz neigt sich schon. Ein Stein hielte länger.", "Holz ist für Zäune. Für mich hätt ich mir Stein gewünscht."),
 &"waited": PackedStringArray("Du hast mich zu lange liegen lassen. Ich hab es gerochen.", "Zu lange auf der Bahre. Das vergisst man nicht, auch tot nicht.", "Ich kam spät unter die Erde. Die Fliegen waren schneller."),
 &"bare": PackedStringArray("Nicht eine Blume. Hat mich denn keiner gemocht?", "So kahl hier. Ein kleines Licht in der Nacht wär schön.", "Ein wenig Schmuck am Grab, und ich gäbe Ruhe.")
@@ -20,3 +22,18 @@ by_trait = Dictionary[StringName, PackedStringArray]({
 &"strange_wound": PackedStringArray("Der Kreis über meinem Herzen brennt noch. Jede Nacht.", "Drei Linien, ein Kreis. Wer so zeichnet, ist noch nicht fertig.")
 })
 gift = "Der Geist deutet ins Moos – zwei Münzen."
+by_story = Dictionary[StringName, PackedStringArray]({
+&"s1_quendel": PackedStringArray("Die Briefe waren gut gemeint. Aber wer gießt dann die Gräber?", "An jedes Grab hab ich Holunder gesetzt. Gieß ihn, wenn es trocken ist."),
+&"s2_hemmerling": PackedStringArray("Ich hab sie übers Moor gerudert, Nacht für Nacht. Die Letzte nicht.", "Der Schlüssel war nicht meiner. Ich sollte ihn nur halten, bis einer fragt."),
+&"s3_wernstein": PackedStringArray("Ich hatte gepackt. Ich war so nah am Fortgehen.", "Der Brief kam zu spät. Oder ich war zu langsam. Such es dir aus."),
+&"s4_uhlig": PackedStringArray("Wir haben geschworen, Lorenz und wir. Ich hab mich dran gehalten.", "Auf den Heuboden bin ich nicht gestiegen. Frag, wer mich hinaufgetragen hat."),
+&"s5_moor": PackedStringArray("Ich trage einen fremden Mantel. Er war mir immer zu weit.", "Der Sechste ist noch nicht tot.")
+})
+by_piety = Dictionary[StringName, PackedStringArray]({
+&"devout": PackedStringArray("Du gehst so leise zwischen uns. Wir hören dich trotzdem.", "Einer, der uns die Hände faltet. Das hat lange keiner mehr getan."),
+&"hardhearted": PackedStringArray("Du riechst nach Ilses Kiepe, Totengräber.", "Du zählst uns wie Säcke. Wir zählen mit.")
+})
+gift_by_coins = Dictionary[int, String]({
+3: "Der Geist deutet ins Moos – drei Münzen."
+})
+no_gift = "Die Geister deuten nicht mehr ins Moos."
