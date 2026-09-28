@@ -71,6 +71,9 @@ var _content_before: int = -1
 ## total_minutes when unlock_flag was first seen this session (-1 = not yet; not saved: a
 ## loaded save with the flag opens at once).
 var _unlock_seen_total: int = -1
+## load_state got a Phase-5 state (not the empty {} of a migrated Phase-4 save): then post_load
+## leaves the unlock to the next morning, as in play (save → load identical, W-Welt W2).
+var _loaded_v4: bool = false
 ## Stations whose ready job was announced (not saved: at worst announced once more).
 var _announced: Dictionary = {}
 
@@ -84,6 +87,7 @@ func _ready() -> void:
 	EventBus.time_tick.connect(_on_time_tick)
 	EventBus.cemetery_completed.connect(_on_cemetery_completed)
 	EventBus.coins_spent.connect(_on_coins_spent)
+	EventBus.new_game_started.connect(_on_new_game)
 
 
 ## The resolved WorkshopConfig (config or data/config/workshop_config.tres).
@@ -317,6 +321,7 @@ func load_state(data: Dictionary) -> void:
 	_spent.clear()
 	_announced.clear()
 	_unlock_seen_total = -1
+	_loaded_v4 = not data.is_empty()
 	var raw_built: Variant = data.get("built", [])
 	if raw_built is Array:
 		for raw: Variant in raw_built:
@@ -347,10 +352,11 @@ func load_state(data: Dictionary) -> void:
 	_content_before = _num(data.get("content_before"), -1)
 
 
-## workshop_open at once when unlock_flag holds (§1.2); decor on the workyard cleared once and
+## workshop_open at once when unlock_flag holds (§1.2 – a migrated save; a Phase-5 save whose
+## unlock is still waiting for its morning keeps waiting); decor on the workyard cleared once and
 ## pending returns handed out (§5.2 step 5).
 func post_load() -> void:
-	if not is_open() and _flag_on(_cfg().unlock_flag):
+	if not is_open() and _flag_on(_cfg().unlock_flag) and not _loaded_v4:
 		_open()
 	_evict_workyard()
 	_flush_pending()
@@ -365,6 +371,13 @@ func _on_time_tick(day: int, _minute: int) -> void:
 	_announce_ready_jobs()
 	if not _evict_pending.is_empty():
 		_flush_pending()
+
+
+## W-Welt (W2): a new game has no decor on the workyard (the build mask blocks it) – the one-time
+## clearing counts as done, so the first load does not change the state (save → load identical).
+func _on_new_game() -> void:
+	if not workyard_rects.is_empty():
+		GameState.set_flag(FLAG_CLEARED, true)
 
 
 ## Records the unlock time (own bookkeeping only; opening follows in apply_morning).

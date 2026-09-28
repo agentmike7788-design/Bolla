@@ -11,7 +11,8 @@ extends SceneTree
 ## (graveyard_build_*.gd): context (layout, ground heights, placing), colliders, entities,
 ## decor, grass and the Phase-3 parts (systems, obstacles, tending spots, notice board, birches,
 ## build mask – docs/PHASE3_DESIGN.md §4) and the Phase-4 parts (systems, elder bushes, props,
-## door note – docs/PHASE4_DESIGN.md §4).
+## door note – docs/PHASE4_DESIGN.md §4) and the Phase-5 parts (systems, workyard with build sites and
+## stations, gather nodes, Am Bruch – docs/PHASE5_DESIGN.md §4, graveyard_build_phase5.gd).
 
 ## Helper scripts are preloaded (no class_name) – see the autoload note below.
 const Ctx := preload("res://src/world/graveyard/graveyard_build_context.gd")
@@ -21,6 +22,7 @@ const Decor := preload("res://src/world/graveyard/graveyard_build_decor.gd")
 const Grass := preload("res://src/world/graveyard/graveyard_build_grass.gd")
 const Phase3 := preload("res://src/world/graveyard/graveyard_build_phase3.gd")
 const Phase4 := preload("res://src/world/graveyard/graveyard_build_phase4.gd")
+const Phase5 := preload("res://src/world/graveyard/graveyard_build_phase5.gd")
 const InteriorBuild := preload("res://src/world/hut_interior/hut_interior_build.gd")
 const InteriorBuilder := preload("res://src/world/hut_interior/hut_interior_builder.gd")
 const LAYOUT_PATH := "res://data/world/graveyard_layout.json"
@@ -135,6 +137,8 @@ func _build_world() -> Node:
 	Phase3.build_obstacles(_ctx, entities)
 	Phase3.build_dirt_spots(_ctx, entities)
 	Phase3.build_notice_board(_ctx, entities)
+	Phase5.build_workyard(_ctx, entities)
+	Phase5.build_gather_nodes(_ctx, entities)
 
 	var decor := _ctx.group(scene_root, "Decor")
 	var old := _ctx.group(decor, "OldGraves")
@@ -149,6 +153,9 @@ func _build_world() -> Node:
 	Phase4.build_elder_bushes(_ctx, decor)
 	Phase4.build_props(_ctx, entities, decor)
 	Phase4.build_door_note(_ctx, decor)
+	Phase5.build_systems(_ctx, systems)
+	Phase5.build_elder_gather(_ctx, decor)
+	Phase5.build_bruch(_ctx, decor, entities)
 
 	Entities.build_waypoints(_ctx, _ctx.group(scene_root, "Waypoints"))
 	_ctx.group(scene_root, "Corpses")

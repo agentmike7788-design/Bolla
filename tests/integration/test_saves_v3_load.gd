@@ -146,7 +146,10 @@ func test_interior_chest_tools_loads() -> void:
 		var c := decor.centre_of(p)
 		if c.distance_to(Vector2(-8.6, -1.3)) < 2.5 or c.distance_to(Vector2(-0.5, -10.6)) < 2.5:
 			ids.append(p.decor_id)
-	assert_true(ids.has(&"decor_bench_wood") and ids.has(&"decor_grave_vase"), "decor on the later workyard (%s)" % str(ids))
+	# W-Welt (W2): pieces on the built workyard are cleared into the hut chest on this first load
+	# (§5.2 step 5, Workshop.workyard_rects) – each of the two is either still placed or in the chest.
+	for id: StringName in [&"decor_bench_wood", &"decor_grave_vase"]:
+		assert_true(ids.has(id) or chest.storage.count(id) > 0, "%s placed or in the chest (%s)" % [id, str(ids)])
 	await _check_and_resave()
 
 

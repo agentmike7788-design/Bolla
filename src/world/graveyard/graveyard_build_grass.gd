@@ -2,11 +2,16 @@ extends RefCounted
 ## Grass helpers of graveyard_builder.gd (build-time tool, static, preloaded): scatters the
 ## tufts (seeded, noise-clumped) into chunked MultiMeshes so the camera culls what it does not
 ## see, keeps paths, roads, NPC routes and placed objects free, thins out ground the camera
-## cannot see, and saves the result as grass.scn.
+## cannot see, and saves the result as grass.scn. Phase 5 (docs/PHASE5_DESIGN.md §4.5): half density
+## Am Bruch, none in the quarry, keep-outs around the workyard stations, the kiln and every gather
+## node (flax beds, clay pit, herbs, quarry spots, alder trunks).
 
 const Ctx := preload("res://src/world/graveyard/graveyard_build_context.gd")
 const OUT_GRASS := "res://src/world/graveyard/grass.scn"
 const GRASS_ASSET := "ph_env_grass_tuft"
+## Phase 5: keep-out radius (m, before grass.gather_keep_out) per gather kind ≈ half the model.
+const GATHER_RADIUS := {"alder": 0.45, "flax_bed": 0.9, "clay_pit": 1.25, "herb_patch": 0.55, "ore_vein": 0.75,
+		"workstone_ledge": 0.85, "rubble_face": 0.95}
 
 
 # --- grass (chunked MultiMeshes so the camera culls what it does not see) -----
@@ -38,6 +43,10 @@ static func build(ctx: Ctx) -> Node3D:
 		if not inner.has_point(p) and rng.randf() > float(cfg.outer_density):
 			continue
 		if _kept_out(p, keep):
+			continue
+		if (keep.no_grass as Array).any(func(r: Rect2) -> bool: return r.has_point(p)):
+			continue
+		if (keep.thin as Array).any(func(r: Rect2) -> bool: return r.has_point(p)) and rng.randf() > float(cfg.get("bruch_density_scale", 1.0)):
 			continue
 		if _hidden(p, keep) and rng.randf() > float(cfg.hidden_density):
 			continue
@@ -133,6 +142,24 @@ static func _keep_out(ctx: Ctx) -> Dictionary:
 			var off := Ctx.v3(defs[0].offset)
 			rects.append({"pos": Ctx.v2(ent.pos), "rot": float(ent.rot_y),
 					"rect": Rect2(off.x - size.x * 0.5, off.z - size.z * 0.5, size.x, size.z).grow(margin)})
+	# Phase 5: workyard footprints, the kiln, the gather nodes (model half size + gather_keep_out).
+	for site: Dictionary in layout.get("workyard", {}).get("build_sites", []):
+		var fp: Array = site.footprint
+		rects.append({"pos": Ctx.v2(site.pos), "rot": float(site.rot_y), "rect": Rect2(fp[0], fp[1], fp[2], fp[3]).grow(margin)})
+	if layout.get("workyard", {}).has("meiler"):
+		circles.append({"c": Ctx.v2(layout.workyard.meiler.pos), "r": float(layout.workyard.meiler.radius) + margin})
+	var gather_out := float(cfg.get("gather_keep_out", 0.0))
+	for g: Dictionary in layout.get("gather_nodes", []):
+		circles.append({"c": Ctx.v2(g.pos), "r": float(GATHER_RADIUS.get(String(g.kind), 0.6)) + gather_out})
+	var no_grass: Array[Rect2] = []
+	var thin: Array[Rect2] = []
+	for sec: Dictionary in layout.sections:
+		var r: Array = sec.rect
+		var rect := Rect2(r[0], r[1], r[2] - r[0], r[3] - r[1])
+		if sec.id == "quarry":
+			no_grass.append(rect)
+		elif sec.id == "bruch":
+			thin.append(rect)
 	var log_def: Dictionary = layout.colliders["ph_prop_fallen_log"][0]
 	var log_size := Ctx.v3(log_def.size)
 	var log_off := Ctx.v3(log_def.offset)
@@ -146,7 +173,7 @@ static func _keep_out(ctx: Ctx) -> Dictionary:
 				"r": float(cfg.hidden_crown_radius) * s})
 	var hut := Ctx.v2(layout.hut.pos)
 	var hut_rect := Rect2(-2.9, -2.4 - float(cfg.hidden_hut_depth), 5.8, float(cfg.hidden_hut_depth))
-	return {"lines": lines, "circles": circles, "rects": rects, "hidden": hidden,
+	return {"lines": lines, "circles": circles, "rects": rects, "hidden": hidden, "no_grass": no_grass, "thin": thin,
 			"hidden_rects": [{"pos": hut, "rot": float(layout.hut.rot_y), "rect": hut_rect}]}
 
 
