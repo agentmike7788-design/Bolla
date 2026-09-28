@@ -694,6 +694,119 @@ func test_real_ghost_lines() -> void:
 	assert_eq((Database.config(&"ghost_config") as GhostConfig).gift_coins, 2)
 
 
+# --- Phase 5 (P4, docs/PHASE5_DESIGN.md §2.5) ---------------------------------------------
+
+func test_phase5_nameless_reason_in_priority() -> void:
+	var grave := _grave_record(&"stone_stele")
+	grave.design = Phase5Fixtures.design(&"stone_stele").to_dict()
+	var corpse := _corpse_record(true, &"", 0.9)
+	assert_eq(GhostMood.main_reason(grave, corpse, 0, 1, economy), &"nameless", "a stone without a name")
+	corpse.laid_out = false
+	assert_eq(GhostMood.main_reason(grave, corpse, 0, 1, economy), &"unkempt", "unkempt before nameless")
+	corpse.laid_out = true
+	corpse.freshness_at_burial = 0.2
+	assert_eq(GhostMood.main_reason(grave, corpse, 0, 0, economy), &"nameless", "nameless before waited / bare")
+	grave.design = Phase5Fixtures.design(&"stone_stele", &"i_rest", &"", false, PackedStringArray(["Hier ruht", "A"])).to_dict()
+	assert_eq(GhostMood.main_reason(grave, corpse, 0, 0, economy), &"waited", "with an inscription: the old reasons")
+	corpse.freshness_at_burial = 0.9
+	assert_eq(GhostMood.main_reason(grave, corpse, 0, 0, economy), &"bare")
+	assert_eq(GhostMood.main_reason(grave, corpse, 0, 1, economy), &"")
+	# The shapes in marker_quality do not turn the plain gravestone into a "cross" complaint.
+	assert_true(economy.marker_quality.has(&"stone_master"), "Phase-5 shapes in the economy")
+	var plain := _grave_record(&"gravestone_simple")
+	assert_eq(GhostMood.main_reason(plain, corpse, 0, 1, economy), &"", "gravestone: nothing missing (Phase 3/4)")
+	var cross := _grave_record(&"wooden_cross")
+	assert_eq(GhostMood.main_reason(cross, corpse, 0, 1, economy), &"cross")
+	assert_eq(GhostMood.REASONS.find(&"nameless"), GhostMood.REASONS.find(&"cross") + 1)
+
+
+func test_phase5_mood_numbers_of_the_contract() -> void:
+	var eco := Phase5Fixtures.economy_config()
+	# Mixed grave: braid taken, shroud, plain stone → 8 + 1 − 5 = 4 restless; master stone complete → 10 content.
+	var mixed := _corpse_record(true, &"", 0.9)
+	mixed.washed = false
+	mixed.laid_out = false
+	mixed.examined = true
+	mixed.cause_id = &"fever"
+	mixed.harvested = [&"hair"]
+	var q_plain := GraveQuality.compute(mixed, &"gravestone_simple", eco)
+	assert_eq(q_plain, 8)
+	var before := GhostMood.score(q_plain, 0, 0, clean_cfg, cfg, GhostMood.robbed_count(mixed))
+	assert_eq([before, GhostMood.mood(before, cfg)], [4, &"restless"])
+	var master := Phase5Fixtures.design(&"stone_master", &"i_fever", &"orn_elder", true).to_dict()
+	var q_master := GraveQuality.compute(mixed, &"stone_master", eco, master)
+	assert_eq(q_master - q_plain, 6, "up to +6 over the plain gravestone")
+	var after := GhostMood.score(q_master, 0, 0, clean_cfg, cfg, GhostMood.robbed_count(mixed))
+	assert_eq([after, GhostMood.mood(after, cfg)], [10, &"content"])
+	# Fully robbed (hair + teeth): −4 → +6 = 2, stays restless.
+	var robbed := _corpse_record(true, &"", 0.9)
+	robbed.washed = false
+	robbed.laid_out = false
+	robbed.cause_id = &"fever"
+	robbed.harvested = [&"hair", &"teeth"]
+	var r_plain := GhostMood.score(GraveQuality.compute(robbed, &"gravestone_simple", eco), 0, 0, clean_cfg, cfg, 2)
+	var r_master := GhostMood.score(GraveQuality.compute(robbed, &"stone_master", eco, master), 0, 0, clean_cfg, cfg, 2)
+	assert_eq([r_plain, r_master], [-4, 2])
+	assert_eq(GhostMood.mood(r_master, cfg), &"restless", "a stone does not give back what was taken")
+
+
+func test_phase5_design_key_and_line() -> void:
+	var p5 := Phase5Fixtures.ghost_lines()
+	var c := _corpse_record(true, &"", 0.9)
+	var plain := Phase5Fixtures.design(&"stone_stele", &"i_rest", &"", false, PackedStringArray(["Hier ruht", "Anna"])).to_dict()
+	var gilded := Phase5Fixtures.design(&"stone_arch", &"i_rest", &"", true, PackedStringArray(["Hier ruht", "Anna"])).to_dict()
+	var master := Phase5Fixtures.design(&"stone_master", &"i_rest", &"", true, PackedStringArray(["Hier ruht", "Anna"])).to_dict()
+	assert_eq(GhostMood.design_key(plain, c), &"default")
+	assert_eq(GhostMood.design_key(gilded, c), &"gilded")
+	assert_eq(GhostMood.design_key(master, c), &"master", "master before gilded")
+	var s5 := _corpse_record(true, &"", 0.9)
+	s5.story_id = &"s5_moor"
+	var lorenz := Phase5Fixtures.design(&"stone_stele", &"i_rest", &"", false, PackedStringArray(["Hier ruht", "Lorenz Aschau"])).to_dict()
+	var dorn := Phase5Fixtures.design(&"stone_stele", &"i_rest", &"", false, PackedStringArray(["Hier ruht", "Kaspar Dorn"])).to_dict()
+	assert_eq(GhostMood.design_key(lorenz, s5), &"s5_lorenz", "S5 with Lorenz' name in the stone")
+	assert_eq(GhostMood.design_key(dorn, s5), &"default", "S5 under his own name")
+	assert_eq(GhostMood.pick_design_line(p5, &"s5_lorenz", 3), "Da steht Lorenz’ Name. Er würde lachen.")
+	assert_eq(GhostMood.pick_design_line(p5, &"master", 0), "Ein Stein wie für einen Ratsherrn. Die im Dorf werden reden.")
+	assert_true(Array(p5.by_design[&"default"]).has(GhostMood.pick_design_line(p5, &"nope", 1)), "unknown key → default")
+	assert_eq(GhostMood.pick_design_line(GhostLines.new(), &"default", 0), "")
+
+
+func test_phase5_by_design_once_per_grave() -> void:
+	await _make_world(2)
+	ghosts.lines = Phase5Fixtures.ghost_lines()
+	var masonry := Stonemasonry.new()
+	world.add_child(masonry)
+	_mark("plot_01", 12, 0)
+	_mark("plot_02", 2, 0)
+	for id: String in ["plot_01", "plot_02"]:
+		var g := graveyard.get_grave(id)
+		g.marker_id = &"stone_master"
+		g.design = Phase5Fixtures.design(&"stone_master", &"i_rest", &"", false, PackedStringArray(["Hier ruht", "Tote"])).to_dict()
+	TimeManager.load_state({"day": 3, "minute_of_day": 1350})
+	assert_true(masonry.design_line_pending("plot_01"))
+	var first := ghosts.listen("plot_01", null)
+	assert_eq(first, "Ein Stein wie für einen Ratsherrn. Die im Dorf werden reden.", "content ghost: by_design (master)")
+	assert_false(masonry.design_line_pending("plot_01"), "heard")
+	TimeManager.load_state({"day": 4, "minute_of_day": 1350})
+	var next := ghosts.listen("plot_01", null)
+	assert_false(Array(Phase5Fixtures.ghost_lines().by_design[&"master"]).has(next), "only once: " + next)
+	assert_eq(ghosts.mood_of("plot_02"), &"restless")
+	assert_false(Array(Phase5Fixtures.ghost_lines().by_design[&"master"]).has(ghosts.listen("plot_02", null)), "restless: no by_design")
+	assert_true(masonry.design_line_pending("plot_02"), "still pending for a restless ghost")
+	assert_eq(masonry.save_state().heard_design, ["plot_01"], "saved by Stonemasonry")
+
+
+func test_phase5_real_ghost_lines() -> void:
+	var real := Database.ghost_lines() as GhostLines
+	var fixture := Phase5Fixtures.ghost_lines()
+	assert_eq(real.by_reason[&"nameless"], fixture.by_reason[&"nameless"], "§2.5 leading texts")
+	assert_eq(real.by_design, fixture.by_design)
+	for key: StringName in [&"default", &"gilded", &"master", &"s5_lorenz"]:
+		assert_true(real.by_design.has(key), String(key))
+		for line: String in real.by_design[key]:
+			assert_true(line.length() <= 90, line)
+
+
 # --- helpers -------------------------------------------------------------------------------
 
 func _bare_manager() -> GhostManager:

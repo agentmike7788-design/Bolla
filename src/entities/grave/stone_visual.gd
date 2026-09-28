@@ -18,17 +18,26 @@ const PAINTED_MATERIAL := "res://assets/materials/mat_painted.tres"
 ## §8 Label3D contract.
 const SURFACE_OFFSET := 0.012
 const VISIBILITY_END := 40.0
-## Label pixel size (m per font pixel) and the largest font size; long lines shrink the font
-## until the widest line fits StoneShapeData.label_width.
-const PIXEL_SIZE := 0.001
-const FONT_SIZE_MAX := 44
-const FONT_SIZE_MIN := 18
-const LINE_SPACING := -6.0
-## Placeholder stone colours (asset_gravestones.py: STONE / STONE_OLD family).
-const STONE_COLOR := Color("#7C8086")
-const STONE_DARK := Color("#686B64")
-const IRON_COLOR := Color("#3A3634")
-const RELIEF_COLOR := Color("#8A8E92")
+## Label pixel size (m per font pixel); font sizes as em in metres per line role. Each line
+## shrinks until it fills at most FILL of StoneShapeData.label_width.
+const PIXEL_SIZE := 0.0005
+const ROLE_NAME := &"name"
+const ROLE_DATE := &"date"
+const ROLE_SAYING := &"saying"
+const EM_MAX := {ROLE_NAME: 0.085, ROLE_DATE: 0.05, ROLE_SAYING: 0.046}
+const EM_MIN := 0.024
+## A date line whose fitted em would fall below this splits at DATE_SPLIT into two lines.
+const EM_DATE_SPLIT := 0.036
+const DATE_SPLIT := " – "
+const FILL := 0.9
+const EMBOLDEN := 0.45
+const LINE_HEIGHT := 1.25
+## Placeholder stone colours (vertex colours, linearised like the glTF import; darker than
+## asset_gravestones.py STONE because those meshes also carry painted AO / moss variation).
+const STONE_COLOR := Color("#5C6066")
+const STONE_DARK := Color("#4C4F4A")
+const IRON_COLOR := Color("#2A2624")
+const RELIEF_COLOR := Color("#686C70")
 
 
 ## A Node3D "Stone" with model, ornament and inscription for `design` (null for an empty one).
@@ -50,24 +59,49 @@ static func build(design: StoneDesign, cfg: StoneConfig = null) -> Node3D:
 	if not design.text.is_empty():
 		var marker := model.find_child(MARKER_INSCRIPTION, true, false) as Node3D
 		var width := shape.label_width if shape != null else 0.5
-		var label := make_label(design.text, width, design.gilded, cfg)
-		label.transform = (_relative(marker, root) if marker != null else Transform3D(Basis.IDENTITY, Vector3(0, 0.55, 0.08))) \
+		var inscription := build_inscription(design, width, cfg)
+		inscription.transform = (_relative(marker, root) if marker != null else Transform3D(Basis.IDENTITY, Vector3(0, 0.55, 0.08))) \
 				* Transform3D(Basis.IDENTITY, Vector3(0, 0, SURFACE_OFFSET))
-		root.add_child(label)
+		root.add_child(inscription)
 	return root
 
 
-## The inscription Label3D (§8): shaded, single-sided, alpha cut, no outline, ink or gold colour,
-## font size fitted so the widest line fits `width` metres.
-static func make_label(text: PackedStringArray, width: float, gilded: bool, cfg: StoneConfig = null) -> Label3D:
+## Node3D "Inscription" (centred on the marker) with one Label3D per line, stacked top-down. Line
+## roles from the inscription template: the name large, "Hier ruht" / dates / saying smaller (like
+## a cut stone of the time); every line shrinks until it fits `width` metres, a date line that
+## still does not fit splits at " – " (visual only – the carved text stays as stored).
+static func build_inscription(design: StoneDesign, width: float, cfg: StoneConfig = null) -> Node3D:
+	var root := Node3D.new()
+	root.name = LABEL_NAME
+	var rows := _rows(design, width)
+	var sizes: Array[float] = []
+	var total := 0.0
+	for row: Dictionary in rows:
+		var em := fitted_em(row.text, width, float(EM_MAX[row.role]))
+		sizes.append(em)
+		total += em * LINE_HEIGHT
+	var y := total * 0.5
+	for i: int in rows.size():
+		var em := sizes[i]
+		y -= em * LINE_HEIGHT * 0.5
+		var label := make_label(rows[i].text, em, width, design.gilded, cfg)
+		label.name = "Line%d" % (i + 1)
+		label.position = Vector3(0, y, 0)
+		root.add_child(label)
+		y -= em * LINE_HEIGHT * 0.5
+	return root
+
+
+## One inscription line (§8): shaded, single-sided, alpha cut, no outline, ink or gold colour.
+static func make_label(text: String, em: float, width: float, gilded: bool, cfg: StoneConfig = null) -> Label3D:
 	var sc := cfg if cfg != null else (Database.config(&"stone_config") as StoneConfig)
 	if sc == null:
 		sc = StoneConfig.new()
 	var l := Label3D.new()
-	l.name = LABEL_NAME
-	l.text = "\n".join(text)
+	l.text = text
 	l.pixel_size = PIXEL_SIZE
-	l.font_size = fitted_font_size(text, width)
+	l.font = _carved_font()
+	l.font_size = maxi(1, roundi(em / PIXEL_SIZE))
 	l.modulate = sc.gold_color if gilded else sc.ink_color
 	l.outline_size = 0
 	l.shaded = true
@@ -75,24 +109,55 @@ static func make_label(text: PackedStringArray, width: float, gilded: bool, cfg:
 	l.alpha_cut = Label3D.ALPHA_CUT_DISCARD
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	l.line_spacing = LINE_SPACING
-	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.autowrap_mode = TextServer.AUTOWRAP_OFF
 	l.width = width / PIXEL_SIZE
 	l.visibility_range_end = VISIBILITY_END
 	l.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return l
 
 
-## Largest font size ≤ FONT_SIZE_MAX at which every line fits `width` metres (≥ FONT_SIZE_MIN).
-static func fitted_font_size(text: PackedStringArray, width: float) -> int:
-	var font := ThemeDB.fallback_font
-	var widest := 0.0
-	for line: String in text:
-		widest = maxf(widest, font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE_MAX).x)
-	if widest <= 0.0:
-		return FONT_SIZE_MAX
-	var fit := floori(FONT_SIZE_MAX * (width * 0.94 / PIXEL_SIZE) / widest)
-	return clampi(fit, FONT_SIZE_MIN, FONT_SIZE_MAX)
+## The placeholder font (§8 "Schriftwahl" is open) slightly emboldened: reads like cut letters.
+static func _carved_font() -> Font:
+	var f := FontVariation.new()
+	f.base_font = ThemeDB.fallback_font
+	f.variation_embolden = EMBOLDEN
+	return f
+
+
+## Largest em (m) ≤ `em_max` at which `text` fits `width` (never below EM_MIN).
+static func fitted_em(text: String, width: float, em_max: float) -> float:
+	var probe := 64
+	var w := ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, probe).x
+	if w <= 0.0:
+		return em_max
+	var fit := probe * PIXEL_SIZE * (width * FILL / (w * PIXEL_SIZE))
+	return clampf(fit, EM_MIN, em_max)
+
+
+## [{text, role}] – roles name / date / saying from the template; wrapped name lines stay "name".
+static func _rows(design: StoneDesign, width: float) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var ins := Database.inscription(design.inscription) as InscriptionData if design.inscription != &"" else null
+	var roles: Array[StringName] = []
+	if ins != null:
+		var extra := maxi(0, design.text.size() - ins.lines.size())
+		for template: String in ins.lines:
+			if template.strip_edges() == "{name}":
+				for k: int in 1 + extra:
+					roles.append(ROLE_NAME)
+			elif template.contains("{"):
+				roles.append(ROLE_DATE)
+			else:
+				roles.append(ROLE_SAYING)
+	for i: int in design.text.size():
+		var role: StringName = roles[i] if i < roles.size() else ROLE_SAYING
+		var line := design.text[i]
+		if role == ROLE_DATE and line.contains(DATE_SPLIT) and fitted_em(line, width, 1.0) < EM_DATE_SPLIT:
+			for part: String in line.split(DATE_SPLIT):
+				out.append({"text": part.strip_edges(), "role": role})
+			continue
+		out.append({"text": line, "role": role})
+	return out
 
 
 # --- models ---------------------------------------------------------------------------------

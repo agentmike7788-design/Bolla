@@ -290,3 +290,56 @@ func test_phase4_old_records_and_graves_unchanged() -> void:
 	assert_eq(GraveQuality.compute(r, &"gravestone_simple", _p4()), 9, "Phase-2 example stays 9")
 	var old := GraveRecord.from_dict({"id": "plot_01", "state": "marked", "quality": 10})
 	assert_eq(old.quality, 10, "saved quality kept")
+
+
+# --- Phase 5 (P4, docs/PHASE5_DESIGN.md §2.5) -------------------------------------------------
+
+func _p5() -> EconomyConfig:
+	return Phase5Fixtures.economy_config()
+
+
+func test_phase5_stone_lines_replace_the_marker_line() -> void:
+	var r := _corpse(0.9)
+	r.shrouded = true
+	r.examined = true
+	var design := Phase5Fixtures.design(&"stone_master", &"i_fever", &"orn_elder", true).to_dict()
+	var lines := GraveQuality.breakdown(r, &"stone_master", _p5(), design)
+	assert_eq(_labels(lines), ["Bestattet", "Leichentuch", "Meisterstein", "Inschrift", "Passende Inschrift", "Vergoldet",
+			"Zierde: Holunderdolde", "Frisch", "Untersucht"])
+	assert_eq(_sum(lines), 2 + 2 + 9 + 1 + 1)
+	assert_eq(GraveQuality.compute(r, &"stone_master", _p5(), design), 15)
+	var nameless := Phase5Fixtures.design(&"stone_arch").to_dict()
+	assert_eq(_labels(GraveQuality.breakdown(r, &"stone_arch", _p5(), nameless)), ["Bestattet", "Leichentuch", "Rundbogenstein", "Frisch", "Untersucht"])
+	assert_eq(_labels(GraveQuality.breakdown(r, &"stone_stele", _p5())), ["Bestattet", "Leichentuch", "Schlichte Stele", "Frisch", "Untersucht"],
+			"shape without design: its display name")
+
+
+func test_phase5_quality_max_19() -> void:
+	var r := _corpse(0.9)
+	r.washed = true
+	r.dress = CorpseRecord.DRESS_GOWN
+	r.shrouded = true
+	r.laid_out = true
+	r.examined = true
+	r.traits = [&"valuables"]
+	r.valuables_decision = &"left"
+	var design := Phase5Fixtures.design(&"stone_master", &"i_fever", &"orn_ivy", true).to_dict()
+	assert_eq(_sum(GraveQuality.breakdown(r, &"stone_master", _p5(), design)), 19, "2+1+3+1+9+1+1+1")
+	assert_eq(GraveQuality.compute(r, &"stone_master", _p5(), design), 19)
+	assert_eq([_p5().quality_max, EconomyConfig.new().quality_max, EconomyConfig.resolve().quality_max], [19, 19, 19])
+	for id: StringName in [&"stone_stele", &"stone_arch", &"stone_master"]:
+		assert_eq(EconomyConfig.new().marker_quality[id], _p5().marker_quality[id], "class default = fixture: %s" % id)
+		assert_eq(EconomyConfig.resolve().marker_quality[id], _p5().marker_quality[id], "data = fixture: %s" % id)
+
+
+func test_phase5_old_graves_unchanged() -> void:
+	var r := _corpse(0.9)
+	r.shrouded = true
+	r.examined = true
+	assert_eq(GraveQuality.breakdown(r, &"gravestone_simple", _p5()), GraveQuality.breakdown(r, &"gravestone_simple", _p4()),
+			"no design: the Phase-4 lines")
+	assert_eq(GraveQuality.breakdown(r, &"gravestone_simple", _p5(), {}), GraveQuality.breakdown(r, &"gravestone_simple", _p5()))
+	assert_eq(GraveQuality.compute(r, &"wooden_cross", _p5()), GraveQuality.compute(r, &"wooden_cross", _p4()))
+	var saved := GraveRecord.from_dict({"id": "plot_01", "state": 3, "marker_id": "gravestone_simple", "quality": 12,
+			"breakdown": [{"label": "Grabstein", "points": 3}]})
+	assert_eq([saved.quality, saved.design, saved.breakdown.size()], [12, {}, 1], "a v3 grave keeps its saved quality")
