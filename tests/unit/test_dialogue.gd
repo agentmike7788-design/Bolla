@@ -14,8 +14,10 @@ const EVENING := 1140  # 19:00
 ## A new game starts "Unauffällig" (docs/PHASE3_DESIGN.md §2.6); reset() leaves the stat at 0.
 const NEW_GAME_REPUTATION := 25
 
-const CONDITION_GRAMMAR := "^!?(has_item:[a-z_]+(:\\d+)?|flag:[a-z_0-9]+|stat_gte:[a-z_]+:-?\\d+|stat_lt:[a-z_]+:-?\\d+|time_between:\\d+:\\d+|flag_eq:[a-z_]+:.*|flag_today:[a-z_]+|day_gte:\\d+|day_odd|day_even)$"
-const ACTION_GRAMMAR := "^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_]+|take_item:[a-z_]+:\\d+|give_item:[a-z_]+:\\d+|stat_add:[a-z_]+:-?\\d+|notify:.+)$"
+const CONDITION_GRAMMAR := "^!?(has_item:[a-z_]+(:\\d+)?|flag:[a-z_0-9]+|stat_gte:[a-z_]+:-?\\d+|stat_lt:[a-z_]+:-?\\d+|time_between:\\d+:\\d+|flag_eq:[a-z_]+:.*|flag_today:[a-z_]+|day_gte:\\d+|day_odd|day_even|piety_tier:(hardhearted|callous|matter_of_fact|considerate|devout)|trader_talks_gte:\\d+|clue_known:c_[a-z_0-9]+|flag_night:[a-z_]+)$"
+const ACTION_GRAMMAR := "^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_]+|take_item:[a-z_]+:\\d+|give_item:[a-z_]+:\\d+|stat_add:[a-z_]+:-?\\d+|notify:.+|open_panel:[a-z_]+|open_trade|add_clue:c_[a-z_0-9]+|trader_tools|trader_talked|set_flag_night:[a-z_]+)$"
+## Negations the data may use (flag-like conditions, docs/PHASE4_DESIGN.md §3.4).
+const NEGATABLE: PackedStringArray = ["!flag:", "!piety_tier:", "!flag_night:", "!trader_talks_gte:"]
 
 
 ## Inventory double with limited room: add_item keeps at most `room` items.
@@ -877,7 +879,7 @@ func test_carter_conditions_and_actions_follow_grammar() -> void:
 	for cond: String in conditions:
 		assert_not_null(cond_re.search(cond), "condition '%s'" % cond)
 		if cond.begins_with("!"):
-			assert_true(cond.begins_with("!flag:"), "only !flag negation as in §3.4: '%s'" % cond)
+			assert_true(Array(NEGATABLE).any(func(prefix: String) -> bool: return cond.begins_with(prefix)), "negation '%s'" % cond)
 	for action: String in actions:
 		assert_not_null(action_re.search(action), "action '%s'" % action)
 		if action.begins_with("take_item:") or action.begins_with("give_item:"):
@@ -903,7 +905,7 @@ func test_carter_price_texts_match_actions() -> void:
 					var shown := "(1 Münze)" if price == "1" else "(%s Münzen)" % price
 					assert_true(c.text.contains(shown), "price shown in '%s'" % c.text)
 					assert_has(c.conditions, "has_item:coin:" + price, "guarded by the price")
-	assert_eq(offers, 6, "1 and 2 Leinen, 1 and 3 Eisenbeschläge, 1 and 4 Blumensamen")
+	assert_eq(offers, 8, "1 and 2 Leinen, 1 and 3 Eisenbeschläge, 1 and 4 Blumensamen, 1 and 5 Wacholder")
 
 
 func test_carter_intro_mentions_schedule_times() -> void:
@@ -1050,6 +1052,7 @@ func test_carter_buy_two_linen_then_more() -> void:
 func test_carter_skipped_delivery_day() -> void:
 	GameState.set_flag(&"met_carter")
 	GameState.set_flag(&"p3_intro")
+	GameState.set_flag(&"p4_intro")  # Phase 4 told already (test_carter_p4_*)
 	TimeManager.day = 3
 	GameState.set_flag(&"delivery_skipped", 3)
 	var r := _start_carter(MORNING, _inv())
@@ -1147,7 +1150,11 @@ func test_carter_ostwiese_from_day_two() -> void:
 	_go(r, &"menu")
 	r = _start_carter(MORNING, _inv())
 	_go(r, &"remark_skipped")
-	assert_eq(_id(r), &"menu", "introduction only once")
+	assert_eq(_id(r), &"p4_intro", "introduction only once – Phase 4 follows in the next talk")
+	_go(r, &"menu")
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "both introductions only once")
 	_go(r, &"shop_p3")
 	assert_eq(_id(r), &"shop_p3", "shop reachable from the menu afterwards")
 
@@ -1164,6 +1171,7 @@ func test_carter_ostwiese_after_first_meeting_later() -> void:
 func test_carter_sells_iron_and_seeds() -> void:
 	GameState.set_flag(&"met_carter")
 	GameState.set_flag(&"p3_intro")
+	GameState.set_flag(&"p4_intro")  # Phase 4 told already (test_carter_p4_*)
 	TimeManager.day = 2
 	var inv := _inv({&"coin": 14})
 	var r := _start_carter(MORNING, inv)
@@ -1194,6 +1202,7 @@ func test_carter_sells_iron_and_seeds() -> void:
 func test_carter_disreputable_even_day_explains_odd_deliveries() -> void:
 	GameState.set_flag(&"met_carter")
 	GameState.set_flag(&"p3_intro")
+	GameState.set_flag(&"p4_intro")  # Phase 4 told already (test_carter_p4_*)
 	GameState.stats[&"reputation"] = 10
 	TimeManager.day = 4
 	var r := _start_carter(MORNING, _inv())
@@ -1287,3 +1296,636 @@ func test_carter_small_talk() -> void:
 	assert_true(r.is_finished())
 	assert_eq(GameState.flags, {"met_carter": true}, "small talk changes no state")
 	assert_eq(notes, [])
+
+
+# --- Phase 4 (P6, docs/PHASE4_DESIGN.md §2.6, §2.7, §2.12, §3.4) ------------------------------
+
+const TRADER_PATH := "res://data/dialogue/trader.tres"
+const NIGHT := 1410        # 23:30
+const AFTER_MIDNIGHT := 60  # 01:00 – still the same night
+
+
+## NightTrade double (group night_trade): tools once, talks per call, state like §5.1.
+class FakeNightTrade extends Node:
+	var tools_given: bool = false
+	var room: bool = true
+	var talks: int = 0
+	var talk_calls: int = 0
+
+	func _init() -> void:
+		add_to_group(&"night_trade")
+
+	func give_tools(inv: Inventory) -> bool:
+		if tools_given or not room or inv == null:
+			return false
+		inv.add_item(&"shears", 1)
+		inv.add_item(&"pliers", 1)
+		tools_given = true
+		return true
+
+	func note_talk() -> void:
+		talk_calls += 1
+
+	func save_state() -> Dictionary:
+		return {"tools_given": tools_given, "talks": talks}
+
+
+func _trade() -> FakeNightTrade:
+	var t := FakeNightTrade.new()
+	tree.root.add_child(t)
+	return t
+
+
+func _journal() -> JournalManager:
+	var j := JournalManager.new()
+	j.clue_data = Phase4Fixtures.clues()
+	j.insight_data = Phase4Fixtures.insights()
+	j.find_data = Phase4Fixtures.finds()
+	tree.root.add_child(j)
+	return j
+
+
+func _trader() -> DialogueData:
+	return load(TRADER_PATH) as DialogueData
+
+
+func _start_trader(minute: int, inv: Inventory, speaker: Node = null) -> DialogueRunner:
+	TimeManager.minute_of_day = minute
+	var r := DialogueRunner.new()
+	r.start(_trader(), {"inventory": inv, "speaker": speaker})
+	return r
+
+
+func _choices_to(r: DialogueRunner, next: StringName) -> int:
+	var n := 0
+	for c: DialogueChoice in r.available_choices():
+		if c.next == next:
+			n += 1
+	return n
+
+
+# conditions
+
+func test_stat_conditions_take_negative_numbers() -> void:
+	GameState.stats[&"piety"] = -20
+	assert_true(_check("stat_lt:piety:-19"))
+	assert_true(_check("stat_gte:piety:-20"))
+	assert_false(_check("stat_gte:piety:-19"))
+	assert_false(_check("stat_lt:piety:-20"))
+	GameState.stats[&"piety"] = -100
+	assert_true(_check("stat_lt:piety:-59"), "hardhearted range")
+
+
+func test_piety_tier_condition_follows_the_thresholds() -> void:
+	var table := {-100: &"hardhearted", -60: &"hardhearted", -59: &"callous", -20: &"callous", -19: &"matter_of_fact",
+			0: &"matter_of_fact", 19: &"matter_of_fact", 20: &"considerate", 59: &"considerate", 60: &"devout", 100: &"devout"}
+	for value: int in table:
+		GameState.stats[&"piety"] = value
+		for tier: StringName in JournalRules.PIETY_TIERS:
+			assert_eq(_check("piety_tier:" + String(tier)), tier == table[value], "piety %d → %s?" % [value, tier])
+			assert_eq(_check("!piety_tier:" + String(tier)), tier != table[value], "negated")
+	assert_eq(JournalRules.piety_tier(0), &"matter_of_fact", "no config → §2.7 defaults")
+
+
+func test_piety_tier_malformed_is_false() -> void:
+	GameState.stats[&"piety"] = 0
+	for cond: String in ["piety_tier", "piety_tier:", "piety_tier:gnadenlos", "piety_tier:Sachlich"]:
+		assert_false(_check(cond), cond)
+
+
+func test_clue_known_reads_the_clue_flag() -> void:
+	assert_false(_check("clue_known:c_mark"))
+	GameState.set_flag(&"clue_c_mark")
+	assert_true(_check("clue_known:c_mark"))
+	assert_true(_check("!clue_known:c_page_1"))
+	assert_false(_check("clue_known:"), "malformed")
+
+
+func test_flag_night_spans_midnight_and_ends_at_noon() -> void:
+	TimeManager.day = 5
+	TimeManager.minute_of_day = NIGHT
+	_apply("set_flag_night:trader_greeted")
+	assert_eq(GameState.get_flag(&"trader_greeted"), 5, "night of day 5")
+	assert_true(_check("flag_night:trader_greeted"))
+	TimeManager.day = 6
+	TimeManager.minute_of_day = AFTER_MIDNIGHT
+	assert_true(_check("flag_night:trader_greeted"), "01:00 is still the same night")
+	TimeManager.minute_of_day = 719
+	assert_true(_check("flag_night:trader_greeted"), "until noon")
+	TimeManager.minute_of_day = 720
+	assert_false(_check("flag_night:trader_greeted"), "a new night starts at 12:00")
+	assert_false(_check("flag_night:nothing"))
+	assert_false(_check("flag_night:"), "malformed")
+
+
+func test_trader_talks_gte_reads_the_night_trade() -> void:
+	assert_false(_check("trader_talks_gte:1"), "no night trade → 0 talks")
+	assert_true(_check("trader_talks_gte:0"))
+	var t := _trade()
+	t.talks = 3
+	assert_true(_check("trader_talks_gte:3"))
+	assert_false(_check("trader_talks_gte:4"))
+	assert_true(_check("!trader_talks_gte:4"))
+	assert_false(_check("trader_talks_gte:x"), "malformed")
+
+
+# actions
+
+func test_open_panel_action_requests_the_panel_with_speaker() -> void:
+	var got: Array = []
+	var cb := func(panel: StringName, ctx: Dictionary) -> void: got.append([panel, ctx])
+	EventBus.ui_panel_requested.connect(cb)
+	var speaker := Node.new()
+	tree.root.add_child(speaker)
+	var inv := _inv()
+	_apply("open_panel:trader", {"inventory": inv, "speaker": speaker})
+	_apply("open_trade", {"speaker": speaker})
+	_apply("open_panel:", {"speaker": speaker})
+	EventBus.ui_panel_requested.disconnect(cb)
+	assert_eq(got.size(), 2, "malformed id ignored")
+	assert_eq(got[0][0], &"trader")
+	assert_eq((got[0][1] as Dictionary).speaker, speaker)
+	assert_eq((got[0][1] as Dictionary).inventory, inv)
+	assert_eq(got[1][0], &"trader", "open_trade = open_panel:trader")
+
+
+func test_add_clue_action_uses_the_journal() -> void:
+	_apply("add_clue:c_trader_lorenz")  # no journal: warning only
+	assert_false(GameState.has_flag(&"clue_c_trader_lorenz"))
+	var j := _journal()
+	_apply("add_clue:c_trader_lorenz")
+	assert_true(j.has_clue(&"c_trader_lorenz"))
+	assert_true(GameState.has_flag(&"clue_c_trader_lorenz"), "flag for dialogue conditions")
+	assert_eq(j.unread(), [&"c_trader_lorenz"] as Array[StringName])
+	_apply("add_clue:c_nope")
+	assert_eq(j.clues().size(), 1, "unknown clue ignored")
+
+
+func test_trader_tools_action_sets_the_flag_only_when_handed_over() -> void:
+	var inv := _inv()
+	_apply("trader_tools", _ctx(inv))
+	assert_false(GameState.has_flag(&"trader_tools_given"), "no night trade")
+	var t := _trade()
+	t.room = false
+	_apply("trader_tools", _ctx(inv))
+	assert_false(GameState.has_flag(&"trader_tools_given"), "full inventory")
+	t.room = true
+	_apply("trader_tools", _ctx(inv))
+	assert_true(GameState.has_flag(&"trader_tools_given"))
+	assert_eq([inv.count(&"shears"), inv.count(&"pliers")], [1, 1])
+	GameState.clear_flag(&"trader_tools_given")
+	_apply("trader_tools", _ctx(inv))
+	assert_true(GameState.has_flag(&"trader_tools_given"), "given earlier (state tools_given)")
+	assert_eq(inv.count(&"shears"), 1, "only once")
+
+
+func test_trader_talked_action_notes_the_talk() -> void:
+	var t := _trade()
+	_apply("trader_talked")
+	_apply("trader_talked")
+	assert_eq(t.talk_calls, 2, "NightTrade.note_talk counts once per night itself")
+
+
+# carter (Osric), Phase 4
+
+func _carter_p4_ready() -> void:
+	GameState.set_flag(&"met_carter")
+	GameState.set_flag(&"p3_intro")
+	GameState.set_flag(&"p4_intro")
+	TimeManager.day = 5
+
+
+func test_carter_p4_intro_on_day_two_and_juniper() -> void:
+	GameState.set_flag(&"met_carter")
+	GameState.set_flag(&"p3_intro")
+	var inv := _inv({&"coin": 13})
+	var r := _start_carter(MORNING, inv)
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "day 1: no Phase-4 introduction")
+	assert_eq(_choices_to(r, &"shop_juniper"), 0, "no juniper before the introduction")
+	TimeManager.day = 2
+	r = _start_carter(MORNING, inv)
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p4_intro")
+	for word: String in ["Kleider, Hände, Wunden, Taschen", "Wacholder"]:
+		assert_true(r.current_text().contains(word), word)
+	assert_true(GameState.has_flag(&"p4_intro"))
+	_go(r, &"p4_intro_prep")
+	for word: String in ["Wurzelbürste", "Holzkamm", "Totenhemd", "Werkbank"]:
+		assert_true(r.current_text().contains(word), word)
+	_go(r, &"shop_juniper")
+	_go_action(r, "give_item:juniper:5")
+	assert_eq([inv.count(&"coin"), inv.count(&"juniper")], [3, 5])
+	_go(r, &"shop_juniper")
+	assert_false(_has_action_choice(r, "give_item:juniper:5"), "3 coins left")
+	_go_action(r, "give_item:juniper:1")
+	assert_eq([inv.count(&"coin"), inv.count(&"juniper")], [1, 6])
+	assert_eq(r.available_choices().size(), 1, "1 coin: only 'Danke.'")
+	_go(r, &"menu")
+	_go(r, &"shop_juniper")
+	_go(r, &"shop_juniper_leave")
+	_go(r, &"menu")
+	r = _start_carter(MORNING, inv)
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "introduction only once")
+
+
+func test_carter_piety_remarks_once_per_tier() -> void:
+	_carter_p4_ready()
+	var expected := {-80: &"p4_piety_hardhearted", -30: &"p4_piety_callous", 30: &"p4_piety_considerate", 70: &"p4_piety_devout"}
+	GameState.stats[&"piety"] = 0
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "'Sachlich': as before")
+	for value: int in expected:
+		GameState.stats[&"piety"] = value
+		r = _start_carter(MORNING, _inv())
+		_go(r, &"remark_skipped")
+		assert_eq(_id(r), expected[value], "piety %d" % value)
+		var tier := String(expected[value]).trim_prefix("p4_piety_")
+		assert_true(GameState.has_flag(StringName("remark_piety_" + tier)), "flag remark_piety_%s (§5.1)" % tier)
+		r = _start_carter(MORNING, _inv())
+		_go(r, &"remark_skipped")
+		assert_ne(_id(r), expected[value], "only once per tier")
+
+
+func test_carter_devout_remark_tells_of_lorenz() -> void:
+	_carter_p4_ready()
+	GameState.stats[&"piety"] = 60
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p4_piety_devout")
+	assert_true(r.current_text().contains("Lorenz") and r.current_text().contains("Danke"))
+
+
+func test_carter_hardhearted_menu_is_curt() -> void:
+	_carter_p4_ready()
+	GameState.set_flag(&"remark_piety_hardhearted")
+	GameState.stats[&"piety"] = -60
+	var inv := _inv({&"coin": 3})
+	var r := _start_carter(MORNING, inv)
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu_cold", "'Hartherzig': kühl, knapp")
+	assert_eq(r.current_text(), "Was brauchst du.")
+	_go(r, &"shop")
+	_go_action(r, "give_item:linen:1")
+	assert_eq(inv.count(&"linen"), 1, "he still sells")
+	_go(r, &"menu")
+	assert_eq(_id(r), &"menu_cold", "every way back to the menu stays curt")
+	_go(r, &"goodbye_morning")
+	_go(r, &"")
+	assert_true(r.is_finished())
+	GameState.stats[&"piety"] = -59
+	r = _start_carter(MORNING, inv)
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p4_piety_callous", "callous is not curt, only pointed")
+
+
+func test_carter_rumor_once() -> void:
+	_carter_p4_ready()
+	GameState.set_flag(&"trader_rumor")
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p4_rumor")
+	assert_true(r.current_text().begins_with("Man sagt, nachts steht eine Frau mit einer Kiepe an deiner Mauer. Ich hab nichts gesagt."))
+	_go(r, &"p4_rumor_more")
+	_go(r, &"menu")
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "once")
+
+
+func test_carter_elder_key_moment_then_six_pits() -> void:
+	_carter_p4_ready()
+	GameState.set_flag(&"has_elder_key")
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p4_elder_key")
+	for word: String in ["Holunder", "Pförtchen", "Lorenz"]:
+		assert_true(r.current_text().contains(word), word)
+	_go(r, &"p4_elder_key_more")
+	_go(r, &"menu")
+	_go(r, &"hint_alive")
+	assert_eq(_id(r), &"hint_elder", "hint: unlock the gate")
+	_go(r, &"menu")
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "key moment once")
+	GameState.set_flag(&"clue_c_six_pits")
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p4_six_pits")
+	assert_true(r.current_text().contains("Sechs"))
+	_go(r, &"menu")
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "six pits once")
+
+
+func test_carter_elder_key_skipped_when_the_pits_are_known() -> void:
+	_carter_p4_ready()
+	GameState.set_flag(&"has_elder_key")
+	GameState.set_flag(&"clue_c_six_pits")
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p4_six_pits", "no key moment after the section was opened")
+
+
+func test_carter_insight_reactions_in_order_once_each() -> void:
+	_carter_p4_ready()
+	for flag: StringName in [&"insight_warnings", &"insight_ferry", &"insight_not_lorenz", &"six_pits_complete"]:
+		GameState.set_flag(flag)
+	var order: Array[StringName] = []
+	for i: int in 5:
+		var r := _start_carter(MORNING, _inv())
+		_go(r, &"remark_skipped")
+		order.append(_id(r))
+	assert_eq(order, [&"p4_warnings", &"p4_ferry", &"p4_not_lorenz", &"p4_chapter", &"menu"] as Array[StringName])
+
+
+func test_carter_not_lorenz_reaction() -> void:
+	_carter_p4_ready()
+	GameState.set_flag(&"insight_not_lorenz")
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p4_not_lorenz")
+	assert_true(r.current_text().contains("Kaspar Dorn"))
+	_go(r, &"p4_not_lorenz_more")
+	_go(r, &"menu")
+	_go(r, &"hint_alive")
+	assert_eq(_id(r), &"hint_alive")
+	assert_true(r.current_text().contains("Birkenhang"), "points to Phase 12, reveals nothing")
+
+
+func test_carter_story_hints_follow_the_journal() -> void:
+	_carter_p4_ready()
+	var expect := [[&"", &"hint_default"], [&"clue_c_mark", &"hint_mark"], [&"clue_c_anchor_snake", &"hint_ferry"],
+			[&"clue_c_page_list", &"hint_list"]]
+	for step: Array in expect:
+		if step[0] != &"":
+			GameState.set_flag(step[0])
+		var r := _start_carter(MORNING, _inv())
+		_go(r, &"remark_skipped")
+		_go(r, &"hint_alive")
+		assert_eq(_id(r), step[1], "after %s" % step[0])
+		_go(r, &"menu")
+		assert_eq(_id(r), &"menu")
+
+
+# trader (Ilse Kranich)
+
+func test_trader_identity() -> void:
+	var d := _trader()
+	assert_not_null(d, TRADER_PATH)
+	assert_eq(d.id, &"trader")
+	assert_eq(d.speaker_name, "Ilse Kranich")
+	assert_eq(Database.dialogue(&"trader"), d, "registered in Database by id")
+	var spot := ScheduleResolver.entry_at(Phase4Fixtures.trader_schedule(), NIGHT)
+	assert_eq(spot.dialogue_id, d.id, "the schedule entry at the wall opens this dialogue")
+
+
+func test_trader_node_ids_unique_targets_exist_all_reachable() -> void:
+	var d := _trader()
+	var ids: Dictionary[StringName, bool] = {}
+	for n: DialogueNode in d.nodes:
+		assert_false(ids.has(n.id), "duplicate %s" % n.id)
+		ids[n.id] = true
+	var seen: Dictionary[StringName, bool] = {d.start_node: true}
+	var queue: Array[StringName] = [d.start_node]
+	while not queue.is_empty():
+		var n := d.get_node_by_id(queue.pop_front())
+		var targets: Array[StringName] = [n.fallback_next]
+		for c: DialogueChoice in n.choices:
+			targets.append(c.next)
+		for t: StringName in targets:
+			if t == &"":
+				continue
+			assert_true(ids.has(t), "%s → %s" % [n.id, t])
+			if not seen.has(t):
+				seen[t] = true
+				queue.append(t)
+	for n: DialogueNode in d.nodes:
+		assert_true(seen.has(n.id), "node %s unreachable" % n.id)
+
+
+func test_trader_no_dead_ends() -> void:
+	# Only the goodbye and the trade (open_panel) end the dialogue; every node offers a way on,
+	# and the goodbye is reachable from everywhere along unconditional choices / fallbacks.
+	var d := _trader()
+	for n: DialogueNode in d.nodes:
+		var unconditional := 0
+		for c: DialogueChoice in n.choices:
+			if c.conditions.is_empty():
+				unconditional += 1
+			if c.next == &"":
+				assert_true(n.id == &"goodbye" or "open_panel:trader" in c.actions, "%s: '%s' ends the dialogue" % [n.id, c.text])
+		assert_true(unconditional >= 1, "%s always offers a choice" % n.id)
+		if not n.conditions.is_empty():
+			assert_ne(n.fallback_next, &"", "conditional %s needs a fallback" % n.id)
+		var found := false
+		var seen: Dictionary[StringName, bool] = {n.id: true}
+		var queue: Array[StringName] = [n.id]
+		while not queue.is_empty() and not found:
+			var m := d.get_node_by_id(queue.pop_front())
+			if m.id == &"goodbye":
+				found = true
+				break
+			var targets: Array[StringName] = [m.fallback_next]
+			for c: DialogueChoice in m.choices:
+				if c.conditions.is_empty():
+					targets.append(c.next)
+			for t: StringName in targets:
+				if t != &"" and not seen.has(t):
+					seen[t] = true
+					queue.append(t)
+		assert_true(found, "no way out from %s" % n.id)
+
+
+func test_trader_conditions_actions_and_texts() -> void:
+	var d := _trader()
+	var cond_re := RegEx.create_from_string(CONDITION_GRAMMAR)
+	var action_re := RegEx.create_from_string(ACTION_GRAMMAR)
+	var all_text := ""
+	for n: DialogueNode in d.nodes:
+		assert_true(n.text.strip_edges().length() > 0, "text of %s" % n.id)
+		all_text += n.text + " "
+		var conditions: Array[String] = n.conditions.duplicate()
+		var actions: Array[String] = n.actions.duplicate()
+		for c: DialogueChoice in n.choices:
+			assert_true(c.text.strip_edges().length() > 0, "choice text in %s" % n.id)
+			conditions.append_array(c.conditions)
+			actions.append_array(c.actions)
+		for cond: String in conditions:
+			assert_not_null(cond_re.search(cond), "condition '%s'" % cond)
+		for action: String in actions:
+			assert_not_null(action_re.search(action), "action '%s'" % action)
+			if action.begins_with("add_clue:"):
+				assert_true(Phase4Fixtures.CLUE_IDS.has(StringName(action.get_slice(":", 1))), action)
+	assert_true(all_text.contains("Stillen"), "she calls the dead 'die Stillen'")
+	assert_true(all_text.contains("feilsche nicht"), "she never haggles")
+
+
+func test_trader_first_meeting_gives_the_tools() -> void:
+	var t := _trade()
+	var inv := _inv()
+	TimeManager.day = 4
+	var r := _start_trader(NIGHT, inv)
+	assert_eq(_id(r), &"first_meet")
+	assert_true(r.current_text().contains("Ilse Kranich"))
+	assert_true(GameState.has_flag(&"trader_met"))
+	assert_eq(t.talk_calls, 1, "a talk counts")
+	_go(r, &"first_note")
+	assert_true(r.current_text().contains("Die Stillen"))
+	_go(r, &"first_gift")
+	assert_eq(_id(r), &"first_gift")
+	assert_eq([inv.count(&"shears"), inv.count(&"pliers")], [1, 1], "Schere und Zange")
+	assert_true(r.current_text().contains("Schere") and r.current_text().contains("Zange"))
+	_go(r, &"menu")
+	_go(r, &"goodbye")
+	_go(r, &"")
+	assert_true(r.is_finished())
+	TimeManager.day = 5
+	r = _start_trader(AFTER_MIDNIGHT, inv)
+	assert_eq(_id(r), &"menu", "same night after midnight: no second greeting")
+	r = _start_trader(NIGHT, inv)
+	assert_eq(_id(r), &"greet_matter_of_fact", "next night: greeting again")
+	assert_eq(inv.count(&"shears"), 1, "tools only once")
+
+
+func test_trader_full_inventory_keeps_the_gift_for_later() -> void:
+	var t := _trade()
+	t.room = false
+	var inv := _inv()
+	var r := _start_trader(NIGHT, inv)
+	_go(r, &"first_note")
+	_go(r, &"first_gift")
+	assert_eq(_id(r), &"first_gift_full")
+	assert_true(r.current_text().contains("Komm wieder, wenn du Platz hast."))
+	_go(r, &"menu")
+	TimeManager.day += 1
+	r = _start_trader(NIGHT, inv)
+	assert_eq(_id(r), &"gift_retry")
+	_go(r, &"menu")
+	t.room = true
+	r = _start_trader(NIGHT, inv)
+	assert_eq(_id(r), &"gift_retry", "offered until handed over")
+	_go(r, &"first_gift")
+	assert_eq(_id(r), &"first_gift")
+	assert_eq(inv.count(&"pliers"), 1)
+	r = _start_trader(NIGHT, inv)
+	assert_eq(_id(r), &"menu", "greeted tonight already")
+
+
+func test_trader_greeting_per_piety_tier() -> void:
+	_trade()
+	GameState.set_flag(&"trader_met")
+	GameState.set_flag(&"trader_tools_given")
+	var lines := {
+		-80: [&"greet_hardhearted", "Du hast gelernt, nicht hinzusehen. Ich hab's dir nicht beigebracht."],
+		-30: [&"greet_callous", "Du bist schneller geworden. Das geht vielen so."],
+		0: [&"greet_matter_of_fact", "Guten Abend, Totengräber. Was bringen die Stillen heute?"],
+		30: [&"greet_considerate", "Nur zum Reden? Auch gut. Die Nacht ist lang."],
+		80: [&"greet_devout", "Du kommst mit leeren Händen. Das steht dir."],
+	}
+	var day := 4
+	for value: int in lines:
+		day += 1
+		TimeManager.day = day
+		GameState.stats[&"piety"] = value
+		var r := _start_trader(NIGHT, _inv())
+		assert_eq(_id(r), lines[value][0], "piety %d" % value)
+		assert_eq(r.current_text(), lines[value][1])
+		assert_eq(GameState.get_flag(&"trader_greeted"), day, "once per night")
+
+
+func test_trader_menu_questions_locked_and_free() -> void:
+	var t := _trade()
+	GameState.set_flag(&"trader_met")
+	GameState.set_flag(&"trader_tools_given")
+	var r := _start_trader(NIGHT, _inv())
+	var texts: Array[String] = []
+	for c: DialogueChoice in r.available_choices():
+		texts.append(c.text)
+	assert_eq(texts, ["Handeln.", "Wer bist du, Ilse?", "Gute Nacht, Ilse."] as Array[String], "Lorenz / mark locked")
+	t.talks = 3
+	r = _start_trader(NIGHT, _inv())
+	assert_eq(_choices_to(r, &"ask_lorenz"), 1, "3 nights talked: the Lorenz question (once)")
+	t.talks = 2
+	GameState.stats[&"trader_sales"] = 4
+	r = _start_trader(NIGHT, _inv())
+	assert_eq(_choices_to(r, &"ask_lorenz"), 1, "or 4 sales (once)")
+	GameState.stats[&"trader_sales"] = 3
+	r = _start_trader(NIGHT, _inv())
+	assert_eq(_choices_to(r, &"ask_lorenz"), 0, "2 talks + 3 sales: not yet")
+	GameState.set_flag(&"clue_c_mark")
+	r = _start_trader(NIGHT, _inv())
+	assert_eq(_choices_to(r, &"ask_marked"), 1, "with c_mark")
+
+
+func test_trader_lorenz_and_mark_answers_add_clues() -> void:
+	var t := _trade()
+	var j := _journal()
+	t.talks = 3
+	GameState.set_flag(&"trader_met")
+	GameState.set_flag(&"trader_tools_given")
+	GameState.set_flag(&"clue_c_mark")
+	var r := _start_trader(NIGHT, _inv())
+	_go(r, &"ask_lorenz")
+	assert_eq(r.current_text(), Phase4Fixtures.clue(&"c_trader_lorenz").text, "answer = clue text (§2.6)")
+	assert_true(j.has_clue(&"c_trader_lorenz"))
+	assert_eq(_choices_to(r, &"lorenz_alive"), 0, "not before Nicht Lorenz")
+	_go(r, &"ask_lorenz_more")
+	_go(r, &"menu")
+	_go(r, &"ask_marked")
+	assert_eq(r.current_text(), Phase4Fixtures.clue(&"c_trader_marked").text)
+	assert_true(j.has_clue(&"c_trader_marked"))
+	_go(r, &"ask_marked_more")
+	_go(r, &"menu")
+	GameState.set_flag(&"insight_not_lorenz")
+	_go(r, &"ask_lorenz")
+	_go(r, &"lorenz_alive")
+	assert_true(r.current_text().contains("Wenn er lebt, dann weiß er, warum er nicht zurückkommt. Stör ihn nicht beim Graben."))
+	assert_eq(j.clue_count(&"c_trader_lorenz"), 0, "a talk clue counts no dead")
+	assert_eq(j.clues().size(), 2, "asking twice adds nothing")
+
+
+func test_trader_trade_opens_the_panel_and_ends() -> void:
+	_trade()
+	GameState.set_flag(&"trader_met")
+	GameState.set_flag(&"trader_tools_given")
+	var got: Array = []
+	var cb := func(panel: StringName, ctx: Dictionary) -> void: got.append([panel, ctx])
+	EventBus.ui_panel_requested.connect(cb)
+	var speaker := Node.new()
+	tree.root.add_child(speaker)
+	var r := _start_trader(NIGHT, _inv(), speaker)
+	_go_action(r, "open_panel:trader")
+	EventBus.ui_panel_requested.disconnect(cb)
+	assert_true(r.is_finished(), "the dialogue ends, the panel takes over")
+	assert_eq(got.size(), 1)
+	assert_eq(got[0][0], &"trader")
+	assert_eq((got[0][1] as Dictionary).speaker, speaker)
+
+
+func test_trader_blossom_after_kranich_insight() -> void:
+	_trade()
+	GameState.set_flag(&"trader_met")
+	GameState.set_flag(&"trader_tools_given")
+	var r := _start_trader(NIGHT, _inv())
+	assert_eq(_choices_to(r, &"ask_blossom"), 0)
+	GameState.set_flag(&"insight_kranich")
+	r = _start_trader(NIGHT, _inv())
+	_go(r, &"ask_blossom")
+	assert_true(r.current_text().contains("Holunderblüte"))
+	_go(r, &"ask_blossom_more")
+	assert_false(r.current_text().contains("Lorenz"), "she names no names")
+	_go(r, &"menu")
+	_go(r, &"who")
+	_go(r, &"who_goods")
+	_go(r, &"menu")
+	_go(r, &"who")
+	_go(r, &"who_night")
+	_go(r, &"menu")
+	_go(r, &"goodbye")
+	_go(r, &"")
+	assert_true(r.is_finished())

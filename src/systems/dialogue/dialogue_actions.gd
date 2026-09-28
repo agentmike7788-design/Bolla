@@ -3,6 +3,10 @@ extends RefCounted
 ## Action interpreter of the dialogue mini-language (docs/VERTICAL_SLICE_DESIGN.md §3.4),
 ## used by DialogueRunner – the syntax is documented in dialogue_runner.gd. Changes GameState
 ## flags / stats and the context inventory, emits notifications. Stateless.
+## Phase 4 (docs/PHASE4_DESIGN.md §3.4): open_panel:<id> (ui_panel_requested with {speaker,
+## inventory}) · open_trade (= open_panel:trader) · add_clue:<id> (JournalManager) · trader_tools
+## (NightTrade.give_tools; success → flag trader_tools_given) · trader_talked (NightTrade.note_talk)
+## · set_flag_night:<name> (flag = the current night, for flag_night:<name>).
 
 const NOTIFY_INFO := &"info"
 const NOTIFY_REWARD := &"reward"
@@ -10,6 +14,11 @@ const NOTIFY_WARNING := &"warning"
 ## "+2 Leinen"
 const REWARD_FORMAT := "+%d %s"
 const NO_ROOM_FORMAT := "Kein Platz für %d %s"
+const TRADER_PANEL := &"trader"
+## Set when Ilse's tools are in the inventory (or were handed over before).
+const TOOLS_FLAG := &"trader_tools_given"
+const JOURNAL_GROUP := &"journal"
+const NIGHT_TRADE_GROUP := &"night_trade"
 
 
 ## Applies every action in order.
@@ -49,8 +58,63 @@ static func apply(action: String, context: Dictionary) -> void:
 				push_warning("[DialogueRunner] '%s': empty notification" % text)
 				return
 			EventBus.notification_requested.emit(p[0], NOTIFY_INFO)
+		# Phase 4 (docs/PHASE4_DESIGN.md §2.6, §2.12, §3.4).
+		"open_panel":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				_open_panel(StringName(p[0]), context)
+		"open_trade":
+			_open_panel(TRADER_PANEL, context)
+		"add_clue":
+			var p := DialogueSyntax.parts(text, 1)
+			if not DialogueSyntax.has_name(p, text):
+				return
+			var journal := DialogueSyntax.system(JOURNAL_GROUP)
+			if journal == null or not journal.has_method(&"add_clue"):
+				push_warning("[DialogueRunner] '%s': no journal" % text)
+				return
+			journal.call(&"add_clue", StringName(p[0]), "", false)
+		"trader_tools":
+			_trader_tools(context)
+		"trader_talked":
+			var trade := DialogueSyntax.system(NIGHT_TRADE_GROUP)
+			if trade == null or not trade.has_method(&"note_talk"):
+				push_warning("[DialogueRunner] trader_talked: no night trade")
+				return
+			trade.call(&"note_talk")
+		"set_flag_night":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				GameState.set_flag(StringName(p[0]), DialogueConditions.night_id())
 		_:
 			push_warning("[DialogueRunner] unknown action '%s' ignored" % action)
+
+
+# --- Phase-4 actions ---
+
+## ui_panel_requested(panel, {speaker, inventory}) – the panel opens over the dialogue; a
+## choice with next &"" ends the dialogue at the same time.
+static func _open_panel(panel: StringName, context: Dictionary) -> void:
+	var ctx := {"speaker": context.get("speaker")}
+	if context.has("inventory"):
+		ctx["inventory"] = context.get("inventory")
+	EventBus.ui_panel_requested.emit(panel, ctx)
+
+
+## Ilse's first gift (NightTrade.give_tools, once). Flag trader_tools_given when handed over now
+## or earlier (state tools_given) – a full inventory leaves it unset ("Komm wieder …").
+static func _trader_tools(context: Dictionary) -> void:
+	var trade := DialogueSyntax.system(NIGHT_TRADE_GROUP)
+	if trade == null or not trade.has_method(&"give_tools"):
+		push_warning("[DialogueRunner] trader_tools: no night trade")
+		return
+	var inv := DialogueSyntax.inventory(context, &"add_item")
+	var given := DialogueSyntax.truthy(trade.call(&"give_tools", inv))
+	if not given and trade.has_method(&"save_state"):
+		var state: Variant = trade.call(&"save_state")
+		given = state is Dictionary and typeof((state as Dictionary).get("tools_given")) == TYPE_BOOL and bool((state as Dictionary).get("tools_given"))
+	if given:
+		GameState.set_flag(TOOLS_FLAG, true)
 
 
 # --- item actions ---

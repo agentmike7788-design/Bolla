@@ -3,12 +3,16 @@ extends TestCase
 ## (tests/fixtures/saves_v1/), the version chain, the "newer version" rejection and the v2
 ## round trip through a file. Pure data – no world (loading into the real world:
 ## tests/integration/test_saves_v1_load.gd).
+## Phase 4 (docs/PHASE4_DESIGN.md §5.2): v2 → v3 on the four Phase-3 fixtures
+## (tests/fixtures/saves_v2/) and the chain 1 → 2 → 3 on the three v1 fixtures, with the
+## expected piety, dress / examination / finds, the new node states and the v3 round trip.
 
 ## Per-process save folder (TestCase.user_dir): parallel runs share user:// (flaky slots).
 var TEST_DIR := TestCase.user_dir("test_save_migration")
 const SLOT := 3
 const NEW_NODES: PackedStringArray = ["expansion", "cleanliness", "decorations", "ghosts"]
 const V1_NODES: PackedStringArray = ["corpse_manager", "graveyard", "npc_carter", "res_stone", "res_wood", "hut_chest", "player"]
+const V3_NODES: PackedStringArray = ["journal", "night_trade", "npc_trader"]
 
 
 func before_each() -> void:
@@ -160,7 +164,9 @@ func test_new_nodes_get_empty_states() -> void:
 			assert_eq(s.nodes.get(id), {}, "%s: %s" % [name, id])
 		for id: String in V1_NODES:
 			assert_true(s.nodes.has(id), "%s keeps %s" % [name, id])
-		assert_eq(s.nodes.size(), V1_NODES.size() + NEW_NODES.size(), name)
+		for id: String in V3_NODES:
+			assert_eq(s.nodes.get(id), {}, "%s: %s (chain → v3)" % [name, id])
+		assert_eq(s.nodes.size(), V1_NODES.size() + NEW_NODES.size() + V3_NODES.size(), name)
 
 
 func test_new_plots_stay_absent() -> void:
@@ -266,3 +272,238 @@ func test_corrupt_v1_data_is_rejected() -> void:
 	assert_eq(_read_slot().err, ERR_FILE_CORRUPT, "no nodes part")
 	_write_doc({"format_version": 1, "meta": doc.meta})
 	assert_eq(_read_slot().err, ERR_FILE_CORRUPT, "no data at all")
+
+
+# --- Phase 4: v2 → v3 (docs/PHASE4_DESIGN.md §5.2) -------------------------------------------
+
+## Expected per fixture: meta.day, piety (−6 × taken + 3 × left), clues rebuilt quietly with the
+## number of dead that carry them.
+const EXPECT_V2 := {
+	"slot_p3_day5_table": {"day": 5, "piety": 6, "clues": {&"c_mark": 1, &"c_warning_letter": 1, &"c_anchor_snake": 1}},
+	"slot_p3_day9_night": {"day": 9, "piety": 3, "clues": {&"c_mark": 1, &"c_warning_letter": 1, &"c_anchor_snake": 2}},
+	"slot_p3_day14_complete": {"day": 14, "piety": 0, "clues": {&"c_mark": 2, &"c_warning_letter": 2, &"c_anchor_snake": 3}},
+	"slot_p3_interior": {"day": 3, "piety": 3, "clues": {}},
+}
+const EXPECT_V1 := {
+	"slot_day3": {"day": 3, "piety": 3, "clues": {&"c_mark": 1}},
+	"slot_day7_complete": {"day": 7, "piety": -9, "clues": {&"c_mark": 1, &"c_warning_letter": 1, &"c_anchor_snake": 1}},
+	"slot_interior": {"day": 2, "piety": 0, "clues": {}},
+}
+const ALL_STEPS: Array[StringName] = [&"clothing", &"hands", &"wounds", &"pockets"]
+
+
+## CorpseManager double for the journal (group corpse_manager, records()).
+class FakeCorpses extends Node:
+	var list: Array[CorpseRecord] = []
+
+	func _init() -> void:
+		add_to_group(&"corpse_manager")
+
+	func records() -> Array[CorpseRecord]:
+		return list
+
+
+## {meta, state} of a v2 fixture, decoded but not migrated.
+func _fixture_v2(name: String) -> Dictionary:
+	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(Phase4Fixtures.save_v2_path(name)))
+	return {"meta": doc.meta, "state": SaveFileIO.decode_state(doc.data)}
+
+
+func _migrated_v2(name: String) -> Dictionary:
+	var f := _fixture_v2(name)
+	return SaveMigration.migrate(f.state, 2, f.meta)
+
+
+func _records_of(state: Dictionary) -> Dictionary:
+	var out := {}
+	for r: Dictionary in state.nodes.corpse_manager.corpses:
+		out[r.id] = r
+	return out
+
+
+## A CorpseRecord of a migrated dictionary incl. the Phase-4 fields (CorpseRecord.from_dict reads
+## them once P1 has extended it; until then they are copied here).
+func _record(d: Dictionary) -> CorpseRecord:
+	var r := CorpseRecord.from_dict(d)
+	r.finds_revealed.assign(d.get("finds_revealed", []))
+	r.exam_done.assign(d.get("exam_done", []))
+	r.dress = StringName(str(d.get("dress", "")))
+	return r
+
+
+## The journal a migrated state gets in post_load (sync_from_records over its records).
+func _journal_after_load(state: Dictionary) -> JournalManager:
+	var corpses := FakeCorpses.new()
+	for d: Dictionary in state.nodes.corpse_manager.corpses:
+		corpses.list.append(_record(d))
+	tree.root.add_child(corpses)
+	var j := JournalManager.new()
+	j.clue_data = Phase4Fixtures.clues()
+	j.insight_data = Phase4Fixtures.insights()
+	j.find_data = Phase4Fixtures.finds()
+	tree.root.add_child(j)
+	j.load_state(state.nodes.journal)
+	j.post_load()
+	return j
+
+
+func _check_v3(name: String, s: Dictionary, expect: Dictionary) -> void:
+	var gs: Dictionary = s.autoloads.GameState
+	assert_eq(gs.stats[&"piety"], expect.piety, name + ": piety from the valuables history")
+	for stat: StringName in [&"utilized", &"prepared", &"trader_sales"]:
+		assert_eq(gs.stats[stat], 0, "%s: %s" % [name, stat])
+	assert_eq(gs.flags[&"piety_last_day"], expect.day, name + ": no recovery on the load day")
+	assert_false(gs.flags.has(&"trader_known"), name + ": the note comes at the next 06:00")
+	var cm: Dictionary = s.nodes.corpse_manager
+	assert_eq([cm.story_delivered, cm.story_last_day, cm.stench_day], [[], 0, expect.day], name + ": corpse manager")
+	for id: String in V3_NODES:
+		assert_eq(s.nodes[id], {}, "%s: empty %s" % [name, id])
+	for r: Dictionary in cm.corpses:
+		var label := "%s/%s" % [name, r.id]
+		assert_eq(r.dress, &"shroud" if r.shrouded else &"", label + " dress")
+		assert_eq(r.story_id, &"", label)
+		assert_eq([r.washed, r.laid_out, r.stench_noted], [false, false, false], label)
+		assert_eq([r.finds_lost, r.harvested], [[], []], label)
+		assert_eq(r.balm_windows, PackedInt32Array(), label)
+		if r.examined:
+			assert_eq(r.exam_done, ALL_STEPS, label + ": all four steps")
+			assert_eq(r.traits_revealed, r.traits, label + ": every trait revealed")
+			assert_eq(r.finds_revealed, SaveMigration.generic_finds(r.traits, r.cause_id), label + ": generic finds")
+			assert_has(r.finds_revealed, StringName("f_cause_" + String(r.cause_id)), label + ": + cause detail")
+		else:
+			assert_eq([r.exam_done, r.traits_revealed, r.finds_revealed], [[], [], []], label + ": not examined")
+	# The journal is rebuilt quietly from the records.
+	var j := _journal_after_load(s)
+	var clues := {}
+	for id: StringName in j.clues():
+		clues[id] = j.clue_count(id)
+		assert_true(GameState.has_flag(StringName("clue_" + String(id))), "%s: flag clue_%s" % [name, id])
+	assert_eq(clues, expect.clues, name + ": journal")
+	assert_eq(j.unread(), [] as Array[StringName], name + ": quiet (no unread marks)")
+	assert_eq(j.insights(), [] as Array[StringName], name + ": no insight linked automatically")
+	j.get_parent().remove_child(j)
+	j.free()
+	for n: Node in tree.get_nodes_in_group(&"corpse_manager"):
+		n.get_parent().remove_child(n)
+		n.free()
+	GameState.reset()
+
+
+func test_v2_fixtures_migrate_to_v3() -> void:
+	for name: String in Phase4Fixtures.SAVES_V2:
+		_check_v3(name, _migrated_v2(name), EXPECT_V2[name])
+
+
+func test_v1_fixtures_chain_to_v3() -> void:
+	for name: String in Phase3Fixtures.SAVES_V1:
+		_check_v3(name, _migrated(name), EXPECT_V1[name])
+
+
+func test_v2_to_v3_keeps_everything_else() -> void:
+	for name: String in Phase4Fixtures.SAVES_V2:
+		var f := _fixture_v2(name)
+		var s := _migrated_v2(name)
+		for id: String in f.state.nodes:
+			if id != "corpse_manager":
+				assert_eq(s.nodes[id], f.state.nodes[id], "%s: %s unchanged (§5.2 steps 6–7)" % [name, id])
+		assert_eq(s.autoloads.TimeManager, f.state.autoloads.TimeManager, name + ": clock")
+		for key: Variant in f.state.autoloads.GameState.flags:
+			assert_eq(s.autoloads.GameState.flags[key], f.state.autoloads.GameState.flags[key], "%s: flag %s" % [name, key])
+		for key: Variant in f.state.autoloads.GameState.stats:
+			assert_eq(s.autoloads.GameState.stats[key], f.state.autoloads.GameState.stats[key], "%s: stat %s" % [name, key])
+		for g: Dictionary in s.nodes.graveyard.graves:
+			assert_false(String(g.id).begins_with("h_"), "%s: h_01…06 stay absent → LOCKED" % name)
+		var old := _records_of(f.state)
+		var new := _records_of(s)
+		assert_eq(new.keys(), old.keys(), name)
+		for id: String in old:
+			for key: Variant in old[id]:
+				assert_eq(new[id][key], old[id][key], "%s/%s.%s kept" % [name, id, key])
+
+
+func test_v2_fixture_details() -> void:
+	var table := _records_of(_migrated_v2("slot_p3_day5_table"))
+	assert_eq(table.corpse_0005.location, CorpseRecord.LOCATION_TABLE)
+	assert_eq(table.corpse_0005.finds_revealed, [&"f_tattoo", &"f_cause_fever", &"f_valuables"] as Array[StringName], "step order")
+	assert_eq(table.corpse_0005.dress, &"", "on the table, not dressed")
+	assert_eq(table.corpse_0004.finds_revealed, [&"f_cause_fever", &"f_valuables", &"f_letter"] as Array[StringName])
+	var complete := _records_of(_migrated_v2("slot_p3_day14_complete"))
+	assert_eq(complete.corpse_0010.finds_revealed,
+			[&"f_tattoo", &"f_mark", &"f_cause_drowned_millpond", &"f_valuables"] as Array[StringName])
+	var night := _records_of(_migrated_v2("slot_p3_day9_night"))
+	assert_eq(night.corpse_0009.exam_done, [] as Array[StringName], "untouched corpse on the bier")
+	var interior := _records_of(_migrated_v2("slot_p3_interior"))
+	assert_eq(interior.corpse_0003.location, CorpseRecord.LOCATION_GROUND)
+	assert_eq(interior.corpse_0003.finds_revealed, [] as Array[StringName], "not examined yet – everything still to find")
+
+
+func test_piety_is_clamped_and_reads_string_keys() -> void:
+	var state := {"autoloads": {"GameState": {"stats": {"valuables_taken": 30}, "flags": {}}}, "nodes": {}}
+	var gs: Dictionary = SaveMigration.migrate_2_to_3(state, {"day": 9}).autoloads.GameState
+	assert_eq(gs.stats[&"piety"], -100, "clamped")
+	var many: Array = []
+	for i: int in 50:
+		many.append({"id": "c%d" % i, "valuables_decision": "left"})
+	state = {"autoloads": {"GameState": {"stats": {}, "flags": {}}}, "nodes": {"corpse_manager": {"corpses": many}}}
+	assert_eq(SaveMigration.migrate_2_to_3(state, {"day": 9}).autoloads.GameState.stats[&"piety"], 100)
+
+
+func test_v2_to_v3_keeps_existing_phase4_fields_and_is_stable() -> void:
+	var s := _migrated_v2("slot_p3_day9_night")
+	assert_eq(SaveMigration.migrate_2_to_3(s, {"day": 9}), s, "a second pass changes nothing")
+	var state := {"autoloads": {"GameState": {"stats": {}, "flags": {&"piety_last_day": 3}}}, "nodes": {
+		"corpse_manager": {"corpses": [{"id": "x", "shrouded": true, "dress": &"gown", "examined": true, "traits": [],
+				"cause_id": &"fever", "finds_revealed": [&"f_s1_page"]}]},
+		"journal": {"clues": {"c_mark": {"day": 3, "corpse": "x", "count": 1}}}}}
+	var out := SaveMigration.migrate_2_to_3(state, {"day": 9})
+	var r: Dictionary = out.nodes.corpse_manager.corpses[0]
+	assert_eq(r.dress, &"gown", "an existing dress stays")
+	assert_eq(r.finds_revealed, [&"f_s1_page"], "existing finds stay")
+	assert_eq(out.nodes.journal, state.nodes.journal, "an existing journal state stays")
+	assert_eq(out.autoloads.GameState.flags[&"piety_last_day"], 3)
+
+
+func test_damaged_v2_values_do_not_break_the_migration() -> void:
+	var state := {"autoloads": {"GameState": {"stats": {"valuables_taken": "viele"}, "flags": []}, "TimeManager": 7},
+		"nodes": {"corpse_manager": {"corpses": [7, "x", {"id": "y", "examined": "true", "shrouded": 1.0, "traits": {"a": 1},
+				"cause_id": 3}]}}}
+	var out := SaveMigration.migrate_2_to_3(state, {})
+	var r: Dictionary = out.nodes.corpse_manager.corpses[2]
+	assert_eq([r.dress, r.exam_done, r.finds_revealed], [&"", [], []], "only real bools count")
+	assert_eq(out.autoloads.GameState.stats[&"piety"], 0)
+	assert_eq(out.nodes.corpse_manager.stench_day, 1, "no day anywhere → 1")
+
+
+func test_read_doc_migrates_every_v2_fixture() -> void:
+	for name: String in Phase4Fixtures.SAVES_V2:
+		assert_eq(Phase4Fixtures.install_save_v2(name, TEST_DIR, SLOT), OK)
+		var read := _read_slot()
+		assert_eq(read.err, OK, name)
+		assert_eq(read.state, _migrated_v2(name), "%s: read_doc applies 2 → 3" % name)
+
+
+func test_v3_round_trip_is_identical() -> void:
+	var cases: Array = []
+	for name: String in Phase4Fixtures.SAVES_V2:
+		cases.append([name, _fixture_v2(name).meta, _migrated_v2(name)])
+	for name: String in Phase3Fixtures.SAVES_V1:
+		cases.append([name, _fixture(name).meta, _migrated(name)])
+	for c: Array in cases:
+		_write_doc(SaveFileIO.make_doc(c[1], c[2]))
+		var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
+		assert_eq(int(doc.format_version), 3, c[0])
+		var read := _read_slot()
+		assert_eq(read.err, OK, c[0])
+		assert_eq(read.state, c[2], "%s: v3 file round trip" % c[0])
+		_write_doc(SaveFileIO.make_doc(read.meta, read.state))
+		assert_eq(_read_slot().state, c[2], "%s: stable" % c[0])
+
+
+func test_version_four_is_rejected() -> void:
+	assert_eq(Phase4Fixtures.install_save_v2("slot_p3_day5_table", TEST_DIR, SLOT), OK)
+	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
+	doc.format_version = 4
+	_write_doc(doc)
+	assert_eq(_read_slot().err, ERR_FILE_UNRECOGNIZED)
+	assert_true(SaveFileIO.is_newer_version(TEST_DIR, SLOT))
+	assert_eq(SaveMigration.migrate(_fixture_v2("slot_p3_day5_table").state, 4), {})

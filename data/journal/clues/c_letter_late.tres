@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_letter_late"
+title = "Ein Brief nach der Zeit"
+text = "‚Geh vor Martini, Ida. Nimm nicht die Nachtfähre, sie ist verraten.‘ Dieselbe schräge Hand, dieselbe braune Tinte wie die anderen Warnbriefe. Datiert drei Wochen, nachdem der alte Totengräber verschwand."
+kind = &"letter"
+order = 9
