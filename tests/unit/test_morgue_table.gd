@@ -207,7 +207,7 @@ func test_panel_title_and_put_down_with_room() -> void:
 	assert_eq(crypt_table.corpse_id, rec.id)
 	crypt_table.interact(player)
 	assert_eq(panels.back()[0], MorgueTable.EXAM_PANEL)
-	assert_eq(panels.back()[1].get("title"), "Gruft-Tisch")
+	assert_eq((panels.back()[1].get("table") as MorgueTable).panel_title(), "Gruft-Tisch", "the panel asks its table")
 
 
 func test_phase4_work_on_the_crypt_table_after_the_move() -> void:

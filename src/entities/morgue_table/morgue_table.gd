@@ -111,7 +111,7 @@ func interact(player: Player) -> void:
 	else:
 		# The panel shows the freshness of now (the hourly decay may lag, QA4-01).
 		manager.refresh_decay(corpse_id)
-		EventBus.ui_panel_requested.emit(EXAM_PANEL, {"corpse_id": corpse_id, "table": self, "player": player, "title": panel_title()})
+		EventBus.ui_panel_requested.emit(EXAM_PANEL, {"corpse_id": corpse_id, "table": self, "player": player})
 
 
 ## Panel (Phase 2, compatibility): examine the corpse on the table – examine_minutes, not
