@@ -123,9 +123,12 @@ func carve(grave_id: String, design: StoneDesign, inv: Inventory) -> String:
 	if inv == null or order_block_reason(grave_id, design, inv) != "":
 		return ""
 	var needed := StoneDesignRules.inputs(design, _config())
+	# All or nothing (QA5-02): a removal that fails midway restores what was already taken.
+	var snapshot := inv.save_state()
 	for id: Variant in needed:
 		if not inv.remove_item(StringName(str(id)), int(needed[id])):
-			push_error("[Stonemasonry] carve: material vanished while taking it ('%s')" % id)
+			push_warning("[Stonemasonry] carve: taking '%s' failed midway – inventory restored" % id)
+			inv.load_state(snapshot)
 			return ""
 	var grave := _grave(grave_id)
 	var d := _with_text(design, _corpse(grave.corpse_id))

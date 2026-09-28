@@ -130,15 +130,20 @@ func request_craft(recipe_id: StringName) -> void:
 
 
 func _finish_craft(recipe: RecipeData, inv: Inventory) -> void:
+	var tool := _item_data(recipe.output_id)
+	var tier_before := _belt_tier(inv, tool.tool_kind) if tool != null and tool.tool_kind != &"" else 0
 	if not CraftingSystem.craft(recipe, inv):
 		_warn(TEXT_FAILED)
 		return
 	GameState.add_stat(STAT_CRAFTED, 1)
 	EventBus.notification_requested.emit(TEXT_REWARD % [recipe.output_amount, _item_name(recipe.output_id)], &"reward")
-	var tool := _item_data(recipe.output_id)
 	if tool != null and tool.tool_kind != &"":
-		EventBus.tool_tier_changed.emit(tool.tool_kind, tool.tool_tier)
-		EventBus.notification_requested.emit(tool_note(tool), &"info")
+		# QA5-04: a lower tool next to a better one on the belt changes no tier (no "faster" note).
+		if _belt_tier(inv, tool.tool_kind) > tier_before:
+			EventBus.tool_tier_changed.emit(tool.tool_kind, tool.tool_tier)
+			EventBus.notification_requested.emit(tool_note(tool), &"info")
+		else:
+			EventBus.notification_requested.emit(TEXT_TOOL_NEW % (tool.display_name if tool.display_name != "" else String(tool.id)), &"info")
 		var shop := workshop()
 		if shop != null:
 			shop.check_goal()
@@ -232,6 +237,18 @@ static func _recipe_name(recipe: RecipeData) -> String:
 static func _item_name(id: StringName) -> String:
 	var item := Database.item(id) as ItemData if Database.has_item(id) else null
 	return item.display_name if item != null and item.display_name != "" else String(id)
+
+
+## Highest tool_tier of `kind` on the belt of `inv` (the items of item_table / Database).
+func _belt_tier(inv: Inventory, kind: StringName) -> int:
+	var best := 0
+	if inv == null or kind == &"":
+		return best
+	for id: StringName in inv.tools():
+		var item := _item_data(id)
+		if item != null and item.tool_kind == kind:
+			best = maxi(best, item.tool_tier)
+	return best
 
 
 func _item_data(id: StringName) -> ItemData:

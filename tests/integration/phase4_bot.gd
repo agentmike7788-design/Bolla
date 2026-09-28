@@ -342,7 +342,7 @@ func _night_at_the_wall() -> void:
 			if coins <= 0:
 				problems.append("day %d: Ilse did not buy %d %s" % [TimeManager.day, n, item])
 			ilse_income += coins
-	var linen := mini(trade.stock_left(&"linen"), maxi(0, 6 - inv().count(&"linen")))
+	var linen := mini(trade.stock_left(&"linen"), maxi(0, _linen_wanted_at_the_wall() - inv().count(&"linen")))
 	while linen > 0 and inv().count(&"coin") >= 2 * linen + RESERVE:
 		if trade.buy(&"linen", linen, inv()):
 			ilse_spent += 2 * linen
@@ -351,6 +351,11 @@ func _night_at_the_wall() -> void:
 		if trade.buy(&"juniper", 1, inv()):
 			ilse_spent += 1
 	UIState.clear()
+
+
+## Linen the bot keeps in stock from Ilse's shop (Phase5Bot: none once the graves are full).
+func _linen_wanted_at_the_wall() -> int:
+	return 6
 
 
 ## Ilse's dialogue: take her tools, ask what can be asked tonight, then trade. true = the

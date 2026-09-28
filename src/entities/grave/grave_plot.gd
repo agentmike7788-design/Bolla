@@ -298,9 +298,17 @@ func has_stone_to_set() -> bool:
 	return not order.is_empty() and bool(order.get("fits_still", false))
 
 
+## Success = the stone left the rack for this grave (QA5-03): a quality difference of 0 (the
+## grave's total clamped at quality_min, e.g. a robbed, rotten corpse) is still a set stone.
 func _finish_set_stone(inv: Inventory) -> void:
 	var masonry := _stonemasonry()
-	if masonry == null or masonry.set_stone(grave_id, inv) <= 0:
+	var order := masonry.ready_for(grave_id) if masonry != null else {}
+	if masonry == null or order.is_empty():
+		EventBus.notification_requested.emit(TEXT_CANNOT_SET_STONE, &"warning")
+		return
+	masonry.set_stone(grave_id, inv)
+	var grave := _grave()
+	if grave == null or grave.design != (order.design as Dictionary):
 		EventBus.notification_requested.emit(TEXT_CANNOT_SET_STONE, &"warning")
 
 

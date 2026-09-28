@@ -134,8 +134,7 @@ func build(station_id: StringName, inv: Inventory) -> bool:
 		return false
 	_built.append(station_id)
 	if s.build_coins > 0:
-		GameState.add_stat(STAT_COINS_SPENT, s.build_coins)
-		EventBus.coins_spent.emit(s.build_coins, REASON_BUILD)
+		GameState.note_coins_spent(s.build_coins, REASON_BUILD)
 	EventBus.station_built.emit(station_id)
 	check_goal()
 	return true
