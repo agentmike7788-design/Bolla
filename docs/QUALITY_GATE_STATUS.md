@@ -6,6 +6,7 @@
 | G1 | Art Direction | ✅ **PASSED** (Runde 1) | 27.09.2026 | ✅ „Art Direction freigegeben" (27.09.2026) |
 | G2 | Vertical Slice | ✅ **PASSED** (nach Änderungsrunde 1: Leichen/Kutscher/Hauptfigur verschönert; Änderungsrunde 2: Hütte 5 × 4 m + begehbarer Innenraum mit Bett, Ofen, Truhe, Grabregister) | 27.09.2026 | ✅ „Vertical Slice freigegeben" (27.09.2026) |
 | G3 | Friedhof vollständig ausbauen | ✅ **PASSED** (Runde 1; 1120 Tests; Bilder `docs/reviews/phase3_round1/`) | 27.09.2026 | ✅ „Phase 3 freigegeben" (27.09.2026) |
+| G4 | Leichensystem erweitern | 🟡 **PENDING USER REVIEW** – Runde 1 gebaut & getestet (1473 Tests, 3/3 grün); Bilder `docs/reviews/phase4_round1/` | 28.09.2026 | ausstehend |
 
 **ART STYLE LOCK:** ✅ **ACTIVE** seit 27.09.2026 (Referenz: `src/world/art_prototype/`, Screenshots `docs/reviews/phase1_round1/`). Keine grundlegende Stiländerung ohne Benutzerfreigabe.
 

@@ -8,7 +8,7 @@ Regel: **BAUE → TESTE → ZEIGE → WARTE AUF FREIGABE.** Keine Phase startet 
 | 1 | Art-Direction-Prototyp | ✅ freigegeben (27.09.2026) – ART STYLE LOCK aktiv |
 | 2 | Vertical Slice | ✅ freigegeben (27.09.2026) |
 | 3 | Friedhof vollständig ausbauen | ✅ freigegeben (27.09.2026) |
-| 4 | Leichensystem erweitern | 🔵 Planung – Umfang wird mit dem Benutzer abgestimmt |
+| 4 | Leichensystem erweitern | 🟡 gebaut & getestet – wartet auf Benutzerfreigabe |
 | 5 | Crafting und Ressourcen | – |
 | 6 | Gebäude | – |
 | 7 | Dorf | – |
