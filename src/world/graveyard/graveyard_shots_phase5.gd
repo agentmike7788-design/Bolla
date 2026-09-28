@@ -314,10 +314,9 @@ func _visible_labels(world: Node3D) -> int:
 ## same measured with the Phase-5 parts switched off (stations / gather nodes / rack hidden and
 ## disabled) for the Phase-5 share (§9: ≤ +0,2 ms).
 func _cpu_probe_p5(world: Node3D) -> void:
-	for stage: String in ["p5_start", "p5_built", "p5_stones", "p5_bruch_open"]:
+	for stage: String in ["p5_start", "p5_built", "p5_stones", "p5_bruch_open", "p5_decay"]:
 		await _apply_p5_stage(world, stage)
-	for stage: String in ["story_table", "balm", "decay", "trader"]:
-		await _apply_p4_stage(world, stage)
+	await _apply_p4_stage(world, "trader")
 	var clock := root.get_node(^"TimeManager")
 	var ui_state := root.get_node(^"UIState")
 	var lines: PackedStringArray = []

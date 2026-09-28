@@ -156,3 +156,21 @@ Welt mit Holunderwinkel (18 Grabstellen, 4 im Winkel belegt + 1 offene Grube), I
 | CPU pro Frame (headless, Uhr läuft, Zoom 12 m, Median / Mittel) | 2,22 / 2,12 ms | 2,53 / 2,51 ms (37 Partikel, 6 Geister, Ilse) | < 1,5 ms ⚠️ siehe Hinweis |
 
 Hinweis CPU: Der Container ist heute deutlich langsamer als bei der Phase-3-Messung. Die unveränderte Phase-3-Sonde (`graveyard_shots_phase3.gd --cpu`) misst zur selben Stunde 2,12 / 2,63 ms (Tag) und 2,79 / 2,91 ms (Nacht) statt der dokumentierten 0,91 – 1,16 ms Median. Phase 4 liegt damit gleichauf mit Phase 3 (die neuen Systeme sind ereignisgetrieben, Npc Ilse ohne Karren- und Fracht-Logik). Das absolute Budget muss W3 auf ruhiger Hardware nachmessen.
+
+### Messung Phase 5 – Welt (W-Welt, 1280×720, Software-Renderer lavapipe, `graveyard_shots_phase5.gd`)
+
+Welt mit Werkhof (3 Stationen gebaut, Meiler brennt, 2 Steine in der Ablage), 18 gestalteten Steinen mit Inschrift (18 Gräber belegt), Am Bruch offen, Steinbruch frei, 6 Geister nachts, 3 verwesende Leichen am Tisch (`perf_p5_02`); Rohdaten `docs/reviews/phase5_wip/world_render_stats.txt`, `world_cpu_stats.txt`.
+
+| Wert | Messung | Budget §9 |
+|---|---|---|
+| Kamera-Dreiecke inkl. Gras, Spiel-Zoom max. 24 m (`perf_p5_01…04`) | 318 k (Bruch Tag) · 434 k (Werkhof Nacht + Verfall) · 455 k (18 Inschriften) · 412 k (Werkhof Tag) | < 500 k ✅ |
+| Kamera-Dreiecke, Übersicht 46 m (nur Screenshot) | 469 k | (Info) |
+| Draw Calls | 229 – 312 (Zoom 24 m), Übersicht 307 | < 1 000 ✅ (erwartet ≤ 560) |
+| Partikel | 54 (Werkhof nachts: 48 Verfall + 3 Kamin + 3 Meiler) | ≤ 60 ✅ |
+| Omni-Lichter sichtbar | 9 Tag · 15 Nacht (+ Esse-Glut) | ≤ 25 ✅ |
+| Schattenwerfende Omni-Lichter | 0 Tag · 2 Nacht (Hütten- und Pfostenlaterne; Esse-Glut `#E07A3A`, 0,5, 3,5 m, nie Schatten) | ≤ 4 ✅ |
+| Label3D (Inschriften) | 56 bei 18 Steinen + 2 in der Ablage (StoneVisual: ein Label je Zeile, 2–4 Zeilen) | ≤ 18 Steine ✅ (§9 zählt Steine; je Zeile ein Label ist P4-Bauweise) |
+| Spielstand | 108 kB, Laden 235 ms (inkl. Weltwechsel) | < 300 kB, < 1 s ✅ |
+| CPU pro Frame (headless, Uhr läuft, Zoom 12 m, Median) | Tag 3,25 ms (Phase-5-Teile aus: 3,52) · Nacht 4,39 ms (aus: 3,66) | Phase-5-Anteil ≤ +0,2 ms ⚠️ nicht auflösbar |
+
+Hinweis CPU: Während der Messung liefen im Container weitere Godot-Prozesse (andere Sitzungen); dieselbe Phase-4-Sonde (`graveyard_shots_phase4.gd --cpu`) misst dabei 5,17 / 4,06 ms Median statt der oben dokumentierten 2,22 / 2,53 ms. Die Differenz „Phase-5-Teile an/aus" schwankt zwischen −0,3 und +0,7 ms von Lauf zu Lauf und ist damit Rauschen. Die Phase-5-Knoten haben kein `_process` (Bauplätze/Sammelstellen/Stationen nur über Signale, Meiler und Ablage ereignisgetrieben, Label3D statisch); der Rauch sind 6 CPU-Partikel. W3 misst auf ruhiger Hardware nach.

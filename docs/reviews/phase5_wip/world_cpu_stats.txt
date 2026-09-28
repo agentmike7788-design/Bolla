@@ -1,0 +1,5 @@
+day: process mean 3.191 / median 3.247 / worst 4.936 ms per frame · nodes 2712
+night: process mean 4.363 / median 4.388 / worst 6.998 ms per frame · nodes 2784
+day_p5_off: process mean 3.348 / median 3.524 / worst 3.836 ms per frame · nodes 2784
+night_p5_off: process mean 3.429 / median 3.656 / worst 3.806 ms per frame · nodes 2784
+save slot 7: 107888 bytes · load 235 ms (incl. world change)
