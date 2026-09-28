@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="OldGraveData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/systems/ossuary/old_grave_data.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_gravestone_round.glb" id="2"]
+
+[resource]
+script = ExtResource("1")
+grave_id = "old_05"
+display_name = "Mattheis Korb"
+born_year = 1755
+died_year = 1797
+reinter_line = "Mattheis Korb. Jemand hat ihm einen Knopf mitgegeben. Er bleibt bei ihm."
+stone_model = ExtResource("2")

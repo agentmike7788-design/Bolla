@@ -984,3 +984,39 @@ func test_phase5_designed_stone_survives_save_load() -> void:
 	assert_eq(graveyard.get_grave("plot_01").design, stone.to_dict())
 	assert_eq(graveyard.save_state(), before, "identical after a JSON load")
 	assert_eq(graveyard.upgrade_options("plot_01", inv), [] as Array[StringName])
+
+
+# --- Phase 6 (P3, docs/PHASE6_DESIGN.md §2.3, §3.4): lift_old ------------------------------------
+
+func test_lift_old_turns_an_old_grave_into_a_free_place() -> void:
+	var free_before := graveyard.free_plot_count()
+	events.clear()
+	assert_true(graveyard.lift_old("old_01"))
+	assert_eq(graveyard.get_grave("old_01").state, EMPTY)
+	assert_eq(events.filter(func(e: Array) -> bool: return e[0] == "state"), [["state", "old_01", EMPTY]])
+	assert_eq(graveyard.free_plot_count(), free_before + 1, "the delivery rule sees one more free place")
+	assert_false(graveyard.lift_old("old_01"), "only once")
+	assert_true(graveyard.dig("old_01"), "an ordinary place now")
+	_fill("plot_01", _corpse())
+	assert_false(graveyard.lift_old("plot_01"), "not old")
+	assert_false(graveyard.lift_old("plot_02"), "EMPTY normal plot")
+
+
+func test_lift_old_refuses_normal_plots_with_an_old_record() -> void:
+	graveyard.load_state({"graves": [{"id": "plot_02", "state": OLD}]})
+	assert_eq(graveyard.get_grave("plot_02").state, OLD)
+	assert_false(graveyard.lift_old("plot_02"), "only is_old plots")
+	assert_eq(graveyard.get_grave("plot_02").state, OLD)
+	assert_false(graveyard.lift_old("plot_99"), "unknown grave")
+
+
+func test_lifted_old_grave_survives_save_load() -> void:
+	graveyard.lift_old("old_01")
+	graveyard.dig("old_01")
+	var saved := _json_round_trip(graveyard.save_state())
+	graveyard.load_state({})
+	assert_eq(graveyard.get_grave("old_01").state, OLD, "default of an old plot")
+	graveyard.load_state(saved)
+	assert_eq(graveyard.get_grave("old_01").state, DUG, "the saved state of the old grave wins")
+	assert_false(graveyard.lift_old("old_01"))
+	assert_eq(graveyard.total_quality(), 0)

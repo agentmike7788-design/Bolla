@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="OldGraveData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/systems/ossuary/old_grave_data.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_gravestone_obelisk.glb" id="2"]
+
+[resource]
+script = ExtResource("1")
+grave_id = "old_03"
+display_name = "Konrad Pfister, Ratsherr"
+born_year = 1702
+died_year = 1771
+reinter_line = "Konrad Pfister, Ratsherr. Der Obelisk war größer als das, was von ihm übrig ist."
+stone_model = ExtResource("2")

@@ -4,7 +4,7 @@ extends Node
 ## _ready collects the grave_plot nodes (grave_id, is_old, section_id) as EMPTY / OLD records –
 ## LOCKED for plots of a section that does not start unlocked (Phase 3, unlock_section).
 ## States: EMPTY -dig-> DUG -bury-> FILLED -place_marker-> MARKED (-upgrade_marker-> MARKED);
-## OLD never changes; LOCKED -unlock_section-> EMPTY.
+## OLD -lift_old-> EMPTY (Phase 6, old plots only; load_state keeps their saved state); LOCKED -unlock_section-> EMPTY.
 ## Reputation events (grave finished good / poor, marker upgraded) go directly to the node in
 ## group "reputation"; the cemetery quality signal comes from CemeteryScore (Phase 3).
 
@@ -69,6 +69,8 @@ var stone_config: StoneConfig
 var _graves: Dictionary[String, GraveRecord] = {}
 ## grave id -> section id of its plot (only graves with a plot in this world).
 var _plot_sections: Dictionary[String, StringName] = {}
+## Phase 6 (P3): ids of the is_old plots (old graves stay old plots after lift_old).
+var _old_plots: Dictionary[String, bool] = {}
 
 
 func _init() -> void:
@@ -484,6 +486,7 @@ func _story_config() -> StoryConfig:
 func _collect_plots() -> Dictionary[String, GraveRecord]:
 	var out: Dictionary[String, GraveRecord] = {}
 	_plot_sections.clear()
+	_old_plots.clear()
 	if not is_inside_tree():
 		return out
 	var locked := _locked_sections()
@@ -506,6 +509,7 @@ func _collect_plots() -> Dictionary[String, GraveRecord]:
 		_plot_sections[id] = section
 		if is_old is bool and is_old:
 			grave.state = GraveRecord.State.OLD
+			_old_plots[id] = true
 		else:
 			grave.state = GraveRecord.State.LOCKED if locked.has(section) else GraveRecord.State.EMPTY
 		out[id] = grave
@@ -671,6 +675,16 @@ func _stone_config() -> StoneConfig:
 
 # --- Phase 6 (docs/PHASE6_DESIGN.md §2.3, §3.4) -------------------------------------------------
 
-## STUB (P3) – OLD → EMPTY (grave_state_changed); only is_old plots. Ossuary.lift calls it.
-func lift_old(_grave_id: String) -> bool:
-	return false
+## OLD → EMPTY (grave_state_changed); only is_old plots (a saved OLD record of a normal plot
+## stays). Ossuary.lift calls it. The lifted grave is an ordinary place from now on: the delivery
+## rule "one corpse per free place" (free_plot_count) picks it up by itself.
+func lift_old(grave_id: String) -> bool:
+	var grave := _known_grave(grave_id, "lift_old")
+	if grave == null or grave.state != GraveRecord.State.OLD:
+		return false
+	if not _old_plots.is_empty() and not _old_plots.has(grave_id):
+		push_warning("[Graveyard] lift_old: '%s' is no old grave" % grave_id)
+		return false
+	grave.state = GraveRecord.State.EMPTY
+	EventBus.grave_state_changed.emit(grave_id, grave.state)
+	return true

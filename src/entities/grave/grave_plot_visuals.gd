@@ -3,6 +3,8 @@ extends RefCounted
 ## State visuals and colliders of a GravePlot: rebuilds its "Visual" child (first child) for
 ## the plot's state / marker_id and enables the builder-made "Collision" shapes whose "role"
 ## meta matches (pit, mound, marker:<id>, old). Interaction stays in grave_plot.gd.
+## Phase 6 (P3): a lifted old grave (OLD → EMPTY) just swaps the models on the same node (no
+## rebuild of the plot); DUG with pit_variant &"foot" shows ph_prop_grave_pit_foot.
 
 var _plot: GravePlot
 var _visual: Node3D
@@ -36,7 +38,7 @@ func apply() -> void:
 		GraveRecord.State.EMPTY:
 			_add_model(plot.empty_model, Vector3.ZERO)
 		GraveRecord.State.DUG:
-			_add_model(plot.pit_model, Vector3.ZERO)
+			_add_model(plot.active_pit_model(), Vector3.ZERO)
 			roles.append(GravePlot.ROLE_PIT)
 		GraveRecord.State.FILLED, GraveRecord.State.MARKED:
 			_add_model(plot.mound_model, plot.mound_offset)

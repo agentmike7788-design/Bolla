@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="OldGraveData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/systems/ossuary/old_grave_data.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_gravestone_round.glb" id="2"]
+
+[resource]
+script = ExtResource("1")
+grave_id = "old_02"
+display_name = "Agnes Hollweg"
+born_year = 1741
+died_year = 1789
+reinter_line = "Agnes Hollweg. Trocken jetzt, und bei den anderen."
+stone_model = ExtResource("2")

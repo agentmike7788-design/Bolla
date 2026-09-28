@@ -95,7 +95,8 @@ func test_database_finds_all_recipes() -> void:
 		&"burial_gown": ["Totenhemd", {&"linen": 3}, 30],
 	}
 	var tools: Array[StringName] = [&"rake", &"scrub_brush", &"comb"]
-	var p5 := Phase5Fixtures.RECIPE_IDS
+	var p5 := Phase5Fixtures.RECIPE_IDS.duplicate()
+	p5.append(&"bone_box")  # Phase 6 (P3, §2.6): tested in test_ossuary.gd
 	var workbench := Database.recipes(&"workbench").filter(func(r: RecipeData) -> bool: return not p5.has(r.id))
 	assert_eq(workbench.size(), expected.size())
 	assert_eq(Database.recipes().filter(func(r: RecipeData) -> bool: return not p5.has(r.id)).size(), expected.size(), "Phase-5 recipes: test_phase5_recipes_*")

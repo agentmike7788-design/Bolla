@@ -52,6 +52,9 @@ const ITEMS := {
 	&"steel_rod": ["Stahlstab", ItemData.Category.MATERIAL, 5],
 	# Phase 6 (P4, §2.6)
 	&"altar_candle": ["Altarkerze", ItemData.Category.MATERIAL, 10],
+	# Phase 6 (P3, §2.6)
+	&"bone_box": ["Gebeinkiste", ItemData.Category.MATERIAL, 5],
+	&"bone_box_full": ["Gebeinkiste (belegt)", ItemData.Category.MATERIAL, 3],
 }
 
 
