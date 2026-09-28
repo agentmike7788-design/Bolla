@@ -18,3 +18,4 @@ __pycache__/
 *.pyc
 # Agent worktrees
 .claude/worktrees/
+build/
