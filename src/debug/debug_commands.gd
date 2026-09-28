@@ -51,6 +51,8 @@ var _phase3: DebugCommandsPhase3
 var _phase4: DebugCommandsPhase4
 ## Phase-5 commands (§6 of docs/PHASE5_DESIGN.md).
 var _phase5: DebugCommandsPhase5
+## Phase-6 commands (§6 of docs/PHASE6_DESIGN.md).
+var _phase6: DebugCommandsPhase6
 
 
 func _init(console: DebugConsole) -> void:
@@ -59,6 +61,7 @@ func _init(console: DebugConsole) -> void:
 	_phase3 = DebugCommandsPhase3.new(_lookup)
 	_phase4 = DebugCommandsPhase4.new(_lookup)
 	_phase5 = DebugCommandsPhase5.new(_lookup)
+	_phase6 = DebugCommandsPhase6.new(_lookup)
 
 
 ## Runs one command (lower-case name + arguments; "clear" is handled by the console).
@@ -94,6 +97,9 @@ func run(command: String, args: PackedStringArray) -> Dictionary:
 			return _cmd_fps(args)
 		"instant":
 			return _cmd_instant(args)
+	# Phase 6 "build <crypt|chapel|shed|all> [1-3]" before Phase 5's "build <station|all>".
+	if command == "build" and DebugCommandsPhase6.takes_build(args):
+		return _phase6.run(command, args)
 	# Phase 5 "build <station|all>" shares its name with Phase 3's "build free on|off".
 	if command == "build" and not (not args.is_empty() and args[0].to_lower() == "free"):
 		return _phase5.run(command, args)
@@ -103,6 +109,8 @@ func run(command: String, args: PackedStringArray) -> Dictionary:
 		return _phase4.run(command, args)
 	if _phase5.handles(command):
 		return _phase5.run(command, args)
+	if _phase6.handles(command):
+		return _phase6.run(command, args)
 	return _error(TEXT_UNKNOWN % command)
 
 
@@ -120,6 +128,7 @@ func help_lines() -> PackedStringArray:
 	out.append_array(DebugCommandsPhase3.HELP)
 	out.append_array(DebugCommandsPhase4.HELP)
 	out.append_array(DebugCommandsPhase5.HELP)
+	out.append_array(DebugCommandsPhase6.HELP)
 	return out
 
 
@@ -253,6 +262,13 @@ func _cmd_tp(args: PackedStringArray) -> Dictionary:
 	if args.size() != 1:
 		return _error("Format: tp <%s>" % names.replace(", ", "|"))
 	var target := args[0].to_lower()
+	if target in _phase6.tp_targets():
+		var p6 := _lookup.player() as Node3D
+		var at6: Variant = _phase6.tp_position(target)
+		if p6 == null or at6 == null:
+			return _error(TEXT_NO_WORLD)
+		_lookup.teleport_player(p6, at6)
+		return _ok("Teleportiert: %s (%.1f, %.1f)" % [target, (at6 as Vector3).x, (at6 as Vector3).z])
 	if target in _phase5.tp_targets():
 		var p5 := _lookup.player() as Node3D
 		var at5: Variant = _phase5.tp_position(target)
