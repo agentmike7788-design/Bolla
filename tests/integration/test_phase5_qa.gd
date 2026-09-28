@@ -389,6 +389,23 @@ func test_long_name_is_set_in_two_larger_lines() -> void:
 	node.free()
 
 
+# --- QA5-10: the finished stones in the rack show their inscription to the camera ---------------
+
+func test_rack_stones_face_the_gameplay_camera() -> void:
+	_stock({&"stone": 6, &"wood": 3})
+	_build(&"mason")
+	var grave_id := _plain_grave()
+	var inv := FakeInventory.new()
+	inv.add_item(&"stone", 4)
+	inv.add_item(&"ink", 1)
+	assert_ne(masonry.carve(grave_id, _design(&"stone_stele", &"i_rest"), inv), "")
+	inv.free()
+	var rack := world.get_node("Entities/station_mason/StoneRack") as Node3D
+	var stone := rack.get_node("Stone_1") as Node3D
+	var front := stone.global_transform.basis.z.normalized()
+	assert_true(front.z > 0.8, "the front (inscription) faces south to the camera: %s" % front)
+
+
 # --- Prüfung: texts – the 1834 calendar, no developer terms in the chapter panel ----------------
 
 func test_calendar_1834_and_chapter_texts() -> void:

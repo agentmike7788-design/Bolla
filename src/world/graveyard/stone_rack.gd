@@ -8,7 +8,9 @@ extends Node3D
 const MASONRY_GROUP := &"stonemasonry"
 const SLOT_FORMAT := "stone_slot_%d"
 const SLOTS := 3
-## Lean against the rack (rad) and the turn of each stone towards the bench's front.
+## Lean against the rack (rad) and the turn of each stone: W3 (G5 QA) – the fronts face the
+## gameplay camera (world +Z, south), turned a little towards the bench (TURN), whatever the
+## bench's own rotation; before they showed their backs from the default view.
 const LEAN := 0.12
 const TURN := 0.35
 
@@ -40,11 +42,18 @@ func refresh() -> void:
 			continue
 		stone.name = "Stone_%d" % (i + 1)
 		var at := _relative(marker) if marker != null else Transform3D(Basis.IDENTITY, Vector3(0.4 + 0.3 * i, 0.06, 0.4 - 0.4 * i))
-		stone.transform = Transform3D(Basis(Vector3.UP, TURN) * Basis(Vector3.RIGHT, -LEAN), at.origin)
+		var yaw := TURN - _parent_yaw()
+		stone.transform = Transform3D(Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, -LEAN), at.origin)
 		for mesh: Node in stone.find_children("*", "GeometryInstance3D", true, false):
 			(mesh as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 		add_child(stone)
 		shown.append(String((stones[i] as Dictionary).id))
+
+
+## World yaw of the bench (the parent) – 0 outside the tree.
+func _parent_yaw() -> float:
+	var p := get_parent() as Node3D
+	return p.global_rotation.y if p != null and p.is_inside_tree() else 0.0
 
 
 func _relative(marker: Node3D) -> Transform3D:
