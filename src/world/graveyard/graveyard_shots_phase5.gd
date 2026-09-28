@@ -38,8 +38,8 @@ const P5_SHOTS: Array[Dictionary] = [
 			"player": Vector2(24.2, 0.6)},
 	{"name": "world_p5_07_flax_herbs", "stage": "p5_gathered", "day": 3, "minute": 700, "focus": Vector2(27.4, 3.6), "distance": 13.0,
 			"player": Vector2(25.2, 3.2)},
-	{"name": "world_p5_06_schlag_alders", "stage": "", "day": 3, "minute": 680, "focus": Vector2(-8.0, 19.4), "distance": 18.0,
-			"player": Vector2(-6.0, 19.0)},
+	{"name": "world_p5_06_schlag_alders", "stage": "", "day": 3, "minute": 680, "focus": Vector2(-7.4, 21.0), "distance": 24.0,
+			"player": Vector2(-5.2, 19.4)},
 	{"name": "world_p5_05_quarry_open", "stage": "p5_quarry_open", "day": 3, "minute": 640, "focus": Vector2(27.0, -8.6), "distance": 18.0,
 			"player": Vector2(26.2, -7.6)},
 	# §9 / §11 performance motifs at the gameplay zoom limit (24 m).
@@ -211,7 +211,13 @@ func _apply_p5_stage(world: Node3D, stage: String) -> void:
 		"p5_quarry_open":
 			_system(world, "Expansion").call(&"unlock", &"quarry")
 		"p5_decay":
-			await _apply_p4_stage(world, "story_table")
+			# Every plot is taken, so no story delivery: a plain corpse onto the table, then the
+			# Phase-4 decay staging (table corpse decaying + two on the ground).
+			var manager := _system(world, "CorpseManager")
+			var table := world.get_node(^"Entities/morgue_table")
+			var record: RefCounted = manager.call(&"spawn_corpse", null, table.call(&"slot_transform"), &"ground")
+			_table_corpse = String(record.get("id"))
+			manager.call(&"put_down", _table_corpse, &"table", table.call(&"slot_transform"), table.call(&"slot_node"))
 			await _apply_p4_stage(world, "decay")
 		_:
 			push_warning("[ShotsP5] unknown stage '%s'" % stage)
