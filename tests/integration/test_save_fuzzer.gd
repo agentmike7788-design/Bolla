@@ -10,6 +10,10 @@ extends TestCase
 ## expected reaction to damaged values. Deterministic (fixed seed).
 ## Phase 4 (P6, docs/PHASE4_DESIGN.md §10): the game save is now format v3 (migration 2 → 3 on
 ## every v2 / v1 load), and the four Phase-3 fixtures (tests/fixtures/saves_v2/) are fuzzed too.
+## W3 (Phase 4): a v3 save of a Phase-4 game in mid-play (Phase4Bot "mixed", day 7 at 23:30: a
+## corpse on the table with 2 of 4 steps, a juniper window, the braid taken, clues + an insight
+## in the journal, Ilse at the wall with half her linen sold) is fuzzed as well; a loaded state
+## also has its piety in −100…100 and only known clues / insights in the journal.
 
 const TIMEOUT := 600.0
 const SLOT := 94
@@ -21,6 +25,12 @@ const TRUNCATIONS := 16
 const V1_FIXTURES: PackedStringArray = ["slot_day3", "slot_day7_complete", "slot_interior"]
 ## Share of the mutations per v2 fixture (four files – keeps the run time of one test bounded).
 const V2_FIXTURE_SHARE := 0.5
+## Phase-4 parts of the state that get extra native mutations in the Phase-4 save.
+const P4_KEYS: PackedStringArray = ["journal", "night_trade", "npc_trader", "piety", "utilized", "prepared",
+		"trader_sales", "story_id", "exam_done", "finds_revealed", "finds_lost", "traits_revealed", "washed", "dress",
+		"laid_out", "harvested", "balm_windows", "stench_noted", "story_delivered", "story_last_day", "stench_day",
+		"trader_known", "has_elder_key", "piety_last_day", "piety_used_day", "trader_met", "trader_tools_given"]
+const P4_CASES := 80
 const OK_TEXTS: PackedStringArray = [SaveManager.TEXT_CORRUPT, SaveManager.TEXT_NEWER_VERSION]
 
 var saves_dir := TestCase.user_dir("test_saves_fuzz")
@@ -49,6 +59,36 @@ func test_fuzz_v2_save_of_a_phase3_game() -> void:
 	assert_eq(int((JSON.parse_string(text) as Dictionary).format_version), SaveFileIO.FORMAT_VERSION, "current format")
 	await _fuzz_text(text, "v3")
 	print("FUZZ v3: %d loaded, %d rejected" % [stats.ok, stats.rejected])
+
+
+func test_fuzz_v3_save_of_a_phase4_game() -> void:
+	var text := await _make_v3_save()
+	var doc: Dictionary = JSON.parse_string(text)
+	assert_eq(int(doc.format_version), 3, "format v3")
+	await _fuzz_text(text, "p4")
+	# Extra native mutations on the Phase-4 parts only.
+	var state := SaveFileIO.decode_state(doc.get("data"))
+	var paths: Array = []
+	_collect_paths(state, [], paths)
+	paths = paths.filter(func(path: Array) -> bool:
+		for part: Variant in path:
+			if str(part) in P4_KEYS:
+				return true
+		return false)
+	assert_true(paths.size() > 20, "Phase-4 paths in the state (%d)" % paths.size())
+	for i: int in P4_CASES:
+		var path: Array = paths[rng.randi() % paths.size()]
+		var st := state.duplicate(true)
+		var bad: Variant = _bad_value()
+		if rng.randi() % 4 == 0:
+			_erase_path(st, path)
+			bad = "<erased>"
+		else:
+			_set_path(st, path, bad)
+		var d: Dictionary = doc.duplicate(true)
+		d.data = JSON.from_native(st)
+		await _load_doc(d, "p4 native %s = %s" % [_path_text(path), str(bad)])
+	print("FUZZ v3 (Phase 4): %d loaded, %d rejected" % [stats.ok, stats.rejected])
 
 
 func test_fuzz_v2_fixtures() -> void:
@@ -159,6 +199,14 @@ func _check_consistent(what: String) -> void:
 	var score := world.get_node("Systems/CemeteryScore") as CemeteryScore
 	assert_true(rep.value() >= 0 and rep.value() <= 100, "%s: reputation %d in 0…100" % [what, rep.value()])
 	assert_true(score.total() >= 0, what + ": quality ≥ 0")
+	var piety := world.get_node("Systems/Piety") as Piety
+	assert_true(piety.value() >= -100 and piety.value() <= 100, "%s: piety %d in −100…100" % [what, piety.value()])
+	assert_eq(GameState.get_stat(&"piety"), piety.value(), what + ": stored piety clamped")
+	var journal := world.get_node("Systems/Journal") as JournalManager
+	for id: StringName in journal.clues():
+		assert_not_null(journal.clue_by_id(id), "%s: known clue %s" % [what, id])
+	for id: StringName in journal.insights():
+		assert_not_null(journal.insight_by_id(id), "%s: known insight %s" % [what, id])
 	assert_true(TimeManager.running, what + ": the clock runs")
 	TimeManager.running = false
 	# The loaded state is stable: save → load gives the same state.
@@ -195,6 +243,41 @@ func _make_v2_save() -> String:
 	TimeManager.set_time(TimeManager.day, 1335)
 	for id: String in bot.ghosts.eligible_graves():
 		bot.ghosts.listen(id, bot.player)
+	UIState.clear()
+	assert_eq(SaveManager.save_game(SLOT), OK)
+	return FileAccess.get_file_as_string(SaveFileIO.slot_path(saves_dir, SLOT))
+
+
+## A Phase-4 game in mid-play (see the header): the v3 file text (slot SLOT).
+func _make_v3_save() -> String:
+	var bot := Phase4Bot.new(&"mixed", tree)
+	bot.bind()
+	for i: int in 6:
+		await bot.run_day()
+	bot.bind()
+	TimeManager.set_time(TimeManager.day, 470)
+	await wait_frames(1)
+	var record: CorpseRecord = null
+	for r: CorpseRecord in bot.manager.records():
+		if r.location == CorpseRecord.LOCATION_DROPOFF:
+			record = r
+	assert_not_null(record, "day 7 delivery")
+	if record != null:
+		var table := bot._to_table(record)
+		table.request_exam_step(CorpseRecord.STEP_CLOTHING)
+		table.request_exam_step(CorpseRecord.STEP_HANDS)
+		bot.inv().add_item(&"juniper", 1)
+		table.request_balm()
+		table.request_harvest(CorpseRecord.HARVEST_HAIR)
+		assert_eq(record.exam_done.size(), 2, "2 of 4 steps")
+		assert_false(record.balm_windows.is_empty(), "a juniper window")
+		assert_true(record.is_harvested(CorpseRecord.HARVEST_HAIR), "the braid")
+	TimeManager.set_time(TimeManager.day, 1410)
+	await wait_frames(2)
+	assert_true(bot.trade.is_present(), "Ilse at the wall")
+	bot.inv().add_item(&"coin", 4)
+	assert_true(bot.trade.buy(&"linen", 1, bot.inv()), "linen from Ilse")
+	assert_false(bot.journal.insights().is_empty(), "an insight")
 	UIState.clear()
 	assert_eq(SaveManager.save_game(SLOT), OK)
 	return FileAccess.get_file_as_string(SaveFileIO.slot_path(saves_dir, SLOT))
