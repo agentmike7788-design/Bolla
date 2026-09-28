@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="SectionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/expansion/section_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"elder"
+display_name = "Holunderwinkel"
+order = 4
+starts_unlocked = false
+requires_section = &""
+requires_rating = &""
+decor_cap = 6
+unlock_text = "Sechs Gruben, sauber ausgehoben, längst eingesunken. Wer gräbt Gräber für Tote, die noch leben?"
+requires_flag = &"has_elder_key"
+requires_flag_text = "Das Pförtchen ist verschlossen."
+counts_for_cemetery = false
+chapter = &"six_pits"

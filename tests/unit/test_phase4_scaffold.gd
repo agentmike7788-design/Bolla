@@ -5,7 +5,7 @@ extends TestCase
 ## chain 1 → 2 → 3, and the W1 fixtures (tests/fixtures/phase4, Phase4Fixtures).
 
 ## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
-const IMPLEMENTED: PackedStringArray = []
+const IMPLEMENTED: PackedStringArray = ["StoryDirector"]
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
 	# P1
@@ -197,7 +197,8 @@ func test_extended_data_classes() -> void:
 	var s := SectionData.new()
 	assert_eq([s.requires_flag, s.requires_flag_text, s.counts_for_cemetery, s.chapter], [&"", "", true, &""])
 	for real: SectionData in Database.sections():
-		assert_true(real.counts_for_cemetery, "%s counts for the cemetery" % real.id)
+		# P1 (W1): the Holunderwinkel is the one section outside the Phase-3 goal (§2.10).
+		assert_eq(real.counts_for_cemetery, real.id != &"elder", "%s counts for the cemetery" % real.id)
 	var e := EconomyConfig.new()
 	assert_eq([e.quality_washed, e.quality_laid_out, e.rot_malus, e.venerable_min_decor, e.venerable_max_dirt], [1, 1, -2, 12, 6])
 	assert_almost(e.rot_threshold, 0.1)

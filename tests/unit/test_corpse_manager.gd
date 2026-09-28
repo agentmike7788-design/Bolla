@@ -507,7 +507,7 @@ func test_decay_clamps_at_zero() -> void:
 	dropoff.is_open = false
 	TimeManager.advance(40 * 60)
 	assert_eq(r.freshness, 0.0)
-	assert_eq(r.freshness_stage(), &"decaying")
+	assert_eq(r.freshness_stage(), &"rotten", "Phase 4 §2.5: below 0.1")
 
 
 func test_decay_uses_cause_multiplier_and_base_rate() -> void:
@@ -943,7 +943,8 @@ func test_load_state_replaces_everything() -> void:
 	assert_eq(manager.records(), [])
 	assert_eq(manager.unburied_count(), 0)
 	assert_eq(container.get_child_count(), 0)
-	assert_eq(manager.save_state(), {"corpses": [], "next_serial": 1, "last_delivery_day": 0, "last_delivery_ids": [], "spawn_counts": {}})
+	assert_eq(manager.save_state(), {"corpses": [], "next_serial": 1, "last_delivery_day": 0, "last_delivery_ids": [], "spawn_counts": {},
+			"story_delivered": [], "story_last_day": 0, "stench_day": 0})
 	assert_not_null(manager.try_daily_delivery(1), "delivery possible again")
 
 
@@ -1259,3 +1260,356 @@ func _on_skipped(day: int, reason: String) -> void:
 
 func _on_note(text: String, kind: StringName) -> void:
 	events.append(["note", text, kind])
+
+
+# --- Phase 4 (P1, docs/PHASE4_DESIGN.md §2.5, §2.11, §3.4, §10) ---------------------------------
+
+## Graveyard with the Phase-4 duck type: free / locked plots and the Holunderwinkel plots.
+class StoryGraveyardDouble extends GraveyardDouble:
+	var locked: int = 0
+	var elder := PackedStringArray(["h_01", "h_02", "h_03", "h_04", "h_05", "h_06"])
+
+	func locked_plot_count() -> int:
+		return locked
+
+	func plots_in_section(section: StringName) -> PackedStringArray:
+		return elder if section == &"elder" else PackedStringArray()
+
+
+## CorpseManager delivering only on odd days (disreputable, §2.11 rule 1).
+class OddDayManager extends CorpseManager:
+	func deliveries_due(day: int) -> int:
+		return day % 2
+
+
+## Piety / journal / corpse care doubles (groups piety, journal, corpse_care).
+class CallsDouble extends Node:
+	var calls: Array = []
+
+	func event(kind: StringName, reason: String) -> void:
+		calls.append(["event", kind, reason])
+
+	func add_clue(id: StringName, corpse_id: String = "", silent: bool = false) -> bool:
+		calls.append(["add_clue", id, corpse_id, silent])
+		return true
+
+	func exam_all_instant(id: String) -> Dictionary:
+		calls.append(["exam_all_instant", id])
+		return {}
+
+	func dress(id: String, kind: StringName, inv: Inventory) -> bool:
+		calls.append(["dress", id, kind, inv != null])
+		return true
+
+
+func test_story_corpse_comes_instead_of_the_random_one() -> void:
+	_story_setup(manager)
+	var arrived: Array = []
+	var on_story := func(story_id: StringName, corpse_id: String) -> void: arrived.append([story_id, corpse_id])
+	EventBus.story_corpse_arrived.connect(on_story)
+	events.clear()
+	var r := manager.try_daily_delivery(6)
+	EventBus.story_corpse_arrived.disconnect(on_story)
+	assert_not_null(r)
+	assert_eq([r.story_id, r.display_name, r.age, r.cause_id], [&"s1_quendel", "Marthe Quendel", 63, &"old_age"])
+	assert_eq(r.traits, [&"strange_wound"] as Array[StringName], "forced traits")
+	assert_eq(r.seed, CorpseGenerator.seed_for(6, 0), "takes the day's spawn index")
+	assert_eq(r.location, &"dropoff")
+	assert_eq(arrived, [[&"s1_quendel", r.id]])
+	assert_has(events, ["note", Phase4Fixtures.story(&"s1_quendel").arrival_note, &"info"])
+	assert_eq(manager.story_delivered(), PackedStringArray(["s1_quendel"]))
+	assert_eq(manager.story_last_day(), 6)
+	assert_eq(manager.deliveries_of(6), [r])
+	assert_eq(manager.records().size(), 1, "no random corpse besides it")
+
+
+func test_story_days_of_a_new_game() -> void:
+	_story_setup(manager)
+	var days := {}
+	for day: int in range(1, 22):
+		var r := manager.try_daily_delivery(day)
+		assert_not_null(r, "a corpse every day (day %d)" % day)
+		if r != null and r.story_id != &"":
+			days[r.story_id] = day
+	assert_eq(days, {&"s1_quendel": 6, &"s2_hemmerling": 9, &"s3_wernstein": 13, &"s4_uhlig": 16, &"s5_moor": 19})
+
+
+func test_story_waits_for_odd_days_while_disreputable() -> void:
+	var m := OddDayManager.new()
+	_replace_manager(m)
+	_story_setup(m)
+	var days := {}
+	for day: int in range(1, 24):
+		var r := m.try_daily_delivery(day)
+		if r != null and r.story_id != &"":
+			days[r.story_id] = day
+	assert_eq(days, {&"s1_quendel": 7, &"s2_hemmerling": 9, &"s3_wernstein": 13, &"s4_uhlig": 17, &"s5_moor": 19})
+
+
+func test_story_catches_up_every_second_day_after_loading() -> void:
+	_story_setup(manager)
+	for day: int in range(1, 15):
+		manager.try_daily_delivery(day)
+	var data := manager.save_state()
+	data["story_delivered"] = []
+	data["story_last_day"] = 0
+	manager.load_state(_json_round_trip(data))
+	var days: Array = []
+	for day: int in range(15, 25):
+		var r := manager.try_daily_delivery(day)
+		if r != null and r.story_id != &"":
+			days.append([r.story_id, day])
+	assert_eq(days, [[&"s1_quendel", 15], [&"s2_hemmerling", 17], [&"s3_wernstein", 19], [&"s4_uhlig", 21], [&"s5_moor", 23]])
+
+
+func test_story_waits_for_a_free_bier() -> void:
+	_story_setup(manager)
+	dropoff.is_open = false
+	assert_null(manager.try_daily_delivery(6))
+	assert_eq(GameState.get_stat(&"missed_deliveries"), 1, "an occupied bier is a missed delivery")
+	assert_eq(manager.story_delivered().size(), 0)
+	dropoff.is_open = true
+	assert_eq(manager.try_daily_delivery(7).story_id, &"s1_quendel", "comes the next day")
+
+
+func test_reservation_keeps_plots_for_pending_stories() -> void:
+	var g := _story_graveyard()
+	_story_setup(manager)
+	g.free_plots = 5
+	events.clear()
+	assert_null(manager.try_daily_delivery(2), "5 free ≤ 0 unburied + 5 pending: no random corpse")
+	assert_eq(events, [["note", Phase4Fixtures.story_config().reserve_note, &"info"]], "quiet, Osric's line only")
+	assert_eq(GameState.get_stat(&"missed_deliveries"), 0)
+	assert_false(GameState.has_flag(&"delivery_skipped"))
+	g.free_plots = 6
+	assert_not_null(manager.try_daily_delivery(3), "6 free > 0 + 5")
+	g.free_plots = 2
+	var s1 := manager.try_daily_delivery(6)
+	assert_eq(s1.story_id, &"s1_quendel", "a story corpse only needs free > unburied (2 > 1)")
+	g.free_plots = 2
+	assert_null(manager.try_daily_delivery(7), "2 free = 2 unburied: full")
+
+
+func test_locked_plots_lift_the_reservation() -> void:
+	var g := _story_graveyard()
+	_story_setup(manager)
+	g.free_plots = 2
+	g.locked = 6
+	assert_not_null(manager.try_daily_delivery(2), "the Holunderwinkel can still take the stories")
+	g.locked = 3
+	assert_null(manager.try_daily_delivery(3), "2 free ≤ 1 unburied + (5 − 3) reserved")
+
+
+func test_no_reservation_in_a_world_without_the_story_section() -> void:
+	_story_setup(manager)
+	graveyard.free_plots = 2
+	assert_not_null(manager.try_daily_delivery(2), "Phase-3 world: nothing reserved")
+
+
+func test_stench_at_the_gate_once_per_day() -> void:
+	_story_setup(manager)
+	var rep := _reputation(&"")
+	manager.reputation_config = Phase4Fixtures.reputation_config()
+	var old := _spawn(&"fever")
+	old.arrival_total_minutes = 460
+	old.last_decay_total = 460
+	# Day 2 07:40 = 24 h after arrival: 1 − 1.2 → 0 (rotten) – stinks.
+	events.clear()
+	EventBus.time_tick.emit(2, 460)
+	assert_eq(rep.calls.filter(func(c: Array) -> bool: return c[1] == &"stench").size(), 1)
+	assert_has(events, ["note", CorpseManager.NOTE_STENCH, &"warning"])
+	var data := manager.save_state()
+	assert_eq(data.stench_day, 2)
+	manager.load_state(_json_round_trip(data))
+	manager._last_delivery_day = 1
+	rep.calls.clear()
+	EventBus.time_tick.emit(2, 461)
+	assert_eq(rep.calls.filter(func(c: Array) -> bool: return c[1] == &"stench").size(), 0, "once per day, also after a reload")
+
+
+func test_no_stench_while_fresh_balmed_or_buried() -> void:
+	_story_setup(manager)
+	var rep := _reputation(&"")
+	manager.reputation_config = Phase4Fixtures.reputation_config()
+	var r := _spawn(&"fever")
+	var t0 := r.arrival_total_minutes
+	manager._check_stench(2, t0 + 13 * 60)
+	assert_eq(rep.calls, [], "13 h: 0.35 (wilted) – no stench")
+	r.balm_windows = PackedInt32Array([t0, t0 + 100000])
+	manager._check_stench(3, t0 + 30 * 60)
+	assert_eq(rep.calls, [], "a running juniper window: no stench")
+	r.balm_windows = PackedInt32Array()
+	manager._check_stench(4, t0 + 30 * 60)
+	assert_eq(rep.calls.size(), 1, "without the window it stinks")
+	manager.mark_buried(r.id, "plot_01")
+	manager._check_stench(5, t0 + 40 * 60)
+	assert_eq(rep.calls.size(), 1, "buried corpses do not stink")
+
+
+func test_stench_falls_back_to_the_class_default_points() -> void:
+	_story_setup(manager)
+	var rep := _reputation(&"")
+	manager.reputation_config = Phase3Fixtures.reputation_config()
+	_spawn(&"fever")
+	manager._check_stench(5, 5 * 1440)
+	assert_eq(rep.calls, [["change", -2, CorpseManager.REASON_STENCH]], "reputation_config.tres without stench (until P3)")
+
+
+func test_key_fallback_on_day_started() -> void:
+	_story_setup(manager)
+	var journal := CallsDouble.new()
+	journal.add_to_group(&"journal")
+	world.add_child(journal)
+	events.clear()
+	EventBus.day_started.emit(11)
+	assert_false(GameState.has_flag(&"has_elder_key"))
+	EventBus.day_started.emit(12)
+	assert_eq(GameState.get_flag(&"has_elder_key"), true)
+	assert_eq(journal.calls, [["add_clue", &"c_elder_key", "", true]], "clue without a line")
+	assert_has(events, ["note", Phase4Fixtures.story_config().key_fallback_text, &"info"])
+	assert_eq(manager.apply_daily_checks(13), [] as Array[StringName], "idempotent")
+	assert_eq(journal.calls.size(), 1)
+
+
+func test_no_key_fallback_when_the_key_was_found() -> void:
+	_story_setup(manager)
+	GameState.set_flag(&"has_elder_key", true)
+	events.clear()
+	assert_eq(manager.apply_daily_checks(15), [] as Array[StringName])
+	assert_eq(events, [])
+
+
+func test_examine_without_corpse_care_reveals_every_step() -> void:
+	var r := _spawn(&"fever", [&"valuables", &"letter"])
+	manager.examine(r.id)
+	assert_true(r.examined)
+	assert_true(r.is_fully_examined())
+	assert_eq(r.traits_revealed, [&"valuables", &"letter"] as Array[StringName])
+	assert_true(r.needs_valuables_decision())
+
+
+func test_examine_and_apply_shroud_delegate_to_corpse_care() -> void:
+	var care := CallsDouble.new()
+	care.add_to_group(&"corpse_care")
+	world.add_child(care)
+	var r := _spawn(&"fever")
+	manager.examine(r.id)
+	var inv := _inventory()
+	assert_true(manager.apply_shroud(r.id, inv))
+	assert_eq(care.calls, [["exam_all_instant", r.id], ["dress", r.id, &"shroud", true]])
+	assert_false(r.examined, "CorpseCare owns the change")
+
+
+func test_apply_shroud_without_care_sets_the_dress() -> void:
+	var r := _spawn(&"fever")
+	var inv := _inventory()
+	inv.add_item(&"shroud", 1)
+	assert_true(manager.apply_shroud(r.id, inv))
+	assert_eq([r.shrouded, r.dress], [true, &"shroud"])
+
+
+func test_decide_valuables_raises_piety_events() -> void:
+	var piety := CallsDouble.new()
+	piety.add_to_group(&"piety")
+	world.add_child(piety)
+	var inv := _inventory()
+	var a := _spawn(&"fever", [&"valuables"])
+	var b := _spawn(&"fever", [&"valuables"])
+	manager.examine(a.id)
+	manager.examine(b.id)
+	manager.decide_valuables(a.id, true, inv)
+	manager.decide_valuables(b.id, false, inv)
+	assert_eq([piety.calls[0][1], piety.calls[1][1]], [&"valuables_taken", &"valuables_left"])
+
+
+func test_story_bookkeeping_round_trip() -> void:
+	_story_setup(manager)
+	for day: int in range(1, 10):
+		manager.try_daily_delivery(day)
+	var data := _json_round_trip(manager.save_state())
+	assert_eq(data.story_delivered, ["s1_quendel", "s2_hemmerling"])
+	var other := _new_manager()
+	other.name = "Other"
+	_story_setup(other)
+	world.add_child(other)
+	other.load_state(data)
+	assert_eq(other.story_delivered(), PackedStringArray(["s1_quendel", "s2_hemmerling"]))
+	assert_eq(other.story_last_day(), 9)
+	assert_eq(other.get_record(manager.deliveries_of(9)[0].id).story_id, &"s2_hemmerling")
+	other.load_state({"story_delivered": ["s1_quendel", "", "s1_quendel", 3], "story_last_day": "x"})
+	assert_eq([other.story_delivered(), other.story_last_day()], [PackedStringArray(["s1_quendel"]), 0], "tolerant")
+
+
+func test_deliver_story_now() -> void:
+	_story_setup(manager)
+	var r := manager.deliver_story_now(&"s5_moor")
+	assert_not_null(r)
+	assert_eq([r.story_id, r.display_name, r.cause_id], [&"s5_moor", Phase4Fixtures.story(&"s5_moor").display_name, &"moor_cold"])
+	assert_eq(manager.story_last_day(), TimeManager.day)
+	assert_null(manager.deliver_story_now(&"s5_moor"), "only once")
+	assert_null(manager.deliver_story_now(&"nope"))
+	dropoff.is_open = false
+	assert_null(manager.deliver_story_now(&"s1_quendel"), "needs a free bier")
+	dropoff.is_open = true
+	graveyard.free_plots = 1
+	assert_null(manager.deliver_story_now(&"s1_quendel"), "needs free > unburied")
+	assert_eq(manager.story_delivered(), PackedStringArray(["s5_moor"]))
+
+
+func test_decay_uses_the_balm_windows_and_the_prep_factor() -> void:
+	var r := _spawn(&"fever")
+	manager.prep_config = Phase4Fixtures.prep_config()
+	var start := r.arrival_total_minutes
+	r.balm_windows = PackedInt32Array([start, start + 240])
+	EventBus.time_skipped.emit(start, start + 240)
+	assert_almost(r.freshness, 1.0 - 0.05 * 1.0, 0.0001, "4 h at 0.25 = 1 h")
+	var custom := PrepConfig.new()
+	custom.balm_factor = 0.5
+	manager.prep_config = custom
+	EventBus.time_skipped.emit(start + 240, start + 241)
+	assert_almost(r.freshness, CorpseDecay.freshness_at(r, start + 241, 0.05, 0.5))
+
+
+func test_carrying_a_decaying_corpse_smells_once() -> void:
+	var fresh := _spawn(&"fever")
+	var player := _player()
+	events.clear()
+	assert_true(manager.pick_up(fresh.id, player))
+	assert_eq(events, [["updated", fresh.id]], "fresh: nothing")
+	manager.put_down(fresh.id, &"ground", Transform3D.IDENTITY)
+	var old := _spawn(&"fever")
+	old.freshness = 0.2
+	events.clear()
+	assert_true(manager.pick_up(old.id, player))
+	assert_eq(events, [["note", CorpseManager.NOTE_SMELL, &"info"], ["updated", old.id]])
+	assert_true(old.stench_noted)
+	manager.put_down(old.id, &"ground", Transform3D.IDENTITY)
+	events.clear()
+	manager.pick_up(old.id, player)
+	assert_eq(events, [["updated", old.id]], "once per corpse")
+
+
+func _story_setup(m: CorpseManager) -> void:
+	m.stories = Phase4Fixtures.stories()
+	m.story_config = Phase4Fixtures.story_config()
+	graveyard.free_plots = 40
+
+
+func _story_graveyard() -> StoryGraveyardDouble:
+	graveyard.remove_from_group(&"graveyard")
+	var g := StoryGraveyardDouble.new()
+	g.add_to_group(&"graveyard")
+	world.add_child(g)
+	graveyard = g
+	return g
+
+
+func _replace_manager(m: CorpseManager) -> void:
+	world.remove_child(manager)
+	_orphans.append(manager)
+	m.name = "CorpseManager"
+	m.tables = tables
+	m.economy = economy
+	m.container_path = ^"../Corpses"
+	world.add_child(m)
+	manager = m

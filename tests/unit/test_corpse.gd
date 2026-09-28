@@ -164,10 +164,14 @@ func test_real_tables_content() -> void:
 	assert_not_null(real)
 	assert_true(real.first_names.size() >= 18)
 	assert_true(real.last_names.size() >= 18)
-	assert_eq(real.causes.size(), 6)
+	assert_eq(real.causes.size(), 7, "Phase 4: + moor_cold (S5 only, weight 0)")
 	for c: Dictionary in real.causes:
 		assert_true(c.id is StringName, "cause id is a StringName")
 		assert_true(String(c.label) != "" and String(c.description) != "")
+		if c.id == &"moor_cold":
+			# Phase 4 §2.5: only the story corpse S5, never rolled; decays at half speed.
+			assert_eq([float(c.weight), float(c.decay_mult)], [0.0, 0.5])
+			continue
 		assert_true(float(c.weight) > 0.0)
 		assert_true(float(c.decay_mult) >= 0.75 and float(c.decay_mult) <= 1.5, "decay_mult of %s" % c.id)
 		assert_true(int(c.base_payment) >= 2 and int(c.base_payment) <= 4, "base_payment of %s" % c.id)
@@ -232,7 +236,7 @@ func test_has_trait_and_revealed_traits() -> void:
 
 func test_freshness_stage_thresholds() -> void:
 	var r := CorpseRecord.new()
-	var cases := [[1.0, &"fresh"], [0.6, &"fresh"], [0.59, &"wilted"], [0.3, &"wilted"], [0.29, &"decaying"], [0.0, &"decaying"]]
+	var cases := [[1.0, &"fresh"], [0.6, &"fresh"], [0.59, &"wilted"], [0.3, &"wilted"], [0.29, &"decaying"], [0.1, &"decaying"], [0.099, &"rotten"], [0.0, &"rotten"]]
 	for c: Array in cases:
 		r.freshness = c[0]
 		assert_eq(r.freshness_stage(), c[1], "freshness %s" % str(c[0]))
@@ -271,7 +275,7 @@ func test_needs_valuables_decision() -> void:
 func test_dict_round_trip_all_fields() -> void:
 	var r := _full_record()
 	var d := r.to_dict()
-	assert_eq(d.keys().size(), 19, "every field is saved (buried_day: §11 register)")
+	assert_eq(d.keys().size(), 30, "every field is saved (buried_day: §11 register; Phase 4: + 11)")
 	var back := CorpseRecord.from_dict(d)
 	assert_eq(back.to_dict(), d)
 	assert_true(back.cause_id is StringName)
@@ -360,3 +364,198 @@ func _full_record() -> CorpseRecord:
 	r.arrival_total_minutes = 1900
 	r.buried_day = 3
 	return r
+
+
+# --- Phase 4 (P1, docs/PHASE4_DESIGN.md §2.1, §2.5, §3.4, §10) ---------------------------------
+
+## Graveyard duck type for the delivery rules: free / locked plots, plots of the elder section.
+class PlotsDouble extends Node:
+	var free_plots: int = 0
+	var locked: int = 0
+	var elder := PackedStringArray()
+
+	func free_plot_count() -> int:
+		return free_plots
+
+	func locked_plot_count() -> int:
+		return locked
+
+	func plots_in_section(section: StringName) -> PackedStringArray:
+		return elder if section == &"elder" else PackedStringArray()
+
+
+func test_phase4_fields_round_trip() -> void:
+	var r := Phase4Fixtures.corpse([&"tattoo", &"valuables"], &"drowned_millpond")
+	r.story_id = &"s2_hemmerling"
+	r.exam_done = [&"hands", &"pockets"]
+	r.finds_revealed = [&"f_tattoo", &"f_s2_key"]
+	r.finds_lost = [&"f_s2_wrists"]
+	r.traits_revealed = [&"tattoo"]
+	r.washed = true
+	r.dress = CorpseRecord.DRESS_GOWN
+	r.shrouded = true
+	r.laid_out = true
+	r.harvested = [&"hair"]
+	r.balm_windows = PackedInt32Array([500, 1580, 2000, 3080])
+	r.stench_noted = true
+	var native := JSON.to_native(JSON.parse_string(JSON.stringify(JSON.from_native(r.to_dict())))) as Dictionary
+	var plain := JSON.parse_string(JSON.stringify(r.to_dict())) as Dictionary
+	for d: Dictionary in [r.to_dict(), native, plain]:
+		var back := CorpseRecord.from_dict(d)
+		assert_eq(back.to_dict(), r.to_dict())
+		assert_eq(back.story_id, &"s2_hemmerling")
+		assert_true(back.exam_done[0] is StringName, "names, not Strings")
+		assert_eq(back.balm_windows, PackedInt32Array([500, 1580, 2000, 3080]))
+
+
+func test_from_dict_tolerates_missing_and_bad_phase4_fields() -> void:
+	var old := CorpseRecord.from_dict({"id": "corpse_0001", "traits": ["letter"], "examined": true, "shrouded": true})
+	assert_eq([old.story_id, old.washed, old.laid_out, old.stench_noted], [&"", false, false, false])
+	assert_eq([old.exam_done.size(), old.finds_revealed.size(), old.harvested.size(), old.balm_windows.size()], [0, 0, 0, 0])
+	assert_eq(old.dress, CorpseRecord.DRESS_SHROUD, "a shrouded record without dress field wears the shroud")
+	var bad := CorpseRecord.from_dict({"exam_done": ["hands", "nose", "hands", 7], "dress": "cape", "harvested": ["teeth", "ears"],
+			"balm_windows": [100, 50, "x", 3, 200, 300, 400], "finds_revealed": "f_mark", "washed": "true"})
+	assert_eq(bad.exam_done, [&"hands"] as Array[StringName], "unknown and duplicate steps dropped")
+	assert_eq(bad.dress, CorpseRecord.DRESS_NONE)
+	assert_false(bad.shrouded)
+	assert_eq(bad.harvested, [&"teeth"] as Array[StringName])
+	assert_eq(bad.balm_windows, PackedInt32Array([200, 300]), "only valid [start < end] pairs")
+	assert_eq(bad.finds_revealed.size(), 0)
+	assert_true(bad.washed)
+	var dressed := CorpseRecord.from_dict({"dress": "gown"})
+	assert_true(dressed.shrouded, "shrouded == (dress != \"\")")
+
+
+func test_revealed_traits_follow_the_steps() -> void:
+	var r := Phase4Fixtures.corpse([&"letter", &"tattoo"])
+	r.examined = true
+	r.exam_done = [&"hands"]
+	r.traits_revealed = [&"tattoo"]
+	assert_eq(r.revealed_traits(), [&"tattoo"] as Array[StringName], "only the revealed find's trait")
+	r.revealed_traits().append(&"x")
+	assert_eq(r.traits_revealed.size(), 1, "a copy")
+	r.exam_done = [&"wounds"]
+	r.traits_revealed.clear()
+	assert_eq(r.revealed_traits(), [] as Array[StringName], "a step without the trait's find")
+	var legacy := Phase4Fixtures.corpse([&"letter"])
+	legacy.examined = true
+	assert_eq(legacy.revealed_traits(), [&"letter"] as Array[StringName], "legacy: examined without step bookkeeping")
+
+
+func test_valuables_decision_needs_the_pockets_step() -> void:
+	var r := Phase4Fixtures.corpse([&"valuables"])
+	r.examined = true
+	r.exam_done = [&"clothing", &"hands", &"wounds"]
+	assert_false(r.needs_valuables_decision(), "pockets not searched yet")
+	r.exam_done.append(&"pockets")
+	assert_true(r.needs_valuables_decision())
+	r.valuables_decision = CorpseRecord.DECISION_LEFT
+	assert_false(r.needs_valuables_decision())
+	var plain := Phase4Fixtures.corpse([&"letter"])
+	plain.exam_done = [&"pockets"]
+	assert_false(plain.needs_valuables_decision(), "no valuables")
+
+
+func test_stage_for_rotten_follows_rot_threshold() -> void:
+	var custom := EconomyConfig.new()
+	custom.rot_threshold = 0.2
+	assert_eq(CorpseRecord.stage_for(0.2, custom), &"decaying")
+	assert_eq(CorpseRecord.stage_for(0.19, custom), &"rotten")
+	var fixture := Phase4Fixtures.economy_config()
+	assert_eq([CorpseRecord.stage_for(0.1, fixture), CorpseRecord.stage_for(0.0999, fixture)], [&"decaying", &"rotten"])
+
+
+func test_balm_window_slows_decay() -> void:
+	# Rate 0.05/h, arrival 460: 10 h with a 4 h window at factor 0.25 → 6 + 1 = 7 effective hours.
+	var r := Phase4Fixtures.corpse([], &"fever", 1.0, 460)
+	var now := 460 + 600
+	r.balm_windows = PackedInt32Array([460 + 120, 460 + 360])
+	assert_almost(CorpseDecay.effective_minutes(r, now, 0.25), 420.0)
+	assert_almost(CorpseDecay.freshness_at(r, now, 0.05, 0.25), 1.0 - 0.05 * 7.0)
+	assert_almost(CorpseDecay.freshness_at(r, now, 0.05), 1.0 - 0.05 * 7.0, 0.0001, "default balm factor 0.25")
+	assert_almost(CorpseDecay.effective_minutes(r, now, 1.0), 600.0, 0.0001, "factor 1 = no effect")
+	r.balm_windows = PackedInt32Array()
+	assert_almost(CorpseDecay.freshness_at(r, now, 0.05), 0.5, 0.0001, "no window: unchanged formula")
+
+
+func test_balm_window_overlap_is_clipped_to_arrival_and_now() -> void:
+	var r := Phase4Fixtures.corpse([], &"fever", 1.0, 1000)
+	r.balm_windows = PackedInt32Array([900, 1060, 1500, 3000])
+	# Overlap: [1000, 1060] = 60 and [1500, 1600] = 100 at now 1600.
+	assert_almost(CorpseDecay.effective_minutes(r, 1600, 0.25), 600.0 - 0.75 * 160.0)
+	assert_almost(CorpseDecay.effective_minutes(r, 900, 0.25), 0.0, 0.0001, "before arrival")
+
+
+func test_three_one_hour_windows_equal_one_three_hour_window() -> void:
+	var a := Phase4Fixtures.corpse([], &"fever", 1.0, 0)
+	a.balm_windows = PackedInt32Array([60, 120, 120, 180, 180, 240])
+	var b := Phase4Fixtures.corpse([], &"fever", 1.0, 0)
+	b.balm_windows = PackedInt32Array([60, 240])
+	for now: int in [30, 90, 150, 240, 600, 3000]:
+		assert_eq(CorpseDecay.freshness_at(a, now, 0.075), CorpseDecay.freshness_at(b, now, 0.075), "now %d" % now)
+	var overlapping := Phase4Fixtures.corpse([], &"fever", 1.0, 0)
+	overlapping.balm_windows = PackedInt32Array([60, 200, 100, 240])
+	assert_eq(CorpseDecay.freshness_at(overlapping, 600, 0.075), CorpseDecay.freshness_at(b, 600, 0.075), "overlaps count once")
+
+
+func test_is_balm_active() -> void:
+	var r := Phase4Fixtures.corpse()
+	r.balm_windows = PackedInt32Array([100, 200, 500, 600])
+	assert_eq([CorpseDecay.is_balm_active(r, 99), CorpseDecay.is_balm_active(r, 100), CorpseDecay.is_balm_active(r, 199),
+			CorpseDecay.is_balm_active(r, 200), CorpseDecay.is_balm_active(r, 550)], [false, true, true, false, true])
+
+
+func test_minutes_until_without_balm() -> void:
+	# 0.05/h: 0.6 is reached after exactly 8 h and first undercut one minute later.
+	var r := Phase4Fixtures.corpse([], &"fever", 1.0, 460)
+	var m := CorpseDecay.minutes_until(r, 460, 0.05, 0.25, 0.6)
+	assert_eq(m, 481)
+	assert_true(CorpseDecay.freshness_at(r, 460 + m, 0.05) < 0.6)
+	assert_true(CorpseDecay.freshness_at(r, 460 + m - 1, 0.05) >= 0.6)
+	assert_eq(CorpseDecay.minutes_until(r, 460 + 100, 0.05, 0.25, 0.6), 381, "from a later moment")
+	assert_eq(CorpseDecay.minutes_until(r, 460 + 481, 0.05, 0.25, 0.6), -1, "already below")
+	assert_eq(CorpseDecay.minutes_until(r, 460, 0.0, 0.25, 0.6), -1, "no decay")
+	assert_eq(CorpseDecay.minutes_until(r, 460, 0.05, 0.25, 0.0), -1, "never below 0")
+
+
+func test_minutes_until_with_balm_windows() -> void:
+	var r := Phase4Fixtures.corpse([], &"fever", 1.0, 0)
+	r.balm_windows = PackedInt32Array([120, 240])
+	# 2 h full + 2 h at 0.25 (= 0.5 h) → 2.5 h at 240; 3.5 h more to reach 6 h (0.7 at 0.05/h).
+	var m := CorpseDecay.minutes_until(r, 0, 0.05, 0.25, 0.7)
+	assert_true(CorpseDecay.freshness_at(r, m, 0.05) < 0.7)
+	assert_true(CorpseDecay.freshness_at(r, m - 1, 0.05) >= 0.7)
+	assert_eq(m, 240 + 211)
+	var inside := CorpseDecay.minutes_until(r, 150, 0.05, 0.25, 0.85)
+	assert_eq(inside, 121, "from inside the window: 1.5 h effective at 240, 0.85 at 270")
+	assert_true(CorpseDecay.freshness_at(r, 150 + inside, 0.05) < 0.85 and CorpseDecay.freshness_at(r, 149 + inside, 0.05) >= 0.85)
+	var frozen := Phase4Fixtures.corpse([], &"fever", 1.0, 0)
+	frozen.balm_windows = PackedInt32Array([0, 600])
+	assert_eq(CorpseDecay.minutes_until(frozen, 0, 0.05, 0.0, 0.9), 600 + 121, "factor 0: nothing happens inside the window")
+
+
+func test_cemetery_full_counts_reserved_plots() -> void:
+	var g := PlotsDouble.new()
+	g.free_plots = 3
+	assert_false(CorpseDeliveryRules.is_cemetery_full(g, 1))
+	assert_false(CorpseDeliveryRules.is_cemetery_full(g, 1, 1))
+	assert_true(CorpseDeliveryRules.is_cemetery_full(g, 1, 2), "3 free ≤ 1 unburied + 2 reserved")
+	assert_false(CorpseDeliveryRules.is_cemetery_full(null, 5, 5), "no graveyard")
+	g.free()
+
+
+func test_reserved_plots_only_what_no_locked_plot_can_take() -> void:
+	var g := PlotsDouble.new()
+	g.locked = 6
+	g.elder = PackedStringArray(["h_01"])
+	assert_eq(CorpseDeliveryRules.reserved_plots(g, 5, &"elder"), 0, "the locked plots still take them")
+	g.locked = 2
+	assert_eq(CorpseDeliveryRules.reserved_plots(g, 5, &"elder"), 3)
+	g.locked = 0
+	assert_eq(CorpseDeliveryRules.reserved_plots(g, 1, &"elder"), 1, "one grave waits for S5")
+	assert_eq(CorpseDeliveryRules.reserved_plots(g, 0, &"elder"), 0)
+	g.elder = PackedStringArray()
+	assert_eq(CorpseDeliveryRules.reserved_plots(g, 5, &"elder"), 0, "a world without the story section")
+	assert_eq(CorpseDeliveryRules.reserved_plots(g, 5), 5, "no section given")
+	assert_eq(CorpseDeliveryRules.reserved_plots(null, 5, &"elder"), 0)
+	g.free()

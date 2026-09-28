@@ -31,7 +31,7 @@ static func breakdown(corpse: CorpseRecord, marker_id: StringName, config: Econo
 	var stage := CorpseRecord.stage_for(fresh, cfg)
 	if stage == CorpseRecord.STAGE_FRESH:
 		out.append(_line(LABEL_FRESH, cfg.fresh_good_bonus))
-	elif stage == CorpseRecord.STAGE_DECAYING:
+	elif stage == CorpseRecord.STAGE_DECAYING or stage == CorpseRecord.STAGE_ROTTEN:  # P1: rotten (§2.5) until P2 adds its line
 		out.append(_line(LABEL_DECAYING, cfg.fresh_bad_malus))
 	if corpse.examined:
 		out.append(_line(LABEL_EXAMINED, cfg.quality_examined))

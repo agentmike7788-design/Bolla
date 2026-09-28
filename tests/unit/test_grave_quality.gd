@@ -207,7 +207,7 @@ func test_freshness_points_match_the_stage() -> void:
 	var custom := config.duplicate() as EconomyConfig
 	custom.fresh_good_threshold = 0.8
 	custom.fresh_bad_threshold = 0.5
-	var points := {&"fresh": custom.fresh_good_bonus, &"wilted": 0, &"decaying": custom.fresh_bad_malus}
+	var points := {&"fresh": custom.fresh_good_bonus, &"wilted": 0, &"decaying": custom.fresh_bad_malus, &"rotten": custom.fresh_bad_malus}  # P1: + rotten
 	for f: float in [1.0, 0.8, 0.79, 0.6, 0.5, 0.49, 0.0]:
 		var stage := CorpseRecord.stage_for(f, custom)
 		assert_eq(GraveQuality.compute(_corpse(f), &"", custom), custom.quality_buried + int(points[stage]), "freshness %s (%s)" % [str(f), stage])

@@ -796,3 +796,149 @@ func _on_grave_quality(grave_id: String, quality: int) -> void:
 
 func _on_panel(panel: StringName, context: Dictionary) -> void:
 	events.append(["panel", panel, context])
+
+
+# --- Phase 4 (P1, docs/PHASE4_DESIGN.md §1.3, §2.7, §2.10, §3.4) ---------------------------------
+
+## Piety (group "piety"): records event calls.
+class PietyDouble extends Node:
+	var calls: Array = []
+
+	func event(kind: StringName, reason: String) -> void:
+		calls.append([kind, reason])
+
+	func tier() -> StringName:
+		return &"devout"
+
+
+## Journal (group "journal"): insights for the chapter panel.
+class JournalDouble extends Node:
+	func insights() -> Array[StringName]:
+		return [&"i_warnings", &"i_not_lorenz"]
+
+
+func test_plots_counting_for_cemetery_leave_out_the_holunderwinkel() -> void:
+	_add_elder_plots()
+	assert_eq(graveyard.plots_in_section(&"elder").size(), 6)
+	assert_eq(graveyard.plots_counting_for_cemetery(), PackedStringArray(["plot_01", "plot_02", "old_01", "plot_03"]))
+	assert_eq(graveyard.locked_plot_count(), 6, "elder starts locked")
+	graveyard.unlock_section(&"elder")
+	assert_eq(graveyard.locked_plot_count(), 0)
+
+
+func test_cemetery_complete_only_counts_sections_one_to_three() -> void:
+	_add_elder_plots()
+	for id: String in ["plot_01", "plot_02", "plot_03"]:
+		_complete(id, _corpse())
+	assert_eq(GameState.get_flag(&"cemetery_complete"), true, "the locked Holunderwinkel does not block it")
+	assert_true(_has_event("cemetery_completed"))
+
+
+func test_chapter_six_pits_needs_every_elder_plot_marked_and_the_finale() -> void:
+	_add_elder_plots()
+	graveyard.unlock_section(&"elder")
+	var chapters: Array = []
+	var on_chapter := func(id: StringName) -> void: chapters.append(id)
+	EventBus.chapter_completed.connect(on_chapter)
+	for i: int in 5:
+		_complete("h_0%d" % (i + 1), _corpse(true, true))
+	assert_eq(chapters, [], "five of six")
+	_complete("h_06", _corpse(true, true))
+	assert_eq(chapters, [], "all marked, but the finale corpse is not buried")
+	assert_false(GameState.has_flag(&"six_pits_complete"))
+	var finale := _corpse(true, true)
+	finale.story_id = &"s5_moor"
+	events.clear()
+	_complete("plot_01", finale)
+	EventBus.chapter_completed.disconnect(on_chapter)
+	assert_eq(chapters, [&"six_pits"])
+	assert_eq(GameState.get_flag(&"six_pits_complete"), true)
+	var panels: Array = events.filter(func(e: Array) -> bool: return e[0] == "panel")
+	assert_eq(panels.size(), 1)
+	assert_eq([panels[0][1], panels[0][2].variant, panels[0][2].chapter], [&"slice_summary", &"six_pits", &"six_pits"])
+
+
+func test_chapter_completes_once_when_the_finale_is_buried_last() -> void:
+	_add_elder_plots()
+	graveyard.unlock_section(&"elder")
+	var finale := _corpse(true, true)
+	finale.story_id = &"s5_moor"
+	_complete("h_01", finale)
+	for i: int in range(1, 5):
+		_complete("h_0%d" % (i + 1), _corpse(true, true))
+	assert_false(GameState.has_flag(&"six_pits_complete"))
+	var piety := PietyDouble.new()
+	piety.add_to_group(&"piety")
+	world.add_child(piety)
+	var journal := JournalDouble.new()
+	journal.add_to_group(&"journal")
+	world.add_child(journal)
+	GameState.set_flag(&"insight_not_lorenz", true)
+	events.clear()
+	_complete("h_06", _corpse(true, true))
+	assert_eq(GameState.get_flag(&"six_pits_complete"), true)
+	var context: Dictionary = graveyard.chapter_context(&"six_pits")
+	assert_eq([context.piety_tier, context.insights, context.not_lorenz], [&"devout", 2, true])
+	var count := events.filter(func(e: Array) -> bool: return e[0] == "panel").size()
+	assert_eq(count, 1)
+	graveyard._check_chapter()
+	assert_eq(events.filter(func(e: Array) -> bool: return e[0] == "panel").size(), 1, "only once")
+
+
+func test_finale_buried_outside_the_holunderwinkel_completes_on_burial() -> void:
+	_add_elder_plots()
+	graveyard.unlock_section(&"elder")
+	for i: int in 6:
+		_complete("h_0%d" % (i + 1), _corpse(true, true))
+	var finale := _corpse(true, true)
+	finale.story_id = &"s5_moor"
+	_fill("plot_02", finale)
+	assert_eq(GameState.get_flag(&"six_pits_complete"), true, "bury checks the chapter too")
+
+
+func test_no_chapter_without_its_plots() -> void:
+	var finale := _corpse(true, true)
+	finale.story_id = &"s5_moor"
+	graveyard.section_data = _sections_with_elder()
+	graveyard.story_config = Phase4Fixtures.story_config()
+	_complete("plot_01", finale)
+	assert_false(GameState.has_flag(&"six_pits_complete"), "a world without Holunderwinkel plots")
+
+
+func test_bury_raises_the_piety_events() -> void:
+	var piety := PietyDouble.new()
+	piety.add_to_group(&"piety")
+	world.add_child(piety)
+	_fill("plot_01", _corpse(true, true))
+	assert_eq(piety.calls, [], "dressed and fresh")
+	var bare := _corpse()
+	_fill("plot_02", bare)
+	assert_eq(piety.calls.size(), 1)
+	assert_eq(piety.calls[0][0], &"bare_burial")
+	piety.calls.clear()
+	var rotten := _corpse()
+	rotten.dress = CorpseRecord.DRESS_GOWN
+	rotten.freshness = 0.05
+	rotten.last_decay_total = 99999999
+	_fill("plot_03", rotten)
+	assert_eq(piety.calls.size(), 1)
+	assert_eq(piety.calls[0][0], &"rotten_burial", "gown counts as dressed; rotten below 0.1")
+
+
+func test_bury_without_piety_node_still_works() -> void:
+	_fill("plot_01", _corpse())
+	assert_eq(graveyard.get_grave("plot_01").state, FILLED)
+
+
+func _add_elder_plots() -> void:
+	graveyard.section_data = _sections_with_elder()
+	graveyard.story_config = Phase4Fixtures.story_config()
+	for i: int in 6:
+		world.add_child(_plot("h_0%d" % (i + 1), false, &"elder"))
+	graveyard.load_state({})
+
+
+func _sections_with_elder() -> Array[SectionData]:
+	var list: Array[SectionData] = Phase3Fixtures.sections()
+	list.append(Phase4Fixtures.elder_section())
+	return list

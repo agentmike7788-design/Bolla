@@ -13,6 +13,17 @@ const PLAYER_GROUP := &"player"
 const DROPOFF_GROUP := &"dropoff"
 const GRAVEYARD_GROUP := &"graveyard"
 const REPUTATION_GROUP := &"reputation"
+const PIETY_GROUP := &"piety"
+const JOURNAL_GROUP := &"journal"
+const CARE_GROUP := &"corpse_care"
+const EVENT_STENCH := &"stench"
+const EVENT_VALUABLES_LEFT := &"valuables_left"
+const EVENT_VALUABLES_TAKEN := &"valuables_taken"
+const REASON_STENCH := "Gestank am Tor"
+const REASON_VALUABLES_LEFT := "Wertsachen gelassen"
+const NOTE_SMELL := "Es riecht streng."
+## Osric at the gate when an unburied corpse stinks at the morning delivery (§2.5).
+const NOTE_STENCH := "Osric hält sich den Ärmel vor die Nase: „Das riecht man bis zur Straße, Totengräber. Die Leute reden schon.“"
 const EVENT_MISSED_DELIVERY := &"missed_delivery"
 const REASON_MISSED := "Lieferung verpasst"
 const REASON_VALUABLES := "Wertsachen genommen"
@@ -50,6 +61,12 @@ var tables: CorpseTables
 var economy: EconomyConfig
 ## Deliveries per tier; null = Database.config(&"reputation_config").
 var reputation_config: ReputationConfig
+## Story corpses S1–S5; empty = Database.story_corpses() (Phase 4 §2.11).
+var stories: Array[StoryCorpseData] = []
+## Story delivery rules; null = Database.config(&"story_config").
+var story_config: StoryConfig
+## Juniper balm factor; null = Database.config(&"prep_config").
+var prep_config: PrepConfig
 
 ## id -> record, in spawn order.
 var _records: Dictionary[String, CorpseRecord] = {}
@@ -63,6 +80,10 @@ var _last_delivery_ids: Array[String] = []
 var _spawn_counts: Dictionary[int, int] = {}
 ## The player carrying a corpse (from pick_up / post_load).
 var _carrier_ref: WeakRef
+## Phase 4: story ids delivered so far (in order), day of the last one, last stench day.
+var _story_delivered: PackedStringArray = PackedStringArray()
+var _story_last_day: int = 0
+var _stench_day: int = 0
 
 
 func _init() -> void:
@@ -76,6 +97,7 @@ func _ready() -> void:
 	EventBus.time_tick.connect(_on_time_tick)
 	EventBus.time_skipped.connect(_on_time_skipped)
 	EventBus.hour_changed.connect(_on_hour_changed)
+	EventBus.day_started.connect(_on_day_started)
 
 
 func records() -> Array[CorpseRecord]:
@@ -137,6 +159,12 @@ func deliveries_due(day: int) -> int:
 ## try_daily_delivery checked at world time `now_total` (the time of the triggering signal).
 ## The corpses arrived at the day's delivery minute – also when the check runs later, inside a
 ## skip (rest, timed action) – but never after now, and have decayed since then.
+## Phase 4 (§2.5, §2.11): the stench at the gate when Osric comes (once per day: a delivery is
+## due and the cemetery is not full for good), then per delivery slot: a
+## due story corpse (StoryDirector.due_story; only the day's first slot) comes instead of the
+## random one and needs more free plots than unburied corpses; a random corpse also leaves the
+## plots reserved for pending story corpses free (CorpseDeliveryRules.reserved_plots) – refused
+## for that reason it is quiet, with Osric's reserve note.
 ## When every remaining EMPTY/DUG plot is already reserved by a corpse waiting for burial, the
 ## cemetery is full for good (graves are never emptied again; LOCKED plots never count): the
 ## carter brings nothing more, which is no missed delivery. No delivery due (disreputable on an
@@ -151,14 +179,26 @@ func _deliver(day: int, now_total: int) -> void:
 	if t == null:
 		push_warning("[CorpseManager] delivery on day %d without corpse tables" % day)
 		return
+	var arrival := CorpseDeliveryRules.arrival_total(day, now_total, t)
 	var due := deliveries_due(day)
 	var graveyard := _first_in_group(GRAVEYARD_GROUP)
 	var dropoffs: Array[Node] = []
 	if is_inside_tree():
 		dropoffs = get_tree().get_nodes_in_group(DROPOFF_GROUP)
+	var story_list := _stories()
 	for i: int in due:
+		var story: StoryCorpseData = null
+		if i == 0:
+			story = StoryDirector.due_story(day, _story_delivered, _story_last_day, story_list, _story_config())
 		if CorpseDeliveryRules.is_cemetery_full(graveyard, unburied_count()):
 			return
+		if i == 0:
+			_check_stench(day, arrival)
+		if story == null:
+			var pending := StoryDirector.pending_count(_story_delivered, story_list)
+			if CorpseDeliveryRules.is_cemetery_full(graveyard, unburied_count(), CorpseDeliveryRules.reserved_plots(graveyard, pending, _story_config().chapter_section)):
+				EventBus.notification_requested.emit(_story_config().reserve_note, &"info")
+				return
 		var free := CorpseDeliveryRules.free_dropoffs(dropoffs)
 		var dropoff: Node = free[0] if not free.is_empty() else (dropoffs[0] if not dropoffs.is_empty() else null)
 		var reason := CorpseDeliveryRules.blocked_reason(dropoff, graveyard, unburied_count(), DROPOFF_GROUP)
@@ -169,11 +209,53 @@ func _deliver(day: int, now_total: int) -> void:
 				rep.event(EVENT_MISSED_DELIVERY, REASON_MISSED)
 			return
 		var at := CorpseDeliveryRules.slot_transform(dropoff)
-		var record := CorpseGenerator.generate(CorpseGenerator.seed_for(day, _take_spawn_index(day)), t, day)
-		var arrival := CorpseDeliveryRules.arrival_total(day, now_total, t)
-		record = _spawn(record, at, CorpseRecord.LOCATION_DROPOFF, arrival, now_total)
+		var seed := CorpseGenerator.seed_for(day, _take_spawn_index(day))
+		var record: CorpseRecord
+		if story != null:
+			record = _spawn_story(story, seed, at, arrival, now_total, day)
+		else:
+			record = _spawn(CorpseGenerator.generate(seed, t, day), at, CorpseRecord.LOCATION_DROPOFF, arrival, now_total)
 		if record != null:
 			_last_delivery_ids.append(record.id)
+
+
+## Spawns the record of `story` at `at` (dropoff), books it as delivered on `day`, then
+## story_corpse_arrived and Osric's arrival note.
+func _spawn_story(story: StoryCorpseData, seed: int, at: Transform3D, arrival: int, now_total: int, day: int) -> CorpseRecord:
+	var record := _spawn(StoryDirector.make_record(story, seed), at, CorpseRecord.LOCATION_DROPOFF, arrival, now_total)
+	if record == null:
+		return null
+	_story_delivered.append(String(story.id))
+	_story_last_day = day
+	EventBus.story_corpse_arrived.emit(story.id, record.id)
+	if story.arrival_note != "":
+		EventBus.notification_requested.emit(story.arrival_note, &"info")
+	return record
+
+
+## §2.5 "Gestank am Tor": at the morning delivery (`at_total`) an unburied corpse at stage
+## decaying or worse without a running juniper window → reputation event stench (−2) and
+## Osric's line; once per day (stench_day, saved – no second penalty after a reload).
+func _check_stench(day: int, at_total: int) -> void:
+	if day <= _stench_day:
+		return
+	var cfg := _economy()
+	var t := _tables()
+	for record: CorpseRecord in _records.values():
+		if record.location == CorpseRecord.LOCATION_BURIED or CorpseDecay.is_balm_active(record, at_total):
+			continue
+		var fresh := CorpseDecay.freshness_at(record, maxi(at_total, record.last_decay_total), CorpseDecay.decay_per_hour(record, t), _balm_factor())
+		if fresh >= cfg.fresh_bad_threshold:
+			continue
+		_stench_day = day
+		var rep := _reputation()
+		if rep != null:
+			if _reputation_config().event_points.has(EVENT_STENCH):
+				rep.event(EVENT_STENCH, REASON_STENCH)
+			else:
+				rep.change(int(ReputationConfig.new().event_points.get(EVENT_STENCH, 0)), REASON_STENCH)
+		EventBus.notification_requested.emit(NOTE_STENCH, &"warning")
+		return
 
 
 ## Adds a corpse at `at` (world transform). record null = generated for TimeManager.day
@@ -231,8 +313,20 @@ func pick_up(id: String, player: Player) -> bool:
 	record.location = CorpseRecord.LOCATION_CARRIED
 	_carrier_ref = weakref(player)
 	player.attach_carried(node, id)
+	_note_smell(record)
 	EventBus.corpse_updated.emit(id)
 	return true
+
+
+## §2.5 "Geruch am Spieler": carrying a corpse at stage decaying or worse (no juniper window
+## running) shows "Es riecht streng." once per corpse (stench_noted). No further effect.
+func _note_smell(record: CorpseRecord) -> void:
+	if record.stench_noted or CorpseDecay.is_balm_active(record, TimeManager.total_minutes()):
+		return
+	if record.freshness >= _economy().fresh_bad_threshold:
+		return
+	record.stench_noted = true
+	EventBus.notification_requested.emit(NOTE_SMELL, &"info")
 
 
 ## Puts the corpse at `xform` (world transform) under `parent` (e.g. a table slot) or the
@@ -259,22 +353,45 @@ func put_down(id: String, location: StringName, xform: Transform3D, parent: Node
 	return true
 
 
+## Phase-2 API (debug / tests). Phase 4: delegates to CorpseCare.exam_all_instant when a node
+## of group corpse_care exists; otherwise the Phase-2 behaviour – every step done at once, all
+## traits revealed (traits_revealed = traits).
 func examine(id: String) -> void:
 	var record := _live_record(id, "examine")
-	if record == null or record.examined:
+	if record == null:
+		return
+	var care := _first_in_group(CARE_GROUP)
+	if care != null and care.has_method(&"exam_all_instant"):
+		care.call(&"exam_all_instant", id)
+		return
+	if record.examined and record.is_fully_examined():
 		return
 	record.examined = true
+	for step: StringName in CorpseRecord.STEPS:
+		if not record.is_step_done(step):
+			record.exam_done.append(step)
+	for t: StringName in record.traits:
+		if not t in record.traits_revealed:
+			record.traits_revealed.append(t)
 	EventBus.corpse_updated.emit(id)
 
 
-## Consumes one shroud. Refused while the valuables decision is open or when already shrouded.
+## Phase-2 API: consumes one shroud. Phase 4: delegates to CorpseCare.dress(id, &"shroud", inv)
+## when a node of group corpse_care exists. Refused while the valuables decision is open or
+## when already dressed.
 func apply_shroud(id: String, inv: Inventory) -> bool:
 	var record := _live_record(id, "apply_shroud")
-	if record == null or record.shrouded or record.needs_valuables_decision():
+	if record == null:
+		return false
+	var care := _first_in_group(CARE_GROUP)
+	if care != null and care.has_method(&"dress"):
+		return bool(care.call(&"dress", id, CorpseRecord.DRESS_SHROUD, inv))
+	if record.shrouded or record.is_dressed() or record.needs_valuables_decision():
 		return false
 	if inv == null or not inv.remove_item(SHROUD_ITEM, 1):
 		return false
 	record.shrouded = true
+	record.dress = CorpseRecord.DRESS_SHROUD
 	EventBus.corpse_updated.emit(id)
 	return true
 
@@ -296,8 +413,10 @@ func decide_valuables(id: String, take: bool, inv: Inventory) -> void:
 		else:
 			GameState.add_stat(STAT_REPUTATION, _economy().valuables_reputation)
 		record.valuables_decision = CorpseRecord.DECISION_TAKEN
+		_piety_event(EVENT_VALUABLES_TAKEN, REASON_VALUABLES)
 	else:
 		record.valuables_decision = CorpseRecord.DECISION_LEFT
+		_piety_event(EVENT_VALUABLES_LEFT, REASON_VALUABLES_LEFT)
 	EventBus.corpse_updated.emit(id)
 
 
@@ -327,31 +446,51 @@ func unburied_count() -> int:
 	return count
 
 
-# --- Phase 4 (docs/PHASE4_DESIGN.md §3.4) – STUB (P1) ------------------------------------------
+# --- Phase 4 (docs/PHASE4_DESIGN.md §3.4) --------------------------------------------------------
 
-## corpse_updated for changes made by CorpseCare (W0: emits only).
+## corpse_updated for changes made by CorpseCare.
 func notify_changed(id: String) -> void:
 	if _records.has(id):
 		EventBus.corpse_updated.emit(id)
 
 
-## STUB (P1) – StoryCorpseData ids delivered so far (saved as "story_delivered").
+## StoryCorpseData ids delivered so far, in delivery order (saved as "story_delivered").
 func story_delivered() -> PackedStringArray:
-	return PackedStringArray()
+	return _story_delivered.duplicate()
 
 
-## STUB (P1) – day of the last story delivery (0 = none).
+## Day of the last story delivery (0 = none).
 func story_last_day() -> int:
-	return 0
+	return _story_last_day
 
 
-## STUB (P1) – debug: delivers `story_id` now (same rules except the day); null if refused.
-func deliver_story_now(_story_id: StringName) -> CorpseRecord:
-	return null
+## Debug: delivers `story_id` now at the first free bier – the rules of the daily delivery
+## except the day (earliest_day / gap): not delivered yet, a free bier and more free plots than
+## unburied corpses. Does not use up the day's delivery. null if refused.
+func deliver_story_now(story_id: StringName) -> CorpseRecord:
+	var story := StoryDirector.find(_stories(), story_id)
+	if story == null:
+		push_warning("[CorpseManager] deliver_story_now: unknown story '%s'" % story_id)
+		return null
+	if _story_delivered.has(String(story_id)):
+		return null
+	var dropoffs: Array[Node] = []
+	if is_inside_tree():
+		dropoffs = get_tree().get_nodes_in_group(DROPOFF_GROUP)
+	var free := CorpseDeliveryRules.free_dropoffs(dropoffs)
+	var dropoff: Node = free[0] if not free.is_empty() else (dropoffs[0] if not dropoffs.is_empty() else null)
+	if CorpseDeliveryRules.blocked_reason(dropoff, _first_in_group(GRAVEYARD_GROUP), unburied_count(), DROPOFF_GROUP) != "":
+		return null
+	var day := TimeManager.day
+	var now := TimeManager.total_minutes()
+	var seed := CorpseGenerator.seed_for(day, _take_spawn_index(day))
+	return _spawn_story(story, seed, CorpseDeliveryRules.slot_transform(dropoff), now, now, day)
 
 
 func save_state() -> Dictionary:
-	return CorpseSaveCodec.write(_records, _next_serial, _last_delivery_day, _last_delivery_ids, _spawn_counts)
+	var data := CorpseSaveCodec.write(_records, _next_serial, _last_delivery_day, _last_delivery_ids, _spawn_counts)
+	data.merge(CorpseSaveCodec.write_story(_story_delivered, _story_last_day, _stench_day))
+	return data
 
 
 ## Replaces everything: old nodes are freed, nodes of all non-buried corpses are recreated
@@ -369,6 +508,9 @@ func load_state(data: Dictionary) -> void:
 	_last_delivery_day = maxi(0, CorpseSaveCodec.to_int(data.get("last_delivery_day"), 0))
 	_last_delivery_ids = CorpseSaveCodec.read_delivery_ids(data)
 	CorpseSaveCodec.read_spawn_counts(data, _spawn_counts)
+	_story_delivered = CorpseSaveCodec.read_story_delivered(data)
+	_story_last_day = maxi(0, CorpseSaveCodec.to_int(data.get("story_last_day"), 0))
+	_stench_day = maxi(0, CorpseSaveCodec.to_int(data.get("stench_day"), 0))
 	for record: CorpseRecord in _records.values():
 		if record.location != CorpseRecord.LOCATION_BURIED:
 			_create_node(record)
@@ -409,6 +551,27 @@ func _on_hour_changed(day: int, hour: int) -> void:
 	_apply_decay((day - 1) * MINUTES_PER_DAY + hour * MINUTES_PER_HOUR)
 
 
+## §2.11 rule 4: the key fallback (StoryDirector.daily_checks). The door note is NightTrade's.
+func _on_day_started(day: int) -> void:
+	apply_daily_checks(day)
+
+
+## StoryDirector.daily_checks for `day` – elder key: the flag, the clue silently (no line),
+## Osric's note at the bier. Returns the fallbacks applied (idempotent).
+func apply_daily_checks(day: int) -> Array[StringName]:
+	var cfg := _story_config()
+	var checks := StoryDirector.daily_checks(day, GameState.has_flag(cfg.key_flag), cfg)
+	for check: StringName in checks:
+		if check == StoryDirector.CHECK_ELDER_KEY:
+			GameState.set_flag(cfg.key_flag, true)
+			var journal := _first_in_group(JOURNAL_GROUP)
+			if journal != null and journal.has_method(&"add_clue"):
+				journal.call(&"add_clue", cfg.key_clue, "", true)
+			if cfg.key_fallback_text != "":
+				EventBus.notification_requested.emit(cfg.key_fallback_text, &"info")
+	return checks
+
+
 func _check_delivery(now_total: int) -> void:
 	var day := CorpseDeliveryRules.day_of(now_total)
 	if not is_inside_tree() or day <= _last_delivery_day:
@@ -434,7 +597,7 @@ func _apply_decay(now_total: int) -> void:
 func _decay_record(record: CorpseRecord, now_total: int) -> bool:
 	if now_total <= record.last_decay_total:
 		return false
-	record.freshness = CorpseDecay.freshness_at(record, now_total, CorpseDecay.decay_per_hour(record, _tables()))
+	record.freshness = CorpseDecay.freshness_at(record, now_total, CorpseDecay.decay_per_hour(record, _tables()), _balm_factor())
 	record.last_decay_total = now_total
 	return true
 
@@ -538,6 +701,38 @@ func _reputation_config() -> ReputationConfig:
 		if reputation_config == null:
 			reputation_config = ReputationConfig.new()
 	return reputation_config
+
+
+func _piety_event(kind: StringName, reason: String) -> void:
+	var piety := _first_in_group(PIETY_GROUP)
+	if piety != null and piety.has_method(&"event"):
+		piety.call(&"event", kind, reason)
+
+
+func _stories() -> Array[StoryCorpseData]:
+	if not stories.is_empty():
+		return stories
+	var out: Array[StoryCorpseData] = []
+	for res: Variant in Database.story_corpses():
+		if res is StoryCorpseData:
+			out.append(res)
+	return out
+
+
+func _story_config() -> StoryConfig:
+	if story_config == null:
+		story_config = Database.config(&"story_config") as StoryConfig
+		if story_config == null:
+			story_config = StoryConfig.new()
+	return story_config
+
+
+func _balm_factor() -> float:
+	if prep_config == null:
+		prep_config = Database.config(&"prep_config") as PrepConfig
+		if prep_config == null:
+			prep_config = PrepConfig.new()
+	return prep_config.balm_factor
 
 
 func _tables() -> CorpseTables:

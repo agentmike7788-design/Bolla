@@ -141,7 +141,7 @@ func test_sections_and_initial_state() -> void:
 func test_real_data_is_used_without_injection() -> void:
 	var plain := ExpansionManager.new()
 	world.add_child(plain)
-	assert_eq(plain.sections().size(), 3)
+	assert_eq(plain.sections().size(), 4, "Phase 4: + elder")
 	assert_eq(plain.data_of("obs_e_01"), Database.clearable(&"bramble"))
 	plain.free()
 
@@ -395,3 +395,114 @@ func _on_state(id: String, state: int) -> void:
 
 func _on_note(text: String, kind: StringName) -> void:
 	events.append(["note", text, kind])
+
+
+# --- Phase 4 (P1, docs/PHASE4_DESIGN.md §2.10, §3.4): the Holunderwinkel -------------------------
+
+## Journal (group "journal"): records add_clue calls.
+class JournalDouble extends Node:
+	var calls: Array = []
+
+	func add_clue(id: StringName, corpse_id: String = "", silent: bool = false) -> bool:
+		calls.append([id, corpse_id, silent])
+		return true
+
+
+func test_elder_needs_the_key_flag() -> void:
+	_add_elder()
+	assert_eq(expansion.block_reason(&"elder"), "Das Pförtchen ist verschlossen.")
+	inv.add_item(&"wood", 5)
+	inv.add_item(&"iron_fittings", 1)
+	assert_false(expansion.can_clear("obs_h_gate", inv))
+	assert_false(expansion.clear("obs_h_gate", inv))
+	GameState.set_flag(&"has_elder_key", true)
+	assert_eq(expansion.block_reason(&"elder"), "")
+	assert_true(expansion.can_clear("obs_h_gate", inv))
+
+
+func test_requires_flag_without_text_has_a_fallback() -> void:
+	var s := Phase4Fixtures.elder_section().duplicate() as SectionData
+	s.requires_flag_text = ""
+	var list: Array[SectionData] = Phase3Fixtures.sections()
+	list.append(s)
+	expansion.section_data = list
+	assert_eq(expansion.block_reason(&"elder"), ExpansionManager.TEXT_NEEDS_FLAG)
+
+
+func test_clearing_the_holunderwinkel_opens_six_plots_and_the_clue() -> void:
+	var journal := _add_elder()
+	GameState.set_flag(&"has_elder_key", true)
+	inv.add_item(&"wood", 2)
+	inv.add_item(&"iron_fittings", 1)
+	var ids := expansion.obstacle_ids(&"elder")
+	assert_eq(ids.size(), 10, "gate + 2 thickets + 6 pits + gap")
+	var minutes := 0
+	for id: String in ids:
+		minutes += expansion.data_of(id).minutes
+	assert_eq(minutes, 300, "§2.10: 5 h")
+	for id: String in ids:
+		if id != "obs_h_gap_1":
+			assert_true(expansion.clear(id, inv), id)
+	assert_eq(journal.calls, [], "not before the last obstacle")
+	assert_eq(inv.count(&"wood"), 6, "2 thickets × 2 wood")
+	assert_true(expansion.clear("obs_h_gap_1", inv))
+	assert_eq([inv.count(&"wood"), inv.count(&"iron_fittings")], [4, 0], "cost 2 wood + 1 iron, yield 4 wood")
+	assert_true(expansion.is_unlocked(&"elder"))
+	for i: int in 6:
+		assert_eq(graveyard.get_grave("h_0%d" % (i + 1)).state, EMPTY)
+	assert_eq(journal.calls, [[&"c_six_pits", "", false]])
+	assert_has(events, ["note", Phase4Fixtures.elder_section().unlock_text, &"reward"])
+	assert_has(rep.calls, ["event", &"section_unlocked", "Holunderwinkel freigelegt"])
+	assert_eq(expansion.unlocked_indices(), PackedInt32Array([1, 4]))
+
+
+func test_other_sections_add_no_clue() -> void:
+	var journal := _add_elder()
+	expansion.unlock(&"east")
+	assert_eq(journal.calls, [])
+
+
+func test_real_elder_data() -> void:
+	var elder := Database.section(&"elder") as SectionData
+	assert_not_null(elder)
+	assert_eq([elder.order, elder.requires_flag, elder.counts_for_cemetery, elder.chapter, elder.decor_cap],
+			[4, &"has_elder_key", false, &"six_pits", 6])
+	var counts := {&"gate_small": 10, &"elder_thicket": 40, &"sunken_pit": 30}
+	for kind: StringName in counts:
+		var data := Database.clearable(kind) as ClearableData
+		assert_not_null(data, String(kind))
+		assert_eq(data.minutes, counts[kind], String(kind))
+	assert_eq((Database.clearable(&"elder_thicket") as ClearableData).yield_items, {&"wood": 2})
+
+
+## Adds the elder section (+ its plots and obstacles) to both managers; returns a journal double.
+func _add_elder() -> JournalDouble:
+	var sections: Array[SectionData] = Phase3Fixtures.sections()
+	sections.append(Phase4Fixtures.elder_section())
+	graveyard.section_data = sections
+	expansion.section_data = sections
+	for id: StringName in Phase4Fixtures.CLEARABLE_IDS:
+		expansion.clearable_data[id] = Phase4Fixtures.clearable(id)
+	for i: int in 6:
+		var plot := PlotDouble.new()
+		plot.grave_id = "h_0%d" % (i + 1)
+		plot.section_id = &"elder"
+		plot.add_to_group(&"grave_plot")
+		world.add_child(plot)
+	var specs: Array = [["obs_h_gate", &"gate_small"], ["obs_h_thicket_1", &"elder_thicket"], ["obs_h_thicket_2", &"elder_thicket"]]
+	for i: int in 6:
+		specs.append(["obs_h_pit_%d" % (i + 1), &"sunken_pit"])
+	specs.append(["obs_h_gap_1", &"fence_gap"])
+	for spec: Array in specs:
+		var obstacle := ClearableObstacle.new()
+		obstacle.obstacle_id = spec[0]
+		obstacle.section_id = &"elder"
+		obstacle.kind = spec[1]
+		obstacle.name = spec[0]
+		world.add_child(obstacle)
+	graveyard.load_state({})
+	expansion.collect_obstacles()
+	var journal := JournalDouble.new()
+	journal.add_to_group(&"journal")
+	world.add_child(journal)
+	return journal

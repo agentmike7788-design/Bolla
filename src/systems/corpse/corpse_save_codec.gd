@@ -81,3 +81,23 @@ static func to_int(v: Variant, fallback: int) -> int:
 	if v is String and (v as String).is_valid_float():
 		return roundi((v as String).to_float())
 	return fallback
+
+
+## Phase 4 (§5.1): the story bookkeeping of the save entry.
+static func write_story(delivered: PackedStringArray, last_day: int, stench_day: int) -> Dictionary:
+	var list: Array = []
+	for id: String in delivered:
+		list.append(id)
+	return {"story_delivered": list, "story_last_day": last_day, "stench_day": stench_day}
+
+
+## data.story_delivered as unique non-empty ids in saved order (missing = none).
+static func read_story_delivered(data: Dictionary) -> PackedStringArray:
+	var out := PackedStringArray()
+	var list: Variant = data.get("story_delivered", [])
+	if not (list is Array or list is PackedStringArray):
+		return out
+	for entry: Variant in list:
+		if (entry is String or entry is StringName) and String(entry) != "" and not out.has(String(entry)):
+			out.append(String(entry))
+	return out

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="StoryCorpseData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/story/story_corpse_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"s5_moor"
+order = 5
+earliest_day = 19
+display_name = "Lorenz Aschau (?)"
+age = 50
+cause_id = &"moor_cold"
+traits = Array[StringName]([&"strange_wound"])
+valuables_coins = 0
+look = 4
+finds = Array[StringName]([&"f_s5_coat", &"f_s5_buckle", &"f_s5_hands", &"f_s5_list"])
+arrival_note = "Das ist er, Totengräber. Der alte Aschau. Das Moor hat ihn ausgespuckt."
+is_finale = true

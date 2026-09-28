@@ -18,6 +18,11 @@ const TEXT_NEEDS_SECTION := "Erst die %s freilegen"
 const TEXT_NEEDS_RATING := "Erst Friedhof „%s“ (%d)"
 const TEXT_UNLOCKED_FALLBACK := "%s ist freigelegt."
 const REASON_UNLOCKED := "%s freigelegt"
+# Phase 4 (docs/PHASE4_DESIGN.md §2.10, §3.4): SectionData.requires_flag, the six_pits clue.
+const TEXT_NEEDS_FLAG := "Noch verschlossen."
+const JOURNAL_GROUP := &"journal"
+const CHAPTER_SIX_PITS := &"six_pits"
+const CLUE_SIX_PITS := &"c_six_pits"
 
 @export var save_id: String = "expansion"
 @export var save_order: int = 5
@@ -101,6 +106,8 @@ func block_reason(section_id: StringName) -> String:
 	var s := section(section_id)
 	if s == null or is_unlocked(section_id):
 		return ""
+	if s.requires_flag != &"" and not GameState.has_flag(s.requires_flag):
+		return s.requires_flag_text if s.requires_flag_text != "" else TEXT_NEEDS_FLAG
 	if s.requires_section != &"" and not is_unlocked(s.requires_section):
 		var needed := section(s.requires_section)
 		return TEXT_NEEDS_SECTION % (needed.display_name if needed != null else String(s.requires_section))
@@ -227,6 +234,10 @@ func unlock(section_id: StringName) -> bool:
 	EventBus.section_unlocked.emit(section_id)
 	var text := s.unlock_text if s.unlock_text != "" else TEXT_UNLOCKED_FALLBACK % s.display_name
 	EventBus.notification_requested.emit(text, &"reward")
+	if s.chapter == CHAPTER_SIX_PITS:
+		var journal := _first(JOURNAL_GROUP)
+		if journal != null and journal.has_method(&"add_clue"):
+			journal.call(&"add_clue", CLUE_SIX_PITS, "", false)
 	return true
 
 
