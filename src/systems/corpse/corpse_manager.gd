@@ -36,7 +36,9 @@ const STAT_MISSED := CorpseDeliveryRules.STAT_MISSED
 const STAT_VALUABLES_TAKEN := &"valuables_taken"
 const STAT_REPUTATION := &"reputation"
 ## Locations a corpse can be spawned at or put down to.
-const PLACE_LOCATIONS: Array[StringName] = [CorpseRecord.LOCATION_DROPOFF, CorpseRecord.LOCATION_TABLE, CorpseRecord.LOCATION_GROUND]
+## Phase 6 (§3.4): + niche (crypt), catafalque (chapel).
+const PLACE_LOCATIONS: Array[StringName] = [CorpseRecord.LOCATION_DROPOFF, CorpseRecord.LOCATION_TABLE, CorpseRecord.LOCATION_GROUND,
+		CorpseRecord.LOCATION_NICHE, CorpseRecord.LOCATION_CATAFALQUE]
 const MINUTES_PER_HOUR := CorpseDecay.MINUTES_PER_HOUR
 const MINUTES_PER_DAY := CorpseDeliveryRules.MINUTES_PER_DAY
 ## Decay rules: CorpseDecay; delivery rules: CorpseDeliveryRules (constants kept here as API).
@@ -46,6 +48,11 @@ const FRESHNESS_RESOLUTION := CorpseDecay.FRESHNESS_RESOLUTION
 const REASON_OCCUPIED := CorpseDeliveryRules.REASON_OCCUPIED
 const REASON_NO_PLOT := CorpseDeliveryRules.REASON_NO_PLOT
 const REASON_NO_DROPOFF := CorpseDeliveryRules.REASON_NO_DROPOFF
+## Phase 6 (§2.2): the Buildings node (crypt level), the niche-wait stat and the table move note.
+const BUILDINGS_GROUP := &"buildings"
+const CRYPT_ID := &"crypt"
+const STAT_NICHE_WAITS := &"niche_waits"
+const NOTE_RELOCATED := "Die Tote vom alten Tisch liegt jetzt unten in der Gruft."
 const NOTE_SKIPPED := CorpseDeliveryRules.NOTE_SKIPPED
 
 @export var save_id: String = "corpse_manager"
@@ -67,6 +74,8 @@ var stories: Array[StoryCorpseData] = []
 var story_config: StoryConfig
 ## Juniper balm factor; null = Database.config(&"prep_config").
 var prep_config: PrepConfig
+## Phase 6: cold factors, crypt room id, stench exemption; null = Database.config(&"crypt_config").
+var crypt_config: CryptConfig
 
 ## id -> record, in spawn order.
 var _records: Dictionary[String, CorpseRecord] = {}
@@ -84,6 +93,8 @@ var _carrier_ref: WeakRef
 var _story_delivered: PackedStringArray = PackedStringArray()
 var _story_last_day: int = 0
 var _stench_day: int = 0
+## Phase 6: corpses already counted in stats.niche_waits (saved as "niche_waited" when not empty).
+var _niche_waited: PackedStringArray = PackedStringArray()
 
 
 func _init() -> void:
@@ -241,8 +252,12 @@ func _check_stench(day: int, at_total: int) -> void:
 		return
 	var cfg := _economy()
 	var t := _tables()
+	var crypt := _crypt_config()
 	for record: CorpseRecord in _records.values():
 		if record.location == CorpseRecord.LOCATION_BURIED or CorpseDecay.is_balm_active(record, at_total):
+			continue
+		# Phase 6 §2.2: the crypt keeps the smell in (stench_exempt).
+		if crypt.stench_exempt and record.room != &"" and record.room == crypt.room_id:
 			continue
 		var fresh := CorpseDecay.freshness_at(record, maxi(at_total, record.last_decay_total), CorpseDecay.decay_per_hour(record, t), _balm_factor())
 		if fresh >= cfg.fresh_bad_threshold:
@@ -287,8 +302,12 @@ func _spawn(record: CorpseRecord, at: Transform3D, location: StringName, arrival
 	_decay_record(record, now_total)
 	record.location = location
 	record.grave_id = ""
+	if location != CorpseRecord.LOCATION_NICHE:
+		record.slot_id = ""
 	CorpseNodePlacement.store_transform(record, at)
 	_records[record.id] = record
+	if _open_permille(record) >= 1000:
+		_open_cold(record, now_total)
 	_create_node(record)
 	EventBus.corpse_arrived.emit(record.id)
 	return record
@@ -310,7 +329,13 @@ func pick_up(id: String, player: Player) -> bool:
 		node = _create_node(record)
 	if node == null:
 		return false
+	var now := TimeManager.total_minutes()
+	if record.location == CorpseRecord.LOCATION_NICHE:
+		_note_niche_wait(record, now)
+	_close_cold(record, now)
 	record.location = CorpseRecord.LOCATION_CARRIED
+	record.room = &""
+	record.slot_id = ""
 	_carrier_ref = weakref(player)
 	player.attach_carried(node, id)
 	_note_smell(record)
@@ -332,17 +357,26 @@ func _note_smell(record: CorpseRecord) -> void:
 
 ## Puts the corpse at `xform` (world transform) under `parent` (e.g. a table slot) or the
 ## container. A carried corpse is detached from the player first.
-## Phase 6 (§3.4, P2): room / slot_id (niche_1…6) are stored on the record; P2 closes the open cold
-## window and opens a new one when cold_factor_for(location, room) < 1 (W0: not read yet).
-func put_down(id: String, location: StringName, xform: Transform3D, parent: Node3D = null, _room: StringName = &"",
-		_slot_id: String = "") -> bool:
+## Phase 6 (§2.2, §3.4): room (&"crypt" | &"chapel" | "") and slot_id (niche_1…6, only for a niche)
+## are stored on the record; the open cold window closes and a new one opens when
+## cold_factor_for(location, room) < 1. A carried corpse put on the ground without a room lies in
+## the carrier's interior (Player.interior_id – the crypt floor is a ground spot). A niche needs a
+## slot_id and takes one corpse.
+func put_down(id: String, location: StringName, xform: Transform3D, parent: Node3D = null, room: StringName = &"",
+		slot_id: String = "") -> bool:
 	var record := _live_record(id, "put_down")
 	if record == null:
 		return false
 	if not location in PLACE_LOCATIONS:
 		push_warning("[CorpseManager] cannot put a corpse down at location '%s'" % location)
 		return false
+	if location == CorpseRecord.LOCATION_NICHE:
+		var other := corpse_in_slot(location, slot_id)
+		if slot_id == "" or (other != "" and other != id):
+			return false
 	if record.location == CorpseRecord.LOCATION_CARRIED:
+		if room == &"" and location == CorpseRecord.LOCATION_GROUND:
+			room = _carrier_room()
 		_release_from_carrier()
 	var node := _node(id)
 	var target: Node = parent if parent != null else _container()
@@ -351,7 +385,12 @@ func put_down(id: String, location: StringName, xform: Transform3D, parent: Node
 	if node == null:
 		return false
 	CorpseNodePlacement.place(node, target, xform)
+	var now := TimeManager.total_minutes()
+	_close_cold(record, now)
 	record.location = location
+	record.room = room
+	record.slot_id = slot_id if location == CorpseRecord.LOCATION_NICHE else ""
+	_open_cold(record, now)
 	CorpseNodePlacement.store_transform(record, xform)
 	EventBus.corpse_updated.emit(id)
 	return true
@@ -432,7 +471,10 @@ func mark_buried(id: String, grave_id: String) -> void:
 	_decay_record(record, TimeManager.total_minutes())
 	if record.location == CorpseRecord.LOCATION_CARRIED:
 		_release_from_carrier()
+	_close_cold(record, TimeManager.total_minutes())
 	record.location = CorpseRecord.LOCATION_BURIED
+	record.room = &""
+	record.slot_id = ""
 	record.grave_id = grave_id
 	record.freshness_at_burial = record.freshness
 	record.buried_day = TimeManager.day
@@ -511,6 +553,8 @@ func deliver_story_now(story_id: StringName) -> CorpseRecord:
 func save_state() -> Dictionary:
 	var data := CorpseSaveCodec.write(_records, _next_serial, _last_delivery_day, _last_delivery_ids, _spawn_counts)
 	data.merge(CorpseSaveCodec.write_story(_story_delivered, _story_last_day, _stench_day))
+	if not _niche_waited.is_empty():
+		data["niche_waited"] = Array(_niche_waited)
 	return data
 
 
@@ -532,6 +576,7 @@ func load_state(data: Dictionary) -> void:
 	_story_delivered = CorpseSaveCodec.read_story_delivered(data)
 	_story_last_day = maxi(0, CorpseSaveCodec.to_int(data.get("story_last_day"), 0))
 	_stench_day = maxi(0, CorpseSaveCodec.to_int(data.get("stench_day"), 0))
+	_niche_waited = CorpseSaveCodec.read_id_list(data.get("niche_waited"))
 	for record: CorpseRecord in _records.values():
 		if record.location != CorpseRecord.LOCATION_BURIED:
 			_create_node(record)
@@ -768,31 +813,168 @@ func _economy() -> EconomyConfig:
 	return economy
 
 
+func _crypt_config() -> CryptConfig:
+	if crypt_config == null:
+		crypt_config = Database.config(&"crypt_config") as CryptConfig
+		if crypt_config == null:
+			crypt_config = CryptConfig.new()
+	return crypt_config
+
 
 # --- Phase 6 (docs/PHASE6_DESIGN.md §2.2, §3.4) -------------------------------------------------
 
-## STUB (P2) – id of the corpse at `location` / `slot_id` ("" = free), from the records.
-func corpse_in_slot(_location: StringName, _slot_id: String) -> String:
+## Id of the corpse at `location` / `slot_id` ("" = free), from the records (the niches, table and
+## catafalque save nothing themselves).
+func corpse_in_slot(location: StringName, slot_id: String) -> String:
+	for record: CorpseRecord in _records.values():
+		if record.location == location and record.slot_id == slot_id:
+			return record.id
 	return ""
 
 
-## STUB (P2) – CryptConfig × Buildings.level(&"crypt"): niche → niche_factor, table / floor in the
-## crypt → room_factor, else 1.0.
-func cold_factor_for(_location: StringName, _room: StringName) -> float:
+## §2.2: CryptConfig × Buildings.level(&"crypt") – in the crypt room a niche has niche_factor, the
+## table and the floor room_factor; everywhere else (chapel, outside, carried) 1.0.
+func cold_factor_for(location: StringName, room: StringName) -> float:
+	var cfg := _crypt_config()
+	if room == &"" or room != cfg.room_id:
+		return 1.0
+	var level := crypt_level()
+	if location == CorpseRecord.LOCATION_NICHE:
+		return _factor_at(cfg.niche_factor_by_level, level)
+	if location == CorpseRecord.LOCATION_TABLE or location == CorpseRecord.LOCATION_GROUND:
+		return _factor_at(cfg.room_factor_by_level, level)
 	return 1.0
 
 
-## STUB (P2) – a crypt level change: open cold windows close at `now_total` and reopen with the new factor.
-func restart_cold(_now_total: int) -> void:
-	pass
+## A crypt level change (Buildings.upgrade / apply_levels): every unburied corpse whose cold factor
+## changed closes its open window at `now_total` and opens one with the new factor (none at 1.0).
+## Idempotent – an unchanged factor keeps its window, a window opened at `now_total` is replaced.
+func restart_cold(now_total: int) -> void:
+	for record: CorpseRecord in _records.values():
+		if record.location == CorpseRecord.LOCATION_BURIED:
+			continue
+		if _open_permille(record) == _permille(cold_factor_for(record.location, record.room)):
+			continue
+		_close_cold(record, now_total)
+		_open_cold(record, now_total)
+		EventBus.corpse_updated.emit(record.id)
 
 
-## STUB (P2) – crypt 1: the corpse on the old table moves onto the crypt table with all its state;
-## its id | "".
-func relocate_table_corpse(_xform: Transform3D, _parent: Node3D, _room: StringName) -> String:
-	return ""
+## §2.2 crypt 1: the corpse on the old table (location table, another room than `room`) moves onto
+## the crypt table at `xform` under `parent` with all its state (steps, finds, juniper windows,
+## harvest, dress stay); its cold window opens with the crypt's room factor; one note. Its id | "".
+func relocate_table_corpse(xform: Transform3D, parent: Node3D, room: StringName) -> String:
+	var record: CorpseRecord = null
+	for r: CorpseRecord in _records.values():
+		if r.location == CorpseRecord.LOCATION_TABLE and r.room != room:
+			record = r
+			break
+	if record == null:
+		return ""
+	var target: Node = parent if parent != null else _container()
+	var node := _node(record.id)
+	if node == null:
+		node = _create_node(record, target)
+	if node != null:
+		CorpseNodePlacement.place(node, target, xform)
+	var now := TimeManager.total_minutes()
+	_close_cold(record, now)
+	record.room = room
+	record.slot_id = ""
+	_open_cold(record, now)
+	CorpseNodePlacement.store_transform(record, xform)
+	EventBus.corpse_updated.emit(record.id)
+	EventBus.notification_requested.emit(NOTE_RELOCATED, &"info")
+	return record.id
 
 
-## STUB (P2) – from ChapelRites: service_held, service_day; corpse_updated.
-func mark_service(_id: String, _day: int) -> void:
-	pass
+## From ChapelRites.hold_service: service_held, service_day; corpse_updated.
+func mark_service(id: String, day: int) -> void:
+	var record := _live_record(id, "mark_service")
+	if record == null:
+		return
+	record.service_held = true
+	record.service_day = day
+	EventBus.corpse_updated.emit(id)
+
+
+## Buildings.level(&"crypt") of the node in group "buildings" (0 without one).
+func crypt_level() -> int:
+	var buildings := _first_in_group(BUILDINGS_GROUP)
+	if buildings == null or not buildings.has_method(&"level"):
+		return 0
+	return int(buildings.call(&"level", CRYPT_ID))
+
+
+## Closes every open cold window of `record` at `now_total` (a window that starts there is dropped).
+func _close_cold(record: CorpseRecord, now_total: int) -> void:
+	var w := record.cold_windows
+	var out := PackedInt32Array()
+	for i: int in range(0, w.size() - 2, 3):
+		if w[i + 1] >= 0:
+			out.append_array([w[i], w[i + 1], w[i + 2]])
+		elif w[i] < now_total:
+			out.append_array([w[i], now_total, w[i + 2]])
+	record.cold_windows = out
+
+
+## Opens a cold window at `now_total` when the record's place is cool (factor < 1).
+func _open_cold(record: CorpseRecord, now_total: int) -> void:
+	var permille := _permille(cold_factor_for(record.location, record.room))
+	if permille < 1000:
+		record.cold_windows.append_array([now_total, -1, permille])
+
+
+## Factor‰ of the record's open cold window (1000 = none).
+func _open_permille(record: CorpseRecord) -> int:
+	var w := record.cold_windows
+	for i: int in range(w.size() - 3, -1, -3):
+		if w[i + 1] < 0:
+			return w[i + 2]
+	return 1000
+
+
+## §3.4: a corpse that lay ≥ niche_wait_minutes in a niche counts once in stats.niche_waits when it
+## is taken out. The stay is the chain of back-to-back niche windows up to now (a crypt level change
+## splits it, restart_cold).
+func _note_niche_wait(record: CorpseRecord, now_total: int) -> void:
+	if _niche_waited.has(record.id):
+		return
+	var cfg := _crypt_config()
+	var niche_permilles: Array[int] = []
+	for f: float in cfg.niche_factor_by_level:
+		if _permille(f) < 1000:
+			niche_permilles.append(_permille(f))
+	var w := record.cold_windows
+	var stay := 0
+	var chain_end := now_total
+	for i: int in range(w.size() - 3, -1, -3):
+		var end := now_total if w[i + 1] < 0 else w[i + 1]
+		if end != chain_end or not w[i + 2] in niche_permilles:
+			break
+		stay += end - w[i]
+		chain_end = w[i]
+	if stay >= cfg.niche_wait_minutes:
+		_niche_waited.append(record.id)
+		GameState.add_stat(STAT_NICHE_WAITS, 1)
+
+
+## Room of the carrier (Player.interior_id; "" outside or without a carrier).
+func _carrier_room() -> StringName:
+	var carrier: Node = _carrier_ref.get_ref() if _carrier_ref != null else null
+	if carrier == null:
+		carrier = _first_in_group(PLAYER_GROUP)
+	if carrier == null:
+		return &""
+	var room: Variant = carrier.get(&"interior_id")
+	return StringName(room) if room is StringName or room is String else &""
+
+
+static func _factor_at(list: PackedFloat32Array, level: int) -> float:
+	if list.is_empty():
+		return 1.0
+	return clampf(list[clampi(level, 0, list.size() - 1)], 0.001, 1.0)
+
+
+static func _permille(factor: float) -> int:
+	return clampi(roundi(factor * 1000.0), 1, 1000)

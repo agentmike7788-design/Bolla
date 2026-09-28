@@ -1613,3 +1613,27 @@ func _replace_manager(m: CorpseManager) -> void:
 	m.container_path = ^"../Corpses"
 	world.add_child(m)
 	manager = m
+
+
+# --- Phase 6 (docs/PHASE6_DESIGN.md §3.4, P2) ---------------------------------------------------
+
+func test_phase6_old_put_down_calls_stay_outside_without_cold() -> void:
+	var r := manager.try_daily_delivery(1)
+	var player := _player()
+	manager.pick_up(r.id, player)
+	assert_true(manager.put_down(r.id, &"table", Transform3D.IDENTITY))
+	assert_eq([r.room, r.slot_id, r.cold_windows], [&"", "", PackedInt32Array()], "Phase-2…5 calls: no room, no cold")
+	assert_eq(manager.cold_factor_for(&"table", &""), 1.0)
+	assert_eq(manager.corpse_in_slot(&"table", ""), r.id)
+	assert_false(manager.save_state().has("niche_waited"))
+
+
+func test_phase6_niche_and_catafalque_are_place_locations() -> void:
+	assert_eq(CorpseManager.PLACE_LOCATIONS, [&"dropoff", &"table", &"ground", &"niche", &"catafalque"] as Array[StringName])
+	var r := _spawn(&"fever")
+	assert_true(manager.put_down(r.id, &"catafalque", Transform3D.IDENTITY, null, &"chapel"))
+	assert_eq([r.location, r.room], [&"catafalque", &"chapel"])
+	manager.mark_service(r.id, 5)
+	assert_eq([r.service_held, r.service_day], [true, 5])
+	manager.mark_buried(r.id, "plot_01")
+	assert_eq([r.room, r.service_held], [&"", true], "the service stays with the dead")
