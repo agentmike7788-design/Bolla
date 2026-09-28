@@ -19,6 +19,11 @@ const TRADER_PANEL := &"trader"
 const TOOLS_FLAG := &"trader_tools_given"
 const JOURNAL_GROUP := &"journal"
 const NIGHT_TRADE_GROUP := &"night_trade"
+## Phase 5 §3.3: coin payments in dialogues (take_item:coin:<n>[:<reason>]).
+const COIN_ITEM := &"coin"
+const TRADER_NPC_ID := &"trader"
+const REASON_OSRIC := &"osric"
+const REASON_ILSE := &"ilse"
 
 
 ## Applies every action in order.
@@ -119,16 +124,33 @@ static func _trader_tools(context: Dictionary) -> void:
 
 # --- item actions ---
 
+## take_item:<id>:<n>[:<reason>]. Phase 5 (docs/PHASE5_DESIGN.md §3.3, §3.4): taking coins is a
+## payment – GameState.note_coins_spent(n, reason) (stats.coins_spent, the ledger, EventBus
+## coins_spent). The reason is the optional 3rd part (e.g. &"license"), else the speaker's:
+## Ilse (npc_id trader) → &"ilse", everyone else (Osric) → &"osric".
 static func _take_item(text: String, context: Dictionary) -> void:
-	var p := DialogueSyntax.parts(text, 2)
+	var p := DialogueSyntax.parts(text, 3)
 	var n: Variant = _item_amount(p, text)
 	if n == null or int(n) == 0:
 		return
 	var inv := DialogueSyntax.inventory(context, &"remove_item")
 	if inv == null:
 		return
-	if not DialogueSyntax.truthy(inv.call(&"remove_item", StringName(p[0]), int(n))):
+	var id := StringName(p[0])
+	if not DialogueSyntax.truthy(inv.call(&"remove_item", id, int(n))):
 		push_warning("[DialogueRunner] '%s': not enough items, nothing taken" % text)
+		return
+	if id == COIN_ITEM:
+		var reason := StringName(p[2]) if p.size() > 2 and p[2] != "" else coin_reason(context)
+		GameState.note_coins_spent(int(n), reason)
+
+
+## Default reason of a coin payment in a dialogue: the speaker's npc_id trader → &"ilse", else &"osric".
+static func coin_reason(context: Dictionary) -> StringName:
+	var speaker: Variant = context.get("speaker")
+	if is_instance_valid(speaker) and StringName(str((speaker as Object).get(&"npc_id"))) == TRADER_NPC_ID:
+		return REASON_ILSE
+	return REASON_OSRIC
 
 
 static func _give_item(text: String, context: Dictionary) -> void:

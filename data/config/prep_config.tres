@@ -14,3 +14,4 @@ balm_minutes = 10
 balm_factor = 0.25
 balm_window_minutes = 1080
 balm_max_windows = 4
+balm_items = Array[StringName]([&"juniper", &"herb_bundle"])

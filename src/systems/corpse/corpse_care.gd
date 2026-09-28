@@ -5,8 +5,8 @@ extends Node
 ## the CorpseRecord. Calls JournalManager.add_clue, Piety.event, Reputation.event and
 ## CorpseManager.notify_changed directly (group API); the EventBus signals exam_step_done /
 ## corpse_prepared / corpse_harvested come on top. Every successful preparation emits
-## corpse_prepared; the 3rd part (washed ∧ dressed ∧ laid out) → Piety.event(&"full_prep"),
-## stats.prepared +1. Timing is the caller's job (MorgueTable runs the timed actions).
+## corpse_prepared; the 3rd part (washed ∧ dressed ∧ laid out) → Piety.event(&"full_prep")
+## (Phase 5 §2.9: only without harvest), stats.prepared +1. Timing is the caller's job (MorgueTable runs the timed actions).
 
 const GROUP := &"corpse_care"
 const MANAGER_GROUP := &"corpse_manager"
@@ -187,12 +187,14 @@ func lay_out(id: String, inv: Inventory) -> bool:
 	return true
 
 
-## Window [now, now + balm_window_minutes].
+## Window [now, now + balm_window_minutes]. Consumes the first balm item held
+## (PrepConfig.balm_items order: juniper, then herb_bundle – Phase 5 §2.6).
 func apply_balm(id: String, inv: Inventory) -> bool:
 	if prep_block_reason(id, CorpsePrep.ACTION_BALM, inv) != "":
 		return false
 	var cfg := _prep()
-	if not inv.remove_item(cfg.balm_item, 1):
+	var item := CorpsePrep.balm_item_in(inv, cfg)
+	if item == &"" or not inv.remove_item(item, 1):
 		return false
 	var record := get_record(id)
 	var now := TimeManager.total_minutes()
@@ -347,10 +349,22 @@ func _after_prep(record: CorpseRecord, action: StringName) -> void:
 	EventBus.corpse_prepared.emit(record.id, action)
 	if action != CorpsePrep.ACTION_BALM and record.is_fully_prepared():
 		var piety := _first(PIETY_GROUP) as Piety
-		if piety != null:
+		if piety != null and full_prep_counts(record, PietyRules._cfg(piety.config)):
 			piety.event(EVENT_FULL_PREP, REASON_FULL_PREP)
 		GameState.add_stat(STAT_PREPARED, 1)
 	_notify(record.id)
+
+
+## Phase 5 §2.9 (G4 finding B2): the full_prep piety bonus only for a corpse nothing was
+## harvested from (PietyConfig.full_prep_requires_unharvested; off → the Phase-4 rule). Harvesting
+## is only possible before dressing, so the answer is final when the 3rd part is done.
+## stats.prepared counts every full preparation either way; grave quality is not touched.
+static func full_prep_counts(record: CorpseRecord, cfg: PietyConfig) -> bool:
+	if record == null:
+		return false
+	if cfg != null and not cfg.full_prep_requires_unharvested:
+		return true
+	return record.harvested.is_empty()
 
 
 ## The record's freshness of now (the hourly decay may lag in real-time play, QA4-01).

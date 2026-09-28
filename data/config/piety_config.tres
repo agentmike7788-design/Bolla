@@ -13,3 +13,4 @@ daily_recovery = 1
 gift_by_tier = PackedInt32Array(0, 2, 2, 2, 3)
 buyer_bonus_by_tier = PackedInt32Array(1, 1, 0, 0, 0)
 affinity_threshold = 20
+full_prep_requires_unharvested = true

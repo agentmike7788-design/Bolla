@@ -1,7 +1,7 @@
 class_name CorpsePrep
 extends RefCounted
 ## Pure preparation rules (docs/PHASE4_DESIGN.md §2.3, §2.5, §3.4): wash, dress (shroud /
-## gown), lay out, juniper smoking. The running-window check of &"balm" reads the world clock
+## gown), lay out, juniper smoking (Phase 5: any PrepConfig.balm_items entry, §2.6). The running-window check of &"balm" reads the world clock
 ## (TimeManager); everything else only the record, the inventory and the config.
 
 const ACTION_WASH := &"wash"
@@ -60,11 +60,21 @@ static func block_reason(record: CorpseRecord, action: StringName, inv: Inventor
 				return REASON_BALM_ACTIVE
 			if record.balm_windows.size() / 2 >= c.balm_max_windows:
 				return REASON_BALM_MAX
-			if not _has(inv, c.balm_item):
-				return FORMAT_NO_BALM % _item_name(c.balm_item)
+			if balm_item_in(inv, c) == &"":
+				return FORMAT_NO_BALM % _item_name(_balm_items(c)[0])
 		_:
 			return REASON_UNKNOWN
 	return ""
+
+
+## Phase 5 (docs/PHASE5_DESIGN.md §2.6, §3.4): the first PrepConfig.balm_items entry the inventory
+## holds (list order: juniper before herb_bundle), &"" when none. An empty list falls back to
+## balm_item (old configs).
+static func balm_item_in(inv: Inventory, cfg: PrepConfig) -> StringName:
+	for id: StringName in _balm_items(_cfg(cfg)):
+		if _has(inv, id):
+			return id
+	return &""
 
 
 static func minutes(action: StringName, cfg: PrepConfig, kind: StringName = &"") -> int:
@@ -101,6 +111,12 @@ static func balm_end(record: CorpseRecord, now_total: int) -> int:
 		if now_total >= w[i] and now_total < w[i + 1]:
 			return w[i + 1]
 	return -1
+
+
+static func _balm_items(c: PrepConfig) -> Array[StringName]:
+	if c.balm_items.is_empty():
+		return [c.balm_item] as Array[StringName]
+	return c.balm_items
 
 
 static func _has(inv: Inventory, id: StringName) -> bool:

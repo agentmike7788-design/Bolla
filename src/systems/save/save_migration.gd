@@ -4,13 +4,19 @@ extends RefCounted
 ## (docs/PHASE3_DESIGN.md §5.2, §3.4 "Speichern"; docs/PHASE4_DESIGN.md §5.2: chain 1→2→3;
 ## docs/PHASE5_DESIGN.md §5.2: chain 1→2→3→4). Applied by SaveFileIO.read_doc after
 ## decode_state; the normal load path follows and the next save writes CURRENT.
-## Pure: never touches the scene tree or an autoload, never changes its input.
+## Pure: never touches the scene tree, never changes its input or an autoload (migrate_3_to_4 only
+## reads item categories from Database).
 
 const CURRENT := 4
 ## Save ids of the Phase-5 system nodes that get an empty state in migrate_3_to_4 (§3.1, §5.2
-## step 3). Used by P6 once the nodes exist in the world (W0: not yet inserted – an unknown
-## save_id would warn).
+## step 3). SaveManager.without_absent_defaults drops them again while the world has no such node.
 const V4_EMPTY_NODES: PackedStringArray = ["workshop", "gathering", "stonemasonry"]
+## Phase-5 statistics that start at 0 (§5.2 step 6; = the Phase-5 part of GameState.DEFAULT_STATS,
+## incl. the coin ledger by purpose coins_spent_<reason>).
+const V4_NEW_STATS: Array[StringName] = [&"crafted", &"stones_set", &"coins_spent", &"trees_felled",
+		&"coins_spent_license", &"coins_spent_build", &"coins_spent_osric", &"coins_spent_ilse"]
+## save_id of the player (Player.save_state: {position, rot_y, in_interior, inventory}).
+const PLAYER_SAVE_ID := "player"
 ## Save ids of the Phase-4 system nodes that get an empty state in migrate_2_to_3 (§3.1, §5.2
 ## steps 4–5). Used by P6 once the nodes exist in the world (W0: not yet inserted – an unknown
 ## save_id would warn).
@@ -148,12 +154,78 @@ static func migrate_2_to_3(state: Dictionary, meta: Dictionary) -> Dictionary:
 	return out
 
 
-## STUB (P6) – docs/PHASE5_DESIGN.md §5.2 steps 1–7 on a deep copy of a v3 state. W0: the
-## identity on a deep copy (fail-safe: every from_dict / load_state tolerates missing keys).
-## P6 moves TOOL items from the player's slots to "tools", adds design {} to the graves, the empty
-## V4_EMPTY_NODES (once the world has them) and the new stats.
+## docs/PHASE5_DESIGN.md §5.2 steps 1–7 on a deep copy of a v3 state (run exactly once).
+## 1. Player inventory: every slot holding a TOOL item (ItemData.Category, read from Database) →
+##    inventory.tools {id: 1}; the slot becomes {} (other slots keep their index). A second piece
+##    of the same tool stays in its slot (nothing is lost). The chest has no belt. Unknown ids stay.
+## 2. Graves: design {} (marker_id, quality, breakdown unchanged).
+## 3. Empty states for V4_EMPTY_NODES (SaveManager.without_absent_defaults drops them while the
+##    world has no such node – no "unknown save_id" warning, nothing lost).
+## 4. expansion: bruch / quarry stay absent → LOCKED (ExpansionManager is tolerant).
+## 5. The workyard decor is cleared at runtime (Workshop.post_load), not here.
+## 6. New stats (V4_NEW_STATS) = 0; no new flags (workshop_open comes from Workshop.post_load).
+## 7. Piety, graves, corpses, journal, Ilse: unchanged (the piety fix only acts from now on).
 static func migrate_3_to_4(state: Dictionary, _meta: Dictionary) -> Dictionary:
-	return state.duplicate(true)
+	var out := state.duplicate(true)
+	var autoloads := _sub(out, "autoloads")
+	var nodes := _sub(out, "nodes")
+	var stats := _sub(_sub(autoloads, "GameState"), "stats")
+	# 1. Tools from the player's slots onto the belt.
+	var player: Variant = nodes.get(PLAYER_SAVE_ID)
+	if player is Dictionary and (player as Dictionary).get("inventory") is Dictionary:
+		move_tools_to_belt((player as Dictionary).inventory)
+	# 2. Graves: no designed stone yet.
+	var graveyard: Variant = nodes.get("graveyard")
+	if graveyard is Dictionary and (graveyard as Dictionary).get("graves") is Array:
+		for grave: Variant in (graveyard as Dictionary).graves:
+			if grave is Dictionary and not (grave as Dictionary).get("design") is Dictionary:
+				(grave as Dictionary)["design"] = {}
+	# 3. Empty states for the new system nodes (nothing built, nodes full, no ready stones).
+	for id: String in V4_EMPTY_NODES:
+		if not nodes.get(id) is Dictionary:
+			nodes[id] = {}
+	# 6. The Phase-5 statistics start at 0.
+	for key: StringName in V4_NEW_STATS:
+		if not _has_key(stats, String(key)):
+			_set_key(stats, String(key), 0)
+	return out
+
+
+## §5.2 step 1 on one saved Inventory state ({slots, currency}) in place: TOOL items → "tools".
+## An existing "tools" dictionary is kept and extended (tolerant, idempotent).
+static func move_tools_to_belt(inv_state: Dictionary) -> void:
+	var belt: Dictionary = {}
+	var saved_belt: Variant = inv_state.get("tools")
+	if saved_belt is Dictionary:
+		belt = saved_belt
+	var slots: Variant = inv_state.get("slots")
+	if slots is Array:
+		var list: Array = slots
+		for i: int in list.size():
+			var slot: Variant = list[i]
+			if not slot is Dictionary or (slot as Dictionary).is_empty():
+				continue
+			var raw_id: Variant = (slot as Dictionary).get("id")
+			if not (raw_id is String or raw_id is StringName) or not is_tool_item(StringName(raw_id)):
+				continue
+			var id := StringName(raw_id)
+			if belt.has(id) or belt.has(String(id)):
+				continue
+			belt[id] = 1
+			var rest := _to_int((slot as Dictionary).get("amount"), 1) - 1
+			if rest > 0:
+				(slot as Dictionary)["amount"] = rest
+			else:
+				list[i] = {}
+	inv_state["tools"] = belt
+
+
+## The item is registered with ItemData.Category.TOOL (unknown ids are not tools).
+static func is_tool_item(id: StringName) -> bool:
+	if id == &"" or not Database.has_item(id):
+		return false
+	var item := Database.item(id) as ItemData
+	return item != null and item.category == ItemData.Category.TOOL
 
 
 ## §5.2 step 2 on one record dictionary (in place). Existing Phase-4 fields are kept.

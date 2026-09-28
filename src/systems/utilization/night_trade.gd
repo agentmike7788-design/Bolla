@@ -16,6 +16,8 @@ extends Node
 const GROUP := &"night_trade"
 const NPC_ID := &"trader"
 const COIN_ITEM := &"coin"
+## Phase 5 §3.3: reason of EventBus.coins_spent for her shop (gold leaf, linen, juniper).
+const COIN_REASON := &"ilse"
 const FLAG_KNOWN := &"trader_known"
 const FLAG_RUMOR := &"trader_rumor"
 const STAT_SALES := &"trader_sales"
@@ -108,10 +110,11 @@ func quote(item_id: StringName, amount: int) -> int:
 
 
 ## Shop: coins off, item in, stock of the night; atomic (present, known item, stock, coins and
-## room – otherwise nothing changes). trader_trade with negative coins.
+## room – otherwise nothing changes). trader_trade with negative coins; Phase 5 §3.4: the coins
+## go into the ledger (GameState.note_coins_spent → stats.coins_spent, coins_spent(cost, &"ilse")).
 func buy(item_id: StringName, amount: int, inv: Inventory) -> bool:
 	var cfg := _trader()
-	if amount <= 0 or inv == null or not is_present() or not cfg.shop.has(item_id):
+	if amount <= 0 or inv == null or not is_present() or not offers(item_id):
 		return false
 	var cost := cfg.price(item_id) * amount
 	if stock_left(item_id) < amount or inv.count(COIN_ITEM) < cost or not inv.can_add(item_id, amount):
@@ -129,15 +132,27 @@ func buy(item_id: StringName, amount: int, inv: Inventory) -> bool:
 	left[String(item_id)] = int(left.get(String(item_id), 0)) - amount
 	_stock_left = left
 	_stock_night = night_id()
+	GameState.note_coins_spent(cost, COIN_REASON)
 	EventBus.trader_trade.emit(-cost, {}, {item_id: amount})
 	return true
 
 
-## Stock left tonight (per_night after a new night); 0 for items she does not sell.
+## Stock left tonight (per_night after a new night); 0 for items she does not sell (yet).
 func stock_left(item_id: StringName) -> int:
-	if not _trader().shop.has(item_id):
+	if not offers(item_id):
 		return 0
 	return maxi(int(_current_stock().get(String(item_id), 0)), 0)
+
+
+## The item is in her shop right now: listed in TraderConfig.shop and its optional
+## "requires_flag" is set (Phase 5 §1.2: gold leaf only from workshop_open on – before that the
+## Phase-5 goods are not offered). The trade panel hides rows for which this is false.
+func offers(item_id: StringName) -> bool:
+	var cfg := _trader()
+	if not cfg.shop.has(item_id):
+		return false
+	var flag := StringName(str((cfg.shop[item_id] as Dictionary).get("requires_flag", "")))
+	return flag == &"" or _flag_on(flag)
 
 
 ## Once (tools_given): shears and pliers (UtilizationConfig.tool_items) – atomic; a tool already

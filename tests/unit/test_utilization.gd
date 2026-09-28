@@ -141,7 +141,8 @@ func test_kinds_carry_the_contract_values() -> void:
 func test_real_configs_match_the_fixtures() -> void:
 	for name: StringName in [&"utilization_config", &"trader_config"]:
 		var real := Database.config(name)
-		var fixture := Phase4Fixtures.config(name)
+		# Phase 5 (P6, §2.6): the real trader config carries gold leaf → the Phase-5 fixture.
+		var fixture := Phase5Fixtures.config(name) if name == &"trader_config" else Phase4Fixtures.config(name)
 		for prop: Dictionary in real.get_property_list():
 			if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
 				assert_eq(real.get(prop.name), fixture.get(prop.name), "%s.%s" % [name, prop.name])

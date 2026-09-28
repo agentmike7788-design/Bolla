@@ -3,8 +3,16 @@ extends Node
 ## flags: StringName -> bool/int/float/String. stats: StringName -> int (default keys below).
 
 ## Phase 4 (§3.4): + piety (−100…100), utilized, prepared, trader_sales.
+## Phase 5 (docs/PHASE5_DESIGN.md §2.7, §5.1): + crafted, stones_set, coins_spent, trees_felled and the
+## coin ledger by purpose coins_spent_<reason> (COIN_REASONS) for the chapter panel / day summary.
 const DEFAULT_STATS: Array[StringName] = [&"burials", &"valuables_taken", &"reputation", &"missed_deliveries", &"days_played",
-		&"piety", &"utilized", &"prepared", &"trader_sales"]
+		&"piety", &"utilized", &"prepared", &"trader_sales",
+		&"crafted", &"stones_set", &"coins_spent", &"trees_felled",
+		&"coins_spent_license", &"coins_spent_build", &"coins_spent_osric", &"coins_spent_ilse"]
+## Phase 5 §3.3: the reasons of EventBus.coins_spent (license, stations, Osric's goods, Ilse's shop).
+const COIN_REASONS: Array[StringName] = [&"license", &"build", &"osric", &"ilse"]
+const STAT_COINS_SPENT := &"coins_spent"
+const COINS_SPENT_PREFIX := "coins_spent_"
 
 var flags: Dictionary = {}
 var stats: Dictionary = {}
@@ -50,6 +58,31 @@ func add_stat(stat: StringName, amount: int) -> void:
 ## Unknown stats read as 0.
 func get_stat(stat: StringName) -> int:
 	return int(stats.get(stat, 0))
+
+
+## Phase 5 §3.3 (the sender's side of EventBus.coins_spent): stats.coins_spent + amount, the ledger
+## stat coins_spent_<reason> + amount, then EventBus.coins_spent(amount, reason). Every system that
+## spends the player's coins (Workshop.build, Osric's dialogue, NightTrade.buy) calls this once per
+## payment, after the coins are gone. amount <= 0 → nothing.
+func note_coins_spent(amount: int, reason: StringName) -> void:
+	if amount <= 0:
+		return
+	add_stat(STAT_COINS_SPENT, amount)
+	add_stat(coin_ledger_stat(reason), amount)
+	EventBus.coins_spent.emit(amount, reason)
+
+
+## "coins_spent_<reason>" – the ledger stat of one purpose (unknown reasons get their own stat).
+static func coin_ledger_stat(reason: StringName) -> StringName:
+	return StringName(COINS_SPENT_PREFIX + String(reason))
+
+
+## {reason: coins} of the ledger for COIN_REASONS (Phase 5 spending by purpose).
+func coin_ledger() -> Dictionary[StringName, int]:
+	var out: Dictionary[StringName, int] = {}
+	for reason: StringName in COIN_REASONS:
+		out[reason] = get_stat(coin_ledger_stat(reason))
+	return out
 
 
 ## Tier label of stats.reputation (0…100, Phase 3 §2.6): "Verrufen" … "Gerühmt".

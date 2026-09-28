@@ -4,6 +4,41 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2_cdonk"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3_0t3rl"]
 
+[sub_resource type="Resource" id="p5_choice_01"]
+script = ExtResource("2_cdonk")
+text = "Zeig her."
+actions = Array[String](["open_panel:trader"])
+
+[sub_resource type="Resource" id="p5_choice_02"]
+script = ExtResource("2_cdonk")
+text = "Was kostet es?"
+next = &"p5_gold_price"
+
+[sub_resource type="Resource" id="p5_choice_03"]
+script = ExtResource("2_cdonk")
+text = "Gute Nacht, Ilse."
+next = &"goodbye"
+
+[sub_resource type="Resource" id="node_p5_gold"]
+script = ExtResource("1_0vtyj")
+id = &"p5_gold"
+text = "Ich hab etwas Neues in der Kiepe. Blattgold, dünn wie ein Atemzug. Aus dem Nachlass eines Vergolders. Er hätte gewollt, dass es glänzt."
+choices = Array[ExtResource("2_cdonk")]([SubResource("p5_choice_01"), SubResource("p5_choice_02"), SubResource("p5_choice_03")])
+conditions = Array[String](["flag:workshop_open", "flag:trader_tools_given", "!flag:remark_gold"])
+fallback_next = &"greet_devout"
+actions = Array[String](["set_flag:remark_gold", "set_flag_night:trader_greeted", "trader_talked"])
+
+[sub_resource type="Resource" id="p5_choice_04"]
+script = ExtResource("2_cdonk")
+text = "Etwas anderes …"
+next = &"menu"
+
+[sub_resource type="Resource" id="node_p5_gold_price"]
+script = ExtResource("1_0vtyj")
+id = &"p5_gold_price"
+text = "Sechs Münzen das Blatt, zwei in jeder Nacht. Mehr hat er nicht hinterlassen, und mehr trag ich nicht durchs Moor."
+choices = Array[ExtResource("2_cdonk")]([SubResource("p5_choice_04")])
+
 [sub_resource type="Resource" id="choice_001"]
 script = ExtResource("2_cdonk")
 text = "Du hast den Zettel an meine Tür gesteckt."
@@ -92,7 +127,7 @@ id = &"gift_retry"
 text = "Hast du jetzt Platz? Die Schere und die Zange liegen noch in meiner Kiepe. Leichter werden sie nicht."
 choices = Array[ExtResource("2_cdonk")]([SubResource("choice_009"), SubResource("choice_010")])
 conditions = Array[String](["flag:trader_met", "!flag:trader_tools_given"])
-fallback_next = &"greet_devout"
+fallback_next = &"p5_gold"
 actions = Array[String](["set_flag_night:trader_greeted", "trader_talked"])
 
 [sub_resource type="Resource" id="choice_011"]
@@ -538,4 +573,4 @@ script = ExtResource("3_0t3rl")
 id = &"trader"
 speaker_name = "Ilse Kranich"
 start_node = &"first_meet"
-nodes = Array[ExtResource("1_0vtyj")]([SubResource("node_first_meet"), SubResource("node_first_note"), SubResource("node_first_gift"), SubResource("node_first_gift_full"), SubResource("node_gift_retry"), SubResource("node_greet_devout"), SubResource("node_greet_considerate"), SubResource("node_greet_matter_of_fact"), SubResource("node_greet_callous"), SubResource("node_greet_hardhearted"), SubResource("node_menu"), SubResource("node_who"), SubResource("node_who_goods"), SubResource("node_who_night"), SubResource("node_ask_lorenz"), SubResource("node_ask_lorenz_more"), SubResource("node_lorenz_alive"), SubResource("node_ask_marked"), SubResource("node_ask_marked_more"), SubResource("node_ask_blossom"), SubResource("node_ask_blossom_more"), SubResource("node_goodbye")])
+nodes = Array[ExtResource("1_0vtyj")]([SubResource("node_first_meet"), SubResource("node_first_note"), SubResource("node_first_gift"), SubResource("node_first_gift_full"), SubResource("node_gift_retry"), SubResource("node_greet_devout"), SubResource("node_greet_considerate"), SubResource("node_greet_matter_of_fact"), SubResource("node_greet_callous"), SubResource("node_greet_hardhearted"), SubResource("node_menu"), SubResource("node_who"), SubResource("node_who_goods"), SubResource("node_who_night"), SubResource("node_ask_lorenz"), SubResource("node_ask_lorenz_more"), SubResource("node_lorenz_alive"), SubResource("node_ask_marked"), SubResource("node_ask_marked_more"), SubResource("node_ask_blossom"), SubResource("node_ask_blossom_more"), SubResource("node_goodbye"), SubResource("node_p5_gold"), SubResource("node_p5_gold_price")])

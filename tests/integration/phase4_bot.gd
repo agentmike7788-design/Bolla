@@ -20,7 +20,7 @@ const BASE := {"tend": true, "take_valuables": false, "shroud": true, "examine":
 		"clear": true, "decor": true, "listen": true, "upgrade": true, "save_load": false, "sleep_minute": 1350,
 		# Phase 4
 		"exam": "full", "prep": true, "gown": true, "balm": true, "harvest": [], "harvest_odd": [],
-		"delay": false, "link": true, "trade": true}
+		"delay": false, "link": true, "trade": true, "prep_on_harvest": false}
 
 ## "exam": "full" (Gründlich untersuchen) | "short" (clothing + pockets, the Phase-3 habit).
 ## "prep": wash + lay out (tools crafted); "gown": Totenhemd instead of the shroud when there
@@ -28,6 +28,8 @@ const BASE := {"tend": true, "take_valuables": false, "shroud": true, "examine":
 ## corpses. "harvest": kinds taken from every corpse; "harvest_odd": only on odd days – such a
 ## day is a harvester's day (only the shroud, no wash / lay out / gown), the others reverent.
 ## "delay": works on a corpse only on the day after its arrival (procrastinator, no juniper).
+## "prep_on_harvest" (Phase 5 §2.9, G4 finding B2): a harvester's day still washes and lays out
+## (full preparation after the harvest, shroud) – the full_prep piety bonus no longer comes then.
 ## "trade": talks to Ilse every night (tools, questions, sells the goods, buys cheap linen).
 static var P4_STRATEGIES := {
 	&"reverent": _with({}),
@@ -35,7 +37,7 @@ static var P4_STRATEGIES := {
 			"harvest": [&"hair", &"teeth"], "decor": false}),
 	&"procrastinator": _with({"exam": "full", "prep": false, "gown": false, "balm": false, "delay": true,
 			"decor": false}),
-	&"mixed": _with({"harvest_odd": [&"hair"]}),
+	&"mixed": _with({"harvest_odd": [&"hair"], "prep_on_harvest": true}),
 	&"save_load4": _with({"save_load": true}),
 }
 
@@ -235,7 +237,7 @@ func _on_table(record: CorpseRecord, table: MorgueTable) -> bool:
 				problems.append("day %d: harvest %s refused" % [TimeManager.day, kind])
 	if flags.balm and record.story_id != &"" and _balm_ok(record):
 		table.request_balm()
-	if flags.prep and not harvest_day:
+	if flags.prep and (not harvest_day or flags.prep_on_harvest):
 		if care.prep_block_reason(record.id, CorpsePrep.ACTION_WASH, inv()) == "":
 			table.request_wash()
 		if care.prep_block_reason(record.id, CorpsePrep.ACTION_LAY_OUT, inv()) == "":

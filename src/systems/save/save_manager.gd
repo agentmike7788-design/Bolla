@@ -18,6 +18,8 @@ const SAVEABLE_GROUP := SaveStateCollector.SAVEABLE_GROUP
 const AUTOLOADS: PackedStringArray = SaveStateCollector.AUTOLOADS
 const PAUSE_MENU := &"pause"
 const DEFAULT_WORLD_TIMEOUT_SEC := 10.0
+## A Phase-4 TOOL item that probes the Inventory for the Phase-5 tool belt (belt_supported).
+const BELT_PROBE_ITEM := &"rake"
 
 const TEXT_SAVED := "Gespeichert."
 const TEXT_CANNOT_SAVE := "Speichern gerade nicht möglich."
@@ -209,9 +211,11 @@ func apply_state(data: Dictionary) -> void:
 	SaveStateCollector.post_load(get_tree())
 
 
-## The node states without the empty ones SaveMigration inserted for Phase-4 system nodes
-## (SaveMigration.V3_EMPTY_NODES) that this world does not have (yet): {} is their default state,
-## so nothing is lost and no "unknown save_id" warning appears. Non-empty states stay (and warn).
+## The node states without the empty ones SaveMigration inserted for Phase-4 / Phase-5 system
+## nodes (SaveMigration.V3_EMPTY_NODES, V4_EMPTY_NODES) that this world does not have (yet): {} is
+## their default state, so nothing is lost and no "unknown save_id" warning appears. Non-empty
+## states stay (and warn). Phase 5 (§5.2 step 1): while the player's Inventory has no tool belt
+## yet (belt_supported), the migrated belt goes back into free slots (with_belt_fallback).
 static func without_absent_defaults(tree: SceneTree, nodes: Dictionary) -> Dictionary:
 	var present := {}
 	for node: Node in SaveStateCollector.saveables(tree):
@@ -220,10 +224,62 @@ static func without_absent_defaults(tree: SceneTree, nodes: Dictionary) -> Dicti
 	for key: Variant in nodes:
 		var id := str(key)
 		var value: Variant = nodes[key]
-		if id in SaveMigration.V3_EMPTY_NODES and not present.has(id) and value is Dictionary and (value as Dictionary).is_empty():
+		var migrated_empty := id in SaveMigration.V3_EMPTY_NODES or id in SaveMigration.V4_EMPTY_NODES
+		if migrated_empty and not present.has(id) and value is Dictionary and (value as Dictionary).is_empty():
 			continue
 		out[key] = value
+	return with_belt_fallback(out, belt_supported())
+
+
+## Phase 5 §5.2 step 1, runtime side: with `supported` false (an Inventory without the tool belt,
+## before P3's belt) the player's inventory.tools go back into the first free slots so no tool is
+## lost; with true (or without "tools") the states are returned unchanged. Never changes `nodes`.
+static func with_belt_fallback(nodes: Dictionary, supported: bool) -> Dictionary:
+	if supported:
+		return nodes
+	var player: Variant = nodes.get(SaveMigration.PLAYER_SAVE_ID)
+	if not player is Dictionary or not (player as Dictionary).get("inventory") is Dictionary:
+		return nodes
+	var inv: Dictionary = (player as Dictionary).inventory
+	if not inv.get("tools") is Dictionary:
+		return nodes
+	var state := inv.duplicate(true)
+	var belt: Dictionary = state.tools
+	state.erase("tools")
+	var slots: Array = state.get("slots") if state.get("slots") is Array else []
+	for id: Variant in belt:
+		var amount: int = int(belt[id]) if (belt[id] is int or belt[id] is float) else 1
+		if amount <= 0:
+			continue
+		var entry := {"id": StringName(str(id)), "amount": amount}
+		var free := -1
+		for i: int in slots.size():
+			if slots[i] is Dictionary and (slots[i] as Dictionary).is_empty():
+				free = i
+				break
+		if free >= 0:
+			slots[free] = entry
+		else:
+			slots.append(entry)
+	state["slots"] = slots
+	var p := (player as Dictionary).duplicate()
+	p["inventory"] = state
+	var out := nodes.duplicate()
+	out[SaveMigration.PLAYER_SAVE_ID] = p
 	return out
+
+
+## The Inventory keeps tools on its belt (P3, Phase 5 §3.4): a probe inventory with tool_belt
+## loads {"tools": {rake: 1}} and counts the rake. False with the W0 stub (no belt yet).
+static func belt_supported() -> bool:
+	if not Database.has_item(BELT_PROBE_ITEM):
+		return false
+	var probe := Inventory.new()
+	probe.tool_belt = true
+	probe.load_state({"slots": [], "currency": {}, "tools": {BELT_PROBE_ITEM: 1}})
+	var ok := probe.count(BELT_PROBE_ITEM) == 1
+	probe.free()
+	return ok
 
 
 func reset() -> void:

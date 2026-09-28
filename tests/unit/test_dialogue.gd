@@ -15,7 +15,7 @@ const EVENING := 1140  # 19:00
 const NEW_GAME_REPUTATION := 25
 
 const CONDITION_GRAMMAR := "^!?(has_item:[a-z_]+(:\\d+)?|flag:[a-z_0-9]+|stat_gte:[a-z_]+:-?\\d+|stat_lt:[a-z_]+:-?\\d+|time_between:\\d+:\\d+|flag_eq:[a-z_]+:.*|flag_today:[a-z_]+|day_gte:\\d+|day_odd|day_even|piety_tier:(hardhearted|callous|matter_of_fact|considerate|devout)|trader_talks_gte:\\d+|clue_known:c_[a-z_0-9]+|flag_night:[a-z_]+)$"
-const ACTION_GRAMMAR := "^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_]+|take_item:[a-z_]+:\\d+|give_item:[a-z_]+:\\d+|stat_add:[a-z_]+:-?\\d+|notify:.+|open_panel:[a-z_]+|open_trade|add_clue:c_[a-z_0-9]+|trader_tools|trader_talked|set_flag_night:[a-z_]+)$"
+const ACTION_GRAMMAR := "^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_]+|take_item:[a-z_]+:\\d+(:[a-z_]+)?|give_item:[a-z_]+:\\d+|stat_add:[a-z_]+:-?\\d+|notify:.+|open_panel:[a-z_]+|open_trade|add_clue:c_[a-z_0-9]+|trader_tools|trader_talked|set_flag_night:[a-z_]+)$"
 ## Negations the data may use (flag-like conditions, docs/PHASE4_DESIGN.md §3.4).
 const NEGATABLE: PackedStringArray = ["!flag:", "!piety_tier:", "!flag_night:", "!trader_talks_gte:"]
 
@@ -905,7 +905,7 @@ func test_carter_price_texts_match_actions() -> void:
 					var shown := "(1 Münze)" if price == "1" else "(%s Münzen)" % price
 					assert_true(c.text.contains(shown), "price shown in '%s'" % c.text)
 					assert_has(c.conditions, "has_item:coin:" + price, "guarded by the price")
-	assert_eq(offers, 8, "1 and 2 Leinen, 1 and 3 Eisenbeschläge, 1 and 4 Blumensamen, 1 and 5 Wacholder")
+	assert_eq(offers, 13, "1 and 2 Leinen, 1 and 3 Eisenbeschläge, 1 and 4 Blumensamen, 1 and 5 Wacholder + Phase 5: license, pickaxe, steel rod, 2 and 4 Eisenbeschläge")
 
 
 func test_carter_intro_mentions_schedule_times() -> void:
@@ -1929,3 +1929,245 @@ func test_trader_blossom_after_kranich_insight() -> void:
 	_go(r, &"goodbye")
 	_go(r, &"")
 	assert_true(r.is_finished())
+
+
+# --- Phase 5 (P6): Osric's quarry license, pickaxe, steel · Ilse's gold leaf · coins_spent ------
+# docs/PHASE5_DESIGN.md §2.6, §3.3, §3.4, §14.4.
+
+## Speaker double with an npc_id (Npc has more setup than a dialogue test needs).
+class SpeakerDouble extends Node:
+	var npc_id: StringName = &""
+
+
+var spent: Array = []
+
+
+func _on_spent(amount: int, reason: StringName) -> void:
+	spent.append([amount, reason])
+
+
+func _watch_spent() -> void:
+	spent.clear()
+	if not EventBus.coins_spent.is_connected(_on_spent):
+		EventBus.coins_spent.connect(_on_spent)
+
+
+func _unwatch_spent() -> void:
+	if EventBus.coins_spent.is_connected(_on_spent):
+		EventBus.coins_spent.disconnect(_on_spent)
+
+
+func _carter_p5_ready() -> void:
+	_carter_p4_ready()
+	GameState.set_flag(&"workshop_open", true)
+
+
+func _p5_nodes(data: DialogueData) -> Array[DialogueNode]:
+	var out: Array[DialogueNode] = []
+	for n: DialogueNode in data.nodes:
+		if String(n.id).begins_with("p5_"):
+			out.append(n)
+	return out
+
+
+func test_carter_p5_intro_once_from_workshop_open() -> void:
+	_carter_p4_ready()
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "no Phase-5 introduction before workshop_open")
+	assert_eq(_choices_to(r, &"p5_license") + _choices_to(r, &"p5_shop"), 0, "no Phase-5 goods before the introduction")
+	GameState.set_flag(&"workshop_open", true)
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p5_intro")
+	var text := r.current_text()
+	for word: String in ["Bruch", "Ostwiese", "Lorenz' alter Werkplatz", "zwanzig Münzen", "Lehmkuhle"]:
+		assert_true(text.contains(word), word)
+	assert_eq(text.count("Lorenz"), 1, "§14.4: exactly one reference to Lorenz")
+	assert_true(GameState.has_flag(&"p5_intro"))
+	_go(r, &"menu")
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "introduction only once")
+	assert_eq(_choices_to(r, &"p5_license"), 1, "the license stays in the menu")
+	assert_eq(_choices_to(r, &"p5_shop"), 1)
+
+
+func test_carter_p5_adds_no_clue_or_insight() -> void:
+	# §14.4: the workplace is one sentence, no new hint in the journal.
+	for n: DialogueNode in _p5_nodes(_carter()):
+		for a: String in n.actions:
+			assert_false(a.begins_with("add_clue"), "%s: %s" % [n.id, a])
+		for c: DialogueChoice in n.choices:
+			for a: String in c.actions:
+				assert_false(a.begins_with("add_clue"), "%s: %s" % [n.id, a])
+	assert_eq(_p5_nodes(_carter()).size(), 9)
+
+
+func test_carter_license_once_for_twenty() -> void:
+	_carter_p5_ready()
+	_watch_spent()
+	var inv := _inv({&"coin": 25})
+	var r := _start_carter(MORNING, inv)
+	_go(r, &"remark_skipped")
+	_go(r, &"p5_license")
+	assert_true(r.current_text().contains("Zwanzig Münzen"))
+	_go_action(r, "take_item:coin:20:license")
+	assert_eq(_id(r), &"p5_license_bought")
+	assert_eq(inv.count(&"coin"), 5)
+	assert_eq(GameState.get_flag(&"bruch_license"), true)
+	assert_eq(spent, [[20, &"license"]])
+	assert_eq([GameState.get_stat(&"coins_spent"), GameState.coin_ledger()[&"license"]], [20, 20])
+	_go(r, &"menu")
+	assert_eq(_choices_to(r, &"p5_license"), 0, "bought once")
+	_go(r, &"p5_shop")
+	assert_eq(_id(r), &"p5_shop")
+	# A second visit to the license node (e.g. from the intro) only says it is sold.
+	r = DialogueRunner.new()
+	r.start(_carter(), _ctx(inv))
+	r._enter(&"p5_license")
+	assert_eq(_id(r), &"p5_license_owned")
+	_unwatch_spent()
+
+
+func test_carter_license_too_expensive() -> void:
+	_carter_p5_ready()
+	_watch_spent()
+	var inv := _inv({&"coin": 19})
+	var r := _start_carter(MORNING, inv)
+	_go(r, &"remark_skipped")
+	_go(r, &"p5_license")
+	assert_false(_has_action_choice(r, "take_item:coin:20:license"), "19 coins")
+	_go(r, &"p5_license_poor")
+	_go(r, &"menu")
+	assert_false(GameState.has_flag(&"bruch_license"))
+	assert_eq([inv.count(&"coin"), spent], [19, []])
+	_unwatch_spent()
+
+
+func test_carter_pickaxe_once_steel_and_fittings() -> void:
+	_carter_p5_ready()
+	GameState.set_flag(&"p5_intro")
+	_watch_spent()
+	var inv := _inv({&"coin": 50})
+	var r := _start_carter(MORNING, inv)
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu")
+	_go(r, &"p5_shop")
+	_go_action(r, "give_item:pickaxe_iron:1")
+	assert_eq(_id(r), &"p5_shop_pickaxe")
+	assert_true(r.current_text().contains("Die Spitze ist stumpf, aber ehrlich."))
+	assert_eq([inv.count(&"coin"), inv.count(&"pickaxe_iron")], [36, 1])
+	assert_eq(GameState.get_flag(&"bought_pickaxe"), true)
+	_go(r, &"p5_shop")
+	assert_false(_has_action_choice(r, "give_item:pickaxe_iron:1"), "the pickaxe only once")
+	_go_action(r, "give_item:steel_rod:1")
+	assert_eq(_id(r), &"p5_shop_steel")
+	assert_true(r.current_text().contains("Frag nicht, was der Schmied in Hollerbrück dafür nimmt."))
+	_go(r, &"p5_shop")
+	_go_action(r, "give_item:steel_rod:1")
+	_go(r, &"p5_shop")
+	_go_action(r, "give_item:iron_fittings:4")
+	assert_eq([inv.count(&"coin"), inv.count(&"steel_rod"), inv.count(&"iron_fittings")], [12, 2, 4])
+	_go(r, &"p5_shop")
+	_go_action(r, "give_item:iron_fittings:2")
+	assert_eq([inv.count(&"coin"), inv.count(&"iron_fittings")], [6, 6])
+	assert_eq(spent, [[14, &"osric"], [6, &"osric"], [6, &"osric"], [12, &"osric"], [6, &"osric"]])
+	assert_eq(GameState.coin_ledger(), {&"license": 0, &"build": 0, &"osric": 44, &"ilse": 0} as Dictionary[StringName, int])
+	_go(r, &"p5_shop")
+	assert_true(_has_action_choice(r, "give_item:steel_rod:1"), "6 coins: steel is repeatable")
+	assert_false(_has_action_choice(r, "give_item:iron_fittings:4"))
+	_unwatch_spent()
+
+
+func test_carter_p5_prices_match_the_contract() -> void:
+	# §2.6: license 20, pickaxe 14, steel rod 6, iron fittings 3 each.
+	var prices := {"pickaxe_iron": [14, 1], "steel_rod": [6, 1], "iron_fittings": [3, 1]}
+	for n: DialogueNode in _p5_nodes(_carter()):
+		for c: DialogueChoice in n.choices:
+			var coins := -1
+			var item := ""
+			var amount := 0
+			for a: String in c.actions:
+				var p := a.split(":")
+				if p[0] == "take_item" and p[1] == "coin":
+					coins = int(p[2])
+				elif p[0] == "give_item":
+					item = p[1]
+					amount = int(p[2])
+			if coins < 0:
+				continue
+			if "take_item:coin:20:license" in c.actions:
+				assert_eq(coins, 20, "license")
+				continue
+			assert_true(prices.has(item), "%s sells a contract item (%s)" % [n.id, item])
+			if prices.has(item):
+				assert_eq(coins, prices[item][0] * amount, "%s × %d" % [item, amount])
+			assert_true(c.text.contains("(%d Münzen)" % coins), c.text)
+			assert_true(c.conditions.has("has_item:coin:%d" % coins), "%s: affordable only" % c.text)
+
+
+func test_coin_reason_from_speaker_and_argument() -> void:
+	_watch_spent()
+	var inv := _inv({&"coin": 30})
+	var ilse := SpeakerDouble.new()
+	ilse.npc_id = &"trader"
+	var osric := SpeakerDouble.new()
+	osric.npc_id = &"carter"
+	_apply("take_item:coin:2", {"inventory": inv, "speaker": ilse})
+	_apply("take_item:coin:3", {"inventory": inv, "speaker": osric})
+	_apply("take_item:coin:4", _ctx(inv))
+	_apply("take_item:coin:5:build", {"inventory": inv, "speaker": osric})
+	_apply("take_item:coin:99", _ctx(inv))
+	inv.add_item(&"linen", 2)
+	_apply("take_item:linen:1", _ctx(inv))
+	assert_eq(spent, [[2, &"ilse"], [3, &"osric"], [4, &"osric"], [5, &"build"]], "refused and non-coin takes are no payment")
+	assert_eq([inv.count(&"coin"), inv.count(&"linen"), GameState.get_stat(&"coins_spent")], [16, 1, 14])
+	assert_eq(DialogueActions.coin_reason({}), &"osric")
+	ilse.free()
+	osric.free()
+	_unwatch_spent()
+
+
+func test_carter_linen_purchase_counts_as_osric() -> void:
+	_carter_p4_ready()
+	_watch_spent()
+	var inv := _inv({&"coin": 10})
+	var r := _start_carter(MORNING, inv)
+	_go(r, &"remark_skipped")
+	_go(r, &"shop")
+	_go_action(r, "give_item:linen:2")
+	assert_eq(spent, [[6, &"osric"]])
+	_unwatch_spent()
+
+
+func test_trader_gold_leaf_remark_once() -> void:
+	_trade()
+	GameState.set_flag(&"trader_met")
+	GameState.set_flag(&"trader_tools_given")
+	var r := _start_trader(NIGHT, _inv())
+	assert_ne(_id(r), &"p5_gold", "not before workshop_open")
+	GameState.set_flag(&"workshop_open", true)
+	TimeManager.day += 1
+	r = _start_trader(NIGHT, _inv())
+	assert_eq(_id(r), &"p5_gold")
+	assert_true(r.current_text().contains("Aus dem Nachlass eines Vergolders. Er hätte gewollt, dass es glänzt."))
+	assert_eq(GameState.get_flag(&"remark_gold"), true)
+	assert_eq(GameState.get_flag(&"trader_greeted"), TimeManager.day, "counts as tonight's greeting")
+	assert_true(_has_action_choice(r, "open_panel:trader"))
+	_go(r, &"p5_gold_price")
+	assert_true(r.current_text().contains("Sechs Münzen") and r.current_text().contains("zwei in jeder Nacht"))
+	_go(r, &"menu")
+	TimeManager.day += 1
+	r = _start_trader(NIGHT, _inv())
+	assert_ne(_id(r), &"p5_gold", "only once")
+	assert_eq(String(_id(r)).begins_with("greet_"), true)
+
+
+func test_trader_gold_leaf_waits_for_the_tools() -> void:
+	_trade()
+	GameState.set_flag(&"trader_met")
+	GameState.set_flag(&"workshop_open", true)
+	var r := _start_trader(NIGHT, _inv())
+	assert_eq(_id(r), &"gift_retry", "the tools first")
+	assert_false(GameState.has_flag(&"remark_gold"))

@@ -420,3 +420,97 @@ func test_table_harvest_and_panel_state() -> void:
 	assert_eq(state.nothing_steps, [&"clothing"] as Array[StringName])
 	assert_eq(state.harvest[&"hair"].done, true)
 	assert_eq(state.next_loss.get("find_id"), &"f_cause_fever", "wounds still open: the cause detail is next at risk")
+
+
+# --- Phase 5 (P6): piety fix §2.9 (G4 finding B2) and herb bundles §2.6 -------------------------
+
+## Hair taken, then washed, dressed, laid out: no full_prep, stats.prepared +1, quality unchanged.
+func _harvest_then_prepare(cfg: PietyConfig) -> CorpseRecord:
+	piety.config = cfg
+	GameState.set_flag(&"trader_known", true)
+	TimeManager.set_time(4, 600)
+	var r := _record()
+	r.arrival_total_minutes = TimeManager.total_minutes()
+	r.last_decay_total = r.arrival_total_minutes
+	_tools()
+	inv.add_item(&"shears", 1)
+	inv.add_item(&"shroud", 1)
+	assert_true(care.harvest(r.id, &"hair", inv))
+	assert_true(care.wash(r.id, inv))
+	assert_true(care.dress(r.id, &"shroud", inv))
+	assert_true(care.lay_out(r.id, inv))
+	assert_true(r.is_fully_prepared())
+	return r
+
+
+func test_piety_fix_no_full_prep_bonus_after_a_harvest() -> void:
+	var r := _harvest_then_prepare(Phase5Fixtures.piety_config())
+	assert_eq(piety.events, [[&"hair_taken", String(care.utilization_config.kind(&"hair").label)]], "no full_prep")
+	assert_eq(GameState.get_stat(&"prepared"), 1, "the journal stays honest")
+	assert_eq(prepared, [[r.id, &"wash"], [r.id, &"dress"], [r.id, &"lay_out"]])
+	var economy := Phase4Fixtures.economy_config()
+	var labels: Array = []
+	for line: Dictionary in GraveQuality.breakdown(r, &"", economy):
+		labels.append(line.label)
+	for label: String in ["Gewaschen", "Leichentuch", "Aufgebahrt"]:
+		assert_has(labels, label, "quality line %s unchanged" % label)
+
+
+func test_piety_fix_unharvested_still_gets_the_bonus() -> void:
+	piety.config = Phase5Fixtures.piety_config()
+	var r := _record()
+	_tools()
+	inv.add_item(&"shroud", 1)
+	care.wash(r.id, inv)
+	care.dress(r.id, &"shroud", inv)
+	care.lay_out(r.id, inv)
+	assert_eq(piety.events, [[&"full_prep", CorpseCare.REASON_FULL_PREP]])
+	assert_eq(GameState.get_stat(&"prepared"), 1)
+
+
+func test_piety_fix_flag_off_restores_the_phase4_rule() -> void:
+	var cfg := Phase5Fixtures.piety_config().duplicate() as PietyConfig
+	cfg.full_prep_requires_unharvested = false
+	_harvest_then_prepare(cfg)
+	assert_eq(piety.events.back(), [&"full_prep", CorpseCare.REASON_FULL_PREP], "old behaviour")
+	assert_eq(GameState.get_stat(&"prepared"), 1)
+
+
+func test_full_prep_counts_rule() -> void:
+	var cfg := PietyConfig.new()
+	var r := CorpseRecord.new()
+	assert_true(CorpseCare.full_prep_counts(r, cfg))
+	r.harvested = [&"teeth"] as Array[StringName]
+	assert_false(CorpseCare.full_prep_counts(r, cfg))
+	assert_false(CorpseCare.full_prep_counts(r, null), "default: the flag is on")
+	cfg.full_prep_requires_unharvested = false
+	assert_true(CorpseCare.full_prep_counts(r, cfg))
+	assert_false(CorpseCare.full_prep_counts(null, cfg))
+	assert_true(Database.config(&"piety_config").get(&"full_prep_requires_unharvested"), "data: on")
+
+
+func test_herb_bundle_smokes_like_juniper() -> void:
+	TimeManager.set_time(1, 600)
+	care.prep_config = Phase5Fixtures.prep_config()
+	var p5 := care.prep_config
+	var r := _record()
+	assert_eq(CorpsePrep.balm_item_in(inv, p5), &"")
+	assert_eq(CorpsePrep.block_reason(r, &"balm", inv, p5), "Keine Wacholderzweige mehr – Osric verkauft sie.")
+	inv.add_item(&"herb_bundle", 2)
+	assert_eq(CorpsePrep.balm_item_in(inv, p5), &"herb_bundle")
+	assert_eq(CorpsePrep.block_reason(r, &"balm", inv, p5), "")
+	assert_true(care.apply_balm(r.id, inv))
+	var now := TimeManager.total_minutes()
+	assert_eq(r.balm_windows, PackedInt32Array([now, now + p5.balm_window_minutes]), "same window as juniper")
+	assert_eq(inv.count(&"herb_bundle"), 1)
+	# Juniper first (list order) when both are held.
+	var other := _record([], 1.0, "other")
+	inv.add_item(&"juniper", 1)
+	assert_eq(CorpsePrep.balm_item_in(inv, p5), &"juniper")
+	assert_true(care.apply_balm(other.id, inv))
+	assert_eq([inv.count(&"juniper"), inv.count(&"herb_bundle")], [0, 1])
+	# Phase-4 config (no herb bundles listed explicitly → class default) and an empty list → balm_item.
+	var old := Phase4Fixtures.prep_config().duplicate() as PrepConfig
+	old.balm_items = [] as Array[StringName]
+	assert_eq(CorpsePrep.balm_item_in(inv, old), &"", "empty list: only balm_item (juniper)")
+	assert_eq(Database.config(&"prep_config").get(&"balm_items"), [&"juniper", &"herb_bundle"] as Array[StringName])
