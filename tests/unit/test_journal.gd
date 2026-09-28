@@ -422,7 +422,8 @@ func test_self_page_has_no_number() -> void:
 # --- real data (data/journal/**) --------------------------------------------------------------
 
 func test_real_clues_match_the_contract() -> void:
-	var clues: Array = Database.clues()
+	# Phase 6 (P3): c_crypt_draft is checked in test_ossuary.gd.
+	var clues: Array = Database.clues().filter(func(c: ClueData) -> bool: return c.id != &"c_crypt_draft")
 	assert_eq(clues.size(), 18, "18 clues (§2.12)")
 	var ids: Array[StringName] = []
 	for c: ClueData in clues:

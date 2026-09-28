@@ -50,6 +50,9 @@ const ITEMS := {
 	&"herb_bundle": ["Räucherkräuter", ItemData.Category.MATERIAL, 10],
 	&"gold_leaf": ["Blattgold", ItemData.Category.MATERIAL, 10],
 	&"steel_rod": ["Stahlstab", ItemData.Category.MATERIAL, 5],
+	# Phase 6 (P3, §2.6)
+	&"bone_box": ["Gebeinkiste", ItemData.Category.MATERIAL, 5],
+	&"bone_box_full": ["Gebeinkiste (belegt)", ItemData.Category.MATERIAL, 3],
 }
 
 
