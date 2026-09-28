@@ -1,0 +1,31 @@
+== round 1
+P4build P4probe r1 [CPU] day: process mean 4.908 / median 3.981 / worst 8.233 ms per frame · ghosts 0 · particles 37 · ilse false
+P4build P4probe r1 [CPU] night_ilse_ghosts_decay: process mean 4.164 / median 4.520 / worst 6.776 ms per frame · ghosts 6 · particles 37 · ilse true
+P5build P4probe r1 [CPU] day: process mean 4.085 / median 3.987 / worst 9.459 ms per frame · ghosts 0 · particles 37 · ilse false
+P5build P4probe r1 [CPU] night_ilse_ghosts_decay: process mean 3.609 / median 3.192 / worst 4.808 ms per frame · ghosts 6 · particles 37 · ilse true
+P5build P5probe r1 [CPU] day: process mean 4.682 / median 4.305 / worst 7.139 ms per frame · nodes 2743
+P5build P5probe r1 [CPU] night: process mean 4.471 / median 4.658 / worst 5.078 ms per frame · nodes 2815
+P5build P5probe r1 [CPU] day_p5_off: process mean 4.329 / median 3.601 / worst 8.246 ms per frame · nodes 2815
+P5build P5probe r1 [CPU] night_p5_off: process mean 4.851 / median 4.641 / worst 5.390 ms per frame · nodes 2815
+P5build P5probe r1 [CPU] save slot 7: 107889 bytes · load 283 ms (incl. world change)
+== round 2
+P4build P4probe r2 [CPU] day: process mean 3.975 / median 3.301 / worst 7.705 ms per frame · ghosts 0 · particles 37 · ilse false
+P4build P4probe r2 [CPU] night_ilse_ghosts_decay: process mean 4.796 / median 4.523 / worst 6.828 ms per frame · ghosts 6 · particles 37 · ilse true
+P5build P4probe r2 [CPU] day: process mean 3.958 / median 4.226 / worst 6.415 ms per frame · ghosts 0 · particles 37 · ilse false
+P5build P4probe r2 [CPU] night_ilse_ghosts_decay: process mean 5.077 / median 3.826 / worst 8.876 ms per frame · ghosts 6 · particles 37 · ilse true
+P5build P5probe r2 [CPU] day: process mean 4.311 / median 4.508 / worst 4.868 ms per frame · nodes 2743
+P5build P5probe r2 [CPU] night: process mean 5.064 / median 4.660 / worst 6.420 ms per frame · nodes 2815
+P5build P5probe r2 [CPU] day_p5_off: process mean 5.605 / median 5.147 / worst 7.820 ms per frame · nodes 2815
+P5build P5probe r2 [CPU] night_p5_off: process mean 5.511 / median 6.897 / worst 8.398 ms per frame · nodes 2815
+P5build P5probe r2 [CPU] save slot 7: 107889 bytes · load 255 ms (incl. world change)
+== round 3
+P4build P4probe r3 [CPU] day: process mean 4.201 / median 4.210 / worst 11.489 ms per frame · ghosts 0 · particles 37 · ilse false
+P4build P4probe r3 [CPU] night_ilse_ghosts_decay: process mean 3.429 / median 3.653 / worst 7.452 ms per frame · ghosts 6 · particles 37 · ilse true
+P5build P4probe r3 [CPU] day: process mean 4.890 / median 4.797 / worst 5.897 ms per frame · ghosts 0 · particles 37 · ilse false
+P5build P4probe r3 [CPU] night_ilse_ghosts_decay: process mean 5.734 / median 5.215 / worst 8.373 ms per frame · ghosts 6 · particles 37 · ilse true
+P5build P5probe r3 [CPU] day: process mean 3.516 / median 3.454 / worst 4.176 ms per frame · nodes 2743
+P5build P5probe r3 [CPU] night: process mean 3.686 / median 3.726 / worst 4.399 ms per frame · nodes 2815
+P5build P5probe r3 [CPU] day_p5_off: process mean 4.049 / median 4.047 / worst 5.245 ms per frame · nodes 2815
+P5build P5probe r3 [CPU] night_p5_off: process mean 4.194 / median 3.823 / worst 5.455 ms per frame · nodes 2815
+P5build P5probe r3 [CPU] save slot 7: 107889 bytes · load 243 ms (incl. world change)
+DONE

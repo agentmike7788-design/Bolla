@@ -10,6 +10,15 @@
 
 **ART STYLE LOCK:** ✅ **ACTIVE** seit 27.09.2026 (Referenz: `src/world/art_prototype/`, Screenshots `docs/reviews/phase1_round1/`). Keine grundlegende Stiländerung ohne Benutzerfreigabe.
 
+## G5 – QA-Protokoll W3 (Agent 19, vorläufig – Benutzerprüfung offen)
+
+- Befunde, Playthrough-Tabellen mit Münzbuch, Fuzzer, Art-/Ton-Prüfung, Performance: `docs/reviews/phase5_wip/qa_playthrough.md` (Vorher/Nachher `docs/reviews/phase5_wip/qa_*.jpg`, CPU-Rohdaten `qa_cpu_p4_vs_p5.txt`).
+- Screenshot-Satz Gate G5 (§11, echte Phase-5-Welt, 1280×720): `docs/reviews/phase5_round1/` (Welt `world_p5_*`, Budget `perf_p5_*` + `render_stats.txt`, UI `ui_*`).
+- Stand der Befunde: 11 behoben (QA5-01…11: Münzbuch „Bau“, atomares Hauen, Stein auf geklemmtem Grab, Werkzeug-Notiz, Am-Bruch-Kanten/Findlinge, Erlen-Lesbarkeit, Rauch, Gürtel-Infozeile, zweizeilige Namen, Ablage zur Kamera, Kapiteltext), jeder mit Regressionstest (`tests/integration/test_phase5_qa.gd`).
+- Playthrough-Bot (`phase5_bot.gd`): 6 Strategien (reverent5, toolsmith, mender, harvester5, crafter, save_load5) ohne Fehler und ohne Warnung; alle erreichen „Namen in Stein“ (Tag 20–29); würdevoll gibt 138 von 165 Münzen aus, morgens nie unter 17. Phase-3/4-Bot-Erwartungen weiter grün.
+- Save-Fuzzer um einen echten v4-Stand mitten in Phase 5 erweitert (Meiler, Ablage 2/3, Erlen gemischt, Gürtel voll) – kein halb angewandter Zustand.
+- Keine Spielwerte geändert. Entscheidungen E1–E5 (Erlen versetzt, Bruchkanten gedreht, 70 Inschrift-Labels, Kapiteltempo, verwertender Weg bleibt reich) stehen im Bericht.
+
 ## G4 – QA-Protokoll W3 (Agent 19, vorläufig – Benutzerprüfung offen)
 
 - Befunde, Playthrough-Tabellen, Fuzzer, Art-/Ton-Prüfung, Performance: `docs/reviews/phase4_wip/qa_playthrough.md` (Vorher/Nachher-Ausschnitte `docs/reviews/phase4_wip/qa_*.jpg`).

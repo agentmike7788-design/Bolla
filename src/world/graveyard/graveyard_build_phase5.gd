@@ -31,10 +31,11 @@ const SYSTEMS := [
 const STATION_PRIORITY := 5
 const REACH_MARGIN := 0.35
 ## §4.1 / §9: chimney and kiln smoke – 3 particles each, warm grey, culled beyond 40 m.
-## W3 (G5 QA): a darker warm grey, wider puffs that spread as they rise – readable by day against
-## the light grass without more particles.
+## W3 (G5 QA): seen from above the smoke lies over the olive grass, not the sky – a light warm
+## grey, lit like the world (shaded: bright by day, dim at night instead of glowing), wider puffs
+## that spread as they rise; readable by day without more particles.
 const SMOKE_PARTICLES := 3
-const SMOKE_COLOR := Color("786E64")
+const SMOKE_COLOR := Color("C2BAAE")
 const SMOKE_SPREAD_END := 1.35
 const SMOKE_RANGE := 40.0
 
@@ -213,6 +214,7 @@ static func make_smoke(node_name: String, width: float, lifetime: float) -> CPUP
 	var mat := (load(SMOKE_MATERIAL) as StandardMaterial3D).duplicate() as StandardMaterial3D
 	mat.resource_name = "mat_vfx_smoke_workyard"
 	mat.albedo_texture = load(SMOKE_TEXTURE) as Texture2D
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
 	var quad := QuadMesh.new()
 	quad.size = Vector2(width * 0.6, width)
 	quad.material = mat

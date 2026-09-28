@@ -202,7 +202,7 @@ func _belt_cell(icon_id: StringName, pale: bool, name: String, tier: int, toolti
 	label.clip_text = true
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.custom_minimum_size.x = belt_cell_width - 52.0
-	label.add_theme_font_size_override(&"font_size", 18)
+	label.add_theme_font_size_override(&"font_size", 16)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	texts.add_child(label)
 	var pips := UIKit.label("%s  %s" % [PIP_ON.repeat(maxi(tier, 0)) + PIP_OFF.repeat(maxi(2 - tier, 0)), Phase5Texts.BELT_TIER % tier],

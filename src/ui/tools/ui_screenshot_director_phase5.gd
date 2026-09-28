@@ -214,6 +214,12 @@ func _built(ids: Array) -> void:
 			list.append(String(id))
 	state["built"] = list
 	_shop.load_state(state)
+	# W3 (G5): the real world shows what is built – the stations stand, their sites are gone.
+	for node: Node in _world.get_node(^"Entities").get_children():
+		if node is Workbench:
+			(node as Workbench).refresh_built()
+		elif node is BuildSite:
+			(node as BuildSite).refresh()
 
 
 ## The camera on `focus` (ground) at `distance` instead of the player.

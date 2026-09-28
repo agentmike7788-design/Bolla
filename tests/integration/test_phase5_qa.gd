@@ -340,7 +340,9 @@ func test_workyard_smoke_reads_by_day_within_the_budget() -> void:
 		var p := node as CPUParticles3D
 		assert_eq(p.amount, 3, "§9: 3 particles")
 		var peak := p.color_ramp.get_color(1)
-		assert_true(peak.get_luminance() < 0.45, "%s: darker warm grey against the day (%.2f)" % [p.name, peak.get_luminance()])
+		assert_true(peak.get_luminance() > 0.6, "%s: light warm grey over the olive grass (%.2f)" % [p.name, peak.get_luminance()])
+		var mat := (p.mesh as QuadMesh).material as StandardMaterial3D
+		assert_eq(mat.shading_mode, BaseMaterial3D.SHADING_MODE_PER_PIXEL, "%s: lit like the world (no glow at night)" % p.name)
 		assert_true(p.scale_amount_curve.sample(1.0) > 1.2, "%s: the plume spreads as it rises" % p.name)
 
 
