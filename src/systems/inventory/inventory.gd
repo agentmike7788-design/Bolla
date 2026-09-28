@@ -18,9 +18,8 @@ signal changed
 ## Switching it on moves TOOL items out of the slots onto the belt (one `changed`).
 @export var tool_belt: bool = false:
 	set = _set_tool_belt
-## Phase 6 §2.5, §3.4 (fields only in W0, the effect is P1's): the stack limit of an item whose
-## category is in stack_categories (empty = all) is max_stack × stack_multiplier (the shed on
-## level 3). save / load unchanged.
+## Phase 6 §2.5, §3.4: the stack limit of an item whose category is in stack_categories
+## (empty = all) is max_stack × stack_multiplier (the shed on level 3). save / load unchanged.
 @export var stack_multiplier: int = 1
 @export var stack_categories: Array[int] = []
 
@@ -304,7 +303,10 @@ func _is_currency(item: ItemData) -> bool:
 
 
 func _stack_limit(item: ItemData) -> int:
-	return maxi(item.max_stack, 1)
+	var limit := maxi(item.max_stack, 1)
+	if stack_multiplier > 1 and (stack_categories.is_empty() or stack_categories.has(int(item.category))):
+		limit *= stack_multiplier
+	return limit
 
 
 func _slot_holds(slot: Dictionary, id: StringName) -> bool:

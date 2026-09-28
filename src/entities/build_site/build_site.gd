@@ -132,12 +132,16 @@ func _warn(text: String) -> void:
 
 # --- Phase 6 (docs/PHASE6_DESIGN.md §2.5, §3.4) -------------------------------------------------
 
-## STUB (P1) – shed ≥ 2: fetch the missing `needs` {item_id: amount} from the shed into the
-## player's inventory (TimedAction fetch_minutes, 0 → at once), then shed_supply_moved(&"fetch").
-func request_fetch(_needs: Dictionary) -> void:
-	pass
+## Shed ≥ 2: fetch the missing `needs` {item_id: amount} from the shed into the player's inventory
+## (TimedAction fetch_minutes, 0 → at once), then shed_supply_moved(&"fetch") – ShedSupply.run_fetch.
+func request_fetch(needs: Dictionary) -> void:
+	ShedSupply.run_fetch(get_tree() if is_inside_tree() else null, _acting_player(), needs)
 
 
-## STUB (P1) – shed 3: store the player's RESOURCE / MATERIAL surplus (ShedSupply.store_surplus).
+## Shed 3: store the player's RESOURCE / MATERIAL surplus (ShedSupply.store_surplus), at once.
 func request_store() -> void:
-	pass
+	ShedSupply.run_store(get_tree() if is_inside_tree() else null, _acting_player())
+
+
+func _acting_player() -> Player:
+	return _player if is_instance_valid(_player) else _first_player()

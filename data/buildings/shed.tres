@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://src/systems/buildings/building_data.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/buildings/building_level_data.gd" id="2"]
+
+[sub_resource type="Resource" id="level_1"]
+script = ExtResource("2")
+level = 1
+title = "Schuppen"
+inputs = Dictionary[StringName, int]({&"wood": 12, &"stone": 4, &"iron_fittings": 2})
+coins = 10
+minutes = 120
+coin_part_label = "Nägel und Schindeln"
+text = "Ein Bretterschuppen mit Schindeldach und Regalen innen. Holz, Stein und Werkstoffe finden hier Platz."
+adds = PackedStringArray("Lager: 24 Plätze", "Holzlege außen")
+
+[sub_resource type="Resource" id="level_2"]
+script = ExtResource("2")
+level = 2
+title = "Werkhof-Anschluss"
+inputs = Dictionary[StringName, int]({&"wood": 10, &"iron_fittings": 2})
+coins = 15
+minutes = 120
+coin_part_label = "Achse für den Handkarren"
+text = "Mit dem Handkarren holst du an jeder Station, was fehlt, aus dem Schuppen."
+adds = PackedStringArray("Lager: 32 Plätze", "An jeder Station: Fehlendes aus dem Schuppen holen (10 Min)", "Handkarren am Schuppen")
+
+[sub_resource type="Resource" id="level_3"]
+script = ExtResource("2")
+level = 3
+title = "Regale und Legen"
+inputs = Dictionary[StringName, int]({&"wood": 8, &"stone": 6, &"iron_bar": 1})
+coins = 20
+minutes = 150
+coin_part_label = "Eisenhaken und Regalwinkel"
+text = "Mehr Regale, eine Steinlege, doppelt hohe Stapel. Holen geht sofort, Überschuss lässt sich einlagern."
+adds = PackedStringArray("Lager: 40 Plätze", "Doppelte Stapel für Rohstoffe und Werkstoffe", "Holen ohne Wartezeit", "Überschuss einlagern")
+
+[resource]
+script = ExtResource("1")
+id = &"shed"
+display_name = "Lagerschuppen"
+order = 3
+site_id = "site_shed"
+door_id = "door_shed"
+room_id = &"shed"
+levels = Array[ExtResource("2")]([SubResource("level_1"), SubResource("level_2"), SubResource("level_3")])
+allows_corpse = false
+prompt_enter = "[E] Schuppen betreten"
+prompt_exit = "[E] Hinausgehen"
