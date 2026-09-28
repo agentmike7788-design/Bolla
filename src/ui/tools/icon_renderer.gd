@@ -65,6 +65,22 @@ const MODELS: Dictionary[StringName, String] = {
 	&"station_mason": "res://assets/models/buildings/ph_bld_mason_bench.glb",
 	&"station_loom": "res://assets/models/buildings/ph_bld_loom.glb",
 	&"station_forge": "res://assets/models/buildings/ph_bld_forge.glb",
+	# Phase 6 (docs/PHASE6_DESIGN.md §7, §8: the new items and every level of the building panel).
+	&"altar_candle": "res://assets/models/items/ph_item_altar_candle.glb",
+	&"bone_box": "res://assets/models/items/ph_item_bone_box.glb",
+	&"bone_box_full": "res://assets/models/items/ph_item_bone_box_full.glb",
+	&"building_crypt_0": "res://assets/models/buildings/ph_bld_crypt_site.glb",
+	&"building_crypt_1": "res://assets/models/buildings/ph_bld_crypt_l1.glb",
+	&"building_crypt_2": "res://assets/models/buildings/ph_bld_crypt_l2.glb",
+	&"building_crypt_3": "res://assets/models/buildings/ph_bld_crypt_l3.glb",
+	&"building_chapel_0": "res://assets/models/buildings/ph_bld_chapel_ruin.glb",
+	&"building_chapel_1": "res://assets/models/buildings/ph_bld_chapel_l1.glb",
+	&"building_chapel_2": "res://assets/models/buildings/ph_bld_chapel_l2.glb",
+	&"building_chapel_3": "res://assets/models/buildings/ph_bld_chapel_l3.glb",
+	&"building_shed_0": "res://assets/models/buildings/ph_bld_shed_site.glb",
+	&"building_shed_1": "res://assets/models/buildings/ph_bld_shed_l1.glb",
+	&"building_shed_2": "res://assets/models/buildings/ph_bld_shed_l2.glb",
+	&"building_shed_3": "res://assets/models/buildings/ph_bld_shed_l3.glb",
 }
 
 var _filter: String = ""
