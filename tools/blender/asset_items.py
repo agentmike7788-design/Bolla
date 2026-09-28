@@ -1,7 +1,11 @@
 """Item models for UI icons (contract section 8): log, stone, linen bolt, coins, shroud;
 Phase 3 (docs/PHASE3_DESIGN.md section 8): rake, flower seeds, iron fittings;
 Phase 4 (docs/PHASE4_DESIGN.md section 8): root scrub brush, wooden comb, burial gown, juniper,
-shears, pliers, hair braid, teeth pouch (a tied linen pouch - nothing visible), elder key.
+shears, pliers, hair braid, teeth pouch (a tied linen pouch - nothing visible), elder key;
+Phase 5 (docs/PHASE5_DESIGN.md section 8): the tool tiers (iron / master shovel, axe, pickaxe - also
+shown on the tool belt), flax, yarn, clay, iron ore, iron bar, charcoal, workstone, elderberries,
+herbs, ink, herb bundle, gold leaf, steel rod.  Only the new ones (build_all rebuilds every item):
+    python -c "import sys; sys.path.insert(0, 'tools/blender'); import asset_items as a; a.build(a.PHASE5_ITEMS)"
 
 Small (~0.3 m), centred on the origin, bottom at z = 0, front = -Y.  Rendered to
 assets/ui/icons/<id>.png by src/ui/tools/icon_renderer.gd (W2).  Same painted
@@ -519,9 +523,452 @@ def item_elder_key():
     L.finish(obj, "ph_item_elder_key", "items", 30)
 
 
+# --- Phase 5 (docs/PHASE5_DESIGN.md section 8) --------------------------------------------------
+# Tool tiers: iron (tier 1) = dark iron with a worn light edge; master (tier 2) = blued blade
+# (dusky blue-grey, low saturation - never a cold saturated blue) and a warm brass ring on the haft.
+
+BLUED = L.hexc("#434C5A")
+BLUED_EDGE = L.hexc("#6A7280")
+BRASS = L.hexc("#B08A48")
+HAFT = L.hexc("#7A5E40")
+HAFT_OLD = L.hexc("#6B5E50")
+FLAX_STRAW = L.hexc("#B39A56")
+FLAX_CAPSULE = L.hexc("#8C6E3E")
+YARN = L.hexc("#D6CAA6")
+CLAY_ITEM = L.hexc("#8E7A5C")
+ORE = L.hexc("#4E3C32")
+ORE_RUST = L.hexc("#8A5234")
+CHARCOAL_ITEM = L.hexc("#2A2624")
+WORKSTONE = L.hexc("#8C9094")
+ELDERBERRY = L.hexc("#3B2D40")      # ink-violet as in Phase 4
+ELDER_STALK = L.hexc("#6E3E48")
+TANSY_ITEM = L.hexc("#D2A93A")
+HERB_LEAF = L.hexc("#566A40")
+MUGWORT_ITEM = L.hexc("#7E8A6C")
+INK_DARK = L.hexc("#221A26")
+GLASS = L.hexc("#4E5448")           # dull green-brown bottle glass
+CORK = L.hexc("#A08058")
+PAPER = L.hexc("#D8CCAE")
+GOLD_LEAF = L.hexc("#C9A24A")
+STEEL_ROD = L.hexc("#6E7278")
+
+
+def _haft(parts, p0, p1, r: float, color, seed: int, ring=None) -> None:
+    """Wooden tool handle lying on the ground; `ring` = position (0..1) of a brass ring."""
+    parts.append(P._stick(p0, p1, r, color, r1=r * 0.9, verts=6, seed=seed, ao=0.15, zrange=(0, 0.06)))
+    P._tint_up(parts[-1], L.hexc("#9A7A52"), 0.35, 0.5, seed=seed)      # worn grip
+    if ring is not None:
+        c = Vector(p0).lerp(Vector(p1), ring)
+        d = (Vector(p1) - Vector(p0)).normalized()
+        rg = L.prim("cyl", radius=r * 1.3, depth=0.03, vertices=8)
+        rg.data.transform(Matrix.Translation(c) @ Vector((0, 0, 1)).rotation_difference(d).to_matrix().to_4x4())
+        parts.append(P._finish_obj(rg, BRASS, var=0.15, ao=0.0, top=0.4, hue_shift=L.hexc("#8A6A34"), seed=seed + 1))
+
+
+def _blade_colors(master: bool):
+    return (BLUED, BLUED_EDGE) if master else (P.IRON, IRON_EDGE)
+
+
+def _shovel(name: str, master: bool) -> None:
+    """Spade lying on its back: haft with a D-grip, a flat blade with a lighter worn edge."""
+    L.reset(600)
+    parts = []
+    body, edge = _blade_colors(master)
+    r = 0.012
+    _haft(parts, (-0.16, 0.0, r), (0.08, 0.0, r), r, HAFT, 1, ring=0.85 if master else None)
+    grip = [(-0.19 + math.cos(a) * 0.03, math.sin(a) * 0.035, r) for a in (j / 10 * math.tau for j in range(10))]
+    parts.append(P._finish_obj(P._path_tube(grip, 0.007, 4, closed=True), HAFT, ao=0.0, seed=2))
+    parts.append(_strip((0.07, 0.0, 0.012), (0.1, 0.0, 0.012), 0.014, 0.02, 0.006, body, 3))        # socket
+    bl = L.prim("cube", loc=(0.17, 0.0, 0.006), scale=(0.075, 0.06, 0.004))
+    L.subdivide(bl, 1)
+    for v in bl.data.vertices:                     # rounded, slightly tapered spade point, a little dished
+        u = (v.co.x - 0.095) / 0.15
+        v.co.y *= 1.0 - 0.25 * max(0.0, u - 0.6) ** 1.5
+        v.co.z += 0.008 * abs(v.co.y) / 0.06
+    P._paint_fn(bl, lambda co, vi: L.mix(body, edge, max(0.0, (co.x - 0.2) / 0.045)))
+    L.set_mat(bl, L.MAT_PAINTED)
+    parts.append(bl)
+    if not master:
+        P._tint_up(bl, P.RUST, 0.35, 0.5, freq=30.0, seed=4)
+    obj = L.join(parts, name)
+    _yaw(obj, -28)
+    P._center_xy(obj)
+    L.finish(obj, name, "items", 35)
+
+
+def item_shovel_iron():
+    """Eisenschaufel: forged iron spade on an ash haft with a D-grip."""
+    _shovel("ph_item_shovel_iron", False)
+
+
+def item_shovel_master():
+    """Meisterschaufel: the same spade with a blued blade and a brass ring below the grip."""
+    _shovel("ph_item_shovel_master", True)
+
+
+def _axe(name: str, master: bool) -> None:
+    """Felling axe lying flat: a long, slightly curved haft, a wedge head with a flared bit."""
+    L.reset(610)
+    parts = []
+    body, edge = _blade_colors(master)
+    r = 0.012
+    haft = [(-0.2, 0.0, r), (-0.05, 0.008, r), (0.1, 0.0, r), (0.16, -0.006, r)]
+    parts.append(P._finish_obj(P._tube(haft, [r * 0.95, r, r * 0.9, r * 0.85], sides=8), HAFT, var=0.15, ao=0.1,
+                               seed=1))
+    if master:
+        rg = L.prim("cyl", loc=(0.1, 0.0, r), rot=(0, 90, 0), radius=r * 1.3, depth=0.028, vertices=8)
+        parts.append(P._finish_obj(rg, BRASS, var=0.15, ao=0.0, top=0.4, seed=2))
+    parts.append(P._rbox((0.15, 0.0, 0.016), (0.022, 0.024, 0.016), body, bev=0.004, seg=1, jit=0.0, seed=3, ao=0.0))
+    bm = bmesh.new()
+    prof = [(0.132, -0.02), (0.168, -0.02), (0.19, -0.09), (0.11, -0.095)]
+    lo = [bm.verts.new((x, y, 0.004)) for x, y in prof]
+    hi = [bm.verts.new((x, y, 0.024 if y > -0.03 else 0.012)) for x, y in prof]
+    bm.faces.new(list(reversed(lo)))
+    bm.faces.new(hi)
+    for i in range(4):
+        bm.faces.new((lo[i], lo[(i + 1) % 4], hi[(i + 1) % 4], hi[i]))
+    head = P._link(bm, "bit")
+    P._paint_fn(head, lambda co, vi: L.mix(body, edge, max(0.0, (-co.y - 0.07) / 0.025)))
+    L.set_mat(head, L.MAT_PAINTED)
+    parts.append(head)
+    if not master:
+        P._tint_up(parts[-2], P.RUST, 0.3, 0.5, freq=30.0, seed=4)
+    obj = L.join(parts, name)
+    _yaw(obj, -25)
+    P._center_xy(obj)
+    L.finish(obj, name, "items", 35)
+
+
+def item_axe_iron():
+    """Holzfälleraxt: an iron felling axe, dark head, bright worn bit."""
+    _axe("ph_item_axe_iron", False)
+
+
+def item_axe_master():
+    """Meisteraxt: blued head, a brass ring round the haft."""
+    _axe("ph_item_axe_master", True)
+
+
+def _pick(name: str, master: bool) -> None:
+    """Pickaxe lying flat: haft and a two-pointed curved head (pick and chisel end)."""
+    L.reset(620)
+    parts = []
+    body, edge = _blade_colors(master)
+    r = 0.012
+    _haft(parts, (-0.2, 0.0, r), (0.14, 0.0, r), r, HAFT if master else HAFT_OLD, 1, ring=0.8 if master else None)
+    parts.append(P._rbox((0.145, 0.0, 0.016), (0.02, 0.022, 0.016), body, bev=0.004, seg=1, jit=0.0, seed=2, ao=0.0))
+    for sgn in (-1, 1):
+        pts = [(0.145, 0.0, 0.016), (0.135, sgn * 0.06, 0.016), (0.11, sgn * 0.12, 0.014)]
+        tip = P._tube(pts, [0.014, 0.01, 0.003 if sgn < 0 else 0.006], sides=4, hint=(0, 0, 1))
+        P._paint_fn(tip, lambda co, vi: L.mix(body, edge, max(0.0, (abs(co.y) - 0.08) / 0.04)))
+        L.set_mat(tip, L.MAT_PAINTED)
+        parts.append(tip)
+    if not master:
+        for o in parts[-3:]:
+            P._tint_up(o, P.RUST, 0.6, 0.3, freq=25.0, seed=3)      # Osric's old pick: rusty
+    obj = L.join(parts, name)
+    _yaw(obj, -22)
+    P._center_xy(obj)
+    L.finish(obj, name, "items", 35)
+
+
+def item_pickaxe_iron():
+    """Alte Spitzhacke: Osric's old pick, a weathered haft, rust on the head."""
+    _pick("ph_item_pickaxe_iron", False)
+
+
+def item_pickaxe_master():
+    """Meisterhacke: blued head, a fresh haft with a brass ring."""
+    _pick("ph_item_pickaxe_master", True)
+
+
+def item_flax():
+    """A bundle of pulled flax: straw-yellow stalks tied in the middle, seed capsules at one end."""
+    L.reset(630)
+    rnd = random.Random(631)
+    parts = []
+    for k in range(9):
+        y = (k - 4) * 0.009
+        z = 0.012 + 0.008 * (k % 3)
+        yaw = math.radians(rnd.uniform(-5, 5))
+        d = Vector((math.cos(yaw), math.sin(yaw), 0.0))
+        p0 = Vector((-0.16, y, z))
+        parts.append(P._stick(p0, p0 + d * 0.3, 0.0045, L.scale_c(FLAX_STRAW, rnd.uniform(0.85, 1.1)), verts=3, seed=k,
+                              ao=0.0))
+        if k % 2 == 0:
+            parts.append(L.part("ico", FLAX_CAPSULE, loc=p0 + d * 0.31 + Vector((0, rnd.uniform(-0.01, 0.01), 0.004)),
+                                radius=0.009, subdivisions=1, paint_kw={"ao": 0.0, "top": 0.4}))
+    tie = [(-0.02, math.cos(a) * 0.045, 0.022 + math.sin(a) * 0.02) for a in (j / 8 * math.tau for j in range(8))]
+    parts.append(P._finish_obj(P._path_tube(tie, 0.005, 4, closed=True, hint=(1, 0, 0)), P.ROPE, ao=0.0, seed=20))
+    obj = L.join(parts, "ph_item_flax")
+    _yaw(obj, -24)
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_flax", "items", 35)
+
+
+def item_yarn():
+    """A ball of linen yarn wound in crossing bands, a loose end, and a small twisted hank."""
+    L.reset(640)
+    ball = L.prim("sphere", loc=(0.02, 0.0, 0.075), radius=0.075, segments=12, ring_count=8)
+    L.jitter(ball, 0.003, 30.0, 1)
+    P._paint_fn(ball, lambda co, vi: L.scale_c(YARN, 0.9 + 0.1 * math.sin((co.x + co.z * 0.6) * 150.0)
+                                               * math.sin((co.y - co.z * 0.5) * 60.0 + 1.0)))
+    L.set_mat(ball, L.MAT_PAINTED)
+    parts = [ball]
+    end = [(0.09, -0.02, 0.07), (0.12, -0.05, 0.02), (0.14, -0.1, 0.004), (0.1, -0.14, 0.004)]
+    parts.append(P._finish_obj(P._path_tube(end, 0.003, 3), YARN, ao=0.0, seed=2))
+    for k in range(3):     # a twisted hank lying beside the ball
+        pts = [(-0.16 + i * 0.03, -0.07 + 0.01 * math.sin(i * 1.2 + k * 2.1), 0.01 + 0.004 * math.cos(i * 1.2 + k * 2.1))
+               for i in range(7)]
+        parts.append(P._finish_obj(P._path_tube(pts, 0.008, 4), L.scale_c(YARN, 0.95 + 0.04 * k), ao=0.0, seed=3 + k))
+    obj = L.join(parts, "ph_item_yarn")
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_yarn", "items", 40)
+
+
+def item_clay():
+    """A lump of grey-ochre clay, pressed flat on top with a thumb print, a smaller lump beside."""
+    L.reset(650)
+    big = L.prim("ico", loc=(0.0, 0.0, 0.06), radius=1.0, subdivisions=3, scale=(0.12, 0.1, 0.065))
+    L.jitter(big, 0.012, 12.0, 1)
+    for v in big.data.vertices:
+        if v.co.z > 0.1:
+            v.co.z = 0.1 + (v.co.z - 0.1) * 0.3 - 0.012 * math.exp(-((v.co.x - 0.02) ** 2 + v.co.y ** 2) / 0.0012)
+    parts = [P._finish_obj(big, CLAY_ITEM, var=0.18, ao=0.3, top=0.2, hue_shift=L.hexc("#6E5640"), seed=2)]
+    small = L.prim("ico", loc=(0.13, -0.07, 0.03), radius=1.0, subdivisions=1, scale=(0.045, 0.04, 0.03))
+    L.jitter(small, 0.006, 20.0, 3)
+    parts.append(P._finish_obj(small, CLAY_ITEM, var=0.18, ao=0.3, top=0.2, seed=3))
+    obj = L.join(parts, "ph_item_clay")
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_clay", "items", 40)
+
+
+def item_iron_ore():
+    """Three rough lumps of iron ore: dark brown rock with a rust-orange crust."""
+    L.reset(660)
+    parts = []
+    for k, (x, y, r) in enumerate(((0.0, 0.0, 0.07), (0.1, -0.05, 0.045), (-0.09, -0.06, 0.04))):
+        o = L.prim("cube", loc=(x, y, r * 0.8), scale=(r, r * 0.85, r * 0.75))
+        L.subdivide(o, 1)
+        L.jitter(o, r * 0.35, 1.2 / r, 10 + k)
+        L.paint(o, ORE, var=0.3, ao=0.3, top=0.2, hue_shift=ORE_RUST, noise_freq=20.0, seed=10 + k)
+        P._tint_up(o, ORE_RUST, 0.45, 0.4, freq=25.0, seed=k)
+        L.set_mat(o, L.MAT_PAINTED)
+        parts.append(o)
+    obj = L.join(parts, "ph_item_iron_ore")
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_iron_ore", "items", 30)
+
+
+def item_iron_bar():
+    """Two forged iron bars, crossed: square section, hammered ends, faint hammer facets."""
+    L.reset(670)
+    parts = []
+    for k, (yaw, z) in enumerate(((-12.0, 0.013), (20.0, 0.037))):
+        o = L.prim("cube", scale=(0.15, 0.018, 0.012))
+        L.subdivide(o, 2)
+        for v in o.data.vertices:
+            if abs(v.co.x) > 0.12:
+                v.co.y *= 0.8
+                v.co.z *= 0.75
+        L.jitter(o, 0.0015, 50.0, k)
+        o.data.transform(Matrix.Translation((0.0, 0.0, z)) @ Matrix.Rotation(math.radians(yaw), 4, "Z"))
+        parts.append(P._finish_obj(o, P.IRON, var=0.3, ao=0.1, top=0.4, hue_shift=L.hexc("#4E4A48"), seed=k))
+    obj = L.join(parts, "ph_item_iron_bar")
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_iron_bar", "items", 30)
+
+
+def item_charcoal():
+    """A small heap of charcoal sticks: black, cracked, the split ends showing the grain."""
+    L.reset(680)
+    rnd = random.Random(681)
+    parts = []
+    for k in range(6):
+        yaw = math.radians(rnd.uniform(-60, 60))
+        d = Vector((math.cos(yaw), math.sin(yaw), 0.0))
+        c = Vector((rnd.uniform(-0.05, 0.05), rnd.uniform(-0.05, 0.05), 0.022 + 0.02 * (k // 3)))
+        ln = rnd.uniform(0.1, 0.16)
+        o = L.tube(c - d * ln / 2, c + d * ln / 2, rnd.uniform(0.018, 0.024), 6)
+        L.jitter(o, 0.003, 40.0, k)
+        P._paint_fn(o, lambda co, vi: L.scale_c(CHARCOAL_ITEM, 0.8 + 0.5 * abs(math.sin(co.x * 90.0 + co.y * 70.0))))
+        L.set_mat(o, L.MAT_PAINTED)
+        parts.append(o)
+    obj = L.join(parts, "ph_item_charcoal")
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_charcoal", "items", 25)
+
+
+def item_workstone():
+    """A squared, dressed block of workstone (ashlar): clean edges, fine chisel lines on top."""
+    L.reset(690)
+    o = L.prim("cube", loc=(0.0, 0.0, 0.065), scale=(0.13, 0.085, 0.065))
+    L.bevel(o, 0.008, 1)
+    L.subdivide(o, 1)
+    L.jitter(o, 0.002, 10.0, 1)
+    P._paint_fn(o, lambda co, vi: L.scale_c(WORKSTONE, (0.92 + 0.08 * math.sin(co.x * 180.0 + co.y * 40.0))
+                                           * (1.08 if co.z > 0.12 else 0.9)))
+    L.set_mat(o, L.MAT_PAINTED)
+    parts = [o]
+    for k in range(3):
+        parts.append(L.part("ico", L.hexc("#A7AAAB"), loc=(0.16 + 0.02 * k, -0.06 + 0.04 * k, 0.008), radius=0.012,
+                            subdivisions=1, paint_kw={"ao": 0.0}))
+    obj = L.join(parts, "ph_item_workstone")
+    _yaw(obj, -20)
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_workstone", "items", 30)
+
+
+def item_elderberries():
+    """An umbel of ripe elderberries laid down: reddish stalks, ink-violet berries, a leaflet."""
+    L.reset(700)
+    rnd = random.Random(701)
+    parts = []
+    c = Vector((0.0, 0.0, 0.02))
+    parts.append(P._stick((-0.17, 0.02, 0.012), c, 0.005, ELDER_STALK, verts=4, seed=1, ao=0.0))
+    for k in range(6):
+        a = k / 6 * math.tau
+        tip = c + Vector((math.cos(a) * 0.07 + 0.05, math.sin(a) * 0.07, 0.01))
+        parts.append(P._stick(c, tip, 0.003, ELDER_STALK, verts=3, seed=2 + k, ao=0.0))
+        for j in range(3):
+            parts.append(L.part("ico", L.scale_c(ELDERBERRY, rnd.uniform(0.85, 1.15)),
+                                loc=tip + Vector((rnd.uniform(-0.018, 0.018), rnd.uniform(-0.018, 0.018), 0.008)),
+                                radius=0.012, subdivisions=1, paint_kw={"ao": 0.1, "top": 0.5, "noise_freq": 30.0}))
+    leaf = L.prim("sphere", loc=(-0.1, -0.05, 0.008), radius=1.0, segments=6, ring_count=3, scale=(0.05, 0.02, 0.004),
+                  rot=(0, 0, 30))
+    parts.append(P._finish_obj(leaf, L.hexc("#566444"), ao=0.0, top=0.3, seed=9))
+    obj = L.join(parts, "ph_item_elderberries")
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_elderberries", "items", 30)
+
+
+def _herb_sprig(parts, p0, p1, color, head, seed: int, buttons: int = 0) -> None:
+    p0, p1 = Vector(p0), Vector(p1)
+    parts.append(P._stick(p0, p1, 0.003, L.hexc("#5A5A3A"), verts=3, seed=seed, ao=0.0))
+    d = (p1 - p0).normalized()
+    for i in range(3):   # small leaves along the stalk
+        c = p0.lerp(p1, 0.3 + i * 0.22) + Vector((0, 0, 0.004))
+        lf = L.prim("sphere", radius=1.0, segments=5, ring_count=3, scale=(0.022, 0.009, 0.003))
+        lf.data.transform(Matrix.Translation(c) @ Vector((1, 0, 0)).rotation_difference(d).to_matrix().to_4x4()
+                          @ Matrix.Rotation(math.radians(40 if i % 2 else -40), 4, "Z") @ Matrix.Translation((0.018, 0, 0)))
+        parts.append(P._finish_obj(lf, color, ao=0.0, top=0.3, var=0.2, seed=seed + i))
+    for k in range(buttons):
+        parts.append(L.part("cyl", head, loc=p1 + Vector((0.008 * (k % 2), 0.012 * (k - 1), 0.006)), radius=0.011,
+                            depth=0.008, vertices=5, paint_kw={"ao": 0.0, "top": 0.3}))
+
+
+def item_herbs():
+    """A loose handful of fresh herbs: tansy with golden buttons and grey-green mugwort."""
+    L.reset(710)
+    parts = []
+    for k, (yaw, col, btn) in enumerate(((-10, HERB_LEAF, 3), (8, MUGWORT_ITEM, 0), (22, HERB_LEAF, 3),
+                                         (-24, MUGWORT_ITEM, 0))):
+        a = math.radians(yaw)
+        p0 = Vector((-0.14, 0.0, 0.006 + 0.003 * k))
+        _herb_sprig(parts, p0, p0 + Vector((math.cos(a), math.sin(a), 0.03)) * 0.27, col, TANSY_ITEM, 10 + k * 5, btn)
+    obj = L.join(parts, "ph_item_herbs")
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_herbs", "items", 30)
+
+
+def item_ink():
+    """Elder ink: a squat bottle of dull glass with a cork, an ink-dark drip and stain, a quill."""
+    L.reset(720)
+    prof = [(0.04, 0.0), (0.05, 0.01), (0.052, 0.06), (0.04, 0.08), (0.018, 0.09), (0.017, 0.11), (0.021, 0.115)]
+    bottle = D._lathe(prof, 10, "bottle", cap_top=True, wobble=0.03, seed=1)
+    P._paint_fn(bottle, lambda co, vi: INK_DARK if (co.z > 0.07 and -1.9 < math.atan2(co.y, co.x) < -1.2)
+                else L.scale_c(GLASS, 0.9 + 0.3 * co.z / 0.1))
+    L.set_mat(bottle, L.MAT_PAINTED)
+    parts = [bottle]
+    parts.append(L.part("cyl", CORK, loc=(0.0, 0.0, 0.125), radius=0.016, depth=0.022, vertices=8,
+                        paint_kw={"ao": 0.0, "top": 0.3}))
+    parts.append(L.part("cyl", INK_DARK, loc=(0.03, -0.075, 0.001), radius=0.028, depth=0.002, vertices=8,
+                        scale=(1.3, 1.0, 1.0), paint_kw={"ao": 0.0, "var": 0.05}))
+    parts.append(P._stick((0.02, 0.02, 0.1), (0.2, 0.08, 0.004), 0.003, L.hexc("#D8D0BC"), verts=3, seed=3, ao=0.0))
+    q0, q1 = Vector((0.02, 0.02, 0.1)), Vector((0.2, 0.08, 0.004))
+    vane = L.prim("sphere", radius=1.0, segments=6, ring_count=3, scale=(0.055, 0.014, 0.003))
+    vane.data.transform(Matrix.Translation(q0.lerp(q1, 0.45) + Vector((0, 0, 0.004)))
+                        @ Vector((1, 0, 0)).rotation_difference((q1 - q0).normalized()).to_matrix().to_4x4())
+    parts.append(P._finish_obj(vane, L.hexc("#D8D0BC"), ao=0.0, top=0.3, seed=4))
+    obj = L.join(parts, "ph_item_ink")
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_ink", "items", 35)
+
+
+def item_herb_bundle():
+    """Räucherkräuter: a tight bundle of dried mugwort and tansy wound round with twine."""
+    L.reset(730)
+    body = L.prim("cyl", loc=(0.0, 0.0, 0.035), rot=(0, 90, 0), radius=0.032, depth=0.24, vertices=8)
+    L.subdivide(body, 2)
+    for v in body.data.vertices:          # thicker at the flower end
+        f = 1.0 + 0.35 * max(0.0, v.co.x / 0.12)
+        v.co.y *= f
+        v.co.z = 0.035 + (v.co.z - 0.035) * f
+    L.jitter(body, 0.004, 30.0, 1)
+    P._paint_fn(body, lambda co, vi: L.scale_c(L.mix(L.hexc("#76805E"), L.hexc("#9A9470"), 0.5 + 0.5 * math.sin(co.x * 90.0)),
+                                               0.85 + 0.25 * max(0.0, co.z / 0.07)))
+    L.set_mat(body, L.MAT_PAINTED)
+    parts = [body]
+    wind = [(-0.1 + i * 0.006, math.cos(i * 0.7) * 0.036, 0.035 + math.sin(i * 0.7) * 0.036) for i in range(28)]
+    parts.append(P._finish_obj(P._path_tube(wind, 0.0035, 3), P.ROPE, ao=0.0, seed=2))
+    for k in range(4):
+        parts.append(L.part("cyl", L.scale_c(TANSY_ITEM, 0.8), loc=(0.125, -0.03 + k * 0.02, 0.04 + 0.012 * (k % 2)),
+                            rot=(0, 90, 0), radius=0.01, depth=0.008, vertices=5, paint_kw={"ao": 0.0}))
+    obj = L.join(parts, "ph_item_herb_bundle")
+    _yaw(obj, -24)
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_herb_bundle", "items", 35)
+
+
+def item_gold_leaf():
+    """A little booklet of gold leaf: paper leaves, dull gold sheets showing between them."""
+    L.reset(740)
+    parts = []
+    for k in range(5):
+        z = 0.004 + k * 0.005
+        col = PAPER if k % 2 == 0 else GOLD_LEAF
+        sheet = L.prim("cube", loc=(0.0, 0.0, z), scale=(0.08, 0.08, 0.0022), rot=(0, 0, k * 3 - 6))
+        L.subdivide(sheet, 1)
+        if k == 4:                          # the top leaf folded back a little
+            for v in sheet.data.vertices:
+                if v.co.x > 0.02:
+                    v.co.z += (v.co.x - 0.02) * 0.4
+        parts.append(P._finish_obj(sheet, col, var=0.12, ao=0.0, top=0.3,
+                                   hue_shift=GOLD_DARK if col == GOLD_LEAF else P.LINEN_DIRTY, seed=k))
+    obj = L.join(parts, "ph_item_gold_leaf")
+    _yaw(obj, -15)
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_gold_leaf", "items", 30)
+
+
+def item_steel_rod():
+    """Two lengths of bright bar steel, square section, tied at one end with twine and a paper tag."""
+    L.reset(750)
+    parts = []
+    for k, (y, yaw) in enumerate(((-0.02, -4.0), (0.02, 5.0))):
+        o = L.prim("cube", loc=(0.0, y, 0.009 + 0.012 * k), scale=(0.2, 0.008, 0.008), rot=(0, 0, yaw))
+        L.subdivide(o, 1)
+        parts.append(P._finish_obj(o, STEEL_ROD, var=0.15, ao=0.0, top=0.45, hue_shift=IRON_EDGE, seed=k))
+    tie = [(-0.14, math.cos(a) * 0.035, 0.015 + math.sin(a) * 0.022) for a in (j / 8 * math.tau for j in range(8))]
+    parts.append(P._finish_obj(P._path_tube(tie, 0.004, 4, closed=True, hint=(1, 0, 0)), P.ROPE, ao=0.0, seed=5))
+    parts.append(L.part("cube", PAPER, loc=(-0.16, -0.06, 0.004), scale=(0.025, 0.018, 0.002), rot=(0, 0, 25),
+                        paint_kw={"ao": 0.0}))
+    obj = L.join(parts, "ph_item_steel_rod")
+    _yaw(obj, -25)
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_steel_rod", "items", 30)
+
+
 ITEMS = (item_log, item_stone, item_linen, item_coin, item_shroud, item_rake, item_seeds, item_iron_fittings,
          item_scrub_brush, item_comb, item_burial_gown, item_juniper, item_shears, item_pliers, item_hair_braid,
-         item_teeth_pouch, item_elder_key)
+         item_teeth_pouch, item_elder_key,
+         item_shovel_iron, item_shovel_master, item_axe_iron, item_axe_master, item_pickaxe_iron, item_pickaxe_master,
+         item_flax, item_yarn, item_clay, item_iron_ore, item_iron_bar, item_charcoal, item_workstone,
+         item_elderberries, item_herbs, item_ink, item_herb_bundle, item_gold_leaf, item_steel_rod)
+PHASE5_ITEMS = ("item_shovel_iron", "item_shovel_master", "item_axe_iron", "item_axe_master", "item_pickaxe_iron",
+                "item_pickaxe_master", "item_flax", "item_yarn", "item_clay", "item_iron_ore", "item_iron_bar",
+                "item_charcoal", "item_workstone", "item_elderberries", "item_herbs", "item_ink", "item_herb_bundle",
+                "item_gold_leaf", "item_steel_rod")
 PHASE4_ITEMS = ("item_scrub_brush", "item_comb", "item_burial_gown", "item_juniper", "item_shears", "item_pliers",
                 "item_hair_braid", "item_teeth_pouch", "item_elder_key")
 
