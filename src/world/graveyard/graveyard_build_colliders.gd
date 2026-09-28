@@ -131,6 +131,9 @@ static func build_bounds(ctx: Ctx) -> void:
 		"North": [Vector3(mid.x, h * 0.5, lo.y - t * 0.5), Vector3(size.x + 2.0 * t, h, t)],
 		"South": [Vector3(mid.x, h * 0.5, hi.y + t * 0.5), Vector3(size.x + 2.0 * t, h, t)],
 	}
+	# Phase 6 (§4.3 S2): the west side is formed by extra_walls (the shed pocket) when west_wall is false.
+	if not bool(cfg.get("west_wall", true)):
+		walls.erase("West")
 	for wall_name: String in walls:
 		var shape := CollisionShape3D.new()
 		shape.name = wall_name
