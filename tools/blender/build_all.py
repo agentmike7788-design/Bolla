@@ -11,7 +11,8 @@ MODULES = ["asset_gravestones", "asset_environment", "asset_buildings", "asset_p
            "asset_carter", "asset_props_slice", "asset_items", "asset_ground_graveyard", "asset_interior",
            "asset_props_phase3", "asset_env_phase3", "asset_ghost",
            "asset_trader", "asset_corpses_phase4", "asset_props_phase4", "asset_env_phase4",
-           "asset_stones_phase5", "asset_stations_phase5", "asset_env_phase5"]
+           "asset_stones_phase5", "asset_stations_phase5", "asset_env_phase5",
+           "asset_buildings_phase6", "asset_interiors_phase6", "asset_props_phase6"]
 
 skipped = []
 for name in (sys.argv[1:] or MODULES):

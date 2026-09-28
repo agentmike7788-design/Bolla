@@ -214,9 +214,23 @@ def finish(obj, name: str, category: str, smooth_angle: float = 35.0, shift: boo
     export(obj, name, category)
 
 
+def _quantize_uvs(objs) -> None:
+    """Deterministic exports: some bmesh ops (bevel, joins) interpolate UVs with a 1-ulp jitter that
+    differs from run to run, so the .glb bytes changed on every export (Phase-5 finding,
+    ph_env_workstone_ledge).  Snapping every UV to a 1/4096 grid makes repeated builds byte-identical;
+    the painted shaders never sample UVs."""
+    for o in objs:
+        if o.type != "MESH":
+            continue
+        for layer in o.data.uv_layers:
+            for d in layer.data:
+                d.uv = (round(d.uv[0] * 4096.0) / 4096.0, round(d.uv[1] * 4096.0) / 4096.0)
+
+
 def export(obj, name: str, category: str) -> None:
     """Save .blend source and export .glb for one finished object."""
     obj.name = name
+    _quantize_uvs([obj] + list(obj.children))
     blend_dir = os.path.join(ROOT, "art_source", "blender", category)
     glb_dir = os.path.join(ROOT, "assets", "models", category)
     os.makedirs(blend_dir, exist_ok=True)
@@ -243,6 +257,7 @@ def export_rigged(armature, name: str, category: str) -> None:
     glb_dir = os.path.join(ROOT, "assets", "models", category)
     os.makedirs(blend_dir, exist_ok=True)
     os.makedirs(glb_dir, exist_ok=True)
+    _quantize_uvs(armature.children_recursive)
     ad = armature.animation_data or armature.animation_data_create()
     on_track = {s.action for t in ad.nla_tracks for s in t.strips}
     for act in sorted(bpy.data.actions, key=lambda a: a.name):
