@@ -66,3 +66,14 @@ Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe): **`docs/PHASE4_DESIGN.md`*
 - Balancing-Übertrag: „Ehrwürdig" verlangt Zier und Pflege
 - Save-Format v3 mit Migration der Phase-3-Stände
 - Wellenplan W0–W3 und Benutzerentscheidungen (§14)
+
+## PHASE 5 – CRAFTING & RESSOURCEN (Plan)
+
+Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe): **`docs/PHASE5_DESIGN.md`**. Inhalt:
+- Werkplatz „Am Bruch" östlich der Ostwiese: Steinmetzbank, Webstuhl und Esse auf festen Bauplätzen (Material + Münzen), Meiler als einziger Hintergrund-Auftrag
+- Rohstoffe mit nachwachsenden Sammelstellen: Lehm, Flachs, Kräuter, Erz, Bruchstein, Werkstein (Steinbruch hinter Findlingen), Schlag-Erlen am Kutschweg, Holunderbeeren
+- Werkzeugstufen (Schaufel, Axt, Spitzhacke, je 0–2) am passiven Werkzeuggürtel, Faktoren 1,0 / 0,8 / 0,6, neue Aufgaben (Fällen, Findlinge, Werkstein); Inventar 20 Slots
+- Grabstein-Gestaltung je Grab an der Steinmetzbank: 3 Formen × 7 Inschrift-Vorlagen (Name/Daten automatisch) × 4 Zierden, vergoldet; Qualität bis 19, Geister-Grund „ohne Namen"
+- Münzsenke: 108 Münzen Pflicht + freiwillige Posten gegen den Überschuss aus Phase 4 (Rechnung §2.8)
+- Übertrag: kein „Voll hergerichtet"-Bonus für verwertete Leichen (Pietät-Fix, Bot `mixed`)
+- Kapitel „Namen in Stein", Save-Format v4 mit Migration der Phase-4-Stände, Wellenplan W0–W3, 4 offene Fragen (§14)
