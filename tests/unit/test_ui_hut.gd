@@ -391,10 +391,10 @@ func test_register_opens_via_event_bus_and_renders_entries() -> void:
 	assert_false(panel.empty_label.visible)
 	var rows := panel.row_texts()
 	assert_eq(rows.size(), 4)
-	assert_eq(Array(rows[0]), ["1", "Hedwig Rabenstein (67)", "Ertrunken im Mühlteich", "Nr. 3", "Grabstein", "9/19", "–"])
-	assert_eq(Array(rows[1]), ["2", "Egbert Kornblum (54)", "Fieber", "Nr. 1", "Holzkreuz", "6/19", "–"], "sorted by day")
-	assert_eq(Array(rows[2]), ["3", "Margarete Eschenbach (31)", "Vom Pferd getreten", "Nr. 5", "Holzkreuz", "7/19", "–"])
-	assert_eq(Array(rows[3]), ["3", "Anselm Grauwert (78)", "Altersschwäche", "Nr. 2", "–", "2/19", "–"], "same day keeps order")
+	assert_eq(Array(rows[0]), ["1", "Hedwig Rabenstein (67)", "Ertrunken im Mühlteich", "Nr. 3", "Grabstein", "9/20", "–"])
+	assert_eq(Array(rows[1]), ["2", "Egbert Kornblum (54)", "Fieber", "Nr. 1", "Holzkreuz", "6/20", "–"], "sorted by day")
+	assert_eq(Array(rows[2]), ["3", "Margarete Eschenbach (31)", "Vom Pferd getreten", "Nr. 5", "Holzkreuz", "7/20", "–"])
+	assert_eq(Array(rows[3]), ["3", "Anselm Grauwert (78)", "Altersschwäche", "Nr. 2", "–", "2/20", "–"], "same day keeps order")
 	assert_eq(panel.footer_label.text, "Friedhofsqualität 24 · Ordentlich")
 	assert_eq(ui.get_viewport().gui_get_focus_owner(), panel.close_button, "focus on Schließen")
 
@@ -427,7 +427,7 @@ func test_register_marks_poor_quality_and_formats_cells() -> void:
 	assert_eq(GraveRegisterPanel.grave_label("north"), "north")
 	assert_eq(GraveRegisterPanel.grave_label(""), "–")
 	var cells := GraveRegisterPanel.cells({"name": "", "age": 0, "day_buried": 5, "quality": 0})
-	assert_eq(Array(cells), ["5", "Unbekannt", "–", "–", "–", "0/19", "–"], "missing fields")
+	assert_eq(Array(cells), ["5", "Unbekannt", "–", "–", "–", "0/20", "–"], "missing fields")
 	assert_eq(GraveRegisterPanel.sorted_entries(null), [])
 	assert_eq(GraveRegisterPanel.sorted_entries([1, "x"]), [], "non-dictionaries ignored")
 

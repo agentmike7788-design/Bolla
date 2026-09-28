@@ -6,7 +6,7 @@ extends TestCase
 ## fixtures (tests/fixtures/phase6, Phase6Fixtures).
 
 ## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
-const IMPLEMENTED: PackedStringArray = ["BuildingRules", "Buildings", "ShedSupply", "BuildingSite", "ShedStore"]
+const IMPLEMENTED: PackedStringArray = ["BuildingRules", "Buildings", "ShedSupply", "BuildingSite", "ShedStore", "ChapelRules", "ChapelRites", "Catafalque", "ChapelAltar", "MournerSet"]
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
 	# P1
@@ -243,8 +243,8 @@ func test_stub_members_on_existing_classes() -> void:
 	assert_eq([inv.stack_multiplier, inv.stack_categories], [1, [] as Array[int]], "Inventory stack fields (P1)")
 	inv.free()
 	assert_eq(CorpseDecay.cold_factor_at(CorpseRecord.new(), 100), 1.0, "stub: no cold")
-	assert_eq(GhostMood.score(9, 1, 0, null, GhostConfig.new(), 0, 3), GhostMood.score(9, 1, 0, null, GhostConfig.new()),
-			"W0: devotion not read yet (P4)")
+	assert_eq(GhostMood.score(9, 1, 0, null, GhostConfig.new(), 0, 3), GhostMood.score(9, 1, 0, null, GhostConfig.new()) + 3,
+			"P4: the devotion bonus is added")
 
 
 func test_player_interior_id() -> void:
@@ -308,7 +308,7 @@ func test_corpse_record_phase6_fields() -> void:
 func test_extended_data_classes() -> void:
 	var e := EconomyConfig.new()
 	assert_eq(e.quality_service, 1)
-	assert_eq(e.quality_max, 19, "W0-Notizen: 20 comes with P4 (fixture already 20)")
+	assert_eq(e.quality_max, 20, "W0-Notizen: 20 since P4")
 	assert_eq(Phase6Fixtures.economy_config().quality_max, 20)
 	assert_eq(GhostConfig.new().devotion_robbed_cap, 8)
 	var lines := GhostLines.new()

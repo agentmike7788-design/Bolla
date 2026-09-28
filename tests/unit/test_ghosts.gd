@@ -807,6 +807,101 @@ func test_phase5_real_ghost_lines() -> void:
 			assert_true(line.length() <= 90, line)
 
 
+# --- Phase 6 (P4, docs/PHASE6_DESIGN.md §2.4, §2.7) ------------------------------------------
+
+func test_phase6_score_adds_the_devotion() -> void:
+	assert_eq(GhostMood.score(7, 0, 0, clean_cfg, cfg, 0, 1), GhostMood.score(7, 0, 0, clean_cfg, cfg) + 1)
+	assert_eq(GhostMood.score(9, 1, 1, clean_cfg, cfg, 2, 3), 9 + 0 + 1 - 10 + 3)
+	assert_eq(GhostMood.score(7, 0, 0, clean_cfg, cfg, 0, -4), GhostMood.score(7, 0, 0, clean_cfg, cfg), "never a malus")
+
+
+func test_phase6_mood_info_reads_the_devotion_capped_for_robbed() -> void:
+	await _make_world(3)
+	var chapel := _chapel({"plot_01": 1, "plot_02": 3})
+	_mark("plot_01", 7, 0)
+	_mark("plot_02", 11, 0)
+	_mark("plot_03", 7, 0)
+	(corpses.recs["c_plot_02"] as CorpseRecord).harvested = [&"hair", &"teeth"] as Array[StringName]
+	# plot_01: wooden cross 7 + 1 = 8 calm → devotion 1: 9 content.
+	assert_eq([ghosts.mood_info("plot_01").devotion, ghosts.mood_info("plot_01").score], [1, 9])
+	assert_eq(ghosts.mood_of("plot_01"), &"content")
+	# plot_02: fully robbed 11 + 1 − 10 = 2 → devotion 3: 5 calm.
+	assert_eq([ghosts.mood_info("plot_02").devotion, ghosts.mood_info("plot_02").score], [3, 5])
+	assert_eq(ghosts.mood_of("plot_02"), &"calm")
+	graveyard.get_grave("plot_02").quality = 16
+	assert_eq(ghosts.mood_info("plot_02").score, 8, "robbed: capped at 8 (calm), never content")
+	assert_eq(ghosts.mood_info("plot_02").devotion, 1)
+	assert_eq(ghosts.mood_info("plot_03").devotion, 0, "no devotion")
+	chapel.free()
+	assert_eq(ghosts.mood_info("plot_01").score, 8, "without a chapel no bonus")
+
+
+func test_phase6_by_service_once_per_grave() -> void:
+	await _make_world(2)
+	ghosts.lines = Phase6Fixtures.ghost_lines()
+	_mark("plot_01", 12, 0)
+	_mark("plot_02", 12, 0)
+	corpses.recs["c_plot_01"].service_held = true
+	var pool := Array(Phase6Fixtures.ghost_lines().by_service)
+	TimeManager.load_state({"day": 3, "minute_of_day": 1350})
+	var first := ghosts.listen("plot_01", null)
+	assert_true(pool.has(first), "first night: by_service – " + first)
+	assert_false(pool.has(ghosts.listen("plot_02", null)), "no service, no by_service line")
+	TimeManager.load_state({"day": 4, "minute_of_day": 1350})
+	assert_false(pool.has(ghosts.listen("plot_01", null)), "only once")
+	assert_eq(ghosts.save_state().service_heard, {"plot_01": 3}, "saved")
+
+
+func test_phase6_by_devotion_once_per_level_with_robbed_pool() -> void:
+	await _make_world(2)
+	ghosts.lines = Phase6Fixtures.ghost_lines()
+	var chapel := _chapel({"plot_01": 1, "plot_02": 2})
+	_mark("plot_01", 12, 0)
+	_mark("plot_02", 12, 0)
+	(corpses.recs["c_plot_02"] as CorpseRecord).harvested = [&"hair"] as Array[StringName]
+	var fixture := Phase6Fixtures.ghost_lines()
+	TimeManager.load_state({"day": 3, "minute_of_day": 1350})
+	assert_true(Array(fixture.by_devotion[&"default"]).has(ghosts.listen("plot_01", null)))
+	assert_eq(ghosts.listen("plot_02", null), "Eine Kerze. Und trotzdem fehlt mir etwas.", "robbed pool")
+	TimeManager.load_state({"day": 4, "minute_of_day": 1350})
+	assert_false(Array(fixture.by_devotion[&"default"]).has(ghosts.listen("plot_01", null)), "once per level")
+	chapel.load_state({"devotions": {"plot_01": 3, "plot_02": 2}})
+	TimeManager.load_state({"day": 5, "minute_of_day": 1350})
+	assert_true(Array(fixture.by_devotion[&"default"]).has(ghosts.listen("plot_01", null)), "a new devotion level speaks again")
+	var saved := ghosts.save_state()
+	assert_eq(saved.devotion_heard, {"plot_01": 3, "plot_02": 2})
+	var restored := GhostManager.new()
+	world.add_child(restored)
+	restored.load_state(JSON.parse_string(JSON.stringify(saved)))
+	assert_eq(restored.save_state(), saved, "roundtrip")
+	restored.queue_free()
+	chapel.free()
+
+
+func test_phase6_real_ghost_lines() -> void:
+	var real := Database.ghost_lines() as GhostLines
+	var fixture := Phase6Fixtures.ghost_lines()
+	for line: String in fixture.by_service:
+		assert_true(Array(real.by_service).has(line), "§2.4 leading text: " + line)
+	for key: StringName in [&"default", &"robbed"]:
+		assert_true(real.by_devotion.has(key), String(key))
+		for line: String in fixture.by_devotion[key]:
+			assert_true(Array(real.by_devotion[key]).has(line), "§2.4 leading text: " + line)
+	var all: Array = Array(real.by_service)
+	for key: StringName in real.by_devotion:
+		all.append_array(Array(real.by_devotion[key]))
+	for line: String in all:
+		assert_true(line.length() <= 90 and line != "", line)
+
+
+func _chapel(devotions: Dictionary) -> ChapelRites:
+	var chapel := ChapelRites.new()
+	chapel.config = Phase6Fixtures.chapel_config()
+	chapel.load_state({"devotions": devotions})
+	world.add_child(chapel)
+	return chapel
+
+
 # --- helpers -------------------------------------------------------------------------------
 
 func _bare_manager() -> GhostManager:

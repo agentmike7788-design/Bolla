@@ -19,6 +19,8 @@ const LABEL_VALUABLES_TAKEN := "Wertsachen genommen"
 ## Marker labels when the item database does not know the marker.
 const MARKER_LABELS: Dictionary[StringName, String] = {&"wooden_cross": "Holzkreuz", &"gravestone_simple": "Grabstein"}
 const LABEL_MARKER_FALLBACK := "Grabzeichen"
+## Phase 6 §2.4, §2.7: the corpse had a funeral service (EconomyConfig.quality_service).
+const LABEL_SERVICE := "Ausgesegnet"
 
 
 ## [{label: String, points: int}] in display order (Phase 4 §2.4): Bestattet · Gewaschen ·
@@ -29,6 +31,7 @@ const LABEL_MARKER_FALLBACK := "Grabzeichen"
 ## shrouded (older saves) counts as shroud.
 ## Phase 5 §2.5, §3.4: a non-empty `design` (StoneDesign.to_dict of the grave) replaces the marker
 ## line by the stone lines (StoneDesignRules.breakdown_lines: "Meisterstein +5", "Inschrift +1", …).
+## Phase 6 §2.4: a corpse with service_held adds "Ausgesegnet" (quality_service) as the last line.
 static func breakdown(corpse: CorpseRecord, marker_id: StringName, config: EconomyConfig, design: Dictionary = {}) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if corpse == null:
@@ -66,6 +69,8 @@ static func breakdown(corpse: CorpseRecord, marker_id: StringName, config: Econo
 	for kind: StringName in cfg.harvest_malus:
 		if corpse.is_harvested(kind):
 			out.append(_line(HARVEST_LABELS.get(kind, String(kind)), cfg.harvest_malus[kind]))
+	if corpse.service_held:
+		out.append(_line(LABEL_SERVICE, cfg.quality_service))
 	return out
 
 

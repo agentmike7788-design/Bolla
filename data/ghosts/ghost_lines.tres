@@ -48,3 +48,8 @@ by_design = Dictionary[StringName, PackedStringArray]({
 &"master": PackedStringArray("Ein Stein wie für einen Ratsherrn. Die im Dorf werden reden."),
 &"s5_lorenz": PackedStringArray("Da steht Lorenz’ Name. Er würde lachen.")
 })
+by_service = PackedStringArray("Es waren Leute da. Für mich.", "Die Glocke hab ich gehört. Oder geträumt.", "Du hast etwas gesagt, drinnen. Ich hab es nicht verstanden. Es war trotzdem gut.", "Man hat mich nicht einfach hinausgetragen. Das merkt man sich.")
+by_devotion = Dictionary[StringName, PackedStringArray]({
+&"default": PackedStringArray("Da war ein Licht für mich. Nur für mich.", "Ich schlafe jetzt ein bisschen tiefer.", "Einer hat an mich gedacht. Mitten in der Nacht."),
+&"robbed": PackedStringArray("Eine Kerze. Und trotzdem fehlt mir etwas.", "Das Licht ist warm. Nur da, wo es fehlt, bleibt es kalt.")
+})

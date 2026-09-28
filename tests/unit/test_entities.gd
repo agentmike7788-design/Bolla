@@ -399,7 +399,7 @@ func test_plot_marker_prompts_and_single_marker() -> void:
 	var marker := plot.get_node("Visual").get_child(1) as Node3D
 	assert_true(marker.position.is_equal_approx(plot.marker_offset), "marker at the head end")
 	assert_true(marker.position.z < 0.0, "head = -Z")
-	assert_eq(plot.get_interaction_prompt(player), "Grab von Bert Moor – Qualität %d/19" % grave.quality)
+	assert_eq(plot.get_interaction_prompt(player), "Grab von Bert Moor – Qualität %d/20" % grave.quality)
 	assert_false(plot.can_interact(player))
 
 
@@ -1052,7 +1052,7 @@ func test_plot_marker_upgrade() -> void:
 	assert_eq(inv.count(&"coin"), coins, "no second payment")
 	assert_eq(inv.count(&"gravestone_simple"), 0)
 	assert_eq(_visual_models(plot)[1], "res://assets/models/props/ph_prop_gravestone_round.glb", "new marker model")
-	assert_eq(plot.get_interaction_prompt(player), "Grab von Bert Moor – Qualität %d/19" % grave.quality)
+	assert_eq(plot.get_interaction_prompt(player), "Grab von Bert Moor – Qualität %d/20" % grave.quality)
 	assert_false(plot.can_interact(player))
 
 
