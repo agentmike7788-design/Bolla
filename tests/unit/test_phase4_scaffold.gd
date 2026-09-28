@@ -223,7 +223,10 @@ func test_extended_data_classes() -> void:
 ## qa_playthrough.md, QA4-02: the decay effects did not show at the default camera distance;
 ## QA4-05: German closing quotes (‚…‘) in the key fallback note.
 const QA_DATA_DEVIATIONS := {&"decay_visual_config": ["wisp_color", "smoke_color", "visibility_range"],
-		&"story_config": ["key_fallback_text"]}
+		&"story_config": ["key_fallback_text"],
+		# Phase 5 (P6, docs/PHASE5_DESIGN.md §2.6): gold leaf in Ilse's shop – checked against
+		# tests/fixtures/phase5/trader_config_fixture.tres in test_utilization / test_night_trade.
+		&"trader_config": ["shop"]}
 
 
 func test_config_files_in_data_match_the_fixtures() -> void:
