@@ -125,6 +125,12 @@ Alle Phase-1-Assets sind Prototypen (`ph_`-Präfix) und **nicht final**, bis der
 | ph_env_bramble, _stump, _hedge_thorn, _weeds_1…3, _leaves_1…3, _birch | Umgebung / Hindernisse / Pflegestellen (Phase 3, P5) | Prototyp – Unkraut/Laub W3 auf Lesbarkeit überarbeitet (`docs/reviews/phase3_wip/qa_weeds_before_after.jpg`), Benutzerprüfung offen |
 | ph_chr_ghost | Geist (Phase 3, P5; ohne Rig, Material `mat_ghost` von P4) | Prototyp – Benutzerprüfung offen |
 | ph_item_rake, _seeds, _iron_fittings | Item-Modelle (Icons, Phase 3) | Prototyp – Benutzerprüfung offen |
+| ph_chr_kranich | Charakter (Phase 4, P5) – Nachthändlerin Ilse Kranich, gemeinsames 8-Knochen-Rig, idle/walk/talk/offer, Marker `light_lantern` (linke Hand), `coins` (rechte Hand) | Prototyp – Vorschau `docs/reviews/phase4_wip/p5_*.jpg`, Benutzerprüfung offen |
+| ph_prop_corpse_05 (S5, Mantel), _corpse_06 (S3, Reisemantel), _corpse_gown (Totenhemd) | Leichen (Phase 4, P5; Marker `sprig`) | Prototyp – Benutzerprüfung offen |
+| ph_prop_layout_sprig, _wash_basin, _smoke_bowl (Marker `smoke`), _wall_ledge | Props Herrichten / Ilse (Phase 4, P5) | Prototyp – Benutzerprüfung offen |
+| ph_prop_gate_small, _gate_small_open, _pit_sunken, ph_env_elder_thicket, ph_env_elder_bush | Holunderwinkel (Phase 4, P5) | Prototyp – Benutzerprüfung offen |
+| ph_item_scrub_brush, _comb, _burial_gown, _juniper, _shears, _pliers, _hair_braid, _teeth_pouch, _elder_key | Item-Modelle (Icons, Phase 4, P5; `_elder_key` zusätzlich zu §8) | Prototyp – Benutzerprüfung offen |
+| ph_vfx_fly_atlas.png, ph_vfx_stench_wisp.png, ph_vfx_smoke_wisp.png (`assets/vfx/`, `tools/textures/paint_vfx.py`) | Partikel-Texturen (Phase 4, P5; Materialien/Partikel P4) | Prototyp – Benutzerprüfung offen |
 | Godot-Standardschrift | UI-Schrift | **Platzhalter** – Schriftwahl offen |
 
 ## Bekannte Probleme

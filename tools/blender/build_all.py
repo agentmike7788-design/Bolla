@@ -9,7 +9,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 MODULES = ["asset_gravestones", "asset_environment", "asset_buildings", "asset_props", "asset_character",
            "asset_carter", "asset_props_slice", "asset_items", "asset_ground_graveyard", "asset_interior",
-           "asset_props_phase3", "asset_env_phase3", "asset_ghost"]
+           "asset_props_phase3", "asset_env_phase3", "asset_ghost",
+           "asset_trader", "asset_corpses_phase4", "asset_props_phase4", "asset_env_phase4"]
 
 skipped = []
 for name in (sys.argv[1:] or MODULES):
