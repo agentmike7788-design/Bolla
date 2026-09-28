@@ -16,6 +16,9 @@ extends UIPanel
 ##   the breakdown lines, material have / need, minutes and „Stein hauen (205 Min)" with the
 ##   block reason. Header: „Ablage: 2/3 fertig".
 ## Every number comes from Stonemasonry.preview – the panel never computes quality itself.
+## Phase 6 (docs/PHASE6_DESIGN.md §2.5, §7): from shed 2 the material rows add „Schuppen: n" and
+## „Fehlendes aus dem Schuppen holen (10 Min)" calls bench.request_fetch(design inputs); from shed 3
+## „Überschuss einlagern" (bench.request_store()).
 
 const STONEMASONRY_GROUP := &"stonemasonry"
 const GRAVEYARD_GROUP := &"graveyard"
@@ -58,6 +61,7 @@ const TEXT_QUALITY := "Grab %d → %d"
 const TEXT_LINE := "%s %s"
 const TEXT_MATERIAL := "Material"
 const TEXT_CARVE := "Stein hauen (%s)"
+const TEXT_SHED := " · Schuppen %d"
 const TEXT_CARVE_LABEL := "Stein hauen"
 const TEXT_CARVED := "Der Stein für %s steht in der Ablage."
 const TEXT_READY_STONES := "Fertige Steine"
@@ -90,6 +94,8 @@ var current_preview: Dictionary = {}
 var rack_label: Label
 var preview: StonePreview
 var carve_button: Button
+## Phase 6: fetch / store row above the carve button.
+var shed_bar: ShedFetchBar
 var reason_label: Label
 var quality_label: Label
 var gilded_toggle: CheckBox
@@ -231,6 +237,10 @@ func _build_right(page_box: VBoxContainer) -> void:
 	reason_label = UIKit.label("", &"LedgerWarnLabel", true)
 	reason_label.custom_minimum_size.x = right_width - 60.0
 	page_box.add_child(reason_label)
+	shed_bar = ShedFetchBar.new(true, true)
+	shed_bar.fetch_pressed.connect(_on_fetch_pressed)
+	shed_bar.store_pressed.connect(_on_store_pressed)
+	page_box.add_child(shed_bar)
 	carve_button = UIKit.button("", &"InkButton")
 	carve_button.pressed.connect(carve)
 	page_box.add_child(carve_button)
@@ -625,6 +635,7 @@ func _refresh_preview() -> void:
 		carve_button.text = TEXT_CARVE_LABEL
 		carve_button.disabled = true
 		reason_label.text = ""
+		shed_bar.show_state({}, true)
 		return
 	var shown := design()
 	shown.text = current_preview.get("text", PackedStringArray())
@@ -638,13 +649,18 @@ func _refresh_preview() -> void:
 	_sum_label.text = TEXT_STONE_SUM % [stone_sum, _max_points()]
 	var needed: Dictionary = current_preview.get("inputs", {})
 	var missing: Dictionary = current_preview.get("missing", {})
+	var shed := Phase6Texts.shed_state_in(get_tree() if is_inside_tree() else null, needed, _inventory)
+	var in_shed: Dictionary = shed.get("available", {})
 	for id: Variant in needed:
 		var need := int(needed[id])
 		var item_id := StringName(str(id))
 		var have := _inventory.count(item_id) if is_instance_valid(_inventory) else need - int(missing.get(id, 0))
 		var row := UIKit.hbox(6)
 		row.add_child(UIKit.icon(Database.icon(item_id), 24.0))
-		var l := UIKit.label("%s %d/%d" % [UIKit.item_name(item_id), have, need], &"InkLabel" if not missing.has(id) else &"LedgerWarnLabel")
+		var text := "%s %d/%d" % [UIKit.item_name(item_id), have, need]
+		if bool(shed.get("shown", false)):
+			text += TEXT_SHED % int(in_shed.get(item_id, 0))
+		var l := UIKit.label(text, &"InkLabel" if not missing.has(id) else &"LedgerWarnLabel")
 		l.custom_minimum_size.x = (right_width - 110.0) * 0.5
 		row.add_child(l)
 		_material_grid.add_child(row)
@@ -656,6 +672,7 @@ func _refresh_preview() -> void:
 	carve_button.tooltip_text = reason
 	reason_label.text = reason if reason != TEXT_BUSY else ""
 	reason_label.visible = reason_label.text != ""
+	shed_bar.show_state(shed, action_running)
 
 
 # --- helpers ----------------------------------------------------------------------------------
@@ -848,3 +865,16 @@ func _economy_of_masonry() -> EconomyConfig:
 	if masonry != null and masonry.has_method(&"_economy"):
 		return masonry.call(&"_economy") as EconomyConfig
 	return null
+
+
+func _on_fetch_pressed() -> void:
+	var bench: Variant = context.get("bench", context.get("workbench"))
+	var needed: Dictionary = current_preview.get("inputs", {})
+	if is_instance_valid(bench) and (bench as Object).has_method(&"request_fetch") and not needed.is_empty():
+		(bench as Object).call(&"request_fetch", needed.duplicate())
+
+
+func _on_store_pressed() -> void:
+	var bench: Variant = context.get("bench", context.get("workbench"))
+	if is_instance_valid(bench) and (bench as Object).has_method(&"request_store"):
+		(bench as Object).call(&"request_store")

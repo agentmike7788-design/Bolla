@@ -6,6 +6,10 @@ extends UIPanel
 ## "Alles nehmen" / "Alles einlagern" move everything that fits. Every move goes through
 ## ChestTransfer (atomic, only what fits moves, nothing is lost). Coins stay with the
 ## player and are only shown in the bag header. Refreshes on both inventories' `changed`.
+## Phase 6 (docs/PHASE6_DESIGN.md §2.5, §7): the shed's store (context chest is a ShedStore) is the
+## same panel titled „Lagerschuppen" with the side „Regal", a wider grid (8 columns, smaller slots)
+## for its 24 / 32 / 40 places, „Schuppen Stufe 3 · 40 Plätze" and, from level 3, the note
+## „Rohstoffe und Werkstoffe stapeln hier doppelt (× 2)." with a × 2 badge on those stacks.
 
 const SIDE_CHEST := &"chest"
 const SIDE_BAG := &"bag"
@@ -23,12 +27,22 @@ const COIN_ITEM := &"coin"
 const GRID_COLUMNS := 4
 const DEFAULT_SLOTS := 16
 const NOTE_WARNING := &"warning"
+const SHED_COLUMNS := 8
+const SHED_SLOT_EDGE := 84.0
+const SHED_ICON_EDGE := 56.0
 
 @export var slot_edge: float = 104.0
 @export var icon_edge: float = 72.0
 
 var take_all_button: Button
 var store_all_button: Button
+var title_label: Label
+var chest_label: Label
+## Shed level / places and the double-stack note (hidden for the hut chest).
+var shed_label: Label
+var stack_note: Label
+## True while the context chest is the shed's store.
+var is_shed: bool = false
 
 var _storage: Inventory
 var _bag: Inventory
@@ -45,18 +59,23 @@ var _bulk: bool = false
 func _build() -> void:
 	var box := UIKit.vbox(16)
 	add_child(box)
-	_make_header(box, TEXT_TITLE)
+	title_label = _make_header(box, TEXT_TITLE)
 	var columns := UIKit.hbox(24)
 	box.add_child(columns)
 	# Chest side.
 	var chest_box := _make_side(columns)
 	var chest_head := UIKit.hbox(10)
-	chest_head.add_child(UIKit.label(TEXT_CHEST, &"SubheaderLabel"))
+	chest_label = UIKit.label(TEXT_CHEST, &"SubheaderLabel")
+	chest_head.add_child(chest_label)
 	chest_head.add_child(UIKit.spacer())
 	_used_label = UIKit.label("", &"DimLabel")
 	chest_head.add_child(_used_label)
 	chest_box.add_child(chest_head)
 	_chest_grid = _make_grid(chest_box)
+	shed_label = UIKit.label("", &"DimLabel")
+	chest_box.add_child(shed_label)
+	stack_note = UIKit.label("", &"AccentLabel", true)
+	chest_box.add_child(stack_note)
 	take_all_button = UIKit.button(TEXT_TAKE_ALL)
 	take_all_button.pressed.connect(take_all)
 	chest_box.add_child(take_all_button)
@@ -85,6 +104,7 @@ func _build() -> void:
 
 
 func _on_opened() -> void:
+	is_shed = context.get("chest") is ShedStore
 	_storage = _inventory_from(&"storage")
 	_bag = _player_inventory()
 	for inv: Inventory in [_storage, _bag]:
@@ -102,6 +122,15 @@ func _on_closed() -> void:
 
 
 func _refresh() -> void:
+	title_label.text = Phase6Texts.SHED_TITLE if is_shed else TEXT_TITLE
+	chest_label.text = Phase6Texts.SHED_SIDE if is_shed else TEXT_CHEST
+	_chest_grid.columns = SHED_COLUMNS if is_shed else GRID_COLUMNS
+	var mult := stack_multiplier()
+	shed_label.visible = is_shed
+	stack_note.visible = is_shed and mult > 1
+	if is_shed:
+		shed_label.text = Phase6Texts.SHED_LEVEL % [ShedSupply.shed_level(get_tree()) if is_inside_tree() else 0, _storage.slot_count if is_instance_valid(_storage) else 0]
+		stack_note.text = Phase6Texts.SHED_STACKS % mult
 	_fill(SIDE_CHEST, _chest_grid, _storage)
 	_fill(SIDE_BAG, _bag_grid, _bag)
 	var used := 0
@@ -177,6 +206,20 @@ func slot_button(side: StringName, index: int) -> Button:
 	return list[index] as Button if index >= 0 and index < list.size() else null
 
 
+## Stack multiplier of the store (1 for the hut chest / below shed 3).
+func stack_multiplier() -> int:
+	return maxi(_storage.stack_multiplier, 1) if is_shed and is_instance_valid(_storage) else 1
+
+
+## True if `id` stacks doubled in the shed (its category is in the store's stack_categories).
+func doubled(id: StringName) -> bool:
+	if stack_multiplier() <= 1 or not Database.has_item(id):
+		return false
+	var item := Database.item(id) as ItemData
+	var cats: Array[int] = _storage.stack_categories
+	return item != null and (cats.is_empty() or cats.has(int(item.category)))
+
+
 func coins_text() -> String:
 	return _coins.text
 
@@ -186,6 +229,10 @@ func used_text() -> String:
 
 
 # --- internals ----------------------------------------------------------------------------
+
+func _slot_edge() -> float:
+	return SHED_SLOT_EDGE if is_shed else slot_edge
+
 
 func _make_side(parent: Container) -> VBoxContainer:
 	var section := UIKit.panel(&"SectionPanel")
@@ -210,7 +257,7 @@ func _fill(side: StringName, grid: GridContainer, inv: Inventory) -> void:
 		slots = inv.get_slots()
 	var total := maxi(slots.size(), inv.slot_count if is_instance_valid(inv) else DEFAULT_SLOTS)
 	var list: Array = _buttons[side]
-	if list.size() != total:
+	if list.size() != total or (not list.is_empty() and not is_equal_approx((list[0] as Button).custom_minimum_size.x, _slot_edge())):
 		UIKit.clear_children(grid)
 		list.clear()
 		for i: int in total:
@@ -223,12 +270,12 @@ func _fill(side: StringName, grid: GridContainer, inv: Inventory) -> void:
 
 func _make_slot_button(side: StringName, index: int) -> Button:
 	var b := UIKit.button("", &"SlotButton")
-	b.custom_minimum_size = Vector2(slot_edge, slot_edge)
+	b.custom_minimum_size = Vector2(_slot_edge(), _slot_edge())
 	var center := CenterContainer.new()
 	center.name = "Center"
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var icon := UIKit.icon(null, icon_edge)
+	var icon := UIKit.icon(null, SHED_ICON_EDGE if is_shed else icon_edge)
 	icon.name = "Icon"
 	center.add_child(icon)
 	b.add_child(center)
@@ -241,6 +288,13 @@ func _make_slot_button(side: StringName, index: int) -> Button:
 	count.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	count.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(count)
+	var badge := UIKit.label("", &"AccentLabel")
+	badge.name = "Badge"
+	badge.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	badge.offset_left = 8.0
+	badge.offset_top = 2.0
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(badge)
 	b.pressed.connect(_on_slot_pressed.bind(side, index))
 	b.gui_input.connect(_on_slot_gui_input.bind(b, side, index))
 	return b
@@ -249,6 +303,8 @@ func _make_slot_button(side: StringName, index: int) -> Button:
 func _show_slot(b: Button, slot: Dictionary) -> void:
 	var icon := b.get_node(^"Center/Icon") as TextureRect
 	var count := b.get_node(^"Count") as Label
+	var badge := b.get_node(^"Badge") as Label
+	badge.text = ""
 	if slot.is_empty():
 		b.remove_meta(&"item_id")
 		b.remove_meta(&"amount")
@@ -263,6 +319,8 @@ func _show_slot(b: Button, slot: Dictionary) -> void:
 	b.tooltip_text = TOOLTIP_FORMAT % [UIKit.item_name(id), UIKit.item_description(id)]
 	icon.texture = Database.icon(id)
 	count.text = str(amount)
+	if is_shed and _chest_grid.is_ancestor_of(b) and doubled(id):
+		badge.text = Phase6Texts.SHED_STACK_BADGE % stack_multiplier()
 
 
 func _bulk_move(from: Inventory, to: Inventory, full_text: String) -> int:

@@ -7,6 +7,9 @@ extends UIPanel
 ## (90 Min)". Something missing → the button is dimmed with „Es fehlt: 2 Stein, 5 Münzen"
 ## (WorkshopRules / BuildSite.block_reason). Pressing it closes the panel and calls
 ## site.request_build() (timed action, the site takes items + coins at the end).
+## Phase 6 (docs/PHASE6_DESIGN.md §2.5, §7): from shed 2 the cost rows say „im Schuppen: n" and
+## „Fehlendes aus dem Schuppen holen (10 Min)" calls site.request_fetch(build_inputs); from shed 3
+## „Überschuss einlagern" calls site.request_store().
 
 const ICON_PREFIX := "station_"
 
@@ -22,6 +25,7 @@ var duration_label: Label
 var coins_label: Label
 var build_button: Button
 var reason_label: Label
+var shed_bar: ShedFetchBar
 ## Cost rows as shown ({id, name, need, have, ok, coin}).
 var rows: Array[Dictionary] = []
 
@@ -56,6 +60,10 @@ func _build() -> void:
 	info.add_child(dur)
 	box.add_child(UIKit.label(Phase5Texts.BUILD_NOTE, &"DimLabel", true))
 	_make_action_row(box)
+	shed_bar = ShedFetchBar.new()
+	shed_bar.fetch_pressed.connect(_on_fetch_pressed)
+	shed_bar.store_pressed.connect(_on_store_pressed)
+	box.add_child(shed_bar)
 	box.add_child(UIKit.separator())
 	var bottom := UIKit.hbox(16)
 	coins_label = UIKit.label("", &"DimLabel")
@@ -95,7 +103,10 @@ func _refresh() -> void:
 	picture.texture = Database.icon(StringName(ICON_PREFIX + String(station_id())))
 	UIKit.clear_children(cost_box)
 	rows = Phase5Texts.build_rows(data, _inventory)
+	var shed := Phase6Texts.shed_state_in(get_tree() if is_inside_tree() else null, needs(), _inventory)
+	var in_shed: Dictionary = shed.get("available", {})
 	for row: Dictionary in rows:
+		row["shed"] = int(in_shed.get(row.id, 0)) if bool(shed.get("shown", false)) and not bool(row.coin) else -1
 		cost_box.add_child(_cost_row(row))
 	var minutes := data.build_minutes if data != null else 0
 	duration_label.text = Phase5Texts.duration(minutes)
@@ -107,6 +118,7 @@ func _refresh() -> void:
 	reason_label.text = reason
 	reason_label.visible = reason != "" and reason != TEXT_BUSY
 	reason_label.theme_type_variation = &"WarningLabel"
+	shed_bar.show_state(shed, action_running)
 
 
 ## "" = can be built; else the site's reason ("Es fehlt: 2 Stein, 5 Münzen", "Schon gebaut.") or
@@ -152,6 +164,8 @@ func _cost_row(row: Dictionary) -> Control:
 	var name := UIKit.label(text, &"")
 	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	line.add_child(name)
+	if int(row.get("shed", -1)) >= 0:
+		line.add_child(UIKit.label(Phase6Texts.SHED_HAVE % int(row.shed), &"DimLabel"))
 	var have := UIKit.label(Phase5Texts.BUILD_HAVE % [int(row.have), int(row.need)], &"GoodLabel" if bool(row.ok) else &"WarningLabel")
 	line.add_child(have)
 	var mark := UIKit.label("✓" if bool(row.ok) else "✗", &"GoodLabel" if bool(row.ok) else &"WarningLabel")
@@ -171,3 +185,21 @@ func _on_build_pressed() -> void:
 		return
 	request_close()
 	(site as Object).call(&"request_build")
+
+
+## The station's build inputs ({item_id: amount}; coins are never fetched).
+func needs() -> Dictionary:
+	var data := station_data()
+	return data.build_inputs.duplicate() if data != null else {}
+
+
+func _on_fetch_pressed() -> void:
+	var site: Variant = context.get("site")
+	if is_instance_valid(site) and (site as Object).has_method(&"request_fetch"):
+		(site as Object).call(&"request_fetch", needs())
+
+
+func _on_store_pressed() -> void:
+	var site: Variant = context.get("site")
+	if is_instance_valid(site) and (site as Object).has_method(&"request_store"):
+		(site as Object).call(&"request_store")

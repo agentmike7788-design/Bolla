@@ -7,6 +7,8 @@ extends UIPanel
 ## Phase 5 (docs/PHASE5_DESIGN.md §7): + „Gesammelt" (sum per item), „Hergestellt", „Gebaut"
 ## and „Ausgaben" by purpose (coins_spent) – complete_phase5() with Phase5DayLog.take(); rows
 ## without anything to say stay hidden.
+## Phase 6 (docs/PHASE6_DESIGN.md §7): „Gebaut" also names the building levels („Gruft Stufe 2"),
+## „Ausgaben" has the purpose „Gebäude", + „Ausgesegnet" and „Umgebettet" (Phase5DayLog).
 
 const TEXT_TITLE := "Tag %d ist vorüber"
 const TEXT_BURIALS := "Bestattungen heute"
@@ -36,6 +38,9 @@ var gathered_label: Label
 var crafted_label: Label
 var built_label: Label
 var spent_label: Label
+## Phase 6 (docs/PHASE6_DESIGN.md §7): services held and boxes reinterred today.
+var services_label: Label
+var reinterred_label: Label
 ## value label -> its caption (hidden together).
 var _captions: Dictionary[Label, Label] = {}
 
@@ -78,7 +83,7 @@ static func complete_context(ctx: Dictionary, tree: SceneTree, unlocked: Array[S
 ## in the context win.
 static func complete_phase5(ctx: Dictionary, log_data: Dictionary) -> Dictionary:
 	var out := ctx.duplicate()
-	for key: String in ["gathered", "crafted", "built", "spent"]:
+	for key: String in ["gathered", "crafted", "built", "spent", "buildings", "services", "reinterred"]:
 		if not out.has(key) and log_data.has(key):
 			out[key] = log_data[key]
 	return out
@@ -103,6 +108,8 @@ func _build() -> void:
 	crafted_label = _add_row(grid, Phase5Texts.DAY_CRAFTED)
 	built_label = _add_row(grid, Phase5Texts.DAY_BUILT)
 	spent_label = _add_row(grid, Phase5Texts.DAY_SPENT)
+	services_label = _add_row(grid, Phase6Texts.DAY_SERVICES)
+	reinterred_label = _add_row(grid, Phase6Texts.DAY_REINTERRED)
 	box.add_child(grid)
 	box.add_child(UIKit.label(TEXT_SAVED, &"DimLabel"))
 	var bottom := UIKit.hbox()
@@ -131,11 +138,19 @@ func _refresh() -> void:
 	_show(gathered_label, gathered != "", gathered)
 	var crafted := int(context.get("crafted", 0))
 	_show(crafted_label, crafted > 0, str(crafted))
-	var built := Phase5Texts.stations_text(context.get("built", []))
+	var built_parts := PackedStringArray()
+	for part: String in [Phase5Texts.stations_text(context.get("built", [])), Phase6Texts.buildings_text(context.get("buildings", []))]:
+		if part != "":
+			built_parts.append(part)
+	var built := ", ".join(built_parts)
 	_show(built_label, built != "", built)
 	built_label.theme_type_variation = &"GoodLabel"
 	var spent := Phase5Texts.spent_text(context.get("spent", {}))
 	_show(spent_label, spent != "", spent)
+	var services := int(context.get("services", 0))
+	_show(services_label, services > 0, str(services))
+	var reinterred := int(context.get("reinterred", 0))
+	_show(reinterred_label, reinterred > 0, str(reinterred))
 
 
 ## German label of a rating id (&"orderly" → "Ordentlich"); other strings pass through.

@@ -9,6 +9,9 @@ extends RefCounted
 ## Title, age and the ✕ button (returned so the panel can wire it).
 static func build_header(panel: CorpseExamPanel, parent: Container) -> Button:
 	var head := UIKit.hbox(18)
+	panel.table_label = UIKit.label("", &"AccentLabel")
+	panel.table_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	head.add_child(panel.table_label)
 	panel.title_label = UIKit.label("", &"HeaderLabel")
 	head.add_child(panel.title_label)
 	panel.age_label = UIKit.label("", &"DimLabel")
@@ -67,6 +70,8 @@ static func build_condition(panel: CorpseExamPanel, parent: Container) -> void:
 	status_row.add_child(panel.examined_label)
 	panel.shrouded_label = UIKit.label("", &"DimLabel")
 	status_row.add_child(panel.shrouded_label)
+	panel.cold_label = UIKit.label("", &"AccentLabel")
+	status_row.add_child(panel.cold_label)
 	condition_box.add_child(status_row)
 	condition.add_child(condition_box)
 	parent.add_child(condition)

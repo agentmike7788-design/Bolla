@@ -69,7 +69,7 @@ const DAY_BUILT := "Gebaut"
 const DAY_SPENT := "Ausgaben"
 ## "27 Münzen (Bau 15 · Osric 12)"
 const DAY_SPENT_VALUE := "%d %s (%s)"
-const SPENT_LABELS: Dictionary[StringName, String] = {&"license": "Brief", &"build": "Bau", &"osric": "Osric", &"ilse": "Ilse"}
+const SPENT_LABELS: Dictionary[StringName, String] = {&"license": "Brief", &"build": "Bau", &"building": "Gebäude", &"osric": "Osric", &"ilse": "Ilse"}
 
 # --- chapter „Namen in Stein" -------------------------------------------------------------------
 const CHAPTER_ID := &"names_in_stone"

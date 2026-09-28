@@ -17,6 +17,9 @@ extends Control
 ## Phase 5 (docs/PHASE5_DESIGN.md §7): unchanged layout (MATERIAL items never show in the
 ## resource bar); the quality tooltip gains the chapter line „Werkhof 2/3 · Werkzeug 2/3 ·
 ## Meisterstein 0/1“ while the workyard is open; workshop / stone signals refresh the objective.
+## Phase 6 (docs/PHASE6_DESIGN.md §7): unchanged layout; from buildings_open the quality tooltip adds
+## „Gruft 2/2 · Kapelle 1/2 · Schuppen 2/2 · Aussegnung 1/1 · Umbettung 3/1" and „Gräber 21 belegt ·
+## 2 frei · 2 alt (Ruhezeit) · 4 umgebettet"; building / ossuary / chapel signals refresh it.
 
 const BASE_ITEMS: Array[StringName] = [&"coin", &"wood", &"stone", &"linen"]
 const CORPSE_MANAGER_GROUP := &"corpse_manager"
@@ -121,6 +124,11 @@ func _ready() -> void:
 	EventBus.grave_stone_set.connect(_on_workshop_changed.unbind(3))
 	EventBus.stone_order_changed.connect(_on_workshop_changed.unbind(3))
 	EventBus.workshop_job_changed.connect(_on_workshop_changed.unbind(3))
+	EventBus.building_upgraded.connect(_on_workshop_changed.unbind(2))
+	EventBus.bones_lifted.connect(_on_workshop_changed.unbind(1))
+	EventBus.bones_reinterred.connect(_on_workshop_changed.unbind(2))
+	EventBus.funeral_held.connect(_on_workshop_changed.unbind(3))
+	EventBus.devotion_held.connect(_on_workshop_changed.unbind(2))
 	refresh_all()
 
 
@@ -380,14 +388,25 @@ func _on_quality_changed(total: int, rating: StringName) -> void:
 	_mark_objective_dirty()
 
 
-## Phase-3 quality tooltip + the Phase-5 chapter line (while the workyard is open).
+## Phase-3 quality tooltip + the Phase-5 chapter line (while the workyard is open) + the Phase-6
+## chapter and grave lines (from buildings_open).
 func quality_tooltip_text(score: Dictionary) -> String:
-	var text := Phase3Texts.quality_tooltip(score)
-	var progress := CemeteryStatus.chapter_progress(get_tree() if is_inside_tree() else null)
-	if progress.is_empty():
-		return text
-	var line := Phase5Texts.CHAPTER_LINE_DONE if bool(progress.get("done_flag", false)) else Phase5Texts.chapter_line(progress)
-	return text + "\n" + line if line != "" else text
+	var tree := get_tree() if is_inside_tree() else null
+	var lines := PackedStringArray([Phase3Texts.quality_tooltip(score)])
+	var progress := CemeteryStatus.chapter_progress(tree)
+	if not progress.is_empty():
+		var line := Phase5Texts.CHAPTER_LINE_DONE if bool(progress.get("done_flag", false)) else Phase5Texts.chapter_line(progress)
+		if line != "":
+			lines.append(line)
+	var p6 := CemeteryStatus.chapter6_progress(tree)
+	if not p6.is_empty():
+		var line6 := Phase6Texts.CHAPTER_LINE_DONE if bool(p6.get("done_flag", false)) else Phase6Texts.chapter_line(p6)
+		if line6 != "":
+			lines.append(line6)
+		var counts := CemeteryStatus.grave_counts(tree)
+		if not counts.is_empty():
+			lines.append(Phase6Texts.graves_line(counts))
+	return "\n".join(lines)
 
 
 func _on_workshop_changed() -> void:

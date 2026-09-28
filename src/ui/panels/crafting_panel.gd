@@ -13,12 +13,16 @@ extends UIPanel
 ## its effect („Graben 50 → 35 Min"); the background recipe (the kiln) shows „läuft allein ·
 ## 8 Std." and, while its job runs, a progress bar with „fertig um 06:10 · noch 3 Std. 20 Min"
 ## (ready: „fertig – holen"). Station tabs do not exist: one always stands at exactly one station.
+## Phase 6 (docs/PHASE6_DESIGN.md §2.5, §7): from shed 2 every input chip says „im Schuppen: n" and
+## a recipe with something missing gets „Fehlendes holen (10 Min)" (workbench.request_fetch(inputs),
+## dimmed with ShedSupply's reason); from shed 3 „Überschuss einlagern" (workbench.request_store()).
 
 const TEXT_TITLE := "Werkbank"
 const TEXT_OWNED := "im Besitz: %d"
 const TEXT_INPUT := "%d× %s"
 const TEXT_INPUT_OK := " ✓"
 const TEXT_INPUT_HAVE := " (%d da)"
+const TEXT_INPUT_SHED := "im Schuppen: %d"
 const TEXT_TIME := "Dauer %s"
 const TEXT_USE_MARKER := "Grabzeichen · %s Qualität"
 const TEXT_USE_SHROUD := "Leichentuch · %s Qualität"
@@ -40,7 +44,7 @@ const CATEGORY_LABELS: Dictionary[StringName, String] = {&"grave": "Grab", &"dec
 var _list: VBoxContainer
 var _scroll: ScrollContainer
 var _inventory: Inventory
-## recipe id -> {button: Button, reason: Label}
+## recipe id -> {button: Button, reason: Label, fetch: Button (null without the shed)}
 var _rows: Dictionary[StringName, Dictionary] = {}
 ## Recipe whose button had keyboard focus last (&"" = none since opening).
 var _focus_recipe: StringName = &""
@@ -48,6 +52,8 @@ var title_label: Label
 ## Background job row of the station (kiln), rebuilt with the list; null without a job.
 var job_bar: ProgressBar
 var job_label: Label
+## Bottom row: „Überschuss einlagern" (shed 3).
+var shed_bar: ShedFetchBar
 
 
 func _build() -> void:
@@ -62,7 +68,11 @@ func _build() -> void:
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.add_child(_list)
 	_make_action_row(box)
-	var bottom := UIKit.hbox()
+	var bottom := UIKit.hbox(16)
+	shed_bar = ShedFetchBar.new()
+	shed_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	shed_bar.store_pressed.connect(_on_store_pressed)
+	bottom.add_child(shed_bar)
 	bottom.add_child(UIKit.spacer())
 	var close_button := UIKit.button(TEXT_CLOSE)
 	close_button.pressed.connect(request_close)
@@ -94,6 +104,10 @@ func _refresh() -> void:
 	job_bar = null
 	job_label = null
 	title_label.text = station_title()
+	# Only „Überschuss einlagern" lives in the bottom row (fetching is per recipe).
+	var store_state := Phase6Texts.shed_state_in(get_tree() if is_inside_tree() else null, {}, _inventory)
+	store_state["reason"] = ShedSupply.TEXT_NOTHING_MISSING
+	shed_bar.show_state(store_state, action_running)
 	var recipes := Database.recipes(_station())
 	# Quick to slow (shroud, cross, gravestone), then by id.
 	recipes.sort_custom(func(a: Resource, b: Resource) -> bool:
@@ -183,6 +197,16 @@ func recipe_ids() -> Array[StringName]:
 	return out
 
 
+## The shed state of `recipe`'s inputs (Phase6Texts.shed_state_in; shown from shed 2).
+func shed_state(recipe: RecipeData) -> Dictionary:
+	return Phase6Texts.shed_state_in(get_tree() if is_inside_tree() else null, recipe.inputs if recipe != null else {}, _inventory)
+
+
+## „Fehlendes holen" of a recipe (null below shed 2 / nothing missing).
+func fetch_button(recipe_id: StringName) -> Button:
+	return _rows[recipe_id].get("fetch") as Button if _rows.has(recipe_id) else null
+
+
 func craft_button(recipe_id: StringName) -> Button:
 	return _rows[recipe_id].button if _rows.has(recipe_id) else null
 
@@ -204,6 +228,9 @@ func _make_row(recipe: RecipeData) -> Control:
 	title_row.add_child(UIKit.label(TEXT_OWNED % owned, &"DimLabel"))
 	info.add_child(title_row)
 	var inputs := UIKit.hbox(16)
+	var shed := shed_state(recipe)
+	var shed_shown := bool(shed.get("shown", false))
+	var in_shed: Dictionary = shed.get("available", {})
 	for id: StringName in recipe.inputs:
 		var need: int = recipe.inputs[id]
 		var have := _inventory.count(id) if is_instance_valid(_inventory) else 0
@@ -212,6 +239,8 @@ func _make_row(recipe: RecipeData) -> Control:
 		var text := TEXT_INPUT % [need, UIKit.item_name(id)]
 		text += TEXT_INPUT_OK if have >= need else TEXT_INPUT_HAVE % have
 		chip.add_child(UIKit.label(text, &"GoodLabel" if have >= need else &"WarningLabel"))
+		if shed_shown:
+			chip.add_child(UIKit.label(TEXT_INPUT_SHED % int(in_shed.get(id, 0)), &"DimLabel"))
 		inputs.add_child(chip)
 	info.add_child(inputs)
 	var details := PackedStringArray([TEXT_TIME % UIKit.minutes(recipe.craft_minutes)])
@@ -239,8 +268,20 @@ func _make_row(recipe: RecipeData) -> Control:
 	reason_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	reason_label.visible = reason != ""
 	action.add_child(reason_label)
+	var fetch: Button = null
+	var fetch_reason := str(shed.get("reason", ""))
+	if shed_shown and fetch_reason != ShedSupply.TEXT_NOTHING_MISSING:
+		fetch = UIKit.button(Phase6Texts.fetch_button(int(shed.get("minutes", 0)), true))
+		fetch.disabled = action_running or fetch_reason != ""
+		fetch.tooltip_text = fetch_reason
+		fetch.pressed.connect(_on_fetch_pressed.bind(recipe.id))
+		action.add_child(fetch)
+		if fetch_reason != "":
+			var why := UIKit.label(fetch_reason, &"DimLabel")
+			why.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			action.add_child(why)
 	row.add_child(action)
-	_rows[recipe.id] = {"button": button, "reason": reason_label}
+	_rows[recipe.id] = {"button": button, "reason": reason_label, "fetch": fetch}
 	return section
 
 
@@ -352,3 +393,18 @@ func _on_craft_pressed(recipe_id: StringName) -> void:
 		push_warning("[CraftingPanel] workbench has no request_craft()")
 		return
 	(bench as Object).call(&"request_craft", recipe_id)
+
+
+func _on_fetch_pressed(recipe_id: StringName) -> void:
+	_focus_recipe = recipe_id
+	var recipe := Database.recipe(recipe_id) as RecipeData
+	var bench: Variant = context.get("workbench")
+	if recipe == null or not is_instance_valid(bench) or not (bench as Object).has_method(&"request_fetch"):
+		return
+	(bench as Object).call(&"request_fetch", recipe.inputs)
+
+
+func _on_store_pressed() -> void:
+	var bench: Variant = context.get("workbench")
+	if is_instance_valid(bench) and (bench as Object).has_method(&"request_store"):
+		(bench as Object).call(&"request_store")

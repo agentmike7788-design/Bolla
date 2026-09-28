@@ -23,6 +23,8 @@
 ; JournalCardSelected (dried-red frame = chosen clue), InkButton, InkStampLabel ("→ Merkbuch"),
 ; JournalThread (red thread + pin colours); NoteQuiet (piety / night notices, no signal colour),
 ; NoteStory (Osric's arrival lines), TradeRowPanel, WhisperLabel (Ilse Kranich's lines).
+; Phase 6: LevelCardDone / LevelCardNext / LevelCardLater (level cards of the building panel:
+; built = moss frame, next = amber frame, later = dimmed).
 [gd_resource type="Theme" format=3]
 
 [sub_resource type="StyleBoxFlat" id="sb_window"]
@@ -956,6 +958,56 @@ corner_radius_bottom_left = 3
 
 [sub_resource type="StyleBoxEmpty" id="sb_empty"]
 
+[sub_resource type="StyleBoxFlat" id="sb_level_done"]
+content_margin_left = 18.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 14.0
+bg_color = Color(0.09, 0.118, 0.153, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.45, 0.52, 0.34, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="sb_level_next"]
+content_margin_left = 18.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 14.0
+bg_color = Color(0.106, 0.129, 0.165, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 3
+border_color = Color(0.949, 0.663, 0.231, 0.85)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+shadow_color = Color(0, 0, 0, 0.3)
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="sb_level_later"]
+content_margin_left = 18.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 14.0
+bg_color = Color(0.071, 0.086, 0.106, 0.55)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.18, 0.16, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
 [resource]
 default_font_size = 22
 AccentButton/base_type = &"Button"
@@ -1290,3 +1342,9 @@ WiltedBar/base_type = &"ProgressBar"
 WiltedBar/styles/fill = SubResource("sb_bar_wilted")
 WindowPanel/base_type = &"PanelContainer"
 WindowPanel/styles/panel = SubResource("sb_window")
+LevelCardDone/base_type = &"PanelContainer"
+LevelCardDone/styles/panel = SubResource("sb_level_done")
+LevelCardNext/base_type = &"PanelContainer"
+LevelCardNext/styles/panel = SubResource("sb_level_next")
+LevelCardLater/base_type = &"PanelContainer"
+LevelCardLater/styles/panel = SubResource("sb_level_later")

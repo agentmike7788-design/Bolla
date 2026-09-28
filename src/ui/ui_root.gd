@@ -43,6 +43,10 @@ const PANEL_SCRIPTS: Dictionary[StringName, Script] = {
 	# Phase 5 (docs/PHASE5_DESIGN.md §7)
 	&"build_site": preload("res://src/ui/panels/build_site_panel.gd"),
 	&"stone_design": preload("res://src/ui/panels/stone_design_panel.gd"),
+	# Phase 6 (docs/PHASE6_DESIGN.md §7)
+	&"building": preload("res://src/ui/panels/building_panel.gd"),
+	&"chapel": preload("res://src/ui/panels/chapel_panel.gd"),
+	&"devotion": preload("res://src/ui/panels/devotion_panel.gd"),
 }
 
 ## Called for "Beenden" (tests replace it).

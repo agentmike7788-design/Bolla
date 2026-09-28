@@ -28,6 +28,13 @@ extends RefCounted
 ## · „Sprich mit Osric über den Bruch“ · „Ostpforte aufschließen“ · „Bauplatz: <Station> bauen“
 ## (the next affordable first) · „Findlinge brechen – Spitzhacke nötig“ · „Werkzeug: …“ ·
 ## „Setz den Meisterstein“; in the idle slot „Gräber ohne Namen: n“.
+## Phase 6 (docs/PHASE6_DESIGN.md §7), `world` keys from CemeteryStatus.phase6_state(): in the corpse
+## chain „Bring die Leiche in die Gruft“ (instead of „zum Leichentisch“ once the crypt stands), „Die
+## Kapelle steht – leg <Name> auf den Katafalk“ (a dressed, examined dead, not serviced, 08:00–17:00)
+## and „Aussegnung am Altar halten“ (on the catafalque); corpses in a niche or on the catafalque
+## count as unburied. After the Phase-5 line: Phase6Texts.objective (Osric · Bauplatz: Gruft ·
+## Gebeine beisetzen · Altes Grab heben / Gebeinkiste zimmern · Hinter dem Beinhaus zieht es kalt ·
+## „Kapelle 2 · Gruft 2 · Schuppen 2“ · „Eine Andacht für <Name>?“).
 
 const TEXT_WAIT_CARTER := "Der Leichenkutscher kommt gegen %s"
 const TEXT_TO_TABLE := "Leiche zum Leichentisch bringen"
@@ -77,20 +84,21 @@ const HINT_MARKER := &"wooden_cross"
 ## Fallbacks when data is missing (mirror data/*.tres defaults).
 const DEFAULT_DELIVERY_MINUTE := 460
 ## Unburied corpses by urgency: lower index first.
-const LOCATION_ORDER: Array[StringName] = [&"carried", &"table", &"ground", &"dropoff"]
+const LOCATION_ORDER: Array[StringName] = [&"carried", &"catafalque", &"table", &"niche", &"ground", &"dropoff"]
+const LOCATION_CATAFALQUE := &"catafalque"
 
 
 static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], inv: Inventory, minute_of_day: int, flags: Dictionary, world: Dictionary = {}) -> String:
 	var active := _active_corpse(corpses)
 	var table_taken := _table_taken_by_other(corpses, active)
 	if active != null and active.location == LOCATION_CARRIED:
-		return _no_plot_fallback(_corpse_step(active, graves, inv, table_taken), world)
+		return _no_plot_fallback(_corpse_step(active, graves, inv, table_taken, world, minute_of_day), world)
 	if _has_state(graves, GraveRecord.State.FILLED):
 		return _marker_step(inv)
 	if active != null:
 		if active.location == LOCATION_TABLE and _loss_soon(world):
 			return TEXT_LOSS
-		return _no_plot_fallback(_corpse_step(active, graves, inv, table_taken), world)
+		return _no_plot_fallback(_corpse_step(active, graves, inv, table_taken, world, minute_of_day), world)
 	if _count_ready(world) > 0:
 		return TEXT_JOURNAL_READY
 	if _reserved(graves, world):
@@ -105,6 +113,9 @@ static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], in
 	var workshop := _phase5_step(world)
 	if workshop != "":
 		return workshop
+	var buildings := Phase6Texts.objective(world)
+	if buildings != "":
+		return buildings
 	if _ghost_night(graves, minute_of_day, flags):
 		return TEXT_GHOST_NIGHT
 	return _idle_step(minute_of_day, flags, world)
@@ -212,11 +223,12 @@ static func _no_plot_fallback(step: String, world: Dictionary) -> String:
 
 
 ## Next step for one unburied corpse. `table_taken`: another corpse lies on the table.
-static func _corpse_step(corpse: CorpseRecord, graves: Array[GraveRecord], inv: Inventory, table_taken: bool = false) -> String:
+static func _corpse_step(corpse: CorpseRecord, graves: Array[GraveRecord], inv: Inventory, table_taken: bool = false,
+		world: Dictionary = {}, minute_of_day: int = -1) -> String:
 	if not corpse.examined and corpse.location == LOCATION_TABLE:
 		return TEXT_EXAMINE
 	if not corpse.examined and not table_taken:
-		return TEXT_TO_TABLE
+		return Phase6Texts.OBJ_TO_CRYPT if int(world.get("crypt_level", 0)) >= 1 else TEXT_TO_TABLE
 	if not corpse.examined and corpse.location == LOCATION_CARRIED and not _has_state(graves, GraveRecord.State.DUG):
 		# The table is occupied and digging needs free hands.
 		return TEXT_TABLE_BUSY
@@ -225,11 +237,29 @@ static func _corpse_step(corpse: CorpseRecord, graves: Array[GraveRecord], inv: 
 		return TEXT_DECIDE
 	if corpse.location == &"table" and not corpse.shrouded and _count(inv, SHROUD_ITEM) > 0:
 		return TEXT_SHROUD % _economy().quality_shroud
+	var chapel := _chapel_step(corpse, world, minute_of_day)
+	if chapel != "":
+		return chapel
 	if _has_state(graves, GraveRecord.State.DUG):
 		return TEXT_BURY
 	if _has_state(graves, GraveRecord.State.EMPTY):
 		return TEXT_DIG
 	return TEXT_NO_PLOT
+
+
+## Phase 6: the chapel for a dressed, examined dead without a service, while services may begin.
+static func _chapel_step(corpse: CorpseRecord, world: Dictionary, minute_of_day: int) -> String:
+	if int(world.get("chapel_level", 0)) < 1 or corpse.service_held or not corpse.examined or minute_of_day < 0:
+		return ""
+	var cfg := Database.config(&"chapel_config") as ChapelConfig
+	if cfg == null:
+		cfg = ChapelConfig.new()
+	var m := posmod(minute_of_day, TimeManager.MINUTES_PER_DAY)
+	if m < cfg.service_start_min or m > cfg.service_start_max or not ChapelRules.is_dressed(corpse) or corpse.freshness < cfg.service_min_freshness:
+		return ""
+	if corpse.location == LOCATION_CATAFALQUE:
+		return Phase6Texts.OBJ_SERVICE
+	return Phase6Texts.OBJ_CATAFALQUE % corpse.display_name
 
 
 ## Idle "rest" slot: the next cemetery goal once „Würdevoll“ is reached (or after the phase

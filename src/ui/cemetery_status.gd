@@ -8,6 +8,9 @@ extends RefCounted
 ## Phase 5 (docs/PHASE5_DESIGN.md §3.4, §7): sections() lists only burial sections (SectionData.
 ## is_burial – Am Bruch and the quarry are work areas, not part of the cemetery); phase5_state()
 ## feeds the objective lines and chapter_progress() the HUD tooltip line.
+## Phase 6 (docs/PHASE6_DESIGN.md §7): phase6_state() feeds the Phase-6 objective lines,
+## chapter6_progress() the chapter line „Gruft 2/2 · … · Umbettung 3/1" and grave_counts() the line
+## „Gräber 21 belegt · 2 frei · 2 alt (Ruhezeit) · 4 umgebettet" of the HUD tooltip.
 
 const SCORE_GROUP := &"cemetery_score"
 const GRAVEYARD_GROUP := &"graveyard"
@@ -27,6 +30,11 @@ const WORKSHOP_GROUP := &"workshop"
 const STONEMASONRY_GROUP := &"stonemasonry"
 const SECTION_BRUCH := &"bruch"
 const SECTION_QUARRY := &"quarry"
+const BUILDINGS_GROUP := &"buildings"
+const OSSUARY_GROUP := &"ossuary"
+const CHAPEL_GROUP := &"chapel_rites"
+const FLAG_P6_INTRO := &"p6_intro"
+const FLAG_PASSAGE_SEEN := &"c_crypt_draft_seen"
 
 
 ## {graves, decor, dirt, total, rating, next_rating, next_at} – CemeteryScore.breakdown(), else
@@ -186,6 +194,7 @@ static func objective_state(tree: SceneTree, inv: Inventory) -> Dictionary:
 			"has_rake": inv != null and inv.has(rake, 1), "total": int(s.total), "rating": s.rating}
 	out.merge(phase4_state(tree))
 	out.merge(phase5_state(tree, inv))
+	out.merge(phase6_state(tree, inv))
 	return out
 
 
@@ -273,6 +282,88 @@ static func chapter_progress(tree: SceneTree) -> Dictionary:
 		return {}
 	var out := shop.goal_progress()
 	out["done_flag"] = GameState.get_flag(shop.workshop_config().goal_flag) == true
+	return out
+
+
+## Phase-6 part of the objective line: {} without Buildings or before buildings_open, else {p6: true,
+## p6_intro, levels, goal_levels, goal_done, crypt_level, chapel_level, reinter_waiting (lifted, not
+## reinterred), full_boxes / boxes (in the pack), next_lift (label of the next liftable old grave),
+## ossuary_free, passage_unseen (sealed / grille but not looked at), devotion_name (the most restless
+## ghost without a light, once the chapel stands)}.
+static func phase6_state(tree: SceneTree, inv: Inventory) -> Dictionary:
+	var buildings := _first(tree, BUILDINGS_GROUP) as Buildings
+	if buildings == null or not buildings.is_open():
+		return {}
+	var cfg := buildings.buildings_config()
+	var levels := buildings.levels()
+	var out := {"p6": true, "p6_intro": GameState.get_flag(FLAG_P6_INTRO) == true, "levels": levels,
+			"goal_levels": cfg.goal_levels.duplicate(), "goal_done": GameState.get_flag(cfg.goal_flag) == true,
+			"crypt_level": int(levels.get(&"crypt", 0)), "chapel_level": int(levels.get(&"chapel", 0))}
+	var ossuary := _first(tree, OSSUARY_GROUP) as Ossuary
+	var crypt_cfg := ossuary.rules() if ossuary != null else CryptConfig.new()
+	out["full_boxes"] = inv.count(crypt_cfg.full_item) if inv != null else 0
+	out["boxes"] = inv.count(crypt_cfg.box_item) if inv != null else 0
+	out["reinter_waiting"] = ossuary.pending().size() if ossuary != null else 0
+	out["ossuary_free"] = ossuary != null and ossuary.used() < ossuary.capacity()
+	var next_lift := ""
+	var graveyard := _first(tree, GRAVEYARD_GROUP) as Graveyard
+	if ossuary != null and graveyard != null:
+		for grave: GraveRecord in graveyard.graves():
+			if grave.state != GraveRecord.State.OLD:
+				continue
+			var old := ossuary.data_of(grave.id)
+			if old != null and OssuaryRules.liftable(old, ossuary.year(), crypt_cfg):
+				next_lift = OssuaryRules.label(old)
+				break
+	out["next_lift"] = next_lift
+	var passage := ossuary.passage_state() if ossuary != null else Ossuary.PASSAGE_HIDDEN
+	out["passage_unseen"] = passage != Ossuary.PASSAGE_HIDDEN and GameState.get_flag(FLAG_PASSAGE_SEEN) != true
+	var devotion := ""
+	var rites := _first(tree, CHAPEL_GROUP) as ChapelRites
+	if rites != null and rites.level() >= 1:
+		var best := 99
+		for e: Dictionary in rites.eligible_devotions():
+			if int(e.get("held_level", 0)) > 0:
+				continue
+			var rank := int(Phase6Texts.MOOD_RANK.get(StringName(str(e.get("mood", ""))), 3))
+			if rank < best and rank < 2:
+				best = rank
+				devotion = str(e.get("name", ""))
+	out["devotion_name"] = devotion
+	return out
+
+
+## Buildings.goal_progress() + done_flag (roof_and_earth_complete); {} before buildings_open.
+static func chapter6_progress(tree: SceneTree) -> Dictionary:
+	var buildings := _first(tree, BUILDINGS_GROUP) as Buildings
+	if buildings == null or not buildings.is_open():
+		return {}
+	var out := buildings.goal_progress()
+	out["done_flag"] = GameState.get_flag(buildings.buildings_config().goal_flag) == true
+	return out
+
+
+## {taken, free, old, old_resting, reinterred} over the graves (Phase 6; {} before buildings_open).
+static func grave_counts(tree: SceneTree) -> Dictionary:
+	var buildings := _first(tree, BUILDINGS_GROUP) as Buildings
+	var graveyard := _first(tree, GRAVEYARD_GROUP) as Graveyard
+	if buildings == null or not buildings.is_open() or graveyard == null:
+		return {}
+	var ossuary := _first(tree, OSSUARY_GROUP) as Ossuary
+	var out := {"taken": 0, "free": 0, "old": 0, "old_resting": 0, "reinterred": ossuary.reinterred().size() if ossuary != null else 0}
+	for g: GraveRecord in graveyard.graves():
+		match g.state:
+			GraveRecord.State.EMPTY, GraveRecord.State.DUG:
+				out.free += 1
+			GraveRecord.State.FILLED, GraveRecord.State.MARKED:
+				out.taken += 1
+			GraveRecord.State.OLD:
+				out.old += 1
+				var data := ossuary.data_of(g.id) if ossuary != null else Database.old_grave(g.id) as OldGraveData
+				var cfg := ossuary.rules() if ossuary != null else CryptConfig.new()
+				var year := ossuary.year() if ossuary != null else StoneCalendar.year_of(TimeManager.day, Database.config(&"stone_config") as StoneConfig)
+				if data != null and not OssuaryRules.liftable(data, year, cfg):
+					out.old_resting += 1
 	return out
 
 

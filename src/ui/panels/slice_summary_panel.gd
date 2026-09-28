@@ -13,6 +13,11 @@ extends UIPanel
 ## is the chapter panel „Namen in Stein": days since the workyard opened, stations built, tool
 ## tiers, stones set (of them master stones), graves with a name n/18, coins spent in Phase 5 by
 ## purpose, content ghosts before → now and the closing line.
+## Phase 6 (docs/PHASE6_DESIGN.md §1.5, §7): variant &"roof_and_earth" (Buildings.chapter_context())
+## is the chapter panel „Unter Dach und Erde": days since buildings_open, the levels of the three
+## buildings, services (with mourners when known), devotions, reinterments n/6 with the names, the
+## dead that waited in a niche, coins spent in Phase 6 by purpose (incl. „Gebäude"), content ghosts
+## before → now and the closing line „Die Toten warten jetzt nicht mehr im Regen."
 ## Default focus is "Weiterspielen"; "Zum Titel" asks once (like the pause menu).
 
 const TEXT_TITLE := "Der Friedhof ist vollendet"
@@ -28,6 +33,7 @@ const TEXT_GHOSTS := "Zufriedene Geister"
 const VARIANT_CEMETERY := &"cemetery"
 const VARIANT_SIX_PITS := &"six_pits"
 const VARIANT_NAMES_IN_STONE := &"names_in_stone"
+const VARIANT_ROOF_AND_EARTH := &"roof_and_earth"
 const TEXT_GOAL_REACHED := "Ziel „%s“ (ab %d) erreicht."
 const TEXT_GOAL_MISSED := "Ziel „%s“ (ab %d) verfehlt – es fehlen %d Punkte."
 const TEXT_CONTINUE := "Weiterspielen"
@@ -59,6 +65,9 @@ var stone_grid: GridContainer
 ## Phase5Texts.CHAPTER_ROWS caption -> value label (variant names_in_stone).
 var stone_rows: Dictionary[String, Label] = {}
 var continue_button: Button
+var roof_grid: GridContainer
+## Phase6Texts.CHAPTER_ROWS caption -> value label (variant roof_and_earth).
+var roof_rows: Dictionary[String, Label] = {}
 
 ## True while "Zum Titel" waits for its confirming second press.
 var _confirm_title: bool = false
@@ -105,6 +114,17 @@ func _build() -> void:
 		stone_rows[caption] = value
 	stone_grid.visible = false
 	box.add_child(stone_grid)
+	roof_grid = GridContainer.new()
+	roof_grid.columns = 2
+	roof_grid.add_theme_constant_override(&"h_separation", 40)
+	for caption: String in Phase6Texts.CHAPTER_ROWS:
+		roof_grid.add_child(UIKit.label(caption, &"DimLabel"))
+		var value := UIKit.label("", &"SubheaderLabel", true)
+		value.custom_minimum_size.x = panel_width - 370.0
+		roof_grid.add_child(value)
+		roof_rows[caption] = value
+	roof_grid.visible = false
+	box.add_child(roof_grid)
 	goal_label = UIKit.label("", &"AccentLabel", true)
 	goal_label.custom_minimum_size.x = panel_width - 80.0
 	box.add_child(goal_label)
@@ -131,6 +151,14 @@ func focus_default() -> void:
 
 func _refresh() -> void:
 	title_button.text = TEXT_CONFIRM % TEXT_TITLE_SCREEN if _confirm_title else TEXT_TITLE_SCREEN
+	var roof := StringName(str(context.get("variant", ""))) == VARIANT_ROOF_AND_EARTH
+	roof_grid.visible = roof
+	if roof:
+		_cemetery_grid.visible = false
+		chapter_grid.visible = false
+		stone_grid.visible = false
+		_refresh_roof_and_earth()
+		return
 	var stones := StringName(str(context.get("variant", ""))) == VARIANT_NAMES_IN_STONE
 	stone_grid.visible = stones
 	if stones:
@@ -189,6 +217,23 @@ func _refresh_names_in_stone() -> void:
 	var final_line := str(context.get("final_line", ""))
 	goal_label.text = final_line if final_line != "" else Phase5Texts.CHAPTER_FINAL_FALLBACK
 	goal_label.theme_type_variation = &"AccentLabel"
+
+
+## Chapter „Unter Dach und Erde": the rows of Phase6Texts.CHAPTER_ROWS and the closing line.
+func _refresh_roof_and_earth() -> void:
+	header_label.text = Phase6Texts.CHAPTER_TITLE
+	intro_label.text = Phase6Texts.CHAPTER_INTRO
+	var values := Phase6Texts.chapter_values(context)
+	for i: int in Phase6Texts.CHAPTER_ROWS.size():
+		roof_rows[Phase6Texts.CHAPTER_ROWS[i]].text = values[i]
+	var final_line := str(context.get("final_line", ""))
+	goal_label.text = final_line if final_line != "" else Phase6Texts.CHAPTER_FINAL_FALLBACK
+	goal_label.theme_type_variation = &"AccentLabel"
+
+
+## Row value of the roof_and_earth panel by caption ("" unknown) – tests.
+func roof_value(caption: String) -> String:
+	return roof_rows[caption].text if roof_rows.has(caption) else ""
 
 
 ## Row value of the names_in_stone panel by caption ("" unknown) – tests.

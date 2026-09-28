@@ -13,6 +13,10 @@ extends UIPanel
 ##   decide_valuables(take), request_pick_up() and the trait cards.
 ## The sections are built by CorpseExamSections / CorpseExamTabs; this script wires and
 ## refreshes them.
+## Phase 6 (docs/PHASE6_DESIGN.md §2.2, §7): the header names the table (table.panel_title():
+## „Gruft-Tisch" / „Leichentisch") before the dead's name; the condition adds the cold of the crypt
+## („Kühle: × 0,7 (Gruft)", CorpseManager.cold_factor_for) – the forecast already counts it
+## (CorpseDecay.minutes_until with both window lists).
 
 const TEXT_AGE := "%d Jahre"
 const TEXT_CAUSE := "Todesursache"
@@ -57,6 +61,9 @@ const CORPSE_MANAGER_GROUP := &"corpse_manager"
 @export var harvest_confirm_seconds: float = 3.0
 
 var title_label: Label
+## Phase 6: the table's name („Gruft-Tisch") and the cold line.
+var table_label: Label
+var cold_label: Label
 var age_label: Label
 var cause_label: Label
 var cause_text: Label
@@ -147,6 +154,10 @@ func _refresh() -> void:
 	var tables := Database.corpse_tables() as CorpseTables
 	var cause: Dictionary = tables.get_cause(record.cause_id) if tables != null else {}
 	title_label.text = record.display_name
+	table_label.text = table_title()
+	table_label.visible = table_label.text != ""
+	cold_label.text = cold_text(record)
+	cold_label.visible = cold_label.text != ""
 	age_label.text = TEXT_AGE % record.age
 	cause_label.text = str(cause.get("label", record.cause_id))
 	cause_text.text = str(cause.get("description", "")) if record.examined else TEXT_CAUSE_HIDDEN
@@ -174,6 +185,24 @@ func focus_default() -> void:
 		if button != null and button.is_visible_in_tree() and not button.disabled:
 			button.grab_focus()
 			return
+
+
+## The context table's panel_title() („Gruft-Tisch" / „Leichentisch"), "" for a table without one.
+func table_title() -> String:
+	var table: Variant = context.get("table")
+	if is_instance_valid(table) and (table as Object).has_method(&"panel_title"):
+		return str((table as Object).call(&"panel_title"))
+	return ""
+
+
+## „Kühle: × 0,7 (Gruft)" while the corpse lies in the cold (CorpseManager.cold_factor_for), else "".
+func cold_text(record: CorpseRecord) -> String:
+	if record == null or not is_inside_tree():
+		return ""
+	var manager := get_tree().get_first_node_in_group(CORPSE_MANAGER_GROUP)
+	if manager == null or not manager.has_method(&"cold_factor_for"):
+		return ""
+	return Phase6Texts.cold_line(record.location, float(manager.call(&"cold_factor_for", record.location, record.room)))
 
 
 ## The CorpseRecord of the context (null when unknown / no manager).
