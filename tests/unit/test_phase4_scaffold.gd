@@ -227,7 +227,10 @@ const QA_DATA_DEVIATIONS := {&"decay_visual_config": ["wisp_color", "smoke_color
 		&"story_config": ["key_fallback_text"],
 		# Phase 5 (P6, docs/PHASE5_DESIGN.md §2.6): gold leaf in Ilse's shop – checked against
 		# tests/fixtures/phase5/trader_config_fixture.tres in test_utilization / test_night_trade.
-		&"trader_config": ["shop"]}
+		&"trader_config": ["shop"],
+		# Phase 6 (P4, docs/PHASE6_DESIGN.md §2.7): + service, devotion, reinterred – checked against
+		# tests/fixtures/phase6/piety_config_fixture.tres in test_piety.
+		&"piety_config": ["events"]}
 
 
 func test_config_files_in_data_match_the_fixtures() -> void:

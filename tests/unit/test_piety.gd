@@ -142,6 +142,19 @@ func test_events_use_config_points() -> void:
 	assert_eq(piety.value(), expected, "unknown event ignored")
 
 
+## Phase 6 (P4, §2.7): service, devotion and reinterred +1 each (Phase-6 fixture).
+func test_phase6_events() -> void:
+	piety.config = Phase6Fixtures.piety_config()
+	for kind: StringName in [&"service", &"devotion", &"reinterred"]:
+		var before := piety.value()
+		piety.event(kind, String(kind))
+		assert_eq(piety.value() - before, 1, String(kind))
+	var real := Database.config(&"piety_config") as PietyConfig
+	assert_eq([real.events[&"service"], real.events[&"devotion"], real.events[&"reinterred"]], [1, 1, 1], "data")
+	var rep := Database.config(&"reputation_config") as ReputationConfig
+	assert_eq(rep.event_points[&"reinterred"], 1, "reputation data")
+
+
 func test_daily_recovery_idempotent() -> void:
 	GameState.stats[&"piety"] = -5
 	assert_eq(piety.apply_daily(3), 1)

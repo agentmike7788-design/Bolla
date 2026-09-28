@@ -343,3 +343,39 @@ func test_phase5_old_graves_unchanged() -> void:
 	var saved := GraveRecord.from_dict({"id": "plot_01", "state": 3, "marker_id": "gravestone_simple", "quality": 12,
 			"breakdown": [{"label": "Grabstein", "points": 3}]})
 	assert_eq([saved.quality, saved.design, saved.breakdown.size()], [12, {}, 1], "a v3 grave keeps its saved quality")
+
+
+# --- Phase 6 (P4, docs/PHASE6_DESIGN.md §2.4, §2.7) ------------------------------------------
+
+func test_phase6_service_line_and_quality_max_20() -> void:
+	var p6 := Phase6Fixtures.economy_config()
+	var r := _corpse(0.9)
+	r.washed = true
+	r.dress = CorpseRecord.DRESS_GOWN
+	r.shrouded = true
+	r.laid_out = true
+	r.examined = true
+	r.traits = [&"valuables"]
+	r.valuables_decision = &"left"
+	var design := Phase5Fixtures.design(&"stone_master", &"i_fever", &"orn_ivy", true).to_dict()
+	assert_false(_labels(GraveQuality.breakdown(r, &"stone_master", p6, design)).has("Ausgesegnet"), "without service no line")
+	r.service_held = true
+	var lines := GraveQuality.breakdown(r, &"stone_master", p6, design)
+	assert_eq(lines.back(), {"label": "Ausgesegnet", "points": 1}, "„Ausgesegnet +1“ as the last line")
+	assert_eq(_sum(lines), 20, "19 + Ausgesegnet")
+	assert_eq(GraveQuality.compute(r, &"stone_master", p6, design), 20)
+	assert_eq(p6.quality_max, 20)
+	assert_eq(GraveQuality.compute(r, &"stone_master", _p5(), design), 19, "the Phase-5 fixture clamps at 19")
+	# Payment: floor(Q × 0.5) – up to 1 coin more.
+	assert_eq(GraveQuality.payment_parts(r, 20, null, p6, &"", null).quality, 10)
+	assert_eq((load("res://data/config/economy_config.tres") as EconomyConfig).quality_service, 1, "data")
+
+
+func test_phase6_old_graves_keep_their_quality() -> void:
+	var saved := GraveRecord.from_dict({"id": "plot_01", "state": 3, "marker_id": "gravestone_simple", "quality": 12,
+			"breakdown": [{"label": "Grabstein", "points": 3}]})
+	assert_eq([saved.quality, saved.breakdown.size()], [12, 1], "a v4 grave keeps its saved quality")
+	var r := _corpse(0.9)
+	r.shrouded = true
+	assert_eq(GraveQuality.breakdown(r, &"wooden_cross", Phase6Fixtures.economy_config()),
+			GraveQuality.breakdown(r, &"wooden_cross", _p5()), "without service: the Phase-5 lines")
