@@ -10,7 +10,8 @@ extends SceneTree
 ## This script assembles the world tree; the parts live in preloaded helpers next to it
 ## (graveyard_build_*.gd): context (layout, ground heights, placing), colliders, entities,
 ## decor, grass and the Phase-3 parts (systems, obstacles, tending spots, notice board, birches,
-## build mask – docs/PHASE3_DESIGN.md §4).
+## build mask – docs/PHASE3_DESIGN.md §4) and the Phase-4 parts (systems, elder bushes, props,
+## door note – docs/PHASE4_DESIGN.md §4).
 
 ## Helper scripts are preloaded (no class_name) – see the autoload note below.
 const Ctx := preload("res://src/world/graveyard/graveyard_build_context.gd")
@@ -19,6 +20,7 @@ const Entities := preload("res://src/world/graveyard/graveyard_build_entities.gd
 const Decor := preload("res://src/world/graveyard/graveyard_build_decor.gd")
 const Grass := preload("res://src/world/graveyard/graveyard_build_grass.gd")
 const Phase3 := preload("res://src/world/graveyard/graveyard_build_phase3.gd")
+const Phase4 := preload("res://src/world/graveyard/graveyard_build_phase4.gd")
 const InteriorBuild := preload("res://src/world/hut_interior/hut_interior_build.gd")
 const InteriorBuilder := preload("res://src/world/hut_interior/hut_interior_builder.gd")
 const LAYOUT_PATH := "res://data/world/graveyard_layout.json"
@@ -143,6 +145,10 @@ func _build_world() -> Node:
 	Phase3.build_overgrowth(_ctx, decor)
 	Phase3.build_passages(_ctx, decor.get_node("Fence"))
 	Phase3.build_systems(_ctx, systems, decor)
+	Phase4.build_systems(_ctx, systems)
+	Phase4.build_elder_bushes(_ctx, decor)
+	Phase4.build_props(_ctx, entities, decor)
+	Phase4.build_door_note(_ctx, decor)
 
 	Entities.build_waypoints(_ctx, _ctx.group(scene_root, "Waypoints"))
 	_ctx.group(scene_root, "Corpses")

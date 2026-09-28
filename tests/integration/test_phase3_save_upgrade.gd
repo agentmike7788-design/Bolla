@@ -5,8 +5,9 @@ extends TestCase
 ## no trader yet, no second piety recovery / stench malus on the load day), keep their Phase-3
 ## state, and the next save is v3 and round-trips. slot_p3_day14_complete: the deliveries rest
 ## (cemetery full, Holunderwinkel still LOCKED) and the journal rebuilds the Phase-3 clues quietly.
-## The story part of §10 (note at the door, key fallback, S1 catch-up) needs P1/P3/W-Welt and is
-## covered by their W2 tests (test_phase4_loop) once merged.
+## W-Welt (W2, the Phase-4 world): a stand loaded on day ≥ 4 after 06:00 finds Ilse's note at once
+## (§5.2 step 5); the next day_started brings the key fallback (day ≥ 12), the Holunderwinkel is
+## cleared by debug, the next delivery is S1 (catch-up) and S2 follows two days later.
 
 ## Records push_warning() messages (warnings never fail a test on their own).
 class WarningLog extends Logger:
@@ -82,16 +83,39 @@ func test_day14_complete_rests_and_rebuilds_the_journal() -> void:
 		var g := world.graveyard.get_grave(id)
 		if g != null:
 			assert_eq(g.state, GraveRecord.State.LOCKED, "%s LOCKED (§5.2 step 6)" % id)
+	var journal := world.get_node("Systems/Journal") as JournalManager
+	assert_true(GameState.has_flag(&"trader_known"), "loaded at 09:00 on day 14: the note at once")
+	assert_true(journal.has_clue(&"c_trader_note"), "the note is in the journal")
+	assert_false(GameState.has_flag(&"has_elder_key"), "no key yet")
 	await _next_morning()
 	assert_eq(delivered.size(), 0, "the deliveries rest (silently)")
 	assert_eq(warnings.take(), PackedStringArray(), "a quiet morning")
-	# The journal of this world (W2 adds Systems/Journal; until then a node is added here) gets
-	# the migrated (empty) state and rebuilds the clues from the records in post_load.
-	var journal := tree.get_first_node_in_group(JournalManager.GROUP) as JournalManager
-	if journal == null:
-		journal = JournalManager.new()
-		journal.name = "Journal"
-		world.get_node("Systems").add_child(journal)
+	# §2.11 rule 4: day 15 ≥ key_fallback_day 12 → the key hangs at the bier.
+	assert_true(GameState.has_flag(&"has_elder_key"), "key fallback on day_started")
+	assert_true(journal.has_clue(&"c_elder_key"))
+	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
+	assert_eq(expansion.block_reason(&"elder"), "", "the gate can be unlocked")
+	# Clear the Holunderwinkel (debug path: unlock) → six EMPTY plots, clue c_six_pits.
+	assert_true(expansion.unlock(&"elder"))
+	for id: String in ELDER_PLOTS:
+		assert_eq(world.graveyard.get_grave(id).state, GraveRecord.State.EMPTY, id)
+	assert_true(journal.has_clue(&"c_six_pits"))
+	# The next delivery is S1 (catch-up), two days later S2.
+	var stories: Array = []
+	var on_story := func(story_id: StringName, _corpse: String) -> void: stories.append([TimeManager.day, story_id])
+	EventBus.story_corpse_arrived.connect(on_story)
+	await _next_morning()
+	var first_day := TimeManager.day
+	assert_eq(stories, [[first_day, &"s1_quendel"]], "S1 is the next delivery")
+	# The bier must be free for the next delivery: bury what arrives (S1, then the random corpse).
+	_bury_at_the_bier()
+	await _next_morning()
+	_bury_at_the_bier()
+	await _next_morning()
+	EventBus.story_corpse_arrived.disconnect(on_story)
+	assert_eq(stories, [[first_day, &"s1_quendel"], [first_day + 2, &"s2_hemmerling"]], "S2 two days later")
+	assert_eq(warnings.take(), PackedStringArray(), "the story mornings are quiet")
+	# The journal was rebuilt from the records in post_load (migrated empty state).
 	journal.load_state({})
 	journal.post_load()
 	if CorpseRecord.new().to_dict().has("finds_revealed"):
@@ -124,7 +148,10 @@ func _load_and_check(name: String, expect: Array) -> void:
 	for stat: StringName in [&"utilized", &"prepared", &"trader_sales"]:
 		assert_eq(GameState.get_stat(stat), 0, "%s: %s" % [name, stat])
 	assert_eq(GameState.get_flag(&"piety_last_day"), day, name + ": piety_last_day = meta.day")
-	assert_false(GameState.has_flag(&"trader_known"), name + ": Ilse comes with the next note")
+	# §5.2 step 5: trader_known is not migrated; from day 4 the note comes at the next 06:00 – at
+	# once when the stand was saved after 06:00 (NightTrade.apply_morning on game_loaded).
+	var note_now := day >= 4 and TimeManager.minute_of_day >= 360
+	assert_eq(GameState.has_flag(&"trader_known"), note_now, name + ": the door note (day %d)" % day)
 	var cm: Dictionary = migrated.state.nodes.corpse_manager
 	assert_eq(cm.stench_day, day, name + ": no stench malus on the load day")
 	for r: Dictionary in cm.corpses:
@@ -147,6 +174,25 @@ func _next_morning() -> void:
 	var tables := Database.corpse_tables() as CorpseTables
 	TimeManager.set_time(TimeManager.day + 1, tables.delivery_minute)
 	await tree.process_frame
+
+
+## Every corpse on the bier into the next EMPTY plot with a wooden cross (real Graveyard API).
+func _bury_at_the_bier() -> void:
+	var inv := world.get_player().inventory
+	for r: CorpseRecord in world.corpse_manager.records():
+		if r.location != CorpseRecord.LOCATION_DROPOFF:
+			continue
+		var plot := ""
+		for g: GraveRecord in world.graveyard.graves():
+			if g.state == GraveRecord.State.EMPTY:
+				plot = g.id
+				break
+		assert_ne(plot, "", "a free plot for " + r.id)
+		if r.needs_valuables_decision():
+			r.valuables_decision = CorpseRecord.DECISION_LEFT
+		assert_true(world.graveyard.dig(plot) and world.graveyard.bury(plot, r.id), "%s buried in %s" % [r.id, plot])
+		inv.add_item(&"wooden_cross", 1)
+		world.graveyard.place_marker(plot, &"wooden_cross", inv)
 
 
 func _on_delivered(_corpse_id: String) -> void:

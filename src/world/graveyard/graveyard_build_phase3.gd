@@ -107,6 +107,9 @@ static func _build_obstacle(ctx: Ctx, parent: Node3D, o: Dictionary) -> void:
 		var repaired_asset := _asset_of(data.get("repaired_model"))
 		_add_model(ctx, node, repaired_asset, "Repaired", local).visible = false
 		_add_body(ctx, node, repaired_asset, "RepairedCollision", local, true)
+	elif data.get("repaired_model") != null:
+		# Phase 4: the gate_small shows its open variant once unlocked (walkable, no collision).
+		_add_model(ctx, node, _asset_of(data.get("repaired_model")), "Repaired", local).visible = false
 
 
 static func _add_model(ctx: Ctx, parent: Node3D, asset: String, node_name: String, local: Transform3D) -> Node3D:
@@ -251,7 +254,8 @@ static func build_overgrowth(ctx: Ctx, decor: Node3D) -> void:
 			if fences.any(func(f: Array) -> bool: return _dist_to_polyline(p, f) < float(cfg.keep_out_fence)):
 				continue
 			placed += 1
-			var asset: String = cfg.assets[rng.randi() % cfg.assets.size()]
+			var assets: Array = s.get("assets", cfg.assets)
+			var asset: String = assets[rng.randi() % assets.size()]
 			var range_s: Array = cfg.scale.get(asset, cfg.scale.default)
 			var scale := rng.randf_range(float(range_s[0]), float(range_s[1]))
 			var inst := ctx.place(asset, group, p, rng.randf() * 360.0, "%s_%02d" % [asset.trim_prefix("ph_env_"), placed])
@@ -279,7 +283,7 @@ static func build_overgrowth(ctx: Ctx, decor: Node3D) -> void:
 
 # --- build mask (§4.3) ------------------------------------------------------------------------
 
-## Bakes and saves the BuildMask: per cell the section order (1 yard, 2 east, 3 north) or 0 =
+## Bakes and saves the BuildMask: per cell the section order (1 yard, 2 east, 3 north, 4 elder) or 0 =
 ## blocked (plots, old graves, buildings, stations, trees, fence, fixed colliders), plus the
 ## GRAVE_RING (0.5 m around plots) and ROUTE flags (earth path, carter route, station access,
 ## strip at the grave's foot end, passages). Obstacles are not baked (runtime blockers).
@@ -378,15 +382,25 @@ static func mask_shapes(ctx: Ctx) -> Dictionary:
 		blocked.append({"c": Ctx.v2(lp.pos), "r": 0.35})
 	for pr: Dictionary in layout.props:
 		blocked.append({"c": Ctx.v2(pr.pos), "r": 0.5})
+	# Phase 4 (§4.2): the props on the ground (wash basin, wall ledge) and the elder bushes.
+	for pr: Dictionary in layout.get("phase4_props", []):
+		if not pr.has("on"):
+			blocked.append({"c": Ctx.v2(pr.pos), "r": 0.5})
+	for b: Dictionary in layout.get("elder_bushes", []):
+		blocked.append({"c": Ctx.v2(b.pos), "r": 0.6 * float(b.scale)})
 	blocked.append({"c": Ctx.v2(layout.notice_board.pos), "r": 0.8})
 	blocked.append({"c": Ctx.v2(layout.signpost.pos), "r": 0.35})
 	var half := float(cfg.route_width) * 0.5
 	route.append({"pts": _points(layout.path.points), "r": half})
 	for pts: Array in _npc_routes(ctx):
 		route.append({"pts": pts, "r": half})
+	# Phase 4 (§4.2): the strip inside the west wall in front of Ilse's spot.
+	if cfg.has("trader_access"):
+		var ta: Array = cfg.trader_access
+		route.append(_rect({"pos": Vector2.ZERO, "rot": 0.0}, Rect2(ta[0], ta[1], ta[2], ta[3])))
 	# The hedge gap (access to the Birkenhang) stays a way once the hedge is gone.
 	for c: Dictionary in layout.clearables:
-		if c.kind == "hedge":
+		if c.kind == "hedge" or c.kind == "gate_small":  # Phase 4 §4.2: the gate = ROUTE
 			var fp: Array = c.footprint
 			route.append(_rect({"pos": Ctx.v2(c.pos), "rot": float(c.rot_y)}, Rect2(fp[0], fp[1] - 0.5, fp[2], fp[3] + 1.0)))
 	return {"sections": sections, "blocked": blocked, "ring": ring, "route": route}

@@ -113,6 +113,7 @@ Alle Phase-1-Assets sind Prototypen (`ph_`-Präfix) und **nicht final**, bis der
 | ph_bld_gravekeeper_hut | Gebäude | Prototyp – Änderungsrunde 2: auf 5 × 4 m vergrößert, Schindeln/Moos/Kamin/Blumenkasten |
 | ph_layout_placeholder (Code-Mesh Zweig/Kerzenstumpf, Rückfall wenn ph_prop_layout_sprig fehlt) | Aufbahrung (Phase 4) | Prototyp |
 | ph_ghost_placeholder (Code-Mesh `GhostPlaceholderMesh`, Rückfall wenn ph_chr_ghost fehlt) | Geist (Phase 3) | Prototyp |
+| ph_door_note (Code-Mesh-Zettel an der Hüttentür, `graveyard_build_phase4.gd`, `door_note.gd`) | Ilses Zettel (Phase 4, W-Welt) | Prototyp – Benutzerprüfung offen |
 | ph_int_room, ph_int_bed, _stove, _desk, _table, _chair, _chest, _shelf, _rug, _herbs, _coat_hook, _candles, _picture, _broom, _bucket, _washbasin, _cat | Innenraum Hütte (Änderungsrunde 2) | Prototyp |
 | ph_env_ground, ph_env_tree_old_oak, ph_env_grass_tuft | Umgebung | Prototyp |
 | ph_prop_gravestone_cross / _round / _obelisk / _slab_old | Grabsteine | Prototyp |

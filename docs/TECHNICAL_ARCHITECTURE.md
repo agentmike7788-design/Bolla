@@ -139,3 +139,20 @@ Welt 56 × 64 m, 12 Grabstellen (10 bestattet + 2 Phase-2-Staging), 59 Deko-Stü
 | Schlafen 18:00 → 06:00 (`advance 720`, einmalig) | 11 – 15 ms | | – |
 
 Hinweis: Die Pflegestellen-Modelle (Unkraut mit `mat_grass`, animiert) liegen wie Baumkronen auf Render-Layer 2 (keine Laternen-Würfelschatten), die Verwilderung der gesperrten Abschnitte wirft keine Schatten.
+
+### Messung Phase 4 – Welt (W-Welt, 1280×720, Software-Renderer lavapipe, `graveyard_shots_phase4.gd`)
+
+Welt mit Holunderwinkel (18 Grabstellen, 4 im Winkel belegt + 1 offene Grube), Ilse Kranich an der Westmauer (23:30), 6 Geister, 3 verwesende Leichen am Tisch (verwesend 0,16 auf dem Tisch, verwesend 0,2 und verfallen 0,05 am Boden), Wacholderrauch am Tag; Rohdaten `docs/reviews/phase4_wip/world_render_stats.txt`.
+
+| Wert | Tag | Nacht (Ilse, Geister, Verfall) | Budget §9 |
+|---|---|---|---|
+| Kamera-Dreiecke inkl. Gras, Spiel-Zoom max. 24 m (`perf_p4_01…03`) | 432 k | 365 k – 440 k | < 500 k ✅ |
+| Kamera-Dreiecke, Übersicht 40 m (nur Screenshot) | 529 k – 530 k | – | (Info) |
+| Draw Calls | 80 – 267 | 101 – 284 | < 1 000 ✅ |
+| Partikel (Fliegen + Schwaden + Rauch, `CorpseDecayVisual.total_live_particles`) | 3 (Rauch) | 37 (10 + 5 verfallen, 2 × 8 + 3 verwesend) | ≤ 60 ✅ (jenseits 22 m Kamera-Abstand ruhen die Emitter: bei Zoom 24 m 0) |
+| Omni-Lichter sichtbar | 8 | 14 – 15 (Laternen, Ilses Laterne, 6 Geister) | ≤ 24 ✅ |
+| Schattenwerfende Omni-Lichter | 0 | 2 (Hütten- und Pfostenlaterne) | ≤ 4 ✅ (Ilses Laterne `#E8A55A`, 0,4, 3 m, nie Schatten) |
+| Ilse Kranich | 7 348 Dreiecke, 1 Skelett, 8 Knochen; außerhalb 22:40–03:20 unsichtbar | | ≤ 9 000 ✅ |
+| CPU pro Frame (headless, Uhr läuft, Zoom 12 m, Median / Mittel) | 2,22 / 2,12 ms | 2,53 / 2,51 ms (37 Partikel, 6 Geister, Ilse) | < 1,5 ms ⚠️ siehe Hinweis |
+
+Hinweis CPU: Der Container ist heute deutlich langsamer als bei der Phase-3-Messung. Die unveränderte Phase-3-Sonde (`graveyard_shots_phase3.gd --cpu`) misst zur selben Stunde 2,12 / 2,63 ms (Tag) und 2,79 / 2,91 ms (Nacht) statt der dokumentierten 0,91 – 1,16 ms Median. Phase 4 liegt damit gleichauf mit Phase 3 (die neuen Systeme sind ereignisgetrieben, Npc Ilse ohne Karren- und Fracht-Logik). Das absolute Budget muss W3 auf ruhiger Hardware nachmessen.

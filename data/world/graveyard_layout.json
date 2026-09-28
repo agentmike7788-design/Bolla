@@ -1,5 +1,5 @@
 {
-  "_comment": "Welt Phase 3 (docs/PHASE3_DESIGN.md §4, Basis docs/VERTICAL_SLICE_DESIGN.md §4). Godot-Koordinaten in Metern: x = Osten, z = Süden (zur Kamera). Friedhofsteil = freigegebene Art-Prototyp-Komposition (data/art_prototype/layout.json), ergänzt um Grabstellen, Stationen und den Kutschweg. Gelesen von tools/blender/asset_ground_graveyard.py (Boden) und src/world/graveyard/graveyard_builder.gd (Szene). Die Laufzeit liest diese Datei nicht.",
+  "_comment": "Welt Phase 3/4 (docs/PHASE3_DESIGN.md §4, docs/PHASE4_DESIGN.md §4, Basis docs/VERTICAL_SLICE_DESIGN.md §4). Godot-Koordinaten in Metern: x = Osten, z = Süden (zur Kamera). Friedhofsteil = freigegebene Art-Prototyp-Komposition (data/art_prototype/layout.json), ergänzt um Grabstellen, Stationen und den Kutschweg. Gelesen von tools/blender/asset_ground_graveyard.py (Boden) und src/world/graveyard/graveyard_builder.gd (Szene). Die Laufzeit liest diese Datei nicht.",
   "ground": {
     "_size": "Phase 3 (§4.1): 56 × 64 m, x −24…32, z −29,5…34,5 – Süd- und Westkante wie Phase 2.",
     "size": [56.0, 64.0],
@@ -13,9 +13,10 @@
   "sections": [
     {"id": "yard", "rect": [-11.5, -12.0, 11.5, 9.6]},
     {"id": "east", "rect": [11.5, -12.0, 21.5, 9.6]},
-    {"id": "north", "rect": [-2.0, -20.0, 11.5, -12.0]}
+    {"id": "north", "rect": [-2.0, -20.0, 11.5, -12.0]},
+    {"id": "elder", "rect": [-11.5, -20.0, -2.0, -12.5]}
   ],
-  "build": {"_comment": "Bau-Maske (§4.3): Raster über x −11,5…21,5, z −20…9,6.", "origin": [-11.5, -20.0], "size": [66, 60],
+  "build": {"_comment": "Bau-Maske (§4.3; Phase 4 §4.2: + Abschnitt elder = 4): Raster über x −11,5…21,5, z −20…9,6. trader_access = Streifen innen vor trader_spot [x, z, w, d] = ROUTE.", "trader_access": [-11.5, -3.8, 1.2, 2.4], "origin": [-11.5, -20.0], "size": [66, 60],
     "cell": 0.5, "route_width": 1.5, "grave_ring": 0.5, "station_margin": 0.6, "station_access": 1.0, "grave_foot_strip": 0.8,
     "building_margin": 0.6, "tree_radius": 0.7, "fence_half_width": 0.3},
   "path": {
@@ -56,7 +57,13 @@
     {"id": "plot_09", "pos": [18.6, -7.0], "rot_y": 0.0, "section": "east"},
     {"id": "plot_10", "pos": [2.6, -16.2], "rot_y": 0.0, "section": "north"},
     {"id": "plot_11", "pos": [5.0, -16.2], "rot_y": 0.0, "section": "north"},
-    {"id": "plot_12", "pos": [7.4, -16.2], "rot_y": 0.0, "section": "north"}
+    {"id": "plot_12", "pos": [7.4, -16.2], "rot_y": 0.0, "section": "north"},
+    {"id": "h_01", "pos": [-9.0, -18.35], "rot_y": 0.0, "section": "elder", "_comment": "Phase 4 §4.1: h_01…h_06 um +0,4 m nach Osten (Westgang 1,5 m für Pförtchen und Dickicht) und Reihe 1 um −0,35 m, Reihe 2 um −0,25 m nach Norden geschoben (Reihenabstand 3,5 m: Fußstreifen frei, Abstand zum Südzaun)."},
+    {"id": "h_02", "pos": [-6.5, -18.35], "rot_y": 0.0, "section": "elder"},
+    {"id": "h_03", "pos": [-4.0, -18.35], "rot_y": 0.0, "section": "elder"},
+    {"id": "h_04", "pos": [-9.0, -14.85], "rot_y": 0.0, "section": "elder"},
+    {"id": "h_05", "pos": [-6.5, -14.85], "rot_y": 0.0, "section": "elder"},
+    {"id": "h_06", "pos": [-4.0, -14.85], "rot_y": 0.0, "section": "elder"}
   ],
   "_clearables": "Hindernisse (§1.2, §2.1). footprint = lokales XZ-Rechteck [x, z, w, d] (Bau-Sperre + Gras-Maske). Zaunlücken: fence.ruins.",
   "clearables": [
@@ -74,9 +81,18 @@
     {"id": "obs_n_04", "kind": "rubble", "section": "north", "pos": [2.8, -18.8], "rot_y": 160.0, "footprint": [-0.8, -0.8, 1.6, 1.6]},
     {"id": "obs_n_05", "kind": "rubble", "section": "north", "pos": [9.6, -14.0], "rot_y": 280.0, "footprint": [-0.8, -0.8, 1.6, 1.6]},
     {"id": "obs_n_06", "kind": "stump", "section": "north", "pos": [7.6, -16.8], "rot_y": 60.0, "footprint": [-0.5, -0.5, 1.0, 1.0]},
-    {"id": "obs_n_07", "kind": "stump", "section": "north", "pos": [-0.6, -17.2], "rot_y": 220.0, "footprint": [-0.5, -0.5, 1.0, 1.0]}
+    {"id": "obs_n_07", "kind": "stump", "section": "north", "pos": [-0.6, -17.2], "rot_y": 220.0, "footprint": [-0.5, -0.5, 1.0, 1.0]},
+    {"id": "obs_h_gate", "kind": "gate_small", "section": "elder", "pos": [-10.0, -12.5], "rot_y": 0.0, "footprint": [-0.6, -0.3, 1.2, 0.6]},
+    {"id": "obs_h_thicket_1", "kind": "elder_thicket", "section": "elder", "pos": [-10.35, -13.75], "rot_y": 20.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
+    {"id": "obs_h_thicket_2", "kind": "elder_thicket", "section": "elder", "pos": [-10.35, -18.75], "rot_y": 200.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
+    {"id": "obs_h_pit_1", "kind": "sunken_pit", "section": "elder", "pos": [-9.0, -18.35], "rot_y": 0.0, "footprint": [-0.72, -1.25, 2.32, 2.5]},
+    {"id": "obs_h_pit_2", "kind": "sunken_pit", "section": "elder", "pos": [-6.5, -18.35], "rot_y": 0.0, "footprint": [-0.72, -1.25, 2.32, 2.5]},
+    {"id": "obs_h_pit_3", "kind": "sunken_pit", "section": "elder", "pos": [-4.0, -18.35], "rot_y": 0.0, "footprint": [-0.72, -1.25, 2.32, 2.5]},
+    {"id": "obs_h_pit_4", "kind": "sunken_pit", "section": "elder", "pos": [-9.0, -14.85], "rot_y": 0.0, "footprint": [-0.72, -1.25, 2.32, 2.5]},
+    {"id": "obs_h_pit_5", "kind": "sunken_pit", "section": "elder", "pos": [-6.5, -14.85], "rot_y": 0.0, "footprint": [-0.72, -1.25, 2.32, 2.5]},
+    {"id": "obs_h_pit_6", "kind": "sunken_pit", "section": "elder", "pos": [-4.0, -14.85], "rot_y": 0.0, "footprint": [-0.72, -1.25, 2.32, 2.5]}
   ],
-  "_dirt_spots": "Pflegestellen (§2.4): 22 Flächenstellen; die Grabstellen dirt_<plot_id> erzeugt der Builder am Hügel (grave_dirt). start = start_progress (neues Spiel).",
+  "_dirt_spots": "Pflegestellen (§2.4; Phase 4 §4.1: + 3 im Holunderwinkel): 25 Flächenstellen; die Grabstellen dirt_<plot_id> erzeugt der Builder am Hügel (grave_dirt). start = start_progress (neues Spiel).",
   "dirt_spots": [
     {"id": "dirt_y01", "pos": [-9.8, 7.8], "section": "yard", "kind": "weeds", "start": 1.8},
     {"id": "dirt_y02", "pos": [10.3, 8.2], "section": "yard", "kind": "weeds", "start": 2.2},
@@ -99,7 +115,10 @@
     {"id": "dirt_n02", "pos": [4.4, -19.0], "section": "north", "kind": "weeds", "start": 0.0},
     {"id": "dirt_n03", "pos": [-0.8, -14.6], "section": "north", "kind": "weeds", "start": 0.0},
     {"id": "dirt_n04", "pos": [-0.2, -18.6], "section": "north", "kind": "leaves", "start": 0.0},
-    {"id": "dirt_n05", "pos": [9.9, -16.3], "section": "north", "kind": "leaves", "start": 0.0}
+    {"id": "dirt_n05", "pos": [9.9, -16.3], "section": "north", "kind": "leaves", "start": 0.0},
+    {"id": "dirt_h01", "pos": [-5.25, -16.6], "section": "elder", "kind": "weeds", "start": 0.0},
+    {"id": "dirt_h02", "pos": [-10.65, -16.75], "section": "elder", "kind": "leaves", "start": 0.0},
+    {"id": "dirt_h03", "pos": [-2.75, -13.05], "section": "elder", "kind": "leaves", "start": 0.0}
   ],
   "grave_dirt": {"_comment": "Grabstelle dirt_<plot_id>: plot-lokal (x, z) auf dem Hügel ph_prop_grave_mound_fresh (Höhe aus dem Mesh), Interactable-Priorität über der Grab-Info (10) – sonst nie fokussierbar.",
     "local": [0.0, 0.3], "mound_inset": 0.03, "priority": 11},
@@ -110,7 +129,9 @@
     "_bush": "Niedrige Büsche kollidieren (Zylinder, Radius × scale) – WorldRoot schaltet die Kollision mit der Kulisse ab.",
     "bush_radius": 0.45,
     "seed": 31, "margin": 0.7, "keep_out_obstacle": 1.3, "keep_out_spot": 0.9, "keep_out_fence": 0.6,
-    "sections": [{"id": "east", "count": 24}, {"id": "north", "count": 18}]},
+    "_assets": "assets je Abschnitt (optional) ersetzt die Liste: im Holunderwinkel ohne kollidierende Büsche (enge Gänge zwischen den Gruben).",
+    "sections": [{"id": "east", "count": 24}, {"id": "north", "count": 18},
+      {"id": "elder", "count": 12, "assets": ["ph_env_weeds_3", "ph_env_weeds_2", "ph_env_leaves_2", "ph_env_weeds_3"]}]},
   "entities": [
     {"id": "morgue_table", "type": "morgue_table", "pos": [-1.6, -5.4], "rot_y": 18.0, "params": {}},
     {"id": "workbench", "type": "workbench", "pos": [-2.5, -8.4], "rot_y": 108.0, "params": {"station": "workbench"}},
@@ -121,7 +142,11 @@
     {"id": "hut_door", "type": "hut_door", "pos": [-5.671, -4.506], "rot_y": 18.0, "params": {}},
     {"id": "dropoff", "type": "dropoff", "pos": [4.4, 8.3], "rot_y": 0.0, "params": {}},
     {"id": "npc_carter", "type": "npc", "pos": [15.8, 32.6], "rot_y": 0.0,
-      "params": {"save_id": "npc_carter", "npc_id": "carter", "model": "ph_chr_carter"}}
+      "params": {"save_id": "npc_carter", "npc_id": "carter", "model": "ph_chr_carter"}},
+    {"id": "npc_trader", "type": "npc", "pos": [-22.0, -14.0], "rot_y": 0.0,
+      "_comment": "Phase 4 §4.2: Ilse Kranich. face_player_range 0: sie bleibt nach Osten gewandt, die Laterne auf dem Mauerstein.",
+      "params": {"save_id": "npc_trader", "npc_id": "trader", "model": "ph_chr_kranich", "requires_flag": "trader_known",
+        "lantern_marker": "light_lantern", "walk_anim_speed": 1.36, "face_player_range": 0.0}}
   ],
   "waypoints": {
     "road_end": [15.8, 32.6],
@@ -130,16 +155,21 @@
     "dropoff": [1.75, 8.4],
     "evening_spot": [-1.4, 10.7],
     "tp_east": [15.6, -1.0],
-    "tp_north": [4.5, -14.0]
+    "tp_north": [4.5, -14.0],
+    "tp_elder": [-10.75, -15.9],
+    "trader_far": [-22.0, -14.0],
+    "trader_mid": [-16.0, -6.0],
+    "trader_spot": [-12.1, -2.6]
   },
   "waypoint_facing": {
     "_comment": "Blickrichtung (rot_y in Grad, 0 = +Z/Kamera) eines NPC, der an diesem Wegpunkt steht und nicht mit dem Spieler redet.",
-    "evening_spot": 15.0
+    "evening_spot": 15.0,
+    "trader_spot": 90.0
   },
   "signpost": {"pos": [-0.9, 15.4], "rot_y": -20.0, "text": "Hollerbrück", "font_size": 64, "pixel_size": 0.0021, "color": "#2a1f18", "surface_offset": 0.012},
   "fallen_log": {"pos": [2.2, 26.5], "rot_y": 8.0},
   "fence": {
-    "_comment": "Prototyp-Zaun (Süd mit Tor, Ost) – Ost- und Westseite für die größere Welt verlängert. Phase 3: Ostwiese und Birkenhang eingezäunt, Lücken = ruins (Hindernis fence_gap), Durchgang Alter Hof → Ostwiese = passages.",
+    "_comment": "Prototyp-Zaun (Süd mit Tor, Ost) – Ost- und Westseite für die größere Welt verlängert. Phase 3: Ostwiese und Birkenhang eingezäunt, Lücken = ruins (Hindernis fence_gap), Durchgang Alter Hof → Ostwiese = passages. Phase 4: Westmauer an Ilses Platz (x −11,5, z −5…−1) und der Zaun des Holunderwinkels (Süd mit Pförtchen obs_h_gate, West, Nord mit Lücke obs_h_gap_1).",
     "segments": [
       [[-11.5, 9.6], [-0.4, 9.6]],
       [[2.6, 9.6], [11.5, 9.6]],
@@ -159,7 +189,13 @@
       [[2.0, -20.0], [7.0, -20.0]],
       [[9.0, -20.0], [11.5, -20.0]],
       [[-2.0, -12.0], [-2.0, -15.0]],
-      [[-2.0, -17.0], [-2.0, -20.0]]
+      [[-2.0, -17.0], [-2.0, -20.0]],
+      [[-11.5, -5.0], [-11.5, -1.0]],
+      [[-11.5, -12.5], [-10.6, -12.5]],
+      [[-9.4, -12.5], [-2.0, -12.5]],
+      [[-11.5, -20.0], [-11.5, -12.5]],
+      [[-11.5, -20.0], [-8.0, -20.0]],
+      [[-6.0, -20.0], [-2.0, -20.0]]
     ],
     "gate_posts": [[-0.4, 9.6], [2.6, 9.6]],
     "_ruins": "Zaunlücken (Hindernis fence_gap, 2 m): pos = Mitte, rot_y = Richtung der Zaunlinie (lokal +X); Modell ph_prop_fence_iron_broken, repariert ph_prop_fence_iron.",
@@ -169,7 +205,8 @@
       {"obstacle": "obs_e_gap_3", "section": "east", "pos": [17.0, -12.0], "rot_y": 0.0},
       {"obstacle": "obs_n_gap_1", "section": "north", "pos": [1.0, -20.0], "rot_y": 0.0},
       {"obstacle": "obs_n_gap_2", "section": "north", "pos": [8.0, -20.0], "rot_y": 0.0},
-      {"obstacle": "obs_n_gap_3", "section": "north", "pos": [-2.0, -16.0], "rot_y": 90.0}
+      {"obstacle": "obs_n_gap_3", "section": "north", "pos": [-2.0, -16.0], "rot_y": 90.0},
+      {"obstacle": "obs_h_gap_1", "section": "elder", "pos": [-7.0, -20.0], "rot_y": 0.0}
     ],
     "_passages": "Offene Durchgänge (ph_prop_fence_passage, 2,4 m entlang lokal +X ab pos).",
     "passages": [
@@ -190,7 +227,7 @@
     {"pos": [3.5, -23.5], "rot_y": 70.0, "scale": 1.4},
     {"pos": [-17.0, -1.5], "rot_y": 200.0, "scale": 1.25},
     {"pos": [25.5, -6.0], "rot_y": 160.0, "scale": 1.2},
-    {"pos": [-6.5, -17.5], "rot_y": 30.0, "scale": 1.3},
+    {"pos": [-7.6, -23.4], "rot_y": 30.0, "scale": 1.3, "_comment": "Phase 4: aus dem Holunderwinkel gerückt (war −6,5 | −17,5)."},
     {"pos": [14.5, -16.0], "rot_y": 90.0, "scale": 1.2}
   ],
   "_birches": "Birkenhang (§4.1): 2 im Abschnitt, 4 dahinter.",
@@ -200,8 +237,23 @@
     {"pos": [-1.4, -22.2], "rot_y": 110.0, "scale": 1.1},
     {"pos": [6.6, -22.0], "rot_y": 300.0, "scale": 1.05},
     {"pos": [12.8, -21.4], "rot_y": 80.0, "scale": 0.95},
-    {"pos": [-4.8, -17.6], "rot_y": 160.0, "scale": 1.0}
+    {"pos": [-4.9, -22.9], "rot_y": 160.0, "scale": 1.0, "_comment": "Phase 4: aus dem Holunderwinkel gerückt (war −4,8 | −17,6)."}
   ],
+  "_elder_bushes": "Phase 4 §4.1: drei große Holundersträucher (ph_env_elder_bush) als Identität, einer über dem Pförtchen.",
+  "elder_bushes": [
+    {"pos": [-12.0, -11.9], "rot_y": 35.0, "scale": 0.95},
+    {"pos": [-12.4, -16.2], "rot_y": 150.0, "scale": 1.0},
+    {"pos": [-2.4, -20.9], "rot_y": 260.0, "scale": 1.05}
+  ],
+  "_phase4_props": "Phase 4 §4.2: Requisiten ohne Logik (Kollision nach colliders). on = Kind des Stations-Knotens, local = [x, z] auf der Platte (Höhe des Markers slot_corpse).",
+  "phase4_props": [
+    {"id": "wash_basin", "asset": "ph_prop_wash_basin", "pos": [-2.88, -4.98], "rot_y": 18.0},
+    {"id": "smoke_bowl", "asset": "ph_prop_smoke_bowl", "on": "morgue_table", "local": [0.55, -0.38], "rot_y": 0.0,
+      "_local": "= Ursprung des Wacholderrauchs von CorpseDecayVisual (Leiche auf slot_corpse, lokal 0,55 | −0,38)."},
+    {"id": "wall_ledge", "asset": "ph_prop_wall_ledge", "pos": [-12.0, -2.9], "rot_y": 90.0}
+  ],
+  "door_note": {"_comment": "Phase 4 §2.11 (5): Ilses Zettel an der Hüttentür (hüttenlokal x, y, z auf dem Türblatt), sichtbar ab trader_known bis zum ersten Treffen (tools_given).",
+    "local": [-0.62, 1.38, 2.1], "size": [0.15, 0.2, 0.01], "color": "#d8c8a0", "tilt_deg": -6.0},
   "forest": {
     "_comment": "Waldrand am Kutschweg.",
     "trees": [
@@ -298,12 +350,17 @@
     "ph_env_hedge_thorn": [{"shape": "box", "size": [4.0, 1.6, 0.9], "offset": [0.0, 0.8, 0.0]}],
     "ph_prop_fence_iron_broken": [{"shape": "box", "size": [2.0, 1.25, 0.3], "offset": [1.0, 0.62, 0.0]}],
     "ph_prop_fence_passage": [{"shape": "box", "size": [0.4, 1.5, 0.4], "offset": [0.17, 0.75, 0.0]}, {"shape": "box", "size": [0.4, 1.5, 0.4], "offset": [2.23, 0.75, 0.0]}],
-    "ph_prop_notice_board": [{"shape": "box", "size": [1.3, 2.0, 0.2], "offset": [0.0, 1.0, 0.0]}]
+    "ph_prop_notice_board": [{"shape": "box", "size": [1.3, 2.0, 0.2], "offset": [0.0, 1.0, 0.0]}],
+    "ph_prop_gate_small": [{"shape": "box", "size": [1.2, 1.4, 0.16], "offset": [0.0, 0.7, 0.0]}],
+    "ph_env_elder_thicket": [{"shape": "cylinder", "radius": 0.95, "height": 1.5, "offset": [0.0, 0.75, 0.0]}],
+    "ph_prop_pit_sunken": [{"shape": "box", "size": [1.1, 0.4, 1.95], "offset": [0.0, 0.2, 0.0]}],
+    "ph_env_elder_bush": [{"shape": "cylinder", "radius": 0.35, "height": 1.6, "offset": [0.0, 0.8, 0.0]}],
+    "ph_prop_wash_basin": [{"shape": "box", "size": [0.5, 0.83, 0.46], "offset": [0.0, 0.41, 0.0]}]
   },
   "walkable_bounds": {"min": [-11.2, -20.3], "max": [21.2, 25.2], "wall_height": 3.0, "wall_thickness": 1.0},
-  "_extra_walls": "Unsichtbare Wände (Höhe/Dicke wie walkable_bounds, mittig auf der Linie): hinter der Hütte, Wald östlich des Kutschwegs.",
-  "extra_walls": [[[-11.2, -12.5], [-2.0, -12.5]], [[11.2, 9.9], [11.2, 25.2]]],
-  "camera_bounds": {"min": [-7.0, -16.0], "max": [17.0, 23.0], "distance": 22.0, "zoom_min": 12.0, "zoom_max": 24.0},
+  "_extra_walls": "Unsichtbare Wände (Höhe/Dicke wie walkable_bounds, mittig auf der Linie): Wald östlich des Kutschwegs. Phase 4: die Sperre hinter der Hütte ersetzt der Zaun des Holunderwinkels mit dem Pförtchen.",
+  "extra_walls": [[[11.2, 9.9], [11.2, 25.2]]],
+  "camera_bounds": {"min": [-10.0, -17.5], "max": [17.0, 23.0], "distance": 22.0, "zoom_min": 12.0, "zoom_max": 24.0},
   "player_start": {"pos": [-4.4, -3.6], "rot_y": 0.0},
   "hut_interior": {"_comment": "Innenraum-Szene (docs §11, src/world/hut_interior/hut_interior.tscn) fern der Außenwelt; hut_door steht am Marker door_outside der Hütte.", "origin": [0.0, 0.0, -200.0]}
 }

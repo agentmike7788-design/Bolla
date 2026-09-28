@@ -183,7 +183,14 @@ func total_quality() -> int:
 	return total
 
 
+## CemeteryScore.rating() (Phase 4 §2.14: "Ehrwürdig" gated by decor and tending) when the world
+## has one; otherwise the graves-only Phase-2 rating (tests, fixture worlds).
 func rating() -> StringName:
+	var score := _first(SCORE_GROUP)
+	if score != null and score.has_method(&"rating"):
+		var gated: StringName = score.call(&"rating")
+		if gated != &"":
+			return gated
 	return CemeteryRating.rating(total_quality(), _economy())
 
 
