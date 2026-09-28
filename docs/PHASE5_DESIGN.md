@@ -1,8 +1,8 @@
 # Phase 5 – Crafting und Ressourcen – Vertrag v1
 
-Status: **v1 – Entwurf zur Benutzerfreigabe, danach verbindlich für die Umsetzung** · Verantwortlich: Agent 01 (Lead), Agent 02 (Game Design), Agent 14 (Crafting/Economy), Agent 08 (Godot Core), Agent 10 (Graveyard System)
+Status: **v1.1 – Entwurf zur Benutzerfreigabe (Vertragsfragen §14 beantwortet), danach verbindlich für die Umsetzung** · Verantwortlich: Agent 01 (Lead), Agent 02 (Game Design), Agent 14 (Crafting/Economy), Agent 08 (Godot Core), Agent 10 (Graveyard System)
 Baut auf `docs/PHASE4_DESIGN.md` (Vertrag v1, freigegeben 28.09.2026), `docs/PHASE3_DESIGN.md` und `docs/VERTICAL_SLICE_DESIGN.md` auf. Was dieses Dokument nicht ändert, gilt dort unverändert weiter. Referenz-Build: **69f8d49** (Gate G4 freigegeben).
-Gameplay-Werte sind **Vorschläge**; der Benutzer prüft sie beim Gate G5. ART STYLE LOCK „Gemaltes Diorama" ist aktiv: Phase 5 ändert den Stil nicht. Der Maler-Shader (`painted.gdshader`, `painted_common.gdshaderinc`, `painted_foliage.gdshader`) bleibt unverändert. Die freigegebenen Abschnitte I–IV (Alter Hof, Ostwiese, Birkenhang, Holunderwinkel) bleiben in Lage und Inhalt unverändert.
+Gameplay-Werte sind **Vorschläge**; der Benutzer prüft sie beim Gate G5. ART STYLE LOCK „Gemaltes Diorama" ist aktiv: Phase 5 ändert den Stil nicht. Der Maler-Shader (`painted.gdshader`, `painted_common.gdshaderinc`, `painted_foliage.gdshader`) bleibt unverändert. Die freigegebenen Abschnitte I–IV (Alter Hof, Ostwiese, Birkenhang, Holunderwinkel) bleiben unverändert. Ausnahmen (Benutzerentscheidung §14.2): der **Werkhof an der Hütte** mit genau einer versetzten Requisite und neu gesperrten Zier-Zellen (§4.1) sowie die **Ostpforte** im Ostzaun der Ostwiese (§4.2).
 
 **Benutzerentscheidungen (verbindlich, 28.09.2026)**
 - Inhalt, alle vier Teile:
@@ -13,6 +13,7 @@ Gameplay-Werte sind **Vorschläge**; der Benutzer prüft sie beim Gate G5. ART S
 - **Münzüberschuss (G4-Befund B1) wird mit Phase 5 gelöst.** Ein würdevoller Spieler gibt bis zum Phasenende den größten Teil aus, ohne sich arm zu fühlen (Rechnung §2.8).
 - **Pietät-Fix aus Phase 4 (G4-Befund B2):** Eine verwertete Leiche bekommt keinen „Voll hergerichtet"-Bonus (+3 Pietät) mehr. Die Grabqualität zählt weiter (§2.9).
 - **Crafting-Tiefe: mittel.** Wenige klare Ketten, 13 neue Rezepte plus 3 Steinformen. Keine Qualitätsstufen bei Items, nur bei der Grabstein-Gestaltung.
+- **Antworten auf die Vertragsfragen (28.09.2026, §14):** keine neuen Grabstellen in Phase 5 · Stationen **neben der Hütte** (Werkhof), Am Bruch bleibt Rohstoffgebiet · Jahreszahl **1834** · Osric führt den Bruch in einem Satz als Lorenz' alten Werkplatz ein, ohne neuen Hinweis.
 
 **Regeln für alle Agents** (wie Phase 3/4)
 - Klassen, Signaturen, Dateipfade, Signale und Datenformate hier sind **fest**. Änderungen nur über den Lead.
@@ -33,7 +34,7 @@ Gameplay-Werte sind **Vorschläge**; der Benutzer prüft sie beim Gate G5. ART S
 Freischaltung (Friedhof vollendet) → Osric erzählt vom Bruch → Steinbruchbrief kaufen (Münzen)
   → AM BRUCH: Ostpforte aufschließen · Lehm stechen · Flachs raufen · Kräuter · (Findlinge brechen → Steinbruch)
   → IM SCHLAG: Erlen fällen (Axt) · am Holunder Beeren pflücken
-  → BAUPLÄTZE: Steinmetzbank · Webstuhl · Esse bauen (Material + Münzen)
+  → WERKHOF AN DER HÜTTE: Steinmetzbank · Webstuhl · Esse auf ihren Bauplätzen bauen (Material + Münzen)
   → ESSE: Meiler (Holzkohle, läuft allein) → Eisen schmelzen → Beschläge → Werkzeug Stufe 1/2
   → WEBSTUHL: Flachs → Garn → Leinen / Totenhemd
   → STEINMETZBANK: Grab wählen → Form × Inschrift × Zierde → Stein hauen → am Grab setzen
@@ -96,14 +97,14 @@ Dann: Flag `names_in_stone_complete`, `chapter_completed(&"names_in_stone")`, Ab
 ## 2. Spielwerte (Vorschläge, alle in `data/`)
 
 ### 2.1 Stationen (`data/stations/<id>.tres` – `StationData`, `data/config/workshop_config.tres` – `WorkshopConfig`)
-**Bauweise – Entscheidung: feste Bauplätze statt freier Platzierung.** Am Bruch liegen drei abgesteckte, eingewachsene Grundflächen (Lorenz' alter Werkplatz). Der Spieler baut dort per Bauplatz-Panel. *Begründung:* Freie Platzierung bräuchte Wege- und Kollisionsregeln, Bau-Masken-Zellen außerhalb der Maske und Bildschirmfotos ohne feste Lage. Der Alte Hof neben der Hütte ist dicht belegt (Tisch, Werkbank, Holz- und Steinhaufen, Pfad zum Holunderwinkel, Ilses Zugang an der Westmauer). Eine Station dort hätte freigegebene Elemente verschoben. Am Bruch liegen die Stationen neben ihren Rohstoffen. Die Werkbank bleibt, wo sie ist.
+**Bauweise – Entscheidung: feste Bauplätze statt freier Platzierung, als Werkhof um die Hütte (Benutzerentscheidung §14.2).** Um die Hütte liegen drei abgesteckte Bauplätze. Der Spieler baut dort per Bauplatz-Panel. *Begründung feste Plätze:* Freie Platzierung bräuchte Wege- und Kollisionsregeln zur Laufzeit und Bildschirmfotos ohne feste Lage. *Begründung Werkhof:* Hütte, Truhe, Bett, Werkbank und Leichentisch bleiben das Zentrum. Handwerk passiert dort, wo der Tag beginnt und endet. Rohstoffe holt man als Gang: zum Bruch ≈ 28 m (≈ 9 s bei 3,2 m/s), zum Schlag ≈ 22 m. Wege: Hüttentür ↔ Webstuhl ≈ 4 m, ↔ Steinmetzbank ≈ 7 m, ↔ Esse ≈ 9 m (westlich um die Hütte). Lage, versetzte Elemente und Routen: §4.1.
 
-| Station | `id` | Bauplatz (x | z, rot_y) | Footprint | Kosten | Min | Panel | Besonderes |
-|---|---|---|---|---|---|---|---|---|
-| Werkbank | `workbench` | bestehend (−2,5 | −8,4) | – | – (vorhanden) | – | `crafting` | + 2 Rezepte (§2.4) |
-| Steinmetzbank | `mason` | `site_mason` (24,0 | −2,8), 90° | 2,6 × 1,6 m | 6 stone, 3 wood, **15 Münzen** (Meißelsatz aus Hollerbrück) | 90 | `stone_design` | Ablage für **3 fertige Steine** (Marker `stone_slot_1…3`) |
-| Webstuhl | `loom` | `site_loom` (24,2 | 3,4), 90° | 2,2 × 1,8 m | 8 wood, 2 iron_fittings, **10 Münzen** (Webkamm und Schäfte) | 90 | `crafting` | unter einem kleinen Schutzdach |
-| Esse | `forge` | `site_forge` (28,8 | −2,6), 0° | 2,8 × 2,2 m (+ Meiler Ø 1,6 m östlich) | 10 stone, 6 clay, 2 iron_fittings, **25 Münzen** (Amboss und Blasebalg) | 120 | `crafting` | **Meiler** als einziger Hintergrund-Auftrag; Glut-Licht |
+| Station | `id` | Bauplatz (x | z, rot_y) | Footprint (x × z) | Zugang (1,0 m) | Kosten | Min | Panel | Besonderes |
+|---|---|---|---|---|---|---|---|---|---|
+| Werkbank | `workbench` | bestehend (−2,5 | −8,4) | – | bestehend | – (vorhanden) | – | `crafting` | + 2 Rezepte (§2.4) |
+| Steinmetzbank | `mason` | `site_mason` (−0,5 | −10,6), 0° | 2,6 × 1,6 m | Süd | 6 stone, 3 wood, **15 Münzen** (Meißelsatz aus Hollerbrück) | 90 | `stone_design` | Ablage für **3 fertige Steine** (Marker `stone_slot_1…3`, Ostende) |
+| Webstuhl | `loom` | `site_loom` (−8,6 | −1,3), 0° | 2,2 × 1,8 m | Süd | 8 wood, 2 iron_fittings, **10 Münzen** (Webkamm und Schäfte) | 90 | `crafting` | unter einem kleinen Pultdach |
+| Esse | `forge` | `site_forge` (−7,3 | −11,1), 0° | 2,6 × 2,0 m (+ Meiler Ø 1,4 m bei (−4,6 | −11,4)) | West (Gang zum Pförtchen) | 10 stone, 6 clay, 2 iron_fittings, **25 Münzen** (Amboss und Blasebalg) | 120 | `crafting` | **Meiler** als einziger Hintergrund-Auftrag; Glut-Licht |
 
 - Bauplatz-Prompt: „[E] Bauplatz: Steinmetzbank" → Panel mit Kosten (vorhanden/fehlt), Dauer, Vorschaubild, Knopf „Bauen (90 Min)". Fehlt etwas → Knopf gedimmt mit „Es fehlt: 2 Stein, 5 Münzen". Bau = TimedAction (nicht abbrechbar). Verbraucht wird **erst am Ende**, atomar (Items + Münzen). Danach ersetzt die Station das Bauplatz-Modell.
 - Stationen lassen sich nicht abreißen oder versetzen.
@@ -231,7 +232,7 @@ Beispiel Meisterstein komplett: 150 + 20 + 10 + 25 = **205 Min**, 3 Werkstein, 2
 | `i_fever` | Die Hitze ist vorbei | „{name}" · „{born} – {died}" · „Die Hitze ist vorbei. Schlaf kühl." | `fever`, `poisoned` |
 | `i_road` | Mitten im Weg | „{name}" · „{born} – {died}" · „Mitten im Weg. Nun angekommen." | `coach_accident`, `fall_hayloft` |
 | `i_garden` | Was du gesät hast | „{name}" · „{born} – {died}" · „Was du gesät hast, blüht noch." | Geschichte `s1_quendel` |
-- **Daten:** `{died}` = Tag der Ankunft (Spieltag aus `CorpseRecord.arrival_total_minutes` mit der Umrechnung des TimeManagers; ohne Wert: `buried_day`) als Kalenderdatum: Spieltag 1 = **3. Gilbhart 1834** (alte deutsche Monatsnamen: Hartung, Hornung, Lenzing, Ostermond, Wonnemond, Brachet, Heuet, Ernting, Scheiding, Gilbhart, Nebelung, Julmond; echte Monatslängen). `{born}` = „* " + (Todesjahr − Alter), also nur das Jahr. Beispiel: „† 8. Nebelung 1834", „* 1771". Jahr und Startdatum stehen in `StoneConfig.calendar` (Frage §14.3).
+- **Daten:** `{died}` = Tag der Ankunft (Spieltag aus `CorpseRecord.arrival_total_minutes` mit der Umrechnung des TimeManagers; ohne Wert: `buried_day`) als Kalenderdatum: Spieltag 1 = **3. Gilbhart 1834** (alte deutsche Monatsnamen: Hartung, Hornung, Lenzing, Ostermond, Wonnemond, Brachet, Heuet, Ernting, Scheiding, Gilbhart, Nebelung, Julmond; echte Monatslängen). `{born}` = „* " + (Todesjahr − Alter), also nur das Jahr. Beispiel: „† 8. Nebelung 1834", „* 1771". Jahr und Startdatum stehen in `StoneConfig.calendar` (Benutzerentscheidung §14.3).
 - Der Text wird beim Hauen **festgeschrieben** (`StoneDesign.text`). `{name}` ist der Registername ohne den Zusatz „ (?)" – S5 heißt vor der Erkenntnis im Stein also „Lorenz Aschau". Wird S5 danach in „Kaspar Dorn" umbenannt, behält ein schon gehauener Stein den alten Namen. Ein neuer Stein ist möglich (gleiche Regeln). Der Geist S5 hat dafür eine Zeile (§2.5 Geister).
 - Namen länger als 22 Zeichen werden in zwei Zeilen umbrochen; höchstens 4 Zeilen je Stein.
 
@@ -268,7 +269,7 @@ Alle +1, 25 Min, ohne Material. Die Wahl ist Ausdruck, keine Optimierung.
 | Eisenbeschlag | Osric (bestehend) | 3 | – | Stationen, Werkzeug Stufe 1, Meisterstein |
 | **Blattgold** | Ilse (Laden) | **6** | 2 je Nacht | Vergolden |
 | Leinen / Wacholder | Osric 3/2 · Ilse 2/1 (bestehend) | – | – | unverändert |
-- Osric `p5_intro` (einmal ab `workshop_open`, Leittext, P6 darf glätten): „Lorenz hat seine Steine selbst gehauen, wusstest du das? Drüben am Bruch, hinter der Ostwiese. Seit er fort ist, wachsen Nesseln über seinem Werkplatz. Die Gemeinde verkauft dir den Brief für den Bruch. Zwanzig Münzen, die Lehmkuhle ist dabei." · Spitzhacke: „Eine alte Spitzhacke vom Wegebau. Vierzehn Münzen. Die Spitze ist stumpf, aber ehrlich." · Stahlstab: „Guter Stahl aus der Stadt. Sechs Münzen. Frag nicht, was der Schmied in Hollerbrück dafür nimmt."
+- Osric `p5_intro` (einmal ab `workshop_open`, Leittext, P6 darf glätten): „Drüben am Bruch, hinter der Ostwiese, war Lorenz' alter Werkplatz. Da hat er seine Steine selbst gebrochen. Die Gemeinde verkauft dir den Brief dafür, zwanzig Münzen, die Lehmkuhle ist dabei." (Benutzerentscheidung §14.4: nur dieser eine Bezug, kein Hinweis im Merkbuch.) · Spitzhacke: „Eine alte Spitzhacke vom Wegebau. Vierzehn Münzen. Die Spitze ist stumpf, aber ehrlich." · Stahlstab: „Guter Stahl aus der Stadt. Sechs Münzen. Frag nicht, was der Schmied in Hollerbrück dafür nimmt."
 - Ilse beim Blattgold (einmal): „Aus dem Nachlass eines Vergolders. Er hätte gewollt, dass es glänzt."
 - **Räucherkräuter** (`herb_bundle`): gelten beim Räuchern wie `juniper` (`PrepConfig.balm_items = [juniper, herb_bundle]`, gleiche Wirkung). Selbst gebundene Kräuter ersetzen gekauften Wacholder. Das ist nur bei künftigen Leichen von Nutzen.
 - **Kein Verkauf** von Phase-5-Waren (Steine, Leinen, Eisen). Das Dorf als Abnehmer kommt in Phase 7/10.
@@ -326,22 +327,22 @@ Alle +1, 25 Min, ohne Material. Die Wahl ist Ausdruck, keine Optimierung.
 | `Workshop` | `Workshop` | `workshop`, `saveable` | `workshop` / **30** |
 | `Gathering` | `GatherManager` | `gathering`, `saveable` | `gathering` / **25** |
 | `Stonemasonry` | `Stonemasonry` | `stonemasonry`, `saveable` | `stonemasonry` / **35** |
-Entitäten: `Entities/site_mason|site_loom|site_forge` (`BuildSite`), `Entities/station_mason|station_loom|station_forge` (bestehendes `Workbench` mit `station` + `requires_built`), `Entities/gather_*` (`GatherNode`, **nicht** einzeln saveable – Zustand im `GatherManager`), `Entities/obs_b_gate`, `obs_q_boulder_1…3` (`ClearableObstacle`). Keine neuen Autoloads. `Graveyard` (10) speichert `design` im GraveRecord.
+Entitäten (Werkhof §4.1): `Entities/site_mason|site_loom|site_forge` (`BuildSite`), `Entities/station_mason|station_loom|station_forge` (bestehendes `Workbench` mit `station` + `requires_built`), `Entities/gather_*` (`GatherNode`, **nicht** einzeln saveable – Zustand im `GatherManager`), `Entities/obs_b_gate`, `obs_q_boulder_1…3` (`ClearableObstacle`). Keine neuen Autoloads. `Graveyard` (10) speichert `design` im GraveRecord.
 
 ### 3.2 Module & Besitz (Phase 5)
 | Modul | Besitzt (Pfade) |
 |---|---|
 | **Lead** (W0 + laufend) | `project.godot`, `src/core/*` (EventBus, Database), alle **Datenklassen ✦**, alle **Stubs** (bis zur Übergabe), `tests/run_tests.gd`, `tests/framework/*`, `tests/fixtures/*` (inkl. **`saves_v3/*`**, `phase5/*`), `tests/integration/test_saves_v3_load.gd`, `tests/unit/test_phase5_scaffold.gd`, `docs/*`, `CLAUDE.md` |
-| **P1 Werkstatt & Stationen** | `src/systems/workshop/{workshop,workshop_rules}.gd`, `src/entities/build_site/*`, `src/entities/workbench/*` (Station-Erweiterung: `requires_built`, Panel aus `StationData`, Hintergrund-Auftrag), `data/stations/*`, `data/config/workshop_config.tres`, `data/recipes/{charcoal,iron_bar,iron_fittings_forge,yarn,linen_woven,burial_gown_loom,ink,herb_bundle}.tres`, `src/systems/crafting/*` (nur Werkzeug-Ausgabe/-Eingabe + `tool_tier_changed`), `tests/unit/{test_workshop,test_crafting}.gd` |
+| **P1 Werkstatt & Stationen** | `src/systems/workshop/{workshop,workshop_rules}.gd`, `src/systems/decoration/decoration_manager.gd` (nur `evict_rects`, §5.2), `src/entities/build_site/*`, `src/entities/workbench/*` (Station-Erweiterung: `requires_built`, Panel aus `StationData`, Hintergrund-Auftrag), `data/stations/*`, `data/config/workshop_config.tres`, `data/recipes/{charcoal,iron_bar,iron_fittings_forge,yarn,linen_woven,burial_gown_loom,ink,herb_bundle}.tres`, `src/systems/crafting/*` (nur Werkzeug-Ausgabe/-Eingabe + `tool_tier_changed`), `tests/unit/{test_workshop,test_crafting}.gd` |
 | **P2 Rohstoffe, Sammeln & Hindernisse** | `src/systems/gathering/{gather_manager,gather_rules}.gd`, `src/entities/gather_node/*`, `data/gather/*`, `src/systems/expansion/expansion_manager.gd` (Arbeitsabschnitte: keine Plots, kein Ruf), `src/entities/clearable/clearable.gd` (Werkzeug-Sperre, Minuten), `data/sections/{bruch,quarry}.tres`, `data/clearables/*` (Werkzeugfelder + neu `boulder`, `gate_east`), `data/items/{flax,yarn,clay,iron_ore,iron_bar,charcoal,workstone,elderberries,herbs,ink,herb_bundle,gold_leaf,steel_rod}.tres`, `tests/unit/{test_gathering,test_expansion}.gd` |
 | **P3 Werkzeuge & Inventar** | `src/systems/inventory/inventory.gd` (Werkzeuggürtel), `src/systems/tools/tool_rules.gd`, `src/entities/player/{player,player_action_runner}.gd` (nur `tool_tier`), `src/entities/grave/grave_plot.gd` (nur Minuten über Werkzeug), `src/entities/resource_node/resource_node.gd` (unverändert außer Minutenquelle), `data/config/{action_config,tool_config,player_config}.tres`, `data/items/{shovel_iron,shovel_master,axe_iron,axe_master,pickaxe_iron,pickaxe_master}.tres`, `data/recipes/{shovel_iron,axe_iron,shovel_master,axe_master,pickaxe_master}.tres`, `tests/unit/{test_inventory,test_tools,test_player}.gd` |
 | **P4 Grabstein-Gestaltung, Qualität & Geister** | `src/systems/stone/{stone_design,stone_design_rules,stone_calendar,stonemasonry}.gd`, `data/stone/**`, `data/config/stone_config.tres`, `src/systems/graveyard/{graveyard,grave_record,grave_quality}.gd`, `data/config/economy_config.tres`, `src/entities/grave/grave_plot_visuals.gd` + Stein-Setzen in `grave_plot.gd` (**Absprache mit P3:** P3 ändert nur die Minuten-Zeilen, P4 den Rest), `src/systems/ghosts/{ghost_mood,ghost_manager}.gd`, `data/ghosts/ghost_lines.tres`, `data/config/{ghost_config,reputation_config}.tres`, `tests/unit/{test_stone_design,test_stonemasonry,test_grave_quality,test_graveyard,test_ghosts}.gd` |
 | **P5 Assets** | `tools/blender/{asset_stations_phase5,asset_env_phase5,asset_stones_phase5}.py` (neu), `tools/blender/asset_items.py`, `tools/blender/build_all.py`, `assets/models/**` (nur neue Phase-5-Dateien), `art_source/blender/**` (Phase 5), `tests/unit/test_assets_phase5.gd`, `docs/reviews/phase5_assets/*` |
 | **P6 Handel, Dialog, Speichern & Übertrag** | `src/systems/save/{save_migration,save_file_io,save_manager}.gd`, `data/dialogue/{carter,trader}.tres`, `src/systems/dialogue/dialogue_actions.gd` (nur `coins_spent` bei `take_item:coin`), `src/systems/utilization/night_trade.gd` (Blattgold, `coins_spent`), `data/config/{trader_config,piety_config,prep_config}.tres`, `src/systems/corpse/{corpse_care,corpse_prep}.gd` (**Pietät-Fix**, `balm_items`), `src/systems/game_state/game_state.gd` (Stats), `tests/unit/{test_save,test_save_migration,test_dialogue,test_night_trade,test_corpse_prep,test_piety,test_game_state}.gd`, `tests/integration/test_phase4_save_upgrade.gd` (neu) |
-| **W-Welt** (W2) | `data/world/graveyard_layout.json`, `src/world/graveyard/*` (Builder, neu `graveyard_build_phase5.gd`, `graveyard_shots_phase5.gd`), `src/world/camera/camera_rig.gd` (nur Grenzen), `tools/blender/asset_ground_graveyard.py` (Bodenerweiterung Ost), `tests/integration/{test_graveyard_world,test_phase5_loop}.gd`, `docs/reviews/phase5_round1/*` |
+| **W-Welt** (W2) | `data/world/graveyard_layout.json` (inkl. **Werkhof und versetzter Holzhaufen**, §4.1), `src/world/graveyard/*` (Builder, neu `graveyard_build_phase5.gd`, `graveyard_shots_phase5.gd`, Bau-Maske und Gras neu gebacken), `src/world/camera/camera_rig.gd` (nur Grenzen), `tools/blender/asset_ground_graveyard.py` (Bodenerweiterung Ost), `tests/integration/{test_graveyard_world,test_phase5_loop}.gd`, `docs/reviews/phase5_round1/*` |
 | **W-UI** (W2) | `src/ui/**` (neu `panels/{build_site_panel,stone_design_panel,stone_preview}.gd`, `phase5_texts.gd`), `assets/ui/**`, `tools/ui/*`, `src/debug/*` (neu `debug_commands_phase5.gd`; außer `asset_preview.gd`, `screenshot_capture.gd`), `tests/unit/{test_ui,test_objective,test_ui_phase5}.gd`, `tests/integration/test_ui_flow.gd` |
 | **W3 QA** | `tests/integration/{phase3_bot,phase4_bot,phase5_bot,test_phase3_playthrough,test_phase4_playthrough,test_phase5_playthrough,test_phase5_qa,test_save_fuzzer}.gd`, `docs/reviews/phase5_wip/*` |
-| **Eingefroren** | `src/world/art_prototype/*`, `src/entities/player/player_proto.*`, `data/art_prototype/*`, **Maler-Shader** (`painted.gdshader`, `painted_common.gdshaderinc`, `painted_foliage.gdshader`), `data/atmosphere/*`, `src/world/hut_interior/*`, Abschnitte I–IV im Layout (Plots, Zaun außer der Ostpforte, Hindernisse, Pflegestellen) |
+| **Eingefroren** | `src/world/art_prototype/*`, `src/entities/player/player_proto.*`, `data/art_prototype/*`, **Maler-Shader** (`painted.gdshader`, `painted_common.gdshaderinc`, `painted_foliage.gdshader`), `data/atmosphere/*`, `src/world/hut_interior/*`, Abschnitte I–IV im Layout (Plots, Zaun außer der Ostpforte, Hindernisse, Pflegestellen, alle Requisiten außer `res_wood`), **Hütte, Leichentisch, Werkbank, Pförtchen** |
 
 ✦ **Datenklassen (W0, Lead):** `StationData`, `WorkshopConfig`, `GatherNodeData`, `ToolConfig`, `StoneShapeData`, `InscriptionData`, `OrnamentData`, `StoneConfig`, `StoneDesign` (Wertobjekt). Erweiterungen: `ItemData` (+ `Category.MATERIAL`, `tool_kind`, `tool_tier`), `RecipeData.background`, `ClearableData` (+ `tool_kind`, `min_tier`), `SectionData.is_burial`, `ActionConfig` (+ `tool_tier_factors`, `action_tools`, `tool_minutes`), `PlayerConfig.inventory_slots`-Default 20, `EconomyConfig` (+ Formen in `marker_quality`, `quality_max 19`), `GhostLines` (+ `nameless`, `by_design`), `ReputationConfig.event_points` (+ `master_stone`), `PietyConfig.full_prep_requires_unharvested`, `PrepConfig.balm_items`, `TraderConfig.shop`-Default (+ `gold_leaf`).
 Bei nur fünf Agents übernimmt P1 zusätzlich P6.
@@ -410,8 +411,10 @@ func job_of(station_id: StringName) -> Dictionary     # {} | {recipe, end_total,
 func collect(station_id: StringName, inv: Inventory) -> int   # Ertrag ins Inventar (voll → 0, Auftrag bleibt)
 func goal_progress() -> Dictionary; func check_goal() -> void # Kapitel §1.5 einmalig
 func apply_morning(day: int) -> void                  # idempotent: workshop_open ab unlock_flag
-func save_state() -> Dictionary; func load_state(data: Dictionary) -> void; func post_load() -> void   # post_load: workshop_open sofort, wenn unlock_flag
-class_name BuildSite extends Node3D                  # Entities/site_<id>; sichtbar ab workshop_open ∧ Abschnitt bruch frei ∧ nicht gebaut
+func save_state() -> Dictionary; func load_state(data: Dictionary) -> void; func post_load() -> void   # post_load: workshop_open sofort, wenn unlock_flag; Zier im Werkhof räumen (§5.2)
+@export var workyard_rects: Array[Rect2] = []   # vom Builder aus layout.workyard.blocked_rects (Footprint + Rand + Zugang)
+# DecorationManager (P1, nur Ergänzung): func evict_rects(rects: Array[Rect2]) -> Dictionary   # {decor_id: Anzahl} abgebaut, decor_changed je Stück
+class_name BuildSite extends Node3D                  # Entities/site_<id> (Werkhof); sichtbar ab workshop_open ∧ nicht gebaut
 @export var station_id: StringName
 func request_build() -> void                          # Panel: TimedAction build_minutes (nicht abbrechbar) → Workshop.build
 # Workbench (P1-Erweiterung): @export var requires_built: bool = false  # unsichtbar + ohne Kollision bis Workshop.is_built(station)
@@ -552,43 +555,76 @@ Keine neuen Tasten. Panels über [E] an Stationen/Bauplätzen, Esc schließt. Im
 
 ## 4. Welt (W-Welt)
 
-### 4.1 Am Bruch (neuer Arbeitsbereich östlich der Ostwiese)
+### 4.1 Werkhof an der Hütte (Benutzerentscheidung §14.2)
+**Fest bleiben:** Hütte (−5,6 | −7,2; Ecken NW −8,66|−8,36 · NO −3,81|−9,94 · SO −2,54|−6,04 · SW −7,39|−4,46), Leichentisch (−1,6 | −5,4), Werkbank (−2,5 | −8,4), Pförtchen zum Holunderwinkel (−10,0 | −12,5), Waschschüssel, Kiste, Schaufel-Requisite, Steinhaufen `res_stone`, Ilses Zugangsstreifen, alle Pflegestellen, Spielerstart.
+```
+ z −12,5 ══Zaun Holunderwinkel══[Pförtchen x −10,6…−9,4]════════════╗ z −12 ═Zaun═[Durchgang Birkenhang x 2,5…6,5]═
+         │ Gang   │ ESSE (−7,3|−11,1)    Meiler (−4,6|−11,4)         ║  STEINMETZBANK (−0,5|−10,6)  ┆ Route   │ plot_01
+         │ x −11,2│ Zugang West                                      ║  Zugang Süd                  ┆ x 0,8…2,4│ (3,6|−8,2)
+         │ …−8,6  │           ┌───────── HÜTTE ─────────┐            ║  Werkbank (−2,5|−8,4)        ┆
+         │ Stein- │           │  (Dach, fest)           │            ║  HOLZHAUFEN neu (0,0|−7,8)   ┆
+         │ haufen │  Kiste    └──── Tür (−5,67|−4,5) ───┘  Tisch (−1,6|−5,4) · Schüssel
+  Ilse ▌ │ Route z −3,86…−2,2 (1,66 m) zwischen Hütten-SW-Ecke und Webstuhl ──→ Tür
+         │ WEBSTUHL (−8,6|−1,3), Zugang Süd            Pfad → Tor
+         │ dirt_y07 (−9,6|−2,6) bleibt · Eiche (−7,6|3,2) bleibt
+```
+**Plätze** (Maße §2.1): Die Steinmetzbank steht nordöstlich neben der Werkbank, östlich der Hütte, und ist von der Kamera aus frei sichtbar. Die Esse steht nördlich der Hütte am Holunderwinkel-Zaun (0,1 m vor der Zaunkante, 0,27 m vor dem Hüttenrand). Ihr Zugang liegt im bestehenden Gang zum Pförtchen: Der Spieler steht an der Esse **westlich** der Hütte und bleibt sichtbar. Kamin, Rauch und Glut ragen über das Dach. Der Meiler steht hinter der Hütte; sichtbar ist nur sein Rauch, die Interaktion („Holzkohle holen") läuft an der Esse. Der Webstuhl steht südwestlich vor der Hütte, links der Tür, mit Blick zur Kamera.
+
+**Versetzte bzw. geänderte Elemente (vollständig – alles andere im Alten Hof bleibt bitgleich):**
+| # | Element (Layout-id) | vorher | nachher | Δ | Grund |
+|---|---|---|---|---|---|
+| V1 | Holzhaufen `res_wood` (Entity `resource_node`, `ph_prop_wood_pile`, rot 100° bleibt) | (−1,2 | −9,4) | **(0,0 | −7,8)** | 2,0 m | Er lag im Zugang (Süd) der Steinmetzbank. Neu: 0,4 m östlich des Werkbank-Zugangs, 1,7 m Abstand zum Grabring von `plot_01`, 1,9 m nördlich des Leichentischs |
+| V2 | Zier-Zellen der Bau-Maske unter den 3 Footprints + `station_margin 0,6` + Zugang 1,0 m + Meiler (`workyard.blocked_rects`) | Abschnitt `yard` (Zier erlaubt) | gesperrt (Stationen) bzw. ROUTE (Zugänge) | – | Stationen brauchen feste Fläche. Dort schon platzierte Zier wird beim Laden geräumt (§5.2) |
+| V3 | Gras unter Footprints und Zugängen | gebacken | entfernt (`keep_out_station`), `grass.scn` neu gebacken | – | wie bei allen Stationen |
+| – | Pflegestellen | – | **keine versetzt** (`dirt_y07` bleibt 0,4 m hinter dem Webstuhl in der Route, `dirt_y08` bleibt in der Route östlich der Steinmetzbank) | – | Pflegestellen dürfen auf Routen liegen (Phase 3) |
+W-Welt darf die drei Bauplätze um höchstens ±0,3 m schieben, wenn die Routen-Prüfung das verlangt, und meldet es. Weitere Versetzungen braucht es nicht, sonst fragt W-Welt beim Lead nach.
+
+**Routen (Bau-Maske ROUTE, Breite ≥ 1,5 m, von W-Welt per Flood-Fill geprüft):**
+- Hüttentür → Pförtchen: zwischen Hütten-SW-Ecke (Rand 0,6 m) und Webstuhl-Rückseite z −3,86…−2,2 (1,66 m), dann der Gang x −11,2…−8,6 nach Norden (am Steinhaufen so schmal wie in Phase 4, unverändert); vor dem Pförtchen bleiben 1,2 m frei, die Esse beginnt bei x −8,6. Alternativ westlich um den Webstuhl über Ilses Streifen: x −11,2…−9,7 (1,5 m).
+- Hüttentür → Birkenhang-Durchgang (Hecke x 2,5…6,5, z −12): östlich der Steinmetzbank x 0,8…2,38 (Grabring `plot_01`) = 1,58 m.
+- Hüttentür → Tor / Ostwiese / Ostpforte: unverändert (Erdweg, Leichentisch, Gräber).
+- Der Streifen hinter der Hütte (zwischen Esse, Meiler und Steinmetzbank) ist **keine** Route. Hütte und Zaun lassen dort ≤ 2,6 m, und das Dach verdeckt ihn. Von der Esse zur Steinmetzbank geht man südlich um die Hütte (≈ 18 m, ≈ 6 s).
+
+**Licht & Rauch (Budget §9):** Esse-Glut: 1 OmniLight `#E07A3A`, Energie 0,5, Reichweite 3,5 m, **ohne Schatten**, leichtes Flackern, nur wenn gebaut, Gruppe `warm_lights`. Sie zählt nicht zu den ≤ 4 Schattenlichtern; die Hüttenlaterne (Südseite, mit Schatten) bleibt unverändert. Die Glut reicht nicht in den Holunderwinkel (Abstand zu `h_04` ≈ 3,8 m) und leuchtet nicht in den Innenraum (Innenraum ist eine eigene Szene fern der Außenwelt). Rauch: Esse-Kamin 3 + Meiler 3 Partikel (`CPUParticles3D`, Wacholderrauch-Textur warmgrau getönt, `visibility_range_end 40 m`), zusammen mit den Verfallseffekten ≤ 60.
+
+**Vorher/Nachher (G5):** W-Welt rendert den Alten Hof aus derselben Kamera: vorher mit Build `69f8d49` (eigener Worktree, nur lesen), nachher mit leeren Bauplätzen und nachher mit gebautem Werkhof → `p5_00a/b/c` (§11).
+
+### 4.2 Am Bruch (Rohstoffgebiet östlich der Ostwiese)
 ```
             z −12 ┌──────── Bruchkante (Felswand ph_env_quarry_face, 9 m) ────────┐
                   │  Erzader        Werkstein 1        Werkstein 2   Bruchstein   │  Steinbruch `quarry`
                   │  (24,6|−9,6)    (26,8|−9,4)        (29,2|−9,6)   (30,4|−8,0)   │
             z −6,5│   Findling 1 ·· Findling 2 ·· Findling 3  (24,2 / 26,8 / 29,4) │  ← gesperrt bis gebrochen
-                  │ Steinmetzbank (24,0|−2,8)          Esse (28,8|−2,6) + Meiler   │
+                  │ (leere, eingewachsene Steinplatte 24,0|−2,8 – Kulisse)          │
  Ostwiese  x 21,5 ▌ Ostpforte (21,5|0,0)                                           │  Arbeitsbereich `bruch`
-  (Zaun bleibt)   │ Webstuhl (24,2|3,4)   Flachsbeete (26,4 / 28,2 / 30,0 | 1,8)   │
+  (Zaun bleibt)   │                       Flachsbeete (26,4 / 28,2 / 30,0 | 1,8)   │
                   │ Kräuter (23,0|8,2)     Lehmkuhle (28,6|6,6)    Kräuter (30,6|8,4)│
             z 9,6 └────────────── Hecke / Bruchkante Süd ──────────────────────────┘
                   x 21,5                                                       x 31,5
 ```
 - Abschnitt **`bruch`** (Rechteck x 21,5…31,5, z −6,5…9,6; `is_burial false`, `counts_for_cemetery false`, `decor_cap 0`, `requires_flag bruch_license`, Text „Die Pforte ist zu. Osric weiß, wer den Schlüssel hat."): Hindernis `obs_b_gate` (Kind `gate_east`, „Ostpforte / aufschließen", 10 Min, Modell `ph_prop_gate_small`/`_open` auf 1,6 m Breite skaliert).
 - Abschnitt **`quarry`** (x 21,5…31,5, z −12…−6,5; `requires_section bruch`, sonst wie `bruch`): Hindernisse `obs_q_boulder_1…3` (Kind `boulder`, „Findling / brechen", 60 Min Basis, Spitzhacke ≥ 1, Ertrag 3 stone). Die Sammelstellen im Steinbruch sind bis zur Freigabe **logisch** gesperrt (Prompt „Findlinge versperren den Weg."). Die Findlinge liegen sichtbar davor; eine lückenlose Kollisionssperre ist nicht nötig.
-- **Ostpforte:** Das Zaunstück [[21,5, 3,0], [21,5, −3,0]] der Ostwiese wird zu [[21,5, 3,0], [21,5, 0,8]] + Pforte (1,6 m) + [[21,5, −0,8], [21,5, −3,0]]. Das ist der einzige Eingriff am freigegebenen Abschnitt. Die Pflegestelle `dirt_e02` (20,0 | −1,2) bleibt; der Zugang vor der Pforte (1,0 m) wird ROUTE in der Bau-Maske.
+- **Ostpforte:** Das Zaunstück [[21,5, 3,0], [21,5, −3,0]] der Ostwiese wird zu [[21,5, 3,0], [21,5, 0,8]] + Pforte (1,6 m) + [[21,5, −0,8], [21,5, −3,0]]. Das ist der einzige Eingriff an der Ostwiese. Die Pflegestelle `dirt_e02` (20,0 | −1,2) bleibt; der Zugang vor der Pforte (1,0 m) wird ROUTE in der Bau-Maske.
 - Rand: Nord- und Ostkante als Felsabbruch (`ph_env_quarry_face`, `ph_env_quarry_edge`), Südkante als Hecke (`ph_env_hedge_thorn`, bestehendes Asset). Unsichtbare Wand x 31,2.
 - Bestehende Hintergrundbäume im Bereich werden versetzt: (24,5 | 2,0) → (34,5 | 3,0) · (25,5 | −6,0) → (35,0 | −7,0); (23,5 | −13,5) bleibt (hinter der Felswand).
-- Bauplätze: `site_mason`, `site_loom`, `site_forge` mit `ph_prop_build_site` (Pflöcke, Schnur, Tafel, eingewachsene Steinplatte). Die Stationen stehen an denselben Stellen und sind bis zum Bau unsichtbar.
-- **Esse-Licht:** 1 OmniLight `#E07A3A`, Energie 0,5, Reichweite 3,5 m, **ohne Schatten**, leichtes Flackern, nur wenn gebaut. Gruppe `warm_lights` (Atmosphäre skaliert wie bisher).
+- **Keine Stationen am Bruch.** Er ist reines Rohstoffgebiet (Steinbruch, Findlinge, Erz, Werkstein, Bruchstein, Lehmkuhle, Flachs, Kräuter). Osric nennt ihn Lorenz' alten Werkplatz (§2.6); im Gelände erinnert daran nur eine eingewachsene, leere Steinplatte bei (24,0 | −2,8) ohne Funktion (Requisite `ph_prop_build_site` ohne Pflöcke).
 - Teleport `tp_bruch` (25,5 | 0,0), `tp_quarry` (27,0 | −8,0).
 
-### 4.2 Schlag am Kutschweg
+### 4.3 Schlag am Kutschweg
 - 5 Schlag-Erlen `gather_alder_1…5` zwischen den bestehenden Waldbäumen westlich des Kutschwegs (innerhalb der begehbaren Fläche): (−6,2 | 16,4), (−10,4 | 15,8), (−7,6 | 20,4), (−10,6 | 21,2), (−5,4 | 24,2). Die bestehenden Bäume und Büsche bleiben (W-Welt darf die Erlen um ±0,6 m schieben und meldet es).
 - Kräuter `gather_herbs_3/4` am Wegrain (−2,8 | 18,0), (−2,6 | 23,6).
 - Teleport `tp_schlag` (−6,0 | 19,0).
 
-### 4.3 Holunder
+### 4.4 Holunder
 Die drei Holundersträucher (`elder_bushes`) bekommen je ein Interactable (`GatherNode` ohne Modell, Kind `elder_bush`). Das Modell bleibt unverändert. Ist ein Strauch von innen nicht erreichbar (der Strauch über dem Pförtchen steht außen), entfällt dort die Sammelstelle; W-Welt meldet die Zahl.
 
-### 4.4 Boden, Grenzen, Schema
-- `ground.size` **[64,0, 64,0]**, `ground.center` **[8,0, 2,5]** → x −24…40. Süd-, West- und Nordkante unverändert; `ph_env_ground_graveyard` wird neu exportiert (Glättung unter Bauplätzen und Beeten, Steinboden-Tönung im Steinbruch nur über Vertex-Farbe im bestehenden Material).
+### 4.5 Boden, Grenzen, Schema
+- `ground.size` **[64,0, 64,0]**, `ground.center` **[8,0, 2,5]** → x −24…40. Süd-, West- und Nordkante unverändert; `ph_env_ground_graveyard` wird neu exportiert (Glättung unter den Werkhof-Bauplätzen und den Beeten, Steinboden-Tönung im Steinbruch nur über Vertex-Farbe im bestehenden Material).
 - `walkable_bounds.max` [21,2, 25,2] → **[31,2, 25,2]**. Neue `extra_walls`: Ostwiesen-Ostzaun bleibt Kollision (Zaun), dazu [[21,5, 9,6], [31,2, 9,6]] (Hecke Süd) und die Felskanten.
 - `camera_bounds.max` [17,0, 23,0] → **[27,0, 23,0]**.
-- Gras: Im `bruch` Dichte × 0,5 (`grass.bruch_density_scale`), im `quarry` keins (Steinboden), `keep_out` um Stationen, Beete und die Lehmkuhle.
-- Die Bau-Maske (Zier) bleibt auf x −11,5…21,5. Der Bruch liegt außerhalb, also keine Zier dort (gewollt).
-- **Layout-Schema:** `sections[]` + `bruch`, `quarry` · `clearables[]` + `obs_b_gate`, `obs_q_boulder_1…3` · `build_sites[] {id, station, pos, rot_y, footprint}` · `stations[]` (Entities `type: workbench`, params `station`, `requires_built: true`) · `gather_nodes[] {id, kind, pos, rot_y, section?}` · `elder_bushes[].gather` · `quarry_edges[]` · `waypoints` + `tp_bruch`, `tp_quarry`, `tp_schlag` · `fence.segments` (Ostpforte) · `lights` + `ph_bld_forge/light_ember`. Neue Systemknoten §3.1 legt `graveyard_build_phase5.gd` an.
+- Gras: Im `bruch` Dichte × 0,5 (`grass.bruch_density_scale`), im `quarry` keins (Steinboden), `keep_out` um Beete und Lehmkuhle; im Werkhof um die Stationen (V3).
+- Die Bau-Maske (Zier) bleibt auf x −11,5…21,5 und wird mit den Werkhof-Sperren (V2) neu gebacken. Der Bruch liegt außerhalb, also keine Zier dort (gewollt).
+- **Layout-Schema:** `sections[]` + `bruch`, `quarry` · `clearables[]` + `obs_b_gate`, `obs_q_boulder_1…3` · `workyard {build_sites[] {id, station, pos, rot_y, footprint, access}, meiler {pos, radius}, blocked_rects[]}` · `stations[]` (Entities `type: workbench`, params `station`, `requires_built: true`) · `gather_nodes[] {id, kind, pos, rot_y, section?}` · `elder_bushes[].gather` · `quarry_edges[]` · `entities[res_wood].pos` (V1) · `waypoints` + `tp_bruch`, `tp_quarry`, `tp_schlag`, `tp_workyard` (−4,4 | −3,6) · `fence.segments` (Ostpforte) · `lights` + `ph_bld_forge/light_ember`. Neue Systemknoten §3.1 legt `graveyard_build_phase5.gd` an.
 
 ---
 
@@ -601,7 +637,7 @@ data.autoloads.GameState.stats   + crafted, stones_set, coins_spent, trees_felle
 data.autoloads.GameState.flags   + workshop_open, bruch_license, bought_pickaxe, p5_intro, names_in_stone_complete, remark_gold
 data.nodes.player (Inventory)    + "tools": {"rake": 1, "shears": 1, "pickaxe_iron": 1, …}   (Gürtel; Slots ohne TOOL-Items)
 data.nodes.graveyard.graves[]    + design: {} | {"shape": "stone_master", "inscription": "i_garden", "ornament": "orn_elder", "gilded": true, "text": ["Marthe Quendel", "* 1771 – † 8. Nebelung 1834", "Was du gesät hast, blüht noch."]}
-data.nodes.workshop              {"built": ["mason", "loom"], "jobs": {"forge": {"recipe": "charcoal", "end_total": 38400}}, "goal_done": false}
+data.nodes.workshop              {"built": ["mason", "loom"], "jobs": {"forge": {"recipe": "charcoal", "end_total": 38400}}, "goal_done": false, "evict_pending": {}}
 data.nodes.gathering             {"gather_alder_1": {"charges": 0, "last_taken_day": 23, "last_refresh_day": 24}, …}
 data.nodes.stonemasonry          {"next_id": 4, "ready": [{"id": "stone_0003", "grave_id": "h_01", "design": {…}}], "heard_design": ["plot_04"]}
 data.nodes.expansion             + Abschnitte bruch, quarry (fehlen → LOCKED)
@@ -614,8 +650,9 @@ Nicht gespeichert: Werkzeugstufen (aus dem Gürtel abgeleitet), Kapitel-Fortschr
 2. **Gräber:** `design = {}`; `marker_id`, `quality`, `breakdown` unverändert.
 3. `nodes.workshop = {}`, `nodes.gathering = {}`, `nodes.stonemasonry = {}` → nichts gebaut, alle Sammelstellen voll beim nächsten `refresh` (post_load), keine fertigen Steine.
 4. `nodes.expansion`: `bruch`/`quarry` fehlen → LOCKED (ExpansionManager tolerant).
-5. Stats `crafted`, `stones_set`, `coins_spent`, `trees_felled` = 0. Flags: keine. `workshop_open` setzt `Workshop.post_load` zur Laufzeit, wenn `cemetery_complete` gilt.
-6. Pietät, Gräber, Leichen, Merkbuch, Ilse: unverändert (der Pietät-Fix wirkt nur künftig).
+5. **Zier im Werkhof** (zur Laufzeit, nicht in der reinen Migration): `Workshop.post_load` ruft einmalig `DecorationManager.evict_rects(workyard_rects)`. Zier-Stücke, deren Zellen ein Werkhof-Rechteck schneiden, werden abgebaut. Die Items gehen in die Truhe `hut_chest`, ein Überlauf ins Spieler-Inventar. Was auch dort nicht passt, bleibt als offene Rückgabe im Zustand von `Workshop` und wird ausgegeben, sobald Platz ist. Einmalige Notiz: „Deine Zier stand auf dem neuen Werkhof. Sie liegt jetzt in der Truhe.“ Flag `workyard_cleared`. Nichts geht verloren.
+6. Stats `crafted`, `stones_set`, `coins_spent`, `trees_felled` = 0. Flags: keine. `workshop_open` setzt `Workshop.post_load` zur Laufzeit, wenn `cemetery_complete` gilt.
+7. Pietät, Gräber, Leichen, Merkbuch, Ilse: unverändert (der Pietät-Fix wirkt nur künftig). Der Holzhaufen (V1) speichert keine Position (nur `remaining`) und steht nach dem Laden am neuen Platz.
 
 **Fixtures (W0, Lead, vor jeder Code-Änderung mit Build `69f8d49` erzeugt, über `Phase4Bot` + echte Systeme):** `tests/fixtures/saves_v3/`
 - `slot_p4_day7_table.json`: `mixed`, Tag 7, 10:00, Leiche auf dem Tisch mit 2 von 4 Schritten, laufendes Räucherfenster, Zopf genommen; Wurzelbürste, Kamm, Rechen, Schere, Zange **in Slots** (Gürtel-Migration).
@@ -623,7 +660,7 @@ Nicht gespeichert: Werkzeugstufen (aus dem Gürtel abgeleitet), Kapitel-Fortschr
 - `slot_p4_day20_reverent.json`: `reverent`, Tag 20, 07:00, Kapitel `six_pits`, 18 Gräber, **121 Münzen**, Ruf 100 (Start `reverent5`/`toolsmith`).
 - `slot_p4_day20_mixed.json`: `mixed` (alte Strategie), Tag 20, 07:00, Kapitel erreicht, beraubte Gräber mit unruhigen Geistern (Start `mender`).
 - `slot_p4_day25_harvester.json`: `harvester`, Tag 25, 07:00, Kapitel erreicht, ≈ 179 Münzen (Start `harvester5`).
-- `slot_p4_interior_chest_tools.json`: Tag 9, 20:00, Spieler in der Hütte, Rechen und Kamm **in der Truhe**, Zange im Inventar.
+- `slot_p4_interior_chest_tools.json`: Tag 9, 20:00, Spieler in der Hütte, Rechen und Kamm **in der Truhe**, Zange im Inventar; dazu **Zier im späteren Werkhof** (Holzbank vor der Hütte bei (−8,6 | −1,3), Grabvase bei (−0,5 | −10,6)) für die Räum-Regel.
 Dazu `make_v3_saves.gd` + `_driver.gd` (historisches Werkzeug, wie Phase 4). Lade-Wächter: `tests/integration/test_saves_v3_load.gd` (Lead). v2- und v1-Fixtures laden weiterhin (Kette bis 4).
 
 ---
@@ -640,7 +677,7 @@ Dazu `make_v3_saves.gd` + `_driver.gd` (historisches Werkzeug, wie Phase 4). Lad
   - *rechts* **Vorschau** (`StonePreview`: eigene `SubViewport` + `World3D`, das echte Formmodell mit Zierde und Label3D, feste warme Seitenlicht-Stimmung, neu gerendert nur bei Änderung), darunter „Grab 13 → 19", Aufschlüsselungs-Zeilen, Material vorhanden/fehlt, Minuten, Knopf „Stein hauen (205 Min)". Kopfzeile: „Ablage: 2/3 fertig".
   - Unten „Fertige Steine": Name, Form, „bereit" / „passt nicht mehr – Verwerfen" (zweistufig wie Verwerten).
 - **Inventar:** 20 Slots (5 × 4). Neue Leiste **Werkzeuggürtel** über den Slots: Schaufel/Axt/Spitzhacke mit Stufen-Namen (Stufe 0 als „Alte Schaufel", blass), daneben Rechen, Bürste, Kamm, Schere, Zange. Tooltip mit Wirkung.
-- **HUD:** unverändert (MATERIAL erscheint nicht in der Ressourcenleiste). Kleine Kapitelanzeige im Friedhofs-Tooltip: „Werkplatz 2/3 · Werkzeug 2/3 · Meisterstein 0/1".
+- **HUD:** unverändert (MATERIAL erscheint nicht in der Ressourcenleiste). Kleine Kapitelanzeige im Friedhofs-Tooltip: „Werkhof 2/3 · Werkzeug 2/3 · Meisterstein 0/1".
 - **Grab-Prompt:** „Grab von Marthe Quendel – Qualität 18/19"; im Grabregister eine Spalte „Inschrift" (erste Zeile + Spruch); Totenzettel im Merkbuch zeigt den Steintext; Seite *Ich* + „Steine gesetzt: 6".
 - **Belohnungskarte / Neu-gesetzt-Karte:** Aufschlüsselung mit den Stein-Zeilen, „Grabqualität +6".
 - **Tageszusammenfassung:** + „Ausgaben" (nach Zweck aus `coins_spent`), „Gesammelt" (Summen je Item), „Gebaut".
@@ -676,10 +713,10 @@ Dazu `make_v3_saves.gd` + `_driver.gd` (historisches Werkzeug, wie Phase 4). Lad
 | Größe | Budget | Begründung |
 |---|---|---|
 | FPS | 60 @ 1080p Mittelklasse-GPU | unverändert |
-| Draw Calls | < 1 000 (erwartet ≤ 560) | Bruch ≈ +60 (Felswand, 12 Stellen, 3 Stationen, Findlinge), Schlag ≈ +20, Inschriften ≤ 18 Label3D, Zierden ≤ 18 |
+| Draw Calls | < 1 000 (erwartet ≤ 560) | Bruch ≈ +45 (Felswand, 12 Stellen, Findlinge), Werkhof ≈ +15 (3 Stationen, Meiler, Bauplätze), Schlag ≈ +20, Inschriften ≤ 18 Label3D, Zierden ≤ 18 |
 | Kamera-Dreiecke inkl. Gras (Spiel-Zoom) | < 500 k | Bruch ≈ +45 k (halbe Grasdichte, Steinbruch ohne Gras), Schlag ≈ +25 k |
-| Lichter | ≤ 4 Omni mit Schatten (unverändert), ≤ 25 sichtbar | + Esse-Glut (ohne Schatten) |
-| Partikel | ≤ 60 (unverändert) | Meiler-Rauch 3, Esse-Rauch 3 (`visibility_range_end 40 m`) |
+| Lichter | ≤ 4 Omni mit Schatten (unverändert), ≤ 25 sichtbar | + Esse-Glut am Werkhof (ohne Schatten, 3,5 m). Messung `perf_p5_02`: Werkhof nachts mit Hüttenlaterne, Grablaternen und Esse; Zahl der Schattenlichter wie in Phase 4 |
+| Partikel | ≤ 60 (unverändert) | Meiler-Rauch 3, Esse-Rauch 3 (`visibility_range_end 40 m`); der Werkhof liegt neben dem Leichentisch, also gemeinsam mit ≤ 3 Leichen-Effekten gemessen |
 | Skripte CPU/Frame (headless) | Phase-5-Anteil ≤ +0,2 ms gegenüber dem Phase-4-Build auf derselben Inszenierung | Sammelstellen ohne `_process` (nur `day_started` / Interaktion), Label3D statisch, Vorschau-Viewport nur bei offenem Panel (`UPDATE_ONCE` bei Änderung). Absolutes Ziel 1,5 ms nur auf dem Benutzer-PC messbar (G4-Befund) |
 | Spielstand | < 300 kB, Laden < 1 s | + Sammelstellen ≈ 2 kB, + ≈ 0,4 kB je gestaltetem Grab |
 | Stein-Panel öffnen | < 150 ms bei 18 Gräbern | Vorschau lazy |
@@ -690,7 +727,7 @@ Regeln wie Phase 3/4 (Fixtures statt fremder Moduldaten, Fehler-Logger, Watchdog
 **Unit**
 | Datei | Besitzer | Prüft |
 |---|---|---|
-| `test_workshop.gd` | P1 | Bau atomar (Items + Münzen; fehlt eins → nichts verbraucht), Sperrgründe, `station_built`/`coins_spent`, Station erst nach Bau sichtbar/benutzbar, Meiler (Start, Ende aus Minuten, laden mitten im Brand, einsammeln bei vollem Inventar), Freischaltung `workshop_open` (Morgen/Laden, idempotent), Kapitel genau einmal, Save/Load |
+| `test_workshop.gd` | P1 | Werkhof-Räumung (`evict_rects`: Zier im Rechteck → Truhe, Überlauf → Inventar, Rest offen bis Platz ist, einmalig, kein Verlust), Bau atomar (Items + Münzen; fehlt eins → nichts verbraucht), Sperrgründe, `station_built`/`coins_spent`, Station erst nach Bau sichtbar/benutzbar, Meiler (Start, Ende aus Minuten, laden mitten im Brand, einsammeln bei vollem Inventar), Freischaltung `workshop_open` (Morgen/Laden, idempotent), Kapitel genau einmal, Save/Load |
 | `test_crafting.gd` (+) | P1 | Werkzeug als Ein- und Ausgabe (Gürtel), `tool_tier_changed`, neue Rezepte laden, Zählung Rezepte je Station |
 | `test_gathering.gd` | P2 | Ladungen, Ertrag, Bonus Stufe 2, Nachwachsen je `regrow_days` (Tagessprung, Mehrtagessprung, laden), Erlen-Stufen (Stumpf/Schössling/Baum), Werkzeug-/Abschnitts-/Flag-Sperren, voll → abgelehnt, Holunder ohne Modellwechsel, Save/Load |
 | `test_expansion.gd` (+) | P2 | Arbeitsabschnitte ohne Plots und ohne Ruf, `requires_flag bruch_license`, `requires_section`, Findling nur mit Spitzhacke, Minuten nach Stufe |
@@ -705,9 +742,9 @@ Regeln wie Phase 3/4 (Fixtures statt fremder Moduldaten, Fehler-Logger, Watchdog
 | `test_ui_phase5.gd` | W-UI | Werkstatt-Panel (Titel, Gruppen, Werkzeug-Wirkung, Meiler-Status), Bauplatz-Panel (fehlt/vorhanden), Stein-Panel (Grabliste + Gründe, Text mit Namen, „passt", Vergolden nur mit Inschrift, Vorschau-Zahlen = `Stonemasonry.preview`), Gürtel-Leiste, Zielzeilen, Tageszusammenfassung „Ausgaben", Debug-Befehle |
 
 **Integration**
-- `test_phase5_loop.gd` (W-Welt): v3-Fixture `slot_p4_day20_reverent` laden → `workshop_open` → Osric: Brief → Ostpforte → Lehm, Flachs → Steinmetzbank bauen → Stele mit Inschrift für ein Grab hauen und setzen (Qualität steigt, keine Bezahlung) → Spitzhacke kaufen → Webstuhl, Esse → Meiler über Nacht → Findlinge → Erz → Barren → Beschläge → Holzfälleraxt → Erle fällen (Stumpf, nach 5 Tagen Baum) → Stahlstab → Meisterhacke → Werkstein → Meisterstein vergoldet mit Zierde → Kapitel. **Roundtrip** `collect_state()` identisch nach `save_game`/`load_game` an 4 Momenten: Meiler brennt, zwei fertige Steine in der Ablage, Erle im Schössling-Stadium, nach dem Kapitel.
+- `test_phase5_loop.gd` (W-Welt): v3-Fixture `slot_p4_day20_reverent` laden → `workshop_open` → Osric: Brief → Ostpforte → Lehm, Flachs → Steinmetzbank bauen → Stele mit Inschrift für ein Grab hauen und setzen (Qualität steigt, keine Bezahlung) → Spitzhacke kaufen → Webstuhl, Esse am Werkhof (Wege Hütte ↔ Bruch mit echter Bewegung, nicht per Teleport) → Meiler über Nacht → Findlinge → Erz → Barren → Beschläge → Holzfälleraxt → Erle fällen (Stumpf, nach 5 Tagen Baum) → Stahlstab → Meisterhacke → Werkstein → Meisterstein vergoldet mit Zierde → Kapitel. **Roundtrip** `collect_state()` identisch nach `save_game`/`load_game` an 4 Momenten: Meiler brennt, zwei fertige Steine in der Ablage, Erle im Schössling-Stadium, nach dem Kapitel.
 - `test_phase4_save_upgrade.gd` (P6): `slot_p4_day13_complete` laden → Lieferungen laufen weiter → `workshop_open` am Morgen → Webstuhl-Totenhemd für die nächste Leiche → gestalteter Stein direkt auf ein `FILLED`-Grab (mit Bezahlung).
-- `test_graveyard_world.gd` (+): Abschnitte `bruch`/`quarry`, Ostpforte (nach Öffnen begehbar), Bauplätze + Stationen deckungsgleich, 12 Sammelstellen Am Bruch + 7 im Schlag + Holunder, Kamera-/Laufgrenzen, Boden 64 × 64, Esse-Licht ohne Schatten.
+- `test_graveyard_world.gd` (+): **Werkhof:** Bauplätze + Stationen deckungsgleich an den Positionen §2.1; `res_wood` bei (0,0 | −7,8); **Layout-Diff** gegen `tests/fixtures/phase5/layout_p4.json` (Kopie aus `69f8d49`, W0): in den Abschnitten I–IV ändern sich nur `res_wood` und die Ostpforten-Zaunstücke, dazu kommen die neuen Einträge; Hütte, Tisch, Werkbank, Pförtchen und Pflegestellen sind identisch. Routen-Flood-Fill (Kapselbreite 1,5 m): Hüttentür ↔ Pförtchen, ↔ Birkenhang-Durchgang, ↔ Tor, ↔ Ostpforte, ↔ jeder Stationszugang. Sichtprüfung: Ein Strahl von der Standard-Kamera (22 m) zum Kopf (1,7 m) des Spielers an jedem Stationszugang trifft die Hütte nicht. Esse-Licht ohne Schatten. **Am Bruch:** Abschnitte `bruch`/`quarry`, Ostpforte (nach Öffnen begehbar), 12 Sammelstellen Am Bruch + 7 im Schlag + Holunder, Kamera-/Laufgrenzen, Boden 64 × 64, Esse-Licht ohne Schatten.
 - **Playthrough-Bot (W3):** `phase5_bot.gd` erweitert `Phase4Bot` um Freischaltung, Käufe bei Osric/Ilse (echter `DialogueRunner` für `p5_intro`), Bauen, Sammeln mit Werkzeugstufen, Meiler, Stationshandwerk, Steinwahl (bestes passendes Design, das Material erlaubt) und Setzen. **Münzbuch je Strategie:** Start, Einnahmen (Bezahlung, Pflegegeld, Gaben, Ilse-Verkäufe), Ausgaben nach `coins_spent.reason` (license, build, osric, ilse), Ende, niedrigster Morgenstand.
   | Strategie | Start | Tage | Verhalten | Erwartung |
   |---|---|---|---|---|
@@ -724,10 +761,13 @@ Regeln wie Phase 3/4 (Fixtures statt fremder Moduldaten, Fehler-Logger, Watchdog
 ## 11. Screenshot-Liste Gate G5 (`graveyard_shots_phase5.gd -- --out=/abs/dir` + `ui_screenshots.gd --phase5`, 1280×720 → `docs/reviews/phase5_round1/`)
 | # | Motiv |
 |---|---|
-| p5_01 | Übersicht Tag: Friedhof + Am Bruch, Ostpforte offen, Bauplätze noch leer |
-| p5_02 | Am Bruch nah: drei Bauplätze mit Pflöcken, Lehmkuhle, Flachsbeete reif |
-| p5_03 | Werkplatz fertig: Steinmetzbank mit 2 fertigen Steinen, Webstuhl, Esse mit Glut, Meiler raucht (Abend) |
-| p5_04 | Nacht: Esse-Glut und Laternen, Nebel über dem Bruch |
+| p5_00a | **Alter Hof vorher** (Build `69f8d49`, Kamera auf die Hütte, Tag) |
+| p5_00b | **Alter Hof nachher, Bauplätze leer** (gleiche Kamera): Holzhaufen versetzt, drei Bauplätze mit Pflöcken |
+| p5_00c | **Alter Hof nachher, Werkhof gebaut** (gleiche Kamera): Webstuhl vor der Hütte, Steinmetzbank mit 2 fertigen Steinen, Esse-Kamin mit Rauch über dem Dach |
+| p5_01 | Übersicht Tag: Friedhof mit Werkhof + Am Bruch, Ostpforte offen |
+| p5_02 | Am Bruch nah: Lehmkuhle, Flachsbeete reif, Findlinge vor dem Steinbruch |
+| p5_03 | Werkhof am Abend: Spieler an der Esse (westlich der Hütte, sichtbar), Glut, Meiler raucht hinter dem Dach |
+| p5_04 | Werkhof nachts: Esse-Glut neben der Hüttenlaterne, Geister im Holunderwinkel dahinter |
 | p5_05 | Steinbruch vorher (Findlinge) / nachher (Erzader, Werksteinbank) |
 | p5_06 | Schlag: Erlen in drei Stufen nebeneinander (Baum, Stock, Stockausschlag) |
 | p5_07 | Flachsbeet reif vs. gerauft; Kräuterrain |
@@ -747,37 +787,38 @@ Regeln wie Phase 3/4 (Fixtures statt fremder Moduldaten, Fehler-Logger, Watchdog
 | p5_21 | Grabregister mit Inschrift-Spalte / Totenzettel mit Steintext |
 | p5_22 | Tageszusammenfassung mit „Ausgaben" |
 | p5_23 | Abschluss-Panel „Namen in Stein" |
-Dazu Asset-Tafeln `docs/reviews/phase5_assets/` und eine Performance-Tabelle je Motiv (`perf_p5_01…03`: Bruch Tag Zoom max, Bruch Nacht mit Esse, Friedhof mit 18 Inschriften).
+Dazu Asset-Tafeln `docs/reviews/phase5_assets/` und eine Performance-Tabelle je Motiv (`perf_p5_01…04`: Bruch Tag Zoom max, Werkhof nachts mit Esse + 3 verwesenden Leichen am Tisch, Friedhof mit 18 Inschriften, Werkhof Tag Zoom max).
 
 ## 12. Wellenplan
 | Welle | Agents (parallel) | Inhalt | Ende |
 |---|---|---|---|
-| **W0** | Lead | **Zuerst v3-Fixtures mit Build `69f8d49`** (6 Stände §5.2, eigener Commit vor jedem Gerüst). Dann: Datenklassen ✦ (inkl. Erweiterungen), Stubs mit exakten Signaturen, 8 EventBus-Signale, Database-Ordner, `Category.MATERIAL`, `SaveMigration.CURRENT = 4` mit `migrate_3_to_4` als Identität (fail-safe), Config-Fixtures `tests/fixtures/phase5/` (+ `Phase5Fixtures`, u. a. `grave_with(corpse, marker, design)`, `inv_with_tools(tiers)`), `test_phase5_scaffold.gd`, `test_saves_v3_load.gd` | Import + alle Tests grün → Commit |
+| **W0** | Lead | **Zuerst v3-Fixtures mit Build `69f8d49`** (6 Stände §5.2, eigener Commit vor jedem Gerüst) und `tests/fixtures/phase5/layout_p4.json` (Layout-Kopie für den Diff-Test). Dann: Datenklassen ✦ (inkl. Erweiterungen), Stubs mit exakten Signaturen, 8 EventBus-Signale, Database-Ordner, `Category.MATERIAL`, `SaveMigration.CURRENT = 4` mit `migrate_3_to_4` als Identität (fail-safe), Config-Fixtures `tests/fixtures/phase5/` (+ `Phase5Fixtures`, u. a. `grave_with(corpse, marker, design)`, `inv_with_tools(tiers)`), `test_phase5_scaffold.gd`, `test_saves_v3_load.gd` | Import + alle Tests grün → Commit |
 | **W1** | P1, P2, P3, P4, P5, P6 (bei 5 Agents: P1 + P6) | Systeme mit Unit-Tests gegen Fixtures (ohne Welt): Werkstatt/Bau/Meiler (P1) · Sammelstellen, Arbeitsabschnitte, Hindernis-Werkzeug (P2) · Gürtel, Werkzeugstufen, Minuten (P3) · Stein-Gestaltung, Kalender, Qualität, Setzen, Geister (P4) · Assets + Asset-Tests (P5) · Migration v4, Osric/Ilse, `coins_spent`, **Pietät-Fix** (P6) | je Modul: Tests grün → Merge durch Lead, danach `--import` |
-| **W2** | W-Welt, W-UI (2 parallel) | Bodenerweiterung Ost, Am Bruch, Schlag, Holunder-Sammelstellen, Ostpforte, Bauplätze/Stationen, Esse-Licht, Builder `graveyard_build_phase5.gd`, `test_phase5_loop`; Werkstatt-/Bauplatz-/Stein-Panel mit Vorschau, Gürtel-Leiste, HUD-Tooltip, Zielzeilen, Tageszusammenfassung, Debug, Icons | Integration + Roundtrips grün, Screenshots erstellt |
+| **W2** | W-Welt, W-UI (2 parallel) | **Werkhof an der Hütte** (Bauplätze/Stationen, Holzhaufen V1, Bau-Maske V2, Gras V3, Routen- und Sicht-Prüfung, Vorher/Nachher p5_00a–c), Bodenerweiterung Ost, Am Bruch (Rohstoffe), Schlag, Holunder-Sammelstellen, Ostpforte, Esse-Licht, Builder `graveyard_build_phase5.gd`, `test_phase5_loop`; Werkstatt-/Bauplatz-/Stein-Panel mit Vorschau, Gürtel-Leiste, HUD-Tooltip, Zielzeilen, Tageszusammenfassung, Debug, Icons | Integration + Roundtrips grün, Screenshots erstellt |
 | **W3** | QA (19), Art (04), Lead | `phase5_bot.gd` (6 Strategien inkl. **crafter**, **toolsmith**, Münzbuch), `phase4_bot` `mixed` + `prep_on_harvest`, Save-Fuzzer v4, Performance, Stil-/Ton-Prüfung (Inschriften, Gold, Glut, Erlen-Stufen), Befunde beheben (Besitzer), Gate-Protokoll in `QUALITY_GATE_STATUS.md` | **STOPP – Benutzerprüfung G5** |
 Abhängigkeiten:
 - W1-Agents nutzen nur Stubs und Datenklassen anderer Module.
 - P3 liefert den Gürtel zuerst (Tag 1 der Welle): P1 (Werkzeug-Rezepte), P2 (Sperren) und P4 hängen an `ToolRules.tier`. Bis dahin liefert der Stub `ToolRules.tier` 0 und `Inventory` das alte Verhalten.
 - `grave_plot.gd`: P3 ändert nur die zwei Minuten-Zeilen (`dig`, `bury`), P4 ergänzt Stein-Prompt und -Aktion. Merge-Reihenfolge P3 → P4.
-- P5 liefert zuerst die Steinformen + Zierden (Vorschau im Stein-Panel), `ph_bld_*` und `ph_env_quarry_face` (Blocker für W2-Screenshots). Bis dahin: graue Platzhalter-Quader aus dem Builder (nur Tests, nie in Screenshots).
+- P1 liefert `Workshop.workyard_rects` + `DecorationManager.evict_rects` vor W2 (W-Welt füllt die Rechtecke aus dem Layout).
+- P5 liefert zuerst die Steinformen + Zierden (Vorschau im Stein-Panel), `ph_bld_*` (Esse-Kamin mindestens 0,5 m über der Hütten-Traufe, damit er über dem Dach sichtbar ist) und `ph_env_quarry_face` (Blocker für W2-Screenshots). Bis dahin: graue Platzhalter-Quader aus dem Builder (nur Tests, nie in Screenshots).
 - Texte: P6 besitzt `carter.tres`/`trader.tres`, P4 `data/stone/**` und `ghost_lines.tres`, P1 `data/stations/*`, P2 `data/gather/*` und neue Item-Texte. Die Leittexte stehen in §2. Wer sie ändert, meldet es dem Lead.
 
 ## 13. Nicht in Phase 5
 - Freie Platzierung oder Abriss von Stationen, weitere Gebäude, Werkstatt-Innenräume (Gebäude: Phase 6)
-- Neue Grabstellen oder neue Lieferungen nach vollem Friedhof (Frage §14.1), Exhumieren, Umbetten
+- Neue Grabstellen oder neue Lieferungen nach vollem Friedhof (Benutzerentscheidung §14.1: später), Exhumieren, Umbetten
 - Verkauf von Handwerkswaren, Aufträge des Dorfes, Preisdynamik, weitere Händler (Dorf/Wirtschaft: Phase 7/10)
 - Freitext-Inschriften, Schriftwahl, Übersetzungen der Inschriften
 - Item-Qualitätsstufen, Werkzeug-Verschleiß oder Reparatur, Werkzeug sichtbar in der Hand der Figur (Modell bleibt, Stufe nur im Gürtel)
 - Mehr als ein Hintergrund-Auftrag je Station, Handwerk in Abwesenheit außer dem Meiler, Warteschlangen
 - Tiere, Landwirtschaft über das Flachsbeet hinaus, Aussaat/Samen für Flachs, Jahreszeiten, Wetter
-- Neue Erzählfäden oder Erkenntnisse (die Andeutung zu Lorenz' Werkplatz ist nur ein Osric-Satz, Frage §14.4)
+- Neue Erzählfäden oder Erkenntnisse (der Bezug zu Lorenz' Werkplatz ist nur ein Osric-Satz, Benutzerentscheidung §14.4)
 - Krypten unter dem Birkenhang (Phase 12), Kräfte (Phase 13+), Kampf
 - Musik, Sound (Agent 17 inaktiv), Controller, Lokalisierung
-- Änderungen am Maler-Shader, an den Atmosphären-Presets, am Hütten-Innenraum und an den Abschnitten I–IV (außer der Ostpforte)
+- Änderungen am Maler-Shader, an den Atmosphären-Presets, am Hütten-Innenraum und an den Abschnitten I–IV (außer Werkhof V1–V3 und Ostpforte); Hütte, Leichentisch, Werkbank und Pförtchen werden nicht bewegt
 
-## 14. Offene Fragen an den Benutzer (bitte beim Freigeben beantworten)
-1. **Voller Friedhof – neue Grabstellen?** Nach dem 18. Grab bringt Osric keine Leichen mehr (Phase-4-Regel). Der Phase-5-Bogen auf einem Phase-4-Endstand lebt deshalb vom **Neu-Setzen** der 18 Steine, nicht von Bestattungen; der Webstuhl wird dann vor allem für Vorrat genutzt. *Vorschlag:* so lassen und neue Grabstellen mit Phase 6/11 bringen. *Alternative:* 4 Grabstellen „Bruchrand" schon in Phase 5 (≈ +3 Tage Lieferungen, +44 Münzen Einnahmen – die Münzrechnung §2.8 verschiebt sich).
-2. **Ort der Stationen:** *Vorschlag:* am Bruch (Lorenz' alter Werkplatz, Alter Hof bleibt unverändert, Stationen neben ihren Rohstoffen; ≈ 30 m Weg von der Hütte). *Alternative:* neben der Hütte. Das verlangt, freigegebene Elemente im Alten Hof zu verschieben (Steinhaufen, Kiste, Pfad zum Holunderwinkel).
-3. **Jahreszahl auf den Inschriften:** Sie legt die Epoche der Welt fest. *Vorschlag:* **1834** (Biedermeier, „Märchenbuch"-Zeit), Spieltag 1 = 3. Gilbhart, alte Monatsnamen. *Alternativen:* eine andere Jahreszahl, oder nur Tag und Monat ohne Jahr (dann entfällt „* Geburtsjahr" und es steht „{age} Jahre").
-4. **Lorenz' Werkplatz:** Soll Osric den Bruch als Lorenz' alten Werkplatz einführen (ein Satz, kein neuer Hinweis, keine Erkenntnis)? *Vorschlag:* ja, als leise Verbindung zum Geheimnis. *Alternative:* neutraler Werkplatz der Gemeinde, ohne Bezug zu Lorenz.
+## 14. Benutzerentscheidungen (28.09.2026, bindend)
+1. **Keine neuen Grabstellen in Phase 5**; sie kommen später. Der Phase-5-Bogen auf einem Phase-4-Endstand lebt vom Neu-Setzen der 18 Steine. Die Münzrechnung §2.8 gilt unverändert.
+2. **Stationen neben der Hütte.** Steinmetzbank, Webstuhl und Esse bilden einen Werkhof um die Hütte (§2.1, §4.1). Freigegebene Elemente im Alten Hof dürfen versetzt werden, aber nur das Nötigste: Holzhaufen (V1), gesperrte Zier-Zellen (V2), Gras (V3). Hütte, Leichentisch, Werkbank und Pförtchen bleiben stehen. „Am Bruch" bleibt Rohstoffgebiet (Steinbruch, Findlinge, Erz, Stein, Lehmkuhle, Flachs, Kräuter). Die Esse hält die Licht- und Partikelbudgets ein (§4.1, §9).
+3. **Jahreszahl 1834** auf den Inschriften (Spieltag 1 = 3. Gilbhart 1834, alte Monatsnamen).
+4. **Lorenz' Werkplatz: ja.** Osric führt den Bruch in einem Satz als Lorenz' alten Werkplatz ein, ohne neuen Hinweis und ohne Erkenntnis (§2.6).

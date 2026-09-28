@@ -70,10 +70,11 @@ Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe): **`docs/PHASE4_DESIGN.md`*
 ## PHASE 5 – CRAFTING & RESSOURCEN (Plan)
 
 Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe): **`docs/PHASE5_DESIGN.md`**. Inhalt:
-- Werkplatz „Am Bruch" östlich der Ostwiese: Steinmetzbank, Webstuhl und Esse auf festen Bauplätzen (Material + Münzen), Meiler als einziger Hintergrund-Auftrag
+- Werkhof an der Hütte: Steinmetzbank, Webstuhl und Esse auf festen Bauplätzen (Material + Münzen), Meiler als einziger Hintergrund-Auftrag; Holzhaufen versetzt (sonst bleibt der Alte Hof unverändert)
+- „Am Bruch" östlich der Ostwiese als Rohstoffgebiet (Steinbruch, Findlinge, Erz, Lehm, Flachs), eingeführt als Lorenz' alter Werkplatz
 - Rohstoffe mit nachwachsenden Sammelstellen: Lehm, Flachs, Kräuter, Erz, Bruchstein, Werkstein (Steinbruch hinter Findlingen), Schlag-Erlen am Kutschweg, Holunderbeeren
 - Werkzeugstufen (Schaufel, Axt, Spitzhacke, je 0–2) am passiven Werkzeuggürtel, Faktoren 1,0 / 0,8 / 0,6, neue Aufgaben (Fällen, Findlinge, Werkstein); Inventar 20 Slots
 - Grabstein-Gestaltung je Grab an der Steinmetzbank: 3 Formen × 7 Inschrift-Vorlagen (Name/Daten automatisch) × 4 Zierden, vergoldet; Qualität bis 19, Geister-Grund „ohne Namen"
 - Münzsenke: 108 Münzen Pflicht + freiwillige Posten gegen den Überschuss aus Phase 4 (Rechnung §2.8)
 - Übertrag: kein „Voll hergerichtet"-Bonus für verwertete Leichen (Pietät-Fix, Bot `mixed`)
-- Kapitel „Namen in Stein", Save-Format v4 mit Migration der Phase-4-Stände, Wellenplan W0–W3, 4 offene Fragen (§14)
+- Kapitel „Namen in Stein", Save-Format v4 mit Migration der Phase-4-Stände, Wellenplan W0–W3, Benutzerentscheidungen §14 (keine neuen Gräber, Werkhof an der Hütte, Jahr 1834, Lorenz-Bezug)
