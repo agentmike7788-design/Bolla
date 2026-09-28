@@ -1,11 +1,16 @@
-[gd_resource type="Resource" script_class="BuildingData" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="BuildingData" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://src/systems/buildings/building_data.gd" id="1"]
 [ext_resource type="Script" path="res://src/systems/buildings/building_level_data.gd" id="2"]
+[ext_resource type="PackedScene" path="res://assets/models/buildings/ph_bld_crypt_site.glb" id="m0"]
+[ext_resource type="PackedScene" path="res://assets/models/buildings/ph_bld_crypt_l1.glb" id="m1"]
+[ext_resource type="PackedScene" path="res://assets/models/buildings/ph_bld_crypt_l2.glb" id="m2"]
+[ext_resource type="PackedScene" path="res://assets/models/buildings/ph_bld_crypt_l3.glb" id="m3"]
 
 [sub_resource type="Resource" id="level_1"]
 script = ExtResource("2")
 level = 1
+model = ExtResource("m1")
 title = "Gruft geöffnet"
 inputs = Dictionary[StringName, int]({&"stone": 12, &"wood": 6, &"clay": 4, &"iron_fittings": 2})
 coins = 20
@@ -17,6 +22,7 @@ adds = PackedStringArray("Portal und Treppe", "Gruft-Tisch statt des Tischs vor 
 [sub_resource type="Resource" id="level_2"]
 script = ExtResource("2")
 level = 2
+model = ExtResource("m2")
 title = "Kühlgewölbe"
 inputs = Dictionary[StringName, int]({&"workstone": 4, &"stone": 8, &"clay": 4, &"iron_bar": 1})
 coins = 30
@@ -28,6 +34,7 @@ adds = PackedStringArray("4 Kühlnischen (× 0,4)", "Raumkühle × 0,7", "Beinha
 [sub_resource type="Resource" id="level_3"]
 script = ExtResource("2")
 level = 3
+model = ExtResource("m3")
 title = "Tiefe Gruft"
 inputs = Dictionary[StringName, int]({&"workstone": 6, &"stone": 6, &"iron_bar": 2})
 coins = 35
@@ -39,6 +46,7 @@ adds = PackedStringArray("6 Kühlnischen (× 0,3)", "Raumkühle × 0,6", "Beinha
 [resource]
 script = ExtResource("1")
 id = &"crypt"
+model_site = ExtResource("m0")
 display_name = "Gruft"
 order = 1
 site_id = "site_crypt"

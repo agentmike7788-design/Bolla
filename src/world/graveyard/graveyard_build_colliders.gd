@@ -10,6 +10,9 @@ const ROLE_PIT := "pit"
 const ROLE_MOUND := "mound"
 const ROLE_MARKER := "marker:"
 const ROLE_OLD := "old"
+## Phase 6: the old graves' pit with the heap at the foot end (GravePlot.pit_variant &"foot").
+const PIT_FOOT := "foot"
+const PIT_FOOT_ASSET := "ph_prop_grave_pit_foot"
 
 
 ## Collision shapes of `asset` (layout "colliders") under a new StaticBody3D at `xform`.
@@ -65,8 +68,12 @@ static func build_plot_collision(ctx: Ctx, plot: Node3D, g: Dictionary, old: boo
 		add_shapes(ctx, body, colliders["ph_prop_grave_mound_" + String(g.mound)], Transform3D.IDENTITY, 1.0, 1.0, ROLE_OLD)
 		add_shapes(ctx, body, colliders["ph_prop_gravestone_" + String(g.stone)],
 				Transform3D(Basis.IDENTITY, plot.get("old_stone_offset")), 1.0, 1.0, ROLE_OLD)
-		return
-	add_shapes(ctx, body, colliders[_asset_of(plot.get("pit_model"))], Transform3D.IDENTITY, 1.0, 1.0, ROLE_PIT)
+	# Phase 6 (§2.3): a lifted old grave is an ordinary place – it gets the pit (heap at the foot
+	# end for pit_variant foot), mound and marker shapes of a plot as well.
+	var pit_asset := _asset_of(plot.get("pit_model"))
+	if String(g.get("pit_variant", "")) == PIT_FOOT and colliders.has(PIT_FOOT_ASSET):
+		pit_asset = PIT_FOOT_ASSET
+	add_shapes(ctx, body, colliders[pit_asset], Transform3D.IDENTITY, 1.0, 1.0, ROLE_PIT)
 	add_shapes(ctx, body, colliders[_asset_of(plot.get("mound_model"))],
 			Transform3D(Basis.IDENTITY, plot.get("mound_offset")), 1.0, 1.0, ROLE_MOUND)
 	var markers: Dictionary = plot.get("marker_models")

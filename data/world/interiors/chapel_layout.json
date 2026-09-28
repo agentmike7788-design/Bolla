@@ -1,0 +1,42 @@
+{
+  "_comment": "Die Kapelle innen (docs/PHASE6_DESIGN.md §4.7, §4.8), gebaut von src/world/interiors/interior_build.gd; Koordinaten wie crypt_layout.json. Schiff innen x −2,25…2,25, z −3,75…3,5, Chor x −1,5…1,5, z −5,75…−4,0 (Öffnung x −1…1). Der Katafalk steht längs vor dem Chor (die Leiche liegt zur Kamera hin), die Bänke in zwei Reihen beiderseits des Mittelgangs, zum Altar gewandt (rot 180). Die Altarkerzen (Rolle rite) brennen nur während Aussegnung oder Andacht und ab Stufe 3 immer (chapel_rite_lights.gd), der Totenleuchter-Ständer (eternal) und der Lichtfleck des Chorfensters (stain) ab Stufe 3. Trauergäste: Sitze [x, z, rot_y, y] in Zeigereihenfolge (2 auf Stufe 2, 4 auf Stufe 3).",
+  "room_id": "chapel",
+  "building": "chapel",
+  "room": "ph_int_chapel_room",
+  "door_inside": [0.0, 3.45],
+  "spawn_inside": [0.0, 2.95],
+  "walkway": 0.9,
+  "camera_bounds": {"min": [-0.6, -2.4], "max": [0.6, 1.2]},
+  "sun_rotation_deg": [-52.0, 35.0, 0.0],
+  "sun_shadow": true,
+  "rite_lights": true,
+  "wall_height": 3.0,
+  "floor": [-3.0, -6.1, 3.0, 4.2],
+  "walls": [
+    [-3.0, -4.0, -2.25, 3.8], [2.25, -4.0, 3.0, 3.8],
+    [-3.0, 3.5, 3.0, 4.2],
+    [-3.0, -4.25, -1.0, -3.75], [1.0, -4.25, 3.0, -3.75],
+    [-1.9, -6.1, -1.5, -4.0], [1.5, -6.1, 1.9, -4.0], [-1.9, -6.1, 1.9, -5.75]
+  ],
+  "items": [
+    {"asset": "ph_int_altar", "id": "ChapelAltar", "pos": [0.0, -5.15], "rot_y": 0.0, "mount": "floor", "interact": "chapel_altar",
+      "use_pos": [0.0, -4.15], "reach": [2.0, 1.0, 2.0], "reach_offset": [0.0, 0.5, 0.8],
+      "light_roles": {"light_candle_1": "rite", "light_candle_2": "rite"}},
+    {"asset": "ph_int_catafalque", "id": "Catafalque", "pos": [0.0, -2.5], "rot_y": 90.0, "mount": "floor", "interact": "catafalque",
+      "use_pos": [0.95, -2.5], "reach": [2.4, 1.0, 1.8]},
+    {"asset": "ph_int_pew_rough", "pos": [-1.25, 0.1], "rot_y": 180.0, "mount": "floor", "min_level": 1, "max_level": 1, "collision_inset": 0.1},
+    {"asset": "ph_int_pew_rough", "pos": [1.25, 0.1], "rot_y": 180.0, "mount": "floor", "min_level": 1, "max_level": 1, "collision_inset": 0.1},
+    {"asset": "ph_int_pew", "pos": [-1.3, 0.0], "rot_y": 180.0, "mount": "floor", "min_level": 2, "collision_inset": 0.1},
+    {"asset": "ph_int_pew", "pos": [1.3, 0.0], "rot_y": 180.0, "mount": "floor", "min_level": 2, "collision_inset": 0.1},
+    {"asset": "ph_int_pew", "pos": [-1.3, 1.4], "rot_y": 180.0, "mount": "floor", "min_level": 2, "collision_inset": 0.1},
+    {"asset": "ph_int_pew", "pos": [1.3, 1.4], "rot_y": 180.0, "mount": "floor", "min_level": 2, "collision_inset": 0.1},
+    {"id": "MournerSet", "interact": "mourner_set", "pos": [0.0, 0.0], "min_level": 2,
+      "params": {"figures": ["ph_chr_mourner_a", "ph_chr_mourner_b", "ph_chr_mourner_c", "ph_chr_mourner_d"],
+        "seats": [[-0.58, 0.05, 180.0, 0.0], [0.58, 0.05, 180.0, 0.0], [-1.06, 0.05, 180.0, 0.0], [1.54, 1.45, 180.0, 0.0]]}},
+    {"asset": "ph_int_bell_rope", "pos": [-1.85, 2.75], "rot_y": 0.0, "mount": "hang", "min_level": 2},
+    {"asset": "ph_int_candelabrum", "pos": [1.15, -4.3], "rot_y": 0.0, "mount": "floor", "min_level": 3, "light_roles": {"light_candle": "eternal"}},
+    {"asset": "ph_int_stained_window", "pos": [0.0, -5.72], "y": 1.55, "rot_y": 0.0, "mount": "hang", "min_level": 3, "light_roles": {"light_stain": "stain"}},
+    {"asset": "ph_int_holy_water", "pos": [0.95, 3.05], "rot_y": 0.0, "mount": "floor"},
+    {"asset": "ph_deco_grave_vase", "pos": [-1.15, -4.35], "rot_y": 15.0, "mount": "floor"}
+  ]
+}

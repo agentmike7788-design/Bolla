@@ -1,0 +1,217 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/world/interiors/interior_room.gd" id="1_gvouo"]
+[ext_resource type="Resource" path="res://data/config/interiors/shed.tres" id="2_bolcb"]
+[ext_resource type="PackedScene" path="res://assets/models/interior/ph_int_shed_room.glb" id="3_526bm"]
+[ext_resource type="Script" path="res://src/world/atmosphere/flicker_light.gd" id="4_fxswo"]
+[ext_resource type="PackedScene" path="res://assets/models/interior/ph_int_wood_rack.glb" id="5_nd1uu"]
+[ext_resource type="PackedScene" path="res://assets/models/interior/ph_int_stone_bin.glb" id="6_kkbtm"]
+[ext_resource type="PackedScene" path="res://assets/models/interior/ph_int_shed_rack.glb" id="7_05gtm"]
+[ext_resource type="PackedScene" path="res://src/world/interiors/room_exit.tscn" id="8_5qfk8"]
+[ext_resource type="Script" path="res://src/world/interiors/room_exit.gd" id="9_sogqh"]
+[ext_resource type="PackedScene" path="res://src/entities/shed_store/shed_store.tscn" id="10_m07vm"]
+[ext_resource type="Script" path="res://src/entities/shed_store/shed_store.gd" id="11_hqjh2"]
+[ext_resource type="Script" path="res://src/components/interactable.gd" id="12_bwq4k"]
+[ext_resource type="Script" path="res://src/systems/inventory/inventory.gd" id="13_k3dse"]
+[ext_resource type="Script" path="res://src/world/hut_interior/interior_lighting.gd" id="14_dtd27"]
+
+[sub_resource type="Environment" id="Environment_wqweg"]
+background_mode = 1
+background_color = Color(0.02, 0.018, 0.016, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.62, 0.58, 0.52, 1)
+ambient_light_energy = 0.55
+tonemap_mode = 4
+ssao_enabled = true
+ssao_radius = 0.6
+ssao_intensity = 1.4
+glow_enabled = true
+glow_intensity = 0.4
+glow_bloom = 0.04
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_oso7j"]
+size = Vector3(2, 1, 1.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8wmov"]
+size = Vector3(3.6, 0.4, 3.8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_hm27c"]
+size = Vector3(0.4, 3, 3.8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8v6n2"]
+size = Vector3(0.4, 3, 3.8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_h4cyd"]
+size = Vector3(3.6, 3, 0.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_aeniu"]
+size = Vector3(3.6, 3, 0.45)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_dsu3u"]
+size = Vector3(2.0182474, 2.0041134, 0.5727603)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_b0yse"]
+size = Vector3(1.4649429, 1.2563953, 0.5225463)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_sdod7"]
+size = Vector3(1.0426273, 0.5749769, 0.70280683)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_eryh1"]
+size = Vector3(2.0182474, 2.0041134, 0.5727603)
+
+[node name="ShedInterior" type="Node3D" unique_id=1642110994]
+script = ExtResource("1_gvouo")
+room_id = &"shed"
+config = ExtResource("2_bolcb")
+environment = SubResource("Environment_wqweg")
+bounds_min = Vector2(-0.3, -0.4)
+bounds_max = Vector2(0.3, 0.2)
+hide_when_inactive = true
+building_id = &"shed"
+
+[node name="Room" type="Node3D" parent="." unique_id=943992322 instance=ExtResource("3_526bm")]
+
+[node name="Light_lantern" type="OmniLight3D" parent="Room" unique_id=790788245]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.65, 1.4499999, 1.4)
+light_color = Color(1, 0.68235296, 0.33333334, 1)
+light_energy = 1.1
+shadow_enabled = true
+shadow_blur = 1.5
+omni_attenuation = 1.4
+script = ExtResource("4_fxswo")
+amount = 0.06
+metadata/interior_role = &"lantern"
+metadata/base_energy = 1.1
+
+[node name="Light_window_1" type="OmniLight3D" parent="Room" unique_id=287970435]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.05, 1.325, -0.225)
+light_color = Color(1, 0.8862745, 0.6901961, 1)
+light_energy = 0.91
+shadow_blur = 1.5
+omni_range = 3.5
+omni_attenuation = 1.4
+metadata/interior_role = &"window"
+metadata/base_energy = 0.91
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=267709450]
+transform = Transform3D(0.8660254, -0.42402405, 0.26495963, 0, 0.52991927, 0.8480481, -0.5, -0.73443115, 0.45892355, 0, 0, 0)
+visible = false
+light_angular_distance = 2.0
+shadow_enabled = true
+shadow_blur = 2.0
+directional_shadow_mode = 0
+directional_shadow_max_distance = 18.0
+
+[node name="Spawn" type="Marker3D" parent="." unique_id=665678846]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0.1, 0, 0.95)
+
+[node name="Furniture" type="Node3D" parent="." unique_id=1014692521]
+
+[node name="wood_rack_1" type="Node3D" parent="Furniture" unique_id=172279422 instance=ExtResource("5_nd1uu")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -1.14, 0, 0.7)
+metadata/min_level = 1
+
+[node name="stone_bin_1" type="Node3D" parent="Furniture" unique_id=1384204117 instance=ExtResource("6_kkbtm")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -1.05, 0, -0.95)
+metadata/min_level = 2
+
+[node name="shed_rack_1" type="Node3D" parent="Furniture" unique_id=988468297 instance=ExtResource("7_05gtm")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 1.12, 0, 0.25)
+metadata/min_level = 3
+
+[node name="Entities" type="Node3D" parent="." unique_id=590669856]
+
+[node name="room_exit" type="Node3D" parent="Entities" unique_id=1401304681 instance=ExtResource("8_5qfk8")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0, 1.4)
+script = ExtResource("9_sogqh")
+building_id = &"shed"
+
+[node name="ShedStore" parent="Entities" unique_id=104154329 groups=["saveable", "shed_store"] instance=ExtResource("10_m07vm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15, 0, -1.2)
+script = ExtResource("11_hqjh2")
+save_id = "shed_store"
+save_order = 61
+
+[node name="Interactable" parent="Entities/ShedStore" index="0"]
+collision_layer = 8
+collision_mask = 0
+monitoring = false
+priority = 5
+script = ExtResource("12_bwq4k")
+
+[node name="Shape" parent="Entities/ShedStore/Interactable" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0.5, 0.2)
+shape = SubResource("BoxShape3D_oso7j")
+
+[node name="Storage" parent="Entities/ShedStore" index="1"]
+script = ExtResource("13_k3dse")
+
+[node name="Model" type="Node3D" parent="Entities/ShedStore" unique_id=748300241 instance=ExtResource("7_05gtm")]
+
+[node name="UsePos" type="Marker3D" parent="Entities/ShedStore" unique_id=1511546982]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.85)
+
+[node name="Colliders" type="Node3D" parent="." unique_id=1236848783]
+
+[node name="Room" type="StaticBody3D" parent="Colliders" unique_id=1613254991]
+collision_mask = 0
+
+[node name="Floor" type="CollisionShape3D" parent="Colliders/Room" unique_id=1184997961]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0)
+shape = SubResource("BoxShape3D_8wmov")
+
+[node name="Wall_1" type="CollisionShape3D" parent="Colliders/Room" unique_id=1641173516]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5999999, 1.5, 0)
+shape = SubResource("BoxShape3D_hm27c")
+
+[node name="Wall_2" type="CollisionShape3D" parent="Colliders/Room" unique_id=71782381]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1.5, 0)
+shape = SubResource("BoxShape3D_8v6n2")
+
+[node name="Wall_3" type="CollisionShape3D" parent="Colliders/Room" unique_id=1092978299]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -1.6999999)
+shape = SubResource("BoxShape3D_h4cyd")
+
+[node name="Wall_4" type="CollisionShape3D" parent="Colliders/Room" unique_id=137564213]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 1.6750001)
+shape = SubResource("BoxShape3D_aeniu")
+
+[node name="ShedStore" type="StaticBody3D" parent="Colliders" unique_id=1234112767]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15, 0, -1.2)
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/ShedStore" unique_id=1681667103]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1717549, 1.0020567, -0.00044578314)
+shape = SubResource("BoxShape3D_dsu3u")
+
+[node name="wood_rack_1" type="StaticBody3D" parent="Colliders" unique_id=2006219426]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -1.14, 0, 0.7)
+collision_mask = 0
+metadata/min_level = 1
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/wood_rack_1" unique_id=712944823]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.62819767, 0)
+shape = SubResource("BoxShape3D_b0yse")
+
+[node name="stone_bin_1" type="StaticBody3D" parent="Colliders" unique_id=624036071]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -1.05, 0, -0.95)
+collision_mask = 0
+metadata/min_level = 2
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/stone_bin_1" unique_id=1181147997]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.28748846, 0)
+shape = SubResource("BoxShape3D_sdod7")
+
+[node name="shed_rack_1" type="StaticBody3D" parent="Colliders" unique_id=239862535]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 1.12, 0, 0.25)
+collision_mask = 0
+metadata/min_level = 3
+
+[node name="Shape" type="CollisionShape3D" parent="Colliders/shed_rack_1" unique_id=1924368455]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1717549, 1.0020567, -0.00044578314)
+shape = SubResource("BoxShape3D_eryh1")
+
+[node name="Lighting" type="Node" parent="." unique_id=178786379]
+script = ExtResource("14_dtd27")
+
+[editable path="Entities/ShedStore"]

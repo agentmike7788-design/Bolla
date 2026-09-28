@@ -1,11 +1,16 @@
-[gd_resource type="Resource" script_class="BuildingData" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="BuildingData" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://src/systems/buildings/building_data.gd" id="1"]
 [ext_resource type="Script" path="res://src/systems/buildings/building_level_data.gd" id="2"]
+[ext_resource type="PackedScene" path="res://assets/models/buildings/ph_bld_shed_site.glb" id="m0"]
+[ext_resource type="PackedScene" path="res://assets/models/buildings/ph_bld_shed_l1.glb" id="m1"]
+[ext_resource type="PackedScene" path="res://assets/models/buildings/ph_bld_shed_l2.glb" id="m2"]
+[ext_resource type="PackedScene" path="res://assets/models/buildings/ph_bld_shed_l3.glb" id="m3"]
 
 [sub_resource type="Resource" id="level_1"]
 script = ExtResource("2")
 level = 1
+model = ExtResource("m1")
 title = "Schuppen"
 inputs = Dictionary[StringName, int]({&"wood": 12, &"stone": 4, &"iron_fittings": 2})
 coins = 10
@@ -17,6 +22,7 @@ adds = PackedStringArray("Lager: 24 Plätze", "Holzlege außen")
 [sub_resource type="Resource" id="level_2"]
 script = ExtResource("2")
 level = 2
+model = ExtResource("m2")
 title = "Werkhof-Anschluss"
 inputs = Dictionary[StringName, int]({&"wood": 10, &"iron_fittings": 2})
 coins = 15
@@ -28,6 +34,7 @@ adds = PackedStringArray("Lager: 32 Plätze", "An jeder Station: Fehlendes aus d
 [sub_resource type="Resource" id="level_3"]
 script = ExtResource("2")
 level = 3
+model = ExtResource("m3")
 title = "Regale und Legen"
 inputs = Dictionary[StringName, int]({&"wood": 8, &"stone": 6, &"iron_bar": 1})
 coins = 20
@@ -39,6 +46,7 @@ adds = PackedStringArray("Lager: 40 Plätze", "Doppelte Stapel für Rohstoffe un
 [resource]
 script = ExtResource("1")
 id = &"shed"
+model_site = ExtResource("m0")
 display_name = "Lagerschuppen"
 order = 3
 site_id = "site_shed"
