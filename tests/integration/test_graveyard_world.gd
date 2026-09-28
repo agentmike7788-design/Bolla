@@ -5,6 +5,9 @@ extends TestCase
 ## Phase 3 (docs/PHASE3_DESIGN.md §4, §10, W-Welt): 12 plots in 3 sections, every obstacle /
 ## tending spot / system node, no obstacle on a station or the path, the build mask matches
 ## the layout, passages walkable once cleared, bounds + extra_walls, camera bounds.
+## Phase 4 (docs/PHASE4_DESIGN.md §4, §10): 18 plots, the Holunderwinkel (gate, pits, thickets,
+## elders), the Phase-4 system nodes, Ilse (npc_trader) with her waypoints and lantern, the
+## props, the door note, build mask index 4, the gate walkable once opened.
 
 const TIMEOUT := 60.0
 const WORLD := "res://src/world/graveyard/graveyard.tscn"
@@ -94,11 +97,12 @@ func test_every_layout_id_exists() -> void:
 		var want := GraveRecord.State.EMPTY if p.section == "yard" else GraveRecord.State.LOCKED
 		assert_eq(world.graveyard.get_grave(p.id).state, want, p.id + " state at the start")
 		assert_true(_section_rect(p.section).has_point(_v2(p.pos)), p.id + " inside its section")
-	assert_eq(layout.plots.size(), 12, "plot_01..plot_12")
+	assert_eq(layout.plots.size(), 18, "plot_01..plot_12 + h_01..h_06 (Phase 4)")
 	for i: int in range(1, 7):
 		assert_has(world.graveyard.plots_in_section(&"yard"), "plot_%02d" % i)
 	assert_eq(world.graveyard.plots_in_section(&"east"), PackedStringArray(["plot_07", "plot_08", "plot_09"]))
 	assert_eq(world.graveyard.plots_in_section(&"north"), PackedStringArray(["plot_10", "plot_11", "plot_12"]))
+	assert_eq(world.graveyard.plots_in_section(&"elder"), PackedStringArray(["h_01", "h_02", "h_03", "h_04", "h_05", "h_06"]))
 	for g: Dictionary in layout.old_graves:
 		var old := world.get_node_by_layout_id(g.id) as GravePlot
 		assert_not_null(old, g.id)
@@ -680,7 +684,8 @@ func test_phase3_system_nodes() -> void:
 	for n: Node in SaveStateCollector.saveables(tree):
 		if world.get_node("Systems").is_ancestor_of(n):
 			ids.append(String(n.get("save_id")))
-	assert_eq(ids, ["corpse_manager", "expansion", "graveyard", "cleanliness", "decorations", "ghosts"], "load order")
+	assert_eq(ids, ["corpse_manager", "expansion", "graveyard", "cleanliness", "decorations", "ghosts", "journal", "night_trade"],
+			"load order (Phase 4: + journal 40, night_trade 45)")
 	var decorations := world.get_node("Systems/Decorations") as DecorationManager
 	assert_eq(decorations.mask.resource_path, BUILD_MASK)
 	assert_eq(decorations.get_node(decorations.container_path), world.get_node("Decor/Placed"))
@@ -697,12 +702,12 @@ func test_phase3_system_nodes() -> void:
 	assert_ne(expansion.block_reason(&"north"), "")
 
 
-## 21 obstacles (Ostwiese 10, Birkenhang 11) with model, collision and footprint in their
+## 31 obstacles (Ostwiese 10, Birkenhang 11, Holunderwinkel 10) with model, collision and footprint in their
 ## section; none on a station, a plot of the old yard, the path or a waypoint.
 func test_phase3_obstacles() -> void:
 	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
 	var all := Phase3.obstacles(layout)
-	assert_eq(all.size(), 21)
+	assert_eq(all.size(), 31)
 	var kinds := {}
 	for o: Dictionary in all:
 		var node := world.get_node_or_null("Entities/" + String(o.id)) as ClearableObstacle
@@ -737,18 +742,21 @@ func test_phase3_obstacles() -> void:
 		for k: int in 60:
 			assert_false(rect.has_point(_on_polyline(layout.path.points, k / 59.0)), o.id + " off the earth path")
 	assert_eq(kinds, {"east/bramble": 4, "east/rubble": 3, "east/fence_gap": 3, "north/hedge": 1, "north/bramble": 3,
-			"north/rubble": 2, "north/stump": 2, "north/fence_gap": 3})
+			"north/rubble": 2, "north/stump": 2, "north/fence_gap": 3,
+			"elder/gate_small": 1, "elder/elder_thicket": 2, "elder/sunken_pit": 6, "elder/fence_gap": 1})
 	assert_eq(expansion.progress(&"east"), Vector2i(0, 10))
 	assert_eq(expansion.progress(&"north"), Vector2i(0, 11))
+	assert_eq(expansion.progress(&"elder"), Vector2i(0, 10))
 	assert_true((world.get_node("Entities/obs_e_01") as ClearableObstacle).world_rect().grow(0.3).has_point(Vector2(11.5, -2.2)),
 			"the bramble obs_e_01 blocks the passage")
 
 
 ## §2.4: 22 area spots (yard 12 with 4 leaves under the oak, east 5, north 5 with 2 leaves) +
-## one weeds spot per plot on its mound = 34; a new game's start values only in the yard.
+## one weeds spot per plot on its mound = 34; Phase 4 §4.1: + 3 in the Holunderwinkel (2 leaves
+## under the elders) + 6 graves = 43; a new game's start values only in the yard.
 func test_phase3_tending_spots() -> void:
 	var clean := world.get_node("Systems/Cleanliness") as CleanlinessManager
-	assert_eq(clean.spot_ids().size(), 34)
+	assert_eq(clean.spot_ids().size(), 43)
 	var counts := {}
 	var started := 0
 	for d: Dictionary in layout.dirt_spots:
@@ -768,7 +776,8 @@ func test_phase3_tending_spots() -> void:
 			assert_eq(d.section, "yard", d.id)
 			assert_eq(d.kind, "weeds", d.id + ": no rake on day 1")
 			assert_true(float(d.start) >= 1.2 and float(d.start) <= 2.4, d.id + " level 1–2")
-	assert_eq(counts, {"yard/weeds": 8, "yard/leaves": 4, "east/weeds": 5, "north/weeds": 3, "north/leaves": 2})
+	assert_eq(counts, {"yard/weeds": 8, "yard/leaves": 4, "east/weeds": 5, "north/weeds": 3, "north/leaves": 2,
+			"elder/weeds": 1, "elder/leaves": 2})
 	assert_eq(started, 6, "§1.3 day 1: six spots in the old yard")
 	for p: Dictionary in layout.plots:
 		var spot := world.get_node_or_null("Entities/dirt_" + String(p.id)) as DirtSpot
@@ -803,10 +812,11 @@ func test_phase3_build_mask_matches_layout() -> void:
 			var s := mask.section_at(c)
 			per_section[s] = int(per_section.get(s, 0)) + 1
 			if s != 0:
-				assert_true(_section_rect(["", "yard", "east", "north"][s]).has_point(p), "cell %s in section %d" % [c, s])
+				assert_true(_section_rect(["", "yard", "east", "north", "elder"][s]).has_point(p), "cell %s in section %d" % [c, s])
 	assert_eq(diff, 0, "build_mask.res is up to date with the layout (rebuild graveyard.tscn)")
 	for s: int in [1, 2, 3]:
 		assert_true(int(per_section.get(s, 0)) > 200, "section %d buildable cells: %d" % [s, per_section.get(s, 0)])
+	assert_true(int(per_section.get(4, 0)) > 40, "Holunderwinkel (index 4) buildable cells: %d" % per_section.get(4, 0))
 	for p: Dictionary in layout.plots + layout.old_graves:
 		assert_eq(mask.flags_at(mask.world_to_cell(_v2(p.pos))), BuildMask.BLOCKED, p.id + " blocked")
 	for p: Dictionary in layout.plots:
@@ -860,7 +870,8 @@ func test_phase3_passages_walkable_once_cleared() -> void:
 		assert_eq(world.graveyard.get_grave(id).state, GraveRecord.State.EMPTY, id + " unlocked")
 
 
-## §4.1: walkable bounds + the two extra walls, camera bounds, trees moved out of the sections.
+## §4.1: walkable bounds + the extra wall (Phase 4: the one behind the hut is the Holunderwinkel's
+## fence now), camera bounds, trees moved out of the sections.
 func test_phase3_bounds_and_camera() -> void:
 	var wb: Dictionary = layout.walkable_bounds
 	assert_eq([wb.min, wb.max], [[-11.2, -20.3], [21.2, 25.2]])
@@ -868,16 +879,16 @@ func test_phase3_bounds_and_camera() -> void:
 	var t := float(wb.wall_thickness)
 	assert_almost((bounds.get_node("East") as Node3D).position.x, 21.2 + t * 0.5, 0.001)
 	assert_almost((bounds.get_node("North") as Node3D).position.z, -20.3 - t * 0.5, 0.001)
-	for k: int in [1, 2]:
-		assert_true(bounds.has_node("Extra_%d" % k), "extra wall %d" % k)
+	assert_true(bounds.has_node("Extra_1"), "extra wall east of the road")
+	assert_false(bounds.has_node("Extra_2"), "Phase 4: no invisible wall behind the hut")
 	await tree.physics_frame
 	await tree.physics_frame
 	var space := world.get_world_3d().direct_space_state
 	for ray: Array in [[Vector3(-6.0, 1.0, -11.0), Vector3(-6.0, 1.0, -14.0)], [Vector3(9.5, 1.0, 16.0), Vector3(13.0, 1.0, 16.0)]]:
 		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(ray[0], ray[1], 1))
-		assert_false(hit.is_empty(), "extra wall between %s and %s" % ray)
+		assert_false(hit.is_empty(), "wall / fence between %s and %s" % ray)
 	var rig := world.get_node("CameraRig") as CameraRig
-	assert_eq([rig.bounds_min, rig.bounds_max], [Vector2(-7.0, -16.0), Vector2(17.0, 23.0)])
+	assert_eq([rig.bounds_min, rig.bounds_max], [Vector2(-10.0, -17.5), Vector2(17.0, 23.0)], "Phase 4 §4.1: min → (−10, −17.5)")
 	assert_eq([rig.zoom_min, rig.zoom_max], [12.0, 24.0])
 	for tr: Dictionary in layout.background_trees + layout.forest.trees:
 		for s: Dictionary in layout.sections:
@@ -917,6 +928,228 @@ func test_phase3_notice_board() -> void:
 	assert_true(board.label.text.contains("„Verwahrlost“"), board.label.text)
 
 
+# --- Phase 4 (docs/PHASE4_DESIGN.md §3.1, §4, §10 test_graveyard_world) ----------------------
+
+## §3.1: CorpseCare, Piety (derived), Journal (journal / 40), NightTrade (night_trade / 45).
+func test_phase4_system_nodes() -> void:
+	var want := {
+		"CorpseCare": ["CorpseCare", "corpse_care", "", 0],
+		"Piety": ["Piety", "piety", "", 0],
+		"Journal": ["JournalManager", "journal", "journal", 40],
+		"NightTrade": ["NightTrade", "night_trade", "night_trade", 45],
+	}
+	for node_name: String in want:
+		var w: Array = want[node_name]
+		var node := world.get_node_or_null("Systems/" + node_name)
+		assert_not_null(node, "Systems/" + node_name)
+		if node == null:
+			continue
+		assert_eq(node.get_script().get_global_name(), w[0], node_name)
+		assert_true(node.is_in_group(StringName(w[1])), "%s in group %s" % [node_name, w[1]])
+		if w[2] != "":
+			assert_true(node.is_in_group(&"saveable"), node_name + " saveable")
+			assert_eq([node.get("save_id"), node.get("save_order")], [w[2], w[3]], node_name)
+		else:
+			assert_false(node.is_in_group(&"saveable"), node_name + " not saved")
+	var npc := world.get_node_by_layout_id("npc_trader") as Npc
+	assert_not_null(npc, "Entities/npc_trader")
+	assert_eq([npc.save_id, npc.save_order, npc.npc_id], ["npc_trader", 20, &"trader"])
+	assert_true(npc.is_in_group(&"saveable"))
+	var state := SaveManager.collect_state()
+	for id: String in SaveMigration.V3_EMPTY_NODES:
+		assert_true((state.nodes as Dictionary).has(id), "saved state of " + id)
+
+
+## §4.1: section elder (index 4, locked by the key), 6 LOCKED plots under 6 sunken pits, the gate
+## in the fence behind the hut, two thickets, the gap in the north fence – 300 minutes of work.
+func test_phase4_holunderwinkel_layout() -> void:
+	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
+	var elder := expansion.section(&"elder")
+	assert_not_null(elder)
+	assert_eq([elder.order, elder.counts_for_cemetery, elder.chapter], [4, false, &"six_pits"])
+	assert_false(expansion.is_unlocked(&"elder"))
+	assert_eq(expansion.block_reason(&"elder"), "Das Pförtchen ist verschlossen.")
+	var ids := expansion.obstacle_ids(&"elder")
+	assert_eq(ids.size(), 10, "1 gate, 2 thickets, 6 pits, 1 fence gap")
+	var minutes := 0
+	var cost := {}
+	for id: String in ids:
+		var data := expansion.data_of(id)
+		minutes += data.minutes
+		for item: StringName in data.cost:
+			cost[item] = int(cost.get(item, 0)) + data.cost[item]
+		var node := expansion.obstacle(id)
+		assert_not_null(node.get_node_or_null("Model"), id + " model")
+		assert_eq(node.get_node("Model").scene_file_path, data.model.resource_path, id + " model = ClearableData.model")
+	assert_eq(minutes, 300, "§2.10: 300 minutes of clearing")
+	assert_eq(cost, {&"wood": 2, &"iron_fittings": 1})
+	for i: int in 6:
+		var plot_id := "h_%02d" % (i + 1)
+		assert_eq(world.graveyard.get_grave(plot_id).state, GraveRecord.State.LOCKED, plot_id)
+		var pit := expansion.obstacle("obs_h_pit_%d" % (i + 1))
+		var plot := world.get_node_by_layout_id(plot_id) as GravePlot
+		assert_eq(pit.kind, &"sunken_pit")
+		_assert_at(pit, Vector2(plot.global_position.x, plot.global_position.z), "pit over " + plot_id)
+		assert_eq(pit.footprint, plot.footprint, plot_id + ": pit footprint = the plot")
+	assert_eq(expansion.obstacle("obs_h_gate").kind, &"gate_small")
+	assert_eq(world.get_node("Decor/ElderBushes").get_child_count(), 3, "three large elders")
+	for k: int in [1, 2, 3]:
+		assert_true(world.has_node("Colliders/ElderBush_%d" % k), "elder trunk %d collides" % k)
+	var bush_over_gate := false
+	for b: Node in world.get_node("Decor/ElderBushes").get_children():
+		if _flat((b as Node3D).global_position - expansion.obstacle("obs_h_gate").global_position).length() < 2.5:
+			bush_over_gate = true
+	assert_true(bush_over_gate, "an elder over the gate")
+	assert_true(world.has_node("Decor/Overgrowth/elder"), "overgrowth while locked")
+	assert_eq(_waypoint_ids_missing(["tp_elder", "trader_far", "trader_mid", "trader_spot"]), [])
+
+
+## §4.1: the closed gate blocks; with the key it opens (open model, no collision) and the
+## gravekeeper walks through; the whole corner becomes walkable once cleared.
+func test_phase4_gate_opens_with_the_key() -> void:
+	await tree.physics_frame
+	await tree.physics_frame
+	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
+	var inv := world.get_player().inventory
+	var gate := expansion.obstacle("obs_h_gate")
+	var through := [Vector2(-10.0, -12.0), Vector2(-10.0, -12.5), Vector2(-10.0, -13.0)]
+	assert_false(_capsule_free(through[1]), "the closed gate blocks")
+	assert_false(expansion.can_clear("obs_h_gate", inv), "locked without the key")
+	assert_eq(gate.get_interaction_prompt(world.get_player()), "Das Pförtchen ist verschlossen.")
+	GameState.set_flag(&"has_elder_key", true)
+	assert_eq(expansion.block_reason(&"elder"), "")
+	assert_true(expansion.clear("obs_h_gate", inv), "unlocked with the key")
+	assert_false((gate.get_node("Model") as Node3D).visible, "closed gate hidden")
+	assert_true((gate.get_node("Repaired") as Node3D).visible, "open gate shown")
+	assert_eq(gate.get_node("Repaired").scene_file_path, "res://assets/models/props/ph_prop_gate_small_open.glb")
+	for i: int in 3:
+		await tree.physics_frame
+	assert_true(_capsule_free(through[0]) and _capsule_free(through[1]), "walkable through the open gate")
+	assert_false(_capsule_free(through[2]), "the thicket still blocks the way in")
+	assert_true(expansion.unlock(&"elder"))
+	for i: int in 3:
+		await tree.physics_frame
+	for p: Vector2 in through + [_v2(layout.waypoints.tp_elder), Vector2(-7.75, -16.6), Vector2(-7.75, -13.0)]:
+		assert_true(_capsule_free(p), "walkable at %s once cleared" % p)
+	assert_false(_capsule_free(Vector2(-7.0, -20.0)), "the repaired gap closes the north fence")
+	for i: int in 6:
+		assert_eq(world.graveyard.get_grave("h_%02d" % (i + 1)).state, GraveRecord.State.EMPTY)
+	assert_false(world.get_node("Decor/Overgrowth/elder").visible, "overgrowth gone")
+
+
+## §4.2: Ilse walks her schedule from the forest edge to the spot outside the west wall (only
+## with trader_known), stands there 23:00–03:00 facing east with her lantern on the wall stone,
+## and the gravekeeper can talk to her from inside the wall.
+func test_phase4_trader_walks_and_waits_at_the_west_wall() -> void:
+	var npc := world.get_node_by_layout_id("npc_trader") as Npc
+	var trade := world.get_node("Systems/NightTrade") as NightTrade
+	assert_eq(npc.get_node("Model").scene_file_path, "res://assets/models/characters/ph_chr_kranich.glb")
+	assert_eq([npc.requires_flag, npc.lantern_marker], [&"trader_known", &"light_lantern"])
+	assert_almost(npc.walk_anim_speed, 1.36, 0.001)
+	await _at_day(npc, 4, 1410)
+	assert_false(npc.visible, "unknown: invisible")
+	assert_false(npc.interactable.enabled)
+	GameState.set_flag(&"trader_known", true)
+	await _at_day(npc, 4, 1370)
+	assert_true(npc.visible and npc.is_walking(), "22:50 on her way")
+	_assert_xz(npc.global_position, _along(["trader_far", "trader_mid", "trader_spot"], 0.5), "22:50 half way")
+	await _at_day(npc, 4, 1410)
+	assert_true(npc.visible and npc.is_talkable() and not npc.is_walking(), "23:30 at the wall")
+	_assert_xz(npc.global_position, world.get_waypoint(&"trader_spot"), "23:30 trader_spot")
+	assert_almost(npc.rotation.y, deg_to_rad(90.0), 0.001, "facing east")
+	assert_true(trade.is_present())
+	assert_eq(npc.get_interaction_prompt(world.get_player()), "[E] Mit Ilse reden")
+	# Lantern: warm, dimmed, no shadow, resting on the wall stone next to her.
+	var lantern := npc.lantern()
+	assert_not_null(lantern)
+	assert_eq(String(lantern.get_parent().name), "light_lantern")
+	assert_false(lantern.shadow_enabled, "no shadow")
+	assert_false(bool(lantern.get_meta(&"casts_shadow", false)))
+	assert_true(lantern.is_in_group(&"warm_lights"))
+	assert_almost(float(lantern.get_meta(&"base_energy", 0.0)), 0.4, 0.001, "§8: energy 0.4")
+	assert_almost(lantern.omni_range, 3.0, 0.001)
+	var ledge := world.get_node("Decor/Phase4Props/WallLedge") as Node3D
+	assert_true(_flat(lantern.global_position - ledge.global_position).length() < 0.3,
+			"the lantern rests on the wall stone (%.2f m off)" % _flat(lantern.global_position - ledge.global_position).length())
+	var above := lantern.global_position.y - ledge.global_position.y
+	assert_true(above > 0.5 and above < 0.8, "just above the stone (%.2f m)" % above)
+	# Talk over the wall from inside (x ≈ −10.9), facing west.
+	var player := world.get_player()
+	var inside := Vector2(-10.85, -2.6)
+	assert_true(_capsule_free(inside), "the spot inside the wall is free")
+	player.global_position = Vector3(inside.x, world.ground_height(inside), inside.y)
+	player.rotation.y = -PI * 0.5
+	for i: int in 4:
+		await tree.physics_frame
+	assert_eq(player.detector.focused, npc.interactable, "Ilse is in reach over the wall")
+	await _at_day(npc, 5, 240)
+	assert_false(npc.visible, "04:00 gone")
+	assert_false(trade.is_present())
+
+
+## Her way outside the fence needs no collision and never enters the walkable area.
+func test_phase4_trader_route_is_outside_and_free() -> void:
+	await tree.physics_frame
+	await tree.physics_frame
+	var wb: Dictionary = layout.walkable_bounds
+	var ids := ["trader_far", "trader_mid", "trader_spot"]
+	for k: int in 41:
+		var p := _along(ids, k / 40.0)
+		assert_true(p.x < float(wb.min[0]) - 0.3, "route point %s outside the walkable area" % p)
+		# (the last metres lie in the invisible west wall of walkable_bounds – she needs no collision)
+		if p.x < float(wb.min[0]) - float(wb.wall_thickness) - 0.4:
+			assert_true(_capsule_free(Vector2(p.x, p.z)), "route free at %s" % p)
+	for id: String in ids:
+		var w := world.get_waypoint(StringName(id))
+		assert_almost(w.y, world.ground_height(Vector2(w.x, w.z)), 0.02, id + " on the ground")
+
+
+## §4.2: wash basin next to the table, smoke bowl on its edge (= where the juniper smoke of a
+## corpse on the table rises), the wall stone at Ilse's spot; the door note shows from the note
+## until the first meeting.
+func test_phase4_props_and_door_note() -> void:
+	var table := world.get_node_by_layout_id("morgue_table") as MorgueTable
+	var basin := world.get_node("Decor/Phase4Props/WashBasin") as Node3D
+	assert_eq(basin.scene_file_path, "res://assets/models/props/ph_prop_wash_basin.glb")
+	var d := _flat(basin.global_position - table.global_position).length()
+	assert_true(d > 1.1 and d < 1.6, "basin beside the table (%.2f m)" % d)
+	assert_true(world.has_node("Colliders/WashBasin"))
+	var bowl := table.get_node("SmokeBowl") as Node3D
+	assert_eq(bowl.scene_file_path, "res://assets/models/props/ph_prop_smoke_bowl.glb")
+	var marker := bowl.find_child("smoke", true, false) as Node3D
+	var probe := CorpseDecayVisual.new()
+	var smoke_at := table.slot_node().global_transform * probe.smoke_node.position
+	probe.free()
+	assert_true(_flat(marker.global_position - smoke_at).length() < 0.02, "the smoke rises from the bowl")
+	assert_true(absf(marker.global_position.y - smoke_at.y) < 0.05, "at the bowl's rim (%.3f m)" % (marker.global_position.y - smoke_at.y))
+	var ledge := world.get_node("Decor/Phase4Props/WallLedge") as Node3D
+	_assert_at(ledge, _v2(layout.phase4_props[2].pos), "wall ledge")
+	assert_true(ledge.global_position.x < -11.5, "outside the west wall")
+	# Door note: on the door leaf, hidden until trader_known, gone after the first meeting.
+	var note := world.get_node("Decor/DoorNote") as Node3D
+	var door := world.get_node_by_layout_id("hut_door") as Node3D
+	assert_true(_flat(note.global_position - door.global_position).length() < 0.8, "on the hut door")
+	assert_false(note.visible, "no note before day 4")
+	GameState.set_flag(&"trader_known", true)
+	note.call(&"refresh")
+	assert_true(note.visible, "the note at the door")
+	(world.get_node("Systems/NightTrade") as NightTrade).load_state({"intro_done": true, "tools_given": true})
+	note.call(&"refresh")
+	assert_false(note.visible, "gone after meeting Ilse")
+
+
+## §4.3: the Holunderwinkel is index 4 of the build mask, the gate and the strip inside the west
+## wall at Ilse's spot are routes, the plots and the basin are blocked.
+func test_phase4_build_mask() -> void:
+	var mask := load(BUILD_MASK) as BuildMask
+	assert_eq(mask.section_at(mask.world_to_cell(Vector2(-7.75, -16.6))), 4, "Holunderwinkel = 4")
+	for p: Vector2 in [Vector2(-10.0, -13.2), Vector2(-10.75, -2.6)]:
+		assert_true(mask.flags_at(mask.world_to_cell(p)) & BuildMask.ROUTE, "route at %s" % p)
+	for i: int in 6:
+		assert_eq(mask.flags_at(mask.world_to_cell(_v2(layout.plots[12 + i].pos))), BuildMask.BLOCKED, "h_%02d blocked" % (i + 1))
+	assert_eq(mask.flags_at(mask.world_to_cell(_v2(layout.phase4_props[0].pos))), BuildMask.BLOCKED, "wash basin blocked")
+
+
 # --- helpers ----------------------------------------------------------------------------------
 
 func _at(npc: Npc, minute: int) -> void:
@@ -924,6 +1157,17 @@ func _at(npc: Npc, minute: int) -> void:
 	npc.refresh()
 	await tree.process_frame
 	await tree.process_frame
+
+
+func _at_day(npc: Npc, day: int, minute: int) -> void:
+	TimeManager.load_state({"day": day, "minute_of_day": minute})
+	npc.refresh()
+	await tree.process_frame
+	await tree.process_frame
+
+
+func _waypoint_ids_missing(ids: Array) -> Array:
+	return ids.filter(func(id: String) -> bool: return not world.has_node("Waypoints/" + id))
 
 
 ## Point at fraction t of the arc length along the waypoint polyline (XZ).

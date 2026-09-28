@@ -49,6 +49,14 @@ static func build_entity(ctx: Ctx, parent: Node, ent: Dictionary) -> void:
 			node.set("save_id", params.save_id)
 			node.set("npc_id", StringName(params.npc_id))
 			node.set("model", load(Ctx.model_path(params.model)))
+			# Phase 4 (Ilse, §4.2): flag gate, lantern marker, walk cycle speed, no turning.
+			if params.has("requires_flag"):
+				node.set("requires_flag", StringName(params.requires_flag))
+			if params.has("lantern_marker"):
+				node.set("lantern_marker", StringName(params.lantern_marker))
+			for key: String in ["walk_anim_speed", "face_player_range"]:
+				if params.has(key):
+					node.set(key, float(params[key]))
 		"workbench":
 			node.set("station", StringName(params.get("station", "workbench")))
 	ctx.add(parent, node)

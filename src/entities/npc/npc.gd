@@ -366,6 +366,8 @@ func _make_lantern() -> void:
 	_lantern.omni_range = LANTERN_RANGE
 	_lantern.shadow_enabled = false
 	_lantern.position = offset
+	# AtmosphereController scales every warm light from its base energy (default 1.0).
+	_lantern.set_meta(&"base_energy", LANTERN_ENERGY)
 	_lantern.add_to_group(&"warm_lights", true)
 	parent.add_child(_lantern)
 
