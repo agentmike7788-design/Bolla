@@ -30,6 +30,9 @@ extends Resource
 @export var rot_malus: int = -2
 ## Harvest kind → points.
 @export var harvest_malus: Dictionary[StringName, int] = {&"hair": -1, &"teeth": -2}
+# Phase 6 (docs/PHASE6_DESIGN.md §2.4, §2.7): „Ausgesegnet +1" when the corpse had a funeral
+# service. quality_max 20 comes with P4 (W0-Notizen: stays 19 here and in the .tres until then).
+@export var quality_service: int = 1
 @export_group("Payment & reputation")
 ## payment = base_payment(cause) + floor(quality * payment_per_quality)
 @export var payment_per_quality: float = 0.5

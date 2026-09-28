@@ -478,13 +478,13 @@ func test_database_phase5_folders() -> void:
 
 
 func test_save_format_v4_and_migration_chain() -> void:
-	assert_eq(SaveMigration.CURRENT, 4)
-	assert_eq(SaveFileIO.FORMAT_VERSION, 4)
-	assert_eq(SaveManager.FORMAT_VERSION, 4)
+	assert_eq(SaveMigration.CURRENT, 5)  # Phase 6: v5
+	assert_eq(SaveFileIO.FORMAT_VERSION, 5)
+	assert_eq(SaveManager.FORMAT_VERSION, 5)
 	assert_eq(SaveMigration.V4_EMPTY_NODES, PackedStringArray(["workshop", "gathering", "stonemasonry"]))
 	var state := {"autoloads": {"TimeManager": {"day": 5}, "GameState": {"stats": {}, "flags": {}}}, "nodes": {"corpse_manager": {}}}
-	assert_eq(SaveMigration.migrate(state, 4), state, "current version unchanged")
-	assert_eq(SaveMigration.migrate(state, 5), {}, "newer → corrupt")
+	assert_eq(SaveMigration.migrate(state, 4), state, "v4 → v5 (Phase 6 W0: identity)")
+	assert_eq(SaveMigration.migrate(state, SaveMigration.CURRENT + 1), {}, "newer → corrupt")
 	var v4 := SaveMigration.migrate_3_to_4(state, {"day": 5})
 	assert_eq((v4.nodes as Dictionary).keys(), ["corpse_manager", "workshop", "gathering", "stonemasonry"], "P6: empty Phase-5 nodes")
 	assert_false(is_same(v4, state), "deep copy")

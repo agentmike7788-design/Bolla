@@ -39,7 +39,9 @@ const WEEDS_LEVEL := 2
 
 
 ## `robbed` = number of harvested kinds (robbed_count).
-static func score(quality: int, dirt_level: int, decor_bonus: int, clean: CleanlinessConfig, cfg: GhostConfig, robbed: int = 0) -> int:
+## Phase 6 (§2.4, §3.4; P4): `_devotion` = ChapelRules.devotion_bonus (already capped) – W0: not read yet.
+static func score(quality: int, dirt_level: int, decor_bonus: int, clean: CleanlinessConfig, cfg: GhostConfig, robbed: int = 0,
+		_devotion: int = 0) -> int:
 	var dirt := 0
 	if clean != null and not clean.grave_mood_by_level.is_empty():
 		var lvl := clampi(dirt_level, 0, clean.grave_mood_by_level.size() - 1)

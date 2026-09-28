@@ -18,6 +18,11 @@ signal changed
 ## Switching it on moves TOOL items out of the slots onto the belt (one `changed`).
 @export var tool_belt: bool = false:
 	set = _set_tool_belt
+## Phase 6 §2.5, §3.4 (fields only in W0, the effect is P1's): the stack limit of an item whose
+## category is in stack_categories (empty = all) is max_stack × stack_multiplier (the shed on
+## level 3). save / load unchanged.
+@export var stack_multiplier: int = 1
+@export var stack_categories: Array[int] = []
 
 ## slot_count entries: {} (empty) or {"id": StringName, "amount": int} with 1 <= amount <= max_stack.
 var _slots: Array[Dictionary] = []

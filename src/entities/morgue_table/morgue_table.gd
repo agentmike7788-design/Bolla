@@ -44,6 +44,13 @@ var corpse_id: String = "":
 
 @onready var interactable: Interactable = get_node_or_null(^"Interactable") as Interactable
 
+# Phase 6 (docs/PHASE6_DESIGN.md §2.2, §3.4; P2): the crypt table (room &"crypt", requires_level 1)
+# and the old table in front of the hut (retire_at_level 1). Exactly one table is active.
+@export var room: StringName = &""
+@export var requires_level: int = 0
+## 0 = never retires.
+@export var retire_at_level: int = 0
+
 ## Player of the last interaction (the panel acts for them).
 var _player: Player
 
@@ -379,3 +386,9 @@ static func _actions(player: Player) -> ActionConfig:
 
 static func _is_carrying(player: Player) -> bool:
 	return is_instance_valid(player.carried)
+
+
+## STUB (P2) – Buildings.level(&"crypt") in [requires_level, retire_at_level) (retire 0 = never).
+## W0: always true (the old table stays active).
+func is_active() -> bool:
+	return true

@@ -28,3 +28,8 @@ extends Resource
 # inscription, after &"cross"). by_design: once per grave in the first night after a designed
 # stone was set – keys &"default", &"gilded", &"master", &"s5_lorenz".
 @export var by_design: Dictionary[StringName, PackedStringArray] = {}
+# Phase 6 (docs/PHASE6_DESIGN.md §2.4): once per grave in the first night after the marker of a
+# corpse with a funeral service (by_service) / after a devotion (by_devotion: &"default",
+# &"robbed").
+@export var by_service: PackedStringArray = PackedStringArray()
+@export var by_devotion: Dictionary[StringName, PackedStringArray] = {}

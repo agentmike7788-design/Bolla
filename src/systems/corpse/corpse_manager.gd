@@ -332,7 +332,10 @@ func _note_smell(record: CorpseRecord) -> void:
 
 ## Puts the corpse at `xform` (world transform) under `parent` (e.g. a table slot) or the
 ## container. A carried corpse is detached from the player first.
-func put_down(id: String, location: StringName, xform: Transform3D, parent: Node3D = null) -> bool:
+## Phase 6 (§3.4, P2): room / slot_id (niche_1…6) are stored on the record; P2 closes the open cold
+## window and opens a new one when cold_factor_for(location, room) < 1 (W0: not read yet).
+func put_down(id: String, location: StringName, xform: Transform3D, parent: Node3D = null, _room: StringName = &"",
+		_slot_id: String = "") -> bool:
 	var record := _live_record(id, "put_down")
 	if record == null:
 		return false
@@ -764,3 +767,32 @@ func _economy() -> EconomyConfig:
 		economy = EconomyConfig.resolve()
 	return economy
 
+
+
+# --- Phase 6 (docs/PHASE6_DESIGN.md §2.2, §3.4) -------------------------------------------------
+
+## STUB (P2) – id of the corpse at `location` / `slot_id` ("" = free), from the records.
+func corpse_in_slot(_location: StringName, _slot_id: String) -> String:
+	return ""
+
+
+## STUB (P2) – CryptConfig × Buildings.level(&"crypt"): niche → niche_factor, table / floor in the
+## crypt → room_factor, else 1.0.
+func cold_factor_for(_location: StringName, _room: StringName) -> float:
+	return 1.0
+
+
+## STUB (P2) – a crypt level change: open cold windows close at `now_total` and reopen with the new factor.
+func restart_cold(_now_total: int) -> void:
+	pass
+
+
+## STUB (P2) – crypt 1: the corpse on the old table moves onto the crypt table with all its state;
+## its id | "".
+func relocate_table_corpse(_xform: Transform3D, _parent: Node3D, _room: StringName) -> String:
+	return ""
+
+
+## STUB (P2) – from ChapelRites: service_held, service_day; corpse_updated.
+func mark_service(_id: String, _day: int) -> void:
+	pass

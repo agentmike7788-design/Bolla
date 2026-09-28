@@ -667,3 +667,10 @@ func _stone_config() -> StoneConfig:
 		if stone_config == null:
 			stone_config = StoneConfig.new()
 	return stone_config
+
+
+# --- Phase 6 (docs/PHASE6_DESIGN.md §2.3, §3.4) -------------------------------------------------
+
+## STUB (P3) – OLD → EMPTY (grave_state_changed); only is_old plots. Ossuary.lift calls it.
+func lift_old(_grave_id: String) -> bool:
+	return false

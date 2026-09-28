@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="OldGraveData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/systems/ossuary/old_grave_data.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_gravestone_cross.glb" id="2"]
+
+[resource]
+script = ExtResource("1")
+grave_id = "old_01"
+display_name = "Wendel Gratz"
+born_year = 1779
+died_year = 1833
+reinter_line = ""
+stone_model = ExtResource("2")

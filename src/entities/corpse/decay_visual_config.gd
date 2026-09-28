@@ -16,3 +16,8 @@ extends Resource
 @export var visibility_range: float = 22.0
 ## At most this many corpses emit particles at once.
 @export var max_emitting: int = 3
+# Phase 6 (docs/PHASE6_DESIGN.md §2.2): in a cold niche the flies rest, the wisps run at × 0.5 and
+# 2 chill particles per occupied niche show the cold (marker "chill").
+@export var niche_fly_scale: float = 0.0
+@export var niche_wisp_scale: float = 0.5
+@export var niche_chill_particles: int = 2

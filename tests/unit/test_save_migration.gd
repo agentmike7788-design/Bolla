@@ -83,8 +83,8 @@ func test_reputation_table() -> void:
 # --- version chain ----------------------------------------------------------------------------
 
 func test_current_version_is_three() -> void:
-	# Phase 5 W0: v4 (docs/PHASE5_DESIGN.md §5) – the name stays for the history of this test.
-	assert_eq(SaveMigration.CURRENT, 4)
+	# Phase 5 W0: v4, Phase 6 W0: v5 (docs/PHASE6_DESIGN.md §5) – the name stays for the history of this test.
+	assert_eq(SaveMigration.CURRENT, 5)
 	assert_eq(SaveFileIO.FORMAT_VERSION, SaveMigration.CURRENT)
 
 
@@ -686,7 +686,7 @@ func test_v4_round_trip_is_identical() -> void:
 		var migrated := _migrated_v3(name)
 		_write_doc(SaveFileIO.make_doc(f.meta, migrated))
 		var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
-		assert_eq(int(doc.format_version), 4, name)
+		assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, name)  # Phase 6: v5
 		var read := _read_slot()
 		assert_eq(read.err, OK, name)
 		assert_eq(read.state, migrated, "%s: v4 file round trip" % name)
@@ -695,10 +695,11 @@ func test_v4_round_trip_is_identical() -> void:
 
 
 func test_version_five_is_rejected() -> void:
-	assert_eq(SaveMigration.CURRENT, 4)
+	# Phase 6 W0: CURRENT 5 – the name stays; a version above CURRENT is rejected.
+	assert_eq(SaveMigration.CURRENT, 5)
 	assert_eq(Phase5Fixtures.install_save_v3("slot_p4_day7_table", TEST_DIR, SLOT), OK)
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
-	doc.format_version = 5
+	doc.format_version = SaveMigration.CURRENT + 1
 	_write_doc(doc)
 	assert_eq(_read_slot().err, ERR_FILE_UNRECOGNIZED)
 	assert_true(SaveFileIO.is_newer_version(TEST_DIR, SLOT))

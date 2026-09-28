@@ -2,12 +2,16 @@ class_name SaveMigration
 extends RefCounted
 ## Upgrades a decoded save state ({autoloads, nodes}) to the CURRENT format
 ## (docs/PHASE3_DESIGN.md §5.2, §3.4 "Speichern"; docs/PHASE4_DESIGN.md §5.2: chain 1→2→3;
-## docs/PHASE5_DESIGN.md §5.2: chain 1→2→3→4). Applied by SaveFileIO.read_doc after
+## docs/PHASE5_DESIGN.md §5.2: chain 1→2→3→4; docs/PHASE6_DESIGN.md §5.2: chain 1→…→5). Applied by SaveFileIO.read_doc after
 ## decode_state; the normal load path follows and the next save writes CURRENT.
 ## Pure: never touches the scene tree, never changes its input or an autoload (migrate_3_to_4 only
 ## reads item categories from Database).
 
-const CURRENT := 4
+const CURRENT := 5
+## Save ids of the Phase-6 system nodes / the shed store that get an empty state in migrate_4_to_5
+## (docs/PHASE6_DESIGN.md §3.1, §5.2 step 4) – inserted only once W-Welt creates the nodes (like
+## Phase 4 / 5; W0: migrate_4_to_5 is the identity).
+const V5_EMPTY_NODES: PackedStringArray = ["buildings", "ossuary", "chapel", "shed_store"]
 ## Save ids of the Phase-5 system nodes that get an empty state in migrate_3_to_4 (§3.1, §5.2
 ## step 3). SaveManager.without_absent_defaults drops them again while the world has no such node.
 const V4_EMPTY_NODES: PackedStringArray = ["workshop", "gathering", "stonemasonry"]
@@ -59,6 +63,8 @@ static func migrate(state: Dictionary, from_version: int, meta: Dictionary = {})
 		out = migrate_2_to_3(out, meta)
 	if from_version <= 3:
 		out = migrate_3_to_4(out, meta)
+	if from_version <= 4:
+		out = migrate_4_to_5(out, meta)
 	return out
 
 
@@ -189,6 +195,14 @@ static func migrate_3_to_4(state: Dictionary, _meta: Dictionary) -> Dictionary:
 		if not _has_key(stats, String(key)):
 			_set_key(stats, String(key), 0)
 	return out
+
+
+## STUB (P6) – docs/PHASE6_DESIGN.md §5.2 steps 1–7 on a deep copy of a v4 state (run exactly
+## once). W0: the identity on a deep copy (fail-safe: every from_dict / load_state tolerates the
+## missing Phase-6 keys). P6: player interior_id from in_interior, the new record fields, empty
+## V5_EMPTY_NODES (once the world has them), the new stats = 0.
+static func migrate_4_to_5(state: Dictionary, _meta: Dictionary) -> Dictionary:
+	return state.duplicate(true)
 
 
 ## §5.2 step 1 on one saved Inventory state ({slots, currency}) in place: TOOL items → "tools".

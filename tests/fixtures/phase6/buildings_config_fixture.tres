@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildingsConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/buildings/buildings_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+unlock_flag = &"names_in_stone_complete"
+open_flag = &"buildings_open"
+intro_minute = 360
+goal_levels = Dictionary[StringName, int]({&"crypt": 2, &"chapel": 2, &"shed": 2})
+goal_services = 1
+goal_reinterred = 1
+chapter_id = &"roof_and_earth"
+goal_flag = &"roof_and_earth_complete"
+cleared_flag = &"building_sites_cleared"

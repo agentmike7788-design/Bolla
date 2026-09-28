@@ -60,6 +60,14 @@ extends Resource
 @export var sun_night_energy: float = 0.08
 @export var exposure: float = 1.0
 
+@export_group("Fog")
+## Phase 6 §4.8: cold air in the crypt (depth fog of the room's Environment, not volumetric).
+@export var fog_enabled: bool = false
+@export var fog_color: Color = Color("#8a98a8")
+@export var fog_density: float = 0.0
+## Phase 6 §4.8: the "window" light role is the stair shaft (crypt).
+@export var shaft_role_as_window: bool = false
+
 @export_group("Chest")
 @export var chest_slots: int = 16
 

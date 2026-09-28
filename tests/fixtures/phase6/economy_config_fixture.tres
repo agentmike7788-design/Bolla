@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="EconomyConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/graveyard/economy_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+quality_buried = 2
+quality_shroud = 2
+quality_examined = 1
+marker_quality = Dictionary[StringName, int]({&"wooden_cross": 1, &"gravestone_simple": 3, &"stone_stele": 3, &"stone_arch": 4, &"stone_master": 5})
+fresh_good_threshold = 0.6
+fresh_good_bonus = 1
+fresh_bad_threshold = 0.3
+fresh_bad_malus = -1
+valuables_left_bonus = 1
+valuables_taken_malus = -2
+quality_min = 0
+quality_max = 20
+quality_washed = 1
+quality_laid_out = 1
+dress_quality = Dictionary[StringName, int]({&"shroud": 2, &"gown": 3})
+rot_threshold = 0.1
+rot_malus = -2
+harvest_malus = Dictionary[StringName, int]({&"hair": -1, &"teeth": -2})
+payment_per_quality = 0.5
+valuables_reputation = -8
+old_grave_quality = 0
+rating_thresholds = PackedInt32Array(15, 32, 50, 100)
+venerable_min_decor = 12
+venerable_max_dirt = 6
+quality_service = 1

@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://src/systems/buildings/building_data.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/buildings/building_level_data.gd" id="2"]
+
+[sub_resource type="Resource" id="level_1"]
+script = ExtResource("2")
+level = 1
+title = "Gruft geöffnet"
+inputs = Dictionary[StringName, int]({&"stone": 12, &"wood": 6, &"clay": 4, &"iron_fittings": 2})
+coins = 20
+minutes = 180
+coin_part_label = "Kalk und Mörtel aus Hollerbrück"
+text = "Der zugeschüttete Hals wird frei, Treppe und Gewölbe werden gemauert. Unten steht ein Steintisch – der Tisch vor der Hütte wird nicht mehr gebraucht."
+adds = PackedStringArray("Portal und Treppe", "Gruft-Tisch statt des Tischs vor der Hütte", "Waschbecken und Räucherschale", "2 Kühlnischen (× 0,5)", "Raumkühle × 0,8", "Beinhaus: 3 Plätze", "Hängelaterne")
+
+[sub_resource type="Resource" id="level_2"]
+script = ExtResource("2")
+level = 2
+title = "Kühlgewölbe"
+inputs = Dictionary[StringName, int]({&"workstone": 4, &"stone": 8, &"clay": 4, &"iron_bar": 1})
+coins = 30
+minutes = 210
+coin_part_label = "Schieferplatten für die Nischen"
+text = "Schieferbänke in den Wandnischen halten die Kälte. Hinter dem Beinhaus kommt beim Ausbau eine vermauerte Tür zum Vorschein."
+adds = PackedStringArray("4 Kühlnischen (× 0,4)", "Raumkühle × 0,7", "Beinhaus: 5 Plätze", "Gebeinregal", "Eine vermauerte Tür")
+
+[sub_resource type="Resource" id="level_3"]
+script = ExtResource("2")
+level = 3
+title = "Tiefe Gruft"
+inputs = Dictionary[StringName, int]({&"workstone": 6, &"stone": 6, &"iron_bar": 2})
+coins = 35
+minutes = 240
+coin_part_label = "Eisengitter und Namenstafel"
+text = "Die ganze Gruft ist ausgebaut. Eine Tafel trägt die Namen der Umgebetteten, und in der vermauerten Tür sitzt ein Gitter."
+adds = PackedStringArray("6 Kühlnischen (× 0,3)", "Raumkühle × 0,6", "Beinhaus: 6 Plätze", "Namenstafel", "Gitter im Gang", "Laterne am Portal")
+
+[resource]
+script = ExtResource("1")
+id = &"crypt"
+display_name = "Gruft"
+order = 1
+site_id = "site_crypt"
+door_id = "door_crypt"
+room_id = &"crypt"
+levels = Array[ExtResource("2")]([SubResource("level_1"), SubResource("level_2"), SubResource("level_3")])
+allows_corpse = true
+prompt_enter = "[E] Gruft betreten"
+prompt_exit = "[E] Hinaufgehen"

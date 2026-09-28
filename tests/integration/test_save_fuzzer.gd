@@ -118,7 +118,7 @@ func test_fuzz_v3_fixtures() -> void:
 func test_fuzz_v4_save_with_phase5_parts() -> void:
 	var text := await _make_v4_save()
 	var doc: Dictionary = JSON.parse_string(text)
-	assert_eq(int(doc.format_version), 4, "format v4")
+	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, "current format (v4; Phase 6: v5)")
 	await _fuzz_text(text, "p5", P5_SHARE)
 	var state := SaveFileIO.decode_state(doc.get("data"))
 	var paths: Array = []
@@ -151,7 +151,7 @@ func test_fuzz_v4_save_with_phase5_parts() -> void:
 func test_fuzz_v4_real_mid_phase5_save() -> void:
 	var text := await _make_real_v4_save()
 	var doc: Dictionary = JSON.parse_string(text)
-	assert_eq(int(doc.format_version), 4, "format v4")
+	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, "current format (v4; Phase 6: v5)")
 	await _fuzz_text(text, "p5 real", P5_SHARE)
 	var state := SaveFileIO.decode_state(doc.get("data"))
 	var paths: Array = []

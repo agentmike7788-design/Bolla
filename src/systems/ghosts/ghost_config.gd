@@ -23,3 +23,5 @@ extends Resource
 @export var gift_coins: int = 2
 ## Phase 4 §2.9: mood points per harvested kind (hair / teeth) – reason "robbed".
 @export var robbed_mood: int = -5
+## Phase 6 §2.4, §2.7: a devotion raises a robbed soul's score at most to this value.
+@export var devotion_robbed_cap: int = 8

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ShedConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/buildings/shed_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+slots_by_level = PackedInt32Array(0, 24, 32, 40)
+stack_mult_by_level = PackedInt32Array(1, 1, 1, 2)
+stack_categories = Array[int]([0, 6])
+fetch_min_level = 2
+fetch_minutes_by_level = PackedInt32Array(0, 0, 10, 0)
+store_min_level = 3
+excluded_items = Array[StringName]([&"bone_box_full"])

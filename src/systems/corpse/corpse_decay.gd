@@ -110,3 +110,12 @@ static func decay_per_hour(record: CorpseRecord, tables: CorpseTables) -> float:
 	if tables == null:
 		return 0.0
 	return tables.base_decay_per_hour * float(tables.get_cause(record.cause_id).get("decay_mult", 1.0))
+
+
+# --- Phase 6 (docs/PHASE6_DESIGN.md §2.2, §3.4) -------------------------------------------------
+
+## STUB (P2) – the cold factor of `record` at the minute `total` (cold_windows [start, end (-1 =
+## open), factor‰]): 1.0 without an open / covering window. P2 makes effective_minutes /
+## freshness_at / minutes_until use min(balm, cold) per minute.
+static func cold_factor_at(_record: CorpseRecord, _total: int) -> float:
+	return 1.0

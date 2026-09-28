@@ -60,6 +60,9 @@ const NAME_UNKNOWN := "Unbekannt"
 @export var old_mound: String = ""
 ## Stone position of the approved art-prototype graves (head end).
 @export var old_stone_offset: Vector3 = Vector3(0, 0, -1.12)
+## Phase 6 (§2.3, §3.4; P3): &"foot" for the old graves – the spoil heap lies at the foot end
+## (ph_prop_grave_pit_foot) once an old grave was lifted and is dug again.
+@export var pit_variant: StringName = &""
 @export_group("Visuals")
 @export var empty_model: PackedScene = preload("res://assets/models/props/ph_prop_grave_plot_empty.glb")
 @export var pit_model: PackedScene = preload("res://assets/models/props/ph_prop_grave_pit.glb")

@@ -28,6 +28,12 @@ const GATHER_DIR := "res://data/gather"
 const STONE_SHAPE_DIR := "res://data/stone/shapes"
 const INSCRIPTION_DIR := "res://data/stone/inscriptions"
 const ORNAMENT_DIR := "res://data/stone/ornaments"
+# Phase 6 (docs/PHASE6_DESIGN.md §3.5)
+const BUILDING_DIR := "res://data/buildings"
+const OLD_GRAVE_DIR := "res://data/ossuary/old_graves"
+## Room configs data/config/interiors/<room_id>.tres (InteriorConfig); missing → interior_config.
+const INTERIOR_CONFIG_DIR := "res://data/config/interiors"
+const INTERIOR_CONFIG := &"interior_config"
 
 var _items: Dictionary = {}       # StringName -> ItemData
 var _recipes: Dictionary = {}     # StringName -> RecipeData
@@ -47,6 +53,9 @@ var _gather: Dictionary = {}      # StringName -> GatherNodeData
 var _shapes: Dictionary = {}      # StringName -> StoneShapeData
 var _inscriptions: Dictionary = {}  # StringName -> InscriptionData
 var _ornaments: Dictionary = {}   # StringName -> OrnamentData
+var _buildings: Dictionary = {}   # StringName -> BuildingData
+var _old_graves: Dictionary = {}  # StringName (grave_id) -> OldGraveData
+var _interior_configs: Dictionary = {}  # StringName (room_id) -> InteriorConfig
 var _icons: Dictionary = {}       # StringName -> Texture2D
 var _placeholder: Texture2D
 
@@ -78,6 +87,11 @@ func reload() -> void:
 	_shapes = _load_dir(STONE_SHAPE_DIR, "id")
 	_inscriptions = _load_dir(INSCRIPTION_DIR, "id")
 	_ornaments = _load_dir(ORNAMENT_DIR, "id")
+	_buildings = _load_dir(BUILDING_DIR, "id")
+	_old_graves = _load_dir(OLD_GRAVE_DIR, "grave_id")
+	_interior_configs.clear()
+	for path: String in _resource_files(INTERIOR_CONFIG_DIR):
+		_interior_configs[StringName(path.get_file().get_basename())] = load(path)
 
 
 func item(id: StringName) -> Resource:
@@ -252,6 +266,35 @@ func ornament(id: StringName) -> Resource:
 ## All ornaments, sorted by `order` (ties by id).
 func ornaments() -> Array:
 	return _sorted(_ornaments.values(), "order")
+
+
+# --- Phase 6 ---------------------------------------------------------------------------------
+
+## data/buildings/<id>.tres (BuildingData), null if unknown.
+func building(id: StringName) -> Resource:
+	return _buildings.get(id)
+
+
+## All buildings, sorted by `order` (ties by id).
+func buildings() -> Array:
+	return _sorted(_buildings.values(), "order")
+
+
+## data/ossuary/old_graves/<grave_id>.tres (OldGraveData), null if unknown.
+func old_grave(grave_id: String) -> Resource:
+	return _old_graves.get(StringName(grave_id))
+
+
+## All old graves, sorted by grave_id.
+func old_graves() -> Array:
+	return _sorted(_old_graves.values(), "grave_id")
+
+
+## data/config/interiors/<room_id>.tres (InteriorConfig); missing → data/config/interior_config.tres.
+func interior_config(room_id: StringName) -> Resource:
+	if _interior_configs.has(room_id):
+		return _interior_configs[room_id]
+	return _configs.get(INTERIOR_CONFIG)
 
 
 func corpse_tables() -> Resource:

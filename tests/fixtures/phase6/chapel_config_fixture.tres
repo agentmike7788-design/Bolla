@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ChapelConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/chapel/chapel_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+service_minutes = 45
+service_start_min = 480
+service_start_max = 1020
+candle_item = &"altar_candle"
+candle_amount = 1
+service_min_freshness = 0.3
+service_needs_dress = true
+service_fee_by_level = PackedInt32Array(0, 3, 5, 7)
+service_rep_by_level = PackedInt32Array(0, 1, 2, 3)
+mourners_by_level = PackedInt32Array(0, 0, 2, 4)
+devotion_minutes = 30
+devotion_mood_by_level = PackedInt32Array(0, 1, 2, 3)
+devotion_robbed_cap = 8
+room_id = &"chapel"

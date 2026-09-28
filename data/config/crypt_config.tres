@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CryptConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/corpse/crypt_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+niches_by_level = PackedInt32Array(0, 2, 4, 6)
+niche_factor_by_level = PackedFloat32Array(1, 0.5, 0.4, 0.3)
+room_factor_by_level = PackedFloat32Array(1, 0.8, 0.7, 0.6)
+ossuary_by_level = PackedInt32Array(0, 3, 5, 6)
+stench_exempt = true
+lift_minutes = 60
+reinter_minutes = 20
+reinter_fee = 4
+box_item = &"bone_box"
+full_item = &"bone_box_full"
+min_rest_years = 30
+passage_level = 2
+grille_level = 3
+passage_clue = &"c_crypt_draft"
+room_id = &"crypt"
+niche_wait_minutes = 60

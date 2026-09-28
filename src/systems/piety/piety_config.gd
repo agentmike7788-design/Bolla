@@ -8,7 +8,8 @@ extends Resource
 @export var start_value: int = 0
 ## Tier i+1 from value ≥ tier_thresholds[i].
 @export var tier_thresholds: PackedInt32Array = [-59, -19, 20, 60]
-@export var events: Dictionary[StringName, int] = {&"valuables_left": 3, &"valuables_taken": -6, &"hair_taken": -4, &"teeth_taken": -6, &"full_prep": 3, &"bare_burial": -2, &"rotten_burial": -2}
+## Phase 6 §2.7: + service (unharvested only), devotion (once per grave), reinterred.
+@export var events: Dictionary[StringName, int] = {&"valuables_left": 3, &"valuables_taken": -6, &"hair_taken": -4, &"teeth_taken": -6, &"full_prep": 3, &"bare_burial": -2, &"rotten_burial": -2, &"service": 1, &"devotion": 1, &"reinterred": 1}
 ## Daily +1 towards 0 (only below 0, only without harvesting the day before).
 @export var daily_recovery: int = 1
 ## Ghost gift coins per tier.

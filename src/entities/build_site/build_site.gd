@@ -128,3 +128,16 @@ func _first_player() -> Player:
 
 func _warn(text: String) -> void:
 	EventBus.notification_requested.emit(text, &"warning")
+
+
+# --- Phase 6 (docs/PHASE6_DESIGN.md §2.5, §3.4) -------------------------------------------------
+
+## STUB (P1) – shed ≥ 2: fetch the missing `needs` {item_id: amount} from the shed into the
+## player's inventory (TimedAction fetch_minutes, 0 → at once), then shed_supply_moved(&"fetch").
+func request_fetch(_needs: Dictionary) -> void:
+	pass
+
+
+## STUB (P1) – shed 3: store the player's RESOURCE / MATERIAL surplus (ShedSupply.store_surplus).
+func request_store() -> void:
+	pass

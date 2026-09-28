@@ -103,6 +103,21 @@ signal grave_stone_set(grave_id: String, shape_id: StringName, quality: int)
 # Coins (every expense through a system: build, Osric, Ilse); reason: &"license", &"build", &"osric", &"ilse"
 signal coins_spent(amount: int, reason: StringName)
 
+# Phase 6 (docs/PHASE6_DESIGN.md §3.3) – listeners never change game state (Buildings, Ossuary,
+# ChapelRites and the shed entities call the others directly).
+# Buildings (Buildings.upgrade)
+signal building_upgraded(building_id: StringName, level: int)
+## Interiors (Player.set_in_interior): "" = outside; interior_changed(inside) stays and comes first.
+signal interior_room_changed(room_id: StringName)
+# Ossuary (Ossuary.lift / reinter)
+signal bones_lifted(grave_id: String)
+signal bones_reinterred(grave_id: String, count: int)
+# Chapel (ChapelRites)
+signal funeral_held(corpse_id: String, chapel_level: int, fee: int)
+signal devotion_held(grave_id: String, bonus: int)
+## Shed (ShedSupply through the entity); direction: &"fetch" | &"store"
+signal shed_supply_moved(items: Dictionary, direction: StringName)
+
 # UI
 signal ui_panel_requested(panel: StringName, context: Dictionary)
 signal ui_modal_changed(open: bool)

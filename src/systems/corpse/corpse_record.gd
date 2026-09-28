@@ -9,7 +9,11 @@ const LOCATION_CARRIED := &"carried"
 const LOCATION_TABLE := &"table"
 const LOCATION_GROUND := &"ground"
 const LOCATION_BURIED := &"buried"
-const LOCATIONS: Array[StringName] = [LOCATION_DROPOFF, LOCATION_CARRIED, LOCATION_TABLE, LOCATION_GROUND, LOCATION_BURIED]
+# Phase 6 (docs/PHASE6_DESIGN.md §3.4, W0) – appended.
+const LOCATION_NICHE := &"niche"
+const LOCATION_CATAFALQUE := &"catafalque"
+const LOCATIONS: Array[StringName] = [LOCATION_DROPOFF, LOCATION_CARRIED, LOCATION_TABLE, LOCATION_GROUND, LOCATION_BURIED,
+		LOCATION_NICHE, LOCATION_CATAFALQUE]
 
 const STAGE_FRESH := &"fresh"
 const STAGE_WILTED := &"wilted"
@@ -74,6 +78,16 @@ var harvested: Array[StringName] = []
 var balm_windows: PackedInt32Array = []
 ## "Es riecht streng." already shown for this corpse.
 var stench_noted: bool = false
+# Phase 6 (§3.4, §5.1) – all in to_dict / from_dict (missing = default).
+## &"crypt" | &"chapel" | &"" (outside).
+var room: StringName = &""
+## niche_1…6 at LOCATION_NICHE ("" elsewhere).
+var slot_id: String = ""
+## Cold windows [start, end (-1 = open), factor‰, …] in total minutes.
+var cold_windows: PackedInt32Array = []
+## Funeral service held (ChapelRites → CorpseManager.mark_service) on game day service_day.
+var service_held: bool = false
+var service_day: int = 0
 
 
 func has_trait(t: StringName) -> bool:
@@ -181,6 +195,11 @@ func to_dict() -> Dictionary:
 		"harvested": harvested.duplicate(),
 		"balm_windows": Array(balm_windows),
 		"stench_noted": stench_noted,
+		"room": room,
+		"slot_id": slot_id,
+		"cold_windows": Array(cold_windows),
+		"service_held": service_held,
+		"service_day": service_day,
 	}
 
 
@@ -226,6 +245,12 @@ static func from_dict(d: Dictionary) -> CorpseRecord:
 	r.harvested = _only(_to_name_array(d.get("harvested")), HARVEST_KINDS)
 	r.balm_windows = _to_windows(d.get("balm_windows"))
 	r.stench_noted = _to_bool(d.get("stench_noted"), r.stench_noted)
+	# Phase 6 (§3.4, §5.1) – missing fields keep their defaults.
+	r.room = StringName(_to_str(d.get("room"), ""))
+	r.slot_id = _to_str(d.get("slot_id"), r.slot_id)
+	r.cold_windows = _to_cold_windows(d.get("cold_windows"))
+	r.service_held = _to_bool(d.get("service_held"), r.service_held)
+	r.service_day = _to_int(d.get("service_day"), r.service_day)
 	return r
 
 
@@ -258,6 +283,24 @@ static func _to_windows(v: Variant) -> PackedInt32Array:
 		if start >= 0 and end > start:
 			out.append(start)
 			out.append(end)
+	return out
+
+
+## [start, end, factor‰, …] triples: start ≥ 0, end -1 (open) or > start, factor 1…1000 (JSON
+## floats accepted); a malformed triple is dropped.
+static func _to_cold_windows(v: Variant) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	if not (v is Array or v is PackedInt32Array or v is PackedInt64Array or v is PackedFloat32Array or v is PackedFloat64Array):
+		return out
+	var list := Array(v)
+	for i: int in range(0, list.size() - 2, 3):
+		var start := _to_int(list[i], -1)
+		var end := _to_int(list[i + 1], -2)
+		var factor := _to_int(list[i + 2], 0)
+		if start >= 0 and (end == -1 or end > start) and factor >= 1 and factor <= 1000:
+			out.append(start)
+			out.append(end)
+			out.append(factor)
 	return out
 
 

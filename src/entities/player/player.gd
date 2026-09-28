@@ -63,6 +63,9 @@ var carried_id: String = ""
 var instant_actions: bool = false
 ## True while the gravekeeper is inside the hut (docs §11) – set by the portal, saved.
 var in_interior: bool = false
+## Phase 6 (§3.4; P6): the room the gravekeeper is in – "" outside, &"hut", &"crypt", &"chapel",
+## &"shed". W0: set by set_in_interior only (P6 saves it and emits interior_room_changed).
+var interior_id: StringName = &""
 ## Build mode (set_build_mode, Phase 3): no focus, no [E]/[Q]. Not saved.
 var build_mode: bool = false
 
@@ -262,8 +265,9 @@ func set_build_mode(active: bool) -> void:
 
 ## Inside / outside the hut; always announces EventBus.interior_changed so camera, sun and
 ## environment follow (also after a load that did not change the value).
-func set_in_interior(value: bool) -> void:
+func set_in_interior(value: bool, room: StringName = &"") -> void:
 	in_interior = value
+	interior_id = (room if room != &"" else &"hut") if value else &""
 	EventBus.interior_changed.emit(value)
 
 

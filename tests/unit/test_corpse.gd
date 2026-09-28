@@ -275,7 +275,7 @@ func test_needs_valuables_decision() -> void:
 func test_dict_round_trip_all_fields() -> void:
 	var r := _full_record()
 	var d := r.to_dict()
-	assert_eq(d.keys().size(), 30, "every field is saved (buried_day: §11 register; Phase 4: + 11)")
+	assert_eq(d.keys().size(), 35, "every field is saved (buried_day: §11 register; Phase 4: + 11; Phase 6: + 5)")
 	var back := CorpseRecord.from_dict(d)
 	assert_eq(back.to_dict(), d)
 	assert_true(back.cause_id is StringName)

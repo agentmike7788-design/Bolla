@@ -283,8 +283,11 @@ func test_piety_config_values() -> void:
 			assert_eq(arr.size(), PietyRules.TIERS.size(), "one value per tier")
 		assert_eq(cfg.gift_by_tier, PackedInt32Array([0, 2, 2, 2, 3]))
 		assert_eq(cfg.buyer_bonus_by_tier, PackedInt32Array([1, 1, 0, 0, 0]))
-		assert_eq(cfg.events, {&"valuables_left": 3, &"valuables_taken": -6, &"hair_taken": -4, &"teeth_taken": -6,
-				&"full_prep": 3, &"bare_burial": -2, &"rotten_burial": -2})
+		# Phase 6 (§2.7) appends service / devotion / reinterred to the class default.
+		var phase4_events := {&"valuables_left": 3, &"valuables_taken": -6, &"hair_taken": -4, &"teeth_taken": -6,
+				&"full_prep": 3, &"bare_burial": -2, &"rotten_burial": -2}
+		for key: StringName in phase4_events:
+			assert_eq(cfg.events.get(key), phase4_events[key], String(key))
 		assert_eq([cfg.daily_recovery, cfg.affinity_threshold], [1, 20])
 	var labels: Array = []
 	for t: StringName in PietyRules.TIERS:
@@ -501,9 +504,9 @@ func test_database_phase4_folders() -> void:
 
 func test_save_format_v3_and_migration_chain() -> void:
 	# Phase 5 W0: v4 (docs/PHASE5_DESIGN.md §5) – the v3 step of the chain stays.
-	assert_eq(SaveMigration.CURRENT, 4)
-	assert_eq(SaveFileIO.FORMAT_VERSION, 4)
-	assert_eq(SaveManager.FORMAT_VERSION, 4)
+	assert_eq(SaveMigration.CURRENT, 5)  # Phase 6: v5
+	assert_eq(SaveFileIO.FORMAT_VERSION, 5)
+	assert_eq(SaveManager.FORMAT_VERSION, 5)
 	assert_eq(SaveMigration.V3_EMPTY_NODES, PackedStringArray(["journal", "night_trade", "npc_trader"]))
 	var state := {"autoloads": {"TimeManager": {"day": 5}, "GameState": {"stats": {}, "flags": {}}}, "nodes": {"corpse_manager": {}}}
 	assert_eq(SaveMigration.migrate(state, SaveMigration.CURRENT), state, "current version unchanged")
