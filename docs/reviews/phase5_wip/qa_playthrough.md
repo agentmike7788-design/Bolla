@@ -96,6 +96,10 @@ Messung headless, `TIME_PROCESS` je Frame (Median), Container mit Nachbarlast. *
 - Strukturell: Phase 5 bringt **kein neues `_process`** (Sammelstellen, Stationen, Ablage, Meiler reagieren nur auf Signale; `Workshop` und 3 `BuildSite` je Spielminute ein `time_tick`), 70 statische `Label3D`, 6 Partikel. Deshalb keine Optimierung nötig. Bitte am Benutzer-PC messen (`--cpu`).
 - Rendern (Motive `perf_p5_*`, 1280×720): Kamera-Dreiecke ≤ 455 k (< 500 k), Draw Calls ≤ 334 (< 1 000), Schattenlichter 2 (≤ 4), Partikel ≤ 54 (≤ 60). Spielstand 108 kB, Laden 243–283 ms.
 
+## Tests
+
+Vollständige Suite am Ende dreimal hintereinander: **1748 / 1748 grün** in allen drei Läufen (RESULT: PASS; je ≈ 900 s). Basis vor W3: 1725; neu 16 (`test_phase5_qa`) + 6 (`test_phase5_playthrough`) + 1 (Fuzzer v4 echt).
+
 ## 7. Screenshot-Satz Gate G5 (`docs/reviews/phase5_round1/`, 1280×720, echte Phase-5-Welt)
 
 Welt: `graveyard_shots_phase5.gd --jpg` (Bühnen über die echten Systeme); UI: `ui_screenshots.gd --phase5` – der Regisseur nutzt jetzt den echten Bauplatz `site_forge` und zeigt gebaute Stationen in der Welt (`refresh_built`). Alle Bilder angesehen; behoben dabei: Ablage-Steine zeigten den Rücken (QA5-10), Stationen fehlten hinter den UI-Panels, Schlag-Motiv gerahmt auf die drei Erlen-Stufen, Gürtel-Namen gekürzt → voll.
