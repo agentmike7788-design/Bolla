@@ -54,8 +54,13 @@ var problems: PackedStringArray = []
 
 func _init(p_strategy: StringName, p_tree: SceneTree) -> void:
 	strategy = p_strategy
-	flags = STRATEGIES[p_strategy]
+	flags = strategies()[p_strategy]
 	tree = p_tree
+
+
+## Strategy table (Phase4Bot adds its own strategies).
+func strategies() -> Dictionary:
+	return STRATEGIES
 
 
 func bind() -> void:
@@ -201,6 +206,14 @@ func _bury(record: CorpseRecord) -> void:
 	if plot == null:
 		problems.append("day %d: no free plot for %s" % [TimeManager.day, record.id])
 		return
+	var table := _to_table(record)
+	if table == null or not _on_table(record, table):
+		return
+	_dig_and_bury(record, plot, table)
+
+
+## Carries `record` onto the morgue table (unless it lies there) and opens its panel.
+func _to_table(record: CorpseRecord) -> MorgueTable:
 	var table := world.get_node_by_layout_id("morgue_table") as MorgueTable
 	if record.location != CorpseRecord.LOCATION_TABLE:
 		_walk()
@@ -212,6 +225,12 @@ func _bury(record: CorpseRecord) -> void:
 		table.interact(player)
 		UIState.clear()
 	UIState.clear()
+	return table
+
+
+## Work at the table before the burial (Phase 3: examine → valuables → shroud). false = the
+## corpse stays on the table today.
+func _on_table(record: CorpseRecord, table: MorgueTable) -> bool:
 	if flags.examine and not record.examined:
 		table.request_examine()
 	if record.needs_valuables_decision():
@@ -223,6 +242,11 @@ func _bury(record: CorpseRecord) -> void:
 			table.interact(player)
 			UIState.clear()
 			table.request_shroud()
+	return true
+
+
+## Marker → dig `plot` → carry from the table → bury → marker.
+func _dig_and_bury(record: CorpseRecord, plot: GravePlot, table: MorgueTable) -> void:
 	# Marker ready before the pit is dug.
 	if inv().count(&"gravestone_simple") + inv().count(&"wooden_cross") == 0:
 		_craft_essentials()
