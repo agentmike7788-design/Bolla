@@ -214,9 +214,51 @@ def finish(obj, name: str, category: str, smooth_angle: float = 35.0, shift: boo
     export(obj, name, category)
 
 
+def _quantize_uvs(objs) -> None:
+    """Deterministic exports: some bmesh ops (bevel, joins) interpolate UVs with a 1-ulp jitter that
+    differs from run to run, so the .glb bytes changed on every export (Phase-5 finding,
+    ph_env_workstone_ledge).  Snapping every UV to a 1/4096 grid makes repeated builds byte-identical;
+    the painted shaders never sample UVs."""
+    for o in objs:
+        if o.type != "MESH":
+            continue
+        for layer in o.data.uv_layers:
+            for d in layer.data:
+                d.uv = (round(d.uv[0] * 4096.0) / 4096.0, round(d.uv[1] * 4096.0) / 4096.0)
+
+
+def _canonical_glb(path: str) -> None:
+    """Deterministic exports, part 2: for some meshes (sweeps / lofts of the figures) the glTF exporter
+    wrote the same triangles in a different order on every run.  Sort the triangles of every indexed
+    primitive in place - the draw order inside one opaque surface does not matter."""
+    import struct
+    with open(path, "rb") as f:
+        data = bytearray(f.read())
+    jlen = struct.unpack_from("<I", data, 12)[0]
+    doc = json.loads(bytes(data[20:20 + jlen]))
+    bin0 = 20 + jlen + 8
+    fmt = {5121: "B", 5123: "H", 5125: "I"}
+    for mesh in doc.get("meshes", []):
+        for prim in mesh.get("primitives", []):
+            if "indices" not in prim or prim.get("mode", 4) != 4:
+                continue
+            acc = doc["accessors"][prim["indices"]]
+            view = doc["bufferViews"][acc["bufferView"]]
+            ch = fmt[acc["componentType"]]
+            off = bin0 + view.get("byteOffset", 0) + acc.get("byteOffset", 0)
+            n = acc["count"]
+            idx = struct.unpack_from("<%d%s" % (n, ch), data, off)
+            tris = sorted(tuple(idx[i:i + 3]) for i in range(0, n - n % 3, 3))
+            flat = [v for t in tris for v in t] + list(idx[n - n % 3:])
+            struct.pack_into("<%d%s" % (n, ch), data, off, *flat)
+    with open(path, "wb") as f:
+        f.write(data)
+
+
 def export(obj, name: str, category: str) -> None:
     """Save .blend source and export .glb for one finished object."""
     obj.name = name
+    _quantize_uvs([obj] + list(obj.children))
     blend_dir = os.path.join(ROOT, "art_source", "blender", category)
     glb_dir = os.path.join(ROOT, "assets", "models", category)
     os.makedirs(blend_dir, exist_ok=True)
@@ -230,6 +272,7 @@ def export(obj, name: str, category: str) -> None:
         use_selection=True, export_apply=True, export_yup=True,
         export_vertex_color="ACTIVE",
     )
+    _canonical_glb(os.path.join(glb_dir, name + ".glb"))
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(blend_dir, name + ".blend"), compress=True)
     tris = sum(len(p.vertices) - 2 for p in obj.data.polygons)
     print(f"[asset] {category}/{name}  tris={tris}")
@@ -243,6 +286,7 @@ def export_rigged(armature, name: str, category: str) -> None:
     glb_dir = os.path.join(ROOT, "assets", "models", category)
     os.makedirs(blend_dir, exist_ok=True)
     os.makedirs(glb_dir, exist_ok=True)
+    _quantize_uvs(armature.children_recursive)
     ad = armature.animation_data or armature.animation_data_create()
     on_track = {s.action for t in ad.nla_tracks for s in t.strips}
     for act in sorted(bpy.data.actions, key=lambda a: a.name):
@@ -266,6 +310,7 @@ def export_rigged(armature, name: str, category: str) -> None:
         export_vertex_color="ACTIVE", export_animation_mode="ACTIONS",
         export_force_sampling=True,
     )
+    _canonical_glb(os.path.join(glb_dir, name + ".glb"))
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(blend_dir, name + ".blend"), compress=True)
     meshes = [c for c in armature.children_recursive if c.type == "MESH"]
     tris = sum(len(p.vertices) - 2 for m in meshes for p in m.data.polygons)
