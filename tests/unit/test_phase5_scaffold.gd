@@ -6,7 +6,7 @@ extends TestCase
 ## fixtures (tests/fixtures/phase5, Phase5Fixtures).
 
 ## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
-const IMPLEMENTED: PackedStringArray = []
+const IMPLEMENTED: PackedStringArray = ["WorkshopRules", "Workshop", "BuildSite"]
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
 	# P1

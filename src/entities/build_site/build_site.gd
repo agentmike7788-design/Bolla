@@ -1,28 +1,130 @@
 class_name BuildSite
 extends Node3D
-## STUB (P1) – Entities/site_<id> in the workyard (docs/PHASE5_DESIGN.md §2.1, §3.4, §4.1):
-## visible from workshop_open while its station is not built. [E] opens the build-site panel
-## (&"build_site", context {station, site, inventory}); request_build runs the build as a timed
-## action (build_minutes, not cancellable) → Workshop.build. W1 (P1) fills the bodies.
+## Entities/site_<id> in the workyard (docs/PHASE5_DESIGN.md §2.1, §3.4, §4.1): visible (with
+## collision and a prompt) from workshop_open while its station is not built. [E] opens the
+## build-site panel (&"build_site", context {station (id), station_data, site, inventory,
+## player}); request_build runs the build as a timed action (build_minutes, not cancellable) →
+## Workshop.build (items + coins taken at the end, atomically). Afterwards the station
+## (Workbench with requires_built) replaces the site.
 
 const PANEL := &"build_site"
 const PROMPT := "[E] Bauplatz: %s"
+const WORKSHOP_GROUP := &"workshop"
+const ANIM := &"interact"
+const LABEL_BUILD := "%s bauen"
+const TEXT_BUILT := "%s steht."
+const TEXT_FAILED := "Bauen fehlgeschlagen."
+const TEXT_BUSY := "Gerade nicht möglich."
 
 @export var station_id: StringName
 
+@onready var interactable: Interactable = get_node_or_null(^"Interactable") as Interactable
 
-func can_interact(_player: Player) -> bool:
-	return false
-
-
-func get_interaction_prompt(_player: Player) -> String:
-	return ""
+## Player of the last interaction (the panel builds for them).
+var _player: Player
 
 
-func interact(_player: Player) -> void:
-	pass
+func _ready() -> void:
+	EventBus.station_built.connect(_on_station_built)
+	EventBus.game_loaded.connect(_on_game_loaded)
+	EventBus.time_tick.connect(_on_time_tick)
+	refresh()
+
+
+## workshop_open ∧ the station not built.
+func is_active() -> bool:
+	var shop := workshop()
+	return shop != null and shop.is_open() and not shop.is_built(station_id)
+
+
+## Visible, with collision and interactable only while active.
+func refresh() -> void:
+	var on := is_active()
+	if visible == on and (process_mode == Node.PROCESS_MODE_DISABLED) == (not on):
+		return
+	visible = on
+	process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED
+
+
+func can_interact(player: Player) -> bool:
+	return player != null and is_active() and not player.is_busy() and not is_instance_valid(player.carried)
+
+
+func get_interaction_prompt(player: Player) -> String:
+	if not is_active():
+		return ""
+	if player != null and is_instance_valid(player.carried):
+		return Player.TEXT_HANDS_FULL
+	var data := station_data()
+	return PROMPT % (data.display_name if data != null and data.display_name != "" else String(station_id))
+
+
+func interact(player: Player) -> void:
+	if not can_interact(player):
+		return
+	_player = player
+	EventBus.ui_panel_requested.emit(PANEL, {"station": station_id, "station_data": station_data(), "site": self,
+			"inventory": player.inventory, "player": player})
+
+
+## "" or why the station cannot be built now (Workshop.build_block_reason).
+func block_reason(inv: Inventory) -> String:
+	var shop := workshop()
+	if shop == null:
+		return TEXT_BUSY
+	return shop.build_block_reason(station_id, inv)
 
 
 ## Panel: TimedAction build_minutes (not cancellable) → Workshop.build.
 func request_build() -> void:
-	pass
+	var player := _player if is_instance_valid(_player) else _first_player()
+	var data := station_data()
+	if player == null or data == null or player.is_busy() or is_instance_valid(player.carried) or not is_active():
+		_warn(TEXT_BUSY)
+		return
+	var reason := block_reason(player.inventory)
+	if reason != "":
+		_warn(reason)
+		return
+	player.start_timed_action(LABEL_BUILD % data.display_name, data.build_minutes, _finish_build.bind(player.inventory), false, ANIM)
+
+
+func _finish_build(inv: Inventory) -> void:
+	var shop := workshop()
+	if shop == null or not shop.build(station_id, inv):
+		_warn(TEXT_FAILED)
+		return
+	var data := station_data()
+	EventBus.notification_requested.emit(TEXT_BUILT % (data.display_name if data != null else String(station_id)), &"reward")
+	refresh()
+
+
+## Systems/Workshop (group workshop) or null.
+func workshop() -> Workshop:
+	return get_tree().get_first_node_in_group(WORKSHOP_GROUP) as Workshop if is_inside_tree() else null
+
+
+## StationData of station_id (Database) or null.
+func station_data() -> StationData:
+	return Database.station(station_id) as StationData
+
+
+func _on_station_built(id: StringName) -> void:
+	if id == station_id:
+		refresh()
+
+
+func _on_game_loaded(_slot: int) -> void:
+	refresh()
+
+
+func _on_time_tick(_day: int, _minute: int) -> void:
+	refresh()
+
+
+func _first_player() -> Player:
+	return get_tree().get_first_node_in_group(&"player") as Player if is_inside_tree() else null
+
+
+func _warn(text: String) -> void:
+	EventBus.notification_requested.emit(text, &"warning")

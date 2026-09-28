@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/crafting/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"charcoal"
+display_name = "Meiler anstecken"
+inputs = Dictionary[StringName, int]({&"wood": 4})
+output_id = &"charcoal"
+output_amount = 3
+craft_minutes = 10
+station = &"forge"
+category = &"material"
+background = true

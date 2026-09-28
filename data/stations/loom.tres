@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="StationData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/workshop/station_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"loom"
+display_name = "Webstuhl"
+site_id = "site_loom"
+build_inputs = Dictionary[StringName, int]({&"wood": 8, &"iron_fittings": 2})
+build_coins = 10
+build_minutes = 90
+panel = &"crafting"
+prompt_use = "[E] Webstuhl benutzen"
+build_text = "Ein kleiner Trittwebstuhl unter einem Pultdach. Aus Flachs wird Garn, aus Garn Leinen."
+coin_part_label = "Webkamm und Schäfte"
+prebuilt = false
