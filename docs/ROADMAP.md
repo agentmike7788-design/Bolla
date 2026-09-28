@@ -78,3 +78,15 @@ Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe): **`docs/PHASE5_DESIGN.md`*
 - Münzsenke: 108 Münzen Pflicht + freiwillige Posten gegen den Überschuss aus Phase 4 (Rechnung §2.8)
 - Übertrag: kein „Voll hergerichtet"-Bonus für verwertete Leichen (Pietät-Fix, Bot `mixed`)
 - Kapitel „Namen in Stein", Save-Format v4 mit Migration der Phase-4-Stände, Wellenplan W0–W3, Benutzerentscheidungen §14 (keine neuen Gräber, Werkhof an der Hütte, Jahr 1834, Lorenz-Bezug)
+
+## PHASE 6 – GEBÄUDE (Plan)
+
+Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe, Vertragsfragen §14 offen): **`docs/PHASE6_DESIGN.md`**. Inhalt:
+- Drei Gebäude auf festen Bauplätzen mit Stufen 1–3 (Material + Münzen), jedes begehbar mit eigener Innenraum-Szene nach dem Hüttenmuster (Portal, Kameraprofil, Innenlicht nach Tag/Nacht)
+- **Die Gruft** unter der alten Eiche (Südwestecke Alter Hof): Leichenhalle + Beinhaus in einem Gebäude unter der Erde; der Leichentisch vor der Hütte zieht mit Gruft 1 hinab (Benutzerwunsch), Kühlnischen 2/4/6 bremsen den Verfall (× 0,5/0,4/0,3), vermauerter Gang und Gitter als Haken für Phase 12
+- **Beinhaus:** 6 verwitterte Altgräber heben und umbetten (Ruhezeit 30 Jahre) → die Stellen werden frei, Osric liefert wieder
+- **Die Kapelle** am Birkenkamm (neuer Kirchhof nördlich des Birkenhangs, Kirchpforte): Aussegnung als Laienritus (Kerze, Gebühr, Ruf, Trauergäste, „Ausgesegnet +1"), Andacht für Gräber (beraubte Seelen höchstens gleichmütig)
+- **Der Lagerschuppen** westlich der Hütte: 24/32/40 Plätze, ab Stufe 2 „Fehlendes aus dem Schuppen holen" an allen Stationen
+- Kamerastrahl-Sichtprüfung für jedes Gebäude und jede Stufe, Vorher/Nachher vor der Hütte
+- Münzrechnung: 130 Münzen Pflicht (Stufe 1+2), 225 für alles, finanziert über Umbettgeld, neue Bestattungen und Gebühren
+- Kapitel „Unter Dach und Erde", Save-Format v5 mit Migration der Phase-5-Stände (Leiche am alten Tisch bleibt bearbeitbar), Wellenplan W0–W3, Vertragsfragen §14
