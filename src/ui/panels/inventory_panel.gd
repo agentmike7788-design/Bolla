@@ -25,12 +25,14 @@ const DEFAULT_SLOTS := 16
 
 @export var slot_edge: float = 104.0
 @export var icon_edge: float = 72.0
+@export var belt_cell_width: float = 176.0
 
 var _grid: GridContainer
 var _coins: Label
 var _reputation: Label
 var _inventory: Inventory
 var _belt: HBoxContainer
+var _belt_other: HBoxContainer
 var _belt_box: VBoxContainer
 ## tool kind -> its belt cell (tier tools) · item id -> cell (other tools)
 var belt_cells: Dictionary[StringName, Control] = {}
@@ -44,6 +46,8 @@ func _build() -> void:
 	_belt_box.add_child(UIKit.label(Phase5Texts.BELT_TITLE, &"AccentLabel"))
 	_belt = UIKit.hbox(8)
 	_belt_box.add_child(_belt)
+	_belt_other = UIKit.hbox(8)
+	_belt_box.add_child(_belt_other)
 	box.add_child(_belt_box)
 	_grid = GridContainer.new()
 	_grid.columns = GRID_COLUMNS
@@ -118,6 +122,7 @@ func belt_entries() -> Dictionary:
 
 func _refresh_belt() -> void:
 	UIKit.clear_children(_belt)
+	UIKit.clear_children(_belt_other)
 	belt_cells.clear()
 	var on_belt := is_instance_valid(_inventory) and _inventory.tool_belt
 	_belt_box.visible = on_belt
@@ -150,35 +155,45 @@ func _refresh_belt() -> void:
 		if tiered.has(id):
 			continue
 		var cell := _belt_cell(id, false, UIKit.item_name(id), -1, TOOLTIP_FORMAT % [UIKit.item_name(id), UIKit.item_description(id)], false)
-		_belt.add_child(cell)
+		_belt_other.add_child(cell)
 		belt_cells[id] = cell
 
 
-## One belt cell: icon (or an empty frame), name, tier pips for the tier tools.
+## One belt cell. Tier tools: icon, name and tier pips side by side (a pale icon for „Altes Beil" /
+## no pickaxe); the care and harvest tools: a small icon cell, the name in the tooltip.
 func _belt_cell(icon_id: StringName, pale: bool, name: String, tier: int, tooltip: String, tiered: bool) -> Control:
 	var cell := UIKit.panel(&"SlotPanel")
 	cell.mouse_filter = Control.MOUSE_FILTER_PASS
 	cell.tooltip_text = tooltip
-	cell.custom_minimum_size = Vector2(150.0 if tiered else 84.0, 104.0)
-	var box := UIKit.vbox(0)
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var icon := UIKit.icon(Database.icon(icon_id) if icon_id != &"" else null, 52.0)
+	cell.set_meta(&"name", name)
+	var icon := UIKit.icon(Database.icon(icon_id) if icon_id != &"" else null, 52.0 if tiered else 46.0)
 	icon.modulate = Color(1, 1, 1, 0.3) if pale else Color(1, 1, 1, 1)
-	box.add_child(icon)
-	var label := UIKit.label(name, &"DimLabel" if tier <= 0 and tiered else &"")
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if not tiered:
+		cell.custom_minimum_size = Vector2(62.0, 62.0)
+		var center := CenterContainer.new()
+		center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		center.add_child(icon)
+		cell.add_child(center)
+		return cell
+	cell.custom_minimum_size = Vector2(belt_cell_width, 72.0)
+	var row := UIKit.hbox(8)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(icon)
+	var texts := UIKit.vbox(0)
+	texts.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	texts.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var label := UIKit.label(name, &"DimLabel" if tier <= 0 else &"")
 	label.clip_text = true
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	label.custom_minimum_size.x = cell.custom_minimum_size.x - 16.0
+	label.custom_minimum_size.x = belt_cell_width - 80.0
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(label)
-	if tiered:
-		var pips := UIKit.label(PIP_ON.repeat(maxi(tier, 0)) + PIP_OFF.repeat(maxi(2 - tier, 0)), &"AccentLabel" if tier > 0 else &"DimLabel")
-		pips.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		pips.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		box.add_child(pips)
-	cell.add_child(box)
-	cell.set_meta(&"name", name)
+	texts.add_child(label)
+	var pips := UIKit.label("%s  %s" % [PIP_ON.repeat(maxi(tier, 0)) + PIP_OFF.repeat(maxi(2 - tier, 0)), Phase5Texts.BELT_TIER % tier],
+			&"AccentLabel" if tier > 0 else &"DimLabel")
+	pips.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	texts.add_child(pips)
+	row.add_child(texts)
+	cell.add_child(row)
 	return cell
 
 

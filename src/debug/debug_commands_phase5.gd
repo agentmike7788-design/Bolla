@@ -128,7 +128,11 @@ func _cmd_build(args: PackedStringArray) -> Dictionary:
 		names.append(String(id))
 	if args.size() != 1 or not (args[0].to_lower() == "all" or StringName(args[0].to_lower()) in goal):
 		return _error("Format: build <%s|all>" % "|".join(names))
-	var wanted: Array[StringName] = goal.duplicate() if args[0].to_lower() == "all" else [StringName(args[0].to_lower())]
+	var wanted: Array[StringName] = []
+	if args[0].to_lower() == "all":
+		wanted.assign(goal)
+	else:
+		wanted.append(StringName(args[0].to_lower()))
 	var state := shop.save_state()
 	var built: Array = state.get("built", [])
 	var added: Array[StringName] = []

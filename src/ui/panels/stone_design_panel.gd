@@ -38,10 +38,13 @@ const TEXT_DESIGN := "Gestaltung"
 const TEXT_SHAPE := "Form"
 const TEXT_SHAPE_META := "+%d · %s · %s"
 const TEXT_INSCRIPTION := "Inschrift"
+const TEXT_INSCRIPTION_FOR := "Inschrift für %s"
+const TEXT_SHAPE_POINTS := "+%d · %s"
+const TEXT_STONE_SUM := "Stein: %d von %d Punkten"
 const TEXT_NO_INSCRIPTION := "ohne Inschrift"
 const TEXT_NO_INSCRIPTION_META := "Der Stein bleibt namenlos."
 const TEXT_FITS := "passt – %s"
-const TEXT_FITS_STORY := "ihre Geschichte"
+const TEXT_FITS_STORY := "Geschichte"
 const TEXT_FITS_CAUSE := "Todesursache"
 const TEXT_FITS_AGE := "Alter"
 const TEXT_FITS_TOOLTIP := "passt zu %s"
@@ -65,11 +68,11 @@ const TEXT_DISCARD := "Verwerfen"
 const TEXT_DISCARD_CONFIRM := "Wirklich verwerfen?"
 const TEXT_HINT := "Klick wählt · [ / ] blättern · [Esc] schließen"
 
-@export var page_height: float = 900.0
+@export var page_height: float = 792.0
 @export var left_width: float = 470.0
 @export var middle_width: float = 660.0
 @export var right_width: float = 540.0
-@export var preview_size: Vector2i = Vector2i(500, 380)
+@export var preview_size: Vector2i = Vector2i(500, 300)
 
 var masonry: Node
 var grave_id: String = ""
@@ -104,11 +107,14 @@ var _page_label: Label
 var _filter_button: Button
 var _rack_box: VBoxContainer
 var _shape_row: HBoxContainer
-var _ins_box: VBoxContainer
-var _orn_row: HBoxContainer
-var _lines_box: VBoxContainer
-var _material_box: VBoxContainer
+var _ins_box: GridContainer
+var _ins_title: Label
+var _text_label: Label
+var _orn_row: GridContainer
+var _lines_box: GridContainer
 var _minutes_label: Label
+var _material_grid: GridContainer
+var _sum_label: Label
 var _inventory: Inventory
 
 
@@ -176,19 +182,19 @@ func _build_middle(page_box: VBoxContainer) -> void:
 	_shape_row = UIKit.hbox(8)
 	page_box.add_child(_shape_row)
 	var ins_head := UIKit.hbox(8)
-	var ins_t := UIKit.label(TEXT_INSCRIPTION, &"LedgerHeadLabel")
-	ins_t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	ins_head.add_child(ins_t)
+	_ins_title = UIKit.label(TEXT_INSCRIPTION, &"LedgerHeadLabel")
+	_ins_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ins_head.add_child(_ins_title)
 	gilded_toggle = CheckBox.new()
 	gilded_toggle.theme_type_variation = &"InkButton"
 	gilded_toggle.focus_mode = Control.FOCUS_NONE
 	gilded_toggle.toggled.connect(set_gilded)
 	ins_head.add_child(gilded_toggle)
 	page_box.add_child(ins_head)
-	_ins_box = UIKit.vbox(4)
+	_ins_box = _grid(2, 6, 6)
 	page_box.add_child(_ins_box)
 	page_box.add_child(UIKit.label(TEXT_ORNAMENT, &"LedgerHeadLabel"))
-	_orn_row = UIKit.hbox(6)
+	_orn_row = _grid(3, 6, 6)
 	page_box.add_child(_orn_row)
 
 
@@ -200,14 +206,25 @@ func _build_right(page_box: VBoxContainer) -> void:
 	preview.view_size = preview_size
 	frame.add_child(preview)
 	page_box.add_child(frame)
+	_text_label = UIKit.label("", &"InkLabel", true)
+	_text_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_text_label.custom_minimum_size.x = right_width - 60.0
+	page_box.add_child(_text_label)
 	quality_label = UIKit.label("", &"InkHeaderLabel")
 	quality_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	page_box.add_child(quality_label)
-	_lines_box = UIKit.vbox(0)
+	_sum_label = UIKit.label("", &"InkDimLabel")
+	_sum_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	page_box.add_child(_sum_label)
+	_lines_box = _grid(2, 18, 0)
 	page_box.add_child(_lines_box)
 	page_box.add_child(UIKit.label(TEXT_MATERIAL, &"LedgerHeadLabel"))
-	_material_box = UIKit.vbox(2)
-	page_box.add_child(_material_box)
+	var mat := GridContainer.new()
+	mat.columns = 2
+	mat.add_theme_constant_override(&"h_separation", 18)
+	mat.add_theme_constant_override(&"v_separation", 2)
+	page_box.add_child(mat)
+	_material_grid = mat
 	page_box.add_child(UIKit.spacer(false))
 	_minutes_label = UIKit.label("", &"InkDimLabel")
 	page_box.add_child(_minutes_label)
@@ -414,6 +431,58 @@ func inscription_lines(ins_id: StringName) -> PackedStringArray:
 	return StoneDesignRules.render_text(ins, corpse, _stone_config())
 
 
+## The stone's own lines of the preview (shape, inscription, fitting, gilded, ornament – at most
+## 9 points): the entries of Stonemasonry.preview().lines that StoneDesignRules names for the design.
+func stone_lines() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var corpse := _corpse_of(grave_id)
+	if current_preview.is_empty() or corpse == null:
+		return out
+	var own := StoneDesignRules.breakdown_lines(design(), corpse, _economy_of_masonry(), _stone_config())
+	var labels := {}
+	for line: Dictionary in own:
+		labels[str(line.label)] = true
+	for line: Dictionary in current_preview.get("lines", []):
+		if labels.has(str(line.get("label", ""))):
+			out.append(line)
+	return out
+
+
+## [saying, dates] of a template for the chosen dead – its real lines without the name (the name
+## is the same in every row and stands in the section title): the saying (or „Hier ruht") and the
+## date line.
+func row_parts(ins: InscriptionData, lines: PackedStringArray) -> PackedStringArray:
+	var saying := PackedStringArray()
+	var dates := ""
+	var source := lines if not lines.is_empty() else ins.lines
+	var corpse := _corpse_of(grave_id)
+	var name_lines := StoneDesignRules.wrap_name(StoneDesignRules.carved_name(corpse)) if corpse != null else PackedStringArray()
+	for i: int in source.size():
+		var line := source[i]
+		if line in name_lines or line.contains("{name}"):
+			continue
+		var template := ins.lines[i] if not lines.is_empty() and i < ins.lines.size() and ins.lines.size() == lines.size() else line
+		if template.contains("{born}") or template.contains("{died}") or line.contains("†"):
+			dates = line
+		else:
+			saying.append(line)
+	return PackedStringArray([" ".join(saying), dates])
+
+
+func _max_points() -> int:
+	var eco := EconomyConfig.resolve(_economy_of_masonry())
+	var sc := _stone_config()
+	var best := 0
+	for res: Resource in Database.stone_shapes():
+		var s := res as StoneShapeData
+		if s != null:
+			best = maxi(best, int(eco.marker_quality.get(s.id, 0)))
+	var orn := 0
+	for res: Resource in Database.ornaments():
+		orn = maxi(orn, (res as OrnamentData).points)
+	return best + sc.inscription_points + sc.fitting_points + sc.gilded_points + orn
+
+
 func breakdown_texts() -> PackedStringArray:
 	var out := PackedStringArray()
 	for node: Node in _lines_box.get_children():
@@ -457,11 +526,17 @@ func _refresh_rack(stones: Array[Dictionary]) -> void:
 		var row := UIKit.hbox(8)
 		var names := UIKit.vbox(0)
 		names.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		names.add_child(UIKit.label(str(s.name), &"InkLabel"))
+		names.custom_minimum_size.x = left_width - 250.0
+		var who := UIKit.label(str(s.name), &"InkLabel")
+		who.clip_text = true
+		who.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		names.add_child(who)
 		var shape_data := Database.stone_shape(StringName(str(s.shape))) as StoneShapeData
 		var ok := bool(s.get("fits_still", true))
 		var state := UIKit.label("%s · %s" % [shape_data.display_name if shape_data != null else str(s.shape), TEXT_READY if ok else TEXT_STALE],
 				&"InkDimLabel" if ok else &"LedgerWarnLabel")
+		state.clip_text = true
+		state.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		names.add_child(state)
 		row.add_child(names)
 		if not ok:
@@ -483,28 +558,33 @@ func _refresh_design() -> void:
 		if s == null:
 			continue
 		var points := int(eco.marker_quality.get(s.id, 0))
-		var meta := TEXT_SHAPE_META % [points, _inputs_text(s.inputs), UIKit.minutes(s.minutes)]
-		var b := _card(s.display_name, meta, s.id == shape, Vector2((middle_width - 60.0) / 3.0, 74.0))
+		var meta := TEXT_SHAPE_POINTS % [points, UIKit.minutes(s.minutes)]
+		var b := _card(s.display_name, meta, s.id == shape, Vector2((middle_width - 60.0) / 3.0, 118.0), false, "", _inputs_text(s.inputs))
+		b.tooltip_text = TEXT_SHAPE_META % [points, _inputs_text(s.inputs), UIKit.minutes(s.minutes)]
 		b.pressed.connect(select_shape.bind(s.id))
 		_shape_row.add_child(b)
 		shape_buttons[s.id] = b
 	UIKit.clear_children(_ins_box)
 	inscription_buttons.clear()
-	var none := _card(TEXT_NO_INSCRIPTION, TEXT_NO_INSCRIPTION_META, inscription == &"", Vector2(middle_width - 40.0, 50.0))
+	var corpse := _corpse_of(grave_id)
+	_ins_title.text = TEXT_INSCRIPTION_FOR % StoneDesignRules.carved_name(corpse) if corpse != null else TEXT_INSCRIPTION
+	var ins_edge := Vector2((middle_width - 46.0) * 0.5, 94.0)
+	var none := _card(TEXT_NO_INSCRIPTION, TEXT_NO_INSCRIPTION_META, inscription == &"", ins_edge)
 	none.pressed.connect(select_inscription.bind(&""))
 	_ins_box.add_child(none)
 	inscription_buttons[&""] = none
-	var corpse := _corpse_of(grave_id)
 	for res: Resource in Database.inscriptions():
 		var ins := res as InscriptionData
 		if ins == null:
 			continue
 		var lines := inscription_lines(ins.id)
-		var body := " · ".join(lines) if not lines.is_empty() else " · ".join(ins.lines)
+		var parts := row_parts(ins, lines)
 		var fits := fits_text(ins.id)
-		var b := _card(ins.title, body, ins.id == inscription, Vector2(middle_width - 40.0, 50.0), false, fits)
-		if fits != "" and corpse != null:
-			b.tooltip_text = TEXT_FITS_TOOLTIP % StoneDesignRules.carved_name(corpse)
+		var b := _card(ins.title, parts[0], ins.id == inscription, ins_edge, false, "", fits if fits != "" else parts[1],
+				&"InkStampLabel" if fits != "" else &"InkDimLabel")
+		b.tooltip_text = "\n".join(lines)
+		if fits_text(ins.id) != "" and corpse != null:
+			b.tooltip_text += "\n" + TEXT_FITS_TOOLTIP % StoneDesignRules.carved_name(corpse)
 		b.pressed.connect(select_inscription.bind(ins.id))
 		_ins_box.add_child(b)
 		inscription_buttons[ins.id] = b
@@ -514,7 +594,7 @@ func _refresh_design() -> void:
 	gilded_toggle.text = TEXT_GILDED % gold if inscription != &"" else TEXT_GILDED_NEEDS
 	UIKit.clear_children(_orn_row)
 	ornament_buttons.clear()
-	var edge := Vector2((middle_width - 70.0) / 5.0, 64.0)
+	var edge := Vector2((middle_width - 52.0) / 3.0, 66.0)
 	var no_orn := _card(TEXT_NO_ORNAMENT, "", ornament == &"", edge)
 	no_orn.pressed.connect(select_ornament.bind(&""))
 	_orn_row.add_child(no_orn)
@@ -532,12 +612,14 @@ func _refresh_design() -> void:
 
 func _refresh_preview() -> void:
 	UIKit.clear_children(_lines_box)
-	UIKit.clear_children(_material_box)
+	UIKit.clear_children(_material_grid)
 	current_preview = {}
 	if masonry != null and masonry.has_method(&"preview") and grave_id != "":
 		current_preview = masonry.call(&"preview", grave_id, design())
 	if current_preview.is_empty():
 		quality_label.text = TEXT_PICK_GRAVE
+		_text_label.text = ""
+		_sum_label.text = ""
 		preview.show_design(null)
 		_minutes_label.text = ""
 		carve_button.text = TEXT_CARVE_LABEL
@@ -547,22 +629,25 @@ func _refresh_preview() -> void:
 	var shown := design()
 	shown.text = current_preview.get("text", PackedStringArray())
 	preview.show_design(shown)
+	_text_label.text = "\n".join(shown.text) if not shown.text.is_empty() else TEXT_NO_INSCRIPTION_META
 	quality_label.text = TEXT_QUALITY % [int(current_preview.quality_before), int(current_preview.quality_after)]
-	for line: Dictionary in current_preview.get("lines", []):
+	var stone_sum := 0
+	for line: Dictionary in stone_lines():
+		stone_sum += int(line.get("points", 0))
 		_lines_box.add_child(UIKit.label(TEXT_LINE % [str(line.get("label", "")), UIKit.signed(int(line.get("points", 0)))], &"InkLabel"))
+	_sum_label.text = TEXT_STONE_SUM % [stone_sum, _max_points()]
 	var needed: Dictionary = current_preview.get("inputs", {})
 	var missing: Dictionary = current_preview.get("missing", {})
 	for id: Variant in needed:
 		var need := int(needed[id])
 		var item_id := StringName(str(id))
 		var have := _inventory.count(item_id) if is_instance_valid(_inventory) else need - int(missing.get(id, 0))
-		var row := UIKit.hbox(8)
-		row.add_child(UIKit.icon(Database.icon(item_id), 26.0))
-		var l := UIKit.label("%d× %s" % [need, UIKit.item_name(item_id)], &"InkLabel")
-		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var row := UIKit.hbox(6)
+		row.add_child(UIKit.icon(Database.icon(item_id), 24.0))
+		var l := UIKit.label("%s %d/%d" % [UIKit.item_name(item_id), have, need], &"InkLabel" if not missing.has(id) else &"LedgerWarnLabel")
+		l.custom_minimum_size.x = (right_width - 110.0) * 0.5
 		row.add_child(l)
-		row.add_child(UIKit.label("%d / %d" % [have, need], &"InkLabel" if not missing.has(id) else &"LedgerWarnLabel"))
-		_material_box.add_child(row)
+		_material_grid.add_child(row)
 	var minutes := int(current_preview.get("minutes", 0))
 	_minutes_label.text = "%s · %s" % [UIKit.minutes(minutes), Phase5Texts.duration(minutes)] if minutes >= 60 else UIKit.minutes(minutes)
 	carve_button.text = TEXT_CARVE % UIKit.minutes(minutes)
@@ -576,7 +661,8 @@ func _refresh_preview() -> void:
 # --- helpers ----------------------------------------------------------------------------------
 
 ## A selectable card on the parchment: title + meta line (+ badge on the right).
-func _card(title: String, meta: String, chosen: bool, size: Vector2, dimmed: bool = false, badge: String = "") -> Button:
+func _card(title: String, meta: String, chosen: bool, size: Vector2, dimmed: bool = false, badge: String = "", extra: String = "",
+		extra_variation: StringName = &"InkDimLabel") -> Button:
 	var b := Button.new()
 	b.theme_type_variation = &"JournalCardSelected" if chosen else &"JournalCardButton"
 	b.focus_mode = Control.FOCUS_NONE
@@ -607,12 +693,25 @@ func _card(title: String, meta: String, chosen: bool, size: Vector2, dimmed: boo
 		m.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		m.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		box.add_child(m)
+	if extra != "":
+		var x := UIKit.label(extra, extra_variation, true)
+		x.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		x.custom_minimum_size.x = size.x - 24.0
+		box.add_child(x)
 	b.add_child(box)
 	b.set_meta(&"title", title)
 	b.set_meta(&"meta", meta)
 	b.set_meta(&"badge", badge)
 	b.set_meta(&"dimmed", dimmed)
 	return b
+
+
+static func _grid(columns: int, h_sep: int, v_sep: int) -> GridContainer:
+	var g := GridContainer.new()
+	g.columns = columns
+	g.add_theme_constant_override(&"h_separation", h_sep)
+	g.add_theme_constant_override(&"v_separation", v_sep)
+	return g
 
 
 func _finish_carve(id: String, d: StoneDesign, inv: Inventory) -> void:

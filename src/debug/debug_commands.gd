@@ -94,6 +94,9 @@ func run(command: String, args: PackedStringArray) -> Dictionary:
 			return _cmd_fps(args)
 		"instant":
 			return _cmd_instant(args)
+	# Phase 5 "build <station|all>" shares its name with Phase 3's "build free on|off".
+	if command == "build" and not (not args.is_empty() and args[0].to_lower() == "free"):
+		return _phase5.run(command, args)
 	if _phase3.handles(command):
 		return _phase3.run(command, args)
 	if _phase4.handles(command):

@@ -10,8 +10,10 @@ const EARTH := Color("3A3026")
 const KEY_COLOR := Color(1.0, 0.9, 0.74)
 const FILL_COLOR := Color(0.66, 0.72, 0.84)
 const FOV := 28.0
-## Share of the frame height the stone fills.
-const FILL := 0.8
+## Share of the frame height the framed part fills; the frame shows the upper TOP_SHARE of the
+## stone (face, inscription, ornament – the plinth is cut, the letters read larger).
+const FILL := 0.94
+const TOP_SHARE := 0.74
 ## Camera pitch (degrees down) and yaw (degrees to the right of the face normal).
 const PITCH := 9.0
 const YAW := 14.0
@@ -87,14 +89,14 @@ func _ensure_viewport() -> void:
 	env.environment.background_color = BACKGROUND
 	env.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.environment.ambient_light_color = Color(0.55, 0.52, 0.5)
-	env.environment.ambient_light_energy = 0.5
+	env.environment.ambient_light_energy = 0.32
 	env.environment.tonemap_mode = Environment.TONE_MAPPER_AGX
 	viewport.add_child(env)
 	var key := DirectionalLight3D.new()
 	key.name = "Key"
 	key.rotation_degrees = Vector3(-24.0, -48.0, 0.0)
 	key.light_color = KEY_COLOR
-	key.light_energy = 1.35
+	key.light_energy = 0.8
 	key.shadow_enabled = true
 	viewport.add_child(key)
 	var fill := DirectionalLight3D.new()
@@ -129,7 +131,9 @@ func _ensure_viewport() -> void:
 
 
 ## Camera in front of the face (+Z), slightly from the right and above, the whole stone in frame.
-func _frame(box: AABB) -> void:
+func _frame(full: AABB) -> void:
+	var top := full.size.y * TOP_SHARE
+	var box := AABB(Vector3(full.position.x, full.end.y - top, full.position.z), Vector3(full.size.x, top, full.size.z))
 	var center := box.get_center()
 	var height := maxf(box.size.y, box.size.x * float(view_size.y) / maxf(view_size.x, 1.0))
 	var distance := (height * 0.5 / FILL) / tan(deg_to_rad(FOV * 0.5)) + box.size.z * 0.5

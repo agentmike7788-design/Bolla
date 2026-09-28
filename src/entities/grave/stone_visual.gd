@@ -24,7 +24,7 @@ const PIXEL_SIZE := 0.0005
 const ROLE_NAME := &"name"
 const ROLE_DATE := &"date"
 const ROLE_SAYING := &"saying"
-const EM_MAX := {ROLE_NAME: 0.095, ROLE_DATE: 0.05, ROLE_SAYING: 0.046}
+const EM_MAX := {ROLE_NAME: 0.095, ROLE_DATE: 0.056, ROLE_SAYING: 0.052}
 const EM_MIN := 0.024
 ## A date line whose fitted em would fall below this splits at DATE_SPLIT into two lines.
 const EM_DATE_SPLIT := 0.036

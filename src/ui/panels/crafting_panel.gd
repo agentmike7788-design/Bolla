@@ -33,9 +33,9 @@ const WORKSHOP_GROUP := &"workshop"
 const CATEGORY_LABELS: Dictionary[StringName, String] = {&"grave": "Grab", &"decor": "Zier", &"tool": "Werkzeug", &"material": "Werkstoffe"}
 
 @export var panel_width: float = 900.0
-@export var output_icon_edge: float = 72.0
+@export var output_icon_edge: float = 60.0
 @export var input_icon_edge: float = 30.0
-@export var max_list_height: float = 700.0
+@export var max_list_height: float = 780.0
 
 var _list: VBoxContainer
 var _scroll: ScrollContainer
@@ -58,7 +58,7 @@ func _build() -> void:
 	_scroll = ScrollContainer.new()
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	box.add_child(_scroll)
-	_list = UIKit.vbox(12)
+	_list = UIKit.vbox(8)
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.add_child(_list)
 	_make_action_row(box)
@@ -159,6 +159,13 @@ func block_reason(recipe: RecipeData) -> String:
 		var shop := workshop()
 		if shop != null and not shop.job_of(_station()).is_empty():
 			return Workbench.TEXT_JOB_RUNNING
+	var tool := Database.item(recipe.output_id) as ItemData if Database.has_item(recipe.output_id) else null
+	if tool != null and tool.tool_kind != &"" and _inventory.tool_belt:
+		var have := ToolRules.tier(_inventory, tool.tool_kind)
+		if have == tool.tool_tier:
+			return Phase5Texts.TOOL_HAVE
+		if have > tool.tool_tier:
+			return Phase5Texts.TOOL_HAVE_BETTER % ToolRules.tool_name(tool.tool_kind, have, Database.config(&"tool_config") as ToolConfig)
 	var missing := CraftingSystem.missing(recipe, _inventory)
 	if not missing.is_empty():
 		return TEXT_MISSING % _missing_text(missing)
@@ -249,11 +256,14 @@ func phase5_details(recipe: RecipeData) -> PackedStringArray:
 	var out := PackedStringArray()
 	var tool := Database.item(recipe.output_id) as ItemData if Database.has_item(recipe.output_id) else null
 	if tool != null and tool.tool_kind != &"":
+		# The recipe consumes the lower tool of the kind: the effect counts from that one, else from the
+		# tier on the belt (never from the tier being made).
+		var from_tier := ToolRules.tier(_inventory, tool.tool_kind) if is_instance_valid(_inventory) else 0
 		for id: StringName in recipe.inputs:
 			var input := Database.item(id) as ItemData if Database.has_item(id) else null
 			if input != null and input.tool_kind == tool.tool_kind:
 				out.append(Phase5Texts.TOOL_REPLACES % input.display_name)
-		var from_tier := ToolRules.tier(_inventory, tool.tool_kind) if is_instance_valid(_inventory) else 0
+				from_tier = input.tool_tier
 		var effect := Phase5Texts.tool_effect(tool.tool_kind, mini(from_tier, tool.tool_tier - 1), tool.tool_tier, _action_config())
 		if effect != "":
 			out.append(effect)

@@ -21,6 +21,8 @@ const BUILD_COINS_HAVE := "Münzen im Beutel: %d"
 const TOOL_REPLACES := "ersetzt: %s"
 const TOOL_EFFECT := "%s %d → %d Min"
 const TOOL_NEW := "%s: neu · %d Min"
+const TOOL_HAVE := "Hängt schon am Gürtel."
+const TOOL_HAVE_BETTER := "Am Gürtel hängt schon %s."
 const KILN_ALONE := "läuft allein · %s"
 const KILN_UNTIL := "fertig um %s"
 const KILN_LEFT := "noch %s"
@@ -140,25 +142,26 @@ static func tool_tasks(kind: StringName, actions: ActionConfig) -> Array[Diction
 	return out
 
 
-## Station panel, tool recipe: "Graben 50 → 35 Min · Bestatten 25 → 20 Min" (from the tier on the
-## belt to `tier`); tasks the old tier could not do: "Erle fällen: neu · 50 Min". At most `limit`.
+## Station panel, tool recipe: "Graben 50 → 35 Min · Bestatten 25 → 20 Min" (from `from_tier` to
+## `tier`); tasks the old tier could not do come first: "Erle fällen: neu · 50 Min". At most `limit`.
 static func tool_effect(kind: StringName, from_tier: int, tier: int, actions: ActionConfig, limit: int = 2) -> String:
-	var parts := PackedStringArray()
+	var opened := PackedStringArray()
+	var faster := PackedStringArray()
 	var act := actions if actions != null else ActionConfig.new()
 	for task: Dictionary in tool_tasks(kind, act):
-		if parts.size() >= limit:
-			break
 		var min_tier := int(task.min_tier)
 		if tier < min_tier:
 			continue
 		var after := act.tool_minutes(int(task.base), tier)
 		if from_tier < min_tier:
-			parts.append(TOOL_NEW % [task.label, after])
+			opened.append(TOOL_NEW % [task.label, after])
 			continue
 		var before := act.tool_minutes(int(task.base), from_tier)
 		if after < before:
-			parts.append(TOOL_EFFECT % [task.label, before, after])
-	return " · ".join(parts)
+			faster.append(TOOL_EFFECT % [task.label, before, after])
+	# New tasks first (Werkstein with the master pick), then what gets faster.
+	opened.append_array(faster)
+	return " · ".join(opened.slice(0, limit))
 
 
 ## Belt tooltip lines of one kind at `tier` (compared with tier 0): „Graben dauert 35 statt 60
