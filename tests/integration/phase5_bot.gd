@@ -64,6 +64,8 @@ var start_coins: int = -1
 var income: Dictionary = {"burial": 0, "stipend": 0, "gift": 0, "ilse": 0, "valuables": 0}
 var spent_by: Dictionary = {}
 var lowest_morning: int = 1 << 30
+## Lowest morning purse once workshop_open is set (the Phase-5 arc).
+var lowest_morning_p5: int = 1 << 30
 var morning_coins: int = 0
 var spent_p5: int = 0
 ## Phase-5 progress.
@@ -77,6 +79,8 @@ var gilded: int = 0
 ## {"<action>@<tier>": minutes measured on the clock} (toolsmith: §2.3 table).
 var action_minutes: Dictionary = {}
 var content_start: int = -1
+## Debug trace of the loom decisions (printed by the playthrough test for the crafter).
+var loom_trace: PackedStringArray = []
 var _day_spent: Dictionary = {}
 var _area: StringName = &"hut"
 var _watching5: bool = false
@@ -139,6 +143,8 @@ func run_day() -> void:
 	if p5_open() and open_day < 0:
 		open_day = TimeManager.day
 		content_start = _content_ghosts()
+	if p5_open():
+		lowest_morning_p5 = mini(lowest_morning_p5, morning_coins)
 	_leave_hut()
 	_gather()
 	if p5_open():
@@ -186,7 +192,10 @@ func _phase5() -> void:
 		var did := false
 		did = _open_gate() or did
 		did = _collect_kiln() or did
+		if _wants_gowns():
+			did = _gather_bruch() or did  # the flax first: the gowns of the last deliveries wait for it
 		did = _build_next() or did
+		did = _loom_work() or did
 		did = _forge_work() or did
 		did = _gather_bruch() or did
 		did = _gather_quarry() or did
@@ -235,6 +244,9 @@ func _osric_wishes() -> Array[Dictionary]:
 	# §2.8: 2 fittings for the woodcutter's axe before the first own bar.
 	if shop.is_built(&"loom") and player.tool_tier(&"axe") == 0 and inv().count(&"iron_bar") == 0 and inv().count(&"iron_ore") < 2:
 		fittings_need += 2
+		# The toolsmith buys the iron shovel's fittings too: the own ore goes into the master tools.
+		if flags.tools_first and player.tool_tier(&"shovel") == 0:
+			fittings_need += 2
 	fittings_need -= inv().count(&"iron_fittings")
 	while fittings_need > 0:
 		var take := 4 if fittings_need >= 4 else 2
@@ -380,7 +392,7 @@ func _want(item: StringName) -> int:
 				n += 6
 			return n + 2
 		&"flax":
-			return 9 if shop.is_built(&"loom") and _wants_gowns() else 0
+			return 12 if _wants_gowns() else 0
 		&"herbs":
 			return 3
 		&"elderberries":
@@ -642,8 +654,8 @@ func _forge_need() -> StringName:
 		if bars < 2:
 			return &"bars"
 		bars -= 2
-	# 3. The chapter's master stone: 2 fittings.
-	if _master_stone_open():
+	# 3. The chapter's master stone: 2 fittings (the toolsmith: after the master tools).
+	if _master_stone_open() and not flags.tools_first:
 		if fittings < 2:
 			return &"fittings" if bars > 0 or inv().count(&"iron_ore") >= 2 else &""
 		fittings -= 2
@@ -654,6 +666,8 @@ func _forge_need() -> StringName:
 				if bars < 2:
 					return &"bars"
 				bars -= 2
+	if _master_stone_open() and flags.tools_first and fittings < 2:
+		return &"fittings"
 	# 5. More master stones: fittings for the next one.
 	if flags.restone and fittings < 2:
 		return &"fittings"
@@ -672,25 +686,24 @@ func graveyard_free_plots() -> int:
 	return n
 
 
-## Yarn, linen and gowns for the next deliveries (the loom saves Osric's linen, §2.8).
+## Yarn, linen and gowns for the next deliveries (the loom saves Osric's linen, §2.8): all flax
+## spun at once (tomorrow morning's gown needs the yarn), gowns woven while linen is there.
 func _loom_work() -> bool:
 	if not shop.is_built(&"loom") or not _wants_gowns():
 		return false
 	var did := false
-	var gowns := inv().count(&"burial_gown")
-	while gowns < 2 and _fits(60):
-		if inv().count(&"yarn") >= 2 and inv().count(&"linen") >= 1:
-			if not _craft5(&"loom", &"burial_gown_loom"):
-				break
-			loom_gowns += 1
-			gowns += 1
-			did = true
-		elif inv().count(&"flax") >= 2:
-			if not _craft5(&"loom", &"yarn"):
-				break
-			did = true
-		else:
+	while inv().count(&"flax") >= 2 and _fits(20 + WALK_MINUTES):
+		if not _craft5(&"loom", &"yarn"):
 			break
+		did = true
+	var gowns_wanted := mini(3, graveyard_free_plots() + _waiting_corpses())
+	loom_trace.append("d%d %s loom: gown %d yarn %d linen %d want %d" % [TimeManager.day, TimeManager.format_clock(),
+			inv().count(&"burial_gown"), inv().count(&"yarn"), inv().count(&"linen"), gowns_wanted])
+	while inv().count(&"burial_gown") < gowns_wanted and inv().count(&"yarn") >= 2 and inv().count(&"linen") >= 1 and _fits(30 + WALK_MINUTES):
+		if not _craft5(&"loom", &"burial_gown_loom"):
+			break
+		loom_gowns += 1
+		did = true
 	return did
 
 
@@ -734,11 +747,35 @@ func _craft5(station: StringName, recipe_id: StringName) -> bool:
 
 ## Phase 4 + the loom gown before the workbench gown; with the loom only 1 linen per gown.
 func _craft_essentials() -> void:
-	if p5_open() and shop.is_built(&"loom") and flags.gown and inv().count(&"burial_gown") == 0 \
-			and inv().count(&"yarn") >= 2 and inv().count(&"linen") >= 1:
+	if p5_open() and shop.is_built(&"loom"):
+		loom_trace.append("d%d %s ess: gown %d yarn %d linen %d flax %d free %d wait %d" % [TimeManager.day, TimeManager.format_clock(),
+				inv().count(&"burial_gown"), inv().count(&"yarn"), inv().count(&"linen"), inv().count(&"flax"), graveyard_free_plots(), _waiting_corpses()])
+	if p5_open() and shop.is_built(&"loom") and flags.gown and flags.loom_gowns and _wants_gowns():
+		# The morning before the cart: spin and weave today's gown at the loom.
+		while inv().count(&"yarn") < 2 and inv().count(&"flax") >= 2 and _fits(20 + WALK_MINUTES):
+			if not _craft5(&"loom", &"yarn"):
+				break
+		if inv().count(&"burial_gown") == 0 and inv().count(&"yarn") >= 2 and inv().count(&"linen") >= 1 \
+				and _craft5(&"loom", &"burial_gown_loom"):
+			loom_gowns += 1
+	# With the loom the gowns come from there (1 linen + 2 yarn): no workbench gown (3 linen).
+	var keep: bool = flags.gown
+	if p5_open() and shop.is_built(&"loom") and flags.loom_gowns:
+		flags.gown = false
+	super._craft_essentials()
+	flags.gown = keep
+
+
+## Before the corpse is dressed: a gown from the loom when the yarn is there (not the workbench's
+## 3 linen).
+func _on_table(record: CorpseRecord, table: MorgueTable) -> bool:
+	if p5_open() and shop.is_built(&"loom") and flags.gown and flags.loom_gowns and not record.is_dressed() \
+			and inv().count(&"burial_gown") == 0 and inv().count(&"yarn") >= 2 and inv().count(&"linen") >= 1:
 		if _craft5(&"loom", &"burial_gown_loom"):
 			loom_gowns += 1
-	super._craft_essentials()
+		table.interact(player)
+		UIState.clear()
+	return super._on_table(record, table)
 
 
 func _buy_for_today() -> void:
@@ -957,7 +994,8 @@ func record_day(day: int) -> void:
 		"tiers": "%d/%d/%d" % [int(tiers.get(&"shovel", 0)), int(tiers.get(&"axe", 0)), int(tiers.get(&"pickaxe", 0))],
 		"stones_set": GameState.get_stat(&"stones_set"), "masters": shop.master_stones(), "named": named,
 		"content": _content_ghosts(), "chapter5": GameState.has_flag(&"names_in_stone_complete"),
-		"open": shop.is_open(), "crafted": GameState.get_stat(&"crafted"),
+		"open": shop.is_open(), "crafted": GameState.get_stat(&"crafted"), "loom_gowns": loom_gowns,
+		"stock": "flax %d yarn %d linen %d gown %d" % [inv().count(&"flax"), inv().count(&"yarn"), inv().count(&"linen"), inv().count(&"burial_gown")],
 	})
 
 
@@ -997,8 +1035,8 @@ func ledger_text() -> String:
 	for source: Variant in income:
 		in_parts.append("%s %d" % [source, int(income[source])])
 		in_total += int(income[source])
-	return "start %d · income %d (%s) · spent %d (%s) · Phase 5 spent %d · end %d · lowest morning %d" % [start_coins,
-			in_total, ", ".join(in_parts), total, ", ".join(spent_parts), spent_p5, inv().count(&"coin"), lowest_morning]
+	return "start %d · income %d (%s) · spent %d (%s) · Phase 5 spent %d · end %d · lowest morning %d (Phase 5: %d)" % [start_coins,
+			in_total, ", ".join(in_parts), total, ", ".join(spent_parts), spent_p5, inv().count(&"coin"), lowest_morning, lowest_morning_p5]
 
 
 func total_spent() -> int:

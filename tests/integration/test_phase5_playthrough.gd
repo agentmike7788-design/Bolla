@@ -56,7 +56,11 @@ func test_reverent5() -> void:
 	assert_true(bot.chapter5_day > 0 and bot.chapter5_day <= 28, "reverent5: chapter by day 28 (%d)" % bot.chapter5_day)
 	assert_true(bot.spent_p5 >= 100, "Phase-5 spending ≥ 100 (%d)" % bot.spent_p5)
 	assert_true(end >= 10 and end <= 45, "end 10–45 (%d)" % end)
-	assert_true(bot.lowest_morning >= 10, "morning never below 10 (%d)" % bot.lowest_morning)
+	assert_true(bot.lowest_morning_p5 >= 10, "morning never below 10 (%d)" % bot.lowest_morning_p5)
+	# §2.8 / the user: most of the surplus spent, never poor (≈ 15).
+	var available := bot.start_coins + bot.total_income()
+	assert_true(bot.spent_p5 * 100 >= 75 * available, "most of the surplus spent (%d of %d)" % [bot.spent_p5, available])
+	assert_true(bot.lowest_morning_p5 >= 15, "never below ≈ 15 in the morning (%d)" % bot.lowest_morning_p5)
 	assert_true(bot.stones_set.size() >= 6, "≥ 6 graves set anew (%d)" % bot.stones_set.size())
 	assert_eq(bot.gilded, 3, "gold for 3 stones")
 	reverent_rows = bot.rows.duplicate(true)
@@ -120,6 +124,7 @@ func test_crafter() -> void:
 	var end := bot.inv().count(&"coin")
 	assert_true(end >= 15 and end <= 80, "end 15–80 (%d)" % end)
 	assert_true(bot.loom_gowns >= 4, "≥ 4 gowns from the loom (%d)" % bot.loom_gowns)
+	assert_true(bot.lowest_morning_p5 >= 10, "Phase 5: morning never below 10 (%d)" % bot.lowest_morning_p5)
 
 
 func test_save_load5_matches_reverent5() -> void:
@@ -186,6 +191,10 @@ func _play(strategy: StringName, days: int) -> Phase5Bot:
 			% [strategy, bot.chapter5_day, bot.open_day, bot.chapter_day, bot.ledger_text(), str(bot.gathered),
 			bot.stones_set.size(), bot.gilded, bot.loom_gowns, str(bot.tier_days)])
 	print(bot.table_p5())
+	for line: String in bot.loom_trace:
+		print("LOOM5 ", line)
+	for r: Dictionary in bot.rows:
+		print("STOCK5 %s day %d: %s, loom gowns %d" % [strategy, r.day, r.get("stock", ""), int(r.get("loom_gowns", 0))])
 	return bot
 
 
