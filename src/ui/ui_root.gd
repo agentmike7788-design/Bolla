@@ -9,6 +9,9 @@ extends CanvasLayer
 ## Phase 3 (docs/PHASE3_DESIGN.md §7): U toggles the cemetery overview (context from
 ## CemeteryStatus, also opened by the grave register's button); the day summary is completed
 ## with stipend, reputation, dirty spots and the sections unlocked since the last summary.
+## Phase 4 (docs/PHASE4_DESIGN.md §3.6, §7): J toggles the Merkbuch (not while building, not in a
+## dialogue; context JournalManager.panel_context()), the trade panel &"trader" opens over
+## Ilse's dialogue (dialogue action open_panel:trader).
 
 const GROUP := &"ui_root"
 const PLAYER_GROUP := &"player"
@@ -17,6 +20,9 @@ const PANEL_PAUSE := &"pause"
 const PANEL_INVENTORY := &"inventory"
 const PANEL_OVERVIEW := &"cemetery_overview"
 const PANEL_DAY_SUMMARY := &"day_summary"
+const PANEL_JOURNAL := &"journal"
+const JOURNAL_GROUP := &"journal"
+const BUILD_MODE_GROUP := &"build_mode"
 const DEBUG_MODAL := &"debug"
 const ACTION_TITLE := &"title"
 const ACTION_QUIT := &"quit"
@@ -32,6 +38,8 @@ const PANEL_SCRIPTS: Dictionary[StringName, Script] = {
 	&"chest": preload("res://src/ui/panels/chest_panel.gd"),
 	&"grave_register": preload("res://src/ui/panels/grave_register_panel.gd"),
 	&"cemetery_overview": preload("res://src/ui/panels/cemetery_overview_panel.gd"),
+	&"journal": preload("res://src/ui/panels/journal_panel.gd"),
+	&"trader": preload("res://src/ui/panels/trader_panel.gd"),
 }
 
 ## Called for "Beenden" (tests replace it).
@@ -116,6 +124,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed(PANEL_OVERVIEW):
 		_consume()
 		toggle_overview()
+	elif event.is_action_pressed(PANEL_JOURNAL):
+		_consume()
+		toggle_journal()
 	elif top() == DialogueBox.MODAL_ID and dialogue_box.handle_choice_input(event):
 		_consume()
 	elif not _stack.is_empty() and event.is_action_pressed(&"interact"):
@@ -183,6 +194,27 @@ func toggle_overview() -> void:
 		close_panel(PANEL_OVERVIEW)
 	elif _stack.is_empty():
 		open_overview()
+
+
+## J: opens the Merkbuch when nothing is open (not in build mode), closes it when on top.
+func toggle_journal() -> void:
+	if top() == PANEL_JOURNAL:
+		close_panel(PANEL_JOURNAL)
+	elif _stack.is_empty() and not _build_mode_active():
+		open_journal()
+
+
+## Opens the Merkbuch on `page` (JournalManager.panel_context); no-op without a journal node.
+func open_journal(page: StringName = &"people") -> void:
+	var journal := get_tree().get_first_node_in_group(JOURNAL_GROUP) if is_inside_tree() else null
+	if journal == null or not journal.has_method(&"panel_context"):
+		return
+	open_panel(PANEL_JOURNAL, journal.call(&"panel_context", page))
+
+
+func _build_mode_active() -> bool:
+	var mode := get_tree().get_first_node_in_group(BUILD_MODE_GROUP) if is_inside_tree() else null
+	return mode != null and mode.get(&"active") == true
 
 
 ## Opens the overview with a fresh snapshot of the systems (also on top of the register).

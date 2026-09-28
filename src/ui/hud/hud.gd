@@ -12,6 +12,8 @@ extends Control
 ## CemeteryScore (tooltip: graves · decor · care), a reputation line (tier, trend arrow of
 ## Reputation.forecast(), 0–100 bar; tooltip: effects) and, while BuildMode is active, the
 ## build bar in place of the interaction prompt.
+## Phase 4 (docs/PHASE4_DESIGN.md §7): a small book beside the day with the unread count of the
+## Merkbuch („[J] Merkbuch · 2 neu“, hidden without a journal). No piety display.
 
 const BASE_ITEMS: Array[StringName] = [&"coin", &"wood", &"stone", &"linen"]
 const CORPSE_MANAGER_GROUP := &"corpse_manager"
@@ -30,6 +32,7 @@ const TEXT_NOTICE_UNKNOWN := "Heute keine Leiche – die Bahre war belegt oder k
 const TEXT_ACTION_RUNNING := "%s …"
 const TEXT_REPUTATION_CAPTION := "Ruf"
 const BUILD_MODE_GROUP := &"build_mode"
+const JOURNAL_GROUP := &"journal"
 ## Build-bar refresh while shown (the cursor moves with the mouse).
 const BUILD_SYNC_SECONDS := 0.1
 
@@ -58,6 +61,8 @@ var reputation_label: Label
 var reputation_arrow: Label
 var reputation_meter: ReputationMeter
 var build_bar: BuildBar
+var journal_badge: HBoxContainer
+var journal_label: Label
 
 ## item id -> {chip: Control, count: Label, caption: Label (crafted items only)}
 var _chips: Dictionary[StringName, Dictionary] = {}
@@ -70,6 +75,7 @@ var _skipped_day: int = 0
 var _build_active: bool = false
 var _build_sync_left: float = 0.0
 var _reputation_dirty: bool = false
+var _journal_dirty: bool = false
 
 
 func _init() -> void:
@@ -102,6 +108,11 @@ func _ready() -> void:
 	EventBus.ghost_spoke.connect(_mark_objective_dirty.unbind(3))
 	EventBus.reputation_changed.connect(_mark_reputation_dirty.unbind(4))
 	EventBus.build_mode_changed.connect(_on_build_mode_changed)
+	EventBus.clue_found.connect(_mark_journal_dirty.unbind(2))
+	EventBus.insight_unlocked.connect(_mark_journal_dirty.unbind(1))
+	EventBus.clue_found.connect(_mark_objective_dirty.unbind(2))
+	EventBus.insight_unlocked.connect(_mark_objective_dirty.unbind(1))
+	EventBus.story_corpse_arrived.connect(_mark_objective_dirty.unbind(2))
 	refresh_all()
 
 
@@ -135,6 +146,24 @@ func refresh_all() -> void:
 		_hide_notice()
 	_apply_modal_visibility()
 	refresh_objective()
+	refresh_journal_badge()
+
+
+## „[J] Merkbuch · 2 neu“ from JournalManager.unread_count(); hidden without a journal node.
+func refresh_journal_badge() -> void:
+	_journal_dirty = false
+	var journal := _group_node(JOURNAL_GROUP)
+	journal_badge.visible = journal != null and journal.has_method(&"unread_count")
+	if not journal_badge.visible:
+		return
+	var n := int(journal.call(&"unread_count"))
+	journal_label.text = Phase4Texts.journal_badge(n)
+	journal_label.theme_type_variation = &"HudLabel" if n > 0 else &"HudDimLabel"
+	(journal_badge.get_child(0) as HudBuilder.JournalBookIcon).unread = n > 0
+
+
+func journal_badge_text() -> String:
+	return journal_label.text if journal_badge.visible else ""
 
 
 func refresh_objective() -> void:
@@ -372,6 +401,14 @@ func _on_action_finished(_completed: bool) -> void:
 
 func _on_modal_changed(_open: bool) -> void:
 	_apply_modal_visibility()
+	_mark_journal_dirty()
+
+
+func _mark_journal_dirty() -> void:
+	if _journal_dirty:
+		return
+	_journal_dirty = true
+	refresh_journal_badge.call_deferred()
 
 
 func _records() -> Array[CorpseRecord]:

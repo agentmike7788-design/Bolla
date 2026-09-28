@@ -16,6 +16,13 @@
 ; LedgerWarnLabel, LedgerCloseButton, LedgerScrollBar, LedgerOrnament (ink/rule/margin colours).
 ; Phase 3: BuildSlotButton / BuildSlotSelected (build bar, amber frame = selected),
 ; ReputationMeter (track/fill/tick/frame colours of the 0–100 reputation bar).
+; Phase 4: ExamTabButton / ExamTabSelected / ExamTabMuted / ExamTabMutedSelected (tabs of the
+; morgue table panel, the muted pair has no signal colour), FindLostPanel / FindNothingPanel
+; (lost and empty find cards); the journal ("Merkbuch", parchment like the grave register):
+; JournalTabButton / JournalTabSelected, JournalCardPanel / JournalCardButton /
+; JournalCardSelected (dried-red frame = chosen clue), InkButton, InkStampLabel ("→ Merkbuch"),
+; JournalThread (red thread + pin colours); NoteQuiet (piety / night notices, no signal colour),
+; NoteStory (Osric's arrival lines), TradeRowPanel, WhisperLabel (Ilse Kranich's lines).
 [gd_resource type="Theme" format=3]
 
 [sub_resource type="StyleBoxFlat" id="sb_window"]
@@ -672,6 +679,281 @@ corner_radius_bottom_left = 4
 shadow_color = Color(0.949, 0.663, 0.231, 0.18)
 shadow_size = 6
 
+[sub_resource type="StyleBoxFlat" id="sb_tab_normal"]
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 10.0
+draw_center = false
+border_width_left = 0
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 2
+border_color = Color(0.353, 0.255, 0.188, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="sb_tab_hover"]
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 10.0
+bg_color = Color(0.141, 0.176, 0.231, 0.6)
+border_width_left = 0
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 2
+border_color = Color(0.949, 0.663, 0.231, 0.45)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+
+[sub_resource type="StyleBoxFlat" id="sb_tab_selected"]
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 10.0
+bg_color = Color(0.153, 0.192, 0.251, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 3
+border_color = Color(0.949, 0.663, 0.231, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+
+[sub_resource type="StyleBoxFlat" id="sb_tab_muted_selected"]
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 10.0
+bg_color = Color(0.133, 0.157, 0.192, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 3
+border_color = Color(0.541, 0.561, 0.58, 0.85)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+
+[sub_resource type="StyleBoxFlat" id="sb_find_lost"]
+content_margin_left = 22.0
+content_margin_top = 14.0
+content_margin_right = 22.0
+content_margin_bottom = 14.0
+bg_color = Color(0.52, 0.5, 0.45, 0.78)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.36, 0.34, 0.3, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="sb_find_nothing"]
+content_margin_left = 10.0
+content_margin_top = 6.0
+content_margin_right = 10.0
+content_margin_bottom = 6.0
+draw_center = false
+border_width_left = 0
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 1
+border_color = Color(0.353, 0.255, 0.188, 0.55)
+
+[sub_resource type="StyleBoxFlat" id="sb_journal_card"]
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 12.0
+bg_color = Color(0.925, 0.871, 0.745, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.608, 0.486, 0.325, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+shadow_color = Color(0.106, 0.071, 0.047, 0.22)
+shadow_size = 3
+shadow_offset = Vector2(1, 2)
+
+[sub_resource type="StyleBoxFlat" id="sb_journal_card_hover"]
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 12.0
+bg_color = Color(0.945, 0.898, 0.78, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.36, 0.2, 0.08, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+shadow_color = Color(0.106, 0.071, 0.047, 0.28)
+shadow_size = 4
+shadow_offset = Vector2(1, 2)
+
+[sub_resource type="StyleBoxFlat" id="sb_journal_card_selected"]
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 12.0
+bg_color = Color(0.957, 0.886, 0.722, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 3
+border_color = Color(0.549, 0.184, 0.169, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+shadow_color = Color(0.549, 0.184, 0.169, 0.25)
+shadow_size = 5
+shadow_offset = Vector2(1, 2)
+
+[sub_resource type="StyleBoxFlat" id="sb_journal_tab"]
+content_margin_left = 16.0
+content_margin_top = 6.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+draw_center = false
+border_width_left = 0
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 2
+border_color = Color(0.541, 0.42, 0.271, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="sb_journal_tab_hover"]
+content_margin_left = 16.0
+content_margin_top = 6.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(0.36, 0.2, 0.08, 0.08)
+border_width_left = 0
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 2
+border_color = Color(0.36, 0.2, 0.08, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+
+[sub_resource type="StyleBoxFlat" id="sb_journal_tab_selected"]
+content_margin_left = 16.0
+content_margin_top = 6.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(0.78, 0.69, 0.52, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 3
+border_color = Color(0.36, 0.2, 0.08, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+
+[sub_resource type="StyleBoxFlat" id="sb_ink_button"]
+content_margin_left = 18.0
+content_margin_top = 6.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+bg_color = Color(0.36, 0.2, 0.08, 0.06)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.36, 0.2, 0.08, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="sb_ink_button_hover"]
+content_margin_left = 18.0
+content_margin_top = 6.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+bg_color = Color(0.36, 0.2, 0.08, 0.16)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.3, 0.165, 0.063, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="sb_ink_button_disabled"]
+content_margin_left = 18.0
+content_margin_top = 6.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.541, 0.42, 0.271, 0.5)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="sb_note_quiet"]
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(0.071, 0.098, 0.137, 0.62)
+border_width_left = 2
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 0
+border_color = Color(0.541, 0.561, 0.58, 0.7)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="sb_note_story"]
+content_margin_left = 18.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+bg_color = Color(0.098, 0.133, 0.184, 0.92)
+border_width_left = 5
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 0
+border_color = Color(0.62, 0.47, 0.32, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="sb_trade_row"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.063, 0.086, 0.122, 0.6)
+border_width_left = 0
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 1
+border_color = Color(0.243, 0.196, 0.157, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
 [sub_resource type="StyleBoxEmpty" id="sb_empty"]
 
 [resource]
@@ -753,6 +1035,42 @@ DimLabel/colors/font_color = Color(0.541, 0.561, 0.58, 1)
 DimLabel/font_sizes/font_size = 20
 DimPanel/base_type = &"Panel"
 DimPanel/styles/panel = SubResource("sb_dim")
+ExamTabButton/base_type = &"Button"
+ExamTabButton/colors/font_color = Color(0.72, 0.7, 0.66, 1)
+ExamTabButton/colors/font_focus_color = Color(0.95, 0.9, 0.8, 1)
+ExamTabButton/colors/font_hover_color = Color(1, 0.93, 0.8, 1)
+ExamTabButton/colors/font_pressed_color = Color(0.949, 0.663, 0.231, 1)
+ExamTabButton/styles/focus = SubResource("sb_empty")
+ExamTabButton/styles/hover = SubResource("sb_tab_hover")
+ExamTabButton/styles/normal = SubResource("sb_tab_normal")
+ExamTabButton/styles/pressed = SubResource("sb_tab_selected")
+ExamTabMuted/base_type = &"Button"
+ExamTabMuted/colors/font_color = Color(0.541, 0.561, 0.58, 1)
+ExamTabMuted/colors/font_focus_color = Color(0.72, 0.72, 0.7, 1)
+ExamTabMuted/colors/font_hover_color = Color(0.78, 0.78, 0.76, 1)
+ExamTabMuted/colors/font_pressed_color = Color(0.72, 0.72, 0.7, 1)
+ExamTabMuted/styles/focus = SubResource("sb_empty")
+ExamTabMuted/styles/hover = SubResource("sb_tab_hover")
+ExamTabMuted/styles/normal = SubResource("sb_tab_normal")
+ExamTabMuted/styles/pressed = SubResource("sb_tab_muted_selected")
+ExamTabMutedSelected/base_type = &"Button"
+ExamTabMutedSelected/colors/font_color = Color(0.8, 0.8, 0.78, 1)
+ExamTabMutedSelected/colors/font_hover_color = Color(0.8, 0.8, 0.78, 1)
+ExamTabMutedSelected/styles/focus = SubResource("sb_empty")
+ExamTabMutedSelected/styles/hover = SubResource("sb_tab_muted_selected")
+ExamTabMutedSelected/styles/normal = SubResource("sb_tab_muted_selected")
+ExamTabMutedSelected/styles/pressed = SubResource("sb_tab_muted_selected")
+ExamTabSelected/base_type = &"Button"
+ExamTabSelected/colors/font_color = Color(0.949, 0.663, 0.231, 1)
+ExamTabSelected/colors/font_hover_color = Color(0.98, 0.78, 0.45, 1)
+ExamTabSelected/styles/focus = SubResource("sb_empty")
+ExamTabSelected/styles/hover = SubResource("sb_tab_selected")
+ExamTabSelected/styles/normal = SubResource("sb_tab_selected")
+ExamTabSelected/styles/pressed = SubResource("sb_tab_selected")
+FindLostPanel/base_type = &"PanelContainer"
+FindLostPanel/styles/panel = SubResource("sb_find_lost")
+FindNothingPanel/base_type = &"PanelContainer"
+FindNothingPanel/styles/panel = SubResource("sb_find_nothing")
 FreshBar/base_type = &"ProgressBar"
 FreshBar/styles/fill = SubResource("sb_bar_fresh")
 GoodLabel/base_type = &"Label"
@@ -788,6 +1106,18 @@ HudLabel/constants/shadow_offset_y = 1
 HudLabel/font_sizes/font_size = 24
 HudPanel/base_type = &"PanelContainer"
 HudPanel/styles/panel = SubResource("sb_hud")
+InkButton/base_type = &"Button"
+InkButton/colors/font_color = Color(0.3, 0.165, 0.063, 1)
+InkButton/colors/font_disabled_color = Color(0.541, 0.42, 0.271, 0.8)
+InkButton/colors/font_focus_color = Color(0.3, 0.165, 0.063, 1)
+InkButton/colors/font_hover_color = Color(0.169, 0.129, 0.094, 1)
+InkButton/colors/font_pressed_color = Color(0.549, 0.184, 0.169, 1)
+InkButton/font_sizes/font_size = 21
+InkButton/styles/disabled = SubResource("sb_ink_button_disabled")
+InkButton/styles/focus = SubResource("sb_empty")
+InkButton/styles/hover = SubResource("sb_ink_button_hover")
+InkButton/styles/normal = SubResource("sb_ink_button")
+InkButton/styles/pressed = SubResource("sb_ink_button_hover")
 InkDimLabel/base_type = &"Label"
 InkDimLabel/colors/font_color = Color(0.38, 0.3, 0.21, 1)
 InkDimLabel/font_sizes/font_size = 19
@@ -797,6 +1127,41 @@ InkHeaderLabel/font_sizes/font_size = 28
 InkLabel/base_type = &"Label"
 InkLabel/colors/font_color = Color(0.169, 0.129, 0.094, 1)
 InkLabel/font_sizes/font_size = 22
+InkStampLabel/base_type = &"Label"
+InkStampLabel/colors/font_color = Color(0.549, 0.184, 0.169, 0.9)
+InkStampLabel/font_sizes/font_size = 17
+JournalCardButton/base_type = &"Button"
+JournalCardButton/styles/focus = SubResource("sb_empty")
+JournalCardButton/styles/hover = SubResource("sb_journal_card_hover")
+JournalCardButton/styles/normal = SubResource("sb_journal_card")
+JournalCardButton/styles/pressed = SubResource("sb_journal_card_hover")
+JournalCardPanel/base_type = &"PanelContainer"
+JournalCardPanel/styles/panel = SubResource("sb_journal_card")
+JournalCardSelected/base_type = &"Button"
+JournalCardSelected/styles/focus = SubResource("sb_empty")
+JournalCardSelected/styles/hover = SubResource("sb_journal_card_selected")
+JournalCardSelected/styles/normal = SubResource("sb_journal_card_selected")
+JournalCardSelected/styles/pressed = SubResource("sb_journal_card_selected")
+JournalTabButton/base_type = &"Button"
+JournalTabButton/colors/font_color = Color(0.38, 0.3, 0.21, 1)
+JournalTabButton/colors/font_focus_color = Color(0.3, 0.165, 0.063, 1)
+JournalTabButton/colors/font_hover_color = Color(0.3, 0.165, 0.063, 1)
+JournalTabButton/colors/font_pressed_color = Color(0.3, 0.165, 0.063, 1)
+JournalTabButton/font_sizes/font_size = 22
+JournalTabButton/styles/focus = SubResource("sb_empty")
+JournalTabButton/styles/hover = SubResource("sb_journal_tab_hover")
+JournalTabButton/styles/normal = SubResource("sb_journal_tab")
+JournalTabButton/styles/pressed = SubResource("sb_journal_tab_selected")
+JournalTabSelected/base_type = &"Button"
+JournalTabSelected/colors/font_color = Color(0.3, 0.165, 0.063, 1)
+JournalTabSelected/colors/font_hover_color = Color(0.3, 0.165, 0.063, 1)
+JournalTabSelected/font_sizes/font_size = 22
+JournalTabSelected/styles/focus = SubResource("sb_empty")
+JournalTabSelected/styles/hover = SubResource("sb_journal_tab_selected")
+JournalTabSelected/styles/normal = SubResource("sb_journal_tab_selected")
+JournalTabSelected/styles/pressed = SubResource("sb_journal_tab_selected")
+JournalThread/colors/pin = Color(0.36, 0.2, 0.08, 1)
+JournalThread/colors/thread = Color(0.62, 0.16, 0.14, 0.85)
 KeyCapPanel/base_type = &"PanelContainer"
 KeyCapPanel/styles/panel = SubResource("sb_keycap")
 KeyLabel/base_type = &"Label"
@@ -812,6 +1177,10 @@ LineEdit/font_sizes/font_size = 22
 LineEdit/styles/focus = SubResource("sb_line_focus")
 LineEdit/styles/normal = SubResource("sb_line_normal")
 LineEdit/styles/read_only = SubResource("sb_line_normal")
+NoteQuiet/base_type = &"PanelContainer"
+NoteQuiet/styles/panel = SubResource("sb_note_quiet")
+NoteStory/base_type = &"PanelContainer"
+NoteStory/styles/panel = SubResource("sb_note_story")
 NoteInfo/base_type = &"PanelContainer"
 NoteInfo/styles/panel = SubResource("sb_note_info")
 NoteReward/base_type = &"PanelContainer"
@@ -900,6 +1269,8 @@ TitleLabel/font_sizes/font_size = 96
 TooltipLabel/colors/font_color = Color(0.169, 0.129, 0.094, 1)
 TooltipLabel/font_sizes/font_size = 19
 TooltipPanel/styles/panel = SubResource("sb_tooltip")
+TradeRowPanel/base_type = &"PanelContainer"
+TradeRowPanel/styles/panel = SubResource("sb_trade_row")
 VBoxContainer/constants/separation = 10
 VScrollBar/styles/grabber = SubResource("sb_grabber")
 VScrollBar/styles/grabber_highlight = SubResource("sb_grabber_hover")
@@ -909,6 +1280,12 @@ VScrollBar/styles/scroll_focus = SubResource("sb_scroll")
 WarningLabel/base_type = &"Label"
 WarningLabel/colors/font_color = Color(0.86, 0.46, 0.4, 1)
 WarningLabel/font_sizes/font_size = 21
+WhisperLabel/base_type = &"Label"
+WhisperLabel/colors/font_color = Color(0.79, 0.8, 0.77, 1)
+WhisperLabel/colors/font_shadow_color = Color(0, 0, 0, 0.4)
+WhisperLabel/constants/shadow_offset_x = 0
+WhisperLabel/constants/shadow_offset_y = 1
+WhisperLabel/font_sizes/font_size = 24
 WiltedBar/base_type = &"ProgressBar"
 WiltedBar/styles/fill = SubResource("sb_bar_wilted")
 WindowPanel/base_type = &"PanelContainer"

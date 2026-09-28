@@ -1,7 +1,7 @@
 extends SceneTree
 ## Renders the item models to UI icons: res://assets/ui/icons/<id>.png (128×128, transparent,
 ## same 3/4 camera and lighting for all). Needs a real renderer:
-##   GODOT=<godot> tools/godot_run.sh -s res://src/ui/tools/icon_renderer.gd [-- --filter=<id>]
+##   GODOT=<godot> tools/godot_run.sh -s res://src/ui/tools/icon_renderer.gd [-- --filter=<id>[,<id>…]]
 ## then: godot --headless --path . --import
 
 const OUT_DIR := "res://assets/ui/icons"
@@ -33,6 +33,15 @@ const MODELS: Dictionary[StringName, String] = {
 	&"decor_grave_vase": "res://assets/models/decor/ph_deco_grave_vase.glb",
 	&"decor_lantern": "res://assets/models/decor/ph_deco_lantern_small.glb",
 	&"decor_path_gravel": "res://assets/models/decor/ph_deco_path_gravel.glb",
+	# Phase 4 (docs/PHASE4_DESIGN.md §2.13, §8: tools, goods and the gown from the P5 models).
+	&"scrub_brush": "res://assets/models/items/ph_item_scrub_brush.glb",
+	&"comb": "res://assets/models/items/ph_item_comb.glb",
+	&"burial_gown": "res://assets/models/items/ph_item_burial_gown.glb",
+	&"juniper": "res://assets/models/items/ph_item_juniper.glb",
+	&"shears": "res://assets/models/items/ph_item_shears.glb",
+	&"pliers": "res://assets/models/items/ph_item_pliers.glb",
+	&"hair_braid": "res://assets/models/items/ph_item_hair_braid.glb",
+	&"teeth_pouch": "res://assets/models/items/ph_item_teeth_pouch.glb",
 }
 
 var _filter: String = ""
@@ -60,7 +69,7 @@ func _run() -> void:
 	viewport.add_child(cam)
 	var failures := 0
 	for id: StringName in MODELS:
-		if _filter != "" and not String(id).contains(_filter):
+		if not _matches(id):
 			continue
 		var scene := load(MODELS[id]) as PackedScene
 		if scene == null:
@@ -141,3 +150,13 @@ func _aabb(node: Node3D) -> AABB:
 		box = b if first else box.merge(b)
 		first = false
 	return box
+
+
+## --filter=<a,b,…>: every id containing one of the parts ("" = all).
+func _matches(id: StringName) -> bool:
+	if _filter == "":
+		return true
+	for part: String in _filter.split(",", false):
+		if String(id).contains(part):
+			return true
+	return false

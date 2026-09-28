@@ -3,6 +3,10 @@ extends VBoxContainer
 ## Stack of short messages (EventBus.notification_requested) – newest at the bottom,
 ## coloured by kind (&"info", &"reward", &"warning"), each fades out after `lifetime`.
 ## Repeating the newest text within `merge_window` refreshes it instead of stacking.
+## Phase 4 (docs/PHASE4_DESIGN.md §7): quiet notices (piety tier changes – never a number –,
+## Ilse waiting at the wall, the smell) get the muted NoteQuiet card, story events (Osric's
+## arrival lines with a caption, the note at the door, the key) the wood-framed NoteStory card
+## (Phase4Texts.note_style); the kind stays as sent.
 
 const KIND_STYLES: Dictionary[StringName, StringName] = {
 	&"info": &"NoteInfo",
@@ -14,6 +18,7 @@ const META_TEXT := &"note_text"
 const META_KIND := &"note_kind"
 const META_BORN := &"note_born"
 const META_TWEEN := &"note_tween"
+const META_STYLE := &"note_style"
 
 ## Seconds a message stays fully visible.
 @export var lifetime: float = 4.0
@@ -41,15 +46,26 @@ func push(text: String, kind: StringName = &"info") -> void:
 		newest.set_meta(META_BORN, now)
 		_start_fade(newest)
 		return
-	var entry := UIKit.panel(KIND_STYLES.get(kind, DEFAULT_STYLE))
+	var style := Phase4Texts.note_style(text)
+	var entry := UIKit.panel(style if style != &"" else KIND_STYLES.get(kind, DEFAULT_STYLE))
 	entry.custom_minimum_size.x = entry_width
 	entry.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	entry.set_meta(META_TEXT, text)
 	entry.set_meta(META_KIND, kind)
 	entry.set_meta(META_BORN, now)
-	var l := UIKit.label(text, &"HudLabel", true)
+	entry.set_meta(META_STYLE, entry.theme_type_variation)
+	var l := UIKit.label(text, &"HudDimLabel" if style == Phase4Texts.STYLE_QUIET else &"HudLabel", true)
 	l.custom_minimum_size.x = entry_width - 40.0
-	entry.add_child(l)
+	var caption := Phase4Texts.note_caption(text)
+	if caption != "":
+		var col := UIKit.vbox(2)
+		col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		col.add_child(UIKit.label(caption, &"HudCaptionLabel"))
+		l.text = "„%s“" % text
+		col.add_child(l)
+		entry.add_child(col)
+	else:
+		entry.add_child(l)
 	add_child(entry)
 	while _live_entries().size() > max_entries:
 		_remove(_live_entries()[0])
@@ -69,6 +85,14 @@ func kinds() -> Array[StringName]:
 	var out: Array[StringName] = []
 	for entry: Control in _live_entries():
 		out.append(StringName(entry.get_meta(META_KIND)))
+	return out
+
+
+## Theme variation of every shown message (oldest first).
+func styles() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for entry: Control in _live_entries():
+		out.append(StringName(entry.get_meta(META_STYLE, &"")))
 	return out
 
 

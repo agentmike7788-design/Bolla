@@ -5,6 +5,10 @@ extends UIPanel
 ## §1.3, §7): variant &"cemetery" (Graveyard.summary_context()) adds {decor, dirt,
 ## reputation_tier, content_ghosts} and measures the goal „Ehrwürdig“ (100) instead of
 ## „Würdevoll“; reputation is shown as its tier (no raw value).
+## Phase 4 (docs/PHASE4_DESIGN.md §1.3, §7): variant &"six_pits" (Graveyard.chapter_context())
+## is the chapter panel „Sechs Gruben“: days, burials, prepared / utilized, the piety tier as a
+## word (never a number), insights n/5, ghosts content / restless and a closing line by piety
+## tier and the insight „Nicht Lorenz“.
 ## Default focus is "Weiterspielen"; "Zum Titel" asks once (like the pause menu).
 
 const TEXT_TITLE := "Der Friedhof ist vollendet"
@@ -18,6 +22,7 @@ const TEXT_DECOR := "Zier"
 const TEXT_DIRT := "Pflege"
 const TEXT_GHOSTS := "Zufriedene Geister"
 const VARIANT_CEMETERY := &"cemetery"
+const VARIANT_SIX_PITS := &"six_pits"
 const TEXT_GOAL_REACHED := "Ziel „%s“ (ab %d) erreicht."
 const TEXT_GOAL_MISSED := "Ziel „%s“ (ab %d) verfehlt – es fehlen %d Punkte."
 const TEXT_CONTINUE := "Weiterspielen"
@@ -39,6 +44,12 @@ var ghosts_label: Label
 var _captions: Dictionary[Label, Label] = {}
 var goal_label: Label
 var title_button: Button
+var header_label: Label
+var intro_label: Label
+var chapter_grid: GridContainer
+## CHAPTER_ROWS caption -> value label (variant six_pits).
+var chapter_rows: Dictionary[String, Label] = {}
+var _cemetery_grid: GridContainer
 var continue_button: Button
 
 ## True while "Zum Titel" waits for its confirming second press.
@@ -49,11 +60,12 @@ func _build() -> void:
 	custom_minimum_size.x = panel_width
 	var box := UIKit.vbox(14)
 	add_child(box)
-	_make_header(box, TEXT_TITLE, false)
-	var intro := UIKit.label(TEXT_INTRO, &"", true)
-	intro.custom_minimum_size.x = panel_width - 80.0
-	box.add_child(intro)
+	header_label = _make_header(box, TEXT_TITLE, false)
+	intro_label = UIKit.label(TEXT_INTRO, &"", true)
+	intro_label.custom_minimum_size.x = panel_width - 80.0
+	box.add_child(intro_label)
 	var grid := GridContainer.new()
+	_cemetery_grid = grid
 	grid.columns = 2
 	grid.add_theme_constant_override(&"h_separation", 40)
 	days_label = _add_row(grid, TEXT_DAYS)
@@ -64,6 +76,16 @@ func _build() -> void:
 	reputation_label = _add_row(grid, TEXT_REPUTATION)
 	ghosts_label = _add_row(grid, TEXT_GHOSTS)
 	box.add_child(grid)
+	chapter_grid = GridContainer.new()
+	chapter_grid.columns = 2
+	chapter_grid.add_theme_constant_override(&"h_separation", 40)
+	for caption: String in Phase4Texts.CHAPTER_ROWS:
+		chapter_grid.add_child(UIKit.label(caption, &"DimLabel"))
+		var value := UIKit.label("", &"SubheaderLabel")
+		chapter_grid.add_child(value)
+		chapter_rows[caption] = value
+	chapter_grid.visible = false
+	box.add_child(chapter_grid)
 	goal_label = UIKit.label("", &"AccentLabel", true)
 	goal_label.custom_minimum_size.x = panel_width - 80.0
 	box.add_child(goal_label)
@@ -90,6 +112,14 @@ func focus_default() -> void:
 
 func _refresh() -> void:
 	title_button.text = TEXT_CONFIRM % TEXT_TITLE_SCREEN if _confirm_title else TEXT_TITLE_SCREEN
+	var chapter := StringName(str(context.get("variant", ""))) == VARIANT_SIX_PITS
+	_cemetery_grid.visible = not chapter
+	chapter_grid.visible = chapter
+	header_label.text = Phase4Texts.CHAPTER_TITLE if chapter else TEXT_TITLE
+	intro_label.text = Phase4Texts.CHAPTER_INTRO if chapter else TEXT_INTRO
+	if chapter:
+		_refresh_chapter()
+		return
 	var total := int(context.get("total", 0))
 	days_label.text = str(int(context.get("days", TimeManager.day)))
 	burials_label.text = str(int(context.get("burials", 0)))
@@ -109,6 +139,23 @@ func _refresh() -> void:
 	else:
 		goal_label.text = TEXT_GOAL_MISSED % [goal_name, goal, goal - total]
 		goal_label.theme_type_variation = &"AccentLabel"
+
+
+## Chapter „Sechs Gruben“: the rows of Phase4Texts.CHAPTER_ROWS and the closing lines.
+func _refresh_chapter() -> void:
+	var values := Phase4Texts.chapter_values(context, Phase4Texts.main_insight_total())
+	for i: int in Phase4Texts.CHAPTER_ROWS.size():
+		chapter_rows[Phase4Texts.CHAPTER_ROWS[i]].text = values[i]
+	var tier := StringName(str(context.get("piety_tier", "")))
+	if tier == &"":
+		tier = PietyRules.tier(int(context.get("piety", 0)), PietyRules._cfg(null))
+	goal_label.text = Phase4Texts.chapter_closing(tier, bool(context.get("not_lorenz", false)))
+	goal_label.theme_type_variation = &"AccentLabel"
+
+
+## Chapter row value by caption ("" unknown) – tests.
+func chapter_value(caption: String) -> String:
+	return chapter_rows[caption].text if chapter_rows.has(caption) else ""
 
 
 func _goal_threshold(goal_rating: StringName = GOAL_RATING) -> int:

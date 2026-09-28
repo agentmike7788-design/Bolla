@@ -163,7 +163,11 @@ func test_hud_tooltip_texts() -> void:
 	assert_eq(b.rating, &"dignified")
 	assert_eq(Phase3Texts.quality_tooltip(b), "Gräber 48 · Zier +12 · Pflege −3\nEhrwürdig ab 100 – es fehlen 43")
 	var top := CemeteryStatus.breakdown_of(110, 0, 0, EconomyConfig.resolve())
-	assert_eq(Phase3Texts.quality_tooltip(top), "Gräber 110 · Zier 0 · Pflege 0\nHöchste Stufe erreicht.")
+	assert_eq(top.rating, &"dignified", "Phase 4 §2.14: Ehrwürdig needs decor and tending")
+	assert_eq(Phase3Texts.quality_tooltip(top), "Gräber 110 · Zier 0 · Pflege 0\nFür „Ehrwürdig“ fehlt noch: Zier 0/12")
+	var full := CemeteryStatus.breakdown_of(100, 14, 2, EconomyConfig.resolve())
+	assert_eq(full.rating, &"venerable")
+	assert_eq(Phase3Texts.quality_tooltip(full), "Gräber 100 · Zier +14 · Pflege −2\nHöchste Stufe erreicht.")
 	var r := CemeteryStatus.reputation_of(40, 3, Phase3Fixtures.reputation_config())
 	assert_eq(r.tier, &"respected")
 	assert_eq(Phase3Texts.reputation_tooltip(r),

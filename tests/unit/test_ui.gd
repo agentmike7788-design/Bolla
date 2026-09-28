@@ -1143,7 +1143,7 @@ func test_debug_flags_quality_fps_instant() -> void:
 
 func test_debug_help_and_unknown() -> void:
 	var help := String(Debug.execute("help").text)
-	for command: String in ["time HH:MM", "day +N", "pause", "give <item>", "spawn corpse", "npc carter here", "tp <gate|hut|road|workbench|table|east|north>",
+	for command: String in ["time HH:MM", "day +N", "pause", "give <item>", "spawn corpse", "npc carter here", "tp <gate|hut|road|workbench|table|east|north|elder|trader>",
 			"save [slot]", "load [slot]", "camera ortho|persp", "flags clear", "quality", "fps", "instant on|off"]:
 		assert_true(help.contains(command), command)
 	var result := Debug.execute("dance")

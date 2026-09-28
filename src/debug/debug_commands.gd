@@ -28,7 +28,7 @@ const HELP := [
 	"give <item> [n] – Item ins Inventar (%s)",
 	"spawn corpse – Leiche an der Bahre, sonst neben dir",
 	"npc carter here – Kutscher herholen; ist er nicht da: Zeit bis zu seinem Auftritt vorspulen",
-	"tp <gate|hut|road|workbench|table|east|north> – teleportieren",
+	"tp <gate|hut|road|workbench|table|east|north|elder|trader> – teleportieren",
 	"save [slot] / load [slot] – speichern / laden (Standard: Slot 1)",
 	"camera ortho|persp – Kameraprojektion (ohne Argument umschalten)",
 	"flags · flags clear – Flags & Statistik zeigen / Flags löschen (Quest zurücksetzen)",
@@ -47,12 +47,15 @@ var _console: DebugConsole
 var _lookup: DebugWorldLookup
 ## Phase-3 commands (§6 of docs/PHASE3_DESIGN.md).
 var _phase3: DebugCommandsPhase3
+## Phase-4 commands (§6 of docs/PHASE4_DESIGN.md).
+var _phase4: DebugCommandsPhase4
 
 
 func _init(console: DebugConsole) -> void:
 	_console = console
 	_lookup = DebugWorldLookup.new(console)
 	_phase3 = DebugCommandsPhase3.new(_lookup)
+	_phase4 = DebugCommandsPhase4.new(_lookup)
 
 
 ## Runs one command (lower-case name + arguments; "clear" is handled by the console).
@@ -90,6 +93,8 @@ func run(command: String, args: PackedStringArray) -> Dictionary:
 			return _cmd_instant(args)
 	if _phase3.handles(command):
 		return _phase3.run(command, args)
+	if _phase4.handles(command):
+		return _phase4.run(command, args)
 	return _error(TEXT_UNKNOWN % command)
 
 
@@ -105,6 +110,7 @@ func help_lines() -> PackedStringArray:
 	for line: String in HELP:
 		out.append(line % DebugCommandParser.item_ids() if line.contains("%s") else line)
 	out.append_array(DebugCommandsPhase3.HELP)
+	out.append_array(DebugCommandsPhase4.HELP)
 	return out
 
 
@@ -238,9 +244,9 @@ func _cmd_tp(args: PackedStringArray) -> Dictionary:
 	if args.size() != 1:
 		return _error("Format: tp <%s>" % names.replace(", ", "|"))
 	var target := args[0].to_lower()
-	if target in ["east", "north"]:
+	if target in ["east", "north", "elder", "trader"]:
 		var p3 := _lookup.player() as Node3D
-		var at: Variant = _phase3.section_position(StringName(target))
+		var at: Variant = _phase4.tp_position(target, _phase3) if target in ["elder", "trader"] else _phase3.section_position(StringName(target))
 		if p3 == null or at == null:
 			return _error(TEXT_NO_WORLD)
 		_lookup.teleport_player(p3, at)
@@ -334,6 +340,7 @@ func _cmd_quality(args: PackedStringArray) -> Dictionary:
 	var score := CemeteryStatus.score(graveyard.get_tree())
 	var lines: PackedStringArray = ["Friedhofsqualität %d · %s" % [int(score.total), CemeteryRating.label(score.rating)]]
 	lines.append_array(_phase3.quality_lines())
+	lines.append_array(_phase4.quality_lines())
 	for grave: GraveRecord in graveyard.call(&"graves"):
 		var state_name: String = GraveRecord.State.keys()[grave.state]
 		var detail := ""

@@ -26,6 +26,16 @@ static func build_clock_panel(hud: GameHud) -> void:
 	texts.add_child(hud.day_label)
 	texts.add_child(hud.clock_label)
 	row.add_child(texts)
+	row.add_child(UIKit.spacer())
+	# Phase 4 §7: the book beside the day with the unread count (hidden without a journal).
+	hud.journal_badge = UIKit.hbox(8)
+	hud.journal_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.journal_badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hud.journal_badge.add_child(JournalBookIcon.new())
+	hud.journal_label = UIKit.label("", &"HudDimLabel")
+	hud.journal_badge.add_child(hud.journal_label)
+	hud.journal_badge.visible = false
+	row.add_child(hud.journal_badge)
 	box.add_child(row)
 	box.add_child(UIKit.separator())
 	var objective_row := UIKit.hbox(10)
@@ -173,3 +183,27 @@ static func item_order() -> Array[StringName]:
 	crafted.sort()
 	out.append_array(crafted)
 	return out
+
+
+## Small closed book (HUD journal badge); a candle-amber bookmark when something is unread.
+class JournalBookIcon extends Control:
+	var unread: bool = false:
+		set(value):
+			unread = value
+			queue_redraw()
+
+	func _init() -> void:
+		custom_minimum_size = Vector2(26.0, 30.0)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var cover := Color(0.42, 0.31, 0.22, 1.0)
+		var pages := Color(0.87, 0.8, 0.65, 1.0)
+		var r := Rect2(Vector2(3.0, 3.0), size - Vector2(6.0, 6.0))
+		draw_rect(Rect2(r.position + Vector2(3.0, 2.0), r.size - Vector2(3.0, 2.0)), pages)
+		draw_rect(Rect2(r.position, r.size - Vector2(3.0, 2.0)), cover)
+		draw_line(r.position + Vector2(4.0, 1.0), r.position + Vector2(4.0, r.size.y - 3.0), Color(0.2, 0.13, 0.09, 1.0), 2.0)
+		if unread:
+			var x := r.position.x + r.size.x - 9.0
+			draw_colored_polygon(PackedVector2Array([Vector2(x, 0.0), Vector2(x + 5.0, 0.0), Vector2(x + 5.0, 12.0),
+					Vector2(x + 2.5, 9.0), Vector2(x, 12.0)]), Color(0.949, 0.663, 0.231, 1.0))

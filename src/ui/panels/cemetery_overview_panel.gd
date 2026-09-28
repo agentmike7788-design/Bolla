@@ -51,6 +51,8 @@ var _sections_box: VBoxContainer
 var quality_value: Label
 var quality_rows: Dictionary[String, Label] = {}
 var quality_next: Label
+## Phase 4 §2.14: what „Ehrwürdig“ still lacks (decor / tending).
+var quality_venerable: Label
 var reputation_value: Label
 var reputation_arrow: Label
 var reputation_meter: ReputationMeter
@@ -148,6 +150,8 @@ func _build_quality(parent: Container) -> void:
 		quality_rows[key] = _row(inner, key)
 	quality_next = UIKit.label("", &"DimLabel")
 	inner.add_child(quality_next)
+	quality_venerable = UIKit.label("", &"WarningLabel", true)
+	inner.add_child(quality_venerable)
 
 
 func _build_reputation(parent: Container) -> void:
@@ -262,6 +266,9 @@ func _refresh_quality(score: Dictionary) -> void:
 	var next := StringName(str(score.get("next_rating", "")))
 	var at := int(score.get("next_at", 0))
 	quality_next.text = TEXT_NEXT % [CemeteryRating.label(next), at, maxi(at - total, 0)] if next != &"" else TEXT_TOP
+	var missing := Phase4Texts.venerable_missing_text(score.get("venerable_missing", PackedStringArray()))
+	quality_venerable.text = missing if StringName(str(score.get("rating", ""))) != &"venerable" else ""
+	quality_venerable.visible = quality_venerable.text != ""
 
 
 func _refresh_reputation(rep: Dictionary) -> void:

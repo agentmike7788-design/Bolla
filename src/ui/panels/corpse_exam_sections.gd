@@ -131,3 +131,68 @@ static func trait_card(trait_id: StringName, info: Dictionary, column_width: flo
 	card_box.add_child(text)
 	card.add_child(card_box)
 	return card
+
+
+# --- Phase 4 (docs/PHASE4_DESIGN.md §7) ------------------------------------------------------
+
+## A find card of MorgueTablePanelState.finds: revealed = parchment card (ink stamp „→ Merkbuch“
+## when it carries a clue); lost = dimmed card with the lost text and a small wilted leaf.
+## Meta find_id / find_state.
+static func find_card(find: Dictionary, width: float) -> PanelContainer:
+	var lost := StringName(str(find.get("state", ""))) == MorgueTablePanelState.STATE_LOST
+	var card := UIKit.panel(&"FindLostPanel" if lost else &"CardPanel")
+	card.set_meta(&"find_id", StringName(str(find.get("id", ""))))
+	card.set_meta(&"find_state", StringName(str(find.get("state", ""))))
+	var box := UIKit.vbox(4)
+	var head := UIKit.hbox(10)
+	if lost:
+		var leaf := WiltedLeaf.new()
+		leaf.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		head.add_child(leaf)
+	var title := UIKit.label(str(find.get("label", "")), &"InkDimLabel" if lost else &"InkHeaderLabel")
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(title)
+	if not lost and StringName(str(find.get("clue_id", ""))) != &"":
+		var stamp := UIKit.label(Phase4Texts.TEXT_FIND_STAMP, &"InkStampLabel")
+		stamp.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		stamp.rotation_degrees = -3.0
+		head.add_child(stamp)
+	box.add_child(head)
+	var text := UIKit.label(str(find.get("text", "")), &"InkDimLabel" if lost else &"InkLabel", true)
+	text.custom_minimum_size.x = width - 70.0
+	box.add_child(text)
+	card.add_child(box)
+	return card
+
+
+## Slim line for a finished step without finds: „Kleidung – Nichts Auffälliges.“
+static func nothing_row(step_label: String, text: String, width: float) -> PanelContainer:
+	var row := UIKit.panel(&"FindNothingPanel")
+	row.set_meta(&"nothing_step", step_label)
+	var l := UIKit.label("%s – %s" % [step_label, text], &"DimLabel", true)
+	l.custom_minimum_size.x = width - 40.0
+	row.add_child(l)
+	return row
+
+
+## Small painted-looking wilted leaf (the loss symbol of lost find cards).
+class WiltedLeaf extends Control:
+	func _init() -> void:
+		custom_minimum_size = Vector2(22.0, 22.0)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var c := size * 0.5
+		var leaf := Color(0.42, 0.36, 0.24, 0.95)
+		var vein := Color(0.25, 0.2, 0.13, 0.9)
+		var pts := PackedVector2Array()
+		for i: int in 13:
+			var t := float(i) / 12.0
+			var a := lerpf(-PI * 0.5, PI * 0.5, t)
+			pts.append(c + Vector2(cos(a) * 5.0 + 1.5 * sin(t * PI * 3.0), sin(a) * 9.0).rotated(0.7))
+		for i: int in range(12, -1, -1):
+			var t := float(i) / 12.0
+			var a := lerpf(-PI * 0.5, PI * 0.5, t)
+			pts.append(c + Vector2(-cos(a) * 4.0, sin(a) * 9.0).rotated(0.7))
+		draw_colored_polygon(pts, leaf)
+		draw_line(c + Vector2(0.0, -9.0).rotated(0.7), c + Vector2(0.0, 11.0).rotated(0.7), vein, 1.5, true)

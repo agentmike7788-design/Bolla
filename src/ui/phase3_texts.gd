@@ -147,11 +147,18 @@ static func quality_tooltip(breakdown: Dictionary) -> String:
 	var lines := PackedStringArray([TEXT_Q_PARTS % [int(breakdown.get("graves", 0)),
 			UIKit.signed(int(breakdown.get("decor", 0))), UIKit.signed(-int(breakdown.get("dirt", 0)))]])
 	var next: StringName = StringName(str(breakdown.get("next_rating", "")))
-	if next != &"":
+	var missing := Phase4Texts.venerable_missing_text(breakdown.get("venerable_missing", PackedStringArray()))
+	var gated := missing != "" and StringName(str(breakdown.get("rating", ""))) != &"venerable"
+	if next != &"" and gated and int(breakdown.get("total", 0)) >= int(breakdown.get("next_at", 0)):
+		pass # the points are there – only the Ehrwürdig condition is missing (line below)
+	elif next != &"":
 		var at := int(breakdown.get("next_at", 0))
 		lines.append(TEXT_Q_NEXT % [CemeteryRating.label(next), at, maxi(at - int(breakdown.get("total", 0)), 0)])
 	else:
 		lines.append(TEXT_Q_TOP)
+	# Phase 4 §2.14: „Ehrwürdig“ also needs decor and tending – name what is missing.
+	if gated:
+		lines.append(missing)
 	return "\n".join(lines)
 
 

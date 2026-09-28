@@ -1,11 +1,18 @@
 class_name CorpseExamPanel
 extends UIPanel
 ## &"corpse_exam" – context {corpse_id: String, table: MorgueTable, player: Player}.
-## Shows name, age, cause (+ description once examined), freshness, the revealed traits
-## and the valuables decision. Buttons only call table.request_examine(),
-## table.request_shroud(), table.decide_valuables(take) and table.request_pick_up().
-## Closes itself when the corpse leaves the table.
-## The sections are built by CorpseExamSections; this script wires and refreshes them.
+## Shows name, age, cause (+ description once examined), freshness, the findings and the
+## valuables decision. Closes itself when the corpse leaves the table.
+## Two modes, chosen on every refresh:
+## - Phase 4 (docs/PHASE4_DESIGN.md §7): the table offers panel_state() (a CorpseCare node
+##   exists) → the left column gets the tabs Untersuchen · Herrichten · Verwerten
+##   (CorpseExamTabs), the right column the find cards grouped by step (lost ones dimmed).
+##   Buttons call table.request_exam_step / request_exam_all / request_wash / request_dress /
+##   request_lay_out / request_balm / request_harvest, decide_valuables and request_pick_up.
+## - Phase 2 (no panel_state): the old layout – request_examine(), request_shroud(),
+##   decide_valuables(take), request_pick_up() and the trait cards.
+## The sections are built by CorpseExamSections / CorpseExamTabs; this script wires and
+## refreshes them.
 
 const TEXT_AGE := "%d Jahre"
 const TEXT_CAUSE := "Todesursache"
@@ -33,8 +40,10 @@ const TEXT_REASON_BUSY := "Arbeit läuft …"
 const TEXT_REASON_DECIDE := "Leichentuch: erst über die Wertsachen entscheiden."
 const TEXT_REASON_NO_SHROUD := "Kein Leichentuch im Inventar (Werkbank: %s)."
 const TEXT_REASON_NO_SHROUD_PLAIN := "Kein Leichentuch im Inventar."
-const STAGE_LABELS: Dictionary[StringName, String] = {&"fresh": "Frisch", &"wilted": "Welk", &"decaying": "Verwesend"}
-const STAGE_BARS: Dictionary[StringName, StringName] = {&"fresh": &"FreshBar", &"wilted": &"WiltedBar", &"decaying": &"DecayBar"}
+const TEXT_DRESSED := "✓ Eingekleidet (%s)"
+const TEXT_NOT_DRESSED := "Nicht eingekleidet"
+const STAGE_LABELS: Dictionary[StringName, String] = {&"fresh": "Frisch", &"wilted": "Welk", &"decaying": "Verwesend", &"rotten": "Verfallen"}
+const STAGE_BARS: Dictionary[StringName, StringName] = {&"fresh": &"FreshBar", &"wilted": &"WiltedBar", &"decaying": &"DecayBar", &"rotten": &"DecayBar"}
 const SHROUD_ITEM := &"shroud"
 const LOCATION_TABLE := &"table"
 const CORPSE_MANAGER_GROUP := &"corpse_manager"
@@ -42,6 +51,10 @@ const CORPSE_MANAGER_GROUP := &"corpse_manager"
 @export var column_width: float = 600.0
 ## Height of the scrolling findings column (several traits fit, more scroll).
 @export var findings_height: float = 400.0
+## Phase 4: the findings column is taller (it sits beside the tabs).
+@export var findings_height_p4: float = 500.0
+## Phase 4: seconds a harvest button stays armed after the first press.
+@export var harvest_confirm_seconds: float = 3.0
 
 var title_label: Label
 var age_label: Label
@@ -63,9 +76,16 @@ var shroud_button: Button
 var pick_up_button: Button
 var close_button: Button
 var reason_label: Label
+## Phase-4 tabs, pages and find cards.
+var tabs: CorpseExamTabs
+## True while the table offers panel_state() (Phase-4 layout).
+var phase4: bool = false
 
 var _corpse_id: String = ""
 var _traits_scroll: ScrollContainer
+var _left: VBoxContainer
+var _decision_home: int = 0
+var _last_corpse: String = ""
 
 
 func _build() -> void:
@@ -73,14 +93,21 @@ func _build() -> void:
 	add_child(box)
 	CorpseExamSections.build_header(self, box).pressed.connect(request_close)
 	var columns := CorpseExamSections.build_columns(self, box)
-	var left := columns[0]
+	_left = columns[0]
 	var right := columns[1]
-	CorpseExamSections.build_cause(self, left)
-	CorpseExamSections.build_condition(self, left)
+	CorpseExamSections.build_cause(self, _left)
+	CorpseExamSections.build_condition(self, _left)
 	_traits_scroll = CorpseExamSections.build_findings(self, right)
-	CorpseExamSections.build_decision(self, left)
+	CorpseExamSections.build_decision(self, _left)
+	_decision_home = decision_box.get_index()
 	take_button.pressed.connect(_on_take_pressed)
 	leave_button.pressed.connect(_on_leave_pressed)
+	tabs = CorpseExamTabs.new(_call_table, _economy())
+	tabs.confirm_seconds = harvest_confirm_seconds
+	tabs.build_condition_extras(freshness_bar.get_parent().get_parent() as VBoxContainer, freshness_bar)
+	tabs.build(_left, column_width, self)
+	tabs.build_findings(traits_box, findings_note)
+	tabs.exam_only.append(cause_label.get_parent().get_parent() as Control)
 
 	_make_action_row(box)
 	box.add_child(UIKit.separator())
@@ -99,10 +126,15 @@ func _ready() -> void:
 
 func _on_opened() -> void:
 	_corpse_id = str(context.get("corpse_id", ""))
+	if _corpse_id != _last_corpse:
+		tabs.current_tab = CorpseExamTabs.TAB_EXAM
+	_last_corpse = _corpse_id
 
 
 func _on_closed() -> void:
 	_corpse_id = ""
+	if tabs != null:
+		tabs.disarm()
 
 
 func _refresh() -> void:
@@ -110,6 +142,8 @@ func _refresh() -> void:
 	if record == null or record.location != LOCATION_TABLE:
 		request_close.call_deferred()
 		return
+	var state := panel_state()
+	_set_mode(not state.is_empty())
 	var tables := Database.corpse_tables() as CorpseTables
 	var cause: Dictionary = tables.get_cause(record.cause_id) if tables != null else {}
 	title_label.text = record.display_name
@@ -118,16 +152,25 @@ func _refresh() -> void:
 	cause_text.text = str(cause.get("description", "")) if record.examined else TEXT_CAUSE_HIDDEN
 	cause_text.theme_type_variation = &"" if record.examined else &"DimLabel"
 	_refresh_condition(record)
-	_refresh_traits(record, tables)
 	_refresh_valuables(record)
-	_refresh_buttons(record)
+	if phase4:
+		_refresh_phase4(record, state)
+	else:
+		_refresh_traits(record, tables)
+		_refresh_buttons(record)
 
 
-## Default focus never lands on the (irreversible) valuables buttons.
+## Default focus never lands on the (irreversible) valuables or harvest buttons.
 func focus_default() -> void:
 	if not is_visible_in_tree():
 		return
-	for button: Button in [examine_button, shroud_button, pick_up_button, close_button]:
+	var candidates: Array[Button] = []
+	if phase4 and tabs != null:
+		candidates.append_array(tabs.focus_candidates())
+	else:
+		candidates.append_array([examine_button, shroud_button])
+	candidates.append_array([pick_up_button, close_button])
+	for button: Button in candidates:
 		if button != null and button.is_visible_in_tree() and not button.disabled:
 			button.grab_focus()
 			return
@@ -143,13 +186,67 @@ func current_record() -> CorpseRecord:
 	return manager.call(&"get_record", _corpse_id) as CorpseRecord
 
 
-## Trait labels shown in the findings (empty until examined).
+## MorgueTable.panel_state() of the context table ({} = Phase-2 table / no CorpseCare).
+func panel_state() -> Dictionary:
+	var table: Variant = context.get("table")
+	if not is_instance_valid(table) or not (table as Object).has_method(&"panel_state"):
+		return {}
+	var state: Variant = (table as Object).call(&"panel_state")
+	return state if state is Dictionary else {}
+
+
+## Trait labels shown in the findings (Phase 2; empty until examined).
 func shown_traits() -> PackedStringArray:
 	var out: PackedStringArray = []
 	for card: Node in traits_box.get_children():
 		if not card.is_queued_for_deletion() and card.has_meta(&"trait_id"):
 			out.append(String(card.get_meta(&"trait_id")))
 	return out
+
+
+## Phase 4: [find id, state] of every shown find card, in display order.
+func shown_finds() -> Array[Array]:
+	var out: Array[Array] = []
+	for card: Node in traits_box.get_children():
+		if not card.is_queued_for_deletion() and card.has_meta(&"find_id"):
+			out.append([card.get_meta(&"find_id"), card.get_meta(&"find_state")])
+	return out
+
+
+## Phase 4: step labels shown as „… – Nichts Auffälliges.“ rows.
+func shown_nothing_steps() -> PackedStringArray:
+	var out: PackedStringArray = []
+	for card: Node in traits_box.get_children():
+		if not card.is_queued_for_deletion() and card.has_meta(&"nothing_step"):
+			out.append(str(card.get_meta(&"nothing_step")))
+	return out
+
+
+func _set_mode(p4: bool) -> void:
+	if p4 == phase4 and tabs.tab_bar.visible == p4:
+		return
+	phase4 = p4
+	tabs.tab_bar.visible = p4
+	for tab: StringName in CorpseExamTabs.TABS:
+		tabs.pages[tab].visible = p4 and tab == tabs.current_tab
+	for l: Control in tabs.stage_labels:
+		l.get_parent().visible = p4
+	tabs.stage_ticks.visible = p4
+	tabs.loss_label.visible = false
+	examine_button.visible = not p4
+	if not p4:
+		for c: Control in tabs.exam_only:
+			c.visible = true
+	shroud_button.visible = not p4
+	_traits_scroll.custom_minimum_size.y = findings_height_p4 if p4 else findings_height
+	# The valuables decision sits in the Untersuchen page (Phase 4) or under the condition.
+	var target: Container = tabs.exam_page_decision_slot if p4 else _left
+	for node: Control in [decision_box, decided_label]:
+		if node.get_parent() != target:
+			node.reparent(target, false)
+	if not p4:
+		_left.move_child(decision_box, mini(_decision_home, _left.get_child_count() - 1))
+		_left.move_child(decided_label, decision_box.get_index() + 1)
 
 
 func _refresh_condition(record: CorpseRecord) -> void:
@@ -159,8 +256,24 @@ func _refresh_condition(record: CorpseRecord) -> void:
 	freshness_label.text = TEXT_FRESHNESS % [STAGE_LABELS.get(stage, String(stage)), roundi(record.freshness * 100.0)]
 	examined_label.text = TEXT_EXAMINED if record.examined else TEXT_NOT_EXAMINED
 	examined_label.theme_type_variation = &"GoodLabel" if record.examined else &"DimLabel"
-	shrouded_label.text = TEXT_SHROUDED if record.shrouded else TEXT_NOT_SHROUDED
+	if phase4 and record.dress != &"":
+		shrouded_label.text = TEXT_DRESSED % Phase4Texts.DRESS_LABELS.get(record.dress, String(record.dress))
+	elif phase4:
+		shrouded_label.text = TEXT_NOT_DRESSED
+	else:
+		shrouded_label.text = TEXT_SHROUDED if record.shrouded else TEXT_NOT_SHROUDED
 	shrouded_label.theme_type_variation = &"GoodLabel" if record.shrouded else &"DimLabel"
+
+
+func _refresh_phase4(record: CorpseRecord, state: Dictionary) -> void:
+	tabs.refresh(state, action_running)
+	tabs.refresh_findings(state, column_width)
+	_traits_scroll.visible = traits_box.get_child_count() > 0
+	pick_up_button.disabled = action_running
+	reason_label.text = TEXT_REASON_BUSY if action_running else ""
+	reason_label.visible = action_running
+	take_button.text = Phase4Texts.TEXT_TAKE_P4 % [record.valuables_coins, UIKit.signed(_economy().valuables_taken_malus),
+			UIKit.signed(_economy().valuables_reputation)]
 
 
 ## Trait cards scroll in a fixed-height column; without cards only a note is shown.
@@ -259,7 +372,11 @@ func _on_corpse_updated(corpse_id: String) -> void:
 
 
 func _on_time_tick(_day: int, _minute: int) -> void:
-	if is_open:
-		var r := current_record()
-		if r != null and r.location == LOCATION_TABLE:
-			_refresh_condition(r)
+	if not is_open:
+		return
+	var r := current_record()
+	if r == null or r.location != LOCATION_TABLE:
+		return
+	_refresh_condition(r)
+	if phase4:
+		tabs.refresh_condition(panel_state())

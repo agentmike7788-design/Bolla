@@ -14,6 +14,9 @@ const CLEANLINESS_GROUP := &"cleanliness"
 const REPUTATION_GROUP := &"reputation"
 const GHOSTS_GROUP := &"ghosts"
 const DIRT_SPOT_GROUP := &"dirt_spot"
+const CARE_GROUP := &"corpse_care"
+const CORPSE_MANAGER_GROUP := &"corpse_manager"
+const JOURNAL_GROUP := &"journal"
 const KIND_WEEDS := &"weeds"
 const KIND_LEAVES := &"leaves"
 const LEVELS := 4
@@ -32,10 +35,12 @@ static func score(tree: SceneTree) -> Dictionary:
 	return breakdown_of(graves, 0, 0, _economy())
 
 
-## Pure: the breakdown for the given parts (same shape as CemeteryScore.breakdown()).
+## Pure: the breakdown for the given parts (same shape as CemeteryScore.breakdown()). Phase 4
+## §2.14: the rating is gated (CemeteryRating.rating_gated – „Ehrwürdig“ also needs decor and
+## tending), venerable_missing names what is lacking ("Zier 8/12", …; empty = nothing).
 static func breakdown_of(graves: int, decor: int, dirt: int, economy: EconomyConfig) -> Dictionary:
 	var total := maxi(0, graves + decor - dirt)
-	var rating := CemeteryRating.rating(total, economy)
+	var rating := CemeteryRating.rating_gated(total, decor, dirt, economy)
 	var index := CemeteryRating.TIERS.find(rating)
 	var thresholds := economy.rating_thresholds
 	var next_rating := &""
@@ -44,11 +49,13 @@ static func breakdown_of(graves: int, decor: int, dirt: int, economy: EconomyCon
 		next_rating = CemeteryRating.TIERS[index + 1]
 		next_at = thresholds[index]
 	return {"graves": graves, "decor": decor, "dirt": dirt, "total": total, "rating": rating,
-			"next_rating": next_rating, "next_at": next_at}
+			"next_rating": next_rating, "next_at": next_at,
+			"venerable_missing": CemeteryRating.venerable_missing(decor, dirt, economy)}
 
 
 ## One entry per section (by order): {id, name, order, unlocked, done, total, block, plots,
-## plots_free, plots_marked, decor, decor_raw, decor_cap}. [] without an ExpansionManager.
+## plots_free, plots_marked, decor, decor_raw, decor_cap, gate (a flag unlocks it – the
+## Holunderwinkel's key), counts_for_cemetery}. [] without an ExpansionManager.
 static func sections(tree: SceneTree) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var expansion := _first(tree, EXPANSION_GROUP) as ExpansionManager
@@ -64,7 +71,8 @@ static func sections(tree: SceneTree) -> Array[Dictionary]:
 		var entry := {"id": s.id, "name": s.display_name, "order": s.order,
 				"unlocked": expansion.is_unlocked(s.id), "done": p.x, "total": p.y,
 				"block": expansion.block_reason(s.id), "plots": 0, "plots_free": 0, "plots_marked": 0,
-				"decor": 0, "decor_raw": 0, "decor_cap": s.decor_cap}
+				"decor": 0, "decor_raw": 0, "decor_cap": s.decor_cap, "gate": s.requires_flag != &"",
+				"counts_for_cemetery": s.counts_for_cemetery}
 		if graveyard != null:
 			for id: String in graveyard.plots_in_section(s.id):
 				var g := graveyard.get_grave(id)
@@ -159,13 +167,42 @@ static func overview_context(tree: SceneTree) -> Dictionary:
 
 
 ## Phase-3 part of the objective line (ObjectiveResolver `world`): {sections, weeds, leaves,
-## has_rake, total, rating, day}.
+## has_rake, total, rating} + Phase 4 (§7, phase4_state): {table_loss, journal_ready,
+## story_pending}.
 static func objective_state(tree: SceneTree, inv: Inventory) -> Dictionary:
 	var d := dirt(tree)
 	var s := score(tree)
 	var rake := _clean_config().rake_item
-	return {"sections": sections(tree), "weeds": int(d.weeds), "leaves": int(d.leaves),
+	var out := {"sections": sections(tree), "weeds": int(d.weeds), "leaves": int(d.leaves),
 			"has_rake": inv != null and inv.has(rake, 1), "total": int(s.total), "rating": s.rating}
+	out.merge(phase4_state(tree))
+	return out
+
+
+## {table_loss (minutes until the next find of the corpse on the table is lost, −1 = none),
+## journal_ready (titles of insights whose clues are all found, not linked yet),
+## story_pending (story corpses not delivered yet)} – neutral without the Phase-4 systems.
+static func phase4_state(tree: SceneTree) -> Dictionary:
+	var loss := -1
+	var care := _first(tree, CARE_GROUP)
+	var manager := _first(tree, CORPSE_MANAGER_GROUP)
+	if care != null and manager != null and care.has_method(&"next_loss") and manager.has_method(&"records"):
+		for r: CorpseRecord in manager.call(&"records"):
+			if r.location == CorpseRecord.LOCATION_TABLE:
+				var nl: Dictionary = care.call(&"next_loss", r.id)
+				if not nl.is_empty():
+					loss = int(nl.get("minutes", -1))
+				break
+	var ready := PackedStringArray()
+	var journal := _first(tree, JOURNAL_GROUP)
+	if journal != null and journal.has_method(&"ready_insights"):
+		for i: InsightData in journal.call(&"ready_insights"):
+			ready.append(i.title)
+	var pending := 0
+	if manager != null and manager.has_method(&"story_delivered"):
+		var delivered := manager.call(&"story_delivered") as PackedStringArray
+		pending = maxi(Database.story_corpses().size() - delivered.size(), 0)
+	return {"table_loss": loss, "journal_ready": ready, "story_pending": pending}
 
 
 static func _first(tree: SceneTree, group: StringName) -> Node:

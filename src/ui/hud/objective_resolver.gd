@@ -15,6 +15,13 @@ extends RefCounted
 ##   6. the first ghost night (21:00 … 04:30, until a ghost was heard – flag ghosts_seen)
 ##   7. idle: wait for the carter / sleep by clock time; otherwise (rest) the next cemetery
 ##      goal once „Würdevoll“ is reached / after cemetery_complete: „Friedhof: Ehrwürdig ab 100“
+## Phase 4 (docs/PHASE4_DESIGN.md §7), `world` keys from CemeteryStatus.phase4_state():
+##   - a corpse on the table whose next find is lost within LOSS_HINT_MINUTES (table_loss):
+##     „Spuren verblassen – untersuchen oder räuchern“ in place of its corpse step
+##   - after the corpse chain, before the Phase-3 goals: „Merkbuch: Hinweise passen zusammen“
+##     (journal_ready) and „Eine Grube wartet noch“ (story_pending > 0 and the free plots are
+##     all held for the story dead)
+##   - a gated section (the Holunderwinkel) not started yet but open to work: „… aufschließen“
 
 const TEXT_WAIT_CARTER := "Der Leichenkutscher kommt gegen %s"
 const TEXT_TO_TABLE := "Leiche zum Leichentisch bringen"
@@ -37,6 +44,12 @@ const TEXT_RAKE := "Laub liegt – Rechen an der Werkbank bauen"
 const TEXT_GHOST_NIGHT := "Etwas regt sich zwischen den Gräbern …"
 const TEXT_VENERABLE := "Friedhof: %s ab %d (jetzt %d)"
 const TEXT_COMPLETE := "Der Friedhof ist vollendet und %s"
+const TEXT_LOSS := "Spuren verblassen – untersuchen oder räuchern"
+const TEXT_JOURNAL_READY := "Merkbuch: Hinweise passen zusammen"
+const TEXT_RESERVED := "Eine Grube wartet noch"
+const TEXT_UNLOCK_GATE := "%s aufschließen"
+## „Spuren verblassen …“ while the next loss is at most this far away (§7).
+const LOSS_HINT_MINUTES := 120
 const SPOT_ONE := "Stelle"
 const SPOT_MANY := "Stellen"
 ## Phase-3 goal (§1.3) and the rating from which the idle line names it.
@@ -69,7 +82,13 @@ static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], in
 	if _has_state(graves, GraveRecord.State.FILLED):
 		return _marker_step(inv)
 	if active != null:
+		if active.location == LOCATION_TABLE and _loss_soon(world):
+			return TEXT_LOSS
 		return _no_plot_fallback(_corpse_step(active, graves, inv, table_taken), world)
+	if _count_ready(world) > 0:
+		return TEXT_JOURNAL_READY
+	if _reserved(graves, world):
+		return TEXT_RESERVED
 	if _free_plots(graves) <= SECTION_FREE_MAX:
 		var section := _section_step(world)
 		if section != "":
@@ -91,6 +110,8 @@ static func _section_step(world: Dictionary) -> String:
 		if s == null or bool(s.get("unlocked", true)):
 			continue
 		var block := str(s.get("block", ""))
+		if block == "" and bool(s.get("gate", false)) and int(s.get("done", 0)) == 0:
+			return TEXT_UNLOCK_GATE % str(s.get("name", ""))
 		if block == "":
 			return TEXT_SECTION % [str(s.get("name", "")), int(s.get("done", 0)), int(s.get("total", 0))]
 		if blocked == "":
@@ -115,6 +136,26 @@ static func _ghost_night(graves: Array[GraveRecord], minute_of_day: int, flags: 
 		return false
 	var m := posmod(minute_of_day, TimeManager.MINUTES_PER_DAY)
 	return m >= GHOST_HINT_FROM or m < GHOST_HINT_UNTIL
+
+
+## The next find of the table corpse is lost within LOSS_HINT_MINUTES (world.table_loss ≥ 0).
+static func _loss_soon(world: Dictionary) -> bool:
+	var loss := int(world.get("table_loss", -1))
+	return loss >= 0 and loss <= LOSS_HINT_MINUTES
+
+
+static func _count_ready(world: Dictionary) -> int:
+	var ready: Variant = world.get("journal_ready", [])
+	if ready is PackedStringArray:
+		return (ready as PackedStringArray).size()
+	return (ready as Array).size() if ready is Array else 0
+
+
+## Story dead still to come and every free plot is held for them (no random corpse today).
+static func _reserved(graves: Array[GraveRecord], world: Dictionary) -> bool:
+	var pending := int(world.get("story_pending", 0))
+	var free := _free_plots(graves)
+	return pending > 0 and free > 0 and free <= pending
 
 
 ## "Keine freie Grabstelle mehr" → the section that brings new plots, if any.
