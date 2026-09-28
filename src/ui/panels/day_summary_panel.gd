@@ -4,6 +4,9 @@ extends UIPanel
 ## Phase-3 rows (docs/PHASE3_DESIGN.md §7), filled in by complete_context() when UIRoot opens it:
 ## {stipend, reputation_delta, reputation_tier, dirty_spots, sections_unlocked: Array[String]}.
 ## Missing Phase-3 keys hide their rows. Shown after sleeping (the autosave already ran).
+## Phase 5 (docs/PHASE5_DESIGN.md §7): + „Gesammelt" (sum per item), „Hergestellt", „Gebaut"
+## and „Ausgaben" by purpose (coins_spent) – complete_phase5() with Phase5DayLog.take(); rows
+## without anything to say stay hidden.
 
 const TEXT_TITLE := "Tag %d ist vorüber"
 const TEXT_BURIALS := "Bestattungen heute"
@@ -29,6 +32,10 @@ var stipend_label: Label
 var reputation_label: Label
 var dirty_label: Label
 var unlocked_label: Label
+var gathered_label: Label
+var crafted_label: Label
+var built_label: Label
+var spent_label: Label
 ## value label -> its caption (hidden together).
 var _captions: Dictionary[Label, Label] = {}
 
@@ -67,6 +74,16 @@ static func complete_context(ctx: Dictionary, tree: SceneTree, unlocked: Array[S
 	return out
 
 
+## Adds the Phase-5 rows (Phase5DayLog.take(): gathered, crafted, built, spent) – keys already
+## in the context win.
+static func complete_phase5(ctx: Dictionary, log_data: Dictionary) -> Dictionary:
+	var out := ctx.duplicate()
+	for key: String in ["gathered", "crafted", "built", "spent"]:
+		if not out.has(key) and log_data.has(key):
+			out[key] = log_data[key]
+	return out
+
+
 func _build() -> void:
 	custom_minimum_size.x = panel_width
 	var box := UIKit.vbox(14)
@@ -82,6 +99,10 @@ func _build() -> void:
 	reputation_label = _add_row(grid, TEXT_REPUTATION)
 	dirty_label = _add_row(grid, TEXT_DIRTY)
 	unlocked_label = _add_row(grid, TEXT_UNLOCKED)
+	gathered_label = _add_row(grid, Phase5Texts.DAY_GATHERED)
+	crafted_label = _add_row(grid, Phase5Texts.DAY_CRAFTED)
+	built_label = _add_row(grid, Phase5Texts.DAY_BUILT)
+	spent_label = _add_row(grid, Phase5Texts.DAY_SPENT)
 	box.add_child(grid)
 	box.add_child(UIKit.label(TEXT_SAVED, &"DimLabel"))
 	var bottom := UIKit.hbox()
@@ -106,6 +127,15 @@ func _refresh() -> void:
 	var unlocked: Array = context.get("sections_unlocked", [])
 	_show(unlocked_label, not unlocked.is_empty(), ", ".join(PackedStringArray(unlocked)))
 	unlocked_label.theme_type_variation = &"GoodLabel" if not unlocked.is_empty() else &"SubheaderLabel"
+	var gathered := Phase5Texts.amounts_text(context.get("gathered", {}))
+	_show(gathered_label, gathered != "", gathered)
+	var crafted := int(context.get("crafted", 0))
+	_show(crafted_label, crafted > 0, str(crafted))
+	var built := Phase5Texts.stations_text(context.get("built", []))
+	_show(built_label, built != "", built)
+	built_label.theme_type_variation = &"GoodLabel"
+	var spent := Phase5Texts.spent_text(context.get("spent", {}))
+	_show(spent_label, spent != "", spent)
 
 
 ## German label of a rating id (&"orderly" → "Ordentlich"); other strings pass through.

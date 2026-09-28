@@ -22,6 +22,12 @@ extends RefCounted
 ##     (journal_ready) and „Eine Grube wartet noch“ (story_pending > 0 and the free plots are
 ##     all held for the story dead)
 ##   - a gated section (the Holunderwinkel) not started yet but open to work: „… aufschließen“
+## Phase 5 (docs/PHASE5_DESIGN.md §7), `world` keys from CemeteryStatus.phase5_state() – after the
+## corpse chain, the Phase-4 goals, the sections and the tending (care keeps the cemetery's
+## rating, so it stays first): „Holzkohle ist fertig“ · „Ein Stein liegt bereit – setz ihn bei …“
+## · „Sprich mit Osric über den Bruch“ · „Ostpforte aufschließen“ · „Bauplatz: <Station> bauen“
+## (the next affordable first) · „Findlinge brechen – Spitzhacke nötig“ · „Werkzeug: …“ ·
+## „Setz den Meisterstein“; in the idle slot „Gräber ohne Namen: n“.
 
 const TEXT_WAIT_CARTER := "Der Leichenkutscher kommt gegen %s"
 const TEXT_TO_TABLE := "Leiche zum Leichentisch bringen"
@@ -96,9 +102,48 @@ static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], in
 	var care := _care_step(world, inv)
 	if care != "":
 		return care
+	var workshop := _phase5_step(world)
+	if workshop != "":
+		return workshop
 	if _ghost_night(graves, minute_of_day, flags):
 		return TEXT_GHOST_NIGHT
 	return _idle_step(minute_of_day, flags, world)
+
+
+## Phase-5 line of the workyard (§7) or "" (no Phase-5 state / nothing to do but naming graves).
+static func _phase5_step(world: Dictionary) -> String:
+	if not bool(world.get("p5", false)):
+		return ""
+	if bool(world.get("kiln_ready", false)):
+		return Phase5Texts.OBJ_KILN
+	var ready := str(world.get("stone_ready", ""))
+	if ready != "":
+		return Phase5Texts.OBJ_STONE_READY % ready
+	if not bool(world.get("license", false)):
+		return Phase5Texts.OBJ_OSRIC
+	if not bool(world.get("bruch_open", true)):
+		return Phase5Texts.OBJ_GATE
+	var sites: Array = world.get("sites", [])
+	if not sites.is_empty():
+		var pick: Dictionary = sites[0]
+		for site: Dictionary in sites:
+			if bool(site.get("affordable", false)):
+				pick = site
+				break
+		return Phase5Texts.OBJ_BUILD % str(pick.get("name", ""))
+	var tiers: Dictionary = world.get("tiers", {})
+	if not bool(world.get("quarry_open", true)):
+		return Phase5Texts.OBJ_BOULDERS if int(tiers.get(&"pickaxe", 0)) >= 1 else Phase5Texts.OBJ_BOULDERS_TOOL
+	if bool(world.get("goal_done", false)):
+		return ""
+	var missing: PackedStringArray = world.get("goal_missing", PackedStringArray())
+	var goal_tiers: Dictionary = world.get("goal_tiers", {})
+	for kind: Variant in goal_tiers:
+		if String(kind) in missing:
+			return Phase5Texts.OBJ_TOOLS % Phase5Texts.tool_goal_text(tiers, goal_tiers, Database.config(&"tool_config") as ToolConfig)
+	if WorkshopRules.GOAL_MASTER in missing:
+		return Phase5Texts.OBJ_MASTER
+	return ""
 
 
 ## Next section to clear: the first locked one that can be worked on, else the first locked
@@ -243,6 +288,9 @@ static func _idle_step(minute_of_day: int, flags: Dictionary = {}, world: Dictio
 	var delivery := _delivery_minute()
 	if minute < delivery and not _flag(flags, FLAG_CEMETERY_COMPLETE):
 		return TEXT_WAIT_CARTER % UIKit.clock(delivery)
+	var nameless := int(world.get("nameless", 0))
+	if bool(world.get("p5", false)) and nameless > 0:
+		return Phase5Texts.OBJ_NAMELESS % nameless
 	var goal := _goal_step(flags, world)
 	return goal if goal != "" else TEXT_REST
 

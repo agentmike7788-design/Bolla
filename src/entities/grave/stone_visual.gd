@@ -24,13 +24,19 @@ const PIXEL_SIZE := 0.0005
 const ROLE_NAME := &"name"
 const ROLE_DATE := &"date"
 const ROLE_SAYING := &"saying"
-const EM_MAX := {ROLE_NAME: 0.085, ROLE_DATE: 0.05, ROLE_SAYING: 0.046}
+const EM_MAX := {ROLE_NAME: 0.095, ROLE_DATE: 0.05, ROLE_SAYING: 0.046}
 const EM_MIN := 0.024
 ## A date line whose fitted em would fall below this splits at DATE_SPLIT into two lines.
 const EM_DATE_SPLIT := 0.036
 const DATE_SPLIT := " – "
-const FILL := 0.9
-const EMBOLDEN := 0.45
+const FILL := 0.94
+## W-UI readability fix (P5 review, 10 m zoom): heavier cut letters.
+const EMBOLDEN := 0.62
+## Gilded letters: the fill is StoneConfig.gold_color, darkened a little, with a dark cut edge
+## (outline in the ink colour) so light gold reads on light stone (P5 finding). Ink letters keep
+## no outline (§8).
+const GOLD_DARKEN := 0.12
+const GOLD_EDGE_SHARE := 0.07
 const LINE_HEIGHT := 1.25
 ## Placeholder stone colours (vertex colours, linearised like the glTF import; darker than
 ## asset_gravestones.py STONE because those meshes also carry painted AO / moss variation).
@@ -102,8 +108,9 @@ static func make_label(text: String, em: float, width: float, gilded: bool, cfg:
 	l.pixel_size = PIXEL_SIZE
 	l.font = _carved_font()
 	l.font_size = maxi(1, roundi(em / PIXEL_SIZE))
-	l.modulate = sc.gold_color if gilded else sc.ink_color
-	l.outline_size = 0
+	l.modulate = gilded_fill(sc) if gilded else sc.ink_color
+	l.outline_size = maxi(2, roundi(l.font_size * GOLD_EDGE_SHARE)) if gilded else 0
+	l.outline_modulate = sc.ink_color
 	l.shaded = true
 	l.double_sided = false
 	l.alpha_cut = Label3D.ALPHA_CUT_DISCARD
@@ -114,6 +121,12 @@ static func make_label(text: String, em: float, width: float, gilded: bool, cfg:
 	l.visibility_range_end = VISIBILITY_END
 	l.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return l
+
+
+## Fill colour of gilded letters (StoneConfig.gold_color, slightly darker for contrast on stone).
+static func gilded_fill(cfg: StoneConfig) -> Color:
+	var sc := cfg if cfg != null else StoneConfig.new()
+	return sc.gold_color.darkened(GOLD_DARKEN)
 
 
 ## The placeholder font (§8 "Schriftwahl" is open) slightly emboldened: reads like cut letters.

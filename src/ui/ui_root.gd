@@ -40,6 +40,9 @@ const PANEL_SCRIPTS: Dictionary[StringName, Script] = {
 	&"cemetery_overview": preload("res://src/ui/panels/cemetery_overview_panel.gd"),
 	&"journal": preload("res://src/ui/panels/journal_panel.gd"),
 	&"trader": preload("res://src/ui/panels/trader_panel.gd"),
+	# Phase 5 (docs/PHASE5_DESIGN.md §7)
+	&"build_site": preload("res://src/ui/panels/build_site_panel.gd"),
+	&"stone_design": preload("res://src/ui/panels/stone_design_panel.gd"),
 }
 
 ## Called for "Beenden" (tests replace it).
@@ -58,6 +61,8 @@ var player: Node
 var screen_fade: ScreenFade
 ## Phase-3 notifications (tier changes, stipend, ghost lines).
 var notices: Phase3Notices
+## Phase 5: gathered / crafted / built / spent since the last day summary.
+var day_log: Phase5DayLog
 
 ## Open UI, bottom → top: panel ids and &"dialogue".
 var _stack: Array[StringName] = []
@@ -86,6 +91,9 @@ func _ready() -> void:
 	notices = Phase3Notices.new()
 	notices.name = "Phase3Notices"
 	add_child(notices)
+	day_log = Phase5DayLog.new()
+	day_log.name = "Phase5DayLog"
+	add_child(day_log)
 	_bind_player(get_tree().get_first_node_in_group(PLAYER_GROUP))
 	_update_dim()
 
@@ -149,6 +157,8 @@ func open_panel(panel: StringName, context: Dictionary) -> void:
 		_hold_tree_pause()
 	if panel == PANEL_DAY_SUMMARY:
 		context = DaySummaryPanel.complete_context(context, get_tree() if is_inside_tree() else null, notices.take_unlocked() if notices != null else [] as Array[StringName])
+		if day_log != null:
+			context = DaySummaryPanel.complete_phase5(context, day_log.take())
 	node.open(context)
 	_update_visibility()
 

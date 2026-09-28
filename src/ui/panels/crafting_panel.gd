@@ -7,6 +7,12 @@ extends UIPanel
 ## Phase 3 (docs/PHASE3_DESIGN.md §7): recipes grouped „Grab“ / „Zier“ / „Werkzeug“
 ## (RecipeData.category), decor recipes with „Zier +3 – zählt je Abschnitt bis zur Obergrenze“
 ## (also the row tooltip); the list scrolls once it is taller than max_list_height.
+## Phase 5 (docs/PHASE5_DESIGN.md §7): one panel per station (mason has its own stone panel) –
+## the title is StationData.display_name („Esse", „Webstuhl", „Werkbank"), groups Werkstoffe ·
+## Werkzeug · Grab · Zier; a tool recipe shows the tool it replaces („ersetzt: Eisenschaufel") and
+## its effect („Graben 50 → 35 Min"); the background recipe (the kiln) shows „läuft allein ·
+## 8 Std." and, while its job runs, a progress bar with „fertig um 06:10 · noch 3 Std. 20 Min"
+## (ready: „fertig – holen"). Station tabs do not exist: one always stands at exactly one station.
 
 const TEXT_TITLE := "Werkbank"
 const TEXT_OWNED := "im Besitz: %d"
@@ -22,7 +28,8 @@ const TEXT_NO_ROOM := "Kein Platz im Inventar"
 const TEXT_NO_RECIPES := "Hier lässt sich nichts herstellen."
 const SHROUD_ITEM := &"shroud"
 const DEFAULT_STATION := &"workbench"
-const CATEGORY_ORDER: Array[StringName] = [&"grave", &"decor", &"tool"]
+const CATEGORY_ORDER: Array[StringName] = [&"material", &"tool", &"grave", &"decor"]
+const WORKSHOP_GROUP := &"workshop"
 const CATEGORY_LABELS: Dictionary[StringName, String] = {&"grave": "Grab", &"decor": "Zier", &"tool": "Werkzeug", &"material": "Werkstoffe"}
 
 @export var panel_width: float = 900.0
@@ -37,13 +44,17 @@ var _inventory: Inventory
 var _rows: Dictionary[StringName, Dictionary] = {}
 ## Recipe whose button had keyboard focus last (&"" = none since opening).
 var _focus_recipe: StringName = &""
+var title_label: Label
+## Background job row of the station (kiln), rebuilt with the list; null without a job.
+var job_bar: ProgressBar
+var job_label: Label
 
 
 func _build() -> void:
 	custom_minimum_size.x = panel_width
 	var box := UIKit.vbox(14)
 	add_child(box)
-	_make_header(box, TEXT_TITLE)
+	title_label = _make_header(box, TEXT_TITLE)
 	_scroll = ScrollContainer.new()
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	box.add_child(_scroll)
@@ -80,6 +91,9 @@ func _refresh() -> void:
 			_focus_recipe = id
 	UIKit.clear_children(_list)
 	_rows.clear()
+	job_bar = null
+	job_label = null
+	title_label.text = station_title()
 	var recipes := Database.recipes(_station())
 	# Quick to slow (shroud, cross, gravestone), then by id.
 	recipes.sort_custom(func(a: Resource, b: Resource) -> bool:
@@ -141,9 +155,15 @@ func block_reason(recipe: RecipeData) -> String:
 		return TEXT_BUSY
 	if not is_instance_valid(_inventory):
 		return TEXT_MISSING % _missing_text(recipe.inputs)
+	if recipe.background:
+		var shop := workshop()
+		if shop != null and not shop.job_of(_station()).is_empty():
+			return Workbench.TEXT_JOB_RUNNING
 	var missing := CraftingSystem.missing(recipe, _inventory)
 	if not missing.is_empty():
 		return TEXT_MISSING % _missing_text(missing)
+	if recipe.background:
+		return ""  # the yield comes later (collect checks the room)
 	if not CraftingSystem.can_craft(recipe, _inventory):
 		return TEXT_NO_ROOM
 	return ""
@@ -191,11 +211,14 @@ func _make_row(recipe: RecipeData) -> Control:
 	var use := _use_text(recipe.output_id)
 	if use != "":
 		details.append(use)
+	details.append_array(phase5_details(recipe))
 	var decor_hint := Phase3Texts.recipe_decor_hint(Database.decor(recipe.output_id) as DecorData) if Database.has_decor(recipe.output_id) else ""
 	if decor_hint != "":
 		details.append(decor_hint)
 		section.tooltip_text = "%s\n%s" % [decor_hint, Phase3Texts.decor_tooltip(Database.decor(recipe.output_id) as DecorData)]
 	info.add_child(UIKit.label(" · ".join(details), &"DimLabel"))
+	if recipe.background:
+		_add_job_row(info, recipe)
 	row.add_child(info)
 	var action := UIKit.vbox(4)
 	action.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -212,6 +235,76 @@ func _make_row(recipe: RecipeData) -> Control:
 	row.add_child(action)
 	_rows[recipe.id] = {"button": button, "reason": reason_label}
 	return section
+
+
+## Title: StationData.display_name of the station („Esse"), else „Werkbank".
+func station_title() -> String:
+	var data := Database.station(_station()) as StationData
+	return data.display_name if data != null and data.display_name != "" else TEXT_TITLE
+
+
+## Phase-5 detail parts of a row: the replaced tool and its effect (tool recipes), „läuft allein ·
+## 8 Std." (background recipe).
+func phase5_details(recipe: RecipeData) -> PackedStringArray:
+	var out := PackedStringArray()
+	var tool := Database.item(recipe.output_id) as ItemData if Database.has_item(recipe.output_id) else null
+	if tool != null and tool.tool_kind != &"":
+		for id: StringName in recipe.inputs:
+			var input := Database.item(id) as ItemData if Database.has_item(id) else null
+			if input != null and input.tool_kind == tool.tool_kind:
+				out.append(Phase5Texts.TOOL_REPLACES % input.display_name)
+		var from_tier := ToolRules.tier(_inventory, tool.tool_kind) if is_instance_valid(_inventory) else 0
+		var effect := Phase5Texts.tool_effect(tool.tool_kind, mini(from_tier, tool.tool_tier - 1), tool.tool_tier, _action_config())
+		if effect != "":
+			out.append(effect)
+	if recipe.background:
+		out.append(Phase5Texts.KILN_ALONE % Phase5Texts.duration(_background_minutes(recipe)))
+	return out
+
+
+## Job text of the station's background job: "fertig um 06:10 · noch 3 Std. 20 Min" / "fertig –
+## holen" ("" without a job).
+func job_text() -> String:
+	return job_label.text if job_label != null else ""
+
+
+## 0…1 of the running job (0 without one).
+func job_ratio() -> float:
+	return job_bar.value if job_bar != null else 0.0
+
+
+func _add_job_row(info: VBoxContainer, recipe: RecipeData) -> void:
+	var shop := workshop()
+	var job := shop.job_of(_station()) if shop != null else {}
+	if job.is_empty() or StringName(str(job.get("recipe", ""))) != recipe.id:
+		return
+	var box := UIKit.hbox(12)
+	job_bar = UIKit.bar()
+	job_bar.custom_minimum_size = Vector2(220.0, 16.0)
+	job_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var total := maxi(_background_minutes(recipe), 1)
+	var left := maxi(int(job.end_total) - TimeManager.total_minutes(), 0)
+	job_bar.value = clampf(1.0 - float(left) / total, 0.0, 1.0)
+	box.add_child(job_bar)
+	var text := Phase5Texts.KILN_READY if bool(job.get("ready", false)) else "%s · %s" % [
+			Phase5Texts.KILN_UNTIL % UIKit.clock(int(job.end_total)), Phase5Texts.KILN_LEFT % Phase5Texts.duration(left)]
+	job_label = UIKit.label(text, &"GoodLabel" if bool(job.get("ready", false)) else &"AccentLabel")
+	box.add_child(job_label)
+	info.add_child(box)
+
+
+func _background_minutes(recipe: RecipeData) -> int:
+	var shop := workshop()
+	var cfg := shop.workshop_config() if shop != null else (Database.config(&"workshop_config") as WorkshopConfig)
+	return cfg.background_minutes if cfg != null and cfg.background_minutes > 0 else recipe.craft_minutes
+
+
+## Systems/Workshop (group workshop), or the one given in the context ("workshop") – tests.
+func workshop() -> Workshop:
+	var given: Variant = context.get("workshop")
+	if is_instance_valid(given) and given is Workshop:
+		return given
+	return get_tree().get_first_node_in_group(WORKSHOP_GROUP) as Workshop if is_inside_tree() else null
 
 
 func _use_text(output_id: StringName) -> String:

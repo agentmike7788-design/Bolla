@@ -237,9 +237,10 @@ func test_stone_visual_inscription_and_ornament() -> void:
 	var joined := PackedStringArray()
 	for node: Node in labels:
 		var l := node as Label3D
-		assert_true(l.shaded and not l.double_sided and l.outline_size == 0, "§8 label flags")
+		assert_true(l.shaded and not l.double_sided, "§8 label flags")
+		assert_true(l.outline_size > 0 and l.outline_modulate.is_equal_approx(cfg.ink_color), "gilded: dark cut edge (W-UI readability)")
 		assert_eq(l.alpha_cut, Label3D.ALPHA_CUT_DISCARD)
-		assert_true(l.modulate.is_equal_approx(cfg.gold_color), "gilded → gold")
+		assert_true(l.modulate.is_equal_approx(StoneVisual.gilded_fill(cfg)), "gilded → gold")
 		assert_almost(l.visibility_range_end, 40.0)
 		joined.append(l.text)
 	assert_true(" ".join(joined).contains("Marthe Quendel") and " ".join(joined).contains("8. Nebelung 1834"))
@@ -251,6 +252,7 @@ func test_stone_visual_inscription_and_ornament() -> void:
 	var plain := StoneVisual.build(ink, cfg)
 	var first := plain.get_node(^"Inscription").get_child(0) as Label3D
 	assert_true(first.modulate.is_equal_approx(cfg.ink_color), "ink colour")
+	assert_eq(first.outline_size, 0, "§8: ink letters without outline")
 	assert_null(plain.get_node_or_null(^"Ornament"))
 	plain.free()
 	var nameless := StoneVisual.build(Phase5Fixtures.design(&"stone_arch"), cfg)

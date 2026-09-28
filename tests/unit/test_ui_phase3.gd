@@ -573,7 +573,7 @@ func test_workbench_groups_and_decor_hint() -> void:
 	for child: Node in panel._list.get_children():
 		if child is Label:
 			headers.append((child as Label).text)
-	assert_eq(headers, ["Grab", "Zier", "Werkzeug", "Werkstoffe"], "Phase 5: ink, herb_bundle (material)")
+	assert_eq(headers, ["Werkstoffe", "Werkzeug", "Grab", "Zier"], "Phase 5 §7: Werkstoffe · Werkzeug · Grab · Zier")
 	var ids := panel.recipe_ids()
 	var first_decor := -1
 	var last_grave := -1

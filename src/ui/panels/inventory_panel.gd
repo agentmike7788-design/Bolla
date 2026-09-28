@@ -2,6 +2,10 @@ class_name InventoryPanel
 extends UIPanel
 ## &"inventory" – context {inventory: Inventory}. Slot grid with icons, counts and
 ## tooltips (name + description), coins (outside the slots) and the reputation label.
+## Phase 5 (docs/PHASE5_DESIGN.md §2.3, §7): 20 slots as 5 × 4; above them the tool belt
+## (Inventory.tools(), not in get_slots): shovel / axe / pickaxe with the tier name (tier 0 as
+## „Alte Schaufel", pale), tier pips and a tooltip with the effect („Graben dauert 35 statt 60
+## Minuten."), then the care and harvest tools (rake, brush, comb, shears, pliers).
 
 const TEXT_TITLE := "Inventar"
 const TEXT_COINS := "Münzen"
@@ -12,6 +16,11 @@ const TEXT_HINT := "[I] oder [Esc] schließen"
 const TOOLTIP_FORMAT := "%s\n%s"
 const COIN_ITEM := &"coin"
 const GRID_COLUMNS := 4
+## From this many slots on the grid has 5 columns (20 = 5 × 4).
+const WIDE_FROM := 20
+const WIDE_COLUMNS := 5
+const PIP_ON := "●"
+const PIP_OFF := "○"
 const DEFAULT_SLOTS := 16
 
 @export var slot_edge: float = 104.0
@@ -21,12 +30,21 @@ var _grid: GridContainer
 var _coins: Label
 var _reputation: Label
 var _inventory: Inventory
+var _belt: HBoxContainer
+var _belt_box: VBoxContainer
+## tool kind -> its belt cell (tier tools) · item id -> cell (other tools)
+var belt_cells: Dictionary[StringName, Control] = {}
 
 
 func _build() -> void:
 	var box := UIKit.vbox(16)
 	add_child(box)
 	_make_header(box, TEXT_TITLE)
+	_belt_box = UIKit.vbox(6)
+	_belt_box.add_child(UIKit.label(Phase5Texts.BELT_TITLE, &"AccentLabel"))
+	_belt = UIKit.hbox(8)
+	_belt_box.add_child(_belt)
+	box.add_child(_belt_box)
 	_grid = GridContainer.new()
 	_grid.columns = GRID_COLUMNS
 	box.add_child(_grid)
@@ -66,6 +84,8 @@ func _refresh() -> void:
 	if is_instance_valid(_inventory):
 		slots = _inventory.get_slots()
 	var total := maxi(slots.size(), _inventory.slot_count if is_instance_valid(_inventory) else DEFAULT_SLOTS)
+	_grid.columns = WIDE_COLUMNS if total >= WIDE_FROM else GRID_COLUMNS
+	_refresh_belt()
 	for i: int in total:
 		_grid.add_child(_make_slot(slots[i] if i < slots.size() else {}))
 	_coins.text = str(_inventory.count(COIN_ITEM) if is_instance_valid(_inventory) else 0)
@@ -85,6 +105,90 @@ func shown_slots() -> Array[Dictionary]:
 		else:
 			out.append({})
 	return out
+
+
+## Belt cells: {kind_or_id: {name, tier, tooltip}} – tests.
+func belt_entries() -> Dictionary:
+	var out := {}
+	for key: StringName in belt_cells:
+		var cell := belt_cells[key]
+		out[key] = {"name": cell.get_meta(&"name", ""), "tier": cell.get_meta(&"tier", 0), "tooltip": cell.tooltip_text}
+	return out
+
+
+func _refresh_belt() -> void:
+	UIKit.clear_children(_belt)
+	belt_cells.clear()
+	var on_belt := is_instance_valid(_inventory) and _inventory.tool_belt
+	_belt_box.visible = on_belt
+	if not on_belt:
+		return
+	var tools := Database.config(&"tool_config") as ToolConfig
+	if tools == null:
+		tools = ToolConfig.new()
+	var actions := _action_config()
+	var tiered := {}
+	for kind: StringName in tools.kinds:
+		var tier := ToolRules.tier(_inventory, kind)
+		var name := ToolRules.tool_name(kind, tier, tools)
+		var icon_id := &""
+		for id: StringName in _inventory.tools():
+			var item := Database.item(id) as ItemData if Database.has_item(id) else null
+			if item != null and item.tool_kind == kind:
+				tiered[id] = true
+				if item.tool_tier == tier:
+					icon_id = id
+		var pale := icon_id == &""
+		if pale:
+			icon_id = _tool_item_id(kind, 1)
+		var cell := _belt_cell(icon_id, pale, name if name != "" else "%s: %s" % [tools.labels.get(kind, String(kind)), Phase5Texts.BELT_NO_TOOL],
+				tier, Phase5Texts.belt_tooltip(kind, tier, actions, tools), true)
+		cell.set_meta(&"tier", tier)
+		_belt.add_child(cell)
+		belt_cells[kind] = cell
+	for id: StringName in _inventory.tools():
+		if tiered.has(id):
+			continue
+		var cell := _belt_cell(id, false, UIKit.item_name(id), -1, TOOLTIP_FORMAT % [UIKit.item_name(id), UIKit.item_description(id)], false)
+		_belt.add_child(cell)
+		belt_cells[id] = cell
+
+
+## One belt cell: icon (or an empty frame), name, tier pips for the tier tools.
+func _belt_cell(icon_id: StringName, pale: bool, name: String, tier: int, tooltip: String, tiered: bool) -> Control:
+	var cell := UIKit.panel(&"SlotPanel")
+	cell.mouse_filter = Control.MOUSE_FILTER_PASS
+	cell.tooltip_text = tooltip
+	cell.custom_minimum_size = Vector2(150.0 if tiered else 84.0, 104.0)
+	var box := UIKit.vbox(0)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var icon := UIKit.icon(Database.icon(icon_id) if icon_id != &"" else null, 52.0)
+	icon.modulate = Color(1, 1, 1, 0.3) if pale else Color(1, 1, 1, 1)
+	box.add_child(icon)
+	var label := UIKit.label(name, &"DimLabel" if tier <= 0 and tiered else &"")
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.clip_text = true
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	label.custom_minimum_size.x = cell.custom_minimum_size.x - 16.0
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(label)
+	if tiered:
+		var pips := UIKit.label(PIP_ON.repeat(maxi(tier, 0)) + PIP_OFF.repeat(maxi(2 - tier, 0)), &"AccentLabel" if tier > 0 else &"DimLabel")
+		pips.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		pips.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(pips)
+	cell.add_child(box)
+	cell.set_meta(&"name", name)
+	return cell
+
+
+## Item id of the `kind` tool at `tier` (Database), &"" if none.
+static func _tool_item_id(kind: StringName, tier: int) -> StringName:
+	for res: Resource in Database.items():
+		var item := res as ItemData
+		if item != null and item.tool_kind == kind and item.tool_tier == tier:
+			return item.id
+	return &""
 
 
 func coins_text() -> String:

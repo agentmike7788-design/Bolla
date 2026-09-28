@@ -5,6 +5,9 @@ extends RefCounted
 ## Every system is found through its group; a missing system yields neutral values, so the HUD,
 ## the overview panel and the summaries work in Phase-2 worlds and in tests without a world.
 ## Never changes game state.
+## Phase 5 (docs/PHASE5_DESIGN.md §3.4, §7): sections() lists only burial sections (SectionData.
+## is_burial – Am Bruch and the quarry are work areas, not part of the cemetery); phase5_state()
+## feeds the objective lines and chapter_progress() the HUD tooltip line.
 
 const SCORE_GROUP := &"cemetery_score"
 const GRAVEYARD_GROUP := &"graveyard"
@@ -20,6 +23,10 @@ const JOURNAL_GROUP := &"journal"
 const KIND_WEEDS := &"weeds"
 const KIND_LEAVES := &"leaves"
 const LEVELS := 4
+const WORKSHOP_GROUP := &"workshop"
+const STONEMASONRY_GROUP := &"stonemasonry"
+const SECTION_BRUCH := &"bruch"
+const SECTION_QUARRY := &"quarry"
 
 
 ## {graves, decor, dirt, total, rating, next_rating, next_at} – CemeteryScore.breakdown(), else
@@ -67,6 +74,8 @@ static func sections(tree: SceneTree) -> Array[Dictionary]:
 	if decorations != null:
 		decor_by = decorations.score_by_section()
 	for s: SectionData in expansion.sections():
+		if not s.is_burial:
+			continue
 		var p := expansion.progress(s.id)
 		var entry := {"id": s.id, "name": s.display_name, "order": s.order,
 				"unlocked": expansion.is_unlocked(s.id), "done": p.x, "total": p.y,
@@ -176,6 +185,7 @@ static func objective_state(tree: SceneTree, inv: Inventory) -> Dictionary:
 	var out := {"sections": sections(tree), "weeds": int(d.weeds), "leaves": int(d.leaves),
 			"has_rake": inv != null and inv.has(rake, 1), "total": int(s.total), "rating": s.rating}
 	out.merge(phase4_state(tree))
+	out.merge(phase5_state(tree, inv))
 	return out
 
 
@@ -203,6 +213,67 @@ static func phase4_state(tree: SceneTree) -> Dictionary:
 		var delivered := manager.call(&"story_delivered") as PackedStringArray
 		pending = maxi(Database.story_corpses().size() - delivered.size(), 0)
 	return {"table_loss": loss, "journal_ready": ready, "story_pending": pending}
+
+
+## Phase-5 part of the objective line: {} without a Workshop or before workshop_open, else
+## {p5: true, license, bruch_open, quarry_open, sites: [{id, name, affordable}] (unbuilt goal
+## stations in goal order), kiln_ready, stone_ready (name of the dead whose stone waits, ""),
+## tiers, goal_tiers, goal_missing, goal_done, nameless (graves with a dead but no name in stone)}.
+static func phase5_state(tree: SceneTree, inv: Inventory) -> Dictionary:
+	var shop := _first(tree, WORKSHOP_GROUP) as Workshop
+	if shop == null or not shop.is_open():
+		return {}
+	var cfg := shop.workshop_config()
+	var out := {"p5": true, "license": GameState.get_flag(cfg.license_flag) == true}
+	var expansion := _first(tree, EXPANSION_GROUP) as ExpansionManager
+	out["bruch_open"] = expansion == null or expansion.section(SECTION_BRUCH) == null or expansion.is_unlocked(SECTION_BRUCH)
+	out["quarry_open"] = expansion == null or expansion.section(SECTION_QUARRY) == null or expansion.is_unlocked(SECTION_QUARRY)
+	var sites: Array[Dictionary] = []
+	for id: StringName in cfg.goal_stations:
+		if shop.is_built(id):
+			continue
+		var data := Database.station(id) as StationData
+		sites.append({"id": id, "name": data.display_name if data != null else String(id),
+				"affordable": inv != null and data != null and WorkshopRules.missing(data, inv).is_empty()})
+	out["sites"] = sites
+	var kiln := false
+	for id: StringName in shop.built():
+		var job := shop.job_of(id)
+		kiln = kiln or (not job.is_empty() and bool(job.ready))
+	out["kiln_ready"] = kiln
+	var ready_name := ""
+	var masonry := _first(tree, STONEMASONRY_GROUP) as Stonemasonry
+	if masonry != null:
+		for stone: Dictionary in masonry.ready_stones():
+			if bool(stone.get("fits_still", false)):
+				ready_name = str(stone.name)
+				break
+	out["stone_ready"] = ready_name
+	var progress := shop.goal_progress()
+	out["tiers"] = shop.tiers()
+	out["goal_tiers"] = cfg.goal_tiers.duplicate()
+	out["goal_missing"] = progress.get("missing", PackedStringArray())
+	out["goal_done"] = GameState.get_flag(cfg.goal_flag) == true
+	var nameless := 0
+	var graveyard := _first(tree, GRAVEYARD_GROUP) as Graveyard
+	if graveyard != null:
+		for g: GraveRecord in graveyard.graves():
+			if g.corpse_id == "" or not (g.state == GraveRecord.State.FILLED or g.state == GraveRecord.State.MARKED):
+				continue
+			if g.design.is_empty() or StoneDesign.from_dict(g.design).inscription == &"":
+				nameless += 1
+	out["nameless"] = nameless
+	return out
+
+
+## Workshop.goal_progress() while the workyard is open ({} otherwise) – the HUD chapter line.
+static func chapter_progress(tree: SceneTree) -> Dictionary:
+	var shop := _first(tree, WORKSHOP_GROUP) as Workshop
+	if shop == null or not shop.is_open():
+		return {}
+	var out := shop.goal_progress()
+	out["done_flag"] = GameState.get_flag(shop.workshop_config().goal_flag) == true
+	return out
 
 
 static func _first(tree: SceneTree, group: StringName) -> Node:

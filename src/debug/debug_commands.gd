@@ -49,6 +49,8 @@ var _lookup: DebugWorldLookup
 var _phase3: DebugCommandsPhase3
 ## Phase-4 commands (§6 of docs/PHASE4_DESIGN.md).
 var _phase4: DebugCommandsPhase4
+## Phase-5 commands (§6 of docs/PHASE5_DESIGN.md).
+var _phase5: DebugCommandsPhase5
 
 
 func _init(console: DebugConsole) -> void:
@@ -56,6 +58,7 @@ func _init(console: DebugConsole) -> void:
 	_lookup = DebugWorldLookup.new(console)
 	_phase3 = DebugCommandsPhase3.new(_lookup)
 	_phase4 = DebugCommandsPhase4.new(_lookup)
+	_phase5 = DebugCommandsPhase5.new(_lookup)
 
 
 ## Runs one command (lower-case name + arguments; "clear" is handled by the console).
@@ -95,6 +98,8 @@ func run(command: String, args: PackedStringArray) -> Dictionary:
 		return _phase3.run(command, args)
 	if _phase4.handles(command):
 		return _phase4.run(command, args)
+	if _phase5.handles(command):
+		return _phase5.run(command, args)
 	return _error(TEXT_UNKNOWN % command)
 
 
@@ -111,6 +116,7 @@ func help_lines() -> PackedStringArray:
 		out.append(line % DebugCommandParser.item_ids() if line.contains("%s") else line)
 	out.append_array(DebugCommandsPhase3.HELP)
 	out.append_array(DebugCommandsPhase4.HELP)
+	out.append_array(DebugCommandsPhase5.HELP)
 	return out
 
 
@@ -244,6 +250,13 @@ func _cmd_tp(args: PackedStringArray) -> Dictionary:
 	if args.size() != 1:
 		return _error("Format: tp <%s>" % names.replace(", ", "|"))
 	var target := args[0].to_lower()
+	if target in _phase5.tp_targets():
+		var p5 := _lookup.player() as Node3D
+		var at5: Variant = _phase5.tp_position(target)
+		if p5 == null or at5 == null:
+			return _error(TEXT_NO_WORLD)
+		_lookup.teleport_player(p5, at5)
+		return _ok("Teleportiert: %s (%.1f, %.1f)" % [target, (at5 as Vector3).x, (at5 as Vector3).z])
 	if target in ["east", "north", "elder", "trader"]:
 		var p3 := _lookup.player() as Node3D
 		var at: Variant = _phase4.tp_position(target, _phase3) if target in ["elder", "trader"] else _phase3.section_position(StringName(target))

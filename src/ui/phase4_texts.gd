@@ -77,6 +77,7 @@ const TRADE_AFTER_SELL := "„Die Stillen danken es dir nicht. Ich schon.“"
 const TRADE_AFTER_BUY: Dictionary[StringName, String] = {
 	&"linen": "„Aus einem Nachlass. Frag nicht, aus welchem.“",
 	&"juniper": "„Gegen den Geruch. Und gegen das, was mit ihm kommt.“",
+	&"gold_leaf": "„Nicht atmen, wenn du es auflegst. Es fliegt dir sonst davon.“",
 }
 const TRADE_AFTER_BUY_FALLBACK := "„Gute Wahl. Die Nacht ist lang.“"
 const TRADE_GREETING_FALLBACK := "„Guten Abend, Totengräber.“"

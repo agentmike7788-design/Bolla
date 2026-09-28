@@ -9,6 +9,8 @@ extends UIPanel
 ## shop (TraderConfig.shop) with tonight's stock. Coins change hands at once through
 ## NightTrade.sell / buy; every button is off while she is not at the wall (is_present).
 ## After each trade one of her quiet lines. Never shows piety as a number.
+## Phase 5 (docs/PHASE5_DESIGN.md §2.6): a shop row is shown only while NightTrade.offers(id)
+## (gold leaf from workshop_open on).
 
 const NIGHT_TRADE_GROUP := &"night_trade"
 const PIETY_GROUP := &"piety"
@@ -201,6 +203,7 @@ func _refresh() -> void:
 		(r.price as Label).text = "%d %s" % [price, Phase4Texts.coins(price)]
 		(r.stock as Label).text = Phase4Texts.stock_text(left)
 		(r.stock as Label).theme_type_variation = &"DimLabel" if left > 0 else &"WarningLabel"
+		(r.row as Control).visible = offered(id)
 		var b := r.buy as Button
 		b.disabled = not present or left <= 0 or coins < price
 		b.tooltip_text = Phase4Texts.TRADE_NO_COINS if coins < price else ""
@@ -241,6 +244,13 @@ func buy(item_id: StringName) -> bool:
 		reply = Phase4Texts.TRADE_NO_ROOM
 	refresh()
 	return ok
+
+
+## NightTrade.offers(id) (a shop item behind a flag, e.g. gold leaf); true without the node.
+func offered(item_id: StringName) -> bool:
+	if night_trade != null and night_trade.has_method(&"offers"):
+		return bool(night_trade.call(&"offers", item_id))
+	return true
 
 
 func is_present() -> bool:

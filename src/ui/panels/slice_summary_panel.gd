@@ -9,6 +9,10 @@ extends UIPanel
 ## is the chapter panel „Sechs Gruben“: days, burials, prepared / utilized, the piety tier as a
 ## word (never a number), insights n/5, ghosts content / restless and a closing line by piety
 ## tier and the insight „Nicht Lorenz“.
+## Phase 5 (docs/PHASE5_DESIGN.md §1.5, §7): variant &"names_in_stone" (Workshop.chapter_context())
+## is the chapter panel „Namen in Stein": days since the workyard opened, stations built, tool
+## tiers, stones set (of them master stones), graves with a name n/18, coins spent in Phase 5 by
+## purpose, content ghosts before → now and the closing line.
 ## Default focus is "Weiterspielen"; "Zum Titel" asks once (like the pause menu).
 
 const TEXT_TITLE := "Der Friedhof ist vollendet"
@@ -23,6 +27,7 @@ const TEXT_DIRT := "Pflege"
 const TEXT_GHOSTS := "Zufriedene Geister"
 const VARIANT_CEMETERY := &"cemetery"
 const VARIANT_SIX_PITS := &"six_pits"
+const VARIANT_NAMES_IN_STONE := &"names_in_stone"
 const TEXT_GOAL_REACHED := "Ziel „%s“ (ab %d) erreicht."
 const TEXT_GOAL_MISSED := "Ziel „%s“ (ab %d) verfehlt – es fehlen %d Punkte."
 const TEXT_CONTINUE := "Weiterspielen"
@@ -50,6 +55,9 @@ var chapter_grid: GridContainer
 ## CHAPTER_ROWS caption -> value label (variant six_pits).
 var chapter_rows: Dictionary[String, Label] = {}
 var _cemetery_grid: GridContainer
+var stone_grid: GridContainer
+## Phase5Texts.CHAPTER_ROWS caption -> value label (variant names_in_stone).
+var stone_rows: Dictionary[String, Label] = {}
 var continue_button: Button
 
 ## True while "Zum Titel" waits for its confirming second press.
@@ -86,6 +94,17 @@ func _build() -> void:
 		chapter_rows[caption] = value
 	chapter_grid.visible = false
 	box.add_child(chapter_grid)
+	stone_grid = GridContainer.new()
+	stone_grid.columns = 2
+	stone_grid.add_theme_constant_override(&"h_separation", 40)
+	for caption: String in Phase5Texts.CHAPTER_ROWS:
+		stone_grid.add_child(UIKit.label(caption, &"DimLabel"))
+		var value := UIKit.label("", &"SubheaderLabel", true)
+		value.custom_minimum_size.x = panel_width - 330.0
+		stone_grid.add_child(value)
+		stone_rows[caption] = value
+	stone_grid.visible = false
+	box.add_child(stone_grid)
 	goal_label = UIKit.label("", &"AccentLabel", true)
 	goal_label.custom_minimum_size.x = panel_width - 80.0
 	box.add_child(goal_label)
@@ -112,6 +131,13 @@ func focus_default() -> void:
 
 func _refresh() -> void:
 	title_button.text = TEXT_CONFIRM % TEXT_TITLE_SCREEN if _confirm_title else TEXT_TITLE_SCREEN
+	var stones := StringName(str(context.get("variant", ""))) == VARIANT_NAMES_IN_STONE
+	stone_grid.visible = stones
+	if stones:
+		_cemetery_grid.visible = false
+		chapter_grid.visible = false
+		_refresh_names_in_stone()
+		return
 	var chapter := StringName(str(context.get("variant", ""))) == VARIANT_SIX_PITS
 	_cemetery_grid.visible = not chapter
 	chapter_grid.visible = chapter
@@ -151,6 +177,23 @@ func _refresh_chapter() -> void:
 		tier = PietyRules.tier(int(context.get("piety", 0)), PietyRules._cfg(null))
 	goal_label.text = Phase4Texts.chapter_closing(tier, bool(context.get("not_lorenz", false)))
 	goal_label.theme_type_variation = &"AccentLabel"
+
+
+## Chapter „Namen in Stein": the rows of Phase5Texts.CHAPTER_ROWS and the closing line.
+func _refresh_names_in_stone() -> void:
+	header_label.text = Phase5Texts.CHAPTER_TITLE
+	intro_label.text = Phase5Texts.CHAPTER_INTRO
+	var values := Phase5Texts.chapter_values(context)
+	for i: int in Phase5Texts.CHAPTER_ROWS.size():
+		stone_rows[Phase5Texts.CHAPTER_ROWS[i]].text = values[i]
+	var final_line := str(context.get("final_line", ""))
+	goal_label.text = final_line if final_line != "" else Phase5Texts.CHAPTER_FINAL_FALLBACK
+	goal_label.theme_type_variation = &"AccentLabel"
+
+
+## Row value of the names_in_stone panel by caption ("" unknown) – tests.
+func stone_value(caption: String) -> String:
+	return stone_rows[caption].text if stone_rows.has(caption) else ""
 
 
 ## Chapter row value by caption ("" unknown) – tests.

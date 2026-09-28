@@ -14,6 +14,9 @@ extends Control
 ## build bar in place of the interaction prompt.
 ## Phase 4 (docs/PHASE4_DESIGN.md §7): a small book beside the day with the unread count of the
 ## Merkbuch („[J] Merkbuch · 2 neu“, hidden without a journal). No piety display.
+## Phase 5 (docs/PHASE5_DESIGN.md §7): unchanged layout (MATERIAL items never show in the
+## resource bar); the quality tooltip gains the chapter line „Werkhof 2/3 · Werkzeug 2/3 ·
+## Meisterstein 0/1“ while the workyard is open; workshop / stone signals refresh the objective.
 
 const BASE_ITEMS: Array[StringName] = [&"coin", &"wood", &"stone", &"linen"]
 const CORPSE_MANAGER_GROUP := &"corpse_manager"
@@ -113,6 +116,11 @@ func _ready() -> void:
 	EventBus.clue_found.connect(_mark_objective_dirty.unbind(2))
 	EventBus.insight_unlocked.connect(_mark_objective_dirty.unbind(1))
 	EventBus.story_corpse_arrived.connect(_mark_objective_dirty.unbind(2))
+	EventBus.station_built.connect(_on_workshop_changed.unbind(1))
+	EventBus.tool_tier_changed.connect(_on_workshop_changed.unbind(2))
+	EventBus.grave_stone_set.connect(_on_workshop_changed.unbind(3))
+	EventBus.stone_order_changed.connect(_on_workshop_changed.unbind(3))
+	EventBus.workshop_job_changed.connect(_on_workshop_changed.unbind(3))
 	refresh_all()
 
 
@@ -352,6 +360,7 @@ func _on_day_started(day: int) -> void:
 	if _skipped_day != 0 and _skipped_day != day:
 		_hide_notice()
 	_mark_reputation_dirty()
+	_on_workshop_changed()
 
 
 func _on_inventory_changed() -> void:
@@ -366,8 +375,24 @@ func _on_quality_changed(total: int, rating: StringName) -> void:
 	var score := CemeteryStatus.score(get_tree() if is_inside_tree() else null)
 	if int(score.total) != total:
 		score = CemeteryStatus.breakdown_of(total, 0, 0, _economy())
-	quality_row.tooltip_text = Phase3Texts.quality_tooltip(score)
+	quality_row.tooltip_text = quality_tooltip_text(score)
 	_mark_reputation_dirty()
+	_mark_objective_dirty()
+
+
+## Phase-3 quality tooltip + the Phase-5 chapter line (while the workyard is open).
+func quality_tooltip_text(score: Dictionary) -> String:
+	var text := Phase3Texts.quality_tooltip(score)
+	var progress := CemeteryStatus.chapter_progress(get_tree() if is_inside_tree() else null)
+	if progress.is_empty():
+		return text
+	var line := Phase5Texts.CHAPTER_LINE_DONE if bool(progress.get("done_flag", false)) else Phase5Texts.chapter_line(progress)
+	return text + "\n" + line if line != "" else text
+
+
+func _on_workshop_changed() -> void:
+	var score := CemeteryStatus.score(get_tree() if is_inside_tree() else null)
+	quality_row.tooltip_text = quality_tooltip_text(score)
 	_mark_objective_dirty()
 
 
