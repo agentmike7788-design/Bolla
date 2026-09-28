@@ -575,8 +575,8 @@ def _shovel(name: str, master: bool) -> None:
     parts = []
     body, edge = _blade_colors(master)
     r = 0.012
-    _haft(parts, (-0.22, 0.0, r), (0.08, 0.0, r), r, HAFT, 1, ring=0.85 if master else None)
-    grip = [(-0.25 + math.cos(a) * 0.03, math.sin(a) * 0.035, r) for a in (j / 10 * math.tau for j in range(10))]
+    _haft(parts, (-0.16, 0.0, r), (0.08, 0.0, r), r, HAFT, 1, ring=0.85 if master else None)
+    grip = [(-0.19 + math.cos(a) * 0.03, math.sin(a) * 0.035, r) for a in (j / 10 * math.tau for j in range(10))]
     parts.append(P._finish_obj(P._path_tube(grip, 0.007, 4, closed=True), HAFT, ao=0.0, seed=2))
     parts.append(_strip((0.07, 0.0, 0.012), (0.1, 0.0, 0.012), 0.014, 0.02, 0.006, body, 3))        # socket
     bl = L.prim("cube", loc=(0.17, 0.0, 0.006), scale=(0.075, 0.06, 0.004))
@@ -613,7 +613,7 @@ def _axe(name: str, master: bool) -> None:
     body, edge = _blade_colors(master)
     r = 0.012
     haft = [(-0.2, 0.0, r), (-0.05, 0.008, r), (0.1, 0.0, r), (0.16, -0.006, r)]
-    parts.append(P._finish_obj(P._tube(haft, [r * 0.95, r, r * 0.9, r * 0.85], sides=6), HAFT, var=0.15, ao=0.1,
+    parts.append(P._finish_obj(P._tube(haft, [r * 0.95, r, r * 0.9, r * 0.85], sides=8), HAFT, var=0.15, ao=0.1,
                                seed=1))
     if master:
         rg = L.prim("cyl", loc=(0.1, 0.0, r), rot=(0, 90, 0), radius=r * 1.3, depth=0.028, vertices=8)
@@ -729,7 +729,7 @@ def item_yarn():
 def item_clay():
     """A lump of grey-ochre clay, pressed flat on top with a thumb print, a smaller lump beside."""
     L.reset(650)
-    big = L.prim("ico", loc=(0.0, 0.0, 0.06), radius=1.0, subdivisions=2, scale=(0.12, 0.1, 0.065))
+    big = L.prim("ico", loc=(0.0, 0.0, 0.06), radius=1.0, subdivisions=3, scale=(0.12, 0.1, 0.065))
     L.jitter(big, 0.012, 12.0, 1)
     for v in big.data.vertices:
         if v.co.z > 0.1:

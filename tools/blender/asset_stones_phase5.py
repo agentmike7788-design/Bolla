@@ -34,12 +34,12 @@ MOSS = P.MOSS
 IRON = P.IRON
 RUST = P.RUST
 RELIEF_D = 0.02                    # relief depth (section 8)
-RELIEF_SCALE = 1.25                # drawn at ~0.2 m, scaled to ~0.25 m across
+RELIEF_SCALE = 1.25                # drawn at ~0.2 m, scaled so every relief fits 0.3 x 0.26 m
 
 # (inscription centre z, ornament centre z, front face y) per shape - shared with the tests via the markers
 STELE = {"w": 0.58, "t": 0.13, "h": 0.94, "gable": 0.08, "ins_z": 0.5, "orn_z": 0.8}
 ARCH = {"w": 0.64, "t": 0.14, "h": 0.68, "ins_z": 0.44, "orn_z": 0.78}
-MASTER = {"w": 0.86, "t": 0.2, "plinth": (1.02, 0.38, 0.2), "body_top": 1.04, "gable": 0.36,
+MASTER = {"w": 0.9, "t": 0.2, "plinth": (1.06, 0.38, 0.2), "body_top": 1.04, "gable": 0.36,
           "ins_z": 0.62, "orn_z": 1.24}
 
 
@@ -113,6 +113,7 @@ def gravestone_stele():
     s = STELE
     w, t, h, g = s["w"], s["t"], s["h"], s["gable"]
     body = L.prim("cube", loc=(0, 0, 0.05 + (h - 0.05) / 2), scale=(w / 2, t / 2, (h - 0.05) / 2))
+    L.subdivide(body, 2)
     L.bevel(body, 0.012, 1)
     top = _prism([(-w / 2 + 0.012, h), (w / 2 - 0.012, h), (0.0, h + g)], t - 0.01, name="gable")
     for o, sd in ((body, 1), (top, 2)):
@@ -285,7 +286,7 @@ def _relief_poly(poly_xz, depth: float = RELIEF_D, inset: float = 0.004):
     return P._link(bm, "relief")
 
 
-def _finish_relief(parts, name: str) -> None:
+def _finish_relief(parts, name: str, scale: float = RELIEF_SCALE) -> None:
     for i, o in enumerate(parts):
         L.paint(o, STONE_DRESSED, var=0.1, ao=0.0, top=0.25, noise_freq=6.0, hue_shift=STONE_SHADE, seed=i)
         L.set_mat(o, L.MAT_PAINTED)
@@ -295,8 +296,8 @@ def _finish_relief(parts, name: str) -> None:
     zs = [v.co.z for v in obj.data.vertices]
     cx, cz = (min(xs) + max(xs)) / 2, (min(zs) + max(zs)) / 2
     for v in obj.data.vertices:
-        v.co.x = (v.co.x - cx) * RELIEF_SCALE
-        v.co.z = (v.co.z - cz) * RELIEF_SCALE
+        v.co.x = (v.co.x - cx) * scale
+        v.co.z = (v.co.z - cz) * scale
         v.co.y = min(0.0, max(-RELIEF_D, v.co.y))
     L.smooth(obj, 40)
     L.export(obj, name, "props")
@@ -325,7 +326,7 @@ def orn_ivy():
         tip = (x + 0.006 * side, z + side * 0.03)
         parts.append(_relief_line([(x, z), tip], 0.003, depth=RELIEF_D * 0.5))
         parts.append(_ivy_leaf(tip[0], tip[1] + side * sz * 0.8, sz, 90 * side + (12 if k % 2 else -12)))
-    _finish_relief(parts, "ph_prop_orn_ivy")
+    _finish_relief(parts, "ph_prop_orn_ivy", 1.15)
 
 
 def orn_poppy():
@@ -347,7 +348,7 @@ def orn_poppy():
         parts.append(_relief_poly([(x, z) for x, z in crown], depth=RELIEF_D * 0.9, inset=0.003))
     leaf = [(-0.02, -0.07), (-0.06, -0.05), (-0.1, -0.055), (-0.085, -0.075), (-0.05, -0.085)]
     parts.append(_relief_poly(leaf, depth=RELIEF_D * 0.6, inset=0.006))
-    _finish_relief(parts, "ph_prop_orn_poppy")
+    _finish_relief(parts, "ph_prop_orn_poppy", 1.18)
 
 
 def orn_elder():
@@ -391,7 +392,7 @@ def orn_torch():
         parts.append(_relief_poly(loop if sx > 0 else list(reversed(loop)), depth=RELIEF_D * 0.6, inset=0.004))
         parts.append(_relief_line([(sx * 0.008, 0.085), (sx * 0.03, 0.05), (sx * 0.026, 0.02)], 0.005,
                                   depth=RELIEF_D * 0.5))
-    _finish_relief(parts, "ph_prop_orn_torch")
+    _finish_relief(parts, "ph_prop_orn_torch", 1.0)
 
 
 ASSETS = (gravestone_stele, gravestone_arch, gravestone_master, orn_ivy, orn_poppy, orn_elder, orn_torch)

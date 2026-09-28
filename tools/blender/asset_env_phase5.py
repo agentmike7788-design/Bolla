@@ -352,7 +352,7 @@ def clay_pit():
                    rot=(0, 0, math.degrees(a) + 90))
         L.jitter(b, 0.006, 6.0, 10 + i)
         parts.append(P._finish_obj(b, L.mix(CLAY, CLAY_WET, 0.2), var=0.15, ao=0.2, top=0.25, seed=10 + i))
-    heap = L.prim("ico", loc=(1.0, 0.3, 0.0), radius=1.0, subdivisions=2, scale=(0.36, 0.3, 0.26))
+    heap = L.prim("ico", loc=(1.0, 0.3, 0.08), radius=1.0, subdivisions=2, scale=(0.36, 0.3, 0.2))
     L.jitter(heap, 0.04, 6.0, 20)
     parts.append(P._finish_obj(heap, CLAY, var=0.25, ao=0.35, top=0.2, hue_shift=CLAY_WET, seed=20))
     for i in range(5):

@@ -177,7 +177,7 @@ def mason_bench():
     """Heavy timber trestle (west) with a half-worked sandstone-grey block, mallet, chisels, chips;
     east of it a rack of sleepers and a diagonal rail where three finished stones lean."""
     L.reset(1700)
-    parts = [_ground_patch(2.5, 1.5, L.mix(EARTH, STONE_OLD, 0.35), L.mix(GRASS, EARTH, 0.45), 1)]
+    parts = [_ground_patch(2.3, 1.36, L.mix(EARTH, STONE_OLD, 0.35), L.mix(GRASS, EARTH, 0.45), 1)]
     bx, top = -0.72, 0.5
     # trestle: two thick beams side by side on four stout legs, braces
     for sy in (-1, 1):
@@ -222,7 +222,7 @@ def mason_bench():
             parts.append(P._plank((x, y + dy, 0.03), (0.42, 0.05, 0.03), WOOD_OLD, seed=40 + i * 2 + int(dy > 0),
                                   zrange=(0, 0.8)))
     rail0 = Vector((0.0, -0.08, 0.72))
-    rail1 = Vector((1.25, 0.72, 0.8))
+    rail1 = Vector((1.14, 0.66, 0.8))
     for t in (0.0, 0.5, 1.0):
         p = rail0.lerp(rail1, t) + Vector((0.05, 0.06, 0.0))
         parts.append(P._stick((p.x, p.y, 0.0), (p.x, p.y, p.z + 0.1), 0.045, WOOD_DARK, r1=0.04, verts=6, seed=50,
@@ -233,6 +233,7 @@ def mason_bench():
     for i, (x, y) in enumerate(MASON_SLOTS):
         _slot(obj, "stone_slot_%d" % (i + 1), (x, y, 0.06))
     L.marker(obj, "use", (bx, -1.25, 0.0))
+    P._center_xy(obj)
     L.finish(obj, "ph_bld_mason_bench", "buildings", 35, shift=False)
 
 
@@ -258,7 +259,7 @@ def loom():
     the ground, and over it all a lean-to roof on four posts (high at the front, open to the camera)."""
     L.reset(1800)
     rnd = random.Random(1801)
-    parts = [_ground_patch(2.1, 1.7, L.mix(EARTH, WOOD_OLD, 0.3), L.mix(GRASS, EARTH, 0.45), 2)]
+    parts = [_ground_patch(1.95, 1.6, L.mix(EARTH, WOOD_OLD, 0.3), L.mix(GRASS, EARTH, 0.45), 2)]
     hw = 0.62                         # half width of the loom frame (x)
     yf, yb = -0.42, 0.5               # front / back posts
     for sx in (-1, 1):
@@ -331,7 +332,7 @@ def loom():
         parts.append(L.part("sphere", WARP, loc=(0.84 + k * 0.05, -0.5 + (k - 1) * 0.06, 0.26), radius=0.06,
                             segments=8, ring_count=5, scale=(1.0, 1.0, 0.8), paint_kw={"ao": 0.2, "top": 0.3}))
     # the lean-to roof: posts, two beams, rafters and three rows of shingle boards
-    zf, zb, px, py = 2.5, 2.05, 0.98, 0.8
+    zf, zb, px, py = 2.5, 2.05, 0.93, 0.78
     for sx in (-1, 1):
         for y, z in ((-py, zf), (py, zb)):
             parts.append(P._stick((sx * px, y, 0.0), (sx * px, y, z), 0.05, WOOD_DARK, r1=0.045, verts=6,
@@ -339,19 +340,19 @@ def loom():
         parts.append(P._stick((sx * px, -py + 0.25, zf - 0.08), (sx * px - sx * 0.02, -py, zf - 0.45), 0.025, WOOD_DARK,
                               verts=4, seed=31, ao=0.1))
     for y, z in ((-py, zf), (py, zb)):
-        parts.append(P._stick((-px - 0.12, y, z), (px + 0.12, y, z), 0.055, WOOD_DARK, verts=6, seed=32, ao=0.1))
+        parts.append(P._stick((-px - 0.07, y, z), (px + 0.07, y, z), 0.055, WOOD_DARK, verts=6, seed=32, ao=0.1))
     slope = (zb - zf) / (2 * py)
 
     def roof_z(y: float) -> float:
         return zf + (y + py) * slope + 0.07
 
     rows = 4
-    y0, y1 = -py - 0.25, py + 0.12
+    y0, y1 = -py - 0.12, py + 0.06
     for r in range(rows):
         ya, yb2 = y0 + (y1 - y0) * r / rows, y0 + (y1 - y0) * (r + 1) / rows + 0.08
-        x = -px - 0.22
+        x = -px - 0.12
         k = 0
-        while x < px + 0.2:
+        while x < px + 0.06:
             w = rnd.uniform(0.18, 0.3)
             ym = (ya + yb2) / 2
             sh = L.prim("cube", loc=(x + w / 2, ym, roof_z(ym) + 0.02 - r * 0.004), scale=(w / 2 * 0.96, (yb2 - ya) / 2, 0.012))
@@ -368,6 +369,7 @@ def loom():
             x += w
             k += 1
     obj = L.join(parts, "ph_bld_loom")
+    P._center_xy(obj)
     L.finish(obj, "ph_bld_loom", "buildings", 35, shift=False)
 
 
@@ -417,7 +419,7 @@ def forge():
     L.reset(1900)
     rnd = random.Random(1901)
     h = HEARTH
-    parts = [_ground_patch(2.5, 1.9, L.mix(SOOT, EARTH, 0.55), L.mix(GRASS, EARTH, 0.5), 3)]
+    parts = [_ground_patch(2.3, 1.75, L.mix(SOOT, EARTH, 0.55), L.mix(GRASS, EARTH, 0.5), 3)]
     cx, cy = (h["x0"] + h["x1"]) / 2, (h["y0"] + h["y1"]) / 2
     hx, hy = (h["x1"] - h["x0"]) / 2, (h["y1"] - h["y0"]) / 2
     parts.append(_core((cx, cy, h["h"] / 2), (hx - 0.04, hy - 0.04, h["h"] / 2), 1, cuts=1))
@@ -433,12 +435,12 @@ def forge():
         L.paint(slab, L.mix(STONE_DARK, SOOT, 0.35), var=0.25, ao=0.1, top=0.1, seed=400 + i)
         L.set_mat(slab, L.MAT_PAINTED)
         parts.append(slab)
-    bed = P._rings_mesh([(0.3, 0.3, h["h"] + 0.03), (0.22, 0.22, h["h"] + 0.06), (0.1, 0.1, h["h"] + 0.1)], 14,
+    bed = P._rings_mesh([(0.3, 0.3, h["h"] + 0.035), (0.22, 0.22, h["h"] + 0.05), (0.12, 0.12, h["h"] + 0.06)], 16,
                         lambda k, x, y: (1.0 + 0.1 * noise.noise(Vector((x * 9, y * 9, k))), 0.02 * noise.noise(
                             Vector((x * 14, y * 14, 3)))), p=2.2, name="coals")
     bed.data.transform(Matrix.Translation((FIRE.x, FIRE.y, 0.0)))
-    P._paint_fn(bed, lambda co, vi: L.mix(CHARCOAL, EMBER, max(0.0, min(1.0, 1.2 - Vector((co.x - FIRE.x, co.y - FIRE.y)).length
-                                                                          / 0.2 + 0.4 * noise.noise(co * 18.0)))))
+    P._paint_fn(bed, lambda co, vi: L.mix(CHARCOAL, EMBER, max(0.0, min(1.0, 1.1 - Vector((co.x - FIRE.x, co.y - FIRE.y)).length
+                                                                          / 0.3 + 1.2 * noise.noise(co * 14.0)))))
     L.set_mat(bed, L.MAT_PAINTED)
     parts.append(bed)
     for i in range(6):               # lumps of charcoal on the glowing bed
@@ -447,7 +449,7 @@ def forge():
         c = EMBER if rr < 0.14 else CHARCOAL
         parts.append(L.part("ico", c, loc=(FIRE.x + math.cos(a) * rr, FIRE.y + math.sin(a) * rr, h["h"] + 0.09),
                             radius=0.035, subdivisions=1, jit=0.01, seed=410 + i,
-                            paint_kw={"ao": 0.0, "var": 0.3, "hue_shift": EMBER_DULL}))
+                            paint_kw={"ao": 0.0, "var": 0.1, "top": 0.0}))
     # back walls (east + north) carrying the hood
     bw = [((0.97, cy, 1.1), (0.08, hy, 0.3)), ((cx + 0.1, h["y1"] - 0.08, 1.1), (hx - 0.1, 0.08, 0.3))]
     soot = lambda z: 0.55 + 0.45 * max(0.0, 1.0 - (z - 0.8) / 1.2)
@@ -517,10 +519,10 @@ def forge():
         parts.append(P._stick((x, h["y0"] - 0.2, 0.0), (x + 0.03, h["y0"] - 0.02, 0.62 + i * 0.03), 0.012,
                               L.mix(IRON, RUST, 0.4), verts=4, seed=810 + i, ao=0.2))
     # charcoal basket by the hearth (south-east)
-    bk = L.prim("cyl", loc=(1.12, -0.62, 0.13), radius=0.15, depth=0.26, vertices=10)
+    bk = L.prim("cyl", loc=(1.07, -0.66, 0.13), radius=0.13, depth=0.26, vertices=10)
     L.taper(bk, -0.13, 0.13, 1.25)
     parts.append(P._finish_obj(bk, L.hexc("#6E5A3E"), var=0.3, ao=0.4, noise_freq=14.0, seed=820))
-    parts.append(L.part("ico", CHARCOAL, loc=(1.12, -0.62, 0.26), radius=0.16, subdivisions=2, scale=(1.0, 1.0, 0.35),
+    parts.append(L.part("ico", CHARCOAL, loc=(1.07, -0.66, 0.26), radius=0.14, subdivisions=2, scale=(1.0, 1.0, 0.35),
                         jit=0.02, seed=821, paint_kw={"ao": 0.0, "var": 0.35}))
     # bellows on a low trestle north of the hearth, nozzle into the fire bed
     by, bz = 0.78, 0.55
@@ -553,6 +555,7 @@ def forge():
     obj = L.join(parts, "ph_bld_forge")
     L.marker(obj, "light_ember", (FIRE.x, FIRE.y, h["h"] + 0.3))
     L.marker(obj, "smoke", (top.x, top.y, top.z + 0.1))
+    P._center_xy(obj)
     L.finish(obj, "ph_bld_forge", "buildings", 35, shift=False)
 
 
@@ -615,7 +618,7 @@ def _kiln(name: str, burning: bool) -> None:
         parts.append(L.part("cyl", L.mix(END_GRAIN, SOOT, 0.7 if burning else 0.15),
                             loc=p1 + (p1 - p0).normalized() * 0.003, rot=(90, 0, 90 + math.degrees(a)), radius=0.042,
                             depth=0.006, vertices=5, paint_kw={"ao": 0.0}))
-    base = P._rings_mesh([(0.95, 0.95, 0.004), (0.8, 0.8, 0.01)], 16,
+    base = P._rings_mesh([(0.85, 0.85, 0.004), (0.74, 0.74, 0.01)], 16,
                          lambda k, x, y: (1.0 + 0.08 * noise.noise(Vector((x * 3, y * 3, k))), 0.0), p=2.0, name="ring")
     ring_c = L.mix(ASH, SOOT, 0.3) if burning else L.mix(EARTH, GRASS, 0.3)
     parts.append(P._finish_obj(base, ring_c, var=0.3, ao=0.0, noise_freq=4.0, seed=40))

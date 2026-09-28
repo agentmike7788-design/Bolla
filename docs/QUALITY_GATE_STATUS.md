@@ -143,6 +143,13 @@ Alle Phase-1-Assets sind Prototypen (`ph_`-Präfix) und **nicht final**, bis der
 | ph_prop_gate_small, _gate_small_open, _pit_sunken, ph_env_elder_thicket, ph_env_elder_bush | Holunderwinkel (Phase 4, P5) | Prototyp – Benutzerprüfung offen |
 | ph_item_scrub_brush, _comb, _burial_gown, _juniper, _shears, _pliers, _hair_braid, _teeth_pouch, _elder_key | Item-Modelle (Icons, Phase 4, P5; `_elder_key` zusätzlich zu §8) | Prototyp – Benutzerprüfung offen |
 | ph_vfx_fly_atlas.png, ph_vfx_stench_wisp.png, ph_vfx_smoke_wisp.png (`assets/vfx/`, `tools/textures/paint_vfx.py`) | Partikel-Texturen (Phase 4, P5; Materialien/Partikel P4) | Prototyp – Benutzerprüfung offen |
+| ph_bld_mason_bench (Marker `stone_slot_1…3`, `use`), ph_bld_loom, ph_bld_forge (Marker `light_ember`, `smoke`) | Werkhof-Stationen (Phase 5, P5) | Prototyp – Vorschau `docs/reviews/phase5_wip/p5_*.jpg`, Benutzerprüfung offen |
+| ph_prop_charcoal_kiln, _charcoal_kiln_burning (Marker `smoke`), _build_site (Kindmesh `stakes`), _build_site_slab | Werkhof-Requisiten / Bruch-Steinplatte (Phase 5, P5) | Prototyp – Benutzerprüfung offen |
+| ph_env_alder_coppice, _alder_stump, _alder_sapling, _flax_bed, _flax_bed_empty, _clay_pit, _quarry_face, _quarry_edge, _ore_vein, _ore_vein_empty, _workstone_ledge, _workstone_ledge_empty, _rubble_face, _boulder, _boulder_broken, _herb_patch, _herb_patch_cut | Sammelstellen / Steinbruch (Phase 5, P5) | Prototyp – Benutzerprüfung offen |
+| ph_prop_gravestone_stele, _gravestone_arch, _gravestone_master (Marker `inscription`, `ornament`) | Steinformen (Phase 5, P5) | Prototyp – Benutzerprüfung offen |
+| ph_prop_orn_ivy, _orn_poppy, _orn_elder, _orn_torch | Relief-Zierden (Phase 5, P5) | Prototyp – Benutzerprüfung offen |
+| ph_item_shovel_iron, _shovel_master, _axe_iron, _axe_master, _pickaxe_iron, _pickaxe_master | Werkzeug-Stufen (Icons / Gürtel, Phase 5, P5) | Prototyp – Benutzerprüfung offen |
+| ph_item_flax, _yarn, _clay, _iron_ore, _iron_bar, _charcoal, _workstone, _elderberries, _herbs, _ink, _herb_bundle, _gold_leaf, _steel_rod | Item-Modelle (Icons, Phase 5, P5) | Prototyp – Benutzerprüfung offen |
 | Godot-Standardschrift | UI-Schrift | **Platzhalter** – Schriftwahl offen |
 
 ## Bekannte Probleme
