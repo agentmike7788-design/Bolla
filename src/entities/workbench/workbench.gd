@@ -96,8 +96,10 @@ func interact(player: Player) -> void:
 		return
 	var data := station_data()
 	var panel := data.panel if data != null and data.panel != &"" else PANEL
-	EventBus.ui_panel_requested.emit(panel, {"station": station, "inventory": player.inventory, "workbench": self, "player": player,
-			"bench": self, "station_data": data})
+	var context := {"station": station, "inventory": player.inventory, "workbench": self, "player": player}
+	if panel == &"stone_design":
+		context["bench"] = self  # §7: {inventory, player, bench}
+	EventBus.ui_panel_requested.emit(panel, context)
 
 
 ## Panel: crafts `recipe_id` for the player of the last interaction (warning when impossible).
