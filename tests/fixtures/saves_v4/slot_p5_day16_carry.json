@@ -1,0 +1,4869 @@
+{
+	"data": {
+		"args": [
+			"s:autoloads",
+			{
+				"args": [
+					"s:TimeManager",
+					{
+						"args": [
+							"s:day",
+							"i:16",
+							"s:minute_of_day",
+							"i:490"
+						],
+						"type": "Dictionary"
+					},
+					"s:GameState",
+					{
+						"args": [
+							"s:flags",
+							{
+								"args": [
+									"sn:rep_last_day",
+									"i:16",
+									"sn:piety_last_day",
+									"i:16",
+									"sn:workyard_cleared",
+									true,
+									"sn:ghosts_seen",
+									true,
+									"sn:day_burials_base",
+									"i:15",
+									"sn:day_coins_base",
+									"i:31",
+									"sn:clue_c_mark",
+									true,
+									"sn:trader_known",
+									true,
+									"sn:clue_c_trader_note",
+									true,
+									"sn:clue_c_warning_letter",
+									true,
+									"sn:trader_met",
+									true,
+									"sn:trader_greeted",
+									"i:15",
+									"sn:trader_tools_given",
+									true,
+									"sn:clue_c_trader_marked",
+									true,
+									"sn:clue_c_anchor_snake",
+									true,
+									"sn:clue_c_page_1",
+									true,
+									"sn:insight_warnings",
+									true,
+									"sn:clue_c_trader_lorenz",
+									true,
+									"sn:clue_c_ferry_jacket",
+									true,
+									"sn:has_elder_key",
+									true,
+									"sn:clue_c_elder_key",
+									true,
+									"sn:clue_c_six_pits",
+									true,
+									"sn:insight_kranich",
+									true,
+									"sn:cemetery_complete",
+									true,
+									"sn:workshop_open",
+									true,
+									"sn:met_carter",
+									true,
+									"sn:praised_renowned",
+									true,
+									"sn:praised_esteemed",
+									true,
+									"sn:p3_intro",
+									true,
+									"sn:cemetery_praised",
+									true,
+									"sn:p4_intro",
+									true,
+									"sn:p5_intro",
+									true,
+									"sn:bruch_license",
+									true,
+									"sn:clue_c_mark_healed",
+									true,
+									"sn:clue_c_letter_late",
+									true,
+									"sn:insight_marked",
+									true,
+									"sn:insight_still_writing",
+									true,
+									"sn:remark_gold",
+									true,
+									"sn:remark_six_pits",
+									true,
+									"sn:bought_pickaxe",
+									true
+								],
+								"type": "Dictionary"
+							},
+							"s:stats",
+							{
+								"args": [
+									"sn:burials",
+									"i:15",
+									"sn:valuables_taken",
+									"i:0",
+									"sn:reputation",
+									"i:100",
+									"sn:missed_deliveries",
+									"i:0",
+									"sn:days_played",
+									"i:15",
+									"sn:piety",
+									"i:57",
+									"sn:utilized",
+									"i:0",
+									"sn:prepared",
+									"i:14",
+									"sn:trader_sales",
+									"i:0",
+									"sn:crafted",
+									"i:53",
+									"sn:stones_set",
+									"i:0",
+									"sn:coins_spent",
+									"i:210",
+									"sn:trees_felled",
+									"i:0",
+									"sn:coins_spent_license",
+									"i:20",
+									"sn:coins_spent_build",
+									"i:10",
+									"sn:coins_spent_osric",
+									"i:121",
+									"sn:coins_spent_ilse",
+									"i:59"
+								],
+								"type": "Dictionary"
+							}
+						],
+						"type": "Dictionary"
+					}
+				],
+				"type": "Dictionary"
+			},
+			"s:nodes",
+			{
+				"args": [
+					"s:corpse_manager",
+					{
+						"args": [
+							"s:corpses",
+							[
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0001",
+										"s:seed",
+										"i:7936",
+										"s:display_name",
+										"s:Cordula Brenneisen",
+										"s:age",
+										"i:31",
+										"s:cause_id",
+										"sn:fever",
+										"s:traits",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										true,
+										"s:shrouded",
+										true,
+										"s:valuables_coins",
+										"i:0",
+										"s:valuables_decision",
+										"sn:",
+										"s:freshness",
+										"f:0.741667",
+										"s:freshness_at_burial",
+										"f:0.741667",
+										"s:last_decay_total",
+										"i:770",
+										"s:location",
+										"sn:buried",
+										"s:position",
+										{
+											"args": [
+												-1.600000023841858,
+												0.8455460667610168,
+												-5.400000095367432
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.31415927410126",
+										"s:grave_id",
+										"s:plot_01",
+										"s:arrival_total_minutes",
+										"i:460",
+										"s:buried_day",
+										"i:1",
+										"s:story_id",
+										"sn:",
+										"s:exam_done",
+										{
+											"args": [
+												"sn:clothing",
+												"sn:hands",
+												"sn:wounds",
+												"sn:pockets"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_revealed",
+										{
+											"args": [
+												"sn:f_cause_fever"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_lost",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:traits_revealed",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:washed",
+										false,
+										"s:dress",
+										"sn:shroud",
+										"s:laid_out",
+										false,
+										"s:harvested",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:balm_windows",
+										[],
+										"s:stench_noted",
+										false
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0002",
+										"s:seed",
+										"i:15855",
+										"s:display_name",
+										"s:Frieda Mühlhauser",
+										"s:age",
+										"i:65",
+										"s:cause_id",
+										"sn:old_age",
+										"s:traits",
+										{
+											"args": [
+												"sn:valuables"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										true,
+										"s:shrouded",
+										true,
+										"s:valuables_coins",
+										"i:8",
+										"s:valuables_decision",
+										"sn:left",
+										"s:freshness",
+										"f:0.85375",
+										"s:freshness_at_burial",
+										"f:0.85375",
+										"s:last_decay_total",
+										"i:2134",
+										"s:location",
+										"sn:buried",
+										"s:position",
+										{
+											"args": [
+												-1.600000023841858,
+												0.8455460667610168,
+												-5.400000095367432
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.31415927410126",
+										"s:grave_id",
+										"s:plot_02",
+										"s:arrival_total_minutes",
+										"i:1900",
+										"s:buried_day",
+										"i:2",
+										"s:story_id",
+										"sn:",
+										"s:exam_done",
+										{
+											"args": [
+												"sn:clothing",
+												"sn:hands",
+												"sn:wounds",
+												"sn:pockets"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_revealed",
+										{
+											"args": [
+												"sn:f_cause_old_age",
+												"sn:f_valuables"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_lost",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:traits_revealed",
+										{
+											"args": [
+												"sn:valuables"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:washed",
+										true,
+										"s:dress",
+										"sn:shroud",
+										"s:laid_out",
+										true,
+										"s:harvested",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:balm_windows",
+										[],
+										"s:stench_noted",
+										false
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0003",
+										"s:seed",
+										"i:23774",
+										"s:display_name",
+										"s:Frieda Hagedorn",
+										"s:age",
+										"i:23",
+										"s:cause_id",
+										"sn:fever",
+										"s:traits",
+										{
+											"args": [
+												"sn:strange_wound"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										true,
+										"s:shrouded",
+										true,
+										"s:valuables_coins",
+										"i:0",
+										"s:valuables_decision",
+										"sn:",
+										"s:freshness",
+										"f:0.771667",
+										"s:freshness_at_burial",
+										"f:0.771667",
+										"s:last_decay_total",
+										"i:3614",
+										"s:location",
+										"sn:buried",
+										"s:position",
+										{
+											"args": [
+												-1.600000023841858,
+												0.8455460667610168,
+												-5.400000095367432
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.31415927410126",
+										"s:grave_id",
+										"s:plot_03",
+										"s:arrival_total_minutes",
+										"i:3340",
+										"s:buried_day",
+										"i:3",
+										"s:story_id",
+										"sn:",
+										"s:exam_done",
+										{
+											"args": [
+												"sn:clothing",
+												"sn:hands",
+												"sn:wounds",
+												"sn:pockets"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_revealed",
+										{
+											"args": [
+												"sn:f_cause_fever",
+												"sn:f_mark"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_lost",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:traits_revealed",
+										{
+											"args": [
+												"sn:strange_wound"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:washed",
+										true,
+										"s:dress",
+										"sn:shroud",
+										"s:laid_out",
+										true,
+										"s:harvested",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:balm_windows",
+										[],
+										"s:stench_noted",
+										false
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0004",
+										"s:seed",
+										"i:31693",
+										"s:display_name",
+										"s:Gottlieb Dornbusch",
+										"s:age",
+										"i:21",
+										"s:cause_id",
+										"sn:fever",
+										"s:traits",
+										{
+											"args": [
+												"sn:valuables",
+												"sn:letter"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										true,
+										"s:shrouded",
+										true,
+										"s:valuables_coins",
+										"i:5",
+										"s:valuables_decision",
+										"sn:left",
+										"s:freshness",
+										"f:0.820833",
+										"s:freshness_at_burial",
+										"f:0.820833",
+										"s:last_decay_total",
+										"i:4995",
+										"s:location",
+										"sn:buried",
+										"s:position",
+										{
+											"args": [
+												-1.600000023841858,
+												0.8455460667610168,
+												-5.400000095367432
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.31415927410126",
+										"s:grave_id",
+										"s:plot_04",
+										"s:arrival_total_minutes",
+										"i:4780",
+										"s:buried_day",
+										"i:4",
+										"s:story_id",
+										"sn:",
+										"s:exam_done",
+										{
+											"args": [
+												"sn:clothing",
+												"sn:hands",
+												"sn:wounds",
+												"sn:pockets"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_revealed",
+										{
+											"args": [
+												"sn:f_cause_fever",
+												"sn:f_letter",
+												"sn:f_valuables"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_lost",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:traits_revealed",
+										{
+											"args": [
+												"sn:letter",
+												"sn:valuables"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:washed",
+										true,
+										"s:dress",
+										"sn:shroud",
+										"s:laid_out",
+										true,
+										"s:harvested",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:balm_windows",
+										[],
+										"s:stench_noted",
+										false
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0005",
+										"s:seed",
+										"i:39612",
+										"s:display_name",
+										"s:Dietlinde Moosbacher",
+										"s:age",
+										"i:20",
+										"s:cause_id",
+										"sn:fever",
+										"s:traits",
+										{
+											"args": [
+												"sn:valuables",
+												"sn:tattoo"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										true,
+										"s:shrouded",
+										true,
+										"s:valuables_coins",
+										"i:6",
+										"s:valuables_decision",
+										"sn:left",
+										"s:freshness",
+										"f:0.84",
+										"s:freshness_at_burial",
+										"f:0.84",
+										"s:last_decay_total",
+										"i:6412",
+										"s:location",
+										"sn:buried",
+										"s:position",
+										{
+											"args": [
+												-1.600000023841858,
+												0.8455460667610168,
+												-5.400000095367432
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.31415927410126",
+										"s:grave_id",
+										"s:plot_05",
+										"s:arrival_total_minutes",
+										"i:6220",
+										"s:buried_day",
+										"i:5",
+										"s:story_id",
+										"sn:",
+										"s:exam_done",
+										{
+											"args": [
+												"sn:clothing",
+												"sn:hands",
+												"sn:wounds",
+												"sn:pockets"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_revealed",
+										{
+											"args": [
+												"sn:f_tattoo",
+												"sn:f_cause_fever",
+												"sn:f_valuables"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_lost",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:traits_revealed",
+										{
+											"args": [
+												"sn:tattoo",
+												"sn:valuables"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:washed",
+										true,
+										"s:dress",
+										"sn:shroud",
+										"s:laid_out",
+										true,
+										"s:harvested",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:balm_windows",
+										[],
+										"s:stench_noted",
+										false
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0006",
+										"s:seed",
+										"i:47531",
+										"s:display_name",
+										"s:Marthe Quendel",
+										"s:age",
+										"i:63",
+										"s:cause_id",
+										"sn:old_age",
+										"s:traits",
+										{
+											"args": [
+												"sn:strange_wound"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										true,
+										"s:shrouded",
+										true,
+										"s:valuables_coins",
+										"i:0",
+										"s:valuables_decision",
+										"sn:",
+										"s:freshness",
+										"f:0.935156",
+										"s:freshness_at_burial",
+										"f:0.935156",
+										"s:last_decay_total",
+										"i:7862",
+										"s:location",
+										"sn:buried",
+										"s:position",
+										{
+											"args": [
+												-1.600000023841858,
+												0.8455460667610168,
+												-5.400000095367432
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.31415927410126",
+										"s:grave_id",
+										"s:plot_06",
+										"s:arrival_total_minutes",
+										"i:7660",
+										"s:buried_day",
+										"i:6",
+										"s:story_id",
+										"sn:s1_quendel",
+										"s:exam_done",
+										{
+											"args": [
+												"sn:clothing",
+												"sn:hands",
+												"sn:wounds",
+												"sn:pockets"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_revealed",
+										{
+											"args": [
+												"sn:f_s1_sprig",
+												"sn:f_s1_soil",
+												"sn:f_cause_old_age",
+												"sn:f_mark",
+												"sn:f_s1_page"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_lost",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:traits_revealed",
+										{
+											"args": [
+												"sn:strange_wound"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:washed",
+										true,
+										"s:dress",
+										"sn:shroud",
+										"s:laid_out",
+										true,
+										"s:harvested",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:balm_windows",
+										[
+											"i:7731",
+											"i:8811"
+										],
+										"s:stench_noted",
+										false
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0007",
+										"s:seed",
+										"i:55450",
+										"s:display_name",
+										"s:Josepha Kesselring",
+										"s:age",
+										"i:56",
+										"s:cause_id",
+										"sn:fever",
+										"s:traits",
+										{
+											"args": [
+												"sn:valuables",
+												"sn:tattoo"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										true,
+										"s:shrouded",
+										true,
+										"s:valuables_coins",
+										"i:8",
+										"s:valuables_decision",
+										"sn:left",
+										"s:freshness",
+										"f:0.84",
+										"s:freshness_at_burial",
+										"f:0.84",
+										"s:last_decay_total",
+										"i:9292",
+										"s:location",
+										"sn:buried",
+										"s:position",
+										{
+											"args": [
+												-1.600000023841858,
+												0.8455460667610168,
+												-5.400000095367432
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.31415927410126",
+										"s:grave_id",
+										"s:plot_07",
+										"s:arrival_total_minutes",
+										"i:9100",
+										"s:buried_day",
+										"i:7",
+										"s:story_id",
+										"sn:",
+										"s:exam_done",
+										{
+											"args": [
+												"sn:clothing",
+												"sn:hands",
+												"sn:wounds",
+												"sn:pockets"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_revealed",
+										{
+											"args": [
+												"sn:f_tattoo",
+												"sn:f_cause_fever",
+												"sn:f_valuables"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_lost",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:traits_revealed",
+										{
+											"args": [
+												"sn:tattoo",
+												"sn:valuables"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:washed",
+										true,
+										"s:dress",
+										"sn:shroud",
+										"s:laid_out",
+										true,
+										"s:harvested",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:balm_windows",
+										[],
+										"s:stench_noted",
+										false
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0008",
+										"s:seed",
+										"i:63369",
+										"s:display_name",
+										"s:Frieda Rabenstein",
+										"s:age",
+										"i:86",
+										"s:cause_id",
+										"sn:fever",
+										"s:traits",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										true,
+										"s:shrouded",
+										true,
+										"s:valuables_coins",
+										"i:0",
+										"s:valuables_decision",
+										"sn:",
+										"s:freshness",
+										"f:0.811667",
+										"s:freshness_at_burial",
+										"f:0.811667",
+										"s:last_decay_total",
+										"i:10766",
+										"s:location",
+										"sn:buried",
+										"s:position",
+										{
+											"args": [
+												-1.600000023841858,
+												0.8455460667610168,
+												-5.400000095367432
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.31415927410126",
+										"s:grave_id",
+										"s:plot_08",
+										"s:arrival_total_minutes",
+										"i:10540",
+										"s:buried_day",
+										"i:8",
+										"s:story_id",
+										"sn:",
+										"s:exam_done",
+										{
+											"args": [
+												"sn:clothing",
+												"sn:hands",
+												"sn:wounds",
+												"sn:pockets"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_revealed",
+										{
+											"args": [
+												"sn:f_cause_fever"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_lost",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:traits_revealed",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:washed",
+										true,
+										"s:dress",
+										"sn:gown",
+										"s:laid_out",
+										true,
+										"s:harvested",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:balm_windows",
+										[],
+										"s:stench_noted",
+										false
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0009",
+										"s:seed",
+										"i:71288",
+										"s:display_name",
+										"s:Jost Hemmerling",
+										"s:age",
+										"i:41",
+										"s:cause_id",
+										"sn:drowned_millpond",
+										"s:traits",
+										{
+											"args": [
+												"sn:tattoo"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										true,
+										"s:shrouded",
+										true,
+										"s:valuables_coins",
+										"i:0",
+										"s:valuables_decision",
+										"sn:",
+										"s:freshness",
+										"f:0.8325",
+										"s:freshness_at_burial",
+										"f:0.8325",
+										"s:last_decay_total",
+										"i:12216",
+										"s:location",
+										"sn:buried",
+										"s:position",
+										{
+											"args": [
+												-1.600000023841858,
+												0.8455460667610168,
+												-5.400000095367432
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.31415927410126",
+										"s:grave_id",
+										"s:plot_09",
+										"s:arrival_total_minutes",
+										"i:11980",
+										"s:buried_day",
+										"i:9",
+										"s:story_id",
+										"sn:s2_hemmerling",
+										"s:exam_done",
+										{
+											"args": [
+												"sn:clothing",
+												"sn:hands",
+												"sn:wounds",
+												"sn:pockets"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_revealed",
+										{
+											"args": [
+												"sn:f_s2_jacket",
+												"sn:f_tattoo",
+												"sn:f_cause_drowned_millpond",
+												"sn:f_s2_wrists",
+												"sn:f_s2_key"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_lost",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:traits_revealed",
+										{
+											"args": [
+												"sn:tattoo"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:washed",
+										true,
+										"s:dress",
+										"sn:gown",
+										"s:laid_out",
+										true,
+										"s:harvested",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:balm_windows",
+										[
+											"i:12080",
+											"i:13160"
+										],
+										"s:stench_noted",
+										false
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0010",
+										"s:seed",
+										"i:79207",
+										"s:display_name",
+										"s:Theres Schattauer",
+										"s:age",
+										"i:55",
+										"s:cause_id",
+										"sn:drowned_millpond",
+										"s:traits",
+										{
+											"args": [
+												"sn:valuables",
+												"sn:tattoo",
+												"sn:strange_wound"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										true,
+										"s:shrouded",
+										true,
+										"s:valuables_coins",
+										"i:6",
+										"s:valuables_decision",
+										"sn:left",
+										"s:freshness",
+										"f:0.7175",
+										"s:freshness_at_burial",
+										"f:0.7175",
+										"s:last_decay_total",
+										"i:13646",
+										"s:location",
+										"sn:buried",
+										"s:position",
+										{
+											"args": [
+												-1.600000023841858,
+												0.8455460667610168,
+												-5.400000095367432
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.31415927410126",
+										"s:grave_id",
+										"s:plot_10",
+										"s:arrival_total_minutes",
+										"i:13420",
+										"s:buried_day",
+										"i:10",
+										"s:story_id",
+										"sn:",
+										"s:exam_done",
+										{
+											"args": [
+												"sn:clothing",
+												"sn:hands",
+												"sn:wounds",
+												"sn:pockets"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_revealed",
+										{
+											"args": [
+												"sn:f_tattoo",
+												"sn:f_cause_drowned_millpond",
+												"sn:f_mark",
+												"sn:f_valuables"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_lost",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:traits_revealed",
+										{
+											"args": [
+												"sn:tattoo",
+												"sn:strange_wound",
+												"sn:valuables"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:washed",
+										true,
+										"s:dress",
+										"sn:gown",
+										"s:laid_out",
+										true,
+										"s:harvested",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:balm_windows",
+										[],
+										"s:stench_noted",
+										false
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0011",
+										"s:seed",
+										"i:87126",
+										"s:display_name",
+										"s:Anselm Pechstein",
+										"s:age",
+										"i:25",
+										"s:cause_id",
+										"sn:fever",
+										"s:traits",
+										{
+											"args": [
+												"sn:letter"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										true,
+										"s:shrouded",
+										true,
+										"s:valuables_coins",
+										"i:0",
+										"s:valuables_decision",
+										"sn:",
+										"s:freshness",
+										"f:0.811667",
+										"s:freshness_at_burial",
+										"f:0.811667",
+										"s:last_decay_total",
+										"i:15086",
+										"s:location",
+										"sn:buried",
+										"s:position",
+										{
+											"args": [
+												-1.600000023841858,
+												0.8455460667610168,
+												-5.400000095367432
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.31415927410126",
+										"s:grave_id",
+										"s:plot_11",
+										"s:arrival_total_minutes",
+										"i:14860",
+										"s:buried_day",
+										"i:11",
+										"s:story_id",
+										"sn:",
+										"s:exam_done",
+										{
+											"args": [
+												"sn:clothing",
+												"sn:hands",
+												"sn:wounds",
+												"sn:pockets"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_revealed",
+										{
+											"args": [
+												"sn:f_cause_fever",
+												"sn:f_letter"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_lost",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:traits_revealed",
+										{
+											"args": [
+												"sn:letter"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:washed",
+										true,
+										"s:dress",
+										"sn:gown",
+										"s:laid_out",
+										true,
+										"s:harvested",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:balm_windows",
+										[],
+										"s:stench_noted",
+										false
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0012",
+										"s:seed",
+										"i:95045",
+										"s:display_name",
+										"s:Theres Holzapfel",
+										"s:age",
+										"i:58",
+										"s:cause_id",
+										"sn:drowned_millpond",
+										"s:traits",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										true,
+										"s:shrouded",
+										true,
+										"s:valuables_coins",
+										"i:0",
+										"s:valuables_decision",
+										"sn:",
+										"s:freshness",
+										"f:0.7175",
+										"s:freshness_at_burial",
+										"f:0.7175",
+										"s:last_decay_total",
+										"i:16526",
+										"s:location",
+										"sn:buried",
+										"s:position",
+										{
+											"args": [
+												-1.600000023841858,
+												0.8455460667610168,
+												-5.400000095367432
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.31415927410126",
+										"s:grave_id",
+										"s:plot_12",
+										"s:arrival_total_minutes",
+										"i:16300",
+										"s:buried_day",
+										"i:12",
+										"s:story_id",
+										"sn:",
+										"s:exam_done",
+										{
+											"args": [
+												"sn:clothing",
+												"sn:hands",
+												"sn:wounds",
+												"sn:pockets"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_revealed",
+										{
+											"args": [
+												"sn:f_cause_drowned_millpond"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_lost",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:traits_revealed",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:washed",
+										true,
+										"s:dress",
+										"sn:gown",
+										"s:laid_out",
+										true,
+										"s:harvested",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:balm_windows",
+										[],
+										"s:stench_noted",
+										false
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0013",
+										"s:seed",
+										"i:102964",
+										"s:display_name",
+										"s:Ida Wernstein",
+										"s:age",
+										"i:27",
+										"s:cause_id",
+										"sn:poisoned",
+										"s:traits",
+										{
+											"args": [
+												"sn:strange_wound",
+												"sn:letter"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										true,
+										"s:shrouded",
+										true,
+										"s:valuables_coins",
+										"i:0",
+										"s:valuables_decision",
+										"sn:",
+										"s:freshness",
+										"f:0.857292",
+										"s:freshness_at_burial",
+										"f:0.857292",
+										"s:last_decay_total",
+										"i:17979",
+										"s:location",
+										"sn:buried",
+										"s:position",
+										{
+											"args": [
+												-1.600000023841858,
+												0.8455460667610168,
+												-5.400000095367432
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.31415927410126",
+										"s:grave_id",
+										"s:h_01",
+										"s:arrival_total_minutes",
+										"i:17740",
+										"s:buried_day",
+										"i:13",
+										"s:story_id",
+										"sn:s3_wernstein",
+										"s:exam_done",
+										{
+											"args": [
+												"sn:clothing",
+												"sn:hands",
+												"sn:wounds",
+												"sn:pockets"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_revealed",
+										{
+											"args": [
+												"sn:f_s3_coat",
+												"sn:f_s3_ink",
+												"sn:f_cause_poisoned",
+												"sn:f_s3_mark",
+												"sn:f_s3_letter"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_lost",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:traits_revealed",
+										{
+											"args": [
+												"sn:strange_wound",
+												"sn:letter"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:washed",
+										true,
+										"s:dress",
+										"sn:gown",
+										"s:laid_out",
+										true,
+										"s:harvested",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:balm_windows",
+										[
+											"i:17843",
+											"i:18923"
+										],
+										"s:stench_noted",
+										false
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0014",
+										"s:seed",
+										"i:110883",
+										"s:display_name",
+										"s:Dietlinde Weidenfeller",
+										"s:age",
+										"i:20",
+										"s:cause_id",
+										"sn:drowned_millpond",
+										"s:traits",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										true,
+										"s:shrouded",
+										true,
+										"s:valuables_coins",
+										"i:0",
+										"s:valuables_decision",
+										"sn:",
+										"s:freshness",
+										"f:0.7175",
+										"s:freshness_at_burial",
+										"f:0.7175",
+										"s:last_decay_total",
+										"i:19406",
+										"s:location",
+										"sn:buried",
+										"s:position",
+										{
+											"args": [
+												-1.600000023841858,
+												0.8455460667610168,
+												-5.400000095367432
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.31415927410126",
+										"s:grave_id",
+										"s:h_02",
+										"s:arrival_total_minutes",
+										"i:19180",
+										"s:buried_day",
+										"i:14",
+										"s:story_id",
+										"sn:",
+										"s:exam_done",
+										{
+											"args": [
+												"sn:clothing",
+												"sn:hands",
+												"sn:wounds",
+												"sn:pockets"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_revealed",
+										{
+											"args": [
+												"sn:f_cause_drowned_millpond"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_lost",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:traits_revealed",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:washed",
+										true,
+										"s:dress",
+										"sn:gown",
+										"s:laid_out",
+										true,
+										"s:harvested",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:balm_windows",
+										[],
+										"s:stench_noted",
+										false
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0015",
+										"s:seed",
+										"i:118802",
+										"s:display_name",
+										"s:Gottlieb Rabenstein",
+										"s:age",
+										"i:88",
+										"s:cause_id",
+										"sn:drowned_millpond",
+										"s:traits",
+										{
+											"args": [
+												"sn:letter",
+												"sn:strange_wound"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										true,
+										"s:shrouded",
+										true,
+										"s:valuables_coins",
+										"i:0",
+										"s:valuables_decision",
+										"sn:",
+										"s:freshness",
+										"f:0.7525",
+										"s:freshness_at_burial",
+										"f:0.7525",
+										"s:last_decay_total",
+										"i:20818",
+										"s:location",
+										"sn:buried",
+										"s:position",
+										{
+											"args": [
+												-1.600000023841858,
+												0.8455460667610168,
+												-5.400000095367432
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.31415927410126",
+										"s:grave_id",
+										"s:h_03",
+										"s:arrival_total_minutes",
+										"i:20620",
+										"s:buried_day",
+										"i:15",
+										"s:story_id",
+										"sn:",
+										"s:exam_done",
+										{
+											"args": [
+												"sn:clothing",
+												"sn:hands",
+												"sn:wounds",
+												"sn:pockets"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_revealed",
+										{
+											"args": [
+												"sn:f_cause_drowned_millpond",
+												"sn:f_mark",
+												"sn:f_letter"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_lost",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:traits_revealed",
+										{
+											"args": [
+												"sn:strange_wound",
+												"sn:letter"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:washed",
+										true,
+										"s:dress",
+										"sn:gown",
+										"s:laid_out",
+										true,
+										"s:harvested",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:balm_windows",
+										[],
+										"s:stench_noted",
+										false
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:corpse_0016",
+										"s:seed",
+										"i:126721",
+										"s:display_name",
+										"s:Bartel Uhlig",
+										"s:age",
+										"i:72",
+										"s:cause_id",
+										"sn:fall_hayloft",
+										"s:traits",
+										{
+											"args": [
+												"sn:tattoo"
+											],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:examined",
+										false,
+										"s:shrouded",
+										false,
+										"s:valuables_coins",
+										"i:0",
+										"s:valuables_decision",
+										"sn:",
+										"s:freshness",
+										"f:0.975",
+										"s:freshness_at_burial",
+										"f:-1.0",
+										"s:last_decay_total",
+										"i:22090",
+										"s:location",
+										"sn:carried",
+										"s:position",
+										{
+											"args": [
+												4.400000095367432,
+												0.5057660937309265,
+												8.300000190734863
+											],
+											"type": "Vector3"
+										},
+										"s:rot_y",
+										"f:0.0",
+										"s:grave_id",
+										"s:",
+										"s:arrival_total_minutes",
+										"i:22060",
+										"s:buried_day",
+										"i:0",
+										"s:story_id",
+										"sn:s4_uhlig",
+										"s:exam_done",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_revealed",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:finds_lost",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:traits_revealed",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:washed",
+										false,
+										"s:dress",
+										"sn:",
+										"s:laid_out",
+										false,
+										"s:harvested",
+										{
+											"args": [],
+											"elem_type": "StringName",
+											"type": "Array"
+										},
+										"s:balm_windows",
+										[],
+										"s:stench_noted",
+										false
+									],
+									"type": "Dictionary"
+								}
+							],
+							"s:next_serial",
+							"i:17",
+							"s:last_delivery_day",
+							"i:16",
+							"s:last_delivery_ids",
+							{
+								"args": [
+									"s:corpse_0016"
+								],
+								"elem_type": "String",
+								"type": "Array"
+							},
+							"s:spawn_counts",
+							{
+								"args": [
+									"i:1",
+									"i:1",
+									"i:2",
+									"i:1",
+									"i:3",
+									"i:1",
+									"i:4",
+									"i:1",
+									"i:5",
+									"i:1",
+									"i:6",
+									"i:1",
+									"i:7",
+									"i:1",
+									"i:8",
+									"i:1",
+									"i:9",
+									"i:1",
+									"i:10",
+									"i:1",
+									"i:11",
+									"i:1",
+									"i:12",
+									"i:1",
+									"i:13",
+									"i:1",
+									"i:14",
+									"i:1",
+									"i:15",
+									"i:1",
+									"i:16",
+									"i:1"
+								],
+								"type": "Dictionary"
+							},
+							"s:story_delivered",
+							[
+								"s:s1_quendel",
+								"s:s2_hemmerling",
+								"s:s3_wernstein",
+								"s:s4_uhlig"
+							],
+							"s:story_last_day",
+							"i:16",
+							"s:stench_day",
+							"i:0"
+						],
+						"type": "Dictionary"
+					},
+					"s:expansion",
+					{
+						"args": [
+							"s:cleared",
+							[
+								"s:obs_e_01",
+								"s:obs_e_02",
+								"s:obs_e_03",
+								"s:obs_e_04",
+								"s:obs_e_05",
+								"s:obs_e_06",
+								"s:obs_e_07",
+								"s:obs_e_gap_1",
+								"s:obs_e_gap_2",
+								"s:obs_e_gap_3",
+								"s:obs_n_hedge",
+								"s:obs_n_01",
+								"s:obs_n_02",
+								"s:obs_n_03",
+								"s:obs_n_04",
+								"s:obs_n_05",
+								"s:obs_n_06",
+								"s:obs_n_07",
+								"s:obs_n_gap_1",
+								"s:obs_n_gap_2",
+								"s:obs_n_gap_3",
+								"s:obs_h_gate",
+								"s:obs_h_gap_1",
+								"s:obs_h_pit_1",
+								"s:obs_h_pit_2",
+								"s:obs_h_pit_3",
+								"s:obs_h_pit_4",
+								"s:obs_h_pit_5",
+								"s:obs_h_pit_6",
+								"s:obs_h_thicket_1",
+								"s:obs_h_thicket_2",
+								"s:obs_b_gate",
+								"s:obs_q_boulder_1",
+								"s:obs_q_boulder_2",
+								"s:obs_q_boulder_3"
+							],
+							"s:unlocked",
+							[
+								"sn:east",
+								"sn:north",
+								"sn:elder",
+								"sn:bruch",
+								"sn:quarry"
+							]
+						],
+						"type": "Dictionary"
+					},
+					"s:graveyard",
+					{
+						"args": [
+							"s:graves",
+							[
+								{
+									"args": [
+										"s:id",
+										"s:plot_01",
+										"s:state",
+										"i:3",
+										"s:corpse_id",
+										"s:corpse_0001",
+										"s:marker_id",
+										"sn:gravestone_simple",
+										"s:quality",
+										"i:9",
+										"s:breakdown",
+										[
+											{
+												"args": [
+													"s:label",
+													"s:Bestattet",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Leichentuch",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Grabstein",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Frisch",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Untersucht",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											}
+										],
+										"s:completed_day",
+										"i:1",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:plot_02",
+										"s:state",
+										"i:3",
+										"s:corpse_id",
+										"s:corpse_0002",
+										"s:marker_id",
+										"sn:gravestone_simple",
+										"s:quality",
+										"i:12",
+										"s:breakdown",
+										[
+											{
+												"args": [
+													"s:label",
+													"s:Bestattet",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Gewaschen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Leichentuch",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Aufgebahrt",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Grabstein",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Frisch",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Untersucht",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Wertsachen liegen gelassen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											}
+										],
+										"s:completed_day",
+										"i:2",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:plot_03",
+										"s:state",
+										"i:3",
+										"s:corpse_id",
+										"s:corpse_0003",
+										"s:marker_id",
+										"sn:gravestone_simple",
+										"s:quality",
+										"i:11",
+										"s:breakdown",
+										[
+											{
+												"args": [
+													"s:label",
+													"s:Bestattet",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Gewaschen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Leichentuch",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Aufgebahrt",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Grabstein",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Frisch",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Untersucht",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											}
+										],
+										"s:completed_day",
+										"i:3",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:plot_04",
+										"s:state",
+										"i:3",
+										"s:corpse_id",
+										"s:corpse_0004",
+										"s:marker_id",
+										"sn:gravestone_simple",
+										"s:quality",
+										"i:12",
+										"s:breakdown",
+										[
+											{
+												"args": [
+													"s:label",
+													"s:Bestattet",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Gewaschen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Leichentuch",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Aufgebahrt",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Grabstein",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Frisch",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Untersucht",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Wertsachen liegen gelassen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											}
+										],
+										"s:completed_day",
+										"i:4",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:plot_05",
+										"s:state",
+										"i:3",
+										"s:corpse_id",
+										"s:corpse_0005",
+										"s:marker_id",
+										"sn:gravestone_simple",
+										"s:quality",
+										"i:12",
+										"s:breakdown",
+										[
+											{
+												"args": [
+													"s:label",
+													"s:Bestattet",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Gewaschen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Leichentuch",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Aufgebahrt",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Grabstein",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Frisch",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Untersucht",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Wertsachen liegen gelassen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											}
+										],
+										"s:completed_day",
+										"i:5",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:plot_06",
+										"s:state",
+										"i:3",
+										"s:corpse_id",
+										"s:corpse_0006",
+										"s:marker_id",
+										"sn:gravestone_simple",
+										"s:quality",
+										"i:11",
+										"s:breakdown",
+										[
+											{
+												"args": [
+													"s:label",
+													"s:Bestattet",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Gewaschen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Leichentuch",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Aufgebahrt",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Grabstein",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Frisch",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Untersucht",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											}
+										],
+										"s:completed_day",
+										"i:6",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:plot_07",
+										"s:state",
+										"i:3",
+										"s:corpse_id",
+										"s:corpse_0007",
+										"s:marker_id",
+										"sn:gravestone_simple",
+										"s:quality",
+										"i:12",
+										"s:breakdown",
+										[
+											{
+												"args": [
+													"s:label",
+													"s:Bestattet",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Gewaschen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Leichentuch",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Aufgebahrt",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Grabstein",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Frisch",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Untersucht",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Wertsachen liegen gelassen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											}
+										],
+										"s:completed_day",
+										"i:7",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:plot_08",
+										"s:state",
+										"i:3",
+										"s:corpse_id",
+										"s:corpse_0008",
+										"s:marker_id",
+										"sn:gravestone_simple",
+										"s:quality",
+										"i:12",
+										"s:breakdown",
+										[
+											{
+												"args": [
+													"s:label",
+													"s:Bestattet",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Gewaschen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Totenhemd",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Aufgebahrt",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Grabstein",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Frisch",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Untersucht",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											}
+										],
+										"s:completed_day",
+										"i:8",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:plot_09",
+										"s:state",
+										"i:3",
+										"s:corpse_id",
+										"s:corpse_0009",
+										"s:marker_id",
+										"sn:gravestone_simple",
+										"s:quality",
+										"i:12",
+										"s:breakdown",
+										[
+											{
+												"args": [
+													"s:label",
+													"s:Bestattet",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Gewaschen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Totenhemd",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Aufgebahrt",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Grabstein",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Frisch",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Untersucht",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											}
+										],
+										"s:completed_day",
+										"i:9",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:plot_10",
+										"s:state",
+										"i:3",
+										"s:corpse_id",
+										"s:corpse_0010",
+										"s:marker_id",
+										"sn:gravestone_simple",
+										"s:quality",
+										"i:13",
+										"s:breakdown",
+										[
+											{
+												"args": [
+													"s:label",
+													"s:Bestattet",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Gewaschen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Totenhemd",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Aufgebahrt",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Grabstein",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Frisch",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Untersucht",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Wertsachen liegen gelassen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											}
+										],
+										"s:completed_day",
+										"i:10",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:plot_11",
+										"s:state",
+										"i:3",
+										"s:corpse_id",
+										"s:corpse_0011",
+										"s:marker_id",
+										"sn:gravestone_simple",
+										"s:quality",
+										"i:12",
+										"s:breakdown",
+										[
+											{
+												"args": [
+													"s:label",
+													"s:Bestattet",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Gewaschen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Totenhemd",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Aufgebahrt",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Grabstein",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Frisch",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Untersucht",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											}
+										],
+										"s:completed_day",
+										"i:11",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:plot_12",
+										"s:state",
+										"i:3",
+										"s:corpse_id",
+										"s:corpse_0012",
+										"s:marker_id",
+										"sn:gravestone_simple",
+										"s:quality",
+										"i:12",
+										"s:breakdown",
+										[
+											{
+												"args": [
+													"s:label",
+													"s:Bestattet",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Gewaschen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Totenhemd",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Aufgebahrt",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Grabstein",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Frisch",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Untersucht",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											}
+										],
+										"s:completed_day",
+										"i:12",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:h_01",
+										"s:state",
+										"i:3",
+										"s:corpse_id",
+										"s:corpse_0013",
+										"s:marker_id",
+										"sn:gravestone_simple",
+										"s:quality",
+										"i:12",
+										"s:breakdown",
+										[
+											{
+												"args": [
+													"s:label",
+													"s:Bestattet",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Gewaschen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Totenhemd",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Aufgebahrt",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Grabstein",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Frisch",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Untersucht",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											}
+										],
+										"s:completed_day",
+										"i:13",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:h_02",
+										"s:state",
+										"i:3",
+										"s:corpse_id",
+										"s:corpse_0014",
+										"s:marker_id",
+										"sn:gravestone_simple",
+										"s:quality",
+										"i:12",
+										"s:breakdown",
+										[
+											{
+												"args": [
+													"s:label",
+													"s:Bestattet",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Gewaschen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Totenhemd",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Aufgebahrt",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Grabstein",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Frisch",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Untersucht",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											}
+										],
+										"s:completed_day",
+										"i:14",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:h_03",
+										"s:state",
+										"i:3",
+										"s:corpse_id",
+										"s:corpse_0015",
+										"s:marker_id",
+										"sn:gravestone_simple",
+										"s:quality",
+										"i:12",
+										"s:breakdown",
+										[
+											{
+												"args": [
+													"s:label",
+													"s:Bestattet",
+													"s:points",
+													"i:2"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Gewaschen",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Totenhemd",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Aufgebahrt",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Grabstein",
+													"s:points",
+													"i:3"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Frisch",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											},
+											{
+												"args": [
+													"s:label",
+													"s:Untersucht",
+													"s:points",
+													"i:1"
+												],
+												"type": "Dictionary"
+											}
+										],
+										"s:completed_day",
+										"i:15",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:h_04",
+										"s:state",
+										"i:0",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[],
+										"s:completed_day",
+										"i:0",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:h_05",
+										"s:state",
+										"i:0",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[],
+										"s:completed_day",
+										"i:0",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:h_06",
+										"s:state",
+										"i:0",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[],
+										"s:completed_day",
+										"i:0",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:old_01",
+										"s:state",
+										"i:4",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[],
+										"s:completed_day",
+										"i:0",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:old_02",
+										"s:state",
+										"i:4",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[],
+										"s:completed_day",
+										"i:0",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:old_03",
+										"s:state",
+										"i:4",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[],
+										"s:completed_day",
+										"i:0",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:old_04",
+										"s:state",
+										"i:4",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[],
+										"s:completed_day",
+										"i:0",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:old_05",
+										"s:state",
+										"i:4",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[],
+										"s:completed_day",
+										"i:0",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:old_06",
+										"s:state",
+										"i:4",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[],
+										"s:completed_day",
+										"i:0",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:old_07",
+										"s:state",
+										"i:4",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[],
+										"s:completed_day",
+										"i:0",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:id",
+										"s:old_08",
+										"s:state",
+										"i:4",
+										"s:corpse_id",
+										"s:",
+										"s:marker_id",
+										"sn:",
+										"s:quality",
+										"i:0",
+										"s:breakdown",
+										[],
+										"s:completed_day",
+										"i:0",
+										"s:design",
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"type": "Dictionary"
+								}
+							]
+						],
+						"type": "Dictionary"
+					},
+					"s:cleanliness",
+					{
+						"args": [
+							"s:last_total",
+							"i:22090",
+							"s:spots",
+							{
+								"args": [
+									"s:dirt_y01",
+									"f:0.8343575",
+									"s:dirt_y02",
+									"f:0.83124708333333",
+									"s:dirt_y03",
+									"f:0.828133125",
+									"s:dirt_y04",
+									"f:0.825015625",
+									"s:dirt_y05",
+									"f:0.82189458333333",
+									"s:dirt_y06",
+									"f:0.81877",
+									"s:dirt_y07",
+									"f:1.13927625",
+									"s:dirt_y08",
+									"f:1.1363065625",
+									"s:dirt_y09",
+									"f:1.09",
+									"s:dirt_y10",
+									"f:1.09970666666667",
+									"s:dirt_y11",
+									"f:1.096875",
+									"s:dirt_y12",
+									"f:1.09404",
+									"s:dirt_e01",
+									"f:0.90081395833333",
+									"s:dirt_e02",
+									"f:0.897259375",
+									"s:dirt_e03",
+									"f:0.89370125",
+									"s:dirt_e04",
+									"f:0.89013958333333",
+									"s:dirt_e05",
+									"f:0.886574375",
+									"s:dirt_n01",
+									"f:0.798609375",
+									"s:dirt_n02",
+									"f:0.79541604166667",
+									"s:dirt_n03",
+									"f:0.79221916666667",
+									"s:dirt_n04",
+									"f:0.32504333333333",
+									"s:dirt_n05",
+									"f:0.32182194444444",
+									"s:dirt_h01",
+									"f:0.292734375",
+									"s:dirt_h02",
+									"f:0.38630375",
+									"s:dirt_h03",
+									"f:0.38229166666667",
+									"s:dirt_plot_01",
+									"f:0.500155625",
+									"s:dirt_plot_02",
+									"f:0.49714625",
+									"s:dirt_plot_03",
+									"f:0.20923458333333",
+									"s:dirt_plot_04",
+									"f:1.038046875",
+									"s:dirt_plot_05",
+									"f:0.7217109375",
+									"s:dirt_plot_06",
+									"f:0.49493333333333",
+									"s:dirt_plot_07",
+									"f:0.2063978125",
+									"s:dirt_plot_08",
+									"f:1.03699625",
+									"s:dirt_plot_09",
+									"f:0.71997520833333",
+									"s:dirt_plot_10",
+									"f:0.49879885416667",
+									"s:dirt_plot_11",
+									"f:0.2060625",
+									"s:dirt_plot_12",
+									"f:1.09251458333333",
+									"s:dirt_h_01",
+									"f:1.06971645833333",
+									"s:dirt_h_02",
+									"f:0.69867875",
+									"s:dirt_h_03",
+									"f:0.33125",
+									"s:dirt_h_04",
+									"f:0.0",
+									"s:dirt_h_05",
+									"f:0.0",
+									"s:dirt_h_06",
+									"f:0.0"
+								],
+								"type": "Dictionary"
+							}
+						],
+						"type": "Dictionary"
+					},
+					"s:decorations",
+					{
+						"args": [
+							"s:next_uid",
+							"i:12",
+							"s:placements",
+							[
+								{
+									"args": [
+										"s:uid",
+										"s:d_1",
+										"s:decor_id",
+										"sn:decor_grave_vase",
+										"s:cell",
+										{
+											"args": [
+												30,
+												20
+											],
+											"type": "Vector2i"
+										},
+										"s:rot",
+										"i:0"
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:uid",
+										"s:d_2",
+										"s:decor_id",
+										"sn:decor_grave_vase",
+										"s:cell",
+										{
+											"args": [
+												36,
+												26
+											],
+											"type": "Vector2i"
+										},
+										"s:rot",
+										"i:0"
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:uid",
+										"s:d_3",
+										"s:decor_id",
+										"sn:decor_bench_wood",
+										"s:cell",
+										{
+											"args": [
+												30,
+												28
+											],
+											"type": "Vector2i"
+										},
+										"s:rot",
+										"i:0"
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:uid",
+										"s:d_4",
+										"s:decor_id",
+										"sn:decor_lantern",
+										"s:cell",
+										{
+											"args": [
+												29,
+												20
+											],
+											"type": "Vector2i"
+										},
+										"s:rot",
+										"i:0"
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:uid",
+										"s:d_5",
+										"s:decor_id",
+										"sn:decor_lantern",
+										"s:cell",
+										{
+											"args": [
+												32,
+												20
+											],
+											"type": "Vector2i"
+										},
+										"s:rot",
+										"i:0"
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:uid",
+										"s:d_6",
+										"s:decor_id",
+										"sn:decor_lantern",
+										"s:cell",
+										{
+											"args": [
+												48,
+												25
+											],
+											"type": "Vector2i"
+										},
+										"s:rot",
+										"i:0"
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:uid",
+										"s:d_7",
+										"s:decor_id",
+										"sn:decor_bench_wood",
+										"s:cell",
+										{
+											"args": [
+												50,
+												32
+											],
+											"type": "Vector2i"
+										},
+										"s:rot",
+										"i:0"
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:uid",
+										"s:d_8",
+										"s:decor_id",
+										"sn:decor_lantern",
+										"s:cell",
+										{
+											"args": [
+												55,
+												22
+											],
+											"type": "Vector2i"
+										},
+										"s:rot",
+										"i:0"
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:uid",
+										"s:d_9",
+										"s:decor_id",
+										"sn:decor_lantern",
+										"s:cell",
+										{
+											"args": [
+												25,
+												7
+											],
+											"type": "Vector2i"
+										},
+										"s:rot",
+										"i:0"
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:uid",
+										"s:d_10",
+										"s:decor_id",
+										"sn:decor_bench_wood",
+										"s:cell",
+										{
+											"args": [
+												28,
+												12
+											],
+											"type": "Vector2i"
+										},
+										"s:rot",
+										"i:0"
+									],
+									"type": "Dictionary"
+								},
+								{
+									"args": [
+										"s:uid",
+										"s:d_11",
+										"s:decor_id",
+										"sn:decor_lantern",
+										"s:cell",
+										{
+											"args": [
+												32,
+												4
+											],
+											"type": "Vector2i"
+										},
+										"s:rot",
+										"i:0"
+									],
+									"type": "Dictionary"
+								}
+							]
+						],
+						"type": "Dictionary"
+					},
+					"s:npc_carter",
+					{
+						"args": [],
+						"type": "Dictionary"
+					},
+					"s:npc_trader",
+					{
+						"args": [],
+						"type": "Dictionary"
+					},
+					"s:res_stone",
+					{
+						"args": [
+							"s:remaining",
+							"i:0",
+							"s:last_reset_day",
+							"i:16"
+						],
+						"type": "Dictionary"
+					},
+					"s:res_wood",
+					{
+						"args": [
+							"s:remaining",
+							"i:0",
+							"s:last_reset_day",
+							"i:16"
+						],
+						"type": "Dictionary"
+					},
+					"s:gathering",
+					{
+						"args": [
+							"s:gather_alder_1",
+							{
+								"args": [
+									"s:charges",
+									"i:1",
+									"s:last_taken_day",
+									"i:-1",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_alder_2",
+							{
+								"args": [
+									"s:charges",
+									"i:1",
+									"s:last_taken_day",
+									"i:-1",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_alder_3",
+							{
+								"args": [
+									"s:charges",
+									"i:1",
+									"s:last_taken_day",
+									"i:-1",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_alder_4",
+							{
+								"args": [
+									"s:charges",
+									"i:1",
+									"s:last_taken_day",
+									"i:-1",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_alder_5",
+							{
+								"args": [
+									"s:charges",
+									"i:1",
+									"s:last_taken_day",
+									"i:-1",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_clay_1",
+							{
+								"args": [
+									"s:charges",
+									"i:3",
+									"s:last_taken_day",
+									"i:14",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_elder_1",
+							{
+								"args": [
+									"s:charges",
+									"i:1",
+									"s:last_taken_day",
+									"i:14",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_elder_2",
+							{
+								"args": [
+									"s:charges",
+									"i:1",
+									"s:last_taken_day",
+									"i:14",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_elder_3",
+							{
+								"args": [
+									"s:charges",
+									"i:1",
+									"s:last_taken_day",
+									"i:14",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_flax_1",
+							{
+								"args": [
+									"s:charges",
+									"i:1",
+									"s:last_taken_day",
+									"i:13",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_flax_2",
+							{
+								"args": [
+									"s:charges",
+									"i:1",
+									"s:last_taken_day",
+									"i:13",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_flax_3",
+							{
+								"args": [
+									"s:charges",
+									"i:1",
+									"s:last_taken_day",
+									"i:13",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_herbs_1",
+							{
+								"args": [
+									"s:charges",
+									"i:2",
+									"s:last_taken_day",
+									"i:13",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_herbs_2",
+							{
+								"args": [
+									"s:charges",
+									"i:2",
+									"s:last_taken_day",
+									"i:14",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_herbs_3",
+							{
+								"args": [
+									"s:charges",
+									"i:2",
+									"s:last_taken_day",
+									"i:-1",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_herbs_4",
+							{
+								"args": [
+									"s:charges",
+									"i:2",
+									"s:last_taken_day",
+									"i:-1",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_ore_1",
+							{
+								"args": [
+									"s:charges",
+									"i:3",
+									"s:last_taken_day",
+									"i:15",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_rubble_1",
+							{
+								"args": [
+									"s:charges",
+									"i:4",
+									"s:last_taken_day",
+									"i:15",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_workstone_1",
+							{
+								"args": [
+									"s:charges",
+									"i:2",
+									"s:last_taken_day",
+									"i:-1",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							},
+							"s:gather_workstone_2",
+							{
+								"args": [
+									"s:charges",
+									"i:2",
+									"s:last_taken_day",
+									"i:-1",
+									"s:last_refresh_day",
+									"i:16"
+								],
+								"type": "Dictionary"
+							}
+						],
+						"type": "Dictionary"
+					},
+					"s:ghosts",
+					{
+						"args": [
+							"s:gifts",
+							{
+								"args": [
+									"s:plot_01",
+									"i:1",
+									"s:plot_02",
+									"i:2",
+									"s:plot_03",
+									"i:3",
+									"s:plot_04",
+									"i:4",
+									"s:plot_05",
+									"i:5",
+									"s:plot_06",
+									"i:6",
+									"s:plot_07",
+									"i:7",
+									"s:plot_08",
+									"i:8",
+									"s:plot_09",
+									"i:9",
+									"s:plot_10",
+									"i:10",
+									"s:plot_11",
+									"i:11",
+									"s:plot_12",
+									"i:12",
+									"s:h_01",
+									"i:13",
+									"s:h_02",
+									"i:14",
+									"s:h_03",
+									"i:15"
+								],
+								"key_type": "String",
+								"type": "Dictionary",
+								"value_type": "int"
+							},
+							"s:heard",
+							{
+								"args": [
+									"s:plot_01",
+									"i:15",
+									"s:plot_02",
+									"i:15",
+									"s:plot_03",
+									"i:15",
+									"s:plot_04",
+									"i:15",
+									"s:plot_05",
+									"i:15",
+									"s:plot_06",
+									"i:15",
+									"s:plot_07",
+									"i:15",
+									"s:plot_08",
+									"i:15",
+									"s:plot_09",
+									"i:15",
+									"s:plot_10",
+									"i:15",
+									"s:plot_11",
+									"i:15",
+									"s:plot_12",
+									"i:15",
+									"s:h_01",
+									"i:15",
+									"s:h_02",
+									"i:15",
+									"s:h_03",
+									"i:15"
+								],
+								"key_type": "String",
+								"type": "Dictionary",
+								"value_type": "int"
+							}
+						],
+						"type": "Dictionary"
+					},
+					"s:workshop",
+					{
+						"args": [
+							"s:built",
+							[
+								"s:loom"
+							],
+							"s:jobs",
+							{
+								"args": [],
+								"type": "Dictionary"
+							},
+							"s:goal_done",
+							false,
+							"s:evict_pending",
+							{
+								"args": [],
+								"type": "Dictionary"
+							},
+							"s:open_day",
+							"i:13",
+							"s:spent",
+							{
+								"args": [
+									"s:license",
+									"i:20",
+									"s:osric",
+									"i:32",
+									"s:ilse",
+									"i:19",
+									"s:build",
+									"i:10"
+								],
+								"type": "Dictionary"
+							},
+							"s:content_before",
+							"i:12"
+						],
+						"type": "Dictionary"
+					},
+					"s:stonemasonry",
+					{
+						"args": [
+							"s:next_id",
+							"i:1",
+							"s:ready",
+							[],
+							"s:heard_design",
+							[]
+						],
+						"type": "Dictionary"
+					},
+					"s:journal",
+					{
+						"args": [
+							"s:clues",
+							{
+								"args": [
+									"s:c_mark",
+									{
+										"args": [
+											"s:day",
+											"i:3",
+											"s:corpse",
+											"s:corpse_0003",
+											"s:count",
+											"i:4"
+										],
+										"type": "Dictionary"
+									},
+									"s:c_trader_note",
+									{
+										"args": [
+											"s:day",
+											"i:4",
+											"s:corpse",
+											"s:",
+											"s:count",
+											"i:0"
+										],
+										"type": "Dictionary"
+									},
+									"s:c_warning_letter",
+									{
+										"args": [
+											"s:day",
+											"i:4",
+											"s:corpse",
+											"s:corpse_0004",
+											"s:count",
+											"i:3"
+										],
+										"type": "Dictionary"
+									},
+									"s:c_trader_marked",
+									{
+										"args": [
+											"s:day",
+											"i:4",
+											"s:corpse",
+											"s:",
+											"s:count",
+											"i:0"
+										],
+										"type": "Dictionary"
+									},
+									"s:c_anchor_snake",
+									{
+										"args": [
+											"s:day",
+											"i:5",
+											"s:corpse",
+											"s:corpse_0005",
+											"s:count",
+											"i:4"
+										],
+										"type": "Dictionary"
+									},
+									"s:c_page_1",
+									{
+										"args": [
+											"s:day",
+											"i:6",
+											"s:corpse",
+											"s:corpse_0006",
+											"s:count",
+											"i:1"
+										],
+										"type": "Dictionary"
+									},
+									"s:c_trader_lorenz",
+									{
+										"args": [
+											"s:day",
+											"i:6",
+											"s:corpse",
+											"s:",
+											"s:count",
+											"i:0"
+										],
+										"type": "Dictionary"
+									},
+									"s:c_ferry_jacket",
+									{
+										"args": [
+											"s:day",
+											"i:9",
+											"s:corpse",
+											"s:corpse_0009",
+											"s:count",
+											"i:1"
+										],
+										"type": "Dictionary"
+									},
+									"s:c_elder_key",
+									{
+										"args": [
+											"s:day",
+											"i:9",
+											"s:corpse",
+											"s:corpse_0009",
+											"s:count",
+											"i:1"
+										],
+										"type": "Dictionary"
+									},
+									"s:c_six_pits",
+									{
+										"args": [
+											"s:day",
+											"i:9",
+											"s:corpse",
+											"s:",
+											"s:count",
+											"i:0"
+										],
+										"type": "Dictionary"
+									},
+									"s:c_mark_healed",
+									{
+										"args": [
+											"s:day",
+											"i:13",
+											"s:corpse",
+											"s:corpse_0013",
+											"s:count",
+											"i:1"
+										],
+										"type": "Dictionary"
+									},
+									"s:c_letter_late",
+									{
+										"args": [
+											"s:day",
+											"i:13",
+											"s:corpse",
+											"s:corpse_0013",
+											"s:count",
+											"i:1"
+										],
+										"type": "Dictionary"
+									}
+								],
+								"type": "Dictionary"
+							},
+							"s:insights",
+							{
+								"args": [
+									"s:i_warnings",
+									"i:6",
+									"s:i_kranich",
+									"i:9",
+									"s:i_marked",
+									"i:13",
+									"s:i_still_writing",
+									"i:13"
+								],
+								"type": "Dictionary"
+							},
+							"s:unread",
+							{
+								"args": [],
+								"elem_type": "String",
+								"type": "Array"
+							}
+						],
+						"type": "Dictionary"
+					},
+					"s:night_trade",
+					{
+						"args": [
+							"s:intro_done",
+							true,
+							"s:tools_given",
+							true,
+							"s:talks",
+							"i:12",
+							"s:last_talk_night",
+							"i:15",
+							"s:stock_night",
+							"i:15",
+							"s:stock_left",
+							{
+								"args": [
+									"s:linen",
+									"i:0",
+									"s:juniper",
+									"i:4",
+									"s:gold_leaf",
+									"i:2"
+								],
+								"type": "Dictionary"
+							}
+						],
+						"type": "Dictionary"
+					},
+					"s:hut_chest",
+					{
+						"args": [
+							"s:storage",
+							{
+								"args": [
+									"s:slots",
+									[
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"s:currency",
+									{
+										"args": [],
+										"type": "Dictionary"
+									}
+								],
+								"type": "Dictionary"
+							}
+						],
+						"type": "Dictionary"
+					},
+					"s:player",
+					{
+						"args": [
+							"s:position",
+							{
+								"args": [
+									-5.624647617340088,
+									0.008723041974008083,
+									-4.363341331481934
+								],
+								"type": "Vector3"
+							},
+							"s:rot_y",
+							"f:0.31415927410126",
+							"s:in_interior",
+							false,
+							"s:inventory",
+							{
+								"args": [
+									"s:slots",
+									[
+										{
+											"args": [
+												"s:id",
+												"sn:shroud",
+												"s:amount",
+												"i:1"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [
+												"s:id",
+												"sn:wood",
+												"s:amount",
+												"i:44"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [
+												"s:id",
+												"sn:burial_gown",
+												"s:amount",
+												"i:1"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [
+												"s:id",
+												"sn:juniper",
+												"s:amount",
+												"i:2"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [
+												"s:id",
+												"sn:stone",
+												"s:amount",
+												"i:25"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [
+												"s:id",
+												"sn:clay",
+												"s:amount",
+												"i:10"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [
+												"s:id",
+												"sn:gravestone_simple",
+												"s:amount",
+												"i:1"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [
+												"s:id",
+												"sn:iron_fittings",
+												"s:amount",
+												"i:4"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [
+												"s:id",
+												"sn:flax",
+												"s:amount",
+												"i:1"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [
+												"s:id",
+												"sn:herbs",
+												"s:amount",
+												"i:3"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [
+												"s:id",
+												"sn:iron_ore",
+												"s:amount",
+												"i:3"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [
+												"s:id",
+												"sn:elderberries",
+												"s:amount",
+												"i:4"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [
+												"s:id",
+												"sn:ink",
+												"s:amount",
+												"i:2"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [
+												"s:id",
+												"sn:linen",
+												"s:amount",
+												"i:5"
+											],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										},
+										{
+											"args": [],
+											"type": "Dictionary"
+										}
+									],
+									"s:currency",
+									{
+										"args": [
+											"sn:coin",
+											"i:31"
+										],
+										"type": "Dictionary"
+									},
+									"s:tools",
+									{
+										"args": [
+											"sn:scrub_brush",
+											"i:1",
+											"sn:comb",
+											"i:1",
+											"sn:rake",
+											"i:1",
+											"sn:shears",
+											"i:1",
+											"sn:pliers",
+											"i:1",
+											"sn:pickaxe_iron",
+											"i:1"
+										],
+										"type": "Dictionary"
+									}
+								],
+								"type": "Dictionary"
+							}
+						],
+						"type": "Dictionary"
+					}
+				],
+				"type": "Dictionary"
+			}
+		],
+		"type": "Dictionary"
+	},
+	"format_version": 4,
+	"meta": {
+		"day": 16,
+		"game_version": "0.2.0-phase2",
+		"minute_of_day": 490,
+		"saved_unix": 1790616671,
+		"scene": "res://src/world/graveyard/graveyard.tscn"
+	}
+}
