@@ -6,9 +6,9 @@ extends TestCase
 ## the next corpse (harvested → no „Voll hergerichtet“, stats.prepared still counts), Osric offers
 ## the quarry license from workshop_open on (real DialogueRunner, coins into the ledger), and the
 ## v4 resave round-trips.
-## Open until the owners merge (W1/W2): the loom shroud for the next corpse (P1 Workshop + stations)
-## and a designed stone on a FILLED grave (P4 Stonemasonry) – asserted here as soon as the world has
-## the Systems/Workshop and Systems/Stonemasonry nodes with their implementations.
+## W-Welt (W2, §10): with the workyard in the world the loom is built on its site and weaves the
+## burial gown for the next corpse, and a designed stone goes straight onto a FILLED grave (with
+## the burial payment, like placing a first marker).
 
 ## Records push_warning() messages (warnings never fail a test on their own).
 class WarningLog extends Logger:
@@ -110,6 +110,7 @@ func test_day13_complete_upgrades_to_phase5() -> void:
 	assert_eq(GameState.get_flag(&"bruch_license"), true)
 	assert_eq(spent, [[20, &"license"]])
 	assert_eq([GameState.get_stat(&"coins_spent"), GameState.get_stat(&"coins_spent_license")], [20, 20])
+	await _loom_gown_and_designed_stone(inv)
 	assert_eq(warnings.take(), PackedStringArray(), "no warnings in the Phase-5 steps")
 	# The v4 resave round-trips (ledger and flags included).
 	var before := SaveManager.collect_state()
@@ -126,6 +127,73 @@ func test_day13_complete_upgrades_to_phase5() -> void:
 
 
 # --- helpers ----------------------------------------------------------------------------------
+
+## §10: loom built on its build site (8 wood, 2 fittings, 10 coins) → yarn → linen → burial gown for
+## the corpse delivered on day 14 → buried in h_02 (FILLED) → mason's bench → a stele with an
+## inscription set on that FILLED grave: MARKED, the burial is paid, the design is stored.
+func _loom_gown_and_designed_stone(inv: Inventory) -> void:
+	var player := world.get_player()
+	player.instant_actions = true
+	var shop := world.get_node("Systems/Workshop") as Workshop
+	var masonry := world.get_node("Systems/Stonemasonry") as Stonemasonry
+	inv.add_item(&"wood", 11)
+	inv.add_item(&"iron_fittings", 2)
+	var site := world.get_node("Entities/site_loom") as BuildSite
+	site.refresh()
+	assert_true(site.visible and site.is_active(), "the loom's build site is shown")
+	assert_eq(site.block_reason(inv), "", "loom buildable")
+	site._player = player
+	site.request_build()
+	assert_true(shop.is_built(&"loom"), "loom built")
+	UIState.clear()
+	var loom := world.get_node("Entities/station_loom") as Workbench
+	assert_true(loom.visible and loom.can_interact(player), "the loom stands")
+	inv.add_item(&"flax", 10)
+	loom.interact(player)
+	for i: int in 5:
+		loom.request_craft(&"yarn")
+	loom.request_craft(&"linen_woven")
+	loom.request_craft(&"burial_gown_loom")
+	UIState.clear()
+	assert_eq(inv.count(&"burial_gown"), 1, "a burial gown from the loom")
+	# The corpse of day 14 onto the table, examined, dressed in the woven gown, buried in h_02.
+	var record: CorpseRecord = null
+	for r: CorpseRecord in world.corpse_manager.records():
+		if r.location == CorpseRecord.LOCATION_DROPOFF:
+			record = r
+	assert_not_null(record, "the corpse of day 14")
+	if record == null:
+		return
+	var table := world.get_node_by_layout_id("morgue_table") as MorgueTable
+	world.corpse_manager.put_down(record.id, &"table", table.slot_transform(), table.slot_node())
+	var care := tree.get_first_node_in_group(&"corpse_care") as CorpseCare
+	care.exam_all_instant(record.id)
+	if record.needs_valuables_decision():
+		record.valuables_decision = CorpseRecord.DECISION_LEFT
+	assert_true(care.dress(record.id, CorpseRecord.DRESS_GOWN, inv), "dressed in the loom's gown")
+	assert_eq(record.dress, CorpseRecord.DRESS_GOWN)
+	assert_true(world.graveyard.dig("h_02") and world.graveyard.bury("h_02", record.id), "buried in h_02")
+	assert_eq(world.graveyard.get_grave("h_02").state, GraveRecord.State.FILLED)
+	# The mason's bench, a stele with inscription → straight onto the FILLED grave (paid).
+	inv.add_item(&"stone", 10)
+	inv.add_item(&"ink", 1)
+	assert_true(shop.build(&"mason", inv), "mason's bench built")
+	var design := StoneDesign.new()
+	design.shape = &"stone_stele"
+	design.inscription = &"i_rest"
+	assert_eq(masonry.order_block_reason("h_02", design, inv), "", "a stone for the FILLED grave")
+	assert_ne(masonry.carve("h_02", design, inv), "", "carved")
+	var coins := inv.count(&"coin")
+	var plot := world.get_node_by_layout_id("h_02") as GravePlot
+	assert_true(plot.has_stone_to_set(), "the grave offers the stone")
+	plot.interact(player)
+	var grave := world.graveyard.get_grave("h_02")
+	assert_eq(grave.state, GraveRecord.State.MARKED, "h_02 marked with the designed stone")
+	assert_eq(StoneDesign.from_dict(grave.design).shape, &"stone_stele")
+	assert_true(inv.count(&"coin") > coins, "the burial is paid (%d → %d)" % [coins, inv.count(&"coin")])
+	UIState.clear()
+	await tree.process_frame
+
 
 func _load() -> void:
 	assert_eq(Phase5Fixtures.install_save_v3(FIXTURE, saves_dir, SLOT), OK)

@@ -85,3 +85,39 @@ Quelle: `data/world/graveyard_layout.json`, Builder-Teile `graveyard_build_phase
 - Tür-Zettel `Decor/DoorNote` (`ph_door_note`) am Türblatt der Hütte: sichtbar ab `trader_known` bis zum ersten Treffen mit Ilse.
 - Zwei Bäume aus dem Winkel versetzt (Eiche −6,5 | −17,5 → −7,6 | −23,4; Birke −4,8 | −17,6 → −4,9 | −22,9), drei Holundersträucher `ph_env_elder_bush`. Kamera-Grenze min → (−10, −17,5); `walkable_bounds` unverändert. Teleport `tp_elder` (−10,75 | −15,9).
 - Boden neu exportiert (nur die neuen Grabstellen werden geglättet; Größe und Kanten unverändert).
+
+## Phase-5-Welt – Werkhof, Am Bruch, Schlag (W-Welt, Vertrag `docs/PHASE5_DESIGN.md` §4)
+
+Quelle: `data/world/graveyard_layout.json` (Blöcke `workyard`, `stations`, `gather_nodes`, `quarry_edges`, Abschnitte `bruch`/`quarry`, Hindernisse `obs_b_gate`, `obs_q_boulder_1…3`), Builder-Teil `graveyard_build_phase5.gd` (Systemknoten Gathering 25 · Workshop 30 · Stonemasonry 35, Bauplätze, Stationen, Meiler, Steinablage, Sammelstellen, Felskante), Laufzeit-Präsentation `kiln_visual.gd` (Meiler kalt/brennend) und `stone_rack.gd` (fertige Steine an `stone_slot_1…3`). Aufnahmen: `graveyard_shots_phase5.gd`.
+
+```
+ z −12 ══Holunderwinkel-Zaun══[Pförtchen]════╗══Birkenhang-Zaun══[Hecke x 2,5…6,5]══
+        │ Gang x −11,2…−8,6   Meiler (−4,6|−11,4) ║ ESSE (−2,2|−10,9) STEINMETZBANK (0,32|−10,55, 90°)
+        │ Steinhaufen          ┌─── HÜTTE ───┐     Zugang Süd (−1,55|−9,4)  Zugang Ost (1,6|−10,55)
+        │ Kiste (−8,4|−5,75)   │  (fest)      │ Werkbank   Holzhaufen (0,3|−8,4)       plot_01 …
+ Ilse ▌ │ WEBSTUHL (−8,75|−3,9, 270°) └Tür┘ Tisch
+        │ Zugang West (−10,2|−3,9) über Ilses Streifen          Pfad → Tor
+```
+
+**Werkhof – Stationen neben der Hütte, alle drei von der Spielkamera sichtbar.** Die Lage aus §2.1/§4.1 wurde geändert (Benutzer-Hinweis nach P5): Die Esse hinter der Hütte war von der Kamera (45°, 22 m) fast ganz vom Dach verdeckt, der Webstuhl vor der Hütte lag unter der Eichenkrone. Gesucht wurde per Strahlprüfung (Kamera → Modellpunkte, Verdecker Hütte + Kronen) über alle freien Plätze am Hof:
+
+| Station | vorher (§2.1) | nachher | Zugang | sichtbare Modellpunkte (Kamera am Zugang / vor der Tür; §2.1-Lage zum Vergleich) |
+|---|---|---|---|---|
+| Esse | (−7,3 \| −11,1), hinter der Hütte | **(−2,2 \| −10,9), 0°** – nordöstlich neben der Werkbank am Birkenhang-Zaun | Süd (−1,55 \| −9,4) | 91 % / 59 % (obere Hälfte 99 %; Westende hinter der Traufe, Glut und Kamin frei) – vorher 70 % / 32 % |
+| Steinmetzbank | (−0,5 \| −10,6), 0° | **(0,32 \| −10,55), 90°** – östlich neben der Esse, Ablage zur Kamera | Ost (1,6 \| −10,55) | 98 % / 88 % |
+| Webstuhl | (−8,6 \| −1,3), unter der Krone | **(−8,75 \| −3,9), 270°** – an der Südwestecke der Hütte, Pultdach zur Kamera | West (−10,2 \| −3,9) über Ilses Streifen | 78 % / 79 % (obere Hälfte 100 %) – vorher 1 % / 8 % |
+| Meiler | (−4,6 \| −11,4) | unverändert (hinter der Hütte, nur Rauch sichtbar) | an der Esse | – |
+
+**Versetzte bzw. geänderte freigegebene Elemente (vollständig; Layout-Diff-Test gegen `tests/fixtures/phase5/layout_p4.json`):**
+- V1 Holzhaufen `res_wood`: (−1,2 | −9,4) → **(0,3 | −8,4)** (§4.1 nannte (0,0 | −7,8); dort ließ er zum Leichentisch keinen 1,5-m-Gang).
+- Kiste `ph_prop_crate`: (−8,2 | −4,9) → **(−8,4 | −5,75)** (Platz für den Webstuhl an der Hütten-Südwestecke).
+- V2/V3: Bau-Maske gesperrt unter Footprint + 0,6 m, Zugang 1,0 m ROUTE, Meiler gesperrt; Gras dort entfernt; Boden unter den Bauplätzen geglättet (an bestehende Zonen angeglichen, Werkbank/Tisch bitgleich).
+- Ostpforte: Ostwiesen-Zaunstück [[21,5, 3], [21,5, −3]] → [[21,5, 3], [21,5, 0,8]] + Pforte + [[21,5, −0,8], [21,5, −3]].
+- Zwei Hintergrundbäume aus Am Bruch: (24,5 | 2,0) → (34,5 | 3,0), (25,5 | −6,0) → (35,0 | −7,0).
+- Nicht bewegt: Hütte, Leichentisch, Werkbank, Pförtchen, Steinhaufen, Waschschüssel, Schaufel, alle Pflegestellen, Grabstellen, Spielerstart.
+
+**Routen (Flood-Fill mit 1,5-m-Zylinder, alle Stationen gebaut):** Hüttentür ↔ Pförtchen (westlich um den Webstuhl über Ilses Streifen, dann der Gang; die Engstelle am Steinhaufen bleibt wie in Phase 4), ↔ Birkenhang-Durchgang (östlich der Steinmetzbank), ↔ Tor, ↔ Ostpforte, ↔ jeder Stationszugang. Esse-Glut: 1 Omni `#E07A3A`, 0,5, 3,5 m, ohne Schatten, Kind der Station (nur gebaut sichtbar). Rauch: Kamin 3 + Meiler 3 Partikel (`ph_vfx_smoke_wisp`, warmgrau, 40 m).
+
+**Am Bruch (§4.2)** – x 21,5…31,5: Abschnitt `bruch` (z −6,5…9,6, Flag `bruch_license`, Ostpforte 1,6 m = `ph_prop_gate_small` × 1,345 in X), `quarry` (z −12…−6,5, nach `bruch`, 3 Findlinge `ph_env_boulder` → `_broken` bei z −6,6). Sammelstellen: Erzader, 2 Werksteinbänke, Bruchsteinwand im Steinbruch; 3 Flachsbeete, Lehmkuhle, 2 Kräuterraine Am Bruch. Rand: Felswand `ph_env_quarry_face` (26,2 | −12,9), Kantenstücke an Nord- und Ostkante, 3 Dornhecken im Süden; unsichtbare Wände z 9,6 und z −11,4, Ostgrenze x 31,2. Eingewachsene Steinplatte (24,0 | −2,8) ohne Funktion. Teleports `tp_bruch` (25,5 | 0), `tp_quarry` (27,0 | −8,3).
+**Schlag (§4.3):** 5 Erlen an den Vertragspositionen (nicht verschoben), Kräuter (−2,8 | 18,0), (−2,6 | 23,6); `tp_schlag` (−5,2 | 19,4) statt (−6,0 | 19,0) (dort stand ein Busch). **Holunder (§4.4):** alle 3 Sträucher tragen eine Sammelstelle (Kind des Strauchs, nach innen versetzt), alle 3 vom Spieler erreichbar.
+**Boden, Grenzen:** Boden 64 × 64 m (Mitte (8 | 2,5), x −24…40), Steinboden-Tönung im Steinbruch, Gras Am Bruch halbe Dichte, im Steinbruch keins; `walkable_bounds.max` x 31,2, `camera_bounds.max` x 27. Die Bau-Maske bleibt x −11,5…21,5.
