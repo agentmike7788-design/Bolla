@@ -487,7 +487,7 @@ func _listen_to_ghosts() -> void:
 func _sleep() -> void:
 	_wait_until(int(flags.sleep_minute))
 	var door := world.get_node_by_layout_id("hut_door") as HutDoor
-	var interior := tree.get_first_node_in_group(HutInterior.GROUP) as HutInterior
+	var interior := tree.get_first_node_in_group(HutInterior.HUT_GROUP) as HutInterior
 	if door.can_interact(player):
 		HutPortal.arrive(player, interior.spawn_transform(), true)
 	var bed := interior.get_node("Entities/bed") as Bed

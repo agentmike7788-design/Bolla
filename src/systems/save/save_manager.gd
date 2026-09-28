@@ -212,7 +212,7 @@ func apply_state(data: Dictionary) -> void:
 
 
 ## The node states without the empty ones SaveMigration inserted for Phase-4 / Phase-5 system
-## nodes (SaveMigration.V3_EMPTY_NODES, V4_EMPTY_NODES) that this world does not have (yet): {} is
+## nodes (SaveMigration.V3_EMPTY_NODES, V4_EMPTY_NODES, V5_EMPTY_NODES) that this world does not have (yet): {} is
 ## their default state, so nothing is lost and no "unknown save_id" warning appears. Non-empty
 ## states stay (and warn). Phase 5 (§5.2 step 1): while the player's Inventory has no tool belt
 ## yet (belt_supported), the migrated belt goes back into free slots (with_belt_fallback).
@@ -224,7 +224,8 @@ static func without_absent_defaults(tree: SceneTree, nodes: Dictionary) -> Dicti
 	for key: Variant in nodes:
 		var id := str(key)
 		var value: Variant = nodes[key]
-		var migrated_empty := id in SaveMigration.V3_EMPTY_NODES or id in SaveMigration.V4_EMPTY_NODES
+		var migrated_empty := id in SaveMigration.V3_EMPTY_NODES or id in SaveMigration.V4_EMPTY_NODES \
+				or id in SaveMigration.V5_EMPTY_NODES
 		if migrated_empty and not present.has(id) and value is Dictionary and (value as Dictionary).is_empty():
 			continue
 		out[key] = value

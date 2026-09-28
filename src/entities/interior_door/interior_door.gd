@@ -29,5 +29,5 @@ func _outside_door() -> HutDoor:
 
 
 func _config() -> InteriorConfig:
-	var interior := get_tree().get_first_node_in_group(HutInterior.GROUP) as HutInterior if is_inside_tree() else null
+	var interior := get_tree().get_first_node_in_group(HutInterior.HUT_GROUP) as HutInterior if is_inside_tree() else null
 	return interior.config if interior != null else null

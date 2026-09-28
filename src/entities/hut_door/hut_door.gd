@@ -47,7 +47,7 @@ func exit_transform() -> Transform3D:
 func _interior() -> HutInterior:
 	if not is_inside_tree():
 		return null
-	return get_tree().get_first_node_in_group(HutInterior.GROUP) as HutInterior
+	return get_tree().get_first_node_in_group(HutInterior.HUT_GROUP) as HutInterior
 
 
 static func _is_carrying(player: Player) -> bool:

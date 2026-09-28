@@ -5,10 +5,14 @@ extends TestCase
 ## Phase 4 (§3.4): + piety, utilized, prepared, trader_sales.
 ## Phase 5 (docs/PHASE5_DESIGN.md §2.7, P6): + crafted, stones_set, coins_spent, trees_felled + the
 ## coin ledger by purpose (coins_spent_license / _build / _osric / _ilse).
+## Phase 6 (docs/PHASE6_DESIGN.md §2.7, P6): + services_held, devotions_held, bones_lifted,
+## bones_reinterred, niche_waits + the ledger purpose building (coins_spent_building).
 const STAT_KEYS: Array[StringName] = [&"burials", &"valuables_taken", &"reputation", &"missed_deliveries", &"days_played",
 		&"piety", &"utilized", &"prepared", &"trader_sales",
 		&"crafted", &"stones_set", &"coins_spent", &"trees_felled",
-		&"coins_spent_license", &"coins_spent_build", &"coins_spent_osric", &"coins_spent_ilse"]
+		&"coins_spent_license", &"coins_spent_build", &"coins_spent_osric", &"coins_spent_ilse",
+		&"services_held", &"devotions_held", &"bones_lifted", &"bones_reinterred", &"niche_waits",
+		&"coins_spent_building"]
 
 
 func test_defaults_after_reset() -> void:
@@ -193,7 +197,7 @@ func test_note_coins_spent_counts_and_signals() -> void:
 	EventBus.coins_spent.disconnect(on_spent)
 	assert_eq(spent, [[20, &"license"], [15, &"build"], [14, &"osric"], [6, &"ilse"], [6, &"osric"]], "nothing for <= 0")
 	assert_eq(GameState.get_stat(&"coins_spent"), 61)
-	assert_eq(GameState.coin_ledger(), {&"license": 20, &"build": 15, &"osric": 20, &"ilse": 6} as Dictionary[StringName, int])
+	assert_eq(GameState.coin_ledger(), {&"license": 20, &"build": 15, &"osric": 20, &"ilse": 6, &"building": 0} as Dictionary[StringName, int])
 	assert_eq(GameState.get_stat(GameState.coin_ledger_stat(&"osric")), 20)
 
 
@@ -205,6 +209,36 @@ func test_coin_ledger_survives_save_load() -> void:
 	GameState.load_state(saved)
 	assert_eq([GameState.get_stat(&"coins_spent"), GameState.coin_ledger()[&"osric"]], [12, 12])
 	GameState.load_state({"stats": {"burials": 1}})
-	assert_eq(GameState.coin_ledger(), {&"license": 0, &"build": 0, &"osric": 0, &"ilse": 0} as Dictionary[StringName, int], "old saves: 0")
-	for key: StringName in SaveMigration.V4_NEW_STATS:
+	assert_eq(GameState.coin_ledger(), {&"license": 0, &"build": 0, &"osric": 0, &"ilse": 0, &"building": 0} as Dictionary[StringName, int], "old saves: 0")
+	for key: StringName in SaveMigration.V4_NEW_STATS + SaveMigration.V5_NEW_STATS:
 		assert_true(GameState.DEFAULT_STATS.has(key), "migration stat %s is a default stat" % key)
+
+
+# --- Phase 6 (P6): stats §2.7, coin purpose building ---------------------------------------------
+
+func test_phase6_stats_are_default_stats() -> void:
+	for key: StringName in [&"services_held", &"devotions_held", &"bones_lifted", &"bones_reinterred", &"niche_waits"]:
+		assert_true(GameState.DEFAULT_STATS.has(key), "§2.7: %s" % key)
+		assert_eq(GameState.get_stat(key), 0)
+	assert_true(GameState.COIN_REASONS.has(&"building"), "§2.7: coins_spent purpose building")
+	var before := GameState.DEFAULT_STATS.slice(0, 17)
+	assert_eq(before, STAT_KEYS.slice(0, 17), "Phase-2…5 stats unchanged and first")
+
+
+func test_building_spending_in_the_ledger() -> void:
+	GameState.note_coins_spent(20, &"building")
+	GameState.note_coins_spent(2, &"osric")
+	assert_eq(GameState.coin_ledger()[&"building"], 20)
+	assert_eq(GameState.get_stat(&"coins_spent_building"), 20)
+	var sum := 0
+	var ledger := GameState.coin_ledger()
+	for reason: StringName in ledger:
+		sum += ledger[reason]
+	assert_eq(GameState.get_stat(&"coins_spent"), sum, "stats.coins_spent = sum of the ledger")
+
+
+func test_v4_stats_load_without_phase6_keys() -> void:
+	GameState.load_state({"stats": {"burials": 3, "coins_spent": 5}})
+	for key: StringName in SaveMigration.V5_NEW_STATS:
+		assert_eq(GameState.get_stat(key), 0, "%s defaults to 0" % key)
+		assert_true(GameState.stats.has(key), "%s present after load" % key)

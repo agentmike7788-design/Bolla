@@ -5,12 +5,17 @@ extends Node
 ## Phase 4 (§3.4): + piety (−100…100), utilized, prepared, trader_sales.
 ## Phase 5 (docs/PHASE5_DESIGN.md §2.7, §5.1): + crafted, stones_set, coins_spent, trees_felled and the
 ## coin ledger by purpose coins_spent_<reason> (COIN_REASONS) for the chapter panel / day summary.
+## Phase 6 (docs/PHASE6_DESIGN.md §2.7, §5.1): + services_held, devotions_held, bones_lifted,
+## bones_reinterred, niche_waits and the ledger stat coins_spent_building.
 const DEFAULT_STATS: Array[StringName] = [&"burials", &"valuables_taken", &"reputation", &"missed_deliveries", &"days_played",
 		&"piety", &"utilized", &"prepared", &"trader_sales",
 		&"crafted", &"stones_set", &"coins_spent", &"trees_felled",
-		&"coins_spent_license", &"coins_spent_build", &"coins_spent_osric", &"coins_spent_ilse"]
-## Phase 5 §3.3: the reasons of EventBus.coins_spent (license, stations, Osric's goods, Ilse's shop).
-const COIN_REASONS: Array[StringName] = [&"license", &"build", &"osric", &"ilse"]
+		&"coins_spent_license", &"coins_spent_build", &"coins_spent_osric", &"coins_spent_ilse",
+		&"services_held", &"devotions_held", &"bones_lifted", &"bones_reinterred", &"niche_waits",
+		&"coins_spent_building"]
+## Phase 5 §3.3: the reasons of EventBus.coins_spent (license, stations, Osric's goods, Ilse's shop);
+## Phase 6 §2.7: + building (the building levels; altar candles run under osric).
+const COIN_REASONS: Array[StringName] = [&"license", &"build", &"osric", &"ilse", &"building"]
 const STAT_COINS_SPENT := &"coins_spent"
 const COINS_SPENT_PREFIX := "coins_spent_"
 

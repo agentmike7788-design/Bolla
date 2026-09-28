@@ -1,11 +1,14 @@
 class_name InteriorLighting
 extends Node
-## Lights the hut interior by the game clock (docs §11, values: InteriorConfig): the window
+## Lights an interior room by the game clock (docs §11, values: InteriorConfig): the window
 ## glow (cool blue at night, warm by day, no shadow), the hanging lantern (shadow at night),
 ## the candles (night only), the interior's ambient / background / exposure and its soft sun,
 ## blended by InteriorConfig.daylight(TimeManager minute). Lights are found by their meta
-## "interior_role" (window, lantern, candle) below the HutInterior. The stove fire is a warm
-## light of the AtmosphereController (flicker_light.gd, meta min_scale) and not touched here.
+## "interior_role" (window, lantern, candle) below the InteriorRoom (Phase 6 §3.4: the hut and
+## the buildings' rooms, each with its own config – Database.interior_config(room_id); in the
+## crypt the window role is the stair shaft). A config with fog_enabled sets the room
+## Environment's depth fog (the crypt's cold air, §4.8). The stove fire is a warm light of the
+## AtmosphereController (flicker_light.gd, meta min_scale) and not touched here.
 
 const META_ROLE := &"interior_role"
 const ROLE_WINDOW := &"window"
@@ -30,18 +33,18 @@ var _applied_minute: float = NAN
 
 
 func _ready() -> void:
-	var interior := get_parent() as HutInterior
+	var interior := get_parent() as InteriorRoom
 	if interior != null:
-		config = InteriorConfig.resolve(interior.config)
+		config = interior.room_config()
 		environment = interior.environment
 		sun = interior.get_node_or_null(^"Sun") as DirectionalLight3D
 		collect_lights(interior)
 	config = InteriorConfig.resolve(config)
-	apply_minute(_clock_minute())
+	apply_minute(clock_minute())
 
 
 func _process(_delta: float) -> void:
-	var minute := _clock_minute()
+	var minute := clock_minute()
 	if is_nan(_applied_minute) or absf(minute - _applied_minute) >= reapply_step_minutes:
 		apply_minute(minute)
 
@@ -83,6 +86,10 @@ func apply_daylight(t: float) -> void:
 		environment.ambient_light_color = c.ambient_night_color.lerp(c.ambient_day_color, daylight)
 		environment.ambient_light_energy = lerpf(c.ambient_night_energy, c.ambient_day_energy, daylight)
 		environment.tonemap_exposure = c.exposure
+		if c.fog_enabled:
+			environment.fog_enabled = true
+			environment.fog_light_color = c.fog_color
+			environment.fog_density = c.fog_density
 	if sun != null:
 		sun.light_color = c.sun_night_color.lerp(c.sun_day_color, daylight)
 		sun.light_energy = lerpf(c.sun_night_energy, c.sun_day_energy, daylight)
@@ -97,6 +104,6 @@ static func _set_energy(light: Light3D, energy: float) -> void:
 
 
 ## TimeManager.get_minute_f(), looked up at runtime (tool scripts compile this before autoloads).
-func _clock_minute() -> float:
+func clock_minute() -> float:
 	var clock := get_node_or_null(^"/root/TimeManager")
 	return float(clock.call(&"get_minute_f")) if clock != null else 720.0

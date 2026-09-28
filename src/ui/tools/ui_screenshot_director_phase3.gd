@@ -313,7 +313,7 @@ func _day_summary_shot() -> void:
 	UIState.clear()
 	_ui.close_all()
 	TimeManager.set_time(TimeManager.day, 1290)
-	var interior := get_tree().get_first_node_in_group(HutInterior.GROUP) as HutInterior
+	var interior := get_tree().get_first_node_in_group(HutInterior.HUT_GROUP) as HutInterior
 	HutPortal.arrive(_player, interior.spawn_transform(), true)
 	await get_tree().process_frame
 	var bed := interior.get_node(^"Entities/bed") as Bed

@@ -9,6 +9,10 @@ extends TestCase
 ## Phase 5 (docs/PHASE5_DESIGN.md §5.2): v3 → v4 on the six Phase-4 fixtures (tests/fixtures/saves_v3/,
 ## tool belt, design {}, empty Phase-5 nodes, stats), the chain from v1/v2, the v4 round trip,
 ## version 5 rejected and the runtime side in SaveManager (belt fallback, absent empty nodes).
+## Phase 6 (docs/PHASE6_DESIGN.md §5.2): v4 → v5 on the seven Phase-5 fixtures (tests/fixtures/saves_v4/:
+## interior_id from in_interior, the new record fields, the table corpse stays on the old table,
+## empty Phase-6 nodes, new stats 0, nothing else changed), the chain from v1/v2/v3, the v5 round
+## trip, version 6 rejected and the absent Phase-6 nodes dropped at runtime.
 
 ## Per-process save folder (TestCase.user_dir): parallel runs share user:// (flaky slots).
 var TEST_DIR := TestCase.user_dir("test_save_migration")
@@ -173,7 +177,10 @@ func test_new_nodes_get_empty_states() -> void:
 			assert_eq(s.nodes.get(id), {}, "%s: %s (chain → v3)" % [name, id])
 		for id: String in SaveMigration.V4_EMPTY_NODES:
 			assert_eq(s.nodes.get(id), {}, "%s: %s (chain → v4)" % [name, id])
-		assert_eq(s.nodes.size(), V1_NODES.size() + NEW_NODES.size() + V3_NODES.size() + SaveMigration.V4_EMPTY_NODES.size(), name)
+		for id: String in SaveMigration.V5_EMPTY_NODES:
+			assert_eq(s.nodes.get(id), {}, "%s: %s (chain → v5)" % [name, id])
+		assert_eq(s.nodes.size(), V1_NODES.size() + NEW_NODES.size() + V3_NODES.size() + SaveMigration.V4_EMPTY_NODES.size()
+				+ SaveMigration.V5_EMPTY_NODES.size(), name)
 
 
 func test_new_plots_stay_absent() -> void:
@@ -567,7 +574,9 @@ func test_v3_fixtures_migrate_to_v4_with_expected_values() -> void:
 	assert_eq(EXPECT_V4.size(), Phase5Fixtures.SAVES_V3.size())
 	for name: String in Phase5Fixtures.SAVES_V3:
 		var before: Dictionary = _fixture_v3(name).state
-		var s := _migrated_v3(name)
+		# Phase 6: the step 3 → 4 alone (the chain continues with 4 → 5, tested below).
+		var f3 := _fixture_v3(name)
+		var s := SaveMigration.migrate_3_to_4(f3.state, f3.meta)
 		var e: Dictionary = EXPECT_V4[name]
 		# 1. tools on the belt (1 each), their slots empty, all other slots at their index.
 		var belt := _belt(s)
@@ -739,3 +748,198 @@ func test_absent_phase5_nodes_are_dropped_only_when_empty() -> void:
 	assert_false(out.has("workshop") or out.has("gathering") or out.has("journal"), "empty, no such node → dropped")
 	assert_eq(out.get("stonemasonry"), {"next_id": 2}, "non-empty states stay")
 	assert_eq(out.get("graveyard"), {})
+
+
+# --- Phase 6: v4 → v5 (docs/PHASE6_DESIGN.md §5.2) ----------------------------------------------
+
+const V5_STATS: Array[StringName] = [&"services_held", &"devotions_held", &"bones_lifted", &"bones_reinterred", &"niche_waits"]
+const V5_RECORD_KEYS: PackedStringArray = ["room", "slot_id", "cold_windows", "service_held", "service_day"]
+
+
+func _fixture_v4(name: String) -> Dictionary:
+	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(Phase6Fixtures.save_v4_path(name)))
+	return {"meta": doc.meta, "state": SaveFileIO.decode_state(doc.data)}
+
+
+func _migrated_v4(name: String) -> Dictionary:
+	var f := _fixture_v4(name)
+	return SaveMigration.migrate(f.state, 4, f.meta)
+
+
+func _corpses(state: Dictionary) -> Array:
+	var cm: Variant = state.nodes.get("corpse_manager")
+	return (cm as Dictionary).get("corpses", []) if cm is Dictionary else []
+
+
+func test_v4_fixtures_migrate_to_v5() -> void:
+	assert_eq(Phase6Fixtures.SAVES_V4.size(), 7, "§5.2: seven v4 fixtures")
+	for name: String in Phase6Fixtures.SAVES_V4:
+		var before: Dictionary = _fixture_v4(name).state
+		assert_false(before.is_empty(), name + " decodes")
+		var s := _migrated_v4(name)
+		# 1. interior_id from in_interior; the rest of the player unchanged.
+		var player: Dictionary = (s.nodes.player as Dictionary).duplicate()
+		var old_player: Dictionary = before.nodes.player
+		assert_eq(player.get("interior_id"), "hut" if bool(old_player.in_interior) else "", name + ": interior_id")
+		player.erase("interior_id")
+		assert_eq(player, old_player, name + ": player otherwise unchanged")
+		# 2. every record gets the five fields with defaults; nothing else changes (location stays).
+		var old_records: Array = _corpses(before)
+		var new_records: Array = _corpses(s)
+		assert_eq(new_records.size(), old_records.size(), name + ": records")
+		for i: int in new_records.size():
+			var r: Dictionary = (new_records[i] as Dictionary).duplicate()
+			assert_eq([r.room, r.slot_id, r.cold_windows, r.service_held, r.service_day], ["", "", [], false, 0],
+					"%s: %s Phase-6 defaults" % [name, r.id])
+			for key: String in V5_RECORD_KEYS:
+				if not (old_records[i] as Dictionary).has(key):
+					r.erase(key)
+			assert_eq(r, old_records[i], "%s: record %s otherwise unchanged" % [name, r.id])
+		# 3. graves unchanged (old graves stay OLD).
+		assert_eq(s.nodes.graveyard, before.nodes.graveyard, name + ": graves unchanged")
+		# 4. empty Phase-6 nodes.
+		for id: String in SaveMigration.V5_EMPTY_NODES:
+			assert_eq(s.nodes.get(id), {}, "%s: empty %s" % [name, id])
+		# 6. new stats 0, no new flags, everything else unchanged.
+		var stats: Dictionary = _game_state(s).stats
+		for key: StringName in V5_STATS:
+			assert_eq(stats.get(key), 0, "%s: stat %s" % [name, key])
+		for key: Variant in _game_state(before).stats:
+			assert_eq(stats[key], _game_state(before).stats[key], "%s: stat %s kept" % [name, key])
+		assert_eq(_game_state(s).flags, _game_state(before).flags, name + ": no new flags")
+		assert_eq(s.autoloads.TimeManager, before.autoloads.TimeManager, name + ": time")
+		for id: Variant in before.nodes:
+			if not str(id) in ["player", "corpse_manager"]:
+				assert_eq(s.nodes[id], before.nodes[id], "%s: %s unchanged" % [name, id])
+		assert_eq(s.nodes.size(), before.nodes.size() + SaveMigration.V5_EMPTY_NODES.size(), name + ": only the new nodes added")
+
+
+func test_v4_table_corpse_stays_on_the_old_table() -> void:
+	# §5.2 step 2: the crypt is at level 0 after the load – the corpse stays workable outside.
+	var s := _migrated_v4("slot_p5_day16_table")
+	var on_table: Array = []
+	for r: Variant in _corpses(s):
+		if str((r as Dictionary).location) == String(CorpseRecord.LOCATION_TABLE):
+			on_table.append(r)
+	assert_eq(on_table.size(), 1, "one corpse on the table")
+	if on_table.size() == 1:
+		var d: Dictionary = on_table[0]
+		assert_eq([d.room, d.slot_id, d.cold_windows], ["", "", []], "outside, no niche, no cold")
+		var record := CorpseRecord.from_dict(d)
+		assert_eq(record.location, CorpseRecord.LOCATION_TABLE)
+		assert_eq(record.room, &"")
+		assert_eq(record.exam_done.size(), 2, "2 of 4 steps kept")
+		assert_true(record.is_harvested(&"hair"), "braid taken")
+		assert_true(record.balm_windows.size() >= 2, "juniper window kept")
+	var carry := _migrated_v4("slot_p5_day16_carry")
+	var carried := 0
+	for r: Variant in _corpses(carry):
+		if str((r as Dictionary).location) == String(CorpseRecord.LOCATION_CARRIED):
+			carried += 1
+			assert_eq((r as Dictionary).room, "", "carried outside")
+	assert_eq(carried, 1, "the carried corpse stays carried")
+	assert_eq(carry.nodes.player.interior_id, "", "outside")
+	assert_eq(_migrated_v4("slot_p5_interior").nodes.player.interior_id, "hut", "§5.2 step 1: in the hut")
+
+
+func test_v4_to_v5_does_not_change_its_input_and_is_stable() -> void:
+	for name: String in Phase6Fixtures.SAVES_V4:
+		var f := _fixture_v4(name)
+		var copy: Dictionary = f.state.duplicate(true)
+		var once := SaveMigration.migrate_4_to_5(f.state, f.meta)
+		assert_eq(f.state, copy, name + ": input unchanged")
+		assert_false(is_same(once, f.state), name + ": deep copy")
+		assert_eq(SaveMigration.migrate_4_to_5(once, f.meta), once, name + ": a second run changes nothing")
+
+
+func test_v4_to_v5_is_tolerant() -> void:
+	var state := {"autoloads": {"GameState": {"stats": {"niche_waits": 3}, "flags": {}}}, "nodes": {
+		"player": {"in_interior": "yes", "position": Vector3.ZERO},
+		"corpse_manager": {"corpses": [{"id": "c1", "room": "crypt", "cold_windows": [10, -1, 500]}, "junk", 5]},
+		"buildings": {"levels": {"crypt": 1}}}}
+	var s := SaveMigration.migrate_4_to_5(state, {})
+	assert_eq(s.nodes.player.interior_id, "", "only a real true counts as inside")
+	var c1: Dictionary = s.nodes.corpse_manager.corpses[0]
+	assert_eq([c1.room, c1.cold_windows, c1.slot_id, c1.service_held, c1.service_day], ["crypt", [10, -1, 500], "", false, 0],
+			"existing fields kept, missing ones added")
+	assert_eq((s.nodes.corpse_manager.corpses as Array).slice(1), ["junk", 5], "odd entries left alone")
+	assert_eq(s.nodes.buildings, {"levels": {"crypt": 1}}, "an existing node state is kept")
+	assert_eq([s.nodes.ossuary, s.nodes.chapel, s.nodes.shed_store], [{}, {}, {}])
+	var stats: Dictionary = _game_state(s).stats
+	assert_eq(stats.get("niche_waits", stats.get(&"niche_waits")), 3, "an existing stat is kept")
+	var inside := SaveMigration.migrate_4_to_5({"autoloads": {}, "nodes": {"player": {"in_interior": true, "interior_id": "crypt"}}}, {})
+	assert_eq(inside.nodes.player.interior_id, "crypt", "an existing interior_id is kept")
+	var bare := SaveMigration.migrate_4_to_5({"autoloads": {}, "nodes": {}}, {})
+	assert_eq((bare.nodes as Dictionary).size(), SaveMigration.V5_EMPTY_NODES.size())
+	# Each record gets its own cold_windows array.
+	var two := SaveMigration.migrate_4_to_5({"autoloads": {}, "nodes": {"corpse_manager": {"corpses": [{}, {}]}}}, {})
+	var list: Array = two.nodes.corpse_manager.corpses
+	((list[0] as Dictionary).cold_windows as Array).append(1)
+	assert_eq((list[1] as Dictionary).cold_windows, [], "no shared default array")
+
+
+func test_read_doc_migrates_every_v4_fixture() -> void:
+	for name: String in Phase6Fixtures.SAVES_V4:
+		assert_eq(Phase6Fixtures.install_save_v4(name, TEST_DIR, SLOT), OK)
+		var read := _read_slot()
+		assert_eq(read.err, OK, name)
+		assert_eq(read.state, _migrated_v4(name), "%s: read_doc applies 4 → 5" % name)
+
+
+func test_older_fixtures_chain_to_v5() -> void:
+	var states: Array = []
+	for name: String in Phase5Fixtures.SAVES_V3:
+		states.append([name, _migrated_v3(name)])
+	for name: String in Phase4Fixtures.SAVES_V2:
+		states.append([name, _migrated_v2(name)])
+	for name: String in Phase3Fixtures.SAVES_V1:
+		states.append([name, _migrated(name)])
+	assert_eq(states.size(), 13, "6 v3 + 4 v2 + 3 v1 fixtures")
+	for c: Array in states:
+		var s: Dictionary = c[1]
+		for id: String in SaveMigration.V5_EMPTY_NODES:
+			assert_eq(s.nodes.get(id), {}, "%s: %s" % [c[0], id])
+		for key: StringName in V5_STATS:
+			assert_eq(_game_state(s).stats.get(key), 0, "%s: %s" % [c[0], key])
+		var player: Dictionary = s.nodes.player
+		assert_eq(player.interior_id, "hut" if player.get("in_interior") == true else "", c[0] + ": interior_id")
+		for r: Variant in _corpses(s):
+			for key: String in V5_RECORD_KEYS:
+				assert_true((r as Dictionary).has(key), "%s: record %s" % [c[0], key])
+
+
+func test_v5_round_trip_is_identical() -> void:
+	for name: String in Phase6Fixtures.SAVES_V4:
+		var f := _fixture_v4(name)
+		var migrated := _migrated_v4(name)
+		_write_doc(SaveFileIO.make_doc(f.meta, migrated))
+		var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
+		assert_eq(int(doc.format_version), 5, name)
+		var read := _read_slot()
+		assert_eq(read.err, OK, name)
+		assert_eq(read.state, migrated, "%s: v5 file round trip" % name)
+		_write_doc(SaveFileIO.make_doc(read.meta, read.state))
+		assert_eq(_read_slot().state, migrated, "%s: stable" % name)
+
+
+func test_version_six_is_rejected() -> void:
+	assert_eq(SaveMigration.CURRENT, 5)
+	assert_eq(Phase6Fixtures.install_save_v4("slot_p5_day30_reverent", TEST_DIR, SLOT), OK)
+	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
+	doc.format_version = 6
+	_write_doc(doc)
+	assert_eq(_read_slot().err, ERR_FILE_UNRECOGNIZED)
+	assert_true(SaveFileIO.is_newer_version(TEST_DIR, SLOT))
+
+
+func test_absent_phase6_nodes_are_dropped_only_when_empty() -> void:
+	var nodes := {"buildings": {}, "ossuary": {}, "chapel": {"services": 1}, "shed_store": {}, "graveyard": {}}
+	var out := SaveManager.without_absent_defaults(tree, nodes)
+	assert_false(out.has("buildings") or out.has("ossuary") or out.has("shed_store"), "empty, no such node → dropped")
+	assert_eq(out.get("chapel"), {"services": 1}, "non-empty states stay")
+	assert_eq(out.get("graveyard"), {})
+	var b := Buildings.new()
+	tree.root.add_child(b)
+	var kept := SaveManager.without_absent_defaults(tree, {"buildings": {}})
+	assert_eq(kept.get("buildings"), {}, "the world has the node → its empty state is loaded")
+	b.free()
