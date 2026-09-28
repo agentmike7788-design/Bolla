@@ -533,7 +533,7 @@ func test_reward_card_breakdown_and_payment() -> void:
 	assert_true(card.visible)
 	assert_eq(card._subtitle.text, "Hedwig Rabenstein")
 	assert_eq(card.line_texts(), PackedStringArray(["Bestattet +2", "Leichentuch +2", "Grabstein +3", "Verwesend −1"]))
-	assert_eq(card.quality_text(), "6/10")
+	assert_eq(card.quality_text(), "6/13")
 	assert_eq(card.payment_text(), "")
 	EventBus.payment_received.emit(7, "Bestattung von Hedwig Rabenstein")
 	assert_eq(card.payment_text(), "+7 Münzen")
@@ -727,7 +727,7 @@ func test_crafting_rows_have_need_and_reasons() -> void:
 	ui.open_panel(&"crafting", _contexts()[&"crafting"])
 	var panel := ui.get_panel(&"crafting") as CraftingPanel
 	var grave_ids := panel.recipe_ids().filter(func(id: StringName) -> bool: return (Database.recipe(id) as RecipeData).category == &"grave")
-	assert_eq(grave_ids, [&"shroud", &"wooden_cross", &"gravestone_simple"], "quick to slow (grave recipes)")
+	assert_eq(grave_ids, [&"shroud", &"burial_gown", &"wooden_cross", &"gravestone_simple"], "quick to slow (grave recipes)")
 	assert_true(panel.craft_button(&"shroud").disabled)
 	assert_eq(panel.reason_text(&"shroud"), "Fehlt: 1 Leinen")
 	assert_false(panel.craft_button(&"wooden_cross").disabled)
@@ -1255,7 +1255,7 @@ func test_reward_card_waits_while_a_modal_is_open() -> void:
 	assert_false(card.visible)
 	ui.close_panel(&"pause")
 	assert_true(card.visible)
-	assert_eq(card.quality_text(), "6/10")
+	assert_eq(card.quality_text(), "6/13")
 
 
 ## UI-06: the reward card sits in a free screen area – not over the centred player and the

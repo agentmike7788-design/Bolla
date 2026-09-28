@@ -20,6 +20,15 @@ const ITEMS := {
 	&"decor_path_gravel": ["Kiesplatte", ItemData.Category.DECOR, 40],
 	&"iron_fittings": ["Eisenbeschlag", ItemData.Category.RESOURCE, 20],   # Phase 3 (P6)
 	&"seeds": ["Blumensamen", ItemData.Category.RESOURCE, 20],   # Phase 3 (P6)
+	# Phase 4 (P2, §2.13)
+	&"scrub_brush": ["Wurzelbürste", ItemData.Category.TOOL, 1],
+	&"comb": ["Holzkamm", ItemData.Category.TOOL, 1],
+	&"burial_gown": ["Totenhemd", ItemData.Category.CRAFTED, 5],
+	&"juniper": ["Wacholderzweige", ItemData.Category.RESOURCE, 10],
+	&"shears": ["Schere", ItemData.Category.TOOL, 1],
+	&"pliers": ["Zange", ItemData.Category.TOOL, 1],
+	&"hair_braid": ["Zopf", ItemData.Category.GOODS, 10],
+	&"teeth_pouch": ["Zahnsäckchen", ItemData.Category.GOODS, 10],
 }
 
 

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="FindData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/corpse/find_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"f_s2_key"
+step = &"pockets"
+label = "Ein Schlüssel"
+text = "Ein rostiger Schlüssel an einer Lederschnur. In den Bart ist ein Holunderblatt gefeilt."
+lost_text = ""
+min_freshness = 0.0
+trait_id = &""
+cause_id = &""
+story_only = true
+clue_id = &"c_elder_key"
+sets_flag = &"has_elder_key"

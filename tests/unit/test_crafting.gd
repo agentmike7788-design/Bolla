@@ -89,7 +89,12 @@ func test_database_finds_all_recipes() -> void:
 		&"decor_grave_vase": ["Grabvase", {&"stone": 1, &"seeds": 1}, 15, 1],
 		&"decor_lantern": ["Grablaterne", {&"wood": 2, &"iron_fittings": 1}, 30, 1],
 		&"decor_path_gravel": ["Kiesplatte", {&"stone": 2}, 20, 4],
+		# Phase 4 (P2, §2.13)
+		&"scrub_brush": ["Wurzelbürste", {&"wood": 2}, 15],
+		&"comb": ["Holzkamm", {&"wood": 1}, 10],
+		&"burial_gown": ["Totenhemd", {&"linen": 3}, 30],
 	}
+	var tools: Array[StringName] = [&"rake", &"scrub_brush", &"comb"]
 	var workbench := Database.recipes(&"workbench")
 	assert_eq(workbench.size(), expected.size())
 	assert_eq(Database.recipes().size(), expected.size())
@@ -103,7 +108,7 @@ func test_database_finds_all_recipes() -> void:
 		assert_eq(r.inputs, spec[1], "%s inputs" % id)
 		assert_eq(r.output_id, id, "%s output" % id)
 		assert_eq(r.output_amount, spec[3] if spec.size() > 3 else 1)
-		assert_eq(r.category, &"decor" if String(id).begins_with("decor_") else (&"tool" if id == &"rake" else &"grave"), "%s category" % id)
+		assert_eq(r.category, &"decor" if String(id).begins_with("decor_") else (&"tool" if tools.has(id) else &"grave"), "%s category" % id)
 		assert_eq(r.craft_minutes, spec[2], "%s minutes" % id)
 		assert_eq(r.station, &"workbench")
 		assert_true(r in workbench)

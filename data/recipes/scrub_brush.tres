@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/crafting/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"scrub_brush"
+display_name = "Wurzelbürste"
+inputs = Dictionary[StringName, int]({
+&"wood": 2
+})
+output_id = &"scrub_brush"
+output_amount = 1
+craft_minutes = 15
+station = &"workbench"
+category = &"tool"

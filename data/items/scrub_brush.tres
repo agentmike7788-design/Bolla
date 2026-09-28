@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"scrub_brush"
+display_name = "Wurzelbürste"
+description = "Eine grobe Bürste aus Wurzelfasern. Damit wäscht man den Staub der letzten Tage ab, sanft und gründlich."
+category = 4
+max_stack = 1

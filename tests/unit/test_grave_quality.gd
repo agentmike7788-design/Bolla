@@ -64,7 +64,8 @@ func test_each_factor_of_the_table() -> void:
 
 
 func test_freshness_thresholds() -> void:
-	var cases := [[1.0, 1], [0.6, 1], [0.59, 0], [0.3, 0], [0.29, -1], [0.0, -1]]
+	# Phase 4 §2.4: below rot_threshold (0.1) "Verfallen" −2 replaces "Verwesend" −1.
+	var cases := [[1.0, 1], [0.6, 1], [0.59, 0], [0.3, 0], [0.29, -1], [0.1, -1], [0.099, -2], [0.0, -2]]
 	for c: Array in cases:
 		assert_eq(GraveQuality.compute(_corpse(c[0]), &"", config), 2 + int(c[1]), "freshness %s" % str(c[0]))
 
@@ -115,7 +116,7 @@ func test_clamp_to_max() -> void:
 	r.examined = true
 	var lines := GraveQuality.breakdown(r, &"gravestone_simple", generous)
 	assert_eq(_sum(lines), 8 + 2 + 3 + 1 + 1, "breakdown is not clamped")
-	assert_eq(GraveQuality.compute(r, &"gravestone_simple", generous), 10)
+	assert_eq(GraveQuality.compute(r, &"gravestone_simple", generous), 13, "Phase 4 §2.4: quality_max 13")
 
 
 func test_clamp_to_min() -> void:
@@ -207,7 +208,82 @@ func test_freshness_points_match_the_stage() -> void:
 	var custom := config.duplicate() as EconomyConfig
 	custom.fresh_good_threshold = 0.8
 	custom.fresh_bad_threshold = 0.5
-	var points := {&"fresh": custom.fresh_good_bonus, &"wilted": 0, &"decaying": custom.fresh_bad_malus}
+	var points := {&"fresh": custom.fresh_good_bonus, &"wilted": 0, &"decaying": custom.fresh_bad_malus, &"rotten": custom.rot_malus}
 	for f: float in [1.0, 0.8, 0.79, 0.6, 0.5, 0.49, 0.0]:
 		var stage := CorpseRecord.stage_for(f, custom)
-		assert_eq(GraveQuality.compute(_corpse(f), &"", custom), custom.quality_buried + int(points[stage]), "freshness %s (%s)" % [str(f), stage])
+		var expected: int = custom.rot_malus if f < custom.rot_threshold else int(points[stage])
+		assert_eq(GraveQuality.compute(_corpse(f), &"", custom), custom.quality_buried + expected, "freshness %s (%s)" % [str(f), stage])
+
+
+# --- Phase 4 (docs/PHASE4_DESIGN.md §2.4, P2) --------------------------------------------------
+
+func _p4() -> EconomyConfig:
+	return Phase4Fixtures.economy_config()
+
+
+func test_phase4_lines_in_order() -> void:
+	var r := _corpse(0.9)
+	r.washed = true
+	r.dress = CorpseRecord.DRESS_GOWN
+	r.shrouded = true
+	r.laid_out = true
+	r.examined = true
+	r.traits = [&"valuables"]
+	r.valuables_decision = &"left"
+	var lines := GraveQuality.breakdown(r, &"gravestone_simple", _p4())
+	assert_eq(_labels(lines), ["Bestattet", "Gewaschen", "Totenhemd", "Aufgebahrt", "Grabstein", "Frisch", "Untersucht", "Wertsachen liegen gelassen"])
+	assert_eq(_sum(lines), 13)
+	assert_eq(GraveQuality.compute(r, &"gravestone_simple", _p4()), 13, "§2.4 maximum 13")
+	assert_eq(_p4().quality_max, 13)
+	assert_eq(EconomyConfig.new().quality_max, 13, "class default")
+	assert_eq((load("res://data/config/economy_config.tres") as EconomyConfig).quality_max, 13, "data")
+
+
+func test_phase4_each_new_line() -> void:
+	var e := _p4()
+	var washed := _corpse()
+	washed.washed = true
+	assert_eq(GraveQuality.breakdown(washed, &"", e)[1], {"label": "Gewaschen", "points": 1})
+	var shroud := _corpse()
+	shroud.dress = CorpseRecord.DRESS_SHROUD
+	shroud.shrouded = true
+	assert_eq(GraveQuality.breakdown(shroud, &"", e)[1], {"label": "Leichentuch", "points": 2})
+	var gown := _corpse()
+	gown.dress = CorpseRecord.DRESS_GOWN
+	gown.shrouded = true
+	assert_eq(GraveQuality.breakdown(gown, &"", e)[1], {"label": "Totenhemd", "points": 3})
+	assert_eq(GraveQuality.breakdown(gown, &"", e).size(), 2, "one dress line only")
+	var laid := _corpse()
+	laid.laid_out = true
+	assert_eq(GraveQuality.breakdown(laid, &"", e)[1], {"label": "Aufgebahrt", "points": 1})
+	var hair := _corpse()
+	hair.harvested.append(CorpseRecord.HARVEST_HAIR)
+	assert_eq(GraveQuality.breakdown(hair, &"", e)[1], {"label": "Haar genommen", "points": -1})
+	var both := _corpse()
+	both.harvested.append(CorpseRecord.HARVEST_TEETH)
+	both.harvested.append(CorpseRecord.HARVEST_HAIR)
+	var lines := GraveQuality.breakdown(both, &"", e)
+	assert_eq(lines.slice(1), [{"label": "Haar genommen", "points": -1}, {"label": "Zähne genommen", "points": -2}], "config order")
+	assert_eq(GraveQuality.compute(both, &"", e), 0, "clamped at quality_min")
+
+
+func test_phase4_rotten_replaces_decaying() -> void:
+	var e := _p4()
+	assert_eq(GraveQuality.breakdown(_corpse(0.1), &"", e)[1], {"label": "Verwesend", "points": -1})
+	assert_eq(GraveQuality.breakdown(_corpse(0.09), &"", e)[1], {"label": "Verfallen", "points": -2})
+	assert_eq(GraveQuality.breakdown(_corpse(0.0), &"", e).size(), 2, "no extra decaying line")
+	var r := _corpse(0.5)
+	r.freshness_at_burial = 0.05
+	assert_has(_labels(GraveQuality.breakdown(r, &"", e)), "Verfallen", "freshness at burial counts")
+
+
+## Phase-2/3 records (shrouded, no dress / preparation fields) score as before, and a saved
+## grave keeps its quality (no recalculation).
+func test_phase4_old_records_and_graves_unchanged() -> void:
+	var r := _corpse(0.9)
+	r.shrouded = true
+	r.examined = true
+	assert_eq(_labels(GraveQuality.breakdown(r, &"gravestone_simple", _p4())), ["Bestattet", "Leichentuch", "Grabstein", "Frisch", "Untersucht"])
+	assert_eq(GraveQuality.compute(r, &"gravestone_simple", _p4()), 9, "Phase-2 example stays 9")
+	var old := GraveRecord.from_dict({"id": "plot_01", "state": "marked", "quality": 10})
+	assert_eq(old.quality, 10, "saved quality kept")
