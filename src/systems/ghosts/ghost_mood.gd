@@ -96,8 +96,9 @@ static func main_reason(grave: GraveRecord, corpse: CorpseRecord, dirt_level: in
 ## one of them for every PIETY_EVERY-th seed; a story ghost (by_story) speaks only its own
 ## lines when content and adds them to its hints when calm (restless story ghosts complain
 ## like any other).
+## QA (W3): `harvested` (CorpseRecord.harvested) adds GhostLines.by_harvest to the robbed hints.
 static func pick_line(lines: GhostLines, mood_id: StringName, reason: StringName, traits: Array[StringName], seed: int,
-		story_id: StringName = &"", piety_tier: StringName = &"") -> String:
+		story_id: StringName = &"", piety_tier: StringName = &"", harvested: Array[StringName] = []) -> String:
 	if lines == null:
 		return ""
 	var piety_pool: PackedStringArray = lines.by_piety.get(piety_tier, PackedStringArray()) if piety_tier != &"" else PackedStringArray()
@@ -111,6 +112,7 @@ static func pick_line(lines: GhostLines, mood_id: StringName, reason: StringName
 		pool.append_array(story_pool)
 		if reason != &"" and lines.by_reason.has(reason):
 			pool.append_array(lines.by_reason[reason])
+		_append_harvest(pool, lines, reason, harvested)
 	elif mood_id == CONTENT:
 		pool.append_array(lines.content)
 		for t: StringName in traits:
@@ -119,6 +121,7 @@ static func pick_line(lines: GhostLines, mood_id: StringName, reason: StringName
 	else:
 		if reason != &"" and lines.by_reason.has(reason):
 			pool.append_array(lines.by_reason[reason])
+		_append_harvest(pool, lines, reason, harvested)
 		if pool.is_empty():
 			pool.append_array(lines.calm)
 	if pool.is_empty():
@@ -128,6 +131,15 @@ static func pick_line(lines: GhostLines, mood_id: StringName, reason: StringName
 	if pool.is_empty():
 		return ""
 	return pool[posmod(seed, pool.size())]
+
+
+## The kind-specific robbed lines (by_harvest) of the kinds taken.
+static func _append_harvest(pool: PackedStringArray, lines: GhostLines, reason: StringName, harvested: Array[StringName]) -> void:
+	if reason != REASON_ROBBED:
+		return
+	for kind: StringName in harvested:
+		if lines.by_harvest.has(kind):
+			pool.append_array(lines.by_harvest[kind])
 
 
 static func label(mood_id: StringName) -> String:

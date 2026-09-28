@@ -302,8 +302,12 @@ func _clear_obstacles() -> void:
 			node.interact(player)
 
 
-## Links every insight whose clues are all found (journal page "Hinweise", exact set).
+## Links every insight whose clues are all found (journal page "Hinweise", exact set). The
+## journal panel is opened on its pages first (as a player reading it; UI warnings count).
 func _link() -> void:
+	for page: StringName in JournalManager.PAGES:
+		EventBus.ui_panel_requested.emit(JournalManager.PANEL, journal.panel_context(page))
+		UIState.clear()
 	for insight: InsightData in journal.ready_insights():
 		var ids: Array[StringName] = []
 		ids.assign(insight.requires)

@@ -183,7 +183,8 @@ func listen(grave_id: String, player: Player) -> String:
 		var corpse := _corpse(_graveyard().get_grave(grave_id).corpse_id)
 		var traits: Array[StringName] = corpse.traits.duplicate() if corpse != null else []
 		var story: StringName = corpse.story_id if corpse != null else &""
-		text = GhostMood.pick_line(_lines(), mood, info.reason, traits, line_seed(grave_id, day) + turn, story, piety_tier())
+		var harvested: Array[StringName] = corpse.harvested.duplicate() if corpse != null else []
+		text = GhostMood.pick_line(_lines(), mood, info.reason, traits, line_seed(grave_id, day) + turn, story, piety_tier(), harvested)
 		_said[grave_id] = {"total": now, "text": text, "mood": mood, "day": day, "turn": turn}
 	if mood == GhostMood.CONTENT and not _gifts.has(grave_id):
 		_give_gift(grave_id, player, day)

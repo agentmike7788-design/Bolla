@@ -91,6 +91,8 @@ var _held_heading: float = 0.0
 ## The schedule has with_cart entries (Osric); otherwise no cart / cargo logic at all (Ilse).
 var _uses_cart: bool = true
 var _lantern: OmniLight3D
+## Game minute of the last update while hidden (see _process).
+var _hidden_minute: int = -1
 
 
 func _init() -> void:
@@ -127,6 +129,13 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	# QA W3 (Phase 4 perf): hidden (at home, or its requires_flag missing – Ilse all day) the
+	# schedule can only change with the game minute – re-evaluated once per minute, not per frame.
+	if not _present and _held_entry == null:
+		var minute := TimeManager.total_minutes()
+		if minute == _hidden_minute:
+			return
+		_hidden_minute = minute
 	_update(delta)
 
 
@@ -264,6 +273,9 @@ func _set_state(present: bool, talkable: bool, with_cart: bool) -> void:
 		_present = present
 		visible = present
 		body_shape.set_deferred(&"disabled", not present)
+		# Hidden: the skeleton rests (QA W3 perf); _update_animation plays again once shown.
+		if _anim != null and not present and _anim.is_playing():
+			_anim.pause()
 	if talkable != _talkable:
 		_talkable = talkable
 		interactable.enabled = talkable
@@ -275,7 +287,7 @@ func _set_state(present: bool, talkable: bool, with_cart: bool) -> void:
 
 
 func _update_animation() -> void:
-	if _anim == null:
+	if _anim == null or not _present:
 		return
 	# Held by debug_teleport in the middle of a walk: he waits (idle) instead of walking on the spot.
 	var wanted := entry.animation if _held_entry == null or entry.travel_minutes == 0 else ANIM_IDLE

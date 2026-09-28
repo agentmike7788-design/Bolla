@@ -323,7 +323,7 @@ func pick_up(id: String, player: Player) -> bool:
 func _note_smell(record: CorpseRecord) -> void:
 	if record.stench_noted or CorpseDecay.is_balm_active(record, TimeManager.total_minutes()):
 		return
-	_decay_record(record, TimeManager.total_minutes())
+	refresh_decay(record.id)
 	if record.freshness >= _economy().fresh_bad_threshold:
 		return
 	record.stench_noted = true
@@ -451,10 +451,14 @@ func unburied_count() -> int:
 
 ## Decays `id` up to now (corpse_updated on a stage change). CorpseCare calls it before it
 ## resolves a step or checks a harvest: in real-time play the clock ticks minute by minute and
-## the hourly decay may be up to 59 minutes behind (QA4-01).
+## the hourly decay may be up to 59 minutes behind (QA4-01). Only a record that follows the
+## decay formula is brought forward – a freshness set by hand (tests, staged shots) stays.
 func refresh_decay(id: String) -> void:
 	var record := get_record(id)
 	if record == null or record.location == CorpseRecord.LOCATION_BURIED:
+		return
+	var rate := CorpseDecay.decay_per_hour(record, _tables())
+	if rate <= 0.0 or absf(CorpseDecay.freshness_at(record, record.last_decay_total, rate, _balm_factor()) - record.freshness) > 0.00001:
 		return
 	var cfg := _economy()
 	var stage := CorpseRecord.stage_for(record.freshness, cfg)

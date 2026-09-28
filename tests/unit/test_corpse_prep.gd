@@ -285,6 +285,9 @@ func test_harvest_hair_gives_the_braid_and_costs() -> void:
 	TimeManager.set_time(4, 600)
 	GameState.set_flag(&"trader_known", true)
 	var r := _record()
+	# A fresh corpse of today (QA4-01: the harvest checks the freshness of now).
+	r.arrival_total_minutes = TimeManager.total_minutes()
+	r.last_decay_total = r.arrival_total_minutes
 	inv.add_item(&"shears", 1)
 	assert_eq(care.harvest_block_reason(r.id, &"hair", inv), "")
 	assert_true(care.harvest(r.id, &"hair", inv))

@@ -7,7 +7,7 @@ script = ExtResource("1")
 content = PackedStringArray("Die Erde liegt warm auf mir. Hab Dank, Totengräber.", "So still war es nie, als ich noch lebte. Das ist gut so.", "Du hast mich ordentlich zugedeckt. Mehr wünscht sich keiner.", "Mein Stein steht gerade. Das hätte meiner Mutter gefallen.", "Nachts hört man hier den Wind im Gras. Ich höre gern zu.", "Die Lebenden vergessen langsam. Du vergisst mich nicht, das spür ich.", "Ruhig liegt es sich hier. Wer hätte das gedacht.", "Der Hügel erinnert sich an mich. Das genügt.")
 calm = PackedStringArray("Es ist nicht schlecht hier. Nur ein wenig still.", "Ich warte. Worauf, weiß ich selbst nicht mehr.", "Die Nacht ist lang, wenn man nicht mehr müde wird.", "Man gewöhnt sich an alles. Sogar ans Totsein.")
 by_reason = Dictionary[StringName, PackedStringArray]({
-&"robbed": PackedStringArray("Mir fehlt etwas. Ich weiß genau, was.", "Mein Zopf. Wo ist mein Zopf?", "Du hast mir genommen, was mir gehörte. Nicht das Geld – mich."),
+&"robbed": PackedStringArray("Mir fehlt etwas. Ich weiß genau, was.", "Man hat mir etwas genommen. Ich spür die Stelle noch.", "Du hast mir genommen, was mir gehörte. Nicht das Geld – mich."),
 &"weeds": PackedStringArray("Das Unkraut kriecht mir in die Träume. Rupf es aus, ja?", "Disteln auf meinem Hügel. Als wär ich längst vergessen.", "Es wuchert über mir. Ich hatte es gern ordentlich."),
 &"valuables": PackedStringArray("Mein Beutel fehlt. Ich spür die leere Stelle noch am Saum.", "Du hast behalten, was mir gehörte. Die Toten zählen nach.", "Meine Taschen sind leer. Das war nicht recht von dir."),
 &"cold": PackedStringArray("Mir ist kalt. So bloß in die Erde – das war nicht recht.", "Kein Tuch um mich. Die Erde kratzt.", "Ein Leinentuch hätte gereicht. Nur ein bisschen Wärme."),
@@ -37,3 +37,7 @@ gift_by_coins = Dictionary[int, String]({
 3: "Der Geist deutet ins Moos – drei Münzen."
 })
 no_gift = "Die Geister deuten nicht mehr ins Moos."
+by_harvest = Dictionary[StringName, PackedStringArray]({
+&"hair": PackedStringArray("Mein Zopf. Wo ist mein Zopf?"),
+&"teeth": PackedStringArray("Mein Mund ist still geworden. Stiller, als der Tod ihn macht.")
+})

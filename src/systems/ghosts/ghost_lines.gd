@@ -21,3 +21,6 @@ extends Resource
 @export var gift_by_coins: Dictionary[int, String] = {}
 ## Once per night when a content ghost would give but Pietät allows no gift (§2.7, §3.4).
 @export var no_gift: String = "Die Geister deuten nicht mehr ins Moos."
+## QA (W3, G4): extra complaints of a robbed ghost by the kind taken (hair / teeth) – a ghost
+## whose teeth were taken must not ask for its braid. Added to by_reason.robbed.
+@export var by_harvest: Dictionary[StringName, PackedStringArray] = {}

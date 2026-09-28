@@ -91,6 +91,41 @@ func test_grass_cleared_under_a_corpse_on_the_ground() -> void:
 	assert_eq(_texel(mask, spot), 0, "the grass is back once the corpse is carried")
 
 
+# --- QA4-04: a ghost whose teeth were taken does not ask for its braid ------------------------
+
+func test_robbed_lines_match_the_kind_taken() -> void:
+	var lines := Database.ghost_lines() as GhostLines
+	var none: Array[StringName] = []
+	var teeth: Array[StringName] = [CorpseRecord.HARVEST_TEETH]
+	var hair: Array[StringName] = [CorpseRecord.HARVEST_HAIR]
+	var hair_line := false
+	for seed: int in 40:
+		for mood: StringName in [GhostMood.RESTLESS, GhostMood.CALM]:
+			var t := GhostMood.pick_line(lines, mood, GhostMood.REASON_ROBBED, none, seed, &"", &"", teeth)
+			assert_false(t.contains("Zopf"), "teeth only: %s" % t)
+			hair_line = hair_line or GhostMood.pick_line(lines, mood, GhostMood.REASON_ROBBED, none, seed, &"", &"", hair).contains("Zopf")
+	assert_true(hair_line, "the braid line stays for a ghost whose hair was taken")
+
+
+# --- QA4-06 (perf): a hidden NPC rests – its skeleton is not animated, it updates per minute ---
+
+func test_hidden_npc_rests_and_comes_back_on_time() -> void:
+	var ilse := bot.ilse
+	var anim := ilse.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	TimeManager.running = false
+	TimeManager.set_time(2, 700)
+	await wait_frames(3)
+	assert_false(ilse.visible, "unknown: hidden")
+	if anim != null:
+		assert_false(anim.is_playing(), "hidden: no skeleton animation")
+	GameState.set_flag(&"trader_known", true)
+	TimeManager.set_time(2, 1400)
+	await wait_frames(3)
+	assert_true(ilse.visible and ilse.is_talkable(), "23:20 at the wall again")
+	if anim != null:
+		assert_true(anim.is_playing(), "shown: animated")
+
+
 # --- helpers ----------------------------------------------------------------------------------
 
 ## A generated corpse on the table whose freshness falls below `threshold` at a minute that is

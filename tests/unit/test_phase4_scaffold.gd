@@ -219,8 +219,10 @@ func test_extended_data_classes() -> void:
 
 
 ## Data that deviates from the W0 fixture after the G4 QA round (docs/reviews/phase4_wip/
-## qa_playthrough.md, QA4-02: the decay effects did not show at the default camera distance).
-const QA_DATA_DEVIATIONS := {&"decay_visual_config": ["wisp_color", "smoke_color", "visibility_range"]}
+## qa_playthrough.md, QA4-02: the decay effects did not show at the default camera distance;
+## QA4-05: German closing quotes (‚…‘) in the key fallback note.
+const QA_DATA_DEVIATIONS := {&"decay_visual_config": ["wisp_color", "smoke_color", "visibility_range"],
+		&"story_config": ["key_fallback_text"]}
 
 
 func test_config_files_in_data_match_the_fixtures() -> void:
