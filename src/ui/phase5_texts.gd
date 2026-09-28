@@ -37,6 +37,8 @@ const BELT_TITLE := "Werkzeuggürtel"
 const BELT_TIER := "Stufe %d"
 const BELT_NO_TOOL := "keine"
 const BELT_OTHER := "Pflege & Verwertung"
+## Info line under the belt while no tier tool is hovered.
+const BELT_HINT := "Die beste Stufe am Gürtel gilt von selbst. Zeig auf ein Werkzeug, dann steht hier seine Wirkung."
 const BELT_FASTER := "%s dauert %d statt %d Minuten."
 const BELT_SAME := "%s: %d Minuten."
 const BELT_OPENS := "%s: %d Minuten – geht erst mit %s."
@@ -74,7 +76,7 @@ const CHAPTER_ID := &"names_in_stone"
 const CHAPTER_TITLE := "Namen in Stein"
 const CHAPTER_INTRO := "Werkzeug, Tuch und Stein – Dinge, die länger halten als der, der sie macht. Die Toten haben ihre Namen zurück."
 const CHAPTER_ROWS: PackedStringArray = ["Tage seit dem Werkhof", "Stationen", "Werkzeug", "Steine gesetzt",
-		"Gräber mit Namen", "Ausgaben (Phase 5)", "Zufriedene Geister"]
+		"Gräber mit Namen", "Ausgaben seit dem Werkhof", "Zufriedene Geister"]
 const CHAPTER_STONES := "%d (davon %d %s)"
 const CHAPTER_MASTER_ONE := "Meisterstein"
 const CHAPTER_MASTER_MANY := "Meistersteine"

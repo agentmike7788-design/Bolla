@@ -132,10 +132,13 @@ func _ensure_systems() -> void:
 		systems.add_child(node)
 	_shop = get_tree().get_first_node_in_group(&"workshop") as Workshop
 	_masonry = get_tree().get_first_node_in_group(&"stonemasonry") as Stonemasonry
-	_site = BuildSite.new()
-	_site.name = "ShotSiteForge"
-	_site.station_id = &"forge"
-	_world.add_child(_site)
+	# W3 (G5): the real forge build site of the workyard (a stand-in only for a world without it).
+	_site = _world.get_node_or_null(^"Entities/site_forge") as BuildSite
+	if _site == null:
+		_site = BuildSite.new()
+		_site.name = "ShotSiteForge"
+		_site.station_id = &"forge"
+		_world.add_child(_site)
 
 
 # --- staging (real systems only) ----------------------------------------------------------
@@ -279,6 +282,9 @@ func _build_site_shot() -> void:
 	_coin_stash = inv.count(&"coin") - 20
 	inv.remove_item(&"coin", _coin_stash)
 	_site.refresh()
+	# In front of the real site, as the player opens it ([E] Bauplatz: Esse).
+	_place_player(_site.global_position + _site.global_basis.z * 1.6, 0.0)
+	_frame(_site.global_position, 12.0)
 	_ui.open_panel(&"build_site", {"station": &"forge", "station_data": Database.station(&"forge"), "site": _site,
 			"inventory": inv, "player": _player})
 	await get_tree().process_frame

@@ -8,6 +8,7 @@ const TIMEOUT := 300.0
 const SLOT := 92
 const FIXTURE := "slot_p4_day20_reverent"
 const FakeInventory := preload("res://tests/fixtures/fake_inventory.gd")
+const PROBE_LAYER := 1 << 19
 
 
 ## Refuses to give up one item id (a removal failing midway).
@@ -279,6 +280,128 @@ func test_am_bruch_and_quarry_are_never_a_trap() -> void:
 	assert_true(_near(reached, _v(world.get_waypoint(&"tp_quarry")), 0.5), "tp_quarry reachable")
 
 
+# --- QA5-05: Am Bruch reads as a rugged quarry wall with weathered boulders -------------------
+# The east edge pieces showed their back (a grassy lip) to the camera – tall grass-topped blocks;
+# the boulder was a smooth sphere.
+
+func test_quarry_edges_face_into_am_bruch_and_the_boulder_is_faceted() -> void:
+	var east := 0
+	for node: Node in world.get_node("Decor/Bruch").get_children():
+		var n := node as Node3D
+		if n == null or not n.scene_file_path.ends_with("ph_env_quarry_edge.glb") or n.global_position.x < 30.0:
+			continue
+		east += 1
+		var front := n.global_transform.basis.z.normalized()
+		assert_true(front.x < -0.8, "%s: rock front towards Am Bruch (west), got %s" % [n.name, front])
+	assert_eq(east, 8, "east edge pieces")
+	var edge := _faces_of("res://assets/models/environment/ph_env_quarry_edge.glb")
+	assert_true(_up_green_share(edge) < 0.15, "edge top is bare rock, not a grassy lip (%.2f)" % _up_green_share(edge))
+	var boulder := _faces_of("res://assets/models/environment/ph_env_boulder.glb")
+	assert_true(_facet_share(boulder) >= 0.2, "the boulder has broad split facets (%.2f; a sphere ≈ 0.12)" % _facet_share(boulder))
+
+
+# --- QA5-06: the alders' stages are readable under the forest crowns --------------------------
+# Stump and shoots stood behind forest crowns and the crowns of the other alders (gather_alder_4:
+# 6 % visible from the gameplay camera).
+
+func test_alder_stages_are_seen_from_the_gameplay_camera() -> void:
+	var dir := Vector3.BACK.rotated(Vector3.RIGHT, -deg_to_rad(45.0))
+	var space := world.get_world_3d().direct_space_state
+	for k: int in [1, 2, 3, 4, 5]:
+		var alder := world.get_node("Entities/gather_alder_%d" % k) as Node3D
+		var faces := PackedVector3Array()
+		_collect_faces(world.get_node("Decor/Trees"), faces)
+		_collect_faces(world.get_node("Decor/Bushes"), faces)
+		for j: int in [1, 2, 3, 4, 5]:
+			if j != k:
+				_collect_faces(world.get_node("Entities/gather_alder_%d/Full" % j), faces)
+		var body := _probe_body(faces)
+		for i: int in 2:
+			await tree.physics_frame
+		var seen := 0
+		var total := 0
+		for h: float in [0.3, 0.8, 1.4]:
+			for a: int in 6:
+				var q := alder.global_position + Vector3(0.35, h, 0.0).rotated(Vector3.UP, TAU * a / 6.0)
+				total += 1
+				if space.intersect_ray(PhysicsRayQueryParameters3D.create(q + dir * 22.0, q, PROBE_LAYER)).is_empty():
+					seen += 1
+		body.free()
+		assert_true(seen >= 0.8 * total, "gather_alder_%d: stump / shoots seen %d / %d" % [k, seen, total])
+
+
+# --- QA5-07: chimney smoke readable by day within the particle budget ---------------------------
+
+func test_workyard_smoke_reads_by_day_within_the_budget() -> void:
+	var forge := world.get_node("Entities/station_forge")
+	var smokes := forge.find_children("*", "CPUParticles3D", true, false)
+	assert_eq(smokes.size(), 2, "chimney + kiln")
+	for node: Node in smokes:
+		var p := node as CPUParticles3D
+		assert_eq(p.amount, 3, "§9: 3 particles")
+		var peak := p.color_ramp.get_color(1)
+		assert_true(peak.get_luminance() < 0.45, "%s: darker warm grey against the day (%.2f)" % [p.name, peak.get_luminance()])
+		assert_true(p.scale_amount_curve.sample(1.0) > 1.2, "%s: the plume spreads as it rises" % p.name)
+
+
+# --- QA5-08: the belt's effect text does not cover the care tools --------------------------------
+
+func test_belt_effect_shows_in_the_panel_not_over_the_care_tools() -> void:
+	var ui := world.get_node("UI") as UIRoot
+	ui.toggle_inventory()
+	await tree.process_frame
+	var panel := ui.get_panel(&"inventory") as InventoryPanel
+	var shovel := panel.belt_cells.get(&"shovel") as Control
+	assert_not_null(shovel)
+	assert_eq(shovel.tooltip_text, "", "no floating tooltip over the row below")
+	shovel.mouse_entered.emit()
+	assert_true(panel.belt_info_text().contains("Graben") and panel.belt_info_text().contains("Nächste Stufe"), panel.belt_info_text())
+	shovel.mouse_exited.emit()
+	assert_eq(panel.belt_info_text(), Phase5Texts.BELT_HINT)
+	var care := 0
+	for key: StringName in panel.belt_cells:
+		if not key in [&"shovel", &"axe", &"pickaxe"]:
+			care += 1
+			assert_ne(panel.belt_cells[key].tooltip_text, "", "%s keeps its short tooltip" % key)
+	assert_true(care >= 3, "care tools on the belt (%d)" % care)
+	UIState.clear()
+
+
+# --- QA5-09: a long name stays readable at the gameplay zoom -------------------------------------
+
+func test_long_name_is_set_in_two_larger_lines() -> void:
+	var cfg := Database.config(&"stone_config") as StoneConfig
+	var corpse := CorpseRecord.new()
+	corpse.display_name = "Cornelius Kornblum"
+	corpse.age = 58
+	corpse.arrival_total_minutes = 460
+	var d := _design(&"stone_stele", &"i_rest")
+	d.text = StoneDesignRules.render_text(Database.inscription(&"i_rest") as InscriptionData, corpse, cfg)
+	assert_eq(d.text.size(), 3, "the carved text: Hier ruht / name / dates")
+	var node := StoneVisual.build_inscription(d, (Database.stone_shape(&"stone_stele") as StoneShapeData).label_width, cfg)
+	var lines: Array[String] = []
+	for child: Node in node.get_children():
+		lines.append((child as Label3D).text)
+	assert_eq(lines.slice(0, 3), ["Hier ruht", "Cornelius", "Kornblum"] as Array[String], str(lines))
+	for i: int in [1, 2]:
+		var l := node.get_child(i) as Label3D
+		assert_true(l.font_size * l.pixel_size >= 0.07, "name line %d: %.3f m letters" % [i, l.font_size * l.pixel_size])
+	node.free()
+
+
+# --- Prüfung: texts – the 1834 calendar, no developer terms in the chapter panel ----------------
+
+func test_calendar_1834_and_chapter_texts() -> void:
+	var cfg := Database.config(&"stone_config") as StoneConfig
+	assert_eq(StoneCalendar.date_text(1, cfg), "3. Gilbhart 1834")
+	assert_eq(StoneCalendar.date_text(29, cfg), "31. Gilbhart 1834")
+	assert_eq(StoneCalendar.date_text(30, cfg), "1. Nebelung 1834")
+	assert_eq(StoneCalendar.date_text(60, cfg), "1. Julmond 1834")
+	assert_eq(StoneCalendar.date_text(91, cfg), "1. Hartung 1835")
+	for row: String in Phase5Texts.CHAPTER_ROWS:
+		assert_false(row.contains("Phase"), "player-facing row without 'Phase': %s" % row)
+
+
 # --- helpers ----------------------------------------------------------------------------------
 
 func _bind() -> void:
@@ -384,6 +507,83 @@ func _pos(id: String) -> Vector2:
 
 static func _v(p: Vector3) -> Vector2:
 	return Vector2(p.x, p.z)
+
+
+func _collect_faces(node: Node, out: PackedVector3Array) -> void:
+	for n: Node in node.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		for v: Vector3 in mi.mesh.get_faces():
+			out.append(mi.global_transform * v)
+
+
+func _probe_body(faces: PackedVector3Array) -> StaticBody3D:
+	var concave := ConcavePolygonShape3D.new()
+	concave.backface_collision = true
+	concave.set_faces(faces)
+	var body := StaticBody3D.new()
+	body.collision_layer = PROBE_LAYER
+	body.collision_mask = 0
+	var cs := CollisionShape3D.new()
+	cs.shape = concave
+	body.add_child(cs)
+	world.add_child(body)
+	return body
+
+
+## [[a, b, c, colour_of_a], …] of a model's triangles (local space).
+func _faces_of(path: String) -> Array:
+	var out: Array = []
+	var scene := (load(path) as PackedScene).instantiate()
+	for n: Node in scene.find_children("*", "MeshInstance3D", true, false):
+		var mesh := (n as MeshInstance3D).mesh
+		for s: int in mesh.get_surface_count():
+			var arr := mesh.surface_get_arrays(s)
+			var v: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+			var cols: PackedColorArray = arr[Mesh.ARRAY_COLOR] if arr[Mesh.ARRAY_COLOR] != null else PackedColorArray()
+			var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
+			for t: int in idx.size() / 3:
+				var c: Color = cols[idx[3 * t]] if cols.size() > 0 else Color.GRAY
+				out.append([v[idx[3 * t]], v[idx[3 * t + 1]], v[idx[3 * t + 2]], c])
+	scene.free()
+	return out
+
+
+## Share of the surface in the 8 largest normal buckets (flat facets concentrate the area).
+static func _facet_share(tris: Array) -> float:
+	var buckets := {}
+	var total := 0.0
+	for t: Array in tris:
+		var cr := (t[1] - t[0]).cross(t[2] - t[0]) as Vector3
+		var area := cr.length() * 0.5
+		if area <= 0.0:
+			continue
+		var n := cr.normalized()
+		var key := Vector3i(roundi(n.x * 6), roundi(n.y * 6), roundi(n.z * 6))
+		buckets[key] = float(buckets.get(key, 0.0)) + area
+		total += area
+	var areas: Array = buckets.values()
+	areas.sort()
+	areas.reverse()
+	var top := 0.0
+	for i: int in mini(8, areas.size()):
+		top += float(areas[i])
+	return top / maxf(total, 1e-6)
+
+
+## Share of the up-facing surface painted grass-green.
+static func _up_green_share(tris: Array) -> float:
+	var up := 0.0
+	var green := 0.0
+	for t: Array in tris:
+		var cr := (t[1] - t[0]).cross(t[2] - t[0]) as Vector3
+		var area := cr.length() * 0.5
+		if area <= 0.0 or cr.normalized().y < 0.6:
+			continue
+		up += area
+		var c := (t[3] as Color).linear_to_srgb()
+		if c.h > 0.17 and c.h < 0.33 and c.s > 0.25:
+			green += area
+	return green / maxf(up, 1e-6)
 
 
 func _on_note(text: String, _kind: StringName) -> void:

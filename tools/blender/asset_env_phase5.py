@@ -387,9 +387,12 @@ def _hash(i: int, j: int, seed: int) -> float:
     return noise.noise(Vector((i * 1.618 + 0.5, j * 2.414 + 0.5, seed * 0.77 + 0.5)))
 
 
-def _wall(width: float, height: float, nx: int, nz: int, seed: int, taper_ends: bool, top_depth: float = 1.4):
+def _wall(width: float, height: float, nx: int, nz: int, seed: int, taper_ends: bool, top_depth: float = 1.4,
+          rocky_top: bool = False):
     """Quarry face (front at y ~ 0): three benches stepping back, each broken into blocks along
     vertical joints, a ragged top edge, a grassy lip running back over the top.
+    rocky_top (the edge pieces, seen from above by the gameplay camera): a jagged skyline with deep
+    notches and a bare, stepped rock top with moss in its cracks instead of the grassy lip.
     Returns (object, top(x) -> (y, z) of the lip's front edge)."""
     bm = bmesh.new()
     rows = []
@@ -401,6 +404,8 @@ def _wall(width: float, height: float, nx: int, nz: int, seed: int, taper_ends: 
         end = min(1.0, 0.5 + 1.6 * min(u, 1.0 - u)) if taper_ends else 1.0
         col = math.floor((x + 0.35 * noise.noise(Vector((x * 0.3, seed, 7.0)))) / 1.15)
         notch = 0.28 if _hash(col, 9, seed) > 0.25 else 0.0
+        if rocky_top:                                  # jagged: every joint block its own height
+            notch = 0.55 * (0.5 + 0.5 * _hash(col, 11, seed)) + (0.35 if _hash(col, 13, seed) > 0.3 else 0.0)
         heights.append(height * end * (1.0 + 0.08 * noise.noise(Vector((x * 0.45, seed, 1.0)))) - notch * end)
     for k in range(nz + 1):
         t = k / nz
@@ -422,8 +427,11 @@ def _wall(width: float, height: float, nx: int, nz: int, seed: int, taper_ends: 
         row = []
         for i in range(nx + 1):
             v = rows[-1][i].co
-            row.append(bm.verts.new((v.x, v.y + 0.08 + top_depth * s, v.z + 0.1 * math.sin(s * math.pi) - 0.05 * s
-                                     + 0.05 * noise.noise(Vector((v.x, s * 3, seed))))))
+            dz = 0.1 * math.sin(s * math.pi) - 0.05 * s + 0.05 * noise.noise(Vector((v.x, s * 3, seed)))
+            if rocky_top:                              # broken, stepped rock top falling away behind
+                dz = -0.28 * s * (1.0 + noise.noise(Vector((v.x * 1.7, s * 2, seed + 3)))) \
+                    + 0.12 * noise.noise(Vector((v.x * 2.3, s * 4, seed + 9)))
+            row.append(bm.verts.new((v.x, v.y + 0.08 + top_depth * s, v.z + dz)))
         top.append(row)
     back = [bm.verts.new((rows[-1][i].co.x, top[-1][i].co.y, -0.2)) for i in range(nx + 1)]
     grid = rows + top + [back]
@@ -440,9 +448,11 @@ def _wall(width: float, height: float, nx: int, nz: int, seed: int, taper_ends: 
     def col(co, vi):
         if vi < n_face:
             return _strata(co, seed)
+        if rocky_top and vi < n_face + 3 * (nx + 1):  # bare rock top, a little darker than the face
+            return L.scale_c(_strata(co, seed + 1), 0.9)
         return L.mix(GRASS, EARTH, 0.25 + 0.3 * noise.noise(co * 2.0)) if vi < n_face + 3 * (nx + 1) else EARTH_DARK
     P._paint_fn(o, col)
-    P._tint_up(o, MOSS, 0.9, 0.35, freq=1.5, seed=seed)
+    P._tint_up(o, MOSS, 0.55 if rocky_top else 0.9, 0.5 if rocky_top else 0.35, freq=3.2 if rocky_top else 1.5, seed=seed)
     L.set_mat(o, L.MAT_PAINTED)
 
     def top_at(x: float):
@@ -457,7 +467,7 @@ def _talus(parts, width: float, n: int, seed: int) -> None:
         x = rnd.uniform(-width / 2, width / 2)
         s = rnd.uniform(0.12, 0.3)
         parts.append(_rock((x, -0.85 - rnd.uniform(0.0, 0.4), s * 0.45), (s * 1.3, s, s * 0.8), seed + i, subdiv=1,
-                           color=L.mix(STONE, STONE_WARM, rnd.random()), moss=0.4, angular=0.5))
+                           color=L.mix(STONE_MID, STONE_DARK, 0.2 + 0.5 * rnd.random()), moss=0.55, angular=0.5))
 
 
 def quarry_face():
@@ -477,14 +487,20 @@ def quarry_face():
 
 
 def quarry_edge():
-    """Kantenstuck: 3 m of the same face, lower towards both ends so pieces chain round a corner."""
+    """Kantenstuck: 3 m of the same face, lower towards both ends so pieces chain round a corner.
+    Seen from above (the gameplay camera looks down on the edge pieces), so the top is bare, jagged
+    rock – joint blocks of different heights, a few loose blocks on the ledges, moss only in the
+    cracks – and no grassy lip (W3: it read as a row of tall grass-topped blocks)."""
     L.reset(2510)
-    wall, top_at = _wall(3.0, 3.0, 12, 12, 7, True, top_depth=1.2)
+    wall, top_at = _wall(3.0, 3.0, 12, 12, 7, True, top_depth=0.7, rocky_top=True)
     parts = [wall]
-    _talus(parts, 2.6, 5, 30)
-    y, z = top_at(0.3)
-    parts.append(E._clump((0.3, y + 0.4, z + 0.05), 0.36, L.mix(P.LEAF_A, P.LEAF_B, 0.3), 60, subdiv=2,
-                          scale=(1.2, 1.0, 0.6), zr=(z - 0.3, z + 0.5)))
+    _talus(parts, 2.6, 6, 30)
+    rnd = random.Random(2511)
+    for i, x in enumerate((-1.0, 0.1, 0.9)):         # loose blocks lying on the broken top
+        y, z = top_at(x)
+        s = rnd.uniform(0.22, 0.32)
+        parts.append(_rock((x, y + 0.3, z - 0.05 + s * 0.3), (s * 1.3, s, s * 0.8), 70 + i, subdiv=1,
+                           color=L.mix(STONE_MID, STONE_WARM, rnd.random()), moss=0.45, angular=0.6))
     obj = L.join(parts, "ph_env_quarry_edge")
     P._center_xy(obj)
     L.finish(obj, "ph_env_quarry_edge", "environment", 40, shift=False)
@@ -617,14 +633,52 @@ def rubble_face():
     L.finish(obj, "ph_env_rubble_face", "environment", 35, shift=False)
 
 
+def _chisel(obj, planes, seed: int) -> None:
+    """Weathered facets: every vertex beyond a cutting plane (unit normal n, distance d from the
+    centre of the unit rock) is pushed back onto it, so the rock gets broad flat faces and hard
+    edges like a split, frost-worn erratic instead of a smooth ball."""
+    for v in obj.data.vertices:
+        p = v.co.copy()
+        for n, d in planes:
+            k = p.dot(n) - d
+            if k > 0.0:
+                p -= n * k
+        v.co = p
+    L.jitter(obj, 0.035, 5.0, seed)
+
+
 def boulder():
-    """Findling: a big, rounded erratic, 2.0 m across and 1.6 m high, thick moss on top, grass round
-    its foot, a smaller companion stone."""
+    """Findling: a big erratic, 2.0 m across and 1.6 m high – weathered: broad split facets and hard
+    edges, a crack, lichen-spotted flanks, moss in patches on top, grass round its foot and a
+    smaller companion stone (W3: it read as a smooth sphere)."""
     L.reset(2900)
-    b = _rock((0.0, 0.0, 0.72), (1.0, 0.85, 0.9), 1, color=L.mix(STONE, STONE_WARM, 0.3), moss=0.0, angular=0.15,
-              subdiv=3)
-    P._tint_up(b, MOSS, 1.0, 0.1, freq=1.8, seed=1)
-    P._tint_up(b, MOSS_LIGHT, 0.5, 0.6, freq=3.0, seed=2)
+    b = L.prim("ico", radius=1.0, subdivisions=3)
+    L.jitter(b, 0.12, 1.1, 1)
+    rnd = random.Random(2901)
+    planes = []
+    for i in range(9):                               # broad facets, the flat top and a split flank
+        a = i / 9 * math.tau + rnd.uniform(-0.3, 0.3)
+        el = rnd.uniform(-0.15, 0.7)
+        n = Vector((math.cos(a) * math.cos(el), math.sin(a) * math.cos(el), math.sin(el))).normalized()
+        planes.append((n, rnd.uniform(0.62, 0.8)))
+    planes.append((Vector((0.1, -0.05, 1.0)).normalized(), 0.72))
+    _chisel(b, planes, 2)
+    for v in b.data.vertices:                        # sits on the ground, flatter underneath
+        if v.co.z < -0.45:
+            v.co.z = -0.45 + (v.co.z + 0.45) * 0.3
+    b.data.transform(Matrix.Translation((0.0, 0.0, 0.5)) @ Matrix.Diagonal((1.02, 0.86, 1.08, 1)))
+    L.paint(b, L.mix(STONE, STONE_WARM, 0.35), var=0.3, ao=0.5, top=0.12, zrange=(0.0, 1.6), hue_shift=STONE_DARK, seed=1)
+    me = b.data                                      # a dark weathering crack across the front flank
+    attr = me.color_attributes["Col"]
+    for poly in me.polygons:
+        c = poly.center
+        if abs(c.x * 0.8 + c.z * 0.45 - 0.35) < 0.06 and c.y < 0.1:
+            for li in poly.loop_indices:
+                col = attr.data[li].color
+                attr.data[li].color = (col[0] * 0.55, col[1] * 0.55, col[2] * 0.55, 1.0)
+    L.set_mat(b, L.MAT_PAINTED)
+    P._tint_up(b, MOSS, 1.0, 0.25, freq=2.6, seed=1)
+    P._tint_up(b, MOSS_LIGHT, 0.6, 0.55, freq=4.0, seed=2)
     parts = [b, _rock((0.85, -0.55, 0.14), (0.24, 0.2, 0.18), 3, subdiv=1, moss=0.7, angular=0.3)]
     parts.append(E._blades([((math.cos(a) * 0.95, math.sin(a) * 0.82), 5, (0.12, 0.3), 0.014, 0.1)
                             for a in (i / 9 * math.tau for i in range(9))], E.GRASS_TINT, 10))

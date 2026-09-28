@@ -305,7 +305,7 @@ func test_stone_preview_renders_on_change_only() -> void:
 	assert_eq(preview.render_count, 1)
 	assert_eq(preview.viewport.render_target_update_mode, SubViewport.UPDATE_ONCE)
 	assert_true(preview.viewport.own_world_3d, "own World3D")
-	assert_true(Array(preview.label_texts()).has("Egbert Kornblum"))
+	assert_true(Array(preview.label_texts()).has("Egbert Kornblum") or Array(preview.label_texts()).has("Kornblum"), str(preview.label_texts()))
 	preview.show_design(Phase5Fixtures.design(&"stone_stele", &"i_rest", &"", false,
 			PackedStringArray(["Hier ruht", "Egbert Kornblum", "* 1763 – † 3. Gilbhart 1834"])))
 	assert_eq(preview.render_count, 1, "same design: nothing rebuilt")
@@ -448,7 +448,7 @@ func test_chapter_panel_names_in_stone() -> void:
 	assert_eq(panel.stone_value("Werkzeug"), "Meisterschaufel · Holzfälleraxt · Meisterhacke")
 	assert_eq(panel.stone_value("Steine gesetzt"), "6 (davon 1 Meisterstein)")
 	assert_eq(panel.stone_value("Gräber mit Namen"), "7/18")
-	assert_eq(panel.stone_value("Ausgaben (Phase 5)"), "114 Münzen (Brief 20 · Bau 50 · Osric 32 · Ilse 12)")
+	assert_eq(panel.stone_value("Ausgaben seit dem Werkhof"), "114 Münzen (Brief 20 · Bau 50 · Osric 32 · Ilse 12)")
 	assert_eq(panel.stone_value("Zufriedene Geister"), "4 → 9")
 	assert_eq(panel.goal_label.text, "Die Namen stehen jetzt da, wo der Regen sie nicht wegwäscht.")
 	ui.close_top_panel()

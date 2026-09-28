@@ -25,7 +25,10 @@ const DEFAULT_SLOTS := 16
 
 @export var slot_edge: float = 104.0
 @export var icon_edge: float = 72.0
-@export var belt_cell_width: float = 188.0
+@export var belt_cell_width: float = 184.0
+## W3 (G5 QA): the tier tools' effect shows in this fixed line under the belt instead of a floating
+## tooltip (that covered the care-tool row); 3 lines at the panel width.
+@export var belt_info_height: float = 72.0
 
 var _grid: GridContainer
 var _coins: Label
@@ -34,6 +37,7 @@ var _inventory: Inventory
 var _belt: HBoxContainer
 var _belt_other: HBoxContainer
 var _belt_box: VBoxContainer
+var _belt_info: Label
 ## tool kind -> its belt cell (tier tools) · item id -> cell (other tools)
 var belt_cells: Dictionary[StringName, Control] = {}
 
@@ -48,6 +52,11 @@ func _build() -> void:
 	_belt_box.add_child(_belt)
 	_belt_other = UIKit.hbox(8)
 	_belt_box.add_child(_belt_other)
+	_belt_info = UIKit.label(Phase5Texts.BELT_HINT, &"DimLabel", true)
+	_belt_info.custom_minimum_size = Vector2(0.0, belt_info_height)
+	_belt_info.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	_belt_info.add_theme_font_size_override(&"font_size", 18)
+	_belt_box.add_child(_belt_info)
 	box.add_child(_belt_box)
 	_grid = GridContainer.new()
 	_grid.columns = GRID_COLUMNS
@@ -116,7 +125,8 @@ func belt_entries() -> Dictionary:
 	var out := {}
 	for key: StringName in belt_cells:
 		var cell := belt_cells[key]
-		out[key] = {"name": cell.get_meta(&"name", ""), "tier": cell.get_meta(&"tier", 0), "tooltip": cell.tooltip_text}
+		out[key] = {"name": cell.get_meta(&"name", ""), "tier": cell.get_meta(&"tier", 0),
+				"tooltip": cell.get_meta(&"info", cell.tooltip_text)}
 	return out
 
 
@@ -124,6 +134,7 @@ func _refresh_belt() -> void:
 	UIKit.clear_children(_belt)
 	UIKit.clear_children(_belt_other)
 	belt_cells.clear()
+	show_belt_info("")
 	var on_belt := is_instance_valid(_inventory) and _inventory.tool_belt
 	_belt_box.visible = on_belt
 	if not on_belt:
@@ -166,7 +177,7 @@ func _belt_cell(icon_id: StringName, pale: bool, name: String, tier: int, toolti
 	cell.mouse_filter = Control.MOUSE_FILTER_PASS
 	cell.tooltip_text = tooltip
 	cell.set_meta(&"name", name)
-	var icon := UIKit.icon(Database.icon(icon_id) if icon_id != &"" else null, 40.0 if tiered else 46.0)
+	var icon := UIKit.icon(Database.icon(icon_id) if icon_id != &"" else null, 34.0 if tiered else 46.0)
 	icon.modulate = Color(1, 1, 1, 0.3) if pale else Color(1, 1, 1, 1)
 	if not tiered:
 		cell.custom_minimum_size = Vector2(62.0, 62.0)
@@ -175,8 +186,13 @@ func _belt_cell(icon_id: StringName, pale: bool, name: String, tier: int, toolti
 		center.add_child(icon)
 		cell.add_child(center)
 		return cell
+	# The effect goes into the info line under the belt (no floating tooltip over the care tools).
+	cell.tooltip_text = ""
+	cell.set_meta(&"info", tooltip)
+	cell.mouse_entered.connect(show_belt_info.bind(tooltip))
+	cell.mouse_exited.connect(show_belt_info.bind(""))
 	cell.custom_minimum_size = Vector2(belt_cell_width, 72.0)
-	var row := UIKit.hbox(8)
+	var row := UIKit.hbox(6)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(icon)
 	var texts := UIKit.vbox(0)
@@ -185,7 +201,8 @@ func _belt_cell(icon_id: StringName, pale: bool, name: String, tier: int, toolti
 	var label := UIKit.label(name, &"DimLabel" if tier <= 0 else &"")
 	label.clip_text = true
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	label.custom_minimum_size.x = belt_cell_width - 62.0
+	label.custom_minimum_size.x = belt_cell_width - 52.0
+	label.add_theme_font_size_override(&"font_size", 18)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	texts.add_child(label)
 	var pips := UIKit.label("%s  %s" % [PIP_ON.repeat(maxi(tier, 0)) + PIP_OFF.repeat(maxi(2 - tier, 0)), Phase5Texts.BELT_TIER % tier],
@@ -195,6 +212,18 @@ func _belt_cell(icon_id: StringName, pale: bool, name: String, tier: int, toolti
 	row.add_child(texts)
 	cell.add_child(row)
 	return cell
+
+
+## The info line under the belt: a tier tool's effect while hovered (lines joined), else the hint.
+func show_belt_info(text: String) -> void:
+	if _belt_info == null:
+		return
+	_belt_info.text = Phase5Texts.BELT_HINT if text == "" else " · ".join(text.split("\n"))
+
+
+## The info line's text (tests, screenshot director).
+func belt_info_text() -> String:
+	return _belt_info.text if _belt_info != null else ""
 
 
 ## Item id of the `kind` tool at `tier` (Database), &"" if none.

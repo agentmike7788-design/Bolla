@@ -12,4 +12,4 @@ inputs = Dictionary[StringName, int]({&"stone": 4})
 minutes = 50
 model = ExtResource("m1")
 max_lines = 4
-label_width = 0.5
+label_width = 0.54

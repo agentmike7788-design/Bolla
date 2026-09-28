@@ -29,6 +29,12 @@ const EM_MIN := 0.024
 ## A date line whose fitted em would fall below this splits at DATE_SPLIT into two lines.
 const EM_DATE_SPLIT := 0.036
 const DATE_SPLIT := " – "
+## W3 (G5 QA, 10 m zoom): a one-line name whose fitted em falls below this is set in two lines
+## (fore- / surname, at the space nearest the middle) when the stone keeps ≤ NAME_SPLIT_MAX_ROWS
+## lines – visual only, the carved text stays as stored. Split name lines are capped at EM_NAME_SPLIT.
+const EM_NAME_SPLIT := 0.07
+const EM_NAME_SPLIT_MAX := 0.085
+const NAME_SPLIT_MAX_ROWS := 4
 const FILL := 0.94
 ## W-UI readability fix (P5 review, 10 m zoom): heavier cut letters.
 const EMBOLDEN := 0.62
@@ -83,7 +89,7 @@ static func build_inscription(design: StoneDesign, width: float, cfg: StoneConfi
 	var sizes: Array[float] = []
 	var total := 0.0
 	for row: Dictionary in rows:
-		var em := fitted_em(row.text, width, float(EM_MAX[row.role]))
+		var em := fitted_em(row.text, width, float(row.get("em_max", EM_MAX[row.role])))
 		sizes.append(em)
 		total += em * LINE_HEIGHT
 	var y := total * 0.5
@@ -170,6 +176,28 @@ static func _rows(design: StoneDesign, width: float) -> Array[Dictionary]:
 				out.append({"text": part.strip_edges(), "role": role})
 			continue
 		out.append({"text": line, "role": role})
+	return _split_name(out, width)
+
+
+## One long name line → fore- and surname on two lines (see EM_NAME_SPLIT).
+static func _split_name(rows: Array[Dictionary], width: float) -> Array[Dictionary]:
+	var names := rows.filter(func(r: Dictionary) -> bool: return r.role == ROLE_NAME)
+	if names.size() != 1 or rows.size() + 1 > NAME_SPLIT_MAX_ROWS:
+		return rows
+	var text: String = names[0].text
+	if not text.contains(" ") or fitted_em(text, width, float(EM_MAX[ROLE_NAME])) >= EM_NAME_SPLIT:
+		return rows
+	var best := -1
+	for i: int in text.length():
+		if text[i] == " " and (best < 0 or absi(i - text.length() / 2) < absi(best - text.length() / 2)):
+			best = i
+	var out: Array[Dictionary] = []
+	for r: Dictionary in rows:
+		if r.role != ROLE_NAME:
+			out.append(r)
+			continue
+		out.append({"text": text.substr(0, best).strip_edges(), "role": ROLE_NAME, "em_max": EM_NAME_SPLIT_MAX})
+		out.append({"text": text.substr(best + 1).strip_edges(), "role": ROLE_NAME, "em_max": EM_NAME_SPLIT_MAX})
 	return out
 
 

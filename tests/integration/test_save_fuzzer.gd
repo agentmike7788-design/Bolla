@@ -18,7 +18,8 @@ extends TestCase
 ## every older load); the six Phase-4 fixtures (tests/fixtures/saves_v3/) are fuzzed, and a v4
 ## save with Phase-5 parts (workshop, gathering, stonemasonry, grave designs, tool belt, coin
 ## ledger – written as the contract §5.1 shows them; nodes the world does not have yet are ignored
-## with a warning) gets targeted mutations of those parts.
+## with a warning) gets targeted mutations of those parts. W3 (Phase 5): also a real mid-Phase-5 v4
+## save played by Phase5Bot (kiln burning, rack 2/3, alders in mixed stages, full tool belt).
 
 const TIMEOUT := 600.0
 const SLOT := 94
@@ -143,6 +144,39 @@ func test_fuzz_v4_save_with_phase5_parts() -> void:
 	print("FUZZ v4 (Phase 5): %d loaded, %d rejected" % [stats.ok, stats.rejected])
 
 
+## W3 (Phase 5): a real v4 save in mid-Phase 5, played by Phase5Bot (reverent5 from the Phase-4 end
+## state, 4 days) and staged through the real entities: the kiln burning, 2 of 3 stones in the rack,
+## alders felled on different days (stump / shoots / tree), the tool belt full. Targeted native
+## mutations of the Phase-5 parts plus the JSON / native layers; the same two allowed outcomes.
+func test_fuzz_v4_real_mid_phase5_save() -> void:
+	var text := await _make_real_v4_save()
+	var doc: Dictionary = JSON.parse_string(text)
+	assert_eq(int(doc.format_version), 4, "format v4")
+	await _fuzz_text(text, "p5 real", P5_SHARE)
+	var state := SaveFileIO.decode_state(doc.get("data"))
+	var paths: Array = []
+	_collect_paths(state, [], paths)
+	paths = paths.filter(func(path: Array) -> bool:
+		for part: Variant in path:
+			if str(part) in P5_KEYS:
+				return true
+		return false)
+	assert_true(paths.size() > 40, "Phase-5 paths in the real state (%d)" % paths.size())
+	for i: int in P5_CASES:
+		var path: Array = paths[rng.randi() % paths.size()]
+		var st := state.duplicate(true)
+		var bad: Variant = _bad_value()
+		if rng.randi() % 4 == 0:
+			_erase_path(st, path)
+			bad = "<erased>"
+		else:
+			_set_path(st, path, bad)
+		var d: Dictionary = doc.duplicate(true)
+		d.data = JSON.from_native(st)
+		await _load_doc(d, "p5 real native %s = %s" % [_path_text(path), str(bad)])
+	print("FUZZ v4 (real Phase-5 save): %d loaded, %d rejected" % [stats.ok, stats.rejected])
+
+
 func test_fuzz_v2_fixtures() -> void:
 	for id: String in Phase4Fixtures.SAVES_V2:
 		var text := FileAccess.get_file_as_string(Phase4Fixtures.save_v2_path(id))
@@ -259,6 +293,25 @@ func _check_consistent(what: String) -> void:
 		assert_not_null(journal.clue_by_id(id), "%s: known clue %s" % [what, id])
 	for id: StringName in journal.insights():
 		assert_not_null(journal.insight_by_id(id), "%s: known insight %s" % [what, id])
+	# Phase 5 (W3): the loaded Phase-5 parts are within their rules (no half-applied state).
+	var masonry := world.get_node_or_null("Systems/Stonemasonry") as Stonemasonry
+	var shop := world.get_node_or_null("Systems/Workshop") as Workshop
+	if masonry != null and shop != null:
+		assert_true(masonry.ready_stones().size() <= shop.workshop_config().ready_slots, what + ": rack ≤ its slots")
+		var graves := {}
+		for order: Dictionary in masonry.ready_stones():
+			assert_false(graves.has(order.grave_id), "%s: one ready stone per grave" % what)
+			graves[order.grave_id] = true
+		for id: StringName in shop.built():
+			assert_not_null(Database.station(id), "%s: known station %s" % [what, id])
+	var gathering := world.get_node_or_null("Systems/Gathering") as GatherManager
+	if gathering != null:
+		for node_id: String in gathering.node_ids():
+			var c := gathering.charges(node_id)
+			assert_true(c >= 0 and c <= gathering.data_of(node_id).charges_max, "%s: %s charges %d in range" % [what, node_id, c])
+	var belt := world.get_player().inventory.tools()
+	for id: StringName in belt:
+		assert_true(belt[id] >= 1 and belt[id] <= (Database.item(id) as ItemData).max_stack, "%s: belt %s × %d" % [what, id, belt[id]])
 	assert_true(TimeManager.running, what + ": the clock runs")
 	TimeManager.running = false
 	# The loaded state is stable: save → load gives the same state.
@@ -368,6 +421,63 @@ func _make_v4_save() -> String:
 		flags[StringName(key)] = true
 	doc.data = JSON.from_native(state)
 	return JSON.stringify(doc, "\t", true, true)
+
+
+## Phase5Bot (reverent5) plays 4 days from slot_p4_day20_reverent; then, on day 24: the kiln lit,
+## two stones carved into the rack, an alder felled today (another one was felled days ago), every
+## tool on the belt – saved (the v4 file text).
+func _make_real_v4_save() -> String:
+	assert_eq(Phase5Fixtures.install_save_v3("slot_p4_day20_reverent", saves_dir, SLOT), OK)
+	assert_eq(await SaveManager.load_game(SLOT), OK)
+	var bot := Phase5Bot.new(&"reverent5", tree)
+	bot.bind()
+	for i: int in 4:
+		await bot.run_day()
+	bot.bind()
+	var inv := bot.inv()
+	TimeManager.set_time(TimeManager.day, 600)
+	UIState.clear()
+	assert_true(bot.shop.is_built(&"forge"), "the forge stands")
+	if not bot.shop.job_of(&"forge").is_empty() and bool(bot.shop.job_of(&"forge").ready):
+		bot._collect_kiln()
+	if bot.shop.job_of(&"forge").is_empty():
+		inv.add_item(&"wood", 4)
+		assert_true(bot._craft5(&"forge", &"charcoal"), "kiln lit")
+	for id: StringName in [&"shovel_master", &"axe_master", &"pickaxe_master"]:
+		if inv.count(id) == 0:
+			inv.add_item(id, 1)
+	for id: StringName in [&"rake", &"scrub_brush", &"comb", &"shears", &"pliers"]:
+		if inv.count(id) == 0:
+			inv.add_item(id, 1)
+	var carved := 0
+	for g: GraveRecord in bot.graveyard.graves():
+		if carved >= 2 or g.state != GraveRecord.State.MARKED or g.corpse_id == "":
+			continue
+		var d := StoneDesign.new()
+		d.shape = &"stone_master"
+		d.inscription = &"i_rest"
+		d.ornament = &"orn_ivy"
+		d.gilded = true
+		inv.add_item(&"workstone", 3)
+		inv.add_item(&"stone", 2)
+		inv.add_item(&"iron_fittings", 2)
+		inv.add_item(&"clay", 1)
+		inv.add_item(&"ink", 1)
+		inv.add_item(&"gold_leaf", 1)
+		if bot.masonry.order_block_reason(g.id, d, inv) == "" and bot._carve_with_panel(g.id, d) != "":
+			carved += 1
+	assert_eq(bot.masonry.ready_stones().size(), 2, "2 of 3 stones in the rack")
+	var alder := bot._gather_node("gather_alder_2")
+	if alder.can_interact(bot.player):
+		alder.interact(bot.player)
+	var stages := {}
+	for k: int in [1, 2, 3, 4, 5]:
+		stages[bot.gathering.stage("gather_alder_%d" % k)] = true
+	assert_true(stages.size() >= 2, "alders in mixed stages %s" % str(stages.keys()))
+	assert_false(bot.shop.job_of(&"forge").is_empty(), "the kiln burns")
+	UIState.clear()
+	assert_eq(SaveManager.save_game(SLOT), OK)
+	return FileAccess.get_file_as_string(SaveFileIO.slot_path(saves_dir, SLOT))
 
 
 func _bad_value() -> Variant:

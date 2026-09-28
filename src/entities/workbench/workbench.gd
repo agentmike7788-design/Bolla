@@ -139,7 +139,7 @@ func _finish_craft(recipe: RecipeData, inv: Inventory) -> void:
 	EventBus.notification_requested.emit(TEXT_REWARD % [recipe.output_amount, _item_name(recipe.output_id)], &"reward")
 	if tool != null and tool.tool_kind != &"":
 		# QA5-04: a lower tool next to a better one on the belt changes no tier (no "faster" note).
-		if _belt_tier(inv, tool.tool_kind) > tier_before:
+		if tool.tool_tier > tier_before:
 			EventBus.tool_tier_changed.emit(tool.tool_kind, tool.tool_tier)
 			EventBus.notification_requested.emit(tool_note(tool), &"info")
 		else:

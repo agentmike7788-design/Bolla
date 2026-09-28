@@ -21,6 +21,9 @@ const P5_SHOTS: Array[Dictionary] = [
 			"player": Vector2(-4.4, -3.6)},
 	{"name": "world_p5_00c_hof_built", "stage": "p5_built", "day": 2, "minute": 660, "focus": Vector2(-4.0, -7.0), "distance": 22.0,
 			"player": Vector2(-4.4, -3.6)},
+	# W3 (G5): the mason's bench with the two finished stones in its rack, close.
+	{"name": "world_p5_08_mason_rack", "stage": "", "day": 2, "minute": 680, "focus": Vector2(0.6, -10.4), "distance": 9.0,
+			"player": Vector2(1.9, -9.9)},
 	{"name": "world_p5_03_workyard_forge_day", "stage": "", "day": 2, "minute": 700, "focus": Vector2(-1.2, -9.4), "distance": 14.0,
 			"player": Vector2(-1.45, -9.1)},
 	{"name": "world_p5_03b_workyard_evening", "stage": "", "day": 2, "minute": 1150, "focus": Vector2(-3.4, -7.6), "distance": 18.0,
@@ -38,8 +41,8 @@ const P5_SHOTS: Array[Dictionary] = [
 			"player": Vector2(24.2, 0.6)},
 	{"name": "world_p5_07_flax_herbs", "stage": "p5_gathered", "day": 3, "minute": 700, "focus": Vector2(27.4, 3.6), "distance": 13.0,
 			"player": Vector2(25.2, 3.2)},
-	{"name": "world_p5_06_schlag_alders", "stage": "", "day": 3, "minute": 680, "focus": Vector2(-7.4, 21.0), "distance": 24.0,
-			"player": Vector2(-5.2, 19.4)},
+	{"name": "world_p5_06_schlag_alders", "stage": "", "day": 3, "minute": 680, "focus": Vector2(-6.4, 18.6), "distance": 20.0,
+			"player": Vector2(-2.6, 20.8)},
 	{"name": "world_p5_05_quarry_open", "stage": "p5_quarry_open", "day": 3, "minute": 640, "focus": Vector2(27.0, -8.6), "distance": 18.0,
 			"player": Vector2(26.2, -7.6)},
 	# §9 / §11 performance motifs at the gameplay zoom limit (24 m).

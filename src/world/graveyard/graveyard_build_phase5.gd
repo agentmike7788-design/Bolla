@@ -31,8 +31,11 @@ const SYSTEMS := [
 const STATION_PRIORITY := 5
 const REACH_MARGIN := 0.35
 ## §4.1 / §9: chimney and kiln smoke – 3 particles each, warm grey, culled beyond 40 m.
+## W3 (G5 QA): a darker warm grey, wider puffs that spread as they rise – readable by day against
+## the light grass without more particles.
 const SMOKE_PARTICLES := 3
-const SMOKE_COLOR := Color("8E8478")
+const SMOKE_COLOR := Color("786E64")
+const SMOKE_SPREAD_END := 1.35
 const SMOKE_RANGE := 40.0
 
 
@@ -132,7 +135,7 @@ static func _build_station(ctx: Ctx, parent: Node3D, st: Dictionary) -> void:
 	ctx.add(area, shape)
 	var smoke_marker := model.find_child("smoke", true, false) as Node3D
 	if smoke_marker != null:
-		var smoke := make_smoke("ChimneySmoke", 1.6, 6.0)
+		var smoke := make_smoke("ChimneySmoke", 2.0, 6.5)
 		smoke.transform = Ctx.rel_xform(smoke_marker, node)
 		smoke.emitting = true
 		ctx.add(node, smoke)
@@ -161,7 +164,7 @@ static func _build_kiln(ctx: Ctx, forge: Node3D) -> void:
 		ctx.add(kiln, m)
 	kiln.get_node("Burning").visible = false
 	var marker := kiln.get_node("Burning").find_child("smoke", true, false) as Node3D
-	var smoke := make_smoke("Smoke", 1.3, 5.0)
+	var smoke := make_smoke("Smoke", 1.6, 5.5)
 	smoke.transform = Ctx.rel_xform(marker, kiln) if marker != null else Transform3D(Basis.IDENTITY, Vector3(0, 0.86, 0))
 	smoke.emitting = false
 	smoke.visible = false
@@ -195,8 +198,9 @@ static func make_smoke(node_name: String, width: float, lifetime: float) -> CPUP
 	p.scale_amount_min = 0.8
 	p.scale_amount_max = 1.0
 	var grow := Curve.new()
+	grow.max_value = SMOKE_SPREAD_END
 	grow.add_point(Vector2(0.0, 0.45))
-	grow.add_point(Vector2(1.0, 1.0))
+	grow.add_point(Vector2(1.0, SMOKE_SPREAD_END))
 	p.scale_amount_curve = grow
 	var ramp := Gradient.new()
 	ramp.offsets = PackedFloat32Array([0.0, 0.25, 0.65, 1.0])
