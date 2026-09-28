@@ -1,6 +1,7 @@
 class_name InteriorConfig
 extends Resource
-## Hut interior values (data/config/interior_config.tres, docs §11): portal fade, interior
+## Interior room values (the hut: data/config/interior_config.tres, docs §11; Phase 6 §4.8: the
+## rooms of the buildings data/config/interiors/<room_id>.tres): portal fade, interior
 ## camera profile, the interior lights and ambient by night / by day, the stove fire and the
 ## chest size. InteriorLighting blends night → day with daylight(minute) (keyframes below).
 
@@ -100,3 +101,13 @@ static func resolve(config: InteriorConfig = null) -> InteriorConfig:
 	var db: Node = tree.root.get_node_or_null(^"Database") if tree != null else null
 	var found: Resource = db.call(&"config", &"interior_config") if db != null else null
 	return found as InteriorConfig if found is InteriorConfig else InteriorConfig.new()
+
+
+## Phase 6 (§3.5): the config of the room `room_id` (Database.interior_config – missing →
+## interior_config), else the defaults above. Looked up at runtime (tool scripts compile this
+## before the autoloads exist).
+static func for_room(room_id: StringName) -> InteriorConfig:
+	var tree := Engine.get_main_loop() as SceneTree
+	var db: Node = tree.root.get_node_or_null(^"Database") if tree != null else null
+	var found: Resource = db.call(&"interior_config", room_id) if db != null and db.has_method(&"interior_config") else null
+	return found as InteriorConfig if found is InteriorConfig else resolve(null)

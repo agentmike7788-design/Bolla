@@ -20,6 +20,13 @@ extends TestCase
 ## ledger – written as the contract §5.1 shows them; nodes the world does not have yet are ignored
 ## with a warning) gets targeted mutations of those parts. W3 (Phase 5): also a real mid-Phase-5 v4
 ## save played by Phase5Bot (kiln burning, rack 2/3, alders in mixed stages, full tool belt).
+## Phase 6 (P6, docs/PHASE6_DESIGN.md §5, §10): the game save is format v5 (migration 4 → 5 on every
+## older load); the seven Phase-5 fixtures (tests/fixtures/saves_v4/) are fuzzed, and a v5 save with
+## Phase-6 parts (buildings, ossuary, chapel, shed_store, record rooms / niches / cold windows /
+## services, interior_id, the new stats and flags – written as the contract §5.1 shows them; nodes
+## the world does not have yet are ignored with a warning) gets targeted mutations of those parts.
+## A loaded state also has in_interior ⇔ interior_id and only rooms the world has (or the hut).
+## (W3 adds the real mid-Phase-6 v5 save once the world has the buildings.)
 
 const TIMEOUT := 600.0
 const SLOT := 94
@@ -47,6 +54,16 @@ const P5_KEYS: PackedStringArray = ["workshop", "gathering", "stonemasonry", "de
 		"bought_pickaxe", "p5_intro", "remark_gold"]
 const P5_CASES := 60
 const P5_SHARE := 0.4
+## Share of the mutations per v4 fixture (seven files).
+const V4_FIXTURE_SHARE := 0.15
+## Phase-6 parts of the state that get extra native mutations in the v5 save (§5.1).
+const P6_KEYS: PackedStringArray = ["buildings", "ossuary", "chapel", "shed_store", "levels", "goal_done", "open_day", "spent",
+		"lifted", "reinterred", "passage", "devotions", "services", "storage", "room", "slot_id", "cold_windows",
+		"service_held", "service_day", "interior_id", "in_interior", "services_held", "devotions_held", "bones_lifted",
+		"bones_reinterred", "niche_waits", "coins_spent_building", "buildings_open", "p6_intro", "building_sites_cleared",
+		"roof_and_earth_complete"]
+const P6_CASES := 60
+const P6_SHARE := 0.3
 const OK_TEXTS: PackedStringArray = [SaveManager.TEXT_CORRUPT, SaveManager.TEXT_NEWER_VERSION]
 
 var saves_dir := TestCase.user_dir("test_saves_fuzz")
@@ -175,6 +192,45 @@ func test_fuzz_v4_real_mid_phase5_save() -> void:
 		d.data = JSON.from_native(st)
 		await _load_doc(d, "p5 real native %s = %s" % [_path_text(path), str(bad)])
 	print("FUZZ v4 (real Phase-5 save): %d loaded, %d rejected" % [stats.ok, stats.rejected])
+
+
+func test_fuzz_v4_fixtures() -> void:
+	for id: String in Phase6Fixtures.SAVES_V4:
+		var text := FileAccess.get_file_as_string(Phase6Fixtures.save_v4_path(id))
+		assert_ne(text, "", id)
+		assert_eq(int((JSON.parse_string(text) as Dictionary).format_version), 4, id)
+		await _fuzz_text(text, id, V4_FIXTURE_SHARE)
+	print("FUZZ v4 fixtures: %d loaded, %d rejected" % [stats.ok, stats.rejected])
+
+
+func test_fuzz_v5_save_with_phase6_parts() -> void:
+	var text := await _make_v5_save()
+	var doc: Dictionary = JSON.parse_string(text)
+	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, "current format (v5)")
+	assert_eq(SaveFileIO.FORMAT_VERSION, 5)
+	await _fuzz_text(text, "p6", P6_SHARE)
+	var state := SaveFileIO.decode_state(doc.get("data"))
+	var paths: Array = []
+	_collect_paths(state, [], paths)
+	paths = paths.filter(func(path: Array) -> bool:
+		for part: Variant in path:
+			if str(part) in P6_KEYS:
+				return true
+		return false)
+	assert_true(paths.size() > 40, "Phase-6 paths in the state (%d)" % paths.size())
+	for i: int in P6_CASES:
+		var path: Array = paths[rng.randi() % paths.size()]
+		var st := state.duplicate(true)
+		var bad: Variant = _bad_value()
+		if rng.randi() % 4 == 0:
+			_erase_path(st, path)
+			bad = "<erased>"
+		else:
+			_set_path(st, path, bad)
+		var d: Dictionary = doc.duplicate(true)
+		d.data = JSON.from_native(st)
+		await _load_doc(d, "p6 native %s = %s" % [_path_text(path), str(bad)])
+	print("FUZZ v5 (Phase 6): %d loaded, %d rejected" % [stats.ok, stats.rejected])
 
 
 func test_fuzz_v2_fixtures() -> void:
@@ -312,6 +368,12 @@ func _check_consistent(what: String) -> void:
 	var belt := world.get_player().inventory.tools()
 	for id: StringName in belt:
 		assert_true(belt[id] >= 1 and belt[id] <= (Database.item(id) as ItemData).max_stack, "%s: belt %s × %d" % [what, id, belt[id]])
+	# Phase 6 (P6): the gravekeeper's room is consistent – inside ⇔ a room id, and one this world has
+	# (the hut is always valid).
+	var player := world.get_player()
+	assert_eq(player.in_interior, player.interior_id != &"", "%s: in_interior ⇔ interior_id (%s)" % [what, player.interior_id])
+	if player.interior_id != &"" and player.interior_id != InteriorRoom.HUT:
+		assert_not_null(InteriorRoom.find(tree, player.interior_id), "%s: room %s exists" % [what, player.interior_id])
 	assert_true(TimeManager.running, what + ": the clock runs")
 	TimeManager.running = false
 	# The loaded state is stable: save → load gives the same state.
@@ -418,6 +480,46 @@ func _make_v4_save() -> String:
 		stats[StringName(key)] = 3
 	var flags: Dictionary = state.autoloads.GameState.flags
 	for key: String in ["workshop_open", "bruch_license", "bought_pickaxe", "p5_intro", "remark_gold"]:
+		flags[StringName(key)] = true
+	doc.data = JSON.from_native(state)
+	return JSON.stringify(doc, "\t", true, true)
+
+
+## The Phase-5 end state (v4 fixture day30_reverent) loaded and saved by this build (v5), with the
+## Phase-6 parts of §5.1 written in: building levels, lifted / reinterred old graves, devotions,
+## the shed store, a corpse in a niche with an open cold window, one on the catafalque with a held
+## service, the gravekeeper in the crypt, the Phase-6 stats and flags (the v5 file text).
+func _make_v5_save() -> String:
+	assert_eq(Phase6Fixtures.install_save_v4("slot_p5_day30_reverent", saves_dir, SLOT), OK)
+	assert_eq(await SaveManager.load_game(SLOT), OK)
+	TimeManager.running = false
+	UIState.clear()
+	assert_eq(SaveManager.save_game(SLOT), OK)
+	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(saves_dir, SLOT)))
+	assert_eq(int(doc.format_version), 5, "saved as v5")
+	var state := SaveFileIO.decode_state(doc.data)
+	state.nodes["buildings"] = {"levels": {"crypt": 2, "chapel": 1, "shed": 1}, "goal_done": false, "open_day": 30,
+			"spent": {"building": 75}, "evict_pending": {}}
+	state.nodes["ossuary"] = {"lifted": ["old_04", "old_06", "old_07"], "reinterred": ["old_04", "old_06"], "passage": "sealed"}
+	state.nodes["chapel"] = {"devotions": {"plot_04": 2}, "services": 3}
+	state.nodes["shed_store"] = {"storage": {"slots": [{"id": "wood", "amount": 12}, {"id": "stone", "amount": 6}, {}], "currency": {}}}
+	var total := TimeManager.total_minutes()
+	var niche := {"id": "p6_fuzz_niche", "seed": 7, "display_name": "Anna Weber", "age": 61, "cause_id": "fever",
+			"location": "niche", "room": "crypt", "slot_id": "niche_2", "cold_windows": [total - 300, -1, 400],
+			"balm_windows": [total - 200, total + 400, 250], "arrival_total_minutes": total - 400, "last_decay_total": total,
+			"freshness": 0.9, "service_held": false, "service_day": 0}
+	var catafalque := {"id": "p6_fuzz_catafalque", "seed": 8, "display_name": "Jakob Roth", "age": 40, "cause_id": "fall",
+			"location": "catafalque", "room": "chapel", "slot_id": "", "cold_windows": [total - 900, total - 600, 700],
+			"arrival_total_minutes": total - 1000, "last_decay_total": total, "freshness": 0.7, "dress": "shroud",
+			"service_held": true, "service_day": 30}
+	(state.nodes.corpse_manager.corpses as Array).append_array([niche, catafalque])
+	state.nodes.player["in_interior"] = true
+	state.nodes.player["interior_id"] = "crypt"
+	var stats: Dictionary = state.autoloads.GameState.stats
+	for key: String in ["services_held", "devotions_held", "bones_lifted", "bones_reinterred", "niche_waits", "coins_spent_building"]:
+		stats[StringName(key)] = 2
+	var flags: Dictionary = state.autoloads.GameState.flags
+	for key: String in ["buildings_open", "p6_intro", "building_sites_cleared"]:
 		flags[StringName(key)] = true
 	doc.data = JSON.from_native(state)
 	return JSON.stringify(doc, "\t", true, true)

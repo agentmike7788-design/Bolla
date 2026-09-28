@@ -905,7 +905,7 @@ func test_carter_price_texts_match_actions() -> void:
 					var shown := "(1 Münze)" if price == "1" else "(%s Münzen)" % price
 					assert_true(c.text.contains(shown), "price shown in '%s'" % c.text)
 					assert_has(c.conditions, "has_item:coin:" + price, "guarded by the price")
-	assert_eq(offers, 13, "1 and 2 Leinen, 1 and 3 Eisenbeschläge, 1 and 4 Blumensamen, 1 and 5 Wacholder + Phase 5: license, pickaxe, steel rod, 2 and 4 Eisenbeschläge")
+	assert_eq(offers, 15, "1 and 2 Leinen, 1 and 3 Eisenbeschläge, 1 and 4 Blumensamen, 1 and 5 Wacholder + Phase 5: license, pickaxe, steel rod, 2 and 4 Eisenbeschläge + Phase 6: 1 and 3 Altarkerzen")
 
 
 func test_carter_intro_mentions_schedule_times() -> void:
@@ -2073,7 +2073,7 @@ func test_carter_pickaxe_once_steel_and_fittings() -> void:
 	_go_action(r, "give_item:iron_fittings:2")
 	assert_eq([inv.count(&"coin"), inv.count(&"iron_fittings")], [6, 6])
 	assert_eq(spent, [[14, &"osric"], [6, &"osric"], [6, &"osric"], [12, &"osric"], [6, &"osric"]])
-	assert_eq(GameState.coin_ledger(), {&"license": 0, &"build": 0, &"osric": 44, &"ilse": 0} as Dictionary[StringName, int])
+	assert_eq(GameState.coin_ledger(), {&"license": 0, &"build": 0, &"osric": 44, &"ilse": 0, &"building": 0} as Dictionary[StringName, int])
 	_go(r, &"p5_shop")
 	assert_true(_has_action_choice(r, "give_item:steel_rod:1"), "6 coins: steel is repeatable")
 	assert_false(_has_action_choice(r, "give_item:iron_fittings:4"))
@@ -2171,3 +2171,134 @@ func test_trader_gold_leaf_waits_for_the_tools() -> void:
 	var r := _start_trader(NIGHT, _inv())
 	assert_eq(_id(r), &"gift_retry", "the tools first")
 	assert_false(GameState.has_flag(&"remark_gold"))
+
+
+# --- Phase 6 (P6): Osric – p6_intro, altar candles, the buildings (docs/PHASE6_DESIGN.md §1.2, §2.6) ---
+
+func _carter_p6_ready() -> void:
+	_carter_p5_ready()
+	GameState.set_flag(&"p5_intro")
+	GameState.set_flag(&"names_in_stone_complete")
+
+
+func _p6_nodes(data: DialogueData) -> Array[DialogueNode]:
+	var out: Array[DialogueNode] = []
+	for n: DialogueNode in data.nodes:
+		if String(n.id).begins_with("p6_"):
+			out.append(n)
+	return out
+
+
+func test_carter_p6_intro_once_from_buildings_open() -> void:
+	_carter_p6_ready()
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "no Phase-6 introduction before buildings_open (names_in_stone alone is not enough)")
+	assert_eq(_choices_to(r, &"p6_candles") + _choices_to(r, &"p6_buildings"), 0, "§1.2: no candles, no hint before buildings_open")
+	GameState.set_flag(&"buildings_open")
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p6_intro")
+	var text := r.current_text()
+	for word: String in ["Gemeinderat", "Brett vor deiner Hütte", "alten Eiche", "Gruft", "Kapelle", "Beinhaus", "Vier Münzen"]:
+		assert_true(text.contains(word), word)
+	assert_true(GameState.has_flag(&"p6_intro"))
+	_go(r, &"menu")
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu", "introduction only once")
+	assert_eq(_choices_to(r, &"p6_candles"), 1, "candles in the menu")
+	assert_eq(_choices_to(r, &"p6_buildings"), 1, "the building hint in the menu")
+
+
+func test_carter_p6_intro_comes_after_p5_intro() -> void:
+	# A migrated Phase-5 end state: both remarks pending → one per conversation, p5 first.
+	_carter_p4_ready()
+	GameState.set_flag(&"workshop_open", true)
+	GameState.set_flag(&"buildings_open")
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p5_intro")
+	_go(r, &"menu")
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p6_intro", "the next conversation")
+	assert_eq(_carter().get_node_by_id(&"p6_intro").fallback_next, &"p4_rumor", "the chain continues as before")
+
+
+func test_carter_altar_candles_two_coins_each() -> void:
+	_carter_p6_ready()
+	GameState.set_flag(&"buildings_open")
+	GameState.set_flag(&"p6_intro")
+	_watch_spent()
+	var inv := _inv({&"coin": 9})
+	var r := _start_carter(MORNING, inv)
+	_go(r, &"remark_skipped")
+	_go(r, &"p6_candles")
+	assert_true(r.current_text().contains("zwei Münzen das Stück"), "§2.6 text")
+	assert_true(r.current_text().contains("so lange wie ein Gebet"))
+	_go_action(r, "give_item:altar_candle:1")
+	assert_eq(_id(r), &"p6_candles_bought")
+	assert_eq([inv.count(&"coin"), inv.count(&"altar_candle")], [7, 1])
+	_go(r, &"p6_candles")
+	_go_action(r, "give_item:altar_candle:3")
+	assert_eq([inv.count(&"coin"), inv.count(&"altar_candle")], [1, 4])
+	assert_eq(spent, [[2, &"osric"], [6, &"osric"]], "§2.6: candles run under osric")
+	assert_eq(GameState.coin_ledger()[&"osric"], 8)
+	assert_eq(_choices_to(r, &"p6_candles"), 0, "1 coin left: no more candles")
+	_go(r, &"menu")
+	_go(r, &"p6_candles")
+	assert_false(_has_action_choice(r, "give_item:altar_candle:1"), "affordable only")
+	_unwatch_spent()
+
+
+func test_carter_p6_buildings_hint_and_old_graves() -> void:
+	_carter_p6_ready()
+	GameState.set_flag(&"buildings_open")
+	GameState.set_flag(&"p6_intro")
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	_go(r, &"p6_buildings")
+	var text := r.current_text()
+	for word: String in ["Gruft", "Kapelle", "Schuppen", "Hollerbrück"]:
+		assert_true(text.contains(word), word)
+	_go(r, &"p6_old_graves")
+	assert_true(r.current_text().contains("Beinhaus"))
+	assert_true(r.current_text().contains("zwei frischen Hügel"), "§2.3: the rest period of old_01 / old_08")
+	_go(r, &"menu")
+	assert_eq(_id(r), &"menu")
+
+
+func test_carter_p6_in_the_cold_menu_too() -> void:
+	_carter_p6_ready()
+	GameState.set_flag(&"buildings_open")
+	GameState.set_flag(&"p6_intro")
+	GameState.stats[&"piety"] = -100
+	GameState.set_flag(&"remark_piety_hardhearted")
+	var r := _start_carter(MORNING, _inv({&"coin": 2}))
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"menu_cold")
+	assert_eq(_choices_to(r, &"p6_candles"), 1)
+	assert_eq(_choices_to(r, &"p6_buildings"), 1)
+
+
+func test_carter_p6_nodes_add_no_clue_and_prices_match() -> void:
+	var nodes := _p6_nodes(_carter())
+	assert_eq(nodes.size(), 5, "p6_intro, p6_buildings, p6_old_graves, p6_candles, p6_candles_bought")
+	var offers := 0
+	for n: DialogueNode in nodes:
+		for a: String in n.actions:
+			assert_false(a.begins_with("add_clue"), "%s: %s" % [n.id, a])
+		for c: DialogueChoice in n.choices:
+			for a: String in c.actions:
+				assert_false(a.begins_with("add_clue"), "%s: %s" % [n.id, a])
+				if a.begins_with("take_item:coin:"):
+					offers += 1
+					var coins := int(a.get_slice(":", 2))
+					var candles := 0
+					for b: String in c.actions:
+						if b.begins_with("give_item:altar_candle:"):
+							candles = int(b.get_slice(":", 2))
+					assert_eq(coins, 2 * candles, "§2.6: 2 coins per candle (%s)" % c.text)
+					assert_eq(a.get_slice(":", 3), "osric", "coins_spent(osric)")
+	assert_eq(offers, 2)

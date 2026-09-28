@@ -9,9 +9,15 @@ extends RefCounted
 
 const CURRENT := 5
 ## Save ids of the Phase-6 system nodes / the shed store that get an empty state in migrate_4_to_5
-## (docs/PHASE6_DESIGN.md §3.1, §5.2 step 4) – inserted only once W-Welt creates the nodes (like
-## Phase 4 / 5; W0: migrate_4_to_5 is the identity).
+## (docs/PHASE6_DESIGN.md §3.1, §5.2 step 4); SaveManager.without_absent_defaults drops them while
+## the world has no such node (like V4_EMPTY_NODES).
 const V5_EMPTY_NODES: PackedStringArray = ["buildings", "ossuary", "chapel", "shed_store"]
+## Phase-6 statistics that start at 0 (§5.2 step 6; = the Phase-6 part of GameState.DEFAULT_STATS,
+## incl. the ledger stat of the coin purpose &"building", §2.7).
+const V5_NEW_STATS: Array[StringName] = [&"services_held", &"devotions_held", &"bones_lifted", &"bones_reinterred",
+		&"niche_waits", &"coins_spent_building"]
+## §5.2 step 2: the new CorpseRecord fields and their defaults (= CorpseRecord.to_dict of a new record).
+const V5_RECORD_DEFAULTS := {"room": "", "slot_id": "", "cold_windows": [], "service_held": false, "service_day": 0}
 ## Save ids of the Phase-5 system nodes that get an empty state in migrate_3_to_4 (§3.1, §5.2
 ## step 3). SaveManager.without_absent_defaults drops them again while the world has no such node.
 const V4_EMPTY_NODES: PackedStringArray = ["workshop", "gathering", "stonemasonry"]
@@ -197,12 +203,45 @@ static func migrate_3_to_4(state: Dictionary, _meta: Dictionary) -> Dictionary:
 	return out
 
 
-## STUB (P6) – docs/PHASE6_DESIGN.md §5.2 steps 1–7 on a deep copy of a v4 state (run exactly
-## once). W0: the identity on a deep copy (fail-safe: every from_dict / load_state tolerates the
-## missing Phase-6 keys). P6: player interior_id from in_interior, the new record fields, empty
-## V5_EMPTY_NODES (once the world has them), the new stats = 0.
+## docs/PHASE6_DESIGN.md §5.2 steps 1–7 on a deep copy of a v4 state (run exactly once).
+## 1. Player: interior_id "hut" when in_interior is true, else "".
+## 2. Corpse records + room "", slot_id "", cold_windows [], service_held false, service_day 0
+##    (existing keys are kept). A corpse on the table in front of the hut stays there (location
+##    table, room ""): the crypt is at level 0 after the load, the old table stays active and the
+##    corpse workable; only finishing crypt 1 carries it down at runtime (§2.2). Carried corpses
+##    and corpses on the ground are unchanged.
+## 3. Graves unchanged (old graves stay OLD).
+## 4. Empty states for V5_EMPTY_NODES (level 0 everywhere, nothing lifted, no devotion, empty
+##    store); SaveManager.without_absent_defaults drops them again while the world has no such node.
+## 5. The decor on the crypt site is cleared at runtime (Buildings.post_load), not here.
+## 6. New stats (V5_NEW_STATS) = 0; no new flags (buildings_open comes from Buildings.post_load).
+## 7. dirt_y01 saves only its grade – it keeps it at its new place. Nothing to do.
 static func migrate_4_to_5(state: Dictionary, _meta: Dictionary) -> Dictionary:
-	return state.duplicate(true)
+	var out := state.duplicate(true)
+	var autoloads := _sub(out, "autoloads")
+	var nodes := _sub(out, "nodes")
+	var stats := _sub(_sub(autoloads, "GameState"), "stats")
+	# 1. The room of the gravekeeper.
+	var player: Variant = nodes.get(PLAYER_SAVE_ID)
+	if player is Dictionary and not (player as Dictionary).has("interior_id"):
+		(player as Dictionary)["interior_id"] = "hut" if _is_true((player as Dictionary).get("in_interior")) else ""
+	# 2. The new record fields (the table corpse stays on the old table).
+	var corpse_state: Variant = nodes.get("corpse_manager")
+	if corpse_state is Dictionary and (corpse_state as Dictionary).get("corpses") is Array:
+		for r: Variant in (corpse_state as Dictionary).corpses:
+			if r is Dictionary:
+				for key: String in V5_RECORD_DEFAULTS:
+					if not (r as Dictionary).has(key):
+						(r as Dictionary)[key] = V5_RECORD_DEFAULTS[key].duplicate() if V5_RECORD_DEFAULTS[key] is Array else V5_RECORD_DEFAULTS[key]
+	# 4. Empty states for the new system nodes / the shed store.
+	for id: String in V5_EMPTY_NODES:
+		if not nodes.get(id) is Dictionary:
+			nodes[id] = {}
+	# 6. The Phase-6 statistics start at 0.
+	for key: StringName in V5_NEW_STATS:
+		if not _has_key(stats, String(key)):
+			_set_key(stats, String(key), 0)
+	return out
 
 
 ## §5.2 step 1 on one saved Inventory state ({slots, currency}) in place: TOOL items → "tools".

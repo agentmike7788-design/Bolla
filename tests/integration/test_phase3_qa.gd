@@ -29,7 +29,7 @@ func test_bed_day_summary_reports_cemetery_quality() -> void:
 	bot.decorations.free_build = true
 	assert_ne(bot.decorations.place(&"decor_bench_wood", _free_cell(&"decor_bench_wood", Vector2(16.0, 2.0)), 0, null), "")
 	assert_ne(bot.score.total(), bot.graveyard.total_quality(), "setup: decor and dirt change the quality")
-	var bed := tree.get_first_node_in_group(HutInterior.GROUP).get_node("Entities/bed") as Bed
+	var bed := tree.get_first_node_in_group(HutInterior.HUT_GROUP).get_node("Entities/bed") as Bed
 	var summary := bed.day_summary(bot.player)
 	assert_eq(summary.total, bot.score.total(), "day summary = CemeteryScore (graves + decor − dirt)")
 	assert_eq(summary.rating, bot.score.rating())
@@ -37,7 +37,7 @@ func test_bed_day_summary_reports_cemetery_quality() -> void:
 
 func test_desk_register_reports_cemetery_quality() -> void:
 	_complete("plot_01", &"gravestone_simple")
-	var desk := tree.get_first_node_in_group(HutInterior.GROUP).get_node("Entities/desk") as Desk
+	var desk := tree.get_first_node_in_group(HutInterior.HUT_GROUP).get_node("Entities/desk") as Desk
 	var ctx := desk.register_context()
 	assert_eq(ctx.total, bot.score.total(), "register footer = CemeteryScore")
 
@@ -46,7 +46,7 @@ func test_desk_register_reports_cemetery_quality() -> void:
 
 func test_register_mood_after_listening() -> void:
 	_complete("plot_01", &"gravestone_simple")
-	var desk := tree.get_first_node_in_group(HutInterior.GROUP).get_node("Entities/desk") as Desk
+	var desk := tree.get_first_node_in_group(HutInterior.HUT_GROUP).get_node("Entities/desk") as Desk
 	var entry: Dictionary = desk.register_context().entries[0]
 	assert_eq(str(entry.get("mood", "")), "", "not heard yet")
 	TimeManager.set_time(TimeManager.day + 1, 1305)

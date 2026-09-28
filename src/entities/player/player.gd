@@ -61,10 +61,10 @@ var carried: Node3D
 var carried_id: String = ""
 ## Tests: timed actions finish inside start_timed_action (game time still advances).
 var instant_actions: bool = false
-## True while the gravekeeper is inside the hut (docs §11) – set by the portal, saved.
+## True while the gravekeeper is inside an interior room (docs §11) – set by the portal, saved.
 var in_interior: bool = false
-## Phase 6 (§3.4; P6): the room the gravekeeper is in – "" outside, &"hut", &"crypt", &"chapel",
-## &"shed". W0: set by set_in_interior only (P6 saves it and emits interior_room_changed).
+## Phase 6 (§3.4): the room the gravekeeper is in – "" outside, &"hut", &"crypt", &"chapel",
+## &"shed". Set by set_in_interior, saved ("interior_id").
 var interior_id: StringName = &""
 ## Build mode (set_build_mode, Phase 3): no focus, no [E]/[Q]. Not saved.
 var build_mode: bool = false
@@ -263,18 +263,22 @@ func set_build_mode(active: bool) -> void:
 	_update_focus_prompt()
 
 
-## Inside / outside the hut; always announces EventBus.interior_changed so camera, sun and
-## environment follow (also after a load that did not change the value).
+## Inside / outside an interior room (`room` empty + inside → the hut); always announces
+## EventBus.interior_changed(value) and then EventBus.interior_room_changed(interior_id) so
+## rooms, camera, sun and environment follow (also after a load that did not change the value).
 func set_in_interior(value: bool, room: StringName = &"") -> void:
 	in_interior = value
 	interior_id = (room if room != &"" else &"hut") if value else &""
 	EventBus.interior_changed.emit(value)
+	EventBus.interior_room_changed.emit(interior_id)
 
 
-## {position: Vector3, rot_y: float, in_interior: bool, inventory: Inventory.save_state()}.
-## The carried corpse is not saved here – CorpseManager.post_load() re-attaches it.
+## {position: Vector3, rot_y: float, in_interior: bool, interior_id: String,
+## inventory: Inventory.save_state()}. The carried corpse is not saved here –
+## CorpseManager.post_load() re-attaches it.
 func save_state() -> Dictionary:
-	return {"position": position, "rot_y": rotation.y, "in_interior": in_interior, "inventory": inventory.save_state()}
+	return {"position": position, "rot_y": rotation.y, "in_interior": in_interior, "interior_id": String(interior_id),
+			"inventory": inventory.save_state()}
 
 
 ## Replaces the state; stops any timed action and forgets the carried node (its owner, the
@@ -291,9 +295,24 @@ func load_state(data: Dictionary) -> void:
 		rotation = Vector3(0.0, float(saved_rot), 0.0)
 	velocity = Vector3.ZERO
 	var saved_inside: Variant = data.get("in_interior", false)
-	set_in_interior(saved_inside is bool and bool(saved_inside))
+	var inside := saved_inside is bool and bool(saved_inside)
+	set_in_interior(inside, _saved_room(data.get("interior_id"), inside))
 	var saved_inventory: Variant = data.get("inventory")
 	inventory.load_state(saved_inventory if saved_inventory is Dictionary else {})
+
+
+## Phase 6 §5.2 (tolerant): the saved interior_id when inside – missing, empty or not a string →
+## the hut; a room the world does not have (while it has rooms at all) → the hut as well.
+func _saved_room(saved: Variant, inside: bool) -> StringName:
+	if not inside or not (saved is String or saved is StringName) or str(saved) == "":
+		return &""
+	var room := StringName(str(saved))
+	if room == InteriorRoom.HUT or not is_inside_tree():
+		return room
+	if get_tree().get_nodes_in_group(InteriorRoom.GROUP).is_empty() or InteriorRoom.find(get_tree(), room) != null:
+		return room
+	push_warning("[Player] interior_id '%s': no such room – the gravekeeper is in the hut" % room)
+	return &""
 
 
 # --- input & interaction ------------------------------------------------------------------

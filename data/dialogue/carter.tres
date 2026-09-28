@@ -4,6 +4,123 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2_cdonk"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3_0t3rl"]
 
+[sub_resource type="Resource" id="p6_choice_menu_candles"]
+script = ExtResource("2_cdonk")
+text = "Hast du Altarkerzen?"
+next = &"p6_candles"
+conditions = Array[String](["flag:buildings_open"])
+
+[sub_resource type="Resource" id="p6_choice_menu_buildings"]
+script = ExtResource("2_cdonk")
+text = "Was rätst du mir bei den Bauten?"
+next = &"p6_buildings"
+conditions = Array[String](["flag:p6_intro"])
+
+[sub_resource type="Resource" id="p6_choice_cold_candles"]
+script = ExtResource("2_cdonk")
+text = "Hast du Altarkerzen?"
+next = &"p6_candles"
+conditions = Array[String](["flag:buildings_open"])
+
+[sub_resource type="Resource" id="p6_choice_cold_buildings"]
+script = ExtResource("2_cdonk")
+text = "Was rätst du mir bei den Bauten?"
+next = &"p6_buildings"
+conditions = Array[String](["flag:p6_intro"])
+
+[sub_resource type="Resource" id="p6_choice_01"]
+script = ExtResource("2_cdonk")
+text = "Wo fange ich an?"
+next = &"p6_buildings"
+
+[sub_resource type="Resource" id="p6_choice_02"]
+script = ExtResource("2_cdonk")
+text = "Brauche ich für die Kapelle etwas von dir?"
+next = &"p6_candles"
+
+[sub_resource type="Resource" id="p6_choice_03"]
+script = ExtResource("2_cdonk")
+text = "Ich sehe mir die Eiche an."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_p6_intro"]
+script = ExtResource("1_0vtyj")
+id = &"p6_intro"
+text = "Der Gemeinderat hat getagt, Totengräber. Der Friedhof ist voll, und die Leute wollen ihre Toten nicht mehr auf dem Brett vor deiner Hütte liegen sehen, wie Fisch auf dem Markt. Unter der alten Eiche liegt die Gruft der Gemeinde, seit Jahren zugeschüttet. Meine Leute haben den Hals freigelegt. Oben am Kamm steht die Kapelle, ohne Dach. Und wenn du die ganz Alten ins Beinhaus bringst, wird unten im Hof Platz. Vier Münzen zahlt die Gemeinde für jede Umbettung."
+choices = Array[ExtResource("2_cdonk")]([SubResource("p6_choice_01"), SubResource("p6_choice_02"), SubResource("p6_choice_03")])
+conditions = Array[String](["flag:buildings_open", "!flag:p6_intro"])
+fallback_next = &"p4_rumor"
+actions = Array[String](["set_flag:p6_intro"])
+
+[sub_resource type="Resource" id="p6_choice_04"]
+script = ExtResource("2_cdonk")
+text = "Und die alten Gräber im Hof?"
+next = &"p6_old_graves"
+
+[sub_resource type="Resource" id="p6_choice_05"]
+script = ExtResource("2_cdonk")
+text = "Danke, Osric."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_p6_buildings"]
+script = ExtResource("1_0vtyj")
+id = &"p6_buildings"
+text = "Mit der Gruft, wenn du mich fragst. Unten ist es kühl, da hält sich eine Leiche einen Tag länger, und im Dorf muss sie keiner mehr auf dem Brett sehen. Die Kapelle braucht ein Dach, bevor einer darin beten mag. Für den Schuppen reichen Bretter und ein langer Nachmittag. Holz und Stein holst du selbst. Kalk, Schiefer und Nägel bringe ich aus Hollerbrück, die zahlst du, wenn gebaut wird."
+choices = Array[ExtResource("2_cdonk")]([SubResource("p6_choice_04"), SubResource("p6_choice_05")])
+
+[sub_resource type="Resource" id="p6_choice_06"]
+script = ExtResource("2_cdonk")
+text = "Ich gehe behutsam vor."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_p6_old_graves"]
+script = ExtResource("1_0vtyj")
+id = &"p6_old_graves"
+text = "Die ganz Alten? Zu denen kommt keiner mehr. Wer um sie geweint hat, liegt längst selbst hier oben. Zimmer eine Kiste, heb sie mit Anstand und bring sie trocken nach unten. Im Beinhaus liegen sie besser als unter dem Moos. Nur die zwei frischen Hügel lässt du in Ruhe. Um die weint noch jemand."
+choices = Array[ExtResource("2_cdonk")]([SubResource("p6_choice_06")])
+
+[sub_resource type="Resource" id="p6_choice_07"]
+script = ExtResource("2_cdonk")
+text = "Eine Altarkerze. (2 Münzen)"
+next = &"p6_candles_bought"
+conditions = Array[String](["has_item:coin:2"])
+actions = Array[String](["take_item:coin:2:osric", "give_item:altar_candle:1"])
+
+[sub_resource type="Resource" id="p6_choice_08"]
+script = ExtResource("2_cdonk")
+text = "Drei Altarkerzen. (6 Münzen)"
+next = &"p6_candles_bought"
+conditions = Array[String](["has_item:coin:6"])
+actions = Array[String](["take_item:coin:6:osric", "give_item:altar_candle:3"])
+
+[sub_resource type="Resource" id="p6_choice_09"]
+script = ExtResource("2_cdonk")
+text = "Heute nicht."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_p6_candles"]
+script = ExtResource("1_0vtyj")
+id = &"p6_candles"
+text = "Altarkerzen aus der Stadt, zwei Münzen das Stück. Sie brennen so lange wie ein Gebet, wenn man nicht trödelt."
+choices = Array[ExtResource("2_cdonk")]([SubResource("p6_choice_07"), SubResource("p6_choice_08"), SubResource("p6_choice_09")])
+
+[sub_resource type="Resource" id="p6_choice_10"]
+script = ExtResource("2_cdonk")
+text = "Ich nehme noch eine."
+next = &"p6_candles"
+conditions = Array[String](["has_item:coin:2"])
+
+[sub_resource type="Resource" id="p6_choice_11"]
+script = ExtResource("2_cdonk")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_p6_candles_bought"]
+script = ExtResource("1_0vtyj")
+id = &"p6_candles_bought"
+text = "Da. Halt sie weg vom Tabak in deiner Tasche, sonst riecht die ganze Kapelle nach mir."
+choices = Array[ExtResource("2_cdonk")]([SubResource("p6_choice_10"), SubResource("p6_choice_11")])
+
 [sub_resource type="Resource" id="p5_choice_01"]
 script = ExtResource("2_cdonk")
 text = "Ich nehme den Brief."
@@ -25,7 +142,7 @@ id = &"p5_intro"
 text = "Der Friedhof steht, Totengräber. Jetzt fehlen den Toten nur noch ihre Namen. Drüben am Bruch, hinter der Ostwiese, war Lorenz' alter Werkplatz, da hat er seine Steine selbst gebrochen. Die Gemeinde verkauft dir den Brief dafür, zwanzig Münzen, die Lehmkuhle ist dabei."
 choices = Array[ExtResource("2_cdonk")]([SubResource("p5_choice_01"), SubResource("p5_choice_02"), SubResource("p5_choice_03")])
 conditions = Array[String](["flag:workshop_open", "!flag:p5_intro"])
-fallback_next = &"p4_rumor"
+fallback_next = &"p6_intro"
 actions = Array[String](["set_flag:p5_intro"])
 
 [sub_resource type="Resource" id="p5_choice_04"]
@@ -339,7 +456,7 @@ next = &"goodbye_morning"
 script = ExtResource("1_0vtyj")
 id = &"menu"
 text = "Also – was brauchst du?"
-choices = Array[ExtResource("2_cdonk")]([SubResource("choice_012"), SubResource("choice_013"), SubResource("choice_014"), SubResource("p5_choice_18"), SubResource("p5_choice_19"), SubResource("choice_015"), SubResource("choice_016"), SubResource("choice_017"), SubResource("choice_018")])
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_012"), SubResource("choice_013"), SubResource("choice_014"), SubResource("p5_choice_18"), SubResource("p5_choice_19"), SubResource("p6_choice_menu_candles"), SubResource("p6_choice_menu_buildings"), SubResource("choice_015"), SubResource("choice_016"), SubResource("choice_017"), SubResource("choice_018")])
 conditions = Array[String](["!piety_tier:hardhearted"])
 fallback_next = &"menu_cold"
 
@@ -1031,7 +1148,7 @@ next = &"goodbye_morning"
 script = ExtResource("1_0vtyj")
 id = &"menu_cold"
 text = "Was brauchst du."
-choices = Array[ExtResource("2_cdonk")]([SubResource("choice_086"), SubResource("choice_087"), SubResource("choice_088"), SubResource("p5_choice_20"), SubResource("p5_choice_21"), SubResource("choice_089"), SubResource("choice_090"), SubResource("choice_091"), SubResource("choice_092")])
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_086"), SubResource("choice_087"), SubResource("choice_088"), SubResource("p5_choice_20"), SubResource("p5_choice_21"), SubResource("p6_choice_cold_candles"), SubResource("p6_choice_cold_buildings"), SubResource("choice_089"), SubResource("choice_090"), SubResource("choice_091"), SubResource("choice_092")])
 
 [sub_resource type="Resource" id="choice_093"]
 script = ExtResource("2_cdonk")
@@ -1114,4 +1231,4 @@ script = ExtResource("3_0t3rl")
 id = &"carter"
 speaker_name = "Osric Faulhaber"
 start_node = &"intro"
-nodes = Array[ExtResource("1_0vtyj")]([SubResource("node_intro"), SubResource("node_intro_linen"), SubResource("node_intro_absent"), SubResource("node_slice_done"), SubResource("node_greet_morning"), SubResource("node_greet_evening"), SubResource("node_remark_skipped"), SubResource("node_remark_rep"), SubResource("node_menu"), SubResource("node_shop"), SubResource("node_shop_bought"), SubResource("node_shop_leave"), SubResource("node_shop_poor"), SubResource("node_village"), SubResource("node_village_people"), SubResource("node_village_vanished"), SubResource("node_mystery"), SubResource("node_mystery_more"), SubResource("node_goodbye_morning"), SubResource("node_goodbye"), SubResource("node_cemetery_done"), SubResource("node_remark_no_delivery"), SubResource("node_rep_odd_days"), SubResource("node_remark_renowned"), SubResource("node_remark_esteemed"), SubResource("node_p3_intro"), SubResource("node_p3_intro_tools"), SubResource("node_shop_p3"), SubResource("node_shop_p3_bought"), SubResource("node_shop_p3_leave"), SubResource("node_p4_intro"), SubResource("node_p4_intro_prep"), SubResource("node_shop_juniper"), SubResource("node_shop_juniper_bought"), SubResource("node_shop_juniper_leave"), SubResource("node_p4_rumor"), SubResource("node_p4_rumor_more"), SubResource("node_p4_elder_key"), SubResource("node_p4_elder_key_more"), SubResource("node_p4_six_pits"), SubResource("node_p4_warnings"), SubResource("node_p4_ferry"), SubResource("node_p4_not_lorenz"), SubResource("node_p4_not_lorenz_more"), SubResource("node_p4_chapter"), SubResource("node_p4_piety_devout"), SubResource("node_p4_piety_considerate"), SubResource("node_p4_piety_callous"), SubResource("node_p4_piety_hardhearted"), SubResource("node_menu_cold"), SubResource("node_hint_alive"), SubResource("node_hint_list"), SubResource("node_hint_elder"), SubResource("node_hint_ferry"), SubResource("node_hint_mark"), SubResource("node_hint_default"), SubResource("node_p5_intro"), SubResource("node_p5_license"), SubResource("node_p5_license_bought"), SubResource("node_p5_license_poor"), SubResource("node_p5_license_owned"), SubResource("node_p5_shop"), SubResource("node_p5_shop_pickaxe"), SubResource("node_p5_shop_steel"), SubResource("node_p5_shop_bought")])
+nodes = Array[ExtResource("1_0vtyj")]([SubResource("node_intro"), SubResource("node_intro_linen"), SubResource("node_intro_absent"), SubResource("node_slice_done"), SubResource("node_greet_morning"), SubResource("node_greet_evening"), SubResource("node_remark_skipped"), SubResource("node_remark_rep"), SubResource("node_menu"), SubResource("node_shop"), SubResource("node_shop_bought"), SubResource("node_shop_leave"), SubResource("node_shop_poor"), SubResource("node_village"), SubResource("node_village_people"), SubResource("node_village_vanished"), SubResource("node_mystery"), SubResource("node_mystery_more"), SubResource("node_goodbye_morning"), SubResource("node_goodbye"), SubResource("node_cemetery_done"), SubResource("node_remark_no_delivery"), SubResource("node_rep_odd_days"), SubResource("node_remark_renowned"), SubResource("node_remark_esteemed"), SubResource("node_p3_intro"), SubResource("node_p3_intro_tools"), SubResource("node_shop_p3"), SubResource("node_shop_p3_bought"), SubResource("node_shop_p3_leave"), SubResource("node_p4_intro"), SubResource("node_p4_intro_prep"), SubResource("node_shop_juniper"), SubResource("node_shop_juniper_bought"), SubResource("node_shop_juniper_leave"), SubResource("node_p4_rumor"), SubResource("node_p4_rumor_more"), SubResource("node_p4_elder_key"), SubResource("node_p4_elder_key_more"), SubResource("node_p4_six_pits"), SubResource("node_p4_warnings"), SubResource("node_p4_ferry"), SubResource("node_p4_not_lorenz"), SubResource("node_p4_not_lorenz_more"), SubResource("node_p4_chapter"), SubResource("node_p4_piety_devout"), SubResource("node_p4_piety_considerate"), SubResource("node_p4_piety_callous"), SubResource("node_p4_piety_hardhearted"), SubResource("node_menu_cold"), SubResource("node_hint_alive"), SubResource("node_hint_list"), SubResource("node_hint_elder"), SubResource("node_hint_ferry"), SubResource("node_hint_mark"), SubResource("node_hint_default"), SubResource("node_p5_intro"), SubResource("node_p5_license"), SubResource("node_p5_license_bought"), SubResource("node_p5_license_poor"), SubResource("node_p5_license_owned"), SubResource("node_p5_shop"), SubResource("node_p5_shop_pickaxe"), SubResource("node_p5_shop_steel"), SubResource("node_p5_shop_bought"), SubResource("node_p6_intro"), SubResource("node_p6_buildings"), SubResource("node_p6_old_graves"), SubResource("node_p6_candles"), SubResource("node_p6_candles_bought")])
