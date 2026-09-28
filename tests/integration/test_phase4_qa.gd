@@ -142,6 +142,29 @@ func test_insight_count_of_five_without_the_optional_one() -> void:
 	assert_true(int(me.insights) <= int(me.insights_total), "page Ich: %d/%d" % [me.insights, me.insights_total])
 
 
+# --- probe: the HUD quality follows a new grave in a new game --------------------------------
+
+func test_hud_quality_follows_a_new_grave() -> void:
+	var got := {"n": 0, "total": -1}
+	var on_q := func(total: int, _r: StringName) -> void:
+		got.n += 1
+		got.total = total
+	EventBus.cemetery_quality_changed.connect(on_q)
+	var plot := bot.world.get_node_by_layout_id("plot_01") as Node3D
+	var record := bot.manager.spawn_corpse(null, plot.global_transform, &"ground")
+	record.examined = true
+	record.shrouded = true
+	record.dress = CorpseRecord.DRESS_SHROUD
+	if record.needs_valuables_decision():
+		record.valuables_decision = CorpseRecord.DECISION_LEFT
+	bot.graveyard.dig("plot_01")
+	bot.graveyard.bury("plot_01", record.id)
+	bot.inv().add_item(&"wooden_cross", 1)
+	bot.graveyard.place_marker("plot_01", &"wooden_cross", bot.inv())
+	EventBus.cemetery_quality_changed.disconnect(on_q)
+	assert_true(got.n > 0 and int(got.total) > 0, "quality signal after a marked grave (%s)" % str(got))
+
+
 # --- helpers ----------------------------------------------------------------------------------
 
 ## A generated corpse on the table whose freshness falls below `threshold` at a minute that is

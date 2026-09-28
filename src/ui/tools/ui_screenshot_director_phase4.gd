@@ -188,20 +188,32 @@ func _frame(focus: Vector3, distance: float) -> void:
 	if rig.get(&"target") != _anchor:
 		_bounds_were = bool(rig.get(&"bounds_enabled"))
 	rig.set("bounds_enabled", false)
+	rig.set("zoom_min", minf(float(rig.get(&"zoom_min")), 5.0))
 	rig.set("target", _anchor)
 	rig.call(&"set_distance", distance)
 	rig.call(&"snap")
 
 
-## Camera at `distance` so that `world_pos` shows at the screen point `screen`.
-func _frame_at(world_pos: Vector3, screen: Vector2, distance: float) -> void:
+## Camera at `distance` so that `world_pos` shows at `screen` (pixels of the 1280 × 720 shot;
+## the viewport itself may be larger – the content stretches).
+func _frame_at(world_pos: Vector3, shot_px: Vector2, distance: float) -> void:
+	var screen := shot_px * get_viewport().get_visible_rect().size / Vector2(1280.0, 720.0)
 	_frame(world_pos, distance)
-	var cam := get_viewport().get_camera_3d()
-	if cam == null:
-		return
-	var here := _ground_under(cam, cam.unproject_position(world_pos))
-	var there := _ground_under(cam, screen)
-	_frame(_anchor.global_position + (here - there), distance)
+	# Two passes: the rig places its camera in its own frame after snap().
+	for i: int in 2:
+		for f: int in 2:
+			await get_tree().process_frame
+		var cam := get_viewport().get_camera_3d()
+		if cam == null:
+			return
+		var here := _ground_under(cam, cam.unproject_position(world_pos))
+		var there := _ground_under(cam, screen)
+		_frame(_anchor.global_position + (here - there), distance)
+	for f: int in 2:
+		await get_tree().process_frame
+	var check := get_viewport().get_camera_3d()
+	if check != null:
+		print("[UiShotsP4] framed %s at %s (wanted %s)" % [world_pos, check.unproject_position(world_pos), screen])
 
 
 func _hide(path: NodePath) -> void:
@@ -303,7 +315,7 @@ func _osric_shot() -> void:
 	GameState.set_flag(&"met_carter", true)
 	GameState.set_flag(&"p3_intro", true)
 	_place_player(npc.global_position + Vector3(-1.2, 0.0, -1.0), PI * 0.75)
-	_frame_at(npc.global_position, Vector2(640, 250), 9.0)
+	await _frame_at(npc.global_position, Vector2(640, 330), 10.0)
 	await get_tree().process_frame
 	_ui.open_dialogue(&"carter", npc)
 	for i: int in 8:
@@ -327,7 +339,7 @@ func _ilse_dialogue_shot() -> void:
 	var spot: Vector3 = _world.get_waypoint(&"trader_spot")
 	_place_player(spot + Vector3(1.35, 0.0, 0.3), -PI * 0.5)
 	_hide(^"Decor/Tree")
-	_frame_at(ilse.global_position, Vector2(560, 250), 7.0)
+	await _frame_at(ilse.global_position, Vector2(560, 380), 9.0)
 	await get_tree().process_frame
 	_ui.notifications.clear()
 	_ui.open_dialogue(&"trader", ilse)
@@ -349,7 +361,7 @@ func _trade_shot() -> void:
 	var spot: Vector3 = _world.get_waypoint(&"trader_spot")
 	_place_player(spot + Vector3(1.35, 0.0, 0.3), -PI * 0.5)
 	_hide(^"Decor/Tree")
-	_frame_at(ilse.global_position, Vector2(105, 430), 7.0)
+	await _frame_at(ilse.global_position, Vector2(110, 520), 8.0)
 	await get_tree().process_frame
 	_ui.notifications.clear()
 	_ui.open_panel(&"trader", {"speaker": ilse, "inventory": inv})
@@ -401,6 +413,7 @@ func _ghost_shot() -> void:
 			# listen() as [E] on the ghost does; the bubble stays up for the slow software renderer.
 			g.say(ghosts.listen(g.grave_id, _player), 600.0)
 	_frame(mid, 8.0)
+	(_world.get_node(^"Systems/CemeteryScore") as CemeteryScore).refresh(true)
 	_ui.notifications.clear()
 	await get_tree().process_frame
 

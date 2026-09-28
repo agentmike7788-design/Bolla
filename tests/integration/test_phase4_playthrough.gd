@@ -55,6 +55,9 @@ func test_reverent() -> void:
 	assert_eq(last.piety_tier, &"devout", "„Andächtig“ (%d)" % last.piety)
 	assert_eq(last.utilized, 0, "never harvested")
 	assert_true(last.prepared >= 12, "prepared %d" % last.prepared)
+	# §2.15: payment 3 + floor(12 × 0.5) + reputation bonus 2 ≈ 11 per grave.
+	var paid := float(bot.burial_income) / maxf(1.0, float(bot.burials_paid))
+	assert_true(paid >= 9.0 and paid <= 13.0, "§2.15 ≈ 11 coins per grave (%.1f)" % paid)
 	reverent_rows = bot.rows.duplicate(true)
 
 
@@ -65,6 +68,12 @@ func test_harvester() -> void:
 	assert_true(last.piety <= -60, "„Hartherzig“ (%d)" % last.piety)
 	assert_true(last.utilized >= 20, "harvested %d" % last.utilized)
 	assert_true(bot.ilse_income > 0, "sold at the wall")
+	# §2.15: braid 4 + teeth 5 (+2 from „Abgebrüht“) ≈ 9–11 per fully harvested corpse; the
+	# payment drops to ≈ 6 or less (quality − 3, no reputation bonus while disreputable).
+	var per_corpse := float(bot.ilse_income) / maxf(1.0, float(last.utilized) / 2.0)
+	assert_true(per_corpse >= 8.0 and per_corpse <= 13.0, "§2.15 Ilse ≈ 9–11 per corpse (%.1f)" % per_corpse)
+	var paid := float(bot.burial_income) / maxf(1.0, float(bot.burials_paid))
+	assert_true(paid >= 3.0 and paid <= 8.0, "§2.15 payment ≈ 6 or less (%.1f)" % paid)
 
 
 func test_procrastinator() -> void:
