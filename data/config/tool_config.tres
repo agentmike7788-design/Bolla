@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ToolConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/tools/tool_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+kinds = Array[StringName]([&"shovel", &"axe", &"pickaxe"])
+labels = Dictionary[StringName, String]({&"shovel": "Schaufel", &"axe": "Axt", &"pickaxe": "Spitzhacke"})
+base_names = Dictionary[StringName, String]({&"shovel": "Alte Schaufel", &"axe": "Altes Beil", &"pickaxe": ""})
+source_hint = Dictionary[StringName, String]({&"shovel": "Esse", &"axe": "Esse", &"pickaxe": "Osric"})

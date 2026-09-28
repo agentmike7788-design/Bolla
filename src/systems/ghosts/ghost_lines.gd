@@ -24,3 +24,7 @@ extends Resource
 ## QA (W3, G4): extra complaints of a robbed ghost by the kind taken (hair / teeth) – a ghost
 ## whose teeth were taken must not ask for its braid. Added to by_reason.robbed.
 @export var by_harvest: Dictionary[StringName, PackedStringArray] = {}
+# Phase 5 (docs/PHASE5_DESIGN.md §2.5): by_reason gets &"nameless" (a stone without an
+# inscription, after &"cross"). by_design: once per grave in the first night after a designed
+# stone was set – keys &"default", &"gilded", &"master", &"s5_lorenz".
+@export var by_design: Dictionary[StringName, PackedStringArray] = {}

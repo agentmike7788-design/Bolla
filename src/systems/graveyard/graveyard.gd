@@ -576,3 +576,13 @@ func _tables() -> CorpseTables:
 	if tables == null:
 		tables = Database.corpse_tables() as CorpseTables
 	return tables
+
+
+# --- Phase 5 (docs/PHASE5_DESIGN.md §2.5, §3.4) -------------------------------------------------
+
+## STUB (P4): sets a designed stone. FILLED → like place_marker (payment); MARKED → like
+## upgrade_marker (no payment, marker_upgrade, stone_master → master_stone). grave_stone_set,
+## grave_quality_changed / grave_completed as before; stats.stones_set; Workshop.check_goal.
+## Returns the quality difference (0 = refused).
+func set_designed_stone(_grave_id: String, _design: StoneDesign, _inv: Inventory) -> int:
+	return 0

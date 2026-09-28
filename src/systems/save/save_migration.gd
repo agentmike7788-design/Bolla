@@ -1,11 +1,16 @@
 class_name SaveMigration
 extends RefCounted
 ## Upgrades a decoded save state ({autoloads, nodes}) to the CURRENT format
-## (docs/PHASE3_DESIGN.md §5.2, §3.4 "Speichern"; docs/PHASE4_DESIGN.md §5.2: chain 1→2→3). Applied by SaveFileIO.read_doc after
+## (docs/PHASE3_DESIGN.md §5.2, §3.4 "Speichern"; docs/PHASE4_DESIGN.md §5.2: chain 1→2→3;
+## docs/PHASE5_DESIGN.md §5.2: chain 1→2→3→4). Applied by SaveFileIO.read_doc after
 ## decode_state; the normal load path follows and the next save writes CURRENT.
 ## Pure: never touches the scene tree or an autoload, never changes its input.
 
-const CURRENT := 3
+const CURRENT := 4
+## Save ids of the Phase-5 system nodes that get an empty state in migrate_3_to_4 (§3.1, §5.2
+## step 3). Used by P6 once the nodes exist in the world (W0: not yet inserted – an unknown
+## save_id would warn).
+const V4_EMPTY_NODES: PackedStringArray = ["workshop", "gathering", "stonemasonry"]
 ## Save ids of the Phase-4 system nodes that get an empty state in migrate_2_to_3 (§3.1, §5.2
 ## steps 4–5). Used by P6 once the nodes exist in the world (W0: not yet inserted – an unknown
 ## save_id would warn).
@@ -46,6 +51,8 @@ static func migrate(state: Dictionary, from_version: int, meta: Dictionary = {})
 		out = migrate_1_to_2(out, meta)
 	if from_version <= 2:
 		out = migrate_2_to_3(out, meta)
+	if from_version <= 3:
+		out = migrate_3_to_4(out, meta)
 	return out
 
 
@@ -139,6 +146,14 @@ static func migrate_2_to_3(state: Dictionary, meta: Dictionary) -> Dictionary:
 	#    them LOCKED from its section data. 7. Player, time, inventory, chest, decor, cleanliness,
 	#    ghosts: unchanged.
 	return out
+
+
+## STUB (P6) – docs/PHASE5_DESIGN.md §5.2 steps 1–7 on a deep copy of a v3 state. W0: the
+## identity on a deep copy (fail-safe: every from_dict / load_state tolerates missing keys).
+## P6 moves TOOL items from the player's slots to "tools", adds design {} to the graves, the empty
+## V4_EMPTY_NODES (once the world has them) and the new stats.
+static func migrate_3_to_4(state: Dictionary, _meta: Dictionary) -> Dictionary:
+	return state.duplicate(true)
 
 
 ## §5.2 step 2 on one record dictionary (in place). Existing Phase-4 fields are kept.

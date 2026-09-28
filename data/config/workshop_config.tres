@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="WorkshopConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/workshop/workshop_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+unlock_flag = &"cemetery_complete"
+open_flag = &"workshop_open"
+license_flag = &"bruch_license"
+intro_minute = 360
+goal_stations = Array[StringName]([&"mason", &"loom", &"forge"])
+goal_tiers = Dictionary[StringName, int]({&"shovel": 1, &"axe": 1, &"pickaxe": 2})
+goal_master_stones = 1
+chapter_id = &"names_in_stone"
+goal_flag = &"names_in_stone_complete"
+ready_slots = 3

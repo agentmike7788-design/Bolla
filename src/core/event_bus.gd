@@ -85,6 +85,24 @@ signal insight_unlocked(insight_id: StringName)
 # Night trader (NightTrade): one trade in the panel (coins positive = income).
 signal trader_trade(coins: int, sold: Dictionary, bought: Dictionary)
 
+# Phase 5 (docs/PHASE5_DESIGN.md §3.3) – listeners never change game state (the changing system
+# calls the others directly; coins_spent raises stats.coins_spent in the sender).
+# Workshop (Workshop)
+signal station_built(station_id: StringName)
+## state: &"started", &"ready", &"collected"
+signal workshop_job_changed(station_id: StringName, recipe_id: StringName, state: StringName)
+# Gathering (GatherManager)
+signal resource_gathered(node_id: String, item_id: StringName, amount: int)
+## stage: &"full", &"partial", &"empty", &"regrowing"
+signal gather_node_changed(node_id: String, charges: int, stage: StringName)
+# Tools (Workbench after a tool recipe; not the Player on load)
+signal tool_tier_changed(kind: StringName, tier: int)
+# Stones (Stonemasonry / Graveyard); state: &"ready", &"set", &"discarded"
+signal stone_order_changed(order_id: String, grave_id: String, state: StringName)
+signal grave_stone_set(grave_id: String, shape_id: StringName, quality: int)
+# Coins (every expense through a system: build, Osric, Ilse); reason: &"license", &"build", &"osric", &"ilse"
+signal coins_spent(amount: int, reason: StringName)
+
 # UI
 signal ui_panel_requested(panel: StringName, context: Dictionary)
 signal ui_modal_changed(open: bool)

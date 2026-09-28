@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="InscriptionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/stone/inscription_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"i_garden"
+order = 7
+title = "Was du gesät hast"
+lines = PackedStringArray("{name}", "{born} – {died}", "Was du gesät hast, blüht noch.")
+fits_min_age = -1
+fits_max_age = -1
+fits_story = Array[StringName]([&"s1_quendel"])

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SectionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/expansion/section_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"bruch"
+display_name = "Am Bruch"
+order = 5
+decor_cap = 0
+requires_flag = &"bruch_license"
+requires_flag_text = "Die Pforte ist zu. Osric weiß, wer den Schlüssel hat."
+counts_for_cemetery = false
+is_burial = false

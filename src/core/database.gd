@@ -22,6 +22,12 @@ const FIND_DIR := "res://data/finds"
 const STORY_DIR := "res://data/story"
 const CLUE_DIR := "res://data/journal/clues"
 const INSIGHT_DIR := "res://data/journal/insights"
+# Phase 5 (docs/PHASE5_DESIGN.md §3.5)
+const STATION_DIR := "res://data/stations"
+const GATHER_DIR := "res://data/gather"
+const STONE_SHAPE_DIR := "res://data/stone/shapes"
+const INSCRIPTION_DIR := "res://data/stone/inscriptions"
+const ORNAMENT_DIR := "res://data/stone/ornaments"
 
 var _items: Dictionary = {}       # StringName -> ItemData
 var _recipes: Dictionary = {}     # StringName -> RecipeData
@@ -36,6 +42,11 @@ var _finds: Dictionary = {}       # StringName -> FindData
 var _stories: Dictionary = {}     # StringName -> StoryCorpseData
 var _clues: Dictionary = {}       # StringName -> ClueData
 var _insights: Dictionary = {}    # StringName -> InsightData
+var _stations: Dictionary = {}    # StringName -> StationData
+var _gather: Dictionary = {}      # StringName -> GatherNodeData
+var _shapes: Dictionary = {}      # StringName -> StoneShapeData
+var _inscriptions: Dictionary = {}  # StringName -> InscriptionData
+var _ornaments: Dictionary = {}   # StringName -> OrnamentData
 var _icons: Dictionary = {}       # StringName -> Texture2D
 var _placeholder: Texture2D
 
@@ -62,6 +73,11 @@ func reload() -> void:
 	_stories = _load_dir(STORY_DIR, "id")
 	_clues = _load_dir(CLUE_DIR, "id")
 	_insights = _load_dir(INSIGHT_DIR, "id")
+	_stations = _load_dir(STATION_DIR, "id")
+	_gather = _load_dir(GATHER_DIR, "id")
+	_shapes = _load_dir(STONE_SHAPE_DIR, "id")
+	_inscriptions = _load_dir(INSCRIPTION_DIR, "id")
+	_ornaments = _load_dir(ORNAMENT_DIR, "id")
 
 
 func item(id: StringName) -> Resource:
@@ -184,6 +200,58 @@ func insight(id: StringName) -> Resource:
 ## All insights, sorted by `order`.
 func insights() -> Array:
 	return _sorted(_insights.values(), "order")
+
+
+# --- Phase 5 ---------------------------------------------------------------------------------
+
+## data/stations/<id>.tres (StationData), null if unknown.
+func station(id: StringName) -> Resource:
+	return _stations.get(id)
+
+
+## All stations, sorted by id.
+func stations() -> Array:
+	return _sorted(_stations.values(), "id")
+
+
+## data/gather/<kind>.tres (GatherNodeData), null if unknown.
+func gather_kind(id: StringName) -> Resource:
+	return _gather.get(id)
+
+
+## All gather kinds, sorted by id.
+func gather_kinds() -> Array:
+	return _sorted(_gather.values(), "id")
+
+
+## data/stone/shapes/<id>.tres (StoneShapeData), null if unknown.
+func stone_shape(id: StringName) -> Resource:
+	return _shapes.get(id)
+
+
+## All stone shapes, sorted by `order` (ties by id).
+func stone_shapes() -> Array:
+	return _sorted(_shapes.values(), "order")
+
+
+## data/stone/inscriptions/<id>.tres (InscriptionData), null if unknown.
+func inscription(id: StringName) -> Resource:
+	return _inscriptions.get(id)
+
+
+## All inscription templates, sorted by `order` (ties by id).
+func inscriptions() -> Array:
+	return _sorted(_inscriptions.values(), "order")
+
+
+## data/stone/ornaments/<id>.tres (OrnamentData), null if unknown.
+func ornament(id: StringName) -> Resource:
+	return _ornaments.get(id)
+
+
+## All ornaments, sorted by `order` (ties by id).
+func ornaments() -> Array:
+	return _sorted(_ornaments.values(), "order")
 
 
 func corpse_tables() -> Resource:

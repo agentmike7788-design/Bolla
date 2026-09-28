@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="InscriptionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/stone/inscription_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"i_rest"
+order = 1
+title = "Hier ruht"
+lines = PackedStringArray("Hier ruht", "{name}", "{born} – {died}")
+fits_min_age = -1
+fits_max_age = -1

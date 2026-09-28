@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ActionConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/entities/player/action_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+examine_minutes = 20
+shroud_minutes = 10
+dig_minutes = 60
+bury_minutes = 30
+marker_minutes = 10
+gather_minutes = 10
+real_seconds_per_minute = 0.05
+real_seconds_min = 1.5
+real_seconds_max = 4.0
+tool_tier_factors = PackedFloat32Array(1, 0.8, 0.6)
+action_tools = Dictionary[StringName, StringName]({&"dig": &"shovel", &"bury": &"shovel"})
+tool_minute_step = 5

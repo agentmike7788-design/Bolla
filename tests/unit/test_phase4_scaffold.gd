@@ -195,7 +195,8 @@ func test_input_actions() -> void:
 func test_appended_enum_values() -> void:
 	assert_eq([ItemData.Category.RESOURCE, ItemData.Category.CRAFTED, ItemData.Category.CURRENCY,
 			ItemData.Category.DECOR, ItemData.Category.TOOL, ItemData.Category.GOODS], [0, 1, 2, 3, 4, 5])
-	assert_eq(ItemData.Category.size(), 6)
+	# Phase 5 W0 appends MATERIAL (6) – see test_phase5_scaffold.gd.
+	assert_eq(ItemData.Category.size(), 7)
 
 
 func test_extended_data_classes() -> void:
@@ -495,13 +496,14 @@ func test_database_phase4_folders() -> void:
 
 
 func test_save_format_v3_and_migration_chain() -> void:
-	assert_eq(SaveMigration.CURRENT, 3)
-	assert_eq(SaveFileIO.FORMAT_VERSION, 3)
-	assert_eq(SaveManager.FORMAT_VERSION, 3)
+	# Phase 5 W0: v4 (docs/PHASE5_DESIGN.md §5) – the v3 step of the chain stays.
+	assert_eq(SaveMigration.CURRENT, 4)
+	assert_eq(SaveFileIO.FORMAT_VERSION, 4)
+	assert_eq(SaveManager.FORMAT_VERSION, 4)
 	assert_eq(SaveMigration.V3_EMPTY_NODES, PackedStringArray(["journal", "night_trade", "npc_trader"]))
 	var state := {"autoloads": {"TimeManager": {"day": 5}, "GameState": {"stats": {}, "flags": {}}}, "nodes": {"corpse_manager": {}}}
-	assert_eq(SaveMigration.migrate(state, 3), state, "current version unchanged")
-	assert_eq(SaveMigration.migrate(state, 4), {}, "newer → corrupt")
+	assert_eq(SaveMigration.migrate(state, SaveMigration.CURRENT), state, "current version unchanged")
+	assert_eq(SaveMigration.migrate(state, SaveMigration.CURRENT + 1), {}, "newer → corrupt")
 	var v3 := SaveMigration.migrate_2_to_3(state, {"day": 5})
 	# P6 filled §5.2 (tests/unit/test_save_migration.gd); the input stays untouched.
 	assert_eq(state.nodes, {"corpse_manager": {}}, "input unchanged")

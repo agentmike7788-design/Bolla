@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ClearableData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/expansion/clearable_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"boulder"
+display_name = "Findling"
+verb = "brechen"
+minutes = 60
+animation = &"dig"
+yield_items = Dictionary[StringName, int]({&"stone": 3})
+tool_kind = &"pickaxe"
+min_tier = 1

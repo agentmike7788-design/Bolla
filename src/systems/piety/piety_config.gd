@@ -17,3 +17,6 @@ extends Resource
 @export var buyer_bonus_by_tier: PackedInt32Array = [1, 1, 0, 0, 0]
 ## Hook for Phase 13+ (PietyRules.affinity): ≥ +threshold soul, ≤ −threshold bone.
 @export var affinity_threshold: int = 20
+# Phase 5 (docs/PHASE5_DESIGN.md §2.9, G4 finding B2): full_prep only for a corpse nothing was
+# harvested from (CorpseCare._after_prep, P6). stats.prepared counts every full preparation.
+@export var full_prep_requires_unharvested: bool = true

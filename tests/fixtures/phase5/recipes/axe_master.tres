@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/crafting/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"axe_master"
+display_name = "Meisteraxt"
+inputs = Dictionary[StringName, int]({&"axe_iron": 1, &"iron_bar": 2, &"charcoal": 1, &"steel_rod": 1})
+output_id = &"axe_master"
+output_amount = 1
+craft_minutes = 60
+station = &"forge"
+category = &"tool"

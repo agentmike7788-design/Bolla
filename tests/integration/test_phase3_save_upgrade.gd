@@ -161,7 +161,7 @@ func _load_and_check(name: String, expect: Array) -> void:
 	var before := SaveManager.collect_state()
 	assert_eq(SaveManager.save_game(RESAVE_SLOT), OK, name + " saves")
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(saves_dir, RESAVE_SLOT)))
-	assert_eq(int(doc.format_version), 3, name + ": v3")
+	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, name + ": current format (v3; Phase 5: v4)")
 	err = await SaveManager.load_game(RESAVE_SLOT)
 	assert_eq(err, OK)
 	world = tree.current_scene as WorldRoot

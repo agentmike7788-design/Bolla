@@ -27,7 +27,8 @@ const LABEL_MARKER_FALLBACK := "Grabzeichen"
 ## Freshness uses freshness_at_burial once set (>= 0), else the current freshness; below
 ## rot_threshold the rotten malus replaces the decaying one. A record without dress but
 ## shrouded (older saves) counts as shroud.
-static func breakdown(corpse: CorpseRecord, marker_id: StringName, config: EconomyConfig) -> Array[Dictionary]:
+## STUB (P4) Phase 5 §3.4: `_design` (StoneDesign.to_dict of the grave) adds the stone lines – not read yet.
+static func breakdown(corpse: CorpseRecord, marker_id: StringName, config: EconomyConfig, _design: Dictionary = {}) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if corpse == null:
 		push_warning("[GraveQuality] breakdown without corpse")
@@ -65,7 +66,7 @@ static func breakdown(corpse: CorpseRecord, marker_id: StringName, config: Econo
 
 
 ## Sum of the breakdown, clamped to [quality_min, quality_max].
-static func compute(corpse: CorpseRecord, marker_id: StringName, config: EconomyConfig) -> int:
+static func compute(corpse: CorpseRecord, marker_id: StringName, config: EconomyConfig, _design: Dictionary = {}) -> int:
 	var cfg := _config(config)
 	var total := 0
 	for entry: Dictionary in breakdown(corpse, marker_id, cfg):

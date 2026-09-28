@@ -23,8 +23,9 @@ extends Resource
 @export var deliveries_per_day: PackedInt32Array = [1, 1, 1, 1, 1]
 ## 1 = deliveries only on odd days in that tier.
 @export var delivery_every_other_day: PackedInt32Array = [1, 0, 0, 0, 0]
-## Phase 4 §2.8 adds hair_taken −3, teeth_taken −5, stench −2 (class default; the .tres is P3's).
-@export var event_points: Dictionary[StringName, int] = {&"grave_good": 2, &"grave_poor": -3, &"missed_delivery": -4, &"marker_upgrade": 1, &"section_unlocked": 4, &"hair_taken": -3, &"teeth_taken": -5, &"stench": -2}
+## Phase 4 §2.8 adds hair_taken −3, teeth_taken −5, stench −2; Phase 5 §2.7 master_stone +3
+## (class default; the .tres is P4's in Phase 5).
+@export var event_points: Dictionary[StringName, int] = {&"grave_good": 2, &"grave_poor": -3, &"missed_delivery": -4, &"marker_upgrade": 1, &"section_unlocked": 4, &"hair_taken": -3, &"teeth_taken": -5, &"stench": -2, &"master_stone": 3}
 ## A finished grave with quality ≥ grave_good_min → grave_good, ≤ grave_poor_max → grave_poor.
 @export var grave_good_min: int = 8
 @export var grave_poor_max: int = 3

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="StoneShapeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/stone/stone_shape_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"stone_master"
+display_name = "Meisterstein"
+order = 3
+inputs = Dictionary[StringName, int]({&"workstone": 3, &"stone": 2, &"iron_fittings": 2, &"clay": 1})
+minutes = 150
+max_lines = 4
+label_width = 0.7

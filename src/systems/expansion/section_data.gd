@@ -24,3 +24,7 @@ extends Resource
 @export var counts_for_cemetery: bool = true
 ## Chapter completed by filling this section (elder: &"six_pits").
 @export var chapter: StringName = &""
+# Phase 5 (docs/PHASE5_DESIGN.md §3.4, §4.2)
+## false = a work area (bruch, quarry): no plots, no reputation section_unlocked, not in the
+## cemetery overview / Ehrwürdig.
+@export var is_burial: bool = true

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TraderConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/utilization/trader_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+intro_day = 4
+intro_minute = 360
+notice_minute = 1365
+shop = Dictionary[StringName, Dictionary]({&"linen": {"price": 2, "per_night": 3}, &"juniper": {"price": 1, "per_night": 4}, &"gold_leaf": {"price": 6, "per_night": 2}})
+lorenz_after_talks = 3
+lorenz_after_sales = 4
+rumor_after_sales = 3
+intro_note = "Wer den Toten etwas nimmt, braucht jemanden, der es abnimmt. Ich komme nach elf an die Westmauer. Frag nach Ilse. – I. K."
+greetings = Dictionary[StringName, String]({&"devout": "Du kommst mit leeren Händen. Das steht dir.", &"considerate": "Nur zum Reden? Auch gut. Die Nacht ist lang.", &"matter_of_fact": "Guten Abend, Totengräber. Was bringen die Stillen heute?", &"callous": "Du bist schneller geworden. Das geht vielen so.", &"hardhearted": "Du hast gelernt, nicht hinzusehen. Ich hab's dir nicht beigebracht."})

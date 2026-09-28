@@ -64,7 +64,7 @@ func test_fuzz_v2_save_of_a_phase3_game() -> void:
 func test_fuzz_v3_save_of_a_phase4_game() -> void:
 	var text := await _make_v3_save()
 	var doc: Dictionary = JSON.parse_string(text)
-	assert_eq(int(doc.format_version), 3, "format v3")
+	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, "current format (v3; Phase 5: v4)")
 	await _fuzz_text(text, "p4")
 	# Extra native mutations on the Phase-4 parts only.
 	var state := SaveFileIO.decode_state(doc.get("data"))

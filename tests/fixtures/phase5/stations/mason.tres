@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="StationData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/workshop/station_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"mason"
+display_name = "Steinmetzbank"
+site_id = "site_mason"
+build_inputs = Dictionary[StringName, int]({&"stone": 6, &"wood": 3})
+build_coins = 15
+build_minutes = 90
+panel = &"stone_design"
+prompt_use = "[E] Steinmetzbank benutzen"
+build_text = "Ein schwerer Bock, ein Steinblock, Klüpfel und Meißel. Hier bekommen die Toten ihre Namen zurück."
+coin_part_label = "Meißelsatz aus Hollerbrück"
+prebuilt = false

@@ -15,6 +15,9 @@ const TEXT_FAILED := "Herstellen fehlgeschlagen."
 const TEXT_BUSY := "Gerade nicht möglich."
 
 @export var station: StringName = &"workbench"
+## STUB (P1) Phase 5 §3.4: invisible and without collision until Workshop.is_built(station) –
+## no effect yet. The panel comes from StationData.panel; background recipes → Workshop.start_job.
+@export var requires_built: bool = false
 
 @onready var interactable: Interactable = get_node_or_null(^"Interactable") as Interactable
 

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="StoneConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/stone/stone_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+inscription_points = 1
+fitting_points = 1
+gilded_points = 1
+ink_item = &"ink"
+ink_amount = 1
+inscription_minutes = 20
+gold_item = &"gold_leaf"
+gilding_minutes = 10
+set_minutes = 20
+calendar = {
+"month_days": [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
+"month_names": ["Hartung", "Hornung", "Lenzing", "Ostermond", "Wonnemond", "Brachet", "Heuet", "Ernting", "Scheiding", "Gilbhart", "Nebelung", "Julmond"],
+"start_day": 3,
+"start_month": 10,
+"start_year": 1834
+}
+ink_color = Color(0.16470589, 0.12156863, 0.09411765, 1)
+gold_color = Color(0.7882353, 0.63529414, 0.2901961, 1)

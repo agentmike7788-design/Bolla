@@ -11,6 +11,9 @@ signal changed
 ## Changing it keeps the contents: slots beyond the new count are repacked into free space.
 @export var slot_count: int = 16:
 	set = _set_slot_count
+## STUB (P3) Phase 5 §2.3, §3.4: TOOL items hang on the belt outside the slots (the player: true)
+## – no effect yet; count / has / remove_item / can_add include the belt once P3 delivers it.
+@export var tool_belt: bool = false
 
 ## slot_count entries: {} (empty) or {"id": StringName, "amount": int} with 1 <= amount <= max_stack.
 var _slots: Array[Dictionary] = []
@@ -268,4 +271,10 @@ func _empty_slots(n: int) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for i: int in n:
 		out.append({})
+	return out
+
+
+## STUB (P3) Phase 5 §3.4: the tool belt {item_id: 1} (empty until P3 delivers the belt).
+func tools() -> Dictionary[StringName, int]:
+	var out: Dictionary[StringName, int] = {}
 	return out

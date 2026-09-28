@@ -12,7 +12,21 @@ extends Resource
 @export var real_seconds_per_minute: float = 0.05
 @export var real_seconds_min: float = 1.5
 @export var real_seconds_max: float = 4.0
+# Phase 5 (docs/PHASE5_DESIGN.md §2.3): minutes × factor[tier] of the tool kind.
+@export var tool_tier_factors: PackedFloat32Array = [1.0, 0.8, 0.6]
+## Action → tool kind whose tier sets its minutes.
+@export var action_tools: Dictionary[StringName, StringName] = {&"dig": &"shovel", &"bury": &"shovel"}
+@export var tool_minute_step: int = 5
 
 
 func real_seconds_for(game_minutes: int) -> float:
 	return clampf(game_minutes * real_seconds_per_minute, real_seconds_min, real_seconds_max)
+
+
+## §1.3: max(step, round(base × factor[tier] / step) × step); tiers outside the table clamp.
+func tool_minutes(base: int, tier: int) -> int:
+	var step := maxi(tool_minute_step, 1)
+	var factor := 1.0
+	if not tool_tier_factors.is_empty():
+		factor = tool_tier_factors[clampi(tier, 0, tool_tier_factors.size() - 1)]
+	return maxi(step, int(roundf(base * factor / step)) * step)

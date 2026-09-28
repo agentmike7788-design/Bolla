@@ -398,3 +398,8 @@ func _tick_action(delta: float) -> void:
 
 func _update_animation(delta: float) -> void:
 	_animator.update(delta, _action, _is_carrying())
+
+
+## STUB (P3) Phase 5 §3.4: highest tier of `kind` on the tool belt (ToolRules.tier; 0 until P3).
+func tool_tier(kind: StringName) -> int:
+	return ToolRules.tier(inventory, kind)

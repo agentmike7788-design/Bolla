@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/crafting/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"burial_gown_loom"
+display_name = "Totenhemd weben"
+inputs = Dictionary[StringName, int]({&"linen": 1, &"yarn": 2})
+output_id = &"burial_gown"
+output_amount = 1
+craft_minutes = 30
+station = &"loom"
+category = &"grave"

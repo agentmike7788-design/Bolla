@@ -445,3 +445,11 @@ static func _uid_num(uid: String) -> int:
 static func _circle_hits_rect(c: Vector2, r: float, rect: Rect2) -> bool:
 	var nearest := Vector2(clampf(c.x, rect.position.x, rect.end.x), clampf(c.y, rect.position.y, rect.end.y))
 	return nearest.distance_squared_to(c) < r * r
+
+
+# --- Phase 5 (docs/PHASE5_DESIGN.md §3.4, §5.2 step 5) ------------------------------------------
+
+## STUB (P1): removes every decor piece whose cells touch one of `rects` (world XZ), decor_changed
+## per piece; the items go back via Workshop. Returns {decor_id: count} removed.
+func evict_rects(_rects: Array[Rect2]) -> Dictionary:
+	return {}

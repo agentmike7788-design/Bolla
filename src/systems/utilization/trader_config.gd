@@ -8,7 +8,8 @@ extends Resource
 ## 22:45: "Jemand wartet an der Westmauer." (once per night).
 @export var notice_minute: int = 1365
 ## Her small shop: item → {"price": coins, "per_night": stock}.
-@export var shop: Dictionary[StringName, Dictionary] = {&"linen": {"price": 2, "per_night": 3}, &"juniper": {"price": 1, "per_night": 4}}
+## Phase 5 §2.6 adds gold_leaf (6, 2 per night) – class default; data/config/trader_config.tres is P6's.
+@export var shop: Dictionary[StringName, Dictionary] = {&"linen": {"price": 2, "per_night": 3}, &"juniper": {"price": 1, "per_night": 4}, &"gold_leaf": {"price": 6, "per_night": 2}}
 ## "Kanntest du den alten Totengräber?" after this many talks (different nights) or sales.
 @export var lorenz_after_talks: int = 3
 @export var lorenz_after_sales: int = 4

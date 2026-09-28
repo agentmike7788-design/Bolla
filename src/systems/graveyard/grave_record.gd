@@ -16,6 +16,9 @@ var quality: int = 0
 var breakdown: Array = []
 ## Phase 3: TimeManager.day of place_marker (0 = migrated / unknown).
 var completed_day: int = 0
+## STUB (P4) Phase 5 §3.4, §5.1: StoneDesign.to_dict of the designed stone ({} = none). Not in
+## to_dict / from_dict yet (P4 adds it, tolerant).
+var design: Dictionary = {}
 
 
 func to_dict() -> Dictionary:

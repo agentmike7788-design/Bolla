@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="GatherNodeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/gathering/gather_node_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"alder"
+display_name = "Schlag-Erle"
+verb = "Erle fällen"
+item_id = &"wood"
+yield_amount = 4
+charges_max = 1
+regrow_days = 5
+minutes = 60
+tool_kind = &"axe"
+min_tier = 1
+tier2_bonus = 1
+animation = &"dig"
+requires_flag = &"workshop_open"
+regrow_stage_days = PackedInt32Array(2, 5)

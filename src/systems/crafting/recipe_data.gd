@@ -12,3 +12,6 @@ extends Resource
 @export var station: StringName = &"workbench"
 ## Workbench group (Phase 3 §2.2): &"grave", &"decor" or &"tool".
 @export var category: StringName = &"grave"
+# Phase 5 (docs/PHASE5_DESIGN.md §2.1, §2.4): runs on its own after the craft minutes (the
+# charcoal kiln: Workshop.start_job, at most one per station). New categories: &"material".
+@export var background: bool = false
