@@ -179,14 +179,15 @@ func load_state(data: Dictionary) -> void:
 	_reinterred = PackedStringArray()
 	_passage = PASSAGE_HIDDEN
 	var lifted: Variant = data.get("lifted", [])
+	var known := _known_ids()
 	if lifted is Array or lifted is PackedStringArray:
 		for raw: Variant in lifted:
 			var id := str(raw) if raw is String or raw is StringName else ""
 			if id == "" or _lifted.has(id):
 				push_warning("[Ossuary] saved lifted entry '%s' skipped" % str(raw))
 				continue
-			if not _known_ids().is_empty() and not _known_ids().has(id):
-				push_warning("[Ossuary] saved lifted grave '%s' is no old grave – skipped" % id)
+			if not known.is_empty() and not known.has(id):
+				push_warning("[Ossuary] saved lifted grave '%s' is no liftable old grave – skipped" % id)
 				continue
 			_lifted.append(id)
 	var done: Variant = data.get("reinterred", [])
@@ -255,10 +256,12 @@ func _old_graves() -> Array[OldGraveData]:
 	return old_grave_data
 
 
+## The liftable old graves of this year (a save may not claim old_01 / old_08).
 func _known_ids() -> Dictionary:
 	var out := {}
 	for data: OldGraveData in _old_graves():
-		out[data.grave_id] = true
+		if OssuaryRules.liftable(data, year(), _cfg()):
+			out[data.grave_id] = true
 	return out
 
 
