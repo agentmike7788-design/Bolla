@@ -164,15 +164,16 @@ func _cost_row(row: Dictionary) -> Control:
 	var name := UIKit.label(text, &"")
 	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	line.add_child(name)
-	if int(row.get("shed", -1)) >= 0:
-		line.add_child(UIKit.label(Phase6Texts.SHED_HAVE % int(row.shed), &"DimLabel"))
+	var shed_text := Phase6Texts.SHED_HAVE % int(row.shed) if int(row.get("shed", -1)) >= 0 else ""
+	if shed_text != "":
+		line.add_child(UIKit.label(shed_text, &"DimLabel"))
 	var have := UIKit.label(Phase5Texts.BUILD_HAVE % [int(row.have), int(row.need)], &"GoodLabel" if bool(row.ok) else &"WarningLabel")
 	line.add_child(have)
 	var mark := UIKit.label("✓" if bool(row.ok) else "✗", &"GoodLabel" if bool(row.ok) else &"WarningLabel")
 	mark.custom_minimum_size.x = 22.0
 	line.add_child(mark)
 	line.set_meta(&"id", icon_id)
-	line.set_meta(&"text", "%s %s" % [text, have.text])
+	line.set_meta(&"text", "%s %s" % [text, have.text] if shed_text == "" else "%s %s %s" % [text, shed_text, have.text])
 	return line
 
 
