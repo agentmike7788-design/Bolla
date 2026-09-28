@@ -23,10 +23,10 @@ const ARRIVE := 0.35
 const TO_OLD_04: Array[Vector2] = [Vector2(-5.2, -3.4), Vector2(-2.2, -2.6), Vector2(0.6, -0.4), Vector2(2.9, 2.7)]
 const TO_CRYPT: Array[Vector2] = [Vector2(1.0, 3.2), Vector2(0.8, 7.9), Vector2(-3.0, 8.35), Vector2(-7.0, 8.4), Vector2(-9.0, 8.9)]
 const TO_CHAPEL: Array[Vector2] = [Vector2(-7.0, 8.4), Vector2(-3.0, 8.35), Vector2(0.8, 7.9), Vector2(-0.2, 2.5),
-		Vector2(-1.2, -1.0), Vector2(1.2, -6.0), Vector2(4.5, -10.6), Vector2(4.5, -13.2), Vector2(0.6, -14.2),
+		Vector2(-1.2, -1.0), Vector2(1.2, -6.0), Vector2(4.5, -10.6), Vector2(4.5, -12.8), Vector2(1.2, -12.8), Vector2(0.6, -14.2),
 		Vector2(0.6, -18.9), Vector2(4.5, -19.0), Vector2(4.5, -20.9)]
-const CHAPEL_TO_OLD_04: Array[Vector2] = [Vector2(4.5, -19.0), Vector2(0.6, -18.9), Vector2(0.6, -14.2), Vector2(4.5, -13.2),
-		Vector2(4.5, -10.6), Vector2(1.2, -6.0), Vector2(0.6, -0.4), Vector2(2.9, 2.7)]
+const CHAPEL_TO_OLD_04: Array[Vector2] = [Vector2(4.5, -19.0), Vector2(0.6, -18.9), Vector2(0.6, -14.2), Vector2(1.2, -12.8), Vector2(4.5, -12.8),
+		Vector2(4.5, -10.6), Vector2(1.2, -6.0), Vector2(0.6, -0.4), Vector2(1.4, 1.0)]
 
 var saves_dir := TestCase.user_dir("test_saves_p6_loop")
 var world: WorldRoot
@@ -158,14 +158,14 @@ func test_phase6_loop_to_roof_and_earth_with_round_trips() -> void:
 	await _exit(&"crypt")
 	# The procession (real movement): the Kirchpforte is unlocked first with free hands – put down,
 	# unlock, pick up again (§4.2: the gate opens with buildings_open).
-	await _walk(TO_CHAPEL.slice(0, 10))
+	await _walk(TO_CHAPEL.slice(0, 11))
 	manager.put_down(corpse_id, CorpseRecord.LOCATION_GROUND, player.global_transform)
 	var gate := world.get_node("Entities/obs_c_gate") as ClearableObstacle
 	assert_true(gate.can_interact(player), "the Kirchpforte can be unlocked")
 	gate.interact(player)
 	assert_true(gate.cleared, "Kirchpforte open")
 	manager.get_corpse_node(corpse_id).interact(player)
-	await _walk(TO_CHAPEL.slice(10))
+	await _walk(TO_CHAPEL.slice(11))
 	await _enter(&"chapel")
 	var catafalque := _room(&"chapel").get_node("Entities/Catafalque") as Catafalque
 	catafalque.interact(player)

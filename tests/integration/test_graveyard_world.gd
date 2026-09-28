@@ -2165,7 +2165,7 @@ func test_phase6_overview_and_no_new_occlusion() -> void:
 			var eye := _p6_eye(a, zoom)
 			for node: Node3D in sites:
 				var box := _p6_model_aabb(node)
-				assert_false(box.intersects_segment(eye, head), "%s hides the player at %s (zoom %d)" % [node.name, a, int(zoom)])
+				assert_true(box.intersects_segment(eye, head) == null, "%s hides the player at %s (zoom %d)" % [node.name, a, int(zoom)])
 
 
 # --- Phase 6 helpers ---------------------------------------------------------------------------
