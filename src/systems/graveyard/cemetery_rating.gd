@@ -17,6 +17,9 @@ const LABELS: Dictionary[StringName, String] = {
 	DIGNIFIED: "Würdevoll",
 	VENERABLE: "Ehrwürdig",
 }
+## venerable_missing() parts (HUD / tooltip: "Ehrwürdig: noch Zier 8/12").
+const TEXT_MISSING_DECOR := "Zier %d/%d"
+const TEXT_MISSING_DIRT := "Pflegeabzug %d (höchstens %d)"
 
 
 static func rating(total: int, config: EconomyConfig) -> StringName:
@@ -32,15 +35,25 @@ static func rating(total: int, config: EconomyConfig) -> StringName:
 	return TIERS[tier]
 
 
-## STUB (P3) – Phase 4 §2.14: rating(total) but venerable only with decor ≥ venerable_min_decor
-## and dirt_penalty ≤ venerable_max_dirt, otherwise at most dignified (W0: = rating).
-static func rating_gated(total: int, _decor: int, _dirt_penalty: int, config: EconomyConfig) -> StringName:
-	return rating(total, config)
+## Phase 4 §2.14: rating(total), but venerable only with decor ≥ venerable_min_decor and
+## dirt_penalty ≤ venerable_max_dirt – otherwise at most dignified.
+static func rating_gated(total: int, decor: int, dirt_penalty: int, config: EconomyConfig) -> StringName:
+	var plain := rating(total, config)
+	if plain == VENERABLE and not venerable_missing(decor, dirt_penalty, config).is_empty():
+		return DIGNIFIED
+	return plain
 
 
-## STUB (P3) – what venerable still lacks ("Zier 8/12", "Pflegeabzug 9 (höchstens 6)").
-static func venerable_missing(_decor: int, _dirt_penalty: int, _config: EconomyConfig) -> PackedStringArray:
-	return PackedStringArray()
+## What venerable still lacks besides the quality: "Zier 8/12", "Pflegeabzug 9 (höchstens 6)";
+## empty = both conditions hold.
+static func venerable_missing(decor: int, dirt_penalty: int, config: EconomyConfig) -> PackedStringArray:
+	var cfg := EconomyConfig.resolve(config)
+	var out := PackedStringArray()
+	if decor < cfg.venerable_min_decor:
+		out.append(TEXT_MISSING_DECOR % [maxi(decor, 0), cfg.venerable_min_decor])
+	if dirt_penalty > cfg.venerable_max_dirt:
+		out.append(TEXT_MISSING_DIRT % [dirt_penalty, cfg.venerable_max_dirt])
+	return out
 
 
 ## German label ("Verwahrlost" … "Ehrwürdig"); "" for unknown ids.

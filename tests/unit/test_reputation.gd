@@ -136,12 +136,14 @@ func test_migrate_v1_table() -> void:
 	assert_eq(ReputationRules.tier(ReputationRules.migrate_v1(-3), cfg), &"disreputable", "−3 stays Verrufen")
 
 
-func test_real_config_matches_the_fixture() -> void:
+func test_real_config_matches_the_phase4_fixture() -> void:
 	var real := Database.config(&"reputation_config") as ReputationConfig
 	assert_not_null(real)
+	# Phase 4 (§2.14 / §2.8): the data follows the Phase-4 fixture; the rule tests keep Phase 3's.
+	var phase4 := Phase4Fixtures.reputation_config()
 	for prop: Dictionary in ReputationConfig.new().get_property_list():
 		if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
-			assert_eq(real.get(prop.name), cfg.get(prop.name), String(prop.name))
+			assert_eq(real.get(prop.name), phase4.get(prop.name), String(prop.name))
 
 
 # --- node ---------------------------------------------------------------------------------
@@ -285,3 +287,19 @@ func test_without_score_node_target_uses_zero() -> void:
 	score.free()
 	GameState.stats[&"reputation"] = 30
 	assert_eq(rep.forecast(), ReputationRules.drift(30, 20, cfg))
+
+
+## Phase 4 §2.8: hair −3, teeth −5, stench at the gate −2 (Phase-3 events unchanged).
+func test_phase4_events() -> void:
+	rep.config = Phase4Fixtures.reputation_config()
+	GameState.stats[&"reputation"] = 50
+	rep.event(&"hair_taken", "Zopf")
+	assert_eq(rep.value(), 47)
+	rep.event(&"teeth_taken", "Zähne")
+	assert_eq(rep.value(), 42)
+	rep.event(&"stench", "Gestank am Tor")
+	assert_eq(rep.value(), 40)
+	rep.event(&"grave_good", "gut")
+	assert_eq(rep.value(), 42, "Phase-3 points unchanged")
+	var real := Database.config(&"reputation_config") as ReputationConfig
+	assert_eq([real.event_points[&"hair_taken"], real.event_points[&"teeth_taken"], real.event_points[&"stench"]], [-3, -5, -2])

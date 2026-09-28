@@ -43,19 +43,22 @@ func total() -> int:
 	return compute(_graves(), _decor(), _dirt())
 
 
+## Phase 4 §2.14: "Ehrwürdig" also needs decor and tending (CemeteryRating.rating_gated).
 func rating() -> StringName:
-	return CemeteryRating.rating(total(), _economy())
+	return CemeteryRating.rating_gated(total(), _decor(), _dirt(), _economy())
 
 
-## {graves, decor, dirt (≥ 0, subtracted), total, rating, next_rating (&"" at the top), next_at}
-## next_at = quality at which next_rating starts (0 at the top).
+## {graves, decor, dirt (≥ 0, subtracted), total, rating, next_rating (&"" at the top), next_at,
+##  venerable_missing}. next_at = quality at which next_rating starts (0 at the top); rating is
+## gated (§2.14): held at dignified by missing decor / tending, next_rating stays venerable
+## with next_at = its threshold, venerable_missing names what is lacking (empty = nothing).
 func breakdown() -> Dictionary:
 	var graves := _graves()
 	var decor := _decor()
 	var dirt := _dirt()
 	var sum := compute(graves, decor, dirt)
 	var cfg := _economy()
-	var current := CemeteryRating.rating(sum, cfg)
+	var current := CemeteryRating.rating_gated(sum, decor, dirt, cfg)
 	var index := CemeteryRating.TIERS.find(current)
 	var next_rating := &""
 	var next_at := 0
@@ -66,14 +69,15 @@ func breakdown() -> Dictionary:
 		next_rating = CemeteryRating.TIERS[index + 1]
 		next_at = thresholds[index]
 	return {"graves": graves, "decor": decor, "dirt": dirt, "total": sum, "rating": current,
-			"next_rating": next_rating, "next_at": next_at}
+			"next_rating": next_rating, "next_at": next_at,
+			"venerable_missing": CemeteryRating.venerable_missing(decor, dirt, cfg)}
 
 
 ## Recomputes; cemetery_quality_changed only when total or rating changed (or `force`).
 ## Deviation from §3.4 (`refresh() -> void`): optional `force` for world_ready / game_loaded.
 func refresh(force: bool = false) -> void:
 	var sum := total()
-	var current := CemeteryRating.rating(sum, _economy())
+	var current := rating()
 	if not force and sum == _last_total and current == _last_rating:
 		return
 	_last_total = sum

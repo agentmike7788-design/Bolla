@@ -128,3 +128,31 @@ func _slice_total(shroud: bool, marker: StringName, take: int, shrouds: int = 0)
 
 func _real_rating(total: int) -> StringName:
 	return CemeteryRating.rating(total, load(REAL_ECONOMY) as EconomyConfig)
+
+
+# --- Phase 4 §2.14: „Ehrwürdig“ needs decor and tending ------------------------------------
+
+func test_rating_gated_needs_decor_and_tending() -> void:
+	var p4 := Phase4Fixtures.economy_config()
+	for cfg: EconomyConfig in [config, p4, EconomyConfig.new()]:
+		assert_eq([cfg.venerable_min_decor, cfg.venerable_max_dirt], [12, 6], "§2.14 values")
+		assert_eq(CemeteryRating.rating_gated(100, 12, 6, cfg), &"venerable", "exactly at both limits")
+		assert_eq(CemeteryRating.rating_gated(100, 11, 0, cfg), &"dignified", "decor 11")
+		assert_eq(CemeteryRating.rating_gated(150, 36, 7, cfg), &"dignified", "dirt 7")
+		assert_eq(CemeteryRating.rating_gated(99, 36, 0, cfg), &"dignified", "quality below 100")
+	# Below the top tier the gate changes nothing.
+	for total: int in [0, 14, 15, 32, 50, 99]:
+		assert_eq(CemeteryRating.rating_gated(total, 0, 40, config), CemeteryRating.rating(total, config), "total %d" % total)
+
+
+func test_venerable_missing_texts() -> void:
+	assert_eq(CemeteryRating.venerable_missing(12, 6, config), PackedStringArray())
+	assert_eq(CemeteryRating.venerable_missing(8, 0, config), PackedStringArray(["Zier 8/12"]))
+	assert_eq(CemeteryRating.venerable_missing(20, 9, config), PackedStringArray(["Pflegeabzug 9 (höchstens 6)"]))
+	assert_eq(CemeteryRating.venerable_missing(0, 13, config), PackedStringArray(["Zier 0/12", "Pflegeabzug 13 (höchstens 6)"]))
+	var custom := config.duplicate() as EconomyConfig
+	custom.venerable_min_decor = 4
+	custom.venerable_max_dirt = 0
+	assert_eq(CemeteryRating.venerable_missing(3, 1, custom), PackedStringArray(["Zier 3/4", "Pflegeabzug 1 (höchstens 0)"]))
+	assert_eq(CemeteryRating.rating_gated(100, 4, 0, custom), &"venerable")
+	assert_eq(CemeteryRating.venerable_missing(5, 0, null), PackedStringArray(["Zier 5/12"]), "null = data config")

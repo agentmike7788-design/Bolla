@@ -1,6 +1,7 @@
 extends TestCase
 ## P3 (docs/PHASE3_DESIGN.md §2.5, §3.3, §3.4, §10): CemeteryScore – formula graves + decor −
-## dirt, clamped ≥ 0, five tiers incl. Ehrwürdig, breakdown with the next tier,
+## dirt, clamped ≥ 0, five tiers incl. Ehrwürdig (Phase 4 §2.14: gated by decor / dirt),
+## breakdown with the next tier and venerable_missing,
 ## cemetery_quality_changed only on change, exactly one after world_ready / loading.
 ## Graves, decor and dirt come from group doubles.
 
@@ -96,15 +97,32 @@ func test_missing_systems_count_zero() -> void:
 
 
 func test_five_tiers() -> void:
-	var cases := [[0, &"neglected"], [15, &"orderly"], [32, &"tended"], [50, &"dignified"], [100, &"venerable"]]
+	var cases := [[0, &"neglected"], [15, &"orderly"], [32, &"tended"], [50, &"dignified"], [100, &"dignified"]]
 	for c: Array in cases:
 		graves.quality = c[0]
-		assert_eq(score.rating(), c[1], "total %d" % c[0])
-	graves.quality = 90
-	decor.score = 10
+		assert_eq(score.rating(), c[1], "total %d (no decor: at most Würdevoll)" % c[0])
+	graves.quality = 88
+	decor.score = 12
 	assert_eq(score.rating(), &"venerable", "graves + decor reach Ehrwürdig")
 	dirt.value = 1
 	assert_eq(score.rating(), &"dignified", "dirt costs the top tier")
+
+
+## Phase 4 §2.14: Ehrwürdig needs decor ≥ 12 and a dirt penalty ≤ 6 on top of quality 100.
+func test_venerable_gate() -> void:
+	graves.quality = 120
+	decor.score = 11
+	assert_eq(score.rating(), &"dignified", "decor 11 < 12")
+	decor.score = 12
+	dirt.value = 7
+	assert_eq(score.total(), 125)
+	assert_eq(score.rating(), &"dignified", "dirt 7 > 6")
+	dirt.value = 6
+	assert_eq(score.rating(), &"venerable", "decor 12, dirt 6")
+	events.clear()
+	dirt.value = 7
+	EventBus.cleanliness_changed.emit(7, 3)
+	assert_eq(events, [[125, &"dignified"]], "the gated rating is what the signal reports")
 
 
 func test_breakdown() -> void:
@@ -112,7 +130,7 @@ func test_breakdown() -> void:
 	decor.score = 8
 	dirt.value = 2
 	assert_eq(score.breakdown(), {"graves": 40, "decor": 8, "dirt": 2, "total": 46, "rating": &"tended",
-			"next_rating": &"dignified", "next_at": 50})
+			"next_rating": &"dignified", "next_at": 50, "venerable_missing": PackedStringArray(["Zier 8/12"])})
 	graves.quality = 0
 	decor.score = 0
 	assert_eq(score.breakdown().next_rating, &"orderly")
@@ -120,10 +138,16 @@ func test_breakdown() -> void:
 	assert_eq(score.breakdown().total, 0, "clamped")
 	assert_eq(score.breakdown().dirt, 2, "the penalty is reported positive")
 	graves.quality = 110
+	var held := score.breakdown()
+	assert_eq(held.rating, &"dignified", "quality enough, decor missing")
+	assert_eq([held.next_rating, held.next_at], [&"venerable", 100])
+	assert_eq(held.venerable_missing, PackedStringArray(["Zier 0/12"]))
+	decor.score = 12
 	var top := score.breakdown()
 	assert_eq(top.rating, &"venerable")
 	assert_eq(top.next_rating, &"", "no tier above Ehrwürdig")
 	assert_eq(top.next_at, 0)
+	assert_eq(top.venerable_missing, PackedStringArray())
 
 
 func test_signal_only_on_change() -> void:

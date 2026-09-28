@@ -2,7 +2,9 @@ extends Node
 ## Autoload GameState – story flags & statistics (docs/VERTICAL_SLICE_DESIGN.md §3.4).
 ## flags: StringName -> bool/int/float/String. stats: StringName -> int (default keys below).
 
-const DEFAULT_STATS: Array[StringName] = [&"burials", &"valuables_taken", &"reputation", &"missed_deliveries", &"days_played"]
+## Phase 4 (§3.4): + piety (−100…100), utilized, prepared, trader_sales.
+const DEFAULT_STATS: Array[StringName] = [&"burials", &"valuables_taken", &"reputation", &"missed_deliveries", &"days_played",
+		&"piety", &"utilized", &"prepared", &"trader_sales"]
 
 var flags: Dictionary = {}
 var stats: Dictionary = {}

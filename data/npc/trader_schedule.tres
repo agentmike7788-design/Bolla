@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="NpcSchedule" format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2"]
+
+[sub_resource type="Resource" id="night_spot"]
+script = ExtResource("1")
+activity = &"idle"
+animation = &"idle"
+path = PackedStringArray("trader_spot")
+dialogue_id = &"trader"
+
+[sub_resource type="Resource" id="night_leave"]
+script = ExtResource("1")
+start_minute = 180
+travel_minutes = 20
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("trader_spot", "trader_mid", "trader_far")
+
+[sub_resource type="Resource" id="day_away"]
+script = ExtResource("1")
+start_minute = 200
+activity = &"home"
+path = PackedStringArray("trader_far")
+visible = false
+
+[sub_resource type="Resource" id="evening_arrive"]
+script = ExtResource("1")
+start_minute = 1360
+travel_minutes = 20
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("trader_far", "trader_mid", "trader_spot")
+
+[sub_resource type="Resource" id="evening_spot"]
+script = ExtResource("1")
+start_minute = 1380
+activity = &"idle"
+animation = &"idle"
+path = PackedStringArray("trader_spot")
+dialogue_id = &"trader"
+
+[resource]
+script = ExtResource("2")
+npc_id = &"trader"
+display_name = "Ilse Kranich"
+entries = Array[ExtResource("1")]([SubResource("night_spot"), SubResource("night_leave"), SubResource("day_away"), SubResource("evening_arrive"), SubResource("evening_spot")])

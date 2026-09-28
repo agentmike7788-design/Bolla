@@ -381,12 +381,14 @@ func test_dirt_spot_shows_levels() -> void:
 	assert_eq(DirtSpot.model_path(&"moss", 1), "")
 
 
-func test_real_config_matches_the_fixture() -> void:
+func test_real_config_matches_the_phase4_fixture() -> void:
 	var real := Database.config(&"cleanliness_config") as CleanlinessConfig
 	assert_not_null(real)
+	# Phase 4 (§2.14 / §2.8): the data follows the Phase-4 fixture; the rule tests keep Phase 3's.
+	var phase4 := Phase4Fixtures.cleanliness_config()
 	for prop: Dictionary in CleanlinessConfig.new().get_property_list():
 		if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
-			assert_eq(real.get(prop.name), cfg.get(prop.name), String(prop.name))
+			assert_eq(real.get(prop.name), phase4.get(prop.name), String(prop.name))
 	assert_true(Database.has_item(real.rake_item), "the rake exists")
 	var recipe := Database.recipe(&"rake") as RecipeData
 	assert_not_null(recipe)
@@ -398,3 +400,15 @@ func test_real_config_matches_the_fixture() -> void:
 	var rake := Database.item(&"rake") as ItemData
 	assert_eq(rake.category, ItemData.Category.TOOL)
 	assert_eq(rake.max_stack, 1)
+
+
+## Phase 4 §2.14 (a): an overgrown spot costs 3 instead of 2 ([0, 0, 1, 3], the real data).
+func test_phase4_penalty_table() -> void:
+	manager.config = Phase4Fixtures.cleanliness_config()
+	assert_eq(manager.config.penalty_by_level, PackedInt32Array([0, 0, 1, 3]))
+	var data := manager.save_state()
+	data.spots = {"dirt_y01": 0.5, "dirt_y02": 1.5, "dirt_y03": 2.5, "dirt_plot_01": 3.9}
+	manager.load_state(data)
+	assert_eq(manager.penalty(), 0 + 0 + 1 + 3)
+	manager.config = Database.config(&"cleanliness_config") as CleanlinessConfig
+	assert_eq(manager.penalty(), 4, "data/config uses the Phase-4 table")

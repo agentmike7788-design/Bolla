@@ -2,7 +2,9 @@ extends TestCase
 ## M2: GameState – flags, stats, reputation label, reset, save/load (§3.4, §2.4).
 ## Phase 3 (P3): the label follows ReputationRules on the 0…100 scale (docs/PHASE3_DESIGN.md §2.6).
 
-const STAT_KEYS: Array[StringName] = [&"burials", &"valuables_taken", &"reputation", &"missed_deliveries", &"days_played"]
+## Phase 4 (§3.4): + piety, utilized, prepared, trader_sales.
+const STAT_KEYS: Array[StringName] = [&"burials", &"valuables_taken", &"reputation", &"missed_deliveries", &"days_played",
+		&"piety", &"utilized", &"prepared", &"trader_sales"]
 
 
 func test_defaults_after_reset() -> void:

@@ -3,7 +3,10 @@ extends TestCase
 ## in-game days of the real graveyard world under several strategies. Asserts: no engine errors
 ## and no warnings, quality / reputation in range, reputation drift exactly once per day, coins
 ## plausible against §2.6, the phase goal (12 graves) around day 14 for the diligent player,
-## „Ehrwürdig“ (100) reachable, „Würdevoll“ (50) still reachable without tending.
+## „Ehrwürdig“ reachable, „Würdevoll“ (50) still reachable without tending.
+## Phase 4 (docs/PHASE4_DESIGN.md §2.14): „Ehrwürdig“ also needs decor ≥ 12 and a dirt penalty
+## ≤ 6 – checked on the gated CemeteryScore.rating() (bot row "rating"): diligent reaches it by
+## day 12, neglectful and hoarder on none of the 14 days; quality range 0…260.
 ## The per-day numbers are printed ("PLAYTHROUGH <strategy>") for
 ## docs/reviews/phase3_wip/qa_playthrough.md.
 
@@ -47,15 +50,17 @@ func test_diligent() -> void:
 	var last: Dictionary = bot.rows.back()
 	assert_true(GameState.has_flag(&"cemetery_complete"), "diligent: all 12 graves by day %d" % DAYS)
 	assert_true(_first_day(bot, func(r: Dictionary) -> bool: return r.marked >= 12) <= DAYS, "phase goal ≈ day 14")
-	assert_true(_first_day(bot, func(r: Dictionary) -> bool: return r.quality >= 100) > 0, "„Ehrwürdig“ reachable (max %d)" % _max(bot, "quality"))
+	var venerable := _first_day(bot, func(r: Dictionary) -> bool: return r.rating == CemeteryRating.VENERABLE)
+	assert_true(venerable > 0 and venerable <= 12, "„Ehrwürdig“ by day 12 (day %d, max %d)" % [venerable, _max(bot, "quality")])
 	assert_true(last.rep >= 55, "diligent ends at least „Geschätzt“ (%d)" % last.rep)
 
 
 ## §1.3 gate goal: „Würdevoll“ also with neglected tending (everything else done properly).
 func test_neglectful_still_reaches_dignified() -> void:
 	var bot := await _play(&"neglectful")
-	assert_true(_first_day(bot, func(r: Dictionary) -> bool: return r.quality >= 50) > 0,
+	assert_true(_first_day(bot, func(r: Dictionary) -> bool: return r.rating == CemeteryRating.DIGNIFIED) > 0,
 			"„Würdevoll“ without tending (max %d)" % _max(bot, "quality"))
+	_assert_never_venerable(bot, &"neglectful")
 
 
 ## Never tends, takes every valuable, no decor: slower (no Birkenhang), but no softlock.
@@ -71,6 +76,7 @@ func test_hoarder_without_decor() -> void:
 	assert_true(expansion_done(bot), "hoarder clears both sections")
 	for r: Dictionary in bot.rows:
 		assert_eq(r.decor, 0, "no decor")
+	_assert_never_venerable(bot, &"hoarder")
 
 
 func test_save_load_every_day_matches_diligent() -> void:
@@ -102,7 +108,7 @@ func _play(strategy: StringName) -> Phase3Bot:
 		assert_false(r.is_empty(), "%s: day %d recorded" % [strategy, i + 1])
 		if r.is_empty():
 			break
-		assert_true(r.quality >= 0 and r.quality <= 150, "%s day %d: quality %d in range" % [strategy, r.day, r.quality])
+		assert_true(r.quality >= 0 and r.quality <= 260, "%s day %d: quality %d in range" % [strategy, r.day, r.quality])
 		assert_true(r.rep >= 0 and r.rep <= 100, "%s day %d: reputation %d in range" % [strategy, r.day, r.rep])
 		assert_eq(int(GameState.get_flag(&"rep_last_day", 0)), TimeManager.day, "%s: drift applied for day %d" % [strategy, TimeManager.day])
 	EventBus.reputation_changed.disconnect(on_rep)
@@ -116,6 +122,13 @@ func _play(strategy: StringName) -> Phase3Bot:
 	print("PLAYTHROUGH %s  spent %d  gifts %d  income %d" % [strategy, bot.spent, bot.gifts, coins_in.n])
 	print(bot.table())
 	return bot
+
+
+## §2.14: without decor or with neglected tending „Ehrwürdig“ stays out of reach.
+func _assert_never_venerable(bot: Phase3Bot, strategy: StringName) -> void:
+	for r: Dictionary in bot.rows:
+		assert_ne(r.rating, CemeteryRating.VENERABLE, "%s: never „Ehrwürdig“ (day %d: quality %d, decor %d, dirt %d)"
+				% [strategy, r.day, r.quality, r.decor, r.dirt])
 
 
 func expansion_done(bot: Phase3Bot) -> bool:

@@ -5,7 +5,7 @@ extends TestCase
 ## chain 1 → 2 → 3, and the W1 fixtures (tests/fixtures/phase4, Phase4Fixtures).
 
 ## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
-const IMPLEMENTED: PackedStringArray = []
+const IMPLEMENTED: PackedStringArray = ["PietyRules", "Piety", "UtilizationRules", "NightTrade"]  # P3
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
 	# P1
@@ -125,7 +125,8 @@ func test_node_stubs_instantiate_with_groups() -> void:
 		assert_eq(node.get(&"save_order"), spec[2], spec[0])
 		assert_true(node.is_in_group(&"saveable"), spec[0] + " saveable")
 		assert_true(node.is_in_group(spec[3]), "%s in group %s" % [spec[0], spec[3]])
-		assert_eq(node.call("save_state"), {}, spec[0] + " stub state")
+		if not IMPLEMENTED.has(spec[0]):
+			assert_eq(node.call("save_state"), {}, spec[0] + " stub state")
 		node.free()
 	for spec: Array in [["CorpseCare", &"corpse_care"], ["Piety", &"piety"]]:
 		var node: Node = (load(_path_of(spec[0])) as GDScript).new()

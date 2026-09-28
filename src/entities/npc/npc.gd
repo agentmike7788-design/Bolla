@@ -21,15 +21,23 @@ const FLAG_DELIVERY_SKIPPED := &"delivery_skipped"
 const CART_SLOT := "slot_corpse"
 ## Below this (m) a path segment has no direction.
 const EPSILON := 0.0001
+## Lantern light (§8): warm, dimmed, no shadow.
+const LANTERN_NAME := "Lantern"
+const LANTERN_COLOR := Color("E8A55A")
+const LANTERN_ENERGY := 0.4
+const LANTERN_RANGE := 3.0
+const LANTERN_FALLBACK := Vector3(-0.25, 0.9, 0.2)
 
 @export var save_id: String = ""
 @export var save_order: int = 20
 @export var npc_id: StringName
 @export var model: PackedScene
-## Phase 4 (docs/PHASE4_DESIGN.md §3.4) – STUB (P3): flag missing → like activity home
-## (invisible, no prompt). Not evaluated yet.
+## Phase 4 (docs/PHASE4_DESIGN.md §3.4): while this GameState flag is missing (or false) the
+## NPC behaves like activity home – invisible, no prompt, no collision (Ilse: trader_known).
+## &"" = always (Osric).
 @export var requires_flag: StringName = &""
-## STUB (P3): lantern (OmniLight without shadow, group warm_lights) at this marker.
+## Phase 4: a lantern (OmniLight3D without shadow, group warm_lights) at the model node with
+## this name (Ilse: light_lantern); without such a node at LANTERN_FALLBACK. &"" = none.
 @export var lantern_marker: StringName = &""
 @export_group("Animation")
 ## Ground speed (m/s) at which the walk / push_cart cycles do not slide (rig notes, M6a).
@@ -77,6 +85,9 @@ var _model: Node3D
 var _held_entry: ScheduleEntry
 var _held_position: Vector3
 var _held_heading: float = 0.0
+## The schedule has with_cart entries (Osric); otherwise no cart / cargo logic at all (Ilse).
+var _uses_cart: bool = true
+var _lantern: OmniLight3D
 
 
 func _init() -> void:
@@ -102,6 +113,13 @@ func _ready() -> void:
 		cargo.transform = Transform3D.IDENTITY
 	_tables = Database.corpse_tables() as CorpseTables
 	_heading = rotation.y
+	_uses_cart = _schedule_uses_cart()
+	if not _uses_cart:
+		cart.visible = false
+		cart_shape.disabled = true
+		cargo.visible = false
+		_with_cart = false
+	_make_lantern()
 	refresh()
 
 
@@ -135,6 +153,23 @@ func first_name() -> String:
 
 func is_present() -> bool:
 	return _present
+
+
+## Standing at a dialogue spot (prompt active).
+func is_talkable() -> bool:
+	return _talkable
+
+
+## requires_flag is set (or none is required).
+func flag_allows() -> bool:
+	if requires_flag == &"" or not GameState.has_flag(requires_flag):
+		return requires_flag == &""
+	var v: Variant = GameState.get_flag(requires_flag)
+	return not (typeof(v) == TYPE_BOOL and not v)
+
+
+func lantern() -> OmniLight3D:
+	return _lantern
 
 
 func is_walking() -> bool:
@@ -193,10 +228,12 @@ func _update(delta: float) -> void:
 	var sample := _pose.sample(path, progress)
 	global_position = sample[0] if _held_entry == null else _held_position
 	var dir: Vector3 = sample[1]
-	_set_state(entry.visible, entry.visible and entry.dialogue_id != &"", entry.visible and entry.with_cart)
-	cargo.visible = _with_cart and _has_cargo()
-	if cargo.visible and _cargo_day != TimeManager.day:
-		_show_cargo_for(TimeManager.day)
+	var shown := entry.visible and flag_allows()
+	_set_state(shown, shown and entry.dialogue_id != &"", shown and entry.with_cart and _uses_cart)
+	if _uses_cart:
+		cargo.visible = _with_cart and _has_cargo()
+		if cargo.visible and _cargo_day != TimeManager.day:
+			_show_cargo_for(TimeManager.day)
 	# The root (and with it the cart) turns with the path; only the figure turns to a player.
 	var heading := _heading
 	if _held_entry != null:
@@ -299,6 +336,38 @@ func _cemetery_full() -> bool:
 			or not manager.has_method(&"unburied_count"):
 		return false
 	return int(graveyard.call(&"free_plot_count")) <= int(manager.call(&"unburied_count"))
+
+
+func _schedule_uses_cart() -> bool:
+	var sched := _schedule()
+	if sched == null:
+		return true
+	for e: ScheduleEntry in sched.entries:
+		if e != null and e.with_cart:
+			return true
+	return false
+
+
+## The lantern light at the lantern_marker node of the model (fallback: in front of the hip).
+func _make_lantern() -> void:
+	if lantern_marker == &"" or _lantern != null:
+		return
+	var parent: Node3D = self
+	var offset := LANTERN_FALLBACK
+	if _model != null:
+		var marker := _model.find_child(String(lantern_marker), true, false) as Node3D
+		if marker != null:
+			parent = marker
+			offset = Vector3.ZERO
+	_lantern = OmniLight3D.new()
+	_lantern.name = LANTERN_NAME
+	_lantern.light_color = LANTERN_COLOR
+	_lantern.light_energy = LANTERN_ENERGY
+	_lantern.omni_range = LANTERN_RANGE
+	_lantern.shadow_enabled = false
+	_lantern.position = offset
+	_lantern.add_to_group(&"warm_lights", true)
+	parent.add_child(_lantern)
 
 
 # --- lookups -------------------------------------------------------------------------------
