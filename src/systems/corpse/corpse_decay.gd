@@ -14,7 +14,8 @@ const FRESHNESS_RESOLUTION := 1000000.0
 ## Docs §2.5 / Phase 4 §2.5: freshness = START_FRESHNESS - decay_per_hour * effective hours
 ## since arrival (min 0), in one expression from the total-minute difference – no float error
 ## adds up over the hourly steps – snapped to the FRESHNESS_RESOLUTION grid. Juniper windows
-## (record.balm_windows) slow the decay to balm_factor while they overlap [arrival, now].
+## (record.balm_windows) slow the decay to balm_factor while they overlap [arrival, now];
+## Phase 6: cold windows (record.cold_windows) likewise – the stronger factor wins (effective_minutes).
 static func freshness_at(record: CorpseRecord, now_total: int, decay_per_hour: float, balm_factor: float = 0.25) -> float:
 	var minutes := effective_minutes(record, now_total, balm_factor)
 	var value := maxf(0.0, START_FRESHNESS - decay_per_hour * minutes / float(MINUTES_PER_HOUR))
@@ -23,13 +24,35 @@ static func freshness_at(record: CorpseRecord, now_total: int, decay_per_hour: f
 
 ## §2.5: minutes since arrival − (1 − balm_factor) × Σ overlap(balm window, [arrival, now]).
 ## Overlapping windows count once (their union), so 3 × 1 h back to back == 1 × 3 h.
+## Phase 6 (§2.2): with cold windows the rate of every minute is min(balm factor while a juniper
+## window runs else 1, cold factor while a cold window runs else 1) – cold and smoke never add up.
+## The minutes are summed per rate (integers) and reduced once per rate: without cold windows this
+## is bit-identical to the Phase-4 formula.
 static func effective_minutes(record: CorpseRecord, now_total: int, balm_factor: float) -> float:
 	var arrival := record.arrival_total_minutes
 	var minutes := maxi(0, now_total - arrival)
-	if minutes == 0 or record.balm_windows.size() < 2:
+	if minutes == 0 or (record.balm_windows.size() < 2 and record.cold_windows.size() < 3):
 		return float(minutes)
-	var balmed := _covered_minutes(record.balm_windows, arrival, now_total)
-	return float(minutes) - (1.0 - clampf(balm_factor, 0.0, 1.0)) * float(balmed)
+	if record.cold_windows.size() < 3:
+		var balmed := _covered_minutes(record.balm_windows, arrival, now_total)
+		return float(minutes) - (1.0 - clampf(balm_factor, 0.0, 1.0)) * float(balmed)
+	var by_rate := {}
+	var borders := _borders(record, arrival, now_total, true)
+	for i: int in borders.size() - 1:
+		var rate := rate_at(record, borders[i], balm_factor)
+		if rate < 1.0:
+			by_rate[rate] = int(by_rate.get(rate, 0)) + borders[i + 1] - borders[i]
+	var reduced := 0.0
+	for rate: float in by_rate:
+		reduced += (1.0 - rate) * float(by_rate[rate])
+	return float(minutes) - reduced
+
+
+## Phase 6: the decay rate factor of the minute `total` – min(balm_factor while a juniper window
+## covers it else 1, cold_factor_at(total)).
+static func rate_at(record: CorpseRecord, total: int, balm_factor: float) -> float:
+	var rate := clampf(balm_factor, 0.0, 1.0) if is_balm_active(record, total) else 1.0
+	return minf(rate, cold_factor_at(record, total))
 
 
 ## A juniper window of `record` covers the minute `now_total` (start ≤ now < end).
@@ -41,7 +64,7 @@ static func is_balm_active(record: CorpseRecord, now_total: int) -> bool:
 
 
 ## Minutes from now until the freshness is first below `threshold` (−1 = already below, or it
-## never gets there: no decay, threshold ≤ 0). Steps minute-exact across the balm windows; for the UI
+## never gets there: no decay, threshold ≤ 0). Steps minute-exact across the balm and cold windows; for the UI
 ## ("noch ≈ 3 h") and CorpseExam.next_loss.
 static func minutes_until(record: CorpseRecord, now_total: int, decay_per_hour: float, balm_factor: float, threshold: float) -> int:
 	if freshness_at(record, now_total, decay_per_hour, balm_factor) < threshold:
@@ -53,17 +76,16 @@ static func minutes_until(record: CorpseRecord, now_total: int, decay_per_hour: 
 	var t := maxi(now_total, record.arrival_total_minutes)
 	var done := effective_minutes(record, t, balm_factor)
 	var factor := clampf(balm_factor, 0.0, 1.0)
-	# Walk the segments between window borders after t (each segment has one constant rate).
+	# Walk the segments between window borders after t (each segment has one constant rate;
+	# juniper and cold windows, an open cold window runs on).
 	var borders: Array[int] = []
-	for i: int in range(0, record.balm_windows.size() - 1, 2):
-		for b: int in [record.balm_windows[i], record.balm_windows[i + 1]]:
-			if b > t and not b in borders:
-				borders.append(b)
-	borders.sort()
+	for b: int in _borders(record, t, -1, false):
+		if b > t:
+			borders.append(b)
 	var guess := t
 	var seg_start := t
 	for border: int in borders + [-1]:
-		var rate := factor if is_balm_active(record, seg_start) else 1.0
+		var rate := minf(factor if is_balm_active(record, seg_start) else 1.0, cold_factor_at(record, seg_start))
 		var seg_end := border
 		if rate <= 0.0 and seg_end < 0:
 			return -1
@@ -114,8 +136,36 @@ static func decay_per_hour(record: CorpseRecord, tables: CorpseTables) -> float:
 
 # --- Phase 6 (docs/PHASE6_DESIGN.md §2.2, §3.4) -------------------------------------------------
 
-## STUB (P2) – the cold factor of `record` at the minute `total` (cold_windows [start, end (-1 =
-## open), factor‰]): 1.0 without an open / covering window. P2 makes effective_minutes /
-## freshness_at / minutes_until use min(balm, cold) per minute.
-static func cold_factor_at(_record: CorpseRecord, _total: int) -> float:
-	return 1.0
+## The cold factor of `record` at the minute `total`: the smallest factor of the cold windows
+## [start, end (-1 = open), factor‰] that cover it (start ≤ total < end; an open window runs on),
+## 1.0 without one.
+static func cold_factor_at(record: CorpseRecord, total: int) -> float:
+	var factor := 1.0
+	var w := record.cold_windows
+	for i: int in range(0, w.size() - 2, 3):
+		if w[i] <= total and (w[i + 1] < 0 or total < w[i + 1]):
+			factor = minf(factor, clampf(float(w[i + 2]) / 1000.0, 0.0, 1.0))
+	return factor
+
+
+## Sorted distinct window borders of both lists inside [from, to] (to < 0 = no upper limit);
+## with_ends adds from and to themselves.
+static func _borders(record: CorpseRecord, from: int, to: int, with_ends: bool) -> Array[int]:
+	var raw: Array[int] = []
+	for i: int in range(0, record.balm_windows.size() - 1, 2):
+		raw.append(record.balm_windows[i])
+		raw.append(record.balm_windows[i + 1])
+	var w := record.cold_windows
+	for i: int in range(0, w.size() - 2, 3):
+		raw.append(w[i])
+		if w[i + 1] >= 0:
+			raw.append(w[i + 1])
+	if with_ends:
+		raw.append(from)
+		raw.append(to)
+	var out: Array[int] = []
+	for b: int in raw:
+		if b >= from and (to < 0 or b <= to) and not b in out:
+			out.append(b)
+	out.sort()
+	return out

@@ -14,3 +14,7 @@ wisp_color = Color(0.9, 0.88, 0.68, 0.35)
 smoke_color = Color(0.94, 0.91, 0.86, 0.35)
 visibility_range = 40.0
 max_emitting = 3
+niche_fly_scale = 0.0
+niche_wisp_scale = 0.5
+niche_chill_particles = 2
+niche_chill_color = Color(0.74, 0.78, 0.84, 0.3)

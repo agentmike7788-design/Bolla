@@ -15,6 +15,10 @@ extends Node3D
 ## - QA (W3, G4): a subtle fly cloud (FlyCloud: one billboard quad of painted ink specks, no
 ##   particle) hovers over the body with the flies, so the flies read at the gameplay camera
 ##   distance (22 m) where the single flies are below a pixel; it fades with the fly count.
+## - Phase 6 (§2.2): in a cold niche (record location &"niche") the flies rest (× niche_fly_scale),
+##   the wisps run at × niche_wisp_scale, the overlay stays honest, and a cold breath (Chill:
+##   niche_chill_particles of the smoke texture, warm grey-blue) rises at the niche's "chill"
+##   marker. The chill is outside the max_emitting slots (a few particles per occupied niche).
 
 const OVERLAY_MATERIAL := preload("res://assets/materials/mat_decay_overlay.tres")
 const FLY_MATERIAL := preload("res://assets/materials/mat_vfx_fly.tres")
@@ -52,6 +56,7 @@ var flies_node: CPUParticles3D
 var wisps_node: CPUParticles3D
 var smoke_node: CPUParticles3D
 var cloud_node: MeshInstance3D
+var chill_node: CPUParticles3D
 
 ## Visuals that currently emit / wait for a free emitter slot (max_emitting).
 static var _emitting: Array[CorpseDecayVisual] = []
@@ -66,6 +71,8 @@ var _in_range: bool = true
 var _range_left: float = 0.0
 var _colours_for: DecayVisualConfig
 var _cloud_time: float = 0.0
+var _in_niche: bool = false
+var _chill: int = 0
 static var _cloud_material: StandardMaterial3D
 
 
@@ -103,7 +110,8 @@ func _process(delta: float) -> void:
 		_sync_particles()
 
 
-## Presentation of the record's decay (Corpse: on corpse_updated and hour_changed).
+## Presentation of the record's decay (Corpse: on corpse_updated and hour_changed). Phase 6: the
+## niche scales come from the parent corpse's record (location &"niche"), or set_in_niche().
 func apply(freshness: float, stage: StringName, balm_active: bool, washed: bool) -> void:
 	var cfg := _config()
 	var st := stage if stage in STAGES else STAGES[0]
@@ -111,9 +119,16 @@ func apply(freshness: float, stage: StringName, balm_active: bool, washed: bool)
 	if washed:
 		amount -= cfg.washed_reduction
 	_amount = clampf(amount, 0.0, 1.0)
-	_flies = maxi(0, int(cfg.flies_by_stage.get(st, 0)))
-	_wisps = 0 if balm_active else maxi(0, int(cfg.wisps_by_stage.get(st, 0)))
+	var niche := _record_in_niche()
+	if niche != null:
+		_in_niche = niche.location == CorpseRecord.LOCATION_NICHE
+	var fly_scale := cfg.niche_fly_scale if _in_niche else 1.0
+	var wisp_scale := cfg.niche_wisp_scale if _in_niche else 1.0
+	_flies = maxi(0, roundi(float(cfg.flies_by_stage.get(st, 0)) * maxf(0.0, fly_scale)))
+	_wisps = 0 if balm_active else maxi(0, roundi(float(cfg.wisps_by_stage.get(st, 0)) * maxf(0.0, wisp_scale)))
 	_smoke = balm_active and cfg.smoke_particles > 0
+	_chill = maxi(0, cfg.niche_chill_particles) if _in_niche else 0
+	_sync_chill(niche)
 	if _colours_for != cfg:
 		_apply_colours()
 	_apply_overlay()
@@ -138,6 +153,22 @@ func wisps() -> int:
 
 func smoke_on() -> bool:
 	return _smoke
+
+
+## Phase 6: whether the corpse lies in a cold niche (as last applied).
+func in_niche() -> bool:
+	return _in_niche
+
+
+## Phase 6: chill particles wanted (niche_chill_particles in a niche, else 0).
+func chill() -> int:
+	return _chill
+
+
+## Phase 6: sets the niche state by hand (visuals without a corpse record, e.g. previews); the
+## next apply() reads the record again when there is one.
+func set_in_niche(on: bool) -> void:
+	_in_niche = on
 
 
 # --- helpers (public, not part of the contract) ------------------------------------------
@@ -209,6 +240,23 @@ func _build() -> void:
 	wisps_node = _make_emitter("Wisps", WISP_MATERIAL, WISP_TEXTURE, Vector2(0.59, 0.59))
 	smoke_node = _make_emitter("Smoke", SMOKE_MATERIAL, SMOKE_TEXTURE, Vector2(0.36, 0.59))
 	cloud_node = _make_cloud()
+	chill_node = _make_emitter("Chill", SMOKE_MATERIAL, SMOKE_TEXTURE, Vector2(0.5, 0.4))
+	# Chill: a slow, low cold breath drifting out of the niche (top_level at the chill marker).
+	chill_node.top_level = true
+	chill_node.local_coords = false
+	chill_node.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	chill_node.emission_box_extents = Vector3(0.5, 0.05, 0.15)
+	chill_node.lifetime = 5.0
+	chill_node.preprocess = 5.0
+	chill_node.direction = Vector3(0, 0.4, 1)
+	chill_node.spread = 25.0
+	chill_node.initial_velocity_min = 0.04
+	chill_node.initial_velocity_max = 0.08
+	chill_node.angle_min = -30.0
+	chill_node.angle_max = 30.0
+	chill_node.scale_amount_min = 0.8
+	chill_node.scale_amount_max = 1.0
+	chill_node.scale_amount_curve = _grow_curve(0.5)
 	# Flies: dart around above the body (the corpses lie along local X, ~1.8 × 0.6 m).
 	flies_node.position = Vector3(0.0, 0.35, 0.0)
 	flies_node.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
@@ -432,6 +480,8 @@ func _apply_colours() -> void:
 		p.visibility_range_end = cfg.visibility_range
 	flies_node.visibility_range_end = cfg.visibility_range
 	cloud_node.visibility_range_end = cfg.visibility_range
+	chill_node.color_ramp = _ramp(Color(cfg.niche_chill_color, 0.0), cfg.niche_chill_color, 0.3)
+	chill_node.visibility_range_end = cfg.visibility_range
 
 
 ## Fade in over `rise`, hold, fade out over the last third.
@@ -514,6 +564,30 @@ static func _set_overlay(model: Node, material: Material, amount: float) -> void
 		mesh.material_overlay = material
 		if material != null:
 			mesh.set_instance_shader_parameter(AMOUNT_PARAM, amount)
+
+
+## The record of the parent corpse (null without one – then set_in_niche() decides).
+func _record_in_niche() -> CorpseRecord:
+	var corpse := get_parent()
+	if corpse == null or not is_inside_tree():
+		return null
+	var id: Variant = corpse.get(&"corpse_id")
+	var manager := get_tree().get_first_node_in_group(&"corpse_manager") as CorpseManager
+	if manager == null or not (id is String) or String(id) == "":
+		return null
+	return manager.get_record(String(id))
+
+
+## The cold breath at the niche's chill marker (CryptNiche with the record's slot_id), else over
+## the body; off outside a niche.
+func _sync_chill(record: CorpseRecord) -> void:
+	if _chill <= 0:
+		_set_emitter(chill_node, 0)
+		return
+	var niche := CryptNiche.find(get_tree(), record.slot_id) if record != null and is_inside_tree() else null
+	var at := niche.chill_node().global_transform if niche != null else (global_transform if is_inside_tree() else Transform3D.IDENTITY)
+	chill_node.transform = Transform3D(Basis.IDENTITY, at.origin)  # top_level: world space
+	_set_emitter(chill_node, _chill)
 
 
 func _config() -> DecayVisualConfig:

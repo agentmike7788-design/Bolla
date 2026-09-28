@@ -8,6 +8,11 @@ extends Node3D
 ## request_lay_out / request_balm / request_harvest (Phase 4, via Systems/CorpseCare),
 ## decide_valuables and request_pick_up; request_examine / request_shroud stay for the
 ## Phase-2 panel. panel_state() is the read-only view model of the Phase-4 panel.
+## Phase 6 (§2.2, §3.4): a table belongs to a room (&"crypt" for the crypt table) and is active while
+## Buildings.level(&"crypt") is in [requires_level, retire_at_level) – the old table in front of the
+## hut retires at crypt 1, the crypt table starts there, so exactly one table is active. An inactive
+## table is hidden, without collision and prompt, sees no corpse; props with meta "follows_table"
+## (its own children, or nodes of the world whose meta names this table) follow it.
 
 const GROUP := &"morgue_table"
 const MANAGER_GROUP := &"corpse_manager"
@@ -36,6 +41,12 @@ const TEXT_DECIDE_FIRST := "Erst über die Wertsachen entscheiden."
 const TEXT_NO_SHROUD := "Kein Leichentuch – an der Werkbank herstellen."
 const TEXT_NO_DECISION := "Hier gibt es nichts zu entscheiden."
 const TEXT_BUSY := "Gerade nicht möglich."
+## Phase 6: panel title per room (W-UI reads panel_title()).
+const TITLE_DEFAULT := "Leichentisch"
+const TITLE_CRYPT := "Gruft-Tisch"
+const CRYPT_ROOM := &"crypt"
+const BUILDINGS_GROUP := &"buildings"
+const FOLLOW_META := &"follows_table"
 
 ## Id of the corpse on the table ("" = free), always derived from the CorpseManager records.
 var corpse_id: String = "":
@@ -53,14 +64,23 @@ var corpse_id: String = "":
 
 ## Player of the last interaction (the panel acts for them).
 var _player: Player
+## Active state last applied to visibility / collision (tables start visible = active).
+var _applied_active: bool = true
 
 
 func _init() -> void:
 	add_to_group(GROUP, true)
 
 
+func _ready() -> void:
+	EventBus.building_upgraded.connect(_on_building_upgraded)
+	EventBus.game_loaded.connect(_on_game_loaded)
+	EventBus.world_ready.connect(_on_world_ready)
+	refresh_active()
+
+
 func can_interact(player: Player) -> bool:
-	if player == null or player.is_busy():
+	if player == null or player.is_busy() or not is_active():
 		return false
 	if _is_carrying(player):
 		return corpse_id == ""
@@ -68,6 +88,8 @@ func can_interact(player: Player) -> bool:
 
 
 func get_interaction_prompt(player: Player) -> String:
+	if not is_active():
+		return ""
 	var record := _table_record()
 	if player != null and _is_carrying(player):
 		return PROMPT_OCCUPIED if record != null else PROMPT_PUT_DOWN
@@ -85,11 +107,11 @@ func interact(player: Player) -> void:
 		return
 	if _is_carrying(player):
 		var slot := slot_node()
-		manager.put_down(player.carried_id, CorpseRecord.LOCATION_TABLE, slot_transform(), slot)
+		manager.put_down(player.carried_id, CorpseRecord.LOCATION_TABLE, slot_transform(), slot, room)
 	else:
 		# The panel shows the freshness of now (the hourly decay may lag, QA4-01).
 		manager.refresh_decay(corpse_id)
-		EventBus.ui_panel_requested.emit(EXAM_PANEL, {"corpse_id": corpse_id, "table": self, "player": player})
+		EventBus.ui_panel_requested.emit(EXAM_PANEL, {"corpse_id": corpse_id, "table": self, "player": player, "title": panel_title()})
 
 
 ## Panel (Phase 2, compatibility): examine the corpse on the table – examine_minutes, not
@@ -346,7 +368,7 @@ func _table_record() -> CorpseRecord:
 
 func _table_corpse_id() -> String:
 	var manager := _manager()
-	if manager == null:
+	if manager == null or not is_active():
 		return ""
 	for record: CorpseRecord in manager.records():
 		if record.location == CorpseRecord.LOCATION_TABLE:
@@ -388,7 +410,81 @@ static func _is_carrying(player: Player) -> bool:
 	return is_instance_valid(player.carried)
 
 
-## STUB (P2) – Buildings.level(&"crypt") in [requires_level, retire_at_level) (retire 0 = never).
-## W0: always true (the old table stays active).
+## Buildings.level(&"crypt") in [requires_level, retire_at_level) (retire 0 = never); without a
+## Buildings node the crypt is at level 0 (the old table stays active).
 func is_active() -> bool:
-	return true
+	var level := crypt_level()
+	return level >= requires_level and (retire_at_level <= 0 or level < retire_at_level)
+
+
+## Panel title: „Gruft-Tisch" in the crypt, else „Leichentisch".
+func panel_title() -> String:
+	return TITLE_CRYPT if room == CRYPT_ROOM else TITLE_DEFAULT
+
+
+## Buildings.level(&"crypt") of the node in group "buildings" (0 without one).
+func crypt_level() -> int:
+	var buildings := get_tree().get_first_node_in_group(BUILDINGS_GROUP) if is_inside_tree() else null
+	if buildings == null or not buildings.has_method(&"level"):
+		return 0
+	return int(buildings.call(&"level", &"crypt"))
+
+
+## Brings visibility, collision and the Interactable (and the following props) in line with
+## is_active() – on ready, building_upgraded, game_loaded, world_ready; Buildings.apply_levels may
+## call it for every node in group morgue_table. Presentation only, no game state.
+func refresh_active() -> void:
+	var active := is_active()
+	if active == _applied_active:
+		return
+	_applied_active = active
+	visible = active
+	_set_collision(self, active)
+	if interactable != null:
+		interactable.enabled = active
+		interactable.set_deferred(&"monitorable", active)
+	for node: Node in followers():
+		if node is Node3D:
+			(node as Node3D).visible = active
+		_set_collision(node, active)
+
+
+## Props that follow the table: own descendants with meta "follows_table" and nodes of the world
+## whose meta "follows_table" is this table's name.
+func followers() -> Array[Node]:
+	var out: Array[Node] = []
+	for node: Node in find_children("*", "", true, false):
+		if node.has_meta(FOLLOW_META):
+			out.append(node)
+	if not is_inside_tree():
+		return out
+	var top: Node = self
+	while top.get_parent() != null and top.get_parent() != get_tree().root:
+		top = top.get_parent()
+	if top == self:
+		return out
+	for node: Node in top.find_children("*", "", true, false):
+		if node.has_meta(FOLLOW_META) and not out.has(node) and not is_ancestor_of(node) and \
+				str(node.get_meta(FOLLOW_META)) == String(name):
+			out.append(node)
+	return out
+
+
+static func _set_collision(root: Node, on: bool) -> void:
+	var shapes: Array[Node] = root.find_children("*", "CollisionShape3D", true, false)
+	if root is CollisionShape3D:
+		shapes.append(root)
+	for shape: Node in shapes:
+		(shape as CollisionShape3D).set_deferred(&"disabled", not on)
+
+
+func _on_building_upgraded(_building_id: StringName, _level: int) -> void:
+	refresh_active()
+
+
+func _on_game_loaded(_slot: int) -> void:
+	refresh_active()
+
+
+func _on_world_ready(_world: Node) -> void:
+	refresh_active()

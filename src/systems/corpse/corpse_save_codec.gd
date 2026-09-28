@@ -101,3 +101,14 @@ static func read_story_delivered(data: Dictionary) -> PackedStringArray:
 		if (entry is String or entry is StringName) and String(entry) != "" and not out.has(String(entry)):
 			out.append(String(entry))
 	return out
+
+
+## Phase 6: a saved list of unique non-empty ids (e.g. "niche_waited"; missing / invalid = none).
+static func read_id_list(list: Variant) -> PackedStringArray:
+	var out := PackedStringArray()
+	if not (list is Array or list is PackedStringArray):
+		return out
+	for entry: Variant in list:
+		if (entry is String or entry is StringName) and String(entry) != "" and not out.has(String(entry)):
+			out.append(String(entry))
+	return out

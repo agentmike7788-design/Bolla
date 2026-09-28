@@ -21,3 +21,5 @@ extends Resource
 @export var niche_fly_scale: float = 0.0
 @export var niche_wisp_scale: float = 0.5
 @export var niche_chill_particles: int = 2
+## Tint of the cold breath (the smoke texture, warm grey-blue).
+@export var niche_chill_color: Color = Color(0.74, 0.78, 0.84, 0.3)
