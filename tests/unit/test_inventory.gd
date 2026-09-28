@@ -29,6 +29,13 @@ const ITEMS := {
 	&"pliers": ["Zange", ItemData.Category.TOOL, 1],
 	&"hair_braid": ["Zopf", ItemData.Category.GOODS, 10],
 	&"teeth_pouch": ["Zahnsäckchen", ItemData.Category.GOODS, 10],
+	# Phase 5 (P3, §2.3): tier tools
+	&"shovel_iron": ["Eisenschaufel", ItemData.Category.TOOL, 1],
+	&"shovel_master": ["Meisterschaufel", ItemData.Category.TOOL, 1],
+	&"axe_iron": ["Holzfälleraxt", ItemData.Category.TOOL, 1],
+	&"axe_master": ["Meisteraxt", ItemData.Category.TOOL, 1],
+	&"pickaxe_iron": ["Alte Spitzhacke", ItemData.Category.TOOL, 1],
+	&"pickaxe_master": ["Meisterhacke", ItemData.Category.TOOL, 1],
 }
 
 
@@ -554,3 +561,163 @@ func test_start_items_fit_a_new_inventory() -> void:
 		assert_eq(inv.add_item(id, start[id]), 0, String(id))
 	assert_eq(inv.count(&"coin"), 5)
 	assert_eq(_layout().slice(0, 3), [[&"wood", 2], [&"linen", 1], []], "coins take no slot")
+
+
+# --- Phase 5: tool belt (P3, docs/PHASE5_DESIGN.md §2.3, §3.4, §5.1) -------------------------------
+
+func _belt(slots: int = 20) -> Inventory:
+	var i := _make(slots)
+	i.tool_belt = true
+	return i
+
+
+func test_real_player_config_has_20_slots() -> void:
+	var real := Database.config(&"player_config") as PlayerConfig
+	assert_eq(real.inventory_slots, 20, "§2.3: 16 → 20")
+	assert_eq(real.inventory_slots, Phase5Fixtures.player_config().inventory_slots)
+	_use_slots(real.inventory_slots)
+	assert_eq(inv.get_slots().size(), 20)
+
+
+func test_belt_tools_take_no_slot() -> void:
+	var b := _belt()
+	changes = 0
+	assert_eq(b.add_item(&"rake", 1), 0)
+	assert_eq(b.add_item(&"shovel_iron", 1), 0)
+	assert_eq(changes, 2, "changed once per call")
+	assert_eq(b.tools(), {&"rake": 1, &"shovel_iron": 1} as Dictionary[StringName, int])
+	for slot: Dictionary in b.get_slots():
+		assert_true(slot.is_empty(), "get_slots never shows the belt")
+	assert_eq(b.get_slots().size(), 20)
+	assert_eq([b.count(&"rake"), b.count(&"shovel_iron")], [1, 1])
+	assert_true(b.has(&"rake"))
+	b.free()
+
+
+func test_belt_holds_max_stack_per_id_and_returns_the_rest() -> void:
+	var b := _belt()
+	b.add_item(&"shears", 1)
+	changes = 0
+	assert_false(b.can_add(&"shears", 1), "one per id")
+	assert_eq(b.add_item(&"shears", 1), 1, "the rest comes back")
+	assert_eq(changes, 0, "refusal emits nothing")
+	assert_eq(b.add_item(&"comb", 3), 2, "max_stack 1 → 2 back")
+	assert_eq(b.count(&"comb"), 1)
+	assert_true(b.can_add(&"pliers", 1))
+	b.free()
+
+
+func test_belt_is_not_blocked_by_full_slots() -> void:
+	var b := _belt(1)
+	b.add_item(&"wood", 50)
+	assert_false(b.can_add(&"wood", 1))
+	assert_true(b.can_add(&"axe_iron", 1), "the belt is outside the slots")
+	assert_eq(b.add_item(&"axe_iron", 1), 0)
+	b.free()
+
+
+func test_remove_from_the_belt() -> void:
+	var b := _belt()
+	b.add_item(&"pickaxe_iron", 1)
+	b.add_item(&"coin", 3)
+	changes = 0
+	assert_false(b.remove_item(&"pickaxe_iron", 2), "all or nothing")
+	assert_eq(changes, 0)
+	assert_true(b.remove_item(&"pickaxe_iron", 1))
+	assert_eq(changes, 1)
+	assert_eq(b.tools(), {} as Dictionary[StringName, int])
+	assert_eq(b.count(&"pickaxe_iron"), 0)
+	assert_eq(b.count(&"coin"), 3)
+	b.free()
+
+
+func test_chest_has_no_belt() -> void:
+	# inv (before_each) is a plain slot inventory like the chest.
+	assert_false(inv.tool_belt)
+	inv.add_item(&"rake", 1)
+	inv.add_item(&"shovel_master", 1)
+	assert_eq(inv.tools(), {} as Dictionary[StringName, int])
+	assert_eq(_layout().slice(0, 3), [[&"rake", 1], [&"shovel_master", 1], []])
+	assert_false(inv.save_state().has("tools"), "no belt entry for the chest")
+
+
+func test_switching_the_belt_on_moves_slot_tools() -> void:
+	inv.add_item(&"wood", 3)
+	inv.add_item(&"rake", 1)
+	inv.add_item(&"comb", 1)
+	changes = 0
+	inv.tool_belt = true
+	assert_eq(changes, 1)
+	assert_eq(inv.tools(), {&"rake": 1, &"comb": 1} as Dictionary[StringName, int])
+	assert_eq(_layout().slice(0, 3), [[&"wood", 3], [], []])
+	inv.tool_belt = false
+	assert_eq(inv.tools(), {} as Dictionary[StringName, int])
+	assert_eq(inv.count(&"rake") + inv.count(&"comb"), 2, "back into slots, nothing lost")
+
+
+func test_belt_save_and_load_roundtrip() -> void:
+	var b := _belt()
+	b.add_item(&"wood", 4)
+	b.add_item(&"coin", 9)
+	b.add_item(&"scrub_brush", 1)
+	b.add_item(&"axe_master", 1)
+	var saved := b.save_state()
+	assert_eq(saved["tools"], {&"scrub_brush": 1, &"axe_master": 1})
+	assert_eq((saved["slots"] as Array).size(), 20)
+	var restored: Dictionary = JSON.parse_string(JSON.stringify(saved))
+	var c := _belt()
+	changes = 0
+	c.load_state(restored)
+	assert_eq(changes, 1)
+	assert_eq(c.save_state(), saved, "save → JSON → load → save is identical")
+	assert_eq(c.tools(), b.tools())
+	b.free()
+	c.free()
+
+
+func test_loading_old_slots_moves_tools_to_the_belt() -> void:
+	# Phase-4 save: 16 slots with tools inside (§5.2 1).
+	var b := _belt()
+	var slots: Array = []
+	for i: int in 16:
+		slots.append({})
+	slots[0] = {"id": "wood", "amount": 5}
+	slots[2] = {"id": "rake", "amount": 1}
+	slots[5] = {"id": "pliers", "amount": 1}
+	slots[7] = {"id": "stone", "amount": 2}
+	b.load_state({"slots": slots, "currency": {"coin": 4}})
+	assert_eq(b.tools(), {&"rake": 1, &"pliers": 1} as Dictionary[StringName, int])
+	var layout := b.get_slots()
+	assert_eq(layout.size(), 20)
+	assert_eq([layout[0], layout[2], layout[5], layout[7]], [{"id": &"wood", "amount": 5}, {}, {}, {"id": &"stone", "amount": 2}],
+			"other slots keep their index")
+	assert_eq(b.count(&"coin"), 4)
+	assert_eq(warnings.count_containing("[Inventory]"), 0, "no warnings")
+	b.free()
+
+
+func test_loading_a_duplicate_belt_tool_keeps_it() -> void:
+	var b := _belt()
+	b.load_state({"slots": [{"id": "rake", "amount": 1}], "tools": {"rake": 1}})
+	assert_eq(b.count(&"rake"), 2, "nothing lost")
+	assert_eq(b.tools(), {&"rake": 1} as Dictionary[StringName, int])
+	b.free()
+
+
+func test_tools_without_belt_are_repacked_into_slots() -> void:
+	inv.load_state({"slots": [], "tools": {"rake": 1, "bogus": 1}})
+	assert_eq(inv.count(&"rake"), 1)
+	assert_eq(_layout()[0], [&"rake", 1])
+	assert_eq(warnings.count_containing("bogus"), 1, "unknown id warned as before")
+
+
+func test_clear_empties_the_belt() -> void:
+	var b := _belt()
+	b.add_item(&"rake", 1)
+	changes = 0
+	b.clear()
+	assert_eq(changes, 1)
+	assert_eq(b.tools(), {} as Dictionary[StringName, int])
+	b.clear()
+	assert_eq(changes, 1, "clearing an empty inventory is a no-op")
+	b.free()

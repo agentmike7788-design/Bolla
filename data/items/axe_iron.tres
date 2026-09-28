@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"axe_iron"
+display_name = "Holzfälleraxt"
+description = "Eine schwere Holzfälleraxt aus der eigenen Esse. Damit fallen auch die Erlen im Schlag."
+category = 4
+max_stack = 1
+tool_kind = &"axe"
+tool_tier = 1

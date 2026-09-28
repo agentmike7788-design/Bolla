@@ -234,7 +234,7 @@ static func decode_state(data: Variant) -> Dictionary:
 	if not data is Dictionary:
 		return {}
 	var envelope: Dictionary = data
-	if envelope.get("type") != "Dictionary" or not envelope.get("args") is Array or (envelope.args as Array).size() % 2 != 0:
+	if not envelope.get("type") is String or envelope.get("type") != "Dictionary" or not envelope.get("args") is Array or (envelope.args as Array).size() % 2 != 0:
 		return {}
 	# QA-07: a damaged value anywhere inside would make JSON.to_native log engine errors.
 	if not is_native_json(envelope):

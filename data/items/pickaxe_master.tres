@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"pickaxe_master"
+display_name = "Meisterhacke"
+description = "Gebläute Spitze, Messingring am Stiel. Sie bricht sogar den Werkstein sauber aus der Bank."
+category = 4
+max_stack = 1
+tool_kind = &"pickaxe"
+tool_tier = 2

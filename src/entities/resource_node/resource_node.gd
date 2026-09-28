@@ -55,13 +55,13 @@ func get_interaction_prompt(player: Player) -> String:
 		return PROMPT_EMPTY
 	if player != null and not player.inventory.can_add(item_id, gather_amount):
 		return PROMPT_NO_ROOM
-	return PROMPT % [label(), _actions(player).gather_minutes, remaining]
+	return PROMPT % [label(), _minutes(player), remaining]
 
 
 func interact(player: Player) -> void:
 	if not can_interact(player):
 		return
-	player.start_timed_action(label(), _actions(player).gather_minutes, _finish_gather.bind(player.inventory), true, ANIM)
+	player.start_timed_action(label(), _minutes(player), _finish_gather.bind(player.inventory), true, ANIM)
 
 
 ## "Holz sammeln"
@@ -118,6 +118,13 @@ func _on_new_game_started() -> void:
 func _item_name() -> String:
 	var item := Database.item(item_id) as ItemData if Database.has_item(item_id) else null
 	return item.display_name if item != null and item.display_name != "" else String(item_id)
+
+
+## Phase 5 §3.4 (P3): the minute source goes through the tool rules (ActionConfig.action_tools has
+## no &"gather" entry, so the wood and stone piles keep gather_minutes).
+static func _minutes(player: Player) -> int:
+	var actions := _actions(player)
+	return ToolRules.action_minutes(actions, &"gather", actions.gather_minutes, player.inventory if player != null else null)
 
 
 static func _actions(player: Player) -> ActionConfig:

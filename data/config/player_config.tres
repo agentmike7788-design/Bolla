@@ -7,7 +7,7 @@ script = ExtResource("1")
 move_speed = 3.2
 carry_speed = 2.0
 turn_speed = 10.0
-inventory_slots = 16
+inventory_slots = 20
 start_items = Dictionary[StringName, int]({
 &"coin": 5,
 &"linen": 1,

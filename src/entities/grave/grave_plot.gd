@@ -137,9 +137,9 @@ func get_interaction_prompt(player: Player) -> String:
 				return Player.TEXT_HANDS_FULL
 			if _corpse_on_plot():
 				return PROMPT_CORPSE_HERE
-			return PROMPT_DIG % _actions(player).dig_minutes
+			return PROMPT_DIG % _dig_minutes(player)
 		GraveRecord.State.DUG:
-			return PROMPT_BURY % _actions(player).bury_minutes if carrying else PROMPT_FETCH
+			return PROMPT_BURY % _bury_minutes(player) if carrying else PROMPT_FETCH
 		GraveRecord.State.FILLED:
 			if carrying:
 				return Player.TEXT_HANDS_FULL
@@ -164,9 +164,9 @@ func interact(player: Player) -> void:
 	var actions := _actions(player)
 	match grave.state:
 		GraveRecord.State.EMPTY:
-			player.start_timed_action(LABEL_DIG, actions.dig_minutes, _finish_dig.bind(player), true, ANIM_DIG)
+			player.start_timed_action(LABEL_DIG, _dig_minutes(player), _finish_dig.bind(player), true, ANIM_DIG)
 		GraveRecord.State.DUG:
-			player.start_timed_action(LABEL_BURY, actions.bury_minutes, _finish_bury.bind(player.carried_id), true, ANIM_DIG)
+			player.start_timed_action(LABEL_BURY, _bury_minutes(player), _finish_bury.bind(player.carried_id), true, ANIM_DIG)
 		GraveRecord.State.FILLED:
 			var options := available_markers(player.inventory)
 			if options.size() == 1:
@@ -362,6 +362,21 @@ func _economy() -> EconomyConfig:
 		return graveyard.economy
 	var cfg := Database.config(&"economy_config") as EconomyConfig
 	return cfg if cfg != null else EconomyConfig.new()
+
+
+## Phase 5 §2.3 (P3): dig / bury minutes by the shovel tier on the player's belt (60/50/35, 30/25/20).
+static func _dig_minutes(player: Player) -> int:
+	return _tool_minutes(player, &"dig", _actions(player).dig_minutes)
+
+
+static func _bury_minutes(player: Player) -> int:
+	return _tool_minutes(player, &"bury", _actions(player).bury_minutes)
+
+
+static func _tool_minutes(player: Player, action: StringName, base: int) -> int:
+	if player == null:
+		return base
+	return ToolRules.action_minutes(_actions(player), action, base, player.inventory)
 
 
 static func _actions(player: Player) -> ActionConfig:

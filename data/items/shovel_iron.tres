@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"shovel_iron"
+display_name = "Eisenschaufel"
+description = "Ein Blatt aus geschmiedetem Eisen, frisch geschärft. Die Erde gibt schneller nach."
+category = 4
+max_stack = 1
+tool_kind = &"shovel"
+tool_tier = 1

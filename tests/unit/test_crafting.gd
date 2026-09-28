@@ -97,7 +97,9 @@ func test_database_finds_all_recipes() -> void:
 	var tools: Array[StringName] = [&"rake", &"scrub_brush", &"comb"]
 	var workbench := Database.recipes(&"workbench")
 	assert_eq(workbench.size(), expected.size())
-	assert_eq(Database.recipes().size(), expected.size())
+	# Phase 5: + P3's 5 tool recipes at the forge (tested in test_tools.gd); P1 adds its own.
+	var forge_tools: Array[StringName] = [&"shovel_iron", &"axe_iron", &"shovel_master", &"axe_master", &"pickaxe_master"]
+	assert_eq(Database.recipes().size(), expected.size() + forge_tools.size())
 	for id: StringName in expected:
 		var spec: Array = expected[id]
 		var r := _recipe(id)

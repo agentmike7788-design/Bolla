@@ -114,6 +114,7 @@ func _ready() -> void:
 	if actions == null:
 		actions = ActionConfig.new()
 	inventory.slot_count = config.inventory_slots
+	inventory.tool_belt = true   # Phase 5 §2.3: tools hang on the belt, outside the slots
 	_animator = PlayerAnimator.new(self)
 	_animator.attach_lantern()
 	_modal = UIState.is_modal()
@@ -400,6 +401,8 @@ func _update_animation(delta: float) -> void:
 	_animator.update(delta, _action, _is_carrying())
 
 
-## STUB (P3) Phase 5 §3.4: highest tier of `kind` on the tool belt (ToolRules.tier; 0 until P3).
+## Phase 5 §3.4: highest tier of `kind` on the tool belt (ToolRules.tier; 0 = the old tool, and
+## for the pickaxe: none). Derived, never saved. EventBus.tool_tier_changed is sent by the
+## workbench after a tool recipe (§3.3) – the player sends nothing, also not when loading.
 func tool_tier(kind: StringName) -> int:
 	return ToolRules.tier(inventory, kind)

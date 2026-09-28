@@ -112,7 +112,7 @@ func test_configs_come_from_data() -> void:
 	assert_almost(p.config.move_speed, 3.2)
 	assert_almost(p.config.carry_speed, 2.0)
 	assert_almost(p.config.drop_distance, 0.8)
-	assert_eq(p.config.inventory_slots, 16)
+	assert_eq(p.config.inventory_slots, 20, "Phase 5 §2.3: 16 → 20")
 	assert_eq(p.config.start_items, {&"coin": 5, &"wood": 2, &"linen": 1})
 	assert_eq(p.actions.resource_path, "res://data/config/action_config.tres")
 	assert_eq([p.actions.examine_minutes, p.actions.shroud_minutes, p.actions.dig_minutes,
@@ -120,6 +120,11 @@ func test_configs_come_from_data() -> void:
 	assert_almost(p.actions.real_seconds_for(20), 1.5, 0.0001, "clamped to minimum")
 	assert_almost(p.actions.real_seconds_for(60), 3.0)
 	assert_almost(p.actions.real_seconds_for(200), 4.0, 0.0001, "clamped to maximum")
+	assert_eq(Array(p.actions.tool_tier_factors), [1.0, 0.8, 0.6], "Phase 5 §2.3")
+	assert_eq(p.actions.action_tools, {&"dig": &"shovel", &"bury": &"shovel"})
+	assert_eq(p.actions.tool_minute_step, 5)
+	assert_true(p.inventory.tool_belt, "the player carries the tool belt")
+	assert_eq(p.inventory.slot_count, 20)
 
 
 func test_injected_configs_are_kept() -> void:
@@ -909,6 +914,102 @@ func test_is_saveable_by_save_manager() -> void:
 	var nodes: Dictionary = SaveManager.collect_state()["nodes"]
 	assert_true(nodes.has("player"))
 	assert_eq(nodes["player"], p.save_state())
+
+
+# --- Phase 5: tool belt & tiers (P3, docs/PHASE5_DESIGN.md §2.3, §3.4) --------------------------
+
+func test_real_inventory_has_20_slots_and_a_belt() -> void:
+	var p := await _player(false)
+	assert_true(p.inventory.tool_belt)
+	assert_eq(p.inventory.get_slots().size(), 20)
+	p.inventory.add_item(&"rake", 1)
+	assert_eq(p.inventory.tools(), {&"rake": 1} as Dictionary[StringName, int], "tools hang on the belt")
+
+
+func test_tool_tier_from_the_belt() -> void:
+	var p := await _player(false)
+	assert_eq([p.tool_tier(&"shovel"), p.tool_tier(&"axe"), p.tool_tier(&"pickaxe")], [0, 0, 0])
+	p.inventory.add_item(&"shovel_iron", 1)
+	p.inventory.add_item(&"pickaxe_master", 1)
+	assert_eq([p.tool_tier(&"shovel"), p.tool_tier(&"axe"), p.tool_tier(&"pickaxe")], [1, 0, 2])
+
+
+func test_tool_tier_survives_save_and_load_without_a_signal() -> void:
+	var a := await _player(false)
+	a.inventory.add_item(&"axe_iron", 1)
+	a.inventory.add_item(&"wood", 2)
+	var saved := a.save_state()
+	assert_eq(saved["inventory"]["tools"], {&"axe_iron": 1})
+	var text := JSON.stringify(JSON.from_native(saved))
+	var b := await _player(false, Vector3(3, 0, 3))
+	b.set_physics_process(false)
+	var heard: Array = []
+	var on_tier := func(kind: StringName, tier: int) -> void: heard.append([kind, tier])
+	EventBus.tool_tier_changed.connect(on_tier)
+	b.load_state(JSON.to_native(JSON.parse_string(text)))
+	EventBus.tool_tier_changed.disconnect(on_tier)
+	assert_eq(b.tool_tier(&"axe"), 1)
+	assert_eq(b.inventory.count(&"wood"), 2)
+	assert_eq(b.save_state(), saved, "identical after the roundtrip")
+	assert_eq(heard, [], "no tool_tier_changed when loading (§3.3)")
+
+
+func test_old_save_with_tools_in_slots_loads_onto_the_belt() -> void:
+	var p := await _player(false)
+	p.set_physics_process(false)
+	var slots: Array = []
+	for i: int in 16:
+		slots.append({})
+	slots[1] = {"id": "comb", "amount": 1}
+	slots[3] = {"id": "linen", "amount": 2}
+	p.load_state({"position": Vector3.ZERO, "rot_y": 0.0, "inventory": {"slots": slots, "currency": {"coin": 7}}})
+	assert_eq(p.inventory.tools(), {&"comb": 1} as Dictionary[StringName, int])
+	assert_eq(p.inventory.get_slots().size(), 20)
+	assert_eq(p.inventory.get_slots()[3], {"id": &"linen", "amount": 2})
+	assert_eq(p.inventory.count(&"coin"), 7)
+
+
+func test_dig_and_bury_minutes_follow_the_shovel_tier() -> void:
+	var world := await _grave_world()
+	var p: Player = world.get_node("Player")
+	var plot: GravePlot = world.get_node("Plot")
+	assert_eq(plot.get_interaction_prompt(p), "[E] Grab ausheben (60 Min)")
+	assert_eq([GravePlot._dig_minutes(p), GravePlot._bury_minutes(p)], [60, 30])
+	p.inventory.add_item(&"shovel_iron", 1)
+	assert_eq(plot.get_interaction_prompt(p), "[E] Grab ausheben (50 Min)")
+	assert_eq([GravePlot._dig_minutes(p), GravePlot._bury_minutes(p)], [50, 25])
+	p.inventory.add_item(&"shovel_master", 1)
+	assert_eq(plot.get_interaction_prompt(p), "[E] Grab ausheben (35 Min)")
+	assert_eq([GravePlot._dig_minutes(p), GravePlot._bury_minutes(p)], [35, 20])
+	var before := TimeManager.total_minutes()
+	plot.interact(p)
+	var graveyard: Graveyard = world.get_node("Graveyard")
+	assert_eq(graveyard.get_grave("plot_01").state, GraveRecord.State.DUG)
+	assert_eq(TimeManager.total_minutes() - before, 35, "digging with the master shovel takes 35 game minutes")
+
+
+## Small world: Graveyard (fixture economy/tables), one plot, the real player (instant actions).
+func _grave_world() -> Node3D:
+	_box(Vector3(0, -0.5, 0), Vector3(40, 1, 40))
+	var world := Node3D.new()
+	var graveyard := Graveyard.new()
+	graveyard.name = "Graveyard"
+	graveyard.economy = load("res://tests/fixtures/economy_config_fixture.tres") as EconomyConfig
+	graveyard.tables = load("res://tests/fixtures/corpse_tables_fixture.tres") as CorpseTables
+	world.add_child(graveyard)
+	var plot := (load("res://src/entities/grave/grave_plot.tscn") as PackedScene).instantiate() as GravePlot
+	plot.name = "Plot"
+	plot.grave_id = "plot_01"
+	plot.position = Vector3(6, 0, 0)
+	world.add_child(plot)
+	var p := (load(SCENE) as PackedScene).instantiate() as Player
+	p.name = "Player"
+	p.position = Vector3(0, 0, 4)
+	world.add_child(p)
+	tree.root.add_child(world)
+	p.instant_actions = true
+	await tree.process_frame
+	return world
 
 
 # --- helpers ------------------------------------------------------------------------------
