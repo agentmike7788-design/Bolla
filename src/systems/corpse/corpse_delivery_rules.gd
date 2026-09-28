@@ -31,10 +31,28 @@ static func arrival_total(day: int, now_total: int, tables: CorpseTables) -> int
 
 
 ## A graveyard exists and no plot is left for a new corpse – and none ever comes back.
-## Phase 4 (§2.11): `reserved` = pending story corpses – STUB (P1): not yet counted.
-static func is_cemetery_full(graveyard: Node, unburied: int, _reserved: int = 0) -> bool:
+## Phase 4 (§2.11): `reserved` plots (pending story corpses, reserved_plots) are not free for it.
+static func is_cemetery_full(graveyard: Node, unburied: int, reserved: int = 0) -> bool:
 	return graveyard != null and graveyard.has_method("free_plot_count") \
-			and int(graveyard.call("free_plot_count")) <= unburied
+			and int(graveyard.call("free_plot_count")) <= unburied + maxi(0, reserved)
+
+
+## Phase 4 (§2.11 rule 2): plots a random corpse must leave free for the `pending` story
+## corpses – only those no LOCKED plot can still take (a section unlocked later brings them),
+## so the reservation bites once the remaining capacity is final (never on day 2 of a new game).
+## Only in a world that has plots of the story's section (`story_section`, StoryConfig
+## .chapter_section = the Holunderwinkel): without them (Phase-3 world) nothing is reserved.
+static func reserved_plots(graveyard: Node, pending: int, story_section: StringName = &"") -> int:
+	if pending <= 0 or graveyard == null:
+		return 0
+	if story_section != &"":
+		if not graveyard.has_method("plots_in_section") \
+				or (graveyard.call("plots_in_section", story_section) as PackedStringArray).is_empty():
+			return 0
+	var locked := 0
+	if graveyard.has_method("locked_plot_count"):
+		locked = int(graveyard.call("locked_plot_count"))
+	return maxi(0, pending - locked)
 
 
 static func free_plot_count(graveyard: Node) -> int:

@@ -55,7 +55,7 @@ static func main_reason(grave: GraveRecord, corpse: CorpseRecord, dirt_level: in
 		return REASON_CROSS
 	if corpse != null:
 		var fresh := corpse.freshness_at_burial if corpse.freshness_at_burial >= 0.0 else corpse.freshness
-		if CorpseRecord.stage_for(fresh, cfg) == CorpseRecord.STAGE_DECAYING:
+		if CorpseRecord.stage_for(fresh, cfg) in [CorpseRecord.STAGE_DECAYING, CorpseRecord.STAGE_ROTTEN]:  # P1: rotten (§2.5)
 			return REASON_WAITED
 	if decor_bonus <= 0:
 		return REASON_BARE

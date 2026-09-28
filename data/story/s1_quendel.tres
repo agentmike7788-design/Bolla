@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="StoryCorpseData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/story/story_corpse_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"s1_quendel"
+order = 1
+earliest_day = 6
+display_name = "Marthe Quendel"
+age = 63
+cause_id = &"old_age"
+traits = Array[StringName]([&"strange_wound"])
+valuables_coins = 0
+look = 1
+finds = Array[StringName]([&"f_s1_sprig", &"f_s1_soil", &"f_s1_page"])
+arrival_note = "Marthe Quendel. Hat mir mal die Hand verbunden, als das Rad brach. Sei gut zu ihr."
+is_finale = false

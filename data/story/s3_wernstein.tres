@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="StoryCorpseData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/story/story_corpse_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"s3_wernstein"
+order = 3
+earliest_day = 13
+display_name = "Ida Wernstein"
+age = 27
+cause_id = &"poisoned"
+traits = Array[StringName]([&"strange_wound", &"letter"])
+valuables_coins = 0
+look = 5
+finds = Array[StringName]([&"f_s3_coat", &"f_s3_ink", &"f_s3_mark", &"f_s3_letter"])
+arrival_note = "Ida Wernstein. Die wollte weg aus Hollerbrück, hieß es. Hat's nicht geschafft."
+is_finale = false

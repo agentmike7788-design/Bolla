@@ -32,6 +32,8 @@ const DRESS_SHROUD := &"shroud"
 const DRESS_GOWN := &"gown"
 const HARVEST_HAIR := &"hair"
 const HARVEST_TEETH := &"teeth"
+const DRESSES: Array[StringName] = [DRESS_NONE, DRESS_SHROUD, DRESS_GOWN]
+const HARVEST_KINDS: Array[StringName] = [HARVEST_HAIR, HARVEST_TEETH]
 
 var id: String = ""
 var seed: int = 0
@@ -53,7 +55,7 @@ var grave_id: String = ""
 var arrival_total_minutes: int = 0
 ## Game day of the burial (CorpseManager.mark_buried; 0 = not buried / older save).
 var buried_day: int = 0
-# Phase 4 (§3.4). W0 declares the fields; P1 adds them to to_dict / from_dict (missing = default).
+# Phase 4 (§3.4) – all in to_dict / from_dict (missing = default).
 var story_id: StringName = &""
 ## Finished examination steps (STEPS).
 var exam_done: Array[StringName] = []
@@ -78,7 +80,7 @@ func has_trait(t: StringName) -> bool:
 	return traits.has(t)
 
 
-# --- Phase 4 helpers (W0; P1 owns them from W1 on) ---------------------------------------------
+# --- Phase 4 helpers ---------------------------------------------------------------------------
 
 func is_step_done(step: StringName) -> bool:
 	return exam_done.has(step)
@@ -105,11 +107,14 @@ func is_harvested(kind: StringName) -> bool:
 	return harvested.has(kind)
 
 
-## Empty until the corpse has been examined.
+## Phase 4 (§2.1): the traits whose find was revealed (traits_revealed, set by CorpseCare; the
+## Phase-2 path CorpseManager.examine without CorpseCare reveals all traits). Legacy fallback: a
+## record marked examined without any step bookkeeping (Phase-2/3 code and older records) shows
+## all its traits, as before. Always a copy.
 func revealed_traits() -> Array[StringName]:
-	if not examined:
-		return []
-	return traits.duplicate()
+	if _is_legacy_examined():
+		return traits.duplicate()
+	return traits_revealed.duplicate()
 
 
 ## stage_for(freshness) with the game's config (data/config/economy_config.tres, else defaults).
@@ -117,20 +122,31 @@ func freshness_stage() -> StringName:
 	return stage_for(freshness, EconomyConfig.resolve())
 
 
-## &"fresh" (>= fresh_good_threshold), &"decaying" (< fresh_bad_threshold), else &"wilted".
-## The one threshold rule – GraveQuality's freshness points use it too.
+## &"fresh" (>= fresh_good_threshold), &"rotten" (< rot_threshold, Phase 4 §2.5), &"decaying"
+## (< fresh_bad_threshold), else &"wilted". The one threshold rule – GraveQuality's freshness
+## points use it too.
 static func stage_for(value: float, config: EconomyConfig) -> StringName:
 	var cfg := EconomyConfig.resolve(config)
 	if value >= cfg.fresh_good_threshold:
 		return STAGE_FRESH
+	if value < cfg.rot_threshold:
+		return STAGE_ROTTEN
 	if value < cfg.fresh_bad_threshold:
 		return STAGE_DECAYING
 	return STAGE_WILTED
 
 
-## True while examined valuables still wait for the take/leave decision.
+## Phase 4 (§2.1): the pockets step is done, the corpse carries valuables and they are still
+## undecided. Legacy fallback (examined without step bookkeeping): examined is enough.
 func needs_valuables_decision() -> bool:
-	return examined and has_trait(TRAIT_VALUABLES) and valuables_decision == DECISION_NONE
+	if not has_trait(TRAIT_VALUABLES) or valuables_decision != DECISION_NONE:
+		return false
+	return _is_legacy_examined() or is_step_done(STEP_POCKETS)
+
+
+## examined set without any Phase-4 step bookkeeping (Phase-2/3 code paths, unmigrated records).
+func _is_legacy_examined() -> bool:
+	return examined and exam_done.is_empty() and traits_revealed.is_empty()
 
 
 func to_dict() -> Dictionary:
@@ -154,6 +170,17 @@ func to_dict() -> Dictionary:
 		"grave_id": grave_id,
 		"arrival_total_minutes": arrival_total_minutes,
 		"buried_day": buried_day,
+		"story_id": story_id,
+		"exam_done": exam_done.duplicate(),
+		"finds_revealed": finds_revealed.duplicate(),
+		"finds_lost": finds_lost.duplicate(),
+		"traits_revealed": traits_revealed.duplicate(),
+		"washed": washed,
+		"dress": dress,
+		"laid_out": laid_out,
+		"harvested": harvested.duplicate(),
+		"balm_windows": Array(balm_windows),
+		"stench_noted": stench_noted,
 	}
 
 
@@ -181,7 +208,57 @@ static func from_dict(d: Dictionary) -> CorpseRecord:
 	r.grave_id = _to_str(d.get("grave_id"), r.grave_id)
 	r.arrival_total_minutes = _to_int(d.get("arrival_total_minutes"), r.arrival_total_minutes)
 	r.buried_day = _to_int(d.get("buried_day"), r.buried_day)
+	# Phase 4 (§3.4, §5.1) – missing fields keep their defaults.
+	r.story_id = StringName(_to_str(d.get("story_id"), ""))
+	r.exam_done = _only(_to_name_array(d.get("exam_done")), STEPS)
+	r.finds_revealed = _unique(_to_name_array(d.get("finds_revealed")))
+	r.finds_lost = _unique(_to_name_array(d.get("finds_lost")))
+	r.traits_revealed = _unique(_to_name_array(d.get("traits_revealed")))
+	r.washed = _to_bool(d.get("washed"), r.washed)
+	var dress_id := StringName(_to_str(d.get("dress"), ""))
+	if dress_id in DRESSES:
+		r.dress = dress_id
+	# shrouded == (dress != "") – a record saved before the dress field was dressed in a shroud.
+	if r.dress == DRESS_NONE and r.shrouded and not d.has("dress"):
+		r.dress = DRESS_SHROUD
+	r.shrouded = r.shrouded or r.dress != DRESS_NONE
+	r.laid_out = _to_bool(d.get("laid_out"), r.laid_out)
+	r.harvested = _only(_to_name_array(d.get("harvested")), HARVEST_KINDS)
+	r.balm_windows = _to_windows(d.get("balm_windows"))
+	r.stench_noted = _to_bool(d.get("stench_noted"), r.stench_noted)
 	return r
+
+
+## Unique entries of `list` that are in `allowed`, in order.
+static func _only(list: Array[StringName], allowed: Array[StringName]) -> Array[StringName]:
+	var out: Array[StringName] = []
+	for item: StringName in list:
+		if item in allowed and not item in out:
+			out.append(item)
+	return out
+
+
+static func _unique(list: Array[StringName]) -> Array[StringName]:
+	var out: Array[StringName] = []
+	for item: StringName in list:
+		if item != &"" and not item in out:
+			out.append(item)
+	return out
+
+
+## [start, end, …] pairs with end > start (JSON floats accepted); a malformed pair is dropped.
+static func _to_windows(v: Variant) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	if not (v is Array or v is PackedInt32Array or v is PackedInt64Array or v is PackedFloat32Array or v is PackedFloat64Array):
+		return out
+	var list := Array(v)
+	for i: int in range(0, list.size() - 1, 2):
+		var start := _to_int(list[i], -1)
+		var end := _to_int(list[i + 1], -1)
+		if start >= 0 and end > start:
+			out.append(start)
+			out.append(end)
+	return out
 
 
 static func _to_str(v: Variant, fallback: String) -> String:

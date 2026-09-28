@@ -30,6 +30,18 @@ const REASON_UPGRADE := "Grabzeichen von %s aufgewertet"
 const EVENT_GRAVE_GOOD := &"grave_good"
 const EVENT_GRAVE_POOR := &"grave_poor"
 const EVENT_MARKER_UPGRADE := &"marker_upgrade"
+# Phase 4 (docs/PHASE4_DESIGN.md §1.3, §2.7, §3.4)
+const PIETY_GROUP := &"piety"
+const JOURNAL_GROUP := &"journal"
+const EVENT_BARE_BURIAL := &"bare_burial"
+const EVENT_ROTTEN_BURIAL := &"rotten_burial"
+const REASON_BARE_BURIAL := "%s ohne Leichentuch bestattet"
+const REASON_ROTTEN_BURIAL := "%s verfallen bestattet"
+const CHAPTER_SIX_PITS := &"six_pits"
+const FLAG_NOT_LORENZ := &"insight_not_lorenz"
+const STAT_PREPARED := &"prepared"
+const STAT_UTILIZED := &"utilized"
+const STAT_PIETY := &"piety"
 
 @export var save_id: String = "graveyard"
 @export var save_order: int = 10
@@ -42,6 +54,8 @@ var tables: CorpseTables
 var reputation_config: ReputationConfig
 ## Sections (which start unlocked); empty = Database.sections().
 var section_data: Array[SectionData] = []
+## Finale story of the chapter six_pits; null = Database.config(&"story_config").
+var story_config: StoryConfig
 
 ## id -> record, in plot (tree) order.
 var _graves: Dictionary[String, GraveRecord] = {}
@@ -102,8 +116,10 @@ func bury(grave_id: String, corpse_id: String) -> bool:
 	grave.corpse_id = corpse_id
 	corpses.mark_buried(corpse_id, grave_id)
 	GameState.add_stat(STAT_BURIALS, 1)
+	_burial_piety(corpse)
 	EventBus.grave_state_changed.emit(grave_id, grave.state)
 	EventBus.corpse_buried.emit(corpse_id, grave_id)
+	_check_chapter()
 	return true
 
 
@@ -151,6 +167,7 @@ func place_marker(grave_id: String, marker_id: StringName, inv: Inventory) -> in
 		elif grave.quality <= rep_cfg.grave_poor_max:
 			rep.event(EVENT_GRAVE_POOR, REASON_GRAVE % corpse.display_name)
 	_check_cemetery_complete()
+	_check_chapter()
 	return paid
 
 
@@ -225,10 +242,24 @@ func plots_in_section(section_id: StringName) -> PackedStringArray:
 	return out
 
 
-## STUB (P1) – Phase 4 §3.4: grave ids of the plots in sections with counts_for_cemetery
-## (W0: every plot).
+## Phase 4 §3.4: grave ids of the plots in sections with counts_for_cemetery (the Phase-3 goal
+## cemetery_complete; the Holunderwinkel does not count). Graves of unknown sections count.
 func plots_counting_for_cemetery() -> PackedStringArray:
-	return PackedStringArray(_graves.keys())
+	var excluded := _sections_where(func(s: SectionData) -> bool: return not s.counts_for_cemetery)
+	var out := PackedStringArray()
+	for id: String in _graves:
+		if not excluded.has(_plot_sections.get(id, &"")):
+			out.append(id)
+	return out
+
+
+## LOCKED graves (plots of sections not unlocked yet) – CorpseDeliveryRules.reserved_plots.
+func locked_plot_count() -> int:
+	var count := 0
+	for grave: GraveRecord in _graves.values():
+		if grave.state == GraveRecord.State.LOCKED:
+			count += 1
+	return count
 
 
 ## Section of the plot of `grave_id` (&"" = no plot in this world).
@@ -285,11 +316,13 @@ func _on_world_ready(world: Node) -> void:
 
 ## Phase goal (§1.3): every non-old grave MARKED (so none LOCKED, at least one exists) → flag
 ## cemetery_complete, cemetery_completed, summary panel (variant cemetery). Once.
+## Phase 4 (§2.10): only graves of sections with counts_for_cemetery (not the Holunderwinkel).
 func _check_cemetery_complete() -> void:
 	if GameState.has_flag(FLAG_CEMETERY_COMPLETE):
 		return
 	var any := false
-	for grave: GraveRecord in _graves.values():
+	for id: String in plots_counting_for_cemetery():
+		var grave := _graves[id]
 		if grave.state == GraveRecord.State.OLD:
 			continue
 		if grave.state != GraveRecord.State.MARKED:
@@ -325,6 +358,104 @@ func summary_context() -> Dictionary:
 		"reputation_tier": rep.tier() if rep != null else &"",
 		"content_ghosts": _content_ghosts(),
 	}
+
+
+## Phase 4 (§1.3, §3.4): per section with a chapter – every plot of it MARKED (at least one)
+## and, for the chapter six_pits, the finale story corpse (StoryConfig.finale_story) buried →
+## flag <chapter>_complete, chapter_completed, summary panel (variant = the chapter). Once each.
+func _check_chapter() -> void:
+	for s: SectionData in _section_list():
+		if s.chapter == &"" or GameState.has_flag(_chapter_flag(s.chapter)):
+			continue
+		var ids := plots_in_section(s.id)
+		if ids.is_empty():
+			continue
+		var all_marked := true
+		for id: String in ids:
+			if _graves[id].state != GraveRecord.State.MARKED:
+				all_marked = false
+				break
+		if not all_marked:
+			continue
+		if s.chapter == CHAPTER_SIX_PITS and not _finale_buried():
+			continue
+		GameState.set_flag(_chapter_flag(s.chapter), true)
+		EventBus.chapter_completed.emit(s.chapter)
+		EventBus.ui_panel_requested.emit(SLICE_SUMMARY_PANEL, chapter_context(s.chapter))
+
+
+## Context of the chapter panel: summary_context() with variant = `chapter_id`, plus
+## prepared / utilized, piety + piety_tier (Piety node), insights (JournalManager, count),
+## not_lorenz (flag insight_not_lorenz) and restless_ghosts.
+func chapter_context(chapter_id: StringName) -> Dictionary:
+	var context := summary_context()
+	context["variant"] = chapter_id
+	context["chapter"] = chapter_id
+	context["prepared"] = GameState.get_stat(STAT_PREPARED)
+	context["utilized"] = GameState.get_stat(STAT_UTILIZED)
+	context["piety"] = GameState.get_stat(STAT_PIETY)
+	var piety := _first(PIETY_GROUP)
+	context["piety_tier"] = piety.call(&"tier") if piety != null and piety.has_method(&"tier") else &""
+	var journal := _first(JOURNAL_GROUP)
+	context["insights"] = (journal.call(&"insights") as Array).size() if journal != null and journal.has_method(&"insights") else 0
+	context["not_lorenz"] = GameState.has_flag(FLAG_NOT_LORENZ)
+	context["restless_ghosts"] = _ghosts_with_mood(&"restless")
+	return context
+
+
+func _chapter_flag(chapter_id: StringName) -> StringName:
+	return StringName("%s_complete" % chapter_id)
+
+
+## The finale story corpse (StoryConfig.finale_story) is buried.
+func _finale_buried() -> bool:
+	var corpses := _corpse_manager()
+	if corpses == null:
+		return false
+	var finale := _story_config().finale_story
+	for record: CorpseRecord in corpses.records():
+		if record.story_id == finale and record.location == CorpseRecord.LOCATION_BURIED:
+			return true
+	return false
+
+
+## Graveyard.bury (Phase 4 §2.7): Piety events bare_burial (not dressed) and rotten_burial
+## (stage rotten at burial) – directly on the node in group piety.
+func _burial_piety(corpse: CorpseRecord) -> void:
+	var piety := _first(PIETY_GROUP)
+	if piety == null or not piety.has_method(&"event"):
+		return
+	if not corpse.is_dressed() and not corpse.shrouded:
+		piety.call(&"event", EVENT_BARE_BURIAL, REASON_BARE_BURIAL % corpse.display_name)
+	var fresh := corpse.freshness_at_burial if corpse.freshness_at_burial >= 0.0 else corpse.freshness
+	if CorpseRecord.stage_for(fresh, _economy()) == CorpseRecord.STAGE_ROTTEN:
+		piety.call(&"event", EVENT_ROTTEN_BURIAL, REASON_ROTTEN_BURIAL % corpse.display_name)
+
+
+func _section_list() -> Array[SectionData]:
+	var out: Array[SectionData] = []
+	var list: Array = section_data if not section_data.is_empty() else Database.sections()
+	for section: Variant in list:
+		if section is SectionData:
+			out.append(section)
+	return out
+
+
+## Ids of the sections for which `pred` holds.
+func _sections_where(pred: Callable) -> Dictionary:
+	var out := {}
+	for s: SectionData in _section_list():
+		if pred.call(s):
+			out[s.id] = true
+	return out
+
+
+func _story_config() -> StoryConfig:
+	if story_config == null:
+		story_config = Database.config(&"story_config") as StoryConfig
+		if story_config == null:
+			story_config = StoryConfig.new()
+	return story_config
 
 
 func _collect_plots() -> Dictionary[String, GraveRecord]:
@@ -374,12 +505,16 @@ func _corpse_of(grave: GraveRecord) -> CorpseRecord:
 
 
 func _content_ghosts() -> int:
+	return _ghosts_with_mood(&"content")
+
+
+func _ghosts_with_mood(mood: StringName) -> int:
 	var ghosts := _first(GHOSTS_GROUP)
 	if ghosts == null or not ghosts.has_method(&"eligible_graves") or not ghosts.has_method(&"mood_of"):
 		return 0
 	var count := 0
 	for id: String in ghosts.call(&"eligible_graves"):
-		if ghosts.call(&"mood_of", id) == &"content":
+		if ghosts.call(&"mood_of", id) == mood:
 			count += 1
 	return count
 
