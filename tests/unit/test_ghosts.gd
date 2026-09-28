@@ -3,14 +3,17 @@ extends TestCase
 ## deterministic lines), GhostManager (eligibility, time window + fade, max 6 nearest with
 ## hysteresis, listen: repeat within 60 min, one-time gift, save/load), the Ghost entity
 ## (prompt, fade, bubble, placeholder model, soul light), mat_ghost / ghost.gdshader and the
-## real ghost lines. Other modules are replaced by doubles (read only through their groups).
+## real ghost lines. Phase 4 (docs/PHASE4_DESIGN.md §2.7, §2.9): robbed mood, reasons robbed /
+## unkempt in priority, story and piety lines, gift 0 / 2 / 3 by Pietät tier (Piety double).
+## Other modules are replaced by doubles (read only through their groups).
 
 const FakeInventory := preload("res://tests/fixtures/fake_inventory.gd")
 const GHOST_SCENE := "res://src/entities/ghost/ghost.tscn"
 const PLAYER_SCENE := "res://src/entities/player/player.tscn"
 const SHADER := "res://assets/shaders/ghost.gdshader"
 const MATERIAL := "res://assets/materials/mat_ghost.tres"
-const REASONS: Array[StringName] = [&"weeds", &"valuables", &"cold", &"cross", &"waited", &"bare"]
+const REASONS: Array[StringName] = [&"robbed", &"weeds", &"valuables", &"cold", &"unkempt", &"cross", &"waited", &"bare"]
+const STORIES: Array[StringName] = [&"s1_quendel", &"s2_hemmerling", &"s3_wernstein", &"s4_uhlig", &"s5_moor"]
 const TRAITS: Array[StringName] = [&"letter", &"tattoo", &"strange_wound"]
 const MARKED := GraveRecord.State.MARKED
 
@@ -54,6 +57,21 @@ class DecorDouble extends Node:
 		return int(bonus.get(Vector2i(roundi(p.x), roundi(p.y)), 0))
 
 
+## Piety API used by the ghosts (group piety): gift_coins(), tier().
+class PietyDouble extends Node:
+	var coins: int = 2
+	var tier_id: StringName = &"matter_of_fact"
+
+	func _init() -> void:
+		add_to_group(&"piety")
+
+	func gift_coins() -> int:
+		return coins
+
+	func tier() -> StringName:
+		return tier_id
+
+
 var cfg: GhostConfig
 var clean_cfg: CleanlinessConfig
 var economy: EconomyConfig
@@ -67,6 +85,7 @@ var ghosts: GhostManager
 var spoke: Array = []
 var nights: Array = []
 var payments: Array = []
+var notes: Array = []
 
 
 func before_each() -> void:
@@ -82,9 +101,12 @@ func before_each() -> void:
 	EventBus.ghost_spoke.connect(_on_spoke)
 	EventBus.ghost_night_changed.connect(_on_night)
 	EventBus.payment_received.connect(_on_payment)
+	notes.clear()
+	EventBus.notification_requested.connect(_on_note)
 
 
 func after_each() -> void:
+	EventBus.notification_requested.disconnect(_on_note)
 	EventBus.ghost_spoke.disconnect(_on_spoke)
 	EventBus.ghost_night_changed.disconnect(_on_night)
 	EventBus.payment_received.disconnect(_on_payment)
@@ -125,11 +147,19 @@ func test_contract_examples() -> void:
 func test_main_reason_priority() -> void:
 	var grave := _grave_record(&"wooden_cross")
 	var corpse := _corpse_record(false, &"taken", 0.1)
+	corpse.washed = false
+	corpse.laid_out = false
+	corpse.harvested = [&"hair"]
+	assert_eq(GhostMood.main_reason(grave, corpse, 2, 0, economy), &"robbed", "robbed before everything (hair / teeth)")
+	corpse.harvested = []
 	assert_eq(GhostMood.main_reason(grave, corpse, 2, 0, economy), &"weeds", "weeds first (level ≥ 2)")
 	assert_eq(GhostMood.main_reason(grave, corpse, 1, 0, economy), &"valuables")
 	corpse.valuables_decision = &"left"
 	assert_eq(GhostMood.main_reason(grave, corpse, 1, 0, economy), &"cold", "no shroud")
 	corpse.shrouded = true
+	assert_eq(GhostMood.main_reason(grave, corpse, 1, 0, economy), &"unkempt", "shrouded, not washed / laid out")
+	corpse.washed = true
+	corpse.laid_out = true
 	assert_eq(GhostMood.main_reason(grave, corpse, 1, 0, economy), &"cross", "wooden cross can be upgraded")
 	grave.marker_id = &"gravestone_simple"
 	assert_eq(GhostMood.main_reason(grave, corpse, 1, 0, economy), &"waited", "buried decaying")
@@ -145,6 +175,58 @@ func test_main_reason_uses_current_freshness_before_burial() -> void:
 	assert_eq(GhostMood.main_reason(grave, corpse, 0, 2, economy), &"waited")
 	corpse.freshness = 0.8
 	assert_eq(GhostMood.main_reason(grave, corpse, 0, 2, economy), &"")
+
+
+func test_phase4_reasons_unkempt_and_waited_rotten() -> void:
+	var grave := _grave_record(&"gravestone_simple")
+	var corpse := _corpse_record(true, &"left", 0.9)
+	assert_eq(GhostMood.main_reason(grave, corpse, 0, 1, economy), &"", "washed + dressed + laid out: nothing")
+	corpse.laid_out = false
+	assert_eq(GhostMood.main_reason(grave, corpse, 0, 1, economy), &"unkempt", "not laid out")
+	corpse.laid_out = true
+	corpse.washed = false
+	assert_eq(GhostMood.main_reason(grave, corpse, 0, 1, economy), &"unkempt", "not washed")
+	grave.marker_id = &"wooden_cross"
+	assert_eq(GhostMood.main_reason(grave, corpse, 0, 1, economy), &"unkempt", "unkempt before cross")
+	corpse.washed = true
+	corpse.shrouded = false
+	corpse.dress = &"gown"
+	assert_eq(GhostMood.main_reason(grave, corpse, 0, 1, economy), &"cross", "a burial gown counts as dressed (not cold)")
+	corpse.dress = &""
+	assert_eq(GhostMood.main_reason(grave, corpse, 0, 1, economy), &"cold", "cold before unkempt")
+	corpse.dress = &"shroud"
+	corpse.shrouded = true
+	grave.marker_id = &"gravestone_simple"
+	corpse.freshness_at_burial = 0.05
+	assert_eq(GhostMood.main_reason(grave, corpse, 0, 1, economy), &"waited", "rotten at burial counts as waited")
+	corpse.harvested = [&"teeth"]
+	corpse.valuables_decision = &"taken"
+	assert_eq(GhostMood.main_reason(grave, corpse, 3, 0, economy), &"robbed", "teeth: robbed before weeds / valuables")
+
+
+func test_robbed_mood_per_harvested_kind() -> void:
+	var p4 := Phase4Fixtures.economy_config()
+	assert_not_null(p4)
+	assert_eq(cfg.robbed_mood, -5)
+	assert_eq(GhostMood.score(9, 0, 0, clean_cfg, cfg, 0), GhostMood.score(9, 0, 0, clean_cfg, cfg), "default: not robbed")
+	assert_eq(GhostMood.score(9, 0, 0, clean_cfg, cfg, 1), 5, "9 + 1 − 5")
+	assert_eq(GhostMood.score(9, 0, 0, clean_cfg, cfg, 2), 0, "9 + 1 − 10")
+	# §2.9 examples: fully prepared 12 +1 → content; hair 12 − 1 − 5 + 1 = 7 calm; hair + teeth 12 − 3 − 10 + 1 = 0.
+	assert_eq(GhostMood.mood(GhostMood.score(12, 0, 0, clean_cfg, cfg), cfg), &"content")
+	assert_eq(GhostMood.score(11, 0, 0, clean_cfg, cfg, 1), 7)
+	assert_eq(GhostMood.mood(GhostMood.score(11, 0, 0, clean_cfg, cfg, 1), cfg), &"calm")
+	assert_eq(GhostMood.score(9, 0, 0, clean_cfg, cfg, 2), 0)
+	assert_eq(GhostMood.mood(GhostMood.score(9, 0, 0, clean_cfg, cfg, 2), cfg), &"restless")
+	# Wooden cross + shroud 7 + 1 = 8 calm; washed + laid out 9 + 1 = 10 → content.
+	assert_eq(GhostMood.mood(GhostMood.score(9, 0, 0, clean_cfg, cfg), cfg), &"content")
+	var c := CorpseRecord.new()
+	assert_eq(GhostMood.robbed_count(c), 0)
+	c.harvested = [&"hair", &"teeth"]
+	assert_eq(GhostMood.robbed_count(c), 2)
+	assert_eq(GhostMood.robbed_count(null), 0)
+	var custom := GhostConfig.new()
+	custom.robbed_mood = -3
+	assert_eq(GhostMood.score(9, 0, 0, clean_cfg, custom, 2), 4, "robbed_mood from the config")
 
 
 # --- GhostMood: lines ----------------------------------------------------------------------
@@ -181,6 +263,46 @@ func test_pick_line_fallbacks() -> void:
 	assert_eq(GhostMood.pick_line(empty, &"restless", &"weeds", none, 1), "")
 	empty.calm = PackedStringArray(["only"])
 	assert_eq(GhostMood.pick_line(empty, &"restless", &"weeds", none, 5), "only", "reason pool missing → calm lines")
+
+
+func test_pick_line_story_ghosts_speak_their_own_lines() -> void:
+	var p4 := Phase4Fixtures.ghost_lines()
+	var none: Array[StringName] = []
+	for story: StringName in STORIES:
+		var seen := {}
+		for seed: int in 20:
+			seen[GhostMood.pick_line(p4, &"content", &"", none, seed, story)] = true
+		assert_eq(seen.keys(), ["%s_0" % story, "%s_1" % story], "content %s: only its two lines" % story)
+		var calm := {}
+		for seed: int in 40:
+			calm[GhostMood.pick_line(p4, &"calm", &"cross", none, seed, story)] = true
+		assert_true(calm.has("%s_0" % story) and calm.has("cross_0"), "calm: story lines + hints %s" % [calm.keys()])
+		assert_true(GhostMood.pick_line(p4, &"restless", &"robbed", none, 3, story).begins_with("robbed_"), "restless: complaints")
+	assert_true(GhostMood.pick_line(p4, &"content", &"", none, 3, &"unknown").begins_with("content_"), "unknown story → normal")
+	assert_eq(GhostMood.pick_line(p4, &"content", &"", none, 5, &"s2_hemmerling"),
+			GhostMood.pick_line(p4, &"content", &"", none, 5, &"s2_hemmerling"), "deterministic")
+
+
+func test_pick_line_piety_lines_one_in_four() -> void:
+	var p4 := Phase4Fixtures.ghost_lines()
+	var none: Array[StringName] = []
+	for tier: StringName in [&"devout", &"hardhearted"]:
+		var own := 0
+		for seed: int in 40:
+			var line := GhostMood.pick_line(p4, &"calm", &"weeds", none, seed, &"", tier)
+			if line.begins_with(String(tier) + "_"):
+				own += 1
+				assert_eq(posmod(seed, 4), 0, "piety line on every 4th seed")
+			else:
+				assert_true(line.begins_with("weeds_"), line)
+		assert_eq(own, 10, "%s: 1 in 4" % tier)
+		var both := {}
+		for seed: int in 16:
+			both[GhostMood.pick_line(p4, &"content", &"", none, seed * 4, &"s1_quendel", tier)] = true
+		assert_eq(both.size(), 2, "both %s lines are used, also by story ghosts" % tier)
+	for tier: StringName in [&"callous", &"matter_of_fact", &"considerate", &""]:
+		for seed: int in 12:
+			assert_true(GhostMood.pick_line(p4, &"calm", &"weeds", none, seed, &"", tier).begins_with("weeds_"), "%s: no own lines" % tier)
 
 
 # --- GhostManager: time --------------------------------------------------------------------
@@ -381,6 +503,82 @@ func test_save_load_roundtrip() -> void:
 	restored.queue_free()
 
 
+func test_gift_by_piety_tier_0_2_3() -> void:
+	await _make_world(4)
+	var player := await _player()
+	var piety := PietyDouble.new()
+	world.add_child(piety)
+	lines = Phase4Fixtures.ghost_lines()
+	lines.gift_by_coins = {3: "drei"}
+	ghosts.lines = lines
+	for i: int in 4:
+		_mark("plot_%02d" % (i + 1), 10, 0)
+	TimeManager.load_state({"day": 3, "minute_of_day": 1350})
+	# Hartherzig: no gift, the line once per night, the grave keeps its gift.
+	piety.coins = 0
+	ghosts.listen("plot_01", player)
+	ghosts.listen("plot_02", player)
+	assert_eq(player.inventory.count(&"coin"), 0, "hardhearted: no gift")
+	assert_false(ghosts.gift_given("plot_01"))
+	assert_eq(notes.count(lines.no_gift), 1, "no-gift line once per night")
+	TimeManager.load_state({"day": 4, "minute_of_day": 100})
+	ghosts.listen("plot_01", player)
+	assert_eq(notes.count(lines.no_gift), 1, "after midnight: still the same night")
+	TimeManager.load_state({"day": 4, "minute_of_day": 1350})
+	ghosts.listen("plot_01", player)
+	assert_eq(notes.count(lines.no_gift), 2, "next night again")
+	# Sachlich: 2 (gift text), Andächtig: 3 (own text).
+	piety.coins = 2
+	ghosts.listen("plot_01", player)
+	assert_eq(player.inventory.count(&"coin"), 2)
+	assert_eq(payments[-1], [2, lines.gift])
+	piety.coins = 3
+	ghosts.listen("plot_02", player)
+	assert_eq(player.inventory.count(&"coin"), 5)
+	assert_eq(payments[-1], [3, "drei"])
+	ghosts.listen("plot_02", player)
+	assert_eq(player.inventory.count(&"coin"), 5, "still once per grave")
+	assert_eq(ghosts.gift_amount(), 3)
+	piety.queue_free()
+	await wait_frames(1)
+	assert_eq(ghosts.gift_amount(), cfg.gift_coins, "without Piety: GhostConfig.gift_coins")
+	assert_eq(ghosts.piety_tier(), &"")
+
+
+func test_listen_uses_story_piety_and_robbed_mood() -> void:
+	await _make_world(2)
+	var piety := PietyDouble.new()
+	world.add_child(piety)
+	lines = Phase4Fixtures.ghost_lines()
+	ghosts.lines = lines
+	_mark("plot_01", 12, 0)
+	_mark("plot_02", 12, 0)
+	corpses.recs["c_plot_01"].story_id = &"s3_wernstein"
+	var robbed: CorpseRecord = corpses.recs["c_plot_02"]
+	robbed.harvested = [&"hair"]
+	graveyard.get_grave("plot_02").quality = 11
+	assert_eq(ghosts.mood_info("plot_02").score, 7, "12 − 1 (quality) − 5 + 1")
+	assert_eq(ghosts.mood_of("plot_02"), &"calm")
+	assert_eq(ghosts.mood_info("plot_02").reason, &"robbed")
+	robbed.harvested = [&"hair", &"teeth"]
+	graveyard.get_grave("plot_02").quality = 9
+	assert_eq(ghosts.mood_of("plot_02"), &"restless", "hair + teeth: 0")
+	TimeManager.load_state({"day": 3, "minute_of_day": 1350})
+	var seed := GhostManager.line_seed("plot_01", 3)
+	var text := ghosts.listen("plot_01", null)
+	if posmod(seed, 4) == 0:
+		assert_true(text.begins_with("matter_of_fact") or text.begins_with("s3_wernstein_"), text)
+	assert_true(text.begins_with("s3_wernstein_"), "content story ghost: " + text)
+	assert_true(ghosts.listen("plot_02", null).begins_with("robbed_"))
+	piety.tier_id = &"devout"
+	var devout := 0
+	for day: int in range(10, 30):
+		TimeManager.load_state({"day": day, "minute_of_day": 1350})
+		if ghosts.listen("plot_02", null).begins_with("devout_"):
+			devout += 1
+	assert_true(devout > 0 and devout < 20, "devout lines now and then (%d / 20)" % devout)
+
+
 # --- Ghost entity --------------------------------------------------------------------------
 
 func test_ghost_entity_prompt_fade_and_bubble() -> void:
@@ -475,7 +673,7 @@ func test_real_ghost_lines() -> void:
 	assert_not_null(real)
 	assert_eq(real.content.size(), 8, "8 thanks lines")
 	assert_true(real.calm.size() >= 3, "calm lines")
-	assert_eq(real.by_reason.size(), REASONS.size())
+	assert_eq(real.by_reason.size(), REASONS.size(), "8 reasons incl. robbed / unkempt")
 	for reason: StringName in REASONS:
 		assert_eq(real.by_reason.get(reason, PackedStringArray()).size(), 3, String(reason))
 	assert_eq(real.by_trait.size(), TRAITS.size())
@@ -485,6 +683,8 @@ func test_real_ghost_lines() -> void:
 	var pools: Array = [real.content, real.calm]
 	pools.append_array(real.by_reason.values())
 	pools.append_array(real.by_trait.values())
+	pools.append_array(real.by_story.values())
+	pools.append_array(real.by_piety.values())
 	for pool: PackedStringArray in pools:
 		for line: String in pool:
 			assert_true(line.length() > 0 and line.length() <= 90, "≤ 90 characters: " + line)
@@ -584,6 +784,9 @@ func _grave_record(marker: StringName) -> GraveRecord:
 func _corpse_record(shrouded: bool, decision: StringName, fresh_at_burial: float) -> CorpseRecord:
 	var c := CorpseRecord.new()
 	c.shrouded = shrouded
+	c.dress = CorpseRecord.DRESS_SHROUD if shrouded else CorpseRecord.DRESS_NONE
+	c.washed = true
+	c.laid_out = true
 	c.valuables_decision = decision
 	c.freshness_at_burial = fresh_at_burial
 	return c
@@ -599,3 +802,7 @@ func _on_night(active: bool) -> void:
 
 func _on_payment(amount: int, reason: String) -> void:
 	payments.append([amount, reason])
+
+
+func _on_note(text: String, _kind: StringName) -> void:
+	notes.append(text)

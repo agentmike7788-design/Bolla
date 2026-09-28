@@ -18,6 +18,7 @@ const GRAVEYARD_GROUP := &"graveyard"
 const CORPSE_MANAGER_GROUP := &"corpse_manager"
 const CLEANLINESS_GROUP := &"cleanliness"
 const DECORATIONS_GROUP := &"decorations"
+const PIETY_GROUP := &"piety"
 const PLOT_GROUP := &"grave_plot"
 const PLAYER_GROUP := &"player"
 const DEFAULT_SCENE := "res://src/entities/ghost/ghost.tscn"
@@ -62,6 +63,8 @@ var _container: Node3D
 var _reselect_left: float = 0.0
 var _night_active: bool = false
 var _moods_dirty: bool = true
+## Night in which the "no gift" line was shown (once per night, not saved).
+var _no_gift_night: int = -(1 << 30)
 
 
 func _init() -> void:
@@ -143,7 +146,7 @@ func mood_info(grave_id: String) -> Dictionary:
 	var corpse := _corpse(grave.corpse_id)
 	var dirt := _dirt_level(grave_id)
 	var bonus := mini(_decor_bonus(grave_id), _config().decor_bonus_max)
-	var value := GhostMood.score(grave.quality, dirt, bonus, _cleanliness_config(), _config())
+	var value := GhostMood.score(grave.quality, dirt, bonus, _cleanliness_config(), _config(), GhostMood.robbed_count(corpse))
 	return {
 		"score": value,
 		"mood": GhostMood.mood(value, _config()),
@@ -179,7 +182,8 @@ func listen(grave_id: String, player: Player) -> String:
 		var turn := int(last.turn) + 1 if not last.is_empty() and int(last.day) == day else 0
 		var corpse := _corpse(_graveyard().get_grave(grave_id).corpse_id)
 		var traits: Array[StringName] = corpse.traits.duplicate() if corpse != null else []
-		text = GhostMood.pick_line(_lines(), mood, info.reason, traits, line_seed(grave_id, day) + turn)
+		var story: StringName = corpse.story_id if corpse != null else &""
+		text = GhostMood.pick_line(_lines(), mood, info.reason, traits, line_seed(grave_id, day) + turn, story, piety_tier())
 		_said[grave_id] = {"total": now, "text": text, "mood": mood, "day": day, "turn": turn}
 	if mood == GhostMood.CONTENT and not _gifts.has(grave_id):
 		_give_gift(grave_id, player, day)
@@ -259,6 +263,23 @@ func heard_moods() -> Dictionary:
 
 func is_night_active() -> bool:
 	return _night_active
+
+
+## Coins of a ghost's gift: Piety.gift_coins() (§2.7: 0 / 2 / 2 / 2 / 3 by tier); without a
+## Piety node GhostConfig.gift_coins.
+func gift_amount() -> int:
+	var piety := _first(PIETY_GROUP)
+	if piety != null and piety.has_method(&"gift_coins"):
+		return maxi(0, int(piety.call(&"gift_coins")))
+	return _config().gift_coins
+
+
+## Current Pietät tier (&"" without a Piety node).
+func piety_tier() -> StringName:
+	var piety := _first(PIETY_GROUP)
+	if piety != null and piety.has_method(&"tier"):
+		return StringName(piety.call(&"tier"))
+	return &""
 
 
 ## Binds the pool to the nearest eligible graves (outside ghost time: releases all).
@@ -361,13 +382,35 @@ func _ensure_pool() -> void:
 
 func _give_gift(grave_id: String, player: Player, day: int) -> void:
 	var inv: Inventory = player.inventory if player != null else null
-	var coins := _config().gift_coins
-	if inv == null or coins <= 0 or not inv.can_add(COIN_ITEM, coins):
+	var coins := gift_amount()
+	if coins <= 0:
+		_note_no_gift()
+		return
+	if inv == null or not inv.can_add(COIN_ITEM, coins):
 		return
 	inv.add_item(COIN_ITEM, coins)
 	_gifts[grave_id] = day
-	var text := _lines().gift if _lines() != null else ""
+	var text := gift_text(coins)
 	EventBus.payment_received.emit(coins, text)
+	if text != "":
+		EventBus.notification_requested.emit(text, NOTIFY_KIND)
+
+
+## Gift line for `coins` (GhostLines.gift_by_coins, else GhostLines.gift).
+func gift_text(coins: int) -> String:
+	var l := _lines()
+	if l == null:
+		return ""
+	return l.gift_by_coins.get(coins, l.gift)
+
+
+## "Die Geister deuten nicht mehr ins Moos." once per night; the grave keeps its gift for later.
+func _note_no_gift() -> void:
+	var night := night_index(TimeManager.day, TimeManager.minute_of_day)
+	if night == _no_gift_night:
+		return
+	_no_gift_night = night
+	var text := _lines().no_gift if _lines() != null else ""
 	if text != "":
 		EventBus.notification_requested.emit(text, NOTIFY_KIND)
 
