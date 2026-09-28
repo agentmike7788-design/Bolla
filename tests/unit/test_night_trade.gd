@@ -511,3 +511,48 @@ func _trader_npc() -> Npc:
 	ways.add_child(npc)
 	await tree.process_frame
 	return npc
+
+
+# --- Phase 5 (P6): gold leaf §2.6, coins_spent §3.3 ------------------------------------------
+
+func test_gold_leaf_from_workshop_open_two_per_night() -> void:
+	trade.trader_config = Phase5Fixtures.trader_config()
+	var spent: Array = []
+	var on_spent := func(amount: int, reason: StringName) -> void: spent.append([amount, reason])
+	EventBus.coins_spent.connect(on_spent)
+	_ilse_here()
+	inv.add_item(&"coin", 30)
+	assert_false(trade.offers(&"gold_leaf"), "not before workshop_open (§1.2)")
+	assert_eq(trade.stock_left(&"gold_leaf"), 0)
+	assert_false(trade.buy(&"gold_leaf", 1, inv))
+	assert_true(trade.offers(&"linen"), "Phase-4 goods need no flag")
+	GameState.set_flag(&"workshop_open", true)
+	assert_true(trade.offers(&"gold_leaf"))
+	assert_eq([trade.trader_config.price(&"gold_leaf"), trade.stock_left(&"gold_leaf")], [6, 2])
+	assert_true(trade.buy(&"gold_leaf", 2, inv))
+	assert_eq([inv.count(&"gold_leaf"), inv.count(&"coin"), trade.stock_left(&"gold_leaf")], [2, 18, 0])
+	assert_false(trade.buy(&"gold_leaf", 1, inv), "2 per night")
+	assert_true(trade.buy(&"linen", 1, inv))
+	EventBus.coins_spent.disconnect(on_spent)
+	assert_eq(spent, [[12, &"ilse"], [2, &"ilse"]])
+	assert_eq(GameState.get_stat(&"coins_spent"), 14)
+	assert_eq(GameState.coin_ledger()[&"ilse"], 14)
+	assert_eq(trades.front(), [-12, {}, {&"gold_leaf": 2}])
+	_at(6, 1400)
+	assert_eq(trade.stock_left(&"gold_leaf"), 2, "a new night")
+
+
+func test_refused_buy_spends_nothing() -> void:
+	trade.trader_config = Phase5Fixtures.trader_config()
+	GameState.set_flag(&"workshop_open", true)
+	_ilse_here()
+	inv.add_item(&"coin", 5)
+	assert_false(trade.buy(&"gold_leaf", 1, inv), "6 coins needed")
+	assert_eq(GameState.get_stat(&"coins_spent"), 0)
+
+
+func test_real_trader_config_sells_gold_leaf() -> void:
+	var real := Database.config(&"trader_config") as TraderConfig
+	assert_eq([real.price(&"gold_leaf"), real.per_night(&"gold_leaf")], [6, 2])
+	assert_eq(StringName(str((real.shop[&"gold_leaf"] as Dictionary).get("requires_flag"))), &"workshop_open")
+	assert_eq([real.price(&"linen"), real.per_night(&"linen"), real.price(&"juniper"), real.per_night(&"juniper")], [2, 3, 1, 4], "Phase-4 goods unchanged")

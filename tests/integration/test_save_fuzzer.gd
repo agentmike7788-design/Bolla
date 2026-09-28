@@ -14,6 +14,11 @@ extends TestCase
 ## corpse on the table with 2 of 4 steps, a juniper window, the braid taken, clues + an insight
 ## in the journal, Ilse at the wall with half her linen sold) is fuzzed as well; a loaded state
 ## also has its piety in −100…100 and only known clues / insights in the journal.
+## Phase 5 (P6, docs/PHASE5_DESIGN.md §5, §10): the game save is format v4 (migration 3 → 4 on
+## every older load); the six Phase-4 fixtures (tests/fixtures/saves_v3/) are fuzzed, and a v4
+## save with Phase-5 parts (workshop, gathering, stonemasonry, grave designs, tool belt, coin
+## ledger – written as the contract §5.1 shows them; nodes the world does not have yet are ignored
+## with a warning) gets targeted mutations of those parts.
 
 const TIMEOUT := 600.0
 const SLOT := 94
@@ -31,6 +36,16 @@ const P4_KEYS: PackedStringArray = ["journal", "night_trade", "npc_trader", "pie
 		"laid_out", "harvested", "balm_windows", "stench_noted", "story_delivered", "story_last_day", "stench_day",
 		"trader_known", "has_elder_key", "piety_last_day", "piety_used_day", "trader_met", "trader_tools_given"]
 const P4_CASES := 80
+## Share of the mutations per v3 fixture (six files).
+const V3_FIXTURE_SHARE := 0.2
+## Phase-5 parts of the state that get extra native mutations in the v4 save (§5.1).
+const P5_KEYS: PackedStringArray = ["workshop", "gathering", "stonemasonry", "design", "tools", "built", "jobs",
+		"goal_done", "evict_pending", "charges", "last_taken_day", "last_refresh_day", "next_id", "ready",
+		"heard_design", "crafted", "stones_set", "coins_spent", "trees_felled", "coins_spent_license",
+		"coins_spent_build", "coins_spent_osric", "coins_spent_ilse", "workshop_open", "bruch_license",
+		"bought_pickaxe", "p5_intro", "remark_gold"]
+const P5_CASES := 60
+const P5_SHARE := 0.4
 const OK_TEXTS: PackedStringArray = [SaveManager.TEXT_CORRUPT, SaveManager.TEXT_NEWER_VERSION]
 
 var saves_dir := TestCase.user_dir("test_saves_fuzz")
@@ -89,6 +104,43 @@ func test_fuzz_v3_save_of_a_phase4_game() -> void:
 		d.data = JSON.from_native(st)
 		await _load_doc(d, "p4 native %s = %s" % [_path_text(path), str(bad)])
 	print("FUZZ v3 (Phase 4): %d loaded, %d rejected" % [stats.ok, stats.rejected])
+
+
+func test_fuzz_v3_fixtures() -> void:
+	for id: String in Phase5Fixtures.SAVES_V3:
+		var text := FileAccess.get_file_as_string(Phase5Fixtures.save_v3_path(id))
+		assert_ne(text, "", id)
+		await _fuzz_text(text, id, V3_FIXTURE_SHARE)
+	print("FUZZ v3 fixtures: %d loaded, %d rejected" % [stats.ok, stats.rejected])
+
+
+func test_fuzz_v4_save_with_phase5_parts() -> void:
+	var text := await _make_v4_save()
+	var doc: Dictionary = JSON.parse_string(text)
+	assert_eq(int(doc.format_version), 4, "format v4")
+	await _fuzz_text(text, "p5", P5_SHARE)
+	var state := SaveFileIO.decode_state(doc.get("data"))
+	var paths: Array = []
+	_collect_paths(state, [], paths)
+	paths = paths.filter(func(path: Array) -> bool:
+		for part: Variant in path:
+			if str(part) in P5_KEYS:
+				return true
+		return false)
+	assert_true(paths.size() > 30, "Phase-5 paths in the state (%d)" % paths.size())
+	for i: int in P5_CASES:
+		var path: Array = paths[rng.randi() % paths.size()]
+		var st := state.duplicate(true)
+		var bad: Variant = _bad_value()
+		if rng.randi() % 4 == 0:
+			_erase_path(st, path)
+			bad = "<erased>"
+		else:
+			_set_path(st, path, bad)
+		var d: Dictionary = doc.duplicate(true)
+		d.data = JSON.from_native(st)
+		await _load_doc(d, "p5 native %s = %s" % [_path_text(path), str(bad)])
+	print("FUZZ v4 (Phase 5): %d loaded, %d rejected" % [stats.ok, stats.rejected])
 
 
 func test_fuzz_v2_fixtures() -> void:
@@ -281,6 +333,41 @@ func _make_v3_save() -> String:
 	UIState.clear()
 	assert_eq(SaveManager.save_game(SLOT), OK)
 	return FileAccess.get_file_as_string(SaveFileIO.slot_path(saves_dir, SLOT))
+
+
+## The Phase-4 end state (v3 fixture day20_reverent) loaded and saved by this build (v4), with the
+## Phase-5 parts of §5.1 written in: a charcoal job in the forge, two ready stones, gather nodes,
+## designed graves, a full tool belt and a coin ledger (the v4 file text).
+func _make_v4_save() -> String:
+	assert_eq(Phase5Fixtures.install_save_v3("slot_p4_day20_reverent", saves_dir, SLOT), OK)
+	assert_eq(await SaveManager.load_game(SLOT), OK)
+	TimeManager.running = false
+	UIState.clear()
+	assert_eq(SaveManager.save_game(SLOT), OK)
+	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(saves_dir, SLOT)))
+	var state := SaveFileIO.decode_state(doc.data)
+	var design := {"shape": "stone_master", "inscription": "i_garden", "ornament": "orn_elder", "gilded": true,
+			"text": ["Marthe Quendel", "* 1771 – † 8. Nebelung 1834", "Was du gesät hast, blüht noch."]}
+	var graves: Array = state.nodes.graveyard.graves
+	for i: int in graves.size():
+		(graves[i] as Dictionary)["design"] = design.duplicate(true) if i < 3 else {}
+	state.nodes["workshop"] = {"built": ["mason", "loom"], "jobs": {"forge": {"recipe": "charcoal", "end_total": 38400}},
+			"goal_done": false, "evict_pending": {"decor_bench_wood": 1}}
+	state.nodes["gathering"] = {"gather_alder_1": {"charges": 0, "last_taken_day": 23, "last_refresh_day": 24},
+			"gather_clay_1": {"charges": 2, "last_taken_day": 22, "last_refresh_day": 24}}
+	state.nodes["stonemasonry"] = {"next_id": 4, "ready": [{"id": "stone_0003", "grave_id": "h_01", "design": design},
+			{"id": "stone_0002", "grave_id": "plot_02", "design": {"shape": "stone_stele"}}], "heard_design": ["plot_04"]}
+	(state.nodes.player.inventory as Dictionary)["tools"] = {"rake": 1, "shears": 1, "pliers": 1, "comb": 1, "scrub_brush": 1,
+			"pickaxe_iron": 1, "shovel_iron": 1, "axe_iron": 1}
+	var stats: Dictionary = state.autoloads.GameState.stats
+	for key: String in ["crafted", "stones_set", "coins_spent", "trees_felled", "coins_spent_license", "coins_spent_build",
+			"coins_spent_osric", "coins_spent_ilse"]:
+		stats[StringName(key)] = 3
+	var flags: Dictionary = state.autoloads.GameState.flags
+	for key: String in ["workshop_open", "bruch_license", "bought_pickaxe", "p5_intro", "remark_gold"]:
+		flags[StringName(key)] = true
+	doc.data = JSON.from_native(state)
+	return JSON.stringify(doc, "\t", true, true)
 
 
 func _bad_value() -> Variant:

@@ -3,8 +3,12 @@ extends TestCase
 ## Phase 3 (P3): the label follows ReputationRules on the 0…100 scale (docs/PHASE3_DESIGN.md §2.6).
 
 ## Phase 4 (§3.4): + piety, utilized, prepared, trader_sales.
+## Phase 5 (docs/PHASE5_DESIGN.md §2.7, P6): + crafted, stones_set, coins_spent, trees_felled + the
+## coin ledger by purpose (coins_spent_license / _build / _osric / _ilse).
 const STAT_KEYS: Array[StringName] = [&"burials", &"valuables_taken", &"reputation", &"missed_deliveries", &"days_played",
-		&"piety", &"utilized", &"prepared", &"trader_sales"]
+		&"piety", &"utilized", &"prepared", &"trader_sales",
+		&"crafted", &"stones_set", &"coins_spent", &"trees_felled",
+		&"coins_spent_license", &"coins_spent_build", &"coins_spent_osric", &"coins_spent_ilse"]
 
 
 func test_defaults_after_reset() -> void:
@@ -171,3 +175,36 @@ func test_load_state_fills_missing_and_skips_bad_values() -> void:
 	GameState.load_state({})
 	assert_eq(GameState.flags, {})
 	assert_eq(GameState.get_stat(&"burials"), 0)
+
+
+# --- Phase 5 (P6): coin ledger §2.7, §3.3 --------------------------------------------------------
+
+func test_note_coins_spent_counts_and_signals() -> void:
+	var spent: Array = []
+	var on_spent := func(amount: int, reason: StringName) -> void: spent.append([amount, reason])
+	EventBus.coins_spent.connect(on_spent)
+	GameState.note_coins_spent(20, &"license")
+	GameState.note_coins_spent(15, &"build")
+	GameState.note_coins_spent(14, &"osric")
+	GameState.note_coins_spent(6, &"ilse")
+	GameState.note_coins_spent(6, &"osric")
+	GameState.note_coins_spent(0, &"osric")
+	GameState.note_coins_spent(-3, &"ilse")
+	EventBus.coins_spent.disconnect(on_spent)
+	assert_eq(spent, [[20, &"license"], [15, &"build"], [14, &"osric"], [6, &"ilse"], [6, &"osric"]], "nothing for <= 0")
+	assert_eq(GameState.get_stat(&"coins_spent"), 61)
+	assert_eq(GameState.coin_ledger(), {&"license": 20, &"build": 15, &"osric": 20, &"ilse": 6} as Dictionary[StringName, int])
+	assert_eq(GameState.get_stat(GameState.coin_ledger_stat(&"osric")), 20)
+
+
+func test_coin_ledger_survives_save_load() -> void:
+	GameState.note_coins_spent(12, &"osric")
+	var saved: Dictionary = JSON.to_native(JSON.from_native(GameState.save_state()))
+	GameState.reset()
+	assert_eq(GameState.get_stat(&"coins_spent"), 0)
+	GameState.load_state(saved)
+	assert_eq([GameState.get_stat(&"coins_spent"), GameState.coin_ledger()[&"osric"]], [12, 12])
+	GameState.load_state({"stats": {"burials": 1}})
+	assert_eq(GameState.coin_ledger(), {&"license": 0, &"build": 0, &"osric": 0, &"ilse": 0} as Dictionary[StringName, int], "old saves: 0")
+	for key: StringName in SaveMigration.V4_NEW_STATS:
+		assert_true(GameState.DEFAULT_STATS.has(key), "migration stat %s is a default stat" % key)

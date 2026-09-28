@@ -85,12 +85,34 @@ func test_procrastinator() -> void:
 	assert_true(bot.chapter_day > 0, "procrastinator: chapter six_pits reached (%d)" % bot.chapter_day)
 
 
+## Phase 5 §2.9 (G4 finding B2): mixed prepares fully on harvest days too (prep_on_harvest) and
+## still ends „Sachlich“ / „Abgebrüht“; stats.prepared counts the harvested corpses, and no
+## „Voll hergerichtet“ piety event belongs to a harvested corpse.
 func test_mixed() -> void:
+	var full_prep_events := {"n": 0}
+	var on_piety := func(_v: int, _t: StringName, _d: int, reason: String) -> void:
+		if reason == CorpseCare.REASON_FULL_PREP:
+			full_prep_events.n += 1
+	EventBus.piety_changed.connect(on_piety)
 	var bot := await _play(&"mixed", 24)
+	EventBus.piety_changed.disconnect(on_piety)
 	var last: Dictionary = bot.rows.back()
 	assert_has([&"matter_of_fact", &"callous"], last.piety_tier, "mixed: „Sachlich“ or „Abgebrüht“ (%d)" % last.piety)
 	assert_true(last.utilized > 0 and last.utilized <= 12, "hair on odd days only (%d)" % last.utilized)
 	assert_true(bot.chapter_day > 0, "mixed: chapter six_pits (%d)" % bot.chapter_day)
+	var clean := 0
+	var harvested := 0
+	for r: CorpseRecord in (tree.current_scene as WorldRoot).corpse_manager.records():
+		if r.is_fully_prepared():
+			if r.harvested.is_empty():
+				clean += 1
+			else:
+				harvested += 1
+	assert_true(harvested > 0, "harvested corpses were prepared fully too (%d)" % harvested)
+	assert_eq(GameState.get_stat(&"prepared"), clean + harvested, "stats.prepared counts every full preparation")
+	assert_true(full_prep_events.n <= clean, "no full_prep bonus for a harvested corpse (%d events, %d clean)" % [full_prep_events.n, clean])
+	print("PLAYTHROUGH4 mixed piety fix: prepared %d (harvested %d) · full_prep events %d · piety %d"
+			% [clean + harvested, harvested, full_prep_events.n, last.piety])
 
 
 func test_save_load_every_morning_matches_reverent() -> void:

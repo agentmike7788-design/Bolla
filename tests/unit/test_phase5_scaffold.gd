@@ -6,7 +6,7 @@ extends TestCase
 ## fixtures (tests/fixtures/phase5, Phase5Fixtures).
 
 ## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
-const IMPLEMENTED: PackedStringArray = ["ToolRules", "GatherRules", "GatherManager", "GatherNode"]
+const IMPLEMENTED: PackedStringArray = ["ToolRules", "GatherRules", "GatherManager", "GatherNode", "SaveMigration"]
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
 	# P1
@@ -486,7 +486,7 @@ func test_save_format_v4_and_migration_chain() -> void:
 	assert_eq(SaveMigration.migrate(state, 4), state, "current version unchanged")
 	assert_eq(SaveMigration.migrate(state, 5), {}, "newer → corrupt")
 	var v4 := SaveMigration.migrate_3_to_4(state, {"day": 5})
-	assert_eq(v4, state, "W0: identity")
+	assert_eq((v4.nodes as Dictionary).keys(), ["corpse_manager", "workshop", "gathering", "stonemasonry"], "P6: empty Phase-5 nodes")
 	assert_false(is_same(v4, state), "deep copy")
 	assert_eq(state.nodes, {"corpse_manager": {}}, "input unchanged")
 	var from_v3 := SaveMigration.migrate(state, 3, {"day": 5})
