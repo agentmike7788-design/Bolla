@@ -108,7 +108,8 @@ func test_day16_carry_stays_carried_outside() -> void:
 	assert_false(hut.active, "the hut view is off")
 	await _resave_round_trip()
 	if _crypt_ready():
-		await _carry_into_the_crypt_niche(player)
+		# The round trip loaded a new world: its player.
+		await _carry_into_the_crypt_niche(world.get_player())
 
 
 func test_interior_save_in_the_hut() -> void:
@@ -160,6 +161,9 @@ func _crypt_takes_the_table_corpse(corpse_id: String) -> void:
 	for id: StringName in [&"stone", &"wood", &"clay", &"iron_fittings"]:
 		inv.add_item(id, 20)
 	inv.add_item(&"coin", 40)
+	# §6 `build crypt 1` (debug): the same rules except material and time – a Phase-5 save of day 16
+	# has no buildings_open yet, the debug build opens the sites first.
+	GameState.set_flag(&"buildings_open", true)
 	assert_true(bool(buildings.call(&"upgrade", &"crypt", inv)), "crypt 1 built")
 	UIState.clear()
 	assert_eq(record.location, CorpseRecord.LOCATION_TABLE, "still on a table")
@@ -199,6 +203,7 @@ func _crypt_takes_the_table_corpse(corpse_id: String) -> void:
 ## §10: carried into the crypt (level 1) → into a niche.
 func _carry_into_the_crypt_niche(player: Player) -> void:
 	var buildings := world.get_node("Systems/Buildings")
+	GameState.set_flag(&"buildings_open", true)
 	buildings.call(&"load_state", {"levels": {"crypt": 1}})
 	buildings.call(&"apply_levels")
 	var door := BuildingDoor.find(tree, &"crypt")

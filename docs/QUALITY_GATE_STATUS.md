@@ -169,6 +169,7 @@ Alle Phase-1-Assets sind Prototypen (`ph_`-Präfix) und **nicht final**, bis der
 | ph_int_shed_room, _shed_rack, _wood_rack, _stone_bin | Lagerschuppen innen (Phase 6, P5) | Prototyp – Benutzerprüfung offen |
 | ph_chr_mourner_a, _b, _c, _d | Trauergäste, sitzend, ohne Rig (Phase 6, P5) | Prototyp – Benutzerprüfung offen |
 | ph_item_altar_candle, _bone_box, _bone_box_full | Item-Modelle (Icons, Phase 6, P5) | Prototyp – Benutzerprüfung offen |
+| ph_env_ground_graveyard (neu exportiert, 64 × 80 m) · Kirchpforte = ph_prop_gate_small(_open) × 1,345 · Innenraum-Szenen crypt/chapel/shed_interior.tscn (aus den ph_int_*-Teilen, generiert) | Phase-6-Welt (W-Welt): Boden Nord-Erweiterung, Kirchpforte, drei Innenräume, Gebäude in der Welt verbaut | Prototyp – Aufnahmen `docs/reviews/phase6_wip/world_p6_*.jpg`, Benutzerprüfung offen |
 | Godot-Standardschrift | UI-Schrift | **Platzhalter** – Schriftwahl offen |
 
 ## Bekannte Probleme

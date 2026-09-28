@@ -18,11 +18,11 @@ extends "res://src/world/graveyard/graveyard_shots_phase5.gd"
 const FIXTURES := "res://tests/fixtures/saves_v4/%s.json"
 const SHOT_SLOT := 5
 ## p6_00a/b/c: in front of the hut from the south, the table (−1,6 | −5,4) and the crypt corner in view.
-const HOF6_CAMERA := {"focus": Vector2(-5.2, 0.6), "distance": 24.0, "day": 16, "minute": 600, "player": Vector2(-3.4, -4.2)}
+const HOF6_CAMERA := {"focus": Vector2(-4.8, 1.4), "distance": 28.0, "day": 16, "minute": 600, "player": Vector2(-3.4, -4.2)}
 const P6_SHOTS: Array[Dictionary] = [
 	{"name": "world_p6_00b_hof_sites", "fixture": "slot_p5_day16_table", "open": true, "levels": [0, 0, 0],
-			"day": 16, "minute": 600, "focus": Vector2(-5.2, 0.6), "distance": 24.0, "player": Vector2(-3.4, -4.2)},
-	{"name": "world_p6_00c_hof_crypt1", "levels": [1, 0, 0], "day": 16, "minute": 600, "focus": Vector2(-5.2, 0.6), "distance": 24.0,
+			"day": 16, "minute": 600, "focus": Vector2(-4.8, 1.4), "distance": 28.0, "player": Vector2(-3.4, -4.2)},
+	{"name": "world_p6_00c_hof_crypt1", "levels": [1, 0, 0], "day": 16, "minute": 600, "focus": Vector2(-4.8, 1.4), "distance": 28.0,
 			"player": Vector2(-3.4, -4.2)},
 	# Each building by day at its access (gameplay camera 22 m) for levels 0–3, and at night.
 	{"name": "world_p6_02_crypt_l0_day", "fixture": "slot_p5_day30_reverent", "levels": [0, 0, 0], "day": 30, "minute": 660,
@@ -64,9 +64,9 @@ const P6_SHOTS: Array[Dictionary] = [
 			"ossuary": 3, "zoom": 8.0},
 	{"name": "world_p6_08b_ossuary_l3_grille", "levels": [3, 3, 3], "room": "crypt", "day": 30, "minute": 1350, "player": Vector2(0.6, -2.6),
 			"ossuary": 6, "zoom": 8.0},
-	{"name": "world_p6_09_chapel_int_l2_service", "levels": [2, 2, 2], "room": "chapel", "day": 30, "minute": 660, "player": Vector2(0.0, -4.1),
+	{"name": "world_p6_09_chapel_int_l2_service", "levels": [2, 2, 2], "room": "chapel", "day": 30, "minute": 660, "player": Vector2(0.95, -3.9),
 			"corpses": [["catafalque", ""]], "rite": true},
-	{"name": "world_p6_10_chapel_int_l3_service", "levels": [3, 3, 3], "room": "chapel", "day": 30, "minute": 660, "player": Vector2(0.0, -4.1),
+	{"name": "world_p6_10_chapel_int_l3_service", "levels": [3, 3, 3], "room": "chapel", "day": 30, "minute": 660, "player": Vector2(0.95, -3.9),
 			"corpses": [["catafalque", ""]], "rite": true},
 	{"name": "world_p6_11_chapel_int_l2_night_devotion", "levels": [2, 2, 2], "room": "chapel", "day": 30, "minute": 1350, "player": Vector2(0.0, -4.1),
 			"rite": true},
@@ -253,6 +253,7 @@ func _room(id: StringName) -> Node3D:
 ## upgrade sends (building_upgraded, the ossuary passage, InteriorRoom.apply_level).
 func _set_levels(world: Node3D, levels: Array) -> void:
 	var buildings := _system(world, "Buildings")
+	var crypt_before := _level(world, &"crypt")
 	var state: Dictionary = buildings.call(&"save_state")
 	var saved := {}
 	for i: int in LEVEL_IDS.size():
@@ -262,6 +263,10 @@ func _set_levels(world: Node3D, levels: Array) -> void:
 	root.get_node(^"GameState").call(&"set_flag", &"buildings_open", true)
 	_system(world, "Ossuary").call(&"on_crypt_level", int(levels[0]))
 	buildings.call(&"apply_levels")
+	if crypt_before <= 0 and int(levels[0]) >= 1:
+		# As Buildings.upgrade does at crypt 1: the corpse on the old table goes down (§2.2).
+		var table := world.get_node(^"Interiors/CryptInterior/Entities/MorgueTable")
+		_system(world, "CorpseManager").call(&"relocate_table_corpse", table.call(&"slot_transform"), table.call(&"slot_node"), &"crypt")
 	for i: int in LEVEL_IDS.size():
 		root.get_node(^"EventBus").emit_signal(&"building_upgraded", LEVEL_IDS[i], int(levels[i]))
 
