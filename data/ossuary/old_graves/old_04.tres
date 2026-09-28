@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="OldGraveData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/systems/ossuary/old_grave_data.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_gravestone_slab_old.glb" id="2"]
+
+[resource]
+script = ExtResource("1")
+grave_id = "old_04"
+display_name = "Barbe Lindt"
+born_year = 1730
+died_year = 1758
+reinter_line = "Barbe Lindt. Achtundzwanzig Jahre. Die Platte hat sie länger gehalten als das Leben."
+stone_model = ExtResource("2")

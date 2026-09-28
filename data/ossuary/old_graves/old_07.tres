@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="OldGraveData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/systems/ossuary/old_grave_data.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_gravestone_slab_old.glb" id="2"]
+
+[resource]
+script = ExtResource("1")
+grave_id = "old_07"
+display_name = "Elias Brand, Totengräber"
+born_year = 1690
+died_year = 1751
+reinter_line = "Elias Brand, Totengräber zu Hollerbrück. Einer von uns. Er hat lange genug gewartet."
+stone_model = ExtResource("2")

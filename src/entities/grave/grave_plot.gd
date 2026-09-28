@@ -2,8 +2,12 @@ class_name GravePlot
 extends Node3D
 ## One grave place (group grave_plot). Visual follows the GraveRecord state (grave_state_changed):
 ## EMPTY staked plot · DUG open pit · FILLED fresh mound · MARKED mound + marker at the head (−Z)
-## · OLD (is_old) the layout's stone + mound, no interaction · LOCKED (section not yet unlocked,
-## Phase 3) nothing: no visual, no collision, no prompt.
+## · OLD (is_old) the layout's stone + mound · LOCKED (section not yet unlocked, Phase 3) nothing:
+## no visual, no collision, no prompt.
+## Phase 6 (§2.3, §3.4): an OLD plot has no interaction until buildings_open; then „[E] Altes Grab
+## heben: <Name> (Jahre)" (or the block reason, dimmed) → Ossuary.lift → Graveyard.lift_old
+## (OLD → EMPTY). From then on it is an ordinary place (is_old stays true: it is still an old
+## plot); pit_variant &"foot" puts the spoil heap at the foot end (ph_prop_grave_pit_foot).
 ## Interaction: dig (EMPTY, free hands) → bury (DUG, carrying) → place marker (FILLED, free
 ## hands; a choice panel when both marker types are in the inventory) → upgrade the marker
 ## (MARKED with a wooden cross and a better marker in the inventory, Phase 3). The Graveyard
@@ -48,6 +52,13 @@ const PROMPT_SET_STONE := "[E] Gestalteten Stein setzen (%d Min)"
 const LABEL_SET_STONE := "Gestalteten Stein setzen"
 const TEXT_CANNOT_SET_STONE := "Der Stein passt hier nicht mehr."
 const NAME_UNKNOWN := "Unbekannt"
+# Phase 6 (docs/PHASE6_DESIGN.md §2.3, §3.4; P3): lifting an old grave.
+const OSSUARY_GROUP := &"ossuary"
+const PROMPT_LIFT := "[E] Altes Grab heben: %s"
+const LABEL_LIFT := "Altes Grab heben"
+const TEXT_CANNOT_LIFT := "Das alte Grab lässt sich nicht heben."
+const PIT_FOOT := &"foot"
+const PIT_FOOT_PATH := "res://assets/models/props/ph_prop_grave_pit_foot.glb"
 
 @export var grave_id: String = ""
 @export var is_old: bool = false
@@ -63,6 +74,8 @@ const NAME_UNKNOWN := "Unbekannt"
 ## Phase 6 (§2.3, §3.4; P3): &"foot" for the old graves – the spoil heap lies at the foot end
 ## (ph_prop_grave_pit_foot) once an old grave was lifted and is dug again.
 @export var pit_variant: StringName = &""
+## Plot-local XZ area of the pit with the heap at the foot end (+Z) – pit_variant &"foot".
+@export var foot_footprint: Rect2 = Rect2(-0.72, -1.25, 1.44, 3.38)
 @export_group("Visuals")
 @export var empty_model: PackedScene = preload("res://assets/models/props/ph_prop_grave_plot_empty.glb")
 @export var pit_model: PackedScene = preload("res://assets/models/props/ph_prop_grave_pit.glb")
@@ -104,26 +117,26 @@ func _init() -> void:
 func _ready() -> void:
 	EventBus.grave_state_changed.connect(_on_grave_state_changed)
 	EventBus.grave_quality_changed.connect(_on_grave_quality_changed)
-	if is_old:
-		state = GraveRecord.State.OLD
-		if interactable != null:
-			interactable.enabled = false
-			interactable.monitorable = false
+	EventBus.time_tick.connect(_on_time_tick)
+	var grave := _grave()
+	if grave != null:
+		state = grave.state
 	else:
-		var grave := _grave()
-		state = grave.state if grave != null else GraveRecord.State.EMPTY
-		marker_id = grave.marker_id if grave != null else &""
-		design = grave.design.duplicate(true) if grave != null else {}
+		state = GraveRecord.State.OLD if is_old else GraveRecord.State.EMPTY
+	marker_id = grave.marker_id if grave != null else &""
+	design = grave.design.duplicate(true) if grave != null else {}
 	_apply_visual()
 
 
 func can_interact(player: Player) -> bool:
-	if is_old or player == null or player.is_busy():
+	if player == null or player.is_busy():
 		return false
 	var grave := _grave()
 	if grave == null:
 		return false
 	match grave.state:
+		GraveRecord.State.OLD:
+			return is_old and _lift_open() and not _is_carrying(player) and _lift_block_reason(player) == ""
 		GraveRecord.State.EMPTY:
 			return not _is_carrying(player) and not _corpse_on_plot()
 		GraveRecord.State.DUG:
@@ -136,13 +149,18 @@ func can_interact(player: Player) -> bool:
 
 
 func get_interaction_prompt(player: Player) -> String:
-	if is_old:
-		return ""
 	var grave := _grave()
 	if grave == null:
 		return ""
 	var carrying := player != null and _is_carrying(player)
 	match grave.state:
+		GraveRecord.State.OLD:
+			if not is_old or not _lift_open():
+				return ""
+			if carrying:
+				return Player.TEXT_HANDS_FULL
+			var reason := _lift_block_reason(player)
+			return reason if reason != "" else PROMPT_LIFT % OssuaryRules.label(_ossuary().data_of(grave_id))
 		GraveRecord.State.EMPTY:
 			if carrying:
 				return Player.TEXT_HANDS_FULL
@@ -182,6 +200,9 @@ func interact(player: Player) -> void:
 				true, ANIM_MARKER)
 		return
 	match grave.state:
+		GraveRecord.State.OLD:
+			player.start_timed_action(LABEL_LIFT, _ossuary().lift_minutes(player.inventory, _actions(player)),
+					_finish_lift.bind(player.inventory), true, ANIM_DIG)
 		GraveRecord.State.EMPTY:
 			player.start_timed_action(LABEL_DIG, _dig_minutes(player), _finish_dig.bind(player), true, ANIM_DIG)
 		GraveRecord.State.DUG:
@@ -241,6 +262,12 @@ func _finish_dig(player: Player) -> void:
 		_move_out(player)
 
 
+func _finish_lift(inv: Inventory) -> void:
+	var ossuary := _ossuary()
+	if ossuary == null or not ossuary.lift(grave_id, inv):
+		EventBus.notification_requested.emit(TEXT_CANNOT_LIFT, &"warning")
+
+
 func _finish_bury(corpse_id: String) -> void:
 	var graveyard := _graveyard()
 	if graveyard != null:
@@ -260,7 +287,7 @@ func _move_out(player: Player) -> void:
 	if not is_instance_valid(player) or not player.is_inside_tree():
 		return
 	var local := to_local(player.global_position)
-	var area := footprint.grow(eject_margin)
+	var area := active_footprint().grow(eject_margin)
 	var p := Vector2(local.x, local.z)
 	if not area.has_point(p):
 		return
@@ -324,7 +351,7 @@ func _finish_upgrade(id: StringName, inv: Inventory) -> void:
 # --- visuals & collision ------------------------------------------------------------------
 
 func _on_grave_state_changed(id: String, new_state: int) -> void:
-	if id != grave_id or is_old:
+	if id != grave_id:
 		return
 	state = new_state
 	var grave := _grave()
@@ -335,7 +362,7 @@ func _on_grave_state_changed(id: String, new_state: int) -> void:
 
 ## Marker upgrade: same state, new marker model.
 func _on_grave_quality_changed(id: String, _quality: int) -> void:
-	if id != grave_id or is_old:
+	if id != grave_id:
 		return
 	var grave := _grave()
 	marker_id = grave.marker_id if grave != null else marker_id
@@ -343,13 +370,42 @@ func _on_grave_quality_changed(id: String, _quality: int) -> void:
 	_apply_visual()
 
 
-## Visual + colliders; a LOCKED plot also switches its Interactable off.
+## Visual + colliders; a LOCKED plot also switches its Interactable off, an OLD one until
+## buildings_open (Phase 6).
 func _apply_visual() -> void:
 	_visuals.apply()
-	if interactable != null and not is_old:
-		var open := state != GraveRecord.State.LOCKED
-		interactable.enabled = open
-		interactable.set_deferred(&"monitorable", open)
+	_update_interactable()
+
+
+func _update_interactable() -> void:
+	if interactable == null:
+		return
+	var open := state != GraveRecord.State.LOCKED
+	if state == GraveRecord.State.OLD:
+		open = is_old and _lift_open()
+	if interactable.enabled == open and interactable.monitorable == open:
+		return
+	interactable.enabled = open
+	interactable.set_deferred(&"monitorable", open)
+
+
+## buildings_open can come any minute (morning, load, debug): the old plot's Interactable follows.
+func _on_time_tick(_day: int, _minute: int) -> void:
+	if state == GraveRecord.State.OLD:
+		_update_interactable()
+
+
+## The pit model of this plot: the foot-end variant for the old graves (falls back to pit_model
+## while the asset is missing).
+func active_pit_model() -> PackedScene:
+	if pit_variant == PIT_FOOT and ResourceLoader.exists(PIT_FOOT_PATH):
+		return load(PIT_FOOT_PATH) as PackedScene
+	return pit_model
+
+
+## Pit + heap area of the open grave (foot_footprint for pit_variant &"foot").
+func active_footprint() -> Rect2:
+	return foot_footprint if pit_variant == PIT_FOOT else footprint
 
 
 ## Shapes that are active for the current state (for tests / debugging).
@@ -367,7 +423,7 @@ func _corpse_on_plot() -> bool:
 		if record.location != CorpseRecord.LOCATION_GROUND:
 			continue
 		var local := to_local(record.position)
-		if footprint.has_point(Vector2(local.x, local.z)):
+		if active_footprint().has_point(Vector2(local.x, local.z)):
 			return true
 	return false
 
@@ -386,6 +442,23 @@ func _item_name(id: StringName) -> String:
 func _grave() -> GraveRecord:
 	var graveyard := _graveyard()
 	return graveyard.get_grave(grave_id) if graveyard != null else null
+
+
+func _ossuary() -> Ossuary:
+	return get_tree().get_first_node_in_group(OSSUARY_GROUP) as Ossuary if is_inside_tree() else null
+
+
+## Lifting shows only from buildings_open and with an Ossuary in the world.
+func _lift_open() -> bool:
+	var ossuary := _ossuary()
+	return ossuary != null and ossuary.is_open()
+
+
+func _lift_block_reason(player: Player) -> String:
+	var ossuary := _ossuary()
+	if ossuary == null:
+		return TEXT_CANNOT_LIFT
+	return ossuary.lift_block_reason(grave_id, player.inventory if player != null else null)
 
 
 func _graveyard() -> Graveyard:

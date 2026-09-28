@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"bone_box_full"
+display_name = "Gebeinkiste (belegt)"
+description = "Mit Schnur verschlossen und leichter, als man denkt. Sie gehört ins Beinhaus, nicht in die Truhe."
+category = 6
+max_stack = 3
