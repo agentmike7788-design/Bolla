@@ -6,7 +6,7 @@ extends TestCase
 ## fixtures (tests/fixtures/phase5, Phase5Fixtures).
 
 ## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
-const IMPLEMENTED: PackedStringArray = ["ToolRules"]   # P3
+const IMPLEMENTED: PackedStringArray = ["ToolRules", "GatherRules", "GatherManager", "GatherNode"]
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
 	# P1
@@ -199,8 +199,12 @@ func test_extended_data_classes() -> void:
 	var c := ClearableData.new()
 	assert_eq([c.tool_kind, c.min_tier], [&"", 0])
 	assert_true(SectionData.new().is_burial)
+	# P2 (W0 note 6): only the approved sections I–IV; bruch / quarry are work areas.
 	for real: SectionData in Database.sections():
-		assert_true(real.is_burial, "%s: the approved sections are burial sections" % real.id)
+		if real.id in [&"yard", &"east", &"north", &"elder"]:
+			assert_true(real.is_burial, "%s: the approved sections are burial sections" % real.id)
+		else:
+			assert_false(real.is_burial, "%s: a work area" % real.id)
 	var a := ActionConfig.new()
 	assert_eq(Array(a.tool_tier_factors), [1.0, 0.8, 0.6])
 	assert_eq(a.action_tools, {&"dig": &"shovel", &"bury": &"shovel"})
@@ -340,6 +344,8 @@ func test_clearable_and_section_fixtures() -> void:
 	assert_eq([bruch.requires_flag, bruch.requires_flag_text], [&"bruch_license", "Die Pforte ist zu. Osric weiß, wer den Schlüssel hat."])
 	assert_eq(quarry.requires_section, &"bruch")
 	for real: SectionData in Database.sections():
+		if real.id in [&"bruch", &"quarry"]:
+			continue  # P2 (W1): the real work areas themselves
 		assert_true(bruch.order > real.order and quarry.order > real.order, "orders after %s" % real.id)
 
 

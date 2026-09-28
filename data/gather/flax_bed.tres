@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="GatherNodeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/gathering/gather_node_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"flax_bed"
+display_name = "Flachsbeet"
+verb = "Flachs raufen"
+item_id = &"flax"
+yield_amount = 3
+charges_max = 1
+regrow_days = 3
+minutes = 20
+tool_kind = &""
+min_tier = 0
+tier2_bonus = 0
+animation = &"interact"
+requires_flag = &"workshop_open"

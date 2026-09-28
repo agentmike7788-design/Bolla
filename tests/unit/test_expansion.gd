@@ -141,7 +141,7 @@ func test_sections_and_initial_state() -> void:
 func test_real_data_is_used_without_injection() -> void:
 	var plain := ExpansionManager.new()
 	world.add_child(plain)
-	assert_eq(plain.sections().size(), 4, "Phase 4: + elder")
+	assert_eq(plain.sections().size(), 6, "Phase 4: + elder; Phase 5: + bruch, quarry")
 	assert_eq(plain.data_of("obs_e_01"), Database.clearable(&"bramble"))
 	plain.free()
 
@@ -506,3 +506,145 @@ func _add_elder() -> JournalDouble:
 	journal.add_to_group(&"journal")
 	world.add_child(journal)
 	return journal
+
+
+# --- Phase 5 (P2, docs/PHASE5_DESIGN.md §2.3, §3.4, §4.2): work areas and tool obstacles ----------
+
+func test_work_areas_need_the_license_then_the_gate() -> void:
+	_add_bruch()
+	assert_eq(expansion.block_reason(&"bruch"), "Die Pforte ist zu. Osric weiß, wer den Schlüssel hat.")
+	assert_eq(expansion.block_reason(&"quarry"), "Erst die Am Bruch freilegen", "requires_section bruch")
+	assert_false(expansion.can_clear("obs_b_gate", inv))
+	GameState.set_flag(&"bruch_license")
+	assert_eq(expansion.block_reason(&"bruch"), "")
+	assert_eq(expansion.clear_minutes("obs_b_gate", inv), 10, "the gate needs no tool")
+	assert_true(expansion.clear("obs_b_gate", inv))
+	assert_true(expansion.is_unlocked(&"bruch"))
+	assert_eq(expansion.block_reason(&"quarry"), "", "quarry workable once bruch is open")
+	assert_false(expansion.is_unlocked(&"quarry"))
+
+
+func test_work_area_unlock_has_no_plots_and_no_reputation() -> void:
+	_add_bruch()
+	GameState.set_flag(&"bruch_license")
+	events.clear()
+	assert_true(expansion.clear("obs_b_gate", inv))
+	assert_eq(rep.calls, [], "no reputation for a work area")
+	assert_false(_has("state"), "no plot changes")
+	assert_has(events, ["unlocked", &"bruch"])
+	assert_has(events, ["note", "Am Bruch ist freigelegt.", &"reward"])
+	assert_eq(graveyard.get_grave("plot_07").state, LOCKED, "burial sections untouched")
+	events.clear()
+	expansion.post_load()
+	assert_eq(events, [], "post_load does not repair plots of a work area")
+
+
+func test_boulder_only_with_a_pickaxe() -> void:
+	_add_bruch()
+	GameState.set_flag(&"bruch_license")
+	expansion.clear("obs_b_gate", inv)
+	assert_true(expansion.tool_block_reason("obs_q_boulder_1", inv, 0).contains("nötig"))
+	assert_false(expansion.can_clear("obs_q_boulder_1", inv, 0), "no pickaxe")
+	assert_false(expansion.can_clear("obs_q_boulder_1", inv), "default tier from the (empty) belt")
+	assert_false(expansion.clear("obs_q_boulder_1", inv, 0))
+	assert_eq(expansion.tool_block_reason("obs_q_boulder_1", inv, 1), "")
+	assert_true(expansion.can_clear("obs_q_boulder_1", inv, 1))
+	for i: int in 3:
+		assert_true(expansion.clear("obs_q_boulder_%d" % (i + 1), inv, 2 if i == 2 else 1))
+	assert_eq(inv.count(&"stone"), 9, "3 stone each")
+	assert_true(expansion.is_unlocked(&"quarry"))
+	assert_eq(rep.calls, [])
+	var o: ClearableObstacle = obstacles["obs_q_boulder_1"]
+	assert_true(o.cleared)
+
+
+func test_minutes_follow_the_tool_tier() -> void:
+	_add_bruch()
+	expansion.actions = Phase5Fixtures.action_config()
+	var real := {&"rubble": Database.clearable(&"rubble"), &"stump": Database.clearable(&"stump"),
+			&"hedge": Database.clearable(&"hedge")}
+	for kind: StringName in real:
+		expansion.clearable_data[kind] = real[kind]
+	var expected := {"obs_q_boulder_1": [60, 50, 35], "obs_e_02": [40, 30, 25], "obs_n_01": [60, 50, 35], "obs_n_hedge": [60, 50, 35],
+			"obs_b_gate": [10, 10, 10]}
+	for id: String in expected:
+		var got: Array = []
+		for tier: int in 3:
+			got.append(expansion.clear_minutes(id, inv, tier))
+		assert_eq(got, expected[id], id)
+	assert_eq(expansion.clear_minutes("obs_e_01", inv, 2), 30, "Phase-3 fixture without a tool: plain minutes")
+	assert_eq(expansion.clear_minutes("obs_nope", inv, 1), 0)
+	assert_eq(expansion.tool_block_reason("obs_e_02", inv, 0), "", "min tier 0: the field-stone heap stays open")
+
+
+func test_obstacle_prompt_shows_the_tool_reason() -> void:
+	_add_bruch()
+	GameState.set_flag(&"bruch_license")
+	var boulder: ClearableObstacle = obstacles["obs_q_boulder_2"]
+	assert_eq(boulder.get_interaction_prompt(null), "Erst die Am Bruch freilegen")
+	expansion.clear("obs_b_gate", inv)
+	var prompt := boulder.get_interaction_prompt(null)
+	assert_true(prompt.contains("nötig"), prompt)
+	assert_eq(boulder.tool_tier(null), 0)
+	var gate: ClearableObstacle = obstacles["obs_b_gate"]
+	assert_eq(gate.get_interaction_prompt(null), "", "cleared")
+
+
+func test_work_areas_save_and_load() -> void:
+	_add_bruch()
+	GameState.set_flag(&"bruch_license")
+	expansion.clear("obs_b_gate", inv)
+	var saved := expansion.save_state()
+	assert_eq(saved.unlocked, [&"bruch"])
+	expansion.load_state({})
+	assert_false(expansion.is_unlocked(&"bruch"), "missing → locked (v3 saves)")
+	assert_false((obstacles["obs_b_gate"] as ClearableObstacle).cleared)
+	expansion.load_state(JSON.parse_string(JSON.stringify(saved)))
+	assert_true(expansion.is_unlocked(&"bruch"))
+	assert_true((obstacles["obs_b_gate"] as ClearableObstacle).cleared)
+
+
+func test_real_phase5_section_and_clearable_data() -> void:
+	for id: StringName in [&"bruch", &"quarry"]:
+		var real := Database.section(id) as SectionData
+		var fixture := Phase5Fixtures.section(id)
+		assert_not_null(real, String(id))
+		assert_eq([real.order, real.is_burial, real.counts_for_cemetery, real.decor_cap, real.requires_flag, real.requires_section,
+				real.requires_flag_text, real.starts_unlocked], [fixture.order, false, false, 0, fixture.requires_flag,
+				fixture.requires_section, fixture.requires_flag_text, false], String(id))
+		assert_true(real.unlock_text != "", "%s has an unlock text" % id)
+	for id: StringName in [&"boulder", &"gate_east"]:
+		var real := Database.clearable(id) as ClearableData
+		var fixture := Phase5Fixtures.clearable(id)
+		assert_eq([real.minutes, real.verb, real.display_name, real.yield_items, real.tool_kind, real.min_tier],
+				[fixture.minutes, fixture.verb, fixture.display_name, fixture.yield_items, fixture.tool_kind, fixture.min_tier], String(id))
+	var tools := {&"bramble": &"axe", &"hedge": &"axe", &"elder_thicket": &"axe", &"stump": &"shovel", &"sunken_pit": &"shovel",
+			&"rubble": &"pickaxe", &"fence_gap": &"", &"gate_small": &"", &"gate_east": &"", &"boulder": &"pickaxe"}
+	for kind: StringName in tools:
+		var data := Database.clearable(kind) as ClearableData
+		assert_eq(data.tool_kind, tools[kind], String(kind))
+		assert_eq(data.min_tier, 1 if kind == &"boulder" else 0, String(kind))
+
+
+## Adds bruch + quarry (fixtures) with the east gate and three boulders (§4.2).
+func _add_bruch() -> void:
+	var sections: Array[SectionData] = Phase3Fixtures.sections()
+	sections.append(Phase5Fixtures.section(&"bruch"))
+	sections.append(Phase5Fixtures.section(&"quarry"))
+	graveyard.section_data = sections
+	expansion.section_data = sections
+	for id: StringName in Phase5Fixtures.CLEARABLE_IDS:
+		expansion.clearable_data[id] = Phase5Fixtures.clearable(id)
+	var specs: Array = [["obs_b_gate", &"bruch", &"gate_east"]]
+	for i: int in 3:
+		specs.append(["obs_q_boulder_%d" % (i + 1), &"quarry", &"boulder"])
+	for spec: Array in specs:
+		var obstacle := ClearableObstacle.new()
+		obstacle.obstacle_id = spec[0]
+		obstacle.section_id = spec[1]
+		obstacle.kind = spec[2]
+		obstacle.name = spec[0]
+		world.add_child(obstacle)
+		obstacles[spec[0]] = obstacle
+	graveyard.load_state({})
+	expansion.collect_obstacles()

@@ -6,6 +6,10 @@ extends Node
 ## A section can be worked on once its prerequisites hold (requires_section unlocked,
 ## cemetery rating ≥ requires_rating); clearing its last obstacle unlocks it automatically:
 ## Graveyard.unlock_section, reputation event section_unlocked, section_unlocked, notification.
+## Phase 5 (docs/PHASE5_DESIGN.md §2.3, §3.4, §4.2): work areas (SectionData.is_burial false: bruch,
+## quarry) unlock without plots and without the reputation event. Obstacles may need a tool tier
+## (ClearableData.tool_kind / min_tier: boulder → pickaxe 1); the tier also sets the minutes
+## (ActionConfig.tool_minutes). tier −1 = ToolRules.tier(inv, kind).
 
 const GROUP := &"expansion"
 const SAVEABLE_GROUP := &"saveable"
@@ -33,6 +37,10 @@ var section_data: Array[SectionData] = []
 var clearable_data: Dictionary[StringName, ClearableData] = {}
 ## Rating thresholds for the prerequisite text; null = the Graveyard's / EconomyConfig.resolve().
 var economy: EconomyConfig
+## Tool minutes (Phase 5); null = data/config/action_config.tres.
+var actions: ActionConfig
+## Tool names for the tool reason (Phase 5); null = data/config/tool_config.tres.
+var tool_config: ToolConfig
 
 ## obstacle id -> node, in tree order.
 var _obstacles: Dictionary[String, ClearableObstacle] = {}
@@ -178,19 +186,54 @@ func yield_fits(obstacle_id: String, inv: Inventory) -> bool:
 	return true
 
 
-## Prerequisite met, cost available, yield fits.
-func can_clear(obstacle_id: String, inv: Inventory) -> bool:
+## Tool tier that counts for `obstacle_id` (tier −1 = ToolRules.tier of the inventory).
+func tier_for(obstacle_id: String, inv: Inventory, tier: int = -1) -> int:
+	if tier >= 0:
+		return tier
+	var data := data_of(obstacle_id)
+	if data == null or data.tool_kind == &"" or inv == null:
+		return 0
+	return ToolRules.tier(inv, data.tool_kind)
+
+
+## "" | "Spitzhacke nötig" (ToolRules text; a plain fallback while it has none).
+func tool_block_reason(obstacle_id: String, inv: Inventory, tier: int = -1) -> String:
+	var data := data_of(obstacle_id)
+	if data == null or data.tool_kind == &"" or data.min_tier <= 0:
+		return ""
+	if tier_for(obstacle_id, inv, tier) >= data.min_tier:
+		return ""
+	var text := ToolRules.block_reason(inv, data.tool_kind, data.min_tier, _tool_config())
+	if text != "":
+		return text
+	return GatherRules.TEXT_TOOL % [_tool_config().labels.get(data.tool_kind, String(data.tool_kind)), data.min_tier]
+
+
+## Minutes to clear `obstacle_id` with `tier` (ActionConfig.tool_minutes when the kind has a tool).
+func clear_minutes(obstacle_id: String, inv: Inventory = null, tier: int = -1) -> int:
+	var data := data_of(obstacle_id)
+	if data == null:
+		return 0
+	if data.tool_kind == &"":
+		return data.minutes
+	return _actions().tool_minutes(data.minutes, tier_for(obstacle_id, inv, tier))
+
+
+## Prerequisite met, tool tier reached, cost available, yield fits.
+func can_clear(obstacle_id: String, inv: Inventory, tier: int = -1) -> bool:
 	var node := obstacle(obstacle_id)
 	if node == null or inv == null or is_cleared(obstacle_id) or data_of(obstacle_id) == null:
 		return false
 	if is_unlocked(node.section_id) or block_reason(node.section_id) != "":
 		return false
+	if tool_block_reason(obstacle_id, inv, tier) != "":
+		return false
 	return missing_cost(obstacle_id, inv).is_empty() and yield_fits(obstacle_id, inv)
 
 
 ## Atomic: cost off, yield in, obstacle_cleared, section_progress_changed; the last one unlocks.
-func clear(obstacle_id: String, inv: Inventory) -> bool:
-	if not can_clear(obstacle_id, inv):
+func clear(obstacle_id: String, inv: Inventory, tier: int = -1) -> bool:
+	if not can_clear(obstacle_id, inv, tier):
 		return false
 	var data := data_of(obstacle_id)
 	for id: StringName in data.cost:
@@ -225,12 +268,14 @@ func unlock(section_id: StringName) -> bool:
 	if remaining:
 		var p := progress(section_id)
 		EventBus.section_progress_changed.emit(section_id, p.x, p.y)
-	var graveyard := _graveyard()
-	if graveyard != null:
-		graveyard.unlock_section(section_id)
-	var rep := _first(REPUTATION_GROUP) as Reputation
-	if rep != null:
-		rep.event(EVENT_SECTION_UNLOCKED, REASON_UNLOCKED % s.display_name)
+	# Phase 5: a work area has no plots and brings no reputation.
+	if s.is_burial:
+		var graveyard := _graveyard()
+		if graveyard != null:
+			graveyard.unlock_section(section_id)
+		var rep := _first(REPUTATION_GROUP) as Reputation
+		if rep != null:
+			rep.event(EVENT_SECTION_UNLOCKED, REASON_UNLOCKED % s.display_name)
 	EventBus.section_unlocked.emit(section_id)
 	var text := s.unlock_text if s.unlock_text != "" else TEXT_UNLOCKED_FALLBACK % s.display_name
 	EventBus.notification_requested.emit(text, &"reward")
@@ -290,7 +335,7 @@ func post_load() -> void:
 			push_warning("[ExpansionManager] section '%s' has no obstacle left but is locked – unlocked" % s.id)
 			unlock(s.id)
 			continue
-		if not _unlocked.has(s.id):
+		if not _unlocked.has(s.id) or not s.is_burial:
 			continue
 		var locked := false
 		for grave_id: String in graveyard.plots_in_section(s.id):
@@ -335,6 +380,22 @@ func _rating_threshold(rating_id: StringName) -> int:
 		cfg = graveyard.economy if graveyard != null and graveyard.economy != null else EconomyConfig.resolve()
 	var index := CemeteryRating.TIERS.find(rating_id) - 1
 	return cfg.rating_thresholds[index] if index >= 0 and index < cfg.rating_thresholds.size() else 0
+
+
+func _actions() -> ActionConfig:
+	if actions == null:
+		actions = Database.config(&"action_config") as ActionConfig
+		if actions == null:
+			actions = ActionConfig.new()
+	return actions
+
+
+func _tool_config() -> ToolConfig:
+	if tool_config == null:
+		tool_config = Database.config(&"tool_config") as ToolConfig
+		if tool_config == null:
+			tool_config = ToolConfig.new()
+	return tool_config
 
 
 func _graveyard() -> Graveyard:

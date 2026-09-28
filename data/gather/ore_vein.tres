@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="GatherNodeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/gathering/gather_node_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ore_vein"
+display_name = "Erzader"
+verb = "Erz abbauen"
+item_id = &"iron_ore"
+yield_amount = 1
+charges_max = 3
+regrow_days = 1
+minutes = 40
+tool_kind = &"pickaxe"
+min_tier = 1
+tier2_bonus = 0
+animation = &"dig"
+requires_flag = &"workshop_open"

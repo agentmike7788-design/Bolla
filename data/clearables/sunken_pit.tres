@@ -13,3 +13,5 @@ animation = &"dig"
 cost = Dictionary[StringName, int]({})
 yield_items = Dictionary[StringName, int]({})
 model = ExtResource("m1")
+tool_kind = &"shovel"
+min_tier = 0
