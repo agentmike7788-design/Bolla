@@ -15,6 +15,7 @@ const HUT_GROUP := &"hut_interior"
 
 
 func _init() -> void:
+	super()
 	add_to_group(HUT_GROUP)
 	room_id = InteriorRoom.HUT
 
