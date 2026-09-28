@@ -80,6 +80,8 @@ func interact(player: Player) -> void:
 		var slot := slot_node()
 		manager.put_down(player.carried_id, CorpseRecord.LOCATION_TABLE, slot_transform(), slot)
 	else:
+		# The panel shows the freshness of now (the hourly decay may lag, QA4-01).
+		manager.refresh_decay(corpse_id)
 		EventBus.ui_panel_requested.emit(EXAM_PANEL, {"corpse_id": corpse_id, "table": self, "player": player})
 
 

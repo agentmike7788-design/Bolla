@@ -21,11 +21,14 @@ const FLAG_DELIVERY_SKIPPED := &"delivery_skipped"
 const CART_SLOT := "slot_corpse"
 ## Below this (m) a path segment has no direction.
 const EPSILON := 0.0001
-## Lantern light (§8): warm, dimmed, no shadow.
+## Lantern light (§8): warm, no shadow. QA art (W3, G4): 0.4 / 3 m read as a weak spark at the
+## west wall at night – the lantern now lays a warm pool on the ground and lights her face like
+## the gravekeeper's own lantern (energy 1.0, softer falloff); still one light, no shadow.
 const LANTERN_NAME := "Lantern"
 const LANTERN_COLOR := Color("E8A55A")
-const LANTERN_ENERGY := 0.4
-const LANTERN_RANGE := 3.0
+const LANTERN_ENERGY := 2.2
+const LANTERN_RANGE := 4.5
+const LANTERN_ATTENUATION := 1.8
 const LANTERN_FALLBACK := Vector3(-0.25, 0.9, 0.2)
 
 @export var save_id: String = ""
@@ -364,6 +367,7 @@ func _make_lantern() -> void:
 	_lantern.light_color = LANTERN_COLOR
 	_lantern.light_energy = LANTERN_ENERGY
 	_lantern.omni_range = LANTERN_RANGE
+	_lantern.omni_attenuation = LANTERN_ATTENUATION
 	_lantern.shadow_enabled = false
 	_lantern.position = offset
 	# AtmosphereController scales every warm light from its base energy (default 1.0).

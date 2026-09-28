@@ -174,6 +174,9 @@ func test_at_most_three_corpses_emit_and_the_budget_holds() -> void:
 
 func test_emitters_are_billboard_unshaded_without_shadows() -> void:
 	var v := _visual()
+	# The injected config (colours, visibility range) applies with the first apply() – the
+	# emitters are built in _init from data/config (QA W3: the data may deviate from the fixture).
+	v.apply(0.05, &"rotten", false, false)
 	for p: CPUParticles3D in [v.flies_node, v.wisps_node, v.smoke_node]:
 		assert_eq(p.cast_shadow, GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, p.name)
 		assert_almost(p.visibility_range_end, cfg.visibility_range, 0.001, p.name + " visibility range")

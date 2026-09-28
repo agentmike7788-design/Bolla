@@ -12,6 +12,9 @@ extends Node3D
 ##   balm is active). At most DecayVisualConfig.max_emitting corpses emit at once (the rest
 ##   wait and take over when one stops); beyond visibility_range from the camera the emitters
 ##   are hidden and not processed.
+## - QA (W3, G4): a subtle fly cloud (FlyCloud: one billboard quad of painted ink specks, no
+##   particle) hovers over the body with the flies, so the flies read at the gameplay camera
+##   distance (22 m) where the single flies are below a pixel; it fades with the fly count.
 
 const OVERLAY_MATERIAL := preload("res://assets/materials/mat_decay_overlay.tres")
 const FLY_MATERIAL := preload("res://assets/materials/mat_vfx_fly.tres")
@@ -26,6 +29,17 @@ const AMOUNT_PARAM := &"amount"
 const STAGES: Array[StringName] = [&"fresh", &"wilted", &"decaying", &"rotten"]
 ## Seconds between the camera-distance checks.
 const RANGE_CHECK_SECONDS := 0.5
+## Fly cloud (QA W3): size (m), height over the body, ink colour, opacity at 10 flies, bobbing.
+const CLOUD_SIZE := Vector2(1.25, 0.6)
+const CLOUD_HEIGHT := 0.5
+const CLOUD_COLOR := Color("1F2A3A")
+const CLOUD_ALPHA := 0.6
+const CLOUD_FULL_FLIES := 10
+const CLOUD_BOB := 0.05
+## QA (W3, G4): P5's wisp / smoke are painted in a mid olive / grey as dark as the lawn; their
+## colours are lifted this far towards white (alpha and brush strokes kept) so the tint of
+## wisp_color / smoke_color reads on grass at the gameplay distance.
+const WISP_LIFT := 0.55
 
 ## null = Database (data/config/decay_visual_config.tres) → class defaults.
 var config: DecayVisualConfig
@@ -37,6 +51,7 @@ var target: Node3D
 var flies_node: CPUParticles3D
 var wisps_node: CPUParticles3D
 var smoke_node: CPUParticles3D
+var cloud_node: MeshInstance3D
 
 ## Visuals that currently emit / wait for a free emitter slot (max_emitting).
 static var _emitting: Array[CorpseDecayVisual] = []
@@ -50,6 +65,8 @@ var _smoke: bool = false
 var _in_range: bool = true
 var _range_left: float = 0.0
 var _colours_for: DecayVisualConfig
+var _cloud_time: float = 0.0
+static var _cloud_material: StandardMaterial3D
 
 
 func _init() -> void:
@@ -72,6 +89,9 @@ func _notification(what: int) -> void:
 func _process(delta: float) -> void:
 	if not is_emitting():
 		return
+	if cloud_node.visible:
+		_cloud_time += delta
+		cloud_node.position = Vector3(sin(_cloud_time * 0.7) * 0.06, CLOUD_HEIGHT + sin(_cloud_time * 1.9) * CLOUD_BOB, 0.0)
 	_range_left -= delta
 	if _range_left > 0.0:
 		return
@@ -185,9 +205,10 @@ static func total_live_particles() -> int:
 # --- internals ---------------------------------------------------------------------------
 
 func _build() -> void:
-	flies_node = _make_emitter("Flies", FLY_MATERIAL, FLY_ATLAS, Vector2(0.085, 0.085))
-	wisps_node = _make_emitter("Wisps", WISP_MATERIAL, WISP_TEXTURE, Vector2(0.55, 0.55))
-	smoke_node = _make_emitter("Smoke", SMOKE_MATERIAL, SMOKE_TEXTURE, Vector2(0.28, 0.55))
+	flies_node = _make_emitter("Flies", FLY_MATERIAL, FLY_ATLAS, Vector2(0.1, 0.1))
+	wisps_node = _make_emitter("Wisps", WISP_MATERIAL, WISP_TEXTURE, Vector2(0.59, 0.59))
+	smoke_node = _make_emitter("Smoke", SMOKE_MATERIAL, SMOKE_TEXTURE, Vector2(0.36, 0.59))
+	cloud_node = _make_cloud()
 	# Flies: dart around above the body (the corpses lie along local X, ~1.8 × 0.6 m).
 	flies_node.position = Vector3(0.0, 0.35, 0.0)
 	flies_node.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
@@ -212,31 +233,31 @@ func _build() -> void:
 		flies_node.anim_speed_min = 6.0
 		flies_node.anim_speed_max = 9.0
 	# Wisps: slow, curling rise from the body, fading out.
-	wisps_node.position = Vector3(0.0, 0.2, 0.0)
+	wisps_node.position = Vector3(0.0, 0.3, 0.0)
 	wisps_node.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
 	wisps_node.emission_box_extents = Vector3(0.55, 0.05, 0.15)
-	wisps_node.lifetime = 5.0
-	wisps_node.preprocess = 5.0
+	wisps_node.lifetime = 6.0
+	wisps_node.preprocess = 6.0
 	wisps_node.direction = Vector3(0, 1, 0)
 	wisps_node.spread = 20.0
-	wisps_node.initial_velocity_min = 0.06
-	wisps_node.initial_velocity_max = 0.12
+	wisps_node.initial_velocity_min = 0.09
+	wisps_node.initial_velocity_max = 0.15
 	wisps_node.tangential_accel_min = -0.05
 	wisps_node.tangential_accel_max = 0.05
 	wisps_node.angle_min = -40.0
 	wisps_node.angle_max = 40.0
 	wisps_node.angular_velocity_min = -12.0
 	wisps_node.angular_velocity_max = 12.0
-	wisps_node.scale_amount_min = 0.6
+	wisps_node.scale_amount_min = 0.8
 	wisps_node.scale_amount_max = 1.0
-	wisps_node.scale_amount_curve = _grow_curve(0.5)
+	wisps_node.scale_amount_curve = _grow_curve(0.55)
 	# Smoke: a thin juniper thread rising at the table edge (smoke bowl, W-Welt) and drifting
 	# over the body.
 	smoke_node.position = Vector3(0.55, 0.12, -0.38)
 	smoke_node.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
 	smoke_node.emission_sphere_radius = 0.04
-	smoke_node.lifetime = 4.0
-	smoke_node.preprocess = 4.0
+	smoke_node.lifetime = 5.0
+	smoke_node.preprocess = 5.0
 	smoke_node.direction = Vector3(-0.15, 1, -0.2)
 	smoke_node.spread = 12.0
 	smoke_node.initial_velocity_min = 0.1
@@ -245,7 +266,7 @@ func _build() -> void:
 	smoke_node.angle_max = 25.0
 	smoke_node.angular_velocity_min = -8.0
 	smoke_node.angular_velocity_max = 8.0
-	smoke_node.scale_amount_min = 0.7
+	smoke_node.scale_amount_min = 0.85
 	smoke_node.scale_amount_max = 1.0
 	smoke_node.scale_amount_curve = _grow_curve(0.35)
 	_apply_colours()
@@ -272,6 +293,58 @@ func _make_emitter(node_name: String, base: StandardMaterial3D, texture_path: St
 	return p
 
 
+## The fly cloud: one billboard quad (unshaded, transparent, no shadow), hidden until flies come.
+func _make_cloud() -> MeshInstance3D:
+	var m := MeshInstance3D.new()
+	m.name = "FlyCloud"
+	var quad := QuadMesh.new()
+	quad.size = CLOUD_SIZE
+	if _cloud_material == null:
+		_cloud_material = StandardMaterial3D.new()
+		_cloud_material.resource_name = "mat_vfx_fly_cloud"
+		_cloud_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_cloud_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_cloud_material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		_cloud_material.billboard_keep_scale = true
+		_cloud_material.albedo_color = CLOUD_COLOR
+		_cloud_material.albedo_texture = cloud_texture()
+		_cloud_material.disable_receive_shadows = true
+	quad.material = _cloud_material
+	m.mesh = quad
+	m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	m.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	m.position = Vector3(0.0, CLOUD_HEIGHT, 0.0)
+	m.visible = false
+	add_child(m)
+	return m
+
+
+## ph_vfx_fly_cloud: ~46 soft ink specks in a loose oval (white, alpha only; the material tints
+## them), denser towards the middle. Deterministic, 128 × 64, mipmapped – from afar the specks
+## melt into a faint dark shimmer, close up they are single flies.
+static func cloud_texture() -> ImageTexture:
+	var w := 128
+	var h := 64
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	img.fill(Color(1, 1, 1, 0))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1931
+	for i: int in 46:
+		var ang := rng.randf() * TAU
+		var r := sqrt(rng.randf()) * 0.9
+		var cx := w * 0.5 + cos(ang) * r * w * 0.46
+		var cy := h * 0.5 + sin(ang) * r * h * 0.4
+		var rad := rng.randf_range(1.2, 2.1)
+		for y: int in range(maxi(0, floori(cy - 3.0)), mini(h, ceili(cy + 3.0))):
+			for x: int in range(maxi(0, floori(cx - 3.0)), mini(w, ceili(cx + 3.0))):
+				var d := Vector2(x + 0.5 - cx, y + 0.5 - cy).length()
+				var a := clampf(1.0 - (d - rad * 0.5) / rad, 0.0, 1.0)
+				if a > img.get_pixel(x, y).a:
+					img.set_pixel(x, y, Color(1, 1, 1, a))
+	img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
+
+
 ## The base material with P5's painted texture once it exists; until then wisps and smoke get
 ## a brushed curl stroke painted in code (ph_ stand-in), flies keep the soft speck of the .tres.
 static func _material(base: StandardMaterial3D, texture_path: String) -> StandardMaterial3D:
@@ -281,7 +354,9 @@ static func _material(base: StandardMaterial3D, texture_path: String) -> Standar
 	var key := base.resource_path + "|" + texture_path + ("" if has_png else "|ph")
 	if not _textures.has(key):
 		var mat := base.duplicate() as StandardMaterial3D
-		if has_png:
+		if has_png and texture_path in [WISP_TEXTURE, SMOKE_TEXTURE]:
+			mat.albedo_texture = lifted_texture(load(texture_path) as Texture2D, WISP_LIFT)
+		elif has_png:
 			mat.albedo_texture = load(texture_path) as Texture2D
 		else:
 			mat.albedo_texture = curl_texture(texture_path == SMOKE_TEXTURE)
@@ -290,6 +365,23 @@ static func _material(base: StandardMaterial3D, texture_path: String) -> Standar
 			mat.particles_anim_loop = true
 		_textures[key] = mat
 	return _textures[key]
+
+
+## A copy of `tex` with its colours lifted `amount` towards white (alpha unchanged), mipmapped.
+static func lifted_texture(tex: Texture2D, amount: float) -> Texture2D:
+	var img := tex.get_image() if tex != null else null
+	if img == null:
+		return tex
+	if img.is_compressed():
+		img.decompress()
+	img.convert(Image.FORMAT_RGBA8)
+	img.clear_mipmaps()
+	for y: int in img.get_height():
+		for x: int in img.get_width():
+			var c := img.get_pixel(x, y)
+			img.set_pixel(x, y, Color(lerpf(c.r, 1.0, amount), lerpf(c.g, 1.0, amount), lerpf(c.b, 1.0, amount), c.a))
+	img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
 
 
 ## ph_vfx_curl: a soft, brushed curl stroke (white, alpha only) – smell wisp (two loose
@@ -339,6 +431,7 @@ func _apply_colours() -> void:
 		var p := node as CPUParticles3D
 		p.visibility_range_end = cfg.visibility_range
 	flies_node.visibility_range_end = cfg.visibility_range
+	cloud_node.visibility_range_end = cfg.visibility_range
 
 
 ## Fade in over `rise`, hold, fade out over the last third.
@@ -361,6 +454,10 @@ func _sync_particles() -> void:
 	_set_emitter(flies_node, _flies if active else 0)
 	_set_emitter(wisps_node, _wisps if active else 0)
 	_set_emitter(smoke_node, _config().smoke_particles if active and _smoke else 0)
+	var cloud := active and _flies > 0
+	cloud_node.visible = cloud
+	if cloud:
+		cloud_node.transparency = 1.0 - CLOUD_ALPHA * clampf(float(_flies) / CLOUD_FULL_FLIES, 0.0, 1.0)
 
 
 func _set_emitter(p: CPUParticles3D, count: int) -> void:

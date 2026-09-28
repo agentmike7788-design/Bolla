@@ -250,8 +250,9 @@ func test_npc_lantern_without_shadow() -> void:
 		return
 	assert_false(light.shadow_enabled)
 	assert_true(light.is_in_group(&"warm_lights"))
-	assert_almost(light.light_energy, 0.4)
-	assert_almost(light.omni_range, 3.0)
+	assert_almost(light.light_energy, Npc.LANTERN_ENERGY)
+	assert_almost(light.omni_range, Npc.LANTERN_RANGE)
+	assert_true(light.light_energy >= 1.0, "QA W3 (G4): reads at the west wall at night")
 	assert_true(light.light_color.is_equal_approx(Color("E8A55A")))
 
 

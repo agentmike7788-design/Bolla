@@ -71,6 +71,7 @@ func exam_all_minutes(id: String) -> int:
 func exam_step(id: String, step: StringName) -> Dictionary:
 	if step_block_reason(id, step) != "":
 		return {}
+	_refresh_decay(id)
 	var record := get_record(id)
 	var result := _resolve_step(record, step)
 	_finish_exam(record, [step] as Array[StringName], result)
@@ -83,6 +84,7 @@ func exam_all(id: String) -> Dictionary:
 	var steps := open_steps(id)
 	if steps.is_empty():
 		return {}
+	_refresh_decay(id)
 	var record := get_record(id)
 	var revealed: Array[StringName] = []
 	var lost: Array[StringName] = []
@@ -209,6 +211,7 @@ func harvest_block_reason(id: String, kind: StringName, inv: Inventory) -> Strin
 	var live := _live_reason(record)
 	if live != "":
 		return live
+	_refresh_decay(id)
 	var cfg := _util()
 	var known := GameState.has_flag(FLAG_TRADER_KNOWN)
 	var reason := String(harvest_rule.call(record, kind, inv, cfg, known)) if harvest_rule.is_valid() \
@@ -348,6 +351,13 @@ func _after_prep(record: CorpseRecord, action: StringName) -> void:
 			piety.event(EVENT_FULL_PREP, REASON_FULL_PREP)
 		GameState.add_stat(STAT_PREPARED, 1)
 	_notify(record.id)
+
+
+## The record's freshness of now (the hourly decay may lag in real-time play, QA4-01).
+func _refresh_decay(id: String) -> void:
+	var manager := _first(MANAGER_GROUP) as CorpseManager
+	if manager != null:
+		manager.refresh_decay(id)
 
 
 func _notify(id: String) -> void:

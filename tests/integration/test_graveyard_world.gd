@@ -1066,8 +1066,9 @@ func test_phase4_trader_walks_and_waits_at_the_west_wall() -> void:
 	assert_false(lantern.shadow_enabled, "no shadow")
 	assert_false(bool(lantern.get_meta(&"casts_shadow", false)))
 	assert_true(lantern.is_in_group(&"warm_lights"))
-	assert_almost(float(lantern.get_meta(&"base_energy", 0.0)), 0.4, 0.001, "§8: energy 0.4")
-	assert_almost(lantern.omni_range, 3.0, 0.001)
+	# §8 energy 0.4 / 3 m → QA W3 (G4): a warm pool on the ground that reads at night.
+	assert_almost(float(lantern.get_meta(&"base_energy", 0.0)), Npc.LANTERN_ENERGY, 0.001, "base energy")
+	assert_almost(lantern.omni_range, Npc.LANTERN_RANGE, 0.001)
 	var ledge := world.get_node("Decor/Phase4Props/WallLedge") as Node3D
 	assert_true(_flat(lantern.global_position - ledge.global_position).length() < 0.3,
 			"the lantern rests on the wall stone (%.2f m off)" % _flat(lantern.global_position - ledge.global_position).length())

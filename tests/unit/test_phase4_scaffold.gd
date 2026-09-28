@@ -218,6 +218,11 @@ func test_extended_data_classes() -> void:
 	assert_eq(CleanlinessConfig.new().penalty_by_level, PackedInt32Array([0, 0, 1, 3]), "§2.14 (a)")
 
 
+## Data that deviates from the W0 fixture after the G4 QA round (docs/reviews/phase4_wip/
+## qa_playthrough.md, QA4-02: the decay effects did not show at the default camera distance).
+const QA_DATA_DEVIATIONS := {&"decay_visual_config": ["wisp_color", "smoke_color", "visibility_range"]}
+
+
 func test_config_files_in_data_match_the_fixtures() -> void:
 	for name: StringName in Phase4Fixtures.CONFIG_NAMES:
 		var real := Database.config(name)
@@ -229,6 +234,8 @@ func test_config_files_in_data_match_the_fixtures() -> void:
 		assert_eq((real.get_script() as Script).get_global_name(), (fixture.get_script() as Script).get_global_name(), String(name))
 		for prop: Dictionary in real.get_property_list():
 			if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
+				if QA_DATA_DEVIATIONS.get(name, []).has(String(prop.name)):
+					continue
 				assert_eq(real.get(prop.name), fixture.get(prop.name), "%s.%s" % [name, prop.name])
 
 
