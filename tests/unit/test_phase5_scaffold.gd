@@ -344,6 +344,8 @@ func test_clearable_and_section_fixtures() -> void:
 	assert_eq([bruch.requires_flag, bruch.requires_flag_text], [&"bruch_license", "Die Pforte ist zu. Osric weiß, wer den Schlüssel hat."])
 	assert_eq(quarry.requires_section, &"bruch")
 	for real: SectionData in Database.sections():
+		if real.id in [&"bruch", &"quarry"]:
+			continue  # P2 (W1): the real work areas themselves
 		assert_true(bruch.order > real.order and quarry.order > real.order, "orders after %s" % real.id)
 
 
