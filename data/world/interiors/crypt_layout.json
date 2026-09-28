@@ -42,7 +42,7 @@
     {"asset": "ph_int_ossuary_shelf", "id": "OssuaryShelf", "pos": [-0.25, -4.17], "y": 0.15, "rot_y": 0.0, "mount": "floor", "collide": false,
       "interact": "ossuary_shelf", "scale": [0.9, 1.0, 1.0], "use_pos": [-0.25, -2.85], "reach": [2.4, 1.2, 1.6], "reach_offset": [0.0, 0.6, 0.5],
       "params": {"name_board": {"asset": "ph_int_name_board", "local": [0.0, 2.16, -0.22], "min_level": 3}}},
-    {"asset": "ph_int_sealed_passage", "id": "SealedPassage", "pos": [1.38, -3.8], "y": 0.15, "rot_y": -90.0, "mount": "wall", "collide": false,
+    {"asset": "ph_int_sealed_passage", "id": "SealedPassage", "pos": [1.02, -3.62], "y": 0.15, "rot_y": -38.0, "mount": "wall", "collide": false,
       "interact": "sealed_passage", "params": {"grille_asset": "ph_int_sealed_passage_grille"}, "reach": [1.4, 1.0, 1.6], "reach_offset": [0.0, 0.5, 0.7]},
     {"asset": "ph_int_bone_rack", "pos": [-2.0, 2.45], "rot_y": 180.0, "mount": "floor", "min_level": 2},
     {"asset": "ph_int_bucket", "pos": [2.35, 2.35], "rot_y": 25.0, "mount": "floor"},

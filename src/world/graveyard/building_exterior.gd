@@ -27,6 +27,8 @@ const FLICKER := preload("res://src/world/atmosphere/flicker_light.gd")
 const BELL_AMPLITUDE := 14.0
 const BELL_HZ := 0.8
 const BELL_SECONDS := 6.0
+## Window lights sit this far outside the wall (m).
+const WINDOW_OUT := 0.7
 
 @export var building_id: StringName
 ## Marker name → light config {color, energy, range, flicker} (layout "lights", baked by the builder).
@@ -125,7 +127,11 @@ func _attach(model: Node3D) -> void:
 		var cfg: Dictionary = lights.get(String(marker.name), {})
 		if cfg.is_empty():
 			continue
-		model.add_child(_make_light(String(marker.name), cfg, _rel(marker as Node3D, model)))
+		var xf := _rel(marker as Node3D, model)
+		if String(marker.name).begins_with("light_window"):
+			# The window markers sit in the wall plane: the glow goes outside onto the ground.
+			xf.origin.x += signf(xf.origin.x) * WINDOW_OUT
+		model.add_child(_make_light(String(marker.name), cfg, xf))
 
 
 func _make_light(marker_name: String, cfg: Dictionary, xform: Transform3D) -> OmniLight3D:

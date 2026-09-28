@@ -60,16 +60,16 @@ const P6_SHOTS: Array[Dictionary] = [
 			"corpses": [["table", ""]]},
 	{"name": "world_p6_07_crypt_int_l3_night", "levels": [3, 3, 3], "room": "crypt", "day": 30, "minute": 1350, "player": Vector2(-0.9, 1.0),
 			"corpses": [["table", ""], ["niche", "niche_1"], ["niche", "niche_4"], ["niche", "niche_5"]], "ossuary": 4},
-	{"name": "world_p6_08_ossuary_l2", "levels": [2, 2, 2], "room": "crypt", "day": 30, "minute": 660, "player": Vector2(0.6, -2.6),
+	{"name": "world_p6_08_ossuary_l2", "levels": [2, 2, 2], "room": "crypt", "day": 30, "minute": 660, "player": Vector2(2.0, -1.4),
 			"ossuary": 3, "zoom": 8.0},
-	{"name": "world_p6_08b_ossuary_l3_grille", "levels": [3, 3, 3], "room": "crypt", "day": 30, "minute": 1350, "player": Vector2(0.6, -2.6),
+	{"name": "world_p6_08b_ossuary_l3_grille", "levels": [3, 3, 3], "room": "crypt", "day": 30, "minute": 1350, "player": Vector2(2.0, -1.4),
 			"ossuary": 6, "zoom": 8.0},
 	{"name": "world_p6_09_chapel_int_l2_service", "levels": [2, 2, 2], "room": "chapel", "day": 30, "minute": 660, "player": Vector2(0.95, -3.9),
 			"corpses": [["catafalque", ""]], "rite": true},
 	{"name": "world_p6_10_chapel_int_l3_service", "levels": [3, 3, 3], "room": "chapel", "day": 30, "minute": 660, "player": Vector2(0.95, -3.9),
 			"corpses": [["catafalque", ""]], "rite": true},
 	{"name": "world_p6_11_chapel_int_l2_night_devotion", "levels": [2, 2, 2], "room": "chapel", "day": 30, "minute": 1350, "player": Vector2(0.0, -4.1),
-			"rite": true},
+			"rite": true, "mourners": false},
 	{"name": "world_p6_12_shed_int_l3", "levels": [3, 3, 3], "room": "shed", "day": 30, "minute": 660, "player": Vector2(0.1, 0.4)},
 	{"name": "world_p6_13_procession_gate", "levels": [2, 2, 2], "day": 30, "minute": 700, "focus": Vector2(4.5, -18.0), "distance": 22.0,
 			"player": Vector2(4.5, -19.6), "carry": true, "gate_open": true},
@@ -188,7 +188,8 @@ func _shoot(world: Node3D, shot: Dictionary, report: PackedStringArray) -> void:
 		rec.set(&"dress", &"shroud")
 		rec.set(&"shrouded", true)
 		_staged_corpses.append(String(rec.get(&"id")))
-	_set_rite(world, bool(shot.get("rite", false)), int(shot.levels[1]) if shot.has("levels") else _level(world, &"chapel"))
+	_set_rite(world, bool(shot.get("rite", false)), int(shot.levels[1]) if shot.has("levels") else _level(world, &"chapel"),
+			bool(shot.get("mourners", true)))
 	if room != null:
 		var stand: Vector2 = shot.player
 		var local := Vector3(stand.x, 0.0, stand.y)
@@ -218,6 +219,10 @@ func _shoot(world: Node3D, shot: Dictionary, report: PackedStringArray) -> void:
 		_system(world, "CorpseManager").call(&"pick_up", _staged_corpses.back(), player)
 	for i: int in 3:
 		await process_frame
+	# The clock was set without a tick: the outdoor dressing follows the time of the shot.
+	for ext: Node in world.find_children("Exterior", "", true, false):
+		if ext.has_method(&"refresh"):
+			ext.call(&"refresh")
 	rig.call(&"snap")
 	_refresh_npcs(world)
 	_refresh_corpses(world)
@@ -345,7 +350,7 @@ func _stage_ossuary(world: Node3D, n: int) -> void:
 
 
 ## The chapel rite (altar candles, bell, mourners of the level) on / off for the shot.
-func _set_rite(world: Node3D, on: bool, chapel_level: int) -> void:
+func _set_rite(world: Node3D, on: bool, chapel_level: int, with_mourners: bool = true) -> void:
 	var altar := world.get_node_or_null(^"Interiors/ChapelInterior/Entities/ChapelAltar")
 	if altar == null:
 		return
@@ -354,20 +359,36 @@ func _set_rite(world: Node3D, on: bool, chapel_level: int) -> void:
 	if mourners != null:
 		var cfg: Resource = root.get_node(^"Database").call(&"config", &"chapel_config")
 		var by_level: PackedInt32Array = cfg.get(&"mourners_by_level")
-		var n := by_level[clampi(chapel_level, 0, by_level.size() - 1)] if on else 0
+		var n := by_level[clampi(chapel_level, 0, by_level.size() - 1)] if on and with_mourners else 0
 		if n > 0:
 			mourners.call(&"show_mourners", n)
 		else:
 			mourners.call(&"hide_mourners")
 
 
-## Visible / shadowed lights of any kind in the tree that are drawn.
+## Lights (omni / spot) that are drawn: visible, lit, their range sphere inside the camera frustum,
+## and not in a room that is not shown (the hut is never hidden – its lights count only inside).
 func _all_lights(world: Node3D) -> Dictionary:
 	var vis := 0
 	var shadowed := 0
+	var cam := (world.get_node(^"CameraRig/Camera3D") as Camera3D)
+	var planes := cam.get_frustum()
+	var player := world.get_node(^"Player")
+	var in_hut: bool = player.get(&"interior_id") == &"hut"
+	var hut := world.get_node_or_null(^"HutInterior")
 	for node: Node in world.find_children("*", "Light3D", true, false):
 		var l := node as Light3D
 		if l is DirectionalLight3D or not l.is_visible_in_tree() or l.light_energy <= 0.01:
+			continue
+		if hut != null and hut.is_ancestor_of(l) and not in_hut:
+			continue
+		var r := float(l.get(&"omni_range")) if l is OmniLight3D else float(l.get(&"spot_range"))
+		var inside := true
+		for plane: Plane in planes:
+			if plane.distance_to(l.global_position) > r:
+				inside = false
+				break
+		if not inside:
 			continue
 		vis += 1
 		if l.shadow_enabled:

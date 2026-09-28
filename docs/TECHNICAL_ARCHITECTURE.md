@@ -174,3 +174,22 @@ Welt mit Werkhof (3 Stationen gebaut, Meiler brennt, 2 Steine in der Ablage), 18
 | CPU pro Frame (headless, Uhr läuft, Zoom 12 m, Median) | Tag 3,25 ms (Phase-5-Teile aus: 3,52) · Nacht 4,39 ms (aus: 3,66) | Phase-5-Anteil ≤ +0,2 ms ⚠️ nicht auflösbar |
 
 Hinweis CPU: Während der Messung liefen im Container weitere Godot-Prozesse (andere Sitzungen); dieselbe Phase-4-Sonde (`graveyard_shots_phase4.gd --cpu`) misst dabei 5,17 / 4,06 ms Median statt der oben dokumentierten 2,22 / 2,53 ms. Die Differenz „Phase-5-Teile an/aus" schwankt zwischen −0,3 und +0,7 ms von Lauf zu Lauf und ist damit Rauschen. Die Phase-5-Knoten haben kein `_process` (Bauplätze/Sammelstellen/Stationen nur über Signale, Meiler und Ablage ereignisgetrieben, Label3D statisch); der Rauch sind 6 CPU-Partikel. W3 misst auf ruhiger Hardware nach.
+
+### Messung Phase 6 – Welt (W-Welt, 1280×720, Software-Renderer lavapipe, `graveyard_shots_phase6.gd`)
+
+Start aus den v4-Fixtures (`slot_p5_day16_table` für p6_00, `slot_p5_day30_reverent` sonst: 18 gestaltete Gräber, 15 Zierstücke, 6 Geister nachts), alle drei Gebäude auf Stufe 3 (`perf_*`), Gruft voll belegt (Tisch + 6 Nischen, 6 Kisten), Kapelle während der Aussegnung mit 4 Trauergästen. Lichter = sichtbar, mit Energie und mit ihrer Reichweite im Kamera-Frustum (Innenräume nur, wenn aktiv). Rohdaten `docs/reviews/phase6_wip/world_p6_render_stats.txt`, `world_p6_cpu_stats.txt`.
+
+| Wert | Messung | Budget §9 |
+|---|---|---|
+| Kamera-Dreiecke inkl. Gras, Spiel-Zoom max. 24 m (`perf_p6_01/02/05`) | 371 k (Übersicht Tag) · 430 k (Kamm nachts, Kapelle St. 3) · 395 k (Alter Hof nachts, 3 verwesende Leichen, Gruft-Laterne) | < 500 k ✅ |
+| Draw Calls außen | 189 – 355 (Zoom 24 m), Hof vor der Hütte 28 m 266 | < 1 000 ✅ (erwartet ≤ 600) |
+| Draw Calls innen | Gruft voll nachts 90 · Kapelle Aussegnung St. 3 37 · Schuppen 16 | ≤ 250 je Raum ✅ |
+| Kamera-Dreiecke innen | Gruft 47 k · Kapelle 27 k · Schuppen 17 k | (Info) |
+| Lichter außen sichtbar / mit Schatten | Tag 5–16 / 0 · Nacht 11–20 / 1–2 (Hütten- und Pfostenlaterne; Gruft-Laterne, Kapellenfenster, Totenleuchter ohne Schatten) | ≤ 25 / ≤ 4 ✅ |
+| Lichter innen sichtbar / mit Schatten (nur der aktive Raum) | Gruft 6 / 1 (Hängelaterne) · Kapelle 7–9 / 1 (Innenraum-Sonne) · Schuppen 3 / 1 (Sonne; Laterne nachts statt Sonne) | ≤ 8 / ≤ 2 ✅ |
+| Partikel | außen 3–15 · Gruft voll 23 (Schacht 8 + Nischen-Hauch + Tisch-Leiche) · Kapelle 15 | ≤ 60 ✅ |
+| Spielstand | 141 kB (Tag 31, alle Gebäude St. 3, 3 Leichen in Nischen/Katafalk), Laden 267 ms inkl. Weltwechsel | < 300 kB, < 1 s ✅ |
+| CPU pro Frame (headless, Uhr läuft, Median) | Tag 5,13 ms (Phase-6-Teile aus: 4,82) · Nacht 4,35 ms (aus: 5,06) | Phase-6-Anteil ≤ +0,2 ms ⚠️ Rauschen (±0,7 ms, s. u.) |
+
+Hinweis CPU: wie in Phase 5 lief die Messung im geteilten Container (parallele Godot-Prozesse anderer Sitzungen); die Differenz „an/aus" hat je Tageszeit das umgekehrte Vorzeichen (+0,32 / −0,71 ms) und liegt im Rauschen. Die Phase-6-Knoten haben kein `_process` außer `BuildingExterior` der Kapelle (Glocke; eine Eigenschaftsabfrage je Frame), `chapel_rite_lights.gd` (4 Hz, nur im Kapellenraum) und dem Gitterlicht (nur ab Gruft 3 und nur sichtbar im Raum); Bauplätze, Türen, Nischen, Katafalk, Altar ereignisgetrieben; `InteriorLighting` läuft nur im aktiven Raum. W3 misst auf ruhiger Hardware nach.
+

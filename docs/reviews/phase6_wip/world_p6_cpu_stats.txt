@@ -1,0 +1,5 @@
+day: process mean 5.057 / median 5.134 / worst 5.289 ms per frame · nodes 3196
+night: process mean 4.789 / median 4.350 / worst 5.925 ms per frame · nodes 3268
+day_p6_off: process mean 4.689 / median 4.816 / worst 6.991 ms per frame · nodes 3268
+night_p6_off: process mean 5.187 / median 5.058 / worst 7.031 ms per frame · nodes 3268
+save slot 7: 140957 bytes · load 267 ms (incl. world change)
