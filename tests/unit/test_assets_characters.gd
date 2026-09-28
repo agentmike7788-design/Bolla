@@ -23,7 +23,14 @@ const CHARACTERS := {
 		"animations": {"idle": [1.6, 3.0], "walk": [0.4, 0.9], "push_cart": [0.5, 1.0], "talk": [1.6, 3.0]},
 		"one_shot": [],
 	},
+	# Phase 4 (docs/PHASE4_DESIGN.md §8): Ilse Kranich, the night trader
+	"ph_chr_kranich": {
+		"height": [1.78, 1.86],
+		"animations": {"idle": [1.6, 3.0], "walk": [0.6, 1.0], "talk": [1.6, 3.0], "offer": [0.8, 1.2]},
+		"one_shot": ["offer"],
+	},
 }
+const KRANICH_TRI_MAX := 9000  # PHASE4_DESIGN §8 budget (stricter than TRI_MAX)
 
 
 ## Offline pose evaluator for one imported character.
@@ -630,3 +637,105 @@ func test_animations_play_in_engine() -> void:
 			ap.play(a)
 			await tree.process_frame
 		inst.queue_free()
+
+
+# --- Ilse Kranich (Phase 4, P5) ---------------------------------------------------------
+
+func test_kranich_budget_and_silhouette() -> void:
+	var k := _rig("ph_chr_kranich")
+	var tris := _tris(k.mesh_instance.mesh)
+	assert_true(tris <= KRANICH_TRI_MAX, "kranich: %d tris <= %d" % [tris, KRANICH_TRI_MAX])
+	var hk := _rest_aabb(k).size.y
+	var hc := _rest_aabb(_rig("ph_chr_carter")).size.y
+	assert_true(hk - hc >= 0.12, "Ilse clearly taller than Osric (%.2f vs %.2f m)" % [hk, hc])
+	# gaunt: at belly height (0.75 .. 1.05 m) far narrower than the stout carter
+	var band: PackedVector3Array = []
+	for bone: String in ["hips", "spine"]:
+		for p: Vector3 in k.posed(null, bone, 0.0):
+			if p.y > 0.75 and p.y < 1.05 and p.z > -0.2:
+				band.append(p)
+	assert_true(_width(band) / hk < 0.26, "Ilse is narrow at the belly (%.2f m)" % _width(band))
+	# the wicker basket sits on her back (behind the spine, -Z), below the top of the hood
+	var back := -INF
+	for p: Vector3 in k.posed(null, "spine", 0.0):
+		back = maxf(back, -p.z)
+	assert_true(back > 0.35, "back-basket reaches %.2f m behind her" % back)
+
+
+func test_kranich_lantern_in_the_left_hand() -> void:
+	var r := _rig("ph_chr_kranich")
+	var marker := r.scene.find_child("light_lantern", true, false) as Node3D
+	assert_not_null(marker, "light_lantern marker")
+	if marker == null:
+		return
+	var att := marker.get_parent() as BoneAttachment3D
+	assert_not_null(att, "marker sits on a BoneAttachment3D")
+	if att:
+		assert_eq(att.bone_name, "arm_l", "the lantern swings with her left arm")
+	var p := _scene_pos(marker, r.scene)
+	assert_true(p.x > 0.2 and p.x < 0.4, "lantern on her left, clear of the coat (x %.2f)" % p.x)
+	assert_true(p.y > 0.5 and p.y < 0.8, "lantern hangs below the fist (y %.2f)" % p.y)
+	assert_true(p.y < r.hand(null, "arm_l", 0.0).y + 0.05, "light inside the lantern, under the hand")
+
+
+func test_kranich_coins_marker_in_the_right_hand() -> void:
+	var r := _rig("ph_chr_kranich")
+	var marker := r.scene.find_child("coins", true, false) as Node3D
+	assert_not_null(marker, "coins marker")
+	if marker == null:
+		return
+	var att := marker.get_parent() as BoneAttachment3D
+	assert_not_null(att, "coins marker on a BoneAttachment3D")
+	if att:
+		assert_eq(att.bone_name, "arm_r", "coins follow the right hand")
+	var p := _scene_pos(marker, r.scene)
+	assert_true(p.distance_to(r.hand(null, "arm_r", 0.0)) < 0.12, "coins at the right palm (%s)" % p)
+
+
+func test_kranich_walks_calmly() -> void:
+	_check_walk("ph_chr_kranich", "walk", 0.12, [1.1, 1.5])   # calm stride ~1.3 m/s (§8)
+
+
+func test_kranich_offer_hands_over_coins() -> void:
+	var r := _rig("ph_chr_kranich")
+	var anim := r.animation(&"offer")
+	var rest := r.hand(null, "arm_r", 0.0)
+	var reach := -INF
+	for k: int in 16:
+		reach = maxf(reach, r.hand(anim, "arm_r", anim.length * k / 16.0).z - rest.z)
+	assert_true(reach > 0.3, "offer: right hand reaches forward (%.2f m)" % reach)
+	for b: String in BONES:
+		var bi := r.skeleton.find_bone(b)
+		for t: float in [0.0, anim.length]:
+			var p := r.local_pose(anim, bi, t)
+			var rb := r.skeleton.get_bone_rest(bi)
+			assert_true(p.origin.distance_to(rb.origin) < 0.002 and
+					p.basis.get_rotation_quaternion().angle_to(rb.basis.get_rotation_quaternion()) < 0.01,
+					"offer: %s at rest at t=%.2f" % [b, t])
+	for leg: String in ["leg_l", "leg_r"]:
+		assert_almost(r.lowest_y(r.boot(anim, leg, anim.length * 0.5)), 0.0, 0.012, "offer: %s planted" % leg)
+
+
+func test_kranich_talks_with_the_free_hand() -> void:
+	var r := _rig("ph_chr_kranich")
+	var anim := r.animation(&"talk")
+	var moves := {}
+	for arm: String in ["arm_l", "arm_r"]:
+		var lo := Vector3(INF, INF, INF)
+		var hi := -lo
+		for k: int in 24:
+			var h := r.hand(anim, arm, anim.length * k / 24.0)
+			lo = lo.min(h)
+			hi = hi.max(h)
+		moves[arm] = (hi - lo).length()
+	assert_true(moves.arm_r > 0.12, "talk: right hand gestures (%.2f m)" % moves.arm_r)
+	assert_true(moves.arm_l < moves.arm_r * 0.3, "talk: the lantern hand stays still")
+
+
+func _scene_pos(node: Node, scene: Node) -> Vector3:
+	var xf := Transform3D.IDENTITY
+	var n: Node = node
+	while n != scene:
+		xf = (n as Node3D).transform * xf
+		n = n.get_parent()
+	return xf.origin
