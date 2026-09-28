@@ -4,8 +4,15 @@ extends RefCounted
 
 const LABEL_BURIED := "Bestattet"
 const LABEL_SHROUD := "Leichentuch"
+const LABEL_GOWN := "Totenhemd"
+const LABEL_WASHED := "Gewaschen"
+const LABEL_LAID_OUT := "Aufgebahrt"
 const LABEL_FRESH := "Frisch"
 const LABEL_DECAYING := "Verwesend"
+const LABEL_ROTTEN := "Verfallen"
+## Phase 4 §2.4: dress kind → line label; harvest kind → line label.
+const DRESS_LABELS: Dictionary[StringName, String] = {&"shroud": "Leichentuch", &"gown": "Totenhemd"}
+const HARVEST_LABELS: Dictionary[StringName, String] = {&"hair": "Haar genommen", &"teeth": "Zähne genommen"}
 const LABEL_EXAMINED := "Untersucht"
 const LABEL_VALUABLES_LEFT := "Wertsachen liegen gelassen"
 const LABEL_VALUABLES_TAKEN := "Wertsachen genommen"
@@ -14,8 +21,12 @@ const MARKER_LABELS: Dictionary[StringName, String] = {&"wooden_cross": "Holzkre
 const LABEL_MARKER_FALLBACK := "Grabzeichen"
 
 
-## [{label: String, points: int}] in display order. Unknown marker ids add no marker line.
-## Freshness uses freshness_at_burial once set (>= 0), else the current freshness.
+## [{label: String, points: int}] in display order (Phase 4 §2.4): Bestattet · Gewaschen ·
+## Leichentuch / Totenhemd · Aufgebahrt · marker · Frisch / Verwesend / Verfallen · Untersucht ·
+## Wertsachen · Haar / Zähne genommen. Unknown marker ids add no marker line.
+## Freshness uses freshness_at_burial once set (>= 0), else the current freshness; below
+## rot_threshold the rotten malus replaces the decaying one. A record without dress but
+## shrouded (older saves) counts as shroud.
 static func breakdown(corpse: CorpseRecord, marker_id: StringName, config: EconomyConfig) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if corpse == null:
@@ -23,13 +34,21 @@ static func breakdown(corpse: CorpseRecord, marker_id: StringName, config: Econo
 		return out
 	var cfg := _config(config)
 	out.append(_line(LABEL_BURIED, cfg.quality_buried))
-	if corpse.shrouded:
+	if corpse.washed:
+		out.append(_line(LABEL_WASHED, cfg.quality_washed))
+	if corpse.dress != CorpseRecord.DRESS_NONE and cfg.dress_quality.has(corpse.dress):
+		out.append(_line(DRESS_LABELS.get(corpse.dress, LABEL_SHROUD), cfg.dress_quality[corpse.dress]))
+	elif corpse.shrouded:
 		out.append(_line(LABEL_SHROUD, cfg.quality_shroud))
+	if corpse.laid_out:
+		out.append(_line(LABEL_LAID_OUT, cfg.quality_laid_out))
 	if cfg.marker_quality.has(marker_id):
 		out.append(_line(_marker_label(marker_id), cfg.marker_quality[marker_id]))
 	var fresh := corpse.freshness_at_burial if corpse.freshness_at_burial >= 0.0 else corpse.freshness
 	var stage := CorpseRecord.stage_for(fresh, cfg)
-	if stage == CorpseRecord.STAGE_FRESH:
+	if fresh < cfg.rot_threshold:
+		out.append(_line(LABEL_ROTTEN, cfg.rot_malus))
+	elif stage == CorpseRecord.STAGE_FRESH:
 		out.append(_line(LABEL_FRESH, cfg.fresh_good_bonus))
 	elif stage == CorpseRecord.STAGE_DECAYING:
 		out.append(_line(LABEL_DECAYING, cfg.fresh_bad_malus))
@@ -39,6 +58,9 @@ static func breakdown(corpse: CorpseRecord, marker_id: StringName, config: Econo
 		out.append(_line(LABEL_VALUABLES_LEFT, cfg.valuables_left_bonus))
 	elif corpse.valuables_decision == CorpseRecord.DECISION_TAKEN:
 		out.append(_line(LABEL_VALUABLES_TAKEN, cfg.valuables_taken_malus))
+	for kind: StringName in cfg.harvest_malus:
+		if corpse.is_harvested(kind):
+			out.append(_line(HARVEST_LABELS.get(kind, String(kind)), cfg.harvest_malus[kind]))
 	return out
 
 

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="FindData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/corpse/find_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"f_s5_hands"
+step = &"hands"
+label = "Hände"
+text = "Junge Hände, keine Schwielen vom Spaten. Lorenz hat dreißig Jahre gegraben."
+lost_text = "Die Hände sind schwarz vom Moor und aufgequollen. Wem sie gehört haben, verraten sie nicht mehr."
+min_freshness = 0.3
+trait_id = &""
+cause_id = &""
+story_only = true
+clue_id = &"c_soft_hands"
+sets_flag = &""

@@ -4,10 +4,14 @@ extends Node3D
 ## Occupancy is derived from the CorpseManager records (location &"table") – nothing is saved
 ## here, and after a load the corpse node lives under the Corpses container at its saved spot.
 ## Carrying + free table: put down. Free hands + occupied: opens the corpse_exam panel, whose
-## buttons call request_examine / request_shroud / decide_valuables / request_pick_up.
+## buttons call request_exam_step / request_exam_all / request_wash / request_dress /
+## request_lay_out / request_balm / request_harvest (Phase 4, via Systems/CorpseCare),
+## decide_valuables and request_pick_up; request_examine / request_shroud stay for the
+## Phase-2 panel. panel_state() is the read-only view model of the Phase-4 panel.
 
 const GROUP := &"morgue_table"
 const MANAGER_GROUP := &"corpse_manager"
+const CARE_GROUP := &"corpse_care"
 const SLOT_NAME := "slot_corpse"
 const EXAM_PANEL := &"corpse_exam"
 const SHROUD_ITEM := &"shroud"
@@ -20,6 +24,11 @@ const PROMPT_VIEW := "[E] Leiche ansehen"
 const PROMPT_OCCUPIED := "Der Tisch ist belegt"
 const LABEL_EXAMINE := "Untersuchen"
 const LABEL_SHROUD := "Leichentuch anlegen"
+const LABEL_GOWN := "Totenhemd anziehen"
+const LABEL_EXAM_ALL := "Gründlich untersuchen"
+const LABEL_WASH := "Waschen"
+const LABEL_LAY_OUT := "Aufbahren"
+const LABEL_BALM := "Mit Wacholder räuchern"
 const TEXT_NO_CORPSE := "Auf dem Tisch liegt keine Leiche."
 const TEXT_EXAMINED := "Die Leiche ist bereits untersucht."
 const TEXT_SHROUDED := "Die Leiche ist bereits eingehüllt."
@@ -74,13 +83,16 @@ func interact(player: Player) -> void:
 		EventBus.ui_panel_requested.emit(EXAM_PANEL, {"corpse_id": corpse_id, "table": self, "player": player})
 
 
-## Panel: examine the corpse on the table (timed examine_minutes, not cancellable).
+## Panel (Phase 2, compatibility): examine the corpse on the table – examine_minutes, not
+## cancellable. With a CorpseCare node every open step is resolved at the end (the Phase-2
+## panel showed everything at once); without one the Phase-2 flag only.
 func request_examine() -> void:
 	var record := _table_record()
 	var player := _acting_player()
+	var care := _care()
 	if record == null:
 		_warn(TEXT_NO_CORPSE)
-	elif record.examined:
+	elif (care == null and record.examined) or (care != null and care.open_steps(record.id).is_empty()):
 		_warn(TEXT_EXAMINED)
 	elif not _can_act(player):
 		_warn(TEXT_BUSY)
@@ -88,22 +100,9 @@ func request_examine() -> void:
 		player.start_timed_action(LABEL_EXAMINE, _actions(player).examine_minutes, _finish_examine.bind(record.id), false, ANIM)
 
 
-## Panel: wrap the corpse in a shroud (needs 1 shroud; locked while the valuables decision is open).
+## Panel (Phase 2, compatibility) = request_dress(&"shroud").
 func request_shroud() -> void:
-	var record := _table_record()
-	var player := _acting_player()
-	if record == null:
-		_warn(TEXT_NO_CORPSE)
-	elif record.shrouded:
-		_warn(TEXT_SHROUDED)
-	elif record.needs_valuables_decision():
-		_warn(TEXT_DECIDE_FIRST)
-	elif not _can_act(player):
-		_warn(TEXT_BUSY)
-	elif not player.inventory.has(SHROUD_ITEM):
-		_warn(TEXT_NO_SHROUD)
-	else:
-		player.start_timed_action(LABEL_SHROUD, _actions(player).shroud_minutes, _finish_shroud.bind(record.id, player.inventory), false, ANIM)
+	request_dress(CorpseRecord.DRESS_SHROUD)
 
 
 ## Panel: final valuables decision (take = coins now, quality and reputation suffer).
@@ -132,36 +131,90 @@ func request_pick_up() -> void:
 		_manager().pick_up(record.id, player)
 
 
-# --- Phase 4 panel calls (docs/PHASE4_DESIGN.md §3.4) – STUB (P2) ------------------------------
-# request_examine() becomes request_exam_step(&"clothing"), request_shroud() request_dress(&"shroud").
+# --- Phase 4 panel calls (docs/PHASE4_DESIGN.md §3.4) ---------------------------------------
+# Every call checks the CorpseCare reason first (a warning note otherwise), runs its minutes as
+# a timed action that cannot be cancelled and applies the result at the end (CorpseCare re-checks).
 
-func request_exam_step(_step: StringName) -> void:
-	pass
+## One examination step (ExamConfig minutes).
+func request_exam_step(step: StringName) -> void:
+	var record := _table_record()
+	var care := _care()
+	var player := _acting_player()
+	if not _ready_to_act(record, care, player):
+		return
+	var reason := care.step_block_reason(record.id, step)
+	if reason != "":
+		_warn(reason)
+		return
+	var cfg := care.get_exam_config()
+	var label := String(cfg.step(step).get("verb", LABEL_EXAMINE))
+	player.start_timed_action(label, cfg.step_minutes(step), _finish_exam_step.bind(record.id, step), false, ANIM)
 
 
 ## "Gründlich untersuchen": all open steps as one timed action, then CorpseCare.exam_all.
 func request_exam_all() -> void:
-	pass
+	var record := _table_record()
+	var care := _care()
+	var player := _acting_player()
+	if not _ready_to_act(record, care, player):
+		return
+	if care.open_steps(record.id).is_empty():
+		_warn(TEXT_EXAMINED)
+		return
+	player.start_timed_action(LABEL_EXAM_ALL, care.exam_all_minutes(record.id), _finish_exam_all.bind(record.id), false, ANIM)
 
 
 func request_wash() -> void:
-	pass
+	_request_prep(CorpsePrep.ACTION_WASH, &"", LABEL_WASH)
 
 
-func request_dress(_kind: StringName) -> void:
-	pass
+## kind: CorpseRecord.DRESS_SHROUD / DRESS_GOWN. Without a CorpseCare node the Phase-2 shroud.
+func request_dress(kind: StringName) -> void:
+	if _care() == null and kind == CorpseRecord.DRESS_SHROUD:
+		_request_shroud_phase2()
+		return
+	_request_prep(CorpsePrep.ACTION_DRESS, kind, LABEL_GOWN if kind == CorpseRecord.DRESS_GOWN else LABEL_SHROUD)
 
 
 func request_lay_out() -> void:
-	pass
+	_request_prep(CorpsePrep.ACTION_LAY_OUT, &"", LABEL_LAY_OUT)
 
 
 func request_balm() -> void:
-	pass
+	_request_prep(CorpsePrep.ACTION_BALM, &"", LABEL_BALM)
 
 
-func request_harvest(_kind: StringName) -> void:
-	pass
+## kind: CorpseRecord.HARVEST_HAIR / HARVEST_TEETH (UtilizationConfig minutes and verb). No
+## note while the button is hidden (trader not known).
+func request_harvest(kind: StringName) -> void:
+	var record := _table_record()
+	var care := _care()
+	var player := _acting_player()
+	if not _ready_to_act(record, care, player):
+		return
+	var reason := care.harvest_block_reason(record.id, kind, player.inventory)
+	if reason == UtilizationRules.HIDDEN:
+		return
+	if reason != "":
+		_warn(reason)
+		return
+	var entry := care.get_utilization_config().kind(kind)
+	player.start_timed_action(String(entry.get("verb", String(kind))), int(entry.get("minutes", 0)),
+			_finish_harvest.bind(record.id, kind, player.inventory), false, ANIM)
+
+
+## Everything the Phase-4 panel needs about the corpse on the table ({} = none): steps with
+## label / minutes / done / reason, open steps + minutes, finds per step (revealed / lost /
+## pending with text and clue), preparation lines with minutes / reason, harvest kinds with
+## reason (hidden = "-"), the loss forecast and the running juniper window.
+func panel_state() -> Dictionary:
+	var record := _table_record()
+	var care := _care()
+	var player := _acting_player()
+	if record == null or care == null:
+		return {}
+	var inv: Inventory = player.inventory if player != null else null
+	return MorgueTablePanelState.build(record, care, inv)
 
 
 ## The model's slot_corpse marker (the corpse is parented to it with identity transform).
@@ -176,8 +229,98 @@ func slot_transform() -> Transform3D:
 
 func _finish_examine(id: String) -> void:
 	var manager := _manager()
-	if manager != null and _is_on_table(id):
+	if manager == null or not _is_on_table(id):
+		return
+	var care := _care()
+	if care != null:
+		care.exam_all_instant(id)
+	else:
 		manager.examine(id)
+
+
+func _finish_exam_step(id: String, step: StringName) -> void:
+	var care := _care()
+	if care != null and _is_on_table(id):
+		care.exam_step(id, step)
+
+
+func _finish_exam_all(id: String) -> void:
+	var care := _care()
+	if care != null and _is_on_table(id):
+		care.exam_all(id)
+
+
+func _finish_prep(id: String, action: StringName, kind: StringName, inv: Inventory) -> void:
+	var care := _care()
+	if care == null or not _is_on_table(id):
+		return
+	var ok := false
+	match action:
+		CorpsePrep.ACTION_WASH:
+			ok = care.wash(id, inv)
+		CorpsePrep.ACTION_DRESS:
+			ok = care.dress(id, kind, inv)
+		CorpsePrep.ACTION_LAY_OUT:
+			ok = care.lay_out(id, inv)
+		CorpsePrep.ACTION_BALM:
+			ok = care.apply_balm(id, inv)
+	if not ok:
+		_warn(TEXT_BUSY)
+
+
+func _finish_harvest(id: String, kind: StringName, inv: Inventory) -> void:
+	var care := _care()
+	if care != null and _is_on_table(id) and not care.harvest(id, kind, inv):
+		var reason := care.harvest_block_reason(id, kind, inv)
+		_warn(reason if reason != "" and reason != UtilizationRules.HIDDEN else TEXT_BUSY)
+
+
+func _request_prep(action: StringName, kind: StringName, label: String) -> void:
+	var record := _table_record()
+	var care := _care()
+	var player := _acting_player()
+	if not _ready_to_act(record, care, player):
+		return
+	var reason := care.prep_block_reason(record.id, action, player.inventory, kind)
+	if reason != "":
+		_warn(reason)
+		return
+	player.start_timed_action(label, CorpsePrep.minutes(action, care.get_prep_config(), kind),
+			_finish_prep.bind(record.id, action, kind, player.inventory), false, ANIM)
+
+
+## Phase-2 shroud (no CorpseCare in the world): needs 1 shroud, locked while the valuables
+## decision is open.
+func _request_shroud_phase2() -> void:
+	var record := _table_record()
+	var player := _acting_player()
+	if record == null:
+		_warn(TEXT_NO_CORPSE)
+	elif record.shrouded:
+		_warn(TEXT_SHROUDED)
+	elif record.needs_valuables_decision():
+		_warn(TEXT_DECIDE_FIRST)
+	elif not _can_act(player):
+		_warn(TEXT_BUSY)
+	elif not player.inventory.has(SHROUD_ITEM):
+		_warn(TEXT_NO_SHROUD)
+	else:
+		player.start_timed_action(LABEL_SHROUD, _actions(player).shroud_minutes, _finish_shroud.bind(record.id, player.inventory), false, ANIM)
+
+
+## Table corpse, CorpseCare node and a free player – warns otherwise.
+func _ready_to_act(record: CorpseRecord, care: CorpseCare, player: Player) -> bool:
+	if record == null:
+		_warn(TEXT_NO_CORPSE)
+		return false
+	if care == null or not _can_act(player):
+		_warn(TEXT_BUSY)
+		return false
+	return true
+
+
+func _care() -> CorpseCare:
+	return get_tree().get_first_node_in_group(CARE_GROUP) as CorpseCare if is_inside_tree() else null
 
 
 func _finish_shroud(id: String, inv: Inventory) -> void:

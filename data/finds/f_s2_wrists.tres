@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="FindData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/corpse/find_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"f_s2_wrists"
+step = &"wounds"
+label = "Striemen"
+text = "Keine Wunde. Nur Striemen an den Handgelenken, als hätte er sich an etwas festgeklammert."
+lost_text = "An den Handgelenken ist die Haut aufgequollen. Was sie einmal gezeigt hat, hat das Wasser mitgenommen."
+min_freshness = 0.6
+trait_id = &""
+cause_id = &""
+story_only = true
+clue_id = &""
+sets_flag = &""

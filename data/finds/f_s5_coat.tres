@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="FindData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/corpse/find_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"f_s5_coat"
+step = &"clothing"
+label = "Totengräbermantel"
+text = "Ein langer, geflickter Totengräbermantel. Innen am Kragen gestickt: ‚L. Aschau'."
+lost_text = ""
+min_freshness = 0.0
+trait_id = &""
+cause_id = &""
+story_only = true
+clue_id = &"c_coat"
+sets_flag = &""

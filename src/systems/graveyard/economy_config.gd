@@ -14,9 +14,8 @@ extends Resource
 @export var valuables_left_bonus: int = 1
 @export var valuables_taken_malus: int = -2
 @export var quality_min: int = 0
-## Phase 4 §2.4: 13 – switched by P2 together with economy_config.tres and the "/10" UI tests
-## (PHASE4_DESIGN W0 note 4); until then 10.
-@export var quality_max: int = 10
+## Phase 4 §2.4: 13 (2+1+3+1+3+1+1+1). Graves finished before keep their saved quality.
+@export var quality_max: int = 13
 # Phase 4 (docs/PHASE4_DESIGN.md §2.4, §2.5)
 @export var quality_washed: int = 1
 @export var quality_laid_out: int = 1

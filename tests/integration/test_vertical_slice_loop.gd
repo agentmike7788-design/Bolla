@@ -114,7 +114,7 @@ func test_full_loop_day_one_and_save_roundtrip() -> void:
 	assert_eq(graveyard.get_grave("plot_01").state, GraveRecord.State.MARKED)
 	var loaded_plot := world.get_node_by_layout_id("plot_01") as GravePlot
 	assert_eq(loaded_plot.state, GraveRecord.State.MARKED, "visual restored")
-	assert_eq(loaded_plot.get_interaction_prompt(player), "Grab von %s – Qualität %d/10" % [record.display_name, grave.quality])
+	assert_eq(loaded_plot.get_interaction_prompt(player), "Grab von %s – Qualität %d/13" % [record.display_name, grave.quality])
 
 
 func test_day_two_delivery_with_valuables_and_decision() -> void:

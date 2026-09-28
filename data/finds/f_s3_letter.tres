@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="FindData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/corpse/find_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"f_s3_letter"
+step = &"pockets"
+label = "Ein Warnbrief"
+text = "Ein Warnbrief in derselben schrägen Hand: ‚Geh vor Martini, Ida. Nimm nicht die Nachtfähre, sie ist verraten.' Datiert drei Wochen, nachdem der alte Totengräber verschwand."
+lost_text = ""
+min_freshness = 0.0
+trait_id = &"letter"
+cause_id = &""
+story_only = true
+clue_id = &"c_letter_late"
+sets_flag = &""
