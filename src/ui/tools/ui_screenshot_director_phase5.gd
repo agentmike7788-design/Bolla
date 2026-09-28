@@ -397,7 +397,7 @@ func _zoom_shot() -> void:
 	var a := _world.get_node_by_layout_id("plot_01") as Node3D
 	var b := _world.get_node_by_layout_id("plot_02") as Node3D
 	var mid := (a.global_position + b.global_position) * 0.5
-	_place_player(mid + Vector3(0.0, 0.0, 4.2), PI)
+	_place_player(mid + Vector3(3.4, 0.0, 5.0), PI)
 	_frame(mid + Vector3(0.0, 0.0, 0.8), 10.0)
 	await get_tree().process_frame
 	_ui.notifications.clear()

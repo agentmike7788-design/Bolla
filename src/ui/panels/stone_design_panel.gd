@@ -533,7 +533,7 @@ func _refresh_rack(stones: Array[Dictionary]) -> void:
 		names.add_child(who)
 		var shape_data := Database.stone_shape(StringName(str(s.shape))) as StoneShapeData
 		var ok := bool(s.get("fits_still", true))
-		var state := UIKit.label("%s · %s" % [shape_data.display_name if shape_data != null else str(s.shape), TEXT_READY if ok else TEXT_STALE],
+		var state := UIKit.label("%s · %s" % [shape_data.display_name if shape_data != null else str(s.shape), TEXT_READY] if ok else TEXT_STALE,
 				&"InkDimLabel" if ok else &"LedgerWarnLabel")
 		state.clip_text = true
 		state.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS

@@ -25,7 +25,7 @@ const DEFAULT_SLOTS := 16
 
 @export var slot_edge: float = 104.0
 @export var icon_edge: float = 72.0
-@export var belt_cell_width: float = 176.0
+@export var belt_cell_width: float = 188.0
 
 var _grid: GridContainer
 var _coins: Label
@@ -166,7 +166,7 @@ func _belt_cell(icon_id: StringName, pale: bool, name: String, tier: int, toolti
 	cell.mouse_filter = Control.MOUSE_FILTER_PASS
 	cell.tooltip_text = tooltip
 	cell.set_meta(&"name", name)
-	var icon := UIKit.icon(Database.icon(icon_id) if icon_id != &"" else null, 52.0 if tiered else 46.0)
+	var icon := UIKit.icon(Database.icon(icon_id) if icon_id != &"" else null, 40.0 if tiered else 46.0)
 	icon.modulate = Color(1, 1, 1, 0.3) if pale else Color(1, 1, 1, 1)
 	if not tiered:
 		cell.custom_minimum_size = Vector2(62.0, 62.0)
@@ -185,7 +185,7 @@ func _belt_cell(icon_id: StringName, pale: bool, name: String, tier: int, toolti
 	var label := UIKit.label(name, &"DimLabel" if tier <= 0 else &"")
 	label.clip_text = true
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	label.custom_minimum_size.x = belt_cell_width - 80.0
+	label.custom_minimum_size.x = belt_cell_width - 62.0
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	texts.add_child(label)
 	var pips := UIKit.label("%s  %s" % [PIP_ON.repeat(maxi(tier, 0)) + PIP_OFF.repeat(maxi(2 - tier, 0)), Phase5Texts.BELT_TIER % tier],
