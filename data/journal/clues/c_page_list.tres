@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_page_list"
+title = "Die Liste der Sechs"
+text = "Ins Mantelfutter eingenäht: die letzte Seite aus Lorenz’ Kladde. Sechs Namen – Quendel. Hemmerling. Wernstein. Uhlig. Dorn. Der sechste ist vom Moorwasser verwischt. Darunter: ‚Unter dem Birkenhang ist es nicht still.‘"
+kind = &"page"
+order = 15

@@ -10,6 +10,16 @@ const CURRENT := 3
 ## steps 4–5). Used by P6 once the nodes exist in the world (W0: not yet inserted – an unknown
 ## save_id would warn).
 const V3_EMPTY_NODES: PackedStringArray = ["journal", "night_trade", "npc_trader"]
+## §5.2 step 1: piety from the valuables history (= PietyConfig.events valuables_taken / _left;
+## part of the format, not a balancing value).
+const PIETY_PER_TAKEN := -6
+const PIETY_PER_LEFT := 3
+const PIETY_MIN := -100
+const PIETY_MAX := 100
+## Generic find ids (§2.2, fixed by the contract): trait → find, cause → "f_cause_<cause>".
+const TRAIT_FINDS: Dictionary[StringName, StringName] = {&"valuables": &"f_valuables", &"letter": &"f_letter",
+		&"tattoo": &"f_tattoo", &"strange_wound": &"f_mark"}
+const CAUSE_FIND_PREFIX := "f_cause_"
 
 ## Save ids of the Phase-3 system nodes that get an empty state ({} = their default state,
 ## docs/PHASE3_DESIGN.md §3.1, §5.2 step 4). Reputation keeps its value in GameState, the
@@ -79,11 +89,98 @@ static func migrate_1_to_2(state: Dictionary, meta: Dictionary) -> Dictionary:
 	return out
 
 
-## STUB (P6) – docs/PHASE4_DESIGN.md §5.2 steps 1–7 on a deep copy of a v2 state. W0:
-## identity (fail-safe: a v2 save loads exactly as in Phase 3, every new field keeps its
-## default because every from_dict / load_state tolerates missing keys).
-static func migrate_2_to_3(state: Dictionary, _meta: Dictionary) -> Dictionary:
-	return state.duplicate(true)
+## docs/PHASE4_DESIGN.md §5.2 steps 1–7 on a deep copy of a v2 state (run exactly once).
+## Phase-3 saves keep everything they had; the new Phase-4 state is derived from the history:
+## piety from the valuables choices, dress / examination / finds from the records, the journal
+## is rebuilt quietly by JournalManager.post_load (sync_from_records) from finds_revealed.
+static func migrate_2_to_3(state: Dictionary, meta: Dictionary) -> Dictionary:
+	var out := state.duplicate(true)
+	var autoloads := _sub(out, "autoloads")
+	var nodes := _sub(out, "nodes")
+	var game_state := _sub(autoloads, "GameState")
+	var stats := _sub(game_state, "stats")
+	var flags := _sub(game_state, "flags")
+	var day := _save_day(meta, _sub(autoloads, "TimeManager"))
+	var corpse_state: Variant = nodes.get("corpse_manager")
+	var records: Array = []
+	if corpse_state is Dictionary and (corpse_state as Dictionary).get("corpses") is Array:
+		records = (corpse_state as Dictionary).corpses
+	# 1. Piety from the history: −6 per valuables taken, +3 per valuables left.
+	var left := 0
+	for r: Variant in records:
+		if r is Dictionary and String(str((r as Dictionary).get("valuables_decision", ""))) == String(CorpseRecord.DECISION_LEFT):
+			left += 1
+	var taken := _to_int(_get_key(stats, "valuables_taken"), 0)
+	_set_key(stats, "piety", clampi(PIETY_PER_TAKEN * taken + PIETY_PER_LEFT * left, PIETY_MIN, PIETY_MAX))
+	_set_key(stats, "utilized", 0)
+	_set_key(stats, "prepared", 0)
+	# 5. (stats part) no sales at Ilse's yet.
+	_set_key(stats, "trader_sales", 0)
+	# 2. Records: dress from shrouded; examined → all four steps, all traits, the generic finds
+	#    of its traits + the cause detail (Phase 2/3 showed everything at once – nothing lost).
+	for r: Variant in records:
+		if r is Dictionary:
+			_migrate_record(r)
+	# 3. CorpseManager: no story yet, no stench malus on the day of the load.
+	if corpse_state is Dictionary:
+		var cm := corpse_state as Dictionary
+		cm["story_delivered"] = [] as Array[String]
+		cm["story_last_day"] = 0
+		cm["stench_day"] = day
+	# 4./5. Empty states for the new system nodes (journal: rebuilt in post_load).
+	for id: String in V3_EMPTY_NODES:
+		if not nodes.get(id) is Dictionary:
+			nodes[id] = {}
+	# 5. No second daily piety recovery on the day of the load. trader_known stays unset: from
+	#    day 4 on the note comes at the next 06:00 (NightTrade.apply_morning).
+	if not _has_key(flags, "piety_last_day"):
+		_set_key(flags, "piety_last_day", day)
+	# 6. Graves unchanged (stored quality ≤ 10 stays); h_01…06 stay absent → Graveyard creates
+	#    them LOCKED from its section data. 7. Player, time, inventory, chest, decor, cleanliness,
+	#    ghosts: unchanged.
+	return out
+
+
+## §5.2 step 2 on one record dictionary (in place). Existing Phase-4 fields are kept.
+static func _migrate_record(r: Dictionary) -> void:
+	var shrouded := _is_true(r.get("shrouded"))
+	if not r.has("dress"):
+		r["dress"] = CorpseRecord.DRESS_SHROUD if shrouded else CorpseRecord.DRESS_NONE
+	var traits: Array[StringName] = []
+	var saved_traits: Variant = r.get("traits", [])
+	if saved_traits is Array:
+		for t: Variant in saved_traits:
+			if t is String or t is StringName:
+				traits.append(StringName(str(t)))
+	var examined := _is_true(r.get("examined"))
+	if not r.has("exam_done"):
+		r["exam_done"] = CorpseRecord.STEPS.duplicate() if examined else [] as Array[StringName]
+	if not r.has("traits_revealed"):
+		r["traits_revealed"] = traits.duplicate() if examined else [] as Array[StringName]
+	if not r.has("finds_revealed"):
+		r["finds_revealed"] = generic_finds(traits, StringName(str(r.get("cause_id", "")))) if examined else [] as Array[StringName]
+	var defaults := {
+		"story_id": &"", "finds_lost": [] as Array[StringName], "washed": false, "laid_out": false,
+		"harvested": [] as Array[StringName], "balm_windows": PackedInt32Array(), "stench_noted": false,
+	}
+	for key: String in defaults:
+		if not r.has(key):
+			r[key] = defaults[key]
+
+
+## The generic finds a Phase-2/3 examination showed at once, in step order (§2.1, §2.2):
+## hands (tattoo) → wounds (mark, cause detail) → pockets (valuables, letter).
+static func generic_finds(traits: Array[StringName], cause_id: StringName) -> Array[StringName]:
+	var out: Array[StringName] = []
+	for t: StringName in [&"tattoo", &"strange_wound"]:
+		if t in traits:
+			out.append(TRAIT_FINDS[t])
+	if cause_id != &"":
+		out.append(StringName(CAUSE_FIND_PREFIX + String(cause_id)))
+	for t: StringName in [&"valuables", &"letter"]:
+		if t in traits:
+			out.append(TRAIT_FINDS[t])
+	return out
 
 
 ## ReputationRules.migrate_v1 (§3.4): 0 → 40, −1 → 31, −2 → 22, −3 → 13, clamped 0…100.
@@ -128,6 +225,11 @@ static func _set_key(d: Dictionary, key: String, value: Variant) -> void:
 static func _erase_key(d: Dictionary, key: String) -> void:
 	d.erase(key)
 	d.erase(StringName(key))
+
+
+## Only a real bool true counts (damaged files may hold anything).
+static func _is_true(v: Variant) -> bool:
+	return typeof(v) == TYPE_BOOL and bool(v)
 
 
 static func _to_int(v: Variant, default: int) -> int:

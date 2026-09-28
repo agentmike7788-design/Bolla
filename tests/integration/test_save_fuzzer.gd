@@ -8,6 +8,8 @@ extends TestCase
 ##     survives another save → load).
 ## Engine errors (script errors, push_error) fail the test through the runner; warnings are the
 ## expected reaction to damaged values. Deterministic (fixed seed).
+## Phase 4 (P6, docs/PHASE4_DESIGN.md §10): the game save is now format v3 (migration 2 → 3 on
+## every v2 / v1 load), and the four Phase-3 fixtures (tests/fixtures/saves_v2/) are fuzzed too.
 
 const TIMEOUT := 600.0
 const SLOT := 94
@@ -17,6 +19,8 @@ const JSON_CASES := 70
 const NATIVE_CASES := 90
 const TRUNCATIONS := 16
 const V1_FIXTURES: PackedStringArray = ["slot_day3", "slot_day7_complete", "slot_interior"]
+## Share of the mutations per v2 fixture (four files – keeps the run time of one test bounded).
+const V2_FIXTURE_SHARE := 0.5
 const OK_TEXTS: PackedStringArray = [SaveManager.TEXT_CORRUPT, SaveManager.TEXT_NEWER_VERSION]
 
 var saves_dir := TestCase.user_dir("test_saves_fuzz")
@@ -40,9 +44,19 @@ func after_each() -> void:
 
 
 func test_fuzz_v2_save_of_a_phase3_game() -> void:
+	# Written by the current build: format v3 (the Phase-3 game state, saved in Phase 4).
 	var text := await _make_v2_save()
-	await _fuzz_text(text, "v2")
-	print("FUZZ v2: %d loaded, %d rejected" % [stats.ok, stats.rejected])
+	assert_eq(int((JSON.parse_string(text) as Dictionary).format_version), SaveFileIO.FORMAT_VERSION, "current format")
+	await _fuzz_text(text, "v3")
+	print("FUZZ v3: %d loaded, %d rejected" % [stats.ok, stats.rejected])
+
+
+func test_fuzz_v2_fixtures() -> void:
+	for id: String in Phase4Fixtures.SAVES_V2:
+		var text := FileAccess.get_file_as_string(Phase4Fixtures.save_v2_path(id))
+		assert_ne(text, "", id)
+		await _fuzz_text(text, id, V2_FIXTURE_SHARE)
+	print("FUZZ v2 fixtures: %d loaded, %d rejected" % [stats.ok, stats.rejected])
 
 
 func test_fuzz_v1_fixtures() -> void:
@@ -73,10 +87,11 @@ func test_version_and_meta_are_rejected_cleanly() -> void:
 
 # --- the fuzzing ------------------------------------------------------------------------------
 
-func _fuzz_text(text: String, label: String) -> void:
+func _fuzz_text(text: String, label: String, share: float = 1.0) -> void:
+	var truncations := maxi(1, roundi(TRUNCATIONS * share))
 	# 1. Truncated files (a crash while writing without the tmp rename, a full disk).
-	for i: int in TRUNCATIONS:
-		var at := int(float(text.length()) * float(i + 1) / float(TRUNCATIONS + 1))
+	for i: int in truncations:
+		var at := int(float(text.length()) * float(i + 1) / float(truncations + 1))
 		await _load_text(text.substr(0, at), "%s truncated at %d" % [label, at])
 	var doc: Variant = JSON.parse_string(text)
 	assert_true(doc is Dictionary, label)
@@ -85,7 +100,7 @@ func _fuzz_text(text: String, label: String) -> void:
 	# 2. JSON layer: a value of the file (inside the JSON.from_native envelope too) replaced.
 	var paths: Array = []
 	_collect_paths(doc, [], paths)
-	for i: int in JSON_CASES:
+	for i: int in maxi(1, roundi(JSON_CASES * share)):
 		var path: Array = paths[rng.randi() % paths.size()]
 		var d: Dictionary = (doc as Dictionary).duplicate(true)
 		var bad: Variant = _bad_value()
@@ -96,7 +111,7 @@ func _fuzz_text(text: String, label: String) -> void:
 	assert_false(state.is_empty(), label + " decodes")
 	var native_paths: Array = []
 	_collect_paths(state, [], native_paths)
-	for i: int in NATIVE_CASES:
+	for i: int in maxi(1, roundi(NATIVE_CASES * share)):
 		var path: Array = native_paths[rng.randi() % native_paths.size()]
 		var s := state.duplicate(true)
 		var bad: Variant = _bad_value()

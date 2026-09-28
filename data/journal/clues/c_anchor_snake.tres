@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_anchor_snake"
+title = "Anker und Schlange"
+text = "Am Unterarm eine verblasste Tätowierung: ein Anker, um den sich eine Schlange windet. Grob mit Nadel und Ruß gestochen, vor vielen Jahren, von jemandem, der es nicht gelernt hatte."
+kind = &"mark"
+order = 3

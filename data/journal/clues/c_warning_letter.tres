@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_warning_letter"
+title = "Ein Warnbrief"
+text = "Ein Brief ohne Anrede und ohne Unterschrift, in schräger Hand und brauner Tinte: ‚Geh fort, solange du noch gehen kannst. Sag keinem, wohin.‘ Wer ihn bekam, hat ihn gefaltet und bei sich getragen – bis zuletzt."
+kind = &"letter"
+order = 2

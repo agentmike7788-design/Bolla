@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_coat"
+title = "Lorenz’ Mantel"
+text = "Ein langer, vielfach geflickter Totengräbermantel. Innen am Kragen, in verblichenem Garn gestickt: ‚L. Aschau‘. Osric hat ihn schon von Weitem erkannt."
+kind = &"object"
+order = 12

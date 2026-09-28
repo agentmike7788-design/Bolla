@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="InsightData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/insight_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"i_marked"
+order = 2
+title = "Gezeichnet"
+question = "Wann wird das Zeichen geritzt?"
+text = "Das Zeichen wird Wochen vor dem Tod geritzt. Wer es trägt, ist ausgewählt – und jemand in Hollerbrück wählt aus."
+requires = Array[StringName]([&"c_mark", &"c_mark_healed", &"c_page_1"])
+sets_flag = &"insight_marked"
+optional = false
+rename_story = &""
+rename_to = ""

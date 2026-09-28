@@ -5,7 +5,7 @@ extends TestCase
 ## chain 1 → 2 → 3, and the W1 fixtures (tests/fixtures/phase4, Phase4Fixtures).
 
 ## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
-const IMPLEMENTED: PackedStringArray = []
+const IMPLEMENTED: PackedStringArray = ["JournalRules", "JournalManager"]  # P6
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
 	# P1
@@ -125,7 +125,8 @@ func test_node_stubs_instantiate_with_groups() -> void:
 		assert_eq(node.get(&"save_order"), spec[2], spec[0])
 		assert_true(node.is_in_group(&"saveable"), spec[0] + " saveable")
 		assert_true(node.is_in_group(spec[3]), "%s in group %s" % [spec[0], spec[3]])
-		assert_eq(node.call("save_state"), {}, spec[0] + " stub state")
+		if not IMPLEMENTED.has(spec[0]):
+			assert_eq(node.call("save_state"), {}, spec[0] + " stub state")
 		node.free()
 	for spec: Array in [["CorpseCare", &"corpse_care"], ["Piety", &"piety"]]:
 		var node: Node = (load(_path_of(spec[0])) as GDScript).new()
@@ -488,8 +489,10 @@ func test_save_format_v3_and_migration_chain() -> void:
 	assert_eq(SaveMigration.migrate(state, 3), state, "current version unchanged")
 	assert_eq(SaveMigration.migrate(state, 4), {}, "newer → corrupt")
 	var v3 := SaveMigration.migrate_2_to_3(state, {"day": 5})
-	assert_eq(v3, state, "W0: identity (P6 fills §5.2)")
+	# P6 filled §5.2 (tests/unit/test_save_migration.gd); the input stays untouched.
+	assert_eq(state.nodes, {"corpse_manager": {}}, "input unchanged")
 	assert_false(is_same(v3, state), "deep copy")
+	assert_true((v3.nodes as Dictionary).has_all(Array(SaveMigration.V3_EMPTY_NODES)), "empty v3 node states")
 	var from_v2 := SaveMigration.migrate(state, 2, {"day": 5})
 	assert_true(from_v2.get("autoloads") is Dictionary and from_v2.get("nodes") is Dictionary)
 	var from_v1 := SaveMigration.migrate(state, 1, {"day": 5})

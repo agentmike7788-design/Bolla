@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_trader_marked"
+title = "„Die gehören schon jemandem“"
+text = "Die mit dem Zeichen kaufe ich nicht. Die gehören schon jemandem. Frag mich nicht, wem."
+kind = &"talk"
+order = 18

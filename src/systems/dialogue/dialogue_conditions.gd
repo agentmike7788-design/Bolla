@@ -5,6 +5,10 @@ extends RefCounted
 ## TimeManager and the context inventory; changes nothing. Stateless.
 ## Phase 3 adds: day_gte:<n> (TimeManager.day >= n) · day_odd · day_even (odd-day deliveries
 ## at "Verrufen", docs/PHASE3_DESIGN.md §2.7).
+## Phase 4 (docs/PHASE4_DESIGN.md §3.4): piety_tier:<id> (tier of stats.piety equals id, §2.7) ·
+## trader_talks_gte:<n> (nights talked with Ilse, NightTrade) · clue_known:<id> (journal clue,
+## flag clue_<id>) · flag_night:<name> (flag value == the current night, a night starts 12:00).
+## stat_gte / stat_lt take negative numbers (piety).
 
 enum _Result { FALSE, TRUE, INVALID }
 
@@ -83,7 +87,53 @@ static func _evaluate(text: String, context: Dictionary) -> _Result:
 			if text.contains(":"):
 				return _Result.INVALID
 			return _bool((TimeManager.day % 2 == 1) == (text == "day_odd"))
+		# Phase 4 (docs/PHASE4_DESIGN.md §2.6, §2.7, §3.4).
+		"piety_tier":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or not StringName(p[0]) in JournalRules.PIETY_TIERS:
+				return _Result.INVALID
+			return _bool(piety_tier() == StringName(p[0]))
+		"trader_talks_gte":
+			var p := DialogueSyntax.parts(text, 1)
+			var n: Variant = DialogueSyntax.int_arg(p, 0, null)
+			if n == null:
+				return _Result.INVALID
+			return _bool(trader_talks() >= int(n))
+		"clue_known":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			return _bool(GameState.get_flag(StringName(JournalManager.CLUE_FLAG_PREFIX + p[0])))
+		"flag_night":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			var value: Variant = GameState.get_flag(StringName(p[0]))
+			return _bool((value is int or value is float) and int(value) == night_id())
 	return _Result.INVALID
+
+
+## Tier of GameState.stats.piety (§2.7 thresholds from data/config/piety_config.tres).
+static func piety_tier() -> StringName:
+	var cfg: PietyConfig = null
+	if Database.has_method(&"config"):
+		cfg = Database.config(&"piety_config") as PietyConfig
+	return JournalRules.piety_tier(GameState.get_stat(&"piety"), cfg)
+
+
+## Nights talked with Ilse (NightTrade state "talks"); 0 without the system.
+static func trader_talks() -> int:
+	var trade := DialogueSyntax.system(&"night_trade")
+	if trade == null or not trade.has_method(&"save_state"):
+		return 0
+	var state: Variant = trade.call(&"save_state")
+	var talks: Variant = (state as Dictionary).get("talks", 0) if state is Dictionary else 0
+	return int(talks) if (talks is int or talks is float) else 0
+
+
+## The current night (GhostManager.night_index: a night starts at 12:00).
+static func night_id() -> int:
+	return GhostManager.night_index(TimeManager.day, TimeManager.minute_of_day)
 
 
 ## a <= t < b; a > b wraps over midnight; a == b is an empty window.

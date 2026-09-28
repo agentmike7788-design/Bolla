@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_mark_healed"
+title = "Ein verheiltes Zeichen"
+text = "Das Dreistrich-Zeichen über Ida Wernsteins Herzen ist längst vernarbt – blass und glatt wie eine alte Brandnarbe. Sie trug es seit Wochen, nicht erst seit ihrer letzten Stunde."
+kind = &"mark"
+order = 8

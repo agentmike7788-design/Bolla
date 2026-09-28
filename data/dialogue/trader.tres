@@ -1,0 +1,541 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1_0vtyj"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2_cdonk"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3_0t3rl"]
+
+[sub_resource type="Resource" id="choice_001"]
+script = ExtResource("2_cdonk")
+text = "Du hast den Zettel an meine Tür gesteckt."
+next = &"first_note"
+
+[sub_resource type="Resource" id="choice_002"]
+script = ExtResource("2_cdonk")
+text = "Was willst du von mir?"
+next = &"first_note"
+
+[sub_resource type="Resource" id="node_first_meet"]
+script = ExtResource("1_0vtyj")
+id = &"first_meet"
+text = "Da bist du ja. Ich dachte mir, dass du kommst. Die Neuen kommen immer in der ersten Nacht, aus Neugier – und in der zweiten aus einem anderen Grund. Ilse Kranich. Unten im Dorf sagen sie Kranichfrau, wegen der Feder. Ich habe nichts dagegen. Kraniche ziehen auch nachts."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_001"), SubResource("choice_002")])
+conditions = Array[String](["!flag:trader_met"])
+fallback_next = &"gift_retry"
+actions = Array[String](["set_flag:trader_met", "set_flag_night:trader_greeted", "trader_talked"])
+
+[sub_resource type="Resource" id="choice_003"]
+script = ExtResource("2_cdonk")
+text = "Ich nehme den Toten nichts."
+next = &"first_gift"
+actions = Array[String](["trader_tools"])
+
+[sub_resource type="Resource" id="choice_004"]
+script = ExtResource("2_cdonk")
+text = "Was zahlst du?"
+next = &"first_gift"
+actions = Array[String](["trader_tools"])
+
+[sub_resource type="Resource" id="node_first_note"]
+script = ExtResource("1_0vtyj")
+id = &"first_note"
+text = "Wollen? Nichts. Ich nehme ab, was andere nicht behalten wollen. Haar für die Perückenmacher in der Stadt, Zähne für die Zahnbrecher, Leinen aus Nachlässen. Die Stillen brauchen es nicht mehr. Ob du es ihnen nimmst, ist deine Sache, nicht meine. Ich feilsche nicht, und ich frage nicht, woher etwas kommt."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_003"), SubResource("choice_004")])
+
+[sub_resource type="Resource" id="choice_005"]
+script = ExtResource("2_cdonk")
+text = "Zeig mir, was du hast."
+actions = Array[String](["open_panel:trader"])
+
+[sub_resource type="Resource" id="choice_006"]
+script = ExtResource("2_cdonk")
+text = "Ich habe noch Fragen."
+next = &"menu"
+
+[sub_resource type="Resource" id="choice_007"]
+script = ExtResource("2_cdonk")
+text = "Gute Nacht, Ilse."
+next = &"goodbye"
+
+[sub_resource type="Resource" id="node_first_gift"]
+script = ExtResource("1_0vtyj")
+id = &"first_gift"
+text = "Wie du willst. Nimm trotzdem das hier: eine Schere und eine Zange, gut geschliffen. Einer hat sie mir dagelassen, der sie nicht mehr brauchte. Man kann sie auch für anderes nehmen. Man tut es nur selten. Ich stehe jede Nacht hier, von elf bis drei. Leinen und Wacholder habe ich immer, billiger als der Kutscher. Sag es ihm nicht, er ist empfindlich."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_005"), SubResource("choice_006"), SubResource("choice_007")])
+conditions = Array[String](["flag:trader_tools_given"])
+fallback_next = &"first_gift_full"
+
+[sub_resource type="Resource" id="choice_008"]
+script = ExtResource("2_cdonk")
+text = "Ich komme wieder."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_first_gift_full"]
+script = ExtResource("1_0vtyj")
+id = &"first_gift_full"
+text = "Deine Taschen sind voll, Totengräber. Komm wieder, wenn du Platz hast. Ich habe Zeit."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_008")])
+
+[sub_resource type="Resource" id="choice_009"]
+script = ExtResource("2_cdonk")
+text = "Ja, gib her."
+next = &"first_gift"
+actions = Array[String](["trader_tools"])
+
+[sub_resource type="Resource" id="choice_010"]
+script = ExtResource("2_cdonk")
+text = "Noch nicht."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_gift_retry"]
+script = ExtResource("1_0vtyj")
+id = &"gift_retry"
+text = "Hast du jetzt Platz? Die Schere und die Zange liegen noch in meiner Kiepe. Leichter werden sie nicht."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_009"), SubResource("choice_010")])
+conditions = Array[String](["flag:trader_met", "!flag:trader_tools_given"])
+fallback_next = &"greet_devout"
+actions = Array[String](["set_flag_night:trader_greeted", "trader_talked"])
+
+[sub_resource type="Resource" id="choice_011"]
+script = ExtResource("2_cdonk")
+text = "Handeln."
+actions = Array[String](["open_panel:trader"])
+
+[sub_resource type="Resource" id="choice_012"]
+script = ExtResource("2_cdonk")
+text = "Wer bist du, Ilse?"
+next = &"who"
+
+[sub_resource type="Resource" id="choice_013"]
+script = ExtResource("2_cdonk")
+text = "Kanntest du den alten Totengräber?"
+next = &"ask_lorenz"
+conditions = Array[String](["trader_talks_gte:3"])
+
+[sub_resource type="Resource" id="choice_014"]
+script = ExtResource("2_cdonk")
+text = "Kanntest du den alten Totengräber?"
+next = &"ask_lorenz"
+conditions = Array[String](["!trader_talks_gte:3", "stat_gte:trader_sales:4"])
+
+[sub_resource type="Resource" id="choice_015"]
+script = ExtResource("2_cdonk")
+text = "Die mit dem Zeichen …?"
+next = &"ask_marked"
+conditions = Array[String](["clue_known:c_mark"])
+
+[sub_resource type="Resource" id="choice_016"]
+script = ExtResource("2_cdonk")
+text = "Die Holunderblüte an deiner Kiepe …"
+next = &"ask_blossom"
+conditions = Array[String](["flag:insight_kranich"])
+
+[sub_resource type="Resource" id="choice_017"]
+script = ExtResource("2_cdonk")
+text = "Gute Nacht, Ilse."
+next = &"goodbye"
+
+[sub_resource type="Resource" id="node_greet_devout"]
+script = ExtResource("1_0vtyj")
+id = &"greet_devout"
+text = "Du kommst mit leeren Händen. Das steht dir."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_011"), SubResource("choice_012"), SubResource("choice_013"), SubResource("choice_014"), SubResource("choice_015"), SubResource("choice_016"), SubResource("choice_017")])
+conditions = Array[String](["piety_tier:devout", "!flag_night:trader_greeted"])
+fallback_next = &"greet_considerate"
+actions = Array[String](["set_flag_night:trader_greeted", "trader_talked"])
+
+[sub_resource type="Resource" id="choice_018"]
+script = ExtResource("2_cdonk")
+text = "Handeln."
+actions = Array[String](["open_panel:trader"])
+
+[sub_resource type="Resource" id="choice_019"]
+script = ExtResource("2_cdonk")
+text = "Wer bist du, Ilse?"
+next = &"who"
+
+[sub_resource type="Resource" id="choice_020"]
+script = ExtResource("2_cdonk")
+text = "Kanntest du den alten Totengräber?"
+next = &"ask_lorenz"
+conditions = Array[String](["trader_talks_gte:3"])
+
+[sub_resource type="Resource" id="choice_021"]
+script = ExtResource("2_cdonk")
+text = "Kanntest du den alten Totengräber?"
+next = &"ask_lorenz"
+conditions = Array[String](["!trader_talks_gte:3", "stat_gte:trader_sales:4"])
+
+[sub_resource type="Resource" id="choice_022"]
+script = ExtResource("2_cdonk")
+text = "Die mit dem Zeichen …?"
+next = &"ask_marked"
+conditions = Array[String](["clue_known:c_mark"])
+
+[sub_resource type="Resource" id="choice_023"]
+script = ExtResource("2_cdonk")
+text = "Die Holunderblüte an deiner Kiepe …"
+next = &"ask_blossom"
+conditions = Array[String](["flag:insight_kranich"])
+
+[sub_resource type="Resource" id="choice_024"]
+script = ExtResource("2_cdonk")
+text = "Gute Nacht, Ilse."
+next = &"goodbye"
+
+[sub_resource type="Resource" id="node_greet_considerate"]
+script = ExtResource("1_0vtyj")
+id = &"greet_considerate"
+text = "Nur zum Reden? Auch gut. Die Nacht ist lang."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_018"), SubResource("choice_019"), SubResource("choice_020"), SubResource("choice_021"), SubResource("choice_022"), SubResource("choice_023"), SubResource("choice_024")])
+conditions = Array[String](["piety_tier:considerate", "!flag_night:trader_greeted"])
+fallback_next = &"greet_matter_of_fact"
+actions = Array[String](["set_flag_night:trader_greeted", "trader_talked"])
+
+[sub_resource type="Resource" id="choice_025"]
+script = ExtResource("2_cdonk")
+text = "Handeln."
+actions = Array[String](["open_panel:trader"])
+
+[sub_resource type="Resource" id="choice_026"]
+script = ExtResource("2_cdonk")
+text = "Wer bist du, Ilse?"
+next = &"who"
+
+[sub_resource type="Resource" id="choice_027"]
+script = ExtResource("2_cdonk")
+text = "Kanntest du den alten Totengräber?"
+next = &"ask_lorenz"
+conditions = Array[String](["trader_talks_gte:3"])
+
+[sub_resource type="Resource" id="choice_028"]
+script = ExtResource("2_cdonk")
+text = "Kanntest du den alten Totengräber?"
+next = &"ask_lorenz"
+conditions = Array[String](["!trader_talks_gte:3", "stat_gte:trader_sales:4"])
+
+[sub_resource type="Resource" id="choice_029"]
+script = ExtResource("2_cdonk")
+text = "Die mit dem Zeichen …?"
+next = &"ask_marked"
+conditions = Array[String](["clue_known:c_mark"])
+
+[sub_resource type="Resource" id="choice_030"]
+script = ExtResource("2_cdonk")
+text = "Die Holunderblüte an deiner Kiepe …"
+next = &"ask_blossom"
+conditions = Array[String](["flag:insight_kranich"])
+
+[sub_resource type="Resource" id="choice_031"]
+script = ExtResource("2_cdonk")
+text = "Gute Nacht, Ilse."
+next = &"goodbye"
+
+[sub_resource type="Resource" id="node_greet_matter_of_fact"]
+script = ExtResource("1_0vtyj")
+id = &"greet_matter_of_fact"
+text = "Guten Abend, Totengräber. Was bringen die Stillen heute?"
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_025"), SubResource("choice_026"), SubResource("choice_027"), SubResource("choice_028"), SubResource("choice_029"), SubResource("choice_030"), SubResource("choice_031")])
+conditions = Array[String](["piety_tier:matter_of_fact", "!flag_night:trader_greeted"])
+fallback_next = &"greet_callous"
+actions = Array[String](["set_flag_night:trader_greeted", "trader_talked"])
+
+[sub_resource type="Resource" id="choice_032"]
+script = ExtResource("2_cdonk")
+text = "Handeln."
+actions = Array[String](["open_panel:trader"])
+
+[sub_resource type="Resource" id="choice_033"]
+script = ExtResource("2_cdonk")
+text = "Wer bist du, Ilse?"
+next = &"who"
+
+[sub_resource type="Resource" id="choice_034"]
+script = ExtResource("2_cdonk")
+text = "Kanntest du den alten Totengräber?"
+next = &"ask_lorenz"
+conditions = Array[String](["trader_talks_gte:3"])
+
+[sub_resource type="Resource" id="choice_035"]
+script = ExtResource("2_cdonk")
+text = "Kanntest du den alten Totengräber?"
+next = &"ask_lorenz"
+conditions = Array[String](["!trader_talks_gte:3", "stat_gte:trader_sales:4"])
+
+[sub_resource type="Resource" id="choice_036"]
+script = ExtResource("2_cdonk")
+text = "Die mit dem Zeichen …?"
+next = &"ask_marked"
+conditions = Array[String](["clue_known:c_mark"])
+
+[sub_resource type="Resource" id="choice_037"]
+script = ExtResource("2_cdonk")
+text = "Die Holunderblüte an deiner Kiepe …"
+next = &"ask_blossom"
+conditions = Array[String](["flag:insight_kranich"])
+
+[sub_resource type="Resource" id="choice_038"]
+script = ExtResource("2_cdonk")
+text = "Gute Nacht, Ilse."
+next = &"goodbye"
+
+[sub_resource type="Resource" id="node_greet_callous"]
+script = ExtResource("1_0vtyj")
+id = &"greet_callous"
+text = "Du bist schneller geworden. Das geht vielen so."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_032"), SubResource("choice_033"), SubResource("choice_034"), SubResource("choice_035"), SubResource("choice_036"), SubResource("choice_037"), SubResource("choice_038")])
+conditions = Array[String](["piety_tier:callous", "!flag_night:trader_greeted"])
+fallback_next = &"greet_hardhearted"
+actions = Array[String](["set_flag_night:trader_greeted", "trader_talked"])
+
+[sub_resource type="Resource" id="choice_039"]
+script = ExtResource("2_cdonk")
+text = "Handeln."
+actions = Array[String](["open_panel:trader"])
+
+[sub_resource type="Resource" id="choice_040"]
+script = ExtResource("2_cdonk")
+text = "Wer bist du, Ilse?"
+next = &"who"
+
+[sub_resource type="Resource" id="choice_041"]
+script = ExtResource("2_cdonk")
+text = "Kanntest du den alten Totengräber?"
+next = &"ask_lorenz"
+conditions = Array[String](["trader_talks_gte:3"])
+
+[sub_resource type="Resource" id="choice_042"]
+script = ExtResource("2_cdonk")
+text = "Kanntest du den alten Totengräber?"
+next = &"ask_lorenz"
+conditions = Array[String](["!trader_talks_gte:3", "stat_gte:trader_sales:4"])
+
+[sub_resource type="Resource" id="choice_043"]
+script = ExtResource("2_cdonk")
+text = "Die mit dem Zeichen …?"
+next = &"ask_marked"
+conditions = Array[String](["clue_known:c_mark"])
+
+[sub_resource type="Resource" id="choice_044"]
+script = ExtResource("2_cdonk")
+text = "Die Holunderblüte an deiner Kiepe …"
+next = &"ask_blossom"
+conditions = Array[String](["flag:insight_kranich"])
+
+[sub_resource type="Resource" id="choice_045"]
+script = ExtResource("2_cdonk")
+text = "Gute Nacht, Ilse."
+next = &"goodbye"
+
+[sub_resource type="Resource" id="node_greet_hardhearted"]
+script = ExtResource("1_0vtyj")
+id = &"greet_hardhearted"
+text = "Du hast gelernt, nicht hinzusehen. Ich hab's dir nicht beigebracht."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_039"), SubResource("choice_040"), SubResource("choice_041"), SubResource("choice_042"), SubResource("choice_043"), SubResource("choice_044"), SubResource("choice_045")])
+conditions = Array[String](["piety_tier:hardhearted", "!flag_night:trader_greeted"])
+fallback_next = &"menu"
+actions = Array[String](["set_flag_night:trader_greeted", "trader_talked"])
+
+[sub_resource type="Resource" id="choice_046"]
+script = ExtResource("2_cdonk")
+text = "Handeln."
+actions = Array[String](["open_panel:trader"])
+
+[sub_resource type="Resource" id="choice_047"]
+script = ExtResource("2_cdonk")
+text = "Wer bist du, Ilse?"
+next = &"who"
+
+[sub_resource type="Resource" id="choice_048"]
+script = ExtResource("2_cdonk")
+text = "Kanntest du den alten Totengräber?"
+next = &"ask_lorenz"
+conditions = Array[String](["trader_talks_gte:3"])
+
+[sub_resource type="Resource" id="choice_049"]
+script = ExtResource("2_cdonk")
+text = "Kanntest du den alten Totengräber?"
+next = &"ask_lorenz"
+conditions = Array[String](["!trader_talks_gte:3", "stat_gte:trader_sales:4"])
+
+[sub_resource type="Resource" id="choice_050"]
+script = ExtResource("2_cdonk")
+text = "Die mit dem Zeichen …?"
+next = &"ask_marked"
+conditions = Array[String](["clue_known:c_mark"])
+
+[sub_resource type="Resource" id="choice_051"]
+script = ExtResource("2_cdonk")
+text = "Die Holunderblüte an deiner Kiepe …"
+next = &"ask_blossom"
+conditions = Array[String](["flag:insight_kranich"])
+
+[sub_resource type="Resource" id="choice_052"]
+script = ExtResource("2_cdonk")
+text = "Gute Nacht, Ilse."
+next = &"goodbye"
+
+[sub_resource type="Resource" id="node_menu"]
+script = ExtResource("1_0vtyj")
+id = &"menu"
+text = "Noch etwas? Ich habe Zeit. Die Stillen auch."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_046"), SubResource("choice_047"), SubResource("choice_048"), SubResource("choice_049"), SubResource("choice_050"), SubResource("choice_051"), SubResource("choice_052")])
+
+[sub_resource type="Resource" id="choice_053"]
+script = ExtResource("2_cdonk")
+text = "Was machst du mit dem, was du kaufst?"
+next = &"who_goods"
+
+[sub_resource type="Resource" id="choice_054"]
+script = ExtResource("2_cdonk")
+text = "Hast du keine Angst, nachts im Moor?"
+next = &"who_night"
+
+[sub_resource type="Resource" id="choice_055"]
+script = ExtResource("2_cdonk")
+text = "Schon gut."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_who"]
+script = ExtResource("1_0vtyj")
+id = &"who"
+text = "Eine, die nachts geht, weil am Tag zu viele Leute auf den Wegen sind. Ich ziehe von Dorf zu Dorf, über die Moorwege, seit ich so alt war wie du jetzt. Vielleicht länger. Man zählt die Jahre nicht mehr, wenn man sie im Dunkeln verbringt."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_053"), SubResource("choice_054"), SubResource("choice_055")])
+
+[sub_resource type="Resource" id="choice_056"]
+script = ExtResource("2_cdonk")
+text = "Verstehe."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_who_goods"]
+script = ExtResource("1_0vtyj")
+id = &"who_goods"
+text = "Ich verkaufe es weiter. Die feinen Damen in der Stadt tragen die Zöpfe unserer Mägde und wissen es nicht. Ist das schlimm? Die Stillen frieren nicht am Kopf. Was sonst aus meiner Kiepe wird, geht dich nichts an. Nicht böse gemeint."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_056")])
+
+[sub_resource type="Resource" id="choice_057"]
+script = ExtResource("2_cdonk")
+text = "Ich hoffe nicht."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_who_night"]
+script = ExtResource("1_0vtyj")
+id = &"who_night"
+text = "Angst? Im Moor sind die Lebenden das Gefährliche, und die schlafen nachts. Die anderen kennen mich. Sie gehen ein Stück neben mir her und sagen nichts. Man gewöhnt sich an stille Gesellschaft. Du wirst es auch noch."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_057")])
+
+[sub_resource type="Resource" id="choice_058"]
+script = ExtResource("2_cdonk")
+text = "Warum wollte er das wissen?"
+next = &"ask_lorenz_more"
+
+[sub_resource type="Resource" id="choice_059"]
+script = ExtResource("2_cdonk")
+text = "Er lebt, Ilse."
+next = &"lorenz_alive"
+conditions = Array[String](["flag:insight_not_lorenz"])
+
+[sub_resource type="Resource" id="choice_060"]
+script = ExtResource("2_cdonk")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_ask_lorenz"]
+script = ExtResource("1_0vtyj")
+id = &"ask_lorenz"
+text = "Lorenz? Er hat mir nie etwas verkauft. Er hat mir Tee gekocht und gefragt, wer im Dorf die Kranken besucht. Dann hat er aufgeschrieben, was ich sagte."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_058"), SubResource("choice_059"), SubResource("choice_060")])
+actions = Array[String](["add_clue:c_trader_lorenz"])
+
+[sub_resource type="Resource" id="choice_061"]
+script = ExtResource("2_cdonk")
+text = "Danke, Ilse."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_ask_lorenz_more"]
+script = ExtResource("1_0vtyj")
+id = &"ask_lorenz_more"
+text = "Das habe ich ihn nicht gefragt. Wer so fragt, will keine Frage zurück. Er hatte eine Kladde mit braunem Einband und eine schräge Schrift, und er schrieb schnell, als liefe ihm etwas davon. Mehr weiß ich nicht. Und was ich weiß, ist nicht alles, was es gibt."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_061")])
+
+[sub_resource type="Resource" id="choice_062"]
+script = ExtResource("2_cdonk")
+text = "Ich verstehe."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_lorenz_alive"]
+script = ExtResource("1_0vtyj")
+id = &"lorenz_alive"
+text = "So. … Wenn er lebt, dann weiß er, warum er nicht zurückkommt. Stör ihn nicht beim Graben."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_062")])
+
+[sub_resource type="Resource" id="choice_063"]
+script = ExtResource("2_cdonk")
+text = "Wem?"
+next = &"ask_marked_more"
+
+[sub_resource type="Resource" id="choice_064"]
+script = ExtResource("2_cdonk")
+text = "Gut."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_ask_marked"]
+script = ExtResource("1_0vtyj")
+id = &"ask_marked"
+text = "Die mit dem Zeichen kaufe ich nicht. Die gehören schon jemandem. Frag mich nicht, wem."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_063"), SubResource("choice_064")])
+actions = Array[String](["add_clue:c_trader_marked"])
+
+[sub_resource type="Resource" id="choice_065"]
+script = ExtResource("2_cdonk")
+text = "Ich merke es mir."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_ask_marked_more"]
+script = ExtResource("1_0vtyj")
+id = &"ask_marked_more"
+text = "Ich sagte, frag mich nicht. … Du bist höflich, also bin ich es auch: Ich weiß es nicht. Ich weiß nur, dass man ihnen nichts nehmen soll. Nicht einmal ein Haar. Ihnen fehlt es dann nicht. Es fehlt dann jemand anderem, und der merkt es."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_065")])
+
+[sub_resource type="Resource" id="choice_066"]
+script = ExtResource("2_cdonk")
+text = "Von wem hast du sie?"
+next = &"ask_blossom_more"
+
+[sub_resource type="Resource" id="choice_067"]
+script = ExtResource("2_cdonk")
+text = "Schon gut."
+next = &"menu"
+
+[sub_resource type="Resource" id="node_ask_blossom"]
+script = ExtResource("1_0vtyj")
+id = &"ask_blossom"
+text = "Die hier? Eine Holunderblüte. Sie welkt nicht, wenn man sie richtig presst. Man bekommt sie geschenkt, und man gibt sie nicht zurück. … Du hast ein gutes Auge, Totengräber. Das ist nicht immer ein Geschenk."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_066"), SubResource("choice_067")])
+
+[sub_resource type="Resource" id="choice_068"]
+script = ExtResource("2_cdonk")
+text = "Etwas anderes …"
+next = &"menu"
+
+[sub_resource type="Resource" id="node_ask_blossom_more"]
+script = ExtResource("1_0vtyj")
+id = &"ask_blossom_more"
+text = "Von einem, der Tee gekocht hat. Jetzt ist es spät. Handeln wir, oder gehst du schlafen?"
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_068")])
+
+[sub_resource type="Resource" id="choice_069"]
+script = ExtResource("2_cdonk")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="node_goodbye"]
+script = ExtResource("1_0vtyj")
+id = &"goodbye"
+text = "Gute Nacht, Totengräber. Grüß die Stillen von mir. Sie grüßen nicht zurück, aber sie merken es sich."
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_069")])
+
+[resource]
+script = ExtResource("3_0t3rl")
+id = &"trader"
+speaker_name = "Ilse Kranich"
+start_node = &"first_meet"
+nodes = Array[ExtResource("1_0vtyj")]([SubResource("node_first_meet"), SubResource("node_first_note"), SubResource("node_first_gift"), SubResource("node_first_gift_full"), SubResource("node_gift_retry"), SubResource("node_greet_devout"), SubResource("node_greet_considerate"), SubResource("node_greet_matter_of_fact"), SubResource("node_greet_callous"), SubResource("node_greet_hardhearted"), SubResource("node_menu"), SubResource("node_who"), SubResource("node_who_goods"), SubResource("node_who_night"), SubResource("node_ask_lorenz"), SubResource("node_ask_lorenz_more"), SubResource("node_lorenz_alive"), SubResource("node_ask_marked"), SubResource("node_ask_marked_more"), SubResource("node_ask_blossom"), SubResource("node_ask_blossom_more"), SubResource("node_goodbye")])

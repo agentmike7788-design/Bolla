@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_mark"
+title = "Das Dreistrich-Zeichen"
+text = "Über dem Herzen, klein und sauber in die Haut geritzt: ein Kreis, von drei geraden Linien durchbrochen. Kein Messer im Streit macht so etwas, und kein Tier. Jemand hat sich Zeit dafür genommen."
+kind = &"mark"
+order = 1

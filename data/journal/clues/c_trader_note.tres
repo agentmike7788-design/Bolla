@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_trader_note"
+title = "Ein Zettel an der Tür"
+text = "Wer den Toten etwas nimmt, braucht jemanden, der es abnimmt. Ich komme nach elf an die Westmauer. Frag nach Ilse. – I. K."
+kind = &"note"
+order = 16

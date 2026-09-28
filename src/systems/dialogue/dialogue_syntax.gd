@@ -60,3 +60,9 @@ static func inventory(context: Dictionary, method: StringName) -> Object:
 		return inv
 	push_warning("[DialogueRunner] context has no inventory with %s()" % method)
 	return null
+
+
+## First node of `group` in the running SceneTree (Phase-4 systems: journal, night_trade), or null.
+static func system(group: StringName) -> Node:
+	var tree := Engine.get_main_loop() as SceneTree
+	return tree.get_first_node_in_group(group) if tree != null else null

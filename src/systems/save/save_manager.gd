@@ -129,7 +129,7 @@ func load_game(slot: int) -> Error:
 		_transition = false
 		_notify(TEXT_WORLD_FAILED)
 		return ERR_TIMEOUT
-	SaveStateCollector.apply_nodes(get_tree(), state.nodes)
+	SaveStateCollector.apply_nodes(get_tree(), without_absent_defaults(get_tree(), state.nodes))
 	SaveStateCollector.post_load(get_tree())
 	is_loading = false
 	_transition = false
@@ -207,6 +207,23 @@ func apply_state(data: Dictionary) -> void:
 	SaveStateCollector.apply_autoloads(get_tree(), SaveStateCollector.sub_dict(data, "autoloads"))
 	SaveStateCollector.apply_nodes(get_tree(), SaveStateCollector.sub_dict(data, "nodes"))
 	SaveStateCollector.post_load(get_tree())
+
+
+## The node states without the empty ones SaveMigration inserted for Phase-4 system nodes
+## (SaveMigration.V3_EMPTY_NODES) that this world does not have (yet): {} is their default state,
+## so nothing is lost and no "unknown save_id" warning appears. Non-empty states stay (and warn).
+static func without_absent_defaults(tree: SceneTree, nodes: Dictionary) -> Dictionary:
+	var present := {}
+	for node: Node in SaveStateCollector.saveables(tree):
+		present[SaveStateCollector.save_id(node)] = true
+	var out := {}
+	for key: Variant in nodes:
+		var id := str(key)
+		var value: Variant = nodes[key]
+		if id in SaveMigration.V3_EMPTY_NODES and not present.has(id) and value is Dictionary and (value as Dictionary).is_empty():
+			continue
+		out[key] = value
+	return out
 
 
 func reset() -> void:

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_ferry_jacket"
+title = "Die Fährmannsjoppe"
+text = "Eine Joppe mit Messingknöpfen, auf jedem ein kleines Ruder. So kleideten sich die Moorfährleute, bevor der Rat die Fähre stilllegte. Jost Hemmerling trug sie noch, Jahre danach – als wäre er nie abgestiegen."
+kind = &"object"
+order = 5

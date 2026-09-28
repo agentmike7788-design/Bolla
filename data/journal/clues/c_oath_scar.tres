@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_oath_scar"
+title = "Die Schwurnarbe"
+text = "Quer über Bartel Uhligs linke Handfläche läuft eine alte, gerade Schnittnarbe. So besiegelten die Fährleute einen Schwur: Hand auf Hand, Blut auf Blut, und keiner redet."
+kind = &"mark"
+order = 10

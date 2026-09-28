@@ -360,7 +360,8 @@ func test_full_load_sequence() -> void:
 	assert_eq(signals, [], "autoload state applied silently")
 	assert_true(await wait_for_signal(EventBus.game_loaded, 5.0))
 	var loaded := tree.current_scene
-	assert_ne(loaded.get_instance_id(), old_world_id, "fresh world instance")
+	# Exact int comparison: assert_ne compares numbers approximately, and instance ids are large.
+	assert_false(loaded.get_instance_id() == old_world_id, "fresh world instance")
 	var expected: Array[String] = READY_EVENTS.duplicate()
 	expected.append_array(["early:load", "graveyard:load", "player:load",
 			"early:post_load", "graveyard:post_load", "player:post_load", "graveyard:broadcast"])
@@ -561,3 +562,41 @@ func _on_game_saved(slot: int) -> void:
 
 func _on_tick(d: int, m: int) -> void:
 	signals.append(["tick", d, m])
+
+
+# --- Phase 4 (P6, docs/PHASE4_DESIGN.md §5.1, §5.2) -------------------------------------------
+
+func test_empty_phase4_states_of_absent_nodes_are_dropped() -> void:
+	# SaveMigration inserts {} for journal / night_trade / npc_trader; a world without those
+	# nodes (before W2) must not warn about them – their {} is the default state anyway.
+	var journal := JournalManager.new()
+	tree.root.add_child(journal)
+	var nodes := {"journal": {}, "night_trade": {}, "npc_trader": {"x": 1}, "graveyard": {}, "other": {}}
+	var out := SaveManager.without_absent_defaults(tree, nodes)
+	assert_eq(out, {"journal": {}, "npc_trader": {"x": 1}, "graveyard": {}, "other": {}},
+			"present node kept, absent empty v3 state dropped, non-empty and foreign states kept (they warn)")
+	assert_eq(nodes.size(), 5, "input unchanged")
+
+
+func test_journal_state_survives_the_save_file() -> void:
+	var journal := JournalManager.new()
+	journal.clue_data = Phase4Fixtures.clues()
+	journal.insight_data = Phase4Fixtures.insights()
+	tree.root.add_child(journal)
+	journal.add_clue(&"c_warning_letter", "corpse_0004")
+	journal.add_clue(&"c_page_1", "corpse_0006")
+	journal.try_link([&"c_page_1", &"c_warning_letter"])
+	var state := {"autoloads": {"TimeManager": TimeManager.save_state(), "GameState": GameState.save_state()},
+			"nodes": {"journal": journal.save_state()}}
+	assert_eq(SaveFileIO.ensure_dir(TEST_DIR), OK)
+	assert_eq(SaveFileIO.write_doc(TEST_DIR, 2, SaveFileIO.make_doc(SaveFileIO.make_meta(WORLD), state)), OK)
+	var read := {}
+	assert_eq(SaveFileIO.read_doc(TEST_DIR, 2, read), OK)
+	assert_eq(read.state, state, "v3 file round trip incl. the journal (§5.1)")
+	var other := JournalManager.new()
+	other.clue_data = Phase4Fixtures.clues()
+	other.insight_data = Phase4Fixtures.insights()
+	tree.root.add_child(other)
+	other.load_state(read.state.nodes.journal)
+	assert_eq(other.save_state(), journal.save_state())
+	assert_true(other.has_insight(&"i_warnings"))
