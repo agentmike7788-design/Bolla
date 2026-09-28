@@ -1232,7 +1232,7 @@ func test_phase5_workyard_sites_and_stations() -> void:
 		var world_fp := _world_rect(node, Rect2(fp[0], fp[1], fp[2], fp[3]).grow(float(layout.build.station_margin)))
 		assert_true(shop.workyard_rects.any(func(r: Rect2) -> bool: return r.grow(0.01).encloses(world_fp)),
 				site.id + " footprint + margin inside a workyard rect")
-	_assert_at(world.get_node_by_layout_id("res_wood") as Node3D, Vector2(0.3, -7.8), "V1: the wood pile moved")
+	_assert_at(world.get_node_by_layout_id("res_wood") as Node3D, Vector2(0.3, -8.4), "V1: the wood pile moved")
 	GameState.set_flag(&"workshop_open", true)
 	for node: BuildSite in sites:
 		node.refresh()
