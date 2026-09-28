@@ -1124,7 +1124,7 @@ def chapel_ruin():
                             rot=(random.uniform(-20, 20), random.uniform(-20, 20), random.uniform(0, 90)), seed=850 + i,
                             moss=0.6))
     # rubble heaps under the broken gable (outside, both sides of the door) and inside
-    for i, (x, y) in enumerate(((1.3, CH_Y0 - 0.35), (-1.55, CH_Y0 - 0.3), (1.2, CH_Y0 + 0.9), (-1.2, 0.9))):
+    for i, (x, y) in enumerate(((1.3, CH_Y0 - 0.12), (-1.55, CH_Y0 - 0.1), (1.2, CH_Y0 + 0.9), (-1.2, 0.9))):
         for k in range(4):
             s = random.uniform(0.09, 0.16)
             parts.append(_stone((x + random.uniform(-0.3, 0.3), y + random.uniform(-0.15, 0.15), s * 0.45 + k * 0.03),
@@ -1134,8 +1134,8 @@ def chapel_ruin():
     # a fallen rafter across the nave, one still leaning on the north wall
     parts.append(P._plank((0.3, -0.6, 0.18), (1.7, 0.08, 0.08), WOOD_OLD, seed=890, rot=(0, 8, 28), cuts=2))
     parts.append(P._plank((-0.9, 1.25, 1.2), (0.07, 0.07, 1.3), WOOD_OLD, seed=891, rot=(-32, 0, 5), cuts=1))
-    for i, (x, y, r) in enumerate(((-1.5, -2.4, 0.55), (1.5, -1.0, 0.5), (-0.3, 1.2, 0.6), (1.7, CH_Y0 - 0.55, 0.45),
-                                   (-1.95, CH_Y0 - 0.4, 0.4), (0.6, CC_Y1 - 0.9, 0.45))):
+    for i, (x, y, r) in enumerate(((-1.5, -2.4, 0.55), (1.5, -1.0, 0.5), (-0.3, 1.2, 0.6), (1.7, CH_Y0 - 0.08, 0.3),
+                                   (-1.95, CH_Y0 - 0.06, 0.28), (0.6, CC_Y1 - 0.9, 0.45))):
         _bramble(parts, x, y, r, 900 + i * 13)
     _done(parts, "ph_bld_chapel_ruin", [("build", (2.95, -2.4, 0.0))])
 

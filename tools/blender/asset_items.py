@@ -4,7 +4,9 @@ Phase 4 (docs/PHASE4_DESIGN.md section 8): root scrub brush, wooden comb, burial
 shears, pliers, hair braid, teeth pouch (a tied linen pouch - nothing visible), elder key;
 Phase 5 (docs/PHASE5_DESIGN.md section 8): the tool tiers (iron / master shovel, axe, pickaxe - also
 shown on the tool belt), flax, yarn, clay, iron ore, iron bar, charcoal, workstone, elderberries,
-herbs, ink, herb bundle, gold leaf, steel rod.  Only the new ones (build_all rebuilds every item):
+herbs, ink, herb bundle, gold leaf, steel rod;
+Phase 6 (docs/PHASE6_DESIGN.md section 8): altar candle, bone box, bone box (full: tied, blank tag).
+Only the new ones (build_all rebuilds every item):
     python -c "import sys; sys.path.insert(0, 'tools/blender'); import asset_items as a; a.build(a.PHASE5_ITEMS)"
 
 Small (~0.3 m), centred on the origin, bottom at z = 0, front = -Y.  Rendered to
@@ -959,12 +961,88 @@ def item_steel_rod():
     L.finish(obj, "ph_item_steel_rod", "items", 30)
 
 
+# --- Phase 6 (docs/PHASE6_DESIGN.md section 8) ---------------------------------------------------
+
+CANDLE_WAX = L.hexc("#E8DEC6")      # altar candle: pale beeswax-white, not pure white
+BOX_WOOD = L.hexc("#7C5B3D")
+TAG = L.hexc("#D8CCAA")
+
+
+def item_altar_candle():
+    """Two tall altar candles lying side by side, tied with a thread; a paper band round them."""
+    L.reset(760)
+    parts = []
+    for k, (y, ln) in enumerate(((-0.024, 0.3), (0.024, 0.28))):
+        c = L.prim("cyl", loc=(0.0, y, 0.022), rot=(0, 90, 0), radius=0.022, depth=ln, vertices=8)
+        L.jitter(c, 0.001, 20.0, k)
+        parts.append(P._finish_obj(c, CANDLE_WAX, var=0.06, ao=0.1, top=0.3, hue_shift=L.hexc("#D8C9A4"), seed=k))
+        parts.append(L.part("cyl", L.hexc("#2A2420"), loc=(ln / 2 + 0.004, y, 0.022), rot=(0, 90, 0), radius=0.003,
+                            depth=0.014, vertices=4))
+    band = L.prim("cube", loc=(-0.03, 0.0, 0.022), scale=(0.02, 0.05, 0.025))
+    L.bevel(band, 0.012, 1)
+    parts.append(P._finish_obj(band, TAG, var=0.05, ao=0.0, top=0.2))
+    tie = [(0.08, math.cos(a) * 0.05, 0.022 + math.sin(a) * 0.026) for a in (j / 8 * math.tau for j in range(8))]
+    parts.append(P._finish_obj(P._path_tube(tie, 0.003, 3, closed=True, hint=(1, 0, 0)), P.ROPE, ao=0.0, seed=5))
+    obj = L.join(parts, "ph_item_altar_candle")
+    _yaw(obj, -25)
+    P._center_xy(obj)
+    L.finish(obj, "ph_item_altar_candle", "items", 35)
+
+
+def _bone_box(name: str, full: bool) -> None:
+    """A small plank box with a lid (the empty one open, lid leaning); full: closed, tied crosswise
+    with a cord and a blank name tag hanging from it."""
+    L.reset(770 if full else 771)
+    parts = []
+    hx, hy, h = 0.15, 0.09, 0.13
+    for sy in (-1, 1):
+        parts.append(P._plank((0.0, sy * (hy - 0.006), h / 2), (hx, 0.007, h / 2), BOX_WOOD, seed=1 + sy, ao=0.25))
+    for sx in (-1, 1):
+        parts.append(P._plank((sx * (hx - 0.007), 0.0, h / 2), (0.007, hy - 0.012, h / 2), P.WOOD, seed=3 + sx, ao=0.25))
+    parts.append(P._plank((0.0, 0.0, 0.006), (hx, hy - 0.006, 0.006), P.WOOD_DARK, seed=6))
+    if full:
+        lid = L.prim("cube", loc=(0.0, 0.0, h + 0.009), scale=(hx + 0.012, hy + 0.012, 0.009))
+        L.bevel(lid, 0.004, 1)
+        parts.append(P._finish_obj(lid, L.scale_c(BOX_WOOD, 0.95), var=0.12, ao=0.0, top=0.25))
+        for axis in (0, 1):    # the cord crosswise over the lid and round the box
+            if axis == 0:
+                pts = [(x, 0.0, h + 0.02) for x in (-hx - 0.003, hx + 0.003)]
+                loop = [(-hx - 0.004, 0.0, h + 0.02), (hx + 0.004, 0.0, h + 0.02), (hx + 0.004, 0.0, 0.0),
+                        (-hx - 0.004, 0.0, 0.0)]
+            else:
+                loop = [(0.0, -hy - 0.004, h + 0.02), (0.0, hy + 0.004, h + 0.02), (0.0, hy + 0.004, 0.0),
+                        (0.0, -hy - 0.004, 0.0)]
+            parts.append(P._finish_obj(P._path_tube(loop, 0.003, 3, closed=True), P.ROPE, ao=0.0, seed=10 + axis))
+        tag = L.prim("cube", loc=(0.06, -hy - 0.012, h - 0.02), scale=(0.028, 0.002, 0.018), rot=(0, 12, 0))
+        parts.append(P._finish_obj(tag, TAG, var=0.05, ao=0.0))
+        parts.append(P._stick((0.05, -hy - 0.01, h + 0.0), (0.0, -hy - 0.004, h + 0.02), 0.0015, P.ROPE, verts=3, ao=0.0))
+    else:
+        parts.append(L.part("cube", L.hexc("#2E241C"), loc=(0.0, 0.0, h - 0.004), scale=(hx - 0.014, hy - 0.014, 0.002),
+                            paint_kw={"ao": 0.0}))
+        lid = L.prim("cube", loc=(0.0, hy + 0.03, h * 0.62), scale=(hx + 0.012, 0.009, hy + 0.012), rot=(-14, 0, 0))
+        parts.append(P._finish_obj(lid, L.scale_c(BOX_WOOD, 0.95), var=0.12, ao=0.2, top=0.25))
+    obj = L.join(parts, name)
+    _yaw(obj, -22)
+    P._center_xy(obj)
+    L.finish(obj, name, "items", 35)
+
+
+def item_bone_box():
+    _bone_box("ph_item_bone_box", False)
+
+
+def item_bone_box_full():
+    _bone_box("ph_item_bone_box_full", True)
+
+
 ITEMS = (item_log, item_stone, item_linen, item_coin, item_shroud, item_rake, item_seeds, item_iron_fittings,
          item_scrub_brush, item_comb, item_burial_gown, item_juniper, item_shears, item_pliers, item_hair_braid,
          item_teeth_pouch, item_elder_key,
          item_shovel_iron, item_shovel_master, item_axe_iron, item_axe_master, item_pickaxe_iron, item_pickaxe_master,
          item_flax, item_yarn, item_clay, item_iron_ore, item_iron_bar, item_charcoal, item_workstone,
-         item_elderberries, item_herbs, item_ink, item_herb_bundle, item_gold_leaf, item_steel_rod)
+         item_elderberries, item_herbs, item_ink, item_herb_bundle, item_gold_leaf, item_steel_rod,
+         item_altar_candle, item_bone_box, item_bone_box_full)
+PHASE6_ITEMS = ("item_altar_candle", "item_bone_box", "item_bone_box_full")
 PHASE5_ITEMS = ("item_shovel_iron", "item_shovel_master", "item_axe_iron", "item_axe_master", "item_pickaxe_iron",
                 "item_pickaxe_master", "item_flax", "item_yarn", "item_clay", "item_iron_ore", "item_iron_bar",
                 "item_charcoal", "item_workstone", "item_elderberries", "item_herbs", "item_ink", "item_herb_bundle",

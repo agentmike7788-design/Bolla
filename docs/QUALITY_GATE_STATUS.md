@@ -160,6 +160,15 @@ Alle Phase-1-Assets sind Prototypen (`ph_`-Präfix) und **nicht final**, bis der
 | ph_prop_orn_ivy, _orn_poppy, _orn_elder, _orn_torch | Relief-Zierden (Phase 5, P5) | Prototyp – Benutzerprüfung offen |
 | ph_item_shovel_iron, _shovel_master, _axe_iron, _axe_master, _pickaxe_iron, _pickaxe_master | Werkzeug-Stufen (Icons / Gürtel, Phase 5, P5) | Prototyp – Benutzerprüfung offen |
 | ph_item_flax, _yarn, _clay, _iron_ore, _iron_bar, _charcoal, _workstone, _elderberries, _herbs, _ink, _herb_bundle, _gold_leaf, _steel_rod | Item-Modelle (Icons, Phase 5, P5) | Prototyp – Benutzerprüfung offen |
+| ph_bld_crypt_site, ph_bld_crypt_l1, _l2, _l3 (Marker `door_outside`, `build`; l3 + `light_lantern`, `inscription`) | Gruft außen, Stufen 0–3 (Phase 6, P5; ≤ 2,6 m, Hügel `mat_ground`) | Prototyp – Vorschau `docs/reviews/phase6_wip/p5_*.jpg`, Benutzerprüfung offen |
+| ph_bld_chapel_ruin, ph_bld_chapel_l1, _l2, _l3 (Marker `door_outside`, `build`, `light_window_1…4`; l2+ Kindmesh `bell`; l3 + `light_choir`), ph_prop_soul_lantern (Marker `light_soul`) | Kapelle außen, Stufen 0–3, Totenleuchter (Phase 6, P5) | Prototyp – Benutzerprüfung offen |
+| ph_bld_shed_site, ph_bld_shed_l1, _l2, _l3 (Marker `door_outside`, `build`) | Lagerschuppen außen, Stufen 0–3 (Phase 6, P5; l2 mit eigenem leichtem Handkarren) | Prototyp – Benutzerprüfung offen |
+| ph_prop_grave_pit_foot | Altgrab gehoben, Aushub am Fußende (Phase 6, P5) | Prototyp – Benutzerprüfung offen |
+| ph_int_crypt_room, _crypt_stair, _crypt_table, _crypt_niche, _crypt_niche_sealed, _crypt_lantern, _candle_niche, _ossuary_shelf, _bone_box, _bone_rack, _name_board, _sealed_passage, _sealed_passage_grille | Gruft innen (Phase 6, P5) | Prototyp – Benutzerprüfung offen |
+| ph_int_chapel_room, _altar (Kindmeshes `flame_1/2`), _catafalque, _pew_rough, _pew, _bell_rope, _candelabrum, _stained_window, _holy_water | Kapelle innen (Phase 6, P5; `_holy_water` zusätzlich zu §8) | Prototyp – Benutzerprüfung offen |
+| ph_int_shed_room, _shed_rack, _wood_rack, _stone_bin | Lagerschuppen innen (Phase 6, P5) | Prototyp – Benutzerprüfung offen |
+| ph_chr_mourner_a, _b, _c, _d | Trauergäste, sitzend, ohne Rig (Phase 6, P5) | Prototyp – Benutzerprüfung offen |
+| ph_item_altar_candle, _bone_box, _bone_box_full | Item-Modelle (Icons, Phase 6, P5) | Prototyp – Benutzerprüfung offen |
 | Godot-Standardschrift | UI-Schrift | **Platzhalter** – Schriftwahl offen |
 
 ## Bekannte Probleme
