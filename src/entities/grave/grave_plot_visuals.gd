@@ -13,12 +13,14 @@ func _init(plot: GravePlot) -> void:
 	_plot = plot
 
 
-## Rebuilds the visual for the plot's current state (no-op while state and marker are unchanged).
+## Rebuilds the visual for the plot's current state (no-op while state, marker and design are
+## unchanged).
 func apply() -> void:
 	var plot := _plot
 	var state := plot.state
 	var marker_id := plot.marker_id
-	var key := "%d:%s" % [state, marker_id]
+	var design := StoneDesign.from_dict(plot.design)
+	var key := "%d:%s:%s" % [state, marker_id, JSON.stringify(plot.design)]
 	if key == _visual_key and _visual != null:
 		return
 	_visual_key = key
@@ -39,7 +41,13 @@ func apply() -> void:
 		GraveRecord.State.FILLED, GraveRecord.State.MARKED:
 			_add_model(plot.mound_model, plot.mound_offset)
 			roles.append(GravePlot.ROLE_MOUND)
-			if state == GraveRecord.State.MARKED and plot.marker_models.has(marker_id):
+			if state == GraveRecord.State.MARKED and not design.is_empty():
+				# Phase 5 §2.5, §8: designed stone – shape model, ornament, inscription Label3D.
+				var stone := StoneVisual.build(design)
+				stone.position = plot.marker_offset
+				_visual.add_child(stone)
+				roles.append(GravePlot.ROLE_MARKER + String(design.shape))
+			elif state == GraveRecord.State.MARKED and plot.marker_models.has(marker_id):
 				_add_model(plot.marker_models[marker_id], plot.marker_offset)
 				roles.append(GravePlot.ROLE_MARKER + String(marker_id))
 		GraveRecord.State.OLD:

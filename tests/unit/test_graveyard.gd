@@ -507,7 +507,7 @@ func test_grave_record_dict_round_trip() -> void:
 	g.completed_day = 6
 	var d := g.to_dict()
 	assert_eq(d, {"id": "plot_05", "state": 3, "corpse_id": "corpse_0003", "marker_id": &"gravestone_simple", "quality": 8,
-			"breakdown": [{"label": "Bestattet", "points": 2}, {"label": "Wertsachen genommen", "points": -2}], "completed_day": 6})
+			"breakdown": [{"label": "Bestattet", "points": 2}, {"label": "Wertsachen genommen", "points": -2}], "completed_day": 6, "design": {}})
 	assert_eq(GraveRecord.from_dict(d).to_dict(), d)
 	var plain: Dictionary = JSON.parse_string(JSON.stringify(d))
 	var back := GraveRecord.from_dict(plain)
@@ -942,3 +942,45 @@ func _sections_with_elder() -> Array[SectionData]:
 	var list: Array[SectionData] = Phase3Fixtures.sections()
 	list.append(Phase4Fixtures.elder_section())
 	return list
+
+
+# --- Phase 5 (P4, docs/PHASE5_DESIGN.md §3.4, §5.1) -------------------------------------------
+
+func test_phase5_grave_record_design_roundtrip() -> void:
+	var g := GraveRecord.new()
+	g.id = "plot_05"
+	g.state = MARKED
+	g.marker_id = &"stone_master"
+	g.design = Phase5Fixtures.design(&"stone_master", &"i_garden", &"orn_elder", true,
+			PackedStringArray(["Marthe Quendel", "* 1771 – † 8. Nebelung 1834", "Was du gesät hast, blüht noch."])).to_dict()
+	var d := g.to_dict()
+	assert_eq(d.design, {"shape": "stone_master", "inscription": "i_garden", "ornament": "orn_elder", "gilded": true,
+			"text": ["Marthe Quendel", "* 1771 – † 8. Nebelung 1834", "Was du gesät hast, blüht noch."]}, "§5.1 format")
+	var back := GraveRecord.from_dict(JSON.parse_string(JSON.stringify(d)))
+	assert_eq(back.to_dict(), d, "JSON roundtrip")
+	(d.design.text as Array).clear()
+	assert_eq(g.design.text.size(), 3, "to_dict copies the design")
+	assert_eq(GraveRecord.from_dict({"id": "x"}).design, {}, "v3 grave without design")
+	assert_eq(GraveRecord.from_dict({"id": "x", "design": "junk"}).design, {}, "tolerant")
+	assert_eq(GraveRecord.from_dict({"id": "x", "design": {"inscription": "i_rest"}}).design, {}, "no shape = no stone")
+
+
+func test_phase5_designed_stone_survives_save_load() -> void:
+	graveyard.economy = Phase5Fixtures.economy_config()
+	var r := _corpse(true, true)
+	graveyard.dig("plot_01")
+	graveyard.bury("plot_01", r.id)
+	var stone := Phase5Fixtures.design(&"stone_arch", &"i_fever", &"orn_ivy", false, PackedStringArray(["Anna Moor"]))
+	events.clear()
+	var diff := graveyard.set_designed_stone("plot_01", stone, inv)
+	var g := graveyard.get_grave("plot_01")
+	assert_eq([g.state, g.marker_id], [MARKED, &"stone_arch"])
+	assert_eq(g.quality, GraveQuality.compute(r, &"stone_arch", graveyard.economy, stone.to_dict()))
+	assert_eq(diff, g.quality, "FILLED: difference from 0")
+	assert_true(inv.count(&"coin") > 0, "paid")
+	assert_eq(GameState.get_stat(&"stones_set"), 1)
+	var before := graveyard.save_state()
+	graveyard.load_state(JSON.parse_string(JSON.stringify(before)))
+	assert_eq(graveyard.get_grave("plot_01").design, stone.to_dict())
+	assert_eq(graveyard.save_state(), before, "identical after a JSON load")
+	assert_eq(graveyard.upgrade_options("plot_01", inv), [] as Array[StringName])

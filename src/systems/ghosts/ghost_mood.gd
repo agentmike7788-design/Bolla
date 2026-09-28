@@ -4,8 +4,8 @@ extends RefCounted
 ## score = grave quality + own dirt spot (grave_mood_by_level: +1/0/−2/−4) + decor bonus
 ## (clamped to decor_bonus_max) + robbed × GhostConfig.robbed_mood (Phase 4 §2.9: hair /
 ## teeth taken). ≥ 9 content · 5…8 calm · ≤ 4 restless (mood_thresholds).
-## Reasons by priority (Phase 4 §2.9): &"robbed", &"weeds", &"valuables", &"cold", &"unkempt",
-## &"cross", &"waited", &"bare".
+## Reasons by priority (Phase 4 §2.9, Phase 5 §2.5): &"robbed", &"weeds", &"valuables", &"cold",
+## &"unkempt", &"cross", &"nameless", &"waited", &"bare".
 
 const RESTLESS := &"restless"
 const CALM := &"calm"
@@ -19,10 +19,17 @@ const REASON_VALUABLES := &"valuables"
 const REASON_COLD := &"cold"
 const REASON_UNKEMPT := &"unkempt"
 const REASON_CROSS := &"cross"
+const REASON_NAMELESS := &"nameless"
 const REASON_WAITED := &"waited"
 const REASON_BARE := &"bare"
 const REASONS: Array[StringName] = [REASON_ROBBED, REASON_WEEDS, REASON_VALUABLES, REASON_COLD, REASON_UNKEMPT,
-		REASON_CROSS, REASON_WAITED, REASON_BARE]
+		REASON_CROSS, REASON_NAMELESS, REASON_WAITED, REASON_BARE]
+## Phase 5 §2.5: by_design keys (GhostLines.by_design) – most specific first.
+const DESIGN_S5_LORENZ := &"s5_lorenz"
+const DESIGN_MASTER := &"master"
+const DESIGN_GILDED := &"gilded"
+const DESIGN_DEFAULT := &"default"
+const MASTER_SHAPE := &"stone_master"
 ## Kinds of CorpseRecord.harvested that count as "robbed".
 const ROBBED_KINDS: Array[StringName] = [CorpseRecord.HARVEST_HAIR, CorpseRecord.HARVEST_TEETH]
 ## Piety tiers with their own lines (GhostLines.by_piety): one heard line in PIETY_EVERY.
@@ -63,8 +70,9 @@ static func mood(value: int, cfg: GhostConfig) -> StringName:
 	return CONTENT
 
 
-## Phase 3 §2.8 + Phase 4 §2.9; &"" = nothing missing. unkempt = not washed or not laid out;
-## waited = buried decaying or rotten.
+## Phase 3 §2.8 + Phase 4 §2.9 + Phase 5 §2.5; &"" = nothing missing. unkempt = not washed or not
+## laid out; cross = a better marker item exists (wooden cross → gravestone); nameless = a
+## designed stone without an inscription; waited = buried decaying or rotten.
 static func main_reason(grave: GraveRecord, corpse: CorpseRecord, dirt_level: int, decor_bonus: int, economy: EconomyConfig) -> StringName:
 	if robbed_count(corpse) > 0:
 		return REASON_ROBBED
@@ -80,6 +88,8 @@ static func main_reason(grave: GraveRecord, corpse: CorpseRecord, dirt_level: in
 			return REASON_UNKEMPT
 	if grave != null and _marker_upgradeable(grave.marker_id, cfg):
 		return REASON_CROSS
+	if grave != null and _nameless(grave):
+		return REASON_NAMELESS
 	if corpse != null:
 		var fresh := corpse.freshness_at_burial if corpse.freshness_at_burial >= 0.0 else corpse.freshness
 		if CorpseRecord.stage_for(fresh, cfg) in [CorpseRecord.STAGE_DECAYING, CorpseRecord.STAGE_ROTTEN]:
@@ -146,12 +156,47 @@ static func label(mood_id: StringName) -> String:
 	return LABELS.get(mood_id, "")
 
 
-## The marker is not the best one of EconomyConfig.marker_quality (upgrade possible).
+## by_design pool key of a freshly set designed stone (§2.5): s5_lorenz (a story corpse renamed
+## by an insight whose stone still carries the old name) · master · gilded · default.
+static func design_key(design: Dictionary, corpse: CorpseRecord) -> StringName:
+	var stone := StoneDesign.from_dict(design)
+	if corpse != null and corpse.story_id != &"" and not stone.text.is_empty():
+		for res: Resource in Database.insights():
+			var insight := res as InsightData
+			if insight != null and insight.rename_story == corpse.story_id and insight.rename_to != "" \
+					and not "\n".join(stone.text).contains(insight.rename_to):
+				return DESIGN_S5_LORENZ
+	if stone.shape == MASTER_SHAPE:
+		return DESIGN_MASTER
+	if stone.gilded:
+		return DESIGN_GILDED
+	return DESIGN_DEFAULT
+
+
+## One by_design line (pool of `key`, else default), deterministic from `seed`; "" = none.
+static func pick_design_line(lines: GhostLines, key: StringName, seed: int) -> String:
+	if lines == null:
+		return ""
+	var pool: PackedStringArray = lines.by_design.get(key, PackedStringArray())
+	if pool.is_empty():
+		pool = lines.by_design.get(DESIGN_DEFAULT, PackedStringArray())
+	return pool[posmod(seed, pool.size())] if not pool.is_empty() else ""
+
+
+## A better marker ITEM exists in EconomyConfig.marker_quality (designed stone shapes are no
+## items and never make a marker "upgradeable" – Phase 5 §2.5).
 static func _marker_upgradeable(marker_id: StringName, cfg: EconomyConfig) -> bool:
-	if marker_id == &"" or not cfg.marker_quality.has(marker_id):
+	if marker_id == &"" or not cfg.marker_quality.has(marker_id) or StoneDesignRules.is_shape(marker_id):
 		return false
 	var own: int = cfg.marker_quality[marker_id]
 	for id: StringName in cfg.marker_quality:
-		if cfg.marker_quality[id] > own:
+		if cfg.marker_quality[id] > own and not StoneDesignRules.is_shape(id):
 			return true
 	return false
+
+
+## A designed stone without an inscription (§2.5 "ohne Inschrift bleibt der Stein namenlos"). The
+## plain gravestone of Phase 3/4 keeps its old reasons (waited / bare), so the early game's hints
+## do not change.
+static func _nameless(grave: GraveRecord) -> bool:
+	return not grave.design.is_empty() and StoneDesign.from_dict(grave.design).inscription == &""

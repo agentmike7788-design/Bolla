@@ -13,6 +13,7 @@ by_reason = Dictionary[StringName, PackedStringArray]({
 &"cold": PackedStringArray("Mir ist kalt. So bloß in die Erde – das war nicht recht.", "Kein Tuch um mich. Die Erde kratzt.", "Ein Leinentuch hätte gereicht. Nur ein bisschen Wärme."),
 &"unkempt": PackedStringArray("Ungewaschen in die Erde. Der Staub juckt noch.", "Meine Hände liegen irgendwie. Hat sie keiner gefaltet?", "Mein Haar war mein Stolz. Nun liegt es wirr."),
 &"cross": PackedStringArray("Holz verrottet. Dann weiß keiner mehr, wer hier liegt.", "Mein Kreuz neigt sich schon. Ein Stein hielte länger.", "Holz ist für Zäune. Für mich hätt ich mir Stein gewünscht."),
+&"nameless": PackedStringArray("Ein Stein, aber kein Name. Wer soll mich finden?", "Die Leute gehen vorbei und raten, wer hier liegt.", "Schreib mich auf, Totengräber. Nur den Namen."),
 &"waited": PackedStringArray("Du hast mich zu lange liegen lassen. Ich hab es gerochen.", "Zu lange auf der Bahre. Das vergisst man nicht, auch tot nicht.", "Ich kam spät unter die Erde. Die Fliegen waren schneller."),
 &"bare": PackedStringArray("Nicht eine Blume. Hat mich denn keiner gemocht?", "So kahl hier. Ein kleines Licht in der Nacht wär schön.", "Ein wenig Schmuck am Grab, und ich gäbe Ruhe.")
 })
@@ -40,4 +41,10 @@ no_gift = "Die Geister deuten nicht mehr ins Moos."
 by_harvest = Dictionary[StringName, PackedStringArray]({
 &"hair": PackedStringArray("Mein Zopf. Wo ist mein Zopf?"),
 &"teeth": PackedStringArray("Mein Mund ist still geworden. Stiller, als der Tod ihn macht.")
+})
+by_design = Dictionary[StringName, PackedStringArray]({
+&"default": PackedStringArray("Da steht mein Name. Ich hatte ihn fast vergessen.", "So schön hat mich keiner gekannt."),
+&"gilded": PackedStringArray("Gold? Für mich? Na, na."),
+&"master": PackedStringArray("Ein Stein wie für einen Ratsherrn. Die im Dorf werden reden."),
+&"s5_lorenz": PackedStringArray("Da steht Lorenz’ Name. Er würde lachen.")
 })

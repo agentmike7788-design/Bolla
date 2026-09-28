@@ -21,6 +21,7 @@ const DECORATIONS_GROUP := &"decorations"
 const PIETY_GROUP := &"piety"
 const PLOT_GROUP := &"grave_plot"
 const PLAYER_GROUP := &"player"
+const STONEMASONRY_GROUP := &"stonemasonry"
 const DEFAULT_SCENE := "res://src/entities/ghost/ghost.tscn"
 const DIRT_PREFIX := "dirt_"
 const COIN_ITEM := &"coin"
@@ -184,13 +185,30 @@ func listen(grave_id: String, player: Player) -> String:
 		var traits: Array[StringName] = corpse.traits.duplicate() if corpse != null else []
 		var story: StringName = corpse.story_id if corpse != null else &""
 		var harvested: Array[StringName] = corpse.harvested.duplicate() if corpse != null else []
-		text = GhostMood.pick_line(_lines(), mood, info.reason, traits, line_seed(grave_id, day) + turn, story, piety_tier(), harvested)
+		text = _design_line(grave_id, mood, corpse, line_seed(grave_id, day) + turn)
+		if text == "":
+			text = GhostMood.pick_line(_lines(), mood, info.reason, traits, line_seed(grave_id, day) + turn, story, piety_tier(), harvested)
 		_said[grave_id] = {"total": now, "text": text, "mood": mood, "day": day, "turn": turn}
 	if mood == GhostMood.CONTENT and not _gifts.has(grave_id):
 		_give_gift(grave_id, player, day)
 	_heard[grave_id] = day
 	GameState.set_flag(FLAG_SEEN, true)
 	EventBus.ghost_spoke.emit(grave_id, mood, text)
+	return text
+
+
+## Phase 5 §2.5: the by_design line of a content / calm ghost whose designed stone is new (once
+## per grave – Stonemasonry remembers it and saves it); "" = none.
+func _design_line(grave_id: String, mood: StringName, corpse: CorpseRecord, seed: int) -> String:
+	if mood != GhostMood.CONTENT and mood != GhostMood.CALM:
+		return ""
+	var masonry := get_tree().get_first_node_in_group(STONEMASONRY_GROUP) if is_inside_tree() else null
+	if masonry == null or not masonry.has_method(&"design_line_pending") or not masonry.call(&"design_line_pending", grave_id):
+		return ""
+	var grave := _graveyard().get_grave(grave_id)
+	var text := GhostMood.pick_design_line(_lines(), GhostMood.design_key(grave.design, corpse), seed)
+	if text != "":
+		masonry.call(&"mark_design_heard", grave_id)
 	return text
 
 

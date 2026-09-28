@@ -27,8 +27,9 @@ const LABEL_MARKER_FALLBACK := "Grabzeichen"
 ## Freshness uses freshness_at_burial once set (>= 0), else the current freshness; below
 ## rot_threshold the rotten malus replaces the decaying one. A record without dress but
 ## shrouded (older saves) counts as shroud.
-## STUB (P4) Phase 5 §3.4: `_design` (StoneDesign.to_dict of the grave) adds the stone lines – not read yet.
-static func breakdown(corpse: CorpseRecord, marker_id: StringName, config: EconomyConfig, _design: Dictionary = {}) -> Array[Dictionary]:
+## Phase 5 §2.5, §3.4: a non-empty `design` (StoneDesign.to_dict of the grave) replaces the marker
+## line by the stone lines (StoneDesignRules.breakdown_lines: "Meisterstein +5", "Inschrift +1", …).
+static func breakdown(corpse: CorpseRecord, marker_id: StringName, config: EconomyConfig, design: Dictionary = {}) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if corpse == null:
 		push_warning("[GraveQuality] breakdown without corpse")
@@ -43,7 +44,10 @@ static func breakdown(corpse: CorpseRecord, marker_id: StringName, config: Econo
 		out.append(_line(LABEL_SHROUD, cfg.quality_shroud))
 	if corpse.laid_out:
 		out.append(_line(LABEL_LAID_OUT, cfg.quality_laid_out))
-	if cfg.marker_quality.has(marker_id):
+	var stone := StoneDesign.from_dict(design) if not design.is_empty() else null
+	if stone != null and not stone.is_empty():
+		out.append_array(StoneDesignRules.breakdown_lines(stone, corpse, cfg, null))
+	elif cfg.marker_quality.has(marker_id):
 		out.append(_line(_marker_label(marker_id), cfg.marker_quality[marker_id]))
 	var fresh := corpse.freshness_at_burial if corpse.freshness_at_burial >= 0.0 else corpse.freshness
 	var stage := CorpseRecord.stage_for(fresh, cfg)
@@ -66,10 +70,10 @@ static func breakdown(corpse: CorpseRecord, marker_id: StringName, config: Econo
 
 
 ## Sum of the breakdown, clamped to [quality_min, quality_max].
-static func compute(corpse: CorpseRecord, marker_id: StringName, config: EconomyConfig, _design: Dictionary = {}) -> int:
+static func compute(corpse: CorpseRecord, marker_id: StringName, config: EconomyConfig, design: Dictionary = {}) -> int:
 	var cfg := _config(config)
 	var total := 0
-	for entry: Dictionary in breakdown(corpse, marker_id, cfg):
+	for entry: Dictionary in breakdown(corpse, marker_id, cfg, design):
 		total += int(entry.points)
 	return clampi(total, mini(cfg.quality_min, cfg.quality_max), maxi(cfg.quality_min, cfg.quality_max))
 
@@ -102,6 +106,9 @@ static func _marker_label(marker_id: StringName) -> String:
 		var item := Database.item(marker_id) as ItemData
 		if item != null and item.display_name != "":
 			return item.display_name
+	var shape := Database.stone_shape(marker_id) as StoneShapeData
+	if shape != null and shape.display_name != "":
+		return shape.display_name
 	return MARKER_LABELS.get(marker_id, LABEL_MARKER_FALLBACK)
 
 

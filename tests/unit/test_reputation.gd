@@ -140,7 +140,8 @@ func test_real_config_matches_the_phase4_fixture() -> void:
 	var real := Database.config(&"reputation_config") as ReputationConfig
 	assert_not_null(real)
 	# Phase 4 (§2.14 / §2.8): the data follows the Phase-4 fixture; the rule tests keep Phase 3's.
-	var phase4 := Phase4Fixtures.reputation_config()
+	# Phase 5 (§2.7): + event master_stone – the Phase-5 fixture is the Phase-4 one plus that event.
+	var phase4 := Phase5Fixtures.reputation_config()
 	for prop: Dictionary in ReputationConfig.new().get_property_list():
 		if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
 			assert_eq(real.get(prop.name), phase4.get(prop.name), String(prop.name))
