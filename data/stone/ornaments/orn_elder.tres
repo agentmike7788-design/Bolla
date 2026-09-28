@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="OrnamentData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="OrnamentData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://src/systems/stone/ornament_data.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/props/ph_prop_orn_elder.glb" id="m1"]
 
 [resource]
 script = ExtResource("1")
@@ -10,3 +11,4 @@ display_name = "Holunderdolde"
 tooltip = "Hollerbrücks Blüte. Sie hält fern, was nicht herein soll."
 points = 1
 minutes = 25
+model = ExtResource("m1")

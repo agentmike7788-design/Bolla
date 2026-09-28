@@ -1,6 +1,9 @@
-[gd_resource type="Resource" script_class="GatherNodeData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="GatherNodeData" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://src/systems/gathering/gather_node_data.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/environment/ph_env_alder_coppice.glb" id="m1"]
+[ext_resource type="PackedScene" path="res://assets/models/environment/ph_env_alder_stump.glb" id="m2"]
+[ext_resource type="PackedScene" path="res://assets/models/environment/ph_env_alder_sapling.glb" id="m3"]
 
 [resource]
 script = ExtResource("1")
@@ -17,4 +20,7 @@ min_tier = 1
 tier2_bonus = 1
 animation = &"dig"
 requires_flag = &"workshop_open"
+model_full = ExtResource("m1")
+model_empty = ExtResource("m2")
+model_regrow = ExtResource("m3")
 regrow_stage_days = PackedInt32Array(2, 5)

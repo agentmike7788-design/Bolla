@@ -7,6 +7,12 @@ trodden earth at the stations. Under grave plots and stations the ground is flat
 floor sits only 3-4 cm and the plot patch 0.4-1.8 cm above it): a flat core rect per zone,
 then a smooth falloff back to the noise.
 
+Phase 5 (docs/PHASE5_DESIGN.md §4.5): 64 × 64 m (x −24…40, Am Bruch in the east); flat under
+the workyard build sites (footprint + station_flat_margin) and the flax beds / clay pit
+(ground.gather_flat_kinds). A new zone that touches an existing one takes over that zone's
+height, so the approved stations (workbench, table) keep their ground bit for bit. The quarry
+floor gets a stone tint (vertex colour only, ground.quarry_tint) and the beds / pit trodden earth.
+
 Grid vertices lie exactly on multiples of ground.cell (Godot coords), so the world builder can
 look heights up by grid index.  Layout coords are Godot (x, z); Blender y = -z.
 
@@ -36,6 +42,9 @@ GRASS_B = L.hexc("#667A48")
 GRASS_DRY = L.hexc("#7D7D4E")
 DIRT = L.hexc("#6B5A48")
 DIRT_DARK = L.hexc("#54463A")
+# Phase 5: quarry floor (stone family #8A8F94, muted towards the painted ground).
+STONE_FLOOR = L.hexc("#7A7C74")
+STONE_FLOOR_DARK = L.hexc("#646660")
 
 # Prototype height noise and path depression (m).
 NOISE_LOW, NOISE_HIGH, PATH_DEPTH = 0.06, 0.015, 0.035
@@ -115,6 +124,9 @@ class Ground:
         for zone in self.zones:  # the flat height = the unflattened ground at the zone centre
             zone[3] = self.raw_height(*zone[0])
         self._merge_touching_zones()
+        self._add_phase5_zones(lay, margin)
+        tint = g.get("quarry_tint")
+        self.quarry = tuple(tint) if tint else None
 
     def _merge_touching_zones(self):
         """Neighbouring plots (2.4 m apart) have overlapping cores: one common height per group
@@ -142,6 +154,36 @@ class Ground:
         for i in range(n):
             members = heights[find(i)]
             self.zones[i][3] = sum(members) / len(members)
+
+    def _add_phase5_zones(self, lay, margin):
+        """Workyard build sites and the flax beds / clay pit (Phase 5). A zone touching an older
+        zone adopts its height (the approved ground stays unchanged); the others get their own."""
+        new = []
+        for site in lay.get("workyard", {}).get("build_sites", []):
+            fx, fz, fw, fd = site["footprint"]
+            new.append([site["pos"], site["rot_y"], (fx - margin, fz - margin, fx + fw + margin, fz + fd + margin), None])
+            self.trodden.append(site["pos"])
+        kinds = lay["ground"].get("gather_flat_kinds", {})
+        for node in lay.get("gather_nodes", []):
+            if node["kind"] in kinds:
+                w, d = kinds[node["kind"]]
+                new.append([node["pos"], node["rot_y"], (-w / 2, -d / 2, w / 2, d / 2), None])
+                self.trodden.append(node["pos"])
+        old = list(self.zones)
+
+        def reach(zone):
+            rect = zone[2]
+            return math.hypot(max(abs(rect[0]), abs(rect[2])), max(abs(rect[1]), abs(rect[3])))
+
+        done = []
+        for zone in new:
+            zone[3] = self.raw_height(*zone[0])
+            for o in old + done:  # an approved zone first, then an earlier new one
+                if math.hypot(zone[0][0] - o[0][0], zone[0][1] - o[0][1]) < reach(zone) + reach(o) - self.falloff:
+                    zone[3] = o[3]
+                    break
+            done.append(zone)
+        self.zones.extend(new)
 
     # --- masks (same edge noise as the prototype path) ---
     def path_mask(self, x, z):
@@ -194,6 +236,12 @@ class Ground:
             c = L.mix(c, L.mix(DIRT, DIRT_DARK, 0.45 + 0.4 * n2), rm)
             rut = max(0.0, 1.0 - abs(d - self.rut) / 0.16) * rm
             c = L.mix(c, L.scale_c(DIRT_DARK, 0.82), rut * (0.55 + 0.2 * n1))
+        if self.quarry and self.quarry[0] - 1.0 < x < self.quarry[2] + 1.0 and self.quarry[1] - 1.0 < z < self.quarry[3] + 1.0:
+            # stone floor of the quarry, softly blended at its edge (1 m)
+            inside = min(x - self.quarry[0], self.quarry[2] - x, z - self.quarry[1], self.quarry[3] - z)
+            q = _smoothstep((inside + 1.0) / 2.0)
+            n3 = noise.noise(Vector((x * 0.9, z * 0.9, 11.0)))
+            c = L.mix(c, L.mix(STONE_FLOOR, STONE_FLOOR_DARK, 0.5 + 0.5 * n3), q * 0.85)
         f = 1.0 + n2 * 0.06
         return [L._to_lin(min(1.0, ch * f)) for ch in c]
 

@@ -378,6 +378,17 @@ static func mask_shapes(ctx: Ctx) -> Dictionary:
 		blocked.append({"c": a + dir * (w - 0.17), "r": 0.4})
 		# the way through the passage, 1.5 m on both sides of the fence line
 		route.append(_rect({"pos": a, "rot": float(pa.rot_y)}, Rect2(0.0, -1.5, w, 3.0)))
+	# Phase 5 (§4.1 V2): the workyard build sites like stations (footprint + margin blocked,
+	# + access = ROUTE) and the charcoal kiln.
+	var workyard: Dictionary = layout.get("workyard", {})
+	for site: Dictionary in workyard.get("build_sites", []):
+		var fp: Array = site.footprint
+		var xf := {"pos": Ctx.v2(site.pos), "rot": float(site.rot_y)}
+		var rect := Rect2(fp[0], fp[1], fp[2], fp[3])
+		blocked.append(_rect(xf, rect.grow(margin)))
+		route.append(_rect(xf, rect.grow(margin + access)))
+	if workyard.has("meiler"):
+		blocked.append({"c": Ctx.v2(workyard.meiler.pos), "r": float(workyard.meiler.radius) + margin})
 	for lp: Dictionary in layout.lantern_posts:
 		blocked.append({"c": Ctx.v2(lp.pos), "r": 0.35})
 	for pr: Dictionary in layout.props:
@@ -400,7 +411,7 @@ static func mask_shapes(ctx: Ctx) -> Dictionary:
 		route.append(_rect({"pos": Vector2.ZERO, "rot": 0.0}, Rect2(ta[0], ta[1], ta[2], ta[3])))
 	# The hedge gap (access to the Birkenhang) stays a way once the hedge is gone.
 	for c: Dictionary in layout.clearables:
-		if c.kind == "hedge" or c.kind == "gate_small":  # Phase 4 §4.2: the gate = ROUTE
+		if c.kind in ["hedge", "gate_small", "gate_east"]:  # Phase 4 §4.2 / Phase 5 §4.2: the gates = ROUTE
 			var fp: Array = c.footprint
 			route.append(_rect({"pos": Ctx.v2(c.pos), "rot": float(c.rot_y)}, Rect2(fp[0], fp[1] - 0.5, fp[2], fp[3] + 1.0)))
 	return {"sections": sections, "blocked": blocked, "ring": ring, "route": route}
