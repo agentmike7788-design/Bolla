@@ -19,3 +19,4 @@ speeds = Dictionary[StringName, float]({&"content": 0.0, &"calm": 0.4, &"restles
 repeat_minutes = 60
 bubble_seconds = 4.0
 gift_coins = 2
+devotion_robbed_cap = 8

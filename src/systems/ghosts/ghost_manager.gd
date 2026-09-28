@@ -11,6 +11,10 @@ extends Node
 ## grave_state_changed, grave_quality_changed, dirt_changed and decor_changed.
 ## Saved: {gifts: {grave_id: day}, heard: {grave_id: day}} (+ late, see save_state). Ghost nodes, moods and the
 ## "said within repeat_minutes" memory are not saved.
+## Phase 6 (docs/PHASE6_DESIGN.md §2.4): the devotion of a grave (ChapelRites.devotion_level, group
+## chapel_rites) adds ChapelRules.devotion_bonus to the mood (capped for robbed souls). Once per grave
+## the ghost speaks a by_service line (corpse with a funeral service) and once per devotion level a
+## by_devotion line (&"robbed" pool for robbed souls) – saved as service_heard / devotion_heard.
 
 const GROUP := &"ghosts"
 const SAVEABLE_GROUP := &"saveable"
@@ -22,6 +26,9 @@ const PIETY_GROUP := &"piety"
 const PLOT_GROUP := &"grave_plot"
 const PLAYER_GROUP := &"player"
 const STONEMASONRY_GROUP := &"stonemasonry"
+const CHAPEL_GROUP := &"chapel_rites"
+const DEVOTION_DEFAULT := &"default"
+const DEVOTION_ROBBED := &"robbed"
 const DEFAULT_SCENE := "res://src/entities/ghost/ghost.tscn"
 const DIRT_PREFIX := "dirt_"
 const COIN_ITEM := &"coin"
@@ -54,6 +61,9 @@ var _gifts: Dictionary[String, int] = {}
 var _heard: Dictionary[String, int] = {}
 ## Graves completed at/after LATE_MINUTE (grave_id -> day); saved while still relevant.
 var _late: Dictionary[String, int] = {}
+## Phase 6: grave_id -> day its by_service line was spoken; grave_id -> devotion level whose line was spoken.
+var _service_heard: Dictionary[String, int] = {}
+var _devotion_heard: Dictionary[String, int] = {}
 ## grave_id -> {total: int, text: String, mood: StringName, day: int, turn: int}
 var _said: Dictionary[String, Dictionary] = {}
 var _pool: Array[Ghost] = []
@@ -79,6 +89,7 @@ func _ready() -> void:
 	EventBus.dirt_changed.connect(_on_mood_input)
 	EventBus.decor_changed.connect(_on_decor_changed)
 	EventBus.grave_completed.connect(_on_grave_completed)
+	EventBus.devotion_held.connect(_on_mood_input)
 	EventBus.world_ready.connect(_on_world_ready)
 
 
@@ -137,7 +148,8 @@ func mood_of(grave_id: String) -> StringName:
 	return info.get("mood", &"")
 
 
-## {score, mood, reason, quality, dirt_level, decor_bonus} – {} without a MARKED grave.
+## {score, mood, reason, quality, dirt_level, decor_bonus, devotion} – {} without a MARKED grave.
+## devotion = the (capped) bonus of the grave's devotion (Phase 6), included in score.
 ## (Also for the debug command "ghost mood" and the cemetery overview.)
 func mood_info(grave_id: String) -> Dictionary:
 	var graveyard := _graveyard()
@@ -147,7 +159,10 @@ func mood_info(grave_id: String) -> Dictionary:
 	var corpse := _corpse(grave.corpse_id)
 	var dirt := _dirt_level(grave_id)
 	var bonus := mini(_decor_bonus(grave_id), _config().decor_bonus_max)
-	var value := GhostMood.score(grave.quality, dirt, bonus, _cleanliness_config(), _config(), GhostMood.robbed_count(corpse))
+	var robbed := GhostMood.robbed_count(corpse)
+	var base := GhostMood.score(grave.quality, dirt, bonus, _cleanliness_config(), _config(), robbed)
+	var devotion := _devotion_bonus(grave_id, robbed, base)
+	var value := GhostMood.score(grave.quality, dirt, bonus, _cleanliness_config(), _config(), robbed, devotion)
 	return {
 		"score": value,
 		"mood": GhostMood.mood(value, _config()),
@@ -155,6 +170,7 @@ func mood_info(grave_id: String) -> Dictionary:
 		"quality": grave.quality,
 		"dirt_level": dirt,
 		"decor_bonus": bonus,
+		"devotion": devotion,
 	}
 
 
@@ -185,7 +201,9 @@ func listen(grave_id: String, player: Player) -> String:
 		var traits: Array[StringName] = corpse.traits.duplicate() if corpse != null else []
 		var story: StringName = corpse.story_id if corpse != null else &""
 		var harvested: Array[StringName] = corpse.harvested.duplicate() if corpse != null else []
-		text = _design_line(grave_id, mood, corpse, line_seed(grave_id, day) + turn)
+		text = _chapel_line(grave_id, corpse, line_seed(grave_id, day) + turn)
+		if text == "":
+			text = _design_line(grave_id, mood, corpse, line_seed(grave_id, day) + turn)
 		if text == "":
 			text = GhostMood.pick_line(_lines(), mood, info.reason, traits, line_seed(grave_id, day) + turn, story, piety_tier(), harvested)
 		_said[grave_id] = {"total": now, "text": text, "mood": mood, "day": day, "turn": turn}
@@ -212,6 +230,49 @@ func _design_line(grave_id: String, mood: StringName, corpse: CorpseRecord, seed
 	return text
 
 
+## Phase 6 §2.4: the by_service line once per grave of a corpse with a funeral service, else the
+## by_devotion line once per new devotion level (robbed pool for a robbed soul, else default); "" = none.
+## Any mood – the rite was for this one.
+func _chapel_line(grave_id: String, corpse: CorpseRecord, seed: int) -> String:
+	var l := _lines()
+	if l == null:
+		return ""
+	if corpse != null and corpse.service_held and not _service_heard.has(grave_id) and not l.by_service.is_empty():
+		_service_heard[grave_id] = TimeManager.day
+		return l.by_service[posmod(seed, l.by_service.size())]
+	var held := _devotion_level(grave_id)
+	if held <= 0 or held <= int(_devotion_heard.get(grave_id, 0)):
+		return ""
+	var key := DEVOTION_ROBBED if GhostMood.robbed_count(corpse) > 0 else DEVOTION_DEFAULT
+	var pool: PackedStringArray = l.by_devotion.get(key, PackedStringArray())
+	if pool.is_empty():
+		pool = l.by_devotion.get(DEVOTION_DEFAULT, PackedStringArray())
+	if pool.is_empty():
+		return ""
+	_devotion_heard[grave_id] = held
+	return pool[posmod(seed, pool.size())]
+
+
+## Chapel level of the grave's devotion (0 without ChapelRites).
+func _devotion_level(grave_id: String) -> int:
+	var chapel := _first(CHAPEL_GROUP)
+	if chapel == null or not chapel.has_method(&"devotion_level"):
+		return 0
+	return int(chapel.call(&"devotion_level", grave_id))
+
+
+## ChapelRules.devotion_bonus of the grave's devotion for `base` (its score without it).
+func _devotion_bonus(grave_id: String, robbed: int, base: int) -> int:
+	var held := _devotion_level(grave_id)
+	if held <= 0:
+		return 0
+	var chapel := _first(CHAPEL_GROUP)
+	var chapel_cfg: ChapelConfig = null
+	if chapel != null and chapel.has_method(&"get_config"):
+		chapel_cfg = chapel.call(&"get_config") as ChapelConfig
+	return ChapelRules.devotion_bonus(held, robbed, base, chapel_cfg)
+
+
 ## {gifts, heard} (+ "late": {grave_id: day} while a grave finished after 21:00 is still
 ## waiting for its first night – QA-04: otherwise a load lets its ghost walk that same night).
 func save_state() -> Dictionary:
@@ -222,6 +283,10 @@ func save_state() -> Dictionary:
 			late[id] = _late[id]
 	if not late.is_empty():
 		out["late"] = late
+	if not _service_heard.is_empty():
+		out["service_heard"] = _service_heard.duplicate()
+	if not _devotion_heard.is_empty():
+		out["devotion_heard"] = _devotion_heard.duplicate()
 	return out
 
 
@@ -229,6 +294,8 @@ func load_state(data: Dictionary) -> void:
 	_gifts = _read_days(data.get("gifts", {}))
 	_heard = _read_days(data.get("heard", {}))
 	_late = _read_days(data.get("late", {}))
+	_service_heard = _read_days(data.get("service_heard", {}))
+	_devotion_heard = _read_days(data.get("devotion_heard", {}))
 	_said.clear()
 	_plots.clear()
 	_release_all()

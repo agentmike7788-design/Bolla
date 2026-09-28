@@ -18,8 +18,9 @@ extends Resource
 @export var valuables_taken_malus: int = -2
 @export var quality_min: int = 0
 ## Phase 4 §2.4: 13 (2+1+3+1+3+1+1+1). Phase 5 §2.5: 19 (2+1+3+1+9+1+1+1: a gilded master stone
-## with a fitting inscription and an ornament). Graves finished before keep their saved quality.
-@export var quality_max: int = 19
+## with a fitting inscription and an ornament). Phase 6 §2.7: 20 (19 + „Ausgesegnet"). Graves
+## finished before keep their saved quality.
+@export var quality_max: int = 20
 # Phase 4 (docs/PHASE4_DESIGN.md §2.4, §2.5)
 @export var quality_washed: int = 1
 @export var quality_laid_out: int = 1
@@ -31,7 +32,7 @@ extends Resource
 ## Harvest kind → points.
 @export var harvest_malus: Dictionary[StringName, int] = {&"hair": -1, &"teeth": -2}
 # Phase 6 (docs/PHASE6_DESIGN.md §2.4, §2.7): „Ausgesegnet +1" when the corpse had a funeral
-# service. quality_max 20 comes with P4 (W0-Notizen: stays 19 here and in the .tres until then).
+# service (GraveQuality line „Ausgesegnet").
 @export var quality_service: int = 1
 @export_group("Payment & reputation")
 ## payment = base_payment(cause) + floor(quality * payment_per_quality)

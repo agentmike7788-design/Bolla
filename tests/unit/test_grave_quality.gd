@@ -237,9 +237,9 @@ func test_phase4_lines_in_order() -> void:
 	assert_eq(_sum(lines), 13)
 	assert_eq(GraveQuality.compute(r, &"gravestone_simple", _p4()), 13, "§2.4 maximum 13")
 	assert_eq(_p4().quality_max, 13)
-	# Phase 5 §2.5: class default and data are 19 (a gilded master stone), the Phase-4 fixture keeps 13.
-	assert_eq(EconomyConfig.new().quality_max, 19, "class default (Phase 5)")
-	assert_eq((load("res://data/config/economy_config.tres") as EconomyConfig).quality_max, 19, "data (Phase 5)")
+	# Phase 5 §2.5: 19 (a gilded master stone); Phase 6 §2.7: class default and data 20 (+ „Ausgesegnet"). Phase 4 keeps 13.
+	assert_eq(EconomyConfig.new().quality_max, 20, "class default (Phase 6)")
+	assert_eq((load("res://data/config/economy_config.tres") as EconomyConfig).quality_max, 20, "data (Phase 6)")
 
 
 func test_phase4_each_new_line() -> void:
@@ -326,7 +326,7 @@ func test_phase5_quality_max_19() -> void:
 	var design := Phase5Fixtures.design(&"stone_master", &"i_fever", &"orn_ivy", true).to_dict()
 	assert_eq(_sum(GraveQuality.breakdown(r, &"stone_master", _p5(), design)), 19, "2+1+3+1+9+1+1+1")
 	assert_eq(GraveQuality.compute(r, &"stone_master", _p5(), design), 19)
-	assert_eq([_p5().quality_max, EconomyConfig.new().quality_max, EconomyConfig.resolve().quality_max], [19, 19, 19])
+	assert_eq([_p5().quality_max, EconomyConfig.new().quality_max, EconomyConfig.resolve().quality_max], [19, 20, 20], "Phase 6: + Ausgesegnet")
 	for id: StringName in [&"stone_stele", &"stone_arch", &"stone_master"]:
 		assert_eq(EconomyConfig.new().marker_quality[id], _p5().marker_quality[id], "class default = fixture: %s" % id)
 		assert_eq(EconomyConfig.resolve().marker_quality[id], _p5().marker_quality[id], "data = fixture: %s" % id)

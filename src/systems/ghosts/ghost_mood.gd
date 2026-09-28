@@ -3,7 +3,7 @@ extends RefCounted
 ## Pure mood / hint / line rules of the ghosts (docs/PHASE3_DESIGN.md §2.8, §3.4).
 ## score = grave quality + own dirt spot (grave_mood_by_level: +1/0/−2/−4) + decor bonus
 ## (clamped to decor_bonus_max) + robbed × GhostConfig.robbed_mood (Phase 4 §2.9: hair /
-## teeth taken). ≥ 9 content · 5…8 calm · ≤ 4 restless (mood_thresholds).
+## teeth taken) + devotion (Phase 6 §2.4: ChapelRules.devotion_bonus). ≥ 9 content · 5…8 calm · ≤ 4 restless (mood_thresholds).
 ## Reasons by priority (Phase 4 §2.9, Phase 5 §2.5): &"robbed", &"weeds", &"valuables", &"cold",
 ## &"unkempt", &"cross", &"nameless", &"waited", &"bare".
 
@@ -39,16 +39,17 @@ const WEEDS_LEVEL := 2
 
 
 ## `robbed` = number of harvested kinds (robbed_count).
-## Phase 6 (§2.4, §3.4; P4): `_devotion` = ChapelRules.devotion_bonus (already capped) – W0: not read yet.
+## Phase 6 (§2.4, §3.4): `devotion` = ChapelRules.devotion_bonus (already capped for robbed souls) is
+## added as it is (negative values count as 0).
 static func score(quality: int, dirt_level: int, decor_bonus: int, clean: CleanlinessConfig, cfg: GhostConfig, robbed: int = 0,
-		_devotion: int = 0) -> int:
+		devotion: int = 0) -> int:
 	var dirt := 0
 	if clean != null and not clean.grave_mood_by_level.is_empty():
 		var lvl := clampi(dirt_level, 0, clean.grave_mood_by_level.size() - 1)
 		dirt = clean.grave_mood_by_level[lvl]
 	var cap := cfg.decor_bonus_max if cfg != null else 2
 	var robbed_mood := cfg.robbed_mood if cfg != null else -5
-	return quality + dirt + clampi(decor_bonus, 0, cap) + maxi(robbed, 0) * robbed_mood
+	return quality + dirt + clampi(decor_bonus, 0, cap) + maxi(robbed, 0) * robbed_mood + maxi(devotion, 0)
 
 
 ## Harvested kinds (hair / teeth) of a record – each costs robbed_mood.

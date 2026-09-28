@@ -207,6 +207,8 @@ func test_new_game_starts_at_start_value() -> void:
 func test_real_config_matches_the_fixture() -> void:
 	var real := Database.config(&"piety_config") as PietyConfig
 	assert_not_null(real)
+	# Phase 6 (§2.7): the data follows the Phase-6 fixture (Phase 4 + full_prep rule + service, devotion, reinterred).
+	var expected := Phase6Fixtures.piety_config()
 	for prop: Dictionary in PietyConfig.new().get_property_list():
 		if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
-			assert_eq(real.get(prop.name), cfg.get(prop.name), String(prop.name))
+			assert_eq(real.get(prop.name), expected.get(prop.name), String(prop.name))

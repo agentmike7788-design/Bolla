@@ -50,6 +50,8 @@ const ITEMS := {
 	&"herb_bundle": ["Räucherkräuter", ItemData.Category.MATERIAL, 10],
 	&"gold_leaf": ["Blattgold", ItemData.Category.MATERIAL, 10],
 	&"steel_rod": ["Stahlstab", ItemData.Category.MATERIAL, 5],
+	# Phase 6 (P4, §2.6)
+	&"altar_candle": ["Altarkerze", ItemData.Category.MATERIAL, 10],
 }
 
 
