@@ -9,6 +9,15 @@
 
 **ART STYLE LOCK:** ✅ **ACTIVE** seit 27.09.2026 (Referenz: `src/world/art_prototype/`, Screenshots `docs/reviews/phase1_round1/`). Keine grundlegende Stiländerung ohne Benutzerfreigabe.
 
+## G4 – QA-Protokoll W3 (Agent 19, vorläufig – Benutzerprüfung offen)
+
+- Befunde, Playthrough-Tabellen, Fuzzer, Art-/Ton-Prüfung, Performance: `docs/reviews/phase4_wip/qa_playthrough.md` (Vorher/Nachher-Ausschnitte `docs/reviews/phase4_wip/qa_*.jpg`).
+- Screenshot-Satz Gate G4 (§11, echte Phase-4-Welt, 1280×720): `docs/reviews/phase4_round1/` (Welt `world_p4_*`, Budget `perf_p4_*` + `render_stats.txt`, UI `ui_*`).
+- Stand der Befunde: 8 behoben (QA4-01…08), jeder mit Regressionstest (`tests/integration/test_phase4_qa.gd`).
+- Playthrough-Bot (`phase4_bot.gd`): 5 Moral-Strategien × 24–28 Tage ohne Fehler und ohne Warnung; beide Wege erreichen „Sechs Gruben“ (würdevoll Tag 19, verwertend Tag 24); alle 5 Erkenntnisse würdevoll erreichbar; Phase-3-Bot-Erwartungen (§2.14) weiter grün.
+- Save-Fuzzer um einen v3-Stand mitten in Phase 4 erweitert (gezielte Mutationen der Phase-4-Teile).
+- Werte unverändert bis auf die Art-Fixes (Laterne Ilse, `visibility_range` der Verfallseffekte); Entscheidungen B1/B2 (Münzüberschuss, Verwerten + Herrichten) stehen im Bericht.
+
 ## G3 – QA-Protokoll W3 (Agent 19, vorläufig – Benutzerprüfung offen)
 
 - Befunde, Playthrough-Zahlen, Fuzzer: `docs/reviews/phase3_wip/qa_playthrough.md`.
