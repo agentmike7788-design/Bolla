@@ -219,7 +219,7 @@ func test_shed_chest_larger_grid_and_double_stacks() -> void:
 	await _setup()
 	_buildings({&"shed": 3})
 	await _shed_store()
-	shed.store().add_item(&"stone", 30)
+	shed.store().add_item(&"stone", 70)
 	shed.store().add_item(&"shovel_iron", 1)
 	ui.open_panel(&"chest", {"storage": shed.store(), "inventory": inv, "chest": shed})
 	var panel := ui.get_panel(&"chest") as ChestPanel
@@ -233,8 +233,11 @@ func test_shed_chest_larger_grid_and_double_stacks() -> void:
 	assert_eq(panel.stack_note.text, "Rohstoffe und Werkstoffe stapeln hier doppelt (× 2).")
 	assert_true(panel.doubled(&"stone"))
 	assert_false(panel.doubled(&"shovel_iron"), "tools never stack doubled")
+	assert_eq(panel.shown_slots(ChestPanel.SIDE_CHEST)[0], {"id": &"stone", "amount": 70}, "one doubled stack")
 	var badge := panel.slot_button(ChestPanel.SIDE_CHEST, 0).get_node(^"Badge") as Label
-	assert_eq(badge.text, "× 2")
+	assert_eq(badge.text, "× 2", "above the normal limit of 50")
+	assert_true(panel.slot_button(ChestPanel.SIDE_CHEST, 0).tooltip_text.contains("Stapel bis 100 (× 2)"))
+	assert_eq((panel.slot_button(ChestPanel.SIDE_CHEST, 1).get_node(^"Badge") as Label).text, "", "the tool: no badge")
 	ui.close_top_panel()
 	var chest := Chest.new()
 	var storage := Inventory.new()

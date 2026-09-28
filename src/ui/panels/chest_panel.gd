@@ -9,7 +9,7 @@ extends UIPanel
 ## Phase 6 (docs/PHASE6_DESIGN.md §2.5, §7): the shed's store (context chest is a ShedStore) is the
 ## same panel titled „Lagerschuppen" with the side „Regal", a wider grid (8 columns, smaller slots)
 ## for its 24 / 32 / 40 places, „Schuppen Stufe 3 · 40 Plätze" and, from level 3, the note
-## „Rohstoffe und Werkstoffe stapeln hier doppelt (× 2)." with a × 2 badge on those stacks.
+## „Rohstoffe und Werkstoffe stapeln hier doppelt (× 2)." with a × 2 badge on stacks above the normal limit.
 
 const SIDE_CHEST := &"chest"
 const SIDE_BAG := &"bag"
@@ -320,7 +320,13 @@ func _show_slot(b: Button, slot: Dictionary) -> void:
 	icon.texture = Database.icon(id)
 	count.text = str(amount)
 	if is_shed and _chest_grid.is_ancestor_of(b) and doubled(id):
-		badge.text = Phase6Texts.SHED_STACK_BADGE % stack_multiplier()
+		# The × 2 badge where the doubling is in use (a stack above the normal limit); the tooltip
+		# always names the doubled limit.
+		var item := Database.item(id) as ItemData
+		var base := item.max_stack if item != null else 0
+		b.tooltip_text += "\n" + Phase6Texts.SHED_STACK_LIMIT % [base * stack_multiplier(), stack_multiplier()]
+		if amount > base:
+			badge.text = Phase6Texts.SHED_STACK_BADGE % stack_multiplier()
 
 
 func _bulk_move(from: Inventory, to: Inventory, full_text: String) -> int:

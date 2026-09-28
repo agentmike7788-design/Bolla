@@ -125,7 +125,7 @@ func _refresh() -> void:
 		selected = _first_open()
 	page = clampi(page, 0, page_count() - 1)
 	candles_label.text = Phase6Texts.DEVOTION_CANDLES % (_inventory.count(cfg.candle_item) if is_instance_valid(_inventory) else 0)
-	sort_button.text = Phase6Texts.DEVOTION_SORT_ROWS if restless_first else Phase6Texts.DEVOTION_SORT_RESTLESS
+	sort_button.text = (Phase6Texts.CHECK_ON if restless_first else Phase6Texts.CHECK_OFF) % Phase6Texts.DEVOTION_SORT_RESTLESS
 	page_label.text = Phase6Texts.DEVOTION_PAGE % [page + 1, page_count()]
 	page_label.visible = page_count() > 1
 	UIKit.clear_children(list_box)
@@ -213,7 +213,7 @@ func _first_open() -> String:
 func _row(row: Dictionary) -> Control:
 	var grave_id := str(row.grave_id)
 	var chosen := grave_id == selected
-	var b := UIKit.button("", &"JournalCardSelected" if chosen else &"SlotButton")
+	var b := UIKit.button("", &"BuildSlotSelected" if chosen else &"SlotButton")
 	b.custom_minimum_size = Vector2(panel_width - 80.0, 58.0)
 	b.toggle_mode = false
 	b.pressed.connect(select.bind(grave_id))

@@ -3,11 +3,16 @@ extends Control
 ## Dialogue UI (docs §7): runs a DialogueRunner with {inventory, speaker}, shows speaker
 ## name, text and up to MAX_CHOICES answers (buttons + keys dialogue_choice_1..4).
 ## UIState modal &"dialogue" while open; emits EventBus.dialogue_ended(id) at the end.
+## Phase 6: Osric's menu has grown past four answers (candles, buildings) – every available answer
+## is shown (up to MAX_CHOICES; from TWO_COLUMNS_FROM on in two columns), keys 1–4 pick the first
+## four, the rest by mouse or focus (arrows + Enter).
 
 signal closed(dialogue_id: StringName)
 
 const MODAL_ID := &"dialogue"
-const MAX_CHOICES := 4
+const MAX_CHOICES := 12
+const KEY_CHOICES := 4
+const TWO_COLUMNS_FROM := 6
 const CHOICE_ACTIONS: Array[StringName] = [&"dialogue_choice_1", &"dialogue_choice_2", &"dialogue_choice_3", &"dialogue_choice_4"]
 const TEXT_END := "(Ende)"
 const TEXT_HINT := "[1–4] wählen · [Esc] beenden"
@@ -161,8 +166,14 @@ func _show_node() -> void:
 	var choices := runner.available_choices()
 	if choices.is_empty():
 		_add_choice(0, TEXT_END)
-	for i: int in mini(choices.size(), MAX_CHOICES):
-		_add_choice(i, choices[i].text)
+	var shown := mini(choices.size(), MAX_CHOICES)
+	var columns := 2 if shown >= TWO_COLUMNS_FROM else 1
+	var line: HBoxContainer = null
+	for i: int in shown:
+		if i % columns == 0:
+			line = UIKit.hbox(16)
+			choices_box.add_child(line)
+		_add_choice(i, choices[i].text, line if columns > 1 else null)
 	_focus_first_choice.call_deferred()
 
 
@@ -171,9 +182,10 @@ func _focus_first_choice() -> void:
 		_choice_buttons[0].grab_focus()
 
 
-func _add_choice(index: int, text: String) -> void:
+func _add_choice(index: int, text: String, line: HBoxContainer = null) -> void:
 	var row := UIKit.hbox(12)
-	var cap := UIKit.keycap(str(index + 1))
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var cap := UIKit.keycap(str(index + 1) if index < KEY_CHOICES else "·")
 	cap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(cap)
 	var button := UIKit.button(text, &"ChoiceButton")
@@ -182,7 +194,11 @@ func _add_choice(index: int, text: String) -> void:
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.pressed.connect(choose.bind(index))
 	row.add_child(button)
-	choices_box.add_child(row)
+	if line != null:
+		row.custom_minimum_size.x = (box_width - 100.0) * 0.5
+		line.add_child(row)
+	else:
+		choices_box.add_child(row)
 	_choice_buttons.append(button)
 
 

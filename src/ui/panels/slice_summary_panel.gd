@@ -44,6 +44,8 @@ const GOAL_RATING := &"dignified"
 const GOAL_RATING_CEMETERY := &"venerable"
 
 @export var panel_width: float = 720.0
+## Value column of the roof_and_earth rows (names of the reinterred; the panel grows with it).
+@export var roof_value_width: float = 640.0
 
 var days_label: Label
 var burials_label: Label
@@ -120,7 +122,7 @@ func _build() -> void:
 	for caption: String in Phase6Texts.CHAPTER_ROWS:
 		roof_grid.add_child(UIKit.label(caption, &"DimLabel"))
 		var value := UIKit.label("", &"SubheaderLabel", true)
-		value.custom_minimum_size.x = panel_width - 370.0
+		value.custom_minimum_size.x = roof_value_width
 		roof_grid.add_child(value)
 		roof_rows[caption] = value
 	roof_grid.visible = false
