@@ -95,11 +95,10 @@ func test_database_finds_all_recipes() -> void:
 		&"burial_gown": ["Totenhemd", {&"linen": 3}, 30],
 	}
 	var tools: Array[StringName] = [&"rake", &"scrub_brush", &"comb"]
-	var workbench := Database.recipes(&"workbench")
+	var p5 := Phase5Fixtures.RECIPE_IDS
+	var workbench := Database.recipes(&"workbench").filter(func(r: RecipeData) -> bool: return not p5.has(r.id))
 	assert_eq(workbench.size(), expected.size())
-	# Phase 5: + P3's 5 tool recipes at the forge (tested in test_tools.gd); P1 adds its own.
-	var forge_tools: Array[StringName] = [&"shovel_iron", &"axe_iron", &"shovel_master", &"axe_master", &"pickaxe_master"]
-	assert_eq(Database.recipes().size(), expected.size() + forge_tools.size())
+	assert_eq(Database.recipes().filter(func(r: RecipeData) -> bool: return not p5.has(r.id)).size(), expected.size(), "Phase-5 recipes: test_phase5_recipes_*")
 	for id: StringName in expected:
 		var spec: Array = expected[id]
 		var r := _recipe(id)
@@ -338,3 +337,97 @@ func test_invalid_arguments_are_refused() -> void:
 		assert_false(CraftingSystem.can_craft(bad, inv))
 		assert_false(CraftingSystem.craft(bad, inv))
 	assert_eq(inv.count(&"wood"), 3)
+
+
+# --- Phase 5 (P1, docs/PHASE5_DESIGN.md §2.3, §2.4, §3.4) ----------------------------------------
+
+## P1's recipe files (§3.2); the tool recipes are P3's.
+const P1_RECIPES: Array[StringName] = [&"charcoal", &"iron_bar", &"iron_fittings_forge", &"yarn", &"linen_woven",
+		&"burial_gown_loom", &"ink", &"herb_bundle"]
+const P3_RECIPES: Array[StringName] = [&"shovel_iron", &"axe_iron", &"shovel_master", &"axe_master", &"pickaxe_master"]
+
+
+func test_phase5_recipes_load_like_the_contract() -> void:
+	for id: StringName in P1_RECIPES:
+		var r := Database.recipe(id) as RecipeData
+		assert_not_null(r, "data/recipes/%s.tres" % id)
+		if r == null:
+			continue
+		var f := Phase5Fixtures.recipe(id)
+		assert_eq([r.display_name, r.inputs, r.output_id, r.output_amount, r.craft_minutes, r.station, r.category, r.background],
+				[f.display_name, f.inputs, f.output_id, f.output_amount, f.craft_minutes, f.station, f.category, f.background], String(id))
+		assert_eq(r.resource_path, "res://data/recipes/%s.tres" % id, "file name = id")
+	for r: RecipeData in Database.recipes():
+		assert_eq(r.background, r.id == &"charcoal", "only the kiln is a background recipe (%s)" % r.id)
+
+
+func test_phase5_recipe_count_per_station() -> void:
+	# §2.4: forge 8 (3 P1 + 5 P3 tools), loom 3, workbench + 2. P3's tool recipes count when present.
+	var tools_present := P3_RECIPES.filter(func(id: StringName) -> bool: return Database.recipe(id) != null).size()
+	assert_eq(Database.recipes(&"forge").size(), 3 + tools_present)
+	assert_eq(Database.recipes(&"loom").size(), 3)
+	var workbench_p5 := Database.recipes(&"workbench").filter(func(r: RecipeData) -> bool: return P1_RECIPES.has(r.id))
+	assert_eq(workbench_p5.size(), 2, "ink, herb_bundle")
+	assert_eq(Database.recipes(&"mason"), [], "the mason's bench has stone shapes, no RecipeData")
+
+
+func test_phase5_stations_in_data() -> void:
+	assert_eq(Database.stations().size(), 4)
+	for f: StationData in Phase5Fixtures.stations():
+		var s := Database.station(f.id) as StationData
+		assert_not_null(s, String(f.id))
+		if s == null:
+			continue
+		assert_eq([s.site_id, s.build_inputs, s.build_coins, s.build_minutes, s.panel, s.prebuilt, s.coin_part_label],
+				[f.site_id, f.build_inputs, f.build_coins, f.build_minutes, f.panel, f.prebuilt, f.coin_part_label], String(f.id))
+		assert_true(s.prompt_use.begins_with("[E] ") and s.display_name != "", String(f.id))
+		if not s.prebuilt:
+			assert_true(s.build_text != "", String(f.id))
+
+
+func test_tool_as_input_and_output_on_the_belt() -> void:
+	var tool_inv := Phase5Fixtures.inv_with_tools({&"shovel": 1}, {&"iron_bar": 2, &"charcoal": 1, &"steel_rod": 1})
+	var upgrade := Phase5Fixtures.recipe(&"shovel_master")
+	assert_eq(CraftingSystem.missing(upgrade, tool_inv), {}, "the belt tool counts as an input")
+	assert_true(CraftingSystem.craft(upgrade, tool_inv))
+	assert_eq(tool_inv.count(&"shovel_iron"), 0, "the lower tool is consumed")
+	assert_eq(tool_inv.count(&"shovel_master"), 1)
+	assert_eq([tool_inv.count(&"iron_bar"), tool_inv.count(&"charcoal"), tool_inv.count(&"steel_rod")], [0, 0, 0])
+	var again := Phase5Fixtures.inv_with_tools({}, {&"iron_bar": 2, &"charcoal": 1, &"steel_rod": 1})
+	assert_eq(CraftingSystem.missing(upgrade, again), {&"shovel_iron": 1}, "no iron shovel → no master shovel")
+	tool_inv.free()
+	again.free()
+
+
+func test_crafted_tool_emits_tool_tier_changed_and_a_note() -> void:
+	var bench := Workbench.new()
+	for id: StringName in Phase5Fixtures.TOOL_IDS:
+		bench.item_table[id] = Phase5Fixtures.item(id)
+	bench.action_config = Phase5Fixtures.action_config()
+	var tool_inv := Phase5Fixtures.inv_with_tools({&"shovel": 1}, {&"iron_bar": 2, &"charcoal": 1, &"steel_rod": 1})
+	var tiers: Array = []
+	var notes: Array = []
+	var on_tier := func(kind: StringName, tier: int) -> void: tiers.append([kind, tier])
+	var on_note := func(text: String, kind: StringName) -> void: notes.append([text, kind])
+	EventBus.tool_tier_changed.connect(on_tier)
+	EventBus.notification_requested.connect(on_note)
+	GameState.reset()
+	bench._finish_craft(Phase5Fixtures.recipe(&"shovel_master"), tool_inv)
+	assert_eq(tiers, [[&"shovel", 2]])
+	assert_has(notes, ["Graben dauert jetzt 35 statt 50 Minuten.", &"info"], "§2.3 note")
+	assert_eq(GameState.get_stat(&"crafted"), 1)
+	tiers.clear()
+	notes.clear()
+	var axe_inv := Phase5Fixtures.inv_with_tools({}, {&"iron_fittings": 2, &"wood": 1})
+	bench._finish_craft(Phase5Fixtures.recipe(&"axe_iron"), axe_inv)
+	assert_eq(tiers, [[&"axe", 1]])
+	assert_has(notes, ["Holzfälleraxt hängt jetzt am Gürtel.", &"info"])
+	tiers.clear()
+	bench._finish_craft(_custom({&"wood": 1}, &"wood"), axe_inv)
+	assert_eq(tiers, [], "no tool, no signal")
+	EventBus.tool_tier_changed.disconnect(on_tier)
+	EventBus.notification_requested.disconnect(on_note)
+	GameState.reset()
+	tool_inv.free()
+	axe_inv.free()
+	bench.free()

@@ -449,7 +449,21 @@ static func _circle_hits_rect(c: Vector2, r: float, rect: Rect2) -> bool:
 
 # --- Phase 5 (docs/PHASE5_DESIGN.md §3.4, §5.2 step 5) ------------------------------------------
 
-## STUB (P1): removes every decor piece whose cells touch one of `rects` (world XZ), decor_changed
-## per piece; the items go back via Workshop. Returns {decor_id: count} removed.
-func evict_rects(_rects: Array[Rect2]) -> Dictionary:
-	return {}
+## Removes every decor piece whose footprint overlaps one of `rects` (world XZ; touching edges do
+## not count), oldest first, decor_changed per piece. Gives no items back – the caller (Workshop,
+## §5.2 step 5) hands them out. Returns {decor_id: count} removed.
+func evict_rects(rects: Array[Rect2]) -> Dictionary:
+	var out := {}
+	if rects.is_empty() or mask == null:
+		return out
+	var sorted := placements()
+	sorted.sort_custom(func(a: DecorPlacement, b: DecorPlacement) -> bool: return _uid_num(a.uid) < _uid_num(b.uid))
+	for p: DecorPlacement in sorted:
+		var d := decor(p.decor_id)
+		var area := grid().footprint_rect(p.cell, d.footprint if d != null else Vector2i.ONE, p.rot)
+		if not rects.any(func(r: Rect2) -> bool: return r.intersects(area)):
+			continue
+		_erase(p)
+		out[p.decor_id] = int(out.get(p.decor_id, 0)) + 1
+		EventBus.decor_changed.emit(p.uid, p.decor_id, false)
+	return out

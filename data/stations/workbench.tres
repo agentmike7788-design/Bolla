@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="StationData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/workshop/station_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"workbench"
+display_name = "Werkbank"
+site_id = ""
+build_inputs = Dictionary[StringName, int]({})
+build_coins = 0
+build_minutes = 0
+panel = &"crafting"
+prompt_use = "[E] Werkbank benutzen"
+build_text = ""
+coin_part_label = ""
+prebuilt = true

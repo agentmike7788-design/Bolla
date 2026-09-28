@@ -19,3 +19,8 @@ extends Resource
 @export var goal_flag: StringName = &"names_in_stone_complete"
 ## Places for finished stones at the mason's bench.
 @export var ready_slots: int = 3
+# P1 (W1): the durations of the charcoal kiln that §1.3 names but no data class held.
+## Game minutes a background job runs on its own after start_job (§2.1: the kiln, 480).
+@export var background_minutes: int = 480
+## Game minutes of "[E] Holzkohle holen" (§1.3: 5).
+@export var collect_minutes: int = 5

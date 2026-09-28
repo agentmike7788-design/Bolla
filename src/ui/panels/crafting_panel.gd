@@ -23,7 +23,7 @@ const TEXT_NO_RECIPES := "Hier lässt sich nichts herstellen."
 const SHROUD_ITEM := &"shroud"
 const DEFAULT_STATION := &"workbench"
 const CATEGORY_ORDER: Array[StringName] = [&"grave", &"decor", &"tool"]
-const CATEGORY_LABELS: Dictionary[StringName, String] = {&"grave": "Grab", &"decor": "Zier", &"tool": "Werkzeug"}
+const CATEGORY_LABELS: Dictionary[StringName, String] = {&"grave": "Grab", &"decor": "Zier", &"tool": "Werkzeug", &"material": "Werkstoffe"}
 
 @export var panel_width: float = 900.0
 @export var output_icon_edge: float = 72.0

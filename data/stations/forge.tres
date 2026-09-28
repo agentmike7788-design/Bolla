@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="StationData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/workshop/station_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"forge"
+display_name = "Esse"
+site_id = "site_forge"
+build_inputs = Dictionary[StringName, int]({&"stone": 10, &"clay": 6, &"iron_fittings": 2})
+build_coins = 25
+build_minutes = 120
+panel = &"crafting"
+prompt_use = "[E] Esse benutzen"
+build_text = "Gemauerte Esse mit Kamin, Amboss und Löschtrog. Daneben ein Platz für den Meiler."
+coin_part_label = "Amboss und Blasebalg"
+prebuilt = false
