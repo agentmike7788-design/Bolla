@@ -73,7 +73,7 @@ def _figure(parts, coat, coat_dark, lean: float = 0.26, skirt: bool = False, sto
         path = [Vector((0, 0.02, hip)), Vector((0, -0.2, hip + 0.02)), Vector((0, -0.4, hip - 0.02)),
                 Vector((0, -0.46, hip - 0.2)), Vector((0, -0.48, 0.12))]
         lap = sweep(path, [0.2 * stout, 0.21 * stout, 0.2, 0.19, 0.2], n=10, flat=0.45,
-                    normals=[(0, 0, 1), (0, 0, 1), (0, 0.4, 1), (0, 1, 0), (0, 1, 0)], name="lap")
+                    normals=[(0, 0, 1), (0, 0, 1), (0, -0.6, 1), (0, -1, 0.2), (0, -1, 0)], name="lap")
         parts.append(_shade(lap, coat, coat_dark, (0.0, hip), seed + 1, fold=9.0))
     else:
         for sx in (-1, 1):
@@ -84,7 +84,7 @@ def _figure(parts, coat, coat_dark, lean: float = 0.26, skirt: bool = False, sto
         # the coat hangs over the front of the thighs
         flap = sweep([Vector((0, 0.0, hip + 0.02)), Vector((0, -0.24, hip + 0.03)), Vector((0, -0.34, hip - 0.08))],
                      [0.19 * stout, 0.2 * stout, 0.2 * stout], n=8, flat=0.35,
-                     normals=[(0, 0, 1), (0, 0, 1), (0, 0.6, 1)], name="flap")
+                     normals=[(0, 0, 1), (0, 0, 1), (0, -0.6, 1)], name="flap")
         parts.append(_shade(flap, coat, coat_dark, (0.0, hip), seed + 3))
     for sx in (-1, 1):   # boots
         b = L.prim("cube", loc=(sx * 0.1, -0.52, 0.045), scale=(0.055, 0.12, 0.045))
@@ -122,10 +122,10 @@ def _hood(parts, c: Vector, color, dark, deep: float = 1.0, seed: int = 0):
         r = math.sin(math.pi * (0.15 + 0.85 * t)) * 0.15 + 0.02
         rings.append((z, r * 1.02, r * 1.12 * deep, 0.0, c.y + 0.025 - 0.05 * (1 - t)))
     hood = loft(rings, n=14, p=2.2, name="hood")
-    # the face opening: pull the front ring points of the lower half back (a dark hollow)
+    # the face opening: the front of the lower half is pushed back a little and shaded (a dark hollow)
     for v in hood.data.vertices:
         if v.co.y < c.y - 0.1 and c.z - 0.13 < v.co.z < c.z + 0.07 and abs(v.co.x) < 0.07:
-            v.co.y = c.y - 0.09
+            v.co.y += 0.25 * (c.y - 0.1 - v.co.y)
     _shade(hood, color, dark, (c.z - 0.2, c.z + 0.15), seed)
     _tint(hood, lambda co, n: (0.45, None, 0.0) if (co.y < c.y - 0.06 and co.z < c.z + 0.05 and abs(co.x) < 0.1) else (1.0, None, 0.0))
     parts.append(hood)

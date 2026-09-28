@@ -12,10 +12,11 @@ GRUFT (crypt, under the oak - cold, no windows)
                          arched opening of the ossuary niche (3 x 1.6 m, raised one step), the south
                          stub with the opening of the stair shaft.  Markers door_inside (on the lowest
                          stair step), spawn_inside (foot of the stair)
-  ph_int_crypt_stair     shaft 1.4 x 3 m, 8 steps rising south towards the camera, ending in daylight
-                         (the door frame at the top).  Marker light_window_1 (the shaft light, role window)
+  ph_int_crypt_stair     shaft 1.4 x 3 m, 8 steps rising south towards the camera, ending on a landing in
+                         daylight (no door frame: it would block the camera).  Origin = where the shaft meets
+                         the room's south face, the shaft runs to +Z.  light_window_1 (shaft light, role window)
   ph_int_crypt_table     stone slab on two masonry trestles; marker slot_corpse (+X = long axis)
-  ph_int_crypt_niche     cold niche: brick arcosolium unit (2.0 x 0.85 m) with a slate bench; slot_corpse,
+  ph_int_crypt_niche     cold niche: brick arcosolium unit (cut open at the top like the vault) (2.0 x 0.85 m) with a slate bench; slot_corpse,
                          chill (three fit each 6 m side wall)
   ph_int_crypt_niche_sealed  the same unit, bricked up
   ph_int_crypt_lantern   hanging lantern on a chain; marker light_ceiling (role lantern)
@@ -433,19 +434,24 @@ def crypt_stair():
             tilt = math.degrees(math.atan2(STAIR_RISE, STAIR_L))
             parts.append(_slab((sx * (STAIR_W / 2 + 0.12), (a0 + a1) / 2, zc), (0.15, STAIR_L / 8 + 0.02, 0.05), STONE_OLD,
                                rot=(-tilt, 0, 0), seed=40 + k + sx * 5, var=0.2, ao=0.0, top=0.3))
-    # the door at the top: stone frame, the doorway full of pale daylight
+    # the top: a landing in the daylight falling in through the (unseen) door - no door frame, it
+    # would stand between the camera and the room; the light is paint + the shaft light (role window)
     zt = STAIR_RISE
-    y = -STAIR_L - 0.05
-    parts.append(_slab((0.0, y - 0.02, zt + 1.0), (STAIR_W / 2 - 0.02, 0.02, 1.0), DAYLIGHT, seed=60, var=0.08, ao=0.0,
-                       top=0.0))
-    for sx in (-1, 1):
-        parts.append(_slab((sx * (STAIR_W / 2 + 0.05), y, zt + 1.0), (0.1, 0.1, 1.0), STONE_PALE, seed=61 + sx, var=0.15,
-                           ao=0.1))
-    parts.append(_slab((0.0, y, zt + 2.05), (STAIR_W / 2 + 0.2, 0.12, 0.1), STONE_PALE, seed=64, var=0.15, ao=0.0))
+    y = -STAIR_L
+    land = _slab((0.0, y - 0.25, zt / 2), (STAIR_W / 2 - 0.02, 0.25, zt / 2), STONE_DARK, jit=0.008, seed=60, var=0.15,
+                 ao=0.2, top=0.3)
+    P._modulate(land, lambda co: 1.0)
+    parts.append(land)
+    patch = _slab((0.0, y - 0.2, zt + 0.004), (STAIR_W / 2 - 0.1, 0.24, 0.004), DAYLIGHT, jit=0.0, seed=61, var=0.08,
+                  ao=0.0, top=0.0)
+    parts.append(patch)
+    for k in (n - 1, n - 2):          # the light spills down over the two upper steps
+        parts.append(_slab((0.0, -k * run - run * 0.55, (k + 1) * rise + 0.003), (STAIR_W / 2 - 0.12, run * 0.3, 0.003),
+                           L.mix(DAYLIGHT, STONE_DARK, 0.35 if k == n - 1 else 0.65), jit=0.0, var=0.08, ao=0.0, top=0.0))
     # a little cold dust on the lowest steps, a forgotten broom
     parts.append(P._stick((0.52, -0.3, rise), (0.45, -0.1, rise + 1.05), 0.014, WOOD_OLD, verts=4))
     _cut_band(parts, -STAIR_W / 2 - 0.25, STAIR_W / 2 + 0.25, -STAIR_L - 0.2, 0.0, 70, sides=("e", "w"))
-    obj = _done(parts, "ph_int_crypt_stair", [("light_window_1", (0.0, -STAIR_L + 0.6, zt + 1.4))], 30)
+    obj = _done(parts, "ph_int_crypt_stair", [("light_window_1", (0.0, -STAIR_L - 0.2, zt + 1.2))], 30)
     del obj
 
 
@@ -506,17 +512,18 @@ def _niche_frame(parts, sealed: bool, seed: int):
         parts.append(_slab((0.0, y - 0.005, 0.68), (0.08, 0.004, 0.012), L.hexc("#3A2E26"), jit=0.0, var=0.0, ao=0.0))
         return None
     # inside: back wall, cheeks, the arched ceiling, the slate bench on a brick base
-    _face(parts, "y", D / 2, -1, -iw, iw, 0.0, spring + rise, 0.3, 0.14, _brick_col(dark=L.hexc("#5A463A")),
+    _face(parts, "y", D / 2, -1, -iw, iw, 0.0, spring + rise, 0.3, 0.14, _brick_col(base=L.hexc("#96796A"), dark=L.hexc("#7A6252")),
           top=lambda a: cz + math.sqrt(max(0.0, r * r - a * a)), relief=0.008)
     for sx in (-1, 1):
-        _face(parts, "x", sx * iw, -sx, y, D / 2, 0.0, spring, 0.28, 0.14, _brick_col(dark=L.hexc("#5A463A")), relief=0.008)
-    a_s = math.atan2(spring - cz, iw)
-
-    def ceil(u, v):
-        a = a_s + (math.pi - 2 * a_s) * v
-        return Vector((r * math.cos(a), u, cz + r * math.sin(a)))
-    parts += _tiled(lambda u, v: ceil(-u, v), -D / 2, D / 2, 0.0, 1.0, 0.28, 0.12, _brick_col(base=L.hexc("#7A6252")),
-                    relief=0.006)
+        _face(parts, "x", sx * iw, -sx, y, D / 2, 0.0, spring, 0.28, 0.14, _brick_col(base=L.hexc("#96796A"), dark=L.hexc("#7A6252")),
+              relief=0.008)
+    # no vault inside: like the room's vault the niche is cut open at the top, so the 45 deg camera
+    # sees the body on the bench over the arch; a stone coping marks the cut
+    for sx in (-1, 1):
+        parts.append(_slab((sx * (iw + 0.05), 0.0, spring + 0.03), (0.07, D / 2, 0.035), STONE_OLD, seed=seed + 40 + sx,
+                           var=0.18, ao=0.0, top=0.3))
+    parts.append(_slab((0.0, D / 2 - 0.06, spring + rise + 0.03), (iw + 0.1, 0.07, 0.035), STONE_OLD, seed=seed + 43,
+                       var=0.18, ao=0.0, top=0.3))
     bench = 0.5
     parts.append(_slab((0.0, 0.02, bench / 2), (iw, D / 2 - 0.02, bench / 2), BRICK_DARK, cuts=1, jit=0.01, seed=seed + 30,
                        var=0.25, ao=0.4))

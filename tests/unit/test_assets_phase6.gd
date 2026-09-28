@@ -33,7 +33,7 @@ const MODELS := {
 	"ph_bld_shed_l3": ["buildings", Vector3(3.0, 2.8, 3.3), Vector3(3.35, 3.4, 3.75), 3800],
 	"ph_prop_grave_pit_foot": ["props", Vector3(1.3, 0.2, 2.6), Vector3(1.9, 0.7, 3.2), 900],
 	"ph_int_crypt_room": ["interior", Vector3(8.0, 3.2, 7.4), Vector3(8.8, 4.2, 8.2), 9000],
-	"ph_int_crypt_stair": ["interior", Vector3(1.4, 4.2, 2.9), Vector3(2.4, 5.6, 3.4), 2000],
+	"ph_int_crypt_stair": ["interior", Vector3(1.4, 3.4, 2.9), Vector3(2.4, 4.4, 3.7), 2000],
 	"ph_int_crypt_table": ["interior", Vector3(1.9, 0.75, 0.8), Vector3(2.3, 1.0, 1.2), 1200],
 	"ph_int_crypt_niche": ["interior", Vector3(1.9, 1.4, 0.8), Vector3(2.2, 1.8, 1.0), 900],
 	"ph_int_crypt_niche_sealed": ["interior", Vector3(1.9, 1.4, 0.08), Vector3(2.2, 1.8, 1.0), 500],
@@ -232,6 +232,7 @@ func test_exports_are_deterministic() -> void:
 	var lib := FileAccess.get_file_as_string("res://tools/blender/lib_painted.py")
 	assert_true(lib.contains("def _quantize_uvs("), "lib_painted quantizes UVs")
 	assert_true(lib.count("_quantize_uvs(") >= 3, "export() and export_rigged() both call it")
+	assert_true(lib.count("_canonical_glb(") >= 3, "triangle order canonicalised after both exports")
 
 
 # --- buildings outside ---------------------------------------------------------------------------
