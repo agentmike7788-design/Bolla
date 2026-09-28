@@ -252,9 +252,11 @@ func test_ghost_lines_fixture() -> void:
 
 func test_sections_in_data_and_fixtures() -> void:
 	# Phase 4 (P1, W0 note 6): data/sections + elder (order 4) – the Phase-3 three come first.
+	# Phase 5 (P2, W0 note 6): + the work areas bruch (5) and quarry (6).
 	var real: Array = Database.sections().slice(0, 3)
-	assert_eq(Database.sections().size(), 4)
+	assert_eq(Database.sections().size(), 6)
 	assert_eq((Database.sections()[3] as SectionData).id, &"elder")
+	assert_eq([(Database.sections()[4] as SectionData).id, (Database.sections()[5] as SectionData).id], [&"bruch", &"quarry"])
 	for list: Array in [real, Phase3Fixtures.sections()]:
 		var ids: Array = []
 		for s: SectionData in list:

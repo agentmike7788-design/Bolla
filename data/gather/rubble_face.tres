@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="GatherNodeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/gathering/gather_node_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"rubble_face"
+display_name = "Bruchsteinwand"
+verb = "Bruchstein schlagen"
+item_id = &"stone"
+yield_amount = 2
+charges_max = 4
+regrow_days = 1
+minutes = 30
+tool_kind = &"pickaxe"
+min_tier = 1
+tier2_bonus = 1
+animation = &"dig"
+requires_flag = &"workshop_open"

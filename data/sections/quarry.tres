@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="SectionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/expansion/section_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"quarry"
+display_name = "Steinbruch"
+order = 6
+starts_unlocked = false
+requires_section = &"bruch"
+requires_rating = &""
+decor_cap = 0
+unlock_text = "Die Findlinge sind gebrochen. Der Steinbruch liegt offen: Erz, Bruchstein, Werkstein."
+requires_flag_text = "Findlinge versperren den Weg."
+counts_for_cemetery = false
+is_burial = false

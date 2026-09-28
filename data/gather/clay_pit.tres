@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="GatherNodeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/gathering/gather_node_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"clay_pit"
+display_name = "Lehmkuhle"
+verb = "Lehm stechen"
+item_id = &"clay"
+yield_amount = 2
+charges_max = 3
+regrow_days = 1
+minutes = 30
+tool_kind = &"shovel"
+min_tier = 0
+tier2_bonus = 1
+animation = &"dig"
+requires_flag = &"workshop_open"

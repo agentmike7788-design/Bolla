@@ -29,6 +29,20 @@ const ITEMS := {
 	&"pliers": ["Zange", ItemData.Category.TOOL, 1],
 	&"hair_braid": ["Zopf", ItemData.Category.GOODS, 10],
 	&"teeth_pouch": ["Zahnsäckchen", ItemData.Category.GOODS, 10],
+	# Phase 5 (P2, §2.2): the 13 MATERIAL items
+	&"flax": ["Flachs", ItemData.Category.MATERIAL, 30],
+	&"yarn": ["Leinengarn", ItemData.Category.MATERIAL, 30],
+	&"clay": ["Lehm", ItemData.Category.MATERIAL, 30],
+	&"iron_ore": ["Eisenerz", ItemData.Category.MATERIAL, 20],
+	&"iron_bar": ["Eisenbarren", ItemData.Category.MATERIAL, 20],
+	&"charcoal": ["Holzkohle", ItemData.Category.MATERIAL, 30],
+	&"workstone": ["Werkstein", ItemData.Category.MATERIAL, 10],
+	&"elderberries": ["Holunderbeeren", ItemData.Category.MATERIAL, 20],
+	&"herbs": ["Kräuter (Rainfarn & Beifuß)", ItemData.Category.MATERIAL, 20],
+	&"ink": ["Holundertinte", ItemData.Category.MATERIAL, 10],
+	&"herb_bundle": ["Räucherkräuter", ItemData.Category.MATERIAL, 10],
+	&"gold_leaf": ["Blattgold", ItemData.Category.MATERIAL, 10],
+	&"steel_rod": ["Stahlstab", ItemData.Category.MATERIAL, 5],
 }
 
 

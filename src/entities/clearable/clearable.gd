@@ -7,6 +7,9 @@ extends Node3D
 ## Visuals: "Model" (ClearableData.model, or a builder-made child of that name) while standing;
 ## a fence_gap shows "Repaired" (ClearableData.repaired_model) once repaired. Optional child
 ## "Collision" (StaticBody3D) is switched off when cleared, "RepairedCollision" on.
+## Phase 5 (docs/PHASE5_DESIGN.md §2.3): ClearableData.tool_kind / min_tier – the player's tier
+## (Player.tool_tier) gates the obstacle (boulder: pickaxe 1, dimmed tool reason from ToolRules)
+## and sets the minutes (ActionConfig.tool_minutes via ExpansionManager.clear_minutes).
 
 const GROUP := &"clearable"
 const EXPANSION_GROUP := &"expansion"
@@ -70,7 +73,7 @@ func can_interact(player: Player) -> bool:
 	if cleared or player == null or player.is_busy() or _is_carrying(player):
 		return false
 	var manager := _manager()
-	return manager != null and manager.can_clear(obstacle_id, player.inventory)
+	return manager != null and manager.can_clear(obstacle_id, player.inventory, tool_tier(player))
 
 
 func get_interaction_prompt(player: Player) -> String:
@@ -84,12 +87,16 @@ func get_interaction_prompt(player: Player) -> String:
 	if player != null and _is_carrying(player):
 		return Player.TEXT_HANDS_FULL
 	var inv := player.inventory if player != null else null
+	var tier := tool_tier(player)
+	var tool_reason := manager.tool_block_reason(obstacle_id, inv, tier)
+	if tool_reason != "":
+		return tool_reason
 	var missing := manager.missing_cost(obstacle_id, inv)
 	if not missing.is_empty():
 		return PROMPT_MISSING % _amounts(missing)
 	if inv != null and not manager.yield_fits(obstacle_id, inv):
 		return PROMPT_NO_ROOM
-	var text := PROMPT % [data.display_name, data.verb, data.minutes]
+	var text := PROMPT % [data.display_name, data.verb, manager.clear_minutes(obstacle_id, inv, tier)]
 	if not data.yield_items.is_empty():
 		text += PROMPT_YIELD % _amounts(data.yield_items, "+")
 	elif not data.cost.is_empty():
@@ -101,14 +108,24 @@ func interact(player: Player) -> void:
 	if not can_interact(player):
 		return
 	var data := _data()
-	player.start_timed_action(LABEL % [data.display_name, data.verb], data.minutes,
-			_finish.bind(player.inventory), true, data.animation)
+	var tier := tool_tier(player)
+	var minutes := _manager().clear_minutes(obstacle_id, player.inventory, tier)
+	player.start_timed_action(LABEL % [data.display_name, data.verb], minutes,
+			_finish.bind(player.inventory, tier), true, data.animation)
 
 
-func _finish(inv: Inventory) -> void:
+## Player.tool_tier of this obstacle's tool kind (0 without a tool kind / player).
+func tool_tier(player: Player) -> int:
+	var data := _data()
+	if player == null or data == null or data.tool_kind == &"":
+		return 0
+	return player.tool_tier(data.tool_kind)
+
+
+func _finish(inv: Inventory, tier: int = -1) -> void:
 	var manager := _manager()
 	var data := _data()
-	if manager == null or data == null or not manager.clear(obstacle_id, inv):
+	if manager == null or data == null or not manager.clear(obstacle_id, inv, tier):
 		EventBus.notification_requested.emit(TEXT_FAILED, &"warning")
 		return
 	if not data.yield_items.is_empty():
