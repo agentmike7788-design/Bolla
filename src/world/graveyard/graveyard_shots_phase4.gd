@@ -24,6 +24,9 @@ const P4_SHOTS: Array[Dictionary] = [
 			"player": Vector2(-0.6, -3.6)},
 	{"name": "world_p4_05b_decay_vfx_close", "stage": "", "day": 6, "minute": 1290, "focus": Vector2(-1.7, -5.2), "distance": 5.0,
 			"player": Vector2(0.4, -4.0)},
+	# W3 (G4): the decay stages by day at the gameplay zoom minimum (table: decaying, ground: wilted-decaying / rotten).
+	{"name": "world_p4_05c_decay_day", "stage": "", "day": 6, "minute": 700, "focus": Vector2(-1.8, -4.4), "distance": 12.0,
+			"player": Vector2(1.2, -2.8)},
 	{"name": "world_p4_06_holunderwinkel_open", "stage": "elder_open", "day": 7, "minute": 650, "focus": Vector2(-7.0, -15.6), "distance": 20.0,
 			"player": Vector2(-7.7, -16.6)},
 	{"name": "world_p4_07_ilse_west_wall_night", "stage": "trader", "day": 8, "minute": 1410, "focus": Vector2(-12.2, -3.2), "distance": 8.0,

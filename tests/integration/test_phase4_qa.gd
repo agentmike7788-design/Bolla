@@ -126,6 +126,22 @@ func test_hidden_npc_rests_and_comes_back_on_time() -> void:
 		assert_true(anim.is_playing(), "shown: animated")
 
 
+# --- QA4-07: the optional insight (Die Kranichfrau) does not count as a sixth of five --------
+
+func test_insight_count_of_five_without_the_optional_one() -> void:
+	for clue: ClueData in bot.journal._clue_list():
+		bot.journal.add_clue(clue.id, "", true)
+	for insight: InsightData in bot.journal._insight_list():
+		var ids: Array[StringName] = []
+		ids.assign(insight.requires)
+		assert_eq(bot.journal.try_link(ids), insight.id)
+	assert_eq(bot.journal.insights().size(), 6, "setup: 5 main + the optional one")
+	var ctx := bot.graveyard.chapter_context(&"six_pits")
+	assert_eq(int(ctx.insights), 5, "chapter panel: 5/5, not 6/5")
+	var me := bot.journal.self_page()
+	assert_true(int(me.insights) <= int(me.insights_total), "page Ich: %d/%d" % [me.insights, me.insights_total])
+
+
 # --- helpers ----------------------------------------------------------------------------------
 
 ## A generated corpse on the table whose freshness falls below `threshold` at a minute that is

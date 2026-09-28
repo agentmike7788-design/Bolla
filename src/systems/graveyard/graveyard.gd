@@ -404,7 +404,13 @@ func chapter_context(chapter_id: StringName) -> Dictionary:
 	var piety := _first(PIETY_GROUP)
 	context["piety_tier"] = piety.call(&"tier") if piety != null and piety.has_method(&"tier") else &""
 	var journal := _first(JOURNAL_GROUP)
-	context["insights"] = (journal.call(&"insights") as Array).size() if journal != null and journal.has_method(&"insights") else 0
+	# Main insights only (QA4-07: not the optional Kranichfrau – "n/5").
+	var insights := 0
+	if journal != null and journal.has_method(&"main_insight_count"):
+		insights = int(journal.call(&"main_insight_count"))
+	elif journal != null and journal.has_method(&"insights"):
+		insights = (journal.call(&"insights") as Array).size()
+	context["insights"] = insights
 	context["not_lorenz"] = GameState.has_flag(FLAG_NOT_LORENZ)
 	context["restless_ghosts"] = _ghosts_with_mood(&"restless")
 	return context

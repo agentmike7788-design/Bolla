@@ -10,6 +10,10 @@ extends Node
 ## Shots (1280×720, <out>/ui_<name>.jpg):
 ##   table_exam · table_prep · table_harvest · journal_clues · journal_insight · journal_self ·
 ##   trade_ilse · chapter_six_pits
+## W3 (G4, over the real Phase-4 world – the builder has every system node now): door_note ·
+## osric_p4 (his Phase-4 introduction) · ilse_dialogue (her „Abgebrüht“ greeting, Ilse at the
+## wall above the dialogue box) · trade_ilse (the panel with Ilse framed beside it) ·
+## ghost_robbed (a robbed and a fully prepared ghost side by side, both speaking).
 ##   GODOT=… tools/godot_run.sh --resolution 1280x720 -s res://src/ui/tools/ui_screenshots.gd -- --phase4 --out=/abs/dir [--shots=table_exam,trade_ilse]
 
 const SAVE_DIR := "user://ui_shot_saves_p4"
@@ -42,6 +46,11 @@ var _piety: Piety
 var _trade: NightTrade
 var _table: MorgueTable
 var _record: CorpseRecord
+var _anchor: Node3D
+var _bounds_were: bool = true
+## Nodes hidden for one shot (the old oak between the camera and the west wall – in play the
+## foliage cutout frees the gravekeeper there), shown again by _unframe.
+var _hidden: Array[Node3D] = []
 
 
 func _ready() -> void:
@@ -80,7 +89,11 @@ func _run() -> void:
 	await _shot("journal_clues", _journal_clues_shot)
 	await _shot("journal_insight", _journal_insight_shot)
 	await _shot("journal_self", _journal_self_shot)
+	await _shot("door_note", _door_note_shot)
+	await _shot("osric_p4", _osric_shot)
+	await _shot("ilse_dialogue", _ilse_dialogue_shot)
 	await _shot("trade_ilse", _trade_shot)
+	await _shot("ghost_robbed", _ghost_shot)
 	await _shot("chapter_six_pits", _chapter_shot)
 	for slot: int in [0, 1]:
 		SaveManager.delete_save(slot)
@@ -102,10 +115,12 @@ func _shot(shot_name: String, setup: Callable) -> void:
 	UIState.clear()
 	_ui.notifications.clear()
 	_ui.reward_card.visible = false
+	_unframe()
 	await get_tree().process_frame
 
 
-## Missing Phase-4 system nodes (until the W-Welt builder adds them) – same classes and groups.
+## Missing Phase-4 system nodes (W-Welt's builder adds them now – a no-op in the real world;
+## kept for older scene builds) – same classes and groups.
 func _ensure_systems() -> void:
 	var systems := _world.get_node(^"Systems")
 	for node_name: String in SYSTEMS:
@@ -162,6 +177,61 @@ func _set_freshness(value: float) -> void:
 	_corpses.notify_changed(_record.id)
 
 
+## Camera on `focus` (ground) at `distance` instead of the player.
+func _frame(focus: Vector3, distance: float) -> void:
+	var rig := _world.get_node(^"CameraRig")
+	if _anchor == null:
+		_anchor = Node3D.new()
+		_anchor.name = "ShotAnchor"
+		_world.add_child(_anchor)
+	_anchor.global_position = Vector3(focus.x, 0.0, focus.z)
+	if rig.get(&"target") != _anchor:
+		_bounds_were = bool(rig.get(&"bounds_enabled"))
+	rig.set("bounds_enabled", false)
+	rig.set("target", _anchor)
+	rig.call(&"set_distance", distance)
+	rig.call(&"snap")
+
+
+## Camera at `distance` so that `world_pos` shows at the screen point `screen`.
+func _frame_at(world_pos: Vector3, screen: Vector2, distance: float) -> void:
+	_frame(world_pos, distance)
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return
+	var here := _ground_under(cam, cam.unproject_position(world_pos))
+	var there := _ground_under(cam, screen)
+	_frame(_anchor.global_position + (here - there), distance)
+
+
+func _hide(path: NodePath) -> void:
+	var node := _world.get_node_or_null(path) as Node3D
+	if node != null and node.visible:
+		node.visible = false
+		_hidden.append(node)
+
+
+static func _ground_under(cam: Camera3D, screen: Vector2) -> Vector3:
+	var origin := cam.project_ray_origin(screen)
+	var dir := cam.project_ray_normal(screen)
+	var hit: Variant = Plane(Vector3.UP, 0.0).intersects_ray(origin, dir)
+	return hit if hit != null else origin
+
+
+## The camera follows the player again.
+func _unframe() -> void:
+	if _anchor == null:
+		return
+	for node: Node3D in _hidden:
+		node.visible = true
+	_hidden.clear()
+	var rig := _world.get_node(^"CameraRig")
+	rig.set("bounds_enabled", _bounds_were)
+	rig.set("target", _player)
+	rig.call(&"set_distance", 22.0)
+	rig.call(&"snap")
+
+
 func _place_player(at: Vector3, facing: float = PI) -> void:
 	at.y = _world.ground_height(Vector2(at.x, at.z))
 	_player.global_transform = Transform3D(Basis(Vector3.UP, facing), at)
@@ -211,22 +281,128 @@ func _journal_self_shot() -> void:
 	_ui.open_journal(&"self")
 
 
-## 23:30 at the west wall: Ilse greets a „callous“ gravekeeper (+1 per item).
+## The note at the hut door (trader_known, Ilse not met yet), close.
+func _door_note_shot() -> void:
+	var door := _world.get_node_by_layout_id("hut_door") as Node3D
+	var note := _world.get_node_or_null(^"Decor/DoorNote") as Node3D
+	var at := note.global_position if note != null else door.global_position
+	_place_player(door.global_position + door.global_basis.z * 1.6 + door.global_basis.x * 1.2, door.global_rotation.y + PI)
+	_hide(^"Decor/Tree")
+	_frame(Vector3(at.x, 0.0, at.z) + door.global_basis.z * 0.4, 4.5)
+	await get_tree().process_frame
+
+
+## Morning at the gate: Osric's Phase-4 introduction (p4_intro: clothes, hands, wounds, pockets).
+func _osric_shot() -> void:
+	TimeManager.set_time(TimeManager.day + 1, 480)
+	UIState.clear()
+	_ui.close_all()
+	var npc := _world.get_node_by_layout_id("npc_carter") as Node3D
+	for i: int in 5:
+		await get_tree().process_frame
+	GameState.set_flag(&"met_carter", true)
+	GameState.set_flag(&"p3_intro", true)
+	_place_player(npc.global_position + Vector3(-1.2, 0.0, -1.0), PI * 0.75)
+	_frame_at(npc.global_position, Vector2(640, 250), 9.0)
+	await get_tree().process_frame
+	_ui.open_dialogue(&"carter", npc)
+	for i: int in 8:
+		if _ui.dialogue_box.current_text().contains("Aschau") or not _ui.dialogue_box.is_active():
+			break
+		_ui.dialogue_box.choose(0)
+	_ui.dialogue_box.text_label.visible_ratio = 1.0
+	_ui.dialogue_box.chars_per_second = 0.0
+
+
+## 23:30 at the west wall: met before, her tools given – she greets a „callous“ gravekeeper.
+func _ilse_dialogue_shot() -> void:
+	_ui.dialogue_box.chars_per_second = 110.0
+	TimeManager.set_time(TimeManager.day, NIGHT)
+	_piety.change(-30 - _piety.value(), "Aufnahme")
+	GameState.set_flag(&"trader_met", true)
+	GameState.set_flag(&"trader_tools_given", true)
+	var ilse := _world.get_node_by_layout_id("npc_trader") as Npc
+	for i: int in 5:
+		await get_tree().process_frame
+	var spot: Vector3 = _world.get_waypoint(&"trader_spot")
+	_place_player(spot + Vector3(1.35, 0.0, 0.3), -PI * 0.5)
+	_hide(^"Decor/Tree")
+	_frame_at(ilse.global_position, Vector2(560, 250), 7.0)
+	await get_tree().process_frame
+	_ui.notifications.clear()
+	_ui.open_dialogue(&"trader", ilse)
+	_ui.dialogue_box.text_label.visible_ratio = 1.0
+	_ui.dialogue_box.chars_per_second = 0.0
+
+
+## The trade panel („Handeln.“) with Ilse at the wall framed to the left of it.
 func _trade_shot() -> void:
+	_ui.dialogue_box.chars_per_second = 110.0
 	TimeManager.set_time(TimeManager.day, NIGHT)
 	_piety.change(-30 - _piety.value(), "Aufnahme")
 	var inv := _player.inventory
 	inv.add_item(&"hair_braid", 2)
 	inv.add_item(&"teeth_pouch", 1)
+	var ilse := _world.get_node_by_layout_id("npc_trader") as Npc
+	for i: int in 5:
+		await get_tree().process_frame
 	var spot: Vector3 = _world.get_waypoint(&"trader_spot")
-	if spot != Vector3.ZERO:
-		_place_player(spot + Vector3(1.4, 0.0, 0.0), -PI * 0.5)
+	_place_player(spot + Vector3(1.35, 0.0, 0.3), -PI * 0.5)
+	_hide(^"Decor/Tree")
+	_frame_at(ilse.global_position, Vector2(105, 430), 7.0)
 	await get_tree().process_frame
 	_ui.notifications.clear()
-	_ui.open_panel(&"trader", {"speaker": null, "inventory": inv})
+	_ui.open_panel(&"trader", {"speaker": ilse, "inventory": inv})
 	await get_tree().process_frame
 	var panel := _ui.get_panel(&"trader") as TraderPanel
 	panel.buy(&"juniper")
+
+
+## Night: a robbed ghost (hair and teeth taken, restless) beside a fully prepared one (content).
+func _ghost_shot() -> void:
+	_ui.dialogue_box.chars_per_second = 110.0
+	_piety.change(10 - _piety.value(), "Aufnahme")
+	var inv := _player.inventory
+	for spec: Array in [["plot_04", true], ["plot_05", false]]:
+		var plot_id: String = spec[0]
+		if _graveyard.get_grave(plot_id).state != GraveRecord.State.EMPTY:
+			continue
+		var plot := _world.get_node_by_layout_id(plot_id) as Node3D
+		var record := _corpses.spawn_corpse(null, plot.global_transform, &"ground")
+		record.examined = true
+		record.exam_done.assign(CorpseRecord.STEPS)
+		if record.needs_valuables_decision():
+			record.valuables_decision = CorpseRecord.DECISION_LEFT
+		if bool(spec[1]):
+			record.harvested.assign([CorpseRecord.HARVEST_HAIR, CorpseRecord.HARVEST_TEETH])
+			record.dress = CorpseRecord.DRESS_SHROUD
+		else:
+			record.washed = true
+			record.laid_out = true
+			record.dress = CorpseRecord.DRESS_GOWN
+		record.shrouded = true
+		_graveyard.dig(plot_id)
+		_graveyard.bury(plot_id, record.id)
+		inv.add_item(&"gravestone_simple", 1)
+		_graveyard.place_marker(plot_id, &"gravestone_simple", inv)
+	# Next night, ghost time: both walk and speak.
+	TimeManager.set_time(TimeManager.day + 1, 1335)
+	var ghosts := _world.get_node(^"Systems/Ghosts") as GhostManager
+	var a := _world.get_node_by_layout_id("plot_04") as Node3D
+	var b := _world.get_node_by_layout_id("plot_05") as Node3D
+	var mid := (a.global_position + b.global_position) * 0.5
+	_place_player(mid + Vector3(0.0, 0.0, 1.6), PI)
+	for i: int in 5:
+		await get_tree().process_frame
+	ghosts.reselect()
+	ghosts.update_visuals(TimeManager.get_minute_f())
+	for g: Ghost in ghosts.active_ghosts():
+		if g.grave_id in ["plot_04", "plot_05"]:
+			# listen() as [E] on the ghost does; the bubble stays up for the slow software renderer.
+			g.say(ghosts.listen(g.grave_id, _player), 600.0)
+	_frame(mid, 8.0)
+	_ui.notifications.clear()
+	await get_tree().process_frame
 
 
 func _chapter_shot() -> void:
@@ -234,7 +410,15 @@ func _chapter_shot() -> void:
 	GameState.stats[&"burials"] = 18
 	GameState.stats[&"prepared"] = 13
 	GameState.stats[&"utilized"] = 1
-	GameState.set_flag(&"insight_not_lorenz", true)
+	# The five main insights linked through the journal (the flag insight_not_lorenz with them).
+	for clue: ClueData in _journal._clue_list():
+		_journal.add_clue(clue.id, "", true)
+	for insight: InsightData in _journal._insight_list():
+		if not insight.optional:
+			var ids: Array[StringName] = []
+			ids.assign(insight.requires)
+			_journal.try_link(ids)
 	var context := _graveyard.chapter_context(&"six_pits")
+	context["days"] = 19
 	_ui.notifications.clear()
 	_ui.open_panel(&"slice_summary", context)

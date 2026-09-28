@@ -160,6 +160,17 @@ func has_insight(id: StringName) -> bool:
 	return _insights.has(id)
 
 
+## Unlocked main insights (not optional) – "n/5" in the chapter panel and on the page "Ich"
+## (QA4-07: the optional Kranichfrau made it 6/5).
+func main_insight_count() -> int:
+	var n := 0
+	for id: StringName in _insights:
+		var i := insight_by_id(id)
+		if i == null or not i.optional:
+			n += 1
+	return n
+
+
 ## Insights with a found clue that are not linked yet (column "Offene Fragen").
 func open_questions() -> Array[InsightData]:
 	return JournalRules.open_questions(_clues, _insight_list(), _insights)
@@ -277,7 +288,7 @@ func self_page() -> Dictionary:
 			main += 1
 	return {"tier": tier, "label": label, "sentence": PietyRules.self_image(tier),
 			"prepared": GameState.get_stat(&"prepared"), "utilized": GameState.get_stat(&"utilized"),
-			"insights": insights().size(), "insights_total": main}
+			"insights": main_insight_count(), "insights_total": main}
 
 
 # --- sync / save ------------------------------------------------------------------------------
