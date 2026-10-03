@@ -76,18 +76,21 @@ export function createFactory(world, { start } = {}) {
   const feeds = (from, to) =>
     from && from.type !== 'storage' && from.tile.x + DIRS[from.dir].x === to.tile.x && from.tile.z + DIRS[from.dir].z === to.tile.z;
 
-  function canPlace(type, tile) {
+  // `overBelt`: a building other than a belt may replace a belt standing there.
+  function canPlace(type, tile, overBelt = false) {
     if (!tile) return { ok: false, reason: '' };
     if (!research.unlocked.has(type)) return { ok: false, reason: 'Noch nicht freigeschaltet' };
-    if (buildings.has(indexOf(tile))) return { ok: false, reason: 'Hier steht schon etwas' };
+    const existing = buildings.get(indexOf(tile));
+    if (existing && !(overBelt && existing.type === 'belt' && type !== 'belt')) return { ok: false, reason: 'Hier steht schon etwas' };
     if (!TERRAIN[tile.terrain].buildable) return { ok: false, reason: 'Hier kann man nicht bauen' };
     if (type === 'drill' && !tile.ore) return { ok: false, reason: 'Bohrer nur auf Erzfeldern' };
     return { ok: true, reason: '' };
   }
 
-  function place(type, tile, dir) {
-    if (!canPlace(type, tile).ok) return null;
+  function place(type, tile, dir, overBelt = false) {
+    if (!canPlace(type, tile, overBelt).ok) return null;
     const b = { type, tile, dir, index: indexOf(tile) };
+    buildings.delete(b.index); // a belt it replaces
     if (type === 'drill') Object.assign(b, { timer: 0, held: null, state: 'work', mined: 0 });
     if (type === 'belt') Object.assign(b, { items: [], shape: 'straight' });
     if (type === 'storage') Object.assign(b, { received: 0, last: 0 });

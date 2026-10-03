@@ -41,6 +41,7 @@ export function createMenu({ root, audio, dayNight, graphics, onGraphics, action
         ? [
             latest && ['continue', 'Weiterspielen', latest.name],
             ['new', 'Neues Spiel', 'Karte wählen'],
+            ['tutorial', 'Tutorial', actions.tutorialDone() ? 'noch mal ansehen' : 'erste Schritte, 5 Minuten'],
             ['load', 'Laden', `${listSaves().length || 'keine'} Spielstände`],
             ['settings', 'Einstellungen', 'Ton und Grafik'],
             ['controls', 'Steuerung', 'Tasten und Maus'],
@@ -65,12 +66,13 @@ export function createMenu({ root, audio, dayNight, graphics, onGraphics, action
   function mainPage() {
     if (mode !== 'title') return '';
     const latest = listSaves()[0];
-    if (!latest) {
+    if (!latest || !actions.tutorialDone()) {
       return `<div class="gm-card gm-hello">
         <p class="label">Willkommen</p>
         <h3>Deine erste Fabrik</h3>
-        <p>Setz Bohrer auf Erz, leg Bänder zu einem Lager und arbeite dich vom Erz bis zum Schaltkreis vor. Jede Karte hat ihre eigenen Missionen.</p>
-        <div class="goal-actions"><button type="button" data-act="new">Neues Spiel</button></div>
+        <p>Setz Bohrer auf Erz, leg Bänder zu einem Lager und arbeite dich vom Erz bis zum Schaltkreis vor. Das Tutorial zeigt dir in ein paar Minuten, wie es geht.</p>
+        <div class="goal-actions"><button type="button" data-act="tutorial">Tutorial starten</button>
+          <button type="button" class="link" data-act="${latest ? 'continue' : 'new'}">${latest ? 'Weiterspielen' : 'Ohne Tutorial'}</button></div>
       </div>`;
     }
     return `<button type="button" class="gm-card gm-continue" data-act="continue">
@@ -192,6 +194,7 @@ export function createMenu({ root, audio, dayNight, graphics, onGraphics, action
     const run = {
       continue: actions.continueGame,
       new: actions.newGame,
+      tutorial: actions.tutorial,
       resume: actions.resume,
       save: actions.save,
       title: actions.toTitle,
