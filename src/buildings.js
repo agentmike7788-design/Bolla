@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { BELT_TIERS, DIRS, ITEMS } from './factory.js';
+import { DIRS, ITEMS } from './factory.js';
 import { ORES } from './world.js';
 
 const STEEL = 0x3a4046;
@@ -218,7 +218,14 @@ function itemShapes() {
       lift: 0.025,
     },
     chip: { geo: mergeGeometries([new THREE.BoxGeometry(0.2, 0.025, 0.16), new THREE.BoxGeometry(0.07, 0.03, 0.07).translate(0, 0.025, 0)]), lift: 0.015 },
-    beam: { geo: mergeGeometries([new THREE.BoxGeometry(0.08, 0.02, 0.26).translate(0, 0.05, 0), new THREE.BoxGeometry(0.08, 0.02, 0.26).translate(0, -0.05, 0), new THREE.BoxGeometry(0.02, 0.1, 0.26)]), lift: 0.06 },
+    beam: {
+      geo: mergeGeometries([
+        new THREE.BoxGeometry(0.08, 0.02, 0.26).translate(0, 0.05, 0),
+        new THREE.BoxGeometry(0.08, 0.02, 0.26).translate(0, -0.05, 0),
+        new THREE.BoxGeometry(0.02, 0.1, 0.26),
+      ]),
+      lift: 0.06,
+    },
   };
 }
 
@@ -231,39 +238,26 @@ export function createFactoryView(renderer) {
   const parts = buildingParts();
   const views = new Map(); // building -> model view
 
-  // Each belt tier has its own rail colour and a chevron texture scrolling at its speed.
-  const baseTex = chevronTexture(renderer.capabilities.getMaxAnisotropy());
-  const bedMat = new THREE.MeshStandardMaterial({ color: STEEL, roughness: 0.7, metalness: 0.3, flatShading: true });
-  const tiers = BELT_TIERS.map((t, i) => {
-    const tex = i ? baseTex.clone() : baseTex;
-    return {
-      speed: t.speed,
-      tex,
-      mats: {
-        bed: bedMat,
-        rails: new THREE.MeshStandardMaterial({ color: t.color, roughness: 0.5, metalness: 0.2, flatShading: true }),
-        surface: new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9 }),
-      },
-    };
-  });
+  const beltTex = chevronTexture(renderer.capabilities.getMaxAnisotropy());
+  const beltMats = {
+    bed: new THREE.MeshStandardMaterial({ color: STEEL, roughness: 0.7, metalness: 0.3, flatShading: true }),
+    rails: new THREE.MeshStandardMaterial({ color: SIGNAL, roughness: 0.5, metalness: 0.2, flatShading: true }),
+    surface: new THREE.MeshStandardMaterial({ map: beltTex, roughness: 0.9 }),
+  };
   const MAX_BELTS = 64 * 64;
-  const beltMeshes = {}; // `${shape}${tier}` -> [bed, rails, surface]
+  const beltMeshes = {};
   for (const shape of Object.keys(BELT_PATHS)) {
     const geos = beltGeometries(shape);
-    tiers.forEach((tier, t) => {
-      beltMeshes[shape + t] = Object.entries(geos).map(([part, geo]) => {
-        const mesh = new THREE.InstancedMesh(geo, tier.mats[part], MAX_BELTS);
-        mesh.count = 0;
-        mesh.castShadow = part !== 'surface';
-        mesh.receiveShadow = true;
-        mesh.frustumCulled = false;
-        group.add(mesh);
-        return mesh;
-      });
+    beltMeshes[shape] = Object.entries(geos).map(([part, geo]) => {
+      const mesh = new THREE.InstancedMesh(geo, beltMats[part], MAX_BELTS);
+      mesh.count = 0;
+      mesh.castShadow = part !== 'surface';
+      mesh.receiveShadow = true;
+      mesh.frustumCulled = false;
+      group.add(mesh);
+      return mesh;
     });
   }
-  // Drill bodies take the colour of the belt tier that matches their research level.
-  const drillMat = flat(SIGNAL, { roughness: 0.5 });
 
   const MAX_ITEMS = 6000;
   const itemMat = new THREE.MeshStandardMaterial({ roughness: 0.45, metalness: 0.35, flatShading: true });
@@ -282,6 +276,10 @@ export function createFactoryView(renderer) {
 
   const dummy = new THREE.Object3D();
   let drillSpeed = 1;
+  // Belt rails and drill bodies change colour with each speed research.
+  const drillMat = flat(SIGNAL, { roughness: 0.5 });
+  const TIER_COLORS = [SIGNAL, 0xe2483a, 0x3b8fe6, 0xa05ae0];
+  const level = (done, ids) => ids.filter((id) => done.has(id)).length;
 
   function makeModel(b) {
     const { g, m } = parts;
@@ -346,9 +344,8 @@ export function createFactoryView(renderer) {
       view.press.position.set(0, 0.55, 0.04);
       lamp(0.3, 0.9, -0.25);
     } else if (b.type === 'splitter' || b.type === 'merger') {
-      const body = b.type === 'splitter' ? m.splitter : m.merger;
       add(g.hubFoot, m.dark);
-      add(g.hub, body);
+      add(g.hub, b.type === 'splitter' ? m.splitter : m.merger);
       add(b.type === 'splitter' ? g.mouths : g.inlets, m.dark);
       if (b.type === 'merger') add(g.mouth1, m.signal);
       add(g.hubRing, m.steel);
@@ -365,8 +362,7 @@ export function createFactoryView(renderer) {
       add(g.tray, m.dark);
       view.gear = add(g.gearWheel, m.signal);
       view.gear.position.set(0.43, 0.38, 0.12);
-      const base = add(g.armBase, m.dark);
-      base.position.set(-0.22, 0.05, -0.3);
+      add(g.armBase, m.dark).position.set(-0.22, 0.05, -0.3);
       view.arm = new THREE.Group();
       view.arm.position.set(-0.22, 0.12, -0.3);
       const arm = new THREE.Mesh(g.arm, m.signal);
@@ -400,15 +396,14 @@ export function createFactoryView(renderer) {
   // Bring building models and belt instances in line with the factory after a change.
   function rebuild(factory) {
     const alive = new Set();
-    const counts = Object.fromEntries(Object.keys(beltMeshes).map((k) => [k, 0]));
+    const counts = { straight: 0, left: 0, right: 0 };
     for (const b of factory.buildings.values()) {
       if (b.type === 'belt') {
-        const key = b.shape + b.tier;
-        const i = counts[key]++;
+        const i = counts[b.shape]++;
         dummy.position.set(b.tile.position.x, b.tile.height, b.tile.position.z);
         dummy.rotation.set(0, yaw(b.dir), 0);
         dummy.updateMatrix();
-        for (const mesh of beltMeshes[key]) mesh.setMatrixAt(i, dummy.matrix);
+        for (const mesh of beltMeshes[b.shape]) mesh.setMatrixAt(i, dummy.matrix);
         continue;
       }
       alive.add(b);
@@ -464,14 +459,12 @@ export function createFactoryView(renderer) {
   }
 
   function update(dt, elapsed, factory) {
-    for (const tier of tiers) {
-      tier.tex.offset.y -= tier.speed * CHEVRONS_PER_TILE * dt;
-      tier.tex.offset.y %= 1;
-    }
-    const { researched } = factory.progress;
-    const drillLevel = researched.has('drill3') ? 2 : researched.has('drill2') ? 1 : 0;
-    drillMat.color.setHex(BELT_TIERS[drillLevel].color);
-    drillSpeed = factory.progress.speed.drill;
+    beltTex.offset.y -= factory.beltSpeed() * CHEVRONS_PER_TILE * dt;
+    beltTex.offset.y %= 1;
+    const done = factory.research.done;
+    beltMats.rails.color.setHex(TIER_COLORS[level(done, ['fastBelts', 'expressBelts', 'maglev'])]);
+    drillMat.color.setHex(TIER_COLORS[level(done, ['drillHeads', 'deepDrill'])]);
+    drillSpeed = factory.research.stats.drill;
 
     const n = Object.fromEntries(Object.keys(shapes).map((k) => [k, 0]));
     for (const b of factory.buildings.values()) {
@@ -532,7 +525,7 @@ export function createFactoryView(renderer) {
       view.press.position.y = 0.55 - down * 0.22;
       setLamp(view, b.state, elapsed);
     } else if (b.type === 'splitter' || b.type === 'merger') {
-      // The diverter swings towards each exit (or from each inlet) as items pass.
+      // The splitter's diverter points at the exit that got the last item; the merger's spins on.
       if (b.passed !== view.seen) {
         view.seen = b.passed;
         view.turn += 1;

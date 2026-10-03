@@ -1,4 +1,5 @@
 import { ORES, TERRAIN } from './world.js';
+import { createResearch } from './research.js';
 
 // Grid directions: 0 north (-z), 1 east (+x), 2 south (+z), 3 west (-x).
 export const DIRS = [
@@ -22,7 +23,7 @@ export const ITEMS = {
   steel: { name: 'Stahlträger', color: 0x5d6b7a, shape: 'beam' },
 };
 
-// Furnace and press turn one input item into one output item.
+// Machines turn one input item into one output item.
 export const RECIPES = {
   furnace: { time: 2, makes: { iron: 'ironIngot', copper: 'copperIngot' } },
   assembler: { time: 1.6, makes: { ironIngot: 'ironPlate', copperIngot: 'wire', stone: 'concrete' } },
@@ -46,33 +47,7 @@ export const BUILDINGS = {
   constructor: { name: 'Konstruktor' },
 };
 
-// Belt tiers: the belt tool always lays the best researched tier, and dragging over
-// an older belt upgrades it.
-export const BELT_TIERS = [
-  { name: 'Förderband', speed: 1.5, color: 0xf0a830 },
-  { name: 'Schnellband', speed: 2.6, color: 0xe2483a },
-  { name: 'Expressband', speed: 4, color: 0x3b8fe6 },
-];
-
-// The research tree. Research is paid with items from the storages. col/row place
-// the node in the research menu; needs are the nodes that must be done first.
-// unlocks adds buildings, belt raises the belt tier, speed multiplies machine speed.
-export const RESEARCH = [
-  { id: 'smelting', name: 'Schmelzen', col: 0, row: 1, needs: [], cost: { iron: 20, copper: 20 }, unlocks: ['furnace'], text: 'Schmelzofen: Erz wird zu Barren.' },
-  { id: 'pressing', name: 'Pressen', col: 1, row: 0, needs: ['smelting'], cost: { ironIngot: 30, copperIngot: 20 }, unlocks: ['assembler'], text: 'Presse: Platten, Draht und Beton.' },
-  { id: 'logistics', name: 'Logistik', col: 1, row: 2, needs: ['smelting'], cost: { ironIngot: 20, stone: 20 }, unlocks: ['splitter', 'merger'], text: 'Verteiler und Zusammenführer für Bänder.' },
-  { id: 'drill2', name: 'Schnellbohrer', col: 2, row: 0, needs: ['pressing'], cost: { ironPlate: 20, concrete: 10 }, speed: { drill: 1.6 }, text: 'Alle Bohrer fördern 60 % schneller.' },
-  { id: 'kiln', name: 'Hochofen', col: 2, row: 1, needs: ['pressing'], cost: { ironPlate: 15, concrete: 25 }, speed: { furnace: 1.5 }, text: 'Alle Schmelzöfen arbeiten 50 % schneller.' },
-  { id: 'belt2', name: 'Schnellband', col: 2, row: 2, needs: ['pressing', 'logistics'], cost: { ironPlate: 30, wire: 20 }, belt: 1, text: 'Rote Bänder, fast doppelt so schnell.' },
-  { id: 'constructor', name: 'Konstruktor', col: 2, row: 3, needs: ['pressing'], cost: { ironPlate: 40, wire: 30, concrete: 20 }, unlocks: ['constructor'], text: 'Baut Zahnräder, Schaltkreise und Stahl aus mehreren Teilen.' },
-  { id: 'drill3', name: 'Tiefbohrer', col: 3, row: 0, needs: ['drill2', 'constructor'], cost: { steel: 20, circuit: 15 }, speed: { drill: 1.7 }, text: 'Bohrer fördern noch einmal 70 % schneller.' },
-  { id: 'hydraulics', name: 'Hydraulik', col: 3, row: 1, needs: ['constructor'], cost: { gear: 25, circuit: 10 }, speed: { assembler: 1.5, constructor: 1.5 }, text: 'Presse und Konstruktor arbeiten 50 % schneller.' },
-  { id: 'belt3', name: 'Expressband', col: 3, row: 2, needs: ['belt2', 'constructor'], cost: { gear: 30, steel: 15 }, belt: 2, text: 'Blaue Bänder, die schnellsten der Fabrik.' },
-  { id: 'master', name: 'Meisterfabrik', col: 4, row: 1, needs: ['drill3', 'hydraulics', 'belt3'], cost: { circuit: 50, steel: 40, gear: 40 }, final: true, text: 'Das große Ziel: eine Fabrik, die alles kann.' },
-];
-export const RESEARCH_BY_ID = Object.fromEntries(RESEARCH.map((r) => [r.id, r]));
-const START_UNLOCKED = ['drill', 'belt', 'storage'];
-
+export const BELT_SPEED = 1.5; // tiles per second, before research
 export const ITEM_SPACING = 0.34; // minimum gap between two items on a belt, in tiles
 export const DRILL_TIME = 1.4; // seconds per mined ore
 const MACHINE_INPUT = 4; // items a machine buffers on each side
@@ -87,14 +62,8 @@ export const isMachine = (b) => b?.type === 'furnace' || b?.type === 'assembler'
 export function createFactory(world) {
   const buildings = new Map(); // tile index -> building
   const mined = Object.fromEntries(Object.keys(ORES).map((k) => [k, 0]));
-  const stored = Object.fromEntries(Object.keys(ITEMS).map((k) => [k, 0])); // in all storages, spent on research
-  const progress = {
-    researched: new Set(),
-    unlocked: new Set(START_UNLOCKED),
-    beltTier: 0,
-    speed: { drill: 1, furnace: 1, assembler: 1, constructor: 1 },
-    done: false,
-  };
+  const stored = Object.fromEntries(Object.keys(ITEMS).map((k) => [k, 0])); // in all storages together
+  const research = createResearch(stored);
 
   const indexOf = (tile) => tile.z * world.size + tile.x;
   const at = (x, z) => (x < 0 || z < 0 || x >= world.size || z >= world.size ? null : buildings.get(z * world.size + x) ?? null);
@@ -105,7 +74,7 @@ export function createFactory(world) {
 
   function canPlace(type, tile) {
     if (!tile) return { ok: false, reason: '' };
-    if (!progress.unlocked.has(type)) return { ok: false, reason: 'Noch nicht erforscht' };
+    if (!research.unlocked.has(type)) return { ok: false, reason: 'Noch nicht freigeschaltet' };
     if (buildings.has(indexOf(tile))) return { ok: false, reason: 'Hier steht schon etwas' };
     if (!TERRAIN[tile.terrain].buildable) return { ok: false, reason: 'Hier kann man nicht bauen' };
     if (type === 'drill' && !tile.ore) return { ok: false, reason: 'Bohrer nur auf Erzfeldern' };
@@ -116,7 +85,7 @@ export function createFactory(world) {
     if (!canPlace(type, tile).ok) return null;
     const b = { type, tile, dir, index: indexOf(tile) };
     if (type === 'drill') Object.assign(b, { timer: 0, held: null, state: 'work', mined: 0 });
-    if (type === 'belt') Object.assign(b, { items: [], shape: 'straight', tier: progress.beltTier });
+    if (type === 'belt') Object.assign(b, { items: [], shape: 'straight' });
     if (type === 'storage') Object.assign(b, { received: 0, last: 0 });
     if (isMachine(b)) Object.assign(b, { input: [], output: [], current: null, timer: 0, state: 'idle', made: 0, refused: null });
     if (type === 'constructor') Object.assign(b, { recipe: 'gear', input: {}, output: [], busy: false, timer: 0, state: 'idle', made: 0, refused: null });
@@ -139,13 +108,6 @@ export function createFactory(world) {
     if (b.dir === dir) return;
     b.dir = dir;
     updateShapes();
-  }
-
-  // Lay the best researched belt tier over an older belt. Items stay on it.
-  function upgradeBelt(b) {
-    if (b.type !== 'belt' || b.tier >= progress.beltTier) return false;
-    b.tier = progress.beltTier;
-    return true;
   }
 
   function setRecipe(b, recipe) {
@@ -203,16 +165,6 @@ export function createFactory(world) {
       slot.push(kind);
       return true;
     }
-    if (isMachine(target)) {
-      if (!RECIPES[target.type].makes[kind]) {
-        target.refused = kind;
-        return false;
-      }
-      if (target.input.length >= MACHINE_INPUT) return false;
-      target.input.push(kind);
-      target.refused = null;
-      return true;
-    }
     if (target.type === 'constructor') {
       const need = CONSTRUCTOR_RECIPES[target.recipe].needs[kind];
       if (!need) {
@@ -224,33 +176,20 @@ export function createFactory(world) {
       target.refused = null;
       return true;
     }
+    if (isMachine(target)) {
+      if (!RECIPES[target.type].makes[kind]) {
+        target.refused = kind;
+        return false;
+      }
+      if (target.input.length >= MACHINE_INPUT) return false;
+      target.input.push(kind);
+      target.refused = null;
+      return true;
+    }
     return false;
   }
 
-  // Research ----------------------------------------------------------------
-
-  const researchState = (r) => {
-    if (progress.researched.has(r.id)) return 'done';
-    return r.needs.every((id) => progress.researched.has(id)) ? 'open' : 'locked';
-  };
-  const affordable = (r) => Object.entries(r.cost).every(([k, n]) => stored[k] >= n);
-
-  function research(id) {
-    const r = RESEARCH_BY_ID[id];
-    if (!r || researchState(r) !== 'open' || !affordable(r)) return false;
-    for (const [k, n] of Object.entries(r.cost)) stored[k] -= n;
-    progress.researched.add(id);
-    for (const type of r.unlocks ?? []) progress.unlocked.add(type);
-    if (r.belt) progress.beltTier = Math.max(progress.beltTier, r.belt);
-    for (const [k, f] of Object.entries(r.speed ?? {})) progress.speed[k] *= f;
-    if (r.final) progress.done = true;
-    return true;
-  }
-
-  // Simulation ----------------------------------------------------------------
-
-  function tickBelt(b, dt) {
-    const step = BELT_TIERS[b.tier].speed * dt;
+  function tickBelt(b, step) {
     // Items are ordered front first; each one stops behind the one ahead of it.
     let limit = Infinity;
     const kept = [];
@@ -269,7 +208,7 @@ export function createFactory(world) {
 
   function tickMachine(b, dt) {
     const recipe = RECIPES[b.type];
-    const time = recipe.time / progress.speed[b.type];
+    const time = recipe.time / research.stats[b.type];
     if (b.output.length && pushTo(neighbour(b, b.dir), b.output[0], b.dir)) b.output.shift();
     if (!b.current && b.input.length) {
       b.current = b.input.shift();
@@ -294,7 +233,7 @@ export function createFactory(world) {
 
   function tickConstructor(b, dt) {
     const recipe = CONSTRUCTOR_RECIPES[b.recipe];
-    const time = recipe.time / progress.speed.constructor;
+    const time = recipe.time / research.stats.constructor;
     if (b.output.length && pushTo(neighbour(b, b.dir), b.output[0], b.dir)) b.output.shift();
     if (!b.busy && Object.entries(recipe.needs).every(([k, n]) => (b.input[k] ?? 0) >= n)) {
       for (const [k, n] of Object.entries(recipe.needs)) b.input[k] -= n;
@@ -358,10 +297,9 @@ export function createFactory(world) {
       return;
     }
     b.state = 'work';
-    b.timer += dt;
-    const time = DRILL_TIME / progress.speed.drill;
-    if (b.timer >= time) {
-      b.timer -= time;
+    b.timer += dt * research.stats.drill;
+    if (b.timer >= DRILL_TIME) {
+      b.timer -= DRILL_TIME;
       b.tile.amount--;
       b.held = b.tile.ore;
       b.mined++;
@@ -369,8 +307,11 @@ export function createFactory(world) {
     }
   }
 
+  const beltSpeed = () => BELT_SPEED * research.stats.belt;
+
   function tick(dt) {
-    for (const b of buildings.values()) if (b.type === 'belt' && b.items.length) tickBelt(b, dt);
+    const step = beltSpeed() * dt;
+    for (const b of buildings.values()) if (b.type === 'belt' && b.items.length) tickBelt(b, step);
     for (const b of buildings.values()) {
       if (isMachine(b)) tickMachine(b, dt);
       else if (b.type === 'constructor') tickConstructor(b, dt);
@@ -384,17 +325,14 @@ export function createFactory(world) {
     buildings,
     mined,
     stored,
-    progress,
+    research,
+    beltSpeed,
     at,
     canPlace,
     place,
     remove,
     setDir,
-    upgradeBelt,
     setRecipe,
-    research,
-    researchState,
-    affordable,
     tick,
     get: (tile) => buildings.get(indexOf(tile)) ?? null,
   };

@@ -3,19 +3,9 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { generateWorld, ORES, TERRAIN, MAP_SIZE, TILE } from './world.js';
 import { buildWorldMeshes, createSea } from './scenery.js';
 import { createCameraRig } from './camera.js';
-import {
-  createFactory,
-  DIRS,
-  DIR_NAMES,
-  BUILDINGS,
-  ITEMS,
-  RECIPES,
-  RESEARCH,
-  RESEARCH_BY_ID,
-  BELT_TIERS,
-  CONSTRUCTOR_RECIPES,
-  isMachine,
-} from './factory.js';
+import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, RECIPES, CONSTRUCTOR_RECIPES, isMachine } from './factory.js';
+import { RESEARCH } from './research.js';
+import { createResearchView } from './researchView.js';
 import { createFactoryView, createGhost } from './buildings.js';
 import './style.css';
 
@@ -102,12 +92,9 @@ function loadWorld(seed) {
   factory = createFactory(world);
   factoryView.clear();
   document.getElementById('seed').textContent = `#${seed}`;
-  pinned = null;
-  selected = null;
-  recipePanel.hidden = true;
-  if (tool && tool !== 'remove' && !factory.progress.unlocked.has(tool)) setTool(null);
   renderLegend();
-  updateTree();
+  researchView.reset();
+  openRecipes(null);
   renderProgress();
   showTile(null);
 }
@@ -139,11 +126,8 @@ const num = (n) => n.toLocaleString('de-DE');
 
 // --- Research, storage and unlocks -----------------------------------------
 
-const goalPanel = document.getElementById('goal');
 const storeList = document.getElementById('store');
 const toast = document.getElementById('toast');
-const researchBtn = document.getElementById('open-research');
-let pinned = null; // research the player chose to work towards
 let toastTimer = 0;
 
 function showToast(title, text) {
@@ -156,77 +140,18 @@ function showToast(title, text) {
   toastTimer = setTimeout(() => (toast.hidden = true), 4200);
 }
 
-// What a research gives, in words.
-function rewardText(r) {
-  const parts = (r.unlocks ?? []).map((t) => BUILDINGS[t].name);
-  if (r.belt) parts.push(BELT_TIERS[r.belt].name);
-  if (r.speed) parts.push('Tempo');
-  if (r.final) parts.push('Spielziel');
-  return parts.join(', ');
-}
-
-// The research shown in the goal panel: the pinned one, else the first one that is open.
-function goalResearch() {
-  if (pinned && factory.researchState(RESEARCH_BY_ID[pinned]) === 'open') return RESEARCH_BY_ID[pinned];
-  return RESEARCH.find((r) => factory.researchState(r) === 'open') ?? null;
-}
-
-function costRows(r) {
-  return Object.entries(r.cost)
-    .map(([k, need]) => {
-      const have = Math.min(factory.stored[k], need);
-      return `<li style="--c:${hex(ITEMS[k].color)}" class="${have >= need ? 'met' : ''}">
-        <span class="swatch"></span><span class="name">${ITEMS[k].name}</span>
-        <span class="num">${have}/${need}</span>
-        <span class="bar"><i style="width:${(have / need) * 100}%"></i></span></li>`;
-    })
-    .join('');
-}
-
-function doResearch(id) {
-  if (!factory.research(id)) return;
-  const r = RESEARCH_BY_ID[id];
-  if (pinned === id) pinned = null;
-  if (r.final) showToast('Meisterfabrik!', 'Du hast den ganzen Technologie-Baum erforscht. Glückwunsch!');
-  else showToast('Erforscht', `${r.name} · ${r.text}`);
-  shapesDirty = true;
-  updateTree();
-  renderProgress();
-  renderHelp();
-}
-
-goalPanel.addEventListener('click', (e) => {
-  const go = e.target.closest('[data-research]');
-  if (go) doResearch(go.dataset.research);
-  if (e.target.closest('[data-open-tree]')) openResearch(true);
+const researchView = createResearchView({
+  getFactory: () => factory,
+  onResearch(r) {
+    if (r.id === 'firstFactory') showToast('Spielziel geschafft!', 'Deine Fabrik schmilzt und presst. Weiter geht es mit dem Konstruktor!');
+    else if (r.goal) showToast('Meisterfabrik!', 'Du hast den ganzen Forschungsbaum geschafft. Glückwunsch!');
+    else showToast(`Erforscht: ${r.name}`, r.desc);
+    renderProgress();
+  },
 });
 
-let goalKey = '';
 function renderProgress() {
-  const r = goalResearch();
-  let html;
-  if (factory.progress.done) {
-    html = `<p class="label">Ziel erreicht</p>
-      <p class="goal-name">Meisterfabrik</p>
-      <p class="goal-unlock">Alles erforscht. Baue weiter, so groß du willst.</p>`;
-  } else if (r) {
-    const ready = factory.affordable(r);
-    html = `<p class="label">Forschungsziel · Teile ins Lager bringen</p>
-      <p class="goal-name">${r.name}</p>
-      <ul>${costRows(r)}</ul>
-      <p class="goal-unlock">Schaltet frei: <b>${rewardText(r)}</b></p>
-      <div class="goal-actions">
-        <button type="button" data-research="${r.id}" ${ready ? '' : 'disabled'}>${ready ? 'Jetzt erforschen' : 'Noch nicht genug'}</button>
-        <button type="button" class="ghost-btn" data-open-tree>Baum</button>
-      </div>`;
-  } else {
-    html = '';
-  }
-  // Only touch the DOM when something changed, so the buttons stay clickable.
-  if (html !== goalKey) {
-    goalPanel.innerHTML = html;
-    goalKey = html;
-  }
+  researchView.update();
 
   const kept = Object.entries(factory.stored).filter(([, n]) => n > 0);
   storeList.innerHTML = kept.length
@@ -238,124 +163,17 @@ function renderProgress() {
   for (const b of toolButtons) {
     const type = b.dataset.tool;
     if (!BUILDINGS[type]) continue;
-    const locked = !factory.progress.unlocked.has(type);
+    const locked = !factory.research.unlocked.has(type);
     b.classList.toggle('locked', locked);
     b.setAttribute('aria-disabled', String(locked));
     b.title = locked ? `Noch gesperrt: ${unlockHint(type)}` : BUILDINGS[type].name;
   }
-  const beltBtn = document.querySelector('.tool[data-tool="belt"]');
-  beltBtn.style.setProperty('--tier', hex(BELT_TIERS[factory.progress.beltTier].color));
-
-  const canResearch = RESEARCH.some((x) => factory.researchState(x) === 'open' && factory.affordable(x));
-  researchBtn.classList.toggle('ready', canResearch);
-  if (!researchEl.hidden) updateTree();
 }
 
 function unlockHint(type) {
   const r = RESEARCH.find((x) => x.unlocks?.includes(type));
-  return r ? `Forschung „${r.name}“` : '';
+  return r ? `im Forschungsbaum „${r.name}“ erforschen` : '';
 }
-
-// --- Research menu --------------------------------------------------------
-
-const researchEl = document.getElementById('research');
-const tree = document.getElementById('tree');
-const treeLines = document.getElementById('tree-lines');
-const NODE_W = 210;
-const NODE_H = 148;
-const GAP_X = 46;
-const GAP_Y = 18;
-const nodes = {};
-
-function buildTree() {
-  const cols = Math.max(...RESEARCH.map((r) => r.col)) + 1;
-  const rows = Math.max(...RESEARCH.map((r) => r.row)) + 1;
-  const w = cols * NODE_W + (cols - 1) * GAP_X;
-  const h = rows * NODE_H + (rows - 1) * GAP_Y;
-  tree.style.width = `${w}px`;
-  tree.style.height = `${h}px`;
-  treeLines.setAttribute('viewBox', `0 0 ${w} ${h}`);
-  treeLines.setAttribute('width', w);
-  treeLines.setAttribute('height', h);
-  const pos = (r) => ({ x: r.col * (NODE_W + GAP_X), y: r.row * (NODE_H + GAP_Y) });
-  let lines = '';
-  for (const r of RESEARCH) {
-    const to = pos(r);
-    for (const id of r.needs) {
-      const from = pos(RESEARCH_BY_ID[id]);
-      const x1 = from.x + NODE_W;
-      const y1 = from.y + NODE_H / 2;
-      const x2 = to.x;
-      const y2 = to.y + NODE_H / 2;
-      const mx = (x1 + x2) / 2;
-      lines += `<path data-from="${id}" data-to="${r.id}" d="M${x1} ${y1}C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}" />`;
-    }
-  }
-  treeLines.innerHTML = lines;
-  for (const r of RESEARCH) {
-    const el = document.createElement('article');
-    el.className = 'node';
-    el.style.left = `${pos(r).x}px`;
-    el.style.top = `${pos(r).y}px`;
-    el.style.width = `${NODE_W}px`;
-    el.style.height = `${NODE_H}px`;
-    el.innerHTML = `<p class="node-name">${r.name}<span class="node-state"></span></p>
-      <p class="node-text">${r.text}</p>
-      <ul class="node-cost"></ul>
-      <div class="node-actions"><button type="button" data-research="${r.id}">Erforschen</button><button type="button" class="ghost-btn" data-pin="${r.id}">Als Ziel</button></div>`;
-    el.dataset.id = r.id;
-    tree.append(el);
-    nodes[r.id] = el;
-  }
-}
-
-tree.addEventListener('click', (e) => {
-  const go = e.target.closest('[data-research]');
-  if (go) return doResearch(go.dataset.research);
-  const pin = e.target.closest('[data-pin]');
-  if (pin) {
-    pinned = pin.dataset.pin;
-    updateTree();
-    renderProgress();
-  }
-});
-
-function updateTree() {
-  if (!factory) return;
-  for (const r of RESEARCH) {
-    const el = nodes[r.id];
-    const state = factory.researchState(r);
-    const ready = state === 'open' && factory.affordable(r);
-    el.className = `node ${state}${ready ? ' ready' : ''}${goalResearch() === r ? ' pinned' : ''}${r.final ? ' final' : ''}`;
-    el.querySelector('.node-state').textContent = state === 'done' ? 'Erforscht' : state === 'locked' ? 'Gesperrt' : ready ? 'Bereit' : '';
-    el.querySelector('.node-cost').innerHTML = Object.entries(r.cost)
-      .map(([k, n]) => {
-        const have = state === 'done' ? n : Math.min(factory.stored[k], n);
-        return `<li class="${have >= n ? 'met' : ''}"><span class="swatch" style="--c:${hex(ITEMS[k].color)}"></span>${ITEMS[k].name}<span class="num">${have}/${n}</span></li>`;
-      })
-      .join('');
-    const go = el.querySelector('[data-research]');
-    go.disabled = !ready;
-    go.hidden = state !== 'open';
-    el.querySelector('[data-pin]').hidden = state !== 'open' || goalResearch() === r;
-  }
-  for (const path of treeLines.children) {
-    path.classList.toggle('done', factory.progress.researched.has(path.dataset.from));
-  }
-}
-
-function openResearch(open) {
-  researchEl.hidden = !open;
-  if (open) {
-    updateTree();
-    if (tool) setTool(tool);
-  }
-}
-researchBtn.addEventListener('click', () => openResearch(researchEl.hidden));
-document.getElementById('research-close').addEventListener('click', () => openResearch(false));
-researchEl.addEventListener('click', (e) => {
-  if (e.target === researchEl) openResearch(false);
-});
 
 // --- Constructor recipes ----------------------------------------------------
 
@@ -363,11 +181,10 @@ const recipePanel = document.getElementById('recipe');
 const recipeList = document.getElementById('recipe-list');
 let selected = null; // the constructor whose recipe panel is open
 
-function needsText(needs) {
-  return Object.entries(needs)
+const needsText = (needs) =>
+  Object.entries(needs)
     .map(([k, n]) => `${n} ${ITEMS[k].name}`)
     .join(' + ');
-}
 
 function openRecipes(b) {
   selected = b;
@@ -418,9 +235,8 @@ function showTile(tile) {
     tileName.textContent = `Bohrer · ${ORES[tile.ore].name}`;
     tileDetail.textContent = `${STATE_TEXT[building.state]} · ${building.mined} abgebaut · Rest ${tile.amount.toLocaleString('de-DE')}`;
   } else if (building?.type === 'belt') {
-    const tier = BELT_TIERS[building.tier];
-    tileName.textContent = tier.name;
-    tileDetail.textContent = `Richtung ${DIR_NAMES[building.dir]} · ${num(tier.speed)} Felder/s · ${building.items.length} Teile drauf`;
+    tileName.textContent = 'Förderband';
+    tileDetail.textContent = `Richtung ${DIR_NAMES[building.dir]} · ${building.items.length} Teile drauf`;
   } else if (building?.type === 'splitter') {
     tileName.textContent = 'Verteiler';
     tileDetail.textContent = `Nimmt von hinten, gibt abwechselnd nach vorn, links, rechts · ${num(building.passed)} verteilt`;
@@ -434,7 +250,7 @@ function showTile(tile) {
       .map(([k, n]) => `${ITEMS[k].name} ${Math.min(building.input[k] ?? 0, n)}/${n}`)
       .join(' · ');
     const state = building.refused ? `Nimmt kein ${ITEMS[building.refused].name} an` : MACHINE_TEXT[building.state];
-    tileDetail.textContent = `${state} · ${have} · ${building.made} hergestellt${tool ? '' : ' · Klick: Rezept'}`;
+    tileDetail.textContent = `${state} · ${have}${tool ? '' : ' · Klick: Rezept'}`;
   } else if (isMachine(building)) {
     const recipe = RECIPES[building.type];
     tileName.textContent = BUILDINGS[building.type].name;
@@ -508,7 +324,7 @@ const help = document.getElementById('help');
 const HELP = {
   none: [['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–8', 'bauen'], ['X', 'abreißen'], ['T', 'Forschung']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
-  belt: [['Ziehen', 'Band verlegen'], ['Über altes Band ziehen', 'aufrüsten'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen']],
+  belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   furnace: [['Klick', 'Schmelzofen setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   assembler: [['Klick', 'Presse setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
@@ -523,8 +339,8 @@ function renderHelp() {
 }
 
 function setTool(next) {
-  if (next && BUILDINGS[next] && !factory.progress.unlocked.has(next)) {
-    showToast(`${BUILDINGS[next].name} gesperrt`, `Erforsche ${unlockHint(next)}`);
+  if (next && BUILDINGS[next] && !factory.research.unlocked.has(next)) {
+    showToast(`${BUILDINGS[next].name} gesperrt`, unlockHint(next));
     return;
   }
   tool = next === tool ? null : next;
@@ -564,10 +380,8 @@ function buildAt(tile) {
     if (removed && removed === selected) openRecipes(null);
   } else {
     const existing = factory.get(tile);
-    if (tool === 'belt' && existing?.type === 'belt') {
-      factory.setDir(existing, dir);
-      factory.upgradeBelt(existing);
-    } else if (factory.place(tool, tile, dir)) meshes.setDecorHidden(tile.z * world.size + tile.x, true);
+    if (tool === 'belt' && existing?.type === 'belt') factory.setDir(existing, dir);
+    else if (factory.place(tool, tile, dir)) meshes.setDecorHidden(tile.z * world.size + tile.x, true);
   }
   shapesDirty = true;
 }
@@ -624,15 +438,14 @@ document.getElementById('rotate').addEventListener('click', rotate);
 window.addEventListener('keydown', (e) => {
   if (e.repeat && e.key.toLowerCase() !== 'r') return;
   const key = e.key.toLowerCase();
-  if (key === 't') return openResearch(researchEl.hidden);
-  if (key === 'escape' && !researchEl.hidden) return openResearch(false);
-  if (key === 'escape' && selected && !tool) return openRecipes(null);
-  if (!researchEl.hidden) return;
   const numbered = ['drill', 'belt', 'storage', 'furnace', 'assembler', 'splitter', 'merger', 'constructor'][Number(key) - 1];
   if (numbered) setTool(numbered);
   else if (key === 'x' || key === 'delete') setTool('remove');
   else if (key === 'r') rotate();
+  else if (key === 't') researchView.toggle();
+  else if (key === 'escape' && researchView.isOpen) researchView.close();
   else if (key === 'escape' && tool) setTool(tool);
+  else if (key === 'escape' && selected) openRecipes(null);
 });
 
 function updateHover() {
@@ -684,7 +497,6 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, camera);
 });
 
-buildTree();
 loadWorld(4711);
 renderHelp();
 resize();
