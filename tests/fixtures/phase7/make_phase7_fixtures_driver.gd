@@ -101,7 +101,8 @@ func _configs() -> void:
 ## Phase-7 values of existing configs (fixtures only; the data files belong to their owners).
 func _extended_configs() -> void:
 	var eco := (load("res://tests/fixtures/phase6/economy_config_fixture.tres") as EconomyConfig).duplicate(true) as EconomyConfig
-	eco.harvest_malus = EconomyConfig.new().harvest_malus
+	eco.harvest_malus = _si({"hair": -1, "teeth": -2, "heart": -2, "lung": -2, "stomach": -2, "liver": -2, "kidneys": -2,
+			"eyes": -3, "hand": -3})
 	_save(eco, OUT + "/economy_config_fixture.tres")
 	var rep := (load("res://tests/fixtures/phase6/reputation_config_fixture.tres") as ReputationConfig).duplicate(true) as ReputationConfig
 	rep.event_points = ReputationConfig.new().event_points

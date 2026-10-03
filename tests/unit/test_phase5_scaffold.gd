@@ -478,9 +478,9 @@ func test_database_phase5_folders() -> void:
 
 
 func test_save_format_v4_and_migration_chain() -> void:
-	assert_eq(SaveMigration.CURRENT, 5)  # Phase 6: v5
-	assert_eq(SaveFileIO.FORMAT_VERSION, 5)
-	assert_eq(SaveManager.FORMAT_VERSION, 5)
+	assert_eq(SaveMigration.CURRENT, 6)  # Phase 6: v5, Phase 7: v6
+	assert_eq(SaveFileIO.FORMAT_VERSION, 6)
+	assert_eq(SaveManager.FORMAT_VERSION, 6)
 	assert_eq(SaveMigration.V4_EMPTY_NODES, PackedStringArray(["workshop", "gathering", "stonemasonry"]))
 	var state := {"autoloads": {"TimeManager": {"day": 5}, "GameState": {"stats": {}, "flags": {}}}, "nodes": {"corpse_manager": {}}}
 	# Phase 6 (P6): migrate_4_to_5 implemented – only the Phase-6 nodes / stats are added.

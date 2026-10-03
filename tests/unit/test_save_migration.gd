@@ -88,7 +88,7 @@ func test_reputation_table() -> void:
 
 func test_current_version_is_three() -> void:
 	# Phase 5 W0: v4, Phase 6 W0: v5 (docs/PHASE6_DESIGN.md §5) – the name stays for the history of this test.
-	assert_eq(SaveMigration.CURRENT, 5)
+	assert_eq(SaveMigration.CURRENT, 6)  # Phase 7 W0: v6
 	assert_eq(SaveFileIO.FORMAT_VERSION, SaveMigration.CURRENT)
 
 
@@ -704,8 +704,8 @@ func test_v4_round_trip_is_identical() -> void:
 
 
 func test_version_five_is_rejected() -> void:
-	# Phase 6 W0: CURRENT 5 – the name stays; a version above CURRENT is rejected.
-	assert_eq(SaveMigration.CURRENT, 5)
+	# Phase 6 W0: CURRENT 5, Phase 7 W0: 6 – the name stays; a version above CURRENT is rejected.
+	assert_eq(SaveMigration.CURRENT, 6)
 	assert_eq(Phase5Fixtures.install_save_v3("slot_p4_day7_table", TEST_DIR, SLOT), OK)
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
 	doc.format_version = SaveMigration.CURRENT + 1
@@ -914,7 +914,7 @@ func test_v5_round_trip_is_identical() -> void:
 		var migrated := _migrated_v4(name)
 		_write_doc(SaveFileIO.make_doc(f.meta, migrated))
 		var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
-		assert_eq(int(doc.format_version), 5, name)
+		assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, name)
 		var read := _read_slot()
 		assert_eq(read.err, OK, name)
 		assert_eq(read.state, migrated, "%s: v5 file round trip" % name)
@@ -923,10 +923,11 @@ func test_v5_round_trip_is_identical() -> void:
 
 
 func test_version_six_is_rejected() -> void:
-	assert_eq(SaveMigration.CURRENT, 5)
+	# Phase 7 W0: CURRENT 6 – the name stays; a version above CURRENT is rejected.
+	assert_eq(SaveMigration.CURRENT, 6)
 	assert_eq(Phase6Fixtures.install_save_v4("slot_p5_day30_reverent", TEST_DIR, SLOT), OK)
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
-	doc.format_version = 6
+	doc.format_version = SaveMigration.CURRENT + 1
 	_write_doc(doc)
 	assert_eq(_read_slot().err, ERR_FILE_UNRECOGNIZED)
 	assert_true(SaveFileIO.is_newer_version(TEST_DIR, SLOT))

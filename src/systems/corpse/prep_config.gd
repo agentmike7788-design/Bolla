@@ -16,8 +16,9 @@ extends Resource
 @export var balm_max_windows: int = 4
 # Phase 5 (docs/PHASE5_DESIGN.md §2.6): herb_bundle smokes like juniper. The first available item
 # in list order is used (P6); balm_item stays = the first element (compatibility).
-# Phase 7 (docs/PHASE7_DESIGN.md §2.7, §3.4): + corpse_balm (Totensalbe, third entry; the .tres is P7's).
-@export var balm_items: Array[StringName] = [&"juniper", &"herb_bundle", &"corpse_balm"]
+# Phase 7 (docs/PHASE7_DESIGN.md §2.7, §3.4) adds corpse_balm as third entry – W0-Notizen: NOT as class
+# default yet (older fixtures follow it); P7 sets class default and prep_config.tres together.
+@export var balm_items: Array[StringName] = [&"juniper", &"herb_bundle"]
 
 
 ## Item consumed by dressing in `kind` (&"" if unknown).

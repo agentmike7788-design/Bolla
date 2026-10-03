@@ -267,7 +267,7 @@ func _resave_round_trip() -> void:
 			assert_true((r as Dictionary).has(key), "record saves %s" % key)
 	assert_eq(SaveManager.save_game(RESAVE_SLOT), OK)
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(saves_dir, RESAVE_SLOT)))
-	assert_eq(int(doc.format_version), 5, "v5")
+	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, "current format (Phase 6: v5, Phase 7: v6)")
 	var err: Error = await SaveManager.load_game(RESAVE_SLOT)
 	assert_eq(err, OK)
 	world = tree.current_scene as WorldRoot
