@@ -8,7 +8,7 @@
 | G3 | Friedhof vollständig ausbauen | ✅ **PASSED** (Runde 1; 1120 Tests; Bilder `docs/reviews/phase3_round1/`) | 27.09.2026 | ✅ „Phase 3 freigegeben" (27.09.2026) |
 | G4 | Leichensystem erweitern | ✅ **PASSED** (Runde 1; 1473 Tests; Bilder `docs/reviews/phase4_round1/`; Lampe 2,2/4,5 m und Verfall-Sichtweite 40 m mit freigegeben) | 28.09.2026 | ✅ „Phase 4 freigegeben" (28.09.2026) |
 | G5 | Crafting und Ressourcen | ✅ **PASSED** (Runde 1; 1748 Tests; Bilder `docs/reviews/phase5_round1/`; Werkhof-Lage, Erlen-Verschiebung und Tempo wie gebaut freigegeben, Münzausgleich Verwerten → Phase 10) | 28.09.2026 | ✅ „Phase 5 freigegeben" (28.09.2026) |
-| G6 | Gebäude | 🟡 **PENDING USER REVIEW** – Runde 1 gebaut & getestet (2017 Tests, 3/3 grün); Bilder `docs/reviews/phase6_round1/` | 03.10.2026 | ausstehend |
+| G6 | Gebäude | ✅ **PASSED** (Runde 1; 2017 Tests; Bilder `docs/reviews/phase6_round1/`; Tempo, Schuppen-Ausnahmen, Taschengröße und Gruft-Kamera wie gebaut freigegeben) | 03.10.2026 | ✅ „Phase 6 freigegeben" (03.10.2026) |
 
 **ART STYLE LOCK:** ✅ **ACTIVE** seit 27.09.2026 (Referenz: `src/world/art_prototype/`, Screenshots `docs/reviews/phase1_round1/`). Keine grundlegende Stiländerung ohne Benutzerfreigabe.
 

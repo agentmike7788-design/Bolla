@@ -10,8 +10,8 @@ Regel: **BAUE → TESTE → ZEIGE → WARTE AUF FREIGABE.** Keine Phase startet 
 | 3 | Friedhof vollständig ausbauen | ✅ freigegeben (27.09.2026) |
 | 4 | Leichensystem erweitern | ✅ freigegeben (28.09.2026) |
 | 5 | Crafting und Ressourcen | ✅ freigegeben (28.09.2026) |
-| 6 | Gebäude | 🟡 gebaut & getestet – wartet auf Benutzerfreigabe |
-| 7 | Dorf | – |
+| 6 | Gebäude | ✅ freigegeben (03.10.2026) |
+| 7 | Dorf | 🔵 Planung – Umfang wird mit dem Benutzer abgestimmt (Organe/Anatomie-Wunsch berücksichtigen) |
 | 8 | NPCs | – |
 | 9 | Quests | – |
 | 10 | Wirtschaft | – |
