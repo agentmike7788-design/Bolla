@@ -737,6 +737,8 @@ func _try_build(nb: Dictionary) -> bool:
 	if next == null:
 		return false
 	var reserve := RESERVE6_OPTIONAL if nb.optional else RESERVE6_NEEDED
+	if not nb.optional and _build_candidates().size() == 1 and _plan_inputs().size() <= next.inputs.size():
+		reserve = 0  # the last upgrade of the chapter: the purse may go to 0 for it
 	if inv().count(&"coin") - next.coins < reserve:
 		_note_wait(id, "coins %d < %d + %d" % [inv().count(&"coin"), next.coins, reserve])
 		return false
