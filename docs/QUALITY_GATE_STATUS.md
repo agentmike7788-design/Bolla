@@ -11,6 +11,15 @@
 
 **ART STYLE LOCK:** ✅ **ACTIVE** seit 27.09.2026 (Referenz: `src/world/art_prototype/`, Screenshots `docs/reviews/phase1_round1/`). Keine grundlegende Stiländerung ohne Benutzerfreigabe.
 
+## G6 – QA-Protokoll W3 (Agent 19, vorläufig – Benutzerprüfung offen)
+
+- Befunde, Playthrough-Tabellen mit Münzbuch, Fuzzer, Art-/Ton-Prüfung, Performance: `docs/reviews/phase6_wip/qa_playthrough.md` (Vorher/Nachher `docs/reviews/phase6_wip/qa_01…05_*.jpg`, CPU-Rohdaten `qa_cpu_p5_vs_p6.txt`).
+- Screenshot-Satz Gate G6 (§11, echte Phase-6-Welt und Innenräume, 1280×720): `docs/reviews/phase6_round1/` (Welt `world_p6_*`, Budget `perf_p6_*` + `render_stats_p6.txt`, UI `ui_*` jetzt in den echten Räumen).
+- Befunde behoben: QA6-01 (Kapitel fiel nicht, wenn das Grabzeichen der ausgesegneten Leiche zuletzt kam – hoch), QA6-07 (Aussegnung scheiterte am Ende an der Frische – hoch), QA6-02/03/04/06/08/10/11 (Trauergäste im Kapitel-Panel, `Buildings.open()`, Schuppen behält Kisten/Kerzen, Gruft-Zustand vor den Bildern, Lade-Bereinigung der Leichenplätze, Zahl im Flag, alter Tisch über `apply_levels`), Art QA6-A1…A4 (Gruft-Nebel, Gras im gehobenen Altgrab, Gruft-Kamera zum Beinhaus, UI-Bilder in den Räumen), Ton T1…T4; jeder mit Regressionstest (`tests/integration/test_phase6_qa.gd`, Fuzzer).
+- Playthrough-Bot (`phase6_bot.gd`, echte Panels): 6 Strategien (reverent6, mortician, mender6, harvester6, founder, save_load6) ohne Fehler und ohne Warnung; **alle erreichen „Unter Dach und Erde“** (Tag 29–42); `save_load6` zeilengleich zu `reverent6`; Phase-3/4/5-Bot-Erwartungen grün.
+- Save-Fuzzer um einen echten v5-Stand mitten in Phase 6 erweitert – kein halb angewandter Zustand.
+- Datenänderungen: nur `shed_config.excluded_items` (+ `bone_box`, `altar_candle`), Gruft-Nebellicht (`fog_day/night_energy`), Kameragrenze Gruft. Keine Münz-/Mengenwerte geändert. Entscheidungen B6-1…4 (Bogen B8 statt B6 bei Start 27, Totengräber 13 Tage, mender 11 Tage, harvester), E2–E4 stehen im Bericht.
+
 ## G5 – QA-Protokoll W3 (Agent 19, vorläufig – Benutzerprüfung offen)
 
 - Befunde, Playthrough-Tabellen mit Münzbuch, Fuzzer, Art-/Ton-Prüfung, Performance: `docs/reviews/phase5_wip/qa_playthrough.md` (Vorher/Nachher `docs/reviews/phase5_wip/qa_*.jpg`, CPU-Rohdaten `qa_cpu_p4_vs_p5.txt`).
