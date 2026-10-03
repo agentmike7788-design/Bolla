@@ -206,7 +206,8 @@ func test_extended_data_classes() -> void:
 		# P1 (W1): the Holunderwinkel is the one section outside the Phase-3 goal (§2.10).
 		# Phase 5 (P2, W0 note 6): the work areas bruch / quarry do not count either.
 		# Phase 6 (W-Welt, §4.2): the churchyard has no graves and does not count either.
-		assert_eq(real.counts_for_cemetery, not real.id in [&"elder", &"bruch", &"quarry", &"churchyard"], "%s counts for the cemetery" % real.id)
+		# Phase 7 (P3, §2.9): the Lindenacker does not count either.
+		assert_eq(real.counts_for_cemetery, not real.id in [&"elder", &"bruch", &"quarry", &"churchyard", &"linden"], "%s counts for the cemetery" % real.id)
 	var e := EconomyConfig.new()
 	assert_eq([e.quality_washed, e.quality_laid_out, e.rot_malus, e.venerable_min_decor, e.venerable_max_dirt], [1, 1, -2, 12, 6])
 	assert_almost(e.rot_threshold, 0.1)

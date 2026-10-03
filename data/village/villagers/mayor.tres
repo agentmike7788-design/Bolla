@@ -16,10 +16,11 @@ specimen_delta = 0
 returned_delta = 0
 piety_sensitive = false
 remarks = Dictionary[StringName, PackedStringArray]({
-&"friend": PackedStringArray("Setzen Sie sich, Totengräber. Die Akten können warten."),
-&"rep_disreputable": PackedStringArray("Der Gemeinderat hat Beschwerden vorliegen, Totengräber. Schriftliche."),
-&"rep_esteemed": PackedStringArray("Der Gemeinderat ist zufrieden. Das kommt selten vor, glauben Sie mir."),
-&"rep_renowned": PackedStringArray("Wenn das Pflegegeld nicht reicht, sagen Sie es mir. Unter uns."),
-&"rep_respected": PackedStringArray("Der Totengräber. Grüß Gott.", "Ihre Pflege ist ordnungsgemäß. Ich habe es vermerkt."),
-&"rep_unremarkable": PackedStringArray("Ah, der Totengräber. Die Gemeinde hat Sie zur Kenntnis genommen.")
+&"friend": PackedStringArray("Setzen Sie sich, Totengräber. Die Akten können warten.", "Unter uns: Die Beine sind besser. Amtlich weiß ich davon nichts."),
+&"rep_disreputable": PackedStringArray("Der Gemeinderat hat Beschwerden vorliegen, Totengräber. Schriftliche.", "Totengräber. Es liegen Beschwerden vor. Schriftlich. Guten Tag."),
+&"rep_esteemed": PackedStringArray("Der Gemeinderat ist zufrieden. Das kommt selten vor, glauben Sie mir.", "Ich habe Sie lobend ins Protokoll geschrieben. Zweimal. Das ist ein Rekord."),
+&"rep_renowned": PackedStringArray("Wenn das Pflegegeld nicht reicht, sagen Sie es mir. Unter uns.", "Mein verehrter Totengräber! Ich arbeite an einer Satzung für Ihre Ehrung."),
+&"rep_respected": PackedStringArray("Der Totengräber. Grüß Gott.", "Ihre Pflege ist ordnungsgemäß. Ich habe es vermerkt.", "Totengräber! Die Gemeinde ist zufrieden. Das darf ich amtlich sagen."),
+&"rep_unremarkable": PackedStringArray("Ah, der Totengräber. Die Gemeinde hat Sie zur Kenntnis genommen.", "Guten Tag. Die Amtsstube hat bis sechzehn Uhr geöffnet."),
+&"specimens": PackedStringArray("Man redet über Gläser vom Hügel. Ich habe es nicht zu Protokoll genommen. Noch nicht.")
 })

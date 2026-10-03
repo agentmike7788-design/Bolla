@@ -16,10 +16,11 @@ specimen_delta = 0
 returned_delta = 0
 piety_sensitive = false
 remarks = Dictionary[StringName, PackedStringArray]({
-&"friend": PackedStringArray("Für dich steht immer ein Krug warm, das weißt du."),
-&"rep_disreputable": PackedStringArray("Du bist der vom Hügel. Setz dich ans Fenster, da sieht dich keiner."),
-&"rep_esteemed": PackedStringArray("Da kommt er ja! Die Leute reden gut von dir, Totengräber. Fast zu gut."),
-&"rep_renowned": PackedStringArray("Wackernagel hat für dich einen Stuhl am Ofen frei. Den kriegt sonst nur der Pfarrer."),
-&"rep_respected": PackedStringArray("Der Totengräber. Grüß Gott.", "Wackernagel sagt, du gräbst ordentlich. Wackernagel bin ich."),
-&"rep_unremarkable": PackedStringArray("Ach, der Totengräber. Willst du was trinken oder nur gucken?")
+&"friend": PackedStringArray("Für dich steht immer ein Krug warm, das weißt du.", "He, Totengräber! Komm nachher rein, ich hab Holunderwein vom letzten Jahr. Nur für dich und mich und Kehr, aber Kehr weiß es nicht."),
+&"rep_disreputable": PackedStringArray("Du bist der vom Hügel. Setz dich ans Fenster, da sieht dich keiner.", "Das ist der, bei dem die Taschen leichter werden. Wackernagel zählt nach."),
+&"rep_esteemed": PackedStringArray("Da kommt er ja! Die Leute reden gut von dir, Totengräber. Fast zu gut.", "Da kommt er! Wackernagel hat den guten Krug schon abgewischt."),
+&"rep_renowned": PackedStringArray("Wackernagel hat für dich einen Stuhl am Ofen frei. Den kriegt sonst nur der Pfarrer.", "Platz da, der Totengräber! Brandt, rück zur Seite, du bist nicht tot, du kannst stehen."),
+&"rep_respected": PackedStringArray("Der Totengräber. Grüß Gott.", "Wackernagel sagt, du gräbst ordentlich. Wackernagel bin ich.", "Totengräber! Kehr hat gesagt, du grüßt nicht. Ich hab gesagt, du grüßt die Toten, das reicht."),
+&"rep_unremarkable": PackedStringArray("Ach, der Totengräber. Willst du was trinken oder nur gucken?", "Der vom Hügel! Durst? Wackernagel hat immer Durst für zwei."),
+&"specimens": PackedStringArray("Bei Quast klirrt es wieder, wenn Faulhaber ablädt. Ich frag nicht. Ich hab ja Ohren.")
 })

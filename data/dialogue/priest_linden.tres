@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="priest_linden_c001"]
+script = ExtResource("2")
+text = "Ich bleibe."
+next = &"stay"
+
+[sub_resource type="Resource" id="priest_linden_c002"]
+script = ExtResource("2")
+text = "Ich lasse Sie in Ruhe."
+
+[sub_resource type="Resource" id="priest_linden_node_bless"]
+script = ExtResource("1")
+id = &"bless"
+text = "Ah, da sind Sie ja. Der Hügel hat mich fast umgebracht, und ich wäre wenigstens am richtigen Ort gewesen. Ich segne die Erde, nicht die Arbeit. Die Arbeit segnest du selbst, jeden Tag ein bisschen. Bleiben Sie, wenn Sie wollen. Es dauert, bis ich alle Heiligen beisammen habe."
+choices = Array[ExtResource("2")]([SubResource("priest_linden_c001"), SubResource("priest_linden_c002")])
+conditions = Array[String](["!flag:linden_consecrated"])
+fallback_next = &"after"
+actions = Array[String](["talked:priest"])
+
+[sub_resource type="Resource" id="priest_linden_c003"]
+script = ExtResource("2")
+text = "Amen."
+
+[sub_resource type="Resource" id="priest_linden_node_stay"]
+script = ExtResource("1")
+id = &"stay"
+text = "Schön. Dann beten Sie mit, oder schweigen Sie mit, das zählt beides. Die Linde hat hier gestanden, als mein Großvater ein Kind war. Wer unter ihr liegt, wird es gut haben. Und wer neben ihr gräbt, auch."
+choices = Array[ExtResource("2")]([SubResource("priest_linden_c003")])
+
+[sub_resource type="Resource" id="priest_linden_c004"]
+script = ExtResource("2")
+text = "Danke, Herr Pfarrer."
+
+[sub_resource type="Resource" id="priest_linden_node_after"]
+script = ExtResource("1")
+id = &"after"
+text = "Es ist geweiht. Jetzt gehört es denen, die kommen. Und Ihnen, solange Sie sie hinlegen."
+choices = Array[ExtResource("2")]([SubResource("priest_linden_c004")])
+
+[resource]
+script = ExtResource("3")
+id = &"priest_linden"
+speaker_name = "Pfarrer Ambrosius Lenz"
+start_node = &"bless"
+nodes = Array[ExtResource("1")]([SubResource("priest_linden_node_bless"), SubResource("priest_linden_node_stay"), SubResource("priest_linden_node_after")])

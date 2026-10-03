@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="FindData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/corpse/find_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"f_d1_poppy"
+step = &"clothing"
+label = "Mohn am Mieder"
+text = "Getrockneter Mohn am Mieder, mit einem roten Faden gebunden."
+lost_text = ""
+min_freshness = 0.0
+trait_id = &""
+cause_id = &""
+story_only = true
+clue_id = &""
+sets_flag = &""

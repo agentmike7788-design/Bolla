@@ -141,7 +141,7 @@ func test_sections_and_initial_state() -> void:
 func test_real_data_is_used_without_injection() -> void:
 	var plain := ExpansionManager.new()
 	world.add_child(plain)
-	assert_eq(plain.sections().size(), 7, "Phase 4: + elder; Phase 5: + bruch, quarry; Phase 6: + churchyard")
+	assert_eq(plain.sections().size(), 8, "Phase 4: + elder; Phase 5: + bruch, quarry; Phase 6: + churchyard; Phase 7: + linden")
 	assert_eq(plain.data_of("obs_e_01"), Database.clearable(&"bramble"))
 	plain.free()
 
@@ -648,3 +648,114 @@ func _add_bruch() -> void:
 		obstacles[spec[0]] = obstacle
 	graveyard.load_state({})
 	expansion.collect_obstacles()
+
+
+# --- Phase 7 (P3, docs/PHASE7_DESIGN.md §2.9, §3.4): unlock_flag, try_unlock, the section order ---
+
+## Adds the Lindenacker (fixture) with two plots, the small gate and a stump; no flags set.
+func _add_linden() -> void:
+	_clear_flags_linden()
+	var sections: Array[SectionData] = Phase3Fixtures.sections()
+	sections.append(Phase7Fixtures.linden_section())
+	graveyard.section_data = sections
+	expansion.section_data = sections
+	expansion.clearable_data[&"gate_small"] = Database.clearable(&"gate_small") as ClearableData
+	for gid: String in ["l_01", "l_02"]:
+		var plot := PlotDouble.new()
+		plot.grave_id = gid
+		plot.section_id = &"linden"
+		plot.add_to_group(&"grave_plot")
+		world.add_child(plot)
+	for spec: Array in [["obs_l_gate", &"gate_small"], ["obs_l_stump_1", &"stump"]]:
+		var obstacle := ClearableObstacle.new()
+		obstacle.obstacle_id = spec[0]
+		obstacle.section_id = &"linden"
+		obstacle.kind = spec[1]
+		obstacle.name = spec[0]
+		world.add_child(obstacle)
+		obstacles[spec[0]] = obstacle
+	graveyard.load_state({})
+	expansion.collect_obstacles()
+
+
+func _clear_flags_linden() -> void:
+	for flag: StringName in [&"linden_granted", &"linden_consecrated"]:
+		GameState.clear_flag(flag)
+
+
+func test_linden_needs_the_grant_then_opens_after_clearing_and_consecration() -> void:
+	_add_linden()
+	assert_eq(expansion.block_reason(&"linden"), "Hier ist noch Gemeindewald.", "§2.9: before linden_granted")
+	assert_false(expansion.can_clear("obs_l_gate", inv))
+	GameState.set_flag(&"linden_granted", true)
+	assert_eq(expansion.block_reason(&"linden"), "")
+	assert_true(expansion.clear("obs_l_gate", inv))
+	assert_true(expansion.clear("obs_l_stump_1", inv))
+	assert_false(expansion.is_unlocked(&"linden"), "cleared, but not consecrated")
+	assert_true(_noted("Geräumt. Es fehlt die Weihe."))
+	assert_eq(graveyard.get_grave("l_01").state, LOCKED)
+	GameState.set_flag(&"linden_consecrated", true)
+	assert_true(expansion.try_unlock(&"linden"), "after the flag")
+	assert_true(expansion.is_unlocked(&"linden"))
+	assert_eq([graveyard.get_grave("l_01").state, graveyard.get_grave("l_02").state], [EMPTY, EMPTY])
+	assert_has(rep.calls, ["event", &"section_unlocked", "Lindenacker freigelegt"])
+	assert_false(expansion.try_unlock(&"linden"), "once")
+	_clear_flags_linden()
+
+
+func test_linden_consecrated_first_opens_with_the_last_obstacle() -> void:
+	_add_linden()
+	GameState.set_flag(&"linden_granted", true)
+	GameState.set_flag(&"linden_consecrated", true)
+	assert_false(expansion.try_unlock(&"linden"), "obstacles left")
+	assert_true(expansion.clear("obs_l_gate", inv))
+	assert_false(expansion.is_unlocked(&"linden"))
+	assert_true(expansion.clear("obs_l_stump_1", inv))
+	assert_true(expansion.is_unlocked(&"linden"), "the last obstacle after the consecration")
+	_clear_flags_linden()
+
+
+func test_sections_without_unlock_flag_unlock_as_before() -> void:
+	_add_linden()
+	inv.add_item(&"wood", 2)
+	inv.add_item(&"iron_fittings", 1)
+	for id: String in ["obs_e_01", "obs_e_02", "obs_e_gap_1"]:
+		assert_true(expansion.clear(id, inv), id)
+	assert_true(expansion.is_unlocked(&"east"), "Phase-3 rule unchanged")
+	_clear_flags_linden()
+
+
+func test_post_load_waits_for_the_unlock_flag() -> void:
+	_add_linden()
+	GameState.set_flag(&"linden_granted", true)
+	expansion.load_state({"cleared": ["obs_l_gate", "obs_l_stump_1"], "unlocked": []})
+	expansion.post_load()
+	assert_false(expansion.is_unlocked(&"linden"), "QA-05 repair waits for linden_consecrated")
+	GameState.set_flag(&"linden_consecrated", true)
+	expansion.post_load()
+	assert_true(expansion.is_unlocked(&"linden"), "repair once consecrated")
+	_clear_flags_linden()
+
+
+func test_the_section_order_completes_with_the_last_obstacle() -> void:
+	_add_linden()
+	var orders := Orders.new()
+	orders.config = Phase7Fixtures.orders_config()
+	orders.order_table[&"o_fenner_linden"] = Phase7Fixtures.order(&"o_fenner_linden")
+	world.add_child(orders)
+	orders.load_state({"states": {"o_fenner_linden": "accepted"}, "accepted_day": {"o_fenner_linden": 1}})
+	GameState.set_flag(&"linden_granted", true)
+	assert_true(expansion.clear("obs_l_gate", inv))
+	assert_eq(orders.state(&"o_fenner_linden"), &"accepted", "1/2")
+	assert_true(expansion.clear("obs_l_stump_1", inv))
+	assert_eq(orders.state(&"o_fenner_linden"), &"completed", "Orders.note_section_progress")
+	assert_has(rep.calls, ["change", 2, "Auftrag: Der Lindenacker"])
+	orders.free()
+	_clear_flags_linden()
+
+
+func _noted(text: String) -> bool:
+	for e: Array in events:
+		if e.size() > 1 and e[0] == "note" and e[1] == text:
+			return true
+	return false

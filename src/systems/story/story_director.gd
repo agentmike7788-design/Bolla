@@ -3,8 +3,15 @@ extends RefCounted
 ## Pure rules of the story corpses S1–S5 (docs/PHASE4_DESIGN.md §2.11, §3.4). No node, no
 ## state: the CorpseManager saves story_delivered / story_last_day, calls due_story before the
 ## random corpse of a delivery day and daily_checks at day_started (key fallback).
+## Phase 7 (docs/PHASE7_DESIGN.md §2.9, §3.4, P6): a story may wait for a flag (requires_flag) and
+## come at the earliest after_days after the day stored in after_flag (D1 Wiebke Hagedorn:
+## village_open_day + 8, only with linden_consecrated). Such a story only reserves a place while it
+## can come (pending_count), and daily_checks sets its due_flag (hagedorn_dead) at 00:00 of the day it
+## is due. The only side effect of this class: that flag (GameState), read from the running world.
 
 const CHECK_ELDER_KEY := &"elder_key"
+## daily_checks: a story's due_flag was set today.
+const CHECK_DUE_FLAG := &"due_flag"
 
 
 ## The next undelivered story (by order) with day ≥ earliest_day and
@@ -19,15 +26,46 @@ static func due_story(day: int, delivered: PackedStringArray, last_story_day: in
 		return null
 	if last_story_day > 0 and day < last_story_day + gap:
 		return null
+	if not can_come(next, day):
+		return null
 	return next
 
 
-## Stories not yet delivered (reservation of free plots).
+## Phase 7: requires_flag set and day ≥ the day in after_flag + after_days (a missing / non-numeric
+## after_flag holds the story back).
+static func can_come(story: StoryCorpseData, day: int) -> bool:
+	if story == null:
+		return false
+	if story.requires_flag != &"" and not GameState.flag_on(story.requires_flag):
+		return false
+	if story.after_flag != &"":
+		var since: Variant = GameState.get_flag(story.after_flag)
+		if not (since is int or since is float):
+			return false
+		if day < int(since) + story.after_days:
+			return false
+	return true
+
+
+## Phase 7: the due_flags of the story due on `day` (pure; daily_checks sets them).
+static func due_flags(day: int, delivered: PackedStringArray, last_story_day: int, stories: Array[StoryCorpseData], cfg: StoryConfig) -> Array[StringName]:
+	var out: Array[StringName] = []
+	var story := due_story(day, delivered, last_story_day, stories, cfg)
+	if story != null and story.due_flag != &"":
+		out.append(story.due_flag)
+	return out
+
+
+## Stories not yet delivered (reservation of free plots). Phase 7: a story whose requires_flag is not
+## set cannot come and reserves nothing (D1 before the consecration – Phase-6 games unchanged).
 static func pending_count(delivered: PackedStringArray, stories: Array[StoryCorpseData]) -> int:
 	var count := 0
 	for story: StoryCorpseData in stories:
-		if story != null and not delivered.has(String(story.id)):
-			count += 1
+		if story == null or delivered.has(String(story.id)):
+			continue
+		if story.requires_flag != &"" and not GameState.flag_on(story.requires_flag):
+			continue
+		count += 1
 	return count
 
 
@@ -55,11 +93,26 @@ static func make_record(story: StoryCorpseData, seed: int) -> CorpseRecord:
 
 ## Fallbacks due today: &"elder_key" from key_fallback_day on without the key (idempotent:
 ## once the key flag is set, nothing is due any more).
+## Phase 7: the due_flag of the story due today (D1 → hagedorn_dead = day, her Npc disappears) is set
+## here, once (stories / deliveries from the CorpseManager of the running world) → &"due_flag".
 static func daily_checks(day: int, has_key: bool, cfg: StoryConfig) -> Array[StringName]:
 	var out: Array[StringName] = []
 	var c := cfg if cfg != null else StoryConfig.new()
 	if not has_key and day >= c.key_fallback_day:
 		out.append(CHECK_ELDER_KEY)
+	var tree := Engine.get_main_loop() as SceneTree
+	var manager := tree.get_first_node_in_group(&"corpse_manager") if tree != null else null
+	if manager != null and manager.has_method(&"story_delivered") and manager.has_method(&"story_last_day"):
+		var stories: Array[StoryCorpseData] = []
+		var injected: Variant = manager.get(&"stories")
+		var list: Array = injected if injected is Array and not (injected as Array).is_empty() else Database.story_corpses()
+		for res: Variant in list:
+			if res is StoryCorpseData:
+				stories.append(res)
+		for flag: StringName in due_flags(day, manager.call(&"story_delivered"), int(manager.call(&"story_last_day")), stories, c):
+			if not GameState.has_flag(flag):
+				GameState.set_flag(flag, day)
+				out.append(CHECK_DUE_FLAG)
 	return out
 
 

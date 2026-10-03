@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"o_rosine_tincture"
+giver = &"innkeeper"
+recipient = &""
+kind = &"deliver"
+title = "Fieber im Haus"
+request_text = "Jakob fiebert, und der Quast nimmt zu viel. Zwei Fläschchen Fiebertinktur – oder die Bittertropfen, wenn du welche hast."
+thanks_text = "„Jakob schläft. Zum ersten Mal seit drei Nächten. Du bist ein komischer Heiliger, Totengräber, aber du bist einer.“"
+items = Dictionary[StringName, int]({
+&"fever_tincture": 2
+})
+coins = 0
+target = ""
+conditions = {
+"substitutes": {
+"fever_tincture": "bitter_drops"
+}
+}
+days_limit = 4
+requires_flag = &""
+requires_orders = Array[StringName]([&"o_rosine_berries"])
+requires_tier = &""
+reward_coins = 8
+reward_rel = 10
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 5
+accept_flag = &""

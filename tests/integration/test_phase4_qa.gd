@@ -135,9 +135,9 @@ func test_insight_count_of_five_without_the_optional_one() -> void:
 		var ids: Array[StringName] = []
 		ids.assign(insight.requires)
 		assert_eq(bot.journal.try_link(ids), insight.id)
-	assert_eq(bot.journal.insights().size(), 6, "setup: 5 main + the optional one")
+	assert_eq(bot.journal.insights().size(), 8, "setup: 5 main + the optional one (Phase 7: + i_deathbook, optional i_burn_it)")
 	var ctx := bot.graveyard.chapter_context(&"six_pits")
-	assert_eq(int(ctx.insights), 5, "chapter panel: 5/5, not 6/5")
+	assert_eq(int(ctx.insights), 6, "chapter panel: main insights only, not the optional ones (Phase 7: + i_deathbook)")
 	var me := bot.journal.self_page()
 	assert_true(int(me.insights) <= int(me.insights_total), "page Ich: %d/%d" % [me.insights, me.insights_total])
 

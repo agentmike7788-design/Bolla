@@ -1,0 +1,96 @@
+[gd_resource type="Resource" script_class="NpcSchedule" format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1_ttn2y"]
+[ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2_hf8u0"]
+
+[sub_resource type="Resource" id="Resource_5l2sa"]
+script = ExtResource("1_ttn2y")
+activity = &"home"
+path = PackedStringArray("v_office_door")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_3o3ey"]
+script = ExtResource("1_ttn2y")
+start_minute = 475
+path = PackedStringArray("v_in_office_desk")
+dialogue_id = &"v_mayor"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_0oylv"]
+script = ExtResource("1_ttn2y")
+start_minute = 720
+travel_minutes = 20
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_office_door", "v_well", "v_anger_w", "v_board")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_2kkg6"]
+script = ExtResource("1_ttn2y")
+start_minute = 740
+path = PackedStringArray("v_board")
+dialogue_id = &"v_mayor"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_f1tkc"]
+script = ExtResource("1_ttn2y")
+start_minute = 780
+travel_minutes = 5
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_board", "v_office_door")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_aojaw"]
+script = ExtResource("1_ttn2y")
+start_minute = 785
+path = PackedStringArray("v_in_office_desk")
+dialogue_id = &"v_mayor"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_tdu31"]
+script = ExtResource("1_ttn2y")
+start_minute = 960
+travel_minutes = 5
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_office_door", "v_board")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_sfipx"]
+script = ExtResource("1_ttn2y")
+start_minute = 965
+path = PackedStringArray("v_board")
+dialogue_id = &"v_mayor"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_irxlc"]
+script = ExtResource("1_ttn2y")
+start_minute = 1080
+travel_minutes = 5
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_board", "v_inn_door")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_ofwtp"]
+script = ExtResource("1_ttn2y")
+start_minute = 1085
+path = PackedStringArray("v_in_inn_table")
+dialogue_id = &"v_mayor"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_jjb4c"]
+script = ExtResource("1_ttn2y")
+start_minute = 1260
+activity = &"home"
+path = PackedStringArray("v_office_door")
+visible = false
+region = &"village"
+
+[resource]
+script = ExtResource("2_hf8u0")
+npc_id = &"mayor"
+display_name = "Gottlieb Fenner"
+entries = Array[ExtResource("1_ttn2y")]([SubResource("Resource_5l2sa"), SubResource("Resource_3o3ey"), SubResource("Resource_0oylv"), SubResource("Resource_2kkg6"), SubResource("Resource_f1tkc"), SubResource("Resource_aojaw"), SubResource("Resource_tdu31"), SubResource("Resource_sfipx"), SubResource("Resource_irxlc"), SubResource("Resource_ofwtp"), SubResource("Resource_jjb4c")])

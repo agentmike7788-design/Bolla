@@ -1,0 +1,390 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="v_priest_c001"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_start"]
+script = ExtResource("1")
+id = &"start"
+text = "Ah, der Totengräber! Lenz, Ambrosius, Pfarrer von St. Gallus, seit – nun, seit die Linde noch jung war, sagt man, aber man sagt viel. Ich hätte Sie längst besucht, aber der Hügel, wissen Sie, der Hügel und meine Knie sind keine Freunde. Wie geht es unseren Toten?"
+choices = Array[ExtResource("2")]([SubResource("v_priest_c001")])
+conditions = Array[String](["!met:priest"])
+fallback_next = &"greet_p_devout"
+actions = Array[String](["meet:priest", "talked:priest"])
+
+[sub_resource type="Resource" id="v_priest_c002"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_greet_p_devout"]
+script = ExtResource("1")
+id = &"greet_p_devout"
+text = "Totengräber. Sie gehen leise, wissen Sie das? Wie einer, der nichts wecken will. Das sieht man selten. Grüß Gott."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c002")])
+conditions = Array[String](["piety_tier:devout"])
+fallback_next = &"greet_p_hardhearted"
+actions = Array[String](["talked:priest"])
+
+[sub_resource type="Resource" id="v_priest_c003"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_greet_p_hardhearted"]
+script = ExtResource("1")
+id = &"greet_p_hardhearted"
+text = "Totengräber. Ich bete für Sie. Nein, sagen Sie nichts. Ich bete einfach."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c003")])
+conditions = Array[String](["piety_tier:hardhearted"])
+fallback_next = &"greet_disreputable"
+actions = Array[String](["talked:priest"])
+
+[sub_resource type="Resource" id="v_priest_c004"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_greet_disreputable"]
+script = ExtResource("1")
+id = &"greet_disreputable"
+text = "Totengräber. Man erzählt mir Dinge, die ich lieber nicht gehört hätte. Ich höre sie trotzdem, das ist mein Beruf. Was führt Sie her?"
+choices = Array[ExtResource("2")]([SubResource("v_priest_c004")])
+conditions = Array[String](["rep_tier:disreputable"])
+fallback_next = &"greet_unremarkable"
+actions = Array[String](["talked:priest"])
+
+[sub_resource type="Resource" id="v_priest_c005"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_greet_unremarkable"]
+script = ExtResource("1")
+id = &"greet_unremarkable"
+text = "Grüß Gott, Totengräber. Ein schöner Tag, nicht wahr? Oder ein gewöhnlicher. Die gewöhnlichen sind mir die liebsten."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c005")])
+conditions = Array[String](["rep_tier:unremarkable"])
+fallback_next = &"greet_respected"
+actions = Array[String](["talked:priest"])
+
+[sub_resource type="Resource" id="v_priest_c006"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_greet_respected"]
+script = ExtResource("1")
+id = &"greet_respected"
+text = "Grüß Gott! Ich habe am Sonntag von Ihnen gesprochen. Nicht namentlich, keine Sorge. Ich sagte: Wer die Toten ehrt, ehrt die Lebenden, und alle haben genickt. Auch die, die geschlafen haben."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c006")])
+conditions = Array[String](["rep_tier:respected"])
+fallback_next = &"greet_esteemed"
+actions = Array[String](["talked:priest"])
+
+[sub_resource type="Resource" id="v_priest_c007"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_greet_esteemed"]
+script = ExtResource("1")
+id = &"greet_esteemed"
+text = "Ah, Totengräber! Kommen Sie, kommen Sie. Die Kirchentür ist kühl, und ich habe Zeit. Ich habe immer Zeit, fragen Sie die Gemeinde."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c007")])
+conditions = Array[String](["rep_tier:esteemed"])
+fallback_next = &"greet_renowned"
+actions = Array[String](["talked:priest"])
+
+[sub_resource type="Resource" id="v_priest_c008"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_greet_renowned"]
+script = ExtResource("1")
+id = &"greet_renowned"
+text = "Mein lieber Totengräber! Wissen Sie, dass man Sie in meinen Gebeten öfter nennt als den Schultheiß? Er weiß es nicht. Sagen Sie es ihm nicht."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c008")])
+actions = Array[String](["talked:priest"])
+
+[sub_resource type="Resource" id="v_priest_c009"]
+script = ExtResource("2")
+text = "Hast du Altarkerzen?"
+conditions = Array[String](["shop_open:priest"])
+actions = Array[String](["open_shop:priest"])
+
+[sub_resource type="Resource" id="v_priest_c010"]
+script = ExtResource("2")
+text = "Den Lindenacker weihen? (10 Münzen)"
+next = &"consecrate"
+conditions = Array[String](["flag:linden_granted", "!flag:linden_consecration_day", "!flag:linden_consecrated", "!rel_tier:priest:trusted"])
+
+[sub_resource type="Resource" id="v_priest_c011"]
+script = ExtResource("2")
+text = "Den Lindenacker weihen? (5 Münzen)"
+next = &"consecrate"
+conditions = Array[String](["flag:linden_granted", "!flag:linden_consecration_day", "!flag:linden_consecrated", "rel_tier:priest:trusted", "!rel_tier:priest:friend"])
+
+[sub_resource type="Resource" id="v_priest_c012"]
+script = ExtResource("2")
+text = "Den Lindenacker weihen? (umsonst)"
+next = &"consecrate"
+conditions = Array[String](["flag:linden_granted", "!flag:linden_consecration_day", "!flag:linden_consecrated", "rel_tier:priest:friend"])
+
+[sub_resource type="Resource" id="v_priest_c013"]
+script = ExtResource("2")
+text = "[Auftrag] Eine Aussegnung"
+next = &"o_o_lenz_service"
+conditions = Array[String](["order_offerable:o_lenz_service"])
+
+[sub_resource type="Resource" id="v_priest_c014"]
+script = ExtResource("2")
+text = "[Auftrag] Armenspeisung"
+next = &"o_o_lenz_poor"
+conditions = Array[String](["order_offerable:o_lenz_poor"])
+
+[sub_resource type="Resource" id="v_priest_c015"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist, was du wolltest: Münzen und Honigkuchen"
+next = &"t_o_lenz_poor"
+conditions = Array[String](["order_ready:o_lenz_poor"])
+actions = Array[String](["order_turn_in:o_lenz_poor"])
+
+[sub_resource type="Resource" id="v_priest_c016"]
+script = ExtResource("2")
+text = "Das Sterbebuch …"
+next = &"deathbook"
+conditions = Array[String](["rel_tier:priest:trusted", "!clue_known:c_v_deathbook"])
+
+[sub_resource type="Resource" id="v_priest_c017"]
+script = ExtResource("2")
+text = "Was ist mit dem alten Totengräber?"
+next = &"lorenz"
+
+[sub_resource type="Resource" id="v_priest_c018"]
+script = ExtResource("2")
+text = "Sie besuchen die Kranken?"
+next = &"visits"
+
+[sub_resource type="Resource" id="v_priest_c019"]
+script = ExtResource("2")
+text = "Ich hab dir etwas mitgebracht."
+actions = Array[String](["open_gifts:priest"])
+
+[sub_resource type="Resource" id="v_priest_c020"]
+script = ExtResource("2")
+text = "Auf Wiedersehen."
+next = &"bye"
+
+[sub_resource type="Resource" id="v_priest_node_menu"]
+script = ExtResource("1")
+id = &"menu"
+text = "Nun, was kann ein alter Pfarrer für Sie tun?"
+choices = Array[ExtResource("2")]([SubResource("v_priest_c009"), SubResource("v_priest_c010"), SubResource("v_priest_c011"), SubResource("v_priest_c012"), SubResource("v_priest_c013"), SubResource("v_priest_c014"), SubResource("v_priest_c015"), SubResource("v_priest_c016"), SubResource("v_priest_c017"), SubResource("v_priest_c018"), SubResource("v_priest_c019"), SubResource("v_priest_c020")])
+
+[sub_resource type="Resource" id="v_priest_c021"]
+script = ExtResource("2")
+text = "Hier ist das Geld. (10 Münzen)"
+next = &"consecrate_paid"
+conditions = Array[String](["village_can:consecrate", "!rel_tier:priest:trusted"])
+actions = Array[String](["consecrate_pay"])
+
+[sub_resource type="Resource" id="v_priest_c022"]
+script = ExtResource("2")
+text = "Hier ist das Geld. (5 Münzen)"
+next = &"consecrate_paid"
+conditions = Array[String](["village_can:consecrate", "rel_tier:priest:trusted", "!rel_tier:priest:friend"])
+actions = Array[String](["consecrate_pay"])
+
+[sub_resource type="Resource" id="v_priest_c023"]
+script = ExtResource("2")
+text = "Danke, Herr Pfarrer."
+next = &"consecrate_paid"
+conditions = Array[String](["village_can:consecrate", "rel_tier:priest:friend"])
+actions = Array[String](["consecrate_pay"])
+
+[sub_resource type="Resource" id="v_priest_c024"]
+script = ExtResource("2")
+text = "Ich komme wieder, wenn ich das Geld habe."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_consecrate"]
+script = ExtResource("1")
+id = &"consecrate"
+text = "Den Lindenacker? Gern, gern. Ich segne die Erde, nicht die Arbeit, das sage ich gleich. Ich komme morgen gegen halb zehn hinauf, wenn die Knie wollen. Die Gemeinde verlangt eine Gebühr, ich verlange nichts, aber die Gemeinde – nun."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c021"), SubResource("v_priest_c022"), SubResource("v_priest_c023"), SubResource("v_priest_c024")])
+
+[sub_resource type="Resource" id="v_priest_c025"]
+script = ExtResource("2")
+text = "Bis morgen."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_consecrate_paid"]
+script = ExtResource("1")
+id = &"consecrate_paid"
+text = "Morgen also. Halten Sie mir einen Platz an der Pforte frei. Und wenn noch Brombeeren stehen: Gott sieht durch Brombeeren. Ich nicht immer."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c025")])
+
+[sub_resource type="Resource" id="v_priest_c026"]
+script = ExtResource("2")
+text = "(Lesen)"
+next = &"deathbook_read"
+actions = Array[String](["add_clue:c_v_deathbook"])
+
+[sub_resource type="Resource" id="v_priest_node_deathbook"]
+script = ExtResource("1")
+id = &"deathbook"
+text = "Das Sterbebuch? Ich führe es, wie mein Vorgänger es geführt hat, und dessen Vorgänger. Namen, Tage, Ursachen, so gut man sie weiß. Sie wollen hineinsehen? Nun. Sie sind ja auch eine Art Buchführer, nicht wahr, nur mit Erde statt Tinte. Hier, die letzten Seiten."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c026")])
+
+[sub_resource type="Resource" id="v_priest_c027"]
+script = ExtResource("2")
+text = "Natürlich."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_deathbook_read"]
+script = ExtResource("1")
+id = &"deathbook_read"
+text = "Was Sie da am Rand sehen? Die kleinen Striche? Ach, Fliegendreck, oder ein Kind hat gekritzelt. Ich – nein. Das ist keine Hand, die ich kenne. Legen Sie es bitte zurück, Totengräber. Ich habe gleich Versehgang."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c027")])
+
+[sub_resource type="Resource" id="v_priest_c028"]
+script = ExtResource("2")
+text = "Nach Süden?"
+next = &"lorenz_south"
+
+[sub_resource type="Resource" id="v_priest_c029"]
+script = ExtResource("2")
+text = "Schöne Fenster."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_lorenz"]
+script = ExtResource("1")
+id = &"lorenz"
+text = "Lorenz Aschau? Ein guter Mann. Er ist nach Süden gegangen, sagt man. Oder er ist gestorben, sagt man auch. Ich sage: Wir beten für ihn, so oder so, das kostet nichts und schadet keinem. Haben Sie schon die Kirchenfenster gesehen? Das blaue ist neu."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c028"), SubResource("v_priest_c029")])
+
+[sub_resource type="Resource" id="v_priest_c030"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_lorenz_south"]
+script = ExtResource("1")
+id = &"lorenz_south"
+text = "Nach Süden, ja, das ist eine Richtung, die man nimmt, wenn man keine andere weiß. Das blaue Fenster, Totengräber, das sollten Sie sich wirklich ansehen."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c030")])
+
+[sub_resource type="Resource" id="v_priest_c031"]
+script = ExtResource("2")
+text = "Ich verstehe."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_visits"]
+script = ExtResource("1")
+id = &"visits"
+text = "Die Kranken? Jeden Mittag. Versehgang heißt das, ein schönes altes Wort. Ich sitze bei ihnen, ich höre zu, ich gebe ihnen, was die Kirche gibt. Quast kommt auch, mit seinen Gläschen, und Liesel, wenn es soweit ist. Manchmal treffen wir uns auf der Schwelle. Man nickt sich zu. Das ist Hollerbrück."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c031")])
+
+[sub_resource type="Resource" id="v_priest_c032"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_lenz_service_yes"
+actions = Array[String](["order_accept:o_lenz_service"])
+
+[sub_resource type="Resource" id="v_priest_c033"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_o_o_lenz_service"]
+script = ExtResource("1")
+id = &"o_o_lenz_service"
+text = "Wenn die nächste heraufkommt, die man Ihnen bringt: Kleiden Sie sie ein und lassen Sie mich sie aussegnen, in Ihrer Kapelle, mit Gästen. Die Leute sollen sehen, dass oben nicht nur gegraben wird. Drei Tage, dann ist es zu spät für die Seele, sagt man, und für die Nase auch."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c032"), SubResource("v_priest_c033")])
+
+[sub_resource type="Resource" id="v_priest_c034"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_o_o_lenz_service_yes"]
+script = ExtResource("1")
+id = &"o_o_lenz_service_yes"
+text = "Schön. Schön. Ich bete schon einmal vor, das schadet nie."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c034")])
+
+[sub_resource type="Resource" id="v_priest_c035"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_lenz_poor_yes"
+actions = Array[String](["order_accept:o_lenz_poor"])
+
+[sub_resource type="Resource" id="v_priest_c036"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_o_o_lenz_poor"]
+script = ExtResource("1")
+id = &"o_o_lenz_poor"
+text = "Die Armenspeisung, Totengräber. Zwölf Münzen und vier Honigkuchen. Die Kinder fragen jedes Jahr, ob es Honigkuchen gibt, und jedes Jahr sage ich: Wenn Gott will. Dieses Jahr will ich, dass Gott will."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c035"), SubResource("v_priest_c036")])
+
+[sub_resource type="Resource" id="v_priest_c037"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_o_o_lenz_poor_yes"]
+script = ExtResource("1")
+id = &"o_o_lenz_poor_yes"
+text = "Ich sage es den Kindern noch nicht. Falls Gott doch nicht will."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c037")])
+
+[sub_resource type="Resource" id="v_priest_c038"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_priest_node_t_o_lenz_poor"]
+script = ExtResource("1")
+id = &"t_o_lenz_poor"
+text = "Vergelt's Gott, Totengräber. Ich sage es den Kindern. Ich sage nicht, von wem. Die Alten werden es trotzdem wissen."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c038")])
+
+[sub_resource type="Resource" id="v_priest_c039"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="v_priest_node_bye"]
+script = ExtResource("1")
+id = &"bye"
+text = "Gehen Sie mit Gott, mein Freund. Und wenn Sie einmal reden wollen, ohne zu beichten: Die Kirchentür ist auch für Zuhörer."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c039")])
+conditions = Array[String](["rel_tier:priest:friend"])
+fallback_next = &"bye_plain"
+
+[sub_resource type="Resource" id="v_priest_c040"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="v_priest_node_bye_plain"]
+script = ExtResource("1")
+id = &"bye_plain"
+text = "Gehen Sie mit Gott. Und mit Vorsicht, der Kutschweg ist bei Regen glatt."
+choices = Array[ExtResource("2")]([SubResource("v_priest_c040")])
+
+[resource]
+script = ExtResource("3")
+id = &"v_priest"
+speaker_name = "Pfarrer Ambrosius Lenz"
+start_node = &"start"
+nodes = Array[ExtResource("1")]([SubResource("v_priest_node_start"), SubResource("v_priest_node_greet_p_devout"), SubResource("v_priest_node_greet_p_hardhearted"), SubResource("v_priest_node_greet_disreputable"), SubResource("v_priest_node_greet_unremarkable"), SubResource("v_priest_node_greet_respected"), SubResource("v_priest_node_greet_esteemed"), SubResource("v_priest_node_greet_renowned"), SubResource("v_priest_node_menu"), SubResource("v_priest_node_consecrate"), SubResource("v_priest_node_consecrate_paid"), SubResource("v_priest_node_deathbook"), SubResource("v_priest_node_deathbook_read"), SubResource("v_priest_node_lorenz"), SubResource("v_priest_node_lorenz_south"), SubResource("v_priest_node_visits"), SubResource("v_priest_node_o_o_lenz_service"), SubResource("v_priest_node_o_o_lenz_service_yes"), SubResource("v_priest_node_o_o_lenz_poor"), SubResource("v_priest_node_o_o_lenz_poor_yes"), SubResource("v_priest_node_t_o_lenz_poor"), SubResource("v_priest_node_bye"), SubResource("v_priest_node_bye_plain")])

@@ -1,0 +1,403 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="v_mayor_c001"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_start"]
+script = ExtResource("1")
+id = &"start"
+text = "Fenner, Gottlieb, Schultheiß der Gemeinde Hollerbrück. Bitte, treten Sie näher. Es ist mir eine Freude und, wenn ich so sagen darf, eine Notwendigkeit, Sie endlich persönlich in Augenschein zu nehmen. Die Gemeinde hat ein Anliegen. Genauer: zwei. Genauer gesagt: ein Grundstück."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c001")])
+conditions = Array[String](["!met:mayor"])
+fallback_next = &"greet_disreputable"
+actions = Array[String](["meet:mayor", "talked:mayor"])
+
+[sub_resource type="Resource" id="v_mayor_c002"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_greet_disreputable"]
+script = ExtResource("1")
+id = &"greet_disreputable"
+text = "Totengräber. Es liegen Beschwerden vor. Schriftlich. Ich bin verpflichtet, das zu erwähnen, und hiermit erwähnt. Was wünschen Sie?"
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c002")])
+conditions = Array[String](["rep_tier:disreputable"])
+fallback_next = &"greet_unremarkable"
+actions = Array[String](["talked:mayor"])
+
+[sub_resource type="Resource" id="v_mayor_c003"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_greet_unremarkable"]
+script = ExtResource("1")
+id = &"greet_unremarkable"
+text = "Guten Tag. Die Amtsstube steht Ihnen offen, im Rahmen der Öffnungszeiten."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c003")])
+conditions = Array[String](["rep_tier:unremarkable"])
+fallback_next = &"greet_respected"
+actions = Array[String](["talked:mayor"])
+
+[sub_resource type="Resource" id="v_mayor_c004"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_greet_respected"]
+script = ExtResource("1")
+id = &"greet_respected"
+text = "Ah, der Totengräber. Die Gemeinde ist zufrieden, das darf ich amtlich sagen. Nehmen Sie Platz. Der Stuhl wackelt, das ist nicht amtlich."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c004")])
+conditions = Array[String](["rep_tier:respected"])
+fallback_next = &"greet_esteemed"
+actions = Array[String](["talked:mayor"])
+
+[sub_resource type="Resource" id="v_mayor_c005"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_greet_esteemed"]
+script = ExtResource("1")
+id = &"greet_esteemed"
+text = "Totengräber! Ich habe Ihren Namen gestern zweimal ins Protokoll geschrieben. Lobend. Das ist in Hollerbrück selten wie eine Brücke ohne Löcher."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c005")])
+conditions = Array[String](["rep_tier:esteemed"])
+fallback_next = &"greet_renowned"
+actions = Array[String](["talked:mayor"])
+
+[sub_resource type="Resource" id="v_mayor_c006"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_greet_renowned"]
+script = ExtResource("1")
+id = &"greet_renowned"
+text = "Mein verehrter Totengräber. Wenn die Gemeinde Ihnen eine Ehrenbürgerschaft antragen könnte, hätte ich den Antrag schon formuliert. Leider fehlt die Satzung. Ich arbeite daran."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c006")])
+actions = Array[String](["talked:mayor"])
+
+[sub_resource type="Resource" id="v_mayor_c007"]
+script = ExtResource("2")
+text = "[Auftrag] Der Lindenacker"
+next = &"o_o_fenner_linden"
+conditions = Array[String](["order_offerable:o_fenner_linden"])
+
+[sub_resource type="Resource" id="v_mayor_c008"]
+script = ExtResource("2")
+text = "[Auftrag] Die Brunnenfassung"
+next = &"o_o_fenner_well"
+conditions = Array[String](["order_offerable:o_fenner_well"])
+
+[sub_resource type="Resource" id="v_mayor_c009"]
+script = ExtResource("2")
+text = "[Auftrag] Die Holderbrücke"
+next = &"o_o_fenner_bridge"
+conditions = Array[String](["order_offerable:o_fenner_bridge"])
+
+[sub_resource type="Resource" id="v_mayor_c010"]
+script = ExtResource("2")
+text = "[Auftrag] Die Beine des Schultheißen"
+next = &"o_o_fenner_dropsy"
+conditions = Array[String](["order_offerable:o_fenner_dropsy"])
+
+[sub_resource type="Resource" id="v_mayor_c011"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist, was du wolltest: Münzen und Bretter"
+next = &"t_o_fenner_bridge"
+conditions = Array[String](["order_ready:o_fenner_bridge"])
+actions = Array[String](["order_turn_in:o_fenner_bridge"])
+
+[sub_resource type="Resource" id="v_mayor_c012"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist, was du wolltest: das Pulver"
+next = &"t_o_fenner_dropsy"
+conditions = Array[String](["order_ready:o_fenner_dropsy"])
+actions = Array[String](["order_turn_in:o_fenner_dropsy"])
+
+[sub_resource type="Resource" id="v_mayor_c013"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist, was du wolltest: Holz für den Gemeindezaun"
+next = &"t_ob_wood"
+conditions = Array[String](["order_ready:ob_wood"])
+actions = Array[String](["order_turn_in:ob_wood"])
+
+[sub_resource type="Resource" id="v_mayor_c014"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist, was du wolltest: Steine für den Kirchweg"
+next = &"t_ob_stone"
+conditions = Array[String](["order_ready:ob_stone"])
+actions = Array[String](["order_turn_in:ob_stone"])
+
+[sub_resource type="Resource" id="v_mayor_c015"]
+script = ExtResource("2")
+text = "Für die Armenkasse. (5 Münzen)"
+next = &"donated"
+conditions = Array[String](["village_can:donate"])
+actions = Array[String](["donate"])
+
+[sub_resource type="Resource" id="v_mayor_c016"]
+script = ExtResource("2")
+text = "Die Abschrift des Sterbebuchs …"
+next = &"register"
+conditions = Array[String](["rel_tier:mayor:trusted", "!clue_known:c_v_deathbook"])
+
+[sub_resource type="Resource" id="v_mayor_c017"]
+script = ExtResource("2")
+text = "Wer war vor mir Totengräber?"
+next = &"lorenz"
+
+[sub_resource type="Resource" id="v_mayor_c018"]
+script = ExtResource("2")
+text = "Ich hab dir etwas mitgebracht."
+actions = Array[String](["open_gifts:mayor"])
+
+[sub_resource type="Resource" id="v_mayor_c019"]
+script = ExtResource("2")
+text = "Auf Wiedersehen."
+next = &"bye"
+
+[sub_resource type="Resource" id="v_mayor_node_menu"]
+script = ExtResource("1")
+id = &"menu"
+text = "Womit kann die Gemeinde dienen?"
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c007"), SubResource("v_mayor_c008"), SubResource("v_mayor_c009"), SubResource("v_mayor_c010"), SubResource("v_mayor_c011"), SubResource("v_mayor_c012"), SubResource("v_mayor_c013"), SubResource("v_mayor_c014"), SubResource("v_mayor_c015"), SubResource("v_mayor_c016"), SubResource("v_mayor_c017"), SubResource("v_mayor_c018"), SubResource("v_mayor_c019")])
+
+[sub_resource type="Resource" id="v_mayor_c020"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_fenner_linden_yes"
+actions = Array[String](["order_accept:o_fenner_linden"])
+
+[sub_resource type="Resource" id="v_mayor_c021"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_o_o_fenner_linden"]
+script = ExtResource("1")
+id = &"o_o_fenner_linden"
+text = "Der Lindenacker. Ein Stück Gemeindewald südlich Ihrer Ostwiese, wo früher die alte Linde stand. Die Gemeinde überlässt es dem Friedhof, unentgeltlich, mit der Auflage, es urbar zu machen: eine Pforte, vier Stümpfe, drei Brombeerhecken, zwei Steinhaufen. Danach weiht es der Pfarrer. Acht Stellen. Unterschreiben Sie hier. Nein, hier."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c020"), SubResource("v_mayor_c021")])
+
+[sub_resource type="Resource" id="v_mayor_c022"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_o_o_fenner_linden_yes"]
+script = ExtResource("1")
+id = &"o_o_fenner_linden_yes"
+text = "Vermerkt. Der Grund gehört ab heute dem Friedhof. Ich lasse es Osric ausrichten, der erzählt es ohnehin herum."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c022")])
+
+[sub_resource type="Resource" id="v_mayor_c023"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_fenner_well_yes"
+actions = Array[String](["order_accept:o_fenner_well"])
+
+[sub_resource type="Resource" id="v_mayor_c024"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_o_o_fenner_well"]
+script = ExtResource("1")
+id = &"o_o_fenner_well"
+text = "Die Brunnenfassung am Anger bröckelt, Totengräber. Die Gemeinde braucht vier Werksteine. Sie haben, wie man hört, eine Steinmetzbank. Geben Sie die Steine bei Esch ab, er setzt sie. Vier Tage, dann tagt der Rat, und ich möchte etwas vorweisen."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c023"), SubResource("v_mayor_c024")])
+
+[sub_resource type="Resource" id="v_mayor_c025"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_o_o_fenner_well_yes"]
+script = ExtResource("1")
+id = &"o_o_fenner_well_yes"
+text = "Vier Werksteine, bei Esch. Ich notiere: beauftragt."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c025")])
+
+[sub_resource type="Resource" id="v_mayor_c026"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_fenner_bridge_yes"
+actions = Array[String](["order_accept:o_fenner_bridge"])
+
+[sub_resource type="Resource" id="v_mayor_c027"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_o_o_fenner_bridge"]
+script = ExtResource("1")
+id = &"o_o_fenner_bridge"
+text = "Die Holderbrücke. Zwei Bohlen sind morsch, eine dritte ist fort, keiner weiß wohin, ich vermute Kehr. Zwanzig Münzen und sechs Bretter. Die Gemeinde kann es nicht, die Armenkasse darf es nicht, also frage ich Sie. Inoffiziell. Mit Quittung."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c026"), SubResource("v_mayor_c027")])
+
+[sub_resource type="Resource" id="v_mayor_c028"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_o_o_fenner_bridge_yes"]
+script = ExtResource("1")
+id = &"o_o_fenner_bridge_yes"
+text = "Ich stelle die Quittung schon aus. Für den Fall."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c028")])
+
+[sub_resource type="Resource" id="v_mayor_c029"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_fenner_dropsy_yes"
+actions = Array[String](["order_accept:o_fenner_dropsy"])
+
+[sub_resource type="Resource" id="v_mayor_c030"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_o_o_fenner_dropsy"]
+script = ExtResource("1")
+id = &"o_o_fenner_dropsy"
+text = "Totengräber, unter vier Augen. Meine Beine. Abends sind sie wie Teig. Quast sagt Wassersucht und will mich zur Ader lassen, und dann redet das ganze Dorf. Man sagt, Sie haben jetzt ein Pult, und Quasts Rezepte. Ein Pulver. Sagen Sie es keinem."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c029"), SubResource("v_mayor_c030")])
+
+[sub_resource type="Resource" id="v_mayor_c031"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_o_o_fenner_dropsy_yes"]
+script = ExtResource("1")
+id = &"o_o_fenner_dropsy_yes"
+text = "Das bleibt unter uns. Amtlich unter uns."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c031")])
+
+[sub_resource type="Resource" id="v_mayor_c032"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_t_o_fenner_bridge"]
+script = ExtResource("1")
+id = &"t_o_fenner_bridge"
+text = "Zwanzig Münzen. Ich zähle: zwanzig. Und sechs Bretter, ich zähle: sechs. Die Gemeinde dankt, schriftlich und mündlich, in dieser Reihenfolge."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c032")])
+
+[sub_resource type="Resource" id="v_mayor_c033"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_t_o_fenner_dropsy"]
+script = ExtResource("1")
+id = &"t_o_fenner_dropsy"
+text = "Ich danke Ihnen. Das hat es nicht gegeben, verstehen Sie. Amtlich nicht."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c033")])
+
+[sub_resource type="Resource" id="v_mayor_c034"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_t_ob_wood"]
+script = ExtResource("1")
+id = &"t_ob_wood"
+text = "Zehn Scheite für den Gemeindezaun, ordnungsgemäß. Ich trage Sie ein."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c034")])
+
+[sub_resource type="Resource" id="v_mayor_c035"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_t_ob_stone"]
+script = ExtResource("1")
+id = &"t_ob_stone"
+text = "Acht Steine. Der Kirchweg dankt, und ich vertrete ihn hiermit."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c035")])
+
+[sub_resource type="Resource" id="v_mayor_c036"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_donated"]
+script = ExtResource("1")
+id = &"donated"
+text = "Fünf Münzen für die Armenkasse. Ich zähle: eins, zwei, drei, vier, fünf. Ich trage es ein, mit Ihrem Namen. Die Armen werden es nicht lesen, aber ich."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c036")])
+
+[sub_resource type="Resource" id="v_mayor_c037"]
+script = ExtResource("2")
+text = "(Die Abschrift lesen)"
+next = &"register_read"
+actions = Array[String](["add_clue:c_v_deathbook"])
+
+[sub_resource type="Resource" id="v_mayor_node_register"]
+script = ExtResource("1")
+id = &"register"
+text = "Die Abschrift des Sterbebuchs liegt auf dem Lesepult, für die Gemeinde. Sie dürfen hineinsehen, Totengräber, Sie gehören ja gewissermaßen zum Amt. Nur nichts herausreißen. Das hat einmal einer getan. Ich weiß bis heute nicht, wer."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c037")])
+
+[sub_resource type="Resource" id="v_mayor_c038"]
+script = ExtResource("2")
+text = "Mir auch nicht."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_register_read"]
+script = ExtResource("1")
+id = &"register_read"
+text = "Sie sehen das auch? Diese Striche am Rand? Ich habe sie für einen Schreibfehler des Pfarrers gehalten. Aber der Pfarrer macht keine Schreibfehler, er macht nur zu viele Worte. Und die Tinte – nein. Das ist ältere Tinte. Das gefällt mir nicht, Totengräber. Amtlich nicht."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c038")])
+
+[sub_resource type="Resource" id="v_mayor_c039"]
+script = ExtResource("2")
+text = "Verstehe."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_mayor_node_lorenz"]
+script = ExtResource("1")
+id = &"lorenz"
+text = "Lorenz Aschau. Einunddreißig Jahre im Dienst. Die Akte ist geschlossen: verschwunden, nicht verstorben, das ist ein Unterschied, der der Gemeinde zwölf Münzen Begräbnisgeld spart. Ich sage das ungern. Ich sage es, weil es stimmt."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c039")])
+
+[sub_resource type="Resource" id="v_mayor_c040"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="v_mayor_node_bye"]
+script = ExtResource("1")
+id = &"bye"
+text = "Auf Wiedersehen, mein Freund. Und wenn Sie einmal etwas schriftlich brauchen: Ich siegele es Ihnen. Umsonst. Das darf ich eigentlich nicht."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c040")])
+conditions = Array[String](["rel_tier:mayor:friend"])
+fallback_next = &"bye_plain"
+
+[sub_resource type="Resource" id="v_mayor_c041"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="v_mayor_node_bye_plain"]
+script = ExtResource("1")
+id = &"bye_plain"
+text = "Die Amtsstube schließt um sechzehn Uhr. Danach bin ich an der Gemeindetafel. Danach im Holderkrug. Danach privat."
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c041")])
+
+[resource]
+script = ExtResource("3")
+id = &"v_mayor"
+speaker_name = "Schultheiß Gottlieb Fenner"
+start_node = &"start"
+nodes = Array[ExtResource("1")]([SubResource("v_mayor_node_start"), SubResource("v_mayor_node_greet_disreputable"), SubResource("v_mayor_node_greet_unremarkable"), SubResource("v_mayor_node_greet_respected"), SubResource("v_mayor_node_greet_esteemed"), SubResource("v_mayor_node_greet_renowned"), SubResource("v_mayor_node_menu"), SubResource("v_mayor_node_o_o_fenner_linden"), SubResource("v_mayor_node_o_o_fenner_linden_yes"), SubResource("v_mayor_node_o_o_fenner_well"), SubResource("v_mayor_node_o_o_fenner_well_yes"), SubResource("v_mayor_node_o_o_fenner_bridge"), SubResource("v_mayor_node_o_o_fenner_bridge_yes"), SubResource("v_mayor_node_o_o_fenner_dropsy"), SubResource("v_mayor_node_o_o_fenner_dropsy_yes"), SubResource("v_mayor_node_t_o_fenner_bridge"), SubResource("v_mayor_node_t_o_fenner_dropsy"), SubResource("v_mayor_node_t_ob_wood"), SubResource("v_mayor_node_t_ob_stone"), SubResource("v_mayor_node_donated"), SubResource("v_mayor_node_register"), SubResource("v_mayor_node_register_read"), SubResource("v_mayor_node_lorenz"), SubResource("v_mayor_node_bye"), SubResource("v_mayor_node_bye_plain")])

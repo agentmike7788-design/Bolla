@@ -179,8 +179,10 @@ func test_new_nodes_get_empty_states() -> void:
 			assert_eq(s.nodes.get(id), {}, "%s: %s (chain → v4)" % [name, id])
 		for id: String in SaveMigration.V5_EMPTY_NODES:
 			assert_eq(s.nodes.get(id), {}, "%s: %s (chain → v5)" % [name, id])
+		for id: String in SaveMigration.V6_EMPTY_NODES:
+			assert_eq(s.nodes.get(id), {}, "%s: %s (chain → v6)" % [name, id])
 		assert_eq(s.nodes.size(), V1_NODES.size() + NEW_NODES.size() + V3_NODES.size() + SaveMigration.V4_EMPTY_NODES.size()
-				+ SaveMigration.V5_EMPTY_NODES.size(), name)
+				+ SaveMigration.V5_EMPTY_NODES.size() + SaveMigration.V6_EMPTY_NODES.size(), name)
 
 
 func test_new_plots_stay_absent() -> void:
@@ -763,7 +765,8 @@ func _fixture_v4(name: String) -> Dictionary:
 
 func _migrated_v4(name: String) -> Dictionary:
 	var f := _fixture_v4(name)
-	return SaveMigration.migrate(f.state, 4, f.meta)
+	# Phase 7: the v4 → v5 step alone (the chain goes on to v6, tested in test_v5_fixtures_migrate_to_v6).
+	return SaveMigration.migrate_4_to_5(f.state, f.meta)
 
 
 func _corpses(state: Dictionary) -> Array:
@@ -883,7 +886,8 @@ func test_read_doc_migrates_every_v4_fixture() -> void:
 		assert_eq(Phase6Fixtures.install_save_v4(name, TEST_DIR, SLOT), OK)
 		var read := _read_slot()
 		assert_eq(read.err, OK, name)
-		assert_eq(read.state, _migrated_v4(name), "%s: read_doc applies 4 → 5" % name)
+		var f := _fixture_v4(name)
+		assert_eq(read.state, SaveMigration.migrate(f.state, 4, f.meta), "%s: read_doc applies 4 → 5 → 6" % name)
 
 
 func test_older_fixtures_chain_to_v5() -> void:
@@ -944,3 +948,86 @@ func test_absent_phase6_nodes_are_dropped_only_when_empty() -> void:
 	var kept := SaveManager.without_absent_defaults(tree, {"buildings": {}})
 	assert_eq(kept.get("buildings"), {}, "the world has the node → its empty state is loaded")
 	b.free()
+
+
+# --- Phase 7: v5 → v6 (docs/PHASE7_DESIGN.md §5.2, P6) --------------------------------------------
+
+const V6_RECORD_KEYS: PackedStringArray = ["hidden_cause", "returned", "revealed_cause"]
+
+
+func _fixture_v5(name: String) -> Dictionary:
+	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(Phase7Fixtures.save_v5_path(name)))
+	return {"meta": doc.meta, "state": SaveFileIO.decode_state(doc.data)}
+
+
+func test_v5_fixtures_migrate_to_v6() -> void:
+	assert_eq(Phase7Fixtures.SAVES_V5.size(), 7, "§5.2: seven v5 fixtures")
+	for name: String in Phase7Fixtures.SAVES_V5:
+		var f := _fixture_v5(name)
+		var before: Dictionary = f.state
+		assert_false(before.is_empty(), name + " decodes")
+		var s := SaveMigration.migrate_5_to_6(before, f.meta)
+		assert_false(is_same(s, before), "deep copy")
+		# 1. region_id graveyard; interior_id and the rest unchanged.
+		var player: Dictionary = (s.nodes.player as Dictionary).duplicate()
+		assert_eq(player.get("region_id"), "graveyard", name + ": region")
+		assert_eq(player.get("interior_id"), before.nodes.player.get("interior_id"), name + ": interior_id kept")
+		player.erase("region_id")
+		assert_eq(player, before.nodes.player, name + ": player otherwise unchanged (inventory slots too)")
+		# 3. the three record fields; nothing else changes (the crypt table corpse stays).
+		var old_records: Array = _corpses(before)
+		var new_records: Array = _corpses(s)
+		assert_eq(new_records.size(), old_records.size(), name + ": records")
+		for i: int in new_records.size():
+			var r: Dictionary = (new_records[i] as Dictionary).duplicate()
+			assert_eq([r.hidden_cause, r.returned, r.revealed_cause], ["", [], ""], "%s: %s Phase-7 defaults" % [name, r.id])
+			for key: String in V6_RECORD_KEYS:
+				if not (old_records[i] as Dictionary).has(key):
+					r.erase(key)
+			assert_eq(r, old_records[i], "%s: record %s otherwise unchanged" % [name, r.id])
+		# 4. graves unchanged; 5. empty Phase-7 nodes; 6. stats 0, no flags.
+		assert_eq(s.nodes.graveyard, before.nodes.graveyard, name + ": graves unchanged")
+		for id: String in SaveMigration.V6_EMPTY_NODES:
+			assert_eq(s.nodes.get(id), {}, "%s: empty %s" % [name, id])
+		var stats: Dictionary = _game_state(s).stats
+		for key: StringName in SaveMigration.V6_NEW_STATS:
+			assert_eq(stats.get(key), 0, "%s: stat %s" % [name, key])
+		for key: Variant in _game_state(before).stats:
+			assert_eq(stats[key], _game_state(before).stats[key], "%s: stat %s kept" % [name, key])
+		assert_eq(_game_state(s).flags, _game_state(before).flags, name + ": no new flags")
+		assert_eq(s.autoloads.TimeManager, before.autoloads.TimeManager, name + ": time")
+		for id: Variant in before.nodes:
+			if not str(id) in ["player", "corpse_manager"]:
+				assert_eq(s.nodes[id], before.nodes[id], "%s: %s unchanged" % [name, id])
+		assert_eq(s.nodes.size(), before.nodes.size() + SaveMigration.V6_EMPTY_NODES.size(), name + ": only the new nodes added")
+		assert_eq(SaveMigration.migrate_5_to_6(s, f.meta), s, name + ": idempotent on its own output")
+
+
+func test_read_doc_migrates_every_v5_fixture() -> void:
+	for name: String in Phase7Fixtures.SAVES_V5:
+		assert_eq(Phase7Fixtures.install_save_v5(name, TEST_DIR, SLOT), OK)
+		var read := _read_slot()
+		assert_eq(read.err, OK, name)
+		var f := _fixture_v5(name)
+		assert_eq(read.state, SaveMigration.migrate_5_to_6(f.state, f.meta), "%s: read_doc applies 5 → 6" % name)
+
+
+func test_v6_doc_round_trip() -> void:
+	var f := _fixture_v5("slot_p6_day40_reverent")
+	var v6 := SaveMigration.migrate_5_to_6(f.state, f.meta)
+	(v6.nodes as Dictionary)["orders"] = {"states": {"o_fenner_linden": "accepted"}, "accepted_day": {"o_fenner_linden": 40},
+			"board_day": 40, "board": ["ob_wood"], "history": {}, "progress": {}}
+	(v6.nodes as Dictionary)["village"] = {"open_day": 40, "goal_done": false}
+	SaveFileIO.ensure_dir(TEST_DIR)
+	assert_eq(SaveFileIO.write_doc(TEST_DIR, SLOT, SaveFileIO.make_doc(f.meta, v6)), OK)
+	var read := _read_slot()
+	assert_eq(read.err, OK)
+	assert_eq(read.state, v6, "v6 → file → v6 identical (no migration)")
+	assert_eq(SaveMigration.migrate(v6, 6), v6)
+	assert_eq(SaveMigration.migrate(v6, 7), {}, "version 7 → refused")
+	var nodes := {"village": {}, "orders": {}, "lectures": {}, "player": {}}
+	var out := SaveManager.without_absent_defaults(tree, nodes)
+	for id: String in ["village", "orders", "lectures"]:
+		assert_false(out.has(id), "%s: an empty migrated state of an absent node is dropped" % id)
+	var kept := SaveManager.without_absent_defaults(tree, {"village": {"open_day": 3}})
+	assert_true(kept.has("village"), "a real state is kept")

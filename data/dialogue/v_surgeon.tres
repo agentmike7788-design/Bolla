@@ -1,0 +1,545 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="v_surgeon_c001"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_start"]
+script = ExtResource("1")
+id = &"start"
+text = "Quast. Wundarzt, Geburtshelfer, wenn man mich lässt. Sie haben, was mir fehlt, Totengräber: Zeit mit den Toten, bevor die Erde sie nimmt. Die Stadt zahlt für Präparate, für das anatomische Kabinett. Ich zahle Ihnen davon, was recht ist. Die Toten lehren die Lebenden. Verzeihen Sie, das ist ein Spruch. Aber er stimmt."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c001")])
+conditions = Array[String](["!met:surgeon"])
+fallback_next = &"ask_again"
+actions = Array[String](["meet:surgeon", "talked:surgeon"])
+
+[sub_resource type="Resource" id="v_surgeon_c002"]
+script = ExtResource("2")
+text = "Zeigen Sie mir, wie."
+next = &"case_yes"
+actions = Array[String](["anatomy_case"])
+
+[sub_resource type="Resource" id="v_surgeon_c003"]
+script = ExtResource("2")
+text = "Nein. Dabei bleibt es."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_ask_again"]
+script = ExtResource("1")
+id = &"ask_again"
+text = "Sie erinnern sich an mein Angebot? Die Stadt wartet. Die Toten auch, aber die haben Geduld. Ich frage nur dieses eine Mal noch, danach nie wieder."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c002"), SubResource("v_surgeon_c003")])
+conditions = Array[String](["flag:anatomy_declined", "!flag:anatomy_known", "!flag:anatomy_asked_again", "flag_days_gte:anatomy_declined:3"])
+fallback_next = &"invite"
+actions = Array[String](["set_flag:anatomy_asked_again", "talked:surgeon"])
+
+[sub_resource type="Resource" id="v_surgeon_c004"]
+script = ExtResource("2")
+text = "Ich überlege es mir."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_invite"]
+script = ExtResource("1")
+id = &"invite"
+text = "Totengräber, ein Wort unter uns. Dienstags … nein, jeden dritten Abend unterrichte ich drei Studenten aus der Stadt. Sie kommen mit Osrics Morgenfuhre und gehen mit ihr. Kommen Sie nach elf. Klopfen Sie nicht. Und bringen Sie etwas mit, das man zeigen kann."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c004")])
+conditions = Array[String](["flag:anatomy_known", "!flag:lecture_invited", "rel_tier:surgeon:acquainted", "specimen_sold_any"])
+fallback_next = &"invite_r"
+actions = Array[String](["lecture_invite", "talked:surgeon"])
+
+[sub_resource type="Resource" id="v_surgeon_c005"]
+script = ExtResource("2")
+text = "Ich überlege es mir."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_invite_r"]
+script = ExtResource("1")
+id = &"invite_r"
+text = "Totengräber, ein Wort unter uns. Dienstags … nein, jeden dritten Abend unterrichte ich drei Studenten aus der Stadt. Sie kommen mit Osrics Morgenfuhre und gehen mit ihr. Kommen Sie nach elf. Klopfen Sie nicht. Und bringen Sie etwas mit, das man zeigen kann."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c005")])
+conditions = Array[String](["flag:anatomy_known", "!flag:lecture_invited", "rel_tier:surgeon:acquainted", "stat_gte:specimens_researched:1"])
+fallback_next = &"greet_p_devout"
+actions = Array[String](["lecture_invite", "talked:surgeon"])
+
+[sub_resource type="Resource" id="v_surgeon_c006"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_greet_p_devout"]
+script = ExtResource("1")
+id = &"greet_p_devout"
+text = "Sie riechen nach Wacholder und Wachs, Totengräber. Sie behandeln sie gut, die Ihren. Man sieht es an den Händen."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c006")])
+conditions = Array[String](["piety_tier:devout"])
+fallback_next = &"greet_p_hardhearted"
+actions = Array[String](["talked:surgeon"])
+
+[sub_resource type="Resource" id="v_surgeon_c007"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_greet_p_hardhearted"]
+script = ExtResource("1")
+id = &"greet_p_hardhearted"
+text = "Totengräber. Sie gehen inzwischen zügig mit ihnen um. Ich sage das ohne Vorwurf. Ich weiß, wie es ist."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c007")])
+conditions = Array[String](["piety_tier:hardhearted"])
+fallback_next = &"greet_disreputable"
+actions = Array[String](["talked:surgeon"])
+
+[sub_resource type="Resource" id="v_surgeon_c008"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_greet_disreputable"]
+script = ExtResource("1")
+id = &"greet_disreputable"
+text = "Ah. Sie. Man redet über Sie, Totengräber. Das stört mich nicht. Über mich redet man auch."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c008")])
+conditions = Array[String](["rep_tier:disreputable"])
+fallback_next = &"greet_unremarkable"
+actions = Array[String](["talked:surgeon"])
+
+[sub_resource type="Resource" id="v_surgeon_c009"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_greet_unremarkable"]
+script = ExtResource("1")
+id = &"greet_unremarkable"
+text = "Guten Tag. Treten Sie ein, aber bitte nicht auf das Tuch."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c009")])
+conditions = Array[String](["rep_tier:unremarkable"])
+fallback_next = &"greet_respected"
+actions = Array[String](["talked:surgeon"])
+
+[sub_resource type="Resource" id="v_surgeon_c010"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_greet_respected"]
+script = ExtResource("1")
+id = &"greet_respected"
+text = "Totengräber. Schön, Sie zu sehen. Sie haben ruhige Hände, habe ich gehört. Das ist selten."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c010")])
+conditions = Array[String](["rep_tier:respected"])
+fallback_next = &"greet_esteemed"
+actions = Array[String](["talked:surgeon"])
+
+[sub_resource type="Resource" id="v_surgeon_c011"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_greet_esteemed"]
+script = ExtResource("1")
+id = &"greet_esteemed"
+text = "Totengräber, bitte. Ein Stuhl. Nein, der andere, auf dem sitzen sonst die Patienten."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c011")])
+conditions = Array[String](["rep_tier:esteemed"])
+fallback_next = &"greet_renowned"
+actions = Array[String](["talked:surgeon"])
+
+[sub_resource type="Resource" id="v_surgeon_c012"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_greet_renowned"]
+script = ExtResource("1")
+id = &"greet_renowned"
+text = "Totengräber. Man spricht in der Stadt von Ihnen. Nicht laut, aber man spricht. Das ist für einen wie uns das höchste Lob."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c012")])
+actions = Array[String](["talked:surgeon"])
+
+[sub_resource type="Resource" id="v_surgeon_c013"]
+script = ExtResource("2")
+text = "Was hast du da?"
+conditions = Array[String](["shop_open:surgeon"])
+actions = Array[String](["open_shop:surgeon"])
+
+[sub_resource type="Resource" id="v_surgeon_c014"]
+script = ExtResource("2")
+text = "Zeigen Sie mir, wie."
+next = &"case_yes"
+conditions = Array[String](["!flag:anatomy_known", "!flag:anatomy_declined"])
+actions = Array[String](["anatomy_case"])
+
+[sub_resource type="Resource" id="v_surgeon_c015"]
+script = ExtResource("2")
+text = "Nein. Die bleiben, wie sie sind."
+next = &"case_no"
+conditions = Array[String](["!flag:anatomy_known", "!flag:anatomy_declined"])
+actions = Array[String](["set_flag_day:anatomy_declined"])
+
+[sub_resource type="Resource" id="v_surgeon_c016"]
+script = ExtResource("2")
+text = "Ich habe es mir überlegt."
+next = &"case_yes"
+conditions = Array[String](["flag:anatomy_declined", "!flag:anatomy_known"])
+actions = Array[String](["anatomy_case"])
+
+[sub_resource type="Resource" id="v_surgeon_c017"]
+script = ExtResource("2")
+text = "Ich habe Präparate für Sie."
+conditions = Array[String](["flag:anatomy_known"])
+actions = Array[String](["open_anatomist"])
+
+[sub_resource type="Resource" id="v_surgeon_c018"]
+script = ExtResource("2")
+text = "Ein Präparat für heute Abend."
+conditions = Array[String](["flag:anatomy_known", "lecture_tonight"])
+actions = Array[String](["open_lecture"])
+
+[sub_resource type="Resource" id="v_surgeon_c019"]
+script = ExtResource("2")
+text = "[Auftrag] Fiebertinktur"
+next = &"o_o_quast_tincture"
+conditions = Array[String](["order_offerable:o_quast_tincture"])
+
+[sub_resource type="Resource" id="v_surgeon_c020"]
+script = ExtResource("2")
+text = "[Auftrag] Für das Kabinett"
+next = &"o_o_quast_specimen"
+conditions = Array[String](["order_offerable:o_quast_specimen"])
+
+[sub_resource type="Resource" id="v_surgeon_c021"]
+script = ExtResource("2")
+text = "[Auftrag] Rattengift"
+next = &"o_o_quast_antidote"
+conditions = Array[String](["order_offerable:o_quast_antidote"])
+
+[sub_resource type="Resource" id="v_surgeon_c022"]
+script = ExtResource("2")
+text = "[Auftrag] Für die Universität"
+next = &"o_o_quast_cabinet"
+conditions = Array[String](["order_offerable:o_quast_cabinet"])
+
+[sub_resource type="Resource" id="v_surgeon_c023"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist, was du wolltest: Fiebertinktur"
+next = &"t_o_quast_tincture"
+conditions = Array[String](["order_ready:o_quast_tincture"])
+actions = Array[String](["order_turn_in:o_quast_tincture"])
+
+[sub_resource type="Resource" id="v_surgeon_c024"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist, was du wolltest: ein Präparat"
+next = &"t_o_quast_specimen"
+conditions = Array[String](["order_ready:o_quast_specimen"])
+actions = Array[String](["order_turn_in:o_quast_specimen"])
+
+[sub_resource type="Resource" id="v_surgeon_c025"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist, was du wolltest: Gegengift"
+next = &"t_o_quast_antidote"
+conditions = Array[String](["order_ready:o_quast_antidote"])
+actions = Array[String](["order_turn_in:o_quast_antidote"])
+
+[sub_resource type="Resource" id="v_surgeon_c026"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist, was du wolltest: ein Schaupräparat"
+next = &"t_o_quast_cabinet"
+conditions = Array[String](["order_ready:o_quast_cabinet"])
+actions = Array[String](["order_turn_in:o_quast_cabinet"])
+
+[sub_resource type="Resource" id="v_surgeon_c027"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist, was du wolltest: Kräuter für die Armen"
+next = &"t_ob_herbs"
+conditions = Array[String](["order_ready:ob_herbs"])
+actions = Array[String](["order_turn_in:ob_herbs"])
+
+[sub_resource type="Resource" id="v_surgeon_c028"]
+script = ExtResource("2")
+text = "Ein Herz ohne Krankheit …"
+next = &"still_heart"
+conditions = Array[String](["clue_known:c_v_still_heart", "!flag:quast_still_heart"])
+actions = Array[String](["set_flag:quast_still_heart"])
+
+[sub_resource type="Resource" id="v_surgeon_c029"]
+script = ExtResource("2")
+text = "Sie besuchen die Kranken?"
+next = &"visits"
+
+[sub_resource type="Resource" id="v_surgeon_c030"]
+script = ExtResource("2")
+text = "Ich hab dir etwas mitgebracht."
+actions = Array[String](["open_gifts:surgeon"])
+
+[sub_resource type="Resource" id="v_surgeon_c031"]
+script = ExtResource("2")
+text = "Auf Wiedersehen."
+next = &"bye"
+
+[sub_resource type="Resource" id="v_surgeon_node_menu"]
+script = ExtResource("1")
+id = &"menu"
+text = "Was führt Sie zu mir?"
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c013"), SubResource("v_surgeon_c014"), SubResource("v_surgeon_c015"), SubResource("v_surgeon_c016"), SubResource("v_surgeon_c017"), SubResource("v_surgeon_c018"), SubResource("v_surgeon_c019"), SubResource("v_surgeon_c020"), SubResource("v_surgeon_c021"), SubResource("v_surgeon_c022"), SubResource("v_surgeon_c023"), SubResource("v_surgeon_c024"), SubResource("v_surgeon_c025"), SubResource("v_surgeon_c026"), SubResource("v_surgeon_c027"), SubResource("v_surgeon_c028"), SubResource("v_surgeon_c029"), SubResource("v_surgeon_c030"), SubResource("v_surgeon_c031")])
+
+[sub_resource type="Resource" id="v_surgeon_c032"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_case_yes"]
+script = ExtResource("1")
+id = &"case_yes"
+text = "Dann nehmen Sie das. Mein Präparierbesteck, das zweite, das erste behalte ich. Darin liegt mein Rezeptbuch, und zwei Lehrsätze, die Sie zuerst brauchen: Wer ertrinkt, atmet Wasser. Der Trunk macht die Leber hart. Arbeiten Sie unter dem Tuch, Totengräber. Sie müssen nicht hinsehen, um es richtig zu machen. Sie müssen nur wissen, was Sie tun."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c032")])
+
+[sub_resource type="Resource" id="v_surgeon_c033"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_case_no"]
+script = ExtResource("1")
+id = &"case_no"
+text = "Wie Sie meinen. Ich werde Sie nicht drängen. Ich frage in ein paar Tagen noch einmal, und danach nie wieder. Das ist mein Versprechen, und eine Drohung ist es nicht."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c033")])
+
+[sub_resource type="Resource" id="v_surgeon_c034"]
+script = ExtResource("2")
+text = "Was stand darauf?"
+next = &"still_heart_more"
+
+[sub_resource type="Resource" id="v_surgeon_c035"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_still_heart"]
+script = ExtResource("1")
+id = &"still_heart"
+text = "Ein gesundes Herz, still stehen geblieben, bei einem mit dem Zeichen. Ich habe so ein Herz schon zweimal eingelegt. Beide Male lag morgens ein Zettel vor meiner Tür. Zwei Worte. Ich habe sie verbrannt. Den Zettel, meine ich. Nicht das Herz."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c034"), SubResource("v_surgeon_c035")])
+
+[sub_resource type="Resource" id="v_surgeon_c036"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_still_heart_more"]
+script = ExtResource("1")
+id = &"still_heart_more"
+text = "Verbrennt es. In einer schrägen Hand, sehr ordentlich. Ich bin Arzt, Totengräber. Ich glaube nicht an Gespenster. Ich glaube an Leute, die nachts Briefe schreiben."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c036")])
+
+[sub_resource type="Resource" id="v_surgeon_c037"]
+script = ExtResource("2")
+text = "Verstehe."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_visits"]
+script = ExtResource("1")
+id = &"visits"
+text = "Mittags gehe ich zu denen, die nicht mehr zu mir kommen können. Fieber, Wasser, das Alter. Meistens das Alter, das kann ich nicht heilen, nur begleiten. Der Pfarrer ist oft schon da, oder Liesel ist noch da. Wir sind ein kleiner Verein, wir drei, nur ohne Satzung."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c037")])
+
+[sub_resource type="Resource" id="v_surgeon_c038"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_quast_tincture_yes"
+actions = Array[String](["order_accept:o_quast_tincture"])
+
+[sub_resource type="Resource" id="v_surgeon_c039"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_o_o_quast_tincture"]
+script = ExtResource("1")
+id = &"o_o_quast_tincture"
+text = "Zwei Fläschchen Fiebertinktur, wenn Sie das Pult dafür haben. Das Fieber ist dieses Jahr früh. Ich komme nicht nach. Fünf Tage."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c038"), SubResource("v_surgeon_c039")])
+
+[sub_resource type="Resource" id="v_surgeon_c040"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_o_o_quast_tincture_yes"]
+script = ExtResource("1")
+id = &"o_o_quast_tincture_yes"
+text = "Danke. Ich zahle für Ware, nicht für Mitleid, aber für beides gut."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c040")])
+
+[sub_resource type="Resource" id="v_surgeon_c041"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_quast_specimen_yes"
+actions = Array[String](["order_accept:o_quast_specimen"])
+
+[sub_resource type="Resource" id="v_surgeon_c042"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_o_o_quast_specimen"]
+script = ExtResource("1")
+id = &"o_o_quast_specimen"
+text = "Für das Kabinett der Stadt brauche ich ein gut lesbares Präparat im Glas. Herz, Lunge, Magen, Leber oder Nieren. Ich sage Ihnen nicht, welches. Sie wissen am besten, was Sie vertreten können."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c041"), SubResource("v_surgeon_c042")])
+
+[sub_resource type="Resource" id="v_surgeon_c043"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_o_o_quast_specimen_yes"]
+script = ExtResource("1")
+id = &"o_o_quast_specimen_yes"
+text = "Sie bringen es, wenn es sich ergibt. Ich bitte nicht um einen Toten, Totengräber. Ich bitte um ein Glas."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c043")])
+
+[sub_resource type="Resource" id="v_surgeon_c044"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_quast_antidote_yes"
+actions = Array[String](["order_accept:o_quast_antidote"])
+
+[sub_resource type="Resource" id="v_surgeon_c045"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_o_o_quast_antidote"]
+script = ExtResource("1")
+id = &"o_o_quast_antidote"
+text = "Der kleine Kehr hat vom Rattengift genascht. Ich habe nicht genug Gegengift. Sie haben das Rezept. Zwei Fläschchen, in zwei Tagen, sonst brauche ich Sie in anderer Eigenschaft."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c044"), SubResource("v_surgeon_c045")])
+
+[sub_resource type="Resource" id="v_surgeon_c046"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_o_o_quast_antidote_yes"]
+script = ExtResource("1")
+id = &"o_o_quast_antidote_yes"
+text = "Eilen Sie. Bitte. Das sage ich selten."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c046")])
+
+[sub_resource type="Resource" id="v_surgeon_c047"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_quast_cabinet_yes"
+actions = Array[String](["order_accept:o_quast_cabinet"])
+
+[sub_resource type="Resource" id="v_surgeon_c048"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_o_o_quast_cabinet"]
+script = ExtResource("1")
+id = &"o_o_quast_cabinet"
+text = "Die Universität fragt nach einem Schaupräparat. Für die Lehre, nicht für die Neugier, schreibt sie. Ich glaube ihr das zur Hälfte."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c047"), SubResource("v_surgeon_c048")])
+
+[sub_resource type="Resource" id="v_surgeon_c049"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_o_o_quast_cabinet_yes"]
+script = ExtResource("1")
+id = &"o_o_quast_cabinet_yes"
+text = "Mit Wachs und Tinte, sauber beschriftet. Die Studenten lernen mehr vom Etikett als von meinen Vorlesungen."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c049")])
+
+[sub_resource type="Resource" id="v_surgeon_c050"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_t_o_quast_tincture"]
+script = ExtResource("1")
+id = &"t_o_quast_tincture"
+text = "Sauber angesetzt. Ich frage nicht, woher Sie die Kräuter haben. Doch, ich frage. Aber später."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c050")])
+
+[sub_resource type="Resource" id="v_surgeon_c051"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_t_o_quast_specimen"]
+script = ExtResource("1")
+id = &"t_o_quast_specimen"
+text = "Klar und ruhig. Das Kabinett wird es in Ehren halten. Verzeihen Sie das Wort."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c051")])
+
+[sub_resource type="Resource" id="v_surgeon_c052"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_t_o_quast_antidote"]
+script = ExtResource("1")
+id = &"t_o_quast_antidote"
+text = "Ich gehe sofort. Laufen Sie nicht mit, Totengräber, Ihre Kundschaft wartet nicht auf Kinder."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c052")])
+
+[sub_resource type="Resource" id="v_surgeon_c053"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_t_o_quast_cabinet"]
+script = ExtResource("1")
+id = &"t_o_quast_cabinet"
+text = "Die Universität wird schreiben. Auf Latein. Ich übersetze Ihnen das Lob, wenn Sie es hören wollen."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c053")])
+
+[sub_resource type="Resource" id="v_surgeon_c054"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_surgeon_node_t_ob_herbs"]
+script = ExtResource("1")
+id = &"t_ob_herbs"
+text = "Kräuter für die Armen. Im Winter wird man es merken. Im Sommer merkt man nie etwas."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c054")])
+
+[sub_resource type="Resource" id="v_surgeon_c055"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="v_surgeon_node_bye"]
+script = ExtResource("1")
+id = &"bye"
+text = "Leben Sie wohl, Totengräber. Und wenn Ihnen einmal etwas fehlt: Ich verstehe mehr von Lebenden, als man mir zutraut."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c055")])
+conditions = Array[String](["rel_tier:surgeon:friend"])
+fallback_next = &"bye_plain"
+
+[sub_resource type="Resource" id="v_surgeon_c056"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="v_surgeon_node_bye_plain"]
+script = ExtResource("1")
+id = &"bye_plain"
+text = "Guten Tag, Totengräber. Waschen Sie die Hände, bevor Sie essen. Das ist kein Latein, das ist Vernunft."
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c056")])
+
+[resource]
+script = ExtResource("3")
+id = &"v_surgeon"
+speaker_name = "Severin Quast"
+start_node = &"start"
+nodes = Array[ExtResource("1")]([SubResource("v_surgeon_node_start"), SubResource("v_surgeon_node_ask_again"), SubResource("v_surgeon_node_invite"), SubResource("v_surgeon_node_invite_r"), SubResource("v_surgeon_node_greet_p_devout"), SubResource("v_surgeon_node_greet_p_hardhearted"), SubResource("v_surgeon_node_greet_disreputable"), SubResource("v_surgeon_node_greet_unremarkable"), SubResource("v_surgeon_node_greet_respected"), SubResource("v_surgeon_node_greet_esteemed"), SubResource("v_surgeon_node_greet_renowned"), SubResource("v_surgeon_node_menu"), SubResource("v_surgeon_node_case_yes"), SubResource("v_surgeon_node_case_no"), SubResource("v_surgeon_node_still_heart"), SubResource("v_surgeon_node_still_heart_more"), SubResource("v_surgeon_node_visits"), SubResource("v_surgeon_node_o_o_quast_tincture"), SubResource("v_surgeon_node_o_o_quast_tincture_yes"), SubResource("v_surgeon_node_o_o_quast_specimen"), SubResource("v_surgeon_node_o_o_quast_specimen_yes"), SubResource("v_surgeon_node_o_o_quast_antidote"), SubResource("v_surgeon_node_o_o_quast_antidote_yes"), SubResource("v_surgeon_node_o_o_quast_cabinet"), SubResource("v_surgeon_node_o_o_quast_cabinet_yes"), SubResource("v_surgeon_node_t_o_quast_tincture"), SubResource("v_surgeon_node_t_o_quast_specimen"), SubResource("v_surgeon_node_t_o_quast_antidote"), SubResource("v_surgeon_node_t_o_quast_cabinet"), SubResource("v_surgeon_node_t_ob_herbs"), SubResource("v_surgeon_node_bye"), SubResource("v_surgeon_node_bye_plain")])

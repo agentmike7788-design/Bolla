@@ -49,6 +49,9 @@ const STAT_STONES_SET := &"stones_set"
 const SHAPE_MASTER := &"stone_master"
 const EVENT_MASTER_STONE := &"master_stone"
 const REASON_MASTER_STONE := "Ein Meisterstein auf dem Friedhof. Das spricht sich herum."
+# Phase 7 (docs/PHASE7_DESIGN.md §2.5, §3.3): orders hear of graves and stones directly.
+const ORDERS_GROUP := &"orders"
+const REASON_NEW_OLD_STONE := "Ein neuer Stein für %s"
 
 @export var save_id: String = "graveyard"
 @export var save_order: int = 10
@@ -180,6 +183,7 @@ func place_marker(grave_id: String, marker_id: StringName, inv: Inventory) -> in
 	_check_cemetery_complete()
 	_check_chapter()
 	_check_buildings_goal(corpse)
+	_note_orders_grave(grave_id, grave.corpse_id)
 	return paid
 
 
@@ -665,6 +669,11 @@ func set_designed_stone(grave_id: String, design: StoneDesign, inv: Inventory) -
 	var workshop := _first(WORKSHOP_GROUP)
 	if workshop != null and workshop.has_method(&"check_goal"):
 		workshop.call(&"check_goal")
+	if was_filled:
+		_note_orders_grave(grave_id, grave.corpse_id)
+	var orders := _first(ORDERS_GROUP)
+	if orders != null and orders.has_method(&"note_stone_set"):
+		orders.call(&"note_stone_set", grave_id)
 	return grave.quality - old_quality
 
 
@@ -688,11 +697,56 @@ func _stone_config() -> StoneConfig:
 
 # --- Phase 7 (docs/PHASE7_DESIGN.md §2.5, §3.4) -------------------------------------------------
 
-## STUB (P3) – a designed stone replaces the old stone of a rest-period grave (old_01 / old_08) with an
-## active stone order: the state stays OLD, no payment, no quality – only Orders.note_stone_set and
-## reputation marker_upgrade +1. false = refused.
-func replace_old_marker(_grave_id: String, _design: StoneDesign) -> bool:
+## Phase 7 (docs/PHASE7_DESIGN.md §2.5, §3.4): a designed stone replaces the old stone of a
+## rest-period grave (old_01 / old_08) with an active stone order for it: the state stays OLD (not
+## liftable), no payment, no quality – grave.design / marker_id take the new stone, reputation
+## marker_upgrade +1, stats.stones_set + 1, grave_stone_set, then Orders.note_stone_set. false =
+## refused (no OLD old grave, no stone, no active order). Stonemasonry.set_stone calls it for a stone
+## carved for an old grave.
+func replace_old_marker(grave_id: String, design: StoneDesign) -> bool:
+	var grave := _known_grave(grave_id, "replace_old_marker")
+	if grave == null or design == null or design.is_empty() or grave.state != GraveRecord.State.OLD:
+		return false
+	if not _old_plots.is_empty() and not _old_plots.has(grave_id):
+		return false
+	if not _economy().marker_quality.has(design.shape):
+		push_warning("[Graveyard] replace_old_marker: '%s' is no stone shape" % design.shape)
+		return false
+	if not has_stone_order(grave_id):
+		return false
+	grave.design = design.to_dict()
+	grave.marker_id = design.shape
+	GameState.add_stat(STAT_STONES_SET, 1)
+	var old := Database.old_grave(grave_id) as OldGraveData
+	var name := old.display_name if old != null and old.display_name != "" else grave_id
+	var rep := _reputation()
+	if rep != null:
+		rep.event(EVENT_MARKER_UPGRADE, REASON_NEW_OLD_STONE % name)
+	EventBus.grave_stone_set.emit(grave_id, design.shape, grave.quality)
+	var orders := _first(ORDERS_GROUP)
+	if orders != null and orders.has_method(&"note_stone_set"):
+		orders.call(&"note_stone_set", grave_id)
+	return true
+
+
+## An accepted stone order targets `grave_id` (Orders, group orders) – only then may an old grave
+## get a new stone (Stonemasonry, GravePlot).
+func has_stone_order(grave_id: String) -> bool:
+	var orders := _first(ORDERS_GROUP)
+	if orders == null or not orders.has_method(&"active") or not orders.has_method(&"order_data"):
+		return false
+	for id: StringName in orders.call(&"active"):
+		var o := orders.call(&"order_data", id) as OrderData
+		if o != null and o.kind == &"stone" and o.target == grave_id:
+			return true
 	return false
+
+
+## Phase 7 (§3.3): bury / stone orders hear of a completed grave directly.
+func _note_orders_grave(grave_id: String, corpse_id: String) -> void:
+	var orders := _first(ORDERS_GROUP)
+	if orders != null and orders.has_method(&"note_grave_completed"):
+		orders.call(&"note_grave_completed", grave_id, corpse_id)
 
 
 # --- Phase 6 (docs/PHASE6_DESIGN.md §2.3, §3.4) -------------------------------------------------

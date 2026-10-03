@@ -9,8 +9,19 @@ extends RefCounted
 ## trader_talks_gte:<n> (nights talked with Ilse, NightTrade) · clue_known:<id> (journal clue,
 ## flag clue_<id>) · flag_night:<name> (flag value == the current night, a night starts 12:00).
 ## stat_gte / stat_lt take negative numbers (piety).
+## Phase 7 (docs/PHASE7_DESIGN.md §3.4, P6): rel_gte:<npc>:<n> (relationship value) · rel_tier:<npc>:<tier>
+## (the relationship is on <tier> or higher) · met:<npc> · rep_tier:<tier> (reputation tier equals) ·
+## order:<id>:<state> (none = no state) · order_offerable:<id> · shop_open:<shop> · region:<id> ·
+## specimens_held_gte:<n> · specimen_sold_any · alive:<npc> (its Npc's hide_flag is off; oldwoman →
+## hagedorn_dead) · lecture_tonight · village_open_days_gte:<n> (days since village_open_day) ·
+## flag_days_gte:<flag>:<n> (the flag holds a day; at least n days since) · order_ready:<id> (accepted and
+## its items in the context inventory) · village_can:<round|donate|consecrate> (Village's block reason is "")
+## · mourning_today (a mourning ribbon hangs today).
 
 enum _Result { FALSE, TRUE, INVALID }
+
+## Phase 7: hide flags known without an Npc node in the world (§2.2: Wiebke Hagedorn after her death).
+const HIDE_FLAGS := {&"oldwoman": &"hagedorn_dead"}
 
 
 ## True when every condition holds (an empty list holds).
@@ -110,7 +121,154 @@ static func _evaluate(text: String, context: Dictionary) -> _Result:
 				return _Result.INVALID
 			var value: Variant = GameState.get_flag(StringName(p[0]))
 			return _bool((value is int or value is float) and int(value) == night_id())
+		# Phase 7 (docs/PHASE7_DESIGN.md §3.4).
+		"rel_gte":
+			var p := DialogueSyntax.parts(text, 2)
+			var n: Variant = DialogueSyntax.int_arg(p, 1, null)
+			if p.is_empty() or p[0] == "" or n == null:
+				return _Result.INVALID
+			return _bool(rel_value(StringName(p[0])) >= int(n))
+		"rel_tier":
+			var p := DialogueSyntax.parts(text, 2)
+			if p.size() < 2 or p[0] == "" or OrderRules.tier_index(StringName(p[1])) < 0:
+				return _Result.INVALID
+			return _bool(OrderRules.tier_index(rel_tier(StringName(p[0]))) >= OrderRules.tier_index(StringName(p[1])))
+		"met":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			var rel := DialogueSyntax.system(&"relationships")
+			return _bool(rel != null and rel.has_method(&"met") and bool(rel.call(&"met", StringName(p[0]))))
+		"rep_tier":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or not StringName(p[0]) in ReputationRules.TIERS:
+				return _Result.INVALID
+			return _bool(rep_tier() == StringName(p[0]))
+		"order":
+			var p := DialogueSyntax.parts(text, 2)
+			if p.size() < 2 or p[0] == "":
+				return _Result.INVALID
+			var orders := DialogueSyntax.system(&"orders")
+			var state: StringName = orders.call(&"state", StringName(p[0])) if orders != null and orders.has_method(&"state") else &""
+			return _bool(String(state) == (p[1] if p[1] != "none" else ""))
+		"order_offerable":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			var orders := DialogueSyntax.system(&"orders")
+			return _bool(orders != null and orders.has_method(&"block_reason") and str(orders.call(&"block_reason", StringName(p[0]))) == "")
+		"order_ready":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			return _bool(order_ready(StringName(p[0]), context))
+		"shop_open":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			var shops := DialogueSyntax.system(&"village_shops")
+			return _bool(shops != null and shops.has_method(&"is_open") and bool(shops.call(&"is_open", StringName(p[0]))))
+		"region":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			return _bool(RegionRoot.current(Engine.get_main_loop() as SceneTree) == StringName(p[0]))
+		"specimens_held_gte":
+			var p := DialogueSyntax.parts(text, 1)
+			var n: Variant = DialogueSyntax.int_arg(p, 0, null)
+			if n == null:
+				return _Result.INVALID
+			var specimens := DialogueSyntax.system(&"specimens")
+			var held: Variant = specimens.call(&"held") if specimens != null and specimens.has_method(&"held") else PackedStringArray()
+			return _bool((held as PackedStringArray).size() >= int(n) if held is PackedStringArray else false)
+		"specimen_sold_any":
+			if text.contains(":"):
+				return _Result.INVALID
+			return _bool(GameState.get_stat(&"specimens_sold") > 0)
+		"alive":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			return _bool(is_alive(StringName(p[0])))
+		"lecture_tonight":
+			if text.contains(":"):
+				return _Result.INVALID
+			var lectures := DialogueSyntax.system(&"lectures")
+			return _bool(lectures != null and lectures.has_method(&"tonight") and bool(lectures.call(&"tonight")))
+		"flag_days_gte":
+			var p := DialogueSyntax.parts(text, 2)
+			var n: Variant = DialogueSyntax.int_arg(p, 1, null)
+			if p.size() < 2 or p[0] == "" or n == null:
+				return _Result.INVALID
+			var since: Variant = GameState.get_flag(StringName(p[0]))
+			return _bool((since is int or since is float) and TimeManager.day - int(since) >= int(n))
+		"village_can":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or not p[0] in ["round", "donate", "consecrate"]:
+				return _Result.INVALID
+			var village := DialogueSyntax.system(&"village")
+			if village == null:
+				return _Result.FALSE
+			var method: StringName = {"round": &"round_block_reason", "donate": &"donation_block_reason", "consecrate": &"consecration_block_reason"}[p[0]]
+			var inv: Variant = context.get("inventory")
+			return _bool(village.has_method(method) and str(village.call(method, inv if inv is Inventory else null)) == "")
+		"mourning_today":
+			if text.contains(":"):
+				return _Result.INVALID
+			var village := DialogueSyntax.system(&"village")
+			return _bool(village != null and village.has_method(&"mourning_house") and village.call(&"mourning_house", TimeManager.day) != &"")
+		"village_open_days_gte":
+			var p := DialogueSyntax.parts(text, 1)
+			var n: Variant = DialogueSyntax.int_arg(p, 0, null)
+			if n == null:
+				return _Result.INVALID
+			var since: Variant = GameState.get_flag(&"village_open_day")
+			return _bool((since is int or since is float) and TimeManager.day - int(since) >= int(n))
 	return _Result.INVALID
+
+
+## Phase 7: the relationship value with `npc_id` (0 without Relationships).
+static func rel_value(npc_id: StringName) -> int:
+	var rel := DialogueSyntax.system(&"relationships")
+	return int(rel.call(&"value", npc_id)) if rel != null and rel.has_method(&"value") else 0
+
+
+## Phase 7: the relationship tier with `npc_id` (thresholds of data/config/relationship_config.tres).
+static func rel_tier(npc_id: StringName) -> StringName:
+	var cfg: RelationshipConfig = null
+	if Database.has_method(&"config"):
+		cfg = Database.config(&"relationship_config") as RelationshipConfig
+	return OrderRules.rel_tier(rel_value(npc_id), cfg)
+
+
+## Phase 7: the tier of GameState.stats.reputation.
+static func rep_tier() -> StringName:
+	var cfg: ReputationConfig = null
+	if Database.has_method(&"config"):
+		cfg = Database.config(&"reputation_config") as ReputationConfig
+	return ReputationRules.tier(GameState.get_stat(&"reputation"), cfg)
+
+
+## Phase 7: the order is accepted and its items are in the context inventory.
+static func order_ready(order_id: StringName, context: Dictionary) -> bool:
+	var orders := DialogueSyntax.system(&"orders")
+	if orders == null or not orders.has_method(&"state") or orders.call(&"state", order_id) != &"accepted":
+		return false
+	var data: OrderData = orders.call(&"order_data", order_id) if orders.has_method(&"order_data") else null
+	var inv: Variant = context.get("inventory")
+	return data != null and inv is Inventory and OrderRules.deliver_ready(data, inv as Inventory)
+
+
+## Phase 7: no Npc of `npc_id` hides behind its hide_flag (Wiebke Hagedorn: hagedorn_dead).
+static func is_alive(npc_id: StringName) -> bool:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree != null:
+		for node: Node in tree.get_nodes_in_group(&"npc"):
+			if node.get(&"npc_id") == npc_id:
+				var flag: Variant = node.get(&"hide_flag")
+				if flag is StringName and flag != &"" and GameState.flag_on(flag):
+					return false
+	return not (HIDE_FLAGS.has(npc_id) and GameState.flag_on(HIDE_FLAGS[npc_id]))
 
 
 ## Tier of GameState.stats.piety (§2.7 thresholds from data/config/piety_config.tres).

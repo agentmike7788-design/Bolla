@@ -7,15 +7,25 @@ extends Node
 ## coin ledger by purpose coins_spent_<reason> (COIN_REASONS) for the chapter panel / day summary.
 ## Phase 6 (docs/PHASE6_DESIGN.md §2.7, §5.1): + services_held, devotions_held, bones_lifted,
 ## bones_reinterred, niche_waits and the ledger stat coins_spent_building.
+## Phase 7 (docs/PHASE7_DESIGN.md §2.11, §5.1): + village_trips, orders_done/_failed, gifts_given, rounds_bought,
+## donations, specimens_taken/_sold/_researched/_returned/_collected, medicines_made, lectures_attended,
+## deductions, university_standing and the ledger stats coins_spent_village/_donation/_round/_consecration.
 const DEFAULT_STATS: Array[StringName] = [&"burials", &"valuables_taken", &"reputation", &"missed_deliveries", &"days_played",
 		&"piety", &"utilized", &"prepared", &"trader_sales",
 		&"crafted", &"stones_set", &"coins_spent", &"trees_felled",
 		&"coins_spent_license", &"coins_spent_build", &"coins_spent_osric", &"coins_spent_ilse",
 		&"services_held", &"devotions_held", &"bones_lifted", &"bones_reinterred", &"niche_waits",
-		&"coins_spent_building"]
+		&"coins_spent_building",
+		&"village_trips", &"orders_done", &"orders_failed", &"gifts_given", &"rounds_bought", &"donations",
+		&"specimens_taken", &"specimens_sold", &"specimens_researched", &"specimens_returned", &"specimens_collected",
+		&"medicines_made", &"lectures_attended", &"deductions", &"university_standing",
+		&"coins_spent_village", &"coins_spent_donation", &"coins_spent_round", &"coins_spent_consecration"]
 ## Phase 5 §3.3: the reasons of EventBus.coins_spent (license, stations, Osric's goods, Ilse's shop);
 ## Phase 6 §2.7: + building (the building levels; altar candles run under osric).
-const COIN_REASONS: Array[StringName] = [&"license", &"build", &"osric", &"ilse", &"building"]
+## Phase 7 §2.11: + village (the village shops), donation (poor box, donation orders), round (the inn),
+## consecration (the Lindenacker); the pult runs under build.
+const COIN_REASONS: Array[StringName] = [&"license", &"build", &"osric", &"ilse", &"building", &"village", &"donation",
+		&"round", &"consecration"]
 const STAT_COINS_SPENT := &"coins_spent"
 const COINS_SPENT_PREFIX := "coins_spent_"
 

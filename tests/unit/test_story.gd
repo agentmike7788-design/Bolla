@@ -122,7 +122,7 @@ func test_daily_checks_key_fallback_from_day_12() -> void:
 
 func test_real_story_data_matches_the_contract() -> void:
 	var real: Array = Database.story_corpses()
-	assert_eq(real.size(), 5)
+	assert_eq(real.size(), 6, "S1–S5 + D1 (Phase 7)")
 	var ids: Array = []
 	var days: Array = []
 	for s: StoryCorpseData in real:
@@ -132,8 +132,8 @@ func test_real_story_data_matches_the_contract() -> void:
 		assert_ne(s.arrival_note, "", "%s: Osric's line" % s.id)
 		var cause: Dictionary = (Database.corpse_tables() as CorpseTables).get_cause(s.cause_id)
 		assert_false(cause.is_empty(), "%s: cause %s in the corpse tables" % [s.id, s.cause_id])
-	assert_eq(ids, [&"s1_quendel", &"s2_hemmerling", &"s3_wernstein", &"s4_uhlig", &"s5_moor"])
-	assert_eq(days, [6, 9, 13, 16, 19])
+	assert_eq(ids, [&"s1_quendel", &"s2_hemmerling", &"s3_wernstein", &"s4_uhlig", &"s5_moor", &"d1_hagedorn"])
+	assert_eq(days, [6, 9, 13, 16, 19, 1], "D1 waits for village_open_day + 8 instead")
 	var cfg_real := Database.config(&"story_config") as StoryConfig
 	assert_eq((Database.story_corpse(cfg_real.finale_story) as StoryCorpseData).is_finale, true)
 
@@ -144,3 +144,79 @@ func test_moor_cold_is_never_rolled() -> void:
 	assert_eq([float(moor.weight), float(moor.decay_mult)], [0.0, 0.5])
 	for i: int in 300:
 		assert_ne(CorpseGenerator.generate(CorpseGenerator.seed_for(i + 1, 0), real, 30).cause_id, &"moor_cold")
+
+
+# --- Phase 7 (P6, docs/PHASE7_DESIGN.md §2.9, §3.4): D1 Wiebke Hagedorn -----------------------------
+
+const ALL_OLD := ["s1_quendel", "s2_hemmerling", "s3_wernstein", "s4_uhlig", "s5_moor"]
+
+
+func _with_d1() -> Array[StoryCorpseData]:
+	var out := stories.duplicate()
+	out.append(Phase7Fixtures.d1_story())
+	return out
+
+
+func _clear_d1_flags() -> void:
+	for f: StringName in [&"village_open_day", &"linden_consecrated", &"hagedorn_dead"]:
+		GameState.clear_flag(f)
+
+
+func test_d1_comes_eight_days_after_the_village_opened_only_consecrated() -> void:
+	_clear_d1_flags()
+	var all := _with_d1()
+	var delivered := PackedStringArray(ALL_OLD)
+	assert_null(StoryDirector.due_story(60, delivered, 20, all, cfg), "no village_open_day")
+	GameState.set_flag(&"village_open_day", 40)
+	assert_null(StoryDirector.due_story(60, delivered, 20, all, cfg), "not consecrated")
+	GameState.set_flag(&"linden_consecrated", true)
+	assert_null(StoryDirector.due_story(47, delivered, 20, all, cfg), "40 + 8 = 48")
+	assert_eq(StoryDirector.due_story(48, delivered, 20, all, cfg).id, &"d1_hagedorn")
+	assert_eq(StoryDirector.due_story(48, PackedStringArray(ALL_OLD.slice(0, 4)), 20, all, cfg).id, &"s5_moor", "S1–S5 first")
+	assert_null(StoryDirector.due_story(48, delivered, 47, all, cfg), "the gap of 2 days still holds")
+	assert_eq(StoryDirector.due_flags(48, delivered, 20, all, cfg), [&"hagedorn_dead"] as Array[StringName])
+	assert_eq(StoryDirector.due_flags(47, delivered, 20, all, cfg), [] as Array[StringName])
+	_clear_d1_flags()
+
+
+func test_d1_reserves_a_place_only_once_it_can_come() -> void:
+	_clear_d1_flags()
+	var all := _with_d1()
+	var delivered := PackedStringArray(ALL_OLD)
+	assert_eq(StoryDirector.pending_count(delivered, all), 0, "Phase-6 games unchanged: no reservation before the consecration")
+	GameState.set_flag(&"linden_consecrated", true)
+	assert_eq(StoryDirector.pending_count(delivered, all), 1, "one place stays free for Wiebke Hagedorn")
+	delivered.append("d1_hagedorn")
+	assert_eq(StoryDirector.pending_count(delivered, all), 0)
+	_clear_d1_flags()
+
+
+func test_d1_record_and_data() -> void:
+	var d := Database.story_corpse(&"d1_hagedorn") as StoryCorpseData
+	assert_not_null(d)
+	assert_eq([d.display_name, d.age, d.cause_id, d.section, d.after_days, d.due_flag], ["Wiebke Hagedorn", 81, &"old_age", &"linden", 8, &"hagedorn_dead"])
+	var r := StoryDirector.make_record(d, 77)
+	assert_true(r.has_trait(&"strange_wound"), "gezeichnet")
+	assert_eq(r.story_id, &"d1_hagedorn")
+	var mark := Database.find(&"f_d1_mark") as FindData
+	assert_eq([mark.trait_id, mark.clue_id, mark.step], [&"strange_wound", &"c_v_hagedorn", &"wounds"], "replaces f_mark (§2.9)")
+	assert_almost(mark.min_freshness, 0.3)
+	for id: StringName in d.finds:
+		assert_true((Database.find(id) as FindData).story_only, String(id))
+
+
+func test_daily_checks_set_the_due_flag_at_midnight() -> void:
+	_clear_d1_flags()
+	var manager := CorpseManager.new()
+	manager.stories = _with_d1()
+	tree.root.add_child(manager)
+	manager.load_state({"story_delivered": ALL_OLD, "story_last_day": 20})
+	GameState.set_flag(&"village_open_day", 40)
+	GameState.set_flag(&"linden_consecrated", true)
+	assert_false(StoryDirector.daily_checks(47, true, cfg).has(StoryDirector.CHECK_DUE_FLAG))
+	assert_false(GameState.has_flag(&"hagedorn_dead"))
+	assert_true(StoryDirector.daily_checks(48, true, cfg).has(StoryDirector.CHECK_DUE_FLAG))
+	assert_eq(GameState.get_flag(&"hagedorn_dead"), 48, "her Npc disappears (hide_flag)")
+	assert_false(StoryDirector.daily_checks(48, true, cfg).has(StoryDirector.CHECK_DUE_FLAG), "once")
+	manager.free()
+	_clear_d1_flags()

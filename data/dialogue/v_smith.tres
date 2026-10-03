@@ -1,0 +1,291 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="v_smith_c001"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_smith_node_start"]
+script = ExtResource("1")
+id = &"start"
+text = "Esch. Schmied. Du bist der Totengräber. Deine Beschläge sind von mir. Osric fährt sie hoch. Halten sie?"
+choices = Array[ExtResource("2")]([SubResource("v_smith_c001")])
+conditions = Array[String](["!met:smith"])
+fallback_next = &"greet_disreputable"
+actions = Array[String](["meet:smith", "talked:smith"])
+
+[sub_resource type="Resource" id="v_smith_c002"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_smith_node_greet_disreputable"]
+script = ExtResource("1")
+id = &"greet_disreputable"
+text = "Du. Die Leute reden. Ich red nicht. Was willst du?"
+choices = Array[ExtResource("2")]([SubResource("v_smith_c002")])
+conditions = Array[String](["rep_tier:disreputable"])
+fallback_next = &"greet_unremarkable"
+actions = Array[String](["talked:smith"])
+
+[sub_resource type="Resource" id="v_smith_c003"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_smith_node_greet_unremarkable"]
+script = ExtResource("1")
+id = &"greet_unremarkable"
+text = "Totengräber. Was brauchst du?"
+choices = Array[ExtResource("2")]([SubResource("v_smith_c003")])
+conditions = Array[String](["rep_tier:unremarkable"])
+fallback_next = &"greet_respected"
+actions = Array[String](["talked:smith"])
+
+[sub_resource type="Resource" id="v_smith_c004"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_smith_node_greet_respected"]
+script = ExtResource("1")
+id = &"greet_respected"
+text = "Totengräber. Gut gearbeitet, oben. Hab's gesehen, als ich die Kirchentür gebracht hab."
+choices = Array[ExtResource("2")]([SubResource("v_smith_c004")])
+conditions = Array[String](["rep_tier:respected"])
+fallback_next = &"greet_esteemed"
+actions = Array[String](["talked:smith"])
+
+[sub_resource type="Resource" id="v_smith_c005"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_smith_node_greet_esteemed"]
+script = ExtResource("1")
+id = &"greet_esteemed"
+text = "Totengräber. Komm ran. Die Esse ist warm."
+choices = Array[ExtResource("2")]([SubResource("v_smith_c005")])
+conditions = Array[String](["rep_tier:esteemed"])
+fallback_next = &"greet_renowned"
+actions = Array[String](["talked:smith"])
+
+[sub_resource type="Resource" id="v_smith_c006"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_smith_node_greet_renowned"]
+script = ExtResource("1")
+id = &"greet_renowned"
+text = "Totengräber. Setz dich. Ich hör auf zu hämmern. Das mach ich für keinen."
+choices = Array[ExtResource("2")]([SubResource("v_smith_c006")])
+actions = Array[String](["talked:smith"])
+
+[sub_resource type="Resource" id="v_smith_c007"]
+script = ExtResource("2")
+text = "Was hast du da?"
+conditions = Array[String](["shop_open:smith"])
+actions = Array[String](["open_shop:smith"])
+
+[sub_resource type="Resource" id="v_smith_c008"]
+script = ExtResource("2")
+text = "[Auftrag] Kohle für die Esse"
+next = &"o_o_esch_charcoal"
+conditions = Array[String](["order_offerable:o_esch_charcoal"])
+
+[sub_resource type="Resource" id="v_smith_c009"]
+script = ExtResource("2")
+text = "[Auftrag] Ein Stein für den Meister"
+next = &"o_o_esch_stone"
+conditions = Array[String](["order_offerable:o_esch_stone"])
+
+[sub_resource type="Resource" id="v_smith_c010"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist, was du wolltest: Holzkohle"
+next = &"t_o_esch_charcoal"
+conditions = Array[String](["order_ready:o_esch_charcoal"])
+actions = Array[String](["order_turn_in:o_esch_charcoal"])
+
+[sub_resource type="Resource" id="v_smith_c011"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist, was du wolltest: Werksteine für den Brunnen"
+next = &"t_o_fenner_well"
+conditions = Array[String](["order_ready:o_fenner_well"])
+actions = Array[String](["order_turn_in:o_fenner_well"])
+
+[sub_resource type="Resource" id="v_smith_c012"]
+script = ExtResource("2")
+text = "Wer war Wendel Gratz?"
+next = &"gratz"
+conditions = Array[String](["order:o_esch_stone:accepted"])
+
+[sub_resource type="Resource" id="v_smith_c013"]
+script = ExtResource("2")
+text = "Kennst du den Wundarzt?"
+next = &"about_quast"
+
+[sub_resource type="Resource" id="v_smith_c014"]
+script = ExtResource("2")
+text = "Ich hab dir etwas mitgebracht."
+actions = Array[String](["open_gifts:smith"])
+
+[sub_resource type="Resource" id="v_smith_c015"]
+script = ExtResource("2")
+text = "Auf Wiedersehen."
+next = &"bye"
+
+[sub_resource type="Resource" id="v_smith_node_menu"]
+script = ExtResource("1")
+id = &"menu"
+text = "Sag."
+choices = Array[ExtResource("2")]([SubResource("v_smith_c007"), SubResource("v_smith_c008"), SubResource("v_smith_c009"), SubResource("v_smith_c010"), SubResource("v_smith_c011"), SubResource("v_smith_c012"), SubResource("v_smith_c013"), SubResource("v_smith_c014"), SubResource("v_smith_c015")])
+
+[sub_resource type="Resource" id="v_smith_c016"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_esch_charcoal_yes"
+actions = Array[String](["order_accept:o_esch_charcoal"])
+
+[sub_resource type="Resource" id="v_smith_c017"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_smith_node_o_o_esch_charcoal"]
+script = ExtResource("1")
+id = &"o_o_esch_charcoal"
+text = "Holzkohle. Sechs Säcke. Die Esse frisst mehr, als ich kaufen will. Fünf Tage."
+choices = Array[ExtResource("2")]([SubResource("v_smith_c016"), SubResource("v_smith_c017")])
+
+[sub_resource type="Resource" id="v_smith_c018"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_smith_node_o_o_esch_charcoal_yes"]
+script = ExtResource("1")
+id = &"o_o_esch_charcoal_yes"
+text = "Gut."
+choices = Array[ExtResource("2")]([SubResource("v_smith_c018")])
+
+[sub_resource type="Resource" id="v_smith_c019"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_esch_stone_yes"
+actions = Array[String](["order_accept:o_esch_stone"])
+
+[sub_resource type="Resource" id="v_smith_c020"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_smith_node_o_o_esch_stone"]
+script = ExtResource("1")
+id = &"o_o_esch_stone"
+text = "Wendel Gratz. Mein Meister. Liegt bei dir oben. Sein Stein ist nicht mehr zu lesen. Ein Bogenstein. Mit einer Fackel. Er hat nie aufgehört zu arbeiten. Sechs Tage."
+choices = Array[ExtResource("2")]([SubResource("v_smith_c019"), SubResource("v_smith_c020")])
+
+[sub_resource type="Resource" id="v_smith_c021"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_smith_node_o_o_esch_stone_yes"]
+script = ExtResource("1")
+id = &"o_o_esch_stone_yes"
+text = "Ich zahl, was es kostet. Mach ihn gerade."
+choices = Array[ExtResource("2")]([SubResource("v_smith_c021")])
+
+[sub_resource type="Resource" id="v_smith_c022"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_smith_node_t_o_esch_charcoal"]
+script = ExtResource("1")
+id = &"t_o_esch_charcoal"
+text = "Gute Kohle. Brennt gleichmäßig."
+choices = Array[ExtResource("2")]([SubResource("v_smith_c022")])
+
+[sub_resource type="Resource" id="v_smith_c023"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_smith_node_t_o_fenner_well"]
+script = ExtResource("1")
+id = &"t_o_fenner_well"
+text = "Sauber gehauen. Fenner kriegt seinen Brunnen. Sag ihm, er soll nicht zählen kommen."
+choices = Array[ExtResource("2")]([SubResource("v_smith_c023")])
+
+[sub_resource type="Resource" id="v_smith_c024"]
+script = ExtResource("2")
+text = "Ich mach ihm einen guten Stein."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_smith_node_gratz"]
+script = ExtResource("1")
+id = &"gratz"
+text = "Gratz hat mir das Feuer gezeigt. Und den Hammer. Und wann man aufhört. Hat er selbst nie gekonnt."
+choices = Array[ExtResource("2")]([SubResource("v_smith_c024")])
+
+[sub_resource type="Resource" id="v_smith_c025"]
+script = ExtResource("2")
+text = "Warum nicht?"
+next = &"about_quast_more"
+
+[sub_resource type="Resource" id="v_smith_c026"]
+script = ExtResource("2")
+text = "Verstehe."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_smith_node_about_quast"]
+script = ExtResource("1")
+id = &"about_quast"
+text = "Quast. Lässt sich Messer machen. Kleine. Sehr scharf. Zahlt gut. Fragt nicht nach dem Preis. Mag ich nicht."
+choices = Array[ExtResource("2")]([SubResource("v_smith_c025"), SubResource("v_smith_c026")])
+
+[sub_resource type="Resource" id="v_smith_c027"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_smith_node_about_quast_more"]
+script = ExtResource("1")
+id = &"about_quast_more"
+text = "Wer nicht nach dem Preis fragt, weiß schon, was es ihm wert ist."
+choices = Array[ExtResource("2")]([SubResource("v_smith_c027")])
+
+[sub_resource type="Resource" id="v_smith_c028"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="v_smith_node_bye"]
+script = ExtResource("1")
+id = &"bye"
+text = "Komm wieder. Das Eisen wartet."
+choices = Array[ExtResource("2")]([SubResource("v_smith_c028")])
+conditions = Array[String](["rel_tier:smith:friend"])
+fallback_next = &"bye_plain"
+
+[sub_resource type="Resource" id="v_smith_c029"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="v_smith_node_bye_plain"]
+script = ExtResource("1")
+id = &"bye_plain"
+text = "Geh."
+choices = Array[ExtResource("2")]([SubResource("v_smith_c029")])
+
+[resource]
+script = ExtResource("3")
+id = &"v_smith"
+speaker_name = "Ulrich Esch"
+start_node = &"start"
+nodes = Array[ExtResource("1")]([SubResource("v_smith_node_start"), SubResource("v_smith_node_greet_disreputable"), SubResource("v_smith_node_greet_unremarkable"), SubResource("v_smith_node_greet_respected"), SubResource("v_smith_node_greet_esteemed"), SubResource("v_smith_node_greet_renowned"), SubResource("v_smith_node_menu"), SubResource("v_smith_node_o_o_esch_charcoal"), SubResource("v_smith_node_o_o_esch_charcoal_yes"), SubResource("v_smith_node_o_o_esch_stone"), SubResource("v_smith_node_o_o_esch_stone_yes"), SubResource("v_smith_node_t_o_esch_charcoal"), SubResource("v_smith_node_t_o_fenner_well"), SubResource("v_smith_node_gratz"), SubResource("v_smith_node_about_quast"), SubResource("v_smith_node_about_quast_more"), SubResource("v_smith_node_bye"), SubResource("v_smith_node_bye_plain")])

@@ -1,0 +1,181 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="carter_village_c001"]
+script = ExtResource("2")
+text = "Danke, Osric."
+next = &"beer"
+
+[sub_resource type="Resource" id="carter_village_node_first"]
+script = ExtResource("1")
+id = &"first"
+text = "Da bist du ja! Ich hab gewettet, dass du es vor dem Abend schaffst. Hab verloren, gegen mich selbst, ist nicht schlimm. Setz dich. Das ist Rosine, der gehört der Holderkrug und das halbe Dorf, wenn man sie reden lässt. Ich zahl dir das Bier, wie versprochen."
+choices = Array[ExtResource("2")]([SubResource("carter_village_c001")])
+conditions = Array[String](["!flag:carter_village_met"])
+fallback_next = &"ribbon"
+actions = Array[String](["set_flag:carter_village_met", "notify:Osric stellt dir ein Bier hin. Es ist warm und gut."])
+
+[sub_resource type="Resource" id="carter_village_c002"]
+script = ExtResource("2")
+text = "Wer ist Quast?"
+next = &"quast"
+
+[sub_resource type="Resource" id="carter_village_c003"]
+script = ExtResource("2")
+text = "Bis später."
+
+[sub_resource type="Resource" id="carter_village_node_beer"]
+script = ExtResource("1")
+id = &"beer"
+text = "Prost. Auf die Toten, die nicht mehr durstig sind, und auf uns, die es noch sind. Fenner sitzt in der Amtsstube und wartet auf dich, der hat ein Stück Land, das er loswerden will. Und Quast will dich auch sprechen, aber der will immer jeden sprechen."
+choices = Array[ExtResource("2")]([SubResource("carter_village_c002"), SubResource("carter_village_c003")])
+
+[sub_resource type="Resource" id="carter_village_c004"]
+script = ExtResource("2")
+text = "Meistens?"
+next = &"menu"
+
+[sub_resource type="Resource" id="carter_village_c005"]
+script = ExtResource("2")
+text = "Bis später."
+
+[sub_resource type="Resource" id="carter_village_node_quast"]
+script = ExtResource("1")
+id = &"quast"
+text = "Der Wundarzt. Höflich, leise, sauber. Fährt manchmal mit mir in die Stadt, mit Kisten, die klirren. Ich frag nicht, was drin ist. Ich fahr auch Tote, ohne zu fragen, woran sie gestorben sind. Meistens."
+choices = Array[ExtResource("2")]([SubResource("carter_village_c004"), SubResource("carter_village_c005")])
+
+[sub_resource type="Resource" id="carter_village_c006"]
+script = ExtResource("2")
+text = "Ich tue mein Bestes."
+next = &"menu"
+
+[sub_resource type="Resource" id="carter_village_node_ribbon"]
+script = ExtResource("1")
+id = &"ribbon"
+text = "Siehst du das schwarze Band an der Tür drüben? Das ist der Flor. Ich hab sie dir heute früh gebracht. Die Familie hängt es raus, bis ihr Toter unter der Erde ist. Dann nehmen sie es ab. Mach ihnen nicht zu lange Kummer."
+choices = Array[ExtResource("2")]([SubResource("carter_village_c006")])
+conditions = Array[String](["mourning_today", "!flag_today:carter_ribbon_said"])
+fallback_next = &"specimens_1"
+actions = Array[String](["set_flag_day:carter_ribbon_said"])
+
+[sub_resource type="Resource" id="carter_village_c007"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="carter_village_node_specimens_1"]
+script = ExtResource("1")
+id = &"specimens_1"
+text = "Der Quast fährt jetzt öfter mit mir in die Stadt. Seine Kisten klirren. Ich sag nichts. Ich sag nur, dass sie klirren."
+choices = Array[ExtResource("2")]([SubResource("carter_village_c007")])
+conditions = Array[String](["specimen_sold_any", "!flag:carter_spec_1"])
+fallback_next = &"specimens_2"
+actions = Array[String](["set_flag:carter_spec_1"])
+
+[sub_resource type="Resource" id="carter_village_c008"]
+script = ExtResource("2")
+text = "Ich weiß es."
+next = &"menu"
+
+[sub_resource type="Resource" id="carter_village_c009"]
+script = ExtResource("2")
+text = "Nicht immer."
+next = &"menu"
+
+[sub_resource type="Resource" id="carter_village_node_specimens_2"]
+script = ExtResource("1")
+id = &"specimens_2"
+text = "Im Holderkrug redet man über Gläser mit Etiketten. Ich hab gesagt, der Totengräber weiß, was er tut. Weißt du's?"
+choices = Array[ExtResource("2")]([SubResource("carter_village_c008"), SubResource("carter_village_c009")])
+conditions = Array[String](["stat_gte:specimens_sold:5", "!flag:carter_spec_2"])
+fallback_next = &"chapter"
+actions = Array[String](["set_flag:carter_spec_2"])
+
+[sub_resource type="Resource" id="carter_village_c010"]
+script = ExtResource("2")
+text = "Prost, Osric."
+next = &"menu"
+
+[sub_resource type="Resource" id="carter_village_node_chapter"]
+script = ExtResource("1")
+id = &"chapter"
+text = "Hast du's gehört? Unten sagen sie jetzt deinen Namen, nicht nur „der vom Hügel“. Das hat bei Lorenz Jahre gedauert. Bei mir hat es nie geklappt, mich nennen sie immer noch „der mit dem Karren“."
+choices = Array[ExtResource("2")]([SubResource("carter_village_c010")])
+conditions = Array[String](["flag:name_in_village_complete", "!flag:carter_chapter7"])
+fallback_next = &"menu"
+actions = Array[String](["set_flag:carter_chapter7"])
+
+[sub_resource type="Resource" id="carter_village_c011"]
+script = ExtResource("2")
+text = "Wer im Dorf ist wer?"
+next = &"who"
+
+[sub_resource type="Resource" id="carter_village_c012"]
+script = ExtResource("2")
+text = "Wo finde ich wen?"
+next = &"where"
+
+[sub_resource type="Resource" id="carter_village_c013"]
+script = ExtResource("2")
+text = "Wiebke Hagedorn …"
+next = &"wiebke_dead"
+conditions = Array[String](["!alive:oldwoman"])
+
+[sub_resource type="Resource" id="carter_village_c014"]
+script = ExtResource("2")
+text = "Mach's gut, Osric."
+
+[sub_resource type="Resource" id="carter_village_node_menu"]
+script = ExtResource("1")
+id = &"menu"
+text = "Noch eins? Ich zahl nicht zweimal, aber ich hör zweimal zu."
+choices = Array[ExtResource("2")]([SubResource("carter_village_c011"), SubResource("carter_village_c012"), SubResource("carter_village_c013"), SubResource("carter_village_c014")])
+
+[sub_resource type="Resource" id="carter_village_c015"]
+script = ExtResource("2")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="carter_village_node_who"]
+script = ExtResource("1")
+id = &"who"
+text = "Rosine hast du ja. Esch ist der Schmied, sagt drei Worte am Tag und meint alle. Theres Mangold rechnet dir alles vor, auch das, was du nicht kaufst. Der Pfarrer redet über alles, nur nicht über Lorenz. Fenner ist ehrlich und umständlich, in dieser Reihenfolge. Liesel Dorn wäscht die Toten und traut keinem. Und die alte Hagedorn will bei dir liegen, das weißt du."
+choices = Array[ExtResource("2")]([SubResource("carter_village_c015")])
+
+[sub_resource type="Resource" id="carter_village_c016"]
+script = ExtResource("2")
+text = "Fast?"
+next = &"menu"
+
+[sub_resource type="Resource" id="carter_village_c017"]
+script = ExtResource("2")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="carter_village_node_where"]
+script = ExtResource("1")
+id = &"where"
+text = "Vormittags sind alle bei der Arbeit, mittags dreht sich der Anger, nachmittags findest du jeden, und abends sitzen die Wichtigen hier. Quast hat seine Stube offen bis sechs. Und nachts – nachts ist Hollerbrück still. Fast."
+choices = Array[ExtResource("2")]([SubResource("carter_village_c016"), SubResource("carter_village_c017")])
+
+[sub_resource type="Resource" id="carter_village_c018"]
+script = ExtResource("2")
+text = "Ich trödle nicht."
+next = &"menu"
+
+[sub_resource type="Resource" id="carter_village_node_wiebke_dead"]
+script = ExtResource("1")
+id = &"wiebke_dead"
+text = "Die alte Hagedorn. Heute Nacht, im Schlaf, sagt Liesel. Sie hat mir letzte Woche aufgetragen, dir auszurichten: nicht trödeln. Ich richte es aus. Ich hab sie dir hinaufgebracht. Sie war leicht, Totengräber. Leichter als der Mohn, kommt mir vor."
+choices = Array[ExtResource("2")]([SubResource("carter_village_c018")])
+
+[resource]
+script = ExtResource("3")
+id = &"carter_village"
+speaker_name = "Osric Faulhaber"
+start_node = &"first"
+nodes = Array[ExtResource("1")]([SubResource("carter_village_node_first"), SubResource("carter_village_node_beer"), SubResource("carter_village_node_quast"), SubResource("carter_village_node_ribbon"), SubResource("carter_village_node_specimens_1"), SubResource("carter_village_node_specimens_2"), SubResource("carter_village_node_chapter"), SubResource("carter_village_node_menu"), SubResource("carter_village_node_who"), SubResource("carter_village_node_where"), SubResource("carter_village_node_wiebke_dead")])

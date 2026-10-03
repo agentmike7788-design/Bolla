@@ -16,10 +16,11 @@ specimen_delta = 0
 returned_delta = 0
 piety_sensitive = false
 remarks = Dictionary[StringName, PackedStringArray]({
-&"friend": PackedStringArray("Komm rein, wenn du was brauchst. Ich mach's dir krumm oder gerade."),
-&"rep_disreputable": PackedStringArray("Das ist der, bei dem die Taschen leichter werden."),
-&"rep_esteemed": PackedStringArray("Deine Kreuze stehen gerade. Hab's gesehen."),
-&"rep_renowned": PackedStringArray("Wer so gräbt, kann auch schmieden lernen. Sag ich nicht oft."),
-&"rep_respected": PackedStringArray("Totengräber.", "Gute Schaufel? Zeig her. Geht."),
-&"rep_unremarkable": PackedStringArray("Hm.")
+&"friend": PackedStringArray("Komm rein, wenn du was brauchst. Ich mach's dir krumm oder gerade.", "Hab dir einen Nagel geschmiedet. Einen guten. Für den Sarg von jemandem, der ihn verdient."),
+&"rep_disreputable": PackedStringArray("Das ist der, bei dem die Taschen leichter werden.", "Hm."),
+&"rep_esteemed": PackedStringArray("Deine Kreuze stehen gerade. Hab's gesehen.", "Die Beschläge halten? Gut."),
+&"rep_renowned": PackedStringArray("Wer so gräbt, kann auch schmieden lernen. Sag ich nicht oft.", "Totengräber. Komm. Die Esse ist warm."),
+&"rep_respected": PackedStringArray("Totengräber.", "Gute Schaufel? Zeig her. Geht.", "Gute Arbeit, oben. Hab's gesehen."),
+&"rep_unremarkable": PackedStringArray("Hm.", "Totengräber."),
+&"specimens": PackedStringArray("Quast will kleinere Messer. Ich mach sie. Ich mag es nicht.")
 })

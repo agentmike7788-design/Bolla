@@ -201,7 +201,7 @@ func test_extended_data_classes() -> void:
 	assert_true(SectionData.new().is_burial)
 	# P2 (W0 note 6): only the approved sections I–IV; bruch / quarry are work areas.
 	for real: SectionData in Database.sections():
-		if real.id in [&"yard", &"east", &"north", &"elder"]:
+		if real.id in [&"yard", &"east", &"north", &"elder", &"linden"]:  # Phase 7 (P3): + the Lindenacker
 			assert_true(real.is_burial, "%s: the approved sections are burial sections" % real.id)
 		else:
 			assert_false(real.is_burial, "%s: a work area" % real.id)
@@ -345,8 +345,8 @@ func test_clearable_and_section_fixtures() -> void:
 	assert_eq([bruch.requires_flag, bruch.requires_flag_text], [&"bruch_license", "Die Pforte ist zu. Osric weiß, wer den Schlüssel hat."])
 	assert_eq(quarry.requires_section, &"bruch")
 	for real: SectionData in Database.sections():
-		if real.id in [&"bruch", &"quarry", &"churchyard"]:
-			continue  # P2 (W1): the real work areas themselves; Phase 6 (W-Welt): the churchyard (order 7) comes after them
+		if real.id in [&"bruch", &"quarry", &"churchyard", &"linden"]:
+			continue  # P2 (W1): the real work areas themselves; Phase 6 (W-Welt): the churchyard (order 7) comes after them; Phase 7 (P3): the Lindenacker (order 8)
 		assert_true(bruch.order > real.order and quarry.order > real.order, "orders after %s" % real.id)
 
 
@@ -485,7 +485,7 @@ func test_save_format_v4_and_migration_chain() -> void:
 	assert_eq(SaveMigration.V4_EMPTY_NODES, PackedStringArray(["workshop", "gathering", "stonemasonry"]))
 	var state := {"autoloads": {"TimeManager": {"day": 5}, "GameState": {"stats": {}, "flags": {}}}, "nodes": {"corpse_manager": {}}}
 	# Phase 6 (P6): migrate_4_to_5 implemented – only the Phase-6 nodes / stats are added.
-	assert_eq((SaveMigration.migrate(state, 4).nodes as Dictionary).keys(), ["corpse_manager"] + Array(SaveMigration.V5_EMPTY_NODES), "v4 → v5")
+	assert_eq((SaveMigration.migrate(state, 4).nodes as Dictionary).keys(), ["corpse_manager"] + Array(SaveMigration.V5_EMPTY_NODES) + Array(SaveMigration.V6_EMPTY_NODES), "v4 → v5 → v6 (Phase 7: + V6 nodes)")
 	assert_eq(SaveMigration.migrate(state, SaveMigration.CURRENT + 1), {}, "newer → corrupt")
 	var v4 := SaveMigration.migrate_3_to_4(state, {"day": 5})
 	assert_eq((v4.nodes as Dictionary).keys(), ["corpse_manager", "workshop", "gathering", "stonemasonry"], "P6: empty Phase-5 nodes")
