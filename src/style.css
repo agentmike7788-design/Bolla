@@ -277,6 +277,7 @@ kbd {
 .rocket.ready .power-bar i { background: #6be36b; }
 .rocket.ready .label span { color: #6be36b; }
 .oil .power-bar i { background: #e0a040; }
+.drone .label span { color: #5ad1c8; }
 .tool[hidden] { display: none; }
 
 .tool.locked { opacity: 0.38; }
@@ -443,6 +444,17 @@ button.link kbd { font-size: 10px; padding: 0 3px; }
 .stop-add button { min-width: 38px; padding: 6px 10px; font: 600 15px/1 var(--font-display); }
 .stop-add button.unreachable { opacity: 0.45; }
 .stop-add span { font-size: 12px; color: var(--ink-dim); }
+.stop-add button[aria-pressed='true'] { border-color: var(--signal); background: rgba(255, 211, 77, 0.16); }
+/* Requester chest: which part, how many */
+.wish-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; max-height: 210px; overflow-y: auto; }
+.wish-grid button {
+  display: flex; align-items: center; gap: 5px; min-width: 0;
+  padding: 5px 6px; text-align: left; background: transparent; color: var(--ink);
+  border: 1px solid var(--edge); font: 500 11px/1.1 var(--font-data);
+}
+.wish-grid button span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wish-grid button[aria-pressed='true'] { border-color: var(--signal); background: rgba(255, 211, 77, 0.12); }
+.wish-grid .swatch { flex: none; }
 
 /* Mission panel extras: clock, met goals and the row of mission steps. */
 .mission-head { display: flex; justify-content: space-between; gap: 8px; }

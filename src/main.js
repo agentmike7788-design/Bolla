@@ -18,6 +18,7 @@ import { createMenu } from './menu.js';
 import { createTutorial, tutorialDone, TUTORIAL_SEED } from './tutorial.js';
 import { createLaunch } from './launch.js';
 import { createStatsView } from './statsView.js';
+import { DRONES_PER_PORT, DRONE_RANGE, DRONE_SPEED, PROVIDER_CAP, REQUEST_AMOUNTS } from './drones.js';
 import './style.css';
 
 const canvas = document.getElementById('scene');
@@ -209,8 +210,11 @@ function renderProgress() {
   renderPower();
   renderOil();
   renderRail();
+  renderDrones();
   renderRocket();
   if (selected?.type === 'silo') renderSiloNote();
+  const chestNote = (selected?.type === 'requester' || selected?.type === 'provider') && document.getElementById('chest-note');
+  if (chestNote) chestNote.textContent = chestLine(selected);
   // The train panel's status line follows the train; the rest stays clickable.
   const note = selected?.path && document.getElementById('train-note');
   if (note) note.innerHTML = `${trainLine(selected)}${selected.total ? `<br>${cargoText(selected.cargo)}` : ''}`;
@@ -299,6 +303,27 @@ function renderRail() {
   } else {
     railState.textContent = `${num(perMin)}/min`;
     railText.textContent = `${s.trains} ${s.trains === 1 ? 'Zug' : 'Züge'} · ${s.running} ${s.running === 1 ? 'fährt' : 'fahren'}${s.waiting ? ` · ${s.waiting} warten` : ''} · ${s.stations} Bahnhöfe · ${num(factory.shipped)} Teile geliefert`;
+  }
+}
+
+const dronePanel = document.getElementById('drone');
+const droneState = document.getElementById('drone-state');
+const droneText = document.getElementById('drone-text');
+
+// Shown once drones are unlocked: ports, drones in the air and what they carried.
+function renderDrones() {
+  const s = factory.drones.summary();
+  dronePanel.hidden = !factory.research.unlocked.has('dronePort') && !s.ports;
+  if (dronePanel.hidden) return;
+  if (!s.ports) {
+    droneState.textContent = 'kein Hafen';
+    droneText.textContent = 'Drohnenhafen (F) mit Strom bauen, Angebotskisten (V) mit Bändern füllen, Anfragekisten (C) vor die Maschinen.';
+  } else if (!s.chests) {
+    droneState.textContent = 'keine Kisten';
+    droneText.textContent = `${s.drones} Drohnen warten. Angebots- und Anfragekisten in den Bereich des Hafens stellen.`;
+  } else {
+    droneState.textContent = `${num(factory.flownPerMinute())}/min`;
+    droneText.textContent = `${s.flying} von ${s.drones} Drohnen fliegen · ${s.chests} Kisten${s.uncovered ? ` (${s.uncovered} außer Reichweite)` : ''} · ${num(factory.flown)} Teile geflogen`;
   }
 }
 
@@ -679,6 +704,7 @@ const TRAIN_TEXT = {
   stop: 'Hält',
   nopath: 'Kein Weg zum nächsten Halt',
   noschedule: 'Kein Fahrplan: Halte hinzufügen',
+  signal: 'Wartet am roten Signal',
 };
 const stationOf = (i) => {
   const b = factory.buildings.get(i);
@@ -708,6 +734,25 @@ function renderPanel() {
   const b = selected;
   if (b.path) return renderSchedule(b);
   if (b.type === 'silo') return renderSilo(b);
+  if (b.type === 'requester' || b.type === 'provider') return renderChest(b);
+  if (b.type === 'signal') {
+    recipeLabel.textContent = 'Signal · Art';
+    const modes = [
+      ['block', 'Blocksignal', 'Lässt einen Zug durch, wenn der Block dahinter frei ist'],
+      ['chain', 'Kettensignal', 'Lässt einen Zug erst durch, wenn sein Weg bis zum nächsten Blocksignal frei ist. Vor Weichen und Kreuzungen setzen'],
+    ];
+    recipeList.innerHTML =
+      modes
+        .map(
+          ([id, name, text]) => `<button type="button" class="recipe-option" data-mode="${id}" aria-pressed="${(id === 'chain') === !!b.chain}">
+        <span class="swatch" style="--c:${id === 'chain' ? '#8a5ae0' : '#3ef06a'}"></span><b>${name}</b><span>${text}</span></button>`,
+        )
+        .join('') +
+      `<p class="panel-note">Richtung:</p>
+      <div class="stop-add"><button type="button" data-mode="both" aria-pressed="${!b.oneway}">Beide Richtungen</button><button type="button" data-mode="oneway" aria-pressed="${!!b.oneway}">Einbahn nach ${DIR_NAMES[b.dir]}</button></div>
+      <p class="panel-note">Grün: der Block hinter dem Signal ist frei. Einbahnsignale lassen Züge nur in Pfeilrichtung durch (R dreht), so fahren auf Ringen und Doppelgleisen alle Züge gleich herum.</p>`;
+    return;
+  }
   if (b.type === 'station') {
     recipeLabel.textContent = `Bahnhof ${b.name} · Betriebsart`;
     const modes = [
@@ -732,6 +777,31 @@ function renderPanel() {
         <b>${ITEMS[r.makes].name}</b><span>${r.needs ? needsText(r.needs) : `${r.oil} Öl`} · ${r.time} s</span></button>`,
     )
     .join('');
+}
+
+// What a drone chest holds, for its panel.
+function chestLine(b) {
+  const what = b.total ? cargoText(b.items) : 'leer';
+  const reach = b.dnet ? '' : ' · Kein Drohnenhafen in Reichweite';
+  if (b.type === 'provider') return `${b.total}/${PROVIDER_CAP} Teile: ${what} · ${num(b.sent)} von Drohnen abgeholt${reach}`;
+  return `${b.request ? `${b.items[b.request] ?? 0}/${b.want} ${ITEMS[b.request].name}` : 'Noch kein Teil gewählt'} · ${num(b.received)} geliefert, ${num(b.handed)} weitergegeben${reach}`;
+}
+
+// A requester chest picks the part and how many it keeps; a provider shows its stock.
+function renderChest(b) {
+  recipeLabel.textContent = b.type === 'provider' ? 'Angebotskiste' : 'Anfragekiste · Teil wählen';
+  if (b.type === 'provider') {
+    recipeList.innerHTML = `<p class="panel-note" id="chest-note">${chestLine(b)}</p>
+      <p class="panel-note">Bänder von jeder Seite füllen die Kiste. Drohnen holen die Teile für Anfragekisten im selben Netz ab.</p>`;
+    return;
+  }
+  recipeList.innerHTML = `<div class="wish-grid">${Object.entries(ITEMS)
+    .map(([k, it]) => `<button type="button" data-wish="${k}" aria-pressed="${b.request === k}"><span class="swatch" style="--c:${hex(it.color)}"></span><span>${it.name}</span></button>`)
+    .join('')}</div>
+    <p class="panel-note">Vorrat halten:</p>
+    <div class="stop-add">${REQUEST_AMOUNTS.map((n) => `<button type="button" data-want="${n}" aria-pressed="${b.want === n}">${n}</button>`).join('')}</div>
+    <p class="panel-note" id="chest-note">${chestLine(b)}</p>
+    <p class="panel-note">Gibt die Teile nach ${DIR_NAMES[b.dir]} an ein Band oder eine Maschine weiter (R dreht).</p>`;
 }
 
 // The silo's stages with their parts, and the start button once the rocket is ready.
@@ -796,18 +866,22 @@ function renderSchedule(t) {
     }</div>`;
 }
 
-const hasRecipes = (b) => !!recipesOf(b?.type) || b?.type === 'station' || b?.type === 'silo';
+const hasRecipes = (b) => !!recipesOf(b?.type) || ['station', 'silo', 'signal', 'requester', 'provider'].includes(b?.type);
 recipeList.addEventListener('click', (e) => {
   if (!selected) return;
   const opt = e.target.closest('[data-recipe]');
   const mode = e.target.closest('[data-mode]');
   const add = e.target.closest('[data-stop]');
   const drop = e.target.closest('[data-unstop]');
+  const wish = e.target.closest('[data-wish]');
+  const want = e.target.closest('[data-want]');
   if (e.target.closest('[data-launch]')) return startLaunch(selected);
   if (opt) factory.setRecipe(selected, opt.dataset.recipe);
   else if (mode) factory.setMode(selected, mode.dataset.mode);
   else if (add) factory.railways.setSchedule(selected, [...selected.schedule, Number(add.dataset.stop)]);
   else if (drop) factory.railways.setSchedule(selected, selected.schedule.filter((_, n) => n !== Number(drop.dataset.unstop)));
+  else if (wish) factory.setRequest(selected, wish.dataset.wish);
+  else if (want) factory.setRequest(selected, selected.request, Number(want.dataset.want));
   else return;
   audio.play.click();
   renderPanel();
@@ -845,6 +919,7 @@ function showTile(tile) {
     marker.visible = false;
     ghost.show(null);
     factoryView.showSupply(tool === 'pole' || tool === 'power');
+    factoryView.showDroneRange(DRONE_TOOLS.has(tool));
     tileName.textContent = 'Maus über die Karte bewegen';
     tileDetail.textContent = '';
     return;
@@ -858,6 +933,7 @@ function showTile(tile) {
   marker.position.set(tile.position.x, Math.max(tile.height, 0.28) + 0.03, tile.position.z);
   ghost.show(tool, tile, tool === 'remove' || overBelt ? building?.dir ?? 0 : dir, check?.ok);
   factoryView.showSupply(tool === 'pole' || tool === 'power' || usesPower({ type: tool }) || (!tool && (building?.type === 'pole' || building?.type === 'power')));
+  factoryView.showDroneRange(DRONE_TOOLS.has(tool) || (!tool && DRONE_TOOLS.has(building?.type)));
 
   const terrain = TERRAIN[tile.terrain];
   if (train) {
@@ -868,6 +944,19 @@ function showTile(tile) {
     tileName.textContent = 'Gleis';
     const n = building.links?.length ?? 0;
     tileDetail.textContent = n ? `${n === 1 ? 'Gleisende' : n === 2 ? 'Strecke' : 'Weiche'} · Züge fahren bis ${num(Math.round(TRAIN_SPEED * factory.research.stats.train * 60))} Felder/min` : 'Noch nicht verbunden: Gleis von hier weiterziehen';
+  } else if (building?.type === 'signal') {
+    tileName.textContent = building.chain ? 'Kettensignal' : 'Blocksignal';
+    const g = building.green ?? [false, false];
+    const ahead = DIR_NAMES[building.dir];
+    const free = building.oneway ? `Einbahn nach ${ahead} · ${g[0] ? 'Grün' : 'Rot'}` : g[0] && g[1] ? 'Beide Seiten frei' : g[0] || g[1] ? `Frei nach ${DIR_NAMES[g[0] ? building.dir : (building.dir + 2) % 4]}` : 'Rot: Blöcke belegt oder reserviert';
+    tileDetail.textContent = `${free}${tool ? '' : ' · Klick: Art und Richtung'}`;
+  } else if (building?.type === 'dronePort') {
+    tileName.textContent = 'Drohnenhafen';
+    const state = building.state === 'nopower' ? 'Kein Strom: Drohnen bleiben am Boden' : `${building.out ?? 0} von ${DRONES_PER_PORT} Drohnen unterwegs`;
+    tileDetail.textContent = `${state} · Reichweite ${DRONE_RANGE * 2 + 1} × ${DRONE_RANGE * 2 + 1} Felder · ${num(Math.round(DRONE_SPEED * factory.research.stats.drone * 60))} Felder/min${powerNote(building)}`;
+  } else if (building?.type === 'provider' || building?.type === 'requester') {
+    tileName.textContent = building.type === 'provider' ? 'Angebotskiste' : `Anfragekiste${building.request ? ` · ${ITEMS[building.request].name}` : ''}`;
+    tileDetail.textContent = `${chestLine(building)}${tool ? '' : building.type === 'requester' ? ' · Klick: Teil wählen' : ''}`;
   } else if (building?.type === 'station') {
     tileName.textContent = `Bahnhof ${building.name} · ${building.mode === 'load' ? 'Beladen' : 'Entladen'}`;
     const side = building.mode === 'load' ? 'Bänder von der Seite liefern zu' : 'gibt an Bänder an den Seiten ab';
@@ -996,9 +1085,10 @@ let lastTile = null;
 let shapesDirty = false;
 
 const toolButtons = document.querySelectorAll('.tool[data-tool]');
+const DRONE_TOOLS = new Set(['dronePort', 'provider', 'requester']);
 const help = document.getElementById('help');
 const HELP = {
-  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['O P I K', 'Öl'], ['G B Z', 'Bahn'], ['H', 'Silo'], ['X', 'abreißen'], ['T', 'Forschung'], ['L', 'Statistik'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
+  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['O P I K', 'Öl'], ['G B Z J', 'Bahn'], ['F V C', 'Drohnen'], ['H', 'Silo'], ['X', 'abreißen'], ['T', 'Forschung'], ['L', 'Statistik'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
@@ -1014,6 +1104,10 @@ const HELP = {
   tank: [['Klick', 'Öltank setzen'], ['Speichert', '400 Öl'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen']],
   refinery: [['Klick', 'Raffinerie setzen'], ['R', 'Ausgang drehen'], ['Rohr', 'an jede Seite außer vorn'], ['Ohne Werkzeug klicken', 'Rezept wählen']],
   rail: [['Ziehen', 'Gleise verlegen'], ['Ecken', 'werden Kurven'], ['Von einem Gleis ziehen', 'Abzweig'], ['Esc', 'fertig']],
+  signal: [['Klick auf Gleis', 'Signal setzen'], ['Blöcke', 'je ein Zug'], ['Ohne Werkzeug klicken', 'Block- / Kettensignal'], ['Esc', 'fertig']],
+  dronePort: [['Klick', 'Drohnenhafen setzen'], ['Strom', 'Mast in die Nähe'], ['Reichweite', `${DRONE_RANGE * 2 + 1} × ${DRONE_RANGE * 2 + 1}`], ['Esc', 'fertig']],
+  provider: [['Klick', 'Angebotskiste setzen'], ['Bänder', 'füllen sie'], ['Im Bereich', 'eines Hafens'], ['Esc', 'fertig']],
+  requester: [['Klick', 'Anfragekiste setzen'], ['R', 'Ausgang drehen'], ['Ohne Werkzeug klicken', 'Teil wählen'], ['Esc', 'fertig']],
   station: [['Klick', 'Bahnhof setzen'], ['R', 'Gleisrichtung drehen'], ['Bänder', 'an die Seiten'], ['Ohne Werkzeug klicken', 'Beladen / Entladen']],
   train: [['Klick auf Bahnhof', 'Zug einsetzen'], ['Braucht', '4 Felder Gleis'], ['Ohne Werkzeug klicken', 'Fahrplan'], ['Esc', 'fertig']],
   silo: [['Klick', 'Raketensilo setzen'], ['Braucht', '3 × 3 freie Felder'], ['Bänder', 'an jede Seite'], ['Ohne Werkzeug klicken', 'Etappen, Start']],
@@ -1057,7 +1151,8 @@ function rotate() {
   audio.play.rotate();
   const building = !tool && hovered && factory.get(hovered);
   if (building) {
-    factory.setDir(building, (building.dir + 1) % 4);
+    // A signal turns round on its track; everything else turns a quarter.
+    factory.setDir(building, (building.dir + (building.type === 'signal' ? 2 : 1)) % 4);
     shapesDirty = true;
   } else {
     dir = (dir + 1) % 4;
@@ -1070,7 +1165,8 @@ function buildAt(tile) {
   if (tool === 'remove') {
     const removed = factory.remove(tile);
     if (removed) {
-      for (const i of factory.footprint(removed)) meshes.setDecorHidden(i, false);
+      // A signal leaves its rail behind, which keeps the ground clear.
+      if (!factory.get(tile)) for (const i of factory.footprint(removed)) meshes.setDecorHidden(i, false);
       audio.play.remove();
       effects.remove(tile, removed.type);
     }
@@ -1203,7 +1299,7 @@ window.addEventListener('keydown', (e) => {
   if (key === 'n') return dayNight.skipAhead();
   if (key === 't' && missions) return showToast('Missionskarte', 'Hier schalten Missionen neue Gebäude frei, nicht der Forschungsbaum.');
   const numbered = /^[0-9]$/.test(key) && ['drill', 'belt', 'storage', 'furnace', 'assembler', 'splitter', 'merger', 'constructor', 'power', 'pole'][(Number(key) + 9) % 10];
-  const oilKey = { o: 'pump', p: 'pipe', i: 'refinery', k: 'tank', g: 'rail', b: 'station', z: 'train', h: 'silo' }[key];
+  const oilKey = { o: 'pump', p: 'pipe', i: 'refinery', k: 'tank', g: 'rail', b: 'station', z: 'train', j: 'signal', f: 'dronePort', v: 'provider', c: 'requester', h: 'silo' }[key];
   if (numbered) setTool(numbered);
   else if (oilKey) setTool(oilKey);
   else if (key === 'x' || key === 'delete') setTool('remove');
@@ -1351,4 +1447,4 @@ resize();
 openTitle();
 
 // Handle for poking at the game from the browser console while developing.
-if (import.meta.env.DEV) window.bolla = { launch, stats, camera, rig, tutorial, renderer, scene, factoryView, startGame, saveGame, loadGame, menu, dayNight, effects, audio, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get meshes() { return meshes; }, get factory() { return factory; }, get missions() { return missions; } };
+if (import.meta.env.DEV) window.bolla = { closeMenu, launch, stats, camera, rig, tutorial, renderer, scene, factoryView, startGame, saveGame, loadGame, menu, dayNight, effects, audio, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get meshes() { return meshes; }, get factory() { return factory; }, get missions() { return missions; } };
