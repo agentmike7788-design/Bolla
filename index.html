@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Bolla Fabrik</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@500&display=swap" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene"></canvas>
+      <header class="hud hud-top">
+        <h1>Bolla Fabrik</h1>
+        <p class="seed">Karte <span id="seed"></span> <button id="new-map" type="button">Neue Karte</button></p>
+      </header>
+      <aside class="hud hud-info" id="tile-info" aria-live="polite">
+        <p class="label">Feld</p>
+        <p class="value" id="tile-name">Maus über die Karte bewegen</p>
+        <p class="detail" id="tile-detail"></p>
+      </aside>
+      <aside class="hud hud-legend">
+        <p class="label">Erzvorkommen</p>
+        <ul id="legend"></ul>
+      </aside>
+      <footer class="hud hud-help">
+        <span><kbd>Linke Maus</kbd> verschieben</span>
+        <span><kbd>Rechte Maus</kbd> / <kbd>Q</kbd> <kbd>E</kbd> drehen</span>
+        <span><kbd>Mausrad</kbd> zoomen</span>
+        <span><kbd>WASD</kbd> bewegen</span>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

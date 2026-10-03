@@ -1,0 +1,71 @@
+import * as THREE from 'three';
+import { MapControls } from 'three/addons/controls/MapControls.js';
+
+// Strategy-game camera: left mouse pans, right mouse rotates, wheel zooms,
+// WASD moves and Q/E rotates. The focus point stays inside the map.
+export function createCameraRig(camera, dom, halfExtent) {
+  camera.position.set(0, 34, 34);
+
+  const controls = new MapControls(camera, dom);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.12;
+  controls.screenSpacePanning = false;
+  controls.minDistance = 8;
+  controls.maxDistance = 90;
+  controls.minPolarAngle = 0.15;
+  controls.maxPolarAngle = Math.PI / 2.6;
+  controls.zoomToCursor = true;
+  controls.target.set(0, 0, 0);
+  controls.update();
+
+  const keys = new Set();
+  const isTyping = () => document.activeElement?.tagName === 'INPUT';
+  window.addEventListener('keydown', (e) => {
+    if (!isTyping()) keys.add(e.key.toLowerCase());
+  });
+  window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
+  window.addEventListener('blur', () => keys.clear());
+
+  const forward = new THREE.Vector3();
+  const right = new THREE.Vector3();
+  const move = new THREE.Vector3();
+  const offset = new THREE.Vector3();
+  const up = new THREE.Vector3(0, 1, 0);
+
+  function update(dt) {
+    move.set(0, 0, 0);
+    camera.getWorldDirection(forward);
+    forward.y = 0;
+    forward.normalize();
+    right.crossVectors(forward, up);
+    if (keys.has('w') || keys.has('arrowup')) move.add(forward);
+    if (keys.has('s') || keys.has('arrowdown')) move.sub(forward);
+    if (keys.has('d') || keys.has('arrowright')) move.add(right);
+    if (keys.has('a') || keys.has('arrowleft')) move.sub(right);
+    if (move.lengthSq() > 0) {
+      // Move faster when zoomed out.
+      const speed = controls.getDistance() * 0.9 * dt;
+      move.normalize().multiplyScalar(speed);
+      camera.position.add(move);
+      controls.target.add(move);
+    }
+
+    const turn = (keys.has('q') ? 1 : 0) - (keys.has('e') ? 1 : 0);
+    if (turn) {
+      offset.subVectors(camera.position, controls.target).applyAxisAngle(up, turn * 1.6 * dt);
+      camera.position.copy(controls.target).add(offset);
+    }
+
+    // Keep the focus point on the map.
+    const clamped = controls.target.clone();
+    clamped.x = THREE.MathUtils.clamp(clamped.x, -halfExtent, halfExtent);
+    clamped.z = THREE.MathUtils.clamp(clamped.z, -halfExtent, halfExtent);
+    clamped.y = 0;
+    camera.position.add(clamped.clone().sub(controls.target));
+    controls.target.copy(clamped);
+
+    controls.update();
+  }
+
+  return { controls, update };
+}
