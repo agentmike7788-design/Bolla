@@ -19,9 +19,10 @@ export function createCameraRig(camera, dom, halfExtent) {
   controls.update();
 
   const keys = new Set();
+  let locked = false; // while a menu is open the keys and mouse leave the camera alone
   const isTyping = () => document.activeElement?.tagName === 'INPUT';
   window.addEventListener('keydown', (e) => {
-    if (!isTyping()) keys.add(e.key.toLowerCase());
+    if (!isTyping() && !locked && !e.ctrlKey && !e.metaKey) keys.add(e.key.toLowerCase());
   });
   window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
   window.addEventListener('blur', () => keys.clear());
@@ -67,5 +68,17 @@ export function createCameraRig(camera, dom, halfExtent) {
     controls.update();
   }
 
-  return { controls, update };
+  function setLocked(on) {
+    locked = on;
+    controls.enabled = !on;
+    if (on) keys.clear();
+  }
+
+  // Slowly circle around the focus point, for the title screen.
+  function orbit(angle) {
+    offset.subVectors(camera.position, controls.target).applyAxisAngle(up, angle);
+    camera.position.copy(controls.target).add(offset);
+  }
+
+  return { controls, update, setLocked, orbit };
 }

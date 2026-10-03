@@ -341,6 +341,38 @@ export function createFactory(world, { start } = {}) {
     for (const b of buildings.values()) if (b.type === 'drill') tickDrill(b, dt);
   }
 
+  // Plain data for a save game. The world itself is rebuilt from its seed,
+  // only the ore left in each field is stored.
+  function save() {
+    return {
+      time,
+      mined,
+      stored,
+      delivered,
+      recent: Object.fromEntries(Object.entries(recent).filter(([, log]) => log.length)),
+      research: research.save(),
+      amounts: world.tiles.filter((t) => t.ore).map((t) => t.amount),
+      buildings: [...buildings.values()].map(({ tile, index, ...rest }) => ({ ...rest, index })),
+    };
+  }
+
+  function load(data) {
+    time = data.time ?? 0;
+    for (const [target, from] of [[mined, data.mined], [stored, data.stored], [delivered, data.delivered]]) {
+      for (const k of Object.keys(target)) target[k] = from?.[k] ?? 0;
+    }
+    for (const k of Object.keys(recent)) recent[k] = data.recent?.[k] ?? [];
+    research.load(data.research);
+    let n = 0;
+    for (const t of world.tiles) if (t.ore) t.amount = data.amounts?.[n++] ?? t.amount;
+    buildings.clear();
+    for (const b of data.buildings ?? []) {
+      const tile = world.tiles[b.index];
+      if (tile && BUILDINGS[b.type]) buildings.set(b.index, { ...b, tile });
+    }
+    updateShapes();
+  }
+
   return {
     buildings,
     mined,
@@ -360,6 +392,8 @@ export function createFactory(world, { start } = {}) {
     setDir,
     setRecipe,
     tick,
+    save,
+    load,
     get: (tile) => buildings.get(indexOf(tile)) ?? null,
   };
 }

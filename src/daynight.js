@@ -248,6 +248,9 @@ export function createDayNight({ scene, renderer, sun, hemi, mapHalf }) {
         localStorage.setItem(MODE_KEY, mode);
       } catch {}
     },
+    get time() {
+      return time;
+    },
     setTime(t) {
       time = t;
     },

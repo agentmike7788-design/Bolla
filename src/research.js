@@ -168,6 +168,18 @@ export function createResearch(stored, start = START_UNLOCKED) {
     affordable,
     complete,
     grant,
+    save: () => ({ done: [...done], unlocked: [...unlocked], stats: { ...stats }, levels: { ...levels } }),
+    load(data) {
+      if (!data) return;
+      done.clear();
+      for (const id of data.done ?? []) if (byId[id]) done.add(id);
+      unlocked.clear();
+      for (const type of data.unlocked ?? start) unlocked.add(type);
+      for (const s of STATS) {
+        stats[s] = data.stats?.[s] ?? 1;
+        levels[s] = data.levels?.[s] ?? 0;
+      }
+    },
     get won() {
       return RESEARCH.some((r) => r.goal && done.has(r.id));
     },

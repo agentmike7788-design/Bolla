@@ -26,7 +26,7 @@ Maschinen nehmen Teile von Bändern an jeder Seite außer ihrem Ausgang an und g
 
 Forschung: Oben links steht die nächste Forschung, `T` öffnet den ganzen Baum. Bezahlt wird mit Teilen aus dem Lager. Schmelzen schaltet den Schmelzofen frei, Pressen die Presse; dazu gibt es schnellere Bänder, Bohrer und Öfen. „Erste Fabrik“ (25 Platten, 25 Draht, 15 Beton) ist das erste Spielziel. Danach geht es weiter: Logistik (Verteiler, Zusammenführer), Konstruktor, Hydraulik, Tiefbohrer und Magnetbänder; „Meisterfabrik“ (50 Schaltkreise, 40 Stahlträger, 40 Zahnräder) ist das große Ziel. Bänder und Bohrer wechseln mit jeder Tempo-Forschung die Farbe. Neue Einträge kommen in `src/research.js`; der Baum ordnet sie selbst nach ihren Voraussetzungen an.
 
-Karten und Missionen: Beim Start (und mit `M` oder dem Knopf „Karten“) wählt man eine Karte. Im freien Spiel gibt es eine Zufallsinsel mit allen Erzen und den Forschungsbaum. Dazu kommen vier Missionskarten mit eigener Landschaft und nur bestimmten Erzen:
+Karten und Missionen: Unter „Neues Spiel“ im Hauptmenü (und im Spiel mit `M` oder dem Knopf „Karten“) wählt man eine Karte. Im freien Spiel gibt es eine Zufallsinsel mit allen Erzen und den Forschungsbaum. Dazu kommen vier Missionskarten mit eigener Landschaft und nur bestimmten Erzen:
 - Eisenberge (Eisen, Kalkstein): der Einstieg vom ersten Bohrer bis zum Zahnradwerk.
 - Kupferwüste (Kupfer, Kalkstein): Wüste mit Kakteen, am Ende 60 Draht pro Minute.
 - Kohleinsel (Kohle, Eisen): kleine Insel, wenig Platz, ein Stahlwerk.
@@ -34,7 +34,9 @@ Karten und Missionen: Beim Start (und mit `M` oder dem Knopf „Karten“) wähl
 
 Auf Missionskarten ersetzen Missionen den Forschungsbaum: Jede Mission hat Ziele (Teile ins Lager liefern, Gebäude bauen oder eine Menge pro Minute schaffen) und schaltet als Belohnung Gebäude und Tempo frei. Wer alle Missionen schafft, bekommt je nach Zeit ein bis drei Sterne; die Bestzeit merkt sich der Browser. Neue Karten kommen in `src/scenarios.js`.
 
-Ton und Licht: Alle Geräusche entstehen im Browser per Web Audio, ohne Audiodateien: Bauen, Abreißen, Drehen, Missionserfolg und eine ruhige Hintergrundmusik. Maschinen brummen, rattern und fauchen umso lauter, je näher die Kamera ist, und kommen von links oder rechts. Über „Ton & Licht“ oben stellt man Lautstärke und Musik ein, `U` schaltet den Ton stumm. Ein Tag dauert acht Minuten: Die Sonne wandert, abends wird es orange, nachts gibt es Sterne, und die Maschinen leuchten den Boden an. `N` springt zur nächsten Tageszeit; im Menü lässt sich auch „Immer Tag“ oder „Immer Nacht“ wählen. Öfen sprühen Funken und Glut, Bohrer werfen Erzbrocken auf, Pressen funken beim Stanzen, beim Bauen staubt es, und eine geschaffte Karte gibt ein Feuerwerk.
+Ton und Licht: Alle Geräusche entstehen im Browser per Web Audio, ohne Audiodateien: Bauen, Abreißen, Drehen, Missionserfolg und eine ruhige Hintergrundmusik. Maschinen brummen, rattern und fauchen umso lauter, je näher die Kamera ist, und kommen von links oder rechts. Unter Einstellungen im Menü stellt man Lautstärke und Musik ein, `U` schaltet den Ton stumm. Ein Tag dauert acht Minuten: Die Sonne wandert, abends wird es orange, nachts gibt es Sterne, und die Maschinen leuchten den Boden an. `N` springt zur nächsten Tageszeit; im Menü lässt sich auch „Immer Tag“ oder „Immer Nacht“ wählen. Öfen sprühen Funken und Glut, Bohrer werfen Erzbrocken auf, Pressen funken beim Stanzen, beim Bauen staubt es, und eine geschaffte Karte gibt ein Feuerwerk.
+
+Hauptmenü und Speichern: Das Spiel startet im Hauptmenü; dahinter kreist die Kamera über dem zuletzt gespielten Spiel. „Weiterspielen“ macht dort weiter, „Neues Spiel“ öffnet die Kartenauswahl, „Laden“ zeigt alle Spielstände mit Vorschaubild, Einstellungen haben Ton, Grafik (Schatten, Auflösung, Partikel, Tageszeit) und das Autospeichern, Steuerung listet alle Tasten. Jedes Spiel ist ein eigener Spielstand im Browser (localStorage); es speichert sich jede Minute von selbst, beim Kartenwechsel, beim Verlassen der Seite und mit `Strg S`. Mit Export wird ein Spielstand zur Datei, mit „Datei importieren“ kommt er zurück, auch auf einem anderen Gerät. `Esc` schließt erst das, was gerade offen ist (Kartenauswahl, Forschungsbaum, Rezepte, Werkzeug), und öffnet sonst das Pausenmenü; solange es offen ist, steht die Fabrik still.
 
 Code:
 - `src/world.js` erzeugt die Karte (Gelände per Rauschen, Erzfelder als Flecken); Landschaft und Erze lassen sich pro Karte einstellen.
@@ -45,4 +47,5 @@ Code:
 - `src/research.js` ist der Forschungsbaum, `src/researchView.js` zeigt ihn an.
 - `src/buildings.js` zeichnet die Gebäude, Bänder, die Teile darauf und die Bau-Vorschau.
 - `src/audio.js` erzeugt alle Geräusche und die Musik, `src/effects.js` die Partikel, `src/daynight.js` den Tag-Nacht-Wechsel mit Himmel, Sternen und Maschinenlichtern.
+- `src/save.js` speichert und lädt Spielstände, `src/menu.js` ist Hauptmenü und Pausenmenü.
 - `src/main.js` verbindet Szene, Licht, Maus- und Tastatur-Steuerung und HUD.
