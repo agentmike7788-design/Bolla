@@ -59,6 +59,14 @@ const LABEL_LIFT := "Altes Grab heben"
 const TEXT_CANNOT_LIFT := "Das alte Grab lässt sich nicht heben."
 const PIT_FOOT := &"foot"
 const PIT_FOOT_PATH := "res://assets/models/props/ph_prop_grave_pit_foot.glb"
+# Phase 7 (docs/PHASE7_DESIGN.md §2.5, §2.6.2, §3.4; P4): give a specimen back, a new stone on a
+# rest-period grave (against the P3 API Graveyard.replace_old_marker).
+const SPECIMENS_GROUP := &"specimens"
+const PROMPT_RETURN := "[E] Präparat beisetzen: %s von %s (%d Min)"
+const LABEL_RETURN := "Präparat beisetzen"
+const TEXT_CANNOT_RETURN := "Das Präparat lässt sich hier nicht beisetzen."
+const PROMPT_NEW_STONE := "[E] Neuen Stein setzen (%d Min)"
+const LABEL_NEW_STONE := "Neuen Stein setzen"
 
 @export var grave_id: String = ""
 @export var is_old: bool = false
@@ -136,15 +144,19 @@ func can_interact(player: Player) -> bool:
 		return false
 	match grave.state:
 		GraveRecord.State.OLD:
+			if has_old_stone_to_set():
+				return not _is_carrying(player)
 			return is_old and _lift_open() and not _is_carrying(player) and _lift_block_reason(player) == ""
 		GraveRecord.State.EMPTY:
 			return not _is_carrying(player) and not _corpse_on_plot()
 		GraveRecord.State.DUG:
 			return _is_carrying(player)
 		GraveRecord.State.FILLED:
-			return not _is_carrying(player) and (has_stone_to_set() or not available_markers(player.inventory).is_empty())
+			return not _is_carrying(player) and (has_stone_to_set() or returnable_specimen(player.inventory) != ""
+					or not available_markers(player.inventory).is_empty())
 		GraveRecord.State.MARKED:
-			return not _is_carrying(player) and (has_stone_to_set() or upgrade_marker_id(player.inventory) != &"")
+			return not _is_carrying(player) and (has_stone_to_set() or returnable_specimen(player.inventory) != ""
+					or upgrade_marker_id(player.inventory) != &"")
 	return false
 
 
@@ -155,6 +167,8 @@ func get_interaction_prompt(player: Player) -> String:
 	var carrying := player != null and _is_carrying(player)
 	match grave.state:
 		GraveRecord.State.OLD:
+			if has_old_stone_to_set():
+				return Player.TEXT_HANDS_FULL if carrying else PROMPT_NEW_STONE % _stone_config().set_minutes
 			if not is_old or not _lift_open():
 				return ""
 			if carrying:
@@ -174,6 +188,9 @@ func get_interaction_prompt(player: Player) -> String:
 				return Player.TEXT_HANDS_FULL
 			if has_stone_to_set():
 				return PROMPT_SET_STONE % _stone_config().set_minutes
+			var back := return_prompt(player.inventory if player != null else null)
+			if back != "":
+				return back
 			var options := available_markers(player.inventory if player != null else null)
 			if options.is_empty():
 				return PROMPT_NO_MARKER
@@ -183,6 +200,9 @@ func get_interaction_prompt(player: Player) -> String:
 		GraveRecord.State.MARKED:
 			if has_stone_to_set() and not carrying:
 				return PROMPT_SET_STONE % _stone_config().set_minutes
+			var back := return_prompt(player.inventory if player != null else null)
+			if back != "" and not carrying:
+				return back
 			var better := upgrade_marker_id(player.inventory if player != null else null)
 			if better != &"" and not carrying:
 				return PROMPT_UPGRADE % [_item_name(better), _item_name(grave.marker_id), _actions(player).marker_minutes]
@@ -198,6 +218,13 @@ func interact(player: Player) -> void:
 	if (grave.state == GraveRecord.State.FILLED or grave.state == GraveRecord.State.MARKED) and has_stone_to_set():
 		player.start_timed_action(LABEL_SET_STONE, _stone_config().set_minutes, _finish_set_stone.bind(player.inventory),
 				true, ANIM_MARKER)
+		return
+	if grave.state == GraveRecord.State.OLD and has_old_stone_to_set():
+		player.start_timed_action(LABEL_NEW_STONE, _stone_config().set_minutes, _finish_new_stone, true, ANIM_MARKER)
+		return
+	var uid := returnable_specimen(player.inventory)
+	if (grave.state == GraveRecord.State.FILLED or grave.state == GraveRecord.State.MARKED) and uid != "":
+		player.start_timed_action(LABEL_RETURN, _return_minutes(), _finish_return.bind(uid, player.inventory), true, ANIM_MARKER)
 		return
 	match grave.state:
 		GraveRecord.State.OLD:
@@ -340,6 +367,65 @@ func _finish_set_stone(inv: Inventory) -> void:
 	var grave := _grave()
 	if grave == null or grave.design != (order.design as Dictionary):
 		EventBus.notification_requested.emit(TEXT_CANNOT_SET_STONE, &"warning")
+
+
+# --- Phase 7 (P4): „Präparat beisetzen", „Neuen Stein setzen" -----------------------------------
+
+## The first specimen of the buried dead in `inv` that can go back into this grave ("" = none).
+func returnable_specimen(inv: Inventory) -> String:
+	var grave := _grave()
+	var specimens := _specimens()
+	if grave == null or inv == null or specimens == null or grave.corpse_id == "":
+		return ""
+	for uid: String in specimens.of_corpse(grave.corpse_id):
+		if inv.has_uid(uid) and specimens.return_block_reason(uid, grave_id) == "":
+			return uid
+	return ""
+
+
+## „[E] Präparat beisetzen: Herz von Hedwig Lamprecht (10 Min)" ("" = nothing to give back).
+func return_prompt(inv: Inventory) -> String:
+	var uid := returnable_specimen(inv)
+	if uid == "":
+		return ""
+	var specimens := _specimens()
+	var spec := specimens.get_record(uid)
+	return PROMPT_RETURN % [specimens.organ_label(spec.organ), spec.corpse_name, _return_minutes()]
+
+
+## A rest-period grave (OLD) whose designed stone waits in the mason's rack (an active stone order, P3).
+func has_old_stone_to_set() -> bool:
+	var grave := _grave()
+	var masonry := _stonemasonry()
+	if grave == null or grave.state != GraveRecord.State.OLD or masonry == null:
+		return false
+	return not masonry.ready_for(grave_id).is_empty()
+
+
+func _finish_return(uid: String, inv: Inventory) -> void:
+	var specimens := _specimens()
+	if specimens == null or not specimens.return_to_grave(uid, grave_id, inv):
+		EventBus.notification_requested.emit(TEXT_CANNOT_RETURN, &"warning")
+
+
+func _finish_new_stone() -> void:
+	var masonry := _stonemasonry()
+	var graveyard := _graveyard()
+	var order := masonry.ready_for(grave_id) if masonry != null else {}
+	if graveyard == null or order.is_empty() or not graveyard.replace_old_marker(grave_id, StoneDesign.from_dict(order.get("design", {}))):
+		EventBus.notification_requested.emit(TEXT_CANNOT_SET_STONE, &"warning")
+
+
+func _return_minutes() -> int:
+	var specimens := _specimens()
+	if specimens != null:
+		return specimens.get_config().return_minutes
+	var cfg := Database.config(&"anatomy_config") as AnatomyConfig
+	return cfg.return_minutes if cfg != null else 10
+
+
+func _specimens() -> Specimens:
+	return get_tree().get_first_node_in_group(SPECIMENS_GROUP) as Specimens if is_inside_tree() else null
 
 
 func _finish_upgrade(id: StringName, inv: Inventory) -> void:

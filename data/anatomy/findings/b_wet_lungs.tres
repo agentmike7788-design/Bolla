@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="SpecimenFindingData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/anatomy/specimen_finding_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"b_wet_lungs"
+organ = &"lung"
+priority = 20
+story_id = &""
+hidden_cause = &""
+cause_id = &"drowned_millpond"
+requires_trait = &""
+text = "Die Lunge ist schwer von Wasser."
+clue_id = &""
+reveals_cause = &""

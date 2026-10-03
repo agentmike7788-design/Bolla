@@ -2,6 +2,8 @@ class_name CorpseGenerator
 extends RefCounted
 ## Deterministic corpse generation (local RNG only, no autoloads).
 ## Draw order (fixed): first name, last name, age, cause, traits, valuables coins.
+## Phase 7 (docs/PHASE7_DESIGN.md §2.6.3): the hidden cause comes from its own RNG of the same seed, so
+## every earlier draw (and every corpse of older saves) stays bit-identical.
 
 ## seed_for(day, index) = day * DAY_FACTOR + OFFSET + INDEX_FACTOR * index (docs §2.5).
 const DAY_FACTOR := 7919
@@ -30,8 +32,26 @@ static func generate(seed: int, tables: CorpseTables, day: int) -> CorpseRecord:
 		var low := mini(tables.valuables_coins_min, tables.valuables_coins_max)
 		var high := maxi(tables.valuables_coins_min, tables.valuables_coins_max)
 		record.valuables_coins = rng.randi_range(low, high)
+	record.hidden_cause = hidden_cause_for(seed, record.cause_id, tables)
 	record.freshness = 1.0
 	return record
+
+
+## CorpseTables.hidden_causes[cause] = [{id, chance}, …]: one roll per entry in order, first hit wins;
+## &"" = none. Deterministic from the seed (own RNG).
+static func hidden_cause_for(seed: int, cause_id: StringName, tables: CorpseTables) -> StringName:
+	if tables == null or not tables.hidden_causes.has(cause_id):
+		return &""
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([seed, "hidden_cause"])
+	for entry: Variant in tables.hidden_causes[cause_id]:
+		if not entry is Dictionary:
+			continue
+		var chance := clampf(float((entry as Dictionary).get("chance", 0.0)), 0.0, 1.0)
+		var id := StringName(str((entry as Dictionary).get("id", "")))
+		if id != &"" and (rng.randf() < chance or chance >= 1.0):
+			return id
+	return &""
 
 
 static func seed_for(day: int, spawn_index: int) -> int:

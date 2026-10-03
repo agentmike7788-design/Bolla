@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="SpecimenFindingData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/anatomy/specimen_finding_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"b_hard_liver"
+organ = &"liver"
+priority = 30
+story_id = &""
+hidden_cause = &"drink"
+cause_id = &""
+requires_trait = &""
+text = "Hart und gelblich, mit kleinen Knoten."
+clue_id = &""
+reveals_cause = &""

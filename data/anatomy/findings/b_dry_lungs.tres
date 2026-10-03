@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="SpecimenFindingData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/anatomy/specimen_finding_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"b_dry_lungs"
+organ = &"lung"
+priority = 30
+story_id = &""
+hidden_cause = &"dead_before_water"
+cause_id = &""
+requires_trait = &""
+text = "Die Lunge ist trocken."
+clue_id = &""
+reveals_cause = &""

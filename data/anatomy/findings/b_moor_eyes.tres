@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="SpecimenFindingData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/anatomy/specimen_finding_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"b_moor_eyes"
+organ = &"eyes"
+priority = 30
+story_id = &""
+hidden_cause = &"drowned_millpond"
+cause_id = &"moor_cold"
+requires_trait = &""
+text = "Die Augen sind trüb, mit einem braunen Schleier."
+clue_id = &""
+reveals_cause = &""

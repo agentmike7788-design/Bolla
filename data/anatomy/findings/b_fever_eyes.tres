@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="SpecimenFindingData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/anatomy/specimen_finding_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"b_fever_eyes"
+organ = &"eyes"
+priority = 20
+story_id = &""
+hidden_cause = &""
+cause_id = &"fever"
+requires_trait = &""
+text = "Gelblich und glasig."
+clue_id = &""
+reveals_cause = &""

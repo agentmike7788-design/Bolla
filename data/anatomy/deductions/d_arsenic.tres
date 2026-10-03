@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DeductionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/anatomy/deduction_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"d_arsenic"
+cause_id = &"arsenic"
+needs_any = Array[StringName]([&"b_white_stomach", &"b_pale_liver"])
+needs_all = Array[StringName]([&"l_stomach"])
+clue_id = &"c_v_arsenic"
+text = "Gedeutet: Arsenik."
+reveals_cause = true

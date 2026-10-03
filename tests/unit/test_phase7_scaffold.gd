@@ -6,7 +6,7 @@ extends TestCase
 ## (tests/fixtures/phase7, Phase7Fixtures).
 
 ## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
-const IMPLEMENTED: PackedStringArray = ["RegionRoot", "RegionPortal", "RegionTravel", "HouseDoor", "NpcLod", "ShopRules", "VillageShops", "RelationshipRules", "Relationships", "ShopCounter", "PultStore", "PultRules", "CollectionRules", "CollectionShelf"]
+const IMPLEMENTED: PackedStringArray = ["RegionRoot", "RegionPortal", "RegionTravel", "HouseDoor", "NpcLod", "ShopRules", "VillageShops", "RelationshipRules", "Relationships", "ShopCounter", "PultStore", "PultRules", "CollectionRules", "CollectionShelf", "SpecimenRules", "Specimens", "LectureRules", "Lectures", "DeductionRules", "Deductions", "LectureSet"]
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
 	# P1
@@ -323,7 +323,7 @@ func test_appended_harvest_kinds() -> void:
 			"§3.4: the seven organs appended")
 	assert_eq(CorpseRecord.ORGAN_KINDS, ORGANS)
 	assert_eq(AnatomyConfig.ORGANS, ORGANS)
-	assert_eq(GhostMood.ROBBED_KINDS, [&"hair", &"teeth"] as Array[StringName], "Phase-6 robbed count unchanged until P4")
+	assert_eq(GhostMood.ROBBED_KINDS, CorpseRecord.HARVEST_KINDS, "P4: the organs count as robbed too")
 
 
 func test_corpse_record_phase7_fields() -> void:
@@ -368,8 +368,8 @@ func test_extended_data_classes() -> void:
 	var entry := ScheduleEntry.new()
 	assert_eq([entry.region, entry.today_flag], [&"", &""], "\"\" = graveyard")
 	assert_eq(CorpseTables.new().hidden_causes, {} as Dictionary[StringName, Array])
-	# The data files are unchanged until their owners (P4 / P7) take them over.
-	assert_false((Database.config(&"economy_config") as EconomyConfig).harvest_malus.has(&"heart"), "economy_config.tres is P4's")
+	# P4 took economy_config over: class default and data carry the organ maluses (W0-Notizen 4).
+	assert_eq((Database.config(&"economy_config") as EconomyConfig).harvest_malus, e.harvest_malus, "economy_config.tres (P4)")
 
 
 func test_config_files_in_data_match_the_fixtures() -> void:

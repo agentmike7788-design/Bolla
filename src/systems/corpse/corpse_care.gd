@@ -25,12 +25,21 @@ const REASON_DRESSED := "Nach dem Einkleiden nicht mehr möglich."
 const REASON_HARVESTED := "Das ist schon genommen."
 const REASON_INVENTORY_FULL := "Kein Platz im Inventar."
 const REASON_UNKNOWN_KIND := "Das geht hier nicht."
+# Phase 7 (docs/PHASE7_DESIGN.md §2.6) – specimens.
+const SPECIMENS_GROUP := &"specimens"
+const ORDERS_GROUP := &"orders"
+const EVENT_ORGAN_TAKEN := &"organ_taken"
+const STAT_SPECIMENS_TAKEN := &"specimens_taken"
+const TEXT_ORGAN_JAR := "Ein Glas mehr. Auf dem Etikett steht ihr Name."
+const TEXT_ORGAN_BUNDLE := "Ein Bündel in Leinen. Es hält nicht lange."
 
 ## Injected configs / data (tests); null or empty = data/ via Database on first use.
 var exam_config: ExamConfig
 var prep_config: PrepConfig
 var utilization_config: UtilizationConfig
 var tables: CorpseTables
+## Phase 7: specimens (null = data/config/anatomy_config.tres).
+var anatomy_config: AnatomyConfig
 var finds: Array[FindData] = []
 ## story_id → StoryCorpseData (empty = Database.story_corpse).
 var stories: Dictionary[StringName, StoryCorpseData] = {}
@@ -232,17 +241,62 @@ func harvest_block_reason(id: String, kind: StringName, inv: Inventory) -> Strin
 	return ""
 
 
-## STUB (P4) – Phase 7 (docs/PHASE7_DESIGN.md §2.6, §3.4): SpecimenRules.harvest_block_reason + at most
+## Phase 7 (docs/PHASE7_DESIGN.md §2.6, §3.4): SpecimenRules.harvest_block_reason – at most
 ## AnatomyConfig.max_per_corpse organs (hair / teeth do not count) and the containers allowed per organ.
 ## "-" = no specimen card (anatomy unknown, not the crypt table).
-func organ_block_reason(_id: String, _organ: StringName, _container: StringName, _inv: Inventory) -> String:
-	return SpecimenRules.REASON_NO_CARD
+func organ_block_reason(id: String, organ: StringName, container: StringName, inv: Inventory) -> String:
+	var record := get_record(id)
+	if _live_reason(record) != "":
+		return SpecimenRules.REASON_NO_CARD
+	_refresh_decay(id)
+	var cfg := _anatomy()
+	return SpecimenRules.harvest_block_reason(record, organ, container, inv, record.room, GameState.flag_on(cfg.known_flag), cfg)
 
 
-## STUB (P4) – uid | "": Specimens.harvest, Piety.event(organ_taken), Reputation.event(organ_taken),
-## stats.specimens_taken, piety_used_day, Orders.note_harvest, corpse_harvested(id, organ, item).
-func harvest_organ(_id: String, _organ: StringName, _container: StringName, _inv: Inventory) -> String:
-	return ""
+## uid | "": Specimens.harvest, the organ's piety (AnatomyConfig.organs[*].piety, event organ_taken),
+## Reputation.event(organ_taken / organ_taken_grave), stats.specimens_taken, piety_used_day,
+## Orders.note_harvest, corpse_harvested(id, organ, item), the quiet end line. The grave quality
+## (EconomyConfig.harvest_malus) and the ghost (GhostMood.robbed_penalty) read record.harvested.
+func harvest_organ(id: String, organ: StringName, container: StringName, inv: Inventory) -> String:
+	if organ_block_reason(id, organ, container, inv) != "":
+		return ""
+	var specimens := _first(SPECIMENS_GROUP) as Specimens
+	if specimens == null:
+		return ""
+	var uid := specimens.harvest(id, organ, container, inv)
+	if uid == "":
+		return ""
+	var record := get_record(id)
+	record.harvested.append(organ)
+	var row := _anatomy().organ(organ)
+	var label := "Präparat: " + String(row.get("label", String(organ)))
+	var piety := _first(PIETY_GROUP) as Piety
+	if piety != null:
+		piety.change(int(row.get("piety", 0)), label)
+	var rep := _first(REPUTATION_GROUP) as Reputation
+	if rep != null:
+		rep.event(StringName(row.get("reputation_event", EVENT_ORGAN_TAKEN)), label)
+	GameState.add_stat(STAT_SPECIMENS_TAKEN, 1)
+	GameState.set_flag(FLAG_PIETY_USED_DAY, TimeManager.day)
+	var orders := _first(ORDERS_GROUP) as Orders
+	if orders != null:
+		orders.note_harvest(id)
+	EventBus.corpse_harvested.emit(id, organ, SpecimenRules.item_for(container))
+	EventBus.notification_requested.emit(TEXT_ORGAN_JAR if container == SpecimenRecord.CONTAINER_JAR else TEXT_ORGAN_BUNDLE, &"info")
+	_notify(id)
+	return uid
+
+
+func get_anatomy_config() -> AnatomyConfig:
+	return _anatomy()
+
+
+func _anatomy() -> AnatomyConfig:
+	if anatomy_config == null:
+		anatomy_config = Database.config(&"anatomy_config") as AnatomyConfig
+		if anatomy_config == null:
+			anatomy_config = AnatomyConfig.new()
+	return anatomy_config
 
 
 ## Item into the inventory (full → refused), Piety.event, Reputation.event, stats.utilized,

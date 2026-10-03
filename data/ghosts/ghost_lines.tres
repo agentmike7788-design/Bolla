@@ -40,7 +40,9 @@ gift_by_coins = Dictionary[int, String]({
 no_gift = "Die Geister deuten nicht mehr ins Moos."
 by_harvest = Dictionary[StringName, PackedStringArray]({
 &"hair": PackedStringArray("Mein Zopf. Wo ist mein Zopf?"),
-&"teeth": PackedStringArray("Mein Mund ist still geworden. Stiller, als der Tod ihn macht.")
+&"teeth": PackedStringArray("Mein Mund ist still geworden. Stiller, als der Tod ihn macht."),
+&"eyes": PackedStringArray("Ich sehe die Linde nicht mehr. Ich weiß nur, dass sie da ist."),
+&"hand": PackedStringArray("Ich greife nach etwas und weiß nicht, womit.")
 })
 by_design = Dictionary[StringName, PackedStringArray]({
 &"default": PackedStringArray("Da steht mein Name. Ich hatte ihn fast vergessen.", "So schön hat mich keiner gekannt."),
@@ -53,3 +55,5 @@ by_devotion = Dictionary[StringName, PackedStringArray]({
 &"default": PackedStringArray("Da war ein Licht für mich. Nur für mich.", "Ich schlafe jetzt ein bisschen tiefer.", "Einer hat an mich gedacht. Mitten in der Nacht."),
 &"robbed": PackedStringArray("Eine Kerze. Und trotzdem fehlt mir etwas.", "Das Licht ist warm. Nur da, wo es fehlt, bleibt es kalt.")
 })
+by_organ = PackedStringArray("In mir ist eine Stelle, die nicht mehr warm wird.", "Mein Name steht auf einem Etikett. Wer liest ihn?", "Sie haben mich in der Stadt in ein Regal gestellt. Ich kann die Linde nicht sehen.")
+by_returned = PackedStringArray("Es ist wieder da. Ich spüre es nicht, aber ich weiß es.", "Du hast zurückgebracht, was du genommen hast. Das tun nicht viele.")

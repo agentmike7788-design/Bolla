@@ -894,6 +894,85 @@ func test_phase6_real_ghost_lines() -> void:
 		assert_true(line.length() <= 90 and line != "", line)
 
 
+# --- Phase 7 (P4, docs/PHASE7_DESIGN.md §2.6.2, §2.11, §3.4) ------------------------------------
+
+func test_phase7_robbed_count_and_penalty_with_return() -> void:
+	var a := Phase7Fixtures.anatomy_config()
+	var c := CorpseRecord.new()
+	c.harvested = [&"hair", &"heart", &"eyes"] as Array[StringName]
+	assert_eq(GhostMood.robbed_count(c), 3, "organs count as robbed")
+	assert_eq(GhostMood.robbed_penalty(c, cfg, a), -5 - 5 - 8, "hair −5, heart −5, eyes −8")
+	c.returned = [&"heart"] as Array[StringName]
+	assert_eq(GhostMood.robbed_count(c), 2, "harvested − returned")
+	assert_eq(GhostMood.robbed_penalty(c, cfg, a), -13)
+	c.harvested = [&"hair", &"teeth"] as Array[StringName]
+	c.returned = [] as Array[StringName]
+	assert_eq(GhostMood.robbed_penalty(c, cfg, a), 2 * cfg.robbed_mood, "Phase 6 unchanged for hair / teeth")
+	assert_eq(GhostMood.robbed_penalty(null, cfg, a), 0)
+
+
+func test_phase7_reason_robbed_organ_before_robbed() -> void:
+	var c := _corpse_record(true, &"", 0.9)
+	c.harvested = [&"hair", &"liver"] as Array[StringName]
+	var g := _grave_record(&"gravestone_simple")
+	assert_eq(GhostMood.main_reason(g, c, 0, 0, economy), &"robbed_organ")
+	c.returned = [&"liver"] as Array[StringName]
+	assert_eq(GhostMood.main_reason(g, c, 0, 0, economy), &"robbed", "the organ is back, the braid is not")
+	c.harvested = [&"liver"] as Array[StringName]
+	assert_ne(GhostMood.main_reason(g, c, 0, 0, economy), &"robbed", "nothing robbed any more")
+	assert_eq(GhostMood.REASONS[0], &"robbed_organ")
+
+
+func test_phase7_pool_by_organ_for_a_missing_organ() -> void:
+	var l := Phase7Fixtures.ghost_lines()
+	var pool := Array(l.by_organ)
+	for s: int in 20:
+		assert_true(pool.has(GhostMood.pick_line(l, &"restless", &"robbed_organ", [] as Array[StringName], s)), "by_organ")
+	var calm := GhostMood.pick_line(l, &"calm", &"robbed_organ", [] as Array[StringName], 3)
+	assert_true(pool.has(calm) or Array(l.by_reason.get(&"robbed_organ", PackedStringArray())).has(calm))
+
+
+func test_phase7_mood_info_with_organs_and_by_returned_once() -> void:
+	await _make_world(2)
+	ghosts.lines = Phase7Fixtures.ghost_lines()
+	ghosts.anatomy = Phase7Fixtures.anatomy_config()
+	_mark("plot_01", 12, 0)
+	_mark("plot_02", 12, 0)
+	var r: CorpseRecord = corpses.recs["c_plot_01"]
+	r.harvested = [&"eyes"] as Array[StringName]
+	assert_eq(ghosts.mood_info("plot_01").score, 12 + 1 - 8, "eyes −8")
+	assert_eq(ghosts.mood_info("plot_01").reason, &"robbed_organ")
+	TimeManager.load_state({"day": 3, "minute_of_day": 1350})
+	assert_true(Array(ghosts.lines.by_organ).has(ghosts.listen("plot_01", null)), "a missing organ speaks by_organ")
+	r.returned = [&"eyes"] as Array[StringName]
+	assert_eq(ghosts.mood_info("plot_01").score, 13, "back: the mood recovers")
+	TimeManager.load_state({"day": 4, "minute_of_day": 1350})
+	var pool := Array(ghosts.lines.by_returned)
+	assert_true(pool.has(ghosts.listen("plot_01", null)), "the first night after the return: by_returned")
+	TimeManager.load_state({"day": 5, "minute_of_day": 1350})
+	assert_false(pool.has(ghosts.listen("plot_01", null)), "once per return")
+	assert_false(pool.has(ghosts.listen("plot_02", null)), "nothing returned, no by_returned")
+	var saved := ghosts.save_state()
+	assert_eq(saved.returned_heard, {"plot_01": 1}, "saved")
+	var restored := GhostManager.new()
+	world.add_child(restored)
+	restored.load_state(JSON.parse_string(JSON.stringify(saved)))
+	assert_eq(restored.save_state(), saved, "roundtrip")
+	restored.queue_free()
+
+
+func test_phase7_real_ghost_lines() -> void:
+	var real := Database.ghost_lines() as GhostLines
+	var fixture := Phase7Fixtures.ghost_lines()
+	var all := Array(real.by_organ) + Array(real.by_harvest.get(&"eyes", PackedStringArray())) \
+			+ Array(real.by_harvest.get(&"hand", PackedStringArray()))
+	for line: String in fixture.by_organ:
+		assert_true(all.has(line), "§2.11 leading text: " + line)
+	assert_eq(real.by_returned, fixture.by_returned)
+	assert_false(Array(real.by_organ).has("Ich sehe die Linde nicht mehr. Ich weiß nur, dass sie da ist."),
+			"the eyes' line only for a ghost missing its eyes")
+
+
 func _chapel(devotions: Dictionary) -> ChapelRites:
 	var chapel := ChapelRites.new()
 	chapel.config = Phase6Fixtures.chapel_config()
