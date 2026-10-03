@@ -148,7 +148,7 @@ export function createEffects({ onMade } = {}) {
       const rate = (MOBILE ? 0.5 : 1) * Math.min(1, 30 / zoom);
 
       for (const b of factory.buildings.values()) {
-        if (b.type === 'belt' || b.type === 'storage') continue;
+        if (b.type === 'belt' || b.type === 'storage' || b.type === 'pole') continue;
         const dx = b.tile.position.x - focus.x;
         const dz = b.tile.position.z - focus.z;
         const close = dx * dx + dz * dz < reach;
@@ -176,6 +176,16 @@ export function createEffects({ onMade } = {}) {
               const [x, y, z] = world(b, 0, 0.29, -0.32);
               spawn(glow, { x, y, z, vx: rnd(-1.2, 1.2), vy: rnd(0.8, 2.2), vz: rnd(-1.2, 1.2), life: rnd(0.25, 0.5), size: 0.05, grow: -0.6, color: color(0xffe090), gravity: -6, drag: 0.4 });
             }
+          }
+        } else if (b.type === 'power') {
+          if (working && emit && Math.random() < 0.45 * rate) {
+            // Dark coal smoke out of the stack, and a few embers.
+            const [x, y, z] = world(b, 0.3 + rnd(-0.04, 0.04), 1.48, 0.26 + rnd(-0.04, 0.04));
+            spawn(solid, { x, y, z, vx: rnd(-0.12, 0.12), vy: rnd(0.6, 1), vz: rnd(-0.12, 0.12), life: rnd(1.4, 2.2), size: 0.14, grow: 2.2, color: color(0x77736e, 0.08), gravity: 0.15, drag: 0.8, fade: 0.5 });
+          }
+          if (working && emit && Math.random() < 0.2 * rate) {
+            const [x, y, z] = world(b, 0.3, 1.46, 0.26);
+            spawn(glow, { x, y, z, vx: rnd(-0.2, 0.2), vy: rnd(0.8, 1.4), vz: rnd(-0.2, 0.2), life: rnd(0.6, 1.2), size: rnd(0.04, 0.06), grow: -0.6, color: color(0xff8a2a, 0.2), gravity: 0.2, drag: 0.6, wobble: 3 });
           }
         } else if (b.type === 'drill') {
           if (working && emit && Math.random() < 0.5 * rate) {

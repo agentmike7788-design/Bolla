@@ -14,7 +14,7 @@ npm run build   # baut das Spiel nach dist/
 
 Steuerung: linke Maus verschieben, rechte Maus oder Q/E drehen, Mausrad zoomen, WASD bewegen.
 
-Bauen: `1` Bohrer, `2` Förderband, `3` Lager, `4` Schmelzofen, `5` Presse, `6` Verteiler, `7` Zusammenführer, `8` Konstruktor, `X` Abriss, `T` Forschungsbaum, `R` dreht das nächste Gebäude (ohne Werkzeug: das Gebäude unter der Maus), `Esc` beendet den Bau-Modus. Bänder verlegt man durch Ziehen mit der linken Maus; sie folgen der Maus und biegen automatisch ab. Ein Klick mit einer Maschine (oder Lager, Verteiler …) auf ein Bandstück ersetzt es, die Maschine übernimmt die Laufrichtung des Bands. Ein Bohrer legt sein Erz auf das Band vor seinem Ausgang. Am Ende eines Bands staut sich das Erz, und der Bohrer wartet.
+Bauen: `1` Bohrer, `2` Förderband, `3` Lager, `4` Schmelzofen, `5` Presse, `6` Verteiler, `7` Zusammenführer, `8` Konstruktor, `9` Kohlekraftwerk, `0` Strommast, `X` Abriss, `T` Forschungsbaum, `R` dreht das nächste Gebäude (ohne Werkzeug: das Gebäude unter der Maus), `Esc` beendet den Bau-Modus. Bänder verlegt man durch Ziehen mit der linken Maus; sie folgen der Maus und biegen automatisch ab. Ein Klick mit einer Maschine (oder Lager, Verteiler …) auf ein Bandstück ersetzt es, die Maschine übernimmt die Laufrichtung des Bands. Ein Bohrer legt sein Erz auf das Band vor seinem Ausgang. Am Ende eines Bands staut sich das Erz, und der Bohrer wartet.
 
 Maschinen nehmen Teile von Bändern an jeder Seite außer ihrem Ausgang an und geben ihr Produkt nach vorn ab (Pfeil beim Bauen):
 - Schmelzofen: Eisenerz → Eisenbarren, Kupfererz → Kupferbarren.
@@ -24,7 +24,9 @@ Maschinen nehmen Teile von Bändern an jeder Seite außer ihrem Ausgang an und g
 - Zusammenführer: nimmt Teile von hinten, links und rechts und gibt sie abwechselnd nach vorn ab.
 - Konstruktor: baut aus mehreren Teilen eins. Ohne Werkzeug auf ihn klicken, um das Rezept zu wählen: 2 Eisenplatten → Zahnrad, 1 Eisenplatte + 2 Kupferdraht → Schaltkreis, 2 Eisenbarren + 1 Kohle → Stahlträger.
 
-Forschung: Oben links steht die nächste Forschung, `T` öffnet den ganzen Baum. Bezahlt wird mit Teilen aus dem Lager. Schmelzen schaltet den Schmelzofen frei, Pressen die Presse; dazu gibt es schnellere Bänder, Bohrer und Öfen. „Erste Fabrik“ (40 Platten, 40 Draht, 25 Beton) ist das erste Spielziel. Danach geht es weiter: Logistik (Verteiler, Zusammenführer), Konstruktor, Hydraulik, Tiefbohrer und Magnetbänder; „Meisterfabrik“ (120 Schaltkreise, 100 Stahlträger, 100 Zahnräder) ist das große Ziel. Bänder und Bohrer wechseln mit jeder Tempo-Forschung die Farbe. Neue Einträge kommen in `src/research.js`; der Baum ordnet sie selbst nach ihren Voraussetzungen an.
+Strom: Das Kohlekraftwerk nimmt Kohle per Band von jeder Seite an und liefert 8 MW. Strommasten verbinden sich automatisch mit Masten bis 7 Felder entfernt (die Leitungen hängen sichtbar zwischen ihnen) und versorgen alle Gebäude im Feld 5×5 um sich, auch das Kraftwerk selbst. Bohrer (1 MW), Schmelzöfen (2 MW), Pressen (1,5 MW) und Konstruktoren (3 MW) laufen ohne Netz im Grundtempo, am Netz doppelt so schnell. Reicht der Strom nicht, werden alle Maschinen im Netz anteilig langsamer, ohne Kohle stehen sie still und ihr Lämpchen blinkt lila. Rechts oben zeigt „Strom“ Bedarf, Leistung und Kohlevorrat; beim Bauen von Masten und Maschinen erscheinen die versorgten Felder blau. Freigeschaltet wird Strom im freien Spiel mit „Elektrizität“, „Dampfturbinen“ bringt +50 %; auf der Kohleinsel und dem Festland gibt es ihn als Missionsbelohnung.
+
+Forschung: Oben links steht die nächste Forschung, `T` öffnet den ganzen Baum. Bezahlt wird mit Teilen aus dem Lager. Schmelzen schaltet den Schmelzofen frei, Pressen die Presse; dazu gibt es schnellere Bänder, Bohrer und Öfen. „Erste Fabrik“ (40 Platten, 40 Draht, 25 Beton) ist das erste Spielziel. Danach geht es weiter: Logistik (Verteiler, Zusammenführer), Elektrizität (Kraftwerk, Masten), Konstruktor, Dampfturbinen, Hydraulik, Tiefbohrer und Magnetbänder; „Meisterfabrik“ (120 Schaltkreise, 100 Stahlträger, 100 Zahnräder) ist das große Ziel. Bänder und Bohrer wechseln mit jeder Tempo-Forschung die Farbe. Neue Einträge kommen in `src/research.js`; der Baum ordnet sie selbst nach ihren Voraussetzungen an.
 
 Karten und Missionen: Unter „Neues Spiel“ im Hauptmenü (und im Spiel mit `M` oder dem Knopf „Karten“) wählt man eine Karte. Im freien Spiel gibt es eine Zufallsinsel mit allen Erzen und den Forschungsbaum. Dazu kommen vier Missionskarten mit eigener Landschaft und nur bestimmten Erzen:
 - Eisenberge (Eisen, Kalkstein): der Einstieg vom ersten Bohrer bis zum Zahnradwerk.
@@ -47,7 +49,7 @@ Code:
 - `src/scenarios.js` sind die Karten mit ihren Missionen, `src/missionView.js` zeigt die aktuelle Mission an.
 - `src/scenery.js` baut daraus die 3D-Szene: Kacheln, Bäume, Büsche, Blumen, Felsen, Erze und das Meer.
 - `src/camera.js` ist die Kamera-Steuerung.
-- `src/factory.js` ist die Spiel-Logik: welches Gebäude wo steht, Abbau, Transport, Rezepte der Maschinen, Lager und Ziele.
+- `src/factory.js` ist die Spiel-Logik: welches Gebäude wo steht, Abbau, Transport, Rezepte der Maschinen, Stromnetz, Lager und Ziele.
 - `src/research.js` ist der Forschungsbaum, `src/researchView.js` zeigt ihn an.
 - `src/buildings.js` zeichnet die Gebäude, Bänder, die Teile darauf und die Bau-Vorschau.
 - `src/audio.js` erzeugt alle Geräusche und die Musik, `src/effects.js` die Partikel, `src/daynight.js` den Tag-Nacht-Wechsel mit Himmel, Sternen und Maschinenlichtern.

@@ -5,7 +5,7 @@
 const INDEX_KEY = 'bolla.saves';
 const dataKey = (id) => `bolla.save.${id}`;
 const FORMAT = 'bolla-save';
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2; // 2: power plants and poles
 
 export const newSaveId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 

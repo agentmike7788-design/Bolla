@@ -45,6 +45,8 @@ export const BUILDINGS = {
   splitter: { name: 'Verteiler' },
   merger: { name: 'Zusammenführer' },
   constructor: { name: 'Konstruktor' },
+  power: { name: 'Kohlekraftwerk' },
+  pole: { name: 'Strommast' },
 };
 
 export const BELT_SPEED = 1.5; // tiles per second, before research
@@ -56,6 +58,23 @@ const SPLITTER_BUFFER = 2;
 
 const opposite = (dir) => (dir + 2) % 4;
 export const isMachine = (b) => b?.type === 'furnace' || b?.type === 'assembler';
+// Buildings that never hand items on.
+const NO_OUTPUT = new Set(['storage', 'power', 'pole']);
+
+// Power. A coal power plant burns coal from belts and feeds every network it is
+// connected to. Poles carry the power: wires reach from pole to pole, and a pole
+// supplies every building within its square. Machines run without power at their
+// basic speed; on a network they run POWER_SPEED times as fast, but only while the
+// network has enough power, and they stop when it has none.
+export const POWER_OUTPUT = 8; // MW per power plant, before research
+export const POWER_USE = { drill: 1, furnace: 2, assembler: 1.5, constructor: 3 }; // MW while working
+export const POWER_SPEED = 2;
+export const COAL_SECONDS = 4; // one coal keeps a plant at full output that long
+export const WIRE_REACH = 7; // tiles between two poles
+export const POLE_SUPPLY = 2; // a pole supplies the tiles up to this far away (5×5)
+const COAL_ENERGY = POWER_OUTPUT * COAL_SECONDS;
+const PLANT_FUEL = 5; // coal a plant keeps in stock
+export const usesPower = (b) => !!POWER_USE[b?.type];
 
 // The factory on top of a world: which building stands on which tile, and the
 // simulation that moves items from drills over belts through machines into storage.
@@ -74,7 +93,7 @@ export function createFactory(world, { start } = {}) {
   const neighbour = (b, dir) => at(b.tile.x + DIRS[dir].x, b.tile.z + DIRS[dir].z);
   // Does building `from` hand its items to building `to`?
   const feeds = (from, to) =>
-    from && from.type !== 'storage' && from.tile.x + DIRS[from.dir].x === to.tile.x && from.tile.z + DIRS[from.dir].z === to.tile.z;
+    from && !NO_OUTPUT.has(from.type) && from.tile.x + DIRS[from.dir].x === to.tile.x && from.tile.z + DIRS[from.dir].z === to.tile.z;
 
   // `overBelt`: a building other than a belt may replace a belt standing there.
   function canPlace(type, tile, overBelt = false) {
@@ -98,6 +117,7 @@ export function createFactory(world, { start } = {}) {
     if (type === 'constructor') Object.assign(b, { recipe: 'gear', input: {}, output: [], busy: false, timer: 0, state: 'idle', made: 0, refused: null });
     if (type === 'splitter') Object.assign(b, { items: [], next: 0, passed: 0 });
     if (type === 'merger') Object.assign(b, { slots: [[], [], [], []], next: 0, passed: 0 });
+    if (type === 'power') Object.assign(b, { fuel: 0, burn: 0, state: 'idle', made: 0, refused: null });
     buildings.set(b.index, b);
     updateShapes();
     return b;
@@ -109,6 +129,124 @@ export function createFactory(world, { start } = {}) {
     buildings.delete(b.index);
     updateShapes();
     return b;
+  }
+
+  // --- Power grid ---------------------------------------------------------------
+
+  const grid = { nets: [], wires: [], version: 0 };
+  let gridDirty = true;
+
+  // Poles within reach form networks. The wires drawn between them are the shortest
+  // links that join each network (a spanning tree), so the view stays tidy.
+  function updateGrid() {
+    gridDirty = false;
+    grid.version++;
+    const poles = [...buildings.values()].filter((b) => b.type === 'pole');
+    const pairs = [];
+    for (let i = 0; i < poles.length; i++) {
+      for (let j = i + 1; j < poles.length; j++) {
+        const d = Math.hypot(poles[i].tile.x - poles[j].tile.x, poles[i].tile.z - poles[j].tile.z);
+        if (d <= WIRE_REACH) pairs.push([d, poles[i], poles[j]]);
+      }
+    }
+    pairs.sort((a, b) => a[0] - b[0]);
+    const root = new Map(poles.map((p) => [p, p]));
+    const find = (p) => (root.get(p) === p ? p : find(root.get(p)));
+    grid.wires = [];
+    for (const [, a, b] of pairs) {
+      const ra = find(a);
+      const rb = find(b);
+      if (ra === rb) continue;
+      root.set(ra, rb);
+      grid.wires.push([a, b]);
+    }
+    const byRoot = new Map();
+    grid.nets = [];
+    for (const p of poles) {
+      const r = find(p);
+      if (!byRoot.has(r)) {
+        const net = { id: grid.nets.length + 1, poles: [], plants: [], consumers: [], capacity: 0, demand: 0, satisfaction: 0, used: 0 };
+        byRoot.set(r, net);
+        grid.nets.push(net);
+      }
+      const net = byRoot.get(r);
+      net.poles.push(p);
+      p.net = net;
+    }
+    // Every plant and machine joins the network of the first pole that covers it.
+    for (const b of buildings.values()) {
+      if (b.type === 'pole') continue;
+      b.net = null;
+      if (b.type !== 'power' && !usesPower(b)) continue;
+      for (let dz = -POLE_SUPPLY; dz <= POLE_SUPPLY && !b.net; dz++) {
+        for (let dx = -POLE_SUPPLY; dx <= POLE_SUPPLY; dx++) {
+          const p = at(b.tile.x + dx, b.tile.z + dz);
+          if (p?.type !== 'pole') continue;
+          b.net = p.net;
+          (b.type === 'power' ? p.net.plants : p.net.consumers).push(b);
+          break;
+        }
+      }
+    }
+  }
+
+  // Speed factor of a machine from its power: 1 off the grid, up to POWER_SPEED on it.
+  const powerFactor = (b) => (b.net ? POWER_SPEED * b.net.satisfaction : 1);
+
+  // Shares the power of each network's plants among its working machines.
+  function tickPower(dt) {
+    const out = POWER_OUTPUT * research.stats.power;
+    for (const b of buildings.values()) {
+      if (b.type !== 'power') continue;
+      // Load the next coal before the current one is used up.
+      if (b.burn <= 0 && b.fuel > 0) {
+        b.fuel--;
+        b.burn += COAL_ENERGY * research.stats.power;
+      }
+      if (!b.net) b.state = b.burn > 0 || b.fuel > 0 ? 'idle' : 'empty';
+    }
+    for (const net of grid.nets) {
+      const fed = net.plants.filter((p) => p.burn > 0);
+      net.capacity = fed.length * out;
+      // Machines that are working or waiting for power ask for it.
+      net.demand = 0;
+      for (const b of net.consumers) if (b.state === 'work' || b.state === 'nopower') net.demand += POWER_USE[b.type];
+      net.satisfaction = net.capacity <= 0 ? 0 : net.demand <= 0 ? 1 : Math.min(1, net.capacity / net.demand);
+      net.used = Math.min(net.capacity, net.demand);
+      for (const p of net.plants) {
+        if (p.burn <= 0) {
+          p.state = 'empty';
+          continue;
+        }
+        const share = net.used / fed.length;
+        p.burn -= share * dt;
+        p.load = net.capacity ? net.used / net.capacity : 0;
+        p.state = share > 0 ? 'work' : 'idle';
+      }
+    }
+  }
+
+  // Totals over all networks, for the HUD.
+  function powerSummary() {
+    const s = { nets: grid.nets.length, plants: 0, capacity: 0, demand: 0, used: 0, consumers: 0, short: 0, fuel: 0 };
+    for (const net of grid.nets) {
+      s.plants += net.plants.length;
+      s.capacity += net.capacity;
+      s.demand += net.demand;
+      s.used += net.used;
+      s.consumers += net.consumers.length;
+      if (net.consumers.length && net.satisfaction < 1) s.short++;
+      for (const p of net.plants) s.fuel += p.fuel + (p.burn > 0 ? 1 : 0);
+    }
+    s.satisfaction = s.demand ? s.used / s.demand : s.capacity > 0 ? 1 : 0;
+    return s;
+  }
+
+  // Machines currently running on power from a network.
+  function powered() {
+    let n = 0;
+    for (const net of grid.nets) if (net.satisfaction > 0) for (const b of net.consumers) if (b.state === 'work') n++;
+    return n;
   }
 
   function setDir(b, dir) {
@@ -131,6 +269,7 @@ export function createFactory(world, { start } = {}) {
   // A belt curves when exactly one side feeds into it and nothing comes from behind.
   // 'left' means items enter over the left edge (seen in travel direction).
   function updateShapes() {
+    gridDirty = true;
     for (const b of buildings.values()) {
       if (b.type !== 'belt') continue;
       const back = neighbour(b, opposite(b.dir));
@@ -155,7 +294,18 @@ export function createFactory(world, { start } = {}) {
       target.last = kind;
       return true;
     }
-    if (target.type === 'drill' || target.dir === opposite(dir)) return false;
+    if (target.type === 'power') {
+      // Coal from any side.
+      if (kind !== 'coal') {
+        target.refused = kind;
+        return false;
+      }
+      if (target.fuel >= PLANT_FUEL) return false;
+      target.fuel++;
+      target.refused = null;
+      return true;
+    }
+    if (target.type === 'drill' || target.type === 'pole' || target.dir === opposite(dir)) return false;
     if (target.type === 'belt') {
       const last = target.items[target.items.length - 1];
       if (last && last.p < ITEM_SPACING) return false;
@@ -228,8 +378,9 @@ export function createFactory(world, { start } = {}) {
       b.state = 'idle';
       return;
     }
-    b.state = 'work';
-    b.timer = Math.min(b.timer + dt, time);
+    const speed = powerFactor(b);
+    b.state = speed > 0 ? 'work' : 'nopower';
+    b.timer = Math.min(b.timer + dt * speed, time);
     if (b.timer < time) return;
     if (b.output.length >= MACHINE_OUTPUT) {
       b.state = 'blocked';
@@ -253,8 +404,9 @@ export function createFactory(world, { start } = {}) {
       b.state = 'idle';
       return;
     }
-    b.state = 'work';
-    b.timer = Math.min(b.timer + dt, time);
+    const speed = powerFactor(b);
+    b.state = speed > 0 ? 'work' : 'nopower';
+    b.timer = Math.min(b.timer + dt * speed, time);
     if (b.timer < time) return;
     if (b.output.length >= MACHINE_OUTPUT) {
       b.state = 'blocked';
@@ -305,8 +457,9 @@ export function createFactory(world, { start } = {}) {
       b.state = 'empty';
       return;
     }
-    b.state = 'work';
-    b.timer += dt * research.stats.drill;
+    const speed = powerFactor(b);
+    b.state = speed > 0 ? 'work' : 'nopower';
+    b.timer += dt * research.stats.drill * speed;
     if (b.timer >= DRILL_TIME) {
       b.timer -= DRILL_TIME;
       b.tile.amount--;
@@ -332,7 +485,9 @@ export function createFactory(world, { start } = {}) {
   };
 
   function tick(dt) {
+    if (gridDirty) updateGrid();
     time += dt;
+    tickPower(dt);
     const step = beltSpeed() * dt;
     for (const b of buildings.values()) if (b.type === 'belt' && b.items.length) tickBelt(b, step);
     for (const b of buildings.values()) {
@@ -355,7 +510,7 @@ export function createFactory(world, { start } = {}) {
       recent: Object.fromEntries(Object.entries(recent).filter(([, log]) => log.length)),
       research: research.save(),
       amounts: world.tiles.filter((t) => t.ore).map((t) => t.amount),
-      buildings: [...buildings.values()].map(({ tile, index, ...rest }) => ({ ...rest, index })),
+      buildings: [...buildings.values()].map(({ tile, index, net, load, ...rest }) => ({ ...rest, index })),
     };
   }
 
@@ -382,8 +537,13 @@ export function createFactory(world, { start } = {}) {
     stored,
     delivered,
     research,
+    grid,
     perMinute,
     count,
+    powerFactor,
+    powerSummary,
+    powered,
+    updateGrid: () => gridDirty && updateGrid(),
     get time() {
       return time;
     },
