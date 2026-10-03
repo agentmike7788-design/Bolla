@@ -12,7 +12,10 @@
       <canvas id="scene"></canvas>
       <header class="hud hud-top">
         <h1>Bolla Fabrik</h1>
-        <p class="seed">Karte <span id="seed"></span> <button id="new-map" type="button">Neue Karte</button> <button id="maps-open" type="button" class="link">Karten <kbd>M</kbd></button></p>
+        <p class="seed">Karte <span id="seed"></span> <button id="new-map" type="button">Neue Karte</button> <button id="maps-open" type="button" class="link">Karten <kbd>M</kbd></button>
+          <span class="daytime" title="Tageszeit"><span id="clock-icon" aria-hidden="true">☀</span> <span id="clock">06:00</span></span>
+          <span class="saved" id="saved" aria-live="polite"></span>
+          <button id="menu-open" type="button" class="link">Menü <kbd>Esc</kbd></button></p>
       </header>
       <aside class="hud hud-info" id="tile-info" aria-live="polite">
         <p class="label">Feld</p>
@@ -89,6 +92,7 @@
           </div>
         </section>
       </div>
+      <div class="gm" id="menu" hidden></div>
       <div class="menu" id="maps" hidden>
         <section class="menu-box" role="dialog" aria-label="Karte wählen">
           <header class="tree-head">

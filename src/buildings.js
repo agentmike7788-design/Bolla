@@ -276,6 +276,7 @@ export function createFactoryView(renderer) {
 
   const dummy = new THREE.Object3D();
   let drillSpeed = 1;
+  let night = 0; // 0 by day, 1 at night: lamps and windows shine brighter
   // Belt rails and drill bodies change colour with each speed boost.
   const drillMat = flat(SIGNAL, { roughness: 0.5 });
   const TIER_COLORS = [SIGNAL, 0xe2483a, 0x3b8fe6, 0xa05ae0];
@@ -497,7 +498,7 @@ export function createFactoryView(renderer) {
     view.lamp.material.color.setHex(col);
     view.lamp.material.emissive.setHex(col);
     const steady = state === 'work' || state === 'idle';
-    view.lamp.material.emissiveIntensity = steady ? 1.2 : 0.8 + Math.sin(elapsed * 6) * 0.6;
+    view.lamp.material.emissiveIntensity = (steady ? 1.2 : 0.8 + Math.sin(elapsed * 6) * 0.6) * (1 + night * 1.5);
   }
 
   function animate(b, view, dt, elapsed) {
@@ -545,7 +546,7 @@ export function createFactoryView(renderer) {
       }
       view.flash = Math.max(0, view.flash - dt);
       setLamp(view, view.flash > 0 ? 'work' : 'idle', elapsed);
-      view.lamp.material.emissiveIntensity = view.flash > 0 ? 2 : 0.5;
+      view.lamp.material.emissiveIntensity = (view.flash > 0 ? 2 : 0.5) * (1 + night * 1.5);
     }
   }
 
@@ -556,7 +557,12 @@ export function createFactoryView(renderer) {
     for (const mesh of Object.values(itemMeshes)) mesh.count = 0;
   }
 
-  return { group, rebuild, update, clear };
+  function setNight(n) {
+    night = n;
+    parts.m.glass.emissiveIntensity = 0.4 + n * 1.4;
+  }
+
+  return { group, rebuild, update, clear, setNight };
 }
 
 // Translucent preview of the building under the cursor: footprint, direction arrow

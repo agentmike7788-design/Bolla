@@ -227,6 +227,14 @@ export function createMissions(scenario, factory) {
       if (!this.current) finishedAt = factory.time;
       return m;
     },
+    save: () => ({ index, base, reached: [...reached], finishedAt }),
+    load(data) {
+      if (!data) return;
+      index = Math.min(data.index ?? 0, scenario.missions.length);
+      base = { ...base, ...data.base };
+      reached = new Set(data.reached ?? []);
+      finishedAt = data.finishedAt ?? null;
+    },
   };
 }
 
