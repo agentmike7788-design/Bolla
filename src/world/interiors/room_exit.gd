@@ -9,8 +9,8 @@ extends Node3D
 const PROMPT_OUT := "[E] Hinausgehen"
 
 @export var building_id: StringName
-## Phase 7 (docs/PHASE7_DESIGN.md §3.4, P1): set → HouseDoor.find(tree, door_id).exit_transform()
-## instead of the BuildingDoor (the village houses). STUB (P1): not read yet.
+## Phase 7 (docs/PHASE7_DESIGN.md §3.4, §4.3): set → HouseDoor.find(tree, door_id).exit_transform()
+## instead of the BuildingDoor (the village houses; no opening time on the way out, the region stays).
 @export var door_id: StringName = &""
 ## The building's data; null = the outside door's (or Database.building(building_id)).
 var data: BuildingData
@@ -19,14 +19,14 @@ var data: BuildingData
 
 
 func can_interact(player: Player) -> bool:
-	if player == null or player.is_busy() or HutPortal.is_travelling(player) or _door() == null:
+	if player == null or player.is_busy() or HutPortal.is_travelling(player) or not _has_door():
 		return false
 	var info := building_data()
 	return info == null or info.allows_corpse or not is_instance_valid(player.carried)
 
 
 func get_interaction_prompt(player: Player) -> String:
-	if _door() == null:
+	if not _has_door():
 		return ""
 	var info := building_data()
 	if info != null and player != null and is_instance_valid(player.carried) and not info.allows_corpse:
@@ -37,7 +37,16 @@ func get_interaction_prompt(player: Player) -> String:
 func interact(player: Player) -> void:
 	if not can_interact(player):
 		return
-	HutPortal.travel(player, _door().exit_transform(), false, _fade_seconds())
+	HutPortal.travel(player, exit_transform(), false, _fade_seconds())
+
+
+## Where the way out ends: the HouseDoor's exit (door_id set) or the BuildingDoor's.
+func exit_transform() -> Transform3D:
+	if door_id != &"":
+		var house := _house_door()
+		return house.exit_transform() if house != null else Transform3D()
+	var door := _door()
+	return door.exit_transform() if door != null else Transform3D()
 
 
 ## The BuildingData (own, the door's, or Database), null when unknown.
@@ -54,7 +63,15 @@ func building_data() -> BuildingData:
 
 
 func _door() -> BuildingDoor:
-	return BuildingDoor.find(get_tree(), building_id) if is_inside_tree() else null
+	return BuildingDoor.find(get_tree(), building_id) if is_inside_tree() and door_id == &"" else null
+
+
+func _house_door() -> HouseDoor:
+	return HouseDoor.find(get_tree(), door_id) if is_inside_tree() and door_id != &"" else null
+
+
+func _has_door() -> bool:
+	return _house_door() != null if door_id != &"" else _door() != null
 
 
 func _fade_seconds() -> float:

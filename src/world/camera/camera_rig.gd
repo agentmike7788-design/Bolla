@@ -30,6 +30,10 @@ var profile: CameraProfile
 var _focus: Vector3
 ## The rig's own framing, captured when the first profile replaces it.
 var _own: CameraProfile
+## Phase 7: the outdoor region's base profile (set_base_profile); null = none (bit-identical).
+var base_profile: CameraProfile
+## The base profile that was active when _own was captured (its zoom comes back with it).
+var _own_base: CameraProfile
 ## Phase 3: the mouse wheel rotates the build preview while build mode is on – no zoom then.
 var _zoom_locked: bool = false
 
@@ -79,22 +83,32 @@ func set_profile(value: CameraProfile) -> void:
 		return
 	if profile == null:
 		_own = _capture()
+		_own_base = base_profile
 	profile = value
 	_apply(value)
 
 
-## Back to the rig's own framing (and the zoom it had) – no-op without a profile.
+## Back to the rig's own framing (and the zoom it had) – no-op without a profile. Phase 7: with a
+## base profile that changed while the place profile was on (another region), back to that base.
 func clear_profile() -> void:
 	if profile == null:
 		return
 	profile = null
-	_apply(_own)
+	if base_profile != null and base_profile != _own_base:
+		_apply(base_profile)
+	else:
+		_apply(_own)
 
 
-## STUB (P1) – Phase 7 (docs/PHASE7_DESIGN.md §3.4): the region's base profile; clear_profile()
-## returns to it (instead of the start framing). Without a call everything stays bit-identical.
-func set_base_profile(_p: CameraProfile) -> void:
-	pass
+## Phase 7 (docs/PHASE7_DESIGN.md §3.4): the outdoor region's framing (RegionRoot.camera_profile).
+## Applied at once while no place profile is on; otherwise kept, and clear_profile() returns to it
+## (instead of the framing captured before the room). Without a call everything stays bit-identical.
+## The same profile again (a load in the same region) keeps the current zoom.
+func set_base_profile(p: CameraProfile) -> void:
+	var changed := p != base_profile
+	base_profile = p
+	if p != null and profile == null and changed:
+		_apply(p)
 
 
 ## Jump to the target immediately (used after teleports and for screenshots).

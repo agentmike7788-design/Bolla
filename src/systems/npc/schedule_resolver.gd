@@ -11,10 +11,10 @@ const MINUTES_PER_DAY := 1440
 ## start_minute <= t; before the first start of the day the latest entry of the day
 ## (the one running over midnight). Equal starts: the later array entry wins.
 ## null (with a warning) for a null or empty schedule.
-## Phase 7 (§3.4, P1): `day` ≥ 0 – entries with a today_flag count only when that flag == day (and win
-## a tie of start_minute); day -1 (every call before Phase 7) skips them. STUB (P1): `day` is not read
-## yet (no schedule has a today_flag entry before P6).
-static func entry_at(schedule: NpcSchedule, minute_of_day: int, _day: int = -1) -> ScheduleEntry:
+## Phase 7 (docs/PHASE7_DESIGN.md §3.4): entries with a today_flag count only on `day` ≥ 0 while that
+## GameState flag equals `day` (the priest's consecration day), and such a valid entry wins a tie of
+## start_minute over a plain one. day -1 (every call before Phase 7) skips them – bit-identical.
+static func entry_at(schedule: NpcSchedule, minute_of_day: int, day: int = -1) -> ScheduleEntry:
 	if schedule == null or schedule.entries.is_empty():
 		push_warning("[ScheduleResolver] entry_at(): schedule has no entries")
 		return null
@@ -24,11 +24,31 @@ static func entry_at(schedule: NpcSchedule, minute_of_day: int, _day: int = -1) 
 	for entry: ScheduleEntry in schedule.entries:
 		if entry == null:
 			continue
-		if latest == null or entry.start_minute >= latest.start_minute:
+		if entry.today_flag != &"" and not is_today(entry.today_flag, day):
+			continue
+		if _later(entry, latest):
 			latest = entry
-		if entry.start_minute <= t and (active == null or entry.start_minute >= active.start_minute):
+		if entry.start_minute <= t and _later(entry, active):
 			active = entry
 	return active if active != null else latest
+
+
+## Whether the GameState flag `flag` holds the number `day` (day < 0: never).
+static func is_today(flag: StringName, day: int) -> bool:
+	if day < 0 or flag == &"" or not GameState.has_flag(flag):
+		return false
+	var value: Variant = GameState.get_flag(flag)
+	return (typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT) and int(value) == day
+
+
+## `entry` replaces `current`: a later start, or the same start unless `current` is a (valid)
+## today_flag entry and `entry` is not.
+static func _later(entry: ScheduleEntry, current: ScheduleEntry) -> bool:
+	if current == null or entry.start_minute > current.start_minute:
+		return true
+	if entry.start_minute < current.start_minute:
+		return false
+	return entry.today_flag != &"" or current.today_flag == &""
 
 
 ## Travel progress 0..1 along entry.path at minute_f:
