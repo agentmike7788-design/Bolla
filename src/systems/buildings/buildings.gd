@@ -195,8 +195,8 @@ func check_goal() -> void:
 
 
 ## Context of the chapter panel (§1.5): the graveyard's summary_context (when there is one) with
-## variant/chapter = chapter_id, plus days since buildings_open, the levels, services / devotions
-## held, reinterred graves (names, n/liftable), corpses that waited in a niche, coins spent after
+## variant/chapter = chapter_id, plus days since buildings_open, the levels, services (with
+## mourners, QA6-02) / devotions held, reinterred graves (names, n/liftable), corpses that waited in a niche, coins spent after
 ## buildings_open by reason, content ghosts before → now and the final line.
 func chapter_context() -> Dictionary:
 	var cfg := _cfg()
@@ -210,6 +210,9 @@ func chapter_context() -> Dictionary:
 	context["levels"] = levels()
 	context["services_held"] = GameState.get_stat(&"services_held")
 	context["services_buried"] = _services_buried()
+	var rites := _first(CHAPEL_GROUP)
+	if rites != null and rites.has_method(&"services_with_mourners"):
+		context["services_mourners"] = int(rites.call(&"services_with_mourners"))
 	context["devotions_held"] = GameState.get_stat(&"devotions_held")
 	var names := PackedStringArray()
 	for grave_id: String in _reinterred():
@@ -384,6 +387,13 @@ func _reinterred() -> PackedStringArray:
 static func _open_at(seen_total: int, intro_minute: int) -> int:
 	var day_index := floori(float(seen_total - intro_minute) / MINUTES_PER_DAY) + 1
 	return day_index * MINUTES_PER_DAY + intro_minute
+
+
+## Sets buildings_open now (debug console, screenshot director; play opens through apply_morning /
+## post_load). Idempotent. QA6-03: public instead of calling the private _open by name.
+func open() -> void:
+	if not is_open():
+		_open()
 
 
 func _open() -> void:

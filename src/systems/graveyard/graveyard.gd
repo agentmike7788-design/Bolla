@@ -44,6 +44,7 @@ const STAT_UTILIZED := &"utilized"
 const STAT_PIETY := &"piety"
 # Phase 5 (docs/PHASE5_DESIGN.md §2.5, §2.7)
 const WORKSHOP_GROUP := &"workshop"
+const BUILDINGS_GROUP := &"buildings"
 const STAT_STONES_SET := &"stones_set"
 const SHAPE_MASTER := &"stone_master"
 const EVENT_MASTER_STONE := &"master_stone"
@@ -178,6 +179,7 @@ func place_marker(grave_id: String, marker_id: StringName, inv: Inventory) -> in
 			rep.event(EVENT_GRAVE_POOR, REASON_GRAVE % corpse.display_name)
 	_check_cemetery_complete()
 	_check_chapter()
+	_check_buildings_goal(corpse)
 	return paid
 
 
@@ -659,10 +661,21 @@ func set_designed_stone(grave_id: String, design: StoneDesign, inv: Inventory) -
 	if was_filled:
 		_check_cemetery_complete()
 		_check_chapter()
+		_check_buildings_goal(corpse)
 	var workshop := _first(WORKSHOP_GROUP)
 	if workshop != null and workshop.has_method(&"check_goal"):
 		workshop.call(&"check_goal")
 	return grave.quality - old_quality
+
+
+## Phase 6 (§1.5, §3.3; QA6-01): the marker of a serviced corpse may complete „Unter Dach und
+## Erde" – Buildings.check_goal (direct call, only for a corpse with service_held).
+func _check_buildings_goal(corpse: CorpseRecord) -> void:
+	if corpse == null or not corpse.service_held:
+		return
+	var buildings := _first(BUILDINGS_GROUP)
+	if buildings != null and buildings.has_method(&"check_goal"):
+		buildings.call(&"check_goal")
 
 
 func _stone_config() -> StoneConfig:

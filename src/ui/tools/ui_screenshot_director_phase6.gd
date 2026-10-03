@@ -180,7 +180,7 @@ func _stage() -> void:
 		GameState.set_flag(flag, true)
 	_buildings.post_load()  # buildings_open at once (§1.2, like a migrated save)
 	if not _buildings.is_open():
-		_buildings.call(&"_open")
+		_buildings.open()
 	for i: int in GRAVES.size():
 		var spec: Array = GRAVES[i]
 		_bury(spec[0], spec[1], int(spec[2]), spec[3], spec[4], bool(spec[5]), 12 + i)

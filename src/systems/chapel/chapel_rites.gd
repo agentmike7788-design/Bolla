@@ -40,6 +40,8 @@ var config: ChapelConfig
 var _devotions: Dictionary[String, int] = {}
 ## Services held so far (chapter panel / journal).
 var _services: int = 0
+## Services held with mourners in the pews (chapel ≥ 2; chapter panel „davon mit Trauergästen", QA6-02).
+var _mourned: int = 0
 
 
 func _init() -> void:
@@ -90,6 +92,8 @@ func hold_service(corpse_id: String, inv: Inventory) -> int:
 	if manager != null:
 		manager.mark_service(corpse_id, TimeManager.day)
 	_services += 1
+	if ChapelRules.mourners(lvl, cfg) > 0:
+		_mourned += 1
 	GameState.add_stat(STAT_SERVICES, 1)
 	EventBus.funeral_held.emit(corpse_id, lvl, fee)
 	return fee
@@ -184,17 +188,22 @@ func services_held() -> int:
 	return _services
 
 
+## Services held with mourners (chapel level with mourners_by_level > 0).
+func services_with_mourners() -> int:
+	return _mourned
+
+
 ## Graves with a devotion (grave_id -> level), a copy.
 func devotions() -> Dictionary[String, int]:
 	return _devotions.duplicate()
 
 
-## {devotions: {grave_id: level}, services: n} (§5.1).
+## {devotions: {grave_id: level}, services: n, mourned: n} (§5.1; "mourned" QA6-02).
 func save_state() -> Dictionary:
 	var dev := {}
 	for id: String in _devotions:
 		dev[id] = _devotions[id]
-	return {"devotions": dev, "services": _services}
+	return {"devotions": dev, "services": _services, "mourned": _mourned}
 
 
 ## Tolerant: missing keys = nothing held; invalid entries are dropped with a warning; levels are
@@ -202,6 +211,7 @@ func save_state() -> Dictionary:
 func load_state(data: Dictionary) -> void:
 	_devotions.clear()
 	_services = 0
+	_mourned = 0
 	var raw: Variant = data.get("devotions", {})
 	if raw is Dictionary:
 		for key: Variant in raw:
@@ -217,6 +227,11 @@ func load_state(data: Dictionary) -> void:
 		_services = maxi(0, roundi(float(services)))
 	else:
 		push_warning("[ChapelRites] invalid saved service count")
+	var mourned: Variant = data.get("mourned", 0)
+	if mourned is int or mourned is float:
+		_mourned = clampi(roundi(float(mourned)), 0, _services)
+	else:
+		push_warning("[ChapelRites] invalid saved mourned count")
 
 
 ## The rules in use (ChapelConfig; data/config/chapel_config.tres unless set).

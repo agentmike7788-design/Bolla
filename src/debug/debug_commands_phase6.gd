@@ -123,7 +123,7 @@ func _cmd_buildings(args: PackedStringArray) -> Dictionary:
 	var cfg := b.buildings_config()
 	GameState.set_flag(cfg.unlock_flag, true)
 	if not b.is_open():
-		b.call(&"_open")
+		b.open()
 	b.apply_levels()
 	return _ok("Gebäude offen: Bauplätze, Kirchpforte und Altgräber sind da.")
 
@@ -149,7 +149,7 @@ func _cmd_build(args: PackedStringArray) -> Dictionary:
 		goal = int(args[1])
 	if not b.is_open():
 		GameState.set_flag(b.buildings_config().unlock_flag, true)
-		b.call(&"_open")
+		b.open()
 	var parts := PackedStringArray()
 	for id: StringName in wanted:
 		var data := b.building(id)
