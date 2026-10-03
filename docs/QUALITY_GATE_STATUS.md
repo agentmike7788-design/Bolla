@@ -180,6 +180,16 @@ Alle Phase-1-Assets sind Prototypen (`ph_`-Präfix) und **nicht final**, bis der
 | ph_chr_mourner_a, _b, _c, _d | Trauergäste, sitzend, ohne Rig (Phase 6, P5) | Prototyp – Benutzerprüfung offen |
 | ph_item_altar_candle, _bone_box, _bone_box_full | Item-Modelle (Icons, Phase 6, P5) | Prototyp – Benutzerprüfung offen |
 | ph_env_ground_graveyard (neu exportiert, 64 × 80 m) · Kirchpforte = ph_prop_gate_small(_open) × 1,345 · Innenraum-Szenen crypt/chapel/shed_interior.tscn (aus den ph_int_*-Teilen, generiert) | Phase-6-Welt (W-Welt): Boden Nord-Erweiterung, Kirchpforte, drei Innenräume, Gebäude in der Welt verbaut | Prototyp – Aufnahmen `docs/reviews/phase6_wip/world_p6_*.jpg`, Benutzerprüfung offen |
+| ph_chr_v_innkeeper, _v_smith, _v_grocer, _v_priest, _v_mayor, _v_surgeon, _v_washer, _v_oldwoman | Die acht Dorfbewohner (Phase 7, P5): gemeinsames 8-Knochen-Rig, idle/walk/talk, dazu work (Schmied, Krämerin, Liesel) und sit (Hagedorn) | Prototyp – Vorschau `docs/reviews/phase7_wip/p5_*.jpg`, Benutzerprüfung offen |
+| ph_chr_guest_a, _guest_b, ph_chr_student_a, _b, _c | Sitzende Figuren ohne Rig: Gäste der Gaststube, Studenten der Vorlesung (Phase 7, P5) | Prototyp – Benutzerprüfung offen |
+| ph_bld_v_church, _v_office, _v_inn, _v_smithy, _v_shop, _v_surgery, _v_remise, _v_cottage_a, _v_cottage_b, _v_house_a, _v_house_b, _v_house_c, _v_inn2 | Hollerbrück außen (Phase 7, P5; Marker `door_outside`, `light_window(_N)`, `light_lantern`/`light_door`, `label_board`, `ribbon`, `counter`, `anvil`, `light_ember`, `smoke`) | Prototyp – Benutzerprüfung offen |
+| ph_prop_v_well, _v_bridge, _v_board, _v_shrine, _v_sign, _v_ribbon, _v_bench, _v_wash_stones, ph_prop_milestone, ph_env_linden_old, ph_env_brook, ph_env_garden_fence | Dorf-Requisiten, Wegstein, Linde (Dorf + Lindenacker), Bach, Gartenzaun (Phase 7, P5) | Prototyp – Benutzerprüfung offen |
+| ph_prop_corpse_poppy | D1 Wiebke Hagedorn: Mohnsträußchen als Kindmesh `poppy` für Look 1 (Phase 7, P5) | Prototyp – Benutzerprüfung offen |
+| ph_int_inn_room, _inn_bar, _inn_table, _inn_stove, _inn_barrels, _inn_stairs | Gaststube (Phase 7, P5) | Prototyp – Benutzerprüfung offen |
+| ph_int_surgery_room, _surgery_table, _surgery_cabinet, _surgery_desk, _surgery_bag, _surgery_lectern, _surgery_bench, _surgery_shutters | Wundarztstube + Vorlesung (Phase 7, P5; Gläser trüb und verschlossen, kein Skelett) | Prototyp – Benutzerprüfung offen |
+| ph_int_office_room, _office_desk, _office_shelf, _office_poor_box, _office_lectern | Amtsstube (Phase 7, P5) | Prototyp – Benutzerprüfung offen |
+| ph_int_pult (Marker `use`, `cold`), ph_int_collection_shelf (Marker `slot_1…7`, `use`) | Präparierpult und Sammlungsregal in der Gruft (Phase 7, P5; Gläser unter Tuch, Fächer hinter Vorhängen) | Prototyp – Benutzerprüfung offen |
+| ph_item_prep_jar, _prep_jar_small, _spirits, _beeswax, _anatomy_case, _specimen_jar, _specimen_jar_eyes, _specimen_bundle, _display_specimen, _bone_specimen, _fever_tincture, _wound_salve, _corpse_balm, _antidote, _bitter_drops, _dropsy_powder, _honey_cake, _elder_wine | Item-Modelle (Icons, Phase 7, P5; `_specimen_jar_eyes` zusätzlich zu §8: das dunkle Augenglas) | Prototyp – Benutzerprüfung offen |
 | Godot-Standardschrift | UI-Schrift | **Platzhalter** – Schriftwahl offen |
 
 ## Bekannte Probleme

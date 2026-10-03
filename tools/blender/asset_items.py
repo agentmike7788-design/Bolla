@@ -5,7 +5,10 @@ shears, pliers, hair braid, teeth pouch (a tied linen pouch - nothing visible), 
 Phase 5 (docs/PHASE5_DESIGN.md section 8): the tool tiers (iron / master shovel, axe, pickaxe - also
 shown on the tool belt), flax, yarn, clay, iron ore, iron bar, charcoal, workstone, elderberries,
 herbs, ink, herb bundle, gold leaf, steel rod;
-Phase 6 (docs/PHASE6_DESIGN.md section 8): altar candle, bone box, bone box (full: tied, blank tag).
+Phase 6 (docs/PHASE6_DESIGN.md section 8): altar candle, bone box, bone box (full: tied, blank tag);
+Phase 7 (docs/PHASE7_DESIGN.md section 8): preparation jars, spirits, beeswax, the closed dissecting case, the
+specimens (cloudy sealed jar, the dark eye glass variant, linen bundle, display bell, bone box), the medicines
+(labelled bottles, tins, a crock, powder papers), honey cake, elder wine (PHASE7_ITEMS).
 Only the new ones (build_all rebuilds every item):
     python -c "import sys; sys.path.insert(0, 'tools/blender'); import asset_items as a; a.build(a.PHASE5_ITEMS)"
 
@@ -20,7 +23,7 @@ import random
 
 import bpy  # noqa: F401  (must be imported before bmesh)
 import bmesh
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Vector, noise
 
 import lib_painted as L
 import asset_props_slice as P
@@ -1035,13 +1038,289 @@ def item_bone_box_full():
     _bone_box("ph_item_bone_box_full", True)
 
 
+# --- Phase 7 (docs/PHASE7_DESIGN.md sections 2.8 and 8) -------------------------------------------------
+# Specimens only as cloudy, sealed jars (an undefined dark shadow inside), the eyes as a small, almost black
+# glass with two seals, linen bundles, a closed wooden box; medicines as labelled bottles and powder papers.
+# No red, no organ shapes.
+
+def _p7(parts, name: str, yaw: float = -22.0, smooth: float = 35.0) -> None:
+    obj = L.join(parts, name)
+    _yaw(obj, yaw)
+    P._center_xy(obj)
+    import asset_villagers as VIL
+    VIL.finish_stable(obj, name, "items", smooth)
+
+
+def _bottle(parts, at, h: float, r: float, glass, neck: float = 0.35, label=True, seed: int = 0, n: int = 8, cork=None):
+    """Bottle: body, shoulder, neck, a cork (or wax), an optional blank label on the front."""
+    import asset_anatomy as A
+    at = Vector(at)
+    prof = [(0.0, 0.0), (r, 0.004), (r, h * (1 - neck)), (r * 0.4, h * (1 - neck * 0.45)), (r * 0.32, h * 0.92), (r * 0.36, h * 0.96),
+            (0.0, h * 0.96)]
+    b = A._lathe(prof, n=n, name="bottle")
+    b.data.transform(Matrix.Translation(at))
+    P._paint_fn(b, lambda co, vi: L.scale_c(glass, 0.85 + 0.35 * max(0.0, (co.z - at.z) / h - 0.5)))
+    L.set_mat(b, L.MAT_PAINTED)
+    parts.append(b)
+    parts.append(L.part("cyl", cork or L.hexc("#8A7050"), loc=at + Vector((0, 0, h * 0.99)), radius=r * 0.3, depth=h * 0.08, vertices=6,
+                        paint_kw={"ao": 0.0, "top": 0.3}))
+    if label:
+        parts.append(L.part("cube", A.PAPER, loc=at + Vector((0, -r - 0.002, h * 0.4)), scale=(r * 0.75, 0.002, h * 0.16),
+                            paint_kw={"ao": 0.0, "var": 0.05}))
+
+
+def item_prep_jar():
+    """An empty preparation jar: clear-ish glass, a wax lid on a string, no label yet; a second lid beside it."""
+    import asset_anatomy as A
+    L.reset(780)
+    parts = []
+    A.jar(parts, (0.0, 0.0, 0.0), h=0.2, r=0.07, seed=1, n=10, label=False, empty=True)
+    parts.append(L.part("cyl", A.WAX, loc=(0.11, -0.03, 0.01), radius=0.05, depth=0.02, vertices=10, paint_kw={"ao": 0.0, "top": 0.3}))
+    _p7(parts, "ph_item_prep_jar")
+
+
+def item_prep_jar_small():
+    """The small, dark preparation glass with two seals (for the eyes), empty - two of them."""
+    import asset_anatomy as A
+    L.reset(781)
+    parts = []
+    A.eye_jar(parts, (0.0, 0.0, 0.0), h=0.12, r=0.05, seed=2)
+    A.eye_jar(parts, (0.1, 0.05, 0.0), h=0.1, r=0.04, seed=3)
+    _p7(parts, "ph_item_prep_jar_small")
+
+
+def item_spirits():
+    """A flask of spirits (Branntwein): brown-green glass, a cork, a blank label; a little cup beside it."""
+    L.reset(782)
+    parts = []
+    _bottle(parts, (0.0, 0.0, 0.0), 0.27, 0.055, L.hexc("#5E5A3E"), seed=1)
+    cup = L.prim("cyl", loc=(0.09, -0.04, 0.025), radius=0.03, depth=0.05, vertices=8)
+    L.taper(cup, 0.0, 0.05, 1.2)
+    parts.append(P._finish_obj(cup, L.hexc("#8A8A84"), var=0.1, ao=0.2, top=0.3))
+    _p7(parts, "ph_item_spirits")
+
+
+def item_beeswax():
+    """Two cakes of beeswax, rounded, honey-brown."""
+    L.reset(783)
+    parts = []
+    for k, (x, y, r, h) in enumerate(((0.0, 0.0, 0.09, 0.05), (0.1, 0.06, 0.07, 0.04))):
+        c = L.prim("cyl", loc=(x, y, h / 2), radius=r, depth=h, vertices=12)
+        L.bevel(c, 0.01, 1)
+        L.jitter(c, 0.003, 12.0, k)
+        parts.append(P._finish_obj(c, L.hexc("#B08C48"), var=0.12, ao=0.2, top=0.35, hue_shift=L.hexc("#8C6A34"), seed=k))
+    _p7(parts, "ph_item_beeswax")
+
+
+def item_anatomy_case():
+    """The dissecting set: a CLOSED leather case with a strap and a brass clasp - nothing of the instruments shows."""
+    L.reset(784)
+    parts = []
+    case = L.prim("cube", loc=(0.0, 0.0, 0.035), scale=(0.17, 0.08, 0.035))
+    L.bevel(case, 0.02, 2)
+    parts.append(P._finish_obj(case, L.hexc("#5A3E2C"), var=0.14, ao=0.25, top=0.35, hue_shift=L.hexc("#3E2A1E")))
+    parts.append(L.part("cube", L.hexc("#3E2A1E"), loc=(0.05, 0.0, 0.035), scale=(0.018, 0.083, 0.037), paint_kw={"ao": 0.0}))
+    parts.append(L.part("cube", L.hexc("#8C7648"), loc=(0.05, -0.084, 0.04), scale=(0.022, 0.004, 0.016), paint_kw={"ao": 0.0, "top": 0.5}))
+    _p7(parts, "ph_item_anatomy_case")
+
+
+def item_specimen_jar():
+    """A specimen in its jar: cloudy glass, a wax lid on a string, a paper label; inside only a dark, undefined shadow."""
+    import asset_anatomy as A
+    L.reset(785)
+    parts = []
+    A.jar(parts, (0.0, 0.0, 0.0), h=0.21, r=0.072, seed=4, n=10)
+    _p7(parts, "ph_item_specimen_jar")
+
+
+def item_specimen_jar_eyes():
+    """(Variant icon) the eyes: the small, almost black glass with two seals and a label - nothing recognisable."""
+    import asset_anatomy as A
+    L.reset(786)
+    parts = []
+    A.eye_jar(parts, (0.0, 0.0, 0.0), h=0.13, r=0.055, seed=5)
+    parts.append(L.part("cube", A.PAPER, loc=(0.0, -0.057, 0.05), scale=(0.035, 0.002, 0.018), paint_kw={"ao": 0.0}))
+    parts.append(L.part("cyl", A.WAX, loc=(0.07, 0.03, 0.006), radius=0.022, depth=0.012, vertices=8, paint_kw={"ao": 0.0}))
+    _p7(parts, "ph_item_specimen_jar_eyes")
+
+
+def item_specimen_bundle():
+    """A specimen in linen: a soft parcel tied crosswise, a paper tag on the string."""
+    import asset_anatomy as A
+    L.reset(787)
+    parts = []
+    A.bundle(parts, (0.0, 0.0, 0.0), size=(0.11, 0.08, 0.05), seed=6)
+    parts.append(L.part("cube", A.PAPER, loc=(0.08, -0.08, 0.04), scale=(0.025, 0.002, 0.015), rot=(0, 10, 0), paint_kw={"ao": 0.0}))
+    _p7(parts, "ph_item_specimen_bundle")
+
+
+def item_display_specimen():
+    """A display specimen: a cloudy glass bell on a turned wooden base, sealed with wax; inside a dark shadow."""
+    import asset_anatomy as A
+    L.reset(788)
+    parts = []
+    base = A._lathe([(0.0, 0.0), (0.1, 0.004), (0.105, 0.02), (0.09, 0.035), (0.0, 0.035)], n=12, name="base")
+    parts.append(P._finish_obj(base, A.OAK, var=0.12, ao=0.2, top=0.35))
+    bell = A._lathe([(0.0, 0.035), (0.075, 0.035), (0.078, 0.15), (0.06, 0.2), (0.02, 0.225), (0.0, 0.228)], n=12, name="bell")
+
+    def fn(co, vi):
+        z = co.z / 0.23
+        c = L.mix(A.GLASS_CLOUDY, A.GLASS_CLOUDY_D, 0.3 + 0.3 * noise.noise(co * 25.0))
+        if 0.2 < z < 0.65:
+            c = L.mix(c, A.SHADOW_IN, 0.5 * max(0.0, 1.0 - abs(z - 0.42) / 0.23))
+        return c
+    P._paint_fn(bell, fn)
+    L.set_mat(bell, L.MAT_PAINTED)
+    parts.append(bell)
+    parts.append(L.part("torus", A.WAX, loc=(0.0, 0.0, 0.04), major_radius=0.08, minor_radius=0.008, major_segments=12, minor_segments=3,
+                        paint_kw={"ao": 0.0}))
+    parts.append(L.part("cyl", A.WAX_SEAL, loc=(0.0, -0.085, 0.045), rot=(90, 0, 0), radius=0.018, depth=0.006, vertices=8,
+                        paint_kw={"ao": 0.0}))
+    parts.append(L.part("cube", A.PAPER, loc=(0.0, -0.1, 0.018), scale=(0.04, 0.002, 0.01), paint_kw={"ao": 0.0}))
+    _p7(parts, "ph_item_display_specimen")
+
+
+def item_bone_specimen():
+    """The bone specimen: a tied linen parcel lying in a wooden box with a blank label - nothing else shows."""
+    import asset_anatomy as A
+    L.reset(789)
+    parts = []
+    hx, hy, h = 0.16, 0.08, 0.06
+    for sy in (-1, 1):
+        parts.append(P._plank((0.0, sy * (hy - 0.006), h / 2), (hx, 0.007, h / 2), A.OAK, seed=1 + sy, ao=0.25))
+    for sx in (-1, 1):
+        parts.append(P._plank((sx * (hx - 0.007), 0.0, h / 2), (0.007, hy - 0.012, h / 2), A.OAK_DARK, seed=3 + sx, ao=0.25))
+    parts.append(P._plank((0.0, 0.0, 0.006), (hx, hy - 0.006, 0.006), A.OAK_DARK, seed=6))
+    A.bundle(parts, (0.0, 0.0, 0.01), size=(0.13, 0.06, 0.035), seed=7)
+    parts.append(L.part("cube", A.PAPER, loc=(0.0, -hy - 0.002, h * 0.5), scale=(0.05, 0.002, 0.018), paint_kw={"ao": 0.0}))
+    _p7(parts, "ph_item_bone_specimen")
+
+
+def _powder_papers(parts, at, n: int = 3, seed: int = 0):
+    """Folded powder papers (Pulverbriefchen), stacked a little askew, a thread round each."""
+    import asset_anatomy as A
+    at = Vector(at)
+    for k in range(n):
+        p = L.prim("cube", loc=at + Vector((0.01 * k, 0.006 * k, 0.006 + k * 0.012)), scale=(0.06, 0.04, 0.005), rot=(0, 0, k * 11 - 8))
+        L.bevel(p, 0.003, 1)
+        parts.append(P._finish_obj(p, L.scale_c(A.PAPER, 0.95 + 0.04 * k), var=0.05, ao=0.1, top=0.3, seed=seed + k))
+        parts.append(L.part("cube", L.hexc("#6E5A44"), loc=at + Vector((0.01 * k, 0.006 * k, 0.012 + k * 0.012)),
+                            scale=(0.008, 0.041, 0.002), rot=(0, 0, k * 11 - 8), paint_kw={"ao": 0.0}))
+
+
+def item_fever_tincture():
+    """Fever tincture: a small brown bottle with a paper label and a cork, a second one behind."""
+    L.reset(790)
+    parts = []
+    _bottle(parts, (0.0, 0.0, 0.0), 0.15, 0.045, L.hexc("#5A4A34"), seed=1)
+    _bottle(parts, (0.075, 0.05, 0.0), 0.13, 0.038, L.hexc("#5A4A34"), seed=2)
+    _p7(parts, "ph_item_fever_tincture")
+
+
+def item_wound_salve():
+    """Wound salve: two little round tins of ointment, one open (pale yellow salve)."""
+    L.reset(791)
+    parts = []
+    for k, (x, y, op) in enumerate(((0.0, 0.0, False), (0.1, 0.04, True))):
+        t = L.prim("cyl", loc=(x, y, 0.02), radius=0.05, depth=0.04, vertices=12)
+        parts.append(P._finish_obj(t, L.hexc("#7C8187"), var=0.1, ao=0.2, top=0.4))
+        if op:
+            parts.append(L.part("cyl", L.hexc("#C8B880"), loc=(x, y, 0.041), radius=0.044, depth=0.004, vertices=12,
+                                paint_kw={"ao": 0.0, "var": 0.1}))
+        else:
+            parts.append(L.part("cyl", L.hexc("#6A6E74"), loc=(x, y, 0.043), radius=0.052, depth=0.008, vertices=12,
+                                paint_kw={"ao": 0.0, "top": 0.4}))
+    _p7(parts, "ph_item_wound_salve")
+
+
+def item_corpse_balm():
+    """Corpse balm: a clay crock covered with a cloth tied with string, a paper tag."""
+    import asset_anatomy as A
+    L.reset(792)
+    parts = []
+    crock = A._lathe([(0.0, 0.0), (0.05, 0.003), (0.065, 0.06), (0.055, 0.1), (0.05, 0.11), (0.0, 0.11)], n=10, name="crock")
+    parts.append(P._finish_obj(crock, L.hexc("#7A6450"), var=0.14, ao=0.25, top=0.3))
+    cl = L.prim("sphere", loc=(0.0, 0.0, 0.11), radius=1.0, scale=(0.065, 0.065, 0.025), segments=10, ring_count=4)
+    L.jitter(cl, 0.006, 20.0, 1)
+    parts.append(P._finish_obj(cl, A.LINEN, var=0.12, ao=0.1, top=0.3))
+    parts.append(L.part("torus", A.STRING, loc=(0.0, 0.0, 0.1), major_radius=0.053, minor_radius=0.003, major_segments=10, minor_segments=3))
+    parts.append(L.part("cube", A.PAPER, loc=(0.075, -0.04, 0.005), scale=(0.03, 0.02, 0.003), paint_kw={"ao": 0.0}))
+    _p7(parts, "ph_item_corpse_balm")
+
+
+def item_antidote():
+    """Antidote "nach Quast": two squat, square-shouldered bottles with broad labels and wax-sealed corks."""
+    import asset_anatomy as A
+    L.reset(793)
+    parts = []
+    _bottle(parts, (0.0, 0.0, 0.0), 0.14, 0.05, L.hexc("#4E5246"), neck=0.25, seed=1, n=6, cork=A.WAX)
+    _bottle(parts, (0.08, 0.05, 0.0), 0.12, 0.04, L.hexc("#4E5246"), neck=0.25, seed=2, n=6, cork=A.WAX)
+    _p7(parts, "ph_item_antidote")
+
+
+def item_bitter_drops():
+    """Bitter drops "nach Quast": two slim dark dropper bottles with labels."""
+    L.reset(794)
+    parts = []
+    _bottle(parts, (0.0, 0.0, 0.0), 0.16, 0.036, L.hexc("#3A3428"), neck=0.45, seed=1)
+    _bottle(parts, (0.065, 0.055, 0.0), 0.15, 0.033, L.hexc("#3A3428"), neck=0.45, seed=2)
+    _p7(parts, "ph_item_bitter_drops")
+
+
+def item_dropsy_powder():
+    """Dropsy powder "nach Quast": three folded powder papers, each tied with a thread."""
+    L.reset(795)
+    parts = []
+    _powder_papers(parts, (0.0, 0.0, 0.0), 3, seed=1)
+    _p7(parts, "ph_item_dropsy_powder")
+
+
+def item_honey_cake():
+    """Honigkuchen: a square brown cake with blanched almonds on top, a broken-off piece."""
+    L.reset(796)
+    parts = []
+    c = L.prim("cube", loc=(0.0, 0.0, 0.025), scale=(0.11, 0.08, 0.025))
+    L.bevel(c, 0.01, 1)
+    L.jitter(c, 0.003, 10.0, 1)
+    parts.append(P._finish_obj(c, L.hexc("#7A4E2C"), var=0.12, ao=0.2, top=0.35, hue_shift=L.hexc("#5E3A22")))
+    for k in range(6):
+        a = k / 6 * math.tau
+        parts.append(L.part("sphere", L.hexc("#D8C8A0"), loc=(math.cos(a) * 0.06, math.sin(a) * 0.04, 0.051), radius=1.0,
+                            scale=(0.014, 0.008, 0.004), segments=6, ring_count=3, paint_kw={"ao": 0.0}))
+    piece = L.prim("cube", loc=(0.15, -0.06, 0.02), scale=(0.035, 0.03, 0.02), rot=(0, 0, 30))
+    parts.append(P._finish_obj(piece, L.hexc("#7A4E2C"), var=0.12, ao=0.2, top=0.35))
+    _p7(parts, "ph_item_honey_cake")
+
+
+def item_elder_wine():
+    """Holunderwein: a dark bottle with a cork and a label painted with a little elder sprig (no text), a spare cork."""
+    L.reset(797)
+    parts = []
+    _bottle(parts, (0.0, 0.0, 0.0), 0.28, 0.058, L.hexc("#2E2830"), seed=1)
+    for k in range(4):
+        parts.append(L.part("cube", L.hexc("#4E6440") if k < 2 else L.hexc("#D8CEAE"),
+                            loc=(-0.02 + k * 0.013, -0.063, 0.11 + (k % 2) * 0.01), scale=(0.006, 0.002, 0.006), paint_kw={"ao": 0.0}))
+    parts.append(L.part("cyl", L.hexc("#8A7050"), loc=(0.09, -0.02, 0.012), rot=(0, 90, 20), radius=0.012, depth=0.035, vertices=6))
+    _p7(parts, "ph_item_elder_wine")
+
+
+PHASE7_ITEMS = ("item_prep_jar", "item_prep_jar_small", "item_spirits", "item_beeswax", "item_anatomy_case", "item_specimen_jar",
+                "item_specimen_jar_eyes", "item_specimen_bundle", "item_display_specimen", "item_bone_specimen",
+                "item_fever_tincture", "item_wound_salve", "item_corpse_balm", "item_antidote", "item_bitter_drops",
+                "item_dropsy_powder", "item_honey_cake", "item_elder_wine")
+
+
 ITEMS = (item_log, item_stone, item_linen, item_coin, item_shroud, item_rake, item_seeds, item_iron_fittings,
          item_scrub_brush, item_comb, item_burial_gown, item_juniper, item_shears, item_pliers, item_hair_braid,
          item_teeth_pouch, item_elder_key,
          item_shovel_iron, item_shovel_master, item_axe_iron, item_axe_master, item_pickaxe_iron, item_pickaxe_master,
          item_flax, item_yarn, item_clay, item_iron_ore, item_iron_bar, item_charcoal, item_workstone,
          item_elderberries, item_herbs, item_ink, item_herb_bundle, item_gold_leaf, item_steel_rod,
-         item_altar_candle, item_bone_box, item_bone_box_full)
+         item_altar_candle, item_bone_box, item_bone_box_full,
+         item_prep_jar, item_prep_jar_small, item_spirits, item_beeswax, item_anatomy_case, item_specimen_jar,
+         item_specimen_jar_eyes, item_specimen_bundle, item_display_specimen, item_bone_specimen, item_fever_tincture,
+         item_wound_salve, item_corpse_balm, item_antidote, item_bitter_drops, item_dropsy_powder, item_honey_cake,
+         item_elder_wine)
 PHASE6_ITEMS = ("item_altar_candle", "item_bone_box", "item_bone_box_full")
 PHASE5_ITEMS = ("item_shovel_iron", "item_shovel_master", "item_axe_iron", "item_axe_master", "item_pickaxe_iron",
                 "item_pickaxe_master", "item_flax", "item_yarn", "item_clay", "item_iron_ore", "item_iron_bar",
