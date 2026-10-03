@@ -196,10 +196,12 @@ func request_hold() -> bool:
 	_show_scene(spec.organ, float(cfg.lecture.get("veil_alpha", DEFAULT_VEIL)))
 	var p := _player_node()
 	if p != null and p.has_method(&"start_timed_action"):
+		if not EventBus.timed_action_finished.is_connected(_on_lecture_finished):
+			EventBus.timed_action_finished.connect(_on_lecture_finished, CONNECT_ONE_SHOT)
 		if bool(p.call(&"start_timed_action", Phase7Texts.LECTURE_ACTION, minutes, finish_hold.bind(uid, inv), false, ANIM)):
-			if not EventBus.timed_action_finished.is_connected(_on_lecture_finished):
-				EventBus.timed_action_finished.connect(_on_lecture_finished, CONNECT_ONE_SHOT)
 			return true
+		if EventBus.timed_action_finished.is_connected(_on_lecture_finished):
+			EventBus.timed_action_finished.disconnect(_on_lecture_finished)
 		_hide_scene()
 		return false
 	finish_hold(uid, inv)

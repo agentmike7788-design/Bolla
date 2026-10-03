@@ -182,6 +182,25 @@ func test_title_shows_quick_save_warnings() -> void:
 	assert_false(title.new_game_button.disabled, "a warning does not lock the menu")
 
 
+## Phase 7 (docs/PHASE7_DESIGN.md §7): a veil that was down when a slot is loaded does not survive the
+## load; the region name of the arrival is shown over the new world.
+func test_phase7_veil_does_not_survive_a_load() -> void:
+	await _new_game()
+	assert_eq(SaveManager.save_game(1), OK)
+	var ui := await add_scene(UI_SCENE) as UIRoot
+	EventBus.screen_veil_changed.emit(true)
+	assert_true(ui.veil.active and ui.veil.visible)
+	ui.open_panel(&"pause", {})
+	var menu := ui.get_panel(&"pause") as PauseMenu
+	menu.load_button.pressed.emit()
+	menu.slot_buttons[1].pressed.emit()
+	assert_true(await wait_for_signal(EventBus.game_loaded, WORLD_TIMEOUT + 1.0), "game_loaded")
+	assert_false(ui.veil.active)
+	assert_false(ui.veil.visible, "the veil is gone after the load")
+	EventBus.region_changed.emit(&"village")
+	assert_eq(ui.region_label.shown_text, "Hollerbrück · Anger")
+
+
 # --- helpers --------------------------------------------------------------------------------
 
 ## The title screen as the current scene (like src/boot/main.gd will do).

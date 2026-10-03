@@ -60,9 +60,15 @@ func _ready() -> void:
 	EventBus.screen_veil_changed.connect(_on_veil_changed)
 	EventBus.timed_action_started.connect(_on_action_started)
 	EventBus.timed_action_progress.connect(_on_action_progress)
+	EventBus.game_loaded.connect(_on_game_reset.unbind(1))
+	EventBus.new_game_started.connect(_on_game_reset)
 
 
 func _exit_tree() -> void:
+	for sig: Signal in [EventBus.game_loaded, EventBus.new_game_started]:
+		for c: Dictionary in sig.get_connections():
+			if c.callable.get_object() == self:
+				sig.disconnect(c.callable)
 	for pair: Array in [[EventBus.screen_veil_changed, _on_veil_changed], [EventBus.timed_action_started, _on_action_started],
 			[EventBus.timed_action_progress, _on_action_progress]]:
 		var sig: Signal = pair[0]
@@ -147,6 +153,16 @@ func _on_action_started(label: String, _duration: float) -> void:
 	elif not active:
 		line_label.text = label
 	bar.value = 0.0
+
+
+## A load or a new game never keeps a veil (the action it belonged to is gone).
+func _on_game_reset() -> void:
+	if _tween != null and _tween.is_valid():
+		_tween.kill()
+	active = false
+	lines = []
+	modulate.a = 0.0
+	visible = false
 
 
 func _on_action_progress(ratio: float) -> void:

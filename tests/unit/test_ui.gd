@@ -1374,6 +1374,15 @@ func _contexts() -> Dictionary[StringName, Dictionary]:
 		&"day_summary": {"day": 2, "burials_today": 1, "coins_today": 9, "total": 9, "rating": &"neglected"},
 		&"slice_summary": {"days": 6, "burials": 6, "total": 48, "rating": &"dignified", "reputation": 0},
 		&"pause": {},
+		# Phase 7 (docs/PHASE7_DESIGN.md §7): every village panel opens without its systems, too.
+		&"shop": {"shop_id": &"grocer", "inventory": inv, "player": player},
+		&"gift": {"npc_id": &"innkeeper", "inventory": inv, "player": player},
+		&"orders": {"board": true, "orders": [&"ob_wood"], "inventory": inv, "player": player},
+		&"anatomist": {"inventory": inv},
+		&"lecture": {"inventory": inv},
+		&"pult": {"station": &"pult", "inventory": inv, "player": player},
+		&"collection": {"inventory": inv},
+		&"deduction": {"corpse_id": "corpse_0001"},
 	}
 
 
