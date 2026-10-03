@@ -6,8 +6,8 @@ import { listSaves, whenText, playTimeText } from './save.js';
 
 const CONTROLS = [
   ['Kamera', [['Linke Maus ziehen', 'Karte verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['W A S D', 'bewegen']]],
-  ['Bauen', [['1 – 9, 0', 'Gebäude wählen (9 Kraftwerk, 0 Mast)'], ['O P I K', 'Ölpumpe, Rohr, Raffinerie, Tank'], ['G B Z', 'Gleis, Bahnhof, Zug'], ['Klick / Ziehen', 'bauen, Bänder und Rohre ziehen'], ['R', 'drehen'], ['X', 'abreißen'], ['Klick auf Konstruktor oder Raffinerie', 'Rezept wählen'], ['Klick auf Bahnhof oder Zug', 'Betriebsart, Fahrplan'], ['Esc', 'Werkzeug weglegen']]],
-  ['Spiel', [['T', 'Forschungsbaum'], ['M', 'Karten'], ['N', 'nächste Tageszeit'], ['U', 'Ton an / aus'], ['Strg S', 'speichern'], ['Esc', 'Menü']]],
+  ['Bauen', [['1 – 9, 0', 'Gebäude wählen (9 Kraftwerk, 0 Mast)'], ['O P I K', 'Ölpumpe, Rohr, Raffinerie, Tank'], ['G B Z', 'Gleis, Bahnhof, Zug'], ['H', 'Raketensilo'], ['Klick / Ziehen', 'bauen, Bänder und Rohre ziehen'], ['R', 'drehen'], ['X', 'abreißen'], ['Klick auf Konstruktor oder Raffinerie', 'Rezept wählen'], ['Klick auf Bahnhof oder Zug', 'Betriebsart, Fahrplan'], ['Klick auf Raketensilo', 'Etappen, Raketenstart'], ['Esc', 'Werkzeug weglegen']]],
+  ['Spiel', [['T', 'Forschungsbaum'], ['L', 'Statistik'], ['M', 'Karten'], ['N', 'nächste Tageszeit'], ['U', 'Ton an / aus'], ['Strg S', 'speichern'], ['Esc', 'Menü']]],
   ['Touch', [['Ein Finger', 'verschieben oder bauen'], ['Zwei Finger', 'zoomen und drehen']]],
 ];
 

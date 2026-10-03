@@ -7,7 +7,7 @@
 //
 // The estimate is play time = building time + waiting for the parts. Building
 // time assumes a quick but not perfect player (see BUILD_SECONDS).
-import { createFactory, BUILDINGS, CONSTRUCTOR_RECIPES, PUMP_RATE } from '../src/factory.js';
+import { createFactory, BUILDINGS, CONSTRUCTOR_RECIPES, PUMP_RATE, SILO_STAGES, POWER_SPEED } from '../src/factory.js';
 import { SCENARIOS } from '../src/scenarios.js';
 import { RESEARCH, STATS } from '../src/research.js';
 
@@ -195,6 +195,29 @@ function link(factory, a, b) {
   return b;
 }
 
+// The rocket silo: every stage is a delivery of its parts (one line per part, two
+// from 60 on, lines that stand are reused) plus the stage's build time on power.
+// A launch adds the countdown and the flight.
+const LAUNCH_SECONDS = 30;
+function siloStages(from, to, stats, lines) {
+  let build = 0;
+  let wait = 0;
+  for (const stage of SILO_STAGES.slice(from, to)) {
+    let stageWait = 0;
+    for (const [item, n] of Object.entries(stage.needs)) {
+      const line = measure(item, stats);
+      const want = n >= 60 ? 2 : 1;
+      if ((lines[item] ?? 0) < want) {
+        build += (want - (lines[item] ?? 0)) * buildTime(line.cost);
+        lines[item] = want;
+      }
+      stageWait = Math.max(stageWait, line.first + (n / (line.perMin * lines[item])) * 60);
+    }
+    wait += stageWait + stage.time / POWER_SPEED;
+  }
+  return { build, wait };
+}
+
 const baseStats = () => Object.fromEntries(STATS.map((s) => [s, 1]));
 const fmt = (sec) => {
   const s = Math.round(sec);
@@ -224,12 +247,21 @@ function planScenario(s) {
   const stats = baseStats();
   const lines = {}; // item -> lines standing
   let pumps = 0;
+  let siloDone = 0; // stages of the silo built
   let total = 0;
   const rows = [];
   for (const m of s.missions) {
     let build = 0;
     let wait = 0;
     for (const g of m.goals) {
+      if (g.silo || g.launched) {
+        const to = g.silo ?? SILO_STAGES.length;
+        const r = siloStages(siloDone, to, stats, lines);
+        build += r.build;
+        wait = Math.max(wait, r.wait + (g.launched ? LAUNCH_SECONDS : 0));
+        siloDone = g.launched ? 1 : Math.max(siloDone, to);
+        continue;
+      }
       if (g.powered) {
         // A plant fed by a coal line (reused when one stands) and a pole per three machines.
         // The speed bonus of the grid is left out, so later missions are estimated a bit slow.
@@ -324,4 +356,9 @@ console.log('\nForschungsbaum (freies Spiel)');
     console.log(`    ${r.name.padEnd(22)} bauen ${fmt(build).padStart(5)}  warten ${fmt(wait).padStart(5)}  → ${fmt(time).padStart(5)}  (gesamt ${fmt(total)})`);
     for (const [stat, f] of Object.entries(r.boosts ?? {})) stats[stat] *= f;
   }
+  // The end goal of the free game: build the silo and start the rocket.
+  const r = siloStages(0, SILO_STAGES.length, stats, lines);
+  const time = r.build + (r.wait + LAUNCH_SECONDS) * 0.8;
+  total += time;
+  console.log(`    ${'Raketenstart'.padEnd(22)} bauen ${fmt(r.build).padStart(5)}  warten ${fmt(r.wait + LAUNCH_SECONDS).padStart(5)}  → ${fmt(time).padStart(5)}  (gesamt ${fmt(total)})`);
 }

@@ -4,7 +4,7 @@ import { generateWorld, ORES, TERRAIN, MAP_SIZE, TILE } from './world.js';
 import { TRAIN_CARGO, STATION_CAP, TRAIN_SPEED } from './trains.js';
 import { buildWorldMeshes, createSea } from './scenery.js';
 import { createCameraRig } from './camera.js';
-import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, RECIPES, CONSTRUCTOR_RECIPES, REFINERY_RECIPES, recipesOf, isMachine, usesPower, POWER_USE, POWER_SPEED, POWER_OUTPUT, WIRE_REACH, PUMP_RATE } from './factory.js';
+import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, RECIPES, CONSTRUCTOR_RECIPES, REFINERY_RECIPES, recipesOf, isMachine, usesPower, POWER_USE, POWER_SPEED, POWER_OUTPUT, WIRE_REACH, PUMP_RATE, SILO_STAGES, siloReady } from './factory.js';
 import { RESEARCH } from './research.js';
 import { createResearchView } from './researchView.js';
 import { createFactoryView, createGhost } from './buildings.js';
@@ -16,6 +16,8 @@ import { createDayNight } from './daynight.js';
 import { listSaves, readSave, writeSave, deleteSave, exportSave, importSave, newSaveId, SAVE_VERSION } from './save.js';
 import { createMenu } from './menu.js';
 import { createTutorial, tutorialDone, TUTORIAL_SEED } from './tutorial.js';
+import { createLaunch } from './launch.js';
+import { createStatsView } from './statsView.js';
 import './style.css';
 
 const canvas = document.getElementById('scene');
@@ -120,7 +122,7 @@ function loadWorld(seed, mapScenario = null, saved = null) {
   if (saved) {
     factory.load(saved.factory, saved.v);
     missions?.load(saved.missions);
-    for (const b of factory.buildings.values()) meshes.setDecorHidden(b.index, true);
+    for (const b of factory.buildings.values()) for (const i of factory.footprint(b)) meshes.setDecorHidden(i, true);
   }
   factoryView.clear();
   effects.clear();
@@ -207,6 +209,8 @@ function renderProgress() {
   renderPower();
   renderOil();
   renderRail();
+  renderRocket();
+  if (selected?.type === 'silo') renderSiloNote();
   // The train panel's status line follows the train; the rest stays clickable.
   const note = selected?.path && document.getElementById('train-note');
   if (note) note.innerHTML = `${trainLine(selected)}${selected.total ? `<br>${cargoText(selected.cargo)}` : ''}`;
@@ -298,6 +302,58 @@ function renderRail() {
   }
 }
 
+const rocketPanel = document.getElementById('rocket');
+const rocketState = document.getElementById('rocket-state');
+const rocketFill = document.getElementById('rocket-fill');
+const rocketText = document.getElementById('rocket-text');
+
+// Parts of a silo's current stage, as delivered/needed.
+const siloParts = (b, stage) =>
+  Object.entries(stage.needs)
+    .map(([k, n]) => `${ITEMS[k].name} ${b.have[k] ?? 0}/${n}`)
+    .join(' · ');
+// How far the silo is: whole stages plus the share of parts and build time of the current one.
+function siloProgress(b) {
+  const stage = SILO_STAGES[b.stage];
+  if (!stage) return 1;
+  const needed = Object.values(stage.needs).reduce((a, n) => a + n, 0);
+  const got = Object.entries(stage.needs).reduce((a, [k, n]) => a + Math.min(b.have[k] ?? 0, n), 0);
+  const part = b.busy ? 0.8 + 0.2 * (b.timer / stage.time) : (got / needed) * 0.8;
+  return (b.stage + part) / SILO_STAGES.length;
+}
+
+const siloSeen = new WeakMap(); // silo -> stages finished when last looked
+
+// Shown once the silo is unlocked: the stages of the silo furthest along.
+function renderRocket() {
+  for (const b of factory.buildings.values()) {
+    if (b.type !== 'silo') continue;
+    const last = siloSeen.get(b);
+    siloSeen.set(b, b.made);
+    if (last === undefined || b.made <= last || inTitle) continue;
+    const done = SILO_STAGES[b.stage - 1];
+    audio.play.success();
+    showToast(`Etappe geschafft: ${done.name}`, siloReady(b) ? 'Die Rakete ist betankt und startklar. Klick das Silo an!' : `Als Nächstes: ${SILO_STAGES[b.stage].name}.`);
+  }
+  const s = factory.siloSummary();
+  rocketPanel.hidden = !factory.research.unlocked.has('silo') && !s.silos;
+  if (rocketPanel.hidden) return;
+  const b = s.best;
+  rocketPanel.classList.toggle('ready', siloReady(b));
+  rocketFill.style.width = `${b ? siloProgress(b) * 100 : 0}%`;
+  if (!b) {
+    rocketState.textContent = s.launched ? `${s.launched} gestartet` : 'kein Silo';
+    rocketText.textContent = 'Raketensilo (H) auf 3 × 3 freie Felder setzen und Bänder an seine Seiten führen.';
+  } else if (siloReady(b)) {
+    rocketState.textContent = 'startklar';
+    rocketText.textContent = 'Die Rakete ist betankt. Klick das Silo an und starte sie!';
+  } else {
+    const stage = SILO_STAGES[b.stage];
+    rocketState.textContent = `Etappe ${b.stage + 1}/${SILO_STAGES.length}`;
+    rocketText.textContent = `${stage.name}: ${b.busy ? `wird gebaut, ${Math.round((b.timer / stage.time) * 100)} %` : siloParts(b, stage)}${s.launched ? ` · ${s.launched} gestartet` : ''}`;
+  }
+}
+
 function unlockHint(type) {
   if (missions) {
     const m = scenario.missions.find((x) => x.reward.unlocks?.includes(type));
@@ -355,6 +411,7 @@ function showWin() {
   const stars = starsFor(scenario, seconds);
   const best = saveRecord(scenario.id, stars, seconds);
   const next = SCENARIOS[SCENARIOS.indexOf(scenario) + 1];
+  document.getElementById('win-label').textContent = 'Alle Missionen erfüllt';
   document.getElementById('win-title').textContent = scenario.name;
   document.getElementById('win-stars').textContent = starText(stars);
   document.getElementById('win-time').textContent =
@@ -383,7 +440,7 @@ for (const menu of [mapsMenu, winMenu]) {
 }
 document.getElementById('goal').addEventListener('click', (e) => e.target.closest('[data-maps]') && openMaps());
 document.getElementById('maps-open').addEventListener('click', openMaps);
-const menuOpen = () => !mapsMenu.hidden || !winMenu.hidden;
+const menuOpen = () => !mapsMenu.hidden || !winMenu.hidden || stats.isOpen || launch.active;
 
 // --- Graphics settings --------------------------------------------------------
 
@@ -650,6 +707,7 @@ function openPanel(b) {
 function renderPanel() {
   const b = selected;
   if (b.path) return renderSchedule(b);
+  if (b.type === 'silo') return renderSilo(b);
   if (b.type === 'station') {
     recipeLabel.textContent = `Bahnhof ${b.name} · Betriebsart`;
     const modes = [
@@ -676,6 +734,44 @@ function renderPanel() {
     .join('');
 }
 
+// The silo's stages with their parts, and the start button once the rocket is ready.
+function renderSilo(b) {
+  recipeLabel.textContent = `Raketensilo${b.launched ? ` · ${b.launched} gestartet` : ''}`;
+  recipeList.innerHTML = `<ol class="stages">${SILO_STAGES.map((st, i) => `<li data-stage="${i}"><b>${i + 1}. ${st.name}</b><span></span></li>`).join('')}</ol>
+    <p class="panel-note" id="silo-note"></p>
+    <button type="button" class="launch-go" data-launch>Rakete starten</button>`;
+  renderSiloNote();
+}
+
+// The changing part of the silo panel, refreshed with the HUD.
+function renderSiloNote() {
+  const b = selected;
+  const note = document.getElementById('silo-note');
+  if (!note) return;
+  for (const li of recipeList.querySelectorAll('[data-stage]')) {
+    const i = Number(li.dataset.stage);
+    const st = SILO_STAGES[i];
+    li.className = i < b.stage ? 'done' : i === b.stage ? 'now' : '';
+    li.querySelector('span').textContent =
+      i < b.stage ? 'fertig' : i === b.stage ? (b.busy ? `wird gebaut · ${Math.round((b.timer / st.time) * 100)} %` : siloParts(b, st)) : needsText(st.needs);
+  }
+  const ready = siloReady(b);
+  const state = ready ? 'Startklar! Alle Systeme bereit.' : b.refused ? `Nimmt kein ${ITEMS[b.refused].name} an` : b.state === 'nopower' ? 'Kein Strom' : b.busy ? `Baut: ${SILO_STAGES[b.stage].desc}` : 'Bänder von jeder Seite liefern die Teile';
+  note.textContent = `${state}${b.net ? '' : ready ? '' : ' · ohne Strom halb so schnell'}`;
+  const go = recipeList.querySelector('[data-launch]');
+  go.disabled = !ready;
+  go.textContent = ready ? 'Rakete starten' : 'Start erst nach allen Etappen';
+}
+
+function startLaunch(b) {
+  if (!factory.launch(b)) return;
+  openPanel(null);
+  if (tool) setTool(tool);
+  researchView.close();
+  stats.close();
+  launch.start(b);
+}
+
 // A train's stops in order, and every station it could stop at.
 function renderSchedule(t) {
   const reach = new Set(factory.railways.reachable(t.path[Math.round(t.s)]));
@@ -700,13 +796,14 @@ function renderSchedule(t) {
     }</div>`;
 }
 
-const hasRecipes = (b) => !!recipesOf(b?.type) || b?.type === 'station';
+const hasRecipes = (b) => !!recipesOf(b?.type) || b?.type === 'station' || b?.type === 'silo';
 recipeList.addEventListener('click', (e) => {
   if (!selected) return;
   const opt = e.target.closest('[data-recipe]');
   const mode = e.target.closest('[data-mode]');
   const add = e.target.closest('[data-stop]');
   const drop = e.target.closest('[data-unstop]');
+  if (e.target.closest('[data-launch]')) return startLaunch(selected);
   if (opt) factory.setRecipe(selected, opt.dataset.recipe);
   else if (mode) factory.setMode(selected, mode.dataset.mode);
   else if (add) factory.railways.setSchedule(selected, [...selected.schedule, Number(add.dataset.stop)]);
@@ -831,6 +928,12 @@ function showTile(tile) {
     tileName.textContent = `Raffinerie · ${ITEMS[recipe.makes].name}`;
     const where = building.pipes?.members.length > 1 ? pipeNote(building) : 'Rohr an eine Seite außer vorn';
     tileDetail.textContent = `${REFINERY_TEXT[building.state]} · ${recipe.oil} Öl je Teil · ${where}${powerNote(building)}${tool ? '' : ' · Klick: Rezept'}`;
+  } else if (building?.type === 'silo') {
+    const stage = SILO_STAGES[building.stage];
+    tileName.textContent = `Raketensilo · ${stage ? `Etappe ${building.stage + 1}: ${stage.name}` : 'startklar'}`;
+    tileDetail.textContent = stage
+      ? `${building.busy ? `Wird gebaut, ${Math.round((building.timer / stage.time) * 100)} %` : siloParts(building, stage)}${powerNote(building)}${tool ? '' : ' · Klick: Etappen'}`
+      : `Die Rakete ist betankt${tool ? '' : ' · Klick: Start'}`;
   } else if (building?.type === 'storage') {
     tileName.textContent = 'Lager';
     tileDetail.textContent = building.received
@@ -895,7 +998,7 @@ let shapesDirty = false;
 const toolButtons = document.querySelectorAll('.tool[data-tool]');
 const help = document.getElementById('help');
 const HELP = {
-  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['O P I K', 'Öl'], ['G B Z', 'Bahn'], ['X', 'abreißen'], ['T', 'Forschung'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
+  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['O P I K', 'Öl'], ['G B Z', 'Bahn'], ['H', 'Silo'], ['X', 'abreißen'], ['T', 'Forschung'], ['L', 'Statistik'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
@@ -913,6 +1016,7 @@ const HELP = {
   rail: [['Ziehen', 'Gleise verlegen'], ['Ecken', 'werden Kurven'], ['Von einem Gleis ziehen', 'Abzweig'], ['Esc', 'fertig']],
   station: [['Klick', 'Bahnhof setzen'], ['R', 'Gleisrichtung drehen'], ['Bänder', 'an die Seiten'], ['Ohne Werkzeug klicken', 'Beladen / Entladen']],
   train: [['Klick auf Bahnhof', 'Zug einsetzen'], ['Braucht', '4 Felder Gleis'], ['Ohne Werkzeug klicken', 'Fahrplan'], ['Esc', 'fertig']],
+  silo: [['Klick', 'Raketensilo setzen'], ['Braucht', '3 × 3 freie Felder'], ['Bänder', 'an jede Seite'], ['Ohne Werkzeug klicken', 'Etappen, Start']],
   remove: [['Klick / Ziehen', 'abreißen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
 };
 
@@ -966,7 +1070,7 @@ function buildAt(tile) {
   if (tool === 'remove') {
     const removed = factory.remove(tile);
     if (removed) {
-      meshes.setDecorHidden(tile.z * world.size + tile.x, false);
+      for (const i of factory.footprint(removed)) meshes.setDecorHidden(i, false);
       audio.play.remove();
       effects.remove(tile, removed.type);
     }
@@ -992,7 +1096,8 @@ function buildAt(tile) {
         showToast('Hier passt kein Zug', factory.canAddTrain(tile).reason);
       }
     } else if (factory.place(tool, tile, existing?.type === 'belt' ? existing.dir : dir, !lastTile)) {
-      meshes.setDecorHidden(tile.z * world.size + tile.x, true);
+      for (const i of factory.footprint(factory.get(tile))) meshes.setDecorHidden(i, true);
+      if (tool === 'silo') for (const i of factory.footprint(factory.get(tile))) effects.build(world.tiles[i], i % 2 === 0);
       audio.play.build(tool);
       effects.build(tile, tool !== 'belt');
     } else if (!lastTile) audio.play.deny();
@@ -1050,7 +1155,7 @@ canvas.addEventListener('pointerdown', (e) => {
 let downAt = null;
 window.addEventListener('pointerup', (e) => {
   dragging = false;
-  if (!downAt || e.target !== canvas) return;
+  if (!downAt || e.target !== canvas || launch.active) return;
   const moved = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y);
   downAt = null;
   if (tool || moved > 6) return;
@@ -1065,6 +1170,8 @@ document.getElementById('rotate').addEventListener('click', rotate);
 
 // Esc closes whatever is on top; with nothing left open it brings up the pause menu.
 function escape() {
+  if (launch.active) return launch.skip();
+  if (stats.isOpen) return stats.close();
   if (!mapsMenu.hidden || !winMenu.hidden) mapsMenu.hidden = winMenu.hidden = true;
   else if (menu.isOpen) menu.back();
   else if (researchView.isOpen) researchView.close();
@@ -1083,17 +1190,20 @@ window.addEventListener('keydown', (e) => {
   }
   if (e.repeat && key !== 'r') return;
   if (key === 'escape') return escape();
+  if (launch.active) return;
   if (e.ctrlKey || e.metaKey || e.altKey || menu.isOpen) return;
   if (menuOpen()) {
     if (key === 'm') mapsMenu.hidden = winMenu.hidden = true;
+    if (key === 'l' && stats.isOpen) stats.close();
     return;
   }
   if (key === 'm') return openMaps();
+  if (key === 'l') return stats.toggle();
   if (key === 'u') return toggleMute();
   if (key === 'n') return dayNight.skipAhead();
   if (key === 't' && missions) return showToast('Missionskarte', 'Hier schalten Missionen neue Gebäude frei, nicht der Forschungsbaum.');
   const numbered = /^[0-9]$/.test(key) && ['drill', 'belt', 'storage', 'furnace', 'assembler', 'splitter', 'merger', 'constructor', 'power', 'pole'][(Number(key) + 9) % 10];
-  const oilKey = { o: 'pump', p: 'pipe', i: 'refinery', k: 'tank', g: 'rail', b: 'station', z: 'train' }[key];
+  const oilKey = { o: 'pump', p: 'pipe', i: 'refinery', k: 'tank', g: 'rail', b: 'station', z: 'train', h: 'silo' }[key];
   if (numbered) setTool(numbered);
   else if (oilKey) setTool(oilKey);
   else if (key === 'x' || key === 'delete') setTool('remove');
@@ -1117,6 +1227,40 @@ function resize() {
 window.addEventListener('resize', resize);
 
 document.getElementById('new-map').addEventListener('click', () => startGame(scenarioById('free')));
+document.getElementById('stats-open').addEventListener('click', () => stats.toggle());
+
+// --- Statistics and the rocket launch -------------------------------------------
+
+const stats = createStatsView({ root: app, getFactory: () => factory });
+
+const launch = createLaunch({
+  scene,
+  camera,
+  rig,
+  audio,
+  effects,
+  root: app,
+  onDone(silo, base) {
+    shapesDirty = true;
+    audio.play.fanfare();
+    effects.fireworks(base, 30);
+    // A mission map ends with its own win screen; in the free game the first rocket is the end goal.
+    if (missions) return checkMissions();
+    showRocketWin();
+  },
+});
+
+function showRocketWin() {
+  const made = Object.entries(factory.history.total.p)
+    .filter(([k]) => ITEMS[k])
+    .reduce((n, [, v]) => n + v, 0);
+  document.getElementById('win-label').textContent = 'Raketenstart geglückt';
+  document.getElementById('win-title').textContent = factory.launched > 1 ? `${factory.launched}. Rakete im All` : 'Rakete im All!';
+  document.getElementById('win-stars').textContent = '🚀';
+  document.getElementById('win-time').textContent = `Spielzeit ${clock(factory.time)} · ${num(Math.round(made))} Teile hergestellt · ${num(factory.buildings.size)} Gebäude`;
+  document.getElementById('win-next').hidden = true;
+  winMenu.hidden = false;
+}
 
 // The simulation runs in fixed steps so belts behave the same at any frame rate.
 const STEP = 1 / 60;
@@ -1133,7 +1277,8 @@ renderer.setAnimationLoop(() => {
   // Menus stop the factory; the title screen slowly circles the map.
   const paused = menu.isOpen;
   if (inTitle) rig.orbit(dt * 0.05);
-  rig.update(dt);
+  if (launch.active) launch.update(dt);
+  else rig.update(dt);
   sea.update(timer.getElapsed());
   if (!paused) pending += dt;
   while (pending >= STEP) {
@@ -1183,8 +1328,9 @@ renderer.setAnimationLoop(() => {
   if (legendTimer > 0.5 && !paused) {
     legendTimer = 0;
     renderLegend();
-    checkMissions();
+    if (!launch.active) checkMissions();
     renderProgress();
+    stats.update();
     if (factory.derailed.length) {
       showToast('Zug entgleist', 'Unter dem Zug fehlt jetzt ein Gleis. Er wurde abgeräumt.');
       factory.derailed.length = 0;
@@ -1192,7 +1338,7 @@ renderer.setAnimationLoop(() => {
     }
   }
   tutorial.update(dt, elapsed, !paused && !inTitle && !menuOpen());
-  updateHover();
+  if (!launch.active) updateHover();
   renderer.render(scene, camera);
 });
 
@@ -1205,4 +1351,4 @@ resize();
 openTitle();
 
 // Handle for poking at the game from the browser console while developing.
-if (import.meta.env.DEV) window.bolla = { camera, rig, tutorial, renderer, scene, factoryView, startGame, saveGame, loadGame, menu, dayNight, effects, audio, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get meshes() { return meshes; }, get factory() { return factory; }, get missions() { return missions; } };
+if (import.meta.env.DEV) window.bolla = { launch, stats, camera, rig, tutorial, renderer, scene, factoryView, startGame, saveGame, loadGame, menu, dayNight, effects, audio, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get meshes() { return meshes; }, get factory() { return factory; }, get missions() { return missions; } };

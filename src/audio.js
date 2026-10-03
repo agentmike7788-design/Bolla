@@ -207,6 +207,21 @@ export function createAudio() {
         tone({ type: 'square', freq: f * 0.5, attack: 0.04, decay: 0.5, peak: 0.025 * level, t: t + d, pan });
       }
     },
+    // One second of the launch countdown; the last one is higher and longer.
+    beep(last = false) {
+      if (!ctx) return;
+      const t = now();
+      tone({ type: 'sine', freq: last ? 1320 : 880, attack: 0.005, decay: last ? 0.9 : 0.16, peak: 0.16, t });
+      tone({ type: 'square', freq: last ? 660 : 440, attack: 0.005, decay: 0.08, peak: 0.03, t });
+    },
+    // Ignition: a deep thump and a crack before the roar takes over.
+    ignition() {
+      if (!ctx) return;
+      const t = now();
+      tone({ freq: 70, to: 28, attack: 0.01, decay: 1.6, peak: 0.9, t });
+      hiss({ filter: 'lowpass', freq: 1800, to: 120, attack: 0.01, decay: 1.8, peak: 0.7, t });
+      hiss({ filter: 'highpass', freq: 3000, attack: 0.002, decay: 0.25, peak: 0.25, t });
+    },
     // The furnace or press finished a part.
     ding(pan = 0, level = 1) {
       if (!ctx || level < 0.05 || throttle('ding', 90)) return;
@@ -444,8 +459,66 @@ export function createAudio() {
     return { stop: () => clearInterval(timer) };
   }
 
+  // The roar of a rocket engine: low rumble, a rushing mid band and crackle. The
+  // returned handle sets its level (0..1) and lets it die away.
+  function rocket() {
+    if (!ctx) return { set() {}, stop() {} };
+    const t = now();
+    const out = ctx.createGain();
+    out.gain.value = 0.0001;
+    out.connect(sfx);
+    const layer = (type, freq, q, gain) => {
+      const src = ctx.createBufferSource();
+      src.buffer = noise;
+      src.loop = true;
+      src.playbackRate.value = 0.7 + Math.random() * 0.2;
+      const f = ctx.createBiquadFilter();
+      f.type = type;
+      f.frequency.value = freq;
+      f.Q.value = q;
+      const g = ctx.createGain();
+      g.gain.value = gain;
+      src.connect(f).connect(g).connect(out);
+      src.start(t);
+      return { src, f };
+    };
+    const rumble = layer('lowpass', 140, 0.7, 1.4);
+    const rush = layer('bandpass', 700, 0.6, 0.5);
+    const crackle = layer('highpass', 2500, 0.5, 0.12);
+    const sub = ctx.createOscillator();
+    sub.type = 'sine';
+    sub.frequency.value = 38;
+    const subGain = ctx.createGain();
+    subGain.gain.value = 0.6;
+    sub.connect(subGain).connect(out);
+    sub.start(t);
+    const sources = [rumble.src, rush.src, crackle.src, sub];
+    return {
+      // `far` 0..1 muffles the sound as the rocket climbs away.
+      set(level, far = 0) {
+        const n = now();
+        out.gain.setTargetAtTime(Math.max(0.0001, level * 0.8), n, 0.15);
+        rush.f.frequency.setTargetAtTime(700 - far * 450, n, 0.3);
+        crackle.f.frequency.setTargetAtTime(2500 + far * 4000, n, 0.3);
+      },
+      stop(fade = 2) {
+        const n = now();
+        out.gain.cancelScheduledValues(n);
+        out.gain.setTargetAtTime(0.0001, n, fade / 4);
+        for (const s of sources) s.stop(n + fade + 0.5);
+      },
+    };
+  }
+
   return {
     play,
+    rocket,
+    // Music and machines go quiet while the rocket starts.
+    duck(on) {
+      if (!ctx) return;
+      musicBus.gain.setTargetAtTime(on ? 0.0001 : settings.music * 0.6, now(), 0.6);
+      machineBus.gain.setTargetAtTime(on ? 0.15 : 0.55, now(), 0.6);
+    },
     updateMachines,
     spot,
     settings,

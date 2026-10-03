@@ -48,6 +48,7 @@ const GLOWS = {
   pump: { color: 0xffd9a0, size: 1.4, light: 0.3 },
   refinery: { color: 0xffa040, size: 3, light: 0.9 },
   station: { color: 0xffe2b0, size: 2.4, light: 0.6 },
+  silo: { color: 0xfff0d8, size: 5, light: 1.2 },
 };
 
 export function createDayNight({ scene, renderer, sun, hemi, mapHalf }) {
@@ -232,7 +233,7 @@ export function createDayNight({ scene, renderer, sun, hemi, mapHalf }) {
       const kind = GLOWS[g.b.type];
       const flicker = g.b.type === 'furnace' ? 0.85 + Math.sin(elapsed * 13 + i) * 0.1 + Math.sin(elapsed * 7.1) * 0.06 : 1;
       l.color.setHex(kind.color);
-      l.position.set(g.b.tile.position.x, g.b.tile.height + (g.b.type === 'furnace' ? 0.55 : 0.9), g.b.tile.position.z);
+      l.position.set(g.b.tile.position.x, g.b.tile.height + (g.b.type === 'furnace' ? 0.55 : g.b.type === 'silo' ? 3 : 0.9), g.b.tile.position.z);
       l.intensity = night * 3.2 * kind.light * (0.4 + g.level * 0.7) * flicker;
     });
   }

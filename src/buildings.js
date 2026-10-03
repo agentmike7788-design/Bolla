@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { DIRS, ITEMS, POLE_SUPPLY, isFluid } from './factory.js';
+import { DIRS, ITEMS, POLE_SUPPLY, isFluid, SILO_STAGES } from './factory.js';
 import { trackPoint, isTrack, CAR_GAP, CARS, WAGON_CARGO, STATION_CAP } from './trains.js';
 import { ORES } from './world.js';
 
@@ -144,6 +144,78 @@ function chevronTexture(anisotropy) {
 
 const flat = (color, extra) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.25, flatShading: true, ...extra });
 
+// The rocket, standing with its engines at y = 0 and its nose about 5 tiles up.
+// `hull` is body, boosters and fins, `nose` the payload fairing on top, `flame`
+// the exhaust under the engines (hidden until it burns). Used by the silo model
+// and by the launch, see launch.js.
+const ROCKET_PARTS = (() => {
+  let made = null;
+  return () => {
+    if (made) return made;
+    const cyl = (r0, r1, h, y, x = 0, z = 0, seg = 20) => new THREE.CylinderGeometry(r0, r1, h, seg).translate(x, y + h / 2, z);
+    const g = {
+      body: cyl(0.3, 0.3, 3.2, 0.5),
+      skirt: cyl(0.3, 0.37, 0.32, 0.18),
+      bells: mergeGeometries([[0, 0.15], [0.13, -0.08], [-0.13, -0.08]].map(([x, z]) => cyl(0.06, 0.12, 0.2, 0, x, z, 10))),
+      bands: mergeGeometries([cyl(0.305, 0.305, 0.1, 2.55), cyl(0.305, 0.305, 0.05, 1.2)]),
+      stripe: cyl(0.306, 0.306, 0.3, 3.1),
+      fins: mergeGeometries([0, 1, 2, 3].map((i) => new THREE.BoxGeometry(0.035, 0.6, 0.32).translate(0, 0.65, 0.42).rotateY((i * Math.PI) / 2 + Math.PI / 4))),
+      boosters: mergeGeometries([-1, 1].flatMap((sx) => [cyl(0.14, 0.14, 1.9, 0.35, sx * 0.45), new THREE.ConeGeometry(0.14, 0.4, 14).translate(sx * 0.45, 2.45, 0), cyl(0.08, 0.13, 0.18, 0.17, sx * 0.45)])),
+      struts: mergeGeometries([-1, 1].flatMap((sx) => [0.7, 2.0].map((y) => new THREE.BoxGeometry(0.2, 0.04, 0.04).translate(sx * 0.33, y, 0)))),
+      fairing: cyl(0.3, 0.3, 0.5, 3.7),
+      cone: new THREE.ConeGeometry(0.3, 0.95, 20).translate(0, 4.2 + 0.475, 0),
+      tip: cyl(0.015, 0.015, 0.25, 5.1, 0, 0, 6),
+      windows: mergeGeometries([0, 1, 2, 3].map((i) => new THREE.BoxGeometry(0.08, 0.08, 0.02).translate(0, 3.95, 0.305).rotateY((i * Math.PI) / 2))),
+      flame: new THREE.ConeGeometry(0.28, 1.6, 16, 1, true).rotateX(Math.PI).translate(0, -0.8, 0),
+      core: new THREE.ConeGeometry(0.14, 0.9, 12, 1, true).rotateX(Math.PI).translate(0, -0.45, 0),
+    };
+    const m = {
+      white: flat(0xf1eee8, { roughness: 0.45, metalness: 0.15 }),
+      black: flat(0x24272b, { roughness: 0.5 }),
+      orange: flat(0xff6a3d, { roughness: 0.5 }),
+      metal: new THREE.MeshStandardMaterial({ color: 0x8d949b, roughness: 0.3, metalness: 0.85 }),
+      window: new THREE.MeshStandardMaterial({ color: 0x0f2a38, emissive: 0x7fd4ff, emissiveIntensity: 0.8, roughness: 0.2 }),
+      flame: new THREE.MeshBasicMaterial({ color: 0xff8a2a, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
+      core: new THREE.MeshBasicMaterial({ color: 0xfff2c0, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
+    };
+    made = { g, m };
+    return made;
+  };
+})();
+
+export function createRocket() {
+  const { g, m } = ROCKET_PARTS();
+  const group = new THREE.Group();
+  const part = (parent, geo, mat, shadow = true) => {
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.castShadow = shadow;
+    mesh.receiveShadow = true;
+    parent.add(mesh);
+    return mesh;
+  };
+  const hull = new THREE.Group();
+  const nose = new THREE.Group();
+  group.add(hull, nose);
+  part(hull, g.body, m.white);
+  part(hull, g.skirt, m.black);
+  part(hull, g.bells, m.metal);
+  part(hull, g.bands, m.black);
+  part(hull, g.fins, m.orange);
+  part(hull, g.boosters, m.white);
+  part(hull, g.struts, m.metal);
+  part(nose, g.stripe, m.orange);
+  part(nose, g.fairing, m.white);
+  part(nose, g.cone, m.white);
+  part(nose, g.tip, m.metal);
+  part(nose, g.windows, m.window, false);
+  const flame = new THREE.Group();
+  part(flame, g.flame, m.flame, false);
+  part(flame, g.core, m.core, false);
+  flame.visible = false;
+  group.add(flame);
+  return { group, hull, nose, flame };
+}
+
 // Shared geometries and materials of all building models. Every model faces -z,
 // the side it hands its items out.
 function buildingParts() {
@@ -284,6 +356,31 @@ function buildingParts() {
     headlight: new THREE.SphereGeometry(0.04, 8, 6).translate(0, 0.38, -0.44),
     container: rbox(0.46, 0.36, 0.8, 0, 0.18, 0, 0.03),
     wagonFrame: mergeGeometries([box(0.5, 0.1, 0.03, 0, 0.25, -0.43), box(0.5, 0.1, 0.03, 0, 0.25, 0.43)]),
+    // Rocket silo, 3 × 3 tiles: a slab with a skirt down to lower ground, the
+    // building site with a fence and a crane, then the launch pad with its
+    // flame trench and a lattice service tower with two arms.
+    siloSlab: mergeGeometries([box(2.96, 0.12, 2.96, 0, 0.06, 0), box(2.9, 1.2, 2.9, 0, -0.6, 0)]),
+    fence: mergeGeometries(
+      [-1.35, -0.45, 0.45, 1.35].flatMap((u) => [
+        box(0.05, 0.4, 0.05, u, 0.3, -1.35), box(0.05, 0.4, 0.05, u, 0.3, 1.35), box(0.05, 0.4, 0.05, -1.35, 0.3, u), box(0.05, 0.4, 0.05, 1.35, 0.3, u),
+      ]),
+    ),
+    tape: mergeGeometries([box(2.72, 0.05, 0.02, 0, 0.42, -1.35), box(2.72, 0.05, 0.02, 0, 0.42, 1.35), box(0.02, 0.05, 2.72, -1.35, 0.42, 0), box(0.02, 0.05, 2.72, 1.35, 0.42, 0)]),
+    craneMast: mergeGeometries([box(0.14, 3, 0.14, -0.95, 1.6, 0.95), box(0.4, 0.12, 0.4, -0.95, 0.18, 0.95)]),
+    craneJib: mergeGeometries([box(2.1, 0.1, 0.1, 0.55, 0, 0), box(0.5, 0.18, 0.18, -0.65, -0.05, 0), new THREE.CylinderGeometry(0.008, 0.008, 1.4, 4).translate(1.4, -0.7, 0)]),
+    piles: mergeGeometries([box(0.4, 0.2, 0.3, 0.7, 0.22, -0.8), box(0.4, 0.2, 0.3, 0.75, 0.42, -0.78), box(0.3, 0.3, 0.3, -0.75, 0.27, -0.7), box(0.6, 0.08, 0.2, 0.3, 0.16, 0.6), box(0.6, 0.08, 0.2, 0.3, 0.24, 0.62)]),
+    pad: mergeGeometries([box(2.4, 0.42, 2.4, 0, 0.33, 0), box(1.8, 0.06, 1.8, 0, 0.57, 0)]),
+    trench: box(0.7, 0.05, 1.25, 0, 0.555, -0.6),
+    padRing: new THREE.TorusGeometry(0.45, 0.04, 6, 24).rotateX(Math.PI / 2).translate(0, 0.6, 0),
+    tower: mergeGeometries([
+      ...[-1, 1].flatMap((sx) => [-1, 1].map((sz) => box(0.07, 5.6, 0.07, 0.92 + sx * 0.2, 0.54 + 2.8, 0.92 + sz * 0.2))),
+      ...[1, 1.6, 2.2, 2.8, 3.4, 4, 4.6, 5.2, 5.8].flatMap((y) => [box(0.44, 0.04, 0.04, 0.92, y, 0.72), box(0.44, 0.04, 0.04, 0.92, y, 1.12), box(0.04, 0.04, 0.44, 0.72, y, 0.92), box(0.04, 0.04, 0.44, 1.12, y, 0.92)]),
+      ...[1.3, 2.5, 3.7, 4.9].flatMap((y) => [-1, 1].map((sx) => box(0.03, 0.75, 0.03, 0, 0, 0).rotateZ(sx * 0.5).translate(0.92, y, 0.72))),
+      box(0.56, 0.08, 0.56, 0.92, 6.16, 0.92),
+    ]),
+    arms: mergeGeometries([2.6, 4.0].map((y) => box(0.1, 0.08, 0.95, 0, 0, 0).rotateY(Math.PI / 4).translate(0.55, y, 0.55))),
+    fuelLine: new THREE.CylinderGeometry(0.035, 0.035, 0.64, 6).rotateZ(Math.PI / 2).rotateY(Math.PI / 4).translate(-0.475, 0.66, 0.475),
+    fuelTanks: mergeGeometries([new THREE.SphereGeometry(0.22, 14, 10).translate(-0.92, 0.82, 0.55), new THREE.SphereGeometry(0.22, 14, 10).translate(-0.55, 0.82, 0.92)]),
   };
   const m = {
     steel: flat(STEEL),
@@ -315,6 +412,8 @@ function buildingParts() {
     platform: flat(0xc9c2b4, { roughness: 0.85, metalness: 0.05 }),
     roof: flat(0x34536b, { roughness: 0.6 }),
     loco: flat(0xc8402e, { roughness: 0.45 }),
+    pad: flat(0x6f6a62, { roughness: 0.9, metalness: 0.05 }),
+    tower: flat(0xc8402e, { roughness: 0.55, metalness: 0.4 }),
     ore: Object.fromEntries(Object.entries(ORES).map(([k, o]) => [k, flat(o.color, { roughness: 0.4, metalness: 0.3 })])),
   };
   return { g, m };
@@ -878,6 +977,37 @@ export function createFactoryView(renderer) {
       sign.position.set(0, 1.38, 0);
       root.add(sign);
       lamp(0, 1.0, -0.47);
+    } else if (b.type === 'silo') {
+      add(g.siloSlab, m.concrete);
+      view.site = new THREE.Group();
+      root.add(view.site);
+      for (const [geo, mat] of [[g.fence, m.steel], [g.tape, m.signal], [g.craneMast, m.signal], [g.piles, m.container]]) {
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.castShadow = true;
+        view.site.add(mesh);
+      }
+      view.jib = new THREE.Mesh(g.craneJib, m.signal);
+      view.jib.castShadow = true;
+      view.jib.position.set(-0.95, 3.1, 0.95);
+      view.site.add(view.jib);
+      view.pad = new THREE.Group();
+      root.add(view.pad);
+      for (const [geo, mat] of [[g.pad, m.pad], [g.trench, m.dark], [g.padRing, m.steel], [g.tower, m.tower], [g.arms, m.steel], [g.fuelTanks, m.white]]) {
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        view.pad.add(mesh);
+      }
+      view.fuel = own(new THREE.MeshStandardMaterial({ color: 0x3a1a0a, emissive: 0xff6a3d, emissiveIntensity: 0, roughness: 0.4 }));
+      view.pad.add(new THREE.Mesh(g.fuelLine, view.fuel));
+      view.rocket = createRocket();
+      view.rocket.group.position.y = 0.6;
+      root.add(view.rocket.group);
+      // A red beacon on top of the tower.
+      view.beacon = add(g.lamp, own(new THREE.MeshStandardMaterial({ color: 0xff3020, emissive: 0xff3020, emissiveIntensity: 1 })), false);
+      view.beacon.scale.setScalar(1.6);
+      view.beacon.position.set(0.92, 6.28, 0.92);
+      lamp(0, 0.5, -1.25);
     } else if (b.type === 'storage') {
       add(g.pad, m.dark);
       add(g.crate, m.container);
@@ -1101,6 +1231,27 @@ export function createFactoryView(renderer) {
         c.scale.setScalar(0.6 + Math.min(1, fill * 2 - i) * 0.5);
       });
       setLamp(view, b.state === 'work' ? 'work' : 'idle', elapsed);
+    } else if (b.type === 'silo') {
+      // Each stage grows out of the ground while it is being built.
+      const grow = b.busy ? Math.max(0.03, b.timer / SILO_STAGES[b.stage].time) : 0;
+      const shown = (stage) => (b.stage > stage ? 1 : b.stage === stage ? grow : 0);
+      view.site.visible = b.stage === 0;
+      if (working && b.stage === 0) view.jib.rotation.y = Math.sin(view.phase * 0.6) * 1.2;
+      const pad = shown(0);
+      view.pad.visible = pad > 0;
+      view.pad.scale.y = pad;
+      const hull = shown(1);
+      const nose = shown(2);
+      view.rocket.group.visible = hull > 0;
+      view.rocket.hull.scale.y = hull;
+      view.rocket.nose.visible = nose > 0;
+      view.rocket.nose.scale.set(1, nose, 1);
+      view.rocket.nose.position.y = 3.7 * (1 - nose); // grows up from the top of the hull
+      // The fuel line glows while the rocket is fuelled and pulses once it is ready.
+      const fuel = b.stage >= SILO_STAGES.length ? 1.2 + Math.sin(elapsed * 3) * 0.6 : b.stage === 3 && b.busy ? 0.4 + grow * 1.2 : 0;
+      view.fuel.emissiveIntensity = fuel * (1 + night);
+      view.beacon.material.emissiveIntensity = (Math.sin(elapsed * 4) > 0.3 ? 2.2 : 0.2) * (1 + night * 1.5);
+      setLamp(view, b.state === 'ready' ? 'work' : b.state, elapsed);
     } else if (b.type === 'storage') {
       if (b.received !== view.seen) {
         view.seen = b.received;
@@ -1187,6 +1338,7 @@ export function createGhost() {
     rail: { geo: box(0.84, 0.1, 1), arrow: 0.14 },
     station: { geo: mergeGeometries([box(1, 0.06, 0.9).translate(0, 1.03, 0), box(0.05, 1, 0.05).translate(-0.42, 0, -0.38), box(0.05, 1, 0.05).translate(0.42, 0, -0.38), box(0.05, 1, 0.05).translate(-0.42, 0, 0.38), box(0.05, 1, 0.05).translate(0.42, 0, 0.38), box(0.84, 0.1, 1)]), arrow: 0.14 },
     train: { geo: mergeGeometries([box(0.48, 0.5, 0.9).translate(0, 0.12, 0), box(0.48, 0.5, 0.9).translate(0, 0.12, 1)]), arrow: 0.75 },
+    silo: { geo: mergeGeometries([box(2.9, 0.6, 2.9), box(0.44, 6, 0.44).translate(0.92, 0, 0.92), new THREE.CylinderGeometry(0.3, 0.3, 4.4, 12).translate(0, 2.8, 0)]), arrow: null },
     refinery: { geo: mergeGeometries([box(0.86, 0.36, 0.86), new THREE.CylinderGeometry(0.13, 0.13, 1.2, 8).translate(0.2, 0.6, 0.14), new THREE.CylinderGeometry(0.03, 0.03, 1, 6).translate(-0.33, 0.5, -0.3)]), arrow: 0.45 },
   };
   const meshes = Object.fromEntries(Object.entries(shapes).map(([k, s]) => [k, new THREE.Mesh(s.geo, bodyMat)]));
@@ -1208,6 +1360,7 @@ export function createGhost() {
     pivot.rotation.y = yaw(dir);
     for (const [k, s] of Object.entries(meshes)) s.visible = k === tool;
     supply.visible = tool === 'pole';
+    foot.scale.setScalar(tool === 'silo' ? 3 : 1);
     const arrowY = shapes[tool]?.arrow ?? null;
     arrow.visible = arrowY !== null;
     arrow.position.y = arrowY ?? 0;
