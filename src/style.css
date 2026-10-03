@@ -893,3 +893,79 @@ button.stats-row:hover { background: rgba(233, 228, 216, 0.08); filter: none; }
   .stats-body { grid-template-columns: 1fr; padding: 12px; }
   .stats-box .tree-head .segmented { min-width: 0; flex: 1; }
 }
+
+/* Biome weather in the top bar: calm countdown, then a pulsing warning while the storm rages. */
+.weather {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+.weather[hidden] { display: none; }
+.weather.raging { color: #ff9a4a; animation: rage 1.2s ease-in-out infinite; }
+@keyframes rage {
+  50% { opacity: 0.55; }
+}
+
+/* Biome tags on the map cards; the free game's card picks one. */
+.map-biome,
+.biome-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 1px 7px;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+}
+.map-biomes { display: flex; flex-wrap: wrap; gap: 6px; flex-basis: 100%; margin-top: 4px; }
+.biome-pick { cursor: pointer; background: rgba(233, 228, 216, 0.06); }
+.biome-pick:hover,
+.biome-pick:focus-visible { border-color: var(--signal); color: var(--signal); outline: none; }
+
+/* Achievement toast: below the normal toast, golden. */
+.achievement {
+  z-index: 13;
+  position: absolute;
+  top: calc(84px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 18px 10px 12px;
+  background: linear-gradient(135deg, rgba(60, 46, 14, 0.94), rgba(24, 28, 31, 0.94));
+  border: 1px solid var(--signal);
+  border-radius: 6px;
+  box-shadow: 0 0 24px rgba(255, 211, 77, 0.25);
+  pointer-events: none;
+  max-width: calc(100% - 32px);
+}
+.achievement[hidden] { display: none; }
+.achievement.pop { animation: pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1); }
+.achievement .ach-icon { font-size: 34px; line-height: 1; filter: drop-shadow(0 0 6px rgba(255, 211, 77, 0.6)); }
+.achievement > span:last-child { display: grid; gap: 1px; }
+.achievement small { font: 500 10px var(--font-data); letter-spacing: 0.12em; text-transform: uppercase; color: var(--signal); }
+.achievement strong { font: 700 20px/1.1 var(--font-display); letter-spacing: 0.05em; }
+.achievement span span { font-size: 12px; color: var(--ink-dim); }
+
+/* Achievements page in the menu. */
+.gm-achs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.gm-ach {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px;
+  background: rgba(29, 35, 40, 0.96);
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  opacity: 0.55;
+}
+.gm-ach.earned { opacity: 1; border-color: rgba(255, 211, 77, 0.5); }
+.gm-ach-icon { font-size: 26px; line-height: 1; filter: grayscale(1); }
+.gm-ach.earned .gm-ach-icon { filter: none; }
+.gm-ach-text { display: grid; gap: 2px; min-width: 0; }
+.gm-ach-text b { font: 600 16px/1.15 var(--font-display); letter-spacing: 0.04em; }
+.gm-ach-text small { font-size: 12px; color: var(--ink-dim); }
+.gm-ach-when { font: 500 10px var(--font-data) !important; color: var(--signal) !important; }

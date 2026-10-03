@@ -10,6 +10,7 @@
 import { createFactory, BUILDINGS, CONSTRUCTOR_RECIPES, PUMP_RATE, SILO_STAGES, POWER_SPEED } from '../src/factory.js';
 import { SCENARIOS } from '../src/scenarios.js';
 import { RESEARCH, STATS } from '../src/research.js';
+import { biomeOf, averageEffect } from '../src/biomes.js';
 
 const SIZE = 64;
 const BUILD_SECONDS = { building: 6, belt: 1.2 }; // per placed building / belt tile
@@ -282,7 +283,12 @@ for (const item of Object.keys(LINES)) {
 // For every mission the player builds one line per item it needs (lines that already
 // stand from earlier missions are reused), and as many lines as a rate goal needs.
 
+// Biomes: storms slow the lines down on average, and in the frost every line runs
+// slower until the player has power (the first mission with a power goal).
 function planScenario(s) {
+  const biome = s.map?.biome ?? 'meadow';
+  const storms = averageEffect(biome, 'drill') * averageEffect(biome, 'belt');
+  let frost = biomeOf(biome).frost ?? 1;
   const stats = baseStats();
   const lines = {}; // item -> lines standing
   let pumps = 0;
@@ -354,6 +360,8 @@ function planScenario(s) {
       const t = g.deliver ? line.first + (g.count / (line.perMin * n)) * 60 : line.first + 60;
       wait = Math.max(wait, t);
     }
+    wait /= storms * frost;
+    if (m.goals.some((g) => g.powered)) frost = 1;
     // Earlier lines keep running while the player builds, so waiting overlaps building a bit.
     const time = build + wait * 0.8;
     total += time;
@@ -361,7 +369,7 @@ function planScenario(s) {
     for (const [stat, f] of Object.entries(m.reward.boosts ?? {})) stats[stat] *= f;
   }
   const suggest = Math.round((total * PAR_FACTOR) / 60);
-  console.log(`\n${s.name}: geschätzt ${fmt(total)}, drei Sterne unter ${s.par}:00 (Vorschlag ${suggest}:00)`);
+  console.log(`\n${s.name}${biome !== 'meadow' ? ` (${biomeOf(biome).name})` : ''}: geschätzt ${fmt(total)}, drei Sterne unter ${s.par}:00 (Vorschlag ${suggest}:00)`);
   rows.forEach((r) => console.log(r));
   return total;
 }

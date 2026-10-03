@@ -13,6 +13,7 @@
       <header class="hud hud-top">
         <h1>Bolla Fabrik</h1>
         <p class="seed">Karte <span id="seed"></span> <button id="new-map" type="button">Neue Karte</button> <button id="maps-open" type="button" class="link">Karten <kbd>M</kbd></button> <button id="stats-open" type="button" class="link">Statistik <kbd>L</kbd></button>
+          <span class="weather" id="weather" hidden></span>
           <span class="daytime" title="Tageszeit"><span id="clock-icon" aria-hidden="true">☀</span> <span id="clock">06:00</span></span>
           <span class="saved" id="saved" aria-live="polite"></span>
           <button id="menu-open" type="button" class="link">Menü <kbd>Esc</kbd></button></p>
@@ -94,6 +95,10 @@
         <button type="button" class="tool" data-tool="pole" aria-pressed="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V4M6 6h12M6 6v2M18 6v2M9 21h6M8 10l4-4 4 4" /></svg>
           <span>Mast</span><kbd>0</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="geo" data-group="geo" aria-pressed="false" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 20v-6h6v6M14 20l1-12h4l1 12M16 4c-1 1 1 2 0 3M19 3c-1 1 1 2 0 3M8 14v-3" /></svg>
+          <span>Erdwärme</span><kbd>Y</kbd>
         </button>
         <button type="button" class="tool" data-tool="pump" data-group="oil" aria-pressed="false" hidden>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M7 20l3-11 3 11M4 7l14-3M4 7l1 4M18 4v9M16 13h4M17 17a3 3 0 1 0 0-.1" /></svg>
@@ -196,6 +201,7 @@
         </section>
       </div>
       <div class="toast" id="toast" role="status" hidden></div>
+      <div class="achievement" id="achievement" role="status" hidden></div>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>

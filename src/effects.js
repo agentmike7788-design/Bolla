@@ -187,6 +187,12 @@ export function createEffects({ onMade } = {}) {
             const [x, y, z] = world(b, 0.3, 1.46, 0.26);
             spawn(glow, { x, y, z, vx: rnd(-0.2, 0.2), vy: rnd(0.8, 1.4), vz: rnd(-0.2, 0.2), life: rnd(0.6, 1.2), size: rnd(0.04, 0.06), grow: -0.6, color: color(0xff8a2a, 0.2), gravity: 0.2, drag: 0.6, wobble: 3 });
           }
+        } else if (b.type === 'geo') {
+          if (emit && Math.random() < (working ? 0.5 : 0.12) * rate) {
+            // White steam out of the cooling tower.
+            const [x, y, z] = world(b, 0.16 + rnd(-0.08, 0.08), 0.9, 0.14 + rnd(-0.08, 0.08));
+            spawn(solid, { x, y, z, vx: rnd(-0.1, 0.1), vy: rnd(0.6, 1), vz: rnd(-0.1, 0.1), life: rnd(1.6, 2.6), size: 0.2, grow: 2.6, color: color(0xf4f6f6, 0.03), gravity: 0.15, drag: 0.8, fade: 0.5 });
+          }
         } else if (b.type === 'refinery') {
           if (working && emit && Math.random() < 0.6 * rate) {
             // Sparks of the flare and white steam off the columns.

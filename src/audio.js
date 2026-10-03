@@ -106,6 +106,7 @@ export function createAudio() {
   function hiss({ t = now(), attack = 0.003, decay = 0.15, peak = 0.3, filter = 'bandpass', freq = 1200, to, q = 1, out = sfx }) {
     const src = ctx.createBufferSource();
     src.buffer = noise;
+    src.loop = true; // long hisses outlast the one second of noise
     src.playbackRate.value = 0.8 + Math.random() * 0.4;
     const f = ctx.createBiquadFilter();
     f.type = filter;
@@ -147,7 +148,7 @@ export function createAudio() {
       tone({ type: 'sine', freq: 660, decay: 0.08, peak: 0.12, t: t + 0.12 });
       tone({ type: 'sine', freq: 990, decay: 0.12, peak: 0.1, t: t + 0.19 });
       // Power buildings crackle when they join the grid.
-      if (type === 'pole' || type === 'power') {
+      if (type === 'pole' || type === 'power' || type === 'geo') {
         for (let i = 0; i < 4; i++) hiss({ filter: 'highpass', freq: 4000, decay: 0.03, peak: 0.12, t: t + 0.22 + i * 0.035 + Math.random() * 0.02 });
         tone({ type: 'sawtooth', freq: 100, decay: 0.25, peak: 0.05, t: t + 0.22 });
       }
@@ -221,6 +222,29 @@ export function createAudio() {
       tone({ freq: 70, to: 28, attack: 0.01, decay: 1.6, peak: 0.9, t });
       hiss({ filter: 'lowpass', freq: 1800, to: 120, attack: 0.01, decay: 1.8, peak: 0.7, t });
       hiss({ filter: 'highpass', freq: 3000, attack: 0.002, decay: 0.25, peak: 0.25, t });
+    },
+    // A storm breaks: a gust of wind, or the rumble of the volcano.
+    storm(biome) {
+      if (!ctx) return;
+      const t = now();
+      if (biome === 'volcano') {
+        tone({ freq: 55, to: 30, attack: 0.3, decay: 2.4, peak: 0.7, t });
+        hiss({ filter: 'lowpass', freq: 400, to: 90, attack: 0.2, decay: 2.6, peak: 0.6, t });
+        for (let i = 0; i < 4; i++) tone({ freq: 70 + Math.random() * 30, to: 35, decay: 0.5, peak: 0.35, t: t + 0.4 + i * 0.35 + Math.random() * 0.1 });
+        return;
+      }
+      const high = biome === 'snow' ? 1800 : 1200;
+      hiss({ filter: 'bandpass', freq: high * 0.4, to: high, attack: 0.6, decay: 2.2, peak: 0.45, q: 1.2, t });
+      hiss({ filter: 'bandpass', freq: high, to: high * 0.5, attack: 0.9, decay: 2, peak: 0.3, q: 2, t: t + 0.5 });
+    },
+    // An achievement: a glittering chime.
+    achievement() {
+      if (!ctx) return;
+      const t = now();
+      [783.99, 1046.5, 1318.5, 1567.98, 2093].forEach((f, i) => {
+        tone({ type: 'sine', freq: f, attack: 0.005, decay: 0.7, peak: 0.12, t: t + i * 0.06 });
+        tone({ type: 'triangle', freq: f * 1.5, attack: 0.005, decay: 0.3, peak: 0.03, t: t + i * 0.06 });
+      });
     },
     // The furnace or press finished a part.
     ding(pan = 0, level = 1) {

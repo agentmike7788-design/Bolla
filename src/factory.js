@@ -3,6 +3,7 @@ import { createResearch, researchById } from './research.js';
 import { createHistory } from './stats.js';
 import { createRailways, isTrack, axisBits, STATION_CAP } from './trains.js';
 import { createDrones, isChest } from './drones.js';
+import { biomeOf, weatherAt, weatherEffect } from './biomes.js';
 
 // Grid directions: 0 north (-z), 1 east (+x), 2 south (+z), 3 west (-x).
 export const DIRS = [
@@ -66,6 +67,7 @@ export const BUILDINGS = {
   merger: { name: 'Zusammenführer' },
   constructor: { name: 'Konstruktor' },
   power: { name: 'Kohlekraftwerk' },
+  geo: { name: 'Erdwärmekraftwerk' },
   pole: { name: 'Strommast' },
   pump: { name: 'Ölpumpe' },
   pipe: { name: 'Rohr' },
@@ -107,7 +109,7 @@ const SPLITTER_BUFFER = 2;
 const opposite = (dir) => (dir + 2) % 4;
 export const isMachine = (b) => b?.type === 'furnace' || b?.type === 'assembler';
 // Buildings that never hand items on.
-const NO_OUTPUT = new Set(['storage', 'power', 'pole', 'pump', 'pipe', 'tank', 'rail', 'station', 'signal', 'silo', 'dronePort', 'provider']);
+const NO_OUTPUT = new Set(['storage', 'power', 'geo', 'pole', 'pump', 'pipe', 'tank', 'rail', 'station', 'signal', 'silo', 'dronePort', 'provider']);
 
 // Power. A coal power plant burns coal from belts and feeds every network it is
 // connected to. Poles carry the power: wires reach from pole to pole, and a pole
@@ -124,6 +126,9 @@ const COAL_ENERGY = POWER_OUTPUT * COAL_SECONDS;
 const PLANT_FUEL = 5; // coal a plant keeps in stock
 export const FUEL_VALUE = { coal: 1, fuel: 3 }; // a can of fuel burns as long as three coal
 export const usesPower = (b) => !!POWER_USE[b?.type];
+// A geothermal plant stands on a steaming vent and needs no fuel at all.
+export const GEO_OUTPUT = 12; // MW per geothermal plant, before research
+export const isPlant = (b) => b?.type === 'power' || b?.type === 'geo';
 
 // Oil. A pump on an oil field needs power and pushes oil into the pipes next to
 // it. Pumps, pipes, tanks and refineries that touch form one pipe network that
@@ -158,6 +163,7 @@ export function createFactory(world, { start } = {}) {
   const shipLog = []; // unload times of the last minute
   let flown = 0; // parts ever delivered by drones
   const flyLog = []; // drone delivery times of the last minute
+  let weather = weatherAt(world.biome, 0); // storms of the biome, see biomes.js
   let launched = 0; // rockets started
   const launches = []; // silos that just started a rocket, for the view to show
   const footprint = new Map(); // tile index -> big building covering it beside its own tile
@@ -204,6 +210,7 @@ export function createFactory(world, { start } = {}) {
     if (!TERRAIN[tile.terrain].buildable) return { ok: false, reason: 'Hier kann man nicht bauen' };
     if (type === 'drill' && (!tile.ore || ORES[tile.ore].fluid)) return { ok: false, reason: tile.ore ? 'Auf Öl gehört eine Ölpumpe' : 'Bohrer nur auf Erzfeldern' };
     if (type === 'pump' && !ORES[tile.ore]?.fluid) return { ok: false, reason: 'Ölpumpe nur auf Ölfeldern' };
+    if (type === 'geo' && !tile.vent) return { ok: false, reason: 'Erdwärmekraftwerk nur auf dampfende Quellen' };
     return { ok: true, reason: '' };
   }
 
@@ -230,6 +237,7 @@ export function createFactory(world, { start } = {}) {
     if (type === 'splitter') Object.assign(b, { items: [], next: 0, passed: 0 });
     if (type === 'merger') Object.assign(b, { slots: [[], [], [], []], next: 0, passed: 0 });
     if (type === 'power') Object.assign(b, { fuel: 0, burn: 0, state: 'idle', made: 0, refused: null });
+    if (type === 'geo') Object.assign(b, { state: 'idle', made: 0 });
     if (type === 'pump') Object.assign(b, { acc: 0, state: 'nopower', pumped: 0 });
     if (type === 'refinery') Object.assign(b, { recipe: 'plastic', output: [], busy: false, timer: 0, state: 'idle', made: 0 });
     if (isFluid(b)) b.oil = 0;
@@ -375,7 +383,7 @@ export function createFactory(world, { start } = {}) {
     for (const b of buildings.values()) {
       if (b.type === 'pole') continue;
       b.net = null;
-      if (b.type !== 'power' && !usesPower(b)) continue;
+      if (!isPlant(b) && !usesPower(b)) continue;
       // Big buildings are supplied by a pole that reaches any of their tiles.
       const reach = POLE_SUPPLY + (sizeOf(b.type) - 1) / 2;
       for (let dz = -reach; dz <= reach && !b.net; dz++) {
@@ -383,20 +391,26 @@ export function createFactory(world, { start } = {}) {
           const p = at(b.tile.x + dx, b.tile.z + dz);
           if (p?.type !== 'pole') continue;
           b.net = p.net;
-          (b.type === 'power' ? p.net.plants : p.net.consumers).push(b);
+          (isPlant(b) ? p.net.plants : p.net.consumers).push(b);
           break;
         }
       }
     }
   }
 
-  // Speed factor of a machine from its power: 1 off the grid, up to POWER_SPEED on it.
-  const powerFactor = (b) => (b.net ? POWER_SPEED * b.net.satisfaction : 1);
+  // Speed factor of a machine from its power: 1 off the grid (less in the frost),
+  // up to POWER_SPEED on it.
+  const frost = biomeOf(world.biome).frost ?? 1;
+  const powerFactor = (b) => (b.net ? POWER_SPEED * b.net.satisfaction : frost);
+
+  // Output of one plant right now: coal plants while they burn, geothermal always.
+  const plantOutput = (p) =>
+    p.type === 'geo' ? GEO_OUTPUT * research.stats.power * weatherEffect(weather, 'geo') : p.burn > 0 ? POWER_OUTPUT * research.stats.power : 0;
 
   // Shares the power of each network's plants among its working machines.
   function tickPower(dt) {
-    const out = POWER_OUTPUT * research.stats.power;
     for (const b of buildings.values()) {
+      if (b.type === 'geo' && !b.net) b.state = 'idle';
       if (b.type !== 'power') continue;
       // Load the next coal before the current one is used up.
       if (b.burn <= 0 && b.fuel > 0) {
@@ -406,29 +420,31 @@ export function createFactory(world, { start } = {}) {
       if (!b.net) b.state = b.burn > 0 || b.fuel > 0 ? 'idle' : 'empty';
     }
     for (const net of grid.nets) {
-      const fed = net.plants.filter((p) => p.burn > 0);
-      net.capacity = fed.length * out;
+      const fed = net.plants.filter((p) => plantOutput(p) > 0);
+      net.capacity = fed.reduce((n, p) => n + plantOutput(p), 0);
       // Machines that are working or waiting for power ask for it.
       net.demand = 0;
       for (const b of net.consumers) if (b.state === 'work' || b.state === 'nopower') net.demand += POWER_USE[b.type];
       net.satisfaction = net.capacity <= 0 ? 0 : net.demand <= 0 ? 1 : Math.min(1, net.capacity / net.demand);
       net.used = Math.min(net.capacity, net.demand);
+      // Every plant runs at the same share of its output.
+      const load = net.capacity ? net.used / net.capacity : 0;
       for (const p of net.plants) {
-        if (p.burn <= 0) {
+        const out = plantOutput(p);
+        if (out <= 0) {
           p.state = 'empty';
           continue;
         }
-        const share = net.used / fed.length;
-        p.burn -= share * dt;
-        p.load = net.capacity ? net.used / net.capacity : 0;
-        p.state = share > 0 ? 'work' : 'idle';
+        if (p.type === 'power') p.burn -= out * load * dt;
+        p.load = load;
+        p.state = load > 0 ? 'work' : 'idle';
       }
     }
   }
 
   // Totals over all networks, for the HUD.
   function powerSummary() {
-    const s = { nets: grid.nets.length, plants: 0, capacity: 0, demand: 0, used: 0, consumers: 0, short: 0, fuel: 0 };
+    const s = { nets: grid.nets.length, plants: 0, capacity: 0, demand: 0, used: 0, consumers: 0, short: 0, fuel: 0, geo: 0 };
     for (const net of grid.nets) {
       s.plants += net.plants.length;
       s.capacity += net.capacity;
@@ -436,7 +452,10 @@ export function createFactory(world, { start } = {}) {
       s.used += net.used;
       s.consumers += net.consumers.length;
       if (net.consumers.length && net.satisfaction < 1) s.short++;
-      for (const p of net.plants) s.fuel += p.fuel + (p.burn > 0 ? 1 : 0);
+      for (const p of net.plants) {
+        if (p.type === 'geo') s.geo++;
+        else s.fuel += p.fuel + (p.burn > 0 ? 1 : 0);
+      }
     }
     s.satisfaction = s.demand ? s.used / s.demand : s.capacity > 0 ? 1 : 0;
     return s;
@@ -910,7 +929,7 @@ export function createFactory(world, { start } = {}) {
     }
     const speed = powerFactor(b);
     b.state = speed > 0 ? 'work' : 'nopower';
-    b.timer += dt * research.stats.drill * speed;
+    b.timer += dt * research.stats.drill * speed * weatherEffect(weather, 'drill');
     if (b.timer >= DRILL_TIME) {
       b.timer -= DRILL_TIME;
       b.tile.amount--;
@@ -921,7 +940,7 @@ export function createFactory(world, { start } = {}) {
     }
   }
 
-  const beltSpeed = () => BELT_SPEED * research.stats.belt;
+  const beltSpeed = () => BELT_SPEED * research.stats.belt * weatherEffect(weather, 'belt');
 
   // Items of one kind put into storage during the last minute.
   function perMinute(kind) {
@@ -947,6 +966,7 @@ export function createFactory(world, { start } = {}) {
     if (pipesDirty) updatePipes();
     if (railways.dirty) derailed.push(...railways.update());
     time += dt;
+    weather = weatherAt(world.biome, time);
     tickPower(dt);
     let capacity = 0;
     let demand = 0;
@@ -998,6 +1018,7 @@ export function createFactory(world, { start } = {}) {
   // `version` is the save format (see save.js); before 3 there was no oil on the map.
   function load(data, version = Infinity) {
     time = data.time ?? 0;
+    weather = weatherAt(world.biome, time);
     pumped = data.pumped ?? 0;
     shipped = data.shipped ?? 0;
     launched = data.launched ?? 0;
@@ -1080,6 +1101,11 @@ export function createFactory(world, { start } = {}) {
     get time() {
       return time;
     },
+    get weather() {
+      return weather;
+    },
+    biome: world.biome ?? 'meadow',
+    frost,
     beltSpeed,
     at,
     canPlace,

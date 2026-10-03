@@ -1,4 +1,5 @@
 import { listSaves, whenText, playTimeText } from './save.js';
+import { ACHIEVEMENTS, loadAchievements } from './achievements.js';
 
 // The title screen and the pause menu. Both share one overlay: a column of
 // big menu entries on the left and the open page (saves, settings, controls)
@@ -7,7 +8,7 @@ import { listSaves, whenText, playTimeText } from './save.js';
 const CONTROLS = [
   ['Kamera', [['Linke Maus ziehen', 'Karte verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['W A S D', 'bewegen']]],
   ['Bauen', [['1 – 9, 0', 'Gebäude wählen (9 Kraftwerk, 0 Mast)'], ['O P I K', 'Ölpumpe, Rohr, Raffinerie, Tank'], ['G B Z J', 'Gleis, Bahnhof, Zug, Signal'], ['F V C', 'Drohnenhafen, Angebots-, Anfragekiste'], ['H', 'Raketensilo'], ['Klick / Ziehen', 'bauen, Bänder und Rohre ziehen'], ['R', 'drehen'], ['X', 'abreißen'], ['Klick auf Konstruktor oder Raffinerie', 'Rezept wählen'], ['Klick auf Bahnhof oder Zug', 'Betriebsart, Fahrplan'], ['Klick auf Signal oder Anfragekiste', 'Art und Richtung, gewünschtes Teil'], ['Klick auf Raketensilo', 'Etappen, Raketenstart'], ['Esc', 'Werkzeug weglegen']]],
-  ['Spiel', [['T', 'Forschungsbaum'], ['L', 'Statistik'], ['M', 'Karten'], ['N', 'nächste Tageszeit'], ['U', 'Ton an / aus'], ['Strg S', 'speichern'], ['Esc', 'Menü']]],
+  ['Spiel', [['Y', 'Erdwärmekraftwerk (Vulkan)'], ['T', 'Forschungsbaum'], ['L', 'Statistik'], ['M', 'Karten'], ['N', 'nächste Tageszeit'], ['U', 'Ton an / aus'], ['Strg S', 'speichern'], ['Esc', 'Menü']]],
   ['Touch', [['Ein Finger', 'verschieben oder bauen'], ['Zwei Finger', 'zoomen und drehen']]],
 ];
 
@@ -43,6 +44,7 @@ export function createMenu({ root, audio, dayNight, graphics, onGraphics, action
             ['new', 'Neues Spiel', 'Karte wählen'],
             ['tutorial', 'Tutorial', actions.tutorialDone() ? 'noch mal ansehen' : 'erste Schritte, 5 Minuten'],
             ['load', 'Laden', `${listSaves().length || 'keine'} Spielstände`],
+            ['achievements', 'Erfolge', achievementCount()],
             ['settings', 'Einstellungen', 'Ton und Grafik'],
             ['controls', 'Steuerung', 'Tasten und Maus'],
           ]
@@ -50,6 +52,7 @@ export function createMenu({ root, audio, dayNight, graphics, onGraphics, action
             ['resume', 'Weiterspielen', 'Esc'],
             ['save', 'Speichern', 'Strg S'],
             ['load', 'Laden', ''],
+            ['achievements', 'Erfolge', achievementCount()],
             ['settings', 'Einstellungen', ''],
             ['controls', 'Steuerung', ''],
             ['title', 'Hauptmenü', 'speichert vorher'],
@@ -133,6 +136,27 @@ export function createMenu({ root, audio, dayNight, graphics, onGraphics, action
       </div>`;
   }
 
+  function achievementCount() {
+    const earned = loadAchievements();
+    return `${ACHIEVEMENTS.filter((a) => earned[a.id]).length} von ${ACHIEVEMENTS.length}`;
+  }
+
+  function achievementsPage() {
+    const earned = loadAchievements();
+    const cards = ACHIEVEMENTS.map((a) => {
+      const when = earned[a.id];
+      const hidden = a.secret && !when;
+      return `<li class="gm-ach${when ? ' earned' : ''}">
+        <span class="gm-ach-icon" aria-hidden="true">${hidden ? '❔' : a.icon}</span>
+        <span class="gm-ach-text"><b>${hidden ? '???' : a.name}</b><small>${hidden ? 'Ein geheimer Erfolg' : a.desc}</small>
+        ${when ? `<small class="gm-ach-when">${whenText(when)}</small>` : ''}</span>
+      </li>`;
+    }).join('');
+    return `<header class="gm-head"><h2>Erfolge</h2><span class="gm-note">${achievementCount()}</span></header>
+      <p class="gm-note">Erfolge gelten für alle Spiele in diesem Browser.</p>
+      <ul class="gm-achs">${cards}</ul>`;
+  }
+
   function controlsPage() {
     return `<header class="gm-head"><h2>Steuerung</h2></header>
       <div class="gm-controls">${CONTROLS.map(
@@ -148,7 +172,7 @@ export function createMenu({ root, audio, dayNight, graphics, onGraphics, action
            <p class="gm-tag">Erz abbauen. Bänder legen. Eine Fabrik bauen, die nie stillsteht.</p>`
         : `<p class="label">Spiel angehalten</p><h2 class="gm-logo gm-pause">Pause</h2>
            <p class="gm-tag">${esc(actions.gameName())}</p>`;
-    const body = { main: mainPage, load: loadPage, settings: settingsPage, controls: controlsPage }[page]();
+    const body = { main: mainPage, load: loadPage, settings: settingsPage, controls: controlsPage, achievements: achievementsPage }[page]();
     root.innerHTML = `<div class="gm-side">${head}<nav class="gm-nav">${nav()}</nav>
         <p class="gm-foot">${page === 'main' ? (mode === 'pause' ? '<kbd>Esc</kbd> weiter' : '<kbd>↑ ↓</kbd> wählen · <kbd>Enter</kbd> los') : '<kbd>Esc</kbd> zurück'}</p></div>
       <section class="gm-page" ${body ? '' : 'hidden'}>${body}</section>`;
@@ -189,7 +213,7 @@ export function createMenu({ root, audio, dayNight, graphics, onGraphics, action
       confirmDelete = id;
       return render();
     }
-    if (['load', 'settings', 'controls'].includes(act)) return show(page === act ? 'main' : act);
+    if (['load', 'settings', 'controls', 'achievements'].includes(act)) return show(page === act ? 'main' : act);
     if (act === 'import') return file.click();
     const run = {
       continue: actions.continueGame,
