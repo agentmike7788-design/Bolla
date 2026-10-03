@@ -62,7 +62,7 @@ export const isTurret = (b) => b?.type === 'turret' || b?.type === 'laser';
 const TURN = 7; // radians per second a turret head turns
 
 // Hit points of buildings; everything else has DEFAULT_HP.
-export const BUILDING_HP = { wall: 600, turret: 350, laser: 420, silo: 3000, storage: 260, power: 300, geo: 320, refinery: 300, tank: 300, constructor: 260, furnace: 220, assembler: 220, drill: 160, pump: 160, pole: 110, pipe: 90, dronePort: 220 };
+export const BUILDING_HP = { wall: 600, turret: 350, laser: 420, silo: 3000, storage: 260, power: 300, geo: 320, refinery: 300, tank: 300, constructor: 260, furnace: 220, assembler: 220, drill: 160, pump: 160, pole: 110, pipe: 90, dronePort: 220, solar: 120, wind: 200, battery: 260 };
 const DEFAULT_HP = 150;
 export const maxHp = (b) => BUILDING_HP[b.type] ?? DEFAULT_HP;
 // Creatures walk over these and never bite them.
@@ -192,7 +192,9 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
     for (const b of buildings.values()) {
       const rate = POLLUTION[b.type];
       if (!rate || b.state !== 'work') continue;
-      const n = (rate / 60) * dt;
+      // A power plant smokes as hard as it burns: renewable power on the same
+      // network lets it idle.
+      const n = (rate / 60) * dt * (b.type === 'power' ? Math.max(0.15, b.load ?? 1) : 1);
       smog[chunkOf(b.tile.x, b.tile.z)] += n;
       made += n;
     }

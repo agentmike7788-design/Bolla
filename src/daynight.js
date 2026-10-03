@@ -50,6 +50,7 @@ const GLOWS = {
   refinery: { color: 0xffa040, size: 3, light: 0.9 },
   station: { color: 0xffe2b0, size: 2.4, light: 0.6 },
   silo: { color: 0xfff0d8, size: 5, light: 1.2 },
+  battery: { color: 0x8affa0, size: 1.4, light: 0.25 },
 };
 
 export function createDayNight({ scene, renderer, sun, hemi, mapHalf }) {

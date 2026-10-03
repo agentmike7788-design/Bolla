@@ -3,6 +3,7 @@ import { ITEMS, BUILDINGS } from './factory.js';
 const hex = (color) => `#${color.toString(16).padStart(6, '0')}`;
 const SIGNAL = 0xffd34d;
 const POWER = 0x7fd4ff;
+const GREEN = 0x7ee08a;
 const OIL = 0xe0a040;
 const RAIL = 0xe07a2e;
 const ROCKET = 0xff6a3d;
@@ -31,10 +32,14 @@ function goalRow(p) {
     ? 'Nester zerstören'
     : p.powered
     ? 'Maschinen mit Strom'
+    : p.green
+    ? 'MW Strom ohne Kohle'
+    : p.stored
+    ? 'MJ in Akkus'
     : p.building
       ? `${BUILDINGS[p.building].name} bauen`
       : `${ITEMS[p.item].name}${p.rate ? ' pro Minute' : ''}`;
-  const color = p.silo || p.launched ? ROCKET : p.oil ? OIL : p.shipped ? RAIL : p.flown ? DRONE : p.kills || p.nests ? ENEMY : p.powered ? POWER : p.building ? SIGNAL : ITEMS[p.item].color;
+  const color = p.silo || p.launched ? ROCKET : p.oil ? OIL : p.shipped ? RAIL : p.flown ? DRONE : p.kills || p.nests ? ENEMY : p.powered ? POWER : p.green || p.stored ? GREEN : p.building ? SIGNAL : ITEMS[p.item].color;
   const have = Math.min(p.have, p.need);
   const done = p.have >= p.need;
   return `<li style="--c:${hex(color)}" class="${done ? 'met' : ''}${p.rate ? ' rate' : ''}">

@@ -273,6 +273,12 @@ kbd {
 .power.short .label span { color: #ffb02e; }
 .power.out .label span { color: #ff6b5b; }
 .power-text { margin: 0; font-size: 12px; color: var(--ink-dim); }
+.power-mix { margin: 4px 0 0; font-size: 12px; color: var(--ink-dim); display: flex; flex-wrap: wrap; gap: 2px 10px; }
+.power-mix b { font-weight: 600; color: var(--ink); }
+.power-mix .clean { color: #7ee08a; }
+.battery-bar { height: 4px; margin: 5px 0 0; }
+.battery-bar i { background: #7ee08a; }
+.power.clean .power-bar:not(.battery-bar) i { background: linear-gradient(90deg, #7ee08a, #7fd4ff); }
 .rocket .power-bar i { background: #ff6a3d; }
 .rocket.ready .power-bar i { background: #6be36b; }
 .rocket.ready .label span { color: #6be36b; }

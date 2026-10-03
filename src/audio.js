@@ -148,7 +148,7 @@ export function createAudio() {
       tone({ type: 'sine', freq: 660, decay: 0.08, peak: 0.12, t: t + 0.12 });
       tone({ type: 'sine', freq: 990, decay: 0.12, peak: 0.1, t: t + 0.19 });
       // Power buildings crackle when they join the grid.
-      if (type === 'pole' || type === 'power' || type === 'geo') {
+      if (type === 'pole' || type === 'power' || type === 'geo' || type === 'solar' || type === 'wind' || type === 'battery') {
         for (let i = 0; i < 4; i++) hiss({ filter: 'highpass', freq: 4000, decay: 0.03, peak: 0.12, t: t + 0.22 + i * 0.035 + Math.random() * 0.02 });
         tone({ type: 'sawtooth', freq: 100, decay: 0.25, peak: 0.05, t: t + 0.22 });
       }

@@ -88,6 +88,9 @@ export const BUILDINGS = {
   wall: { name: 'Mauer' },
   turret: { name: 'Geschützturm' },
   laser: { name: 'Laserturm' },
+  solar: { name: 'Solarpanel' },
+  wind: { name: 'Windrad' },
+  battery: { name: 'Akku' },
 };
 
 // Tiles a building covers along each side; big ones stand on the middle tile.
@@ -116,7 +119,7 @@ const SPLITTER_BUFFER = 2;
 const opposite = (dir) => (dir + 2) % 4;
 export const isMachine = (b) => b?.type === 'furnace' || b?.type === 'assembler';
 // Buildings that never hand items on.
-const NO_OUTPUT = new Set(['storage', 'power', 'geo', 'pole', 'pump', 'pipe', 'tank', 'rail', 'station', 'signal', 'silo', 'dronePort', 'provider', 'wall', 'turret', 'laser']);
+const NO_OUTPUT = new Set(['storage', 'power', 'geo', 'pole', 'pump', 'pipe', 'tank', 'rail', 'station', 'signal', 'silo', 'dronePort', 'provider', 'wall', 'turret', 'laser', 'solar', 'wind', 'battery']);
 
 // Power. A coal power plant burns coal from belts and feeds every network it is
 // connected to. Poles carry the power: wires reach from pole to pole, and a pole
@@ -135,7 +138,40 @@ export const FUEL_VALUE = { coal: 1, fuel: 3 }; // a can of fuel burns as long a
 export const usesPower = (b) => !!POWER_USE[b?.type];
 // A geothermal plant stands on a steaming vent and needs no fuel at all.
 export const GEO_OUTPUT = 12; // MW per geothermal plant, before research
-export const isPlant = (b) => b?.type === 'power' || b?.type === 'geo';
+
+// Renewable power. Solar panels follow the sun of the day-night cycle, wind
+// turbines the wind, which rises and falls over time and blows harder in storms;
+// turbines close together take each other's wind. Neither needs fuel nor makes
+// smog. Batteries on a network store what the sun and wind give beyond the
+// demand and hand it back when they fall short (at night, in a lull).
+// A network takes renewable power first, then batteries, and burns coal last.
+export const SOLAR_OUTPUT = 3; // MW per panel in full sun, before research
+export const WIND_OUTPUT = 5; // MW per turbine in full wind, before research
+export const WIND_WAKE = 2; // turbines this close (in tiles) take each other's wind…
+export const WAKE_LOSS = 0.2; // …this share for each neighbour
+export const BATTERY_CAPACITY = 600; // MJ (MW for a second) per battery, before research
+export const BATTERY_RATE = 6; // MW a battery takes or gives at most
+const PLANTS = new Set(['power', 'geo', 'solar', 'wind']);
+export const isPlant = (b) => PLANTS.has(b?.type);
+export const isRenewable = (b) => b?.type === 'solar' || b?.type === 'wind';
+
+// Sunlight at time of day `t` (0…1, as in daynight.js): the sun is up for about
+// two thirds of the day; 0 at night, 1 around noon.
+export function sunlightAt(t) {
+  const e = Math.sin(t * Math.PI * 2) + 0.3;
+  const x = Math.min(1, Math.max(0, e / 0.9));
+  return x * x * (3 - 2 * x);
+}
+
+// Wind strength 0.1…1 at simulated time `time`: slow gusts and lulls, the same for
+// a given seed, so a save game needs nothing extra.
+export function windAt(time, seed = 0) {
+  const s = (seed % 1000) * 0.37;
+  const w = 0.55 + 0.25 * Math.sin(time / 41 + s) + 0.14 * Math.sin(time / 13.3 + s * 2.1) + 0.06 * Math.sin(time / 4.7 + s * 3.3);
+  return Math.min(1, Math.max(0.1, w));
+}
+// Direction the wind blows from, in radians: it turns slowly over the day.
+export const windDirAt = (time, seed = 0) => Math.sin(time / 180 + seed) * 1.2 + (seed % 7);
 
 // Oil. A pump on an oil field needs power and pushes oil into the pipes next to
 // it. Pumps, pipes, tanks and refineries that touch form one pipe network that
@@ -259,6 +295,8 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
     if (type === 'requester') Object.assign(b, { items: {}, total: 0, request: null, want: 25, received: 0, handed: 0 });
     if (type === 'turret') Object.assign(b, { ammo: 0, shots: 0, aim: 0, state: 'empty', fired: 0 });
     if (type === 'laser') Object.assign(b, { aim: 0, state: 'idle', fired: 0 });
+    if (type === 'solar' || type === 'wind') Object.assign(b, { state: 'idle', made: 0 });
+    if (type === 'battery') Object.assign(b, { charge: 0, state: 'idle' });
     buildings.set(b.index, b);
     cover(b);
     if (isTrack(b)) railways.join(b);
@@ -402,7 +440,7 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
     for (const p of poles) {
       const r = find(p);
       if (!byRoot.has(r)) {
-        const net = { id: grid.nets.length + 1, poles: [], plants: [], consumers: [], capacity: 0, demand: 0, satisfaction: 0, used: 0 };
+        const net = { id: grid.nets.length + 1, poles: [], plants: [], consumers: [], batteries: [], capacity: 0, demand: 0, satisfaction: 0, used: 0, clean: 0, coal: 0, flow: 0 };
         byRoot.set(r, net);
         grid.nets.push(net);
       }
@@ -414,7 +452,7 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
     for (const b of buildings.values()) {
       if (b.type === 'pole') continue;
       b.net = null;
-      if (!isPlant(b) && !usesPower(b)) continue;
+      if (!isPlant(b) && !usesPower(b) && b.type !== 'battery') continue;
       // Big buildings are supplied by a pole that reaches any of their tiles.
       const reach = POLE_SUPPLY + (sizeOf(b.type) - 1) / 2;
       for (let dz = -reach; dz <= reach && !b.net; dz++) {
@@ -422,10 +460,16 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
           const p = at(b.tile.x + dx, b.tile.z + dz);
           if (p?.type !== 'pole') continue;
           b.net = p.net;
-          (isPlant(b) ? p.net.plants : p.net.consumers).push(b);
+          (isPlant(b) ? p.net.plants : b.type === 'battery' ? p.net.batteries : p.net.consumers).push(b);
           break;
         }
       }
+    }
+    // Turbines close together take each other's wind.
+    const turbines = [...buildings.values()].filter((b) => b.type === 'wind');
+    for (const t of turbines) {
+      const near = turbines.filter((o) => o !== t && Math.max(Math.abs(o.tile.x - t.tile.x), Math.abs(o.tile.z - t.tile.z)) <= WIND_WAKE).length;
+      t.wake = Math.max(0.2, 1 - near * WAKE_LOSS);
     }
   }
 
@@ -434,14 +478,30 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
   const frost = biomeOf(world.biome).frost ?? 1;
   const powerFactor = (b) => (b.net ? POWER_SPEED * b.net.satisfaction : frost);
 
-  // Output of one plant right now: coal plants while they burn, geothermal always.
-  const plantOutput = (p) =>
-    p.type === 'geo' ? GEO_OUTPUT * research.stats.power * weatherEffect(weather, 'geo') : p.burn > 0 ? POWER_OUTPUT * research.stats.power : 0;
+  // Sunlight on the panels, set from the day-night cycle (see main.js); the
+  // balancing tool leaves it at full sun or sets it itself.
+  let daylight = 1;
+  const biomeInfo = biomeOf(world.biome);
+  const sunNow = () => daylight * (biomeInfo.sun ?? 1) * weatherEffect(weather, 'solar');
+  const windNow = () => Math.min(1.5, windAt(time, world.seed ?? 0) * (biomeInfo.wind ?? 1) * weatherEffect(weather, 'wind'));
+  const batteryCapacity = () => BATTERY_CAPACITY * research.stats.battery;
 
-  // Shares the power of each network's plants among its working machines.
+  // Output of one plant right now: coal plants while they burn, geothermal always,
+  // solar with the sun and wind turbines with the wind.
+  function plantOutput(p) {
+    if (p.type === 'geo') return GEO_OUTPUT * research.stats.power * weatherEffect(weather, 'geo');
+    if (p.type === 'solar') return SOLAR_OUTPUT * research.stats.renewable * sunNow();
+    if (p.type === 'wind') return WIND_OUTPUT * research.stats.renewable * windNow() * (p.wake ?? 1);
+    return p.burn > 0 ? POWER_OUTPUT * research.stats.power : 0;
+  }
+
+  // Shares the power of each network's plants among its working machines:
+  // renewable and geothermal power first, then the batteries, coal last. What the
+  // clean plants give beyond the demand charges the batteries.
   function tickPower(dt) {
     for (const b of buildings.values()) {
-      if (b.type === 'geo' && !b.net) b.state = 'idle';
+      if ((b.type === 'geo' || isRenewable(b)) && !b.net) b.state = plantOutput(b) > 0 ? 'idle' : 'empty';
+      if (b.type === 'battery' && !b.net) b.state = 'idle';
       if (b.type !== 'power') continue;
       // Load the next coal before the current one is used up.
       if (b.burn <= 0 && b.fuel > 0) {
@@ -450,23 +510,57 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
       }
       if (!b.net) b.state = b.burn > 0 || b.fuel > 0 ? 'idle' : 'empty';
     }
+    const cap = batteryCapacity();
     for (const net of grid.nets) {
-      const fed = net.plants.filter((p) => plantOutput(p) > 0);
-      net.capacity = fed.reduce((n, p) => n + plantOutput(p), 0);
+      let clean = 0;
+      let coal = 0;
+      for (const p of net.plants) {
+        const out = plantOutput(p);
+        p.out = out;
+        if (p.type === 'power') coal += out;
+        else clean += out;
+      }
+      net.capacity = clean + coal;
       // Machines that are working or waiting for power ask for it.
       net.demand = 0;
       for (const b of net.consumers) if (b.state === 'work' || b.state === 'nopower') net.demand += POWER_USE[b.type];
-      net.satisfaction = net.capacity <= 0 ? 0 : net.demand <= 0 ? 1 : Math.min(1, net.capacity / net.demand);
-      net.used = Math.min(net.capacity, net.demand);
-      // Every plant runs at the same share of its output.
-      const load = net.capacity ? net.used / net.capacity : 0;
+      let canGive = 0;
+      let canTake = 0;
+      for (const b of net.batteries) {
+        b.charge = Math.min(cap, b.charge ?? 0);
+        canGive += Math.min(BATTERY_RATE, b.charge / dt);
+        canTake += Math.min(BATTERY_RATE, (cap - b.charge) / dt);
+      }
+      const fromClean = Math.min(clean, net.demand);
+      const fromBattery = Math.min(canGive, net.demand - fromClean);
+      const fromCoal = Math.min(coal, net.demand - fromClean - fromBattery);
+      const charging = Math.min(canTake, clean - fromClean);
+      // Batteries share the flow by what each can take or give.
+      const flow = charging > 0 ? charging : -fromBattery;
+      for (const b of net.batteries) {
+        const share = flow > 0 ? (canTake ? Math.min(BATTERY_RATE, (cap - b.charge) / dt) / canTake : 0) : canGive ? Math.min(BATTERY_RATE, b.charge / dt) / canGive : 0;
+        b.flow = flow * share;
+        b.charge = Math.min(cap, Math.max(0, b.charge + b.flow * dt));
+        b.state = b.flow > 0.01 ? 'charge' : b.flow < -0.01 ? 'discharge' : 'idle';
+      }
+      const supply = fromClean + fromBattery + fromCoal;
+      net.satisfaction = net.demand > 0 ? supply / net.demand : net.capacity > 0 || canGive > 0 ? 1 : 0;
+      net.used = supply;
+      net.clean = fromClean + fromBattery;
+      net.coal = fromCoal;
+      net.flow = flow;
+      // The clean plants run at the share they are needed (machines and charging),
+      // coal plants at what is left for them.
+      const cleanLoad = clean ? (fromClean + charging) / clean : 0;
+      const coalLoad = coal ? fromCoal / coal : 0;
       for (const p of net.plants) {
-        const out = plantOutput(p);
-        if (out <= 0) {
+        if (p.out <= 0) {
           p.state = 'empty';
+          p.load = 0;
           continue;
         }
-        if (p.type === 'power') p.burn -= out * load * dt;
+        const load = p.type === 'power' ? coalLoad : cleanLoad;
+        if (p.type === 'power') p.burn -= p.out * load * dt;
         p.load = load;
         p.state = load > 0 ? 'work' : 'idle';
       }
@@ -475,21 +569,40 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
 
   // Totals over all networks, for the HUD.
   function powerSummary() {
-    const s = { nets: grid.nets.length, plants: 0, capacity: 0, demand: 0, used: 0, consumers: 0, short: 0, fuel: 0, geo: 0 };
+    const s = { nets: grid.nets.length, plants: 0, capacity: 0, demand: 0, used: 0, consumers: 0, short: 0, fuel: 0, geo: 0, solar: 0, wind: 0, coalPlants: 0, clean: 0, coal: 0, batteries: 0, charge: 0, storage: 0, flow: 0 };
     for (const net of grid.nets) {
       s.plants += net.plants.length;
       s.capacity += net.capacity;
       s.demand += net.demand;
       s.used += net.used;
+      s.clean += net.clean;
+      s.coal += net.coal;
+      s.flow += net.flow;
       s.consumers += net.consumers.length;
       if (net.consumers.length && net.satisfaction < 1) s.short++;
       for (const p of net.plants) {
-        if (p.type === 'geo') s.geo++;
-        else s.fuel += p.fuel + (p.burn > 0 ? 1 : 0);
+        if (p.type === 'power') {
+          s.coalPlants++;
+          s.fuel += p.fuel + (p.burn > 0 ? 1 : 0);
+        } else s[p.type]++;
+      }
+      for (const b of net.batteries) {
+        s.batteries++;
+        s.charge += b.charge;
       }
     }
-    s.satisfaction = s.demand ? s.used / s.demand : s.capacity > 0 ? 1 : 0;
+    s.storage = s.batteries * batteryCapacity();
+    s.satisfaction = s.demand ? s.used / s.demand : s.capacity > 0 || s.charge > 0 ? 1 : 0;
+    s.sun = sunNow();
+    s.windSpeed = windNow();
     return s;
+  }
+
+  // MJ stored in every battery, on a network or not.
+  function storedEnergy() {
+    let n = 0;
+    for (const b of buildings.values()) if (b.type === 'battery') n += b.charge ?? 0;
+    return n;
   }
 
   // Machines currently running on power from a network.
@@ -1050,7 +1163,7 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
       recent: Object.fromEntries(Object.entries(recent).filter(([, log]) => log.length)),
       research: research.save(),
       amounts: world.tiles.filter((t) => t.ore).map((t) => t.amount),
-      buildings: [...buildings.values()].map(({ tile, index, net, load, pipes, links, depth, green, dnet, out, aim, ...rest }) => ({ ...rest, index })),
+      buildings: [...buildings.values()].map(({ tile, index, net, load, pipes, links, depth, green, dnet, out, aim, wake, flow, ...rest }) => ({ ...rest, index })),
     };
   }
 
@@ -1103,6 +1216,12 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
     powerFactor,
     powerSummary,
     powered,
+    storedEnergy,
+    setDaylight: (v) => (daylight = v),
+    get daylight() {
+      return daylight;
+    },
+    batteryCapacity,
     pipes,
     oilSummary,
     updateGrid: () => gridDirty && updateGrid(),

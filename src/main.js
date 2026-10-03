@@ -4,7 +4,7 @@ import { generateWorld, ORES, TERRAIN, MAP_SIZE, TILE } from './world.js';
 import { TRAIN_CARGO, STATION_CAP, TRAIN_SPEED } from './trains.js';
 import { buildWorldMeshes, createSea } from './scenery.js';
 import { createCameraRig } from './camera.js';
-import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, RECIPES, CONSTRUCTOR_RECIPES, REFINERY_RECIPES, recipesOf, isMachine, usesPower, POWER_USE, POWER_SPEED, POWER_OUTPUT, GEO_OUTPUT, WIRE_REACH, PUMP_RATE, SILO_STAGES, siloReady } from './factory.js';
+import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, RECIPES, CONSTRUCTOR_RECIPES, REFINERY_RECIPES, recipesOf, isMachine, usesPower, POWER_USE, POWER_SPEED, POWER_OUTPUT, GEO_OUTPUT, SOLAR_OUTPUT, WIND_OUTPUT, BATTERY_RATE, sunlightAt, WIRE_REACH, PUMP_RATE, SILO_STAGES, siloReady } from './factory.js';
 import { RESEARCH } from './research.js';
 import { createResearchView } from './researchView.js';
 import { createFactoryView, createGhost } from './buildings.js';
@@ -272,31 +272,59 @@ const powerPanel = document.getElementById('power');
 const powerState = document.getElementById('power-state');
 const powerFill = document.getElementById('power-fill');
 const powerText = document.getElementById('power-text');
+const powerMix = document.getElementById('power-mix');
+const batteryBar = document.getElementById('battery-bar');
+const batteryFill = document.getElementById('battery-fill');
 const mw = (n) => `${n.toLocaleString('de-DE', { maximumFractionDigits: 1 })} MW`;
 
-// Shown once power is unlocked: how much of the plants' output the machines use.
+// Shown once power is unlocked: how much of the plants' output the machines use,
+// where it comes from, and how full the batteries are.
+const POWER_TOOLS = ['power', 'geo', 'solar', 'wind'];
 function renderPower() {
   const s = factory.powerSummary();
-  const unlocked = factory.research.unlocked.has('power') || factory.research.unlocked.has('geo');
+  const unlocked = POWER_TOOLS.some((t) => factory.research.unlocked.has(t));
   powerPanel.hidden = !unlocked && !s.nets;
   if (powerPanel.hidden) return;
-  const out = s.consumers > 0 && s.capacity <= 0;
-  const short = !out && s.demand > s.capacity;
+  const stored = s.charge > 0.5 && s.flow <= 0;
+  const out = s.consumers > 0 && s.capacity <= 0 && !stored;
+  const short = !out && s.consumers > 0 && s.satisfaction < 0.999 && s.demand > 0;
+  const green = s.solar + s.wind + s.geo > 0;
   powerPanel.classList.toggle('out', out);
   powerPanel.classList.toggle('short', short);
-  powerFill.style.width = `${s.capacity ? Math.min(100, (s.demand / s.capacity) * 100) : out ? 100 : 0}%`;
+  powerPanel.classList.toggle('clean', !out && !short && s.used > 0 && s.coal <= 0.01);
+  const supply = s.capacity + Math.max(0, -s.flow);
+  powerFill.style.width = `${supply ? Math.min(100, (s.demand / supply) * 100) : out ? 100 : 0}%`;
   if (!s.nets) {
     powerState.textContent = 'kein Netz';
     powerText.textContent = factory.research.unlocked.has('power')
       ? 'Kraftwerk bauen, Kohle hineinleiten und Masten bis zu den Maschinen setzen.'
-      : 'Erdwärmekraftwerk (Y) auf eine dampfende Quelle setzen und Masten bis zu den Maschinen.';
+      : factory.research.unlocked.has('solar')
+        ? 'Solarpanels (Ö) oder Windräder (Ä) aufstellen und Masten bis zu den Maschinen setzen.'
+        : 'Erdwärmekraftwerk (Y) auf eine dampfende Quelle setzen und Masten bis zu den Maschinen.';
   } else if (out) {
-    powerState.textContent = s.plants ? 'keine Kohle' : 'kein Kraftwerk';
-    powerText.textContent = s.plants ? 'Die Kraftwerke brauchen Kohle vom Band. Die Maschinen am Netz stehen still.' : 'Im Netz fehlt ein Kraftwerk. Die Maschinen am Netz stehen still.';
+    powerState.textContent = !s.plants ? 'kein Kraftwerk' : s.coalPlants && !green ? 'keine Kohle' : s.solar && !s.wind && !s.coalPlants ? 'keine Sonne' : 'kein Strom';
+    powerText.textContent = !s.plants
+      ? 'Im Netz fehlt ein Kraftwerk. Die Maschinen am Netz stehen still.'
+      : s.coalPlants && !green
+        ? 'Die Kraftwerke brauchen Kohle vom Band. Die Maschinen am Netz stehen still.'
+        : 'Sonne und Wind liefern gerade nichts. Akkus speichern den Strom vom Tag für die Nacht.';
   } else {
-    powerState.textContent = short ? `Mangel · ${Math.round(s.satisfaction * 100)} %` : `${Math.round((s.demand / Math.max(s.capacity, 0.001)) * 100)} % Last`;
-    powerText.textContent = `Bedarf ${mw(s.demand)} von ${mw(s.capacity)} · ${s.consumers} Maschinen am Netz · ${s.geo ? `${s.geo} Erdwärme${s.plants > s.geo ? `, ${s.fuel} Kohle` : ''}` : `${s.fuel} Kohle im Kraftwerk`}`;
+    powerState.textContent = short ? `Mangel · ${Math.round(s.satisfaction * 100)} %` : `${Math.round((s.demand / Math.max(supply, 0.001)) * 100)} % Last`;
+    const sources = [s.coalPlants && `${s.fuel} Kohle`, s.geo && `${s.geo} Erdwärme`, s.solar && `${s.solar} Solar`, s.wind && `${s.wind} Wind`].filter(Boolean).join(', ');
+    powerText.textContent = `Bedarf ${mw(s.demand)} von ${mw(supply)} · ${s.consumers} Maschinen am Netz${sources ? ` · ${sources}` : ''}`;
   }
+  // The mix: clean power, coal, and the sun and wind right now.
+  powerMix.hidden = !green && !s.batteries;
+  if (!powerMix.hidden) {
+    const parts = [];
+    if (s.solar) parts.push(`<span title="Sonne">☀ <b>${pct(Math.min(1, s.sun))}</b></span>`);
+    if (s.wind) parts.push(`<span title="Wind">🌬 <b>${pct(s.windSpeed)}</b></span>`);
+    if (s.used > 0) parts.push(`<span class="clean" title="Anteil ohne Kohle">Sauber <b class="clean">${pct(s.clean / s.used)}</b></span>`);
+    if (s.batteries) parts.push(`<span title="Akkus">🔋 <b>${pct(s.storage ? s.charge / s.storage : 0)}</b>${s.flow > 0.05 ? ' lädt' : s.flow < -0.05 ? ' entlädt' : ''}</span>`);
+    powerMix.innerHTML = parts.join('');
+  }
+  batteryBar.hidden = !s.batteries;
+  if (s.batteries) batteryFill.style.width = `${s.storage ? (s.charge / s.storage) * 100 : 0}%`;
 }
 
 const oilPanel = document.getElementById('oil');
@@ -1097,7 +1125,7 @@ function showTile(tile) {
   if (!tile) {
     marker.visible = false;
     ghost.show(null);
-    factoryView.showSupply(tool === 'pole' || tool === 'power');
+    factoryView.showSupply(tool === 'pole' || POWER_TOOLS.includes(tool) || tool === 'battery');
     factoryView.showDroneRange(DRONE_TOOLS.has(tool));
     tileName.textContent = 'Maus über die Karte bewegen';
     tileDetail.textContent = '';
@@ -1111,7 +1139,7 @@ function showTile(tile) {
   marker.visible = !tool;
   marker.position.set(tile.position.x, Math.max(tile.height, 0.28) + 0.03, tile.position.z);
   ghost.show(tool, tile, tool === 'remove' || overBelt ? building?.dir ?? 0 : dir, check?.ok);
-  factoryView.showSupply(tool === 'pole' || tool === 'power' || usesPower({ type: tool }) || (!tool && (building?.type === 'pole' || building?.type === 'power')));
+  factoryView.showSupply(tool === 'pole' || POWER_TOOLS.includes(tool) || tool === 'battery' || usesPower({ type: tool }) || (!tool && (building?.type === 'pole' || POWER_TOOLS.includes(building?.type) || building?.type === 'battery')));
   factoryView.showDroneRange(DRONE_TOOLS.has(tool) || (!tool && DRONE_TOOLS.has(building?.type)));
 
   const terrain = TERRAIN[tile.terrain];
@@ -1181,6 +1209,23 @@ function showTile(tile) {
     tileDetail.textContent = building.net
       ? `${building.state === 'work' ? 'Liefert Strom' : 'Bereit, nichts braucht Strom'} · ${mw(out)} ohne Kohle · Netz: ${mw(building.net.demand)} Bedarf`
       : `Nicht am Netz: Strommast in die Nähe setzen · ${mw(out)} ohne Kohle`;
+  } else if (building?.type === 'solar' || building?.type === 'wind') {
+    const solar = building.type === 'solar';
+    tileName.textContent = solar ? 'Solarpanel' : 'Windrad';
+    const s = factory.powerSummary();
+    const peak = (solar ? SOLAR_OUTPUT : WIND_OUTPUT) * factory.research.stats.renewable;
+    const now = building.out ?? 0;
+    const why = solar ? `Sonne ${pct(Math.min(1, s.sun))}` : `Wind ${pct(s.windSpeed)}${(building.wake ?? 1) < 1 ? ` · Nachbarn nehmen ${pct(1 - building.wake)} Wind` : ''}`;
+    const state = now <= 0.01 ? (solar ? 'Nacht: keine Sonne' : 'Flaute') : building.state === 'work' ? 'Liefert Strom' : 'Bereit, nichts braucht Strom';
+    tileDetail.textContent = building.net
+      ? `${state} · ${mw(now)} von ${mw(peak)} · ${why} · kein Smog`
+      : `Nicht am Netz: Strommast in die Nähe setzen · ${mw(now)} von ${mw(peak)} · ${why}`;
+  } else if (building?.type === 'battery') {
+    tileName.textContent = 'Akku';
+    const cap = factory.batteryCapacity();
+    const flow = building.flow ?? 0;
+    const state = !building.net ? 'Nicht am Netz: Strommast in die Nähe setzen' : flow > 0.01 ? `Lädt mit ${mw(flow)}` : flow < -0.01 ? `Gibt ${mw(-flow)} ab` : building.charge >= cap - 0.5 ? 'Voll' : 'Wartet auf Sonne oder Wind';
+    tileDetail.textContent = `${state} · ${Math.round(building.charge)} von ${Math.round(cap)} MJ (${pct(building.charge / cap)}) · höchstens ${mw(BATTERY_RATE)}`;
   } else if (building?.type === 'pole') {
     tileName.textContent = 'Strommast';
     const net = building.net;
@@ -1297,7 +1342,7 @@ const DRONE_TOOLS = new Set(['dronePort', 'provider', 'requester']);
 const DEFENSE_TOOLS = new Set(['wall', 'turret', 'laser']);
 const help = document.getElementById('help');
 const HELP = {
-  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['Y', 'Erdwärme'], ['O P I K', 'Öl'], ['G B Z J', 'Bahn'], ['F V C', 'Drohnen'], ['H', 'Silo'], [', . -', 'Abwehr'], ['X', 'abreißen'], ['T', 'Forschung'], ['L', 'Statistik'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
+  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['Y', 'Erdwärme'], ['Ö Ä #', 'Ökostrom'], ['O P I K', 'Öl'], ['G B Z J', 'Bahn'], ['F V C', 'Drohnen'], ['H', 'Silo'], [', . -', 'Abwehr'], ['X', 'abreißen'], ['T', 'Forschung'], ['L', 'Statistik'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
@@ -1308,6 +1353,9 @@ const HELP = {
   constructor: [['Klick', 'Konstruktor setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Ohne Werkzeug klicken', 'Rezept wählen']],
   power: [['Klick', 'Kraftwerk setzen'], ['Kohle', 'per Band von jeder Seite'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen']],
   geo: [['Klick auf Quelle', 'Erdwärmekraftwerk setzen'], ['Liefert', `${GEO_OUTPUT} MW ohne Kohle`], ['Mast', 'in die Nähe'], ['Esc', 'fertig']],
+  solar: [['Klick / Ziehen', 'Solarpanels setzen'], ['Liefert', `bis ${SOLAR_OUTPUT} MW bei Sonne`], ['Mast', 'in die Nähe'], ['Esc', 'fertig']],
+  wind: [['Klick', 'Windrad setzen'], ['Liefert', `bis ${WIND_OUTPUT} MW bei Wind`], ['Abstand', 'mehr als 2 Felder'], ['Esc', 'fertig']],
+  battery: [['Klick', 'Akku setzen'], ['Speichert', 'Sonnen- und Windstrom'], ['Mast', 'in die Nähe'], ['Esc', 'fertig']],
   pole: [['Klick / Ziehen', 'Strommasten setzen'], ['Reichweite', '7 Felder'], ['Versorgt', '5×5 Felder'], ['Esc', 'fertig']],
   pump: [['Klick', 'Ölpumpe auf Ölfeld setzen'], ['Strom', 'Mast in die Nähe'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen']],
   pipe: [['Ziehen', 'Rohre verlegen'], ['Verbindet', 'alles daneben'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen']],
@@ -1515,6 +1563,8 @@ window.addEventListener('keydown', (e) => {
   const numbered = /^[0-9]$/.test(key) && ['drill', 'belt', 'storage', 'furnace', 'assembler', 'splitter', 'merger', 'constructor', 'power', 'pole'][(Number(key) + 9) % 10];
   const oilKey = { y: 'geo', o: 'pump', p: 'pipe', i: 'refinery', k: 'tank', g: 'rail', b: 'station', z: 'train', j: 'signal', f: 'dronePort', v: 'provider', c: 'requester', h: 'silo' }[key];
   const defenseKey = { ',': 'wall', '.': 'turret', '-': 'laser' }[key];
+  // Renewables: Ö Ä # on a German keyboard, ; ' \ in the same places on others.
+  const greenKey = { 'ö': 'solar', ';': 'solar', 'ä': 'wind', "'": 'wind', '#': 'battery', '\\': 'battery' }[key];
   if (key === ' ') {
     e.preventDefault();
     return lookAtAttack();
@@ -1522,6 +1572,7 @@ window.addEventListener('keydown', (e) => {
   if (numbered) setTool(numbered);
   else if (oilKey) setTool(oilKey);
   else if (defenseKey) setTool(defenseKey);
+  else if (greenKey) setTool(greenKey);
   else if (key === 'x' || key === 'delete') setTool('remove');
   else if (key === 'r') rotate();
   else if (key === 't') researchView.toggle();
@@ -1657,6 +1708,7 @@ renderer.setAnimationLoop(() => {
   meshes.update(timer.getElapsed(), erupting);
   dayNight.setStorm(weather.strength);
   if (!paused) pending += dt;
+  factory.setDaylight(sunlightAt(dayNight.time));
   while (pending >= STEP) {
     factory.tick(STEP);
     pending -= STEP;
