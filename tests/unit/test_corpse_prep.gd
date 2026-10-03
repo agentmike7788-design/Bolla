@@ -513,4 +513,5 @@ func test_herb_bundle_smokes_like_juniper() -> void:
 	var old := Phase4Fixtures.prep_config().duplicate() as PrepConfig
 	old.balm_items = [] as Array[StringName]
 	assert_eq(CorpsePrep.balm_item_in(inv, old), &"", "empty list: only balm_item (juniper)")
-	assert_eq(Database.config(&"prep_config").get(&"balm_items"), [&"juniper", &"herb_bundle"] as Array[StringName])
+	# Phase 7 (P7): + corpse_balm (Totensalbe) as third entry.
+	assert_eq(Database.config(&"prep_config").get(&"balm_items"), [&"juniper", &"herb_bundle", &"corpse_balm"] as Array[StringName])

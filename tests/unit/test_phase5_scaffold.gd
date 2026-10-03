@@ -219,7 +219,8 @@ func test_extended_data_classes() -> void:
 	assert_eq(ReputationConfig.new().event_points[&"master_stone"], 3)
 	assert_true(PietyConfig.new().full_prep_requires_unharvested)
 	var prep := PrepConfig.new()
-	assert_eq(prep.balm_items, [&"juniper", &"herb_bundle"] as Array[StringName])
+	# Phase 7 (P7, W0-Notizen 4): + corpse_balm as third entry (class default and data together).
+	assert_eq(prep.balm_items, [&"juniper", &"herb_bundle", &"corpse_balm"] as Array[StringName])
 	assert_eq(prep.balm_items[0], prep.balm_item, "balm_item stays the first element")
 	var t := TraderConfig.new()
 	assert_eq([t.price(&"gold_leaf"), t.per_night(&"gold_leaf"), t.price(&"linen"), t.price(&"juniper")], [6, 2, 2, 1])

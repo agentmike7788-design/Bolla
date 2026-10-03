@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/villager_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"surgeon"
+display_name = "Severin Quast"
+role = "Wundarzt und Geburtshelfer"
+dialogue_id = &"v_surgeon"
+shop_id = &"surgeon"
+home_door = &"door_surgery"
+gifts_liked = Array[StringName]([&"spirits", &"herb_bundle"])
+start_value = 20
+specimen_delta = 2
+returned_delta = 0
+piety_sensitive = false
+remarks = Dictionary[StringName, PackedStringArray]({
+&"friend": PackedStringArray("Kommen Sie herein. Ich habe Tee. Nur Tee, keine Sorge."),
+&"piety_devout": PackedStringArray("Sie gehen mit ihnen um, als schliefen sie nur. Verzeihen Sie, das ist kein Vorwurf."),
+&"piety_hardhearted": PackedStringArray("Sie sehen inzwischen hin, ohne zu zögern. Das ist nützlich. Und traurig."),
+&"rep_disreputable": PackedStringArray("Man spricht nicht gut von Ihnen. Von mir übrigens auch nicht."),
+&"rep_esteemed": PackedStringArray("Ihre Toten sind sauber versorgt. Das ist mehr, als man von den meisten Ärzten sagen kann."),
+&"rep_renowned": PackedStringArray("Man kennt Ihren Namen bis in die Stadt. Seien Sie vorsichtig damit."),
+&"rep_respected": PackedStringArray("Die Toten lehren die Lebenden."),
+&"rep_unremarkable": PackedStringArray("Guten Tag. Viel zu tun, oben?")
+})

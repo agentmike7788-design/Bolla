@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ShopData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/shop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"priest"
+npc_id = &"priest"
+title = "Kirchentür"
+sells = Dictionary[StringName, Dictionary]({
+&"altar_candle": {
+"per_day": 6,
+"price": 2
+}
+})
+buys = Dictionary[StringName, Dictionary]({})
+coin_reason = &"village"

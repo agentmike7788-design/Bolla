@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/crafting/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"fever_tincture"
+display_name = "Fiebertinktur ansetzen"
+inputs = Dictionary[StringName, int]({
+&"elderberries": 1,
+&"herbs": 2,
+&"spirits": 1
+})
+output_id = &"fever_tincture"
+output_amount = 1
+craft_minutes = 30
+station = &"pult"
+category = &"material"
+background = false

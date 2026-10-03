@@ -15,4 +15,6 @@ extends Resource
 @export var store_min_level: int = 3
 ## W3 QA6-04: §2.5 „keine Gebeinkisten" – the empty boxes and the altar candles stay with the gravekeeper
 ## too (an old grave and the altar have no fetch).
-@export var excluded_items: Array[StringName] = [&"bone_box_full", &"bone_box", &"altar_candle"]
+## Phase 7 (docs/PHASE7_DESIGN.md §2.8, P7): + the four specimen items (unique pieces with a label).
+@export var excluded_items: Array[StringName] = [&"bone_box_full", &"bone_box", &"altar_candle", &"specimen_jar",
+		&"specimen_bundle", &"display_specimen", &"bone_specimen"]

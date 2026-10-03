@@ -115,7 +115,23 @@ func built() -> Array[StringName]:
 
 ## "" or why `station_id` cannot be built now with `inv` (WorkshopRules).
 func build_block_reason(station_id: StringName, inv: Inventory) -> String:
-	return WorkshopRules.build_block_reason(_station(station_id), inv, is_built(station_id), is_open())
+	var reason := WorkshopRules.build_block_reason(_station(station_id), inv, is_built(station_id), is_open())
+	if reason == "" and not site_available(station_id):
+		# Phase 7 (docs/PHASE7_DESIGN.md §2.7, P7): the pult in the crypt from village_open, crypt ≥ 1.
+		return PultRules.TEXT_SITE_CLOSED
+	return reason
+
+
+## Phase 7 (§2.7): the site of `station_id` may be used now – the pult only from village_open with the
+## crypt on level ≥ 1 (Buildings); every Phase-5 station always.
+func site_available(station_id: StringName) -> bool:
+	if station_id != PultRules.STATION_ID:
+		return true
+	var level := 0
+	var buildings := get_tree().get_first_node_in_group(&"buildings") if is_inside_tree() else null
+	if buildings != null and buildings.has_method(&"level"):
+		level = int(buildings.call(&"level", PultRules.SITE_BUILDING))
+	return PultRules.site_block_reason(_flag_on(PultRules.SITE_FLAG), level) == ""
 
 
 ## Atomic: items + coins at the end of the build; station_built, coins_spent(&"build"); check_goal.

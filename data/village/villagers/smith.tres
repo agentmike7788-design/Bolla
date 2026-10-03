@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/villager_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"smith"
+display_name = "Ulrich Esch"
+role = "Schmied"
+dialogue_id = &"v_smith"
+shop_id = &"smith"
+home_door = &""
+gifts_liked = Array[StringName]([&"elder_wine", &"iron_ore"])
+start_value = 15
+specimen_delta = 0
+returned_delta = 0
+piety_sensitive = false
+remarks = Dictionary[StringName, PackedStringArray]({
+&"friend": PackedStringArray("Komm rein, wenn du was brauchst. Ich mach's dir krumm oder gerade."),
+&"rep_disreputable": PackedStringArray("Das ist der, bei dem die Taschen leichter werden."),
+&"rep_esteemed": PackedStringArray("Deine Kreuze stehen gerade. Hab's gesehen."),
+&"rep_renowned": PackedStringArray("Wer so gräbt, kann auch schmieden lernen. Sag ich nicht oft."),
+&"rep_respected": PackedStringArray("Totengräber.", "Gute Schaufel? Zeig her. Geht."),
+&"rep_unremarkable": PackedStringArray("Hm.")
+})

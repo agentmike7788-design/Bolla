@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="ShopData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/shop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"surgeon"
+npc_id = &"surgeon"
+title = "Wundarztstube"
+sells = Dictionary[StringName, Dictionary]({
+&"prep_jar": {
+"per_day": 4,
+"price": 2
+},
+&"prep_jar_small": {
+"per_day": 4,
+"price": 3
+},
+&"spirits": {
+"per_day": 2,
+"price": 3
+}
+})
+buys = Dictionary[StringName, Dictionary]({
+&"antidote": {
+"per_day": 2,
+"price": 7
+},
+&"bitter_drops": {
+"per_day": 2,
+"price": 6
+},
+&"dropsy_powder": {
+"per_day": 2,
+"price": 8
+},
+&"fever_tincture": {
+"per_day": 3,
+"price": 6
+},
+&"wound_salve": {
+"per_day": 2,
+"price": 5
+}
+})
+coin_reason = &"village"

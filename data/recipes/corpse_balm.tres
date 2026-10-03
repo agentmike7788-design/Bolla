@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/crafting/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"corpse_balm"
+display_name = "Totensalbe rühren"
+inputs = Dictionary[StringName, int]({
+&"beeswax": 1,
+&"herbs": 2
+})
+output_id = &"corpse_balm"
+output_amount = 1
+craft_minutes = 20
+station = &"pult"
+category = &"material"
+background = false
