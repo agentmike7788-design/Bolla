@@ -159,6 +159,26 @@ function buildingParts() {
     crateStripe: box(0.86, 0.06, 0.8, 0, 0.44, 0.02),
     hatch: box(0.44, 0.04, 0.38, 0, 0.56, 0.02),
     display: box(0.3, 0.12, 0.02, 0, 0.3, -0.38),
+    // Splitter and merger: a low hub with a turning diverter and three mouths.
+    hubFoot: box(0.9, 0.08, 0.9, 0, 0.04, 0),
+    hub: rbox(0.62, 0.3, 0.62, 0, 0.23, 0, 0.06),
+    hubRing: new THREE.CylinderGeometry(0.24, 0.24, 0.05, 16).translate(0, 0.4, 0),
+    diverter: mergeGeometries([box(0.07, 0.07, 0.28, 0, 0, -0.12), new THREE.CylinderGeometry(0.07, 0.07, 0.1, 10)]),
+    mouths: mergeGeometries([box(0.3, 0.16, 0.12, 0, 0.16, -0.38), box(0.12, 0.16, 0.3, -0.38, 0.16, 0), box(0.12, 0.16, 0.3, 0.38, 0.16, 0)]),
+    mouth1: box(0.3, 0.16, 0.12, 0, 0.16, -0.38),
+    inlets: mergeGeometries([box(0.3, 0.16, 0.12, 0, 0.16, 0.38), box(0.12, 0.16, 0.3, -0.38, 0.16, 0), box(0.12, 0.16, 0.3, 0.38, 0.16, 0)]),
+    // Constructor: a big workshop with two hoppers, a gear wheel and a robot arm.
+    bigFoot: rbox(0.94, 0.1, 0.94, 0, 0.05, 0, 0.03),
+    shop: rbox(0.8, 0.5, 0.64, 0, 0.35, 0.1, 0.06),
+    shopRoof: box(0.86, 0.06, 0.7, 0, 0.62, 0.1),
+    hoppers: mergeGeometries([-0.2, 0.2].map((x) => new THREE.CylinderGeometry(0.14, 0.06, 0.24, 8).translate(x, 0.77, 0.18))),
+    window: box(0.5, 0.16, 0.02, 0, 0.42, -0.225),
+    gearWheel: mergeGeometries([
+      new THREE.CylinderGeometry(0.15, 0.15, 0.05, 12).rotateZ(Math.PI / 2),
+      ...[0, 1, 2, 3].map((i) => new THREE.BoxGeometry(0.05, 0.4, 0.07).rotateX((i * Math.PI) / 4)),
+    ]),
+    armBase: new THREE.CylinderGeometry(0.06, 0.08, 0.1, 8),
+    arm: box(0.05, 0.05, 0.3, 0, 0, -0.15),
   };
   const m = {
     steel: flat(STEEL),
@@ -169,6 +189,10 @@ function buildingParts() {
     soot: flat(0x4a4440, { roughness: 0.9, metalness: 0.1 }),
     smoke: new THREE.MeshStandardMaterial({ color: 0xb9b6b0, roughness: 1, transparent: true, opacity: 0.55, depthWrite: false, flatShading: true }),
     container: flat(0x4f7d8c, { roughness: 0.55 }),
+    splitter: flat(0x2f8f83, { roughness: 0.5 }),
+    merger: flat(0x7a5aa8, { roughness: 0.5 }),
+    shop: flat(0x3f6f9e, { roughness: 0.55 }),
+    glass: new THREE.MeshStandardMaterial({ color: 0x18323f, emissive: 0x2a8fc0, emissiveIntensity: 0.4, roughness: 0.2 }),
     ore: Object.fromEntries(Object.entries(ORES).map(([k, o]) => [k, flat(o.color, { roughness: 0.4, metalness: 0.3 })])),
   };
   return { g, m };
@@ -186,6 +210,22 @@ function itemShapes() {
     plate: { geo: new THREE.BoxGeometry(0.22, 0.03, 0.22), lift: 0.015 },
     wire: { geo: new THREE.TorusGeometry(0.07, 0.03, 6, 14).rotateX(Math.PI / 2), lift: 0.03 },
     block: { geo: new THREE.BoxGeometry(0.16, 0.14, 0.16), lift: 0.07 },
+    gear: {
+      geo: mergeGeometries([
+        new THREE.CylinderGeometry(0.075, 0.075, 0.05, 10),
+        ...[0, 1, 2, 3].map((i) => new THREE.BoxGeometry(0.21, 0.05, 0.04).rotateY((i * Math.PI) / 4)),
+      ]),
+      lift: 0.025,
+    },
+    chip: { geo: mergeGeometries([new THREE.BoxGeometry(0.2, 0.025, 0.16), new THREE.BoxGeometry(0.07, 0.03, 0.07).translate(0, 0.025, 0)]), lift: 0.015 },
+    beam: {
+      geo: mergeGeometries([
+        new THREE.BoxGeometry(0.08, 0.02, 0.26).translate(0, 0.05, 0),
+        new THREE.BoxGeometry(0.08, 0.02, 0.26).translate(0, -0.05, 0),
+        new THREE.BoxGeometry(0.02, 0.1, 0.26),
+      ]),
+      lift: 0.06,
+    },
   };
 }
 
@@ -235,6 +275,11 @@ export function createFactoryView(renderer) {
   const itemColors = Object.fromEntries(Object.entries(ITEMS).map(([k, it]) => [k, new THREE.Color(it.color)]));
 
   const dummy = new THREE.Object3D();
+  let drillSpeed = 1;
+  // Belt rails and drill bodies change colour with each speed research.
+  const drillMat = flat(SIGNAL, { roughness: 0.5 });
+  const TIER_COLORS = [SIGNAL, 0xe2483a, 0x3b8fe6, 0xa05ae0];
+  const level = (done, ids) => ids.filter((id) => done.has(id)).length;
 
   function makeModel(b) {
     const { g, m } = parts;
@@ -256,7 +301,7 @@ export function createFactoryView(renderer) {
 
     if (b.type === 'drill') {
       add(g.foot, m.steel);
-      add(g.body, m.signal);
+      add(g.body, drillMat);
       add(g.roof, m.dark);
       add(g.chute, m.dark);
       add(g.chuteOre, m.ore[b.tile.ore]);
@@ -298,6 +343,33 @@ export function createFactoryView(renderer) {
       view.press.add(new THREE.Mesh(g.ram, m.steel));
       view.press.position.set(0, 0.55, 0.04);
       lamp(0.3, 0.9, -0.25);
+    } else if (b.type === 'splitter' || b.type === 'merger') {
+      add(g.hubFoot, m.dark);
+      add(g.hub, b.type === 'splitter' ? m.splitter : m.merger);
+      add(b.type === 'splitter' ? g.mouths : g.inlets, m.dark);
+      if (b.type === 'merger') add(g.mouth1, m.signal);
+      add(g.hubRing, m.steel);
+      view.spinner = add(g.diverter, m.signal);
+      view.spinner.position.y = 0.46;
+      view.seen = b.passed;
+      view.turn = 0;
+    } else if (b.type === 'constructor') {
+      add(g.bigFoot, m.steel);
+      add(g.shop, m.shop);
+      add(g.shopRoof, m.dark);
+      add(g.hoppers, m.chrome);
+      add(g.window, m.glass);
+      add(g.tray, m.dark);
+      view.gear = add(g.gearWheel, m.signal);
+      view.gear.position.set(0.43, 0.38, 0.12);
+      add(g.armBase, m.dark).position.set(-0.22, 0.05, -0.3);
+      view.arm = new THREE.Group();
+      view.arm.position.set(-0.22, 0.12, -0.3);
+      const arm = new THREE.Mesh(g.arm, m.signal);
+      arm.castShadow = true;
+      view.arm.add(arm);
+      root.add(view.arm);
+      lamp(0.3, 0.68, -0.15);
     } else if (b.type === 'storage') {
       add(g.pad, m.dark);
       add(g.crate, m.container);
@@ -389,6 +461,10 @@ export function createFactoryView(renderer) {
   function update(dt, elapsed, factory) {
     beltTex.offset.y -= factory.beltSpeed() * CHEVRONS_PER_TILE * dt;
     beltTex.offset.y %= 1;
+    const done = factory.research.done;
+    beltMats.rails.color.setHex(TIER_COLORS[level(done, ['fastBelts', 'expressBelts', 'maglev'])]);
+    drillMat.color.setHex(TIER_COLORS[level(done, ['drillHeads', 'deepDrill'])]);
+    drillSpeed = factory.research.stats.drill;
 
     const n = Object.fromEntries(Object.keys(shapes).map((k) => [k, 0]));
     for (const b of factory.buildings.values()) {
@@ -428,8 +504,8 @@ export function createFactoryView(renderer) {
     const working = b.state === 'work';
     if (working) view.phase += dt;
     if (b.type === 'drill') {
-      if (working) view.rotor.rotation.y += dt * 7;
-      view.piston.position.y = 0.64 + (working ? Math.sin(view.phase * 9) * 0.035 : 0);
+      if (working) view.rotor.rotation.y += dt * 7 * drillSpeed;
+      view.piston.position.y = 0.64 + (working ? Math.sin(view.phase * 9 * drillSpeed) * 0.035 : 0);
       setLamp(view, b.state, elapsed);
     } else if (b.type === 'furnace') {
       const target = working ? 2.2 + Math.sin(elapsed * 13) * 0.3 + Math.sin(elapsed * 7.3) * 0.25 : 0.25;
@@ -447,6 +523,20 @@ export function createFactoryView(renderer) {
       const t = working ? (view.phase * 1.25) % 1 : 0;
       const down = t < 0.7 ? 0 : Math.sin(((t - 0.7) / 0.3) * Math.PI);
       view.press.position.y = 0.55 - down * 0.22;
+      setLamp(view, b.state, elapsed);
+    } else if (b.type === 'splitter' || b.type === 'merger') {
+      // The splitter's diverter points at the exit that got the last item; the merger's spins on.
+      if (b.passed !== view.seen) {
+        view.seen = b.passed;
+        view.turn += 1;
+      }
+      const target = b.type === 'splitter' ? [0, 1, -1][(b.next + 2) % 3] * (Math.PI / 2) : view.turn * (Math.PI / 2);
+      view.spinner.rotation.y += (target - view.spinner.rotation.y) * Math.min(1, dt * 12);
+    } else if (b.type === 'constructor') {
+      if (working) {
+        view.gear.rotation.x += dt * 4;
+        view.arm.rotation.y = Math.sin(view.phase * 3) * 0.9;
+      }
       setLamp(view, b.state, elapsed);
     } else if (b.type === 'storage') {
       if (b.received !== view.seen) {
@@ -506,6 +596,9 @@ export function createGhost() {
     storage: { geo: box(0.86, 0.58, 0.8), arrow: null },
     furnace: { geo: mergeGeometries([box(0.74, 0.66, 0.68, 0.06), box(0.2, 1.2, 0.2).translate(0.18, 0, 0.2)]), arrow: 0.7 },
     assembler: { geo: box(0.76, 0.86, 0.72, 0.04), arrow: 0.9 },
+    splitter: { geo: box(0.86, 0.4, 0.86), arrow: 0.5 },
+    merger: { geo: box(0.86, 0.4, 0.86), arrow: 0.5 },
+    constructor: { geo: mergeGeometries([box(0.84, 0.66, 0.7, 0.1), box(0.5, 0.25, 0.2).translate(0, 0.66, 0.18)]), arrow: 0.95 },
   };
   const meshes = Object.fromEntries(Object.entries(shapes).map(([k, s]) => [k, new THREE.Mesh(s.geo, bodyMat)]));
   for (const s of Object.values(meshes)) pivot.add(s);

@@ -3,7 +3,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { generateWorld, ORES, TERRAIN, MAP_SIZE, TILE } from './world.js';
 import { buildWorldMeshes, createSea } from './scenery.js';
 import { createCameraRig } from './camera.js';
-import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, RECIPES, isMachine } from './factory.js';
+import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, RECIPES, CONSTRUCTOR_RECIPES, isMachine } from './factory.js';
 import { RESEARCH } from './research.js';
 import { createResearchView } from './researchView.js';
 import { createFactoryView, createGhost } from './buildings.js';
@@ -94,6 +94,7 @@ function loadWorld(seed) {
   document.getElementById('seed').textContent = `#${seed}`;
   renderLegend();
   researchView.reset();
+  openRecipes(null);
   renderProgress();
   showTile(null);
 }
@@ -142,7 +143,8 @@ function showToast(title, text) {
 const researchView = createResearchView({
   getFactory: () => factory,
   onResearch(r) {
-    if (r.goal) showToast('Spielziel geschafft!', 'Deine Fabrik schmilzt, presst und liefert. Glückwunsch!');
+    if (r.id === 'firstFactory') showToast('Spielziel geschafft!', 'Deine Fabrik schmilzt und presst. Weiter geht es mit dem Konstruktor!');
+    else if (r.goal) showToast('Meisterfabrik!', 'Du hast den ganzen Forschungsbaum geschafft. Glückwunsch!');
     else showToast(`Erforscht: ${r.name}`, r.desc);
     renderProgress();
   },
@@ -173,6 +175,38 @@ function unlockHint(type) {
   return r ? `im Forschungsbaum „${r.name}“ erforschen` : '';
 }
 
+// --- Constructor recipes ----------------------------------------------------
+
+const recipePanel = document.getElementById('recipe');
+const recipeList = document.getElementById('recipe-list');
+let selected = null; // the constructor whose recipe panel is open
+
+const needsText = (needs) =>
+  Object.entries(needs)
+    .map(([k, n]) => `${n} ${ITEMS[k].name}`)
+    .join(' + ');
+
+function openRecipes(b) {
+  selected = b;
+  recipePanel.hidden = !b;
+  if (!b) return;
+  recipeList.innerHTML = Object.entries(CONSTRUCTOR_RECIPES)
+    .map(
+      ([id, r]) => `<button type="button" class="recipe-option" data-recipe="${id}" aria-pressed="${b.recipe === id}">
+        <span class="swatch" style="--c:${hex(ITEMS[r.makes].color)}"></span>
+        <b>${ITEMS[r.makes].name}</b><span>${needsText(r.needs)} · ${r.time} s</span></button>`,
+    )
+    .join('');
+}
+recipeList.addEventListener('click', (e) => {
+  const opt = e.target.closest('[data-recipe]');
+  if (!opt || !selected) return;
+  factory.setRecipe(selected, opt.dataset.recipe);
+  openRecipes(selected);
+  showTile(hovered);
+});
+document.getElementById('recipe-close').addEventListener('click', () => openRecipes(null));
+
 const tileName = document.getElementById('tile-name');
 const tileDetail = document.getElementById('tile-detail');
 
@@ -191,6 +225,7 @@ function showTile(tile) {
   }
   const building = factory.get(tile);
   const check = tool === 'remove' ? { ok: !!building, reason: building ? '' : 'Hier steht nichts' } : tool && canBuild(tile);
+  canvas.style.cursor = !tool && building?.type === 'constructor' ? 'pointer' : '';
   marker.visible = !tool;
   marker.position.set(tile.position.x, Math.max(tile.height, 0.28) + 0.03, tile.position.z);
   ghost.show(tool, tile, tool === 'remove' ? building?.dir ?? 0 : dir, check?.ok);
@@ -202,6 +237,20 @@ function showTile(tile) {
   } else if (building?.type === 'belt') {
     tileName.textContent = 'Förderband';
     tileDetail.textContent = `Richtung ${DIR_NAMES[building.dir]} · ${building.items.length} Teile drauf`;
+  } else if (building?.type === 'splitter') {
+    tileName.textContent = 'Verteiler';
+    tileDetail.textContent = `Nimmt von hinten, gibt abwechselnd nach vorn, links, rechts · ${num(building.passed)} verteilt`;
+  } else if (building?.type === 'merger') {
+    tileName.textContent = 'Zusammenführer';
+    tileDetail.textContent = `Nimmt von drei Seiten, gibt nach ${DIR_NAMES[building.dir]} ab · ${num(building.passed)} durch`;
+  } else if (building?.type === 'constructor') {
+    const recipe = CONSTRUCTOR_RECIPES[building.recipe];
+    tileName.textContent = `Konstruktor · ${ITEMS[recipe.makes].name}`;
+    const have = Object.entries(recipe.needs)
+      .map(([k, n]) => `${ITEMS[k].name} ${Math.min(building.input[k] ?? 0, n)}/${n}`)
+      .join(' · ');
+    const state = building.refused ? `Nimmt kein ${ITEMS[building.refused].name} an` : MACHINE_TEXT[building.state];
+    tileDetail.textContent = `${state} · ${have}${tool ? '' : ' · Klick: Rezept'}`;
   } else if (isMachine(building)) {
     const recipe = RECIPES[building.type];
     tileName.textContent = BUILDINGS[building.type].name;
@@ -273,12 +322,15 @@ let shapesDirty = false;
 const toolButtons = document.querySelectorAll('.tool[data-tool]');
 const help = document.getElementById('help');
 const HELP = {
-  none: [['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–5', 'bauen'], ['X', 'abreißen'], ['T', 'Forschung']],
+  none: [['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–8', 'bauen'], ['X', 'abreißen'], ['T', 'Forschung']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   furnace: [['Klick', 'Schmelzofen setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   assembler: [['Klick', 'Presse setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
+  splitter: [['Klick', 'Verteiler setzen'], ['R', 'drehen: Eingang hinten'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
+  merger: [['Klick', 'Zusammenführer setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
+  constructor: [['Klick', 'Konstruktor setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Ohne Werkzeug klicken', 'Rezept wählen']],
   remove: [['Klick / Ziehen', 'abreißen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
 };
 
@@ -323,7 +375,9 @@ function rotate() {
 function buildAt(tile) {
   if (!tile) return;
   if (tool === 'remove') {
-    if (factory.remove(tile)) meshes.setDecorHidden(tile.z * world.size + tile.x, false);
+    const removed = factory.remove(tile);
+    if (removed) meshes.setDecorHidden(tile.z * world.size + tile.x, false);
+    if (removed && removed === selected) openRecipes(null);
   } else {
     const existing = factory.get(tile);
     if (tool === 'belt' && existing?.type === 'belt') factory.setDir(existing, dir);
@@ -357,14 +411,25 @@ canvas.addEventListener('pointerdown', (e) => {
     dragging = false;
     return;
   }
+  if (e.button === 0) downAt = { x: e.clientX, y: e.clientY };
   if (!tool || e.button !== 0) return;
   setPointer(e);
   dragging = true;
   lastTile = null;
   buildAlong(pickTile());
 });
-window.addEventListener('pointerup', () => {
+// A click (no drag) on a constructor without a tool opens its recipes.
+let downAt = null;
+window.addEventListener('pointerup', (e) => {
   dragging = false;
+  if (!downAt || e.target !== canvas) return;
+  const moved = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y);
+  downAt = null;
+  if (tool || moved > 6) return;
+  setPointer(e);
+  const tile = pickTile();
+  const b = tile && factory.get(tile);
+  openRecipes(b?.type === 'constructor' ? b : null);
 });
 
 for (const b of toolButtons) b.addEventListener('click', () => setTool(b.dataset.tool));
@@ -373,13 +438,14 @@ document.getElementById('rotate').addEventListener('click', rotate);
 window.addEventListener('keydown', (e) => {
   if (e.repeat && e.key.toLowerCase() !== 'r') return;
   const key = e.key.toLowerCase();
-  const numbered = ['drill', 'belt', 'storage', 'furnace', 'assembler'][Number(key) - 1];
+  const numbered = ['drill', 'belt', 'storage', 'furnace', 'assembler', 'splitter', 'merger', 'constructor'][Number(key) - 1];
   if (numbered) setTool(numbered);
   else if (key === 'x' || key === 'delete') setTool('remove');
   else if (key === 'r') rotate();
   else if (key === 't') researchView.toggle();
   else if (key === 'escape' && researchView.isOpen) researchView.close();
   else if (key === 'escape' && tool) setTool(tool);
+  else if (key === 'escape' && selected) openRecipes(null);
 });
 
 function updateHover() {

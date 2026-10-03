@@ -383,6 +383,32 @@ button.link kbd { font-size: 10px; padding: 0 3px; }
   vertical-align: middle;
 }
 
+/* Constructor recipe picker, above the tool bar. */
+.hud-recipe {
+  bottom: calc(118px + env(safe-area-inset-bottom, 0px));
+  right: 16px;
+  width: 300px;
+  display: grid;
+  gap: 6px;
+}
+.hud-recipe[hidden] { display: none; }
+#recipe-list { display: grid; gap: 6px; }
+.recipe-option {
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 2px 8px;
+  align-items: center;
+  text-align: left;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--edge);
+  padding: 7px 10px;
+}
+.recipe-option b { font: 600 15px/1.1 var(--font-display); letter-spacing: 0.04em; }
+.recipe-option span:last-child { grid-column: 2; font: 500 11px var(--font-data); color: var(--ink-dim); }
+.recipe-option:hover { background: rgba(233, 228, 216, 0.08); filter: none; }
+.recipe-option[aria-pressed='true'] { border-color: var(--signal); background: rgba(255, 211, 77, 0.12); }
+
 @media (max-width: 640px) {
   .hud-info { top: calc(100px + env(safe-area-inset-top, 0px)); left: 16px; right: 16px; width: auto; padding: 8px 14px; }
   .hud-info .value { font-size: 17px; }
@@ -403,4 +429,10 @@ button.link kbd { font-size: 10px; padding: 0 3px; }
   .tree-box { width: 100%; }
   .tool kbd { display: none; }
   .hud-help span:nth-child(n + 3) { display: none; }
+  /* More tools than fit: hide locked ones and let the bar scroll sideways. */
+  .hud-tools { overflow-x: auto; scrollbar-width: none; }
+  .tool { flex: 1 0 52px; }
+  .tool.locked { display: none; }
+  .hud-recipe { left: 16px; right: 16px; width: auto; bottom: calc(126px + env(safe-area-inset-bottom, 0px)); }
+  .hud-help { flex-wrap: nowrap; overflow: hidden; white-space: nowrap; }
 }

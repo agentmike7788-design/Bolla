@@ -60,6 +60,14 @@ export const RESEARCH = [
     boosts: { belt: 1.5 },
   },
   {
+    id: 'logistics',
+    name: 'Logistik',
+    desc: 'Verteiler teilt ein Band in drei, Zusammenführer macht aus drei eins.',
+    cost: { ironIngot: 20, stone: 20 },
+    requires: ['smelting'],
+    unlocks: ['splitter', 'merger'],
+  },
+  {
     id: 'firstFactory',
     name: 'Erste Fabrik',
     desc: 'Das erste Spielziel: eine Fabrik, die schmilzt und presst.',
@@ -67,10 +75,50 @@ export const RESEARCH = [
     requires: ['pressing'],
     goal: true,
   },
+  {
+    id: 'constructor',
+    name: 'Konstruktor',
+    desc: 'Baut Zahnräder, Schaltkreise und Stahlträger aus mehreren Teilen. Kohle wird gebraucht!',
+    cost: { ironPlate: 40, wire: 30, concrete: 20 },
+    requires: ['firstFactory'],
+    unlocks: ['constructor'],
+  },
+  {
+    id: 'hydraulics',
+    name: 'Hydraulik',
+    desc: 'Presse und Konstruktor arbeiten 50 % schneller.',
+    cost: { gear: 25, circuit: 10 },
+    requires: ['constructor'],
+    boosts: { assembler: 1.5, constructor: 1.5 },
+  },
+  {
+    id: 'deepDrill',
+    name: 'Tiefbohrer',
+    desc: 'Bohrer fördern noch einmal 70 % schneller.',
+    cost: { steel: 20, circuit: 15 },
+    requires: ['constructor', 'drillHeads'],
+    boosts: { drill: 1.7 },
+  },
+  {
+    id: 'maglev',
+    name: 'Magnetbänder',
+    desc: 'Förderbänder schweben und laufen noch einmal 40 % schneller.',
+    cost: { gear: 30, steel: 15 },
+    requires: ['constructor', 'expressBelts'],
+    boosts: { belt: 1.4 },
+  },
+  {
+    id: 'masterFactory',
+    name: 'Meisterfabrik',
+    desc: 'Das große Ziel: Schaltkreise, Stahl und Zahnräder in Massen.',
+    cost: { circuit: 50, steel: 40, gear: 40 },
+    requires: ['hydraulics', 'deepDrill', 'maglev'],
+    goal: true,
+  },
 ];
 
 // Factory stats that research can multiply. 1 is the starting value.
-export const STATS = ['belt', 'drill', 'furnace', 'assembler'];
+export const STATS = ['belt', 'drill', 'furnace', 'assembler', 'constructor'];
 
 export const START_UNLOCKED = ['drill', 'belt', 'storage'];
 
