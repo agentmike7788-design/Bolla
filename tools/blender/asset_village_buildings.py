@@ -29,7 +29,7 @@ Markers (glTF empties, Godot attaches lights / prompts; Blender coordinates here
   light_window     (cottages, houses, inn2) the same for the one lit window
   light_lantern    inn: below the lantern glass by the door (the shadow light)
   light_door       church: below the lantern glass beside the door (the shadow light)
-  sign_text        inn / inn2: centre of the blank sign board face, local +Z (Godot) = face normal
+  label_board        inn / inn2: centre of the blank sign board face, local +Z (Godot) = face normal
   ribbon           cottages, houses, inn2: where the mourning ribbon (ph_prop_v_ribbon) hangs (door frame)
   counter          smithy / shop: ground point of the ShopCounter (in front of the anvil / shop window)
   anvil            smithy: top of the anvil face
@@ -498,7 +498,7 @@ def _lantern(parts, face: str, plane: float, a: float, z: float, seed: int = 0) 
 
 def _sign(parts, face: str, plane: float, a: float, z: float, out: float, motif: str, seed: int = 0):
     """Hanging inn sign on an iron bracket that sticks out of the wall; a painted motif on the board, a
-    blank upper band for the Label3D. Returns the board-centre (sign_text) point."""
+    blank upper band for the Label3D. Returns the board-centre (label_board) point."""
     s = SIGN[face]
     p_wall = _pt(face, plane, a, 0.0, z)
     p_tip = _pt(face, plane, a, out, z)
@@ -763,7 +763,7 @@ def inn():
     _chimney(parts, -1.6, 1.8, ridge - 2.2, ridge + 0.5, seed=410)
     # the sign on its bracket, east of the door, and the lantern west of it
     st = _sign(parts, "S", y0, 1.2, 3.25, 0.95, "elder", seed=500)
-    markers.append(("sign_text", st))
+    markers.append(("label_board", st))
     markers.append(("light_lantern", _lantern(parts, "S", y0, -1.0, 2.3, seed=520)))
     # bench under the west windows, a barrel by the door
     for k, (z, hy) in enumerate(((0.45, 0.17),)):
@@ -1192,7 +1192,7 @@ def _house(name: str, seed: int, base, roof_pal, gable_front: bool, w: float, d:
     _plinth(parts, x0, x1, y0, y1, 0.4, seed=60)
     if sign:
         st = _sign(parts, "E", x1, y0 + 0.5, 3.2, 0.9, sign, seed=70)
-        markers.append(("sign_text", st))
+        markers.append(("label_board", st))
     _done(parts, name, markers)
 
 
