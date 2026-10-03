@@ -5,23 +5,24 @@ export const TILE = 1;
 
 // Terrain types of the base map.
 export const TERRAIN = {
-  water: { name: 'Wasser', color: 0x3b6e8f, height: 0.2, buildable: false },
-  sand: { name: 'Sand', color: 0xcdb47a, height: 0.35, buildable: true },
-  grass: { name: 'Wiese', color: 0x6f9a4a, height: 0.45, buildable: true },
-  forest: { name: 'Wald', color: 0x4c7a3a, height: 0.5, buildable: true },
-  rock: { name: 'Fels', color: 0x8a8378, height: 0.8, buildable: false },
+  water: { name: 'Wasser', color: 0x7d8f6e, height: 0.05, buildable: false },
+  sand: { name: 'Sand', color: 0xdcc58a, height: 0.36, buildable: true },
+  grass: { name: 'Wiese', color: 0x6faa3e, height: 0.45, buildable: true },
+  forest: { name: 'Wald', color: 0x4f8a38, height: 0.5, buildable: true },
+  rock: { name: 'Fels', color: 0x8c857a, height: 0.85, buildable: false },
 };
 
 // Ore deposits that drills will mine in a later step.
+// color: the ore itself, rock: the ground it sits in, crystal: shiny veins.
 export const ORES = {
-  iron: { name: 'Eisenerz', color: 0x9aa3ad, rock: 0x6d5a52, unit: 'Einheiten' },
-  copper: { name: 'Kupfererz', color: 0xd27a3c, rock: 0x7a4a2e, unit: 'Einheiten' },
-  coal: { name: 'Kohle', color: 0x2b2b2e, rock: 0x3a3a3d, unit: 'Einheiten' },
-  stone: { name: 'Kalkstein', color: 0xe3dccb, rock: 0xb8ae98, unit: 'Einheiten' },
+  iron: { name: 'Eisenerz', color: 0x8c96a3, rock: 0x6a5d58, crystal: 0xb9c7d6 },
+  copper: { name: 'Kupfererz', color: 0xc8682c, rock: 0x6e4a36, crystal: 0x3fb8a4 },
+  coal: { name: 'Kohle', color: 0x26262a, rock: 0x403c3a, crystal: null },
+  stone: { name: 'Kalkstein', color: 0xe6dcc6, rock: 0xb3a88f, crystal: null },
 };
 
 // Small deterministic PRNG so a seed always yields the same map.
-function mulberry32(seed) {
+export function mulberry32(seed) {
   let a = seed >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -84,7 +85,9 @@ export function generateWorld(seed) {
 
   for (let z = 0; z < MAP_SIZE; z++) {
     for (let x = 0; x < MAP_SIZE; x++) {
-      const h = fbm(x / 14, z / 14);
+      // Fade the land into the sea towards the edge so the map reads as an island.
+      const edge = Math.max(Math.abs((x / (MAP_SIZE - 1)) * 2 - 1), Math.abs((z / (MAP_SIZE - 1)) * 2 - 1));
+      const h = fbm(x / 14, z / 14) - THREE.MathUtils.smoothstep(edge, 0.78, 1) * 0.3;
       const moisture = fbm(x / 9 + 100, z / 9 + 100, 3);
       let terrain;
       if (h < 0.36) terrain = 'water';
@@ -129,88 +132,3 @@ export function generateWorld(seed) {
   return { seed, size: MAP_SIZE, tiles, at };
 }
 
-const dummy = new THREE.Object3D();
-const color = new THREE.Color();
-
-// Builds the meshes for a world: one instanced mesh for the ground tiles and
-// one for the ore rocks sitting on top of deposit tiles.
-export function buildWorldMeshes(world) {
-  const group = new THREE.Group();
-  const offset = (world.size * TILE) / 2 - TILE / 2;
-
-  // Box top sits at y = 0, so an instance placed at tile.height has its top there.
-  const tileGeo = new THREE.BoxGeometry(TILE * 0.96, 1, TILE * 0.96);
-  tileGeo.translate(0, -0.5, 0);
-  const tileMat = new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0 });
-  const tiles = new THREE.InstancedMesh(tileGeo, tileMat, world.tiles.length);
-  tiles.receiveShadow = true;
-  tiles.castShadow = true;
-
-  world.tiles.forEach((tile, i) => {
-    const t = TERRAIN[tile.terrain];
-    const jitter = ((tile.x * 7 + tile.z * 13) % 5) * 0.012;
-    tile.height = t.height + jitter;
-    dummy.position.set(tile.x * TILE - offset, tile.height, tile.z * TILE - offset);
-    dummy.rotation.set(0, 0, 0);
-    dummy.scale.set(1, tile.height + 0.5, 1);
-    dummy.updateMatrix();
-    tiles.setMatrixAt(i, dummy.matrix);
-    color.setHex(tile.ore ? ORES[tile.ore].rock : t.color);
-    color.offsetHSL(0, 0, (jitter - 0.024) * 1.5);
-    tiles.setColorAt(i, color);
-    tile.position = new THREE.Vector3(tile.x * TILE - offset, tile.height, tile.z * TILE - offset);
-  });
-  tiles.instanceMatrix.needsUpdate = true;
-  group.add(tiles);
-
-  // Ore chunks: a few low-poly rocks per deposit tile, more for richer tiles.
-  const rockGeo = new THREE.DodecahedronGeometry(0.16, 0);
-  const rockMat = new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.25, flatShading: true });
-  const oreTiles = world.tiles.filter((t) => t.ore);
-  const rocksPerTile = (t) => 1 + Math.min(3, Math.floor(t.amount / 600));
-  const rockCount = oreTiles.reduce((n, t) => n + rocksPerTile(t), 0);
-  const rocks = new THREE.InstancedMesh(rockGeo, rockMat, Math.max(rockCount, 1));
-  rocks.castShadow = true;
-  let r = 0;
-  const rand = mulberry32(world.seed ^ 0x9e3779b9);
-  for (const tile of oreTiles) {
-    for (let k = 0; k < rocksPerTile(tile); k++) {
-      const s = 0.7 + rand() * 0.8;
-      dummy.position.set(
-        tile.position.x + (rand() - 0.5) * 0.6,
-        tile.height + 0.08 * s,
-        tile.position.z + (rand() - 0.5) * 0.6,
-      );
-      dummy.rotation.set(rand() * Math.PI, rand() * Math.PI, rand() * Math.PI);
-      dummy.scale.set(s, s * 0.8, s);
-      dummy.updateMatrix();
-      rocks.setMatrixAt(r, dummy.matrix);
-      color.setHex(ORES[tile.ore].color);
-      color.offsetHSL(0, 0, (rand() - 0.5) * 0.08);
-      rocks.setColorAt(r, color);
-      r++;
-    }
-  }
-  rocks.count = rockCount;
-  group.add(rocks);
-
-  // Trees on forest tiles so the map reads at a glance.
-  const forestTiles = world.tiles.filter((t) => t.terrain === 'forest' && !t.ore);
-  const treeGeo = new THREE.ConeGeometry(0.22, 0.6, 6);
-  treeGeo.translate(0, 0.3, 0);
-  const treeMat = new THREE.MeshStandardMaterial({ color: 0x2f5a2a, roughness: 0.8, flatShading: true });
-  const trees = new THREE.InstancedMesh(treeGeo, treeMat, Math.max(forestTiles.length, 1));
-  trees.castShadow = true;
-  forestTiles.forEach((tile, i) => {
-    const s = 0.8 + rand() * 0.5;
-    dummy.position.set(tile.position.x + (rand() - 0.5) * 0.4, tile.height, tile.position.z + (rand() - 0.5) * 0.4);
-    dummy.rotation.set(0, rand() * Math.PI, 0);
-    dummy.scale.set(s, s, s);
-    dummy.updateMatrix();
-    trees.setMatrixAt(i, dummy.matrix);
-  });
-  trees.count = forestTiles.length;
-  group.add(trees);
-
-  return { group, tiles };
-}

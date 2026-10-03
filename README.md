@@ -15,6 +15,7 @@ npm run build   # baut das Spiel nach dist/
 Steuerung: linke Maus verschieben, rechte Maus oder Q/E drehen, Mausrad zoomen, WASD bewegen.
 
 Code:
-- `src/world.js` erzeugt die Karte (Gelände per Rauschen, Erzfelder als Flecken) und baut die 3D-Meshes.
+- `src/world.js` erzeugt die Karte (Gelände per Rauschen, Erzfelder als Flecken).
+- `src/scenery.js` baut daraus die 3D-Szene: Kacheln, Bäume, Büsche, Blumen, Felsen, Erze und das Meer.
 - `src/camera.js` ist die Kamera-Steuerung.
 - `src/main.js` verbindet Szene, Licht, Hover-Anzeige und HUD.
