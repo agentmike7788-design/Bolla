@@ -12,7 +12,7 @@
       <canvas id="scene"></canvas>
       <header class="hud hud-top">
         <h1>Bolla Fabrik</h1>
-        <p class="seed">Karte <span id="seed"></span> <button id="new-map" type="button">Neue Karte</button></p>
+        <p class="seed">Karte <span id="seed"></span> <button id="new-map" type="button">Neue Karte</button> <button id="maps-open" type="button" class="link">Karten <kbd>M</kbd></button></p>
       </header>
       <aside class="hud hud-info" id="tile-info" aria-live="polite">
         <p class="label">Feld</p>
@@ -86,6 +86,29 @@
           <div class="tree-scroll">
             <svg class="tree-lines" aria-hidden="true"></svg>
             <div class="tree-cols"></div>
+          </div>
+        </section>
+      </div>
+      <div class="menu" id="maps" hidden>
+        <section class="menu-box" role="dialog" aria-label="Karte wählen">
+          <header class="tree-head">
+            <h2>Karte wählen</h2>
+            <p>Jede Karte hat ihre eigenen Erze und Missionen. Im freien Spiel gibt es alles und den Forschungsbaum.</p>
+            <button type="button" class="link" data-close>Schließen <kbd>Esc</kbd></button>
+          </header>
+          <div class="maps-list" id="maps-list"></div>
+        </section>
+      </div>
+      <div class="menu" id="win" hidden>
+        <section class="menu-box win-box" role="dialog" aria-label="Karte geschafft">
+          <p class="label">Alle Missionen erfüllt</p>
+          <h2 id="win-title"></h2>
+          <p class="stars" id="win-stars"></p>
+          <p class="win-time" id="win-time"></p>
+          <div class="goal-actions win-actions">
+            <button type="button" id="win-next">Nächste Karte</button>
+            <button type="button" class="link" data-maps>Kartenauswahl</button>
+            <button type="button" class="link" data-close>Weiterbauen</button>
           </div>
         </section>
       </div>

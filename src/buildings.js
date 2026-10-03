@@ -276,10 +276,10 @@ export function createFactoryView(renderer) {
 
   const dummy = new THREE.Object3D();
   let drillSpeed = 1;
-  // Belt rails and drill bodies change colour with each speed research.
+  // Belt rails and drill bodies change colour with each speed boost.
   const drillMat = flat(SIGNAL, { roughness: 0.5 });
   const TIER_COLORS = [SIGNAL, 0xe2483a, 0x3b8fe6, 0xa05ae0];
-  const level = (done, ids) => ids.filter((id) => done.has(id)).length;
+  const tier = (n) => TIER_COLORS[Math.min(n, TIER_COLORS.length - 1)];
 
   function makeModel(b) {
     const { g, m } = parts;
@@ -461,9 +461,9 @@ export function createFactoryView(renderer) {
   function update(dt, elapsed, factory) {
     beltTex.offset.y -= factory.beltSpeed() * CHEVRONS_PER_TILE * dt;
     beltTex.offset.y %= 1;
-    const done = factory.research.done;
-    beltMats.rails.color.setHex(TIER_COLORS[level(done, ['fastBelts', 'expressBelts', 'maglev'])]);
-    drillMat.color.setHex(TIER_COLORS[level(done, ['drillHeads', 'deepDrill'])]);
+    const { levels } = factory.research;
+    beltMats.rails.color.setHex(tier(levels.belt));
+    drillMat.color.setHex(tier(levels.drill));
     drillSpeed = factory.research.stats.drill;
 
     const n = Object.fromEntries(Object.keys(shapes).map((k) => [k, 0]));

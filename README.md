@@ -26,8 +26,17 @@ Maschinen nehmen Teile von Bändern an jeder Seite außer ihrem Ausgang an und g
 
 Forschung: Oben links steht die nächste Forschung, `T` öffnet den ganzen Baum. Bezahlt wird mit Teilen aus dem Lager. Schmelzen schaltet den Schmelzofen frei, Pressen die Presse; dazu gibt es schnellere Bänder, Bohrer und Öfen. „Erste Fabrik“ (25 Platten, 25 Draht, 15 Beton) ist das erste Spielziel. Danach geht es weiter: Logistik (Verteiler, Zusammenführer), Konstruktor, Hydraulik, Tiefbohrer und Magnetbänder; „Meisterfabrik“ (50 Schaltkreise, 40 Stahlträger, 40 Zahnräder) ist das große Ziel. Bänder und Bohrer wechseln mit jeder Tempo-Forschung die Farbe. Neue Einträge kommen in `src/research.js`; der Baum ordnet sie selbst nach ihren Voraussetzungen an.
 
+Karten und Missionen: Beim Start (und mit `M` oder dem Knopf „Karten“) wählt man eine Karte. Im freien Spiel gibt es eine Zufallsinsel mit allen Erzen und den Forschungsbaum. Dazu kommen vier Missionskarten mit eigener Landschaft und nur bestimmten Erzen:
+- Eisenberge (Eisen, Kalkstein): der Einstieg vom ersten Bohrer bis zum Zahnradwerk.
+- Kupferwüste (Kupfer, Kalkstein): Wüste mit Kakteen, am Ende 60 Draht pro Minute.
+- Kohleinsel (Kohle, Eisen): kleine Insel, wenig Platz, ein Stahlwerk.
+- Großes Festland (alle Erze): die Meisterprüfung mit Schaltkreisen und Stahl.
+
+Auf Missionskarten ersetzen Missionen den Forschungsbaum: Jede Mission hat Ziele (Teile ins Lager liefern, Gebäude bauen oder eine Menge pro Minute schaffen) und schaltet als Belohnung Gebäude und Tempo frei. Wer alle Missionen schafft, bekommt je nach Zeit ein bis drei Sterne; die Bestzeit merkt sich der Browser. Neue Karten kommen in `src/scenarios.js`.
+
 Code:
-- `src/world.js` erzeugt die Karte (Gelände per Rauschen, Erzfelder als Flecken).
+- `src/world.js` erzeugt die Karte (Gelände per Rauschen, Erzfelder als Flecken); Landschaft und Erze lassen sich pro Karte einstellen.
+- `src/scenarios.js` sind die Karten mit ihren Missionen, `src/missionView.js` zeigt die aktuelle Mission an.
 - `src/scenery.js` baut daraus die 3D-Szene: Kacheln, Bäume, Büsche, Blumen, Felsen, Erze und das Meer.
 - `src/camera.js` ist die Kamera-Steuerung.
 - `src/factory.js` ist die Spiel-Logik: welches Gebäude wo steht, Abbau, Transport, Rezepte der Maschinen, Lager und Ziele.

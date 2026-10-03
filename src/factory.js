@@ -59,11 +59,15 @@ export const isMachine = (b) => b?.type === 'furnace' || b?.type === 'assembler'
 
 // The factory on top of a world: which building stands on which tile, and the
 // simulation that moves items from drills over belts through machines into storage.
-export function createFactory(world) {
+// `start` lists the buildings that can be built from the beginning.
+export function createFactory(world, { start } = {}) {
   const buildings = new Map(); // tile index -> building
   const mined = Object.fromEntries(Object.keys(ORES).map((k) => [k, 0]));
   const stored = Object.fromEntries(Object.keys(ITEMS).map((k) => [k, 0])); // in all storages together
-  const research = createResearch(stored);
+  const delivered = Object.fromEntries(Object.keys(ITEMS).map((k) => [k, 0])); // ever put into storage
+  const recent = Object.fromEntries(Object.keys(ITEMS).map((k) => [k, []])); // delivery times of the last minute
+  const research = createResearch(stored, start);
+  let time = 0; // simulated seconds since the start
 
   const indexOf = (tile) => tile.z * world.size + tile.x;
   const at = (x, z) => (x < 0 || z < 0 || x >= world.size || z >= world.size ? null : buildings.get(z * world.size + x) ?? null);
@@ -142,6 +146,8 @@ export function createFactory(world) {
     if (!target) return false;
     if (target.type === 'storage') {
       stored[kind]++;
+      delivered[kind]++;
+      recent[kind].push(time);
       target.received++;
       target.last = kind;
       return true;
@@ -309,7 +315,21 @@ export function createFactory(world) {
 
   const beltSpeed = () => BELT_SPEED * research.stats.belt;
 
+  // Items of one kind put into storage during the last minute.
+  function perMinute(kind) {
+    const log = recent[kind];
+    while (log.length && log[0] < time - 60) log.shift();
+    return log.length;
+  }
+
+  const count = (type) => {
+    let n = 0;
+    for (const b of buildings.values()) if (b.type === type) n++;
+    return n;
+  };
+
   function tick(dt) {
+    time += dt;
     const step = beltSpeed() * dt;
     for (const b of buildings.values()) if (b.type === 'belt' && b.items.length) tickBelt(b, step);
     for (const b of buildings.values()) {
@@ -325,7 +345,13 @@ export function createFactory(world) {
     buildings,
     mined,
     stored,
+    delivered,
     research,
+    perMinute,
+    count,
+    get time() {
+      return time;
+    },
     beltSpeed,
     at,
     canPlace,

@@ -131,21 +131,31 @@ export function depthOf(r) {
 }
 
 // Research state of one game: what is done and what that gives.
-export function createResearch(stored) {
+// `start` are the buildings available from the beginning.
+export function createResearch(stored, start = START_UNLOCKED) {
   const done = new Set();
-  const unlocked = new Set(START_UNLOCKED);
+  const unlocked = new Set(start);
   const stats = Object.fromEntries(STATS.map((s) => [s, 1]));
+  const levels = Object.fromEntries(STATS.map((s) => [s, 0])); // boosts received per stat
 
   const available = (r) => !done.has(r.id) && r.requires.every((id) => done.has(id));
   const affordable = (r) => Object.entries(r.cost).every(([k, n]) => stored[k] >= n);
+
+  // Unlocks and boosts of a research entry or a mission reward.
+  function grant({ unlocks = [], boosts = {} }) {
+    for (const type of unlocks) unlocked.add(type);
+    for (const [stat, factor] of Object.entries(boosts)) {
+      stats[stat] *= factor;
+      levels[stat]++;
+    }
+  }
 
   function complete(id) {
     const r = byId[id];
     if (!r || !available(r) || !affordable(r)) return false;
     for (const [k, n] of Object.entries(r.cost)) stored[k] -= n;
     done.add(id);
-    for (const type of r.unlocks ?? []) unlocked.add(type);
-    for (const [stat, factor] of Object.entries(r.boosts ?? {})) stats[stat] *= factor;
+    grant(r);
     return true;
   }
 
@@ -153,9 +163,11 @@ export function createResearch(stored) {
     done,
     unlocked,
     stats,
+    levels,
     available,
     affordable,
     complete,
+    grant,
     get won() {
       return RESEARCH.some((r) => r.goal && done.has(r.id));
     },

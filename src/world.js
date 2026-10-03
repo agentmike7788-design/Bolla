@@ -9,6 +9,7 @@ export const TERRAIN = {
   sand: { name: 'Sand', color: 0xdcc58a, height: 0.36, buildable: true },
   grass: { name: 'Wiese', color: 0x6faa3e, height: 0.45, buildable: true },
   forest: { name: 'Wald', color: 0x4f8a38, height: 0.5, buildable: true },
+  dune: { name: 'Wüste', color: 0xd9b46c, height: 0.42, buildable: true },
   rock: { name: 'Fels', color: 0x8c857a, height: 0.85, buildable: false },
 };
 
@@ -78,7 +79,26 @@ function makeNoise(rand) {
   };
 }
 
-export function generateWorld(seed) {
+// Default shape of a map. Scenarios override parts of it (see scenarios.js):
+//   ores     ore patches per kind; kinds left out do not appear at all
+//   land     raises (or lowers) the whole terrain: more or less sea
+//   coast    where the island starts sinking into the sea, 0 centre .. 1 edge
+//   rock     share of high ground that turns to rock, 0 none .. 1 all
+//   forest   how dry it may be for trees to grow, 1 no forest at all
+//   desert   grass turns into desert sand
+//   richness multiplies the ore in each patch
+export const DEFAULT_MAP = {
+  ores: { iron: 5, copper: 4, coal: 4, stone: 3 },
+  land: 0,
+  coast: 0.78,
+  rock: 0.48,
+  forest: 0.56,
+  desert: false,
+  richness: 1,
+};
+
+export function generateWorld(seed, options = {}) {
+  const map = { ...DEFAULT_MAP, ...options };
   const rand = mulberry32(seed);
   const fbm = makeNoise(rand);
   const tiles = [];
@@ -87,21 +107,21 @@ export function generateWorld(seed) {
     for (let x = 0; x < MAP_SIZE; x++) {
       // Fade the land into the sea towards the edge so the map reads as an island.
       const edge = Math.max(Math.abs((x / (MAP_SIZE - 1)) * 2 - 1), Math.abs((z / (MAP_SIZE - 1)) * 2 - 1));
-      const h = fbm(x / 14, z / 14) - THREE.MathUtils.smoothstep(edge, 0.78, 1) * 0.3;
+      const h = fbm(x / 14, z / 14) + map.land - THREE.MathUtils.smoothstep(edge, map.coast, 1) * 0.3;
       const moisture = fbm(x / 9 + 100, z / 9 + 100, 3);
       let terrain;
       if (h < 0.36) terrain = 'water';
       else if (h < 0.41) terrain = 'sand';
-      else if (h > 0.63 && fbm(x / 6 + 300, z / 6 + 300, 2) > 0.52) terrain = 'rock';
-      else terrain = moisture > 0.56 ? 'forest' : 'grass';
+      else if (h > 0.63 && fbm(x / 6 + 300, z / 6 + 300, 2) > 1 - map.rock) terrain = 'rock';
+      else if (moisture > map.forest) terrain = 'forest';
+      else terrain = map.desert ? 'dune' : 'grass';
       tiles.push({ x, z, terrain, ore: null, amount: 0 });
     }
   }
 
   // Scatter ore patches as blobs on buildable land, away from the map edge.
-  const patchCount = { iron: 5, copper: 4, coal: 4, stone: 3 };
   const at = (x, z) => tiles[z * MAP_SIZE + x];
-  for (const [ore, count] of Object.entries(patchCount)) {
+  for (const [ore, count] of Object.entries(map.ores)) {
     let placed = 0;
     let tries = 0;
     while (placed < count && tries < 400) {
@@ -122,7 +142,7 @@ export function generateWorld(seed) {
           if (dist > radius || !TERRAIN[tile.terrain].buildable || tile.ore) continue;
           tile.ore = ore;
           // Richer in the middle of the patch.
-          tile.amount = Math.round((1 - dist / (radius + 1.5)) * 1800 + 200 + rand() * 300);
+          tile.amount = Math.round(((1 - dist / (radius + 1.5)) * 1800 + 200 + rand() * 300) * map.richness);
         }
       }
       placed++;

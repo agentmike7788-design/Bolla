@@ -7,6 +7,8 @@ import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, RECIPES, CONSTRUCTOR_
 import { RESEARCH } from './research.js';
 import { createResearchView } from './researchView.js';
 import { createFactoryView, createGhost } from './buildings.js';
+import { SCENARIOS, scenarioById, createMissions, starsFor, loadRecords, saveRecord } from './scenarios.js';
+import { createMissionView, clock } from './missionView.js';
 import './style.css';
 
 const canvas = document.getElementById('scene');
@@ -77,8 +79,17 @@ scene.add(ghost.group);
 let world;
 let meshes;
 let factory;
+let scenario; // the map being played, see scenarios.js
+let missions = null; // mission progress, null in the free game
 
-function loadWorld(seed) {
+// Start a map: the free game with a random (or given) seed, or a scenario.
+function startGame(next, seed = Math.floor(Math.random() * 99999)) {
+  scenario = next;
+  if (scenario.free) loadWorld(seed);
+  else loadWorld(scenario.seed, scenario);
+}
+
+function loadWorld(seed, mapScenario = null) {
   if (meshes) {
     scene.remove(meshes.group);
     meshes.group.traverse((o) => {
@@ -86,14 +97,20 @@ function loadWorld(seed) {
       o.material?.dispose();
     });
   }
-  world = generateWorld(seed);
+  world = generateWorld(seed, mapScenario?.map);
   meshes = buildWorldMeshes(world);
   scene.add(meshes.group);
-  factory = createFactory(world);
+  factory = createFactory(world, { start: mapScenario?.start });
+  missions = mapScenario ? createMissions(mapScenario, factory) : null;
   factoryView.clear();
-  document.getElementById('seed').textContent = `#${seed}`;
+  shapesDirty = true;
+  if (tool) setTool(tool);
+  document.getElementById('seed').textContent = mapScenario ? mapScenario.name : `#${seed}`;
+  document.getElementById('new-map').hidden = !!mapScenario;
   renderLegend();
-  researchView.reset();
+  researchView.setEnabled(!missions);
+  if (missions) missionView.render();
+  else researchView.reset();
   openRecipes(null);
   renderProgress();
   showTile(null);
@@ -110,7 +127,8 @@ function renderLegend() {
   const list = document.getElementById('legend');
   list.innerHTML = '';
   for (const [key, ore] of Object.entries(ORES)) {
-    const c = counts[key] ?? { tiles: 0, amount: 0 };
+    const c = counts[key];
+    if (!c) continue;
     const li = document.createElement('li');
     li.innerHTML = `<span class="swatch" style="--c:${hex(ore.color)}"></span>
       <span class="name">${ore.name}</span>
@@ -150,8 +168,11 @@ const researchView = createResearchView({
   },
 });
 
+const missionView = createMissionView({ panel: document.getElementById('goal'), getGame: () => ({ scenario, missions, factory }) });
+
 function renderProgress() {
-  researchView.update();
+  if (missions) missionView.update();
+  else researchView.update();
 
   const kept = Object.entries(factory.stored).filter(([, n]) => n > 0);
   storeList.innerHTML = kept.length
@@ -171,9 +192,84 @@ function renderProgress() {
 }
 
 function unlockHint(type) {
+  if (missions) {
+    const m = scenario.missions.find((x) => x.reward.unlocks?.includes(type));
+    return m ? `Belohnung der Mission „${m.name}“` : 'auf dieser Karte nicht verfügbar';
+  }
   const r = RESEARCH.find((x) => x.unlocks?.includes(type));
   return r ? `im Forschungsbaum „${r.name}“ erforschen` : '';
 }
+
+// --- Missions, map selection and the win screen ------------------------------
+
+function checkMissions() {
+  const done = missions?.check();
+  if (!done) return;
+  renderProgress();
+  if (missions.current) showToast(`Mission geschafft: ${done.name}`, `Belohnung: ${done.reward.text}`);
+  else showWin();
+}
+
+const mapsMenu = document.getElementById('maps');
+const mapsList = document.getElementById('maps-list');
+const winMenu = document.getElementById('win');
+const oreSwatches = (s) =>
+  Object.keys(s.map?.ores ?? ORES)
+    .map((k) => `<span class="ore-chip"><span class="swatch" style="--c:${hex(ORES[k].color)}"></span>${ORES[k].name}</span>`)
+    .join('');
+const starText = (n) => '★'.repeat(n) + '☆'.repeat(3 - n);
+
+function openMaps() {
+  const records = loadRecords();
+  winMenu.hidden = true;
+  mapsList.innerHTML = SCENARIOS.map((s) => {
+    const r = records[s.id];
+    const meta = s.free
+      ? 'Forschungsbaum · Zufallskarte'
+      : `${s.missions.length} Missionen · ${'●'.repeat(s.level)}${'○'.repeat(4 - s.level)}${r ? ` · <span class="best">${starText(r.stars)} ${clock(r.time)}</span>` : ''}`;
+    return `<button type="button" class="map-card${s === scenario ? ' current' : ''}" data-map="${s.id}">
+      <span class="map-name">${s.name}${s === scenario ? ' <span class="tag">Läuft</span>' : ''}</span>
+      <span class="map-meta">${meta}</span>
+      <span class="map-desc">${s.desc}</span>
+      <span class="map-ores">${oreSwatches(s)}</span>
+    </button>`;
+  }).join('');
+  mapsMenu.hidden = false;
+}
+
+function showWin() {
+  const seconds = missions.finishedAt;
+  const stars = starsFor(scenario, seconds);
+  const best = saveRecord(scenario.id, stars, seconds);
+  const next = SCENARIOS[SCENARIOS.indexOf(scenario) + 1];
+  document.getElementById('win-title').textContent = scenario.name;
+  document.getElementById('win-stars').textContent = starText(stars);
+  document.getElementById('win-time').textContent =
+    `Zeit ${clock(seconds)} · drei Sterne unter ${scenario.par} Minuten · Bestzeit ${clock(best.time)}`;
+  const nextBtn = document.getElementById('win-next');
+  nextBtn.hidden = !next;
+  nextBtn.onclick = () => {
+    winMenu.hidden = true;
+    startGame(next);
+  };
+  winMenu.hidden = false;
+}
+
+mapsList.addEventListener('click', (e) => {
+  const card = e.target.closest('[data-map]');
+  if (!card) return;
+  mapsMenu.hidden = true;
+  startGame(scenarioById(card.dataset.map));
+});
+for (const menu of [mapsMenu, winMenu]) {
+  menu.addEventListener('click', (e) => {
+    if (e.target.closest('[data-close]') || e.target === menu) menu.hidden = true;
+    if (e.target.closest('[data-maps]')) openMaps();
+  });
+}
+document.getElementById('goal').addEventListener('click', (e) => e.target.closest('[data-maps]') && openMaps());
+document.getElementById('maps-open').addEventListener('click', openMaps);
+const menuOpen = () => !mapsMenu.hidden || !winMenu.hidden;
 
 // --- Constructor recipes ----------------------------------------------------
 
@@ -322,7 +418,7 @@ let shapesDirty = false;
 const toolButtons = document.querySelectorAll('.tool[data-tool]');
 const help = document.getElementById('help');
 const HELP = {
-  none: [['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–8', 'bauen'], ['X', 'abreißen'], ['T', 'Forschung']],
+  none: [['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–8', 'bauen'], ['X', 'abreißen'], ['T', 'Forschung'], ['M', 'Karten']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
@@ -438,6 +534,12 @@ document.getElementById('rotate').addEventListener('click', rotate);
 window.addEventListener('keydown', (e) => {
   if (e.repeat && e.key.toLowerCase() !== 'r') return;
   const key = e.key.toLowerCase();
+  if (menuOpen()) {
+    if (key === 'escape' || key === 'm') mapsMenu.hidden = winMenu.hidden = true;
+    return;
+  }
+  if (key === 'm') return openMaps();
+  if (key === 't' && missions) return showToast('Missionskarte', 'Hier schalten Missionen neue Gebäude frei, nicht der Forschungsbaum.');
   const numbered = ['drill', 'belt', 'storage', 'furnace', 'assembler', 'splitter', 'merger', 'constructor'][Number(key) - 1];
   if (numbered) setTool(numbered);
   else if (key === 'x' || key === 'delete') setTool('remove');
@@ -462,9 +564,7 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 
-document.getElementById('new-map').addEventListener('click', () => {
-  loadWorld(Math.floor(Math.random() * 99999));
-});
+document.getElementById('new-map').addEventListener('click', () => startGame(scenarioById('free')));
 
 // The simulation runs in fixed steps so belts behave the same at any frame rate.
 const STEP = 1 / 60;
@@ -491,15 +591,17 @@ renderer.setAnimationLoop(() => {
   if (legendTimer > 0.5) {
     legendTimer = 0;
     renderLegend();
+    checkMissions();
     renderProgress();
   }
   updateHover();
   renderer.render(scene, camera);
 });
 
-loadWorld(4711);
+startGame(scenarioById('free'), 4711);
 renderHelp();
 resize();
+openMaps();
 
 // Handle for poking at the game from the browser console while developing.
-if (import.meta.env.DEV) window.bolla = { camera, rig, refresh: () => (shapesDirty = true), get world() { return world; }, get factory() { return factory; } };
+if (import.meta.env.DEV) window.bolla = { camera, rig, startGame, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get factory() { return factory; }, get missions() { return missions; } };

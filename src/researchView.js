@@ -35,6 +35,7 @@ export function createResearchView({ getFactory, onResearch }) {
   const lines = overlay.querySelector('.tree-lines');
   let pinned = null; // id the player chose to work towards
   let panelId; // id the panel currently shows
+  let enabled = true; // off on mission maps, where the panel shows the mission
 
   const factory = () => getFactory();
 
@@ -132,6 +133,7 @@ export function createResearchView({ getFactory, onResearch }) {
 
   // Refresh numbers and states without rebuilding the DOM, so clicks are not lost.
   function update() {
+    if (!enabled) return;
     const f = factory();
     if (target()?.id !== panelId) renderPanel();
     const r = target();
@@ -155,6 +157,7 @@ export function createResearchView({ getFactory, onResearch }) {
   }
 
   function open() {
+    if (!enabled) return;
     overlay.hidden = false;
     renderTree();
   }
@@ -182,12 +185,20 @@ export function createResearchView({ getFactory, onResearch }) {
   return {
     reset() {
       pinned = null;
+      if (!enabled) return;
       panelId = undefined;
       renderPanel();
       if (!overlay.hidden) renderTree();
       else update();
     },
     update,
+    setEnabled(on) {
+      enabled = on;
+      if (!on) close();
+    },
+    get enabled() {
+      return enabled;
+    },
     toggle: () => (overlay.hidden ? open() : close()),
     close,
     get isOpen() {
