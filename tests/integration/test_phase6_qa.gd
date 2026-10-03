@@ -234,6 +234,38 @@ func test_apply_levels_retires_the_old_table() -> void:
 	assert_true(crypt_table.is_active() and crypt_table.visible, "the crypt table works")
 
 
+# --- Prüfung: save → load inside every room keeps the room, its light and the camera -------------
+
+func test_save_and_load_in_every_room_restores_room_and_camera() -> void:
+	_levels({&"crypt": 1, &"chapel": 1, &"shed": 1})
+	for id: StringName in [&"crypt", &"chapel", &"shed"]:
+		var door := BuildingDoor.find(tree, id)
+		HutPortal.arrive(player, door.room().spawn_transform(), true, id)
+		assert_eq(SaveManager.save_game(SLOT), OK)
+		assert_eq(await SaveManager.load_game(SLOT), OK)
+		_bind()
+		assert_eq(player.interior_id, id, "back in the %s" % id)
+		for other: StringName in [&"crypt", &"chapel", &"shed"]:
+			assert_eq(InteriorRoom.find(tree, other).active, other == id, "%s active only when it is the room" % other)
+		var room := InteriorRoom.find(tree, id)
+		var rig := world.get_node("CameraRig") as CameraRig
+		assert_not_null(rig.profile, "%s: the room's camera profile" % id)
+		if rig.profile != null:
+			assert_almost(rig.profile.distance, room.room_config().camera_distance, 0.001, "%s: distance of the room" % id)
+			assert_eq(rig.camera.environment, room.environment, "%s: the room's environment" % id)
+		assert_false((world.get_node("Sun") as Light3D).visible, "%s: the outdoor sun is off" % id)
+		# And out again: the outdoor framing comes back.
+		var exits := room.find_children("*", "", true, false).filter(func(n: Node) -> bool: return n is RoomExit)
+		(exits[0] as RoomExit).interact(player)
+		for i: int in 90:
+			if not HutPortal.is_travelling(player):
+				break
+			await tree.process_frame
+		assert_eq(player.interior_id, &"", "%s: outside again" % id)
+		assert_null(rig.profile, "%s: outdoor framing" % id)
+		assert_true((world.get_node("Sun") as Light3D).visible, "%s: the sun again" % id)
+
+
 # --- helpers ----------------------------------------------------------------------------------
 
 func _bind() -> void:

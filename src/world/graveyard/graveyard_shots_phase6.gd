@@ -29,6 +29,8 @@ const P6_SHOTS: Array[Dictionary] = [
 			"focus": Vector2(-9.0, 8.9), "distance": 22.0, "player": Vector2(-9.0, 9.1)},
 	{"name": "world_p6_02_crypt_l1_day", "levels": [1, 1, 1], "day": 30, "minute": 660, "focus": Vector2(-9.0, 8.9), "distance": 22.0,
 			"player": Vector2(-9.0, 9.1)},
+	{"name": "world_p6_02_crypt_l2_day", "levels": [2, 2, 2], "day": 30, "minute": 660, "focus": Vector2(-9.0, 8.9), "distance": 22.0,
+			"player": Vector2(-9.0, 9.1)},
 	{"name": "world_p6_02_crypt_l3_day", "levels": [3, 3, 3], "day": 30, "minute": 660, "focus": Vector2(-9.0, 8.9), "distance": 22.0,
 			"player": Vector2(-9.0, 9.1)},
 	{"name": "world_p6_02_crypt_l3_zoom12", "day": 30, "minute": 660, "focus": Vector2(-9.0, 8.9), "distance": 12.0,
@@ -48,6 +50,8 @@ const P6_SHOTS: Array[Dictionary] = [
 	{"name": "world_p6_04_shed_l0_day", "levels": [0, 0, 0], "day": 30, "minute": 660, "focus": Vector2(-12.9, -6.4), "distance": 22.0,
 			"player": Vector2(-12.6, -6.1)},
 	{"name": "world_p6_04_shed_l1_day", "levels": [1, 1, 1], "day": 30, "minute": 660, "focus": Vector2(-12.9, -6.4), "distance": 22.0,
+			"player": Vector2(-12.6, -6.1)},
+	{"name": "world_p6_04_shed_l2_day", "levels": [2, 2, 2], "day": 30, "minute": 660, "focus": Vector2(-12.9, -6.4), "distance": 22.0,
 			"player": Vector2(-12.6, -6.1)},
 	{"name": "world_p6_04_shed_l3_day", "levels": [3, 3, 3], "day": 30, "minute": 660, "focus": Vector2(-12.9, -6.4), "distance": 22.0,
 			"player": Vector2(-12.6, -6.1)},
@@ -294,13 +298,18 @@ func _clear_staged(world: Node3D) -> void:
 	_staged_corpses.clear()
 
 
+## W3: the records live under "corpses" (CorpseSaveCodec) – filtering "records" kept every staged
+## corpse, so a later shot showed the previous one's (the devotion shot had a corpse on the catafalque).
 static func _without(state: Dictionary, ids: Array[String]) -> Dictionary:
 	var out := state.duplicate(true)
-	var kept: Array = []
-	for r: Dictionary in out.get("records", []):
-		if not String(r.get("id", "")) in ids:
-			kept.append(r)
-	out["records"] = kept
+	for key: String in ["corpses", "records"]:
+		if not out.has(key):
+			continue
+		var kept: Array = []
+		for r: Dictionary in out[key]:
+			if not String(r.get("id", "")) in ids:
+				kept.append(r)
+		out[key] = kept
 	return out
 
 

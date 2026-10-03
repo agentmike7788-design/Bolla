@@ -33,6 +33,8 @@ const RESERVE6_OPTIONAL := 10
 ## The service starts at the latest at service_start_max: leave the crypt before this.
 const SERVICE_LEAVE_LATEST := 1020 - PROCESSION_MINUTES
 const OSRIC_CANDLE_PRICE := 2
+## Stone / wood / workstone / clay the pack keeps once the shed stands (the rest goes in, §2.5).
+const SHED_KEEP := 4
 
 ## Phase-6 flags on top of the Phase-5 ones:
 ## "p6": plays Phase 6 · "order": the building upgrades in order (a building id per level) ·
@@ -267,9 +269,29 @@ func _craft_essentials() -> void:
 		_t("essentials %d min" % (TimeManager.total_minutes() - t0))
 
 
+## Shed ≥ 2 (§2.5): what a workbench recipe lacks comes out of the shed first – „Fehlendes aus dem
+## Schuppen holen" at the station (Workbench.request_fetch), then the craft as usual.
+func _craft(bench: Workbench, recipe: StringName) -> bool:
+	var r := Database.recipe(recipe) as RecipeData
+	if p6_open() and r != null and buildings.level(&"shed") >= 2 and not CraftingSystem.can_craft(r, inv()) \
+			and ShedSupply.fetch_reason_for(tree, player, r.inputs) == "" and _time_left():
+		_to_room(&"")
+		bench.interact(player)
+		UIState.clear()
+		bench.request_fetch(r.inputs)
+	return super._craft(bench, recipe)
+
+
 ## A full pack (Phase 6 adds boxes and candles): surplus to the shed first, else the craft waits.
 func _craft5(station: StringName, recipe_id: StringName) -> bool:
 	var r := Database.recipe(recipe_id) as RecipeData
+	var node := _station(station)
+	if p6_open() and r != null and node != null and buildings.level(&"shed") >= 2 and not CraftingSystem.can_craft(r, inv()) \
+			and ShedSupply.fetch_reason_for(tree, player, r.inputs) == "" and _time_left():
+		_to_room(&"")
+		node.interact(player)
+		UIState.clear()
+		node.request_fetch(r.inputs)
 	if p6_open() and r != null and not r.background and not _room_for(r):
 		_store_surplus6(true)
 		if not _room_for(r):
@@ -603,6 +625,14 @@ func _mark6(plot: GravePlot) -> void:
 	var grave_id := plot.grave_id
 	if _stele_possible() and _fits(60 + WALK_MINUTES):
 		var d := _design_for(grave_id, &"stone_stele")
+		var needs := StoneDesignRules.inputs(d, stone_cfg)
+		if not ShedSupply.shortfall(needs, inv()).is_empty() and ShedSupply.fetch_reason_for(tree, player, needs) == "":
+			# §2.5: the stone panel's fetch – the bench brings what the design lacks from the shed.
+			_to_room(&"")
+			var bench := _station(&"mason")
+			bench.interact(player)
+			UIState.clear()
+			bench.request_fetch(needs)
 		if masonry.order_block_reason(grave_id, d, inv()) == "":
 			var order := _carve_with_panel(grave_id, d)
 			if order != "":
@@ -624,7 +654,13 @@ func _mark6(plot: GravePlot) -> void:
 
 
 func _stele_possible() -> bool:
-	return shop.is_built(&"mason") and inv().count(&"stone") >= 4 + _stone_keep6()
+	return shop.is_built(&"mason") and _stone_reachable() >= 4 + _stone_keep6()
+
+
+## Stone in the pack, plus the shed's once it is connected (shed ≥ 2: fetched at the bench).
+func _stone_reachable() -> int:
+	var shed := ShedSupply.shed_inventory(tree)
+	return inv().count(&"stone") + (shed.count(&"stone") if shed != null and buildings.level(&"shed") >= 2 else 0)
 
 
 func _catafalque() -> Catafalque:
@@ -827,7 +863,9 @@ func _store_surplus6(now: bool = false) -> void:
 		return
 	var moves := {}
 	for id: StringName in [&"stone", &"wood", &"workstone", &"clay"]:
-		var extra := inv().count(id) - _want(id) - 4
+		# The pack keeps a working stock (SHED_KEEP); the rest waits in the shed and comes back through
+		# „Fehlendes aus dem Schuppen holen" at the stations and building sites (shed ≥ 2).
+		var extra := inv().count(id) - SHED_KEEP
 		if extra > 0:
 			moves[id] = extra
 	if moves.is_empty():
@@ -1175,7 +1213,11 @@ func _want(item: StringName) -> int:
 			need += 8  # two steles
 		&"iron_ore":
 			need = 2 * _bars_to_make()
-	return maxi(base, need)
+	var want := maxi(base, need)
+	# Shed ≥ 2: what lies in the shed counts as stock – the stations and sites fetch it (§2.5).
+	if shed != null and buildings.level(&"shed") >= 2 and item != &"iron_ore":
+		want = maxi(base - shed.count(item), need) if base > need else want
+	return want
 
 
 func _stone_keep6() -> int:
