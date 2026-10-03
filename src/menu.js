@@ -1,5 +1,6 @@
 import { listSaves, whenText, playTimeText } from './save.js';
 import { ACHIEVEMENTS, loadAchievements } from './achievements.js';
+import { ENEMY_MODES } from './enemies.js';
 
 // The title screen and the pause menu. Both share one overlay: a column of
 // big menu entries on the left and the open page (saves, settings, controls)
@@ -7,8 +8,8 @@ import { ACHIEVEMENTS, loadAchievements } from './achievements.js';
 
 const CONTROLS = [
   ['Kamera', [['Linke Maus ziehen', 'Karte verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['W A S D', 'bewegen']]],
-  ['Bauen', [['1 – 9, 0', 'Gebäude wählen (9 Kraftwerk, 0 Mast)'], ['O P I K', 'Ölpumpe, Rohr, Raffinerie, Tank'], ['G B Z J', 'Gleis, Bahnhof, Zug, Signal'], ['F V C', 'Drohnenhafen, Angebots-, Anfragekiste'], ['H', 'Raketensilo'], ['Klick / Ziehen', 'bauen, Bänder und Rohre ziehen'], ['R', 'drehen'], ['X', 'abreißen'], ['Klick auf Konstruktor oder Raffinerie', 'Rezept wählen'], ['Klick auf Bahnhof oder Zug', 'Betriebsart, Fahrplan'], ['Klick auf Signal oder Anfragekiste', 'Art und Richtung, gewünschtes Teil'], ['Klick auf Raketensilo', 'Etappen, Raketenstart'], ['Esc', 'Werkzeug weglegen']]],
-  ['Spiel', [['Y', 'Erdwärmekraftwerk (Vulkan)'], ['T', 'Forschungsbaum'], ['L', 'Statistik'], ['M', 'Karten'], ['N', 'nächste Tageszeit'], ['U', 'Ton an / aus'], ['Strg S', 'speichern'], ['Esc', 'Menü']]],
+  ['Bauen', [['1 – 9, 0', 'Gebäude wählen (9 Kraftwerk, 0 Mast)'], ['O P I K', 'Ölpumpe, Rohr, Raffinerie, Tank'], ['G B Z J', 'Gleis, Bahnhof, Zug, Signal'], ['F V C', 'Drohnenhafen, Angebots-, Anfragekiste'], ['H', 'Raketensilo'], [', . -', 'Mauer, Geschützturm, Laserturm'], ['Klick / Ziehen', 'bauen, Bänder und Rohre ziehen'], ['R', 'drehen'], ['X', 'abreißen'], ['Klick auf Konstruktor oder Raffinerie', 'Rezept wählen'], ['Klick auf Bahnhof oder Zug', 'Betriebsart, Fahrplan'], ['Klick auf Signal oder Anfragekiste', 'Art und Richtung, gewünschtes Teil'], ['Klick auf Raketensilo', 'Etappen, Raketenstart'], ['Esc', 'Werkzeug weglegen']]],
+  ['Spiel', [['Y', 'Erdwärmekraftwerk (Vulkan)'], ['T', 'Forschungsbaum'], ['L', 'Statistik'], ['Leertaste', 'zum letzten Angriff'], ['M', 'Karten'], ['N', 'nächste Tageszeit'], ['U', 'Ton an / aus'], ['Strg S', 'speichern'], ['Esc', 'Menü']]],
   ['Touch', [['Ein Finger', 'verschieben oder bauen'], ['Zwei Finger', 'zoomen und drehen']]],
 ];
 
@@ -132,6 +133,8 @@ export function createMenu({ root, audio, dayNight, graphics, onGraphics, action
         <section>
           <p class="label">Spiel</p>
           <div class="gm-row"><span>Autospeichern</span>${segmented('autosave', graphics.autosave, [[0, 'Aus'], [60, 'Jede Minute'], [300, 'Alle 5 Min.']])}</div>
+          ${mode === 'pause' ? `<div class="gm-row"><span>Gegner in diesem Spiel</span>${segmented('enemies', actions.enemyMode(), Object.entries(ENEMY_MODES).map(([id, m]) => [id, m.name]))}</div>
+          <p class="gm-note">${ENEMY_MODES[actions.enemyMode()].desc}. Neue Nester entstehen nur fern von deinen Gebäuden.</p>` : ''}
         </section>
       </div>`;
   }
@@ -254,6 +257,7 @@ export function createMenu({ root, audio, dayNight, graphics, onGraphics, action
 
   function setOption(key, value) {
     if (key === 'daymode') dayNight.setMode(value);
+    else if (key === 'enemies') actions.setEnemyMode(value);
     else if (key === 'particles') onGraphics({ particles: value === 'true' });
     else if (key === 'autosave') onGraphics({ autosave: Number(value) });
     else onGraphics({ [key]: value });

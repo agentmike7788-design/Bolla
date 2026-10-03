@@ -22,6 +22,8 @@ import { DRONES_PER_PORT, DRONE_RANGE, DRONE_SPEED, PROVIDER_CAP, REQUEST_AMOUNT
 import { BIOMES, biomeOf, weatherEffect } from './biomes.js';
 import { createWeatherView } from './weatherView.js';
 import { createAchievements } from './achievements.js';
+import { ENEMY_MODES, CREATURES, TURRET, LASER } from './enemies.js';
+import { createEnemyView } from './enemyView.js';
 import './style.css';
 
 const canvas = document.getElementById('scene');
@@ -84,6 +86,19 @@ const effects = createEffects({
 });
 scene.add(effects.group);
 const weatherView = createWeatherView({ scene, effects });
+// Shots, hits and deaths are heard from where they happen.
+const enemyView = createEnemyView({
+  effects,
+  onFx(f, pos) {
+    const s = audio.spot(pos, rig.controls.target, camRight, zoom);
+    if (f.type === 'bullet') audio.play.gun(s.pan, s.level);
+    else if (f.type === 'laser') audio.play.laser(s.pan, s.level);
+    else if (f.type === 'acid') audio.play.acid(s.pan, s.level);
+    else if (f.type === 'death') audio.play.squish(s.pan, s.level, f.kind === 'brute');
+    else if (f.type === 'boom' || f.type === 'nestDeath') audio.play.boom(s.pan, s.level, f.type === 'nestDeath' || f.big);
+  },
+});
+scene.add(enemyView.group);
 const dayNight = createDayNight({ scene, renderer, sun, hemi });
 let zoom = 40; // camera distance to the point it looks at
 const camRight = new THREE.Vector3();
@@ -97,14 +112,15 @@ let missions = null; // mission progress, null in the free game
 let slotId = null; // save slot of the running game, see save.js
 let savedOnce = false; // an empty new game is only saved once something happened
 
-// Start a map: the free game with a random (or given) seed and a biome, or a scenario.
-function startGame(next, seed = Math.floor(Math.random() * 99999), biome = 'meadow') {
+// Start a map: the free game with a random (or given) seed, a biome and how
+// dangerous the wild is, or a scenario.
+function startGame(next, seed = Math.floor(Math.random() * 99999), biome = 'meadow', enemies = 'off') {
   leaveGame();
   tutorial.stop();
   scenario = next;
   slotId = newSaveId();
   savedOnce = false;
-  if (scenario.free) loadWorld(seed, null, null, biome);
+  if (scenario.free) loadWorld(seed, null, null, biome, enemies);
   else loadWorld(scenario.seed, scenario);
   rig.controls.target.set(0, 0, 0);
   camera.position.set(0, 34, 34);
@@ -118,7 +134,7 @@ const FREE_MAPS = {
   volcano: { biome: 'volcano', vents: 10, land: 0.02, richness: 1.3 },
 };
 
-function loadWorld(seed, mapScenario = null, saved = null, biome = 'meadow') {
+function loadWorld(seed, mapScenario = null, saved = null, biome = 'meadow', enemies = 'off') {
   if (meshes) {
     scene.remove(meshes.group);
     meshes.group.traverse((o) => {
@@ -135,7 +151,9 @@ function loadWorld(seed, mapScenario = null, saved = null, biome = 'meadow') {
   dayNight.setBiome(look);
   weatherView.setWorld(world);
   stormSeen = null;
-  factory = createFactory(world, { start: mapScenario?.start });
+  // A loaded game brings its own enemies; a new map gets the chosen mode.
+  factory = createFactory(world, { start: mapScenario?.start, enemies: saved ? 'off' : (mapScenario?.enemies ?? enemies), grace: mapScenario?.grace ?? null });
+  enemyView.setWorld(world, factory.enemies.chunks);
   missions = mapScenario ? createMissions(mapScenario, factory) : null;
   if (saved) {
     factory.load(saved.factory, saved.v);
@@ -228,6 +246,7 @@ function renderProgress() {
   renderOil();
   renderRail();
   renderDrones();
+  renderEnemies();
   renderRocket();
   if (selected?.type === 'silo') renderSiloNote();
   const chestNote = (selected?.type === 'requester' || selected?.type === 'provider') && document.getElementById('chest-note');
@@ -346,6 +365,105 @@ function renderDrones() {
   }
 }
 
+const enemyPanel = document.getElementById('enemy');
+const enemyState = document.getElementById('enemy-state');
+const enemyFill = document.getElementById('enemy-fill');
+const enemyText = document.getElementById('enemy-text');
+const enemyActions = document.getElementById('enemy-actions');
+const pct = (n) => `${Math.round(n * 100)} %`;
+
+// Shown when the map has enemies: nests, evolution, attacks and what they cost.
+function renderEnemies() {
+  const s = factory.enemies.summary();
+  enemyPanel.hidden = s.mode === 'off';
+  if (enemyPanel.hidden) return;
+  const attack = s.attacking > 0;
+  enemyPanel.classList.toggle('attack', attack);
+  enemyFill.style.width = pct(s.evo);
+  const smog = `Smog ${num(Math.round(s.smog))}/min`;
+  if (attack) {
+    enemyState.textContent = `Angriff! ${s.attacking} ${s.attacking === 1 ? 'Gegner' : 'Gegner'}`;
+    enemyText.textContent = `${s.empty ? `${s.empty} Türme ohne Munition oder Strom · ` : ''}${num(s.killed)} besiegt · ${s.lost} Gebäude verloren`;
+  } else if (!s.nests) {
+    enemyState.textContent = 'alle Nester zerstört';
+    enemyText.textContent = `${num(s.killed)} Gegner besiegt, ${s.nestsKilled} Nester ausgeräuchert. Die Insel gehört dir.`;
+  } else {
+    enemyState.textContent = s.mode === 'peaceful' ? 'friedlich' : s.graceLeft > 0 ? `ruhig · ${clock(s.graceLeft)}` : 'ruhig';
+    const why = s.mode === 'peaceful' ? 'Nester wehren sich nur, wenn Türme auf sie schießen.' : s.graceLeft > 0 ? 'Bis dahin greift niemand an. Smog aus Bohrern, Öfen und Kraftwerken lockt die Nester an.' : 'Smog lockt Angriffe an: Mauern und Türme um die Fabrik!';
+    enemyText.textContent = `${s.nests} Nester · Evolution ${pct(s.evo)} · ${smog} · ${why}`;
+  }
+  const actions = `${s.ruins ? `<button type="button" data-rebuild>Trümmer aufbauen (${s.ruins})</button>` : ''}${factory.enemies.lastAttack ? '<button type="button" class="link" data-look>Hinsehen <kbd>Leertaste</kbd></button>' : ''}`;
+  // Redrawn only on change, so a click is never lost.
+  if (enemyActions.dataset.html !== actions) enemyActions.innerHTML = enemyActions.dataset.html = actions;
+}
+
+// The camera jumps to the last attack.
+function lookAtAttack() {
+  const a = factory.enemies.lastAttack;
+  if (!a) return;
+  const t = world.at(Math.round(a.x), Math.round(a.z));
+  if (!t) return;
+  const offset = camera.position.clone().sub(rig.controls.target);
+  rig.controls.target.set(t.position.x, 0, t.position.z);
+  camera.position.copy(rig.controls.target).add(offset);
+}
+
+// Buildings creatures tore down come back where it is safe again.
+function rebuildRuins() {
+  const n = factory.enemies.rebuild((r) => {
+    const tile = world.tiles[r.index];
+    const b = factory.place(r.type, tile, r.dir);
+    if (!b) return false;
+    for (const k of ['recipe', 'mode', 'chain', 'oneway', 'request', 'want']) if (r[k] !== undefined) b[k] = r[k];
+    for (const i of factory.footprint(b)) meshes.setDecorHidden(i, true);
+    effects.build(tile, true);
+    return true;
+  });
+  shapesDirty = true;
+  if (n) audio.play.build('drill');
+  showToast(n ? 'Wiederaufgebaut' : 'Noch nicht sicher', n ? `${n} Gebäude stehen wieder.` : 'Wo noch Gegner sind, wird nicht gebaut.');
+  renderEnemies();
+}
+
+enemyActions.addEventListener('click', (e) => {
+  if (e.target.closest('[data-rebuild]')) rebuildRuins();
+  if (e.target.closest('[data-look]')) lookAtAttack();
+});
+
+let lossToastAt = -99;
+
+// Toasts and the alarm for new waves and buildings lost.
+function watchEnemies() {
+  const e = factory.enemies;
+  for (const a of e.alerts) {
+    if (inTitle) continue;
+    const where = compass(a.nest.x, a.nest.z);
+    audio.play.alarm();
+    showToast('Angriff!', `${a.count} ${a.count === 1 ? 'Gegner kommt' : 'Gegner kommen'} aus dem ${where}. Ziel: ${BUILDINGS[a.target.type].name}. Leertaste: hinsehen.`);
+  }
+  e.alerts.length = 0;
+  if (e.destroyed.length) {
+    for (const b of e.destroyed) {
+      if (!factory.get(b.tile)) for (const i of factory.footprint(b)) meshes.setDecorHidden(i, false);
+      if (b === selected) openPanel(null);
+    }
+    if (!inTitle && factory.time - lossToastAt > 8) {
+      lossToastAt = factory.time;
+      showToast(`${BUILDINGS[e.destroyed[0].type].name} zerstört`, 'Die Trümmer lassen sich im Gegner-Fenster wieder aufbauen.');
+    }
+    e.destroyed.length = 0;
+    shapesDirty = true;
+  }
+}
+
+// Rough direction of a spot as seen from the middle of the map.
+function compass(x, z) {
+  const c = (world.size - 1) / 2;
+  const a = Math.atan2(x - c, -(z - c)); // 0 = north, clockwise
+  const names = ['Norden', 'Nordosten', 'Osten', 'Südosten', 'Süden', 'Südwesten', 'Westen', 'Nordwesten'];
+  return names[(Math.round(a / (Math.PI / 4)) + 8) % 8];
+}
+
 const rocketPanel = document.getElementById('rocket');
 const rocketState = document.getElementById('rocket-state');
 const rocketFill = document.getElementById('rocket-fill');
@@ -423,6 +541,19 @@ function checkMissions() {
   }
 }
 
+// How dangerous the free game is, remembered in this browser.
+const ENEMY_KEY = 'bolla.enemies';
+let freeEnemies = 'normal';
+try {
+  freeEnemies = ENEMY_MODES[localStorage.getItem(ENEMY_KEY)] ? localStorage.getItem(ENEMY_KEY) : 'normal';
+} catch {}
+function setFreeEnemies(mode) {
+  freeEnemies = mode;
+  try {
+    localStorage.setItem(ENEMY_KEY, mode);
+  } catch {}
+}
+
 const mapsMenu = document.getElementById('maps');
 const mapsList = document.getElementById('maps-list');
 const winMenu = document.getElementById('win');
@@ -444,10 +575,11 @@ function openMaps() {
     const biomes = s.free
       ? `<span class="map-biomes">${Object.entries(BIOMES)
           .map(([id, b]) => `<span role="button" tabindex="0" class="biome-pick" data-biome="${id}" title="${b.desc}">${b.icon} ${b.name}</span>`)
+          .join('')}</span>
+        <span class="map-biomes enemy-modes"><span class="enemy-label">🪲 Gegner</span>${Object.entries(ENEMY_MODES)
+          .map(([id, m]) => `<span role="radio" tabindex="0" class="enemy-pick" data-enemy="${id}" aria-checked="${id === freeEnemies}" title="${m.desc}">${m.name}</span>`)
           .join('')}</span>`
-      : s.map?.biome
-        ? `<span class="map-biome" title="${look.desc}">${look.icon} ${look.name}</span>`
-        : '';
+      : `${s.map?.biome ? `<span class="map-biome" title="${look.desc}">${look.icon} ${look.name}</span>` : ''}${s.enemies ? `<span class="map-biome enemy" title="${ENEMY_MODES[s.enemies].desc}">🪲 Gegner</span>` : ''}`;
     return `<button type="button" class="map-card${s === scenario ? ' current' : ''}" data-map="${s.id}">
       <span class="map-name">${s.name}${s === scenario ? ' <span class="tag">Läuft</span>' : ''}</span>
       <span class="map-meta">${meta}</span>
@@ -478,12 +610,20 @@ function showWin() {
 }
 
 mapsList.addEventListener('click', (e) => {
+  // The enemies of the free game are picked first, then the biome starts it.
+  const pick = e.target.closest('[data-enemy]');
+  if (pick) {
+    setFreeEnemies(pick.dataset.enemy);
+    audio.play.click();
+    for (const el of mapsList.querySelectorAll('[data-enemy]')) el.setAttribute('aria-checked', String(el === pick));
+    return;
+  }
   const card = e.target.closest('[data-map]');
   if (!card) return;
   mapsMenu.hidden = true;
   // On the free game's card a biome can be picked; the card itself is grassland.
   const biome = e.target.closest('[data-biome]')?.dataset.biome ?? 'meadow';
-  startGame(scenarioById(card.dataset.map), undefined, biome);
+  startGame(scenarioById(card.dataset.map), undefined, biome, freeEnemies);
   if (menu.isOpen) closeMenu();
 });
 for (const menu of [mapsMenu, winMenu]) {
@@ -645,6 +785,12 @@ const menu = createMenu({
     tutorial: startTutorial,
     tutorialDone,
     resume: closeMenu,
+    enemyMode: () => factory.enemies.mode,
+    setEnemyMode(mode) {
+      factory.enemies.setMode(mode);
+      shapesDirty = true;
+      renderEnemies();
+    },
     save: () => saveGame({ manual: true }),
     toTitle: openTitle,
     load(id) {
@@ -942,6 +1088,7 @@ function powerNote(b) {
   return ` · Strom ${POWER_USE[b.type]} MW, ${pct < 100 ? `nur ${pct} %` : `Tempo ×${POWER_SPEED}`}`;
 }
 const itemList = (keys) => keys.map((k) => ITEMS[k].name).join(', ');
+const hpText = (b) => `${Math.ceil(b.hp ?? factory.enemies.maxHp(b))}/${factory.enemies.maxHp(b)} Lebenspunkte`;
 
 const TERRAIN_NOTE = { ice: 'Gefrorener See: bebaubar', lava: 'Glühende Lava: nicht bebaubar', cone: 'Der Vulkan: nicht bebaubar' };
 
@@ -1061,11 +1208,30 @@ function showTile(tile) {
     tileDetail.textContent = stage
       ? `${building.busy ? `Wird gebaut, ${Math.round((building.timer / stage.time) * 100)} %` : siloParts(building, stage)}${powerNote(building)}${tool ? '' : ' · Klick: Etappen'}`
       : `Die Rakete ist betankt${tool ? '' : ' · Klick: Start'}`;
+  } else if (building?.type === 'wall') {
+    tileName.textContent = 'Mauer';
+    tileDetail.textContent = `${hpText(building)} · Gegner müssen sich durchbeißen oder außen herum laufen`;
+  } else if (building?.type === 'turret') {
+    tileName.textContent = 'Geschützturm';
+    const state = { work: 'Feuert', idle: 'Wachsam', empty: 'Keine Munition: Band oder Anfragekiste mit Munition anschließen' }[building.state] ?? '';
+    tileDetail.textContent = `${state} · Munition ${building.ammo ?? 0}/${TURRET.store} (${(building.ammo ?? 0) * TURRET.shots + (building.shots ?? 0)} Schuss) · Reichweite ${TURRET.range} · ${hpText(building)}`;
+  } else if (building?.type === 'laser') {
+    tileName.textContent = 'Laserturm';
+    const state = { work: 'Feuert', idle: 'Wachsam', nopower: 'Kein Strom: feuert nicht' }[building.state] ?? '';
+    tileDetail.textContent = `${state} · Reichweite ${LASER.range} · ${building.net ? `Strom ${POWER_USE.laser} MW beim Feuern` : 'Braucht einen Strommast in der Nähe'} · ${hpText(building)}`;
   } else if (building?.type === 'storage') {
     tileName.textContent = 'Lager';
     tileDetail.textContent = building.received
       ? `${num(building.received)} eingelagert · zuletzt ${ITEMS[building.last].name}`
       : 'Nimmt alles von Bändern auf allen Seiten';
+  } else if (!building && factory.enemies.nestAt(tile)) {
+    const nest = factory.enemies.nestAt(tile);
+    tileName.textContent = 'Nest';
+    tileDetail.textContent = `${Math.ceil(nest.hp)}/${nest.max} Lebenspunkte · ${nest.anger >= 45 ? 'Wütend: bald kommt eine Welle' : 'Saugt Smog auf und wird wütend'} · Türme in Reichweite schießen darauf`;
+  } else if (!building && factory.enemies.ruins.some((r) => r.index === tile.z * world.size + tile.x)) {
+    const r = factory.enemies.ruins.find((x) => x.index === tile.z * world.size + tile.x);
+    tileName.textContent = `Trümmer · ${BUILDINGS[r.type].name}`;
+    tileDetail.textContent = 'Von Gegnern zerstört. Im Gegner-Fenster lässt es sich wieder aufbauen.';
   } else if (tile.vent && !building) {
     tileName.textContent = 'Erdwärmequelle';
     tileDetail.textContent = `Heißer Dampf aus der Tiefe: Platz für ein Erdwärmekraftwerk · Feld ${tile.x}, ${tile.z}`;
@@ -1076,6 +1242,7 @@ function showTile(tile) {
     tileName.textContent = terrain.name;
     tileDetail.textContent = `${TERRAIN_NOTE[tile.terrain] ?? (terrain.buildable ? 'Bebaubar' : 'Nicht bebaubar')} · Feld ${tile.x}, ${tile.z}`;
   }
+  if (building?.hp !== undefined && !['wall', 'turret', 'laser'].includes(building.type)) tileDetail.textContent += ` · beschädigt: ${hpText(building)}`;
   if (check && !check.ok && check.reason) tileDetail.textContent = check.reason;
   else if (overBelt) tileDetail.textContent = `Ersetzt das Bandstück · Ausgang nach ${DIR_NAMES[building.dir]}`;
 }
@@ -1127,9 +1294,10 @@ let shapesDirty = false;
 
 const toolButtons = document.querySelectorAll('.tool[data-tool]');
 const DRONE_TOOLS = new Set(['dronePort', 'provider', 'requester']);
+const DEFENSE_TOOLS = new Set(['wall', 'turret', 'laser']);
 const help = document.getElementById('help');
 const HELP = {
-  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['Y', 'Erdwärme'], ['O P I K', 'Öl'], ['G B Z J', 'Bahn'], ['F V C', 'Drohnen'], ['H', 'Silo'], ['X', 'abreißen'], ['T', 'Forschung'], ['L', 'Statistik'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
+  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['Y', 'Erdwärme'], ['O P I K', 'Öl'], ['G B Z J', 'Bahn'], ['F V C', 'Drohnen'], ['H', 'Silo'], [', . -', 'Abwehr'], ['X', 'abreißen'], ['T', 'Forschung'], ['L', 'Statistik'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
@@ -1152,6 +1320,9 @@ const HELP = {
   requester: [['Klick', 'Anfragekiste setzen'], ['R', 'Ausgang drehen'], ['Ohne Werkzeug klicken', 'Teil wählen'], ['Esc', 'fertig']],
   station: [['Klick', 'Bahnhof setzen'], ['R', 'Gleisrichtung drehen'], ['Bänder', 'an die Seiten'], ['Ohne Werkzeug klicken', 'Beladen / Entladen']],
   train: [['Klick auf Bahnhof', 'Zug einsetzen'], ['Braucht', '4 Felder Gleis'], ['Ohne Werkzeug klicken', 'Fahrplan'], ['Esc', 'fertig']],
+  wall: [['Klick / Ziehen', 'Mauer bauen'], ['Gegner', 'beißen sich langsam durch'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen']],
+  turret: [['Klick', 'Geschützturm setzen'], ['Munition', 'per Band oder Anfragekiste'], ['Reichweite', `${TURRET.range} Felder`], ['Esc', 'fertig']],
+  laser: [['Klick', 'Laserturm setzen'], ['Strom', `${POWER_USE.laser} MW beim Feuern`], ['Reichweite', `${LASER.range} Felder`], ['Esc', 'fertig']],
   silo: [['Klick', 'Raketensilo setzen'], ['Braucht', '3 × 3 freie Felder'], ['Bänder', 'an jede Seite'], ['Ohne Werkzeug klicken', 'Etappen, Start']],
   remove: [['Klick / Ziehen', 'abreißen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
 };
@@ -1175,6 +1346,7 @@ function setTool(next) {
   rig.controls.mouseButtons.MIDDLE = tool ? THREE.MOUSE.PAN : THREE.MOUSE.DOLLY;
   rig.controls.touches.ONE = tool ? null : THREE.TOUCH.PAN;
   renderHelp();
+  enemyView.showSmog(DEFENSE_TOOLS.has(tool));
   showTile(hovered);
 }
 
@@ -1258,7 +1430,7 @@ function buildAlong(tile) {
     lastTile = tile;
     return;
   }
-  if (!lastTile || (tool !== 'belt' && tool !== 'pipe' && tool !== 'rail')) {
+  if (!lastTile || (tool !== 'belt' && tool !== 'pipe' && tool !== 'rail' && tool !== 'wall')) {
     buildAt(tile);
     lastTile = tile;
     return;
@@ -1342,8 +1514,14 @@ window.addEventListener('keydown', (e) => {
   if (key === 't' && missions) return showToast('Missionskarte', 'Hier schalten Missionen neue Gebäude frei, nicht der Forschungsbaum.');
   const numbered = /^[0-9]$/.test(key) && ['drill', 'belt', 'storage', 'furnace', 'assembler', 'splitter', 'merger', 'constructor', 'power', 'pole'][(Number(key) + 9) % 10];
   const oilKey = { y: 'geo', o: 'pump', p: 'pipe', i: 'refinery', k: 'tank', g: 'rail', b: 'station', z: 'train', j: 'signal', f: 'dronePort', v: 'provider', c: 'requester', h: 'silo' }[key];
+  const defenseKey = { ',': 'wall', '.': 'turret', '-': 'laser' }[key];
+  if (key === ' ') {
+    e.preventDefault();
+    return lookAtAttack();
+  }
   if (numbered) setTool(numbered);
   else if (oilKey) setTool(oilKey);
+  else if (defenseKey) setTool(defenseKey);
   else if (key === 'x' || key === 'delete') setTool('remove');
   else if (key === 'r') rotate();
   else if (key === 't') researchView.toggle();
@@ -1365,7 +1543,7 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 
-document.getElementById('new-map').addEventListener('click', () => startGame(scenarioById('free'), undefined, world.biome));
+document.getElementById('new-map').addEventListener('click', () => startGame(scenarioById('free'), undefined, world.biome, factory.enemies.mode));
 document.getElementById('stats-open').addEventListener('click', () => stats.toggle());
 
 // --- Statistics and the rocket launch -------------------------------------------
@@ -1497,6 +1675,8 @@ renderer.setAnimationLoop(() => {
   factoryView.update(dt, elapsed, factory);
   if (graphics.particles) effects.update(paused ? 0 : dt, factory, focus, zoom, dayNight.night);
   weatherView.update(paused ? 0 : dt, elapsed, focus, weather, dayNight.night, factory, graphics.particles && !paused);
+  enemyView.update(paused ? 0 : dt, elapsed, factory, camera, dayNight.night);
+  watchEnemies();
   audio.setNight(dayNight.night);
   soundTimer += dt;
   if (soundTimer > 0.1) {
@@ -1552,4 +1732,4 @@ resize();
 openTitle();
 
 // Handle for poking at the game from the browser console while developing.
-if (import.meta.env.DEV) window.bolla = { closeMenu, achievements, weatherView, launch, stats, camera, rig, tutorial, renderer, scene, factoryView, startGame, saveGame, loadGame, menu, dayNight, effects, audio, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get meshes() { return meshes; }, get factory() { return factory; }, get missions() { return missions; } };
+if (import.meta.env.DEV) window.bolla = { closeMenu, enemyView, lookAtAttack, achievements, weatherView, launch, stats, camera, rig, tutorial, renderer, scene, factoryView, startGame, saveGame, loadGame, menu, dayNight, effects, audio, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get meshes() { return meshes; }, get factory() { return factory; }, get missions() { return missions; } };

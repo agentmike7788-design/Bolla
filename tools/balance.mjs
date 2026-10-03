@@ -41,6 +41,7 @@ const LINES = {
   gear: { recipe: 'gear', inputs: ['ironPlate', 'ironPlate'] },
   circuit: { recipe: 'circuit', inputs: ['ironPlate', 'wire'] },
   steel: { recipe: 'steel', inputs: ['ironIngot', 'coal'] },
+  ammo: { recipe: 'ammo', inputs: ['ironPlate', 'copperIngot'] },
   // Oil lines: pump, pipes, refinery, with a pole and a power plant beside them.
   plastic: { refinery: 'plastic' },
   fuel: { refinery: 'fuel' },
@@ -341,6 +342,19 @@ function planScenario(s) {
         if (!lines.drone) build += buildTime(drone.cost);
         lines.drone = 1;
         wait = Math.max(wait, drone.first + (g.flown / drone.perMin) * 60);
+        continue;
+      }
+      // Fights cannot be simulated here: a wave of about five creatures every two
+      // minutes once the grace period is over, and per nest a few turrets and
+      // walls carried up to it, then a minute of shooting.
+      if (g.kills) {
+        const grace = Math.max(0, (s.grace ?? 900) - total);
+        wait = Math.max(wait, grace + (g.kills / 5) * 120);
+        continue;
+      }
+      if (g.nests) {
+        build += g.nests * 8 * BUILD_SECONDS.building;
+        wait = Math.max(wait, g.nests * 60);
         continue;
       }
       if (g.oil) {

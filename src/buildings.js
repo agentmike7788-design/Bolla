@@ -3,6 +3,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { DIRS, ITEMS, POLE_SUPPLY, isFluid, SILO_STAGES } from './factory.js';
 import { DRONES_PER_PORT, DRONE_RANGE, PROVIDER_CAP } from './drones.js';
+import { TURRET_RANGE, LASER_RANGE } from './enemies.js';
 import { trackPoint, isTrack, CAR_GAP, CARS, WAGON_CARGO, STATION_CAP } from './trains.js';
 import { ORES } from './world.js';
 
@@ -396,6 +397,25 @@ function buildingParts() {
     chestBands: mergeGeometries([box(0.68, 0.05, 0.68, 0, 0.16, 0), box(0.68, 0.05, 0.68, 0, 0.34, 0)]),
     chestHatch: box(0.3, 0.02, 0.3, 0, 0.51, 0),
     chestGauge: box(0.04, 0.3, 0.02, 0, 0, 0),
+    // Wall: a concrete block with merlons; blocks side by side read as one wall.
+    wall: rbox(1, 0.62, 1, 0, 0.31, 0, 0.03),
+    wallBand: box(1.01, 0.07, 1.01, 0, 0.5, 0),
+    merlons: mergeGeometries([-0.3, 0.3].flatMap((x) => [-0.3, 0.3].map((z) => box(0.26, 0.16, 0.26, x, 0.7, z)))),
+    // Gun turret: a round base, a head with two barrels that turns to its target.
+    turretFoot: rbox(0.86, 0.14, 0.86, 0, 0.07, 0, 0.04),
+    turretBase: new THREE.CylinderGeometry(0.3, 0.38, 0.3, 14).translate(0, 0.29, 0),
+    turretRing: new THREE.TorusGeometry(0.31, 0.03, 6, 20).rotateX(Math.PI / 2).translate(0, 0.45, 0),
+    turretHead: rbox(0.4, 0.24, 0.44, 0, 0.58, 0.04, 0.05),
+    turretBarrels: mergeGeometries([-0.07, 0.07].map((x) => new THREE.CylinderGeometry(0.035, 0.035, 0.46, 8).rotateX(Math.PI / 2).translate(x, 0.6, -0.3))),
+    turretMuzzle: mergeGeometries([-0.07, 0.07].map((x) => new THREE.CylinderGeometry(0.05, 0.05, 0.06, 8).rotateX(Math.PI / 2).translate(x, 0.6, -0.52))),
+    turretBox: box(0.12, 0.16, 0.22, 0.25, 0.55, 0.08),
+    flash: new THREE.SphereGeometry(0.11, 8, 6).scale(1, 1, 1.8).translate(0, 0.6, -0.66),
+    // Laser turret: a slim tower with a dome and a glowing lens in front.
+    laserTower: mergeGeometries([new THREE.CylinderGeometry(0.2, 0.32, 0.62, 10).translate(0, 0.45, 0), new THREE.CylinderGeometry(0.34, 0.34, 0.06, 10).translate(0, 0.18, 0)]),
+    laserFins: mergeGeometries([0, 1, 2, 3].map((i) => box(0.04, 0.42, 0.22, 0, 0.42, 0.24).rotateY((i * Math.PI) / 2 + Math.PI / 4))),
+    laserDome: new THREE.SphereGeometry(0.25, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 0.76, 0),
+    laserGun: mergeGeometries([new THREE.CylinderGeometry(0.075, 0.1, 0.4, 10).rotateX(Math.PI / 2).translate(0, 0.86, -0.18), box(0.3, 0.06, 0.2, 0, 0.98, 0.02)]),
+    laserLens: new THREE.CylinderGeometry(0.06, 0.06, 0.03, 12).rotateX(Math.PI / 2).translate(0, 0.86, -0.39),
     // Rocket silo, 3 × 3 tiles: a slab with a skirt down to lower ground, the
     // building site with a fence and a crane, then the launch pad with its
     // flame trench and a lattice service tower with two arms.
@@ -459,6 +479,9 @@ function buildingParts() {
     requester: flat(0x3b7fd6, { roughness: 0.5 }),
     drone: flat(0x3a4650, { roughness: 0.45, metalness: 0.4 }),
     chainBand: flat(0x8a5ae0, { roughness: 0.5 }),
+    wall: flat(0xa9a397, { roughness: 0.9, metalness: 0.05 }),
+    turret: flat(0x56614a, { roughness: 0.55, metalness: 0.35 }),
+    laser: flat(0xd9dde0, { roughness: 0.35, metalness: 0.5 }),
     ore: Object.fromEntries(Object.entries(ORES).map(([k, o]) => [k, flat(o.color, { roughness: 0.4, metalness: 0.3 })])),
   };
   return { g, m };
@@ -502,6 +525,13 @@ function itemShapes() {
         new THREE.CylinderGeometry(0.02, 0.02, 0.04, 6).translate(0.04, 0.19, 0),
         new THREE.BoxGeometry(0.07, 0.025, 0.025).translate(-0.03, 0.19, 0),
       ].map((g) => g.toNonIndexed())),
+      lift: 0,
+    },
+    ammo: {
+      geo: mergeGeometries([
+        new THREE.BoxGeometry(0.2, 0.08, 0.14).translate(0, 0.04, 0),
+        ...[-0.06, 0, 0.06].map((x) => new THREE.CylinderGeometry(0.018, 0.018, 0.07, 6).translate(x, 0.11, 0)),
+      ]),
       lift: 0,
     },
     cpu: {
@@ -1189,6 +1219,41 @@ export function createFactoryView(renderer) {
       }
       view.gauge = add(g.chestGauge, own(new THREE.MeshStandardMaterial({ color: 0x1a2a10, emissive: 0x7ee08a, emissiveIntensity: 0.9 })), false);
       view.gauge.position.set(0, 0.25, -0.335);
+    } else if (b.type === 'wall') {
+      add(g.wall, m.wall);
+      add(g.wallBand, m.signal);
+      add(g.merlons, m.wall);
+    } else if (b.type === 'turret' || b.type === 'laser') {
+      // The head turns on its own, so it gets its own group.
+      view.head = new THREE.Group();
+      root.add(view.head);
+      const head = (geo, mat, shadow = true) => {
+        const mesh = add(geo, mat, shadow);
+        view.head.add(mesh);
+        return mesh;
+      };
+      add(g.turretFoot, m.dark);
+      if (b.type === 'turret') {
+        add(g.turretBase, m.turret);
+        add(g.turretRing, m.dark);
+        head(g.turretHead, m.turret);
+        head(g.turretBarrels, m.dark);
+        head(g.turretMuzzle, m.steel);
+        head(g.turretBox, m.signal);
+        view.flash = head(g.flash, own(new THREE.MeshBasicMaterial({ color: 0xffd27a, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false })), false);
+        lamp(0.3, 0.2, 0.3);
+      } else {
+        add(g.laserTower, m.laser);
+        add(g.laserFins, m.dark);
+        head(g.laserDome, m.laser);
+        head(g.laserGun, m.dark);
+        view.lens = own(new THREE.MeshStandardMaterial({ color: 0x220808, emissive: 0xff3a2a, emissiveIntensity: 1 }));
+        head(g.laserLens, view.lens, false);
+        lamp(0.27, 0.24, 0.27);
+      }
+      view.flash && (view.flash.visible = false);
+      view.fired = b.fired ?? 0;
+      view.flashTime = 0;
     } else if (b.type === 'storage') {
       add(g.pad, m.dark);
       add(g.crate, m.container);
@@ -1454,6 +1519,20 @@ export function createFactoryView(renderer) {
       view.top.material.color.setHex(0x111111);
       view.top.material.emissive.setHex(go ? 0x22e050 : 0xff2a10);
       view.top.material.emissiveIntensity = 1.8 * (1 + night * 1.5);
+    } else if (b.type === 'turret' || b.type === 'laser') {
+      // The head follows the aim of the simulation, which is a world angle.
+      view.head.rotation.y = (b.aim ?? 0) - yaw(b.dir);
+      if ((b.fired ?? 0) !== view.fired) {
+        view.fired = b.fired ?? 0;
+        view.flashTime = 0.05;
+      }
+      view.flashTime = Math.max(0, view.flashTime - dt);
+      if (view.flash) {
+        view.flash.visible = view.flashTime > 0;
+        view.flash.rotation.z = Math.random() * Math.PI;
+      }
+      if (view.lens) view.lens.emissiveIntensity = (b.state === 'work' ? 2.4 + Math.sin(elapsed * 30) * 0.6 : b.state === 'nopower' ? 0.15 : 0.7) * (1 + night);
+      setLamp(view, b.state, elapsed);
     } else if (b.type === 'dronePort') {
       view.parked.forEach((d, i) => (d.visible = i < DRONES_PER_PORT - (b.out ?? 0)));
       setLamp(view, b.state, elapsed);
@@ -1560,6 +1639,9 @@ export function createGhost() {
     signal: { geo: mergeGeometries([box(0.84, 0.1, 1), new THREE.CylinderGeometry(0.03, 0.03, 0.9, 6).translate(0.4, 0.45, 0), box(0.14, 0.24, 0.14).translate(0.4, 0.86, 0)]), arrow: 0.14 },
     dronePort: { geo: mergeGeometries([box(0.94, 0.12, 0.94), new THREE.CylinderGeometry(0.03, 0.03, 0.8, 6).translate(0.38, 0.4, 0.38)]), arrow: null },
     provider: { geo: box(0.7, 0.52, 0.7), arrow: null },
+    wall: { geo: box(1, 0.8, 1), arrow: null },
+    turret: { geo: mergeGeometries([box(0.8, 0.45, 0.8), box(0.4, 0.25, 0.4).translate(0, 0.45, 0), new THREE.CylinderGeometry(0.05, 0.05, 0.46, 6).rotateX(Math.PI / 2).translate(0, 0.6, -0.3)]), arrow: null },
+    laser: { geo: mergeGeometries([new THREE.CylinderGeometry(0.22, 0.34, 0.75, 10).translate(0, 0.375, 0), new THREE.SphereGeometry(0.25, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 0.76, 0)]), arrow: null },
     requester: { geo: box(0.7, 0.52, 0.7), arrow: 0.56 },
     refinery: { geo: mergeGeometries([box(0.86, 0.36, 0.86), new THREE.CylinderGeometry(0.13, 0.13, 1.2, 8).translate(0.2, 0.6, 0.14), new THREE.CylinderGeometry(0.03, 0.03, 1, 6).translate(-0.33, 0.5, -0.3)]), arrow: 0.45 },
   };
@@ -1576,6 +1658,11 @@ export function createGhost() {
   const portArea = new THREE.Mesh(new THREE.PlaneGeometry(span, span).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x5ad1c8, transparent: true, opacity: 0.12, depthWrite: false }));
   portArea.position.y = 0.06;
   group.add(portArea);
+  // And the circle a new turret reaches.
+  const rangeMat = new THREE.MeshBasicMaterial({ color: 0xff6b5b, transparent: true, opacity: 0.12, depthWrite: false });
+  const rangeRing = new THREE.Mesh(new THREE.CircleGeometry(1, 48).rotateX(-Math.PI / 2), rangeMat);
+  rangeRing.position.y = 0.07;
+  group.add(rangeRing);
 
   function show(tool, tile, dir, ok) {
     if (!tool || !tile) {
@@ -1588,6 +1675,8 @@ export function createGhost() {
     for (const [k, s] of Object.entries(meshes)) s.visible = k === tool;
     supply.visible = tool === 'pole';
     portArea.visible = tool === 'dronePort';
+    rangeRing.visible = tool === 'turret' || tool === 'laser';
+    rangeRing.scale.setScalar(tool === 'laser' ? LASER_RANGE : TURRET_RANGE);
     foot.scale.setScalar(tool === 'silo' ? 3 : 1);
     const arrowY = shapes[tool]?.arrow ?? null;
     arrow.visible = arrowY !== null;

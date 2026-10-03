@@ -204,6 +204,38 @@ export const RESEARCH = [
     boosts: { drone: 1.6 },
   },
   {
+    id: 'defense',
+    name: 'Verteidigung',
+    desc: 'Mauern und Geschütztürme. Der Konstruktor baut Munition aus Eisenplatte und Kupferbarren, Bänder bringen sie zu den Türmen.',
+    cost: { ironPlate: 40, concrete: 40, copperIngot: 20 },
+    requires: ['firstFactory'],
+    unlocks: ['wall', 'turret'],
+  },
+  {
+    id: 'hardAmmo',
+    name: 'Hartkernmunition',
+    desc: 'Geschütz- und Lasertürme richten 50 % mehr Schaden an.',
+    cost: { steel: 30, ammo: 40 },
+    requires: ['defense', 'constructor'],
+    boosts: { weapons: 1.5 },
+  },
+  {
+    id: 'lasers',
+    name: 'Lasertürme',
+    desc: 'Lasertürme brauchen keine Munition, nur Strom (3 MW, solange sie feuern), und reichen weiter.',
+    cost: { circuit: 50, steel: 40, ammo: 30 },
+    requires: ['hardAmmo', 'electricity'],
+    unlocks: ['laser'],
+  },
+  {
+    id: 'focusLens',
+    name: 'Fokuslinsen',
+    desc: 'Alle Türme richten noch einmal 40 % mehr Schaden an.',
+    cost: { processor: 20, circuit: 40 },
+    requires: ['lasers', 'refining'],
+    boosts: { weapons: 1.4 },
+  },
+  {
     id: 'oilAge',
     name: 'Ölzeitalter',
     desc: 'Das letzte Ziel: Prozessoren, Kunststoff und Treibstoff für die Zukunft.',
@@ -222,7 +254,7 @@ export const RESEARCH = [
 ];
 
 // Factory stats that research can multiply. 1 is the starting value.
-export const STATS = ['belt', 'drill', 'furnace', 'assembler', 'constructor', 'power', 'pump', 'refinery', 'train', 'drone'];
+export const STATS = ['belt', 'drill', 'furnace', 'assembler', 'constructor', 'power', 'pump', 'refinery', 'train', 'drone', 'weapons'];
 
 export const START_UNLOCKED = ['drill', 'belt', 'storage'];
 

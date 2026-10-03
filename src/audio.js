@@ -246,6 +246,41 @@ export function createAudio() {
         tone({ type: 'triangle', freq: f * 1.5, attack: 0.005, decay: 0.3, peak: 0.03, t: t + i * 0.06 });
       });
     },
+    // Defence: a gun shot, a laser zap, a creature dying, an explosion, the alarm.
+    gun(pan = 0, level = 1) {
+      if (!ctx || level < 0.04 || throttle('gun', 55)) return;
+      hiss({ filter: 'bandpass', freq: 1800, to: 500, decay: 0.07, peak: 0.16 * level, q: 0.8 });
+      tone({ type: 'square', freq: 140, to: 60, decay: 0.06, peak: 0.05 * level, pan });
+    },
+    laser(pan = 0, level = 1) {
+      if (!ctx || level < 0.04 || throttle('laser', 70)) return;
+      tone({ type: 'sawtooth', freq: 1800, to: 320, decay: 0.16, peak: 0.05 * level, pan });
+      tone({ type: 'sine', freq: 2600, to: 900, decay: 0.12, peak: 0.04 * level, pan });
+    },
+    squish(pan = 0, level = 1, big = false) {
+      if (!ctx || level < 0.04 || throttle('squish', 60)) return;
+      hiss({ filter: 'lowpass', freq: big ? 700 : 1400, to: 200, decay: big ? 0.3 : 0.16, peak: 0.22 * level });
+      tone({ type: 'triangle', freq: big ? 180 : 420, to: big ? 60 : 140, decay: big ? 0.25 : 0.12, peak: 0.08 * level, pan });
+    },
+    acid(pan = 0, level = 1) {
+      if (!ctx || level < 0.05 || throttle('acid', 120)) return;
+      hiss({ filter: 'highpass', freq: 2500, to: 4000, decay: 0.18, peak: 0.08 * level });
+      tone({ type: 'sine', freq: 300, to: 700, decay: 0.12, peak: 0.04 * level, pan });
+    },
+    boom(pan = 0, level = 1, big = false) {
+      if (!ctx || throttle('boom', 90)) return;
+      const l = Math.max(0.25, level);
+      tone({ freq: big ? 70 : 95, to: 30, attack: 0.005, decay: big ? 1.1 : 0.6, peak: 0.55 * l, pan });
+      hiss({ filter: 'lowpass', freq: 1200, to: 120, decay: big ? 1.2 : 0.7, peak: 0.5 * l });
+    },
+    alarm() {
+      if (!ctx || throttle('alarm', 4000)) return;
+      const t = now();
+      for (let i = 0; i < 3; i++) {
+        tone({ type: 'square', freq: 660, to: 880, attack: 0.02, decay: 0.28, peak: 0.07, t: t + i * 0.42 });
+        tone({ type: 'square', freq: 440, attack: 0.02, decay: 0.12, peak: 0.05, t: t + i * 0.42 + 0.28 });
+      }
+    },
     // The furnace or press finished a part.
     ding(pan = 0, level = 1) {
       if (!ctx || level < 0.05 || throttle('ding', 90)) return;
