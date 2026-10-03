@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SectionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/expansion/section_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"linden"
+display_name = "Lindenacker"
+order = 8
+starts_unlocked = false
+requires_section = &""
+requires_rating = &""
+decor_cap = 6
+unlock_text = "Der Lindenacker ist geweiht. Acht Stellen unter der alten Linde."
+requires_flag = &"linden_granted"
+requires_flag_text = "Hier ist noch Gemeindewald."
+counts_for_cemetery = false
+chapter = &""
+is_burial = true
+unlock_flag = &"linden_consecrated"

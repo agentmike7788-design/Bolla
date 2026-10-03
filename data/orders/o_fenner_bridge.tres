@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"o_fenner_bridge"
+giver = &"mayor"
+recipient = &""
+kind = &"donate"
+title = "Die Holderbrücke"
+request_text = "Zwanzig Münzen und sechs Bretter für neue Bohlen."
+thanks_text = "Fenner zählt die zwanzig Münzen laut nach, zweimal. „Die Holderbrücke wird es Ihnen danken. Und die Gemeinde auch, zu Protokoll.“"
+items = Dictionary[StringName, int]({
+&"wood": 6
+})
+coins = 20
+target = ""
+conditions = {}
+days_limit = 6
+requires_flag = &""
+requires_orders = Array[StringName]([&"o_fenner_well"])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 10
+reward_rep = 3
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 3
+accept_flag = &""

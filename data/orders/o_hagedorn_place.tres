@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"o_hagedorn_place"
+giver = &"oldwoman"
+recipient = &"washer"
+kind = &"bury"
+title = "Wiebke Hagedorns letzter Wunsch"
+request_text = "Oben liegen will ich, mit Blick auf die Linde. Im Totenhemd, und ein Stein mit Mohn. Und dass mir keiner was wegnimmt, verstanden?"
+thanks_text = "Liesel kommt den Hügel herauf und steht eine Weile am Stein mit dem Mohn. „Mit Blick auf die Linde. Sie hätte gesagt: Na also.“"
+items = Dictionary[StringName, int]({})
+coins = 0
+target = "d1_hagedorn"
+conditions = {
+"dress": "gown",
+"ornament": "orn_poppy",
+"section": "linden",
+"unharvested": true
+}
+days_limit = 3
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 10
+reward_rel = 0
+reward_rep = 2
+extra_rel = Dictionary[StringName, int]({
+&"washer": 8
+})
+fail_rel = Dictionary[StringName, int]({
+&"priest": -5,
+&"washer": -10
+})
+board = false
+cooldown_days = 3
+order = 17
+accept_flag = &""

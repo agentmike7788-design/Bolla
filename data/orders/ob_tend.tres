@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ob_tend"
+giver = &"council"
+recipient = &""
+kind = &"tend"
+title = "Der Lindenacker gepflegt"
+request_text = "Alle belegten Gräber im Lindenacker an zwei Morgen in Folge ohne Pflegeabzug."
+thanks_text = "Wer am Lindenacker vorbeikommt, sagt: gepflegt. Fenner schreibt: gepflegt. Es ist dasselbe Wort, nur amtlich."
+items = Dictionary[StringName, int]({})
+coins = 0
+target = "linden"
+conditions = {
+"mornings": 2
+}
+days_limit = 4
+requires_flag = &"linden_consecrated"
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 5
+reward_rel = 0
+reward_rep = 1
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = true
+cooldown_days = 3
+order = 23
+accept_flag = &""

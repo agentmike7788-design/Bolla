@@ -58,7 +58,7 @@ func eligible_graves() -> Array[Dictionary]:
 	for grave: GraveRecord in graveyard.graves():
 		if not _holds_corpse(grave):
 			continue
-		var corpse := _corpse(grave.corpse_id)
+		var corpse := _subject(grave)
 		if corpse == null:
 			continue
 		out.append({"grave_id": grave.id, "name": corpse.display_name if corpse.display_name != "" else NAME_UNKNOWN,
@@ -71,7 +71,7 @@ func eligible_graves() -> Array[Dictionary]:
 ## ({} for an unknown grave). `missing` / `block_reason` against `inventory` (or the player's).
 func preview(grave_id: String, design: StoneDesign) -> Dictionary:
 	var grave := _grave(grave_id)
-	var corpse := _corpse(grave.corpse_id) if grave != null else null
+	var corpse := _subject(grave) if grave != null else null
 	if grave == null or corpse == null or design == null:
 		return {}
 	var d := _with_text(design, corpse)
@@ -97,7 +97,7 @@ func preview(grave_id: String, design: StoneDesign) -> Dictionary:
 ## material ("Es fehlt: 2 Stein, 1 Holundertinte").
 func order_block_reason(grave_id: String, design: StoneDesign, inv: Inventory) -> String:
 	var grave := _grave(grave_id)
-	var corpse := _corpse(grave.corpse_id) if grave != null and _holds_corpse(grave) else null
+	var corpse := _subject(grave) if grave != null and _holds_corpse(grave) else null
 	if corpse == null:
 		return TEXT_NO_GRAVE
 	if design == null or design.is_empty() or Database.stone_shape(design.shape) == null \
@@ -131,7 +131,7 @@ func carve(grave_id: String, design: StoneDesign, inv: Inventory) -> String:
 			inv.load_state(snapshot)
 			return ""
 	var grave := _grave(grave_id)
-	var d := _with_text(design, _corpse(grave.corpse_id))
+	var d := _with_text(design, _subject(grave))
 	var order_id := ID_FORMAT % _next_id
 	_next_id += 1
 	_ready.append({"id": order_id, "grave_id": grave_id, "design": d.to_dict()})
@@ -170,13 +170,22 @@ func discard(order_id: String) -> bool:
 ## From GravePlot after StoneConfig.set_minutes → Graveyard.set_designed_stone (payment into
 ## `inv` for a FILLED grave); the stone leaves the rack; stone_order_changed(&"set"). A new stone
 ## lets the ghost speak its by_design line again. Quality difference (0 = refused / nothing set).
+## Phase 7: on a rest-period grave with a stone order → Graveyard.replace_old_marker (returns 1 when set).
 func set_stone(grave_id: String, inv: Inventory) -> int:
 	var order := ready_for(grave_id)
 	var graveyard := _graveyard()
 	if order.is_empty() or graveyard == null:
 		return 0
 	var design := StoneDesign.from_dict(order.design)
-	var diff := graveyard.set_designed_stone(grave_id, design, inv)
+	var diff := 0
+	var before := graveyard.get_grave(grave_id)
+	if before != null and before.state == GraveRecord.State.OLD:
+		# Phase 7: a new stone on a rest-period grave (no payment, no quality, the state stays OLD).
+		if not graveyard.replace_old_marker(grave_id, design):
+			return 0
+		diff = 1
+	else:
+		diff = graveyard.set_designed_stone(grave_id, design, inv)
 	var grave := graveyard.get_grave(grave_id)
 	if grave == null or grave.design != design.to_dict():
 		return 0
@@ -250,7 +259,7 @@ func load_state(data: Dictionary) -> void:
 func _describe(order: Dictionary) -> Dictionary:
 	var design := StoneDesign.from_dict(order.design)
 	var grave := _grave(order.grave_id)
-	var corpse := _corpse(grave.corpse_id) if grave != null else null
+	var corpse := _subject(grave) if grave != null else null
 	var fits_still := grave != null and corpse != null and _holds_corpse(grave) and _is_better(grave, corpse, design)
 	var name := corpse.display_name if corpse != null and corpse.display_name != "" else NAME_UNKNOWN
 	return {"id": order.id, "grave_id": order.grave_id, "design": (order.design as Dictionary).duplicate(true),
@@ -270,6 +279,8 @@ func _with_text(design: StoneDesign, corpse: CorpseRecord) -> StoneDesign:
 
 
 func _is_better(grave: GraveRecord, corpse: CorpseRecord, design: StoneDesign) -> bool:
+	if _old_with_order(grave):
+		return StoneDesign.from_dict(grave.design).to_dict() != _with_text(design, corpse).to_dict()
 	return StoneDesignRules.marker_points(design, corpse, _economy(), _config()) \
 			> StoneDesignRules.current_marker_points(grave, corpse, _economy(), _config())
 
@@ -282,7 +293,33 @@ func _quality_now(grave: GraveRecord, corpse: CorpseRecord) -> int:
 
 
 func _holds_corpse(grave: GraveRecord) -> bool:
+	if _old_with_order(grave):
+		return true
 	return (grave.state == GraveRecord.State.FILLED or grave.state == GraveRecord.State.MARKED) and grave.corpse_id != ""
+
+
+## Phase 7 (docs/PHASE7_DESIGN.md §2.5, §3.2 P3): a rest-period grave (OLD: old_01 / old_08) with an
+## accepted stone order for it may get a stone carved – the order is the only way.
+func _old_with_order(grave: GraveRecord) -> bool:
+	if grave == null or grave.state != GraveRecord.State.OLD:
+		return false
+	var graveyard := _graveyard()
+	return graveyard != null and graveyard.has_stone_order(grave.id)
+
+
+## The corpse of the grave; for an old grave with a stone order a stand-in record of its dead
+## (name, age from OldGraveData) for the stone's text.
+func _subject(grave: GraveRecord) -> CorpseRecord:
+	if grave == null:
+		return null
+	if _old_with_order(grave):
+		var old := Database.old_grave(grave.id) as OldGraveData
+		var r := CorpseRecord.new()
+		r.id = ""
+		r.display_name = old.display_name if old != null else NAME_UNKNOWN
+		r.age = maxi(old.died_year - old.born_year, 0) if old != null else 0
+		return r
+	return _corpse(grave.corpse_id)
 
 
 ## {item_id: missing amount}; without inventory everything is missing.

@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"o_quast_antidote"
+giver = &"surgeon"
+recipient = &""
+kind = &"deliver"
+title = "Rattengift"
+request_text = "Der kleine Kehr hat vom Rattengift genascht. Ich habe nicht genug."
+thanks_text = "„Der kleine Kehr hat sich übergeben, dann geschlafen, dann gegessen. In dieser Reihenfolge ist es gut.“"
+items = Dictionary[StringName, int]({
+&"antidote": 2
+})
+coins = 0
+target = ""
+conditions = {
+"teaching": "l_stomach"
+}
+days_limit = 2
+requires_flag = &"anatomy_known"
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 12
+reward_rel = 8
+reward_rep = 1
+extra_rel = Dictionary[StringName, int]({
+&"innkeeper": 4
+})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 13
+accept_flag = &""

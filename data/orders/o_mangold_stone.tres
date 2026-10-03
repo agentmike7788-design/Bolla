@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"o_mangold_stone"
+giver = &"grocer"
+recipient = &""
+kind = &"stone"
+title = "Ein Stein für die Mutter"
+request_text = "Dorothee Mahn, meine Mutter. Ihr Stein ist kaum noch zu lesen. Eine Stele mit Mohn, und es soll etwas darauf stehen. Ich rechne es dir nicht vor, ich bezahle es."
+thanks_text = "Theres liest den Namen zweimal und rückt das Augenglas zurecht. „Dorothee Mahn. Jetzt steht es da. Dann stimmt es auch.“"
+items = Dictionary[StringName, int]({})
+coins = 0
+target = "old_08"
+conditions = {
+"inscription": true,
+"ornament": "orn_poppy",
+"stone_shape": "stone_stele"
+}
+days_limit = 6
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &"acquainted"
+reward_coins = 12
+reward_rel = 10
+reward_rep = 1
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 8
+accept_flag = &""

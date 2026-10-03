@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"o_fenner_dropsy"
+giver = &"mayor"
+recipient = &""
+kind = &"deliver"
+title = "Die Beine des Schultheißen"
+request_text = "Meine Beine, Totengräber. Sagen Sie es keinem."
+thanks_text = "Fenner steckt das Pulverbriefchen in die Rocktasche, ohne hinzusehen. „Das bleibt unter uns. Amtlich unter uns.“"
+items = Dictionary[StringName, int]({
+&"dropsy_powder": 1
+})
+coins = 0
+target = ""
+conditions = {}
+days_limit = 5
+requires_flag = &"anatomy_known"
+requires_orders = Array[StringName]([])
+requires_tier = &"trusted"
+reward_coins = 10
+reward_rel = 8
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 14
+accept_flag = &""

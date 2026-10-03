@@ -27,6 +27,10 @@ const TEXT_NEEDS_FLAG := "Noch verschlossen."
 const JOURNAL_GROUP := &"journal"
 const CHAPTER_SIX_PITS := &"six_pits"
 const CLUE_SIX_PITS := &"c_six_pits"
+# Phase 7 (docs/PHASE7_DESIGN.md §2.9, §3.3, §3.4): SectionData.unlock_flag (the consecration).
+const TEXT_NEEDS_UNLOCK_FLAG := "Geräumt. Es fehlt die Weihe."
+const ORDERS_GROUP := &"orders"
+const VILLAGE_GROUP := &"village"
 
 @export var save_id: String = "expansion"
 @export var save_order: int = 5
@@ -247,16 +251,35 @@ func clear(obstacle_id: String, inv: Inventory, tier: int = -1) -> bool:
 	EventBus.obstacle_cleared.emit(obstacle_id, node.section_id)
 	var p := progress(node.section_id)
 	EventBus.section_progress_changed.emit(node.section_id, p.x, p.y)
+	var orders := _first(ORDERS_GROUP)
+	if orders != null and orders.has_method(&"note_section_progress"):
+		orders.call(&"note_section_progress", node.section_id, p.x, p.y)
 	if p.x >= p.y:
-		unlock(node.section_id)
+		try_unlock(node.section_id)
 	return true
 
 
-## STUB (P3) – Phase 7 (docs/PHASE7_DESIGN.md §2.9, §3.4): unlocks `section_id` once all its obstacles
-## are cleared AND SectionData.unlock_flag is set (after the last obstacle and after the flag);
-## else „Geräumt. Es fehlt die Weihe." – false.
-func try_unlock(_section_id: StringName) -> bool:
-	return false
+## Phase 7 (docs/PHASE7_DESIGN.md §2.9, §3.4): unlocks `section_id` once all its obstacles are cleared
+## AND SectionData.unlock_flag is set – called after the last obstacle (clear) and after the flag
+## (Village.consecrate), so either order opens it. Cleared but the flag missing → notification
+## „Geräumt. Es fehlt die Weihe." – false. A section without unlock_flag behaves as before.
+## Village.check_goal follows an unlock.
+func try_unlock(section_id: StringName) -> bool:
+	var s := section(section_id)
+	if s == null or is_unlocked(section_id):
+		return false
+	var p := progress(section_id)
+	if p.x < p.y:
+		return false
+	if s.unlock_flag != &"" and not GameState.flag_on(s.unlock_flag):
+		EventBus.notification_requested.emit(TEXT_NEEDS_UNLOCK_FLAG, &"info")
+		return false
+	if not unlock(section_id):
+		return false
+	var village := _first(VILLAGE_GROUP)
+	if village != null and village.has_method(&"check_goal"):
+		village.call(&"check_goal")
+	return true
 
 
 ## Graveyard.unlock_section, reputation +4 (event section_unlocked), section_unlocked,
@@ -338,7 +361,9 @@ func post_load() -> void:
 		# QA-05: every obstacle cleared but still locked (inconsistent / older save) would be a
 		# softlock – clear() only unlocks on the last obstacle. Unlock it now.
 		var p := progress(s.id)
-		if not _unlocked.has(s.id) and p.y > 0 and p.x >= p.y:
+		# Phase 7: a section with an unlock_flag (the Lindenacker) waits for its flag.
+		var flag_ok := s.unlock_flag == &"" or GameState.flag_on(s.unlock_flag)
+		if not _unlocked.has(s.id) and p.y > 0 and p.x >= p.y and flag_ok:
 			push_warning("[ExpansionManager] section '%s' has no obstacle left but is locked – unlocked" % s.id)
 			unlock(s.id)
 			continue
