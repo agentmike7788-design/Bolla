@@ -178,7 +178,7 @@ static func _build_props(ctx: Ctx, decor: Node3D) -> void:
 		if pr.has("label"):
 			Decor.add_sign_label(ctx, node, SIGN_LABEL.merged({"text": String(pr.label)}))
 		if pr.has("collider"):
-			_collider(ctx, node.transform, [pr.collider], String(pr.id), 1.0)
+			_collider(ctx, node.transform, pr.collider if pr.collider is Array else [pr.collider], String(pr.id), 1.0)
 
 
 static func _build_decor(ctx: Ctx, decor: Node3D) -> void:

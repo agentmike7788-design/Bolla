@@ -31,7 +31,7 @@ const VILLAGERS: Array[StringName] = [&"innkeeper", &"smith", &"grocer", &"pries
 ## puts it into the brook); the cottages turned 180° (door and ribbon towards the camera).
 const SHIFTED := {"house_kehr": 1.5, "house_brandt": 1.5, "house_ott": 1.5, "house_sieber": 6.0,
 		"v_bridge": 0.8, "v_anger_w": 0.8, "v_well": 0.8, "v_church_door": 0.8, "v_dorn_door": 0.8, "v_wash": 0.8,
-		"v_board": 0.8, "village_board": 0.8, "linden": 1.0, "v_hagedorn_gate": 0.8}
+		"v_board": 0.8, "village_board": 0.8, "linden": 1.0, "v_hagedorn_gate": 0.8, "v_well_bench": 0.8}
 ## Village schedule entries the player talks to outdoors (dialogue, standing, region village, not v_in_*).
 const INDOOR_PREFIX := "v_in_"
 const FLOOD_STEP := 0.25
@@ -631,25 +631,6 @@ func _flood(start: Vector2, step: float, area: Rect2, radius: float) -> Dictiona
 				seen[n] = true
 				queue.append(n)
 	return free
-
-
-func test_zz_debug_flood() -> void:
-	player.set_region(&"village")
-	await tree.physics_frame
-	var space := world.get_world_3d().direct_space_state
-	for x: float in [-24.5, -24.0, -23.5, -23.0, -22.0, -21.0, -20.0, -18.0, -16.0, -14.0, -12.0]:
-		for z: float in [1.0, 1.5, 2.0, 2.5]:
-			var shape := CylinderShape3D.new()
-			shape.radius = 0.75
-			shape.height = 1.4
-			var q := PhysicsShapeQueryParameters3D.new()
-			q.shape = shape
-			q.collision_mask = 1
-			q.transform = Transform3D(Basis.IDENTITY, Vector3(x, village.ground_height(Vector2(x, z + 400.0)) + 0.9, z + 400.0))
-			var names: PackedStringArray = []
-			for hit: Dictionary in space.intersect_shape(q, 8):
-				names.append(String((hit.collider as Node).get_path()).get_slice("/", -1) + "/" + str(hit.shape))
-			print("DBG %.1f %.1f: %s" % [x, z, names])
 
 
 ## How far (m) the hip-height line a → b lies inside a world collider: for every blocked sample (each
