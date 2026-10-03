@@ -5,6 +5,10 @@ extends UIPanel
 ## Read-only ledger page on the desk: a leather-bound parchment page with ruled lines,
 ## one line per burial (oldest first), blank ruled lines fill a short page, a long list
 ## scrolls (mouse wheel, ↑/↓, Bild↑/Bild↓). Footer: cemetery quality and its tier.
+## Phase 7 (docs/PHASE7_DESIGN.md §7): from anatomy_known (or once an entry carries "specimens") a column
+## „Präparate" – the number taken, the returned ones as „(1 ✓)"; a deduced dead carries a small seal ◆ after
+## the name. The live systems fill the entries in on opening (complete_entries). Lindenacker graves read
+## „Linde 3"; the new stones on the old graves are named in the subtitle.
 
 const TEXT_TITLE := "Grabregister des Friedhofs"
 const TEXT_SUBTITLE_NONE := "Verzeichnis der Bestatteten · noch keine Einträge"
@@ -31,6 +35,8 @@ const QUALITY_COLUMN := 5
 const LOW_QUALITY_RATIO := 0.35
 
 @export var page_width: float = 1300.0
+## Phase 7: the page grows by the Präparate column.
+@export var page_width_p7: float = 1440.0
 ## Ruled lines per page (blank lines fill up; more entries scroll).
 @export var page_rows: int = 8
 @export var row_height: float = 50.0
@@ -47,12 +53,17 @@ var _rows: VBoxContainer
 var _empty_row: PanelContainer
 ## Rendered entries in display order (for tests).
 var _shown: Array[Dictionary] = []
+## Phase 7: the Präparate column is shown.
+var with_specimens: bool = false
+var _head_panel: PanelContainer
+var _page: PanelContainer
 
 
 func _build() -> void:
 	theme_type_variation = &"LedgerPanel"
 	var page := UIKit.panel(&"LedgerPagePanel")
 	page.custom_minimum_size.x = page_width
+	_page = page
 	add_child(page)
 	var box := UIKit.vbox(12)
 	page.add_child(box)
@@ -79,6 +90,7 @@ func _build() -> void:
 	box.add_child(subtitle_label)
 	box.add_child(LedgerOrnament.new())
 	var head_panel := UIKit.panel(&"LedgerHeadPanel")
+	_head_panel = head_panel
 	head_panel.add_child(_make_line(PackedStringArray(COLUMNS), true))
 	head_panel.draw.connect(_draw_margin_rule.bind(head_panel))
 	# Heading and ruled lines touch, so the margin rule runs through both.
@@ -120,7 +132,15 @@ func _build() -> void:
 
 
 func _refresh() -> void:
-	_shown = sorted_entries(context.get("entries", []))
+	var raw: Array = complete_entries(context.get("entries", []), get_tree() if is_inside_tree() else null)
+	with_specimens = GameState.flag_on(&"anatomy_known") or raw.any(func(e: Variant) -> bool: return e is Dictionary and (e as Dictionary).has("specimens"))
+	_page.custom_minimum_size.x = page_width_p7 if with_specimens else page_width
+	UIKit.clear_children(_head_panel)
+	var heads := PackedStringArray(COLUMNS)
+	if with_specimens:
+		heads.append(Phase7Texts.REGISTER_COLUMN)
+	_head_panel.add_child(_make_line(heads, true))
+	_shown = sorted_entries(raw)
 	UIKit.clear_children(_rows)
 	for entry: Dictionary in _shown:
 		_rows.add_child(_make_row(entry))
@@ -136,6 +156,9 @@ func _refresh() -> void:
 			subtitle_label.text = TEXT_SUBTITLE_ONE
 		_:
 			subtitle_label.text = TEXT_SUBTITLE % _shown.size()
+	var stones := replaced_stones(get_tree() if is_inside_tree() else null)
+	if not stones.is_empty():
+		subtitle_label.text += " · Neuer Stein: " + ", ".join(stones)
 	footer_label.text = TEXT_FOOTER % [int(context.get("total", 0)), DaySummaryPanel.rating_label(context.get("rating", &""))]
 	scroll.scroll_vertical = 0
 
@@ -179,8 +202,49 @@ static func sorted_entries(raw: Variant) -> Array[Dictionary]:
 	return out
 
 
-## Cell texts of one entry, in COLUMNS order.
-static func cells(entry: Dictionary) -> PackedStringArray:
+## Phase 7: adds "specimens" {taken, returned} and "deduced" to each entry from the live systems (the
+## grave's dead → CorpseRecord.harvested organs / returned, revealed_cause). Without them unchanged.
+static func complete_entries(raw: Variant, tree: SceneTree) -> Array:
+	var out: Array = []
+	if not raw is Array:
+		return out
+	var graveyard := tree.get_first_node_in_group(&"graveyard") as Graveyard if tree != null else null
+	var manager := tree.get_first_node_in_group(&"corpse_manager") as CorpseManager if tree != null else null
+	for e: Variant in raw:
+		if not e is Dictionary:
+			out.append(e)
+			continue
+		var entry := (e as Dictionary).duplicate()
+		var grave := graveyard.get_grave(str(entry.get("grave_id", ""))) if graveyard != null else null
+		var record := manager.get_record(grave.corpse_id) if grave != null and manager != null and grave.corpse_id != "" else null
+		if record != null:
+			var organs := 0
+			for k: StringName in record.harvested:
+				if k in AnatomyConfig.ORGANS:
+					organs += 1
+			if organs > 0 or GameState.flag_on(&"anatomy_known"):
+				entry["specimens"] = {"taken": organs, "returned": record.returned.size()}
+			if record.revealed_cause != &"":
+				entry["deduced"] = true
+		out.append(entry)
+	return out
+
+
+## Names of the old graves that got a new stone through an order (Phase 7, old_01 / old_08).
+static func replaced_stones(tree: SceneTree) -> PackedStringArray:
+	var out := PackedStringArray()
+	var graveyard := tree.get_first_node_in_group(&"graveyard") as Graveyard if tree != null else null
+	if graveyard == null:
+		return out
+	for grave: GraveRecord in graveyard.graves():
+		if grave.state == GraveRecord.State.OLD and not grave.design.is_empty():
+			var old := Database.old_grave(grave.id) as OldGraveData
+			out.append(old.display_name if old != null and old.display_name != "" else grave_label(grave.id))
+	return out
+
+
+## Cell texts of one entry, in COLUMNS order (+ „Präparate" when `with_specimens`).
+static func cells(entry: Dictionary, with_specimens: bool = false) -> PackedStringArray:
 	var name_text := str(entry.get("name", "")).strip_edges()
 	if name_text == "":
 		name_text = TEXT_UNKNOWN
@@ -190,7 +254,9 @@ static func cells(entry: Dictionary) -> PackedStringArray:
 	var cause := str(entry.get("cause_label", "")).strip_edges()
 	var marker := str(entry.get("marker_label", "")).strip_edges()
 	var mood := str(entry.get("mood", "")).strip_edges()
-	return PackedStringArray([
+	if bool(entry.get("deduced", false)):
+		name_text += Phase7Texts.REGISTER_SEAL
+	var out := PackedStringArray([
 		str(int(entry.get("day_buried", 0))),
 		name_text,
 		cause if cause != "" else TEXT_NONE,
@@ -199,12 +265,20 @@ static func cells(entry: Dictionary) -> PackedStringArray:
 		TEXT_QUALITY % [int(entry.get("quality", 0)), _quality_max()],
 		mood if mood != "" else TEXT_NONE,
 	])
+	if with_specimens:
+		var sp: Dictionary = entry.get("specimens", {})
+		var taken := int(sp.get("taken", 0))
+		var returned := int(sp.get("returned", 0))
+		out.append(TEXT_NONE if taken <= 0 else (Phase7Texts.REGISTER_RETURNED % [taken, returned] if returned > 0 else str(taken)))
+	return out
 
 
 ## "plot_03" → "Nr. 3"; ids without a trailing number pass through ("" → "–").
 static func grave_label(grave_id: String) -> String:
 	if grave_id == "":
 		return TEXT_NONE
+	if grave_id.begins_with("l_") and grave_id.substr(2).is_valid_int():
+		return Phase7Texts.LINDEN_GRAVE % grave_id.substr(2).to_int()
 	var digits := ""
 	var i := grave_id.length() - 1
 	while i >= 0 and grave_id[i] >= "0" and grave_id[i] <= "9":
@@ -237,10 +311,10 @@ func _make_row(entry: Dictionary) -> PanelContainer:
 	row.mouse_filter = Control.MOUSE_FILTER_PASS
 	if entry.is_empty():
 		var blank := PackedStringArray()
-		blank.resize(COLUMNS.size())
+		blank.resize(COLUMNS.size() + (1 if with_specimens else 0))
 		row.add_child(_make_line(blank, false))
 		return row
-	var texts := cells(entry)
+	var texts := cells(entry, with_specimens)
 	var line := _make_line(texts, false)
 	var quality := int(entry.get("quality", 0))
 	if float(quality) < LOW_QUALITY_RATIO * float(_quality_max()):
@@ -256,7 +330,7 @@ func _make_line(texts: PackedStringArray, heading: bool) -> HBoxContainer:
 	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for i: int in texts.size():
 		var cell := UIKit.label(texts[i], &"LedgerHeadLabel" if heading else &"InkLabel")
-		cell.custom_minimum_size.x = COLUMN_WIDTHS[i]
+		cell.custom_minimum_size.x = COLUMN_WIDTHS[i] if i < COLUMN_WIDTHS.size() else Phase7Texts.REGISTER_COLUMN_WIDTH
 		cell.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		cell.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		cell.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS

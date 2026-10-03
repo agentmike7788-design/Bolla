@@ -265,7 +265,8 @@ static func main_insight_total(insights: Array = []) -> int:
 	var n := 0
 	for raw: Variant in list:
 		var i := raw as InsightData
-		if i != null and not i.optional:
+		# Phase 7: the later insights (i_deathbook, …) are not part of the Phase-4 chapter.
+		if i != null and not i.optional and not i.id in Phase7Texts.PHASE7_INSIGHTS:
 			n += 1
 	return n if n > 0 else 5
 

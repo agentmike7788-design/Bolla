@@ -7,14 +7,24 @@ extends RefCounted
 ## request_* method through `call_table` – no game state is changed here.
 ## Harvest buttons are two-stage: the first press arms them („Wirklich? Noch einmal klicken“),
 ## after confirm_seconds they fall back; they never take the default focus.
+## Phase 7 (docs/PHASE7_DESIGN.md §2.6, §7): a fourth tab „Präparate" (only with anatomy_known at the crypt
+## table – state["organs"] from CorpseExamOrgans): seven rows Herz … Hand under „Genommen: 1 von höchstens
+## 3", each with Glas / Bündel where allowed (eyes only the jar, the hand only linen), the ingredients
+## (there / missing), the minutes, the consequence line without a piety number, the clarity preview and a
+## two-stage button (3 s; eyes and hand with the longer line) → MorgueTable.request_organ(organ, container).
+## Taken rows say where the piece is now.
 
 const TAB_EXAM := &"exam"
 const TAB_PREP := &"prep"
 const TAB_HARVEST := &"harvest"
-const TABS: Array[StringName] = [TAB_EXAM, TAB_PREP, TAB_HARVEST]
+const TAB_ORGANS := &"organs"
+const TABS: Array[StringName] = [TAB_EXAM, TAB_PREP, TAB_HARVEST, TAB_ORGANS]
 const TAB_LABELS: Dictionary[StringName, String] = {
 	TAB_EXAM: Phase4Texts.TAB_EXAM, TAB_PREP: Phase4Texts.TAB_PREP, TAB_HARVEST: Phase4Texts.TAB_HARVEST,
+	TAB_ORGANS: Phase7Texts.TAB_ORGANS,
 }
+## Tabs drawn muted (no signal colour): taking from the dead.
+const MUTED_TABS: Array[StringName] = [TAB_HARVEST, TAB_ORGANS]
 ## Loss forecast at or below this many minutes is written as a warning (§7 objective: 120).
 const LOSS_WARN_MINUTES := 120
 const DRESS_KINDS: Array[StringName] = [&"shroud", &"gown"]
@@ -30,6 +40,9 @@ var pages: Dictionary[StringName, VBoxContainer] = {}
 var current_tab: StringName = TAB_EXAM
 ## Shown on the Untersuchen tab only (the cause section of the panel; keeps the panel on screen).
 var exam_only: Array[Control] = []
+## Phase 7: hidden on the „Präparate" tab (the condition section – the card needs the room for its seven
+## rows; the clarity stands in its head line).
+var organs_hide: Array[Control] = []
 
 var stage_ticks: StageTicks
 ## Frisch · Welk · Verwesend · Verfallen – the current stage lit.
@@ -55,6 +68,13 @@ var full_prep_label: Label
 
 var harvest_rows: Dictionary[StringName, Dictionary] = {}
 var harvest_intro: Label
+
+## Phase 7: organ -> {box, title, jar, bundle, button, info, consequence, reason, taken}; the chosen
+## container per organ; the head line.
+var organ_rows: Dictionary[StringName, Dictionary] = {}
+var organ_containers: Dictionary[StringName, StringName] = {}
+var organs_head: Label
+var armed_organ: StringName = &""
 
 var findings_box: VBoxContainer
 var findings_note: Label
@@ -113,6 +133,7 @@ func build(parent: VBoxContainer, column_width: float, timer_parent: Node) -> vo
 	_build_exam(pages[TAB_EXAM])
 	_build_prep(pages[TAB_PREP])
 	_build_harvest(pages[TAB_HARVEST])
+	_build_organs(pages[TAB_ORGANS])
 	_timer = Timer.new()
 	_timer.one_shot = true
 	_timer.timeout.connect(disarm)
@@ -212,6 +233,58 @@ func _build_harvest(page: VBoxContainer) -> void:
 		harvest_rows[kind] = {"box": box, "button": b, "line": line, "reason": reason}
 
 
+func _build_organs(page: VBoxContainer) -> void:
+	organs_head = UIKit.label("", &"AccentLabel")
+	page.add_child(organs_head)
+	var intro := UIKit.label(Phase7Texts.ORGANS_INTRO, &"DimLabel", true)
+	intro.custom_minimum_size.x = _column_width
+	page.add_child(intro)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size = Vector2(_column_width, 560.0)
+	page.add_child(scroll)
+	var list := UIKit.vbox(6)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
+	for organ: StringName in AnatomyConfig.ORGANS:
+		var box := UIKit.vbox(2)
+		var head := UIKit.hbox(8)
+		var title := UIKit.label("", &"SubheaderLabel")
+		title.custom_minimum_size.x = 110.0
+		title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		head.add_child(title)
+		var jar := UIKit.button(Phase7Texts.ORGAN_JAR, &"ExamTabButton")
+		jar.focus_mode = Control.FOCUS_NONE
+		jar.pressed.connect(choose_container.bind(organ, SpecimenRecord.CONTAINER_JAR))
+		head.add_child(jar)
+		var bundle := UIKit.button(Phase7Texts.ORGAN_BUNDLE, &"ExamTabButton")
+		bundle.focus_mode = Control.FOCUS_NONE
+		bundle.pressed.connect(choose_container.bind(organ, SpecimenRecord.CONTAINER_BUNDLE))
+		head.add_child(bundle)
+		var b := UIKit.button("", &"DangerButton")
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.pressed.connect(press_organ.bind(organ))
+		head.add_child(b)
+		box.add_child(head)
+		var line := UIKit.hbox(14)
+		var info := UIKit.label("", &"DimLabel")
+		line.add_child(info)
+		var consequence := UIKit.label("", &"DimLabel")
+		consequence.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		consequence.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		line.add_child(consequence)
+		box.add_child(line)
+		var reason := UIKit.label("", &"WarningLabel", true)
+		reason.custom_minimum_size.x = _column_width - 30.0
+		box.add_child(reason)
+		var taken := UIKit.label("", &"GoodLabel", true)
+		box.add_child(taken)
+		list.add_child(box)
+		organ_rows[organ] = {"box": box, "title": title, "jar": jar, "bundle": bundle, "button": b, "info": info,
+				"consequence": consequence, "reason": reason, "taken": taken}
+
+
 ## Findings column: caption, note and the grouped cards (inside the panel's scroll).
 func build_findings(findings: VBoxContainer, note: Label) -> void:
 	findings_box = findings
@@ -226,10 +299,15 @@ func refresh(state: Dictionary, running: bool) -> void:
 	tab_buttons[TAB_HARVEST].visible = harvest_visible
 	if current_tab == TAB_HARVEST and not harvest_visible:
 		current_tab = TAB_EXAM
+	var organs: Dictionary = state.get("organs", {})
+	tab_buttons[TAB_ORGANS].visible = bool(organs.get("visible", false))
+	if current_tab == TAB_ORGANS and not tab_buttons[TAB_ORGANS].visible:
+		current_tab = TAB_EXAM
 	_refresh_tabs()
 	_refresh_exam(state, running)
 	_refresh_prep(state.get("prep", {}), running)
 	_refresh_harvest(state.get("harvest", {}), running)
+	_refresh_organs(organs, running)
 	refresh_condition(state)
 
 
@@ -248,7 +326,7 @@ func refresh_condition(state: Dictionary) -> void:
 
 
 func select_tab(tab: StringName) -> void:
-	if not tab in TABS or (tab == TAB_HARVEST and not tab_buttons[TAB_HARVEST].visible):
+	if not tab in TABS or (tab in MUTED_TABS and not tab_buttons[tab].visible):
 		return
 	current_tab = tab
 	disarm()
@@ -258,13 +336,15 @@ func select_tab(tab: StringName) -> void:
 func _refresh_tabs() -> void:
 	for tab: StringName in TABS:
 		var selected := tab == current_tab
-		if tab == TAB_HARVEST:
+		if tab in MUTED_TABS:
 			tab_buttons[tab].theme_type_variation = &"ExamTabMutedSelected" if selected else &"ExamTabMuted"
 		else:
 			tab_buttons[tab].theme_type_variation = &"ExamTabSelected" if selected else &"ExamTabButton"
 		pages[tab].visible = selected
 	for c: Control in exam_only:
 		c.visible = current_tab == TAB_EXAM
+	for c: Control in organs_hide:
+		c.visible = current_tab != TAB_ORGANS
 
 
 func _refresh_exam(state: Dictionary, running: bool) -> void:
@@ -364,6 +444,97 @@ func _refresh_harvest(harvest: Dictionary, running: bool) -> void:
 		(row.reason as Label).visible = (row.reason as Label).text != ""
 
 
+## Phase 7: the seven specimen rows from state["organs"] (CorpseExamOrgans.state).
+func _refresh_organs(organs: Dictionary, running: bool) -> void:
+	if organs_head == null:
+		return
+	var rows: Dictionary = organs.get("rows", {})
+	organs_head.text = Phase7Texts.ORGANS_HEAD % [int(organs.get("taken", 0)), int(organs.get("max", 3))]
+	var clarity := str(organs.get("clarity_word", ""))
+	if clarity != "":
+		organs_head.text += Phase7Texts.SEP + Phase7Texts.ORGAN_CLARITY % clarity
+	var inv := _inventory()
+	for organ: StringName in organ_rows:
+		var ui: Dictionary = organ_rows[organ]
+		var entry: Dictionary = rows.get(organ, {})
+		(ui.box as Control).visible = not entry.is_empty()
+		if entry.is_empty():
+			continue
+		var containers: Array = entry.get("containers", [])
+		var chosen := chosen_container(organ, containers)
+		var jar := ui.jar as Button
+		var bundle := ui.bundle as Button
+		var taken_now := bool(entry.get("taken", false))
+		jar.visible = containers.has(SpecimenRecord.CONTAINER_JAR) and not taken_now
+		bundle.visible = containers.has(SpecimenRecord.CONTAINER_BUNDLE) and not taken_now
+		jar.theme_type_variation = &"ExamTabSelected" if chosen == SpecimenRecord.CONTAINER_JAR else &"ExamTabButton"
+		bundle.theme_type_variation = &"ExamTabSelected" if chosen == SpecimenRecord.CONTAINER_BUNDLE else &"ExamTabButton"
+		(ui.title as Label).text = str(entry.get("label", organ))
+		var taken := bool(entry.get("taken", false))
+		var reasons: Dictionary = entry.get("reasons", {})
+		var reason := str(reasons.get(chosen, SpecimenRules.REASON_NO_CARD))
+		var b := ui.button as Button
+		b.visible = not taken
+		jar.disabled = taken or running
+		bundle.disabled = taken or running
+		if armed_organ == organ:
+			b.text = Phase7Texts.ORGAN_CONFIRM_GRAVE if organ in Phase7Texts.GRAVE_ORGANS else Phase7Texts.ORGAN_CONFIRM
+		else:
+			b.text = Phase7Texts.ORGAN_TAKE % [Phase7Texts.container_word(chosen), UIKit.minutes(int(entry.get("minutes", 20)))]
+		b.disabled = running or taken or reason != ""
+		var inputs: Dictionary = (entry.get("inputs", {}) as Dictionary).get(chosen, {})
+		var info := Phase7Texts.inputs_text(inputs, inv)
+		(ui.info as Label).text = info if not taken else ""
+		(ui.info as Label).visible = not taken
+		(ui.consequence as Label).text = str(entry.get("consequence", ""))
+		(ui.consequence as Label).visible = not taken
+		var shown_reason := reason if not taken and reason != SpecimenRules.REASON_NO_CARD else ""
+		(ui.reason as Label).text = shown_reason
+		(ui.reason as Label).visible = shown_reason != ""
+		var where := str(entry.get("where", ""))
+		var taken_text := Phase7Texts.ORGAN_RETURNED if bool(entry.get("returned", false)) else Phase7Texts.ORGAN_TAKEN % (where if where != "" else Phase7Texts.NONE)
+		(ui.taken as Label).text = taken_text if taken else ""
+		(ui.taken as Label).visible = taken
+
+
+## The container shown for `organ` (the chosen one if still allowed, else the first allowed).
+func chosen_container(organ: StringName, containers: Array) -> StringName:
+	var c: StringName = organ_containers.get(organ, &"")
+	if c != &"" and containers.has(c):
+		return c
+	return StringName(str(containers[0])) if not containers.is_empty() else SpecimenRecord.CONTAINER_JAR
+
+
+func choose_container(organ: StringName, container: StringName) -> void:
+	organ_containers[organ] = container
+	if armed_organ == organ:
+		armed_organ = &""
+	_refresh_organs(_state.get("organs", {}), false)
+
+
+## First press arms the organ row, a second within confirm_seconds calls request_organ(organ, container).
+func press_organ(organ: StringName) -> void:
+	var rows: Dictionary = (_state.get("organs", {}) as Dictionary).get("rows", {})
+	var entry: Dictionary = rows.get(organ, {})
+	var container := chosen_container(organ, entry.get("containers", []))
+	if armed_organ == organ and Time.get_ticks_msec() <= _armed_until:
+		disarm()
+		_call(&"request_organ", [organ, container])
+		return
+	armed_kind = &""
+	armed_organ = organ
+	_armed_until = Time.get_ticks_msec() + int(confirm_seconds * 1000.0)
+	if _timer != null and _timer.is_inside_tree():
+		_timer.start(confirm_seconds)
+	_refresh_organs(_state.get("organs", {}), false)
+
+
+func _inventory() -> Inventory:
+	var tree := Engine.get_main_loop() as SceneTree
+	var p := tree.get_first_node_in_group(&"player") if tree != null else null
+	return p.get(&"inventory") as Inventory if p != null else null
+
+
 ## Find cards grouped by step; lost finds dimmed with their lost text; clue cards stamped.
 func refresh_findings(state: Dictionary, card_width: float) -> void:
 	UIKit.clear_children(findings_box)
@@ -399,6 +570,7 @@ func press_harvest(kind: StringName) -> void:
 		_call(&"request_harvest", [kind])
 		return
 	armed_kind = kind
+	armed_organ = &""
 	_armed_until = Time.get_ticks_msec() + int(confirm_seconds * 1000.0)
 	if _timer != null and _timer.is_inside_tree():
 		_timer.start(confirm_seconds)
@@ -406,12 +578,14 @@ func press_harvest(kind: StringName) -> void:
 
 
 func disarm() -> void:
-	if armed_kind == &"":
+	if armed_kind == &"" and armed_organ == &"":
 		return
 	armed_kind = &""
+	armed_organ = &""
 	if _timer != null and _timer.is_inside_tree():
 		_timer.stop()
 	_refresh_harvest(_state.get("harvest", {}), false)
+	_refresh_organs(_state.get("organs", {}), false)
 
 
 ## Buttons that may take the default focus (never harvest or valuables).

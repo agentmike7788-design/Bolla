@@ -191,6 +191,32 @@ func test_is_pure() -> void:
 	assert_eq(flags, {&"met_carter": true})
 
 
+## Phase 7 (docs/PHASE7_DESIGN.md §7): the village line comes after the corpse chain and the Phase-6
+## buildings goal; the Lindenacker is no Phase-3 section step.
+func test_phase7_village_line_after_the_corpse_chain() -> void:
+	var world := {"p7": true, "p7_intro": true, "visited": true, "linden_granted": true, "linden_done": 3, "linden_total": 10,
+			"sections": [{"id": &"linden", "name": "Lindenacker", "unlocked": false, "done": 3, "total": 10, "block": "", "gate": true}]}
+	assert_eq(_objective_world([], [], world), "Lindenacker: 3/10", "not „Lindenacker aufschließen“")
+	var carried := _corpse(&"carried")
+	assert_eq(_objective_world([carried], [_grave(GraveRecord.State.DUG)], world), TO_TABLE, "the corpse first")
+	world["p6"] = true
+	world["p6_intro"] = true
+	world["levels"] = {&"crypt": 1, &"chapel": 0, &"shed": 0}
+	world["goal_levels"] = {&"crypt": 2, &"chapel": 2, &"shed": 2}
+	world["goal_done"] = false
+	assert_eq(_objective_world([], [], world), "Kapelle 2 · Gruft 2 · Schuppen 2", "Phase 6 first while open")
+	world["goal_done"] = true
+	assert_eq(_objective_world([], [], world), "Lindenacker: 3/10")
+
+
+func _objective_world(corpses: Array, graves: Array, world: Dictionary) -> String:
+	var typed_corpses: Array[CorpseRecord] = []
+	typed_corpses.assign(corpses)
+	var typed_graves: Array[GraveRecord] = []
+	typed_graves.assign(graves)
+	return ObjectiveResolver.current(typed_corpses, typed_graves, _inv, NOON, {}, world)
+
+
 # --- helpers ------------------------------------------------------------------------------
 
 func _objective(corpses: Array, graves: Array, minute: int = NOON) -> String:

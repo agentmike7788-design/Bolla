@@ -12,7 +12,9 @@ const LABEL_DECAYING := "Verwesend"
 const LABEL_ROTTEN := "Verfallen"
 ## Phase 4 §2.4: dress kind → line label; harvest kind → line label.
 const DRESS_LABELS: Dictionary[StringName, String] = {&"shroud": "Leichentuch", &"gown": "Totenhemd"}
-const HARVEST_LABELS: Dictionary[StringName, String] = {&"hair": "Haar genommen", &"teeth": "Zähne genommen"}
+const HARVEST_LABELS: Dictionary[StringName, String] = {&"hair": "Haar genommen", &"teeth": "Zähne genommen",
+		&"heart": "Präparat: Herz", &"lung": "Präparat: Lunge", &"stomach": "Präparat: Magen", &"liver": "Präparat: Leber",
+		&"kidneys": "Präparat: Nieren", &"eyes": "Präparat: Augen", &"hand": "Präparat: Hand"}
 const LABEL_EXAMINED := "Untersucht"
 const LABEL_VALUABLES_LEFT := "Wertsachen liegen gelassen"
 const LABEL_VALUABLES_TAKEN := "Wertsachen genommen"

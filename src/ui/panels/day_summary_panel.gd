@@ -9,6 +9,8 @@ extends UIPanel
 ## without anything to say stay hidden.
 ## Phase 6 (docs/PHASE6_DESIGN.md §7): „Gebaut" also names the building levels („Gruft Stufe 2"),
 ## „Ausgaben" has the purpose „Gebäude", + „Ausgesegnet" and „Umgebettet" (Phase5DayLog).
+## Phase 7 (docs/PHASE7_DESIGN.md §7): + „Im Dorf" (earned · spent in the village by purpose), „Aufträge
+## erledigt", „Beziehungen" (arrows per person) and „Präparate" (taken, sold, returned …).
 
 const TEXT_TITLE := "Tag %d ist vorüber"
 const TEXT_BURIALS := "Bestattungen heute"
@@ -41,6 +43,11 @@ var spent_label: Label
 ## Phase 6 (docs/PHASE6_DESIGN.md §7): services held and boxes reinterred today.
 var services_label: Label
 var reinterred_label: Label
+## Phase 7 rows.
+var village_label: Label
+var orders_label: Label
+var relations_label: Label
+var specimens_label: Label
 ## value label -> its caption (hidden together).
 var _captions: Dictionary[Label, Label] = {}
 
@@ -83,7 +90,8 @@ static func complete_context(ctx: Dictionary, tree: SceneTree, unlocked: Array[S
 ## in the context win.
 static func complete_phase5(ctx: Dictionary, log_data: Dictionary) -> Dictionary:
 	var out := ctx.duplicate()
-	for key: String in ["gathered", "crafted", "built", "spent", "buildings", "services", "reinterred"]:
+	for key: String in ["gathered", "crafted", "built", "spent", "buildings", "services", "reinterred", "village_income",
+			"orders_done", "relations", "specimens"]:
 		if not out.has(key) and log_data.has(key):
 			out[key] = log_data[key]
 	return out
@@ -110,6 +118,10 @@ func _build() -> void:
 	spent_label = _add_row(grid, Phase5Texts.DAY_SPENT)
 	services_label = _add_row(grid, Phase6Texts.DAY_SERVICES)
 	reinterred_label = _add_row(grid, Phase6Texts.DAY_REINTERRED)
+	village_label = _add_row(grid, Phase7Texts.DAY_VILLAGE)
+	orders_label = _add_row(grid, Phase7Texts.DAY_ORDERS)
+	relations_label = _add_row(grid, Phase7Texts.DAY_RELATIONS)
+	specimens_label = _add_row(grid, Phase7Texts.DAY_SPECIMENS)
 	box.add_child(grid)
 	box.add_child(UIKit.label(TEXT_SAVED, &"DimLabel"))
 	var bottom := UIKit.hbox()
@@ -151,6 +163,18 @@ func _refresh() -> void:
 	_show(services_label, services > 0, str(services))
 	var reinterred := int(context.get("reinterred", 0))
 	_show(reinterred_label, reinterred > 0, str(reinterred))
+	var income := int(context.get("village_income", 0))
+	var spent_d: Dictionary = context.get("spent", {})
+	var village_spent := 0
+	for reason: StringName in Phase7Texts.SPENT_LABELS:
+		village_spent += int(spent_d.get(reason, spent_d.get(String(reason), 0)))
+	_show(village_label, income > 0 or village_spent > 0, Phase7Texts.DAY_VILLAGE_VALUE % [income, village_spent])
+	var done := int(context.get("orders_done", 0))
+	_show(orders_label, done > 0, str(done))
+	var rel_text := Phase7Texts.relations_text(context.get("relations", {}))
+	_show(relations_label, rel_text != "", rel_text)
+	var spec_text := Phase7Texts.specimens_text(context.get("specimens", {}))
+	_show(specimens_label, spec_text != "", spec_text)
 
 
 ## German label of a rating id (&"orderly" → "Ordentlich"); other strings pass through.

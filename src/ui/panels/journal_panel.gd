@@ -11,10 +11,17 @@ extends UIPanel
 ## Tabs by click or [ / ] (journal_page_prev / _next), J / Esc close (UIRoot). Unread entries
 ## carry a dot; they are marked read when their page is left or the book is closed.
 ## The only game call is try_link (and mark_read) – everything else is read-only.
+## Phase 7 (docs/PHASE7_DESIGN.md §7): from village_open two more tabs – „Aufträge" (running, completed,
+## missed) and „Hollerbrück" (eight people, JournalPagesPhase7); the death note lists the dead's specimens
+## with where they are, the finding and the deduced cause, and offers „Ursache deuten" (&"deduction").
 
 const PAGES: Array[StringName] = [&"people", &"clues", &"insights", &"self"]
+## Phase 7: shown from village_open.
+const PHASE7_PAGES: Array[StringName] = [&"orders", &"village"]
+const VILLAGE_FLAG := &"village_open"
 const PAGE_LABELS: Dictionary[StringName, String] = {
 	&"people": "Die Toten", &"clues": "Hinweise", &"insights": "Erkenntnisse", &"self": "Ich",
+	&"orders": "Aufträge", &"village": "Hollerbrück",
 }
 const JOURNAL_GROUP := &"journal"
 const MAX_SELECTED := 3
@@ -36,7 +43,9 @@ const TEXT_PREP_NONE := "nicht hergerichtet"
 const TEXT_WASHED := "gewaschen"
 const TEXT_LAID_OUT := "aufgebahrt"
 const TEXT_HARVESTED := "Genommen: %s"
-const HARVEST_LABELS: Dictionary[StringName, String] = {&"hair": "der Zopf", &"teeth": "die Zähne"}
+const HARVEST_LABELS: Dictionary[StringName, String] = {&"hair": "der Zopf", &"teeth": "die Zähne", &"heart": "das Herz",
+		&"lung": "die Lunge", &"stomach": "der Magen", &"liver": "die Leber", &"kidneys": "die Nieren", &"eyes": "die Augen",
+		&"hand": "die Hand"}
 const TEXT_HEARD := "Gehört: „%s“"
 const TEXT_HEARD_ANY := "Gehört: Ihr Geist hat zu dir gesprochen."
 const TEXT_SELECTED := "%d von höchstens %d gewählt"
@@ -85,6 +94,8 @@ var thread: RedThread
 ## clue id -> its card button (Hinweise page)
 var clue_buttons: Dictionary[StringName, Button] = {}
 var insight_text_label: Label
+## Phase 7: „Ursache deuten" on the death note (null = not offered).
+var deduce_button: Button
 
 
 func _build() -> void:
@@ -95,7 +106,7 @@ func _build() -> void:
 	var title := UIKit.label(TEXT_TITLE, &"HeaderLabel")
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
-	for page: StringName in PAGES:
+	for page: StringName in PAGES + PHASE7_PAGES:
 		var tab := UIKit.hbox(2)
 		var b := UIKit.button(PAGE_LABELS[page], &"JournalTabButton")
 		b.focus_mode = Control.FOCUS_NONE
@@ -135,7 +146,7 @@ func _on_opened() -> void:
 	var j: Variant = context.get("journal")
 	journal = j if is_instance_valid(j) else (get_tree().get_first_node_in_group(JOURNAL_GROUP) if is_inside_tree() else null)
 	var page := StringName(str(context.get("page", "people")))
-	current_page = page if page in PAGES else &"people"
+	current_page = page if page in pages() else &"people"
 	selected.clear()
 	link_feedback = ""
 	focused_clue = &""
@@ -153,6 +164,7 @@ func _refresh() -> void:
 	thread = null
 	link_button = null
 	insight_text_label = null
+	deduce_button = null
 	match current_page:
 		&"people":
 			_build_people()
@@ -162,11 +174,30 @@ func _refresh() -> void:
 			_build_insights()
 		&"self":
 			_build_self()
+		&"orders":
+			_page_title(left_page, PAGE_LABELS[&"orders"])
+			JournalPagesPhase7.build_orders(left_page, right_page, get_tree() if is_inside_tree() else null, _inventory(), page_width)
+		&"village":
+			_page_title(left_page, PAGE_LABELS[&"village"])
+			JournalPagesPhase7.build_village(left_page, right_page, get_tree() if is_inside_tree() else null, page_width)
+
+
+## The tabs shown now: the four Phase-4 pages, from village_open also „Aufträge" and „Hollerbrück".
+func pages() -> Array[StringName]:
+	var out: Array[StringName] = PAGES.duplicate()
+	if GameState.flag_on(VILLAGE_FLAG):
+		out.append_array(PHASE7_PAGES)
+	return out
+
+
+func _inventory() -> Inventory:
+	var p := get_tree().get_first_node_in_group(&"player") if is_inside_tree() else null
+	return p.get(&"inventory") as Inventory if p != null else null
 
 
 ## Switches the tab (marks the left page read).
 func show_page(page: StringName) -> void:
-	if not page in PAGES or page == current_page:
+	if not page in pages() or page == current_page:
 		return
 	_mark_page_read()
 	current_page = page
@@ -176,7 +207,8 @@ func show_page(page: StringName) -> void:
 
 ## ±1 page, wrapping ([ / ]).
 func turn_page(step: int) -> void:
-	show_page(PAGES[posmod(PAGES.find(current_page) + step, PAGES.size())])
+	var shown := pages()
+	show_page(shown[posmod(shown.find(current_page) + step, shown.size())])
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -306,6 +338,7 @@ func _death_note(parent: VBoxContainer, p: Dictionary) -> void:
 		body.add_child(UIKit.label(TEXT_HEARD % heard, &"InkDimLabel", true))
 	elif bool(p.get("heard_any", false)):
 		body.add_child(UIKit.label(TEXT_HEARD_ANY, &"InkDimLabel", true))
+	deduce_button = JournalPagesPhase7.build_note(body, get_tree() if is_inside_tree() else null, str(p.get("corpse_id", "")), page_width)
 
 
 func _note_entry(f: Dictionary, lost: bool) -> Control:
@@ -515,7 +548,9 @@ func _build_self() -> void:
 # --- helpers ----------------------------------------------------------------------------------
 
 func _refresh_tabs() -> void:
-	for page: StringName in PAGES:
+	var shown := pages()
+	for page: StringName in PAGES + PHASE7_PAGES:
+		tab_buttons[page].get_parent().visible = page in shown
 		tab_buttons[page].theme_type_variation = &"JournalTabSelected" if page == current_page else &"JournalTabButton"
 		tab_dots[page].modulate.a = 1.0 if page_has_unread(page) else 0.0
 

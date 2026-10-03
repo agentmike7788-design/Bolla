@@ -9,6 +9,9 @@ extends CanvasLayer
 ## Phase 3 (docs/PHASE3_DESIGN.md §7): U toggles the cemetery overview (context from
 ## CemeteryStatus, also opened by the grave register's button); the day summary is completed
 ## with stipend, reputation, dirty spots and the sections unlocked since the last summary.
+## Phase 7 (docs/PHASE7_DESIGN.md §7): the village panels (shop, gift, orders, anatomist, lecture, pult,
+## collection, deduction), the screen veil (above the panels, below the portal fade), the region name and
+## the remark bubbles.
 ## Phase 4 (docs/PHASE4_DESIGN.md §3.6, §7): J toggles the Merkbuch (not while building, not in a
 ## dialogue; context JournalManager.panel_context()), the trade panel &"trader" opens over
 ## Ilse's dialogue (dialogue action open_panel:trader).
@@ -47,6 +50,15 @@ const PANEL_SCRIPTS: Dictionary[StringName, Script] = {
 	&"building": preload("res://src/ui/panels/building_panel.gd"),
 	&"chapel": preload("res://src/ui/panels/chapel_panel.gd"),
 	&"devotion": preload("res://src/ui/panels/devotion_panel.gd"),
+	# Phase 7 (docs/PHASE7_DESIGN.md §7)
+	&"shop": preload("res://src/ui/panels/shop_panel.gd"),
+	&"gift": preload("res://src/ui/panels/gift_panel.gd"),
+	&"orders": preload("res://src/ui/panels/orders_panel.gd"),
+	&"anatomist": preload("res://src/ui/panels/anatomist_panel.gd"),
+	&"lecture": preload("res://src/ui/panels/lecture_panel.gd"),
+	&"pult": preload("res://src/ui/panels/pult_panel.gd"),
+	&"collection": preload("res://src/ui/panels/collection_panel.gd"),
+	&"deduction": preload("res://src/ui/panels/deduction_panel.gd"),
 }
 
 ## Called for "Beenden" (tests replace it).
@@ -67,6 +79,10 @@ var screen_fade: ScreenFade
 var notices: Phase3Notices
 ## Phase 5: gathered / crafted / built / spent since the last day summary.
 var day_log: Phase5DayLog
+## Phase 7 (§7): the veil of a specimen / the lecture, the region name, the villagers' remark bubbles.
+var veil: ScreenVeil
+var region_label: RegionLabel
+var remark_bubbles: RemarkBubbles
 
 ## Open UI, bottom → top: panel ids and &"dialogue".
 var _stack: Array[StringName] = []
@@ -90,8 +106,14 @@ func _ready() -> void:
 	EventBus.new_game_started.connect(_on_game_refresh)
 	EventBus.ui_modal_changed.connect(_on_ui_modal_changed)
 	dialogue_box.closed.connect(_on_dialogue_closed)
+	region_label = RegionLabel.new()
+	root_control.add_child(region_label)
+	veil = ScreenVeil.new()
+	root_control.add_child(veil)
 	screen_fade = ScreenFade.new()
 	root_control.add_child(screen_fade)
+	remark_bubbles = RemarkBubbles.new()
+	add_child(remark_bubbles)
 	notices = Phase3Notices.new()
 	notices.name = "Phase3Notices"
 	add_child(notices)

@@ -53,6 +53,8 @@ var _phase4: DebugCommandsPhase4
 var _phase5: DebugCommandsPhase5
 ## Phase-6 commands (§6 of docs/PHASE6_DESIGN.md).
 var _phase6: DebugCommandsPhase6
+## Phase-7 commands (§6 of docs/PHASE7_DESIGN.md).
+var _phase7: DebugCommandsPhase7
 
 
 func _init(console: DebugConsole) -> void:
@@ -62,6 +64,7 @@ func _init(console: DebugConsole) -> void:
 	_phase4 = DebugCommandsPhase4.new(_lookup)
 	_phase5 = DebugCommandsPhase5.new(_lookup)
 	_phase6 = DebugCommandsPhase6.new(_lookup)
+	_phase7 = DebugCommandsPhase7.new(_lookup)
 
 
 ## Runs one command (lower-case name + arguments; "clear" is handled by the console).
@@ -97,6 +100,9 @@ func run(command: String, args: PackedStringArray) -> Dictionary:
 			return _cmd_fps(args)
 		"instant":
 			return _cmd_instant(args)
+	# Phase 7 "room <inn|surgery|office>" before Phase 6's rooms.
+	if command == "room" and DebugCommandsPhase7.takes_room(args):
+		return _phase7.run(command, args)
 	# Phase 6 "build <crypt|chapel|shed|all> [1-3]" before Phase 5's "build <station|all>".
 	if command == "build" and DebugCommandsPhase6.takes_build(args):
 		return _phase6.run(command, args)
@@ -111,6 +117,8 @@ func run(command: String, args: PackedStringArray) -> Dictionary:
 		return _phase5.run(command, args)
 	if _phase6.handles(command):
 		return _phase6.run(command, args)
+	if _phase7.handles(command):
+		return _phase7.run(command, args)
 	return _error(TEXT_UNKNOWN % command)
 
 
@@ -129,6 +137,7 @@ func help_lines() -> PackedStringArray:
 	out.append_array(DebugCommandsPhase4.HELP)
 	out.append_array(DebugCommandsPhase5.HELP)
 	out.append_array(DebugCommandsPhase6.HELP)
+	out.append_array(DebugCommandsPhase7.HELP)
 	return out
 
 
@@ -262,6 +271,8 @@ func _cmd_tp(args: PackedStringArray) -> Dictionary:
 	if args.size() != 1:
 		return _error("Format: tp <%s>" % names.replace(", ", "|"))
 	var target := args[0].to_lower()
+	if target in _phase7.tp_targets():
+		return _phase7.cmd_tp(args)
 	if target in _phase6.tp_targets():
 		var p6 := _lookup.player() as Node3D
 		var at6: Variant = _phase6.tp_position(target)

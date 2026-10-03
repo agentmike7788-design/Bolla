@@ -17,6 +17,8 @@ extends UIPanel
 ## „Gruft-Tisch" / „Leichentisch") before the dead's name; the condition adds the cold of the crypt
 ## („Kühle: × 0,7 (Gruft)", CorpseManager.cold_factor_for) – the forecast already counts it
 ## (CorpseDecay.minutes_until with both window lists).
+## Phase 7 (docs/PHASE7_DESIGN.md §2.6, §7): the tab „Präparate" (CorpseExamOrgans → CorpseExamTabs) and
+## the cause „laut Osric: Fieber · gedeutet: Arsenik" once deduced (CorpseRecord.revealed_cause).
 
 const TEXT_AGE := "%d Jahre"
 const TEXT_CAUSE := "Todesursache"
@@ -115,6 +117,7 @@ func _build() -> void:
 	tabs.build(_left, column_width, self)
 	tabs.build_findings(traits_box, findings_note)
 	tabs.exam_only.append(cause_label.get_parent().get_parent() as Control)
+	tabs.organs_hide.append(freshness_bar.get_parent().get_parent().get_parent() as Control)
 
 	_make_action_row(box)
 	box.add_child(UIKit.separator())
@@ -150,6 +153,8 @@ func _refresh() -> void:
 		request_close.call_deferred()
 		return
 	var state := panel_state()
+	if not state.is_empty():
+		state["organs"] = CorpseExamOrgans.state(get_tree() if is_inside_tree() else null, record, _exam_inventory())
 	_set_mode(not state.is_empty())
 	var tables := Database.corpse_tables() as CorpseTables
 	var cause: Dictionary = tables.get_cause(record.cause_id) if tables != null else {}
@@ -160,6 +165,8 @@ func _refresh() -> void:
 	cold_label.visible = cold_label.text != ""
 	age_label.text = TEXT_AGE % record.age
 	cause_label.text = str(cause.get("label", record.cause_id))
+	if record.revealed_cause != &"":
+		cause_label.text = Phase7Texts.CAUSE_REVEALED % [cause_label.text, Phase7Texts.cause_label(record.revealed_cause)]
 	cause_text.text = str(cause.get("description", "")) if record.examined else TEXT_CAUSE_HIDDEN
 	cause_text.theme_type_variation = &"" if record.examined else &"DimLabel"
 	_refresh_condition(record)
@@ -370,6 +377,15 @@ func _shroud_block_reason(record: CorpseRecord) -> String:
 			parts.append("%d %s" % [recipe.inputs[id], UIKit.item_name(id)])
 		return TEXT_REASON_NO_SHROUD % " + ".join(parts)
 	return ""
+
+
+## The acting player's inventory (context player, else the group player) – Phase 7 specimen card.
+func _exam_inventory() -> Inventory:
+	var inv := _player_inventory()
+	if inv != null:
+		return inv
+	var p := get_tree().get_first_node_in_group(&"player") if is_inside_tree() else null
+	return p.get(&"inventory") as Inventory if p != null else null
 
 
 func _call_table(method: StringName, args: Array = []) -> void:

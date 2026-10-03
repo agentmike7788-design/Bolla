@@ -20,6 +20,8 @@ extends Control
 ## Phase 6 (docs/PHASE6_DESIGN.md §7): unchanged layout; from buildings_open the quality tooltip adds
 ## „Gruft 2/2 · Kapelle 1/2 · Schuppen 2/2 · Aussegnung 1/1 · Umbettung 3/1" and „Gräber 21 belegt ·
 ## 2 frei · 2 alt (Ruhezeit) · 4 umgebettet"; building / ossuary / chapel signals refresh it.
+## Phase 7 (docs/PHASE7_DESIGN.md §7): unchanged layout; orders, relationships, the region and the
+## consecration refresh the objective (the village line).
 
 const BASE_ITEMS: Array[StringName] = [&"coin", &"wood", &"stone", &"linen"]
 const CORPSE_MANAGER_GROUP := &"corpse_manager"
@@ -129,6 +131,12 @@ func _ready() -> void:
 	EventBus.bones_reinterred.connect(_on_workshop_changed.unbind(2))
 	EventBus.funeral_held.connect(_on_workshop_changed.unbind(3))
 	EventBus.devotion_held.connect(_on_workshop_changed.unbind(2))
+	# Phase 7 (docs/PHASE7_DESIGN.md §7): the village line of the objective.
+	EventBus.order_changed.connect(_mark_objective_dirty.unbind(2))
+	EventBus.relationship_changed.connect(_mark_objective_dirty.unbind(5))
+	EventBus.region_changed.connect(_mark_objective_dirty.unbind(1))
+	EventBus.ground_consecrated.connect(_mark_objective_dirty.unbind(1))
+	EventBus.specimen_changed.connect(_mark_objective_dirty.unbind(2))
 	refresh_all()
 
 
