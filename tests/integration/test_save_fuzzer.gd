@@ -26,7 +26,11 @@ extends TestCase
 ## services, interior_id, the new stats and flags – written as the contract §5.1 shows them; nodes
 ## the world does not have yet are ignored with a warning) gets targeted mutations of those parts.
 ## A loaded state also has in_interior ⇔ interior_id and only rooms the world has (or the hut).
-## (W3 adds the real mid-Phase-6 v5 save once the world has the buildings.)
+## W3 (Phase 6): also a real mid-Phase-6 v5 save played by Phase6Bot (reverent6, 4 days: a corpse
+## in a niche with open cold window, one on the catafalque, a box lifted and not reinterred, the
+## gravekeeper in the crypt, the shed half full); a loaded state also has at most one corpse per
+## niche / table / catafalque, a niche corpse only in an open niche, levels 0…3, reinterred ⊆
+## lifted ⊆ the liftable old graves, and no corpse in the crypt while the crypt is a site.
 
 const TIMEOUT := 600.0
 const SLOT := 94
@@ -233,6 +237,78 @@ func test_fuzz_v5_save_with_phase6_parts() -> void:
 	print("FUZZ v5 (Phase 6): %d loaded, %d rejected" % [stats.ok, stats.rejected])
 
 
+## W3 (Phase 6): Phase6Bot (reverent6) plays 4 days from slot_p5_day30_reverent; then on day 34:
+## a corpse in a niche (open cold window), one on the catafalque, a box lifted and waiting, the
+## gravekeeper in the crypt, the shed half full – saved (v5). Targeted native mutations of the
+## Phase-6 parts (incl. cold_windows, room, slot_id, interior_id) plus the JSON / native layers.
+func test_fuzz_v5_real_mid_phase6_save() -> void:
+	var text := await _make_real_v5_save()
+	var doc: Dictionary = JSON.parse_string(text)
+	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, "current format (v5)")
+	await _fuzz_text(text, "p6 real", P6_SHARE)
+	var state := SaveFileIO.decode_state(doc.get("data"))
+	var paths: Array = []
+	_collect_paths(state, [], paths)
+	paths = paths.filter(func(path: Array) -> bool:
+		for part: Variant in path:
+			if str(part) in P6_KEYS:
+				return true
+		return false)
+	assert_true(paths.size() > 40, "Phase-6 paths in the real state (%d)" % paths.size())
+	for i: int in P6_CASES:
+		var path: Array = paths[rng.randi() % paths.size()]
+		var st := state.duplicate(true)
+		var bad: Variant = _bad_value()
+		if rng.randi() % 4 == 0:
+			_erase_path(st, path)
+			bad = "<erased>"
+		else:
+			_set_path(st, path, bad)
+		var d: Dictionary = doc.duplicate(true)
+		d.data = JSON.from_native(st)
+		await _load_doc(d, "p6 real native %s = %s" % [_path_text(path), str(bad)])
+	# Targeted: two corpses claim the same niche / the catafalque; a niche of a higher crypt level;
+	# the crypt back to a site with corpses inside; reinterred beyond lifted.
+	for case: int in 6:
+		var st := state.duplicate(true)
+		var records: Array = st.nodes.corpse_manager.corpses
+		var unburied := records.filter(func(r: Variant) -> bool: return r is Dictionary and str(r.get("location")) != "buried")
+		var what := ""
+		match case:
+			0:
+				for r: Dictionary in unburied:
+					r["location"] = "niche"
+					r["room"] = "crypt"
+					r["slot_id"] = "niche_1"
+				what = "all corpses in niche_1"
+			1:
+				for r: Dictionary in unburied:
+					r["location"] = "catafalque"
+					r["room"] = "chapel"
+				what = "all corpses on the catafalque"
+			2:
+				for r: Dictionary in unburied:
+					r["location"] = "niche"
+					r["room"] = "crypt"
+					r["slot_id"] = "niche_6"
+				what = "a niche of crypt 3"
+			3:
+				st.nodes.buildings.levels = {"crypt": 0, "chapel": 0, "shed": 0}
+				what = "every building back to a site"
+			4:
+				st.nodes.ossuary.reinterred = ["old_04", "old_06", "old_07", "old_02", "old_05", "old_03", "old_01"]
+				what = "reinterred beyond lifted"
+			5:
+				for r: Dictionary in unburied:
+					r["location"] = "table"
+					r["room"] = "crypt"
+				what = "all corpses on the crypt table"
+		var d: Dictionary = doc.duplicate(true)
+		d.data = JSON.from_native(st)
+		await _load_doc(d, "p6 real targeted: " + what)
+	print("FUZZ v5 (real Phase-6 save): %d loaded, %d rejected" % [stats.ok, stats.rejected])
+
+
 func test_fuzz_v2_fixtures() -> void:
 	for id: String in Phase4Fixtures.SAVES_V2:
 		var text := FileAccess.get_file_as_string(Phase4Fixtures.save_v2_path(id))
@@ -374,6 +450,32 @@ func _check_consistent(what: String) -> void:
 	assert_eq(player.in_interior, player.interior_id != &"", "%s: in_interior ⇔ interior_id (%s)" % [what, player.interior_id])
 	if player.interior_id != &"" and player.interior_id != InteriorRoom.HUT:
 		assert_not_null(InteriorRoom.find(tree, player.interior_id), "%s: room %s exists" % [what, player.interior_id])
+	# Phase 6 (W3): the loaded corpses and buildings are within their rules.
+	var buildings := world.get_node_or_null("Systems/Buildings") as Buildings
+	var ossuary := world.get_node_or_null("Systems/Ossuary") as Ossuary
+	if buildings != null and ossuary != null:
+		var lv := buildings.levels()
+		for id: StringName in lv:
+			assert_true(int(lv[id]) >= 0 and int(lv[id]) <= 3, "%s: level %s = %d in 0…3" % [what, id, lv[id]])
+		var lifted := ossuary.pending() + ossuary.reinterred()
+		for id: String in ossuary.reinterred():
+			assert_true(id in lifted, "%s: reinterred %s was lifted" % [what, id])
+		for id: String in lifted:
+			assert_true(id in Phase6Fixtures.LIFTABLE_IDS, "%s: lifted %s is liftable" % [what, id])
+			assert_ne(world.graveyard.get_grave(id).state, GraveRecord.State.OLD, "%s: lifted %s is no OLD grave" % [what, id])
+		var taken := {}
+		for r: CorpseRecord in world.corpse_manager.records():
+			if r.location in [CorpseRecord.LOCATION_NICHE, CorpseRecord.LOCATION_TABLE, CorpseRecord.LOCATION_CATAFALQUE]:
+				var key := "%s/%s" % [r.location, r.slot_id]
+				assert_false(taken.has(key), "%s: one corpse at %s (%s, %s)" % [what, key, r.id, taken.get(key, "")])
+				taken[key] = r.id
+			if r.location == CorpseRecord.LOCATION_NICHE:
+				var niche := CryptNiche.find(tree, r.slot_id)
+				assert_true(niche != null and niche.is_open(), "%s: %s in an open niche (%s)" % [what, r.id, r.slot_id])
+			if r.room == &"crypt":
+				assert_true(buildings.level(&"crypt") >= 1, "%s: %s in the crypt while it is a site" % [what, r.id])
+			if r.location == CorpseRecord.LOCATION_CATAFALQUE:
+				assert_true(buildings.level(&"chapel") >= 1, "%s: %s on the catafalque of a ruin" % [what, r.id])
 	assert_true(TimeManager.running, what + ": the clock runs")
 	TimeManager.running = false
 	# The loaded state is stable: save → load gives the same state.
@@ -523,6 +625,57 @@ func _make_v5_save() -> String:
 		flags[StringName(key)] = true
 	doc.data = JSON.from_native(state)
 	return JSON.stringify(doc, "\t", true, true)
+
+
+## Phase6Bot (reverent6) plays 4 days from slot_p5_day30_reverent; then on day 34 (morning): a
+## corpse in a niche, one on the catafalque (serviced or not), a box lifted and waiting, the shed
+## half full, the gravekeeper in the crypt – saved (the v5 file text).
+func _make_real_v5_save() -> String:
+	assert_eq(Phase6Fixtures.install_save_v4("slot_p5_day30_reverent", saves_dir, SLOT), OK)
+	assert_eq(await SaveManager.load_game(SLOT), OK)
+	var bot := Phase6Bot.new(&"reverent6", tree)
+	bot.bind()
+	for i: int in 4:
+		await bot.run_day()
+	bot.bind()
+	var inv := bot.inv()
+	TimeManager.set_time(TimeManager.day, 600)
+	UIState.clear()
+	for id: StringName in [&"crypt", &"chapel", &"shed"]:
+		while bot.buildings.level(id) < (2 if id == &"crypt" else 1):
+			var next := BuildingRules.next_level(bot.buildings.building(id), bot.buildings.level(id))
+			for item: StringName in next.inputs:
+				inv.add_item(item, int(next.inputs[item]))
+			inv.add_item(&"coin", next.coins)
+			assert_true(bot.buildings.upgrade(id, inv), "%s up" % id)
+	# A box lifted and waiting.
+	for id: String in ["old_02", "old_05", "old_03"]:
+		if bot.ossuary.used() < bot.ossuary.capacity() and bot.graveyard.get_grave(id).state == GraveRecord.State.OLD:
+			inv.add_item(&"bone_box", 1)
+			assert_true(bot.ossuary.lift(id, inv), "lifted " + id)
+			break
+	assert_false(bot.ossuary.pending().is_empty(), "a box waits")
+	# Two corpses: one into a niche, one onto the catafalque.
+	var a := bot.manager.spawn_corpse()
+	var b := bot.manager.spawn_corpse()
+	a.dress = CorpseRecord.DRESS_SHROUD
+	b.dress = CorpseRecord.DRESS_GOWN
+	var cat := InteriorRoom.find(tree, &"chapel").get_node("Entities/Catafalque") as Catafalque
+	assert_true(bot.manager.put_down(b.id, CorpseRecord.LOCATION_CATAFALQUE, cat.slot_node().global_transform, null, &"chapel"))
+	var niche := CryptNiche.find(tree, "niche_2")
+	assert_true(bot.manager.put_down(a.id, CorpseRecord.LOCATION_NICHE, niche.slot_node().global_transform, null, &"crypt", "niche_2"))
+	assert_false(a.cold_windows.is_empty(), "open cold window")
+	# The shed half full.
+	var shed := ShedStore.find(tree).store()
+	for item: StringName in [&"wood", &"stone", &"clay", &"workstone", &"iron_ore", &"linen"]:
+		shed.add_item(item, 9)
+	# Into the crypt.
+	var door := BuildingDoor.find(tree, &"crypt")
+	HutPortal.arrive(bot.player, door.room().spawn_transform(), true, &"crypt")
+	assert_eq(bot.player.interior_id, &"crypt")
+	UIState.clear()
+	assert_eq(SaveManager.save_game(SLOT), OK)
+	return FileAccess.get_file_as_string(SaveFileIO.slot_path(saves_dir, SLOT))
 
 
 ## Phase5Bot (reverent5) plays 4 days from slot_p4_day20_reverent; then, on day 24: the kiln lit,

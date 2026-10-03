@@ -4,8 +4,9 @@ extends Node
 ## public APIs of the systems. Phase-6 nodes the world does not have yet (Systems/Buildings,
 ## Ossuary, Chapel; the three building sites, the shed store, a crypt table and the catafalque –
 ## W-Welt's builder adds them) are added at runtime from their own scripts / scenes; nothing is
-## written to the world files. Where no interior is built yet the panels stand over the outdoor
-## world at the building's site.
+## written to the world files. W3: the shed chest, the crypt table, the chapel and the devotion
+## panels are shot inside the real rooms (InteriorRoom, entered like the door does), with the real
+## altar, catafalque, crypt table and shed store.
 ## Staging: names_in_stone_complete → buildings_open; seven graves in the Alter Hof buried and
 ## marked (two of them robbed of hair and teeth); materials in the pack.
 ## Shots (1280×720, <out>/ui_<name>.jpg):
@@ -283,6 +284,32 @@ func _place_player(at: Vector3, facing: float = PI) -> void:
 	_world.get_node(^"CameraRig").call(&"snap")
 
 
+## Into the real room `id` (like BuildingDoor: HutPortal.arrive + the room's camera profile and
+## light), the gravekeeper `back` m in front of `near` (room-local +Z, towards the camera).
+func _in_room(id: StringName, near: Node3D, back: float) -> void:
+	_unframe()
+	var room := InteriorRoom.find(get_tree(), id)
+	if room == null:
+		push_error("[UiShotsP6] no room %s" % id)
+		return
+	HutPortal.arrive(_player, room.spawn_transform(), true, id)
+	if near != null and near.is_inside_tree():
+		var at := near.global_position + room.global_basis.z * back
+		at.y = room.global_position.y
+		_player.global_transform = Transform3D(Basis(Vector3.UP, PI), at)
+	_world.get_node(^"CameraRig").call(&"snap")
+	await get_tree().process_frame
+
+
+func _out_of_rooms() -> void:
+	if _player.in_interior:
+		HutPortal.arrive(_player, Transform3D(Basis.IDENTITY, _world.get_waypoint(&"dropoff") + Vector3(0.0, 0.0, -2.0)), false)
+
+
+func _altar() -> ChapelAltar:
+	return get_tree().get_first_node_in_group(&"chapel_altar") as ChapelAltar
+
+
 func _hover(control: Control) -> void:
 	var at := control.get_global_rect().get_center()
 	var window_pos := get_viewport().get_screen_transform() * at
@@ -348,9 +375,7 @@ func _shed_chest_shot() -> void:
 			[&"altar_candle", 3], [&"flax", 9], [&"linen", 4], [&"gold_leaf", 1], [&"ink", 2]]:
 		store.add_item(entry[0], entry[1])
 	_pack({&"coin": 18, &"stone": 6, &"wood": 3, &"shovel_iron": 1, &"pickaxe_iron": 1, &"bone_box_full": 1})
-	var site := _sites[&"shed"]
-	_place_player(site.global_position + Vector3(1.4, 0.0, 3.4), 0.3)
-	_frame(site.global_position + Vector3(0.0, 0.0, 1.2), 12.0)
+	await _in_room(&"shed", _shed, 1.0)
 	_ui.open_panel(&"chest", {"storage": store, "inventory": _player.inventory, "chest": _shed})
 	await get_tree().process_frame
 
@@ -372,9 +397,7 @@ func _exam_shot() -> void:
 		for step: StringName in [CorpseRecord.STEP_CLOTHING, CorpseRecord.STEP_HANDS]:
 			care.call(&"exam_step", spawned.id, step)
 	_ui.notifications.clear()
-	var site := _sites[&"crypt"]
-	_place_player(site.global_position + Vector3(1.4, 0.0, 3.2), 0.3)
-	_frame(site.global_position + Vector3(0.0, 0.0, 1.0), 11.0)
+	await _in_room(&"crypt", _crypt_table, 1.1)
 	_ui.open_panel(&"corpse_exam", {"corpse_id": spawned.id, "table": _crypt_table, "player": _player})
 	await get_tree().process_frame
 
@@ -387,11 +410,9 @@ func _chapel_shot() -> void:
 	_corpses.put_down(dead.id, CorpseRecord.LOCATION_CATAFALQUE, _catafalque.slot_node().global_transform, null, &"chapel")
 	TimeManager.set_time(DAY + 2, 630)
 	_pack({&"coin": 17, &"altar_candle": 1, &"shovel_iron": 1})
-	var site := _sites[&"chapel"]
-	_place_player(site.global_position + Vector3(0.6, 0.0, 5.0), 0.0)
-	_frame(site.global_position + Vector3(0.0, 0.0, 2.5), 16.0)
+	await _in_room(&"chapel", _catafalque, 1.3)
 	_ui.notifications.clear()
-	_ui.open_panel(&"chapel", {"corpse_id": dead.id, "altar": null, "inventory": _player.inventory, "player": _player})
+	_ui.open_panel(&"chapel", {"corpse_id": dead.id, "altar": _altar(), "inventory": _player.inventory, "player": _player})
 	await get_tree().process_frame
 
 
@@ -401,11 +422,12 @@ func _devotion_shot() -> void:
 	_pack({&"coin": 9, &"altar_candle": 3, &"shovel_iron": 1})
 	_rites.hold_devotion("plot_02", _player.inventory)
 	TimeManager.set_time(DAY + 2, 1330)
-	var site := _sites[&"chapel"]
-	_place_player(site.global_position + Vector3(0.6, 0.0, 5.0), 0.0)
-	_frame(site.global_position + Vector3(0.0, 0.0, 2.5), 16.0)
+	for record: CorpseRecord in _corpses.records():
+		if record.location == CorpseRecord.LOCATION_CATAFALQUE:
+			_corpses.put_down(record.id, CorpseRecord.LOCATION_GROUND, Transform3D(Basis.IDENTITY, HIDDEN_AT + Vector3(3.0, 0.0, 0.0)))
+	await _in_room(&"chapel", _altar(), 1.6)
 	_ui.notifications.clear()
-	_ui.open_panel(&"devotion", {"altar": null, "inventory": _player.inventory, "player": _player})
+	_ui.open_panel(&"devotion", {"altar": _altar(), "inventory": _player.inventory, "player": _player})
 	await get_tree().process_frame
 	var panel := _ui.get_panel(&"devotion") as DevotionPanel
 	for row: Dictionary in panel.rows:
@@ -415,6 +437,7 @@ func _devotion_shot() -> void:
 
 
 func _hud_chapter_shot() -> void:
+	_out_of_rooms()
 	_levels({&"crypt": 2, &"chapel": 1, &"shed": 2})
 	TimeManager.set_time(DAY + 3, 640)
 	var table := _world.get_node_by_layout_id("morgue_table") as Node3D
@@ -444,6 +467,7 @@ func _chapter_shot() -> void:
 
 ## Morning at the gate: Osric sells altar candles.
 func _osric_shot() -> void:
+	_out_of_rooms()
 	TimeManager.set_time(DAY + 4, 480)
 	UIState.clear()
 	_ui.close_all()

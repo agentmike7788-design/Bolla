@@ -600,6 +600,87 @@ func post_load() -> void:
 			push_warning("[CorpseManager] carried corpse '%s' has no carrier – put on the ground" % record.id)
 			record.location = CorpseRecord.LOCATION_GROUND
 			EventBus.corpse_updated.emit(record.id)
+	_sanitize_places()
+
+
+## Phase 6 (QA6-08, §10 save rules): a loaded place that cannot hold its corpse – a niche the crypt
+## level keeps walled up or another corpse already holds, a second corpse on the table or the
+## catafalque, a corpse inside a crypt / chapel that is still a site – puts it on the ground with a
+## warning: on the floor of its room, or outside at the building's door when the room is not built.
+## The cold window follows the new place. Valid places stay untouched (save → load identical).
+func _sanitize_places() -> void:
+	if not is_inside_tree():
+		return
+	var taken := {}
+	for record: CorpseRecord in _records.values():
+		if record.location == CorpseRecord.LOCATION_BURIED or record.location == CorpseRecord.LOCATION_CARRIED:
+			continue
+		var room := record.room
+		if room != &"" and _room_level(room) < 1:
+			_misplaced(record, &"", _door_transform(room), "the %s is not built" % room)
+			continue
+		var key := ""
+		var ok := true
+		match record.location:
+			CorpseRecord.LOCATION_NICHE:
+				key = "niche/" + record.slot_id
+				var niche := CryptNiche.find(get_tree(), record.slot_id)
+				ok = room == _crypt_config().room_id and niche != null and niche.is_open()
+			CorpseRecord.LOCATION_TABLE:
+				key = "table"
+			CorpseRecord.LOCATION_CATAFALQUE:
+				key = "catafalque"
+				ok = room != &""
+		if key == "":
+			continue
+		if not ok or taken.has(key):
+			_misplaced(record, room, _floor_transform(room, record), "%s is no place for it" % key)
+			continue
+		taken[key] = record.id
+
+
+func _misplaced(record: CorpseRecord, room: StringName, xform: Transform3D, why: String) -> void:
+	push_warning("[CorpseManager] saved corpse '%s' at %s/%s %s – put on the ground" % [record.id, record.location, record.slot_id, why])
+	var now := TimeManager.total_minutes()
+	_close_cold(record, now)
+	record.location = CorpseRecord.LOCATION_GROUND
+	record.room = room
+	record.slot_id = ""
+	_open_cold(record, now)
+	var node := _node(record.id)
+	if node != null:
+		CorpseNodePlacement.place(node, _container(), xform)
+	CorpseNodePlacement.store_transform(record, xform)
+	EventBus.corpse_updated.emit(record.id)
+
+
+## Level of the building whose room is `room` (crypt / chapel; any other room counts as built).
+func _room_level(room: StringName) -> int:
+	if room == _crypt_config().room_id:
+		return crypt_level()
+	var buildings := _first_in_group(BUILDINGS_GROUP)
+	if buildings == null or not buildings.has_method(&"level") or not buildings.has_method(&"building"):
+		return 1
+	if buildings.call(&"building", room) == null:
+		return 1
+	return int(buildings.call(&"level", room))
+
+
+## Outside in front of the building's door (the saved transform when the world has no door).
+func _door_transform(room: StringName) -> Transform3D:
+	for node: Node in get_tree().get_nodes_in_group(&"building_door"):
+		if node.get(&"building_id") == room and node.has_method(&"exit_transform"):
+			return node.call(&"exit_transform") as Transform3D
+	return Transform3D.IDENTITY
+
+
+## On the floor of `room` next to where the gravekeeper comes in (outside: where it lay).
+func _floor_transform(room: StringName, record: CorpseRecord) -> Transform3D:
+	var room_node := InteriorRoom.find(get_tree(), room) if room != &"" else null
+	if room_node == null:
+		return CorpseNodePlacement.record_transform(record)
+	var spawn := room_node.spawn_transform()
+	return Transform3D(spawn.basis, spawn.origin + spawn.basis.x * 0.9)
 
 
 # --- time ---
