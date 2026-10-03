@@ -387,8 +387,6 @@ def surgery_cabinet():
             k += 1
     # glass doors: thin frames and pale panes (painted, cloudy) over the shelves
     for sx in (-1, 1):
-        parts.append(box((sx * 0.3, -D + 0.005, 0.8 + (H - 0.8) / 2), (0.28, 0.006, (H - 0.8) / 2 - 0.02), L.hexc("#9A9C94"),
-                         ao=0.0, var=0.1, top=0.0))
         for z in (0.82, H - 0.02, 1.36):
             parts.append(box((sx * 0.3, -D - 0.002, z), (0.29, 0.012, 0.018), WOOD_DARK, ao=0.0))
         parts.append(box((sx * 0.58, -D - 0.002, 1.35), (0.018, 0.012, 0.55), WOOD_DARK, ao=0.0))

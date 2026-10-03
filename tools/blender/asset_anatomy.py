@@ -51,7 +51,7 @@ OAK = L.hexc("#6E5238")
 OAK_DARK = L.hexc("#4A3626")
 SLATE = L.hexc("#4E5258")
 SLATE_LIGHT = L.hexc("#646970")
-CLOTH = L.hexc("#B8B09A")            # the cover cloth (unbleached, a little grey)
+CLOTH = L.hexc("#A8A08A")            # the cover cloth (unbleached, a little grey)
 CLOTH_DARK = L.hexc("#948C78")
 IRON = P.IRON
 BRASS = L.hexc("#8C7648")
@@ -211,6 +211,34 @@ def _cloth_over(parts, x0, x1, y0, y1, z_top: float, z_drop: float, seed: int = 
     return o
 
 
+def _curtain(x0: float, x1: float, y: float, z_top: float, z_bot: float, seed: int = 0, n: int = 10):
+    """A cloth curtain on a rod: a grid sheet with vertical folds (deeper towards the gathered side)."""
+    from asset_carter import _thicken
+    bm = bmesh.new()
+    rows = []
+    for j, z in enumerate((z_top, (z_top + z_bot) / 2, z_bot)):
+        row = []
+        for i in range(n + 1):
+            t = i / n
+            x = x0 + (x1 - x0) * t
+            fold = (0.012 + 0.012 * t) * math.sin(t * math.pi * 7.0 + seed)
+            row.append(bm.verts.new((x, y + fold - 0.004 * j, z + (0.01 * t * j if j else 0.0))))
+        rows.append(row)
+    for r0, r1 in zip(rows, rows[1:]):
+        for i in range(n):
+            bm.faces.new((r0[i], r0[i + 1], r1[i + 1], r1[i]))
+    o = P._link(bm, "curtain")
+    _thicken(o, 0.006)
+    _paint(o, CLOTH, var=0.14, ao=0.25, top=0.2, hue_shift=CLOTH_DARK, seed=seed)
+
+    def shade(co, nr):
+        t = (co.x - x0) / max(1e-6, x1 - x0)
+        return 1.0 - 0.18 * max(0.0, math.sin(t * math.pi * 7.0 + seed + 1.2)), None, 0.0
+    from asset_carter import _tint
+    _tint(o, shade)
+    return o
+
+
 def _done(parts, name: str, markers=(), smooth: float = 40.0):
     obj = L.join(parts, name)
     for m, loc in markers:
@@ -248,7 +276,7 @@ def pult():
     for k, x in enumerate(xs):
         jar(parts, (x, 0.17, zt), h=0.17, r=0.06, seed=10 + k, n=8, label=False)
     _cloth_over(parts, -0.6, 0.18, 0.06, 0.3, zt + 0.02, zt, seed=20, nx=10, ny=4,
-                bumps=[(x, 0.17, 0.16, 0.12) for x in xs])
+                bumps=[(x, 0.17, 0.22, 0.12) for x in xs])
     # front of the top: sealing wax stick, blank labels, mortar, the recipe book, a row of little vials
     parts.append(VB._beam((0.32, -0.15, zt + 0.012), (0.46, -0.1, zt + 0.012), 0.01, WAX, seed=30))
     for k in range(3):
@@ -294,12 +322,8 @@ def collection_shelf():
                 parts.append(box((0.0, 0.0, z + 0.2), (0.012, D - 0.02, 0.2), OAK_DARK, seed=6, ao=0.3))
             # rod and a curtain drawn half aside (covers the left part), the label strip below
             parts.append(VB._beam((cx - cw, -D + 0.02, z + 0.38), (cx + cw, -D + 0.02, z + 0.38), 0.006, IRON, seed=7))
-            cl = L.prim("cube", loc=(cx - cw * 0.45, -D + 0.02, z + 0.2), scale=(cw * 0.55, 0.012, 0.18))
-            L.subdivide(cl, 2)
-            for v in cl.data.vertices:
-                v.co.y += 0.015 * math.sin((v.co.x - cx) * 60.0)
-            L.jitter(cl, 0.003, 30.0, 8 + len(slots))
-            parts.append(_paint(cl, CLOTH, var=0.14, ao=0.25, top=0.2, hue_shift=CLOTH_DARK))
+            cl = _curtain(cx - cw, cx - cw + cw * 1.1, -D + 0.025, z + 0.37, z + 0.02, seed=8 + len(slots))
+            parts.append(cl)
             parts.append(box((cx, -D + 0.005, z - 0.03), (cw * 0.5, 0.004, 0.016), PAPER, ao=0.0, var=0.05))
             slots.append(Vector((cx + cw * 0.45, 0.0, z)))
     # slot order bottom-left first; seven compartments

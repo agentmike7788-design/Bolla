@@ -619,8 +619,8 @@ def church():
             _quoins(parts, sx * (tx + 0.005), sy + (-0.005 if sy == t0 else 0.005), sx, -1 if sy == t0 else 1,
                     0.3 if sy == t1 else ridge - 0.4, t_top, 400 + int(sy * 10) + sx)
     parts.append(_box((0.0, (t0 + t1) / 2, t_top + 0.12), (tx + 0.15, (t1 - t0) / 2 + 0.15, 0.12), SAND, top=0.3))
-    spire = L.prim("cone", loc=(0.0, (t0 + t1) / 2, t_top + 0.24 + 2.0), vertices=8, radius1=tx + 0.08, radius2=0.03,
-                   depth=4.0, rot=(0, 0, 22.5))
+    spire = L.prim("cone", loc=(0.0, (t0 + t1) / 2, t_top + 0.24 + 1.925), vertices=8, radius1=tx + 0.08, radius2=0.03,
+                   depth=3.85, rot=(0, 0, 22.5))
     L.subdivide(spire, 1)
     for v in spire.data.vertices:   # flare at the foot
         tt = (v.co.z - (t_top + 0.24)) / 4.0
@@ -632,9 +632,9 @@ def church():
                                                 0.95 + 0.08 * noise.noise(co * 2.0)))
     L.set_mat(spire, L.MAT_PAINTED)
     parts.append(spire)
-    tip = t_top + 0.24 + 4.0
+    tip = t_top + 0.24 + 3.85
     parts.append(L.part("ico", BRASS, loc=(0.0, (t0 + t1) / 2, tip + 0.02), radius=0.1, subdivisions=1))
-    B6._cross(parts, Vector((0.0, (t0 + t1) / 2, tip + 0.08)), 0.62, color=IRON, seed=450)
+    B6._cross(parts, Vector((0.0, (t0 + t1) / 2, tip + 0.08)), 0.5, color=IRON, seed=450)
     _done(parts, "ph_bld_v_church", markers)
 
 
@@ -646,8 +646,8 @@ def office():
     random.seed(7010)
     L.reset(7010)
     parts = []
-    x0, x1, y0, y1 = -4.4, 4.4, -3.2, 3.2
-    g1, eave, ridge = 3.0, 5.7, 8.4
+    x0, x1, y0, y1 = -4.25, 4.25, -3.2, 3.2
+    g1, eave, ridge = 3.0, 5.7, 8.0
     jet = 0.18   # upper floor jetty over the south front
     win_x = (-3.3, -1.7, 1.7, 3.3)
     up_x = (-3.3, -1.7, 0.0, 1.7, 3.3)
@@ -704,8 +704,8 @@ def office():
             markers.append(("light_window_1", lp))
     for face, plane in (("E", x1), ("W", x0)):
         _win(parts, face, plane, -jet / 2, g1 + 0.8, 0.6, 1.1, seed=360 + SIGN[face])
-    _roof(parts, "x", 0.0, -jet / 2, 3.2 + jet / 2, 4.4, eave, ridge, TILE, over=0.4, row=0.36, seg=0.8, seed=400, mossy=0.2)
-    _chimney(parts, 2.6, 0.9, ridge - 1.8, ridge + 0.8, seed=410)
+    _roof(parts, "x", 0.0, -jet / 2, 3.2 + jet / 2, 4.25, eave, ridge, TILE, over=0.33, row=0.36, seg=0.8, seed=400, mossy=0.2, end_over=0.18)
+    _chimney(parts, 2.6, 0.9, ridge - 1.8, ridge + 0.28, seed=410)
     _done(parts, "ph_bld_v_office", markers)
 
 
@@ -718,7 +718,7 @@ def inn():
     L.reset(7020)
     parts = []
     x0, x1, y0, y1 = -4.8, 4.8, -3.2, 3.2
-    g1, eave, ridge = 2.8, 4.9, 8.4
+    g1, eave, ridge = 2.8, 4.9, 8.0
     gx = (-3.4, -1.7, 1.7, 3.4)
     markers = []
     # ground floor: plaster over a rubble socle
@@ -759,8 +759,8 @@ def inn():
     for i, x in enumerate(gx):
         _win(parts, "S", y0, x, g1 + 0.55, 0.75, 1.1, seed=300 + i * 10)
     _win(parts, "S", y0, 0.0, eave + 0.35, 0.6, 0.9, seed=350)
-    _roof(parts, "y", 0.0, 0.0, 4.8, 3.2, eave, ridge, TILE_OLD, over=0.45, row=0.36, seg=0.8, seed=400, mossy=0.3, end_over=0.35)
-    _chimney(parts, -1.6, 1.8, ridge - 2.2, ridge + 0.5, seed=410)
+    _roof(parts, "y", 0.0, 0.0, 4.8, 3.2, eave, ridge, TILE_OLD, over=0.38, row=0.36, seg=0.8, seed=400, mossy=0.3, end_over=0.35)
+    _chimney(parts, -1.6, 1.8, ridge - 2.2, ridge + 0.32, seed=410)
     # the sign on its bracket, east of the door, and the lantern west of it
     st = _sign(parts, "S", y0, 1.2, 3.25, 0.95, "elder", seed=500)
     markers.append(("label_board", st))
@@ -871,7 +871,7 @@ def shop():
     L.reset(7040)
     parts = []
     x0, x1, y0, y1 = -2.9, 2.9, -2.3, 2.3
-    eave, ridge = 3.3, 5.85
+    eave, ridge = 3.3, 5.5
     gf = _gable_fn(2.3, eave, ridge - 0.12)
     win = (0.0, 1.6, 0.95, 2.05)   # the shop window in the east wall
     _wall(parts, "E", x1, y0, y1, 0.0, ridge, [win], top=gf, base=PLASTER_ROSE, seed=1, zr=(0.0, ridge))
@@ -931,7 +931,7 @@ def shop():
     parts.append(_beam((x1 + 0.08, -1.27, 2.45), (x1 + 0.08, -1.03, 2.45), 0.01, BRASS, seed=62))
     parts.append(_beam((x1 + 0.08, -1.15, 2.55), (x1 + 0.08, -1.15, 2.37), 0.008, BRASS, seed=63))
     _roof(parts, "x", 0.0, 0.0, 2.3, 2.9, eave, ridge, TILE, over=0.35, row=0.34, seg=0.7, seed=70, mossy=0.25)
-    _chimney(parts, -0.9, -0.3, ridge - 1.5, ridge + 0.6, hw=0.22, seed=80)
+    _chimney(parts, -0.9, -0.3, ridge - 1.5, ridge + 0.36, hw=0.22, seed=80)
     markers.append(("counter", Vector((3.7, 0.0, 0.0))))
     _done(parts, "ph_bld_v_shop", markers)
 
@@ -945,7 +945,7 @@ def surgery():
     L.reset(7050)
     parts = []
     x0, x1, y0, y1 = -3.2, 3.2, -3.8, 3.8
-    g1, eave, ridge = 2.9, 5.3, 7.85
+    g1, eave, ridge = 2.9, 5.3, 7.5
     gf = _gable_fn(3.2, eave, ridge - 0.12)
     wy = (-2.2, 2.2)
     uy = (-2.4, 0.0, 2.4)
@@ -991,7 +991,7 @@ def surgery():
     parts.append(L.part("torus", BRASS, loc=(x0 - 0.06, 0.75, 1.3), rot=(0, 90, 0), major_radius=0.04, minor_radius=0.01,
                         major_segments=8, minor_segments=3))
     _roof(parts, "y", 0.0, 0.0, 3.2, 3.8, eave, ridge, SLATE, over=0.35, row=0.35, seg=0.75, seed=300, mossy=0.15)
-    _chimney(parts, 1.2, 1.6, ridge - 1.4, ridge + 0.6, hw=0.24, seed=310, color=SAND_DARK)
+    _chimney(parts, 1.2, 1.6, ridge - 1.4, ridge + 0.36, hw=0.24, seed=310, color=SAND_DARK)
     _done(parts, "ph_bld_v_surgery", markers)
 
 
@@ -1020,7 +1020,7 @@ def remise():
     L.reset(7060)
     parts = []
     x0, x1, y0, y1 = -3.4, 3.4, -2.3, 2.3
-    eave, ridge = 2.8, 4.85
+    eave, ridge = 2.8, 4.75
     gf = _gable_fn(2.3, eave, ridge - 0.12)
     _plinth(parts, x0, x1, y0, y1, 0.35, seed=1, skip=())
     gate = (-1.3, 1.3)
@@ -1042,7 +1042,7 @@ def remise():
                 parts.append(_box((x0 - 0.06, a, 1.3), (0.03, 0.125, 1.2), L.scale_c(WOOD, random.uniform(0.85, 1.1)), jit=0.004,
                                   seed=150 + k, var=0.2, ao=0.3))
             else:
-                ang = math.radians(-70)
+                ang = math.radians(-30)
                 hinge = Vector((x0 - 0.06, 1.3, 0.0))
                 off = Vector((math.sin(ang) * (1.3 - a), -math.cos(ang) * (1.3 - a), 0.0))
                 o = L.prim("cube", scale=(0.03, 0.125, 1.2))
@@ -1070,7 +1070,7 @@ def _cottage(name: str, thatch: bool, seed: int):
     L.reset(seed)
     parts = []
     x0, x1, y0, y1 = -2.7, 2.7, -2.05, 2.05
-    eave, ridge = 2.35, 4.35 if thatch else 4.3
+    eave, ridge = 2.35, 4.22 if thatch else 4.3
     gf = _gable_fn(2.05, eave, ridge - 0.15)
     base = PLASTER if thatch else PLASTER_PALE
     _wall(parts, "N", y1, x0, x1, 0.0, eave, [(0.0, 0.9, 0.0, 1.95), (1.6, 0.6, 0.9, 1.7)], base=base, seed=1, stones=0.35 if thatch else 0.1)
@@ -1112,7 +1112,7 @@ def _cottage(name: str, thatch: bool, seed: int):
                 parts.append(_box_paint(L.tube(p0, p1, 0.11, 6), THATCH[1], var=0.2))
     else:
         _roof(parts, "x", 0.0, 0.0, 2.05, 2.7, eave, ridge, SHINGLE, over=0.35, row=0.3, seg=0.65, seed=60, mossy=0.35)
-    _chimney(parts, -1.4, 0.4, ridge - 1.0, ridge + 0.55, hw=0.2, seed=70)
+    _chimney(parts, -1.4, 0.4, ridge - 1.0, ridge + 0.5, hw=0.2, seed=70)
     _done(parts, name, markers)
 
 
@@ -1157,7 +1157,7 @@ def _house(name: str, seed: int, base, roof_pal, gable_front: bool, w: float, d:
         markers.append(("door_outside", Vector((-w / 4, y0 - 0.5, 0.0))))
         markers.append(("ribbon", Vector((-w / 4, y0 - 0.08, 2.18))))
         _roof(parts, "y", 0.0, 0.0, w / 2, d / 2, eave, ridge, roof_pal, over=0.35, row=0.35, seg=0.75, seed=40, mossy=0.3)
-        _chimney(parts, w / 4 - 0.2, d / 4, ridge - 1.2, ridge + 0.5, hw=0.22, seed=50)
+        _chimney(parts, w / 4 - 0.2, d / 4, ridge - 1.2, ridge + 0.36, hw=0.22, seed=50)
     else:
         gf = _gable_fn(d / 2, eave, ridge - 0.12)
         wx = (-w / 3, w / 3)
@@ -1188,7 +1188,7 @@ def _house(name: str, seed: int, base, roof_pal, gable_front: bool, w: float, d:
         markers.append(("door_outside", Vector((0.0, y0 - 0.5, 0.0))))
         markers.append(("ribbon", Vector((0.0, y0 - 0.08, 2.18))))
         _roof(parts, "x", 0.0, 0.0, d / 2, w / 2, eave, ridge, roof_pal, over=0.35, row=0.35, seg=0.75, seed=40, mossy=0.3)
-        _chimney(parts, -w / 4, 0.4, ridge - 1.2, ridge + 0.5, hw=0.22, seed=50)
+        _chimney(parts, -w / 4, 0.4, ridge - 1.2, ridge + 0.36, hw=0.22, seed=50)
     _plinth(parts, x0, x1, y0, y1, 0.4, seed=60)
     if sign:
         st = _sign(parts, "E", x1, y0 + 0.5, 3.2, 0.9, sign, seed=70)
@@ -1197,19 +1197,19 @@ def _house(name: str, seed: int, base, roof_pal, gable_front: bool, w: float, d:
 
 
 def house_a():
-    _house("ph_bld_v_house_a", 7090, PLASTER_OCHRE, TILE, False, 6.6, 5.0, 4.6, 6.9)
+    _house("ph_bld_v_house_a", 7090, PLASTER_OCHRE, TILE, False, 6.6, 5.0, 4.5, 6.5)
 
 
 def house_b():
-    _house("ph_bld_v_house_b", 7100, PLASTER_GREY, SHINGLE, False, 6.0, 4.8, 4.5, 6.8)
+    _house("ph_bld_v_house_b", 7100, PLASTER_GREY, SHINGLE, False, 6.0, 4.8, 4.4, 6.5)
 
 
 def house_c():
-    _house("ph_bld_v_house_c", 7110, PLASTER_ROSE, TILE_OLD, True, 5.2, 6.0, 4.4, 6.9)
+    _house("ph_bld_v_house_c", 7110, PLASTER_ROSE, TILE_OLD, True, 5.2, 6.0, 4.3, 6.5)
 
 
 def inn2():
-    _house("ph_bld_v_inn2", 7120, PLASTER_DIRTY, SHINGLE, False, 7.0, 5.0, 4.0, 6.6, upper_timber=True, sign="stump")
+    _house("ph_bld_v_inn2", 7120, PLASTER_DIRTY, SHINGLE, False, 7.0, 5.0, 4.0, 6.5, upper_timber=True, sign="stump")
 
 
 ASSETS = [church, office, inn, smithy, shop, surgery, remise, cottage_a, cottage_b, house_a, house_b, house_c, inn2]
