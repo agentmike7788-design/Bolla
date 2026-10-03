@@ -214,9 +214,23 @@
           <header class="tree-head">
             <h2>Karte wählen</h2>
             <p>Jede Karte hat ihre eigenen Erze und Missionen. Im freien Spiel gibt es alles und den Forschungsbaum.</p>
+            <button type="button" data-campaign>Kampagne</button>
             <button type="button" class="link" data-close>Schließen <kbd>Esc</kbd></button>
           </header>
           <div class="maps-list" id="maps-list"></div>
+        </section>
+      </div>
+      <div class="menu campaign" id="campaign" hidden>
+        <section class="menu-box cp-box" role="dialog" aria-label="Kampagne">
+          <header class="tree-head">
+            <h2>Kampagne</h2>
+            <p class="cp-summary"></p>
+            <button type="button" class="link" data-close>Schließen <kbd>Esc</kbd></button>
+          </header>
+          <div class="cp-body">
+            <div class="cp-route"></div>
+            <aside class="cp-detail"></aside>
+          </div>
         </section>
       </div>
       <div class="menu" id="win" hidden>
@@ -225,14 +239,18 @@
           <h2 id="win-title"></h2>
           <p class="stars" id="win-stars"></p>
           <p class="win-time" id="win-time"></p>
+          <div class="win-campaign" id="win-campaign" hidden></div>
           <div class="goal-actions win-actions">
             <button type="button" id="win-next">Nächste Karte</button>
+            <button type="button" class="link" id="win-to-campaign" data-campaign hidden>Kampagne</button>
             <button type="button" class="link" data-maps>Kartenauswahl</button>
             <button type="button" class="link" data-close>Weiterbauen</button>
           </div>
         </section>
       </div>
       <div class="toast" id="toast" role="status" hidden></div>
+      <div class="radio" id="radio" role="status" aria-live="polite" hidden></div>
+      <div class="chapter-card" id="chapter-card" hidden></div>
       <div class="achievement" id="achievement" role="status" hidden></div>
     </div>
     <script type="module" src="/src/main.js"></script>

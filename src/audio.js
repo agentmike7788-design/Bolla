@@ -246,6 +246,14 @@ export function createAudio() {
         tone({ type: 'triangle', freq: f * 1.5, attack: 0.005, decay: 0.3, peak: 0.03, t: t + i * 0.06 });
       });
     },
+    // A radio message: a crackle of static and two short chirps.
+    radio() {
+      if (!ctx || throttle('radio', 300)) return;
+      const t = now();
+      hiss({ filter: 'bandpass', freq: 2400, attack: 0.005, decay: 0.12, peak: 0.12, q: 0.8, t });
+      tone({ type: 'square', freq: 1760, attack: 0.002, decay: 0.05, peak: 0.035, t: t + 0.1 });
+      tone({ type: 'square', freq: 2350, attack: 0.002, decay: 0.07, peak: 0.035, t: t + 0.17 });
+    },
     // Defence: a gun shot, a laser zap, a creature dying, an explosion, the alarm.
     gun(pan = 0, level = 1) {
       if (!ctx || level < 0.04 || throttle('gun', 55)) return;

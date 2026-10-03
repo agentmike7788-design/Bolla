@@ -1,6 +1,7 @@
 import { listSaves, whenText, playTimeText } from './save.js';
 import { ACHIEVEMENTS, loadAchievements } from './achievements.js';
 import { ENEMY_MODES } from './enemies.js';
+import { CAMPAIGN, loadCampaign } from './campaign.js';
 
 // The title screen and the pause menu. Both share one overlay: a column of
 // big menu entries on the left and the open page (saves, settings, controls)
@@ -42,6 +43,7 @@ export function createMenu({ root, audio, dayNight, graphics, onGraphics, action
       mode === 'title'
         ? [
             latest && ['continue', 'Weiterspielen', latest.name],
+            ['campaign', 'Kampagne', campaignHint()],
             ['new', 'Neues Spiel', 'Karte wählen'],
             ['tutorial', 'Tutorial', actions.tutorialDone() ? 'noch mal ansehen' : 'erste Schritte, 5 Minuten'],
             ['load', 'Laden', `${listSaves().length || 'keine'} Spielstände`],
@@ -52,6 +54,7 @@ export function createMenu({ root, audio, dayNight, graphics, onGraphics, action
         : [
             ['resume', 'Weiterspielen', 'Esc'],
             ['save', 'Speichern', 'Strg S'],
+            ['campaign', 'Kampagne', campaignHint()],
             ['load', 'Laden', ''],
             ['achievements', 'Erfolge', achievementCount()],
             ['settings', 'Einstellungen', ''],
@@ -139,6 +142,11 @@ export function createMenu({ root, audio, dayNight, graphics, onGraphics, action
       </div>`;
   }
 
+  function campaignHint() {
+    const done = Object.keys(loadCampaign().done).length;
+    return done ? `${done} von ${CAMPAIGN.length} Karten` : 'die Geschichte des Archipels';
+  }
+
   function achievementCount() {
     const earned = loadAchievements();
     return `${ACHIEVEMENTS.filter((a) => earned[a.id]).length} von ${ACHIEVEMENTS.length}`;
@@ -221,6 +229,7 @@ export function createMenu({ root, audio, dayNight, graphics, onGraphics, action
     const run = {
       continue: actions.continueGame,
       new: actions.newGame,
+      campaign: actions.campaign,
       tutorial: actions.tutorial,
       resume: actions.resume,
       save: actions.save,
