@@ -12,11 +12,12 @@ import { createMissionView, clock } from './missionView.js';
 import { createAudio } from './audio.js';
 import { createEffects } from './effects.js';
 import { createDayNight } from './daynight.js';
+import { listSaves, readSave, writeSave, deleteSave, exportSave, importSave, newSaveId, SAVE_VERSION } from './save.js';
+import { createMenu } from './menu.js';
 import './style.css';
 
 const canvas = document.getElementById('scene');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -37,8 +38,6 @@ scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffe2b8, 2.5);
 sun.position.set(38, 42, 22);
 sun.castShadow = true;
-const shadowSize = matchMedia('(pointer: coarse)').matches ? 2048 : 4096;
-sun.shadow.mapSize.set(shadowSize, shadowSize);
 const half = (MAP_SIZE * TILE) / 2 + 4;
 Object.assign(sun.shadow.camera, { left: -half, right: half, top: half, bottom: -half, near: 1, far: 160 });
 sun.shadow.bias = -0.0004;
@@ -81,14 +80,22 @@ let factory;
 let scenario; // the map being played, see scenarios.js
 let missions = null; // mission progress, null in the free game
 
+let slotId = null; // save slot of the running game, see save.js
+let savedOnce = false; // an empty new game is only saved once something happened
+
 // Start a map: the free game with a random (or given) seed, or a scenario.
 function startGame(next, seed = Math.floor(Math.random() * 99999)) {
+  leaveGame();
   scenario = next;
+  slotId = newSaveId();
+  savedOnce = false;
   if (scenario.free) loadWorld(seed);
   else loadWorld(scenario.seed, scenario);
+  rig.controls.target.set(0, 0, 0);
+  camera.position.set(0, 34, 34);
 }
 
-function loadWorld(seed, mapScenario = null) {
+function loadWorld(seed, mapScenario = null, saved = null) {
   if (meshes) {
     scene.remove(meshes.group);
     meshes.group.traverse((o) => {
@@ -101,6 +108,11 @@ function loadWorld(seed, mapScenario = null) {
   scene.add(meshes.group);
   factory = createFactory(world, { start: mapScenario?.start });
   missions = mapScenario ? createMissions(mapScenario, factory) : null;
+  if (saved) {
+    factory.load(saved.factory);
+    missions?.load(saved.missions);
+    for (const b of factory.buildings.values()) meshes.setDecorHidden(b.index, true);
+  }
   factoryView.clear();
   effects.clear();
   shapesDirty = true;
@@ -267,6 +279,7 @@ mapsList.addEventListener('click', (e) => {
   if (!card) return;
   mapsMenu.hidden = true;
   startGame(scenarioById(card.dataset.map));
+  if (menu.isOpen) closeMenu();
 });
 for (const menu of [mapsMenu, winMenu]) {
   menu.addEventListener('click', (e) => {
@@ -278,48 +291,199 @@ document.getElementById('goal').addEventListener('click', (e) => e.target.closes
 document.getElementById('maps-open').addEventListener('click', openMaps);
 const menuOpen = () => !mapsMenu.hidden || !winMenu.hidden;
 
-// --- Sound and daylight settings ---------------------------------------------
+// --- Graphics settings --------------------------------------------------------
 
-const settingsPanel = document.getElementById('settings');
-const settingsOpen = document.getElementById('settings-open');
+const GRAPHICS_KEY = 'bolla.graphics';
+const MOBILE = matchMedia('(pointer: coarse)').matches;
+const graphics = { shadows: 'high', resolution: 'high', particles: true, autosave: 60 };
+try {
+  Object.assign(graphics, JSON.parse(localStorage.getItem(GRAPHICS_KEY)));
+} catch {}
+
+function applyGraphics() {
+  sun.castShadow = graphics.shadows !== 'off';
+  const size = (graphics.shadows === 'high' ? 4096 : 2048) / (MOBILE ? 2 : 1);
+  if (sun.shadow.mapSize.x !== size) {
+    sun.shadow.map?.dispose();
+    sun.shadow.map = null;
+    sun.shadow.mapSize.set(size, size);
+  }
+  const ratio = { low: 0.75, normal: 1.25, high: 2 }[graphics.resolution] ?? 2;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, ratio));
+  effects.group.visible = graphics.particles;
+  if (!graphics.particles) effects.clear();
+}
+
+function setGraphics(changes) {
+  Object.assign(graphics, changes);
+  try {
+    localStorage.setItem(GRAPHICS_KEY, JSON.stringify(graphics));
+  } catch {}
+  applyGraphics();
+  resize();
+}
+
 const clockLabel = document.getElementById('clock');
 const clockIcon = document.getElementById('clock-icon');
-const volInput = document.getElementById('vol');
-const musicInput = document.getElementById('music');
-const muteInput = document.getElementById('mute');
-const dayModes = document.querySelectorAll('#daymode [data-mode]');
 
-function renderSettings() {
-  volInput.value = audio.settings.volume;
-  musicInput.value = audio.settings.music;
-  muteInput.checked = audio.settings.muted;
-  for (const b of dayModes) b.setAttribute('aria-checked', String(b.dataset.mode === dayNight.mode));
-}
-function toggleSettings(open = settingsPanel.hidden) {
-  settingsPanel.hidden = !open;
-  settingsOpen.setAttribute('aria-expanded', String(open));
-  if (open) renderSettings();
-}
 function toggleMute() {
   audio.set({ muted: !audio.settings.muted });
-  renderSettings();
+  menu.refresh();
   showToast(audio.settings.muted ? 'Ton aus' : 'Ton an', 'Taste U schaltet um.');
 }
-settingsOpen.addEventListener('click', () => toggleSettings());
-volInput.addEventListener('input', () => audio.set({ volume: Number(volInput.value), muted: false }));
-volInput.addEventListener('change', () => {
-  renderSettings();
-  audio.play.build('drill');
-});
-musicInput.addEventListener('input', () => audio.set({ music: Number(musicInput.value) }));
-muteInput.addEventListener('change', () => audio.set({ muted: muteInput.checked }));
-for (const b of dayModes) {
-  b.addEventListener('click', () => {
-    dayNight.setMode(b.dataset.mode);
-    renderSettings();
-  });
+
+// --- Saving and loading -------------------------------------------------------
+
+const savedLabel = document.getElementById('saved');
+const thumbCanvas = Object.assign(document.createElement('canvas'), { width: 240, height: 135 });
+let autosaveTimer = 0;
+let savedTimer = 0;
+
+const gameName = () => (scenario.free ? `Freies Spiel #${world.seed}` : scenario.name);
+
+// A small picture of the map for the save list, taken right after a render.
+function thumbnail() {
+  renderer.render(scene, camera);
+  const ctx = thumbCanvas.getContext('2d');
+  const src = renderer.domElement;
+  // Cut the middle of the screen to 16:9.
+  const w = Math.min(src.width, (src.height * 16) / 9);
+  const h = (w * 9) / 16;
+  ctx.drawImage(src, (src.width - w) / 2, (src.height - h) / 2, w, h, 0, 0, thumbCanvas.width, thumbCanvas.height);
+  return thumbCanvas.toDataURL('image/jpeg', 0.72);
 }
-document.getElementById('skip-time').addEventListener('click', () => dayNight.skipAhead());
+
+// Writes the running game to its slot. `manual` saves even an untouched map.
+function saveGame({ manual = false, quiet = false } = {}) {
+  if (!factory || !slotId) return false;
+  if (!manual && !savedOnce && !factory.buildings.size) return false;
+  const data = {
+    v: SAVE_VERSION,
+    scenario: scenario.id,
+    seed: world.seed,
+    factory: factory.save(),
+    missions: missions?.save() ?? null,
+    dayTime: dayNight.time,
+    camera: { position: camera.position.toArray(), target: rig.controls.target.toArray() },
+  };
+  const meta = { id: slotId, name: gameName(), scenario: scenario.id, savedAt: Date.now(), playTime: factory.time, buildings: factory.buildings.size, thumb: thumbnail() };
+  const ok = writeSave(meta, data);
+  if (!ok) {
+    showToast('Speichern fehlgeschlagen', 'Kein Platz mehr im Browser. Lösche alte Spielstände unter Laden.');
+    return false;
+  }
+  savedOnce = true;
+  autosaveTimer = 0;
+  savedLabel.textContent = '✓ Gespeichert';
+  savedLabel.classList.add('show');
+  savedTimer = 2.5;
+  if (manual && !quiet) showToast('Gespeichert', `${meta.name} · in diesem Browser`);
+  return true;
+}
+
+// Before another game replaces the running one.
+function leaveGame() {
+  if (factory && !inTitle) saveGame();
+}
+
+function loadGame(id) {
+  const data = readSave(id);
+  const next = data && scenarioById(data.scenario);
+  if (!next) {
+    showToast('Laden fehlgeschlagen', 'Der Spielstand ist beschädigt.');
+    return false;
+  }
+  leaveGame();
+  scenario = next;
+  slotId = id;
+  savedOnce = true;
+  loadWorld(data.seed, next.free ? null : next, data);
+  dayNight.setTime(data.dayTime ?? 0.02);
+  if (data.camera) {
+    camera.position.fromArray(data.camera.position);
+    rig.controls.target.fromArray(data.camera.target);
+  }
+  return true;
+}
+
+// --- Title screen and pause menu ----------------------------------------------
+
+const app = document.getElementById('app');
+let inTitle = true;
+
+function closeMenu() {
+  menu.close();
+  inTitle = false;
+  app.classList.remove('in-title');
+  rig.setLocked(false);
+}
+
+const menu = createMenu({
+  root: document.getElementById('menu'),
+  audio,
+  dayNight,
+  graphics,
+  onGraphics: setGraphics,
+  actions: {
+    currentId: () => slotId,
+    gameName: () => gameName(),
+    continueGame() {
+      const latest = listSaves()[0];
+      if (latest && latest.id !== slotId && !loadGame(latest.id)) return;
+      closeMenu();
+    },
+    newGame: openMaps,
+    resume: closeMenu,
+    save: () => saveGame({ manual: true }),
+    toTitle: openTitle,
+    load(id) {
+      if (loadGame(id)) closeMenu();
+    },
+    exportSave(id) {
+      if (id === slotId && !inTitle) saveGame({ manual: true, quiet: true });
+      exportSave(id).then((ok) => !ok && showToast('Nicht exportiert', 'Der Spielstand wurde nicht als Datei gesichert.'));
+    },
+    importSave(text) {
+      try {
+        const meta = importSave(text);
+        showToast('Spielstand importiert', meta.name);
+      } catch (err) {
+        showToast('Import fehlgeschlagen', err.message);
+      }
+    },
+    deleteSave(id) {
+      deleteSave(id);
+      // The title screen keeps showing that map, now as a new unsaved game.
+      if (id === slotId) {
+        slotId = newSaveId();
+        savedOnce = false;
+      }
+    },
+  },
+});
+
+function openTitle() {
+  leaveGame();
+  inTitle = true;
+  if (tool) setTool(tool);
+  openRecipes(null);
+  researchView.close();
+  mapsMenu.hidden = winMenu.hidden = true;
+  app.classList.add('in-title');
+  rig.setLocked(true);
+  menu.openTitle();
+}
+
+function openPause() {
+  rig.setLocked(true);
+  menu.openPause();
+}
+
+document.getElementById('menu-open').addEventListener('click', openPause);
+
+// Leaving the page (tab closed, app switched) saves the game.
+window.addEventListener('pagehide', () => leaveGame());
+document.addEventListener('visibilitychange', () => document.hidden && leaveGame());
 
 // --- Constructor recipes ----------------------------------------------------
 
@@ -468,7 +632,7 @@ let shapesDirty = false;
 const toolButtons = document.querySelectorAll('.tool[data-tool]');
 const help = document.getElementById('help');
 const HELP = {
-  none: [['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–8', 'bauen'], ['X', 'abreißen'], ['T', 'Forschung'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
+  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–8', 'bauen'], ['X', 'abreißen'], ['T', 'Forschung'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
@@ -594,11 +758,29 @@ window.addEventListener('pointerup', (e) => {
 for (const b of toolButtons) b.addEventListener('click', () => setTool(b.dataset.tool));
 document.getElementById('rotate').addEventListener('click', rotate);
 
+// Esc closes whatever is on top; with nothing left open it brings up the pause menu.
+function escape() {
+  if (!mapsMenu.hidden || !winMenu.hidden) mapsMenu.hidden = winMenu.hidden = true;
+  else if (menu.isOpen) menu.back();
+  else if (researchView.isOpen) researchView.close();
+  else if (selected) openRecipes(null);
+  else if (tool) setTool(tool);
+  else openPause();
+}
+
 window.addEventListener('keydown', (e) => {
-  if (e.repeat && e.key.toLowerCase() !== 'r') return;
   const key = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && key === 's') {
+    e.preventDefault();
+    if (!inTitle) saveGame({ manual: true });
+    menu.refresh();
+    return;
+  }
+  if (e.repeat && key !== 'r') return;
+  if (key === 'escape') return escape();
+  if (e.ctrlKey || e.metaKey || e.altKey || menu.isOpen) return;
   if (menuOpen()) {
-    if (key === 'escape' || key === 'm') mapsMenu.hidden = winMenu.hidden = true;
+    if (key === 'm') mapsMenu.hidden = winMenu.hidden = true;
     return;
   }
   if (key === 'm') return openMaps();
@@ -610,10 +792,6 @@ window.addEventListener('keydown', (e) => {
   else if (key === 'x' || key === 'delete') setTool('remove');
   else if (key === 'r') rotate();
   else if (key === 't') researchView.toggle();
-  else if (key === 'escape' && researchView.isOpen) researchView.close();
-  else if (key === 'escape' && !settingsPanel.hidden) toggleSettings(false);
-  else if (key === 'escape' && tool) setTool(tool);
-  else if (key === 'escape' && selected) openRecipes(null);
 });
 
 function updateHover() {
@@ -638,14 +816,18 @@ const STEP = 1 / 60;
 let pending = 0;
 let legendTimer = 0;
 let soundTimer = 0;
+const IDLE = { buildings: new Map() }; // what the machine sounds hear while paused
 
 const timer = new THREE.Timer();
 renderer.setAnimationLoop(() => {
   timer.update();
   const dt = Math.min(timer.getDelta(), 0.25);
+  // Menus stop the factory; the title screen slowly circles the map.
+  const paused = menu.isOpen;
+  if (inTitle) rig.orbit(dt * 0.05);
   rig.update(dt);
   sea.update(timer.getElapsed());
-  pending += dt;
+  if (!paused) pending += dt;
   while (pending >= STEP) {
     factory.tick(STEP);
     pending -= STEP;
@@ -662,17 +844,25 @@ renderer.setAnimationLoop(() => {
   dayNight.update(dt, elapsed, focus, camera, factory);
   factoryView.setNight(dayNight.night);
   factoryView.update(dt, elapsed, factory);
-  effects.update(dt, factory, focus, zoom, dayNight.night);
+  if (graphics.particles) effects.update(paused ? 0 : dt, factory, focus, zoom, dayNight.night);
   audio.setNight(dayNight.night);
   soundTimer += dt;
   if (soundTimer > 0.1) {
     soundTimer = 0;
-    audio.updateMachines(factory, focus, camRight, zoom);
+    audio.updateMachines(paused ? IDLE : factory, focus, camRight, zoom);
     clockLabel.textContent = dayNight.clock();
     clockIcon.textContent = dayNight.night > 0.5 ? '☾' : '☀';
   }
+  if (!paused && graphics.autosave) {
+    autosaveTimer += dt;
+    if (autosaveTimer >= graphics.autosave) {
+      autosaveTimer = 0;
+      saveGame();
+    }
+  }
+  if (savedTimer > 0 && (savedTimer -= dt) <= 0) savedLabel.classList.remove('show');
   legendTimer += dt;
-  if (legendTimer > 0.5) {
+  if (legendTimer > 0.5 && !paused) {
     legendTimer = 0;
     renderLegend();
     checkMissions();
@@ -682,10 +872,13 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, camera);
 });
 
-startGame(scenarioById('free'), 4711);
+// The title screen shows the last game behind the menu, or a fresh map.
+applyGraphics();
+const latest = listSaves()[0];
+if (!latest || !loadGame(latest.id)) startGame(scenarioById('free'), 4711);
 renderHelp();
 resize();
-openMaps();
+openTitle();
 
 // Handle for poking at the game from the browser console while developing.
-if (import.meta.env.DEV) window.bolla = { camera, rig, renderer, scene, startGame, dayNight, effects, audio, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get factory() { return factory; }, get missions() { return missions; } };
+if (import.meta.env.DEV) window.bolla = { camera, rig, renderer, scene, startGame, saveGame, loadGame, menu, dayNight, effects, audio, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get factory() { return factory; }, get missions() { return missions; } };
