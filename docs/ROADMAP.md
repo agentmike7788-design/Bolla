@@ -91,6 +91,17 @@ Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe, Vertragsfragen §14 offen):
 - Münzrechnung: 130 Münzen Pflicht (Stufe 1+2), 225 für alles, finanziert über Umbettgeld, neue Bestattungen und Gebühren
 - Kapitel „Unter Dach und Erde", Save-Format v5 mit Migration der Phase-5-Stände (Leiche am alten Tisch bleibt bearbeitbar), Wellenplan W0–W3, Vertragsfragen §14
 
+## PHASE 7 – DORF (Plan)
+
+Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe, Vertragsfragen §14 offen): **`docs/PHASE7_DESIGN.md`**. Inhalt:
+- **Hollerbrück** als eigene Außen-Region (Szene fern der Friedhofswelt, Abblende am Wegstein, 30 Spielminuten Weg), Anger mit Brunnen, Linde und Gemeindetafel, Kirche St. Gallus (außen), drei begehbare Häuser (Holderkrug, Wundarztstube, Amtsstube)
+- Acht Dorfbewohner auf dem gemeinsamen Rig (Wirtin, Schmied, Krämerin, Pfarrer, Schultheiß, Wundarzt Quast, Seelfrau Liesel Dorn, die alte Hagedorn) mit Tagesabläufen, Läden und Dialogen; Osric wohnt im Dorf, Ilse spricht nachts über das Dorf; NPC-Last über LOD und Regionen begrenzt
+- **Organ-System (Benutzerwunsch 03.10.2026):** Präparate Herz, Lunge, Magen am Gruft-Tisch (angedeutet: Tuch, Schleier, nur verschlossene Gläser/Bündel), verkaufen, untersuchen lassen (wahre Todesursache → Merkbuch), Schaupräparat am neuen Präparierpult, ins Grab zurücklegen; Daten-Haken für Phase 13
+- Aufträge (liefern, bestatten, Stein setzen, pflegen, spenden) und ein Beziehungswert je Person; Ruf und Pietät färben Begrüßung, Gerede und Preise
+- Der **Lindenacker** (8 neue Grabstellen südlich der Ostwiese, vom Pfarrer geweiht) macht das Dorf zur Quelle neuer Toter; Geschichts-Leiche D1 Wiebke Hagedorn
+- Geheimnis-Ausschnitt „Wer besucht die Sterbenden?" (Erkenntnis „Vorher eingetragen"), nächster Schritt „Der unterstrichene Name" (Phase 8)
+- Kapitel „Ein Name im Dorf", Münzrechnung, Save-Format v6 mit Migration der Phase-6-Stände, Wellenplan W0–W3 (W1 mit 7 Paketen), Vertragsfragen §14
+
 ## Benutzerwunsch 03.10.2026 – Organe & Anatomie (eigene spätere Phase/Erweiterung)
 - **Wann:** als eigene Erweiterung **nach Phase 6** (nicht in Phase 6). Einordnung wird vor dem Start mit dem Benutzer abgestimmt (Vorschlag: zusammen mit Phase 7 „Dorf", wo der Wundarzt/Anatom der Stadt eingeführt wird).
 - **Darstellung:** **angedeutet** wie die bisherige Verwertung – Tuch über der Leiche, Werkzeug-Geräusch, Abblende; Organe nur als verschlossene Gläser/Bündel im Inventar. Kein Blut, keine offenen Wunden (ART STYLE LOCK).

@@ -79,7 +79,7 @@ Alle Handgriffe aus Phase 4–6 bleiben **unverändert**. Die Präparate sind ei
 |---|---|---|---|
 | 40 (B1) | Osric `p7_intro`. Nachmittags ins Dorf: Schultheiß Fenner (Amtsstube) gibt den **Lindenacker** frei (`o_fenner_linden`) und bittet um Werkstein für die Brunnenfassung (`o_fenner_well`). Holderkrug: Osric, Wirtin Rosine. Abends zurück. | 20 → 21 | „Sprich mit Osric" → „Geh nach Hollerbrück" → „Der Schultheiß erwartet dich in der Amtsstube" |
 | 41 (B2) | Lindenacker roden (vormittags ≈ 4 h). Dorf: Werkstein beim Schmied abgeben (+6), Pfarrer Lenz am Kirchplatz: Weihe des Lindenackers bezahlen (10). Krämerin Theres, Wiebke Hagedorn am Brunnen (`o_hagedorn_place`). | 25 → 21 | „Lindenacker: 7/10" → „Bitte den Pfarrer um die Weihe" |
-| 42 (B3) | Rest roden, Pforte. **10:00 Pfarrer Lenz weiht den Lindenacker** (er kommt den Hügel herauf). Wundarzt Quast (Wundarztstube): Vorstellung, Präparierbesteck angeboten (annehmen oder ablehnen). | 25 → 27 | „Der Pfarrer kommt um zehn" → „Der Wundarzt will dich sprechen" |
+| 42 (B3) | Rest roden, Pforte. **09:20–10:30 Pfarrer Lenz weiht den Lindenacker** (er kommt den Hügel herauf). Wundarzt Quast (Wundarztstube): Vorstellung, Präparierbesteck angeboten (annehmen oder ablehnen). | 25 → 27 | „Der Pfarrer kommt am Vormittag" → „Der Wundarzt will dich sprechen" |
 | 43 (B4) | Erste Leiche seit Tagen → Gruft → Lindenacker `l_01`. Aufträge Rosine (Holunderbeeren) und Esch (Holzkohle) abgeben. | 31 → 40 | „Bring die Leiche in die Gruft" |
 | 44 (B5) | Leiche 2. **Präparierpult** aufstellen (12). Fiebertinktur für Rosines Sohn. | 44 → 40 | „Gruft: Präparierpult aufstellen" |
 | 45 (B6) | Leiche 3 mit Aussegnung (`o_lenz_service`). Stein für Dorothee Mahn (`o_mangold_stone`) an der Steinmetzbank. | 44 → 55 | „Ein Stein für Dorothee Mahn" |
@@ -88,7 +88,7 @@ Alle Handgriffe aus Phase 4–6 bleiben **unverändert**. Die Präparate sind ei
 | 48 (B9) | **Trauerflor an Wiebke Hagedorns Kate.** Osric bringt sie (Geschichts-Leiche D1, gezeichnet). Totenhemd, Aussegnung, Lindenacker, Stein mit Mohn → `o_hagedorn_place`. | 45 → 63 | „Wiebke Hagedorns letzter Wunsch" |
 | 49 (B10) | Leiche 7. Liesel **Vertraut** → Hinweis *Was die Seelfrau sah*. | 67 → 76 | „Merkbuch: Hinweise passen zusammen" |
 | 50 (B11) | Leiche 8 (Lindenacker voll). Erkenntnis **„Vorher eingetragen"**. Stein für Wendel Gratz (`o_esch_stone`). | 80 → 88 | „Drei Bewohner vertraut: 2/3" |
-| 51 (B12) | Dritter Bewohner **Vertraut**, sechster Auftrag → **Kapitel „Ein Name im Dorf"**. Freiwillig: Gruft 3 (35). | 92 → 61 | „Ein Name im Dorf: 4/4" |
+| 51 (B12) | Dritter Bewohner **Vertraut** (Aufträge sind schon 7) → **Kapitel „Ein Name im Dorf"**. Freiwillig: Gruft 3 (35). | 92 → 61 | „Ein Name im Dorf: 4/4" |
 | 52 (B13) | Freies Spiel. Keine freie Stelle → keine Lieferung. Gemeindetafel, Tinkturen, Runden. | 65 → 63 | „Die Gemeindetafel hat neue Bitten" |
 
 **B) Neues Spiel:** `roof_and_earth` fällt je nach Spielweise an Tag 29–42 (G6), der Bogen läuft danach wie A. Richtwert Kapitelende „Ein Name im Dorf" ≈ Tag 41–55. Die Kapitel sind voneinander unabhängig: Phase 7 sperrt nichts aus Phase 4–6.
@@ -423,7 +423,7 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 | **Lead** (W0 + laufend) | `project.godot`, `src/core/*` (EventBus, Database), alle **Datenklassen ✦**, alle **Stubs** (bis zur Übergabe), `tests/run_tests.gd`, `tests/framework/*`, `tests/fixtures/*` (inkl. **`saves_v5/*`**, `phase7/*`), `tests/integration/test_saves_v5_load.gd`, `tests/unit/test_phase7_scaffold.gd`, `docs/*`, `CLAUDE.md` |
 | **P1 Regionen, Portale & NPC-Last** | `src/world/regions/{region_root,region_portal,region_travel}.gd` (neu), `src/entities/house_door/*` (neu), `src/entities/region_portal/*` (neu, Szene), `src/world/interiors/{interior_room,room_exit}.gd` (nur `region_id` / `door_id`), `src/world/hut_interior/hut_portal.gd` (nur Durchreichen), `src/world/camera/camera_rig.gd` (`set_base_profile`), `src/entities/player/player.gd` (nur `region_id`, `set_region`, Speichern), `src/entities/npc/{npc,npc_pose}.gd` (`region_id`, `hide_flag`, LOD), `src/systems/npc/{schedule_resolver,npc_lod}.gd`, `data/config/npc_config.tres`, `data/config/regions/*`, `tests/unit/{test_regions,test_npc_lod,test_schedule_resolver,test_house_door}.gd`, `tests/integration/test_region_travel.gd` |
 | **P2 Läden & Beziehungen** | `src/systems/village/{village_shops,shop_rules,relationships,relationship_rules}.gd`, `src/entities/shop_counter/*`, `data/shops/*`, `data/village/villagers/*`, `data/config/relationship_config.tres`, `tests/unit/{test_village_shops,test_relationships}.gd` |
-| **P3 Aufträge & Dorf-Fortschritt** | `src/systems/village/{orders,order_rules,village}.gd`, `src/entities/village_board/*`, `src/entities/mourning_ribbon/*`, `data/orders/*`, `data/config/{orders_config,village_config}.tres`, `data/sections/linden.tres`, `data/clearables/*` (nur neue Einträge), `src/systems/expansion/expansion_manager.gd` (nur `unlock_flag`, `try_unlock`), `src/systems/graveyard/graveyard.gd` (nur `replace_old_marker` und die Aufrufe `Orders.note_grave_completed`/`note_stone_set`), `src/systems/stone/stonemasonry.gd` (nur Steine für Ruhezeit-Gräber mit Auftrag: `ready_for` gilt auch für sie), `tests/unit/{test_orders,test_village,test_expansion}.gd` |
+| **P3 Aufträge & Dorf-Fortschritt** | `src/systems/village/{orders,order_rules,village}.gd`, `src/entities/{village_board,mourning_ribbon,poor_box,register_copy}/*`, `data/orders/*`, `data/config/{orders_config,village_config}.tres`, `data/sections/linden.tres`, `data/clearables/*` (nur neue Einträge), `src/systems/expansion/expansion_manager.gd` (nur `unlock_flag`, `try_unlock`), `src/systems/graveyard/graveyard.gd` (nur `replace_old_marker` und die Aufrufe `Orders.note_grave_completed`/`note_stone_set`), `src/systems/stone/stonemasonry.gd` (nur Steine für Ruhezeit-Gräber mit Auftrag: `ready_for` gilt auch für sie), `tests/unit/{test_orders,test_village,test_expansion}.gd` |
 | **P4 Anatomie** | `src/systems/anatomy/{specimens,specimen_rules,specimen_record}.gd` (neu), `src/systems/corpse/{corpse_care,corpse_generator,corpse_record}.gd` (Organ-Karte, `hidden_cause`, `returned`), `src/entities/morgue_table/morgue_table.gd` (`request_organ`, Tuch, Schleier), `src/entities/corpse/corpse.gd` (nur `set_covered`), `src/entities/grave/grave_plot.gd` (beide neuen Prompts: „Präparat beisetzen" und „Neuen Stein setzen" auf Ruhezeit-Gräbern gegen die P3-API), `src/systems/inventory/inventory.gd` + `src/ui/panels/chest_transfer.gd` (nur Einzelstücke), `src/systems/ghosts/{ghost_mood,ghost_manager}.gd`, `data/config/{anatomy_config,economy_config,reputation_config,piety_config}.tres`, `data/anatomy/**`, `data/ghosts/ghost_lines.tres`, `data/corpses/corpse_tables.tres` (nur `hidden_causes`), `tests/unit/{test_specimens,test_inventory_unique,test_anatomy_harvest,test_ghosts,test_corpse_generator}.gd` |
 | **P5 Assets** | `tools/blender/{asset_village_buildings,asset_village_props,asset_village_interiors,asset_villagers,asset_anatomy}.py` (neu), `tools/blender/asset_items.py`, `tools/blender/build_all.py`, `assets/models/**` (nur neue Phase-7-Dateien), `art_source/blender/**` (Phase 7), `tests/unit/test_assets_phase7.gd`, `docs/reviews/phase7_assets/*` |
 | **P6 Dialog, Geschichte & Speichern** | `data/dialogue/{carter,trader}.tres`, `data/dialogue/v_*.tres` + `carter_village.tres` + `priest_linden.tres` (neu), `data/npc/*_schedule.tres` (neue + Osrics Dorf-Einträge), `src/systems/dialogue/{dialogue_conditions,dialogue_actions}.gd`, `src/systems/story/{story_director,story_corpse_data}.gd` (nur `after_flag`/`after_days`/`section`-Logik), `data/story/d1_hagedorn.tres`, `data/finds/f_d1_*.tres`, `data/journal/{clues,insights}/*` (Phase 7), `src/systems/save/{save_migration,save_file_io,save_manager}.gd`, `src/systems/game_state/game_state.gd` (Stats), `tests/unit/{test_dialogue,test_save,test_save_migration,test_story,test_journal,test_game_state}.gd`, `tests/integration/test_phase6_save_upgrade.gd` |
@@ -449,7 +449,7 @@ Bei nur fünf Agents übernimmt P2 zusätzlich P7 und P3 zusätzlich P6.
 | `ShopCounter` | `src/entities/shop_counter/shop_counter.gd` (+ `.tscn`) | Stub (P2) |
 | `OrderData`, `OrdersConfig` | `src/systems/village/{order_data,orders_config}.gd` | ✦ |
 | `OrderRules`, `Orders`, `Village` | `src/systems/village/{order_rules,orders,village}.gd` | Stub (P3) |
-| `VillageBoard`, `MourningRibbon` | `src/entities/{village_board,mourning_ribbon}/*.gd` (+ `.tscn`) | Stub (P3) |
+| `VillageBoard`, `MourningRibbon`, `PoorBox`, `RegisterCopy` | `src/entities/{village_board,mourning_ribbon,poor_box,register_copy}/*.gd` (+ `.tscn`) | Stub (P3) |
 | `AnatomyConfig`, `SpecimenFindingData` | `src/systems/anatomy/{anatomy_config,specimen_finding_data}.gd` | ✦ |
 | `SpecimenRecord` | `src/systems/anatomy/specimen_record.gd` | ✦ (reine Daten + `to_dict`/`from_dict`) |
 | `SpecimenRules`, `Specimens` | `src/systems/anatomy/{specimen_rules,specimens}.gd` | Stub (P4) |
@@ -474,7 +474,7 @@ signal screen_veil_changed(active: bool)
 # Weihe (Village)
 signal ground_consecrated(section_id: StringName)
 ```
-Regel wie Phase 3–6: **Listener ändern keinen Spielzustand.** Wer ändert, ruft direkt auf: `ShopCounter`/Dialog → `VillageShops.buy/sell` → `Relationships.add` (nur Ankauf-Ereignisse, keine); `DialogueActions` → `Relationships.add/give_gift`, `Orders.accept/turn_in`, `Village.buy_round/donate/pay_consecration`; `Orders.complete` → `Relationships.add`, `Reputation.event`, `Village.check_goal`; `Graveyard.place_marker/set_designed_stone` → `Orders.note_grave_completed/note_stone_set` (P3); `ExpansionManager` → `Orders.note_section_progress`, `Village.check_goal`; `MorgueTable` → `CorpseCare.harvest_organ` → `Specimens.harvest`, `Piety.event`, `Reputation.event`; `AnatomistPanel` → `Specimens.sell/research` → `Relationships.add`, `JournalManager.add_clue`; `GravePlot` → `Specimens.return_to_grave` → `CorpseManager.notify_changed`, `Piety.event`; `Npc`-Zeitplan des Pfarrers endet → `Village.apply_minute` (Uhr) → `Village.consecrate` → `ExpansionManager.try_unlock`. `coins_spent` erhöht `stats.coins_spent` im Sender über `GameState.note_coins_spent`.
+Regel wie Phase 3–6: **Listener ändern keinen Spielzustand.** Wer ändert, ruft direkt auf: `ShopCounter`/Dialog → `VillageShops.buy/sell` (ändert keine Beziehung); `DialogueActions` → `Relationships.add/give_gift`, `Orders.accept/turn_in`, `Village.buy_round/donate/pay_consecration`; `Orders.complete` → `Relationships.add`, `Reputation.event`, `Village.check_goal`; `Graveyard.place_marker/set_designed_stone` → `Orders.note_grave_completed/note_stone_set` (P3); `ExpansionManager` → `Orders.note_section_progress`, `Village.check_goal`; `MorgueTable` → `CorpseCare.harvest_organ` → `Specimens.harvest`, `Piety.event`, `Reputation.event`; `AnatomistPanel` → `Specimens.sell/research` → `Relationships.add`, `JournalManager.add_clue`; `GravePlot` → `Specimens.return_to_grave` → `CorpseManager.notify_changed`, `Piety.event`; `Npc`-Zeitplan des Pfarrers endet → `Village.apply_minute` (Uhr) → `Village.consecrate` → `ExpansionManager.try_unlock`. `coins_spent` erhöht `stats.coins_spent` im Sender über `GameState.note_coins_spent`.
 
 ### 3.4 Logik-Klassen (Signaturen = Vertrag)
 
@@ -486,7 +486,7 @@ class_name RegionConfig extends Resource              # ✦ data/config/regions/
 @export var camera_distance: float = 22.0; @export var camera_zoom_min: float = 12.0; @export var camera_zoom_max: float = 24.0
 @export var bounds_min: Vector2; @export var bounds_max: Vector2       # Fokusgrenzen, region-lokal
 @export var travel_minutes: int = 30; @export var fade_seconds: float = 0.8
-@export var managed_paths: PackedStringArray = []    # Graveyard: ["Decor", "Lights", "Grass"]; Village: ["."] (alles)
+@export var managed_paths: PackedStringArray = []    # relativ zum Eltern-Knoten der Region (Graveyard: WorldRoot → ["Decor", "Lights", "Grass"]); Village: ["."] (die eigene Szene)
 class_name RegionRoot extends Node3D                  # src/world/regions/region_root.gd
 const GROUP := &"region_root"; const GRAVEYARD := &"graveyard"; const VILLAGE := &"village"
 @export var region_id: StringName = &"graveyard"; @export var config: RegionConfig
@@ -651,6 +651,8 @@ func mourning_house(day: int) -> StringName          # "" = keiner
 func goal_progress() -> Dictionary; func check_goal() -> void
 func save_state() -> Dictionary; func load_state(data: Dictionary) -> void
 class_name VillageBoard extends Node3D                # Gemeindetafel an der Linde: „[E] Gemeindetafel lesen" → Panel &"orders" {board: true}
+class_name PoorBox extends Node3D                     # Amtsstube: „[E] In die Armenkasse geben (5 Münzen)" → Village.donate (höchstens 2 Schritte je Tag)
+class_name RegisterCopy extends Node3D                # Amtsstube: „[E] Die Abschrift lesen" (Fenner anwesend ∧ (Vertraut ∨ Spende heute)) → JournalManager.add_clue(c_v_deathbook)
 class_name MourningRibbon extends Node3D              # Trauerflor an Marker ribbon eines Hauses; sichtbar nach Village.mourning_house
 @export var house_id: StringName
 # SectionData ✦ + @export var unlock_flag: StringName = &""   # Abschnitt öffnet erst mit allen Hindernissen UND diesem Flag
@@ -912,3 +914,172 @@ Nicht gespeichert: NPC-Positionen (aus der Uhr), LOD-Stufen, Trauerflor (aus Tag
 - `slot_p6_crypt_table.json`: Leiche auf dem Gruft-Tisch mit 2 von 4 Schritten, Zopf genommen, offenes Kältefenster, Spieler in der Gruft (Präparate nach der Migration möglich, Ruf/Pietät-Folgen korrekt).
 - `slot_p6_chapel_carry.json`: Spieler trägt eine Leiche in der Kapelle (Region graveyard, `interior_id chapel`).
 Dazu `make_v5_saves.gd` + `_driver.gd` (historisches Werkzeug, wie Phase 6) und `tests/fixtures/phase7/layout_p6.json` (= `graveyard_layout.json` von `705bd5a`, bytegleich). Lade-Wächter: `tests/integration/test_saves_v5_load.gd` (Lead). v4-, v3-, v2- und v1-Fixtures laden weiter (Kette bis 6).
+
+---
+
+## 6. Debug-Konsole (W-UI) – neue Befehle
+`village open` · `region <graveyard|village>` (Teleport mit Profil, ohne Zeitsprung) · `room <inn|surgery|office>` · `tp <village|anger|linden>` · `rel <npc> <wert>` · `rel all <wert>` · `orders` (Zustände, Fristen) · `order <id> <offer|accept|done|fail>` · `board` (Tafel neu würfeln) · `linden <grant|clear|consecrate|open>` · `anatomy` (Besteck + `anatomy_known`) · `specimen <heart|lung|stomach> [jar|bundle]` (Präparat von der Tisch-Leiche sofort) · `specimens` (Liste mit Klarheit, Zustand) · `spoil <uid>` · `hidden <cause>` (verborgene Ursache der Tisch-Leiche setzen) · `hagedorn` (D1 morgen fällig) · `npclod` (LOD-Stufen als Farbe über den Köpfen) · `remark <npc>` · `vis7` (Sichtprüfung §4.5 im laufenden Spiel) · `goal7`.
+
+## 7. UI (W-UI)
+- **Laden-Panel** `&"shop"` (Kontext `{shop_id, speaker, inventory, player}`): Pergament wie Ilses Panel, zwei Spalten „Kaufen" / „Verkaufen", je Zeile Icon, Name, Preis (durchgestrichener Grundpreis bei Rabatt, „+1 (Ruf)" bei Aufschlag), Vorrat „noch 4 heute", gehalten „du hast 6"; Knöpfe 1 / 5; gedimmt mit Grund. Kopf: Name der Person, Beziehung als Wort und fünf Punkte.
+- **Wundarzt-Panel** `&"anatomist"` (Kontext `{speaker, inventory}`): Liste der gehaltenen Präparate mit Etikett (Organ, Name, Alter, Klarheit als Wort und Balken, Glas/Bündel/Schaupräparat, „verdorben in ≈ 4 h"), Preis, Knöpfe **„Verkaufen (8)"** und **„Untersuchen lassen (30 Min)"**; Hinweiszeile beim Verkauf: „Im Dorf wird man davon hören." Untersuchte und verkaufte erscheinen nicht mehr. Ohne Präparate: Quasts Zeile „Bringen Sie mir, was die Erde nicht vermisst." (nur bei `anatomy_known`).
+- **Präparate-Karte am Gruft-Tisch** (4. Registerkarte „Präparate" in `corpse_exam_tabs.gd`, nur ab `anatomy_known` und `room crypt`): drei Zeilen Herz / Lunge / Magen mit Umschalter **Glas** (Glas + Branntwein vorhanden/fehlt) / **Bündel** (Leinen), Dauer 20 Min, Folgenzeile („Qualität −2 · Ruf −3 · der Geist wird es merken" – ohne Pietät-Zahl, wie Phase 4), Klarheit-Vorschau („Klarheit jetzt: gut"), **zweistufige Bestätigung** („Wirklich? Noch einmal drücken.", 3 s); genommene Zeilen zeigen „Genommen – im Glas, an Quast verkauft" usw. Während der Handlung: **Schleier** (`hud/veil.gd`, 85 % Tintenblau `#1F2A3A`, 0,6 s Ein-/Ausblendung) mit Aktionsbalken und der Zeile. Untersuchungs-Karte: Ursache „laut Osric: Fieber · laut Quast: Arsenik", sobald untersucht.
+- **Pult-Panel** `&"pult"`: Präparate im Inventar und im Kühlfach, „Bündel einlegen (5 Min)", „Schaupräparat herrichten (40 Min)", Zutatenzeilen wie das Werkstatt-Panel (mit Schuppen-Holen ab Schuppen 2).
+- **Aufträge** `&"orders"` (Gemeindetafel und Dialog): Karten mit Titel, Auftraggeber, Text, Bedingungen als Häkchenliste („Totenhemd ✓ · Aussegnung – · Lindenacker ✓"), Frist („noch 2 Tage"), Lohn (Münzen, Beziehung als Pfeil, Ruf), Knopf „Annehmen" / gedimmt „Vier Aufträge laufen schon." · Kopfzeile der Tafel mit Ruf. **Merkbuch-Seite „Aufträge":** aktive (mit Fortschritt), erledigte (mit Datum nach dem Kalender aus Phase 5), gescheiterte (grau).
+- **Merkbuch-Seite „Hollerbrück":** acht Karten (Icon-Porträt aus dem Icon-Renderer, Name, Rolle, Beziehung als Wort + fünf Punkte, „Zuletzt gesprochen: heute", Laden-Zeiten, mag: „?" bis zum ersten angenommenen Geschenk), dazu die Ruf-Stufe des Dorfes. Die Pietät bleibt verborgen.
+- **Geschenk-Panel** `&"gift"`: Inventarzeilen, die die Person mag (ab dem ersten Treffer bekannt), „Schenken"; einmal je Tag.
+- **HUD:** Beim Betreten einer Region für 3 s unten links der Ortsname („Hollerbrück · Anger", `RegionConfig.arrive_text`). **Gerede-Blasen** über Dorfbewohnern wie die Geisterblasen (`remark_bubbles.gd`, 4 s, eine zugleich). Zielzeile (`ObjectiveResolver`, nach den Ketten aus Phase 4–6): „Sprich mit Osric" · „Geh nach Hollerbrück" (Wegstein) · „Der Schultheiß erwartet dich in der Amtsstube" · „Lindenacker: 4/10" · „Bitte den Pfarrer um die Weihe" · „Der Pfarrer kommt am Vormittag" · „Bring die Leiche in die Gruft" · „Der Wundarzt will dich sprechen" (einmal) · „Auftrag: <Titel> (noch n Tage)" (dringendster) · „Wiebke Hagedorns letzter Wunsch" · „Merkbuch: Hinweise passen zusammen" · „Ein Name im Dorf: 3/4" · danach „Die Gemeindetafel hat neue Bitten".
+- **Prompts:** Wegstein „[E] Nach Hollerbrück (30 Min)" / mit Leiche gedimmt · Brücke „[E] Zum Friedhof (30 Min)" · Türen „[E] Holderkrug betreten" · „Geschlossen. Öffnet um 14:00." · Laden „[E] Kaufen und verkaufen" · Tafel „[E] Gemeindetafel lesen" · Armenkasse · Abschrift · Grab „[E] Präparat beisetzen: Herz von Hedwig Lamprecht (10 Min)" · Ruhezeit-Grab „[E] Neuen Stein setzen (20 Min)".
+- **Grabregister** (Hütte): Spalte „Präparate" (Anzahl, zurückgelegt als ✓); Lindenacker als Abschnitt; Ersatzsteine auf `old_01`/`old_08` vermerkt. **Totenzettel:** Präparate mit Verbleib, Befund, „laut Quast". **Tageszusammenfassung:** + „Im Dorf" (Einnahmen, Ausgaben nach Zweck), „Aufträge erledigt", „Beziehungen" (Pfeile), „Präparate".
+- **Abschluss-Panel** Variante `&"name_in_village"` (§1.5).
+
+## 8. Assets (P5, Stil gesperrt, alle `ph_`, `lib_painted.py` / geteilte Materialien)
+| Asset | Zweck | Dreiecke | Hinweise |
+|---|---|---|---|
+| `ph_bld_v_church` | Kirche St. Gallus (Schiff + Turm, Tür, Kirchplatz-Stufen) | ≤ 9 000 | Marker `door_outside`, `light_door`, `light_window_*`; Turm Nordende ≤ 17 m; Kalkputz warmgrau, Schiefer `#5B6168` |
+| `ph_bld_v_office`, `ph_bld_v_inn` | Amtshaus, Holderkrug (Fachwerk, zwei Geschosse) | ≤ 6 500 / 7 000 | `door_outside`, `light_window_*`, Holderkrug + `light_lantern`, Wirtshausschild mit gemaltem Holunderzweig (kein Text außer „Holderkrug") |
+| `ph_bld_v_smithy`, `ph_bld_v_shop`, `ph_bld_v_surgery`, `ph_bld_v_remise` | Schmiede (offen, Esse, Amboss), Krämerladen (Ladenfenster mit Klappladen), Wundarzthaus (Messingschild), Remise | ≤ 4 500 / 4 500 / 6 000 / 3 000 | `counter`, `anvil`, `light_ember`, `smoke`, `door_outside` |
+| `ph_bld_v_cottage_a/_b`, `ph_bld_v_house_a/_b/_c`, `ph_bld_v_inn2` | Katen (Hagedorn, Dorn), Wohnhäuser, „Zum Stumpf" | ≤ 3 000 / 4 500 / 4 500 | Marker `ribbon`, `light_window`; Katen First ≤ 4,5 m |
+| `ph_prop_v_well`, `ph_prop_v_bridge`, `ph_prop_v_board`, `ph_prop_v_shrine`, `ph_prop_v_sign`, `ph_prop_v_ribbon`, `ph_prop_v_bench`, `ph_prop_v_wash_stones`, `ph_prop_v_cart_rest` | Brunnen, Holderbrücke, Gemeindetafel, Bildstock, Ortstafel, Trauerflor, Bank, Waschplatz, abgestellter Karren | ≤ 1 500 / 3 000 / 800 / 600 / 400 / 150 / 400 / 500 / (bestehender Handkarren) | Trauerflor: schwarzes Band mit Schleife, kein Text |
+| `ph_env_linden_old`, `ph_env_brook`, `ph_env_ground_village`, `ph_env_garden_fence` | alte Linde (Dorf + Lindenacker), Bachlauf (flaches gemaltes Wasser, **ohne** neuen Shader, Vertex-Farbe + bestehendes Material), Dorfboden, Gartenzaun | ≤ 6 000 / 2 000 / (Boden) / 300 | Linde mit `painted_foliage` wie die Eiche |
+| `ph_prop_milestone` | Wegstein „Hollerbrück · 3 Meilen" am Kutschweg | ≤ 500 | Label3D wie die Friedhofstafel |
+| `ph_int_inn_*` (`room`, `bar`, `table`, `stove`, `barrels`, `stairs`), `ph_chr_guest_a/_b` | Gaststube, sitzende Gäste ohne Rig | ≤ 9 000 / 1 500 / 600 / 1 200 / 800 / 600 · ≤ 2 500 | `door_inside`, `spawn_inside`, `light_*` |
+| `ph_int_surgery_*` (`room`, `table`, `cabinet`, `desk`, `bag`) | Wundarztstube: Gläser **trüb und verschlossen**, Etiketten ohne lesbaren Text, kein Skelett | ≤ 7 000 / 900 / 1 800 / 1 200 / 400 | – |
+| `ph_int_office_*` (`room`, `desk`, `shelf`, `poor_box`, `lectern`) | Amtsstube, Armenkasse, Lesepult mit Buch | ≤ 7 000 / 1 000 / 1 200 / 600 / 700 | – |
+| `ph_int_pult` | Präparierpult in der Gruft: Pult mit Schieferlade (Kühlfach), Glasreihe **unter einem Tuch**, Wachsstange, Etiketten | ≤ 2 200 | Marker `use`, `cold` |
+| `ph_chr_v_innkeeper`, `_smith`, `_grocer`, `_priest`, `_mayor`, `_surgeon`, `_washer`, `_oldwoman` | die acht Dorfbewohner auf dem **gemeinsamen 8-Knochen-Rig** (wie Ilse), Animationen `idle`, `walk`, `talk`, dazu `work` (Schmied, Liesel, Krämerin) und `sit` (Hagedorn) | je ≤ 9 000 | 4–5 Kopfhöhen, eigene Silhouette je Figur (Hut/Haube/Barett/Kahlkopf/Stock), Palette der Figuren; Gesichter einfach |
+| `ph_prop_corpse_poppy` (Kindmesh `poppy` für Look 1) | D1: Mohnsträußchen am Mieder | ≤ 300 | – |
+| `ph_item_prep_jar`, `_spirits`, `_beeswax`, `_anatomy_case`, `_specimen_jar`, `_specimen_bundle`, `_display_specimen`, `_fever_tincture`, `_wound_salve`, `_corpse_balm`, `_honey_cake`, `_elder_wine` | Item-Icons | ≤ 800 | **Präparat im Glas:** trübes Glas mit Wachsdeckel, Papieretikett, Inhalt nur als dunkler, unbestimmter Schatten; **Bündel:** Leinen mit Schnur; **Schaupräparat:** Glasglocke auf Holzsockel mit Siegel. Kein Rot, keine Organformen |
+- Wiederverwenden: Friedhofs-Zaun, Holunderbüsche, Bäume, Laternenpfahl, Handkarren, Phase-6-Trauergäste (Gaststube), `ph_prop_corpse_shrouded` (Tuch beim Präparat), Bänke.
+- **Kein Gore:** keine offenen Leiber, keine Organe außerhalb trüber Gläser, kein Blut, keine Instrumente im Detail (das Besteck ist eine geschlossene Ledertasche).
+
+## 9. Performance-Budget (Phase 7, Messung mit `village_shots.gd` und `graveyard_shots_phase7.gd`)
+| Größe | Budget | Begründung |
+|---|---|---|
+| FPS | 60 @ 1080p Mittelklasse-GPU | unverändert |
+| Draw Calls Dorf | < 1 000 (erwartet ≤ 500) | 12 Häuser à ≈ 6–10, Figuren 9 × 3, Requisiten, Gras-Chunks |
+| Draw Calls Friedhof | wie G6 (≤ 600) | der Lindenacker bringt ≈ +20 (8 Gräber, Zaun, Linde) |
+| Kamera-Dreiecke inkl. Gras (Spiel-Zoom) | < 500 k Dorf und Friedhof | Dorf-Gras × 0,5; Figuren je ≤ 9 k |
+| Sichtbare Figuren mit Skelett | ≤ 9 im Dorf, davon **≤ 6 voll animiert** (`NpcConfig.max_full`) | `NpcLod`: Stufe 1 (gedrosselte Auswertung 5 Hz) ab 26 m, Stufe 2 (Animation ruht) ab 40 m oder in einem nicht aktiven Raum |
+| Lichter Dorf | ≤ 2 Omni mit Schatten (Holderkrug, Kirchentür), ≤ 22 sichtbar | Fenster, Brücke, Linde, Esse ohne Schatten |
+| Lichter innen | ≤ 2 mit Schatten, ≤ 8 sichtbar je Raum | wie Phase 6 |
+| Partikel | ≤ 60 je Region | Dorf: Esse-Funken 4, Kaminrauch 4 × 3 |
+| Regionswechsel | Abblende 0,8 s, Hänger ≤ 60 ms in der Mitte | Dorf vorgebaut; nur Sichtbarkeit, `process_mode`, `refresh()` der 9 Npc, Kameraprofil |
+| Skripte CPU/Frame (headless, Uhr läuft) | **Dorf aktiv:** ≤ Friedhofs-Referenz derselben Messung + 0,3 ms · **Friedhof aktiv:** Phase-7-Anteil ≤ +0,1 ms gegenüber 705bd5a | inaktive Region ist `PROCESS_MODE_DISABLED`; Npc der inaktiven Region werten einmal je Spielminute aus; Läden, Aufträge, Beziehungen, Präparate ohne `_process` (ereignis- bzw. stundengetrieben); `NpcLod` 2 Hz; Gerede über `NpcLod`, keine Areas |
+| Neues Spiel / Laden | ≤ 600 ms / < 1 s | Dorf-Szene + 3 Räume zusätzlich im Baum |
+| Spielstand | < 350 kB | + ≈ 6 kB Dorf (Beziehungen, Aufträge, Läden, Präparate) |
+*Hinweis CPU (Lehre G4–G6):* Der geteilte Container misst ±0,7 ms Rauschen. Deshalb vergleicht W3 **relativ in derselben Messung** (Dorf aktiv vs. Friedhof aktiv vs. Phase-7-Teile aus) und protokolliert Median und Mittel über ≥ 3 Läufe. Liegt der Dorf-Anteil über +0,3 ms, senkt P1 zuerst `max_full` auf 4 und die Stufe-1-Rate auf 3 Hz, bevor Inhalte gekürzt werden.
+
+## 10. Tests
+Regeln wie Phase 3–6 (Fixtures statt fremder Moduldaten, Fehler-Logger, Watchdog). **Alle 2 017 bestehenden Tests bleiben grün**; Anpassungen nur durch den Besitzer (z. B. `HARVEST_KINDS`-Länge, Item-Zählungen, Exam-Tabs 3 → 4, Laufgrenzen/Layout-Diff im Welt-Test).
+
+**Unit**
+| Datei | Besitzer | Prüft |
+|---|---|---|
+| `test_regions.gd` / `test_house_door.gd` / `test_schedule_resolver.gd` (+) | P1 | `RegionRoot.apply_region` (aktiv/inaktiv, `managed_paths` unsichtbar + DISABLED, Npc-`refresh` bei Aktivierung, Basisprofil der Kamera, `clear_profile` → Region); Portal-Sperrgründe (Leiche, Handlung, Flag); Reise: +30 Min genau einmal, `region_changed` nach `interior_*`; Türen: Öffnungsfenster, „Öffnet um …", Ausgang zurück zur Haustür; `today_flag`-Alternativen, `region`-Filter, alte Zeitpläne bitgleich (`day -1`) |
+| `test_npc_lod.gd` | P1 | Rangfolge nach Abstand, `max_full`, Stufen 0/1/2, Npc in inaktiver Region einmal je Minute, Animation ruht, `hide_flag`, Gerede-Nähe einmal je Tag |
+| `test_village_shops.gd` | P2 | Preise (Grund, Verrufen +1, Vertraut −1 ab 4, nie < 1), Vorrat/Tag und Ankauf/Tag (Reset 06:00, nicht durch Laden), atomar (Münzen/Platz), `is_open` nur am Laden-Ort, `shop_trade`, Münzbuch `village`, `requires_tier` |
+| `test_relationships.gd` | P2 | Startwert (Ruf- und Pietät-Bonus), Stufen 15/40/70, Klemme 0…100, Gespräch +1 je Tag, Geschenk nur gemocht und einmal je Tag, Runde für alle in der Gaststube, Spende, Präparat-Verkauf/-Rückgabe-Deltas, `count_at_least`, Gerede-Vorrang, Save/Load |
+| `test_orders.gd` | P3 | alle sechs Arten; Freigaben (Flag, Vorgänger, Stufe), `max_active 4`, Fristen 06:00, Scheitern (Beziehung −4, `fail_rel`), Bestatt-Bedingungen (`wait`/`broken`/`done`), `unharvested` scheitert beim Nehmen, Stein-Abgleich, Tafel deterministisch mit Abkühlzeit, Lohn einmal, Save/Load |
+| `test_village.gd` / `test_expansion.gd` (+) | P3 | Freischaltung (Morgen/Laden v5/v6, idempotent), Weihe-Preis je Stufe, Weihetag (Pfarrer-Eintrag gilt nur heute), `consecrate` + `try_unlock` in beiden Reihenfolgen, `unlock_flag`, Runde/Spende je Tag, Trauerflor deterministisch, Kapitel genau einmal (alle vier Bedingungen, jede Reihenfolge), Ersatzstein auf `old_01`/`old_08` nur mit Auftrag (Zustand bleibt OLD) |
+| `test_specimens.gd` / `test_anatomy_harvest.gd` | P4 | Sperrgründe (Karte unsichtbar ohne `anatomy_known`/außerhalb der Gruft, eingekleidet, Frische < 0,3, Werkzeug, Glas/Bündel-Zutaten, Platz), Wirkung (Ruf −3, Pietät −8, `harvested`, Qualität −2 beim Zeichen, kein `full_prep`), Klarheit = Frische am Ende, Bündel-Verfall 600 Min und × 0,25 im Kühlfach (Fenster, Mehrtagessprung, Laden mitten im Fenster), Einlegen, Preise (Tabelle §2.6), Verkauf/Untersuchung/Rückgabe schließen sich aus, Befund-Vorrang, Hinweise einmal, verborgene Ursachen deterministisch, `kept`, Save/Load |
+| `test_inventory_unique.gd` | P4 | Einzelstücke: ein Platz je Stück, `uid` bleibt bei Truhe/Schuppen/Kühlfach-Transfer, `remove_uid`, Save/Load mit und ohne `uid`, alte Stände unverändert, `ChestTransfer` |
+| `test_ghosts.gd` (+) / `test_corpse_generator.gd` (+) | P4 | `robbed_count` mit Rückgabe, Grund `robbed_organ`, Pools `by_organ`/`by_returned` einmal je Grab; `hidden_cause` aus dem Seed, Story-Leichen ohne |
+| `test_pult.gd` / `test_recipes_phase7.gd` | P7 | Bau (Material + 12 Münzen, nur Gruft ≥ 1), Rezepte, Totensalbe als Räucher-Ersatz (× 0,25, 18 h), Kühlfach meldet Fenster, Schaupräparat, Schuppen-Ausschlüsse |
+| `test_dialogue.gd` (+) / `test_story.gd` / `test_journal.gd` (+) / `test_save_migration.gd` (+) / `test_save.gd` (+) / `test_game_state.gd` (+) | P6 | neue Bedingungen/Aktionen; Osric `p7_intro` einmal; Quast-Angebot (annehmen/ablehnen/später); Ilses neue Fragen und Hinweis; D1 fällig nach `after_flag + 8` nur mit Weihe, Reservierung im Lindenacker, `hagedorn_dead` um 00:00; Erkenntnisse `i_deathbook`/`i_burn_it`; **7 v5-, 7 v4-, 6 v3-, 4 v2-, 3 v1-Fixtures laden ohne Fehler/Warnungen**; v6-Roundtrip identisch; Version 7 → abgelehnt |
+| `test_assets_phase7.gd` | P5 | Modelle vorhanden, Budgets §8, Marker (`door_outside`, `door_inside`, `spawn_inside`, `counter`, `anvil`, `ribbon`, `light_*`, `use`, `cold`), Rig/Animationen der acht Figuren (gemeinsames Skelett, `idle`/`walk`/`talk`), Höhen (Katen ≤ 4,5 m, Kirchturm ≤ 17 m), Icons; **Stilregel:** Präparat-Icons ohne gesättigtes Rot (Pixelprüfung) |
+| `test_ui_phase7.gd` | W-UI | Laden-, Wundarzt-, Auftrags-, Geschenk-, Pult-Panel (Werte = Systeme, Gründe), Präparate-Karte (zweistufig, Schleier an/aus, Folgenzeile), Merkbuch „Aufträge"/„Hollerbrück", Zielzeilen, HUD-Ortsname, Gerede-Blase, Register/Totenzettel/Tageszusammenfassung, Debug-Befehle |
+
+**Integration**
+- `test_region_travel.gd` (P1): Wegstein → Dorf → Gaststube → Dorf → Friedhof mit echter `HutPortal`/`RegionTravel`-Kette; Uhr +60 Min gesamt; Kamera-Profil je Ort; Speichern/Laden in jedem der fünf Zustände (Friedhof, Dorf, Gaststube, Gruft, Kapelle) → identische Ansicht.
+- `test_phase7_loop.gd` (W-Welt): v5-Fixture `slot_p6_day40_reverent` laden → `village_open` → Osric `p7_intro` (echter `DialogueRunner`) → Wegstein → Fenner (Lindenacker, Brunnen) → Lindenacker räumen (echte Hindernisse) → Weihe bezahlen → nächster Tag 10:30 geweiht, Abschnitt offen → Lieferung → Gruft-Tisch → **Präparat im Glas** (zweistufig) → Grab im Lindenacker → Wundarzt: verkaufen / untersuchen → zweite Leiche: **Präparat beisetzen** (Geisterstimmung zurück) → Aufträge liefern, Stein für `old_08` → D1 per Debug fällig → Bestatt-Auftrag → Hinweise → `i_deathbook` → drei Vertraute (Debug-Hilfe nur für Zeit) → **Kapitel**. **Roundtrip** `collect_state()` identisch nach `save_game`/`load_game` an 6 Momenten: im Dorf mit Präparat im Inventar; in der Gaststube um 23:00; Bündel im Kühlfach mit offenem Fenster; am Weihetag 10:00 (Pfarrer auf dem Friedhof); Auftrag angenommen mit Frist; nach dem Kapitel.
+- `test_phase6_save_upgrade.gd` (P6): `slot_p6_crypt_table` laden → Präparate erst nach `anatomy` → Zopf bleibt genommen, Herz dazu → Qualität −1 −2; `slot_p6_chapel_carry` laden → Kapelle, `region graveyard`, Aussegnung weiter möglich.
+- `test_village_world.gd` (W-Welt): Häuser, Türen, Läden, Wegpunkte an den Positionen §4.2/§4.4; Sichtprüfung und Wege §4.5 vollständig; Frustum-Test: von keinem Dorf-Kamerastandpunkt ist der Friedhof oder ein Innenraum im Bild und umgekehrt.
+- `test_graveyard_world.gd` (+): Layout-Diff gegen `layout_p6.json`: nur R1, L1–L9, P1, N1, N2 und neue Einträge; Lindenacker-Sicht und -Wege §4.6; keine neue Verdeckung.
+- `test_interiors.gd` (+): drei neue Räume an ihren Ursprüngen, Frustum, ≤ 2 Schattenlichter, `door_id`-Ausgang.
+- **Playthrough-Bot (W3):** `phase7_bot.gd` erweitert `Phase6Bot` um Reisen (echte Portale, Wegminuten über die Uhr), Dialoge über den echten `DialogueRunner`, Laden-, Auftrags-, Geschenk-, Wundarzt- und Pult-Panel, Lindenacker räumen, Weihe, Präparate über die echte Präparate-Karte (zweistufig), Rückgabe am Grab. **Münzbuch je Strategie** (+ Zwecke `village`, `donation`, `round`, `consecration`; Einnahmen „Auftrag", „Verkauf im Dorf", „Präparat").
+  | Strategie | Start | Tage | Verhalten | Erwartung |
+  |---|---|---|---|---|
+  | `neighbor7` | v5 `day40_reverent` | 13 | Bogen A §1.4, keine Präparate | Kapitel ≤ B13; Ende 30–110; Morgenstand nie < 15; ≥ 8 Aufträge; Pietät nicht gesunken |
+  | `anatomist7` | v5 `day40_reverent` | 13 | Besteck angenommen, jede Leiche Herz + Lunge + Magen im Glas, alles an Quast | Kapitel erreicht (Sterbebuch über die Amtsstube); Pfarrer und Liesel höchstens „Bekannt"; Geister der Lindenacker-Gräber unruhig; Präparat-Netto 2–7 je Leiche |
+  | `scholar7` | v5 `day41_mender` | 13 | nur Herzen im Glas, alle untersuchen, zwei Bündel ins Kühlfach und einlegen, zwei Gläser zurücklegen | `i_burn_it` (wenn eine gezeichnete Leiche kam, sonst Befund), Rückgabe hebt die Stimmung um 5; Kapitel erreicht |
+  | `penitent7` | v5 `day45_harvester` | 13 | keine Präparate, Spenden 2/Tag, Runden, Geschenke | Ruf steigt ≥ eine Stufe; Kapitel erreicht |
+  | `founder7` | v5 `day37_founder` | 15 | `crafter` + Phase 7 | Kapitel ≤ Tag 55; alte Kapitel unverändert |
+  | `save_load7` | wie `neighbor7` | 13 | lädt jeden Morgen, einmal in der Gaststube und einmal mit Bündel im Kühlfach | bitgleich zu `neighbor7` |
+  - Phase-3/4/5/6-Bots unverändert grün: Sie sehen nach ihrem Kapitel `village_open`, reisen aber nicht. Ohne Dorf bleibt der Lindenacker zu.
+- **Save-Fuzzer (W3):** + echter v6-Stand mitten in Phase 7 (Spieler in der Gaststube, Präparate im Inventar und Kühlfach, Bündel mit offenem Fenster, 3 aktive Aufträge, Weihetag) mit gezielten Mutationen (`region_id`, `uid` doppelt/fehlend, `specimens.records`, Auftragszustände, Beziehungswerte außerhalb 0…100, `returned` ⊄ `harvested`) + alle v5…v1-Fixtures. Neu in der Konsistenzprüfung: jede `uid` höchstens in einem Platz; gehaltene Records ohne Platz → Warnung erlaubt, Zustand bleibt; `returned ⊆ harvested`; unbekannte Region → Friedhof.
+- Art-Prototyp-Regression: `test_art_prototype.gd` unverändert grün.
+
+## 11. Screenshot-Liste Gate G7 (`village_shots.gd -- --out=/abs/dir`, `graveyard_shots_phase7.gd -- --out=/abs/dir` + `ui_screenshots.gd --phase7`, 1280×720 → `docs/reviews/phase7_round1/`)
+| # | Motiv |
+|---|---|
+| p7_00 | Wegstein am Ende des Kutschwegs, Spieler davor, Tag (Prompt sichtbar) |
+| p7_01 | Ankunft an der Holderbrücke, Ortstafel, Bildstock, Holunder, Morgen |
+| p7_02 | Anger Übersicht Tag (Zoom 24): Kirche, Amtshaus, Holderkrug, Brunnen, Linde, Schmiede, Leute an ihren Orten |
+| p7_03 | Anger am Nachmittag (14:30): Brunnen mit Theres und Liesel, Hagedorn an ihrer Pforte, Fenner an der Tafel |
+| p7_04 | Anger in der Abenddämmerung: Holderkrug-Laterne, Fenster warm, Esch unter der Linde |
+| p7_05 | Dorf nachts: Kirchentür-Laterne, Brücke, dunkle Katen, Osric auf dem Weg in den Holderkrug |
+| p7_06 | Kontaktbogen der acht Dorfbewohner (idle, gleiche Kamera, Namen darunter) |
+| p7_07 | Schmiede mit Esse-Glut, Esch am Amboss, Laden-Prompt |
+| p7_08 | Krämerladen mit offenem Fensterladen, Theres |
+| p7_09 | Kirche St. Gallus mit Pfarrer Lenz an der Tür |
+| p7_10 | Gaststube Tag / Nacht: Rosine am Schanktisch, Gäste, Osric im Eck, „Eine Runde für alle" |
+| p7_11 | Wundarztstube: Quast am Pult, Glasschrank mit trüben Gläsern |
+| p7_12 | Amtsstube: Fenner, Armenkasse, Lesepult mit der Abschrift |
+| p7_13 | Lindenacker vorher (Wald, Stümpfe, Brombeeren) / geräumt / belegt mit Steinen, Linde am Rand |
+| p7_14 | Weihetag: Pfarrer Lenz an der Lindenacker-Pforte, Spieler daneben |
+| p7_15 | Trauerflor an der Hagedorn-Kate, Liesel davor |
+| p7_16 | Gruft mit Präparierpult (Glasreihe unter dem Tuch, Kühlfach) |
+| p7_17 | Präparate-Karte am Gruft-Tisch, Zeile geschärft („Wirklich? Noch einmal drücken.") |
+| p7_18 | Während des Präparats: Tuch über der Leiche, Schleier, Aktionsbalken, Zeile |
+| p7_19 | Laden-Panel (Theres, Rabatt bei „Vertraut") |
+| p7_20 | Wundarzt-Panel mit drei Präparaten (Glas, Bündel mit Verfallsanzeige, Schaupräparat) |
+| p7_21 | Gemeindetafel-Panel mit zwei Angeboten und Kopfzeile Ruf |
+| p7_22 | Merkbuch „Hollerbrück" (acht Karten) und „Aufträge" |
+| p7_23 | Gerede-Blase über Rosine („Wackernagel hat für dich einen Stuhl am Ofen frei …") |
+| p7_24 | Präparat beisetzen am Grab (Prompt + Aktionsbalken) und Geist mit `by_returned`-Blase in der Nacht |
+| p7_25 | Geist mit `by_organ`-Blase über einem Lindenacker-Grab |
+| p7_26 | Neuer Stein auf `old_08` (Dorothee Mahn) neben dem alten an der Gruft-Treppe |
+| p7_27 | Merkbuch: Erkenntnis „Vorher eingetragen" |
+| p7_28 | Abschluss-Panel „Ein Name im Dorf" |
+| p7_vis_village / _linden | Sichtprüfung §4.5/§4.6 mit eingezeichneten Strahlen (frei grün, verdeckt rot), Zoom 12/22/24 |
+Dazu Asset-Tafeln `docs/reviews/phase7_assets/` (Gebäude, Figuren mit Rig-Posen, Items) und eine Performance-Tabelle (`perf_p7_01…05`: Anger Tag Zoom 24 mit 9 Figuren · Dorf nachts · Gaststube abends voll · Friedhof mit Lindenacker belegt · Gruft mit Pult und vollen Nischen).
+
+## 12. Wellenplan
+| Welle | Agents (parallel) | Inhalt | Ende |
+|---|---|---|---|
+| **W0** | Lead | **Zuerst v5-Fixtures mit Build `705bd5a`** (7 Stände §5.2, eigener Commit vor jedem Gerüst) und `tests/fixtures/phase7/layout_p6.json`. Dann: Datenklassen ✦ (inkl. Erweiterungen), Stubs mit exakten Signaturen, 8 EventBus-Signale, Database-Ordner, `SaveMigration.CURRENT = 6` mit `migrate_5_to_6` als Identität (fail-safe), Config-Fixtures `tests/fixtures/phase7/` (+ `Phase7Fixtures`, u. a. `region_at(id, tree)`, `villager(npc, value)`, `order_in(id, state)`, `specimen(organ, container, clarity, corpse)`, `shop_with(stock)`, `linden_open(tree)`), Prüfung aller `npc_id`-Lookups auf Region (§3.4), `test_phase7_scaffold.gd`, `test_saves_v5_load.gd` | Import + alle Tests grün → Commit |
+| **W1** | P1, P2, P3, P4, P5, P6, P7 (bei 5 Agents: P2 + P7, P3 + P6) | Systeme mit Unit-Tests gegen Fixtures (ohne Welt): Regionen/Portale/Türen/NPC-LOD/Zeitplan-Region (P1) · Läden/Beziehungen/Gerede (P2) · Aufträge/Dorf/Weihe/Kapitel/Ersatzstein (P3) · Präparate/Einzelstücke/Befunde/Rückgabe/Geister (P4) · Assets + Asset-Tests, **Figuren zuerst** (P5) · Dialoge der acht + Osric/Ilse, D1, Merkbuch, Migration v6 (P6) · Pult/Rezepte/Kühlfach (P7) | je Modul: Tests grün → Merge durch Lead, danach `--import` |
+| **W2** | W-Welt, W-UI (2 parallel) | Dorf-Region (Layout, Builder, Boden, Gras, Licht, Wegpunkte, 9 Npc), drei Innenräume, Wegstein, Lindenacker (L1–L9), Pult-Platz, Pfarrer am Weihetag, **Sichtprüfungen §4.5/§4.6** und Wege, `test_phase7_loop`, `test_village_world`; alle Panels, Präparate-Karte mit Schleier, Merkbuch-Seiten, HUD, Zielzeilen, Register, Debug, Icons | Integration + Roundtrips grün, Screenshots erstellt |
+| **W3** | QA (19), Art (04), Lead | `phase7_bot.gd` (6 Strategien, Münzbuch), Save-Fuzzer v6, Performance relativ (§9), Stil-/Ton-Prüfung (Dorf-Licht, Figuren, Gläser ohne Gore, Schleier, Trauerflor, Texte der acht Stimmen), Befunde beheben (Besitzer), Gate-Protokoll in `QUALITY_GATE_STATUS.md` | **STOPP – Benutzerprüfung G7** |
+Abhängigkeiten:
+- **P1 liefert zuerst** (Tag 1 der Welle): `RegionRoot`, `Player.region_id`, `ScheduleEntry.region` im Resolver und `Npc.region_id`. P2/P3 (Läden, Weihetag) und P6 (Zeitpläne) hängen daran. Bis dahin arbeiten Läden mit `is_open` aus dem Zeitplan allein (wie `NightTrade`).
+- **P4 liefert zuerst** die Einzelstücke im `Inventory` (Tag 1–2): P7 (Kühlfach, Schaupräparat) und W-UI (Wundarzt-Panel) hängen daran.
+- **P5 liefert zuerst** die acht Figuren (Rig, `idle/walk/talk`) und die Nordreihe des Dorfes (Höhen) – **Blocker** für die Sichtprüfung im Dorf. Bis dahin: graue Platzhalter-Quader in Modellmaß und die Ilse-Figur als Stellvertreter (nur Tests, nie in Screenshots).
+- `graveyard.gd`: nur P3 (Ersatzstein, Aufträge). `grave_plot.gd`: nur P4 (beide Prompts). `corpse_care.gd`/`morgue_table.gd`: nur P4. `expansion_manager.gd`: nur P3. `dialogue_*`: nur P6. `npc.gd`/`schedule_resolver.gd`: nur P1.
+- Texte: P6 besitzt alle Dialoge und Zeitpläne, P3 die Aufträge (`data/orders/*`), P4 die Befunde und Geisterzeilen, P2 Gerede und Bewohnerdaten. Die Leittexte stehen in §1–§2; wer sie ändert, meldet es dem Lead.
+
+## 13. Nicht in Phase 7
+- Ein durchgehend begehbarer Kutschweg, weitere Dörfer, Stadtbesuche, Reisen mit Karren oder Kutsche (Welt: Phase 11)
+- Der Innenraum der Kirche, Messen, Predigten, Beichte, eigene Riten des Pfarrers am Friedhof außer der Weihe (Phase 8/11)
+- Beziehungen zu Osric und Ilse, Romanzen, Hochzeiten, Kinder als Figuren, Feste, Markttage, Wochentage
+- Freie Gespräche, Gerüchte-Netz, Tagesabläufe, die auf den Spieler reagieren (NPCs: Phase 8); Quest-Ketten mit Verzweigung und Belohnungsbaum (Phase 9)
+- Preisdynamik, Angebot und Nachfrage, Steuern, Pacht, Kredit (Phase 10)
+- Leichen ins Dorf tragen, Leichen aus dem Dorf abholen, mehr als eine Lieferung am Tag, Exhumieren
+- Fleisch, Blut, Fett, Haut, Gehirn, Knochen oder Schädel als Ware; Organe als Zutat für Salben, Speisen, Tränke; sichtbare Organe, offene Leiber, Sektionsszenen; Organe für die Auferstehung (Phase 13 – heute nur Daten)
+- Präparate an Ilse; Präparate aus Gräbern holen; Präparate von Geschichts-Leichen S1–S5 (bestattet)
+- Wer zeichnet, und warum; Lorenz' Aufenthalt; das Gitter in der Gruft (Phase 12)
+- Gegner, Diebstahl, Strafen, Verhaftung, Kirchenbann
+- Neue Gebäude auf dem Friedhof, Zier im Dorf, Zier auf Ruhezeit-Gräbern; Wetter, Jahreszeiten
+- Änderungen am Maler-Shader, an den Atmosphären-Presets, an den freigegebenen Abschnitten I–IV, Werkhof, Kirchhof, an Hütte, Werkbank, Stationen, Pforten und den Phase-6-Gebäuden (außer §4.6)
+
+## 14. Vertragsfragen (bitte beim Freigeben beantworten)
+1. **Anbindung des Dorfes:** Eigene Außen-Region mit Abblende am Wegstein und **30 Spielminuten** Weg je Richtung (§4.1, Empfehlung) – oder kürzer (15 Min) / länger (45 Min)? Ein durchgehender Weg ist nicht vorgesehen.
+2. **Neuer Grund: der Lindenacker** südlich der Ostwiese mit **8 Grabstellen**, vom Schultheiß gegeben und vom Pfarrer geweiht; dafür werden zwei (bedingt drei) Waldbäume versetzt (§2.9, §4.6). Einverstanden – oder lieber eine andere Lage (z. B. Gräber rund um die Kapelle, enger und mit Risiko für die Kapellen-Sicht)?
+3. **Organ-System:** drei Präparate (**Herz, Lunge, Magen**), Glas (haltbar, 5 Münzen Ware) oder Bündel (verdirbt in 10 h, im Kühlfach × 0,25), Verkauf an Quast (8 / 5 / 6 Grundpreis), Untersuchung mit Befund, Schaupräparat am Pult und **„Präparat beisetzen"** als würdiger Rückweg (§2.6). Passt Umfang und Ton – oder soll ein Teil (z. B. das Bündel oder die Rückgabe) entfallen?
+4. **Wiebke Hagedorn:** Man lernt sie im Dorf kennen, sie bittet um ihren Platz, und ungefähr acht Tage später bringt Osric sie – gezeichnet (§2.9, §1.6). Ist dieser Ton recht – oder soll sie überleben und eine andere Person die Geschichts-Leiche D1 sein?
+
+---
+
+## W0-Notizen (Lead, Welle 0 – verbindlich für W1)
+*(werden nach Welle 0 ergänzt: gemessene Fixture-Stände, Abweichungen, Testzahl)*
