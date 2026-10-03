@@ -126,6 +126,7 @@ func camera_profile() -> CameraProfile:
 	p.distance = c.camera_distance
 	p.zoom_min = c.camera_zoom_min
 	p.zoom_max = c.camera_zoom_max
+	p.pitch_deg = c.camera_pitch
 	p.bounds_enabled = true
 	var o := Vector2(c.origin.x, c.origin.z)
 	p.bounds_min = o + c.bounds_min

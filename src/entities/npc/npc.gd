@@ -294,6 +294,11 @@ func _update(delta: float) -> void:
 	progress = ScheduleResolver.progress(entry, minute_f)
 	if _held_entry != null and _held_entry != entry:
 		_held_entry = null
+	if not shows_region(entry):
+		# W-Welt (Phase 7): an entry of the other region (Osric's village day, the priest's
+		# consecration walk) names waypoints this Npc's world does not have – hidden, no path.
+		_set_state(false, false, false)
+		return
 	var path := _pose.path(entry)
 	var sample := _pose.sample(path, progress)
 	global_position = sample[0] if _held_entry == null else _held_position

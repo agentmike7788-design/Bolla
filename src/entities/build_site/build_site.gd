@@ -17,6 +17,9 @@ const TEXT_FAILED := "Bauen fehlgeschlagen."
 const TEXT_BUSY := "Gerade nicht möglich."
 
 @export var station_id: StringName
+## Phase 7 (W-Welt, the pult in the crypt): hidden until this GameState flag is set (village_open);
+## &"" = no flag (bit-identical for the workyard sites).
+@export var requires_flag: StringName = &""
 
 @onready var interactable: Interactable = get_node_or_null(^"Interactable") as Interactable
 
@@ -31,8 +34,10 @@ func _ready() -> void:
 	refresh()
 
 
-## workshop_open ∧ the station not built.
+## workshop_open ∧ the station not built (∧ requires_flag, Phase 7).
 func is_active() -> bool:
+	if requires_flag != &"" and not GameState.flag_on(requires_flag):
+		return false
 	var shop := workshop()
 	return shop != null and shop.is_open() and not shop.is_built(station_id)
 

@@ -1,0 +1,32 @@
+{
+  "_comment": "Die Amtsstube im Amtshaus (docs/PHASE7_DESIGN.md §4.3, §4.7), gebaut von src/world/interiors/interior_build.gd; Koordinaten wie crypt_layout.json. Stube innen x −3…3, z −2,5…2,5, Tür in der Südwand bei x 1,2. Schreibpult mit Siegel (Fenner dahinter, Kerze ohne Schatten), Aktenregal an der Nordwand, die Armenkasse (PoorBox) und das Lesepult mit der Abschrift des Sterbebuchs (RegisterCopy) an der Ostwand. Fenster aus dem Raummodell.",
+  "room_id": "office",
+  "building": "",
+  "region": "village",
+  "door_id": "door_office",
+  "room": "ph_int_office_room",
+  "door_inside": [1.2, 2.25],
+  "spawn_inside": [1.2, 1.7],
+  "walkway": 0.9,
+  "camera_bounds": {"min": [-0.8, -1.0], "max": [0.8, 0.4]},
+  "sun_rotation_deg": [-55.0, 25.0, 0.0],
+  "sun_shadow": false,
+  "wall_height": 3.0,
+  "floor": [-3.45, -2.85, 3.45, 2.95],
+  "walls": [
+    [-3.45, -2.85, -3.0, 2.95], [3.0, -2.85, 3.45, 2.95],
+    [-3.45, -2.85, 3.45, -2.5],
+    [-3.45, 2.5, 0.6, 2.95], [1.8, 2.5, 3.45, 2.95], [0.6, 2.95, 1.8, 3.3]
+  ],
+  "items": [
+    {"asset": "ph_int_office_desk", "id": "Desk", "pos": [-0.6, -1.45], "rot_y": 0.0, "mount": "floor"},
+    {"asset": "ph_int_office_shelf", "pos": [-2.3, -2.25], "rot_y": 0.0, "mount": "floor"},
+    {"asset": "ph_int_office_poor_box", "id": "PoorBox", "pos": [2.45, -1.75], "rot_y": -90.0, "mount": "floor", "interact": "poor_box",
+      "use_pos": [1.7, -1.75], "reach": [1.4, 1.0, 1.6], "reach_offset": [0.0, 0.5, 0.4]},
+    {"asset": "ph_int_office_lectern", "id": "RegisterCopy", "pos": [2.5, 0.3], "rot_y": -90.0, "mount": "floor", "interact": "register_copy",
+      "use_pos": [1.75, 0.3], "reach": [1.4, 1.0, 1.6], "reach_offset": [0.0, 0.5, 0.45]}
+  ],
+  "waypoints": {
+    "v_in_office_desk": [-0.6, -2.12, 0.0]
+  }
+}

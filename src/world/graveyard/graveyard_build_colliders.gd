@@ -83,7 +83,7 @@ static func build_plot_collision(ctx: Ctx, plot: Node3D, g: Dictionary, old: boo
 
 
 ## Ground collision: a HeightMapShape3D of the same grid (uniform scale = cell size).
-static func build_ground_collision(ctx: Ctx) -> void:
+static func build_ground_collision(ctx: Ctx, out_path: String = OUT_GROUND_SHAPE) -> void:
 	var body := StaticBody3D.new()
 	body.name = "GroundCollision"
 	body.collision_layer = Ctx.WORLD_LAYER
@@ -100,11 +100,11 @@ static func build_ground_collision(ctx: Ctx) -> void:
 	hm.map_width = w
 	hm.map_depth = d
 	hm.map_data = data
-	var err := ResourceSaver.save(hm, OUT_GROUND_SHAPE)  # binary: keeps the .tscn small
-	assert(err == OK, "save failed: %s" % OUT_GROUND_SHAPE)
+	var err := ResourceSaver.save(hm, out_path)  # binary: keeps the .tscn small
+	assert(err == OK, "save failed: %s" % out_path)
 	var shape := CollisionShape3D.new()
 	shape.name = "Shape"
-	shape.shape = load(OUT_GROUND_SHAPE)
+	shape.shape = load(out_path)
 	var centre := Vector3((ctx.grid_min.x + (w - 1) * 0.5) * ctx.cell, 0.0, (ctx.grid_min.y + (d - 1) * 0.5) * ctx.cell)
 	shape.transform = Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * ctx.cell), centre)
 	ctx.add(body, shape)

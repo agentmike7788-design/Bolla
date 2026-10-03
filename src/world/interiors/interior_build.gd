@@ -38,7 +38,16 @@ const ENTITY_SCENES := {
 	"chapel_altar": "res://src/entities/chapel_altar/chapel_altar.tscn",
 	"shed_store": "res://src/entities/shed_store/shed_store.tscn",
 	"room_exit": "res://src/world/interiors/room_exit.tscn",
+	# Phase 7 (docs/PHASE7_DESIGN.md §2.7, §4.3, §4.6 P1)
+	"poor_box": "res://src/entities/poor_box/poor_box.tscn",
+	"register_copy": "res://src/entities/register_copy/register_copy.tscn",
+	"pult_store": "res://src/entities/pult_store/pult_store.tscn",
+	"collection_shelf": "res://src/entities/collection_shelf/collection_shelf.tscn",
+	"build_site": "res://src/entities/build_site/build_site.tscn",
 }
+const WORKBENCH_SCRIPT := "res://src/entities/workbench/workbench.gd"
+const LECTURE_SCRIPT := "res://src/entities/lecture_set/lecture_set.gd"
+const BUILD_SITE_SLAB := "ph_prop_build_site_slab"
 const WORLD_LAYER := 1
 const INTERACT_LAYER := 8
 const WALL_H := 3.0
@@ -79,13 +88,15 @@ static func build(layout: Dictionary) -> Node3D:
 	root.set("hide_when_inactive", true)
 	root.set("config", cfg)
 	root.set("environment", _environment(cfg))
+	# Phase 7: the village rooms belong to the village region (InteriorRoom.region_id, docs / tests).
+	root.set("region_id", StringName(layout.get("region", "graveyard")))
 	var cam: Dictionary = layout.get("camera_bounds", {})
 	if cam.has("min"):
 		root.set("bounds_min", _v2(cam.min))
 		root.set("bounds_max", _v2(cam.max))
 	var room := _instance(String(layout.room), "Room")
 	_add(root, room, root)
-	_marker_lights(root, room, String(layout.room), {}, cfg)
+	_marker_lights(root, room, String(layout.room), layout.get("light_roles", {}), cfg)
 	var sun := DirectionalLight3D.new()
 	sun.name = "Sun"
 	sun.visible = false
@@ -108,10 +119,25 @@ static func build(layout: Dictionary) -> Node3D:
 	exit.name = "room_exit"
 	exit.set("building_id", StringName(layout.get("building", room_id)))
 	exit.transform = _xform(_v2(layout.door_inside), 0.0, 0.0)
+	# Phase 7: a village room leads back to its HouseDoor (RoomExit.door_id; the region stays).
+	exit.set("door_id", StringName(layout.get("door_id", "")))
 	_add(entities, exit, root)
 	var counts := {}
 	for item: Dictionary in layout.items:
 		_build_item(root, furniture, entities, colliders, item, counts, cfg)
+	# Phase 7 (§4.4): the room's NPC spots Waypoints/<id> [x, z, facing°] (RegionRoot finds them by
+	# the room's region_id).
+	if layout.has("waypoints"):
+		var wps := _group(root, "Waypoints")
+		for id: String in layout.waypoints:
+			var w: Array = layout.waypoints[id]
+			var marker := Marker3D.new()
+			marker.name = id
+			marker.position = Vector3(float(w[0]), 0.0, float(w[1]))
+			if w.size() > 2:
+				marker.rotation_degrees.y = float(w[2])
+				marker.set_meta(&"facing", true)
+			_add(wps, marker, root)
 	if layout.has("particles"):
 		var parts := _group(root, "Particles")
 		for p: Dictionary in layout.particles:
@@ -142,6 +168,12 @@ static func _build_item(root: Node3D, furniture: Node3D, entities: Node3D, colli
 		_add(entities, set_node, root)
 		_mourners(root, set_node, params)
 		_level_metas(set_node, item)
+		return
+	if kind == "lecture_set":
+		_lecture_set(root, entities, item, xform)
+		return
+	if kind == "pult_station":
+		_pult_station(root, entities, colliders, item, xform, cfg)
 		return
 	var asset := String(item.asset)
 	var model := _instance(asset, "Model")
@@ -190,7 +222,18 @@ static func _build_item(root: Node3D, furniture: Node3D, entities: Node3D, colli
 	if item.has("follows_table"):
 		holder.set_meta(&"follows_table", String(item.follows_table))
 	_marker_lights(root, model, asset, item.get("light_roles", {}), cfg)
-	if String(item.get("mount", "floor")) in COLLIDING_MOUNTS and bool(item.get("collide", true)):
+	if item.has("collide_rects"):
+		# Phase 7: only parts of the piece collide (the inn's bar: counter and back shelf, Rosine
+		# stands between them) – local rects [x0, z0, x1, z1] at the piece's height.
+		var rbody := _body(root, colliders, String(holder.name), xform)
+		var k := 0
+		for r: Array in item.collide_rects:
+			k += 1
+			var rr := Rect2(float(r[0]), float(r[1]), float(r[2]) - float(r[0]), float(r[3]) - float(r[1]))
+			_box(root, rbody, "Shape%d" % k, Vector3(rr.get_center().x, bounds.size.y * 0.5, rr.get_center().y),
+					Vector3(rr.size.x, bounds.size.y, rr.size.y))
+		_level_metas(rbody, item)
+	elif String(item.get("mount", "floor")) in COLLIDING_MOUNTS and bool(item.get("collide", true)):
 		var body := _piece_collision(root, colliders, bounds, xform, String(holder.name), float(item.get("collision_inset", 0.0)))
 		if body != null:
 			_level_metas(body, item)
@@ -254,6 +297,123 @@ static func _entity_extras(root: Node3D, entity: Node3D, model: Node3D, kind: St
 			box.size = _v3(item.reach)
 			shape.shape = box
 			shape.position = _v3(item.get("reach_offset", [0.0, 0.5, 0.0]))
+
+
+## Phase 7 (§2.6.4, §4.3): the LectureSet of the surgery – Student1…3 (params.figures cycled over
+## params.seats [x, z, rot_y, y], room-local) and the sealed Jar on the lectern (params.jar at
+## params.jar_pos [x, y, z]); all hidden until LectureSet.show_lecture. No collision, no Interactable.
+static func _lecture_set(root: Node3D, entities: Node3D, item: Dictionary, xform: Transform3D) -> void:
+	var params: Dictionary = item.get("params", {})
+	var set_node := Node3D.new()
+	set_node.name = String(item.get("id", "LectureSet"))
+	set_node.set_script(load(LECTURE_SCRIPT))
+	set_node.transform = xform
+	_add(entities, set_node, root)
+	var figures: Array = params.get("figures", [])
+	var k := 0
+	for seat: Array in params.get("seats", []):
+		k += 1
+		var fig := _instance(String(figures[(k - 1) % figures.size()]), "Student%d" % k)
+		var world := Transform3D(Basis(Vector3.UP, deg_to_rad(float(seat[2]))), Vector3(float(seat[0]), float(seat[3]), float(seat[1])))
+		fig.transform = xform.affine_inverse() * world
+		fig.visible = false
+		_add(set_node, fig, root)
+	if params.has("jar"):
+		var jar := _instance(String(params.jar), "Jar")
+		jar.transform = xform.affine_inverse() * Transform3D(Basis.IDENTITY, _v3(params.jar_pos))
+		jar.visible = false
+		_add(set_node, jar, root)
+
+
+## Phase 7 (§2.7, §4.6 P1): the preparation desk in the crypt. A holder "PultPlace" (level metas of
+## the item: min_level 1) carries
+##   site_pult (BuildSite, station params.station, requires_flag params.requires_flag – hidden before
+##   village_open; the stone slab of the Phase-6 sites as its model, collision only while active),
+##   station_pult (Workbench station + requires_built: model, collision, Interactable; hidden until
+##   built) with PultStore (the slate drawer at the model's marker `cold`) and the CollectionShelf
+##   (params.shelf {asset, pos, rot_y}: model, collision, Interactable at its marker `use`).
+static func _pult_station(root: Node3D, entities: Node3D, colliders: Node3D, item: Dictionary, xform: Transform3D,
+		cfg: Resource) -> void:
+	var params: Dictionary = item.get("params", {})
+	var holder := Node3D.new()
+	holder.name = "PultPlace"
+	_add(entities, holder, root)
+	_level_metas(holder, item)
+	var asset := String(item.asset)
+	var probe := _instance(asset, "Probe")
+	var bounds := _mesh_aabb(probe)
+	var cold := probe.find_child("cold", true, false) as Node3D
+	var cold_xf := _rel(cold, probe) if cold != null else Transform3D(Basis.IDENTITY, Vector3(0, 0.7, 0.35))
+	probe.free()
+	# The build site (before the pult stands).
+	var site := (load(ENTITY_SCENES.build_site) as PackedScene).instantiate() as Node3D
+	site.name = "site_pult"
+	site.set("station_id", StringName(params.station))
+	site.set("requires_flag", StringName(params.get("requires_flag", "")))
+	site.transform = xform
+	_add(holder, site, root)
+	var slab := _instance(BUILD_SITE_SLAB, "Model")
+	var slab_box := _mesh_aabb(slab)
+	if slab_box.size.x > 0.0:
+		slab.scale = Vector3(bounds.size.x / slab_box.size.x, 1.0, bounds.size.z / slab_box.size.z)
+	slab.position = Vector3(bounds.get_center().x, 0.0, bounds.get_center().z)
+	_add(site, slab, root)
+	_fit_reach(root, site, bounds, 0.45)
+	# The station (Workbench with requires_built).
+	var station := Node3D.new()
+	station.name = String(item.get("id", "station_pult"))
+	station.set_script(load(WORKBENCH_SCRIPT))
+	station.set("station", StringName(params.station))
+	station.set("requires_built", true)
+	station.transform = xform
+	_add(holder, station, root)
+	var model := _instance(asset, "Model")
+	_add(station, model, root)
+	_marker_lights(root, model, asset, item.get("light_roles", {}), cfg)
+	_add_interactable(station, Vector3(bounds.size.x + 0.5, 1.0, bounds.size.z + 0.9))
+	(station.get_node("Interactable/Shape") as Node3D).position = Vector3(bounds.get_center().x, 0.5, bounds.get_center().z + 0.25)
+	var body := StaticBody3D.new()
+	body.name = "Collision"
+	body.collision_layer = WORLD_LAYER
+	body.collision_mask = 0
+	_add(station, body, root)
+	_box(root, body, "Shape", bounds.get_center(), bounds.size)
+	# The cold drawer (PultStore) in the desk front.
+	var store := (load(ENTITY_SCENES.pult_store) as PackedScene).instantiate() as Node3D
+	store.name = "PultStore"
+	store.transform = Transform3D(Basis.IDENTITY, Vector3(cold_xf.origin.x, 0.0, cold_xf.origin.z + 0.3))
+	_add(station, store, root)
+	# The collection shelf beside it (its own place in the room, child of the station so it stands
+	# only once the pult is built).
+	var sh: Dictionary = params.get("shelf", {})
+	if not sh.is_empty():
+		var shelf_xf := _xform(_v2(sh.pos), float(sh.get("rot_y", 0.0)), 0.0)
+		var shelf := (load(ENTITY_SCENES.collection_shelf) as PackedScene).instantiate() as Node3D
+		shelf.name = "CollectionShelf"
+		shelf.transform = xform.affine_inverse() * shelf_xf
+		_add(station, shelf, root)
+		var smodel := _instance(String(sh.asset), "Model")
+		_add(shelf, smodel, root)
+		var sbox := _mesh_aabb(smodel)
+		var sbody := StaticBody3D.new()
+		sbody.name = "Collision"
+		sbody.collision_layer = WORLD_LAYER
+		sbody.collision_mask = 0
+		_add(shelf, sbody, root)
+		_box(root, sbody, "Shape", sbox.get_center(), sbox.size)
+		_fit_reach(root, shelf, sbox, 0.5)
+
+
+## The Interactable/Shape of an instanced entity resized around `box` (+ margin, deeper to the front).
+static func _fit_reach(root: Node3D, entity: Node3D, box: AABB, margin: float) -> void:
+	var shape := entity.get_node_or_null(^"Interactable/Shape") as CollisionShape3D
+	if shape == null:
+		return
+	root.set_editable_instance(entity, true)
+	var b := BoxShape3D.new()
+	b.size = Vector3(box.size.x + margin * 2.0, 1.0, box.size.z + margin * 2.0 + 0.4)
+	shape.shape = b
+	shape.position = Vector3(box.get_center().x, 0.5, box.get_center().z + 0.2)
 
 
 ## The mourners: children of the set in show order (MournerSet uses its figure children); seats
@@ -346,6 +506,13 @@ static func _marker_lights(root: Node3D, model: Node3D, asset: String, overrides
 				light.light_energy = 0.0
 				light.visible = false
 				light.set_script(load(FLICKER))
+			&"stove":
+				# Phase 7 (§4.7): the inn's tiled stove – a steady warm fire light, no shadow.
+				light.light_color = cfg.get("stove_color")
+				_range(light, cfg.get("stove_range"))
+				light.light_energy = float(cfg.get("stove_day_energy"))
+				light.set_script(load(FLICKER))
+				light.set("amount", float(cfg.get("stove_flicker")))
 			&"eternal":
 				light.light_color = Color("#FF9A4A")
 				_range(light, 1.5)
@@ -366,6 +533,8 @@ static func _default_role(marker_name: String) -> StringName:
 		return &"window"
 	if marker_name == "light_ceiling" or marker_name == "light_lantern":
 		return &"lantern"
+	if marker_name == "light_stove":
+		return &"stove"
 	if marker_name.begins_with("light_candle"):
 		return &"candle"
 	return &""

@@ -44,9 +44,16 @@
       "params": {"name_board": {"asset": "ph_int_name_board", "local": [0.0, 2.16, -0.22], "min_level": 3}}},
     {"asset": "ph_int_sealed_passage", "id": "SealedPassage", "pos": [1.02, -3.62], "y": 0.15, "rot_y": -38.0, "mount": "wall", "collide": false,
       "interact": "sealed_passage", "params": {"grille_asset": "ph_int_sealed_passage_grille"}, "reach": [1.4, 1.0, 1.6], "reach_offset": [0.0, 0.5, 0.7]},
-    {"asset": "ph_int_bone_rack", "pos": [-2.0, 2.45], "rot_y": 180.0, "mount": "floor", "min_level": 2},
-    {"asset": "ph_int_bucket", "pos": [2.35, 2.35], "rot_y": 25.0, "mount": "floor"},
-    {"asset": "ph_int_herbs", "pos": [1.6, 2.68], "y": 1.75, "rot_y": 180.0, "mount": "hang"}
+    {"asset": "ph_int_bone_rack", "pos": [-0.9, 1.95], "rot_y": 90.0, "mount": "floor", "min_level": 2,
+      "_phase7": "Phase 7 §4.6 P1 (W-Welt): war (−2,0 | 2,45) rot 180 – dort steht jetzt das Präparierpult; neben der Treppe."},
+    {"asset": "ph_int_bucket", "pos": [0.88, 1.95], "rot_y": 25.0, "mount": "floor",
+      "_phase7": "Phase 7 §4.6 P1: war (2,35 | 2,35) – dort steht jetzt das Sammlungsregal."},
+    {"asset": "ph_int_herbs", "pos": [-1.95, 2.62], "y": 1.75, "rot_y": 180.0, "mount": "hang",
+      "_phase7": "Phase 7 §4.6 P1: war (1,6 | 2,68) – hängt jetzt über dem Pult."},
+    {"asset": "ph_int_pult", "id": "station_pult", "pos": [-1.95, 2.38], "rot_y": 180.0, "interact": "pult_station", "min_level": 1,
+      "_phase7": "Phase 7 §2.7, §4.6 P1 (W-Welt): Präparierpult an der Südwand zwischen Westwand und Treppe (die Westwand trägt ab Stufe 3 niche_5), Schieferlade (PultStore) vorn; das Sammlungsregal an der Südwand östlich der Treppe. Bauplatz sichtbar ab village_open und Gruft ≥ 1.",
+      "params": {"station": "pult", "requires_flag": "village_open",
+        "shelf": {"asset": "ph_int_collection_shelf", "pos": [1.8, 2.5], "rot_y": 180.0}}}
   ],
   "particles": [
     {"name": "ShaftMotes", "pos": [0.0, 1.6, 3.4], "box": [0.9, 2.0, 1.6], "amount": 8, "color": "#b9c4cf", "alpha": 0.28, "lifetime": 7.0, "size": 0.22}

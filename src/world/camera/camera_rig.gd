@@ -36,9 +36,12 @@ var base_profile: CameraProfile
 var _own_base: CameraProfile
 ## Phase 3: the mouse wheel rotates the build preview while build mode is on – no zoom then.
 var _zoom_locked: bool = false
+## Phase 7 (W-Welt): the rig's own pitch; a profile with pitch_deg <= 0 returns to it.
+var _default_pitch: float = NAN
 
 
 func _ready() -> void:
+	_default_pitch = pitch_deg
 	_focus = _clamped(target.global_position if target else global_position)
 	_apply_projection()
 	_update_transform()
@@ -154,6 +157,10 @@ func _apply(p: CameraProfile) -> void:
 	bounds_enabled = p.bounds_enabled
 	bounds_min = p.bounds_min
 	bounds_max = p.bounds_max
+	if p.pitch_deg > 0.0:
+		pitch_deg = p.pitch_deg
+	elif not is_nan(_default_pitch):
+		pitch_deg = _default_pitch
 	if camera:
 		camera.environment = p.environment
 		camera.attributes = p.attributes
