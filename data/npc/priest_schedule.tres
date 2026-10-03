@@ -55,7 +55,7 @@ region = &"village"
 [sub_resource type="Resource" id="Resource_svkmg"]
 script = ExtResource("1_h8iy5")
 start_minute = 1090
-path = PackedStringArray("v_in_inn_table")
+path = PackedStringArray("v_in_inn_corner")
 dialogue_id = &"v_priest"
 region = &"village"
 
