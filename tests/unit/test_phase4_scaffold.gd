@@ -211,7 +211,8 @@ func test_extended_data_classes() -> void:
 	assert_eq([e.quality_washed, e.quality_laid_out, e.rot_malus, e.venerable_min_decor, e.venerable_max_dirt], [1, 1, -2, 12, 6])
 	assert_almost(e.rot_threshold, 0.1)
 	assert_eq(e.dress_quality, {&"shroud": 2, &"gown": 3})
-	assert_eq(e.harvest_malus, {&"hair": -1, &"teeth": -2})
+	# Phase 7 (P4, §2.11): the seven organs appended; hair / teeth unchanged.
+	assert_eq([e.harvest_malus[&"hair"], e.harvest_malus[&"teeth"]], [-1, -2])
 	assert_eq(e.dress_quality[&"shroud"], e.quality_shroud, "shroud keeps its points")
 	assert_eq(GhostConfig.new().robbed_mood, -5)
 	var lines := GhostLines.new()

@@ -277,7 +277,7 @@ func test_harvest_block_reasons_in_order() -> void:
 	assert_eq(SpecimenRules.harvest_block_reason(r, &"brain", &"jar", inv, room, true, cfg), SpecimenRules.TEXT_UNKNOWN, "no such organ")
 	assert_eq(SpecimenRules.harvest_block_reason(r, &"eyes", &"bundle", inv, room, true, cfg), SpecimenRules.TEXT_ONLY_JAR)
 	assert_eq(SpecimenRules.harvest_block_reason(r, &"hand", &"jar", inv, room, true, cfg), SpecimenRules.TEXT_ONLY_BUNDLE)
-	assert_eq(SpecimenRules.harvest_block_reason(r, &"eyes", &"jar", inv, room, true, cfg), "Es fehlt: kleines Präparatglas",
+	assert_eq(SpecimenRules.harvest_block_reason(r, &"eyes", &"jar", inv, room, true, cfg), "Es fehlt: Kleines Präparatglas",
 			"the eyes need the small dark jar")
 	assert_eq(SpecimenRules.harvest_block_reason(r, &"hand", &"bundle", inv, room, true, cfg).begins_with("Es fehlt:"), true)
 	r.harvested = [&"hair", &"teeth", &"heart", &"lung"] as Array[StringName]
@@ -461,8 +461,8 @@ func test_return_to_grave() -> void:
 	other.id = "g_2"
 	other.state = GraveRecord.State.MARKED
 	other.corpse_id = "c_9"
-	graveyard.load_state({"graves": [g.to_dict(), other.to_dict()]})
 	world.add_child(graveyard)
+	graveyard.load_state({"graves": [g.to_dict(), other.to_dict()]})
 	assert_eq(specimens.return_block_reason(heart, "g_2"), Specimens.TEXT_NOT_HERE)
 	assert_eq(specimens.return_block_reason(heart, "g_1"), "")
 	assert_true(specimens.return_to_grave(heart, "g_1", inv))

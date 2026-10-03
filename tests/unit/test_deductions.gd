@@ -14,13 +14,13 @@ class ManagerDouble extends CorpseManager:
 
 
 class JournalDouble extends JournalManager:
-	var clues: Array = []
+	var added: Array = []
 
 	func _ready() -> void:
 		pass
 
 	func add_clue(id: StringName, corpse_id: String = "", _silent: bool = false) -> bool:
-		clues.append([id, corpse_id])
+		added.append([id, corpse_id])
 		return true
 
 
@@ -108,13 +108,13 @@ func test_right_deduction_once_with_clue_cause_and_stat() -> void:
 	var res := deductions.deduce("c_1", _cards(["b_white_stomach", "l_stomach"]), &"arsenic")
 	assert_eq([res.ok, res.cause, res.clue], [true, &"arsenic", &"c_v_arsenic"])
 	assert_eq(r.revealed_cause, &"arsenic", "the death notice: gedeutet: Arsenik")
-	assert_eq(journal.clues, [[&"c_v_arsenic", "c_1"]])
+	assert_eq(journal.added, [[&"c_v_arsenic", "c_1"]])
 	assert_eq(GameState.get_stat(&"deductions"), 1)
 	assert_eq(deduced, [["c_1", &"arsenic"]])
 	assert_eq(deductions.deduced("c_1"), _cards(["d_arsenic"]))
 	var again := deductions.deduce("c_1", _cards(["b_white_stomach", "l_stomach"]), &"arsenic")
 	assert_true(again.ok and again.repeat)
-	assert_eq([GameState.get_stat(&"deductions"), journal.clues.size(), deduced.size()], [1, 1, 1], "once")
+	assert_eq([GameState.get_stat(&"deductions"), journal.added.size(), deduced.size()], [1, 1, 1], "once")
 
 
 func test_wrong_deduction_costs_nothing() -> void:
@@ -128,7 +128,7 @@ func test_wrong_deduction_costs_nothing() -> void:
 	assert_eq(deductions.deduce("c_1", _cards(["b_white_stomach", "l_stomach", "l_lung", "l_liver"]), &"arsenic").ok, false,
 			"at most three")
 	assert_eq(deductions.deduce("c_1", _cards(["b_pale_liver", "l_stomach"]), &"arsenic").ok, false, "only own cards")
-	assert_eq([r.revealed_cause, GameState.get_stat(&"deductions"), journal.clues, deduced], [&"", 0, [], []], "no trace")
+	assert_eq([r.revealed_cause, GameState.get_stat(&"deductions"), journal.added, deduced], [&"", 0, [], []], "no trace")
 	assert_eq(deductions.deduced("c_1"), PackedStringArray())
 
 
