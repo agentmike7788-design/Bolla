@@ -18,6 +18,7 @@
 //                   { powered: count }          that many machines working on power at once
 //                   { oil: count }              pump that much more oil
 //                   { shipped: count }          unload that many more parts from trains
+//                   { flown: count }            drones deliver that many more parts
 //                   { silo: stages }            a rocket silo with that many stages built
 //                   { launched: count }         start that many more rockets
 //     reward      { unlocks, boosts, text } like a research entry, see research.js
@@ -266,7 +267,7 @@ export const SCENARIOS = [
         name: 'Fernverkehr',
         desc: 'Eisen aus dem Nordwesten, Kupfer aus dem Südosten: Schaltkreise brauchen beides.',
         goals: [{ deliver: 'circuit', count: 20 }],
-        reward: { boosts: { train: 1.5, belt: 1.5 }, text: 'Züge +50 %, Bänder +50 %' },
+        reward: { unlocks: ['signal'], boosts: { train: 1.5, belt: 1.5 }, text: 'Signale, Züge +50 %, Bänder +50 %' },
       },
       {
         name: 'Stahlexpress',
@@ -283,13 +284,64 @@ export const SCENARIOS = [
     ],
   },
   {
+    id: 'hub',
+    name: 'Drehkreuz',
+    desc: 'Vier Erze in vier Ecken, die Fabrik in der Mitte. Viele Züge brauchen Signale, und für die letzten Meter kommen die Drohnen.',
+    level: 4,
+    seed: 5150,
+    map: {
+      size: 88,
+      ores: { iron: 3, copper: 3, coal: 3, stone: 3 },
+      zones: { iron: [0, 0, 0.3, 0.3], copper: [0.7, 0, 1, 0.3], coal: [0, 0.7, 0.3, 1], stone: [0.7, 0.7, 1, 1] },
+      land: 0.08,
+      coast: 0.88,
+      rock: 0.35,
+      forest: 0.55,
+      richness: 1.4,
+    },
+    start: ['drill', 'belt', 'storage', 'furnace', 'assembler', 'constructor', 'splitter', 'merger', 'power', 'pole', 'rail', 'station', 'train'],
+    par: 24,
+    missions: [
+      {
+        name: 'Vier Ecken',
+        desc: 'Bahnhöfe an die Erze, ein Bahnhof in der Mitte und zwei Züge auf die Gleise.',
+        goals: [{ build: 'station', count: 3 }, { build: 'rail', count: 60 }, { build: 'train', count: 2 }],
+        reward: { unlocks: ['signal'], text: 'Signale' },
+      },
+      {
+        name: 'Grüne Welle',
+        desc: 'Zwei Züge auf einer Strecke stehen sich im Weg. Signale teilen sie in Blöcke, Kettensignale gehören vor jede Weiche.',
+        goals: [{ build: 'signal', count: 4 }, { shipped: 240 }],
+        reward: { unlocks: ['dronePort', 'provider', 'requester'], boosts: { train: 1.5 }, text: 'Drohnenhafen, Angebots- und Anfragekisten, Züge +50 %' },
+      },
+      {
+        name: 'Luftbrücke',
+        desc: 'Bänder in eine Angebotskiste, eine Anfragekiste vor die Maschine, ein Drohnenhafen mit Strom dazwischen.',
+        goals: [{ build: 'dronePort', count: 1 }, { flown: 100 }],
+        reward: { boosts: { drone: 1.5, drill: 1.5 }, text: 'Drohnen +50 %, Bohrer +50 %' },
+      },
+      {
+        name: 'Schaltzentrale',
+        desc: 'Platten aus dem Nordwesten, Draht aus dem Nordosten: Schaltkreise für das ganze Netz.',
+        goals: [{ deliver: 'circuit', count: 30 }, { flown: 300 }],
+        reward: { boosts: { furnace: 2, constructor: 1.5, belt: 1.5 }, text: 'Öfen ×2, Konstruktor +50 %, Bänder +50 %' },
+      },
+      {
+        name: 'Drehkreuz',
+        desc: 'Das ganze Netz läuft: Schaltkreise im Minutentakt, Züge und Drohnen in Bewegung.',
+        goals: [{ rate: 'circuit', perMin: 20 }, { shipped: 400 }],
+        reward: { text: 'Alle Signale auf Grün' },
+      },
+    ],
+  },
+  {
     id: 'starport',
     name: 'Sternenhafen',
     desc: 'Das Finale: eine weite Küste mit allem, was die Erde hergibt. Hier baust du das Raketensilo und schickst eine Rakete ins All.',
     level: 4,
     seed: 3141,
     map: { size: 80, ores: { iron: 5, copper: 4, coal: 4, stone: 4, oil: 4 }, land: 0.06, coast: 0.86, forest: 0.45, rock: 0.4, richness: 1.4 },
-    start: ['drill', 'belt', 'storage', 'furnace', 'assembler', 'constructor', 'splitter', 'merger', 'power', 'pole', 'pump', 'pipe', 'tank', 'refinery', 'rail', 'station', 'train'],
+    start: ['drill', 'belt', 'storage', 'furnace', 'assembler', 'constructor', 'splitter', 'merger', 'power', 'pole', 'pump', 'pipe', 'tank', 'refinery', 'rail', 'station', 'train', 'signal', 'dronePort', 'provider', 'requester'],
     par: 37,
     missions: [
       {
@@ -338,6 +390,7 @@ export function createMissions(scenario, factory) {
   let basePumped = factory.pumped;
   let baseShipped = factory.shipped;
   let baseLaunched = factory.launched;
+  let baseFlown = factory.flown;
   let reached = new Set(); // rate goals met once stay met
   let finishedAt = null;
 
@@ -348,6 +401,7 @@ export function createMissions(scenario, factory) {
     if (goal.silo) return { silo: true, have: Math.min(factory.count('siloStage'), goal.silo), need: goal.silo };
     if (goal.launched) return { launched: true, have: factory.launched - baseLaunched, need: goal.launched };
     if (goal.shipped) return { shipped: true, have: factory.shipped - baseShipped, need: goal.shipped };
+    if (goal.flown) return { flown: true, have: factory.flown - baseFlown, need: goal.flown };
     if (goal.powered) return { powered: true, have: reached.has(i) ? goal.powered : factory.powered(), need: goal.powered };
     const have = reached.has(i) ? goal.perMin : factory.perMinute(goal.rate);
     return { item: goal.rate, rate: true, have, need: goal.perMin };
@@ -380,11 +434,12 @@ export function createMissions(scenario, factory) {
       basePumped = factory.pumped;
       baseShipped = factory.shipped;
       baseLaunched = factory.launched;
+      baseFlown = factory.flown;
       reached = new Set();
       if (!this.current) finishedAt = factory.time;
       return m;
     },
-    save: () => ({ index, base, basePumped, baseShipped, baseLaunched, reached: [...reached], finishedAt }),
+    save: () => ({ index, base, basePumped, baseShipped, baseLaunched, baseFlown, reached: [...reached], finishedAt }),
     load(data) {
       if (!data) return;
       index = Math.min(data.index ?? 0, scenario.missions.length);
@@ -392,6 +447,7 @@ export function createMissions(scenario, factory) {
       basePumped = data.basePumped ?? 0;
       baseShipped = data.baseShipped ?? 0;
       baseLaunched = data.baseLaunched ?? 0;
+      baseFlown = data.baseFlown ?? 0;
       reached = new Set(data.reached ?? []);
       finishedAt = data.finishedAt ?? null;
     },

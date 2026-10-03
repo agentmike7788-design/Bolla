@@ -38,6 +38,10 @@
           <p class="label">Bahn <span id="rail-state"></span></p>
           <p class="power-text" id="rail-text"></p>
         </div>
+        <div class="power drone" id="drone" hidden>
+          <p class="label">Drohnen <span id="drone-state"></span></p>
+          <p class="power-text" id="drone-text"></p>
+        </div>
         <div class="power rocket" id="rocket" hidden>
           <p class="label">Rakete <span id="rocket-state"></span></p>
           <div class="power-bar"><i id="rocket-fill"></i></div>
@@ -118,6 +122,22 @@
         <button type="button" class="tool" data-tool="train" data-group="rail" aria-pressed="false" hidden>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM4 11h16M8 21l2-4M16 21l-2-4M8 14h.01M16 14h.01" /></svg>
           <span>Zug</span><kbd>Z</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="signal" data-group="rail" aria-pressed="false" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-9M9 21h6M9 3h6v9H9zM12 6.5h.01M12 9.5h.01" /></svg>
+          <span>Signal</span><kbd>J</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="dronePort" data-group="drone" aria-pressed="false" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 20v-3h14v3M9 9h6v3H9zM4 7h5M15 7h5M6.5 7v2.5M17.5 7v2.5M12 12v5" /></svg>
+          <span>Drohnen</span><kbd>F</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="provider" data-group="drone" aria-pressed="false" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16v11H4zM3 6h18v3H3zM12 17v-5M9.5 14.5L12 12l2.5 2.5" /></svg>
+          <span>Angebot</span><kbd>V</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="requester" data-group="drone" aria-pressed="false" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16v11H4zM3 6h18v3H3zM12 12v5M9.5 14.5L12 17l2.5-2.5" /></svg>
+          <span>Anfrage</span><kbd>C</kbd>
         </button>
         <button type="button" class="tool" data-tool="silo" data-group="space" aria-pressed="false" hidden>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c3 3 4 7 4 11v4H8v-4c0-4 1-8 4-11zM8 14l-3 4v3h3M16 14l3 4v3h-3M10 21h4M12 8v.01" /></svg>

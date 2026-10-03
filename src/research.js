@@ -172,6 +172,30 @@ export const RESEARCH = [
     boosts: { train: 1.6 },
   },
   {
+    id: 'signals',
+    name: 'Zugsignale',
+    desc: 'Signale teilen die Strecke in Blöcke: in jeden Block fährt nur ein Zug. Kettensignale halten Züge vor Kreuzungen, bis der Weg hindurch frei ist.',
+    cost: { circuit: 30, steel: 20 },
+    requires: ['railways'],
+    unlocks: ['signal'],
+  },
+  {
+    id: 'drones',
+    name: 'Logistikdrohnen',
+    desc: 'Drohnenhafen, Angebots- und Anfragekisten. Drohnen fliegen Teile ohne Band von Kiste zu Kiste, solange der Hafen Strom hat.',
+    cost: { circuit: 60, gear: 40, steel: 40 },
+    requires: ['hydraulics', 'electricity'],
+    unlocks: ['dronePort', 'provider', 'requester'],
+  },
+  {
+    id: 'droneRotors',
+    name: 'Leichtbau-Rotoren',
+    desc: 'Drohnen fliegen 60 % schneller.',
+    cost: { plastic: 30, processor: 15 },
+    requires: ['drones', 'refining'],
+    boosts: { drone: 1.6 },
+  },
+  {
     id: 'oilAge',
     name: 'Ölzeitalter',
     desc: 'Das letzte Ziel: Prozessoren, Kunststoff und Treibstoff für die Zukunft.',
@@ -190,7 +214,7 @@ export const RESEARCH = [
 ];
 
 // Factory stats that research can multiply. 1 is the starting value.
-export const STATS = ['belt', 'drill', 'furnace', 'assembler', 'constructor', 'power', 'pump', 'refinery', 'train'];
+export const STATS = ['belt', 'drill', 'furnace', 'assembler', 'constructor', 'power', 'pump', 'refinery', 'train', 'drone'];
 
 export const START_UNLOCKED = ['drill', 'belt', 'storage'];
 

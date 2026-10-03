@@ -3,7 +3,7 @@
 // close, and a slow generative background tune. No audio files needed.
 
 const SETTINGS_KEY = 'bolla-audio';
-const MACHINE_TYPES = ['drill', 'furnace', 'assembler', 'constructor', 'belt', 'power', 'pump', 'refinery', 'train'];
+const MACHINE_TYPES = ['drill', 'furnace', 'assembler', 'constructor', 'belt', 'power', 'pump', 'refinery', 'train', 'drone'];
 const LOOP_SECONDS = 2.4;
 
 function loadSettings() {
@@ -310,6 +310,12 @@ export function createAudio() {
       const knock = (p < 0.08 ? Math.exp(-p * 60) : 0) + (p > 0.12 && p < 0.2 ? Math.exp(-(p - 0.12) * 60) : 0);
       return low(s, 'r', 0.15) * 0.9 + knock * Math.sin(TAU * 140 * t) * 0.7 + Math.sin(TAU * 55 * t) * 0.05;
     },
+    // Drone rotors: a high buzz that wobbles a little.
+    drone: (t, s) => {
+      const f = 190 + Math.sin(TAU * 1.5 * t) * 6;
+      const buzz = Math.sin(TAU * f * t) * 0.14 + Math.sin(TAU * f * 2 * t) * 0.07 + Math.sin(TAU * f * 3.02 * t) * 0.03;
+      return buzz * (0.8 + 0.2 * Math.sin(TAU * 12 * t)) + low(s, 'w', 0.6) * 0.12;
+    },
     // A soft rattle of rollers.
     belt: (t, s) => {
       const roll = low(s, 'b', 0.5) * (0.4 + 0.6 * pulse(t, 0.1, 12));
@@ -333,7 +339,7 @@ export function createAudio() {
   // Machines are heard by how close they are to the spot the camera looks at.
   // One loop per machine type is mixed from all working machines, so a big
   // factory costs no more than a small one.
-  const LEVEL = { drill: 0.5, furnace: 0.75, assembler: 0.7, constructor: 0.6, belt: 0.25, power: 0.6, pump: 0.55, refinery: 0.55, train: 0.7 };
+  const LEVEL = { drill: 0.5, furnace: 0.75, assembler: 0.7, constructor: 0.6, belt: 0.25, power: 0.6, pump: 0.55, refinery: 0.55, train: 0.7, drone: 0.4 };
   function updateMachines(factory, focus, right, zoom) {
     if (!ctx || ctx.state !== 'running') return;
     const radius = 3 + zoom * 0.18;
@@ -362,6 +368,16 @@ export function createAudio() {
       const w = Math.min(1, tr.speed / 3) / (1 + d2);
       sum.train = (sum.train ?? 0) + w;
       panSum.train = (panSum.train ?? 0) + w * Math.max(-1, Math.min(1, (dx * right.x + dz * right.z) / (radius * 2)));
+    }
+    // Flying drones buzz where they are.
+    for (const d of factory.drones?.drones ?? []) {
+      const dx = d.x - focus.x;
+      const dz = d.z - focus.z;
+      const d2 = (dx * dx + dz * dz) / (radius * radius);
+      if (d2 > 30) continue;
+      const w = 1 / (1 + d2);
+      sum.drone = (sum.drone ?? 0) + w;
+      panSum.drone = (panSum.drone ?? 0) + w * Math.max(-1, Math.min(1, (dx * right.x + dz * right.z) / (radius * 2)));
     }
     const t = ctx.currentTime;
     for (const type of MACHINE_TYPES) {

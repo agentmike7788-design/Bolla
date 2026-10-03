@@ -190,6 +190,43 @@ function measureTrain(stats) {
   const perMin = (factory.shipped - atWarm) / 4;
   return { perMin, first: first ?? Infinity, cost: { building: 6, belt: RAIL_TILES + 4 * 2 + 2 } };
 }
+// Drones: two drill lines fill a provider chest, a powered drone port carries the
+// ore DRONE_TILES further to a requester that hands it to a storage.
+const DRONE_TILES = 12;
+function measureDrones(stats) {
+  const world = flatWorld();
+  const factory = createFactory(world, { start: ALL });
+  Object.assign(factory.research.stats, stats);
+  const at = world.at;
+  const z = 20;
+  const P = factory.place('provider', at(10, z), E);
+  for (const [dz, dir] of [[-3, 2], [3, 0]]) {
+    Object.assign(at(10, z + dz), { ore: 'iron', amount: 1e6 });
+    factory.place('drill', at(10, z + dz), dir);
+    factory.place('belt', at(10, z + dz / 1.5), dir);
+    factory.place('belt', at(10, z + dz / 3), dir);
+  }
+  const R = factory.place('requester', at(10 + DRONE_TILES, z), E);
+  factory.setRequest(R, 'iron');
+  factory.place('belt', at(11 + DRONE_TILES, z), E);
+  factory.place('storage', at(12 + DRONE_TILES, z), E);
+  factory.place('dronePort', at(10 + DRONE_TILES / 2, z + 2), E);
+  factory.place('pole', at(10 + DRONE_TILES / 2, z + 4), E);
+  const plant = factory.place('power', at(11 + DRONE_TILES / 2, z + 5), E);
+  let first = null;
+  const step = 1 / 60;
+  let atWarm = 0;
+  for (let t = 0; t < 240; t += step) {
+    plant.fuel = 5;
+    factory.tick(step);
+    if (first === null && factory.flown > 0) first = factory.time;
+    if (Math.abs(factory.time - 120) < step / 2) atWarm = factory.flown;
+  }
+  void P;
+  const perMin = (factory.flown - atWarm) / 2;
+  return { perMin, first: first ?? Infinity, cost: { building: 9, belt: 6 } };
+}
+
 function link(factory, a, b) {
   factory.linkTrack(a, b);
   return b;
@@ -236,6 +273,8 @@ for (const item of Object.keys(LINES)) {
 {
   const m = measureTrain(base);
   console.log(`  ${'Zug'.padEnd(12)} ${m.perMin.toFixed(1).padStart(5)} /min  erste Lieferung nach ${m.first.toFixed(1)} s (${RAIL_TILES} Felder Gleis, zwei Bohrer)`);
+  const d = measureDrones(base);
+  console.log(`  ${'Drohnen'.padEnd(12)} ${d.perMin.toFixed(1).padStart(5)} /min  erste Lieferung nach ${d.first.toFixed(1)} s (${DRONE_TILES} Felder Flug, zwei Bohrer)`);
 }
 
 // --- Missions ---------------------------------------------------------------------
@@ -288,6 +327,14 @@ function planScenario(s) {
         if (!lines.train) build += buildTime(train.cost);
         lines.train = 1;
         wait = Math.max(wait, train.first + (g.shipped / train.perMin) * 60);
+        continue;
+      }
+      if (g.flown) {
+        // One drone network fed by two drill lines; built now or in an earlier mission.
+        const drone = measureDrones(stats);
+        if (!lines.drone) build += buildTime(drone.cost);
+        lines.drone = 1;
+        wait = Math.max(wait, drone.first + (g.flown / drone.perMin) * 60);
         continue;
       }
       if (g.oil) {

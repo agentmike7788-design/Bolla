@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { DIRS, ITEMS, POLE_SUPPLY, isFluid, SILO_STAGES } from './factory.js';
+import { DRONES_PER_PORT, DRONE_RANGE, PROVIDER_CAP } from './drones.js';
 import { trackPoint, isTrack, CAR_GAP, CARS, WAGON_CARGO, STATION_CAP } from './trains.js';
 import { ORES } from './world.js';
 
@@ -341,8 +342,8 @@ function buildingParts() {
     flame: new THREE.ConeGeometry(0.05, 0.16, 7).translate(0, 0.08, 0),
     // Station: a roof over the track on four posts, low platforms along the sides.
     platforms: mergeGeometries([box(0.12, 0.1, 0.96, -0.42, 0.05, 0), box(0.12, 0.1, 0.96, 0.42, 0.05, 0)]),
-    posts: mergeGeometries([-1, 1].flatMap((sx) => [-1, 1].map((sz) => new THREE.CylinderGeometry(0.025, 0.025, 1, 6).translate(sx * 0.42, 0.55, sz * 0.38)))),
-    roof: rbox(1, 0.06, 0.9, 0, 1.06, 0, 0.02),
+    roofPosts: mergeGeometries([-1, 1].flatMap((sx) => [-1, 1].map((sz) => new THREE.CylinderGeometry(0.025, 0.025, 1, 6).translate(sx * 0.42, 0.55, sz * 0.38)))),
+    stationRoof: rbox(1, 0.06, 0.9, 0, 1.06, 0, 0.02),
     fascia: mergeGeometries([box(1.02, 0.08, 0.03, 0, 1.0, -0.45), box(1.02, 0.08, 0.03, 0, 1.0, 0.45)]),
     crates: mergeGeometries([box(0.1, 0.1, 0.1, 0, 0.05, 0), box(0.1, 0.1, 0.1, 0, 0.05, 0.12), box(0.1, 0.1, 0.1, 0, 0.15, 0.06)]),
     // Train cars face -z, their floor at the top of the rails.
@@ -356,6 +357,33 @@ function buildingParts() {
     headlight: new THREE.SphereGeometry(0.04, 8, 6).translate(0, 0.38, -0.44),
     container: rbox(0.46, 0.36, 0.8, 0, 0.18, 0, 0.03),
     wagonFrame: mergeGeometries([box(0.5, 0.1, 0.03, 0, 0.25, -0.43), box(0.5, 0.1, 0.03, 0, 0.25, 0.43)]),
+    // Signal: a mast beside the track with a lamp head facing both ways along it.
+    sigMast: mergeGeometries([box(0.14, 0.06, 0.14, 0.4, 0.03, 0), new THREE.CylinderGeometry(0.022, 0.028, 0.92, 6).translate(0.4, 0.5, 0)]),
+    sigHead: box(0.16, 0.24, 0.13, 0.4, 0.98, 0),
+    sigVisor: mergeGeometries([box(0.18, 0.03, 0.07, 0.4, 1.07, -0.09), box(0.18, 0.03, 0.07, 0.4, 1.07, 0.09)]),
+    sigBand: box(0.175, 0.05, 0.145, 0.4, 0.85, 0),
+    sigLamp: new THREE.SphereGeometry(0.055, 12, 8),
+    sigTop: new THREE.CylinderGeometry(0.09, 0.09, 0.04, 12).translate(0.4, 1.12, 0),
+    // Drone port: a landing pad with a ring, a mast with an antenna and charging lights.
+    portPad: mergeGeometries([box(0.94, 0.08, 0.94, 0, 0.04, 0), box(0.8, 0.04, 0.8, 0, 0.1, 0)]),
+    portRing: new THREE.TorusGeometry(0.3, 0.025, 4, 24).rotateX(Math.PI / 2).translate(0, 0.125, 0),
+    portMark: mergeGeometries([box(0.05, 0.01, 0.3, -0.09, 0.125, 0), box(0.05, 0.01, 0.3, 0.09, 0.125, 0), box(0.18, 0.01, 0.05, 0, 0.125, 0)]),
+    portMast: mergeGeometries([new THREE.CylinderGeometry(0.025, 0.03, 0.7, 6).translate(0.38, 0.45, 0.38), box(0.12, 0.02, 0.02, 0.38, 0.78, 0.38)]),
+    // A quadcopter: body, four arms with rotors, sitting on short legs.
+    drone: mergeGeometries([
+      box(0.16, 0.06, 0.16, 0, 0, 0),
+      box(0.42, 0.025, 0.035, 0, 0.01, 0).rotateY(Math.PI / 4),
+      box(0.42, 0.025, 0.035, 0, 0.01, 0).rotateY(-Math.PI / 4),
+      ...[0, 1, 2, 3].map((i) => new THREE.CylinderGeometry(0.075, 0.075, 0.012, 10).translate(Math.cos((i + 0.5) * Math.PI / 2) * 0.15, 0.03, Math.sin((i + 0.5) * Math.PI / 2) * 0.15)),
+      box(0.1, 0.03, 0.1, 0, 0.045, 0),
+    ]).scale(1.3, 1.3, 1.3),
+    droneCargo: box(0.15, 0.13, 0.15, 0, -0.11, 0),
+    // Chests for the drones: a sturdy box with a coloured lid and a hatch.
+    chest: rbox(0.66, 0.42, 0.66, 0, 0.25, 0, 0.04),
+    chestLid: box(0.7, 0.06, 0.7, 0, 0.47, 0),
+    chestBands: mergeGeometries([box(0.68, 0.05, 0.68, 0, 0.16, 0), box(0.68, 0.05, 0.68, 0, 0.34, 0)]),
+    chestHatch: box(0.3, 0.02, 0.3, 0, 0.51, 0),
+    chestGauge: box(0.04, 0.3, 0.02, 0, 0, 0),
     // Rocket silo, 3 × 3 tiles: a slab with a skirt down to lower ground, the
     // building site with a fence and a crane, then the launch pad with its
     // flame trench and a lattice service tower with two arms.
@@ -369,7 +397,7 @@ function buildingParts() {
     craneMast: mergeGeometries([box(0.14, 3, 0.14, -0.95, 1.6, 0.95), box(0.4, 0.12, 0.4, -0.95, 0.18, 0.95)]),
     craneJib: mergeGeometries([box(2.1, 0.1, 0.1, 0.55, 0, 0), box(0.5, 0.18, 0.18, -0.65, -0.05, 0), new THREE.CylinderGeometry(0.008, 0.008, 1.4, 4).translate(1.4, -0.7, 0)]),
     piles: mergeGeometries([box(0.4, 0.2, 0.3, 0.7, 0.22, -0.8), box(0.4, 0.2, 0.3, 0.75, 0.42, -0.78), box(0.3, 0.3, 0.3, -0.75, 0.27, -0.7), box(0.6, 0.08, 0.2, 0.3, 0.16, 0.6), box(0.6, 0.08, 0.2, 0.3, 0.24, 0.62)]),
-    pad: mergeGeometries([box(2.4, 0.42, 2.4, 0, 0.33, 0), box(1.8, 0.06, 1.8, 0, 0.57, 0)]),
+    launchPad: mergeGeometries([box(2.4, 0.42, 2.4, 0, 0.33, 0), box(1.8, 0.06, 1.8, 0, 0.57, 0)]),
     trench: box(0.7, 0.05, 1.25, 0, 0.555, -0.6),
     padRing: new THREE.TorusGeometry(0.45, 0.04, 6, 24).rotateX(Math.PI / 2).translate(0, 0.6, 0),
     tower: mergeGeometries([
@@ -414,6 +442,10 @@ function buildingParts() {
     loco: flat(0xc8402e, { roughness: 0.45 }),
     pad: flat(0x6f6a62, { roughness: 0.9, metalness: 0.05 }),
     tower: flat(0xc8402e, { roughness: 0.55, metalness: 0.4 }),
+    provider: flat(0xd8572e, { roughness: 0.5 }),
+    requester: flat(0x3b7fd6, { roughness: 0.5 }),
+    drone: flat(0x3a4650, { roughness: 0.45, metalness: 0.4 }),
+    chainBand: flat(0x8a5ae0, { roughness: 0.5 }),
     ore: Object.fromEntries(Object.entries(ORES).map(([k, o]) => [k, flat(o.color, { roughness: 0.4, metalness: 0.3 })])),
   };
   return { g, m };
@@ -534,6 +566,86 @@ export function createFactoryView(renderer) {
   areas.renderOrder = 1;
   group.add(areas);
 
+  // The squares drone ports cover, shown while building logistics.
+  const droneAreaSize = DRONE_RANGE * 2 + 1;
+  const droneAreaMat = new THREE.MeshBasicMaterial({ color: 0x5ad1c8, transparent: true, opacity: 0.09, depthWrite: false });
+  const droneAreas = new THREE.InstancedMesh(new THREE.PlaneGeometry(droneAreaSize - 0.1, droneAreaSize - 0.1).rotateX(-Math.PI / 2), droneAreaMat, 256);
+  droneAreas.count = 0;
+  droneAreas.visible = false;
+  droneAreas.frustumCulled = false;
+  droneAreas.renderOrder = 1;
+  group.add(droneAreas);
+
+  // Flying drones: instanced bodies and the parts they carry.
+  const MAX_DRONES = 1024;
+  const droneBodies = new THREE.InstancedMesh(parts.g.drone, parts.m.drone, MAX_DRONES);
+  const droneCargo = new THREE.InstancedMesh(parts.g.droneCargo, itemMat, MAX_DRONES);
+  // A teal light on each drone, brighter at night.
+  const droneLightMat = new THREE.MeshStandardMaterial({ color: 0x5ad1c8, emissive: 0x5ad1c8, emissiveIntensity: 1.5 });
+  const droneLights = new THREE.InstancedMesh(parts.g.lamp, droneLightMat, MAX_DRONES);
+  for (const mesh of [droneBodies, droneCargo, droneLights]) {
+    mesh.count = 0;
+    mesh.castShadow = mesh !== droneLights;
+    mesh.frustumCulled = false;
+    group.add(mesh);
+  }
+  const CRUISE = 2.2; // flight height above the pads
+  const PAD = 0.2;
+
+  function rebuildDroneAreas(factory) {
+    let n = 0;
+    for (const b of factory.buildings.values()) {
+      if (b.type !== 'dronePort' || n >= 256) continue;
+      dummy.position.set(b.tile.position.x, b.tile.height + 0.06, b.tile.position.z);
+      dummy.rotation.set(0, 0, 0);
+      dummy.updateMatrix();
+      droneAreas.setMatrixAt(n++, dummy.matrix);
+    }
+    droneAreas.count = n;
+    droneAreas.instanceMatrix.needsUpdate = true;
+  }
+
+  function updateDrones(factory, elapsed) {
+    let n = 0;
+    let c = 0;
+    for (const d of factory.drones.drones) {
+      if (n >= MAX_DRONES) break;
+      const target = factory.buildings.get(d.phase === 'pick' ? d.from : d.phase === 'drop' ? d.to : d.port);
+      const tx = target ? target.tile.position.x : d.x;
+      const tz = target ? target.tile.position.z : d.z;
+      const toGo = Math.hypot(tx - d.x, tz - d.z);
+      const gone = Math.hypot(d.x - d.sx, d.z - d.sz);
+      // Up from the start, level at cruise height, down onto the target.
+      const lift = Math.min(1, gone / 1.6, toGo / 1.6);
+      const ease = lift * lift * (3 - 2 * lift);
+      const ground = target ? target.tile.height : 0.3;
+      dummy.position.set(d.x, ground + PAD + 0.45 + ease * CRUISE + Math.sin(elapsed * 3 + d.id) * 0.03, d.z);
+      const heading = toGo > 0.01 ? Math.atan2(-(tx - d.x), -(tz - d.z)) : 0;
+      dummy.rotation.set(0, 0, 0);
+      dummy.rotateY(heading);
+      dummy.rotateX(toGo > 0.3 ? -0.18 : 0); // nose down while flying
+      dummy.updateMatrix();
+      droneBodies.setMatrixAt(n, dummy.matrix);
+      dummy.translateY(0.1);
+      dummy.updateMatrix();
+      droneLights.setMatrixAt(n++, dummy.matrix);
+      dummy.translateY(-0.1);
+      dummy.updateMatrix();
+      if (d.n > 0) {
+        droneCargo.setMatrixAt(c, dummy.matrix);
+        droneCargo.setColorAt(c, itemColors[d.kind]);
+        c++;
+      }
+    }
+    droneBodies.count = droneLights.count = n;
+    droneCargo.count = c;
+    droneLightMat.emissiveIntensity = (1.2 + Math.sin(elapsed * 5) * 0.4) * (1 + night * 1.5);
+    droneLights.instanceMatrix.needsUpdate = true;
+    droneBodies.instanceMatrix.needsUpdate = true;
+    droneCargo.instanceMatrix.needsUpdate = true;
+    if (droneCargo.instanceColor) droneCargo.instanceColor.needsUpdate = true;
+  }
+
   // Pipes: hubs and arms as instances, rebuilt when the pipe networks change, and
   // glowing rings that run along them with the oil, away from the pumps.
   const PIPE_Y = 0.34;
@@ -624,7 +736,7 @@ export function createFactoryView(renderer) {
 
   // Which pieces draw a track tile: [shape, direction] pairs.
   function trackPieces(b) {
-    if (b.type === 'station') return [['straight', b.dir]];
+    if (b.type === 'station' || b.type === 'signal') return [['straight', b.dir]];
     let sides = b.links ?? [];
     if (!sides.length) sides = [0, 1, 2, 3].filter((d) => b.conn & (1 << d));
     if (!sides.length) sides = [b.dir];
@@ -946,8 +1058,8 @@ export function createFactoryView(renderer) {
       lamp(-0.05, 0.42, -0.02);
     } else if (b.type === 'station') {
       add(g.platforms, m.platform);
-      add(g.posts, m.steel);
-      add(g.roof, m.roof);
+      add(g.roofPosts, m.steel);
+      add(g.stationRoof, m.roof);
       view.fascia = add(g.fascia, own(flat(MODE_COLOR.load, { roughness: 0.5 })));
       view.crates = [-1, 1].map((sx) => {
         const c = add(g.crates, m.container);
@@ -992,7 +1104,7 @@ export function createFactoryView(renderer) {
       view.site.add(view.jib);
       view.pad = new THREE.Group();
       root.add(view.pad);
-      for (const [geo, mat] of [[g.pad, m.pad], [g.trench, m.dark], [g.padRing, m.steel], [g.tower, m.tower], [g.arms, m.steel], [g.fuelTanks, m.white]]) {
+      for (const [geo, mat] of [[g.launchPad, m.pad], [g.trench, m.dark], [g.padRing, m.steel], [g.tower, m.tower], [g.arms, m.steel], [g.fuelTanks, m.white]]) {
         const mesh = new THREE.Mesh(geo, mat);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
@@ -1008,6 +1120,48 @@ export function createFactoryView(renderer) {
       view.beacon.scale.setScalar(1.6);
       view.beacon.position.set(0.92, 6.28, 0.92);
       lamp(0, 0.5, -1.25);
+    } else if (b.type === 'signal') {
+      add(g.sigMast, m.dark);
+      add(g.sigHead, m.dark);
+      add(g.sigVisor, m.dark);
+      view.band = add(g.sigBand, m.chainBand);
+      // Lamp 0 faces trains that drive in the signal's direction, lamp 1 the others.
+      view.lamps = [1, -1].map((side) => {
+        const lamp = add(g.sigLamp, own(new THREE.MeshStandardMaterial({ color: 0xff3020, emissive: 0xff3020, emissiveIntensity: 1.4 })), false);
+        lamp.position.set(0.4, 0.98, side * 0.07);
+        return lamp;
+      });
+      // A light on top, so the state reads from above too.
+      view.top = add(g.sigTop, own(new THREE.MeshStandardMaterial({ color: 0xff3020, emissive: 0xff3020, emissiveIntensity: 1.4 })), false);
+    } else if (b.type === 'dronePort') {
+      add(g.portPad, m.concrete);
+      add(g.portRing, m.signal);
+      add(g.portMark, m.white);
+      add(g.portMast, m.steel);
+      // Drones resting on the pad; one goes missing for every drone out.
+      view.parked = [0, 1, 2, 3].slice(0, DRONES_PER_PORT).map((i) => {
+        const d = add(g.drone, m.drone);
+        d.position.set((i % 2 ? 0.2 : -0.2), 0.17, i < 2 ? -0.2 : 0.2);
+        d.scale.setScalar(0.6);
+        return d;
+      });
+      lamp(0.38, 0.84, 0.38);
+    } else if (b.type === 'provider' || b.type === 'requester') {
+      add(g.pad, m.dark);
+      add(g.chest, m.container);
+      add(g.chestBands, m.dark);
+      add(g.chestLid, b.type === 'provider' ? m.provider : m.requester);
+      add(g.chestHatch, m.dark);
+      if (b.type === 'requester') {
+        add(g.tray, m.dark);
+        // The hatch shows the colour of the part it asks for.
+        view.wish = own(new THREE.MeshStandardMaterial({ color: 0x555555, emissive: 0x000000, roughness: 0.4 }));
+        const wish = add(g.chestHatch, view.wish, false);
+        wish.scale.set(0.7, 1.5, 0.7);
+        wish.position.y = 0.012;
+      }
+      view.gauge = add(g.chestGauge, own(new THREE.MeshStandardMaterial({ color: 0x1a2a10, emissive: 0x7ee08a, emissiveIntensity: 0.9 })), false);
+      view.gauge.position.set(0, 0.25, -0.335);
     } else if (b.type === 'storage') {
       add(g.pad, m.dark);
       add(g.crate, m.container);
@@ -1073,6 +1227,7 @@ export function createFactoryView(renderer) {
     }
     factory.updateTracks();
     rebuildRails(factory);
+    rebuildDroneAreas(factory);
   }
 
   // World position of an item on a belt, following the belt's shape.
@@ -1142,6 +1297,7 @@ export function createFactoryView(renderer) {
 
     updateFlow(dt, factory);
     updateTrains(factory);
+    updateDrones(factory, elapsed);
     for (const [b, view] of views) animate(b, view, dt, elapsed);
   }
 
@@ -1252,6 +1408,33 @@ export function createFactoryView(renderer) {
       view.fuel.emissiveIntensity = fuel * (1 + night);
       view.beacon.material.emissiveIntensity = (Math.sin(elapsed * 4) > 0.3 ? 2.2 : 0.2) * (1 + night * 1.5);
       setLamp(view, b.state === 'ready' ? 'work' : b.state, elapsed);
+    } else if (b.type === 'signal') {
+      view.band.visible = !!b.chain;
+      const green = b.green ?? [false, false];
+      view.lamps.forEach((lamp, i) => {
+        // The lamp on the side a train comes from shows the block it would enter.
+        const col = green[i] === null ? 0x222222 : green[i] ? 0x3ef06a : 0xff3020;
+        lamp.material.color.setHex(0x111111);
+        lamp.material.emissive.setHex(col);
+        lamp.material.emissiveIntensity = green[i] === null ? 0 : 1.6 * (1 + night * 1.5);
+      });
+      const go = green[0] !== false && green[1] !== false;
+      view.top.material.color.setHex(0x111111);
+      view.top.material.emissive.setHex(go ? 0x22e050 : 0xff2a10);
+      view.top.material.emissiveIntensity = 1.8 * (1 + night * 1.5);
+    } else if (b.type === 'dronePort') {
+      view.parked.forEach((d, i) => (d.visible = i < DRONES_PER_PORT - (b.out ?? 0)));
+      setLamp(view, b.state, elapsed);
+    } else if (b.type === 'provider' || b.type === 'requester') {
+      const fill = b.type === 'provider' ? b.total / PROVIDER_CAP : b.want ? Math.min(1, b.total / b.want) : 0;
+      view.gauge.scale.y = Math.max(0.03, fill);
+      view.gauge.position.y = 0.1 + 0.15 * Math.max(0.03, fill);
+      if (view.wish) {
+        const col = b.request ? ITEMS[b.request].color : 0x555555;
+        view.wish.color.setHex(col);
+        view.wish.emissive.setHex(b.request ? col : 0);
+        view.wish.emissiveIntensity = 0.35 * (1 + night);
+      }
     } else if (b.type === 'storage') {
       if (b.received !== view.seen) {
         view.seen = b.received;
@@ -1278,6 +1461,7 @@ export function createFactoryView(renderer) {
     for (const meshes of Object.values(railMeshes)) for (const mesh of meshes) mesh.count = 0;
     for (const view of trainViews.values()) dropTrain(view);
     trainViews.clear();
+    droneAreas.count = droneBodies.count = droneCargo.count = droneLights.count = 0;
   }
 
   function setNight(n) {
@@ -1286,8 +1470,9 @@ export function createFactoryView(renderer) {
   }
 
   const showSupply = (on) => (areas.visible = on);
+  const showDroneRange = (on) => (droneAreas.visible = on);
 
-  return { group, rebuild, update, clear, setNight, showSupply };
+  return { group, rebuild, update, clear, setNight, showSupply, showDroneRange };
 }
 
 // Translucent preview of the building under the cursor: footprint, direction arrow
@@ -1339,6 +1524,10 @@ export function createGhost() {
     station: { geo: mergeGeometries([box(1, 0.06, 0.9).translate(0, 1.03, 0), box(0.05, 1, 0.05).translate(-0.42, 0, -0.38), box(0.05, 1, 0.05).translate(0.42, 0, -0.38), box(0.05, 1, 0.05).translate(-0.42, 0, 0.38), box(0.05, 1, 0.05).translate(0.42, 0, 0.38), box(0.84, 0.1, 1)]), arrow: 0.14 },
     train: { geo: mergeGeometries([box(0.48, 0.5, 0.9).translate(0, 0.12, 0), box(0.48, 0.5, 0.9).translate(0, 0.12, 1)]), arrow: 0.75 },
     silo: { geo: mergeGeometries([box(2.9, 0.6, 2.9), box(0.44, 6, 0.44).translate(0.92, 0, 0.92), new THREE.CylinderGeometry(0.3, 0.3, 4.4, 12).translate(0, 2.8, 0)]), arrow: null },
+    signal: { geo: mergeGeometries([box(0.84, 0.1, 1), new THREE.CylinderGeometry(0.03, 0.03, 0.9, 6).translate(0.4, 0.45, 0), box(0.14, 0.24, 0.14).translate(0.4, 0.86, 0)]), arrow: 0.14 },
+    dronePort: { geo: mergeGeometries([box(0.94, 0.12, 0.94), new THREE.CylinderGeometry(0.03, 0.03, 0.8, 6).translate(0.38, 0.4, 0.38)]), arrow: null },
+    provider: { geo: box(0.7, 0.52, 0.7), arrow: null },
+    requester: { geo: box(0.7, 0.52, 0.7), arrow: 0.56 },
     refinery: { geo: mergeGeometries([box(0.86, 0.36, 0.86), new THREE.CylinderGeometry(0.13, 0.13, 1.2, 8).translate(0.2, 0.6, 0.14), new THREE.CylinderGeometry(0.03, 0.03, 1, 6).translate(-0.33, 0.5, -0.3)]), arrow: 0.45 },
   };
   const meshes = Object.fromEntries(Object.entries(shapes).map(([k, s]) => [k, new THREE.Mesh(s.geo, bodyMat)]));
@@ -1349,6 +1538,11 @@ export function createGhost() {
   const supply = new THREE.Mesh(new THREE.PlaneGeometry(reach, reach).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x7fd4ff, transparent: true, opacity: 0.18, depthWrite: false }));
   supply.position.y = 0.05;
   group.add(supply);
+  // And the square a new drone port will cover.
+  const span = DRONE_RANGE * 2 + 1;
+  const portArea = new THREE.Mesh(new THREE.PlaneGeometry(span, span).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x5ad1c8, transparent: true, opacity: 0.12, depthWrite: false }));
+  portArea.position.y = 0.06;
+  group.add(portArea);
 
   function show(tool, tile, dir, ok) {
     if (!tool || !tile) {
@@ -1360,6 +1554,7 @@ export function createGhost() {
     pivot.rotation.y = yaw(dir);
     for (const [k, s] of Object.entries(meshes)) s.visible = k === tool;
     supply.visible = tool === 'pole';
+    portArea.visible = tool === 'dronePort';
     foot.scale.setScalar(tool === 'silo' ? 3 : 1);
     const arrowY = shapes[tool]?.arrow ?? null;
     arrow.visible = arrowY !== null;

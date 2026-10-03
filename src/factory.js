@@ -2,6 +2,7 @@ import { ORES, TERRAIN } from './world.js';
 import { createResearch, researchById } from './research.js';
 import { createHistory } from './stats.js';
 import { createRailways, isTrack, axisBits, STATION_CAP } from './trains.js';
+import { createDrones, isChest } from './drones.js';
 
 // Grid directions: 0 north (-z), 1 east (+x), 2 south (+z), 3 west (-x).
 export const DIRS = [
@@ -72,8 +73,12 @@ export const BUILDINGS = {
   refinery: { name: 'Raffinerie' },
   rail: { name: 'Gleis' },
   station: { name: 'Bahnhof' },
+  signal: { name: 'Signal' },
   train: { name: 'Zug', vehicle: true }, // not a building: a train on the track, see trains.js
   silo: { name: 'Raketensilo', size: 3 },
+  dronePort: { name: 'Drohnenhafen' },
+  provider: { name: 'Angebotskiste' },
+  requester: { name: 'Anfragekiste' },
 };
 
 // Tiles a building covers along each side; big ones stand on the middle tile.
@@ -102,7 +107,7 @@ const SPLITTER_BUFFER = 2;
 const opposite = (dir) => (dir + 2) % 4;
 export const isMachine = (b) => b?.type === 'furnace' || b?.type === 'assembler';
 // Buildings that never hand items on.
-const NO_OUTPUT = new Set(['storage', 'power', 'pole', 'pump', 'pipe', 'tank', 'rail', 'station', 'silo']);
+const NO_OUTPUT = new Set(['storage', 'power', 'pole', 'pump', 'pipe', 'tank', 'rail', 'station', 'signal', 'silo', 'dronePort', 'provider']);
 
 // Power. A coal power plant burns coal from belts and feeds every network it is
 // connected to. Poles carry the power: wires reach from pole to pole, and a pole
@@ -110,7 +115,7 @@ const NO_OUTPUT = new Set(['storage', 'power', 'pole', 'pump', 'pipe', 'tank', '
 // basic speed; on a network they run POWER_SPEED times as fast, but only while the
 // network has enough power, and they stop when it has none.
 export const POWER_OUTPUT = 8; // MW per power plant, before research
-export const POWER_USE = { drill: 1, furnace: 2, assembler: 1.5, constructor: 3, pump: 1.5, refinery: 3, silo: 4 }; // MW while working
+export const POWER_USE = { drill: 1, furnace: 2, assembler: 1.5, constructor: 3, pump: 1.5, refinery: 3, silo: 4, dronePort: 2 }; // MW while working
 export const POWER_SPEED = 2;
 export const COAL_SECONDS = 4; // one coal keeps a plant at full output that long
 export const WIRE_REACH = 7; // tiles between two poles
@@ -151,6 +156,8 @@ export function createFactory(world, { start } = {}) {
   let pumped = 0; // oil ever pumped
   let shipped = 0; // parts ever unloaded from trains
   const shipLog = []; // unload times of the last minute
+  let flown = 0; // parts ever delivered by drones
+  const flyLog = []; // drone delivery times of the last minute
   let launched = 0; // rockets started
   const launches = []; // silos that just started a rocket, for the view to show
   const footprint = new Map(); // tile index -> big building covering it beside its own tile
@@ -191,6 +198,8 @@ export function createFactory(world, { start } = {}) {
       return { ok: true, reason: '' };
     }
     const existing = at(tile.x, tile.z);
+    // A signal goes onto a straight piece of rail, or anywhere a station could.
+    if (type === 'signal' && existing?.type === 'rail') return railAxis(existing) === null ? { ok: false, reason: 'Signale nur auf gerade Gleise' } : { ok: true, reason: '' };
     if (existing && !(overBelt && existing.type === 'belt' && type !== 'belt')) return { ok: false, reason: 'Hier steht schon etwas' };
     if (!TERRAIN[tile.terrain].buildable) return { ok: false, reason: 'Hier kann man nicht bauen' };
     if (type === 'drill' && (!tile.ore || ORES[tile.ore].fluid)) return { ok: false, reason: tile.ore ? 'Auf Öl gehört eine Ölpumpe' : 'Bohrer nur auf Erzfeldern' };
@@ -198,8 +207,19 @@ export function createFactory(world, { start } = {}) {
     return { ok: true, reason: '' };
   }
 
+  // Direction of a straight rail (0 or 1), or null for curves and junctions.
+  function railAxis(b) {
+    const conn = (b.links?.length ? b.links.reduce((c, d) => c | (1 << d), 0) : b.conn) || axisBits(b.dir);
+    if ((conn & ~axisBits(0)) === 0) return 0;
+    if ((conn & ~axisBits(1)) === 0) return 1;
+    return null;
+  }
+
   function place(type, tile, dir, overBelt = false) {
     if (!canPlace(type, tile, overBelt).ok) return null;
+    const under = at(tile.x, tile.z);
+    // On a rail the signal follows the track, facing the way the player chose if it fits.
+    if (type === 'signal' && under?.type === 'rail' && dir % 2 !== railAxis(under)) dir = railAxis(under);
     const b = { type, tile, dir, index: indexOf(tile) };
     buildings.delete(b.index); // a belt it replaces
     if (type === 'drill') Object.assign(b, { timer: 0, held: null, state: 'work', mined: 0 });
@@ -215,7 +235,11 @@ export function createFactory(world, { start } = {}) {
     if (isFluid(b)) b.oil = 0;
     if (type === 'rail') b.conn = 0;
     if (type === 'station') Object.assign(b, { conn: axisBits(dir), mode: 'load', name: stationName(), items: {}, total: 0, received: 0, sent: 0 });
+    if (type === 'signal') Object.assign(b, { conn: axisBits(dir), chain: false, oneway: false });
     if (type === 'silo') Object.assign(b, { stage: 0, have: {}, busy: false, timer: 0, state: 'idle', made: 0, launched: 0, refused: null });
+    if (type === 'dronePort') Object.assign(b, { state: 'nopower', out: 0 });
+    if (type === 'provider') Object.assign(b, { items: {}, total: 0, filled: 0, sent: 0 });
+    if (type === 'requester') Object.assign(b, { items: {}, total: 0, request: null, want: 25, received: 0, handed: 0 });
     buildings.set(b.index, b);
     cover(b);
     if (isTrack(b)) railways.join(b);
@@ -233,6 +257,13 @@ export function createFactory(world, { start } = {}) {
     const b = tile && at(tile.x, tile.z);
     if (!b) return null;
     buildings.delete(b.index);
+    // A signal leaves the rail it stood on.
+    if (b.type === 'signal') {
+      buildings.set(b.index, { type: 'rail', tile, dir: b.dir, index: b.index, conn: b.conn });
+      railways.markDirty();
+      updateShapes();
+      return b;
+    }
     for (const [i, big] of footprint) if (big === b) footprint.delete(i);
     if (isTrack(b)) railways.markDirty();
     updateShapes();
@@ -263,6 +294,25 @@ export function createFactory(world, { start } = {}) {
     },
   });
 
+  // --- Logistics drones ------------------------------------------------------------
+
+  const drones = createDrones({
+    buildings,
+    research,
+    neighbour,
+    pushTo,
+    onFly(kind, n) {
+      flown += n;
+      for (let i = 0; i < n; i++) flyLog.push(time);
+    },
+  });
+
+  // Parts drones delivered during the last minute.
+  function flownPerMinute() {
+    while (flyLog.length && flyLog[0] < time - 60) flyLog.shift();
+    return flyLog.length;
+  }
+
   // Parts unloaded from trains during the last minute.
   function shippedPerMinute() {
     while (shipLog.length && shipLog[0] < time - 60) shipLog.shift();
@@ -271,6 +321,11 @@ export function createFactory(world, { start } = {}) {
 
   function setMode(b, mode) {
     if (b.type === 'station' && (mode === 'load' || mode === 'unload')) b.mode = mode;
+    if (b.type === 'signal' && (mode === 'block' || mode === 'chain')) b.chain = mode === 'chain';
+    if (b.type === 'signal' && (mode === 'both' || mode === 'oneway')) {
+      b.oneway = mode === 'oneway';
+      railways.markDirty();
+    }
   }
 
   // --- Power grid ---------------------------------------------------------------
@@ -557,8 +612,8 @@ export function createFactory(world, { start } = {}) {
   function setDir(b, dir) {
     if (b.dir === dir || b.type === 'rail') return;
     b.dir = dir;
-    // A station turns its track with it.
-    if (b.type === 'station') {
+    // A station or signal turns its track with it.
+    if (b.type === 'station' || b.type === 'signal') {
       b.conn = axisBits(dir);
       railways.join(b);
     }
@@ -583,6 +638,7 @@ export function createFactory(world, { start } = {}) {
   function updateShapes() {
     gridDirty = true;
     pipesDirty = true;
+    drones.markDirty();
     for (const b of buildings.values()) {
       if (b.type !== 'belt') continue;
       const back = neighbour(b, opposite(b.dir));
@@ -633,6 +689,8 @@ export function createFactory(world, { start } = {}) {
       history.consume(kind);
       return true;
     }
+    if (target.type === 'provider') return drones.accept(target, kind);
+    if (target.type === 'requester') return false;
     if (target.type === 'station') {
       // Loading stations take parts over their two sides, not along the track.
       if (target.mode !== 'load' || dir % 2 === target.dir % 2 || target.total >= STATION_CAP) return false;
@@ -641,7 +699,7 @@ export function createFactory(world, { start } = {}) {
       target.received++;
       return true;
     }
-    if (target.type === 'drill' || target.type === 'pole' || target.type === 'rail' || isFluid(target) || target.dir === opposite(dir)) return false;
+    if (target.type === 'drill' || target.type === 'pole' || isTrack(target) || target.type === 'dronePort' || isFluid(target) || target.dir === opposite(dir)) return false;
     if (target.type === 'belt') {
       const last = target.items[target.items.length - 1];
       if (last && last.p < ITEM_SPACING) return false;
@@ -899,6 +957,7 @@ export function createFactory(world, { start } = {}) {
     history.tick(dt, capacity, demand);
     tickFluids(dt);
     railways.tick(dt);
+    drones.tick(dt);
     const step = beltSpeed() * dt;
     for (const b of buildings.values()) if (b.type === 'belt' && b.items.length) tickBelt(b, step);
     for (const b of buildings.values()) {
@@ -919,6 +978,9 @@ export function createFactory(world, { start } = {}) {
       time,
       pumped,
       shipped,
+      flown,
+      flyLog: [...flyLog],
+      drones: drones.save(),
       launched,
       history: history.save(),
       shipLog: [...shipLog],
@@ -929,7 +991,7 @@ export function createFactory(world, { start } = {}) {
       recent: Object.fromEntries(Object.entries(recent).filter(([, log]) => log.length)),
       research: research.save(),
       amounts: world.tiles.filter((t) => t.ore).map((t) => t.amount),
-      buildings: [...buildings.values()].map(({ tile, index, net, load, pipes, links, depth, ...rest }) => ({ ...rest, index })),
+      buildings: [...buildings.values()].map(({ tile, index, net, load, pipes, links, depth, green, dnet, out, ...rest }) => ({ ...rest, index })),
     };
   }
 
@@ -939,6 +1001,9 @@ export function createFactory(world, { start } = {}) {
     pumped = data.pumped ?? 0;
     shipped = data.shipped ?? 0;
     launched = data.launched ?? 0;
+    flown = data.flown ?? 0;
+    flyLog.length = 0;
+    flyLog.push(...(data.flyLog ?? []));
     history.load(data.history);
     shipLog.length = 0;
     shipLog.push(...(data.shipLog ?? []));
@@ -960,6 +1025,7 @@ export function createFactory(world, { start } = {}) {
       cover(loaded);
     }
     railways.load(data.trains);
+    drones.load(data.drones);
     updateShapes();
   }
 
@@ -988,6 +1054,12 @@ export function createFactory(world, { start } = {}) {
     get launched() {
       return launched;
     },
+    get flown() {
+      return flown;
+    },
+    flownPerMinute,
+    drones,
+    setRequest: (b, kind, want) => drones.setRequest(b, kind, want),
     history,
     launches,
     launch,

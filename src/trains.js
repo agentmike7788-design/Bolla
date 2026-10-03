@@ -11,6 +11,15 @@
 // and goes on. With a locomotive at each end it can reverse at any station, so a
 // single line between two stations is enough. Trains wait for each other; two
 // that would wait for ever let one pass.
+//
+// Signals split the track into blocks: the track between signals. A train only
+// passes a signal once the block behind it is free, then reserves that block
+// until its last car has left it, so several trains can share a network. A chain
+// signal looks further: it lets a train in only when the way through the next
+// blocks up to the next plain signal is free, so nobody stops on a junction.
+// Signals work both ways, like the trains, unless they are set to one way: then
+// trains only pass them in their direction and find their way around, which
+// makes loops and double tracks where every train runs the same way.
 
 const D = [
   { x: 0, z: -1 },
@@ -35,7 +44,10 @@ const LOAD_WAIT = 3; // a train with some cargo leaves when nothing came for thi
 const UNLOAD_WAIT = 5; // and leaves a full station after this long
 const MIN_STOP = 1.2; // seconds every stop takes at least
 const PASS_AFTER = 1.5; // seconds two trains wait for each other before one passes
-export const isTrack = (b) => b?.type === 'rail' || b?.type === 'station';
+const DEADLOCK_AFTER = 20; // seconds before a ring of waiting trains breaks up
+export const isTrack = (b) => b?.type === 'rail' || b?.type === 'station' || b?.type === 'signal';
+// Stations and signals are straight pieces of track along their direction.
+const isStraightPiece = (b) => b.type === 'station' || b.type === 'signal';
 
 // Point and heading at distance `s` along a path of tile indices; whole numbers
 // are tile middles. Curves follow a quarter circle like the rails do.
@@ -86,16 +98,25 @@ export function createRailways({ world, buildings, neighbour, research, pushTo, 
   let dirty = true;
   let occupied = new Map(); // tile index -> train covering it
   let stations = [];
+  let signals = [];
+  let blocks = []; // { id, tiles, reservedBy, trains } between signals
+  const blockOf = new Map(); // tile index -> block; signal tiles belong to none
 
   const size = world.size;
   const indexStep = (d) => D[d].z * size + D[d].x;
-  const fits = (b, d) => b.type !== 'station' || d % 2 === b.dir % 2;
+  const fits = (b, d) => !isStraightPiece(b) || d % 2 === b.dir % 2;
 
   function trackLink(a, d) {
     const n = neighbour(a, d);
     return isTrack(n) && a.conn & bit(d) && n.conn & bit(opposite(d)) ? n : null;
   }
   const realLinks = (b) => [0, 1, 2, 3].filter((d) => trackLink(b, d));
+  // May a train step from tile i in direction d? Not against a one-way signal.
+  const passable = (i, d) => {
+    const a = buildings.get(i);
+    const b = buildings.get(i + indexStep(d));
+    return !(a?.oneway && a.type === 'signal' && a.dir !== d) && !(b?.oneway && b.type === 'signal' && b.dir !== d);
+  };
 
   // A rail forgets the sides it points to without a partner there.
   function tidy(b) {
@@ -140,11 +161,14 @@ export function createRailways({ world, buildings, neighbour, research, pushTo, 
   function update() {
     dirty = false;
     stations = [];
+    signals = [];
     for (const b of buildings.values()) {
       if (!isTrack(b)) continue;
       b.links = realLinks(b);
       if (b.type === 'station') stations.push(b);
+      if (b.type === 'signal') signals.push(b);
     }
+    updateBlocks();
     const lost = [];
     for (const t of [...trains]) {
       const [from, to] = covered(t);
@@ -160,6 +184,107 @@ export function createRailways({ world, buildings, neighbour, research, pushTo, 
       } else if (t.at === null || t.state === 'nopath') plan(t);
     }
     return lost;
+  }
+
+  // The track between signals falls into blocks. Reservations start over: trains
+  // ask again at the next signal.
+  function updateBlocks() {
+    blocks = [];
+    blockOf.clear();
+    for (const t of trains) t.res = [];
+    for (const b of buildings.values()) {
+      if (!isTrack(b) || b.type === 'signal' || blockOf.has(b.index)) continue;
+      const block = { id: blocks.length + 1, tiles: [], reservedBy: null, trains: new Set() };
+      blocks.push(block);
+      const todo = [b.index];
+      blockOf.set(b.index, block);
+      while (todo.length) {
+        const i = todo.pop();
+        block.tiles.push(i);
+        for (const d of buildings.get(i).links) {
+          const j = i + indexStep(d);
+          const n = buildings.get(j);
+          if (n.type === 'signal' || blockOf.has(j)) continue;
+          blockOf.set(j, block);
+          todo.push(j);
+        }
+      }
+    }
+  }
+
+  // Which trains stand in which block, and reservations a train has left behind.
+  function updateBlockTrains() {
+    for (const block of blocks) block.trains.clear();
+    for (const [i, t] of occupied) blockOf.get(i)?.trains.add(t);
+    for (const t of trains) {
+      if (!t.res?.length) continue;
+      t.res = t.res.filter((r) => {
+        const inside = r.block.trains.has(t);
+        if (inside) r.entered = true;
+        if (r.entered && !inside) {
+          if (r.block.reservedBy === t) r.block.reservedBy = null;
+          return false;
+        }
+        return true;
+      });
+    }
+  }
+
+  // A train forgets the blocks it reserved but has not reached yet.
+  function dropReservations(t) {
+    if (!t.res) return;
+    t.res = t.res.filter((r) => {
+      if (r.entered) return true;
+      if (r.block.reservedBy === t) r.block.reservedBy = null;
+      return false;
+    });
+  }
+
+  const blockFree = (block, t) => {
+    const r = block.reservedBy;
+    if (r && r !== t && r !== t.ghost) return r;
+    for (const o of block.trains) if (o !== t && o !== t.ghost) return o;
+    return null;
+  };
+
+  // May train t pass the signal at path index j? Returns null when it may (and
+  // reserves the blocks), else the train in the way.
+  function clearance(t, j) {
+    const sig = buildings.get(t.path[j]);
+    const need = [];
+    for (let i = j + 1; i < t.path.length; i++) {
+      const b = buildings.get(t.path[i]);
+      if (b?.type === 'signal') {
+        if (sig.chain && b.chain) continue;
+        break;
+      }
+      const block = blockOf.get(t.path[i]);
+      // A plain signal guards the one block up to the next signal; a chain signal
+      // the blocks up to the next plain one.
+      if (block && need[need.length - 1] !== block) need.push(block);
+    }
+    for (const block of need) {
+      const o = blockFree(block, t);
+      if (o) return o;
+    }
+    t.res ??= [];
+    for (const block of need) {
+      if (block.reservedBy === t) continue;
+      block.reservedBy = t;
+      t.res.push({ block, entered: block.trains.has(t) });
+    }
+    return null;
+  }
+
+  // The lamps of each signal: is the block on that side free? [towards dir, away from dir]
+  function updateSignals() {
+    for (const s of signals) {
+      s.green = [s.dir, opposite(s.dir)].map((d, side) => {
+        if (side && s.oneway) return null; // a one-way signal shows nothing to the wrong side
+        const block = blockOf.get(s.index + indexStep(d));
+        return !!block && !block.reservedBy && !block.trains.size;
+      });
+    }
   }
 
   // Path indices the cars of a train stand on, tail to head.
@@ -187,7 +312,7 @@ export function createRailways({ world, buildings, neighbour, research, pushTo, 
       if (!b?.links) continue;
       for (const d of b.links) {
         const j = i + indexStep(d);
-        if (prev.has(j) || (i === from && j === back)) continue;
+        if (prev.has(j) || (i === from && j === back) || !passable(i, d)) continue;
         prev.set(j, i);
         queue.push(j);
       }
@@ -243,6 +368,7 @@ export function createRailways({ world, buildings, neighbour, research, pushTo, 
     }
     t.at = null;
     t.state = 'run';
+    dropReservations(t);
     if (Math.round(t.s) >= t.path.length - 1) arrive(t);
   }
 
@@ -315,7 +441,18 @@ export function createRailways({ world, buildings, neighbour, research, pushTo, 
     let blocker = null;
     const k = Math.round(t.s);
     const look = Math.ceil((t.speed * t.speed) / (2 * TRAIN_ACCEL)) + 2;
+    let atSignal = false;
     for (let m = 1; m <= look && k + m <= end; m++) {
+      // A red signal: stop on the tile before it.
+      if (buildings.get(t.path[k + m])?.type === 'signal') {
+        const o = clearance(t, k + m);
+        if (o) {
+          blocker = o;
+          limit = Math.min(limit, k + m - 1);
+          atSignal = true;
+          break;
+        }
+      }
       const o = occupied.get(t.path[k + m]);
       if (!o || o === t || o === t.ghost) continue;
       blocker = o;
@@ -328,18 +465,21 @@ export function createRailways({ world, buildings, neighbour, research, pushTo, 
       t.blockedFor = (t.blockedFor ?? 0) + dt;
       // Waiting for each other: the older train passes.
       if (blocker.blockedBy === t && t.blockedFor > PASS_AFTER && t.id < blocker.id) t.ghost = blocker;
+      // Three or more trains waiting in a ring: after a long wait one squeezes past.
+      else if (t.blockedFor > DEADLOCK_AFTER && blocker.blockedBy && blocker.blockedFor > DEADLOCK_AFTER) t.ghost = blocker;
     } else t.blockedFor = 0;
     const dist = Math.max(0, limit - t.s);
     const target = Math.min(vmax, Math.sqrt(2 * TRAIN_ACCEL * dist));
     t.speed = t.speed < target ? Math.min(target, t.speed + TRAIN_ACCEL * dt) : target;
     if (t.s < limit) t.s = Math.min(limit, t.s + t.speed * dt);
     else t.speed = 0;
-    t.state = t.blockedBy ? 'blocked' : 'run';
+    t.state = t.blockedBy ? (atSignal ? 'signal' : 'blocked') : 'run';
     if (t.s >= end - 1e-3) arrive(t);
   }
 
   function tick(dt) {
     rebuildOccupied();
+    updateBlockTrains();
     for (const st of stations) st.state = 'idle';
     for (const t of trains) {
       if (t.at !== null) work(t, dt);
@@ -348,6 +488,7 @@ export function createRailways({ world, buildings, neighbour, research, pushTo, 
         if (t.retry > 2) plan(t);
       } else drive(t, dt);
     }
+    updateSignals();
     // Unloading stations hand their cargo to belts on their sides.
     for (const st of stations) {
       if (st.mode !== 'unload' || !st.total) continue;
@@ -403,7 +544,7 @@ export function createRailways({ world, buildings, neighbour, research, pushTo, 
       if (b?.type === 'station') found.push(i);
       for (const d of b?.links ?? []) {
         const j = i + indexStep(d);
-        if (seen.has(j)) continue;
+        if (seen.has(j) || !passable(i, d)) continue;
         seen.add(j);
         queue.push(j);
       }
@@ -443,6 +584,7 @@ export function createRailways({ world, buildings, neighbour, research, pushTo, 
   function removeTrain(t) {
     const i = trains.indexOf(t);
     if (i >= 0) trains.splice(i, 1);
+    for (const block of blocks) if (block.reservedBy === t) block.reservedBy = null;
     for (const o of trains) {
       if (o.ghost === t) o.ghost = null;
       if (o.blockedBy === t) o.blockedBy = null;
@@ -476,6 +618,7 @@ export function createRailways({ world, buildings, neighbour, research, pushTo, 
       const r = t.schedule.length ? route(t.path[k], t.path[k - 1] ?? -1, t.schedule[0]) : null;
       if (r) {
         t.path = t.path.slice(0, k).concat(r);
+        dropReservations(t);
       } else plan(t);
     }
   }
@@ -485,9 +628,9 @@ export function createRailways({ world, buildings, neighbour, research, pushTo, 
     let waiting = 0;
     for (const t of trains) {
       if (t.state === 'run') running++;
-      if (t.state === 'nopath' || t.state === 'noschedule' || t.state === 'blocked') waiting++;
+      if (t.state === 'nopath' || t.state === 'noschedule' || t.state === 'blocked' || t.state === 'signal') waiting++;
     }
-    return { trains: trains.length, running, waiting, stations: stations.length };
+    return { trains: trains.length, running, waiting, stations: stations.length, signals: signals.length, blocks: blocks.length };
   }
 
   return {
@@ -507,7 +650,7 @@ export function createRailways({ world, buildings, neighbour, research, pushTo, 
     setSchedule,
     reachable,
     summary,
-    save: () => trains.map(({ blockedBy, ghost, blockedFor, retry, ...t }) => ({ ...t, cargo: { ...t.cargo }, path: [...t.path], schedule: [...t.schedule] })),
+    save: () => trains.map(({ blockedBy, ghost, blockedFor, retry, res, ...t }) => ({ ...t, cargo: { ...t.cargo }, path: [...t.path], schedule: [...t.schedule] })),
     load(list) {
       trains.length = 0;
       for (const t of list ?? []) trains.push({ ...t, cargo: { ...t.cargo } });
