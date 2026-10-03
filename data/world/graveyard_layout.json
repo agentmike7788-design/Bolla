@@ -119,11 +119,11 @@
     {"id": "obs_l_stump_1", "kind": "stump", "section": "linden", "pos": [12.6, 17.4], "rot_y": 60.0, "footprint": [-0.5, -0.5, 1.0, 1.0]},
     {"id": "obs_l_stump_2", "kind": "stump", "section": "linden", "pos": [18.0, 12.0], "rot_y": 200.0, "footprint": [-0.5, -0.5, 1.0, 1.0]},
     {"id": "obs_l_stump_3", "kind": "stump", "section": "linden", "pos": [20.6, 18.7], "rot_y": 310.0, "footprint": [-0.5, -0.5, 1.0, 1.0]},
-    {"id": "obs_l_stump_4", "kind": "stump", "section": "linden", "pos": [14.9, 14.8], "rot_y": 120.0, "footprint": [-0.5, -0.5, 1.0, 1.0]},
+    {"id": "obs_l_stump_4", "kind": "stump", "section": "linden", "pos": [14.3, 14.8], "rot_y": 120.0, "footprint": [-0.5, -0.5, 1.0, 1.0]},
     {"id": "obs_l_bramble_1", "kind": "bramble", "section": "linden", "pos": [13.2, 11.3], "rot_y": 30.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
     {"id": "obs_l_bramble_2", "kind": "bramble", "section": "linden", "pos": [19.8, 15.0], "rot_y": 160.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
     {"id": "obs_l_bramble_3", "kind": "bramble", "section": "linden", "pos": [16.8, 18.5], "rot_y": 260.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
-    {"id": "obs_l_rubble_1", "kind": "rubble", "section": "linden", "pos": [17.3, 14.6], "rot_y": 80.0, "footprint": [-0.8, -0.8, 1.6, 1.6]},
+    {"id": "obs_l_rubble_1", "kind": "rubble", "section": "linden", "pos": [17.7, 14.6], "rot_y": 80.0, "footprint": [-0.8, -0.8, 1.6, 1.6]},
     {"id": "obs_l_rubble_2", "kind": "rubble", "section": "linden", "pos": [20.6, 11.1], "rot_y": 20.0, "footprint": [-0.8, -0.8, 1.6, 1.6]}
   ],
   "_dirt_spots": "Pflegestellen (§2.4; Phase 4 §4.1: + 3 im Holunderwinkel): 25 Flächenstellen; die Grabstellen dirt_<plot_id> erzeugt der Builder am Hügel (grave_dirt). start = start_progress (neues Spiel).",

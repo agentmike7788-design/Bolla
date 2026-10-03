@@ -748,14 +748,18 @@ func test_phase3_obstacles() -> void:
 		for p: Dictionary in layout.plots.filter(func(pl: Dictionary) -> bool: return pl.section == "yard") + layout.old_graves:
 			assert_false(rect.grow(1.0).has_point(_v2(p.pos)), "%s clear of %s" % [o.id, p.id])
 		for id: String in layout.waypoints:
-			if not id.begins_with("_"):
+			# Phase 7 N1 (§4.6): w_east_pass (11,5 | −2,2, contract) is the yard → east meadow passage the
+			# priest walks on the consecration day – the Lindenacker gate lies in the east meadow, so its
+			# obstacles are long cleared by then.
+			if not id.begins_with("_") and not (id == "w_east_pass" and o.section == "east"):
 				assert_false(rect.grow(0.5).has_point(_v2(layout.waypoints[id])), "%s clear of waypoint %s" % [o.id, id])
 		for k: int in 60:
 			assert_false(rect.has_point(_on_polyline(layout.path.points, k / 59.0)), o.id + " off the earth path")
 	assert_eq(kinds, {"east/bramble": 4, "east/rubble": 3, "east/fence_gap": 3, "north/hedge": 1, "north/bramble": 3,
 			"north/rubble": 2, "north/stump": 2, "north/fence_gap": 3,
 			"elder/gate_small": 1, "elder/elder_thicket": 2, "elder/sunken_pit": 6, "elder/fence_gap": 1,
-			"bruch/gate_east": 1, "quarry/boulder": 3, "churchyard/gate_church": 1})
+			"bruch/gate_east": 1, "quarry/boulder": 3, "churchyard/gate_church": 1,
+			"linden/gate_small": 1, "linden/stump": 4, "linden/bramble": 3, "linden/rubble": 2})  # Phase 7 §4.6 L2/L4
 	assert_eq(expansion.progress(&"east"), Vector2i(0, 10))
 	assert_eq(expansion.progress(&"north"), Vector2i(0, 11))
 	assert_eq(expansion.progress(&"elder"), Vector2i(0, 10))
@@ -809,7 +813,7 @@ func test_phase3_tending_spots() -> void:
 func test_phase3_build_mask_matches_layout() -> void:
 	var mask := load(BUILD_MASK) as BuildMask
 	assert_eq([mask.origin, mask.size, mask.cell], [Vector2(-11.5, -20.0), Vector2i(66, 80), 0.5])
-	assert_eq(mask.cells.size(), 66 * 60)
+	assert_eq(mask.cells.size(), 66 * 80)
 	var ctx := Ctx.new(tree)
 	ctx.layout = layout
 	var shapes := Phase3.mask_shapes(ctx)
@@ -824,7 +828,7 @@ func test_phase3_build_mask_matches_layout() -> void:
 			var s := mask.section_at(c)
 			per_section[s] = int(per_section.get(s, 0)) + 1
 			if s != 0:
-				assert_true(_section_rect(["", "yard", "east", "north", "elder"][s]).has_point(p), "cell %s in section %d" % [c, s])
+				assert_true(_section_rect({1: "yard", 2: "east", 3: "north", 4: "elder", 8: "linden"}[s]).has_point(p), "cell %s in section %d" % [c, s])
 	assert_eq(diff, 0, "build_mask.res is up to date with the layout (rebuild graveyard.tscn)")
 	for s: int in [1, 2, 3]:
 		assert_true(int(per_section.get(s, 0)) > 200, "section %d buildable cells: %d" % [s, per_section.get(s, 0)])
@@ -842,7 +846,10 @@ func test_phase3_build_mask_matches_layout() -> void:
 				if mask.flags_at(c) & BuildMask.GRAVE_RING:
 					ring_cells += 1
 					assert_false(plot.footprint.has_point(Vector2(local.x, local.z)), "%s: ring cell %s not on the plot" % [p.id, c])
-		assert_true(ring_cells >= 6, "%s grave ring (%d cells)" % [p.id, ring_cells])
+		# Phase 7 (§4.6 L1, contract positions): l_04 / l_08 stand at the east fence of the Lindenacker
+		# (x 20,5, section edge x 21,5) – their side strip lies beyond it, l_08 (back row) keeps 5 cells.
+		var ring_min := 5 if String(p.id) in ["l_04", "l_08"] else 6
+		assert_true(ring_cells >= ring_min, "%s grave ring (%d cells)" % [p.id, ring_cells])
 		var foot := plot.global_transform * Vector3(0, 0, plot.footprint.end.y + 0.55)
 		assert_true(mask.flags_at(mask.world_to_cell(Vector2(foot.x, foot.z))) & BuildMask.ROUTE, p.id + " foot-end strip")
 	for p: Vector2 in [Vector2(0.0, 4.0), Vector2(-0.8, 0.5), Vector2(10.8, -2.2), Vector2(12.3, -2.2), Vector2(4.5, -12.2)]:
@@ -2404,7 +2411,7 @@ func test_phase7_lindenacker_and_wegstein_in_the_world() -> void:
 	var size: Vector2i = mask.get("size")
 	var c := Vector2i(floori((p.x - origin.x) / cell), floori((p.y - origin.y) / cell))
 	assert_true(c.y < size.y, "mask rows reach z 20")
-	assert_eq(int((mask.get("cells") as PackedByteArray)[c.y * size.x + c.x]), int((Database.section(&"linden") as SectionData).order),
+	assert_eq(int((mask.get("cells") as PackedByteArray)[c.y * size.x + c.x]) & 0x0F, int((Database.section(&"linden") as SectionData).order),
 			"mask cell in the Lindenacker = section order 8")
 
 
@@ -2473,13 +2480,17 @@ func test_phase7_lindenacker_sight() -> void:
 	for g: Dictionary in layout.gather_nodes:
 		if String(g.get("section", "")) == "bruch":
 			accesses.append(_v2(g.pos))
+	# Mesh copies as above: the old linden's crown is foliage – where the cutout opens it around the
+	# gravekeeper it hides nothing (an AABB would count the whole crown).
 	for a: Vector2 in accesses:
 		var head := Vector3(a.x, world.ground_height(a) + 1.7, a.y)
+		var chest := Vector3(a.x, world.ground_height(a) + chest_h, a.y)
 		for zoom: float in [12.0, 22.0]:
 			var eye := _p6_eye(a, zoom)
+			var why := _p7_blocker(space, eye, head, chest, cut_radius)
 			for node: Node3D in new_nodes:
-				var box := _p6_model_aabb(node) if node.has_node("Model") else _aabb_of_node(node)
-				assert_true(box.intersects_segment(eye, head) == null, "%s hides the player at %s (zoom %d)" % [node.name, a, int(zoom)])
+				var path := String(world.get_path_to(node))
+				assert_false(why == path or why.begins_with(path + "/"), "%s hides the player at %s (zoom %d)" % [node.name, a, int(zoom)])
 	# The milestone at the end of the coach road in the frame at zoom 22.
 	var stand := _v2(layout.waypoints.from_village)
 	_p6_eye(stand, 22.0)
@@ -2503,7 +2514,8 @@ func test_phase7_lindenacker_routes() -> void:
 	assert_true(expansion.is_unlocked(&"linden"), "the Lindenacker opens")
 	for i: int in 4:
 		await tree.physics_frame
-	var step := 0.125
+	# 0,1 m grid: the gate gap x 15,0…16,6 leaves the 1,5 m capsule ±5 cm – its centre 15,8 lies on the grid.
+	var step := 0.1
 	var reached := _flood(Vector2(1.75, 8.4), step, Rect2(-15.0, -31.0, 47.0, 57.0))
 	var targets := {"Lindenacker gate (south side)": [Vector2(15.8, 10.4), 0.4], "milestone": [Vector2(9.0, 23.0), 1.2],
 			"spawn from_village": [Vector2(8.0, 23.4), 0.5]}
@@ -2534,16 +2546,3 @@ func _p7_blocker(space: PhysicsDirectSpaceState3D, eye: Vector3, p: Vector3, che
 			return String(world.get_path_to(body.get_parent()))
 		from = (hit.position as Vector3) + dir * 0.01
 	return ""
-
-
-func _aabb_of_node(node: Node3D) -> AABB:
-	var out := AABB(node.global_position, Vector3.ZERO)
-	var first := true
-	for n: Node in node.find_children("*", "MeshInstance3D", true, false):
-		var mi := n as MeshInstance3D
-		if not mi.is_visible_in_tree():
-			continue
-		var b := mi.global_transform * mi.get_aabb()
-		out = b if first else out.merge(b)
-		first = false
-	return out
