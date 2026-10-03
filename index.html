@@ -12,7 +12,7 @@
       <canvas id="scene"></canvas>
       <header class="hud hud-top">
         <h1>Bolla Fabrik</h1>
-        <p class="seed">Karte <span id="seed"></span> <button id="new-map" type="button">Neue Karte</button> <button id="maps-open" type="button" class="link">Karten <kbd>M</kbd></button>
+        <p class="seed">Karte <span id="seed"></span> <button id="new-map" type="button">Neue Karte</button> <button id="maps-open" type="button" class="link">Karten <kbd>M</kbd></button> <button id="stats-open" type="button" class="link">Statistik <kbd>L</kbd></button>
           <span class="daytime" title="Tageszeit"><span id="clock-icon" aria-hidden="true">☀</span> <span id="clock">06:00</span></span>
           <span class="saved" id="saved" aria-live="polite"></span>
           <button id="menu-open" type="button" class="link">Menü <kbd>Esc</kbd></button></p>
@@ -37,6 +37,11 @@
         <div class="power rail" id="rail" hidden>
           <p class="label">Bahn <span id="rail-state"></span></p>
           <p class="power-text" id="rail-text"></p>
+        </div>
+        <div class="power rocket" id="rocket" hidden>
+          <p class="label">Rakete <span id="rocket-state"></span></p>
+          <div class="power-bar"><i id="rocket-fill"></i></div>
+          <p class="power-text" id="rocket-text"></p>
         </div>
         <p class="label">Lager</p>
         <ul id="store"></ul>
@@ -114,6 +119,10 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM4 11h16M8 21l2-4M16 21l-2-4M8 14h.01M16 14h.01" /></svg>
           <span>Zug</span><kbd>Z</kbd>
         </button>
+        <button type="button" class="tool" data-tool="silo" data-group="space" aria-pressed="false" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c3 3 4 7 4 11v4H8v-4c0-4 1-8 4-11zM8 14l-3 4v3h3M16 14l3 4v3h-3M10 21h4M12 8v.01" /></svg>
+          <span>Silo</span><kbd>H</kbd>
+        </button>
         <button type="button" class="tool" data-tool="remove" aria-pressed="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" /></svg>
           <span>Abriss</span><kbd>X</kbd>
@@ -155,7 +164,7 @@
       </div>
       <div class="menu" id="win" hidden>
         <section class="menu-box win-box" role="dialog" aria-label="Karte geschafft">
-          <p class="label">Alle Missionen erfüllt</p>
+          <p class="label" id="win-label">Alle Missionen erfüllt</p>
           <h2 id="win-title"></h2>
           <p class="stars" id="win-stars"></p>
           <p class="win-time" id="win-time"></p>

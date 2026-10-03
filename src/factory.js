@@ -1,5 +1,6 @@
 import { ORES, TERRAIN } from './world.js';
-import { createResearch } from './research.js';
+import { createResearch, researchById } from './research.js';
+import { createHistory } from './stats.js';
 import { createRailways, isTrack, axisBits, STATION_CAP } from './trains.js';
 
 // Grid directions: 0 north (-z), 1 east (+x), 2 south (+z), 3 west (-x).
@@ -72,7 +73,24 @@ export const BUILDINGS = {
   rail: { name: 'Gleis' },
   station: { name: 'Bahnhof' },
   train: { name: 'Zug', vehicle: true }, // not a building: a train on the track, see trains.js
+  silo: { name: 'Raketensilo', size: 3 },
 };
+
+// Tiles a building covers along each side; big ones stand on the middle tile.
+export const sizeOf = (type) => BUILDINGS[type]?.size ?? 1;
+
+// The rocket silo is the end goal: a launch site built in stages from parts fed in
+// by belts on any side. Each stage starts once all its parts are in and then takes
+// `time` seconds (faster on power, like a machine). With every stage done the
+// rocket is ready and the player starts it; after a launch the pad stays and the
+// next rocket needs the other stages again.
+export const SILO_STAGES = [
+  { id: 'pad', name: 'Startrampe', desc: 'Beton und Stahl für Rampe und Startturm', needs: { concrete: 120, steel: 60 }, time: 20 },
+  { id: 'hull', name: 'Raketenrumpf', desc: 'Stahl, Kunststoff und Zahnräder für Rumpf und Triebwerke', needs: { steel: 100, plastic: 60, gear: 40 }, time: 25 },
+  { id: 'avionics', name: 'Bordcomputer', desc: 'Prozessoren und Schaltkreise für Steuerung und Nutzlast', needs: { processor: 30, circuit: 60 }, time: 20 },
+  { id: 'fuel', name: 'Betankung', desc: 'Treibstoff für den Flug ins All', needs: { fuel: 80 }, time: 15 },
+];
+export const siloReady = (b) => b?.type === 'silo' && b.stage >= SILO_STAGES.length;
 
 export const BELT_SPEED = 1.5; // tiles per second, before research
 export const ITEM_SPACING = 0.34; // minimum gap between two items on a belt, in tiles
@@ -84,7 +102,7 @@ const SPLITTER_BUFFER = 2;
 const opposite = (dir) => (dir + 2) % 4;
 export const isMachine = (b) => b?.type === 'furnace' || b?.type === 'assembler';
 // Buildings that never hand items on.
-const NO_OUTPUT = new Set(['storage', 'power', 'pole', 'pump', 'pipe', 'tank', 'rail', 'station']);
+const NO_OUTPUT = new Set(['storage', 'power', 'pole', 'pump', 'pipe', 'tank', 'rail', 'station', 'silo']);
 
 // Power. A coal power plant burns coal from belts and feeds every network it is
 // connected to. Poles carry the power: wires reach from pole to pole, and a pole
@@ -92,7 +110,7 @@ const NO_OUTPUT = new Set(['storage', 'power', 'pole', 'pump', 'pipe', 'tank', '
 // basic speed; on a network they run POWER_SPEED times as fast, but only while the
 // network has enough power, and they stop when it has none.
 export const POWER_OUTPUT = 8; // MW per power plant, before research
-export const POWER_USE = { drill: 1, furnace: 2, assembler: 1.5, constructor: 3, pump: 1.5, refinery: 3 }; // MW while working
+export const POWER_USE = { drill: 1, furnace: 2, assembler: 1.5, constructor: 3, pump: 1.5, refinery: 3, silo: 4 }; // MW while working
 export const POWER_SPEED = 2;
 export const COAL_SECONDS = 4; // one coal keeps a plant at full output that long
 export const WIRE_REACH = 7; // tiles between two poles
@@ -121,13 +139,39 @@ export function createFactory(world, { start } = {}) {
   const delivered = Object.fromEntries(Object.keys(ITEMS).map((k) => [k, 0])); // ever put into storage
   const recent = Object.fromEntries(Object.keys(ITEMS).map((k) => [k, []])); // delivery times of the last minute
   const research = createResearch(stored, start);
+  const history = createHistory(); // production and use per resource, see stats.js
+  // Research takes its cost out of the storage: that counts as used up.
+  const completeResearch = research.complete;
+  research.complete = (id) => {
+    if (!completeResearch(id)) return false;
+    for (const [k, n] of Object.entries(researchById(id).cost)) history.consume(k, n);
+    return true;
+  };
   let time = 0; // simulated seconds since the start
   let pumped = 0; // oil ever pumped
   let shipped = 0; // parts ever unloaded from trains
   const shipLog = []; // unload times of the last minute
+  let launched = 0; // rockets started
+  const launches = []; // silos that just started a rocket, for the view to show
+  const footprint = new Map(); // tile index -> big building covering it beside its own tile
 
   const indexOf = (tile) => tile.z * world.size + tile.x;
-  const at = (x, z) => (x < 0 || z < 0 || x >= world.size || z >= world.size ? null : buildings.get(z * world.size + x) ?? null);
+  const at = (x, z) => {
+    if (x < 0 || z < 0 || x >= world.size || z >= world.size) return null;
+    const i = z * world.size + x;
+    return buildings.get(i) ?? footprint.get(i) ?? null;
+  };
+  // Tiles a building of `type` covers when it stands on `tile`; null where the map ends.
+  function tilesOf(type, tile) {
+    const r = (sizeOf(type) - 1) / 2;
+    const list = [];
+    for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) list.push(tileAt(tile.x + dx, tile.z + dz));
+    return list;
+  }
+  const tileAt = (x, z) => (x < 0 || z < 0 || x >= world.size || z >= world.size ? null : world.tiles[z * world.size + x]);
+  const cover = (b) => {
+    if (sizeOf(b.type) > 1) for (const t of tilesOf(b.type, b.tile)) if (indexOf(t) !== b.index) footprint.set(indexOf(t), b);
+  };
   const neighbour = (b, dir) => at(b.tile.x + DIRS[dir].x, b.tile.z + DIRS[dir].z);
   // Does building `from` hand its items to building `to`?
   const feeds = (from, to) =>
@@ -138,7 +182,15 @@ export function createFactory(world, { start } = {}) {
     if (!tile) return { ok: false, reason: '' };
     if (!research.unlocked.has(type)) return { ok: false, reason: 'Noch nicht freigeschaltet' };
     if (BUILDINGS[type]?.vehicle) return { ok: false, reason: '' };
-    const existing = buildings.get(indexOf(tile));
+    if (sizeOf(type) > 1) {
+      const n = sizeOf(type);
+      for (const t of tilesOf(type, tile)) {
+        if (!t || !TERRAIN[t.terrain].buildable) return { ok: false, reason: `Braucht ${n} × ${n} freie Felder an Land` };
+        if (at(t.x, t.z)) return { ok: false, reason: `Braucht ${n} × ${n} freie Felder: hier steht schon etwas` };
+      }
+      return { ok: true, reason: '' };
+    }
+    const existing = at(tile.x, tile.z);
     if (existing && !(overBelt && existing.type === 'belt' && type !== 'belt')) return { ok: false, reason: 'Hier steht schon etwas' };
     if (!TERRAIN[tile.terrain].buildable) return { ok: false, reason: 'Hier kann man nicht bauen' };
     if (type === 'drill' && (!tile.ore || ORES[tile.ore].fluid)) return { ok: false, reason: tile.ore ? 'Auf Öl gehört eine Ölpumpe' : 'Bohrer nur auf Erzfeldern' };
@@ -163,7 +215,9 @@ export function createFactory(world, { start } = {}) {
     if (isFluid(b)) b.oil = 0;
     if (type === 'rail') b.conn = 0;
     if (type === 'station') Object.assign(b, { conn: axisBits(dir), mode: 'load', name: stationName(), items: {}, total: 0, received: 0, sent: 0 });
+    if (type === 'silo') Object.assign(b, { stage: 0, have: {}, busy: false, timer: 0, state: 'idle', made: 0, launched: 0, refused: null });
     buildings.set(b.index, b);
+    cover(b);
     if (isTrack(b)) railways.join(b);
     updateShapes();
     return b;
@@ -176,9 +230,10 @@ export function createFactory(world, { start } = {}) {
       railways.removeTrain(train);
       return { type: 'train', tile, train };
     }
-    const b = tile && buildings.get(indexOf(tile));
+    const b = tile && at(tile.x, tile.z);
     if (!b) return null;
     buildings.delete(b.index);
+    for (const [i, big] of footprint) if (big === b) footprint.delete(i);
     if (isTrack(b)) railways.markDirty();
     updateShapes();
     return b;
@@ -266,8 +321,10 @@ export function createFactory(world, { start } = {}) {
       if (b.type === 'pole') continue;
       b.net = null;
       if (b.type !== 'power' && !usesPower(b)) continue;
-      for (let dz = -POLE_SUPPLY; dz <= POLE_SUPPLY && !b.net; dz++) {
-        for (let dx = -POLE_SUPPLY; dx <= POLE_SUPPLY; dx++) {
+      // Big buildings are supplied by a pole that reaches any of their tiles.
+      const reach = POLE_SUPPLY + (sizeOf(b.type) - 1) / 2;
+      for (let dz = -reach; dz <= reach && !b.net; dz++) {
+        for (let dx = -reach; dx <= reach; dx++) {
           const p = at(b.tile.x + dx, b.tile.z + dz);
           if (p?.type !== 'pole') continue;
           b.net = p.net;
@@ -432,6 +489,7 @@ export function createFactory(world, { start } = {}) {
     net.amount += n;
     net.in += n;
     b.acc += n;
+    history.produce('oil', n);
     while (b.acc >= 1) {
       b.acc--;
       b.tile.amount--;
@@ -449,6 +507,7 @@ export function createFactory(world, { start } = {}) {
     if (!b.busy && net && net.amount >= recipe.oil - 1e-6) {
       net.amount = Math.max(0, net.amount - recipe.oil);
       net.out += recipe.oil;
+      history.consume('oil', recipe.oil);
       b.busy = true;
       b.timer = 0;
     }
@@ -465,6 +524,7 @@ export function createFactory(world, { start } = {}) {
       return;
     }
     b.output.push(recipe.makes);
+    history.produce(recipe.makes);
     b.busy = false;
     b.made++;
   }
@@ -555,7 +615,22 @@ export function createFactory(world, { start } = {}) {
       }
       if (target.fuel >= PLANT_FUEL) return false;
       target.fuel += FUEL_VALUE[kind];
+      history.consume(kind);
       target.refused = null;
+      return true;
+    }
+    if (target.type === 'silo') {
+      // Parts of the stage being built, from any side, up to what it needs.
+      const need = SILO_STAGES[target.stage]?.needs[kind];
+      if (!need) {
+        if (!SILO_STAGES[target.stage]?.needs) return false;
+        target.refused = kind;
+        return false;
+      }
+      if ((target.have[kind] ?? 0) >= need) return false;
+      target.have[kind] = (target.have[kind] ?? 0) + 1;
+      target.refused = null;
+      history.consume(kind);
       return true;
     }
     if (target.type === 'station') {
@@ -632,6 +707,7 @@ export function createFactory(world, { start } = {}) {
     if (b.output.length && pushTo(neighbour(b, b.dir), b.output[0], b.dir)) b.output.shift();
     if (!b.current && b.input.length) {
       b.current = b.input.shift();
+      history.consume(b.current);
       b.timer = 0;
       b.refused = null;
     }
@@ -648,6 +724,7 @@ export function createFactory(world, { start } = {}) {
       return;
     }
     b.output.push(recipe.makes[b.current]);
+    history.produce(recipe.makes[b.current]);
     b.current = null;
     b.made++;
   }
@@ -657,7 +734,10 @@ export function createFactory(world, { start } = {}) {
     const time = recipe.time / research.stats.constructor;
     if (b.output.length && pushTo(neighbour(b, b.dir), b.output[0], b.dir)) b.output.shift();
     if (!b.busy && Object.entries(recipe.needs).every(([k, n]) => (b.input[k] ?? 0) >= n)) {
-      for (const [k, n] of Object.entries(recipe.needs)) b.input[k] -= n;
+      for (const [k, n] of Object.entries(recipe.needs)) {
+        b.input[k] -= n;
+        history.consume(k, n);
+      }
       b.busy = true;
       b.timer = 0;
     }
@@ -674,8 +754,60 @@ export function createFactory(world, { start } = {}) {
       return;
     }
     b.output.push(recipe.makes);
+    history.produce(recipe.makes);
     b.busy = false;
     b.made++;
+  }
+
+  // Building the stages of a rocket silo, one after another.
+  function tickSilo(b, dt) {
+    const stage = SILO_STAGES[b.stage];
+    if (!stage) {
+      b.state = 'ready';
+      return;
+    }
+    if (!b.busy && Object.entries(stage.needs).every(([k, n]) => (b.have[k] ?? 0) >= n)) {
+      b.busy = true;
+      b.timer = 0;
+    }
+    if (!b.busy) {
+      b.state = 'idle';
+      return;
+    }
+    const speed = powerFactor(b);
+    b.state = speed > 0 ? 'work' : 'nopower';
+    b.timer = Math.min(b.timer + dt * speed, stage.time);
+    if (b.timer < stage.time) return;
+    b.stage++;
+    b.have = {};
+    b.busy = false;
+    b.timer = 0;
+    b.made++;
+    b.state = b.stage >= SILO_STAGES.length ? 'ready' : 'idle';
+  }
+
+  // Starts the rocket of a ready silo. The launch pad stays; the next rocket
+  // needs every stage after it again.
+  function launch(b) {
+    if (!siloReady(b)) return false;
+    b.stage = 1;
+    b.have = {};
+    b.launched++;
+    launched++;
+    launches.push(b);
+    return true;
+  }
+
+  // The silo furthest along, for the HUD.
+  function siloSummary() {
+    let best = null;
+    let silos = 0;
+    for (const b of buildings.values()) {
+      if (b.type !== 'silo') continue;
+      silos++;
+      if (!best || b.stage > best.stage || (b.stage === best.stage && b.busy && !best.busy)) best = b;
+    }
+    return { silos, best, launched };
   }
 
   // Front, left, right in turn; a blocked exit is skipped.
@@ -725,6 +857,7 @@ export function createFactory(world, { start } = {}) {
       b.timer -= DRILL_TIME;
       b.tile.amount--;
       b.held = b.tile.ore;
+      history.produce(b.tile.ore);
       b.mined++;
       mined[b.tile.ore]++;
     }
@@ -741,6 +874,11 @@ export function createFactory(world, { start } = {}) {
 
   const count = (type) => {
     if (type === 'train') return railways.trains.length;
+    if (type === 'siloStage') {
+      let best = 0;
+      for (const b of buildings.values()) if (b.type === 'silo') best = Math.max(best, b.stage);
+      return best;
+    }
     let n = 0;
     for (const b of buildings.values()) if (b.type === type) n++;
     return n;
@@ -752,6 +890,13 @@ export function createFactory(world, { start } = {}) {
     if (railways.dirty) derailed.push(...railways.update());
     time += dt;
     tickPower(dt);
+    let capacity = 0;
+    let demand = 0;
+    for (const net of grid.nets) {
+      capacity += net.capacity;
+      demand += net.demand;
+    }
+    history.tick(dt, capacity, demand);
     tickFluids(dt);
     railways.tick(dt);
     const step = beltSpeed() * dt;
@@ -761,6 +906,7 @@ export function createFactory(world, { start } = {}) {
       else if (b.type === 'constructor') tickConstructor(b, dt);
       else if (b.type === 'splitter') tickSplitter(b);
       else if (b.type === 'merger') tickMerger(b);
+      else if (b.type === 'silo') tickSilo(b, dt);
     }
     for (const b of buildings.values()) if (b.type === 'drill') tickDrill(b, dt);
   }
@@ -773,6 +919,8 @@ export function createFactory(world, { start } = {}) {
       time,
       pumped,
       shipped,
+      launched,
+      history: history.save(),
       shipLog: [...shipLog],
       trains: railways.save(),
       mined,
@@ -790,6 +938,8 @@ export function createFactory(world, { start } = {}) {
     time = data.time ?? 0;
     pumped = data.pumped ?? 0;
     shipped = data.shipped ?? 0;
+    launched = data.launched ?? 0;
+    history.load(data.history);
     shipLog.length = 0;
     shipLog.push(...(data.shipLog ?? []));
     for (const [target, from] of [[mined, data.mined], [stored, data.stored], [delivered, data.delivered]]) {
@@ -800,10 +950,14 @@ export function createFactory(world, { start } = {}) {
     let n = 0;
     for (const t of world.tiles) if (t.ore && (version >= 3 || !ORES[t.ore].fluid)) t.amount = data.amounts?.[n++] ?? t.amount;
     buildings.clear();
+    footprint.clear();
     pipes.nets = [];
     for (const b of data.buildings ?? []) {
       const tile = world.tiles[b.index];
-      if (tile && BUILDINGS[b.type] && !BUILDINGS[b.type].vehicle) buildings.set(b.index, { ...b, tile });
+      if (!tile || !BUILDINGS[b.type] || BUILDINGS[b.type].vehicle) continue;
+      const loaded = { ...b, tile };
+      buildings.set(b.index, loaded);
+      cover(loaded);
     }
     railways.load(data.trains);
     updateShapes();
@@ -831,6 +985,15 @@ export function createFactory(world, { start } = {}) {
     get shipped() {
       return shipped;
     },
+    get launched() {
+      return launched;
+    },
+    history,
+    launches,
+    launch,
+    siloSummary,
+    // Indices of every tile a building stands on.
+    footprint: (b) => tilesOf(b.type, b.tile).map(indexOf),
     world,
     trains: railways.trains,
     derailed,
@@ -855,6 +1018,6 @@ export function createFactory(world, { start } = {}) {
     tick,
     save,
     load,
-    get: (tile) => buildings.get(indexOf(tile)) ?? null,
+    get: (tile) => at(tile.x, tile.z),
   };
 }

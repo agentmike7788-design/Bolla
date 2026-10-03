@@ -63,8 +63,8 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 
 export function createEffects({ onMade } = {}) {
   const group = new THREE.Group();
-  const glow = pool(MOBILE ? 500 : 1200, true);
-  const solid = pool(MOBILE ? 400 : 900, false);
+  const glow = pool(MOBILE ? 800 : 2400, true);
+  const solid = pool(MOBILE ? 700 : 2400, false);
   group.add(solid.points, glow.points);
   const seen = new WeakMap(); // building -> last count of made parts
   let emitClock = 0;
@@ -219,6 +219,30 @@ export function createEffects({ onMade } = {}) {
           if (working && emit && Math.random() < 0.15 * rate) {
             spawn(solid, { x: b.tile.position.x + rnd(-0.3, 0.3), y: b.tile.height + 0.05, z: b.tile.position.z + rnd(-0.3, 0.3), vx: rnd(-0.3, 0.3), vy: rnd(0.2, 0.5), vz: rnd(-0.3, 0.3), life: rnd(0.7, 1.2), size: 0.16, grow: 1.6, color: color(0xa89a80, 0.1), gravity: 0, drag: 1.5, fade: 0.45 });
           }
+        } else if (b.type === 'silo') {
+          const top = [0.6, 4.4, 5.3, 5.3][Math.min(b.stage, 3)];
+          if (working && emit && Math.random() < 0.8 * rate) {
+            // Welding sparks on the part being built.
+            const a = Math.random() * Math.PI * 2;
+            const r = b.stage === 0 ? rnd(0.3, 1.1) : 0.34;
+            const [x, , z] = world(b, Math.cos(a) * r, 0, Math.sin(a) * r);
+            const y = b.tile.height + 0.6 + Math.random() * (top - 0.4) * (b.timer / 25);
+            for (let i = 0; i < 4; i++) spawn(glow, { x, y, z, vx: rnd(-1.2, 1.2), vy: rnd(0.2, 1.5), vz: rnd(-1.2, 1.2), life: rnd(0.25, 0.5), size: 0.05, grow: -0.6, color: color(0xfff0b0), gravity: -7, drag: 0.6 });
+          }
+          if (b.state === 'ready' && emit && Math.random() < 0.6 * rate) {
+            // A fuelled rocket vents cold white vapour.
+            const a = Math.random() * Math.PI * 2;
+            const [x, , z] = world(b, Math.cos(a) * 0.32, 0, Math.sin(a) * 0.32);
+            spawn(solid, { x, y: b.tile.height + 0.6 + rnd(1, 3.8), z, vx: Math.cos(a) * rnd(0.3, 0.7), vy: rnd(-0.3, 0.1), vz: Math.sin(a) * rnd(0.3, 0.7), life: rnd(1, 1.8), size: 0.2, grow: 2.5, color: color(0xf4f8fa, 0.03), gravity: -0.15, drag: 1.2, fade: 0.5 });
+          }
+          if (finished) {
+            // A stage done: a ring of dust and a shower of sparks.
+            for (let i = 0; i < 40; i++) {
+              const a = (i / 40) * Math.PI * 2;
+              spawn(solid, { x: b.tile.position.x + Math.cos(a) * 1.2, y: b.tile.height + 0.2, z: b.tile.position.z + Math.sin(a) * 1.2, vx: Math.cos(a) * rnd(1, 2), vy: rnd(0.2, 0.8), vz: Math.sin(a) * rnd(1, 2), life: rnd(0.7, 1.2), size: 0.3, grow: 2, color: color(0xc9bfa8, 0.1), gravity: -0.4, drag: 2.5, fade: 0.7 });
+              spawn(glow, { x: b.tile.position.x, y: b.tile.height + top, z: b.tile.position.z, vx: Math.cos(a) * rnd(1, 3), vy: rnd(1, 4), vz: Math.sin(a) * rnd(1, 3), life: rnd(0.5, 1), size: 0.08, grow: -0.5, color: color(0xffd070), gravity: -6, drag: 0.5 });
+            }
+          }
         } else if (b.type === 'assembler' && finished) {
           // Sparks squirt out under the press head.
           for (let i = 0; i < 12; i++) {
@@ -243,6 +267,14 @@ export function createEffects({ onMade } = {}) {
       step(glow, dt);
       step(solid, dt);
     },
+
+    // Raw particles for scripted scenes like the rocket launch: `glow` adds light,
+    // otherwise it is smoke or dust. See spawn() for the fields.
+    emit(p, glowing = false) {
+      if (!group.visible) return;
+      spawn(glowing ? glow : solid, p);
+    },
+    color,
 
     // Called on resize so points keep their world size.
     resize(height, fov) {

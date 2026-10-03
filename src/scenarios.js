@@ -18,6 +18,8 @@
 //                   { powered: count }          that many machines working on power at once
 //                   { oil: count }              pump that much more oil
 //                   { shipped: count }          unload that many more parts from trains
+//                   { silo: stages }            a rocket silo with that many stages built
+//                   { launched: count }         start that many more rockets
 //     reward      { unlocks, boosts, text } like a research entry, see research.js
 export const SCENARIOS = [
   {
@@ -280,6 +282,48 @@ export const SCENARIOS = [
       },
     ],
   },
+  {
+    id: 'starport',
+    name: 'Sternenhafen',
+    desc: 'Das Finale: eine weite Küste mit allem, was die Erde hergibt. Hier baust du das Raketensilo und schickst eine Rakete ins All.',
+    level: 4,
+    seed: 3141,
+    map: { size: 80, ores: { iron: 5, copper: 4, coal: 4, stone: 4, oil: 4 }, land: 0.06, coast: 0.86, forest: 0.45, rock: 0.4, richness: 1.4 },
+    start: ['drill', 'belt', 'storage', 'furnace', 'assembler', 'constructor', 'splitter', 'merger', 'power', 'pole', 'pump', 'pipe', 'tank', 'refinery', 'rail', 'station', 'train'],
+    par: 37,
+    missions: [
+      {
+        name: 'Grundstein',
+        desc: 'Ein Raumhafen braucht Stahl und Beton, und zwar viel. Bau die ersten Linien und gleich ein Kraftwerk dazu.',
+        goals: [{ deliver: 'steel', count: 30 }, { deliver: 'concrete', count: 40 }, { powered: 4 }],
+        reward: { boosts: { drill: 1.5, furnace: 2 }, text: 'Bohrer +50 %, Öfen ×2' },
+      },
+      {
+        name: 'Hightech',
+        desc: 'Öl pumpen, Kunststoff raffinieren, Prozessoren bauen. Ohne sie fliegt nichts.',
+        goals: [{ deliver: 'plastic', count: 30 }, { deliver: 'processor', count: 10 }],
+        reward: { unlocks: ['silo'], boosts: { constructor: 1.5 }, text: 'Raketensilo, Konstruktor +50 %' },
+      },
+      {
+        name: 'Startrampe',
+        desc: 'Das Silo braucht 3 × 3 freie Felder. Bänder von jeder Seite bringen Beton und Stahl für die erste Etappe.',
+        goals: [{ build: 'silo', count: 1 }, { silo: 1 }],
+        reward: { boosts: { belt: 1.6, assembler: 1.5 }, text: 'Bänder +60 %, Presse +50 %' },
+      },
+      {
+        name: 'Die Rakete',
+        desc: 'Rumpf und Bordcomputer: Stahl, Kunststoff, Zahnräder, Prozessoren und Schaltkreise ins Silo.',
+        goals: [{ silo: 3 }],
+        reward: { boosts: { refinery: 1.5, pump: 1.5 }, text: 'Raffinerie und Pumpen +50 %' },
+      },
+      {
+        name: 'Countdown',
+        desc: 'Treibstoff in die Tanks, dann klick das Silo an und drück auf Start.',
+        goals: [{ launched: 1 }],
+        reward: { text: 'Die Rakete fliegt' },
+      },
+    ],
+  },
 ];
 
 export const scenarioById = (id) => SCENARIOS.find((s) => s.id === id);
@@ -293,6 +337,7 @@ export function createMissions(scenario, factory) {
   let base = { ...factory.delivered }; // deliveries count from the start of each mission
   let basePumped = factory.pumped;
   let baseShipped = factory.shipped;
+  let baseLaunched = factory.launched;
   let reached = new Set(); // rate goals met once stay met
   let finishedAt = null;
 
@@ -300,6 +345,8 @@ export function createMissions(scenario, factory) {
     if (goal.deliver) return { item: goal.deliver, have: factory.delivered[goal.deliver] - base[goal.deliver], need: goal.count };
     if (goal.build) return { building: goal.build, have: factory.count(goal.build), need: goal.count };
     if (goal.oil) return { oil: true, have: Math.floor(factory.pumped - basePumped), need: goal.oil };
+    if (goal.silo) return { silo: true, have: Math.min(factory.count('siloStage'), goal.silo), need: goal.silo };
+    if (goal.launched) return { launched: true, have: factory.launched - baseLaunched, need: goal.launched };
     if (goal.shipped) return { shipped: true, have: factory.shipped - baseShipped, need: goal.shipped };
     if (goal.powered) return { powered: true, have: reached.has(i) ? goal.powered : factory.powered(), need: goal.powered };
     const have = reached.has(i) ? goal.perMin : factory.perMinute(goal.rate);
@@ -332,17 +379,19 @@ export function createMissions(scenario, factory) {
       base = { ...factory.delivered };
       basePumped = factory.pumped;
       baseShipped = factory.shipped;
+      baseLaunched = factory.launched;
       reached = new Set();
       if (!this.current) finishedAt = factory.time;
       return m;
     },
-    save: () => ({ index, base, basePumped, baseShipped, reached: [...reached], finishedAt }),
+    save: () => ({ index, base, basePumped, baseShipped, baseLaunched, reached: [...reached], finishedAt }),
     load(data) {
       if (!data) return;
       index = Math.min(data.index ?? 0, scenario.missions.length);
       base = { ...base, ...data.base };
       basePumped = data.basePumped ?? 0;
       baseShipped = data.baseShipped ?? 0;
+      baseLaunched = data.baseLaunched ?? 0;
       reached = new Set(data.reached ?? []);
       finishedAt = data.finishedAt ?? null;
     },

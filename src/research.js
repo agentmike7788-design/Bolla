@@ -179,6 +179,14 @@ export const RESEARCH = [
     requires: ['catalysts', 'masterFactory'],
     goal: true,
   },
+  {
+    id: 'spaceflight',
+    name: 'Raumfahrt',
+    desc: 'Das Raketensilo: Startrampe, Rumpf, Bordcomputer und Treibstoff in vier Etappen, dann geht die Rakete ins All.',
+    cost: { processor: 30, steel: 60, concrete: 80 },
+    requires: ['oilAge', 'expressTrains'],
+    unlocks: ['silo'],
+  },
 ];
 
 // Factory stats that research can multiply. 1 is the starting value.
