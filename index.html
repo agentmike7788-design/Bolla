@@ -23,12 +23,25 @@
         <p class="label">Erzvorkommen</p>
         <ul id="legend"></ul>
       </aside>
-      <footer class="hud hud-help">
-        <span><kbd>Linke Maus</kbd> verschieben</span>
-        <span><kbd>Rechte Maus</kbd> / <kbd>Q</kbd> <kbd>E</kbd> drehen</span>
-        <span><kbd>Mausrad</kbd> zoomen</span>
-        <span><kbd>WASD</kbd> bewegen</span>
-      </footer>
+      <nav class="hud hud-tools" aria-label="Bauen">
+        <button type="button" class="tool" data-tool="drill" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14v-3H5zM7 17V9h10v8M12 9V3M8 5h8" /></svg>
+          <span>Bohrer</span><kbd>1</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="belt" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h18v8H3zM7 14l3-2-3-2M12 14l3-2-3-2" /></svg>
+          <span>Band</span><kbd>2</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="remove" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" /></svg>
+          <span>Abriss</span><kbd>X</kbd>
+        </button>
+        <button type="button" class="tool" id="rotate">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2-5M19 4v4h-4" /></svg>
+          <span>Drehen</span><kbd>R</kbd>
+        </button>
+      </nav>
+      <footer class="hud hud-help" id="help"></footer>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>

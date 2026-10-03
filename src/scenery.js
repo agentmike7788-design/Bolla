@@ -7,7 +7,9 @@ const dummy = new THREE.Object3D();
 const color = new THREE.Color();
 
 // One instanced mesh from a list of { x, y, z, rx, ry, rz, sx, sy, sz, color }.
-function instanced(geometry, material, items, { castShadow = true, receiveShadow = false } = {}) {
+// With `decor`, every instance is registered under the tile it stands on so
+// buildings can hide the trees, flowers and ore lumps beneath them.
+function instanced(geometry, material, items, { castShadow = true, receiveShadow = false } = {}, decor = null) {
   const mesh = new THREE.InstancedMesh(geometry, material, Math.max(items.length, 1));
   items.forEach((it, i) => {
     dummy.position.set(it.x, it.y, it.z);
@@ -16,7 +18,9 @@ function instanced(geometry, material, items, { castShadow = true, receiveShadow
     dummy.updateMatrix();
     mesh.setMatrixAt(i, dummy.matrix);
     mesh.setColorAt(i, color.set(it.color ?? 0xffffff));
+    if (decor) (decor[decor.tileAt(it.x, it.z)] ??= []).push([mesh, i]);
   });
+  if (decor) mesh.userData.matrices = mesh.instanceMatrix.array.slice();
   mesh.count = items.length;
   mesh.castShadow = castShadow;
   mesh.receiveShadow = receiveShadow;
@@ -139,22 +143,35 @@ export function buildWorldMeshes(world) {
 
   const flat = (opts) => new THREE.MeshStandardMaterial({ flatShading: true, ...opts });
 
-  group.add(instanced(new THREE.CylinderGeometry(0.035, 0.05, 0.3, 5).translate(0, 0.15, 0), flat({ roughness: 0.9 }), trunks));
-  group.add(instanced(pineGeometry(), flat({ roughness: 0.85 }), pines));
-  group.add(instanced(new THREE.IcosahedronGeometry(0.24, 0), flat({ roughness: 0.8 }), leafy));
-  group.add(instanced(new THREE.IcosahedronGeometry(0.11, 0), flat({ roughness: 0.85 }), bushes));
-  group.add(instanced(new THREE.OctahedronGeometry(0.025, 0), flat({ roughness: 0.6 }), flowers, { castShadow: false }));
-  group.add(instanced(new THREE.DodecahedronGeometry(0.17, 0), flat({ roughness: 0.9 }), boulders));
-  group.add(instanced(new THREE.DodecahedronGeometry(0.13, 0), flat({ roughness: 0.55, metalness: 0.35 }), oreChunks));
-  group.add(
-    instanced(
-      new THREE.OctahedronGeometry(0.06, 0).translate(0, 0.06, 0),
-      flat({ roughness: 0.12, metalness: 0.2, emissive: 0x223030, envMapIntensity: 1.6 }),
-      crystals,
-    ),
+  // Decorations per tile index, so a building can clear the spot it stands on.
+  const decor = [];
+  decor.tileAt = (x, z) => Math.round((z + offset) / TILE) * world.size + Math.round((x + offset) / TILE);
+  const deco = (geometry, material, items, opts) => group.add(instanced(geometry, material, items, opts, decor));
+
+  deco(new THREE.CylinderGeometry(0.035, 0.05, 0.3, 5).translate(0, 0.15, 0), flat({ roughness: 0.9 }), trunks);
+  deco(pineGeometry(), flat({ roughness: 0.85 }), pines);
+  deco(new THREE.IcosahedronGeometry(0.24, 0), flat({ roughness: 0.8 }), leafy);
+  deco(new THREE.IcosahedronGeometry(0.11, 0), flat({ roughness: 0.85 }), bushes);
+  deco(new THREE.OctahedronGeometry(0.025, 0), flat({ roughness: 0.6 }), flowers, { castShadow: false });
+  deco(new THREE.DodecahedronGeometry(0.17, 0), flat({ roughness: 0.9 }), boulders);
+  deco(new THREE.DodecahedronGeometry(0.13, 0), flat({ roughness: 0.55, metalness: 0.35 }), oreChunks);
+  deco(
+    new THREE.OctahedronGeometry(0.06, 0).translate(0, 0.06, 0),
+    flat({ roughness: 0.12, metalness: 0.2, emissive: 0x223030, envMapIntensity: 1.6 }),
+    crystals,
   );
 
-  return { group, tiles };
+  const hidden = new THREE.Matrix4().makeScale(0, 0, 0);
+  // Hide (or bring back) everything that grows or lies on one tile.
+  function setDecorHidden(tileIndex, hide) {
+    for (const [mesh, i] of decor[tileIndex] ?? []) {
+      if (hide) mesh.setMatrixAt(i, hidden);
+      else mesh.instanceMatrix.array.set(mesh.userData.matrices.subarray(i * 16, i * 16 + 16), i * 16);
+      mesh.instanceMatrix.needsUpdate = true;
+    }
+  }
+
+  return { group, tiles, setDecorHidden };
 }
 
 // Animated sea around and inside the island, with a sandy seabed below it.
