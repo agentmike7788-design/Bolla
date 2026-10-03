@@ -39,9 +39,13 @@ func _init() -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
+	# A quiet band behind the line and the bar keeps them readable over a panel (lecture at 60 %).
+	var band := UIKit.panel(&"HudPanel")
+	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	center.add_child(band)
 	var box := UIKit.vbox(18)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	center.add_child(box)
+	band.add_child(box)
 	line_label = UIKit.label("", &"VeilLabel", true)
 	line_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	line_label.custom_minimum_size.x = 980.0

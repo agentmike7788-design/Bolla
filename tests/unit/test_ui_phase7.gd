@@ -405,6 +405,7 @@ func test_deduction_panel_right_and_wrong() -> void:
 	assert_eq(panel.result_label.text, "Gedeutet: Arsenik")
 	assert_eq(corpse.revealed_cause, &"arsenic")
 	assert_eq(panel.done_label.text, "Schon gedeutet: Arsenik")
+	assert_false(panel.done_label.visible, "the result card says it already")
 
 
 # --- specimen card at the crypt table ----------------------------------------------------------------------
@@ -430,6 +431,7 @@ func test_exam_specimen_card_rows_and_two_stage() -> void:
 	assert_eq(tabs.organ_rows.size(), 7)
 	var eyes: Dictionary = tabs.organ_rows[&"eyes"]
 	assert_true((eyes.jar as Button).visible and not (eyes.bundle as Button).visible, "eyes only in the jar")
+	assert_false(panel.freshness_bar.is_visible_in_tree(), "the card takes the condition's room")
 	var hand: Dictionary = tabs.organ_rows[&"hand"]
 	assert_true((hand.bundle as Button).visible and not (hand.jar as Button).visible, "the hand only in linen")
 	var heart_row: Dictionary = tabs.organ_rows[&"heart"]

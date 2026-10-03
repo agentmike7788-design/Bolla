@@ -40,6 +40,9 @@ var pages: Dictionary[StringName, VBoxContainer] = {}
 var current_tab: StringName = TAB_EXAM
 ## Shown on the Untersuchen tab only (the cause section of the panel; keeps the panel on screen).
 var exam_only: Array[Control] = []
+## Phase 7: hidden on the „Präparate" tab (the condition section – the card needs the room for its seven
+## rows; the clarity stands in its head line).
+var organs_hide: Array[Control] = []
 
 var stage_ticks: StageTicks
 ## Frisch · Welk · Verwesend · Verfallen – the current stage lit.
@@ -238,7 +241,7 @@ func _build_organs(page: VBoxContainer) -> void:
 	page.add_child(intro)
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.custom_minimum_size = Vector2(_column_width, 470.0)
+	scroll.custom_minimum_size = Vector2(_column_width, 560.0)
 	page.add_child(scroll)
 	var list := UIKit.vbox(6)
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -340,6 +343,8 @@ func _refresh_tabs() -> void:
 		pages[tab].visible = selected
 	for c: Control in exam_only:
 		c.visible = current_tab == TAB_EXAM
+	for c: Control in organs_hide:
+		c.visible = current_tab != TAB_ORGANS
 
 
 func _refresh_exam(state: Dictionary, running: bool) -> void:
@@ -459,8 +464,9 @@ func _refresh_organs(organs: Dictionary, running: bool) -> void:
 		var chosen := chosen_container(organ, containers)
 		var jar := ui.jar as Button
 		var bundle := ui.bundle as Button
-		jar.visible = containers.has(SpecimenRecord.CONTAINER_JAR)
-		bundle.visible = containers.has(SpecimenRecord.CONTAINER_BUNDLE)
+		var taken_now := bool(entry.get("taken", false))
+		jar.visible = containers.has(SpecimenRecord.CONTAINER_JAR) and not taken_now
+		bundle.visible = containers.has(SpecimenRecord.CONTAINER_BUNDLE) and not taken_now
 		jar.theme_type_variation = &"ExamTabSelected" if chosen == SpecimenRecord.CONTAINER_JAR else &"ExamTabButton"
 		bundle.theme_type_variation = &"ExamTabSelected" if chosen == SpecimenRecord.CONTAINER_BUNDLE else &"ExamTabButton"
 		(ui.title as Label).text = str(entry.get("label", organ))

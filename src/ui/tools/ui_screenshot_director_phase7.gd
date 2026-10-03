@@ -129,6 +129,7 @@ func _shot(shot_name: String, setup: Callable) -> void:
 		return
 	await setup.call()
 	_ui.hud.refresh_all()
+	_ui.notifications.clear()
 	for i: int in SETTLE_FRAMES:
 		await get_tree().process_frame
 	var path := _out.path_join("ui_%s.jpg" % shot_name)
@@ -141,6 +142,7 @@ func _shot(shot_name: String, setup: Callable) -> void:
 	_ui.reward_card.visible = false
 	_ui.veil.close()
 	_ui.remark_bubbles.clear()
+	_ui.region_label.hide()
 	_unframe()
 	await get_tree().process_frame
 
@@ -378,7 +380,9 @@ func _hud_village_shot() -> void:
 	TimeManager.set_time(DAY, 640)
 	GameState.set_flag(&"linden_granted", false)
 	_ui.hud.refresh_all()
-	EventBus.region_changed.emit(&"village")
+	_ui.region_label.show_region(&"village")
+	# Hold the name for the picture (it fades after 3 s; the capture settles longer under lavapipe).
+	_ui.region_label.call(&"_hold_for_shot")
 	await get_tree().process_frame
 	GameState.set_flag(&"linden_granted", true)
 

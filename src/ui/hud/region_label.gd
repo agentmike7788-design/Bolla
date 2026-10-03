@@ -62,3 +62,11 @@ static func region_text(region_id: StringName) -> String:
 	if cfg != null:
 		return cfg.arrive_text if cfg.arrive_text != "" else cfg.display_name
 	return Phase7Texts.REGION_FALLBACK.get(region_id, "")
+
+
+## QA screenshots: keep the name on screen (no fade).
+func _hold_for_shot() -> void:
+	if _tween != null and _tween.is_valid():
+		_tween.kill()
+	modulate.a = 1.0
+	visible = shown_text != ""

@@ -144,7 +144,9 @@ func _refresh() -> void:
 	if record != null and record.revealed_cause != &"":
 		done.append(Phase7Texts.cause_label(record.revealed_cause))
 	done_label.text = Phase7Texts.DEDUCTION_DONE % ", ".join(done) if not done.is_empty() else ""
-	done_label.visible = done_label.text != ""
+	done_label.visible = done_label.text != "" and not ok
+	if ok and result_text.text.strip_edges().trim_suffix(".") == result_label.text:
+		result_text.visible = false
 
 
 func cards() -> PackedStringArray:

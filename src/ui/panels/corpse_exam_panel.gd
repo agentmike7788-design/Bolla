@@ -117,6 +117,7 @@ func _build() -> void:
 	tabs.build(_left, column_width, self)
 	tabs.build_findings(traits_box, findings_note)
 	tabs.exam_only.append(cause_label.get_parent().get_parent() as Control)
+	tabs.organs_hide.append(freshness_bar.get_parent().get_parent().get_parent() as Control)
 
 	_make_action_row(box)
 	box.add_child(UIKit.separator())
