@@ -39,6 +39,8 @@ static func move(source: Inventory, target: Inventory, id: StringName, amount: i
 		return 0
 	if amount <= 0 or not is_transferable(id):
 		return 0
+	if is_unique(id):
+		return _move_pieces(source, target, id, amount)
 	var n := fit(target, id, mini(amount, source.count(id)))
 	if n <= 0 or not source.remove_item(id, n):
 		return 0
@@ -57,7 +59,53 @@ static func move_slot(source: Inventory, target: Inventory, index: int, one: boo
 	if slot.is_empty():
 		return 0
 	var amount := 1 if one else int(slot.get("amount", 0))
-	return move(source, target, StringName(slot.get("id", &"")), amount)
+	var id := StringName(slot.get("id", &""))
+	if slot.has("uid") and is_transferable(id) and source != target and is_instance_valid(target):
+		return 1 if _move_piece(source, target, id, str(slot["uid"])) else 0
+	return move(source, target, id, amount)
+
+
+## Phase 7 (docs/PHASE7_DESIGN.md §3.4): ItemData.unique – a piece with its own slot and uid.
+static func is_unique(id: StringName) -> bool:
+	if id == &"" or not Database.has_item(id):
+		return false
+	var item := Database.item(id) as ItemData
+	return item != null and item.unique
+
+
+## Up to `amount` pieces of `id`, the newest (last slots) first, each with its uid; returns how many
+## moved. Each piece is one move (changed once per piece on each side).
+static func _move_pieces(source: Inventory, target: Inventory, id: StringName, amount: int) -> int:
+	var list := source.uids(id)
+	var moved := 0
+	var i := list.size() - 1
+	while i >= 0 and moved < amount:
+		if not target.can_add(id, 1) or not _move_piece(source, target, id, list[i]):
+			break
+		moved += 1
+		i -= 1
+	return moved
+
+
+## One piece (uid "" = a debug piece) from source to target; false = no room / not there.
+static func _move_piece(source: Inventory, target: Inventory, id: StringName, uid: String) -> bool:
+	if not target.can_add(id, 1):
+		return false
+	if uid == "":
+		if not source.remove_piece(id, ""):
+			return false
+		if target.add_item(id, 1) > 0:
+			push_warning("[ChestTransfer] target refused the piece '%s' – returned to the source" % id)
+			source.add_item(id, 1)
+			return false
+		return true
+	if not source.remove_uid(uid):
+		return false
+	if not target.add_unique(id, uid):
+		push_warning("[ChestTransfer] target refused the piece '%s' – returned to the source" % uid)
+		source.add_unique(id, uid)
+		return false
+	return true
 
 
 ## Moves every transferable item of `source` that fits into `target` (in slot order).

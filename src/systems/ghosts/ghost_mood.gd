@@ -4,7 +4,7 @@ extends RefCounted
 ## score = grave quality + own dirt spot (grave_mood_by_level: +1/0/−2/−4) + decor bonus
 ## (clamped to decor_bonus_max) + robbed × GhostConfig.robbed_mood (Phase 4 §2.9: hair /
 ## teeth taken) + devotion (Phase 6 §2.4: ChapelRules.devotion_bonus). ≥ 9 content · 5…8 calm · ≤ 4 restless (mood_thresholds).
-## Reasons by priority (Phase 4 §2.9, Phase 5 §2.5): &"robbed", &"weeds", &"valuables", &"cold",
+## Reasons by priority (Phase 4 §2.9, Phase 5 §2.5, Phase 7 §2.11): &"robbed_organ", &"robbed", &"weeds", &"valuables", &"cold",
 ## &"unkempt", &"cross", &"nameless", &"waited", &"bare".
 
 const RESTLESS := &"restless"
@@ -22,7 +22,7 @@ const REASON_CROSS := &"cross"
 const REASON_NAMELESS := &"nameless"
 const REASON_WAITED := &"waited"
 const REASON_BARE := &"bare"
-const REASONS: Array[StringName] = [REASON_ROBBED, REASON_WEEDS, REASON_VALUABLES, REASON_COLD, REASON_UNKEMPT,
+const REASONS: Array[StringName] = [&"robbed_organ", REASON_ROBBED, REASON_WEEDS, REASON_VALUABLES, REASON_COLD, REASON_UNKEMPT,
 		REASON_CROSS, REASON_NAMELESS, REASON_WAITED, REASON_BARE]
 ## Phase 5 §2.5: by_design keys (GhostLines.by_design) – most specific first.
 const DESIGN_S5_LORENZ := &"s5_lorenz"
@@ -30,8 +30,10 @@ const DESIGN_MASTER := &"master"
 const DESIGN_GILDED := &"gilded"
 const DESIGN_DEFAULT := &"default"
 const MASTER_SHAPE := &"stone_master"
-## Kinds of CorpseRecord.harvested that count as "robbed".
-const ROBBED_KINDS: Array[StringName] = [CorpseRecord.HARVEST_HAIR, CorpseRecord.HARVEST_TEETH]
+## Kinds of CorpseRecord.harvested that count as "robbed" (Phase 7: the seven organs appended).
+const ROBBED_KINDS: Array[StringName] = CorpseRecord.HARVEST_KINDS
+## Phase 7 (§2.11, §3.4): an organ is missing (taken, not returned) – before &"robbed".
+const REASON_ROBBED_ORGAN := &"robbed_organ"
 ## Piety tiers with their own lines (GhostLines.by_piety): one heard line in PIETY_EVERY.
 const PIETY_EVERY := 4
 ## Dirt level of the grave's own spot from which weeds are the main complaint.
@@ -52,22 +54,51 @@ static func score(quality: int, dirt_level: int, decor_bonus: int, clean: Cleanl
 	return quality + dirt + clampi(decor_bonus, 0, cap) + maxi(robbed, 0) * robbed_mood + maxi(devotion, 0)
 
 
-## Harvested kinds (hair / teeth) of a record – each costs robbed_mood.
+## Harvested kinds of a record not given back (Phase 7 §3.4: harvested − returned; specimens in the
+## collection count as taken).
 static func robbed_count(corpse: CorpseRecord) -> int:
+	return robbed_kinds(corpse).size()
+
+
+## The kinds taken and not returned, in ROBBED_KINDS order.
+static func robbed_kinds(corpse: CorpseRecord) -> Array[StringName]:
+	var out: Array[StringName] = []
 	if corpse == null:
-		return 0
-	var n := 0
+		return out
 	for kind: StringName in ROBBED_KINDS:
-		if corpse.harvested.has(kind):
-			n += 1
-	return n
+		if corpse.harvested.has(kind) and not corpse.returned.has(kind):
+			out.append(kind)
+	return out
 
 
-## STUB (P4) – Phase 7 (docs/PHASE7_DESIGN.md §2.11): the robbed penalty as the sum over the kinds taken
-## and not returned – hair / teeth robbed_mood each, organs AnatomyConfig.organs[*].mood. W0: the
-## Phase-6 value (robbed_count × robbed_mood).
-static func robbed_penalty(record: CorpseRecord, cfg: GhostConfig = null) -> int:
-	return robbed_count(record) * (cfg.robbed_mood if cfg != null else -5)
+## An organ (not hair / teeth) is taken and not returned.
+static func missing_organ(corpse: CorpseRecord) -> bool:
+	for kind: StringName in robbed_kinds(corpse):
+		if kind in CorpseRecord.ORGAN_KINDS:
+			return true
+	return false
+
+
+## Phase 7 (docs/PHASE7_DESIGN.md §2.11): the robbed penalty as the sum over the kinds taken and not
+## returned – hair / teeth robbed_mood each, organs AnatomyConfig.organs[*].mood (−5, eyes / hand −8).
+## `anatomy` null = data/config/anatomy_config.tres.
+static func robbed_penalty(record: CorpseRecord, cfg: GhostConfig = null, anatomy: AnatomyConfig = null) -> int:
+	var robbed_mood := cfg.robbed_mood if cfg != null else -5
+	var total := 0
+	var a := anatomy
+	for kind: StringName in robbed_kinds(record):
+		if kind in CorpseRecord.ORGAN_KINDS:
+			if a == null:
+				a = _anatomy()
+			total += int(a.organ(kind).get("mood", robbed_mood))
+		else:
+			total += robbed_mood
+	return total
+
+
+static func _anatomy() -> AnatomyConfig:
+	var real := Database.config(&"anatomy_config") as AnatomyConfig
+	return real if real != null else AnatomyConfig.new()
 
 
 ## &"restless", &"calm", &"content"
@@ -84,6 +115,8 @@ static func mood(value: int, cfg: GhostConfig) -> StringName:
 ## laid out; cross = a better marker item exists (wooden cross → gravestone); nameless = a
 ## designed stone without an inscription; waited = buried decaying or rotten.
 static func main_reason(grave: GraveRecord, corpse: CorpseRecord, dirt_level: int, decor_bonus: int, economy: EconomyConfig) -> StringName:
+	if missing_organ(corpse):
+		return REASON_ROBBED_ORGAN
 	if robbed_count(corpse) > 0:
 		return REASON_ROBBED
 	if dirt_level >= WEEDS_LEVEL:
@@ -130,6 +163,8 @@ static func pick_line(lines: GhostLines, mood_id: StringName, reason: StringName
 		pool.append_array(story_pool)
 	elif not story_pool.is_empty() and mood_id == CALM:
 		pool.append_array(story_pool)
+		if reason == REASON_ROBBED_ORGAN:
+			pool.append_array(lines.by_organ)
 		if reason != &"" and lines.by_reason.has(reason):
 			pool.append_array(lines.by_reason[reason])
 		_append_harvest(pool, lines, reason, harvested)
@@ -139,9 +174,13 @@ static func pick_line(lines: GhostLines, mood_id: StringName, reason: StringName
 			if lines.by_trait.has(t):
 				pool.append_array(lines.by_trait[t])
 	else:
+		if reason == REASON_ROBBED_ORGAN:
+			pool.append_array(lines.by_organ)
 		if reason != &"" and lines.by_reason.has(reason):
 			pool.append_array(lines.by_reason[reason])
 		_append_harvest(pool, lines, reason, harvested)
+		if pool.is_empty() and reason == REASON_ROBBED_ORGAN:
+			pool.append_array(lines.by_reason.get(REASON_ROBBED, PackedStringArray()))
 		if pool.is_empty():
 			pool.append_array(lines.calm)
 	if pool.is_empty():
@@ -155,7 +194,7 @@ static func pick_line(lines: GhostLines, mood_id: StringName, reason: StringName
 
 ## The kind-specific robbed lines (by_harvest) of the kinds taken.
 static func _append_harvest(pool: PackedStringArray, lines: GhostLines, reason: StringName, harvested: Array[StringName]) -> void:
-	if reason != REASON_ROBBED:
+	if reason != REASON_ROBBED and reason != REASON_ROBBED_ORGAN:
 		return
 	for kind: StringName in harvested:
 		if lines.by_harvest.has(kind):

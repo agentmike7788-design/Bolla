@@ -54,6 +54,8 @@ func add_item(id: StringName, amount: int) -> int:
 		_tools[id] = int(_tools.get(id, 0)) + take
 		changed.emit()
 		return amount - take
+	if item.unique:
+		push_warning("[Inventory] add_item of the unique item '%s' – pieces without uid (debug only)" % id)
 	var rest := _insert(id, amount, _stack_limit(item))
 	if rest < amount:
 		changed.emit()
@@ -178,31 +180,98 @@ func load_state(data: Dictionary) -> void:
 		for key: Variant in belt:
 			_restore({"id": key, "amount": belt[key]}, -1, pending)
 	for entry: Dictionary in pending:
-		_insert_or_warn(StringName(entry["id"]), int(entry["amount"]))
+		_insert_entry_or_warn(entry)
 	changed.emit()
 
 
 # --- Phase 7 (docs/PHASE7_DESIGN.md §2.8, §3.4) – individual pieces (ItemData.unique) ------------
-# STUB (P4): one slot per piece, slot {"id", "amount": 1, "uid"}; save / load keep "uid" (missing = "").
+# One slot per piece, slot {"id", "amount": 1, "uid"}; normal slots stay {"id", "amount"}. save / load
+# keep "uid" (missing = ""). add_item of a unique id makes pieces with uid "" (debug / tests, warning);
+# remove_item(id, n) takes the newest (the last slots), as for stacks.
 
-## STUB (P4) – a unique piece `id` with `uid` into a free slot; false = no free slot.
-func add_unique(_id: StringName, _uid: String) -> bool:
+## A unique piece `id` with `uid` into the first free slot; false = no free slot, not a unique item,
+## empty uid or a uid already held here (nothing changes).
+func add_unique(id: StringName, uid: String) -> bool:
+	var item := _item(id)
+	if item == null or not item.unique or uid == "" or has_uid(uid):
+		if item != null and not item.unique:
+			push_warning("[Inventory] add_unique: '%s' is not a unique item" % id)
+		return false
+	for i: int in _slots.size():
+		if _slots[i].is_empty():
+			_slots[i] = _make_piece(id, uid)
+			changed.emit()
+			return true
 	return false
 
 
-## STUB (P4) – the slot holding `uid` emptied; false = not here.
-func remove_uid(_uid: String) -> bool:
+## The slot holding `uid` emptied; false = not here ("" never matches – debug pieces go through
+## remove_piece / remove_item).
+func remove_uid(uid: String) -> bool:
+	if uid == "":
+		return false
+	for i: int in _slots.size():
+		if _slot_uid(_slots[i]) == uid:
+			_slots[i] = {}
+			changed.emit()
+			return true
 	return false
 
 
-## STUB (P4) – the uids of the unique pieces (of `id`; &"" = all), slot order.
-func uids(_id: StringName = &"") -> PackedStringArray:
-	return PackedStringArray()
-
-
-## STUB (P4)
-func has_uid(_uid: String) -> bool:
+## The last piece of `id` with exactly `uid` ("" = a debug piece) removed; false = none.
+## ChestTransfer moves debug pieces with it.
+func remove_piece(id: StringName, uid: String) -> bool:
+	for i: int in range(_slots.size() - 1, -1, -1):
+		var slot := _slots[i]
+		if _slot_holds(slot, id) and slot.has("uid") and _slot_uid(slot) == uid:
+			_slots[i] = {}
+			changed.emit()
+			return true
 	return false
+
+
+## The uids of the unique pieces (of `id`; &"" = all), slot order (debug pieces with uid "" too).
+func uids(id: StringName = &"") -> PackedStringArray:
+	var out := PackedStringArray()
+	for slot: Dictionary in _slots:
+		if slot.is_empty() or not slot.has("uid"):
+			continue
+		if id == &"" or StringName(slot["id"]) == id:
+			out.append(_slot_uid(slot))
+	return out
+
+
+func has_uid(uid: String) -> bool:
+	if uid == "":
+		return false
+	for slot: Dictionary in _slots:
+		if _slot_uid(slot) == uid:
+			return true
+	return false
+
+
+## Item id of the piece `uid` (&"" = not here).
+func uid_item(uid: String) -> StringName:
+	if uid == "":
+		return &""
+	for slot: Dictionary in _slots:
+		if _slot_uid(slot) == uid:
+			return StringName(slot["id"])
+	return &""
+
+
+static func _slot_uid(slot: Dictionary) -> String:
+	var v: Variant = slot.get("uid", "")
+	return str(v) if v is String or v is StringName else ""
+
+
+func _make_piece(id: StringName, uid: String) -> Dictionary:
+	return {"id": id, "amount": 1, "uid": uid}
+
+
+func _is_unique_id(id: StringName) -> bool:
+	var item := _item(id)
+	return item != null and item.unique
 
 
 func _set_slot_count(value: int) -> void:
@@ -221,7 +290,7 @@ func _set_slot_count(value: int) -> void:
 		else:
 			overflow.append(old[i])
 	for entry: Dictionary in overflow:
-		_insert_or_warn(StringName(entry["id"]), int(entry["amount"]))
+		_insert_entry_or_warn(entry)
 	changed.emit()
 
 
@@ -252,12 +321,48 @@ func _restore(raw: Variant, index: int, pending: Array[Dictionary]) -> void:
 			amount -= take
 		if amount <= 0:
 			return
+	if item.unique:
+		_restore_piece(id, _slot_uid(entry), amount, index, pending)
+		return
 	if index >= 0 and index < _slots.size() and _slots[index].is_empty():
 		var placed := mini(amount, _stack_limit(item))
 		_slots[index] = _make_slot(id, placed)
 		amount -= placed
 	if amount > 0:
 		pending.append(_make_slot(id, amount))
+
+
+## Phase 7: a saved unique piece keeps its uid (one per slot); an amount > 1 (damaged save) keeps
+## the uid on the first piece only, a uid already placed is dropped with a warning.
+func _restore_piece(id: StringName, uid: String, amount: int, index: int, pending: Array[Dictionary]) -> void:
+	if uid != "" and (has_uid(uid) or _pending_has_uid(pending, uid)):
+		push_warning("[Inventory] saved piece '%s' (%s) twice – dropped" % [uid, id])
+		return
+	for n: int in amount:
+		var piece := _make_piece(id, uid if n == 0 else "")
+		if n == 0 and index >= 0 and index < _slots.size() and _slots[index].is_empty():
+			_slots[index] = piece
+		else:
+			pending.append(piece)
+
+
+static func _pending_has_uid(pending: Array[Dictionary], uid: String) -> bool:
+	for entry: Dictionary in pending:
+		if _slot_uid(entry) == uid:
+			return true
+	return false
+
+
+## A pending / overflow entry: a unique piece (has "uid") into the first free slot, else stacked.
+func _insert_entry_or_warn(entry: Dictionary) -> void:
+	if not entry.has("uid"):
+		_insert_or_warn(StringName(entry["id"]), int(entry["amount"]))
+		return
+	for i: int in _slots.size():
+		if _slots[i].is_empty():
+			_slots[i] = _make_piece(StringName(entry["id"]), _slot_uid(entry))
+			return
+	push_warning("[Inventory] no room for the piece '%s' (%s) – dropped" % [_slot_uid(entry), entry["id"]])
 
 
 func _insert_or_warn(id: StringName, amount: int) -> void:
@@ -284,8 +389,8 @@ func _insert(id: StringName, amount: int, limit: int) -> int:
 			break
 		if _slots[i].is_empty():
 			var take := mini(rest, limit)
-			_slots[i] = _make_slot(id, take)
-			rest -= take
+			_slots[i] = _make_piece(id, "") if _is_unique_id(id) else _make_slot(id, take)
+			rest -= 1 if _is_unique_id(id) else take
 	return rest
 
 
@@ -326,6 +431,8 @@ func _is_currency(item: ItemData) -> bool:
 
 
 func _stack_limit(item: ItemData) -> int:
+	if item.unique:
+		return 1
 	var limit := maxi(item.max_stack, 1)
 	if stack_multiplier > 1 and (stack_categories.is_empty() or stack_categories.has(int(item.category))):
 		limit *= stack_multiplier

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="TeachingData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/anatomy/teaching_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"l_hand"
+organ = &"hand"
+title = "Was die Hand erzählt"
+text = "Die Hand erzählt das Handwerk."

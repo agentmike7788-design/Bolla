@@ -53,6 +53,8 @@ var config: GhostConfig
 var lines: GhostLines
 var cleanliness_config: CleanlinessConfig
 var economy: EconomyConfig
+## Phase 7: organ moods (null = data/config/anatomy_config.tres).
+var anatomy: AnatomyConfig
 ## Debug ("ghosts on"): ghost time regardless of the clock, fully faded in.
 var forced: bool = false
 
@@ -64,6 +66,8 @@ var _late: Dictionary[String, int] = {}
 ## Phase 6: grave_id -> day its by_service line was spoken; grave_id -> devotion level whose line was spoken.
 var _service_heard: Dictionary[String, int] = {}
 var _devotion_heard: Dictionary[String, int] = {}
+## Phase 7: grave_id -> number of returned organs whose by_returned line was spoken.
+var _returned_heard: Dictionary[String, int] = {}
 ## grave_id -> {total: int, text: String, mood: StringName, day: int, turn: int}
 var _said: Dictionary[String, Dictionary] = {}
 var _pool: Array[Ghost] = []
@@ -160,9 +164,12 @@ func mood_info(grave_id: String) -> Dictionary:
 	var dirt := _dirt_level(grave_id)
 	var bonus := mini(_decor_bonus(grave_id), _config().decor_bonus_max)
 	var robbed := GhostMood.robbed_count(corpse)
-	var base := GhostMood.score(grave.quality, dirt, bonus, _cleanliness_config(), _config(), robbed)
+	# Phase 7 (§2.11): the robbed penalty per kind (hair / teeth robbed_mood, organs their own mood);
+	# for hair / teeth alone identical to score(..., robbed).
+	var base := GhostMood.score(grave.quality, dirt, bonus, _cleanliness_config(), _config(), 0) \
+			+ GhostMood.robbed_penalty(corpse, _config(), anatomy)
 	var devotion := _devotion_bonus(grave_id, robbed, base)
-	var value := GhostMood.score(grave.quality, dirt, bonus, _cleanliness_config(), _config(), robbed, devotion)
+	var value := base + maxi(devotion, 0)
 	return {
 		"score": value,
 		"mood": GhostMood.mood(value, _config()),
@@ -201,7 +208,9 @@ func listen(grave_id: String, player: Player) -> String:
 		var traits: Array[StringName] = corpse.traits.duplicate() if corpse != null else []
 		var story: StringName = corpse.story_id if corpse != null else &""
 		var harvested: Array[StringName] = corpse.harvested.duplicate() if corpse != null else []
-		text = _chapel_line(grave_id, corpse, line_seed(grave_id, day) + turn)
+		text = _returned_line(grave_id, corpse, line_seed(grave_id, day) + turn)
+		if text == "":
+			text = _chapel_line(grave_id, corpse, line_seed(grave_id, day) + turn)
 		if text == "":
 			text = _design_line(grave_id, mood, corpse, line_seed(grave_id, day) + turn)
 		if text == "":
@@ -228,6 +237,18 @@ func _design_line(grave_id: String, mood: StringName, corpse: CorpseRecord, seed
 	if text != "":
 		masonry.call(&"mark_design_heard", grave_id)
 	return text
+
+
+## Phase 7 §2.6.2, §2.11: the first night after a specimen went back into the grave, one by_returned
+## line (once per returned organ – saved as returned_heard); "" = none.
+func _returned_line(grave_id: String, corpse: CorpseRecord, seed: int) -> String:
+	var l := _lines()
+	if l == null or corpse == null or l.by_returned.is_empty():
+		return ""
+	if corpse.returned.size() <= int(_returned_heard.get(grave_id, 0)):
+		return ""
+	_returned_heard[grave_id] = corpse.returned.size()
+	return l.by_returned[posmod(seed, l.by_returned.size())]
 
 
 ## Phase 6 §2.4: the by_service line once per grave of a corpse with a funeral service, else the
@@ -287,6 +308,8 @@ func save_state() -> Dictionary:
 		out["service_heard"] = _service_heard.duplicate()
 	if not _devotion_heard.is_empty():
 		out["devotion_heard"] = _devotion_heard.duplicate()
+	if not _returned_heard.is_empty():
+		out["returned_heard"] = _returned_heard.duplicate()
 	return out
 
 
@@ -296,6 +319,7 @@ func load_state(data: Dictionary) -> void:
 	_late = _read_days(data.get("late", {}))
 	_service_heard = _read_days(data.get("service_heard", {}))
 	_devotion_heard = _read_days(data.get("devotion_heard", {}))
+	_returned_heard = _read_days(data.get("returned_heard", {}))
 	_said.clear()
 	_plots.clear()
 	_release_all()

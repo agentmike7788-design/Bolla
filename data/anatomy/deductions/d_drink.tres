@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DeductionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/anatomy/deduction_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"d_drink"
+cause_id = &"drink"
+needs_any = Array[StringName]([])
+needs_all = Array[StringName]([&"b_hard_liver", &"l_liver"])
+clue_id = &""
+text = "Gedeutet: der Trunk."
+reveals_cause = true

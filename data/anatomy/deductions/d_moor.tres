@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DeductionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/anatomy/deduction_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"d_moor"
+cause_id = &"moor_cold"
+needs_any = Array[StringName]([&"f_cause_moor_cold", &"f_cause_drowned_millpond"])
+needs_all = Array[StringName]([&"b_moor_eyes", &"l_eyes"])
+clue_id = &""
+text = "Das Moor. Wie Osric sagte."
+reveals_cause = false

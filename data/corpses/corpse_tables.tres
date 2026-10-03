@@ -17,3 +17,4 @@ base_decay_per_hour = 0.05
 delivery_minute = 460
 valuables_coins_min = 5
 valuables_coins_max = 8
+hidden_causes = Dictionary[StringName, Array]({&"fever": [{"id": &"arsenic", "chance": 0.12}], &"drowned_millpond": [{"id": &"dead_before_water", "chance": 0.15}], &"old_age": [{"id": &"drink", "chance": 0.15}]})

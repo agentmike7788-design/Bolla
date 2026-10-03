@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DeductionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/anatomy/deduction_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"d_dry_lungs"
+cause_id = &"dead_before_water"
+needs_any = Array[StringName]([])
+needs_all = Array[StringName]([&"b_dry_lungs", &"l_lung"])
+clue_id = &"c_v_dry_lungs"
+text = "Gedeutet: tot, bevor sie ins Wasser kam."
+reveals_cause = true

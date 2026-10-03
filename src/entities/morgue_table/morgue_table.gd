@@ -47,6 +47,10 @@ const TITLE_CRYPT := "Gruft-Tisch"
 const CRYPT_ROOM := &"crypt"
 const BUILDINGS_GROUP := &"buildings"
 const FOLLOW_META := &"follows_table"
+## Phase 7 (§2.6): the line under the veil.
+const TEXT_ORGAN := "Du ziehst das Tuch über sie und arbeitest, ohne hinzusehen."
+const TEXT_ORGAN_EYES := "Du legst ihr ein Tuch über das Gesicht, bevor du anfängst."
+const TEXT_ORGAN_HAND := "Du schlägst sie in Leinen, bevor du sie ansiehst."
 
 ## Id of the corpse on the table ("" = free), always derived from the CorpseManager records.
 var corpse_id: String = "":
@@ -66,6 +70,13 @@ var corpse_id: String = "":
 var _player: Player
 ## Active state last applied to visibility / collision (tables start visible = active).
 var _applied_active: bool = true
+## Phase 7 (§2.6): the tool-sound hook – called with AnatomyConfig.sound_cue at the start of a
+## specimen; invalid (default) = silent (Agent 17 is inactive, Phase 7 plays nothing).
+var sound_hook: Callable
+## The cue last asked for (tests / debug); &"" = none yet.
+var last_sound_cue: StringName = &""
+## Corpse id under the cloth while a specimen action runs ("" = none).
+var _covering_id: String = ""
 
 
 func _init() -> void:
@@ -234,11 +245,91 @@ func request_harvest(kind: StringName) -> void:
 			_finish_harvest.bind(record.id, kind, player.inventory), false, ANIM)
 
 
-## STUB (P4) – Phase 7 (docs/PHASE7_DESIGN.md §2.6, §3.4): a specimen of the table corpse – TimedAction
-## AnatomyConfig minutes (not cancellable); start: Corpse.set_covered(true), screen_veil_changed(true);
-## end / abort: both back; then CorpseCare.harvest_organ.
-func request_organ(_organ: StringName, _container: StringName) -> void:
-	pass
+## Phase 7 (docs/PHASE7_DESIGN.md §2.6, §3.4): a specimen of the table corpse – TimedAction of the
+## organ's AnatomyConfig minutes (not cancellable). The depiction stays implied: at the start the cloth
+## covers the whole body (Corpse.set_covered(true)), the screen veil comes (screen_veil_changed(true)),
+## the tool-sound hook is asked (silent in Phase 7) and the action bar carries the one quiet line; at
+## the end (or an abort) both go back, then CorpseCare.harvest_organ. The panel's two-stage
+## confirmation happens before this call (W-UI, like request_harvest).
+func request_organ(organ: StringName, container: StringName) -> void:
+	var record := _table_record()
+	var care := _care()
+	var player := _acting_player()
+	if not _ready_to_act(record, care, player):
+		return
+	var reason := care.organ_block_reason(record.id, organ, container, player.inventory)
+	if reason == SpecimenRules.REASON_NO_CARD:
+		return
+	if reason != "":
+		_warn(reason)
+		return
+	var cfg := care.get_anatomy_config()
+	var minutes := int(cfg.organ(organ).get("minutes", 20))
+	_begin_cover(record.id, cfg)
+	if not player.start_timed_action(organ_line(organ), minutes, _finish_organ.bind(record.id, organ, container, player.inventory),
+			false, ANIM):
+		_end_cover(true)
+		_warn(TEXT_BUSY)
+
+
+## The one line under the veil (§2.6): the eyes and the hand have their own.
+static func organ_line(organ: StringName) -> String:
+	match organ:
+		CorpseRecord.HARVEST_EYES:
+			return TEXT_ORGAN_EYES
+		CorpseRecord.HARVEST_HAND:
+			return TEXT_ORGAN_HAND
+	return TEXT_ORGAN
+
+
+## True while a specimen action runs (cloth on, veil down).
+func is_covering() -> bool:
+	return _covering_id != ""
+
+
+func _begin_cover(id: String, cfg: AnatomyConfig) -> void:
+	_covering_id = id
+	var node := _corpse_node(id)
+	if node != null:
+		node.set_covered(true)
+	EventBus.screen_veil_changed.emit(true)
+	last_sound_cue = cfg.sound_cue
+	if sound_hook.is_valid():
+		sound_hook.call(cfg.sound_cue)
+	if not EventBus.timed_action_finished.is_connected(_on_organ_action_finished):
+		EventBus.timed_action_finished.connect(_on_organ_action_finished, CONNECT_ONE_SHOT)
+
+
+func _on_organ_action_finished(_completed: bool) -> void:
+	_end_cover(false)
+
+
+## Cloth off, veil up (end or abort).
+func _end_cover(disconnect_listener: bool) -> void:
+	if disconnect_listener and EventBus.timed_action_finished.is_connected(_on_organ_action_finished):
+		EventBus.timed_action_finished.disconnect(_on_organ_action_finished)
+	if _covering_id == "":
+		return
+	var node := _corpse_node(_covering_id)
+	if node != null:
+		node.set_covered(false)
+	_covering_id = ""
+	EventBus.screen_veil_changed.emit(false)
+
+
+func _finish_organ(id: String, organ: StringName, container: StringName, inv: Inventory) -> void:
+	_end_cover(true)
+	var care := _care()
+	if care == null or not _is_on_table(id):
+		return
+	if care.harvest_organ(id, organ, container, inv) == "":
+		var reason := care.organ_block_reason(id, organ, container, inv)
+		_warn(reason if reason != "" and reason != SpecimenRules.REASON_NO_CARD else TEXT_BUSY)
+
+
+func _corpse_node(id: String) -> Corpse:
+	var manager := _manager()
+	return manager.get_corpse_node(id) if manager != null else null
 
 
 ## Everything the Phase-4 panel needs about the corpse on the table ({} = none): steps with

@@ -50,6 +50,7 @@ var _model_shrouded: bool = false
 var _model_dress: StringName = &""
 var _model_variant: int = -1
 var _layout: Node3D
+var _covered: bool = false
 
 
 func _ready() -> void:
@@ -85,6 +86,8 @@ func interact(player: Player) -> void:
 func refresh() -> void:
 	var record := _record()
 	var dress := dress_of(record)
+	if _covered and dress == CorpseRecord.DRESS_NONE:
+		dress = CorpseRecord.DRESS_SHROUD
 	var variant := _look_for(record)
 	if _model == null or dress != _model_dress or (dress == CorpseRecord.DRESS_NONE and variant != _model_variant):
 		_set_model(dress, variant)
@@ -108,10 +111,18 @@ func refresh_decay(record: CorpseRecord = null) -> void:
 	decay_visual.apply(record.freshness, stage, balm, record.washed)
 
 
-## STUB (P4) – Phase 7 (docs/PHASE7_DESIGN.md §2.6, §3.4): the cloth model (ph_prop_corpse_shrouded) on /
-## off while a specimen is taken; presentation only.
-func set_covered(_on: bool) -> void:
-	pass
+## Phase 7 (docs/PHASE7_DESIGN.md §2.6, §3.4): while a specimen is taken the cloth lies over the whole
+## body, face and hands included (the shroud model ph_prop_corpse_shrouded); off → the record's own
+## look again. Presentation only – the record is not touched, nothing about the body changes.
+func set_covered(on: bool) -> void:
+	if _covered == on:
+		return
+	_covered = on
+	refresh()
+
+
+func is_covered() -> bool:
+	return _covered
 
 
 func is_shrouded_visual() -> bool:
