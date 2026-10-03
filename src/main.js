@@ -14,6 +14,7 @@ import { createEffects } from './effects.js';
 import { createDayNight } from './daynight.js';
 import { listSaves, readSave, writeSave, deleteSave, exportSave, importSave, newSaveId, SAVE_VERSION } from './save.js';
 import { createMenu } from './menu.js';
+import { createTutorial, tutorialDone, TUTORIAL_SEED } from './tutorial.js';
 import './style.css';
 
 const canvas = document.getElementById('scene');
@@ -86,6 +87,7 @@ let savedOnce = false; // an empty new game is only saved once something happene
 // Start a map: the free game with a random (or given) seed, or a scenario.
 function startGame(next, seed = Math.floor(Math.random() * 99999)) {
   leaveGame();
+  tutorial.stop();
   scenario = next;
   slotId = newSaveId();
   savedOnce = false;
@@ -364,6 +366,7 @@ function saveGame({ manual = false, quiet = false } = {}) {
     factory: factory.save(),
     missions: missions?.save() ?? null,
     dayTime: dayNight.time,
+    tutorial: tutorial.save(),
     camera: { position: camera.position.toArray(), target: rig.controls.target.toArray() },
   };
   const meta = { id: slotId, name: gameName(), scenario: scenario.id, savedAt: Date.now(), playTime: factory.time, buildings: factory.buildings.size, thumb: thumbnail() };
@@ -403,6 +406,8 @@ function loadGame(id) {
     camera.position.fromArray(data.camera.position);
     rig.controls.target.fromArray(data.camera.target);
   }
+  if (data.tutorial != null) tutorial.start(data.tutorial);
+  else tutorial.stop();
   return true;
 }
 
@@ -433,6 +438,8 @@ const menu = createMenu({
       closeMenu();
     },
     newGame: openMaps,
+    tutorial: startTutorial,
+    tutorialDone,
     resume: closeMenu,
     save: () => saveGame({ manual: true }),
     toTitle: openTitle,
@@ -480,6 +487,23 @@ function openPause() {
 }
 
 document.getElementById('menu-open').addEventListener('click', openPause);
+
+// --- Tutorial -------------------------------------------------------------------
+
+const tutorial = createTutorial({
+  root: app,
+  scene,
+  game: () => ({ factory, world, tool, rig, audio, target: rig.controls.target, zoom }),
+  onFinish: () => menu.refresh(),
+});
+
+// The tutorial plays on a fixed free map with iron and copper close together.
+function startTutorial() {
+  startGame(scenarioById('free'), TUTORIAL_SEED);
+  dayNight.setTime(0.02);
+  closeMenu();
+  tutorial.start();
+}
 
 // Leaving the page (tab closed, app switched) saves the game.
 window.addEventListener('pagehide', () => leaveGame());
@@ -535,10 +559,11 @@ function showTile(tile) {
   }
   const building = factory.get(tile);
   const check = tool === 'remove' ? { ok: !!building, reason: building ? '' : 'Hier steht nichts' } : tool && canBuild(tile);
+  const overBelt = check?.ok && tool !== 'remove' && tool !== 'belt' && building?.type === 'belt';
   canvas.style.cursor = !tool && building?.type === 'constructor' ? 'pointer' : '';
   marker.visible = !tool;
   marker.position.set(tile.position.x, Math.max(tile.height, 0.28) + 0.03, tile.position.z);
-  ghost.show(tool, tile, tool === 'remove' ? building?.dir ?? 0 : dir, check?.ok);
+  ghost.show(tool, tile, tool === 'remove' || overBelt ? building?.dir ?? 0 : dir, check?.ok);
 
   const terrain = TERRAIN[tile.terrain];
   if (building?.type === 'drill') {
@@ -582,6 +607,7 @@ function showTile(tile) {
     tileDetail.textContent = `${terrain.buildable ? 'Bebaubar' : 'Nicht bebaubar'} · Feld ${tile.x}, ${tile.z}`;
   }
   if (check && !check.ok && check.reason) tileDetail.textContent = check.reason;
+  else if (overBelt) tileDetail.textContent = `Ersetzt das Bandstück · Ausgang nach ${DIR_NAMES[building.dir]}`;
 }
 
 const raycaster = new THREE.Raycaster();
@@ -670,7 +696,8 @@ function canBuild(tile) {
   const existing = factory.get(tile);
   // Dragging a belt over a belt just turns it.
   if (tool === 'belt' && existing?.type === 'belt') return { ok: true, reason: '' };
-  return factory.canPlace(tool, tile);
+  // Clicking a machine onto a belt replaces that piece; dragging does not eat belts.
+  return factory.canPlace(tool, tile, !(dragging && lastTile));
 }
 
 function rotate() {
@@ -700,7 +727,7 @@ function buildAt(tile) {
     if (tool === 'belt' && existing?.type === 'belt') {
       if (existing.dir !== dir) audio.play.rotate();
       factory.setDir(existing, dir);
-    } else if (factory.place(tool, tile, dir)) {
+    } else if (factory.place(tool, tile, existing?.type === 'belt' ? existing.dir : dir, !lastTile)) {
       meshes.setDecorHidden(tile.z * world.size + tile.x, true);
       audio.play.build(tool);
       effects.build(tile, tool !== 'belt');
@@ -868,6 +895,7 @@ renderer.setAnimationLoop(() => {
     checkMissions();
     renderProgress();
   }
+  tutorial.update(dt, elapsed, !paused && !inTitle && !menuOpen());
   updateHover();
   renderer.render(scene, camera);
 });
@@ -881,4 +909,4 @@ resize();
 openTitle();
 
 // Handle for poking at the game from the browser console while developing.
-if (import.meta.env.DEV) window.bolla = { camera, rig, renderer, scene, startGame, saveGame, loadGame, menu, dayNight, effects, audio, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get factory() { return factory; }, get missions() { return missions; } };
+if (import.meta.env.DEV) window.bolla = { camera, rig, tutorial, renderer, scene, startGame, saveGame, loadGame, menu, dayNight, effects, audio, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get factory() { return factory; }, get missions() { return missions; } };

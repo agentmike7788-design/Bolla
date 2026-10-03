@@ -14,7 +14,7 @@ npm run build   # baut das Spiel nach dist/
 
 Steuerung: linke Maus verschieben, rechte Maus oder Q/E drehen, Mausrad zoomen, WASD bewegen.
 
-Bauen: `1` Bohrer, `2` Förderband, `3` Lager, `4` Schmelzofen, `5` Presse, `6` Verteiler, `7` Zusammenführer, `8` Konstruktor, `X` Abriss, `T` Forschungsbaum, `R` dreht das nächste Gebäude (ohne Werkzeug: das Gebäude unter der Maus), `Esc` beendet den Bau-Modus. Bänder verlegt man durch Ziehen mit der linken Maus; sie folgen der Maus und biegen automatisch ab. Ein Bohrer legt sein Erz auf das Band vor seinem Ausgang. Am Ende eines Bands staut sich das Erz, und der Bohrer wartet.
+Bauen: `1` Bohrer, `2` Förderband, `3` Lager, `4` Schmelzofen, `5` Presse, `6` Verteiler, `7` Zusammenführer, `8` Konstruktor, `X` Abriss, `T` Forschungsbaum, `R` dreht das nächste Gebäude (ohne Werkzeug: das Gebäude unter der Maus), `Esc` beendet den Bau-Modus. Bänder verlegt man durch Ziehen mit der linken Maus; sie folgen der Maus und biegen automatisch ab. Ein Klick mit einer Maschine (oder Lager, Verteiler …) auf ein Bandstück ersetzt es, die Maschine übernimmt die Laufrichtung des Bands. Ein Bohrer legt sein Erz auf das Band vor seinem Ausgang. Am Ende eines Bands staut sich das Erz, und der Bohrer wartet.
 
 Maschinen nehmen Teile von Bändern an jeder Seite außer ihrem Ausgang an und geben ihr Produkt nach vorn ab (Pfeil beim Bauen):
 - Schmelzofen: Eisenerz → Eisenbarren, Kupfererz → Kupferbarren.
@@ -24,17 +24,21 @@ Maschinen nehmen Teile von Bändern an jeder Seite außer ihrem Ausgang an und g
 - Zusammenführer: nimmt Teile von hinten, links und rechts und gibt sie abwechselnd nach vorn ab.
 - Konstruktor: baut aus mehreren Teilen eins. Ohne Werkzeug auf ihn klicken, um das Rezept zu wählen: 2 Eisenplatten → Zahnrad, 1 Eisenplatte + 2 Kupferdraht → Schaltkreis, 2 Eisenbarren + 1 Kohle → Stahlträger.
 
-Forschung: Oben links steht die nächste Forschung, `T` öffnet den ganzen Baum. Bezahlt wird mit Teilen aus dem Lager. Schmelzen schaltet den Schmelzofen frei, Pressen die Presse; dazu gibt es schnellere Bänder, Bohrer und Öfen. „Erste Fabrik“ (25 Platten, 25 Draht, 15 Beton) ist das erste Spielziel. Danach geht es weiter: Logistik (Verteiler, Zusammenführer), Konstruktor, Hydraulik, Tiefbohrer und Magnetbänder; „Meisterfabrik“ (50 Schaltkreise, 40 Stahlträger, 40 Zahnräder) ist das große Ziel. Bänder und Bohrer wechseln mit jeder Tempo-Forschung die Farbe. Neue Einträge kommen in `src/research.js`; der Baum ordnet sie selbst nach ihren Voraussetzungen an.
+Forschung: Oben links steht die nächste Forschung, `T` öffnet den ganzen Baum. Bezahlt wird mit Teilen aus dem Lager. Schmelzen schaltet den Schmelzofen frei, Pressen die Presse; dazu gibt es schnellere Bänder, Bohrer und Öfen. „Erste Fabrik“ (40 Platten, 40 Draht, 25 Beton) ist das erste Spielziel. Danach geht es weiter: Logistik (Verteiler, Zusammenführer), Konstruktor, Hydraulik, Tiefbohrer und Magnetbänder; „Meisterfabrik“ (120 Schaltkreise, 100 Stahlträger, 100 Zahnräder) ist das große Ziel. Bänder und Bohrer wechseln mit jeder Tempo-Forschung die Farbe. Neue Einträge kommen in `src/research.js`; der Baum ordnet sie selbst nach ihren Voraussetzungen an.
 
 Karten und Missionen: Unter „Neues Spiel“ im Hauptmenü (und im Spiel mit `M` oder dem Knopf „Karten“) wählt man eine Karte. Im freien Spiel gibt es eine Zufallsinsel mit allen Erzen und den Forschungsbaum. Dazu kommen vier Missionskarten mit eigener Landschaft und nur bestimmten Erzen:
 - Eisenberge (Eisen, Kalkstein): der Einstieg vom ersten Bohrer bis zum Zahnradwerk.
-- Kupferwüste (Kupfer, Kalkstein): Wüste mit Kakteen, am Ende 60 Draht pro Minute.
+- Kupferwüste (Kupfer, Kalkstein): Wüste mit Kakteen, am Ende 90 Draht pro Minute.
 - Kohleinsel (Kohle, Eisen): kleine Insel, wenig Platz, ein Stahlwerk.
 - Großes Festland (alle Erze): die Meisterprüfung mit Schaltkreisen und Stahl.
 
 Auf Missionskarten ersetzen Missionen den Forschungsbaum: Jede Mission hat Ziele (Teile ins Lager liefern, Gebäude bauen oder eine Menge pro Minute schaffen) und schaltet als Belohnung Gebäude und Tempo frei. Wer alle Missionen schafft, bekommt je nach Zeit ein bis drei Sterne; die Bestzeit merkt sich der Browser. Neue Karten kommen in `src/scenarios.js`.
 
 Ton und Licht: Alle Geräusche entstehen im Browser per Web Audio, ohne Audiodateien: Bauen, Abreißen, Drehen, Missionserfolg und eine ruhige Hintergrundmusik. Maschinen brummen, rattern und fauchen umso lauter, je näher die Kamera ist, und kommen von links oder rechts. Unter Einstellungen im Menü stellt man Lautstärke und Musik ein, `U` schaltet den Ton stumm. Ein Tag dauert acht Minuten: Die Sonne wandert, abends wird es orange, nachts gibt es Sterne, und die Maschinen leuchten den Boden an. `N` springt zur nächsten Tageszeit; im Menü lässt sich auch „Immer Tag“ oder „Immer Nacht“ wählen. Öfen sprühen Funken und Glut, Bohrer werfen Erzbrocken auf, Pressen funken beim Stanzen, beim Bauen staubt es, und eine geschaffte Karte gibt ein Feuerwerk.
+
+Tutorial: Beim ersten Start bietet das Hauptmenü das Tutorial an, später steht es dort als eigener Eintrag. Es spielt auf einer festen freien Karte (Eisen und Kupfer in der Mitte) und führt in elf Schritten von der Kamera über Bohrer, Lager und Band zur ersten Forschung und zum Schmelzofen. Der Knopf oder das Feld, um das es gerade geht, leuchtet, und ein gelber Ring mit Pfeil zeigt auf der Karte, wo gebaut werden soll. Jeder Schritt prüft das Spiel selbst; wer anders baut, kommt trotzdem weiter. „Überspringen“ beendet es jederzeit, ein Spielstand merkt sich den Schritt. Die Schritte stehen in `src/tutorial.js`.
+
+Balancing: `npm run balance` lässt die echte Fabrik-Simulation auf einer flachen Testkarte laufen, misst, was eine Produktionslinie pro Minute schafft, und schätzt daraus die Spielzeit jeder Mission und jeder Forschung. Die Drei-Sterne-Zeiten der Karten liegen beim 1,6-Fachen dieser Schätzung.
 
 Hauptmenü und Speichern: Das Spiel startet im Hauptmenü; dahinter kreist die Kamera über dem zuletzt gespielten Spiel. „Weiterspielen“ macht dort weiter, „Neues Spiel“ öffnet die Kartenauswahl, „Laden“ zeigt alle Spielstände mit Vorschaubild, Einstellungen haben Ton, Grafik (Schatten, Auflösung, Partikel, Tageszeit) und das Autospeichern, Steuerung listet alle Tasten. Jedes Spiel ist ein eigener Spielstand im Browser (localStorage); es speichert sich jede Minute von selbst, beim Kartenwechsel, beim Verlassen der Seite und mit `Strg S`. Mit Export wird ein Spielstand zur Datei, mit „Datei importieren“ kommt er zurück, auch auf einem anderen Gerät. `Esc` schließt erst das, was gerade offen ist (Kartenauswahl, Forschungsbaum, Rezepte, Werkzeug), und öffnet sonst das Pausenmenü; solange es offen ist, steht die Fabrik still.
 
@@ -47,5 +51,6 @@ Code:
 - `src/research.js` ist der Forschungsbaum, `src/researchView.js` zeigt ihn an.
 - `src/buildings.js` zeichnet die Gebäude, Bänder, die Teile darauf und die Bau-Vorschau.
 - `src/audio.js` erzeugt alle Geräusche und die Musik, `src/effects.js` die Partikel, `src/daynight.js` den Tag-Nacht-Wechsel mit Himmel, Sternen und Maschinenlichtern.
-- `src/save.js` speichert und lädt Spielstände, `src/menu.js` ist Hauptmenü und Pausenmenü.
+- `src/save.js` speichert und lädt Spielstände, `src/menu.js` ist Hauptmenü und Pausenmenü, `src/tutorial.js` das Tutorial.
+- `tools/balance.mjs` ist die Balancing-Rechnung (`npm run balance`).
 - `src/main.js` verbindet Szene, Licht, Maus- und Tastatur-Steuerung und HUD.

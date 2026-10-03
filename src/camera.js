@@ -33,7 +33,19 @@ export function createCameraRig(camera, dom, halfExtent) {
   const offset = new THREE.Vector3();
   const up = new THREE.Vector3(0, 1, 0);
 
+  // A short camera flight to a point on the map, see flyTo.
+  let flight = null;
+  const flightStep = new THREE.Vector3();
+
   function update(dt) {
+    if (flight) {
+      flight.t = Math.min(1, flight.t + dt / 0.9);
+      const k = flight.t * flight.t * (3 - 2 * flight.t);
+      flightStep.lerpVectors(flight.from, flight.to, k).sub(controls.target);
+      camera.position.add(flightStep);
+      controls.target.add(flightStep);
+      if (flight.t >= 1) flight = null;
+    }
     move.set(0, 0, 0);
     camera.getWorldDirection(forward);
     forward.y = 0;
@@ -80,5 +92,9 @@ export function createCameraRig(camera, dom, halfExtent) {
     camera.position.copy(controls.target).add(offset);
   }
 
-  return { controls, update, setLocked, orbit };
+  function flyTo(x, z) {
+    flight = { from: controls.target.clone(), to: new THREE.Vector3(x, 0, z), t: 0 };
+  }
+
+  return { controls, update, setLocked, orbit, flyTo };
 }

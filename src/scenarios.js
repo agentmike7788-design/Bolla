@@ -7,7 +7,8 @@
 //   seed          fixed seed, so everyone plays the same map
 //   map           landscape and ores, see DEFAULT_MAP in world.js
 //   start         buildings available from the beginning
-//   par           minutes for three stars (twice that for two)
+//   par           minutes for three stars (twice that for two); `npm run balance`
+//                 estimates play times, par is about 1.6 times that
 //   missions      played one after another; each has
 //     name/desc   text for the mission panel
 //     goals       all must be met:
@@ -30,7 +31,7 @@ export const SCENARIOS = [
     seed: 2207,
     map: { ores: { iron: 7, stone: 4 }, rock: 0.7, forest: 0.5, land: 0.07 },
     start: ['drill', 'belt', 'storage'],
-    par: 12,
+    par: 13,
     missions: [
       {
         name: 'Erster Abstich',
@@ -58,8 +59,8 @@ export const SCENARIOS = [
       },
       {
         name: 'Am laufenden Band',
-        desc: 'Ein Ofen reicht nicht mehr. Teile das Erz mit Verteilern auf mehrere Öfen auf.',
-        goals: [{ rate: 'gear', perMin: 20 }],
+        desc: 'Ein Ofen reicht nicht mehr. Teile das Erz mit Verteilern auf mehrere Öfen auf, und der Beton muss nebenher weiterlaufen.',
+        goals: [{ rate: 'gear', perMin: 20 }, { rate: 'concrete', perMin: 15 }],
         reward: { text: 'Die Eisenberge gehören dir' },
       },
     ],
@@ -72,7 +73,7 @@ export const SCENARIOS = [
     seed: 8128,
     map: { ores: { copper: 5, stone: 3 }, desert: true, forest: 0.74, rock: 0.4, land: 0.04 },
     start: ['drill', 'belt', 'storage', 'furnace'],
-    par: 15,
+    par: 12,
     missions: [
       {
         name: 'Kupferrausch',
@@ -88,14 +89,14 @@ export const SCENARIOS = [
       },
       {
         name: 'Sandsturm',
-        desc: 'Halte die Leitung am Laufen: 30 Draht in einer Minute.',
-        goals: [{ rate: 'wire', perMin: 30 }],
+        desc: 'Eine Linie schafft das nicht: 45 Draht in einer Minute.',
+        goals: [{ rate: 'wire', perMin: 45 }],
         reward: { boosts: { belt: 1.6, drill: 1.4 }, text: 'Bänder +60 %, Bohrer +40 %' },
       },
       {
         name: 'Kupferkönig',
-        desc: 'Die große Lieferung: viel Draht und Beton gleichzeitig.',
-        goals: [{ rate: 'wire', perMin: 60 }, { rate: 'concrete', perMin: 20 }],
+        desc: 'Die große Lieferung: drei Drahtlinien und dazu Beton.',
+        goals: [{ rate: 'wire', perMin: 90 }, { rate: 'concrete', perMin: 30 }],
         reward: { text: 'Die Wüste glänzt kupferrot' },
       },
     ],
@@ -108,7 +109,7 @@ export const SCENARIOS = [
     seed: 3301,
     map: { ores: { coal: 5, iron: 3 }, coast: 0.3, land: -0.02, rock: 0.4, forest: 0.6, richness: 1.4 },
     start: ['drill', 'belt', 'storage', 'furnace', 'assembler'],
-    par: 15,
+    par: 13,
     missions: [
       {
         name: 'Landung',
@@ -125,7 +126,7 @@ export const SCENARIOS = [
       {
         name: 'Schwerindustrie',
         desc: 'Stahl und Zahnräder für die Hafenkräne.',
-        goals: [{ deliver: 'steel', count: 30 }, { deliver: 'gear', count: 20 }],
+        goals: [{ deliver: 'steel', count: 25 }, { deliver: 'gear', count: 20 }],
         reward: { boosts: { belt: 1.6, constructor: 1.5 }, text: 'Bänder +60 %, Konstruktor +50 %' },
       },
       {
@@ -144,7 +145,7 @@ export const SCENARIOS = [
     seed: 6060,
     map: { ores: { iron: 5, copper: 4, coal: 3, stone: 3 }, land: 0.06, coast: 0.85, richness: 1.2 },
     start: ['drill', 'belt', 'storage'],
-    par: 25,
+    par: 22,
     missions: [
       {
         name: 'Erkundung',
@@ -172,8 +173,8 @@ export const SCENARIOS = [
       },
       {
         name: 'Meisterprüfung',
-        desc: 'Schaltkreise und Stahl gleichzeitig im Minutentakt.',
-        goals: [{ rate: 'circuit', perMin: 15 }, { rate: 'steel', perMin: 15 }],
+        desc: 'Schaltkreise und Stahl im Minutentakt. Für die Schaltkreise brauchst du zwei Linien.',
+        goals: [{ rate: 'circuit', perMin: 30 }, { rate: 'steel', perMin: 25 }],
         reward: { text: 'Du bist Meister der Fabrik' },
       },
     ],
