@@ -229,7 +229,8 @@ func _set_buttons(r: Dictionary, reason_one: String, reason_five: String, open: 
 	one.tooltip_text = reason_one
 	five.disabled = action_running or reason_five != ""
 	five.tooltip_text = reason_five
-	var shown := reason_one if open and reason_one != VillageShops.TEXT_CLOSED else ""
+	# „du hast 0" already says what is missing – no extra line for it.
+	var shown := reason_one if open and reason_one != VillageShops.TEXT_CLOSED and reason_one != ShopRules.TEXT_MISSING else ""
 	(r.reason as Label).text = shown
 	(r.reason as Label).visible = shown != ""
 

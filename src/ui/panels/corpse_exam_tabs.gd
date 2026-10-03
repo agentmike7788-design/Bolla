@@ -264,12 +264,14 @@ func _build_organs(page: VBoxContainer) -> void:
 		b.pressed.connect(press_organ.bind(organ))
 		head.add_child(b)
 		box.add_child(head)
-		var info := UIKit.label("", &"DimLabel", true)
-		info.custom_minimum_size.x = _column_width - 30.0
-		box.add_child(info)
-		var consequence := UIKit.label("", &"DimLabel", true)
-		consequence.custom_minimum_size.x = _column_width - 30.0
-		box.add_child(consequence)
+		var line := UIKit.hbox(14)
+		var info := UIKit.label("", &"DimLabel")
+		line.add_child(info)
+		var consequence := UIKit.label("", &"DimLabel")
+		consequence.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		consequence.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		line.add_child(consequence)
+		box.add_child(line)
 		var reason := UIKit.label("", &"WarningLabel", true)
 		reason.custom_minimum_size.x = _column_width - 30.0
 		box.add_child(reason)
@@ -444,6 +446,8 @@ func _refresh_organs(organs: Dictionary, running: bool) -> void:
 	var rows: Dictionary = organs.get("rows", {})
 	organs_head.text = Phase7Texts.ORGANS_HEAD % [int(organs.get("taken", 0)), int(organs.get("max", 3))]
 	var clarity := str(organs.get("clarity_word", ""))
+	if clarity != "":
+		organs_head.text += Phase7Texts.SEP + Phase7Texts.ORGAN_CLARITY % clarity
 	var inv := _inventory()
 	for organ: StringName in organ_rows:
 		var ui: Dictionary = organ_rows[organ]
@@ -474,8 +478,6 @@ func _refresh_organs(organs: Dictionary, running: bool) -> void:
 		b.disabled = running or taken or reason != ""
 		var inputs: Dictionary = (entry.get("inputs", {}) as Dictionary).get(chosen, {})
 		var info := Phase7Texts.inputs_text(inputs, inv)
-		if clarity != "" and not taken:
-			info += Phase7Texts.SEP + Phase7Texts.ORGAN_CLARITY % clarity
 		(ui.info as Label).text = info if not taken else ""
 		(ui.info as Label).visible = not taken
 		(ui.consequence as Label).text = str(entry.get("consequence", ""))

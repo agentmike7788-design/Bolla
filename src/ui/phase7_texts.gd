@@ -37,7 +37,7 @@ const SHOP_SELL := "Verkaufen"
 const SHOP_ONE := "1"
 const SHOP_FIVE := "5"
 const SHOP_PRICE := "%d %s"
-const SHOP_PRICE_BB := "[s]%d[/s] %d %s"
+const SHOP_PRICE_BB := "[s][color=#8a8f94]%d[/color][/s]  %d %s"
 const SHOP_SURCHARGE := "+%d (Ruf)"
 const SHOP_STOCK := "noch %d heute"
 const SHOP_SOLD_OUT := "heute ausverkauft"
@@ -251,12 +251,12 @@ const ORGAN_BUNDLE := "Bündel"
 const ORGAN_TAKE := "%s nehmen (%s)"
 const ORGAN_CONFIRM := "Wirklich? Noch einmal drücken."
 const ORGAN_CONFIRM_GRAVE := "Das bleibt ihr fehlen. Wirklich? Noch einmal drücken."
-const ORGAN_INPUTS := "braucht %s"
+const ORGAN_INPUTS := "%s"
 const ORGAN_INPUT_OK := "%s ✓"
 const ORGAN_INPUT_MISSING := "%s fehlt"
 const ORGAN_CONSEQUENCE := "Qualität %s · Ruf %s · der Geist wird es merken"
 const ORGAN_CONSEQUENCE_GRAVE := "Qualität %s · Ruf %s · das wird ihr fehlen"
-const ORGAN_CLARITY := "Klarheit: %s"
+const ORGAN_CLARITY := "Klarheit jetzt: %s"
 const ORGAN_TAKEN := "Genommen – %s"
 const ORGAN_RETURNED := "Zurückgelegt"
 const CAUSE_REVEALED := "laut Osric: %s · gedeutet: %s"
@@ -618,7 +618,7 @@ static func inputs_text(inputs: Dictionary, inv: Inventory) -> String:
 		var have := inv.count(StringName(str(id))) if inv != null else 0
 		var name := UIKit.item_name(StringName(str(id))) if need == 1 else "%d× %s" % [need, UIKit.item_name(StringName(str(id)))]
 		parts.append((ORGAN_INPUT_OK if have >= need else ORGAN_INPUT_MISSING) % name)
-	return ORGAN_INPUTS % ", ".join(parts) if not parts.is_empty() else ""
+	return ORGAN_INPUTS % SEP.join(parts) if not parts.is_empty() else ""
 
 
 # --- objective --------------------------------------------------------------------------------------

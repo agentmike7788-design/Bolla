@@ -34,6 +34,7 @@ var result_card: PanelContainer
 var result_title: Label
 var result_text: Label
 var result_teaching: Label
+var back_button: Button
 ## uid -> {row, sell, expertise, lecture, price, eta, bar}
 var rows: Dictionary[String, Dictionary] = {}
 var reply: String = ""
@@ -91,10 +92,23 @@ func _build() -> void:
 	coins_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	coins_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bottom.add_child(coins_label)
-	var back := UIKit.button(TEXT_CLOSE)
-	back.pressed.connect(request_close)
-	bottom.add_child(back)
+	back_button = UIKit.button(TEXT_CLOSE)
+	back_button.pressed.connect(request_close)
+	bottom.add_child(back_button)
 	box.add_child(bottom)
+
+
+## The default focus never lands on „Verkaufen" (irreversible): the first „Gutachten", else „Schließen".
+func focus_default() -> void:
+	if not is_visible_in_tree():
+		return
+	for uid: String in rows:
+		var b := rows[uid].expertise as Button
+		if b.is_visible_in_tree() and not b.disabled:
+			b.grab_focus()
+			return
+	if back_button != null and back_button.is_visible_in_tree():
+		back_button.grab_focus()
 
 
 func _on_opened() -> void:

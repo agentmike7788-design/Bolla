@@ -140,7 +140,7 @@ func test_shop_panel_prices_stock_buy_sell() -> void:
 	assert_eq(panel.buy_rows.size(), 3)
 	assert_eq(panel.sell_rows.size(), 2)
 	var bar: Dictionary = panel.buy_rows[&"iron_bar"]
-	assert_true((bar.price as RichTextLabel).text.begins_with("[s]6[/s] 5"), "trusted: the base price struck through")
+	assert_true((bar.price as RichTextLabel).text.begins_with("[s][color=#8a8f94]6[/color][/s]  5"), "trusted: the base price struck through")
 	assert_eq((bar.stock as Label).text, "noch 2 heute")
 	assert_true(panel.buy(&"iron_bar", 1))
 	assert_eq(inv.count(&"coin"), 15)
@@ -426,7 +426,7 @@ func test_exam_specimen_card_rows_and_two_stage() -> void:
 	assert_true(tabs.tab_buttons[&"organs"].visible, "anatomy known at the crypt table: the card is there")
 	assert_eq(tabs.tab_buttons[&"organs"].text, "Präparate")
 	tabs.select_tab(&"organs")
-	assert_eq(tabs.organs_head.text, "Genommen: 1 von höchstens 3")
+	assert_eq(tabs.organs_head.text, "Genommen: 1 von höchstens 3 · Klarheit jetzt: sehr gut")
 	assert_eq(tabs.organ_rows.size(), 7)
 	var eyes: Dictionary = tabs.organ_rows[&"eyes"]
 	assert_true((eyes.jar as Button).visible and not (eyes.bundle as Button).visible, "eyes only in the jar")
@@ -441,7 +441,7 @@ func test_exam_specimen_card_rows_and_two_stage() -> void:
 	assert_true((lung.consequence as Label).text.ends_with("der Geist wird es merken"))
 	assert_false((lung.consequence as Label).text.contains("Pietät"), "no piety number")
 	assert_true((eyes.consequence as Label).text.ends_with("das wird ihr fehlen"))
-	assert_true((lung.info as Label).text.contains("Klarheit: sehr gut"), (lung.info as Label).text)
+	assert_true((lung.info as Label).text.begins_with("Präparatglas"), (lung.info as Label).text)
 	var kidneys: Dictionary = tabs.organ_rows[&"kidneys"]
 	assert_true((kidneys.button as Button).disabled)
 	assert_eq((kidneys.reason as Label).text, "Es fehlt: Präparatglas")
