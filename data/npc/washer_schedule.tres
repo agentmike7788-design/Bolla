@@ -1,0 +1,94 @@
+[gd_resource type="Resource" script_class="NpcSchedule" format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1_rnbvr"]
+[ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2_fh6o0"]
+
+[sub_resource type="Resource" id="Resource_m5ffh"]
+script = ExtResource("1_rnbvr")
+activity = &"home"
+path = PackedStringArray("v_dorn_door")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_gkglj"]
+script = ExtResource("1_rnbvr")
+start_minute = 390
+travel_minutes = 8
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_dorn_door", "v_wash")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_f4woc"]
+script = ExtResource("1_rnbvr")
+start_minute = 398
+animation = &"work"
+path = PackedStringArray("v_wash")
+dialogue_id = &"v_washer"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_7t3c7"]
+script = ExtResource("1_rnbvr")
+start_minute = 540
+activity = &"home"
+path = PackedStringArray("v_dorn_door")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_gsq4f"]
+script = ExtResource("1_rnbvr")
+start_minute = 720
+activity = &"shop"
+animation = &"work"
+path = PackedStringArray("v_dorn_door")
+dialogue_id = &"v_washer"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_ye1ld"]
+script = ExtResource("1_rnbvr")
+start_minute = 900
+travel_minutes = 5
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_dorn_door", "v_well")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_j1n20"]
+script = ExtResource("1_rnbvr")
+start_minute = 905
+animation = &"talk"
+path = PackedStringArray("v_well")
+dialogue_id = &"v_washer"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_nb3dv"]
+script = ExtResource("1_rnbvr")
+start_minute = 990
+travel_minutes = 5
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_well", "v_dorn_door")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_7ggjs"]
+script = ExtResource("1_rnbvr")
+start_minute = 995
+activity = &"shop"
+animation = &"work"
+path = PackedStringArray("v_dorn_door")
+dialogue_id = &"v_washer"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_wymwo"]
+script = ExtResource("1_rnbvr")
+start_minute = 1140
+activity = &"home"
+path = PackedStringArray("v_dorn_door")
+visible = false
+region = &"village"
+
+[resource]
+script = ExtResource("2_fh6o0")
+npc_id = &"washer"
+display_name = "Liesel Dorn"
+entries = Array[ExtResource("1_rnbvr")]([SubResource("Resource_m5ffh"), SubResource("Resource_gkglj"), SubResource("Resource_f4woc"), SubResource("Resource_7t3c7"), SubResource("Resource_gsq4f"), SubResource("Resource_ye1ld"), SubResource("Resource_j1n20"), SubResource("Resource_nb3dv"), SubResource("Resource_7ggjs"), SubResource("Resource_wymwo")])

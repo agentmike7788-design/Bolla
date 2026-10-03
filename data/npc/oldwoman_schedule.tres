@@ -1,0 +1,66 @@
+[gd_resource type="Resource" script_class="NpcSchedule" format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1_a456f"]
+[ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2_4dkle"]
+
+[sub_resource type="Resource" id="Resource_5t8o7"]
+script = ExtResource("1_a456f")
+activity = &"home"
+path = PackedStringArray("v_hagedorn_gate")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_34akn"]
+script = ExtResource("1_a456f")
+start_minute = 540
+travel_minutes = 6
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_hagedorn_gate", "v_well_bench")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_amddw"]
+script = ExtResource("1_a456f")
+start_minute = 546
+animation = &"sit"
+path = PackedStringArray("v_well_bench")
+dialogue_id = &"v_oldwoman"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_cy44s"]
+script = ExtResource("1_a456f")
+start_minute = 660
+travel_minutes = 6
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_well_bench", "v_hagedorn_gate")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_3270m"]
+script = ExtResource("1_a456f")
+start_minute = 666
+activity = &"home"
+path = PackedStringArray("v_hagedorn_gate")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_bihwa"]
+script = ExtResource("1_a456f")
+start_minute = 840
+path = PackedStringArray("v_hagedorn_gate")
+dialogue_id = &"v_oldwoman"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_tf3ik"]
+script = ExtResource("1_a456f")
+start_minute = 1020
+activity = &"home"
+path = PackedStringArray("v_hagedorn_gate")
+visible = false
+region = &"village"
+
+[resource]
+script = ExtResource("2_4dkle")
+npc_id = &"oldwoman"
+display_name = "Wiebke Hagedorn"
+entries = Array[ExtResource("1_a456f")]([SubResource("Resource_5t8o7"), SubResource("Resource_34akn"), SubResource("Resource_amddw"), SubResource("Resource_cy44s"), SubResource("Resource_3270m"), SubResource("Resource_bihwa"), SubResource("Resource_tf3ik")])
