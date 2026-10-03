@@ -396,7 +396,7 @@ func test_crypt_chapel_shed_config_values() -> void:
 	assert_eq([Array(s.slots_by_level), Array(s.stack_mult_by_level), s.stack_categories, s.fetch_min_level,
 			Array(s.fetch_minutes_by_level), s.store_min_level, s.excluded_items],
 			[[0, 24, 32, 40], [1, 1, 1, 2], [ItemData.Category.RESOURCE, ItemData.Category.MATERIAL] as Array[int], 2, [0, 0, 10, 0], 3,
-			[&"bone_box_full"] as Array[StringName]])
+			[&"bone_box_full", &"bone_box", &"altar_candle"] as Array[StringName]])  # W3 QA6-04 (§2.5 „keine Gebeinkisten“)
 
 
 func test_old_grave_fixtures() -> void:

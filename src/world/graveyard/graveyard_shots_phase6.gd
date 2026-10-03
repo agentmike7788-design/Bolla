@@ -349,6 +349,10 @@ func _stage_ground_corpse(world: Node3D, at: Vector2) -> void:
 func _stage_ossuary(world: Node3D, n: int) -> void:
 	var ossuary := _system(world, "Ossuary")
 	var ids: Array = ["old_04", "old_06", "old_07", "old_02", "old_05", "old_03"].slice(0, n)
+	# The graves are lifted first (Ossuary.load_state drops lifted graves that are still OLD, QA6-08).
+	var graveyard := _system(world, "Graveyard")
+	for id: String in ids:
+		graveyard.call(&"lift_old", id)
 	var state: Dictionary = ossuary.call(&"save_state")
 	state["lifted"] = ids
 	state["reinterred"] = ids

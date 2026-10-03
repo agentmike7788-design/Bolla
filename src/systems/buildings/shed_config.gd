@@ -13,4 +13,6 @@ extends Resource
 @export var fetch_minutes_by_level: PackedInt32Array = [0, 0, 10, 0]
 ## „Überschuss einlagern" from this level; never these items.
 @export var store_min_level: int = 3
-@export var excluded_items: Array[StringName] = [&"bone_box_full"]
+## W3 QA6-04: §2.5 „keine Gebeinkisten" – the empty boxes and the altar candles stay with the gravekeeper
+## too (an old grave and the altar have no fetch).
+@export var excluded_items: Array[StringName] = [&"bone_box_full", &"bone_box", &"altar_candle"]

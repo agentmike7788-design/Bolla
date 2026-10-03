@@ -15,6 +15,9 @@ const SLOT := 93
 ## §10 plays the mortician 10 days (chapter ≤ day 38); crypt 3 first costs 85 coins before the
 ## chapel – measured it needs longer (qa_playthrough.md, Befund B6-2): 13 days.
 const MORTICIAN_DAYS := 13
+## The mender (chapel first, full tending every day) builds its last level on day 39 or 40 – the
+## margin of one evening (Befund B6-3): 11 days.
+const MENDER_DAYS := 11
 
 ## Rows of the reverent6 run (save_load6 must match them).
 static var reverent_rows: Array[Dictionary] = []
@@ -100,7 +103,7 @@ func test_mortician() -> void:
 ## The chapel first, devotions for the most restless: content ghosts +≥ 3 (or the W0 finding: the
 ## mender's ghosts are content already), no robbed soul content; chapter.
 func test_mender6() -> void:
-	var bot := await _play_fixture(&"mender6", "slot_p5_day30_mender", 10)
+	var bot := await _play_fixture(&"mender6", "slot_p5_day30_mender", MENDER_DAYS)
 	if bot == null:
 		return
 	assert_true(bot.chapter6_day > 0, "mender6: chapter (%d)" % bot.chapter6_day)

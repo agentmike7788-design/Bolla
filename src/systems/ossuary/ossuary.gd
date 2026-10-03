@@ -189,11 +189,12 @@ func load_state(data: Dictionary) -> void:
 			if not known.is_empty() and not known.has(id):
 				push_warning("[Ossuary] saved lifted grave '%s' is no liftable old grave – skipped" % id)
 				continue
-			# QA6-08: a lifted grave is no old grave any more (Graveyard, save_order 10, loads first).
+			# QA6-08: a lifted grave is no old grave any more (Graveyard, save_order 10, loads first) –
+			# a save that says otherwise gets the grave lifted (its box exists), never two states.
 			var grave := _graveyard().get_grave(id) if _graveyard() != null else null
 			if grave != null and grave.state == GraveRecord.State.OLD:
-				push_warning("[Ossuary] saved lifted grave '%s' is still an old grave – skipped" % id)
-				continue
+				push_warning("[Ossuary] saved lifted grave '%s' was still an old grave – lifted" % id)
+				_graveyard().lift_old(id)
 			_lifted.append(id)
 	var done: Variant = data.get("reinterred", [])
 	if done is Array or done is PackedStringArray:

@@ -134,7 +134,9 @@ static func _keep_out(ctx: Ctx) -> Dictionary:
 		rects.append({"pos": Ctx.v2(pl.pos), "rot": float(pl.rot_y),
 				"rect": Rect2(plot_rect[0], plot_rect[1], plot_rect[2] - plot_rect[0], plot_rect[3] - plot_rect[1])})
 	for g: Dictionary in layout.old_graves:
-		rects.append({"pos": Ctx.v2(g.pos), "rot": float(g.rot_y), "rect": Rect2(-0.62, -1.35, 1.24, 2.35)})
+		# W3 art QA (G6): the old grave's mound and – once lifted and dug – the foot-end pit with its
+		# spoil heap (GravePlot.foot_footprint −0.72…0.72 × −1.25…2.13): grass grew into the open pit.
+		rects.append({"pos": Ctx.v2(g.pos), "rot": float(g.rot_y), "rect": Rect2(-0.72, -1.35, 1.44, 3.48)})
 	var margin := float(cfg.keep_out_station)
 	for ent: Dictionary in layout.entities:
 		var asset: String = Ctx.ENTITY_ASSETS.get(ent.type, (ent.params as Dictionary).get("model", ""))
