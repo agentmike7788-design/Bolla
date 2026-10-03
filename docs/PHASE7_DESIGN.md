@@ -8,7 +8,7 @@ Gameplay-Werte sind **Vorschläge**; der Benutzer prüft sie beim Gate G7. ART S
 - **Inhalt, alle vier Teile:**
   1. **Begehbares Dorf Hollerbrück** am Kutschweg, erreichbar über den Weg vom Friedhofstor: Anger mit Brunnen, Häuser, Dorfeingang. Die Anbindung legt dieser Vertrag fest und begründet sie (§3.4, §4.1).
   2. **Dorfbewohner und Händler** (Wirtin, Schmied, Krämerin, Pfarrer, Schultheiß, Wundarzt/Anatom und weitere), jeder mit Tagesablauf, Laden (Kaufen/Verkaufen) und Dialog, auf dem bestehenden `Npc`-System. Der Pfarrer zeigt sich jetzt im Dorf; Tiefe und eigene Riten bekommt er in Phase 8.
-  3. **Wundarzt/Anatom mit Organ-System** (Benutzerwunsch vom 03.10.2026, `docs/ROADMAP.md`): **angedeutet** (Tuch über der Leiche, Abblende, Organe nur als verschlossene Gläser oder Bündel im Inventar, **kein Blut, keine offenen Wunden**), am **Gruft-Tisch** als neue Kategorie mit derselben zweistufigen Bestätigung wie die Verwertung aus Phase 4. Zwecke: (a) Präparate an den Anatomen verkaufen (Münzen; kostet Pietät und Ruf; Geister „beraubt"), (b) Forschung (die wahre Todesursache → Merkbuch), (c) Handwerk an einer neuen Station, (d) Haken für die Auferstehung (Phase 13, nur Daten).
+  3. **Wundarzt/Anatom mit Organ-System** (Benutzerwunsch vom 03.10.2026, `docs/ROADMAP.md`): **angedeutet** (Tuch über der Leiche, Abblende, Organe nur als verschlossene Gläser oder Bündel im Inventar, **kein Blut, keine offenen Wunden**), am **Gruft-Tisch** als neue Kategorie mit derselben zweistufigen Bestätigung wie die Verwertung aus Phase 4. Zwecke: (a) Präparate an den Anatomen verkaufen (Münzen; kostet Pietät und Ruf; Geister „beraubt"), (b) Forschung (die wahre Todesursache → Merkbuch), (c) Handwerk an einer neuen Station, (d) Haken für die Auferstehung (Phase 13, nur Daten). **Erweitert durch die Benutzerentscheidung §14.3:** sieben Präparate (Herz, Lunge, Magen, Leber, Nieren, Augen, Hand/Knochen), dazu eine **Präparatesammlung** mit Sätzen, **Arzneien aus Präparaten**, Quasts heimliche **Anatomie-Vorlesung** bei Nacht und die **Todesursachen-Deutung** als kleines Verknüpfen-Spiel im Merkbuch.
   4. **Aufträge und Beziehungen:** kleine Aufträge der Dorfbewohner (liefern, würdig bestatten, einen Stein setzen) und **ein Beziehungswert je Person**. Vorstufe für Phase 8 (NPCs) und Phase 9 (Quests): erweiterbar, aber klein.
 - **Umfang: groß.** 12–14 Spieltage auf dem Phase-6-Endstand, mit Kapitelziel (§1.5), in erreichbaren Wellen (W1 mit 7 Paketen, §12).
 - **Einbindung:** Das Dorf wird Quelle für neue Tote (über neuen Grund, §2.9) und für Einnahmen und Ausgaben. Die Dorfbewohner reagieren auf Ruf-Stufe und Pietät. Osric wohnt im Dorf, Ilse bleibt die Nachtgestalt an der Westmauer und spricht über das Dorf. Das Geheimnis geht ein Stück weiter: Hinweise darauf, **wer die Sterbenden zeichnet**, ohne Auflösung. Der nächste Erzählschritt wird benannt (§1.6).
@@ -19,7 +19,7 @@ Gameplay-Werte sind **Vorschläge**; der Benutzer prüft sie beim Gate G7. ART S
 - Nach jedem neuen Worktree und nach jedem Merge: `godot --headless --path . --import`.
 - Jede Datei hat genau einen Besitzer (§3.2). Fremde Dateien nicht ändern; Bedarf an den Lead melden.
 - Alle neuen Assets tragen `ph_` und kommen in die Placeholder-Liste (`docs/QUALITY_GATE_STATUS.md`).
-- Keine Mechaniken, Namen oder Texte anderer Spiele übernehmen. Ausdrücklich **nicht**: Fleisch, Blut, Fett, Haut oder Gehirn als Ressource; Schädel- oder Knochenpunkte (rot/weiß oder sonst farbig); Körperteil-Wertungen mit Sternen; Organe als Zutat für Salben, Speisen oder Tränke; Leichen-Qualitätspunkte, die man „verbessern" kann; Freundschafts-Herzchen; Geschenk-Kalender; Hochzeiten; Tagesquest-Ketten mit Sofortbelohnung; Händler-Reputation als eigene Währung.
+- Keine Mechaniken, Namen oder Texte anderer Spiele übernehmen. Ausdrücklich **nicht**: Fleisch, Blut, Fett, Haut, Gehirn oder Schädel als Ressource; Schädel- oder Knochenpunkte (rot/weiß oder sonst farbig); Körperteil-Wertungen mit Sternen; Organe als Speise oder in Tränken mit Zauberwirkung; Arzneien aus Herz, Augen oder Hand; Beschreibungen der Herstellung einer Arznei; Leichen-Qualitätspunkte, die man „verbessern" kann; Freundschafts-Herzchen; Geschenk-Kalender; Hochzeiten; Tagesquest-Ketten mit Sofortbelohnung; Händler-Reputation als eigene Währung.
 - Eigene Identität dieser Phase: **„Drei Meilen hinunter"**. Bisher kamen die Toten den Hügel herauf, und mit ihnen nur Osric. Jetzt geht der Totengräber hinunter zu den Lebenden. Sie kennen ihn nur von seinem Ruf, er kennt sie nur von ihren Toten. Beides ändert sich. Im Dorf hat jeder ein Gesicht und einen Namen, und wer ein Glas mit einem Namen auf dem Etikett verkauft, verkauft ihn an Leute, die diesen Namen kannten.
 - Sprache: alle Spieltexte eigenständig auf Deutsch, trocken-melancholisch, im Dorf wärmer und geschwätziger als auf dem Hügel, bei der Anatomie still und sachlich. Kein Spott über die Toten, keine Frömmelei, keine Schauerprosa über das Innere der Leiber.
 
@@ -35,9 +35,11 @@ Freischaltung (Kapitel „Unter Dach und Erde") → Osric p7_intro: „Der Schul
        └ Reden (Beziehung +1 je Tag) · Geschenke · eine Runde im Holderkrug · Spende in die Armenkasse
        └ AUFTRÄGE: Gemeindetafel + persönliche Bitten → liefern · würdig bestatten · Stein setzen · Grab pflegen
   → Schultheiß: der LINDENACKER (8 Grabstellen südlich der Ostwiese) → roden → Pfarrer weiht ihn → Osric liefert wieder
-  → Leiche → Gruft-Tisch: Untersuchen · Herrichten · Verwerten (Phase 4) · NEU „Präparate" (Herz, Lunge, Magen)
-       └ Tuch, Abblende, 20 Min → Glas (Glas + Branntwein) oder Bündel (Leinen, verdirbt) mit Namen auf dem Etikett
-       └ Wundarzt Quast: VERKAUFEN (Münzen) · UNTERSUCHEN LASSEN (Befund, Merkbuch) · PRÄPARIERPULT: Schaupräparat
+  → Leiche → Gruft-Tisch: Untersuchen · Herrichten · Verwerten (Phase 4) · NEU „Präparate" (Herz, Lunge, Magen, Leber, Nieren, Augen, Hand – höchstens 3 je Leiche)
+       └ Tuch, Abblende, 20–30 Min → Glas (Glas + Branntwein) oder Bündel (Leinen, verdirbt) mit Namen auf dem Etikett
+       └ Wundarzt Quast: VERKAUFEN (Münzen) · GUTACHTEN (Lehrsatz) · nachts alle 3 Tage: ANATOMIE-VORLESUNG (Honorar, Lehrsatz, Gerede-Gefahr)
+       └ PRÄPARIERPULT: begutachten (Befund-Karte) · Arznei ansetzen (Gegengift, Bittertropfen, Wassersuchtpulver) · Schau- und Knochenpräparat · SAMMLUNG (Sätze → Ansehen bei der Universität)
+       └ MERKBUCH: TODESURSACHE DEUTEN (Befund + Lehrsatz + Ursache → „Deuten" → wahre Ursache, Hinweis)
        └ oder ins Grab ZURÜCKLEGEN („Präparat beisetzen": der Geist bekommt zurück, was ihm genommen wurde)
   → Grab im Lindenacker → bestatten → Stein → Qualität + Bezahlung · Bestatt-Aufträge erfüllt?
   → nachts: Geister (neue Zeilen „beraubt" / „zurückgelegt") · Ilse spricht über das Dorf
@@ -61,11 +63,17 @@ Alle Handgriffe aus Phase 4–6 bleiben **unverändert**. Die Präparate sind ei
 | Eine Runde im Holderkrug ausgeben | 15 | 5 Münzen, Wirtin anwesend, einmal je Tag | nein |
 | Spende in die Armenkasse (Amtsstube) | 0 | 5 Münzen je Schritt, höchstens 2 Schritte je Tag | – |
 | Lindenacker roden (10 Hindernisse, §2.9) | 305 gesamt (Werkzeug-Faktoren aus Phase 5) | Flag `linden_granted` | ja (je Hindernis) |
-| Präparat nehmen (Herz / Lunge / Magen) am Gruft-Tisch | **20** je Präparat | `anatomy_case`, Glas (1 `prep_jar` + 1 `spirits`) oder Bündel (1 `linen`) | nein |
+| Präparat nehmen am Gruft-Tisch (höchstens 3 je Leiche) | **20** (Herz, Lunge, Magen, Leber, Nieren) · **25** (Augen) · **30** (Hand) | `anatomy_case`, Glas (1 `prep_jar` bzw. `prep_jar_small` + 1 `spirits`) oder Bündel (1 `linen`; Hand + 1 `beeswax`) | nein |
 | Bündel einlegen (Präparierpult) | 5 | Bündel, 1 `prep_jar`, 1 `spirits` | nein |
 | Schaupräparat herrichten (Präparierpult) | 40 | Präparat im Glas, 1 `beeswax`, 1 `ink` | nein |
+| Knochenpräparat herrichten (Präparierpult) | 60 | Hand-Bündel, 1 `beeswax`, 1 `linen` | nein |
+| Präparat begutachten (Präparierpult) | 20 | Glas/Knochen/Schau, Klarheit ≥ 0,5 | ja |
+| Arznei ansetzen (Präparierpult) | 20 / 30 | §2.7 | nein |
+| Präparat in die Sammlung stellen / herausnehmen | 0 | Sammlungsregal | – |
+| Anatomie-Vorlesung (Wundarztstube, 23:00) | 60 | Präparat (Klarheit ≥ 0,5), jeder dritte Abend | nein |
+| Todesursache deuten (Merkbuch) | 0 (Panel, die Zeit ruht) | Befund-Karte des Toten | – |
 | Salbe / Tinktur (Präparierpult) | 20 / 30 | Rezept §2.7 | nein |
-| Präparat untersuchen lassen (Wundarztstube) | 30 | Präparat, Quast anwesend | nein |
+| Gutachten bei Quast (Wundarztstube; das Präparat bleibt bei ihm) | 30 | Präparat, Quast anwesend | nein |
 | Präparat beisetzen (am Grab des Toten) | 10 | Präparat dieses Toten, Grab `FILLED` oder `MARKED` | ja |
 | Präparierpult aufstellen (Gruft) | 90 | §2.7 | nein |
 | Untersuchen, Herrichten, Verwerten, Räuchern, Aussegnung, Bauen | unverändert (Phase 4–6) | – | unverändert |
@@ -100,7 +108,7 @@ Erfüllt, sobald **alle** gelten (geprüft von `Village.check_goal` bei `order_c
 3. Mindestens **3 Dorfbewohner** stehen auf **„Vertraut"** oder höher (Beziehung ≥ 40, §2.4).
 4. Die Erkenntnis **„Vorher eingetragen"** (`i_deathbook`) ist verknüpft.
 
-Dann: Flag `name_in_village_complete`, `chapter_completed(&"name_in_village")`, Abschluss-Panel Variante `name_in_village`. Es zeigt: Tage seit `village_open`, Wege ins Dorf, Aufträge n (nach Auftraggeber), Beziehungen aller acht als Wort, Ruf-Stufe, Bestattungen im Lindenacker, Präparate genommen / verkauft / untersucht / zurückgelegt, Münzen im Dorf eingenommen und ausgegeben (nach Zweck), Erkenntnisse der Phase. Schlusszeile je nach Pietät-Stufe (5 Varianten, P6), Standard: „Unten im Dorf kennen sie jetzt deinen Namen. Oben auf dem Hügel kennen sie ihn schon länger." Danach läuft das Spiel frei weiter. **Gate-Ziel:** Alle Bot-Strategien erreichen das Kapitel, auch der verwertende Weg und ein Spieler mit niedrigem Ruf; keine Bedingung verlangt Präparate, keine verbietet sie.
+Dann: Flag `name_in_village_complete`, `chapter_completed(&"name_in_village")`, Abschluss-Panel Variante `name_in_village`. Es zeigt: Tage seit `village_open`, Wege ins Dorf, Aufträge n (nach Auftraggeber), Beziehungen aller acht als Wort, Ruf-Stufe, Bestattungen im Lindenacker, Präparate genommen / verkauft / begutachtet / in Vorlesungen / zu Arzneien / in der Sammlung / zurückgelegt, Deutungen, Ansehen bei der Universität, Münzen im Dorf eingenommen und ausgegeben (nach Zweck), Erkenntnisse der Phase. Schlusszeile je nach Pietät-Stufe (5 Varianten, P6), Standard: „Unten im Dorf kennen sie jetzt deinen Namen. Oben auf dem Hügel kennen sie ihn schon länger." Danach läuft das Spiel frei weiter. **Gate-Ziel:** Alle Bot-Strategien erreichen das Kapitel, auch der verwertende Weg und ein Spieler mit niedrigem Ruf; keine Bedingung verlangt Präparate, keine verbietet sie.
 
 ### 1.6 Das Geheimnis – Phase-7-Ausschnitt „Wer besucht die Sterbenden?"
 **Leitplanke (Autorenwissen, Phase 18 entscheidet endgültig):** Der Gesamtbogen aus Phase 4 §1.4 bleibt. Lorenz lebt unter dem Birkenhang. Er hatte Ilse gefragt, „wer im Dorf die Kranken besucht" (Phase 4 §2.6). In Phase 7 nimmt der Spieler diese Frage auf. Wer zeichnet, wird **nicht** aufgelöst. Drei Menschen haben Zugang zu den Sterbenden, und alle drei sind hier: der **Pfarrer** (Versehgang), der **Wundarzt** (Krankenbesuch) und die **Seelfrau** (Totenwache). Ausgerechnet die Seelfrau, Liesel Dorn, war Lorenz' Augen im Dorf.
@@ -112,7 +120,7 @@ Dann: Flag `name_in_village_complete`, `chapter_completed(&"name_in_village")`, 
 4. *Drei Wochen alt* (`c_v_hagedorn`, Fund an D1 Wiebke Hagedorn, Schritt Wunden, Mindestfrische 0,3): Ihr Zeichen ist frisch verheilt, etwa drei Wochen alt. In ihrer Schürze steckt ein Zettel: „Für den Totengräber. Linde, Mohn, Totenhemd. Und schau nach, wer mich besucht hat. – W. H."
 
 **Erkenntnis (Pflicht fürs Kapitel):** `i_deathbook` „Vorher eingetragen" (Frage: „Wer schreibt die Namen auf?") = `c_v_deathbook` + `c_v_washing` + `c_v_three_visitors`. Text: „Im Sterbebuch steht das Zeichen neben Namen, deren Tod erst Wochen später eingetragen wurde. Liesel hat es an ihren Leibern gesehen, Lorenz hat nach denen gefragt, die die Kranken besuchen. Wer zeichnet, kommt ins Haus, solange sie noch leben, und schreibt sie vorher auf. Drei kommen in Frage. Eine davon hat Lorenz geholfen." Flag `insight_deathbook`.
-**Optionale Erkenntnis (nur über die Anatomie):** `i_burn_it` „Verbrennt es" (Frage: „Was wollte der Zettel bei Quast?") = `c_v_still_heart` (Quast untersucht ein **Herz** eines gezeichneten Toten, §2.6) + `c_warning_letter` (Phase 4). Text: „Zweimal hat Quast ein gesundes, stilles Herz eines Gezeichneten eingelegt. Beide Male lag am nächsten Morgen ein Zettel vor seiner Tür, in derselben schrägen Hand wie die Warnbriefe: ‚Verbrennt es.' Lorenz will nicht, dass sie aufbewahrt werden." Flag `insight_burn_it`. Wer nie ein Organ nimmt, verpasst nur diese eine Zeile; die Geschichte bleibt lösbar.
+**Optionale Erkenntnis (nur über die Anatomie):** `i_burn_it` „Verbrennt es" (Frage: „Was wollte der Zettel bei Quast?") = `c_v_still_heart` (die **Deutung** `d_still_heart` eines Herz-Befunds von einem gezeichneten Toten, §2.6.5) + `c_warning_letter` (Phase 4). Text: „Zweimal hat Quast ein gesundes, stilles Herz eines Gezeichneten eingelegt. Beide Male lag am nächsten Morgen ein Zettel vor seiner Tür, in derselben schrägen Hand wie die Warnbriefe: ‚Verbrennt es.' Lorenz will nicht, dass sie aufbewahrt werden." Flag `insight_burn_it`. Wer nie ein Organ nimmt, verpasst nur diese eine Zeile; die Geschichte bleibt lösbar. Die Pflicht-Erkenntnis `i_deathbook` braucht kein Präparat.
 - `c_v_hagedorn` ist Hinweis und Stimmung, kein Teil einer Pflicht-Erkenntnis (sie wäre sonst an eine Liefertagsfolge gebunden).
 - **Belohnung wie Phase 4:** Text, Flag, Zeile im Abschluss-Panel, keine Münzen.
 
@@ -225,14 +233,17 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 | `o_fenner_well` | Fenner | deliver → Esch | erstes Gespräch | 4 `workstone` für die neue Brunnenfassung, beim Schmied abgeben | 4 | 6 · +6 (+4 Esch) · +1 |
 | `o_fenner_bridge` | Fenner | donate | `o_fenner_well` erledigt | „Die Holderbrücke": 20 Münzen und 6 `wood` für neue Bohlen | 6 | 0 · +10 · +3 |
 | `o_rosine_berries` | Rosine | deliver | erstes Gespräch | 8 `elderberries` für den Holunderwein | 5 | 6 · +8 · 0 |
-| `o_rosine_tincture` | Rosine | deliver | `o_rosine_berries` erledigt | 2 `fever_tincture` – „Jakob fiebert, und der Quast nimmt zu viel." | 4 | 8 · +10 · 0 |
+| `o_rosine_tincture` | Rosine | deliver | `o_rosine_berries` erledigt | 2 `fever_tincture` (oder 2 `bitter_drops`) – „Jakob fiebert, und der Quast nimmt zu viel." | 4 | 8 · +10 · 0 |
 | `o_esch_charcoal` | Esch | deliver | erstes Gespräch | 6 `charcoal` | 5 | 7 · +8 · 0 |
 | `o_esch_stone` | Esch | stone | Esch „Bekannt", `o_esch_charcoal` erledigt | „Ein Stein für den Meister": Wendel Gratz (`old_01`), sein Lehrmeister; Bogenstein mit Fackel | 6 | 10 · +10 · +1 |
 | `o_mangold_stone` | Theres | stone | Theres „Bekannt" | „Ein Stein für die Mutter": Dorothee Mahn (`old_08`); Stele mit Mohn und Inschrift | 6 | 12 · +10 · +1 |
 | `o_lenz_service` | Lenz | bury | erstes Gespräch nach der Weihe | die nächste Lieferung nach Annahme: eingekleidet und **ausgesegnet** in der Kapelle (≥ Stufe 2, mit Trauergästen) | 3 | 6 · +8 · +1 |
 | `o_lenz_poor` | Lenz | donate | Lenz „Vertraut" | „Armenspeisung": 12 Münzen und 4 `honey_cake` | 5 | 0 · +8 · +2 |
 | `o_quast_tincture` | Quast | deliver | erstes Gespräch | 2 `fever_tincture` | 5 | 10 · +8 · 0 |
-| `o_quast_specimen` | Quast | deliver | `anatomy_known` | „Für das Kabinett": 1 Herzpräparat im Glas, Klarheit ≥ 0,6 (§2.6); die Folgen trug schon das Nehmen | 6 | 12 · +10 · 0 |
+| `o_quast_specimen` | Quast | deliver | `anatomy_known` | „Für das Kabinett": 1 Präparat im Glas (Herz, Lunge, Magen, Leber oder Nieren), Klarheit ≥ 0,6 (§2.6); die Folgen trug schon das Nehmen | 6 | 10 · +10 · 0 |
+| `o_quast_antidote` | Quast | deliver | `anatomy_known`, Lehrsatz `l_stomach` | 2 `antidote` – „Der kleine Kehr hat vom Rattengift genascht. Ich habe nicht genug." | 2 | 12 · +8 (+4 Rosine) · +1 |
+| `o_fenner_dropsy` | Fenner | deliver | Fenner „Vertraut", `anatomy_known` | 1 `dropsy_powder` – „Meine Beine, Totengräber. Sagen Sie es keinem." | 5 | 10 · +8 · 0 |
+| `o_quast_cabinet` | Quast | deliver | Ansehen bei der Universität ≥ 2 | 1 `display_specimen` (beliebig) „für das Kabinett der Universität" | 6 | 14 · +10 · 0 |
 | `o_liesel_gowns` | Liesel | deliver | Liesel „Bekannt" | 2 `burial_gown` – „für die, die nicht zu dir hinaufkommen" | 6 | 8 · +8 · 0 |
 | `o_hagedorn_place` | Hagedorn (nach ihrem Tod: Liesel) | bury | erstes Gespräch mit ihr, sonst bei ihrer Ankunft | D1 Wiebke Hagedorn (§2.9): Lindenacker, Totenhemd, Stein mit Mohn, **unverwertet** | 3 Tage ab Ankunft | 10 · +8 Liesel · +2; gescheitert: Liesel −10, Lenz −5 |
 | `ob_wood` | Gemeinde (Tafel) | deliver → Fenner | `village_open` | 10 `wood` „für den Gemeindezaun" | 1 | 5 · +3 Fenner · 0 |
@@ -243,94 +254,151 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 | `ob_tend` | Gemeinde | tend | `linden_consecrated` | alle belegten Gräber im Lindenacker an 2 Morgen in Folge ohne Pflegeabzug | 4 | 5 · 0 · +1 |
 - Tafel-Aufträge: Frist 1 = „bis morgen früh" (angenommen am Tag der Ausschreibung, abzugeben bis 06:00 des Folgetags) – außer `ob_gown`/`ob_tend` mit eigener Frist.
 - **Kapitel** zählt jeden erledigten Auftrag (§1.5). Auftraggeber für „4 verschiedene": Fenner, Rosine, Esch, Theres, Lenz, Quast, Liesel, Hagedorn, Gemeinde.
+- Die drei Arznei-Aufträge (`o_quast_antidote`, `o_fenner_dropsy`, Bittertropfen statt Tinktur) sind **zusätzliche** Wege für den anatomischen Spieler; jeder Kräuter-Auftrag bleibt ohne Präparat lösbar, und das Kapitel braucht keinen von ihnen.
 - *Begründung Lohn:* Ein Liefer-Auftrag ersetzt einen Laden-Verkauf mit Aufschlag (8 Holunderbeeren: bei Rosine 8–16 Münzen Ankauf, als Auftrag 6 + Beziehung +8). Aufträge lohnen also vor allem über die Beziehung. Steine und Bestattungen bringen mehr, weil sie Stunden kosten. Die zwei Spenden-Aufträge (`donate`) sind die Münzsenke des Dorfes: sie kosten 32 Münzen und bringen Ruf und Beziehung, nie Münzen (§2.10).
 
 ### 2.6 Anatomie – Präparate am Gruft-Tisch (`data/config/anatomy_config.tres` – `AnatomyConfig`, `data/anatomy/findings/<id>.tres` – `SpecimenFindingData`)
-**Eigene Identität: das Etikett.** Jedes Präparat trägt den Namen des Toten. Es ist kein Rohstoff und hat keine Punkte, sondern ein Einzelstück mit Herkunft: „Herz – Hedwig Lamprecht, 58 – Klarheit gut". Man kann es verkaufen, untersuchen lassen, als Schaupräparat herrichten **oder dem Toten zurückgeben**. Darin liegt der Unterschied zu jedem Organhandel: Was hier genommen wird, bleibt jemandes, und der Weg zurück ins Grab steht immer offen, solange das Glas nicht verkauft ist.
+**Eigene Identität: das Etikett.** Jedes Präparat trägt den Namen des Toten. Es ist kein Rohstoff und hat keine Punkte, sondern ein Einzelstück mit Herkunft: „Herz – Hedwig Lamprecht, 58 – Klarheit gut". Man kann es verkaufen, in Quasts Vorlesung geben (§2.6.4), in der Sammlung aufstellen (§2.7), zu einer Arznei ansetzen (§2.7), begutachten und deuten (§2.6.5) **oder dem Toten zurückgeben**. Darin liegt der Unterschied zu jedem Organhandel: Was hier genommen wird, bleibt jemandes, und der Weg zurück ins Grab steht offen, solange das Stück nicht verkauft, verbraucht oder in der Vorlesung geblieben ist.
 
-**Drei Präparate** (`AnatomyConfig.organs`; nur diese drei, je Leiche je eines):
-| organ | Etikett | Min | Grundpreis bei Quast | Qualität | Ruf | Pietät | Geist | zeigt in der Untersuchung (§ Befunde) | Auferstehungs-Haken (`res_tag`, nur Daten) |
-|---|---|---|---|---|---|---|---|---|---|
-| `heart` | Herz | 20 | 8 | −2 | −3 | −8 | −5 (beraubt) | ein „stilles Herz" bei Gezeichneten | `&"will"` |
-| `lung` | Lunge | 20 | 5 | −2 | −3 | −8 | −5 | Wasser oder kein Wasser (Ertrunkene) | `&"breath"` |
-| `stomach` | Magen | 20 | 6 | −2 | −3 | −8 | −5 | Gift (Arsenik) | `&"hunger"` |
+**Sieben Präparate** (`AnatomyConfig.organs`; je Leiche jedes höchstens einmal, **höchstens 3 Präparate je Leiche** – `max_per_corpse 3`, „Mehr nimmst du ihr nicht."):
+| organ | Etikett | Behältnis | Min | Grundpreis bei Quast | Qualität | Ruf | Pietät | Geist (Stimmung) | Rückgabe: Pietät | zeigt (Befund-Karten §2.6.5) | `res_tag` (nur Daten) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| `heart` | Herz | Glas oder Bündel | 20 | 7 | −2 | −3 | −8 | −5 | +3 | „stilles Herz" bei Gezeichneten, Altersherz | `&"will"` |
+| `lung` | Lunge | Glas oder Bündel | 20 | 4 | −2 | −3 | −6 | −5 | +3 | Wasser / kein Wasser, Fieberflecken | `&"breath"` |
+| `stomach` | Magen | Glas oder Bündel | 20 | 5 | −2 | −3 | −6 | −5 | +3 | weißer Belag (Gift), leer | `&"hunger"` |
+| `liver` | Leber | Glas oder Bündel | 20 | 5 | −2 | −3 | −6 | −5 | +3 | Trunk, Gelbsucht, Gift | `&"blood_heat"` |
+| `kidneys` | Nieren | Glas oder Bündel | 20 | 4 | −2 | −3 | −6 | −5 | +3 | Steine, Wassersucht | `&"water"` |
+| `eyes` | Augen | **nur Glas** (kleines, dunkles Glas mit zwei Siegeln) | 25 | 9 | −3 | −5 | **−12** | **−8** | +5 | Moortrübung, Fieberglanz | `&"sight"` |
+| `hand` | Hand (Knochen) | **nur Bündel** (in Leinen geschlagen, verschnürt) | 30 | 10 (als Knochenpräparat, §2.7) | −3 | −5 | **−12** | **−8** | +5 | Schwielen (Beruf), Schwurnarbe | `&"grip"` – Lehrpräparat und späterer Auferstehungs-Haken |
+*Begründung:* Die inneren Organe sind das Material der Anatomie von 1834 und kosten gleich viel. Das Herz kostet etwas mehr Pietät, weil es das ist, was die Leute „den Menschen" nennen. Augen und Hand sind das, woran man einen Menschen erkennt. Deshalb kosten sie am meisten, zahlen am besten und werden am stillsten dargestellt. Die Grenze von drei Präparaten je Leiche verhindert, dass eine Leiche ausgeschlachtet wird, und hält die Anatomie als Einnahme unter der Bestattung (§2.10).
 
 **Nehmen (Registerkarte „Präparate" am Gruft-Tisch, §7)**
 - Sichtbar erst ab Flag `anatomy_known` (Quast gibt das **Präparierbesteck** `anatomy_case`, §2.12), nur am Tisch mit `room &"crypt"`. Vorher gibt es keine Karte.
-- Voraussetzungen: Leiche nicht eingekleidet (wie Haar/Zähne: „Nach dem Einkleiden nicht mehr zugänglich."), dieses Präparat noch nicht genommen, Frische ≥ **0,3** („Zu spät. Daran lässt sich nichts mehr zeigen."), Werkzeug `anatomy_case` („Werkzeug fehlt – Quast hat es."), Behältnis: **Glas** (1 `prep_jar` + 1 `spirits`) oder **Bündel** (1 `linen`) nach Wahl in der Zeile, Platz für ein Einzelstück.
-- **Zweistufige Bestätigung** wie die Verwertung aus Phase 4 (`CorpseExamTabs.press_harvest`, `confirm_seconds 3`): Der erste Druck schärft die Zeile („Wirklich? Noch einmal drücken."), der zweite innerhalb von 3 s startet.
-- **Darstellung (angedeutet):** Beim Start legt sich das **Tuch** über die Leiche (Modellwechsel auf `ph_prop_corpse_shrouded`, die bestehende Tuch-Variante), die Figur beugt sich über den Tisch (`interact`), der Bildschirm wird über 0,6 s zu einem **dunklen Schleier** (85 %, `screen_veil_changed(true)`), nur der Aktionsbalken und eine Zeile bleiben lesbar: „Du ziehst das Tuch über sie und arbeitest, ohne hinzusehen." Am Ende hebt sich der Schleier, das Tuch bleibt **nicht** liegen (vorheriges Modell), und die Zeile: „Ein Glas mehr. Auf dem Etikett steht ihr Name." bzw. „Ein Bündel in Leinen. Es hält nicht lange." Kein Ton (Agent 17 inaktiv), kein Blut, keine Wunde, keine sichtbare Veränderung am Körper danach.
-- **Wirkung sofort:** Item ins Inventar (Einzelstück, §3.4), `record.harvested` + Organ (gleiche Liste wie Haar/Zähne, `CorpseRecord.HARVEST_KINDS` angehängt), Ruf `organ_taken` −3, Pietät `organ_taken` −8, `stats.specimens_taken` +1, Flag `piety_used_day`. Qualität −2 je Präparat erscheint beim Grabzeichen (`EconomyConfig.harvest_malus`). Kein „Voll hergerichtet"-Bonus mehr für diese Leiche (Phase-5-Regel `full_prep_requires_unharvested` greift von selbst).
-- **Klarheit** = Frische der Leiche am Ende der 20 Minuten (0,3…1,0), wird im Etikett als Wort gezeigt: ≥ 0,8 „sehr gut" · ≥ 0,6 „gut" · ≥ 0,45 „trüb" · darunter „kaum lesbar".
+- Voraussetzungen: Leiche nicht eingekleidet (wie Haar/Zähne: „Nach dem Einkleiden nicht mehr zugänglich."), dieses Präparat noch nicht genommen, weniger als 3 genommen, Frische ≥ **0,3** („Zu spät. Daran lässt sich nichts mehr zeigen."), Werkzeug `anatomy_case` („Werkzeug fehlt – Quast hat es."), Behältnis: **Glas** (1 `prep_jar` + 1 `spirits`; Augen: 1 `prep_jar_small` + 1 `spirits`) oder **Bündel** (1 `linen`; Hand: 1 `linen` + 1 `beeswax`) nach Wahl in der Zeile, wo erlaubt, und Platz für ein Einzelstück.
+- **Zweistufige Bestätigung** wie die Verwertung aus Phase 4 (`CorpseExamTabs.press_harvest`, `confirm_seconds 3`). Für Augen und Hand steht beim ersten Druck die längere Zeile „Das bleibt ihr fehlen. Wirklich? Noch einmal drücken."
+- **Darstellung (angedeutet):** Beim Start legt sich das **Tuch** über die ganze Leiche, auch über Gesicht und Hände (Modellwechsel auf `ph_prop_corpse_shrouded`). Die Figur beugt sich über den Tisch (`interact`). Ein leises **Werkzeuggeräusch** ist als Ton-Haken vorgesehen (`AnatomyConfig.sound_cue &"anatomy_tool"`; Agent 17 ist inaktiv, Phase 7 spielt nichts ab). Über 0,6 s wird der Bildschirm zu einem **dunklen Schleier** (85 %, `screen_veil_changed(true)`); nur der Aktionsbalken und eine Zeile bleiben lesbar: „Du ziehst das Tuch über sie und arbeitest, ohne hinzusehen." Bei Augen: „Du legst ihr ein Tuch über das Gesicht, bevor du anfängst." Bei der Hand: „Du schlägst sie in Leinen, bevor du sie ansiehst." Am Ende hebt sich der Schleier, das Tuch verschwindet, und es kommt die Zeile „Ein Glas mehr. Auf dem Etikett steht ihr Name." bzw. „Ein Bündel in Leinen. Es hält nicht lange." Kein Blut, keine Wunde, keine sichtbare Veränderung am Körper danach; die Leiche wird ohnehin eingekleidet bestattet.
+- **Wirkung sofort:** Item ins Inventar (Einzelstück, §3.4), `record.harvested` + Organ (`CorpseRecord.HARVEST_KINDS` angehängt), Ruf `organ_taken` bzw. `organ_taken_grave` (Augen/Hand), Pietät nach Tabelle, `stats.specimens_taken` +1, Flag `piety_used_day`. Die Qualität erscheint beim Grabzeichen (`EconomyConfig.harvest_malus`). Kein „Voll hergerichtet"-Bonus für diese Leiche (Phase-5-Regel). Die Geisterstimmung sinkt je Organ nach Tabelle (`AnatomyConfig.organs[*].mood`).
+- **Klarheit** = Frische der Leiche am Ende der Handlung (0,3…1,0), im Etikett als Wort: ≥ 0,8 „sehr gut" · ≥ 0,6 „gut" · ≥ 0,45 „trüb" · darunter „kaum lesbar".
 
-**Glas oder Bündel – Verderben (die Frage „verderben Organe ohne Glas oder Kälte?" – Entscheidung: ja, nur das Bündel)**
+**Glas oder Bündel – Verderben**
 - **Glas** (`specimen_jar`): verschlossen, in Branntwein. Die Klarheit bleibt für immer.
-- **Bündel** (`specimen_bundle`, in Leinen): Klarheit sinkt linear auf 0 in **600 Min** (10 h); liegt es im **Kühlfach des Präparierpults** (§2.7), läuft die Zeit × **0,25** (≈ 40 h). Bei 0 ist es **verdorben**: nicht verkäuflich, nicht untersuchbar, nicht mehr einlegbar – es bleibt nur das Zurücklegen ins Grab. Einmal je Bündel die Notiz „Das Bündel von <Name> ist verdorben."
-- **Einlegen** am Präparierpult (5 Min, 1 `prep_jar` + 1 `spirits`): Bündel → Glas mit der Klarheit dieses Augenblicks.
+- **Bündel** (`specimen_bundle`, in Leinen): Die Klarheit sinkt linear auf 0 in **600 Min** (10 h). Im **Kühlfach des Präparierpults** (§2.7) läuft die Zeit × **0,25** (≈ 40 h). Bei 0 ist es **verdorben**: nicht verkäuflich, nicht begutachtbar, nicht mehr einlegbar. Es bleibt nur das Zurücklegen ins Grab. Einmal je Bündel kommt die Notiz „Das Bündel von <Name> ist verdorben."
+- **Einlegen** am Präparierpult (5 Min, 1 `prep_jar` + 1 `spirits`): Bündel → Glas mit der Klarheit dieses Augenblicks. Die **Hand** wird nicht eingelegt, sondern zum **Knochenpräparat** hergerichtet (§2.7, 60 Min) und verdirbt danach nicht mehr.
 - Die Rechnung nutzt Fenster wie die Kühle der Gruft (`SpecimenRecord.cold_windows`, Faktor‰), rein aus der Minutendifferenz, Raster 1e-6.
-- *Begründung:* Das Glas kostet 5 Münzen Ware (Glas 2 + Branntwein 3) und macht das Nehmen teuer und bewusst. Das Bündel ist der billige, eilige Weg, und es bestraft Eile mit Verfall, genau wie die Leichen selbst. Die Kälte der Gruft hilft auch hier, aber nur am Pult.
+- *Begründung:* Das Glas kostet 5 Münzen Ware (Glas 2 + Branntwein 3), das kleine Augenglas 6 (3 + 3). Das macht das Nehmen teuer und bewusst. Das Bündel ist der billige, eilige Weg und bestraft Eile mit Verfall, genau wie die Leichen selbst. Die Kälte der Gruft hilft auch hier, aber nur am Pult.
 
-**Verkaufen an Quast** (Wundarztstube, Panel `&"anatomist"`, Münzen sofort)
-- Preis je Stück: `round(Grundpreis × (0,5 + 0,5 × Klarheit))`; Bündel × 0,5; Schaupräparat × 1,5 + 2; Quast „Befreundet" +1. Beispiele: Herz im Glas bei 0,9 → 8 · Lunge bei 0,6 → 4 · Herz-Bündel nach 3 h (0,63) → 3 · Herz-Schaupräparat → 14.
-- Folgen des Verkaufs (nur Beziehung, §2.4): Pfarrer −4, Liesel −3, Hagedorn −2, Quast +2. Ruf und Pietät trugen schon das Nehmen. `stats.specimens_sold` +1. Das Präparat ist danach für immer fort (`state sold`); der Totenzettel vermerkt „an Quast verkauft".
+#### 2.6.1 Verkaufen an Quast (Wundarztstube, Panel `&"anatomist"`, Münzen sofort)
+- Preis je Stück: `round(Grundpreis × (0,5 + 0,5 × Klarheit))`; Bündel × 0,5; Schaupräparat × 1,5 + 2; Knochenpräparat (Hand) = Grundpreis; dazu + **Ansehen bei der Universität** (§2.7, +1 je Stufe, höchstens +2) und Quast „Befreundet" +1. Beispiele: Herz im Glas bei 0,9 → 7 · Augen bei 0,8 → 8 · Leber-Bündel nach 3 h (0,63) → 2 · Hand als Knochenpräparat → 10 · Herz-Schaupräparat → 12.
+- Folgen des Verkaufs (nur Beziehung, §2.4): Pfarrer −4, Liesel −3, Hagedorn −2, Quast +2 (Augen/Hand: Pfarrer −6, Liesel −5). Ruf und Pietät trugen schon das Nehmen. `stats.specimens_sold` +1. Das Präparat ist danach für immer fort (`state sold`); der Totenzettel vermerkt „an Quast verkauft".
 - **Ilse nimmt keine Präparate** („Gläser nehme ich nicht. Was in Branntwein liegt, gehört schon dem Wundarzt."). Haar und Zähne bleiben bei ihr.
 
-**Untersuchen lassen (Forschung)**
-- In der Wundarztstube: „Präparat untersuchen lassen (30 Min)": Quast sieht es sich an, die Uhr läuft 30 Min (der Spieler wartet in der Stube). Braucht Klarheit ≥ **0,5** („Zu trüb. Da sehe ich nur Branntwein."). Kein Schaupräparat („Unter Wachs sehe ich nichts mehr.").
-- Ergebnis: der **Befund** (`SpecimenFindingData`, Vorrang: Geschichte → verborgene Ursache → gezeichnet → Ursache → Standard) als Zeile im Totenzettel und als Benachrichtigung; wenn der Befund einen Hinweis trägt, kommt er ins Merkbuch (einmal). Das Präparat bleibt bei Quast („für die Sammlung", `state researched`), kein Geld, Quast +3.
-- **Verborgene Ursachen** (✦ `CorpseTables.hidden_causes`, nur Zufallsleichen, deterministisch aus dem Seed): `fever` → `arsenic` mit 12 % · `drowned_millpond` → `dead_before_water` mit 15 %. Ohne Untersuchung bleibt die angezeigte Ursache die von Osric.
-
-| Befund | Präparat · Bedingung | Text (P4 darf glätten) | Hinweis |
-|---|---|---|---|
-| `b_still_heart` | Herz · Leiche gezeichnet (`strange_wound`) | „Gesund. Keine Narbe, kein Fett, keine Schwäche. Es hat einfach aufgehört. Ich habe so ein Herz schon zweimal eingelegt." | `c_v_still_heart` |
-| `b_arsenic` | Magen · verborgene Ursache `arsenic` oder Ursache `poisoned` | „Ein weißlicher Belag und ein Geruch nach Knoblauch. Arsenik. Das war kein Fieber." | `c_v_arsenic` (erstes Mal) |
-| `b_dry_lungs` | Lunge · verborgene Ursache `dead_before_water` | „Trocken. Wer ertrinkt, atmet Wasser. Dieser hat nicht mehr geatmet, als er ins Wasser kam." | `c_v_dry_lungs` (erstes Mal) |
-| `b_wet_lungs` | Lunge · Ursache `drowned_millpond` | „Schwer von Wasser. Er hat noch geatmet, als er unterging." | – |
-| `b_fever_lungs` | Lunge · Ursache `fever` | „Fleckig wie bei allen, die das Sumpffieber holt." | – |
-| `b_old_heart` | Herz · Ursache `old_age` | „Groß und müde. Es hat lange gearbeitet." | – |
-| `b_empty_stomach` | Magen · sonst | „Leer. Die letzten Tage hat sie kaum gegessen." | – |
-| `b_plain` | jedes · sonst | „Nichts, was an der Todesursache etwas ändert." | – |
-- `c_v_arsenic` („Arsenik im Fieber") und `c_v_dry_lungs` („Trockene Lungen") bilden in Phase 7 **keine** Erkenntnis; sie stehen unter „Offen" mit der Randnotiz „Im Dorf stirbt man nicht immer an dem, was Osric sagt." (Haken für Phase 9).
-
-**Zurücklegen ins Grab („Präparat beisetzen")**
-- Am Grab des Toten (Zustand `FILLED` oder `MARKED`): „[E] Präparat beisetzen: Herz von Hedwig Lamprecht (10 Min)". Geht für Glas, Bündel (auch verdorben) und Schaupräparat, nicht nach Verkauf oder Untersuchung.
-- Wirkung: `record.returned` + Organ → der Geist zählt dieses Organ nicht mehr als „beraubt" (Stimmung +5 zurück), Pietät `specimen_returned` **+3**, Pfarrer +1, Liesel +2, `stats.specimens_returned` +1. Die **Qualität bleibt** (der Stein steht schon, die Bezahlung ist geflossen) und der Ruf auch. Geisterzeile aus `by_returned` in der nächsten Nacht. Glas, Branntwein und Leinen sind verbraucht.
+#### 2.6.2 Zurücklegen ins Grab („Präparat beisetzen")
+- Am Grab des Toten (Zustand `FILLED` oder `MARKED`): „[E] Präparat beisetzen: Herz von Hedwig Lamprecht (10 Min)". Möglich für Glas, Bündel (auch verdorben), Schaupräparat, Knochenpräparat und Stücke aus der Sammlung (vorher herausnehmen). Nicht möglich nach Verkauf, Vorlesung oder Arznei.
+- Wirkung: `record.returned` + Organ → der Geist zählt dieses Organ nicht mehr als „beraubt" (Stimmung zurück nach Tabelle), Pietät `specimen_returned` (+3, Augen/Hand +5), Pfarrer +1, Liesel +2, `stats.specimens_returned` +1. Die **Qualität bleibt** (der Stein steht schon, die Bezahlung ist geflossen), der Ruf auch. In der nächsten Nacht kommt eine Geisterzeile aus `by_returned`. Glas, Branntwein und Leinen sind verbraucht.
 - *Begründung:* Phase 5 sagte: „Ein Stein gibt nicht zurück, was genommen wurde." Ein Präparat kann es. Das gibt dem Spieler, der aus Neugier oder Not genommen hat, einen würdigen Ausweg, der etwas kostet (Ware, Zeit, die entgangenen Münzen) und nicht alles heilt.
 
-**Haken für Phase 13 (nur Daten, keine Logik):** `AnatomyConfig.organs[*].res_tag` und `res_weight` (Herz 3, Lunge 2, Magen 1); `Specimens.kept(organ) -> int` zählt gehaltene, nicht verdorbene Präparate. Keine Phase-7-Logik liest sie.
+#### 2.6.3 Befunde (`SpecimenFindingData`) und verborgene Ursachen
+- **Verborgene Ursachen** (✦ `CorpseTables.hidden_causes`, nur Zufallsleichen, deterministisch aus dem Seed): `fever` → `arsenic` mit 12 % · `drowned_millpond` → `dead_before_water` mit 15 % · `old_age` → `drink` mit 15 % (nur Stimmung, keine Geschichte). Ohne Deutung (§2.6.5) bleibt die angezeigte Ursache die von Osric.
+- Ein Befund ist eine **Karte** („Befund-Karte"), die man durch **Begutachten** am Pult (§2.7) oder durch **Quasts Gutachten** erhält. Sie sagt, was zu sehen ist, nicht, was es bedeutet. Die Bedeutung findet der Spieler in der Deutung.
+| Befund | Präparat · Bedingung | Karte (P4 darf glätten) |
+|---|---|---|
+| `b_still_heart` | Herz · gezeichnet (`strange_wound`) | „Ein gesundes Herz. Keine Narbe, kein Fett, keine Schwäche." |
+| `b_old_heart` | Herz · `old_age` | „Ein großes, müdes Herz." |
+| `b_white_stomach` | Magen · `arsenic` oder `poisoned` | „Ein weißlicher Belag. Es riecht nach Knoblauch." |
+| `b_empty_stomach` | Magen · sonst | „Leer. Die letzten Tage kaum gegessen." |
+| `b_dry_lungs` | Lunge · `dead_before_water` | „Die Lunge ist trocken." |
+| `b_wet_lungs` | Lunge · `drowned_millpond` | „Die Lunge ist schwer von Wasser." |
+| `b_spotted_lungs` | Lunge · `fever` | „Fleckig, mit kleinen dunklen Herden." |
+| `b_hard_liver` | Leber · `drink` | „Hart und gelblich, mit kleinen Knoten." |
+| `b_pale_liver` | Leber · `arsenic` oder `poisoned` | „Blass, mit feinen weißen Streifen." |
+| `b_stones` | Nieren · Seed 1 von 4 | „Zwei Steine, so groß wie Erbsen." |
+| `b_moor_eyes` | Augen · `moor_cold` oder `drowned_millpond` | „Die Augen sind trüb, mit einem braunen Schleier." |
+| `b_fever_eyes` | Augen · `fever` | „Gelblich und glasig." |
+| `b_worker_hand` | Hand · immer | „Schwielen an Daumen und Zeigefinger. Ein Handwerk." (Beruf aus dem Seed: Spinnerin, Schmied, Knecht, Wäscherin) |
+| `b_oath_hand` | Hand · Merkmal `tattoo` | „Eine alte Schnittnarbe quer über der Handfläche." |
+| `b_plain` | jedes · sonst | „Nichts Auffälliges." |
 
-`AnatomyConfig` (Kurzform): `organs {heart, lung, stomach: {label, minutes 20, base_price 8/5/6, quality_event, reputation_event &"organ_taken", piety_event &"organ_taken", res_tag, res_weight}}`, `tool_item &"anatomy_case"`, `room_id &"crypt"`, `min_freshness 0.3`, `jar_inputs {prep_jar: 1, spirits: 1}`, `bundle_inputs {linen: 1}`, `bundle_minutes 600`, `pult_cold_factor 0.25`, `clarity_words [0.8, 0.6, 0.45]`, `research_minutes 30`, `research_min_clarity 0.5`, `bundle_price_factor 0.5`, `display_price_factor 1.5`, `display_price_bonus 2`, `friend_price_bonus 1`, `return_minutes 10`, `seal_minutes 5`, `veil_seconds 0.6`, `veil_alpha 0.85`, `known_flag &"anatomy_known"`.
+#### 2.6.4 Die Anatomie-Vorlesung (nachts in der Wundarztstube, `data/config/anatomy_config.tres` – Block `lecture`)
+**Entscheidung: alle drei Nächte, in der Wundarztstube, bei verschlossenen Läden.** Quast unterrichtet heimlich drei Studenten aus der Stadt, die mit Osrics Morgenfuhre kommen und gehen. 1834 waren Leichen für den Unterricht knapp; das ist der Grund für die Heimlichkeit.
+- **Wann:** an jedem Tag mit `Tag % 3 == 0`, von **23:00 bis 00:30** (`lecture_every_days 3`, `lecture_start 1380`, `lecture_minutes 60`). Die Haustür der Wundarztstube öffnet dann für den Totengräber (`HouseDoor.open_windows` + Bedingung `lecture_tonight`), sonst ist sie nachts zu. Quast steht am Behandlungstisch, drei Studenten sitzen auf zwei Bänken (`ph_chr_student_a/b/c`, ohne Rig, sitzend). Freigabe: `anatomy_known`, Quast mindestens „Bekannt" und das erste verkaufte oder begutachtete Präparat (dann lädt Quast ein: „Dienstags … nein, jeden dritten Abend. Kommen Sie nach elf. Klopfen Sie nicht.").
+- **Ablauf:** Mit Quast sprechen → „Ein Präparat für heute Abend" → Präparat wählen (Glas, Knochen- oder Schaupräparat, Klarheit ≥ 0,5, nicht verdorben; **kein Bündel**) → TimedAction **60 Min** mit leichtem Schleier (60 %), Quast spricht zur Bank, das Glas steht auf dem Lesepult, der Behandlungstisch bleibt unter dem weißen Tuch leer. Höchstens **eine Vorlesung je Abend**.
+- **Lohn:** **Honorar** 4 Münzen + Organzuschlag (Herz 2, Augen 3, Hand 4, sonst 1) + 1 je Stufe Ansehen bei der Universität. Dazu die **Mitschrift**: der **Lehrsatz** dieses Organs (§2.6.5) ins Merkbuch, wenn er noch fehlt, sonst eine Zeile Stimmung. Das Präparat bleibt im Kabinett (`state lectured`). `stats.lectures_attended` +1, Quast +3.
+- **Kosten:** Pietät `lecture_attended` **−3** je Abend. **Entdeckung:** Mit 25 % (bei Ruf „Geschätzt" oder höher 10 %; deterministisch aus Tag und Seed) hat jemand Licht gesehen. Dann gibt es am nächsten Morgen Ruf `lecture_rumor` **−4**, Pfarrer −3, Liesel −2 und das Gerede „Bei Quast brannte wieder Licht bis nach Mitternacht." Vorher sagt Quast, ob die Nacht ruhig ist: „Der Nachtwächter ist heute bei seiner Schwester." (10/25 % stehen nicht im Text, nur die Stimmung).
+- *Begründung:* Die Vorlesung bringt einem Präparat 5–9 Münzen statt 4–10 beim Verkauf, dazu Wissen für die Deutung. Sie kostet eine Nacht (30 Min Weg hin, 60 Min, 30 Min zurück, also ≈ bis 01:30) und Pietät, und sie ist ein Risiko für den Ruf. Alle drei Tage heißt höchstens ≈ 4 Abende in Bogen A: genug für die Lehrsätze, zu wenig für eine Einnahmequelle.
 
-### 2.7 Das Präparierpult in der Gruft (`data/stations/pult.tres` – `StationData`, Rezepte `data/recipes/*`)
-**Entscheidung: eine Station im Gruft-Raum statt eines neuen Gebäudes.** *Begründung:* Die Gruft ist kalt, still und hat schon Tisch, Waschbecken und Räucherschale. Das Pult gehört dorthin, wo die Präparate entstehen. Es braucht keinen neuen Bauplatz in der vollen Außenwelt. Die Phase-5-Station (`StationData` + `Workbench`, `requires_built`) trägt es ohne neue Mechanik.
-- **Aufstellen:** „[E] Präparierpult aufstellen" am Platz `pult` in der Gruft (§4.6 P1), sichtbar ab `village_open` und Gruft ≥ 1: **6 wood, 2 iron_fittings, 2 stone + 12 Münzen** („Glaswaren und Wachstuch von Quast", Zweck `&"build"`), 90 Min. Danach steht das Pult mit Kühlfach (Schieferlade).
-- **Rezepte** am Pult (normales Werkstatt-Panel `&"crafting"`, Station `pult`):
+#### 2.6.5 Todesursachen-Deutung (Merkbuch, Panel `&"deduction"`, `data/anatomy/deductions/<id>.tres` – `DeductionData`, `data/anatomy/teachings/<id>.tres` – `TeachingData`)
+**Entscheidung: Der Spieler deutet selbst, mit der Verknüpfen-Mechanik des Merkbuchs (Phase 4 §2.12).** Quast sagt nicht mehr „Arsenik", er zeigt, was zu sehen ist.
+- **Karten:** *Befund-Karten* (§2.6.3, je Toter), *Funde* aus der Untersuchung (Phase 4, z. B. „Bläuliche Fingernägel", die bestehenden Ursachen-Details), *Lehrsätze* (Wissen, gespeichert) und eine Liste möglicher **Ursachen** (die sieben aus `CorpseTables` + `arsenic`, `dead_before_water`, `drink`, `unexplained` „kein natürlicher Tod").
+- **Ablauf:** Merkbuch → Totenzettel → „Ursache deuten" (nur wenn der Tote mindestens eine Befund-Karte hat) → Karten wählen (2–3) und eine Ursache → **„Deuten"**. Stimmt die Menge (`DeductionData.needs` ⊆ gewählt, die Ursache stimmt), dann: wahre Ursache im Totenzettel („gedeutet: Arsenik"), Hinweis der Deutung ins Merkbuch, `stats.deductions` +1, Notiz „Du hast es selbst gesehen." **Falsch:** „Das passt nicht zusammen." – kostenlos, nicht gezählt, beliebig oft.
+- **Lehrsätze** (`TeachingData`): `l_lung` „Wer ertrinkt, atmet Wasser." und `l_liver` „Der Trunk macht die Leber hart." gibt Quast mit dem Besteck. `l_heart` „Ein gesundes Herz bleibt nicht ohne Grund stehen." · `l_stomach` „Arsenik bleicht den Magen und riecht nach Knoblauch." · `l_kidneys` „Steine machen Schmerzen, aber selten den Tod." · `l_eyes` „Das Moor färbt die Augen." · `l_hand` „Die Hand erzählt das Handwerk." kommen aus der **Vorlesung** des jeweiligen Organs oder aus **Quasts Gutachten** (30 Min, das Präparat bleibt bei ihm, §2.7).
+
+| Deutung | Karten (alle nötig) | Ursache | Ergebnis |
+|---|---|---|---|
+| `d_arsenic` | `b_white_stomach` **oder** `b_pale_liver`, `l_stomach` | `arsenic` | wahre Ursache; Hinweis `c_v_arsenic` „Arsenik im Fieber" (erstes Mal) |
+| `d_dry_lungs` | `b_dry_lungs`, `l_lung` | `dead_before_water` | wahre Ursache; Hinweis `c_v_dry_lungs` „Trockene Lungen" (erstes Mal) |
+| `d_still_heart` | `b_still_heart`, `l_heart`, Fund `f_mark` (Zeichen) | `unexplained` | Hinweis `c_v_still_heart` „Ein Herz ohne Krankheit"; Quast sagt danach: „Ich habe so ein Herz schon zweimal eingelegt. Beide Male lag morgens ein Zettel vor meiner Tür." |
+| `d_drink` | `b_hard_liver`, `l_liver` | `drink` | wahre Ursache (Stimmung) |
+| `d_moor` | `b_moor_eyes`, `l_eyes`, Ursache-Fund `f_cause_moor_cold` oder `f_cause_drowned_millpond` | (gezeigte Ursache) | bestätigt; bei S-Leichen nichts Neues (Flavor) |
+- `c_v_arsenic` und `c_v_dry_lungs` bilden in Phase 7 **keine** Erkenntnis. Sie stehen unter „Offen" mit der Randnotiz „Im Dorf stirbt man nicht immer an dem, was Osric sagt." (Haken für Phase 9). `c_v_still_heart` führt zur optionalen Erkenntnis `i_burn_it` (§1.6).
+- *Begründung:* Die Deutung nutzt das bestehende Verknüpfen (gleiche Fehlerregel, gleiche Darstellung) und macht die Anatomie zu Erkenntnis statt zu Ansage. Wer nie ein Präparat nimmt, verpasst nur Nebenfäden.
+
+**Haken für Phase 13 (nur Daten, keine Logik):** `AnatomyConfig.organs[*].res_tag` und `res_weight` (Herz 3, Hand 3, Augen 2, sonst 1); die Hand ist als Knochenpräparat ausdrücklich „Lehrpräparat und Bauteil" markiert (`res_role &"frame"`). `Specimens.kept(organ) -> int` zählt gehaltene, nicht verdorbene Präparate, die Sammlung eingeschlossen. Keine Phase-7-Logik liest sie.
+
+`AnatomyConfig` (Kurzform): `organs {heart, lung, stomach, liver, kidneys, eyes, hand: {label, containers, minutes, base_price, quality, reputation_event, piety, mood, return_piety, sell_rel {priest, washer, oldwoman}, lecture_bonus, res_tag, res_weight}}`, `max_per_corpse 3`, `tool_item &"anatomy_case"`, `room_id &"crypt"`, `min_freshness 0.3`, `jar_inputs {prep_jar: 1, spirits: 1}`, `small_jar_inputs {prep_jar_small: 1, spirits: 1}`, `bundle_inputs {linen: 1}`, `hand_inputs {linen: 1, beeswax: 1}`, `bundle_minutes 600`, `pult_cold_factor 0.25`, `clarity_words [0.8, 0.6, 0.45]`, `inspect_minutes 20`, `expertise_minutes 30`, `inspect_min_clarity 0.5`, `bundle_price_factor 0.5`, `display_price_factor 1.5`, `display_price_bonus 2`, `friend_price_bonus 1`, `return_minutes 10`, `seal_minutes 5`, `display_minutes 40`, `bone_minutes 60`, `veil_seconds 0.6`, `veil_alpha 0.85`, `sound_cue &"anatomy_tool"`, `known_flag &"anatomy_known"`, `lecture {every_days 3, start 1380, minutes 60, fee 4, standing_bonus 1, piety −3, rumor_chance 0.25, rumor_chance_esteemed 0.10, rumor_rep −4, rumor_rel {priest: −3, washer: −2}, veil_alpha 0.6}`.
+
+### 2.7 Das Präparierpult in der Gruft: Arzneien, Sammlung, Kühlfach (`data/stations/pult.tres`, `data/recipes/*`, `data/anatomy/sets/<id>.tres` – `CollectionSetData`)
+**Entscheidung: eine Station im Gruft-Raum statt eines neuen Gebäudes.** *Begründung:* Die Gruft ist kalt, still und hat schon Tisch, Waschbecken und Räucherschale. Das Pult gehört dorthin, wo die Präparate entstehen. Es braucht keinen neuen Bauplatz in der vollen Außenwelt, und die Phase-5-Station (`StationData` + `Workbench`, `requires_built`) trägt es ohne neue Mechanik.
+- **Aufstellen:** „[E] Präparierpult aufstellen" am Platz `pult` in der Gruft (§4.6 P1), sichtbar ab `village_open` und Gruft ≥ 1: **6 wood, 2 iron_fittings, 2 stone + 12 Münzen** („Glaswaren und Wachstuch von Quast", Zweck `&"build"`), 90 Min. Danach stehen Pult, Kühlfach (Schieferlade) und daneben das **Sammlungsregal** (sieben Fächer hinter Tuchvorhängen).
+- **Kräuter-Rezepte** (Werkstatt-Panel `&"crafting"`, Station `pult`; auch ohne Anatomie):
   | Rezept | Zutaten | Min | Ergebnis | Wofür |
   |---|---|---|---|---|
-  | `fever_tincture` Fiebertinktur | 2 `herbs`, 1 `elderberries`, 1 `spirits` | 30 | 1 | Quast kauft 6, Rosine und Quast wollen sie (Aufträge) |
+  | `fever_tincture` Fiebertinktur | 2 `herbs`, 1 `elderberries`, 1 `spirits` | 30 | 1 | Quast kauft 6; Aufträge Rosine, Quast |
   | `wound_salve` Wundsalbe | 1 `herb_bundle`, 1 `beeswax` | 20 | 2 | Theres kauft 4, Quast 5 |
-  | `corpse_balm` Totensalbe | 2 `herbs`, 1 `beeswax` | 20 | 1 | wie Wacholder beim Räuchern (× 0,25, 18 h; `PrepConfig.balm_items` + `corpse_balm`), ohne Rauch – ein Glanz auf der Haut |
-- **Pult-Panel** `&"pult"` (zweite Karte am Pult, nur mit Präparaten): „Bündel einlegen (5 Min)" · „Schaupräparat herrichten (40 Min)": Glas + 1 `beeswax` + 1 `ink` → `display_specimen` (Glas unter einer Glasglocke, Wachssiegel, beschriftet; verkaufbar × 1,5 + 2; zurücklegbar).
+  | `corpse_balm` Totensalbe | 2 `herbs`, 1 `beeswax` | 20 | 1 | wie Wacholder beim Räuchern (× 0,25, 18 h; `PrepConfig.balm_items` + `corpse_balm`), ohne Rauch |
+- **Arzneien aus Präparaten** (Pult-Panel `&"pult"`, verbrauchen **ein** Einzelstück im Glas, Klarheit ≥ 0,45; nach „Quasts Rezeptbuch", das mit dem Besteck kommt). Die Herstellung wird nicht beschrieben, nur angesetzt und abgefüllt. Ergebnis sind beschriftete Fläschchen und Pulverbriefchen, ohne Bild und ohne Hinweis auf den Inhalt außer dem Etikett „nach Quast":
+  | Rezept | Zutaten | Min | Ergebnis | Wirkung / Verwendung | Quast zahlt |
+  |---|---|---|---|---|---|
+  | `antidote` Gegengift | 1 Magen- **oder** Leberpräparat, 1 `herb_bundle`, 1 `spirits` | 30 | 2 | heilt Vergiftete in Aufträgen (`o_quast_antidote`) | 7 |
+  | `bitter_drops` Bittertropfen | 1 Leberpräparat, 2 `herbs`, 1 `spirits` | 30 | 2 | stärker als die Fiebertinktur; ersetzt sie in jedem Fieber-Auftrag | 6 |
+  | `dropsy_powder` Wassersuchtpulver | 1 Nierenpräparat, 1 `herbs`, 1 `beeswax` | 20 | 1 | `o_fenner_dropsy` (die Wassersucht des Schultheißen) | 8 |
+  - Herz, Augen und Hand dienen keiner Arznei (`AnatomyConfig.organs[*].medicine false`). *Begründung:* Arzneien aus inneren Organen waren 1834 Apothekenpraxis (aus Tieren wie aus Menschen); was den Menschen ausmacht, bleibt davon ausgenommen. Die Arznei macht aus einem Präparat Hilfe für Lebende. Das ist der einzige Weg, auf dem das Nehmen einem Dorfbewohner nützt, und er zahlt besser als der Verkauf (2 Fläschchen ≈ 12–14 Münzen gegen ≈ 4–5), kostet aber Kräuter und Zeit.
+- **Weitere Handgriffe am Pult** (Pult-Panel): „Bündel einlegen (5 Min)" · „Schaupräparat herrichten (40 Min)": Glas + 1 `beeswax` + 1 `ink` → `display_specimen` · „Knochenpräparat herrichten (60 Min)": Hand-Bündel + 1 `beeswax` + 1 `linen` → `bone_specimen` (verschnürtes Leinenpaket in einem Holzkasten mit Etikett, verdirbt nicht) · **„Präparat begutachten (20 Min)"**: Glas, Knochen- oder Schaupräparat mit Klarheit ≥ 0,5 → seine Befund-Karte (§2.6.3), das Stück bleibt.
 - **Kühlfach** `PultStore` (`extends Chest`, 8 Plätze, Panel `&"chest"`): nimmt alles auf, was die Truhe nimmt; Bündel darin verderben × 0,25 (§2.6).
-- *Keine* Rezepte mit Präparaten als Zutat außer dem Schaupräparat. Salben und Tinkturen entstehen aus Kräutern, Wachs und Branntwein. *Begründung:* Organe als Arznei wären der grausige Volksglaube, den dieser Vertrag ausschließt (§ Regeln).
+
+**Die Präparatesammlung** (Sammlungsregal `CollectionShelf`, Panel `&"collection"`)
+- Sieben Fächer, **eines je Organ**. Ins Fach kommen Glas, Schau- oder Knochenpräparat (kein Bündel). Ein aufgestelltes Stück bleibt Eigentum und kann wieder herausgenommen werden (dann auch verkaufen, beisetzen …). In der Sammlung zählt es weiter als genommen: Der Geist bleibt beraubt.
+- **Sätze** (`CollectionSetData`), je **einmal** belohnt, sobald alle Fächer des Satzes gleichzeitig belegt sind:
+  | Satz | Fächer | Quast zahlt einmal („Die Universität zahlt für die Aufstellung.") | Ansehen bei der Universität |
+  |---|---|---|---|
+  | `set_chest` „Brustraum" | Herz, Lunge | 5 | +1 |
+  | `set_body` „Leib" | Magen, Leber, Nieren | 6 | +1 |
+  | `set_senses` „Sinne und Hand" | Augen, Hand | 8 | +1 |
+  | `set_complete` „Lehrsammlung" | alle sieben, mindestens eines als Schaupräparat | 15 + Empfehlungsschreiben (`university_letter`, Haken Phase 9/10) | +1 (höchstens 4) |
+- **Ansehen bei der Universität** (`stats.university_standing` 0…4, nie sinkend): +1 Münze je Stufe auf jedes verkaufte Präparat (höchstens +2) und +1 je Stufe auf das Vorlesungs-Honorar; ab Stufe 2 bietet Quast den Auftrag `o_quast_cabinet` an (§2.5). Das Regal wird in Quasts Gesprächen erwähnt („Man spricht in der Stadt von Ihrer Sammlung. Nicht laut.").
+- *Begründung:* Eine volle Lehrsammlung braucht mindestens drei Leichen (je 3 Präparate) und bindet sieben Stücke, die nicht verkauft werden. Sie lohnt mit ≈ 34 Münzen einmalig und dem Ansehen. Wer sammelt, hat lange beraubte Geister. Die Sammlung ist das Ziel des anatomischen Weges, aber keine Goldgrube.
 
 ### 2.8 Neue Items
 `ItemData` erhält **`unique: bool`** (✦, Standard false): Einzelstücke liegen je in einem eigenen Platz und tragen eine `uid` (§3.4).
 | id | Name | Kategorie | Stapel | Herkunft | Zweck |
 |---|---|---|---|---|---|
 | `prep_jar` | Präparatglas | MATERIAL | 10 | Theres 2, Quast 2 | Präparat im Glas, Einlegen |
+| `prep_jar_small` | kleines Präparatglas (dunkel, zwei Siegel) | MATERIAL | 10 | Quast 3 | nur für Augen |
 | `spirits` | Branntwein | MATERIAL | 10 | Rosine 3, Quast 3 | Glas, Fiebertinktur, Geschenk (Quast) |
 | `beeswax` | Bienenwachs | MATERIAL | 10 | Theres 1 | Salben, Schaupräparat |
 | `anatomy_case` | Präparierbesteck | TOOL | 1 | Quast, einmalig (§2.12) | Präparate nehmen |
 | `specimen_jar` | Präparat im Glas | GOODS, **unique** | 1 | Gruft-Tisch | §2.6 |
 | `specimen_bundle` | Präparat im Bündel | GOODS, **unique** | 1 | Gruft-Tisch | §2.6, verdirbt |
+| `bone_specimen` | Knochenpräparat (Hand, in Leinen verschnürt im Holzkasten) | GOODS, **unique** | 1 | Präparierpult | Verkauf 10, Sammlung, Vorlesung, Rückgabe; verdirbt nicht |
+| `antidote` | Gegengift „nach Quast" | CRAFTED | 5 | Pult (Magen/Leber) | `o_quast_antidote`, Quast kauft 7 |
+| `bitter_drops` | Bittertropfen „nach Quast" | CRAFTED | 5 | Pult (Leber) | ersetzt Fiebertinktur in Aufträgen, Quast kauft 6 |
+| `dropsy_powder` | Wassersuchtpulver „nach Quast" | CRAFTED | 5 | Pult (Nieren) | `o_fenner_dropsy`, Quast kauft 8 |
 | `display_specimen` | Schaupräparat | GOODS, **unique** | 1 | Präparierpult | §2.6 |
 | `fever_tincture` | Fiebertinktur | CRAFTED | 5 | Pult | Verkauf, Aufträge |
 | `wound_salve` | Wundsalbe | CRAFTED | 10 | Pult | Verkauf |
 | `corpse_balm` | Totensalbe | MATERIAL | 10 | Pult | Konservieren (wie Wacholder) |
 | `honey_cake` | Honigkuchen | GOODS | 10 | Theres 1 | Geschenk, `o_lenz_poor` |
 | `elder_wine` | Holunderwein | GOODS | 5 | Rosine 2 | Geschenk (Esch, Lenz) |
-- Einzelstücke dürfen in Truhe, Schuppen (nicht über „Überschuss einlagern": `ShedConfig.excluded_items` + die drei) und Kühlfach liegen. Das Etikett (Name, Organ, Klarheit) zeigt der Tooltip aus `Specimens`.
+- Einzelstücke dürfen in Truhe, Schuppen (nicht über „Überschuss einlagern": `ShedConfig.excluded_items` + die vier), Kühlfach und Sammlungsregal liegen. Das Etikett (Name, Organ, Klarheit) zeigt der Tooltip aus `Specimens`; alle Präparate teilen sich vier Item-Ids (`specimen_jar`, `specimen_bundle`, `display_specimen`, `bone_specimen`), das Organ steht im Record.
 
 ### 2.9 Der Lindenacker – neue Grabstellen, das Dorf als Quelle der Toten (`data/sections/linden.tres`, `data/clearables/*`, `data/story/d1_hagedorn.tres`)
 **Entscheidung: Die Gemeinde gibt dem Friedhof ein neues Stück Land, den Lindenacker südlich der Ostwiese (8 Grabstellen), und der Pfarrer weiht ihn (Bestätigung §14.2).** *Begründung:* Nach Phase 6 ist der Friedhof wieder voll, es kommen keine Lieferungen (G6: Einnahmen nur Pflegegeld). Das Dorf ist die Quelle der Toten; der Engpass ist der Platz, nicht die Toten. Die bestehende Regel „eine Lieferung je freie Stelle" bleibt; neu ist, dass der Platz vom Dorf kommt: der Schultheiß gibt den Grund, der Pfarrer weiht ihn, die Toten des Dorfes kommen herauf. Der Lindenacker liegt **südlich**, also kameraseitig: Er verdeckt nichts, die Gräber sind niedrig, und hinter ihm liegt nur Wald (§4.6). Grabstellen um die Kapelle wurden geprüft und verworfen: Der Kirchhof ist zwischen Kapelle, Birken und Zaun höchstens 4 m breit, Phase 6 hat ihn als Vorplatz ohne Gräber freigegeben, und neue Steine dort würden den Kapellen-Sichttest gefährden.
@@ -382,22 +450,40 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 **Andere Wege (Erwartung für W3)**
 | Weg | Start | Einnahmen | Ausgaben | Ende (≈ 13 Tage) | Bemerkung |
 |---|---|---|---|---|---|
-| anatomisch (`anatomist7`, v5 reverent) | ≈ 20 | wie A, Bestattungen ≈ 8 × 10 (Qualität −6, Ruf fällt), dazu Präparate ≈ 8 × 3 × 6 = 144 | Gläser und Branntwein 8 × 3 × 5 = 120, Pult, Weihe | ≈ 60–100 | Das Glas macht das Nehmen teuer; der Gewinn je Leiche liegt bei ≈ 3–6 Münzen netto, Bündel bringen mehr und verderben. Pfarrer und Liesel bleiben „Fremd", Sterbebuch über die Amtsstube. Pietät → Hartherzig, Geister unruhig |
-| forschend (`scholar7`, v5 mender) | ≈ 41 | wie A ohne Präparat-Verkauf | Herzen im Glas, alle untersucht | ≈ 60–90 | `i_burn_it`, `c_v_arsenic`/`c_v_dry_lungs` je nach Seed; 2 Präparate zurückgelegt |
+| anatomisch (`anatomist7`, v5 reverent) | ≈ 20 | ≈ 337 (Rechnung unten) | ≈ 280 | ≈ 77 | +≈ 14 gegenüber A (≈ 5 % des Umsatzes), dafür Pietät Hartherzig, Ruf eine Stufe tiefer, Pfarrer und Liesel „Fremd", alle Lindenacker-Geister unruhig außer Hagedorn |
+| forschend (`scholar7`, v5 mender) | ≈ 41 | wie A + 4 Vorlesungen (≈ 34) + Arznei-Aufträge (22) | wie A + Ware ≈ 60 | ≈ 70–100 | Herzen, Lebern und Mägen im Glas, alles begutachtet und gedeutet, zwei Präparate zurückgelegt; `i_burn_it` und `c_v_arsenic`/`c_v_dry_lungs` je nach Seed |
 | reuig (`penitent7`, v5 harvester) | ≈ 63 | wie A, Ruf niedriger | Spenden 10/Tag, Runden, Geschenke | ≈ 20–60 | Ruf steigt über die Armenkasse; keine Präparate |
 | neues Spiel (`founder7`, v5 founder) | ≈ 40 | wie A | wie A | ≈ 40–90 | Kapitel ≤ Tag 50 |
 
+**Anatomischer Weg nachgerechnet (`anatomist7`, Neuberechnung nach §14.3)** – 8 Lieferungen, davon 7 mit je **3 Präparaten** (Herz, Augen, Hand; D1 Hagedorn bleibt unverwertet), 21 Stück: 10 an Quast verkauft, 7 in der Sammlung (Sätze „Brustraum" und „Sinne und Hand", Ansehen 2), 4 in Vorlesungen.
+| Posten | würdevoll (A) | anatomisch | Unterschied |
+|---|---|---|---|
+| Pflegegeld (Ruf sinkt von Gerühmt auf Geachtet/Geschätzt) | 48 | ≈ 30 | −18 |
+| Bestattungen (Qualität −8 je Leiche → −4, Ruf-Bonus 3 → 1) | 104 | ≈ 62 | −42 |
+| Aussegnungsgebühren | 20 | 20 | 0 |
+| Aufträge (Pfarrer- und Liesel-Aufträge seltener, dafür Quast-Aufträge) | 65 | ≈ 70 | +5 |
+| Präparate verkauft (10 × ≈ 10, Ansehen +2) | – | ≈ 100 | +100 |
+| Vorlesungen (4 × (4 + Organzuschlag + Ansehen 2) ≈ 4 × 9) | – | ≈ 36 | +36 |
+| Sammlungs-Sätze (5 + 8) | – | 13 | +13 |
+| Verkäufe im Dorf, Geistergaben | 20 | ≈ 6 | −14 |
+| **Einnahmen** | **257** | **≈ 337** | +80 |
+| Ware fürs Nehmen (7 × Augenglas 6 + 7 × Glas 5 + 7 × Hand-Bündel und Knochen 8) | – | ≈ 133 | −133 |
+| übrige Ausgaben (wie A, ohne Spenden-Aufträge und ohne Gruft 3) | 214 | ≈ 147 | +67 |
+| **Ende** | **≈ 63** | **≈ 77** | **+≈ 14** |
+- **Je Leiche** bringt der würdevolle Weg ≈ 19 Münzen (Bestattung 13, Gebühr 5, Gabe 1), der anatomische ≈ 22 (Bestattung 7, Gebühr 5, Präparate netto ≈ 10). Über den Bogen frisst der Ruf-Verlust (Pflegegeld, Bezahlung) den größten Teil des Präparat-Erlöses wieder auf. *Das Ziel ist erfüllt:* Die Anatomie ist kein dominanter Verdienst (≈ +5 % über den Bogen). Bündel statt Gläser würden mehr abwerfen, verderben aber in 10 h, und die Grenze von 3 Präparaten je Leiche deckelt alles. Würdevoll bleibt gleichwertig bezahlt und kostet keine Pietät.
+- **Arzneien** sind die beste Verwertung eines Präparats (ein Leberglas → 2 Bittertropfen ≈ 12 Münzen oder ein Auftrag), kosten aber Kräuter und 30 Min. W3 prüft, dass `scholar7` damit nicht über `neighbor7` + 40 kommt; sonst senkt P7 die Quast-Preise der Arzneien um 1.
+
 ### 2.11 Qualität, Ruf, Pietät, Geister, Statistik
-- `EconomyConfig.harvest_malus` + `heart −2`, `lung −2`, `stomach −2`. `quality_max` bleibt **20**. Zurücklegen ändert die Qualität nicht.
-- `ReputationConfig.event_points` + `organ_taken −3`, `donation 1`, `order_failed −1`. Erledigte Aufträge geben `OrderData.reward_rep` mit dem Grund „Auftrag: <Titel>".
-- `PietyConfig.events` + `organ_taken −8`, `specimen_returned +3`. Die tägliche Erholung (Phase 4) bleibt; das Nehmen setzt `piety_used_day`.
-- `GhostMood`: Der Beraubt-Zähler ist jetzt `harvested.size() − returned.size()` (✦ `GhostMood.robbed_count(record)`); `robbed_mood −5` je Art bleibt. Neuer Grund-Text-Pool `GhostLines.by_organ` (Vorrang vor `robbed`, wenn ein Organ fehlt): „In mir ist eine Stelle, die nicht mehr warm wird." · „Mein Name steht auf einem Etikett. Wer liest ihn?" · „Sie haben mich in der Stadt in ein Regal gestellt. Ich kann die Linde nicht sehen." `GhostLines.by_returned` (erste Nacht danach): „Es ist wieder da. Ich spüre es nicht, aber ich weiß es." · „Du hast zurückgebracht, was du genommen hast. Das tun nicht viele."
-- `GameState.DEFAULT_STATS` + `village_trips`, `orders_done`, `orders_failed`, `gifts_given`, `rounds_bought`, `donations`, `specimens_taken`, `specimens_sold`, `specimens_researched`, `specimens_returned`, `coins_spent_village`, `coins_spent_donation`, `coins_spent_round`, `coins_spent_consecration`.
+- `EconomyConfig.harvest_malus` + `heart −2`, `lung −2`, `stomach −2`, `liver −2`, `kidneys −2`, `eyes −3`, `hand −3`. `quality_max` bleibt **20**. Zurücklegen ändert die Qualität nicht.
+- `ReputationConfig.event_points` + `organ_taken −3`, `organ_taken_grave −5` (Augen, Hand), `lecture_rumor −4`, `donation 1`, `order_failed −1`. Erledigte Aufträge geben `OrderData.reward_rep` mit dem Grund „Auftrag: <Titel>".
+- `PietyConfig.events` + `lecture_attended −3`, `specimen_returned +3`, `specimen_returned_grave +5`; die Pietät je Organ steht in `AnatomyConfig.organs[*].piety` (Herz −8, innere Organe −6, Augen/Hand −12) und läuft über `Piety.event(&"organ_taken", …, amount)`. Die tägliche Erholung (Phase 4) bleibt; Nehmen und Vorlesung setzen `piety_used_day`.
+- `GhostMood`: Der Beraubt-Abzug ist jetzt die Summe über die genommenen, nicht zurückgelegten Arten (✦ `GhostMood.robbed_penalty(record)`): Haar/Zähne je −5 (`robbed_mood`, unverändert), Organe nach `AnatomyConfig.organs[*].mood` (−5, Augen/Hand −8). Stücke in der Sammlung zählen als genommen. Neuer Grund-Text-Pool `GhostLines.by_organ` (Vorrang vor `robbed`, wenn ein Organ fehlt): „In mir ist eine Stelle, die nicht mehr warm wird." · „Mein Name steht auf einem Etikett. Wer liest ihn?" · „Sie haben mich in der Stadt in ein Regal gestellt. Ich kann die Linde nicht sehen." · Augen: „Ich sehe die Linde nicht mehr. Ich weiß nur, dass sie da ist." · Hand: „Ich greife nach etwas und weiß nicht, womit." `GhostLines.by_returned` (erste Nacht danach): „Es ist wieder da. Ich spüre es nicht, aber ich weiß es." · „Du hast zurückgebracht, was du genommen hast. Das tun nicht viele."
+- `GameState.DEFAULT_STATS` + `village_trips`, `orders_done`, `orders_failed`, `gifts_given`, `rounds_bought`, `donations`, `specimens_taken`, `specimens_sold`, `specimens_researched`, `specimens_returned`, `specimens_collected`, `medicines_made`, `lectures_attended`, `deductions`, `university_standing`, `coins_spent_village`, `coins_spent_donation`, `coins_spent_round`, `coins_spent_consecration`.
 - `coins_spent`-Zwecke + `&"village"` (Läden), `&"donation"` (Armenkasse, Spenden-Aufträge), `&"round"`, `&"consecration"`. Das Pult läuft unter `&"build"` (Phase-5-Station).
 
 ### 2.12 Osric, Ilse und die Freischaltung der Anatomie
 - **Osric** (`carter.tres` + neuer Dialog `carter_village`, P6): Friedhof: `p7_intro` (§1.2), danach Menüpunkt „Wie ist es unten im Dorf?" (wechselnd nach Beziehungen). Dorf (Remise, Gaststube): stellt am ersten Treffen vor („Das ist Rosine, der gehört der Holderkrug und das halbe Dorf, wenn man sie reden lässt."), spendiert das versprochene Bier (Notiz, keine Wirkung), erzählt vom Trauerflor, kommentiert Präparate einmal je Stufe („Der Quast fährt jetzt öfter mit mir in die Stadt. Seine Kisten klirren."). Keine Beziehung in Phase 7.
-- **Quast und das Besteck:** Beim ersten Gespräch in der Wundarztstube (Knoten `v_surgeon_intro`): „Sie haben, was mir fehlt, Totengräber: Zeit mit den Toten, bevor die Erde sie nimmt. Die Stadt zahlt für Präparate. Ich zahle Ihnen davon, was recht ist." Wahl: **„Zeigen Sie mir, wie." → `anatomy_case` geschenkt, Flag `anatomy_known`** · „Nein. Die bleiben, wie sie sind." → Flag `anatomy_declined` (er fragt nach 3 Tagen noch einmal, danach nie wieder von sich aus; der Menüpunkt „Ich habe es mir überlegt." bleibt). Ohne Besteck gibt es keine Präparate-Karte. *Begründung:* Wie Ilses Werkzeug (Phase 4) ist die dunkle Möglichkeit ein Angebot, kein Zwang.
+- **Quast und das Besteck:** Beim ersten Gespräch in der Wundarztstube (Knoten `v_surgeon_intro`): „Sie haben, was mir fehlt, Totengräber: Zeit mit den Toten, bevor die Erde sie nimmt. Die Stadt zahlt für Präparate. Ich zahle Ihnen davon, was recht ist." Wahl: **„Zeigen Sie mir, wie." → `anatomy_case` geschenkt, Flag `anatomy_known`** · „Nein. Die bleiben, wie sie sind." → Flag `anatomy_declined` (er fragt nach 3 Tagen noch einmal, danach nie wieder von sich aus; der Menüpunkt „Ich habe es mir überlegt." bleibt). Ohne Besteck gibt es keine Präparate-Karte. Mit dem Besteck kommen **Quasts Rezeptbuch** (die drei Arzneien, §2.7) und die Lehrsätze `l_lung` und `l_liver` (§2.6.5). Nach dem ersten verkauften oder begutachteten Präparat lädt er zur **Vorlesung** ein (§2.6.4). *Begründung:* Wie Ilses Werkzeug (Phase 4) ist die dunkle Möglichkeit ein Angebot, kein Zwang.
 - **Ilse** (`trader.tres`, P6), neue Fragen ab `village_open`: „Wer besucht im Dorf die Kranken?" (nach dem ersten Gespräch mit Quast) → Antwort §1.6 → `c_v_three_visitors` · „Was hältst du vom Wundarzt?" → „Quast kauft, was ich nicht nehme, und schreibt alles in ein Buch. Lorenz hat ihn einmal gefragt, wohin die Gläser gehen. Danach hat Quast ihm nichts mehr verkauft." · nach dem ersten verkauften Präparat (Begrüßung, einmal): „Du warst beim Wundarzt. Man riecht den Branntwein durch das Leinen."
 
 ---
@@ -413,9 +499,11 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 | `VillageShops` | `VillageShops` | `village_shops`, `saveable` | `village_shops` / **52** |
 | `Orders` | `Orders` | `orders`, `saveable` | `orders` / **53** |
 | `Specimens` | `Specimens` | `specimens`, `saveable` | `specimens` / **54** |
+| `Lectures` | `Lectures` | `lectures`, `saveable` | `lectures` / **55** |
+| `Deductions` | `Deductions` | `deductions`, `saveable` | `deductions` / **56** |
 | `NpcLod` | `NpcLod` | `npc_lod` | – (nicht gespeichert) |
 
-**Regionen** (§3.4, §4.1): `WorldRoot/Regions/Graveyard` (`RegionRoot`, region_id `graveyard`, verwaltet die bestehenden Außenknoten über `managed_paths`, verschiebt nichts) und `WorldRoot/Regions/Village` (Instanz von `src/world/village/village.tscn`, `RegionRoot`, region_id `village`, Ursprung **(0, 0, 400)**). In der Dorf-Szene: `Ground`, `Decor`, `Buildings`, `Entities` (8 `Npc` der Dorfbewohner + `npc_carter_v`, `HouseDoor` × 3, `ShopCounter` × 2, `VillageBoard`, `RegionPortal` `road_out`, `MourningRibbon` × 6), `Waypoints`, `Colliders`, `Lights`. **Friedhof:** `Entities/road_exit` (`RegionPortal`), `Entities/npc_priest` (`Npc`, Weihetag), Abschnitt `linden` mit Plots und Hindernissen, `Interiors/InnInterior|SurgeryInterior|OfficeInterior` (`InteriorRoom`, `region_id village`), im Gruft-Raum `pult` (`Workbench`, Station `pult`) + `PultStore` (saveable `pult_store` / **62**). Keine neuen Autoloads.
+**Regionen** (§3.4, §4.1): `WorldRoot/Regions/Graveyard` (`RegionRoot`, region_id `graveyard`, verwaltet die bestehenden Außenknoten über `managed_paths`, verschiebt nichts) und `WorldRoot/Regions/Village` (Instanz von `src/world/village/village.tscn`, `RegionRoot`, region_id `village`, Ursprung **(0, 0, 400)**). In der Dorf-Szene: `Ground`, `Decor`, `Buildings`, `Entities` (8 `Npc` der Dorfbewohner + `npc_carter_v`, `HouseDoor` × 3, `ShopCounter` × 2, `VillageBoard`, `RegionPortal` `road_out`, `MourningRibbon` × 6), `Waypoints`, `Colliders`, `Lights`. **Friedhof:** `Entities/road_exit` (`RegionPortal`), `Entities/npc_priest` (`Npc`, Weihetag), Abschnitt `linden` mit Plots und Hindernissen, `Interiors/InnInterior|SurgeryInterior|OfficeInterior` (`InteriorRoom`, `region_id village`; in der Wundarztstube `LectureSet` mit drei Studenten und Lesepult), im Gruft-Raum `pult` (`Workbench`, Station `pult`) + `PultStore` (saveable `pult_store` / **62**) + `CollectionShelf` (saveable `collection_shelf` / **63**). Keine neuen Autoloads.
 
 ### 3.2 Module & Besitz (Phase 7)
 | Modul | Besitzt (Pfade) |
@@ -424,17 +512,18 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 | **P1 Regionen, Portale & NPC-Last** | `src/world/regions/{region_root,region_portal,region_travel}.gd` (neu), `src/entities/house_door/*` (neu), `src/entities/region_portal/*` (neu, Szene), `src/world/interiors/{interior_room,room_exit}.gd` (nur `region_id` / `door_id`), `src/world/hut_interior/hut_portal.gd` (nur Durchreichen), `src/world/camera/camera_rig.gd` (`set_base_profile`), `src/entities/player/player.gd` (nur `region_id`, `set_region`, Speichern), `src/entities/npc/{npc,npc_pose}.gd` (`region_id`, `hide_flag`, LOD), `src/systems/npc/{schedule_resolver,npc_lod}.gd`, `data/config/npc_config.tres`, `data/config/regions/*`, `tests/unit/{test_regions,test_npc_lod,test_schedule_resolver,test_house_door}.gd`, `tests/integration/test_region_travel.gd` |
 | **P2 Läden & Beziehungen** | `src/systems/village/{village_shops,shop_rules,relationships,relationship_rules}.gd`, `src/entities/shop_counter/*`, `data/shops/*`, `data/village/villagers/*`, `data/config/relationship_config.tres`, `tests/unit/{test_village_shops,test_relationships}.gd` |
 | **P3 Aufträge & Dorf-Fortschritt** | `src/systems/village/{orders,order_rules,village}.gd`, `src/entities/{village_board,mourning_ribbon,poor_box,register_copy}/*`, `data/orders/*`, `data/config/{orders_config,village_config}.tres`, `data/sections/linden.tres`, `data/clearables/*` (nur neue Einträge), `src/systems/expansion/expansion_manager.gd` (nur `unlock_flag`, `try_unlock`), `src/systems/graveyard/graveyard.gd` (nur `replace_old_marker` und die Aufrufe `Orders.note_grave_completed`/`note_stone_set`), `src/systems/stone/stonemasonry.gd` (nur Steine für Ruhezeit-Gräber mit Auftrag: `ready_for` gilt auch für sie), `tests/unit/{test_orders,test_village,test_expansion}.gd` |
-| **P4 Anatomie** | `src/systems/anatomy/{specimens,specimen_rules,specimen_record}.gd` (neu), `src/systems/corpse/{corpse_care,corpse_generator,corpse_record}.gd` (Organ-Karte, `hidden_cause`, `returned`), `src/entities/morgue_table/morgue_table.gd` (`request_organ`, Tuch, Schleier), `src/entities/corpse/corpse.gd` (nur `set_covered`), `src/entities/grave/grave_plot.gd` (beide neuen Prompts: „Präparat beisetzen" und „Neuen Stein setzen" auf Ruhezeit-Gräbern gegen die P3-API), `src/systems/inventory/inventory.gd` + `src/ui/panels/chest_transfer.gd` (nur Einzelstücke), `src/systems/ghosts/{ghost_mood,ghost_manager}.gd`, `data/config/{anatomy_config,economy_config,reputation_config,piety_config}.tres`, `data/anatomy/**`, `data/ghosts/ghost_lines.tres`, `data/corpses/corpse_tables.tres` (nur `hidden_causes`), `tests/unit/{test_specimens,test_inventory_unique,test_anatomy_harvest,test_ghosts,test_corpse_generator}.gd` |
+| **P4 Anatomie-Kern & Präparate** | `src/systems/anatomy/{specimens,specimen_rules,specimen_record}.gd` (neu), `src/systems/corpse/{corpse_care,corpse_generator,corpse_record}.gd` (Präparate-Karte mit sieben Organen, Grenze 3, Behältnis-Regeln, `hidden_cause`, `returned`), `src/entities/morgue_table/morgue_table.gd` (`request_organ`, Tuch, Schleier, Ton-Haken), `src/entities/corpse/corpse.gd` (nur `set_covered`), `src/entities/grave/grave_plot.gd` (beide neuen Prompts: „Präparat beisetzen" und „Neuen Stein setzen" auf Ruhezeit-Gräbern gegen die P3-API), `src/systems/inventory/inventory.gd` + `src/ui/panels/chest_transfer.gd` (nur Einzelstücke), `src/systems/ghosts/{ghost_mood,ghost_manager}.gd` (`robbed_penalty`), `data/config/{anatomy_config,economy_config,reputation_config,piety_config}.tres`, `data/anatomy/findings/*`, `data/ghosts/ghost_lines.tres`, `data/corpses/corpse_tables.tres` (nur `hidden_causes`), `tests/unit/{test_specimens,test_inventory_unique,test_anatomy_harvest,test_ghosts,test_corpse_generator}.gd` |
 | **P5 Assets** | `tools/blender/{asset_village_buildings,asset_village_props,asset_village_interiors,asset_villagers,asset_anatomy}.py` (neu), `tools/blender/asset_items.py`, `tools/blender/build_all.py`, `assets/models/**` (nur neue Phase-7-Dateien), `art_source/blender/**` (Phase 7), `tests/unit/test_assets_phase7.gd`, `docs/reviews/phase7_assets/*` |
 | **P6 Dialog, Geschichte & Speichern** | `data/dialogue/{carter,trader}.tres`, `data/dialogue/v_*.tres` + `carter_village.tres` + `priest_linden.tres` (neu), `data/npc/*_schedule.tres` (neue + Osrics Dorf-Einträge), `src/systems/dialogue/{dialogue_conditions,dialogue_actions}.gd`, `src/systems/story/{story_director,story_corpse_data}.gd` (nur `after_flag`/`after_days`/`section`-Logik), `data/story/d1_hagedorn.tres`, `data/finds/f_d1_*.tres`, `data/journal/{clues,insights}/*` (Phase 7), `src/systems/save/{save_migration,save_file_io,save_manager}.gd`, `src/systems/game_state/game_state.gd` (Stats), `tests/unit/{test_dialogue,test_save,test_save_migration,test_story,test_journal,test_game_state}.gd`, `tests/integration/test_phase6_save_upgrade.gd` |
-| **P7 Präparierpult & Handwerk** | `data/stations/pult.tres`, `data/recipes/{fever_tincture,wound_salve,corpse_balm}.tres`, `data/items/*` (Phase-7-Items), `src/entities/pult_store/*` (neu, `extends Chest`), `src/systems/workshop/workshop.gd` (nur Station im Innenraum, falls nötig), `data/config/{prep_config,shed_config}.tres` (`corpse_balm`, Ausschlüsse), `tests/unit/{test_pult,test_recipes_phase7}.gd` |
+| **P7 Präparierpult: Arzneien, Sammlung, Kühlfach** | `data/stations/pult.tres`, `data/recipes/{fever_tincture,wound_salve,corpse_balm}.tres`, `data/items/*` (Phase-7-Items), `src/systems/anatomy/{pult_rules,collection_rules}.gd` (neu: Arzneien, Einlegen, Schau-/Knochenpräparat, Begutachten, Sätze), `src/entities/{pult_store,collection_shelf}/*` (neu, `extends Chest`), `data/anatomy/{medicines,sets}/*`, `src/systems/workshop/workshop.gd` (nur Station im Innenraum, falls nötig), `data/config/{prep_config,shed_config}.tres` (`corpse_balm`, Ausschlüsse), `tests/unit/{test_pult,test_recipes_phase7,test_medicines,test_collection}.gd` |
+| **P8 Vorlesung & Deutung** | `src/systems/anatomy/{lectures,lecture_rules,deductions,deduction_rules}.gd` (neu), `src/entities/lecture_set/*` (neu, Studenten wie `MournerSet`), `data/anatomy/{teachings,deductions}/*`, Block `lecture` in `data/config/anatomy_config.tres` (Werte; Datei P4, Abstimmung über den Lead), `tests/unit/{test_lectures,test_deductions}.gd`, `tests/integration/test_lecture_night.gd` |
 | **W-Welt** (W2) | `data/world/village_layout.json`, `data/world/interiors/{inn,surgery,office}_layout.json`, `data/world/interiors/crypt_layout.json` (nur Pult-Platz), `src/world/village/*` (neu: `village_build.gd`, `village_builder.gd`, `village.tscn`, `village_shots.gd`), `src/world/interiors/*` + `{inn,surgery,office}_interior.tscn`, `data/world/graveyard_layout.json` (Lindenacker, Wegstein, Bäume, Regionen §4.6), `src/world/graveyard/*` (neu `graveyard_build_phase7.gd`, `graveyard_shots_phase7.gd`, Gras/Maske neu gebacken), `tools/blender/asset_ground_village.py` (neu), `tests/integration/{test_village_world,test_graveyard_world,test_phase7_loop,test_interiors}.gd`, `docs/reviews/phase7_round1/*` |
-| **W-UI** (W2) | `src/ui/**` (neu `panels/{shop_panel,anatomist_panel,orders_panel,gift_panel,pult_panel}.gd`, `hud/{region_label,veil,remark_bubbles}.gd`, `phase7_texts.gd`; Präparate-Karte in `corpse_exam_tabs.gd`/`corpse_exam_sections.gd`; Merkbuch-Seiten „Aufträge" und „Hollerbrück"), `assets/ui/**`, `tools/ui/*`, `src/debug/*` (neu `debug_commands_phase7.gd`; außer `asset_preview.gd`, `screenshot_capture.gd`), `tests/unit/{test_ui,test_objective,test_ui_phase7}.gd`, `tests/integration/test_ui_flow.gd` |
+| **W-UI** (W2) | `src/ui/**` (neu `panels/{shop_panel,anatomist_panel,orders_panel,gift_panel,pult_panel,collection_panel,deduction_panel,lecture_panel}.gd`, `hud/{region_label,veil,remark_bubbles}.gd`, `phase7_texts.gd`; Präparate-Karte in `corpse_exam_tabs.gd`/`corpse_exam_sections.gd`; Merkbuch-Seiten „Aufträge" und „Hollerbrück", „Ursache deuten" am Totenzettel), `assets/ui/**`, `tools/ui/*`, `src/debug/*` (neu `debug_commands_phase7.gd`; außer `asset_preview.gd`, `screenshot_capture.gd`), `tests/unit/{test_ui,test_objective,test_ui_phase7}.gd`, `tests/integration/test_ui_flow.gd` |
 | **W3 QA** | `tests/integration/{phase3_bot,…,phase6_bot,phase7_bot,test_phase7_playthrough,test_phase7_qa,test_save_fuzzer}.gd`, `docs/reviews/phase7_wip/*` |
 | **Eingefroren** | `src/world/art_prototype/*`, `src/entities/player/player_proto.*`, `data/art_prototype/*`, **Maler-Shader**, `data/atmosphere/*`, Hütte, Werkbank, Stationen, Pförtchen, Ostpforte, Kirchpforte, alle Phase-6-Gebäude und ihre Räume (außer dem Pult-Platz in der Gruft), Abschnitte I–IV, Werkhof, Kirchhof im Layout (außer §4.6) |
 
-✦ **Datenklassen (W0, Lead):** `RegionConfig`, `NpcConfig`, `VillagerData`, `ShopData`, `RelationshipConfig`, `VillageConfig`, `OrderData`, `OrdersConfig`, `AnatomyConfig`, `SpecimenFindingData`. Erweiterungen: `ScheduleEntry` (+ `region`, `today_flag`), `ItemData` (+ `unique`), `SectionData` (+ `unlock_flag`), `StoryCorpseData` (+ `after_flag`, `after_days`, `section`, `requires_flag`, `due_flag`), `CorpseRecord` (+ `hidden_cause`, `returned`; `HARVEST_KINDS` + `heart`, `lung`, `stomach` angehängt), `CorpseTables` (+ `hidden_causes`), `EconomyConfig.harvest_malus` (+ 3), `ReputationConfig.event_points` (+ `organ_taken`, `donation`, `order_failed`), `PietyConfig.events` (+ `organ_taken`, `specimen_returned`), `GhostLines` (+ `by_organ`, `by_returned`), `PrepConfig.balm_items` (+ `corpse_balm`), `InteriorConfig` unverändert.
-Bei nur fünf Agents übernimmt P2 zusätzlich P7 und P3 zusätzlich P6.
+✦ **Datenklassen (W0, Lead):** `RegionConfig`, `NpcConfig`, `VillagerData`, `ShopData`, `RelationshipConfig`, `VillageConfig`, `OrderData`, `OrdersConfig`, `AnatomyConfig`, `SpecimenFindingData`, `SpecimenRecord`, `MedicineData`, `CollectionSetData`, `TeachingData`, `DeductionData`. Erweiterungen: `ScheduleEntry` (+ `region`, `today_flag`), `ItemData` (+ `unique`), `SectionData` (+ `unlock_flag`), `StoryCorpseData` (+ `after_flag`, `after_days`, `section`, `requires_flag`, `due_flag`), `CorpseRecord` (+ `hidden_cause`, `returned`, `revealed_cause`; `HARVEST_KINDS` + `heart`, `lung`, `stomach`, `liver`, `kidneys`, `eyes`, `hand` angehängt), `CorpseTables` (+ `hidden_causes`), `EconomyConfig.harvest_malus` (+ 7), `ReputationConfig.event_points` (+ `organ_taken`, `organ_taken_grave`, `lecture_rumor`, `donation`, `order_failed`), `PietyConfig.events` (+ `organ_taken`, `lecture_attended`, `specimen_returned`, `specimen_returned_grave`), `GhostLines` (+ `by_organ`, `by_returned`), `PrepConfig.balm_items` (+ `corpse_balm`), `InteriorConfig` unverändert.
+Bei nur fünf Agents übernimmt P2 zusätzlich P7, P3 zusätzlich P6 und P4 zusätzlich P8.
 
 ### 3.2.1 Klassen → Dateien
 | Klasse | Datei | Art |
@@ -454,7 +543,13 @@ Bei nur fünf Agents übernimmt P2 zusätzlich P7 und P3 zusätzlich P6.
 | `SpecimenRecord` | `src/systems/anatomy/specimen_record.gd` | ✦ (reine Daten + `to_dict`/`from_dict`) |
 | `SpecimenRules`, `Specimens` | `src/systems/anatomy/{specimen_rules,specimens}.gd` | Stub (P4) |
 | `PultStore` | `src/entities/pult_store/pult_store.gd` (+ `.tscn`, `extends Chest`) | Stub (P7) |
-| `ShopPanel`, `AnatomistPanel`, `OrdersPanel`, `GiftPanel`, `PultPanel` | `src/ui/panels/*.gd` | W-UI |
+| `MedicineData`, `CollectionSetData` | `src/systems/anatomy/{medicine_data,collection_set_data}.gd` | ✦ |
+| `PultRules`, `CollectionRules` | `src/systems/anatomy/{pult_rules,collection_rules}.gd` | Stub (P7) |
+| `CollectionShelf` | `src/entities/collection_shelf/collection_shelf.gd` (+ `.tscn`, `extends Chest`) | Stub (P7) |
+| `TeachingData`, `DeductionData` | `src/systems/anatomy/{teaching_data,deduction_data}.gd` | ✦ |
+| `LectureRules`, `Lectures`, `DeductionRules`, `Deductions` | `src/systems/anatomy/{lecture_rules,lectures,deduction_rules,deductions}.gd` | Stub (P8) |
+| `LectureSet` | `src/entities/lecture_set/lecture_set.gd` (+ `.tscn`) | Stub (P8) |
+| `ShopPanel`, `AnatomistPanel`, `OrdersPanel`, `GiftPanel`, `PultPanel`, `CollectionPanel`, `DeductionPanel`, `LecturePanel` | `src/ui/panels/*.gd` | W-UI |
 
 ### 3.3 EventBus – neue Signale (Ergänzung `src/core/event_bus.gd`)
 ```gdscript
@@ -467,14 +562,18 @@ signal relationship_changed(npc_id: StringName, value: int, tier: StringName, de
 signal villager_remarked(npc_id: StringName, text: String)
 # Aufträge (Orders); state: &"offered" | &"accepted" | &"completed" | &"failed"
 signal order_changed(order_id: StringName, state: StringName)
-# Präparate (Specimens); state: &"taken" | &"sold" | &"researched" | &"returned" | &"sealed" | &"displayed" | &"spoiled"
+# Präparate (Specimens); state: &"taken" | &"sold" | &"researched" | &"lectured" | &"used" | &"returned" | &"sealed" | &"displayed" | &"boned" | &"spoiled"
 signal specimen_changed(uid: String, state: StringName)
 # Darstellung: dunkler Schleier während eines Präparats (MorgueTable)
 signal screen_veil_changed(active: bool)
 # Weihe (Village)
 signal ground_consecrated(section_id: StringName)
+# Präparatesammlung (CollectionShelf über CollectionRules), Vorlesung (Lectures), Deutung (Deductions)
+signal collection_set_completed(set_id: StringName, standing: int)
+signal lecture_held(day: int, organ: StringName, fee: int, rumor: bool)
+signal cause_deduced(corpse_id: String, cause_id: StringName)
 ```
-Regel wie Phase 3–6: **Listener ändern keinen Spielzustand.** Wer ändert, ruft direkt auf: `ShopCounter`/Dialog → `VillageShops.buy/sell` (ändert keine Beziehung); `DialogueActions` → `Relationships.add/give_gift`, `Orders.accept/turn_in`, `Village.buy_round/donate/pay_consecration`; `Orders.complete` → `Relationships.add`, `Reputation.event`, `Village.check_goal`; `Graveyard.place_marker/set_designed_stone` → `Orders.note_grave_completed/note_stone_set` (P3); `ExpansionManager` → `Orders.note_section_progress`, `Village.check_goal`; `MorgueTable` → `CorpseCare.harvest_organ` → `Specimens.harvest`, `Piety.event`, `Reputation.event`; `AnatomistPanel` → `Specimens.sell/research` → `Relationships.add`, `JournalManager.add_clue`; `GravePlot` → `Specimens.return_to_grave` → `CorpseManager.notify_changed`, `Piety.event`; `Npc`-Zeitplan des Pfarrers endet → `Village.apply_minute` (Uhr) → `Village.consecrate` → `ExpansionManager.try_unlock`. `coins_spent` erhöht `stats.coins_spent` im Sender über `GameState.note_coins_spent`.
+Regel wie Phase 3–6: **Listener ändern keinen Spielzustand.** Wer ändert, ruft direkt auf: `ShopCounter`/Dialog → `VillageShops.buy/sell` (ändert keine Beziehung); `DialogueActions` → `Relationships.add/give_gift`, `Orders.accept/turn_in`, `Village.buy_round/donate/pay_consecration`; `Orders.complete` → `Relationships.add`, `Reputation.event`, `Village.check_goal`; `Graveyard.place_marker/set_designed_stone` → `Orders.note_grave_completed/note_stone_set` (P3); `ExpansionManager` → `Orders.note_section_progress`, `Village.check_goal`; `MorgueTable` → `CorpseCare.harvest_organ` → `Specimens.harvest`, `Piety.event`, `Reputation.event`; `AnatomistPanel` → `Specimens.sell/expertise` → `Relationships.add`, `Deductions.add_card`, `Lectures.learn`; `PultPanel` → `PultRules` + `Specimens.seal/make_display/make_bone/inspect/consume`; `CollectionShelf.place` → `CollectionRules` → `payment_received`, `stats.university_standing`; `LecturePanel` → `Lectures.hold` → `Specimens.consume`, `Piety.event`, `Relationships.add`; `Lectures.apply_morning` → `Reputation.event(lecture_rumor)`; `DeductionPanel` → `Deductions.deduce` → `JournalManager.add_clue`, `CorpseManager.notify_changed`; `GravePlot` → `Specimens.return_to_grave` → `CorpseManager.notify_changed`, `Piety.event`; `Npc`-Zeitplan des Pfarrers endet → `Village.apply_minute` (Uhr) → `Village.consecrate` → `ExpansionManager.try_unlock`. `coins_spent` erhöht `stats.coins_spent` im Sender über `GameState.note_coins_spent`.
 
 ### 3.4 Logik-Klassen (Signaturen = Vertrag)
 
@@ -519,6 +618,7 @@ class_name HouseDoor extends Node3D                   # Village/Entities/door_<i
 @export var door_id: StringName; @export var room_id: StringName; @export var display_name: String = ""
 @export var open_windows: PackedInt32Array = []      # [von, bis, von, bis] Tagesminuten; leer = immer offen
 func is_open_now() -> bool; func next_opening() -> int   # Minute oder -1
+#   Wundarztstube: zusätzlich offen, wenn Lectures.door_open(door_id) (Vorlesungsabend, nur für den eingeladenen Totengräber)
 func exit_transform() -> Transform3D                  # Marker door_outside des Hausmodells
 func can_interact(player: Player) -> bool             # nie mit Leiche (Dorf); geschlossen → Prompt „Geschlossen. Öffnet um 14:00."
 func interact(player: Player) -> void                 # HutPortal.travel(..., room_id) – Player.region_id bleibt village
@@ -664,11 +764,15 @@ class_name MourningRibbon extends Node3D              # Trauerflor an Marker rib
 **Anatomie (P4)**
 ```gdscript
 class_name AnatomyConfig extends Resource             # ✦ data/config/anatomy_config.tres (§2.6; Werte dort)
-@export var organs: Dictionary[StringName, Dictionary] = {}   # heart, lung, stomach: {label, minutes, base_price, reputation_event, piety_event, res_tag, res_weight}
+@export var organs: Dictionary[StringName, Dictionary] = {}   # heart, lung, stomach, liver, kidneys, eyes, hand: {label, containers, minutes, base_price, quality, reputation_event, piety, mood, return_piety, sell_rel, lecture_bonus, medicine, res_tag, res_weight}
+@export var max_per_corpse: int = 3; @export var small_jar_inputs: Dictionary[StringName, int] = {&"prep_jar_small": 1, &"spirits": 1}
+@export var hand_inputs: Dictionary[StringName, int] = {&"linen": 1, &"beeswax": 1}; @export var sound_cue: StringName = &"anatomy_tool"
+@export var inspect_minutes: int = 20; @export var expertise_minutes: int = 30; @export var inspect_min_clarity: float = 0.5; @export var bone_minutes: int = 60
+@export var lecture: Dictionary = {}                  # §2.6.4: every_days, start, minutes, fee, standing_bonus, piety, rumor_chance(_esteemed), rumor_rep, rumor_rel, veil_alpha
 @export var tool_item: StringName = &"anatomy_case"; @export var room_id: StringName = &"crypt"; @export var min_freshness: float = 0.3
 @export var jar_inputs: Dictionary[StringName, int] = {&"prep_jar": 1, &"spirits": 1}; @export var bundle_inputs: Dictionary[StringName, int] = {&"linen": 1}
 @export var bundle_minutes: int = 600; @export var pult_cold_factor: float = 0.25; @export var clarity_words: PackedFloat32Array = [0.8, 0.6, 0.45]
-@export var research_minutes: int = 30; @export var research_min_clarity: float = 0.5
+@export var basic_teachings: Array[StringName] = [&"l_lung", &"l_liver"]   # kommen mit dem Besteck
 @export var bundle_price_factor: float = 0.5; @export var display_price_factor: float = 1.5; @export var display_price_bonus: int = 2
 @export var friend_price_bonus: int = 1; @export var return_minutes: int = 10; @export var seal_minutes: int = 5; @export var display_minutes: int = 40
 @export var veil_seconds: float = 0.6; @export var veil_alpha: float = 0.85; @export var known_flag: StringName = &"anatomy_known"
@@ -678,8 +782,8 @@ class_name SpecimenFindingData extends Resource       # ✦ data/anatomy/finding
 @export var requires_trait: StringName = &""; @export_multiline var text: String; @export var clue_id: StringName = &""
 @export var reveals_cause: StringName = &""          # Totenzettel „laut Quast: Arsenik"
 class_name SpecimenRecord extends RefCounted         # ✦ reine Daten
-const CONTAINER_JAR := &"jar"; const CONTAINER_BUNDLE := &"bundle"; const CONTAINER_DISPLAY := &"display"
-const STATES: Array[StringName] = [&"held", &"sold", &"researched", &"returned"]
+const CONTAINER_JAR := &"jar"; const CONTAINER_BUNDLE := &"bundle"; const CONTAINER_DISPLAY := &"display"; const CONTAINER_BONE := &"bone"
+const STATES: Array[StringName] = [&"held", &"sold", &"researched", &"lectured", &"used", &"returned"]   # researched = Gutachten bei Quast, used = Arznei
 var uid: String; var corpse_id: String; var corpse_name: String; var organ: StringName; var container: StringName
 var clarity_at_harvest: float; var harvest_total: int; var sealed_total: int = -1; var sealed_clarity: float = -1.0
 var cold_windows: PackedInt32Array = []; var state: StringName = &"held"; var finding_id: StringName = &""; var day: int
@@ -696,7 +800,10 @@ func get_record(uid: String) -> SpecimenRecord; func held() -> PackedStringArray
 func label(uid: String) -> String                     # „Herz – Hedwig Lamprecht, 58 – Klarheit gut"
 func harvest(corpse_id: String, organ: StringName, container: StringName, inv: Inventory) -> String   # uid | ""; nimmt Zutaten, add_unique; specimen_changed(taken)
 func sell(uid: String, inv: Inventory) -> int         # Quast anwesend; remove_uid; Münzen; Relationships.on_specimen_sold; stats.specimens_sold
-func research(uid: String, inv: Inventory) -> Dictionary   # nach der TimedAction; {finding, text, clue}; JournalManager.add_clue; Quast +3
+func expertise(uid: String, inv: Inventory) -> Dictionary  # Gutachten nach der TimedAction: Befund-Karte (Deductions.add_card) + Lehrsatz des Organs (Lectures.learn); state researched; Quast +3
+func inspect(uid: String) -> StringName              # Begutachten am Pult: Befund-Id (finding_for), das Stück bleibt; Deductions.add_card
+func consume(uid: String, inv: Inventory, state: StringName) -> bool   # für Vorlesung (lectured) und Arznei (used): remove_uid, state, specimen_changed
+func make_bone(uid: String, inv: Inventory) -> bool  # Hand-Bündel → bone_specimen (neue Item-Id, gleiche uid)
 func seal(uid: String, inv: Inventory) -> bool        # Bündel → Glas (neue uid nicht nötig: container jar, sealed_*)
 func make_display(uid: String, inv: Inventory) -> bool
 func return_block_reason(uid: String, grave_id: String) -> String; func return_to_grave(uid: String, grave_id: String, inv: Inventory) -> bool
@@ -710,7 +817,8 @@ func uids(id: StringName = &"") -> PackedStringArray; func has_uid(uid: String) 
 #   add_item für unique-Ids legt Stücke mit uid "" an (nur Debug/Tests, Warnung); remove_item(id, n) nimmt die neuesten (Kompatibilität)
 #   save/load: "uid" im Platz, fehlend = "" (tolerant); ChestTransfer.move_slot bewegt den Platz samt uid; move(id, n) wählt die neuesten
 # CorpseRecord ✦ + var hidden_cause: StringName = &""; var returned: Array[StringName] = []
-#   HARVEST_KINDS + &"heart", &"lung", &"stomach" (angehängt); is_harvested / harvested unverändert
+#   HARVEST_KINDS + &"heart", &"lung", &"stomach", &"liver", &"kidneys", &"eyes", &"hand" (angehängt); is_harvested / harvested unverändert
+#   CorpseCare.organ_block_reason prüft zusätzlich max_per_corpse (Organe zählen, Haar/Zähne nicht) und die erlaubten Behältnisse je Organ
 # CorpseTables ✦ + @export var hidden_causes: Dictionary[StringName, Array] = {}   # cause → [{id, chance}]; CorpseGenerator würfelt aus dem Seed
 # CorpseCare (P4): func organ_block_reason(id: String, organ: StringName, container: StringName, inv: Inventory) -> String
 #                  func harvest_organ(id: String, organ: StringName, container: StringName, inv: Inventory) -> String   # uid | ""
@@ -746,13 +854,67 @@ func uids(id: StringName = &"") -> PackedStringArray; func has_uid(uid: String) 
 class_name PultStore extends Chest                    # Innen Gruft am Pult; save_id "pult_store", save_order 62; PANEL &"chest"; slot_count 8
 func store() -> Inventory                             # = storage; Inventory.changed → Specimens.note_cold für Bündel (hinein/hinaus)
 # Station pult (data/stations/pult.tres): requires_built, Bau §2.7; Workbench im Gruft-Raum (room crypt), Panel &"crafting"
-#   zweite Karte → Panel &"pult" (W-UI) mit Specimens.seal / make_display als TimedAction (seal_minutes / display_minutes)
+#   zweite Karte → Panel &"pult" (W-UI): Einlegen, Schau-/Knochenpräparat, Begutachten, Arzneien – jeweils TimedAction, danach PultRules/Specimens
+class_name MedicineData extends Resource              # ✦ data/anatomy/medicines/<id>.tres (§2.7)
+@export var id: StringName; @export var organs: Array[StringName] = []   # eines davon als Präparat im Glas
+@export var min_clarity: float = 0.45; @export var inputs: Dictionary[StringName, int] = {}; @export var minutes: int = 30
+@export var output: StringName; @export var amount: int = 1
+class_name PultRules extends RefCounted
+static func medicine_block_reason(med: MedicineData, spec: SpecimenRecord, inv: Inventory, now_total: int, cfg: AnatomyConfig) -> String
+static func seal_block_reason(spec: SpecimenRecord, inv: Inventory, now_total: int, cfg: AnatomyConfig) -> String
+static func display_block_reason(spec: SpecimenRecord, inv: Inventory, cfg: AnatomyConfig) -> String
+static func bone_block_reason(spec: SpecimenRecord, inv: Inventory, now_total: int, cfg: AnatomyConfig) -> String
+static func inspect_block_reason(spec: SpecimenRecord, now_total: int, cfg: AnatomyConfig) -> String
+#   Arznei am Ende der TimedAction: Specimens.consume(uid, inv, &"used"), Zutaten fort, Ausgabe ins Inventar, stats.medicines_made
+class_name CollectionSetData extends Resource         # ✦ data/anatomy/sets/<id>.tres (§2.7)
+@export var id: StringName; @export var title: String; @export var organs: Array[StringName] = []
+@export var needs_display: bool = false; @export var reward_coins: int = 0; @export var standing: int = 1; @export var sets_flag: StringName = &""
+class_name CollectionRules extends RefCounted
+static func slot_for(organ: StringName) -> int; static func accepts(item_id: StringName, spec: SpecimenRecord) -> bool   # kein Bündel
+static func completed_sets(shelf_organs: Dictionary, sets: Array[CollectionSetData], done: PackedStringArray) -> Array[StringName]
+static func price_bonus(standing: int) -> int          # min(standing, 2)
+class_name CollectionShelf extends Chest              # Innen Gruft neben dem Pult; save_id "collection_shelf", save_order 63; 7 Plätze (ein Organ je Platz); PANEL &"collection"
+func standing() -> int; func sets_done() -> PackedStringArray
+func place(uid: String, inv: Inventory) -> bool; func take(uid: String, inv: Inventory) -> bool   # nach dem Aufstellen: CollectionRules.completed_sets → einmal Lohn (payment_received), stats.university_standing, collection_set_completed
 # PrepConfig ✦ balm_items + &"corpse_balm" (dritter Eintrag; juniper bleibt erstes Element)
-# ShedConfig.excluded_items + specimen_jar, specimen_bundle, display_specimen (nur „Überschuss einlagern")
+# ShedConfig.excluded_items + specimen_jar, specimen_bundle, display_specimen, bone_specimen (nur „Überschuss einlagern")
+```
+
+**Vorlesung & Deutung (P8)**
+```gdscript
+class_name TeachingData extends Resource              # ✦ data/anatomy/teachings/<id>.tres (§2.6.5)
+@export var id: StringName; @export var organ: StringName; @export var title: String; @export_multiline var text: String
+class_name DeductionData extends Resource             # ✦ data/anatomy/deductions/<id>.tres (§2.6.5)
+@export var id: StringName; @export var cause_id: StringName
+@export var needs_any: Array[StringName] = []         # mindestens eine dieser Karten (z. B. b_white_stomach | b_pale_liver)
+@export var needs_all: Array[StringName] = []         # alle (Befunde, Funde, Lehrsätze)
+@export var clue_id: StringName = &""; @export_multiline var text: String; @export var reveals_cause: bool = true
+class_name LectureRules extends RefCounted
+static func is_lecture_night(day: int, minute: int, cfg: AnatomyConfig) -> bool   # day % every_days == 0 und start ≤ minute < start + Fenster (bis 00:30)
+static func block_reason(spec: SpecimenRecord, now_total: int, invited: bool, held_today: bool, cfg: AnatomyConfig) -> String
+static func fee(organ: StringName, standing: int, cfg: AnatomyConfig) -> int
+static func rumor(day: int, seed: int, rep_tier: StringName, cfg: AnatomyConfig) -> bool   # deterministisch
+class_name Lectures extends Node                      # Systems/Lectures
+func invited() -> bool; func tonight() -> bool; func door_open(door_id: StringName) -> bool   # HouseDoor (P1) fragt die Gruppe lectures
+func hold(uid: String, inv: Inventory) -> Dictionary  # nach der TimedAction: Specimens.consume(lectured), Honorar (payment_received), Lehrsatz, Pietät, Quast +3, lecture_held
+func learn(teaching_id: StringName) -> bool; func known_teachings() -> PackedStringArray
+func apply_morning(day: int) -> void                  # Gerede der Nacht: Ruf, Pfarrer, Liesel (einmal)
+func save_state() -> Dictionary; func load_state(data: Dictionary) -> void
+class_name DeductionRules extends RefCounted
+static func matches(d: DeductionData, cards: PackedStringArray, cause: StringName) -> bool
+static func find(deductions: Array[DeductionData], cards: PackedStringArray, cause: StringName) -> DeductionData   # null = „Das passt nicht zusammen."
+class_name Deductions extends Node                    # Systems/Deductions
+func add_card(corpse_id: String, card_id: StringName) -> void; func cards(corpse_id: String) -> PackedStringArray   # Befunde + aufgedeckte Funde + Lehrsätze
+func can_deduce(corpse_id: String) -> bool
+func deduce(corpse_id: String, cards: PackedStringArray, cause: StringName) -> Dictionary   # {ok, cause, clue, text}; richtig: CorpseRecord.revealed_cause, JournalManager.add_clue, stats.deductions, cause_deduced
+func deduced(corpse_id: String) -> PackedStringArray
+func save_state() -> Dictionary; func load_state(data: Dictionary) -> void
+class_name LectureSet extends Node3D                  # Wundarztstube: drei sitzende Studenten + Glas auf dem Lesepult; show_lecture(organ) / hide_lecture() mit Überblendung 0,6 s
+# CorpseRecord ✦ + var revealed_cause: StringName = &""   # gedeutete wahre Ursache (Totenzettel)
 ```
 
 ### 3.5 Database (Lead)
-Neue Ordner → Schlüssel: `data/shops` (`id`), `data/orders` (`id`, nach `order`), `data/village/villagers` (`npc_id`), `data/anatomy/findings` (`id`, nach `priority`), `data/config/regions` (`region_id`). Funktionen: `shop(id)`, `shops()`, `order_data(id)`, `orders()`, `villager(npc_id)`, `villagers()`, `finding(id)`, `findings()`, `region_config(id)`. Configs `village_config`, `relationship_config`, `orders_config`, `anatomy_config`, `npc_config` über `config()`. Raum-Configs `data/config/interiors/{inn,surgery,office}.tres` über `interior_config(room_id)` (bestehend). Leere/fehlende Ordner = leere Listen.
+Neue Ordner → Schlüssel: `data/shops` (`id`), `data/orders` (`id`, nach `order`), `data/village/villagers` (`npc_id`), `data/anatomy/findings` (`id`, nach `priority`), `data/anatomy/{medicines,sets,teachings,deductions}` (`id`), `data/config/regions` (`region_id`). Funktionen: `shop(id)`, `shops()`, `order_data(id)`, `orders()`, `villager(npc_id)`, `villagers()`, `finding(id)`, `findings()`, `medicine(id)`, `medicines()`, `collection_set(id)`, `collection_sets()`, `teaching(id)`, `teachings()`, `deduction(id)`, `deductions()`, `region_config(id)`. Configs `village_config`, `relationship_config`, `orders_config`, `anatomy_config`, `npc_config` über `config()`. Raum-Configs `data/config/interiors/{inn,surgery,office}.tres` über `interior_config(room_id)` (bestehend). Leere/fehlende Ordner = leere Listen.
 
 ### 3.6 Eingaben
 Keine neuen Tasten. Panels über [E], Esc schließt. Laden-Panel: Mausklick, Umschalt+Klick = 5 Stück. Auftrags-Panel: `[`/`]` blättert (bestehende Aktionen `journal_page_prev/next`).
@@ -873,7 +1035,8 @@ Test in `test_village_world.gd` (W-Welt) auf der echten Dorf-Region, Verfahren w
 ```
 format_version: 6
 data.autoloads.GameState.stats   + village_trips, orders_done, orders_failed, gifts_given, rounds_bought, donations,
-                                   specimens_taken, specimens_sold, specimens_researched, specimens_returned,
+                                   specimens_taken, specimens_sold, specimens_researched, specimens_returned, specimens_collected,
+                                   medicines_made, lectures_attended, deductions, university_standing,
                                    coins_spent_village, coins_spent_donation, coins_spent_round, coins_spent_consecration
 data.autoloads.GameState.flags   + village_open, village_open_day: 40, p7_intro, linden_granted, linden_consecration_day: 42,
                                    linden_consecrated, anatomy_known | anatomy_declined, hagedorn_dead, name_in_village_complete,
@@ -890,6 +1053,11 @@ data.nodes.orders                {"states": {"o_fenner_well": "completed", …},
 data.nodes.specimens             {"next": 8, "records": [{uid, corpse_id, corpse_name, organ, container, clarity_at_harvest,
                                   harvest_total, sealed_total, sealed_clarity, cold_windows, state, finding_id, day}]}
 data.nodes.pult_store            {"storage": Inventory.save_state()}
+data.nodes.collection_shelf      {"storage": Inventory.save_state(), "sets_done": ["set_chest"], "standing": 1}
+data.nodes.lectures              {"invited": true, "last_day": 45, "attended": 2, "teachings": ["l_lung", "l_liver", "l_heart"], "rumor_day": 46}
+data.nodes.deductions            {"cards": {"c_0012": ["b_white_stomach", "l_stomach"]}, "done": {"c_0012": ["d_arsenic"]}}
+data.nodes.specimens.records[].state  + "lectured" | "used"; container + "bone"
+data.nodes.corpse_manager.records[]   + revealed_cause: "arsenic"
 data.nodes.graveyard.graves[]    + l_01…l_08 (aus dem Layout, Zustand LOCKED bis zur Öffnung); old_01/old_08 + design (Ersatzstein)
 data.nodes.expansion             bestehend (linden: Hindernisse, Fortschritt)
 ```
@@ -901,7 +1069,7 @@ Nicht gespeichert: NPC-Positionen (aus der Uhr), LOD-Stufen, Trauerflor (aus Tag
 2. **Inventare:** Plätze unverändert (`uid` fehlt = ""; es gibt in v5 keine Einzelstücke).
 3. **Leichen:** alle Records + `hidden_cause ""`, `returned []`. Eine Leiche auf dem Gruft-Tisch bleibt bearbeitbar; die Präparate-Karte erscheint erst mit `anatomy_known`.
 4. **Gräber:** unverändert. Die Plots `l_01…l_08` fehlen im v5-Stand und entstehen beim Laden aus dem Layout als `LOCKED` (bestehende tolerante Graveyard-Regel aus Phase 4 für neue Abschnitte).
-5. `nodes.village = {}`, `nodes.relationships = {}`, `nodes.village_shops = {}`, `nodes.orders = {}`, `nodes.specimens = {}`, `nodes.pult_store = {}`. `SaveMigration.V6_EMPTY_NODES` fügt sie erst ein, wenn W-Welt die Knoten anlegt (wie Phase 4–6).
+5. `nodes.village = {}`, `nodes.relationships = {}`, `nodes.village_shops = {}`, `nodes.orders = {}`, `nodes.specimens = {}`, `nodes.pult_store = {}`, `nodes.collection_shelf = {}`, `nodes.lectures = {}`, `nodes.deductions = {}`. `SaveMigration.V6_EMPTY_NODES` fügt sie erst ein, wenn W-Welt die Knoten anlegt (wie Phase 4–6). Records + `revealed_cause ""`.
 6. Stats (§2.11) = 0. Flags: keine. `village_open` setzt `Village.post_load` zur Laufzeit, wenn `roof_and_earth_complete` gilt.
 7. Die Bau-Maske wächst um den Lindenacker; im v5-Stand liegt dort keine Zier (vorher Wald), es muss nichts geräumt werden.
 
@@ -918,13 +1086,16 @@ Dazu `make_v5_saves.gd` + `_driver.gd` (historisches Werkzeug, wie Phase 6) und 
 ---
 
 ## 6. Debug-Konsole (W-UI) – neue Befehle
-`village open` · `region <graveyard|village>` (Teleport mit Profil, ohne Zeitsprung) · `room <inn|surgery|office>` · `tp <village|anger|linden>` · `rel <npc> <wert>` · `rel all <wert>` · `orders` (Zustände, Fristen) · `order <id> <offer|accept|done|fail>` · `board` (Tafel neu würfeln) · `linden <grant|clear|consecrate|open>` · `anatomy` (Besteck + `anatomy_known`) · `specimen <heart|lung|stomach> [jar|bundle]` (Präparat von der Tisch-Leiche sofort) · `specimens` (Liste mit Klarheit, Zustand) · `spoil <uid>` · `hidden <cause>` (verborgene Ursache der Tisch-Leiche setzen) · `hagedorn` (D1 morgen fällig) · `npclod` (LOD-Stufen als Farbe über den Köpfen) · `remark <npc>` · `vis7` (Sichtprüfung §4.5 im laufenden Spiel) · `goal7`.
+`village open` · `region <graveyard|village>` (Teleport mit Profil, ohne Zeitsprung) · `room <inn|surgery|office>` · `tp <village|anger|linden>` · `rel <npc> <wert>` · `rel all <wert>` · `orders` (Zustände, Fristen) · `order <id> <offer|accept|done|fail>` · `board` (Tafel neu würfeln) · `linden <grant|clear|consecrate|open>` · `anatomy` (Besteck + `anatomy_known`) · `specimen <heart|lung|stomach> [jar|bundle]` (Präparat von der Tisch-Leiche sofort) · `specimens` (Liste mit Klarheit, Zustand) · `spoil <uid>` · `shelf <organ…>` (Sammlung füllen) · `standing <0-4>` · `lecture` (heute Vorlesungsabend, Einladung) · `rumor <on|off>` · `cards <corpse>` (Karten anzeigen) · `deduce <corpse> <cause>` · `teach <l_id|all>` · `medicine <id>` · `hidden <cause>` (verborgene Ursache der Tisch-Leiche setzen) · `hagedorn` (D1 morgen fällig) · `npclod` (LOD-Stufen als Farbe über den Köpfen) · `remark <npc>` · `vis7` (Sichtprüfung §4.5 im laufenden Spiel) · `goal7`.
 
 ## 7. UI (W-UI)
 - **Laden-Panel** `&"shop"` (Kontext `{shop_id, speaker, inventory, player}`): Pergament wie Ilses Panel, zwei Spalten „Kaufen" / „Verkaufen", je Zeile Icon, Name, Preis (durchgestrichener Grundpreis bei Rabatt, „+1 (Ruf)" bei Aufschlag), Vorrat „noch 4 heute", gehalten „du hast 6"; Knöpfe 1 / 5; gedimmt mit Grund. Kopf: Name der Person, Beziehung als Wort und fünf Punkte.
-- **Wundarzt-Panel** `&"anatomist"` (Kontext `{speaker, inventory}`): Liste der gehaltenen Präparate mit Etikett (Organ, Name, Alter, Klarheit als Wort und Balken, Glas/Bündel/Schaupräparat, „verdorben in ≈ 4 h"), Preis, Knöpfe **„Verkaufen (8)"** und **„Untersuchen lassen (30 Min)"**; Hinweiszeile beim Verkauf: „Im Dorf wird man davon hören." Untersuchte und verkaufte erscheinen nicht mehr. Ohne Präparate: Quasts Zeile „Bringen Sie mir, was die Erde nicht vermisst." (nur bei `anatomy_known`).
-- **Präparate-Karte am Gruft-Tisch** (4. Registerkarte „Präparate" in `corpse_exam_tabs.gd`, nur ab `anatomy_known` und `room crypt`): drei Zeilen Herz / Lunge / Magen mit Umschalter **Glas** (Glas + Branntwein vorhanden/fehlt) / **Bündel** (Leinen), Dauer 20 Min, Folgenzeile („Qualität −2 · Ruf −3 · der Geist wird es merken" – ohne Pietät-Zahl, wie Phase 4), Klarheit-Vorschau („Klarheit jetzt: gut"), **zweistufige Bestätigung** („Wirklich? Noch einmal drücken.", 3 s); genommene Zeilen zeigen „Genommen – im Glas, an Quast verkauft" usw. Während der Handlung: **Schleier** (`hud/veil.gd`, 85 % Tintenblau `#1F2A3A`, 0,6 s Ein-/Ausblendung) mit Aktionsbalken und der Zeile. Untersuchungs-Karte: Ursache „laut Osric: Fieber · laut Quast: Arsenik", sobald untersucht.
-- **Pult-Panel** `&"pult"`: Präparate im Inventar und im Kühlfach, „Bündel einlegen (5 Min)", „Schaupräparat herrichten (40 Min)", Zutatenzeilen wie das Werkstatt-Panel (mit Schuppen-Holen ab Schuppen 2).
+- **Wundarzt-Panel** `&"anatomist"` (Kontext `{speaker, inventory}`): Liste der gehaltenen Präparate mit Etikett (Organ, Name, Alter, Klarheit als Wort und Balken, Glas/Bündel/Schau-/Knochenpräparat, „verdorben in ≈ 4 h"), Preis (mit „+2 Ansehen"), Knöpfe **„Verkaufen (8)"** und **„Gutachten (30 Min)"**, am Vorlesungsabend zusätzlich **„Für die Vorlesung"**; Hinweiszeile beim Verkauf: „Im Dorf wird man davon hören." Verkaufte und begutachtete erscheinen nicht mehr. Ohne Präparate: Quasts Zeile „Bringen Sie mir, was die Erde nicht vermisst." (nur bei `anatomy_known`).
+- **Vorlesung** `&"lecture"`: Auswahl des Präparats mit Honorar-Vorschau und der Zeile zur Nacht („Der Nachtwächter ist heute bei seiner Schwester."), danach die Szene: Wundarztstube bei geschlossenen Läden, eine Lampe, Quast am Lesepult, drei Studenten von hinten, das Glas im Lampenlicht, der Behandlungstisch unter dem Tuch; Schleier 60 %, Aktionsbalken 60 Min, drei Zeilen aus Quasts Vortrag (je Organ, sachlich, ohne Beschreibung des Inneren). Ergebnis-Karte: Honorar, neuer Lehrsatz.
+- **Deutungs-Panel** `&"deduction"` (aus dem Totenzettel „Ursache deuten"): links die Karten des Toten (Befunde, Funde, Lehrsätze; Farbe je Art wie die Hinweiskarten), rechts die Ursachen-Liste; 2–3 Karten und eine Ursache wählen → **„Deuten"**. Richtig: Karte „Gedeutet: Arsenik" + Hinweis; falsch: „Das passt nicht zusammen." (kein Zähler, kein Abzug). Gedeutete Tote tragen im Register ein kleines Siegel.
+- **Sammlungs-Panel** `&"collection"`: sieben Fächer mit Etiketten (leer: Organname in Grau), Sätze als Leiste mit Häkchen und Lohn, „Ansehen bei der Universität: 2", Knöpfe „Aufstellen" / „Herausnehmen". Hinweis: „Was im Regal steht, fehlt im Grab."
+- **Präparate-Karte am Gruft-Tisch** (4. Registerkarte „Präparate" in `corpse_exam_tabs.gd`, nur ab `anatomy_known` und `room crypt`): sieben Zeilen Herz / Lunge / Magen / Leber / Nieren / Augen / Hand, Kopfzeile „Genommen: 1 von höchstens 3"; je Zeile Umschalter **Glas** / **Bündel**, soweit erlaubt (Augen nur Glas, Hand nur Bündel), Zutaten vorhanden/fehlt, Dauer, Folgenzeile („Qualität −2 · Ruf −3 · der Geist wird es merken"; Augen/Hand „Qualität −3 · Ruf −5 · das wird ihr fehlen" – ohne Pietät-Zahl, wie Phase 4), Klarheit-Vorschau, **zweistufige Bestätigung** (3 s; Augen/Hand mit der längeren Zeile §2.6); genommene Zeilen zeigen „Genommen – im Glas, in der Sammlung" usw. Während der Handlung: **Schleier** (`hud/veil.gd`, 85 % Tintenblau `#1F2A3A`, 0,6 s Ein-/Ausblendung) mit Aktionsbalken und der Zeile. Untersuchungs-Karte: Ursache „laut Osric: Fieber · gedeutet: Arsenik", sobald gedeutet.
+- **Pult-Panel** `&"pult"`: Präparate im Inventar und im Kühlfach; Karten „Einlegen (5 Min)", „Schaupräparat (40 Min)", „Knochenpräparat (60 Min)", „Begutachten (20 Min)" und **„Arzneien"** (Rezeptkarten aus Quasts Rezeptbuch mit gewähltem Präparat, Zutaten, Ergebnis, Quasts Preis), Zutatenzeilen wie das Werkstatt-Panel (mit Schuppen-Holen ab Schuppen 2).
 - **Aufträge** `&"orders"` (Gemeindetafel und Dialog): Karten mit Titel, Auftraggeber, Text, Bedingungen als Häkchenliste („Totenhemd ✓ · Aussegnung – · Lindenacker ✓"), Frist („noch 2 Tage"), Lohn (Münzen, Beziehung als Pfeil, Ruf), Knopf „Annehmen" / gedimmt „Vier Aufträge laufen schon." · Kopfzeile der Tafel mit Ruf. **Merkbuch-Seite „Aufträge":** aktive (mit Fortschritt), erledigte (mit Datum nach dem Kalender aus Phase 5), gescheiterte (grau).
 - **Merkbuch-Seite „Hollerbrück":** acht Karten (Icon-Porträt aus dem Icon-Renderer, Name, Rolle, Beziehung als Wort + fünf Punkte, „Zuletzt gesprochen: heute", Laden-Zeiten, mag: „?" bis zum ersten angenommenen Geschenk), dazu die Ruf-Stufe des Dorfes. Die Pietät bleibt verborgen.
 - **Geschenk-Panel** `&"gift"`: Inventarzeilen, die die Person mag (ab dem ersten Treffer bekannt), „Schenken"; einmal je Tag.
@@ -946,12 +1117,14 @@ Dazu `make_v5_saves.gd` + `_driver.gd` (historisches Werkzeug, wie Phase 6) und 
 | `ph_int_inn_*` (`room`, `bar`, `table`, `stove`, `barrels`, `stairs`), `ph_chr_guest_a/_b` | Gaststube, sitzende Gäste ohne Rig | ≤ 9 000 / 1 500 / 600 / 1 200 / 800 / 600 · ≤ 2 500 | `door_inside`, `spawn_inside`, `light_*` |
 | `ph_int_surgery_*` (`room`, `table`, `cabinet`, `desk`, `bag`) | Wundarztstube: Gläser **trüb und verschlossen**, Etiketten ohne lesbaren Text, kein Skelett | ≤ 7 000 / 900 / 1 800 / 1 200 / 400 | – |
 | `ph_int_office_*` (`room`, `desk`, `shelf`, `poor_box`, `lectern`) | Amtsstube, Armenkasse, Lesepult mit Buch | ≤ 7 000 / 1 000 / 1 200 / 600 / 700 | – |
-| `ph_int_pult` | Präparierpult in der Gruft: Pult mit Schieferlade (Kühlfach), Glasreihe **unter einem Tuch**, Wachsstange, Etiketten | ≤ 2 200 | Marker `use`, `cold` |
+| `ph_int_pult` | Präparierpult in der Gruft: Pult mit Schieferlade (Kühlfach), Glasreihe **unter einem Tuch**, Wachsstange, Etiketten, Mörser, Rezeptbuch, kleine Fläschchenreihe | ≤ 2 400 | Marker `use`, `cold` |
+| `ph_int_collection_shelf` | Sammlungsregal: sieben Fächer hinter **Tuchvorhängen**, Etikettenleiste; belegte Fächer zeigen nur den Glasrand bzw. den Holzkasten unter dem halb gezogenen Tuch | ≤ 2 000 | Marker `slot_1…7`, `use` |
+| `ph_int_surgery_lectern`, `ph_int_surgery_bench`, `ph_int_surgery_shutters`, `ph_chr_student_a/_b/_c` | Vorlesung: Lesepult, zwei Bänke, geschlossene Fensterläden (nachts), drei sitzende Studenten ohne Rig (Mantel, Mütze, Notizbuch, von hinten bzw. im Halbprofil) | ≤ 800 / 600 / 400 / je ≤ 2 500 | Marker `jar_spot`, `seat_1…3` |
 | `ph_chr_v_innkeeper`, `_smith`, `_grocer`, `_priest`, `_mayor`, `_surgeon`, `_washer`, `_oldwoman` | die acht Dorfbewohner auf dem **gemeinsamen 8-Knochen-Rig** (wie Ilse), Animationen `idle`, `walk`, `talk`, dazu `work` (Schmied, Liesel, Krämerin) und `sit` (Hagedorn) | je ≤ 9 000 | 4–5 Kopfhöhen, eigene Silhouette je Figur (Hut/Haube/Barett/Kahlkopf/Stock), Palette der Figuren; Gesichter einfach |
 | `ph_prop_corpse_poppy` (Kindmesh `poppy` für Look 1) | D1: Mohnsträußchen am Mieder | ≤ 300 | – |
-| `ph_item_prep_jar`, `_spirits`, `_beeswax`, `_anatomy_case`, `_specimen_jar`, `_specimen_bundle`, `_display_specimen`, `_fever_tincture`, `_wound_salve`, `_corpse_balm`, `_honey_cake`, `_elder_wine` | Item-Icons | ≤ 800 | **Präparat im Glas:** trübes Glas mit Wachsdeckel, Papieretikett, Inhalt nur als dunkler, unbestimmter Schatten; **Bündel:** Leinen mit Schnur; **Schaupräparat:** Glasglocke auf Holzsockel mit Siegel. Kein Rot, keine Organformen |
+| `ph_item_prep_jar`, `_prep_jar_small`, `_spirits`, `_beeswax`, `_anatomy_case`, `_specimen_jar`, `_specimen_bundle`, `_display_specimen`, `_bone_specimen`, `_fever_tincture`, `_wound_salve`, `_corpse_balm`, `_antidote`, `_bitter_drops`, `_dropsy_powder`, `_honey_cake`, `_elder_wine` | Item-Icons | ≤ 800 | **Präparat im Glas:** trübes Glas mit Wachsdeckel, Papieretikett, Inhalt nur als dunkler, unbestimmter Schatten; **Augen:** dasselbe als kleines, fast schwarzes Glas mit zwei Siegeln, nichts erkennbar; **Bündel:** Leinen mit Schnur; **Knochenpräparat:** geschlossener Holzkasten mit Leinenpaket und Etikett; **Schaupräparat:** Glasglocke auf Holzsockel mit Siegel; **Arzneien:** beschriftete Fläschchen und Pulverbriefchen „nach Quast". Kein Rot, keine Organformen |
 - Wiederverwenden: Friedhofs-Zaun, Holunderbüsche, Bäume, Laternenpfahl, Handkarren, Phase-6-Trauergäste (Gaststube), `ph_prop_corpse_shrouded` (Tuch beim Präparat), Bänke.
-- **Kein Gore:** keine offenen Leiber, keine Organe außerhalb trüber Gläser, kein Blut, keine Instrumente im Detail (das Besteck ist eine geschlossene Ledertasche).
+- **Kein Gore:** keine offenen Leiber, keine Organe außerhalb trüber Gläser, keine Augen und keine Hand sichtbar (nur das dunkle Glas und der Holzkasten), kein Blut, keine Instrumente im Detail (das Besteck ist eine geschlossene Ledertasche), keine Darstellung der Arznei-Herstellung. Kein Gehirn, kein Schädel.
 
 ## 9. Performance-Budget (Phase 7, Messung mit `village_shots.gd` und `graveyard_shots_phase7.gd`)
 | Größe | Budget | Begründung |
@@ -982,13 +1155,15 @@ Regeln wie Phase 3–6 (Fixtures statt fremder Moduldaten, Fehler-Logger, Watchd
 | `test_relationships.gd` | P2 | Startwert (Ruf- und Pietät-Bonus), Stufen 15/40/70, Klemme 0…100, Gespräch +1 je Tag, Geschenk nur gemocht und einmal je Tag, Runde für alle in der Gaststube, Spende, Präparat-Verkauf/-Rückgabe-Deltas, `count_at_least`, Gerede-Vorrang, Save/Load |
 | `test_orders.gd` | P3 | alle sechs Arten; Freigaben (Flag, Vorgänger, Stufe), `max_active 4`, Fristen 06:00, Scheitern (Beziehung −4, `fail_rel`), Bestatt-Bedingungen (`wait`/`broken`/`done`), `unharvested` scheitert beim Nehmen, Stein-Abgleich, Tafel deterministisch mit Abkühlzeit, Lohn einmal, Save/Load |
 | `test_village.gd` / `test_expansion.gd` (+) | P3 | Freischaltung (Morgen/Laden v5/v6, idempotent), Weihe-Preis je Stufe, Weihetag (Pfarrer-Eintrag gilt nur heute), `consecrate` + `try_unlock` in beiden Reihenfolgen, `unlock_flag`, Runde/Spende je Tag, Trauerflor deterministisch, Kapitel genau einmal (alle vier Bedingungen, jede Reihenfolge), Ersatzstein auf `old_01`/`old_08` nur mit Auftrag (Zustand bleibt OLD) |
-| `test_specimens.gd` / `test_anatomy_harvest.gd` | P4 | Sperrgründe (Karte unsichtbar ohne `anatomy_known`/außerhalb der Gruft, eingekleidet, Frische < 0,3, Werkzeug, Glas/Bündel-Zutaten, Platz), Wirkung (Ruf −3, Pietät −8, `harvested`, Qualität −2 beim Zeichen, kein `full_prep`), Klarheit = Frische am Ende, Bündel-Verfall 600 Min und × 0,25 im Kühlfach (Fenster, Mehrtagessprung, Laden mitten im Fenster), Einlegen, Preise (Tabelle §2.6), Verkauf/Untersuchung/Rückgabe schließen sich aus, Befund-Vorrang, Hinweise einmal, verborgene Ursachen deterministisch, `kept`, Save/Load |
+| `test_specimens.gd` / `test_anatomy_harvest.gd` | P4 | Sperrgründe (Karte unsichtbar ohne `anatomy_known`/außerhalb der Gruft, eingekleidet, Frische < 0,3, Werkzeug, Behältnis je Organ: Augen nur Glas, Hand nur Bündel, Zutaten, Platz, **höchstens 3 je Leiche**), Wirkung je Organ (Tabelle §2.6: Ruf, Pietät, Qualität beim Zeichen, Geist), kein `full_prep`, Klarheit = Frische am Ende, Bündel-Verfall 600 Min und × 0,25 im Kühlfach (Fenster, Mehrtagessprung, Laden mitten im Fenster), Preise (§2.6.1 mit Ansehen), Verkauf/Gutachten/Vorlesung/Arznei/Rückgabe schließen sich aus, Befund-Vorrang, verborgene Ursachen deterministisch, `kept`, Save/Load |
 | `test_inventory_unique.gd` | P4 | Einzelstücke: ein Platz je Stück, `uid` bleibt bei Truhe/Schuppen/Kühlfach-Transfer, `remove_uid`, Save/Load mit und ohne `uid`, alte Stände unverändert, `ChestTransfer` |
 | `test_ghosts.gd` (+) / `test_corpse_generator.gd` (+) | P4 | `robbed_count` mit Rückgabe, Grund `robbed_organ`, Pools `by_organ`/`by_returned` einmal je Grab; `hidden_cause` aus dem Seed, Story-Leichen ohne |
-| `test_pult.gd` / `test_recipes_phase7.gd` | P7 | Bau (Material + 12 Münzen, nur Gruft ≥ 1), Rezepte, Totensalbe als Räucher-Ersatz (× 0,25, 18 h), Kühlfach meldet Fenster, Schaupräparat, Schuppen-Ausschlüsse |
+| `test_pult.gd` / `test_recipes_phase7.gd` / `test_medicines.gd` / `test_collection.gd` | P7 | Bau (Material + 12 Münzen, nur Gruft ≥ 1), Kräuter-Rezepte, Totensalbe als Räucher-Ersatz (× 0,25, 18 h), Kühlfach meldet Fenster, Schau- und Knochenpräparat, Begutachten (Stück bleibt, Karte einmal), Arzneien (nur erlaubte Organe, Klarheit ≥ 0,45, Präparat verbraucht, Ausgabe 2/2/1), Sammlung (ein Organ je Fach, kein Bündel, Sätze einmal belohnt auch nach Herausnehmen und Wiederaufstellen, Ansehen nie sinkend, Preisbonus ≤ 2), Schuppen-Ausschlüsse |
+| `test_lectures.gd` / `test_deductions.gd` | P8 | Vorlesungsabend (`Tag % 3`, 23:00–00:30, Tür nur dann), Einladung, ein Abend einmal, Bündel abgelehnt, Honorar (Organ, Ansehen), Lehrsatz einmal, Pietät −3, Gerede deterministisch (25 %/10 %) mit Ruf/Pfarrer/Liesel am Morgen einmal; Deutung: Karten-Sammlung je Toter (Befund, Funde, Lehrsätze), `needs_any`/`needs_all`, falsche Deutung ohne Folgen und ohne Zähler, richtige einmal (Hinweis, `revealed_cause`, Stat), `d_still_heart` → `c_v_still_heart`, Save/Load |
 | `test_dialogue.gd` (+) / `test_story.gd` / `test_journal.gd` (+) / `test_save_migration.gd` (+) / `test_save.gd` (+) / `test_game_state.gd` (+) | P6 | neue Bedingungen/Aktionen; Osric `p7_intro` einmal; Quast-Angebot (annehmen/ablehnen/später); Ilses neue Fragen und Hinweis; D1 fällig nach `after_flag + 8` nur mit Weihe, Reservierung im Lindenacker, `hagedorn_dead` um 00:00; Erkenntnisse `i_deathbook`/`i_burn_it`; **7 v5-, 7 v4-, 6 v3-, 4 v2-, 3 v1-Fixtures laden ohne Fehler/Warnungen**; v6-Roundtrip identisch; Version 7 → abgelehnt |
 | `test_assets_phase7.gd` | P5 | Modelle vorhanden, Budgets §8, Marker (`door_outside`, `door_inside`, `spawn_inside`, `counter`, `anvil`, `ribbon`, `light_*`, `use`, `cold`), Rig/Animationen der acht Figuren (gemeinsames Skelett, `idle`/`walk`/`talk`), Höhen (Katen ≤ 4,5 m, Kirchturm ≤ 17 m), Icons; **Stilregel:** Präparat-Icons ohne gesättigtes Rot (Pixelprüfung) |
-| `test_ui_phase7.gd` | W-UI | Laden-, Wundarzt-, Auftrags-, Geschenk-, Pult-Panel (Werte = Systeme, Gründe), Präparate-Karte (zweistufig, Schleier an/aus, Folgenzeile), Merkbuch „Aufträge"/„Hollerbrück", Zielzeilen, HUD-Ortsname, Gerede-Blase, Register/Totenzettel/Tageszusammenfassung, Debug-Befehle |
+| `test_ui_phase7.gd` | W-UI | Laden-, Wundarzt-, Auftrags-, Geschenk-, Pult-, Sammlungs-, Vorlesungs- und Deutungs-Panel (Werte = Systeme, Gründe), Präparate-Karte (sieben Zeilen, Grenze 3, zweistufig, Schleier an/aus, Folgenzeile), Merkbuch „Aufträge"/„Hollerbrück"/„Ursache deuten", Zielzeilen, HUD-Ortsname, Gerede-Blase, Register/Totenzettel/Tageszusammenfassung, Debug-Befehle |
+- `test_lecture_night.gd` (P8): eingeladener Totengräber reist um 22:30 ins Dorf, Tür der Wundarztstube öffnet nur am Vorlesungsabend, Vorlesung mit echtem Präparat, Rückweg, Gerede am Morgen nach dem deterministischen Seed; Roundtrip mitten in der Nacht vor der Vorlesung.
 
 **Integration**
 - `test_region_travel.gd` (P1): Wegstein → Dorf → Gaststube → Dorf → Friedhof mit echter `HutPortal`/`RegionTravel`-Kette; Uhr +60 Min gesamt; Kamera-Profil je Ort; Speichern/Laden in jedem der fünf Zustände (Friedhof, Dorf, Gaststube, Gruft, Kapelle) → identische Ansicht.
@@ -1001,8 +1176,8 @@ Regeln wie Phase 3–6 (Fixtures statt fremder Moduldaten, Fehler-Logger, Watchd
   | Strategie | Start | Tage | Verhalten | Erwartung |
   |---|---|---|---|---|
   | `neighbor7` | v5 `day40_reverent` | 13 | Bogen A §1.4, keine Präparate | Kapitel ≤ B13; Ende 30–110; Morgenstand nie < 15; ≥ 8 Aufträge; Pietät nicht gesunken |
-  | `anatomist7` | v5 `day40_reverent` | 13 | Besteck angenommen, jede Leiche Herz + Lunge + Magen im Glas, alles an Quast | Kapitel erreicht (Sterbebuch über die Amtsstube); Pfarrer und Liesel höchstens „Bekannt"; Geister der Lindenacker-Gräber unruhig; Präparat-Netto 2–7 je Leiche |
-  | `scholar7` | v5 `day41_mender` | 13 | nur Herzen im Glas, alle untersuchen, zwei Bündel ins Kühlfach und einlegen, zwei Gläser zurücklegen | `i_burn_it` (wenn eine gezeichnete Leiche kam, sonst Befund), Rückgabe hebt die Stimmung um 5; Kapitel erreicht |
+  | `anatomist7` | v5 `day40_reverent` | 13 | Besteck angenommen; jede Leiche außer D1 Herz + Augen + Hand; 10 an Quast, 7 in die Sammlung, 4 in Vorlesungen | Kapitel erreicht (Sterbebuch über die Amtsstube); Pfarrer und Liesel höchstens „Bekannt"; Ende ≤ `neighbor7` + 40 (Anatomie nicht dominant, §2.10); Ansehen ≥ 2; Geister der Lindenacker-Gräber unruhig |
+  | `scholar7` | v5 `day41_mender` | 13 | Herz, Leber, Magen im Glas; alles begutachten und deuten, Arzneien für die Arznei-Aufträge, zwei Bündel ins Kühlfach und einlegen, zwei Gläser zurücklegen | jede mögliche Deutung richtig gefunden; falsche Versuche ohne Folgen; `i_burn_it` (wenn eine gezeichnete Leiche kam); Rückgabe hebt die Stimmung; Ende ≤ `neighbor7` + 40; Kapitel erreicht |
   | `penitent7` | v5 `day45_harvester` | 13 | keine Präparate, Spenden 2/Tag, Runden, Geschenke | Ruf steigt ≥ eine Stufe; Kapitel erreicht |
   | `founder7` | v5 `day37_founder` | 15 | `crafter` + Phase 7 | Kapitel ≤ Tag 55; alte Kapitel unverändert |
   | `save_load7` | wie `neighbor7` | 13 | lädt jeden Morgen, einmal in der Gaststube und einmal mit Bündel im Kühlfach | bitgleich zu `neighbor7` |
@@ -1042,22 +1217,29 @@ Regeln wie Phase 3–6 (Fixtures statt fremder Moduldaten, Fehler-Logger, Watchd
 | p7_26 | Neuer Stein auf `old_08` (Dorothee Mahn) neben dem alten an der Gruft-Treppe |
 | p7_27 | Merkbuch: Erkenntnis „Vorher eingetragen" |
 | p7_28 | Abschluss-Panel „Ein Name im Dorf" |
+| p7_29 | Sammlungsregal in der Gruft mit zwei vollständigen Sätzen (Tuchvorhänge halb gezogen) und das Sammlungs-Panel |
+| p7_30 | Anatomie-Vorlesung nachts: geschlossene Läden, Lampe, Quast am Lesepult, drei Studenten von hinten, Schleier 60 % |
+| p7_31 | Deutungs-Panel: Befund „weißlicher Belag", Lehrsatz „Arsenik …", Ursache gewählt, „Deuten" / Ergebnis „Gedeutet: Arsenik" |
+| p7_32 | Pult-Panel „Arzneien" mit Leberglas und zwei Bittertropfen als Ergebnis |
+| p7_33 | Präparate-Karte mit sieben Zeilen, „Genommen: 2 von höchstens 3", Augen-Zeile geschärft mit der längeren Zeile |
 | p7_vis_village / _linden | Sichtprüfung §4.5/§4.6 mit eingezeichneten Strahlen (frei grün, verdeckt rot), Zoom 12/22/24 |
 Dazu Asset-Tafeln `docs/reviews/phase7_assets/` (Gebäude, Figuren mit Rig-Posen, Items) und eine Performance-Tabelle (`perf_p7_01…05`: Anger Tag Zoom 24 mit 9 Figuren · Dorf nachts · Gaststube abends voll · Friedhof mit Lindenacker belegt · Gruft mit Pult und vollen Nischen).
 
 ## 12. Wellenplan
 | Welle | Agents (parallel) | Inhalt | Ende |
 |---|---|---|---|
-| **W0** | Lead | **Zuerst v5-Fixtures mit Build `705bd5a`** (7 Stände §5.2, eigener Commit vor jedem Gerüst) und `tests/fixtures/phase7/layout_p6.json`. Dann: Datenklassen ✦ (inkl. Erweiterungen), Stubs mit exakten Signaturen, 8 EventBus-Signale, Database-Ordner, `SaveMigration.CURRENT = 6` mit `migrate_5_to_6` als Identität (fail-safe), Config-Fixtures `tests/fixtures/phase7/` (+ `Phase7Fixtures`, u. a. `region_at(id, tree)`, `villager(npc, value)`, `order_in(id, state)`, `specimen(organ, container, clarity, corpse)`, `shop_with(stock)`, `linden_open(tree)`), Prüfung aller `npc_id`-Lookups auf Region (§3.4), `test_phase7_scaffold.gd`, `test_saves_v5_load.gd` | Import + alle Tests grün → Commit |
-| **W1** | P1, P2, P3, P4, P5, P6, P7 (bei 5 Agents: P2 + P7, P3 + P6) | Systeme mit Unit-Tests gegen Fixtures (ohne Welt): Regionen/Portale/Türen/NPC-LOD/Zeitplan-Region (P1) · Läden/Beziehungen/Gerede (P2) · Aufträge/Dorf/Weihe/Kapitel/Ersatzstein (P3) · Präparate/Einzelstücke/Befunde/Rückgabe/Geister (P4) · Assets + Asset-Tests, **Figuren zuerst** (P5) · Dialoge der acht + Osric/Ilse, D1, Merkbuch, Migration v6 (P6) · Pult/Rezepte/Kühlfach (P7) | je Modul: Tests grün → Merge durch Lead, danach `--import` |
+| **W0** | Lead | **Zuerst v5-Fixtures mit Build `705bd5a`** (7 Stände §5.2, eigener Commit vor jedem Gerüst) und `tests/fixtures/phase7/layout_p6.json`. Dann: Datenklassen ✦ (inkl. Erweiterungen), Stubs mit exakten Signaturen, 11 EventBus-Signale, Database-Ordner, `SaveMigration.CURRENT = 6` mit `migrate_5_to_6` als Identität (fail-safe), Config-Fixtures `tests/fixtures/phase7/` (+ `Phase7Fixtures`, u. a. `region_at(id, tree)`, `villager(npc, value)`, `order_in(id, state)`, `specimen(organ, container, clarity, corpse)`, `shelf_with(organs)`, `lecture_night(day)`, `cards_for(corpse, ids)`, `shop_with(stock)`, `linden_open(tree)`), Prüfung aller `npc_id`-Lookups auf Region (§3.4), `test_phase7_scaffold.gd`, `test_saves_v5_load.gd` | Import + alle Tests grün → Commit |
+| **W1** | **8 Pakete:** P1, P2, P3, P4, P5, P6, P7, P8 (bei 5 Agents: P1 · P2 + P7 · P3 + P6 · P4 + P8 · P5) | Systeme mit Unit-Tests gegen Fixtures (ohne Welt): Regionen/Portale/Türen/NPC-LOD/Zeitplan-Region (P1) · Läden/Beziehungen/Gerede (P2) · Aufträge/Dorf/Weihe/Kapitel/Ersatzstein (P3) · Anatomie-Kern: Präparate-Karte mit sieben Organen, Einzelstücke, Verderben, Verkauf, Gutachten, Befunde, Rückgabe, Geister (P4) · Assets + Asset-Tests, **Figuren zuerst** (P5) · Dialoge der acht + Osric/Ilse, D1, Merkbuch, Migration v6 (P6) · Präparierpult: Arzneien, Sammlung, Kühlfach, Schau-/Knochenpräparat, Kräuter-Rezepte (P7) · Vorlesung und Todesursachen-Deutung (P8) | je Modul: Tests grün → Merge durch Lead, danach `--import` |
 | **W2** | W-Welt, W-UI (2 parallel) | Dorf-Region (Layout, Builder, Boden, Gras, Licht, Wegpunkte, 9 Npc), drei Innenräume, Wegstein, Lindenacker (L1–L9), Pult-Platz, Pfarrer am Weihetag, **Sichtprüfungen §4.5/§4.6** und Wege, `test_phase7_loop`, `test_village_world`; alle Panels, Präparate-Karte mit Schleier, Merkbuch-Seiten, HUD, Zielzeilen, Register, Debug, Icons | Integration + Roundtrips grün, Screenshots erstellt |
 | **W3** | QA (19), Art (04), Lead | `phase7_bot.gd` (6 Strategien, Münzbuch), Save-Fuzzer v6, Performance relativ (§9), Stil-/Ton-Prüfung (Dorf-Licht, Figuren, Gläser ohne Gore, Schleier, Trauerflor, Texte der acht Stimmen), Befunde beheben (Besitzer), Gate-Protokoll in `QUALITY_GATE_STATUS.md` | **STOPP – Benutzerprüfung G7** |
 Abhängigkeiten:
 - **P1 liefert zuerst** (Tag 1 der Welle): `RegionRoot`, `Player.region_id`, `ScheduleEntry.region` im Resolver und `Npc.region_id`. P2/P3 (Läden, Weihetag) und P6 (Zeitpläne) hängen daran. Bis dahin arbeiten Läden mit `is_open` aus dem Zeitplan allein (wie `NightTrade`).
-- **P4 liefert zuerst** die Einzelstücke im `Inventory` (Tag 1–2): P7 (Kühlfach, Schaupräparat) und W-UI (Wundarzt-Panel) hängen daran.
+- **P4 liefert zuerst** die Einzelstücke im `Inventory` und `Specimens.harvest/consume/inspect` (Tag 1–2): P7 (Kühlfach, Sammlung, Arzneien), P8 (Vorlesung verbraucht, Begutachten liefert Karten) und W-UI (Wundarzt-Panel) hängen daran. Bis dahin arbeiten P7/P8 mit `Phase7Fixtures.specimen(...)`.
+- **P8** braucht von P6 nur die Hinweis-Daten (`c_v_*`) und `JournalManager.add_clue` (bestehend); die Deutung legt keine eigene Merkbuch-Logik an, das Panel ist W-UI.
+- **Lastverteilung W1** (Richtwert Arbeitstage): P1 4 · P2 3 · P3 4 · P4 4 · P5 6 (größtes Paket, Figuren und Dorf) · P6 4 · P7 3 · P8 3.
 - **P5 liefert zuerst** die acht Figuren (Rig, `idle/walk/talk`) und die Nordreihe des Dorfes (Höhen) – **Blocker** für die Sichtprüfung im Dorf. Bis dahin: graue Platzhalter-Quader in Modellmaß und die Ilse-Figur als Stellvertreter (nur Tests, nie in Screenshots).
 - `graveyard.gd`: nur P3 (Ersatzstein, Aufträge). `grave_plot.gd`: nur P4 (beide Prompts). `corpse_care.gd`/`morgue_table.gd`: nur P4. `expansion_manager.gd`: nur P3. `dialogue_*`: nur P6. `npc.gd`/`schedule_resolver.gd`: nur P1.
-- Texte: P6 besitzt alle Dialoge und Zeitpläne, P3 die Aufträge (`data/orders/*`), P4 die Befunde und Geisterzeilen, P2 Gerede und Bewohnerdaten. Die Leittexte stehen in §1–§2; wer sie ändert, meldet es dem Lead.
+- Texte: P6 besitzt alle Dialoge und Zeitpläne (auch Quasts Vortragszeilen in seinem Dialog), P3 die Aufträge (`data/orders/*`), P4 die Befunde und Geisterzeilen, P7 die Arznei- und Sammlungstexte, P8 die Lehrsätze und Deutungen, P2 Gerede und Bewohnerdaten. Die Leittexte stehen in §1–§2; wer sie ändert, meldet es dem Lead.
 
 ## 13. Nicht in Phase 7
 - Ein durchgehend begehbarer Kutschweg, weitere Dörfer, Stadtbesuche, Reisen mit Karren oder Kutsche (Welt: Phase 11)
@@ -1066,18 +1248,18 @@ Abhängigkeiten:
 - Freie Gespräche, Gerüchte-Netz, Tagesabläufe, die auf den Spieler reagieren (NPCs: Phase 8); Quest-Ketten mit Verzweigung und Belohnungsbaum (Phase 9)
 - Preisdynamik, Angebot und Nachfrage, Steuern, Pacht, Kredit (Phase 10)
 - Leichen ins Dorf tragen, Leichen aus dem Dorf abholen, mehr als eine Lieferung am Tag, Exhumieren
-- Fleisch, Blut, Fett, Haut, Gehirn, Knochen oder Schädel als Ware; Organe als Zutat für Salben, Speisen, Tränke; sichtbare Organe, offene Leiber, Sektionsszenen; Organe für die Auferstehung (Phase 13 – heute nur Daten)
+- Fleisch, Blut, Fett, Haut, Gehirn oder Schädel als Ware; Knochen außer dem Knochenpräparat der Hand; Organe als Speise oder Zaubertrank; Arzneien aus Herz, Augen oder Hand; Darstellung der Arznei-Herstellung; sichtbare Organe, offene Leiber, Sektionsszenen (auch in der Vorlesung bleibt der Tisch leer); Organe für die Auferstehung (Phase 13 – heute nur Daten); mehr als 3 Präparate je Leiche; eine Universität als Ort, Briefwechsel mit ihr (nur das Empfehlungsschreiben als Flag)
 - Präparate an Ilse; Präparate aus Gräbern holen; Präparate von Geschichts-Leichen S1–S5 (bestattet)
 - Wer zeichnet, und warum; Lorenz' Aufenthalt; das Gitter in der Gruft (Phase 12)
 - Gegner, Diebstahl, Strafen, Verhaftung, Kirchenbann
 - Neue Gebäude auf dem Friedhof, Zier im Dorf, Zier auf Ruhezeit-Gräbern; Wetter, Jahreszeiten
 - Änderungen am Maler-Shader, an den Atmosphären-Presets, an den freigegebenen Abschnitten I–IV, Werkhof, Kirchhof, an Hütte, Werkbank, Stationen, Pforten und den Phase-6-Gebäuden (außer §4.6)
 
-## 14. Vertragsfragen (bitte beim Freigeben beantworten)
-1. **Anbindung des Dorfes:** Eigene Außen-Region mit Abblende am Wegstein und **30 Spielminuten** Weg je Richtung (§4.1, Empfehlung) – oder kürzer (15 Min) / länger (45 Min)? Ein durchgehender Weg ist nicht vorgesehen.
-2. **Neuer Grund: der Lindenacker** südlich der Ostwiese mit **8 Grabstellen**, vom Schultheiß gegeben und vom Pfarrer geweiht; dafür werden zwei (bedingt drei) Waldbäume versetzt (§2.9, §4.6). Einverstanden – oder lieber eine andere Lage (z. B. Gräber rund um die Kapelle, enger und mit Risiko für die Kapellen-Sicht)?
-3. **Organ-System:** drei Präparate (**Herz, Lunge, Magen**), Glas (haltbar, 5 Münzen Ware) oder Bündel (verdirbt in 10 h, im Kühlfach × 0,25), Verkauf an Quast (8 / 5 / 6 Grundpreis), Untersuchung mit Befund, Schaupräparat am Pult und **„Präparat beisetzen"** als würdiger Rückweg (§2.6). Passt Umfang und Ton – oder soll ein Teil (z. B. das Bündel oder die Rückgabe) entfallen?
-4. **Wiebke Hagedorn:** Man lernt sie im Dorf kennen, sie bittet um ihren Platz, und ungefähr acht Tage später bringt Osric sie – gezeichnet (§2.9, §1.6). Ist dieser Ton recht – oder soll sie überleben und eine andere Person die Geschichts-Leiche D1 sein?
+## 14. Benutzerentscheidungen (03.10.2026, bindend)
+1. **Anbindung des Dorfes:** eigene Außen-Region mit Abblende am Wegstein und an der Holderbrücke, **30 Spielminuten** Weg je Richtung (§4.1).
+2. **Lindenacker:** 8 Grabstellen südlich der Ostwiese, vom Schultheiß gegeben, vom Pfarrer geweiht; zwei (bedingt drei) Waldbäume werden versetzt (§2.9, §4.6).
+3. **Organ-System – erweitert:** sieben Präparate (**Herz, Lunge, Magen, Leber, Nieren, Augen, Hand/Knochen**; die Hand als Lehrpräparat und späterer Auferstehungs-Haken) und alle vier zusätzlichen Zwecke: **Präparatesammlung** mit Sätzen und Ansehen bei der Universität (§2.7), **Arzneien aus Präparaten** für kranke Dorfbewohner (§2.7), Quasts heimliche **Anatomie-Vorlesung** bei Nacht (§2.6.4) und die **Todesursachen-Deutung** über das Verknüpfen im Merkbuch (§2.6.5). Darstellung bleibt **angedeutet** (Tuch, Werkzeuggeräusch als Haken, Abblende; nur verschlossene Gläser und Leinenbündel; kein Blut, keine offenen Wunden, kein Gehirn, keine Schädelpunkte; Augen nur im dunklen versiegelten Glas, die Hand nur in Leinen). Eigene Mechaniken bleiben: „Präparat beisetzen", Einzelstücke mit Id, Glas gegen Leinen-Verderben, Kühlfach. Neu abgewogen: Kosten je Organ (Augen und Hand am schwersten), Preise, Sätze, Arzneien, Vorlesung; die Anatomie ist kein dominanter Verdienst, der würdevolle Weg bleibt gleichwertig bezahlt (§2.10). Paketschnitt: P4 Anatomie-Kern, P7 Präparierpult mit Arzneien und Sammlung, P8 Vorlesung und Deutung (§12).
+4. **Wiebke Hagedorn stirbt** als Geschichts-Leiche D1, gezeichnet, nachdem man sie im Dorf kennengelernt hat (§2.9, §1.6).
 
 ---
 
