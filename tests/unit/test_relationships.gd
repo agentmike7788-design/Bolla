@@ -242,7 +242,10 @@ func test_real_villager_data_has_six_to_eight_remarks() -> void:
 			n += v.remarks[key].size()
 			assert_true(key in [&"friend", &"specimens"] or String(key).begins_with("rep_") or String(key).begins_with("piety_"),
 					"%s key %s" % [id, key])
-		assert_true(n >= 6 and n <= 8, "%s: 6–8 remarks (%d)" % [id, n])
+		# §2.4 "6–8 Zeilen"; villagers with the two piety_* lines carry them on top of
+		# 5 × rep_ + friend + specimens, so they may have 9.
+		var most := 9 if v.remarks.has(&"piety_devout") else 8
+		assert_true(n >= 6 and n <= most, "%s: 6–%d remarks (%d)" % [id, most, n])
 		for t: StringName in ReputationRules.TIERS:
 			assert_true(v.remarks.has(StringName("rep_" + String(t))), "%s rep_%s" % [id, t])
 		var f := Phase7Fixtures.villager_data(id)

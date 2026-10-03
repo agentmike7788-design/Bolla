@@ -30,7 +30,7 @@ class RelDouble extends Relationships:
 		adds.append([npc_id, delta])
 		return 0
 
-	func on_specimen_sold() -> void:
+	func on_specimen_sold(_organ: StringName = &"") -> void:
 		sold += 1
 
 	func on_specimen_returned() -> void:

@@ -2327,19 +2327,19 @@ const P7_FLAGS: Array[StringName] = [&"village_open", &"p7_intro", &"anatomy_kno
 
 class P7Rel extends Relationships:
 	var vals: Dictionary = {}
-	var met_ids: Array = []
+	var fake_met: Array = []
 	var calls: Array = []
 
 	func value(npc_id: StringName) -> int:
 		return int(vals.get(npc_id, 0))
 
 	func met(npc_id: StringName) -> bool:
-		return met_ids.has(npc_id)
+		return fake_met.has(npc_id)
 
 	func meet(npc_id: StringName) -> void:
 		calls.append(["meet", npc_id])
-		if not met_ids.has(npc_id):
-			met_ids.append(npc_id)
+		if not fake_met.has(npc_id):
+			fake_met.append(npc_id)
 
 	func note_talk(npc_id: StringName) -> void:
 		calls.append(["talk", npc_id])
@@ -2375,7 +2375,7 @@ func _p7_world(rel_values: Dictionary = {}, met: Array = []) -> P7Rel:
 	_p7_clear()
 	var rel := P7Rel.new()
 	rel.vals = rel_values.duplicate()
-	rel.met_ids = met.duplicate()
+	rel.fake_met = met.duplicate()
 	tree.root.add_child(rel)
 	return rel
 

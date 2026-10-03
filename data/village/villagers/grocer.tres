@@ -16,11 +16,11 @@ specimen_delta = 0
 returned_delta = 0
 piety_sensitive = false
 remarks = Dictionary[StringName, PackedStringArray]({
-&"friend": PackedStringArray("Ich hab dir was Buntes zurückgelegt. Frag nicht, nimm es mit.", "Ich hab etwas Buntes für Sie! Ich weiß nicht, was es ist. Darum ist es bunt."),
-&"rep_disreputable": PackedStringArray("Zwei, drei, vier … der Totengräber zahlt heute bar, ja?", "Drei, vier, fünf – und der Totengräber, sechs. Ich zähle alles, was vorbeigeht."),
-&"rep_esteemed": PackedStringArray("Meine Mutter hätte dich gemocht. Sie mochte ordentliche Leute.", "Für Sie lege ich das gute Leinen zurück. Rechnen Sie nicht nach, ich hab es schon."),
-&"rep_renowned": PackedStringArray("Für den Totengräber leg ich die gute Ware nach vorn.", "Der Herr Totengräber! Meine Mutter hätte Ihnen einen Stuhl hingestellt. Ich stelle Ihnen zwei hin."),
-&"rep_respected": PackedStringArray("Der Totengräber. Grüß Gott.", "Drei Ellen Leinen, ich weiß schon. Ich rechne es dir zusammen.", "Grüß Gott, Herr Totengräber! Ich hab Wachs, ich hab Kerzen, ich hab Buntes."),
-&"rep_unremarkable": PackedStringArray("Leinen, Kerzen, Buntes. Was soll's sein?", "Leinen ist frisch, Herr Totengräber! Sechs Ellen, und dann ist es weg."),
+&"rep_disreputable": PackedStringArray("Drei, vier, fünf – und der Totengräber, sechs. Ich zähle alles, was vorbeigeht."),
+&"rep_unremarkable": PackedStringArray("Leinen ist frisch, Herr Totengräber! Sechs Ellen, und dann ist es weg."),
+&"rep_respected": PackedStringArray("Grüß Gott, Herr Totengräber! Ich hab Wachs, ich hab Kerzen, ich hab Buntes."),
+&"rep_esteemed": PackedStringArray("Für Sie lege ich das gute Leinen zurück. Rechnen Sie nicht nach, ich hab es schon."),
+&"rep_renowned": PackedStringArray("Der Herr Totengräber! Meine Mutter hätte Ihnen einen Stuhl hingestellt. Ich stelle Ihnen zwei hin."),
+&"friend": PackedStringArray("Ich hab etwas Buntes für Sie! Ich weiß nicht, was es ist. Darum ist es bunt."),
 &"specimens": PackedStringArray("Gläser, Gläser. Seit Sie im Dorf sind, verkaufe ich mehr Gläser als Gurken. Das rechne ich mir nicht aus.")
 })

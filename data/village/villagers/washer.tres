@@ -16,13 +16,13 @@ specimen_delta = -3
 returned_delta = 2
 piety_sensitive = true
 remarks = Dictionary[StringName, PackedStringArray]({
-&"piety_devout": PackedStringArray("Du riechst nach Wacholder. Das ist ein guter Geruch für einen wie dich."),
-&"piety_hardhearted": PackedStringArray("Du riechst nach Branntwein und Leinen. Ich weiß, was das heißt.", "Du riechst nach Branntwein und kaltem Stein. Bleib weg von meinem Garn."),
-&"rep_disreputable": PackedStringArray("Geh weiter. Ich hab zu tun.", "Der da. Der nimmt den Toten was weg, sagen sie. Ich sag nichts. Ich spinne."),
-&"rep_esteemed": PackedStringArray("Die Kehrs sagen, du hast ihre Großmutter schön hingelegt. Das hab ich gern gehört.", "Die alte Kehr sagt, du hast ihren Mann gut hingelegt. Gutes Weinen war das."),
-&"rep_renowned": PackedStringArray("Kaspar hätte dich gemocht. Er mochte nicht viele.", "Totengräber. Bei dir kommen sie an, als hätten sie es gut gehabt."),
-&"rep_respected": PackedStringArray("Der Totengräber. Grüß Gott."),
+&"rep_disreputable": PackedStringArray("Der da. Der nimmt den Toten was weg, sagen sie. Ich sag nichts. Ich spinne."),
 &"rep_unremarkable": PackedStringArray("Hm. Der Totengräber."),
-&"specimens": PackedStringArray("Wieder ein Glas zum Quast? Ich zähle mit, Totengräber.", "Wieder ein Glas mit einem Namen drauf, hört man. Ich hab sie gewaschen, Totengräber. Alle."),
-&"friend": PackedStringArray("Komm her, setz dich. Ich hab dir einen Faden gesponnen. Für nichts. Einfach so.")
+&"rep_respected": PackedStringArray("Der Totengräber. Grüß Gott."),
+&"rep_esteemed": PackedStringArray("Die alte Kehr sagt, du hast ihren Mann gut hingelegt. Gutes Weinen war das."),
+&"rep_renowned": PackedStringArray("Totengräber. Bei dir kommen sie an, als hätten sie es gut gehabt."),
+&"piety_devout": PackedStringArray("Du riechst nach Wacholder. Das ist ein guter Geruch für einen wie dich."),
+&"piety_hardhearted": PackedStringArray("Du riechst nach Branntwein und kaltem Stein. Bleib weg von meinem Garn."),
+&"friend": PackedStringArray("Komm her, setz dich. Ich hab dir einen Faden gesponnen. Für nichts. Einfach so."),
+&"specimens": PackedStringArray("Wieder ein Glas mit einem Namen drauf, hört man. Ich hab sie gewaschen, Totengräber. Alle.")
 })
