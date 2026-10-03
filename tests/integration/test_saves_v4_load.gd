@@ -136,7 +136,9 @@ func test_day20_crafter_loads() -> void:
 	assert_eq(TimeManager.day, 20)
 	assert_true(TimeManager.minute_of_day >= 1200, "evening of the chapter day")
 	assert_true(GameState.has_flag(&"names_in_stone_complete"), "names_in_stone just reached")
-	assert_false(GameState.has_flag(&"buildings_open"), "Phase 6 opens next morning")
+	# §1.2: a migrated v4 save with names_in_stone_complete opens at once (Buildings.post_load), also
+	# in the evening (W-Welt: the world now has the Buildings node; before W2 there was none).
+	assert_true(GameState.has_flag(&"buildings_open"), "§1.2: v4 with names_in_stone_complete → buildings_open at once")
 	await _check_and_resave()
 
 

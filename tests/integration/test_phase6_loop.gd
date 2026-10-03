@@ -368,6 +368,9 @@ func _press(action: StringName, strength: float) -> void:
 ## Save → load → identical collect_state(); rebinds the new world.
 func _round_trip(moment: String) -> void:
 	UIState.clear()
+	# The gravekeeper settles on the ground after a portal trip before the state is taken.
+	for i: int in 8:
+		await tree.physics_frame
 	var before := SaveManager.collect_state()
 	assert_eq(SaveManager.save_game(SLOT), OK, moment + ": saved")
 	var err: Error = await SaveManager.load_game(SLOT)
@@ -398,6 +401,11 @@ func _state_diff(a: Variant, b: Variant, path: String, out: PackedStringArray) -
 			return
 		for i: int in (a as Array).size():
 			_state_diff(a[i], b[i], "%s[%d]" % [path, i], out)
+		return
+	if a is Vector3 and b is Vector3:
+		# The gravekeeper may settle by a float32 ulp on the ground collision after a load.
+		if (a as Vector3).distance_to(b) > 1e-5:
+			out.append("~%s (%s → %s)" % [path, a, b])
 		return
 	if (a is float or b is float) and (a is float or a is int) and (b is float or b is int):
 		if absf(float(a) - float(b)) > 1e-9 * maxf(1.0, absf(float(a))):

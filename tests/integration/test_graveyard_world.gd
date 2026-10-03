@@ -1982,6 +1982,7 @@ func test_phase6_layout_diff_against_phase5() -> void:
 		"~forest.trees[0].pos",                                                   # G4 (conditional)
 		"~background_trees[3].pos", "~forest.trees[1].pos", "~gather_nodes[gather_alder_2].pos",   # §4.5 crypt view
 		"~walkable_bounds.min", "~extra_walls", "~camera_bounds.min",            # K4, K5, S2, S3
+		"~dirt_spots[dirt_y11].pos", "+dirt_spots[dirt_y11]._comment",            # G5 (conditional)
 	]
 	for g: Dictionary in old.old_graves:
 		allowed.append("+old_graves[%s].pit_variant" % g.id)
@@ -2000,7 +2001,7 @@ func test_phase6_layout_diff_against_phase5() -> void:
 	assert_eq(layout.plots, old.plots, "plots")
 	assert_eq(_by_id(layout.clearables, "obs_h_gate"), _by_id(old.clearables, "obs_h_gate"), "Pförtchen")
 	for d: Dictionary in old.dirt_spots:
-		if d.id != "dirt_y01":
+		if not d.id in ["dirt_y01", "dirt_y11"]:
 			assert_eq(_by_id(layout.dirt_spots, String(d.id)), d, String(d.id))
 	for g: Dictionary in old.old_graves:
 		var now := _by_id(layout.old_graves, String(g.id)).duplicate()
