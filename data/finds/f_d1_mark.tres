@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="FindData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/corpse/find_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"f_d1_mark"
+step = &"wounds"
+label = "Das Zeichen, frisch verheilt"
+text = "Das Zeichen über ihrem Herzen ist frisch verheilt. Drei Wochen, nicht mehr. Sie hat es gewusst."
+lost_text = ""
+min_freshness = 0.3
+trait_id = &"strange_wound"
+cause_id = &""
+story_only = true
+clue_id = &"c_v_hagedorn"
+sets_flag = &""

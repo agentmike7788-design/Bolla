@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_v_still_heart"
+title = "Ein Herz ohne Krankheit"
+text = "Ein gesundes Herz eines Gezeichneten, still stehen geblieben. Quast: „Ich habe so ein Herz schon zweimal eingelegt. Beide Male lag morgens ein Zettel vor meiner Tür.“"
+kind = &"note"
+order = 36

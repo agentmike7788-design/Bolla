@@ -797,3 +797,64 @@ static func _path_text(path: Array) -> String:
 
 func _on_note(text: String, _kind: StringName) -> void:
 	notes.append(text)
+
+
+## Phase 7 (P6, docs/PHASE7_DESIGN.md §10): the seven v5 fixtures through the v5 → v6 migration and the
+## JSON / native layers.
+func test_fuzz_v5_fixtures() -> void:
+	for id: String in Phase7Fixtures.SAVES_V5:
+		var text := FileAccess.get_file_as_string(Phase7Fixtures.save_v5_path(id))
+		assert_ne(text, "", id)
+		assert_eq(int((JSON.parse_string(text) as Dictionary).format_version), 5, id)
+		await _fuzz_text(text, id, V4_FIXTURE_SHARE)
+	print("FUZZ v5 fixtures: %d loaded, %d rejected" % [stats.ok, stats.rejected])
+
+
+## Phase 7 (P6): a v6 save (the Phase-6 world saves v6 now) with targeted mutations of the Phase-7 parts
+## – region_id, the record fields hidden_cause / returned (⊄ harvested) / revealed_cause, a Phase-7
+## system state with nonsense (orders states, relationship values out of 0…100, specimen records).
+## Unknown regions read as the graveyard; returned ⊆ harvested after the load.
+func test_fuzz_v6_phase7_parts() -> void:
+	var text := await _make_v5_save()
+	var doc: Dictionary = JSON.parse_string(text)
+	assert_eq(int(doc.format_version), 6, "saved as v6")
+	var state := SaveFileIO.decode_state(doc.get("data"))
+	for case: int in 8:
+		var st := state.duplicate(true)
+		var what := ""
+		var records: Array = st.nodes.corpse_manager.corpses if st.nodes.get("corpse_manager") is Dictionary \
+				and st.nodes.corpse_manager.get("corpses") is Array else []
+		match case:
+			0:
+				st.nodes.player["region_id"] = "moon"
+				what = "unknown region"
+			1:
+				st.nodes.player["region_id"] = 7
+				what = "region not a string"
+			2:
+				for r: Variant in records:
+					if r is Dictionary:
+						r["returned"] = ["heart", "eyes", 3, "heart"]
+				what = "returned ⊄ harvested"
+			3:
+				for r: Variant in records:
+					if r is Dictionary:
+						r["hidden_cause"] = 12
+						r["revealed_cause"] = ["x"]
+				what = "hidden / revealed cause of the wrong type"
+			4:
+				st.nodes["orders"] = {"states": {"o_fenner_linden": "eaten", "nope": "accepted"}, "board_day": "x"}
+				what = "orders nonsense"
+			5:
+				st.nodes["relationships"] = {"values": {"innkeeper": 500, "smith": -40}, "met": "all"}
+				what = "relationships out of range"
+			6:
+				st.nodes["specimens"] = {"next": -3, "records": [{"uid": "sp_0001", "state": "eaten"}, 5]}
+				what = "specimen records"
+			7:
+				st.nodes["village"] = {"open_day": "x", "donation_steps": 99, "goal_done": "yes"}
+				what = "village nonsense"
+		var d: Dictionary = doc.duplicate(true)
+		d.data = JSON.from_native(st)
+		await _load_doc(d, "p7 targeted: " + what)
+	print("FUZZ v6 (Phase 7 parts): %d loaded, %d rejected" % [stats.ok, stats.rejected])

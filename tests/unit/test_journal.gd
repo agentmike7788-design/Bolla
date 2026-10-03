@@ -421,9 +421,13 @@ func test_self_page_has_no_number() -> void:
 
 # --- real data (data/journal/**) --------------------------------------------------------------
 
+const PHASE7_INSIGHTS: Array[StringName] = [&"i_deathbook", &"i_burn_it"]
+
+
 func test_real_clues_match_the_contract() -> void:
 	# Phase 6 (P3): c_crypt_draft is checked in test_ossuary.gd.
-	var clues: Array = Database.clues().filter(func(c: ClueData) -> bool: return c.id != &"c_crypt_draft")
+	# Phase 7 (P6): the c_v_* clues are checked in test_phase7_clues_and_insights.
+	var clues: Array = Database.clues().filter(func(c: ClueData) -> bool: return c.id != &"c_crypt_draft" and not String(c.id).begins_with("c_v_"))
 	assert_eq(clues.size(), 18, "18 clues (§2.12)")
 	var ids: Array[StringName] = []
 	for c: ClueData in clues:
@@ -443,7 +447,7 @@ func test_real_clues_match_the_contract() -> void:
 
 
 func test_real_insights_match_the_contract() -> void:
-	var insights: Array = Database.insights()
+	var insights: Array = Database.insights().filter(func(i: InsightData) -> bool: return not i.id in PHASE7_INSIGHTS)
 	assert_eq(insights.size(), 6, "5 + 1 optional")
 	var optional := 0
 	for i: InsightData in insights:
@@ -495,5 +499,49 @@ func test_real_data_links_every_insight() -> void:
 	var linked: Array[StringName] = []
 	for i: InsightData in Database.insights():
 		linked.append(j.try_link(i.requires))
-	assert_eq(linked, [&"i_warnings", &"i_marked", &"i_ferry", &"i_still_writing", &"i_not_lorenz", &"i_kranich"] as Array[StringName])
-	assert_eq(j.self_page().insights_total, 5)
+	assert_eq(linked, [&"i_warnings", &"i_marked", &"i_ferry", &"i_still_writing", &"i_not_lorenz", &"i_kranich", &"i_deathbook",
+			&"i_burn_it"] as Array[StringName], "Phase 7: + i_deathbook, i_burn_it")
+	assert_eq(j.self_page().insights_total, 6, "Phase 7: + i_deathbook (i_burn_it is optional)")
+
+
+# --- Phase 7 (P6, docs/PHASE7_DESIGN.md §1.6, §2.6.5) -------------------------------------------
+
+func test_phase7_clues_and_insights() -> void:
+	for id: StringName in Phase7Fixtures.CLUE_IDS:
+		var c := Database.clue(id) as ClueData
+		var f := Phase7Fixtures.clue(id)
+		assert_not_null(c, String(id))
+		if c == null:
+			continue
+		assert_eq([c.kind, c.order, c.title], [f.kind, f.order, f.title], String(id))
+		assert_true(c.text.length() >= 40, "%s has a real text" % id)
+	for id: StringName in [&"c_v_three_visitors", &"c_v_deathbook", &"c_v_washing"]:
+		assert_eq((Database.clue(id) as ClueData).text, Phase7Fixtures.clue(id).text, "%s: the leading text §1.6" % id)
+	for id: StringName in [&"c_v_arsenic", &"c_v_dry_lungs"]:
+		assert_true((Database.clue(id) as ClueData).text.ends_with("Im Dorf stirbt man nicht immer an dem, was Osric sagt."), String(id))
+	var deathbook := Database.insight(&"i_deathbook") as InsightData
+	assert_eq([deathbook.requires, deathbook.sets_flag, deathbook.optional],
+			[[&"c_v_deathbook", &"c_v_washing", &"c_v_three_visitors"] as Array[StringName], &"insight_deathbook", false])
+	assert_true(deathbook.text.contains("Drei kommen in Frage."), "the mystery goes on, unresolved")
+	var burn := Database.insight(&"i_burn_it") as InsightData
+	assert_eq([burn.requires, burn.optional], [[&"c_v_still_heart", &"c_warning_letter"] as Array[StringName], true])
+
+
+func test_deathbook_insight_links_from_its_three_clues() -> void:
+	var j := JournalManager.new()
+	tree.root.add_child(j)
+	var unlocked: Array = []
+	var cb := func(id: StringName) -> void: unlocked.append(id)
+	EventBus.insight_unlocked.connect(cb)
+	GameState.clear_flag(&"insight_deathbook")
+	for id: StringName in [&"c_v_three_visitors", &"c_v_deathbook"]:
+		j.add_clue(id)
+	assert_eq(j.try_link([&"c_v_three_visitors", &"c_v_deathbook"] as Array[StringName]), &"", "two are not enough")
+	j.add_clue(&"c_v_washing")
+	assert_eq(j.try_link([&"c_v_washing", &"c_v_three_visitors", &"c_v_deathbook"] as Array[StringName]), &"i_deathbook")
+	assert_true(GameState.flag_on(&"insight_deathbook"))
+	assert_eq(unlocked, [&"i_deathbook"])
+	assert_false(j.try_link([&"c_v_hagedorn", &"c_v_washing"] as Array[StringName]) == &"i_deathbook", "c_v_hagedorn is mood only")
+	EventBus.insight_unlocked.disconnect(cb)
+	GameState.clear_flag(&"insight_deathbook")
+	j.free()

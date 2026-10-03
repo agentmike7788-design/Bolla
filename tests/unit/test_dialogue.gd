@@ -2073,7 +2073,7 @@ func test_carter_pickaxe_once_steel_and_fittings() -> void:
 	_go_action(r, "give_item:iron_fittings:2")
 	assert_eq([inv.count(&"coin"), inv.count(&"iron_fittings")], [6, 6])
 	assert_eq(spent, [[14, &"osric"], [6, &"osric"], [6, &"osric"], [12, &"osric"], [6, &"osric"]])
-	assert_eq(GameState.coin_ledger(), {&"license": 0, &"build": 0, &"osric": 44, &"ilse": 0, &"building": 0} as Dictionary[StringName, int])
+	assert_eq(GameState.coin_ledger(), {&"license": 0, &"build": 0, &"osric": 44, &"ilse": 0, &"building": 0, &"village": 0, &"donation": 0, &"round": 0, &"consecration": 0} as Dictionary[StringName, int])
 	_go(r, &"p5_shop")
 	assert_true(_has_action_choice(r, "give_item:steel_rod:1"), "6 coins: steel is repeatable")
 	assert_false(_has_action_choice(r, "give_item:iron_fittings:4"))

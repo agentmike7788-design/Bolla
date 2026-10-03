@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="InsightData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/insight_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"i_deathbook"
+order = 7
+title = "Vorher eingetragen"
+question = "Wer schreibt die Namen auf?"
+text = "Im Sterbebuch steht das Zeichen neben Namen, deren Tod erst Wochen später eingetragen wurde. Liesel hat es an ihren Leibern gesehen, Lorenz hat nach denen gefragt, die die Kranken besuchen. Wer zeichnet, kommt ins Haus, solange sie noch leben, und schreibt sie vorher auf. Drei kommen in Frage. Eine davon hat Lorenz geholfen."
+requires = Array[StringName]([&"c_v_deathbook", &"c_v_washing", &"c_v_three_visitors"])
+sets_flag = &"insight_deathbook"
+optional = false
+rename_story = &""
+rename_to = ""

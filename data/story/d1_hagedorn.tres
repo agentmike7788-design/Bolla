@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StoryCorpseData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/story/story_corpse_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"d1_hagedorn"
+order = 6
+earliest_day = 1
+display_name = "Wiebke Hagedorn"
+age = 81
+cause_id = &"old_age"
+traits = Array[StringName]([&"strange_wound"])
+valuables_coins = 0
+look = 1
+finds = Array[StringName]([&"f_d1_poppy", &"f_d1_mark", &"f_d1_note"])
+arrival_note = "Die alte Hagedorn. Heute Nacht, im Schlaf, sagt Liesel. Sie hat mir letzte Woche aufgetragen, dir auszurichten: nicht trödeln. Ich richte es aus."
+is_finale = false
+after_flag = &"village_open_day"
+after_days = 8
+section = &"linden"
+requires_flag = &"linden_consecrated"
+due_flag = &"hagedorn_dead"
