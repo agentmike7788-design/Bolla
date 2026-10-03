@@ -285,15 +285,16 @@ func locked_plot_count() -> int:
 	return count
 
 
-## W-Welt (Phase 7): a locked plot of a section that waits for a flag nobody has set yet (the
-## Lindenacker before linden_granted) is no capacity to come – the Phase-4 story reservation
-## (CorpseDeliveryRules.reserved_plots) must not count on it.
+## W-Welt (Phase 7): a locked plot of a section that only a story event opens (unlock_flag – the
+## Lindenacker opens with linden_consecrated) is no capacity to come before that event – the
+## Phase-4 story reservation (CorpseDeliveryRules.reserved_plots) must not count on it. Sections
+## the player unlocks himself (the Holunderwinkel with its key) still count.
 func _may_open(grave_id: String) -> bool:
 	var section_id: StringName = _plot_sections.get(grave_id, &"")
 	if section_id == &"":
 		return true
 	var data := Database.section(section_id) as SectionData
-	return data == null or data.requires_flag == &"" or GameState.flag_on(data.requires_flag)
+	return data == null or data.unlock_flag == &"" or GameState.flag_on(data.unlock_flag)
 
 
 ## Section of the plot of `grave_id` (&"" = no plot in this world).

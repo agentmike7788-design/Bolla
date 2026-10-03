@@ -52,7 +52,7 @@ const P7_SHOTS: Array[Dictionary] = [
 	{"name": "perf_p7_02_village_night", "day": 41, "minute": 1330, "player": Vector2(0.6, -0.4), "game": 26.0},
 	{"name": "perf_p7_03_inn_evening_full", "day": 41, "minute": 1150, "room": "inn", "player": Vector2(0.9, 1.3)},
 	# Last: the ribbon is forced on for the shot.
-	{"name": "p7_15_mourning_hagedorn", "day": 41, "minute": 780, "player": Vector2(-2.6, 7.2), "facing": 120.0, "game": 16.0,
+	{"name": "p7_15_mourning_hagedorn", "day": 41, "minute": 780, "player": Vector2(-3.2, 11.3), "facing": 200.0, "focus": Vector2(-5.6, 15.4), "distance": 11.0,
 			"stage": "mourning"},
 ]
 
@@ -211,7 +211,13 @@ func _stage_village(world: Node3D, shot: Dictionary) -> void:
 			if ribbon != null:
 				ribbon.visible = true
 				ribbon.set_meta(&"shot_forced", true)
-			_stage_npc(world, "npc_washer", _vpos(world, Vector2(-4.7, 9.6)), 155.0, &"idle", 0.4)
+			_stage_npc(world, "npc_washer", _vpos(world, Vector2(-4.7, 16.9)), 200.0, &"idle", 0.4)
+			# Wiebke Hagedorn is the dead of this house: not in the village.
+			var wiebke := world.find_child("npc_oldwoman", true, false) as Node3D
+			if wiebke != null:
+				wiebke.call(&"_set_state", false, false, false)
+				wiebke.process_mode = Node.PROCESS_MODE_DISABLED
+				_staged_npcs.append(wiebke)
 		"vis":
 			await _stage_vis_village(world, float(shot.zoom), shot)
 
@@ -382,8 +388,8 @@ func _unstage(world: Node3D) -> void:
 		npc.process_mode = Node.PROCESS_MODE_INHERIT
 	_staged_npcs.clear()
 	for node: Node in world.get_tree().get_nodes_in_group(&"npc"):
-		(node as Node3D).visible = true
 		node.call(&"refresh")
+		(node as Node3D).visible = bool(node.get(&"_present"))
 	for node: Node in world.get_tree().get_nodes_in_group(&"mourning_ribbon"):
 		if node.has_meta(&"shot_forced"):
 			node.remove_meta(&"shot_forced")

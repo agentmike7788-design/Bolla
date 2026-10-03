@@ -115,10 +115,17 @@ func test_carter_fixture_village_entries_fit_his_home_times() -> void:
 	for e: ScheduleEntry in fixture.entries:
 		if e.region == &"":
 			graveyard.append(e)
-	assert_eq(graveyard.size(), data.entries.size(), "the graveyard entries stay")
+	# W-Welt (W1 note): carter_schedule.tres holds the 7 village entries as well – its graveyard
+	# routine (no region) is the reference.
+	var data_graveyard := NpcSchedule.new()
+	for e: ScheduleEntry in data.entries:
+		if e.region == &"":
+			data_graveyard.entries.append(e)
+	assert_eq(graveyard.size(), data_graveyard.entries.size(), "the graveyard entries stay")
+	assert_eq(fixture.entries.size(), data.entries.size(), "the data = the fixture")
 	for minute: int in range(0, 1440, 5):
 		var e := ScheduleResolver.entry_at(fixture, minute, 40)
-		var old := ScheduleResolver.entry_at(data, minute, 40)
+		var old := ScheduleResolver.entry_at(data_graveyard, minute, 40)
 		if e.region == &"village":
 			assert_false(old.visible, "@%d: a village entry only while he is 'home' on the graveyard" % minute)
 		else:

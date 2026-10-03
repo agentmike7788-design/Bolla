@@ -298,6 +298,13 @@ static func _build_entities(ctx: Ctx, entities: Node3D, buildings: Node3D) -> vo
 				var marker := house.find_child("ribbon", true, false) as Node3D
 				var ribbon := _instance(RIBBON_SCENE, String(ent.id))
 				ribbon.transform = house.transform * Ctx.rel_xform(marker, house)
+				# G7 art review (p7_15): under a low eave (the cottages) the marker sits in the eave's
+				# shadow from the 45° camera – "ribbon_drop" lowers it onto the door frame, a hand
+				# off the wall.
+				var drop := float(_building(ctx, String(ent.house_id)).get("ribbon_drop", 0.0))
+				if drop > 0.0:
+					var out := Vector3(ribbon.position.x - house.position.x, 0.0, ribbon.position.z - house.position.z)
+					ribbon.position += Vector3.DOWN * drop + (out.normalized() * 0.2 if out.length() > 0.01 else Vector3.ZERO)
 				ribbon.set("house_id", StringName(ent.house_id))
 				ctx.add(entities, ribbon)
 				var model := (load(Ctx.model_path(RIBBON_ASSET)) as PackedScene).instantiate() as Node3D
@@ -439,3 +446,11 @@ static func grass_blocked(layout: Dictionary, p: Vector2) -> bool:
 		if p.distance_to(Ctx.v2(t.pos)) < 0.9 * float(t.scale):
 			return true
 	return false
+
+
+## The layout entry of building `id` ({} if none).
+static func _building(ctx: Ctx, id: String) -> Dictionary:
+	for b: Dictionary in ctx.layout.buildings:
+		if String(b.id) == id:
+			return b
+	return {}

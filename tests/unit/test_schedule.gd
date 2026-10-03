@@ -28,8 +28,18 @@ func _carter() -> NpcSchedule:
 	return load(CARTER_PATH) as NpcSchedule
 
 
-func _carter_entry(start: int) -> ScheduleEntry:
+## Phase 7 (W-Welt, W1 note): carter_schedule.tres also holds Osric's 7 village entries (region
+## village, §2.2); the graveyard routine checked here is the entries without a region.
+func _graveyard_entries() -> Array[ScheduleEntry]:
+	var out: Array[ScheduleEntry] = []
 	for e: ScheduleEntry in _carter().entries:
+		if e.region == &"":
+			out.append(e)
+	return out
+
+
+func _carter_entry(start: int) -> ScheduleEntry:
+	for e: ScheduleEntry in _graveyard_entries():
 		if e.start_minute == start:
 			return e
 	return null
@@ -166,7 +176,8 @@ func test_carter_schedule_loads_with_identity() -> void:
 	assert_not_null(s, CARTER_PATH)
 	assert_eq(s.npc_id, &"carter")
 	assert_eq(s.display_name, "Osric Faulhaber")
-	assert_eq(s.entries.size(), 9)
+	assert_eq(_graveyard_entries().size(), 9, "the graveyard routine")
+	assert_eq(s.entries.size(), 16, "+ 7 village entries (Phase 7)")
 	assert_eq(Database.schedule(&"carter"), s, "registered in Database by npc_id")
 
 
@@ -184,16 +195,16 @@ func test_carter_morning_arrival_matches_delivery_minute() -> void:
 
 func test_carter_entries_sorted_unique_and_in_range() -> void:
 	var last := -1
-	for e: ScheduleEntry in _carter().entries:
+	for e: ScheduleEntry in _graveyard_entries():
 		assert_true(e.start_minute > last, "ascending, unique start %d" % e.start_minute)
 		assert_true(e.start_minute >= 0 and e.start_minute < 1440)
 		assert_true(e.travel_minutes >= 0)
 		last = e.start_minute
-	assert_eq(_carter().entries[0].start_minute, 0, "day starts with an entry at 00:00")
+	assert_eq(_graveyard_entries()[0].start_minute, 0, "day starts with an entry at 00:00")
 
 
 func test_carter_paths_use_known_waypoints() -> void:
-	for e: ScheduleEntry in _carter().entries:
+	for e: ScheduleEntry in _graveyard_entries():
 		assert_false(e.path.is_empty(), "entry %d has a path" % e.start_minute)
 		for wp: String in e.path:
 			assert_has(WAYPOINTS, wp, "entry %d" % e.start_minute)
@@ -202,7 +213,7 @@ func test_carter_paths_use_known_waypoints() -> void:
 
 func test_carter_paths_are_continuous() -> void:
 	# Each phase starts where the previous one ended (wrapping over midnight).
-	var entries := _carter().entries
+	var entries := _graveyard_entries()
 	for i: int in entries.size():
 		var prev := entries[i - 1] if i > 0 else entries[entries.size() - 1]
 		var cur := entries[i]
@@ -269,7 +280,7 @@ func test_carter_specific_entries() -> void:
 
 func test_carter_arrivals_match_next_phase() -> void:
 	# Every walk ends exactly when the next phase begins.
-	var entries := _carter().entries
+	var entries := _graveyard_entries()
 	for i: int in entries.size():
 		var e := entries[i]
 		if e.travel_minutes == 0:
@@ -279,7 +290,7 @@ func test_carter_arrivals_match_next_phase() -> void:
 
 
 func test_carter_hidden_phases_have_no_dialogue_or_cart() -> void:
-	for e: ScheduleEntry in _carter().entries:
+	for e: ScheduleEntry in _graveyard_entries():
 		if not e.visible:
 			assert_eq(e.activity, &"home")
 			assert_eq(e.dialogue_id, &"")

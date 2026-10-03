@@ -416,6 +416,13 @@ func _finish_new_stone() -> void:
 	# rest-period grave and takes the stone out of the mason's rack (stone_order_changed &"set").
 	if graveyard == null or order.is_empty() or masonry.set_stone(grave_id, null) <= 0:
 		EventBus.notification_requested.emit(TEXT_CANNOT_SET_STONE, &"warning")
+		return
+	# W-Welt (G7 shot p7_26): replace_old_marker sends grave_stone_set only (the state stays OLD, no
+	# quality signal) – the new stone shows at once, not after the next load.
+	var grave := _grave()
+	marker_id = grave.marker_id if grave != null else marker_id
+	design = grave.design.duplicate(true) if grave != null else design
+	_apply_visual()
 
 
 func _return_minutes() -> int:

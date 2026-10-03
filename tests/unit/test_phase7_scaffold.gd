@@ -481,10 +481,15 @@ func test_villager_and_schedule_fixtures() -> void:
 		assert_eq([e.today_flag, e.region], [&"linden_consecration_day", &""], "graveyard region")
 	var carter := Phase7Fixtures.schedule(&"carter")
 	var real := Database.schedule(&"carter") as NpcSchedule
-	assert_eq(carter.entries.size(), real.entries.size() + 7, "Osric: the graveyard entries + 7 village entries")
+	# W-Welt (W1 note): the data now carries the 7 village entries too – data = fixture.
+	var real_graveyard := real.entries.filter(func(e: ScheduleEntry) -> bool: return e.region == &"")
+	assert_eq(carter.entries.size(), real_graveyard.size() + 7, "Osric: the graveyard entries + 7 village entries")
+	assert_eq(real.entries.size(), carter.entries.size(), "carter_schedule.tres = the fixture (W-Welt)")
 	for i: int in real.entries.size():
 		assert_eq(carter.entries[i].start_minute, real.entries[i].start_minute, "carter entry %d unchanged" % i)
-		assert_eq(carter.entries[i].region, &"")
+		assert_eq(carter.entries[i].region, real.entries[i].region, "carter entry %d region" % i)
+	for i: int in real_graveyard.size():
+		assert_eq(carter.entries[i].region, &"", "the graveyard entries first")
 
 
 func test_shop_and_order_fixtures() -> void:

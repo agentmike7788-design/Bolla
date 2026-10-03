@@ -9,7 +9,7 @@ extends "res://src/world/village/village_shots.gd"
 ## consecration day (the priest's schedule entry at linden_spot, today_flag) · consecrated and opened
 ## (ExpansionManager.unlock), six graves dug, filled and marked (Graveyard API) · the pult in the crypt
 ## (Workshop state + refresh_built, as the build would) · Dorothee Mahn's new stone on old_08
-## (o_mangold_stone accepted, Stonemasonry.carve, set at the grave like [E]). Sight rays as
+## (o_mangold_stone accepted, Stonemasonry.carve, set as the end of the [E] action does). Sight rays as
 ## village_sight.gd (the check of test_graveyard_world §4.6), seen from above.
 ## Per shot: <out>/<name>.png|jpg and a line in render_stats_p7_graveyard.txt.
 
@@ -35,7 +35,7 @@ const G7_SHOTS: Array[Dictionary] = [
 			"player": Vector2(9.0, 0.0), "stage": "vis", "zoom": 22.0},
 	{"name": "p7_vis_linden_z24", "day": 43, "minute": 640, "focus": Vector2(17.0, 12.5), "distance": 44.0, "pitch": 85.0,
 			"player": Vector2(9.0, 0.0), "stage": "vis", "zoom": 24.0},
-	{"name": "p7_16_crypt_pult", "day": 43, "minute": 660, "room": "crypt", "player": Vector2(0.7, 0.3), "levels": [2, 2, 2],
+	{"name": "p7_16_crypt_pult", "day": 43, "minute": 660, "room": "crypt", "player": Vector2(1.3, -0.8), "levels": [2, 2, 2],
 			"stage": "pult"},
 	{"name": "p7_26_new_stone_old_08", "day": 43, "minute": 660, "focus": Vector2(-6.4, 6.6), "distance": 12.0,
 			"player": Vector2(-4.0, 7.6), "facing": 120.0, "stage": "new_stone"},
@@ -172,10 +172,10 @@ func _stage_new_stone(world: Node3D) -> void:
 		push_warning("[ShotsP7G] old_08 refused: %s" % masonry.call(&"order_block_reason", "old_08", design, _bag))
 		return
 	var plot := world.call(&"get_node_by_layout_id", "old_08") as Node3D
-	var player := world.get_node(^"Player") as Node3D
-	player.global_position = plot.global_position + Vector3(0.0, 0.0, 1.8)
-	plot.call(&"interact", player)
-	root.get_node(^"UIState").call(&"clear")
+	# [E] starts the timed action „Stein setzen"; the shot takes its end directly.
+	plot.call(&"_finish_new_stone")
+	var grave: RefCounted = _system(world, "Graveyard").call(&"get_grave", "old_08")
+	print("[ShotsP7G] old_08 carved %s, stone set: %s" % [carved, not (grave.get(&"design") as Dictionary).is_empty()])
 
 
 func _shoot_grave(world: Node3D, shot: Dictionary, report: PackedStringArray) -> void:
