@@ -475,7 +475,7 @@ static func deadline_text(o: OrderData, days_left: int) -> String:
 		return ORDER_NO_DEADLINE
 	if days_left < 0:
 		return ORDER_DAYS_TODAY if o.days_limit == 1 and o.board else ORDER_DAYS_OFFER % [o.days_limit, days_word(o.days_limit)]
-	if days_left <= 0:
+	if days_left <= 1:
 		return ORDER_DAYS_TODAY
 	return ORDER_DAYS_LEFT % [days_left, days_word(days_left)]
 
@@ -645,7 +645,7 @@ static func objective(world: Dictionary) -> String:
 	var urgent: Dictionary = world.get("urgent_order", {})
 	if not urgent.is_empty():
 		var left := int(urgent.get("days_left", 0))
-		return OBJ_ORDER_TODAY % str(urgent.get("title", "")) if left <= 0 else OBJ_ORDER % [str(urgent.get("title", "")), left, days_word(left)]
+		return OBJ_ORDER_TODAY % str(urgent.get("title", "")) if left <= 1 else OBJ_ORDER % [str(urgent.get("title", "")), left, days_word(left)]
 	if not bool(world.get("goal_done", false)):
 		return OBJ_GOAL % [int(world.get("goal_parts", 0)), int(world.get("goal_total", 4))]
 	if int(world.get("board_open", 0)) > 0:

@@ -35,6 +35,12 @@ extends RefCounted
 ## count as unburied. After the Phase-5 line: Phase6Texts.objective (Osric · Bauplatz: Gruft ·
 ## Gebeine beisetzen · Altes Grab heben / Gebeinkiste zimmern · Hinter dem Beinhaus zieht es kalt ·
 ## „Kapelle 2 · Gruft 2 · Schuppen 2“ · „Eine Andacht für <Name>?“).
+## Phase 7 (docs/PHASE7_DESIGN.md §7), `world` keys from CemeteryStatus.phase7_state(): after the Phase-6
+## buildings goal (before its devotion hint) Phase7Texts.objective – „Sprich mit Osric" · „Geh nach
+## Hollerbrück" · „Der Schultheiß erwartet dich in der Amtsstube" · „Lindenacker: 4/10" · „Bitte den Pfarrer
+## um die Weihe" / „Der Pfarrer kommt am Vormittag" · „Der Wundarzt will dich sprechen" · „Wiebke Hagedorns
+## letzter Wunsch" · „Auftrag: <Titel> (noch n Tage)" · „Ein Name im Dorf: 3/4" · „Die Gemeindetafel hat neue
+## Bitten". The Lindenacker is no Phase-3 section step while the village line names it.
 
 const TEXT_WAIT_CARTER := "Der Leichenkutscher kommt gegen %s"
 const TEXT_TO_TABLE := "Leiche zum Leichentisch bringen"
@@ -114,6 +120,9 @@ static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], in
 	if workshop != "":
 		return workshop
 	var buildings := Phase6Texts.objective(world)
+	var village := Phase7Texts.objective(world)
+	if village != "" and (buildings == "" or bool(world.get("goal_done", false))):
+		return village
 	if buildings != "":
 		return buildings
 	if _ghost_night(graves, minute_of_day, flags):
@@ -164,6 +173,9 @@ static func _section_step(world: Dictionary) -> String:
 	for raw: Variant in world.get("sections", []):
 		var s := raw as Dictionary
 		if s == null or bool(s.get("unlocked", true)):
+			continue
+		if StringName(str(s.get("id", ""))) == &"linden":
+			# Phase 7 names the Lindenacker itself (granted by the mayor, then the consecration).
 			continue
 		var block := str(s.get("block", ""))
 		if block == "" and bool(s.get("gate", false)) and int(s.get("done", 0)) == 0:

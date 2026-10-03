@@ -54,6 +54,9 @@ var job_bar: ProgressBar
 var job_label: Label
 ## Bottom row: „Überschuss einlagern" (shed 3).
 var shed_bar: ShedFetchBar
+## Phase 7 (docs/PHASE7_DESIGN.md §3.4): at the station pult the second card „Präparate und Arzneien"
+## (opens &"pult" with the same context).
+var pult_button: Button
 
 
 func _build() -> void:
@@ -74,10 +77,19 @@ func _build() -> void:
 	shed_bar.store_pressed.connect(_on_store_pressed)
 	bottom.add_child(shed_bar)
 	bottom.add_child(UIKit.spacer())
+	pult_button = UIKit.button(Phase7Texts.PULT_CRAFTING_BUTTON, &"AccentButton")
+	pult_button.pressed.connect(open_pult)
+	pult_button.visible = false
+	bottom.add_child(pult_button)
 	var close_button := UIKit.button(TEXT_CLOSE)
 	close_button.pressed.connect(request_close)
 	bottom.add_child(close_button)
 	box.add_child(bottom)
+
+
+## Phase 7: the pult's second card over this panel (same context).
+func open_pult() -> void:
+	EventBus.ui_panel_requested.emit(&"pult", context.duplicate())
 
 
 func _on_opened() -> void:
@@ -104,6 +116,8 @@ func _refresh() -> void:
 	job_bar = null
 	job_label = null
 	title_label.text = station_title()
+	pult_button.visible = _station() == PultRules.STATION_ID
+	pult_button.disabled = action_running
 	# Only „Überschuss einlagern" lives in the bottom row (fetching is per recipe).
 	var store_state := Phase6Texts.shed_state_in(get_tree() if is_inside_tree() else null, {}, _inventory)
 	store_state["reason"] = ShedSupply.TEXT_NOTHING_MISSING

@@ -34,6 +34,13 @@ const BUILDINGS_GROUP := &"buildings"
 const OSSUARY_GROUP := &"ossuary"
 const CHAPEL_GROUP := &"chapel_rites"
 const FLAG_P6_INTRO := &"p6_intro"
+const VILLAGE_GROUP := &"village"
+const ORDERS_GROUP := &"orders"
+const RELATIONSHIPS_GROUP := &"relationships"
+const SECTION_LINDEN := &"linden"
+const ORDER_HAGEDORN := &"o_hagedorn_place"
+## An order counts as urgent (objective line) with at most this many days left.
+const URGENT_DAYS := 2
 const FLAG_PASSAGE_SEEN := &"c_crypt_draft_seen"
 
 
@@ -195,6 +202,7 @@ static func objective_state(tree: SceneTree, inv: Inventory) -> Dictionary:
 	out.merge(phase4_state(tree))
 	out.merge(phase5_state(tree, inv))
 	out.merge(phase6_state(tree, inv))
+	out.merge(phase7_state(tree))
 	return out
 
 
@@ -383,3 +391,51 @@ static func _rep_config() -> ReputationConfig:
 static func _clean_config() -> CleanlinessConfig:
 	var cfg := Database.config(&"cleanliness_config") as CleanlinessConfig
 	return cfg if cfg != null else CleanlinessConfig.new()
+
+
+## Phase-7 part of the objective line (docs/PHASE7_DESIGN.md §7): {} before village_open, else {p7, p7_intro,
+## visited, linden_granted, linden_done, linden_total, linden_cleared, consecrated, consecration_paid,
+## surgeon_waiting, hagedorn_open, urgent_order {id, title, days_left}, goal_done, goal_parts, goal_total,
+## board_open}.
+static func phase7_state(tree: SceneTree) -> Dictionary:
+	var village := _first(tree, VILLAGE_GROUP) as Village
+	if village == null or not village.is_open():
+		return {}
+	var out := {"p7": true, "p7_intro": GameState.flag_on(&"p7_intro"),
+			"visited": GameState.get_stat(&"village_trips") > 0 or RegionRoot.current(tree) == RegionRoot.VILLAGE,
+			"linden_granted": GameState.flag_on(Village.FLAG_LINDEN_GRANTED), "consecrated": GameState.flag_on(Village.FLAG_CONSECRATED),
+			"consecration_paid": GameState.has_flag(Village.FLAG_CONSECRATION_DAY)}
+	var expansion := _first(tree, EXPANSION_GROUP) as ExpansionManager
+	if expansion != null and expansion.section(SECTION_LINDEN) != null:
+		var p := expansion.progress(SECTION_LINDEN)
+		out["linden_done"] = p.x
+		out["linden_total"] = p.y
+		out["linden_cleared"] = expansion.is_unlocked(SECTION_LINDEN) or (p.y > 0 and p.x >= p.y)
+	else:
+		out["linden_cleared"] = true
+	var rel := _first(tree, RELATIONSHIPS_GROUP) as Relationships
+	out["surgeon_waiting"] = bool(out.consecrated) and not GameState.flag_on(&"anatomy_known") and not GameState.flag_on(&"anatomy_declined") \
+			and (rel == null or not rel.met(&"surgeon"))
+	var orders := _first(tree, ORDERS_GROUP) as Orders
+	out["hagedorn_open"] = orders != null and orders.state(ORDER_HAGEDORN) == Orders.STATE_ACCEPTED and GameState.flag_on(Village.FLAG_HAGEDORN_DEAD)
+	var urgent := {}
+	var board_open := 0
+	if orders != null:
+		for id: StringName in orders.active():
+			if id == ORDER_HAGEDORN or orders.deadline_day(id) <= 0:
+				continue
+			var left := maxi(orders.deadline_day(id) - TimeManager.day, 0)
+			if left <= URGENT_DAYS and (urgent.is_empty() or left < int(urgent.days_left)):
+				var o := orders.order_data(id)
+				urgent = {"id": id, "title": o.title if o != null else String(id), "days_left": left}
+		for id: StringName in orders.board():
+			var st := orders.state(id)
+			if st == &"" or st == Orders.STATE_OFFERED:
+				board_open += 1
+	out["urgent_order"] = urgent
+	out["board_open"] = board_open
+	var goal := village.goal_progress()
+	out["goal_parts"] = int(goal.get("done", 0))
+	out["goal_total"] = int(goal.get("total", 4))
+	out["goal_done"] = GameState.flag_on(village.config.goal_flag if village.config != null else &"name_in_village_complete")
+	return out
