@@ -441,7 +441,7 @@ const menu = createMenu({
     },
     exportSave(id) {
       if (id === slotId && !inTitle) saveGame({ manual: true, quiet: true });
-      if (!exportSave(id)) showToast('Export fehlgeschlagen', 'Der Spielstand konnte nicht gelesen werden.');
+      exportSave(id).then((ok) => !ok && showToast('Nicht exportiert', 'Der Spielstand wurde nicht als Datei gesichert.'));
     },
     importSave(text) {
       try {

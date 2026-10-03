@@ -48,16 +48,28 @@ export function deleteSave(id) {
   } catch {}
 }
 
-// Offers the save as a file download.
-export function exportSave(id) {
+// Offers the save as a file download. Resolves false when it could not be read
+// or the viewer declined. Inside a claude.ai artifact the page may not download
+// on its own, so the viewer's download prompt is used there.
+export async function exportSave(id) {
   const meta = listSaves().find((s) => s.id === id);
   const data = readSave(id);
   if (!meta || !data) return false;
-  const blob = new Blob([JSON.stringify({ format: FORMAT, meta, data })], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  const text = JSON.stringify({ format: FORMAT, meta, data });
   const name = meta.name.replace(/[^\wäöüÄÖÜß-]+/g, '-').replace(/^-|-$/g, '');
-  a.download = `bolla-${name || 'spielstand'}.json`;
+  const filename = `bolla-${name || 'spielstand'}.json`;
+  const downloads = window.claude?.use ? await window.claude.use('downloads').catch(() => null) : null;
+  if (downloads) {
+    try {
+      await downloads.save({ filename, data: text });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  a.download = filename;
   document.body.append(a);
   a.click();
   a.remove();
