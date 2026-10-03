@@ -7,6 +7,7 @@ const OIL = 0xe0a040;
 const RAIL = 0xe07a2e;
 const ROCKET = 0xff6a3d;
 const DRONE = 0x5ad1c8;
+const ENEMY = 0xb04dff;
 
 export const clock = (seconds) => {
   const s = Math.floor(seconds);
@@ -24,12 +25,16 @@ function goalRow(p) {
     ? 'Teile per Zug liefern'
     : p.flown
     ? 'Teile per Drohne liefern'
+    : p.kills
+    ? 'Gegner besiegen'
+    : p.nests
+    ? 'Nester zerstören'
     : p.powered
     ? 'Maschinen mit Strom'
     : p.building
       ? `${BUILDINGS[p.building].name} bauen`
       : `${ITEMS[p.item].name}${p.rate ? ' pro Minute' : ''}`;
-  const color = p.silo || p.launched ? ROCKET : p.oil ? OIL : p.shipped ? RAIL : p.flown ? DRONE : p.powered ? POWER : p.building ? SIGNAL : ITEMS[p.item].color;
+  const color = p.silo || p.launched ? ROCKET : p.oil ? OIL : p.shipped ? RAIL : p.flown ? DRONE : p.kills || p.nests ? ENEMY : p.powered ? POWER : p.building ? SIGNAL : ITEMS[p.item].color;
   const have = Math.min(p.have, p.need);
   const done = p.have >= p.need;
   return `<li style="--c:${hex(color)}" class="${done ? 'met' : ''}${p.rate ? ' rate' : ''}">

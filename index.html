@@ -43,6 +43,12 @@
           <p class="label">Drohnen <span id="drone-state"></span></p>
           <p class="power-text" id="drone-text"></p>
         </div>
+        <div class="power enemy" id="enemy" hidden>
+          <p class="label">Gegner <span id="enemy-state"></span></p>
+          <div class="power-bar" title="Evolution: wie stark die Gegner sind"><i id="enemy-fill"></i></div>
+          <p class="power-text" id="enemy-text"></p>
+          <p class="enemy-actions" id="enemy-actions"></p>
+        </div>
         <div class="power rocket" id="rocket" hidden>
           <p class="label">Rakete <span id="rocket-state"></span></p>
           <div class="power-bar"><i id="rocket-fill"></i></div>
@@ -147,6 +153,18 @@
         <button type="button" class="tool" data-tool="silo" data-group="space" aria-pressed="false" hidden>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c3 3 4 7 4 11v4H8v-4c0-4 1-8 4-11zM8 14l-3 4v3h3M16 14l3 4v3h-3M10 21h4M12 8v.01" /></svg>
           <span>Silo</span><kbd>H</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="wall" data-group="defense" aria-pressed="false" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18V9H3zM3 9V5h3v4M9 9V5h3v4M15 9V5h3v4M21 9V5M3 14.5h18M9 9v5.5M15 9v5.5M12 14.5V20" /></svg>
+          <span>Mauer</span><kbd>,</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="turret" data-group="defense" aria-pressed="false" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21h14M7 21l1.5-6h7L17 21M8 15V11h8v4M12 11V3M10 7h4" /></svg>
+          <span>Geschütz</span><kbd>.</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="laser" data-group="defense" aria-pressed="false" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 21h10M9 21l1-8h4l1 8M8 13a4 4 0 0 1 8 0M12 9V3M15 6l3-3M9 6L6 3" /></svg>
+          <span>Laser</span><kbd>-</kbd>
         </button>
         <button type="button" class="tool" data-tool="remove" aria-pressed="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" /></svg>

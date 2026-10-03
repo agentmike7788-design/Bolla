@@ -4,6 +4,7 @@ import { createHistory } from './stats.js';
 import { createRailways, isTrack, axisBits, STATION_CAP } from './trains.js';
 import { createDrones, isChest } from './drones.js';
 import { biomeOf, weatherAt, weatherEffect } from './biomes.js';
+import { createEnemies, isTurret } from './enemies.js';
 
 // Grid directions: 0 north (-z), 1 east (+x), 2 south (+z), 3 west (-x).
 export const DIRS = [
@@ -32,6 +33,7 @@ export const ITEMS = {
   plastic: { name: 'Kunststoff', color: 0x8fd3ec, shape: 'roll' },
   fuel: { name: 'Treibstoff', color: 0xd8432c, shape: 'canister' },
   processor: { name: 'Prozessor', color: 0x7b5ce6, shape: 'cpu' },
+  ammo: { name: 'Munition', color: 0xd9a441, shape: 'ammo' },
 };
 
 // Machines turn one input item into one output item.
@@ -47,6 +49,8 @@ export const CONSTRUCTOR_RECIPES = {
   steel: { time: 2.5, needs: { ironIngot: 2, coal: 1 }, makes: 'steel' },
   // Shown once the refinery is unlocked: it needs plastic.
   processor: { time: 4, needs: { circuit: 2, plastic: 1 }, makes: 'processor', unlock: 'refinery' },
+  // Shown once turrets are unlocked: a box of cartridges, ten shots.
+  ammo: { time: 1.5, needs: { ironPlate: 1, copperIngot: 1 }, makes: 'ammo', unlock: 'turret' },
 };
 
 // The refinery turns oil from its pipes into items; the player picks the recipe.
@@ -81,6 +85,9 @@ export const BUILDINGS = {
   dronePort: { name: 'Drohnenhafen' },
   provider: { name: 'Angebotskiste' },
   requester: { name: 'Anfragekiste' },
+  wall: { name: 'Mauer' },
+  turret: { name: 'Geschützturm' },
+  laser: { name: 'Laserturm' },
 };
 
 // Tiles a building covers along each side; big ones stand on the middle tile.
@@ -109,7 +116,7 @@ const SPLITTER_BUFFER = 2;
 const opposite = (dir) => (dir + 2) % 4;
 export const isMachine = (b) => b?.type === 'furnace' || b?.type === 'assembler';
 // Buildings that never hand items on.
-const NO_OUTPUT = new Set(['storage', 'power', 'geo', 'pole', 'pump', 'pipe', 'tank', 'rail', 'station', 'signal', 'silo', 'dronePort', 'provider']);
+const NO_OUTPUT = new Set(['storage', 'power', 'geo', 'pole', 'pump', 'pipe', 'tank', 'rail', 'station', 'signal', 'silo', 'dronePort', 'provider', 'wall', 'turret', 'laser']);
 
 // Power. A coal power plant burns coal from belts and feeds every network it is
 // connected to. Poles carry the power: wires reach from pole to pole, and a pole
@@ -117,7 +124,7 @@ const NO_OUTPUT = new Set(['storage', 'power', 'geo', 'pole', 'pump', 'pipe', 't
 // basic speed; on a network they run POWER_SPEED times as fast, but only while the
 // network has enough power, and they stop when it has none.
 export const POWER_OUTPUT = 8; // MW per power plant, before research
-export const POWER_USE = { drill: 1, furnace: 2, assembler: 1.5, constructor: 3, pump: 1.5, refinery: 3, silo: 4, dronePort: 2 }; // MW while working
+export const POWER_USE = { drill: 1, furnace: 2, assembler: 1.5, constructor: 3, pump: 1.5, refinery: 3, silo: 4, dronePort: 2, laser: 3 }; // MW while working
 export const POWER_SPEED = 2;
 export const COAL_SECONDS = 4; // one coal keeps a plant at full output that long
 export const WIRE_REACH = 7; // tiles between two poles
@@ -142,7 +149,7 @@ export const isFluid = (b) => FLUID_BUILDINGS.has(b?.type);
 // The factory on top of a world: which building stands on which tile, and the
 // simulation that moves items from drills over belts through machines into storage.
 // `start` lists the buildings that can be built from the beginning.
-export function createFactory(world, { start } = {}) {
+export function createFactory(world, { start, enemies: enemyMode = 'off', grace = null } = {}) {
   const buildings = new Map(); // tile index -> building
   const mined = Object.fromEntries(Object.keys(ORES).map((k) => [k, 0]));
   const stored = Object.fromEntries(Object.keys(ITEMS).map((k) => [k, 0])); // in all storages together
@@ -200,6 +207,7 @@ export function createFactory(world, { start } = {}) {
       for (const t of tilesOf(type, tile)) {
         if (!t || !TERRAIN[t.terrain].buildable) return { ok: false, reason: `Braucht ${n} × ${n} freie Felder an Land` };
         if (at(t.x, t.z)) return { ok: false, reason: `Braucht ${n} × ${n} freie Felder: hier steht schon etwas` };
+        if (enemies.blocks(t)) return { ok: false, reason: 'Zu nah an einem Nest' };
       }
       return { ok: true, reason: '' };
     }
@@ -211,6 +219,7 @@ export function createFactory(world, { start } = {}) {
     if (type === 'drill' && (!tile.ore || ORES[tile.ore].fluid)) return { ok: false, reason: tile.ore ? 'Auf Öl gehört eine Ölpumpe' : 'Bohrer nur auf Erzfeldern' };
     if (type === 'pump' && !ORES[tile.ore]?.fluid) return { ok: false, reason: 'Ölpumpe nur auf Ölfeldern' };
     if (type === 'geo' && !tile.vent) return { ok: false, reason: 'Erdwärmekraftwerk nur auf dampfende Quellen' };
+    if (enemies.blocks(tile)) return { ok: false, reason: 'Zu nah an einem Nest' };
     return { ok: true, reason: '' };
   }
 
@@ -248,6 +257,8 @@ export function createFactory(world, { start } = {}) {
     if (type === 'dronePort') Object.assign(b, { state: 'nopower', out: 0 });
     if (type === 'provider') Object.assign(b, { items: {}, total: 0, filled: 0, sent: 0 });
     if (type === 'requester') Object.assign(b, { items: {}, total: 0, request: null, want: 25, received: 0, handed: 0 });
+    if (type === 'turret') Object.assign(b, { ammo: 0, shots: 0, aim: 0, state: 'empty', fired: 0 });
+    if (type === 'laser') Object.assign(b, { aim: 0, state: 'idle', fired: 0 });
     buildings.set(b.index, b);
     cover(b);
     if (isTrack(b)) railways.join(b);
@@ -264,6 +275,11 @@ export function createFactory(world, { start } = {}) {
     }
     const b = tile && at(tile.x, tile.z);
     if (!b) return null;
+    return demolish(b);
+  }
+
+  function demolish(b) {
+    const tile = b.tile;
     buildings.delete(b.index);
     // A signal leaves the rail it stood on.
     if (b.type === 'signal') {
@@ -314,6 +330,21 @@ export function createFactory(world, { start } = {}) {
       for (let i = 0; i < n; i++) flyLog.push(time);
     },
   });
+
+  // --- Enemies and defence ----------------------------------------------------------
+
+  const enemies = createEnemies({
+    world,
+    buildings,
+    research,
+    at,
+    demolish,
+    sizeOf,
+    now: () => time,
+    mode: enemyMode,
+    grace,
+  });
+  enemies.start();
 
   // Parts drones delivered during the last minute.
   function flownPerMinute() {
@@ -709,6 +740,12 @@ export function createFactory(world, { start } = {}) {
       return true;
     }
     if (target.type === 'provider') return drones.accept(target, kind);
+    if (target.type === 'turret') {
+      if (!enemies.accept(target, kind)) return false;
+      history.consume(kind);
+      return true;
+    }
+    if (target.type === 'wall' || target.type === 'laser') return false;
     if (target.type === 'requester') return false;
     if (target.type === 'station') {
       // Loading stations take parts over their two sides, not along the track.
@@ -988,6 +1025,7 @@ export function createFactory(world, { start } = {}) {
       else if (b.type === 'silo') tickSilo(b, dt);
     }
     for (const b of buildings.values()) if (b.type === 'drill') tickDrill(b, dt);
+    enemies.tick(dt, (b) => (b.net ? b.net.satisfaction : 0));
   }
 
   // Plain data for a save game. The world itself is rebuilt from its seed,
@@ -1001,6 +1039,7 @@ export function createFactory(world, { start } = {}) {
       flown,
       flyLog: [...flyLog],
       drones: drones.save(),
+      enemies: enemies.save(),
       launched,
       history: history.save(),
       shipLog: [...shipLog],
@@ -1011,7 +1050,7 @@ export function createFactory(world, { start } = {}) {
       recent: Object.fromEntries(Object.entries(recent).filter(([, log]) => log.length)),
       research: research.save(),
       amounts: world.tiles.filter((t) => t.ore).map((t) => t.amount),
-      buildings: [...buildings.values()].map(({ tile, index, net, load, pipes, links, depth, green, dnet, out, ...rest }) => ({ ...rest, index })),
+      buildings: [...buildings.values()].map(({ tile, index, net, load, pipes, links, depth, green, dnet, out, aim, ...rest }) => ({ ...rest, index })),
     };
   }
 
@@ -1047,6 +1086,8 @@ export function createFactory(world, { start } = {}) {
     }
     railways.load(data.trains);
     drones.load(data.drones);
+    // Before version 8 there were no enemies: old games stay peaceful.
+    enemies.load(data.enemies ?? { mode: 'off' });
     updateShapes();
   }
 
@@ -1080,6 +1121,7 @@ export function createFactory(world, { start } = {}) {
     },
     flownPerMinute,
     drones,
+    enemies,
     setRequest: (b, kind, want) => drones.setRequest(b, kind, want),
     history,
     launches,

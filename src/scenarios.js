@@ -8,6 +8,8 @@
 //   map           landscape and ores, see DEFAULT_MAP in world.js; `biome` picks
 //                 look, weather and quirks (see biomes.js)
 //   start         buildings available from the beginning
+//   enemies       creature nests on the map, see ENEMY_MODES in enemies.js
+//   grace         seconds before the first attack, instead of the mode's
 //   par           minutes for three stars (twice that for two); `npm run balance`
 //                 estimates play times, par is about 1.6 times that
 //   missions      played one after another; each has
@@ -20,6 +22,8 @@
 //                   { oil: count }              pump that much more oil
 //                   { shipped: count }          unload that many more parts from trains
 //                   { flown: count }            drones deliver that many more parts
+//                   { kills: count }            defeat that many more creatures
+//                   { nests: count }            destroy that many more nests
 //                   { silo: stages }            a rocket silo with that many stages built
 //                   { launched: count }         start that many more rockets
 //     reward      { unlocks, boosts, text } like a research entry, see research.js
@@ -420,6 +424,44 @@ export const SCENARIOS = [
     ],
   },
   {
+    id: 'bugLands',
+    name: 'Käferland',
+    desc: 'Grüne Hügel, reiche Erze und überall Nester. Jeder Bohrer macht Smog, und Smog lockt die Krabbler an. Mauern und Türme bauen, bevor die erste Welle kommt.',
+    level: 3,
+    seed: 1717,
+    map: { size: 72, ores: { iron: 5, copper: 4, coal: 3, stone: 3 }, land: 0.05, coast: 0.82, forest: 0.55, rock: 0.45, richness: 1.4 },
+    enemies: 'normal',
+    grace: 420,
+    start: ['drill', 'belt', 'storage', 'furnace', 'assembler', 'splitter', 'merger', 'wall', 'turret'],
+    par: 33,
+    missions: [
+      {
+        name: 'Brückenkopf',
+        desc: 'Erz abbauen, Platten pressen, Kupfer schmelzen. Die Nester schlafen noch, aber nicht mehr lange: oben rechts steht, wann.',
+        goals: [{ deliver: 'ironPlate', count: 30 }, { deliver: 'copperIngot', count: 30 }],
+        reward: { unlocks: ['constructor'], text: 'Konstruktor, der auch Munition baut' },
+      },
+      {
+        name: 'Scharf geladen',
+        desc: 'Der Konstruktor macht aus Eisenplatte und Kupferbarren Munition. Stell Geschütztürme an den Rand der Fabrik und führ ein Munitionsband an ihnen vorbei. Etwas Vorrat im Lager schadet nicht.',
+        goals: [{ build: 'turret', count: 3 }, { deliver: 'ammo', count: 20 }],
+        reward: { unlocks: ['power', 'pole'], boosts: { drill: 1.5 }, text: 'Kohlekraftwerk, Strommasten, Bohrer +50 %' },
+      },
+      {
+        name: 'Die Welle',
+        desc: 'Der Smog hat sie geweckt. Halte stand, bis 30 Gegner gefallen sind. Mauern vor den Türmen halten sie auf, zerstörte Gebäude baust du im Gegner-Fenster wieder auf.',
+        goals: [{ kills: 30 }],
+        reward: { unlocks: ['laser'], boosts: { weapons: 1.5 }, text: 'Laserturm, Türme +50 % Schaden' },
+      },
+      {
+        name: 'Gegenangriff',
+        desc: 'Rück mit Mauern und Türmen an die Nester heran, bis sie in Reichweite sind. Unter Beschuss schicken sie Verteidiger. Drei Nester müssen weg.',
+        goals: [{ nests: 3 }],
+        reward: { text: 'Das Käferland ist sicher' },
+      },
+    ],
+  },
+  {
     id: 'starport',
     name: 'Sternenhafen',
     desc: 'Das Finale: eine weite Küste mit allem, was die Erde hergibt. Hier baust du das Raketensilo und schickst eine Rakete ins All.',
@@ -476,6 +518,8 @@ export function createMissions(scenario, factory) {
   let baseShipped = factory.shipped;
   let baseLaunched = factory.launched;
   let baseFlown = factory.flown;
+  let baseKills = factory.enemies.killed;
+  let baseNests = factory.enemies.nestsKilled;
   let reached = new Set(); // rate goals met once stay met
   let finishedAt = null;
 
@@ -487,6 +531,8 @@ export function createMissions(scenario, factory) {
     if (goal.launched) return { launched: true, have: factory.launched - baseLaunched, need: goal.launched };
     if (goal.shipped) return { shipped: true, have: factory.shipped - baseShipped, need: goal.shipped };
     if (goal.flown) return { flown: true, have: factory.flown - baseFlown, need: goal.flown };
+    if (goal.kills) return { kills: true, have: factory.enemies.killed - baseKills, need: goal.kills };
+    if (goal.nests) return { nests: true, have: factory.enemies.nestsKilled - baseNests, need: goal.nests };
     if (goal.powered) return { powered: true, have: reached.has(i) ? goal.powered : factory.powered(), need: goal.powered };
     const have = reached.has(i) ? goal.perMin : factory.perMinute(goal.rate);
     return { item: goal.rate, rate: true, have, need: goal.perMin };
@@ -520,11 +566,13 @@ export function createMissions(scenario, factory) {
       baseShipped = factory.shipped;
       baseLaunched = factory.launched;
       baseFlown = factory.flown;
+      baseKills = factory.enemies.killed;
+      baseNests = factory.enemies.nestsKilled;
       reached = new Set();
       if (!this.current) finishedAt = factory.time;
       return m;
     },
-    save: () => ({ index, base, basePumped, baseShipped, baseLaunched, baseFlown, reached: [...reached], finishedAt }),
+    save: () => ({ index, base, basePumped, baseShipped, baseLaunched, baseFlown, baseKills, baseNests, reached: [...reached], finishedAt }),
     load(data) {
       if (!data) return;
       index = Math.min(data.index ?? 0, scenario.missions.length);
@@ -533,6 +581,8 @@ export function createMissions(scenario, factory) {
       baseShipped = data.baseShipped ?? 0;
       baseLaunched = data.baseLaunched ?? 0;
       baseFlown = data.baseFlown ?? 0;
+      baseKills = data.baseKills ?? 0;
+      baseNests = data.baseNests ?? 0;
       reached = new Set(data.reached ?? []);
       finishedAt = data.finishedAt ?? null;
     },

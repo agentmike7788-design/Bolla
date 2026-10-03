@@ -923,6 +923,20 @@ button.stats-row:hover { background: rgba(233, 228, 216, 0.08); filter: none; }
 .biome-pick { cursor: pointer; background: rgba(233, 228, 216, 0.06); }
 .biome-pick:hover,
 .biome-pick:focus-visible { border-color: var(--signal); color: var(--signal); outline: none; }
+/* Enemy mode of the free game: picked before the biome starts the map. */
+.enemy-pick { display: inline-flex; align-items: center; font-size: 12px; padding: 1px 7px; border: 1px solid var(--edge); border-radius: 10px; cursor: pointer; }
+.enemy-pick:hover,
+.enemy-pick:focus-visible { border-color: #ff8a6a; outline: none; }
+.enemy-pick[aria-checked='true'] { background: rgba(255, 107, 91, 0.18); border-color: #ff6b5b; color: #ffb3a6; }
+.enemy-label { font-size: 12px; color: var(--ink-dim); align-self: center; }
+.map-biome.enemy { border-color: rgba(255, 107, 91, 0.6); color: #ffb3a6; }
+
+/* Enemy panel: evolution bar, red while an attack is on. */
+.enemy .power-bar i { background: #b04dff; }
+.enemy.attack .label span { color: #ff6b5b; animation: rage 0.9s ease-in-out infinite; }
+.enemy-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 0; }
+.enemy-actions:empty { display: none; }
+.enemy-actions button { font-size: 12px; }
 
 /* Achievement toast: below the normal toast, golden. */
 .achievement {
