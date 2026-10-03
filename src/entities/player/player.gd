@@ -67,8 +67,7 @@ var in_interior: bool = false
 ## &"shed". Set by set_in_interior, saved ("interior_id").
 var interior_id: StringName = &""
 ## Phase 7 (docs/PHASE7_DESIGN.md §3.4): the outdoor region the gravekeeper is in – &"graveyard" |
-## &"village" (the rooms of a region belong to it). STUB (P1): set_region sets it; P1 adds
-## EventBus.region_changed, the save key "region_id" and the tolerant load.
+## &"village" (the rooms of a region belong to it). Set by set_region, saved ("region_id").
 var region_id: StringName = &"graveyard"
 ## Build mode (set_build_mode, Phase 3): no focus, no [E]/[Q]. Not saved.
 var build_mode: bool = false
@@ -277,17 +276,20 @@ func set_in_interior(value: bool, room: StringName = &"") -> void:
 	EventBus.interior_room_changed.emit(interior_id)
 
 
-## STUB (P1) – Phase 7 §3.4: into region `id`; P1 emits EventBus.region_changed (after interior_*).
+## Phase 7 §3.4: into region `id`; always announces EventBus.region_changed(id) (regions, NPCs and
+## camera follow – also after a load that did not change it). Callers that also change the room call
+## set_in_interior first, so region_changed comes after interior_changed / interior_room_changed.
 func set_region(id: StringName) -> void:
 	region_id = id
+	EventBus.region_changed.emit(id)
 
 
-## {position: Vector3, rot_y: float, in_interior: bool, interior_id: String,
+## {position: Vector3, rot_y: float, in_interior: bool, interior_id: String, region_id: String,
 ## inventory: Inventory.save_state()}. The carried corpse is not saved here –
 ## CorpseManager.post_load() re-attaches it.
 func save_state() -> Dictionary:
 	return {"position": position, "rot_y": rotation.y, "in_interior": in_interior, "interior_id": String(interior_id),
-			"inventory": inventory.save_state()}
+			"region_id": String(region_id), "inventory": inventory.save_state()}
 
 
 ## Replaces the state; stops any timed action and forgets the carried node (its owner, the
@@ -306,6 +308,7 @@ func load_state(data: Dictionary) -> void:
 	var saved_inside: Variant = data.get("in_interior", false)
 	var inside := saved_inside is bool and bool(saved_inside)
 	set_in_interior(inside, _saved_room(data.get("interior_id"), inside))
+	set_region(_saved_region(data.get("region_id")))
 	var saved_inventory: Variant = data.get("inventory")
 	inventory.load_state(saved_inventory if saved_inventory is Dictionary else {})
 
@@ -322,6 +325,22 @@ func _saved_room(saved: Variant, inside: bool) -> StringName:
 		return room
 	push_warning("[Player] interior_id '%s': no such room – the gravekeeper is in the hut" % room)
 	return &""
+
+
+## Phase 7 §5.1 (tolerant): missing or not a string → the graveyard (no warning – v5 saves). A region
+## the world does not have (while it has regions at all), or – without regions – one that is neither
+## graveyard nor village → the graveyard with a warning.
+func _saved_region(saved: Variant) -> StringName:
+	if not (saved is String or saved is StringName) or str(saved) == "":
+		return RegionRoot.GRAVEYARD
+	var id := StringName(str(saved))
+	if id == RegionRoot.GRAVEYARD:
+		return id
+	var has_regions := is_inside_tree() and not get_tree().get_nodes_in_group(RegionRoot.GROUP).is_empty()
+	if (has_regions and RegionRoot.find(get_tree(), id) != null) or (not has_regions and id == RegionRoot.VILLAGE):
+		return id
+	push_warning("[Player] region_id '%s': no such region – the gravekeeper is on the graveyard" % id)
+	return RegionRoot.GRAVEYARD
 
 
 # --- input & interaction ------------------------------------------------------------------

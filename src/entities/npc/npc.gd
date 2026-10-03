@@ -11,6 +11,11 @@ extends Node3D
 ## both follow from the clock, so a load shows him exactly as walking in did (SL-1).
 ## debug_teleport() (debug console) holds him at a spot until the next schedule phase.
 ## Path sampling and heading evaluation: npc_pose.gd.
+## Phase 7 (docs/PHASE7_DESIGN.md §3.4, §9): shown only for entries of its own region (entry.region,
+## "" = graveyard) and while hide_flag is not set. Outside the gravekeeper's region it evaluates once
+## per game minute (like hidden) and its animation rests. LOD (set_lod, from NpcLod): 0 full ·
+## 1 reduced (evaluation every NpcConfig.reduced_interval s, the animation runs) · 2 resting (the
+## evaluation as 1, the animation paused).
 
 const GROUP := &"npc"
 const PROMPT_TALK := "[E] Mit %s reden"
@@ -44,7 +49,7 @@ const LANTERN_FALLBACK := Vector3(-0.25, 0.9, 0.2)
 @export var lantern_marker: StringName = &""
 ## Phase 7 (docs/PHASE7_DESIGN.md §3.4, P1): the region of this Npc – shown only for schedule entries
 ## of its region (entry.region, "" = graveyard); hidden while the GameState flag hide_flag is set
-## (Wiebke Hagedorn: hagedorn_dead). STUB (P1): not read yet.
+## (Wiebke Hagedorn: hagedorn_dead).
 @export var region_id: StringName = &"graveyard"
 @export var hide_flag: StringName = &""
 @export_group("Animation")
@@ -98,6 +103,12 @@ var _uses_cart: bool = true
 var _lantern: OmniLight3D
 ## Game minute of the last update while hidden (see _process).
 var _hidden_minute: int = -1
+## Phase 7: LOD values (null = data/config/npc_config.tres), the level and the time since the last
+## reduced evaluation; whether the gravekeeper is in this Npc's region.
+var npc_config: NpcConfig
+var _lod: int = 0
+var _lod_elapsed: float = 0.0
+var _region_active: bool = true
 
 
 func _init() -> void:
@@ -130,17 +141,26 @@ func _ready() -> void:
 		cargo.visible = false
 		_with_cart = false
 	_make_lantern()
+	_region_active = RegionRoot.current(get_tree()) == region_id
+	EventBus.region_changed.connect(_on_region_changed)
 	refresh()
 
 
 func _process(delta: float) -> void:
 	# QA W3 (Phase 4 perf): hidden (at home, or its requires_flag missing – Ilse all day) the
 	# schedule can only change with the game minute – re-evaluated once per minute, not per frame.
-	if not _present and _held_entry == null:
+	# Phase 7: the same outside the gravekeeper's region.
+	if (not _present or not _region_active) and _held_entry == null:
 		var minute := TimeManager.total_minutes()
 		if minute == _hidden_minute:
 			return
 		_hidden_minute = minute
+	elif _lod > 0:
+		_lod_elapsed += delta
+		if _lod_elapsed < _lod_interval():
+			return
+		delta = _lod_elapsed
+		_lod_elapsed = 0.0
 	_update(delta)
 
 
@@ -211,21 +231,48 @@ func load_state(_data: Dictionary) -> void:
 	refresh()
 
 
+## Phase 7 (docs/PHASE7_DESIGN.md §3.4, §9): 0 full · 1 reduced (evaluation every
+## NpcConfig.reduced_interval, the animation runs) · 2 resting (animation paused). NpcLod sets it.
+func set_lod(level: int) -> void:
+	level = clampi(level, 0, 2)
+	if level == _lod:
+		return
+	_lod = level
+	_lod_elapsed = 0.0
+	if level >= 2:
+		_pause_animation()
+	elif is_node_ready() and _present:
+		_update_animation()
+
+
+func lod() -> int:
+	return _lod
+
+
+## Whether the gravekeeper is in this Npc's region (Player.region_id; graveyard without a player).
+func region_active() -> bool:
+	return _region_active
+
+
+## The entry belongs to this Npc's region (entry.region, "" = the graveyard).
+func shows_region(e: ScheduleEntry) -> bool:
+	return e != null and (e.region if e.region != &"" else RegionRoot.GRAVEYARD) == region_id
+
+
+## hide_flag is set (Wiebke Hagedorn after hagedorn_dead).
+func hidden_by_flag() -> bool:
+	return hide_flag != &"" and GameState.flag_on(hide_flag)
+
+
 ## Debug console ("npc <id> here"): stands at `world_pos` (on the ground) for the rest of the
 ## current schedule phase, then the clock takes over again. He faces the nearest player – with
 ## the cart turned to his side, so it never lands on them.
-## STUB (P1) – Phase 7 (docs/PHASE7_DESIGN.md §3.4, §9): 0 full · 1 reduced (evaluation every
-## NpcConfig.reduced_interval, the animation runs) · 2 resting (animation paused). NpcLod sets it.
-func set_lod(_level: int) -> void:
-	pass
-
-
 func debug_teleport(world_pos: Vector3) -> void:
 	var sched := _schedule()
 	if sched == null or sched.entries.is_empty():
 		push_warning("[Npc] %s: no schedule – debug_teleport ignored" % name)
 		return
-	_held_entry = ScheduleResolver.entry_at(sched, int(TimeManager.get_minute_f()))
+	_held_entry = ScheduleResolver.entry_at(sched, int(TimeManager.get_minute_f()), TimeManager.day)
 	_held_position = _pose.on_ground(world_pos)
 	_held_heading = rotation.y
 	var player := get_tree().get_first_node_in_group(&"player") as Node3D if is_inside_tree() else null
@@ -241,7 +288,7 @@ func _update(delta: float) -> void:
 	if sched == null or sched.entries.is_empty():
 		return
 	var minute_f := TimeManager.get_minute_f()
-	entry = ScheduleResolver.entry_at(sched, int(minute_f))
+	entry = ScheduleResolver.entry_at(sched, int(minute_f), TimeManager.day)
 	if entry == null:
 		return
 	progress = ScheduleResolver.progress(entry, minute_f)
@@ -251,7 +298,7 @@ func _update(delta: float) -> void:
 	var sample := _pose.sample(path, progress)
 	global_position = sample[0] if _held_entry == null else _held_position
 	var dir: Vector3 = sample[1]
-	var shown := entry.visible and flag_allows()
+	var shown := entry.visible and flag_allows() and shows_region(entry) and not hidden_by_flag()
 	_set_state(shown, shown and entry.dialogue_id != &"", shown and entry.with_cart and _uses_cart)
 	if _uses_cart:
 		cargo.visible = _with_cart and _has_cargo()
@@ -300,6 +347,9 @@ func _set_state(present: bool, talkable: bool, with_cart: bool) -> void:
 func _update_animation() -> void:
 	if _anim == null or not _present:
 		return
+	if _lod >= 2 or not _region_active:
+		_pause_animation()
+		return
 	# Held by debug_teleport in the middle of a walk: he waits (idle) instead of walking on the spot.
 	var wanted := entry.animation if _held_entry == null or entry.travel_minutes == 0 else ANIM_IDLE
 	var designed := 0.0
@@ -313,6 +363,32 @@ func _update_animation() -> void:
 	if _anim.current_animation != wanted or not _anim.is_playing():
 		_anim.play(wanted, anim_blend)
 	_anim.speed_scale = ground_speed() / designed if designed > 0.0 else 1.0
+
+
+func _pause_animation() -> void:
+	if _anim != null and _anim.is_playing():
+		_anim.pause()
+
+
+## EventBus.region_changed: back in the region → placed from the clock at once; away → resting.
+func _on_region_changed(id: StringName) -> void:
+	var now := id == region_id
+	if now == _region_active:
+		return
+	_region_active = now
+	_hidden_minute = -1
+	if not now:
+		_pause_animation()
+	elif is_node_ready():
+		refresh()
+
+
+func _lod_interval() -> float:
+	if npc_config == null:
+		npc_config = Database.config(&"npc_config") as NpcConfig
+		if npc_config == null:
+			npc_config = NpcConfig.new()
+	return npc_config.reduced_interval
 
 
 ## Corpse on the cart: on the way in before the delivery minute, or all day after a skipped one
