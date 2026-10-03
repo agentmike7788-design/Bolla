@@ -52,7 +52,7 @@ const REASON_NO_DROPOFF := CorpseDeliveryRules.REASON_NO_DROPOFF
 const BUILDINGS_GROUP := &"buildings"
 const CRYPT_ID := &"crypt"
 const STAT_NICHE_WAITS := &"niche_waits"
-const NOTE_RELOCATED := "Die Tote vom alten Tisch liegt jetzt unten in der Gruft."
+const NOTE_RELOCATED := "Die Leiche vom alten Tisch liegt jetzt unten in der Gruft."
 const NOTE_SKIPPED := CorpseDeliveryRules.NOTE_SKIPPED
 
 @export var save_id: String = "corpse_manager"

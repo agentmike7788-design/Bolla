@@ -218,6 +218,22 @@ func test_number_in_a_goal_flag_is_no_script_error() -> void:
 	ui.hud.refresh_all()
 
 
+# --- QA6-11: Buildings.apply_levels also retires the old table -------------------------------------
+# MorgueTable had no refresh(): levels applied through load_state + apply_levels (debug console,
+# staging) left the table, wash basin and smoke bowl in front of the hut at crypt 2 (HUD shot).
+
+func test_apply_levels_retires_the_old_table() -> void:
+	var state := buildings.save_state()
+	state["levels"] = {"crypt": 2, "chapel": 1, "shed": 2}
+	buildings.load_state(state)
+	buildings.apply_levels()
+	var old_table := world.get_node_by_layout_id("morgue_table") as MorgueTable
+	assert_false(old_table.visible, "the table in front of the hut is gone at crypt 2")
+	assert_false((world.get_node("Decor/Phase4Props/WashBasin") as Node3D).visible, "the wash basin with it")
+	var crypt_table := InteriorRoom.find(tree, &"crypt").get_node("Entities/MorgueTable") as MorgueTable
+	assert_true(crypt_table.is_active() and crypt_table.visible, "the crypt table works")
+
+
 # --- helpers ----------------------------------------------------------------------------------
 
 func _bind() -> void:

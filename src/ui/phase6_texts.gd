@@ -33,7 +33,7 @@ const FETCH_BUTTON := "Fehlendes aus dem Schuppen holen (%s)"
 const FETCH_SHORT := "Fehlendes holen (%s)"
 const FETCH_NOW := "sofort"
 const STORE_BUTTON := "Überschuss einlagern"
-const STORE_HINT := "Rohstoffe und Werkstoffe in den Schuppen – Werkzeug, Münzen und belegte Gebeinkisten bleiben bei dir."
+const STORE_HINT := "Rohstoffe und Werkstoffe in den Schuppen – Werkzeug, Münzen, Gebeinkisten und Altarkerzen bleiben bei dir."
 const SHED_TITLE := "Lagerschuppen"
 const SHED_SIDE := "Regal"
 const SHED_STACKS := "Rohstoffe und Werkstoffe stapeln hier doppelt (× %d)."
@@ -402,7 +402,8 @@ static func chapter_values(context: Dictionary) -> PackedStringArray:
 	out.append(str(int(context.get("devotions_held", 0))))
 	var names: PackedStringArray = PackedStringArray(context.get("reinterred", PackedStringArray()))
 	var total := int(context.get("reinterred_total", names.size()))
-	out.append(CHAPTER_REINTERRED_VALUE % [names.size(), total, ", ".join(names)] if not names.is_empty() else "0/%d" % total)
+	# W3 tone QA: " · " between the names – „Elias Brand, Totengräber" carries its own comma.
+	out.append(CHAPTER_REINTERRED_VALUE % [names.size(), total, " · ".join(names)] if not names.is_empty() else "0/%d" % total)
 	out.append(str(int(context.get("niche_waits", 0))))
 	var spent := Phase5Texts.spent_text(context.get("coins_spent", {}))
 	out.append(spent if spent != "" else NONE)

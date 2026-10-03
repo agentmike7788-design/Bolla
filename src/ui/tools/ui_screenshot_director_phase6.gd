@@ -455,6 +455,7 @@ func _chapter_shot() -> void:
 	# The staged yard has no bot history; the panel is shown as at the end of arc A (§1.4).
 	context["buildings_days"] = 6
 	context["services_held"] = 5
+	context["services_mourners"] = 2
 	context["devotions_held"] = 2
 	context["reinterred"] = PackedStringArray(["Barbe Lindt", "Hanne Sörgel", "Elias Brand, Totengräber", "Agnes Hollweg", "Mattheis Korb"])
 	context["reinterred_total"] = 6

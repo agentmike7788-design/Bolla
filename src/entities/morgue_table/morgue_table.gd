@@ -478,6 +478,13 @@ static func _set_collision(root: Node, on: bool) -> void:
 		(shape as CollisionShape3D).set_deferred(&"disabled", not on)
 
 
+## Buildings.apply_levels refreshes every node of its REFRESH_GROUPS that has refresh() (QA6-11: the
+## table had none, so a level set through apply_levels – a load_state, the debug console, the
+## screenshot staging – left the old table standing in front of the hut until the next signal).
+func refresh() -> void:
+	refresh_active()
+
+
 func _on_building_upgraded(_building_id: StringName, _level: int) -> void:
 	refresh_active()
 

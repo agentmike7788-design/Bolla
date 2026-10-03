@@ -486,7 +486,7 @@ func test_chapter_panel_roof_and_earth() -> void:
 	assert_eq(panel.roof_value("Gebäude"), "Gruft 2 · Kapelle 2 · Schuppen 2")
 	assert_eq(panel.roof_value("Aussegnungen"), "5")
 	assert_eq(panel.roof_value("Andachten"), "2")
-	assert_eq(panel.roof_value("Umbettungen"), "3/6 · Barbe Lindt, Hanne Sörgel, Elias Brand, Totengräber")
+	assert_eq(panel.roof_value("Umbettungen"), "3/6 · Barbe Lindt · Hanne Sörgel · Elias Brand, Totengräber")
 	assert_eq(panel.roof_value("In der Kühlnische gewartet"), "2")
 	assert_eq(panel.roof_value("Ausgaben seit dem Gemeinderat"), "142 Münzen (Gebäude 130 · Osric 12)")
 	assert_eq(panel.roof_value("Zufriedene Geister"), "9 → 13")

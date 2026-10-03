@@ -16,7 +16,7 @@ inputs = Dictionary[StringName, int]({&"wood": 10, &"stone": 8, &"clay": 2, &"li
 coins = 25
 minutes = 240
 coin_part_label = "Dachschiefer"
-text = "Ein Dach über den alten Mauern, ein Altar mit Tuch und ein Katafalk davor. Hier kann der Totengräber die Aussegnung selbst halten."
+text = "Ein Dach über den alten Mauern, ein Altar mit Tuch und ein Katafalk davor. Hier hältst du die Aussegnung selbst."
 adds = PackedStringArray("Dach und Tür", "Altar mit Altartuch", "Katafalk", "2 rohe Bänke", "Aussegnung (Gebühr 3, Ruf +1)", "Andacht (+1)")
 
 [sub_resource type="Resource" id="level_2"]
