@@ -123,7 +123,7 @@ button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 }
 .hud-legend li {
   display: grid;
-  grid-template-columns: 12px 1fr auto;
+  grid-template-columns: 12px 1fr auto auto;
   gap: 8px;
   align-items: center;
 }
@@ -139,6 +139,49 @@ button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
   font-variant-numeric: tabular-nums;
   color: var(--ink-dim);
 }
+
+.mined {
+  min-width: 3.5em;
+  text-align: right;
+  font: 500 12px var(--font-data);
+  font-variant-numeric: tabular-nums;
+  color: var(--signal);
+}
+.mined:empty { visibility: hidden; }
+
+.hud-tools {
+  bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  right: 16px;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+}
+.tool {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 58px;
+  padding: 6px 6px 5px;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--edge);
+  font: 600 13px/1 var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.tool svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.tool kbd { border: 0; padding: 0; color: var(--ink-dim); font-size: 10px; }
+.tool:hover { filter: none; background: rgba(233, 228, 216, 0.08); }
+.tool[aria-pressed='true'] { background: var(--signal); color: var(--ground); border-color: var(--signal); }
+.tool[aria-pressed='true'] kbd { color: var(--ground); }
 
 .hud-help {
   bottom: calc(12px + env(safe-area-inset-bottom, 0px));
@@ -163,6 +206,9 @@ kbd {
 @media (max-width: 640px) {
   .hud-info { top: calc(100px + env(safe-area-inset-top, 0px)); left: 16px; right: 16px; width: auto; padding: 8px 14px; }
   .hud-info .value { font-size: 17px; }
-  .hud-legend { min-width: 0; }
+  .hud-legend { min-width: 0; bottom: calc(126px + env(safe-area-inset-bottom, 0px)); }
+  .hud-tools { left: 16px; justify-content: space-between; }
+  .tool { flex: 1; min-width: 0; }
+  .tool kbd { display: none; }
   .hud-help span:nth-child(n + 3) { display: none; }
 }

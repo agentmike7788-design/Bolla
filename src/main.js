@@ -3,6 +3,8 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { generateWorld, ORES, TERRAIN, MAP_SIZE, TILE } from './world.js';
 import { buildWorldMeshes, createSea } from './scenery.js';
 import { createCameraRig } from './camera.js';
+import { createFactory, DIRS, DIR_NAMES, BUILDINGS } from './factory.js';
+import { createFactoryView, createGhost } from './buildings.js';
 import './style.css';
 
 const canvas = document.getElementById('scene');
@@ -65,8 +67,14 @@ const marker = new THREE.LineSegments(
 marker.visible = false;
 scene.add(marker);
 
+const factoryView = createFactoryView(renderer);
+scene.add(factoryView.group);
+const ghost = createGhost();
+scene.add(ghost.group);
+
 let world;
 let meshes;
+let factory;
 
 function loadWorld(seed) {
   if (meshes) {
@@ -79,6 +87,8 @@ function loadWorld(seed) {
   world = generateWorld(seed);
   meshes = buildWorldMeshes(world);
   scene.add(meshes.group);
+  factory = createFactory(world);
+  factoryView.clear();
   document.getElementById('seed').textContent = `#${seed}`;
   renderLegend();
   showTile(null);
@@ -99,8 +109,9 @@ function renderLegend() {
     const li = document.createElement('li');
     li.innerHTML = `<span class="swatch" style="--c:#${ore.color.toString(16).padStart(6, '0')}"></span>
       <span class="name">${ore.name}</span>
-      <span class="num">${c.amount.toLocaleString('de-DE')}</span>`;
-    li.title = `${c.tiles} Felder`;
+      <span class="num">${c.amount.toLocaleString('de-DE')}</span>
+      <span class="mined">${factory.mined[key] ? `+${factory.mined[key].toLocaleString('de-DE')}` : ''}</span>`;
+    li.title = `${c.tiles} Felder · rechts: bisher abgebaut`;
     list.append(li);
   }
 }
@@ -108,23 +119,38 @@ function renderLegend() {
 const tileName = document.getElementById('tile-name');
 const tileDetail = document.getElementById('tile-detail');
 
+const STATE_TEXT = { work: 'Fördert', blocked: 'Wartet: Ausgang belegt', empty: 'Erschöpft' };
+
 function showTile(tile) {
+  hovered = tile;
   if (!tile) {
     marker.visible = false;
+    ghost.show(null);
     tileName.textContent = 'Maus über die Karte bewegen';
     tileDetail.textContent = '';
     return;
   }
-  marker.visible = true;
+  const building = factory.get(tile);
+  const check = tool === 'remove' ? { ok: !!building, reason: building ? '' : 'Hier steht nichts' } : tool && canBuild(tile);
+  marker.visible = !tool;
   marker.position.set(tile.position.x, Math.max(tile.height, 0.28) + 0.03, tile.position.z);
+  ghost.show(tool, tile, tool === 'remove' ? building?.dir ?? 0 : dir, check?.ok);
+
   const terrain = TERRAIN[tile.terrain];
-  if (tile.ore) {
+  if (building?.type === 'drill') {
+    tileName.textContent = `Bohrer · ${ORES[tile.ore].name}`;
+    tileDetail.textContent = `${STATE_TEXT[building.state]} · ${building.mined} abgebaut · Rest ${tile.amount.toLocaleString('de-DE')}`;
+  } else if (building?.type === 'belt') {
+    tileName.textContent = 'Förderband';
+    tileDetail.textContent = `Richtung ${DIR_NAMES[building.dir]} · ${building.items.length} Erz drauf`;
+  } else if (tile.ore) {
     tileName.textContent = ORES[tile.ore].name;
     tileDetail.textContent = `${tile.amount.toLocaleString('de-DE')} Einheiten · Feld ${tile.x}, ${tile.z}`;
   } else {
     tileName.textContent = terrain.name;
     tileDetail.textContent = `${terrain.buildable ? 'Bebaubar' : 'Nicht bebaubar'} · Feld ${tile.x}, ${tile.z}`;
   }
+  if (check && !check.ok && check.reason) tileDetail.textContent = check.reason;
 }
 
 const raycaster = new THREE.Raycaster();
@@ -133,31 +159,151 @@ let pointerInside = false;
 const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.4);
 const planeHit = new THREE.Vector3();
 
-canvas.addEventListener('pointermove', (e) => {
+function setPointer(e) {
   const rect = canvas.getBoundingClientRect();
   pointer.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
-  pointerInside = true;
-});
-canvas.addEventListener('pointerleave', () => {
-  pointerInside = false;
-  showTile(null);
-});
+}
 
-function updateHover() {
-  if (!pointerInside) return;
+// The tile under the pointer, or null.
+function pickTile() {
   raycaster.setFromCamera(pointer, camera);
   const hit = raycaster.intersectObject(meshes.tiles, false)[0];
-  if (hit) {
-    showTile(world.tiles[hit.instanceId]);
-    return;
-  }
+  if (hit) return world.tiles[hit.instanceId];
   // The ray slipped through the thin gap between two tiles: pick by grid cell instead.
   const point = raycaster.ray.intersectPlane(groundPlane, planeHit);
   const offset = (MAP_SIZE * TILE) / 2;
   const x = point && Math.floor((point.x + offset) / TILE);
   const z = point && Math.floor((point.z + offset) / TILE);
   const inside = point && x >= 0 && z >= 0 && x < MAP_SIZE && z < MAP_SIZE;
-  showTile(inside ? world.at(x, z) : null);
+  return inside ? world.at(x, z) : null;
+}
+
+canvas.addEventListener('pointermove', (e) => {
+  if (!e.isPrimary) return;
+  setPointer(e);
+  pointerInside = true;
+  if (dragging) buildAlong(pickTile());
+});
+canvas.addEventListener('pointerleave', () => {
+  pointerInside = false;
+  showTile(null);
+});
+
+// --- Building -------------------------------------------------------------
+
+let tool = null; // 'drill' | 'belt' | 'remove' | null
+let dir = 1; // direction for the next building, see DIRS
+let hovered = null;
+let dragging = false;
+let lastTile = null;
+let shapesDirty = false;
+
+const toolButtons = document.querySelectorAll('.tool[data-tool]');
+const help = document.getElementById('help');
+const HELP = {
+  none: [['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1 2 X', 'bauen']],
+  drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
+  belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
+  remove: [['Klick / Ziehen', 'abreißen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
+};
+
+function renderHelp() {
+  help.innerHTML = HELP[tool ?? 'none'].map(([k, t]) => `<span><kbd>${k}</kbd> ${t}</span>`).join('');
+}
+
+function setTool(next) {
+  tool = next === tool ? null : next;
+  for (const b of toolButtons) b.setAttribute('aria-pressed', String(b.dataset.tool === tool));
+  // While a tool is active, the left mouse button and a single finger build
+  // instead of moving the map.
+  rig.controls.mouseButtons.LEFT = tool ? null : THREE.MOUSE.PAN;
+  rig.controls.mouseButtons.MIDDLE = tool ? THREE.MOUSE.PAN : THREE.MOUSE.DOLLY;
+  rig.controls.touches.ONE = tool ? null : THREE.TOUCH.PAN;
+  renderHelp();
+  showTile(hovered);
+}
+
+function canBuild(tile) {
+  const existing = factory.get(tile);
+  // Dragging a belt over a belt just turns it.
+  if (tool === 'belt' && existing?.type === 'belt') return { ok: true, reason: '' };
+  return factory.canPlace(tool, tile);
+}
+
+function rotate() {
+  const building = !tool && hovered && factory.get(hovered);
+  if (building) {
+    factory.setDir(building, (building.dir + 1) % 4);
+    shapesDirty = true;
+  } else {
+    dir = (dir + 1) % 4;
+  }
+  showTile(hovered);
+}
+
+function buildAt(tile) {
+  if (!tile) return;
+  if (tool === 'remove') {
+    if (factory.remove(tile)) meshes.setDecorHidden(tile.z * world.size + tile.x, false);
+  } else {
+    const existing = factory.get(tile);
+    if (tool === 'belt' && existing?.type === 'belt') factory.setDir(existing, dir);
+    else if (factory.place(tool, tile, dir)) meshes.setDecorHidden(tile.z * world.size + tile.x, true);
+  }
+  shapesDirty = true;
+}
+
+// Belts follow the drag: each step turns the previous belt towards the new one.
+function buildAlong(tile) {
+  if (!tile || tile === lastTile) return;
+  if (!lastTile || tool !== 'belt') {
+    buildAt(tile);
+    lastTile = tile;
+    return;
+  }
+  while (lastTile !== tile) {
+    const dx = Math.sign(tile.x - lastTile.x);
+    const dz = dx ? 0 : Math.sign(tile.z - lastTile.z);
+    dir = DIRS.findIndex((d) => d.x === dx && d.z === dz);
+    const prev = factory.get(lastTile);
+    if (prev?.type === 'belt') factory.setDir(prev, dir);
+    lastTile = world.at(lastTile.x + dx, lastTile.z + dz);
+    buildAt(lastTile);
+  }
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+  if (!e.isPrimary) {
+    // A second finger means pinch or rotate, not building.
+    dragging = false;
+    return;
+  }
+  if (!tool || e.button !== 0) return;
+  setPointer(e);
+  dragging = true;
+  lastTile = null;
+  buildAlong(pickTile());
+});
+window.addEventListener('pointerup', () => {
+  dragging = false;
+});
+
+for (const b of toolButtons) b.addEventListener('click', () => setTool(b.dataset.tool));
+document.getElementById('rotate').addEventListener('click', rotate);
+
+window.addEventListener('keydown', (e) => {
+  if (e.repeat && e.key.toLowerCase() !== 'r') return;
+  const key = e.key.toLowerCase();
+  if (key === '1') setTool('drill');
+  else if (key === '2') setTool('belt');
+  else if (key === '3' || key === 'x' || key === 'delete') setTool('remove');
+  else if (key === 'r') rotate();
+  else if (key === 'escape' && tool) setTool(tool);
+});
+
+function updateHover() {
+  if (!pointerInside) return;
+  showTile(pickTile());
 }
 
 function resize() {
@@ -173,14 +319,39 @@ document.getElementById('new-map').addEventListener('click', () => {
   loadWorld(Math.floor(Math.random() * 99999));
 });
 
+// The simulation runs in fixed steps so belts behave the same at any frame rate.
+const STEP = 1 / 60;
+let pending = 0;
+let legendTimer = 0;
+
 const timer = new THREE.Timer();
 renderer.setAnimationLoop(() => {
   timer.update();
-  rig.update(timer.getDelta());
+  const dt = Math.min(timer.getDelta(), 0.25);
+  rig.update(dt);
   sea.update(timer.getElapsed());
+  pending += dt;
+  while (pending >= STEP) {
+    factory.tick(STEP);
+    pending -= STEP;
+  }
+  if (shapesDirty) {
+    factoryView.rebuild(factory);
+    shapesDirty = false;
+  }
+  factoryView.update(dt, timer.getElapsed(), factory);
+  legendTimer += dt;
+  if (legendTimer > 0.5) {
+    legendTimer = 0;
+    renderLegend();
+  }
   updateHover();
   renderer.render(scene, camera);
 });
 
 loadWorld(4711);
+renderHelp();
 resize();
+
+// Handle for poking at the game from the browser console while developing.
+if (import.meta.env.DEV) window.bolla = { camera, rig, get world() { return world; }, get factory() { return factory; } };
