@@ -1,11 +1,16 @@
-[gd_resource type="Resource" script_class="BuildingData" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="BuildingData" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://src/systems/buildings/building_data.gd" id="1"]
 [ext_resource type="Script" path="res://src/systems/buildings/building_level_data.gd" id="2"]
+[ext_resource type="PackedScene" path="res://assets/models/buildings/ph_bld_chapel_ruin.glb" id="m0"]
+[ext_resource type="PackedScene" path="res://assets/models/buildings/ph_bld_chapel_l1.glb" id="m1"]
+[ext_resource type="PackedScene" path="res://assets/models/buildings/ph_bld_chapel_l2.glb" id="m2"]
+[ext_resource type="PackedScene" path="res://assets/models/buildings/ph_bld_chapel_l3.glb" id="m3"]
 
 [sub_resource type="Resource" id="level_1"]
 script = ExtResource("2")
 level = 1
+model = ExtResource("m1")
 title = "Kapelle unter Dach"
 inputs = Dictionary[StringName, int]({&"wood": 10, &"stone": 8, &"clay": 2, &"linen": 2, &"iron_fittings": 2})
 coins = 25
@@ -17,6 +22,7 @@ adds = PackedStringArray("Dach und Tür", "Altar mit Altartuch", "Katafalk", "2 
 [sub_resource type="Resource" id="level_2"]
 script = ExtResource("2")
 level = 2
+model = ExtResource("m2")
 title = "Glocke und Gestühl"
 inputs = Dictionary[StringName, int]({&"wood": 8, &"workstone": 3, &"iron_bar": 2})
 coins = 30
@@ -28,6 +34,7 @@ adds = PackedStringArray("Dachreiter mit Glocke", "4 Kirchenbänke", "2 Trauerg�
 [sub_resource type="Resource" id="level_3"]
 script = ExtResource("2")
 level = 3
+model = ExtResource("m3")
 title = "Licht im Chor"
 inputs = Dictionary[StringName, int]({&"workstone": 4, &"gold_leaf": 2, &"linen": 3, &"iron_fittings": 2})
 coins = 40
@@ -39,6 +46,7 @@ adds = PackedStringArray("Farbiges Chorfenster", "Totenleuchter vor der Tür", "
 [resource]
 script = ExtResource("1")
 id = &"chapel"
+model_site = ExtResource("m0")
 display_name = "Kapelle"
 order = 2
 site_id = "site_chapel"

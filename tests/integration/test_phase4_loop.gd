@@ -245,7 +245,15 @@ func _round_trip(moment: String) -> void:
 	_bind()
 	TimeManager.running = false
 	await wait_frames(1)
-	assert_eq(SaveManager.collect_state(), before, moment + ": collect_state identical after save → load")
+	var after := SaveManager.collect_state()
+	# Phase 6 (W-Welt): on the 64 × 80 m ground collision the gravekeeper settles by one float32 ulp
+	# after a load; positions count as equal within 1e-5 m (everything else stays exact).
+	var p_before: Variant = (before.nodes as Dictionary).get("player", {}).get("position")
+	var p_after: Variant = (after.nodes as Dictionary).get("player", {}).get("position")
+	if p_before is Vector3 and p_after is Vector3 and (p_before as Vector3).is_equal_approx(p_after) \
+			and (p_before as Vector3).distance_to(p_after) < 1e-5:
+		(after.nodes.player as Dictionary)["position"] = p_before
+	assert_eq(after, before, moment + ": collect_state identical after save → load")
 
 
 ## Advances the clock to `minute` of `day` unless it is already later (instant actions take

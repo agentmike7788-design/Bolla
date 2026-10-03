@@ -1,0 +1,25 @@
+{
+  "_comment": "Der Lagerschuppen innen (docs/PHASE6_DESIGN.md §4.7, §4.8), gebaut von src/world/interiors/interior_build.gd; Koordinaten wie crypt_layout.json. Innen x −1,4…1,4, z −1,5…1,4, Tür im Süden. Das Regal mit dem Lagerbuch an der Nordwand ist ShedStore; Holzlege (Stufe 1) an der Westwand unter dem Fenster vorbei, Steinkiste (Stufe 2) in der Nordwestecke, zweites Regal (Stufe 3) an der Ostwand. Laterne an der Tür (Rolle lantern, Schatten nachts), Fenster = Hütte × 0,7.",
+  "room_id": "shed",
+  "building": "shed",
+  "room": "ph_int_shed_room",
+  "door_inside": [0.1, 1.4],
+  "spawn_inside": [0.1, 0.95],
+  "walkway": 0.9,
+  "camera_bounds": {"min": [-0.3, -0.4], "max": [0.3, 0.2]},
+  "sun_rotation_deg": [-58.0, 30.0, 0.0],
+  "sun_shadow": true,
+  "wall_height": 3.0,
+  "floor": [-1.8, -1.9, 1.8, 1.9],
+  "walls": [
+    [-1.8, -1.9, -1.4, 1.9], [1.4, -1.9, 1.8, 1.9],
+    [-1.8, -1.9, 1.8, -1.5], [-1.8, 1.45, 1.8, 1.9]
+  ],
+  "items": [
+    {"asset": "ph_int_shed_rack", "id": "ShedStore", "pos": [0.15, -1.2], "rot_y": 0.0, "mount": "floor", "interact": "shed_store",
+      "use_pos": [0.15, -0.35], "reach": [2.0, 1.0, 1.2], "reach_offset": [0.2, 0.5, 0.2]},
+    {"asset": "ph_int_wood_rack", "pos": [-1.14, 0.7], "rot_y": 90.0, "mount": "floor", "min_level": 1},
+    {"asset": "ph_int_stone_bin", "pos": [-1.05, -0.95], "rot_y": 90.0, "mount": "floor", "min_level": 2},
+    {"asset": "ph_int_shed_rack", "pos": [1.12, 0.25], "rot_y": -90.0, "mount": "floor", "min_level": 3}
+  ]
+}

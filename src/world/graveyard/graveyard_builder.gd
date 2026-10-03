@@ -12,7 +12,9 @@ extends SceneTree
 ## decor, grass and the Phase-3 parts (systems, obstacles, tending spots, notice board, birches,
 ## build mask – docs/PHASE3_DESIGN.md §4) and the Phase-4 parts (systems, elder bushes, props,
 ## door note – docs/PHASE4_DESIGN.md §4) and the Phase-5 parts (systems, workyard with build sites and
-## stations, gather nodes, Am Bruch – docs/PHASE5_DESIGN.md §4, graveyard_build_phase5.gd).
+## stations, gather nodes, Am Bruch – docs/PHASE5_DESIGN.md §4, graveyard_build_phase5.gd) and the Phase-6
+## parts (systems, building sites and doors, the three interiors, the old table retiring at crypt
+## level 1 – docs/PHASE6_DESIGN.md §4, graveyard_build_phase6.gd).
 
 ## Helper scripts are preloaded (no class_name) – see the autoload note below.
 const Ctx := preload("res://src/world/graveyard/graveyard_build_context.gd")
@@ -23,6 +25,7 @@ const Grass := preload("res://src/world/graveyard/graveyard_build_grass.gd")
 const Phase3 := preload("res://src/world/graveyard/graveyard_build_phase3.gd")
 const Phase4 := preload("res://src/world/graveyard/graveyard_build_phase4.gd")
 const Phase5 := preload("res://src/world/graveyard/graveyard_build_phase5.gd")
+const Phase6 := preload("res://src/world/graveyard/graveyard_build_phase6.gd")
 const InteriorBuild := preload("res://src/world/hut_interior/hut_interior_build.gd")
 const InteriorBuilder := preload("res://src/world/hut_interior/hut_interior_builder.gd")
 const LAYOUT_PATH := "res://data/world/graveyard_layout.json"
@@ -139,6 +142,8 @@ func _build_world() -> Node:
 	Phase3.build_notice_board(_ctx, entities)
 	Phase5.build_workyard(_ctx, entities)
 	Phase5.build_gather_nodes(_ctx, entities)
+	Phase6.build_sites(_ctx, entities)
+	Phase6.build_doors(_ctx, entities)
 
 	var decor := _ctx.group(scene_root, "Decor")
 	var old := _ctx.group(decor, "OldGraves")
@@ -156,6 +161,7 @@ func _build_world() -> Node:
 	Phase5.build_systems(_ctx, systems)
 	Phase5.build_elder_gather(_ctx, decor)
 	Phase5.build_bruch(_ctx, decor, entities)
+	Phase6.build_systems(_ctx, systems)
 
 	Entities.build_waypoints(_ctx, _ctx.group(scene_root, "Waypoints"))
 	_ctx.group(scene_root, "Corpses")
@@ -166,10 +172,12 @@ func _build_world() -> Node:
 	_ctx.add(scene_root, player)
 	_build_camera(player)
 	_build_interior()
+	Phase6.build_interiors(_ctx, scene_root)
 	var ui := (load(UI_SCENE) as PackedScene).instantiate()
 	ui.name = "UI"
 	_ctx.add(scene_root, ui)
 	Colliders.build_bounds(_ctx)
+	Phase6.retire_old_table(_ctx)
 	print("  colliders: ", _ctx.collider_count)
 	return scene_root
 

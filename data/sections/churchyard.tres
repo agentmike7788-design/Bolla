@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="SectionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/expansion/section_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"churchyard"
+display_name = "Kirchhof"
+order = 7
+starts_unlocked = false
+requires_section = &""
+requires_rating = &""
+decor_cap = 0
+unlock_text = "Die Kirchpforte ist offen. Oben am Kamm steht die Kapelle."
+requires_flag = &"buildings_open"
+requires_flag_text = "Die Pforte zum Kamm ist verschlossen."
+counts_for_cemetery = false
+is_burial = false

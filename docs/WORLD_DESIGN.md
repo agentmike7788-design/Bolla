@@ -121,3 +121,48 @@ Quelle: `data/world/graveyard_layout.json` (Blöcke `workyard`, `stations`, `gat
 **Am Bruch (§4.2)** – x 21,5…31,5: Abschnitt `bruch` (z −6,5…9,6, Flag `bruch_license`, Ostpforte 1,6 m = `ph_prop_gate_small` × 1,345 in X), `quarry` (z −12…−6,5, nach `bruch`, 3 Findlinge `ph_env_boulder` → `_broken` bei z −6,6). Sammelstellen: Erzader, 2 Werksteinbänke, Bruchsteinwand im Steinbruch; 3 Flachsbeete, Lehmkuhle, 2 Kräuterraine Am Bruch. Rand: Felswand `ph_env_quarry_face` (26,2 | −12,9), Kantenstücke an Nord- und Ostkante, 3 Dornhecken im Süden; unsichtbare Wände z 9,6 und z −11,4, Ostgrenze x 31,2. Eingewachsene Steinplatte (24,0 | −2,8) ohne Funktion. Teleports `tp_bruch` (25,5 | 0), `tp_quarry` (27,0 | −8,3).
 **Schlag (§4.3):** 5 Erlen an den Vertragspositionen (nicht verschoben), Kräuter (−2,8 | 18,0), (−2,6 | 23,6); `tp_schlag` (−5,2 | 19,4) statt (−6,0 | 19,0) (dort stand ein Busch). **Holunder (§4.4):** alle 3 Sträucher tragen eine Sammelstelle (Kind des Strauchs, nach innen versetzt), alle 3 vom Spieler erreichbar.
 **Boden, Grenzen:** Boden 64 × 64 m (Mitte (8 | 2,5), x −24…40), Steinboden-Tönung im Steinbruch, Gras Am Bruch halbe Dichte, im Steinbruch keins; `walkable_bounds.max` x 31,2, `camera_bounds.max` x 27. Die Bau-Maske bleibt x −11,5…21,5.
+
+## Phase-6-Welt – Gruft, Kapelle, Lagerschuppen (W-Welt, Vertrag `docs/PHASE6_DESIGN.md` §4)
+
+Quelle: `data/world/graveyard_layout.json` (Blöcke `buildings` {sites, site_rects, crypt_route, soul_lantern}, `building_doors`, `interiors`, Abschnitt `churchyard`, Hindernis `obs_c_gate`, `old_graves[].pit_variant`), Raum-Layouts `data/world/interiors/{crypt,chapel,shed}_layout.json`. Builder-Teil `graveyard_build_phase6.gd` (Systemknoten Buildings 32 · Ossuary 36 · Chapel 37, Bauplätze `Entities/site_*` mit Footprint-Kollision und `Exterior` = `building_exterior.gd`, Türen `Entities/door_*` am Marker `door_outside`, Innenräume `Interiors/CryptInterior|ChapelInterior|ShedInterior`, Rückbau des alten Tischs), generischer Raum-Builder `src/world/interiors/interior_build.gd` (+ `interior_builder.gd -- --room=<id>`), Kapellen-Ritenlichter `chapel_rite_lights.gd`. Aufnahmen: `graveyard_shots_phase6.gd`.
+
+```
+ z −30 ┌──────────── Kirchhof churchyard (x −2…11,5, keine Gräber, keine Zier) ────────────┐
+       │  Kulisse K7 (z −31…−36) · K2 (0,2|−32)      KAPELLE (4,5|−25,5)  Footprint 5,2 × 7  │
+ z −22 │  Birke (−1,4|−22,2)   Tür (4,5|−21,3) ░ Vorplatz ░  Totenleuchter (6,6|−21,4) · Birke K3 (9,6|−23,4)
+ z −20 ═══════ Nordzaun Birkenhang ═══[KIRCHPFORTE x 3,7…5,3]════════════════════════════
+ z −12 ═ Holunderwinkel ═[Pförtchen]═╗    … Birkenhang …   ═══ Zaun Alter Hof ═[Durchgang]═
+       SCHUPPEN (−12,9|−9,0)  │ Gang x −11,2…−8,6   HÜTTE (fest)
+       Tasche x −14,6…−11,2 · z −7,2…−5,4 (Tür −12,8|−6,85)   Tisch (−1,6|−5,4) → Trittstelle ab Gruft 1
+       … Alter Hof … Eiche (−7,6|3,2) · old_08 (−5,2|5,6)
+ z  5,6 GRUFT (−9,0|6,9) Footprint x −10,4…−7,6 · z 5,6…8,2, Tür (−9,0|8,55), Zugang bis z 9,2
+ z  9,6 ═══ Südzaun ═══ … Tor · Bahre (4,4|8,3)
+```
+
+**Bauplätze und Stufen.** `BuildingSite` zeigt das Modell der Stufe (0 = `model_site`, sonst `levels[n].model` aus `data/buildings/*.tres`), sichtbar ab `buildings_open`; eine Footprint-Box kollidiert (Gruft 2,4 m, Kapelle 6,0 m, Schuppen 3,0 m hoch). `building_exterior.gd` hängt an die Marker der jeweils gezeigten Stufe warme Lichter ohne Schatten: Gruft-Laterne (St. 3), zwei Kapellenfenster (nur während `ChapelAltar.rite_active` und ab St. 3 nachts), Totenleuchter (St. 3, nachts); die Glocke (Kindmesh `bell`, ab St. 2) schwingt 6 s bei Beginn und Ende eines Ritus (GDScript, kein Shader-TIME). Die Türen sitzen an den Positionen der `door_outside`-Marker (Gruft (−9,0 | 8,55), Kapelle (4,5 | −21,3), Schuppen (−12,8 | −6,85)).
+
+**Rückbau vor der Hütte (§4.4).** `Entities/morgue_table` hat `retire_at_level 1`; Waschschüssel (`Decor/Phase4Props/WashBasin`), Räucherschale (`Entities/morgue_table/SmokeBowl`) und die Kollisionskörper `Colliders/morgue_table`, `Colliders/WashBasin` tragen `follows_table = "morgue_table"`. Ab Gruft 1 bleibt die Trittstelle (Bau-Maske und Gras dort unverändert).
+
+**Innenräume (§4.7/§4.8).** Gruft (60 | 0 | −200): Gewölbe 8 × 6 m, Treppe nach Süden (Schacht, 8 Motes), Gruft-Tisch in der Mitte (`MorgueTable` room crypt, requires_level 1) mit Räucherschale und Waschbecken (`follows_table`), Hängelaterne darüber (einziges Schattenlicht), Kühlnischen **niche_1/2 an der Nordwand beiderseits des Beinhauses** (Stufe 1, von der Raumkamera frontal lesbar), niche_3/4 an West-/Ostwand mitte (St. 2), niche_5/6 vorne (St. 3), vermauerte Nischen als Ziegelfront bis zur Stufe davor; Beinhaus-Nische im Norden mit Regal (6 Kistenplätze, Namenstafel ab St. 3), vermauerte Tür schräg in der Nordost-Ecke der Nische, damit die Raumkamera sie sieht (St. 2 / Gitter St. 3), Gebeinregal (St. 2), Kerzennischen über niche_1/2. Kapelle (120 | 0 | −200): Katafalk längs vor dem Chor, Altar mit Kerzen (Rolle `rite`), rohe Bänke nur St. 1, vier Kirchenbänke ab St. 2 mit den Trauergästen (MournerSet, 2 auf St. 2, 4 auf St. 3), Glockenseil (St. 2), Kerzenständer = Ewiges Licht und Chorfenster mit Lichtfleck (St. 3), eine Innenraum-Sonne mit Schatten. Schuppen (180 | 0 | −200): Regal mit Lagerbuch = `ShedStore` an der Nordwand, Holzlege (St. 1), Steinkiste (St. 2), zweites Regal (St. 3), Laterne an der Tür. Jeder Raum hat `Sun`, `Spawn`, `camera_rig_path` / `outdoor_sun_path`, `hide_when_inactive`; Möbel der Stufen tragen `min_level`/`max_level` (Kollision mit).
+
+**Versetzte bzw. geänderte Elemente (vollständig; Layout-Diff-Test gegen `tests/fixtures/phase6/layout_p5.json`):**
+| # | Element | vorher | nachher | Grund |
+|---|---|---|---|---|
+| G1 | Pflegestelle `dirt_y01` | (−9,8 \| 7,8) | (−6,6 \| 8,6) | §4.1 |
+| G4 | Waldbaum `forest.trees[0]` | (−8,2 \| 14,2) | **(−15,8 \| 14,6)** | Sichtprüfung Gruft (weiter als die 2 m aus §4.1; W1-Notiz 1) |
+| – | Kulissenbaum `background_trees[3]` | (−13,0 \| 9,0) | **(−16,5 \| 9,5)** | Sichtprüfung Gruft |
+| – | Waldbaum `forest.trees[1]` | (−12,8 \| 18,0) | **(−16,2 \| 20,6)** | Sichtprüfung Gruft |
+| – | Erle `gather_alder_2` (Schlag) | (−10,4 \| 15,6) | **(−10,4 \| 16,6)** | Sichtprüfung Gruft bei Zoom 12 (Tür und Kopf); weiter südlich verdeckt der Waldbaum (−9,4 \| 22,4) Stumpf und Schösslinge (QA5-06) |
+| G5 | Pflegestelle `dirt_y11` | (−8,8 \| 4,9) | **(−8,8 \| 4,1)** | Kopf des Spielers dort lag in der Box des Gruft-Portals (Prüfung §4.5 Punkt 4) |
+| K1 | Zaun Birkenhang-Nord | [[2,0, −20], [7,0, −20]] | [[2,0, −20], [3,7, −20]] + Kirchpforte + [[5,3, −20], [7,0, −20]] | §4.2 |
+| K2 | Hintergrundbaum | (3,5 \| −23,5) | (0,2 \| −32,0) | §4.2 |
+| K3 | Birke | (6,6 \| −22,0) | (9,6 \| −23,4) | §4.2 |
+| K4–K6 | Laufgrenze min, Kameragrenze min.z, Boden | – | min (−14,8 \| −30,3), camera min (−11,5 \| −24), Boden 64 × 80, Mitte (8 \| −5,5) | §4.2/§4.3 |
+| K7 | Kulisse hinter der Kapelle | – | (−3,6 \| −33,6), (4,2 \| −35,6), (9,6 \| −31,6), (13,4 \| −34,2) | §4.2 |
+| S1 | Hintergrundbaum | (−12,5 \| −9,5) | **(−16,8 \| −13,4)** (1 m weiter als §4.3: sonst verdeckt die Krone den Schuppen-First) | §4.3 |
+| S2 | Westgrenze | Wand x −11,2 | ohne Rechteck-Westwand (`west_wall false`); `extra_walls` auf der alten Linie nördlich/südlich der Tasche, die Tasche **x −14,6…−11,2** (0,2 m schmaler als §4.3, damit Ilses Weg ≥ 0,4 m außerhalb bleibt) · z −7,2…−5,4 und ihr Nordrand unter dem Schuppen | §4.3 |
+| S4 | Hintergrundbaum `background_trees[5]` | (−17,0 \| −1,5) | (−18,6 \| −0,4) | Sichtprüfung Schuppen (bedingt) |
+Nicht bewegt: Hütte, Tisch (nur zur Laufzeit verborgen), Werkbank, Stationen, Pförtchen, Ostpforte, Eiche, alle Grabstellen, Altgräber (nur `pit_variant` neu), alle übrigen Pflegestellen (außer G1, G5), Laternenpfähle, Schwarzes Brett, Ilses Wegpunkte, Bauplätze an den Vertragspositionen (kein Versatz nötig).
+
+**Sichtprüfung §4.5 (Test `test_graveyard_world.gd`, AABB-Strahlen, Stufen 0–3, Zoom 12/22/24):** Tür und Kopf überall frei. Freie Gebäudepunkte von 4: Gruft 3 (der First liegt in der AABB der Eichenkrone dahinter), Kapelle 4, Schuppen 4 (Stufe 0: 3). Im Bild bei Zoom 22 (Modellecken-Stichprobe der Mesh-Vertices): Gruft 100 %, Kapelle 82–100 %, Schuppen 100 %; Bildanteil Gruft 4,6–7,4 %, Kapelle 24–31 %, Schuppen 5–12 %. Übersicht (Mesh-Strahlen): Gruft von der Bahre und `tp_workyard` 5/5, Kapelle von `tp_north` 5/5, Schuppen von `tp_workyard` 5/5. Keine neue Verdeckung an Hüttentür, Stationen, Bahre, Grab- und Pflegestellen, Altgräbern, Ilses Platz.
+**Routen (Flood-Fill 1,5 m):** Hüttentür ↔ Bahre, Gruft-Zugang (die letzten ≈ 2 m zwischen Gruftfront und Südzaun sind 1,4 m breit – der Zugangsstreifen, mit der Spielerkapsel frei), Kirchpforte, Kapellentür, jedes Altgrab, Schuppentür, Pförtchen, Tor, Ostpforte, Stationszugänge; Gang an `old_08` vorbei ≥ 1,9 m. **Boden/Gras:** Boden flach unter den drei Footprints (+ 0,35 m), Trittspuren vor den Türen; Gras fehlt unter Footprints und Vorplätzen (1 m), Kirchhof × 0,6. Bau-Maske: Gruft-Rechtecke gesperrt, Weg Bahre → Gruft ROUTE, Kirchpforte ROUTE.

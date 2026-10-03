@@ -2,8 +2,8 @@
   "_comment": "Welt Phase 3/4/5 (docs/PHASE3_DESIGN.md §4, docs/PHASE4_DESIGN.md §4, docs/PHASE5_DESIGN.md §4, Basis docs/VERTICAL_SLICE_DESIGN.md §4). Godot-Koordinaten in Metern: x = Osten, z = Süden (zur Kamera). Friedhofsteil = freigegebene Art-Prototyp-Komposition (data/art_prototype/layout.json), ergänzt um Grabstellen, Stationen und den Kutschweg. Gelesen von tools/blender/asset_ground_graveyard.py (Boden) und src/world/graveyard/graveyard_builder.gd (Szene). Die Laufzeit liest diese Datei nicht.",
   "ground": {
     "_size": "Phase 3 (§4.1): 56 × 64 m, x −24…32, z −29,5…34,5 – Süd- und Westkante wie Phase 2. Phase 5 (§4.5): 64 × 64 m, x −24…40 (Am Bruch).",
-    "size": [64.0, 64.0],
-    "center": [8.0, 2.5],
+    "size": [64.0, 80.0],
+    "center": [8.0, -5.5],
     "cell": 0.3,
     "_flatten": "Unter Grabstellen/Stationen wird der Boden geglättet (Kern flach, danach weicher Übergang).",
     "flatten_falloff": 0.8,
@@ -11,7 +11,8 @@
     "station_flat_margin": 0.35,
     "_phase5": "Phase 5 (§4.5): flach unter den Werkhof-Bauplätzen (Footprint + station_flat_margin) und unter Flachsbeeten / Lehmkuhle (gather_flat_kinds, Modellmaß); Steinboden-Tönung (nur Vertex-Farbe) im Rechteck quarry_tint [x0, z0, x1, z1].",
     "gather_flat_kinds": {"flax_bed": [1.55, 1.15], "clay_pit": [2.2, 1.7]},
-    "quarry_tint": [21.5, -12.5, 31.8, -5.8]
+    "quarry_tint": [21.5, -12.5, 31.8, -5.8],
+    "_phase6": "Phase 6 (§4.2 K6): 64 × 80 m, z −45,5…34,5 (Kirchhof am Kamm, keine Bodenkante hinter der Kapelle); flach unter den drei Gebäude-Footprints (+ station_flat_margin)."
   },
   "sections": [
     {"id": "yard", "rect": [-11.5, -12.0, 11.5, 9.6]},
@@ -19,7 +20,8 @@
     {"id": "north", "rect": [-2.0, -20.0, 11.5, -12.0]},
     {"id": "elder", "rect": [-11.5, -20.0, -2.0, -12.5]},
     {"id": "bruch", "rect": [21.5, -6.5, 31.5, 9.6], "_comment": "Phase 5 §4.2: Arbeitsbereich Am Bruch (keine Grabstellen, keine Zier – außerhalb der Bau-Maske)."},
-    {"id": "quarry", "rect": [21.5, -12.0, 31.5, -6.5]}
+    {"id": "quarry", "rect": [21.5, -12.0, 31.5, -6.5]},
+    {"id": "churchyard", "rect": [-2.0, -30.0, 11.5, -20.0], "_comment": "Phase 6 §4.2: Kirchhof am Kamm (keine Grabstellen, keine Zier, kein Ruf – außerhalb der Bau-Maske)."}
   ],
   "build": {"_comment": "Bau-Maske (§4.3; Phase 4 §4.2: + Abschnitt elder = 4): Raster über x −11,5…21,5, z −20…9,6. trader_access = Streifen innen vor trader_spot [x, z, w, d] = ROUTE.", "trader_access": [-11.5, -3.8, 1.2, 2.4], "origin": [-11.5, -20.0], "size": [66, 60],
     "cell": 0.5, "route_width": 1.5, "grave_ring": 0.5, "station_margin": 0.6, "station_access": 1.0, "grave_foot_strip": 0.8,
@@ -41,14 +43,14 @@
     {"pos": [-3.0, 10.4], "rot_y": 0.0, "_comment": "Zweite Laterne (Abendplatz des Kutschers) ohne Schatten: die freigegebenen 2 Schattenlichter bleiben das Budget.", "light_overrides": {"light_lantern": {"shadow": false}}}
   ],
   "old_graves": [
-    {"id": "old_01", "pos": [2.6, -3.6], "rot_y": 2.0, "stone": "cross", "mound": "fresh"},
-    {"id": "old_02", "pos": [4.4, -3.8], "rot_y": -4.0, "stone": "round", "mound": "grassy"},
-    {"id": "old_03", "pos": [6.3, -3.4], "rot_y": 6.0, "stone": "obelisk", "mound": "grassy"},
-    {"id": "old_04", "pos": [2.9, 1.0], "rot_y": -3.0, "stone": "slab_old", "mound": "sunken"},
-    {"id": "old_05", "pos": [4.8, 0.8], "rot_y": 3.0, "stone": "round", "mound": "grassy"},
-    {"id": "old_06", "pos": [6.7, 1.3], "rot_y": -8.0, "stone": "cross", "mound": "sunken"},
-    {"id": "old_07", "pos": [-3.4, 4.4], "rot_y": 10.0, "stone": "slab_old", "mound": "grassy"},
-    {"id": "old_08", "pos": [-5.2, 5.6], "rot_y": 14.0, "stone": "round", "mound": "fresh"}
+    {"id": "old_01", "pos": [2.6, -3.6], "rot_y": 2.0, "stone": "cross", "mound": "fresh", "pit_variant": "foot"},
+    {"id": "old_02", "pos": [4.4, -3.8], "rot_y": -4.0, "stone": "round", "mound": "grassy", "pit_variant": "foot"},
+    {"id": "old_03", "pos": [6.3, -3.4], "rot_y": 6.0, "stone": "obelisk", "mound": "grassy", "pit_variant": "foot"},
+    {"id": "old_04", "pos": [2.9, 1.0], "rot_y": -3.0, "stone": "slab_old", "mound": "sunken", "pit_variant": "foot"},
+    {"id": "old_05", "pos": [4.8, 0.8], "rot_y": 3.0, "stone": "round", "mound": "grassy", "pit_variant": "foot"},
+    {"id": "old_06", "pos": [6.7, 1.3], "rot_y": -8.0, "stone": "cross", "mound": "sunken", "pit_variant": "foot"},
+    {"id": "old_07", "pos": [-3.4, 4.4], "rot_y": 10.0, "stone": "slab_old", "mound": "grassy", "pit_variant": "foot"},
+    {"id": "old_08", "pos": [-5.2, 5.6], "rot_y": 14.0, "stone": "round", "mound": "fresh", "pit_variant": "foot"}
   ],
   "plots": [
     {"id": "plot_01", "pos": [3.6, -8.2], "rot_y": 1.0, "section": "yard"},
@@ -100,11 +102,13 @@
       "_comment": "Phase 5 §4.2: Ostpforte im Ostzaun der Ostwiese – ph_prop_gate_small(_open) in X auf 1,6 m gestreckt (1,19 m × 1,345)."},
     {"id": "obs_q_boulder_1", "kind": "boulder", "section": "quarry", "pos": [24.2, -6.6], "rot_y": 0.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
     {"id": "obs_q_boulder_2", "kind": "boulder", "section": "quarry", "pos": [26.8, -6.6], "rot_y": 180.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
-    {"id": "obs_q_boulder_3", "kind": "boulder", "section": "quarry", "pos": [29.4, -6.6], "rot_y": 90.0, "footprint": [-1.0, -1.0, 2.0, 2.0]}
+    {"id": "obs_q_boulder_3", "kind": "boulder", "section": "quarry", "pos": [29.4, -6.6], "rot_y": 90.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
+    {"id": "obs_c_gate", "kind": "gate_church", "section": "churchyard", "pos": [4.5, -20.0], "rot_y": 0.0, "footprint": [-0.8, -0.3, 1.6, 0.6], "model_scale_x": 1.345,
+      "_comment": "Phase 6 §4.2 K1: Kirchpforte im Nordzaun des Birkenhangs (x 3,7…5,3) – ph_prop_gate_small(_open) in X auf 1,6 m gestreckt wie die Ostpforte; aufschließbar ab buildings_open."}
   ],
   "_dirt_spots": "Pflegestellen (§2.4; Phase 4 §4.1: + 3 im Holunderwinkel): 25 Flächenstellen; die Grabstellen dirt_<plot_id> erzeugt der Builder am Hügel (grave_dirt). start = start_progress (neues Spiel).",
   "dirt_spots": [
-    {"id": "dirt_y01", "pos": [-9.8, 7.8], "section": "yard", "kind": "weeds", "start": 1.8},
+    {"id": "dirt_y01", "pos": [-6.6, 8.6], "section": "yard", "kind": "weeds", "start": 1.8},
     {"id": "dirt_y02", "pos": [10.3, 8.2], "section": "yard", "kind": "weeds", "start": 2.2},
     {"id": "dirt_y03", "pos": [10.2, -4.9], "section": "yard", "kind": "weeds", "start": 1.4},
     {"id": "dirt_y04", "pos": [9.9, -11.0], "section": "yard", "kind": "weeds", "start": 2.4},
@@ -114,7 +118,7 @@
     {"id": "dirt_y08", "pos": [1.6, -11.0], "section": "yard", "kind": "weeds", "start": 0.0},
     {"id": "dirt_y09", "pos": [-8.9, 1.9], "section": "yard", "kind": "leaves", "start": 0.0},
     {"id": "dirt_y10", "pos": [-6.1, 2.2], "section": "yard", "kind": "leaves", "start": 0.0},
-    {"id": "dirt_y11", "pos": [-8.8, 4.9], "section": "yard", "kind": "leaves", "start": 0.0},
+    {"id": "dirt_y11", "pos": [-8.8, 4.1], "_comment": "Phase 6 §4.1 G5 (bedingt): 0,8 m nach Norden (war −8,8 | 4,9) – hinter dem Gruft-Portal lag der Kopf des Spielers in dessen Box", "section": "yard", "kind": "leaves", "start": 0.0},
     {"id": "dirt_y12", "pos": [-7.2, 5.3], "section": "yard", "kind": "leaves", "start": 0.0},
     {"id": "dirt_e01", "pos": [13.2, 1.2], "section": "east", "kind": "weeds", "start": 0.0},
     {"id": "dirt_e02", "pos": [20.0, -1.2], "section": "east", "kind": "weeds", "start": 0.0},
@@ -173,7 +177,10 @@
     "tp_bruch": [25.5, 0.0],
     "tp_quarry": [27.0, -8.3],
     "tp_schlag": [-5.2, 19.4],
-    "tp_workyard": [-4.4, -3.6]
+    "tp_workyard": [-4.4, -3.6],
+    "tp_crypt": [-9.0, 8.9],
+    "tp_chapel": [4.5, -21.0],
+    "tp_shed": [-12.9, -6.4]
   },
   "waypoint_facing": {
     "_comment": "Blickrichtung (rot_y in Grad, 0 = +Z/Kamera) eines NPC, der an diesem Wegpunkt steht und nicht mit dem Spieler redet.",
@@ -201,7 +208,8 @@
       [[6.5, -12.0], [11.5, -12.0]],
       [[11.5, -12.0], [11.5, -20.0]],
       [[-2.0, -20.0], [0.0, -20.0]],
-      [[2.0, -20.0], [7.0, -20.0]],
+      [[2.0, -20.0], [3.7, -20.0]],
+      [[5.3, -20.0], [7.0, -20.0]],
       [[9.0, -20.0], [11.5, -20.0]],
       [[-2.0, -12.0], [-2.0, -15.0]],
       [[-2.0, -17.0], [-2.0, -20.0]],
@@ -235,22 +243,26 @@
     {"asset": "ph_prop_crate", "pos": [-8.4, -5.75], "rot_y": 12.0, "_comment": "Phase 5 (Werkhof, Sichtbarkeit): von (−8,2 | −4,9) versetzt – dort steht der Webstuhl."}
   ],
   "background_trees": [
-    {"pos": [-12.5, -9.5], "rot_y": 120.0, "scale": 1.15},
+    {"pos": [-16.8, -13.4], "rot_y": 120.0, "scale": 1.15, "_comment": "Phase 6 §4.3 S1: vom Schuppen-Footprint gerückt (war −12,5 | −9,5; W-Welt: 1 m weiter nach Südwesten als §4.3, sonst verdeckt die Krone den Schuppen-First – Sichtprüfung §4.5)."},
     {"pos": [23.5, -13.5], "rot_y": 250.0, "scale": 1.3},
     {"pos": [34.5, 3.0], "rot_y": 10.0, "scale": 1.0, "_comment": "Phase 5 §4.2: aus Am Bruch gerückt (war 24,5 | 2,0)."},
-    {"pos": [-13.0, 9.0], "rot_y": 300.0, "scale": 1.2},
-    {"pos": [3.5, -23.5], "rot_y": 70.0, "scale": 1.4},
-    {"pos": [-17.0, -1.5], "rot_y": 200.0, "scale": 1.25},
+    {"pos": [-16.5, 9.5], "rot_y": 300.0, "scale": 1.2, "_comment": "Phase 6 W-Welt (Sichtprüfung §4.5): Kulissenbaum vor der Gruft nach Westen gerückt (war −13,0 | 9,0)."},
+    {"pos": [0.2, -32.0], "rot_y": 70.0, "scale": 1.4, "_comment": "Phase 6 §4.2 K2: vom Kapellen-Footprint gerückt (war 3,5 | −23,5)."},
+    {"pos": [-18.6, -0.4], "rot_y": 200.0, "scale": 1.25, "_comment": "Phase 6 §4.3 S4 (bedingt, Sichtprüfung am Schuppen gescheitert): war −17,0 | −1,5."},
     {"pos": [35.0, -7.0], "rot_y": 160.0, "scale": 1.2, "_comment": "Phase 5 §4.2: aus Am Bruch gerückt (war 25,5 | −6,0)."},
     {"pos": [-7.6, -23.4], "rot_y": 30.0, "scale": 1.3, "_comment": "Phase 4: aus dem Holunderwinkel gerückt (war −6,5 | −17,5)."},
-    {"pos": [14.5, -16.0], "rot_y": 90.0, "scale": 1.2}
+    {"pos": [14.5, -16.0], "rot_y": 90.0, "scale": 1.2},
+    {"pos": [-3.6, -33.6], "rot_y": 210.0, "scale": 1.2, "_comment": "Phase 6 §4.2 K7: Kulisse hinter der Kapelle (z −31…−36)."},
+    {"pos": [4.2, -35.6], "rot_y": 140.0, "scale": 1.3},
+    {"pos": [9.6, -31.6], "rot_y": 20.0, "scale": 1.15},
+    {"pos": [13.4, -34.2], "rot_y": 300.0, "scale": 1.25}
   ],
   "_birches": "Birkenhang (§4.1): 2 im Abschnitt, 4 dahinter.",
   "birches": [
     {"pos": [-1.0, -19.2], "rot_y": 30.0, "scale": 1.0},
     {"pos": [10.6, -15.8], "rot_y": 200.0, "scale": 0.9},
     {"pos": [-1.4, -22.2], "rot_y": 110.0, "scale": 1.1},
-    {"pos": [6.6, -22.0], "rot_y": 300.0, "scale": 1.05},
+    {"pos": [9.6, -23.4], "rot_y": 300.0, "scale": 1.05, "_comment": "Phase 6 §4.2 K3: vom Kapellen-Vorplatz gerückt (war 6,6 | −22,0)."},
     {"pos": [12.8, -21.4], "rot_y": 80.0, "scale": 0.95},
     {"pos": [-4.9, -22.9], "rot_y": 160.0, "scale": 1.0, "_comment": "Phase 4: aus dem Holunderwinkel gerückt (war −4,8 | −17,6)."}
   ],
@@ -292,7 +304,7 @@
     {"id": "gather_herbs_1", "kind": "herb_patch", "section": "bruch", "pos": [23.0, 8.2], "rot_y": 0.0},
     {"id": "gather_herbs_2", "kind": "herb_patch", "section": "bruch", "pos": [30.6, 8.4], "rot_y": 40.0},
     {"id": "gather_alder_1", "kind": "alder", "pos": [-6.9, 15.6], "rot_y": 0.0},
-    {"id": "gather_alder_2", "kind": "alder", "pos": [-10.4, 15.6], "rot_y": 70.0},
+    {"id": "gather_alder_2", "kind": "alder", "pos": [-10.4, 16.6], "rot_y": 70.0, "_comment": "Phase 6 W-Welt (Sichtprüfung §4.5, Zoom 12): 1,0 m nach Süden (war −10,4 | 15,6); weiter südlich verdeckt der Waldbaum (−9,4 | 22,4) Stumpf und Schösslinge (QA5-06)"},
     {"id": "gather_alder_3", "kind": "alder", "pos": [-4.0, 17.4], "rot_y": 140.0},
     {"id": "gather_alder_4", "kind": "alder", "pos": [-8.8, 24.0], "rot_y": 210.0},
     {"id": "gather_alder_5", "kind": "alder", "pos": [-5.0, 24.6], "rot_y": 300.0},
@@ -328,8 +340,8 @@
   "forest": {
     "_comment": "Waldrand am Kutschweg.",
     "trees": [
-      {"pos": [-8.2, 14.2], "rot_y": 15.0, "scale": 1.1},
-      {"pos": [-12.8, 18.0], "rot_y": 140.0, "scale": 1.25},
+      {"pos": [-15.8, 14.6], "rot_y": 15.0, "scale": 1.1, "_comment": "Phase 6 §4.1 G4 (bedingt, Sichtprüfung an der Gruft gescheitert): war −8,2 | 14,2; weiter als die 2 m aus §4.1, freigegeben durch die W1-Integrationsnotiz (Kulisse)."},
+      {"pos": [-16.2, 20.6], "rot_y": 140.0, "scale": 1.25, "_comment": "Phase 6 W-Welt (Sichtprüfung §4.5 an der Gruft): war −12,8 | 18,0."},
       {"pos": [-9.4, 22.4], "rot_y": 260.0, "scale": 1.0},
       {"pos": [-16.5, 13.0], "rot_y": 75.0, "scale": 1.2},
       {"pos": [-14.0, 27.5], "rot_y": 200.0, "scale": 1.3},
@@ -372,7 +384,10 @@
     "visibility_range": 50.0,
     "_phase5": "Phase 5 §4.5: Am Bruch halbe Dichte, im Steinbruch kein Gras; keep_out um Beete, Lehmkuhle und Steinbruch-Stellen (Modellmaß + gather_keep_out) und die Werkhof-Footprints (keep_out_station).",
     "bruch_density_scale": 0.5,
-    "gather_keep_out": 0.25
+    "gather_keep_out": 0.25,
+    "_phase6": "Phase 6 §4.1 G3 / §4.2: kein Gras unter den Gebäude-Footprints (+ keep_out_station) und auf dem Vorplatz vor jeder Tür (Zugang + building_access_keep_out), im Kirchhof Dichte × 0,6.",
+    "churchyard_density_scale": 0.6,
+    "building_access_keep_out": 1.0
   },
   "atmosphere": {
     "_comment": "Zeitgesteuerte Stimmung mit Halte-Stützstellen (§4). presets = feste Presets für apply()/cycle() (Debug).",
@@ -391,11 +406,19 @@
     "ph_prop_lantern_post/light_lantern": {"color": "#ffae55", "energy": 2.6, "range": 8.0, "shadow": true, "flicker": true},
     "ph_prop_candle_cluster/light_candle": {"color": "#ffa040", "energy": 0.8, "range": 2.6, "shadow": false, "flicker": true},
     "ph_chr_gravekeeper/light_lantern": {"color": "#ffb866", "energy": 0.9, "range": 3.5, "shadow": false, "flicker": true},
-    "ph_bld_forge/light_ember": {"color": "#e07a3a", "energy": 0.5, "range": 3.5, "shadow": false, "flicker": true, "_comment": "Phase 5 §4.1/§9: Esse-Glut, nur wenn gebaut, ohne Schatten."}
+    "ph_bld_forge/light_ember": {"color": "#e07a3a", "energy": 0.5, "range": 3.5, "shadow": false, "flicker": true, "_comment": "Phase 5 §4.1/§9: Esse-Glut, nur wenn gebaut, ohne Schatten."},
+    "_phase6": "Phase 6 §4.1/§4.2/§9: nur ohne Schatten. Gruft-Laterne ab Stufe 3; Kapellenfenster (2 Lichter, Marker light_window_1 und _3 jeder Kapellenstufe) nur während einer Aussegnung und ab Stufe 3 nachts; Totenleuchter ab Stufe 3 nachts. Die Stufenmodelle tauscht BuildingSite zur Laufzeit, die Lichter hängt building_exterior.gd an.",
+    "ph_bld_crypt_l3/light_lantern": {"color": "#ffae55", "energy": 1.6, "range": 2.2, "shadow": false, "flicker": true},
+    "ph_bld_chapel_l1/light_window_1": {"color": "#ffa24e", "energy": 1.6, "range": 3.5, "shadow": false, "flicker": false},
+    "ph_bld_chapel_l1/light_window_3": {"color": "#ffa24e", "energy": 1.6, "range": 3.5, "shadow": false, "flicker": false},
+    "ph_prop_soul_lantern/light_soul": {"color": "#ffc07a", "energy": 1.3, "range": 2.5, "shadow": false, "flicker": true}
   },
   "colliders": {
     "_comment": "Statische Kollision (Layer 1) je Asset, lokal zum platzierten Modell. shape box: size [x,y,z]; cylinder: radius + height. offset = Mittelpunkt.",
     "ph_bld_gravekeeper_hut": [{"shape": "box", "size": [5.1, 3.0, 4.1], "offset": [0.0, 1.5, 0.0]}],
+    "_phase6": "Phase 6: Gebäude kollidieren über ihren Footprint (buildings.sites[].height), der Totenleuchter als Säule.",
+    "ph_prop_soul_lantern": [{"shape": "cylinder", "radius": 0.34, "height": 2.9, "offset": [0.0, 1.45, 0.0]}],
+    "ph_prop_grave_pit_foot": [{"shape": "box", "size": [1.3, 0.6, 2.2], "offset": [0.0, 0.3, -0.05]}, {"shape": "box", "size": [1.5, 0.5, 0.7], "offset": [0.0, 0.25, 1.42]}],
     "ph_env_tree_old_oak": [{"shape": "cylinder", "radius": 0.6, "height": 3.0, "offset": [0.15, 1.5, -0.05]}],
     "ph_env_bush": [{"shape": "cylinder", "radius": 0.45, "height": 0.8, "offset": [0.0, 0.4, 0.0]}],
     "ph_prop_gravestone_cross": [{"shape": "box", "size": [0.6, 1.3, 0.3], "offset": [0.03, 0.65, 0.0]}],
@@ -445,10 +468,30 @@
     "ph_env_quarry_face": [{"shape": "box", "size": [9.0, 4.0, 2.6], "offset": [0.0, 2.0, 0.0]}],
     "ph_env_quarry_edge": [{"shape": "box", "size": [3.0, 3.4, 2.6], "offset": [0.0, 1.7, 0.0]}]
   },
-  "walkable_bounds": {"min": [-11.2, -20.3], "max": [31.2, 25.2], "wall_height": 3.0, "wall_thickness": 1.0, "_phase5": "Phase 5 §4.5: max [21,2 → 31,2] (Am Bruch)."},
+  "walkable_bounds": {"min": [-14.8, -30.3], "max": [31.2, 25.2], "wall_height": 3.0, "wall_thickness": 1.0, "_phase5": "Phase 5 §4.5: max [21,2 → 31,2] (Am Bruch).", "_phase6": "Phase 6 §4.2 K4 / §4.3 S2: min [−11,2 | −20,3] → [−14,8 | −30,3] (Kirchhof, Schuppen-Tasche); ohne eigene Westwand (west_wall false, sie schnitte Ilses Weg) – die Westgrenze bilden extra_walls: die alte Linie x −11,2 (Wand x −12,2…−11,2 wie bisher) nördlich und südlich der Tasche, die Tasche x −14,6…−11,2 · z −7,2…−5,4 (W-Welt: Westkante 0,2 m östlich von §4.3, damit Ilses Weg ≥ 0,4 m außerhalb bleibt) (Wände außen anliegend, Wandstärke 1 m, die Linien liegen auf der Wandmitte) und ihr Nordrand unter dem Schuppen (vor buildings_open hat der Bauplatz keine Kollision).", "west_wall": false},
   "_extra_walls": "Unsichtbare Wände (Höhe/Dicke wie walkable_bounds, mittig auf der Linie): Wald östlich des Kutschwegs. Phase 4: die Sperre hinter der Hütte ersetzt der Zaun des Holunderwinkels mit dem Pförtchen.",
-  "extra_walls": [[[11.2, 9.9], [11.2, 25.2]], [[21.5, 9.6], [31.2, 9.6]], [[21.5, -11.4], [31.2, -11.4]]],
-  "camera_bounds": {"min": [-10.0, -17.5], "max": [27.0, 23.0], "distance": 22.0, "zoom_min": 12.0, "zoom_max": 24.0},
+  "extra_walls": [[[11.2, 9.9], [11.2, 25.2]], [[21.5, 9.6], [31.2, 9.6]], [[21.5, -11.4], [31.2, -11.4]],
+    [[-2.0, -20.0], [-2.0, -30.3]], [[11.5, -20.0], [11.5, -30.3]],
+    [[-11.7, -20.8], [-11.7, -7.7]], [[-15.1, -7.7], [-11.7, -7.7]], [[-15.1, -7.2], [-15.1, -5.4]], [[-15.1, -4.9], [-11.7, -4.9]], [[-11.7, -4.9], [-11.7, 25.2]]],
+  "camera_bounds": {"min": [-11.5, -24.0], "max": [27.0, 23.0], "distance": 22.0, "zoom_min": 12.0, "zoom_max": 24.0},
   "player_start": {"pos": [-4.4, -3.6], "rot_y": 0.0},
-  "hut_interior": {"_comment": "Innenraum-Szene (docs §11, src/world/hut_interior/hut_interior.tscn) fern der Außenwelt; hut_door steht am Marker door_outside der Hütte.", "origin": [0.0, 0.0, -200.0]}
+  "hut_interior": {"_comment": "Innenraum-Szene (docs §11, src/world/hut_interior/hut_interior.tscn) fern der Außenwelt; hut_door steht am Marker door_outside der Hütte.", "origin": [0.0, 0.0, -200.0]},
+  "_buildings": "Phase 6 §4.1–§4.4: feste Bauplätze (BuildingSite, sichtbar ab buildings_open). footprint = lokales XZ-Rechteck [x, z, w, d], access = Weltpunkt vor der Tür, height = Kollisionshöhe des Footprints. site_rects = Footprint + Rand 0,6 + Zugang (Welt-Rect2 [x, z, w, d]): Zier dort einmal geräumt, Bau-Maske gesperrt.",
+  "buildings": {
+    "sites": [
+      {"id": "site_crypt", "building": "crypt", "pos": [-9.0, 6.9], "rot_y": 0.0, "footprint": [-1.4, -1.3, 2.8, 2.6], "access": [-9.0, 8.7], "height": 2.4, "door_marker": "door_outside"},
+      {"id": "site_chapel", "building": "chapel", "pos": [4.5, -25.5], "rot_y": 0.0, "footprint": [-2.6, -3.5, 5.2, 7.0], "access": [4.5, -21.5], "height": 6.0, "door_marker": "door_outside"},
+      {"id": "site_shed", "building": "shed", "pos": [-12.9, -9.0], "rot_y": 0.0, "footprint": [-1.6, -1.8, 3.2, 3.6], "access": [-12.8, -6.3], "height": 3.0, "door_marker": "door_outside"}
+    ],
+    "site_rects": [[-11.0, 5.0, 4.0, 4.2]],
+    "crypt_route": [[1.75, 8.4], [-5.0, 8.4], [-9.0, 8.9]],
+    "soul_lantern": {"asset": "ph_prop_soul_lantern", "pos": [6.6, -21.4], "rot_y": 0.0, "min_level": 3}
+  },
+  "building_doors": [
+    {"id": "door_crypt", "type": "building_door", "pos": [-9.0, 8.55], "rot_y": 0.0, "params": {"building": "crypt"}},
+    {"id": "door_chapel", "type": "building_door", "pos": [4.5, -21.3], "rot_y": 0.0, "params": {"building": "chapel"}},
+    {"id": "door_shed", "type": "building_door", "pos": [-12.8, -6.85], "rot_y": 0.0, "params": {"building": "shed"}}
+  ],
+  "interiors": {"_comment": "Phase 6 §4.7: Innenraum-Szenen der Gebäude (src/world/interiors/<id>_interior.tscn aus data/world/interiors/<id>_layout.json), 60 m auseinander und fern der Außenwelt.",
+    "crypt": {"origin": [60.0, 0.0, -200.0]}, "chapel": {"origin": [120.0, 0.0, -200.0]}, "shed": {"origin": [180.0, 0.0, -200.0]}}
 }

@@ -28,6 +28,8 @@ static func build_plot(ctx: Ctx, parent: Node, g: Dictionary, old: bool) -> void
 	if old:
 		plot.set("old_stone", g.stone)
 		plot.set("old_mound", g.mound)
+		# Phase 6 (§2.3): once lifted and dug again, the spoil heap lies at the foot end.
+		plot.set("pit_variant", StringName(g.get("pit_variant", "")))
 	ctx.add(parent, plot)
 	Colliders.build_plot_collision(ctx, plot, g, old)
 

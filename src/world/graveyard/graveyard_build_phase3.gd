@@ -389,6 +389,13 @@ static func mask_shapes(ctx: Ctx) -> Dictionary:
 		route.append(_rect(xf, rect.grow(margin + access)))
 	if workyard.has("meiler"):
 		blocked.append({"c": Ctx.v2(workyard.meiler.pos), "r": float(workyard.meiler.radius) + margin})
+	# Phase 6 (§4.1 G2): the building sites – footprint + margin + access (site_rects) blocked, the
+	# way from the bier along the south fence to the crypt access = ROUTE.
+	var buildings: Dictionary = layout.get("buildings", {})
+	for r: Array in buildings.get("site_rects", []):
+		blocked.append(_rect({"pos": Vector2.ZERO, "rot": 0.0}, Rect2(r[0], r[1], r[2], r[3])))
+	if buildings.has("crypt_route"):
+		route.append({"pts": _points(buildings.crypt_route), "r": half_route(cfg)})
 	for lp: Dictionary in layout.lantern_posts:
 		blocked.append({"c": Ctx.v2(lp.pos), "r": 0.35})
 	for pr: Dictionary in layout.props:
@@ -411,10 +418,15 @@ static func mask_shapes(ctx: Ctx) -> Dictionary:
 		route.append(_rect({"pos": Vector2.ZERO, "rot": 0.0}, Rect2(ta[0], ta[1], ta[2], ta[3])))
 	# The hedge gap (access to the Birkenhang) stays a way once the hedge is gone.
 	for c: Dictionary in layout.clearables:
-		if c.kind in ["hedge", "gate_small", "gate_east"]:  # Phase 4 §4.2 / Phase 5 §4.2: the gates = ROUTE
+		if c.kind in ["hedge", "gate_small", "gate_east", "gate_church"]:  # Phase 4 §4.2 / 5 §4.2 / 6 §4.2: the gates = ROUTE
 			var fp: Array = c.footprint
 			route.append(_rect({"pos": Ctx.v2(c.pos), "rot": float(c.rot_y)}, Rect2(fp[0], fp[1] - 0.5, fp[2], fp[3] + 1.0)))
 	return {"sections": sections, "blocked": blocked, "ring": ring, "route": route}
+
+
+## Half the route width of the build mask (layout build.route_width).
+static func half_route(cfg: Dictionary) -> float:
+	return float(cfg.route_width) * 0.5
 
 
 ## Mask byte of the cell with centre `p` (half = half cell: shapes grown by it ≈ the cell

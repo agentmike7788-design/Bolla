@@ -163,8 +163,9 @@ func test_colliders() -> void:
 		assert_true(body.get_child_count() > 0 and body.get_child(0) is CollisionShape3D, "shape: " + body.name)
 		bodies += 1
 	assert_true(bodies > 50, "all placed assets collide (%d)" % bodies)
-	for side: String in ["West", "East", "North", "South"]:
+	for side: String in ["East", "North", "South"]:
 		assert_true(colliders.has_node("Bounds/" + side), "bounds wall " + side)
+	assert_false(colliders.has_node("Bounds/West"), "Phase 6 §4.3 S2: the west side is extra_walls")
 	for p: Dictionary in layout.plots:
 		var shapes := world.get_node_by_layout_id(p.id).get_node("Collision").get_children()
 		var roles: Array = []
@@ -176,7 +177,8 @@ func test_colliders() -> void:
 	await tree.process_frame
 	var old := world.get_node_by_layout_id("old_01").get_node("Collision")
 	for s: Node in old.get_children():
-		assert_false((s as CollisionShape3D).disabled, "old graves block")
+		# Phase 6 (§2.3): the pit / mound / marker shapes for a later lifting stay off while OLD.
+		assert_eq((s as CollisionShape3D).disabled, String(s.get_meta(&"role")) != "old", "old graves block (%s)" % s.get_meta(&"role"))
 
 
 func test_interactables_have_shapes_and_priorities() -> void:
@@ -368,14 +370,15 @@ func test_decor_and_grass() -> void:
 	assert_true(tufts > 5000, "grass (%d tufts)" % tufts)
 	var hut_lights := decor.get_node("Hut").find_children("Light_*", "OmniLight3D", true, false)
 	assert_eq(hut_lights.size(), 3, "hut lantern + two windows (§11)")
-	var interior := world.get_node("HutInterior")
 	var shadowed := 0
 	for l: Node in world.find_children("Light_*", "OmniLight3D", true, false):
 		assert_true(l.has_meta("base_energy"), "light has a base energy: " + l.name)
 		# Interior lights follow InteriorLighting (meta interior_role); the stove fire is warm.
-		assert_true(l.is_in_group(&"warm_lights") or (interior.is_ancestor_of(l) and l.has_meta(&"interior_role")),
+		# Phase 6: the same for the buildings' rooms (their own budget, §4.8 – only one is drawn).
+		var room := _room_of(l)
+		assert_true(l.is_in_group(&"warm_lights") or (room != null and l.has_meta(&"interior_role")),
 				"light grouped: " + l.name)
-		if bool(l.get_meta("casts_shadow", (l as Light3D).shadow_enabled)):
+		if room == null and bool(l.get_meta("casts_shadow", (l as Light3D).shadow_enabled)):
 			shadowed += 1
 	assert_true(shadowed <= 4, "shadowed lights within budget (%d)" % shadowed)
 	var rig := world.get_node("CameraRig") as CameraRig
@@ -688,8 +691,8 @@ func test_phase3_system_nodes() -> void:
 		if world.get_node("Systems").is_ancestor_of(n):
 			ids.append(String(n.get("save_id")))
 	assert_eq(ids, ["corpse_manager", "expansion", "graveyard", "cleanliness", "decorations", "gathering", "ghosts", "workshop",
-			"stonemasonry", "journal", "night_trade"],
-			"load order (Phase 4: + journal 40, night_trade 45; Phase 5: + gathering 25, workshop 30, stonemasonry 35)")
+			"buildings", "stonemasonry", "ossuary", "chapel", "journal", "night_trade"],
+			"load order (Phase 4: + journal 40, night_trade 45; Phase 5: + gathering 25, workshop 30, stonemasonry 35; Phase 6: + buildings 32, ossuary 36, chapel 37)")
 	var decorations := world.get_node("Systems/Decorations") as DecorationManager
 	assert_eq(decorations.mask.resource_path, BUILD_MASK)
 	assert_eq(decorations.get_node(decorations.container_path), world.get_node("Decor/Placed"))
@@ -712,7 +715,7 @@ func test_phase3_system_nodes() -> void:
 func test_phase3_obstacles() -> void:
 	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
 	var all := Phase3.obstacles(layout)
-	assert_eq(all.size(), 35)
+	assert_eq(all.size(), 36, "Phase 6: + the Kirchpforte")
 	var kinds := {}
 	for o: Dictionary in all:
 		var node := world.get_node_or_null("Entities/" + String(o.id)) as ClearableObstacle
@@ -749,7 +752,7 @@ func test_phase3_obstacles() -> void:
 	assert_eq(kinds, {"east/bramble": 4, "east/rubble": 3, "east/fence_gap": 3, "north/hedge": 1, "north/bramble": 3,
 			"north/rubble": 2, "north/stump": 2, "north/fence_gap": 3,
 			"elder/gate_small": 1, "elder/elder_thicket": 2, "elder/sunken_pit": 6, "elder/fence_gap": 1,
-			"bruch/gate_east": 1, "quarry/boulder": 3})
+			"bruch/gate_east": 1, "quarry/boulder": 3, "churchyard/gate_church": 1})
 	assert_eq(expansion.progress(&"east"), Vector2i(0, 10))
 	assert_eq(expansion.progress(&"north"), Vector2i(0, 11))
 	assert_eq(expansion.progress(&"elder"), Vector2i(0, 10))
@@ -881,14 +884,17 @@ func test_phase3_passages_walkable_once_cleared() -> void:
 ## ground reach Am Bruch (x 31,2 / 27 / 40), two more walls (hedge south, quarry north).
 func test_phase3_bounds_and_camera() -> void:
 	var wb: Dictionary = layout.walkable_bounds
-	assert_eq([wb.min, wb.max], [[-11.2, -20.3], [31.2, 25.2]])
+	assert_eq([wb.min, wb.max], [[-14.8, -30.3], [31.2, 25.2]], "Phase 6 §4.2 K4 / §4.3 S2: min → (−14,8 | −30,3)")
 	var bounds := world.get_node("Colliders/Bounds")
 	var t := float(wb.wall_thickness)
 	assert_almost((bounds.get_node("East") as Node3D).position.x, 31.2 + t * 0.5, 0.001)
-	assert_almost((bounds.get_node("North") as Node3D).position.z, -20.3 - t * 0.5, 0.001)
+	assert_almost((bounds.get_node("North") as Node3D).position.z, -30.3 - t * 0.5, 0.001)
 	assert_true(bounds.has_node("Extra_1"), "extra wall east of the road")
 	assert_true(bounds.has_node("Extra_2") and bounds.has_node("Extra_3"), "Phase 5: hedge south / quarry north of Am Bruch")
-	assert_false(bounds.has_node("Extra_4"), "Phase 4: no invisible wall behind the hut")
+	# Phase 6 (§4.2 K4, §4.3 S2): the churchyard sides and the shed pocket (the old west line at x −11,2).
+	for k: int in range(4, 11):
+		assert_true(bounds.has_node("Extra_%d" % k), "Phase 6 wall Extra_%d" % k)
+	assert_false(bounds.has_node("Extra_11"))
 	for k: int in [2, 3]:
 		assert_true((bounds.get_node("Extra_%d" % k) as Node3D).position.x > 21.5, "Extra_%d lies at Am Bruch" % k)
 	await tree.physics_frame
@@ -898,8 +904,8 @@ func test_phase3_bounds_and_camera() -> void:
 		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(ray[0], ray[1], 1))
 		assert_false(hit.is_empty(), "wall / fence between %s and %s" % ray)
 	var rig := world.get_node("CameraRig") as CameraRig
-	assert_eq([rig.bounds_min, rig.bounds_max], [Vector2(-10.0, -17.5), Vector2(27.0, 23.0)],
-			"Phase 4 §4.1: min → (−10, −17.5); Phase 5 §4.5: max x → 27")
+	assert_eq([rig.bounds_min, rig.bounds_max], [Vector2(-11.5, -24.0), Vector2(27.0, 23.0)],
+			"Phase 4 §4.1: min → (−10, −17.5); Phase 5 §4.5: max x → 27; Phase 6 K5 / S3: min → (−11,5 | −24)")
 	assert_eq([rig.zoom_min, rig.zoom_max], [12.0, 24.0])
 	for tr: Dictionary in layout.background_trees + layout.forest.trees:
 		for s: Dictionary in layout.sections:
@@ -911,8 +917,8 @@ func test_phase3_bounds_and_camera() -> void:
 	assert_eq([layout.birches.size(), inside], [6, 2], "6 birches, 2 in the Birkenhang")
 	assert_eq(world.get_node("Decor/Birches").get_child_count(), 6)
 	assert_true(world.has_node("Colliders/Birch_01"))
-	# The ground covers the camera's view: 64 × 64 m (Phase 5 §4.5), south / west / north edge unchanged.
-	assert_eq([layout.ground.size, layout.ground.center], [[64.0, 64.0], [8.0, 2.5]])
+	# The ground covers the camera's view: 64 × 80 m (Phase 6 §4.2 K6), south / west / east edge unchanged.
+	assert_eq([layout.ground.size, layout.ground.center], [[64.0, 80.0], [8.0, -5.5]])
 	var shape := world.get_node("GroundCollision/Shape") as CollisionShape3D
 	var hm := shape.shape as HeightMapShape3D
 	var cell := float(layout.ground.cell)
@@ -920,7 +926,7 @@ func test_phase3_bounds_and_camera() -> void:
 	var hi := lo + Vector2(hm.map_width - 1, hm.map_depth - 1) * cell
 	assert_almost(lo.x, -24.0, 0.2, "west edge")
 	assert_almost(hi.x, 40.0, 0.2, "east edge")
-	assert_almost(lo.y, -29.5, 0.2, "north edge")
+	assert_almost(lo.y, -45.5, 0.2, "north edge (Phase 6 K6)")
 	assert_almost(hi.y, 34.5, 0.2, "south edge")
 
 
@@ -1107,8 +1113,13 @@ func test_phase4_trader_route_is_outside_and_free() -> void:
 	var ids := ["trader_far", "trader_mid", "trader_spot"]
 	for k: int in 41:
 		var p := _along(ids, k / 40.0)
-		assert_true(p.x < float(wb.min[0]) - 0.3, "route point %s outside the walkable area" % p)
-		# (the last metres lie in the invisible west wall of walkable_bounds – she needs no collision)
+		# Phase 6 (§4.3 S2): west of the old line x −11,2 and ≥ 0,4 m outside the shed pocket.
+		assert_true(p.x < -11.2 - 0.3, "route point %s outside the walkable area" % p)
+		var q := Vector2(p.x, p.z)
+		var pocket := Rect2(-14.6, -7.2, 3.4, 1.8)
+		var near := Vector2(clampf(q.x, pocket.position.x, pocket.end.x), clampf(q.y, pocket.position.y, pocket.end.y))
+		assert_true(q.distance_to(near) >= 0.4, "route point %s ≥ 0,4 m off the shed pocket (%.2f)" % [p, q.distance_to(near)])
+		# (the last metres lie in the invisible west walls – she needs no collision)
 		if p.x < float(wb.min[0]) - float(wb.wall_thickness) - 0.4:
 			assert_true(_capsule_free(Vector2(p.x, p.z)), "route free at %s" % p)
 	for id: String in ids:
@@ -1301,8 +1312,10 @@ func test_phase5_forge_light_and_smoke() -> void:
 func test_phase5_layout_diff_against_phase4() -> void:
 	var old := Phase5Fixtures.layout_p4()
 	assert_false(old.is_empty(), "layout_p4.json")
+	# Phase 6: the Phase-5 layout as approved (c5bd76d, layout_p5.json); Phase 6 has its own diff test.
+	var p5 := Phase6Fixtures.layout_p5()
 	var changes: PackedStringArray = []
-	_layout_diff(old, layout, "", changes)
+	_layout_diff(old, p5, "", changes)
 	var allowed := [
 		# additions (new keys / entries)
 		"+_workyard", "+workyard", "+_stations", "+stations", "+_gather_nodes", "+gather_nodes", "+_bruch_decor",
@@ -1335,14 +1348,14 @@ func test_phase5_layout_diff_against_phase4() -> void:
 	for c: String in allowed:
 		assert_true(c in changes, "listed change present: " + c)
 	# Frozen: hut, table, workbench, gate, tending spots, plots, old graves.
-	assert_eq(layout.hut, old.hut, "hut")
-	assert_eq(layout.tree, old.tree, "old oak")
+	assert_eq(p5.hut, old.hut, "hut")
+	assert_eq(p5.tree, old.tree, "old oak")
 	for id: String in ["morgue_table", "workbench", "hut_door", "res_stone", "npc_trader"]:
-		assert_eq(_by_id(layout.entities, id), _by_id(old.entities, id), id)
-	assert_eq(_by_id(layout.clearables, "obs_h_gate"), _by_id(old.clearables, "obs_h_gate"), "Pförtchen")
-	assert_eq(layout.dirt_spots, old.dirt_spots, "tending spots")
-	assert_eq(layout.plots, old.plots, "plots")
-	assert_eq(layout.old_graves, old.old_graves, "old graves")
+		assert_eq(_by_id(p5.entities, id), _by_id(old.entities, id), id)
+	assert_eq(_by_id(p5.clearables, "obs_h_gate"), _by_id(old.clearables, "obs_h_gate"), "Pförtchen")
+	assert_eq(p5.dirt_spots, old.dirt_spots, "tending spots")
+	assert_eq(p5.plots, old.plots, "plots")
+	assert_eq(p5.old_graves, old.old_graves, "old graves")
 
 
 ## §10: route flood fill with a 1.5 m wide capsule over the built workyard (stations collide, all
@@ -1799,6 +1812,16 @@ func _on_polyline(raw: Array, t: float) -> Vector2:
 
 
 ## The player's capsule fits at world XZ `p` (on the ground) without touching a world body.
+## The InteriorRoom (hut or building room) `node` belongs to, null outside.
+func _room_of(node: Node) -> InteriorRoom:
+	var n := node.get_parent()
+	while n != null and n != world:
+		if n is InteriorRoom:
+			return n as InteriorRoom
+		n = n.get_parent()
+	return null
+
+
 func _capsule_free(p: Vector2) -> bool:
 	var capsule := world.get_player().get_node("Collision") as CollisionShape3D
 	var query := PhysicsShapeQueryParameters3D.new()
@@ -1807,3 +1830,454 @@ func _capsule_free(p: Vector2) -> bool:
 	query.exclude = [world.get_player().get_rid()]
 	query.transform = Transform3D(Basis.IDENTITY, Vector3(p.x, world.ground_height(p) + 0.1, p.y)) * capsule.transform
 	return world.get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+
+
+# --- Phase 6 (docs/PHASE6_DESIGN.md §3.1, §4, §10 – W-Welt) ---------------------------------
+
+const P6_SITES := {"site_crypt": ["crypt", Vector2(-9.0, 6.9)], "site_chapel": ["chapel", Vector2(4.5, -25.5)],
+		"site_shed": ["shed", Vector2(-12.9, -9.0)]}
+const P6_DOORS := {"door_crypt": "crypt", "door_chapel": "chapel", "door_shed": "shed"}
+## §4.5: gameplay zoom levels of the near-view check.
+const P6_ZOOMS: Array[float] = [12.0, 22.0, 24.0]
+
+
+func test_phase6_system_nodes() -> void:
+	var want := {
+		"Buildings": ["Buildings", "buildings", "buildings", 32],
+		"Ossuary": ["Ossuary", "ossuary", "ossuary", 36],
+		"Chapel": ["ChapelRites", "chapel_rites", "chapel", 37],
+	}
+	for node_name: String in want:
+		var w: Array = want[node_name]
+		var node := world.get_node_or_null("Systems/" + node_name)
+		assert_not_null(node, "Systems/" + node_name)
+		if node == null:
+			continue
+		assert_eq(node.get_script().get_global_name(), w[0], node_name)
+		assert_true(node.is_in_group(StringName(w[1])) and node.is_in_group(&"saveable"), node_name + " groups")
+		assert_eq([node.get("save_id"), node.get("save_order")], [w[2], w[3]], node_name)
+	var store := world.get_node("Interiors/ShedInterior/Entities/ShedStore")
+	assert_eq([store.get("save_id"), store.get("save_order")], ["shed_store", 61])
+	var buildings := world.get_node("Systems/Buildings") as Buildings
+	var rects: Array[Rect2] = []
+	for r: Array in layout.buildings.site_rects:
+		rects.append(Rect2(r[0], r[1], r[2], r[3]))
+	assert_eq(buildings.site_rects, rects, "Buildings.site_rects = layout.buildings.site_rects")
+	var crypt_rect := rects[0]
+	for p: Vector2 in [Vector2(-10.4, 5.6), Vector2(-7.6, 8.2), Vector2(-9.0, 8.7)]:
+		assert_true(crypt_rect.has_point(p), "crypt site rect covers footprint and access %s" % p)
+	var state := SaveManager.collect_state()
+	for id: String in SaveMigration.V5_EMPTY_NODES:
+		assert_true((state.nodes as Dictionary).has(id), "saved state of " + id)
+
+
+## §4.1–§4.3, §4.6: sites and doors at their positions, hidden before buildings_open; the level
+## model of data/buildings; the door at the model's door_outside marker; the Kirchpforte.
+func test_phase6_sites_doors_and_gate() -> void:
+	for id: String in P6_SITES:
+		var site := world.get_node("Entities/" + id) as BuildingSite
+		assert_not_null(site, id)
+		assert_eq(site.building_id, StringName(P6_SITES[id][0]))
+		_assert_at(site, P6_SITES[id][1], id)
+		assert_false(site.visible, id + " hidden before buildings_open")
+	for id: String in P6_DOORS:
+		var door := world.get_node("Entities/" + id) as BuildingDoor
+		assert_eq(door.building_id, StringName(P6_DOORS[id]), id)
+		assert_false(door.is_open(), id + " closed at level 0")
+	GameState.set_flag(&"buildings_open", true)
+	var buildings := world.get_node("Systems/Buildings") as Buildings
+	for level: int in [0, 1, 2, 3]:
+		buildings.load_state({"levels": {"crypt": level, "chapel": level, "shed": level}})
+		buildings.apply_levels()
+		for id: String in P6_SITES:
+			var site := world.get_node("Entities/" + id) as BuildingSite
+			assert_true(site.visible, id + " visible once open")
+			var data := Database.building(site.building_id) as BuildingData
+			var scene: PackedScene = data.model_site if level == 0 else data.level_data(level).model
+			assert_not_null(scene, "%s model level %d" % [id, level])
+			var model := site.get_node_or_null("Model")
+			assert_not_null(model, "%s shows a model at level %d" % [id, level])
+			if model != null and scene != null:
+				assert_eq(model.scene_file_path, scene.resource_path, "%s level %d model" % [id, level])
+				var marker := model.find_child("door_outside", true, false) as Node3D
+				if level >= 1:
+					var door := world.get_node("Entities/door_" + String(site.building_id)) as BuildingDoor
+					assert_true(door.is_open(), "door open at level %d" % level)
+					assert_almost(door.global_position.distance_to(marker.global_position), 0.0, 0.05, "door at door_outside of " + id)
+	GameState.clear_flag(&"buildings_open")
+	var gate := world.get_node("Entities/obs_c_gate") as ClearableObstacle
+	assert_eq([gate.kind, gate.section_id], [&"gate_church", &"churchyard"])
+	_assert_at(gate, Vector2(4.5, -20.0), "Kirchpforte")
+	assert_almost((gate.get_node("Model") as Node3D).scale.x, 1.345, 0.001, "1.6 m like the Ostpforte")
+	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
+	assert_eq(gate.get_interaction_prompt(world.get_player()), "Die Pforte zum Kamm ist verschlossen.")
+	assert_false(expansion.section(&"churchyard").is_burial or expansion.section(&"churchyard").counts_for_cemetery)
+	assert_true(layout.fence.segments.has([[2.0, -20.0], [3.7, -20.0]]) and layout.fence.segments.has([[5.3, -20.0], [7.0, -20.0]]), "K1")
+
+
+## §4.4: the old table retires at crypt 1 with the wash basin, the smoke bowl and their colliders.
+func test_phase6_old_table_retires_at_crypt_1() -> void:
+	var table := world.get_node_by_layout_id("morgue_table") as MorgueTable
+	assert_eq(table.retire_at_level, 1)
+	var buildings := world.get_node("Systems/Buildings") as Buildings
+	buildings.load_state({"levels": {"crypt": 1}})
+	buildings.apply_levels()
+	table.refresh_active()
+	await tree.physics_frame
+	await tree.physics_frame
+	assert_false(table.visible or table.is_active(), "table gone")
+	for path: String in ["Decor/Phase4Props/WashBasin", "Entities/morgue_table/SmokeBowl"]:
+		assert_false((world.get_node(path) as Node3D).is_visible_in_tree(), path + " gone")
+	for path: String in ["Colliders/morgue_table", "Colliders/WashBasin"]:
+		for shape: Node in world.get_node(path).get_children():
+			assert_true((shape as CollisionShape3D).disabled, path + " without collision")
+	assert_true(_capsule_free(Vector2(-1.6, -5.4)), "the trodden spot is walkable")
+
+
+## §2.3 / W1 note 4: old graves carry pit_variant foot and the pit / mound / marker roles for later.
+func test_phase6_old_graves_collision_roles() -> void:
+	for g: Dictionary in layout.old_graves:
+		var plot := world.get_node("Decor/OldGraves/" + String(g.id)) as GravePlot
+		assert_eq(plot.pit_variant, &"foot", g.id)
+		var roles := {}
+		for shape: Node in plot.get_node("Collision").get_children():
+			roles[String(shape.get_meta(&"role", ""))] = true
+		for role: String in ["old", "pit", "mound"]:
+			assert_true(roles.has(role), "%s role %s" % [g.id, role])
+		assert_true(roles.keys().any(func(r: String) -> bool: return r.begins_with("marker:")), g.id + " marker roles")
+
+
+## §10: layout diff against the approved Phase-5 layout (tests/fixtures/phase6/layout_p5.json,
+## c5bd76d). In sections I–IV and the workyard only G1, K1, K2, K3, S1 and the bounds (K4–K6, S2,
+## S3) change, plus the conditional G4 / S4 and the backdrop trees / alder moved for the §4.5 check
+## (W-Welt report); everything else is new entries. Hut, workbench, stations, Pförtchen, old graves
+## (besides pit_variant) and every other tending spot stay identical.
+func test_phase6_layout_diff_against_phase5() -> void:
+	var old := Phase6Fixtures.layout_p5()
+	assert_false(old.is_empty(), "layout_p5.json")
+	var changes: PackedStringArray = []
+	_layout_diff(old, layout, "", changes)
+	var allowed := [
+		# additions
+		"+ground._phase6", "+sections[churchyard]", "+clearables[obs_c_gate]", "+waypoints.tp_crypt", "+waypoints.tp_chapel",
+		"+waypoints.tp_shed", "+fence.segments[[2.0, -20.0], [3.7, -20.0]]", "+fence.segments[[5.3, -20.0], [7.0, -20.0]]",
+		"+background_trees[0]._comment", "+background_trees[3]._comment", "+background_trees[4]._comment",
+		"+background_trees[5]._comment", "+background_trees[9]", "+background_trees[10]", "+background_trees[11]",
+		"+background_trees[12]", "+birches[3]._comment", "+forest.trees[0]._comment", "+forest.trees[1]._comment",
+		"+gather_nodes[gather_alder_2]._comment", "+grass._phase6", "+grass.churchyard_density_scale",
+		"+grass.building_access_keep_out", "+lights._phase6", "+lights.ph_bld_crypt_l3/light_lantern",
+		"+lights.ph_bld_chapel_l1/light_window_1", "+lights.ph_bld_chapel_l1/light_window_3", "+lights.ph_prop_soul_lantern/light_soul",
+		"+colliders._phase6", "+colliders.ph_prop_soul_lantern", "+colliders.ph_prop_grave_pit_foot", "+walkable_bounds._phase6",
+		"+walkable_bounds.west_wall",
+		"+_buildings", "+buildings", "+building_doors", "+interiors",
+		# changes
+		"~ground.size", "~ground.center",                                         # K6
+		"~dirt_spots[dirt_y01].pos",                                              # G1
+		"-fence.segments[[2.0, -20.0], [7.0, -20.0]]",                            # K1
+		"~background_trees[4].pos",                                               # K2
+		"~birches[3].pos",                                                        # K3
+		"~background_trees[0].pos",                                               # S1
+		"~background_trees[5].pos",                                               # S4 (conditional)
+		"~forest.trees[0].pos",                                                   # G4 (conditional)
+		"~background_trees[3].pos", "~forest.trees[1].pos", "~gather_nodes[gather_alder_2].pos",   # §4.5 crypt view
+		"~walkable_bounds.min", "~extra_walls", "~camera_bounds.min",            # K4, K5, S2, S3
+		"~dirt_spots[dirt_y11].pos", "+dirt_spots[dirt_y11]._comment",            # G5 (conditional)
+	]
+	for g: Dictionary in old.old_graves:
+		allowed.append("+old_graves[%s].pit_variant" % g.id)
+	var unexpected: PackedStringArray = []
+	for c: String in changes:
+		if not c in allowed:
+			unexpected.append(c)
+	assert_eq(unexpected, PackedStringArray(), "only the listed changes to the approved Phase-5 layout")
+	for c: String in allowed:
+		assert_true(c in changes, "listed change present: " + c)
+	assert_eq(layout.hut, old.hut, "hut")
+	assert_eq(layout.tree, old.tree, "old oak")
+	assert_eq(layout.entities, old.entities, "entities (table, workbench, door, bier, NPCs)")
+	assert_eq(layout.stations, old.stations, "stations")
+	assert_eq(layout.workyard, old.workyard, "workyard")
+	assert_eq(layout.plots, old.plots, "plots")
+	assert_eq(_by_id(layout.clearables, "obs_h_gate"), _by_id(old.clearables, "obs_h_gate"), "Pförtchen")
+	for d: Dictionary in old.dirt_spots:
+		if not d.id in ["dirt_y01", "dirt_y11"]:
+			assert_eq(_by_id(layout.dirt_spots, String(d.id)), d, String(d.id))
+	for g: Dictionary in old.old_graves:
+		var now := _by_id(layout.old_graves, String(g.id)).duplicate()
+		now.erase("pit_variant")
+		assert_eq(now, g, String(g.id))
+	assert_eq(layout.lantern_posts, old.lantern_posts, "lantern posts")
+	assert_eq(layout.notice_board, old.notice_board, "notice board")
+
+
+## §10: route flood fill (1.5 m capsule) with every section open, the Kirchpforte open and all
+## buildings on level 3: bier ↔ crypt access, crypt ↔ chapel (Birkenhang passage + Kirchpforte),
+## chapel ↔ every old grave, hut door ↔ shed, shed ↔ Pförtchen, hut door ↔ the Phase-5 targets.
+func test_phase6_routes_flood_fill() -> void:
+	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
+	GameState.set_flag(&"has_elder_key", true)
+	GameState.set_flag(&"bruch_license", true)
+	GameState.set_flag(&"buildings_open", true)
+	for s: StringName in [&"east", &"north", &"elder", &"bruch", &"churchyard"]:
+		expansion.unlock(s)
+	(world.get_node("Systems/Workshop") as Workshop).load_state({"built": ["mason", "loom", "forge"]})
+	for id: String in ["station_mason", "station_loom", "station_forge"]:
+		(world.get_node("Entities/" + id) as Workbench).refresh_built()
+	var buildings := world.get_node("Systems/Buildings") as Buildings
+	buildings.load_state({"levels": {"crypt": 3, "chapel": 3, "shed": 3}})
+	buildings.apply_levels()
+	for i: int in 4:
+		await tree.physics_frame
+	var step := 0.125
+	var reached := _flood(Vector2(-5.67, -3.7), step, Rect2(-15.0, -31.0, 38.0, 42.0))
+	var targets := {
+		"bier": [_v2(layout.waypoints.dropoff), 0.5], "crypt access": [Vector2(-9.0, 8.9), 2.3],
+		"chapel door": [Vector2(4.5, -21.2), 1.0], "Kirchpforte (north side)": [Vector2(4.5, -20.9), 0.5],
+		"shed door": [Vector2(-12.8, -6.4), 1.0], "Pförtchen": [Vector2(-10.0, -11.6), 0.5],
+		"gate (Tor)": [Vector2(1.1, 10.4), 0.5], "Ostpforte": [Vector2(22.4, 0.0), 0.5],
+	}
+	for g: Dictionary in layout.old_graves:
+		targets["old grave " + String(g.id)] = [_v2(g.pos), 1.9]
+	for site: Dictionary in layout.workyard.build_sites:
+		targets["access " + String(site.id)] = [_v2(site.access), 1.0]
+	for name: String in targets:
+		var t: Vector2 = targets[name][0]
+		var near := float(targets[name][1])
+		var ok := false
+		for key: Vector2i in reached:
+			if (Vector2(key) * step).distance_to(t) <= near:
+				ok = true
+				break
+		assert_true(ok, "route hut door → %s (1.5 m capsule)" % name)
+	# The corridor between old_08 and the south fence (§4.1: ≥ 2.0 m): a 1.9 m cylinder passes.
+	var wide := CylinderShape3D.new()
+	wide.radius = 0.95
+	wide.height = 1.0
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = wide
+	q.collision_mask = 1
+	q.exclude = [world.get_player().get_rid(), world.get_node("GroundCollision").get_rid()]
+	for x: float in [-5.2, -6.4]:
+		var p := Vector2(x, 8.35)
+		q.transform = Transform3D(Basis.IDENTITY, Vector3(p.x, world.ground_height(p) + 0.9, p.y))
+		assert_true(world.get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty(), "2 m past old_08 at x %.1f" % x)
+	# The gravekeeper's own capsule stands at each door (the last metre from the 1.5 m corridor).
+	for p: Vector2 in [Vector2(-9.0, 8.9), Vector2(4.5, -21.3), Vector2(-12.8, -6.5)]:
+		assert_true(_capsule_free(p), "the gravekeeper fits at the door %s" % p)
+
+
+## §4.5 (1)+(2): near view at every level – the player at the building's access, the gameplay camera
+## (focus = player + look_offset, clamped to camera_bounds) at zoom 12 / 22 / 24; rays to the door
+## (1.2 m), the left / right eave, the ridge and the player's head (1.7 m) against the AABBs of every
+## VisualInstance3D except ground, grass, particles, the building itself and the player. Door and
+## head free, ≥ 3 of the 4 building points free; the model AABB ≥ 80 % in the frame, ≥ 3 % of it.
+func test_phase6_buildings_visible_from_the_gameplay_camera() -> void:
+	GameState.set_flag(&"buildings_open", true)
+	var buildings := world.get_node("Systems/Buildings") as Buildings
+	var report: PackedStringArray = []
+	for level: int in [0, 1, 2, 3]:
+		buildings.load_state({"levels": {"crypt": level, "chapel": level, "shed": level}})
+		buildings.apply_levels()
+		await tree.process_frame
+		for site: Dictionary in layout.buildings.sites:
+			var node := world.get_node("Entities/" + String(site.id)) as BuildingSite
+			var access := _v2(site.access)
+			world.get_player().global_position = Vector3(access.x, world.ground_height(access), access.y)
+			var free_counts: PackedStringArray = []
+			for zoom: float in P6_ZOOMS:
+				var eye := _p6_eye(access, zoom)
+				var pts := _p6_points(node, access)
+				var blocked := {}
+				for key: String in pts:
+					blocked[key] = _p6_blockers(eye, pts[key], [node])
+				var free_building := 0
+				for key: String in ["door", "eave_l", "eave_r", "ridge"]:
+					if (blocked[key] as PackedStringArray).is_empty():
+						free_building += 1
+				free_counts.append("z%d:%d/4" % [int(zoom), free_building])
+				var tag := "%s L%d zoom %d" % [site.id, level, int(zoom)]
+				assert_eq(blocked.door, PackedStringArray(), tag + ": door free")
+				assert_eq(blocked.head, PackedStringArray(), tag + ": player's head free")
+				assert_true(free_building >= 3, "%s: ≥ 3 of 4 building points free (%s)" % [tag, blocked])
+				if is_equal_approx(zoom, 22.0):
+					var frame := _p6_frame_share(node)
+					assert_true(frame.x >= 0.8, "%s: %.0f %% of the model in the frame" % [tag, frame.x * 100.0])
+					free_counts.append("frame %.0f%%/%.1f%%" % [frame.x * 100.0, frame.y * 100.0])
+					assert_true(frame.y >= 0.03, "%s: covers %.1f %% of the frame" % [tag, frame.y * 100.0])
+			report.append("%s L%d %s" % [site.id, level, " ".join(free_counts)])
+	print("[P6 vis] ", " | ".join(report))
+
+
+## §4.5 (3): overview from fixed spots – crypt from the bier and tp_workyard, chapel from tp_north,
+## shed from tp_workyard: ≥ 60 % of the rays (top corners + centre of the model AABB) free.
+## (4) no new occlusion: from the gameplay camera the rays to the player's head at every existing
+## access (hut door, stations, bier, plots, tending spots, old graves, Ilse's spot) hit none of the
+## three buildings (level 3, the tallest models).
+func test_phase6_overview_and_no_new_occlusion() -> void:
+	GameState.set_flag(&"buildings_open", true)
+	var buildings := world.get_node("Systems/Buildings") as Buildings
+	buildings.load_state({"levels": {"crypt": 3, "chapel": 3, "shed": 3}})
+	buildings.apply_levels()
+	await tree.process_frame
+	# (3) against the meshes themselves (collision copies – crowns are not boxes here, the oak's crown
+	# lies above the low crypt); (1) keeps the conservative AABBs.
+	var probe := _p6_mesh_probe()
+	for i: int in 3:
+		await tree.physics_frame
+	var space := world.get_world_3d().direct_space_state
+	var spots := {"site_crypt": [_v2(layout.waypoints.dropoff), _v2(layout.waypoints.tp_workyard)],
+			"site_chapel": [_v2(layout.waypoints.tp_north)], "site_shed": [_v2(layout.waypoints.tp_workyard)]}
+	var sites: Array = []
+	var report: PackedStringArray = []
+	for id: String in spots:
+		var node := world.get_node("Entities/" + id) as Node3D
+		sites.append(node)
+		var box := _p6_model_aabb(node)
+		var rays: Array[Vector3] = [box.get_center()]
+		for i: int in 8:
+			var c := box.get_endpoint(i)
+			if c.y > box.get_center().y:
+				rays.append(c)
+		for spot: Vector2 in spots[id]:
+			var eye := _p6_eye(spot, 22.0)
+			var free := 0
+			var why: PackedStringArray = []
+			for p: Vector3 in rays:
+				var q := PhysicsRayQueryParameters3D.create(eye, p + (eye - p).normalized() * 0.05, probe)
+				var hit := space.intersect_ray(q)
+				if hit.is_empty() or node.is_ancestor_of(hit.collider as Node):
+					free += 1
+				else:
+					why.append(String(world.get_path_to(hit.collider as Node)))
+			report.append("%s from %s: %d/%d" % [id, spot, free, rays.size()])
+			assert_true(free >= 0.6 * rays.size(), "%s from %s: %d / %d rays free (%s)" % [id, spot, free, rays.size(), why])
+	print("[P6 overview] ", " | ".join(report))
+	var accesses: Array[Vector2] = [_v2(layout.waypoints.dropoff), _v2(layout.waypoints.trader_spot), Vector2(-5.67, -3.7)]
+	for site: Dictionary in layout.workyard.build_sites:
+		accesses.append(_v2(site.access))
+	for p: Dictionary in layout.plots + layout.old_graves:
+		accesses.append(_v2(p.pos) + Vector2(0.0, 1.6))
+	for d: Dictionary in layout.dirt_spots:
+		accesses.append(_v2(d.pos))
+	for a: Vector2 in accesses:
+		var head := Vector3(a.x, world.ground_height(a) + 1.7, a.y)
+		for zoom: float in [12.0, 22.0]:
+			var eye := _p6_eye(a, zoom)
+			for node: Node3D in sites:
+				var box := _p6_model_aabb(node)
+				assert_true(box.intersects_segment(eye, head) == null, "%s hides the player at %s (zoom %d)" % [node.name, a, int(zoom)])
+
+
+# --- Phase 6 helpers ---------------------------------------------------------------------------
+
+## Collision copies (probe layer) of every visible mesh of the world outside ground, grass, rooms and
+## the player – one body per mesh, as its child.
+func _p6_mesh_probe() -> int:
+	for n: Node in world.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		var path := String(world.get_path_to(mi))
+		if not mi.is_visible_in_tree() or mi.mesh == null or path.begins_with("Ground") or path.begins_with("Player") \
+				or path.begins_with("Interiors") or path.begins_with("HutInterior"):
+			continue
+		var shape := ConcavePolygonShape3D.new()
+		shape.backface_collision = true
+		shape.set_faces(mi.mesh.get_faces())
+		var body := StaticBody3D.new()
+		body.name = "Probe"
+		body.collision_layer = FOLIAGE_PROBE_LAYER
+		body.collision_mask = 0
+		var cs := CollisionShape3D.new()
+		cs.shape = shape
+		body.add_child(cs)
+		mi.add_child(body)
+	return FOLIAGE_PROBE_LAYER
+
+## Camera position of the gameplay rig following a player at `at` (look_offset, bounds clamp).
+func _p6_eye(at: Vector2, zoom: float) -> Vector3:
+	var rig := world.get_node("CameraRig") as CameraRig
+	var anchor := Node3D.new()
+	world.add_child(anchor)
+	anchor.global_position = Vector3(at.x, world.ground_height(at), at.y)
+	rig.target = anchor
+	rig.set_distance(zoom)
+	rig.snap()
+	var eye := rig.camera.global_position
+	rig.target = world.get_player()
+	anchor.free()
+	return eye
+
+
+func _p6_model_aabb(site: Node3D) -> AABB:
+	var out := AABB()
+	var first := true
+	var model := site.get_node_or_null("Model")
+	if model == null:
+		return out
+	for n: Node in model.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		var b := mi.global_transform * mi.get_aabb()
+		out = b if first else out.merge(b)
+		first = false
+	return out
+
+
+## Door (1.2 m at the front face), left / right eave (70 % up, rear quarter), ridge, player's head.
+func _p6_points(site: Node3D, access: Vector2) -> Dictionary:
+	var box := _p6_model_aabb(site)
+	var zf := box.position.z + box.size.z * 0.75
+	var eave_y := box.position.y + box.size.y * 0.7
+	var base := site.global_position.y
+	return {"door": Vector3(site.global_position.x, base + minf(1.2, box.size.y * 0.8), box.end.z - 0.1),
+			"eave_l": Vector3(box.position.x + 0.15, eave_y, zf), "eave_r": Vector3(box.end.x - 0.15, eave_y, zf),
+			"ridge": Vector3(box.get_center().x, box.end.y - 0.1, box.get_center().z),
+			"head": Vector3(access.x, world.ground_height(access) + 1.7, access.y)}
+
+
+## VisualInstance3D AABBs on the segment eye → p (excluding ground, grass, particles, lights, the
+## rooms, the player and `exclude`'s subtrees); their paths.
+func _p6_blockers(eye: Vector3, p: Vector3, exclude: Array) -> PackedStringArray:
+	var out := PackedStringArray()
+	var target := p + (eye - p).normalized() * 0.05
+	for n: Node in world.find_children("*", "VisualInstance3D", true, false):
+		var v := n as VisualInstance3D
+		if v is Light3D or v is GPUParticles3D or v is CPUParticles3D or v is MultiMeshInstance3D or v is Label3D:
+			continue
+		if not v.is_visible_in_tree():
+			continue
+		var skip := false
+		for e: Node in exclude:
+			if e.is_ancestor_of(v):
+				skip = true
+		var path := String(world.get_path_to(v))
+		if skip or path.begins_with("Ground") or path.begins_with("Player") or path.begins_with("Interiors") \
+				or path.begins_with("HutInterior") or path.begins_with("Decor/Grass"):
+			continue
+		if (v.global_transform * v.get_aabb()).intersects_segment(eye, target):
+			out.append(path)
+	return out
+
+
+## (share of the model in the frame – its mesh vertices projected; the AABB of a chapel with a
+## ridge turret is mostly air above the nave –, share of the frame covered by the projected AABB
+## clipped to the frame).
+func _p6_frame_share(site: Node3D) -> Vector2:
+	var cam := (world.get_node("CameraRig") as CameraRig).camera
+	var vp := cam.get_viewport().get_visible_rect().size
+	var frame := Rect2(Vector2.ZERO, vp)
+	var inside := 0
+	var total := 0
+	for n: Node in site.get_node("Model").find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		var faces := mi.mesh.get_faces()
+		for i: int in range(0, faces.size(), 3):
+			var p := mi.global_transform * faces[i]
+			total += 1
+			if not cam.is_position_behind(p) and frame.has_point(cam.unproject_position(p)):
+				inside += 1
+	var box := _p6_model_aabb(site)
+	var r := Rect2()
+	for i: int in 8:
+		var s := cam.unproject_position(box.get_endpoint(i))
+		r = Rect2(s, Vector2.ZERO) if i == 0 else r.expand(s)
+	return Vector2(float(inside) / maxi(total, 1), r.intersection(frame).get_area() / frame.get_area())

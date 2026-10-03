@@ -13,6 +13,11 @@ the workyard build sites (footprint + station_flat_margin) and the flax beds / c
 height, so the approved stations (workbench, table) keep their ground bit for bit. The quarry
 floor gets a stone tint (vertex colour only, ground.quarry_tint) and the beds / pit trodden earth.
 
+Phase 6 (docs/PHASE6_DESIGN.md §4.2 K6): 64 × 80 m (z −45,5…34,5, the churchyard on the ridge – no
+ground edge behind the chapel); flat under the building footprints of layout.buildings.sites
+(+ station_flat_margin), trodden earth at their doors. The noise is a function of (x, z) only, so
+every approved vertex keeps its height outside the new zones.
+
 Grid vertices lie exactly on multiples of ground.cell (Godot coords), so the world builder can
 look heights up by grid index.  Layout coords are Godot (x, z); Blender y = -z.
 
@@ -184,6 +189,24 @@ class Ground:
                     break
             done.append(zone)
         self.zones.extend(new)
+        self._add_phase6_zones(lay, margin, reach)
+
+    def _add_phase6_zones(self, lay, margin, reach):
+        """Phase 6 (docs/PHASE6_DESIGN.md §4.2 K6): flat under the three building footprints
+        (+ station_flat_margin), trodden earth in front of each door. Same rule as Phase 5: a zone
+        touching an older one adopts its height."""
+        old = list(self.zones)
+        for site in lay.get("buildings", {}).get("sites", []):
+            fx, fz, fw, fd = site["footprint"]
+            zone = [site["pos"], site["rot_y"], (fx - margin, fz - margin, fx + fw + margin, fz + fd + margin), None]
+            zone[3] = self.raw_height(*zone[0])
+            for o in old:
+                if math.hypot(zone[0][0] - o[0][0], zone[0][1] - o[0][1]) < reach(zone) + reach(o) - self.falloff:
+                    zone[3] = o[3]
+                    break
+            self.zones.append(zone)
+            old.append(zone)
+            self.trodden.append(site["access"])
 
     # --- masks (same edge noise as the prototype path) ---
     def path_mask(self, x, z):

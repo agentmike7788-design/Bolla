@@ -4,7 +4,8 @@ extends RefCounted
 ## see, keeps paths, roads, NPC routes and placed objects free, thins out ground the camera
 ## cannot see, and saves the result as grass.scn. Phase 5 (docs/PHASE5_DESIGN.md §4.5): half density
 ## Am Bruch, none in the quarry, keep-outs around the workyard stations, the kiln and every gather
-## node (flax beds, clay pit, herbs, quarry spots, alder trunks).
+## node (flax beds, clay pit, herbs, quarry spots, alder trunks). Phase 6 (docs/PHASE6_DESIGN.md §4.1 G3,
+## §4.2): none under the building footprints and on their forecourts, × 0.6 in the churchyard.
 
 const Ctx := preload("res://src/world/graveyard/graveyard_build_context.gd")
 const OUT_GRASS := "res://src/world/graveyard/grass.scn"
@@ -47,6 +48,9 @@ static func build(ctx: Ctx) -> Node3D:
 		if (keep.no_grass as Array).any(func(r: Rect2) -> bool: return r.has_point(p)):
 			continue
 		if (keep.thin as Array).any(func(r: Rect2) -> bool: return r.has_point(p)) and rng.randf() > float(cfg.get("bruch_density_scale", 1.0)):
+			continue
+		if (keep.thin_churchyard as Array).any(func(r: Rect2) -> bool: return r.has_point(p)) and \
+				rng.randf() > float(cfg.get("churchyard_density_scale", 1.0)):
 			continue
 		if _hidden(p, keep) and rng.randf() > float(cfg.hidden_density):
 			continue
@@ -153,6 +157,7 @@ static func _keep_out(ctx: Ctx) -> Dictionary:
 		circles.append({"c": Ctx.v2(g.pos), "r": float(GATHER_RADIUS.get(String(g.kind), 0.6)) + gather_out})
 	var no_grass: Array[Rect2] = []
 	var thin: Array[Rect2] = []
+	var thin_churchyard: Array[Rect2] = []
 	for sec: Dictionary in layout.sections:
 		var r: Array = sec.rect
 		var rect := Rect2(r[0], r[1], r[2] - r[0], r[3] - r[1])
@@ -160,6 +165,18 @@ static func _keep_out(ctx: Ctx) -> Dictionary:
 			no_grass.append(rect)
 		elif sec.id == "bruch":
 			thin.append(rect)
+		elif sec.id == "churchyard":
+			thin_churchyard.append(rect)
+	# Phase 6 (§4.1 G3, §4.2): no grass under the building footprints (+ keep_out_station) and on
+	# the forecourt in front of each door (access + building_access_keep_out); the soul lantern.
+	var access_out := float(cfg.get("building_access_keep_out", 0.0))
+	for site: Dictionary in layout.get("buildings", {}).get("sites", []):
+		var fp: Array = site.footprint
+		rects.append({"pos": Ctx.v2(site.pos), "rot": float(site.rot_y), "rect": Rect2(fp[0], fp[1], fp[2], fp[3]).grow(margin)})
+		circles.append({"c": Ctx.v2(site.access), "r": access_out})
+	var soul: Dictionary = layout.get("buildings", {}).get("soul_lantern", {})
+	if not soul.is_empty():
+		circles.append({"c": Ctx.v2(soul.pos), "r": 0.5})
 	var log_def: Dictionary = layout.colliders["ph_prop_fallen_log"][0]
 	var log_size := Ctx.v3(log_def.size)
 	var log_off := Ctx.v3(log_def.offset)
@@ -174,6 +191,7 @@ static func _keep_out(ctx: Ctx) -> Dictionary:
 	var hut := Ctx.v2(layout.hut.pos)
 	var hut_rect := Rect2(-2.9, -2.4 - float(cfg.hidden_hut_depth), 5.8, float(cfg.hidden_hut_depth))
 	return {"lines": lines, "circles": circles, "rects": rects, "hidden": hidden, "no_grass": no_grass, "thin": thin,
+			"thin_churchyard": thin_churchyard,
 			"hidden_rects": [{"pos": hut, "rot": float(layout.hut.rot_y), "rect": hut_rect}]}
 
 
