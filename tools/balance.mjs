@@ -142,6 +142,13 @@ function planScenario(s) {
     let build = 0;
     let wait = 0;
     for (const g of m.goals) {
+      if (g.powered) {
+        // A plant fed by a coal line (reused when one stands) and a pole per three machines.
+        // The speed bonus of the grid is left out, so later missions are estimated a bit slow.
+        build += (2 + Math.ceil(g.powered / 3)) * BUILD_SECONDS.building + (lines.coal ? 0 : buildTime(measure('coal', stats).cost));
+        lines.coal ??= 1;
+        continue;
+      }
       if (g.build) {
         const have = g.build === 'drill' ? Object.keys(lines).length : 0;
         build += Math.max(0, g.count - have) * BUILD_SECONDS.building;

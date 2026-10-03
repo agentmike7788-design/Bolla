@@ -38,6 +38,7 @@ function radialTexture() {
 // Light colour and strength per building type at night.
 const GLOWS = {
   furnace: { color: 0xff7a26, size: 3.2, light: 1 },
+  power: { color: 0xff8a3a, size: 3.4, light: 1 },
   drill: { color: 0xffd9a0, size: 1.8, light: 0.5 },
   assembler: { color: 0xffe2b0, size: 2.2, light: 0.6 },
   constructor: { color: 0x9fd8ff, size: 2.6, light: 0.7 },

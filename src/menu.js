@@ -6,7 +6,7 @@ import { listSaves, whenText, playTimeText } from './save.js';
 
 const CONTROLS = [
   ['Kamera', [['Linke Maus ziehen', 'Karte verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['W A S D', 'bewegen']]],
-  ['Bauen', [['1 – 8', 'Gebäude wählen'], ['Klick / Ziehen', 'bauen, Bänder ziehen'], ['R', 'drehen'], ['X', 'abreißen'], ['Klick auf Konstruktor', 'Rezept wählen'], ['Esc', 'Werkzeug weglegen']]],
+  ['Bauen', [['1 – 9, 0', 'Gebäude wählen (9 Kraftwerk, 0 Mast)'], ['Klick / Ziehen', 'bauen, Bänder ziehen'], ['R', 'drehen'], ['X', 'abreißen'], ['Klick auf Konstruktor', 'Rezept wählen'], ['Esc', 'Werkzeug weglegen']]],
   ['Spiel', [['T', 'Forschungsbaum'], ['M', 'Karten'], ['N', 'nächste Tageszeit'], ['U', 'Ton an / aus'], ['Strg S', 'speichern'], ['Esc', 'Menü']]],
   ['Touch', [['Ein Finger', 'verschieben oder bauen'], ['Zwei Finger', 'zoomen und drehen']]],
 ];

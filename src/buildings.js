@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { DIRS, ITEMS } from './factory.js';
+import { DIRS, ITEMS, POLE_SUPPLY } from './factory.js';
 import { ORES } from './world.js';
 
 const STEEL = 0x3a4046;
@@ -179,6 +179,24 @@ function buildingParts() {
     ]),
     armBase: new THREE.CylinderGeometry(0.06, 0.08, 0.1, 8),
     arm: box(0.05, 0.05, 0.3, 0, 0, -0.15),
+    // Coal power plant: a boiler hall with a firebox, a coal bunker, a striped
+    // smokestack and a fan on the roof.
+    hall: rbox(0.6, 0.5, 0.62, -0.1, 0.35, 0.06, 0.05),
+    hallRoof: box(0.66, 0.05, 0.68, -0.1, 0.62, 0.06),
+    firebox: box(0.3, 0.16, 0.03, -0.1, 0.27, -0.255),
+    fireFrame: box(0.38, 0.24, 0.04, -0.1, 0.27, -0.24),
+    stack: new THREE.CylinderGeometry(0.08, 0.12, 1.36, 10).translate(0.3, 0.78, 0.26),
+    stackBands: mergeGeometries([1.0, 1.32].map((y) => new THREE.CylinderGeometry(0.093, 0.097, 0.1, 10).translate(0.3, y, 0.26))),
+    bunker: new THREE.CylinderGeometry(0.15, 0.07, 0.3, 8).translate(0.3, 0.32, -0.22),
+    bunkerLegs: mergeGeometries([-1, 1].map((sx) => box(0.03, 0.2, 0.03, 0.3 + sx * 0.09, 0.12, -0.22))),
+    coalHeap: new THREE.ConeGeometry(0.13, 0.09, 8).translate(0.3, 0.5, -0.22),
+    fanRing: new THREE.CylinderGeometry(0.17, 0.17, 0.06, 14, 1, true).translate(-0.1, 0.67, 0.06),
+    // Power pole: a wooden mast with a crossbar and two insulators.
+    poleFoot: rbox(0.26, 0.08, 0.26, 0, 0.04, 0, 0.02),
+    mastPole: new THREE.CylinderGeometry(0.035, 0.05, 1.5, 7).translate(0, 0.8, 0),
+    crossbar: box(0.56, 0.05, 0.06, 0, 1.46, 0),
+    brace: mergeGeometries([-1, 1].map((sx) => box(0.025, 0.26, 0.025, 0, 0, 0).rotateZ(sx * 0.7).translate(sx * 0.08, 1.36, 0))),
+    insulators: mergeGeometries([-0.22, 0.22].map((x) => new THREE.CylinderGeometry(0.025, 0.035, 0.09, 8).translate(x, 1.53, 0))),
   };
   const m = {
     steel: flat(STEEL),
@@ -193,12 +211,19 @@ function buildingParts() {
     merger: flat(0x7a5aa8, { roughness: 0.5 }),
     shop: flat(0x3f6f9e, { roughness: 0.55 }),
     glass: new THREE.MeshStandardMaterial({ color: 0x18323f, emissive: 0x2a8fc0, emissiveIntensity: 0.4, roughness: 0.2 }),
+    concrete: flat(0xb3ada1, { roughness: 0.85, metalness: 0.05 }),
+    white: flat(0xe8e4dc, { roughness: 0.7 }),
+    red: flat(0xc8402e, { roughness: 0.6 }),
+    wood: flat(0x7a5536, { roughness: 0.9, metalness: 0 }),
+    porcelain: new THREE.MeshStandardMaterial({ color: 0x9fd6c0, roughness: 0.25, metalness: 0.1 }),
     ore: Object.fromEntries(Object.entries(ORES).map(([k, o]) => [k, flat(o.color, { roughness: 0.4, metalness: 0.3 })])),
   };
   return { g, m };
 }
 
-const LAMP = { work: 0x6be36b, blocked: 0xffb02e, empty: 0xff5544, idle: 0x5aa9ff };
+const LAMP = { work: 0x6be36b, blocked: 0xffb02e, empty: 0xff5544, idle: 0x5aa9ff, nopower: 0xb46bff };
+const WIRE_HEIGHT = 1.53; // insulators above the tile
+const INSULATOR = 0.22; // insulators sideways from the mast
 const GLOW = 0xff7a1f;
 
 // Items on belts: one instanced mesh per item shape, each resting on the belt surface.
@@ -273,6 +298,66 @@ export function createFactoryView(renderer) {
     }),
   );
   const itemColors = Object.fromEntries(Object.entries(ITEMS).map(([k, it]) => [k, new THREE.Color(it.color)]));
+
+  // Power lines between poles, sagging a little, rebuilt when the grid changes.
+  const wireMat = new THREE.MeshStandardMaterial({ color: 0x2b2826, roughness: 0.6, metalness: 0.4 });
+  const wires = new THREE.Mesh(new THREE.BufferGeometry(), wireMat);
+  wires.castShadow = true;
+  wires.frustumCulled = false;
+  group.add(wires);
+  let gridVersion = -1;
+
+  // The squares poles supply, shown while building power and machines.
+  const MAX_AREAS = 1024;
+  const areaSize = POLE_SUPPLY * 2 + 1;
+  const areaMat = new THREE.MeshBasicMaterial({ color: 0x7fd4ff, transparent: true, opacity: 0.13, depthWrite: false });
+  const areas = new THREE.InstancedMesh(new THREE.PlaneGeometry(areaSize - 0.06, areaSize - 0.06).rotateX(-Math.PI / 2), areaMat, MAX_AREAS);
+  areas.count = 0;
+  areas.visible = false;
+  areas.frustumCulled = false;
+  areas.renderOrder = 1;
+  group.add(areas);
+
+  // Where the wire hangs on a pole: the left or right insulator.
+  const insulator = (b, side) => {
+    const a = yaw(b.dir);
+    return new THREE.Vector3(b.tile.position.x + Math.cos(a) * INSULATOR * side, b.tile.height + WIRE_HEIGHT, b.tile.position.z - Math.sin(a) * INSULATOR * side);
+  };
+
+  function rebuildWires(factory) {
+    const geos = [];
+    for (const [a, b] of factory.grid.wires) {
+      // Join left to left or crossed, whichever keeps the two wires apart.
+      const straight = insulator(a, 1).distanceTo(insulator(b, 1)) + insulator(a, -1).distanceTo(insulator(b, -1));
+      const crossed = insulator(a, 1).distanceTo(insulator(b, -1)) + insulator(a, -1).distanceTo(insulator(b, 1));
+      const flip = crossed < straight ? -1 : 1;
+      for (const side of [1, -1]) {
+        const from = insulator(a, side);
+        const to = insulator(b, side * flip);
+        const sag = 0.06 + from.distanceTo(to) * 0.035;
+        const points = [];
+        for (let i = 0; i <= 10; i++) {
+          const t = i / 10;
+          points.push(from.clone().lerp(to, t).setY(from.y + (to.y - from.y) * t - sag * 4 * t * (1 - t)));
+        }
+        geos.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 10, 0.014, 4, false));
+      }
+    }
+    wires.geometry.dispose();
+    wires.geometry = geos.length ? mergeGeometries(geos) : new THREE.BufferGeometry();
+    for (const g of geos) g.dispose();
+
+    let n = 0;
+    for (const b of factory.buildings.values()) {
+      if (b.type !== 'pole' || n >= MAX_AREAS) continue;
+      dummy.position.set(b.tile.position.x, b.tile.height + 0.04, b.tile.position.z);
+      dummy.rotation.set(0, 0, 0);
+      dummy.updateMatrix();
+      areas.setMatrixAt(n++, dummy.matrix);
+    }
+    areas.count = n;
+    areas.instanceMatrix.needsUpdate = true;
+  }
 
   const dummy = new THREE.Object3D();
   let drillSpeed = 1;
@@ -371,6 +456,28 @@ export function createFactoryView(renderer) {
       view.arm.add(arm);
       root.add(view.arm);
       lamp(0.3, 0.68, -0.15);
+    } else if (b.type === 'power') {
+      add(g.bigFoot, m.steel);
+      add(g.hall, m.concrete);
+      add(g.hallRoof, m.dark);
+      add(g.fireFrame, m.dark);
+      view.glow = own(new THREE.MeshStandardMaterial({ color: 0x3a1a0a, emissive: GLOW, emissiveIntensity: 0.2, roughness: 1 }));
+      add(g.firebox, view.glow, false);
+      add(g.stack, m.white);
+      add(g.stackBands, m.red);
+      add(g.bunker, m.dark);
+      add(g.bunkerLegs, m.steel);
+      view.coal = add(g.coalHeap, m.ore.coal);
+      add(g.fanRing, m.steel);
+      view.rotor = add(g.rotor, m.signal);
+      view.rotor.position.set(-0.1, 0.67, 0.06);
+      lamp(0.06, 0.52, -0.26);
+    } else if (b.type === 'pole') {
+      add(g.poleFoot, m.concrete);
+      add(g.mastPole, m.wood);
+      add(g.crossbar, m.wood);
+      add(g.brace, m.wood);
+      add(g.insulators, m.porcelain);
     } else if (b.type === 'storage') {
       add(g.pad, m.dark);
       add(g.crate, m.container);
@@ -422,6 +529,11 @@ export function createFactoryView(renderer) {
       if (alive.has(b)) continue;
       dropModel(view);
       views.delete(b);
+    }
+    factory.updateGrid();
+    if (factory.grid.version !== gridVersion) {
+      gridVersion = factory.grid.version;
+      rebuildWires(factory);
     }
   }
 
@@ -498,6 +610,11 @@ export function createFactoryView(renderer) {
     view.lamp.material.color.setHex(col);
     view.lamp.material.emissive.setHex(col);
     const steady = state === 'work' || state === 'idle';
+    if (state === 'nopower') {
+      // Short purple blinks: the machine waits for power.
+      view.lamp.material.emissiveIntensity = (Math.sin(elapsed * 9) > 0.2 ? 2 : 0.15) * (1 + night * 1.5);
+      return;
+    }
     view.lamp.material.emissiveIntensity = (steady ? 1.2 : 0.8 + Math.sin(elapsed * 6) * 0.6) * (1 + night * 1.5);
   }
 
@@ -539,6 +656,14 @@ export function createFactoryView(renderer) {
         view.arm.rotation.y = Math.sin(view.phase * 3) * 0.9;
       }
       setLamp(view, b.state, elapsed);
+    } else if (b.type === 'power') {
+      const load = working ? 0.4 + 0.6 * (b.load ?? 1) : 0;
+      const target = working ? 1 + load * 1.6 + Math.sin(elapsed * 11) * 0.25 : b.state === 'idle' ? 0.45 : 0.08;
+      view.glow.emissiveIntensity += (target - view.glow.emissiveIntensity) * Math.min(1, dt * 4);
+      view.rotor.rotation.y += dt * (working ? 4 + load * 10 : 0);
+      view.coal.visible = b.fuel > 0;
+      view.coal.scale.setScalar(0.5 + Math.min(1, b.fuel / 5) * 0.5);
+      setLamp(view, b.state, elapsed);
     } else if (b.type === 'storage') {
       if (b.received !== view.seen) {
         view.seen = b.received;
@@ -555,6 +680,10 @@ export function createFactoryView(renderer) {
     views.clear();
     for (const meshes of Object.values(beltMeshes)) for (const mesh of meshes) mesh.count = 0;
     for (const mesh of Object.values(itemMeshes)) mesh.count = 0;
+    wires.geometry.dispose();
+    wires.geometry = new THREE.BufferGeometry();
+    areas.count = 0;
+    gridVersion = -1;
   }
 
   function setNight(n) {
@@ -562,7 +691,9 @@ export function createFactoryView(renderer) {
     parts.m.glass.emissiveIntensity = 0.4 + n * 1.4;
   }
 
-  return { group, rebuild, update, clear, setNight };
+  const showSupply = (on) => (areas.visible = on);
+
+  return { group, rebuild, update, clear, setNight, showSupply };
 }
 
 // Translucent preview of the building under the cursor: footprint, direction arrow
@@ -605,9 +736,17 @@ export function createGhost() {
     splitter: { geo: box(0.86, 0.4, 0.86), arrow: 0.5 },
     merger: { geo: box(0.86, 0.4, 0.86), arrow: 0.5 },
     constructor: { geo: mergeGeometries([box(0.84, 0.66, 0.7, 0.1), box(0.5, 0.25, 0.2).translate(0, 0.66, 0.18)]), arrow: 0.95 },
+    power: { geo: mergeGeometries([box(0.66, 0.66, 0.68, 0.06).translate(-0.1, 0, 0), new THREE.CylinderGeometry(0.1, 0.12, 1.4, 8).translate(0.3, 0.7, 0.26)]), arrow: null },
+    pole: { geo: mergeGeometries([new THREE.CylinderGeometry(0.05, 0.05, 1.5, 6).translate(0, 0.75, 0), box(0.56, 0.06, 0.06).translate(0, 1.43, 0)]), arrow: null },
   };
   const meshes = Object.fromEntries(Object.entries(shapes).map(([k, s]) => [k, new THREE.Mesh(s.geo, bodyMat)]));
   for (const s of Object.values(meshes)) pivot.add(s);
+
+  // The square a new pole will supply.
+  const reach = POLE_SUPPLY * 2 + 1;
+  const supply = new THREE.Mesh(new THREE.PlaneGeometry(reach, reach).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x7fd4ff, transparent: true, opacity: 0.18, depthWrite: false }));
+  supply.position.y = 0.05;
+  group.add(supply);
 
   function show(tool, tile, dir, ok) {
     if (!tool || !tile) {
@@ -618,6 +757,7 @@ export function createGhost() {
     group.position.set(tile.position.x, tile.height, tile.position.z);
     pivot.rotation.y = yaw(dir);
     for (const [k, s] of Object.entries(meshes)) s.visible = k === tool;
+    supply.visible = tool === 'pole';
     const arrowY = shapes[tool]?.arrow ?? null;
     arrow.visible = arrowY !== null;
     arrow.position.y = arrowY ?? 0;

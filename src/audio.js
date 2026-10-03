@@ -3,7 +3,7 @@
 // close, and a slow generative background tune. No audio files needed.
 
 const SETTINGS_KEY = 'bolla-audio';
-const MACHINE_TYPES = ['drill', 'furnace', 'assembler', 'constructor', 'belt'];
+const MACHINE_TYPES = ['drill', 'furnace', 'assembler', 'constructor', 'belt', 'power'];
 const LOOP_SECONDS = 2.4;
 
 function loadSettings() {
@@ -146,6 +146,11 @@ export function createAudio() {
       tone({ type: 'triangle', freq: 1320, to: 1300, decay: 0.25, peak: 0.08, t: t + 0.03 });
       tone({ type: 'sine', freq: 660, decay: 0.08, peak: 0.12, t: t + 0.12 });
       tone({ type: 'sine', freq: 990, decay: 0.12, peak: 0.1, t: t + 0.19 });
+      // Power buildings crackle when they join the grid.
+      if (type === 'pole' || type === 'power') {
+        for (let i = 0; i < 4; i++) hiss({ filter: 'highpass', freq: 4000, decay: 0.03, peak: 0.12, t: t + 0.22 + i * 0.035 + Math.random() * 0.02 });
+        tone({ type: 'sawtooth', freq: 100, decay: 0.25, peak: 0.05, t: t + 0.22 });
+      }
     },
     remove() {
       if (!ctx || throttle('remove', 60)) return;
@@ -254,6 +259,13 @@ export function createAudio() {
       const tick = pulse(t, 0.125, 40) * low(s, 'k', 0.7) * 0.5;
       return whir * (0.6 + 0.4 * Math.sin(TAU * 1.25 * t)) + tick;
     },
+    // The power plant: a turbine hum at mains frequency with a breathing fire under it.
+    power: (t, s) => {
+      const hum = Math.sin(TAU * 50 * t) * 0.3 + Math.sin(TAU * 100 * t) * 0.16 + Math.sin(TAU * 150 * t) * 0.06;
+      const whine = Math.sin(TAU * 410 * t + Math.sin(TAU * 0.5 * t) * 2) * 0.03;
+      const fire = low(s, 'p', 0.05) * 2.5;
+      return (hum + whine) * (0.85 + 0.15 * Math.sin(TAU * 0.42 * t)) + fire * 0.4;
+    },
     // A soft rattle of rollers.
     belt: (t, s) => {
       const roll = low(s, 'b', 0.5) * (0.4 + 0.6 * pulse(t, 0.1, 12));
@@ -277,7 +289,7 @@ export function createAudio() {
   // Machines are heard by how close they are to the spot the camera looks at.
   // One loop per machine type is mixed from all working machines, so a big
   // factory costs no more than a small one.
-  const LEVEL = { drill: 0.5, furnace: 0.75, assembler: 0.7, constructor: 0.6, belt: 0.25 };
+  const LEVEL = { drill: 0.5, furnace: 0.75, assembler: 0.7, constructor: 0.6, belt: 0.25, power: 0.6 };
   function updateMachines(factory, focus, right, zoom) {
     if (!ctx || ctx.state !== 'running') return;
     const radius = 3 + zoom * 0.18;

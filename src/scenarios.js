@@ -15,6 +15,7 @@
 //                   { deliver: item, count }   put `count` more into storage
 //                   { build: type, count }      have `count` of a building
 //                   { rate: item, perMin }      that many into storage within one minute
+//                   { powered: count }          that many machines working on power at once
 //     reward      { unlocks, boosts, text } like a research entry, see research.js
 export const SCENARIOS = [
   {
@@ -109,7 +110,7 @@ export const SCENARIOS = [
     seed: 3301,
     map: { ores: { coal: 5, iron: 3 }, coast: 0.3, land: -0.02, rock: 0.4, forest: 0.6, richness: 1.4 },
     start: ['drill', 'belt', 'storage', 'furnace', 'assembler'],
-    par: 13,
+    par: 14,
     missions: [
       {
         name: 'Landung',
@@ -121,7 +122,13 @@ export const SCENARIOS = [
         name: 'Stahl kochen',
         desc: 'Zwei Eisenbarren und eine Kohle ergeben einen Stahlträger.',
         goals: [{ deliver: 'steel', count: 15 }],
-        reward: { unlocks: ['splitter', 'merger'], boosts: { drill: 1.5 }, text: 'Verteiler, Zusammenführer, Bohrer +50 %' },
+        reward: { unlocks: ['splitter', 'merger', 'power', 'pole'], boosts: { drill: 1.5 }, text: 'Verteiler, Zusammenführer, Bohrer +50 %, Kohlekraftwerk' },
+      },
+      {
+        name: 'Unter Strom',
+        desc: 'Kohle aufs Band ins Kraftwerk, Strommasten daneben und zu den Maschinen. Am Netz arbeiten sie doppelt so schnell.',
+        goals: [{ build: 'power', count: 1 }, { powered: 4 }],
+        reward: { boosts: { power: 1.5 }, text: 'Kraftwerke +50 %' },
       },
       {
         name: 'Schwerindustrie',
@@ -145,7 +152,7 @@ export const SCENARIOS = [
     seed: 6060,
     map: { ores: { iron: 5, copper: 4, coal: 3, stone: 3 }, land: 0.06, coast: 0.85, richness: 1.2 },
     start: ['drill', 'belt', 'storage'],
-    par: 22,
+    par: 23,
     missions: [
       {
         name: 'Erkundung',
@@ -163,12 +170,12 @@ export const SCENARIOS = [
         name: 'Erste Schaltkreise',
         desc: 'Eine Platte und zwei Draht ergeben einen Schaltkreis.',
         goals: [{ deliver: 'circuit', count: 20 }],
-        reward: { boosts: { belt: 1.6, drill: 1.5 }, text: 'Bänder +60 %, Bohrer +50 %' },
+        reward: { unlocks: ['power', 'pole'], boosts: { belt: 1.6, drill: 1.5 }, text: 'Kohlekraftwerk, Strommasten, Bänder +60 %, Bohrer +50 %' },
       },
       {
         name: 'Bauprogramm',
-        desc: 'Zahnräder, Stahl und Beton für die große Halle.',
-        goals: [{ deliver: 'gear', count: 20 }, { deliver: 'steel', count: 20 }, { deliver: 'concrete', count: 20 }],
+        desc: 'Zahnräder, Stahl und Beton für die große Halle. Hol dir Strom dazu, dann geht es doppelt so schnell.',
+        goals: [{ deliver: 'gear', count: 20 }, { deliver: 'steel', count: 20 }, { deliver: 'concrete', count: 20 }, { powered: 6 }],
         reward: { boosts: { furnace: 2, assembler: 1.5, constructor: 1.5 }, text: 'Öfen ×2, Presse und Konstruktor +50 %' },
       },
       {
@@ -196,6 +203,7 @@ export function createMissions(scenario, factory) {
   function progress(goal, i) {
     if (goal.deliver) return { item: goal.deliver, have: factory.delivered[goal.deliver] - base[goal.deliver], need: goal.count };
     if (goal.build) return { building: goal.build, have: factory.count(goal.build), need: goal.count };
+    if (goal.powered) return { powered: true, have: reached.has(i) ? goal.powered : factory.powered(), need: goal.powered };
     const have = reached.has(i) ? goal.perMin : factory.perMinute(goal.rate);
     return { item: goal.rate, rate: true, have, need: goal.perMin };
   }
@@ -219,7 +227,7 @@ export function createMissions(scenario, factory) {
       const m = this.current;
       if (!m) return null;
       const all = m.goals.map(progress);
-      all.forEach((p, i) => p.rate && p.have >= p.need && reached.add(i));
+      all.forEach((p, i) => (p.rate || p.powered) && p.have >= p.need && reached.add(i));
       if (!all.every((p) => p.have >= p.need)) return null;
       factory.research.grant(m.reward);
       index++;

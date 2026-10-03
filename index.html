@@ -24,6 +24,11 @@
       </aside>
       <aside class="hud hud-goal" id="goal" aria-live="polite"></aside>
       <aside class="hud hud-store">
+        <div class="power" id="power" hidden>
+          <p class="label">Strom <span id="power-state"></span></p>
+          <div class="power-bar"><i id="power-fill"></i></div>
+          <p class="power-text" id="power-text"></p>
+        </div>
         <p class="label">Lager</p>
         <ul id="store"></ul>
       </aside>
@@ -63,6 +68,14 @@
         <button type="button" class="tool" data-tool="constructor" aria-pressed="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M4 20V9l5-3v3l5-3v3l6-3v14M8 14h2M14 14h2" /></svg>
           <span>Konstr.</span><kbd>8</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="power" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M4 20v-9h10v9M17 20V4h3v16M7 15h4M9 11l1-3 1 3" /></svg>
+          <span>Kraftwerk</span><kbd>9</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="pole" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V4M6 6h12M6 6v2M18 6v2M9 21h6M8 10l4-4 4 4" /></svg>
+          <span>Mast</span><kbd>0</kbd>
         </button>
         <button type="button" class="tool" data-tool="remove" aria-pressed="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" /></svg>

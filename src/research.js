@@ -68,6 +68,22 @@ export const RESEARCH = [
     unlocks: ['splitter', 'merger'],
   },
   {
+    id: 'electricity',
+    name: 'Elektrizität',
+    desc: 'Kohlekraftwerk und Strommasten. Maschinen am Netz arbeiten doppelt so schnell, solange der Strom reicht.',
+    cost: { ironPlate: 20, wire: 30, coal: 20 },
+    requires: ['pressing'],
+    unlocks: ['power', 'pole'],
+  },
+  {
+    id: 'turbines',
+    name: 'Dampfturbinen',
+    desc: 'Kohlekraftwerke liefern 50 % mehr Strom aus jeder Kohle.',
+    cost: { gear: 25, steel: 20 },
+    requires: ['electricity', 'constructor'],
+    boosts: { power: 1.5 },
+  },
+  {
     id: 'firstFactory',
     name: 'Erste Fabrik',
     desc: 'Das erste Spielziel: eine Fabrik, die schmilzt und presst.',
@@ -118,7 +134,7 @@ export const RESEARCH = [
 ];
 
 // Factory stats that research can multiply. 1 is the starting value.
-export const STATS = ['belt', 'drill', 'furnace', 'assembler', 'constructor'];
+export const STATS = ['belt', 'drill', 'furnace', 'assembler', 'constructor', 'power'];
 
 export const START_UNLOCKED = ['drill', 'belt', 'storage'];
 
