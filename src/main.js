@@ -24,6 +24,8 @@ import { createWeatherView } from './weatherView.js';
 import { createAchievements } from './achievements.js';
 import { ENEMY_MODES, CREATURES, TURRET, LASER } from './enemies.js';
 import { createEnemyView } from './enemyView.js';
+import { CHAPTERS, STORY, PERKS, perksFor, loadCampaign, finishCampaignMap, pickPerk, nextCampaignMap, chapterIndexOf, opensChapter } from './campaign.js';
+import { createRadio, createCampaignView, showChapterCard, perkChoice } from './campaignView.js';
 import './style.css';
 
 const canvas = document.getElementById('scene');
@@ -108,22 +110,37 @@ let meshes;
 let factory;
 let scenario; // the map being played, see scenarios.js
 let missions = null; // mission progress, null in the free game
+let campaignRun = false; // the map is played as part of the campaign, see campaign.js
 
 let slotId = null; // save slot of the running game, see save.js
 let savedOnce = false; // an empty new game is only saved once something happened
 
 // Start a map: the free game with a random (or given) seed, a biome and how
 // dangerous the wild is, or a scenario.
-function startGame(next, seed = Math.floor(Math.random() * 99999), biome = 'meadow', enemies = 'off') {
+function startGame(next, seed = Math.floor(Math.random() * 99999), biome = 'meadow', enemies = 'off', { campaign = false } = {}) {
   leaveGame();
   tutorial.stop();
   scenario = next;
+  campaignRun = campaign && !next.free;
   slotId = newSaveId();
   savedOnce = false;
   if (scenario.free) loadWorld(seed, null, null, biome, enemies);
   else loadWorld(scenario.seed, scenario);
   rig.controls.target.set(0, 0, 0);
   camera.position.set(0, 34, 34);
+  radio.clear();
+  if (campaignRun) startCampaignMap();
+}
+
+// A campaign map starts: the keepsakes of the maps before come along, a new
+// chapter shows its title card, then the radio tells what this map is about.
+function startCampaignMap() {
+  const perks = perksFor(scenario.id, loadCampaign());
+  for (const p of perks) factory.research.grant(PERKS[p]);
+  const chapter = opensChapter(scenario.id);
+  if (chapter) showChapterCard(chapterCard, chapterIndexOf(scenario.id));
+  radio.say(STORY[scenario.id].intro, { fresh: true, delay: chapter ? 4.5 : 1 });
+  if (perks.length) showToast('Mitbringsel dabei', perks.map((p) => `${PERKS[p].icon} ${PERKS[p].text}`).join(' · '));
 }
 
 // Landscape of the free game in each biome.
@@ -229,7 +246,7 @@ const researchView = createResearchView({
   },
 });
 
-const missionView = createMissionView({ panel: document.getElementById('goal'), getGame: () => ({ scenario, missions, factory }) });
+const missionView = createMissionView({ panel: document.getElementById('goal'), getGame: () => ({ scenario, missions, factory, chapter: campaignRun ? chapterIndexOf(scenario.id) + 1 : 0 }) });
 
 function renderProgress() {
   if (missions) missionView.update();
@@ -562,7 +579,12 @@ function checkMissions() {
   if (missions.current) {
     audio.play.success();
     showToast(`Mission geschafft: ${done.name}`, `Belohnung: ${done.reward.text}`);
+    if (campaignRun) radio.say(STORY[scenario.id].missions[missions.index], { delay: 1.5 });
   } else {
+    if (campaignRun) {
+      finishCampaignMap(scenario.id);
+      radio.say(STORY[scenario.id].outro, { delay: 1 });
+    }
     audio.play.fanfare();
     effects.fireworks(rig.controls.target, zoom);
     showWin();
@@ -622,8 +644,13 @@ function showWin() {
   const seconds = missions.finishedAt;
   const stars = starsFor(scenario, seconds);
   const best = saveRecord(scenario.id, stars, seconds);
-  const next = SCENARIOS[SCENARIOS.indexOf(scenario) + 1];
-  document.getElementById('win-label').textContent = 'Alle Missionen erfüllt';
+  const next = campaignRun ? nextCampaignMap(scenario.id) : SCENARIOS[SCENARIOS.indexOf(scenario) + 1];
+  const chapter = CHAPTERS[chapterIndexOf(scenario.id)];
+  document.getElementById('win-label').textContent = !campaignRun
+    ? 'Alle Missionen erfüllt'
+    : next
+      ? `Kapitel ${chapterIndexOf(scenario.id) + 1} · ${chapter.name}`
+      : 'Kampagne abgeschlossen';
   document.getElementById('win-title').textContent = scenario.name;
   document.getElementById('win-stars').textContent = starText(stars);
   document.getElementById('win-time').textContent =
@@ -632,10 +659,32 @@ function showWin() {
   nextBtn.hidden = !next;
   nextBtn.onclick = () => {
     winMenu.hidden = true;
-    startGame(next);
+    startGame(next, undefined, undefined, undefined, { campaign: campaignRun });
   };
+  winCampaign.hidden = !campaignRun;
+  document.getElementById('win-to-campaign').hidden = !campaignRun;
+  if (campaignRun) renderWinCampaign();
   winMenu.hidden = false;
 }
+
+// On a campaign map the win screen offers keepsakes; the next map waits for the pick.
+const winCampaign = document.getElementById('win-campaign');
+function renderWinCampaign() {
+  const progress = loadCampaign();
+  const offers = STORY[scenario.id].perks;
+  winCampaign.innerHTML = offers.length
+    ? perkChoice(scenario.id, progress)
+    : '<p class="win-epilogue">Das Leuchtfeuer sendet. Alle Inseln sind wieder verbunden. Danke fürs Spielen!</p>';
+  document.getElementById('win-next').disabled = offers.length > 0 && !progress.perks[scenario.id];
+}
+winCampaign.addEventListener('click', (e) => {
+  const offer = e.target.closest('[data-perk]');
+  if (!offer || offer.disabled) return;
+  pickPerk(scenario.id, offer.dataset.perk);
+  audio.play.success();
+  renderWinCampaign();
+  document.getElementById('win-next').focus();
+});
 
 mapsList.addEventListener('click', (e) => {
   // The enemies of the free game are picked first, then the biome starts it.
@@ -658,11 +707,37 @@ for (const menu of [mapsMenu, winMenu]) {
   menu.addEventListener('click', (e) => {
     if (e.target.closest('[data-close]') || e.target === menu) menu.hidden = true;
     if (e.target.closest('[data-maps]')) openMaps();
+    if (e.target.closest('[data-campaign]')) openCampaign();
   });
 }
-document.getElementById('goal').addEventListener('click', (e) => e.target.closest('[data-maps]') && openMaps());
+document.getElementById('goal').addEventListener('click', (e) => {
+  if (e.target.closest('[data-maps]')) openMaps();
+  if (e.target.closest('[data-campaign]')) openCampaign();
+  if (e.target.closest('[data-radio]')) radio.replay();
+});
+
+// --- Campaign -------------------------------------------------------------------
+
+const radioBox = document.getElementById('radio');
+const radio = createRadio({ root: radioBox, audio });
+const chapterCard = document.getElementById('chapter-card');
+const campaignView = createCampaignView({
+  root: document.getElementById('campaign'),
+  audio,
+  onStart(id) {
+    startGame(scenarioById(id), undefined, undefined, undefined, { campaign: true });
+    if (menu.isOpen) closeMenu();
+  },
+  onLoad(id) {
+    if (loadGame(id) && menu.isOpen) closeMenu();
+  },
+});
+function openCampaign() {
+  mapsMenu.hidden = winMenu.hidden = true;
+  campaignView.open(campaignRun ? scenario.id : null);
+}
 document.getElementById('maps-open').addEventListener('click', openMaps);
-const menuOpen = () => !mapsMenu.hidden || !winMenu.hidden || stats.isOpen || launch.active;
+const menuOpen = () => !mapsMenu.hidden || !winMenu.hidden || campaignView.isOpen || stats.isOpen || launch.active;
 
 // --- Graphics settings --------------------------------------------------------
 
@@ -712,7 +787,7 @@ const thumbCanvas = Object.assign(document.createElement('canvas'), { width: 240
 let autosaveTimer = 0;
 let savedTimer = 0;
 
-const gameName = () => (scenario.free ? `Freies Spiel #${world.seed}${world.biome !== 'meadow' ? ` · ${biomeOf(world.biome).name}` : ''}` : scenario.name);
+const gameName = () => (scenario.free ? `Freies Spiel #${world.seed}${world.biome !== 'meadow' ? ` · ${biomeOf(world.biome).name}` : ''}` : `${scenario.name}${campaignRun ? ' · Kampagne' : ''}`);
 
 // A small picture of the map for the save list, taken right after a render.
 function thumbnail() {
@@ -737,11 +812,12 @@ function saveGame({ manual = false, quiet = false } = {}) {
     biome: world.biome,
     factory: factory.save(),
     missions: missions?.save() ?? null,
+    campaign: campaignRun,
     dayTime: dayNight.time,
     tutorial: tutorial.save(),
     camera: { position: camera.position.toArray(), target: rig.controls.target.toArray() },
   };
-  const meta = { id: slotId, name: gameName(), scenario: scenario.id, savedAt: Date.now(), playTime: factory.time, buildings: factory.buildings.size, thumb: thumbnail() };
+  const meta = { id: slotId, name: gameName(), scenario: scenario.id, campaign: campaignRun, savedAt: Date.now(), playTime: factory.time, buildings: factory.buildings.size, thumb: thumbnail() };
   const ok = writeSave(meta, data);
   if (!ok) {
     showToast('Speichern fehlgeschlagen', 'Kein Platz mehr im Browser. Lösche alte Spielstände unter Laden.');
@@ -770,8 +846,10 @@ function loadGame(id) {
   }
   leaveGame();
   scenario = next;
+  campaignRun = !!data.campaign && !next.free;
   slotId = id;
   savedOnce = true;
+  radio.clear();
   loadWorld(data.seed, next.free ? null : next, data, data.biome ?? 'meadow');
   dayNight.setTime(data.dayTime ?? 0.02);
   if (data.camera) {
@@ -810,6 +888,7 @@ const menu = createMenu({
       closeMenu();
     },
     newGame: openMaps,
+    campaign: openCampaign,
     tutorial: startTutorial,
     tutorialDone,
     resume: closeMenu,
@@ -854,6 +933,8 @@ function openTitle() {
   openPanel(null);
   researchView.close();
   mapsMenu.hidden = winMenu.hidden = true;
+  campaignView.close();
+  radio.clear();
   app.classList.add('in-title');
   rig.setLocked(true);
   menu.openTitle();
@@ -1530,7 +1611,8 @@ document.getElementById('rotate').addEventListener('click', rotate);
 function escape() {
   if (launch.active) return launch.skip();
   if (stats.isOpen) return stats.close();
-  if (!mapsMenu.hidden || !winMenu.hidden) mapsMenu.hidden = winMenu.hidden = true;
+  if (campaignView.isOpen) campaignView.close();
+  else if (!mapsMenu.hidden || !winMenu.hidden) mapsMenu.hidden = winMenu.hidden = true;
   else if (menu.isOpen) menu.back();
   else if (researchView.isOpen) researchView.close();
   else if (selected) openPanel(null);
@@ -1551,7 +1633,10 @@ window.addEventListener('keydown', (e) => {
   if (launch.active) return;
   if (e.ctrlKey || e.metaKey || e.altKey || menu.isOpen) return;
   if (menuOpen()) {
-    if (key === 'm') mapsMenu.hidden = winMenu.hidden = true;
+    if (key === 'm') {
+      mapsMenu.hidden = winMenu.hidden = true;
+      campaignView.close();
+    }
     if (key === 'l' && stats.isOpen) stats.close();
     return;
   }
@@ -1761,7 +1846,7 @@ renderer.setAnimationLoop(() => {
     legendTimer = 0;
     renderLegend();
     if (!launch.active) checkMissions();
-    if (!inTitle && !launch.active) achievements.check({ factory, scenario, missions, night: dayNight.night });
+    if (!inTitle && !launch.active) achievements.check({ factory, scenario, missions, campaignRun, night: dayNight.night });
     renderProgress();
     stats.update();
     if (factory.derailed.length) {
@@ -1771,6 +1856,8 @@ renderer.setAnimationLoop(() => {
     }
   }
   tutorial.update(dt, elapsed, !paused && !inTitle && !menuOpen());
+  radio.update(paused ? 0 : dt);
+  radioBox.classList.toggle('muted', paused);
   if (!launch.active) updateHover();
   renderer.render(scene, camera);
 });
@@ -1784,4 +1871,4 @@ resize();
 openTitle();
 
 // Handle for poking at the game from the browser console while developing.
-if (import.meta.env.DEV) window.bolla = { closeMenu, enemyView, lookAtAttack, achievements, weatherView, launch, stats, camera, rig, tutorial, renderer, scene, factoryView, startGame, saveGame, loadGame, menu, dayNight, effects, audio, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get meshes() { return meshes; }, get factory() { return factory; }, get missions() { return missions; } };
+if (import.meta.env.DEV) window.bolla = { closeMenu, enemyView, lookAtAttack, achievements, weatherView, launch, stats, camera, rig, tutorial, renderer, scene, factoryView, startGame, saveGame, loadGame, menu, dayNight, effects, audio, checkMissions, radio, campaignView, openCampaign, refresh: () => (shapesDirty = true), get world() { return world; }, get meshes() { return meshes; }, get factory() { return factory; }, get missions() { return missions; }, get campaignRun() { return campaignRun; } };

@@ -11,6 +11,7 @@ import { createFactory, BUILDINGS, CONSTRUCTOR_RECIPES, PUMP_RATE, SILO_STAGES, 
 import { SCENARIOS } from '../src/scenarios.js';
 import { RESEARCH, STATS } from '../src/research.js';
 import { biomeOf, averageEffect } from '../src/biomes.js';
+import { CHAPTERS, CAMPAIGN, STORY, PERKS, VOICES } from '../src/campaign.js';
 
 const SIZE = 64;
 const BUILD_SECONDS = { building: 6, belt: 1.2 }; // per placed building / belt tile
@@ -436,7 +437,47 @@ function planScenario(s) {
 }
 
 console.log('\nMissionen');
-for (const s of SCENARIOS) if (!s.free) planScenario(s);
+const mapTimes = {};
+for (const s of SCENARIOS) if (!s.free) mapTimes[s.id] = planScenario(s);
+
+// --- Campaign ---------------------------------------------------------------------
+//
+// Every mission map is in the campaign exactly once, with radio lines that fit its
+// missions and keepsakes that exist. Times are without keepsakes, so a bit long.
+
+console.log('\nKampagne');
+{
+  const problems = [];
+  const maps = SCENARIOS.filter((s) => !s.free);
+  for (const s of maps) {
+    const n = CAMPAIGN.filter((m) => m.id === s.id).length;
+    if (n !== 1) problems.push(`${s.name}: ${n}× in der Kampagne`);
+  }
+  for (const m of CAMPAIGN) {
+    const s = SCENARIOS.find((x) => x.id === m.id);
+    const story = STORY[m.id];
+    if (!s) problems.push(`${m.id}: keine solche Karte`);
+    if (!story) {
+      problems.push(`${m.id}: keine Geschichte`);
+      continue;
+    }
+    if (s && story.missions.length !== s.missions.length) problems.push(`${s.name}: ${story.missions.length} Funksprüche für ${s.missions.length} Missionen`);
+    for (const [voice] of [...story.intro, ...story.outro, ...story.missions.filter(Boolean).flat()]) if (!VOICES[voice]) problems.push(`${m.id}: unbekannte Stimme ${voice}`);
+    for (const p of story.perks) if (!PERKS[p]) problems.push(`${m.id}: unbekanntes Mitbringsel ${p}`);
+    const last = m === CAMPAIGN[CAMPAIGN.length - 1];
+    if (!last && story.perks.length !== 3) problems.push(`${m.id}: ${story.perks.length} statt 3 Mitbringsel zur Wahl`);
+  }
+  let total = 0;
+  CHAPTERS.forEach((c, i) => {
+    const t = c.maps.reduce((n, id) => n + (mapTimes[id] ?? 0), 0);
+    total += t;
+    console.log(`    Kapitel ${i + 1} ${c.name.padEnd(16)} ${c.maps.length} Karten  geschätzt ${fmt(t).padStart(6)}  (gesamt ${fmt(total)})`);
+  });
+  if (problems.length) {
+    console.log(problems.map((p) => `    FEHLER ${p}`).join('\n'));
+    process.exitCode = 1;
+  } else console.log(`    ${CAMPAIGN.length} Karten in ${CHAPTERS.length} Kapiteln, Geschichte vollständig`);
+}
 
 // --- Research tree ----------------------------------------------------------------
 //

@@ -53,18 +53,18 @@ export function createMissionView({ panel, getGame }) {
   let shown = null; // mission the panel was built for
 
   function render() {
-    const { scenario, missions } = getGame();
+    const { scenario, missions, chapter } = getGame();
     const m = missions.current;
     shown = m;
     if (!m) {
       panel.innerHTML = `<p class="label">${scenario.name} · geschafft</p>
         <p class="goal-name">Alle Missionen erfüllt</p>
         <p class="goal-unlock">Baue weiter, so groß du willst, oder nimm dir die nächste Karte vor.</p>
-        <div class="goal-actions"><button type="button" class="link" data-maps>Karten <kbd>M</kbd></button></div>`;
+        <div class="goal-actions">${chapter ? '<button type="button" data-campaign>Kampagne</button><button type="button" class="link" data-radio title="Funk wiederholen">📻 Funk</button>' : '<button type="button" class="link" data-maps>Karten <kbd>M</kbd></button>'}</div>`;
       return;
     }
     const total = scenario.missions.length;
-    panel.innerHTML = `<p class="label mission-head"><span>Mission ${missions.index + 1}/${total}${missions.index + 1 === total ? ' · Finale' : ''}</span><span class="clock"></span></p>
+    panel.innerHTML = `<p class="label mission-head"><span>${chapter ? `Kapitel ${chapter} · ` : ''}Mission ${missions.index + 1}/${total}${missions.index + 1 === total ? ' · Finale' : ''}</span>${chapter ? '<button type="button" class="radio-replay" data-radio title="Funk wiederholen" aria-label="Funk wiederholen">📻</button>' : ''}<span class="clock"></span></p>
       <p class="goal-name">${m.name}</p>
       <p class="goal-desc">${m.desc}</p>
       <ul class="goals"></ul>

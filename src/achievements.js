@@ -1,13 +1,14 @@
 import { ITEMS } from './factory.js';
 import { SCENARIOS, loadRecords } from './scenarios.js';
 import { biomeOf } from './biomes.js';
+import { CHAPTERS, CAMPAIGN, loadCampaign } from './campaign.js';
 
 // Achievements: small goals across all games, kept in this browser. Each entry
 // has a check that looks at the running game; the first time it holds, the
 // achievement is earned for good.
 //
 //   id/icon/name/desc  key and text for the list and the toast
-//   check(ctx)         ctx: { factory, scenario, missions, night, records }
+//   check(ctx)         ctx: { factory, scenario, missions, campaignRun, night, records, campaign }
 //   secret             shown as ??? until earned
 const made = (f, kind) => f.history.total.p[kind] ?? 0;
 const madeParts = (f) => Object.entries(f.history.total.p).reduce((n, [k, v]) => (ITEMS[k] ? n + v : n), 0);
@@ -61,6 +62,9 @@ export const ACHIEVEMENTS = [
   { id: 'volcano', icon: '🌋', name: 'Feuerläufer', desc: 'Schaff eine Vulkankarte.', check: (ctx) => finishedBiome(ctx, 'volcano') },
   { id: 'stars', icon: '⭐', name: 'Sternensammler', desc: 'Hol dir auf fünf Karten drei Sterne.', check: ({ records }) => Object.values(records).filter((r) => r.stars >= 3).length >= 5 },
   { id: 'allMaps', icon: '🗺️', name: 'Weltenbummler', desc: 'Schaff jede Missionskarte.', check: ({ records }) => missionMaps.every((s) => records[s.id]) },
+  { id: 'chapter', icon: '📻', name: 'Erster Funkkontakt', desc: `Schließ in der Kampagne das Kapitel „${CHAPTERS[0].name}“ ab.`, check: ({ campaign }) => CHAPTERS[0].maps.every((id) => campaign.done[id]) },
+  { id: 'keepsakes', icon: '🎒', name: 'Reisegepäck', desc: 'Sammle in der Kampagne fünf Mitbringsel.', check: ({ campaign }) => Object.keys(campaign.perks).length >= 5 },
+  { id: 'campaign', icon: '🛰️', name: 'Leuchtfeuer', desc: 'Schließ die Kampagne ab.', check: ({ campaign }) => CAMPAIGN.every((m) => campaign.done[m.id]) },
   { id: 'speed', icon: '⏱️', name: 'Blitzstart', desc: 'Schaff eine Karte in der Hälfte der Zeit für drei Sterne.', secret: true, check: ({ scenario, missions }) => missions?.finishedAt != null && missions.finishedAt <= scenario.par * 30 },
 ];
 
@@ -92,7 +96,7 @@ export function createAchievements({ onUnlock }) {
     // Deliveries since the current storm started.
     if (factory.weather.active) storm ??= totalDelivered(factory);
     else storm = null;
-    const ctx = { ...game, records: loadRecords(), stormDelivered: storm === null ? 0 : totalDelivered(factory) - storm };
+    const ctx = { ...game, records: loadRecords(), campaign: loadCampaign(), stormDelivered: storm === null ? 0 : totalDelivered(factory) - storm };
     for (const a of ACHIEVEMENTS) {
       if (earned[a.id]) continue;
       let ok = false;
