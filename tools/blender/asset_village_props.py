@@ -35,6 +35,7 @@ import lib_painted as L
 import asset_props_slice as P
 from asset_environment import _limb
 import asset_village_buildings as VB
+import asset_villagers as VIL
 
 STONE = L.hexc("#7E8187")
 STONE_DARK = L.hexc("#62656A")
@@ -66,7 +67,7 @@ def _done(parts, name: str, cat: str = "props", markers=(), smooth: float = 40.0
     obj = L.join(parts, name)
     for m, loc in markers:
         L.marker(obj, m, tuple(loc))
-    L.finish(obj, name, cat, smooth, shift=shift)
+    VIL.finish_stable(obj, name, cat, smooth, shift=shift)
     return obj
 
 
@@ -256,7 +257,7 @@ def ribbon():
         if co.z > -0.01:
             c = attr.data[li].color
             attr.data[li].color = (c[0] * 1.3, c[1] * 1.3, c[2] * 1.3, 1.0)
-    L.finish(obj, "ph_prop_v_ribbon", "props", 40, shift=False)
+    VIL.finish_stable(obj, "ph_prop_v_ribbon", "props", 40, shift=False)
 
 
 def bench():
@@ -339,7 +340,7 @@ def linden():
         for v in obj.data.vertices:
             if v.co.z > 2.5:
                 v.co.z = 2.5 + (v.co.z - 2.5) * (6.45 / (zmax - 2.5))
-    L.finish(obj, "ph_env_linden_old", "environment", 50, shift=False)
+    VIL.finish_stable(obj, "ph_env_linden_old", "environment", 50, shift=False)
 
 
 # --- brook, garden fence, milestone ------------------------------------------------------------------
@@ -458,7 +459,7 @@ def corpse_poppy():
         parts.append(o)
     obj = L.join(parts, "ph_prop_corpse_poppy")
     obj.name = "ph_prop_corpse_poppy"
-    L.finish(obj, "ph_prop_corpse_poppy", "props", 40, shift=False)
+    VIL.finish_stable(obj, "ph_prop_corpse_poppy", "props", 40, shift=False)
 
 
 ASSETS = [well, bridge, board, shrine, sign, ribbon, bench, wash_stones, linden, brook, garden_fence, milestone, corpse_poppy]

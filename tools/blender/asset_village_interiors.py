@@ -52,6 +52,7 @@ import asset_buildings_phase6 as B6
 import asset_interiors_phase6 as I6
 import asset_village_buildings as VB
 import asset_anatomy as A
+import asset_villagers as VIL
 from asset_interior import _candle, _flame
 
 CAT = "interior"
@@ -90,7 +91,7 @@ def _done(parts, name: str, markers=(), smooth: float = 40.0):
     obj = L.join(parts, name)
     for m, loc in markers:
         L.marker(obj, m, tuple(loc))
-    L.finish(obj, name, CAT, smooth, shift=False)
+    VIL.finish_stable(obj, name, CAT, smooth, shift=False)
     return obj
 
 

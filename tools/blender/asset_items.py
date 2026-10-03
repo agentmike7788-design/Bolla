@@ -1047,7 +1047,8 @@ def _p7(parts, name: str, yaw: float = -22.0, smooth: float = 35.0) -> None:
     obj = L.join(parts, name)
     _yaw(obj, yaw)
     P._center_xy(obj)
-    L.finish(obj, name, "items", smooth)
+    import asset_villagers as VIL
+    VIL.finish_stable(obj, name, "items", smooth)
 
 
 def _bottle(parts, at, h: float, r: float, glass, neck: float = 0.35, label=True, seed: int = 0, n: int = 8, cork=None):

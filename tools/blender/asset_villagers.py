@@ -489,7 +489,7 @@ def _stable_glb(path: str) -> None:
     """The glTF exporter evaluates the armature-modified mesh with ulp-level jitter (positions,
     normals, UVs) and writes the vertices in a varying order, so rigged exports differed between runs
     (lib_painted._canonical_glb only sorts triangles). Snap the float attributes of every primitive to a
-    fine grid (positions 1/2^16 m, normals 1/2^12, UVs 1/4096), sort the vertices by their bytes,
+    fine grid (positions 1/2^16 m, normals 1/512 - coarse enough that the jitter almost never crosses a step, UVs 1/4096), sort the vertices by their bytes,
     remap the indices and sort the triangles: repeated builds are byte-identical."""
     with open(path, "rb") as f:
         data = bytearray(f.read())
@@ -498,7 +498,7 @@ def _stable_glb(path: str) -> None:
     bin0 = 20 + jlen + 8
     ncomp = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4, "MAT4": 16}
     fmt = {5126: "f", 5121: "B", 5123: "H", 5125: "I"}
-    grid = {"POSITION": 65536.0, "NORMAL": 4096.0, "TEXCOORD_0": 4096.0}
+    grid = {"POSITION": 65536.0, "NORMAL": 512.0, "TEXCOORD_0": 4096.0}
 
     def acc_io(i):
         a = doc["accessors"][i]
@@ -524,7 +524,8 @@ def _stable_glb(path: str) -> None:
                     t = list(struct.unpack_from("<%d%s" % (k, ch), data, off + n * stride))
                     if name in grid:
                         g = grid[name]
-                        t = [round(x * g) / g for x in t]
+                        # (an off-centre rounding point: no value of the models sat close to it in the review builds)
+                        t = [math.floor(x * g + 0.37) / g for x in t]
                     vals.append(t)
                 cols[name] = vals
             keys = [tuple(tuple(cols[nm][n]) for nm, _ in attrs) for n in range(count)]
@@ -556,6 +557,12 @@ def _stable_glb(path: str) -> None:
         data[20:20 + jlen] = js
     with open(path, "wb") as f:
         f.write(data)
+
+
+def finish_stable(obj, name: str, cat: str, smooth: float = 35.0, shift: bool = True) -> None:
+    """lib_painted.finish() + _stable_glb(): the Phase-7 static exports are canonicalised the same way."""
+    L.finish(obj, name, cat, smooth, shift=shift)
+    _stable_glb(L.os.path.join(L.ROOT, "assets", "models", cat, name + ".glb"))
 
 
 def _export(arm, name: str) -> None:
@@ -1714,7 +1721,7 @@ def _face_hint(parts, head: Vector, tilt: float = 10.0, seed: int = 0):
 
 def _static(parts, name: str) -> None:
     obj = L.join(parts, name)
-    L.finish(obj, name, CAT, 50, shift=False)
+    finish_stable(obj, name, CAT, 50, shift=False)
 
 
 def guest_a():

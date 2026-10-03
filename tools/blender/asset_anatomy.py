@@ -34,6 +34,7 @@ from mathutils import Matrix, Vector, noise
 import lib_painted as L
 import asset_props_slice as P
 import asset_village_buildings as VB
+import asset_villagers as VIL
 
 CAT = "interior"
 
@@ -243,7 +244,7 @@ def _done(parts, name: str, markers=(), smooth: float = 40.0):
     obj = L.join(parts, name)
     for m, loc in markers:
         L.marker(obj, m, tuple(loc))
-    L.finish(obj, name, CAT, smooth, shift=False)
+    VIL.finish_stable(obj, name, CAT, smooth, shift=False)
     return obj
 
 

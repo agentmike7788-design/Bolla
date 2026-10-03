@@ -48,6 +48,7 @@ from mathutils import Matrix, Vector, noise
 import lib_painted as L
 import asset_props_slice as P
 import asset_buildings_phase6 as B6
+import asset_villagers as VIL
 
 CAT = "buildings"
 
@@ -479,7 +480,7 @@ def _done(parts, name: str, markers=()):
     obj = L.join(parts, name)
     for m_name, loc in markers:
         L.marker(obj, m_name, tuple(loc))
-    L.finish(obj, name, CAT, 35.0, shift=False)
+    VIL.finish_stable(obj, name, CAT, 35.0, shift=False)
     return obj
 
 
