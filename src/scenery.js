@@ -38,6 +38,20 @@ function pineGeometry() {
   return mergeGeometries(tiers);
 }
 
+// A saguaro: trunk with two arms bent upwards.
+function cactusGeometry() {
+  const up = (r, h, x, y) => new THREE.CylinderGeometry(r, r, h, 6).translate(x, y + h / 2, 0);
+  const side = (r, w, x, y) => new THREE.CylinderGeometry(r, r, w, 6).rotateZ(Math.PI / 2).translate(x + w / 2, y, 0);
+  return mergeGeometries([
+    up(0.06, 0.5, 0, 0),
+    side(0.035, 0.13, 0, 0.2),
+    up(0.035, 0.16, 0.13, 0.2),
+    side(0.035, 0.11, -0.11, 0.28),
+    up(0.035, 0.12, -0.11, 0.28),
+    new THREE.SphereGeometry(0.06, 6, 3, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 0.5, 0),
+  ].map((g) => g.toNonIndexed()));
+}
+
 // Builds every mesh that depends on the generated world: ground tiles, trees,
 // bushes, flowers, boulders and the ore deposits.
 export function buildWorldMeshes(world) {
@@ -65,6 +79,7 @@ export function buildWorldMeshes(world) {
   const boulders = [];
   const oreChunks = [];
   const crystals = [];
+  const cacti = [];
   const jitter = (spread) => (rand() - 0.5) * spread;
 
   const addTrunk = (x, y, z, s) => trunks.push({ x, y, z, sx: s, color: shade(0x6b4a2f, rand, 0.1) });
@@ -133,6 +148,15 @@ export function buildWorldMeshes(world) {
         const fz = z + jitter(0.6);
         for (let k = 0; k < n; k++) flowers.push({ x: fx + jitter(0.25), y: y + 0.025, z: fz + jitter(0.25), sx: 0.8 + rand() * 0.6, color: tint });
       }
+    } else if (tile.terrain === 'dune') {
+      if (rand() < 0.07) {
+        const s = 0.7 + rand() * 0.6;
+        cacti.push({ x: x + jitter(0.5), y, z: z + jitter(0.5), ry: rand() * 6, sx: s, sy: s * (0.8 + rand() * 0.5), sz: s, color: shade(0x5f8f4a, rand, 0.12) });
+      } else if (rand() < 0.12) {
+        bushes.push({ x: x + jitter(0.7), y: y + 0.03, z: z + jitter(0.7), ry: rand() * 6, sx: 0.5 + rand() * 0.4, color: shade(0x9a8a4a, rand, 0.15) });
+      } else if (rand() < 0.08) {
+        boulders.push({ x: x + jitter(0.6), y: y + 0.03, z: z + jitter(0.6), rx: rand() * 3, ry: rand() * 3, sx: 0.6, sy: 0.4, sz: 0.6, color: shade(0xc39a62, rand, 0.1) });
+      }
     } else if (tile.terrain === 'rock' && rand() < 0.35) {
       const s = 0.8 + rand() * 1.2;
       boulders.push({ x: x + jitter(0.5), y: y + 0.05 * s, z: z + jitter(0.5), rx: rand() * 3, ry: rand() * 3, sx: s, sy: s * 0.7, sz: s, color: shade(0x8d877d, rand, 0.1) });
@@ -154,6 +178,7 @@ export function buildWorldMeshes(world) {
   deco(new THREE.IcosahedronGeometry(0.11, 0), flat({ roughness: 0.85 }), bushes);
   deco(new THREE.OctahedronGeometry(0.025, 0), flat({ roughness: 0.6 }), flowers, { castShadow: false });
   deco(new THREE.DodecahedronGeometry(0.17, 0), flat({ roughness: 0.9 }), boulders);
+  deco(cactusGeometry(), flat({ roughness: 0.8 }), cacti);
   deco(new THREE.DodecahedronGeometry(0.13, 0), flat({ roughness: 0.55, metalness: 0.35 }), oreChunks);
   deco(
     new THREE.OctahedronGeometry(0.06, 0).translate(0, 0.06, 0),
