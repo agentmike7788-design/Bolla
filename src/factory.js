@@ -1,4 +1,5 @@
 import { ORES, TERRAIN } from './world.js';
+import { createResearch } from './research.js';
 
 // Grid directions: 0 north (-z), 1 east (+x), 2 south (+z), 3 west (-x).
 export const DIRS = [
@@ -33,15 +34,7 @@ export const BUILDINGS = {
   assembler: { name: 'Presse' },
 };
 
-// The first goal of the game: deliver items to a storage to unlock the next machine.
-export const MILESTONES = [
-  { name: 'Erste Lieferung', goal: { iron: 20, copper: 20 }, unlocks: 'furnace' },
-  { name: 'Schmelze', goal: { ironIngot: 30, copperIngot: 20 }, unlocks: 'assembler' },
-  { name: 'Fertigung', goal: { ironPlate: 25, wire: 25, concrete: 15 }, unlocks: null },
-];
-const START_UNLOCKED = ['drill', 'belt', 'storage'];
-
-export const BELT_SPEED = 1.5; // tiles per second
+export const BELT_SPEED = 1.5; // tiles per second, before research
 export const ITEM_SPACING = 0.34; // minimum gap between two items on a belt, in tiles
 export const DRILL_TIME = 1.4; // seconds per mined ore
 const MACHINE_INPUT = 4; // items a machine buffers on each side
@@ -55,8 +48,8 @@ export const isMachine = (b) => b?.type === 'furnace' || b?.type === 'assembler'
 export function createFactory(world) {
   const buildings = new Map(); // tile index -> building
   const mined = Object.fromEntries(Object.keys(ORES).map((k) => [k, 0]));
-  const stored = Object.fromEntries(Object.keys(ITEMS).map((k) => [k, 0])); // delivered to any storage
-  const progress = { level: 0, unlocked: new Set(START_UNLOCKED), done: false };
+  const stored = Object.fromEntries(Object.keys(ITEMS).map((k) => [k, 0])); // in all storages together
+  const research = createResearch(stored);
 
   const indexOf = (tile) => tile.z * world.size + tile.x;
   const at = (x, z) => (x < 0 || z < 0 || x >= world.size || z >= world.size ? null : buildings.get(z * world.size + x) ?? null);
@@ -67,7 +60,7 @@ export function createFactory(world) {
 
   function canPlace(type, tile) {
     if (!tile) return { ok: false, reason: '' };
-    if (!progress.unlocked.has(type)) return { ok: false, reason: 'Noch nicht freigeschaltet' };
+    if (!research.unlocked.has(type)) return { ok: false, reason: 'Noch nicht freigeschaltet' };
     if (buildings.has(indexOf(tile))) return { ok: false, reason: 'Hier steht schon etwas' };
     if (!TERRAIN[tile.terrain].buildable) return { ok: false, reason: 'Hier kann man nicht bauen' };
     if (type === 'drill' && !tile.ore) return { ok: false, reason: 'Bohrer nur auf Erzfeldern' };
@@ -123,7 +116,6 @@ export function createFactory(world) {
       stored[kind]++;
       target.received++;
       target.last = kind;
-      checkProgress();
       return true;
     }
     if (target.dir === opposite(dir)) return false;
@@ -146,14 +138,6 @@ export function createFactory(world) {
     return false;
   }
 
-  function checkProgress() {
-    const m = MILESTONES[progress.level];
-    if (!m || !Object.entries(m.goal).every(([k, n]) => stored[k] >= n)) return;
-    if (m.unlocks) progress.unlocked.add(m.unlocks);
-    progress.level++;
-    progress.done = progress.level >= MILESTONES.length;
-  }
-
   function tickBelt(b, step) {
     // Items are ordered front first; each one stops behind the one ahead of it.
     let limit = Infinity;
@@ -173,6 +157,7 @@ export function createFactory(world) {
 
   function tickMachine(b, dt) {
     const recipe = RECIPES[b.type];
+    const time = recipe.time / research.stats[b.type];
     if (b.output.length && pushTo(neighbour(b, b.dir), b.output[0], b.dir)) b.output.shift();
     if (!b.current && b.input.length) {
       b.current = b.input.shift();
@@ -184,8 +169,8 @@ export function createFactory(world) {
       return;
     }
     b.state = 'work';
-    b.timer = Math.min(b.timer + dt, recipe.time);
-    if (b.timer < recipe.time) return;
+    b.timer = Math.min(b.timer + dt, time);
+    if (b.timer < time) return;
     if (b.output.length >= MACHINE_OUTPUT) {
       b.state = 'blocked';
       return;
@@ -206,7 +191,7 @@ export function createFactory(world) {
       return;
     }
     b.state = 'work';
-    b.timer += dt;
+    b.timer += dt * research.stats.drill;
     if (b.timer >= DRILL_TIME) {
       b.timer -= DRILL_TIME;
       b.tile.amount--;
@@ -216,8 +201,10 @@ export function createFactory(world) {
     }
   }
 
+  const beltSpeed = () => BELT_SPEED * research.stats.belt;
+
   function tick(dt) {
-    const step = BELT_SPEED * dt;
+    const step = beltSpeed() * dt;
     for (const b of buildings.values()) if (b.type === 'belt' && b.items.length) tickBelt(b, step);
     for (const b of buildings.values()) if (isMachine(b)) tickMachine(b, dt);
     for (const b of buildings.values()) if (b.type === 'drill') tickDrill(b, dt);
@@ -227,7 +214,8 @@ export function createFactory(world) {
     buildings,
     mined,
     stored,
-    progress,
+    research,
+    beltSpeed,
     at,
     canPlace,
     place,

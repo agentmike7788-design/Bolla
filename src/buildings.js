@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { BELT_SPEED, DIRS, ITEMS } from './factory.js';
+import { DIRS, ITEMS } from './factory.js';
 import { ORES } from './world.js';
 
 const STEEL = 0x3a4046;
@@ -387,7 +387,7 @@ export function createFactoryView(renderer) {
   }
 
   function update(dt, elapsed, factory) {
-    beltTex.offset.y -= BELT_SPEED * CHEVRONS_PER_TILE * dt;
+    beltTex.offset.y -= factory.beltSpeed() * CHEVRONS_PER_TILE * dt;
     beltTex.offset.y %= 1;
 
     const n = Object.fromEntries(Object.keys(shapes).map((k) => [k, 0]));

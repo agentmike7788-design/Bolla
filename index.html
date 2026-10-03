@@ -24,7 +24,6 @@
         <p class="label">Lager</p>
         <ul id="store"></ul>
       </aside>
-      <div class="toast" id="toast" role="status" hidden></div>
       <aside class="hud hud-legend">
         <p class="label">Erzvorkommen</p>
         <ul id="legend"></ul>
@@ -60,6 +59,20 @@
         </button>
       </nav>
       <footer class="hud hud-help" id="help"></footer>
+      <div class="tree" id="tree" hidden>
+        <section class="tree-box" role="dialog" aria-label="Forschungsbaum">
+          <header class="tree-head">
+            <h2>Forschungsbaum</h2>
+            <p>Bezahlt wird mit Teilen aus dem Lager.</p>
+            <button type="button" class="link" data-close>Schließen <kbd>Esc</kbd></button>
+          </header>
+          <div class="tree-scroll">
+            <svg class="tree-lines" aria-hidden="true"></svg>
+            <div class="tree-cols"></div>
+          </div>
+        </section>
+      </div>
+      <div class="toast" id="toast" role="status" hidden></div>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>

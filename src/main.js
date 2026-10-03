@@ -3,7 +3,9 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { generateWorld, ORES, TERRAIN, MAP_SIZE, TILE } from './world.js';
 import { buildWorldMeshes, createSea } from './scenery.js';
 import { createCameraRig } from './camera.js';
-import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, MILESTONES, RECIPES, isMachine } from './factory.js';
+import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, RECIPES, isMachine } from './factory.js';
+import { RESEARCH } from './research.js';
+import { createResearchView } from './researchView.js';
 import { createFactoryView, createGhost } from './buildings.js';
 import './style.css';
 
@@ -90,8 +92,8 @@ function loadWorld(seed) {
   factory = createFactory(world);
   factoryView.clear();
   document.getElementById('seed').textContent = `#${seed}`;
-  seenLevel = 0;
   renderLegend();
+  researchView.reset();
   renderProgress();
   showTile(null);
 }
@@ -121,12 +123,10 @@ function renderLegend() {
 const hex = (color) => `#${color.toString(16).padStart(6, '0')}`;
 const num = (n) => n.toLocaleString('de-DE');
 
-// --- Goals, storage and unlocks --------------------------------------------
+// --- Research, storage and unlocks -----------------------------------------
 
-const goalPanel = document.getElementById('goal');
 const storeList = document.getElementById('store');
 const toast = document.getElementById('toast');
-let seenLevel = 0;
 let toastTimer = 0;
 
 function showToast(title, text) {
@@ -139,35 +139,17 @@ function showToast(title, text) {
   toastTimer = setTimeout(() => (toast.hidden = true), 4200);
 }
 
-function renderProgress() {
-  const { level, done } = factory.progress;
-  if (level > seenLevel) {
-    const reached = MILESTONES[level - 1];
-    if (reached.unlocks) showToast('Freigeschaltet', `${BUILDINGS[reached.unlocks].name} · Ziel „${reached.name}“ erreicht`);
-    else showToast('Erstes Ziel geschafft!', 'Deine Fabrik schmilzt, presst und liefert. Glückwunsch!');
-    seenLevel = level;
-  }
+const researchView = createResearchView({
+  getFactory: () => factory,
+  onResearch(r) {
+    if (r.goal) showToast('Spielziel geschafft!', 'Deine Fabrik schmilzt, presst und liefert. Glückwunsch!');
+    else showToast(`Erforscht: ${r.name}`, r.desc);
+    renderProgress();
+  },
+});
 
-  if (done) {
-    goalPanel.innerHTML = `<p class="label">Ziel erreicht</p>
-      <p class="goal-name">Fabrik läuft</p>
-      <p class="goal-unlock">Alle Gebäude frei. Baue weiter, so groß du willst.</p>`;
-  } else {
-    const m = MILESTONES[level];
-    const rows = Object.entries(m.goal)
-      .map(([k, need]) => {
-        const have = Math.min(factory.stored[k], need);
-        return `<li style="--c:${hex(ITEMS[k].color)}">
-          <span class="swatch"></span><span class="name">${ITEMS[k].name}</span>
-          <span class="num">${have}/${need}</span>
-          <span class="bar"><i style="width:${(have / need) * 100}%"></i></span></li>`;
-      })
-      .join('');
-    goalPanel.innerHTML = `<p class="label">Ziel ${level + 1} von ${MILESTONES.length} · ins Lager bringen</p>
-      <p class="goal-name">${m.name}</p>
-      <ul>${rows}</ul>
-      <p class="goal-unlock">${m.unlocks ? `Schaltet frei: <b>${BUILDINGS[m.unlocks].name}</b>` : 'Letztes Ziel'}</p>`;
-  }
+function renderProgress() {
+  researchView.update();
 
   const kept = Object.entries(factory.stored).filter(([, n]) => n > 0);
   storeList.innerHTML = kept.length
@@ -179,7 +161,7 @@ function renderProgress() {
   for (const b of toolButtons) {
     const type = b.dataset.tool;
     if (!BUILDINGS[type]) continue;
-    const locked = !factory.progress.unlocked.has(type);
+    const locked = !factory.research.unlocked.has(type);
     b.classList.toggle('locked', locked);
     b.setAttribute('aria-disabled', String(locked));
     b.title = locked ? `Noch gesperrt: ${unlockHint(type)}` : BUILDINGS[type].name;
@@ -187,8 +169,8 @@ function renderProgress() {
 }
 
 function unlockHint(type) {
-  const m = MILESTONES.find((x) => x.unlocks === type);
-  return m ? `Ziel „${m.name}“ erfüllen` : '';
+  const r = RESEARCH.find((x) => x.unlocks?.includes(type));
+  return r ? `im Forschungsbaum „${r.name}“ erforschen` : '';
 }
 
 const tileName = document.getElementById('tile-name');
@@ -291,7 +273,7 @@ let shapesDirty = false;
 const toolButtons = document.querySelectorAll('.tool[data-tool]');
 const help = document.getElementById('help');
 const HELP = {
-  none: [['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–5', 'bauen'], ['X', 'abreißen']],
+  none: [['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–5', 'bauen'], ['X', 'abreißen'], ['T', 'Forschung']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
@@ -305,7 +287,7 @@ function renderHelp() {
 }
 
 function setTool(next) {
-  if (next && BUILDINGS[next] && !factory.progress.unlocked.has(next)) {
+  if (next && BUILDINGS[next] && !factory.research.unlocked.has(next)) {
     showToast(`${BUILDINGS[next].name} gesperrt`, unlockHint(next));
     return;
   }
@@ -395,6 +377,8 @@ window.addEventListener('keydown', (e) => {
   if (numbered) setTool(numbered);
   else if (key === 'x' || key === 'delete') setTool('remove');
   else if (key === 'r') rotate();
+  else if (key === 't') researchView.toggle();
+  else if (key === 'escape' && researchView.isOpen) researchView.close();
   else if (key === 'escape' && tool) setTool(tool);
 });
 
