@@ -1,0 +1,230 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="v_oldwoman_c001"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_oldwoman_node_start"]
+script = ExtResource("1")
+id = &"start"
+text = "Na, endlich einer, der mich ausmisst! Hagedorn, Wiebke, einundachtzig, und ich hab vor, oben bei dir zu liegen, mit Blick auf die Linde. Guck nicht so. Irgendwann musst du mich ja eh kennenlernen, dann lieber, solange ich noch rede."
+choices = Array[ExtResource("2")]([SubResource("v_oldwoman_c001")])
+conditions = Array[String](["!met:oldwoman"])
+fallback_next = &"greet_disreputable"
+actions = Array[String](["meet:oldwoman", "talked:oldwoman"])
+
+[sub_resource type="Resource" id="v_oldwoman_c002"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_oldwoman_node_greet_disreputable"]
+script = ExtResource("1")
+id = &"greet_disreputable"
+text = "Du bist der, über den sie reden? Na und. Über mich haben sie sechzig Jahre geredet. Setz dich, Junge."
+choices = Array[ExtResource("2")]([SubResource("v_oldwoman_c002")])
+conditions = Array[String](["rep_tier:disreputable"])
+fallback_next = &"greet_unremarkable"
+actions = Array[String](["talked:oldwoman"])
+
+[sub_resource type="Resource" id="v_oldwoman_c003"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_oldwoman_node_greet_unremarkable"]
+script = ExtResource("1")
+id = &"greet_unremarkable"
+text = "Guten Morgen, Totengräber. Schönes Wetter zum Sterben. Mach ich aber noch nicht."
+choices = Array[ExtResource("2")]([SubResource("v_oldwoman_c003")])
+conditions = Array[String](["rep_tier:unremarkable"])
+fallback_next = &"greet_respected"
+actions = Array[String](["talked:oldwoman"])
+
+[sub_resource type="Resource" id="v_oldwoman_c004"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_oldwoman_node_greet_respected"]
+script = ExtResource("1")
+id = &"greet_respected"
+text = "Da ist ja mein Totengräber! Sie sagen, oben ist es jetzt hübsch. Ich hab gesagt, ich will's mir nicht vorher ansehen, sonst krieg ich Lust."
+choices = Array[ExtResource("2")]([SubResource("v_oldwoman_c004")])
+conditions = Array[String](["rep_tier:respected"])
+fallback_next = &"greet_esteemed"
+actions = Array[String](["talked:oldwoman"])
+
+[sub_resource type="Resource" id="v_oldwoman_c005"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_oldwoman_node_greet_esteemed"]
+script = ExtResource("1")
+id = &"greet_esteemed"
+text = "Totengräber! Setz dich an den Brunnen. Ich erzähl dir, wer im Dorf alles noch zu dir hinauf muss. Die Liste ist lang, und ich steh drauf."
+choices = Array[ExtResource("2")]([SubResource("v_oldwoman_c005")])
+conditions = Array[String](["rep_tier:esteemed"])
+fallback_next = &"greet_renowned"
+actions = Array[String](["talked:oldwoman"])
+
+[sub_resource type="Resource" id="v_oldwoman_c006"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_oldwoman_node_greet_renowned"]
+script = ExtResource("1")
+id = &"greet_renowned"
+text = "Mein Totengräber! Wenn ich das gewusst hätte, dass einer mal so gut für uns sorgt, wär ich früher gestorben. Nein, Spaß. Später."
+choices = Array[ExtResource("2")]([SubResource("v_oldwoman_c006")])
+actions = Array[String](["talked:oldwoman"])
+
+[sub_resource type="Resource" id="v_oldwoman_c007"]
+script = ExtResource("2")
+text = "[Auftrag] Wiebke Hagedorns letzter Wunsch"
+next = &"o_o_hagedorn_place"
+conditions = Array[String](["order_offerable:o_hagedorn_place"])
+
+[sub_resource type="Resource" id="v_oldwoman_c008"]
+script = ExtResource("2")
+text = "Wer besucht Sie, Frau Hagedorn?"
+next = &"visitors"
+
+[sub_resource type="Resource" id="v_oldwoman_c009"]
+script = ExtResource("2")
+text = "Haben Sie keine Angst?"
+next = &"fear"
+
+[sub_resource type="Resource" id="v_oldwoman_c010"]
+script = ExtResource("2")
+text = "Was ist das für ein Sträußchen?"
+next = &"poppy"
+
+[sub_resource type="Resource" id="v_oldwoman_c011"]
+script = ExtResource("2")
+text = "Ich hab dir etwas mitgebracht."
+actions = Array[String](["open_gifts:oldwoman"])
+
+[sub_resource type="Resource" id="v_oldwoman_c012"]
+script = ExtResource("2")
+text = "Auf Wiedersehen."
+next = &"bye"
+
+[sub_resource type="Resource" id="v_oldwoman_node_menu"]
+script = ExtResource("1")
+id = &"menu"
+text = "Was willst du von einer alten Frau? Außer meiner Größe."
+choices = Array[ExtResource("2")]([SubResource("v_oldwoman_c007"), SubResource("v_oldwoman_c008"), SubResource("v_oldwoman_c009"), SubResource("v_oldwoman_c010"), SubResource("v_oldwoman_c011"), SubResource("v_oldwoman_c012")])
+
+[sub_resource type="Resource" id="v_oldwoman_c013"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_hagedorn_place_yes"
+actions = Array[String](["order_accept:o_hagedorn_place"])
+
+[sub_resource type="Resource" id="v_oldwoman_c014"]
+script = ExtResource("2")
+text = "Ich muss erst nachdenken."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_oldwoman_node_o_o_hagedorn_place"]
+script = ExtResource("1")
+id = &"o_o_hagedorn_place"
+text = "Hör gut zu, ich sag es nur einmal, und dann noch einmal Liesel. Oben liegen, mit Blick auf die Linde. Im Totenhemd, nicht im Lumpen. Und ein Stein mit Mohn drauf. Und dass mir keiner was wegnimmt, verstanden? Nicht ein Haar. Nicht der Quast und nicht du."
+choices = Array[ExtResource("2")]([SubResource("v_oldwoman_c013"), SubResource("v_oldwoman_c014")])
+
+[sub_resource type="Resource" id="v_oldwoman_c015"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_oldwoman_node_o_o_hagedorn_place_yes"]
+script = ExtResource("1")
+id = &"o_o_hagedorn_place_yes"
+text = "Na also. Dann kann ich ja beruhigt alt werden. Älter."
+choices = Array[ExtResource("2")]([SubResource("v_oldwoman_c015")])
+
+[sub_resource type="Resource" id="v_oldwoman_c016"]
+script = ExtResource("2")
+text = "Wann war das?"
+next = &"visitors_when"
+
+[sub_resource type="Resource" id="v_oldwoman_c017"]
+script = ExtResource("2")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_oldwoman_node_visitors"]
+script = ExtResource("1")
+id = &"visitors"
+text = "Wer mich besucht? Der Pfarrer jeden Mittag, dem muss ich zuhören. Der Quast, wenn es zieht, der will immer an meine Brust horchen, der Lümmel. Und Liesel, wenn sie meint, es wär bald soweit. Die meint das oft. Neulich war einer da, als ich geschlafen hab. Hab ich gemerkt am Stuhl, der stand anders. Wer, weiß ich nicht. Mich besuchen ja alle, ich bin die Älteste."
+choices = Array[ExtResource("2")]([SubResource("v_oldwoman_c016"), SubResource("v_oldwoman_c017")])
+
+[sub_resource type="Resource" id="v_oldwoman_c018"]
+script = ExtResource("2")
+text = "Passen Sie auf sich auf."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_oldwoman_node_visitors_when"]
+script = ExtResource("1")
+id = &"visitors_when"
+text = "Drei Wochen? Vier? Seitdem juckt es mich hier, über dem Herzen, wie ein Mückenstich, nur in Ringform. Guck nicht so, Junge. Ich zeig's dir nicht, ich bin eine anständige Frau."
+choices = Array[ExtResource("2")]([SubResource("v_oldwoman_c018")])
+
+[sub_resource type="Resource" id="v_oldwoman_c019"]
+script = ExtResource("2")
+text = "Das Totenhemd."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_oldwoman_node_fear"]
+script = ExtResource("1")
+id = &"fear"
+text = "Angst? Wovor denn? Ich hab drei Männer überlebt, zwei Kriege und einen Pfarrer, der dachte, er kann singen. Sterben ist wie Wetter. Es kommt, und dann zieht man sich was Ordentliches an."
+choices = Array[ExtResource("2")]([SubResource("v_oldwoman_c019")])
+
+[sub_resource type="Resource" id="v_oldwoman_c020"]
+script = ExtResource("2")
+text = "Ich merke es mir."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_oldwoman_node_poppy"]
+script = ExtResource("1")
+id = &"poppy"
+text = "Mohn. Getrocknet. Von meinem Hochzeitsstrauß, dem ersten. Der hält länger als die Männer. Den will ich mitnehmen, und auf dem Stein will ich ihn auch. Damit oben alle wissen: Die hat gelebt."
+choices = Array[ExtResource("2")]([SubResource("v_oldwoman_c020")])
+
+[sub_resource type="Resource" id="v_oldwoman_c021"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="v_oldwoman_node_bye"]
+script = ExtResource("1")
+id = &"bye"
+text = "Geh, mein Junge. Wenn ich dann oben bin, sag mir guten Morgen. Ich hör's."
+choices = Array[ExtResource("2")]([SubResource("v_oldwoman_c021")])
+conditions = Array[String](["rel_tier:oldwoman:friend"])
+fallback_next = &"bye_plain"
+
+[sub_resource type="Resource" id="v_oldwoman_c022"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="v_oldwoman_node_bye_plain"]
+script = ExtResource("1")
+id = &"bye_plain"
+text = "Geh nur. Und lass dir Zeit mit mir, hörst du? Aber nicht zu viel."
+choices = Array[ExtResource("2")]([SubResource("v_oldwoman_c022")])
+
+[resource]
+script = ExtResource("3")
+id = &"v_oldwoman"
+speaker_name = "Wiebke Hagedorn"
+start_node = &"start"
+nodes = Array[ExtResource("1")]([SubResource("v_oldwoman_node_start"), SubResource("v_oldwoman_node_greet_disreputable"), SubResource("v_oldwoman_node_greet_unremarkable"), SubResource("v_oldwoman_node_greet_respected"), SubResource("v_oldwoman_node_greet_esteemed"), SubResource("v_oldwoman_node_greet_renowned"), SubResource("v_oldwoman_node_menu"), SubResource("v_oldwoman_node_o_o_hagedorn_place"), SubResource("v_oldwoman_node_o_o_hagedorn_place_yes"), SubResource("v_oldwoman_node_visitors"), SubResource("v_oldwoman_node_visitors_when"), SubResource("v_oldwoman_node_fear"), SubResource("v_oldwoman_node_poppy"), SubResource("v_oldwoman_node_bye"), SubResource("v_oldwoman_node_bye_plain")])

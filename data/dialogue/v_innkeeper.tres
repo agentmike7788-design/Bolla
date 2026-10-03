@@ -1,0 +1,326 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="v_innkeeper_c001"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_start"]
+script = ExtResource("1")
+id = &"start"
+text = "Na endlich! Der vom Hügel. Wackernagel, Rosine, mir gehört der Holderkrug, und was im Dorf geredet wird, hör ich zuerst. Setz dich, Totengräber. Faulhaber hat gesagt, du trinkst kein Wasser, wenn es Bier gibt. Stimmt das?"
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c001")])
+conditions = Array[String](["!met:innkeeper"])
+fallback_next = &"greet_disreputable"
+actions = Array[String](["meet:innkeeper", "talked:innkeeper"])
+
+[sub_resource type="Resource" id="v_innkeeper_c002"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_greet_disreputable"]
+script = ExtResource("1")
+id = &"greet_disreputable"
+text = "Du bist der vom Hügel. Setz dich ans Fenster, da sieht dich keiner. Und Finger weg vom Zinn, Totengräber, das zähl ich abends."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c002")])
+conditions = Array[String](["rep_tier:disreputable"])
+fallback_next = &"greet_unremarkable"
+actions = Array[String](["talked:innkeeper"])
+
+[sub_resource type="Resource" id="v_innkeeper_c003"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_greet_unremarkable"]
+script = ExtResource("1")
+id = &"greet_unremarkable"
+text = "Ah, der Totengräber. Hast du Durst oder Neuigkeiten? Bei mir geht beides, das eine kostet."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c003")])
+conditions = Array[String](["rep_tier:unremarkable"])
+fallback_next = &"greet_respected"
+actions = Array[String](["talked:innkeeper"])
+
+[sub_resource type="Resource" id="v_innkeeper_c004"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_greet_respected"]
+script = ExtResource("1")
+id = &"greet_respected"
+text = "Totengräber! Komm rein, es zieht. Kehr sitzt am Ofen, Brandt beim Fenster, und für dich ist auch noch was frei."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c004")])
+conditions = Array[String](["rep_tier:respected"])
+fallback_next = &"greet_esteemed"
+actions = Array[String](["talked:innkeeper"])
+
+[sub_resource type="Resource" id="v_innkeeper_c005"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_greet_esteemed"]
+script = ExtResource("1")
+id = &"greet_esteemed"
+text = "Da ist er ja! Fenner hat gestern gesagt, oben sieht es aus wie beim Herrgott im Vorgarten. Ich hab gesagt: Das liegt am Totengräber, nicht am Herrgott."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c005")])
+conditions = Array[String](["rep_tier:esteemed"])
+fallback_next = &"greet_renowned"
+actions = Array[String](["talked:innkeeper"])
+
+[sub_resource type="Resource" id="v_innkeeper_c006"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_greet_renowned"]
+script = ExtResource("1")
+id = &"greet_renowned"
+text = "Wackernagel hat für dich einen Stuhl am Ofen frei. Den kriegt sonst nur der Pfarrer. Und der zahlt seltener."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c006")])
+actions = Array[String](["talked:innkeeper"])
+
+[sub_resource type="Resource" id="v_innkeeper_c007"]
+script = ExtResource("2")
+text = "Was hast du da?"
+conditions = Array[String](["shop_open:inn"])
+actions = Array[String](["open_shop:inn"])
+
+[sub_resource type="Resource" id="v_innkeeper_c008"]
+script = ExtResource("2")
+text = "Eine Runde für alle! (5 Münzen)"
+next = &"round"
+conditions = Array[String](["village_can:round"])
+actions = Array[String](["buy_round"])
+
+[sub_resource type="Resource" id="v_innkeeper_c009"]
+script = ExtResource("2")
+text = "[Auftrag] Holunder für den Wein"
+next = &"o_o_rosine_berries"
+conditions = Array[String](["order_offerable:o_rosine_berries"])
+
+[sub_resource type="Resource" id="v_innkeeper_c010"]
+script = ExtResource("2")
+text = "[Auftrag] Fieber im Haus"
+next = &"o_o_rosine_tincture"
+conditions = Array[String](["order_offerable:o_rosine_tincture"])
+
+[sub_resource type="Resource" id="v_innkeeper_c011"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist, was du wolltest: Holunderbeeren"
+next = &"t_o_rosine_berries"
+conditions = Array[String](["order_ready:o_rosine_berries"])
+actions = Array[String](["order_turn_in:o_rosine_berries"])
+
+[sub_resource type="Resource" id="v_innkeeper_c012"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist, was du wolltest: Fiebertinktur"
+next = &"t_o_rosine_tincture"
+conditions = Array[String](["order_ready:o_rosine_tincture"])
+actions = Array[String](["order_turn_in:o_rosine_tincture"])
+
+[sub_resource type="Resource" id="v_innkeeper_c013"]
+script = ExtResource("2")
+text = "Was redet man im Dorf?"
+next = &"gossip"
+
+[sub_resource type="Resource" id="v_innkeeper_c014"]
+script = ExtResource("2")
+text = "Kennst du die alte Hagedorn?"
+next = &"about_wiebke"
+conditions = Array[String](["alive:oldwoman"])
+
+[sub_resource type="Resource" id="v_innkeeper_c015"]
+script = ExtResource("2")
+text = "Was ist mit Wiebke Hagedorn?"
+next = &"about_wiebke_dead"
+conditions = Array[String](["!alive:oldwoman"])
+
+[sub_resource type="Resource" id="v_innkeeper_c016"]
+script = ExtResource("2")
+text = "Ich hab dir etwas mitgebracht."
+actions = Array[String](["open_gifts:innkeeper"])
+
+[sub_resource type="Resource" id="v_innkeeper_c017"]
+script = ExtResource("2")
+text = "Auf Wiedersehen."
+next = &"bye"
+
+[sub_resource type="Resource" id="v_innkeeper_node_menu"]
+script = ExtResource("1")
+id = &"menu"
+text = "Also, was darf's sein? Wackernagel hat nur zwei Ohren, aber die sind beide offen."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c007"), SubResource("v_innkeeper_c008"), SubResource("v_innkeeper_c009"), SubResource("v_innkeeper_c010"), SubResource("v_innkeeper_c011"), SubResource("v_innkeeper_c012"), SubResource("v_innkeeper_c013"), SubResource("v_innkeeper_c014"), SubResource("v_innkeeper_c015"), SubResource("v_innkeeper_c016"), SubResource("v_innkeeper_c017")])
+
+[sub_resource type="Resource" id="v_innkeeper_c018"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_rosine_berries_yes"
+actions = Array[String](["order_accept:o_rosine_berries"])
+
+[sub_resource type="Resource" id="v_innkeeper_c019"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_o_o_rosine_berries"]
+script = ExtResource("1")
+id = &"o_o_rosine_berries"
+text = "Acht Hände voll Holunderbeeren, Totengräber! Der Holunderwein setzt sich nicht von allein an, und Wackernagel hat nur zwei Hände und einen Wirt, der lieber Karten spielt. Fünf Tage geb ich dir."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c018"), SubResource("v_innkeeper_c019")])
+
+[sub_resource type="Resource" id="v_innkeeper_c020"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_o_o_rosine_berries_yes"]
+script = ExtResource("1")
+id = &"o_o_rosine_berries_yes"
+text = "Abgemacht! Wenn du sie bringst, kriegst du das erste Glas. Das zweite trinken wir zusammen, das dritte zahlst du."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c020")])
+
+[sub_resource type="Resource" id="v_innkeeper_c021"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_rosine_tincture_yes"
+actions = Array[String](["order_accept:o_rosine_tincture"])
+
+[sub_resource type="Resource" id="v_innkeeper_c022"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_o_o_rosine_tincture"]
+script = ExtResource("1")
+id = &"o_o_rosine_tincture"
+text = "Jakob fiebert. Mein Jüngster. Seit drei Nächten. Und der Quast nimmt zu viel, für ein Fläschchen will der eine halbe Ziege. Zwei Fläschchen Fiebertinktur, Totengräber. Oder diese Bittertropfen, ich nehm, was hilft."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c021"), SubResource("v_innkeeper_c022")])
+
+[sub_resource type="Resource" id="v_innkeeper_c023"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_o_o_rosine_tincture_yes"]
+script = ExtResource("1")
+id = &"o_o_rosine_tincture_yes"
+text = "Gott vergelt's. Und wenn nicht der, dann Wackernagel. Vier Tage, länger hält der Junge das nicht aus. Ich auch nicht."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c023")])
+
+[sub_resource type="Resource" id="v_innkeeper_c024"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_t_o_rosine_berries"]
+script = ExtResource("1")
+id = &"t_o_rosine_berries"
+text = "Acht Hände voll! Siehst du, Kehr, ich hab's gesagt, der hält Wort. Kehr hat nichts gesagt. Kehr sagt nie was."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c024")])
+
+[sub_resource type="Resource" id="v_innkeeper_c025"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_t_o_rosine_tincture"]
+script = ExtResource("1")
+id = &"t_o_rosine_tincture"
+text = "Ich bring sie gleich hoch. Wackernagel weint nicht, Totengräber, das ist der Rauch vom Ofen."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c025")])
+
+[sub_resource type="Resource" id="v_innkeeper_c026"]
+script = ExtResource("2")
+text = "Prost."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_round"]
+script = ExtResource("1")
+id = &"round"
+text = "Eine Runde für alle! Habt ihr gehört? Der Totengräber zahlt! Esch, mach den Mund zu und das Glas auf. Wackernagel schenkt aus, und für eine Viertelstunde redet keiner über die Toten."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c026")])
+
+[sub_resource type="Resource" id="v_innkeeper_c027"]
+script = ExtResource("2")
+text = "Und über mich?"
+next = &"gossip_me"
+
+[sub_resource type="Resource" id="v_innkeeper_c028"]
+script = ExtResource("2")
+text = "Danke, Rosine."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_gossip"]
+script = ExtResource("1")
+id = &"gossip"
+text = "Was man redet? Dass Kehr seiner Frau die Hühner verkauft hat, ohne zu fragen. Dass Fenner Wasser in den Beinen hat und es keinem sagt, und das sag ich dir jetzt auch nicht. Und dass bei Quast nachts Licht brennt, aber das redet man, seit er da ist."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c027"), SubResource("v_innkeeper_c028")])
+
+[sub_resource type="Resource" id="v_innkeeper_c029"]
+script = ExtResource("2")
+text = "Gut zu wissen."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_gossip_me"]
+script = ExtResource("1")
+id = &"gossip_me"
+text = "Über dich? Dass du mit den Toten redest. Ich hab gesagt: Na und, Mangold redet mit ihren Kartoffeln, und die antworten noch seltener."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c029")])
+
+[sub_resource type="Resource" id="v_innkeeper_c030"]
+script = ExtResource("2")
+text = "Ich red mal mit ihr."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_about_wiebke"]
+script = ExtResource("1")
+id = &"about_wiebke"
+text = "Die Hagedorn? Einundachtzig und frecher als meine Kinder. Sitzt jeden Morgen am Brunnen und erzählt jedem, wo sie mal liegen will. Oben bei dir, mit Blick auf die Linde. Sie hat schon ihren Mohn getrocknet, sagt sie. Der Pfarrer geht jeden Tag zu ihr. Quast auch, wenn es zieht. Die sterben ja nicht, die Alten, die werden nur besucht."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c030")])
+
+[sub_resource type="Resource" id="v_innkeeper_c031"]
+script = ExtResource("2")
+text = "Das tue ich."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_innkeeper_node_about_wiebke_dead"]
+script = ExtResource("1")
+id = &"about_wiebke_dead"
+text = "Ach, die Hagedorn. Liesel hat sie gewaschen. Wackernagel hat drei Tage nicht gelacht, das ist Rekord. Leg sie ordentlich hin da oben, Totengräber. Mit dem Mohn."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c031")])
+
+[sub_resource type="Resource" id="v_innkeeper_c032"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="v_innkeeper_node_bye"]
+script = ExtResource("1")
+id = &"bye"
+text = "Pass auf dich auf, Totengräber. Wackernagel hat nicht so viele, um die sie sich sorgen kann. Eigentlich doch. Aber du zählst mit."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c032")])
+conditions = Array[String](["rel_tier:innkeeper:friend"])
+fallback_next = &"bye_plain"
+
+[sub_resource type="Resource" id="v_innkeeper_c033"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="v_innkeeper_node_bye_plain"]
+script = ExtResource("1")
+id = &"bye_plain"
+text = "Komm gut den Hügel rauf. Und grüß die Toten von Wackernagel, die waren alle mal Gäste."
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c033")])
+
+[resource]
+script = ExtResource("3")
+id = &"v_innkeeper"
+speaker_name = "Rosine Wackernagel"
+start_node = &"start"
+nodes = Array[ExtResource("1")]([SubResource("v_innkeeper_node_start"), SubResource("v_innkeeper_node_greet_disreputable"), SubResource("v_innkeeper_node_greet_unremarkable"), SubResource("v_innkeeper_node_greet_respected"), SubResource("v_innkeeper_node_greet_esteemed"), SubResource("v_innkeeper_node_greet_renowned"), SubResource("v_innkeeper_node_menu"), SubResource("v_innkeeper_node_o_o_rosine_berries"), SubResource("v_innkeeper_node_o_o_rosine_berries_yes"), SubResource("v_innkeeper_node_o_o_rosine_tincture"), SubResource("v_innkeeper_node_o_o_rosine_tincture_yes"), SubResource("v_innkeeper_node_t_o_rosine_berries"), SubResource("v_innkeeper_node_t_o_rosine_tincture"), SubResource("v_innkeeper_node_round"), SubResource("v_innkeeper_node_gossip"), SubResource("v_innkeeper_node_gossip_me"), SubResource("v_innkeeper_node_about_wiebke"), SubResource("v_innkeeper_node_about_wiebke_dead"), SubResource("v_innkeeper_node_bye"), SubResource("v_innkeeper_node_bye_plain")])

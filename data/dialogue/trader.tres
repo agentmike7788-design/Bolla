@@ -4,6 +4,88 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2_cdonk"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3_0t3rl"]
 
+[sub_resource type="Resource" id="p7_c001"]
+script = ExtResource("2_cdonk")
+text = "Und?"
+next = &"p7_no_jars"
+
+[sub_resource type="Resource" id="p7_c002"]
+script = ExtResource("2_cdonk")
+text = "Gute Nacht, Ilse."
+next = &"goodbye"
+
+[sub_resource type="Resource" id="p7_node_p7_specimen_greet"]
+script = ExtResource("1_0vtyj")
+id = &"p7_specimen_greet"
+text = "Du warst beim Wundarzt. Man riecht den Branntwein durch das Leinen."
+choices = Array[ExtResource("2_cdonk")]([SubResource("p7_c001"), SubResource("p7_c002")])
+conditions = Array[String](["specimen_sold_any", "!flag:remark_ilse_specimen", "!flag_night:trader_greeted"])
+fallback_next = &"greet_devout"
+actions = Array[String](["set_flag:remark_ilse_specimen", "set_flag_night:trader_greeted", "trader_talked"])
+
+[sub_resource type="Resource" id="p7_c003"]
+script = ExtResource("2_cdonk")
+text = "Etwas anderes …"
+next = &"menu"
+
+[sub_resource type="Resource" id="p7_node_p7_no_jars"]
+script = ExtResource("1_0vtyj")
+id = &"p7_no_jars"
+text = "Gläser nehme ich nicht. Was in Branntwein liegt, gehört schon dem Wundarzt. Haar und Zähne, ja. Das andere nicht."
+choices = Array[ExtResource("2_cdonk")]([SubResource("p7_c003")])
+
+[sub_resource type="Resource" id="p7_c004"]
+script = ExtResource("2_cdonk")
+text = "Etwas anderes …"
+next = &"menu"
+
+[sub_resource type="Resource" id="p7_node_p7_visitors"]
+script = ExtResource("1_0vtyj")
+id = &"p7_visitors"
+text = "Lorenz hat mich das auch gefragt. Ich hab ihm drei genannt: den Pfarrer, den Wundarzt und die Seelfrau. Er hat einen Namen unterstrichen. Welchen, hat er mir nicht gezeigt. Ich wollte es auch nicht wissen. Man lebt länger an der Mauer, wenn man nicht alles weiß."
+choices = Array[ExtResource("2_cdonk")]([SubResource("p7_c004")])
+actions = Array[String](["add_clue:c_v_three_visitors"])
+
+[sub_resource type="Resource" id="p7_c005"]
+script = ExtResource("2_cdonk")
+text = "Etwas anderes …"
+next = &"menu"
+
+[sub_resource type="Resource" id="p7_node_p7_quast"]
+script = ExtResource("1_0vtyj")
+id = &"p7_quast"
+text = "Quast kauft, was ich nicht nehme, und schreibt alles in ein Buch. Lorenz hat ihn einmal gefragt, wohin die Gläser gehen. Danach hat Quast ihm nichts mehr verkauft. Und Lorenz hat ihm nichts mehr gebracht. Das war ein stiller Krieg, Totengräber. Die besten sind still."
+choices = Array[ExtResource("2_cdonk")]([SubResource("p7_c005")])
+
+[sub_resource type="Resource" id="p7_c006"]
+script = ExtResource("2_cdonk")
+text = "Etwas anderes …"
+next = &"menu"
+
+[sub_resource type="Resource" id="p7_node_p7_village_ilse"]
+script = ExtResource("1_0vtyj")
+id = &"p7_village_ilse"
+text = "Das Dorf? Ich geh nicht hin, bei Tag. Die Leute sehen mich nicht gern, und ich sie nicht. Aber ich weiß, wer hustet und wer nicht mehr. Die Nacht trägt weit, wenn der Wind vom Bach kommt."
+choices = Array[ExtResource("2_cdonk")]([SubResource("p7_c006")])
+
+[sub_resource type="Resource" id="p7_c007"]
+script = ExtResource("2_cdonk")
+text = "Wer besucht im Dorf die Kranken?"
+next = &"p7_visitors"
+conditions = Array[String](["flag:village_open", "met:surgeon", "!clue_known:c_v_three_visitors"])
+
+[sub_resource type="Resource" id="p7_c008"]
+script = ExtResource("2_cdonk")
+text = "Was hältst du vom Wundarzt?"
+next = &"p7_quast"
+conditions = Array[String](["flag:village_open", "met:surgeon"])
+
+[sub_resource type="Resource" id="p7_c009"]
+script = ExtResource("2_cdonk")
+text = "Du kennst Hollerbrück?"
+next = &"p7_village_ilse"
+conditions = Array[String](["flag:village_open"])
+
 [sub_resource type="Resource" id="p5_choice_01"]
 script = ExtResource("2_cdonk")
 text = "Zeig her."
@@ -25,7 +107,7 @@ id = &"p5_gold"
 text = "Ich hab etwas Neues in der Kiepe. Blattgold, dünn wie ein Atemzug. Aus dem Nachlass eines Vergolders. Er hätte gewollt, dass es glänzt."
 choices = Array[ExtResource("2_cdonk")]([SubResource("p5_choice_01"), SubResource("p5_choice_02"), SubResource("p5_choice_03")])
 conditions = Array[String](["flag:workshop_open", "flag:trader_tools_given", "!flag:remark_gold"])
-fallback_next = &"greet_devout"
+fallback_next = &"p7_specimen_greet"
 actions = Array[String](["set_flag:remark_gold", "set_flag_night:trader_greeted", "trader_talked"])
 
 [sub_resource type="Resource" id="p5_choice_04"]
@@ -173,7 +255,7 @@ next = &"goodbye"
 script = ExtResource("1_0vtyj")
 id = &"greet_devout"
 text = "Du kommst mit leeren Händen. Das steht dir."
-choices = Array[ExtResource("2_cdonk")]([SubResource("choice_011"), SubResource("choice_012"), SubResource("choice_013"), SubResource("choice_014"), SubResource("choice_015"), SubResource("choice_016"), SubResource("choice_017")])
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_011"), SubResource("choice_012"), SubResource("choice_013"), SubResource("choice_014"), SubResource("choice_015"), SubResource("choice_016"), SubResource("p7_c007"), SubResource("p7_c008"), SubResource("p7_c009"), SubResource("choice_017")])
 conditions = Array[String](["piety_tier:devout", "!flag_night:trader_greeted"])
 fallback_next = &"greet_considerate"
 actions = Array[String](["set_flag_night:trader_greeted", "trader_talked"])
@@ -221,7 +303,7 @@ next = &"goodbye"
 script = ExtResource("1_0vtyj")
 id = &"greet_considerate"
 text = "Nur zum Reden? Auch gut. Die Nacht ist lang."
-choices = Array[ExtResource("2_cdonk")]([SubResource("choice_018"), SubResource("choice_019"), SubResource("choice_020"), SubResource("choice_021"), SubResource("choice_022"), SubResource("choice_023"), SubResource("choice_024")])
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_018"), SubResource("choice_019"), SubResource("choice_020"), SubResource("choice_021"), SubResource("choice_022"), SubResource("choice_023"), SubResource("p7_c007"), SubResource("p7_c008"), SubResource("p7_c009"), SubResource("choice_024")])
 conditions = Array[String](["piety_tier:considerate", "!flag_night:trader_greeted"])
 fallback_next = &"greet_matter_of_fact"
 actions = Array[String](["set_flag_night:trader_greeted", "trader_talked"])
@@ -269,7 +351,7 @@ next = &"goodbye"
 script = ExtResource("1_0vtyj")
 id = &"greet_matter_of_fact"
 text = "Guten Abend, Totengräber. Was bringen die Stillen heute?"
-choices = Array[ExtResource("2_cdonk")]([SubResource("choice_025"), SubResource("choice_026"), SubResource("choice_027"), SubResource("choice_028"), SubResource("choice_029"), SubResource("choice_030"), SubResource("choice_031")])
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_025"), SubResource("choice_026"), SubResource("choice_027"), SubResource("choice_028"), SubResource("choice_029"), SubResource("choice_030"), SubResource("p7_c007"), SubResource("p7_c008"), SubResource("p7_c009"), SubResource("choice_031")])
 conditions = Array[String](["piety_tier:matter_of_fact", "!flag_night:trader_greeted"])
 fallback_next = &"greet_callous"
 actions = Array[String](["set_flag_night:trader_greeted", "trader_talked"])
@@ -317,7 +399,7 @@ next = &"goodbye"
 script = ExtResource("1_0vtyj")
 id = &"greet_callous"
 text = "Du bist schneller geworden. Das geht vielen so."
-choices = Array[ExtResource("2_cdonk")]([SubResource("choice_032"), SubResource("choice_033"), SubResource("choice_034"), SubResource("choice_035"), SubResource("choice_036"), SubResource("choice_037"), SubResource("choice_038")])
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_032"), SubResource("choice_033"), SubResource("choice_034"), SubResource("choice_035"), SubResource("choice_036"), SubResource("choice_037"), SubResource("p7_c007"), SubResource("p7_c008"), SubResource("p7_c009"), SubResource("choice_038")])
 conditions = Array[String](["piety_tier:callous", "!flag_night:trader_greeted"])
 fallback_next = &"greet_hardhearted"
 actions = Array[String](["set_flag_night:trader_greeted", "trader_talked"])
@@ -365,7 +447,7 @@ next = &"goodbye"
 script = ExtResource("1_0vtyj")
 id = &"greet_hardhearted"
 text = "Du hast gelernt, nicht hinzusehen. Ich hab's dir nicht beigebracht."
-choices = Array[ExtResource("2_cdonk")]([SubResource("choice_039"), SubResource("choice_040"), SubResource("choice_041"), SubResource("choice_042"), SubResource("choice_043"), SubResource("choice_044"), SubResource("choice_045")])
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_039"), SubResource("choice_040"), SubResource("choice_041"), SubResource("choice_042"), SubResource("choice_043"), SubResource("choice_044"), SubResource("p7_c007"), SubResource("p7_c008"), SubResource("p7_c009"), SubResource("choice_045")])
 conditions = Array[String](["piety_tier:hardhearted", "!flag_night:trader_greeted"])
 fallback_next = &"menu"
 actions = Array[String](["set_flag_night:trader_greeted", "trader_talked"])
@@ -413,7 +495,7 @@ next = &"goodbye"
 script = ExtResource("1_0vtyj")
 id = &"menu"
 text = "Noch etwas? Ich habe Zeit. Die Stillen auch."
-choices = Array[ExtResource("2_cdonk")]([SubResource("choice_046"), SubResource("choice_047"), SubResource("choice_048"), SubResource("choice_049"), SubResource("choice_050"), SubResource("choice_051"), SubResource("choice_052")])
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_046"), SubResource("choice_047"), SubResource("choice_048"), SubResource("choice_049"), SubResource("choice_050"), SubResource("choice_051"), SubResource("p7_c007"), SubResource("p7_c008"), SubResource("p7_c009"), SubResource("choice_052")])
 
 [sub_resource type="Resource" id="choice_053"]
 script = ExtResource("2_cdonk")
@@ -573,4 +655,4 @@ script = ExtResource("3_0t3rl")
 id = &"trader"
 speaker_name = "Ilse Kranich"
 start_node = &"first_meet"
-nodes = Array[ExtResource("1_0vtyj")]([SubResource("node_first_meet"), SubResource("node_first_note"), SubResource("node_first_gift"), SubResource("node_first_gift_full"), SubResource("node_gift_retry"), SubResource("node_greet_devout"), SubResource("node_greet_considerate"), SubResource("node_greet_matter_of_fact"), SubResource("node_greet_callous"), SubResource("node_greet_hardhearted"), SubResource("node_menu"), SubResource("node_who"), SubResource("node_who_goods"), SubResource("node_who_night"), SubResource("node_ask_lorenz"), SubResource("node_ask_lorenz_more"), SubResource("node_lorenz_alive"), SubResource("node_ask_marked"), SubResource("node_ask_marked_more"), SubResource("node_ask_blossom"), SubResource("node_ask_blossom_more"), SubResource("node_goodbye"), SubResource("node_p5_gold"), SubResource("node_p5_gold_price")])
+nodes = Array[ExtResource("1_0vtyj")]([SubResource("node_first_meet"), SubResource("node_first_note"), SubResource("node_first_gift"), SubResource("node_first_gift_full"), SubResource("node_gift_retry"), SubResource("node_greet_devout"), SubResource("node_greet_considerate"), SubResource("node_greet_matter_of_fact"), SubResource("node_greet_callous"), SubResource("node_greet_hardhearted"), SubResource("node_menu"), SubResource("node_who"), SubResource("node_who_goods"), SubResource("node_who_night"), SubResource("node_ask_lorenz"), SubResource("node_ask_lorenz_more"), SubResource("node_lorenz_alive"), SubResource("node_ask_marked"), SubResource("node_ask_marked_more"), SubResource("node_ask_blossom"), SubResource("node_ask_blossom_more"), SubResource("node_goodbye"), SubResource("node_p5_gold"), SubResource("node_p5_gold_price"), SubResource("p7_node_p7_specimen_greet"), SubResource("p7_node_p7_no_jars"), SubResource("p7_node_p7_visitors"), SubResource("p7_node_p7_quast"), SubResource("p7_node_p7_village_ilse")])

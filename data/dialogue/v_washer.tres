@@ -1,0 +1,335 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="v_washer_c001"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_washer_node_start"]
+script = ExtResource("1")
+id = &"start"
+text = "Hm. Du bist der, der sie oben eingräbt. Ich bin die, die sie vorher wäscht. Dorn, Liesel. Kaspar war mein Bruder. Mehr musst du nicht wissen. Zieh das Bein ein, du stehst auf meinem Garn."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c001")])
+conditions = Array[String](["!met:washer"])
+fallback_next = &"hagedorn_gate"
+actions = Array[String](["meet:washer", "talked:washer"])
+
+[sub_resource type="Resource" id="v_washer_c002"]
+script = ExtResource("2")
+text = "Ich weiß."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_washer_node_hagedorn_gate"]
+script = ExtResource("1")
+id = &"hagedorn_gate"
+text = "Sie ist tot, Totengräber. Die Hagedorn. Heute Nacht, im Schlaf. Ich hab sie gewaschen. Sie hat gesagt, du weißt, was sie will. Linde, Mohn, Totenhemd. Und nichts wegnehmen. Hörst du? Nichts."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c002")])
+conditions = Array[String](["!alive:oldwoman", "!flag:liesel_hagedorn_told"])
+fallback_next = &"greet_p_devout"
+actions = Array[String](["set_flag:liesel_hagedorn_told", "talked:washer"])
+
+[sub_resource type="Resource" id="v_washer_c003"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_washer_node_greet_p_devout"]
+script = ExtResource("1")
+id = &"greet_p_devout"
+text = "Du riechst nach Wacholder. Das ist ein guter Geruch für einen wie dich. Komm her."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c003")])
+conditions = Array[String](["piety_tier:devout"])
+fallback_next = &"greet_p_hardhearted"
+actions = Array[String](["talked:washer"])
+
+[sub_resource type="Resource" id="v_washer_c004"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_washer_node_greet_p_hardhearted"]
+script = ExtResource("1")
+id = &"greet_p_hardhearted"
+text = "Du riechst nach Branntwein und kaltem Stein. Ich weiß, was das heißt. Bleib da stehen."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c004")])
+conditions = Array[String](["piety_tier:hardhearted"])
+fallback_next = &"greet_disreputable"
+actions = Array[String](["talked:washer"])
+
+[sub_resource type="Resource" id="v_washer_c005"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_washer_node_greet_disreputable"]
+script = ExtResource("1")
+id = &"greet_disreputable"
+text = "Du. Bleib da stehen. Näher brauchst du nicht."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c005")])
+conditions = Array[String](["rep_tier:disreputable"])
+fallback_next = &"greet_unremarkable"
+actions = Array[String](["talked:washer"])
+
+[sub_resource type="Resource" id="v_washer_c006"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_washer_node_greet_unremarkable"]
+script = ExtResource("1")
+id = &"greet_unremarkable"
+text = "Na. Was willst du?"
+choices = Array[ExtResource("2")]([SubResource("v_washer_c006")])
+conditions = Array[String](["rep_tier:unremarkable"])
+fallback_next = &"greet_respected"
+actions = Array[String](["talked:washer"])
+
+[sub_resource type="Resource" id="v_washer_c007"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_washer_node_greet_respected"]
+script = ExtResource("1")
+id = &"greet_respected"
+text = "Ah, der Totengräber. Die alte Kehr hat gesagt, du hast ihren Mann ordentlich hingelegt. Sie hat geweint. Gutes Weinen."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c007")])
+conditions = Array[String](["rep_tier:respected"])
+fallback_next = &"greet_esteemed"
+actions = Array[String](["talked:washer"])
+
+[sub_resource type="Resource" id="v_washer_c008"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_washer_node_greet_esteemed"]
+script = ExtResource("1")
+id = &"greet_esteemed"
+text = "Setz dich. Da, auf den Hackklotz. Ich spinne weiter, du redest, und wenn du was Dummes sagst, hör ich's am Faden."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c008")])
+conditions = Array[String](["rep_tier:esteemed"])
+fallback_next = &"greet_renowned"
+actions = Array[String](["talked:washer"])
+
+[sub_resource type="Resource" id="v_washer_c009"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_washer_node_greet_renowned"]
+script = ExtResource("1")
+id = &"greet_renowned"
+text = "Totengräber. Die Toten kommen bei dir an, als hätten sie es gut gehabt. Das hab ich lange nicht gesehen. Setz dich."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c009")])
+actions = Array[String](["talked:washer"])
+
+[sub_resource type="Resource" id="v_washer_c010"]
+script = ExtResource("2")
+text = "Was hast du da?"
+conditions = Array[String](["shop_open:washer"])
+actions = Array[String](["open_shop:washer"])
+
+[sub_resource type="Resource" id="v_washer_c011"]
+script = ExtResource("2")
+text = "[Auftrag] Totenhemden"
+next = &"o_o_liesel_gowns"
+conditions = Array[String](["order_offerable:o_liesel_gowns"])
+
+[sub_resource type="Resource" id="v_washer_c012"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist, was du wolltest: Totenhemden"
+next = &"t_o_liesel_gowns"
+conditions = Array[String](["order_ready:o_liesel_gowns"])
+actions = Array[String](["order_turn_in:o_liesel_gowns"])
+
+[sub_resource type="Resource" id="v_washer_c013"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist, was du wolltest: Garn"
+next = &"t_ob_yarn"
+conditions = Array[String](["order_ready:ob_yarn"])
+actions = Array[String](["order_turn_in:ob_yarn"])
+
+[sub_resource type="Resource" id="v_washer_c014"]
+script = ExtResource("2")
+text = "Du wäschst die Toten …"
+next = &"washing"
+conditions = Array[String](["rel_tier:washer:trusted", "!clue_known:c_v_washing"])
+
+[sub_resource type="Resource" id="v_washer_c015"]
+script = ExtResource("2")
+text = "Kaspar war nicht der aus dem Moor."
+next = &"kaspar"
+conditions = Array[String](["flag:insight_not_lorenz", "!clue_known:c_v_washing"])
+
+[sub_resource type="Resource" id="v_washer_c016"]
+script = ExtResource("2")
+text = "Erzähl von Wiebke Hagedorn."
+next = &"about_wiebke"
+conditions = Array[String](["!alive:oldwoman"])
+
+[sub_resource type="Resource" id="v_washer_c017"]
+script = ExtResource("2")
+text = "Wer hält Totenwache?"
+next = &"wake"
+
+[sub_resource type="Resource" id="v_washer_c018"]
+script = ExtResource("2")
+text = "Ich hab dir etwas mitgebracht."
+actions = Array[String](["open_gifts:washer"])
+
+[sub_resource type="Resource" id="v_washer_c019"]
+script = ExtResource("2")
+text = "Auf Wiedersehen."
+next = &"bye"
+
+[sub_resource type="Resource" id="v_washer_node_menu"]
+script = ExtResource("1")
+id = &"menu"
+text = "Na?"
+choices = Array[ExtResource("2")]([SubResource("v_washer_c010"), SubResource("v_washer_c011"), SubResource("v_washer_c012"), SubResource("v_washer_c013"), SubResource("v_washer_c014"), SubResource("v_washer_c015"), SubResource("v_washer_c016"), SubResource("v_washer_c017"), SubResource("v_washer_c018"), SubResource("v_washer_c019")])
+
+[sub_resource type="Resource" id="v_washer_c020"]
+script = ExtResource("2")
+text = "(Schweigen)"
+next = &"menu"
+actions = Array[String](["add_clue:c_v_washing"])
+
+[sub_resource type="Resource" id="v_washer_node_washing"]
+script = ExtResource("1")
+id = &"washing"
+text = "Was ich gesehen hab? Das Zeichen. Den Ring mit den drei Strichen, über dem Herzen. Seit dem Winter, als die Fähre umgekippt ist. Ich hab es Lorenz gesagt, jedes Mal. Er hat genickt und es aufgeschrieben. Seit er fort ist, sag ich es keinem mehr. Ich schreib die Namen in mein Gesangbuch. Hinten, wo keiner singt."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c020")])
+
+[sub_resource type="Resource" id="v_washer_c021"]
+script = ExtResource("2")
+text = "Ich frage."
+next = &"menu"
+actions = Array[String](["add_clue:c_v_washing"])
+
+[sub_resource type="Resource" id="v_washer_node_kaspar"]
+script = ExtResource("1")
+id = &"kaspar"
+text = "Woher weißt du das? … Dann lebt er? Nein. Sag nichts. Wenn du es weißt, dann weißt du auch das andere. Ich hab das Zeichen gesehen, Totengräber, seit der Fähre, an allen, die es hatten. Ich hab es Lorenz gemeldet. Und jetzt schreib ich die Namen in mein Gesangbuch, weil keiner mehr da ist, der fragt."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c021")])
+
+[sub_resource type="Resource" id="v_washer_c022"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_washer_node_about_wiebke"]
+script = ExtResource("1")
+id = &"about_wiebke"
+text = "Ich hab sie gewaschen. Sie war leicht wie ein Vogel und hatte den Mohn noch in der Hand. Das Zeichen hatte sie auch. Frisch. Sie hat es gewusst, Totengräber. Sie hat mich vor drei Wochen gefragt, ob es weh tut. Ich hab gesagt: Das Sterben nicht. Das Warten."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c022")])
+
+[sub_resource type="Resource" id="v_washer_c023"]
+script = ExtResource("2")
+text = "Meistens?"
+next = &"wake_more"
+
+[sub_resource type="Resource" id="v_washer_c024"]
+script = ExtResource("2")
+text = "Verstehe."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_washer_node_wake"]
+script = ExtResource("1")
+id = &"wake"
+text = "Ich. Wer sonst. Neun bis zwölf sitz ich bei denen, die gestern gegangen sind. Mittags sitz ich hier. Der Pfarrer kommt vorher, der Quast kommt vorher. Ich komm nachher. So ist die Reihenfolge, Totengräber. Die stimmt meistens."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c023"), SubResource("v_washer_c024")])
+
+[sub_resource type="Resource" id="v_washer_c025"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_washer_node_wake_more"]
+script = ExtResource("1")
+id = &"wake_more"
+text = "Ich red nicht drüber. Spinn du mal einen Faden, wenn dir einer dauernd über die Schulter schaut."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c025")])
+
+[sub_resource type="Resource" id="v_washer_c026"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_liesel_gowns_yes"
+actions = Array[String](["order_accept:o_liesel_gowns"])
+
+[sub_resource type="Resource" id="v_washer_c027"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_washer_node_o_o_liesel_gowns"]
+script = ExtResource("1")
+id = &"o_o_liesel_gowns"
+text = "Zwei Totenhemden. Für die, die nicht zu dir hinaufkommen. Die Ertrunkenen, die keiner findet, und die, die in der Stadt sterben und hier begraben werden wollen. Die kriegen nur ein Tuch. Das reicht nicht."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c026"), SubResource("v_washer_c027")])
+
+[sub_resource type="Resource" id="v_washer_c028"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_washer_node_o_o_liesel_gowns_yes"]
+script = ExtResource("1")
+id = &"o_o_liesel_gowns_yes"
+text = "Sechs Tage. Und mach die Nähte ordentlich. Ich seh es."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c028")])
+
+[sub_resource type="Resource" id="v_washer_c029"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_washer_node_t_o_liesel_gowns"]
+script = ExtResource("1")
+id = &"t_o_liesel_gowns"
+text = "Gut genäht. Für einen Mann. Danke. Sag es keinem."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c029")])
+
+[sub_resource type="Resource" id="v_washer_c030"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_washer_node_t_ob_yarn"]
+script = ExtResource("1")
+id = &"t_ob_yarn"
+text = "Gutes Garn. Die Spinnstube hat wieder zu tun."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c030")])
+
+[sub_resource type="Resource" id="v_washer_c031"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="v_washer_node_bye"]
+script = ExtResource("1")
+id = &"bye"
+text = "Komm wieder. Ich spinne sowieso. Mit dir geht es schneller."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c031")])
+conditions = Array[String](["rel_tier:washer:friend"])
+fallback_next = &"bye_plain"
+
+[sub_resource type="Resource" id="v_washer_c032"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="v_washer_node_bye_plain"]
+script = ExtResource("1")
+id = &"bye_plain"
+text = "Geh. Und tritt nicht aufs Garn."
+choices = Array[ExtResource("2")]([SubResource("v_washer_c032")])
+
+[resource]
+script = ExtResource("3")
+id = &"v_washer"
+speaker_name = "Liesel Dorn"
+start_node = &"start"
+nodes = Array[ExtResource("1")]([SubResource("v_washer_node_start"), SubResource("v_washer_node_hagedorn_gate"), SubResource("v_washer_node_greet_p_devout"), SubResource("v_washer_node_greet_p_hardhearted"), SubResource("v_washer_node_greet_disreputable"), SubResource("v_washer_node_greet_unremarkable"), SubResource("v_washer_node_greet_respected"), SubResource("v_washer_node_greet_esteemed"), SubResource("v_washer_node_greet_renowned"), SubResource("v_washer_node_menu"), SubResource("v_washer_node_washing"), SubResource("v_washer_node_kaspar"), SubResource("v_washer_node_about_wiebke"), SubResource("v_washer_node_wake"), SubResource("v_washer_node_wake_more"), SubResource("v_washer_node_o_o_liesel_gowns"), SubResource("v_washer_node_o_o_liesel_gowns_yes"), SubResource("v_washer_node_t_o_liesel_gowns"), SubResource("v_washer_node_t_ob_yarn"), SubResource("v_washer_node_bye"), SubResource("v_washer_node_bye_plain")])

@@ -1,0 +1,204 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="v_grocer_c001"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_grocer_node_start"]
+script = ExtResource("1")
+id = &"start"
+text = "Mangold, Theres, geborene Mahn, Kolonialwaren und Buntes. Sie sind der Totengräber. Drei Ellen Leinen die Woche, sagt Faulhaber, macht neun Münzen, macht im Jahr – na, das rechne ich später. Was darf es sein?"
+choices = Array[ExtResource("2")]([SubResource("v_grocer_c001")])
+conditions = Array[String](["!met:grocer"])
+fallback_next = &"greet_disreputable"
+actions = Array[String](["meet:grocer", "talked:grocer"])
+
+[sub_resource type="Resource" id="v_grocer_c002"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_grocer_node_greet_disreputable"]
+script = ExtResource("1")
+id = &"greet_disreputable"
+text = "Ach, Sie. Gezählt wird bei mir vor dem Tresen, nicht dahinter. Und bar."
+choices = Array[ExtResource("2")]([SubResource("v_grocer_c002")])
+conditions = Array[String](["rep_tier:disreputable"])
+fallback_next = &"greet_unremarkable"
+actions = Array[String](["talked:grocer"])
+
+[sub_resource type="Resource" id="v_grocer_c003"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_grocer_node_greet_unremarkable"]
+script = ExtResource("1")
+id = &"greet_unremarkable"
+text = "Guten Tag. Leinen, Samen, Kerzen, Buntes. Was darf es sein?"
+choices = Array[ExtResource("2")]([SubResource("v_grocer_c003")])
+conditions = Array[String](["rep_tier:unremarkable"])
+fallback_next = &"greet_respected"
+actions = Array[String](["talked:grocer"])
+
+[sub_resource type="Resource" id="v_grocer_c004"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_grocer_node_greet_respected"]
+script = ExtResource("1")
+id = &"greet_respected"
+text = "Der Totengräber! Ich habe Leinen frisch, sechs Ellen, und zwei davon lege ich Ihnen zurück, ohne Aufschlag, das sage ich nicht jedem."
+choices = Array[ExtResource("2")]([SubResource("v_grocer_c004")])
+conditions = Array[String](["rep_tier:respected"])
+fallback_next = &"greet_esteemed"
+actions = Array[String](["talked:grocer"])
+
+[sub_resource type="Resource" id="v_grocer_c005"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_grocer_node_greet_esteemed"]
+script = ExtResource("1")
+id = &"greet_esteemed"
+text = "Herr Totengräber, endlich. Ich habe extra Wachs kommen lassen, vier Stück, eins mehr als sonst. Für Sie rechne ich es gerade."
+choices = Array[ExtResource("2")]([SubResource("v_grocer_c005")])
+conditions = Array[String](["rep_tier:esteemed"])
+fallback_next = &"greet_renowned"
+actions = Array[String](["talked:grocer"])
+
+[sub_resource type="Resource" id="v_grocer_c006"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_grocer_node_greet_renowned"]
+script = ExtResource("1")
+id = &"greet_renowned"
+text = "Sie! Kommen Sie, kommen Sie. Für Sie mache ich die Ladentür auf statt nur das Fenster. Das gibt es sonst nur zur Kirchweih."
+choices = Array[ExtResource("2")]([SubResource("v_grocer_c006")])
+actions = Array[String](["talked:grocer"])
+
+[sub_resource type="Resource" id="v_grocer_c007"]
+script = ExtResource("2")
+text = "Was hast du da?"
+conditions = Array[String](["shop_open:grocer"])
+actions = Array[String](["open_shop:grocer"])
+
+[sub_resource type="Resource" id="v_grocer_c008"]
+script = ExtResource("2")
+text = "[Auftrag] Ein Stein für die Mutter"
+next = &"o_o_mangold_stone"
+conditions = Array[String](["order_offerable:o_mangold_stone"])
+
+[sub_resource type="Resource" id="v_grocer_c009"]
+script = ExtResource("2")
+text = "Was ist „Buntes“?"
+next = &"buntes"
+
+[sub_resource type="Resource" id="v_grocer_c010"]
+script = ExtResource("2")
+text = "Du warst mal eine Mahn?"
+next = &"mahn"
+
+[sub_resource type="Resource" id="v_grocer_c011"]
+script = ExtResource("2")
+text = "Ich hab dir etwas mitgebracht."
+actions = Array[String](["open_gifts:grocer"])
+
+[sub_resource type="Resource" id="v_grocer_c012"]
+script = ExtResource("2")
+text = "Auf Wiedersehen."
+next = &"bye"
+
+[sub_resource type="Resource" id="v_grocer_node_menu"]
+script = ExtResource("1")
+id = &"menu"
+text = "Eins, zwei – ja? Ich höre."
+choices = Array[ExtResource("2")]([SubResource("v_grocer_c007"), SubResource("v_grocer_c008"), SubResource("v_grocer_c009"), SubResource("v_grocer_c010"), SubResource("v_grocer_c011"), SubResource("v_grocer_c012")])
+
+[sub_resource type="Resource" id="v_grocer_c013"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_o_mangold_stone_yes"
+actions = Array[String](["order_accept:o_mangold_stone"])
+
+[sub_resource type="Resource" id="v_grocer_c014"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_grocer_node_o_o_mangold_stone"]
+script = ExtResource("1")
+id = &"o_o_mangold_stone"
+text = "Dorothee Mahn. Meine Mutter. Liegt bei Ihnen im alten Hof, und auf dem Stein steht nichts mehr, was man lesen kann. Eine Stele mit Mohn, und es soll etwas darauf stehen. Ich rechne es Ihnen nicht vor. Ich bezahle es. Sechs Tage, dann ist ihr Namenstag."
+choices = Array[ExtResource("2")]([SubResource("v_grocer_c013"), SubResource("v_grocer_c014")])
+
+[sub_resource type="Resource" id="v_grocer_c015"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_grocer_node_o_o_mangold_stone_yes"]
+script = ExtResource("1")
+id = &"o_o_mangold_stone_yes"
+text = "Danke. Ich trage es mir ein. Nein, nicht ins Kassenbuch. In das andere."
+choices = Array[ExtResource("2")]([SubResource("v_grocer_c015")])
+
+[sub_resource type="Resource" id="v_grocer_c016"]
+script = ExtResource("2")
+text = "Verstehe."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_grocer_node_buntes"]
+script = ExtResource("1")
+id = &"buntes"
+text = "Buntes ist alles, was nicht Mehl, Salz, Leinen oder Kerze ist. Bänder, Knöpfe, ein Glas mit Zuckerzeug, eine Feder, die keiner will. Was ich nicht kenne, ist Buntes. Präparatgläser zum Beispiel. Sehr bunt, Herr Totengräber."
+choices = Array[ExtResource("2")]([SubResource("v_grocer_c016")])
+
+[sub_resource type="Resource" id="v_grocer_c017"]
+script = ExtResource("2")
+text = "Sie hätte dich gemocht."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_grocer_node_mahn"]
+script = ExtResource("1")
+id = &"mahn"
+text = "Mahn, ja. Die Mahns hatten den Laden vor mir. Mutter hat gerechnet, wie ich rechne, nur schneller. Sie hätte gesagt: Theres, du redest zu viel und verkaufst zu wenig. Beides stimmt."
+choices = Array[ExtResource("2")]([SubResource("v_grocer_c017")])
+
+[sub_resource type="Resource" id="v_grocer_c018"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="v_grocer_node_bye"]
+script = ExtResource("1")
+id = &"bye"
+text = "Kommen Sie bald wieder. Ich lege Ihnen etwas zurück. Was, weiß ich noch nicht, aber es wird bunt."
+choices = Array[ExtResource("2")]([SubResource("v_grocer_c018")])
+conditions = Array[String](["rel_tier:grocer:friend"])
+fallback_next = &"bye_plain"
+
+[sub_resource type="Resource" id="v_grocer_c019"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="v_grocer_node_bye_plain"]
+script = ExtResource("1")
+id = &"bye_plain"
+text = "Auf Wiedersehen. Und bringen Sie die Körbe zurück, die zählen auch."
+choices = Array[ExtResource("2")]([SubResource("v_grocer_c019")])
+
+[resource]
+script = ExtResource("3")
+id = &"v_grocer"
+speaker_name = "Theres Mangold"
+start_node = &"start"
+nodes = Array[ExtResource("1")]([SubResource("v_grocer_node_start"), SubResource("v_grocer_node_greet_disreputable"), SubResource("v_grocer_node_greet_unremarkable"), SubResource("v_grocer_node_greet_respected"), SubResource("v_grocer_node_greet_esteemed"), SubResource("v_grocer_node_greet_renowned"), SubResource("v_grocer_node_menu"), SubResource("v_grocer_node_o_o_mangold_stone"), SubResource("v_grocer_node_o_o_mangold_stone_yes"), SubResource("v_grocer_node_buntes"), SubResource("v_grocer_node_mahn"), SubResource("v_grocer_node_bye"), SubResource("v_grocer_node_bye_plain")])

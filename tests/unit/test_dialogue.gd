@@ -14,10 +14,19 @@ const EVENING := 1140  # 19:00
 ## A new game starts "Unauffällig" (docs/PHASE3_DESIGN.md §2.6); reset() leaves the stat at 0.
 const NEW_GAME_REPUTATION := 25
 
-const CONDITION_GRAMMAR := "^!?(has_item:[a-z_]+(:\\d+)?|flag:[a-z_0-9]+|stat_gte:[a-z_]+:-?\\d+|stat_lt:[a-z_]+:-?\\d+|time_between:\\d+:\\d+|flag_eq:[a-z_]+:.*|flag_today:[a-z_]+|day_gte:\\d+|day_odd|day_even|piety_tier:(hardhearted|callous|matter_of_fact|considerate|devout)|trader_talks_gte:\\d+|clue_known:c_[a-z_0-9]+|flag_night:[a-z_]+)$"
-const ACTION_GRAMMAR := "^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_]+|take_item:[a-z_]+:\\d+(:[a-z_]+)?|give_item:[a-z_]+:\\d+|stat_add:[a-z_]+:-?\\d+|notify:.+|open_panel:[a-z_]+|open_trade|add_clue:c_[a-z_0-9]+|trader_tools|trader_talked|set_flag_night:[a-z_]+)$"
+const CONDITION_GRAMMAR := ("^!?(has_item:[a-z_]+(:\\d+)?|flag:[a-z_0-9]+|stat_gte:[a-z_]+:-?\\d+|stat_lt:[a-z_]+:-?\\d+|time_between:\\d+:\\d+|flag_eq:[a-z_]+:.*|flag_today:[a-z_]+|day_gte:\\d+|day_odd|day_even|piety_tier:(hardhearted|callous|matter_of_fact|considerate|devout)|trader_talks_gte:\\d+|clue_known:c_[a-z_0-9]+|flag_night:[a-z_]+"
+		# Phase 7 (P6, docs/PHASE7_DESIGN.md §3.4)
+		+ "|rel_gte:[a-z_]+:\\d+|rel_tier:[a-z_]+:(stranger|acquainted|trusted|friend)|met:[a-z_]+|rep_tier:(disreputable|unremarkable|respected|esteemed|renowned)"
+		+ "|order:[a-z_]+:(none|offered|accepted|completed|failed)|order_offerable:[a-z_]+|order_ready:[a-z_]+|shop_open:[a-z_]+|region:[a-z_]+"
+		+ "|specimens_held_gte:\\d+|specimen_sold_any|alive:[a-z_]+|lecture_tonight|village_open_days_gte:\\d+|flag_days_gte:[a-z_]+:\\d+"
+		+ "|village_can:(round|donate|consecrate)|mourning_today)$")
+const ACTION_GRAMMAR := ("^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_]+|take_item:[a-z_]+:\\d+(:[a-z_]+)?|give_item:[a-z_]+:\\d+|stat_add:[a-z_]+:-?\\d+|notify:.+|open_panel:[a-z_]+|open_trade|add_clue:c_[a-z_0-9]+|trader_tools|trader_talked|set_flag_night:[a-z_]+"
+		# Phase 7 (P6)
+		+ "|meet:[a-z_]+|talked:[a-z_]+|open_shop:[a-z_]+|open_gifts:[a-z_]+|order_offer:[a-z_]+|order_accept:[a-z_]+|order_turn_in:[a-z_]+"
+		+ "|buy_round|donate|consecrate_pay|anatomy_case|open_anatomist|open_lecture|lecture_invite|rel_add:[a-z_]+:-?\\d+|set_flag_day:[a-z_]+)$")
 ## Negations the data may use (flag-like conditions, docs/PHASE4_DESIGN.md §3.4).
-const NEGATABLE: PackedStringArray = ["!flag:", "!piety_tier:", "!flag_night:", "!trader_talks_gte:"]
+const NEGATABLE: PackedStringArray = ["!flag:", "!piety_tier:", "!flag_night:", "!trader_talks_gte:", "!clue_known:", "!met:",
+		"!rel_tier:", "!alive:", "!flag_today:"]
 
 
 ## Inventory double with limited room: add_item keeps at most `room` items.
@@ -1760,7 +1769,8 @@ func test_trader_conditions_actions_and_texts() -> void:
 		for action: String in actions:
 			assert_not_null(action_re.search(action), "action '%s'" % action)
 			if action.begins_with("add_clue:"):
-				assert_true(Phase4Fixtures.CLUE_IDS.has(StringName(action.get_slice(":", 1))), action)
+				var clue := StringName(action.get_slice(":", 1))
+				assert_true(Phase4Fixtures.CLUE_IDS.has(clue) or Phase7Fixtures.CLUE_IDS.has(clue), action)
 	assert_true(all_text.contains("Stillen"), "she calls the dead 'die Stillen'")
 	assert_true(all_text.contains("feilsche nicht"), "she never haggles")
 
@@ -2223,7 +2233,8 @@ func test_carter_p6_intro_comes_after_p5_intro() -> void:
 	r = _start_carter(MORNING, _inv())
 	_go(r, &"remark_skipped")
 	assert_eq(_id(r), &"p6_intro", "the next conversation")
-	assert_eq(_carter().get_node_by_id(&"p6_intro").fallback_next, &"p4_rumor", "the chain continues as before")
+	assert_eq(_carter().get_node_by_id(&"p6_intro").fallback_next, &"p7_intro", "Phase 7: p7_intro next")
+	assert_eq(_carter().get_node_by_id(&"p7_intro").fallback_next, &"p4_rumor", "the chain continues as before")
 
 
 func test_carter_altar_candles_two_coins_each() -> void:

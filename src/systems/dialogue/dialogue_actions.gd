@@ -7,6 +7,11 @@ extends RefCounted
 ## inventory}) · open_trade (= open_panel:trader) · add_clue:<id> (JournalManager) · trader_tools
 ## (NightTrade.give_tools; success → flag trader_tools_given) · trader_talked (NightTrade.note_talk)
 ## · set_flag_night:<name> (flag = the current night, for flag_night:<name>).
+## Phase 7 (docs/PHASE7_DESIGN.md §3.4, P6): meet:<npc> · talked:<npc> (Relationships.note_talk) ·
+## open_shop:<shop> · open_gifts:<npc> · order_offer:<id> (Orders.offer + the order card) · order_accept:<id>
+## · order_turn_in:<id> · buy_round · donate · consecrate_pay · anatomy_case (Quast: the case, his recipe
+## book, the basic teachings, flag anatomy_known) · open_anatomist · open_lecture (only on a lecture night)
+## · lecture_invite · rel_add:<npc>:<n> · set_flag_day:<name> (flag = TimeManager.day, for flag_days_gte). take_item:coin:<n> without a reason: a villager speaking → &"village".
 
 const NOTIFY_INFO := &"info"
 const NOTIFY_REWARD := &"reward"
@@ -24,6 +29,19 @@ const COIN_ITEM := &"coin"
 const TRADER_NPC_ID := &"trader"
 const REASON_OSRIC := &"osric"
 const REASON_ILSE := &"ilse"
+# Phase 7
+const REASON_VILLAGE := &"village"
+const VILLAGERS: Array[StringName] = [&"innkeeper", &"smith", &"grocer", &"priest", &"mayor", &"surgeon", &"washer", &"oldwoman"]
+const SHOP_PANEL := &"shop"
+const GIFT_PANEL := &"gift"
+const ORDERS_PANEL := &"orders"
+const ANATOMIST_PANEL := &"anatomist"
+const LECTURE_PANEL := &"lecture"
+const ANATOMY_FLAG := &"anatomy_known"
+const RECIPES_FLAG := &"quast_recipes"
+const INVITE_FLAG := &"lecture_invited"
+const CASE_ITEM := &"anatomy_case"
+const REASON_TALK := "Gespräch"
 
 
 ## Applies every action in order.
@@ -91,8 +109,108 @@ static func apply(action: String, context: Dictionary) -> void:
 			var p := DialogueSyntax.parts(text, 1)
 			if DialogueSyntax.has_name(p, text):
 				GameState.set_flag(StringName(p[0]), DialogueConditions.night_id())
+		# Phase 7 (docs/PHASE7_DESIGN.md §3.4).
+		"meet", "talked":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				_call(&"relationships", &"meet" if DialogueSyntax.key(text) == "meet" else &"note_talk", [StringName(p[0])], text)
+		"rel_add":
+			var p := DialogueSyntax.parts(text, 2)
+			var n: Variant = DialogueSyntax.int_arg(p, 1, null)
+			if not DialogueSyntax.has_name(p, text) or n == null:
+				return
+			_call(&"relationships", &"add", [StringName(p[0]), int(n), REASON_TALK], text)
+		"open_shop":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				_open_panel_with(SHOP_PANEL, context, {"shop_id": StringName(p[0])})
+		"open_gifts":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				_open_panel_with(GIFT_PANEL, context, {"npc_id": StringName(p[0])})
+		"order_offer":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				_call(&"orders", &"offer", [StringName(p[0])], text)
+				_open_panel_with(ORDERS_PANEL, context, {"board": false, "orders": [StringName(p[0])] as Array[StringName]})
+		"order_accept":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				_call(&"orders", &"accept", [StringName(p[0])], text)
+		"order_turn_in":
+			var p := DialogueSyntax.parts(text, 1)
+			var inv := DialogueSyntax.inventory(context, &"remove_item")
+			if DialogueSyntax.has_name(p, text) and inv != null:
+				_call(&"orders", &"turn_in", [StringName(p[0]), inv], text)
+		"buy_round", "donate", "consecrate_pay":
+			var inv := DialogueSyntax.inventory(context, &"remove_item")
+			if inv != null:
+				var method: StringName = {"buy_round": &"buy_round", "donate": &"donate", "consecrate_pay": &"pay_consecration"}[DialogueSyntax.key(text)]
+				_call(&"village", method, [inv], text)
+		"anatomy_case":
+			_anatomy_case(context)
+		"open_anatomist":
+			_open_panel(ANATOMIST_PANEL, context)
+		"open_lecture":
+			var lectures := DialogueSyntax.system(&"lectures")
+			if lectures != null and lectures.has_method(&"tonight") and bool(lectures.call(&"tonight")):
+				_open_panel(LECTURE_PANEL, context)
+		"set_flag_day":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				GameState.set_flag(StringName(p[0]), TimeManager.day)
+		"lecture_invite":
+			GameState.set_flag(INVITE_FLAG, true)
+			var lectures := DialogueSyntax.system(&"lectures")
+			if lectures != null and lectures.has_method(&"invite"):
+				lectures.call(&"invite")
 		_:
 			push_warning("[DialogueRunner] unknown action '%s' ignored" % action)
+
+
+# --- Phase-7 actions ---
+
+## Calls `method` on the first node of `group` (warning without it).
+static func _call(group: StringName, method: StringName, args: Array, text: String) -> Variant:
+	var node := DialogueSyntax.system(group)
+	if node == null or not node.has_method(method):
+		push_warning("[DialogueRunner] '%s': no %s.%s" % [text, group, method])
+		return null
+	return node.callv(method, args)
+
+
+## ui_panel_requested(panel, {speaker, inventory, player} + extra).
+static func _open_panel_with(panel: StringName, context: Dictionary, extra: Dictionary) -> void:
+	var ctx := {"speaker": context.get("speaker")}
+	if context.has("inventory"):
+		ctx["inventory"] = context.get("inventory")
+	var tree := Engine.get_main_loop() as SceneTree
+	var player := tree.get_first_node_in_group(&"player") if tree != null else null
+	if player != null:
+		ctx["player"] = player
+	ctx.merge(extra, true)
+	EventBus.ui_panel_requested.emit(panel, ctx)
+
+
+## Quast's case (§2.12): the tool (once), his recipe book (flag), the basic teachings (Lectures.learn) and
+## anatomy_known. A full inventory still gives the knowledge; the case then waits (flag stays unset).
+static func _anatomy_case(context: Dictionary) -> void:
+	var inv := DialogueSyntax.inventory(context, &"add_item")
+	var has_case := inv != null and inv.has_method(&"has") and bool(inv.call(&"has", CASE_ITEM, 1))
+	if not has_case and not GameState.flag_on(ANATOMY_FLAG) and inv != null:
+		var rest_v: Variant = inv.call(&"add_item", CASE_ITEM, 1)
+		if (rest_v is int or rest_v is float) and int(rest_v) > 0:
+			EventBus.notification_requested.emit(NO_ROOM_FORMAT % [1, _item_name(CASE_ITEM)], NOTIFY_WARNING)
+			return
+		EventBus.notification_requested.emit(REWARD_FORMAT % [1, _item_name(CASE_ITEM)], NOTIFY_REWARD)
+	GameState.set_flag(ANATOMY_FLAG, true)
+	GameState.set_flag(RECIPES_FLAG, true)
+	var cfg := Database.config(&"anatomy_config") as AnatomyConfig
+	var basics: Array[StringName] = cfg.basic_teachings if cfg != null else AnatomyConfig.new().basic_teachings
+	var lectures := DialogueSyntax.system(&"lectures")
+	if lectures != null and lectures.has_method(&"learn"):
+		for t: StringName in basics:
+			lectures.call(&"learn", t)
 
 
 # --- Phase-4 actions ---
@@ -145,11 +263,14 @@ static func _take_item(text: String, context: Dictionary) -> void:
 		GameState.note_coins_spent(int(n), reason)
 
 
-## Default reason of a coin payment in a dialogue: the speaker's npc_id trader → &"ilse", else &"osric".
+## Default reason of a coin payment in a dialogue: the speaker's npc_id trader → &"ilse", a villager →
+## &"village" (Phase 7), else &"osric".
 static func coin_reason(context: Dictionary) -> StringName:
 	var speaker: Variant = context.get("speaker")
 	if is_instance_valid(speaker) and StringName(str((speaker as Object).get(&"npc_id"))) == TRADER_NPC_ID:
 		return REASON_ILSE
+	if is_instance_valid(speaker) and StringName(str((speaker as Object).get(&"npc_id"))) in VILLAGERS:
+		return REASON_VILLAGE
 	return REASON_OSRIC
 
 
