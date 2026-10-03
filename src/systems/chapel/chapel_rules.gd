@@ -12,14 +12,15 @@ const TEXT_NO_CHAPEL := "Die Kapelle hat noch kein Dach."
 const TEXT_NO_CORPSE := "Auf dem Katafalk liegt niemand."
 const TEXT_HELD := "Für diese Leiche ist die Aussegnung schon gehalten."
 const TEXT_NO_GHOST := "In diesem Grab wartet noch keiner auf ein Licht."
-## Minute value for `service_block_reason` that skips the time window (the end of a service that
-## began before 17:00 – ChapelRites.hold_service).
+## Minute value for `service_block_reason` that skips the time window and the freshness (the end of
+## a service that began before 17:00 and fresh enough – ChapelRites.hold_service).
 const ANY_MINUTE := -1
 
 
 ## "" or why the service cannot start, in this order: no chapel (level < 1) · no corpse on the
 ## catafalque · already held · outside service_start_min…service_start_max (skipped for
-## ANY_MINUTE) · not dressed (shroud or gown) · freshness below service_min_freshness · no candle.
+## ANY_MINUTE) · not dressed (shroud or gown) · freshness below service_min_freshness (skipped for
+## ANY_MINUTE: the end of a service that began fresh enough) · no candle.
 static func service_block_reason(record: CorpseRecord, inv: Inventory, minute: int, level: int, cfg: ChapelConfig) -> String:
 	var c := _cfg(cfg)
 	if level < 1:
@@ -32,7 +33,9 @@ static func service_block_reason(record: CorpseRecord, inv: Inventory, minute: i
 		return TEXT_DAYTIME
 	if c.service_needs_dress and not is_dressed(record):
 		return TEXT_DRESS
-	if record.freshness < c.service_min_freshness:
+	# The freshness counts at the start like the time window: a service that began fresh enough
+	# ends even if the corpse lost a little during the 45 minutes (QA6-07).
+	if minute != ANY_MINUTE and record.freshness < c.service_min_freshness:
 		return TEXT_LATE
 	if not has_candle(inv, c):
 		return TEXT_NO_CANDLE

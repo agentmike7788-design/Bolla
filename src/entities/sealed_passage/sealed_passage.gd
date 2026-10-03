@@ -32,6 +32,11 @@ var _grille: Node3D
 var _time: float = 0.0
 
 
+## Group sealed_passage: Buildings.apply_levels refreshes it right after an upgrade / a load (QA6-06).
+func _init() -> void:
+	add_to_group(&"sealed_passage", true)
+
+
 func _ready() -> void:
 	_sealed = _model("Sealed", SEALED_PATH)
 	_grille = _model("Grille", GRILLE_PATH)

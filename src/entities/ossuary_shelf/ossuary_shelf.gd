@@ -46,6 +46,11 @@ var _stones: Node3D
 var _names: Node3D
 
 
+## Group ossuary_shelf: Buildings.apply_levels refreshes it right after an upgrade / a load (QA6-06).
+func _init() -> void:
+	add_to_group(&"ossuary_shelf", true)
+
+
 func _ready() -> void:
 	if get_node_or_null(^"Model") == null and ResourceLoader.exists(MODEL_PATH):
 		var model := (load(MODEL_PATH) as PackedScene).instantiate() as Node3D

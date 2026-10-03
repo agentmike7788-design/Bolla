@@ -44,13 +44,13 @@ const OSRIC_CANDLE_PRICE := 2
 ## save → load there (save_load6).
 const P6_FLAGS := {"p6": true, "service": true, "devote": &"calm", "devotions": 2, "niche_first": false,
 		"order": [&"crypt", &"chapel", &"shed", &"crypt", &"shed", &"chapel"], "optional": [&"crypt"],
-		"save_in_crypt": false, "niche_visit": false, "restone": false, "master_tools": false, "gold": 0}
+		"strict": true, "save_in_crypt": false, "niche_visit": false, "restone": false, "master_tools": false, "gold": 0}
 
 static var P6_STRATEGIES := {
 	&"reverent6": _with6({}, {}, {"niche_visit": true}),
 	&"mortician": _with6({}, {}, {"niche_first": true, "devote": &"none", "devotions": 0,
 			"order": [&"crypt", &"crypt", &"crypt", &"chapel", &"shed", &"shed", &"chapel"], "optional": []}),
-	&"mender6": _with6({}, {"robbed_first": true}, {"devote": &"restless", "devotions": 8,
+	&"mender6": _with6({}, {"robbed_first": true}, {"devote": &"restless", "devotions": 8, "tend6": &"full",
 			"order": [&"chapel", &"crypt", &"shed", &"chapel", &"crypt", &"shed"], "optional": []}),
 	&"harvester6": _with6({"take_valuables": true, "prep": false, "gown": false, "balm": false,
 			"harvest": [&"hair", &"teeth"], "decor": false}, {"loom_gowns": false}, {"devote": &"robbed", "devotions": 14,
@@ -80,9 +80,14 @@ var procession_walks: int = 0
 var saved_in_crypt: bool = false
 ## Exam results of the mortician: {corpse_id: {"lay_minutes", "lost", "freshness", "expected"}}.
 var mortician_checks: Array[Dictionary] = []
+## "d<day> <clock> <what>" – the Phase-6 actions (printed by the playthrough test).
+var trace6: PackedStringArray = []
 var _income_day: Dictionary = {}
 var _watching6: bool = false
 var _pending_niche: Dictionary = {}
+var _visit_pending: bool = false
+var _tended_day: int = -1
+var _exam_only: bool = false
 
 
 static func _with6(p4_overrides: Dictionary, p5_overrides: Dictionary, p6_overrides: Dictionary) -> Dictionary:
@@ -158,7 +163,9 @@ func run_day() -> void:
 			flags.restone = false
 			flags.master_tools = false
 			flags.gold = 0
+			_t("open: inventory %s · chest %s · tools %s" % [_stock_text(inv()), _stock_text(_hut_chest()), str(shop.tiers())])
 		lowest_morning_p6 = mini(lowest_morning_p6, inv().count(&"coin"))
+		_t("morning: %s · shed %s" % [_stock_text(inv()), _stock_text(ShedSupply.shed_inventory(tree))])
 	await super.run_day()
 
 
@@ -170,18 +177,28 @@ func _phase5() -> void:
 	for pass_i: int in 16:
 		if not _time_left():
 			break
+		_t("pass %d" % pass_i)
 		var did := false
 		did = _open_church_gate() or did
 		did = _collect_kiln() or did
+		did = _forge_work() or did
+		did = _gather_for_next() or did
+		did = _forge_work() or did
 		did = _build6() or did
+		if flags.niche_visit and not saved_in_crypt:
+			await _visit_niche()
 		did = _handle_corpses6() or did
 		did = _boxes6() or did
 		did = _lift6() or did
 		did = _reinter6() or did
 		did = _look_at_passage() or did
 		did = _devotions6() or did
-		did = _gather_bruch() or did
+		# Iron is the bottleneck of the plan (§2.1): the forge before the long gathering rounds.
+		did = _forge_work() or did
+		did = _start_kiln() or did
 		did = _gather_quarry() or did
+		did = _forge_work() or did
+		did = _gather_bruch() or did
 		did = _gather_schlag() or did
 		did = _gather_elder() or did
 		did = _workbench5() or did
@@ -189,12 +206,87 @@ func _phase5() -> void:
 		did = _forge_work() or did
 		did = _start_kiln() or did
 		did = (await _stones()) or did
-		if flags.niche_visit and not saved_in_crypt:
-			await _visit_niche()
 		if not did:
 			break
 	_store_surplus6()
 	_to_room(&"")
+
+
+## Phase 6: the building days need the hours – while an upgrade is still planned, only the spots
+## with weeds (level ≥ 2) and once a day; the full round again when the plan is done.
+## The mortician examines yesterday's corpse first thing in the morning (before the cart) and puts
+## it back into the cold; the burial follows after today's corpse went into a niche.
+func _gather() -> void:
+	if p6_open() and flags.niche_first and crypt_level() >= 1:
+		_leave_hut()
+		_exam_only = true
+		_handle_corpses6()
+		_exam_only = false
+		_to_room(&"")
+	super._gather()
+
+
+func _tend() -> void:
+	var t0 := TimeManager.total_minutes()
+	if not p6_open() or _next_build().is_empty() or flags.get("tend6", &"weeds") == &"full":
+		super._tend()
+	elif _tended_day != TimeManager.day:
+		_tended_day = TimeManager.day
+		for id: String in clean.spot_ids():
+			if not _time_left():
+				break
+			if clean.level(id) < 2:
+				continue
+			var spot := world.get_node("Entities/" + id) as DirtSpot
+			if spot != null and spot.can_interact(player):
+				_to_room(&"")
+				_walk(2)
+				spot.interact(player)
+	if p6_open():
+		_t("tend %d min" % (TimeManager.total_minutes() - t0))
+
+
+func _clear_obstacles() -> void:
+	var t0 := TimeManager.total_minutes()
+	super._clear_obstacles()
+	if p6_open() and TimeManager.total_minutes() > t0:
+		_t("clear %d min" % (TimeManager.total_minutes() - t0))
+
+
+func _upgrade_markers() -> void:
+	var t0 := TimeManager.total_minutes()
+	super._upgrade_markers()
+	if p6_open() and TimeManager.total_minutes() > t0:
+		_t("markers %d min" % (TimeManager.total_minutes() - t0))
+
+
+func _craft_essentials() -> void:
+	var t0 := TimeManager.total_minutes()
+	super._craft_essentials()
+	if p6_open() and TimeManager.total_minutes() > t0:
+		_t("essentials %d min" % (TimeManager.total_minutes() - t0))
+
+
+## A full pack (Phase 6 adds boxes and candles): surplus to the shed first, else the craft waits.
+func _craft5(station: StringName, recipe_id: StringName) -> bool:
+	var r := Database.recipe(recipe_id) as RecipeData
+	if p6_open() and r != null and not r.background and not _room_for(r):
+		_store_surplus6(true)
+		if not _room_for(r):
+			_note_wait(recipe_id, "pack full (%d slots)" % inv().slot_count)
+			return false
+	return super._craft5(station, recipe_id)
+
+
+## Room for the output once the inputs are taken (a probe copy).
+func _room_for(r: RecipeData) -> bool:
+	var probe := inv().duplicate(Node.DUPLICATE_SCRIPTS) as Inventory
+	probe.load_state(inv().save_state())
+	for id: StringName in r.inputs:
+		probe.remove_item(id, int(r.inputs[id]))
+	var ok := probe.add_item(r.output_id, r.output_amount) == 0
+	probe.free()
+	return ok
 
 
 func _sleep() -> void:
@@ -263,6 +355,9 @@ func _handle_corpses6() -> bool:
 		return false
 	var list := manager.records().filter(func(r: CorpseRecord) -> bool: return r.location != CorpseRecord.LOCATION_BURIED)
 	list.sort_custom(func(a: CorpseRecord, b: CorpseRecord) -> bool: return a.arrival_total_minutes < b.arrival_total_minutes)
+	if flags.niche_first:
+		# The mortician: today's corpse into the cold first, then yesterday's on the table.
+		list.reverse()
 	var did := false
 	for record: CorpseRecord in list:
 		if not _time_left():
@@ -275,6 +370,7 @@ func _handle_corpses6() -> bool:
 ## strategy holds one and the day allows it) – or a cool niche to wait.
 func _process6(record: CorpseRecord) -> bool:
 	var before := [record.location, record.room, record.slot_id, record.service_held]
+	var start_loc := record.location
 	var table := _table()
 	# 1. Into the crypt (bier, ground outside).
 	if record.location == CorpseRecord.LOCATION_DROPOFF or (record.location == CorpseRecord.LOCATION_GROUND and record.room == &""):
@@ -298,7 +394,9 @@ func _process6(record: CorpseRecord) -> bool:
 			problems.append("day %d: nowhere to put %s in the crypt" % [TimeManager.day, record.id])
 			return false
 	if record.location == CorpseRecord.LOCATION_NICHE:
-		if flags.niche_first and Phase4Bot._arrival_day(record) >= TimeManager.day:
+		if _visit_pending:
+			return false  # waits for the look round the crypt (_visit_niche)
+		if flags.niche_first and (Phase4Bot._arrival_day(record) >= TimeManager.day or (record.examined and _exam_only)):
 			return before != [record.location, record.room, record.slot_id, record.service_held]
 		if table.corpse_id != "" or not _wants_today(record):
 			return before != [record.location, record.room, record.slot_id, record.service_held]
@@ -308,6 +406,24 @@ func _process6(record: CorpseRecord) -> bool:
 		if not _to_room(&"crypt"):
 			return false
 		_work_at_table(record, table)
+		if _exam_only:
+			table.interact(player)
+			UIState.clear()
+			table.request_pick_up()
+			if not _into_niche(record):
+				table.interact(player)
+			return true
+		if flags.niche_visit and not saved_in_crypt and not _visit_pending and _plot_for(record) != null:
+			# reverent6 / save_load6: the corpse waits in a niche while the gravekeeper looks round the
+			# crypt (save_load6 saves and loads there) – then on as usual.
+			table.interact(player)
+			UIState.clear()
+			table.request_pick_up()
+			if _into_niche(record):
+				_visit_pending = true
+				_t("%s waits in %s for the look round" % [record.id, record.slot_id])
+				return true
+			table.interact(player)
 		if not _wants_today(record):
 			# Cooler in the niche than on the table (§2.2), and the table is free for the next one.
 			table.interact(player)
@@ -319,6 +435,8 @@ func _process6(record: CorpseRecord) -> bool:
 		_bury6(record, table)
 	elif record.location == CorpseRecord.LOCATION_CATAFALQUE:
 		_bury6(record, table)
+	if before != [record.location, record.room, record.slot_id, record.service_held]:
+		_t("%s %s → %s %s (fresh %.2f, service %s)" % [record.id, start_loc, record.location, record.slot_id, record.freshness, record.service_held])
 	return before != [record.location, record.room, record.slot_id, record.service_held]
 
 
@@ -356,6 +474,7 @@ func _wants_today(record: CorpseRecord) -> bool:
 ## Freshness tomorrow at 10:00 in a niche ≥ the service minimum (+ a margin).
 func _fresh_enough_tomorrow(record: CorpseRecord) -> bool:
 	var t := Database.corpse_tables() as CorpseTables
+	manager.refresh_decay(record.id)
 	var hours := float(1440 - TimeManager.minute_of_day + 600) / 60.0
 	var factor := manager.cold_factor_for(CorpseRecord.LOCATION_NICHE, &"crypt")
 	return record.freshness - CorpseDecay.decay_per_hour(record, t) * hours * factor >= rites.get_config().service_min_freshness + 0.05
@@ -365,6 +484,7 @@ func _service_wanted(record: CorpseRecord) -> bool:
 	if not flags.service or record.service_held or rites.level() < 1:
 		return false
 	var cfg := rites.get_config()
+	manager.refresh_decay(record.id)
 	return inv().count(cfg.candle_item) >= cfg.candle_amount and ChapelRules.is_dressed(record) \
 			and record.freshness >= cfg.service_min_freshness + 0.05
 
@@ -532,24 +652,35 @@ func _mortician_check(record: CorpseRecord) -> Dictionary:
 		by_hand -= (1.0 - float(w[i + 2]) / 1000.0) * float(end - w[i])
 	var hand_fresh := maxf(0.0, CorpseDecay.START_FRESHNESS - rate * by_hand / 60.0)
 	return {"id": record.id, "lay_minutes": now - record.arrival_total_minutes, "lost": 0, "balm": not record.balm_windows.is_empty(),
+			"crypt": crypt_level(), "decay_mult": rate / t.base_decay_per_hour,
 			"freshness": record.freshness, "expected": expected, "by_hand": hand_fresh}
 
 
 # --- buildings ----------------------------------------------------------------------------------
 
-## {building_id, level} of the next upgrade the strategy wants ({} = none left).
-func _next_build() -> Dictionary:
+## The upgrades the strategy wants next, in its order: per building the next planned level
+## ({id, level, optional}); the optional ones (level 3) only after the chapter.
+func _build_candidates() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
 	var planned := {}
+	var seen := {}
 	for id: StringName in flags.order:
 		planned[id] = int(planned.get(id, 0)) + 1
-		if buildings.level(id) < int(planned[id]):
-			return {"id": id, "level": int(planned[id]), "optional": false}
-	if not GameState.has_flag(&"roof_and_earth_complete"):
-		return {}
+		if buildings.level(id) < int(planned[id]) and not seen.has(id):
+			seen[id] = true
+			out.append({"id": id, "level": buildings.level(id) + 1, "optional": false})
+	if not out.is_empty() or not GameState.has_flag(&"roof_and_earth_complete"):
+		return out
 	for id: StringName in flags.optional:
 		if buildings.level(id) < 3:
-			return {"id": id, "level": buildings.level(id) + 1, "optional": true}
-	return {}
+			out.append({"id": id, "level": buildings.level(id) + 1, "optional": true})
+	return out
+
+
+## The first wanted upgrade ({} = none left).
+func _next_build() -> Dictionary:
+	var c := _build_candidates()
+	return c[0] if not c.is_empty() else {}
 
 
 ## Inputs (items) of the next planned upgrade ({} = none).
@@ -561,10 +692,45 @@ func _next_inputs() -> Dictionary:
 	return lvl.inputs if lvl != null else {}
 
 
+## The first wanted upgrade that the purse and the stock (or the shed) allow now – in the
+## strategy's order; a later, cheaper one goes first while the earlier waits for its coins.
 func _build6() -> bool:
+	for nb: Dictionary in _build_candidates():
+		if _try_build(nb):
+			return true
+		if flags.get("strict", false):
+			break
+	return false
+
+
+## The items the first wanted upgrade still lacks, gathered first (before the long rounds), so the
+## build fits into the day.
+func _gather_for_next() -> bool:
 	var nb := _next_build()
 	if nb.is_empty():
 		return false
+	var lvl := (buildings.building(nb.id) as BuildingData).level_data(int(nb.level))
+	if lvl == null or inv().count(&"coin") - lvl.coins < (RESERVE6_OPTIONAL if nb.optional else RESERVE6_NEEDED):
+		return false
+	var gaps := ShedSupply.shortfall(lvl.inputs, inv())
+	var shed := ShedSupply.shed_inventory(tree)
+	if shed != null and buildings.level(&"shed") >= 1:
+		gaps = ShedSupply._shed_lacking(gaps, shed)
+	if gaps.is_empty():
+		return false
+	var wanted := func(item: StringName) -> bool: return gaps.has(item) and inv().count(item) < int(lvl.inputs.get(item, 0))
+	var did := false
+	if expansion.is_unlocked(&"quarry"):
+		did = _gather_at(QUARRY_NODES, &"bruch", wanted) or did
+	if expansion.is_unlocked(&"bruch"):
+		did = _gather_at(BRUCH_NODES, &"bruch", wanted) or did
+	if player.tool_tier(&"axe") >= 1:
+		did = _gather_at(SCHLAG_ALDERS, &"schlag", wanted) or did
+	_t("gathered for %s %d: gaps %s → %s" % [nb.id, nb.level, str(gaps), str(ShedSupply.shortfall(lvl.inputs, inv()))])
+	return did
+
+
+func _try_build(nb: Dictionary) -> bool:
 	var id: StringName = nb.id
 	var site := world.get_node("Entities/site_" + String(id)) as BuildingSite
 	var next := BuildingRules.next_level(site.building_data(), buildings.level(id))
@@ -572,8 +738,10 @@ func _build6() -> bool:
 		return false
 	var reserve := RESERVE6_OPTIONAL if nb.optional else RESERVE6_NEEDED
 	if inv().count(&"coin") - next.coins < reserve:
+		_note_wait(id, "coins %d < %d + %d" % [inv().count(&"coin"), next.coins, reserve])
 		return false
 	if not _fits(next.minutes + WALK_MINUTES):
+		_note_wait(id, "no time")
 		return false
 	# Shed 1: take what is missing out of the shed by hand (chest panel); shed ≥ 2: the panel's fetch.
 	var gaps := ShedSupply.shortfall(next.inputs, inv())
@@ -582,6 +750,7 @@ func _build6() -> bool:
 		gaps = ShedSupply.shortfall(next.inputs, inv())
 	var shed := ShedSupply.shed_inventory(tree)
 	if not gaps.is_empty() and (buildings.level(&"shed") < 2 or shed == null or not ShedSupply._shed_lacking(gaps, shed).is_empty()):
+		_note_wait(id, "lacks %s" % str(gaps))
 		return false
 	_to_room(&"")
 	_go(&"hut")
@@ -616,13 +785,43 @@ func _build6() -> bool:
 
 func _on_upgraded(id: StringName, level: int) -> void:
 	level_days["%s%d" % [id, level]] = TimeManager.day
+	_t("built %s %d (coins %d)" % [id, level, inv().count(&"coin")])
+
+
+func _stock_text(i: Inventory) -> String:
+	if i == null:
+		return "–"
+	var parts := PackedStringArray()
+	for id: StringName in ChestTransfer.item_ids(i):
+		parts.append("%s %d" % [id, i.count(id)])
+	return ", ".join(parts)
+
+
+func _hut_chest() -> Inventory:
+	var chest := tree.get_first_node_in_group(HutInterior.HUT_GROUP).get_node_or_null("Entities/chest") as Chest
+	return chest.storage if chest != null else null
+
+
+var _waits: Dictionary = {}
+
+
+## One trace line per day and building why it waits.
+func _note_wait(id: StringName, why: String) -> void:
+	var key := "%d%s%s" % [TimeManager.day, id, why.substr(0, 5)]
+	if not _waits.has(key):
+		_waits[key] = true
+		_t("waits %s: %s" % [id, why])
+
+
+func _t(what: String) -> void:
+	trace6.append("d%d %s %s" % [TimeManager.day, TimeManager.format_clock(), what])
 
 
 # --- the shed -----------------------------------------------------------------------------------
 
 ## Evening: stone and wood beyond the next days' needs into the shed (chest panel, ChestTransfer).
-func _store_surplus6() -> void:
-	if not p6_open() or buildings.level(&"shed") < 1 or not _fits(2 * WALK_MINUTES):
+func _store_surplus6(now: bool = false) -> void:
+	if not p6_open() or buildings.level(&"shed") < 1 or not _fits(2 * WALK_MINUTES) or player.carried_id != "":
 		return
 	var moves := {}
 	for id: StringName in [&"stone", &"wood", &"workstone", &"clay"]:
@@ -772,9 +971,22 @@ func _devotions6() -> bool:
 	if flags.devote == &"calm" and not GameState.has_flag(&"roof_and_earth_complete"):
 		return false
 	if inv().count(rites.get_config().candle_item) == 0 or player.carried_id != "" or _catafalque().occupant() != "":
+		_note_wait(&"devotion", "candles %d, carrying %s, catafalque %s" % [inv().count(&"altar_candle"), player.carried_id, _catafalque().occupant()])
 		return false
+	# The candles may not starve the plan: the next upgrade's coins (+ reserve) stay in the purse.
+	var nb := _next_build()
+	if not nb.is_empty() and not GameState.has_flag(&"roof_and_earth_complete"):
+		var lvl := (buildings.building(nb.id) as BuildingData).level_data(int(nb.level))
+		if lvl != null and inv().count(&"coin") < lvl.coins + RESERVE6_NEEDED + OSRIC_CANDLE_PRICE:
+			_note_wait(&"devotion", "coins for %s %d first" % [nb.id, nb.level])
+			return false
 	var pick := _devotion_pick()
 	if pick == "" or not _fits(rites.get_config().devotion_minutes + 2 * WALK_MINUTES):
+		var moods := {}
+		for row: Dictionary in rites.eligible_devotions():
+			var key := "%s/%s" % [row.mood, row.block_reason]
+			moods[key] = int(moods.get(key, 0)) + 1
+		_note_wait(&"devotion", "pick '%s' (%d candles) %s" % [pick, inv().count(&"altar_candle"), str(moods)])
 		return false
 	if not _to_room(&"chapel"):
 		return false
@@ -826,7 +1038,7 @@ func _devotion_pick() -> String:
 
 func _osric_wishes() -> Array[Dictionary]:
 	var out := super._osric_wishes()
-	if not p6_open() or rites.level() < 1 and not _chapel_next():
+	if not p6_open() or rites.level() < 1 and not (_chapel_next() and _chapel_affordable()):
 		return out
 	var budget := inv().count(&"coin")
 	for w: Dictionary in out:
@@ -845,6 +1057,12 @@ func _osric_wishes() -> Array[Dictionary]:
 		budget -= OSRIC_CANDLE_PRICE * take
 		want -= take
 	return out
+
+
+func _chapel_affordable() -> bool:
+	var next := BuildingRules.next_level(buildings.building(&"chapel"), buildings.level(&"chapel"))
+	return next != null and inv().count(&"coin") - next.coins - OSRIC_CANDLE_PRICE >= RESERVE6_NEEDED \
+			and ShedSupply.shortfall(next.inputs, inv()).is_empty()
 
 
 func _chapel_next() -> bool:
@@ -906,17 +1124,55 @@ func _pick_osric(choices: Array[DialogueChoice], wishes: Array[Dictionary], visi
 
 # --- stock --------------------------------------------------------------------------------------
 
-## Phase 5's wants + the next upgrade's inputs + bone boxes + steles.
+## Inputs of every planned upgrade not built yet (the mandatory order, then – after the chapter –
+## the optional levels): the stock the bot gathers and forges towards.
+func _plan_inputs() -> Dictionary:
+	var out := {}
+	var planned := {}
+	var levels: Array = []
+	for id: StringName in flags.order:
+		planned[id] = int(planned.get(id, 0)) + 1
+		if buildings.level(id) < int(planned[id]):
+			levels.append([id, int(planned[id])])
+	if levels.is_empty() and GameState.has_flag(&"roof_and_earth_complete"):
+		for id: StringName in flags.optional:
+			for lvl: int in range(buildings.level(id) + 1, 4):
+				levels.append([id, lvl])
+	for pair: Array in levels:
+		var data := (buildings.building(pair[0]) as BuildingData).level_data(int(pair[1]))
+		if data == null:
+			continue
+		for item: Variant in data.inputs:
+			out[item] = int(out.get(item, 0)) + int(data.inputs[item])
+	return out
+
+
+## Bars still to forge for the plan (bars themselves + bars for the missing fittings).
+func _bars_to_make() -> int:
+	var plan := _plan_inputs()
+	var shed := ShedSupply.shed_inventory(tree)
+	var have_bars := inv().count(&"iron_bar") + (shed.count(&"iron_bar") if shed != null else 0)
+	var have_fit := inv().count(&"iron_fittings") + (shed.count(&"iron_fittings") if shed != null else 0)
+	var fit_missing := maxi(int(plan.get(&"iron_fittings", 0)) - have_fit, 0)
+	return maxi(int(plan.get(&"iron_bar", 0)) - have_bars, 0) + ceili(fit_missing / 2.0)
+
+
+## Phase 5's wants + the plan's inputs + bone boxes + steles (in the shed counts as stocked).
 func _want(item: StringName) -> int:
 	var base := super._want(item)
 	if not p6_open():
 		return base
-	var need := int(_next_inputs().get(item, 0))
+	var need := int(_plan_inputs().get(item, 0))
+	var shed := ShedSupply.shed_inventory(tree)
+	if shed != null:
+		need -= shed.count(item)
 	match item:
 		&"wood":
 			need += 8  # bone boxes, a cross
 		&"stone":
 			need += 8  # two steles
+		&"iron_ore":
+			need = 2 * _bars_to_make()
 	return maxi(base, need)
 
 
@@ -924,15 +1180,30 @@ func _stone_keep6() -> int:
 	return int(_next_inputs().get(&"stone", 0))
 
 
-## Phase 5's forge goals, then bars / fittings for the next upgrade.
+func _charcoal_need() -> int:
+	return super._charcoal_need() + (_bars_to_make() if p6_open() else 0)
+
+
+## Phase 5's forge goals, then bars / fittings: the next wanted upgrade first (its fittings from a
+## bar in hand), then the rest of the plan.
 func _forge_need() -> StringName:
 	var need := super._forge_need()
 	if need != &"" or not p6_open():
 		return need
-	var inputs := _next_inputs()
-	if inv().count(&"iron_bar") < int(inputs.get(&"iron_bar", 0)):
+	for nb: Dictionary in _build_candidates():
+		var lvl := (buildings.building(nb.id) as BuildingData).level_data(int(nb.level))
+		if lvl == null:
+			continue
+		var fit := int(lvl.inputs.get(&"iron_fittings", 0))
+		var bars := int(lvl.inputs.get(&"iron_bar", 0))
+		if inv().count(&"iron_fittings") < fit:
+			return &"fittings" if inv().count(&"iron_bar") > 0 else &"bars"
+		if inv().count(&"iron_bar") < bars:
+			return &"bars"
+	if _bars_to_make() > 0:
 		return &"bars"
-	if inv().count(&"iron_fittings") < int(inputs.get(&"iron_fittings", 0)):
+	var plan := _plan_inputs()
+	if inv().count(&"iron_fittings") < int(plan.get(&"iron_fittings", 0)) and inv().count(&"iron_bar") > int(plan.get(&"iron_bar", 0)):
 		return &"fittings"
 	return &""
 
@@ -961,6 +1232,8 @@ func _visit_niche() -> void:
 	if not _to_room(&"crypt"):
 		return
 	saved_in_crypt = true
+	_visit_pending = false
+	_t("look round the crypt%s" % (" – save → load" if flags.save_in_crypt else ""))
 	if flags.save_in_crypt:
 		await _save_and_load_in_crypt()
 	_to_room(&"")
@@ -1051,17 +1324,21 @@ func _on_chapter(chapter_id: StringName) -> void:
 
 
 func _on_funeral(corpse_id: String, chapel_level: int, fee: int) -> void:
+	_t("service %s at chapel %d, fee %d" % [corpse_id, chapel_level, fee])
 	services.append({"day": TimeManager.day, "corpse": corpse_id, "level": chapel_level, "fee": fee,
 			"mourners": ChapelRules.mourners(chapel_level, rites.get_config())})
 
 
 func _on_devotion(grave_id: String, bonus: int) -> void:
+	_t("devotion %s +%d" % [grave_id, bonus])
 	devotions.append({"day": TimeManager.day, "grave": grave_id, "bonus": bonus})
 
 
 func _on_lifted(grave_id: String) -> void:
+	_t("lifted " + grave_id)
 	lifted_days[grave_id] = TimeManager.day
 
 
 func _on_reinterred(grave_id: String, _count: int) -> void:
+	_t("reinterred " + grave_id)
 	reinterred_days[grave_id] = TimeManager.day

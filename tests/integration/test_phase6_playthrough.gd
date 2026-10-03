@@ -77,12 +77,19 @@ func test_mortician() -> void:
 	assert_true(bot.chapter6_day > 0 and bot.chapter6_day <= 38, "mortician: chapter by day 38 (%d)" % bot.chapter6_day)
 	assert_true(bot.level_days.has("crypt3"), "crypt 3 built")
 	assert_false(bot.mortician_checks.is_empty(), "corpses examined after a night in a niche")
+	var kept := 0
 	for c: Dictionary in bot.mortician_checks:
-		if int(c.lay_minutes) <= 20 * 60:
-			assert_eq(int(c.lost), 0, "%s: no find lost after %d min (fresh %.3f)" % [c.id, c.lay_minutes, c.freshness])
+		# §2.2: the fine traces (cause, min_freshness 0.6) survive while the cold keeps the corpse
+		# „frisch" – no find lost by decay while the formula says ≥ 0.6 (Liegezeit ≤ 20 h at crypt 2).
+		if float(c.freshness) >= 0.6:
+			assert_eq(int(c.lost), 0, "%s: no find lost at freshness %.3f (%d min, crypt %d)" % [c.id, c.freshness, c.lay_minutes, c.crypt])
+			kept += 1
+		if int(c.crypt) >= 3 and float(c.decay_mult) <= 1.0 and int(c.lay_minutes) <= 24 * 60:
+			assert_eq(int(c.lost), 0, "%s: crypt 3 keeps a corpse over night (%d min)" % [c.id, c.lay_minutes])
 		assert_almost(float(c.freshness), float(c.expected), 1e-6, "%s: freshness = CorpseDecay formula" % c.id)
 		if not bool(c.balm):
 			assert_almost(float(c.freshness), float(c.by_hand), 1e-5, "%s: freshness = Σ minutes × cold factor (§2.2)" % c.id)
+	assert_true(kept >= 1, "at least one corpse kept all its finds over night in the cold")
 	print("PLAYTHROUGH6 mortician checks %s · niche stays %s" % [str(bot.mortician_checks), str(bot.niche_stays)])
 
 
@@ -191,6 +198,8 @@ func _play(strategy: StringName, days: int) -> Phase6Bot:
 			bot.services.size(), bot.devotions.size(), str(bot.lifted_days), str(bot.reinterred_days), str(bot.fetched), str(bot.stored),
 			bot.procession_walks])
 	print(bot.table_p6())
+	for line: String in bot.trace6:
+		print("TRACE6 %s %s" % [strategy, line])
 	return bot
 
 

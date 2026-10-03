@@ -145,9 +145,11 @@ func upgrade(building_id: StringName, inv: Inventory) -> bool:
 	_levels[building_id] = next.level
 	if next.coins > 0:
 		GameState.note_coins_spent(next.coins, REASON_BUILDING)
-	apply_levels()
+	# The crypt's state first (cold windows, the table corpse, the passage), then the visuals –
+	# apply_levels refreshes the shelf / passage from the new ossuary state (QA6-06).
 	if building_id == CRYPT:
 		_on_crypt_level(next.level)
+	apply_levels()
 	EventBus.building_upgraded.emit(building_id, next.level)
 	check_goal()
 	return true

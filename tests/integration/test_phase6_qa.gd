@@ -159,6 +159,48 @@ func test_phase6_panels_are_registered_and_drive_the_loop() -> void:
 	assert_eq(rites.devotion_level(grave_id), 1, "devotion through the panel")
 
 
+# --- QA6-07: a service that began fresh enough ends with its fee ------------------------------
+# ChapelRites.hold_service re-checked the freshness at the end of the 45 minutes: a corpse at 0.31
+# when the service began fell below 0.3 during it – no service, the candle kept, the time lost,
+# „Gerade nicht möglich." and a push_warning in normal play (found by the mortician bot).
+
+func test_service_begun_fresh_enough_ends_with_its_fee() -> void:
+	_levels({&"crypt": 1, &"chapel": 1})
+	var id := _corpse_on_catafalque()
+	var record := manager.get_record(id)
+	TimeManager.set_time(TimeManager.day, 600)
+	# Freshness 0.31 now: arrival moved back so that the formula gives just above the minimum.
+	var rate := CorpseDecay.decay_per_hour(record, Database.corpse_tables() as CorpseTables)
+	record.arrival_total_minutes = TimeManager.total_minutes() - int(ceil((1.0 - 0.31) / rate * 60.0))
+	record.last_decay_total = record.arrival_total_minutes
+	manager._decay_record(record, TimeManager.total_minutes())
+	assert_true(record.freshness >= 0.3 and record.freshness < 0.33, "just fresh enough: %.3f" % record.freshness)
+	_stock({&"altar_candle": 1})
+	var coins := player.inventory.count(&"coin")
+	var altar := InteriorRoom.find(tree, &"chapel").get_node("Entities/ChapelAltar") as ChapelAltar
+	altar.interact(player)
+	UIState.clear()
+	altar.request_service()
+	assert_true(record.service_held, "the service is held (freshness at the end %.3f)" % record.freshness)
+	assert_eq(player.inventory.count(&"coin"), coins + 3, "the fee")
+	assert_eq(player.inventory.count(&"altar_candle"), 0, "the candle burnt")
+	assert_false(notes.has(ChapelAltar.TEXT_BUSY), "no „Gerade nicht möglich.\"")
+
+
+# --- QA6-06: an upgrade shows the crypt's new state at once ---------------------------------------
+# Buildings.upgrade refreshed the rooms before Ossuary.on_crypt_level changed the passage, and the
+# SealedPassage / OssuaryShelf were in no group: the walled-up door appeared only one frame later
+# (deferred signal); apply_levels never refreshed them.
+
+func test_crypt_upgrade_shows_the_walled_door_at_once() -> void:
+	_levels({&"crypt": 2})
+	var passage := InteriorRoom.find(tree, &"crypt").get_node("Entities/SealedPassage") as SealedPassage
+	assert_true(passage.is_in_group(&"sealed_passage"), "refreshed by Buildings.apply_levels")
+	assert_true(passage.visible, "the walled-up door right after the upgrade (same frame)")
+	var shelf := InteriorRoom.find(tree, &"crypt").get_node("Entities/OssuaryShelf") as OssuaryShelf
+	assert_true(shelf.is_in_group(&"ossuary_shelf"))
+
+
 # --- helpers ----------------------------------------------------------------------------------
 
 func _bind() -> void:
