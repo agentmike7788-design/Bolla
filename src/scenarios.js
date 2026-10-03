@@ -5,7 +5,8 @@
 //   id/name/desc  key and text for the map selection
 //   level         difficulty 1..4 (dots on the card)
 //   seed          fixed seed, so everyone plays the same map
-//   map           landscape and ores, see DEFAULT_MAP in world.js
+//   map           landscape and ores, see DEFAULT_MAP in world.js; `biome` picks
+//                 look, weather and quirks (see biomes.js)
 //   start         buildings available from the beginning
 //   par           minutes for three stars (twice that for two); `npm run balance`
 //                 estimates play times, par is about 1.6 times that
@@ -77,9 +78,9 @@ export const SCENARIOS = [
     desc: 'Heißer Sand, Kakteen, Kupfer und Kalkstein. Nur wer viele Öfen verteilt, schafft das Drahtziel.',
     level: 2,
     seed: 8128,
-    map: { ores: { copper: 5, stone: 3 }, desert: true, forest: 0.74, rock: 0.4, land: 0.04 },
+    map: { ores: { copper: 5, stone: 3 }, desert: true, biome: 'desert', forest: 0.74, rock: 0.4, land: 0.04 },
     start: ['drill', 'belt', 'storage', 'furnace'],
-    par: 12,
+    par: 13,
     missions: [
       {
         name: 'Kupferrausch',
@@ -146,6 +147,48 @@ export const SCENARIOS = [
         desc: 'Die Insel exportiert: 20 Stahlträger in einer Minute.',
         goals: [{ rate: 'steel', perMin: 20 }],
         reward: { text: 'Die Kohleinsel raucht' },
+      },
+    ],
+  },
+  {
+    id: 'frostFjord',
+    name: 'Frostfjord',
+    desc: 'Schnee, gefrorene Seen und klirrende Kälte. Ohne Strom laufen die Maschinen nur mit 60 %, und Schneestürme bremsen die Bänder.',
+    level: 3,
+    seed: 7311,
+    map: { size: 72, biome: 'snow', ores: { iron: 5, copper: 4, coal: 4, stone: 2 }, land: 0.03, coast: 0.8, forest: 0.6, rock: 0.45, richness: 1.3 },
+    start: ['drill', 'belt', 'storage', 'furnace'],
+    par: 17,
+    missions: [
+      {
+        name: 'Eisige Ankunft',
+        desc: 'Der Frost bremst alles ohne Strom. Grab Kohle und schmilz die ersten Eisenbarren.',
+        goals: [{ deliver: 'ironIngot', count: 25 }, { deliver: 'coal', count: 20 }],
+        reward: { unlocks: ['power', 'pole', 'assembler'], text: 'Kohlekraftwerk, Strommasten, Presse' },
+      },
+      {
+        name: 'Warme Hallen',
+        desc: 'Kohle ins Kraftwerk, Masten zu den Maschinen. Am Netz ist der Frost vergessen und sie laufen doppelt so schnell.',
+        goals: [{ build: 'power', count: 1 }, { powered: 4 }],
+        reward: { unlocks: ['constructor', 'splitter', 'merger'], boosts: { drill: 1.5 }, text: 'Konstruktor, Verteiler, Zusammenführer, Bohrer +50 %' },
+      },
+      {
+        name: 'Über das Eis',
+        desc: 'Die gefrorenen Seen tragen ganze Fabriken. Platten und Draht für die Station.',
+        goals: [{ deliver: 'ironPlate', count: 40 }, { deliver: 'wire', count: 40 }],
+        reward: { boosts: { belt: 1.5, furnace: 1.5 }, text: 'Bänder +50 %, Öfen +50 %' },
+      },
+      {
+        name: 'Polarlicht',
+        desc: 'Schaltkreise und Stahl für die Funkstation. Plane Reserve ein, im Schneesturm laufen die Bänder langsamer.',
+        goals: [{ deliver: 'circuit', count: 25 }, { deliver: 'steel', count: 15 }],
+        reward: { boosts: { power: 1.5, constructor: 1.5 }, text: 'Kraftwerke +50 %, Konstruktor +50 %' },
+      },
+      {
+        name: 'Polarstation',
+        desc: 'Die Station ruft: Schaltkreise und Stahl im Minutentakt, Sturm hin oder her.',
+        goals: [{ rate: 'circuit', perMin: 15 }, { rate: 'steel', perMin: 10 }],
+        reward: { text: 'Die Station leuchtet im Eis' },
       },
     ],
   },
@@ -331,6 +374,48 @@ export const SCENARIOS = [
         desc: 'Das ganze Netz läuft: Schaltkreise im Minutentakt, Züge und Drohnen in Bewegung.',
         goals: [{ rate: 'circuit', perMin: 20 }, { shipped: 400 }],
         reward: { text: 'Alle Signale auf Grün' },
+      },
+    ],
+  },
+  {
+    id: 'volcano',
+    name: 'Glutkessel',
+    desc: 'Eine Vulkaninsel mit reichen Erzen. Dampfende Quellen liefern Strom ohne Kohle, und wenn der Berg ausbricht, regnet es Asche.',
+    level: 4,
+    seed: 6661,
+    map: { size: 76, biome: 'volcano', vents: 9, ores: { iron: 5, copper: 4, coal: 4, stone: 4 }, land: 0.02, coast: 0.8, forest: 0.6, rock: 0.35, richness: 1.7 },
+    start: ['drill', 'belt', 'storage', 'furnace', 'assembler', 'splitter', 'merger', 'pole'],
+    par: 21,
+    missions: [
+      {
+        name: 'Heiße Erde',
+        desc: 'Der Boden ist reich. Schmilz Eisen und Kupfer, solange der Berg ruhig ist. Lava und Vulkan kann man nicht bebauen.',
+        goals: [{ deliver: 'ironIngot', count: 30 }, { deliver: 'copperIngot', count: 30 }],
+        reward: { unlocks: ['geo', 'constructor'], text: 'Erdwärmekraftwerk, Konstruktor' },
+      },
+      {
+        name: 'Erdwärme',
+        desc: 'Setz Erdwärmekraftwerke auf die dampfenden Quellen und Masten zu den Maschinen. Kohle braucht hier niemand.',
+        goals: [{ build: 'geo', count: 2 }, { powered: 6 }],
+        reward: { boosts: { drill: 1.5 }, text: 'Bohrer +50 %' },
+      },
+      {
+        name: 'Vulkanstahl',
+        desc: 'Stahl und Beton für Hallen, die einen Ausbruch aushalten.',
+        goals: [{ deliver: 'steel', count: 30 }, { deliver: 'concrete', count: 30 }],
+        reward: { boosts: { furnace: 2, constructor: 1.5 }, text: 'Öfen ×2, Konstruktor +50 %' },
+      },
+      {
+        name: 'Glutschaltkreise',
+        desc: 'Schaltkreise und Zahnräder. Bei einem Ausbruch liefert die Erdwärme doppelt, nutze den Schub.',
+        goals: [{ deliver: 'circuit', count: 30 }, { deliver: 'gear', count: 30 }],
+        reward: { boosts: { belt: 1.6, power: 1.5 }, text: 'Bänder +60 %, Kraftwerke +50 %' },
+      },
+      {
+        name: 'Feuerberg',
+        desc: 'Der Vulkan arbeitet für dich: Schaltkreise und Stahl im Minutentakt.',
+        goals: [{ rate: 'circuit', perMin: 25 }, { rate: 'steel', perMin: 20 }],
+        reward: { text: 'Der Berg glüht, die Fabrik auch' },
       },
     ],
   },

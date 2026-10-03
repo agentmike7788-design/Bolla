@@ -4,7 +4,7 @@ import { generateWorld, ORES, TERRAIN, MAP_SIZE, TILE } from './world.js';
 import { TRAIN_CARGO, STATION_CAP, TRAIN_SPEED } from './trains.js';
 import { buildWorldMeshes, createSea } from './scenery.js';
 import { createCameraRig } from './camera.js';
-import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, RECIPES, CONSTRUCTOR_RECIPES, REFINERY_RECIPES, recipesOf, isMachine, usesPower, POWER_USE, POWER_SPEED, POWER_OUTPUT, WIRE_REACH, PUMP_RATE, SILO_STAGES, siloReady } from './factory.js';
+import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, RECIPES, CONSTRUCTOR_RECIPES, REFINERY_RECIPES, recipesOf, isMachine, usesPower, POWER_USE, POWER_SPEED, POWER_OUTPUT, GEO_OUTPUT, WIRE_REACH, PUMP_RATE, SILO_STAGES, siloReady } from './factory.js';
 import { RESEARCH } from './research.js';
 import { createResearchView } from './researchView.js';
 import { createFactoryView, createGhost } from './buildings.js';
@@ -19,6 +19,9 @@ import { createTutorial, tutorialDone, TUTORIAL_SEED } from './tutorial.js';
 import { createLaunch } from './launch.js';
 import { createStatsView } from './statsView.js';
 import { DRONES_PER_PORT, DRONE_RANGE, DRONE_SPEED, PROVIDER_CAP, REQUEST_AMOUNTS } from './drones.js';
+import { BIOMES, biomeOf, weatherEffect } from './biomes.js';
+import { createWeatherView } from './weatherView.js';
+import { createAchievements } from './achievements.js';
 import './style.css';
 
 const canvas = document.getElementById('scene');
@@ -80,6 +83,7 @@ const effects = createEffects({
   },
 });
 scene.add(effects.group);
+const weatherView = createWeatherView({ scene, effects });
 const dayNight = createDayNight({ scene, renderer, sun, hemi });
 let zoom = 40; // camera distance to the point it looks at
 const camRight = new THREE.Vector3();
@@ -93,20 +97,28 @@ let missions = null; // mission progress, null in the free game
 let slotId = null; // save slot of the running game, see save.js
 let savedOnce = false; // an empty new game is only saved once something happened
 
-// Start a map: the free game with a random (or given) seed, or a scenario.
-function startGame(next, seed = Math.floor(Math.random() * 99999)) {
+// Start a map: the free game with a random (or given) seed and a biome, or a scenario.
+function startGame(next, seed = Math.floor(Math.random() * 99999), biome = 'meadow') {
   leaveGame();
   tutorial.stop();
   scenario = next;
   slotId = newSaveId();
   savedOnce = false;
-  if (scenario.free) loadWorld(seed);
+  if (scenario.free) loadWorld(seed, null, null, biome);
   else loadWorld(scenario.seed, scenario);
   rig.controls.target.set(0, 0, 0);
   camera.position.set(0, 34, 34);
 }
 
-function loadWorld(seed, mapScenario = null, saved = null) {
+// Landscape of the free game in each biome.
+const FREE_MAPS = {
+  meadow: {},
+  desert: { biome: 'desert', desert: true, forest: 0.72 },
+  snow: { biome: 'snow' },
+  volcano: { biome: 'volcano', vents: 10, land: 0.02, richness: 1.3 },
+};
+
+function loadWorld(seed, mapScenario = null, saved = null, biome = 'meadow') {
   if (meshes) {
     scene.remove(meshes.group);
     meshes.group.traverse((o) => {
@@ -114,10 +126,15 @@ function loadWorld(seed, mapScenario = null, saved = null) {
       o.material?.dispose();
     });
   }
-  world = generateWorld(seed, mapScenario?.map);
+  world = generateWorld(seed, mapScenario?.map ?? FREE_MAPS[biome] ?? {});
   setExtent(world.size);
   meshes = buildWorldMeshes(world);
   scene.add(meshes.group);
+  const look = biomeOf(world.biome);
+  sea.setColor(look.sea ?? 0x2f8fb3);
+  dayNight.setBiome(look);
+  weatherView.setWorld(world);
+  stormSeen = null;
   factory = createFactory(world, { start: mapScenario?.start });
   missions = mapScenario ? createMissions(mapScenario, factory) : null;
   if (saved) {
@@ -129,7 +146,7 @@ function loadWorld(seed, mapScenario = null, saved = null) {
   effects.clear();
   shapesDirty = true;
   if (tool) setTool(tool);
-  document.getElementById('seed').textContent = mapScenario ? mapScenario.name : `#${seed}`;
+  document.getElementById('seed').textContent = `${mapScenario ? mapScenario.name : `#${seed}`}${world.biome !== 'meadow' ? ` · ${look.icon} ${look.name}` : ''}`;
   document.getElementById('new-map').hidden = !!mapScenario;
   renderLegend();
   researchView.setEnabled(!missions);
@@ -241,7 +258,7 @@ const mw = (n) => `${n.toLocaleString('de-DE', { maximumFractionDigits: 1 })} MW
 // Shown once power is unlocked: how much of the plants' output the machines use.
 function renderPower() {
   const s = factory.powerSummary();
-  const unlocked = factory.research.unlocked.has('power');
+  const unlocked = factory.research.unlocked.has('power') || factory.research.unlocked.has('geo');
   powerPanel.hidden = !unlocked && !s.nets;
   if (powerPanel.hidden) return;
   const out = s.consumers > 0 && s.capacity <= 0;
@@ -251,13 +268,15 @@ function renderPower() {
   powerFill.style.width = `${s.capacity ? Math.min(100, (s.demand / s.capacity) * 100) : out ? 100 : 0}%`;
   if (!s.nets) {
     powerState.textContent = 'kein Netz';
-    powerText.textContent = 'Kraftwerk bauen, Kohle hineinleiten und Masten bis zu den Maschinen setzen.';
+    powerText.textContent = factory.research.unlocked.has('power')
+      ? 'Kraftwerk bauen, Kohle hineinleiten und Masten bis zu den Maschinen setzen.'
+      : 'Erdwärmekraftwerk (Y) auf eine dampfende Quelle setzen und Masten bis zu den Maschinen.';
   } else if (out) {
     powerState.textContent = s.plants ? 'keine Kohle' : 'kein Kraftwerk';
     powerText.textContent = s.plants ? 'Die Kraftwerke brauchen Kohle vom Band. Die Maschinen am Netz stehen still.' : 'Im Netz fehlt ein Kraftwerk. Die Maschinen am Netz stehen still.';
   } else {
     powerState.textContent = short ? `Mangel · ${Math.round(s.satisfaction * 100)} %` : `${Math.round((s.demand / Math.max(s.capacity, 0.001)) * 100)} % Last`;
-    powerText.textContent = `Bedarf ${mw(s.demand)} von ${mw(s.capacity)} · ${s.consumers} Maschinen am Netz · ${s.fuel} Kohle im Kraftwerk`;
+    powerText.textContent = `Bedarf ${mw(s.demand)} von ${mw(s.capacity)} · ${s.consumers} Maschinen am Netz · ${s.geo ? `${s.geo} Erdwärme${s.plants > s.geo ? `, ${s.fuel} Kohle` : ''}` : `${s.fuel} Kohle im Kraftwerk`}`;
   }
 }
 
@@ -421,11 +440,19 @@ function openMaps() {
     const meta = s.free
       ? 'Forschungsbaum · Zufallskarte'
       : `${s.missions.length} Missionen · ${'●'.repeat(s.level)}${'○'.repeat(4 - s.level)}${r ? ` · <span class="best">${starText(r.stars)} ${clock(r.time)}</span>` : ''}`;
+    const look = biomeOf(s.map?.biome);
+    const biomes = s.free
+      ? `<span class="map-biomes">${Object.entries(BIOMES)
+          .map(([id, b]) => `<span role="button" tabindex="0" class="biome-pick" data-biome="${id}" title="${b.desc}">${b.icon} ${b.name}</span>`)
+          .join('')}</span>`
+      : s.map?.biome
+        ? `<span class="map-biome" title="${look.desc}">${look.icon} ${look.name}</span>`
+        : '';
     return `<button type="button" class="map-card${s === scenario ? ' current' : ''}" data-map="${s.id}">
       <span class="map-name">${s.name}${s === scenario ? ' <span class="tag">Läuft</span>' : ''}</span>
       <span class="map-meta">${meta}</span>
       <span class="map-desc">${s.desc}</span>
-      <span class="map-ores">${oreSwatches(s)}</span>
+      <span class="map-ores">${oreSwatches(s)}${biomes}</span>
     </button>`;
   }).join('');
   mapsMenu.hidden = false;
@@ -454,7 +481,9 @@ mapsList.addEventListener('click', (e) => {
   const card = e.target.closest('[data-map]');
   if (!card) return;
   mapsMenu.hidden = true;
-  startGame(scenarioById(card.dataset.map));
+  // On the free game's card a biome can be picked; the card itself is grassland.
+  const biome = e.target.closest('[data-biome]')?.dataset.biome ?? 'meadow';
+  startGame(scenarioById(card.dataset.map), undefined, biome);
   if (menu.isOpen) closeMenu();
 });
 for (const menu of [mapsMenu, winMenu]) {
@@ -515,7 +544,7 @@ const thumbCanvas = Object.assign(document.createElement('canvas'), { width: 240
 let autosaveTimer = 0;
 let savedTimer = 0;
 
-const gameName = () => (scenario.free ? `Freies Spiel #${world.seed}` : scenario.name);
+const gameName = () => (scenario.free ? `Freies Spiel #${world.seed}${world.biome !== 'meadow' ? ` · ${biomeOf(world.biome).name}` : ''}` : scenario.name);
 
 // A small picture of the map for the save list, taken right after a render.
 function thumbnail() {
@@ -537,6 +566,7 @@ function saveGame({ manual = false, quiet = false } = {}) {
     v: SAVE_VERSION,
     scenario: scenario.id,
     seed: world.seed,
+    biome: world.biome,
     factory: factory.save(),
     missions: missions?.save() ?? null,
     dayTime: dayNight.time,
@@ -574,7 +604,7 @@ function loadGame(id) {
   scenario = next;
   slotId = id;
   savedOnce = true;
-  loadWorld(data.seed, next.free ? null : next, data);
+  loadWorld(data.seed, next.free ? null : next, data, data.biome ?? 'meadow');
   dayNight.setTime(data.dayTime ?? 0.02);
   if (data.camera) {
     camera.position.fromArray(data.camera.position);
@@ -907,11 +937,13 @@ function pipeNote(b) {
 
 // The power part of a machine's info line.
 function powerNote(b) {
-  if (!b.net) return ' · ohne Strom (Grundtempo)';
+  if (!b.net) return factory.frost < 1 ? ` · ohne Strom: Frost, nur ${Math.round(factory.frost * 100)} %` : ' · ohne Strom (Grundtempo)';
   const pct = Math.round(b.net.satisfaction * 100);
   return ` · Strom ${POWER_USE[b.type]} MW, ${pct < 100 ? `nur ${pct} %` : `Tempo ×${POWER_SPEED}`}`;
 }
 const itemList = (keys) => keys.map((k) => ITEMS[k].name).join(', ');
+
+const TERRAIN_NOTE = { ice: 'Gefrorener See: bebaubar', lava: 'Glühende Lava: nicht bebaubar', cone: 'Der Vulkan: nicht bebaubar' };
 
 function showTile(tile) {
   hovered = tile;
@@ -996,6 +1028,12 @@ function showTile(tile) {
     tileDetail.textContent = building.net
       ? `${state} · ${mw(out)} · Netz: ${mw(building.net.demand)} Bedarf · Brennstoff ${building.fuel}`
       : `Nicht am Netz: Strommast in die Nähe setzen · Brennstoff ${building.fuel} (Kohle 1, Treibstoff 3)`;
+  } else if (building?.type === 'geo') {
+    tileName.textContent = 'Erdwärmekraftwerk';
+    const out = GEO_OUTPUT * factory.research.stats.power * weatherEffect(factory.weather, 'geo');
+    tileDetail.textContent = building.net
+      ? `${building.state === 'work' ? 'Liefert Strom' : 'Bereit, nichts braucht Strom'} · ${mw(out)} ohne Kohle · Netz: ${mw(building.net.demand)} Bedarf`
+      : `Nicht am Netz: Strommast in die Nähe setzen · ${mw(out)} ohne Kohle`;
   } else if (building?.type === 'pole') {
     tileName.textContent = 'Strommast';
     const net = building.net;
@@ -1028,12 +1066,15 @@ function showTile(tile) {
     tileDetail.textContent = building.received
       ? `${num(building.received)} eingelagert · zuletzt ${ITEMS[building.last].name}`
       : 'Nimmt alles von Bändern auf allen Seiten';
+  } else if (tile.vent && !building) {
+    tileName.textContent = 'Erdwärmequelle';
+    tileDetail.textContent = `Heißer Dampf aus der Tiefe: Platz für ein Erdwärmekraftwerk · Feld ${tile.x}, ${tile.z}`;
   } else if (tile.ore) {
     tileName.textContent = ORES[tile.ore].name;
     tileDetail.textContent = `${tile.amount.toLocaleString('de-DE')} Einheiten · Feld ${tile.x}, ${tile.z}`;
   } else {
     tileName.textContent = terrain.name;
-    tileDetail.textContent = `${terrain.buildable ? 'Bebaubar' : 'Nicht bebaubar'} · Feld ${tile.x}, ${tile.z}`;
+    tileDetail.textContent = `${TERRAIN_NOTE[tile.terrain] ?? (terrain.buildable ? 'Bebaubar' : 'Nicht bebaubar')} · Feld ${tile.x}, ${tile.z}`;
   }
   if (check && !check.ok && check.reason) tileDetail.textContent = check.reason;
   else if (overBelt) tileDetail.textContent = `Ersetzt das Bandstück · Ausgang nach ${DIR_NAMES[building.dir]}`;
@@ -1088,7 +1129,7 @@ const toolButtons = document.querySelectorAll('.tool[data-tool]');
 const DRONE_TOOLS = new Set(['dronePort', 'provider', 'requester']);
 const help = document.getElementById('help');
 const HELP = {
-  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['O P I K', 'Öl'], ['G B Z J', 'Bahn'], ['F V C', 'Drohnen'], ['H', 'Silo'], ['X', 'abreißen'], ['T', 'Forschung'], ['L', 'Statistik'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
+  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['Y', 'Erdwärme'], ['O P I K', 'Öl'], ['G B Z J', 'Bahn'], ['F V C', 'Drohnen'], ['H', 'Silo'], ['X', 'abreißen'], ['T', 'Forschung'], ['L', 'Statistik'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
@@ -1098,6 +1139,7 @@ const HELP = {
   merger: [['Klick', 'Zusammenführer setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   constructor: [['Klick', 'Konstruktor setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Ohne Werkzeug klicken', 'Rezept wählen']],
   power: [['Klick', 'Kraftwerk setzen'], ['Kohle', 'per Band von jeder Seite'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen']],
+  geo: [['Klick auf Quelle', 'Erdwärmekraftwerk setzen'], ['Liefert', `${GEO_OUTPUT} MW ohne Kohle`], ['Mast', 'in die Nähe'], ['Esc', 'fertig']],
   pole: [['Klick / Ziehen', 'Strommasten setzen'], ['Reichweite', '7 Felder'], ['Versorgt', '5×5 Felder'], ['Esc', 'fertig']],
   pump: [['Klick', 'Ölpumpe auf Ölfeld setzen'], ['Strom', 'Mast in die Nähe'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen']],
   pipe: [['Ziehen', 'Rohre verlegen'], ['Verbindet', 'alles daneben'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen']],
@@ -1299,7 +1341,7 @@ window.addEventListener('keydown', (e) => {
   if (key === 'n') return dayNight.skipAhead();
   if (key === 't' && missions) return showToast('Missionskarte', 'Hier schalten Missionen neue Gebäude frei, nicht der Forschungsbaum.');
   const numbered = /^[0-9]$/.test(key) && ['drill', 'belt', 'storage', 'furnace', 'assembler', 'splitter', 'merger', 'constructor', 'power', 'pole'][(Number(key) + 9) % 10];
-  const oilKey = { o: 'pump', p: 'pipe', i: 'refinery', k: 'tank', g: 'rail', b: 'station', z: 'train', j: 'signal', f: 'dronePort', v: 'provider', c: 'requester', h: 'silo' }[key];
+  const oilKey = { y: 'geo', o: 'pump', p: 'pipe', i: 'refinery', k: 'tank', g: 'rail', b: 'station', z: 'train', j: 'signal', f: 'dronePort', v: 'provider', c: 'requester', h: 'silo' }[key];
   if (numbered) setTool(numbered);
   else if (oilKey) setTool(oilKey);
   else if (key === 'x' || key === 'delete') setTool('remove');
@@ -1319,10 +1361,11 @@ function resize() {
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
   effects.resize(h * renderer.getPixelRatio(), camera.fov);
+  weatherView.resize(h * renderer.getPixelRatio(), camera.fov);
 }
 window.addEventListener('resize', resize);
 
-document.getElementById('new-map').addEventListener('click', () => startGame(scenarioById('free')));
+document.getElementById('new-map').addEventListener('click', () => startGame(scenarioById('free'), undefined, world.biome));
 document.getElementById('stats-open').addEventListener('click', () => stats.toggle());
 
 // --- Statistics and the rocket launch -------------------------------------------
@@ -1358,6 +1401,61 @@ function showRocketWin() {
   winMenu.hidden = false;
 }
 
+// --- Weather and achievements ------------------------------------------------------
+
+const weatherLabel = document.getElementById('weather');
+let stormSeen = null; // 'warned' or 'raging' for the storm the HUD last announced
+
+// The biome's weather in the top bar, with a toast when a storm is coming and when it breaks.
+function renderWeather() {
+  const w = factory.weather;
+  weatherLabel.hidden = !w.storm;
+  if (!w.storm) return;
+  const icon = biomeOf(factory.biome).icon;
+  const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+  weatherLabel.classList.toggle('raging', w.active);
+  weatherLabel.textContent = w.active ? `${icon} ${w.storm.name}! ${w.storm.text} · ${mmss(w.left)}` : `${icon} ${w.storm.name} in ${mmss(w.next)}`;
+  weatherLabel.title = biomeOf(factory.biome).desc;
+  if (inTitle || menu.isOpen) return;
+  if (w.active && stormSeen !== 'raging') {
+    if (stormSeen === 'warned') {
+      showToast(`${w.storm.name}!`, `${w.storm.text} für ${Math.round(w.storm.lasts)} Sekunden.`);
+      audio.play.storm(factory.biome);
+    }
+    stormSeen = 'raging';
+  } else if (!w.active && w.next <= 15 && stormSeen !== 'warned') {
+    showToast(`${w.storm.name} zieht auf`, `In ${Math.ceil(w.next)} Sekunden: ${w.storm.text}.`);
+    stormSeen = 'warned';
+  } else if (!w.active && w.next > 15) stormSeen = null;
+}
+
+// Earned achievements pop up one after another in their own golden toast.
+const achievementToast = document.getElementById('achievement');
+const achievementQueue = [];
+let achievementTimer = 0;
+const achievements = createAchievements({
+  onUnlock(a) {
+    achievementQueue.push(a);
+    if (achievementQueue.length === 1) showAchievement();
+  },
+});
+function showAchievement() {
+  const a = achievementQueue[0];
+  if (!a) return;
+  achievementToast.innerHTML = `<span class="ach-icon" aria-hidden="true">${a.icon}</span><span><small>Erfolg freigeschaltet</small><strong>${a.name}</strong><span>${a.desc}</span></span>`;
+  achievementToast.hidden = false;
+  achievementToast.classList.remove('pop');
+  void achievementToast.offsetWidth;
+  achievementToast.classList.add('pop');
+  audio.play.achievement();
+  clearTimeout(achievementTimer);
+  achievementTimer = setTimeout(() => {
+    achievementQueue.shift();
+    achievementToast.hidden = true;
+    if (achievementQueue.length) setTimeout(showAchievement, 300);
+  }, 3800);
+}
+
 // The simulation runs in fixed steps so belts behave the same at any frame rate.
 const STEP = 1 / 60;
 let pending = 0;
@@ -1376,6 +1474,10 @@ renderer.setAnimationLoop(() => {
   if (launch.active) launch.update(dt);
   else rig.update(dt);
   sea.update(timer.getElapsed());
+  const weather = factory.weather;
+  const erupting = weather.storm && weather.storm.effects.geo ? weather.strength : 0;
+  meshes.update(timer.getElapsed(), erupting);
+  dayNight.setStorm(weather.strength);
   if (!paused) pending += dt;
   while (pending >= STEP) {
     factory.tick(STEP);
@@ -1394,6 +1496,7 @@ renderer.setAnimationLoop(() => {
   factoryView.setNight(dayNight.night);
   factoryView.update(dt, elapsed, factory);
   if (graphics.particles) effects.update(paused ? 0 : dt, factory, focus, zoom, dayNight.night);
+  weatherView.update(paused ? 0 : dt, elapsed, focus, weather, dayNight.night, factory, graphics.particles && !paused);
   audio.setNight(dayNight.night);
   soundTimer += dt;
   if (soundTimer > 0.1) {
@@ -1409,6 +1512,7 @@ renderer.setAnimationLoop(() => {
         hornTrips.set(t, t.trips);
       }
     }
+    renderWeather();
     clockLabel.textContent = dayNight.clock();
     clockIcon.textContent = dayNight.night > 0.5 ? '☾' : '☀';
   }
@@ -1425,6 +1529,7 @@ renderer.setAnimationLoop(() => {
     legendTimer = 0;
     renderLegend();
     if (!launch.active) checkMissions();
+    if (!inTitle && !launch.active) achievements.check({ factory, scenario, missions, night: dayNight.night });
     renderProgress();
     stats.update();
     if (factory.derailed.length) {
@@ -1447,4 +1552,4 @@ resize();
 openTitle();
 
 // Handle for poking at the game from the browser console while developing.
-if (import.meta.env.DEV) window.bolla = { closeMenu, launch, stats, camera, rig, tutorial, renderer, scene, factoryView, startGame, saveGame, loadGame, menu, dayNight, effects, audio, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get meshes() { return meshes; }, get factory() { return factory; }, get missions() { return missions; } };
+if (import.meta.env.DEV) window.bolla = { closeMenu, achievements, weatherView, launch, stats, camera, rig, tutorial, renderer, scene, factoryView, startGame, saveGame, loadGame, menu, dayNight, effects, audio, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get meshes() { return meshes; }, get factory() { return factory; }, get missions() { return missions; } };

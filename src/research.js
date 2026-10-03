@@ -84,6 +84,14 @@ export const RESEARCH = [
     boosts: { power: 1.5 },
   },
   {
+    id: 'geothermal',
+    name: 'Erdwärme',
+    desc: 'Erdwärmekraftwerk: 12 MW ohne Kohle, direkt auf einer dampfenden Quelle. Quellen gibt es nur auf Vulkaninseln.',
+    cost: { ironPlate: 40, concrete: 40, wire: 30 },
+    requires: ['electricity'],
+    unlocks: ['geo'],
+  },
+  {
     id: 'firstFactory',
     name: 'Erste Fabrik',
     desc: 'Das erste Spielziel: eine Fabrik, die schmilzt und presst.',

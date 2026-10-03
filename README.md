@@ -14,7 +14,7 @@ npm run build   # baut das Spiel nach dist/
 
 Steuerung: linke Maus verschieben, rechte Maus oder Q/E drehen, Mausrad zoomen, WASD bewegen.
 
-Bauen: `1` Bohrer, `2` Förderband, `3` Lager, `4` Schmelzofen, `5` Presse, `6` Verteiler, `7` Zusammenführer, `8` Konstruktor, `9` Kohlekraftwerk, `0` Strommast, `O` Ölpumpe, `P` Rohr, `I` Raffinerie, `K` Öltank, `G` Gleis, `B` Bahnhof, `Z` Zug, `J` Signal, `F` Drohnenhafen, `V` Angebotskiste, `C` Anfragekiste, `H` Raketensilo, `X` Abriss, `T` Forschungsbaum, `L` Statistik, `R` dreht das nächste Gebäude (ohne Werkzeug: das Gebäude unter der Maus), `Esc` beendet den Bau-Modus. Bänder verlegt man durch Ziehen mit der linken Maus; sie folgen der Maus und biegen automatisch ab. Ein Klick mit einer Maschine (oder Lager, Verteiler …) auf ein Bandstück ersetzt es, die Maschine übernimmt die Laufrichtung des Bands. Ein Bohrer legt sein Erz auf das Band vor seinem Ausgang. Am Ende eines Bands staut sich das Erz, und der Bohrer wartet.
+Bauen: `1` Bohrer, `2` Förderband, `3` Lager, `4` Schmelzofen, `5` Presse, `6` Verteiler, `7` Zusammenführer, `8` Konstruktor, `9` Kohlekraftwerk, `0` Strommast, `O` Ölpumpe, `P` Rohr, `I` Raffinerie, `K` Öltank, `G` Gleis, `B` Bahnhof, `Z` Zug, `J` Signal, `F` Drohnenhafen, `V` Angebotskiste, `C` Anfragekiste, `Y` Erdwärmekraftwerk, `H` Raketensilo, `X` Abriss, `T` Forschungsbaum, `L` Statistik, `R` dreht das nächste Gebäude (ohne Werkzeug: das Gebäude unter der Maus), `Esc` beendet den Bau-Modus. Bänder verlegt man durch Ziehen mit der linken Maus; sie folgen der Maus und biegen automatisch ab. Ein Klick mit einer Maschine (oder Lager, Verteiler …) auf ein Bandstück ersetzt es, die Maschine übernimmt die Laufrichtung des Bands. Ein Bohrer legt sein Erz auf das Band vor seinem Ausgang. Am Ende eines Bands staut sich das Erz, und der Bohrer wartet.
 
 Maschinen nehmen Teile von Bändern an jeder Seite außer ihrem Ausgang an und geben ihr Produkt nach vorn ab (Pfeil beim Bauen):
 - Schmelzofen: Eisenerz → Eisenbarren, Kupfererz → Kupferbarren.
@@ -36,18 +36,29 @@ Logistikdrohnen: Ein Drohnenhafen (`F`, 2 MW) hält vier Drohnen und deckt 25 ×
 
 Raketensilo: Das große Endziel. Das Silo steht auf 3 × 3 freien Feldern und nimmt Teile von Bändern an jeder Seite an. Gebaut wird es in vier Etappen: Startrampe (120 Beton, 60 Stahlträger), Raketenrumpf (100 Stahlträger, 60 Kunststoff, 40 Zahnräder), Bordcomputer (30 Prozessoren, 60 Schaltkreise) und Betankung (80 Treibstoff). Sind die Teile einer Etappe drin, wird sie gebaut; das dauert ein paar Sekunden, am Stromnetz (4 MW) halb so lang. Man sieht Baustelle, Startturm, Rumpf und Spitze wachsen; eine betankte Rakete dampft. Ein Klick ohne Werkzeug zeigt die Etappen, und wenn alles fertig ist, startet „Rakete starten“ den Countdown: Die Kamera umkreist die Rampe, bei null zünden die Triebwerke, Rauch rollt über den Boden, und die Kamera folgt der Rakete vom Boden aus in den Himmel (`Esc` überspringt). Danach steht die Startrampe weiter, die nächste Rakete braucht Rumpf, Bordcomputer und Treibstoff neu. Rechts oben zeigt „Rakete“ den Stand. Im freien Spiel schaltet „Raumfahrt“ (nach „Ölzeitalter“ und „Schnellzüge“) das Silo frei, der erste Start ist das Ende des Spiels.
 
+Biome: Jede Karte liegt in einem Biom mit eigenem Look und eigenen Regeln. Oben in der Leiste steht, wann der nächste Sturm kommt; 15 Sekunden vorher warnt eine Meldung, während er tobt, schließt sich der Nebel und die Leiste blinkt orange.
+- Grasland: Wiesen, Wälder, Felsen, kein Wetter.
+- Wüste: Sand und Kakteen. Sandstürme (alle gut vier Minuten, 35 Sekunden lang) bremsen die Bohrer um 40 %.
+- Schnee: Schnee, verschneite Nadelwälder und gefrorene Seen, auf denen man bauen kann. Frost: ohne Strom laufen Maschinen nur mit 60 %. Schneestürme (alle fünf Minuten, 40 Sekunden) bremsen die Bänder um 40 %, dazu fällt immer ein wenig Schnee.
+- Vulkan: Asche, verkohlte Bäume, Basalt, glühende Lavaströme und ein rauchender Vulkan in der Mitte; Lava und Vulkan kann man nicht bebauen. Dampfende Erdwärmequellen tragen das Erdwärmekraftwerk (`Y`, 12 MW ohne Kohle). Bei einem Ausbruch (alle gut fünf Minuten, 30 Sekunden) spuckt der Berg glühende Brocken, Asche regnet, die Bohrer laufen 25 % langsamer und die Erdwärme liefert doppelt.
+Im freien Spiel wählt man das Biom auf der Karte „Freies Spiel“ in der Kartenauswahl; „Erdwärme“ im Forschungsbaum (nach „Elektrizität“) schaltet das Kraftwerk frei. Neue Biome kommen in `src/biomes.js`, ihr Gelände in `src/world.js`.
+
+Erfolge: 27 Erfolge für alle Spiele in diesem Browser, vom ersten Bohrer über 1.000 geflogene Teile bis zu jeder geschafften Karte, dazu ein geheimer. Neue Erfolge erscheinen oben mit Glockenspiel, die ganze Liste steht im Haupt- und im Pausenmenü unter „Erfolge“. Die Liste steht in `src/achievements.js`.
+
 Statistik: `L` (oder „Statistik“ oben) öffnet ein Fenster mit einem Liniendiagramm: was die Fabrik pro Minute herstellt oder verbraucht, je Rohstoff und Teil, über die letzten zehn Minuten oder die letzte Stunde, dazu Leistung und Bedarf aller Stromnetze. Die Liste daneben zeigt für jedes Teil hergestellt, verbraucht und die Bilanz pro Minute; ein Klick blendet eine Linie aus oder ein, die Maus über dem Diagramm zeigt die Werte zu jedem Zeitpunkt. Als verbraucht zählt, was Maschinen, Kraftwerke, Raffinerien, das Silo und die Forschung aufbrauchen. Die Statistik wird mitgespeichert.
 
 Forschung: Oben links steht die nächste Forschung, `T` öffnet den ganzen Baum. Bezahlt wird mit Teilen aus dem Lager. Schmelzen schaltet den Schmelzofen frei, Pressen die Presse; dazu gibt es schnellere Bänder, Bohrer und Öfen. „Erste Fabrik“ (40 Platten, 40 Draht, 25 Beton) ist das erste Spielziel. Danach geht es weiter: Logistik (Verteiler, Zusammenführer), Elektrizität (Kraftwerk, Masten), Konstruktor, Dampfturbinen, Hydraulik, Tiefbohrer und Magnetbänder; „Meisterfabrik“ (120 Schaltkreise, 100 Stahlträger, 100 Zahnräder) ist das große Ziel. Bänder und Bohrer wechseln mit jeder Tempo-Forschung die Farbe. Neue Einträge kommen in `src/research.js`; der Baum ordnet sie selbst nach ihren Voraussetzungen an.
 
-Karten und Missionen: Unter „Neues Spiel“ im Hauptmenü (und im Spiel mit `M` oder dem Knopf „Karten“) wählt man eine Karte. Im freien Spiel gibt es eine Zufallsinsel mit allen Erzen und den Forschungsbaum. Dazu kommen sieben Missionskarten mit eigener Landschaft und nur bestimmten Erzen:
+Karten und Missionen: Unter „Neues Spiel“ im Hauptmenü (und im Spiel mit `M` oder dem Knopf „Karten“) wählt man eine Karte. Im freien Spiel gibt es eine Zufallsinsel mit allen Erzen und den Forschungsbaum. Dazu kommen zehn Missionskarten mit eigener Landschaft und nur bestimmten Erzen:
 - Eisenberge (Eisen, Kalkstein): der Einstieg vom ersten Bohrer bis zum Zahnradwerk.
-- Kupferwüste (Kupfer, Kalkstein): Wüste mit Kakteen, am Ende 90 Draht pro Minute.
+- Kupferwüste (Kupfer, Kalkstein): Wüste mit Kakteen und Sandstürmen, am Ende 90 Draht pro Minute.
 - Kohleinsel (Kohle, Eisen): kleine Insel, wenig Platz, ein Stahlwerk.
+- Frostfjord (Schnee, 72 × 72): Frost bremst alles ohne Strom, also schnell ein Kohlekraftwerk; Fabriken auf dem Eis, Schaltkreise und Stahl im Schneesturm.
 - Großes Festland (alle Erze): die Meisterprüfung mit Schaltkreisen und Stahl.
 - Ölküste (alle Erze und Öl): Strom, Pumpen, Rohre und Raffinerie bis zur Prozessorfabrik.
 - Weites Land (große Karte, 96 × 96): Eisen und Kohle im Nordwesten, Kupfer und Kalkstein im Südosten; Bahnhöfe, Gleise und Züge verbinden beides.
 - Drehkreuz (88 × 88): vier Erze in vier Ecken, die Fabrik in der Mitte. Mehrere Züge, Signale und am Ende die Drohnen.
+- Glutkessel (Vulkan, 76 × 76): reiche Erze rund um den Vulkan, Strom aus Erdwärme statt Kohle, Ausbrüche als Schub für die Kraftwerke.
 - Sternenhafen (80 × 80, alle Erze und Öl): das Finale. Stahl, Beton und Prozessoren, dann das Raketensilo Etappe für Etappe, am Ende der Raketenstart.
 
 Auf Missionskarten ersetzen Missionen den Forschungsbaum: Jede Mission hat Ziele (Teile ins Lager liefern, Gebäude bauen oder eine Menge pro Minute schaffen) und schaltet als Belohnung Gebäude und Tempo frei. Wer alle Missionen schafft, bekommt je nach Zeit ein bis drei Sterne; die Bestzeit merkt sich der Browser. Neue Karten kommen in `src/scenarios.js`.
@@ -63,7 +74,9 @@ Hauptmenü und Speichern: Das Spiel startet im Hauptmenü; dahinter kreist die K
 Code:
 - `src/world.js` erzeugt die Karte (Gelände per Rauschen, Erzfelder als Flecken); Landschaft und Erze lassen sich pro Karte einstellen.
 - `src/scenarios.js` sind die Karten mit ihren Missionen, `src/missionView.js` zeigt die aktuelle Mission an.
-- `src/scenery.js` baut daraus die 3D-Szene: Kacheln, Bäume, Büsche, Blumen, Felsen, Erze und das Meer.
+- `src/scenery.js` baut daraus die 3D-Szene: Kacheln, Bäume, Büsche, Blumen, Felsen, Erze, Lava, Vulkan und das Meer.
+- `src/biomes.js` sind die Biome mit ihren Stürmen, `src/weatherView.js` zeigt Schnee, Sand, Asche, Dampf und Ausbrüche.
+- `src/achievements.js` sind die Erfolge.
 - `src/camera.js` ist die Kamera-Steuerung.
 - `src/factory.js` ist die Spiel-Logik: welches Gebäude wo steht, Abbau, Transport, Rezepte der Maschinen, Stromnetz, Rohrnetze mit Öl, Lager und Ziele. `src/trains.js` enthält Gleise, Bahnhöfe, Signale und die Zugfahrten, `src/drones.js` die Drohnen.
 - `src/stats.js` sammelt Produktion, Verbrauch und Strom in Zehn-Sekunden-Abschnitten, `src/statsView.js` ist das Statistik-Fenster.

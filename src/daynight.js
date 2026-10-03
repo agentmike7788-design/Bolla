@@ -39,6 +39,7 @@ function radialTexture() {
 const GLOWS = {
   furnace: { color: 0xff7a26, size: 3.2, light: 1 },
   power: { color: 0xff8a3a, size: 3.4, light: 1 },
+  geo: { color: 0xff6a2a, size: 2.6, light: 0.8 },
   drill: { color: 0xffd9a0, size: 1.8, light: 0.5 },
   assembler: { color: 0xffe2b0, size: 2.2, light: 0.6 },
   constructor: { color: 0x9fd8ff, size: 2.6, light: 0.7 },
@@ -60,6 +61,10 @@ export function createDayNight({ scene, renderer, sun, hemi, mapHalf }) {
   let skip = 0; // seconds of fast-forward left
   let night = 0;
   let skyTimer = 0;
+  let tint = null; // the biome's sky, see biomes.js
+  let storm = 0; // 0 calm … 1 full storm: fog closes in
+  const stormColor = new THREE.Color();
+  const stormTmp = new THREE.Color();
   const current = {};
   for (const [k, v] of Object.entries(PALETTES.day)) current[k] = v instanceof THREE.Color ? v.clone() : v;
 
@@ -179,6 +184,16 @@ export function createDayNight({ scene, renderer, sun, hemi, mapHalf }) {
     const e = Math.max(-1, Math.min(1, Math.sin(angle) + 0.3));
     blend(e);
     night = smooth(0.12, -0.15, e);
+    if (tint) {
+      const k = tint.amount * (1 - night * 0.8);
+      for (const key of ['top', 'horizon', 'fog']) current[key].lerp(tint[key], k);
+    }
+    if (storm > 0) {
+      stormTmp.copy(stormColor).multiplyScalar(0.12 + (1 - night) * 0.88);
+      current.fog.lerp(stormTmp, storm * 0.85);
+      current.horizon.lerp(stormTmp, storm * 0.75);
+      current.top.lerp(stormTmp, storm * 0.5);
+    }
 
     // Sunlight fades out at the horizon, then the moon takes over from the other side.
     const sunUp = e > 0;
@@ -186,11 +201,13 @@ export function createDayNight({ scene, renderer, sun, hemi, mapHalf }) {
     sunDir.set(Math.cos(angle) * (sunUp ? 1 : -1), h, 0.45).normalize();
     sun.position.copy(sunDir).multiplyScalar(60);
     sun.color.copy(current.sun);
-    sun.intensity = current.sunI * (sunUp ? smooth(0, 0.12, e) : smooth(0, -0.15, e));
+    sun.intensity = current.sunI * (sunUp ? smooth(0, 0.12, e) : smooth(0, -0.15, e)) * (1 - storm * 0.55);
     hemi.color.copy(current.sky);
     hemi.groundColor.copy(current.ground);
     hemi.intensity = current.hemiI;
     scene.fog.color.copy(current.fog);
+    scene.fog.near = 110 - storm * 96;
+    scene.fog.far = 260 - storm * 185;
     renderer.toneMappingExposure = current.exposure;
     scene.environmentIntensity = current.env;
 
@@ -241,6 +258,14 @@ export function createDayNight({ scene, renderer, sun, hemi, mapHalf }) {
   return {
     update,
     rebuild,
+    setBiome(biome) {
+      tint = biome.sky ? { top: C(biome.sky.top), horizon: C(biome.sky.horizon), fog: C(biome.sky.fog), amount: biome.sky.amount } : null;
+      stormColor.set(biome.stormSky ?? 0xc8c8c8);
+      storm = 0;
+    },
+    setStorm(s) {
+      storm = s;
+    },
     get night() {
       return night;
     },

@@ -297,6 +297,18 @@ function buildingParts() {
     bunkerLegs: mergeGeometries([-1, 1].map((sx) => box(0.03, 0.2, 0.03, 0.3 + sx * 0.09, 0.12, -0.22))),
     coalHeap: new THREE.ConeGeometry(0.13, 0.09, 8).translate(0.3, 0.5, -0.22),
     fanRing: new THREE.CylinderGeometry(0.17, 0.17, 0.06, 14, 1, true).translate(-0.1, 0.67, 0.06),
+    // Geothermal plant: a pump house over the vent, a short cooling tower and pipes.
+    geoTower: new THREE.LatheGeometry([[0.3, 0.1], [0.24, 0.3], [0.2, 0.5], [0.22, 0.72], [0.25, 0.86]].map(([r, y]) => new THREE.Vector2(r, y)), 16).translate(0.16, 0, 0.14),
+    geoTowerRim: new THREE.TorusGeometry(0.25, 0.025, 6, 16).rotateX(Math.PI / 2).translate(0.16, 0.86, 0.14),
+    geoHouse: rbox(0.4, 0.34, 0.46, -0.2, 0.27, -0.12, 0.04),
+    geoRoof: box(0.44, 0.04, 0.5, -0.2, 0.46, -0.12),
+    geoPipes: mergeGeometries([
+      new THREE.CylinderGeometry(0.045, 0.045, 0.36, 8).rotateZ(Math.PI / 2).translate(-0.02, 0.2, 0.14),
+      new THREE.CylinderGeometry(0.035, 0.035, 0.3, 8).translate(-0.3, 0.3, 0.26),
+      new THREE.CylinderGeometry(0.035, 0.035, 0.2, 8).rotateX(Math.PI / 2).translate(-0.3, 0.45, 0.18),
+    ]),
+    geoWell: new THREE.CylinderGeometry(0.11, 0.13, 0.08, 12).translate(-0.3, 0.12, 0.26),
+    geoCore: new THREE.TorusGeometry(0.12, 0.025, 6, 14).rotateX(Math.PI / 2).translate(-0.3, 0.17, 0.26),
     // Power pole: a wooden mast with a crossbar and two insulators.
     poleFoot: rbox(0.26, 0.08, 0.26, 0, 0.04, 0, 0.02),
     mastPole: new THREE.CylinderGeometry(0.035, 0.05, 1.5, 7).translate(0, 0.8, 0),
@@ -425,6 +437,7 @@ function buildingParts() {
     glass: new THREE.MeshStandardMaterial({ color: 0x18323f, emissive: 0x2a8fc0, emissiveIntensity: 0.4, roughness: 0.2 }),
     concrete: flat(0xb3ada1, { roughness: 0.85, metalness: 0.05 }),
     white: flat(0xe8e4dc, { roughness: 0.7 }),
+    cooling: flat(0xdcd8cf, { roughness: 0.8, side: THREE.DoubleSide }),
     red: flat(0xc8402e, { roughness: 0.6 }),
     wood: flat(0x7a5536, { roughness: 0.9, metalness: 0 }),
     porcelain: new THREE.MeshStandardMaterial({ color: 0x9fd6c0, roughness: 0.25, metalness: 0.1 }),
@@ -1008,6 +1021,20 @@ export function createFactoryView(renderer) {
       view.rotor = add(g.rotor, m.signal);
       view.rotor.position.set(-0.1, 0.67, 0.06);
       lamp(0.06, 0.52, -0.26);
+    } else if (b.type === 'geo') {
+      add(g.bigFoot, m.steel);
+      add(g.geoTower, m.cooling);
+      add(g.geoTowerRim, m.red);
+      add(g.geoHouse, m.concrete);
+      add(g.geoRoof, m.dark);
+      add(g.geoPipes, m.pipe);
+      add(g.geoWell, m.dark);
+      view.glow = own(new THREE.MeshStandardMaterial({ color: 0x3a1a0a, emissive: GLOW, emissiveIntensity: 0.3, roughness: 1 }));
+      add(g.geoCore, view.glow, false);
+      view.rotor = add(g.rotor, m.signal);
+      view.rotor.scale.setScalar(0.6);
+      view.rotor.position.set(-0.2, 0.5, -0.12);
+      lamp(-0.2, 0.32, -0.36);
     } else if (b.type === 'pole') {
       add(g.poleFoot, m.concrete);
       add(g.mastPole, m.wood);
@@ -1360,6 +1387,11 @@ export function createFactoryView(renderer) {
       view.coal.visible = b.fuel > 0;
       view.coal.scale.setScalar(0.5 + Math.min(1, b.fuel / 5) * 0.5);
       setLamp(view, b.state, elapsed);
+    } else if (b.type === 'geo') {
+      const target = working ? 1.2 + (b.load ?? 1) * 1.4 + Math.sin(elapsed * 3 + view.phase) * 0.2 : 0.5;
+      view.glow.emissiveIntensity += (target - view.glow.emissiveIntensity) * Math.min(1, dt * 3);
+      view.rotor.rotation.y += dt * (working ? 3 + (b.load ?? 1) * 8 : 0.5);
+      setLamp(view, b.state, elapsed);
     } else if (b.type === 'pump') {
       // The beam nods while the crank turns; it slows down to rest when the pump stops.
       view.speed = (view.speed ?? 0) + ((working ? 1 : 0) - (view.speed ?? 0)) * Math.min(1, dt * 2);
@@ -1516,6 +1548,7 @@ export function createGhost() {
     merger: { geo: box(0.86, 0.4, 0.86), arrow: 0.5 },
     constructor: { geo: mergeGeometries([box(0.84, 0.66, 0.7, 0.1), box(0.5, 0.25, 0.2).translate(0, 0.66, 0.18)]), arrow: 0.95 },
     power: { geo: mergeGeometries([box(0.66, 0.66, 0.68, 0.06).translate(-0.1, 0, 0), new THREE.CylinderGeometry(0.1, 0.12, 1.4, 8).translate(0.3, 0.7, 0.26)]), arrow: null },
+    geo: { geo: mergeGeometries([box(0.42, 0.46, 0.5).translate(-0.2, 0, -0.12), new THREE.CylinderGeometry(0.24, 0.3, 0.86, 12).translate(0.16, 0.43, 0.14)]), arrow: null },
     pole: { geo: mergeGeometries([new THREE.CylinderGeometry(0.05, 0.05, 1.5, 6).translate(0, 0.75, 0), box(0.56, 0.06, 0.06).translate(0, 1.43, 0)]), arrow: null },
     pump: { geo: mergeGeometries([box(0.3, 0.1, 0.9), box(0.1, 0.7, 0.1), box(0.1, 0.1, 0.9).translate(0, 0.68, 0)]), arrow: null },
     pipe: { geo: mergeGeometries([new THREE.CylinderGeometry(0.1, 0.1, 1, 8).rotateZ(Math.PI / 2).translate(0, 0.34, 0), new THREE.CylinderGeometry(0.1, 0.1, 1, 8).rotateX(Math.PI / 2).translate(0, 0.34, 0)]), arrow: null },

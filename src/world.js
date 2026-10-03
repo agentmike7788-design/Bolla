@@ -11,6 +11,27 @@ export const TERRAIN = {
   forest: { name: 'Wald', color: 0x4f8a38, height: 0.5, buildable: true },
   dune: { name: 'Wüste', color: 0xd9b46c, height: 0.42, buildable: true },
   rock: { name: 'Fels', color: 0x8c857a, height: 0.85, buildable: false },
+  // Snow (see biomes.js): frozen shallows are ice you can build on.
+  snow: { name: 'Schnee', color: 0xe9eff2, height: 0.45, buildable: true },
+  taiga: { name: 'Nadelwald', color: 0xd5e0e2, height: 0.5, buildable: true },
+  ice: { name: 'Eis', color: 0xb4d9e8, height: 0.3, buildable: true },
+  gravel: { name: 'Kiesstrand', color: 0xa6a299, height: 0.36, buildable: true },
+  crag: { name: 'Verschneiter Fels', color: 0xb9bcbd, height: 0.85, buildable: false },
+  // Volcano: ash and basalt, lava that nothing crosses and the cone in the middle.
+  ash: { name: 'Asche', color: 0x5f5853, height: 0.45, buildable: true },
+  burnt: { name: 'Brandwald', color: 0x4d453f, height: 0.5, buildable: true },
+  blacksand: { name: 'Schwarzer Sand', color: 0x3e3b3a, height: 0.36, buildable: true },
+  basalt: { name: 'Basalt', color: 0x3b3735, height: 0.85, buildable: false },
+  lava: { name: 'Lava', color: 0x2a1410, height: 0.32, buildable: false },
+  cone: { name: 'Vulkan', color: 0x35302d, height: 0.85, buildable: false },
+};
+
+// How each biome turns the base terrain into its own; `water` only for shallows.
+const BIOME_TERRAIN = {
+  meadow: {},
+  desert: { grass: 'dune' },
+  snow: { grass: 'snow', forest: 'taiga', sand: 'gravel', rock: 'crag', water: 'ice' },
+  volcano: { grass: 'ash', forest: 'burnt', sand: 'blacksand', rock: 'basalt' },
 };
 
 // Deposits on the map. Drills mine ores; oil is a fluid that only pumps get out.
@@ -87,7 +108,9 @@ function makeNoise(rand) {
 //   coast    where the island starts sinking into the sea, 0 centre .. 1 edge
 //   rock     share of high ground that turns to rock, 0 none .. 1 all
 //   forest   how dry it may be for trees to grow, 1 no forest at all
-//   desert   grass turns into desert sand
+//   desert   grass turns into desert sand (the same as biome: 'desert')
+//   biome    meadow, desert, snow or volcano: look, weather and quirks, see biomes.js
+//   vents    steaming vents for geothermal plants (volcano maps)
 //   richness multiplies the ore in each patch
 //   size     tiles along each side
 //   zones    where the patches of one kind may lie, as fractions of the map:
@@ -100,6 +123,8 @@ export const DEFAULT_MAP = {
   rock: 0.48,
   forest: 0.56,
   desert: false,
+  biome: null,
+  vents: 0,
   richness: 1,
 };
 
@@ -109,12 +134,16 @@ export function generateWorld(seed, options = {}) {
   const fbm = makeNoise(rand);
   const tiles = [];
   const size = map.size;
+  const biome = map.biome ?? (map.desert ? 'desert' : 'meadow');
+  const swap = BIOME_TERRAIN[biome];
 
   for (let z = 0; z < size; z++) {
     for (let x = 0; x < size; x++) {
       // Fade the land into the sea towards the edge so the map reads as an island.
       const edge = Math.max(Math.abs((x / (size - 1)) * 2 - 1), Math.abs((z / (size - 1)) * 2 - 1));
-      const h = fbm(x / 14, z / 14) + map.land - THREE.MathUtils.smoothstep(edge, map.coast, 1) * 0.3;
+      let h = fbm(x / 14, z / 14) + map.land - THREE.MathUtils.smoothstep(edge, map.coast, 1) * 0.3;
+      // A volcano lifts the land around it.
+      if (biome === 'volcano') h += Math.max(0, 1 - Math.hypot(x / (size - 1) - 0.5, z / (size - 1) - 0.5) / 0.3) * 0.14;
       const moisture = fbm(x / 9 + 100, z / 9 + 100, 3);
       let terrain;
       if (h < 0.36) terrain = 'water';
@@ -122,12 +151,17 @@ export function generateWorld(seed, options = {}) {
       else if (h > 0.63 && fbm(x / 6 + 300, z / 6 + 300, 2) > 1 - map.rock) terrain = 'rock';
       else if (moisture > map.forest) terrain = 'forest';
       else terrain = map.desert ? 'dune' : 'grass';
+      // Only the shallows freeze; the open sea stays water.
+      if (swap[terrain] && (terrain !== 'water' || h > 0.31)) terrain = swap[terrain];
       tiles.push({ x, z, terrain, ore: null, amount: 0 });
     }
   }
 
-  // Scatter ore patches as blobs on buildable land, away from the map edge.
   const at = (x, z) => tiles[z * size + x];
+  let crater = null;
+  if (biome === 'volcano') crater = raiseVolcano(tiles, at, size, rand);
+
+  // Scatter ore patches as blobs on buildable land, away from the map edge.
   for (const [ore, count] of Object.entries(map.ores)) {
     let placed = 0;
     let tries = 0;
@@ -157,6 +191,56 @@ export function generateWorld(seed, options = {}) {
     }
   }
 
-  return { seed, size, tiles, at };
+  if (map.vents) placeVents(tiles, at, size, rand, map.vents, crater);
+
+  return { seed, size, tiles, at, biome, crater };
+}
+
+// The volcano: a cone of unbuildable tiles in the middle of the island and a few
+// short lava streams running down from it.
+function raiseVolcano(tiles, at, size, rand) {
+  const c = (size - 1) / 2;
+  const radius = Math.max(4, Math.round(size * 0.075));
+  for (const t of tiles) if (Math.hypot(t.x - c, t.z - c) <= radius + 0.3) t.terrain = 'cone';
+  const streams = 3 + Math.floor(rand() * 2);
+  for (let i = 0; i < streams; i++) {
+    let a = (i / streams) * Math.PI * 2 + rand() * 0.8;
+    let x = c + Math.cos(a) * (radius + 0.5);
+    let z = c + Math.sin(a) * (radius + 0.5);
+    const length = 5 + Math.floor(rand() * 5);
+    for (let k = 0; k < length; k++) {
+      const t = at(Math.round(x), Math.round(z));
+      if (!t || t.terrain === 'water') break;
+      if (t.terrain !== 'cone') t.terrain = 'lava';
+      a += (rand() - 0.5) * 0.7;
+      x += Math.cos(a);
+      z += Math.sin(a);
+    }
+  }
+  return { x: c, z: c, radius };
+}
+
+// Steaming vents for geothermal plants, on free land a little apart from each other;
+// around the volcano if there is one.
+function placeVents(tiles, at, size, rand, count, crater) {
+  const placed = [];
+  for (let tries = 0; placed.length < count && tries < 2000; tries++) {
+    let x;
+    let z;
+    if (crater) {
+      const a = rand() * Math.PI * 2;
+      const r = crater.radius + 2 + rand() * size * 0.22;
+      x = Math.round(crater.x + Math.cos(a) * r);
+      z = Math.round(crater.z + Math.sin(a) * r);
+    } else {
+      x = 4 + Math.floor(rand() * (size - 8));
+      z = 4 + Math.floor(rand() * (size - 8));
+    }
+    const t = at(x, z);
+    if (!t || !TERRAIN[t.terrain].buildable || t.ore || t.vent) continue;
+    if (placed.some((p) => Math.abs(p.x - x) + Math.abs(p.z - z) < 4)) continue;
+    t.vent = true;
+    placed.push(t);
+  }
 }
 
