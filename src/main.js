@@ -3,7 +3,9 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { generateWorld, ORES, TERRAIN, MAP_SIZE, TILE } from './world.js';
 import { buildWorldMeshes, createSea } from './scenery.js';
 import { createCameraRig } from './camera.js';
-import { createFactory, DIRS, DIR_NAMES, BUILDINGS } from './factory.js';
+import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, RECIPES, isMachine } from './factory.js';
+import { RESEARCH } from './research.js';
+import { createResearchView } from './researchView.js';
 import { createFactoryView, createGhost } from './buildings.js';
 import './style.css';
 
@@ -91,6 +93,8 @@ function loadWorld(seed) {
   factoryView.clear();
   document.getElementById('seed').textContent = `#${seed}`;
   renderLegend();
+  researchView.reset();
+  renderProgress();
   showTile(null);
 }
 
@@ -107,7 +111,7 @@ function renderLegend() {
   for (const [key, ore] of Object.entries(ORES)) {
     const c = counts[key] ?? { tiles: 0, amount: 0 };
     const li = document.createElement('li');
-    li.innerHTML = `<span class="swatch" style="--c:#${ore.color.toString(16).padStart(6, '0')}"></span>
+    li.innerHTML = `<span class="swatch" style="--c:${hex(ore.color)}"></span>
       <span class="name">${ore.name}</span>
       <span class="num">${c.amount.toLocaleString('de-DE')}</span>
       <span class="mined">${factory.mined[key] ? `+${factory.mined[key].toLocaleString('de-DE')}` : ''}</span>`;
@@ -116,10 +120,65 @@ function renderLegend() {
   }
 }
 
+const hex = (color) => `#${color.toString(16).padStart(6, '0')}`;
+const num = (n) => n.toLocaleString('de-DE');
+
+// --- Research, storage and unlocks -----------------------------------------
+
+const storeList = document.getElementById('store');
+const toast = document.getElementById('toast');
+let toastTimer = 0;
+
+function showToast(title, text) {
+  toast.innerHTML = `<strong>${title}</strong><span>${text}</span>`;
+  toast.hidden = false;
+  toast.classList.remove('pop');
+  void toast.offsetWidth; // restart the animation
+  toast.classList.add('pop');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (toast.hidden = true), 4200);
+}
+
+const researchView = createResearchView({
+  getFactory: () => factory,
+  onResearch(r) {
+    if (r.goal) showToast('Spielziel geschafft!', 'Deine Fabrik schmilzt, presst und liefert. Glückwunsch!');
+    else showToast(`Erforscht: ${r.name}`, r.desc);
+    renderProgress();
+  },
+});
+
+function renderProgress() {
+  researchView.update();
+
+  const kept = Object.entries(factory.stored).filter(([, n]) => n > 0);
+  storeList.innerHTML = kept.length
+    ? kept
+        .map(([k, n]) => `<li><span class="swatch" style="--c:${hex(ITEMS[k].color)}"></span><span class="name">${ITEMS[k].name}</span><span class="num">${num(n)}</span></li>`)
+        .join('')
+    : '<li class="empty">Noch leer. Lege ein Band in ein Lager.</li>';
+
+  for (const b of toolButtons) {
+    const type = b.dataset.tool;
+    if (!BUILDINGS[type]) continue;
+    const locked = !factory.research.unlocked.has(type);
+    b.classList.toggle('locked', locked);
+    b.setAttribute('aria-disabled', String(locked));
+    b.title = locked ? `Noch gesperrt: ${unlockHint(type)}` : BUILDINGS[type].name;
+  }
+}
+
+function unlockHint(type) {
+  const r = RESEARCH.find((x) => x.unlocks?.includes(type));
+  return r ? `im Forschungsbaum „${r.name}“ erforschen` : '';
+}
+
 const tileName = document.getElementById('tile-name');
 const tileDetail = document.getElementById('tile-detail');
 
 const STATE_TEXT = { work: 'Fördert', blocked: 'Wartet: Ausgang belegt', empty: 'Erschöpft' };
+const MACHINE_TEXT = { work: 'Arbeitet', idle: 'Wartet auf Material', blocked: 'Wartet: Ausgang belegt' };
+const itemList = (keys) => keys.map((k) => ITEMS[k].name).join(', ');
 
 function showTile(tile) {
   hovered = tile;
@@ -142,7 +201,20 @@ function showTile(tile) {
     tileDetail.textContent = `${STATE_TEXT[building.state]} · ${building.mined} abgebaut · Rest ${tile.amount.toLocaleString('de-DE')}`;
   } else if (building?.type === 'belt') {
     tileName.textContent = 'Förderband';
-    tileDetail.textContent = `Richtung ${DIR_NAMES[building.dir]} · ${building.items.length} Erz drauf`;
+    tileDetail.textContent = `Richtung ${DIR_NAMES[building.dir]} · ${building.items.length} Teile drauf`;
+  } else if (isMachine(building)) {
+    const recipe = RECIPES[building.type];
+    tileName.textContent = BUILDINGS[building.type].name;
+    let state = MACHINE_TEXT[building.state];
+    if (building.current) state += `: ${ITEMS[building.current].name} → ${ITEMS[recipe.makes[building.current]].name}`;
+    else if (building.refused) state = `Nimmt kein ${ITEMS[building.refused].name} an`;
+    else state += ` · nimmt ${itemList(Object.keys(recipe.makes))}`;
+    tileDetail.textContent = `${state} · ${building.made} hergestellt`;
+  } else if (building?.type === 'storage') {
+    tileName.textContent = 'Lager';
+    tileDetail.textContent = building.received
+      ? `${num(building.received)} eingelagert · zuletzt ${ITEMS[building.last].name}`
+      : 'Nimmt alles von Bändern auf allen Seiten';
   } else if (tile.ore) {
     tileName.textContent = ORES[tile.ore].name;
     tileDetail.textContent = `${tile.amount.toLocaleString('de-DE')} Einheiten · Feld ${tile.x}, ${tile.z}`;
@@ -191,7 +263,7 @@ canvas.addEventListener('pointerleave', () => {
 
 // --- Building -------------------------------------------------------------
 
-let tool = null; // 'drill' | 'belt' | 'remove' | null
+let tool = null; // a building type, 'remove' or null
 let dir = 1; // direction for the next building, see DIRS
 let hovered = null;
 let dragging = false;
@@ -201,9 +273,12 @@ let shapesDirty = false;
 const toolButtons = document.querySelectorAll('.tool[data-tool]');
 const help = document.getElementById('help');
 const HELP = {
-  none: [['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1 2 X', 'bauen']],
+  none: [['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–5', 'bauen'], ['X', 'abreißen'], ['T', 'Forschung']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
+  storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
+  furnace: [['Klick', 'Schmelzofen setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
+  assembler: [['Klick', 'Presse setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   remove: [['Klick / Ziehen', 'abreißen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
 };
 
@@ -212,6 +287,10 @@ function renderHelp() {
 }
 
 function setTool(next) {
+  if (next && BUILDINGS[next] && !factory.research.unlocked.has(next)) {
+    showToast(`${BUILDINGS[next].name} gesperrt`, unlockHint(next));
+    return;
+  }
   tool = next === tool ? null : next;
   for (const b of toolButtons) b.setAttribute('aria-pressed', String(b.dataset.tool === tool));
   // While a tool is active, the left mouse button and a single finger build
@@ -294,10 +373,12 @@ document.getElementById('rotate').addEventListener('click', rotate);
 window.addEventListener('keydown', (e) => {
   if (e.repeat && e.key.toLowerCase() !== 'r') return;
   const key = e.key.toLowerCase();
-  if (key === '1') setTool('drill');
-  else if (key === '2') setTool('belt');
-  else if (key === '3' || key === 'x' || key === 'delete') setTool('remove');
+  const numbered = ['drill', 'belt', 'storage', 'furnace', 'assembler'][Number(key) - 1];
+  if (numbered) setTool(numbered);
+  else if (key === 'x' || key === 'delete') setTool('remove');
   else if (key === 'r') rotate();
+  else if (key === 't') researchView.toggle();
+  else if (key === 'escape' && researchView.isOpen) researchView.close();
   else if (key === 'escape' && tool) setTool(tool);
 });
 
@@ -344,6 +425,7 @@ renderer.setAnimationLoop(() => {
   if (legendTimer > 0.5) {
     legendTimer = 0;
     renderLegend();
+    renderProgress();
   }
   updateHover();
   renderer.render(scene, camera);
@@ -354,4 +436,4 @@ renderHelp();
 resize();
 
 // Handle for poking at the game from the browser console while developing.
-if (import.meta.env.DEV) window.bolla = { camera, rig, get world() { return world; }, get factory() { return factory; } };
+if (import.meta.env.DEV) window.bolla = { camera, rig, refresh: () => (shapesDirty = true), get world() { return world; }, get factory() { return factory; } };

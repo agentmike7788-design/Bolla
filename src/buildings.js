@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { BELT_SPEED, DIRS } from './factory.js';
+import { DIRS, ITEMS } from './factory.js';
 import { ORES } from './world.js';
 
 const STEEL = 0x3a4046;
@@ -9,7 +9,6 @@ const STEEL_DARK = 0x2a2f34;
 const SIGNAL = 0xf0a830;
 const CHEVRONS_PER_TILE = 3;
 const BELT_TOP = 0.075; // height of the moving surface above the tile
-const ITEM_LIFT = 0.08;
 
 const yaw = (dir) => -dir * (Math.PI / 2);
 
@@ -110,14 +109,22 @@ function chevronTexture(anisotropy) {
   return tex;
 }
 
-function drillParts() {
+const flat = (color, extra) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.25, flatShading: true, ...extra });
+
+// Shared geometries and materials of all building models. Every model faces -z,
+// the side it hands its items out.
+function buildingParts() {
+  const box = (w, h, d, x, y, z) => new THREE.BoxGeometry(w, h, d).translate(x, y, z);
+  const rbox = (w, h, d, x, y, z, r = 0.05) => new RoundedBoxGeometry(w, h, d, 2, r).translate(x, y, z);
   const g = {
-    foot: new RoundedBoxGeometry(0.86, 0.14, 0.86, 2, 0.04).translate(0, 0.07, 0),
-    body: new RoundedBoxGeometry(0.62, 0.38, 0.56, 2, 0.05).translate(0, 0.33, 0.06),
-    roof: new THREE.BoxGeometry(0.68, 0.05, 0.62).translate(0, 0.545, 0.06),
-    chute: new THREE.BoxGeometry(0.3, 0.16, 0.34).translate(0, 0.2, -0.3),
-    chuteOre: new THREE.BoxGeometry(0.2, 0.03, 0.3).translate(0, 0.285, -0.31),
-    panel: new THREE.BoxGeometry(0.34, 0.12, 0.02).translate(0, 0.34, -0.23),
+    lamp: new THREE.SphereGeometry(0.045, 10, 8),
+    // Drill
+    foot: rbox(0.86, 0.14, 0.86, 0, 0.07, 0, 0.04),
+    body: rbox(0.62, 0.38, 0.56, 0, 0.33, 0.06),
+    roof: box(0.68, 0.05, 0.62, 0, 0.545, 0.06),
+    chute: box(0.3, 0.16, 0.34, 0, 0.2, -0.3),
+    chuteOre: box(0.2, 0.03, 0.3, 0, 0.285, -0.31),
+    panel: box(0.34, 0.12, 0.02, 0, 0.34, -0.23),
     mast: new THREE.CylinderGeometry(0.05, 0.05, 0.42, 8).translate(0, 0.78, 0.06),
     rotor: mergeGeometries([
       new THREE.CylinderGeometry(0.15, 0.15, 0.07, 8),
@@ -125,29 +132,71 @@ function drillParts() {
       new THREE.BoxGeometry(0.06, 0.04, 0.46),
     ]),
     piston: new THREE.CylinderGeometry(0.08, 0.1, 0.16, 8),
-    lamp: new THREE.SphereGeometry(0.045, 10, 8),
+    // Furnace: a brick kiln with a chimney and a glowing mouth on the output side.
+    kilnFoot: rbox(0.9, 0.1, 0.9, 0, 0.05, 0, 0.03),
+    kiln: rbox(0.72, 0.46, 0.66, 0, 0.33, 0.06, 0.07),
+    kilnBands: mergeGeometries([box(0.75, 0.05, 0.69, 0, 0.2, 0.06), box(0.75, 0.05, 0.69, 0, 0.46, 0.06)]),
+    kilnRoof: rbox(0.6, 0.12, 0.56, 0, 0.6, 0.06, 0.04),
+    chimney: new THREE.CylinderGeometry(0.08, 0.1, 0.56, 8).translate(0.18, 0.88, 0.2),
+    chimneyCap: new THREE.CylinderGeometry(0.12, 0.12, 0.05, 8).translate(0.18, 1.17, 0.2),
+    mouthFrame: box(0.42, 0.26, 0.04, 0, 0.3, -0.28),
+    mouth: box(0.32, 0.17, 0.03, 0, 0.29, -0.295),
+    sideGlow: mergeGeometries([box(0.02, 0.08, 0.34, -0.365, 0.33, 0.06), box(0.02, 0.08, 0.34, 0.365, 0.33, 0.06)]),
+    tray: box(0.3, 0.05, 0.16, 0, 0.13, -0.4),
+    puff: new THREE.IcosahedronGeometry(0.09, 0),
+    // Assembler: an open frame with a press that stamps onto a table.
+    posts: mergeGeometries([-1, 1].flatMap((sx) => [-1, 1].map((sz) => box(0.08, 0.6, 0.08, sx * 0.32, 0.4, sz * 0.3 + 0.04)))),
+    table: box(0.62, 0.1, 0.6, 0, 0.2, 0.04),
+    die: box(0.3, 0.04, 0.3, 0, 0.27, 0.04),
+    head: rbox(0.76, 0.18, 0.72, 0, 0.77, 0.04),
+    headStripe: box(0.78, 0.04, 0.74, 0, 0.7, 0.04),
+    press: box(0.26, 0.2, 0.26, 0, 0, 0),
+    ram: new THREE.CylinderGeometry(0.04, 0.04, 0.3, 8).translate(0, 0.25, 0),
+    // Storage: a ribbed container with a hatch on top.
+    pad: box(0.94, 0.06, 0.94, 0, 0.03, 0),
+    crate: rbox(0.84, 0.48, 0.78, 0, 0.3, 0.02, 0.04),
+    ribs: mergeGeometries([-0.3, -0.15, 0, 0.15, 0.3].map((x) => box(0.04, 0.44, 0.82, x, 0.3, 0.02))),
+    crateStripe: box(0.86, 0.06, 0.8, 0, 0.44, 0.02),
+    hatch: box(0.44, 0.04, 0.38, 0, 0.56, 0.02),
+    display: box(0.3, 0.12, 0.02, 0, 0.3, -0.38),
   };
-  const flat = (color, extra) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.25, flatShading: true, ...extra });
   const m = {
     steel: flat(STEEL),
     dark: flat(STEEL_DARK),
     signal: flat(SIGNAL, { roughness: 0.5 }),
     chrome: new THREE.MeshStandardMaterial({ color: 0xc9ced3, roughness: 0.25, metalness: 0.8 }),
+    brick: flat(0x9a5b43, { roughness: 0.85, metalness: 0.05 }),
+    soot: flat(0x4a4440, { roughness: 0.9, metalness: 0.1 }),
+    smoke: new THREE.MeshStandardMaterial({ color: 0xb9b6b0, roughness: 1, transparent: true, opacity: 0.55, depthWrite: false, flatShading: true }),
+    container: flat(0x4f7d8c, { roughness: 0.55 }),
     ore: Object.fromEntries(Object.entries(ORES).map(([k, o]) => [k, flat(o.color, { roughness: 0.4, metalness: 0.3 })])),
   };
   return { g, m };
 }
 
-const LAMP = { work: 0x6be36b, blocked: 0xffb02e, empty: 0xff5544 };
+const LAMP = { work: 0x6be36b, blocked: 0xffb02e, empty: 0xff5544, idle: 0x5aa9ff };
+const GLOW = 0xff7a1f;
 
-// 3D view of the factory: drills as small animated models, belts and the ore on
-// them as instanced meshes that are refreshed every frame.
+// Items on belts: one instanced mesh per item shape, each resting on the belt surface.
+function itemShapes() {
+  const ingot = new THREE.CylinderGeometry(0.062, 0.085, 0.07, 4).rotateY(Math.PI / 4).scale(1.7, 1, 1);
+  return {
+    ore: { geo: new THREE.DodecahedronGeometry(0.1, 0), lift: 0.08, tumble: true },
+    ingot: { geo: ingot, lift: 0.035 },
+    plate: { geo: new THREE.BoxGeometry(0.22, 0.03, 0.22), lift: 0.015 },
+    wire: { geo: new THREE.TorusGeometry(0.07, 0.03, 6, 14).rotateX(Math.PI / 2), lift: 0.03 },
+    block: { geo: new THREE.BoxGeometry(0.16, 0.14, 0.16), lift: 0.07 },
+  };
+}
+
+// 3D view of the factory: buildings as small animated models, belts and the items
+// on them as instanced meshes that are refreshed every frame.
 export function createFactoryView(renderer) {
   const group = new THREE.Group();
-  const drillsGroup = new THREE.Group();
-  group.add(drillsGroup);
-  const parts = drillParts();
-  const drillViews = new Map(); // building -> { root, rotor, piston, lamp }
+  const modelsGroup = new THREE.Group();
+  group.add(modelsGroup);
+  const parts = buildingParts();
+  const views = new Map(); // building -> model view
 
   const beltTex = chevronTexture(renderer.capabilities.getMaxAnisotropy());
   const beltMats = {
@@ -171,66 +220,124 @@ export function createFactoryView(renderer) {
   }
 
   const MAX_ITEMS = 6000;
-  const items = new THREE.InstancedMesh(
-    new THREE.DodecahedronGeometry(0.1, 0),
-    new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0.3, flatShading: true }),
-    MAX_ITEMS,
+  const itemMat = new THREE.MeshStandardMaterial({ roughness: 0.45, metalness: 0.35, flatShading: true });
+  const shapes = itemShapes();
+  const itemMeshes = Object.fromEntries(
+    Object.entries(shapes).map(([k, s]) => {
+      const mesh = new THREE.InstancedMesh(s.geo, itemMat, MAX_ITEMS);
+      mesh.count = 0;
+      mesh.castShadow = true;
+      mesh.frustumCulled = false;
+      group.add(mesh);
+      return [k, mesh];
+    }),
   );
-  items.count = 0;
-  items.castShadow = true;
-  items.frustumCulled = false;
-  group.add(items);
-  const oreColors = Object.fromEntries(Object.entries(ORES).map(([k, o]) => [k, new THREE.Color(o.color)]));
+  const itemColors = Object.fromEntries(Object.entries(ITEMS).map(([k, it]) => [k, new THREE.Color(it.color)]));
 
   const dummy = new THREE.Object3D();
 
-  function makeDrill(b) {
+  function makeModel(b) {
     const { g, m } = parts;
     const root = new THREE.Group();
-    const add = (geo, mat, parent = root) => {
+    const add = (geo, mat, shadow = true) => {
       const mesh = new THREE.Mesh(geo, mat);
-      mesh.castShadow = true;
+      mesh.castShadow = shadow;
       mesh.receiveShadow = true;
-      parent.add(mesh);
+      root.add(mesh);
       return mesh;
     };
-    add(g.foot, m.steel);
-    add(g.body, m.signal);
-    add(g.roof, m.dark);
-    add(g.chute, m.dark);
-    add(g.chuteOre, m.ore[b.tile.ore]);
-    add(g.panel, m.ore[b.tile.ore]);
-    add(g.mast, m.chrome);
-    const rotor = add(g.rotor, m.dark);
-    rotor.position.y = 0.98;
-    const piston = add(g.piston, m.steel);
-    piston.position.set(0, 0.64, 0.06);
-    const lamp = add(g.lamp, new THREE.MeshStandardMaterial({ color: LAMP.work, emissive: LAMP.work, emissiveIntensity: 1.2 }));
-    lamp.castShadow = false;
-    lamp.position.set(0.24, 0.6, 0.28);
+    const view = { root, phase: Math.random() * 10, owned: [] };
+    // Materials that animate per building are owned by the view and disposed with it.
+    const own = (mat) => (view.owned.push(mat), mat);
+    const lamp = (x, y, z) => {
+      view.lamp = add(g.lamp, own(new THREE.MeshStandardMaterial({ color: LAMP.idle, emissive: LAMP.idle, emissiveIntensity: 1.2 })), false);
+      view.lamp.position.set(x, y, z);
+    };
+
+    if (b.type === 'drill') {
+      add(g.foot, m.steel);
+      add(g.body, m.signal);
+      add(g.roof, m.dark);
+      add(g.chute, m.dark);
+      add(g.chuteOre, m.ore[b.tile.ore]);
+      add(g.panel, m.ore[b.tile.ore]);
+      add(g.mast, m.chrome);
+      view.rotor = add(g.rotor, m.dark);
+      view.rotor.position.y = 0.98;
+      view.piston = add(g.piston, m.steel);
+      view.piston.position.set(0, 0.64, 0.06);
+      lamp(0.24, 0.6, 0.28);
+    } else if (b.type === 'furnace') {
+      add(g.kilnFoot, m.steel);
+      add(g.kiln, m.brick);
+      add(g.kilnBands, m.dark);
+      add(g.kilnRoof, m.soot);
+      add(g.chimney, m.soot);
+      add(g.chimneyCap, m.dark);
+      add(g.mouthFrame, m.dark);
+      add(g.tray, m.dark);
+      view.glow = own(new THREE.MeshStandardMaterial({ color: 0x3a1a0a, emissive: GLOW, emissiveIntensity: 0.2, roughness: 1 }));
+      add(g.mouth, view.glow, false);
+      add(g.sideGlow, view.glow, false);
+      view.puffs = [0, 1, 2].map((i) => {
+        const puff = add(g.puff, m.smoke, false);
+        puff.position.set(0.18, 1.2, 0.2);
+        puff.userData.offset = i / 3;
+        return puff;
+      });
+      lamp(0.3, 0.52, -0.25);
+    } else if (b.type === 'assembler') {
+      add(g.kilnFoot, m.steel);
+      add(g.posts, m.steel);
+      add(g.table, m.dark);
+      add(g.die, m.chrome);
+      add(g.head, m.signal);
+      add(g.headStripe, m.dark);
+      add(g.tray, m.dark);
+      view.press = add(g.press, m.chrome);
+      view.press.add(new THREE.Mesh(g.ram, m.steel));
+      view.press.position.set(0, 0.55, 0.04);
+      lamp(0.3, 0.9, -0.25);
+    } else if (b.type === 'storage') {
+      add(g.pad, m.dark);
+      add(g.crate, m.container);
+      add(g.ribs, m.container);
+      add(g.crateStripe, m.signal);
+      add(g.hatch, m.dark);
+      add(g.display, m.dark);
+      lamp(0, 0.3, -0.4);
+      view.seen = b.received;
+      view.flash = 0;
+    }
+
     root.position.set(b.tile.position.x, b.tile.height, b.tile.position.z);
     root.rotation.y = yaw(b.dir);
-    drillsGroup.add(root);
-    return { root, rotor, piston, lamp, phase: Math.random() * 10 };
+    modelsGroup.add(root);
+    return view;
   }
 
-  // Bring drill models and belt instances in line with the factory after a change.
+  function dropModel(view) {
+    modelsGroup.remove(view.root);
+    for (const mat of view.owned) mat.dispose();
+  }
+
+  // Bring building models and belt instances in line with the factory after a change.
   function rebuild(factory) {
     const alive = new Set();
     const counts = { straight: 0, left: 0, right: 0 };
     for (const b of factory.buildings.values()) {
-      if (b.type === 'drill') {
-        alive.add(b);
-        let view = drillViews.get(b);
-        if (!view) drillViews.set(b, (view = makeDrill(b)));
-        view.root.rotation.y = yaw(b.dir);
-      } else if (b.type === 'belt') {
+      if (b.type === 'belt') {
         const i = counts[b.shape]++;
         dummy.position.set(b.tile.position.x, b.tile.height, b.tile.position.z);
         dummy.rotation.set(0, yaw(b.dir), 0);
         dummy.updateMatrix();
         for (const mesh of beltMeshes[b.shape]) mesh.setMatrixAt(i, dummy.matrix);
+        continue;
       }
+      alive.add(b);
+      let view = views.get(b);
+      if (!view) views.set(b, (view = makeModel(b)));
+      view.root.rotation.y = yaw(b.dir);
     }
     for (const [shape, meshes] of Object.entries(beltMeshes)) {
       for (const mesh of meshes) {
@@ -238,23 +345,23 @@ export function createFactoryView(renderer) {
         mesh.instanceMatrix.needsUpdate = true;
       }
     }
-    for (const [b, view] of drillViews) {
+    for (const [b, view] of views) {
       if (alive.has(b)) continue;
-      drillsGroup.remove(view.root);
-      view.lamp.material.dispose();
-      drillViews.delete(b);
+      dropModel(view);
+      views.delete(b);
     }
   }
 
   // World position of an item on a belt, following the belt's shape.
   const itemPos = new THREE.Vector3();
-  function placeItem(b, item) {
+  function placeItem(b, item, lift) {
     const c = b.tile.position;
     const f = DIRS[b.dir];
     const d = DIRS[item.from];
     const p = item.p;
     let x;
     let z;
+    let heading = b.dir;
     if (item.from === b.dir) {
       x = c.x + f.x * (p - 0.5);
       z = c.z + f.z * (p - 0.5);
@@ -265,61 +372,98 @@ export function createFactoryView(renderer) {
       const a = (p * Math.PI) / 2;
       x = kx + (-f.x * Math.cos(a) + d.x * Math.sin(a)) * 0.5;
       z = kz + (-f.z * Math.cos(a) + d.z * Math.sin(a)) * 0.5;
+      heading = item.from + (b.dir - item.from === 1 || b.dir - item.from === -3 ? p : -p);
     } else if (p < 0.5) {
       // Side-loaded onto a straight belt: in from the side, then along the belt.
       x = c.x - d.x * (0.5 - p);
       z = c.z - d.z * (0.5 - p);
+      heading = item.from;
     } else {
       x = c.x + f.x * (p - 0.5);
       z = c.z + f.z * (p - 0.5);
     }
-    return itemPos.set(x, b.tile.height + BELT_TOP + ITEM_LIFT, z);
+    itemPos.set(x, b.tile.height + BELT_TOP + lift, z);
+    return heading;
   }
 
   function update(dt, elapsed, factory) {
-    beltTex.offset.y -= BELT_SPEED * CHEVRONS_PER_TILE * dt;
+    beltTex.offset.y -= factory.beltSpeed() * CHEVRONS_PER_TILE * dt;
     beltTex.offset.y %= 1;
 
-    let n = 0;
+    const n = Object.fromEntries(Object.keys(shapes).map((k) => [k, 0]));
     for (const b of factory.buildings.values()) {
       if (b.type !== 'belt') continue;
       for (const item of b.items) {
-        if (n >= MAX_ITEMS) break;
-        dummy.position.copy(placeItem(b, item));
-        dummy.rotation.set(item.spin, item.spin * 1.7, 0);
-        dummy.scale.setScalar(1);
+        const shape = ITEMS[item.kind].shape;
+        const s = shapes[shape];
+        if (n[shape] >= MAX_ITEMS) continue;
+        const heading = placeItem(b, item, s.lift);
+        dummy.position.copy(itemPos);
+        if (s.tumble) dummy.rotation.set(item.spin, item.spin * 1.7, 0);
+        else dummy.rotation.set(0, yaw(heading), 0);
         dummy.updateMatrix();
-        items.setMatrixAt(n, dummy.matrix);
-        items.setColorAt(n, oreColors[item.ore]);
-        n++;
+        itemMeshes[shape].setMatrixAt(n[shape], dummy.matrix);
+        itemMeshes[shape].setColorAt(n[shape], itemColors[item.kind]);
+        n[shape]++;
       }
     }
-    items.count = n;
-    items.instanceMatrix.needsUpdate = true;
-    if (items.instanceColor) items.instanceColor.needsUpdate = true;
+    for (const [shape, mesh] of Object.entries(itemMeshes)) {
+      mesh.count = n[shape];
+      mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    }
 
-    for (const [b, view] of drillViews) {
-      const working = b.state === 'work';
-      if (working) {
-        view.phase += dt;
-        view.rotor.rotation.y += dt * 7;
-      }
+    for (const [b, view] of views) animate(b, view, dt, elapsed);
+  }
+
+  function setLamp(view, state, elapsed) {
+    const col = LAMP[state];
+    view.lamp.material.color.setHex(col);
+    view.lamp.material.emissive.setHex(col);
+    const steady = state === 'work' || state === 'idle';
+    view.lamp.material.emissiveIntensity = steady ? 1.2 : 0.8 + Math.sin(elapsed * 6) * 0.6;
+  }
+
+  function animate(b, view, dt, elapsed) {
+    const working = b.state === 'work';
+    if (working) view.phase += dt;
+    if (b.type === 'drill') {
+      if (working) view.rotor.rotation.y += dt * 7;
       view.piston.position.y = 0.64 + (working ? Math.sin(view.phase * 9) * 0.035 : 0);
-      const col = LAMP[b.state];
-      view.lamp.material.color.setHex(col);
-      view.lamp.material.emissive.setHex(col);
-      view.lamp.material.emissiveIntensity = b.state === 'work' ? 1.2 : 0.8 + Math.sin(elapsed * 6) * 0.6;
+      setLamp(view, b.state, elapsed);
+    } else if (b.type === 'furnace') {
+      const target = working ? 2.2 + Math.sin(elapsed * 13) * 0.3 + Math.sin(elapsed * 7.3) * 0.25 : 0.25;
+      view.glow.emissiveIntensity += (target - view.glow.emissiveIntensity) * Math.min(1, dt * 4);
+      for (const puff of view.puffs) {
+        const t = (view.phase * 0.5 + puff.userData.offset) % 1;
+        puff.visible = working || t > 0.05;
+        puff.position.set(0.18 + Math.sin(t * 5 + puff.userData.offset * 9) * 0.05, 1.22 + t * 0.7, 0.2 + t * 0.15);
+        puff.scale.setScalar(working ? 0.5 + t * 1.2 : Math.max(0, 1 - t) * 0.6);
+        puff.rotation.y = t * 3;
+      }
+      setLamp(view, b.state, elapsed);
+    } else if (b.type === 'assembler') {
+      // A quick stamp near the end of each cycle, then lift again.
+      const t = working ? (view.phase * 1.25) % 1 : 0;
+      const down = t < 0.7 ? 0 : Math.sin(((t - 0.7) / 0.3) * Math.PI);
+      view.press.position.y = 0.55 - down * 0.22;
+      setLamp(view, b.state, elapsed);
+    } else if (b.type === 'storage') {
+      if (b.received !== view.seen) {
+        view.seen = b.received;
+        view.flash = 0.25;
+      }
+      view.flash = Math.max(0, view.flash - dt);
+      setLamp(view, view.flash > 0 ? 'work' : 'idle', elapsed);
+      view.lamp.material.emissiveIntensity = view.flash > 0 ? 2 : 0.5;
     }
   }
 
   function clear() {
-    for (const view of drillViews.values()) {
-      drillsGroup.remove(view.root);
-      view.lamp.material.dispose();
-    }
-    drillViews.clear();
+    for (const view of views.values()) dropModel(view);
+    views.clear();
     for (const meshes of Object.values(beltMeshes)) for (const mesh of meshes) mesh.count = 0;
-    items.count = 0;
+    for (const mesh of Object.values(itemMeshes)) mesh.count = 0;
   }
 
   return { group, rebuild, update, clear };
@@ -355,11 +499,16 @@ export function createGhost() {
   pivot.add(arrow);
   group.add(pivot);
 
+  const box = (w, h, d, z = 0) => new THREE.BoxGeometry(w, h, d).translate(0, h / 2, z);
   const shapes = {
-    drill: new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.6, 0.62).translate(0, 0.3, 0.04), bodyMat),
-    belt: new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.12, 1).translate(0, 0.06, 0), bodyMat),
+    drill: { geo: box(0.66, 0.6, 0.62, 0.04), arrow: 0.64 },
+    belt: { geo: box(0.84, 0.12, 1), arrow: 0.16 },
+    storage: { geo: box(0.86, 0.58, 0.8), arrow: null },
+    furnace: { geo: mergeGeometries([box(0.74, 0.66, 0.68, 0.06), box(0.2, 1.2, 0.2).translate(0.18, 0, 0.2)]), arrow: 0.7 },
+    assembler: { geo: box(0.76, 0.86, 0.72, 0.04), arrow: 0.9 },
   };
-  for (const s of Object.values(shapes)) pivot.add(s);
+  const meshes = Object.fromEntries(Object.entries(shapes).map(([k, s]) => [k, new THREE.Mesh(s.geo, bodyMat)]));
+  for (const s of Object.values(meshes)) pivot.add(s);
 
   function show(tool, tile, dir, ok) {
     if (!tool || !tile) {
@@ -369,9 +518,10 @@ export function createGhost() {
     group.visible = true;
     group.position.set(tile.position.x, tile.height, tile.position.z);
     pivot.rotation.y = yaw(dir);
-    for (const [k, s] of Object.entries(shapes)) s.visible = k === tool;
-    arrow.visible = tool !== 'remove';
-    arrow.position.y = tool === 'drill' ? 0.64 : 0.16;
+    for (const [k, s] of Object.entries(meshes)) s.visible = k === tool;
+    const arrowY = shapes[tool]?.arrow ?? null;
+    arrow.visible = arrowY !== null;
+    arrow.position.y = arrowY ?? 0;
     const col = tool === 'remove' ? (ok ? 0xff6b5b : 0x9aa0a6) : ok ? 0x7ee08a : 0xff6b5b;
     for (const m of [footMat, bodyMat, arrowMat]) m.color.setHex(col);
   }
