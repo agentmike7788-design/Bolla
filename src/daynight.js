@@ -47,6 +47,7 @@ const GLOWS = {
   merger: { color: 0xd8b0ff, size: 1.2, light: 0.2 },
   pump: { color: 0xffd9a0, size: 1.4, light: 0.3 },
   refinery: { color: 0xffa040, size: 3, light: 0.9 },
+  station: { color: 0xffe2b0, size: 2.4, light: 0.6 },
 };
 
 export function createDayNight({ scene, renderer, sun, hemi, mapHalf }) {

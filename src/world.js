@@ -89,7 +89,11 @@ function makeNoise(rand) {
 //   forest   how dry it may be for trees to grow, 1 no forest at all
 //   desert   grass turns into desert sand
 //   richness multiplies the ore in each patch
+//   size     tiles along each side
+//   zones    where the patches of one kind may lie, as fractions of the map:
+//            { iron: [x0, z0, x1, z1] }; kinds left out lie anywhere
 export const DEFAULT_MAP = {
+  size: MAP_SIZE,
   ores: { iron: 5, copper: 4, coal: 4, stone: 3, oil: 3 },
   land: 0,
   coast: 0.78,
@@ -104,11 +108,12 @@ export function generateWorld(seed, options = {}) {
   const rand = mulberry32(seed);
   const fbm = makeNoise(rand);
   const tiles = [];
+  const size = map.size;
 
-  for (let z = 0; z < MAP_SIZE; z++) {
-    for (let x = 0; x < MAP_SIZE; x++) {
+  for (let z = 0; z < size; z++) {
+    for (let x = 0; x < size; x++) {
       // Fade the land into the sea towards the edge so the map reads as an island.
-      const edge = Math.max(Math.abs((x / (MAP_SIZE - 1)) * 2 - 1), Math.abs((z / (MAP_SIZE - 1)) * 2 - 1));
+      const edge = Math.max(Math.abs((x / (size - 1)) * 2 - 1), Math.abs((z / (size - 1)) * 2 - 1));
       const h = fbm(x / 14, z / 14) + map.land - THREE.MathUtils.smoothstep(edge, map.coast, 1) * 0.3;
       const moisture = fbm(x / 9 + 100, z / 9 + 100, 3);
       let terrain;
@@ -122,14 +127,15 @@ export function generateWorld(seed, options = {}) {
   }
 
   // Scatter ore patches as blobs on buildable land, away from the map edge.
-  const at = (x, z) => tiles[z * MAP_SIZE + x];
+  const at = (x, z) => tiles[z * size + x];
   for (const [ore, count] of Object.entries(map.ores)) {
     let placed = 0;
     let tries = 0;
+    const [x0, z0, x1, z1] = map.zones?.[ore] ?? [0, 0, 1, 1];
     while (placed < count && tries < 400) {
       tries++;
-      const cx = 4 + Math.floor(rand() * (MAP_SIZE - 8));
-      const cz = 4 + Math.floor(rand() * (MAP_SIZE - 8));
+      const cx = 4 + Math.floor((x0 + rand() * (x1 - x0)) * (size - 8));
+      const cz = 4 + Math.floor((z0 + rand() * (z1 - z0)) * (size - 8));
       const center = at(cx, cz);
       if (!TERRAIN[center.terrain].buildable || center.ore) continue;
       const radius = (2 + rand() * 2.5) * (ORES[ore].patch ?? 1);
@@ -138,7 +144,7 @@ export function generateWorld(seed, options = {}) {
         for (let dx = -r; dx <= r; dx++) {
           const x = cx + dx;
           const z = cz + dz;
-          if (x < 0 || z < 0 || x >= MAP_SIZE || z >= MAP_SIZE) continue;
+          if (x < 0 || z < 0 || x >= size || z >= size) continue;
           const dist = Math.hypot(dx, dz) + fbm(x / 3 + 50, z / 3 + 50, 2) * 1.5;
           const tile = at(x, z);
           if (dist > radius || !TERRAIN[tile.terrain].buildable || tile.ore) continue;
@@ -151,6 +157,6 @@ export function generateWorld(seed, options = {}) {
     }
   }
 
-  return { seed, size: MAP_SIZE, tiles, at };
+  return { seed, size, tiles, at };
 }
 

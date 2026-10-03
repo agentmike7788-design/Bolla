@@ -4,6 +4,7 @@ import { MapControls } from 'three/addons/controls/MapControls.js';
 // Strategy-game camera: left mouse pans, right mouse rotates, wheel zooms,
 // WASD moves and Q/E rotates. The focus point stays inside the map.
 export function createCameraRig(camera, dom, halfExtent) {
+  let extent = halfExtent;
   camera.position.set(0, 34, 34);
 
   const controls = new MapControls(camera, dom);
@@ -71,8 +72,8 @@ export function createCameraRig(camera, dom, halfExtent) {
 
     // Keep the focus point on the map.
     const clamped = controls.target.clone();
-    clamped.x = THREE.MathUtils.clamp(clamped.x, -halfExtent, halfExtent);
-    clamped.z = THREE.MathUtils.clamp(clamped.z, -halfExtent, halfExtent);
+    clamped.x = THREE.MathUtils.clamp(clamped.x, -extent, extent);
+    clamped.z = THREE.MathUtils.clamp(clamped.z, -extent, extent);
     clamped.y = 0;
     camera.position.add(clamped.clone().sub(controls.target));
     controls.target.copy(clamped);
@@ -96,5 +97,11 @@ export function createCameraRig(camera, dom, halfExtent) {
     flight = { from: controls.target.clone(), to: new THREE.Vector3(x, 0, z), t: 0 };
   }
 
-  return { controls, update, setLocked, orbit, flyTo };
+  // Big maps let the camera go further out.
+  function setExtent(half) {
+    extent = half;
+    controls.maxDistance = Math.max(90, half * 2.6);
+  }
+
+  return { controls, update, setLocked, orbit, flyTo, setExtent };
 }

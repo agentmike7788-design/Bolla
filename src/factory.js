@@ -1,5 +1,6 @@
 import { ORES, TERRAIN } from './world.js';
 import { createResearch } from './research.js';
+import { createRailways, isTrack, axisBits, STATION_CAP } from './trains.js';
 
 // Grid directions: 0 north (-z), 1 east (+x), 2 south (+z), 3 west (-x).
 export const DIRS = [
@@ -68,6 +69,9 @@ export const BUILDINGS = {
   pipe: { name: 'Rohr' },
   tank: { name: 'Öltank' },
   refinery: { name: 'Raffinerie' },
+  rail: { name: 'Gleis' },
+  station: { name: 'Bahnhof' },
+  train: { name: 'Zug', vehicle: true }, // not a building: a train on the track, see trains.js
 };
 
 export const BELT_SPEED = 1.5; // tiles per second, before research
@@ -80,7 +84,7 @@ const SPLITTER_BUFFER = 2;
 const opposite = (dir) => (dir + 2) % 4;
 export const isMachine = (b) => b?.type === 'furnace' || b?.type === 'assembler';
 // Buildings that never hand items on.
-const NO_OUTPUT = new Set(['storage', 'power', 'pole', 'pump', 'pipe', 'tank']);
+const NO_OUTPUT = new Set(['storage', 'power', 'pole', 'pump', 'pipe', 'tank', 'rail', 'station']);
 
 // Power. A coal power plant burns coal from belts and feeds every network it is
 // connected to. Poles carry the power: wires reach from pole to pole, and a pole
@@ -119,6 +123,8 @@ export function createFactory(world, { start } = {}) {
   const research = createResearch(stored, start);
   let time = 0; // simulated seconds since the start
   let pumped = 0; // oil ever pumped
+  let shipped = 0; // parts ever unloaded from trains
+  const shipLog = []; // unload times of the last minute
 
   const indexOf = (tile) => tile.z * world.size + tile.x;
   const at = (x, z) => (x < 0 || z < 0 || x >= world.size || z >= world.size ? null : buildings.get(z * world.size + x) ?? null);
@@ -131,6 +137,7 @@ export function createFactory(world, { start } = {}) {
   function canPlace(type, tile, overBelt = false) {
     if (!tile) return { ok: false, reason: '' };
     if (!research.unlocked.has(type)) return { ok: false, reason: 'Noch nicht freigeschaltet' };
+    if (BUILDINGS[type]?.vehicle) return { ok: false, reason: '' };
     const existing = buildings.get(indexOf(tile));
     if (existing && !(overBelt && existing.type === 'belt' && type !== 'belt')) return { ok: false, reason: 'Hier steht schon etwas' };
     if (!TERRAIN[tile.terrain].buildable) return { ok: false, reason: 'Hier kann man nicht bauen' };
@@ -154,21 +161,66 @@ export function createFactory(world, { start } = {}) {
     if (type === 'pump') Object.assign(b, { acc: 0, state: 'nopower', pumped: 0 });
     if (type === 'refinery') Object.assign(b, { recipe: 'plastic', output: [], busy: false, timer: 0, state: 'idle', made: 0 });
     if (isFluid(b)) b.oil = 0;
+    if (type === 'rail') b.conn = 0;
+    if (type === 'station') Object.assign(b, { conn: axisBits(dir), mode: 'load', name: stationName(), items: {}, total: 0, received: 0, sent: 0 });
     buildings.set(b.index, b);
+    if (isTrack(b)) railways.join(b);
     updateShapes();
     return b;
   }
 
+  // A train standing on the tile goes first, the track under it with the next click.
   function remove(tile) {
+    const train = railways.trainOn(tile);
+    if (train) {
+      railways.removeTrain(train);
+      return { type: 'train', tile, train };
+    }
     const b = tile && buildings.get(indexOf(tile));
     if (!b) return null;
     buildings.delete(b.index);
+    if (isTrack(b)) railways.markDirty();
     updateShapes();
     return b;
+  }
+
+  // Stations are named A, B, C … in the order they are built; free letters are reused.
+  function stationName() {
+    const used = new Set();
+    for (const b of buildings.values()) if (b.type === 'station') used.add(b.name);
+    for (let i = 0; ; i++) {
+      const name = String.fromCharCode(65 + (i % 26)) + (i >= 26 ? Math.floor(i / 26) + 1 : '');
+      if (!used.has(name)) return name;
+    }
+  }
+
+  // --- Railways -------------------------------------------------------------------
+
+  const railways = createRailways({
+    world,
+    buildings,
+    neighbour,
+    research,
+    pushTo,
+    onShip() {
+      shipped++;
+      shipLog.push(time);
+    },
+  });
+
+  // Parts unloaded from trains during the last minute.
+  function shippedPerMinute() {
+    while (shipLog.length && shipLog[0] < time - 60) shipLog.shift();
+    return shipLog.length;
+  }
+
+  function setMode(b, mode) {
+    if (b.type === 'station' && (mode === 'load' || mode === 'unload')) b.mode = mode;
   }
 
   // --- Power grid ---------------------------------------------------------------
 
+  const derailed = []; // trains lost because their track was torn up, for the view to report
   const grid = { nets: [], wires: [], version: 0 };
   let gridDirty = true;
 
@@ -443,8 +495,13 @@ export function createFactory(world, { start } = {}) {
   }
 
   function setDir(b, dir) {
-    if (b.dir === dir) return;
+    if (b.dir === dir || b.type === 'rail') return;
     b.dir = dir;
+    // A station turns its track with it.
+    if (b.type === 'station') {
+      b.conn = axisBits(dir);
+      railways.join(b);
+    }
     updateShapes();
   }
 
@@ -501,7 +558,15 @@ export function createFactory(world, { start } = {}) {
       target.refused = null;
       return true;
     }
-    if (target.type === 'drill' || target.type === 'pole' || isFluid(target) || target.dir === opposite(dir)) return false;
+    if (target.type === 'station') {
+      // Loading stations take parts over their two sides, not along the track.
+      if (target.mode !== 'load' || dir % 2 === target.dir % 2 || target.total >= STATION_CAP) return false;
+      target.items[kind] = (target.items[kind] ?? 0) + 1;
+      target.total++;
+      target.received++;
+      return true;
+    }
+    if (target.type === 'drill' || target.type === 'pole' || target.type === 'rail' || isFluid(target) || target.dir === opposite(dir)) return false;
     if (target.type === 'belt') {
       const last = target.items[target.items.length - 1];
       if (last && last.p < ITEM_SPACING) return false;
@@ -675,6 +740,7 @@ export function createFactory(world, { start } = {}) {
   }
 
   const count = (type) => {
+    if (type === 'train') return railways.trains.length;
     let n = 0;
     for (const b of buildings.values()) if (b.type === type) n++;
     return n;
@@ -683,9 +749,11 @@ export function createFactory(world, { start } = {}) {
   function tick(dt) {
     if (gridDirty) updateGrid();
     if (pipesDirty) updatePipes();
+    if (railways.dirty) derailed.push(...railways.update());
     time += dt;
     tickPower(dt);
     tickFluids(dt);
+    railways.tick(dt);
     const step = beltSpeed() * dt;
     for (const b of buildings.values()) if (b.type === 'belt' && b.items.length) tickBelt(b, step);
     for (const b of buildings.values()) {
@@ -704,6 +772,9 @@ export function createFactory(world, { start } = {}) {
     return {
       time,
       pumped,
+      shipped,
+      shipLog: [...shipLog],
+      trains: railways.save(),
       mined,
       stored,
       delivered,
@@ -718,6 +789,9 @@ export function createFactory(world, { start } = {}) {
   function load(data, version = Infinity) {
     time = data.time ?? 0;
     pumped = data.pumped ?? 0;
+    shipped = data.shipped ?? 0;
+    shipLog.length = 0;
+    shipLog.push(...(data.shipLog ?? []));
     for (const [target, from] of [[mined, data.mined], [stored, data.stored], [delivered, data.delivered]]) {
       for (const k of Object.keys(target)) target[k] = from?.[k] ?? 0;
     }
@@ -729,8 +803,9 @@ export function createFactory(world, { start } = {}) {
     pipes.nets = [];
     for (const b of data.buildings ?? []) {
       const tile = world.tiles[b.index];
-      if (tile && BUILDINGS[b.type]) buildings.set(b.index, { ...b, tile });
+      if (tile && BUILDINGS[b.type] && !BUILDINGS[b.type].vehicle) buildings.set(b.index, { ...b, tile });
     }
+    railways.load(data.trains);
     updateShapes();
   }
 
@@ -753,6 +828,20 @@ export function createFactory(world, { start } = {}) {
     get pumped() {
       return pumped;
     },
+    get shipped() {
+      return shipped;
+    },
+    world,
+    trains: railways.trains,
+    derailed,
+    railways,
+    shippedPerMinute,
+    setMode,
+    addTrain: (tile) => railways.addTrain(tile),
+    canAddTrain: (tile) => (research.unlocked.has('train') ? railways.startPath(tile) : { ok: false, reason: 'Noch nicht freigeschaltet' }),
+    trainOn: (tile) => railways.trainOn(tile),
+    linkTrack: (a, b) => railways.link(a, b) && (updateShapes(), true),
+    updateTracks: () => derailed.push(...railways.update()),
     get time() {
       return time;
     },

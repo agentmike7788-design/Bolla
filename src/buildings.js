@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { DIRS, ITEMS, POLE_SUPPLY, isFluid } from './factory.js';
+import { trackPoint, isTrack, CAR_GAP, CARS, WAGON_CARGO, STATION_CAP } from './trains.js';
 import { ORES } from './world.js';
 
 const STEEL = 0x3a4046;
@@ -83,6 +84,38 @@ function beltGeometries(shape) {
       sweepBox(path, { u0: 0.33, u1: 0.42, y0: -0.16, y1: 0.12 }, n),
     ]),
     surface: sweepBox(path, { u0: -0.31, u1: 0.31, y0: 0, y1: BELT_TOP, sides: false, caps: false }, n),
+  };
+}
+
+// Track pieces in local space, running towards -z: a straight tile, a curve that
+// enters over the left edge like a belt curve, and an arm from the middle to the
+// front edge for junctions.
+const RAIL_PATHS = {
+  straight: BELT_PATHS.straight,
+  curve: BELT_PATHS.left,
+  arm: { length: 0.5, at: (t) => [0, -0.5 * t] },
+};
+export const RAIL_TOP = 0.11; // top of the rails above the tile
+
+function railGeometries(shape) {
+  const path = RAIL_PATHS[shape];
+  const n = shape === 'curve' ? 12 : 1;
+  const count = Math.max(2, Math.round(path.length * 4));
+  const sleepers = [];
+  for (let i = 0; i < count; i++) {
+    const t = (i + 0.5) / count;
+    const [x, z] = path.at(t);
+    const [ax, az] = path.at(Math.max(0, t - 0.01));
+    const [bx, bz] = path.at(Math.min(1, t + 0.01));
+    sleepers.push(new THREE.BoxGeometry(0.64, 0.05, 0.11).rotateY(Math.atan2(-(bx - ax), -(bz - az))).translate(x, 0.05, z));
+  }
+  return {
+    ballast: sweepBox(path, { u0: -0.42, u1: 0.42, y0: -0.06, y1: 0.025 }, n),
+    sleepers: mergeGeometries(sleepers),
+    rails: mergeGeometries([
+      sweepBox(path, { u0: -0.24, u1: -0.18, y0: 0.06, y1: RAIL_TOP }, n),
+      sweepBox(path, { u0: 0.18, u1: 0.24, y0: 0.06, y1: RAIL_TOP }, n),
+    ]),
   };
 }
 
@@ -234,6 +267,23 @@ function buildingParts() {
     ]),
     flare: mergeGeometries([new THREE.CylinderGeometry(0.025, 0.035, 0.95, 6).translate(-0.33, 0.5, -0.3), new THREE.CylinderGeometry(0.045, 0.03, 0.06, 8).translate(-0.33, 0.99, -0.3)]),
     flame: new THREE.ConeGeometry(0.05, 0.16, 7).translate(0, 0.08, 0),
+    // Station: a roof over the track on four posts, low platforms along the sides.
+    platforms: mergeGeometries([box(0.12, 0.1, 0.96, -0.42, 0.05, 0), box(0.12, 0.1, 0.96, 0.42, 0.05, 0)]),
+    posts: mergeGeometries([-1, 1].flatMap((sx) => [-1, 1].map((sz) => new THREE.CylinderGeometry(0.025, 0.025, 1, 6).translate(sx * 0.42, 0.55, sz * 0.38)))),
+    roof: rbox(1, 0.06, 0.9, 0, 1.06, 0, 0.02),
+    fascia: mergeGeometries([box(1.02, 0.08, 0.03, 0, 1.0, -0.45), box(1.02, 0.08, 0.03, 0, 1.0, 0.45)]),
+    crates: mergeGeometries([box(0.1, 0.1, 0.1, 0, 0.05, 0), box(0.1, 0.1, 0.1, 0, 0.05, 0.12), box(0.1, 0.1, 0.1, 0, 0.15, 0.06)]),
+    // Train cars face -z, their floor at the top of the rails.
+    chassis: box(0.5, 0.07, 0.9, 0, 0.17, 0),
+    bogies: mergeGeometries([box(0.36, 0.08, 0.22, 0, 0.13, -0.28), box(0.36, 0.08, 0.22, 0, 0.13, 0.28)]),
+    hood: rbox(0.4, 0.26, 0.42, 0, 0.33, -0.22, 0.05),
+    cab: rbox(0.48, 0.4, 0.42, 0, 0.4, 0.2, 0.05),
+    cabWindows: box(0.5, 0.11, 0.38, 0, 0.5, 0.2),
+    cabRoof: box(0.52, 0.04, 0.46, 0, 0.62, 0.2),
+    hoodStripe: box(0.41, 0.05, 0.43, 0, 0.3, -0.22),
+    headlight: new THREE.SphereGeometry(0.04, 8, 6).translate(0, 0.38, -0.44),
+    container: rbox(0.46, 0.36, 0.8, 0, 0.18, 0, 0.03),
+    wagonFrame: mergeGeometries([box(0.5, 0.1, 0.03, 0, 0.25, -0.43), box(0.5, 0.1, 0.03, 0, 0.25, 0.43)]),
   };
   const m = {
     steel: flat(STEEL),
@@ -259,11 +309,18 @@ function buildingParts() {
     tank: flat(0xe6e2d8, { roughness: 0.55 }),
     refinery: flat(0xc9cdd0, { roughness: 0.35, metalness: 0.55 }),
     flame: new THREE.MeshBasicMaterial({ color: 0xffa040, transparent: true, opacity: 0.9, depthWrite: false }),
+    ballast: flat(0x8a8178, { roughness: 1, metalness: 0 }),
+    sleeper: flat(0x5a4030, { roughness: 0.9, metalness: 0 }),
+    rail: new THREE.MeshStandardMaterial({ color: 0xa9b0b6, roughness: 0.3, metalness: 0.85 }),
+    platform: flat(0xc9c2b4, { roughness: 0.85, metalness: 0.05 }),
+    roof: flat(0x34536b, { roughness: 0.6 }),
+    loco: flat(0xc8402e, { roughness: 0.45 }),
     ore: Object.fromEntries(Object.entries(ORES).map(([k, o]) => [k, flat(o.color, { roughness: 0.4, metalness: 0.3 })])),
   };
   return { g, m };
 }
 
+const MODE_COLOR = { load: 0x3fae5a, unload: 0xe07a2e };
 const LAMP = { work: 0x6be36b, blocked: 0xffb02e, empty: 0xff5544, idle: 0x5aa9ff, nopower: 0xb46bff };
 const WIRE_HEIGHT = 1.53; // insulators above the tile
 const INSULATOR = 0.22; // insulators sideways from the mast
@@ -329,7 +386,7 @@ export function createFactoryView(renderer) {
     rails: new THREE.MeshStandardMaterial({ color: SIGNAL, roughness: 0.5, metalness: 0.2, flatShading: true }),
     surface: new THREE.MeshStandardMaterial({ map: beltTex, roughness: 0.9 }),
   };
-  const MAX_BELTS = 64 * 64;
+  const MAX_BELTS = 96 * 96;
   const beltMeshes = {};
   for (const shape of Object.keys(BELT_PATHS)) {
     const geos = beltGeometries(shape);
@@ -381,7 +438,7 @@ export function createFactoryView(renderer) {
   // Pipes: hubs and arms as instances, rebuilt when the pipe networks change, and
   // glowing rings that run along them with the oil, away from the pumps.
   const PIPE_Y = 0.34;
-  const MAX_PIPES = 64 * 64;
+  const MAX_PIPES = 96 * 96;
   const pipeHubs = new THREE.InstancedMesh(parts.g.pipeHub, parts.m.pipe, MAX_PIPES);
   const pipeArms = new THREE.InstancedMesh(parts.g.pipeArm, parts.m.pipe, MAX_PIPES * 4);
   const ringMat = new THREE.MeshStandardMaterial({ color: 0x4a2a08, emissive: 0xffb347, emissiveIntensity: 1.6, roughness: 0.4 });
@@ -448,6 +505,142 @@ export function createFactoryView(renderer) {
     flowRings.count = n;
     flowRings.instanceMatrix.needsUpdate = true;
     ringMat.emissiveIntensity = 1.6 + night;
+  }
+
+  // Track: sleepers, rails and ballast as instances per piece, rebuilt with the factory.
+  const MAX_RAILS = { straight: 96 * 96, curve: 4096, arm: 4096 };
+  const railParts = { ballast: parts.m.ballast, sleepers: parts.m.sleeper, rails: parts.m.rail };
+  const railMeshes = {};
+  for (const shape of Object.keys(RAIL_PATHS)) {
+    railMeshes[shape] = Object.entries(railGeometries(shape)).map(([part, geo]) => {
+      const mesh = new THREE.InstancedMesh(geo, railParts[part], MAX_RAILS[shape]);
+      mesh.count = 0;
+      mesh.castShadow = part !== 'ballast';
+      mesh.receiveShadow = true;
+      mesh.frustumCulled = false;
+      group.add(mesh);
+      return mesh;
+    });
+  }
+
+  // Which pieces draw a track tile: [shape, direction] pairs.
+  function trackPieces(b) {
+    if (b.type === 'station') return [['straight', b.dir]];
+    let sides = b.links ?? [];
+    if (!sides.length) sides = [0, 1, 2, 3].filter((d) => b.conn & (1 << d));
+    if (!sides.length) sides = [b.dir];
+    if (sides.length === 1) return [['straight', sides[0]]];
+    if (sides.length === 2) {
+      const [a, c] = sides;
+      if ((a + 2) % 4 === c) return [['straight', a]];
+      // A curve leaves towards `exit` and comes in over its left edge.
+      return [['curve', c === (a + 3) % 4 ? a : c]];
+    }
+    return sides.map((d) => ['arm', d]);
+  }
+
+  function rebuildRails(factory) {
+    const counts = { straight: 0, curve: 0, arm: 0 };
+    for (const b of factory.buildings.values()) {
+      if (!isTrack(b)) continue;
+      for (const [shape, d] of trackPieces(b)) {
+        if (counts[shape] >= MAX_RAILS[shape]) continue;
+        dummy.position.set(b.tile.position.x, b.tile.height, b.tile.position.z);
+        dummy.rotation.set(0, yaw(d), 0);
+        dummy.updateMatrix();
+        for (const mesh of railMeshes[shape]) mesh.setMatrixAt(counts[shape], dummy.matrix);
+        counts[shape]++;
+      }
+    }
+    for (const [shape, meshes] of Object.entries(railMeshes)) {
+      for (const mesh of meshes) {
+        mesh.count = counts[shape];
+        mesh.instanceMatrix.needsUpdate = true;
+      }
+    }
+  }
+
+  // Trains: a few cars each, moved along their track every frame.
+  const trainViews = new Map(); // train -> { root, cars: [{ root, container }], owned }
+  const carPoint = {};
+
+  function makeTrain() {
+    const { g, m } = parts;
+    const root = new THREE.Group();
+    const owned = [];
+    const cars = [];
+    const add = (car, geo, mat) => {
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      car.add(mesh);
+      return mesh;
+    };
+    for (let j = 0; j < CARS; j++) {
+      const car = new THREE.Group();
+      const entry = { root: car };
+      add(car, g.chassis, m.dark);
+      add(car, g.bogies, m.steel);
+      if (j === 0 || j === CARS - 1) {
+        add(car, g.hood, m.loco);
+        add(car, g.hoodStripe, m.signal);
+        add(car, g.cab, m.loco);
+        add(car, g.cabWindows, m.glass);
+        add(car, g.cabRoof, m.dark);
+        const lampMat = new THREE.MeshStandardMaterial({ color: 0xfff2c0, emissive: 0xfff2c0, emissiveIntensity: 1 });
+        owned.push(lampMat);
+        entry.lamp = add(car, g.headlight, lampMat);
+        entry.lamp.castShadow = false;
+      } else {
+        add(car, g.wagonFrame, m.steel);
+        const mat = flat(0x888888, { roughness: 0.55 });
+        owned.push(mat);
+        entry.container = add(car, g.container, mat);
+        entry.container.position.y = 0.205;
+      }
+      root.add(car);
+      cars.push(entry);
+    }
+    modelsGroup.add(root);
+    return { root, cars, owned };
+  }
+
+  function dropTrain(view) {
+    modelsGroup.remove(view.root);
+    for (const mat of view.owned) mat.dispose();
+  }
+
+  function updateTrains(factory) {
+    const alive = new Set(factory.trains);
+    for (const [t, view] of trainViews) {
+      if (alive.has(t)) continue;
+      dropTrain(view);
+      trainViews.delete(t);
+    }
+    // Cargo fills the wagons one after the other, in the colour of what most of it is.
+    for (const t of factory.trains) {
+      let view = trainViews.get(t);
+      if (!view) trainViews.set(t, (view = makeTrain()));
+      let main = null;
+      for (const k in t.cargo) if (t.cargo[k] > 0 && (!main || t.cargo[k] > t.cargo[main])) main = k;
+      for (let j = 0; j < CARS; j++) {
+        const car = view.cars[j];
+        trackPoint(factory.world, t.path, t.s - j * CAR_GAP, carPoint);
+        car.root.position.set(carPoint.x, carPoint.y + RAIL_TOP - 0.11, carPoint.z);
+        car.root.rotation.y = carPoint.heading + (j === CARS - 1 ? Math.PI : 0);
+        if (car.container) {
+          const fill = Math.min(1, Math.max(0, (t.total - (j - 1) * WAGON_CARGO) / WAGON_CARGO));
+          car.container.visible = fill > 0;
+          car.container.scale.y = Math.max(0.05, fill);
+          if (main) car.container.material.color.setHex(ITEMS[main].color);
+        }
+        if (car.lamp) {
+          // The leading lamp shines while the train runs.
+          const lead = j === 0 && t.state === 'run';
+          car.lamp.material.emissiveIntensity = (lead ? 1.6 : 0.25) * (1 + night * 2);
+        }
+      }
+    }
   }
 
   // Where the wire hangs on a pole: the left or right insulator.
@@ -652,6 +845,39 @@ export function createFactoryView(renderer) {
       view.flame = add(g.flame, m.flame, false);
       view.flame.position.set(-0.33, 1.02, -0.3);
       lamp(-0.05, 0.42, -0.02);
+    } else if (b.type === 'station') {
+      add(g.platforms, m.platform);
+      add(g.posts, m.steel);
+      add(g.roof, m.roof);
+      view.fascia = add(g.fascia, own(flat(MODE_COLOR.load, { roughness: 0.5 })));
+      view.crates = [-1, 1].map((sx) => {
+        const c = add(g.crates, m.container);
+        c.position.set(sx * 0.42, 0.1, 0.22);
+        return c;
+      });
+      // A round sign with the station's letter above the roof.
+      const c = document.createElement('canvas');
+      c.width = c.height = 64;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#1d3b52';
+      ctx.beginPath();
+      ctx.arc(32, 32, 29, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `700 ${b.name.length > 1 ? 26 : 36}px "Saira Condensed", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(b.name, 32, 34);
+      const tex = own(new THREE.CanvasTexture(c));
+      tex.colorSpace = THREE.SRGBColorSpace;
+      const sign = new THREE.Sprite(own(new THREE.SpriteMaterial({ map: tex })));
+      sign.scale.setScalar(0.42);
+      sign.position.set(0, 1.38, 0);
+      root.add(sign);
+      lamp(0, 1.0, -0.47);
     } else if (b.type === 'storage') {
       add(g.pad, m.dark);
       add(g.crate, m.container);
@@ -688,6 +914,7 @@ export function createFactoryView(renderer) {
         for (const mesh of beltMeshes[b.shape]) mesh.setMatrixAt(i, dummy.matrix);
         continue;
       }
+      if (b.type === 'rail') continue;
       alive.add(b);
       let view = views.get(b);
       if (!view) views.set(b, (view = makeModel(b)));
@@ -714,6 +941,8 @@ export function createFactoryView(renderer) {
       pipesVersion = factory.pipes.version;
       rebuildPipes(factory);
     }
+    factory.updateTracks();
+    rebuildRails(factory);
   }
 
   // World position of an item on a belt, following the belt's shape.
@@ -782,6 +1011,7 @@ export function createFactoryView(renderer) {
     }
 
     updateFlow(dt, factory);
+    updateTrains(factory);
     for (const [b, view] of views) animate(b, view, dt, elapsed);
   }
 
@@ -863,6 +1093,14 @@ export function createFactoryView(renderer) {
       view.flare = (view.flare ?? 0.45) + (target - (view.flare ?? 0.45)) * Math.min(1, dt * 5);
       view.flame.scale.set(0.8 + view.flare * 0.3, view.flare, 0.8 + view.flare * 0.3);
       setLamp(view, b.state, elapsed);
+    } else if (b.type === 'station') {
+      view.fascia.material.color.setHex(MODE_COLOR[b.mode]);
+      const fill = b.total / STATION_CAP;
+      view.crates.forEach((c, i) => {
+        c.visible = fill > i * 0.5;
+        c.scale.setScalar(0.6 + Math.min(1, fill * 2 - i) * 0.5);
+      });
+      setLamp(view, b.state === 'work' ? 'work' : 'idle', elapsed);
     } else if (b.type === 'storage') {
       if (b.received !== view.seen) {
         view.seen = b.received;
@@ -886,6 +1124,9 @@ export function createFactoryView(renderer) {
     pipeHubs.count = pipeArms.count = flowRings.count = 0;
     flowArms = [];
     pipesVersion = -1;
+    for (const meshes of Object.values(railMeshes)) for (const mesh of meshes) mesh.count = 0;
+    for (const view of trainViews.values()) dropTrain(view);
+    trainViews.clear();
   }
 
   function setNight(n) {
@@ -943,6 +1184,9 @@ export function createGhost() {
     pump: { geo: mergeGeometries([box(0.3, 0.1, 0.9), box(0.1, 0.7, 0.1), box(0.1, 0.1, 0.9).translate(0, 0.68, 0)]), arrow: null },
     pipe: { geo: mergeGeometries([new THREE.CylinderGeometry(0.1, 0.1, 1, 8).rotateZ(Math.PI / 2).translate(0, 0.34, 0), new THREE.CylinderGeometry(0.1, 0.1, 1, 8).rotateX(Math.PI / 2).translate(0, 0.34, 0)]), arrow: null },
     tank: { geo: new THREE.CylinderGeometry(0.4, 0.42, 0.82, 14).translate(0, 0.41, 0), arrow: null },
+    rail: { geo: box(0.84, 0.1, 1), arrow: 0.14 },
+    station: { geo: mergeGeometries([box(1, 0.06, 0.9).translate(0, 1.03, 0), box(0.05, 1, 0.05).translate(-0.42, 0, -0.38), box(0.05, 1, 0.05).translate(0.42, 0, -0.38), box(0.05, 1, 0.05).translate(-0.42, 0, 0.38), box(0.05, 1, 0.05).translate(0.42, 0, 0.38), box(0.84, 0.1, 1)]), arrow: 0.14 },
+    train: { geo: mergeGeometries([box(0.48, 0.5, 0.9).translate(0, 0.12, 0), box(0.48, 0.5, 0.9).translate(0, 0.12, 1)]), arrow: 0.75 },
     refinery: { geo: mergeGeometries([box(0.86, 0.36, 0.86), new THREE.CylinderGeometry(0.13, 0.13, 1.2, 8).translate(0.2, 0.6, 0.14), new THREE.CylinderGeometry(0.03, 0.03, 1, 6).translate(-0.33, 0.5, -0.3)]), arrow: 0.45 },
   };
   const meshes = Object.fromEntries(Object.entries(shapes).map(([k, s]) => [k, new THREE.Mesh(s.geo, bodyMat)]));

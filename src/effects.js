@@ -148,7 +148,7 @@ export function createEffects({ onMade } = {}) {
       const rate = (MOBILE ? 0.5 : 1) * Math.min(1, 30 / zoom);
 
       for (const b of factory.buildings.values()) {
-        if (b.type === 'belt' || b.type === 'storage' || b.type === 'pole' || b.type === 'pipe' || b.type === 'tank') continue;
+        if (b.type === 'belt' || b.type === 'storage' || b.type === 'pole' || b.type === 'pipe' || b.type === 'tank' || b.type === 'rail' || b.type === 'station') continue;
         const dx = b.tile.position.x - focus.x;
         const dz = b.tile.position.z - focus.z;
         const close = dx * dx + dz * dz < reach;

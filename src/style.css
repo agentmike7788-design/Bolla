@@ -424,6 +424,21 @@ button.link kbd { font-size: 10px; padding: 0 3px; }
 .recipe-option span:last-child { grid-column: 2; font: 500 11px var(--font-data); color: var(--ink-dim); }
 .recipe-option:hover { background: rgba(233, 228, 216, 0.08); filter: none; }
 .recipe-option[aria-pressed='true'] { border-color: var(--signal); background: rgba(255, 211, 77, 0.12); }
+/* Station mode and train schedule in the same panel */
+.panel-note { margin: 2px 0 0; font: 500 11px/1.45 var(--font-data); color: var(--ink-dim); }
+.stops { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.stop { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border: 1px solid var(--edge); border-radius: 6px; font-size: 13px; }
+.stop.now { border-color: var(--signal); background: rgba(255, 211, 77, 0.1); }
+.stop.empty { color: var(--ink-dim); }
+.stop-name { flex: 1; font: 600 15px/1.1 var(--font-display); letter-spacing: 0.04em; }
+.stop-mode { font: 500 11px var(--font-data); }
+.stop-mode.load { color: #6fd08a; }
+.stop-mode.unload { color: #f0a060; }
+.stop .link { padding: 2px 6px; }
+.stop-add { display: flex; flex-wrap: wrap; gap: 6px; }
+.stop-add button { min-width: 38px; padding: 6px 10px; font: 600 15px/1 var(--font-display); }
+.stop-add button.unreachable { opacity: 0.45; }
+.stop-add span { font-size: 12px; color: var(--ink-dim); }
 
 /* Mission panel extras: clock, met goals and the row of mission steps. */
 .mission-head { display: flex; justify-content: space-between; gap: 8px; }
