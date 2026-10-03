@@ -17,3 +17,6 @@ enum Category { RESOURCE, CRAFTED, CURRENCY, DECOR, TOOL, GOODS, MATERIAL }
 # without tiers such as the rake) and its tier (1 or 2; tier-0 tools are no items).
 @export var tool_kind: StringName = &""
 @export var tool_tier: int = 0
+# Phase 7 (docs/PHASE7_DESIGN.md §2.8, §3.4): an individual piece (specimens) – one slot per piece,
+# the slot carries a uid (Inventory.add_unique).
+@export var unique: bool = false

@@ -21,6 +21,9 @@ extends Resource
 @export var delivery_minute: int = 460
 @export var valuables_coins_min: int = 5
 @export var valuables_coins_max: int = 8
+# Phase 7 (docs/PHASE7_DESIGN.md §2.6.3, §3.4): hidden causes of random corpses – shown cause →
+# [{"id": StringName, "chance": float}]; CorpseGenerator rolls from the seed (P4).
+@export var hidden_causes: Dictionary[StringName, Array] = {}
 
 
 func get_cause(id: StringName) -> Dictionary:

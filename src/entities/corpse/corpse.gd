@@ -108,6 +108,12 @@ func refresh_decay(record: CorpseRecord = null) -> void:
 	decay_visual.apply(record.freshness, stage, balm, record.washed)
 
 
+## STUB (P4) – Phase 7 (docs/PHASE7_DESIGN.md §2.6, §3.4): the cloth model (ph_prop_corpse_shrouded) on /
+## off while a specimen is taken; presentation only.
+func set_covered(_on: bool) -> void:
+	pass
+
+
 func is_shrouded_visual() -> bool:
 	return _model_shrouded
 

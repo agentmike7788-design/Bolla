@@ -9,7 +9,10 @@ extends Resource
 ## Tier i+1 from value ≥ tier_thresholds[i].
 @export var tier_thresholds: PackedInt32Array = [-59, -19, 20, 60]
 ## Phase 6 §2.7: + service (unharvested only), devotion (once per grave), reinterred.
-@export var events: Dictionary[StringName, int] = {&"valuables_left": 3, &"valuables_taken": -6, &"hair_taken": -4, &"teeth_taken": -6, &"full_prep": 3, &"bare_burial": -2, &"rotten_burial": -2, &"service": 1, &"devotion": 1, &"reinterred": 1}
+## Phase 7 §2.11: + organ_taken (−6 = an inner organ; the amount per organ comes from
+## AnatomyConfig.organs[*].piety through Piety.event(&"organ_taken", …, amount)), lecture_attended −3,
+## specimen_returned +3, specimen_returned_grave +5 (class default; the .tres is P4's).
+@export var events: Dictionary[StringName, int] = {&"valuables_left": 3, &"valuables_taken": -6, &"hair_taken": -4, &"teeth_taken": -6, &"full_prep": 3, &"bare_burial": -2, &"rotten_burial": -2, &"service": 1, &"devotion": 1, &"reinterred": 1, &"organ_taken": -6, &"lecture_attended": -3, &"specimen_returned": 3, &"specimen_returned_grave": 5}
 ## Daily +1 towards 0 (only below 0, only without harvesting the day before).
 @export var daily_recovery: int = 1
 ## Ghost gift coins per tier.

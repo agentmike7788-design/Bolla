@@ -11,7 +11,10 @@ const MINUTES_PER_DAY := 1440
 ## start_minute <= t; before the first start of the day the latest entry of the day
 ## (the one running over midnight). Equal starts: the later array entry wins.
 ## null (with a warning) for a null or empty schedule.
-static func entry_at(schedule: NpcSchedule, minute_of_day: int) -> ScheduleEntry:
+## Phase 7 (§3.4, P1): `day` ≥ 0 – entries with a today_flag count only when that flag == day (and win
+## a tie of start_minute); day -1 (every call before Phase 7) skips them. STUB (P1): `day` is not read
+## yet (no schedule has a today_flag entry before P6).
+static func entry_at(schedule: NpcSchedule, minute_of_day: int, _day: int = -1) -> ScheduleEntry:
 	if schedule == null or schedule.entries.is_empty():
 		push_warning("[ScheduleResolver] entry_at(): schedule has no entries")
 		return null

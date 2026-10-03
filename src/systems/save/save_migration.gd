@@ -2,12 +2,19 @@ class_name SaveMigration
 extends RefCounted
 ## Upgrades a decoded save state ({autoloads, nodes}) to the CURRENT format
 ## (docs/PHASE3_DESIGN.md §5.2, §3.4 "Speichern"; docs/PHASE4_DESIGN.md §5.2: chain 1→2→3;
-## docs/PHASE5_DESIGN.md §5.2: chain 1→2→3→4; docs/PHASE6_DESIGN.md §5.2: chain 1→…→5). Applied by SaveFileIO.read_doc after
+## docs/PHASE5_DESIGN.md §5.2: chain 1→2→3→4; docs/PHASE6_DESIGN.md §5.2: chain 1→…→5;
+## docs/PHASE7_DESIGN.md §5.2: chain 1→…→6). Applied by SaveFileIO.read_doc after
 ## decode_state; the normal load path follows and the next save writes CURRENT.
 ## Pure: never touches the scene tree, never changes its input or an autoload (migrate_3_to_4 only
 ## reads item categories from Database).
 
-const CURRENT := 5
+const CURRENT := 6
+## Save ids of the Phase-7 system nodes / stores that get an empty state in migrate_5_to_6
+## (docs/PHASE7_DESIGN.md §3.1, §5.2 step 5 – §3.4 names the first six, §5.2 all nine; W0-Notizen).
+## Inserted only once W-Welt adds the nodes (like V4/V5); SaveManager.without_absent_defaults
+## learns them with the migration (P6).
+const V6_EMPTY_NODES: PackedStringArray = ["village", "relationships", "village_shops", "orders", "specimens", "pult_store",
+		"collection_shelf", "lectures", "deductions"]
 ## Save ids of the Phase-6 system nodes / the shed store that get an empty state in migrate_4_to_5
 ## (docs/PHASE6_DESIGN.md §3.1, §5.2 step 4); SaveManager.without_absent_defaults drops them while
 ## the world has no such node (like V4_EMPTY_NODES).
@@ -71,6 +78,8 @@ static func migrate(state: Dictionary, from_version: int, meta: Dictionary = {})
 		out = migrate_3_to_4(out, meta)
 	if from_version <= 4:
 		out = migrate_4_to_5(out, meta)
+	if from_version <= 5:
+		out = migrate_5_to_6(out, meta)
 	return out
 
 
@@ -242,6 +251,13 @@ static func migrate_4_to_5(state: Dictionary, _meta: Dictionary) -> Dictionary:
 		if not _has_key(stats, String(key)):
 			_set_key(stats, String(key), 0)
 	return out
+
+
+## STUB (P6) – docs/PHASE7_DESIGN.md §5.2 steps 1–7 on a deep copy of a v5 state. W0: the identity
+## (fail-safe – every from_dict / load_state tolerates the missing Phase-7 keys). P6 adds region_id,
+## the record fields hidden_cause / returned / revealed_cause, V6_EMPTY_NODES and the stats.
+static func migrate_5_to_6(state: Dictionary, _meta: Dictionary) -> Dictionary:
+	return state.duplicate(true)
 
 
 ## §5.2 step 1 on one saved Inventory state ({slots, currency}) in place: TOOL items → "tools".

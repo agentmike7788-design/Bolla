@@ -63,6 +63,13 @@ static func robbed_count(corpse: CorpseRecord) -> int:
 	return n
 
 
+## STUB (P4) – Phase 7 (docs/PHASE7_DESIGN.md §2.11): the robbed penalty as the sum over the kinds taken
+## and not returned – hair / teeth robbed_mood each, organs AnatomyConfig.organs[*].mood. W0: the
+## Phase-6 value (robbed_count × robbed_mood).
+static func robbed_penalty(record: CorpseRecord, cfg: GhostConfig = null) -> int:
+	return robbed_count(record) * (cfg.robbed_mood if cfg != null else -5)
+
+
 ## &"restless", &"calm", &"content"
 static func mood(value: int, cfg: GhostConfig) -> StringName:
 	var t: PackedInt32Array = cfg.mood_thresholds if cfg != null and cfg.mood_thresholds.size() >= 2 else PackedInt32Array([5, 9])

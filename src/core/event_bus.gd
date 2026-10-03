@@ -118,6 +118,29 @@ signal devotion_held(grave_id: String, bonus: int)
 ## Shed (ShedSupply through the entity); direction: &"fetch" | &"store"
 signal shed_supply_moved(items: Dictionary, direction: StringName)
 
+# Phase 7 (docs/PHASE7_DESIGN.md §3.3) – listeners never change game state (the changing system
+# calls the others directly; coins_spent raises stats.coins_spent in the sender).
+## Regions (Player.set_region) – after interior_changed / interior_room_changed when both change.
+signal region_changed(region_id: StringName)
+## Shops (VillageShops): coins positive = income of the player.
+signal shop_trade(shop_id: StringName, coins: int, sold: Dictionary, bought: Dictionary)
+# Relationships (Relationships)
+signal relationship_changed(npc_id: StringName, value: int, tier: StringName, delta: int, reason: String)
+signal villager_remarked(npc_id: StringName, text: String)
+## Orders (Orders); state: &"offered" | &"accepted" | &"completed" | &"failed"
+signal order_changed(order_id: StringName, state: StringName)
+## Specimens (Specimens); state: &"taken" | &"sold" | &"researched" | &"lectured" | &"used" |
+## &"returned" | &"sealed" | &"displayed" | &"boned" | &"spoiled"
+signal specimen_changed(uid: String, state: StringName)
+## Presentation: the dark veil during a specimen (MorgueTable).
+signal screen_veil_changed(active: bool)
+# Consecration (Village)
+signal ground_consecrated(section_id: StringName)
+# Specimen collection (CollectionShelf through CollectionRules), lecture (Lectures), deduction (Deductions)
+signal collection_set_completed(set_id: StringName, standing: int)
+signal lecture_held(day: int, organ: StringName, fee: int, rumor: bool)
+signal cause_deduced(corpse_id: String, cause_id: StringName)
+
 # UI
 signal ui_panel_requested(panel: StringName, context: Dictionary)
 signal ui_modal_changed(open: bool)

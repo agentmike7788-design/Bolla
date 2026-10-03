@@ -54,11 +54,17 @@ func world() -> Node:
 	return null
 
 
+## Phase 7 (§3.4, W0): the graveyard's Npc first (npc_carter_v in the village shares npc_id carter).
 func npc_node(npc_id: StringName) -> Node3D:
+	var other: Node3D = null
 	for node: Node in _console.get_tree().get_nodes_in_group(NPC_GROUP):
 		if StringName(str(node.get(&"npc_id"))) == npc_id and node is Node3D:
-			return node as Node3D
-	return null
+			var region: Variant = node.get(&"region_id")
+			if region == null or StringName(str(region)) == RegionRoot.GRAVEYARD:
+				return node as Node3D
+			if other == null:
+				other = node as Node3D
+	return other
 
 
 func camera_rig() -> CameraRig:

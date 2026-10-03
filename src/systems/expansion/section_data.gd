@@ -28,3 +28,7 @@ extends Resource
 ## false = a work area (bruch, quarry): no plots, no reputation section_unlocked, not in the
 ## cemetery overview / Ehrwürdig.
 @export var is_burial: bool = true
+# Phase 7 (docs/PHASE7_DESIGN.md §2.9, §3.4)
+## The section opens only once all obstacles are cleared AND this GameState flag is set
+## (linden: linden_consecrated; &"" = no flag needed). ExpansionManager.try_unlock (P3).
+@export var unlock_flag: StringName = &""

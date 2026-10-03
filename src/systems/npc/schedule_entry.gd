@@ -16,3 +16,10 @@ extends Resource
 @export var visible: bool = true
 ## true = pushes the handcart in this phase.
 @export var with_cart: bool = false
+# Phase 7 (docs/PHASE7_DESIGN.md §2.2, §3.4)
+## Region of the entry: &"" = the graveyard; &"village" = Hollerbrück. An Npc only shows the
+## entries of its own region (Npc.region_id).
+@export var region: StringName = &""
+## The entry counts only while this GameState flag equals TimeManager.day (the priest's
+## consecration day: linden_consecration_day). ScheduleResolver.entry_at(…, day -1) skips it.
+@export var today_flag: StringName = &""

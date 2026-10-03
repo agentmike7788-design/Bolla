@@ -34,6 +34,17 @@ const OLD_GRAVE_DIR := "res://data/ossuary/old_graves"
 ## Room configs data/config/interiors/<room_id>.tres (InteriorConfig); missing → interior_config.
 const INTERIOR_CONFIG_DIR := "res://data/config/interiors"
 const INTERIOR_CONFIG := &"interior_config"
+# Phase 7 (docs/PHASE7_DESIGN.md §3.5)
+const SHOP_DIR := "res://data/shops"
+const ORDER_DIR := "res://data/orders"
+const VILLAGER_DIR := "res://data/village/villagers"
+const FINDING_DIR := "res://data/anatomy/findings"
+const MEDICINE_DIR := "res://data/anatomy/medicines"
+const SET_DIR := "res://data/anatomy/sets"
+const TEACHING_DIR := "res://data/anatomy/teachings"
+const DEDUCTION_DIR := "res://data/anatomy/deductions"
+## Region configs data/config/regions/<region_id>.tres (RegionConfig, keyed by region_id).
+const REGION_CONFIG_DIR := "res://data/config/regions"
 
 var _items: Dictionary = {}       # StringName -> ItemData
 var _recipes: Dictionary = {}     # StringName -> RecipeData
@@ -56,6 +67,15 @@ var _ornaments: Dictionary = {}   # StringName -> OrnamentData
 var _buildings: Dictionary = {}   # StringName -> BuildingData
 var _old_graves: Dictionary = {}  # StringName (grave_id) -> OldGraveData
 var _interior_configs: Dictionary = {}  # StringName (room_id) -> InteriorConfig
+var _shops: Dictionary = {}       # StringName -> ShopData
+var _orders: Dictionary = {}      # StringName -> OrderData
+var _villagers: Dictionary = {}   # StringName (npc_id) -> VillagerData
+var _findings: Dictionary = {}    # StringName -> SpecimenFindingData
+var _medicines: Dictionary = {}   # StringName -> MedicineData
+var _sets: Dictionary = {}        # StringName -> CollectionSetData
+var _teachings: Dictionary = {}   # StringName -> TeachingData
+var _deductions: Dictionary = {}  # StringName -> DeductionData
+var _region_configs: Dictionary = {}  # StringName (region_id) -> RegionConfig
 var _icons: Dictionary = {}       # StringName -> Texture2D
 var _placeholder: Texture2D
 
@@ -92,6 +112,15 @@ func reload() -> void:
 	_interior_configs.clear()
 	for path: String in _resource_files(INTERIOR_CONFIG_DIR):
 		_interior_configs[StringName(path.get_file().get_basename())] = load(path)
+	_shops = _load_dir(SHOP_DIR, "id")
+	_orders = _load_dir(ORDER_DIR, "id")
+	_villagers = _load_dir(VILLAGER_DIR, "npc_id")
+	_findings = _load_dir(FINDING_DIR, "id")
+	_medicines = _load_dir(MEDICINE_DIR, "id")
+	_sets = _load_dir(SET_DIR, "id")
+	_teachings = _load_dir(TEACHING_DIR, "id")
+	_deductions = _load_dir(DEDUCTION_DIR, "id")
+	_region_configs = _load_dir(REGION_CONFIG_DIR, "region_id")
 
 
 func item(id: StringName) -> Resource:
@@ -295,6 +324,93 @@ func interior_config(room_id: StringName) -> Resource:
 	if _interior_configs.has(room_id):
 		return _interior_configs[room_id]
 	return _configs.get(INTERIOR_CONFIG)
+
+
+# --- Phase 7 ---------------------------------------------------------------------------------
+
+## data/shops/<id>.tres (ShopData), null if unknown.
+func shop(id: StringName) -> Resource:
+	return _shops.get(id)
+
+
+## All shops, sorted by id.
+func shops() -> Array:
+	return _sorted(_shops.values(), "id")
+
+
+## data/orders/<id>.tres (OrderData), null if unknown.
+func order_data(id: StringName) -> Resource:
+	return _orders.get(id)
+
+
+## All orders, sorted by `order` (ties by id).
+func orders() -> Array:
+	return _sorted(_orders.values(), "order")
+
+
+## data/village/villagers/<npc_id>.tres (VillagerData), null if unknown.
+func villager(npc_id: StringName) -> Resource:
+	return _villagers.get(npc_id)
+
+
+## All villagers, sorted by npc_id.
+func villagers() -> Array:
+	return _sorted(_villagers.values(), "npc_id")
+
+
+## data/anatomy/findings/<id>.tres (SpecimenFindingData), null if unknown.
+func finding(id: StringName) -> Resource:
+	return _findings.get(id)
+
+
+## All specimen findings, sorted by `priority` (ties by id).
+func findings() -> Array:
+	return _sorted(_findings.values(), "priority")
+
+
+## data/anatomy/medicines/<id>.tres (MedicineData), null if unknown.
+func medicine(id: StringName) -> Resource:
+	return _medicines.get(id)
+
+
+## All medicines, sorted by id.
+func medicines() -> Array:
+	return _sorted(_medicines.values(), "id")
+
+
+## data/anatomy/sets/<id>.tres (CollectionSetData), null if unknown.
+func collection_set(id: StringName) -> Resource:
+	return _sets.get(id)
+
+
+## All collection sets, sorted by id.
+func collection_sets() -> Array:
+	return _sorted(_sets.values(), "id")
+
+
+## data/anatomy/teachings/<id>.tres (TeachingData), null if unknown.
+func teaching(id: StringName) -> Resource:
+	return _teachings.get(id)
+
+
+## All teachings, sorted by id.
+func teachings() -> Array:
+	return _sorted(_teachings.values(), "id")
+
+
+## data/anatomy/deductions/<id>.tres (DeductionData), null if unknown.
+func deduction(id: StringName) -> Resource:
+	return _deductions.get(id)
+
+
+## All deductions, sorted by id.
+func deductions() -> Array:
+	return _sorted(_deductions.values(), "id")
+
+
+## data/config/regions/<region_id>.tres (RegionConfig), null if unknown.
+func region_config(id: StringName) -> Resource:
+	return _region_configs.get(id)
 
 
 func corpse_tables() -> Resource:

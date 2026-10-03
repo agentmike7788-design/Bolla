@@ -37,7 +37,18 @@ const DRESS_GOWN := &"gown"
 const HARVEST_HAIR := &"hair"
 const HARVEST_TEETH := &"teeth"
 const DRESSES: Array[StringName] = [DRESS_NONE, DRESS_SHROUD, DRESS_GOWN]
-const HARVEST_KINDS: Array[StringName] = [HARVEST_HAIR, HARVEST_TEETH]
+# Phase 7 (docs/PHASE7_DESIGN.md §2.6, §3.4, W0) – the seven organs appended (specimens).
+const HARVEST_HEART := &"heart"
+const HARVEST_LUNG := &"lung"
+const HARVEST_STOMACH := &"stomach"
+const HARVEST_LIVER := &"liver"
+const HARVEST_KIDNEYS := &"kidneys"
+const HARVEST_EYES := &"eyes"
+const HARVEST_HAND := &"hand"
+const ORGAN_KINDS: Array[StringName] = [HARVEST_HEART, HARVEST_LUNG, HARVEST_STOMACH, HARVEST_LIVER, HARVEST_KIDNEYS,
+		HARVEST_EYES, HARVEST_HAND]
+const HARVEST_KINDS: Array[StringName] = [HARVEST_HAIR, HARVEST_TEETH, HARVEST_HEART, HARVEST_LUNG, HARVEST_STOMACH,
+		HARVEST_LIVER, HARVEST_KIDNEYS, HARVEST_EYES, HARVEST_HAND]
 
 var id: String = ""
 var seed: int = 0
@@ -88,6 +99,13 @@ var cold_windows: PackedInt32Array = []
 ## Funeral service held (ChapelRites → CorpseManager.mark_service) on game day service_day.
 var service_held: bool = false
 var service_day: int = 0
+# Phase 7 (§3.4, §5.1) – all in to_dict / from_dict (missing = default).
+## Hidden cause of a random corpse (CorpseTables.hidden_causes; &"" = none / story corpse).
+var hidden_cause: StringName = &""
+## Organs given back to the grave (Specimens.return_to_grave); always ⊆ harvested.
+var returned: Array[StringName] = []
+## The cause the player deduced (Deductions.deduce; &"" = not deduced).
+var revealed_cause: StringName = &""
 
 
 func has_trait(t: StringName) -> bool:
@@ -200,6 +218,9 @@ func to_dict() -> Dictionary:
 		"cold_windows": Array(cold_windows),
 		"service_held": service_held,
 		"service_day": service_day,
+		"hidden_cause": hidden_cause,
+		"returned": returned.duplicate(),
+		"revealed_cause": revealed_cause,
 	}
 
 
@@ -251,6 +272,10 @@ static func from_dict(d: Dictionary) -> CorpseRecord:
 	r.cold_windows = _to_cold_windows(d.get("cold_windows"))
 	r.service_held = _to_bool(d.get("service_held"), r.service_held)
 	r.service_day = _to_int(d.get("service_day"), r.service_day)
+	# Phase 7 (§3.4, §5.1) – missing fields keep their defaults; returned ⊆ harvested.
+	r.hidden_cause = StringName(_to_str(d.get("hidden_cause"), ""))
+	r.returned = _only(_to_name_array(d.get("returned")), r.harvested)
+	r.revealed_cause = StringName(_to_str(d.get("revealed_cause"), ""))
 	return r
 
 

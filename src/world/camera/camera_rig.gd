@@ -91,6 +91,12 @@ func clear_profile() -> void:
 	_apply(_own)
 
 
+## STUB (P1) – Phase 7 (docs/PHASE7_DESIGN.md §3.4): the region's base profile; clear_profile()
+## returns to it (instead of the start framing). Without a call everything stays bit-identical.
+func set_base_profile(_p: CameraProfile) -> void:
+	pass
+
+
 ## Jump to the target immediately (used after teleports and for screenshots).
 func snap() -> void:
 	if target:

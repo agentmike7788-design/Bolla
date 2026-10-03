@@ -19,3 +19,14 @@ extends Resource
 ## Osric's notification on arrival.
 @export_multiline var arrival_note: String = ""
 @export var is_finale: bool = false
+# Phase 7 (docs/PHASE7_DESIGN.md §2.9, §3.4; logic StoryDirector, P6)
+## Due at the earliest after_days after the day stored in this GameState flag (D1:
+## village_open_day + 8; &"" = earliest_day only).
+@export var after_flag: StringName = &""
+@export var after_days: int = 0
+## A place in this section stays reserved until the corpse is buried (&"" = any section).
+@export var section: StringName = &""
+## Only due while this flag is set (D1: linden_consecrated).
+@export var requires_flag: StringName = &""
+## Set at 00:00 of the delivery day (D1: hagedorn_dead – her Npc disappears).
+@export var due_flag: StringName = &""

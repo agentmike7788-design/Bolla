@@ -9,6 +9,9 @@ extends Node3D
 const PROMPT_OUT := "[E] Hinausgehen"
 
 @export var building_id: StringName
+## Phase 7 (docs/PHASE7_DESIGN.md §3.4, P1): set → HouseDoor.find(tree, door_id).exit_transform()
+## instead of the BuildingDoor (the village houses). STUB (P1): not read yet.
+@export var door_id: StringName = &""
 ## The building's data; null = the outside door's (or Database.building(building_id)).
 var data: BuildingData
 

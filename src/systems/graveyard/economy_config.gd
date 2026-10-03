@@ -30,7 +30,10 @@ extends Resource
 @export var rot_threshold: float = 0.1
 @export var rot_malus: int = -2
 ## Harvest kind → points.
-@export var harvest_malus: Dictionary[StringName, int] = {&"hair": -1, &"teeth": -2}
+## Phase 7 §2.11: + the seven organs (heart, lung, stomach, liver, kidneys −2; eyes, hand −3;
+## class default – the .tres is P4's).
+@export var harvest_malus: Dictionary[StringName, int] = {&"hair": -1, &"teeth": -2, &"heart": -2, &"lung": -2,
+		&"stomach": -2, &"liver": -2, &"kidneys": -2, &"eyes": -3, &"hand": -3}
 # Phase 6 (docs/PHASE6_DESIGN.md §2.4, §2.7): „Ausgesegnet +1" when the corpse had a funeral
 # service (GraveQuality line „Ausgesegnet").
 @export var quality_service: int = 1

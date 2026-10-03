@@ -66,6 +66,10 @@ var in_interior: bool = false
 ## Phase 6 (§3.4): the room the gravekeeper is in – "" outside, &"hut", &"crypt", &"chapel",
 ## &"shed". Set by set_in_interior, saved ("interior_id").
 var interior_id: StringName = &""
+## Phase 7 (docs/PHASE7_DESIGN.md §3.4): the outdoor region the gravekeeper is in – &"graveyard" |
+## &"village" (the rooms of a region belong to it). STUB (P1): set_region sets it; P1 adds
+## EventBus.region_changed, the save key "region_id" and the tolerant load.
+var region_id: StringName = &"graveyard"
 ## Build mode (set_build_mode, Phase 3): no focus, no [E]/[Q]. Not saved.
 var build_mode: bool = false
 
@@ -271,6 +275,11 @@ func set_in_interior(value: bool, room: StringName = &"") -> void:
 	interior_id = (room if room != &"" else &"hut") if value else &""
 	EventBus.interior_changed.emit(value)
 	EventBus.interior_room_changed.emit(interior_id)
+
+
+## STUB (P1) – Phase 7 §3.4: into region `id`; P1 emits EventBus.region_changed (after interior_*).
+func set_region(id: StringName) -> void:
+	region_id = id
 
 
 ## {position: Vector3, rot_y: float, in_interior: bool, interior_id: String,

@@ -33,3 +33,7 @@ extends Resource
 # &"robbed").
 @export var by_service: PackedStringArray = PackedStringArray()
 @export var by_devotion: Dictionary[StringName, PackedStringArray] = {}
+# Phase 7 (docs/PHASE7_DESIGN.md §2.11): a ghost missing an organ (by_organ: before robbed) / the
+# first night after a specimen was returned (by_returned).
+@export var by_organ: PackedStringArray = PackedStringArray()
+@export var by_returned: PackedStringArray = PackedStringArray()

@@ -16,7 +16,8 @@ extends Resource
 @export var balm_max_windows: int = 4
 # Phase 5 (docs/PHASE5_DESIGN.md §2.6): herb_bundle smokes like juniper. The first available item
 # in list order is used (P6); balm_item stays = the first element (compatibility).
-@export var balm_items: Array[StringName] = [&"juniper", &"herb_bundle"]
+# Phase 7 (docs/PHASE7_DESIGN.md §2.7, §3.4): + corpse_balm (Totensalbe, third entry; the .tres is P7's).
+@export var balm_items: Array[StringName] = [&"juniper", &"herb_bundle", &"corpse_balm"]
 
 
 ## Item consumed by dressing in `kind` (&"" if unknown).

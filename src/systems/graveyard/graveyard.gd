@@ -686,6 +686,15 @@ func _stone_config() -> StoneConfig:
 	return stone_config
 
 
+# --- Phase 7 (docs/PHASE7_DESIGN.md §2.5, §3.4) -------------------------------------------------
+
+## STUB (P3) – a designed stone replaces the old stone of a rest-period grave (old_01 / old_08) with an
+## active stone order: the state stays OLD, no payment, no quality – only Orders.note_stone_set and
+## reputation marker_upgrade +1. false = refused.
+func replace_old_marker(_grave_id: String, _design: StoneDesign) -> bool:
+	return false
+
+
 # --- Phase 6 (docs/PHASE6_DESIGN.md §2.3, §3.4) -------------------------------------------------
 
 ## OLD → EMPTY (grave_state_changed); only is_old plots (a saved OLD record of a normal plot

@@ -234,6 +234,13 @@ func request_harvest(kind: StringName) -> void:
 			_finish_harvest.bind(record.id, kind, player.inventory), false, ANIM)
 
 
+## STUB (P4) – Phase 7 (docs/PHASE7_DESIGN.md §2.6, §3.4): a specimen of the table corpse – TimedAction
+## AnatomyConfig minutes (not cancellable); start: Corpse.set_covered(true), screen_veil_changed(true);
+## end / abort: both back; then CorpseCare.harvest_organ.
+func request_organ(_organ: StringName, _container: StringName) -> void:
+	pass
+
+
 ## Everything the Phase-4 panel needs about the corpse on the table ({} = none): steps with
 ## label / minutes / done / reason, open steps + minutes, finds per step (revealed / lost /
 ## pending with text and clue), preparation lines with minutes / reason, harvest kinds with

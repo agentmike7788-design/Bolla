@@ -42,6 +42,11 @@ const LANTERN_FALLBACK := Vector3(-0.25, 0.9, 0.2)
 ## Phase 4: a lantern (OmniLight3D without shadow, group warm_lights) at the model node with
 ## this name (Ilse: light_lantern); without such a node at LANTERN_FALLBACK. &"" = none.
 @export var lantern_marker: StringName = &""
+## Phase 7 (docs/PHASE7_DESIGN.md §3.4, P1): the region of this Npc – shown only for schedule entries
+## of its region (entry.region, "" = graveyard); hidden while the GameState flag hide_flag is set
+## (Wiebke Hagedorn: hagedorn_dead). STUB (P1): not read yet.
+@export var region_id: StringName = &"graveyard"
+@export var hide_flag: StringName = &""
 @export_group("Animation")
 ## Ground speed (m/s) at which the walk / push_cart cycles do not slide (rig notes, M6a).
 @export var walk_anim_speed: float = 1.65
@@ -209,6 +214,12 @@ func load_state(_data: Dictionary) -> void:
 ## Debug console ("npc <id> here"): stands at `world_pos` (on the ground) for the rest of the
 ## current schedule phase, then the clock takes over again. He faces the nearest player – with
 ## the cart turned to his side, so it never lands on them.
+## STUB (P1) – Phase 7 (docs/PHASE7_DESIGN.md §3.4, §9): 0 full · 1 reduced (evaluation every
+## NpcConfig.reduced_interval, the animation runs) · 2 resting (animation paused). NpcLod sets it.
+func set_lod(_level: int) -> void:
+	pass
+
+
 func debug_teleport(world_pos: Vector3) -> void:
 	var sched := _schedule()
 	if sched == null or sched.entries.is_empty():

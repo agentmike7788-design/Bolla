@@ -252,6 +252,13 @@ func clear(obstacle_id: String, inv: Inventory, tier: int = -1) -> bool:
 	return true
 
 
+## STUB (P3) – Phase 7 (docs/PHASE7_DESIGN.md §2.9, §3.4): unlocks `section_id` once all its obstacles
+## are cleared AND SectionData.unlock_flag is set (after the last obstacle and after the flag);
+## else „Geräumt. Es fehlt die Weihe." – false.
+func try_unlock(_section_id: StringName) -> bool:
+	return false
+
+
 ## Graveyard.unlock_section, reputation +4 (event section_unlocked), section_unlocked,
 ## notification – also via debug: remaining obstacles of the section count as cleared.
 func unlock(section_id: StringName) -> bool:

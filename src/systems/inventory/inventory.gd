@@ -182,6 +182,29 @@ func load_state(data: Dictionary) -> void:
 	changed.emit()
 
 
+# --- Phase 7 (docs/PHASE7_DESIGN.md §2.8, §3.4) – individual pieces (ItemData.unique) ------------
+# STUB (P4): one slot per piece, slot {"id", "amount": 1, "uid"}; save / load keep "uid" (missing = "").
+
+## STUB (P4) – a unique piece `id` with `uid` into a free slot; false = no free slot.
+func add_unique(_id: StringName, _uid: String) -> bool:
+	return false
+
+
+## STUB (P4) – the slot holding `uid` emptied; false = not here.
+func remove_uid(_uid: String) -> bool:
+	return false
+
+
+## STUB (P4) – the uids of the unique pieces (of `id`; &"" = all), slot order.
+func uids(_id: StringName = &"") -> PackedStringArray:
+	return PackedStringArray()
+
+
+## STUB (P4)
+func has_uid(_uid: String) -> bool:
+	return false
+
+
 func _set_slot_count(value: int) -> void:
 	var new_count := maxi(value, 0)
 	slot_count = new_count

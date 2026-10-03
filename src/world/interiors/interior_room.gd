@@ -33,6 +33,8 @@ const HUT := &"hut"
 @export var hide_when_inactive: bool = false
 ## "" = the hut (no levels).
 @export var building_id: StringName = &""
+## Phase 7 (docs/PHASE7_DESIGN.md §3.4, P1): the outdoor region of the room (docs / tests only).
+@export var region_id: StringName = &"graveyard"
 
 ## True while the view shows this room.
 var active: bool = false

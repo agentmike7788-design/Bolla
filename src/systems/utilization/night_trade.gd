@@ -304,7 +304,8 @@ func _npc() -> Npc:
 		return null
 	for node: Node in get_tree().get_nodes_in_group(Npc.GROUP):
 		var npc := node as Npc
-		if npc != null and npc.npc_id == NPC_ID:
+		# Phase 7 (§3.4, W0): only the graveyard's Npc (Hollerbrück has its own npc ids / regions).
+		if npc != null and npc.npc_id == NPC_ID and npc.region_id == RegionRoot.GRAVEYARD:
 			return npc
 	return null
 

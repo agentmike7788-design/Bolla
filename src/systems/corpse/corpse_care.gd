@@ -232,6 +232,19 @@ func harvest_block_reason(id: String, kind: StringName, inv: Inventory) -> Strin
 	return ""
 
 
+## STUB (P4) – Phase 7 (docs/PHASE7_DESIGN.md §2.6, §3.4): SpecimenRules.harvest_block_reason + at most
+## AnatomyConfig.max_per_corpse organs (hair / teeth do not count) and the containers allowed per organ.
+## "-" = no specimen card (anatomy unknown, not the crypt table).
+func organ_block_reason(_id: String, _organ: StringName, _container: StringName, _inv: Inventory) -> String:
+	return SpecimenRules.REASON_NO_CARD
+
+
+## STUB (P4) – uid | "": Specimens.harvest, Piety.event(organ_taken), Reputation.event(organ_taken),
+## stats.specimens_taken, piety_used_day, Orders.note_harvest, corpse_harvested(id, organ, item).
+func harvest_organ(_id: String, _organ: StringName, _container: StringName, _inv: Inventory) -> String:
+	return ""
+
+
 ## Item into the inventory (full → refused), Piety.event, Reputation.event, stats.utilized,
 ## flag piety_used_day (= today), corpse_harvested, the done_text as a quiet note.
 func harvest(id: String, kind: StringName, inv: Inventory) -> bool:
