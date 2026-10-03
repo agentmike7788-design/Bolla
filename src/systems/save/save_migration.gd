@@ -11,10 +11,20 @@ extends RefCounted
 const CURRENT := 6
 ## Save ids of the Phase-7 system nodes / stores that get an empty state in migrate_5_to_6
 ## (docs/PHASE7_DESIGN.md §3.1, §5.2 step 5 – §3.4 names the first six, §5.2 all nine; W0-Notizen).
-## Inserted only once W-Welt adds the nodes (like V4/V5); SaveManager.without_absent_defaults
-## learns them with the migration (P6).
+## migrate_5_to_6 inserts them; SaveManager.without_absent_defaults drops them again while the world
+## has no such node (like V4/V5).
 const V6_EMPTY_NODES: PackedStringArray = ["village", "relationships", "village_shops", "orders", "specimens", "pult_store",
 		"collection_shelf", "lectures", "deductions"]
+## Phase-7 statistics that start at 0 (§5.2 step 6; = the Phase-7 part of GameState.DEFAULT_STATS,
+## incl. the ledger stats of the coin purposes village, donation, round, consecration, §2.11).
+const V6_NEW_STATS: Array[StringName] = [&"village_trips", &"orders_done", &"orders_failed", &"gifts_given",
+		&"rounds_bought", &"donations", &"specimens_taken", &"specimens_sold", &"specimens_researched", &"specimens_returned",
+		&"specimens_collected", &"medicines_made", &"lectures_attended", &"deductions", &"university_standing",
+		&"coins_spent_village", &"coins_spent_donation", &"coins_spent_round", &"coins_spent_consecration"]
+## §5.2 steps 3/5: the new CorpseRecord fields and their defaults (= CorpseRecord.to_dict of a new record).
+const V6_RECORD_DEFAULTS := {"hidden_cause": "", "returned": [], "revealed_cause": ""}
+## §5.2 step 1: the region of every Phase-6 position (hut, crypt, chapel, shed are graveyard rooms).
+const V6_REGION := "graveyard"
 ## Save ids of the Phase-6 system nodes / the shed store that get an empty state in migrate_4_to_5
 ## (docs/PHASE6_DESIGN.md §3.1, §5.2 step 4); SaveManager.without_absent_defaults drops them while
 ## the world has no such node (like V4_EMPTY_NODES).
@@ -253,11 +263,42 @@ static func migrate_4_to_5(state: Dictionary, _meta: Dictionary) -> Dictionary:
 	return out
 
 
-## STUB (P6) – docs/PHASE7_DESIGN.md §5.2 steps 1–7 on a deep copy of a v5 state. W0: the identity
-## (fail-safe – every from_dict / load_state tolerates the missing Phase-7 keys). P6 adds region_id,
-## the record fields hidden_cause / returned / revealed_cause, V6_EMPTY_NODES and the stats.
+## docs/PHASE7_DESIGN.md §5.2 steps 1–7 on a deep copy of a v5 state (run exactly once).
+## 1. Player: region_id "graveyard" (an existing value is kept); interior_id unchanged.
+## 2. Inventories: slots unchanged (no unique items in v5 – a missing "uid" reads as "").
+## 3. Corpse records + hidden_cause "", returned [], revealed_cause "" (existing keys are kept). A
+##    corpse on the crypt table stays workable; the specimen card comes only with anatomy_known.
+## 4. Graves unchanged: l_01…l_08 are absent and come LOCKED from the layout (Graveyard's tolerant rule).
+## 5. Empty states for V6_EMPTY_NODES; SaveManager.without_absent_defaults drops them again while the
+##    world has no such node (like V4/V5).
+## 6. New stats (V6_NEW_STATS) = 0; no flags – village_open comes from Village.post_load.
+## 7. The build mask grows by the Lindenacker at runtime; there is no decor there in a v5 save.
 static func migrate_5_to_6(state: Dictionary, _meta: Dictionary) -> Dictionary:
-	return state.duplicate(true)
+	var out := state.duplicate(true)
+	var autoloads := _sub(out, "autoloads")
+	var nodes := _sub(out, "nodes")
+	var stats := _sub(_sub(autoloads, "GameState"), "stats")
+	# 1. The region of the gravekeeper.
+	var player: Variant = nodes.get(PLAYER_SAVE_ID)
+	if player is Dictionary and not (player as Dictionary).has("region_id"):
+		(player as Dictionary)["region_id"] = V6_REGION
+	# 3. The new record fields.
+	var corpse_state: Variant = nodes.get("corpse_manager")
+	if corpse_state is Dictionary and (corpse_state as Dictionary).get("corpses") is Array:
+		for r: Variant in (corpse_state as Dictionary).corpses:
+			if r is Dictionary:
+				for key: String in V6_RECORD_DEFAULTS:
+					if not (r as Dictionary).has(key):
+						(r as Dictionary)[key] = V6_RECORD_DEFAULTS[key].duplicate() if V6_RECORD_DEFAULTS[key] is Array else V6_RECORD_DEFAULTS[key]
+	# 5. Empty states for the new system nodes / stores.
+	for id: String in V6_EMPTY_NODES:
+		if not nodes.get(id) is Dictionary:
+			nodes[id] = {}
+	# 6. The Phase-7 statistics start at 0.
+	for key: StringName in V6_NEW_STATS:
+		if not _has_key(stats, String(key)):
+			_set_key(stats, String(key), 0)
+	return out
 
 
 ## §5.2 step 1 on one saved Inventory state ({slots, currency}) in place: TOOL items → "tools".
