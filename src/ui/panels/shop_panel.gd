@@ -163,7 +163,7 @@ func _row(parent: VBoxContainer, item: StringName, buying: bool) -> Dictionary:
 	line.add_child(names)
 	var one := UIKit.button(Phase7Texts.SHOP_ONE)
 	one.custom_minimum_size.x = 52.0
-	one.gui_input.connect(_on_one_input.bind(item, buying))
+	one.gui_input.connect(_on_one_input.bind(one, item, buying))
 	one.pressed.connect(_trade.bind(item, 1, buying))
 	line.add_child(one)
 	var five := UIKit.button(Phase7Texts.SHOP_FIVE, &"AccentButton")
@@ -293,11 +293,12 @@ func _trade(item: StringName, n: int, buying: bool) -> void:
 
 
 ## Umschalt + Klick on „1" trades five.
-func _on_one_input(event: InputEvent, item: StringName, buying: bool) -> void:
+func _on_one_input(event: InputEvent, button: Button, item: StringName, buying: bool) -> void:
 	var mb := event as InputEventMouseButton
 	if mb != null and mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and mb.shift_pressed:
-		_trade(item, MANY, buying)
-		get_viewport().set_input_as_handled()
+		button.accept_event()
+		if not button.disabled:
+			_trade(item, MANY, buying)
 
 
 func _relationships() -> Relationships:

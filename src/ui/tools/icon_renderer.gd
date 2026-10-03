@@ -81,7 +81,38 @@ const MODELS: Dictionary[StringName, String] = {
 	&"building_shed_1": "res://assets/models/buildings/ph_bld_shed_l1.glb",
 	&"building_shed_2": "res://assets/models/buildings/ph_bld_shed_l2.glb",
 	&"building_shed_3": "res://assets/models/buildings/ph_bld_shed_l3.glb",
+	# Phase 7 (docs/PHASE7_DESIGN.md §2.8, §8: the new items – sealed jars, linen, boxes, labelled bottles).
+	&"prep_jar": "res://assets/models/items/ph_item_prep_jar.glb",
+	&"prep_jar_small": "res://assets/models/items/ph_item_prep_jar_small.glb",
+	&"spirits": "res://assets/models/items/ph_item_spirits.glb",
+	&"beeswax": "res://assets/models/items/ph_item_beeswax.glb",
+	&"anatomy_case": "res://assets/models/items/ph_item_anatomy_case.glb",
+	&"specimen_jar": "res://assets/models/items/ph_item_specimen_jar.glb",
+	&"specimen_bundle": "res://assets/models/items/ph_item_specimen_bundle.glb",
+	&"bone_specimen": "res://assets/models/items/ph_item_bone_specimen.glb",
+	&"display_specimen": "res://assets/models/items/ph_item_display_specimen.glb",
+	&"antidote": "res://assets/models/items/ph_item_antidote.glb",
+	&"bitter_drops": "res://assets/models/items/ph_item_bitter_drops.glb",
+	&"dropsy_powder": "res://assets/models/items/ph_item_dropsy_powder.glb",
+	&"fever_tincture": "res://assets/models/items/ph_item_fever_tincture.glb",
+	&"wound_salve": "res://assets/models/items/ph_item_wound_salve.glb",
+	&"corpse_balm": "res://assets/models/items/ph_item_corpse_balm.glb",
+	&"honey_cake": "res://assets/models/items/ph_item_honey_cake.glb",
+	&"elder_wine": "res://assets/models/items/ph_item_elder_wine.glb",
+	# Phase 7 §7: portraits of the Merkbuch page „Hollerbrück" (head and shoulders, see PORTRAITS).
+	&"villager_innkeeper": "res://assets/models/characters/ph_chr_v_innkeeper.glb",
+	&"villager_smith": "res://assets/models/characters/ph_chr_v_smith.glb",
+	&"villager_grocer": "res://assets/models/characters/ph_chr_v_grocer.glb",
+	&"villager_priest": "res://assets/models/characters/ph_chr_v_priest.glb",
+	&"villager_mayor": "res://assets/models/characters/ph_chr_v_mayor.glb",
+	&"villager_surgeon": "res://assets/models/characters/ph_chr_v_surgeon.glb",
+	&"villager_washer": "res://assets/models/characters/ph_chr_v_washer.glb",
+	&"villager_oldwoman": "res://assets/models/characters/ph_chr_v_oldwoman.glb",
 }
+## Ids framed as a portrait: only the top PORTRAIT_SHARE of the model, seen from the front.
+const PORTRAIT_PREFIX := "villager_"
+const PORTRAIT_SHARE := 0.34
+const PORTRAIT_DIR := Vector3(0.3, 0.12, 1.0)
 
 var _filter: String = ""
 
@@ -117,7 +148,12 @@ func _run() -> void:
 			continue
 		var model := scene.instantiate() as Node3D
 		viewport.add_child(model)
-		_frame(cam, _aabb(model))
+		var box := _aabb(model)
+		var portrait := String(id).begins_with(PORTRAIT_PREFIX)
+		if portrait:
+			box.position.y += box.size.y * (1.0 - PORTRAIT_SHARE)
+			box.size.y *= PORTRAIT_SHARE
+		_frame(cam, box, PORTRAIT_DIR if portrait else VIEW_DIR)
 		for i: int in SETTLE_FRAMES:
 			await process_frame
 		var img := viewport.get_texture().get_image()
@@ -161,9 +197,9 @@ func _add_lighting(viewport: SubViewport) -> void:
 
 
 ## Places the camera along VIEW_DIR so the projected bounds fill FILL of the frame.
-func _frame(cam: Camera3D, box: AABB) -> void:
+func _frame(cam: Camera3D, box: AABB, view_dir: Vector3 = VIEW_DIR) -> void:
 	var center := box.get_center()
-	var dir := VIEW_DIR.normalized()
+	var dir := view_dir.normalized()
 	var distance := box.size.length() / tan(deg_to_rad(FOV * 0.5))
 	for i: int in FIT_ITERATIONS:
 		cam.look_at_from_position(center + dir * distance, center, Vector3.UP)
