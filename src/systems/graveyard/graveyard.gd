@@ -280,9 +280,20 @@ func plots_counting_for_cemetery() -> PackedStringArray:
 func locked_plot_count() -> int:
 	var count := 0
 	for grave: GraveRecord in _graves.values():
-		if grave.state == GraveRecord.State.LOCKED:
+		if grave.state == GraveRecord.State.LOCKED and _may_open(grave.id):
 			count += 1
 	return count
+
+
+## W-Welt (Phase 7): a locked plot of a section that waits for a flag nobody has set yet (the
+## Lindenacker before linden_granted) is no capacity to come – the Phase-4 story reservation
+## (CorpseDeliveryRules.reserved_plots) must not count on it.
+func _may_open(grave_id: String) -> bool:
+	var section_id: StringName = _plot_sections.get(grave_id, &"")
+	if section_id == &"":
+		return true
+	var data := Database.section(section_id) as SectionData
+	return data == null or data.requires_flag == &"" or GameState.flag_on(data.requires_flag)
 
 
 ## Section of the plot of `grave_id` (&"" = no plot in this world).

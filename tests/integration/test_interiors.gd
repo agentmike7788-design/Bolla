@@ -198,6 +198,121 @@ func test_chapel_rite_lights_follow_the_altar() -> void:
 		assert_true(l.visible, "level 3: eternal light, candles always")
 
 
+# --- Phase 7 (docs/PHASE7_DESIGN.md §4.3, §4.6 P1, §4.7, §10 test_interiors +) -----------------
+
+const VILLAGE_ROOMS := {"inn": ["InnInterior", Vector3(240, 0, -200), "door_inn", ["v_in_inn_bar", "v_in_inn_table", "v_in_inn_corner"]],
+		"surgery": ["SurgeryInterior", Vector3(300, 0, -200), "door_surgery", ["v_in_surgery_desk"]],
+		"office": ["OfficeInterior", Vector3(360, 0, -200), "door_office", ["v_in_office_desk"]]}
+
+
+func test_village_rooms_at_their_origins_with_door_exits() -> void:
+	for id: String in VILLAGE_ROOMS:
+		var spec: Array = VILLAGE_ROOMS[id]
+		var room := world.get_node_or_null("Interiors/" + String(spec[0])) as InteriorRoom
+		assert_not_null(room, id)
+		if room == null:
+			continue
+		assert_eq([room.room_id, room.region_id, room.building_id], [StringName(id), &"village", &""])
+		assert_true(room.hide_when_inactive)
+		assert_eq(room.global_position, spec[1], id + " origin §4.3")
+		assert_eq(room.camera_rig_path, NodePath("../../CameraRig"))
+		assert_eq(room.outdoor_sun_path, NodePath("../../Sun"))
+		var cfg := room.room_config()
+		assert_eq(cfg, load("res://data/config/interiors/%s.tres" % id), id + " config")
+		var exits := room.find_children("*", "", true, false).filter(func(n: Node) -> bool: return n is RoomExit)
+		assert_eq(exits.size(), 1)
+		var exit := exits[0] as RoomExit
+		assert_eq(exit.door_id, StringName(spec[2]), id + ": the exit leads to its HouseDoor")
+		var door := HouseDoor.find(tree, StringName(spec[2]))
+		assert_not_null(door, String(spec[2]))
+		if door == null:
+			continue
+		assert_eq(door.room(), room)
+		assert_true(exit.exit_transform().origin.distance_to(door.exit_transform().origin) < 0.001, id + " exit = door outside")
+		for wp: String in spec[3]:
+			assert_not_null(room.get_node_or_null("Waypoints/" + wp), "%s %s" % [id, wp])
+	var surgery := InteriorRoom.find(tree, &"surgery")
+	var lecture := surgery.get_node_or_null("Entities/LectureSet") as LectureSet
+	assert_not_null(lecture, "§4.3: the LectureSet in the surgery")
+	if lecture != null:
+		assert_eq(lecture.students().size(), 3, "three students")
+		assert_not_null(lecture.jar(), "the sealed jar")
+		for n: Node3D in lecture.students() + [lecture.jar()]:
+			assert_false(n.visible, "hidden until a lecture")
+	var office := InteriorRoom.find(tree, &"office")
+	assert_true(office.get_node_or_null("Entities/PoorBox") is PoorBox, "the poor box")
+	assert_true(office.get_node_or_null("Entities/RegisterCopy") is RegisterCopy, "the register copy")
+
+
+func test_village_rooms_frustum_lights_and_walkable() -> void:
+	var rig := world.get_node("CameraRig") as CameraRig
+	var player := world.get_player()
+	player.set_region(&"village")
+	await tree.process_frame
+	var others: Array[Node3D] = [world.get_node("Ground") as Node3D, world.get_node("Regions/Village/Ground") as Node3D,
+			world.get_node("HutInterior") as Node3D]
+	for node: Node in world.get_node("Interiors").get_children():
+		others.append(node as Node3D)
+	for id: String in VILLAGE_ROOMS:
+		var room := InteriorRoom.find(tree, StringName(id))
+		player.global_transform = room.spawn_transform()
+		player.set_in_interior(true, StringName(id))
+		await tree.process_frame
+		for zoom: float in [room.room_config().camera_zoom_min, room.room_config().camera_zoom_max]:
+			rig.set_distance(zoom)
+			rig.snap()
+			var planes := rig.camera.get_frustum()
+			for other: Node3D in others:
+				if other == room:
+					continue
+				assert_false(_in_frustum(_aabb(other), planes), "%s (zoom %.0f): %s not in view" % [id, zoom, other.name])
+		var shadows := 0
+		for node: Node in room.find_children("*", "Light3D", true, false):
+			var l := node as Light3D
+			if not l is DirectionalLight3D and (l.shadow_enabled or l.get_meta(&"interior_role", &"") == &"lantern"):
+				shadows += 1
+		if room.get_node("Sun").get("shadow_enabled"):
+			shadows += 1
+		assert_true(shadows <= 2, "%s: ≤ 2 shadow lights (%d)" % [id, shadows])
+		await tree.physics_frame
+		for p: Vector3 in [room.spawn_transform().origin]:
+			assert_true(_capsule_free(p), "%s: the gravekeeper fits at the spawn" % id)
+		player.set_in_interior(false)
+	player.set_region(&"graveyard")
+	var inn := InteriorRoom.find(tree, &"inn")
+	var roles := {}
+	for node: Node in inn.find_children("*", "Light3D", true, false):
+		roles[StringName(node.get_meta(&"interior_role", &""))] = true
+	for r: StringName in [&"window", &"lantern", &"stove"]:
+		assert_true(roles.has(r), "inn: %s light (§4.7)" % r)
+
+
+func test_crypt_pult_place() -> void:
+	var crypt := InteriorRoom.find(tree, &"crypt")
+	var place := crypt.get_node_or_null("Entities/PultPlace") as Node3D
+	assert_not_null(place, "§4.6 P1: the pult place in the crypt")
+	if place == null:
+		return
+	assert_eq(int(place.get_meta(&"min_level")), 1, "from crypt level 1")
+	var site := place.get_node("site_pult") as BuildSite
+	assert_eq([site.station_id, site.requires_flag], [&"pult", &"village_open"])
+	var station := place.get_node("station_pult") as Workbench
+	assert_eq([station.station, station.requires_built], [&"pult", true])
+	assert_true(station.get_node_or_null("PultStore") is PultStore, "the cold drawer")
+	assert_true(station.get_node_or_null("CollectionShelf") is CollectionShelf, "the collection shelf")
+	assert_not_null(station.get_node_or_null("Collision"), "the pult collides once built")
+	# Before village_open the site is not shown (W1 P2 note), afterwards with workshop_open.
+	GameState.set_flag(&"village_open", false)
+	site.refresh()
+	assert_false(site.is_active(), "no site before village_open")
+	GameState.set_flag(&"village_open", true)
+	GameState.set_flag(&"workshop_open", true)
+	site.refresh()
+	assert_eq(site.is_active(), not (world.get_node("Systems/Workshop") as Workshop).is_built(&"pult"), "site while the pult is not built")
+	GameState.set_flag(&"village_open", false)
+	GameState.set_flag(&"workshop_open", false)
+
+
 # --- helpers ----------------------------------------------------------------------------------
 
 func _aabb(node: Node3D) -> AABB:

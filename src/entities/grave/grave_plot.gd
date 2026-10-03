@@ -412,7 +412,9 @@ func _finish_new_stone() -> void:
 	var masonry := _stonemasonry()
 	var graveyard := _graveyard()
 	var order := masonry.ready_for(grave_id) if masonry != null else {}
-	if graveyard == null or order.is_empty() or not graveyard.replace_old_marker(grave_id, StoneDesign.from_dict(order.get("design", {}))):
+	# W-Welt (W1 note P4): through Stonemasonry.set_stone – it calls Graveyard.replace_old_marker for the
+	# rest-period grave and takes the stone out of the mason's rack (stone_order_changed &"set").
+	if graveyard == null or order.is_empty() or masonry.set_stone(grave_id, null) <= 0:
 		EventBus.notification_requested.emit(TEXT_CANNOT_SET_STONE, &"warning")
 
 
