@@ -423,8 +423,8 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 | **Lead** (W0 + laufend) | `project.godot`, `src/core/*` (EventBus, Database), alle **Datenklassen ✦**, alle **Stubs** (bis zur Übergabe), `tests/run_tests.gd`, `tests/framework/*`, `tests/fixtures/*` (inkl. **`saves_v5/*`**, `phase7/*`), `tests/integration/test_saves_v5_load.gd`, `tests/unit/test_phase7_scaffold.gd`, `docs/*`, `CLAUDE.md` |
 | **P1 Regionen, Portale & NPC-Last** | `src/world/regions/{region_root,region_portal,region_travel}.gd` (neu), `src/entities/house_door/*` (neu), `src/entities/region_portal/*` (neu, Szene), `src/world/interiors/{interior_room,room_exit}.gd` (nur `region_id` / `door_id`), `src/world/hut_interior/hut_portal.gd` (nur Durchreichen), `src/world/camera/camera_rig.gd` (`set_base_profile`), `src/entities/player/player.gd` (nur `region_id`, `set_region`, Speichern), `src/entities/npc/{npc,npc_pose}.gd` (`region_id`, `hide_flag`, LOD), `src/systems/npc/{schedule_resolver,npc_lod}.gd`, `data/config/npc_config.tres`, `data/config/regions/*`, `tests/unit/{test_regions,test_npc_lod,test_schedule_resolver,test_house_door}.gd`, `tests/integration/test_region_travel.gd` |
 | **P2 Läden & Beziehungen** | `src/systems/village/{village_shops,shop_rules,relationships,relationship_rules}.gd`, `src/entities/shop_counter/*`, `data/shops/*`, `data/village/villagers/*`, `data/config/relationship_config.tres`, `tests/unit/{test_village_shops,test_relationships}.gd` |
-| **P3 Aufträge & Dorf-Fortschritt** | `src/systems/village/{orders,order_rules,village}.gd`, `src/entities/village_board/*`, `src/entities/mourning_ribbon/*`, `data/orders/*`, `data/config/{orders_config,village_config}.tres`, `data/sections/linden.tres`, `data/clearables/*` (nur neue Einträge), `src/systems/expansion/expansion_manager.gd` (nur `unlock_flag`, `try_unlock`), `src/systems/graveyard/graveyard.gd` (nur `replace_old_marker` und die Aufrufe `Orders.note_grave_completed`/`note_stone_set`), `src/systems/stone/stonemasonry.gd` + `src/entities/grave/grave_plot.gd` (nur „Neuen Stein setzen" auf Ruhezeit-Gräbern mit Auftrag), `tests/unit/{test_orders,test_village,test_expansion}.gd` |
-| **P4 Anatomie** | `src/systems/anatomy/{specimens,specimen_rules,specimen_record}.gd` (neu), `src/systems/corpse/{corpse_care,corpse_generator,corpse_record}.gd` (Organ-Karte, `hidden_cause`, `returned`), `src/entities/morgue_table/morgue_table.gd` (`request_organ`, Tuch, Schleier), `src/entities/corpse/corpse.gd` (nur `set_covered`), `src/entities/grave/grave_plot.gd` (nur „Präparat beisetzen"), `src/systems/inventory/inventory.gd` + `src/ui/panels/chest_transfer.gd` (nur Einzelstücke), `src/systems/ghosts/{ghost_mood,ghost_manager}.gd`, `data/config/{anatomy_config,economy_config,reputation_config,piety_config}.tres`, `data/anatomy/**`, `data/ghosts/ghost_lines.tres`, `data/corpses/corpse_tables.tres` (nur `hidden_causes`), `tests/unit/{test_specimens,test_inventory_unique,test_anatomy_harvest,test_ghosts,test_corpse_generator}.gd` |
+| **P3 Aufträge & Dorf-Fortschritt** | `src/systems/village/{orders,order_rules,village}.gd`, `src/entities/village_board/*`, `src/entities/mourning_ribbon/*`, `data/orders/*`, `data/config/{orders_config,village_config}.tres`, `data/sections/linden.tres`, `data/clearables/*` (nur neue Einträge), `src/systems/expansion/expansion_manager.gd` (nur `unlock_flag`, `try_unlock`), `src/systems/graveyard/graveyard.gd` (nur `replace_old_marker` und die Aufrufe `Orders.note_grave_completed`/`note_stone_set`), `src/systems/stone/stonemasonry.gd` (nur Steine für Ruhezeit-Gräber mit Auftrag: `ready_for` gilt auch für sie), `tests/unit/{test_orders,test_village,test_expansion}.gd` |
+| **P4 Anatomie** | `src/systems/anatomy/{specimens,specimen_rules,specimen_record}.gd` (neu), `src/systems/corpse/{corpse_care,corpse_generator,corpse_record}.gd` (Organ-Karte, `hidden_cause`, `returned`), `src/entities/morgue_table/morgue_table.gd` (`request_organ`, Tuch, Schleier), `src/entities/corpse/corpse.gd` (nur `set_covered`), `src/entities/grave/grave_plot.gd` (beide neuen Prompts: „Präparat beisetzen" und „Neuen Stein setzen" auf Ruhezeit-Gräbern gegen die P3-API), `src/systems/inventory/inventory.gd` + `src/ui/panels/chest_transfer.gd` (nur Einzelstücke), `src/systems/ghosts/{ghost_mood,ghost_manager}.gd`, `data/config/{anatomy_config,economy_config,reputation_config,piety_config}.tres`, `data/anatomy/**`, `data/ghosts/ghost_lines.tres`, `data/corpses/corpse_tables.tres` (nur `hidden_causes`), `tests/unit/{test_specimens,test_inventory_unique,test_anatomy_harvest,test_ghosts,test_corpse_generator}.gd` |
 | **P5 Assets** | `tools/blender/{asset_village_buildings,asset_village_props,asset_village_interiors,asset_villagers,asset_anatomy}.py` (neu), `tools/blender/asset_items.py`, `tools/blender/build_all.py`, `assets/models/**` (nur neue Phase-7-Dateien), `art_source/blender/**` (Phase 7), `tests/unit/test_assets_phase7.gd`, `docs/reviews/phase7_assets/*` |
 | **P6 Dialog, Geschichte & Speichern** | `data/dialogue/{carter,trader}.tres`, `data/dialogue/v_*.tres` + `carter_village.tres` + `priest_linden.tres` (neu), `data/npc/*_schedule.tres` (neue + Osrics Dorf-Einträge), `src/systems/dialogue/{dialogue_conditions,dialogue_actions}.gd`, `src/systems/story/{story_director,story_corpse_data}.gd` (nur `after_flag`/`after_days`/`section`-Logik), `data/story/d1_hagedorn.tres`, `data/finds/f_d1_*.tres`, `data/journal/{clues,insights}/*` (Phase 7), `src/systems/save/{save_migration,save_file_io,save_manager}.gd`, `src/systems/game_state/game_state.gd` (Stats), `tests/unit/{test_dialogue,test_save,test_save_migration,test_story,test_journal,test_game_state}.gd`, `tests/integration/test_phase6_save_upgrade.gd` |
 | **P7 Präparierpult & Handwerk** | `data/stations/pult.tres`, `data/recipes/{fever_tincture,wound_salve,corpse_balm}.tres`, `data/items/*` (Phase-7-Items), `src/entities/pult_store/*` (neu, `extends Chest`), `src/systems/workshop/workshop.gd` (nur Station im Innenraum, falls nötig), `data/config/{prep_config,shed_config}.tres` (`corpse_balm`, Ausschlüsse), `tests/unit/{test_pult,test_recipes_phase7}.gd` |
@@ -655,7 +655,7 @@ class_name MourningRibbon extends Node3D              # Trauerflor an Marker rib
 @export var house_id: StringName
 # SectionData ✦ + @export var unlock_flag: StringName = &""   # Abschnitt öffnet erst mit allen Hindernissen UND diesem Flag
 # ExpansionManager (P3): func try_unlock(section_id: StringName) -> bool   # nach dem letzten Hindernis und nach dem Flag; sonst „Geräumt. Es fehlt die Weihe."
-# Stonemasonry/GravePlot (P3): Ruhezeit-Grab (OLD, nicht hebbar) mit aktivem stone-Auftrag: Steinmetzbank darf einen Stein
+# Stonemasonry (P3) / GravePlot (P4-Prompt): Ruhezeit-Grab (OLD, nicht hebbar) mit aktivem stone-Auftrag: Steinmetzbank darf einen Stein
 #   dafür fertigen; „[E] Neuen Stein setzen (20 Min)" → Graveyard.replace_old_marker(grave_id, design) (Zustand bleibt OLD)
 ```
 
@@ -754,3 +754,161 @@ Neue Ordner → Schlüssel: `data/shops` (`id`), `data/orders` (`id`, nach `orde
 
 ### 3.6 Eingaben
 Keine neuen Tasten. Panels über [E], Esc schließt. Laden-Panel: Mausklick, Umschalt+Klick = 5 Stück. Auftrags-Panel: `[`/`]` blättert (bestehende Aktionen `journal_page_prev/next`).
+
+---
+
+## 4. Welt, Dorf & Innenräume (W-Welt)
+
+### 4.1 Anbindung – Entscheidung: eigene Außen-Region mit Abblende am Wegstein (Bestätigung §14.1)
+**Das Dorf ist eine eigene Außen-Szene** (`src/world/village/village.tscn`, gebaut aus `data/world/village_layout.json`), die der Welt-Builder **fern der Friedhofswelt** unter `WorldRoot/Regions/Village` bei **(0, 0, 400)** instanziert – das erprobte Innenraum-Muster aus Phase 2/6, nur für draußen. Am Ende des Kutschwegs steht ein **Wegstein** („[E] Nach Hollerbrück (30 Min)"); an der Holderbrücke im Dorf der Rückweg („[E] Zum Friedhof (30 Min)"). Der Wechsel ist eine Abblende (0,8 s), in deren Mitte die Uhr um 30 Minuten springt und der Spieler teleportiert wird. Die Region bringt ihr eigenes Kameraprofil (Distanz 22, Zoom 12–24 wie draußen, eigene Fokusgrenzen) und nutzt **dieselbe** Sonne, Umgebung und Atmosphäre.
+
+*Begründung gegen die Alternativen:*
+- **Weiterlaufen auf derselben Szene** (ein neuer Abschnitt am Kutschweg): Osric sagt seit Phase 2 „drei Meilen" – ein angebautes Dorf 30 m hinter dem Tor widerspräche dem und wäre von der Friedhofskamera aus sichtbar (es läge südlich, also im Vordergrund jeder Friedhofsansicht). Boden (64 × 80 m), Gras, Bau-Maske und alle Sichtprüfungen der Phasen 3–6 müssten neu gebacken werden, und die CPU zahlte für Dorf und Friedhof gleichzeitig.
+- **Szenenwechsel** (`change_scene`): Der ganze Spielzustand lebt in einer Welt (`saveable`-Knoten unter `WorldRoot`, uhrgetriebene Systeme: Verfall, Lieferung, Geister, Osric). Ein Szenenwechsel würde den Friedhof entladen, während seine Uhr weiterlaufen muss, und den Speicher-Vertrag aufbrechen.
+- **Die Region** hält alles in einer Szene, kostet in der Ferne fast nichts (die Kamera sieht 84 m weit, `camera.far = distance + 60`; die inaktive Region ist unsichtbar und `PROCESS_MODE_DISABLED`), und sie skaliert: Phase 11 („Welt erweitern": Wald, Sumpf, Mine) hängt weitere `RegionRoot`s an dieselben Portale. Die Innenräume des Dorfes sind normale `InteriorRoom`s in der bekannten Reihe bei z −200.
+- **Die 30 Minuten** sind der Preis der Entfernung (§1.3). Laufen müsste man drei Meilen nicht; man entscheidet nur, ob es sich heute lohnt.
+
+**Regeln am Portal:** keine Leiche („Eine Leiche nimmst du nicht mit ins Dorf. Osric holt und bringt."), keine laufende Handlung, nicht während einer Abblende, nur ab `village_open`. Mit vollem Inventar, Werkzeug und Präparaten geht es. Speichern im Dorf ist erlaubt (`region_id` im Spielstand). Nachts ist das Dorf begehbar; Läden und Häuser haben ihre Zeiten (§2.2).
+
+### 4.2 Hollerbrück – Plan (region-lokal; x = Osten, z = Süden zur Kamera; Ursprung = Mitte des Angers)
+```
+ z −24  ── Kulisse: Kirchhofmauer, Obstbäume, Hügel; Kirchturm am Nordende der Kirche ──
+ z −18  [Wohnhaus Kehr]  AMTSHAUS (−15|−14)   KIRCHE ST. GALLUS (0|−18)   HOLDERKRUG (15|−14)  [Wohnhaus Brandt]
+ z −10,4       Tür → Amtsstube        Tür (0|−11,9), Kirchplatz       Tür → Gaststube · Laterne
+ z  −6  SCHMIEDE (−20|−2)          ····· ANGER (Pflaster, Gras) ·····          WUNDARZTHAUS (19|−2)
+         offen nach Osten, Amboss       BRUNNEN (0|−3) · Bank                   Tür nach Westen → Wundarztstube
+ z   3   │ Hollerbach            LINDE (−7|3) · GEMEINDETAFEL (−7|4,6) · Bank
+ z   1,5 ═HOLDERBRÜCKE (−26|1,5)═ Ortstafel · Bildstock      Weg ← vom Wegstein (Portal road_out −28,4|1,5)
+ z   7   │ Waschplatz (−24,5|8,5)   KRÄMERLADEN (−18|7), Ladenfenster nach Osten     REMISE Osric (19,5|8), Tor nach Westen
+ z  11      HAGEDORN-KATE (−6|13,5), Tür (−6|11)       DORN-KATE (6|13,5), Tür (6|11)
+ z  16  ── Kulisse: Gärten, Zäune, Wiesen, Bachlauf nach Süden ──
+          x −29 (Bachufer)                                                    x 24
+```
+**Kamera-Regel wie Phase 6 §4:** Was südlich steht, verdeckt; was nördlich steht, wird verdeckt. Deshalb stehen die drei hohen Häuser (Amtshaus, Kirche, Holderkrug) als Nordreihe mit den Türen nach Süden, dahinter nur Kulisse. Schmiede, Krämerladen, Wundarzthaus und Remise stehen seitlich und öffnen sich zum Anger. Im Süden stehen nur die zwei niedrigen Katen (Traufe ≤ 2,6 m, First ≤ 4,5 m), Gärten und der Bach.
+
+| Element | Lage (Mitte) | Drehung / Öffnung | Maße (Footprint · Höhe) | Funktion |
+|---|---|---|---|---|
+| Kirche St. Gallus `v_church` | (0 \| −18) | Tür Süd (0 \| −11,9) | 8 × 12 m · First ≤ 9 m, Turm (Nordende) ≤ 17 m | Kulisse mit Tür; Pfarrer an der Tür; **nicht begehbar** in Phase 7 („Drinnen beten Leute. Du störst nicht." – Innenraum Phase 8/11) |
+| Amtshaus `v_office` | (−15 \| −14) | Tür Süd (−15 \| −10,4) | 9 × 7 · ≤ 8,5 m | **begehbar** → Amtsstube |
+| Holderkrug `v_inn` | (15 \| −14) | Tür Süd (15 \| −10,4) | 10 × 7 · ≤ 8,5 m | **begehbar** → Gaststube; Wirtshausschild, Bank, Laterne |
+| Schmiede `v_smithy` | (−20 \| −2) | offen nach Osten | 6 × 6 · ≤ 5,5 m (Kamin 6,5) | `ShopCounter smith` am Amboss (−16,8 \| −2); Esse-Glut |
+| Krämerladen `v_shop` | (−18 \| 7) | Ladenfenster Ost | 6 × 5 · ≤ 6 m | `ShopCounter grocer` (−14,3 \| 7) |
+| Wundarzthaus `v_surgery` | (19 \| −2) | Tür West (15,4 \| −2) | 7 × 8 · ≤ 8 m | **begehbar** → Wundarztstube; Messingschild |
+| Remise `v_remise` | (19,5 \| 8) | Tor West | 7 × 5 · ≤ 5 m | Osrics Karren als Requisite |
+| Hagedorn-Kate `cottage_hagedorn` | (−6 \| 13,5) | Tür Nord (−6 \| 11) | 6 × 5 · First ≤ 4,5 m | Kulisse, Gartenpforte (−6 \| 10,2), Marker `ribbon` |
+| Dorn-Kate `cottage_dorn` | (6 \| 13,5) | Tür Nord (6 \| 11) | 6 × 5 · ≤ 4,5 m | Kulisse, Liesels Spinnplatz (6 \| 10,0), Marker `ribbon` |
+| Wohnhäuser `house_kehr`, `house_brandt`, `house_ott`, `house_sieber` | Rand: (−25,5 \| −12), (25,5 \| −12), (26,5 \| 3), (−27,5 \| 13) (W-Welt ±1,5 m, außerhalb der Laufgrenze) | zur Kamera | je ≤ 7 m | Kulisse, Marker `ribbon`, Fensterlicht |
+| „Zum Stumpf" (zweites Wirtshaus) | hinter dem Amtshaus (−24 \| −20) | – | ≤ 7 m | nur Kulisse, Schild sichtbar |
+| Brunnen `v_well` | (0 \| −3) | – | Ziehbrunnen ≤ 3 m | Bank (2,2 \| −3) |
+| Linde + Gemeindetafel | Stamm (−7 \| 3), Tafel (−7 \| 4,6) Süd | – | Krone r 4,5 m, ≤ 9 m | `VillageBoard`; Bank (−5,2 \| 3,4) |
+| Holderbrücke | (−26 \| 1,5), 6 m lang (O–W) | – | Steinbogen | Portal `road_out` am Westende (−28,4 \| 1,5), Spawn `from_graveyard` (−24,6 \| 1,5, Blick nach Osten) |
+| Waschplatz | (−24,5 \| 8,5) | – | flache Steine am Ostufer | Liesel morgens |
+| Ortstafel „Hollerbrück", Bildstock, Holunderbüsche | (−23,5 \| −0,5), (−22,5 \| 4,5), an der Brücke | – | – | Dorfeingang |
+- **Grenzen:** `walkable_bounds` x −29…24, z −10,6…12,0; Kollision an allen Häusern (Footprint-Boxen), Brückengeländer, Bach (unsichtbare Wand am Ufer außer an Brücke und Waschplatz). `camera_bounds` (Fokus) x −22…20, z −8…8. Boden 70 × 50 m (`ph_env_ground_village`, eigenes Asset aus `tools/blender/asset_ground_village.py`), Gras auf Anger-Rändern und Gärten, Dichte × 0,5 gegenüber dem Friedhof (§9), keines auf Pflaster, Wegen und unter Footprints. Keine Bau-Maske, keine Zier im Dorf.
+
+### 4.3 Begehbare Häuser – drei Innenräume (Muster Phase 6 §4.7/§4.8)
+| Raum | Szene (W-Welt, generiert) | Layout | Ursprung (Welt) | Grundfläche | Kamera (Distanz / Zoom) | Tür außen → innen |
+|---|---|---|---|---|---|---|
+| **Gaststube** `inn` | `src/world/interiors/inn_interior.tscn` | `data/world/interiors/inn_layout.json` | **(240, 0, −200)** | 8 × 6 m | 10 / 8–12 | `door_inn` → hinter der Tür |
+| **Wundarztstube** `surgery` | `…/surgery_interior.tscn` | `…/surgery_layout.json` | **(300, 0, −200)** | 6 × 5 m | 9 / 7–11 | `door_surgery` |
+| **Amtsstube** `office` | `…/office_interior.tscn` | `…/office_layout.json` | **(360, 0, −200)** | 6 × 5 m | 9 / 7–11 | `door_office` |
+- Gleicher generischer Builder (`interior_build.gd`, Layoutformat Phase 6) mit `region_id village`, `hide_when_inactive true`. `RoomExit` mit `door_id` führt zur `HouseDoor` im Dorf zurück (die Region bleibt `village`). Die Dorfbewohner, die drinnen sind, sind normale `Npc` der Dorf-Region mit Wegpunkten im Raum (`v_in_inn_bar`, …); Gehen zwischen Tür und Raum ist ein Zeitplan-Sprung (Eintrag mit `travel_minutes 0` am Innen-Wegpunkt), kein Laufen durch die Tür.
+- **Gaststube:** Schanktisch mit Fässern (Rosine, Marker `bar`), Kachelofen (Feuerlicht `warm_lights`), 4 Tische, Osrics Ecktisch (`v_in_inn_corner`), Treppe nach oben (Kulisse), 2–3 sitzende Gäste ohne Rig (`ph_chr_guest_a/b`, §8), Fenster (Rolle `window`), Hängelaterne mit Schatten (`lantern`, nachts). „[E] Eine Runde für alle (5 Münzen)" am Schanktisch (über Rosines Dialog).
+- **Wundarztstube:** Behandlungstisch mit weißem Tuch (leer), Glasschrank mit **trüben, verschlossenen Gläsern** mit Papieretiketten (keine erkennbaren Inhalte), Schreibpult mit Büchern und dem Kabinettsbuch, Waschschüssel, Arzttasche, Kräuterbündel, Fenster mit kühlem Tageslicht, Öllampe (Schatten nachts). Quasts Platz `v_in_surgery_desk`; das Panel `&"anatomist"` öffnet aus seinem Dialog. Kein Skelett, keine Abbildungen von Innereien.
+- **Amtsstube:** Schreibpult mit Siegel, Aktenregal, **Armenkasse** (eisenbeschlagene Truhe, Entität `PoorBox`: „[E] In die Armenkasse geben (5 Münzen)" → `Village.donate`), **Lesepult mit der Abschrift des Sterbebuchs** (Entität `RegisterCopy`: „[E] Die Abschrift lesen" – mit Fenner „Vertraut" oder nach einer Spende an diesem Tag, und nur wenn Fenner anwesend ist → `c_v_deathbook`; sonst „Das ist Gemeindesache, Totengräber."). `PoorBox`/`RegisterCopy` besitzt P3 (`src/entities/{poor_box,register_copy}/*`).
+
+### 4.4 Wegpunkte (Region Dorf, region-lokal; `Waypoints/<id>`)
+`v_road_in` (−29,5 | 1,5) · `v_bridge` (−25,0 | 1,5) · `v_anger_w` (−12 | 0) · `v_well` (0,6 | −1,6) · `v_well_bench` (2,2 | −2,2) · `v_linden` (−5,2 | 4,2) · `v_board` (−7 | 5,6) · `v_church_door` (0 | −10,6) · `v_office_door` (−15 | −9,6) · `v_inn_door` (15 | −9,6) · `v_anvil` (−16,2 | −2) · `v_shop_window` (−13,6 | 7) · `v_surgery_door` (14,6 | −2) · `v_remise` (15,2 | 8) · `v_hagedorn_gate` (−6 | 9,6) · `v_dorn_door` (6 | 9,6) · `v_wash` (−23,6 | 8,5) · `v_house_n` (−20 | −9,8) (Hausbesuche) · Innen: `v_in_inn_bar`, `v_in_inn_table`, `v_in_inn_corner`, `v_in_surgery_desk`, `v_in_office_desk`. `waypoint_facing` für alle Steh-Orte (Blick zum Anger bzw. zur Kamera). Teleports (Debug): `tp_village` (−20 | 1,5), `tp_anger` (0 | 2).
+
+### 4.5 Sichtprüfung und Wege im Dorf (Kamerastrahl-Test, Pflicht)
+Test in `test_village_world.gd` (W-Welt) auf der echten Dorf-Region, Verfahren wie Phase 6 §4.5 (AABB aller `VisualInstance3D` außer Boden, Gras, Partikel, Spieler und Zielobjekt; Kronen als AABB):
+1. **Nahsicht:** Spieler an jeder `HouseDoor`, jedem `ShopCounter`, der Gemeindetafel, dem Portal und an **jedem gesprächsbereiten Steh-Ort** der acht Zeitpläne (§2.2). Zoom 12, 22, 24: Strahlen zu Spielerkopf (1,7 m), Kopf der Person (1,6 m) und Tür-/Fenstermitte. **Bestanden:** alle frei bei allen drei Zoomstufen.
+2. **Im Bild:** Jedes Haus der Nordreihe ist vom Anger aus (Spieler am Brunnen, Zoom 22) zu ≥ 70 % im Bild und deckt ≥ 3 % der Fläche; der Kirchturm ragt sichtbar über das Schiff.
+3. **Trauerflor:** Marker `ribbon` jedes der sechs Häuser ist vom nächsten Anger-Punkt aus frei.
+4. **Wege** (Flood-Fill, Kapselbreite 1,5 m): Brücke ↔ alle Türen, Läden, Tafel, Waschplatz, Brunnen, Katen; kein Steh-Ort eines Zeitplans liegt in einer Kollision; jeder Zeitplan-Weg (Polylinie) läuft frei (Strahl in Hüfthöhe, Toleranz 0,3 m).
+5. Scheitert eine Prüfung, verschiebt W-Welt nur Kulisse, Linde (±1 m) oder Steh-Orte (±0,8 m) und meldet es im G7-Bericht. Bilder `p7_vis_*` (§11).
+
+### 4.6 Eingriffe am Friedhof (vollständig; Layout-Diff-Test gegen `tests/fixtures/phase7/layout_p6.json`)
+```
+ z  9,6 ════ Ostwiese-Südzaun ════[LINDENACKER-PFORTE x 15,0…16,6]═══════  │ Am Bruch (z ≤ 9,6)
+        │ Nordstreifen (Weg) z 9,6…11,8                                    │
+ z 12,8 │  l_01 (13,6)   l_02 (15,9)   l_03 (18,2)   l_04 (20,5)          │   LINDE (23,4|14,8) Kulisse
+        │ Mittelgang z 13,8…15,9 (≥ 2,0 m)                                  │
+ z 16,9 │  l_05          l_06          l_07          l_08                 │
+ z 19,6 └══ Zaun ═══════════════════════════════════════════════════════════┘
+   x 11,5 (Zaun; unsichtbare Wand x 11,2 zum Kutschweg bleibt)            x 21,5
+   Kutschweg … Wegstein (8,4|24,4) „Hollerbrück · 3 Meilen"
+```
+| # | Element | vorher | nachher | Grund |
+|---|---|---|---|---|
+| R1 | Wegstein `road_exit` (`RegionPortal`, Modell `ph_prop_milestone`) | – | **(8,4 \| 24,4)**, Blick Nordwest; Spawn `from_village` (8,0 \| 23,4) | Ende des sichtbaren Kutschwegs an der Laufgrenze (z 25,2) |
+| L1 | Abschnitt `linden` | Wald hinter der Wand x 11,2 | Rechteck x 11,5…21,5 · z 9,6…19,6, `order 8`, Plots `l_01…l_08` (Raster oben, W-Welt ±0,4 m) | §2.9 |
+| L2 | Ostwiese-Südzaun | [[11,5, 9,6], [21,5, 9,6]] | [[11,5, 9,6], [15,0, 9,6]] + Pforte `obs_l_gate` + [[16,6, 9,6], [21,5, 9,6]] | Zugang aus der Ostwiese |
+| L3 | Zaun Lindenacker | – | West [[11,5, 9,6], [11,5, 19,6]], Süd [[11,5, 19,6], [21,5, 19,6]], Ost [[21,5, 9,6], [21,5, 19,6]] (`ph_prop_fence_iron`), mit `extra_walls` auf denselben Linien | Abgrenzung; die Wand x 11,2 zum Kutschweg bleibt |
+| L4 | Waldbaum `forest.trees[6]` | (12,6 \| 17,2) | **(25,0 \| 23,5)** | stand im Abschnitt |
+| L5 | Waldbaum `forest.trees[8]` | (18,0 \| 12,0) | **(27,5 \| 15,5)** | stand im Abschnitt |
+| L6 (bedingt) | Waldbaum `forest.trees[7]` | (16,5 \| 22,0) | bis 3 m nach Süden | **nur**, wenn die Krone die Köpfe in Reihe 2 verdeckt (§4.5 Punkt 1 am Lindenacker) |
+| L7 | Linde `ph_env_linden_old` | – | (23,4 \| 14,8), außerhalb der Laufgrenze | Namensgeberin, Kulisse; darf keine Bruch-Sammelstelle verdecken (Prüfung) |
+| L8 | Bau-Maske | x −11,5…21,5 · z −20…9,6 | + Rechteck Lindenacker (x 11,5…21,5 · z 9,6…19,6), neu gebacken | Zier im Lindenacker (`decor_cap 6`) |
+| L9 | Gras / Boden | Waldboden | Gras wie Ostwiese im Abschnitt, Boden unter den Plots geglättet (`plot_flat_rect`), `ph_env_ground_graveyard` neu exportiert (Größe unverändert) | – |
+| P1 | Gruft-Raum `crypt_layout.json` | – | Platz `pult` an der Westwand zwischen Treppe und `niche_3` (W-Welt wählt, `min_level 1`, Kollision nur gebaut), `PultStore` im Pult | §2.7 |
+| N1 | Wegpunkte | – | + `w_east_pass` (11,5 \| −2,2), `w_linden_n` (15,8 \| 8,6), `linden_spot` (15,8 \| 10,8), `tp_linden` (16 \| 14,8), `from_village` | Weg des Pfarrers am Weihetag (road_end → gate_outside → dropoff → Hofweg → Durchgang Ostwiese → Pforte) und Debug |
+| N2 | Entitäten | – | `npc_priest` (`Npc`, Region graveyard, Modell `ph_chr_v_priest`), `Regions/Graveyard` (`RegionRoot`, `managed_paths` ["Decor", "Lights", "Grass"]) | – |
+- Nicht bewegt: alles andere, insbesondere Tor, Bahre, Kutschweg-Polylinie, Schlag (Erlen), Ostpforte, Am Bruch, alle Gräber, Pflegestellen und Gebäude. `walkable_bounds` und `camera_bounds` bleiben (max z 25,2 / 23 reichen).
+- **Sichtprüfung Lindenacker** (Phase-6-Verfahren): Kopf des Spielers an jedem Plot und an der Pforte frei bei Zoom 12/22/24; **keine neue Verdeckung** an Ostwiesen-Plots, Pflegestellen, Ostpforte und den Sammelstellen Am Bruch; Wegstein am Ende des Kutschwegs bei Zoom 22 im Bild.
+- **Wege** (Flood-Fill 1,5 m): Tor ↔ Lindenacker-Pforte ↔ jede Grabstelle `l_*` (Nordstreifen, Weststreifen x 11,5…13,1, Mittelgang, Südstreifen); Bahre ↔ Wegstein; Gruft ↔ Lindenacker (Tragweg ≈ 32 m, ≈ 16 s ≈ 30 Spielminuten wie der Leichenzug zur Kapelle).
+
+### 4.7 Licht im Dorf
+- **Tag:** dieselbe Sonne und Atmosphäre wie auf dem Friedhof. Esse-Glut der Schmiede (wie die Werkhof-Esse: `#E07A3A`, 0,5, 3,5 m, ohne Schatten).
+- **Nacht:** Laterne am Holderkrug (**mit Schatten**, 2,6 / 8 m wie die Hüttenlaterne), Laterne an der Kirchentür (**mit Schatten**), Brückenlaterne und Laterne an der Linde (ohne Schatten), warme Fenster (ohne Schatten) an Holderkrug (2), Amtshaus (1), Katen (je 1, bis 22:00), Wohnhäuser (je 1, bis 21:00). Höchstens **2 Schattenlichter** im Dorf (§9). Keine Lichter an Figuren.
+- Innenräume: `InteriorConfig` je Raum wie Hütte/Gruft, ≤ 2 Schattenlichter (Gaststube: Hängelaterne nachts + Ofen ohne Schatten; Wundarztstube: Lampe; Amtsstube: Fenster + Kerze ohne Schatten).
+
+---
+
+## 5. Speichern & Migration (P6)
+
+### 5.1 Format v6 (Ergänzungen)
+```
+format_version: 6
+data.autoloads.GameState.stats   + village_trips, orders_done, orders_failed, gifts_given, rounds_bought, donations,
+                                   specimens_taken, specimens_sold, specimens_researched, specimens_returned,
+                                   coins_spent_village, coins_spent_donation, coins_spent_round, coins_spent_consecration
+data.autoloads.GameState.flags   + village_open, village_open_day: 40, p7_intro, linden_granted, linden_consecration_day: 42,
+                                   linden_consecrated, anatomy_known | anatomy_declined, hagedorn_dead, name_in_village_complete,
+                                   insight_deathbook, insight_burn_it, clue_c_v_* (bestehendes Muster)
+data.nodes.player                + "region_id": "graveyard" | "village"   (interior_id + "inn" | "surgery" | "office")
+data.nodes.player.inventory.slots[] + "uid": "sp_0007"    (nur Einzelstücke; ebenso hut_chest, shed_store, pult_store)
+data.nodes.corpse_manager.records[] + hidden_cause: "arsenic", returned: ["heart"]; harvested + "heart" | "lung" | "stomach"
+data.nodes.village               {"open_day": 40, "consecration_paid_day": 41, "round_day": 45, "donation_day": 46, "donation_steps": 1,
+                                  "goal_done": false, "ribbon_seen": {}}
+data.nodes.relationships         {"values": {"innkeeper": 34, …}, "met": ["innkeeper", …], "talk_day": {…}, "gift_day": {…}, "remark_day": {…}}
+data.nodes.village_shops         {"stock_day": 45, "stock_left": {"grocer": {"linen": 4}}, "bought_left": {"inn": {"elderberries": 6}}}
+data.nodes.orders                {"states": {"o_fenner_well": "completed", …}, "accepted_day": {…}, "board_day": 45,
+                                  "board": ["ob_wood", "ob_herbs"], "history": {"ob_wood": 43}, "progress": {"ob_tend": 1}}
+data.nodes.specimens             {"next": 8, "records": [{uid, corpse_id, corpse_name, organ, container, clarity_at_harvest,
+                                  harvest_total, sealed_total, sealed_clarity, cold_windows, state, finding_id, day}]}
+data.nodes.pult_store            {"storage": Inventory.save_state()}
+data.nodes.graveyard.graves[]    + l_01…l_08 (aus dem Layout, Zustand LOCKED bis zur Öffnung); old_01/old_08 + design (Ersatzstein)
+data.nodes.expansion             bestehend (linden: Hindernisse, Fortschritt)
+```
+Nicht gespeichert: NPC-Positionen (aus der Uhr), LOD-Stufen, Trauerflor (aus Tag + Records), Schleier, Gerede-Blasen. Laden mitten in einem Präparat oder einer Untersuchung bei Quast ist gesperrt (`can_save` false während der TimedAction, wie Phase 5/6).
+
+### 5.2 Migration v5 → v6 (Phase-6-Spielstände müssen laden)
+`SaveMigration.migrate_5_to_6` läuft in `read_doc` nach `decode_state` (Kette 1→…→6), rein, auf einer tiefen Kopie.
+1. **Spieler:** `region_id = "graveyard"`; `interior_id` unverändert (Hütte, Gruft, Kapelle, Schuppen liegen alle in der Friedhofs-Region).
+2. **Inventare:** Plätze unverändert (`uid` fehlt = ""; es gibt in v5 keine Einzelstücke).
+3. **Leichen:** alle Records + `hidden_cause ""`, `returned []`. Eine Leiche auf dem Gruft-Tisch bleibt bearbeitbar; die Präparate-Karte erscheint erst mit `anatomy_known`.
+4. **Gräber:** unverändert. Die Plots `l_01…l_08` fehlen im v5-Stand und entstehen beim Laden aus dem Layout als `LOCKED` (bestehende tolerante Graveyard-Regel aus Phase 4 für neue Abschnitte).
+5. `nodes.village = {}`, `nodes.relationships = {}`, `nodes.village_shops = {}`, `nodes.orders = {}`, `nodes.specimens = {}`, `nodes.pult_store = {}`. `SaveMigration.V6_EMPTY_NODES` fügt sie erst ein, wenn W-Welt die Knoten anlegt (wie Phase 4–6).
+6. Stats (§2.11) = 0. Flags: keine. `village_open` setzt `Village.post_load` zur Laufzeit, wenn `roof_and_earth_complete` gilt.
+7. Die Bau-Maske wächst um den Lindenacker; im v5-Stand liegt dort keine Zier (vorher Wald), es muss nichts geräumt werden.
+
+**Fixtures (W0, Lead, vor jeder Code-Änderung mit Build `705bd5a` erzeugt, über `Phase6Bot` + echte Systeme):** `tests/fixtures/saves_v5/`
+- `slot_p6_day40_reverent.json`: `reverent6`-Endstand, 07:00 nach dem letzten Bot-Tag, `roof_and_earth_complete`, alle drei Gebäude auf Stufe 2, 5 Umbettungen (`old_03` hebbar), Münzen gemessen (≈ 20). Start für `neighbor7`, `anatomist7`, `save_load7`.
+- `slot_p6_day45_harvester.json`: `harvester6`-Endstand (≈ 63 Münzen, Gruft 3, viele beraubte Seelen). Start für `penitent7`.
+- `slot_p6_day41_mender.json`: `mender6`-Endstand (≈ 41 Münzen, Kapelle zuerst). Start für `scholar7`.
+- `slot_p6_day37_founder.json`: `founder`-Endstand nach `roof_and_earth` (neues Spiel). Start für `founder7`.
+- `slot_p6_day37_eve.json`: `reverent6` am Abend des Kapiteltags (Freischaltung am nächsten Morgen, neues Spiel).
+- `slot_p6_crypt_table.json`: Leiche auf dem Gruft-Tisch mit 2 von 4 Schritten, Zopf genommen, offenes Kältefenster, Spieler in der Gruft (Präparate nach der Migration möglich, Ruf/Pietät-Folgen korrekt).
+- `slot_p6_chapel_carry.json`: Spieler trägt eine Leiche in der Kapelle (Region graveyard, `interior_id chapel`).
+Dazu `make_v5_saves.gd` + `_driver.gd` (historisches Werkzeug, wie Phase 6) und `tests/fixtures/phase7/layout_p6.json` (= `graveyard_layout.json` von `705bd5a`, bytegleich). Lade-Wächter: `tests/integration/test_saves_v5_load.gd` (Lead). v4-, v3-, v2- und v1-Fixtures laden weiter (Kette bis 6).
