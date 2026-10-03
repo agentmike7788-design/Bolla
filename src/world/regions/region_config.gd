@@ -12,8 +12,6 @@ extends Resource
 @export var camera_distance: float = 22.0
 @export var camera_zoom_min: float = 12.0
 @export var camera_zoom_max: float = 24.0
-## W-Welt (Phase 7): own camera pitch of the region in degrees; <= 0 = the rig's (45°).
-@export var camera_pitch: float = 0.0
 ## Focus bounds, region-local.
 @export var bounds_min: Vector2
 @export var bounds_max: Vector2

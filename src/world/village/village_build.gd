@@ -411,6 +411,14 @@ static func grass_blocked(layout: Dictionary, p: Vector2) -> bool:
 	for r: Array in layout.paving.rects:
 		if Rect2(r[0], r[1], r[2] - r[0], r[3] - r[1]).grow(0.3).has_point(p):
 			return true
+	for c: Array in layout.paving.get("circles", []):
+		if p.distance_to(Vector2(c[0], c[1])) < float(c[2]) + 0.3:
+			return true
+	for line: Dictionary in layout.paving.get("lines", []):
+		var pts: Array = line.pts
+		for k: int in pts.size() - 1:
+			if p.distance_to(Geometry2D.get_closest_point_to_segment(p, Ctx.v2(pts[k]), Ctx.v2(pts[k + 1]))) < float(line.width) * 0.5 + 0.3:
+				return true
 	var path_r := float(layout.paths.width) * 0.5 + float(cfg.keep_out_path)
 	for line: Array in layout.paths.lines:
 		for k: int in line.size() - 1:

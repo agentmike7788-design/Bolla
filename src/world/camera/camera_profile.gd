@@ -10,7 +10,5 @@ extends Resource
 @export var bounds_enabled: bool = false
 @export var bounds_min: Vector2 = Vector2(-10.0, -10.0)
 @export var bounds_max: Vector2 = Vector2(10.0, 10.0)
-## Phase 7 (W-Welt, village): own pitch in degrees; <= 0 = the rig's own pitch (bit-identical).
-@export var pitch_deg: float = 0.0
 @export var environment: Environment
 @export var attributes: CameraAttributes

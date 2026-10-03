@@ -118,6 +118,10 @@ func _init() -> void:
 
 
 func _ready() -> void:
+	# W-Welt (Phase 7): the village figures and the priest on his consecration walk have no save_id –
+	# their state is the clock (save_state is empty), so they are no saveables at all.
+	if save_id == "":
+		remove_from_group(&"saveable")
 	if model != null and get_node_or_null(^"Model") == null:
 		var inst := model.instantiate()
 		inst.name = "Model"

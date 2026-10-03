@@ -211,13 +211,13 @@
     "tp_crypt": [-9.0, 8.9],
     "tp_chapel": [4.5, -21.0],
     "tp_shed": [-12.9, -6.4],
-    "_phase7": "Phase 7 §4.6 N1: Weg des Pfarrers am Weihetag (road_end → gate_outside → dropoff → w_east_pass → w_linden_n → linden_spot), Debug tp_linden, Spawn from_village am Wegstein.",
     "w_east_pass": [11.5, -2.2],
     "w_linden_n": [15.8, 8.6],
     "linden_spot": [15.8, 10.8],
     "tp_linden": [16.0, 14.8],
     "from_village": [8.0, 23.4]
   },
+  "_waypoints_phase7": "Phase 7 §4.6 N1: w_east_pass, w_linden_n, linden_spot = Weg des Pfarrers am Weihetag (road_end → gate_outside → dropoff → w_east_pass → w_linden_n → linden_spot), tp_linden (Debug), from_village (Spawn am Wegstein).",
   "waypoint_facing": {
     "_comment": "Blickrichtung (rot_y in Grad, 0 = +Z/Kamera) eines NPC, der an diesem Wegpunkt steht und nicht mit dem Spieler redet.",
     "evening_spot": 15.0,

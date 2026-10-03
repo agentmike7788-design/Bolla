@@ -484,6 +484,10 @@ static func _npc_routes(ctx: Ctx) -> Array:
 		if sched == null:
 			continue
 		for e: Resource in sched.get("entries"):
+			# Phase 7: no entries of another region (Osric's village day) and none of a single day
+			# (the priest's consecration walk) – the mask of the approved sections stays as it was.
+			if StringName(e.get("region")) != &"" or StringName(e.get("today_flag")) != &"":
+				continue
 			var path: PackedStringArray = e.get("path")
 			if path.size() < 2:
 				continue

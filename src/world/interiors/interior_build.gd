@@ -18,7 +18,7 @@ extends RefCounted
 
 const LAYOUT_PATH := "res://data/world/interiors/%s_layout.json"
 const OUT_SCENE := "res://src/world/interiors/%s_interior.tscn"
-const MODEL_DIRS: Array[String] = ["res://assets/models/interior/", "res://assets/models/props/",
+const MODEL_DIRS: Array[String] = ["res://assets/models/interior/", "res://assets/models/props/", "res://assets/models/items/",
 		"res://assets/models/characters/", "res://assets/models/decor/"]
 const ROOT_SCRIPT := "res://src/world/interiors/interior_room.gd"
 const LIGHTING_SCRIPT := "res://src/world/hut_interior/interior_lighting.gd"

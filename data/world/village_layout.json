@@ -4,9 +4,9 @@
   "origin": [0.0, 0.0, 400.0],
   "ground": {
     "asset": "ph_env_ground_village",
-    "_size": "§4.2: 70 × 50 m um die Laufgrenze (x −37,5…32,5, z −28…22).",
-    "size": [70.0, 50.0],
-    "center": [-2.5, -3.0],
+    "_size": "§4.2 nennt 70 × 50 m; W-Welt: 70 × 56 m (x −37,5…32,5, z −34…22) – die Kulisse hinter der Kirche (Bäume bis z −30) steht auf Boden.",
+    "size": [70.0, 56.0],
+    "center": [-2.5, -6.0],
     "cell": 0.3,
     "flatten_falloff": 1.2,
     "building_flat_margin": 0.6,
@@ -22,22 +22,32 @@
     "zoom_max": 26.0
   },
   "paving": {
-    "_comment": "Pflaster des Angers und des Kirchplatzes (nur Bodenfarbe, kein Gras): Rechtecke [x0, z0, x1, z1] mit unruhiger Kante.",
-    "rects": [[-12.5, -9.8, 12.5, 5.2], [-2.6, -12.4, 2.6, -9.8], [11.0, -4.2, 15.4, 0.2]],
-    "edge_noise": 0.6
+    "_comment": "Pflaster (nur Bodenfarbe, kein Gras, unruhige Kante): der Brunnenplatz (Kreise [x, z, r]), der Kirchplatz (Rechtecke [x0, z0, x1, z1]) und die gepflasterten Gassen vor der Nordreihe, zum Wundarzthaus und zur Brückenstraße (Linien mit Breite). Der übrige Anger ist Gras mit ausgetretenen Stellen.",
+    "rects": [[-2.8, -12.4, 2.8, -9.4]],
+    "circles": [[0.0, -3.0, 4.6]],
+    "lines": [
+      {"pts": [[-20.5, -9.3], [20.5, -9.3]], "width": 2.4},
+      {"pts": [[0.0, -7.2], [0.0, -9.4]], "width": 2.6},
+      {"pts": [[3.8, -2.2], [10.0, -2.0], [14.8, -2.0]], "width": 2.2},
+      {"pts": [[-3.8, -2.0], [-9.0, -0.4], [-12.6, 0.6], [-17.5, 1.6], [-22.6, 1.5]], "width": 2.2},
+      {"pts": [[-12.0, -9.3], [-12.6, 0.6]], "width": 1.8},
+      {"pts": [[12.0, -9.3], [12.6, -2.0]], "width": 1.8}
+    ],
+    "edge_noise": 0.45
   },
   "paths": {
     "_comment": "Erdwege (Bodenfarbe, kein Gras): Polylinien mit Breite.",
     "width": 1.8,
     "lines": [
-      [[-30.0, 1.5], [-22.8, 1.5], [-17.5, 1.8], [-12.5, 0.6]],
-      [[-22.0, 2.4], [-22.6, 6.0], [-23.4, 8.5]],
-      [[-15.5, 2.0], [-13.6, 7.0]],
-      [[-6.0, 5.2], [-6.0, 10.2]],
-      [[6.0, 5.2], [6.0, 10.0]],
-      [[12.5, 4.0], [15.2, 8.0]],
-      [[-16.4, -2.0], [-12.5, -1.8]],
-      [[-20.0, -9.8], [-15.0, -9.6], [-12.5, -8.5]]
+      [[-32.0, 1.5], [-28.8, 1.5]],
+      [[-21.6, 2.2], [-22.6, 6.0], [-23.4, 8.5]],
+      [[-15.5, 1.8], [-13.6, 7.0]],
+      [[-3.0, 1.2], [-6.0, 5.6], [-6.0, 10.2]],
+      [[2.8, 1.0], [6.0, 5.6], [6.0, 10.0]],
+      [[10.0, -2.0], [12.5, 4.0], [15.2, 8.0]],
+      [[-16.4, -2.0], [-12.8, -1.0]],
+      [[-20.5, -9.3], [-22.5, -11.5]],
+      [[20.5, -9.3], [23.0, -10.5]]
     ]
   },
   "brook": {
@@ -84,14 +94,14 @@
   ],
   "props": [
     {"id": "well", "asset": "ph_prop_v_well", "pos": [0.0, -3.0], "rot_y": 0.0, "collider": {"shape": "cylinder", "radius": 0.85, "height": 1.2, "offset": [0.0, 0.6, 0.0]}},
-    {"id": "well_bench", "asset": "ph_prop_v_bench", "pos": [2.2, -3.0], "rot_y": -90.0, "collider": {"shape": "box", "size": [1.5, 0.5, 0.34], "offset": [0.0, 0.25, 0.0]}},
+    {"id": "well_bench", "asset": "ph_prop_v_bench", "pos": [2.2, -2.3], "rot_y": 0.0, "_comment": "§4.2 (2,2 | −3): längs, damit Wiebke Hagedorn an v_well_bench darauf sitzt", "collider": {"shape": "box", "size": [1.5, 0.5, 0.34], "offset": [0.0, 0.25, 0.0]}},
     {"id": "linden_bench", "asset": "ph_prop_v_bench", "pos": [-5.2, 3.4], "rot_y": 180.0, "collider": {"shape": "box", "size": [1.5, 0.5, 0.34], "offset": [0.0, 0.25, 0.0]}},
     {"id": "inn_bench", "asset": "ph_prop_v_bench", "pos": [11.6, -10.0], "rot_y": 0.0, "collider": {"shape": "box", "size": [1.5, 0.5, 0.34], "offset": [0.0, 0.25, 0.0]}},
     {"id": "linden", "asset": "ph_env_linden_old", "pos": [-7.0, 3.0], "rot_y": 0.0, "crown": true, "collider": {"shape": "cylinder", "radius": 0.7, "height": 3.0, "offset": [0.0, 1.5, 0.0]}},
     {"id": "board", "asset": "ph_prop_v_board", "pos": [-7.0, 4.6], "rot_y": 0.0, "collider": {"shape": "box", "size": [1.5, 1.2, 0.3], "offset": [0.0, 0.6, 0.0]}},
     {"id": "bridge", "asset": "ph_prop_v_bridge", "pos": [-26.0, 1.5], "rot_y": 0.0},
-    {"id": "sign", "asset": "ph_prop_v_sign", "pos": [-22.4, -0.5], "rot_y": 20.0, "label": "Hollerbrück", "collider": {"shape": "box", "size": [0.3, 1.8, 0.2], "offset": [0.0, 0.9, 0.0]}},
-    {"id": "shrine", "asset": "ph_prop_v_shrine", "pos": [-21.6, 4.6], "rot_y": -30.0, "collider": {"shape": "cylinder", "radius": 0.3, "height": 2.2, "offset": [0.0, 1.1, 0.0]}},
+    {"id": "sign", "asset": "ph_prop_v_sign", "pos": [-21.4, 3.0], "rot_y": -60.0, "label": "Hollerbrück", "collider": {"shape": "box", "size": [0.3, 1.8, 0.2], "offset": [0.0, 0.9, 0.0]}},
+    {"id": "shrine", "asset": "ph_prop_v_shrine", "pos": [-22.4, 5.0], "rot_y": -40.0, "collider": {"shape": "cylinder", "radius": 0.3, "height": 2.2, "offset": [0.0, 1.1, 0.0]}},
     {"id": "wash_stones", "asset": "ph_prop_v_wash_stones", "pos": [-24.7, 8.5], "rot_y": 90.0},
     {"id": "cart_rest", "asset": "ph_prop_handcart", "pos": [21.0, 8.4], "rot_y": 70.0, "collider": {"shape": "box", "size": [1.3, 1.0, 2.3], "offset": [0.0, 0.5, 0.1]}},
     {"id": "lantern_bridge", "asset": "ph_prop_lantern_post", "pos": [-22.5, 0.2], "rot_y": 180.0, "collider": {"shape": "cylinder", "radius": 0.12, "height": 2.2, "offset": [0.0, 1.1, 0.0]}},
@@ -99,7 +109,14 @@
     {"id": "smithy_pile", "asset": "ph_prop_wood_pile", "pos": [-22.0, -6.0], "rot_y": 10.0, "collider": {"shape": "box", "size": [1.3, 0.9, 0.9], "offset": [0.0, 0.45, 0.2]}},
     {"id": "shop_crate_1", "asset": "ph_prop_crate", "pos": [-14.6, 9.0], "rot_y": 12.0, "collider": {"shape": "box", "size": [0.7, 0.7, 0.7], "offset": [0.0, 0.35, 0.0]}},
     {"id": "shop_crate_2", "asset": "ph_prop_crate", "pos": [-14.4, 4.9], "rot_y": -20.0, "collider": {"shape": "box", "size": [0.7, 0.7, 0.7], "offset": [0.0, 0.35, 0.0]}},
-    {"id": "inn_crate", "asset": "ph_prop_crate", "pos": [19.0, -9.9], "rot_y": 8.0, "collider": {"shape": "box", "size": [0.7, 0.7, 0.7], "offset": [0.0, 0.35, 0.0]}}
+    {"id": "inn_crate", "asset": "ph_prop_crate", "pos": [19.0, -9.9], "rot_y": 8.0, "collider": {"shape": "box", "size": [0.7, 0.7, 0.7], "offset": [0.0, 0.35, 0.0]}},
+    {"id": "smithy_cart", "asset": "ph_prop_handcart", "pos": [-15.0, -5.8], "rot_y": 35.0, "collider": {"shape": "box", "size": [1.3, 1.0, 2.3], "offset": [0.0, 0.5, 0.1]}},
+    {"id": "smithy_rubble", "asset": "ph_prop_stone_rubble", "pos": [-16.0, 1.6], "rot_y": 70.0, "collider": {"shape": "box", "size": [1.3, 0.6, 1.0], "offset": [0.0, 0.3, 0.0]}},
+    {"id": "church_bench", "asset": "ph_prop_v_bench", "pos": [-4.6, -9.9], "rot_y": 0.0, "collider": {"shape": "box", "size": [1.5, 0.5, 0.34], "offset": [0.0, 0.25, 0.0]}},
+    {"id": "flowers_hagedorn", "asset": "ph_deco_flowerbed", "pos": [-6.0, 17.4], "rot_y": 0.0},
+    {"id": "flowers_dorn", "asset": "ph_deco_flowerbed", "pos": [6.0, 17.4], "rot_y": 0.0},
+    {"id": "flowers_inn", "asset": "ph_deco_flowerbed", "pos": [11.2, -9.0], "rot_y": 0.0},
+    {"id": "flowers_office", "asset": "ph_deco_flowerbed", "pos": [-11.6, -9.2], "rot_y": 0.0}
   ],
   "decor": {
     "_comment": "Kulisse (§4.2 z −24 / z 16): Obstbäume und Hecken hinter der Nordreihe, Gärten mit Zäunen, Holunder und Kräutern südlich der Katen, Erlen und Holunder am Bach. Kronen ohne Kollision außerhalb der Laufgrenze.",
@@ -118,15 +135,24 @@
       {"asset": "ph_env_birch", "pos": [-17.5, -22.0], "rot_y": 200.0, "scale": 0.9},
       {"asset": "ph_env_birch", "pos": [-29.5, -7.5], "rot_y": 0.0, "scale": 0.9},
       {"asset": "ph_env_birch", "pos": [-30.0, 6.5], "rot_y": 140.0, "scale": 0.85},
-      {"asset": "ph_env_birch", "pos": [28.5, 12.5], "rot_y": 70.0, "scale": 0.9}
+      {"asset": "ph_env_birch", "pos": [28.5, 12.5], "rot_y": 70.0, "scale": 0.9},
+      {"asset": "ph_env_tree_old_oak", "pos": [-14.0, -26.5], "rot_y": 70.0, "scale": 1.1},
+      {"asset": "ph_env_tree_old_oak", "pos": [13.5, -27.0], "rot_y": 160.0, "scale": 1.15},
+      {"asset": "ph_env_tree_old_oak", "pos": [-1.0, -29.5], "rot_y": 300.0, "scale": 1.2},
+      {"asset": "ph_env_tree_old_oak", "pos": [26.0, -25.0], "rot_y": 20.0, "scale": 1.1},
+      {"asset": "ph_env_tree_old_oak", "pos": [-28.0, -25.5], "rot_y": 230.0, "scale": 1.15},
+      {"asset": "ph_env_birch", "pos": [-21.0, -28.0], "rot_y": 10.0, "scale": 1.1},
+      {"asset": "ph_env_birch", "pos": [20.0, -29.0], "rot_y": 250.0, "scale": 1.05},
+      {"asset": "ph_env_birch", "pos": [7.5, -30.5], "rot_y": 90.0, "scale": 1.1},
+      {"asset": "ph_env_birch", "pos": [-9.0, -30.0], "rot_y": 180.0, "scale": 1.0}
     ],
     "bushes": [
       {"asset": "ph_env_hedge_thorn", "pos": [-5.6, -24.8], "rot_y": 0.0, "scale": 1.0},
       {"asset": "ph_env_hedge_thorn", "pos": [5.6, -24.8], "rot_y": 0.0, "scale": 1.0},
       {"asset": "ph_env_hedge_thorn", "pos": [-15.0, -18.6], "rot_y": 0.0, "scale": 1.1},
       {"asset": "ph_env_hedge_thorn", "pos": [15.0, -18.6], "rot_y": 0.0, "scale": 1.1},
-      {"asset": "ph_env_elder_bush", "pos": [-23.2, -1.6], "rot_y": 30.0, "scale": 0.75},
-      {"asset": "ph_env_elder_bush", "pos": [-22.8, 3.8], "rot_y": 160.0, "scale": 0.7},
+      {"asset": "ph_env_elder_bush", "pos": [-30.0, -1.4], "rot_y": 30.0, "scale": 0.75},
+      {"asset": "ph_env_elder_bush", "pos": [-30.2, 4.3], "rot_y": 160.0, "scale": 0.7},
       {"asset": "ph_env_elder_bush", "pos": [-10.5, 17.5], "rot_y": 80.0, "scale": 0.85},
       {"asset": "ph_env_elder_bush", "pos": [11.0, 17.0], "rot_y": 250.0, "scale": 0.8},
       {"asset": "ph_env_elder_bush", "pos": [23.5, -7.0], "rot_y": 10.0, "scale": 0.7},

@@ -235,7 +235,7 @@ static func _npc_routes(ctx: Ctx) -> Array:
 			continue
 		for e: Resource in sched.get("entries"):
 			# Phase 7: entries of another region (Osric's day in the village) have no graveyard waypoints.
-			if StringName(e.get("region")) != &"":
+			if StringName(e.get("region")) != &"" or StringName(e.get("today_flag")) != &"":
 				continue
 			var path: PackedStringArray = e.get("path")
 			if path.size() < 2:

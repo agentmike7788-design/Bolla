@@ -37,9 +37,9 @@ GRASS_B = L.hexc("#667A48")
 GRASS_DRY = L.hexc("#7D7D4E")
 DIRT = L.hexc("#6B5A48")
 DIRT_DARK = L.hexc("#54463A")
-COBBLE = L.hexc("#80776A")
-COBBLE_DARK = L.hexc("#61594F")
-COBBLE_JOINT = L.hexc("#4A4339")
+COBBLE = L.hexc("#8C8577")
+COBBLE_DARK = L.hexc("#726B5E")
+COBBLE_JOINT = L.hexc("#565045")
 DAMP = L.hexc("#4E4A3A")
 
 NOISE_LOW, NOISE_HIGH, PATH_DEPTH = 0.06, 0.015, 0.03
@@ -92,6 +92,8 @@ class Ground:
         self.falloff = g["flatten_falloff"]
         margin = g["building_flat_margin"]
         self.paving = lay["paving"]["rects"]
+        self.paving_circles = lay["paving"].get("circles", [])
+        self.paving_lines = lay["paving"].get("lines", [])
         self.paving_noise = lay["paving"]["edge_noise"]
         self.paths = lay["paths"]["lines"]
         self.path_half = lay["paths"]["width"] * 0.5
@@ -109,7 +111,7 @@ class Ground:
         for e in lay["entities"]:
             if "pos" in e and e["type"] in ("ShopCounter", "VillageBoard", "RegionPortal"):
                 self.trodden.append(e["pos"])
-        for wp in ("v_well", "v_wash", "v_remise", "v_hagedorn_gate", "v_dorn_door", "v_anvil"):
+        for wp in ("v_well", "v_wash", "v_remise", "v_hagedorn_gate", "v_dorn_door", "v_anvil", "v_linden", "v_board", "v_shop_window"):
             self.trodden.append(lay["waypoints"][wp])
         for zone in self.zones:
             zone[3] = self.raw_height(*zone[0])
@@ -119,7 +121,13 @@ class Ground:
         n = noise.noise(Vector((x * 0.9, z * 0.9, 4.5))) * self.paving_noise
         for r in self.paving:
             inside = min(x - r[0], r[2] - x, z - r[1], r[3] - z) + n
-            best = max(best, max(0.0, min(1.0, inside / 0.45 + 0.5)))
+            best = max(best, max(0.0, min(1.0, inside / 0.35 + 0.5)))
+        for cx, cz, rad in self.paving_circles:
+            inside = rad - math.hypot(x - cx, z - cz) + n
+            best = max(best, max(0.0, min(1.0, inside / 0.35 + 0.5)))
+        for line in self.paving_lines:
+            inside = line["width"] * 0.5 - _dist_to_polyline((x, z), line["pts"]) + n * 0.6
+            best = max(best, max(0.0, min(1.0, inside / 0.3 + 0.5)))
         return best
 
     def path_mask(self, x, z):
@@ -175,14 +183,16 @@ class Ground:
             c = L.mix(c, DAMP, (1.0 - _smoothstep((bd - self.brook_half + 0.4) / 2.0)) * 0.55)
         vm = self.paving_mask(x, z)
         if vm > 0.0:
-            # painted cobbles: a soft cell pattern from two noise octaves, darker joints, worn centre
-            cx = noise.noise(Vector((x * 2.6, z * 2.6, 13.0)))
-            cz = noise.noise(Vector((x * 2.6 + 7.1, z * 2.6, 17.0)))
-            stone = L.mix(COBBLE, COBBLE_DARK, 0.5 + 0.5 * cx)
-            joint = max(0.0, 1.0 - abs(cx - cz) * 5.0) * 0.45
-            stone = L.mix(stone, COBBLE_JOINT, joint)
-            stone = L.mix(stone, DIRT, max(0.0, n1) * 0.25)
-            c = L.mix(c, stone, vm * 0.92)
+            # painted paving: broad light/dark washes of stone, a fine speckle of single stones,
+            # a darker rim where the paving meets the grass (no texture, vertex colour only)
+            wash = noise.noise(Vector((x * 0.55, z * 0.55, 13.0)))
+            speck = noise.noise(Vector((x * 3.3, z * 3.3, 17.0)))
+            stone = L.mix(COBBLE, COBBLE_DARK, 0.5 + 0.45 * wash)
+            stone = L.mix(stone, COBBLE_JOINT, max(0.0, speck) * 0.35)
+            stone = L.mix(stone, L.scale_c(COBBLE, 1.08), max(0.0, -speck) * 0.3)
+            rim = max(0.0, 1.0 - abs(vm - 0.55) / 0.3)
+            stone = L.mix(stone, COBBLE_JOINT, rim * 0.5)
+            c = L.mix(c, stone, min(1.0, vm * 1.15))
         f = 1.0 + n2 * 0.06
         return [L._to_lin(min(1.0, ch * f)) for ch in c]
 

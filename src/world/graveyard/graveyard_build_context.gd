@@ -56,7 +56,7 @@ static func v3(a: Array) -> Vector3:
 
 
 static func model_path(asset: String) -> String:
-	for cat: String in ["props", "environment", "buildings", "characters"]:
+	for cat: String in ["props", "environment", "buildings", "characters", "decor"]:
 		var p := MODELS + cat + "/" + asset + ".glb"
 		if ResourceLoader.exists(p):
 			return p
