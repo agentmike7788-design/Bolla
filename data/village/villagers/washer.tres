@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/villager_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"washer"
+display_name = "Liesel Dorn"
+role = "Seelfrau und Spinnerin"
+dialogue_id = &"v_washer"
+shop_id = &"washer"
+home_door = &""
+gifts_liked = Array[StringName]([&"linen", &"honey_cake"])
+start_value = 10
+specimen_delta = -3
+returned_delta = 2
+piety_sensitive = true
+remarks = Dictionary[StringName, PackedStringArray]({
+&"rep_disreputable": PackedStringArray("Der da. Der nimmt den Toten was weg, sagen sie. Ich sag nichts. Ich spinne."),
+&"rep_unremarkable": PackedStringArray("Hm. Der Totengräber."),
+&"rep_respected": PackedStringArray("Der Totengräber. Grüß Gott."),
+&"rep_esteemed": PackedStringArray("Die alte Kehr sagt, du hast ihren Mann gut hingelegt. Gutes Weinen war das."),
+&"rep_renowned": PackedStringArray("Totengräber. Bei dir kommen sie an, als hätten sie es gut gehabt."),
+&"piety_devout": PackedStringArray("Du riechst nach Wacholder. Das ist ein guter Geruch für einen wie dich."),
+&"piety_hardhearted": PackedStringArray("Du riechst nach Branntwein und kaltem Stein. Bleib weg von meinem Garn."),
+&"friend": PackedStringArray("Komm her, setz dich. Ich hab dir einen Faden gesponnen. Für nichts. Einfach so."),
+&"specimens": PackedStringArray("Wieder ein Glas mit einem Namen drauf, hört man. Ich hab sie gewaschen, Totengräber. Alle.")
+})

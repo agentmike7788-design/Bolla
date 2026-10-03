@@ -348,6 +348,10 @@ func load_state(data: Dictionary) -> void:
 	if saved_insights is Dictionary:
 		for key: Variant in saved_insights:
 			if key is String or key is StringName:
+				# Phase 7 (P6, fuzzer v6): an unknown insight id of a damaged save is dropped.
+				if not _insight_list().is_empty() and insight_by_id(StringName(str(key))) == null:
+					push_warning("[Journal] unknown insight '%s' skipped" % str(key))
+					continue
 				_insights[StringName(str(key))] = maxi(0, _to_int((saved_insights as Dictionary)[key], 0))
 	var saved_unread: Variant = data.get("unread", [])
 	if saved_unread is Array:

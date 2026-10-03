@@ -2313,3 +2313,312 @@ func test_carter_p6_nodes_add_no_clue_and_prices_match() -> void:
 					assert_eq(coins, 2 * candles, "§2.6: 2 coins per candle (%s)" % c.text)
 					assert_eq(a.get_slice(":", 3), "osric", "coins_spent(osric)")
 	assert_eq(offers, 2)
+
+
+# --- Phase 7 (P6, docs/PHASE7_DESIGN.md §1.2, §2.1, §2.4, §2.12, §3.4, §10) -------------------------
+
+const V_DIALOGUES: PackedStringArray = ["v_innkeeper", "v_smith", "v_grocer", "v_priest", "v_mayor", "v_surgeon", "v_washer",
+		"v_oldwoman", "carter_village", "priest_linden"]
+const P7_FLAGS: Array[StringName] = [&"village_open", &"p7_intro", &"anatomy_known", &"anatomy_declined", &"anatomy_asked_again",
+		&"quast_recipes", &"lecture_invited", &"hagedorn_dead", &"linden_granted", &"linden_consecration_day",
+		&"linden_consecrated", &"remark_ilse_specimen", &"liesel_hagedorn_told", &"clue_c_v_three_visitors",
+		&"clue_c_v_deathbook", &"village_open_day"]
+
+
+class P7Rel extends Relationships:
+	var vals: Dictionary = {}
+	var met_ids: Array = []
+	var calls: Array = []
+
+	func value(npc_id: StringName) -> int:
+		return int(vals.get(npc_id, 0))
+
+	func met(npc_id: StringName) -> bool:
+		return met_ids.has(npc_id)
+
+	func meet(npc_id: StringName) -> void:
+		calls.append(["meet", npc_id])
+		if not met_ids.has(npc_id):
+			met_ids.append(npc_id)
+
+	func note_talk(npc_id: StringName) -> void:
+		calls.append(["talk", npc_id])
+
+	func add(npc_id: StringName, delta: int, reason: String) -> int:
+		calls.append(["add", npc_id, delta, reason])
+		vals[npc_id] = value(npc_id) + delta
+		return value(npc_id)
+
+
+class P7Journal extends Node:
+	var clues: Array = []
+
+	func _init() -> void:
+		add_to_group(&"journal")
+
+	func add_clue(id: StringName, _corpse_id: String = "", _silent: bool = false) -> bool:
+		clues.append(id)
+		GameState.set_flag(StringName("clue_" + String(id)), true)
+		return true
+
+
+func _p7_clear() -> void:
+	for f: StringName in P7_FLAGS:
+		GameState.clear_flag(f)
+
+
+func _v(id: String) -> DialogueData:
+	return load("res://data/dialogue/%s.tres" % id) as DialogueData
+
+
+func _p7_world(rel_values: Dictionary = {}, met: Array = []) -> P7Rel:
+	_p7_clear()
+	var rel := P7Rel.new()
+	rel.vals = rel_values.duplicate()
+	rel.met_ids = met.duplicate()
+	tree.root.add_child(rel)
+	return rel
+
+
+func test_phase7_dialogues_are_well_formed() -> void:
+	var cond_re := RegEx.create_from_string(CONDITION_GRAMMAR)
+	var action_re := RegEx.create_from_string(ACTION_GRAMMAR)
+	for id: String in V_DIALOGUES:
+		var d := _v(id)
+		assert_not_null(d, id)
+		if d == null:
+			continue
+		assert_eq(String(d.id), id)
+		var ids := {}
+		for n: DialogueNode in d.nodes:
+			assert_false(ids.has(n.id), "%s: unique %s" % [id, n.id])
+			ids[n.id] = true
+		assert_true(ids.has(d.start_node), id + " start")
+		for n: DialogueNode in d.nodes:
+			assert_true(n.text.strip_edges().length() > 0, "%s.%s text" % [id, n.id])
+			assert_true(n.fallback_next == &"" or ids.has(n.fallback_next), "%s.%s fallback" % [id, n.id])
+			var conds: Array[String] = n.conditions.duplicate()
+			var acts: Array[String] = n.actions.duplicate()
+			for c: DialogueChoice in n.choices:
+				assert_true(c.next == &"" or ids.has(c.next), "%s.%s → %s" % [id, n.id, c.next])
+				conds.append_array(c.conditions)
+				acts.append_array(c.actions)
+			for c: String in conds:
+				assert_not_null(cond_re.search(c), "%s: condition '%s'" % [id, c])
+			for a: String in acts:
+				assert_not_null(action_re.search(a), "%s: action '%s'" % [id, a])
+	# Every villager offers each of their personal orders, and every recipient takes its deliveries.
+	for o: OrderData in Phase7Fixtures.orders():
+		if o.board and o.kind != &"deliver":
+			continue
+		if not o.board:
+			assert_true(_dialogue_has(_v("v_" + String(o.giver)), "order_offerable:" + String(o.id)), "%s offered by %s" % [o.id, o.giver])
+		if o.kind == &"deliver" or o.kind == &"donate":
+			var who := o.recipient if o.recipient != &"" else o.giver
+			assert_true(_dialogue_has(_v("v_" + String(who)), "order_turn_in:" + String(o.id)), "%s handed to %s" % [o.id, who])
+
+
+func _dialogue_has(d: DialogueData, entry: String) -> bool:
+	for n: DialogueNode in d.nodes:
+		for c: DialogueChoice in n.choices:
+			if entry in c.conditions or entry in c.actions:
+				return true
+	return false
+
+
+func test_phase7_voices_have_their_marks() -> void:
+	var text := {}
+	for id: String in V_DIALOGUES:
+		var all := ""
+		for n: DialogueNode in _v(id).nodes:
+			all += n.text + " "
+		text[id] = all
+	assert_true(String(text.v_innkeeper).contains("Wackernagel"), "Rosine calls herself by her surname")
+	assert_true(String(text.v_grocer).contains("Buntes"), "Theres: Buntes")
+	assert_true(String(text.v_surgeon).contains("Die Toten lehren die Lebenden."), "Quast's saying")
+	assert_true(String(text.v_priest).contains("nach Süden"), "Lenz evades: nach Süden")
+	assert_true(String(text.v_mayor).contains("Ich zähle"), "Fenner counts aloud")
+	assert_true(String(text.v_oldwoman).contains("Linde"), "Wiebke wants the linden")
+	assert_true(String(text.priest_linden).contains("Ich segne die Erde, nicht die Arbeit."), "§2.9 leading line")
+	for id: String in ["v_innkeeper", "v_smith", "v_grocer", "v_priest", "v_mayor", "v_surgeon", "v_washer", "v_oldwoman"]:
+		var greets := 0
+		for n: DialogueNode in _v(id).nodes:
+			if String(n.id).begins_with("greet_") and not String(n.id).begins_with("greet_p_"):
+				greets += 1
+		assert_eq(greets, 5, "%s: five greetings by reputation tier (§2.4)" % id)
+	for id: String in ["v_priest", "v_washer", "v_surgeon"]:
+		assert_true(_v(id).get_node_by_id(&"greet_p_devout") != null and _v(id).get_node_by_id(&"greet_p_hardhearted") != null,
+				id + ": piety greetings")
+
+
+func test_phase7_conditions() -> void:
+	var rel := _p7_world({&"priest": 45, &"washer": 10}, [&"priest"])
+	assert_true(_check("rel_gte:priest:45"))
+	assert_false(_check("rel_gte:priest:46"))
+	assert_true(_check("rel_tier:priest:trusted"))
+	assert_true(_check("rel_tier:priest:acquainted"), "at least")
+	assert_false(_check("rel_tier:priest:friend"))
+	assert_true(_check("met:priest"))
+	assert_false(_check("met:washer"))
+	GameState.stats[&"reputation"] = 50
+	assert_true(_check("rep_tier:respected") or _check("rep_tier:unremarkable") or _check("rep_tier:esteemed"))
+	assert_eq(int(_check("rep_tier:disreputable")) + int(_check("rep_tier:unremarkable")) + int(_check("rep_tier:respected"))
+			+ int(_check("rep_tier:esteemed")) + int(_check("rep_tier:renowned")), 1, "exactly one tier")
+	assert_true(_check("alive:oldwoman"))
+	GameState.set_flag(&"hagedorn_dead", 48)
+	assert_false(_check("alive:oldwoman"), "D1: hagedorn_dead")
+	assert_true(_check("alive:smith"))
+	assert_true(_check("region:graveyard"), "no player → graveyard")
+	assert_false(_check("specimen_sold_any"))
+	TimeManager.day = 45
+	GameState.set_flag(&"anatomy_declined", 42)
+	assert_true(_check("flag_days_gte:anatomy_declined:3"))
+	assert_false(_check("flag_days_gte:anatomy_declined:4"))
+	assert_false(_check("order:o_rosine_berries:accepted"), "no orders system")
+	assert_true(_check("order:o_rosine_berries:none"))
+	expect_errors(0)
+	rel.free()
+	_p7_clear()
+
+
+func test_phase7_order_conditions_and_actions() -> void:
+	var rel := _p7_world({&"innkeeper": 25}, [&"innkeeper"])
+	var orders := Orders.new()
+	orders.config = Phase7Fixtures.orders_config()
+	for o: OrderData in Phase7Fixtures.orders():
+		orders.order_table[o.id] = o
+	tree.root.add_child(orders)
+	var inv := _inv({&"elderberries": 8})
+	assert_true(_check("order_offerable:o_rosine_berries"))
+	assert_false(_check("order_offerable:o_rosine_tincture"))
+	_apply("order_accept:o_rosine_berries", _ctx(inv))
+	assert_true(_check("order:o_rosine_berries:accepted"))
+	assert_true(_check("order_ready:o_rosine_berries", _ctx(inv)))
+	_apply("order_turn_in:o_rosine_berries", _ctx(inv))
+	assert_true(_check("order:o_rosine_berries:completed"))
+	assert_eq(inv.count(&"elderberries"), 0)
+	assert_has(rel.calls, ["add", &"innkeeper", 8, "Auftrag: Holunder für den Wein"])
+	orders.free()
+	rel.free()
+	inv.free()
+	_p7_clear()
+
+
+func test_phase7_relationship_and_village_actions() -> void:
+	var rel := _p7_world({&"priest": 25})
+	var village := Village.new()
+	village.config = Phase7Fixtures.village_config()
+	tree.root.add_child(village)
+	var inv := _inv({&"coin": 30})
+	_apply("meet:smith")
+	_apply("talked:smith")
+	_apply("rel_add:smith:3")
+	assert_eq(rel.calls, [["meet", &"smith"], ["talk", &"smith"], ["add", &"smith", 3, "Gespräch"]])
+	assert_true(_check("village_can:consecrate", _ctx(inv)))
+	_apply("consecrate_pay", _ctx(inv))
+	assert_eq(inv.count(&"coin"), 20, "10 for the consecration")
+	assert_eq(GameState.get_flag(&"linden_consecration_day"), TimeManager.day + 1)
+	assert_false(_check("village_can:consecrate", _ctx(inv)), "paid")
+	_apply("donate", _ctx(inv))
+	assert_eq(inv.count(&"coin"), 15)
+	var speaker := Npc.new()
+	speaker.npc_id = &"innkeeper"
+	var spent := GameState.get_stat(&"coins_spent_village")
+	_apply("take_item:coin:2", {"inventory": inv, "speaker": speaker})
+	assert_eq(GameState.get_stat(&"coins_spent_village"), spent + 2, "a villager's coins run under village")
+	speaker.free()
+	village.free()
+	rel.free()
+	inv.free()
+	_p7_clear()
+
+
+func test_phase7_quast_offers_the_case_and_asks_again() -> void:
+	var rel := _p7_world({&"surgeon": 20})
+	var inv := _inv()
+	TimeManager.day = 42
+	var r := DialogueRunner.new()
+	r.start(_v("v_surgeon"), _ctx(inv))
+	assert_eq(_id(r), &"start", "first meeting: the offer")
+	assert_true(r.current_text().contains("Zeit mit den Toten, bevor die Erde sie nimmt"))
+	_go(r, &"menu")
+	_go(r, &"case_no")
+	assert_eq(GameState.get_flag(&"anatomy_declined"), 42)
+	assert_false(GameState.flag_on(&"anatomy_known"))
+	TimeManager.day = 44
+	r.start(_v("v_surgeon"), _ctx(inv))
+	assert_ne(_id(r), &"ask_again", "not before 3 days")
+	TimeManager.day = 45
+	r.start(_v("v_surgeon"), _ctx(inv))
+	assert_eq(_id(r), &"ask_again", "he asks once more after 3 days")
+	_go(r, &"case_yes")
+	assert_true(GameState.flag_on(&"anatomy_known"))
+	assert_true(GameState.flag_on(&"quast_recipes"))
+	assert_true(inv.has(&"anatomy_case"), "the case")
+	r.start(_v("v_surgeon"), _ctx(inv))
+	assert_ne(_id(r), &"ask_again", "never again")
+	rel.free()
+	inv.free()
+	_p7_clear()
+
+
+func test_phase7_osric_intro_once_after_the_village_opened() -> void:
+	_carter_p4_ready()
+	GameState.set_flag(&"workshop_open", true)
+	GameState.set_flag(&"buildings_open", true)
+	GameState.set_flag(&"p5_intro", true)
+	GameState.set_flag(&"p6_intro", true)
+	_p7_clear()
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_ne(_id(r), &"p7_intro", "village not open yet")
+	GameState.set_flag(&"village_open", true)
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p7_intro")
+	assert_true(r.current_text().contains("Der Schultheiß lässt fragen, ob du mal runterkommst"))
+	assert_true(GameState.flag_on(&"p7_intro"))
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_ne(_id(r), &"p7_intro", "once")
+	_p7_clear()
+
+
+func test_phase7_ilse_names_the_three_visitors() -> void:
+	var rel := _p7_world({}, [&"surgeon"])
+	GameState.set_flag(&"village_open", true)
+	var journal := P7Journal.new()
+	tree.root.add_child(journal)
+	var d := _trader()
+	var r := DialogueRunner.new()
+	var menu := d.get_node_by_id(&"menu")
+	var found := false
+	for c: DialogueChoice in menu.choices:
+		if c.next == &"p7_visitors":
+			found = DialogueConditions.all_met(c.conditions, {})
+	assert_true(found, "after meeting Quast")
+	r.start(d, {})
+	r._enter(&"p7_visitors")
+	assert_eq(journal.clues, [&"c_v_three_visitors"])
+	assert_true(r.current_text().contains("den Pfarrer, den Wundarzt und die Seelfrau"))
+	journal.free()
+	rel.free()
+	_p7_clear()
+
+
+func test_phase7_wiebke_alive_then_gone() -> void:
+	var rel := _p7_world({&"oldwoman": 30, &"washer": 20}, [&"oldwoman", &"washer"])
+	var r := DialogueRunner.new()
+	r.start(_v("v_oldwoman"), _ctx(_inv()))
+	assert_ne(_id(r), &"start")
+	_go(r, &"menu")
+	assert_true(r.available_choices().any(func(c: DialogueChoice) -> bool: return c.next == &"visitors"))
+	_go(r, &"visitors")
+	assert_true(r.current_text().contains("Der Pfarrer jeden Mittag"), "she names her visitors – the mystery, not its answer")
+	GameState.set_flag(&"hagedorn_dead", 48)
+	r.start(_v("v_washer"), _ctx(_inv()))
+	assert_eq(_id(r), &"hagedorn_gate", "Liesel tells of her death once")
+	r.start(_v("v_washer"), _ctx(_inv()))
+	assert_ne(_id(r), &"hagedorn_gate")
+	rel.free()
+	_p7_clear()

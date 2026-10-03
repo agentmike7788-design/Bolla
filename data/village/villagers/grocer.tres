@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/villager_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"grocer"
+display_name = "Theres Mangold"
+role = "Krämerin"
+dialogue_id = &"v_grocer"
+shop_id = &"grocer"
+home_door = &""
+gifts_liked = Array[StringName]([&"herbs", &"elderberries"])
+start_value = 20
+specimen_delta = 0
+returned_delta = 0
+piety_sensitive = false
+remarks = Dictionary[StringName, PackedStringArray]({
+&"rep_disreputable": PackedStringArray("Drei, vier, fünf – und der Totengräber, sechs. Ich zähle alles, was vorbeigeht."),
+&"rep_unremarkable": PackedStringArray("Leinen ist frisch, Herr Totengräber! Sechs Ellen, und dann ist es weg."),
+&"rep_respected": PackedStringArray("Grüß Gott, Herr Totengräber! Ich hab Wachs, ich hab Kerzen, ich hab Buntes."),
+&"rep_esteemed": PackedStringArray("Für Sie lege ich das gute Leinen zurück. Rechnen Sie nicht nach, ich hab es schon."),
+&"rep_renowned": PackedStringArray("Der Herr Totengräber! Meine Mutter hätte Ihnen einen Stuhl hingestellt. Ich stelle Ihnen zwei hin."),
+&"friend": PackedStringArray("Ich hab etwas Buntes für Sie! Ich weiß nicht, was es ist. Darum ist es bunt."),
+&"specimens": PackedStringArray("Gläser, Gläser. Seit Sie im Dorf sind, verkaufe ich mehr Gläser als Gurken. Das rechne ich mir nicht aus.")
+})

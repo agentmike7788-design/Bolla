@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/villager_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"oldwoman"
+display_name = "Wiebke Hagedorn"
+role = "Altenteilerin"
+dialogue_id = &"v_oldwoman"
+shop_id = &""
+home_door = &""
+gifts_liked = Array[StringName]([&"seeds", &"honey_cake"])
+start_value = 30
+specimen_delta = -2
+returned_delta = 0
+piety_sensitive = false
+remarks = Dictionary[StringName, PackedStringArray]({
+&"rep_disreputable": PackedStringArray("Da ist er ja, der Schlimme! Komm her, ich hab keine Taschen mehr."),
+&"rep_unremarkable": PackedStringArray("Schönes Wetter zum Sterben, Totengräber! Mach ich aber noch nicht."),
+&"rep_respected": PackedStringArray("Mein Totengräber! Halt mir oben ein Plätzchen warm."),
+&"rep_esteemed": PackedStringArray("Na, Junge? Wie geht's den Toten? Besser als mir, wette ich."),
+&"rep_renowned": PackedStringArray("Da kommt mein Totengräber! Wenn ich das gewusst hätte, wär ich früher alt geworden."),
+&"friend": PackedStringArray("Ich hab dir Mohnsamen aufgehoben. Für oben. Für mich. Du weißt schon."),
+&"specimens": PackedStringArray("Wehe, du nimmst mir was weg, wenn ich oben bin. Ich hab's Liesel gesagt, und Liesel vergisst nichts.")
+})
