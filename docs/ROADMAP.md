@@ -90,3 +90,9 @@ Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe, Vertragsfragen §14 offen):
 - Kamerastrahl-Sichtprüfung für jedes Gebäude und jede Stufe, Vorher/Nachher vor der Hütte
 - Münzrechnung: 130 Münzen Pflicht (Stufe 1+2), 225 für alles, finanziert über Umbettgeld, neue Bestattungen und Gebühren
 - Kapitel „Unter Dach und Erde", Save-Format v5 mit Migration der Phase-5-Stände (Leiche am alten Tisch bleibt bearbeitbar), Wellenplan W0–W3, Vertragsfragen §14
+
+## Benutzerwunsch 03.10.2026 – Organe & Anatomie (eigene spätere Phase/Erweiterung)
+- **Wann:** als eigene Erweiterung **nach Phase 6** (nicht in Phase 6). Einordnung wird vor dem Start mit dem Benutzer abgestimmt (Vorschlag: zusammen mit Phase 7 „Dorf", wo der Wundarzt/Anatom der Stadt eingeführt wird).
+- **Darstellung:** **angedeutet** wie die bisherige Verwertung – Tuch über der Leiche, Werkzeug-Geräusch, Abblende; Organe nur als verschlossene Gläser/Bündel im Inventar. Kein Blut, keine offenen Wunden (ART STYLE LOCK).
+- **Zweck (alle vier):** Verkauf an einen Anatomen („Präparate", 1834, kostet Pietät/Ruf, Geister unruhig) · Forschung/Hinweise (wahre Todesursache, z. B. Gift → Merkbuch) · Handwerk (Salben, Tinkturen, Präparate an neuer Station) · später Zutat für die Auferstehung (Phase 13).
+- Eigene Mechanik, keine Übernahme aus anderen Spielen.
