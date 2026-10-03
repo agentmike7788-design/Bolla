@@ -152,7 +152,8 @@ Quelle: `data/world/graveyard_layout.json` (Blöcke `buildings` {sites, site_rec
 | G4 | Waldbaum `forest.trees[0]` | (−8,2 \| 14,2) | **(−15,8 \| 14,6)** | Sichtprüfung Gruft (weiter als die 2 m aus §4.1; W1-Notiz 1) |
 | – | Kulissenbaum `background_trees[3]` | (−13,0 \| 9,0) | **(−16,5 \| 9,5)** | Sichtprüfung Gruft |
 | – | Waldbaum `forest.trees[1]` | (−12,8 \| 18,0) | **(−16,2 \| 20,6)** | Sichtprüfung Gruft |
-| – | Erle `gather_alder_2` (Schlag) | (−10,4 \| 15,6) | **(−10,4 \| 17,4)** | Sichtprüfung Gruft bei Zoom 12 (Tür und Kopf) |
+| – | Erle `gather_alder_2` (Schlag) | (−10,4 \| 15,6) | **(−10,4 \| 16,6)** | Sichtprüfung Gruft bei Zoom 12 (Tür und Kopf); weiter südlich verdeckt der Waldbaum (−9,4 \| 22,4) Stumpf und Schösslinge (QA5-06) |
+| G5 | Pflegestelle `dirt_y11` | (−8,8 \| 4,9) | **(−8,8 \| 4,1)** | Kopf des Spielers dort lag in der Box des Gruft-Portals (Prüfung §4.5 Punkt 4) |
 | K1 | Zaun Birkenhang-Nord | [[2,0, −20], [7,0, −20]] | [[2,0, −20], [3,7, −20]] + Kirchpforte + [[5,3, −20], [7,0, −20]] | §4.2 |
 | K2 | Hintergrundbaum | (3,5 \| −23,5) | (0,2 \| −32,0) | §4.2 |
 | K3 | Birke | (6,6 \| −22,0) | (9,6 \| −23,4) | §4.2 |
@@ -161,7 +162,7 @@ Quelle: `data/world/graveyard_layout.json` (Blöcke `buildings` {sites, site_rec
 | S1 | Hintergrundbaum | (−12,5 \| −9,5) | **(−16,8 \| −13,4)** (1 m weiter als §4.3: sonst verdeckt die Krone den Schuppen-First) | §4.3 |
 | S2 | Westgrenze | Wand x −11,2 | ohne Rechteck-Westwand (`west_wall false`); `extra_walls` auf der alten Linie nördlich/südlich der Tasche, die Tasche **x −14,6…−11,2** (0,2 m schmaler als §4.3, damit Ilses Weg ≥ 0,4 m außerhalb bleibt) · z −7,2…−5,4 und ihr Nordrand unter dem Schuppen | §4.3 |
 | S4 | Hintergrundbaum `background_trees[5]` | (−17,0 \| −1,5) | (−18,6 \| −0,4) | Sichtprüfung Schuppen (bedingt) |
-Nicht bewegt: Hütte, Tisch (nur zur Laufzeit verborgen), Werkbank, Stationen, Pförtchen, Ostpforte, Eiche, alle Grabstellen, Altgräber (nur `pit_variant` neu), alle übrigen Pflegestellen, Laternenpfähle, Schwarzes Brett, Ilses Wegpunkte, Bauplätze an den Vertragspositionen (kein Versatz nötig).
+Nicht bewegt: Hütte, Tisch (nur zur Laufzeit verborgen), Werkbank, Stationen, Pförtchen, Ostpforte, Eiche, alle Grabstellen, Altgräber (nur `pit_variant` neu), alle übrigen Pflegestellen (außer G1, G5), Laternenpfähle, Schwarzes Brett, Ilses Wegpunkte, Bauplätze an den Vertragspositionen (kein Versatz nötig).
 
 **Sichtprüfung §4.5 (Test `test_graveyard_world.gd`, AABB-Strahlen, Stufen 0–3, Zoom 12/22/24):** Tür und Kopf überall frei. Freie Gebäudepunkte von 4: Gruft 3 (der First liegt in der AABB der Eichenkrone dahinter), Kapelle 4, Schuppen 4 (Stufe 0: 3). Im Bild bei Zoom 22 (Modellecken-Stichprobe der Mesh-Vertices): Gruft 100 %, Kapelle 82–100 %, Schuppen 100 %; Bildanteil Gruft 4,6–7,4 %, Kapelle 24–31 %, Schuppen 5–12 %. Übersicht (Mesh-Strahlen): Gruft von der Bahre und `tp_workyard` 5/5, Kapelle von `tp_north` 5/5, Schuppen von `tp_workyard` 5/5. Keine neue Verdeckung an Hüttentür, Stationen, Bahre, Grab- und Pflegestellen, Altgräbern, Ilses Platz.
 **Routen (Flood-Fill 1,5 m):** Hüttentür ↔ Bahre, Gruft-Zugang (die letzten ≈ 2 m zwischen Gruftfront und Südzaun sind 1,4 m breit – der Zugangsstreifen, mit der Spielerkapsel frei), Kirchpforte, Kapellentür, jedes Altgrab, Schuppentür, Pförtchen, Tor, Ostpforte, Stationszugänge; Gang an `old_08` vorbei ≥ 1,9 m. **Boden/Gras:** Boden flach unter den drei Footprints (+ 0,35 m), Trittspuren vor den Türen; Gras fehlt unter Footprints und Vorplätzen (1 m), Kirchhof × 0,6. Bau-Maske: Gruft-Rechtecke gesperrt, Weg Bahre → Gruft ROUTE, Kirchpforte ROUTE.
