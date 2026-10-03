@@ -29,6 +29,11 @@
           <div class="power-bar"><i id="power-fill"></i></div>
           <p class="power-text" id="power-text"></p>
         </div>
+        <div class="power oil" id="oil" hidden>
+          <p class="label">Öl <span id="oil-state"></span></p>
+          <div class="power-bar"><i id="oil-fill"></i></div>
+          <p class="power-text" id="oil-text"></p>
+        </div>
         <p class="label">Lager</p>
         <ul id="store"></ul>
       </aside>
@@ -77,6 +82,22 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V4M6 6h12M6 6v2M18 6v2M9 21h6M8 10l4-4 4 4" /></svg>
           <span>Mast</span><kbd>0</kbd>
         </button>
+        <button type="button" class="tool" data-tool="pump" data-group="oil" aria-pressed="false" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M7 20l3-11 3 11M4 7l14-3M4 7l1 4M18 4v9M16 13h4M17 17a3 3 0 1 0 0-.1" /></svg>
+          <span>Pumpe</span><kbd>O</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="pipe" data-group="oil" aria-pressed="false" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h9v12M3 15h3v6M12 9h3V3M15 3h6M15 9h6M5 7v4M5 13v4M13 19h-4" /></svg>
+          <span>Rohr</span><kbd>P</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="refinery" data-group="oil" aria-pressed="false" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 20v-7h6v7M14 20V5h4v15M14 9h4M14 13h4M8 13V9M6 5l2-2 2 2" /></svg>
+          <span>Raffinerie</span><kbd>I</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="tank" data-group="oil" aria-pressed="false" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8c0-4 14-4 14 0v12H5zM5 8c0 3 14 3 14 0M9 12v6M3 20h18" /></svg>
+          <span>Tank</span><kbd>K</kbd>
+        </button>
         <button type="button" class="tool" data-tool="remove" aria-pressed="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" /></svg>
           <span>Abriss</span><kbd>X</kbd>
@@ -88,7 +109,7 @@
       </nav>
       <footer class="hud hud-help" id="help"></footer>
       <aside class="hud hud-recipe" id="recipe" hidden>
-        <p class="label">Konstruktor · Rezept wählen</p>
+        <p class="label" id="recipe-label">Konstruktor · Rezept wählen</p>
         <div id="recipe-list"></div>
         <button type="button" class="link" id="recipe-close">Schließen</button>
       </aside>

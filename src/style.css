@@ -272,6 +272,8 @@ kbd {
 .power.short .label span { color: #ffb02e; }
 .power.out .label span { color: #ff6b5b; }
 .power-text { margin: 0; font-size: 12px; color: var(--ink-dim); }
+.oil .power-bar i { background: #e0a040; }
+.tool[hidden] { display: none; }
 
 .tool.locked { opacity: 0.38; }
 .tool.locked:hover { background: transparent; }
@@ -698,10 +700,16 @@ button.link.danger { color: #ff9a8a; }
   .gm-save img, .gm-save .gm-thumb { width: 96px; }
 }
 
-/* Twelve tools: narrower buttons next to the ore list before the phone layout. */
+/* Twelve (or sixteen) tools: narrower buttons next to the ore list before the phone layout. */
 @media (min-width: 641px) and (max-width: 1240px) {
   .hud-tools { left: 262px; overflow-x: auto; scrollbar-width: none; gap: 4px; }
   .tool { flex: 1 0 50px; min-width: 0; padding: 6px 2px 5px; font-size: 11px; letter-spacing: 0.02em; }
+}
+
+/* With the oil tools there are sixteen: narrow buttons on wider screens too. */
+@media (min-width: 1241px) and (max-width: 1640px) {
+  .hud-tools:has(.tool[data-group='oil']:not([hidden])) { left: 262px; overflow-x: auto; scrollbar-width: none; gap: 4px; }
+  .hud-tools:has(.tool[data-group='oil']:not([hidden])) .tool { flex: 1 0 50px; min-width: 0; padding: 6px 2px 5px; font-size: 11px; letter-spacing: 0.02em; }
 }
 
 @media (max-width: 640px) {
@@ -710,6 +718,8 @@ button.link.danger { color: #ff9a8a; }
   .hud-legend { min-width: 0; bottom: calc(126px + env(safe-area-inset-bottom, 0px)); }
   .hud-tools { left: 16px; justify-content: space-between; gap: 4px; }
   .tool { flex: 1; min-width: 0; padding: 6px 2px 5px; font-size: 11px; letter-spacing: 0.02em; }
+  .hud-tools:has(.tool[data-group='oil']:not([hidden])) { overflow-x: auto; scrollbar-width: none; justify-content: flex-start; }
+  .hud-tools:has(.tool[data-group='oil']:not([hidden])) .tool { flex: 0 0 52px; }
   .hud-store, .hud-legend { display: none; }
   .hud-goal { top: auto; bottom: calc(126px + env(safe-area-inset-bottom, 0px)); width: auto; right: 16px; padding: 8px 14px; }
   .goal-name { font-size: 17px; margin-bottom: 4px; }
