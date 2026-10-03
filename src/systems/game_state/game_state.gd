@@ -48,6 +48,21 @@ func has_flag(flag: StringName) -> bool:
 	return flags.has(flag)
 
 
+## The flag as a truth value of any stored type (bool; a number ≠ 0; a non-empty string) – safe
+## where `get_flag(f) == true` would compare a damaged save's float or int with a bool (a script
+## error, QA6-10).
+func flag_on(flag: StringName) -> bool:
+	var value: Variant = flags.get(flag, false)
+	match typeof(value):
+		TYPE_BOOL:
+			return value
+		TYPE_INT, TYPE_FLOAT:
+			return value != 0
+		TYPE_STRING, TYPE_STRING_NAME:
+			return str(value) != ""
+	return false
+
+
 func clear_flag(flag: StringName) -> void:
 	flags.erase(flag)
 

@@ -22,7 +22,7 @@ func refresh() -> void:
 
 
 func should_show() -> bool:
-	if not GameState.has_flag(FLAG_KNOWN) or GameState.get_flag(FLAG_KNOWN) == false:
+	if not GameState.flag_on(FLAG_KNOWN):
 		return false
 	var trade := get_tree().get_first_node_in_group(NIGHT_TRADE_GROUP)
 	return trade == null or not trade.has_method(&"tools_given") or not bool(trade.call(&"tools_given"))

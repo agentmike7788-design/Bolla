@@ -136,8 +136,10 @@ func test_day20_crafter_loads() -> void:
 	assert_eq(TimeManager.day, 20)
 	assert_true(TimeManager.minute_of_day >= 1200, "evening of the chapter day")
 	assert_true(GameState.has_flag(&"names_in_stone_complete"), "names_in_stone just reached")
-	# §1.2: a migrated v4 save with names_in_stone_complete opens at once (Buildings.post_load), also
-	# in the evening (W-Welt: the world now has the Buildings node; before W2 there was none).
+	# §1.2 („Migrierte Stände (v4) … setzt Buildings.post_load buildings_open sofort (auch nach
+	# 06:00)“): correct against the contract – the morning rule is for v5 saves and a new game only.
+	# W0 note 1 („buildings_open noch nicht gesetzt“) dates from before W2, when the world had no
+	# Buildings node; W3 checked it (QA6-09 in docs/reviews/phase6_wip/qa_playthrough.md).
 	assert_true(GameState.has_flag(&"buildings_open"), "§1.2: v4 with names_in_stone_complete → buildings_open at once")
 	await _check_and_resave()
 

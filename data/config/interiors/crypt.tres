@@ -43,4 +43,6 @@ chest_slots = 16
 fog_enabled = true
 fog_color = Color(0.541176, 0.596078, 0.658824, 1)
 fog_density = 0.02
+fog_day_energy = 0.6
+fog_night_energy = 0.25
 shaft_role_as_window = true

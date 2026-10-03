@@ -233,7 +233,7 @@ static func phase5_state(tree: SceneTree, inv: Inventory) -> Dictionary:
 	if shop == null or not shop.is_open():
 		return {}
 	var cfg := shop.workshop_config()
-	var out := {"p5": true, "license": GameState.get_flag(cfg.license_flag) == true}
+	var out := {"p5": true, "license": GameState.flag_on(cfg.license_flag)}
 	var expansion := _first(tree, EXPANSION_GROUP) as ExpansionManager
 	out["bruch_open"] = expansion == null or expansion.section(SECTION_BRUCH) == null or expansion.is_unlocked(SECTION_BRUCH)
 	out["quarry_open"] = expansion == null or expansion.section(SECTION_QUARRY) == null or expansion.is_unlocked(SECTION_QUARRY)
@@ -262,7 +262,7 @@ static func phase5_state(tree: SceneTree, inv: Inventory) -> Dictionary:
 	out["tiers"] = shop.tiers()
 	out["goal_tiers"] = cfg.goal_tiers.duplicate()
 	out["goal_missing"] = progress.get("missing", PackedStringArray())
-	out["goal_done"] = GameState.get_flag(cfg.goal_flag) == true
+	out["goal_done"] = GameState.flag_on(cfg.goal_flag)
 	var nameless := 0
 	var graveyard := _first(tree, GRAVEYARD_GROUP) as Graveyard
 	if graveyard != null:
@@ -281,7 +281,7 @@ static func chapter_progress(tree: SceneTree) -> Dictionary:
 	if shop == null or not shop.is_open():
 		return {}
 	var out := shop.goal_progress()
-	out["done_flag"] = GameState.get_flag(shop.workshop_config().goal_flag) == true
+	out["done_flag"] = GameState.flag_on(shop.workshop_config().goal_flag)
 	return out
 
 
@@ -296,8 +296,8 @@ static func phase6_state(tree: SceneTree, inv: Inventory) -> Dictionary:
 		return {}
 	var cfg := buildings.buildings_config()
 	var levels := buildings.levels()
-	var out := {"p6": true, "p6_intro": GameState.get_flag(FLAG_P6_INTRO) == true, "levels": levels,
-			"goal_levels": cfg.goal_levels.duplicate(), "goal_done": GameState.get_flag(cfg.goal_flag) == true,
+	var out := {"p6": true, "p6_intro": GameState.flag_on(FLAG_P6_INTRO), "levels": levels,
+			"goal_levels": cfg.goal_levels.duplicate(), "goal_done": GameState.flag_on(cfg.goal_flag),
 			"crypt_level": int(levels.get(&"crypt", 0)), "chapel_level": int(levels.get(&"chapel", 0))}
 	var ossuary := _first(tree, OSSUARY_GROUP) as Ossuary
 	var crypt_cfg := ossuary.rules() if ossuary != null else CryptConfig.new()
@@ -317,7 +317,7 @@ static func phase6_state(tree: SceneTree, inv: Inventory) -> Dictionary:
 				break
 	out["next_lift"] = next_lift
 	var passage := ossuary.passage_state() if ossuary != null else Ossuary.PASSAGE_HIDDEN
-	out["passage_unseen"] = passage != Ossuary.PASSAGE_HIDDEN and GameState.get_flag(FLAG_PASSAGE_SEEN) != true
+	out["passage_unseen"] = passage != Ossuary.PASSAGE_HIDDEN and not GameState.flag_on(FLAG_PASSAGE_SEEN)
 	var devotion := ""
 	var rites := _first(tree, CHAPEL_GROUP) as ChapelRites
 	if rites != null and rites.level() >= 1:
@@ -339,7 +339,7 @@ static func chapter6_progress(tree: SceneTree) -> Dictionary:
 	if buildings == null or not buildings.is_open():
 		return {}
 	var out := buildings.goal_progress()
-	out["done_flag"] = GameState.get_flag(buildings.buildings_config().goal_flag) == true
+	out["done_flag"] = GameState.flag_on(buildings.buildings_config().goal_flag)
 	return out
 
 

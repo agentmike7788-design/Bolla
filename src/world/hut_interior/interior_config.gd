@@ -66,6 +66,12 @@ extends Resource
 @export var fog_enabled: bool = false
 @export var fog_color: Color = Color("#8a98a8")
 @export var fog_density: float = 0.0
+## W3 art QA (G6): the fog's own light by day / at night (Environment.fog_light_energy, blended with
+## daylight like the ambient). The depth fog lights what it covers – 1.0 at night made the crypt a
+## milky grey; the fog never covers the background (fog_sky_affect 0: the void around a room stays
+## the background colour, not a light grey).
+@export var fog_day_energy: float = 1.0
+@export var fog_night_energy: float = 1.0
 ## Phase 6 §4.8: the "window" light role is the stair shaft (crypt).
 @export var shaft_role_as_window: bool = false
 

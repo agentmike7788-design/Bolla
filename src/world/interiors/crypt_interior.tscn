@@ -48,6 +48,7 @@ glow_bloom = 0.04
 fog_enabled = true
 fog_light_color = Color(0.541176, 0.596078, 0.658824, 1)
 fog_density = 0.02
+fog_sky_affect = 0.0
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ej77n"]
 size = Vector3(2.5, 1, 1.5)

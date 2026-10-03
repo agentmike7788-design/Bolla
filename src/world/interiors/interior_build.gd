@@ -487,6 +487,7 @@ static func _environment(cfg: Resource) -> Environment:
 		env.fog_enabled = true
 		env.fog_light_color = cfg.get("fog_color")
 		env.fog_density = cfg.get("fog_density")
+		env.fog_sky_affect = 0.0  # W3: the void around the room keeps the background colour
 	return env
 
 

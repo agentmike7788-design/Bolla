@@ -369,7 +369,7 @@ func _cmd_passage(args: PackedStringArray) -> Dictionary:
 	if ossuary == null:
 		return _error(TEXT_NO_WORLD)
 	return _ok("Gang: %s · angesehen: %s · Beinhaus %d/%d" % [ossuary.passage_state(),
-			"ja" if GameState.get_flag(&"c_crypt_draft_seen") == true else "nein", ossuary.used(), ossuary.capacity()])
+			"ja" if GameState.flag_on(&"c_crypt_draft_seen") else "nein", ossuary.used(), ossuary.capacity()])
 
 
 ## §4.5 in the running game, simplified: a physics ray from the camera to each building's door
@@ -409,7 +409,7 @@ func _cmd_goal6(args: PackedStringArray) -> Dictionary:
 	if b == null:
 		return _error(TEXT_NO_WORLD)
 	var progress := b.goal_progress()
-	var done: bool = GameState.get_flag(b.buildings_config().goal_flag) == true
+	var done: bool = GameState.flag_on(b.buildings_config().goal_flag)
 	return _ok("%s · %d/%d%s" % [Phase6Texts.chapter_line(progress), int(progress.done), int(progress.total), " · erreicht" if done else ""])
 
 

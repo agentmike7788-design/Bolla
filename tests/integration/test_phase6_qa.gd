@@ -201,6 +201,23 @@ func test_crypt_upgrade_shows_the_walled_door_at_once() -> void:
 	assert_true(shelf.is_in_group(&"ossuary_shelf"))
 
 
+# --- QA6-10: a number in a goal flag is no script error -------------------------------------------
+# The HUD's objective / chapter lines compared GameState.get_flag(goal) == true: a damaged save with
+# a float or int in names_in_stone_complete / roof_and_earth_complete / bruch_license … raised
+# „Invalid operands 'float' and 'bool'“ on load (save fuzzer, real mid-Phase-6 save).
+
+func test_number_in_a_goal_flag_is_no_script_error() -> void:
+	for flag: StringName in [&"names_in_stone_complete", &"roof_and_earth_complete", &"bruch_license", &"p6_intro",
+			&"c_crypt_draft_seen", &"trader_known"]:
+		GameState.set_flag(flag, 2.5)
+	ui.hud.refresh_all()
+	var state := CemeteryStatus.phase6_state(tree, player.inventory)
+	assert_true(bool(state.get("goal_done", false)), "2.5 counts as set")
+	GameState.set_flag(&"roof_and_earth_complete", 0)
+	assert_false(GameState.flag_on(&"roof_and_earth_complete"), "0 counts as not set")
+	ui.hud.refresh_all()
+
+
 # --- helpers ----------------------------------------------------------------------------------
 
 func _bind() -> void:

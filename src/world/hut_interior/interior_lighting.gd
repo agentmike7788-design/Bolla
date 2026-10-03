@@ -90,6 +90,8 @@ func apply_daylight(t: float) -> void:
 			environment.fog_enabled = true
 			environment.fog_light_color = c.fog_color
 			environment.fog_density = c.fog_density
+			environment.fog_light_energy = lerpf(c.fog_night_energy, c.fog_day_energy, daylight)
+			environment.fog_sky_affect = 0.0
 	if sun != null:
 		sun.light_color = c.sun_night_color.lerp(c.sun_day_color, daylight)
 		sun.light_energy = lerpf(c.sun_night_energy, c.sun_day_energy, daylight)

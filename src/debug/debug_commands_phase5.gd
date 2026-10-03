@@ -362,7 +362,7 @@ func _cmd_goal(args: PackedStringArray) -> Dictionary:
 		return _error(TEXT_NO_WORLD)
 	var p := shop.goal_progress()
 	var lines := PackedStringArray(["Namen in Stein: %d/%d%s" % [int(p.done), int(p.total),
-			" – erreicht" if GameState.get_flag(shop.workshop_config().goal_flag) == true else ""]])
+			" – erreicht" if GameState.flag_on(shop.workshop_config().goal_flag) else ""]])
 	lines.append(Phase5Texts.chapter_line(p))
 	var missing: PackedStringArray = p.get("missing", PackedStringArray())
 	if not missing.is_empty():
