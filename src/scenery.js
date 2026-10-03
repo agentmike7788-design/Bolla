@@ -80,6 +80,7 @@ export function buildWorldMeshes(world) {
   const oreChunks = [];
   const crystals = [];
   const cacti = [];
+  const puddles = [];
   const jitter = (spread) => (rand() - 0.5) * spread;
 
   const addTrunk = (x, y, z, s) => trunks.push({ x, y, z, sx: s, color: shade(0x6b4a2f, rand, 0.1) });
@@ -88,6 +89,15 @@ export function buildWorldMeshes(world) {
     const { x, z } = tile.position;
     const y = tile.height;
 
+    if (tile.ore && ORES[tile.ore].fluid) {
+      // Oil seeps up in glossy black puddles.
+      const n = 2 + Math.floor(rand() * 2);
+      for (let k = 0; k < n; k++) {
+        const s = 0.6 + rand() * 0.7;
+        puddles.push({ x: x + jitter(0.5), y: y + 0.005 + k * 0.002, z: z + jitter(0.5), ry: rand() * 6, sx: s * (1 + rand() * 0.5), sy: 1, sz: s, color: shade(ORES[tile.ore].color, rand, 0.08) });
+      }
+      continue;
+    }
     if (tile.ore) {
       const ore = ORES[tile.ore];
       const chunkCount = 2 + Math.min(4, Math.floor(tile.amount / 450));
@@ -179,6 +189,7 @@ export function buildWorldMeshes(world) {
   deco(new THREE.OctahedronGeometry(0.025, 0), flat({ roughness: 0.6 }), flowers, { castShadow: false });
   deco(new THREE.DodecahedronGeometry(0.17, 0), flat({ roughness: 0.9 }), boulders);
   deco(cactusGeometry(), flat({ roughness: 0.8 }), cacti);
+  deco(new THREE.CylinderGeometry(0.22, 0.24, 0.02, 12), new THREE.MeshStandardMaterial({ roughness: 0.05, metalness: 0.6, envMapIntensity: 2 }), puddles, { castShadow: false, receiveShadow: true });
   deco(new THREE.DodecahedronGeometry(0.13, 0), flat({ roughness: 0.55, metalness: 0.35 }), oreChunks);
   deco(
     new THREE.OctahedronGeometry(0.06, 0).translate(0, 0.06, 0),

@@ -3,7 +3,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { generateWorld, ORES, TERRAIN, MAP_SIZE, TILE } from './world.js';
 import { buildWorldMeshes, createSea } from './scenery.js';
 import { createCameraRig } from './camera.js';
-import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, RECIPES, CONSTRUCTOR_RECIPES, isMachine, usesPower, POWER_USE, POWER_SPEED, POWER_OUTPUT, WIRE_REACH } from './factory.js';
+import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, RECIPES, CONSTRUCTOR_RECIPES, REFINERY_RECIPES, recipesOf, isMachine, usesPower, POWER_USE, POWER_SPEED, POWER_OUTPUT, WIRE_REACH, PUMP_RATE } from './factory.js';
 import { RESEARCH } from './research.js';
 import { createResearchView } from './researchView.js';
 import { createFactoryView, createGhost } from './buildings.js';
@@ -111,7 +111,7 @@ function loadWorld(seed, mapScenario = null, saved = null) {
   factory = createFactory(world, { start: mapScenario?.start });
   missions = mapScenario ? createMissions(mapScenario, factory) : null;
   if (saved) {
-    factory.load(saved.factory);
+    factory.load(saved.factory, saved.v);
     missions?.load(saved.missions);
     for (const b of factory.buildings.values()) meshes.setDecorHidden(b.index, true);
   }
@@ -177,7 +177,8 @@ const researchView = createResearchView({
   onResearch(r) {
     audio.play.success();
     if (r.id === 'firstFactory') showToast('Spielziel geschafft!', 'Deine Fabrik schmilzt und presst. Weiter geht es mit dem Konstruktor!');
-    else if (r.goal) showToast('Meisterfabrik!', 'Du hast den ganzen Forschungsbaum geschafft. Glückwunsch!');
+    else if (r.id === 'oilAge') showToast('Ölzeitalter!', 'Du hast den ganzen Forschungsbaum geschafft. Glückwunsch!');
+    else if (r.goal) showToast('Meisterfabrik!', 'Schaltkreise, Stahl und Zahnräder in Massen. Als Nächstes wartet das Öl.');
     else showToast(`Erforscht: ${r.name}`, r.desc);
     renderProgress();
   },
@@ -197,10 +198,14 @@ function renderProgress() {
     : '<li class="empty">Noch leer. Lege ein Band in ein Lager.</li>';
 
   renderPower();
+  renderOil();
 
+  // The oil tools show up once one of them is unlocked.
+  const oil = [...toolButtons].some((b) => b.dataset.group === 'oil' && factory.research.unlocked.has(b.dataset.tool));
   for (const b of toolButtons) {
     const type = b.dataset.tool;
     if (!BUILDINGS[type]) continue;
+    b.hidden = b.dataset.group === 'oil' && !oil;
     const locked = !factory.research.unlocked.has(type);
     b.classList.toggle('locked', locked);
     b.setAttribute('aria-disabled', String(locked));
@@ -234,6 +239,29 @@ function renderPower() {
   } else {
     powerState.textContent = short ? `Mangel · ${Math.round(s.satisfaction * 100)} %` : `${Math.round((s.demand / Math.max(s.capacity, 0.001)) * 100)} % Last`;
     powerText.textContent = `Bedarf ${mw(s.demand)} von ${mw(s.capacity)} · ${s.consumers} Maschinen am Netz · ${s.fuel} Kohle im Kraftwerk`;
+  }
+}
+
+const oilPanel = document.getElementById('oil');
+const oilState = document.getElementById('oil-state');
+const oilFill = document.getElementById('oil-fill');
+const oilText = document.getElementById('oil-text');
+
+// Shown once pumps are unlocked: how full the pipes are and how much flows.
+function renderOil() {
+  const s = factory.oilSummary();
+  oilPanel.hidden = !factory.research.unlocked.has('pump') && !s.nets;
+  if (oilPanel.hidden) return;
+  oilFill.style.width = `${s.capacity ? (s.amount / s.capacity) * 100 : 0}%`;
+  if (!s.pumps) {
+    oilState.textContent = 'keine Pumpe';
+    oilText.textContent = 'Ölpumpe auf ein schwarzes Ölfeld setzen, Strommast daneben, Rohre zur Raffinerie.';
+  } else if (!s.working && s.amount < 1) {
+    oilState.textContent = 'steht still';
+    oilText.textContent = 'Die Pumpen brauchen Strom: Kraftwerk und Strommast in ihre Nähe.';
+  } else {
+    oilState.textContent = `${num(Math.round(s.rate * 60))}/min`;
+    oilText.textContent = `${num(Math.round(s.amount))} von ${num(s.capacity)} Öl in den Rohren · ${s.working} von ${s.pumps} Pumpen laufen · ${s.refineries} Raffinerien`;
   }
 }
 
@@ -551,18 +579,24 @@ const needsText = (needs) =>
     .map(([k, n]) => `${n} ${ITEMS[k].name}`)
     .join(' + ');
 
+const recipeLabel = document.getElementById('recipe-label');
+
+// Recipes of a constructor or refinery; ones that need a locked building stay hidden.
 function openRecipes(b) {
   selected = b;
   recipePanel.hidden = !b;
   if (!b) return;
-  recipeList.innerHTML = Object.entries(CONSTRUCTOR_RECIPES)
+  recipeLabel.textContent = `${BUILDINGS[b.type].name} · Rezept wählen`;
+  recipeList.innerHTML = Object.entries(recipesOf(b.type))
+    .filter(([, r]) => !r.unlock || factory.research.unlocked.has(r.unlock))
     .map(
       ([id, r]) => `<button type="button" class="recipe-option" data-recipe="${id}" aria-pressed="${b.recipe === id}">
         <span class="swatch" style="--c:${hex(ITEMS[r.makes].color)}"></span>
-        <b>${ITEMS[r.makes].name}</b><span>${needsText(r.needs)} · ${r.time} s</span></button>`,
+        <b>${ITEMS[r.makes].name}</b><span>${r.needs ? needsText(r.needs) : `${r.oil} Öl`} · ${r.time} s</span></button>`,
     )
     .join('');
 }
+const hasRecipes = (b) => !!recipesOf(b?.type);
 recipeList.addEventListener('click', (e) => {
   const opt = e.target.closest('[data-recipe]');
   if (!opt || !selected) return;
@@ -578,6 +612,15 @@ const tileDetail = document.getElementById('tile-detail');
 const STATE_TEXT = { work: 'Fördert', blocked: 'Wartet: Ausgang belegt', empty: 'Erschöpft', nopower: 'Kein Strom' };
 const MACHINE_TEXT = { work: 'Arbeitet', idle: 'Wartet auf Material', blocked: 'Wartet: Ausgang belegt', nopower: 'Kein Strom' };
 const PLANT_TEXT = { work: 'Liefert Strom', idle: 'Bereit, nichts braucht Strom', empty: 'Keine Kohle' };
+const PUMP_TEXT = { work: 'Pumpt', blocked: 'Rohre voll', empty: 'Ölfeld erschöpft', nopower: 'Kein Strom: Strommast in die Nähe' };
+const REFINERY_TEXT = { work: 'Raffiniert', idle: 'Wartet auf Öl aus den Rohren', blocked: 'Wartet: Ausgang belegt', nopower: 'Kein Strom' };
+
+// How full the pipe network of a fluid building is.
+function pipeNote(b) {
+  const net = b.pipes;
+  if (!net) return '';
+  return `${num(Math.round(net.amount))}/${num(net.capacity)} Öl im Netz · ${num(Math.round(net.rate * 60))}/min`;
+}
 
 // The power part of a machine's info line.
 function powerNote(b) {
@@ -600,7 +643,7 @@ function showTile(tile) {
   const building = factory.get(tile);
   const check = tool === 'remove' ? { ok: !!building, reason: building ? '' : 'Hier steht nichts' } : tool && canBuild(tile);
   const overBelt = check?.ok && tool !== 'remove' && tool !== 'belt' && building?.type === 'belt';
-  canvas.style.cursor = !tool && building?.type === 'constructor' ? 'pointer' : '';
+  canvas.style.cursor = !tool && hasRecipes(building) ? 'pointer' : '';
   marker.visible = !tool;
   marker.position.set(tile.position.x, Math.max(tile.height, 0.28) + 0.03, tile.position.z);
   ghost.show(tool, tile, tool === 'remove' || overBelt ? building?.dir ?? 0 : dir, check?.ok);
@@ -640,14 +683,29 @@ function showTile(tile) {
     const out = POWER_OUTPUT * factory.research.stats.power;
     const state = building.refused ? `Nimmt kein ${ITEMS[building.refused].name} an` : PLANT_TEXT[building.state];
     tileDetail.textContent = building.net
-      ? `${state} · ${mw(out)} · Netz: ${mw(building.net.demand)} Bedarf · ${building.fuel} Kohle`
-      : `Nicht am Netz: Strommast in die Nähe setzen · ${building.fuel} Kohle`;
+      ? `${state} · ${mw(out)} · Netz: ${mw(building.net.demand)} Bedarf · Brennstoff ${building.fuel}`
+      : `Nicht am Netz: Strommast in die Nähe setzen · Brennstoff ${building.fuel} (Kohle 1, Treibstoff 3)`;
   } else if (building?.type === 'pole') {
     tileName.textContent = 'Strommast';
     const net = building.net;
     tileDetail.textContent = net
       ? `${net.plants.length} Kraftwerke · ${net.consumers.length} Maschinen · ${mw(net.demand)} von ${mw(net.capacity)}`
       : 'Versorgt das Feld 5×5 um sich';
+  } else if (building?.type === 'pump') {
+    tileName.textContent = 'Ölpumpe';
+    const rate = PUMP_RATE * factory.research.stats.pump * 60;
+    tileDetail.textContent = `${PUMP_TEXT[building.state]} · bis ${num(Math.round(rate))} Öl/min · Rest ${num(tile.amount)} · ${pipeNote(building)}`;
+  } else if (building?.type === 'pipe') {
+    tileName.textContent = 'Rohr';
+    tileDetail.textContent = building.links?.length ? pipeNote(building) : 'Verbindet sich mit Rohren, Pumpen, Tanks und Raffinerien daneben';
+  } else if (building?.type === 'tank') {
+    tileName.textContent = 'Öltank';
+    tileDetail.textContent = `Speichert 400 Öl · ${pipeNote(building)}`;
+  } else if (building?.type === 'refinery') {
+    const recipe = REFINERY_RECIPES[building.recipe];
+    tileName.textContent = `Raffinerie · ${ITEMS[recipe.makes].name}`;
+    const where = building.pipes?.members.length > 1 ? pipeNote(building) : 'Rohr an eine Seite außer vorn';
+    tileDetail.textContent = `${REFINERY_TEXT[building.state]} · ${recipe.oil} Öl je Teil · ${where}${powerNote(building)}${tool ? '' : ' · Klick: Rezept'}`;
   } else if (building?.type === 'storage') {
     tileName.textContent = 'Lager';
     tileDetail.textContent = building.received
@@ -712,7 +770,7 @@ let shapesDirty = false;
 const toolButtons = document.querySelectorAll('.tool[data-tool]');
 const help = document.getElementById('help');
 const HELP = {
-  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['X', 'abreißen'], ['T', 'Forschung'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
+  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['O P I K', 'Öl'], ['X', 'abreißen'], ['T', 'Forschung'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
@@ -723,6 +781,10 @@ const HELP = {
   constructor: [['Klick', 'Konstruktor setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Ohne Werkzeug klicken', 'Rezept wählen']],
   power: [['Klick', 'Kraftwerk setzen'], ['Kohle', 'per Band von jeder Seite'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen']],
   pole: [['Klick / Ziehen', 'Strommasten setzen'], ['Reichweite', '7 Felder'], ['Versorgt', '5×5 Felder'], ['Esc', 'fertig']],
+  pump: [['Klick', 'Ölpumpe auf Ölfeld setzen'], ['Strom', 'Mast in die Nähe'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen']],
+  pipe: [['Ziehen', 'Rohre verlegen'], ['Verbindet', 'alles daneben'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen']],
+  tank: [['Klick', 'Öltank setzen'], ['Speichert', '400 Öl'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen']],
+  refinery: [['Klick', 'Raffinerie setzen'], ['R', 'Ausgang drehen'], ['Rohr', 'an jede Seite außer vorn'], ['Ohne Werkzeug klicken', 'Rezept wählen']],
   remove: [['Klick / Ziehen', 'abreißen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
 };
 
@@ -750,8 +812,8 @@ function setTool(next) {
 
 function canBuild(tile) {
   const existing = factory.get(tile);
-  // Dragging a belt over a belt just turns it.
-  if (tool === 'belt' && existing?.type === 'belt') return { ok: true, reason: '' };
+  // Dragging a belt over a belt just turns it; a pipe over a pipe changes nothing.
+  if ((tool === 'belt' || tool === 'pipe') && existing?.type === tool) return { ok: true, reason: '' };
   // Clicking a machine onto a belt replaces that piece; dragging does not eat belts.
   return factory.canPlace(tool, tile, !(dragging && lastTile));
 }
@@ -783,6 +845,8 @@ function buildAt(tile) {
     if (tool === 'belt' && existing?.type === 'belt') {
       if (existing.dir !== dir) audio.play.rotate();
       factory.setDir(existing, dir);
+    } else if (tool === 'pipe' && existing?.type === 'pipe') {
+      // Already a pipe here.
     } else if (factory.place(tool, tile, existing?.type === 'belt' ? existing.dir : dir, !lastTile)) {
       meshes.setDecorHidden(tile.z * world.size + tile.x, true);
       audio.play.build(tool);
@@ -802,7 +866,7 @@ function buildAlong(tile) {
     if (!lastTile || factory.get(tile)?.type === 'pole') lastTile = tile;
     return;
   }
-  if (!lastTile || tool !== 'belt') {
+  if (!lastTile || (tool !== 'belt' && tool !== 'pipe')) {
     buildAt(tile);
     lastTile = tile;
     return;
@@ -812,7 +876,7 @@ function buildAlong(tile) {
     const dz = dx ? 0 : Math.sign(tile.z - lastTile.z);
     dir = DIRS.findIndex((d) => d.x === dx && d.z === dz);
     const prev = factory.get(lastTile);
-    if (prev?.type === 'belt') factory.setDir(prev, dir);
+    if (prev?.type === 'belt' && tool === 'belt') factory.setDir(prev, dir);
     lastTile = world.at(lastTile.x + dx, lastTile.z + dz);
     buildAt(lastTile);
   }
@@ -842,7 +906,7 @@ window.addEventListener('pointerup', (e) => {
   setPointer(e);
   const tile = pickTile();
   const b = tile && factory.get(tile);
-  openRecipes(b?.type === 'constructor' ? b : null);
+  openRecipes(hasRecipes(b) ? b : null);
 });
 
 for (const b of toolButtons) b.addEventListener('click', () => setTool(b.dataset.tool));
@@ -878,7 +942,9 @@ window.addEventListener('keydown', (e) => {
   if (key === 'n') return dayNight.skipAhead();
   if (key === 't' && missions) return showToast('Missionskarte', 'Hier schalten Missionen neue Gebäude frei, nicht der Forschungsbaum.');
   const numbered = /^[0-9]$/.test(key) && ['drill', 'belt', 'storage', 'furnace', 'assembler', 'splitter', 'merger', 'constructor', 'power', 'pole'][(Number(key) + 9) % 10];
+  const oilKey = { o: 'pump', p: 'pipe', i: 'refinery', k: 'tank' }[key];
   if (numbered) setTool(numbered);
+  else if (oilKey) setTool(oilKey);
   else if (key === 'x' || key === 'delete') setTool('remove');
   else if (key === 'r') rotate();
   else if (key === 't') researchView.toggle();
@@ -972,4 +1038,4 @@ resize();
 openTitle();
 
 // Handle for poking at the game from the browser console while developing.
-if (import.meta.env.DEV) window.bolla = { camera, rig, tutorial, renderer, scene, startGame, saveGame, loadGame, menu, dayNight, effects, audio, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get meshes() { return meshes; }, get factory() { return factory; }, get missions() { return missions; } };
+if (import.meta.env.DEV) window.bolla = { camera, rig, tutorial, renderer, scene, factoryView, startGame, saveGame, loadGame, menu, dayNight, effects, audio, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get meshes() { return meshes; }, get factory() { return factory; }, get missions() { return missions; } };

@@ -12,7 +12,11 @@ export const DIR_NAMES = ['Nord', 'Ost', 'Süd', 'West'];
 
 // Everything that can travel over a belt. shape picks the 3D model in buildings.js.
 export const ITEMS = {
-  ...Object.fromEntries(Object.entries(ORES).map(([k, o]) => [k, { name: o.name, color: o.color, shape: 'ore' }])),
+  ...Object.fromEntries(
+    Object.entries(ORES)
+      .filter(([, o]) => !o.fluid)
+      .map(([k, o]) => [k, { name: o.name, color: o.color, shape: 'ore' }]),
+  ),
   ironIngot: { name: 'Eisenbarren', color: 0xc4ccd4, shape: 'ingot' },
   copperIngot: { name: 'Kupferbarren', color: 0xe9894a, shape: 'ingot' },
   ironPlate: { name: 'Eisenplatte', color: 0x9fb0bf, shape: 'plate' },
@@ -21,6 +25,9 @@ export const ITEMS = {
   gear: { name: 'Zahnrad', color: 0xb8bec4, shape: 'gear' },
   circuit: { name: 'Schaltkreis', color: 0x3fae5a, shape: 'chip' },
   steel: { name: 'Stahlträger', color: 0x5d6b7a, shape: 'beam' },
+  plastic: { name: 'Kunststoff', color: 0x8fd3ec, shape: 'roll' },
+  fuel: { name: 'Treibstoff', color: 0xd8432c, shape: 'canister' },
+  processor: { name: 'Prozessor', color: 0x7b5ce6, shape: 'cpu' },
 };
 
 // Machines turn one input item into one output item.
@@ -34,7 +41,17 @@ export const CONSTRUCTOR_RECIPES = {
   gear: { time: 2, needs: { ironPlate: 2 }, makes: 'gear' },
   circuit: { time: 3, needs: { ironPlate: 1, wire: 2 }, makes: 'circuit' },
   steel: { time: 2.5, needs: { ironIngot: 2, coal: 1 }, makes: 'steel' },
+  // Shown once the refinery is unlocked: it needs plastic.
+  processor: { time: 4, needs: { circuit: 2, plastic: 1 }, makes: 'processor', unlock: 'refinery' },
 };
+
+// The refinery turns oil from its pipes into items; the player picks the recipe.
+export const REFINERY_RECIPES = {
+  plastic: { time: 3, oil: 3, makes: 'plastic' },
+  fuel: { time: 2, oil: 2, makes: 'fuel' },
+};
+const RECIPE_BOOK = { constructor: CONSTRUCTOR_RECIPES, refinery: REFINERY_RECIPES };
+export const recipesOf = (type) => RECIPE_BOOK[type] ?? null;
 
 export const BUILDINGS = {
   drill: { name: 'Bohrer' },
@@ -47,6 +64,10 @@ export const BUILDINGS = {
   constructor: { name: 'Konstruktor' },
   power: { name: 'Kohlekraftwerk' },
   pole: { name: 'Strommast' },
+  pump: { name: 'Ölpumpe' },
+  pipe: { name: 'Rohr' },
+  tank: { name: 'Öltank' },
+  refinery: { name: 'Raffinerie' },
 };
 
 export const BELT_SPEED = 1.5; // tiles per second, before research
@@ -59,7 +80,7 @@ const SPLITTER_BUFFER = 2;
 const opposite = (dir) => (dir + 2) % 4;
 export const isMachine = (b) => b?.type === 'furnace' || b?.type === 'assembler';
 // Buildings that never hand items on.
-const NO_OUTPUT = new Set(['storage', 'power', 'pole']);
+const NO_OUTPUT = new Set(['storage', 'power', 'pole', 'pump', 'pipe', 'tank']);
 
 // Power. A coal power plant burns coal from belts and feeds every network it is
 // connected to. Poles carry the power: wires reach from pole to pole, and a pole
@@ -67,14 +88,24 @@ const NO_OUTPUT = new Set(['storage', 'power', 'pole']);
 // basic speed; on a network they run POWER_SPEED times as fast, but only while the
 // network has enough power, and they stop when it has none.
 export const POWER_OUTPUT = 8; // MW per power plant, before research
-export const POWER_USE = { drill: 1, furnace: 2, assembler: 1.5, constructor: 3 }; // MW while working
+export const POWER_USE = { drill: 1, furnace: 2, assembler: 1.5, constructor: 3, pump: 1.5, refinery: 3 }; // MW while working
 export const POWER_SPEED = 2;
 export const COAL_SECONDS = 4; // one coal keeps a plant at full output that long
 export const WIRE_REACH = 7; // tiles between two poles
 export const POLE_SUPPLY = 2; // a pole supplies the tiles up to this far away (5×5)
 const COAL_ENERGY = POWER_OUTPUT * COAL_SECONDS;
 const PLANT_FUEL = 5; // coal a plant keeps in stock
+export const FUEL_VALUE = { coal: 1, fuel: 3 }; // a can of fuel burns as long as three coal
 export const usesPower = (b) => !!POWER_USE[b?.type];
+
+// Oil. A pump on an oil field needs power and pushes oil into the pipes next to
+// it. Pumps, pipes, tanks and refineries that touch form one pipe network that
+// holds the oil together; refineries take it out and make items from it. The
+// refinery's output side, where its belt starts, takes no pipe.
+export const FLUID_BUILDINGS = new Set(['pump', 'pipe', 'tank', 'refinery']);
+export const FLUID_CAPACITY = { pump: 10, pipe: 10, tank: 400, refinery: 20 }; // oil each one holds
+export const PUMP_RATE = 2; // oil per second at full power, before research
+export const isFluid = (b) => FLUID_BUILDINGS.has(b?.type);
 
 // The factory on top of a world: which building stands on which tile, and the
 // simulation that moves items from drills over belts through machines into storage.
@@ -87,6 +118,7 @@ export function createFactory(world, { start } = {}) {
   const recent = Object.fromEntries(Object.keys(ITEMS).map((k) => [k, []])); // delivery times of the last minute
   const research = createResearch(stored, start);
   let time = 0; // simulated seconds since the start
+  let pumped = 0; // oil ever pumped
 
   const indexOf = (tile) => tile.z * world.size + tile.x;
   const at = (x, z) => (x < 0 || z < 0 || x >= world.size || z >= world.size ? null : buildings.get(z * world.size + x) ?? null);
@@ -102,7 +134,8 @@ export function createFactory(world, { start } = {}) {
     const existing = buildings.get(indexOf(tile));
     if (existing && !(overBelt && existing.type === 'belt' && type !== 'belt')) return { ok: false, reason: 'Hier steht schon etwas' };
     if (!TERRAIN[tile.terrain].buildable) return { ok: false, reason: 'Hier kann man nicht bauen' };
-    if (type === 'drill' && !tile.ore) return { ok: false, reason: 'Bohrer nur auf Erzfeldern' };
+    if (type === 'drill' && (!tile.ore || ORES[tile.ore].fluid)) return { ok: false, reason: tile.ore ? 'Auf Öl gehört eine Ölpumpe' : 'Bohrer nur auf Erzfeldern' };
+    if (type === 'pump' && !ORES[tile.ore]?.fluid) return { ok: false, reason: 'Ölpumpe nur auf Ölfeldern' };
     return { ok: true, reason: '' };
   }
 
@@ -118,6 +151,9 @@ export function createFactory(world, { start } = {}) {
     if (type === 'splitter') Object.assign(b, { items: [], next: 0, passed: 0 });
     if (type === 'merger') Object.assign(b, { slots: [[], [], [], []], next: 0, passed: 0 });
     if (type === 'power') Object.assign(b, { fuel: 0, burn: 0, state: 'idle', made: 0, refused: null });
+    if (type === 'pump') Object.assign(b, { acc: 0, state: 'nopower', pumped: 0 });
+    if (type === 'refinery') Object.assign(b, { recipe: 'plastic', output: [], busy: false, timer: 0, state: 'idle', made: 0 });
+    if (isFluid(b)) b.oil = 0;
     buildings.set(b.index, b);
     updateShapes();
     return b;
@@ -249,6 +285,163 @@ export function createFactory(world, { start } = {}) {
     return n;
   }
 
+  // --- Pipes and oil -------------------------------------------------------------
+
+  const pipes = { nets: [], version: 0 };
+  let pipesDirty = true;
+
+  // Does fluid building `a` connect to its neighbour in direction `d`?
+  function fluidLink(a, d) {
+    const b = neighbour(a, d);
+    if (!isFluid(b)) return null;
+    if (a.type === 'refinery' && a.dir === d) return null;
+    if (b.type === 'refinery' && b.dir === opposite(d)) return null;
+    return b;
+  }
+
+  // Each member keeps its share of the network's oil, so oil survives a rebuild
+  // and a save game.
+  function settleOil() {
+    for (const net of pipes.nets) for (const m of net.members) m.oil = net.capacity ? (net.amount * FLUID_CAPACITY[m.type]) / net.capacity : 0;
+  }
+
+  // Touching fluid buildings form networks. Every member also learns which sides
+  // it connects on and how many steps it is from the nearest pump, so the view can
+  // draw the oil flowing away from the pumps.
+  function updatePipes() {
+    settleOil();
+    pipesDirty = false;
+    pipes.version++;
+    pipes.nets = [];
+    const members = [...buildings.values()].filter(isFluid);
+    for (const b of members) {
+      b.pipes = null;
+      b.links = [0, 1, 2, 3].filter((d) => fluidLink(b, d));
+      b.depth = Infinity;
+    }
+    for (const first of members) {
+      if (first.pipes) continue;
+      const net = { id: pipes.nets.length + 1, members: [], amount: 0, capacity: 0, rate: 0, in: 0, out: 0, pumps: 0, tanks: 0 };
+      pipes.nets.push(net);
+      const todo = [first];
+      first.pipes = net;
+      while (todo.length) {
+        const b = todo.pop();
+        net.members.push(b);
+        net.amount += b.oil ?? 0;
+        net.capacity += FLUID_CAPACITY[b.type];
+        if (b.type === 'pump') net.pumps++;
+        if (b.type === 'tank') net.tanks++;
+        for (const d of b.links) {
+          const n = neighbour(b, d);
+          if (n.pipes) continue;
+          n.pipes = net;
+          todo.push(n);
+        }
+      }
+      net.amount = Math.min(net.amount, net.capacity);
+      // Steps from the pumps, breadth first.
+      let ring = net.members.filter((b) => b.type === 'pump');
+      for (const b of ring) b.depth = 0;
+      while (ring.length) {
+        const next = [];
+        for (const b of ring) {
+          for (const d of b.links) {
+            const n = neighbour(b, d);
+            if (n.depth <= b.depth + 1) continue;
+            n.depth = b.depth + 1;
+            next.push(n);
+          }
+        }
+        ring = next;
+      }
+    }
+  }
+
+  function tickPump(b, dt) {
+    if (b.tile.amount <= 0) {
+      b.state = 'empty';
+      return;
+    }
+    // Pumps only run on power, and only as fast as the network supplies it.
+    const speed = b.net ? b.net.satisfaction : 0;
+    if (speed <= 0) {
+      b.state = 'nopower';
+      return;
+    }
+    const net = b.pipes;
+    const room = net.capacity - net.amount;
+    if (room < 0.01) {
+      b.state = 'blocked';
+      return;
+    }
+    b.state = 'work';
+    const n = Math.min(PUMP_RATE * research.stats.pump * speed * dt, room);
+    net.amount += n;
+    net.in += n;
+    b.acc += n;
+    while (b.acc >= 1) {
+      b.acc--;
+      b.tile.amount--;
+      b.pumped++;
+      mined[b.tile.ore]++;
+      pumped++;
+    }
+  }
+
+  function tickRefinery(b, dt) {
+    const recipe = REFINERY_RECIPES[b.recipe];
+    const time = recipe.time / research.stats.refinery;
+    if (b.output.length && pushTo(neighbour(b, b.dir), b.output[0], b.dir)) b.output.shift();
+    const net = b.pipes;
+    if (!b.busy && net && net.amount >= recipe.oil - 1e-6) {
+      net.amount = Math.max(0, net.amount - recipe.oil);
+      net.out += recipe.oil;
+      b.busy = true;
+      b.timer = 0;
+    }
+    if (!b.busy) {
+      b.state = 'idle';
+      return;
+    }
+    const speed = powerFactor(b);
+    b.state = speed > 0 ? 'work' : 'nopower';
+    b.timer = Math.min(b.timer + dt * speed, time);
+    if (b.timer < time) return;
+    if (b.output.length >= MACHINE_OUTPUT) {
+      b.state = 'blocked';
+      return;
+    }
+    b.output.push(recipe.makes);
+    b.busy = false;
+    b.made++;
+  }
+
+  function tickFluids(dt) {
+    for (const net of pipes.nets) net.in = net.out = 0;
+    for (const b of buildings.values()) if (b.type === 'pump') tickPump(b, dt);
+    for (const b of buildings.values()) if (b.type === 'refinery') tickRefinery(b, dt);
+    // Oil per second through each network, smoothed for the view.
+    for (const net of pipes.nets) net.rate += (Math.max(net.in, net.out) / dt - net.rate) * Math.min(1, dt * 1.5);
+  }
+
+  // Totals over all pipe networks, for the HUD.
+  function oilSummary() {
+    const s = { nets: 0, pumps: 0, amount: 0, capacity: 0, rate: 0, refineries: 0, working: 0 };
+    for (const net of pipes.nets) {
+      s.nets++;
+      s.pumps += net.pumps;
+      s.amount += net.amount;
+      s.capacity += net.capacity;
+      s.rate += net.rate;
+    }
+    for (const b of buildings.values()) {
+      if (b.type === 'refinery') s.refineries++;
+      if (b.type === 'pump' && b.state === 'work') s.working++;
+    }
+    return s;
+  }
+
   function setDir(b, dir) {
     if (b.dir === dir) return;
     b.dir = dir;
@@ -256,11 +449,13 @@ export function createFactory(world, { start } = {}) {
   }
 
   function setRecipe(b, recipe) {
-    if (b.type !== 'constructor' || b.recipe === recipe || !CONSTRUCTOR_RECIPES[recipe]) return;
+    if (b.recipe === recipe || !recipesOf(b.type)?.[recipe]) return;
     b.recipe = recipe;
     // Keep buffered parts the new recipe can use, drop the rest.
-    const needs = CONSTRUCTOR_RECIPES[recipe].needs;
-    b.input = Object.fromEntries(Object.entries(b.input).filter(([k]) => needs[k]));
+    if (b.type === 'constructor') {
+      const needs = CONSTRUCTOR_RECIPES[recipe].needs;
+      b.input = Object.fromEntries(Object.entries(b.input).filter(([k]) => needs[k]));
+    }
     b.busy = false;
     b.timer = 0;
     b.refused = null;
@@ -270,6 +465,7 @@ export function createFactory(world, { start } = {}) {
   // 'left' means items enter over the left edge (seen in travel direction).
   function updateShapes() {
     gridDirty = true;
+    pipesDirty = true;
     for (const b of buildings.values()) {
       if (b.type !== 'belt') continue;
       const back = neighbour(b, opposite(b.dir));
@@ -295,17 +491,17 @@ export function createFactory(world, { start } = {}) {
       return true;
     }
     if (target.type === 'power') {
-      // Coal from any side.
-      if (kind !== 'coal') {
+      // Coal or fuel from any side.
+      if (!FUEL_VALUE[kind]) {
         target.refused = kind;
         return false;
       }
       if (target.fuel >= PLANT_FUEL) return false;
-      target.fuel++;
+      target.fuel += FUEL_VALUE[kind];
       target.refused = null;
       return true;
     }
-    if (target.type === 'drill' || target.type === 'pole' || target.dir === opposite(dir)) return false;
+    if (target.type === 'drill' || target.type === 'pole' || isFluid(target) || target.dir === opposite(dir)) return false;
     if (target.type === 'belt') {
       const last = target.items[target.items.length - 1];
       if (last && last.p < ITEM_SPACING) return false;
@@ -486,8 +682,10 @@ export function createFactory(world, { start } = {}) {
 
   function tick(dt) {
     if (gridDirty) updateGrid();
+    if (pipesDirty) updatePipes();
     time += dt;
     tickPower(dt);
+    tickFluids(dt);
     const step = beltSpeed() * dt;
     for (const b of buildings.values()) if (b.type === 'belt' && b.items.length) tickBelt(b, step);
     for (const b of buildings.values()) {
@@ -502,28 +700,33 @@ export function createFactory(world, { start } = {}) {
   // Plain data for a save game. The world itself is rebuilt from its seed,
   // only the ore left in each field is stored.
   function save() {
+    settleOil();
     return {
       time,
+      pumped,
       mined,
       stored,
       delivered,
       recent: Object.fromEntries(Object.entries(recent).filter(([, log]) => log.length)),
       research: research.save(),
       amounts: world.tiles.filter((t) => t.ore).map((t) => t.amount),
-      buildings: [...buildings.values()].map(({ tile, index, net, load, ...rest }) => ({ ...rest, index })),
+      buildings: [...buildings.values()].map(({ tile, index, net, load, pipes, links, depth, ...rest }) => ({ ...rest, index })),
     };
   }
 
-  function load(data) {
+  // `version` is the save format (see save.js); before 3 there was no oil on the map.
+  function load(data, version = Infinity) {
     time = data.time ?? 0;
+    pumped = data.pumped ?? 0;
     for (const [target, from] of [[mined, data.mined], [stored, data.stored], [delivered, data.delivered]]) {
       for (const k of Object.keys(target)) target[k] = from?.[k] ?? 0;
     }
     for (const k of Object.keys(recent)) recent[k] = data.recent?.[k] ?? [];
     research.load(data.research);
     let n = 0;
-    for (const t of world.tiles) if (t.ore) t.amount = data.amounts?.[n++] ?? t.amount;
+    for (const t of world.tiles) if (t.ore && (version >= 3 || !ORES[t.ore].fluid)) t.amount = data.amounts?.[n++] ?? t.amount;
     buildings.clear();
+    pipes.nets = [];
     for (const b of data.buildings ?? []) {
       const tile = world.tiles[b.index];
       if (tile && BUILDINGS[b.type]) buildings.set(b.index, { ...b, tile });
@@ -543,7 +746,13 @@ export function createFactory(world, { start } = {}) {
     powerFactor,
     powerSummary,
     powered,
+    pipes,
+    oilSummary,
     updateGrid: () => gridDirty && updateGrid(),
+    updatePipes: () => pipesDirty && updatePipes(),
+    get pumped() {
+      return pumped;
+    },
     get time() {
       return time;
     },

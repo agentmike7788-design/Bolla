@@ -3,6 +3,7 @@ import { ITEMS, BUILDINGS } from './factory.js';
 const hex = (color) => `#${color.toString(16).padStart(6, '0')}`;
 const SIGNAL = 0xffd34d;
 const POWER = 0x7fd4ff;
+const OIL = 0xe0a040;
 
 export const clock = (seconds) => {
   const s = Math.floor(seconds);
@@ -10,12 +11,14 @@ export const clock = (seconds) => {
 };
 
 function goalRow(p) {
-  const name = p.powered
+  const name = p.oil
+    ? 'Öl pumpen'
+    : p.powered
     ? 'Maschinen mit Strom'
     : p.building
       ? `${BUILDINGS[p.building].name} bauen`
       : `${ITEMS[p.item].name}${p.rate ? ' pro Minute' : ''}`;
-  const color = p.powered ? POWER : p.building ? SIGNAL : ITEMS[p.item].color;
+  const color = p.oil ? OIL : p.powered ? POWER : p.building ? SIGNAL : ITEMS[p.item].color;
   const have = Math.min(p.have, p.need);
   const done = p.have >= p.need;
   return `<li style="--c:${hex(color)}" class="${done ? 'met' : ''}${p.rate ? ' rate' : ''}">

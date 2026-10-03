@@ -16,6 +16,7 @@
 //                   { build: type, count }      have `count` of a building
 //                   { rate: item, perMin }      that many into storage within one minute
 //                   { powered: count }          that many machines working on power at once
+//                   { oil: count }              pump that much more oil
 //     reward      { unlocks, boosts, text } like a research entry, see research.js
 export const SCENARIOS = [
   {
@@ -186,6 +187,48 @@ export const SCENARIOS = [
       },
     ],
   },
+  {
+    id: 'oilCoast',
+    name: 'Ölküste',
+    desc: 'Schwarze Pfützen an der Küste. Strom, Pumpen, Rohre und eine Raffinerie: Kunststoff für die Prozessoren.',
+    level: 4,
+    seed: 4242,
+    map: { ores: { iron: 4, copper: 3, coal: 3, stone: 2, oil: 4 }, land: 0.05, coast: 0.82, forest: 0.62, richness: 1.2 },
+    start: ['drill', 'belt', 'storage', 'furnace', 'assembler', 'constructor', 'splitter', 'merger', 'power', 'pole'],
+    par: 19,
+    missions: [
+      {
+        name: 'Strom fürs Ölfeld',
+        desc: 'Ohne Strom keine Pumpe. Kohle ins Kraftwerk, Masten zu den Maschinen.',
+        goals: [{ build: 'power', count: 1 }, { powered: 3 }],
+        reward: { unlocks: ['pump', 'pipe', 'tank'], text: 'Ölpumpe, Rohre, Öltank' },
+      },
+      {
+        name: 'Schwarzes Gold',
+        desc: 'Pumpen auf die schwarzen Felder, ein Strommast daneben und Rohre zu einem Tank.',
+        goals: [{ build: 'pump', count: 2 }, { oil: 150 }],
+        reward: { unlocks: ['refinery'], text: 'Raffinerie' },
+      },
+      {
+        name: 'Raffiniert',
+        desc: 'Ein Rohr hinten in die Raffinerie, ein Band vorn heraus. Klick sie an, um Kunststoff oder Treibstoff zu wählen.',
+        goals: [{ deliver: 'plastic', count: 30 }, { deliver: 'fuel', count: 15 }],
+        reward: { boosts: { pump: 1.5, power: 1.5 }, text: 'Pumpen +50 %, Kraftwerke +50 %' },
+      },
+      {
+        name: 'Prozessoren',
+        desc: 'Zwei Schaltkreise und ein Kunststoff ergeben einen Prozessor.',
+        goals: [{ deliver: 'processor', count: 15 }],
+        reward: { boosts: { constructor: 1.5, refinery: 1.5, belt: 1.6 }, text: 'Konstruktor und Raffinerie +50 %, Bänder +60 %' },
+      },
+      {
+        name: 'Petrochemie',
+        desc: 'Die Küste liefert: Kunststoff und Prozessoren im Minutentakt.',
+        goals: [{ rate: 'plastic', perMin: 30 }, { rate: 'processor', perMin: 8 }],
+        reward: { text: 'Das Öl fließt' },
+      },
+    ],
+  },
 ];
 
 export const scenarioById = (id) => SCENARIOS.find((s) => s.id === id);
@@ -197,12 +240,14 @@ export const starsFor = (scenario, seconds) => (seconds <= scenario.par * 60 ? 3
 export function createMissions(scenario, factory) {
   let index = 0;
   let base = { ...factory.delivered }; // deliveries count from the start of each mission
+  let basePumped = factory.pumped;
   let reached = new Set(); // rate goals met once stay met
   let finishedAt = null;
 
   function progress(goal, i) {
     if (goal.deliver) return { item: goal.deliver, have: factory.delivered[goal.deliver] - base[goal.deliver], need: goal.count };
     if (goal.build) return { building: goal.build, have: factory.count(goal.build), need: goal.count };
+    if (goal.oil) return { oil: true, have: Math.floor(factory.pumped - basePumped), need: goal.oil };
     if (goal.powered) return { powered: true, have: reached.has(i) ? goal.powered : factory.powered(), need: goal.powered };
     const have = reached.has(i) ? goal.perMin : factory.perMinute(goal.rate);
     return { item: goal.rate, rate: true, have, need: goal.perMin };
@@ -232,15 +277,17 @@ export function createMissions(scenario, factory) {
       factory.research.grant(m.reward);
       index++;
       base = { ...factory.delivered };
+      basePumped = factory.pumped;
       reached = new Set();
       if (!this.current) finishedAt = factory.time;
       return m;
     },
-    save: () => ({ index, base, reached: [...reached], finishedAt }),
+    save: () => ({ index, base, basePumped, reached: [...reached], finishedAt }),
     load(data) {
       if (!data) return;
       index = Math.min(data.index ?? 0, scenario.missions.length);
       base = { ...base, ...data.base };
+      basePumped = data.basePumped ?? 0;
       reached = new Set(data.reached ?? []);
       finishedAt = data.finishedAt ?? null;
     },

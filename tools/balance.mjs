@@ -7,7 +7,7 @@
 //
 // The estimate is play time = building time + waiting for the parts. Building
 // time assumes a quick but not perfect player (see BUILD_SECONDS).
-import { createFactory, BUILDINGS } from '../src/factory.js';
+import { createFactory, BUILDINGS, CONSTRUCTOR_RECIPES, PUMP_RATE } from '../src/factory.js';
 import { SCENARIOS } from '../src/scenarios.js';
 import { RESEARCH, STATS } from '../src/research.js';
 
@@ -40,6 +40,11 @@ const LINES = {
   gear: { recipe: 'gear', inputs: ['ironPlate', 'ironPlate'] },
   circuit: { recipe: 'circuit', inputs: ['ironPlate', 'wire'] },
   steel: { recipe: 'steel', inputs: ['ironIngot', 'coal'] },
+  // Oil lines: pump, pipes, refinery, with a pole and a power plant beside them.
+  plastic: { refinery: 'plastic' },
+  fuel: { refinery: 'fuel' },
+  // Built from two finished lines: estimated from those lines and the recipe alone.
+  processor: { recipe: 'processor', feeds: ['circuit', 'plastic'] },
 };
 
 const E = 1;
@@ -77,6 +82,20 @@ function buildLine(factory, world, item, oy) {
   if (line.steps) {
     chain(factory, world, line.steps, cx, oy, E);
     add(line.steps);
+  } else if (line.refinery) {
+    // Pump, two pipes, refinery, two belts. The plant is fed by hand in measure().
+    Object.assign(world.at(cx - 5, oy), { ore: 'oil', amount: 1e6 });
+    factory.place('pump', world.at(cx - 5, oy), E);
+    factory.place('pipe', world.at(cx - 4, oy), E);
+    factory.place('pipe', world.at(cx - 3, oy), E);
+    factory.setRecipe(factory.place('refinery', world.at(cx - 2, oy), E), line.refinery);
+    factory.place('belt', world.at(cx - 1, oy), E);
+    factory.place('belt', world.at(cx, oy), E);
+    factory.place('pole', world.at(cx - 3, oy + 1), E);
+    factory.place('power', world.at(cx - 3, oy + 2), E);
+    // Pump, refinery, pole and plant; pipes cost about as much as belts.
+    cost.building += 4;
+    cost.belt += 2 * BELTS_PER_STEP;
   } else {
     const [a, b] = line.inputs.map((i) => LINES[i].steps);
     chain(factory, world, a, cx - 1, oy, E);
@@ -96,6 +115,8 @@ function buildLine(factory, world, item, oy) {
 
 // Runs one line alone: parts per minute once it is full, seconds until the first part.
 function measure(item, stats) {
+  const line = LINES[item];
+  if (line.feeds) return measureFed(item, stats);
   const world = flatWorld();
   const factory = createFactory(world, { start: ALL });
   Object.assign(factory.research.stats, stats);
@@ -103,13 +124,32 @@ function measure(item, stats) {
   let first = null;
   const step = 1 / 60;
   let atWarm = 0;
+  const plants = [...factory.buildings.values()].filter((b) => b.type === 'power');
   for (let t = 0; t < 240; t += step) {
+    for (const p of plants) p.fuel = 5;
     factory.tick(step);
     if (first === null && factory.delivered[item] > 0) first = factory.time;
     if (Math.abs(factory.time - 120) < step / 2) atWarm = factory.delivered[item];
   }
   const perMin = (factory.delivered[item] - atWarm) / 2;
   return { perMin, first: first ?? Infinity, cost };
+}
+
+// A constructor fed by two finished lines (lines of their own): as fast as the
+// slower of its inputs and its recipe allow.
+function measureFed(item, stats) {
+  const line = LINES[item];
+  const recipe = CONSTRUCTOR_RECIPES[line.recipe];
+  const feeds = line.feeds.map((f) => ({ need: recipe.needs[f], ...measure(f, stats) }));
+  const own = (60 / recipe.time) * stats.constructor;
+  const perMin = Math.min(own, ...feeds.map((f) => f.perMin / f.need));
+  const first = Math.max(...feeds.map((f) => f.first)) + recipe.time / stats.constructor + 3;
+  const cost = { building: 1, belt: BELTS_PER_STEP };
+  for (const f of feeds) {
+    cost.building += f.cost.building;
+    cost.belt += f.cost.belt;
+  }
+  return { perMin, first, cost };
 }
 
 const baseStats = () => Object.fromEntries(STATS.map((s) => [s, 1]));
@@ -136,6 +176,7 @@ for (const item of Object.keys(LINES)) {
 function planScenario(s) {
   const stats = baseStats();
   const lines = {}; // item -> lines standing
+  let pumps = 0;
   let total = 0;
   const rows = [];
   for (const m of s.missions) {
@@ -152,6 +193,15 @@ function planScenario(s) {
       if (g.build) {
         const have = g.build === 'drill' ? Object.keys(lines).length : 0;
         build += Math.max(0, g.count - have) * BUILD_SECONDS.building;
+        if (g.build === 'pump') {
+          // A pole beside the pumps and a few pipes to a tank.
+          build += BUILD_SECONDS.building * 2 + BELTS_PER_STEP * BUILD_SECONDS.belt;
+          pumps = Math.max(pumps, g.count);
+        }
+        continue;
+      }
+      if (g.oil) {
+        wait = Math.max(wait, 3 + g.oil / (PUMP_RATE * stats.pump * Math.max(1, pumps)));
         continue;
       }
       const item = g.deliver ?? g.rate;

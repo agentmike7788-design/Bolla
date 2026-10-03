@@ -13,13 +13,15 @@ export const TERRAIN = {
   rock: { name: 'Fels', color: 0x8c857a, height: 0.85, buildable: false },
 };
 
-// Ore deposits that drills will mine in a later step.
-// color: the ore itself, rock: the ground it sits in, crystal: shiny veins.
+// Deposits on the map. Drills mine ores; oil is a fluid that only pumps get out.
+// color: the deposit itself, rock: the ground it sits in, crystal: shiny veins,
+// patch: size of a field (1 = normal), rich: how much each tile holds.
 export const ORES = {
   iron: { name: 'Eisenerz', color: 0x8c96a3, rock: 0x6a5d58, crystal: 0xb9c7d6 },
   copper: { name: 'Kupfererz', color: 0xc8682c, rock: 0x6e4a36, crystal: 0x3fb8a4 },
   coal: { name: 'Kohle', color: 0x26262a, rock: 0x403c3a, crystal: null },
   stone: { name: 'Kalkstein', color: 0xe6dcc6, rock: 0xb3a88f, crystal: null },
+  oil: { name: 'Erdöl', color: 0x17141c, rock: 0x6b5638, crystal: null, fluid: true, patch: 0.55, rich: 3 },
 };
 
 // Small deterministic PRNG so a seed always yields the same map.
@@ -88,7 +90,7 @@ function makeNoise(rand) {
 //   desert   grass turns into desert sand
 //   richness multiplies the ore in each patch
 export const DEFAULT_MAP = {
-  ores: { iron: 5, copper: 4, coal: 4, stone: 3 },
+  ores: { iron: 5, copper: 4, coal: 4, stone: 3, oil: 3 },
   land: 0,
   coast: 0.78,
   rock: 0.48,
@@ -130,7 +132,7 @@ export function generateWorld(seed, options = {}) {
       const cz = 4 + Math.floor(rand() * (MAP_SIZE - 8));
       const center = at(cx, cz);
       if (!TERRAIN[center.terrain].buildable || center.ore) continue;
-      const radius = 2 + rand() * 2.5;
+      const radius = (2 + rand() * 2.5) * (ORES[ore].patch ?? 1);
       const r = Math.ceil(radius);
       for (let dz = -r; dz <= r; dz++) {
         for (let dx = -r; dx <= r; dx++) {
@@ -142,7 +144,7 @@ export function generateWorld(seed, options = {}) {
           if (dist > radius || !TERRAIN[tile.terrain].buildable || tile.ore) continue;
           tile.ore = ore;
           // Richer in the middle of the patch.
-          tile.amount = Math.round(((1 - dist / (radius + 1.5)) * 1800 + 200 + rand() * 300) * map.richness);
+          tile.amount = Math.round(((1 - dist / (radius + 1.5)) * 1800 + 200 + rand() * 300) * map.richness * (ORES[ore].rich ?? 1));
         }
       }
       placed++;

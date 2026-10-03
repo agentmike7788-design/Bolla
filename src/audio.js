@@ -3,7 +3,7 @@
 // close, and a slow generative background tune. No audio files needed.
 
 const SETTINGS_KEY = 'bolla-audio';
-const MACHINE_TYPES = ['drill', 'furnace', 'assembler', 'constructor', 'belt', 'power'];
+const MACHINE_TYPES = ['drill', 'furnace', 'assembler', 'constructor', 'belt', 'power', 'pump', 'refinery'];
 const LOOP_SECONDS = 2.4;
 
 function loadSettings() {
@@ -266,6 +266,20 @@ export function createAudio() {
       const fire = low(s, 'p', 0.05) * 2.5;
       return (hum + whine) * (0.85 + 0.15 * Math.sin(TAU * 0.42 * t)) + fire * 0.4;
     },
+    // The pumpjack: a slow creak up and a heavy thud down, with a motor under it.
+    pump: (t, s) => {
+      const p = t % 1.2;
+      const thud = Math.sin(TAU * 45 * p) * Math.exp(-p * 9) * 0.6;
+      const creak = p > 0.5 && p < 0.8 ? Math.sin(TAU * (300 + (p - 0.5) * 400) * t) * 0.05 : 0;
+      return thud + creak + Math.sin(TAU * 60 * t) * 0.08 + low(s, 'm', 0.3) * 0.2;
+    },
+    // Bubbling columns and the hiss of the flare.
+    refinery: (t, s) => {
+      if (Math.random() < 0.004) s.bub = 1;
+      s.bub = (s.bub ?? 0) * 0.995;
+      const bubble = Math.sin(TAU * (180 + s.bub * 220) * t) * s.bub * 0.25;
+      return low(s, 'f', 0.08) * 2.2 + bubble + Math.sin(TAU * 90 * t) * 0.06;
+    },
     // A soft rattle of rollers.
     belt: (t, s) => {
       const roll = low(s, 'b', 0.5) * (0.4 + 0.6 * pulse(t, 0.1, 12));
@@ -289,7 +303,7 @@ export function createAudio() {
   // Machines are heard by how close they are to the spot the camera looks at.
   // One loop per machine type is mixed from all working machines, so a big
   // factory costs no more than a small one.
-  const LEVEL = { drill: 0.5, furnace: 0.75, assembler: 0.7, constructor: 0.6, belt: 0.25, power: 0.6 };
+  const LEVEL = { drill: 0.5, furnace: 0.75, assembler: 0.7, constructor: 0.6, belt: 0.25, power: 0.6, pump: 0.55, refinery: 0.55 };
   function updateMachines(factory, focus, right, zoom) {
     if (!ctx || ctx.state !== 'running') return;
     const radius = 3 + zoom * 0.18;

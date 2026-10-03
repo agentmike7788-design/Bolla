@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { DIRS, ITEMS, POLE_SUPPLY } from './factory.js';
+import { DIRS, ITEMS, POLE_SUPPLY, isFluid } from './factory.js';
 import { ORES } from './world.js';
 
 const STEEL = 0x3a4046;
@@ -197,6 +197,43 @@ function buildingParts() {
     crossbar: box(0.56, 0.05, 0.06, 0, 1.46, 0),
     brace: mergeGeometries([-1, 1].map((sx) => box(0.025, 0.26, 0.025, 0, 0, 0).rotateZ(sx * 0.7).translate(sx * 0.08, 1.36, 0))),
     insulators: mergeGeometries([-0.22, 0.22].map((x) => new THREE.CylinderGeometry(0.025, 0.035, 0.09, 8).translate(x, 1.53, 0))),
+    // Oil pump: a pumpjack. The walking beam nods on an A-frame, the horse head
+    // over the well at the front, the crank with its counterweights at the back.
+    jackBase: mergeGeometries([box(0.3, 0.08, 0.9, 0, 0.04, 0), box(0.5, 0.06, 0.22, 0, 0.03, 0.28)]),
+    wellhead: mergeGeometries([new THREE.CylinderGeometry(0.07, 0.09, 0.2, 8).translate(0, 0.1, -0.34), new THREE.CylinderGeometry(0.1, 0.1, 0.04, 8).translate(0, 0.2, -0.34)]),
+    samson: mergeGeometries([-1, 1].flatMap((sx) => [-1, 1].map((sz) => box(0.04, 0.68, 0.04, 0, 0, 0).rotateX(sz * 0.22).rotateZ(sx * 0.18).translate(sx * 0.07, 0.38, sz * 0.07)))),
+    beam: box(0.08, 0.08, 0.86, 0, 0, 0.02),
+    horsehead: new THREE.CylinderGeometry(0.17, 0.17, 0.09, 12, 1, false, Math.PI * 0.5, Math.PI).rotateZ(Math.PI / 2).translate(0, -0.02, -0.4),
+    gearbox: rbox(0.2, 0.16, 0.18, 0, 0.16, 0.3, 0.03),
+    crank: mergeGeometries([box(0.3, 0.05, 0.05, 0, 0, 0), ...[-1, 1].map((sx) => new THREE.CylinderGeometry(0.11, 0.11, 0.05, 10, 1, false, 0, Math.PI).rotateZ(Math.PI / 2).translate(sx * 0.15, 0, 0).rotateX(Math.PI))]),
+    pitman: mergeGeometries([-1, 1].map((sx) => box(0.025, 0.36, 0.025, sx * 0.13, -0.18, 0))),
+    rod: new THREE.CylinderGeometry(0.012, 0.012, 0.5, 5).translate(0, -0.25, 0),
+    // Pipes: a hub with a flange on a small post, and an arm towards each linked side.
+    pipeHub: mergeGeometries([new THREE.SphereGeometry(0.105, 10, 8), box(0.05, 0.3, 0.05, 0, -0.17, 0), box(0.18, 0.03, 0.18, 0, -0.31, 0)]),
+    pipeArm: mergeGeometries([new THREE.CylinderGeometry(0.075, 0.075, 0.5, 10).rotateX(Math.PI / 2).translate(0, 0, -0.25), new THREE.CylinderGeometry(0.098, 0.098, 0.05, 10).rotateX(Math.PI / 2).translate(0, 0, -0.46)]),
+    flowRing: new THREE.CylinderGeometry(0.088, 0.088, 0.09, 10).rotateX(Math.PI / 2),
+    // Oil tank: a white drum with a dome, a ladder and a gauge that shows the level.
+    tankFoot: new THREE.CylinderGeometry(0.44, 0.46, 0.08, 18).translate(0, 0.04, 0),
+    drum: new THREE.CylinderGeometry(0.38, 0.38, 0.62, 18).translate(0, 0.39, 0),
+    drumBands: mergeGeometries([0.22, 0.56].map((y) => new THREE.CylinderGeometry(0.39, 0.39, 0.04, 18).translate(0, y, 0))),
+    dome: new THREE.SphereGeometry(0.38, 18, 6, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 0.35, 1).translate(0, 0.7, 0),
+    ladder: mergeGeometries([-0.05, 0.05].map((x) => box(0.015, 0.7, 0.015, x, 0.4, 0)).concat([0.15, 0.3, 0.45, 0.6].map((y) => box(0.1, 0.012, 0.012, 0, y, 0)))).translate(0, 0, 0.395),
+    gaugeBack: box(0.09, 0.5, 0.02, 0, 0.39, -0.385),
+    gauge: box(0.06, 0.46, 0.02, 0, 0.23, 0),
+    // Refinery: two distillation columns, a heater box, a flare and a hopper out front.
+    refFoot: rbox(0.94, 0.08, 0.94, 0, 0.04, 0, 0.03),
+    heater: rbox(0.42, 0.3, 0.36, -0.2, 0.23, 0.18, 0.04),
+    columnA: new THREE.CylinderGeometry(0.12, 0.12, 1.1, 12).translate(0.2, 0.63, 0.14),
+    columnB: new THREE.CylinderGeometry(0.09, 0.09, 0.8, 12).translate(0.24, 0.48, -0.16),
+    columnRings: mergeGeometries([0.4, 0.7, 1.0].map((y) => new THREE.CylinderGeometry(0.135, 0.135, 0.03, 12).translate(0.2, y, 0.14)).concat([0.4, 0.68].map((y) => new THREE.CylinderGeometry(0.105, 0.105, 0.03, 12).translate(0.24, y, -0.16)))),
+    caps: mergeGeometries([new THREE.SphereGeometry(0.12, 12, 4, 0, Math.PI * 2, 0, Math.PI / 2).translate(0.2, 1.18, 0.14), new THREE.SphereGeometry(0.09, 12, 4, 0, Math.PI * 2, 0, Math.PI / 2).translate(0.24, 0.88, -0.16)]),
+    refPipes: mergeGeometries([
+      new THREE.CylinderGeometry(0.025, 0.025, 0.4, 6).rotateZ(Math.PI / 2).translate(0, 0.32, 0.14),
+      new THREE.CylinderGeometry(0.025, 0.025, 0.3, 6).rotateX(Math.PI / 2).translate(0.2, 0.92, 0),
+      new THREE.CylinderGeometry(0.025, 0.025, 0.1, 6).translate(0.24, 0.92, -0.12),
+    ]),
+    flare: mergeGeometries([new THREE.CylinderGeometry(0.025, 0.035, 0.95, 6).translate(-0.33, 0.5, -0.3), new THREE.CylinderGeometry(0.045, 0.03, 0.06, 8).translate(-0.33, 0.99, -0.3)]),
+    flame: new THREE.ConeGeometry(0.05, 0.16, 7).translate(0, 0.08, 0),
   };
   const m = {
     steel: flat(STEEL),
@@ -216,6 +253,12 @@ function buildingParts() {
     red: flat(0xc8402e, { roughness: 0.6 }),
     wood: flat(0x7a5536, { roughness: 0.9, metalness: 0 }),
     porcelain: new THREE.MeshStandardMaterial({ color: 0x9fd6c0, roughness: 0.25, metalness: 0.1 }),
+    jack: flat(0x2f5f8f, { roughness: 0.5 }),
+    oilBlack: new THREE.MeshStandardMaterial({ color: 0x15131a, roughness: 0.15, metalness: 0.5 }),
+    pipe: flat(0x8a9198, { roughness: 0.4, metalness: 0.6 }),
+    tank: flat(0xe6e2d8, { roughness: 0.55 }),
+    refinery: flat(0xc9cdd0, { roughness: 0.35, metalness: 0.55 }),
+    flame: new THREE.MeshBasicMaterial({ color: 0xffa040, transparent: true, opacity: 0.9, depthWrite: false }),
     ore: Object.fromEntries(Object.entries(ORES).map(([k, o]) => [k, flat(o.color, { roughness: 0.4, metalness: 0.3 })])),
   };
   return { g, m };
@@ -250,6 +293,23 @@ function itemShapes() {
         new THREE.BoxGeometry(0.02, 0.1, 0.26),
       ]),
       lift: 0.06,
+    },
+    roll: { geo: mergeGeometries([new THREE.CylinderGeometry(0.075, 0.075, 0.2, 10).rotateZ(Math.PI / 2), new THREE.CylinderGeometry(0.03, 0.03, 0.22, 6).rotateZ(Math.PI / 2)]), lift: 0.075 },
+    canister: {
+      geo: mergeGeometries([
+        new RoundedBoxGeometry(0.15, 0.18, 0.09, 2, 0.02).translate(0, 0.09, 0),
+        new THREE.CylinderGeometry(0.02, 0.02, 0.04, 6).translate(0.04, 0.19, 0),
+        new THREE.BoxGeometry(0.07, 0.025, 0.025).translate(-0.03, 0.19, 0),
+      ].map((g) => g.toNonIndexed())),
+      lift: 0,
+    },
+    cpu: {
+      geo: mergeGeometries([
+        new THREE.BoxGeometry(0.2, 0.025, 0.2),
+        new THREE.BoxGeometry(0.12, 0.03, 0.12).translate(0, 0.025, 0),
+        ...[-1, 1].map((s) => new THREE.BoxGeometry(0.24, 0.01, 0.02).translate(0, -0.005, s * 0.06)),
+      ]),
+      lift: 0.015,
     },
   };
 }
@@ -317,6 +377,78 @@ export function createFactoryView(renderer) {
   areas.frustumCulled = false;
   areas.renderOrder = 1;
   group.add(areas);
+
+  // Pipes: hubs and arms as instances, rebuilt when the pipe networks change, and
+  // glowing rings that run along them with the oil, away from the pumps.
+  const PIPE_Y = 0.34;
+  const MAX_PIPES = 64 * 64;
+  const pipeHubs = new THREE.InstancedMesh(parts.g.pipeHub, parts.m.pipe, MAX_PIPES);
+  const pipeArms = new THREE.InstancedMesh(parts.g.pipeArm, parts.m.pipe, MAX_PIPES * 4);
+  const ringMat = new THREE.MeshStandardMaterial({ color: 0x4a2a08, emissive: 0xffb347, emissiveIntensity: 1.6, roughness: 0.4 });
+  const flowRings = new THREE.InstancedMesh(parts.g.flowRing, ringMat, MAX_PIPES * 4);
+  for (const mesh of [pipeHubs, pipeArms, flowRings]) {
+    mesh.count = 0;
+    mesh.frustumCulled = false;
+    mesh.castShadow = mesh !== flowRings;
+    mesh.receiveShadow = true;
+    group.add(mesh);
+  }
+  let pipesVersion = -1;
+  let flowArms = []; // { b, d, out }: an arm the oil runs along, out of or into its tile
+  const flowPhase = new WeakMap(); // pipe network -> where its rings are, 0..1
+
+  function rebuildPipes(factory) {
+    let hubs = 0;
+    let arms = 0;
+    flowArms = [];
+    for (const b of factory.buildings.values()) {
+      if (!isFluid(b)) continue;
+      const y = b.tile.height + PIPE_Y;
+      if (b.type === 'pipe') {
+        dummy.position.set(b.tile.position.x, y, b.tile.position.z);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        pipeHubs.setMatrixAt(hubs++, dummy.matrix);
+      }
+      // A pipe on its own lies along its build direction.
+      const sides = b.links.length || b.type !== 'pipe' ? b.links : [b.dir, (b.dir + 2) % 4];
+      for (const d of sides) {
+        dummy.position.set(b.tile.position.x, y, b.tile.position.z);
+        dummy.rotation.set(0, yaw(d), 0);
+        dummy.updateMatrix();
+        pipeArms.setMatrixAt(arms++, dummy.matrix);
+        const n = factory.at(b.tile.x + DIRS[d].x, b.tile.z + DIRS[d].z);
+        if (n && n.depth !== b.depth && Number.isFinite(Math.min(n.depth, b.depth))) flowArms.push({ b, d, out: n.depth > b.depth });
+      }
+    }
+    pipeHubs.count = hubs;
+    pipeArms.count = arms;
+    pipeHubs.instanceMatrix.needsUpdate = true;
+    pipeArms.instanceMatrix.needsUpdate = true;
+  }
+
+  function updateFlow(dt, factory) {
+    for (const net of factory.pipes.nets) {
+      // Faster rings for more oil per second; still rings in a full, idle network.
+      const speed = net.rate > 0.05 ? Math.min(2.4, 0.5 + net.rate * 0.45) : 0;
+      flowPhase.set(net, ((flowPhase.get(net) ?? 0) + dt * speed) % 1);
+    }
+    let n = 0;
+    for (const { b, d, out } of flowArms) {
+      const net = b.pipes;
+      if (!net || net.amount < 0.5) continue;
+      // Out of the tile: from the middle to the edge; into it: from the edge to the middle.
+      const u = flowPhase.get(net) ?? 0;
+      const t = 0.5 * (out ? u : 1 - u);
+      dummy.position.set(b.tile.position.x + DIRS[d].x * t, b.tile.height + PIPE_Y, b.tile.position.z + DIRS[d].z * t);
+      dummy.rotation.set(0, yaw(d), 0);
+      dummy.updateMatrix();
+      flowRings.setMatrixAt(n++, dummy.matrix);
+    }
+    flowRings.count = n;
+    flowRings.instanceMatrix.needsUpdate = true;
+    ringMat.emissiveIntensity = 1.6 + night;
+  }
 
   // Where the wire hangs on a pole: the left or right insulator.
   const insulator = (b, side) => {
@@ -478,6 +610,48 @@ export function createFactoryView(renderer) {
       add(g.crossbar, m.wood);
       add(g.brace, m.wood);
       add(g.insulators, m.porcelain);
+    } else if (b.type === 'pump') {
+      add(g.jackBase, m.steel);
+      add(g.wellhead, m.dark);
+      add(g.samson, m.jack);
+      add(g.gearbox, m.jack);
+      view.beam = new THREE.Group();
+      view.beam.position.set(0, 0.72, 0.02);
+      root.add(view.beam);
+      for (const [geo, mat] of [[g.beam, m.jack], [g.horsehead, m.signal], [g.rod, m.chrome]]) {
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.castShadow = true;
+        if (geo === g.rod) mesh.position.set(0, -0.1, -0.4);
+        view.beam.add(mesh);
+      }
+      const pitman = new THREE.Mesh(g.pitman, m.steel);
+      pitman.position.set(0, 0, 0.42);
+      view.beam.add(pitman);
+      view.crank = add(g.crank, m.dark);
+      view.crank.position.set(0, 0.3, 0.3);
+      lamp(0.12, 0.26, 0.4);
+    } else if (b.type === 'tank') {
+      add(g.tankFoot, m.concrete);
+      add(g.drum, m.tank);
+      add(g.drumBands, m.red);
+      add(g.dome, m.tank);
+      add(g.ladder, m.steel);
+      add(g.gaugeBack, m.dark);
+      view.gauge = add(g.gauge, own(new THREE.MeshStandardMaterial({ color: 0x3a2a10, emissive: 0xffa53a, emissiveIntensity: 0.9 })), false);
+      view.gauge.position.set(0, 0.16, -0.4);
+    } else if (b.type === 'refinery') {
+      add(g.refFoot, m.steel);
+      add(g.heater, m.brick);
+      add(g.columnA, m.refinery);
+      add(g.columnB, m.refinery);
+      add(g.columnRings, m.dark);
+      add(g.caps, m.refinery);
+      add(g.refPipes, m.pipe);
+      add(g.flare, m.dark);
+      add(g.tray, m.dark);
+      view.flame = add(g.flame, m.flame, false);
+      view.flame.position.set(-0.33, 1.02, -0.3);
+      lamp(-0.05, 0.42, -0.02);
     } else if (b.type === 'storage') {
       add(g.pad, m.dark);
       add(g.crate, m.container);
@@ -534,6 +708,11 @@ export function createFactoryView(renderer) {
     if (factory.grid.version !== gridVersion) {
       gridVersion = factory.grid.version;
       rebuildWires(factory);
+    }
+    factory.updatePipes();
+    if (factory.pipes.version !== pipesVersion) {
+      pipesVersion = factory.pipes.version;
+      rebuildPipes(factory);
     }
   }
 
@@ -602,6 +781,7 @@ export function createFactoryView(renderer) {
       if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     }
 
+    updateFlow(dt, factory);
     for (const [b, view] of views) animate(b, view, dt, elapsed);
   }
 
@@ -664,6 +844,25 @@ export function createFactoryView(renderer) {
       view.coal.visible = b.fuel > 0;
       view.coal.scale.setScalar(0.5 + Math.min(1, b.fuel / 5) * 0.5);
       setLamp(view, b.state, elapsed);
+    } else if (b.type === 'pump') {
+      // The beam nods while the crank turns; it slows down to rest when the pump stops.
+      view.speed = (view.speed ?? 0) + ((working ? 1 : 0) - (view.speed ?? 0)) * Math.min(1, dt * 2);
+      view.crankAngle = (view.crankAngle ?? 0) + dt * 3.2 * view.speed;
+      view.crank.rotation.x = view.crankAngle;
+      view.beam.rotation.x = Math.sin(view.crankAngle) * 0.2 * Math.min(1, view.speed * 2);
+      setLamp(view, b.state, elapsed);
+    } else if (b.type === 'tank') {
+      const net = b.pipes;
+      const fill = net?.capacity ? net.amount / net.capacity : 0;
+      view.fill = (view.fill ?? fill) + (fill - (view.fill ?? fill)) * Math.min(1, dt * 3);
+      view.gauge.scale.y = Math.max(0.02, view.fill);
+      view.gauge.material.emissiveIntensity = (0.5 + view.fill * 0.8) * (1 + night);
+    } else if (b.type === 'refinery') {
+      // A pilot flame on the flare; it roars while the refinery works.
+      const target = working ? 1.6 + Math.sin(elapsed * 17 + view.phase) * 0.25 + Math.sin(elapsed * 9.3) * 0.2 : 0.45;
+      view.flare = (view.flare ?? 0.45) + (target - (view.flare ?? 0.45)) * Math.min(1, dt * 5);
+      view.flame.scale.set(0.8 + view.flare * 0.3, view.flare, 0.8 + view.flare * 0.3);
+      setLamp(view, b.state, elapsed);
     } else if (b.type === 'storage') {
       if (b.received !== view.seen) {
         view.seen = b.received;
@@ -684,6 +883,9 @@ export function createFactoryView(renderer) {
     wires.geometry = new THREE.BufferGeometry();
     areas.count = 0;
     gridVersion = -1;
+    pipeHubs.count = pipeArms.count = flowRings.count = 0;
+    flowArms = [];
+    pipesVersion = -1;
   }
 
   function setNight(n) {
@@ -738,6 +940,10 @@ export function createGhost() {
     constructor: { geo: mergeGeometries([box(0.84, 0.66, 0.7, 0.1), box(0.5, 0.25, 0.2).translate(0, 0.66, 0.18)]), arrow: 0.95 },
     power: { geo: mergeGeometries([box(0.66, 0.66, 0.68, 0.06).translate(-0.1, 0, 0), new THREE.CylinderGeometry(0.1, 0.12, 1.4, 8).translate(0.3, 0.7, 0.26)]), arrow: null },
     pole: { geo: mergeGeometries([new THREE.CylinderGeometry(0.05, 0.05, 1.5, 6).translate(0, 0.75, 0), box(0.56, 0.06, 0.06).translate(0, 1.43, 0)]), arrow: null },
+    pump: { geo: mergeGeometries([box(0.3, 0.1, 0.9), box(0.1, 0.7, 0.1), box(0.1, 0.1, 0.9).translate(0, 0.68, 0)]), arrow: null },
+    pipe: { geo: mergeGeometries([new THREE.CylinderGeometry(0.1, 0.1, 1, 8).rotateZ(Math.PI / 2).translate(0, 0.34, 0), new THREE.CylinderGeometry(0.1, 0.1, 1, 8).rotateX(Math.PI / 2).translate(0, 0.34, 0)]), arrow: null },
+    tank: { geo: new THREE.CylinderGeometry(0.4, 0.42, 0.82, 14).translate(0, 0.41, 0), arrow: null },
+    refinery: { geo: mergeGeometries([box(0.86, 0.36, 0.86), new THREE.CylinderGeometry(0.13, 0.13, 1.2, 8).translate(0.2, 0.6, 0.14), new THREE.CylinderGeometry(0.03, 0.03, 1, 6).translate(-0.33, 0.5, -0.3)]), arrow: 0.45 },
   };
   const meshes = Object.fromEntries(Object.entries(shapes).map(([k, s]) => [k, new THREE.Mesh(s.geo, bodyMat)]));
   for (const s of Object.values(meshes)) pivot.add(s);

@@ -148,7 +148,7 @@ export function createEffects({ onMade } = {}) {
       const rate = (MOBILE ? 0.5 : 1) * Math.min(1, 30 / zoom);
 
       for (const b of factory.buildings.values()) {
-        if (b.type === 'belt' || b.type === 'storage' || b.type === 'pole') continue;
+        if (b.type === 'belt' || b.type === 'storage' || b.type === 'pole' || b.type === 'pipe' || b.type === 'tank') continue;
         const dx = b.tile.position.x - focus.x;
         const dz = b.tile.position.z - focus.z;
         const close = dx * dx + dz * dz < reach;
@@ -186,6 +186,28 @@ export function createEffects({ onMade } = {}) {
           if (working && emit && Math.random() < 0.2 * rate) {
             const [x, y, z] = world(b, 0.3, 1.46, 0.26);
             spawn(glow, { x, y, z, vx: rnd(-0.2, 0.2), vy: rnd(0.8, 1.4), vz: rnd(-0.2, 0.2), life: rnd(0.6, 1.2), size: rnd(0.04, 0.06), grow: -0.6, color: color(0xff8a2a, 0.2), gravity: 0.2, drag: 0.6, wobble: 3 });
+          }
+        } else if (b.type === 'refinery') {
+          if (working && emit && Math.random() < 0.6 * rate) {
+            // Sparks of the flare and white steam off the columns.
+            const [x, y, z] = world(b, -0.33 + rnd(-0.03, 0.03), 1.14, -0.3 + rnd(-0.03, 0.03));
+            spawn(glow, { x, y, z, vx: rnd(-0.15, 0.15), vy: rnd(0.9, 1.6), vz: rnd(-0.15, 0.15), life: rnd(0.3, 0.7), size: rnd(0.05, 0.08), grow: -0.5, color: color(0xffa040, 0.15), gravity: 0.3, drag: 0.6, wobble: 4 });
+          }
+          if (working && emit && Math.random() < 0.15 * rate) {
+            const [x, y, z] = world(b, 0.2, 1.25, 0.14);
+            spawn(solid, { x, y, z, vx: rnd(-0.1, 0.1), vy: rnd(0.4, 0.7), vz: rnd(-0.1, 0.1), life: rnd(1.2, 1.8), size: 0.12, grow: 2.2, color: color(0xf2f4f5, 0.04), gravity: 0.1, drag: 1, fade: 0.4 });
+          }
+          if (finished) {
+            for (let i = 0; i < 6; i++) {
+              const [x, y, z] = world(b, rnd(-0.1, 0.1), 0.2, -0.42);
+              spawn(glow, { x, y, z, vx: rnd(-0.5, 0.5), vy: rnd(0.6, 1.3), vz: rnd(-0.5, 0.5), life: rnd(0.3, 0.5), size: 0.05, grow: -0.5, color: color(0xffd070), gravity: -4, drag: 0.6 });
+            }
+          }
+        } else if (b.type === 'pump') {
+          if (working && emit && Math.random() < 0.08 * rate) {
+            // Now and then a black drop at the wellhead.
+            const [x, y, z] = world(b, rnd(-0.05, 0.05), 0.24, -0.34);
+            spawn(solid, { x, y, z, vx: rnd(-0.3, 0.3), vy: rnd(0.4, 0.9), vz: rnd(-0.3, 0.3), life: rnd(0.4, 0.6), size: 0.04, grow: 0, color: color(0x17141c, 0.05), gravity: -7, drag: 0.4, floor: b.tile.height });
           }
         } else if (b.type === 'drill') {
           if (working && emit && Math.random() < 0.5 * rate) {

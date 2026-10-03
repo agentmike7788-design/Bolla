@@ -131,10 +131,42 @@ export const RESEARCH = [
     requires: ['hydraulics', 'deepDrill', 'maglev'],
     goal: true,
   },
+  {
+    id: 'oilDrilling',
+    name: 'Ölförderung',
+    desc: 'Ölpumpe, Rohre und Öltank. Pumpen laufen nur am Stromnetz.',
+    cost: { circuit: 30, steel: 20, concrete: 30 },
+    requires: ['electricity', 'constructor'],
+    unlocks: ['pump', 'pipe', 'tank'],
+  },
+  {
+    id: 'refining',
+    name: 'Raffinerie',
+    desc: 'Macht aus Öl Kunststoff oder Treibstoff. Mit Kunststoff baut der Konstruktor Prozessoren.',
+    cost: { gear: 30, circuit: 30, steel: 20 },
+    requires: ['oilDrilling'],
+    unlocks: ['refinery'],
+  },
+  {
+    id: 'catalysts',
+    name: 'Katalysatoren',
+    desc: 'Raffinerien und Ölpumpen arbeiten 50 % schneller.',
+    cost: { plastic: 40, fuel: 20 },
+    requires: ['refining'],
+    boosts: { refinery: 1.5, pump: 1.5 },
+  },
+  {
+    id: 'oilAge',
+    name: 'Ölzeitalter',
+    desc: 'Das letzte Ziel: Prozessoren, Kunststoff und Treibstoff für die Zukunft.',
+    cost: { processor: 50, plastic: 80, fuel: 40 },
+    requires: ['catalysts', 'masterFactory'],
+    goal: true,
+  },
 ];
 
 // Factory stats that research can multiply. 1 is the starting value.
-export const STATS = ['belt', 'drill', 'furnace', 'assembler', 'constructor', 'power'];
+export const STATS = ['belt', 'drill', 'furnace', 'assembler', 'constructor', 'power', 'pump', 'refinery'];
 
 export const START_UNLOCKED = ['drill', 'belt', 'storage'];
 
