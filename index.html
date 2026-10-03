@@ -12,7 +12,9 @@
       <canvas id="scene"></canvas>
       <header class="hud hud-top">
         <h1>Bolla Fabrik</h1>
-        <p class="seed">Karte <span id="seed"></span> <button id="new-map" type="button">Neue Karte</button> <button id="maps-open" type="button" class="link">Karten <kbd>M</kbd></button></p>
+        <p class="seed">Karte <span id="seed"></span> <button id="new-map" type="button">Neue Karte</button> <button id="maps-open" type="button" class="link">Karten <kbd>M</kbd></button>
+          <span class="daytime" title="Tageszeit"><span id="clock-icon" aria-hidden="true">☀</span> <span id="clock">06:00</span></span>
+          <button id="settings-open" type="button" class="link" aria-expanded="false" aria-controls="settings">Ton &amp; Licht</button></p>
       </header>
       <aside class="hud hud-info" id="tile-info" aria-live="polite">
         <p class="label">Feld</p>
@@ -71,6 +73,19 @@
         </button>
       </nav>
       <footer class="hud hud-help" id="help"></footer>
+      <aside class="hud hud-settings" id="settings" hidden>
+        <p class="label">Ton</p>
+        <label class="slider"><span>Lautstärke</span><input type="range" id="vol" min="0" max="1" step="0.05" /></label>
+        <label class="slider"><span>Musik</span><input type="range" id="music" min="0" max="1" step="0.05" /></label>
+        <label class="check"><input type="checkbox" id="mute" /> Stumm <kbd>U</kbd></label>
+        <p class="label">Tageszeit</p>
+        <div class="segmented" id="daymode" role="radiogroup" aria-label="Tageszeit">
+          <button type="button" data-mode="cycle" role="radio">Wechselt</button>
+          <button type="button" data-mode="day" role="radio">Immer Tag</button>
+          <button type="button" data-mode="night" role="radio">Immer Nacht</button>
+        </div>
+        <button type="button" class="link" id="skip-time">Zur nächsten Tageszeit <kbd>N</kbd></button>
+      </aside>
       <aside class="hud hud-recipe" id="recipe" hidden>
         <p class="label">Konstruktor · Rezept wählen</p>
         <div id="recipe-list"></div>

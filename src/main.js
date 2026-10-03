@@ -9,6 +9,9 @@ import { createResearchView } from './researchView.js';
 import { createFactoryView, createGhost } from './buildings.js';
 import { SCENARIOS, scenarioById, createMissions, starsFor, loadRecords, saveRecord } from './scenarios.js';
 import { createMissionView, clock } from './missionView.js';
+import { createAudio } from './audio.js';
+import { createEffects } from './effects.js';
+import { createDayNight } from './daynight.js';
 import './style.css';
 
 const canvas = document.getElementById('scene');
@@ -20,35 +23,17 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.92;
 
-const HORIZON = 0xcfe3ea;
 const scene = new THREE.Scene();
-scene.background = skyTexture();
-scene.fog = new THREE.Fog(HORIZON, 110, 260);
+scene.fog = new THREE.Fog(0xcfe3ea, 110, 260);
 // Soft reflections for water, crystals and metal ore.
 scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
 scene.environmentIntensity = 0.35;
 
-// Vertical gradient from deep sky blue down to a hazy horizon.
-function skyTexture() {
-  const c = document.createElement('canvas');
-  c.width = 2;
-  c.height = 256;
-  const g = c.getContext('2d');
-  const grad = g.createLinearGradient(0, 0, 0, 256);
-  grad.addColorStop(0, '#5f9fcf');
-  grad.addColorStop(0.65, '#a9cfe2');
-  grad.addColorStop(1, '#cfe3ea');
-  g.fillStyle = grad;
-  g.fillRect(0, 0, 2, 256);
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
-}
-
 const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 400);
 const rig = createCameraRig(camera, canvas, (MAP_SIZE * TILE) / 2);
 
-scene.add(new THREE.HemisphereLight(0xd6ecff, 0x5a4a30, 0.85));
+const hemi = new THREE.HemisphereLight(0xd6ecff, 0x5a4a30, 0.85);
+scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffe2b8, 2.5);
 sun.position.set(38, 42, 22);
 sun.castShadow = true;
@@ -75,6 +60,20 @@ const factoryView = createFactoryView(renderer);
 scene.add(factoryView.group);
 const ghost = createGhost();
 scene.add(ghost.group);
+
+const audio = createAudio();
+const effects = createEffects({
+  // A soft ding when a machine nearby finishes a part.
+  onMade(b) {
+    if (b.type === 'drill') return;
+    const s = audio.spot(b.tile.position, rig.controls.target, camRight, zoom);
+    audio.play.ding(s.pan, s.level);
+  },
+});
+scene.add(effects.group);
+const dayNight = createDayNight({ scene, renderer, sun, hemi });
+let zoom = 40; // camera distance to the point it looks at
+const camRight = new THREE.Vector3();
 
 let world;
 let meshes;
@@ -103,6 +102,7 @@ function loadWorld(seed, mapScenario = null) {
   factory = createFactory(world, { start: mapScenario?.start });
   missions = mapScenario ? createMissions(mapScenario, factory) : null;
   factoryView.clear();
+  effects.clear();
   shapesDirty = true;
   if (tool) setTool(tool);
   document.getElementById('seed').textContent = mapScenario ? mapScenario.name : `#${seed}`;
@@ -161,6 +161,7 @@ function showToast(title, text) {
 const researchView = createResearchView({
   getFactory: () => factory,
   onResearch(r) {
+    audio.play.success();
     if (r.id === 'firstFactory') showToast('Spielziel geschafft!', 'Deine Fabrik schmilzt und presst. Weiter geht es mit dem Konstruktor!');
     else if (r.goal) showToast('Meisterfabrik!', 'Du hast den ganzen Forschungsbaum geschafft. Glückwunsch!');
     else showToast(`Erforscht: ${r.name}`, r.desc);
@@ -206,8 +207,14 @@ function checkMissions() {
   const done = missions?.check();
   if (!done) return;
   renderProgress();
-  if (missions.current) showToast(`Mission geschafft: ${done.name}`, `Belohnung: ${done.reward.text}`);
-  else showWin();
+  if (missions.current) {
+    audio.play.success();
+    showToast(`Mission geschafft: ${done.name}`, `Belohnung: ${done.reward.text}`);
+  } else {
+    audio.play.fanfare();
+    effects.fireworks(rig.controls.target, zoom);
+    showWin();
+  }
 }
 
 const mapsMenu = document.getElementById('maps');
@@ -270,6 +277,49 @@ for (const menu of [mapsMenu, winMenu]) {
 document.getElementById('goal').addEventListener('click', (e) => e.target.closest('[data-maps]') && openMaps());
 document.getElementById('maps-open').addEventListener('click', openMaps);
 const menuOpen = () => !mapsMenu.hidden || !winMenu.hidden;
+
+// --- Sound and daylight settings ---------------------------------------------
+
+const settingsPanel = document.getElementById('settings');
+const settingsOpen = document.getElementById('settings-open');
+const clockLabel = document.getElementById('clock');
+const clockIcon = document.getElementById('clock-icon');
+const volInput = document.getElementById('vol');
+const musicInput = document.getElementById('music');
+const muteInput = document.getElementById('mute');
+const dayModes = document.querySelectorAll('#daymode [data-mode]');
+
+function renderSettings() {
+  volInput.value = audio.settings.volume;
+  musicInput.value = audio.settings.music;
+  muteInput.checked = audio.settings.muted;
+  for (const b of dayModes) b.setAttribute('aria-checked', String(b.dataset.mode === dayNight.mode));
+}
+function toggleSettings(open = settingsPanel.hidden) {
+  settingsPanel.hidden = !open;
+  settingsOpen.setAttribute('aria-expanded', String(open));
+  if (open) renderSettings();
+}
+function toggleMute() {
+  audio.set({ muted: !audio.settings.muted });
+  renderSettings();
+  showToast(audio.settings.muted ? 'Ton aus' : 'Ton an', 'Taste U schaltet um.');
+}
+settingsOpen.addEventListener('click', () => toggleSettings());
+volInput.addEventListener('input', () => audio.set({ volume: Number(volInput.value), muted: false }));
+volInput.addEventListener('change', () => {
+  renderSettings();
+  audio.play.build('drill');
+});
+musicInput.addEventListener('input', () => audio.set({ music: Number(musicInput.value) }));
+muteInput.addEventListener('change', () => audio.set({ muted: muteInput.checked }));
+for (const b of dayModes) {
+  b.addEventListener('click', () => {
+    dayNight.setMode(b.dataset.mode);
+    renderSettings();
+  });
+}
+document.getElementById('skip-time').addEventListener('click', () => dayNight.skipAhead());
 
 // --- Constructor recipes ----------------------------------------------------
 
@@ -418,7 +468,7 @@ let shapesDirty = false;
 const toolButtons = document.querySelectorAll('.tool[data-tool]');
 const help = document.getElementById('help');
 const HELP = {
-  none: [['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–8', 'bauen'], ['X', 'abreißen'], ['T', 'Forschung'], ['M', 'Karten']],
+  none: [['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–8', 'bauen'], ['X', 'abreißen'], ['T', 'Forschung'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
@@ -436,10 +486,12 @@ function renderHelp() {
 
 function setTool(next) {
   if (next && BUILDINGS[next] && !factory.research.unlocked.has(next)) {
+    audio.play.deny();
     showToast(`${BUILDINGS[next].name} gesperrt`, unlockHint(next));
     return;
   }
   tool = next === tool ? null : next;
+  audio.play.click();
   for (const b of toolButtons) b.setAttribute('aria-pressed', String(b.dataset.tool === tool));
   // While a tool is active, the left mouse button and a single finger build
   // instead of moving the map.
@@ -458,6 +510,7 @@ function canBuild(tile) {
 }
 
 function rotate() {
+  audio.play.rotate();
   const building = !tool && hovered && factory.get(hovered);
   if (building) {
     factory.setDir(building, (building.dir + 1) % 4);
@@ -472,12 +525,22 @@ function buildAt(tile) {
   if (!tile) return;
   if (tool === 'remove') {
     const removed = factory.remove(tile);
-    if (removed) meshes.setDecorHidden(tile.z * world.size + tile.x, false);
+    if (removed) {
+      meshes.setDecorHidden(tile.z * world.size + tile.x, false);
+      audio.play.remove();
+      effects.remove(tile, removed.type);
+    }
     if (removed && removed === selected) openRecipes(null);
   } else {
     const existing = factory.get(tile);
-    if (tool === 'belt' && existing?.type === 'belt') factory.setDir(existing, dir);
-    else if (factory.place(tool, tile, dir)) meshes.setDecorHidden(tile.z * world.size + tile.x, true);
+    if (tool === 'belt' && existing?.type === 'belt') {
+      if (existing.dir !== dir) audio.play.rotate();
+      factory.setDir(existing, dir);
+    } else if (factory.place(tool, tile, dir)) {
+      meshes.setDecorHidden(tile.z * world.size + tile.x, true);
+      audio.play.build(tool);
+      effects.build(tile, tool !== 'belt');
+    } else if (!lastTile) audio.play.deny();
   }
   shapesDirty = true;
 }
@@ -539,6 +602,8 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   if (key === 'm') return openMaps();
+  if (key === 'u') return toggleMute();
+  if (key === 'n') return dayNight.skipAhead();
   if (key === 't' && missions) return showToast('Missionskarte', 'Hier schalten Missionen neue Gebäude frei, nicht der Forschungsbaum.');
   const numbered = ['drill', 'belt', 'storage', 'furnace', 'assembler', 'splitter', 'merger', 'constructor'][Number(key) - 1];
   if (numbered) setTool(numbered);
@@ -546,6 +611,7 @@ window.addEventListener('keydown', (e) => {
   else if (key === 'r') rotate();
   else if (key === 't') researchView.toggle();
   else if (key === 'escape' && researchView.isOpen) researchView.close();
+  else if (key === 'escape' && !settingsPanel.hidden) toggleSettings(false);
   else if (key === 'escape' && tool) setTool(tool);
   else if (key === 'escape' && selected) openRecipes(null);
 });
@@ -561,6 +627,7 @@ function resize() {
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
+  effects.resize(h * renderer.getPixelRatio(), camera.fov);
 }
 window.addEventListener('resize', resize);
 
@@ -570,6 +637,7 @@ document.getElementById('new-map').addEventListener('click', () => startGame(sce
 const STEP = 1 / 60;
 let pending = 0;
 let legendTimer = 0;
+let soundTimer = 0;
 
 const timer = new THREE.Timer();
 renderer.setAnimationLoop(() => {
@@ -584,9 +652,25 @@ renderer.setAnimationLoop(() => {
   }
   if (shapesDirty) {
     factoryView.rebuild(factory);
+    dayNight.rebuild(factory);
     shapesDirty = false;
   }
-  factoryView.update(dt, timer.getElapsed(), factory);
+  const elapsed = timer.getElapsed();
+  const focus = rig.controls.target;
+  zoom = camera.position.distanceTo(focus);
+  camRight.setFromMatrixColumn(camera.matrixWorld, 0);
+  dayNight.update(dt, elapsed, focus, camera, factory);
+  factoryView.setNight(dayNight.night);
+  factoryView.update(dt, elapsed, factory);
+  effects.update(dt, factory, focus, zoom, dayNight.night);
+  audio.setNight(dayNight.night);
+  soundTimer += dt;
+  if (soundTimer > 0.1) {
+    soundTimer = 0;
+    audio.updateMachines(factory, focus, camRight, zoom);
+    clockLabel.textContent = dayNight.clock();
+    clockIcon.textContent = dayNight.night > 0.5 ? '☾' : '☀';
+  }
   legendTimer += dt;
   if (legendTimer > 0.5) {
     legendTimer = 0;
@@ -604,4 +688,4 @@ resize();
 openMaps();
 
 // Handle for poking at the game from the browser console while developing.
-if (import.meta.env.DEV) window.bolla = { camera, rig, startGame, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get factory() { return factory; }, get missions() { return missions; } };
+if (import.meta.env.DEV) window.bolla = { camera, rig, renderer, scene, startGame, dayNight, effects, audio, checkMissions, refresh: () => (shapesDirty = true), get world() { return world; }, get factory() { return factory; }, get missions() { return missions; } };

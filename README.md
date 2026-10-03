@@ -34,6 +34,8 @@ Karten und Missionen: Beim Start (und mit `M` oder dem Knopf „Karten“) wähl
 
 Auf Missionskarten ersetzen Missionen den Forschungsbaum: Jede Mission hat Ziele (Teile ins Lager liefern, Gebäude bauen oder eine Menge pro Minute schaffen) und schaltet als Belohnung Gebäude und Tempo frei. Wer alle Missionen schafft, bekommt je nach Zeit ein bis drei Sterne; die Bestzeit merkt sich der Browser. Neue Karten kommen in `src/scenarios.js`.
 
+Ton und Licht: Alle Geräusche entstehen im Browser per Web Audio, ohne Audiodateien: Bauen, Abreißen, Drehen, Missionserfolg und eine ruhige Hintergrundmusik. Maschinen brummen, rattern und fauchen umso lauter, je näher die Kamera ist, und kommen von links oder rechts. Über „Ton & Licht“ oben stellt man Lautstärke und Musik ein, `U` schaltet den Ton stumm. Ein Tag dauert acht Minuten: Die Sonne wandert, abends wird es orange, nachts gibt es Sterne, und die Maschinen leuchten den Boden an. `N` springt zur nächsten Tageszeit; im Menü lässt sich auch „Immer Tag“ oder „Immer Nacht“ wählen. Öfen sprühen Funken und Glut, Bohrer werfen Erzbrocken auf, Pressen funken beim Stanzen, beim Bauen staubt es, und eine geschaffte Karte gibt ein Feuerwerk.
+
 Code:
 - `src/world.js` erzeugt die Karte (Gelände per Rauschen, Erzfelder als Flecken); Landschaft und Erze lassen sich pro Karte einstellen.
 - `src/scenarios.js` sind die Karten mit ihren Missionen, `src/missionView.js` zeigt die aktuelle Mission an.
@@ -42,4 +44,5 @@ Code:
 - `src/factory.js` ist die Spiel-Logik: welches Gebäude wo steht, Abbau, Transport, Rezepte der Maschinen, Lager und Ziele.
 - `src/research.js` ist der Forschungsbaum, `src/researchView.js` zeigt ihn an.
 - `src/buildings.js` zeichnet die Gebäude, Bänder, die Teile darauf und die Bau-Vorschau.
+- `src/audio.js` erzeugt alle Geräusche und die Musik, `src/effects.js` die Partikel, `src/daynight.js` den Tag-Nacht-Wechsel mit Himmel, Sternen und Maschinenlichtern.
 - `src/main.js` verbindet Szene, Licht, Maus- und Tastatur-Steuerung und HUD.

@@ -485,6 +485,34 @@ button.link kbd { font-size: 10px; padding: 0 3px; }
 .win-actions { justify-content: center; margin-top: 18px; }
 .win-actions button { font-size: 13px; padding: 7px 14px; }
 
+.daytime {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+#clock-icon { color: var(--signal); font-size: 14px; line-height: 1; }
+
+.hud-settings {
+  top: calc(64px + env(safe-area-inset-top, 0px));
+  left: 16px;
+  width: 236px;
+  z-index: 5;
+  display: grid;
+  gap: 8px;
+}
+.hud-settings[hidden] { display: none; }
+.hud-settings .label { margin: 4px 0 0; }
+.slider { display: grid; grid-template-columns: 76px 1fr; align-items: center; gap: 8px; font-size: 13px; }
+.slider input { width: 100%; accent-color: var(--signal); }
+.check { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.check input { accent-color: var(--signal); width: 16px; height: 16px; margin: 0; }
+.segmented { display: flex; border: 1px solid var(--edge); border-radius: 3px; overflow: hidden; }
+.segmented button { flex: 1; background: transparent; color: var(--ink-dim); border-radius: 0; padding: 6px 4px; font-size: 12px; }
+.segmented button[aria-checked='true'] { background: var(--signal); color: var(--ground); }
+#skip-time { justify-self: start; }
+
 @media (max-width: 640px) {
   .hud-info { top: calc(100px + env(safe-area-inset-top, 0px)); left: 16px; right: 16px; width: auto; padding: 8px 14px; }
   .hud-info .value { font-size: 17px; }
