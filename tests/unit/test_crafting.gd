@@ -97,6 +97,7 @@ func test_database_finds_all_recipes() -> void:
 	var tools: Array[StringName] = [&"rake", &"scrub_brush", &"comb"]
 	var p5 := Phase5Fixtures.RECIPE_IDS.duplicate()
 	p5.append(&"bone_box")  # Phase 6 (P3, §2.6): tested in test_ossuary.gd
+	p5.append_array(Phase7Fixtures.RECIPE_IDS)  # Phase 7 (P7, §2.7): pult recipes, tested in test_recipes_phase7.gd
 	var workbench := Database.recipes(&"workbench").filter(func(r: RecipeData) -> bool: return not p5.has(r.id))
 	assert_eq(workbench.size(), expected.size())
 	assert_eq(Database.recipes().filter(func(r: RecipeData) -> bool: return not p5.has(r.id)).size(), expected.size(), "Phase-5 recipes: test_phase5_recipes_*")
@@ -373,7 +374,7 @@ func test_phase5_recipe_count_per_station() -> void:
 
 
 func test_phase5_stations_in_data() -> void:
-	assert_eq(Database.stations().size(), 4)
+	assert_eq(Database.stations().size(), 5, "+ Phase 7 pult (test_pult.gd)")
 	for f: StationData in Phase5Fixtures.stations():
 		var s := Database.station(f.id) as StationData
 		assert_not_null(s, String(f.id))
