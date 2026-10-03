@@ -502,7 +502,7 @@ func test_six_pits_chapter_panel() -> void:
 	assert_eq(panel.header_label.text, "Sechs Gruben")
 	assert_true(panel.chapter_grid.visible)
 	assert_eq(panel.chapter_value("Pietät"), "Rücksichtsvoll", "a word, no number")
-	assert_eq(panel.chapter_value("Erkenntnisse"), "4/5")
+	assert_eq(panel.chapter_value("Erkenntnisse"), "4/6")  # Phase 7 (P6): + i_deathbook in the main count
 	assert_eq(panel.chapter_value("Geister"), "9 zufrieden · 2 unruhig")
 	assert_true(panel.goal_label.text.ends_with("Unter dem Birkenhang ist es nicht still."))
 	ui.open_panel(&"slice_summary", {"days": 6, "burials": 6, "total": 48, "rating": &"dignified"})
