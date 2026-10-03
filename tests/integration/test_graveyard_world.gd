@@ -2321,6 +2321,7 @@ func test_phase7_layout_diff_against_phase6() -> void:
 		"+fence.segments[[11.5, 9.6], [11.5, 19.6]]", "+fence.segments[[11.5, 19.6], [21.5, 19.6]]", # L3
 		"+fence.segments[[21.5, 9.6], [21.5, 19.6]]", "~extra_walls", "+_extra_walls_phase7",
 		"~forest.trees[6].pos", "+forest.trees[6]._comment",                                  # L4
+		"~forest.trees[7].pos", "+forest.trees[7]._comment",                                  # §4.5 point 5
 		"~forest.trees[8].pos", "+forest.trees[8]._comment",                                  # L5
 		"+props[4]", "+colliders.ph_env_linden_old",                                          # L7
 		"~build.size", "+build._phase7",                                                      # L8
@@ -2401,7 +2402,8 @@ func test_phase7_lindenacker_and_wegstein_in_the_world() -> void:
 		await _at_day(priest, 41, 540)
 		assert_true(priest.is_present() and priest.is_walking(), "09:00 on the way up")
 		GameState.set_flag(&"linden_consecration_day", 0)
-	for t: Dictionary in [{"i": 6, "to": Vector2(25.0, 23.5)}, {"i": 8, "to": Vector2(27.5, 15.5)}]:
+	for t: Dictionary in [{"i": 6, "to": Vector2(25.0, 23.5)}, {"i": 7, "to": Vector2(17.5, 29.5)},
+			{"i": 8, "to": Vector2(27.5, 15.5)}]:
 		assert_eq(_v2(layout.forest.trees[t.i].pos), t.to, "moved forest tree %d" % t.i)
 	# L8: the build mask covers the Lindenacker with its section order.
 	var mask := load(BUILD_MASK)

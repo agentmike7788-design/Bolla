@@ -35,7 +35,7 @@ const G7_SHOTS: Array[Dictionary] = [
 			"player": Vector2(9.0, 0.0), "stage": "vis", "zoom": 22.0},
 	{"name": "p7_vis_linden_z24", "day": 43, "minute": 640, "focus": Vector2(17.0, 12.5), "distance": 44.0, "pitch": 85.0,
 			"player": Vector2(9.0, 0.0), "stage": "vis", "zoom": 24.0},
-	{"name": "p7_16_crypt_pult", "day": 43, "minute": 660, "room": "crypt", "player": Vector2(-0.4, 1.0), "levels": [2, 2, 2],
+	{"name": "p7_16_crypt_pult", "day": 43, "minute": 660, "room": "crypt", "player": Vector2(0.7, 0.3), "levels": [2, 2, 2],
 			"stage": "pult"},
 	{"name": "p7_26_new_stone_old_08", "day": 43, "minute": 660, "focus": Vector2(-6.4, 6.6), "distance": 12.0,
 			"player": Vector2(-4.0, 7.6), "facing": 120.0, "stage": "new_stone"},
@@ -46,7 +46,9 @@ const G7_SHOTS: Array[Dictionary] = [
 				["niche", "niche_5"], ["niche", "niche_6"]]},
 ]
 
-var _bag: Inventory
+const INVENTORY := "res://src/systems/inventory/inventory.gd"
+
+var _bag: Node
 
 
 func _run() -> void:
@@ -65,9 +67,9 @@ func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(_out)
 	root.get_node(^"SaveManager").set("save_dir", SHOT_SAVE_DIR)
 	var world := await _load_v5(FIXTURE)
-	_bag = Inventory.new()
+	_bag = load(INVENTORY).new()
 	_bag.name = "ShotBag"
-	_bag.slot_count = 80
+	_bag.set(&"slot_count", 80)
 	world.add_child(_bag)
 	var report: PackedStringArray = []
 	for shot: Dictionary in G7_SHOTS:
@@ -102,8 +104,8 @@ func _stage_grave(world: Node3D, shot: Dictionary) -> void:
 				if data != null:
 					_give(_bag, data.get(&"cost"))
 				for tool: StringName in TOOLS:
-					if root.get_node(^"Database").call(&"has_item", tool) and _bag.count(tool) == 0:
-						_bag.add_item(tool, 1)
+					if root.get_node(^"Database").call(&"has_item", tool) and int(_bag.call(&"count", tool)) == 0:
+						_bag.call(&"add_item", tool, 1)
 				if not bool(expansion.call(&"clear", id, _bag)):
 					push_warning("[ShotsP7G] %s refused: %s" % [id, expansion.call(&"tool_block_reason", id, _bag)])
 		"consecration":
@@ -148,7 +150,7 @@ func _stage_linden_graves(world: Node3D) -> void:
 		record.set("examined", true)
 		record.set("shrouded", true)
 		graveyard.call(&"bury", id, record.get("id"))
-		_bag.add_item(LINDEN_MARKERS[id], 1)
+		_bag.call(&"add_item", LINDEN_MARKERS[id], 1)
 		graveyard.call(&"place_marker", id, LINDEN_MARKERS[id], _bag)
 
 
@@ -159,17 +161,17 @@ func _stage_new_stone(world: Node3D) -> void:
 	orders.call(&"offer", &"o_mangold_stone")
 	orders.call(&"accept", &"o_mangold_stone")
 	var masonry := _system(world, "Stonemasonry")
-	var design := StoneDesign.from_dict({"shape": &"stele", "ornament": &"poppy", "inscription": "Dorothee Mahn"})
+	var design: RefCounted = load(STONE_DESIGN).call(&"from_dict", {"shape": &"stele", "ornament": &"poppy", "inscription": "Dorothee Mahn"})
 	var order_data: Resource = orders.call(&"order_data", &"o_mangold_stone")
 	if order_data != null and (order_data.get(&"conditions") as Dictionary).has("stone_shape"):
-		design.shape = StringName((order_data.get(&"conditions") as Dictionary).stone_shape)
+		design.set(&"shape", StringName((order_data.get(&"conditions") as Dictionary).stone_shape))
 	_give(_bag, (masonry.call(&"preview", "old_08", design) as Dictionary).get("inputs", {}))
-	_bag.add_item(&"coin", 40)
+	_bag.call(&"add_item", &"coin", 40)
 	var carved := String(masonry.call(&"carve", "old_08", design, _bag))
 	if carved == "":
 		push_warning("[ShotsP7G] old_08 refused: %s" % masonry.call(&"order_block_reason", "old_08", design, _bag))
 		return
-	var plot := world.get_node(^"Entities/old_08") as Node3D
+	var plot := world.call(&"get_node_by_layout_id", "old_08") as Node3D
 	var player := world.get_node(^"Player") as Node3D
 	player.global_position = plot.global_position + Vector3(0.0, 0.0, 1.8)
 	plot.call(&"interact", player)
