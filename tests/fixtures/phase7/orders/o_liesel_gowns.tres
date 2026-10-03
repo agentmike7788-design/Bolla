@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"o_liesel_gowns"
+giver = &"washer"
+recipient = &""
+kind = &"deliver"
+title = "Totenhemden"
+request_text = "Zwei Totenhemden – für die, die nicht zu dir hinaufkommen."
+thanks_text = "Danke, Totengräber."
+items = Dictionary[StringName, int]({
+&"burial_gown": 2
+})
+coins = 0
+target = ""
+conditions = {}
+days_limit = 6
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &"acquainted"
+reward_coins = 8
+reward_rel = 8
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 16
+accept_flag = &""

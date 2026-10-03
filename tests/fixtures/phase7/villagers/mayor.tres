@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/villager_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"mayor"
+display_name = "Gottlieb Fenner"
+role = "Schultheiß"
+dialogue_id = &"v_mayor"
+shop_id = &""
+home_door = &"door_office"
+gifts_liked = Array[StringName]([&"ink", &"honey_cake"])
+start_value = 30
+specimen_delta = 0
+returned_delta = 0
+piety_sensitive = false
+remarks = Dictionary[StringName, PackedStringArray]({
+&"rep_respected": PackedStringArray("Der Totengräber. Grüß Gott.")
+})

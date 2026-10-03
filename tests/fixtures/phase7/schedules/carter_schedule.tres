@@ -1,0 +1,134 @@
+[gd_resource type="Resource" script_class="NpcSchedule" format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1_7mkef"]
+[ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2_u0cri"]
+
+[sub_resource type="Resource" id="Resource_p3w5k"]
+script = ExtResource("1_7mkef")
+activity = &"home"
+path = PackedStringArray("road_end")
+visible = false
+
+[sub_resource type="Resource" id="Resource_as5ct"]
+script = ExtResource("1_7mkef")
+start_minute = 420
+travel_minutes = 40
+activity = &"walk"
+animation = &"push_cart"
+path = PackedStringArray("road_end", "road_mid", "gate_outside", "dropoff")
+with_cart = true
+
+[sub_resource type="Resource" id="Resource_nfqci"]
+script = ExtResource("1_7mkef")
+start_minute = 460
+path = PackedStringArray("dropoff")
+dialogue_id = &"carter"
+with_cart = true
+
+[sub_resource type="Resource" id="Resource_yjv0w"]
+script = ExtResource("1_7mkef")
+start_minute = 600
+travel_minutes = 40
+activity = &"walk"
+animation = &"push_cart"
+path = PackedStringArray("dropoff", "gate_outside", "road_mid", "road_end")
+with_cart = true
+
+[sub_resource type="Resource" id="Resource_qlrk4"]
+script = ExtResource("1_7mkef")
+start_minute = 640
+activity = &"home"
+path = PackedStringArray("road_end")
+visible = false
+
+[sub_resource type="Resource" id="Resource_k3elf"]
+script = ExtResource("1_7mkef")
+start_minute = 1080
+travel_minutes = 30
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("road_end", "road_mid", "evening_spot")
+
+[sub_resource type="Resource" id="Resource_bn6f3"]
+script = ExtResource("1_7mkef")
+start_minute = 1110
+activity = &"smoke"
+animation = &"talk"
+path = PackedStringArray("evening_spot")
+dialogue_id = &"carter"
+
+[sub_resource type="Resource" id="Resource_716km"]
+script = ExtResource("1_7mkef")
+start_minute = 1260
+travel_minutes = 30
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("evening_spot", "road_mid", "road_end")
+
+[sub_resource type="Resource" id="Resource_xec6l"]
+script = ExtResource("1_7mkef")
+start_minute = 1290
+activity = &"home"
+path = PackedStringArray("road_end")
+visible = false
+
+[sub_resource type="Resource" id="Resource_33eyg"]
+script = ExtResource("1_7mkef")
+start_minute = 670
+travel_minutes = 8
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_road_in", "v_bridge", "v_anger_w", "v_remise")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_aeqkj"]
+script = ExtResource("1_7mkef")
+start_minute = 678
+path = PackedStringArray("v_remise")
+dialogue_id = &"carter_village"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_6c31a"]
+script = ExtResource("1_7mkef")
+start_minute = 840
+travel_minutes = 5
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_remise", "v_inn_door")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_liwuv"]
+script = ExtResource("1_7mkef")
+start_minute = 845
+path = PackedStringArray("v_in_inn_corner")
+dialogue_id = &"carter_village"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_vwqxb"]
+script = ExtResource("1_7mkef")
+start_minute = 1050
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_o2bku"]
+script = ExtResource("1_7mkef")
+start_minute = 1320
+path = PackedStringArray("v_in_inn_corner")
+dialogue_id = &"carter_village"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_32g2u"]
+script = ExtResource("1_7mkef")
+start_minute = 1410
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+
+[resource]
+script = ExtResource("2_u0cri")
+npc_id = &"carter"
+display_name = "Osric Faulhaber"
+entries = Array[ExtResource("1_7mkef")]([SubResource("Resource_p3w5k"), SubResource("Resource_as5ct"), SubResource("Resource_nfqci"), SubResource("Resource_yjv0w"), SubResource("Resource_qlrk4"), SubResource("Resource_k3elf"), SubResource("Resource_bn6f3"), SubResource("Resource_716km"), SubResource("Resource_xec6l"), SubResource("Resource_33eyg"), SubResource("Resource_aeqkj"), SubResource("Resource_6c31a"), SubResource("Resource_liwuv"), SubResource("Resource_vwqxb"), SubResource("Resource_o2bku"), SubResource("Resource_32g2u")])

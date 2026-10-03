@@ -1,0 +1,69 @@
+[gd_resource type="Resource" script_class="NpcSchedule" format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1_dfj8i"]
+[ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2_pg4fx"]
+
+[sub_resource type="Resource" id="Resource_r37f3"]
+script = ExtResource("1_dfj8i")
+activity = &"home"
+path = PackedStringArray("v_shop_window")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_cjctw"]
+script = ExtResource("1_dfj8i")
+start_minute = 445
+activity = &"shop"
+animation = &"work"
+path = PackedStringArray("v_shop_window")
+dialogue_id = &"v_grocer"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_m247r"]
+script = ExtResource("1_dfj8i")
+start_minute = 840
+travel_minutes = 5
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_shop_window", "v_well")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_6bmho"]
+script = ExtResource("1_dfj8i")
+start_minute = 845
+animation = &"talk"
+path = PackedStringArray("v_well")
+dialogue_id = &"v_grocer"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_cvoyc"]
+script = ExtResource("1_dfj8i")
+start_minute = 870
+travel_minutes = 5
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_well", "v_shop_window")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_yxotm"]
+script = ExtResource("1_dfj8i")
+start_minute = 875
+activity = &"shop"
+animation = &"work"
+path = PackedStringArray("v_shop_window")
+dialogue_id = &"v_grocer"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_rt5r3"]
+script = ExtResource("1_dfj8i")
+start_minute = 1080
+activity = &"home"
+path = PackedStringArray("v_shop_window")
+visible = false
+region = &"village"
+
+[resource]
+script = ExtResource("2_pg4fx")
+npc_id = &"grocer"
+display_name = "Theres Mangold"
+entries = Array[ExtResource("1_dfj8i")]([SubResource("Resource_r37f3"), SubResource("Resource_cjctw"), SubResource("Resource_m247r"), SubResource("Resource_6bmho"), SubResource("Resource_cvoyc"), SubResource("Resource_yxotm"), SubResource("Resource_rt5r3")])

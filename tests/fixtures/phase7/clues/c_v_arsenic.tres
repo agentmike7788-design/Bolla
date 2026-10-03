@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_v_arsenic"
+title = "Arsenik im Fieber"
+text = "Im Dorf stirbt man nicht immer an dem, was Osric sagt."
+kind = &"note"
+order = 34

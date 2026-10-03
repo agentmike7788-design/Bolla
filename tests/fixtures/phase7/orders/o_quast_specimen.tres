@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"o_quast_specimen"
+giver = &"surgeon"
+recipient = &""
+kind = &"deliver"
+title = "Für das Kabinett"
+request_text = "Ein Präparat im Glas – Herz, Lunge, Magen, Leber oder Nieren –, gut lesbar."
+thanks_text = "Danke, Totengräber."
+items = Dictionary[StringName, int]({
+&"specimen_jar": 1
+})
+coins = 0
+target = ""
+conditions = {
+"min_clarity": 0.6,
+"organ": ["heart", "lung", "stomach", "liver", "kidneys"]
+}
+days_limit = 6
+requires_flag = &"anatomy_known"
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 10
+reward_rel = 10
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 12
+accept_flag = &""

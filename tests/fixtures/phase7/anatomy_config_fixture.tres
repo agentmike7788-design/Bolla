@@ -1,0 +1,204 @@
+[gd_resource type="Resource" script_class="AnatomyConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/anatomy/anatomy_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+organs = Dictionary[StringName, Dictionary]({
+&"eyes": {
+"base_price": 9,
+"containers": [&"jar"],
+"label": "Augen",
+"lecture_bonus": 3,
+"medicine": false,
+"minutes": 25,
+"mood": -8,
+"piety": -12,
+"quality": -3,
+"reputation_event": &"organ_taken_grave",
+"res_tag": &"sight",
+"res_weight": 2,
+"return_piety": 5,
+"sell_rel": {
+&"oldwoman": -2,
+&"priest": -6,
+&"washer": -5
+}
+},
+&"hand": {
+"base_price": 10,
+"containers": [&"bundle"],
+"label": "Hand",
+"lecture_bonus": 4,
+"medicine": false,
+"minutes": 30,
+"mood": -8,
+"piety": -12,
+"quality": -3,
+"reputation_event": &"organ_taken_grave",
+"res_role": &"frame",
+"res_tag": &"grip",
+"res_weight": 3,
+"return_piety": 5,
+"sell_rel": {
+&"oldwoman": -2,
+&"priest": -6,
+&"washer": -5
+}
+},
+&"heart": {
+"base_price": 7,
+"containers": [&"jar", &"bundle"],
+"label": "Herz",
+"lecture_bonus": 2,
+"medicine": false,
+"minutes": 20,
+"mood": -5,
+"piety": -8,
+"quality": -2,
+"reputation_event": &"organ_taken",
+"res_tag": &"will",
+"res_weight": 3,
+"return_piety": 3,
+"sell_rel": {
+&"oldwoman": -2,
+&"priest": -4,
+&"washer": -3
+}
+},
+&"kidneys": {
+"base_price": 4,
+"containers": [&"jar", &"bundle"],
+"label": "Nieren",
+"lecture_bonus": 1,
+"medicine": true,
+"minutes": 20,
+"mood": -5,
+"piety": -6,
+"quality": -2,
+"reputation_event": &"organ_taken",
+"res_tag": &"water",
+"res_weight": 1,
+"return_piety": 3,
+"sell_rel": {
+&"oldwoman": -2,
+&"priest": -4,
+&"washer": -3
+}
+},
+&"liver": {
+"base_price": 5,
+"containers": [&"jar", &"bundle"],
+"label": "Leber",
+"lecture_bonus": 1,
+"medicine": true,
+"minutes": 20,
+"mood": -5,
+"piety": -6,
+"quality": -2,
+"reputation_event": &"organ_taken",
+"res_tag": &"blood_heat",
+"res_weight": 1,
+"return_piety": 3,
+"sell_rel": {
+&"oldwoman": -2,
+&"priest": -4,
+&"washer": -3
+}
+},
+&"lung": {
+"base_price": 4,
+"containers": [&"jar", &"bundle"],
+"label": "Lunge",
+"lecture_bonus": 1,
+"medicine": true,
+"minutes": 20,
+"mood": -5,
+"piety": -6,
+"quality": -2,
+"reputation_event": &"organ_taken",
+"res_tag": &"breath",
+"res_weight": 1,
+"return_piety": 3,
+"sell_rel": {
+&"oldwoman": -2,
+&"priest": -4,
+&"washer": -3
+}
+},
+&"stomach": {
+"base_price": 5,
+"containers": [&"jar", &"bundle"],
+"label": "Magen",
+"lecture_bonus": 1,
+"medicine": true,
+"minutes": 20,
+"mood": -5,
+"piety": -6,
+"quality": -2,
+"reputation_event": &"organ_taken",
+"res_tag": &"hunger",
+"res_weight": 1,
+"return_piety": 3,
+"sell_rel": {
+&"oldwoman": -2,
+&"priest": -4,
+&"washer": -3
+}
+}
+})
+max_per_corpse = 3
+small_jar_inputs = Dictionary[StringName, int]({
+&"prep_jar_small": 1,
+&"spirits": 1
+})
+hand_inputs = Dictionary[StringName, int]({
+&"beeswax": 1,
+&"linen": 1
+})
+sound_cue = &"anatomy_tool"
+inspect_minutes = 20
+expertise_minutes = 30
+inspect_min_clarity = 0.5
+bone_minutes = 60
+lecture = {
+"every_days": 3,
+"fee": 4,
+"minutes": 60,
+"piety": -3,
+"rumor_chance": 0.25,
+"rumor_chance_esteemed": 0.1,
+"rumor_rel": {
+&"priest": -3,
+&"washer": -2
+},
+"rumor_rep": -4,
+"standing_bonus": 1,
+"start": 1380,
+"veil_alpha": 0.6,
+"window": 90
+}
+tool_item = &"anatomy_case"
+room_id = &"crypt"
+min_freshness = 0.3
+jar_inputs = Dictionary[StringName, int]({
+&"prep_jar": 1,
+&"spirits": 1
+})
+bundle_inputs = Dictionary[StringName, int]({
+&"linen": 1
+})
+bundle_minutes = 600
+pult_cold_factor = 0.25
+clarity_words = PackedFloat32Array(0.8, 0.6, 0.45)
+basic_teachings = Array[StringName]([&"l_lung", &"l_liver"])
+bundle_price_factor = 0.5
+display_price_factor = 1.5
+display_price_bonus = 2
+friend_price_bonus = 1
+return_minutes = 10
+seal_minutes = 5
+display_minutes = 40
+veil_seconds = 0.6
+veil_alpha = 0.85
+known_flag = &"anatomy_known"

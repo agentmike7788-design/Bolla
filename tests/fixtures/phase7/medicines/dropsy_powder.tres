@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MedicineData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/anatomy/medicine_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"dropsy_powder"
+organs = Array[StringName]([&"kidneys"])
+min_clarity = 0.45
+inputs = Dictionary[StringName, int]({
+&"beeswax": 1,
+&"herbs": 1
+})
+minutes = 20
+output = &"dropsy_powder"
+amount = 1

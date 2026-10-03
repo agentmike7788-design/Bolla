@@ -1,0 +1,109 @@
+[gd_resource type="Resource" script_class="NpcSchedule" format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1_h8iy5"]
+[ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2_dfs02"]
+
+[sub_resource type="Resource" id="Resource_dsd5p"]
+script = ExtResource("1_h8iy5")
+activity = &"home"
+path = PackedStringArray("v_church_door")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_jq0uq"]
+script = ExtResource("1_h8iy5")
+start_minute = 480
+activity = &"shop"
+path = PackedStringArray("v_church_door")
+dialogue_id = &"v_priest"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_pbuyb"]
+script = ExtResource("1_h8iy5")
+start_minute = 690
+travel_minutes = 8
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_church_door", "v_well", "v_hagedorn_gate")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_ymcak"]
+script = ExtResource("1_h8iy5")
+start_minute = 698
+activity = &"home"
+path = PackedStringArray("v_hagedorn_gate")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_fgliv"]
+script = ExtResource("1_h8iy5")
+start_minute = 960
+activity = &"shop"
+path = PackedStringArray("v_church_door")
+dialogue_id = &"v_priest"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_aevy6"]
+script = ExtResource("1_h8iy5")
+start_minute = 1080
+travel_minutes = 10
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_church_door", "v_inn_door")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_svkmg"]
+script = ExtResource("1_h8iy5")
+start_minute = 1090
+path = PackedStringArray("v_in_inn_table")
+dialogue_id = &"v_priest"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_tybh8"]
+script = ExtResource("1_h8iy5")
+start_minute = 1200
+activity = &"home"
+path = PackedStringArray("v_church_door")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_dcyle"]
+script = ExtResource("1_h8iy5")
+start_minute = 520
+travel_minutes = 40
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("road_end", "road_mid", "gate_outside", "dropoff", "w_east_pass", "w_linden_n", "linden_spot")
+today_flag = &"linden_consecration_day"
+
+[sub_resource type="Resource" id="Resource_8hub3"]
+script = ExtResource("1_h8iy5")
+start_minute = 560
+activity = &"bless"
+animation = &"talk"
+path = PackedStringArray("linden_spot")
+dialogue_id = &"priest_linden"
+today_flag = &"linden_consecration_day"
+
+[sub_resource type="Resource" id="Resource_d8ent"]
+script = ExtResource("1_h8iy5")
+start_minute = 630
+travel_minutes = 40
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("linden_spot", "w_linden_n", "w_east_pass", "dropoff", "gate_outside", "road_mid", "road_end")
+today_flag = &"linden_consecration_day"
+
+[sub_resource type="Resource" id="Resource_frwys"]
+script = ExtResource("1_h8iy5")
+start_minute = 670
+activity = &"home"
+path = PackedStringArray("road_end")
+visible = false
+today_flag = &"linden_consecration_day"
+
+[resource]
+script = ExtResource("2_dfs02")
+npc_id = &"priest"
+display_name = "Ambrosius Lenz"
+entries = Array[ExtResource("1_h8iy5")]([SubResource("Resource_dsd5p"), SubResource("Resource_jq0uq"), SubResource("Resource_pbuyb"), SubResource("Resource_ymcak"), SubResource("Resource_fgliv"), SubResource("Resource_aevy6"), SubResource("Resource_svkmg"), SubResource("Resource_tybh8"), SubResource("Resource_dcyle"), SubResource("Resource_8hub3"), SubResource("Resource_d8ent"), SubResource("Resource_frwys")])

@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="PietyConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/piety/piety_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+min_value = -100
+max_value = 100
+start_value = 0
+tier_thresholds = PackedInt32Array(-59, -19, 20, 60)
+events = Dictionary[StringName, int]({
+&"bare_burial": -2,
+&"devotion": 1,
+&"full_prep": 3,
+&"hair_taken": -4,
+&"lecture_attended": -3,
+&"organ_taken": -6,
+&"reinterred": 1,
+&"rotten_burial": -2,
+&"service": 1,
+&"specimen_returned": 3,
+&"specimen_returned_grave": 5,
+&"teeth_taken": -6,
+&"valuables_left": 3,
+&"valuables_taken": -6
+})
+daily_recovery = 1
+gift_by_tier = PackedInt32Array(0, 2, 2, 2, 3)
+buyer_bonus_by_tier = PackedInt32Array(1, 1, 0, 0, 0)
+affinity_threshold = 20
+full_prep_requires_unharvested = true

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DeductionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/anatomy/deduction_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"d_still_heart"
+cause_id = &"unexplained"
+needs_any = Array[StringName]([])
+needs_all = Array[StringName]([&"b_still_heart", &"l_heart", &"f_mark"])
+clue_id = &"c_v_still_heart"
+text = "Ein Herz ohne Krankheit. Kein natürlicher Tod."
+reveals_cause = true

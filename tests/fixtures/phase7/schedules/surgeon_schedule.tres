@@ -1,0 +1,83 @@
+[gd_resource type="Resource" script_class="NpcSchedule" format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1_etcrm"]
+[ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2_5r3yp"]
+
+[sub_resource type="Resource" id="Resource_nspls"]
+script = ExtResource("1_etcrm")
+activity = &"home"
+path = PackedStringArray("v_surgery_door")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_xrgjx"]
+script = ExtResource("1_etcrm")
+start_minute = 475
+activity = &"shop"
+path = PackedStringArray("v_in_surgery_desk")
+dialogue_id = &"v_surgeon"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_d058b"]
+script = ExtResource("1_etcrm")
+start_minute = 720
+travel_minutes = 10
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_surgery_door", "v_anger_w", "v_house_n")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_cawe0"]
+script = ExtResource("1_etcrm")
+start_minute = 730
+activity = &"home"
+path = PackedStringArray("v_house_n")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_uj5n2"]
+script = ExtResource("1_etcrm")
+start_minute = 830
+travel_minutes = 10
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_house_n", "v_anger_w", "v_surgery_door")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_x5dx7"]
+script = ExtResource("1_etcrm")
+start_minute = 840
+activity = &"shop"
+path = PackedStringArray("v_in_surgery_desk")
+dialogue_id = &"v_surgeon"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_n2mmb"]
+script = ExtResource("1_etcrm")
+start_minute = 1080
+travel_minutes = 6
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_surgery_door", "v_well", "v_bridge")
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_s8rde"]
+script = ExtResource("1_etcrm")
+start_minute = 1086
+path = PackedStringArray("v_bridge")
+dialogue_id = &"v_surgeon"
+region = &"village"
+
+[sub_resource type="Resource" id="Resource_j33mf"]
+script = ExtResource("1_etcrm")
+start_minute = 1170
+activity = &"home"
+path = PackedStringArray("v_surgery_door")
+visible = false
+region = &"village"
+
+[resource]
+script = ExtResource("2_5r3yp")
+npc_id = &"surgeon"
+display_name = "Severin Quast"
+entries = Array[ExtResource("1_etcrm")]([SubResource("Resource_nspls"), SubResource("Resource_xrgjx"), SubResource("Resource_d058b"), SubResource("Resource_cawe0"), SubResource("Resource_uj5n2"), SubResource("Resource_x5dx7"), SubResource("Resource_n2mmb"), SubResource("Resource_s8rde"), SubResource("Resource_j33mf")])

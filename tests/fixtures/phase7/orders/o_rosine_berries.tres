@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"o_rosine_berries"
+giver = &"innkeeper"
+recipient = &""
+kind = &"deliver"
+title = "Holunder für den Wein"
+request_text = "Acht Hände voll Holunderbeeren für den Holunderwein."
+thanks_text = "Danke, Totengräber."
+items = Dictionary[StringName, int]({
+&"elderberries": 8
+})
+coins = 0
+target = ""
+conditions = {}
+days_limit = 5
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 6
+reward_rel = 8
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 4
+accept_flag = &""

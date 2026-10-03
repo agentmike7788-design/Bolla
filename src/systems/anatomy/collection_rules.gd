@@ -15,7 +15,8 @@ static func accepts(_item_id: StringName, _spec: SpecimenRecord) -> bool:
 	return false
 
 
-## Set ids newly completed by shelf_organs ({organ: container}) that are not in `done`.
+## Set ids newly completed by shelf_organs ({organ: SpecimenRecord} of the filled compartments – W0-Notizen)
+## that are not in `done`.
 static func completed_sets(_shelf_organs: Dictionary, _sets: Array[CollectionSetData], _done: PackedStringArray) -> Array[StringName]:
 	return []
 

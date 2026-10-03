@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/villager_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"grocer"
+display_name = "Theres Mangold"
+role = "Krämerin"
+dialogue_id = &"v_grocer"
+shop_id = &"grocer"
+home_door = &""
+gifts_liked = Array[StringName]([&"herbs", &"elderberries"])
+start_value = 20
+specimen_delta = 0
+returned_delta = 0
+piety_sensitive = false
+remarks = Dictionary[StringName, PackedStringArray]({
+&"rep_disreputable": PackedStringArray("Das ist der, bei dem die Taschen leichter werden."),
+&"rep_respected": PackedStringArray("Der Totengräber. Grüß Gott.")
+})

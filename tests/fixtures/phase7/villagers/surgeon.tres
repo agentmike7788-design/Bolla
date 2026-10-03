@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/villager_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"surgeon"
+display_name = "Severin Quast"
+role = "Wundarzt und Geburtshelfer"
+dialogue_id = &"v_surgeon"
+shop_id = &"surgeon"
+home_door = &"door_surgery"
+gifts_liked = Array[StringName]([&"spirits", &"herb_bundle"])
+start_value = 20
+specimen_delta = 2
+returned_delta = 0
+piety_sensitive = false
+remarks = Dictionary[StringName, PackedStringArray]({
+&"rep_respected": PackedStringArray("Die Toten lehren die Lebenden.")
+})

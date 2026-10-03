@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ShopData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/shop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"inn"
+npc_id = &"innkeeper"
+title = "Holderkrug"
+sells = Dictionary[StringName, Dictionary]({
+&"elder_wine": {
+"per_day": 3,
+"price": 2
+},
+&"spirits": {
+"per_day": 4,
+"price": 3
+}
+})
+buys = Dictionary[StringName, Dictionary]({
+&"elderberries": {
+"per_day": 10,
+"price": 2
+},
+&"herbs": {
+"per_day": 4,
+"price": 1
+}
+})
+coin_reason = &"village"

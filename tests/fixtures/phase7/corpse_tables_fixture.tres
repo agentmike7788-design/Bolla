@@ -1,0 +1,108 @@
+[gd_resource type="Resource" script_class="CorpseTables" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/corpse/corpse_tables.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+first_names = PackedStringArray("Anselm", "Berthold", "Cordula", "Dietlinde", "Egbert", "Frieda", "Gottlieb", "Hedwig", "Ignaz", "Josepha", "Kunibert", "Liesel", "Mechthild", "Notburga", "Ottilie", "Pankraz", "Roswitha", "Sebald", "Theres", "Ulrich", "Walburga", "Wendelin")
+last_names = PackedStringArray("Moosbacher", "Distelmeier", "Holzapfel", "Brenneisen", "Weidenfeller", "Kesselring", "Hagedorn", "Rabenstein", "Eschenbach", "Mühlhauser", "Nebelung", "Kornblum", "Schattauer", "Wolfsgruber", "Krähwinkel", "Pechstein", "Dornbusch", "Unkenfeld", "Hollerbach", "Brunnhuber")
+female_first_names = PackedStringArray("Cordula", "Dietlinde", "Frieda", "Hedwig", "Josepha", "Liesel", "Mechthild", "Notburga", "Ottilie", "Roswitha", "Theres", "Walburga")
+old_age = 60
+age_min = 18
+age_max = 88
+causes = Array[Dictionary]([{
+"base_payment": 3,
+"decay_mult": 1.0,
+"description": "Das Sumpffieber aus den Mooren. Die Haut ist fahl und wächsern, die Lippen sind rissig vom Durst der letzten Nächte.",
+"id": &"fever",
+"label": "Fieber",
+"weight": 1.5
+}, {
+"base_payment": 4,
+"decay_mult": 1.5,
+"description": "Kalt und aufgedunsen, Entengrütze im Haar. Der Müller hat den Leib am Wehr aus dem Wasser gezogen.",
+"id": &"drowned_millpond",
+"label": "Ertrunken im Mühlteich",
+"weight": 1.0
+}, {
+"base_payment": 3,
+"decay_mult": 1.0,
+"description": "Das Genick gebrochen, noch Halme an der Kleidung. Die Leiter stand wohl zu steil.",
+"id": &"fall_hayloft",
+"label": "Sturz vom Heuboden",
+"weight": 1.0
+}, {
+"base_payment": 2,
+"decay_mult": 0.75,
+"description": "Friedlich eingeschlafen, die Hände über der Brust gefaltet. Jemand hat die Augen bereits geschlossen.",
+"id": &"old_age",
+"label": "Altersschwäche",
+"weight": 1.5
+}, {
+"base_payment": 4,
+"decay_mult": 1.25,
+"description": "Bläuliche Fingernägel und ein bitterer Geruch um den Mund. Im Dorf will niemand darüber reden.",
+"id": &"poisoned",
+"label": "Vergiftet?",
+"weight": 0.5
+}, {
+"base_payment": 3,
+"decay_mult": 1.25,
+"description": "Im Hohlweg von der Postkutsche erfasst. Prellungen überall, ein Arm ist zerschlagen.",
+"id": &"coach_accident",
+"label": "Kutschenunglück",
+"weight": 0.75
+}, {
+"base_payment": 3,
+"decay_mult": 0.5,
+"description": "Der Leib ist schwer und kalt vom Moorwasser, der Mantel voll schwarzem Torf. Wie lange er dort lag, weiß niemand.",
+"id": &"moor_cold",
+"label": "Aus dem Moor",
+"weight": 0.0
+}])
+traits = Array[Dictionary]([{
+"chance": 0.35,
+"id": &"valuables",
+"label": "Wertsachen",
+"reveal_text": "In den Rocksaum eingenäht: ein kleiner Beutel mit Münzen. Niemand würde je erfahren, wohin er verschwunden ist."
+}, {
+"chance": 0.25,
+"id": &"letter",
+"label": "Brief",
+"reveal_text": "Ein gefalteter Brief, das Siegel ungebrochen. Die Tinte ist verlaufen – nur „…komm nicht zurück nach Hollerbrück“ ist noch zu lesen."
+}, {
+"chance": 0.2,
+"id": &"tattoo",
+"label": "Tätowierung",
+"reveal_text": "Auf dem Unterarm eine verblasste Tätowierung: ein Anker, umschlungen von einer Schlange. Seeleute kommen selten so weit ins Land."
+}, {
+"chance": 0.15,
+"id": &"strange_wound",
+"label": "Seltsame Wunde",
+"reveal_text": "Über dem Herzen ist ein Zeichen in die Haut geritzt – ein Kreis, von drei Linien durchbrochen. Die Wunde blutet nicht, und unter deinen Fingern fühlt sich die Haut noch warm an."
+}])
+forced_traits_by_day = Dictionary[int, PackedStringArray]({
+1: PackedStringArray(),
+2: PackedStringArray("valuables"),
+3: PackedStringArray("strange_wound"),
+4: PackedStringArray("valuables", "letter"),
+5: PackedStringArray("valuables", "tattoo")
+})
+base_decay_per_hour = 0.05
+delivery_minute = 460
+valuables_coins_min = 5
+valuables_coins_max = 8
+hidden_causes = Dictionary[StringName, Array]({
+&"drowned_millpond": [{
+"chance": 0.15,
+"id": &"dead_before_water"
+}],
+&"fever": [{
+"chance": 0.12,
+"id": &"arsenic"
+}],
+&"old_age": [{
+"chance": 0.15,
+"id": &"drink"
+}]
+})

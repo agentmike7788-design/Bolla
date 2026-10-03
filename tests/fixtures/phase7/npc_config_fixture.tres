@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="NpcConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc/npc_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+lod_full_distance = 26.0
+lod_rest_distance = 40.0
+reduced_interval = 0.2
+max_full = 6
+governor_hz = 2.0
+remark_distance = 4.0

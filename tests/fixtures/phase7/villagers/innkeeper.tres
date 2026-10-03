@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/villager_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"innkeeper"
+display_name = "Rosine Wackernagel"
+role = "Wirtin des Holderkrugs"
+dialogue_id = &"v_innkeeper"
+shop_id = &"inn"
+home_door = &"door_inn"
+gifts_liked = Array[StringName]([&"honey_cake", &"herb_bundle"])
+start_value = 25
+specimen_delta = 0
+returned_delta = 0
+piety_sensitive = false
+remarks = Dictionary[StringName, PackedStringArray]({
+&"rep_disreputable": PackedStringArray("Du bist der vom Hügel. Setz dich ans Fenster, da sieht dich keiner."),
+&"rep_renowned": PackedStringArray("Wackernagel hat für dich einen Stuhl am Ofen frei. Den kriegt sonst nur der Pfarrer."),
+&"rep_respected": PackedStringArray("Der Totengräber. Grüß Gott.")
+})

@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ShopData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/shop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"washer"
+npc_id = &"washer"
+title = "Liesels Spinnplatz"
+sells = Dictionary[StringName, Dictionary]({
+&"linen": {
+"per_day": 2,
+"price": 2
+},
+&"yarn": {
+"per_day": 4,
+"price": 1
+}
+})
+buys = Dictionary[StringName, Dictionary]({
+&"burial_gown": {
+"per_day": 2,
+"price": 6
+},
+&"shroud": {
+"per_day": 2,
+"price": 3
+}
+})
+coin_reason = &"village"

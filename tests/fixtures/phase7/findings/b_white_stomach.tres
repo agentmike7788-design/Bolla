@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="SpecimenFindingData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/anatomy/specimen_finding_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"b_white_stomach"
+organ = &"stomach"
+priority = 30
+story_id = &""
+hidden_cause = &"arsenic"
+cause_id = &"poisoned"
+requires_trait = &""
+text = "Ein weißlicher Belag. Es riecht nach Knoblauch."
+clue_id = &""
+reveals_cause = &""

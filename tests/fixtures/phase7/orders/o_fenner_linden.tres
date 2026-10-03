@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"o_fenner_linden"
+giver = &"mayor"
+recipient = &""
+kind = &"section"
+title = "Der Lindenacker"
+request_text = "Pforte, Stümpfe, Brombeeren und Steine räumen. Die Gemeinde gibt das Land, wenn du es urbar machst."
+thanks_text = "Danke, Totengräber."
+items = Dictionary[StringName, int]({})
+coins = 0
+target = "linden"
+conditions = {}
+days_limit = 0
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 8
+reward_rep = 2
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 1
+accept_flag = &"linden_granted"

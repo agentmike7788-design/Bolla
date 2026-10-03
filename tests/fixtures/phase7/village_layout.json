@@ -1,0 +1,536 @@
+{
+ "_comment": "Phase-7 W1 fixture (docs/PHASE7_DESIGN.md §4.2, §4.4): region-local plan of Hollerbrück (x east, z south, origin = centre of the Anger). W-Welt owns data/world/village_layout.json; W1 tests use this snapshot.",
+ "region_id": "village",
+ "origin": [
+  0,
+  0,
+  400
+ ],
+ "walkable_bounds": {
+  "min": [
+   -29,
+   -10.6
+  ],
+  "max": [
+   24,
+   12.0
+  ]
+ },
+ "camera_bounds": {
+  "min": [
+   -22,
+   -8
+  ],
+  "max": [
+   20,
+   8
+  ]
+ },
+ "ground_size": [
+  70,
+  50
+ ],
+ "buildings": [
+  {
+   "id": "v_church",
+   "model": "ph_bld_v_church",
+   "pos": [
+    0,
+    -18
+   ],
+   "size": [
+    8,
+    12
+   ],
+   "door": [
+    0,
+    -11.9
+   ],
+   "enterable": false,
+   "max_height": 17
+  },
+  {
+   "id": "v_office",
+   "model": "ph_bld_v_office",
+   "pos": [
+    -15,
+    -14
+   ],
+   "size": [
+    9,
+    7
+   ],
+   "door": [
+    -15,
+    -10.4
+   ],
+   "enterable": true,
+   "room": "office",
+   "max_height": 8.5
+  },
+  {
+   "id": "v_inn",
+   "model": "ph_bld_v_inn",
+   "pos": [
+    15,
+    -14
+   ],
+   "size": [
+    10,
+    7
+   ],
+   "door": [
+    15,
+    -10.4
+   ],
+   "enterable": true,
+   "room": "inn",
+   "max_height": 8.5
+  },
+  {
+   "id": "v_smithy",
+   "model": "ph_bld_v_smithy",
+   "pos": [
+    -20,
+    -2
+   ],
+   "size": [
+    6,
+    6
+   ],
+   "open": "east",
+   "max_height": 6.5
+  },
+  {
+   "id": "v_shop",
+   "model": "ph_bld_v_shop",
+   "pos": [
+    -18,
+    7
+   ],
+   "size": [
+    6,
+    5
+   ],
+   "open": "east",
+   "max_height": 6
+  },
+  {
+   "id": "v_surgery",
+   "model": "ph_bld_v_surgery",
+   "pos": [
+    19,
+    -2
+   ],
+   "size": [
+    7,
+    8
+   ],
+   "door": [
+    15.4,
+    -2
+   ],
+   "enterable": true,
+   "room": "surgery",
+   "max_height": 8
+  },
+  {
+   "id": "v_remise",
+   "model": "ph_bld_v_remise",
+   "pos": [
+    19.5,
+    8
+   ],
+   "size": [
+    7,
+    5
+   ],
+   "open": "west",
+   "max_height": 5
+  },
+  {
+   "id": "cottage_hagedorn",
+   "model": "ph_bld_v_cottage_a",
+   "pos": [
+    -6,
+    13.5
+   ],
+   "size": [
+    6,
+    5
+   ],
+   "door": [
+    -6,
+    11
+   ],
+   "max_height": 4.5,
+   "ribbon": true
+  },
+  {
+   "id": "cottage_dorn",
+   "model": "ph_bld_v_cottage_b",
+   "pos": [
+    6,
+    13.5
+   ],
+   "size": [
+    6,
+    5
+   ],
+   "door": [
+    6,
+    11
+   ],
+   "max_height": 4.5,
+   "ribbon": true
+  },
+  {
+   "id": "house_kehr",
+   "model": "ph_bld_v_house_a",
+   "pos": [
+    -25.5,
+    -12
+   ],
+   "max_height": 7,
+   "ribbon": true
+  },
+  {
+   "id": "house_brandt",
+   "model": "ph_bld_v_house_b",
+   "pos": [
+    25.5,
+    -12
+   ],
+   "max_height": 7,
+   "ribbon": true
+  },
+  {
+   "id": "house_ott",
+   "model": "ph_bld_v_house_c",
+   "pos": [
+    26.5,
+    3
+   ],
+   "max_height": 7,
+   "ribbon": true
+  },
+  {
+   "id": "house_sieber",
+   "model": "ph_bld_v_house_a",
+   "pos": [
+    -27.5,
+    13
+   ],
+   "max_height": 7,
+   "ribbon": true
+  },
+  {
+   "id": "v_inn2",
+   "model": "ph_bld_v_inn2",
+   "pos": [
+    -24,
+    -20
+   ],
+   "max_height": 7
+  }
+ ],
+ "entities": [
+  {
+   "id": "road_out",
+   "type": "RegionPortal",
+   "pos": [
+    -28.4,
+    1.5
+   ],
+   "target_region": "graveyard",
+   "target_spawn": "from_village",
+   "prompt": "[E] Zum Friedhof (30 Min)"
+  },
+  {
+   "id": "door_inn",
+   "type": "HouseDoor",
+   "pos": [
+    15,
+    -10.4
+   ],
+   "room_id": "inn",
+   "display_name": "Holderkrug",
+   "open_windows": [
+    410,
+    1410
+   ]
+  },
+  {
+   "id": "door_surgery",
+   "type": "HouseDoor",
+   "pos": [
+    15.4,
+    -2
+   ],
+   "room_id": "surgery",
+   "display_name": "Wundarztstube",
+   "open_windows": [
+    475,
+    720,
+    840,
+    1080
+   ]
+  },
+  {
+   "id": "door_office",
+   "type": "HouseDoor",
+   "pos": [
+    -15,
+    -10.4
+   ],
+   "room_id": "office",
+   "display_name": "Amtsstube",
+   "open_windows": [
+    475,
+    720,
+    785,
+    960
+   ]
+  },
+  {
+   "id": "counter_smith",
+   "type": "ShopCounter",
+   "pos": [
+    -16.8,
+    -2
+   ],
+   "shop_id": "smith"
+  },
+  {
+   "id": "counter_grocer",
+   "type": "ShopCounter",
+   "pos": [
+    -14.3,
+    7
+   ],
+   "shop_id": "grocer"
+  },
+  {
+   "id": "village_board",
+   "type": "VillageBoard",
+   "pos": [
+    -7,
+    4.6
+   ]
+  },
+  {
+   "id": "well",
+   "type": "prop",
+   "model": "ph_prop_v_well",
+   "pos": [
+    0,
+    -3
+   ]
+  },
+  {
+   "id": "linden",
+   "type": "prop",
+   "model": "ph_env_linden_old",
+   "pos": [
+    -7,
+    3
+   ]
+  },
+  {
+   "id": "bridge",
+   "type": "prop",
+   "model": "ph_prop_v_bridge",
+   "pos": [
+    -26,
+    1.5
+   ]
+  },
+  {
+   "id": "ribbon_house_kehr",
+   "type": "MourningRibbon",
+   "house_id": "house_kehr"
+  },
+  {
+   "id": "ribbon_house_brandt",
+   "type": "MourningRibbon",
+   "house_id": "house_brandt"
+  },
+  {
+   "id": "ribbon_house_ott",
+   "type": "MourningRibbon",
+   "house_id": "house_ott"
+  },
+  {
+   "id": "ribbon_house_sieber",
+   "type": "MourningRibbon",
+   "house_id": "house_sieber"
+  },
+  {
+   "id": "ribbon_cottage_hagedorn",
+   "type": "MourningRibbon",
+   "house_id": "cottage_hagedorn"
+  },
+  {
+   "id": "ribbon_cottage_dorn",
+   "type": "MourningRibbon",
+   "house_id": "cottage_dorn"
+  }
+ ],
+ "spawns": {
+  "from_graveyard": {
+   "pos": [
+    -24.6,
+    1.5
+   ],
+   "facing": "east"
+  }
+ },
+ "waypoints": {
+  "v_road_in": [
+   -29.5,
+   1.5
+  ],
+  "v_bridge": [
+   -25.0,
+   1.5
+  ],
+  "v_anger_w": [
+   -12,
+   0
+  ],
+  "v_well": [
+   0.6,
+   -1.6
+  ],
+  "v_well_bench": [
+   2.2,
+   -2.2
+  ],
+  "v_linden": [
+   -5.2,
+   4.2
+  ],
+  "v_board": [
+   -7,
+   5.6
+  ],
+  "v_church_door": [
+   0,
+   -10.6
+  ],
+  "v_office_door": [
+   -15,
+   -9.6
+  ],
+  "v_inn_door": [
+   15,
+   -9.6
+  ],
+  "v_anvil": [
+   -16.2,
+   -2
+  ],
+  "v_shop_window": [
+   -13.6,
+   7
+  ],
+  "v_surgery_door": [
+   14.6,
+   -2
+  ],
+  "v_remise": [
+   15.2,
+   8
+  ],
+  "v_hagedorn_gate": [
+   -6,
+   9.6
+  ],
+  "v_dorn_door": [
+   6,
+   9.6
+  ],
+  "v_wash": [
+   -23.6,
+   8.5
+  ],
+  "v_house_n": [
+   -20,
+   -9.8
+  ],
+  "tp_village": [
+   -20,
+   1.5
+  ],
+  "tp_anger": [
+   0,
+   2
+  ]
+ },
+ "interior_waypoints": {
+  "inn": [
+   "v_in_inn_bar",
+   "v_in_inn_table",
+   "v_in_inn_corner"
+  ],
+  "surgery": [
+   "v_in_surgery_desk"
+  ],
+  "office": [
+   "v_in_office_desk"
+  ]
+ },
+ "interiors": {
+  "inn": {
+   "origin": [
+    240,
+    0,
+    -200
+   ],
+   "size": [
+    8,
+    6
+   ],
+   "distance": 10,
+   "zoom": [
+    8,
+    12
+   ],
+   "door": "door_inn"
+  },
+  "surgery": {
+   "origin": [
+    300,
+    0,
+    -200
+   ],
+   "size": [
+    6,
+    5
+   ],
+   "distance": 9,
+   "zoom": [
+    7,
+    11
+   ],
+   "door": "door_surgery"
+  },
+  "office": {
+   "origin": [
+    360,
+    0,
+    -200
+   ],
+   "size": [
+    6,
+    5
+   ],
+   "distance": 9,
+   "zoom": [
+    7,
+    11
+   ],
+   "door": "door_office"
+  }
+ }
+}

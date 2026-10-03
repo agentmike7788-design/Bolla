@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="VillageConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/village_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+unlock_flag = &"roof_and_earth_complete"
+open_flag = &"village_open"
+intro_minute = 360
+round_price = 5
+round_minutes = 15
+donation_step = 5
+donation_steps_per_day = 2
+consecration_price_by_tier = Dictionary[StringName, int]({
+&"acquainted": 10,
+&"friend": 0,
+&"stranger": 10,
+&"trusted": 5
+})
+consecration_section = &"linden"
+consecration_end_minute = 630
+mourning_houses = PackedStringArray("house_kehr", "house_brandt", "house_ott", "house_sieber", "cottage_hagedorn", "cottage_dorn")
+goal_orders = 6
+goal_givers = 4
+goal_trusted = 3
+goal_insight = &"i_deathbook"
+chapter_id = &"name_in_village"
+goal_flag = &"name_in_village_complete"

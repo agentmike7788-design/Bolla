@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/villager_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"priest"
+display_name = "Ambrosius Lenz"
+role = "Pfarrer von St. Gallus"
+dialogue_id = &"v_priest"
+shop_id = &"priest"
+home_door = &""
+gifts_liked = Array[StringName]([&"elder_wine", &"honey_cake"])
+start_value = 25
+specimen_delta = -4
+returned_delta = 1
+piety_sensitive = true
+remarks = Dictionary[StringName, PackedStringArray]({
+&"rep_respected": PackedStringArray("Der Totengräber. Grüß Gott."),
+&"specimens": PackedStringArray("Quast hat wieder Post vom Hügel, sagt man.")
+})

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/villager_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"oldwoman"
+display_name = "Wiebke Hagedorn"
+role = "Altenteilerin"
+dialogue_id = &"v_oldwoman"
+shop_id = &""
+home_door = &""
+gifts_liked = Array[StringName]([&"seeds", &"honey_cake"])
+start_value = 30
+specimen_delta = -2
+returned_delta = 0
+piety_sensitive = false
+remarks = Dictionary[StringName, PackedStringArray]({
+&"rep_respected": PackedStringArray("Der Totengräber. Grüß Gott.")
+})

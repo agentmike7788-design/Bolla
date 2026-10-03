@@ -1,0 +1,230 @@
+{
+ "_comment": "Phase-7 W1 fixture (docs/PHASE7_DESIGN.md §4.6): the graveyard additions R1, L1–L7, N1, N2 (world coordinates). W-Welt owns data/world/graveyard_layout.json.",
+ "section": {
+  "id": "linden",
+  "rect": {
+   "min": [
+    11.5,
+    9.6
+   ],
+   "max": [
+    21.5,
+    19.6
+   ]
+  },
+  "order": 8
+ },
+ "plots": {
+  "l_01": [
+   13.6,
+   12.8
+  ],
+  "l_02": [
+   15.9,
+   12.8
+  ],
+  "l_03": [
+   18.2,
+   12.8
+  ],
+  "l_04": [
+   20.5,
+   12.8
+  ],
+  "l_05": [
+   13.6,
+   16.9
+  ],
+  "l_06": [
+   15.9,
+   16.9
+  ],
+  "l_07": [
+   18.2,
+   16.9
+  ],
+  "l_08": [
+   20.5,
+   16.9
+  ]
+ },
+ "obstacles": [
+  {
+   "id": "obs_l_gate",
+   "kind": "gate_small",
+   "pos": [
+    15.8,
+    9.6
+   ]
+  },
+  {
+   "id": "obs_l_stump_1",
+   "kind": "stump"
+  },
+  {
+   "id": "obs_l_stump_2",
+   "kind": "stump"
+  },
+  {
+   "id": "obs_l_stump_3",
+   "kind": "stump"
+  },
+  {
+   "id": "obs_l_stump_4",
+   "kind": "stump"
+  },
+  {
+   "id": "obs_l_bramble_1",
+   "kind": "bramble"
+  },
+  {
+   "id": "obs_l_bramble_2",
+   "kind": "bramble"
+  },
+  {
+   "id": "obs_l_bramble_3",
+   "kind": "bramble"
+  },
+  {
+   "id": "obs_l_rubble_1",
+   "kind": "rubble"
+  },
+  {
+   "id": "obs_l_rubble_2",
+   "kind": "rubble"
+  }
+ ],
+ "fences": {
+  "east_meadow_south": [
+   [
+    [
+     11.5,
+     9.6
+    ],
+    [
+     15.0,
+     9.6
+    ]
+   ],
+   [
+    [
+     16.6,
+     9.6
+    ],
+    [
+     21.5,
+     9.6
+    ]
+   ]
+  ],
+  "linden": [
+   [
+    [
+     11.5,
+     9.6
+    ],
+    [
+     11.5,
+     19.6
+    ]
+   ],
+   [
+    [
+     11.5,
+     19.6
+    ],
+    [
+     21.5,
+     19.6
+    ]
+   ],
+   [
+    [
+     21.5,
+     9.6
+    ],
+    [
+     21.5,
+     19.6
+    ]
+   ]
+  ]
+ },
+ "moved_trees": {
+  "forest.trees[6]": {
+   "from": [
+    12.6,
+    17.2
+   ],
+   "to": [
+    25.0,
+    23.5
+   ]
+  },
+  "forest.trees[8]": {
+   "from": [
+    18.0,
+    12.0
+   ],
+   "to": [
+    27.5,
+    15.5
+   ]
+  }
+ },
+ "linden_tree": [
+  23.4,
+  14.8
+ ],
+ "entities": [
+  {
+   "id": "road_exit",
+   "type": "RegionPortal",
+   "model": "ph_prop_milestone",
+   "pos": [
+    8.4,
+    24.4
+   ],
+   "target_region": "village",
+   "target_spawn": "from_graveyard",
+   "prompt": "[E] Nach Hollerbrück (30 Min)",
+   "requires_flag": "village_open"
+  },
+  {
+   "id": "npc_priest",
+   "type": "Npc",
+   "npc_id": "priest",
+   "region_id": "graveyard",
+   "model": "ph_chr_v_priest"
+  }
+ ],
+ "spawns": {
+  "from_village": [
+   8.0,
+   23.4
+  ]
+ },
+ "waypoints": {
+  "w_east_pass": [
+   11.5,
+   -2.2
+  ],
+  "w_linden_n": [
+   15.8,
+   8.6
+  ],
+  "linden_spot": [
+   15.8,
+   10.8
+  ],
+  "tp_linden": [
+   16,
+   14.8
+  ]
+ },
+ "crypt_pult": {
+  "room": "crypt",
+  "min_level": 1,
+  "place": "west wall between the stairs and niche_3 (W-Welt chooses)"
+ }
+}
