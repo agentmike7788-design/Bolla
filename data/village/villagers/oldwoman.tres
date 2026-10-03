@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/villager_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"oldwoman"
+display_name = "Wiebke Hagedorn"
+role = "Altenteilerin"
+dialogue_id = &"v_oldwoman"
+shop_id = &""
+home_door = &""
+gifts_liked = Array[StringName]([&"seeds", &"honey_cake"])
+start_value = 30
+specimen_delta = -2
+returned_delta = 0
+piety_sensitive = false
+remarks = Dictionary[StringName, PackedStringArray]({
+&"friend": PackedStringArray("Setz dich, Junge. Ich erzähl dir, wie's früher am Brunnen war."),
+&"rep_disreputable": PackedStringArray("Du bist also der. Ich hab mir dich größer vorgestellt. Und gewaschener."),
+&"rep_esteemed": PackedStringArray("Man sagt, bei dir liegt man trocken. Das ist mir wichtig, ich hab's an den Knien."),
+&"rep_renowned": PackedStringArray("Wenn's so weit ist, will ich zu dir. Hab ich dem Pfarrer schon gesagt."),
+&"rep_respected": PackedStringArray("Der Totengräber. Grüß Gott.", "Mit Blick auf die Linde, merk dir das. Nicht vergessen."),
+&"rep_unremarkable": PackedStringArray("Na, Totengräber? Noch hab ich keine Zeit für dich."),
+&"specimens": PackedStringArray("Die Leute sagen, beim Quast klirrt es. Lass mich ganz, hörst du?")
+})

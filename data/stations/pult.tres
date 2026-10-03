@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="StationData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/workshop/station_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"pult"
+display_name = "Präparierpult"
+site_id = "pult"
+build_inputs = Dictionary[StringName, int]({
+&"iron_fittings": 2,
+&"stone": 2,
+&"wood": 6
+})
+build_coins = 12
+build_minutes = 90
+panel = &"crafting"
+prompt_use = "[E] Präparierpult benutzen"
+build_text = "Ein Pult mit Schieferlade an der kalten Wand. Daneben ein Regal mit sieben Fächern hinter Tüchern."
+coin_part_label = "Glaswaren und Wachstuch von Quast"
+prebuilt = false

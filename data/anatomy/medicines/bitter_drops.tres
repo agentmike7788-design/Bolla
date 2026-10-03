@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MedicineData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/anatomy/medicine_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"bitter_drops"
+organs = Array[StringName]([&"liver"])
+min_clarity = 0.45
+inputs = Dictionary[StringName, int]({
+&"herbs": 2,
+&"spirits": 1
+})
+minutes = 30
+output = &"bitter_drops"
+amount = 2

@@ -337,8 +337,12 @@ func test_config_files_in_data_match_the_fixtures() -> void:
 		var defaults: Resource = (real.get_script() as GDScript).new()
 		for prop: Dictionary in real.get_property_list():
 			if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
-				assert_eq(real.get(prop.name), fixture.get(prop.name), "%s.%s" % [name, prop.name])
-				assert_eq(defaults.get(prop.name), fixture.get(prop.name), "%s.%s = class default" % [name, prop.name])
+				var expected: Resource = fixture
+				if name == &"shed_config" and prop.name == "excluded_items":
+					# Phase 7 (P7, §2.8): + the four specimen items – the Phase-7 fixture holds them.
+					expected = Phase7Fixtures.shed_config()
+				assert_eq(real.get(prop.name), expected.get(prop.name), "%s.%s" % [name, prop.name])
+				assert_eq(defaults.get(prop.name), expected.get(prop.name), "%s.%s = class default" % [name, prop.name])
 
 
 func test_buildings_and_config_values() -> void:

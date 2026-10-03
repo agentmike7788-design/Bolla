@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="ShopData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/shop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"smith"
+npc_id = &"smith"
+title = "Schmiede"
+sells = Dictionary[StringName, Dictionary]({
+&"iron_bar": {
+"per_day": 2,
+"price": 6
+},
+&"iron_fittings": {
+"per_day": 6,
+"price": 3
+},
+&"steel_rod": {
+"friend_extra": 2,
+"per_day": 2,
+"price": 6
+}
+})
+buys = Dictionary[StringName, Dictionary]({
+&"charcoal": {
+"per_day": 8,
+"price": 1
+},
+&"iron_ore": {
+"per_day": 6,
+"price": 1
+}
+})
+coin_reason = &"village"

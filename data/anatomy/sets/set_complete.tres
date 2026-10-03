@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CollectionSetData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/anatomy/collection_set_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"set_complete"
+title = "Lehrsammlung"
+organs = Array[StringName]([&"heart", &"lung", &"stomach", &"liver", &"kidneys", &"eyes", &"hand"])
+needs_display = true
+reward_coins = 15
+standing = 1
+sets_flag = &"university_letter"

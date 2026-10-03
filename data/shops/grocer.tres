@@ -1,0 +1,67 @@
+[gd_resource type="Resource" script_class="ShopData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/shop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"grocer"
+npc_id = &"grocer"
+title = "Krämerladen"
+sells = Dictionary[StringName, Dictionary]({
+&"altar_candle": {
+"per_day": 4,
+"price": 2
+},
+&"beeswax": {
+"per_day": 4,
+"price": 1
+},
+&"gold_leaf": {
+"per_day": 1,
+"price": 6,
+"requires_tier": &"friend"
+},
+&"honey_cake": {
+"per_day": 4,
+"price": 1
+},
+&"juniper": {
+"per_day": 4,
+"price": 2
+},
+&"linen": {
+"per_day": 6,
+"price": 3
+},
+&"prep_jar": {
+"per_day": 4,
+"price": 2
+},
+&"seeds": {
+"per_day": 6,
+"price": 1
+}
+})
+buys = Dictionary[StringName, Dictionary]({
+&"elderberries": {
+"per_day": 8,
+"price": 1
+},
+&"herb_bundle": {
+"per_day": 4,
+"price": 3
+},
+&"herbs": {
+"per_day": 8,
+"price": 1
+},
+&"wound_salve": {
+"per_day": 3,
+"price": 4
+},
+&"yarn": {
+"per_day": 6,
+"price": 1
+}
+})
+coin_reason = &"village"

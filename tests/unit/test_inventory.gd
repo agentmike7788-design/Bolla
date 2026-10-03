@@ -55,6 +55,24 @@ const ITEMS := {
 	# Phase 6 (P3, §2.6)
 	&"bone_box": ["Gebeinkiste", ItemData.Category.MATERIAL, 5],
 	&"bone_box_full": ["Gebeinkiste (belegt)", ItemData.Category.MATERIAL, 3],
+	# Phase 7 (P7, §2.8)
+	&"prep_jar": ["Präparatglas", ItemData.Category.MATERIAL, 10],
+	&"prep_jar_small": ["Kleines Präparatglas", ItemData.Category.MATERIAL, 10],
+	&"spirits": ["Branntwein", ItemData.Category.MATERIAL, 10],
+	&"beeswax": ["Bienenwachs", ItemData.Category.MATERIAL, 10],
+	&"anatomy_case": ["Präparierbesteck", ItemData.Category.TOOL, 1],
+	&"specimen_jar": ["Präparat im Glas", ItemData.Category.GOODS, 1],
+	&"specimen_bundle": ["Präparat im Bündel", ItemData.Category.GOODS, 1],
+	&"bone_specimen": ["Knochenpräparat", ItemData.Category.GOODS, 1],
+	&"antidote": ["Gegengift", ItemData.Category.CRAFTED, 5],
+	&"bitter_drops": ["Bittertropfen", ItemData.Category.CRAFTED, 5],
+	&"dropsy_powder": ["Wassersuchtpulver", ItemData.Category.CRAFTED, 5],
+	&"display_specimen": ["Schaupräparat", ItemData.Category.GOODS, 1],
+	&"fever_tincture": ["Fiebertinktur", ItemData.Category.CRAFTED, 5],
+	&"wound_salve": ["Wundsalbe", ItemData.Category.CRAFTED, 10],
+	&"corpse_balm": ["Totensalbe", ItemData.Category.MATERIAL, 10],
+	&"honey_cake": ["Honigkuchen", ItemData.Category.GOODS, 10],
+	&"elder_wine": ["Holunderwein", ItemData.Category.GOODS, 5],
 }
 
 
