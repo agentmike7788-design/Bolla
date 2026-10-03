@@ -26,6 +26,7 @@ const Phase3 := preload("res://src/world/graveyard/graveyard_build_phase3.gd")
 const Phase4 := preload("res://src/world/graveyard/graveyard_build_phase4.gd")
 const Phase5 := preload("res://src/world/graveyard/graveyard_build_phase5.gd")
 const Phase6 := preload("res://src/world/graveyard/graveyard_build_phase6.gd")
+const Phase7 := preload("res://src/world/graveyard/graveyard_build_phase7.gd")
 const InteriorBuild := preload("res://src/world/hut_interior/hut_interior_build.gd")
 const InteriorBuilder := preload("res://src/world/hut_interior/hut_interior_builder.gd")
 const LAYOUT_PATH := "res://data/world/graveyard_layout.json"
@@ -144,6 +145,7 @@ func _build_world() -> Node:
 	Phase5.build_gather_nodes(_ctx, entities)
 	Phase6.build_sites(_ctx, entities)
 	Phase6.build_doors(_ctx, entities)
+	Phase7.build_portals(_ctx, entities)
 
 	var decor := _ctx.group(scene_root, "Decor")
 	var old := _ctx.group(decor, "OldGraves")
@@ -162,6 +164,7 @@ func _build_world() -> Node:
 	Phase5.build_elder_gather(_ctx, decor)
 	Phase5.build_bruch(_ctx, decor, entities)
 	Phase6.build_systems(_ctx, systems)
+	Phase7.build_systems(_ctx, systems)
 
 	Entities.build_waypoints(_ctx, _ctx.group(scene_root, "Waypoints"))
 	_ctx.group(scene_root, "Corpses")
@@ -173,6 +176,8 @@ func _build_world() -> Node:
 	_build_camera(player)
 	_build_interior()
 	Phase6.build_interiors(_ctx, scene_root)
+	Phase7.build_interiors(_ctx, scene_root)
+	Phase7.build_regions(_ctx, scene_root)
 	var ui := (load(UI_SCENE) as PackedScene).instantiate()
 	ui.name = "UI"
 	_ctx.add(scene_root, ui)

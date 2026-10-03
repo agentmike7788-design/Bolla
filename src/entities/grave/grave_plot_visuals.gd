@@ -54,7 +54,14 @@ func apply() -> void:
 				roles.append(GravePlot.ROLE_MARKER + String(marker_id))
 		GraveRecord.State.OLD:
 			_add_model(_load_scene(GravePlot.OLD_MOUND_PATH % plot.old_mound), Vector3.ZERO)
-			_add_model(_load_scene(GravePlot.OLD_STONE_PATH % plot.old_stone), plot.old_stone_offset)
+			if not design.is_empty():
+				# Phase 7 (§2.5 o_mangold_stone, W-Welt): a new stone set on a rest-period grave
+				# (Graveyard.replace_old_marker) stands in place of the weathered one.
+				var stone := StoneVisual.build(design)
+				stone.position = plot.old_stone_offset
+				_visual.add_child(stone)
+			else:
+				_add_model(_load_scene(GravePlot.OLD_STONE_PATH % plot.old_stone), plot.old_stone_offset)
 			roles.append(GravePlot.ROLE_OLD)
 	_update_collision(roles)
 

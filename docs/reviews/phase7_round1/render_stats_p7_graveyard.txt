@@ -1,0 +1,12 @@
+p7_00_wegstein_day  camera_tris=265883 (primitives 127427 + grass 138456)  draw_calls=224 (camera 121)  objects=792  omni_visible=3  shadowed=0  particles=3
+p7_13a_linden_before  camera_tris=356300 (primitives 153098 + grass 203202)  draw_calls=271 (camera 112)  objects=550  omni_visible=5  shadowed=0  particles=3
+p7_13b_linden_cleared  camera_tris=344359 (primitives 141157 + grass 203202)  draw_calls=256 (camera 105)  objects=526  omni_visible=5  shadowed=0  particles=3
+p7_14_consecration_day  camera_tris=264791 (primitives 162947 + grass 101844)  draw_calls=215 (camera 64)  objects=465  omni_visible=2  shadowed=0  particles=3
+p7_13c_linden_graves  camera_tris=346153 (primitives 142951 + grass 203202)  draw_calls=247 (camera 101)  objects=498  omni_visible=5  shadowed=0  particles=3
+p7_vis_linden_z12  camera_tris=566920 (primitives 171154 + grass 395766)  draw_calls=237 (camera 159)  objects=480  omni_visible=5  shadowed=0  particles=3
+p7_vis_linden_z22  camera_tris=566920 (primitives 171154 + grass 395766)  draw_calls=237 (camera 159)  objects=480  omni_visible=5  shadowed=0  particles=3
+p7_vis_linden_z24  camera_tris=566920 (primitives 171154 + grass 395766)  draw_calls=237 (camera 159)  objects=480  omni_visible=5  shadowed=0  particles=3
+p7_16_crypt_pult  camera_tris=35104 (primitives 35104 + grass 0)  draw_calls=81 (camera 25)  objects=102  omni_visible=5  shadowed=1  particles=11
+p7_26_new_stone_old_08  camera_tris=245206 (primitives 158860 + grass 86346)  draw_calls=148 (camera 54)  objects=224  omni_visible=6  shadowed=0  particles=3
+perf_p7_04_linden_occupied_day  camera_tris=400799 (primitives 150725 + grass 250074)  draw_calls=287 (camera 138)  objects=559  omni_visible=9  shadowed=0  particles=3
+perf_p7_05_crypt_pult_full_niches  camera_tris=42634 (primitives 42634 + grass 0)  draw_calls=91 (camera 30)  objects=116  omni_visible=5  shadowed=1  particles=19

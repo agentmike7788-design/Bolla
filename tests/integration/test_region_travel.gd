@@ -201,7 +201,7 @@ func test_milestone_village_inn_and_back() -> void:
 	assert_eq(TimeManager.total_minutes() - start, 30)
 	assert_eq(GameState.get_stat(&"village_trips"), 1)
 	var rig := _rig()
-	assert_eq([rig.profile, rig.bounds_min, rig.bounds_max, rig.distance], [null, Vector2(-22, 392), Vector2(20, 408), 22.0],
+	assert_eq([rig.profile, rig.bounds_min, rig.bounds_max, rig.distance], [null, Vector2(-22, 388), Vector2(20, 411), 22.0],
 			"village base profile")
 	assert_true(_region(&"village").visible and not (world.get_node("Decor") as Node3D).visible)
 	assert_true((world.get_node("Sun") as Light3D).visible, "the same sun outside")
@@ -220,7 +220,7 @@ func test_milestone_village_inn_and_back() -> void:
 	assert_true(await wait_for_signal(EventBus.interior_room_changed, 3.0))
 	await wait_frames(1)
 	assert_eq([player.region_id, player.interior_id, rig.profile], [&"village", &"", null])
-	assert_eq([rig.bounds_min, rig.distance], [Vector2(-22, 392), 22.0], "clear_profile → the village")
+	assert_eq([rig.bounds_min, rig.distance], [Vector2(-22, 388), 22.0], "clear_profile → the village")
 	# Back over the bridge.
 	await _walk_through("Regions/Village/Entities/road_out")
 	assert_eq(player.region_id, &"graveyard")

@@ -280,9 +280,21 @@ func plots_counting_for_cemetery() -> PackedStringArray:
 func locked_plot_count() -> int:
 	var count := 0
 	for grave: GraveRecord in _graves.values():
-		if grave.state == GraveRecord.State.LOCKED:
+		if grave.state == GraveRecord.State.LOCKED and _may_open(grave.id):
 			count += 1
 	return count
+
+
+## W-Welt (Phase 7): a locked plot of a section that only a story event opens (unlock_flag – the
+## Lindenacker opens with linden_consecrated) is no capacity to come before that event – the
+## Phase-4 story reservation (CorpseDeliveryRules.reserved_plots) must not count on it. Sections
+## the player unlocks himself (the Holunderwinkel with its key) still count.
+func _may_open(grave_id: String) -> bool:
+	var section_id: StringName = _plot_sections.get(grave_id, &"")
+	if section_id == &"":
+		return true
+	var data := Database.section(section_id) as SectionData
+	return data == null or data.unlock_flag == &"" or GameState.flag_on(data.unlock_flag)
 
 
 ## Section of the plot of `grave_id` (&"" = no plot in this world).

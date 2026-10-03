@@ -118,6 +118,10 @@ func _init() -> void:
 
 
 func _ready() -> void:
+	# W-Welt (Phase 7): the village figures and the priest on his consecration walk have no save_id –
+	# their state is the clock (save_state is empty), so they are no saveables at all.
+	if save_id == "":
+		remove_from_group(&"saveable")
 	if model != null and get_node_or_null(^"Model") == null:
 		var inst := model.instantiate()
 		inst.name = "Model"
@@ -294,6 +298,11 @@ func _update(delta: float) -> void:
 	progress = ScheduleResolver.progress(entry, minute_f)
 	if _held_entry != null and _held_entry != entry:
 		_held_entry = null
+	if not shows_region(entry):
+		# W-Welt (Phase 7): an entry of the other region (Osric's village day, the priest's
+		# consecration walk) names waypoints this Npc's world does not have – hidden, no path.
+		_set_state(false, false, false)
+		return
 	var path := _pose.path(entry)
 	var sample := _pose.sample(path, progress)
 	global_position = sample[0] if _held_entry == null else _held_position

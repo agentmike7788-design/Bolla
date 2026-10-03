@@ -1,0 +1,40 @@
+{
+  "_comment": "Die Gaststube im Holderkrug (docs/PHASE7_DESIGN.md §4.3, §4.7), gebaut von src/world/interiors/interior_build.gd; Koordinaten wie crypt_layout.json (Boden-Mitte = (0, 0), x rechts, z zur Kamera). Stube innen x −4…4, z −3…3, Tür in der Südwand bei x 1,6. Schanktisch an der Nordwand links (Rosine dahinter, Marker bar), Fässer daneben, Kachelofen an der Ostwand (Feuerlicht ohne Schatten), Treppe nach oben an der Westwand (Kulisse), vier Tische, Osrics Ecktisch im Südosten, drei sitzende Gäste ohne Rig. Hängelaterne (Rolle lantern, Schatten nachts) und Fenster aus dem Raummodell. Steh-Orte der Dorfbewohner: waypoints [x, z, Blick°].",
+  "room_id": "inn",
+  "building": "",
+  "region": "village",
+  "door_id": "door_inn",
+  "room": "ph_int_inn_room",
+  "door_inside": [1.6, 2.75],
+  "spawn_inside": [1.6, 2.15],
+  "walkway": 0.9,
+  "camera_bounds": {"min": [-1.4, -1.2], "max": [1.4, 0.6]},
+  "sun_rotation_deg": [-55.0, 30.0, 0.0],
+  "sun_shadow": false,
+  "wall_height": 3.0,
+  "floor": [-4.45, -3.35, 4.45, 3.45],
+  "walls": [
+    [-4.45, -3.35, -4.0, 3.45], [4.0, -3.35, 4.45, 3.45],
+    [-4.45, -3.35, 4.45, -3.0],
+    [-4.45, 3.0, 1.0, 3.45], [2.2, 3.0, 4.45, 3.45], [1.0, 3.45, 2.2, 3.8]
+  ],
+  "items": [
+    {"asset": "ph_int_inn_bar", "id": "Bar", "pos": [-2.0, -2.0], "rot_y": 0.0, "mount": "floor",
+      "collide_rects": [[-1.26, -0.2, 1.26, 0.36], [-1.26, -0.97, 1.26, -0.82]]},
+    {"asset": "ph_int_inn_barrels", "pos": [-3.55, -2.35], "rot_y": 90.0, "mount": "floor"},
+    {"asset": "ph_int_inn_stove", "pos": [3.4, -1.9], "rot_y": -90.0, "mount": "floor"},
+    {"asset": "ph_int_inn_stairs", "pos": [-3.45, 1.45], "rot_y": 0.0, "mount": "floor"},
+    {"asset": "ph_int_inn_table", "pos": [-0.5, -0.1], "rot_y": 0.0, "mount": "floor"},
+    {"asset": "ph_int_inn_table", "pos": [1.9, -1.2], "rot_y": 0.0, "mount": "floor"},
+    {"asset": "ph_int_inn_table", "pos": [-1.9, 1.75], "rot_y": 0.0, "mount": "floor"},
+    {"asset": "ph_int_inn_table", "id": "CornerTable", "pos": [3.15, 1.55], "rot_y": 0.0, "mount": "floor"},
+    {"asset": "ph_chr_guest_a", "id": "Guest1", "pos": [-0.5, 0.58], "rot_y": 180.0, "mount": "flat"},
+    {"asset": "ph_chr_guest_b", "id": "Guest2", "pos": [-0.5, -0.78], "rot_y": 0.0, "mount": "flat"},
+    {"asset": "ph_chr_guest_b", "id": "Guest3", "pos": [-1.9, 2.43], "rot_y": 180.0, "mount": "flat"}
+  ],
+  "waypoints": {
+    "v_in_inn_bar": [-2.0, -2.5, 0.0],
+    "v_in_inn_table": [2.95, -1.2, -90.0],
+    "v_in_inn_corner": [3.15, 0.62, 0.0]
+  }
+}

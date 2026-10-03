@@ -21,6 +21,8 @@ var heights: Dictionary = {}   # Vector2i(grid) -> height
 var grid_min := Vector2i.ZERO
 var grid_max := Vector2i.ZERO
 var cell: float = 0.3
+## Phase 7: the painted ground model of the world being built (the village builds its own).
+var ground_asset: String = GROUND_ASSET
 ## "Colliders" group of the world and the number of StaticBody3D placed in it by collider().
 var colliders: Node3D
 var collider_count: int = 0
@@ -54,7 +56,7 @@ static func v3(a: Array) -> Vector3:
 
 
 static func model_path(asset: String) -> String:
-	for cat: String in ["props", "environment", "buildings", "characters"]:
+	for cat: String in ["props", "environment", "buildings", "characters", "decor"]:
 		var p := MODELS + cat + "/" + asset + ".glb"
 		if ResourceLoader.exists(p):
 			return p
@@ -114,7 +116,7 @@ func attach_lights(asset: String, inst: Node3D, overrides: Dictionary = {}) -> v
 # --- ground height lookup (props sit on the painted, slightly uneven ground) ---
 
 func build_height_lookup() -> void:
-	var scene := (load(model_path(GROUND_ASSET)) as PackedScene).instantiate()
+	var scene := (load(model_path(ground_asset)) as PackedScene).instantiate()
 	var mi := scene.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
 	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 	grid_min = Vector2i(1 << 30, 1 << 30)

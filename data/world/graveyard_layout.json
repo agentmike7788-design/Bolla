@@ -21,9 +21,10 @@
     {"id": "elder", "rect": [-11.5, -20.0, -2.0, -12.5]},
     {"id": "bruch", "rect": [21.5, -6.5, 31.5, 9.6], "_comment": "Phase 5 §4.2: Arbeitsbereich Am Bruch (keine Grabstellen, keine Zier – außerhalb der Bau-Maske)."},
     {"id": "quarry", "rect": [21.5, -12.0, 31.5, -6.5]},
-    {"id": "churchyard", "rect": [-2.0, -30.0, 11.5, -20.0], "_comment": "Phase 6 §4.2: Kirchhof am Kamm (keine Grabstellen, keine Zier, kein Ruf – außerhalb der Bau-Maske)."}
+    {"id": "churchyard", "rect": [-2.0, -30.0, 11.5, -20.0], "_comment": "Phase 6 §4.2: Kirchhof am Kamm (keine Grabstellen, keine Zier, kein Ruf – außerhalb der Bau-Maske)."},
+    {"id": "linden", "rect": [11.5, 9.6, 21.5, 19.6], "_comment": "Phase 7 §2.9/§4.6 L1: Lindenacker südlich der Ostwiese (8 Grabstellen l_01…l_08, 2 Reihen à 4), Pforte im Ostwiesen-Südzaun."}
   ],
-  "build": {"_comment": "Bau-Maske (§4.3; Phase 4 §4.2: + Abschnitt elder = 4): Raster über x −11,5…21,5, z −20…9,6. trader_access = Streifen innen vor trader_spot [x, z, w, d] = ROUTE.", "trader_access": [-11.5, -3.8, 1.2, 2.4], "origin": [-11.5, -20.0], "size": [66, 60],
+  "build": {"_comment": "Bau-Maske (§4.3; Phase 4 §4.2: + Abschnitt elder = 4): Raster über x −11,5…21,5, z −20…9,6. trader_access = Streifen innen vor trader_spot [x, z, w, d] = ROUTE.", "trader_access": [-11.5, -3.8, 1.2, 2.4], "origin": [-11.5, -20.0], "size": [66, 80], "_phase7": "Phase 7 §4.6 L8: Raster bis z 20 (+ Lindenacker x 11,5…21,5 · z 9,6…19,6); gleiche Breite, die alten Zeilen bleiben.",
     "cell": 0.5, "route_width": 1.5, "grave_ring": 0.5, "station_margin": 0.6, "station_access": 1.0, "grave_foot_strip": 0.8,
     "building_margin": 0.6, "tree_radius": 0.7, "fence_half_width": 0.3},
   "path": {
@@ -70,7 +71,15 @@
     {"id": "h_03", "pos": [-4.0, -18.35], "rot_y": 0.0, "section": "elder"},
     {"id": "h_04", "pos": [-9.0, -14.85], "rot_y": 0.0, "section": "elder"},
     {"id": "h_05", "pos": [-6.5, -14.85], "rot_y": 0.0, "section": "elder"},
-    {"id": "h_06", "pos": [-4.0, -14.85], "rot_y": 0.0, "section": "elder"}
+    {"id": "h_06", "pos": [-4.0, -14.85], "rot_y": 0.0, "section": "elder"},
+    {"id": "l_01", "pos": [13.6, 12.8], "rot_y": 1.0, "section": "linden"},
+    {"id": "l_02", "pos": [15.9, 12.8], "rot_y": -2.0, "section": "linden"},
+    {"id": "l_03", "pos": [18.2, 12.8], "rot_y": 2.0, "section": "linden"},
+    {"id": "l_04", "pos": [20.5, 12.8], "rot_y": -1.0, "section": "linden"},
+    {"id": "l_05", "pos": [13.6, 16.9], "rot_y": -1.0, "section": "linden"},
+    {"id": "l_06", "pos": [15.9, 16.9], "rot_y": 2.0, "section": "linden"},
+    {"id": "l_07", "pos": [18.2, 16.9], "rot_y": -2.0, "section": "linden"},
+    {"id": "l_08", "pos": [20.5, 16.9], "rot_y": 1.0, "section": "linden"}
   ],
   "_clearables": "Hindernisse (§1.2, §2.1). footprint = lokales XZ-Rechteck [x, z, w, d] (Bau-Sperre + Gras-Maske). Zaunlücken: fence.ruins.",
   "clearables": [
@@ -104,7 +113,18 @@
     {"id": "obs_q_boulder_2", "kind": "boulder", "section": "quarry", "pos": [26.8, -6.6], "rot_y": 180.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
     {"id": "obs_q_boulder_3", "kind": "boulder", "section": "quarry", "pos": [29.4, -6.6], "rot_y": 90.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
     {"id": "obs_c_gate", "kind": "gate_church", "section": "churchyard", "pos": [4.5, -20.0], "rot_y": 0.0, "footprint": [-0.8, -0.3, 1.6, 0.6], "model_scale_x": 1.345,
-      "_comment": "Phase 6 §4.2 K1: Kirchpforte im Nordzaun des Birkenhangs (x 3,7…5,3) – ph_prop_gate_small(_open) in X auf 1,6 m gestreckt wie die Ostpforte; aufschließbar ab buildings_open."}
+      "_comment": "Phase 6 §4.2 K1: Kirchpforte im Nordzaun des Birkenhangs (x 3,7…5,3) – ph_prop_gate_small(_open) in X auf 1,6 m gestreckt wie die Ostpforte; aufschließbar ab buildings_open."},
+    {"id": "obs_l_gate", "kind": "gate_small", "section": "linden", "pos": [15.8, 9.6], "rot_y": 0.0, "footprint": [-0.8, -0.3, 1.6, 0.6], "model_scale_x": 1.345,
+      "_comment": "Phase 7 §4.6 L2: Lindenacker-Pforte im Ostwiesen-Südzaun (x 15,0…16,6) – ph_prop_gate_small(_open) in X auf 1,6 m gestreckt wie die Ostpforte; zu räumen ab linden_granted."},
+    {"id": "obs_l_stump_1", "kind": "stump", "section": "linden", "pos": [12.6, 17.4], "rot_y": 60.0, "footprint": [-0.5, -0.5, 1.0, 1.0]},
+    {"id": "obs_l_stump_2", "kind": "stump", "section": "linden", "pos": [18.0, 12.0], "rot_y": 200.0, "footprint": [-0.5, -0.5, 1.0, 1.0]},
+    {"id": "obs_l_stump_3", "kind": "stump", "section": "linden", "pos": [20.6, 18.7], "rot_y": 310.0, "footprint": [-0.5, -0.5, 1.0, 1.0]},
+    {"id": "obs_l_stump_4", "kind": "stump", "section": "linden", "pos": [14.3, 14.8], "rot_y": 120.0, "footprint": [-0.5, -0.5, 1.0, 1.0]},
+    {"id": "obs_l_bramble_1", "kind": "bramble", "section": "linden", "pos": [13.2, 11.3], "rot_y": 30.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
+    {"id": "obs_l_bramble_2", "kind": "bramble", "section": "linden", "pos": [19.8, 15.0], "rot_y": 160.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
+    {"id": "obs_l_bramble_3", "kind": "bramble", "section": "linden", "pos": [16.8, 18.5], "rot_y": 260.0, "footprint": [-1.0, -1.0, 2.0, 2.0]},
+    {"id": "obs_l_rubble_1", "kind": "rubble", "section": "linden", "pos": [17.7, 14.6], "rot_y": 80.0, "footprint": [-0.8, -0.8, 1.6, 1.6]},
+    {"id": "obs_l_rubble_2", "kind": "rubble", "section": "linden", "pos": [20.6, 11.1], "rot_y": 20.0, "footprint": [-0.8, -0.8, 1.6, 1.6]}
   ],
   "_dirt_spots": "Pflegestellen (§2.4; Phase 4 §4.1: + 3 im Holunderwinkel): 25 Flächenstellen; die Grabstellen dirt_<plot_id> erzeugt der Builder am Hügel (grave_dirt). start = start_progress (neues Spiel).",
   "dirt_spots": [
@@ -145,7 +165,8 @@
     "seed": 31, "margin": 0.7, "keep_out_obstacle": 1.3, "keep_out_spot": 0.9, "keep_out_fence": 0.6,
     "_assets": "assets je Abschnitt (optional) ersetzt die Liste: im Holunderwinkel ohne kollidierende Büsche (enge Gänge zwischen den Gruben).",
     "sections": [{"id": "east", "count": 24}, {"id": "north", "count": 18},
-      {"id": "elder", "count": 12, "assets": ["ph_env_weeds_3", "ph_env_weeds_2", "ph_env_leaves_2", "ph_env_weeds_3"]}]},
+      {"id": "elder", "count": 12, "assets": ["ph_env_weeds_3", "ph_env_weeds_2", "ph_env_leaves_2", "ph_env_weeds_3"]},
+      {"id": "linden", "count": 16, "assets": ["ph_env_weeds_3", "ph_env_weeds_2", "ph_env_leaves_2", "ph_env_weeds_3", "ph_env_weeds_1"]}]},
   "entities": [
     {"id": "morgue_table", "type": "morgue_table", "pos": [-1.6, -5.4], "rot_y": 18.0, "params": {}},
     {"id": "workbench", "type": "workbench", "pos": [-2.5, -8.4], "rot_y": 108.0, "params": {"station": "workbench"}},
@@ -160,7 +181,16 @@
     {"id": "npc_trader", "type": "npc", "pos": [-22.0, -14.0], "rot_y": 0.0,
       "_comment": "Phase 4 §4.2: Ilse Kranich. face_player_range 0: sie bleibt nach Osten gewandt, die Laterne auf dem Mauerstein.",
       "params": {"save_id": "npc_trader", "npc_id": "trader", "model": "ph_chr_kranich", "requires_flag": "trader_known",
-        "lantern_marker": "light_lantern", "walk_anim_speed": 1.36, "face_player_range": 0.0}}
+        "lantern_marker": "light_lantern", "walk_anim_speed": 1.36, "face_player_range": 0.0}},
+    {"id": "npc_priest", "type": "npc", "pos": [15.8, 32.6], "rot_y": 0.0,
+      "_comment": "Phase 7 §2.9/§4.6 N2: Pfarrer Lenz am Weihetag (Einträge mit today_flag linden_consecration_day, Region graveyard); ohne save_id (die Uhr trägt den Zustand).",
+      "params": {"save_id": "", "npc_id": "priest", "model": "ph_chr_v_priest"}}
+  ],
+  "_region_portals": "Phase 7 §3.1/§4.1/§4.6 R1: RegionPortal-Entitäten (src/entities/region_portal/region_portal.tscn) mit Modell und Label3D wie die Friedhofstafel. §4.6 nennt (8,4 | 24,4) – dort liegt die Mitte des Kutschwegs mit Osrics Karrenspur; der Wegstein steht 1,8 m daneben am Ostrand des Wegs (W-Welt).",
+  "region_portals": [
+    {"id": "road_exit", "model": "ph_prop_milestone", "pos": [9.7, 23.6], "rot_y": -135.0, "target_region": "village", "target_spawn": "from_graveyard",
+      "requires_flag": "village_open", "prompt": "[E] Nach Hollerbrück (30 Min)", "label": "Hollerbrück · 3 Meilen",
+      "label_cfg": {"font_size": 40, "pixel_size": 0.0021, "color": "#2a1f18", "surface_offset": 0.012}}
   ],
   "waypoints": {
     "road_end": [15.8, 32.6],
@@ -180,24 +210,34 @@
     "tp_workyard": [-4.4, -3.6],
     "tp_crypt": [-9.0, 8.9],
     "tp_chapel": [4.5, -21.0],
-    "tp_shed": [-12.9, -6.4]
+    "tp_shed": [-12.9, -6.4],
+    "w_east_pass": [11.5, -2.2],
+    "w_linden_n": [15.8, 8.6],
+    "linden_spot": [15.8, 10.8],
+    "tp_linden": [16.0, 14.8],
+    "from_village": [8.0, 23.4]
   },
+  "_waypoints_phase7": "Phase 7 §4.6 N1: w_east_pass, w_linden_n, linden_spot = Weg des Pfarrers am Weihetag (road_end → gate_outside → dropoff → w_east_pass → w_linden_n → linden_spot), tp_linden (Debug), from_village (Spawn am Wegstein).",
   "waypoint_facing": {
     "_comment": "Blickrichtung (rot_y in Grad, 0 = +Z/Kamera) eines NPC, der an diesem Wegpunkt steht und nicht mit dem Spieler redet.",
     "evening_spot": 15.0,
-    "trader_spot": 90.0
+    "trader_spot": 90.0,
+    "linden_spot": 0.0,
+    "from_village": -135.0
   },
   "signpost": {"pos": [-0.9, 15.4], "rot_y": -20.0, "text": "Hollerbrück", "font_size": 64, "pixel_size": 0.0021, "color": "#2a1f18", "surface_offset": 0.012},
   "fallen_log": {"pos": [2.2, 26.5], "rot_y": 8.0},
   "fence": {
     "_comment": "Prototyp-Zaun (Süd mit Tor, Ost) – Ost- und Westseite für die größere Welt verlängert. Phase 3: Ostwiese und Birkenhang eingezäunt, Lücken = ruins (Hindernis fence_gap), Durchgang Alter Hof → Ostwiese = passages. Phase 4: Westmauer an Ilses Platz (x −11,5, z −5…−1) und der Zaun des Holunderwinkels (Süd mit Pförtchen obs_h_gate, West, Nord mit Lücke obs_h_gap_1).",
+    "_phase7": "Phase 7 §4.6 L2/L3: Ostwiesen-Südzaun mit Lücke x 15,0…16,6 (Lindenacker-Pforte obs_l_gate); Zaun um den Lindenacker (West, Süd, Ost – die letzten drei Segmente).",
     "segments": [
       [[-11.5, 9.6], [-0.4, 9.6]],
       [[2.6, 9.6], [11.5, 9.6]],
       [[11.5, 9.6], [11.5, -1.0]],
       [[11.5, -3.4], [11.5, -12.0]],
       [[-11.5, -1.0], [-11.5, 9.6]],
-      [[11.5, 9.6], [21.5, 9.6]],
+      [[11.5, 9.6], [15.0, 9.6]],
+      [[16.6, 9.6], [21.5, 9.6]],
       [[21.5, 9.6], [21.5, 5.0]],
       [[21.5, 3.0], [21.5, 0.8]],
       [[21.5, -0.8], [21.5, -3.0]],
@@ -218,7 +258,10 @@
       [[-9.4, -12.5], [-2.0, -12.5]],
       [[-11.5, -20.0], [-11.5, -12.5]],
       [[-11.5, -20.0], [-8.0, -20.0]],
-      [[-6.0, -20.0], [-2.0, -20.0]]
+      [[-6.0, -20.0], [-2.0, -20.0]],
+      [[11.5, 9.6], [11.5, 19.6]],
+      [[11.5, 19.6], [21.5, 19.6]],
+      [[21.5, 9.6], [21.5, 19.6]]
     ],
     "gate_posts": [[-0.4, 9.6], [2.6, 9.6]],
     "_ruins": "Zaunlücken (Hindernis fence_gap, 2 m): pos = Mitte, rot_y = Richtung der Zaunlinie (lokal +X); Modell ph_prop_fence_iron_broken, repariert ph_prop_fence_iron.",
@@ -240,7 +283,8 @@
     {"asset": "ph_prop_shovel", "pos": [-2.0, -6.8], "rot_y": 30.0},
     {"asset": "ph_prop_candle_cluster", "pos": [2.2, -2.3], "rot_y": 0.0},
     {"asset": "ph_prop_candle_cluster", "pos": [-5.6, 4.6], "rot_y": 90.0},
-    {"asset": "ph_prop_crate", "pos": [-8.4, -5.75], "rot_y": 12.0, "_comment": "Phase 5 (Werkhof, Sichtbarkeit): von (−8,2 | −4,9) versetzt – dort steht der Webstuhl."}
+    {"asset": "ph_prop_crate", "pos": [-8.4, -5.75], "rot_y": 12.0, "_comment": "Phase 5 (Werkhof, Sichtbarkeit): von (−8,2 | −4,9) versetzt – dort steht der Webstuhl."},
+    {"asset": "ph_env_linden_old", "pos": [23.4, 14.8], "rot_y": 20.0, "_comment": "Phase 7 §4.6 L7: die alte Linde am Lindenacker (Kulisse, außerhalb der Laufgrenze)."}
   ],
   "background_trees": [
     {"pos": [-16.8, -13.4], "rot_y": 120.0, "scale": 1.15, "_comment": "Phase 6 §4.3 S1: vom Schuppen-Footprint gerückt (war −12,5 | −9,5; W-Welt: 1 m weiter nach Südwesten als §4.3, sonst verdeckt die Krone den Schuppen-First – Sichtprüfung §4.5)."},
@@ -346,9 +390,9 @@
       {"pos": [-16.5, 13.0], "rot_y": 75.0, "scale": 1.2},
       {"pos": [-14.0, 27.5], "rot_y": 200.0, "scale": 1.3},
       {"pos": [8.6, 13.2], "rot_y": 310.0, "scale": 1.0},
-      {"pos": [12.6, 17.2], "rot_y": 45.0, "scale": 1.2},
-      {"pos": [16.5, 22.0], "rot_y": 120.0, "scale": 1.1},
-      {"pos": [18.0, 12.0], "rot_y": 280.0, "scale": 1.25},
+      {"pos": [25.0, 23.5], "rot_y": 45.0, "scale": 1.2, "_comment": "Phase 7 §4.6 L4: war (12,6 | 17,2) – stand im Lindenacker."},
+      {"pos": [17.5, 29.5], "rot_y": 120.0, "scale": 1.1, "_comment": "Phase 7 §4.5 Punkt 5 (W-Welt): war (16,5 | 22,0) – Krone verdeckte die hintere Lindenacker-Reihe."},
+      {"pos": [27.5, 15.5], "rot_y": 280.0, "scale": 1.25, "_comment": "Phase 7 §4.6 L5: war (18,0 | 12,0) – stand im Lindenacker."},
       {"pos": [-4.0, 33.5], "rot_y": 330.0, "scale": 1.15},
       {"pos": [6.5, 33.5], "rot_y": 100.0, "scale": 1.1}
     ],
@@ -416,6 +460,9 @@
   "colliders": {
     "_comment": "Statische Kollision (Layer 1) je Asset, lokal zum platzierten Modell. shape box: size [x,y,z]; cylinder: radius + height. offset = Mittelpunkt.",
     "ph_bld_gravekeeper_hut": [{"shape": "box", "size": [5.1, 3.0, 4.1], "offset": [0.0, 1.5, 0.0]}],
+    "_phase7": "Phase 7 §4.6 R1/L7: Wegstein, alte Linde.",
+    "ph_prop_milestone": [{"shape": "box", "size": [0.62, 0.95, 0.48], "offset": [0.03, 0.47, 0.0]}],
+    "ph_env_linden_old": [{"shape": "cylinder", "radius": 0.7, "height": 3.0, "offset": [0.0, 1.5, 0.0]}],
     "_phase6": "Phase 6: Gebäude kollidieren über ihren Footprint (buildings.sites[].height), der Totenleuchter als Säule.",
     "ph_prop_soul_lantern": [{"shape": "cylinder", "radius": 0.34, "height": 2.9, "offset": [0.0, 1.45, 0.0]}],
     "ph_prop_grave_pit_foot": [{"shape": "box", "size": [1.3, 0.6, 2.2], "offset": [0.0, 0.3, -0.05]}, {"shape": "box", "size": [1.5, 0.5, 0.7], "offset": [0.0, 0.25, 1.42]}],
@@ -472,7 +519,9 @@
   "_extra_walls": "Unsichtbare Wände (Höhe/Dicke wie walkable_bounds, mittig auf der Linie): Wald östlich des Kutschwegs. Phase 4: die Sperre hinter der Hütte ersetzt der Zaun des Holunderwinkels mit dem Pförtchen.",
   "extra_walls": [[[11.2, 9.9], [11.2, 25.2]], [[21.5, 9.6], [31.2, 9.6]], [[21.5, -11.4], [31.2, -11.4]],
     [[-2.0, -20.0], [-2.0, -30.3]], [[11.5, -20.0], [11.5, -30.3]],
-    [[-11.7, -20.8], [-11.7, -7.7]], [[-15.1, -7.7], [-11.7, -7.7]], [[-15.1, -7.2], [-15.1, -5.4]], [[-15.1, -4.9], [-11.7, -4.9]], [[-11.7, -4.9], [-11.7, 25.2]]],
+    [[-11.7, -20.8], [-11.7, -7.7]], [[-15.1, -7.7], [-11.7, -7.7]], [[-15.1, -7.2], [-15.1, -5.4]], [[-15.1, -4.9], [-11.7, -4.9]], [[-11.7, -4.9], [-11.7, 25.2]],
+    [[11.5, 20.1], [21.5, 20.1]], [[22.0, 9.6], [22.0, 20.1]]],
+  "_extra_walls_phase7": "Phase 7 §4.6 L3: die beiden letzten Wände liegen hinter dem Lindenacker-Zaun, 0,5 m nach außen versetzt (Süd z 20,1, Ost x 22,0), damit Weststreifen, Mittelgang und Südstreifen ihre Breite behalten; die Westseite deckt die Wand x 11,2 zum Kutschweg.",
   "camera_bounds": {"min": [-11.5, -24.0], "max": [27.0, 23.0], "distance": 22.0, "zoom_min": 12.0, "zoom_max": 24.0},
   "player_start": {"pos": [-4.4, -3.6], "rot_y": 0.0},
   "hut_interior": {"_comment": "Innenraum-Szene (docs §11, src/world/hut_interior/hut_interior.tscn) fern der Außenwelt; hut_door steht am Marker door_outside der Hütte.", "origin": [0.0, 0.0, -200.0]},
