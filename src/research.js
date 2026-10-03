@@ -236,6 +236,46 @@ export const RESEARCH = [
     boosts: { weapons: 1.4 },
   },
   {
+    id: 'solarPower',
+    name: 'Solarenergie',
+    desc: 'Solarpanels: bis zu 3 MW, solange die Sonne scheint. Kein Brennstoff, kein Smog, aber nachts nichts.',
+    cost: { circuit: 20, ironPlate: 30, wire: 30 },
+    requires: ['electricity', 'constructor'],
+    unlocks: ['solar'],
+  },
+  {
+    id: 'windPower',
+    name: 'Windkraft',
+    desc: 'Windräder: bis zu 5 MW, Tag und Nacht, je nach Wind. Stehen sie zu dicht, nehmen sie sich den Wind.',
+    cost: { gear: 30, ironPlate: 30, wire: 20 },
+    requires: ['electricity', 'constructor'],
+    unlocks: ['wind'],
+  },
+  {
+    id: 'batteries',
+    name: 'Akkus',
+    desc: 'Akkus speichern überschüssigen Sonnen- und Windstrom (600 MJ, 6 MW) und geben ihn nachts zurück, bevor Kohle verbrannt wird.',
+    cost: { circuit: 30, copperIngot: 40, steel: 20 },
+    requires: ['solarPower'],
+    unlocks: ['battery'],
+  },
+  {
+    id: 'thinFilm',
+    name: 'Dünnschichtzellen',
+    desc: 'Solarpanels und Windräder liefern 50 % mehr Strom.',
+    cost: { processor: 15, plastic: 30 },
+    requires: ['solarPower', 'windPower', 'refining'],
+    boosts: { renewable: 1.5 },
+  },
+  {
+    id: 'gridStorage',
+    name: 'Großspeicher',
+    desc: 'Akkus fassen doppelt so viel.',
+    cost: { plastic: 40, circuit: 40, steel: 30 },
+    requires: ['batteries', 'refining'],
+    boosts: { battery: 2 },
+  },
+  {
     id: 'oilAge',
     name: 'Ölzeitalter',
     desc: 'Das letzte Ziel: Prozessoren, Kunststoff und Treibstoff für die Zukunft.',
@@ -254,7 +294,7 @@ export const RESEARCH = [
 ];
 
 // Factory stats that research can multiply. 1 is the starting value.
-export const STATS = ['belt', 'drill', 'furnace', 'assembler', 'constructor', 'power', 'pump', 'refinery', 'train', 'drone', 'weapons'];
+export const STATS = ['belt', 'drill', 'furnace', 'assembler', 'constructor', 'power', 'pump', 'refinery', 'train', 'drone', 'weapons', 'renewable', 'battery'];
 
 export const START_UNLOCKED = ['drill', 'belt', 'storage'];
 

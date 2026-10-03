@@ -19,6 +19,8 @@
 //                   { build: type, count }      have `count` of a building
 //                   { rate: item, perMin }      that many into storage within one minute
 //                   { powered: count }          that many machines working on power at once
+//                   { green: mw }               that much power without coal used at once
+//                   { stored: mj }              that much energy in batteries at once
 //                   { oil: count }              pump that much more oil
 //                   { shipped: count }          unload that many more parts from trains
 //                   { flown: count }            drones deliver that many more parts
@@ -462,6 +464,50 @@ export const SCENARIOS = [
     ],
   },
   {
+    id: 'sunCoast',
+    name: 'Sonnenküste',
+    desc: 'Eine Wüstenküste mit viel Sonne und wenig Kohle. Jeder Schornstein macht Smog, und Smog weckt die Nester. Hier läuft die Fabrik auf Sonne, Wind und Akkus.',
+    level: 3,
+    seed: 4242,
+    map: { size: 76, biome: 'desert', ores: { iron: 5, copper: 5, stone: 3, coal: 1 }, land: 0.05, coast: 0.82, forest: 0.72, rock: 0.4, richness: 1.4 },
+    enemies: 'normal',
+    grace: 720,
+    start: ['drill', 'belt', 'storage', 'furnace', 'assembler', 'splitter', 'merger', 'constructor', 'pole', 'wall', 'turret'],
+    par: 25,
+    missions: [
+      {
+        name: 'Sonnenaufgang',
+        desc: 'Platten und Draht für die ersten Solarzellen. Kohle gibt es hier kaum, und die Nester riechen jeden Schornstein.',
+        goals: [{ deliver: 'ironPlate', count: 30 }, { deliver: 'wire', count: 30 }],
+        reward: { unlocks: ['solar'], text: 'Solarpanel' },
+      },
+      {
+        name: 'Mittagssonne',
+        desc: 'Stell Solarpanels auf und zieh Masten zu den Maschinen. Mittags liefern sie am meisten, nachts nichts, und im Sandsturm wenig.',
+        goals: [{ build: 'solar', count: 10 }, { powered: 6 }],
+        reward: { unlocks: ['wind'], boosts: { drill: 1.5 }, text: 'Windrad, Bohrer +50 %' },
+      },
+      {
+        name: 'Rückenwind',
+        desc: 'Windräder drehen sich auch nachts, und im Sandsturm erst recht. Lass Abstand zwischen ihnen, sonst nehmen sie sich den Wind.',
+        goals: [{ build: 'wind', count: 4 }, { green: 12 }],
+        reward: { unlocks: ['battery'], boosts: { furnace: 2 }, text: 'Akku, Öfen ×2' },
+      },
+      {
+        name: 'Nachtschicht',
+        desc: 'Akkus speichern den Strom vom Mittag für die Nacht. Lade sie auf und bau nebenher Schaltkreise.',
+        goals: [{ stored: 1500 }, { deliver: 'circuit', count: 30 }],
+        reward: { boosts: { renewable: 1.5, constructor: 1.5 }, text: 'Solar und Wind +50 %, Konstruktor +50 %' },
+      },
+      {
+        name: 'Grüne Wüste',
+        desc: 'Eine Fabrik ganz ohne Kohlekraft: Schaltkreise im Minutentakt und 30 MW sauberer Strom auf einmal.',
+        goals: [{ rate: 'circuit', perMin: 20 }, { green: 30 }],
+        reward: { text: 'Die Wüste läuft auf Sonne' },
+      },
+    ],
+  },
+  {
     id: 'starport',
     name: 'Sternenhafen',
     desc: 'Das Finale: eine weite Küste mit allem, was die Erde hergibt. Hier baust du das Raketensilo und schickst eine Rakete ins All.',
@@ -534,6 +580,8 @@ export function createMissions(scenario, factory) {
     if (goal.kills) return { kills: true, have: factory.enemies.killed - baseKills, need: goal.kills };
     if (goal.nests) return { nests: true, have: factory.enemies.nestsKilled - baseNests, need: goal.nests };
     if (goal.powered) return { powered: true, have: reached.has(i) ? goal.powered : factory.powered(), need: goal.powered };
+    if (goal.green) return { green: true, have: reached.has(i) ? goal.green : Math.floor(factory.powerSummary().clean), need: goal.green };
+    if (goal.stored) return { stored: true, have: reached.has(i) ? goal.stored : Math.floor(factory.storedEnergy()), need: goal.stored };
     const have = reached.has(i) ? goal.perMin : factory.perMinute(goal.rate);
     return { item: goal.rate, rate: true, have, need: goal.perMin };
   }
@@ -557,7 +605,7 @@ export function createMissions(scenario, factory) {
       const m = this.current;
       if (!m) return null;
       const all = m.goals.map(progress);
-      all.forEach((p, i) => (p.rate || p.powered) && p.have >= p.need && reached.add(i));
+      all.forEach((p, i) => (p.rate || p.powered || p.green || p.stored) && p.have >= p.need && reached.add(i));
       if (!all.every((p) => p.have >= p.need)) return null;
       factory.research.grant(m.reward);
       index++;

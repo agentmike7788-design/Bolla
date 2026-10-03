@@ -31,6 +31,14 @@ export const ACHIEVEMENTS = [
   { id: 'power', icon: '💡', name: 'Es werde Licht', desc: 'Lass eine Maschine mit Strom laufen.', check: ({ factory }) => factory.powered() >= 1 },
   { id: 'bigGrid', icon: '⚡', name: 'Kraftwerkspark', desc: '100 MW Leistung in deinen Netzen.', check: ({ factory }) => factory.powerSummary().capacity >= 100 },
   { id: 'geo', icon: '♨️', name: 'Erdwärme', desc: 'Drei Erdwärmekraftwerke liefern Strom.', check: ({ factory }) => factory.count('geo') >= 3 && factory.powerSummary().geo >= 3 },
+  { id: 'solar', icon: '☀️', name: 'Sonnenanbeter', desc: '30 Solarpanels in einer Fabrik.', check: ({ factory }) => factory.count('solar') >= 30 },
+  { id: 'windpark', icon: '🌬️', name: 'Windpark', desc: '10 Windräder liefern gleichzeitig Strom.', check: ({ factory }) => factory.count('wind') >= 10 && factory.powerSummary().wind >= 10 },
+  { id: 'green', icon: '🌱', name: 'Grüner Strom', desc: '50 MW Strom ohne Kohle gleichzeitig nutzen.', check: ({ factory }) => factory.powerSummary().clean >= 50 },
+  { id: 'nightBattery', icon: '🔋', name: 'Nachtstrom', desc: 'Mitten in der Nacht laufen 20 Maschinen mit Akkustrom, ohne Kohle.', check: ({ factory, night }) => {
+    if (night < 0.9 || factory.powered() < 20) return false;
+    const s = factory.powerSummary();
+    return s.flow < 0 && s.coal <= 0.01;
+  } },
   { id: 'oil', icon: '🛢️', name: 'Schwarzes Gold', desc: 'Pumpe 1.000 Einheiten Öl.', check: ({ factory }) => factory.pumped >= 1000 },
   { id: 'plastic', icon: '🧴', name: 'Plastikwelt', desc: 'Stell 200 Kunststoff her.', check: ({ factory }) => made(factory, 'plastic') >= 200 },
   { id: 'processors', icon: '🧠', name: 'Rechenzentrum', desc: 'Stell 100 Prozessoren her.', check: ({ factory }) => made(factory, 'processor') >= 100 },

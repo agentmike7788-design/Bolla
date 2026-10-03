@@ -7,7 +7,9 @@
 //     name/text     shown in the HUD
 //     first/every   seconds until the first storm, then between two starts
 //     lasts         seconds it rages
-//     effects       multipliers while it rages: drill, belt, geo (geothermal output)
+//     effects       multipliers while it rages: drill, belt, geo (geothermal output),
+//                   solar, wind
+//   sun, wind       how strong sun and wind are on this map (1 = normal)
 //   sky             colours the day palette is tinted towards, `amount` how much
 //   sea             colour of the sea
 export const BIOMES = {
@@ -20,7 +22,8 @@ export const BIOMES = {
     name: 'Wüste',
     icon: '🏜️',
     desc: 'Sand und Kakteen. Sandstürme bremsen die Bohrer.',
-    storm: { name: 'Sandsturm', text: 'Bohrer −40 %', first: 200, every: 260, lasts: 35, effects: { drill: 0.6 } },
+    sun: 1.3,
+    storm: { name: 'Sandsturm', text: 'Bohrer −40 %, Sonne −60 %, Wind +60 %', first: 200, every: 260, lasts: 35, effects: { drill: 0.6, solar: 0.4, wind: 1.6 } },
     sky: { top: 0x6aa2cc, horizon: 0xf0dcae, fog: 0xead6a6, amount: 0.45 },
     stormSky: 0xd8b070,
   },
@@ -29,7 +32,9 @@ export const BIOMES = {
     icon: '❄️',
     desc: 'Frost: ohne Strom laufen Maschinen nur mit 60 %. Auf gefrorenen Seen kann man bauen. Schneestürme bremsen die Bänder.',
     frost: 0.6,
-    storm: { name: 'Schneesturm', text: 'Bänder −40 %', first: 240, every: 300, lasts: 40, effects: { belt: 0.6 } },
+    sun: 0.75,
+    wind: 1.25,
+    storm: { name: 'Schneesturm', text: 'Bänder −40 %, Sonne −70 %, Wind +50 %', first: 240, every: 300, lasts: 40, effects: { belt: 0.6, solar: 0.3, wind: 1.5 } },
     sky: { top: 0x7fa6c8, horizon: 0xe4edf2, fog: 0xdfe8ee, amount: 0.55 },
     stormSky: 0xe8eef2,
     sea: 0x2a6f8c,
@@ -38,7 +43,8 @@ export const BIOMES = {
     name: 'Vulkan',
     icon: '🌋',
     desc: 'Asche, Lava und reiche Erze. Dampfende Quellen liefern Erdwärme. Bei Ausbrüchen regnet Asche: Bohrer langsamer, Erdwärme doppelt.',
-    storm: { name: 'Ausbruch', text: 'Erdwärme ×2, Bohrer −25 %', first: 260, every: 320, lasts: 30, effects: { geo: 2, drill: 0.75 } },
+    sun: 0.85,
+    storm: { name: 'Ausbruch', text: 'Erdwärme ×2, Bohrer −25 %, Asche verdunkelt die Sonne', first: 260, every: 320, lasts: 30, effects: { geo: 2, drill: 0.75, solar: 0.3 } },
     sky: { top: 0x6f6a74, horizon: 0xc9a08a, fog: 0xb09486, amount: 0.5 },
     stormSky: 0x6a5048,
     sea: 0x2a6a74,
@@ -64,7 +70,7 @@ export function weatherAt(biomeId, time) {
   return { storm, active, strength, next: storm.every - phase, left: active ? storm.lasts - phase : 0 };
 }
 
-// Multiplier of one effect (drill, belt, geo) right now.
+// Multiplier of one effect (drill, belt, geo, solar, wind) right now.
 export function weatherEffect(weather, key) {
   const f = weather.storm?.effects[key];
   return f === undefined ? 1 : 1 + (f - 1) * weather.strength;

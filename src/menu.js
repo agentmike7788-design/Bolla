@@ -9,7 +9,7 @@ import { ENEMY_MODES } from './enemies.js';
 const CONTROLS = [
   ['Kamera', [['Linke Maus ziehen', 'Karte verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['W A S D', 'bewegen']]],
   ['Bauen', [['1 – 9, 0', 'Gebäude wählen (9 Kraftwerk, 0 Mast)'], ['O P I K', 'Ölpumpe, Rohr, Raffinerie, Tank'], ['G B Z J', 'Gleis, Bahnhof, Zug, Signal'], ['F V C', 'Drohnenhafen, Angebots-, Anfragekiste'], ['H', 'Raketensilo'], [', . -', 'Mauer, Geschützturm, Laserturm'], ['Klick / Ziehen', 'bauen, Bänder und Rohre ziehen'], ['R', 'drehen'], ['X', 'abreißen'], ['Klick auf Konstruktor oder Raffinerie', 'Rezept wählen'], ['Klick auf Bahnhof oder Zug', 'Betriebsart, Fahrplan'], ['Klick auf Signal oder Anfragekiste', 'Art und Richtung, gewünschtes Teil'], ['Klick auf Raketensilo', 'Etappen, Raketenstart'], ['Esc', 'Werkzeug weglegen']]],
-  ['Spiel', [['Y', 'Erdwärmekraftwerk (Vulkan)'], ['T', 'Forschungsbaum'], ['L', 'Statistik'], ['Leertaste', 'zum letzten Angriff'], ['M', 'Karten'], ['N', 'nächste Tageszeit'], ['U', 'Ton an / aus'], ['Strg S', 'speichern'], ['Esc', 'Menü']]],
+  ['Spiel', [['Y', 'Erdwärmekraftwerk (Vulkan)'], ['Ö Ä #', 'Solarpanel, Windrad, Akku'], ['T', 'Forschungsbaum'], ['L', 'Statistik'], ['Leertaste', 'zum letzten Angriff'], ['M', 'Karten'], ['N', 'nächste Tageszeit'], ['U', 'Ton an / aus'], ['Strg S', 'speichern'], ['Esc', 'Menü']]],
   ['Touch', [['Ein Finger', 'verschieben oder bauen'], ['Zwei Finger', 'zoomen und drehen']]],
 ];
 

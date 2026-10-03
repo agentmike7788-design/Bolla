@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { DIRS, ITEMS, POLE_SUPPLY, isFluid, SILO_STAGES } from './factory.js';
+import { DIRS, ITEMS, POLE_SUPPLY, isFluid, SILO_STAGES, windAt, windDirAt } from './factory.js';
 import { DRONES_PER_PORT, DRONE_RANGE, PROVIDER_CAP } from './drones.js';
 import { TURRET_RANGE, LASER_RANGE } from './enemies.js';
 import { trackPoint, isTrack, CAR_GAP, CARS, WAGON_CARGO, STATION_CAP } from './trains.js';
@@ -416,6 +416,39 @@ function buildingParts() {
     laserDome: new THREE.SphereGeometry(0.25, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 0.76, 0),
     laserGun: mergeGeometries([new THREE.CylinderGeometry(0.075, 0.1, 0.4, 10).rotateX(Math.PI / 2).translate(0, 0.86, -0.18), box(0.3, 0.06, 0.2, 0, 0.98, 0.02)]),
     laserLens: new THREE.CylinderGeometry(0.06, 0.06, 0.03, 12).rotateX(Math.PI / 2).translate(0, 0.86, -0.39),
+    // Solar panel: a tilted array of cells on two legs, facing its direction.
+    solarFoot: mergeGeometries([box(0.12, 0.08, 0.12, 0, 0.04, -0.22), box(0.12, 0.08, 0.12, 0, 0.04, 0.22)]),
+    solarLegs: mergeGeometries([box(0.05, 0.3, 0.05, 0, 0.23, -0.22), box(0.05, 0.44, 0.05, 0, 0.3, 0.22), box(0.05, 0.05, 0.5, 0, 0.32, 0)]),
+    solarFrame: box(0.94, 0.04, 0.84, 0, 0, 0),
+    solarCells: box(0.88, 0.02, 0.78, 0, 0.025, 0),
+    solarGrid: mergeGeometries([
+      ...[-0.22, 0, 0.22].map((x) => box(0.012, 0.01, 0.78, x, 0.04, 0)),
+      ...[-0.26, -0.13, 0, 0.13, 0.26].map((z) => box(0.88, 0.01, 0.01, 0, 0.04, z)),
+    ]),
+    // Wind turbine: a slim tower, a nacelle that turns into the wind, three blades.
+    windFoot: mergeGeometries([new THREE.CylinderGeometry(0.26, 0.3, 0.1, 12).translate(0, 0.05, 0), new THREE.CylinderGeometry(0.18, 0.2, 0.08, 12).translate(0, 0.14, 0)]),
+    windTower: new THREE.CylinderGeometry(0.055, 0.11, 2.5, 10).translate(0, 1.4, 0),
+    windBand: new THREE.CylinderGeometry(0.075, 0.075, 0.06, 10).translate(0, 2.2, 0),
+    nacelle: rbox(0.16, 0.16, 0.44, 0, 0, 0.05, 0.05),
+    hub: new THREE.SphereGeometry(0.075, 12, 8).scale(1, 1, 1.4),
+    blades: mergeGeometries(
+      [0, 1, 2].map((i) => {
+        const blade = new THREE.BoxGeometry(0.075, 0.95, 0.018).translate(0, 0.53, 0);
+        // Taper the blade: narrower towards the tip.
+        const pos = blade.attributes.position;
+        for (let k = 0; k < pos.count; k++) if (pos.getY(k) > 0.6) pos.setX(k, pos.getX(k) * 0.45);
+        return blade.rotateY(0.25).rotateZ((i * Math.PI * 2) / 3);
+      }),
+    ),
+    // Battery: a container with cooling ribs, two terminals and a charge gauge.
+    batteryBox: rbox(0.78, 0.5, 0.62, 0, 0.3, 0, 0.05),
+    batteryFoot: box(0.86, 0.06, 0.7, 0, 0.03, 0),
+    batteryRibs: mergeGeometries([-0.24, -0.12, 0, 0.12, 0.24].map((x) => box(0.035, 0.42, 0.66, x, 0.3, 0))),
+    batteryLid: box(0.8, 0.04, 0.64, 0, 0.56, 0),
+    terminals: mergeGeometries([new THREE.CylinderGeometry(0.045, 0.045, 0.08, 10).translate(-0.2, 0.62, 0.12)]),
+    terminalMinus: new THREE.CylinderGeometry(0.045, 0.045, 0.08, 10).translate(0.2, 0.62, 0.12),
+    batteryGaugeBack: box(0.4, 0.12, 0.02, 0, 0.32, -0.315),
+    batteryGauge: box(0.36, 0.08, 0.02, 0.18, 0, 0).translate(-0.18, 0, 0),
     // Rocket silo, 3 × 3 tiles: a slab with a skirt down to lower ground, the
     // building site with a fence and a crane, then the launch pad with its
     // flame trench and a lattice service tower with two arms.
@@ -482,6 +515,10 @@ function buildingParts() {
     wall: flat(0xa9a397, { roughness: 0.9, metalness: 0.05 }),
     turret: flat(0x56614a, { roughness: 0.55, metalness: 0.35 }),
     laser: flat(0xd9dde0, { roughness: 0.35, metalness: 0.5 }),
+    cells: new THREE.MeshStandardMaterial({ color: 0x1b3560, roughness: 0.18, metalness: 0.6, emissive: 0x0a1830, emissiveIntensity: 0.3 }),
+    cellLines: flat(0xb8c4d0, { roughness: 0.4, metalness: 0.7 }),
+    turbine: flat(0xeef0ee, { roughness: 0.45, metalness: 0.15 }),
+    battery: flat(0x2f6f4f, { roughness: 0.5, metalness: 0.3 }),
     ore: Object.fromEntries(Object.entries(ORES).map(([k, o]) => [k, flat(o.color, { roughness: 0.4, metalness: 0.3 })])),
   };
   return { g, m };
@@ -940,6 +977,9 @@ export function createFactoryView(renderer) {
 
   const dummy = new THREE.Object3D();
   let drillSpeed = 1;
+  let windYaw = 0; // where the wind blows from, for the turbine heads
+  let windSpeed = 0.5;
+  let batteryCap = 600;
   let night = 0; // 0 by day, 1 at night: lamps and windows shine brighter
   // Belt rails and drill bodies change colour with each speed boost.
   const drillMat = flat(SIGNAL, { roughness: 0.5 });
@@ -1223,6 +1263,51 @@ export function createFactoryView(renderer) {
       add(g.wall, m.wall);
       add(g.wallBand, m.signal);
       add(g.merlons, m.wall);
+    } else if (b.type === 'solar') {
+      add(g.solarFoot, m.concrete);
+      add(g.solarLegs, m.steel);
+      // The array leans towards its direction (local -z), about 25 degrees.
+      const panel = new THREE.Group();
+      panel.position.set(0, 0.46, 0);
+      panel.rotation.x = -0.44;
+      root.add(panel);
+      for (const [geo, mat] of [[g.solarFrame, m.steel], [g.solarCells, m.cells], [g.solarGrid, m.cellLines]]) {
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        panel.add(mesh);
+      }
+    } else if (b.type === 'wind') {
+      add(g.windFoot, m.concrete);
+      add(g.windTower, m.turbine);
+      add(g.windBand, m.red);
+      view.head = new THREE.Group();
+      view.head.position.y = 2.68;
+      root.add(view.head);
+      const nacelle = new THREE.Mesh(g.nacelle, m.turbine);
+      nacelle.castShadow = true;
+      view.head.add(nacelle);
+      view.rotor = new THREE.Group();
+      view.rotor.position.z = -0.22;
+      view.head.add(view.rotor);
+      const hub = new THREE.Mesh(g.hub, m.turbine);
+      const blades = new THREE.Mesh(g.blades, m.turbine);
+      blades.castShadow = true;
+      view.rotor.add(hub, blades);
+      view.rotor.rotation.z = view.phase;
+      view.light = add(g.lamp, own(new THREE.MeshStandardMaterial({ color: 0xff3020, emissive: 0xff2010, emissiveIntensity: 0 })), false);
+      view.light.position.set(0, 2.8, 0.1);
+    } else if (b.type === 'battery') {
+      add(g.batteryFoot, m.concrete);
+      add(g.batteryBox, m.battery);
+      add(g.batteryRibs, m.dark);
+      add(g.batteryLid, m.steel);
+      add(g.terminals, m.red);
+      add(g.terminalMinus, m.dark);
+      add(g.batteryGaugeBack, m.dark);
+      view.gauge = add(g.batteryGauge, own(new THREE.MeshStandardMaterial({ color: 0x103018, emissive: 0x6be36b, emissiveIntensity: 0.9 })), false);
+      view.gauge.position.set(0, 0.32, -0.33);
+      lamp(0.3, 0.45, -0.32);
     } else if (b.type === 'turret' || b.type === 'laser') {
       // The head turns on its own, so it gets its own group.
       view.head = new THREE.Group();
@@ -1363,6 +1448,9 @@ export function createFactoryView(renderer) {
     beltMats.rails.color.setHex(tier(levels.belt));
     drillMat.color.setHex(tier(levels.drill));
     drillSpeed = factory.research.stats.drill;
+    windYaw = windDirAt(factory.time, factory.world.seed ?? 0);
+    windSpeed = factory.powerSummary ? Math.min(1.5, factory.powerSummary().windSpeed) : windAt(factory.time);
+    batteryCap = factory.batteryCapacity();
 
     const n = Object.fromEntries(Object.keys(shapes).map((k) => [k, 0]));
     for (const b of factory.buildings.values()) {
@@ -1519,6 +1607,22 @@ export function createFactoryView(renderer) {
       view.top.material.color.setHex(0x111111);
       view.top.material.emissive.setHex(go ? 0x22e050 : 0xff2a10);
       view.top.material.emissiveIntensity = 1.8 * (1 + night * 1.5);
+    } else if (b.type === 'wind') {
+      // The head turns into the wind; the rotor spins with it, slowly when idle.
+      const target = windYaw - view.root.rotation.y;
+      const diff = Math.atan2(Math.sin(target - view.head.rotation.y), Math.cos(target - view.head.rotation.y));
+      view.head.rotation.y += diff * Math.min(1, dt * 0.8);
+      const speed = windSpeed * (b.wake ?? 1) * (working ? 1 : 0.55);
+      view.spin = (view.spin ?? speed) + (speed - (view.spin ?? speed)) * Math.min(1, dt * 0.7);
+      view.rotor.rotation.z += dt * view.spin * 5;
+      view.light.material.emissiveIntensity = night > 0.3 && Math.sin(elapsed * 2.4 + view.phase) > 0.6 ? 2.5 * night : 0;
+    } else if (b.type === 'battery') {
+      const fill = b.charge / batteryCap;
+      view.fill = (view.fill ?? fill) + (fill - (view.fill ?? fill)) * Math.min(1, dt * 3);
+      view.gauge.scale.x = Math.max(0.02, Math.min(1, view.fill));
+      const pulse = b.state === 'charge' ? 0.3 + Math.sin(elapsed * 5) * 0.3 : b.state === 'discharge' ? 0.4 : 0;
+      view.gauge.material.emissiveIntensity = (0.5 + view.fill * 0.6 + pulse) * (1 + night);
+      setLamp(view, b.state === 'charge' ? 'work' : b.state === 'discharge' ? 'blocked' : 'idle', elapsed);
     } else if (b.type === 'turret' || b.type === 'laser') {
       // The head follows the aim of the simulation, which is a world angle.
       view.head.rotation.y = (b.aim ?? 0) - yaw(b.dir);
@@ -1643,6 +1747,9 @@ export function createGhost() {
     turret: { geo: mergeGeometries([box(0.8, 0.45, 0.8), box(0.4, 0.25, 0.4).translate(0, 0.45, 0), new THREE.CylinderGeometry(0.05, 0.05, 0.46, 6).rotateX(Math.PI / 2).translate(0, 0.6, -0.3)]), arrow: null },
     laser: { geo: mergeGeometries([new THREE.CylinderGeometry(0.22, 0.34, 0.75, 10).translate(0, 0.375, 0), new THREE.SphereGeometry(0.25, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 0.76, 0)]), arrow: null },
     requester: { geo: box(0.7, 0.52, 0.7), arrow: 0.56 },
+    solar: { geo: mergeGeometries([box(0.06, 0.5, 0.06), new THREE.BoxGeometry(0.94, 0.04, 0.84).rotateX(-0.44).translate(0, 0.5, 0)]), arrow: 0.12 },
+    wind: { geo: mergeGeometries([new THREE.CylinderGeometry(0.06, 0.11, 2.6, 8).translate(0, 1.3, 0), box(0.16, 0.16, 0.44).translate(0, 2.6, 0.05), box(0.08, 1.9, 0.02).translate(0, 1.73, -0.22)]), arrow: null },
+    battery: { geo: box(0.78, 0.6, 0.62), arrow: null },
     refinery: { geo: mergeGeometries([box(0.86, 0.36, 0.86), new THREE.CylinderGeometry(0.13, 0.13, 1.2, 8).translate(0.2, 0.6, 0.14), new THREE.CylinderGeometry(0.03, 0.03, 1, 6).translate(-0.33, 0.5, -0.3)]), arrow: 0.45 },
   };
   const meshes = Object.fromEntries(Object.entries(shapes).map(([k, s]) => [k, new THREE.Mesh(s.geo, bodyMat)]));

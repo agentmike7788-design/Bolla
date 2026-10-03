@@ -7,7 +7,7 @@
 //
 // The estimate is play time = building time + waiting for the parts. Building
 // time assumes a quick but not perfect player (see BUILD_SECONDS).
-import { createFactory, BUILDINGS, CONSTRUCTOR_RECIPES, PUMP_RATE, SILO_STAGES, POWER_SPEED } from '../src/factory.js';
+import { createFactory, BUILDINGS, CONSTRUCTOR_RECIPES, PUMP_RATE, SILO_STAGES, POWER_SPEED, SOLAR_OUTPUT, WIND_OUTPUT, BATTERY_CAPACITY, BATTERY_RATE, POWER_OUTPUT, sunlightAt, windAt } from '../src/factory.js';
 import { SCENARIOS } from '../src/scenarios.js';
 import { RESEARCH, STATS } from '../src/research.js';
 import { biomeOf, averageEffect } from '../src/biomes.js';
@@ -279,6 +279,33 @@ for (const item of Object.keys(LINES)) {
   console.log(`  ${'Drohnen'.padEnd(12)} ${d.perMin.toFixed(1).padStart(5)} /min  erste Lieferung nach ${d.first.toFixed(1)} s (${DRONE_TILES} Felder Flug, zwei Bohrer)`);
 }
 
+// --- Renewable power ------------------------------------------------------------
+//
+// Average output over a whole day and a long stretch of wind, per biome.
+const DAY_SECONDS = 8 * 60; // as in daynight.js
+const average = (f, n = 2000) => {
+  let sum = 0;
+  for (let i = 0; i < n; i++) sum += f(i / n);
+  return sum / n;
+};
+const avgSun = average(sunlightAt);
+const avgWind = average((x) => windAt(x * 20000));
+const nightShare = average((x) => (sunlightAt(x) < 0.02 ? 1 : 0));
+const sunOf = (biome) => (biomeOf(biome).sun ?? 1) * averageEffect(biome, 'solar');
+const windOf = (biome) => (biomeOf(biome).wind ?? 1) * averageEffect(biome, 'wind');
+console.log('\nErneuerbare Energie (Durchschnitt über Tag und Nacht)');
+console.log(`  Nacht: ${Math.round(nightShare * DAY_SECONDS)} s von ${DAY_SECONDS} s ohne Sonne`);
+for (const biome of ['meadow', 'desert', 'snow', 'volcano']) {
+  const solar = SOLAR_OUTPUT * avgSun * sunOf(biome);
+  const wind = WIND_OUTPUT * avgWind * windOf(biome);
+  console.log(`  ${biomeOf(biome).name.padEnd(10)} Solarpanel Ø ${solar.toFixed(2)} MW (${Math.ceil(POWER_OUTPUT / solar)} ersetzen ein Kohlekraftwerk), Windrad Ø ${wind.toFixed(2)} MW (${Math.ceil(POWER_OUTPUT / wind)})`);
+}
+{
+  // A battery for a night: how many panels charge it on top of the machines.
+  const night = nightShare * DAY_SECONDS;
+  console.log(`  Akku ${BATTERY_CAPACITY} MJ hält ${(BATTERY_CAPACITY / night).toFixed(1)} MW durch die Nacht (${night.toFixed(0)} s), lädt mit höchstens ${BATTERY_RATE} MW in ${Math.round(BATTERY_CAPACITY / BATTERY_RATE)} s`);
+}
+
 // --- Missions ---------------------------------------------------------------------
 //
 // For every mission the player builds one line per item it needs (lines that already
@@ -315,7 +342,27 @@ function planScenario(s) {
         lines.coal ??= 1;
         continue;
       }
+      // Clean power: panels for the missing megawatts at full sun (set by dragging),
+      // then wait for noon.
+      if (g.green) {
+        const peak = SOLAR_OUTPUT * stats.renewable * (biomeOf(biome).sun ?? 1);
+        const have = (lines.solar ?? 0) * peak;
+        const panels = Math.max(0, Math.ceil((g.green - have) / (peak * 0.85)));
+        build += panels * BUILD_SECONDS.building * 0.5;
+        lines.solar = (lines.solar ?? 0) + panels;
+        wait = Math.max(wait, DAY_SECONDS * 0.25);
+        continue;
+      }
+      // Batteries: one per BATTERY_CAPACITY, charged by what the panels give beyond the machines.
+      if (g.stored) {
+        const n = Math.ceil(g.stored / (BATTERY_CAPACITY * stats.battery));
+        build += n * BUILD_SECONDS.building;
+        const surplus = Math.min(n * BATTERY_RATE, 8);
+        wait = Math.max(wait, g.stored / surplus + DAY_SECONDS * 0.2);
+        continue;
+      }
       if (g.build) {
+        if (g.build === 'solar') lines.solar = Math.max(lines.solar ?? 0, g.count);
         const have = g.build === 'drill' ? Object.keys(lines).length : 0;
         // Rails are laid like belts; a train is set onto the track with one click.
         const each = g.build === 'rail' ? BUILD_SECONDS.belt : g.build === 'train' ? 2 : BUILD_SECONDS.building;
