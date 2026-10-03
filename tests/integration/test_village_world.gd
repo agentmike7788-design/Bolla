@@ -135,7 +135,15 @@ func test_houses_doors_shops_and_waypoints_at_the_plan() -> void:
 	for r: MourningRibbon in ribbons:
 		var house := village.get_node("Buildings/" + String(r.house_id)) as Node3D
 		var marker := house.find_child("ribbon", true, false) as Node3D
-		assert_true(r.global_position.distance_to(marker.global_position) < 0.01, "%s at the marker" % r.name)
+		# G7 art review: under a low eave the ribbon hangs `ribbon_drop` lower on the door frame, 0.2 m
+		# off the wall (village_build.gd).
+		var drop := 0.0
+		for b: Dictionary in layout.buildings:
+			if String(b.id) == String(r.house_id):
+				drop = float(b.get("ribbon_drop", 0.0))
+		var want := marker.global_position + Vector3.DOWN * drop
+		var off := r.global_position - want
+		assert_true(absf(off.y) < 0.01 and Vector2(off.x, off.z).length() < (0.21 if drop > 0.0 else 0.01), "%s at the marker" % r.name)
 	var spawn := village.spawn_transform(&"from_graveyard")
 	_assert_near(spawn.origin, _v2(plan.spawns.from_graveyard.pos), 0.05, "spawn from_graveyard")
 	assert_true((spawn.basis * Vector3.FORWARD).x < -0.9 or (spawn.basis * Vector3.BACK).x > 0.9, "the spawn faces east (into the village)")
