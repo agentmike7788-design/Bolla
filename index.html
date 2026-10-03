@@ -19,6 +19,12 @@
         <p class="value" id="tile-name">Maus über die Karte bewegen</p>
         <p class="detail" id="tile-detail"></p>
       </aside>
+      <aside class="hud hud-goal" id="goal" aria-live="polite"></aside>
+      <aside class="hud hud-store">
+        <p class="label">Lager</p>
+        <ul id="store"></ul>
+      </aside>
+      <div class="toast" id="toast" role="status" hidden></div>
       <aside class="hud hud-legend">
         <p class="label">Erzvorkommen</p>
         <ul id="legend"></ul>
@@ -31,6 +37,18 @@
         <button type="button" class="tool" data-tool="belt" aria-pressed="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h18v8H3zM7 14l3-2-3-2M12 14l3-2-3-2" /></svg>
           <span>Band</span><kbd>2</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="storage" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-5 9 5v11H3zM7 20v-7h10v7M7 16h10" /></svg>
+          <span>Lager</span><kbd>3</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="furnace" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16V9H4zM15 9V3h3v6M8 20v-5a4 4 0 0 1 8 0v5" /></svg>
+          <span>Ofen</span><kbd>4</kbd>
+        </button>
+        <button type="button" class="tool" data-tool="assembler" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 20V5h14v15M5 9h14M10 9v4h4V9M8 17h8" /></svg>
+          <span>Presse</span><kbd>5</kbd>
         </button>
         <button type="button" class="tool" data-tool="remove" aria-pressed="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" /></svg>

@@ -3,7 +3,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { generateWorld, ORES, TERRAIN, MAP_SIZE, TILE } from './world.js';
 import { buildWorldMeshes, createSea } from './scenery.js';
 import { createCameraRig } from './camera.js';
-import { createFactory, DIRS, DIR_NAMES, BUILDINGS } from './factory.js';
+import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, MILESTONES, RECIPES, isMachine } from './factory.js';
 import { createFactoryView, createGhost } from './buildings.js';
 import './style.css';
 
@@ -90,7 +90,9 @@ function loadWorld(seed) {
   factory = createFactory(world);
   factoryView.clear();
   document.getElementById('seed').textContent = `#${seed}`;
+  seenLevel = 0;
   renderLegend();
+  renderProgress();
   showTile(null);
 }
 
@@ -107,7 +109,7 @@ function renderLegend() {
   for (const [key, ore] of Object.entries(ORES)) {
     const c = counts[key] ?? { tiles: 0, amount: 0 };
     const li = document.createElement('li');
-    li.innerHTML = `<span class="swatch" style="--c:#${ore.color.toString(16).padStart(6, '0')}"></span>
+    li.innerHTML = `<span class="swatch" style="--c:${hex(ore.color)}"></span>
       <span class="name">${ore.name}</span>
       <span class="num">${c.amount.toLocaleString('de-DE')}</span>
       <span class="mined">${factory.mined[key] ? `+${factory.mined[key].toLocaleString('de-DE')}` : ''}</span>`;
@@ -116,10 +118,85 @@ function renderLegend() {
   }
 }
 
+const hex = (color) => `#${color.toString(16).padStart(6, '0')}`;
+const num = (n) => n.toLocaleString('de-DE');
+
+// --- Goals, storage and unlocks --------------------------------------------
+
+const goalPanel = document.getElementById('goal');
+const storeList = document.getElementById('store');
+const toast = document.getElementById('toast');
+let seenLevel = 0;
+let toastTimer = 0;
+
+function showToast(title, text) {
+  toast.innerHTML = `<strong>${title}</strong><span>${text}</span>`;
+  toast.hidden = false;
+  toast.classList.remove('pop');
+  void toast.offsetWidth; // restart the animation
+  toast.classList.add('pop');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (toast.hidden = true), 4200);
+}
+
+function renderProgress() {
+  const { level, done } = factory.progress;
+  if (level > seenLevel) {
+    const reached = MILESTONES[level - 1];
+    if (reached.unlocks) showToast('Freigeschaltet', `${BUILDINGS[reached.unlocks].name} · Ziel „${reached.name}“ erreicht`);
+    else showToast('Erstes Ziel geschafft!', 'Deine Fabrik schmilzt, presst und liefert. Glückwunsch!');
+    seenLevel = level;
+  }
+
+  if (done) {
+    goalPanel.innerHTML = `<p class="label">Ziel erreicht</p>
+      <p class="goal-name">Fabrik läuft</p>
+      <p class="goal-unlock">Alle Gebäude frei. Baue weiter, so groß du willst.</p>`;
+  } else {
+    const m = MILESTONES[level];
+    const rows = Object.entries(m.goal)
+      .map(([k, need]) => {
+        const have = Math.min(factory.stored[k], need);
+        return `<li style="--c:${hex(ITEMS[k].color)}">
+          <span class="swatch"></span><span class="name">${ITEMS[k].name}</span>
+          <span class="num">${have}/${need}</span>
+          <span class="bar"><i style="width:${(have / need) * 100}%"></i></span></li>`;
+      })
+      .join('');
+    goalPanel.innerHTML = `<p class="label">Ziel ${level + 1} von ${MILESTONES.length} · ins Lager bringen</p>
+      <p class="goal-name">${m.name}</p>
+      <ul>${rows}</ul>
+      <p class="goal-unlock">${m.unlocks ? `Schaltet frei: <b>${BUILDINGS[m.unlocks].name}</b>` : 'Letztes Ziel'}</p>`;
+  }
+
+  const kept = Object.entries(factory.stored).filter(([, n]) => n > 0);
+  storeList.innerHTML = kept.length
+    ? kept
+        .map(([k, n]) => `<li><span class="swatch" style="--c:${hex(ITEMS[k].color)}"></span><span class="name">${ITEMS[k].name}</span><span class="num">${num(n)}</span></li>`)
+        .join('')
+    : '<li class="empty">Noch leer. Lege ein Band in ein Lager.</li>';
+
+  for (const b of toolButtons) {
+    const type = b.dataset.tool;
+    if (!BUILDINGS[type]) continue;
+    const locked = !factory.progress.unlocked.has(type);
+    b.classList.toggle('locked', locked);
+    b.setAttribute('aria-disabled', String(locked));
+    b.title = locked ? `Noch gesperrt: ${unlockHint(type)}` : BUILDINGS[type].name;
+  }
+}
+
+function unlockHint(type) {
+  const m = MILESTONES.find((x) => x.unlocks === type);
+  return m ? `Ziel „${m.name}“ erfüllen` : '';
+}
+
 const tileName = document.getElementById('tile-name');
 const tileDetail = document.getElementById('tile-detail');
 
 const STATE_TEXT = { work: 'Fördert', blocked: 'Wartet: Ausgang belegt', empty: 'Erschöpft' };
+const MACHINE_TEXT = { work: 'Arbeitet', idle: 'Wartet auf Material', blocked: 'Wartet: Ausgang belegt' };
+const itemList = (keys) => keys.map((k) => ITEMS[k].name).join(', ');
 
 function showTile(tile) {
   hovered = tile;
@@ -142,7 +219,20 @@ function showTile(tile) {
     tileDetail.textContent = `${STATE_TEXT[building.state]} · ${building.mined} abgebaut · Rest ${tile.amount.toLocaleString('de-DE')}`;
   } else if (building?.type === 'belt') {
     tileName.textContent = 'Förderband';
-    tileDetail.textContent = `Richtung ${DIR_NAMES[building.dir]} · ${building.items.length} Erz drauf`;
+    tileDetail.textContent = `Richtung ${DIR_NAMES[building.dir]} · ${building.items.length} Teile drauf`;
+  } else if (isMachine(building)) {
+    const recipe = RECIPES[building.type];
+    tileName.textContent = BUILDINGS[building.type].name;
+    let state = MACHINE_TEXT[building.state];
+    if (building.current) state += `: ${ITEMS[building.current].name} → ${ITEMS[recipe.makes[building.current]].name}`;
+    else if (building.refused) state = `Nimmt kein ${ITEMS[building.refused].name} an`;
+    else state += ` · nimmt ${itemList(Object.keys(recipe.makes))}`;
+    tileDetail.textContent = `${state} · ${building.made} hergestellt`;
+  } else if (building?.type === 'storage') {
+    tileName.textContent = 'Lager';
+    tileDetail.textContent = building.received
+      ? `${num(building.received)} eingelagert · zuletzt ${ITEMS[building.last].name}`
+      : 'Nimmt alles von Bändern auf allen Seiten';
   } else if (tile.ore) {
     tileName.textContent = ORES[tile.ore].name;
     tileDetail.textContent = `${tile.amount.toLocaleString('de-DE')} Einheiten · Feld ${tile.x}, ${tile.z}`;
@@ -191,7 +281,7 @@ canvas.addEventListener('pointerleave', () => {
 
 // --- Building -------------------------------------------------------------
 
-let tool = null; // 'drill' | 'belt' | 'remove' | null
+let tool = null; // a building type, 'remove' or null
 let dir = 1; // direction for the next building, see DIRS
 let hovered = null;
 let dragging = false;
@@ -201,9 +291,12 @@ let shapesDirty = false;
 const toolButtons = document.querySelectorAll('.tool[data-tool]');
 const help = document.getElementById('help');
 const HELP = {
-  none: [['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1 2 X', 'bauen']],
+  none: [['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–5', 'bauen'], ['X', 'abreißen']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
+  storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
+  furnace: [['Klick', 'Schmelzofen setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
+  assembler: [['Klick', 'Presse setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   remove: [['Klick / Ziehen', 'abreißen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
 };
 
@@ -212,6 +305,10 @@ function renderHelp() {
 }
 
 function setTool(next) {
+  if (next && BUILDINGS[next] && !factory.progress.unlocked.has(next)) {
+    showToast(`${BUILDINGS[next].name} gesperrt`, unlockHint(next));
+    return;
+  }
   tool = next === tool ? null : next;
   for (const b of toolButtons) b.setAttribute('aria-pressed', String(b.dataset.tool === tool));
   // While a tool is active, the left mouse button and a single finger build
@@ -294,9 +391,9 @@ document.getElementById('rotate').addEventListener('click', rotate);
 window.addEventListener('keydown', (e) => {
   if (e.repeat && e.key.toLowerCase() !== 'r') return;
   const key = e.key.toLowerCase();
-  if (key === '1') setTool('drill');
-  else if (key === '2') setTool('belt');
-  else if (key === '3' || key === 'x' || key === 'delete') setTool('remove');
+  const numbered = ['drill', 'belt', 'storage', 'furnace', 'assembler'][Number(key) - 1];
+  if (numbered) setTool(numbered);
+  else if (key === 'x' || key === 'delete') setTool('remove');
   else if (key === 'r') rotate();
   else if (key === 'escape' && tool) setTool(tool);
 });
@@ -344,6 +441,7 @@ renderer.setAnimationLoop(() => {
   if (legendTimer > 0.5) {
     legendTimer = 0;
     renderLegend();
+    renderProgress();
   }
   updateHover();
   renderer.render(scene, camera);
@@ -354,4 +452,4 @@ renderHelp();
 resize();
 
 // Handle for poking at the game from the browser console while developing.
-if (import.meta.env.DEV) window.bolla = { camera, rig, get world() { return world; }, get factory() { return factory; } };
+if (import.meta.env.DEV) window.bolla = { camera, rig, refresh: () => (shapesDirty = true), get world() { return world; }, get factory() { return factory; } };
