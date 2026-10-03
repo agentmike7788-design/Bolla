@@ -1,0 +1,22 @@
+[QACPU6] p5_c5bd76d day r0: process mean 3.834 / median 3.945 / p90 4.653 ms (physics mean 1.590) · nodes 2623
+[QACPU6] p5_c5bd76d night r0: process mean 3.727 / median 3.386 / p90 4.483 ms (physics mean 1.205) · nodes 2695
+[QACPU6] p6 day r0: process mean 4.621 / median 4.577 / p90 5.035 ms (physics mean 2.061) · nodes 3149
+[QACPU6] p6 night r0: process mean 4.321 / median 4.307 / p90 5.260 ms (physics mean 1.218) · nodes 3221
+[QACPU6] p5_c5bd76d day r0: process mean 4.113 / median 4.172 / p90 4.704 ms (physics mean 2.390) · nodes 2623
+[QACPU6] p5_c5bd76d night r0: process mean 4.295 / median 4.457 / p90 4.935 ms (physics mean 1.620) · nodes 2695
+[QACPU6] p6 day r0: process mean 3.788 / median 3.394 / p90 5.107 ms (physics mean 2.141) · nodes 3149
+[QACPU6] p6 night r0: process mean 4.234 / median 3.726 / p90 6.394 ms (physics mean 1.416) · nodes 3221
+[QACPU6] p5_c5bd76d day r0: process mean 3.440 / median 3.394 / p90 4.140 ms (physics mean 1.684) · nodes 2623
+[QACPU6] p5_c5bd76d night r0: process mean 3.592 / median 3.265 / p90 4.441 ms (physics mean 5.107) · nodes 2695
+[QACPU6] p6 day r0: process mean 4.816 / median 5.138 / p90 5.477 ms (physics mean 5.480) · nodes 3149
+[QACPU6] p6 night r0: process mean 4.236 / median 3.749 / p90 5.693 ms (physics mean 1.437) · nodes 3221
+done
+--- attribution (Phase-6 build, day probe, groups switched off alternating with all on)
+[QACPU6] all on r0: process mean 4.051 / median 3.574 / p90 5.214 ms (physics mean 2.556)
+[QACPU6] rooms off r0: process mean 4.879 / median 3.351 / p90 5.310 ms (physics mean 1.464)
+[QACPU6] sites_doors off r0: process mean 4.723 / median 3.629 / p90 6.080 ms (physics mean 1.753)
+[QACPU6] systems off r0: process mean 3.900 / median 3.726 / p90 5.119 ms (physics mean 2.100)
+[QACPU6] all on r1: process mean 4.439 / median 4.062 / p90 5.442 ms (physics mean 1.944)
+[QACPU6] rooms off r1: process mean 4.754 / median 4.511 / p90 5.568 ms (physics mean 1.527)
+[QACPU6] sites_doors off r1: process mean 3.668 / median 3.481 / p90 4.763 ms (physics mean 1.868)
+[QACPU6] systems off r1: process mean 3.917 / median 3.493 / p90 4.811 ms (physics mean 2.291)

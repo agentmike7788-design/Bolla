@@ -44,6 +44,12 @@ func _run() -> void:
 	var world := current_scene as Node3D
 	var clock := root.get_node(^"TimeManager")
 	var lines: PackedStringArray = []
+	if "--attrib" in OS.get_cmdline_user_args():
+		await _attrib(world, clock, lines)
+		for l: String in lines:
+			print("[QACPU6] ", l)
+		quit()
+		return
 	for r: int in rounds:
 		for probe: Array in [["day", 660], ["night", 1385]]:
 			root.get_node(^"UIState").call(&"clear")
@@ -57,6 +63,34 @@ func _run() -> void:
 	for l: String in lines:
 		print("[QACPU6] ", l)
 	quit()
+
+
+## Phase 6 only (--attrib): the day probe with groups of Phase-6 nodes switched off, alternating
+## with all on (the container is noisy) – which part costs the frame time.
+func _attrib(world: Node3D, clock: Node, lines: PackedStringArray) -> void:
+	var groups := {
+		"rooms": ["Interiors/CryptInterior", "Interiors/ChapelInterior", "Interiors/ShedInterior"],
+		"sites_doors": ["Entities/site_crypt", "Entities/site_chapel", "Entities/site_shed", "Entities/door_crypt",
+				"Entities/door_chapel", "Entities/door_shed", "Entities/obs_c_gate"],
+		"systems": ["Systems/Buildings", "Systems/Ossuary", "Systems/Chapel"],
+	}
+	root.get_node(^"UIState").call(&"clear")
+	clock.call(&"clear_pauses")
+	clock.call(&"load_state", {"day": 30, "minute_of_day": 660})
+	clock.set("running", true)
+	for r: int in 2:
+		lines.append("all on r%d: %s" % [r, await _measure()])
+		for key: String in groups:
+			var nodes: Array[Node] = []
+			for path: String in groups[key]:
+				var n := world.get_node_or_null(NodePath(path))
+				if n != null:
+					nodes.append(n)
+			for n: Node in nodes:
+				n.process_mode = Node.PROCESS_MODE_DISABLED
+			lines.append("%s off r%d: %s" % [key, r, await _measure()])
+			for n: Node in nodes:
+				n.process_mode = Node.PROCESS_MODE_INHERIT
 
 
 func _measure() -> String:
