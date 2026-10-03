@@ -1630,9 +1630,6 @@ def oldwoman():
     for v in frill.data.vertices:
         v.co.y += 0.005 * math.sin(v.co.x * 130.0 + v.co.z * 90.0)
     parts.append(W("head", _painted(frill, OW_CAP, var=0.08, ao=0.0, top=0.3, seed=34)))
-    parts.append(W("head", _painted(sweep([Vector((math.cos(a) * (s.x + 0.022), c.y + 0.02 + math.sin(a) * (s.y + 0.026), c.z + 0.03))
-                                           for a in (math.tau * k / 14 for k in range(14))], 0.008, n=4, closed=True,
-                                          name="capband"), L.hexc("#3A3633"), ao=0.0, var=0.1)))
     mesh = L.join(parts, rig.MESH)
     _global_light(mesh, 1.42)
     L.smooth(mesh, 55)
