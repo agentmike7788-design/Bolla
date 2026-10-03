@@ -156,6 +156,22 @@ export const RESEARCH = [
     boosts: { refinery: 1.5, pump: 1.5 },
   },
   {
+    id: 'railways',
+    name: 'Eisenbahn',
+    desc: 'Gleise, Bahnhöfe und Züge. Ein Zug holt die Teile von weit weg und lädt sie am Ziel wieder aufs Band.',
+    cost: { steel: 30, gear: 30, concrete: 40 },
+    requires: ['constructor', 'logistics'],
+    unlocks: ['rail', 'station', 'train'],
+  },
+  {
+    id: 'expressTrains',
+    name: 'Schnellzüge',
+    desc: 'Züge fahren 60 % schneller.',
+    cost: { steel: 40, circuit: 40 },
+    requires: ['railways'],
+    boosts: { train: 1.6 },
+  },
+  {
     id: 'oilAge',
     name: 'Ölzeitalter',
     desc: 'Das letzte Ziel: Prozessoren, Kunststoff und Treibstoff für die Zukunft.',
@@ -166,7 +182,7 @@ export const RESEARCH = [
 ];
 
 // Factory stats that research can multiply. 1 is the starting value.
-export const STATS = ['belt', 'drill', 'furnace', 'assembler', 'constructor', 'power', 'pump', 'refinery'];
+export const STATS = ['belt', 'drill', 'furnace', 'assembler', 'constructor', 'power', 'pump', 'refinery', 'train'];
 
 export const START_UNLOCKED = ['drill', 'belt', 'storage'];
 

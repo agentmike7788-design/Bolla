@@ -3,7 +3,7 @@
 // close, and a slow generative background tune. No audio files needed.
 
 const SETTINGS_KEY = 'bolla-audio';
-const MACHINE_TYPES = ['drill', 'furnace', 'assembler', 'constructor', 'belt', 'power', 'pump', 'refinery'];
+const MACHINE_TYPES = ['drill', 'furnace', 'assembler', 'constructor', 'belt', 'power', 'pump', 'refinery', 'train'];
 const LOOP_SECONDS = 2.4;
 
 function loadSettings() {
@@ -198,6 +198,15 @@ export function createAudio() {
         tone({ freq: 90, to: 40, decay: 0.3, peak: 0.25, t: t + d });
       }
     },
+    // A two-tone horn when a train is put on the track or leaves near the camera.
+    horn(pan = 0, level = 1) {
+      if (!ctx || level < 0.05 || throttle('horn', 400)) return;
+      const t = now();
+      for (const [f, d] of [[311, 0], [392, 0]]) {
+        tone({ type: 'sawtooth', freq: f, attack: 0.04, decay: 0.55, peak: 0.05 * level, t: t + d, pan });
+        tone({ type: 'square', freq: f * 0.5, attack: 0.04, decay: 0.5, peak: 0.025 * level, t: t + d, pan });
+      }
+    },
     // The furnace or press finished a part.
     ding(pan = 0, level = 1) {
       if (!ctx || level < 0.05 || throttle('ding', 90)) return;
@@ -280,6 +289,12 @@ export function createAudio() {
       const bubble = Math.sin(TAU * (180 + s.bub * 220) * t) * s.bub * 0.25;
       return low(s, 'f', 0.08) * 2.2 + bubble + Math.sin(TAU * 90 * t) * 0.06;
     },
+    // Wheels over rail joints: two quick knocks, a pause, two more.
+    train: (t, s) => {
+      const p = t % 0.6;
+      const knock = (p < 0.08 ? Math.exp(-p * 60) : 0) + (p > 0.12 && p < 0.2 ? Math.exp(-(p - 0.12) * 60) : 0);
+      return low(s, 'r', 0.15) * 0.9 + knock * Math.sin(TAU * 140 * t) * 0.7 + Math.sin(TAU * 55 * t) * 0.05;
+    },
     // A soft rattle of rollers.
     belt: (t, s) => {
       const roll = low(s, 'b', 0.5) * (0.4 + 0.6 * pulse(t, 0.1, 12));
@@ -303,7 +318,7 @@ export function createAudio() {
   // Machines are heard by how close they are to the spot the camera looks at.
   // One loop per machine type is mixed from all working machines, so a big
   // factory costs no more than a small one.
-  const LEVEL = { drill: 0.5, furnace: 0.75, assembler: 0.7, constructor: 0.6, belt: 0.25, power: 0.6, pump: 0.55, refinery: 0.55 };
+  const LEVEL = { drill: 0.5, furnace: 0.75, assembler: 0.7, constructor: 0.6, belt: 0.25, power: 0.6, pump: 0.55, refinery: 0.55, train: 0.7 };
   function updateMachines(factory, focus, right, zoom) {
     if (!ctx || ctx.state !== 'running') return;
     const radius = 3 + zoom * 0.18;
@@ -320,6 +335,18 @@ export function createAudio() {
       const w = 1 / (1 + d2);
       sum[type] = (sum[type] ?? 0) + w;
       panSum[type] = (panSum[type] ?? 0) + w * Math.max(-1, Math.min(1, (dx * right.x + dz * right.z) / (radius * 2)));
+    }
+    // Running trains rattle where their head is.
+    for (const tr of factory.trains ?? []) {
+      if (tr.state !== 'run' || tr.speed < 0.3) continue;
+      const pos = factory.world.tiles[tr.path[Math.round(tr.s)]].position;
+      const dx = pos.x - focus.x;
+      const dz = pos.z - focus.z;
+      const d2 = (dx * dx + dz * dz) / (radius * radius);
+      if (d2 > 30) continue;
+      const w = Math.min(1, tr.speed / 3) / (1 + d2);
+      sum.train = (sum.train ?? 0) + w;
+      panSum.train = (panSum.train ?? 0) + w * Math.max(-1, Math.min(1, (dx * right.x + dz * right.z) / (radius * 2)));
     }
     const t = ctx.currentTime;
     for (const type of MACHINE_TYPES) {

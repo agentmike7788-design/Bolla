@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { generateWorld, ORES, TERRAIN, MAP_SIZE, TILE } from './world.js';
+import { TRAIN_CARGO, STATION_CAP, TRAIN_SPEED } from './trains.js';
 import { buildWorldMeshes, createSea } from './scenery.js';
 import { createCameraRig } from './camera.js';
 import { createFactory, DIRS, DIR_NAMES, BUILDINGS, ITEMS, RECIPES, CONSTRUCTOR_RECIPES, REFINERY_RECIPES, recipesOf, isMachine, usesPower, POWER_USE, POWER_SPEED, POWER_OUTPUT, WIRE_REACH, PUMP_RATE } from './factory.js';
@@ -39,8 +40,13 @@ scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffe2b8, 2.5);
 sun.position.set(38, 42, 22);
 sun.castShadow = true;
-const half = (MAP_SIZE * TILE) / 2 + 4;
-Object.assign(sun.shadow.camera, { left: -half, right: half, top: half, bottom: -half, near: 1, far: 160 });
+// The shadow and the camera cover the whole map; big maps get a wider box.
+function setExtent(size) {
+  const half = (size * TILE) / 2 + 4;
+  Object.assign(sun.shadow.camera, { left: -half, right: half, top: half, bottom: -half, near: 1, far: 160 + size });
+  sun.shadow.camera.updateProjectionMatrix();
+  rig.setExtent((size * TILE) / 2);
+}
 sun.shadow.bias = -0.0004;
 sun.shadow.normalBias = 0.02;
 scene.add(sun);
@@ -106,6 +112,7 @@ function loadWorld(seed, mapScenario = null, saved = null) {
     });
   }
   world = generateWorld(seed, mapScenario?.map);
+  setExtent(world.size);
   meshes = buildWorldMeshes(world);
   scene.add(meshes.group);
   factory = createFactory(world, { start: mapScenario?.start });
@@ -125,7 +132,7 @@ function loadWorld(seed, mapScenario = null, saved = null) {
   researchView.setEnabled(!missions);
   if (missions) missionView.render();
   else researchView.reset();
-  openRecipes(null);
+  openPanel(null);
   renderProgress();
   showTile(null);
 }
@@ -199,13 +206,17 @@ function renderProgress() {
 
   renderPower();
   renderOil();
+  renderRail();
+  // The train panel's status line follows the train; the rest stays clickable.
+  const note = selected?.path && document.getElementById('train-note');
+  if (note) note.innerHTML = `${trainLine(selected)}${selected.total ? `<br>${cargoText(selected.cargo)}` : ''}`;
 
-  // The oil tools show up once one of them is unlocked.
-  const oil = [...toolButtons].some((b) => b.dataset.group === 'oil' && factory.research.unlocked.has(b.dataset.tool));
+  // The oil and railway tools show up once one of their group is unlocked.
+  const shown = new Set([...toolButtons].filter((b) => b.dataset.group && factory.research.unlocked.has(b.dataset.tool)).map((b) => b.dataset.group));
   for (const b of toolButtons) {
     const type = b.dataset.tool;
     if (!BUILDINGS[type]) continue;
-    b.hidden = b.dataset.group === 'oil' && !oil;
+    b.hidden = !!b.dataset.group && !shown.has(b.dataset.group);
     const locked = !factory.research.unlocked.has(type);
     b.classList.toggle('locked', locked);
     b.setAttribute('aria-disabled', String(locked));
@@ -262,6 +273,28 @@ function renderOil() {
   } else {
     oilState.textContent = `${num(Math.round(s.rate * 60))}/min`;
     oilText.textContent = `${num(Math.round(s.amount))} von ${num(s.capacity)} Öl in den Rohren · ${s.working} von ${s.pumps} Pumpen laufen · ${s.refineries} Raffinerien`;
+  }
+}
+
+const railPanel = document.getElementById('rail');
+const railState = document.getElementById('rail-state');
+const railText = document.getElementById('rail-text');
+
+// Shown once the railway is unlocked: trains, stations and what they deliver.
+function renderRail() {
+  const s = factory.railways.summary();
+  railPanel.hidden = !factory.research.unlocked.has('rail') && !s.stations;
+  if (railPanel.hidden) return;
+  const perMin = factory.shippedPerMinute();
+  if (s.stations < 2) {
+    railState.textContent = 'kein Netz';
+    railText.textContent = 'Zwei Bahnhöfe bauen, Gleise dazwischen ziehen, dann einen Zug auf die Schienen setzen.';
+  } else if (!s.trains) {
+    railState.textContent = 'kein Zug';
+    railText.textContent = `${s.stations} Bahnhöfe. Wähle den Zug (Z) und klicke auf einen Bahnhof.`;
+  } else {
+    railState.textContent = `${num(perMin)}/min`;
+    railText.textContent = `${s.trains} ${s.trains === 1 ? 'Zug' : 'Züge'} · ${s.running} ${s.running === 1 ? 'fährt' : 'fahren'}${s.waiting ? ` · ${s.waiting} warten` : ''} · ${s.stations} Bahnhöfe · ${num(factory.shipped)} Teile geliefert`;
   }
 }
 
@@ -532,7 +565,7 @@ function openTitle() {
   leaveGame();
   inTitle = true;
   if (tool) setTool(tool);
-  openRecipes(null);
+  openPanel(null);
   researchView.close();
   mapsMenu.hidden = winMenu.hidden = true;
   app.classList.add('in-title');
@@ -572,7 +605,7 @@ document.addEventListener('visibilitychange', () => document.hidden && leaveGame
 
 const recipePanel = document.getElementById('recipe');
 const recipeList = document.getElementById('recipe-list');
-let selected = null; // the constructor whose recipe panel is open
+let selected = null; // the building or train whose panel is open
 
 const needsText = (needs) =>
   Object.entries(needs)
@@ -581,11 +614,57 @@ const needsText = (needs) =>
 
 const recipeLabel = document.getElementById('recipe-label');
 
-// Recipes of a constructor or refinery; ones that need a locked building stay hidden.
-function openRecipes(b) {
+const TRAIN_TEXT = {
+  run: 'Fährt',
+  blocked: 'Wartet auf freie Strecke',
+  load: 'Lädt',
+  unload: 'Lädt aus',
+  stop: 'Hält',
+  nopath: 'Kein Weg zum nächsten Halt',
+  noschedule: 'Kein Fahrplan: Halte hinzufügen',
+};
+const stationOf = (i) => {
+  const b = factory.buildings.get(i);
+  return b?.type === 'station' ? b : null;
+};
+const cargoText = (cargo) =>
+  Object.entries(cargo)
+    .filter(([, n]) => n > 0)
+    .map(([k, n]) => `${n} ${ITEMS[k].name}`)
+    .join(', ');
+
+function trainLine(t) {
+  const target = stationOf(t.schedule[t.stop]);
+  const where = t.at !== null ? `in Bahnhof ${stationOf(t.at)?.name ?? '?'}` : target ? `nach ${target.name}` : '';
+  return `${TRAIN_TEXT[t.state] ?? ''} ${where} · Ladung ${t.total}/${TRAIN_CARGO}`;
+}
+
+// The side panel: recipes of a constructor or refinery, the mode of a station or
+// the schedule of a train.
+function openPanel(b) {
   selected = b;
   recipePanel.hidden = !b;
-  if (!b) return;
+  if (b) renderPanel();
+}
+
+function renderPanel() {
+  const b = selected;
+  if (b.path) return renderSchedule(b);
+  if (b.type === 'station') {
+    recipeLabel.textContent = `Bahnhof ${b.name} · Betriebsart`;
+    const modes = [
+      ['load', 'Beladen', 'Bänder von der Seite füllen den Bahnhof, Züge laden ein'],
+      ['unload', 'Entladen', 'Züge laden aus, der Bahnhof gibt alles auf Bänder an den Seiten'],
+    ];
+    recipeList.innerHTML =
+      modes
+        .map(
+          ([id, name, text]) => `<button type="button" class="recipe-option" data-mode="${id}" aria-pressed="${b.mode === id}">
+        <span class="swatch" style="--c:${id === 'load' ? '#3fae5a' : '#e07a2e'}"></span><b>${name}</b><span>${text}</span></button>`,
+        )
+        .join('') + `<p class="panel-note">${b.total}/${STATION_CAP} Teile im Bahnhof${b.total ? `: ${cargoText(b.items)}` : ''}</p>`;
+    return;
+  }
   recipeLabel.textContent = `${BUILDINGS[b.type].name} · Rezept wählen`;
   recipeList.innerHTML = Object.entries(recipesOf(b.type))
     .filter(([, r]) => !r.unlock || factory.research.unlocked.has(r.unlock))
@@ -596,15 +675,48 @@ function openRecipes(b) {
     )
     .join('');
 }
-const hasRecipes = (b) => !!recipesOf(b?.type);
+
+// A train's stops in order, and every station it could stop at.
+function renderSchedule(t) {
+  const reach = new Set(factory.railways.reachable(t.path[Math.round(t.s)]));
+  const all = [...factory.buildings.values()].filter((b) => b.type === 'station').sort((a, b) => a.name.localeCompare(b.name, 'de', { numeric: true }));
+  recipeLabel.textContent = `Zug ${t.id} · Fahrplan`;
+  const stops = t.schedule
+    .map((i, n) => {
+      const st = stationOf(i);
+      if (!st) return '';
+      const now = n === t.stop ? ' now' : '';
+      return `<li class="stop${now}"><span class="stop-name">${n + 1}. Bahnhof ${st.name}</span><span class="stop-mode ${st.mode}">${st.mode === 'load' ? 'beladen' : 'entladen'}</span>
+        <button type="button" class="link" data-unstop="${n}" aria-label="Halt entfernen">✕</button></li>`;
+    })
+    .join('');
+  recipeList.innerHTML = `<p class="panel-note" id="train-note">${trainLine(t)}${t.total ? `<br>${cargoText(t.cargo)}` : ''}</p>
+    <ol class="stops">${stops || '<li class="stop empty">Noch keine Halte</li>'}</ol>
+    <p class="panel-note">Halt hinzufügen:</p>
+    <div class="stop-add">${
+      all.length
+        ? all.map((st) => `<button type="button" data-stop="${st.index}"${reach.has(st.index) ? '' : ' class="unreachable" title="Nicht über Gleise erreichbar"'}>${st.name}</button>`).join('')
+        : '<span>Kein Bahnhof gebaut</span>'
+    }</div>`;
+}
+
+const hasRecipes = (b) => !!recipesOf(b?.type) || b?.type === 'station';
 recipeList.addEventListener('click', (e) => {
+  if (!selected) return;
   const opt = e.target.closest('[data-recipe]');
-  if (!opt || !selected) return;
-  factory.setRecipe(selected, opt.dataset.recipe);
-  openRecipes(selected);
+  const mode = e.target.closest('[data-mode]');
+  const add = e.target.closest('[data-stop]');
+  const drop = e.target.closest('[data-unstop]');
+  if (opt) factory.setRecipe(selected, opt.dataset.recipe);
+  else if (mode) factory.setMode(selected, mode.dataset.mode);
+  else if (add) factory.railways.setSchedule(selected, [...selected.schedule, Number(add.dataset.stop)]);
+  else if (drop) factory.railways.setSchedule(selected, selected.schedule.filter((_, n) => n !== Number(drop.dataset.unstop)));
+  else return;
+  audio.play.click();
+  renderPanel();
   showTile(hovered);
 });
-document.getElementById('recipe-close').addEventListener('click', () => openRecipes(null));
+document.getElementById('recipe-close').addEventListener('click', () => openPanel(null));
 
 const tileName = document.getElementById('tile-name');
 const tileDetail = document.getElementById('tile-detail');
@@ -641,16 +753,29 @@ function showTile(tile) {
     return;
   }
   const building = factory.get(tile);
-  const check = tool === 'remove' ? { ok: !!building, reason: building ? '' : 'Hier steht nichts' } : tool && canBuild(tile);
+  const train = factory.trainOn(tile);
+  const check = tool === 'remove' ? { ok: !!(building || train), reason: building || train ? '' : 'Hier steht nichts' } : tool && canBuild(tile);
   const overBelt = check?.ok && tool !== 'remove' && tool !== 'belt' && building?.type === 'belt';
-  canvas.style.cursor = !tool && hasRecipes(building) ? 'pointer' : '';
+  canvas.style.cursor = !tool && (train || hasRecipes(building)) ? 'pointer' : '';
   marker.visible = !tool;
   marker.position.set(tile.position.x, Math.max(tile.height, 0.28) + 0.03, tile.position.z);
   ghost.show(tool, tile, tool === 'remove' || overBelt ? building?.dir ?? 0 : dir, check?.ok);
   factoryView.showSupply(tool === 'pole' || tool === 'power' || usesPower({ type: tool }) || (!tool && (building?.type === 'pole' || building?.type === 'power')));
 
   const terrain = TERRAIN[tile.terrain];
-  if (building?.type === 'drill') {
+  if (train) {
+    tileName.textContent = `Zug ${train.id}`;
+    const stops = train.schedule.map((i) => stationOf(i)?.name ?? '?').join(' → ');
+    tileDetail.textContent = `${trainLine(train)} · Fahrplan ${stops || 'leer'}${tool ? '' : ' · Klick: Fahrplan'}`;
+  } else if (building?.type === 'rail') {
+    tileName.textContent = 'Gleis';
+    const n = building.links?.length ?? 0;
+    tileDetail.textContent = n ? `${n === 1 ? 'Gleisende' : n === 2 ? 'Strecke' : 'Weiche'} · Züge fahren bis ${num(Math.round(TRAIN_SPEED * factory.research.stats.train * 60))} Felder/min` : 'Noch nicht verbunden: Gleis von hier weiterziehen';
+  } else if (building?.type === 'station') {
+    tileName.textContent = `Bahnhof ${building.name} · ${building.mode === 'load' ? 'Beladen' : 'Entladen'}`;
+    const side = building.mode === 'load' ? 'Bänder von der Seite liefern zu' : 'gibt an Bänder an den Seiten ab';
+    tileDetail.textContent = `${building.total}/${STATION_CAP} Teile · ${side}${tool ? '' : ' · Klick: Betriebsart'}`;
+  } else if (building?.type === 'drill') {
     tileName.textContent = `Bohrer · ${ORES[tile.ore].name}`;
     tileDetail.textContent = `${STATE_TEXT[building.state]} · ${building.mined} abgebaut · Rest ${tile.amount.toLocaleString('de-DE')}${powerNote(building)}`;
   } else if (building?.type === 'belt') {
@@ -740,10 +865,10 @@ function pickTile() {
   if (hit) return world.tiles[hit.instanceId];
   // The ray slipped through the thin gap between two tiles: pick by grid cell instead.
   const point = raycaster.ray.intersectPlane(groundPlane, planeHit);
-  const offset = (MAP_SIZE * TILE) / 2;
+  const offset = (world.size * TILE) / 2;
   const x = point && Math.floor((point.x + offset) / TILE);
   const z = point && Math.floor((point.z + offset) / TILE);
-  const inside = point && x >= 0 && z >= 0 && x < MAP_SIZE && z < MAP_SIZE;
+  const inside = point && x >= 0 && z >= 0 && x < world.size && z < world.size;
   return inside ? world.at(x, z) : null;
 }
 
@@ -770,7 +895,7 @@ let shapesDirty = false;
 const toolButtons = document.querySelectorAll('.tool[data-tool]');
 const help = document.getElementById('help');
 const HELP = {
-  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['O P I K', 'Öl'], ['X', 'abreißen'], ['T', 'Forschung'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
+  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['O P I K', 'Öl'], ['G B Z', 'Bahn'], ['X', 'abreißen'], ['T', 'Forschung'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
@@ -785,6 +910,9 @@ const HELP = {
   pipe: [['Ziehen', 'Rohre verlegen'], ['Verbindet', 'alles daneben'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen']],
   tank: [['Klick', 'Öltank setzen'], ['Speichert', '400 Öl'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen']],
   refinery: [['Klick', 'Raffinerie setzen'], ['R', 'Ausgang drehen'], ['Rohr', 'an jede Seite außer vorn'], ['Ohne Werkzeug klicken', 'Rezept wählen']],
+  rail: [['Ziehen', 'Gleise verlegen'], ['Ecken', 'werden Kurven'], ['Von einem Gleis ziehen', 'Abzweig'], ['Esc', 'fertig']],
+  station: [['Klick', 'Bahnhof setzen'], ['R', 'Gleisrichtung drehen'], ['Bänder', 'an die Seiten'], ['Ohne Werkzeug klicken', 'Beladen / Entladen']],
+  train: [['Klick auf Bahnhof', 'Zug einsetzen'], ['Braucht', '4 Felder Gleis'], ['Ohne Werkzeug klicken', 'Fahrplan'], ['Esc', 'fertig']],
   remove: [['Klick / Ziehen', 'abreißen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
 };
 
@@ -812,6 +940,9 @@ function setTool(next) {
 
 function canBuild(tile) {
   const existing = factory.get(tile);
+  if (tool === 'train') return factory.canAddTrain(tile);
+  // Dragging a rail over track joins it.
+  if (tool === 'rail' && (existing?.type === 'rail' || existing?.type === 'station')) return { ok: true, reason: '' };
   // Dragging a belt over a belt just turns it; a pipe over a pipe changes nothing.
   if ((tool === 'belt' || tool === 'pipe') && existing?.type === tool) return { ok: true, reason: '' };
   // Clicking a machine onto a belt replaces that piece; dragging does not eat belts.
@@ -839,7 +970,7 @@ function buildAt(tile) {
       audio.play.remove();
       effects.remove(tile, removed.type);
     }
-    if (removed && removed === selected) openRecipes(null);
+    if (removed && (removed === selected || removed.train === selected)) openPanel(null);
   } else {
     const existing = factory.get(tile);
     if (tool === 'belt' && existing?.type === 'belt') {
@@ -847,6 +978,19 @@ function buildAt(tile) {
       factory.setDir(existing, dir);
     } else if (tool === 'pipe' && existing?.type === 'pipe') {
       // Already a pipe here.
+    } else if (tool === 'rail' && (existing?.type === 'rail' || existing?.type === 'station')) {
+      // Track is here already; the drag links it.
+    } else if (tool === 'train') {
+      const t = factory.addTrain(tile);
+      if (t) {
+        audio.play.horn();
+        effects.build(tile, true);
+        const stops = t.schedule.map((i) => stationOf(i).name);
+        showToast('Zug auf den Schienen', stops.length > 1 ? `Fahrplan ${stops.join(' → ')}. Klick den Zug an, um ihn zu ändern.` : 'Klick den Zug an und gib ihm einen Fahrplan.');
+      } else {
+        audio.play.deny();
+        showToast('Hier passt kein Zug', factory.canAddTrain(tile).reason);
+      }
     } else if (factory.place(tool, tile, existing?.type === 'belt' ? existing.dir : dir, !lastTile)) {
       meshes.setDecorHidden(tile.z * world.size + tile.x, true);
       audio.play.build(tool);
@@ -866,7 +1010,12 @@ function buildAlong(tile) {
     if (!lastTile || factory.get(tile)?.type === 'pole') lastTile = tile;
     return;
   }
-  if (!lastTile || (tool !== 'belt' && tool !== 'pipe')) {
+  if (tool === 'train') {
+    if (!lastTile) buildAt(tile);
+    lastTile = tile;
+    return;
+  }
+  if (!lastTile || (tool !== 'belt' && tool !== 'pipe' && tool !== 'rail')) {
     buildAt(tile);
     lastTile = tile;
     return;
@@ -877,8 +1026,10 @@ function buildAlong(tile) {
     dir = DIRS.findIndex((d) => d.x === dx && d.z === dz);
     const prev = factory.get(lastTile);
     if (prev?.type === 'belt' && tool === 'belt') factory.setDir(prev, dir);
+    const from = lastTile;
     lastTile = world.at(lastTile.x + dx, lastTile.z + dz);
     buildAt(lastTile);
+    if (tool === 'rail' && factory.linkTrack(factory.get(from), factory.get(lastTile))) shapesDirty = true;
   }
 }
 
@@ -905,8 +1056,8 @@ window.addEventListener('pointerup', (e) => {
   if (tool || moved > 6) return;
   setPointer(e);
   const tile = pickTile();
-  const b = tile && factory.get(tile);
-  openRecipes(hasRecipes(b) ? b : null);
+  const b = tile && (factory.trainOn(tile) ?? factory.get(tile));
+  openPanel(b?.path || hasRecipes(b) ? b : null);
 });
 
 for (const b of toolButtons) b.addEventListener('click', () => setTool(b.dataset.tool));
@@ -917,7 +1068,7 @@ function escape() {
   if (!mapsMenu.hidden || !winMenu.hidden) mapsMenu.hidden = winMenu.hidden = true;
   else if (menu.isOpen) menu.back();
   else if (researchView.isOpen) researchView.close();
-  else if (selected) openRecipes(null);
+  else if (selected) openPanel(null);
   else if (tool) setTool(tool);
   else openPause();
 }
@@ -942,7 +1093,7 @@ window.addEventListener('keydown', (e) => {
   if (key === 'n') return dayNight.skipAhead();
   if (key === 't' && missions) return showToast('Missionskarte', 'Hier schalten Missionen neue Gebäude frei, nicht der Forschungsbaum.');
   const numbered = /^[0-9]$/.test(key) && ['drill', 'belt', 'storage', 'furnace', 'assembler', 'splitter', 'merger', 'constructor', 'power', 'pole'][(Number(key) + 9) % 10];
-  const oilKey = { o: 'pump', p: 'pipe', i: 'refinery', k: 'tank' }[key];
+  const oilKey = { o: 'pump', p: 'pipe', i: 'refinery', k: 'tank', g: 'rail', b: 'station', z: 'train' }[key];
   if (numbered) setTool(numbered);
   else if (oilKey) setTool(oilKey);
   else if (key === 'x' || key === 'delete') setTool('remove');
@@ -973,6 +1124,7 @@ let pending = 0;
 let legendTimer = 0;
 let soundTimer = 0;
 const IDLE = { buildings: new Map() }; // what the machine sounds hear while paused
+const hornTrips = new WeakMap(); // train -> trips when its horn last sounded
 
 const timer = new THREE.Timer();
 renderer.setAnimationLoop(() => {
@@ -1006,6 +1158,16 @@ renderer.setAnimationLoop(() => {
   if (soundTimer > 0.1) {
     soundTimer = 0;
     audio.updateMachines(paused ? IDLE : factory, focus, camRight, zoom);
+    // A horn when a train leaves a station near the camera.
+    for (const t of factory.trains) {
+      if (t.trips !== hornTrips.get(t)) {
+        if (hornTrips.has(t)) {
+          const sp = audio.spot(world.tiles[t.path[Math.round(t.s)]].position, focus, camRight, zoom);
+          audio.play.horn(sp.pan, sp.level);
+        }
+        hornTrips.set(t, t.trips);
+      }
+    }
     clockLabel.textContent = dayNight.clock();
     clockIcon.textContent = dayNight.night > 0.5 ? '☾' : '☀';
   }
@@ -1023,6 +1185,11 @@ renderer.setAnimationLoop(() => {
     renderLegend();
     checkMissions();
     renderProgress();
+    if (factory.derailed.length) {
+      showToast('Zug entgleist', 'Unter dem Zug fehlt jetzt ein Gleis. Er wurde abgeräumt.');
+      factory.derailed.length = 0;
+      if (selected?.path && !factory.trains.includes(selected)) openPanel(null);
+    }
   }
   tutorial.update(dt, elapsed, !paused && !inTitle && !menuOpen());
   updateHover();

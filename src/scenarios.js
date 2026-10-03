@@ -17,6 +17,7 @@
 //                   { rate: item, perMin }      that many into storage within one minute
 //                   { powered: count }          that many machines working on power at once
 //                   { oil: count }              pump that much more oil
+//                   { shipped: count }          unload that many more parts from trains
 //     reward      { unlocks, boosts, text } like a research entry, see research.js
 export const SCENARIOS = [
   {
@@ -229,6 +230,56 @@ export const SCENARIOS = [
       },
     ],
   },
+  {
+    id: 'railLands',
+    name: 'Weites Land',
+    desc: 'Eine große Insel. Eisen und Kohle im Nordwesten, Kupfer und Kalkstein im Südosten. Ohne Eisenbahn geht hier nichts.',
+    level: 4,
+    seed: 9150,
+    map: {
+      size: 96,
+      ores: { iron: 4, coal: 3, copper: 4, stone: 3 },
+      zones: { iron: [0, 0, 0.32, 0.32], coal: [0, 0, 0.36, 0.36], copper: [0.68, 0.68, 1, 1], stone: [0.64, 0.64, 1, 1] },
+      land: 0.07,
+      coast: 0.86,
+      rock: 0.35,
+      richness: 1.3,
+    },
+    start: ['drill', 'belt', 'storage', 'furnace', 'assembler', 'constructor', 'splitter', 'merger', 'power', 'pole', 'rail', 'station'],
+    par: 24,
+    missions: [
+      {
+        name: 'Gleisbau',
+        desc: 'Die Erze liegen weit auseinander. Setz einen Bahnhof an jedes Ende und zieh die Gleise dazwischen.',
+        goals: [{ build: 'station', count: 2 }, { build: 'rail', count: 30 }],
+        reward: { unlocks: ['train'], text: 'Zug' },
+      },
+      {
+        name: 'Erste Fracht',
+        desc: 'Setz einen Zug auf einen Bahnhof. Bänder füllen den Bahnhof von der Seite, am anderen Ende stellst du auf Entladen.',
+        goals: [{ build: 'train', count: 1 }, { shipped: 80 }],
+        reward: { boosts: { drill: 1.5 }, text: 'Bohrer +50 %' },
+      },
+      {
+        name: 'Fernverkehr',
+        desc: 'Eisen aus dem Nordwesten, Kupfer aus dem Südosten: Schaltkreise brauchen beides.',
+        goals: [{ deliver: 'circuit', count: 20 }],
+        reward: { boosts: { train: 1.5, belt: 1.5 }, text: 'Züge +50 %, Bänder +50 %' },
+      },
+      {
+        name: 'Stahlexpress',
+        desc: 'Stahl und Zahnräder für neue Strecken. Die Kohle liegt beim Eisen.',
+        goals: [{ deliver: 'steel', count: 25 }, { deliver: 'gear', count: 20 }],
+        reward: { boosts: { furnace: 2, constructor: 1.5 }, text: 'Öfen ×2, Konstruktor +50 %' },
+      },
+      {
+        name: 'Güterverkehr',
+        desc: 'Das ganze Land arbeitet zusammen: Schaltkreise im Minutentakt und volle Züge.',
+        goals: [{ rate: 'circuit', perMin: 20 }, { shipped: 400 }],
+        reward: { text: 'Das Land ist verbunden' },
+      },
+    ],
+  },
 ];
 
 export const scenarioById = (id) => SCENARIOS.find((s) => s.id === id);
@@ -241,6 +292,7 @@ export function createMissions(scenario, factory) {
   let index = 0;
   let base = { ...factory.delivered }; // deliveries count from the start of each mission
   let basePumped = factory.pumped;
+  let baseShipped = factory.shipped;
   let reached = new Set(); // rate goals met once stay met
   let finishedAt = null;
 
@@ -248,6 +300,7 @@ export function createMissions(scenario, factory) {
     if (goal.deliver) return { item: goal.deliver, have: factory.delivered[goal.deliver] - base[goal.deliver], need: goal.count };
     if (goal.build) return { building: goal.build, have: factory.count(goal.build), need: goal.count };
     if (goal.oil) return { oil: true, have: Math.floor(factory.pumped - basePumped), need: goal.oil };
+    if (goal.shipped) return { shipped: true, have: factory.shipped - baseShipped, need: goal.shipped };
     if (goal.powered) return { powered: true, have: reached.has(i) ? goal.powered : factory.powered(), need: goal.powered };
     const have = reached.has(i) ? goal.perMin : factory.perMinute(goal.rate);
     return { item: goal.rate, rate: true, have, need: goal.perMin };
@@ -278,16 +331,18 @@ export function createMissions(scenario, factory) {
       index++;
       base = { ...factory.delivered };
       basePumped = factory.pumped;
+      baseShipped = factory.shipped;
       reached = new Set();
       if (!this.current) finishedAt = factory.time;
       return m;
     },
-    save: () => ({ index, base, basePumped, reached: [...reached], finishedAt }),
+    save: () => ({ index, base, basePumped, baseShipped, reached: [...reached], finishedAt }),
     load(data) {
       if (!data) return;
       index = Math.min(data.index ?? 0, scenario.missions.length);
       base = { ...base, ...data.base };
       basePumped = data.basePumped ?? 0;
+      baseShipped = data.baseShipped ?? 0;
       reached = new Set(data.reached ?? []);
       finishedAt = data.finishedAt ?? null;
     },

@@ -152,6 +152,49 @@ function measureFed(item, stats) {
   return { perMin, first, cost };
 }
 
+// A railway: two drill lines load a station from its sides, the train runs
+// RAIL_TILES of track (with a curve) to a station that unloads into a storage.
+const RAIL_TILES = 40;
+function measureTrain(stats) {
+  const world = flatWorld();
+  const factory = createFactory(world, { start: ALL });
+  Object.assign(factory.research.stats, stats);
+  const at = world.at;
+  const z = 20;
+  const A = factory.place('station', at(5, z), E);
+  let prev = A;
+  const turn = 5 + RAIL_TILES / 2;
+  for (let x = 6; x <= turn; x++) prev = link(factory, prev, factory.place('rail', at(x, z), E));
+  for (let zz = z + 1; zz <= z + 4; zz++) prev = link(factory, prev, factory.place('rail', at(turn, zz), E));
+  for (let x = turn + 1; x < turn + RAIL_TILES / 2 - 4; x++) prev = link(factory, prev, factory.place('rail', at(x, z + 4), E));
+  const bx = turn + RAIL_TILES / 2 - 4;
+  const B = link(factory, prev, factory.place('station', at(bx, z + 4), E));
+  factory.setMode(B, 'unload');
+  for (const [dz, dir] of [[-3, 2], [3, 0]]) {
+    Object.assign(at(5, z + dz), { ore: 'iron', amount: 1e6 });
+    factory.place('drill', at(5, z + dz), dir);
+    factory.place('belt', at(5, z + dz / 1.5), dir);
+    factory.place('belt', at(5, z + dz / 3), dir);
+  }
+  factory.place('belt', at(bx, z + 5), 2);
+  factory.place('storage', at(bx, z + 6), 2);
+  factory.addTrain(at(5, z));
+  let first = null;
+  const step = 1 / 60;
+  let atWarm = 0;
+  for (let t = 0; t < 360; t += step) {
+    factory.tick(step);
+    if (first === null && factory.shipped > 0) first = factory.time;
+    if (Math.abs(factory.time - 120) < step / 2) atWarm = factory.shipped;
+  }
+  const perMin = (factory.shipped - atWarm) / 4;
+  return { perMin, first: first ?? Infinity, cost: { building: 6, belt: RAIL_TILES + 4 * 2 + 2 } };
+}
+function link(factory, a, b) {
+  factory.linkTrack(a, b);
+  return b;
+}
+
 const baseStats = () => Object.fromEntries(STATS.map((s) => [s, 1]));
 const fmt = (sec) => {
   const s = Math.round(sec);
@@ -166,6 +209,10 @@ const base = baseStats();
 for (const item of Object.keys(LINES)) {
   const m = measure(item, base);
   console.log(`  ${item.padEnd(12)} ${m.perMin.toFixed(1).padStart(5)} /min  erstes Teil nach ${m.first.toFixed(1)} s`);
+}
+{
+  const m = measureTrain(base);
+  console.log(`  ${'Zug'.padEnd(12)} ${m.perMin.toFixed(1).padStart(5)} /min  erste Lieferung nach ${m.first.toFixed(1)} s (${RAIL_TILES} Felder Gleis, zwei Bohrer)`);
 }
 
 // --- Missions ---------------------------------------------------------------------
@@ -192,12 +239,23 @@ function planScenario(s) {
       }
       if (g.build) {
         const have = g.build === 'drill' ? Object.keys(lines).length : 0;
-        build += Math.max(0, g.count - have) * BUILD_SECONDS.building;
+        // Rails are laid like belts; a train is set onto the track with one click.
+        const each = g.build === 'rail' ? BUILD_SECONDS.belt : g.build === 'train' ? 2 : BUILD_SECONDS.building;
+        build += Math.max(0, g.count - have) * each;
+        if (g.build === 'rail') lines.train = 1;
         if (g.build === 'pump') {
           // A pole beside the pumps and a few pipes to a tank.
           build += BUILD_SECONDS.building * 2 + BELTS_PER_STEP * BUILD_SECONDS.belt;
           pumps = Math.max(pumps, g.count);
         }
+        continue;
+      }
+      if (g.shipped) {
+        // One railway with two drill lines; built in an earlier mission or now.
+        const train = measureTrain(stats);
+        if (!lines.train) build += buildTime(train.cost);
+        lines.train = 1;
+        wait = Math.max(wait, train.first + (g.shipped / train.perMin) * 60);
         continue;
       }
       if (g.oil) {
