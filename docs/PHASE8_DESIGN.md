@@ -554,7 +554,7 @@ Die Dorfbewohner, die einen Toten auf dem Hügel haben, kommen selbst herauf. Si
 | Modul | Besitzt (Pfade) |
 |---|---|
 | **Lead** (W0 + laufend) | `project.godot`, `src/core/*` (EventBus, Database), alle **Datenklassen ✦**, alle **Stubs** (bis zur Übergabe), `tests/run_tests.gd`, `tests/framework/*`, `tests/fixtures/*` (inkl. **`saves_v6/*`**, `phase8/*`), `tests/integration/test_saves_v6_load.gd`, `tests/unit/test_phase8_scaffold.gd`, `docs/*`, `CLAUDE.md` |
-| **P1 Dorfleben & Figurenlast** | `src/systems/npc_life/{npc_life,mood_rules,chatter_runner,reaction_rules}.gd` (neu), `src/systems/npc/{schedule_builder,npc_lod,schedule_resolver}.gd`, `src/entities/npc/{npc,npc_pose}.gd` (Laufzeit-Zeitplan, Hut-/Strauß-Kindmeshes, `idle_low`, LOD-Kappen je Region), `src/systems/village/relationships.gd` (nur Gerede-Vorrang „Ereignis" und die neuen `gains`), `data/config/{npc_life_config,npc_config,relationship_config}.tres`, `tests/unit/{test_moods,test_chatter,test_schedule_builder,test_npc_lod,test_reactions}.gd` |
+| **P1 Dorfleben & Figurenlast** | `src/systems/npc_life/{npc_life,mood_rules,chatter_runner,reaction_rules}.gd` (neu), `src/systems/npc/{schedule_builder,npc_lod,schedule_resolver}.gd`, `src/entities/npc/{npc,npc_pose}.gd` (Laufzeit-Zeitplan, Hut-/Strauß-Kindmeshes, `idle_low`, LOD-Kappen je Region), `src/systems/village/relationships.gd` (nur Gerede-Vorrang „Ereignis" und die neuen `gains`), `data/config/{npc_life_config,npc_config,relationship_config}.tres`, `data/village/villagers/*` (`circle`, `mood_lines`, Reaktions-Gerede), `tests/unit/{test_moods,test_chatter,test_schedule_builder,test_npc_lod,test_reactions}.gd` |
 | **P2 Besucher, Wünsche & Grabpflege** | `src/systems/visitors/{visitors,visit_rules,wish_rules,grave_view}.gd` (neu), `src/systems/grave_care/{grave_care,grave_care_rules}.gd` (neu), `src/entities/{tip_stone,rain_barrel}/*` (neu), `src/entities/grave/{grave_plot,grave_plot_visuals}.gd` (alle neuen Prompts und Kindmeshes: Blumen, Kerze, Gitter, aufgewühlt, Münzen, Zeile nachmeißeln), `src/systems/graveyard/graveyard.gd` (nur `disturbed`, `append_inscription`, `replace_name_line`), `src/systems/ghosts/{ghost_mood,ghost_manager}.gd` (`care`, `disturbed`, `prayer`, `early_window`, neue Pools), `src/systems/corpse/corpse_manager.gd` (nur `kin_house` bei der Lieferung), `data/visitors/*`, `data/config/{visitor_config,grave_care_config,reputation_config,piety_config,ghost_config}.tres`, `data/ghosts/ghost_lines.tres`, `tests/unit/{test_visitors,test_wishes,test_grave_view,test_grave_care,test_ghosts}.gd` |
 | **P3 Lehrling** | `src/systems/apprentice/{apprentice,apprentice_rules,apprentice_planner}.gd` (neu), `src/entities/{apprentice_board,apprentice_box}/*` (neu), `src/systems/cleanliness/cleanliness_manager.gd` (nur `tend_by(spot_id, actor)` ohne Inventar-Prüfung), `data/apprentice/*`, `data/config/apprentice_config.tres`, `tests/unit/{test_apprentice,test_apprentice_planner,test_apprentice_rules}.gd`, `tests/integration/test_apprentice_day.gd` |
 | **P4 Freundschaft, Gefallen & Feste** | `src/systems/friendship/{friendship,friend_rules,favor_rules}.gd` (neu), `src/systems/festivals/{festivals,festival_rules}.gd` (neu), `src/systems/village/{orders,order_rules}.gd` (Kategorie `friend`, Arten `meet`/`task`, `max_active_friend`), `src/entities/{fest_decor,memorial_plate,archive_cabinet,fiddler}/*` (neu), `data/friendship/*`, `data/festivals/*`, `data/orders/of_*.tres` (Freundschafts- und Gegengefallen-Aufträge), `data/recipes/memorial_plate.tres`, `data/config/orders_config.tres`, `tests/unit/{test_friendship,test_favors,test_festivals,test_orders}.gd`, `tests/integration/test_lights_evening.gd` |
@@ -1183,3 +1183,154 @@ Variante `&"who_comes_up"` (§1.5).
 | Lichtgang-Zug | 12 Npc wechseln gleichzeitig die Region → ≤ 4 ms in einem Frame | `refresh()` je Npc ≤ 0,3 ms; der Zug startet gestaffelt (alle 20 Spielsekunden einer) |
 | Spielstand / Laden | < 400 kB (+ ≈ 8 kB) / < 1 s | |
 *Plan B (in dieser Reihenfolge, bevor Inhalte fallen):* `max_full` 4, Lichtgang Stufe-1-Rate 2 Hz, Kerzen-Pool 4, Lichtgang-Zug nur Angehörige + Lenz + 4 Bewohner.
+
+## 10. Tests
+Regeln wie Phase 3–7 (Fixtures statt fremder Moduldaten, Fehler-Logger, Watchdog). **Alle 2 472 bestehenden Tests bleiben grün** (plus die Tests des Gruft-Umbaus); Anpassungen nur durch den Besitzer (z. B. Item-Zählungen, Clip-Listen der Bewohner, Laufgrenzen/Layout-Diff im Welt-Test, Zahl der Gerede-Vorränge).
+
+**Unit**
+| Datei | Besitzer | Prüft |
+|---|---|---|
+| `test_moods.gd` / `test_reactions.gd` | P1 | Würfeln deterministisch (Tag, `npc_id`), Gewichte, Vorrangregeln 1–5, Wirkung erst ab `p8_open`, Gespräch +2/+1/0, „gereizt" bietet nichts an, Zuhören einmal je Tag (+3, Pietät +1), Ereignis-Gerede 2 Tage, Vorrang Ereignis > friend > piety > rep |
+| `test_chatter.gd` | P1 | Auslösen nur bei beiden anwesend + Spieler ≤ 10 m in derselben Region, eine zugleich je Region, einmal je Tag, Bedingungen, `ch_rumor_robber` setzt `robber_known`, ab `village_open` (Phase-7-Stand) ohne Spielwert-Änderung |
+| `test_schedule_builder.gd` / `test_npc_lod.gd` (+) | P1 | Wegzeit aus Polylinie (3,2 m/Min), Lücken unsichtbar, Laufzeit-Zeitplan ersetzt und kehrt zurück, Speichern/Laden ohne Plan-Daten bitgleich (Positionen aus Plan + Uhr), Kindmeshes `show_with`; LOD-Kappen (9 / 16 am Lichtgang), stehende Figuren Stufe 2 ab 26 m |
+| `test_visitors.gd` / `test_wishes.gd` / `test_grave_view.gd` | P2 | Plan um 06:00 deterministisch (erster Besuch Tag + 1, Trauerzeit 3 Tage, danach 7, Haushalt geht alle Gräber ab, max 3 / 2 zugleich, keiner nachts/am Lichtgang/vor `p8_open`/an `DUG`), `kin_house` bei der Lieferung, Bewohner-Besuche mit `visit_<npc>_day` und verborgenen Dorf-Einträgen; Ansicht (Vorrang, Ruf, Wohlwollen, Tageskappe gepflegt 2, Präparat-Gerede einmal je Toter, zurückgelegte zählen nicht); Lärm ≤ 8 m einmal je Besuch/Tag; Wunsch-Wahl (Reihenfolge, Seed, einer je Grab, 3 offen, `line` nur bei Stein < 4 Zeilen, Wohlwollen ≥ 2), Erfüllung je Art, Trinkgeld 1–3 mit Kappe 4/Tag, Münzen auf dem Stein bleiben und sind einmal nehmbar, Bewohner +4 statt Geld, Verfall ohne Ruf; Save/Load |
+| `test_grave_care.gd` / `test_ghosts.gd` (+) | P2 | Blumen frisch 2 Tage / welk bis 4 / fort, Gießen und Füllungen, Regenfass, Strauß 2 Tage ohne Stapeln, Wachskranz (Wunsch ja, Geist 0), Kerze 15:00–07:00, `lit_last_night`, Gitter ≥ 10 Tage, aufgewühlt + schließen; `care` ≤ 2, Lichtgang +2, Fürbitte gedeckelt, beraubt höchstens gleichmütig, neue Pools mit Vorrang, `early_window` nur Darstellung |
+| `test_apprentice.gd` / `test_apprentice_planner.gd` / `test_apprentice_rules.gd` | P3 | Einstellen nur über Rosine 1, Arbeitstag 08:15–15:40, freie Tage (`day % 7 == 2`, Feste, 3 unbezahlt), Liste 3 Zeilen, nächste Stelle zuerst, überspringt trauernde Gräber und gesperrte Abschnitte, Kerzen erst ab 15:00, Regenfass-Gänge; Minuten je Stufe und Laune, Fehler deterministisch 8 %/2 % (×0,5 nach Tadel), Fehlerwirkungen (Nachbargrab, Blumen, Kerze); Vormachen nur ≤ 4 m und nur für Ungelernte, Geübt nach 12; Lohn 3 aus der Dose um 15:30, unbezahlt (Rosine −2, nach 3 daheim, Rückkehr nach Zahlung); Wirkung über `tend_by`/`GraveCare` = Wirkung des Spielers; Grenzen (nie Leiche, Grab, Stein, Station, Gebäude, Nacht); Save/Load mitten in einer Stelle |
+| `test_friendship.gd` / `test_favors.gd` / `test_orders.gd` (+) | P4 | Schwellen 40/55/70 + Abstand + Laune, Varianten (Liesel mit/ohne `insight_not_lorenz`), Aufträge `meet`/`task`, Kategorie `friend` getrennt (max 2), Lohn je Schritt, Ersatztermine; Gefallen-Wirkungen (Schild, Eisen, Bestellung, Fürbitte, Nachtwächter, Arznei, Totenwäsche), Abklingzeit 5, Gegengefallen +4 / −6 + Sperre 7; Save/Load |
+| `test_festivals.gd` | P4 | Kalendertag 54/58, Verschiebung Lichtgang auf `p8_open_day + 3` genau einmal, Kathrein fällt aus, Fest-Flags, Anwesenheit ≥ 30 Min (+2 einmal), Tanz (≥ Bekannt, 2 Partner, +3), 18:00-Auswertung `lights_all`/`lights_some` mit allen Folgen, Osrics 12 Kerzen, Jakob frei, kein Räuber, Ilse fehlt |
+| `test_night_robber.gd` / `test_night_paths.gd` / `test_wanderers.gd` / `test_shops_phase8.gd` | P7 | Räuber: frühestens Nacht `p8_open_day + 4`, Ziel (frisch ≤ 5 Tage, kein Gitter, keine Kerze, keine Wache), erste sicher, dann 35 % mit Pause 2, deterministisch; Bemerken ≤ 10 m, Flucht, angegraben; zweite Begegnung → Dialog-Ausgänge mit Folgen; 05:00 aufgewühlt; nach 3 Nachtwächter; nie eine Leiche fort. Nachtwege: Folgen `np_ott`/`np_kehr` relativ zu `p8_open_day`, Krankenlicht-Zeiten, Tod 02:10 → `ott_dead`, Beobachtung beim Hinausgehen ≤ 12 m nur in der Dorf-Region, Warten bis 10 Min vorher (≤ 120). Veit: Almosen einmal je Tag, Pietät, `c_n_veit` nach 3 (oder Zuhören + 2). Hanne: Tag `day % 6 == 1`, Vorrat je Tag über beide Stände, Preise, Ankauf |
+| `test_dialogue.gd` (+) / `test_story.gd` / `test_journal.gd` (+) / `test_save_migration.gd` (+) / `test_save.gd` (+) / `test_game_state.gd` (+) | P6 | neue Bedingungen und Aktionen; Osric `p8_intro` einmal; D2 nach `ott_dead` mit Reservierung in Reihe 3; Funde → `c_n_ott_three`; `InsightData.any_clues` (alle Pflicht + 2 von 4, Reihenfolge egal); `StoryConfig.underlined` wählt Text und Variante; **6 v6-, 7 v5-, 7 v4-, 6 v3-, 4 v2-, 3 v1-Fixtures laden ohne Fehler/Warnungen**; `kin_house` nach der Migration = Phase-7-Trauerflor; v7-Roundtrip identisch; Version 8 → abgelehnt |
+| `test_assets_phase8.gd` | P5 | Modelle vorhanden, Budgets §8, Rig (8 bzw. 9 Knochen mit `tool`), Clip-Listen je Figur, Bewohner-Re-Export: Mesh-Hash und alte Clips unverändert, Kindmeshes (`hat_head`/`hat_hand`, `bouquet`, `basket`, Werkzeuge), Gesichter über `lib_faces` (Markerknoten), Höhen (Jakob ≈ 1,45 m, Grabgitter ≤ 1,1 m, keine Requisite > 1,4 m), Icons |
+| `test_audio_phase8.gd` | W-Ton | alle neuen Cues vorhanden, Lautheit im Ziel, Emitter-Reichweiten, Kontext `fest` ersetzt die Musik, keine neue Stimmen-Pool-Größe, Web-Einstellungen unverändert |
+| `test_ui_phase8.gd` / `test_map_phase8.gd` | W-UI | Kreidetafel (Werte = Systeme, nur Angelernte wählbar, Lohndose), Wunsch-Karte, Gefallen-Panel, Merkbuch „Angehörige"/„Hollerbrück" (Laune, drei Punkte), Zielzeilen-Kette, Fest-Banner, Begegnungs-Blasen, Prompts, Tageszusammenfassung, Abschluss-Panel; Karten-Marker (Besucher, Jakob, Wünsche, Münzen, Hanne, Veit, Krankenlicht erst ab `c_n_veit`, Fest, aufgewühlt; **nie** der Räuber), statisches Blatt backt nur bei Reihe 3/Requisiten neu |
+
+**Integration**
+- `test_apprentice_day.gd` (P3): echter Friedhof, Liste „Laub Alter Hof · Unkraut Lindenacker", ein ganzer Arbeitstag mit echtem Laufen, Werkzeug sichtbar (Meta), Wirkungen an den Pflegestellen, ein Fehler am festen Seed, Lohn aus der Dose; Roundtrip um 10:17 mitten in einer Stelle → Weiterarbeit bitgleich.
+- `test_lights_evening.gd` (P4): Lichtgang mit echtem Zug (Region-Übergang, gestaffelt), Kerzen der Angehörigen, 12 Kerzen von Lenz, `lights_all`, Glocke, frühe Geister, Abzug 18:30; Roundtrip um 17:20.
+- `test_night_watch.gd` (P7): frisches Grab, erste Räubernacht, Spieler wacht → Flucht; zweite Nacht ohne Kerze → gestellt (beide Ausgänge in zwei Läufen); dritte Variante ungestört → aufgewühlt, Besuch am Morgen mit Ruf −3, schließen. Krankenlicht `np_ott`: drei Beobachtungen mit echter Reise, Tod, D2-Lieferung.
+- `test_phase8_loop.gd` (W-Welt): v6-Fixture `slot_p7_day53_neighbor` laden → `p8_open` → Osric `p8_intro` (echter `DialogueRunner`) → Rosine 1 → Kreidetafel → Jakob vormachen → Besuch Martha Kehr mit Wunsch → Blumen setzen, gießen → nächster Besuch: Trinkgeld auf dem Stein → Fenner: Reihe 3 räumen → Lieferung → Hanne am Tor → Veit dreimal → Krankenlicht beobachten → Lichtgang (Debug-Tag) → D2 → Pfarrarchiv → Kladde → `i_underlined` → sechs Geschichtsschritte (Debug-Hilfe nur für Zeit und Beziehung) → **Kapitel**. **Roundtrip** `collect_state()` identisch nach `save_game`/`load_game` an 7 Momenten: Besucher kniet; Jakob mitten in einer Stelle; Münzen auf dem Stein; Lichtgang 17:20; Räuber gräbt (02:30); Kathreintanz 20:00 in der Gaststube; nach dem Kapitel.
+- `test_phase7_save_upgrade.gd` (P6): `slot_p7_mid_inn` → Phase 8 bleibt zu, Begegnungen laufen; `slot_p7_crypt_corpse` → Totenwache und Totenwäsche möglich; `slot_p7_day53_anatomist` → Besucher hören vom verkauften Glas (Wohlwollen −3 einmal).
+- `test_graveyard_world.gd` (+) / `test_village_world.gd` (+) / `test_interiors.gd` (+) / `test_visit_routes.gd` (W-Welt): Layout-Diff nur L10–L15, A1–A4, G1–G2, D1–D7 und neue Einträge; Sichtprüfungen §4.8 vollständig; jede Besucherroute frei; Archivschrank und Spielmann-Platz im Raum.
+- **Playthrough-Bot (W3):** `phase8_bot.gd` erweitert `Phase7Bot` um Besuche (auf Besucher zugehen, Wünsche annehmen und erfüllen, Münzen nehmen), Grabpflege (Setzen, Gießen, Kerzen, Gitter), die Kreidetafel, Vormachen, Loben, Lohndose, Geschichtsschritte, Gefallen und Gegengefallen, Almosen, Hanne, Feste (Tanz, Kerzen am Lichtgang), Nachtwache und Beobachtung (echtes Warten und Reisen). **Münzbuch je Strategie** (+ Zwecke `apprentice`, `alms`, `peddler`; Einnahmen „Trinkgeld", „Verkauf an Hanne").
+  | Strategie | Start | Tage | Verhalten | Erwartung |
+  |---|---|---|---|---|
+  | `kindly8` | v6 `day53_neighbor` | 10 | Bogen A §1.4, Grabgitter, alle Wünsche, Jakob ab B2 | Kapitel B8–B10; Ende 75–100; morgens nie < 5; ≥ 6 Wünsche, Trinkgeld ≤ 25; `lights_all` |
+  | `anatomist8` | v6 `day53_anatomist` | 10 | Präparate an 3 Lieferungen (nicht D2), Kladde über Fenner | Kapitel erreicht; Lenz und Liesel ≤ „Bekannt"; Trinkgeld < `kindly8`; Ende ≤ Start + 50 |
+  | `lazy8` | v6 `day53_neighbor` | 10 | kein Lehrling, nimmt keinen Wunsch an, pflegt selbst | **kein** Kapitel (Bedingung 1/2), keine Fehler/Warnungen, Ruf sinkt höchstens um eine Stufe |
+  | `night8` | v6 `day53_neighbor` | 10 | jede Nacht wach am frischen Grab bzw. im Dorf am Krankenlicht, kein Gitter, keine Kerzen | alle 4 Beobachtungsklassen, Lambert gestellt (Ausgang `reported`; zweiter Lauf `let_go`), Kapitel erreicht |
+  | `founder8` | v6 `founder` | 14 | neues Spiel, Phase 8 nach Phase 7 | Kapitel ≤ Tag 68; Lichtgang ggf. verschoben; alte Kapitel unverändert |
+  | `save_load8` | wie `kindly8` | 10 | lädt jeden Morgen, einmal während eines Besuchs, einmal am Lichtgang, einmal nachts beim Räuber | bitgleich zu `kindly8` |
+  - Phase-3/4/5/6/7-Bots unverändert grün: Sie sehen nach ihrem Kapitel `p8_open` (bzw. Begegnungen ab `village_open`), nehmen aber keinen Lehrling und keinen Wunsch an. **Wichtig:** Besuche, Ansicht und Räuber laufen bei ihnen nicht, weil sie vor `name_in_village` enden (Phase 3–6) bzw. am Kapiteltag stoppen (Phase 7).
+- **Save-Fuzzer (W3):** + echter v7-Stand mitten in Phase 8 (Besucher kniet, Jakob arbeitet, Wunsch offen, Münzen auf dem Stein, Kerzen brennen, Gitter, aufgewühltes Grab, Räubernacht, Lichtgang) mit gezielten Mutationen (`plan` kaputt, Wunsch auf unbekanntem Grab, `kin_house` unbekannt, Level außerhalb 0…2, Münzen in der Dose negativ, `steps` > 3, Fest-Tag in der Vergangenheit) + alle v6…v1-Fixtures. Neu in der Konsistenzprüfung: ein Wunsch je Grab, höchstens 3 offen, Plan nur für den aktuellen Tag (sonst neu planen), kein Gitter auf einem `EMPTY`-Grab, `disturbed` nur auf belegten Gräbern.
+- Art-Prototyp-Regression: `test_art_prototype.gd` unverändert grün.
+
+## 11. Screenshot-Liste Gate G8 (`graveyard_shots_phase8.gd -- --out=/abs/dir`, `village_shots.gd --phase8 -- --out=/abs/dir` + `ui_screenshots.gd --phase8`, 1280×720, echter Renderer, dazu je eine Web-Aufnahme der Motive 08, 12, 22 → `docs/reviews/phase8_round1/`)
+| # | Motiv |
+|---|---|
+| p8_00 | Kontaktbogen aller neuen Figuren neben dem Totengräber und zwei Dorfbewohnern (idle, gleiche Kamera, Tag und Laternenlicht, Namen darunter) |
+| p8_01 | Gesichter nah: Jakob, Veit, Hanne, Lambert (gestellt, Halstuch unten), Martha, Gesa, Hinrich, Johann |
+| p8_02 | Martha Kehr kommt den Kutschweg herauf, Korb mit Heidekraut, Morgen |
+| p8_03 | Martha kniet am Grab im Lindenacker, Strauß auf dem Hügel (Spielkamera Zoom 22) |
+| p8_04 | Hinrich Brandt steht mit dem Hut in der Hand am Grab, Nachmittag |
+| p8_05 | Gesprächsbild: Wunsch-Karte „Ein paar Blumen …" |
+| p8_06 | Zwei Münzen und ein Zettel auf dem Stein, Prompt sichtbar |
+| p8_07 | Grabblumen frisch / welk / Wachskranz nebeneinander, Gießkanne am Regenfass |
+| p8_08 | Jakob harkt im Alten Hof mit dem Rechen in der Hand, die Eiche im Hintergrund |
+| p8_09 | Jakob schaut zu, wie der Totengräber jätet (Vormachen) |
+| p8_10 | Jakob gießt (Kanne am `tool`) · Jakob setzt eine Kerze in der Dämmerung |
+| p8_11 | Kreidetafel-Panel mit drei Zeilen, Kreidestrichen und Lohndose |
+| p8_12 | Brotzeit: Jakob auf der Bank an der Hütte |
+| p8_13 | Esch an `old_01`, Theres kniet an `old_08` mit Christrosen |
+| p8_14 | Begegnung am Brunnen (Theres und Liesel, zwei Blasen) |
+| p8_15 | Laune: Lenz bedrückt an der Kirchtür (`idle_low`) und die Zeile „[Zuhören]" |
+| p8_16 | Veit am Friedhofstor sitzend, Becher; Hanne am östlichen Torpfeiler mit Kiepe |
+| p8_17 | Hanne am Brunnen im Dorf, Laden-Panel |
+| p8_18 | Dorf nachts: Krankenlicht bei den Otts, Spieler am Beobachtungsplatz, Lenz mit Laterne an der Tür |
+| p8_19 | Liesel kommt zur Totenwache (02:40), das Licht brennt noch |
+| p8_20 | Kathreintanz: Gaststube geschmückt, Spielmann, zwei tanzende Paare, Totengräber tanzt mit Theres |
+| p8_21 | Lichtgang 1: der Zug mit Laternen auf dem Kutschweg in der Dämmerung |
+| p8_22 | Lichtgang 2: Übersicht Alter Hof + Kirchhof, jedes Grab mit Licht, Lenz am Kirchhof (Zoom 24) |
+| p8_23 | Lichtgang 3: blasse Geister über den beleuchteten Gräbern, nur der Totengräber sieht sie |
+| p8_24 | Nacht: Lambert gräbt am frischen Grab, Blendlaterne |
+| p8_25 | Lambert läuft zur Westmauer (Flucht) · gestellt: sitzt im Aushub, Dialog |
+| p8_26 | Aufgewühltes Grab am Morgen und Grabgitter auf einem anderen frischen Grab |
+| p8_27 | Dritte Reihe im Lindenacker vorher (Stumpf, Brombeere) / belegt mit Steinen |
+| p8_28 | Pfarrarchiv in der Kirche, Spieler am Schrank, Lenz daneben; Namenstafel „Konrad Wackernagel" am Gedenkbrett |
+| p8_29 | Merkbuch „Angehörige" und „Hollerbrück" mit Laune und drei Geschichtspunkten |
+| p8_30 | Merkbuch: Erkenntnis „Der unterstrichene Name" (Pflicht-Gruppe + zwei von vier) |
+| p8_31 | Liesels Totenwäsche am Gruft-Tisch (Gefallen) |
+| p8_32 | Karte Friedhof mit Besucher-, Jakob-, Wunsch- und Münz-Markern · Karte Dorf mit Krankenlicht und Hanne |
+| p8_33 | Abschluss-Panel „Wer heraufkommt" |
+| p8_vis_visitors / _apprentice / _night / _village | Sichtprüfung §4.8 mit eingezeichneten Strahlen (frei grün, verdeckt rot), Zoom 12/22/24 |
+Dazu Asset-Tafeln und Animations-Kontaktbögen `docs/reviews/phase8_assets/` (Figuren mit Rig-Posen, alle neuen Clips, Requisiten, Icons) und eine Performance-Tabelle (`perf_p8_01…05`: Friedhof Tag mit Jakob und 2 Besuchern · Friedhof nachts mit Räuber und Kerzen · **Lichtgang Übersicht** · Gaststube am Kathreintanz · Dorf nachts mit Krankenlicht), Web-Sonde mit Szenario Lichtgang.
+
+## 12. Wellenplan
+### 12.1 Wellen
+| Welle | Agents (parallel) | Inhalt | Ende |
+|---|---|---|---|
+| **W0** | Lead | **Zuerst v6-Fixtures** (6 Stände §5.2, Stand G7 + Gruft-Umbau, eigener Commit vor jedem Gerüst) und `tests/fixtures/phase8/{layout_p7,village_layout_p7}.json`. Dann: Datenklassen ✦ (inkl. Erweiterungen), Stubs mit exakten Signaturen, 13 EventBus-Signale, Database-Ordner, `SaveMigration.CURRENT = 7` mit `migrate_6_to_7` als Identität (fail-safe), Config-Fixtures `tests/fixtures/phase8/` (+ `Phase8Fixtures`, u. a. `kin_grave(kin, plot, buried_day)`, `visit_now(kin, grave, phase)`, `wish_open(grave, kind)`, `flowers(grave, state)`, `apprentice_with(levels, board, coins)`, `story_at(npc, step)`, `fest_today(id)`, `robber_night(grave)`, `sick_light(path, offset)`, `p8_open(tree, day)`), `test_phase8_scaffold.gd`, `test_saves_v6_load.gd` | Import + alle Tests grün → Commit |
+| **W1** | **7 Pakete:** P1, P2, P3, P4, P5, P6, P7 (bei 5 Agents: P1 + P3 · P2 + P7 · P4 · P5 · P6) | Systeme mit Unit-Tests gegen Fixtures (ohne Welt): Dorfleben, Laufzeit-Zeitpläne, LOD (P1) · Besucher, Ansicht, Wünsche, Trinkgeld, Grabpflege, Geister (P2) · Lehrling mit Planer, Anlernen, Lohn (P3) · Freundschaft, Gefallen, Feste, neue Auftragsarten (P4) · **Figuren zuerst**, dann Clips, Requisiten, Icons (P5) · Dialoge, Begegnungstexte, Zeitpläne, D2, Merkbuch `any_clues`, Migration v7 (P6) · Nachtgräber, Krankenlicht, Veit, Hanne, Läden, Items (P7) | je Modul: Tests grün → Merge durch Lead, danach `--import` |
+| **W2** | W-Welt, W-UI, W-Ton (3 parallel) | Reihe 3, Besucherplätze und -routen, Lehrlingsecke, Räuberweg, Dorf-Marker, Räume (Kathrein, Archiv), alle neuen Npc in der Welt, **Sichtprüfungen §4.8**, `test_phase8_loop`; alle Panels, Merkbuch-Seiten, HUD, Zielzeilen, Karte, Debug, Icons; alle Klänge, Musik, Emitter, Lautheit | Integration + Roundtrips grün, Screenshots erstellt |
+| **W3** | QA (19), Art (04), Audio (17), Lead | `phase8_bot.gd` (6 Strategien, Münzbuch), Save-Fuzzer v7, Performance relativ + Web-Sonde (§9), Stil-, Gesichts-, Animations- und Ton-Prüfung (Würde der Trauer, Werkzeug in der Hand, keine Teleports, helle Räume), Befunde beheben (Besitzer), Gate-Protokoll in `QUALITY_GATE_STATUS.md` | **STOPP – Benutzerprüfung G8** |
+
+### 12.2 Abhängigkeiten
+- **P1 liefert zuerst** (Tag 1–2): `ScheduleBuilder`, `Npc.set_runtime_schedule` und die `show_with`-Kindmeshes. P2 (Besuche), P3 (Jakob), P4 (Feste) und P7 (Räuber, Nachtwege) bauen ihre Zeitpläne darauf. Bis dahin arbeiten sie gegen `Phase8Fixtures` mit Daten-Zeitplänen.
+- **P2 liefert zuerst** `GraveCare` (Blumen, Kerzen, Gitter, aufgewühlt) – P3 (Gießen, Kerzen) und P7 (Ziel, aufgewühlt) hängen daran.
+- **P5 liefert zuerst** Jakob und eine Trauernde (Rig, `idle/walk/kneel/rake`) – **Blocker** für die Sichtprüfung und die Bildserien. Bis dahin graue Platzhalter-Quader in Modellmaß und Ilses Figur als Stellvertreterin (nur Tests, nie in Screenshots).
+- **P6** braucht von P4 nur die Auftrags-Ids (`of_*`) und von P7 die Hinweis-Ids; die Texte stehen hier in §1.6, §2.4, §2.13.
+- `grave_plot.gd`, `graveyard.gd`, `ghost_*`: nur P2. `npc.gd`, `npc_lod.gd`, `relationships.gd`: nur P1. `orders*.gd`: nur P4. `dialogue_*`, `save_*`, `game_state.gd`, `journal_manager.gd`: nur P6. `cleanliness_manager.gd`: nur P3. `data/shops/*`, `data/items/*`: nur P7.
+- **Lastverteilung W1** (Richtwert Arbeitstage): P1 3 · P2 4 · P3 3 · P4 3 · P5 6 (größtes Paket: 8 Figuren, ≈ 45 Clips, Re-Export der Bewohner) · P6 4 · P7 3.
+
+### 12.3 Texte
+P6 besitzt alle Dialoge, Begegnungen und Zeitpläne; P2 die Wunsch-, Ansichts- und Geisterzeilen; P1 die Launen- und Reaktionszeilen in `VillagerData`; P4 die Auftrags- und Festtexte, P3 Jakobs Fehler- und Tafeltexte, P7 Veit-, Hanne-, Räuber- und Nachtweg-Texte. Die Leittexte stehen in §1–§2; wer sie ändert, meldet es dem Lead.
+
+### 12.4 Prioritäten (Umfang „mittel")
+| Prio | Inhalt | Wenn W1 eng wird |
+|---|---|---|
+| **A** (Gate) | Besucher mit Ablauf und Ansicht · Wünsche `tend`/`flowers`/`candle` + Trinkgeld · Grabblumen und Grabkerzen · Lehrling mit `rake`/`weed`/`water` · Launen + Zuhören · 8 Begegnungen · Geschichten Rosine, Lenz, Liesel, Quast · Lichtgang · Veit · Krankenlicht `np_ott` · D2 · Kladde · `i_underlined` · dritte Reihe · Save v7 | – |
+| **B** (geplant) | Geschichten Esch, Theres, Fenner · Gefallen und Gegengefallen · Wünsche `line`/`vase` · Lehrling `candle` · Kathreintanz · Hanne · Lambert mit Gitter · `np_kehr` · weitere 8 Begegnungen | in dieser Reihenfolge von unten streichen → §13, Benutzer wird informiert |
+| **C** (gestrichen) | Pilger, Wochentage, Bettel-Aufträge, Briefe, zweiter Lehrling | §13 |
+
+## 13. Nicht in Phase 8
+- Pilger und weitere Wanderer, Fremde aus der Stadt als Figuren, der „Herr mit dem Koffer" als Person (Phase 9), Briefe und Botengänge (Phase 9)
+- Freie Gespräche, Gerüchte-Netz mit Weitergabe, NPC-Bedürfnisse, Wegfindungs-KI, Tagesabläufe, die sich dauerhaft nach dem Spieler richten; Wochentage und Sonntage (ein eigener Kalender-Vertrag)
+- Romanzen, Werben, Hochzeiten, Kinder, Geburtstage, Geschenk-Kalender; eine Beziehung zu Osric, Ilse, Veit, Hanne oder den Angehörigen als Zahl
+- Weitere Feste (Advent, Weihnachten, Neujahr, Fastnacht), Märkte, Messen, Predigten, Beichte, Prozessionen außer dem Lichtgang; Tanz- oder Musik-Minispiele
+- Ein zweiter Lehrling, Gesellen, Mägde, bezahlte Helfer aus dem Dorf; Lehrling bei Nacht, in Gebäuden, an Leichen, Gräbern oder Stationen; Lehrling, der stirbt, kündigt oder untot wird; alles aus Phase 14
+- Leichenraub mit fortgetragener Leiche, leere Gräber, Exhumieren, Verfolgung, Kampf, Fallen, Hunde, Strafen, Gericht, Verhaftung durch den Spieler; der Auftraggeber des Nachtgräbers
+- Die Auflösung, wer zeichnet; Lorenz' Aufenthalt; Liesels Gesangbuch lesen; das Gitter in der Gruft (Phase 12)
+- Wetter, Frost, Schnee, Jahreszeiten-Wechsel der Grabblumen; Pflanzensorten-Auswahl, Beete, Gartenbau
+- Neue Gebäude, neue Innenräume, Begehbarkeit der Dorfhäuser außer den Phase-7-Räumen; neue Abschnitte außer der dritten Reihe; Zier im Dorf
+- Preisdynamik, Steuern, Pacht, Kredit, Trinkgeld als Einnahmequelle mit Wachstum (Phase 10)
+- Änderungen am Maler-Shader, an den Atmosphären-Presets, am Gesichtsaufbau `lib_faces.py`, am Rig (Knochenzahl), an den freigegebenen Abschnitten, Gebäuden und Räumen (außer §4.7)
+
+## 14. Offene Fragen an den Benutzer (Entscheidung vor W0)
+1. **Wen hat Lorenz unterstrichen?** (§1.6; Phase 8 zeigt nur den Verdacht, nicht die Wahrheit)
+   - (a) **Pfarrer Lenz** – der Naheliegende: sein Sterbebuch, sein Versehgang, die Tinte, die „früher da ist".
+   - (b) **Wundarzt Quast** – die Gläser, die stillen Herzen, der „Herr mit dem Koffer" könnte zu ihm passen.
+   - (c) **Seelfrau Liesel Dorn** – die Wendung: Sie hat Lorenz jedes Zeichen gemeldet, und sie „kommt, bevor man ruft". Der Spieler kommt ihr in Phase 8 nahe; die Erkenntnis lässt offen, ob Lorenz sie verdächtigte oder schützen wollte, und Liesel weiß nichts davon.
+   - **Vorschlag: (c)** – die stärkste Spannung für die Phasen 9–18, ohne etwas aufzulösen. Alle drei Textfassungen werden geschrieben (`StoryConfig.underlined`), damit die Wahl bis W2 änderbar bleibt.
+2. **Neue Grabstellen in Phase 8?** (§2.8)
+   - (a) keine – nur eine Stelle `l_09` für D2; Besuche nur an bestehenden Gräbern, kaum frische Gräber für den Nachtgräber, ≈ 1 Lieferung im Bogen.
+   - (b) **eine dritte Reihe im Lindenacker mit 4 Stellen** (Südzaun 3,2 m nach Süden, ein Waldbaum versetzt).
+   - (c) zwei neue Reihen (8 Stellen) – mehr Lieferungen und Münzen (≈ +50 im Bogen), größerer Welt-Eingriff, mehr Sichtprüfung.
+   - **Vorschlag: (b)** – genug frische Gräber für erste Besuche, den Nachtgräber und D2, ohne die Münzrechnung zu kippen.
+3. **Welche Feste?** (§2.7; der Spielkalender steht Ende Nebelung)
+   - (a) **Kathreintanz (25. Nebelung) und Lichtgang (Vorabend des ersten Advents, eigener Hollerbrücker Brauch)** – kalendertreu, der Lichtgang gehört zum Friedhof.
+   - (b) Kirchweih und Erntedank wie vorgeschlagen, als „nachgeholt" oder ohne Kalenderbezug – passt nicht zum November und zu den Inschriften-Daten.
+   - (c) nur der Lichtgang – spart Fest-Gaststube, Tanz-Clips und Fiedelmusik.
+   - **Vorschlag: (a)**, der Kathreintanz als Priorität B (§12.4).
+4. **Der nächtliche Grabräuber – wie hart?** (§2.6.3)
+   - (a) **wie beschrieben:** nicht kämpferisch, gräbt sichtbar, die Leiche bleibt immer im Grab; Schutz durch Grabkerze, Grabgitter oder Fenners Nachtwächter; zweimal ertappt → zum Schultheiß oder laufen lassen; nie gestellt → nach drei offenen Gräbern fängt ihn der Nachtwächter.
+   - (b) sanfter: man sieht ihn nie, nur die Spuren am Morgen; Schutz wie (a).
+   - (c) streichen und für Phase 15 aufheben; Grabgitter entfallen.
+   - **Vorschlag: (a)** – ein Grund, nachts auf den eigenen Friedhof zu sehen, ohne Kampf und ohne Leichenverlust.
+5. **Der Lehrling – wer und zu welchem Preis?** (§2.5)
+   - (a) **Jakob Wackernagel**, Rosines Sohn (das Fieber-Kind aus Phase 7), **3 Münzen je Arbeitstag** aus der Lohndose.
+   - (b) ein fremder Waisenjunge aus Ellbach, der im Schuppen schläft – kein Lohn, dafür 2 Münzen Kost je Tag; ohne Rosine-Geschichte.
+   - (c) Jakob, aber Rosine bezahlt ihn – einfacher, aber ohne Münzsenke (Ende Bogen A ≈ 112 statt 88).
+   - **Vorschlag: (a)** – er hat schon ein Gesicht im Dorf, und sein Lohn ist die wichtigste Senke gegen das Trinkgeld.
+6. **Umfang der Freundschafts-Geschichten** (§2.4, §12.4)
+   - (a) **alle sieben lebenden Bewohner × 3 Schritte** (21 Schritte), Esch, Theres, Fenner als Priorität B.
+   - (b) nur Rosine, Lenz, Quast und Liesel (12 Schritte, Lehrling und Geheimnis); Esch, Theres und Fenner bekommen ihre Geschichten in Phase 9. Spart ≈ 20 % in P4 und P6.
+   - **Vorschlag: (a)** – das Dorf wirkt nur lebendig, wenn nicht nur die drei Verdächtigen eine Geschichte haben; die Prioritäten halten den Umfang „mittel".
