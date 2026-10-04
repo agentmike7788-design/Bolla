@@ -281,6 +281,15 @@ export function createAudio() {
       tone({ freq: big ? 70 : 95, to: 30, attack: 0.005, decay: big ? 1.1 : 0.6, peak: 0.55 * l, pan });
       hiss({ filter: 'lowpass', freq: 1200, to: 120, decay: big ? 1.2 : 0.7, peak: 0.5 * l });
     },
+    // Artillery: a deep thump with a sharp crack, heard from far away.
+    cannon(pan = 0, level = 1) {
+      if (!ctx || throttle('cannon', 150)) return;
+      const l = Math.max(0.35, level);
+      tone({ freq: 58, to: 24, attack: 0.003, decay: 1.4, peak: 0.6 * l, pan });
+      tone({ type: 'square', freq: 220, to: 45, decay: 0.12, peak: 0.08 * l, pan });
+      hiss({ filter: 'bandpass', freq: 2400, to: 300, decay: 0.25, peak: 0.35 * l, q: 0.6 });
+      hiss({ filter: 'lowpass', freq: 600, to: 80, decay: 1.6, peak: 0.3 * l });
+    },
     alarm() {
       if (!ctx || throttle('alarm', 4000)) return;
       const t = now();
