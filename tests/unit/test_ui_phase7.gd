@@ -140,7 +140,8 @@ func test_shop_panel_prices_stock_buy_sell() -> void:
 	assert_eq(panel.buy_rows.size(), 3)
 	assert_eq(panel.sell_rows.size(), 2)
 	var bar: Dictionary = panel.buy_rows[&"iron_bar"]
-	assert_true((bar.price as RichTextLabel).text.begins_with("[s][color=#8a8f94]6[/color][/s]  5"), "trusted: the base price struck through")
+	assert_true((bar.price as RichTextLabel).text.begins_with("[s][color=#b07a62]6[/color][/s] [color=#8a8f94]→[/color] [color=#f2a93b]5"),
+			"trusted: the base price struck through, the new one in amber (QA7)")
 	assert_eq((bar.stock as Label).text, "noch 2 heute")
 	assert_true(panel.buy(&"iron_bar", 1))
 	assert_eq(inv.count(&"coin"), 15)

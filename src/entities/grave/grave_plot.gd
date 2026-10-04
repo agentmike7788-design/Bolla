@@ -188,10 +188,12 @@ func get_interaction_prompt(player: Player) -> String:
 				return Player.TEXT_HANDS_FULL
 			if has_stone_to_set():
 				return PROMPT_SET_STONE % _stone_config().set_minutes
-			var back := return_prompt(player.inventory if player != null else null)
-			if back != "":
-				return back
+			# QA7: the marker first – with a specimen of this dead in the pack the grave could not be
+			# marked by [E] at all (and the marker brings the payment); „Präparat beisetzen" follows on MARKED.
 			var options := available_markers(player.inventory if player != null else null)
+			var back := return_prompt(player.inventory if player != null else null)
+			if options.is_empty() and back != "":
+				return back
 			if options.is_empty():
 				return PROMPT_NO_MARKER
 			if options.size() == 1:
@@ -223,7 +225,8 @@ func interact(player: Player) -> void:
 		player.start_timed_action(LABEL_NEW_STONE, _stone_config().set_minutes, _finish_new_stone, true, ANIM_MARKER)
 		return
 	var uid := returnable_specimen(player.inventory)
-	if (grave.state == GraveRecord.State.FILLED or grave.state == GraveRecord.State.MARKED) and uid != "":
+	var marks_first := grave.state == GraveRecord.State.FILLED and not available_markers(player.inventory).is_empty()
+	if (grave.state == GraveRecord.State.FILLED or grave.state == GraveRecord.State.MARKED) and uid != "" and not marks_first:
 		player.start_timed_action(LABEL_RETURN, _return_minutes(), _finish_return.bind(uid, player.inventory), true, ANIM_MARKER)
 		return
 	match grave.state:

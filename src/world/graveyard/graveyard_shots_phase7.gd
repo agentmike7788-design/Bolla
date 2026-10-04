@@ -35,7 +35,7 @@ const G7_SHOTS: Array[Dictionary] = [
 			"player": Vector2(9.0, 0.0), "stage": "vis", "zoom": 22.0},
 	{"name": "p7_vis_linden_z24", "day": 43, "minute": 640, "focus": Vector2(17.0, 12.5), "distance": 44.0, "pitch": 85.0,
 			"player": Vector2(9.0, 0.0), "stage": "vis", "zoom": 24.0},
-	{"name": "p7_16_crypt_pult", "day": 43, "minute": 660, "room": "crypt", "player": Vector2(1.3, -0.8), "levels": [2, 2, 2],
+	{"name": "p7_16_crypt_pult", "day": 43, "minute": 660, "room": "crypt", "player": Vector2(-1.3, 1.9), "levels": [2, 2, 2],
 			"stage": "pult"},
 	{"name": "p7_26_new_stone_old_08", "day": 43, "minute": 660, "focus": Vector2(-6.4, 6.6), "distance": 12.0,
 			"player": Vector2(-4.0, 7.6), "facing": 120.0, "stage": "new_stone"},

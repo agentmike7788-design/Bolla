@@ -49,7 +49,6 @@ const TEXT_GRAVE := "Erst bestatten, dann beisetzen."
 const REASON_SALE := "Präparat an Quast: %s"
 const REASON_RETURN := "Präparat beigesetzt: %s"
 const REASON_EXPERTISE := "Gutachten: %s"
-const SELL_REL_BASE := &"heart"
 
 @export var save_id: String = "specimens"
 @export var save_order: int = 54
@@ -182,7 +181,7 @@ func sell_block_reason(uid: String, inv: Inventory) -> String:
 
 
 ## Quast's panel only opens in his dialogue (he is there). remove_uid; coins; the village hears of it
-## (Relationships.on_specimen_sold + the heavier eyes / hand deltas); stats.specimens_sold; state sold.
+## (Relationships.on_specimen_sold(organ): the heavier eyes / hand deltas come from sell_rel); stats.specimens_sold; state sold.
 func sell(uid: String, inv: Inventory) -> int:
 	if sell_block_reason(uid, inv) != "":
 		return 0
@@ -197,13 +196,9 @@ func sell(uid: String, inv: Inventory) -> int:
 	EventBus.payment_received.emit(coins, REASON_SALE % organ)
 	var rel := _first(&"relationships") as Relationships
 	if rel != null:
-		rel.on_specimen_sold()
-		var row := _cfg().organ(spec.organ).get("sell_rel", {}) as Dictionary
-		var base := _cfg().organ(SELL_REL_BASE).get("sell_rel", {}) as Dictionary
-		for npc: Variant in row:
-			var extra := int(row[npc]) - int(base.get(npc, 0))
-			if extra != 0:
-				rel.add(StringName(str(npc)), extra, REASON_SALE % organ)
+		# QA7: one call with the organ – AnatomyConfig.organs[organ].sell_rel wins over
+		# VillagerData.specimen_delta (eyes / hand weigh more); no second delta per villager.
+		rel.on_specimen_sold(spec.organ)
 	EventBus.specimen_changed.emit(uid, STATE_SOLD)
 	_notify(spec.corpse_id)
 	return coins
@@ -352,7 +347,7 @@ func note_cold(uid: String, entering: bool) -> void:
 		w.append(-1)
 		w.append(roundi(clampf(_cfg().pult_cold_factor, 0.0, 1.0) * 1000.0))
 	elif not entering and open >= 0:
-		w[open + 1] = now
+		w = _closed(w, open, now)
 	spec.cold_windows = w
 
 
@@ -457,10 +452,24 @@ func _convert(spec: SpecimenRecord, inv: Inventory, inputs: Dictionary[StringNam
 
 func _close_cold(spec: SpecimenRecord, now: int) -> void:
 	var w := spec.cold_windows
-	for i: int in range(0, w.size() - 2, 3):
+	var i := w.size() - 3
+	while i >= 0:
 		if w[i + 1] < 0:
-			w[i + 1] = now
+			w = _closed(w, i, now)
+		i -= 3
 	spec.cold_windows = w
+
+
+## QA7: closes the window at index `i` at `now`; a window of length 0 (in and out in the same minute)
+## has no effect and is dropped – the save parser only keeps windows with end > start, so keeping it
+## would change the state over a save / load.
+static func _closed(w: PackedInt32Array, i: int, now: int) -> PackedInt32Array:
+	if now <= w[i]:
+		for _k: int in 3:
+			w.remove_at(i)
+	else:
+		w[i + 1] = now
+	return w
 
 
 func _finding(spec: SpecimenRecord) -> SpecimenFindingData:

@@ -180,7 +180,8 @@ def bone_box(parts, at, size=(0.16, 0.1, 0.07), seed: int = 0, open_lid: bool = 
     return at + Vector((0, 0, size[2] * 2 + 0.02))
 
 
-def _cloth_over(parts, x0, x1, y0, y1, z_top: float, z_drop: float, seed: int = 0, nx: int = 10, ny: int = 5, bumps=()):
+def _cloth_over(parts, x0, x1, y0, y1, z_top: float, z_drop: float, seed: int = 0, nx: int = 10, ny: int = 5, bumps=(),
+                color=CLOTH, color_dark=CLOTH_DARK):
     """A cloth laid over objects: a sheet over the rectangle, raised over `bumps` [(x, y, h, r)], hanging
     down at the front and sides to z_drop."""
     bm = bmesh.new()
@@ -208,7 +209,7 @@ def _cloth_over(parts, x0, x1, y0, y1, z_top: float, z_drop: float, seed: int = 
             poly.flip()
     from asset_carter import _thicken
     _thicken(o, 0.008)
-    parts.append(_paint(o, CLOTH, var=0.14, ao=0.3, top=0.3, hue_shift=CLOTH_DARK, seed=seed))
+    parts.append(_paint(o, color, var=0.14, ao=0.3, top=0.3, hue_shift=color_dark, seed=seed))
     return o
 
 
@@ -276,8 +277,10 @@ def pult():
     xs = (-0.48, -0.3, -0.12, 0.06)
     for k, x in enumerate(xs):
         jar(parts, (x, 0.17, zt), h=0.17, r=0.06, seed=10 + k, n=8, label=False)
+    # QA7 (G7 art, p7_16): the jars' cloth in bleached linen and a candle on the pult – under the crypt's
+    # north lights the pult at the south wall read almost black.
     _cloth_over(parts, -0.6, 0.18, 0.06, 0.3, zt + 0.02, zt, seed=20, nx=10, ny=4,
-                bumps=[(x, 0.17, 0.22, 0.12) for x in xs])
+                bumps=[(x, 0.17, 0.22, 0.12) for x in xs], color=LINEN, color_dark=LINEN_DIRTY)
     # front of the top: sealing wax stick, blank labels, mortar, the recipe book, a row of little vials
     parts.append(VB._beam((0.32, -0.15, zt + 0.012), (0.46, -0.1, zt + 0.012), 0.01, WAX, seed=30))
     for k in range(3):
@@ -295,7 +298,13 @@ def pult():
         v.data.transform(Matrix.Translation((x, 0.18, zt)))
         parts.append(_paint(v, L.mix(GLASS_CLOUDY, L.hexc("#5E5A48"), 0.3 * (k % 2)), ao=0.1, top=0.3))
         parts.append(_paint(L.prim("cyl", loc=(x, 0.18, zt + 0.094), radius=0.01, depth=0.012, vertices=6), WAX, ao=0.0))
-    markers = [("use", (0.0, -D - 0.55, 0.0)), ("cold", (0.0, -D - 0.03, H - 0.17))]
+    from asset_interior import _candle, _flame
+    holder = _lathe([(0.0, 0.0), (0.045, 0.004), (0.045, 0.012), (0.014, 0.02), (0.014, 0.038), (0.0, 0.038)], n=8, name="holder")
+    holder.data.transform(Matrix.Translation((0.56, -0.2, zt)))
+    parts.append(_paint(holder, BRASS, ao=0.1, top=0.5))
+    fb = _candle(parts, 0.56, -0.2, zt + 0.036, 0.11, seed=40)
+    _flame(parts, fb)
+    markers = [("use", (0.0, -D - 0.55, 0.0)), ("cold", (0.0, -D - 0.03, H - 0.17)), ("light_candle", (fb.x, fb.y, fb.z + 0.08))]
     _done(parts, "ph_int_pult", markers)
 
 

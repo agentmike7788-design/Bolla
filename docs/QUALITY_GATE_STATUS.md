@@ -12,6 +12,15 @@
 
 **ART STYLE LOCK:** ✅ **ACTIVE** seit 27.09.2026 (Referenz: `src/world/art_prototype/`, Screenshots `docs/reviews/phase1_round1/`). Keine grundlegende Stiländerung ohne Benutzerfreigabe.
 
+## G7 – QA-Protokoll W3 (Agent 19, vorläufig – Benutzerprüfung offen)
+
+- Befunde, Playthrough-Tabellen mit Münzbuch, Fuzzer, Art-Prüfung, Performance: `docs/reviews/phase7_wip/qa_playthrough.md` (CPU-Rohdaten `qa_cpu_p7.txt`).
+- Screenshot-Satz Gate G7 (§11, echtes Dorf, echte Räume, echter Renderer, 1280×720): `docs/reviews/phase7_round1/` (Welt `p7_*`, Budget `perf_p7_*` + `render_stats_p7_*.txt`, UI `ui_*` im echten Dorf), Kontaktblatt `p7_contact_sheet_final.jpg`.
+- Befunde behoben: QA7-11 (Vorlesung im echten Spiel unerreichbar – Quast war nachts zu Hause – hoch), QA7-13 (FILLED-Grab mit Präparat im Gepäck nicht per [E] zu markieren – mittel), QA7-12 (Lindenacker `l_04`/`l_08` Grube über dem Zaun – mittel), QA7-01/02/04/05/06 (doppelte Verkaufs-Deltas, Stufen doppelt definiert, Kältefenster der Länge 0, Zeitpläne der G7-Motive, Rabatt-Lesbarkeit), Art QA7-A1…A4 (Esse-Glut, Bach, Pult, Trauerflor), Werkzeug A5/A6; jeder mit Regressionstest (`tests/unit/test_phase7_qa.gd`, `tests/integration/test_phase7_qa.gd`, Fuzzer).
+- Playthrough-Bot (`phase7_bot.gd`, echte Portale/Dialoge/Panels): `neighbor7`, `anatomist7`, `save_load7` je 13 Tage ohne Fehler und Warnung; Kapitel „Ein Name im Dorf“ an Tag 42; Ende 91 / 107 Münzen; `save_load7` zeilengleich zu `neighbor7`.
+- Save-Fuzzer um einen echten v6-Stand mitten in Phase 7 erweitert – kein halb angewandter Zustand.
+- Datenänderungen: Zeitpläne (Quast Lesepult, Theres' Brunnenpause 16:00, Liesel `v_well_w`, Osric Abendweg), Lindenacker `pit_variant`; keine Münz-/Beziehungswerte. Entscheidungen B7-1 (Kapitel zu früh), B7-2, E7-1…3 stehen im Bericht.
+
 ## G6 – QA-Protokoll W3 (Agent 19, vorläufig – Benutzerprüfung offen)
 
 - Befunde, Playthrough-Tabellen mit Münzbuch, Fuzzer, Art-/Ton-Prüfung, Performance: `docs/reviews/phase6_wip/qa_playthrough.md` (Vorher/Nachher `docs/reviews/phase6_wip/qa_01…05_*.jpg`, CPU-Rohdaten `qa_cpu_p5_vs_p6.txt`).

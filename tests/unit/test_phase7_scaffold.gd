@@ -483,7 +483,7 @@ func test_villager_and_schedule_fixtures() -> void:
 	var real := Database.schedule(&"carter") as NpcSchedule
 	# W-Welt (W1 note): the data now carries the 7 village entries too – data = fixture.
 	var real_graveyard := real.entries.filter(func(e: ScheduleEntry) -> bool: return e.region == &"")
-	assert_eq(carter.entries.size(), real_graveyard.size() + 7, "Osric: the graveyard entries + 7 village entries")
+	assert_eq(carter.entries.size(), real_graveyard.size() + 8, "Osric: the graveyard entries + 8 village entries (QA7: the night walk to the inn)")
 	assert_eq(real.entries.size(), carter.entries.size(), "carter_schedule.tres = the fixture (W-Welt)")
 	for i: int in real.entries.size():
 		assert_eq(carter.entries[i].start_minute, real.entries[i].start_minute, "carter entry %d unchanged" % i)

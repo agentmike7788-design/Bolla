@@ -1,0 +1,19 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+[QACPU7] graveyard r0: frame mean 0.152 / median 0.138 / p90 0.181 ms (TIME_PROCESS monitor mean 1.295) · nodes 4850
+[QACPU7] p7_off r0: frame mean 0.155 / median 0.135 / p90 0.192 ms (TIME_PROCESS monitor mean 419.875) · nodes 4850
+region graveyard
+[QACPU7] village r0: frame mean 0.166 / median 0.142 / p90 0.206 ms (TIME_PROCESS monitor mean 419.875) · nodes 4850
+[QACPU7] graveyard r1: frame mean 0.166 / median 0.141 / p90 0.219 ms (TIME_PROCESS monitor mean 384.375) · nodes 4850
+[QACPU7] p7_off r1: frame mean 0.168 / median 0.141 / p90 0.218 ms (TIME_PROCESS monitor mean 384.375) · nodes 4850
+region graveyard
+[QACPU7] village r1: frame mean 0.161 / median 0.145 / p90 0.201 ms (TIME_PROCESS monitor mean 390.561) · nodes 4850
+[QACPU7] graveyard r2: frame mean 0.163 / median 0.143 / p90 0.201 ms (TIME_PROCESS monitor mean 390.561) · nodes 4850
+[QACPU7] p7_off r2: frame mean 0.161 / median 0.142 / p90 0.210 ms (TIME_PROCESS monitor mean 435.198) · nodes 4850
+region graveyard
+[QACPU7] village r2: frame mean 0.170 / median 0.148 / p90 0.204 ms (TIME_PROCESS monitor mean 435.198) · nodes 4850
+[QACPU7] graveyard r3: frame mean 0.165 / median 0.143 / p90 0.203 ms (TIME_PROCESS monitor mean 387.708) · nodes 4850
+[QACPU7] p7_off r3: frame mean 0.156 / median 0.141 / p90 0.186 ms (TIME_PROCESS monitor mean 387.708) · nodes 4850
+region graveyard
+[QACPU7] village r3: frame mean 0.174 / median 0.150 / p90 0.200 ms (TIME_PROCESS monitor mean 411.410) · nodes 4850
+done

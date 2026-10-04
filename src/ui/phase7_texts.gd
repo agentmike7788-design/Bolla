@@ -37,7 +37,9 @@ const SHOP_SELL := "Verkaufen"
 const SHOP_ONE := "1"
 const SHOP_FIVE := "5"
 const SHOP_PRICE := "%d %s"
-const SHOP_PRICE_BB := "[s][color=#8a8f94]%d[/color][/s]  %d %s"
+## QA7: at 720p the thin [s] line alone was hardly visible – the old price in muted rust, an arrow and the
+## new price in candle amber (ART_DIRECTION accent) make the discount read at a glance.
+const SHOP_PRICE_BB := "[s][color=#b07a62]%d[/color][/s] [color=#8a8f94]→[/color] [color=#f2a93b]%d %s[/color]"
 const SHOP_SURCHARGE := "+%d (Ruf)"
 const SHOP_STOCK := "noch %d heute"
 const SHOP_SOLD_OUT := "heute ausverkauft"

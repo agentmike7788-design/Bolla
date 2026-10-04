@@ -797,7 +797,9 @@ def smithy():
     gf = _gable_fn(2.9, eave, ridge - 0.12)
     # rubble walls west, north, south; the east side stands open between two posts
     _wall(parts, "W", x0, y0, y1, 0.0, eave, base=PLASTER_DIRTY, seed=1, stones=0.55)
-    _wall(parts, "S", y0, x0, x1 - 1.6, 0.0, eave, [(-1.0, 0.7, 1.0, 1.9)], base=PLASTER_DIRTY, seed=2, stones=0.55)
+    # QA7 (G7 art, p7_07): the forge stands behind an open hatch in the south wall (towards the camera) –
+    # the coals and their glow are seen from the Anger; before, the forge was hidden under the roof.
+    _wall(parts, "S", y0, x0, x1 - 1.6, 0.0, eave, [(-1.0, 1.2, 0.92, 1.95)], base=PLASTER_DIRTY, seed=2, stones=0.55)
     _wall(parts, "N", y1, x0, x1 - 1.6, 0.0, eave, base=PLASTER_DIRTY, seed=3, stones=0.55)
     for face, plane in (("W", x0), ("E", x1 - 0.1)):   # board gables over the eave line
         for k in range(14):
@@ -807,7 +809,13 @@ def smithy():
                 parts.append(_box(_pt(face, plane, a, -0.05, (eave + zt) / 2), _half(face, 0.2, 0.025, (zt - eave) / 2), WOOD_OLD,
                                   jit=0.004, seed=10 + k, var=0.2, ao=0.2))
         parts.append(_beam(_pt(face, plane, y0, 0.0, eave), _pt(face, plane, y1, 0.0, eave), 0.09, seed=20))
-    _win(parts, "S", y0, -1.0, 1.0, 0.7, 0.9, seed=25, cross=True)
+    # the forge hatch: a heavy frame, a sooty stone sill, one shutter swung open to the west
+    for sa in (-1, 1):
+        parts.append(_box(_pt("S", y0, -1.0 + sa * 0.63, 0.02, 1.43), _half("S", 0.05, 0.17, 0.55), WOOD_OLD, seed=25 + sa, ao=0.1))
+    parts.append(_box(_pt("S", y0, -1.0, 0.02, 2.0), _half("S", 0.7, 0.17, 0.06), WOOD_OLD, seed=27, ao=0.1))
+    parts.append(_box(_pt("S", y0, -1.0, 0.04, 0.89), _half("S", 0.72, 0.2, 0.04), STONE_DARK, jit=0.004, seed=28, top=0.3))
+    parts.append(_box(_pt("S", y0, -1.0 - 1.28, 0.06, 1.43), _half("S", 0.55, 0.025, 0.5), WOOD_OLD, jit=0.004, seed=29, var=0.2,
+                      ao=0.1, rot=(0, 0, -12)))
     for y in (y0 + 0.1, y1 - 0.1):   # corner posts of the open east side + header beam
         parts.append(_beam((x1 - 0.1, y, 0.0), (x1 - 0.1, y, eave), 0.1, seed=30))
         parts.append(_beam((x1 - 1.6, y, 0.0), (x1 - 1.6, y, eave), 0.09, seed=31))
@@ -819,23 +827,24 @@ def smithy():
     # floor: packed earth with soot, a threshold beam
     parts.append(_box((0.0, 0.0, 0.01), (2.9, 2.8, 0.015), L.hexc("#4A3E34"), var=0.25, ao=0.0, top=0.0, cuts=2))
     _roof(parts, "x", 0.0, 0.0, 2.9, 3.0, eave, ridge, SHINGLE, over=0.35, row=0.3, seg=0.5, seed=50, mossy=0.35)
-    # forge against the west wall: a stone hearth, coals, a hood into the chimney
-    fx, fy = -2.25, 0.8
-    parts.append(_box((fx, fy, 0.42), (0.6, 0.65, 0.42), STONE_OLD, jit=0.012, cuts=1, seed=60, var=0.3, ao=0.3, hue_shift=STONE_DARK))
-    parts.append(_box((fx + 0.05, fy, 0.86), (0.45, 0.5, 0.025), COAL, var=0.3, ao=0.0, top=0.0))
-    for k in range(9):
-        c = Vector((fx + 0.05 + random.uniform(-0.3, 0.3), fy + random.uniform(-0.35, 0.35), 0.885))
-        e = L.part("ico", L.mix(EMBER, COAL, random.uniform(0.0, 0.5)), loc=c, radius=random.uniform(0.04, 0.07), subdivisions=1,
-                   scale=(1, 1, 0.45), paint_kw={"var": 0.2, "ao": 0.0, "top": 0.4})
+    # forge against the south wall behind the hatch: a stone hearth, a bed of glowing coals, the hood high
+    # enough to leave the hatch open, the chimney through the roof
+    fx, fy = -1.0, -2.2
+    parts.append(_box((fx, fy, 0.42), (0.55, 0.4, 0.42), STONE_OLD, jit=0.012, cuts=1, seed=60, var=0.3, ao=0.3, hue_shift=STONE_DARK))
+    parts.append(_box((fx, fy, 0.86), (0.45, 0.32, 0.025), COAL, var=0.3, ao=0.0, top=0.0))
+    for k in range(14):
+        c = Vector((fx + random.uniform(-0.36, 0.36), fy + random.uniform(-0.26, 0.26), 0.885))
+        e = L.part("ico", L.mix(EMBER, COAL, random.uniform(0.0, 0.35)), loc=c, radius=random.uniform(0.04, 0.075), subdivisions=1,
+                   scale=(1, 1, 0.45), paint_kw={"var": 0.2, "ao": 0.0, "top": 0.5})
         parts.append(e)
-    hood = L.prim("cone", loc=(fx, fy, 1.85), vertices=4, radius1=0.8, radius2=0.3, depth=0.9, rot=(0, 0, 45))
+    hood = L.prim("cone", loc=(fx, fy + 0.05, 2.28), vertices=4, radius1=0.5, radius2=0.28, depth=0.5, rot=(0, 0, 45))
     parts.append(_box_paint(hood, STONE_OLD, ao=0.3, var=0.25))
-    smoke = _chimney(parts, fx, fy, 2.3, 6.25, hw=0.3, seed=62)
-    ember = Vector((fx + 0.05, fy, 1.15))
+    smoke = _chimney(parts, fx, fy, 2.5, 6.25, hw=0.28, seed=62)
+    ember = Vector((fx, fy, 1.15))
     # bellows beside the forge
-    bl = L.prim("cube", loc=(fx + 0.1, fy - 1.0, 0.75), scale=(0.35, 0.22, 0.08), rot=(0, -10, 0))
+    bl = L.prim("cube", loc=(fx + 0.95, fy + 0.15, 0.75), scale=(0.22, 0.35, 0.08), rot=(10, 0, 0))
     parts.append(_box_paint(bl, P.LEATHER, ao=0.2, var=0.2))
-    parts.append(_beam((fx + 0.45, fy - 1.0, 0.8), (fx + 0.9, fy - 1.0, 0.95), 0.025, WOOD, seed=63))
+    parts.append(_beam((fx + 0.95, fy + 0.5, 0.8), (fx + 0.95, fy + 0.9, 0.95), 0.025, WOOD, seed=63))
     # the anvil on its stump at the east opening
     ax_, ay = 2.25, 0.0
     stump = L.prim("cyl", loc=(ax_, ay, 0.28), radius=0.28, depth=0.56, vertices=10)

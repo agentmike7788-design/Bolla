@@ -19,6 +19,7 @@ class ManagerDouble extends CorpseManager:
 
 class RelDouble extends Relationships:
 	var sold := 0
+	var sold_organs: Array[StringName] = []
 	var returned := 0
 	var adds: Array = []
 	var surgeon_tier := &"stranger"
@@ -30,8 +31,9 @@ class RelDouble extends Relationships:
 		adds.append([npc_id, delta])
 		return 0
 
-	func on_specimen_sold(_organ: StringName = &"") -> void:
+	func on_specimen_sold(organ: StringName = &"") -> void:
 		sold += 1
+		sold_organs.append(organ)
 
 	func on_specimen_returned() -> void:
 		returned += 1
@@ -350,12 +352,14 @@ func test_sell_once_and_the_village_hears_of_it() -> void:
 	assert_eq(specimens.get_record(uid).state, &"sold")
 	assert_eq(GameState.get_stat(&"specimens_sold"), 1)
 	assert_eq(rel.sold, 1)
-	assert_eq(rel.adds, [], "inner organs: only the villagers' specimen_delta")
+	assert_eq(rel.adds, [], "no extra deltas beside on_specimen_sold")
+	assert_eq(rel.sold_organs, [&"heart"] as Array[StringName], "the organ goes along (QA7)")
 	assert_eq(specimens.sell(uid, inv), 0, "once")
 	assert_eq(specimens.return_block_reason(uid, "g_1"), Specimens.TEXT_GONE, "sold pieces do not come back")
 	var eyes := _take(&"eyes", &"jar")
 	specimens.sell(eyes, inv)
-	assert_eq(rel.adds, [[&"priest", -2], [&"washer", -2]], "eyes / hand: priest −6, washer −5 in all")
+	assert_eq(rel.adds, [], "eyes / hand: the heavier sell_rel is Relationships' (QA7)")
+	assert_eq(rel.sold_organs, [&"heart", &"eyes"] as Array[StringName])
 
 
 func test_sale_expertise_lecture_medicine_return_exclude_each_other() -> void:

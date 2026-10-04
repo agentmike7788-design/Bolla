@@ -31,6 +31,13 @@ extends TestCase
 ## gravekeeper in the crypt, the shed half full); a loaded state also has at most one corpse per
 ## niche / table / catafalque, a niche corpse only in an open niche, levels 0…3, reinterred ⊆
 ## lifted ⊆ the liftable old graves, and no corpse in the crypt while the crypt is a site.
+## Phase 7 (W3, docs/PHASE7_DESIGN.md §10 Save-Fuzzer): besides the v5 fixtures and the v6 parts (P6, at
+## the end of the file) a real mid-Phase-7 v6 save (Phase7Bot anatomist7, 3 days from the Phase-6 end state;
+## then the gravekeeper in the Holderkrug, specimens in the pack and in the cold drawer, a bundle with an
+## open cold window, three active orders, the consecration day) gets targeted mutations (region_id, a
+## uid twice / missing, specimens.records, order states, relationship values outside 0…100, returned ⊄
+## harvested). A loaded state also has: every uid in at most one slot, the region one of the world's,
+## relationships 0…100, known order states, returned ⊆ harvested.
 
 const TIMEOUT := 600.0
 const SLOT := 94
@@ -68,6 +75,13 @@ const P6_KEYS: PackedStringArray = ["buildings", "ossuary", "chapel", "shed_stor
 		"roof_and_earth_complete"]
 const P6_CASES := 60
 const P6_SHARE := 0.3
+## Phase-7 parts of the state that get extra native mutations in the v6 save (§5.1).
+const P7_KEYS: PackedStringArray = ["village", "relationships", "village_shops", "orders", "specimens", "pult_store",
+		"collection_shelf", "lectures", "deductions", "region_id", "uid", "records", "values", "states", "returned",
+		"hidden_cause", "revealed_cause", "harvested"]
+const P7_CASES := 60
+const P7_SHARE := 0.25
+const ORDER_STATES: Array[StringName] = [&"", &"offered", &"accepted", &"completed", &"failed"]
 const OK_TEXTS: PackedStringArray = [SaveManager.TEXT_CORRUPT, SaveManager.TEXT_NEWER_VERSION]
 
 var saves_dir := TestCase.user_dir("test_saves_fuzz")
@@ -309,6 +323,93 @@ func test_fuzz_v5_real_mid_phase6_save() -> void:
 	print("FUZZ v5 (real Phase-6 save): %d loaded, %d rejected" % [stats.ok, stats.rejected])
 
 
+## W3 (Phase 7): a real mid-Phase-7 v6 save (see the header) – the JSON / native layers, native
+## mutations of the Phase-7 parts and targeted ones; the same two allowed outcomes.
+func test_fuzz_v6_real_mid_phase7_save() -> void:
+	var text := await _make_real_v6_save()
+	var doc: Dictionary = JSON.parse_string(text)
+	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, "current format (v6)")
+	await _fuzz_text(text, "p7 real", P7_SHARE)
+	var state := SaveFileIO.decode_state(doc.get("data"))
+	var paths: Array = []
+	_collect_paths(state, [], paths)
+	paths = paths.filter(func(path: Array) -> bool:
+		for part: Variant in path:
+			if str(part) in P7_KEYS:
+				return true
+		return false)
+	assert_true(paths.size() > 40, "Phase-7 paths in the real state (%d)" % paths.size())
+	for i: int in P7_CASES:
+		var path: Array = paths[rng.randi() % paths.size()]
+		var st := state.duplicate(true)
+		var bad: Variant = _bad_value()
+		if rng.randi() % 4 == 0:
+			_erase_path(st, path)
+			bad = "<erased>"
+		else:
+			_set_path(st, path, bad)
+		var d: Dictionary = doc.duplicate(true)
+		d.data = JSON.from_native(st)
+		await _load_doc(d, "p7 real native %s = %s" % [_path_text(path), str(bad)])
+	for case: int in 8:
+		var st := state.duplicate(true)
+		var what := ""
+		var slots: Array = st.nodes.player.inventory.get("slots", [])
+		match case:
+			0:
+				st.nodes.player["region_id"] = "atlantis"
+				what = "an unknown region"
+			1:
+				st.nodes.player["region_id"] = 7
+				what = "a region that is no string"
+			2:
+				var uid := ""
+				for sl: Variant in slots:
+					if sl is Dictionary and str((sl as Dictionary).get("uid", "")) != "":
+						uid = str(sl.uid)
+				for sl: Variant in slots:
+					if sl is Dictionary and str((sl as Dictionary).get("id", "")) == "linen":
+						sl["uid"] = uid
+				if st.nodes.has("pult_store"):
+					st.nodes.pult_store["storage"] = (st.nodes.player.inventory as Dictionary).duplicate(true)
+				what = "a uid twice (pack and cold drawer)"
+			3:
+				for sl: Variant in slots:
+					if sl is Dictionary:
+						(sl as Dictionary).erase("uid")
+				what = "every uid missing"
+			4:
+				for r: Variant in st.nodes.specimens.get("records", []):
+					if r is Dictionary:
+						r["state"] = "held"
+						r["corpse_id"] = "corpse_9999"
+						r["organ"] = "brain"
+				what = "specimen records of an unknown corpse / organ"
+			5:
+				var states: Dictionary = st.nodes.orders.get("states", {})
+				for id: Variant in states.keys():
+					states[id] = "eaten"
+				states["o_nonsense"] = "accepted"
+				what = "unknown order states and ids"
+			6:
+				var values: Dictionary = st.nodes.relationships.get("values", {})
+				var k := 0
+				for id: Variant in values.keys():
+					values[id] = -50 if k % 2 == 0 else 250
+					k += 1
+				what = "relationships outside 0…100"
+			7:
+				for r: Variant in st.nodes.corpse_manager.corpses:
+					if r is Dictionary:
+						r["returned"] = ["heart", "eyes", "hand", "lung"]
+						r["harvested"] = []
+				what = "returned ⊄ harvested"
+		var d: Dictionary = doc.duplicate(true)
+		d.data = JSON.from_native(st)
+		await _load_doc(d, "p7 real targeted: " + what)
+	print("FUZZ v6 (real Phase-7 save): %d loaded, %d rejected" % [stats.ok, stats.rejected])
+
+
 func test_fuzz_v2_fixtures() -> void:
 	for id: String in Phase4Fixtures.SAVES_V2:
 		var text := FileAccess.get_file_as_string(Phase4Fixtures.save_v2_path(id))
@@ -476,6 +577,27 @@ func _check_consistent(what: String) -> void:
 				assert_true(buildings.level(&"crypt") >= 1, "%s: %s in the crypt while it is a site" % [what, r.id])
 			if r.location == CorpseRecord.LOCATION_CATAFALQUE:
 				assert_true(buildings.level(&"chapel") >= 1, "%s: %s on the catafalque of a ruin" % [what, r.id])
+	# Phase 7 (W3): uids, region, relationships, orders, returned ⊆ harvested.
+	var seen_uids := {}
+	for inv: Node in tree.root.find_children("*", "Inventory", true, false):
+		for uid: String in (inv as Inventory).uids():
+			assert_false(seen_uids.has(uid), "%s: uid %s in one slot only" % [what, uid])
+			seen_uids[uid] = true
+	assert_true(player.region_id in [&"graveyard", &"village"], "%s: region %s" % [what, player.region_id])
+	if RegionRoot.find(tree, player.region_id) != null:
+		assert_eq(RegionRoot.current(tree), player.region_id, what + ": the active region is the player's")
+	var rel := world.get_node_or_null("Systems/Relationships") as Relationships
+	if rel != null:
+		for id: StringName in rel.met_ids():
+			assert_true(rel.value(id) >= 0 and rel.value(id) <= 100, "%s: relationship %s = %d" % [what, id, rel.value(id)])
+	var orders := world.get_node_or_null("Systems/Orders") as Orders
+	if orders != null:
+		for o: OrderData in orders.all_orders():
+			assert_true(orders.state(o.id) in ORDER_STATES, "%s: order %s state %s" % [what, o.id, orders.state(o.id)])
+		assert_true(orders.active().size() <= 4, "%s: at most 4 active orders" % what)
+	for r: CorpseRecord in world.corpse_manager.records():
+		for organ: StringName in r.returned:
+			assert_true(organ in r.harvested, "%s: %s returned %s was harvested" % [what, r.id, organ])
 	assert_true(TimeManager.running, what + ": the clock runs")
 	TimeManager.running = false
 	# The loaded state is stable: save → load gives the same state.
@@ -673,6 +795,62 @@ func _make_real_v5_save() -> String:
 	var door := BuildingDoor.find(tree, &"crypt")
 	HutPortal.arrive(bot.player, door.room().spawn_transform(), true, &"crypt")
 	assert_eq(bot.player.interior_id, &"crypt")
+	UIState.clear()
+	assert_eq(SaveManager.save_game(SLOT), OK)
+	return FileAccess.get_file_as_string(SaveFileIO.slot_path(saves_dir, SLOT))
+
+
+## Phase7Bot (anatomist7) plays 3 days from the Phase-6 end state; then (see the header): the v6 file
+## text of a game in the Holderkrug with specimens in the pack and the cold drawer, an open cold window,
+## three active orders and the consecration day.
+func _make_real_v6_save() -> String:
+	assert_eq(Phase7Fixtures.install_save_v5("slot_p6_day40_reverent", saves_dir, SLOT), OK)
+	assert_eq(await SaveManager.load_game(SLOT), OK)
+	var bot := Phase7Bot.new(&"anatomist7", tree)
+	bot.bind()
+	for i: int in 3:
+		await bot.run_day()
+	bot.bind()
+	var inv := bot.inv()
+	TimeManager.set_time(TimeManager.day, 840)
+	UIState.clear()
+	# Three orders active (the board's when the givers' are done).
+	for id: StringName in [&"o_rosine_berries", &"o_esch_charcoal", &"o_quast_tincture", &"o_liesel_gowns", &"o_lenz_poor"]:
+		if bot.orders.active().size() >= 3:
+			break
+		if bot.orders.state(id) == &"" or bot.orders.state(id) == &"offered":
+			bot.orders.offer(id)
+			bot.orders.accept(id)
+	assert_true(bot.orders.active().size() >= 2, "active orders %s" % str(bot.orders.active()))
+	# Specimens: a jar in the pack, a bundle in the cold drawer with an open window.
+	var record: CorpseRecord = null
+	for r: CorpseRecord in bot.manager.records():
+		if r.location == CorpseRecord.LOCATION_BURIED:
+			record = r
+	var jar := Phase7Fixtures.specimen(&"liver", SpecimenRecord.CONTAINER_JAR, 0.8, record, TimeManager.total_minutes() - 300)
+	var bundle := Phase7Fixtures.specimen(&"lung", SpecimenRecord.CONTAINER_BUNDLE, 0.9, record, TimeManager.total_minutes() - 60)
+	jar.uid = "sp_0901"
+	bundle.uid = "sp_0902"
+	var saved := bot.specimens.save_state()
+	var all: Array = saved.get("records", [])
+	all.append(jar.to_dict())
+	all.append(bundle.to_dict())
+	bot.specimens.load_state({"next": int(saved.get("next", 1)), "records": all})
+	bot._free_slots(3)
+	assert_true(inv.add_unique(Specimens.ITEM_JAR, jar.uid), "a jar in the pack")
+	var store := InteriorRoom.find(tree, &"crypt").get_node_or_null("Entities/PultPlace/station_pult/PultStore") as PultStore
+	if store != null and bot._pult_built():
+		assert_true(store.store().add_unique(Specimens.ITEM_BUNDLE, bundle.uid), "a bundle in the cold drawer")
+		bot.specimens.note_cold(bundle.uid, true)
+		assert_false(bot.specimens.get_record(bundle.uid).cold_windows.is_empty(), "an open cold window")
+	# The consecration day (flag = today) and the gravekeeper in the Holderkrug.
+	GameState.set_flag(&"linden_consecration_day", TimeManager.day)
+	await bot._travel(&"village")
+	var door := HouseDoor.find(tree, &"door_inn")
+	bot.player.global_transform = door.exit_transform()
+	door.interact(bot.player)
+	await bot._until_arrived()
+	assert_eq([bot.player.region_id, bot.player.interior_id], [&"village", &"inn"], "in the Holderkrug")
 	UIState.clear()
 	assert_eq(SaveManager.save_game(SLOT), OK)
 	return FileAccess.get_file_as_string(SaveFileIO.slot_path(saves_dir, SLOT))

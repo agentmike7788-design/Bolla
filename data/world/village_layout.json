@@ -207,6 +207,7 @@
     "v_anger_w": [-12.0, 0.8],
     "v_well": [1.2, -1.6],
     "v_well_bench": [2.2, -3.0],
+    "v_well_w": [-1.1, -1.8],
     "v_linden": [-5.2, 4.2],
     "v_board": [-7.0, 6.1],
     "v_church_door": [0.0, -10.2],
@@ -225,7 +226,7 @@
   },
   "waypoint_facing": {
     "_comment": "Blickrichtung (rot_y in Grad, 0 = +Z/Kamera) an Steh-Orten: zum Anger bzw. zur Kamera.",
-    "v_well": 0.0, "v_well_bench": 0.0, "v_linden": 0.0, "v_board": 0.0, "v_church_door": 0.0, "v_office_door": 0.0,
+    "v_well": 0.0, "v_well_w": 25.0, "v_well_bench": 0.0, "v_linden": 0.0, "v_board": 0.0, "v_church_door": 0.0, "v_office_door": 0.0,
     "v_inn_door": 0.0, "v_anvil": -90.0, "v_shop_window": 90.0, "v_surgery_door": -60.0, "v_remise": -60.0,
     "v_hagedorn_gate": 0.0, "v_dorn_door": 0.0, "v_wash": 120.0, "v_bridge": 90.0
   },

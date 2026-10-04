@@ -76,8 +76,36 @@ path = PackedStringArray("v_surgery_door")
 visible = false
 region = &"village"
 
+[sub_resource type="Resource" id="Resource_qa7l1"]
+script = ExtResource("1_etcrm")
+start_minute = 1375
+activity = &"lecture"
+animation = &"talk"
+path = PackedStringArray("v_in_surgery_lectern")
+dialogue_id = &"v_surgeon"
+region = &"village"
+today_flag = &"lecture_night_day"
+
+[sub_resource type="Resource" id="Resource_qa7l2"]
+script = ExtResource("1_etcrm")
+activity = &"lecture"
+animation = &"talk"
+path = PackedStringArray("v_in_surgery_lectern")
+dialogue_id = &"v_surgeon"
+region = &"village"
+today_flag = &"lecture_after_day"
+
+[sub_resource type="Resource" id="Resource_qa7l3"]
+script = ExtResource("1_etcrm")
+start_minute = 90
+activity = &"home"
+path = PackedStringArray("v_surgery_door")
+visible = false
+region = &"village"
+today_flag = &"lecture_after_day"
+
 [resource]
 script = ExtResource("2_5r3yp")
 npc_id = &"surgeon"
 display_name = "Severin Quast"
-entries = Array[ExtResource("1_etcrm")]([SubResource("Resource_nspls"), SubResource("Resource_xrgjx"), SubResource("Resource_d058b"), SubResource("Resource_cawe0"), SubResource("Resource_uj5n2"), SubResource("Resource_x5dx7"), SubResource("Resource_n2mmb"), SubResource("Resource_s8rde"), SubResource("Resource_j33mf")])
+entries = Array[ExtResource("1_etcrm")]([SubResource("Resource_nspls"), SubResource("Resource_xrgjx"), SubResource("Resource_d058b"), SubResource("Resource_cawe0"), SubResource("Resource_uj5n2"), SubResource("Resource_x5dx7"), SubResource("Resource_n2mmb"), SubResource("Resource_s8rde"), SubResource("Resource_j33mf"), SubResource("Resource_qa7l1"), SubResource("Resource_qa7l2"), SubResource("Resource_qa7l3")])

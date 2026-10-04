@@ -40,7 +40,7 @@ const MODELS := {
 	"ph_prop_v_board": ["props", Vector3(1.0, 1.8, 0.1), Vector3(1.8, 2.4, 0.8), 800],
 	"ph_prop_v_shrine": ["props", Vector3(0.3, 1.8, 0.3), Vector3(0.8, 2.6, 0.8), 600],
 	"ph_prop_v_sign": ["props", Vector3(0.9, 1.5, 0.05), Vector3(1.6, 2.2, 0.4), 400],
-	"ph_prop_v_ribbon": ["props", Vector3(0.1, 0.3, 0.005), Vector3(0.3, 0.6, 0.1), 150],
+	"ph_prop_v_ribbon": ["props", Vector3(0.1, 0.3, 0.005), Vector3(0.6, 0.9, 0.12), 150],  # QA7: 1.7× (G7 art)
 	"ph_prop_v_bench": ["props", Vector3(1.4, 0.4, 0.25), Vector3(1.8, 0.6, 0.5), 400],
 	"ph_prop_v_wash_stones": ["props", Vector3(1.0, 0.1, 0.8), Vector3(2.4, 0.7, 2.0), 500],
 	"ph_env_linden_old": ["environment", Vector3(6.0, 7.5, 6.0), Vector3(11.0, 9.4, 11.0), 6000],
@@ -108,12 +108,12 @@ const MARKERS := {
 	"ph_int_surgery_bench": ["seat_1", "seat_2", "seat_3"],
 	"ph_int_office_room": ["door_inside", "spawn_inside", "light_window_1"],
 	"ph_int_office_desk": ["light_candle"],
-	"ph_int_pult": ["use", "cold"],
+	"ph_int_pult": ["use", "cold", "light_candle"],  # QA7: the candle on the pult (p7_16)
 	"ph_int_collection_shelf": ["slot_1", "slot_2", "slot_3", "slot_4", "slot_5", "slot_6", "slot_7", "use"],
 }
 ## Lantern glass / candle flame / lamp chimney (mat_emissive_warm, like the hut's lantern).
 const MAY_GLOW: Array[String] = ["ph_bld_v_church", "ph_bld_v_inn", "ph_int_inn_room", "ph_int_surgery_room",
-		"ph_int_office_desk"]
+		"ph_int_office_desk", "ph_int_pult"]
 ## §4.2: centre (x, z) and the door / counter points of the village plan (region-local).
 const PLAN := {
 	"ph_bld_v_church": [Vector2(0, -18), Vector2(0, -11.9)],

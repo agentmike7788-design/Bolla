@@ -112,6 +112,15 @@ path = PackedStringArray("v_road_in")
 visible = false
 region = &"village"
 
+[sub_resource type="Resource" id="v_walk_inn_night"]
+script = ExtResource("1_s38po")
+start_minute = 1315
+travel_minutes = 5
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_remise", "v_inn_door")
+region = &"village"
+
 [sub_resource type="Resource" id="v_inn_night"]
 script = ExtResource("1_s38po")
 start_minute = 1320
@@ -131,4 +140,4 @@ region = &"village"
 script = ExtResource("2_xkmdj")
 npc_id = &"carter"
 display_name = "Osric Faulhaber"
-entries = Array[ExtResource("1_s38po")]([SubResource("night_home"), SubResource("morning_arrive"), SubResource("morning_dropoff"), SubResource("morning_leave"), SubResource("day_home"), SubResource("evening_arrive"), SubResource("evening_smoke"), SubResource("evening_leave"), SubResource("late_home"), SubResource("v_walk_remise"), SubResource("v_remise"), SubResource("v_walk_inn"), SubResource("v_inn_afternoon"), SubResource("v_away"), SubResource("v_inn_night"), SubResource("v_night_home")])
+entries = Array[ExtResource("1_s38po")]([SubResource("night_home"), SubResource("morning_arrive"), SubResource("morning_dropoff"), SubResource("morning_leave"), SubResource("day_home"), SubResource("evening_arrive"), SubResource("evening_smoke"), SubResource("evening_leave"), SubResource("late_home"), SubResource("v_walk_remise"), SubResource("v_remise"), SubResource("v_walk_inn"), SubResource("v_inn_afternoon"), SubResource("v_away"), SubResource("v_walk_inn_night"), SubResource("v_inn_night"), SubResource("v_night_home")])

@@ -177,7 +177,7 @@ func test_carter_schedule_loads_with_identity() -> void:
 	assert_eq(s.npc_id, &"carter")
 	assert_eq(s.display_name, "Osric Faulhaber")
 	assert_eq(_graveyard_entries().size(), 9, "the graveyard routine")
-	assert_eq(s.entries.size(), 16, "+ 7 village entries (Phase 7)")
+	assert_eq(s.entries.size(), 17, "+ 8 village entries (Phase 7; QA7: the night walk to the inn)")
 	assert_eq(Database.schedule(&"carter"), s, "registered in Database by npc_id")
 
 

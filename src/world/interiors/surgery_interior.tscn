@@ -257,5 +257,9 @@ shape = SubResource("BoxShape3D_t4smr")
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 1.75, 0, -1.2)
 metadata/facing = true
 
+[node name="v_in_surgery_lectern" type="Marker3D" parent="Waypoints" unique_id=1220422771]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, 0, -1.15)
+metadata/facing = true
+
 [node name="Lighting" type="Node" parent="." unique_id=287638862]
 script = ExtResource("19_y8syx")

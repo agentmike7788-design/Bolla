@@ -34,6 +34,7 @@
   ],
   "light_roles": {"light_lamp": "lantern"},
   "waypoints": {
-    "v_in_surgery_desk": [1.75, -1.2, 90.0]
+    "v_in_surgery_desk": [1.75, -1.2, 90.0],
+    "v_in_surgery_lectern": [0.25, -1.15, 0.0]
   }
 }
