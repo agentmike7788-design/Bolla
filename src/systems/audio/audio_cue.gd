@@ -1,12 +1,12 @@
 class_name AudioCue
 extends Resource
 ## One playable sound (data/audio/cues_*.tres, written by tools/audio/build_audio.py): a set of
-## variant files (one is picked at random, never the same twice in a row), the bus and the mix
-## values. Streams load lazily (Audio caches them), so a missing file only warns.
+## variant streams (one is picked at random, never the same twice in a row), the bus and the mix
+## values. Streams are real resource dependencies, so an export carries them.
 
 @export var id: StringName
-## res:// paths of the variants (.ogg).
-@export var files: PackedStringArray = []
+## The variants (.ogg).
+@export var streams: Array[AudioStream] = []
 ## &"Music" | &"Ambience" | &"SFX" | &"UI".
 @export var bus: StringName = &"SFX"
 @export var volume_db: float = 0.0

@@ -1,10 +1,15 @@
-[gd_resource type="Resource" script_class="AudioConfig" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="AudioConfig" load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://src/systems/audio/audio_config.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/audio/audio_cue_library.gd" id="2_libscript"]
+[ext_resource type="Resource" path="res://data/audio/cues_sfx.tres" id="lib_sfx"]
+[ext_resource type="Resource" path="res://data/audio/cues_ui.tres" id="lib_ui"]
+[ext_resource type="Resource" path="res://data/audio/cues_ambience.tres" id="lib_ambience"]
+[ext_resource type="Resource" path="res://data/audio/cues_music.tres" id="lib_music"]
 
 [resource]
 script = ExtResource("1")
-libraries = PackedStringArray("res://data/audio/cues_sfx.tres", "res://data/audio/cues_ui.tres", "res://data/audio/cues_ambience.tres", "res://data/audio/cues_music.tres")
+libraries = Array[ExtResource("2_libscript")]([ExtResource("lib_sfx"), ExtResource("lib_ui"), ExtResource("lib_ambience"), ExtResource("lib_music")])
 profile_dir = "res://data/audio/ambience"
 event_map_path = "res://data/audio/audio_events.tres"
 dawn_start = 300

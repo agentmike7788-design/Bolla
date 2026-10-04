@@ -7,7 +7,7 @@ extends Resource
 const BUSES: Array[StringName] = [&"Master", &"Music", &"Ambience", &"SFX", &"UI"]
 
 ## Cue libraries (AudioCueLibrary) and the directory of AudioAmbienceProfiles.
-@export var libraries: PackedStringArray = []
+@export var libraries: Array[AudioCueLibrary] = []
 @export var profile_dir: String = "res://data/audio/ambience"
 @export var event_map_path: String = "res://data/audio/audio_events.tres"
 

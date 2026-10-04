@@ -250,20 +250,28 @@ def _f(v: float) -> str:
 
 
 def library_tres(lib: str, specs: list[Spec]) -> str:
+    # Streams are ext_resources (real dependencies): an exported build keeps them – a
+    # PackedStringArray of res:// paths is emptied by the 4.7 exporter.
+    ext = []
+    for sp in specs:
+        for i in range(sp.variants):
+            ext.append((res_path(sp, i), f"s_{sp.id}_{i + 1}"))
     lines = [
-        f'[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps={len(specs) + 3} format=3]',
+        f'[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps={len(specs) + len(ext) + 3} format=3]',
         "",
         '[ext_resource type="Script" path="res://src/systems/audio/audio_cue.gd" id="1_cue"]',
         '[ext_resource type="Script" path="res://src/systems/audio/audio_cue_library.gd" id="2_lib"]',
-        "",
     ]
+    for path, rid in ext:
+        lines.append(f'[ext_resource type="AudioStream" path="{path}" id="{rid}"]')
+    lines.append("")
     for sp in specs:
-        files = ", ".join(f'"{res_path(sp, i)}"' for i in range(sp.variants))
+        streams = ", ".join(f'ExtResource("s_{sp.id}_{i + 1}")' for i in range(sp.variants))
         lines += [
             f'[sub_resource type="Resource" id="cue_{sp.id}"]',
             'script = ExtResource("1_cue")',
             f'id = &"{sp.id}"',
-            f"files = PackedStringArray({files})",
+            f"streams = Array[AudioStream]([{streams}])",
             f'bus = &"{sp.bus}"',
             f"volume_db = {_f(sp.volume_db)}",
             f"volume_jitter_db = {_f(sp.volume_jitter_db)}",

@@ -1,12 +1,16 @@
-[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://src/systems/audio/audio_cue.gd" id="1_cue"]
 [ext_resource type="Script" path="res://src/systems/audio/audio_cue_library.gd" id="2_lib"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ph_mus_title.ogg" id="s_mus_title_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ph_mus_day.ogg" id="s_mus_day_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ph_mus_night.ogg" id="s_mus_night_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ph_mus_village.ogg" id="s_mus_village_1"]
 
 [sub_resource type="Resource" id="cue_mus_title"]
 script = ExtResource("1_cue")
 id = &"mus_title"
-files = PackedStringArray("res://assets/audio/music/ph_mus_title.ogg")
+streams = Array[AudioStream]([ExtResource("s_mus_title_1")])
 bus = &"Music"
 volume_db = -5
 volume_jitter_db = 0
@@ -21,7 +25,7 @@ max_voices = 1
 [sub_resource type="Resource" id="cue_mus_day"]
 script = ExtResource("1_cue")
 id = &"mus_day"
-files = PackedStringArray("res://assets/audio/music/ph_mus_day.ogg")
+streams = Array[AudioStream]([ExtResource("s_mus_day_1")])
 bus = &"Music"
 volume_db = -6
 volume_jitter_db = 0
@@ -36,7 +40,7 @@ max_voices = 1
 [sub_resource type="Resource" id="cue_mus_night"]
 script = ExtResource("1_cue")
 id = &"mus_night"
-files = PackedStringArray("res://assets/audio/music/ph_mus_night.ogg")
+streams = Array[AudioStream]([ExtResource("s_mus_night_1")])
 bus = &"Music"
 volume_db = -6
 volume_jitter_db = 0
@@ -51,7 +55,7 @@ max_voices = 1
 [sub_resource type="Resource" id="cue_mus_village"]
 script = ExtResource("1_cue")
 id = &"mus_village"
-files = PackedStringArray("res://assets/audio/music/ph_mus_village.ogg")
+streams = Array[AudioStream]([ExtResource("s_mus_village_1")])
 bus = &"Music"
 volume_db = -6
 volume_jitter_db = 0

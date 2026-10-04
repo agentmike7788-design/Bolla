@@ -46,12 +46,15 @@ func test_every_cue_has_existing_files() -> void:
 	assert_true(Audio.cue_ids().size() >= 80, "catalogue loaded (%d cues)" % Audio.cue_ids().size())
 	for id: StringName in Audio.cue_ids():
 		var c := Audio.cue(id)
-		assert_false(c.files.is_empty(), "cue %s has files" % id)
+		assert_false(c.streams.is_empty(), "cue %s has streams" % id)
 		assert_has([&"Music", &"Ambience", &"SFX", &"UI"], c.bus, "cue %s bus" % id)
-		for path: String in c.files:
-			assert_true(path.get_file().begins_with("ph_"), "placeholder prefix %s" % path)
-			assert_true(ResourceLoader.exists(path), "file %s of %s" % [path, id])
-			assert_true(load(path) is AudioStream, "stream %s" % path)
+		for s: AudioStream in c.streams:
+			assert_not_null(s, "stream of %s" % id)
+			if s == null:
+				continue
+			var path := s.resource_path
+			assert_true(path.get_file().begins_with("ph_") and path.ends_with(".ogg"), "placeholder ogg %s" % path)
+			assert_true(FileAccess.file_exists(path), "file %s of %s" % [path, id])
 
 
 func test_every_data_reference_resolves() -> void:

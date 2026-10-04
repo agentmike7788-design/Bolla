@@ -33,7 +33,6 @@ var events: AudioEvents
 
 var _cues: Dictionary[StringName, AudioCue] = {}
 var _profiles: Dictionary[StringName, AudioAmbienceProfile] = {}
-var _streams: Dictionary[String, AudioStream] = {}
 ## cue id -> index of the variant played last (no repeat).
 var _last_variant: Dictionary[StringName, int] = {}
 var _poll_left: float = 0.0
@@ -121,23 +120,20 @@ func profile_ids() -> Array[StringName]:
 
 ## A variant of `c` (never the one played last when there are more), loop flag applied.
 func stream_for(c: AudioCue) -> AudioStream:
-	if c == null or c.files.is_empty():
+	if c == null or c.streams.is_empty():
 		return null
 	var idx := 0
-	if c.files.size() > 1:
-		idx = randi() % c.files.size()
+	if c.streams.size() > 1:
+		idx = randi() % c.streams.size()
 		if idx == _last_variant.get(c.id, -1):
-			idx = (idx + 1) % c.files.size()
+			idx = (idx + 1) % c.streams.size()
 	_last_variant[c.id] = idx
-	var path := c.files[idx]
-	if not _streams.has(path):
-		var s := load(path) as AudioStream if ResourceLoader.exists(path) else null
-		if s == null:
-			push_warning("[Audio] cue '%s': missing file %s" % [c.id, path])
-			return null
-		_set_loop(s, c.loop)
-		_streams[path] = s
-	return _streams[path]
+	var s := c.streams[idx]
+	if s == null:
+		push_warning("[Audio] cue '%s': variant %d missing" % [c.id, idx])
+		return null
+	_set_loop(s, c.loop)
+	return s
 
 
 func set_volume(bus: StringName, linear: float, save: bool = true) -> void:
@@ -329,10 +325,9 @@ func _on_title() -> bool:
 
 
 func _load_catalogue() -> void:
-	for path: String in config.libraries:
-		var lib := load(path) as AudioCueLibrary if ResourceLoader.exists(path) else null
+	for lib: AudioCueLibrary in config.libraries:
 		if lib == null:
-			push_warning("[Audio] cue library %s missing" % path)
+			push_warning("[Audio] a cue library of %s is missing" % CONFIG_PATH)
 			continue
 		for c: AudioCue in lib.cues:
 			if c != null and c.id != &"":

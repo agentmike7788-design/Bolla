@@ -1,12 +1,106 @@
-[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=49 format=3]
+[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=143 format=3]
 
 [ext_resource type="Script" path="res://src/systems/audio/audio_cue.gd" id="1_cue"]
 [ext_resource type="Script" path="res://src/systems/audio/audio_cue_library.gd" id="2_lib"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_step_grass_1.ogg" id="s_step_grass_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_step_grass_2.ogg" id="s_step_grass_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_step_grass_3.ogg" id="s_step_grass_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_step_grass_4.ogg" id="s_step_grass_4"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_step_earth_1.ogg" id="s_step_earth_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_step_earth_2.ogg" id="s_step_earth_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_step_earth_3.ogg" id="s_step_earth_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_step_earth_4.ogg" id="s_step_earth_4"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_step_stone_1.ogg" id="s_step_stone_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_step_stone_2.ogg" id="s_step_stone_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_step_stone_3.ogg" id="s_step_stone_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_step_stone_4.ogg" id="s_step_stone_4"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_step_wood_1.ogg" id="s_step_wood_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_step_wood_2.ogg" id="s_step_wood_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_step_wood_3.ogg" id="s_step_wood_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_step_wood_4.ogg" id="s_step_wood_4"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_dig_1.ogg" id="s_dig_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_dig_2.ogg" id="s_dig_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_dig_3.ogg" id="s_dig_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_dirt_pour_1.ogg" id="s_dirt_pour_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_dirt_pour_2.ogg" id="s_dirt_pour_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_stone_set.ogg" id="s_stone_set_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_chop_1.ogg" id="s_chop_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_chop_2.ogg" id="s_chop_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_chop_3.ogg" id="s_chop_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_saw_1.ogg" id="s_saw_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_saw_2.ogg" id="s_saw_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_hammer_1.ogg" id="s_hammer_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_hammer_2.ogg" id="s_hammer_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_hammer_3.ogg" id="s_hammer_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_anvil_1.ogg" id="s_anvil_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_anvil_2.ogg" id="s_anvil_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_chisel_1.ogg" id="s_chisel_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_chisel_2.ogg" id="s_chisel_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_chisel_3.ogg" id="s_chisel_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_pick_stone_1.ogg" id="s_pick_stone_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_pick_stone_2.ogg" id="s_pick_stone_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_pick_stone_3.ogg" id="s_pick_stone_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_loom_1.ogg" id="s_loom_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_loom_2.ogg" id="s_loom_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_bellows.ogg" id="s_bellows_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_rustle_1.ogg" id="s_rustle_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_rustle_2.ogg" id="s_rustle_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_rustle_3.ogg" id="s_rustle_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_cloth_1.ogg" id="s_cloth_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_cloth_2.ogg" id="s_cloth_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_cloth_3.ogg" id="s_cloth_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_wash_1.ogg" id="s_wash_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_wash_2.ogg" id="s_wash_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_scrub_1.ogg" id="s_scrub_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_scrub_2.ogg" id="s_scrub_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_snip_1.ogg" id="s_snip_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_snip_2.ogg" id="s_snip_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_quill_1.ogg" id="s_quill_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_quill_2.ogg" id="s_quill_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_smoke_hiss.ogg" id="s_smoke_hiss_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_door_open_1.ogg" id="s_door_open_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_door_open_2.ogg" id="s_door_open_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_door_close_1.ogg" id="s_door_close_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_door_close_2.ogg" id="s_door_close_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_chest_open_1.ogg" id="s_chest_open_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_chest_open_2.ogg" id="s_chest_open_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_chest_close_1.ogg" id="s_chest_close_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_chest_close_2.ogg" id="s_chest_close_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_crate_1.ogg" id="s_crate_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_crate_2.ogg" id="s_crate_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_coins_1.ogg" id="s_coins_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_coins_2.ogg" id="s_coins_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_coins_3.ogg" id="s_coins_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_pickup_1.ogg" id="s_pickup_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_pickup_2.ogg" id="s_pickup_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_putdown_1.ogg" id="s_putdown_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_putdown_2.ogg" id="s_putdown_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_corpse_down_1.ogg" id="s_corpse_down_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_corpse_down_2.ogg" id="s_corpse_down_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_glass_seal_1.ogg" id="s_glass_seal_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_glass_seal_2.ogg" id="s_glass_seal_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_anatomy_tool_1.ogg" id="s_anatomy_tool_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_anatomy_tool_2.ogg" id="s_anatomy_tool_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_cart_roll.ogg" id="s_cart_roll_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_church_bell.ogg" id="s_church_bell_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_small_bell.ogg" id="s_small_bell_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_ghost_appear.ogg" id="s_ghost_appear_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_ghost_content.ogg" id="s_ghost_content_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_ghost_restless.ogg" id="s_ghost_restless_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_ghost_night.ogg" id="s_ghost_night_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_chapter.ogg" id="s_chapter_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_travel.ogg" id="s_travel_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_remark_1.ogg" id="s_remark_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_remark_2.ogg" id="s_remark_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_build_place_1.ogg" id="s_build_place_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_build_place_2.ogg" id="s_build_place_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_build_remove.ogg" id="s_build_remove_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_sleep.ogg" id="s_sleep_1"]
 
 [sub_resource type="Resource" id="cue_step_grass"]
 script = ExtResource("1_cue")
 id = &"step_grass"
-files = PackedStringArray("res://assets/audio/sfx/ph_step_grass_1.ogg", "res://assets/audio/sfx/ph_step_grass_2.ogg", "res://assets/audio/sfx/ph_step_grass_3.ogg", "res://assets/audio/sfx/ph_step_grass_4.ogg")
+streams = Array[AudioStream]([ExtResource("s_step_grass_1"), ExtResource("s_step_grass_2"), ExtResource("s_step_grass_3"), ExtResource("s_step_grass_4")])
 bus = &"SFX"
 volume_db = -15
 volume_jitter_db = 1.5
@@ -21,7 +115,7 @@ max_voices = 4
 [sub_resource type="Resource" id="cue_step_earth"]
 script = ExtResource("1_cue")
 id = &"step_earth"
-files = PackedStringArray("res://assets/audio/sfx/ph_step_earth_1.ogg", "res://assets/audio/sfx/ph_step_earth_2.ogg", "res://assets/audio/sfx/ph_step_earth_3.ogg", "res://assets/audio/sfx/ph_step_earth_4.ogg")
+streams = Array[AudioStream]([ExtResource("s_step_earth_1"), ExtResource("s_step_earth_2"), ExtResource("s_step_earth_3"), ExtResource("s_step_earth_4")])
 bus = &"SFX"
 volume_db = -14
 volume_jitter_db = 1.5
@@ -36,7 +130,7 @@ max_voices = 4
 [sub_resource type="Resource" id="cue_step_stone"]
 script = ExtResource("1_cue")
 id = &"step_stone"
-files = PackedStringArray("res://assets/audio/sfx/ph_step_stone_1.ogg", "res://assets/audio/sfx/ph_step_stone_2.ogg", "res://assets/audio/sfx/ph_step_stone_3.ogg", "res://assets/audio/sfx/ph_step_stone_4.ogg")
+streams = Array[AudioStream]([ExtResource("s_step_stone_1"), ExtResource("s_step_stone_2"), ExtResource("s_step_stone_3"), ExtResource("s_step_stone_4")])
 bus = &"SFX"
 volume_db = -16
 volume_jitter_db = 1.5
@@ -51,7 +145,7 @@ max_voices = 4
 [sub_resource type="Resource" id="cue_step_wood"]
 script = ExtResource("1_cue")
 id = &"step_wood"
-files = PackedStringArray("res://assets/audio/sfx/ph_step_wood_1.ogg", "res://assets/audio/sfx/ph_step_wood_2.ogg", "res://assets/audio/sfx/ph_step_wood_3.ogg", "res://assets/audio/sfx/ph_step_wood_4.ogg")
+streams = Array[AudioStream]([ExtResource("s_step_wood_1"), ExtResource("s_step_wood_2"), ExtResource("s_step_wood_3"), ExtResource("s_step_wood_4")])
 bus = &"SFX"
 volume_db = -13
 volume_jitter_db = 1.5
@@ -66,7 +160,7 @@ max_voices = 4
 [sub_resource type="Resource" id="cue_dig"]
 script = ExtResource("1_cue")
 id = &"dig"
-files = PackedStringArray("res://assets/audio/sfx/ph_dig_1.ogg", "res://assets/audio/sfx/ph_dig_2.ogg", "res://assets/audio/sfx/ph_dig_3.ogg")
+streams = Array[AudioStream]([ExtResource("s_dig_1"), ExtResource("s_dig_2"), ExtResource("s_dig_3")])
 bus = &"SFX"
 volume_db = -7
 volume_jitter_db = 1.5
@@ -81,7 +175,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_dirt_pour"]
 script = ExtResource("1_cue")
 id = &"dirt_pour"
-files = PackedStringArray("res://assets/audio/sfx/ph_dirt_pour_1.ogg", "res://assets/audio/sfx/ph_dirt_pour_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_dirt_pour_1"), ExtResource("s_dirt_pour_2")])
 bus = &"SFX"
 volume_db = -8
 volume_jitter_db = 1.5
@@ -96,7 +190,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_stone_set"]
 script = ExtResource("1_cue")
 id = &"stone_set"
-files = PackedStringArray("res://assets/audio/sfx/ph_stone_set.ogg")
+streams = Array[AudioStream]([ExtResource("s_stone_set_1")])
 bus = &"SFX"
 volume_db = -7
 volume_jitter_db = 1.5
@@ -111,7 +205,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_chop"]
 script = ExtResource("1_cue")
 id = &"chop"
-files = PackedStringArray("res://assets/audio/sfx/ph_chop_1.ogg", "res://assets/audio/sfx/ph_chop_2.ogg", "res://assets/audio/sfx/ph_chop_3.ogg")
+streams = Array[AudioStream]([ExtResource("s_chop_1"), ExtResource("s_chop_2"), ExtResource("s_chop_3")])
 bus = &"SFX"
 volume_db = -8
 volume_jitter_db = 1.5
@@ -126,7 +220,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_saw"]
 script = ExtResource("1_cue")
 id = &"saw"
-files = PackedStringArray("res://assets/audio/sfx/ph_saw_1.ogg", "res://assets/audio/sfx/ph_saw_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_saw_1"), ExtResource("s_saw_2")])
 bus = &"SFX"
 volume_db = -12
 volume_jitter_db = 1.5
@@ -141,7 +235,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_hammer"]
 script = ExtResource("1_cue")
 id = &"hammer"
-files = PackedStringArray("res://assets/audio/sfx/ph_hammer_1.ogg", "res://assets/audio/sfx/ph_hammer_2.ogg", "res://assets/audio/sfx/ph_hammer_3.ogg")
+streams = Array[AudioStream]([ExtResource("s_hammer_1"), ExtResource("s_hammer_2"), ExtResource("s_hammer_3")])
 bus = &"SFX"
 volume_db = -10
 volume_jitter_db = 1.5
@@ -156,7 +250,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_anvil"]
 script = ExtResource("1_cue")
 id = &"anvil"
-files = PackedStringArray("res://assets/audio/sfx/ph_anvil_1.ogg", "res://assets/audio/sfx/ph_anvil_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_anvil_1"), ExtResource("s_anvil_2")])
 bus = &"SFX"
 volume_db = -12
 volume_jitter_db = 1.5
@@ -171,7 +265,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_chisel"]
 script = ExtResource("1_cue")
 id = &"chisel"
-files = PackedStringArray("res://assets/audio/sfx/ph_chisel_1.ogg", "res://assets/audio/sfx/ph_chisel_2.ogg", "res://assets/audio/sfx/ph_chisel_3.ogg")
+streams = Array[AudioStream]([ExtResource("s_chisel_1"), ExtResource("s_chisel_2"), ExtResource("s_chisel_3")])
 bus = &"SFX"
 volume_db = -11
 volume_jitter_db = 1.5
@@ -186,7 +280,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_pick_stone"]
 script = ExtResource("1_cue")
 id = &"pick_stone"
-files = PackedStringArray("res://assets/audio/sfx/ph_pick_stone_1.ogg", "res://assets/audio/sfx/ph_pick_stone_2.ogg", "res://assets/audio/sfx/ph_pick_stone_3.ogg")
+streams = Array[AudioStream]([ExtResource("s_pick_stone_1"), ExtResource("s_pick_stone_2"), ExtResource("s_pick_stone_3")])
 bus = &"SFX"
 volume_db = -10
 volume_jitter_db = 1.5
@@ -201,7 +295,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_loom"]
 script = ExtResource("1_cue")
 id = &"loom"
-files = PackedStringArray("res://assets/audio/sfx/ph_loom_1.ogg", "res://assets/audio/sfx/ph_loom_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_loom_1"), ExtResource("s_loom_2")])
 bus = &"SFX"
 volume_db = -10
 volume_jitter_db = 1.5
@@ -216,7 +310,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_bellows"]
 script = ExtResource("1_cue")
 id = &"bellows"
-files = PackedStringArray("res://assets/audio/sfx/ph_bellows.ogg")
+streams = Array[AudioStream]([ExtResource("s_bellows_1")])
 bus = &"SFX"
 volume_db = -10
 volume_jitter_db = 1.5
@@ -231,7 +325,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_rustle"]
 script = ExtResource("1_cue")
 id = &"rustle"
-files = PackedStringArray("res://assets/audio/sfx/ph_rustle_1.ogg", "res://assets/audio/sfx/ph_rustle_2.ogg", "res://assets/audio/sfx/ph_rustle_3.ogg")
+streams = Array[AudioStream]([ExtResource("s_rustle_1"), ExtResource("s_rustle_2"), ExtResource("s_rustle_3")])
 bus = &"SFX"
 volume_db = -12
 volume_jitter_db = 1.5
@@ -246,7 +340,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_cloth"]
 script = ExtResource("1_cue")
 id = &"cloth"
-files = PackedStringArray("res://assets/audio/sfx/ph_cloth_1.ogg", "res://assets/audio/sfx/ph_cloth_2.ogg", "res://assets/audio/sfx/ph_cloth_3.ogg")
+streams = Array[AudioStream]([ExtResource("s_cloth_1"), ExtResource("s_cloth_2"), ExtResource("s_cloth_3")])
 bus = &"SFX"
 volume_db = -11
 volume_jitter_db = 1.5
@@ -261,7 +355,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_wash"]
 script = ExtResource("1_cue")
 id = &"wash"
-files = PackedStringArray("res://assets/audio/sfx/ph_wash_1.ogg", "res://assets/audio/sfx/ph_wash_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_wash_1"), ExtResource("s_wash_2")])
 bus = &"SFX"
 volume_db = -12
 volume_jitter_db = 1.5
@@ -276,7 +370,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_scrub"]
 script = ExtResource("1_cue")
 id = &"scrub"
-files = PackedStringArray("res://assets/audio/sfx/ph_scrub_1.ogg", "res://assets/audio/sfx/ph_scrub_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_scrub_1"), ExtResource("s_scrub_2")])
 bus = &"SFX"
 volume_db = -14
 volume_jitter_db = 1.5
@@ -291,7 +385,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_snip"]
 script = ExtResource("1_cue")
 id = &"snip"
-files = PackedStringArray("res://assets/audio/sfx/ph_snip_1.ogg", "res://assets/audio/sfx/ph_snip_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_snip_1"), ExtResource("s_snip_2")])
 bus = &"SFX"
 volume_db = -12
 volume_jitter_db = 1.5
@@ -306,7 +400,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_quill"]
 script = ExtResource("1_cue")
 id = &"quill"
-files = PackedStringArray("res://assets/audio/sfx/ph_quill_1.ogg", "res://assets/audio/sfx/ph_quill_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_quill_1"), ExtResource("s_quill_2")])
 bus = &"SFX"
 volume_db = -14
 volume_jitter_db = 1.5
@@ -321,7 +415,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_smoke_hiss"]
 script = ExtResource("1_cue")
 id = &"smoke_hiss"
-files = PackedStringArray("res://assets/audio/sfx/ph_smoke_hiss.ogg")
+streams = Array[AudioStream]([ExtResource("s_smoke_hiss_1")])
 bus = &"SFX"
 volume_db = -14
 volume_jitter_db = 1.5
@@ -336,7 +430,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_door_open"]
 script = ExtResource("1_cue")
 id = &"door_open"
-files = PackedStringArray("res://assets/audio/sfx/ph_door_open_1.ogg", "res://assets/audio/sfx/ph_door_open_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_door_open_1"), ExtResource("s_door_open_2")])
 bus = &"SFX"
 volume_db = -9
 volume_jitter_db = 1.5
@@ -351,7 +445,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_door_close"]
 script = ExtResource("1_cue")
 id = &"door_close"
-files = PackedStringArray("res://assets/audio/sfx/ph_door_close_1.ogg", "res://assets/audio/sfx/ph_door_close_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_door_close_1"), ExtResource("s_door_close_2")])
 bus = &"SFX"
 volume_db = -9
 volume_jitter_db = 1.5
@@ -366,7 +460,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_chest_open"]
 script = ExtResource("1_cue")
 id = &"chest_open"
-files = PackedStringArray("res://assets/audio/sfx/ph_chest_open_1.ogg", "res://assets/audio/sfx/ph_chest_open_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_chest_open_1"), ExtResource("s_chest_open_2")])
 bus = &"SFX"
 volume_db = -10
 volume_jitter_db = 1.5
@@ -381,7 +475,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_chest_close"]
 script = ExtResource("1_cue")
 id = &"chest_close"
-files = PackedStringArray("res://assets/audio/sfx/ph_chest_close_1.ogg", "res://assets/audio/sfx/ph_chest_close_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_chest_close_1"), ExtResource("s_chest_close_2")])
 bus = &"SFX"
 volume_db = -10
 volume_jitter_db = 1.5
@@ -396,7 +490,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_crate"]
 script = ExtResource("1_cue")
 id = &"crate"
-files = PackedStringArray("res://assets/audio/sfx/ph_crate_1.ogg", "res://assets/audio/sfx/ph_crate_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_crate_1"), ExtResource("s_crate_2")])
 bus = &"SFX"
 volume_db = -10
 volume_jitter_db = 1.5
@@ -411,7 +505,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_coins"]
 script = ExtResource("1_cue")
 id = &"coins"
-files = PackedStringArray("res://assets/audio/sfx/ph_coins_1.ogg", "res://assets/audio/sfx/ph_coins_2.ogg", "res://assets/audio/sfx/ph_coins_3.ogg")
+streams = Array[AudioStream]([ExtResource("s_coins_1"), ExtResource("s_coins_2"), ExtResource("s_coins_3")])
 bus = &"SFX"
 volume_db = -10
 volume_jitter_db = 1.5
@@ -426,7 +520,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_pickup"]
 script = ExtResource("1_cue")
 id = &"pickup"
-files = PackedStringArray("res://assets/audio/sfx/ph_pickup_1.ogg", "res://assets/audio/sfx/ph_pickup_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_pickup_1"), ExtResource("s_pickup_2")])
 bus = &"SFX"
 volume_db = -12
 volume_jitter_db = 1.5
@@ -441,7 +535,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_putdown"]
 script = ExtResource("1_cue")
 id = &"putdown"
-files = PackedStringArray("res://assets/audio/sfx/ph_putdown_1.ogg", "res://assets/audio/sfx/ph_putdown_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_putdown_1"), ExtResource("s_putdown_2")])
 bus = &"SFX"
 volume_db = -11
 volume_jitter_db = 1.5
@@ -456,7 +550,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_corpse_down"]
 script = ExtResource("1_cue")
 id = &"corpse_down"
-files = PackedStringArray("res://assets/audio/sfx/ph_corpse_down_1.ogg", "res://assets/audio/sfx/ph_corpse_down_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_corpse_down_1"), ExtResource("s_corpse_down_2")])
 bus = &"SFX"
 volume_db = -8
 volume_jitter_db = 1.5
@@ -471,7 +565,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_glass_seal"]
 script = ExtResource("1_cue")
 id = &"glass_seal"
-files = PackedStringArray("res://assets/audio/sfx/ph_glass_seal_1.ogg", "res://assets/audio/sfx/ph_glass_seal_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_glass_seal_1"), ExtResource("s_glass_seal_2")])
 bus = &"SFX"
 volume_db = -11
 volume_jitter_db = 1.5
@@ -486,7 +580,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_anatomy_tool"]
 script = ExtResource("1_cue")
 id = &"anatomy_tool"
-files = PackedStringArray("res://assets/audio/sfx/ph_anatomy_tool_1.ogg", "res://assets/audio/sfx/ph_anatomy_tool_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_anatomy_tool_1"), ExtResource("s_anatomy_tool_2")])
 bus = &"SFX"
 volume_db = -18
 volume_jitter_db = 1.5
@@ -501,7 +595,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_cart_roll"]
 script = ExtResource("1_cue")
 id = &"cart_roll"
-files = PackedStringArray("res://assets/audio/sfx/ph_cart_roll.ogg")
+streams = Array[AudioStream]([ExtResource("s_cart_roll_1")])
 bus = &"SFX"
 volume_db = -12
 volume_jitter_db = 0
@@ -516,7 +610,7 @@ max_voices = 1
 [sub_resource type="Resource" id="cue_church_bell"]
 script = ExtResource("1_cue")
 id = &"church_bell"
-files = PackedStringArray("res://assets/audio/sfx/ph_church_bell.ogg")
+streams = Array[AudioStream]([ExtResource("s_church_bell_1")])
 bus = &"SFX"
 volume_db = -8
 volume_jitter_db = 0
@@ -531,7 +625,7 @@ max_voices = 2
 [sub_resource type="Resource" id="cue_small_bell"]
 script = ExtResource("1_cue")
 id = &"small_bell"
-files = PackedStringArray("res://assets/audio/sfx/ph_small_bell.ogg")
+streams = Array[AudioStream]([ExtResource("s_small_bell_1")])
 bus = &"SFX"
 volume_db = -12
 volume_jitter_db = 1.5
@@ -546,7 +640,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_ghost_appear"]
 script = ExtResource("1_cue")
 id = &"ghost_appear"
-files = PackedStringArray("res://assets/audio/sfx/ph_ghost_appear.ogg")
+streams = Array[AudioStream]([ExtResource("s_ghost_appear_1")])
 bus = &"SFX"
 volume_db = -14
 volume_jitter_db = 1.5
@@ -561,7 +655,7 @@ max_voices = 2
 [sub_resource type="Resource" id="cue_ghost_content"]
 script = ExtResource("1_cue")
 id = &"ghost_content"
-files = PackedStringArray("res://assets/audio/sfx/ph_ghost_content.ogg")
+streams = Array[AudioStream]([ExtResource("s_ghost_content_1")])
 bus = &"SFX"
 volume_db = -12
 volume_jitter_db = 1.5
@@ -576,7 +670,7 @@ max_voices = 1
 [sub_resource type="Resource" id="cue_ghost_restless"]
 script = ExtResource("1_cue")
 id = &"ghost_restless"
-files = PackedStringArray("res://assets/audio/sfx/ph_ghost_restless.ogg")
+streams = Array[AudioStream]([ExtResource("s_ghost_restless_1")])
 bus = &"SFX"
 volume_db = -14
 volume_jitter_db = 1.5
@@ -591,7 +685,7 @@ max_voices = 1
 [sub_resource type="Resource" id="cue_ghost_night"]
 script = ExtResource("1_cue")
 id = &"ghost_night"
-files = PackedStringArray("res://assets/audio/sfx/ph_ghost_night.ogg")
+streams = Array[AudioStream]([ExtResource("s_ghost_night_1")])
 bus = &"SFX"
 volume_db = -12
 volume_jitter_db = 1.5
@@ -606,7 +700,7 @@ max_voices = 1
 [sub_resource type="Resource" id="cue_chapter"]
 script = ExtResource("1_cue")
 id = &"chapter"
-files = PackedStringArray("res://assets/audio/sfx/ph_chapter.ogg")
+streams = Array[AudioStream]([ExtResource("s_chapter_1")])
 bus = &"SFX"
 volume_db = -8
 volume_jitter_db = 0
@@ -621,7 +715,7 @@ max_voices = 1
 [sub_resource type="Resource" id="cue_travel"]
 script = ExtResource("1_cue")
 id = &"travel"
-files = PackedStringArray("res://assets/audio/sfx/ph_travel.ogg")
+streams = Array[AudioStream]([ExtResource("s_travel_1")])
 bus = &"SFX"
 volume_db = -12
 volume_jitter_db = 1.5
@@ -636,7 +730,7 @@ max_voices = 1
 [sub_resource type="Resource" id="cue_remark"]
 script = ExtResource("1_cue")
 id = &"remark"
-files = PackedStringArray("res://assets/audio/sfx/ph_remark_1.ogg", "res://assets/audio/sfx/ph_remark_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_remark_1"), ExtResource("s_remark_2")])
 bus = &"SFX"
 volume_db = -18
 volume_jitter_db = 1.5
@@ -651,7 +745,7 @@ max_voices = 1
 [sub_resource type="Resource" id="cue_build_place"]
 script = ExtResource("1_cue")
 id = &"build_place"
-files = PackedStringArray("res://assets/audio/sfx/ph_build_place_1.ogg", "res://assets/audio/sfx/ph_build_place_2.ogg")
+streams = Array[AudioStream]([ExtResource("s_build_place_1"), ExtResource("s_build_place_2")])
 bus = &"SFX"
 volume_db = -10
 volume_jitter_db = 1.5
@@ -666,7 +760,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_build_remove"]
 script = ExtResource("1_cue")
 id = &"build_remove"
-files = PackedStringArray("res://assets/audio/sfx/ph_build_remove.ogg")
+streams = Array[AudioStream]([ExtResource("s_build_remove_1")])
 bus = &"SFX"
 volume_db = -11
 volume_jitter_db = 1.5
@@ -681,7 +775,7 @@ max_voices = 3
 [sub_resource type="Resource" id="cue_sleep"]
 script = ExtResource("1_cue")
 id = &"sleep"
-files = PackedStringArray("res://assets/audio/sfx/ph_sleep.ogg")
+streams = Array[AudioStream]([ExtResource("s_sleep_1")])
 bus = &"SFX"
 volume_db = -12
 volume_jitter_db = 1.5
