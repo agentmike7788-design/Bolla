@@ -65,8 +65,8 @@ func test_reverent6() -> void:
 	var end := bot.inv().count(&"coin")
 	assert_eq(bot.start_coins, 27, "the measured start purse (W0 note 1)")
 	assert_true(bot.chapter6_day > 0 and bot.chapter6_day <= 37, "reverent6: chapter by day 37 (%d)" % bot.chapter6_day)
-	# 04.10.2026 (Gruft von Beginn an): crypt 1 is free, crypt 2 costs 40 → the mandatory levels are 120.
-	assert_true(bot.spent_p6 >= 120, "Phase-6 spending ≥ 120 (%d)" % bot.spent_p6)
+	# 04.10.2026 (Gruft von Beginn an): crypt 1 is free, crypt 2 costs 35 → the mandatory levels are 115.
+	assert_true(bot.spent_p6 >= 115, "Phase-6 spending ≥ 115 (%d)" % bot.spent_p6)
 	assert_true(end >= 0 and end <= 45, "end 0–45 (%d)" % end)
 	var lowest_b2 := _lowest_morning_from(bot, 31)
 	assert_true(lowest_b2 >= 12, "morning from B2 never below 12 (%d)" % lowest_b2)
