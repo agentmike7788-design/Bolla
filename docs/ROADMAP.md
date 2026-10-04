@@ -11,7 +11,7 @@ Regel: **BAUE → TESTE → ZEIGE → WARTE AUF FREIGABE.** Keine Phase startet 
 | 4 | Leichensystem erweitern | ✅ freigegeben (28.09.2026) |
 | 5 | Crafting und Ressourcen | ✅ freigegeben (28.09.2026) |
 | 6 | Gebäude | ✅ freigegeben (03.10.2026) |
-| 7 | Dorf | 🔵 Planung – Umfang wird mit dem Benutzer abgestimmt (Organe/Anatomie-Wunsch berücksichtigen) |
+| 7 | Dorf | 🟡 Gate G7 PENDING – gebaut (W0–W3, 2372 Tests), wartet auf Benutzerprüfung |
 | 8 | NPCs | – |
 | 9 | Quests | – |
 | 10 | Wirtschaft | – |
