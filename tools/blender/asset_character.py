@@ -953,10 +953,10 @@ def _lower_keys() -> tuple:
     lean = rig.add(_stance(), _body(14.0), {"arm_l": (-62.0, 14.0, 0.0), "arm_r": (-62.0, -14.0, 0.0)})
     bow = rig.add(_stance(), {"spine": (50.0, 0.0, 0.0), "head": (-20.0, 0.0, 0.0),
                               "hips": (6.0, 0.0, 0.0, 0.0, 0.03, -0.09),
-                              "arm_l": (-64.0, 12.0, 0.0), "arm_r": (-64.0, -12.0, 0.0)})
+                              "arm_l": (-88.0, 12.0, 0.0), "arm_r": (-88.0, -12.0, 0.0)})
     let = rig.add(_stance(), {"spine": (54.0, 0.0, 0.0), "head": (-12.0, 0.0, 0.0),
                               "hips": (6.0, 0.0, 0.0, 0.0, 0.03, -0.1),
-                              "arm_l": (-52.0, 8.0, 0.0), "arm_r": (-52.0, -8.0, 0.0)})
+                              "arm_l": (-80.0, 8.0, 0.0), "arm_r": (-80.0, -8.0, 0.0)})
     return carry, lean, bow, let
 
 
@@ -974,7 +974,7 @@ def mourn(t: float) -> dict:
     starts from there)."""
     let = _lower_keys()[3]
     bowed = {"spine": (6.0, 0.0, 0.0), "head": (22.0, 0.0, 0.0),
-             "arm_l": (-24.0, 16.0, 0.0), "arm_r": (-24.0, -16.0, 0.0), "feet": {"leg_l": 0.0, "leg_r": 0.0}}
+             "arm_l": (-26.0, 24.0, 0.0), "arm_r": (-26.0, -24.0, 0.0), "feet": {"leg_l": 0.0, "leg_r": 0.0}}
     rest = {"feet": {"leg_l": 0.0, "leg_r": 0.0}}
     return rig.keyed(t, [(0.0, let), (0.35, bowed), (0.82, bowed), (1.0, rest)], wrap=False)
 
