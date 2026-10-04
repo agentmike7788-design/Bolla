@@ -20,6 +20,6 @@ if "ghost" in what:
 if "corpses" in what:
     import asset_props_slice
     import asset_corpses_phase4
-    asset_props_slice.build(["corpse", "corpse_02", "corpse_03", "corpse_04"])
+    asset_props_slice.build(["corpse", "corpse_02", "corpse_03", "corpse_04", "corpse_shrouded"])
     asset_corpses_phase4.build()
 print("FACES DONE")

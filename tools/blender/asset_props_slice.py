@@ -453,7 +453,7 @@ HEAD_LOCAL_S = Vector((HEAD_R * HEAD_S.y, HEAD_R * HEAD_S.z, HEAD_R * HEAD_S.x))
 def _dead_head(parts, zones, brow_color, *, seed: int = 1, brow_r: float = 0.0075, ears: bool = True,
                age: float = 0.2, nose: str = "straight", nose_s: float = 1.0, jaw: float = 0.95, chin: float = 0.02,
                cheeks: float = 0.45, mouth_w: float = 0.9, res: float = 0.3, seg: int = 14, rings: int = 9,
-               crease: bool = False) -> None:
+               crease: bool = False, skin=None) -> None:
     """G7 Änderungsrunde 1: the shared sculpted head of the living (lib_faces._head), at rest - closed
     lids with a calm lash line curving down, relaxed brows, a soft nose, closed lips with the faintest
     smile; pale but warm skin. Built standing (front -Y) and laid down with HEAD_XF; the back of the
@@ -461,11 +461,12 @@ def _dead_head(parts, zones, brow_color, *, seed: int = 1, brow_r: float = 0.007
     or a headscarf painted onto the skull faces where keep() and pushed out (vertices whose faces all
     belong to a zone), with painted strands; later zones win (as before)."""
     tmp = []
-    F._head(None, Vector((0.0, 0.0, 0.0)), HEAD_LOCAL_S, SKIN, seed=seed + 30, nose=nose, nose_s=nose_s,
+    skin = skin or SKIN
+    F._head(None, Vector((0.0, 0.0, 0.0)), HEAD_LOCAL_S, skin, seed=seed + 30, nose=nose, nose_s=nose_s,
             brow=brow_color, brow_w=1.25 * brow_r / 0.0075, brow_tilt=0.2, brow_arch=0.7, mouth="kind", smile=0.15,
             lip=LIP, mouth_col=L.mix(LIP, F.MOUTH, 0.3), ears=ears, cheeks=cheeks, cheeks_paint=0.35, cheek_col=DEAD_BLUSH, chin=chin, jaw=jaw, age=age,
             mouth_w=mouth_w, add=tmp.append, seg=seg, rings=rings, detail=False, res=res, closed=True,
-            lid_col=L.mix(SKIN, SKIN_ASH, 0.3), lash=LASH, shade_col=L.mix(F.FACE_SHADE, SKIN_ASH, 0.55),
+            lid_col=L.mix(skin, SKIN_ASH, 0.3), lash=LASH, shade_col=L.mix(F.FACE_SHADE, SKIN_ASH, 0.55),
             nose_wings=False, cull=lambda n: n.y > 0.02, crease=crease)
     for o in tmp:
         o.data.transform(HEAD_XF)
@@ -489,7 +490,7 @@ def _dead_head(parts, zones, brow_color, *, seed: int = 1, brow_r: float = 0.007
         zs = around[v.index]
         if min(zs) >= 0:
             lift = min(zones[z][2] for z in zs)
-            locks = zones[zs[0]][3]
+            locks = zones[max(zs)][3]   # (independent of the face order)
             n = (v.co - HEAD_C).normalized()
             v.co += n * (lift + locks * noise.noise(n * 4.0 + off))
     me.update()
@@ -722,7 +723,7 @@ def corpse_02():
     _dead_head(parts, [(lambda u, v: u > 32 or abs(v) > 56 or u < -95, scarf, 0.026, 0.008, 0.1),
                        (lambda u, v: 32 < u < 46 and abs(v) < 44, grey, 0.01, 0.004, 0.2)],
                L.hexc("#857F75"), brow_r=0.006, ears=False, age=0.75, nose="hook", nose_s=0.9, jaw=0.86, chin=0.04,
-               cheeks=0.35, mouth_w=0.8)
+               cheeks=0.35, mouth_w=0.8, skin=L.mix(SKIN, SKIN_ASH, 0.35))   # very old: paler, a breath cooler
     for sy in (-1, 1):  # scarf ends tied under the chin, lying on the collar
         parts.append(_blob("sphere", (0.04, 0.02, 0.007), (0.548, sy * 0.034, 0.2), (0, sy * 0.3, 1),
                            (-1, sy * 0.45, 0), color=L.scale_c(scarf, 0.92), segments=6, ring_count=3, jit=0.002,

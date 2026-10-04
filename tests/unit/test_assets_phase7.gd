@@ -272,8 +272,14 @@ func test_exports_are_deterministic() -> void:
 	var lib := FileAccess.get_file_as_string("res://tools/blender/lib_painted.py")
 	assert_true(lib.contains("def _quantize_uvs(") and lib.count("_canonical_glb(") >= 3, "lib_painted canonicalises exports")
 	# rigged exports: the villagers additionally snap and sort their vertices (export jitter of the skinned mesh)
+	# (G7R1: the code lives in lib_faces.py, shared with the gravekeeper, Osric, Ilse, the ghost, the corpses)
+	var faces := FileAccess.get_file_as_string("res://tools/blender/lib_faces.py")
+	assert_true(faces.contains("def _stable_glb(") and faces.contains("def finish_stable("), "lib_faces canonicalises .glb")
 	var vil := FileAccess.get_file_as_string("res://tools/blender/asset_villagers.py")
-	assert_true(vil.contains("def _stable_glb(") and vil.contains("_stable_glb(L.os.path.join"), "villagers stabilise their .glb")
+	assert_true(vil.contains("_stable_glb(L.os.path.join"), "villagers stabilise their .glb")
+	for gen: String in ["asset_character", "asset_carter", "asset_trader", "asset_ghost"]:
+		var src := FileAccess.get_file_as_string("res://tools/blender/%s.py" % gen)
+		assert_true(src.contains("_stable_glb(L.os.path.join"), gen + " stabilises its .glb")
 
 
 # --- buildings -----------------------------------------------------------------------------------

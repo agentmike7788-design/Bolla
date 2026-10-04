@@ -427,13 +427,17 @@ def _head(parts, c: Vector, s: Vector, skin, *, seed: int, nose: str = "round", 
     face = Face(c, s, jaw=jaw, chin=chin, cheeks=cheeks, age=age, muzzle=muzzle)
     k = face.k
     head = L.prim("sphere", loc=(0, 0, 0), radius=1.0, segments=seg, ring_count=rings)
-    if cull is not None:
-        bm = bmesh.new()
-        bm.from_mesh(head.data)
-        bmesh.ops.delete(bm, geom=[f for f in bm.faces if cull(f.calc_center_median().normalized())], context="FACES")
-        bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
-        bm.to_mesh(head.data)
-        bm.free()
+    if cull is not None:   # rebuilt from the kept faces in their original order (bmesh.ops.delete reorders them)
+        me = head.data
+        co = [v.co.copy() for v in me.vertices]
+        faces = [list(p.vertices) for p in me.polygons
+                 if not cull((sum((co[i] for i in p.vertices), Vector()) / len(p.vertices)).normalized())]
+        used = sorted({i for f in faces for i in f})
+        remap = {old: new for new, old in enumerate(used)}
+        me2 = bpy.data.meshes.new(me.name)
+        me2.from_pydata([co[i] for i in used], [], [[remap[i] for i in f] for f in faces])
+        head.data = me2
+        bpy.data.meshes.remove(me)
     for v in head.data.vertices:
         v.co = face.world(v.co.normalized())
     _painted(head, skin, ao=0.1, var=0.05, top=0.08, seed=seed, zrange=(c.z - s.z, c.z + s.z))
