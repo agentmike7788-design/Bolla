@@ -19,6 +19,7 @@ import bmesh
 from mathutils import Matrix, Vector, noise
 
 import lib_painted as L
+import lib_faces as F
 from asset_environment import _limb as limb  # same gnarled limbs as the approved oak
 
 # --- palette (ART_DIRECTION.md section 3 + Phase 1 asset colours) ----------
@@ -48,7 +49,7 @@ LINEN = L.hexc("#D2C8AE")
 LINEN_DIRTY = L.hexc("#B5AA8E")
 ROPE = L.hexc("#8C7650")
 STRING = L.hexc("#B9A77E")
-SKIN = L.hexc("#76816F")          # pale grey-green (the painted shader lifts it to a pale ash)
+SKIN = L.hexc("#C4A08C")          # G7R1: pale and quiet, but warm - the dead are laid out, not grey
 BOOT = L.hexc("#2E2620")
 LEATHER = L.hexc("#3B2E24")
 
@@ -206,10 +207,11 @@ def _clods(n: int, xr, yr, color, r=(0.03, 0.06), z: float = 0.02, seed: int = 0
 # table, bier and handcart. Peaceful, never gory: closed eyes, folded hands, tidy clothes.
 # Same proportion family as the characters: big head, big hands, big boots.
 
-SKIN_ASH = L.hexc("#6A6874")      # lilac-grey hollows (eye sockets)
-SKIN_WARM = L.hexc("#858A74")     # ashen highlights (cheeks, nose, knuckles)
-LIP = L.hexc("#76696A")
-LASH = L.hexc("#3E3733")
+SKIN_ASH = L.hexc("#A08A90")      # soft lilac hollows (eye sockets, the lids)
+SKIN_WARM = L.hexc("#CFAE9A")     # pale warm highlights (cheeks, nose, knuckles)
+LIP = L.hexc("#A68481")           # muted rose, closed
+LASH = L.hexc("#4A3B34")
+DEAD_BLUSH = L.hexc("#C08A7E")    # the faintest warmth left on the cheeks
 BRASS = L.hexc("#8E7F55")         # dull, never shiny
 CORPSE_SMOOTH = 80.0              # smooth-shading angle: soft limbs, only the soles stay crisp
 
@@ -443,15 +445,33 @@ def _skin_fn(co, poly):
     return _skin_at(co)
 
 
-def _zone_head(parts, zones, segs: int = 14, rings: int = 9, seed: int = 1) -> None:
-    """Sculpted head sphere (pole = nose, crown = +X). zones = [(keep(u, v), colour, lift, locks,
-    streak)]: hair, beard or a headscarf painted onto the faces where keep() and pushed out
-    (vertices whose faces all belong to a zone), with painted strands; later zones win."""
-    o = L.prim("sphere", radius=1.0, segments=segs, ring_count=rings)
-    me = o.data
-    for v in me.vertices:
-        d = v.co.normalized()
-        v.co = HEAD_C + Vector((d.x * HEAD_S.x, d.y * HEAD_S.y, d.z * HEAD_S.z)) * HEAD_R * _head_shape(d)
+# head -> world: the face looks up (+Z), the crown points to +X (the head lies at +X)
+HEAD_XF = Matrix.Translation(HEAD_C) @ Matrix(((0, 0, 1, 0), (-1, 0, 0, 0), (0, -1, 0, 0), (0, 0, 0, 1)))
+HEAD_LOCAL_S = Vector((HEAD_R * HEAD_S.y, HEAD_R * HEAD_S.z, HEAD_R * HEAD_S.x))   # width, depth, height
+
+
+def _dead_head(parts, zones, brow_color, *, seed: int = 1, brow_r: float = 0.0075, ears: bool = True,
+               age: float = 0.2, nose: str = "straight", nose_s: float = 1.0, jaw: float = 0.95, chin: float = 0.02,
+               cheeks: float = 0.45, mouth_w: float = 0.9, res: float = 0.3, seg: int = 14, rings: int = 9,
+               crease: bool = False) -> None:
+    """G7 Änderungsrunde 1: the shared sculpted head of the living (lib_faces._head), at rest - closed
+    lids with a calm lash line curving down, relaxed brows, a soft nose, closed lips with the faintest
+    smile; pale but warm skin. Built standing (front -Y) and laid down with HEAD_XF; the back of the
+    skull (on the table) is left out. zones = [(keep(u, v), colour, lift, locks, streak)]: hair, beard
+    or a headscarf painted onto the skull faces where keep() and pushed out (vertices whose faces all
+    belong to a zone), with painted strands; later zones win (as before)."""
+    tmp = []
+    F._head(None, Vector((0.0, 0.0, 0.0)), HEAD_LOCAL_S, SKIN, seed=seed + 30, nose=nose, nose_s=nose_s,
+            brow=brow_color, brow_w=1.25 * brow_r / 0.0075, brow_tilt=0.2, brow_arch=0.7, mouth="kind", smile=0.15,
+            lip=LIP, mouth_col=L.mix(LIP, F.MOUTH, 0.3), ears=ears, cheeks=cheeks, cheeks_paint=0.35, cheek_col=DEAD_BLUSH, chin=chin, jaw=jaw, age=age,
+            mouth_w=mouth_w, add=tmp.append, seg=seg, rings=rings, detail=False, res=res, closed=True,
+            lid_col=L.mix(SKIN, SKIN_ASH, 0.3), lash=LASH, shade_col=L.mix(F.FACE_SHADE, SKIN_ASH, 0.55),
+            nose_wings=False, cull=lambda n: n.y > 0.02, crease=crease)
+    for o in tmp:
+        o.data.transform(HEAD_XF)
+        o.data.update()
+    skull = tmp[0]
+    me = skull.data
     fz = []
     for poly in me.polygons:
         u, v = _uv(_head_dir(poly.center))
@@ -472,41 +492,20 @@ def _zone_head(parts, zones, segs: int = 14, rings: int = 9, seed: int = 1) -> N
             locks = zones[zs[0]][3]
             n = (v.co - HEAD_C).normalized()
             v.co += n * (lift + locks * noise.noise(n * 4.0 + off))
-
-    def zone_fn(co, poly):
+    me.update()
+    attr = me.color_attributes["Col"]
+    for poly in me.polygons:
         z = fz[poly.index]
         if z < 0:
-            return _skin_at(co)
-        d = co - HEAD_C
-        s = math.sin(math.atan2(d.y, d.z) * 9.0 + d.x * 14.0)
-        return L.scale_c(zones[z][1], 1.0 - zones[z][4] * max(0.0, s) ** 3)
-    parts.append(_cloth(o, zone_fn, var=0.08, ao=0.25, top=0.1, freq=7.0, seed=seed))
-
-
-def _face(parts, brow_color, brow_r: float = 0.0075, ears: bool = True) -> None:
-    """A gentle face: closed lids with lash lines, soft nose, closed lips, ears, relaxed brows."""
-    for sy in (-1, 1):
-        # closed lid: a soft bulge in the socket, a calm curved lash line below it
-        parts.append(_blob("sphere", (0.017, 0.031, 0.012), _face_pt(15, 25 * sy, -0.003), _face_n(15, 25 * sy),
-                           (1, 0, 0), color=L.mix(SKIN, SKIN_ASH, 0.12), segments=6, ring_count=4, ao=0.1, top=0.05))
-        lash = [_face_pt(u, v * sy, 0.006) for u, v in ((12, 13), (8.5, 25), (12, 37))]
-        parts.append(_cloth(_tube(lash, (0.0035, 0.0045, 0.0035), 3, hint=(0, 0, 1), caps=(False, False)),
-                            _flat(LASH), var=0.05, ao=0.0, top=0.0))
-        pts = [_face_pt(u, v * sy, 0.002) for u, v in ((29, 11), (32, 24), (29, 38))]
-        parts.append(_cloth(_tube(pts, (brow_r * 0.8, brow_r, brow_r * 0.7), 4, hint=(1, 0, 0), caps=(False, False)),
-                            _flat(brow_color), var=0.15, ao=0.1))
-        if ears:
-            parts.append(_blob("ico", (0.038, 0.026, 0.012), _face_pt(2, 82 * sy, -0.006), _face_n(2, 88 * sy),
-                               (1, 0, 0), color=L.mix(SKIN, SKIN_ASH, 0.2), subdivisions=1, ao=0.2))
-    # nose: soft and a little big, like the living characters'
-    parts.append(_blob("sphere", (0.038, 0.022, 0.021), _face_pt(-4, 0, 0.004), _face_n(-4, 0), (1, 0, 0),
-                       fn=lambda lc, poly: L.mix(SKIN, SKIN_ASH, 0.3) if lc.x < -0.03 else L.mix(SKIN, SKIN_WARM, 0.6),
-                       segments=8, ring_count=4, ao=0.08))
-    # lips: closed, muted mauve with a darker seam
-    parts.append(_blob("sphere", (0.01, 0.028, 0.008), _face_pt(-27, 0, -0.002), _face_n(-27, 0), (1, 0, 0),
-                       fn=lambda lc, poly: L.scale_c(LIP, 0.75) if abs(lc.x) < 0.004 else L.mix(LIP, SKIN, 0.3),
-                       segments=6,
-                       ring_count=3, ao=0.08))
+            continue
+        for li in poly.loop_indices:
+            co = me.vertices[me.loops[li].vertex_index].co
+            d = co - HEAD_C
+            s = math.sin(math.atan2(d.y, d.z) * 9.0 + d.x * 14.0)
+            c = _shade(L.scale_c(zones[z][1], 1.0 - zones[z][4] * max(0.0, s) ** 3), co, poly.normal.z, 0.08, 0.25, 0.1,
+                       7.0, seed)
+            attr.data[li].color = (L._to_lin(c[0]), L._to_lin(c[1]), L._to_lin(c[2]), 1.0)
+    parts.extend(tmp)
 
 
 # --- body ----------------------------------------------------------------------
@@ -661,7 +660,7 @@ def _sprig(parts, base: Vector, direction: Vector, seed: int = 0, n: int = 3) ->
 def _corpse_done(parts, name: str) -> None:
     obj = L.join(parts, name)
     _center_xy(obj)
-    L.finish(obj, name, "props", CORPSE_SMOOTH)
+    F.finish_stable(obj, name, "props", CORPSE_SMOOTH)
 
 
 # --- the four looks --------------------------------------------------------------
@@ -675,8 +674,8 @@ def corpse():
     shirt, trouser = L.hexc("#857F6B"), L.hexc("#45423A")
     hair = L.hexc("#54412F")
     parts = []
-    _zone_head(parts, [(lambda u, v: u > 40 or (abs(v) > 60 and u > 14) or abs(u) > 125, hair, 0.013, 0.012, 0.16)])
-    _face(parts, L.scale_c(hair, 0.9))
+    _dead_head(parts, [(lambda u, v: u > 40 or (abs(v) > 60 and u > 14) or abs(u) > 125, hair, 0.013, 0.012, 0.16)],
+               L.scale_c(hair, 0.9), age=0.25, nose="round", nose_s=1.05, jaw=1.0)
     _neck(parts)
 
     def half_open(x):
@@ -720,9 +719,10 @@ def corpse_02():
     dress, shawl = L.hexc("#4A4452"), L.hexc("#5F4E40")
     scarf, grey = L.hexc("#7E6A4A"), L.hexc("#9A958B")
     parts = []
-    _zone_head(parts, [(lambda u, v: u > 32 or abs(v) > 56 or u < -95, scarf, 0.026, 0.008, 0.1),
-                       (lambda u, v: 32 < u < 46 and abs(v) < 44, grey, 0.01, 0.004, 0.2)])
-    _face(parts, L.hexc("#857F75"), brow_r=0.006, ears=False)
+    _dead_head(parts, [(lambda u, v: u > 32 or abs(v) > 56 or u < -95, scarf, 0.026, 0.008, 0.1),
+                       (lambda u, v: 32 < u < 46 and abs(v) < 44, grey, 0.01, 0.004, 0.2)],
+               L.hexc("#857F75"), brow_r=0.006, ears=False, age=0.75, nose="hook", nose_s=0.9, jaw=0.86, chin=0.04,
+               cheeks=0.35, mouth_w=0.8)
     for sy in (-1, 1):  # scarf ends tied under the chin, lying on the collar
         parts.append(_blob("sphere", (0.04, 0.02, 0.007), (0.548, sy * 0.034, 0.2), (0, sy * 0.3, 1),
                            (-1, sy * 0.45, 0), color=L.scale_c(scarf, 0.92), segments=6, ring_count=3, jit=0.002,
@@ -778,10 +778,10 @@ def corpse_03():
     shirt, vest = L.hexc("#9C9582"), L.hexc("#45503E")
     trouser, beard = L.hexc("#3B3935"), L.hexc("#A09B8E")
     parts = []
-    _zone_head(parts, [(lambda u, v: (abs(v) > 55 and 16 < u < 150) or abs(u) > 130, beard, 0.012, 0.012, 0.12),
+    _dead_head(parts, [(lambda u, v: (abs(v) > 55 and 16 < u < 150) or abs(u) > 130, beard, 0.012, 0.012, 0.12),
                        (lambda u, v: -125 < u < -16 and not (u > -40 and abs(v) < 16) and abs(v) < 82, beard, 0.02,
-                        0.01, 0.12)])
-    _face(parts, beard, brow_r=0.011)
+                        0.01, 0.12)],
+               beard, brow_r=0.011, ears=False, age=0.8, nose="round", nose_s=1.1, jaw=1.0, cheeks=0.3)
     # the beard flows from the chin over the throat onto the chest in wavy locks
     secs = [(0.47, 0.0, 0.186, 0.036, 0.012, 0.008), (0.5, 0.0, 0.192, 0.05, 0.017, 0.012),
             (0.535, 0.0, 0.198, 0.058, 0.02, 0.016), (0.572, 0.0, 0.205, 0.062, 0.022, 0.02),
@@ -841,9 +841,9 @@ def corpse_04():
     trouser, cap = L.hexc("#54483B"), L.hexc("#4D4843")
     flour = L.hexc("#A9A393")
     parts = []
-    _zone_head(parts, [(lambda u, v: u > 42 - 8 * math.sin(math.radians(v) * 3.0) or (abs(v) > 64 and u > 12)
-                        or abs(u) > 125, L.hexc("#77553A"), 0.015, 0.016, 0.18)])
-    _face(parts, L.hexc("#6A4C33"))
+    _dead_head(parts, [(lambda u, v: u > 42 - 8 * math.sin(math.radians(v) * 3.0) or (abs(v) > 64 and u > 12)
+                        or abs(u) > 125, L.hexc("#77553A"), 0.015, 0.016, 0.18)],
+               L.hexc("#6A4C33"), age=0.0, nose="button", nose_s=1.1, jaw=0.95, chin=0.02, cheeks=0.6)
     _neck(parts)
 
     def zone(x, a, co):

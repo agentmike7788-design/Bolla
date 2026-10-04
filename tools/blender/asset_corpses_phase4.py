@@ -31,7 +31,7 @@ COAT5_DARK = L.hexc("#3B332B")
 PATCH_A = L.hexc("#5F5747")
 PATCH_B = L.hexc("#433D35")
 STITCH = L.hexc("#8A7E68")
-MOOR = L.hexc("#5C5746")          # moor-darkened, leathery skin (still calm, no wounds)
+MOOR = L.hexc("#8A7464")          # moor-darkened, leathery skin (still calm, no wounds; warm, not grey)
 TRAVEL = L.hexc("#5E4A3E")        # Ida's travelling coat: dark rust-brown wool
 TRAVEL_DARK = L.hexc("#47382F")
 CHESTNUT = L.hexc("#553B2B")
@@ -48,7 +48,7 @@ def _done(parts, name: str) -> None:
     obj = L.join(parts, name)
     L.marker(obj, "sprig", _sprig_point())
     P._center_xy(obj)
-    L.finish(obj, name, "props", P.CORPSE_SMOOTH)
+    P.F.finish_stable(obj, name, "props", P.CORPSE_SMOOTH)
 
 
 def _darken(objs, color, amount: float) -> None:
@@ -106,10 +106,10 @@ def corpse_05():
     parts = []
     skin_parts = []
     n0 = len(parts)
-    P._zone_head(parts, [(lambda u, v: u > 44 or (abs(v) > 64 and u > 16) or abs(u) > 128, hair, 0.01, 0.008, 0.14),
+    P._dead_head(parts, [(lambda u, v: u > 44 or (abs(v) > 64 and u > 16) or abs(u) > 128, hair, 0.01, 0.008, 0.14),
                          (lambda u, v: -118 < u < -20 and abs(v) < 84 and not (u > -42 and abs(v) < 20), stubble,
-                          0.003, 0.002, 0.3)], seed=51)
-    P._face(parts, L.scale_c(hair, 1.1))
+                          0.003, 0.002, 0.3)], L.scale_c(hair, 1.1), seed=51, age=0.35, nose="long", nose_s=1.05,
+                 jaw=0.92, chin=0.03, cheeks=0.3, res=0.7, seg=20, rings=12, crease=True)
     P._neck(parts)
     skin_parts += parts[n0:]
 
@@ -161,9 +161,9 @@ def corpse_06():
     laced boots below; ink on thumb and forefinger."""
     L.reset(206)
     parts = []
-    P._zone_head(parts, [(lambda u, v: u > 30 or abs(v) > 58 or abs(u) > 120, CHESTNUT, 0.018, 0.006, 0.2)],
-                 seed=61)
-    P._face(parts, L.scale_c(CHESTNUT, 0.9), brow_r=0.006, ears=False)
+    P._dead_head(parts, [(lambda u, v: u > 30 or abs(v) > 58 or abs(u) > 120, CHESTNUT, 0.018, 0.006, 0.2)],
+                 L.scale_c(CHESTNUT, 0.9), seed=61, brow_r=0.006, ears=False, age=0.0, nose="button", nose_s=0.95,
+                 jaw=0.88, chin=0.03, cheeks=0.55, mouth_w=0.8, res=0.7, seg=20, rings=12, crease=True)
     P._neck(parts)
     P._torso(parts, lambda x, a, co: L.scale_c(TRAVEL, P._crease(co, 0.08, 0.46, 58.0, 0.12)), P._torso_fold,
              seed=62)
@@ -207,9 +207,9 @@ def corpse_gown():
     L.reset(207)
     hair = L.hexc("#6E6254")
     parts = []
-    P._zone_head(parts, [(lambda u, v: u > 38 or (abs(v) > 62 and u > 14) or abs(u) > 126, hair, 0.011, 0.003, 0.22)],
-                 seed=71)
-    P._face(parts, L.scale_c(hair, 0.95))
+    P._dead_head(parts, [(lambda u, v: u > 38 or (abs(v) > 62 and u > 14) or abs(u) > 126, hair, 0.011, 0.003, 0.22)],
+                 L.scale_c(hair, 0.95), seed=71, age=0.45, nose="straight", nose_s=1.0, jaw=0.92, cheeks=0.4,
+                 res=0.7, seg=20, rings=12, crease=True)
     P._neck(parts)
 
     def gown(co, poly):

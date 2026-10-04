@@ -358,7 +358,11 @@ def _brow(add, face, sx, brow, brow_w, brow_tilt, brow_arch, eye_gap, k, seed, s
     arch = [0.0, 0.022, 0.034, 0.034, 0.02, -0.01]
     tilt = [0.12, 0.08, 0.04, 0.0, -0.02, -0.04]
     bw = [0.0052, 0.0068, 0.0072, 0.0064, 0.005, 0.0028]
-    bp = [face.pt(sx * uu * eye_gap ** 0.5, 0.37 + arch[i] * brow_arch + brow_tilt * tilt[i] - (0.012 if i == 5 else 0.0) + lift,
+    if sn(10) <= 3:   # lean (corpses): four points
+        keep = (0, 2, 3, 5)
+        us, arch, tilt, bw = ([a[i] for i in keep] for a in (us, arch, tilt, bw))
+    last = len(us) - 1
+    bp = [face.pt(sx * uu * eye_gap ** 0.5, 0.37 + arch[i] * brow_arch + brow_tilt * tilt[i] - (0.012 if i == last else 0.0) + lift,
                   0.0035 * k) for i, uu in enumerate(us)]
     br = sweep(bp, [r * brow_w * k for r in bw], n=sn(6), flat=0.5, name="brow",
                normals=[face.nrm(sx * uu, 0.36) for uu in us])
@@ -368,14 +372,14 @@ def _brow(add, face, sx, brow, brow_w, brow_tilt, brow_arch, eye_gap, k, seed, s
     add(br)
 
 
-def _closed_eye(add, face, e, nrm, sx, sw, sd, sh, k, lidc, lash_col, sn, seed) -> None:
+def _closed_eye(add, face, e, nrm, sx, sw, sd, sh, k, lidc, lash_col, sn, seed, crease: bool = True) -> None:
     """A closed eye (the dead, at rest): the lid lies over the whole eye as a calm skin dome, the lash
     line curves gently downward along its lower third (peaceful, never sunken)."""
     lw, ld, lh = sw * 1.1, sd * 1.2, sh * 1.02
     add(_oell(lidc, e, nrm, (lw, ld, lh), seg=12, rings=7, ao=0.0, var=0.04, top=0.15, seed=seed + 3))
     m_eye = _frame(e, -nrm, (0, 0, 1))
     lash = []
-    n = 7
+    n = 5 if sn(10) <= 3 else 7
     for i in range(n):
         t = -1.0 + 2.0 * i / (n - 1)
         x = t * lw * 0.9
@@ -383,8 +387,10 @@ def _closed_eye(add, face, e, nrm, sx, sw, sd, sh, k, lidc, lash_col, sn, seed) 
         y = -ld * math.sqrt(max(0.0, 1.0 - (x / lw) ** 2 - (z / lh) ** 2)) * 1.03
         lash.append(m_eye @ Vector((x * sx, y, z)))
     lr = 0.0019 * k
-    add(_painted(sweep(lash, [lr * 0.4, lr * 0.9, lr * 1.15, lr * 1.25, lr * 1.15, lr * 0.9, lr * 0.4], n=sn(5),
+    add(_painted(sweep(lash, [lr * (0.4 + 0.85 * math.sin(math.pi * i / (n - 1))) for i in range(n)], n=sn(5),
                        name="lash"), lash_col, ao=0.0, var=0.05, top=0.0))
+    if not crease:
+        return
     # the lid crease above (a soft painted fold, reads as a resting eye, not a hole)
     crease = []
     for i in range(5):
@@ -403,7 +409,7 @@ def _head(parts, c: Vector, s: Vector, skin, *, seed: int, nose: str = "round", 
           iris=IRIS_BROWN, muzzle: float = 1.0, eye_gap: float = 1.0, mouth_w: float = 1.0, add=None,
           seg: int = 28, rings: int = 18, detail: bool = True, res=None, cull=None, closed: bool = False,
           sclera=None, pupil=None, gleam=None, lash=None, shade_col=None, mouth_col=None, lid_col=None,
-          nose_wings=None, cheeks_paint=None, brow_lift: float = 0.0):
+          nose_wings=None, cheeks_paint=None, brow_lift: float = 0.0, crease: bool = True):
     """Painted, sculpted head (see the section note). brow_tilt > 0 raises the inner brow ends
     (kind / worried), < 0 lowers them (stern). lids: 0.1 wide awake .. 0.45 heavy. mouth: smile,
     laugh, thin, stern, kind. Front = -Y. Returns a dict of useful points and the Face.
@@ -478,7 +484,7 @@ def _head(parts, c: Vector, s: Vector, skin, *, seed: int, nose: str = "round", 
         sw, sd, sh = 0.0235 * eye_k, 0.0115 * eye_k, 0.0165 * eye_k
         if closed:
             _closed_eye(add, face, e, nrm, sx, sw, sd, sh, k, lid_col or L.mix(skin, FACE_SHADE_, 0.22), LASH_, sn,
-                        seed)
+                        seed, crease)
             if brow is not None:
                 _brow(add, face, sx, brow, brow_w, brow_tilt, brow_arch, eye_gap, k, seed, sn, brow_lift)
             continue
@@ -540,7 +546,7 @@ def _head(parts, c: Vector, s: Vector, skin, *, seed: int, nose: str = "round", 
                          line_c, ao=0.0, var=0.04, top=0.0))
         for sx in (-1, 1):
             stroke([(sx * 0.15, -0.19), (sx * 0.21, -0.3), (sx * 0.25, mz + 0.03)], 0.0024 * min(1.0, age + 0.2))
-            if age > 0.5:   # crow's feet, marionette lines
+            if age > 0.5 and sn(10) > 3:   # crow's feet, marionette lines
                 for dz in (-0.06, 0.0, 0.06):
                     stroke([(sx * (ex + 0.21), ez + dz * 0.6), (sx * (ex + 0.3), ez + dz * 1.4)], 0.0018)
                 stroke([(sx * 0.26, mz - 0.05), (sx * 0.27, mz - 0.15)], 0.0016 * age)
@@ -577,19 +583,22 @@ def _head(parts, c: Vector, s: Vector, skin, *, seed: int, nose: str = "round", 
     mw = 0.22 * mouth_w
     curve = {"smile": 0.045, "laugh": 0.06, "kind": 0.035, "thin": 0.0, "stern": -0.025}.get(mouth, 0.03) * smile
     mpts, mrad = [], []
-    for i in range(7):
-        t = -1.0 + 2.0 * i / 6
+    mn = 5 if sn(10) <= 3 else 7
+    for i in range(mn):
+        t = -1.0 + 2.0 * i / (mn - 1)
         uu = t * mw
         ww = mz + curve * t * t - (0.008 if mouth in ("smile", "laugh", "kind") else 0.0) * (1.0 - t * t)
         mpts.append(face.pt(uu, ww, 0.0012 * k))
         thick = 0.0042 if mouth not in ("thin", "stern") else 0.0032
         mrad.append(thick * k * (0.55 + 0.45 * (1.0 - t * t)))
-    add(_painted(sweep(mpts, mrad, n=sn(6), flat=0.6, name="mouth", normals=[face.nrm(0.0, mz)] * 7), MOUTH_, ao=0.0, var=0.05,
+    add(_painted(sweep(mpts, mrad, n=sn(6), flat=0.6, name="mouth", normals=[face.nrm(0.0, mz)] * mn), MOUTH_, ao=0.0, var=0.05,
                  top=0.0, seed=seed + 8))
     if mouth == "laugh":
         add(_oell(L.scale_c(MOUTH_, 0.55), face.pt(0.0, mz - 0.035, -0.002 * k), face.nrm(0.0, mz - 0.03),
                   (0.017 * k, 0.005 * k, 0.0085 * k), seg=10, rings=5, ao=0.0, var=0.03, top=0.0))
-    if mouth not in ("thin", "stern"):
+    if sn(10) <= 3:   # lean (corpses): the lip colour is painted on the skull only
+        pass
+    elif mouth not in ("thin", "stern"):
         lw = 0.014 if mouth != "kind" else 0.011
         add(_oell(lipc, face.pt(0.0, mz - 0.075 - (0.03 if mouth == "laugh" else 0.0), -0.0028 * k),
                   face.nrm(0.0, mz - 0.07), (lw * k * mouth_w, 0.0055 * k, 0.0058 * k), seg=10, rings=5, ao=0.0,
