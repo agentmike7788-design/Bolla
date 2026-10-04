@@ -528,7 +528,11 @@
   "_buildings": "Phase 6 §4.1–§4.4: feste Bauplätze (BuildingSite, sichtbar ab buildings_open). footprint = lokales XZ-Rechteck [x, z, w, d], access = Weltpunkt vor der Tür, height = Kollisionshöhe des Footprints. site_rects = Footprint + Rand 0,6 + Zugang (Welt-Rect2 [x, z, w, d]): Zier dort einmal geräumt, Bau-Maske gesperrt.",
   "buildings": {
     "sites": [
-      {"id": "site_crypt", "building": "crypt", "pos": [-9.0, 6.9], "rot_y": 0.0, "footprint": [-1.4, -1.3, 2.8, 2.6], "access": [-9.0, 8.7], "height": 2.4, "door_marker": "door_outside"},
+      {"id": "site_crypt", "building": "crypt", "pos": [-9.0, 6.9], "rot_y": 0.0, "footprint": [-1.4, -1.3, 2.8, 2.6], "access": [-9.0, 8.7], "height": 2.4, "door_marker": "door_outside",
+        "stair": {"_comment": "G7 Änderungsrunde 1: die Grufttreppe führt durch den Torbogen in die Erde (Rampe im Boden, Rechteck lokal [x0, z0, x1, z1]: top_z = Bodenhöhe, bottom_z = Tiefe depth vor der Tür). passage = Durchgang in der Footprint-Kollision (ab Stufe 1), cheeks = Wangenmauern der Treppe (Kollision ab Stufe 1), cover_rect = Grasdecke über der Grube bis Stufe 1, trigger = Übergang in den Gruft-Raum am Fuß der Treppe (lokal am Türknoten, Laufrichtung dir).",
+          "rect": [-0.62, 0.12, 0.62, 2.1], "top_z": 2.1, "bottom_z": 0.42, "depth": 1.0,
+          "passage": [-0.5, 0.42, 0.5, 1.3], "cheeks": [[-0.95, 1.3, -0.5, 2.1], [0.5, 1.3, 0.95, 2.1]], "cheek_height": 1.3,
+          "cover_rect": [-0.97, -0.05, 0.97, 2.2], "cover_asset": "ph_env_crypt_pit_cover"}},
       {"id": "site_chapel", "building": "chapel", "pos": [4.5, -25.5], "rot_y": 0.0, "footprint": [-2.6, -3.5, 5.2, 7.0], "access": [4.5, -21.5], "height": 6.0, "door_marker": "door_outside"},
       {"id": "site_shed", "building": "shed", "pos": [-12.9, -9.0], "rot_y": 0.0, "footprint": [-1.6, -1.8, 3.2, 3.6], "access": [-12.8, -6.3], "height": 3.0, "door_marker": "door_outside"}
     ],
@@ -537,7 +541,8 @@
     "soul_lantern": {"asset": "ph_prop_soul_lantern", "pos": [6.6, -21.4], "rot_y": 0.0, "min_level": 3}
   },
   "building_doors": [
-    {"id": "door_crypt", "type": "building_door", "pos": [-9.0, 8.55], "rot_y": 0.0, "params": {"building": "crypt"}},
+    {"id": "door_crypt", "type": "building_door", "pos": [-9.0, 7.65], "rot_y": 0.0, "params": {"building": "crypt"},
+      "stair_trigger": {"rect": [-0.5, -0.33, 0.5, 0.05], "height": 2.0, "dir": [0.0, -1.0]}},
     {"id": "door_chapel", "type": "building_door", "pos": [4.5, -21.3], "rot_y": 0.0, "params": {"building": "chapel"}},
     {"id": "door_shed", "type": "building_door", "pos": [-12.8, -6.85], "rot_y": 0.0, "params": {"building": "shed"}}
   ],

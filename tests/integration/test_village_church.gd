@@ -45,7 +45,9 @@ func test_church_door_room_priest_and_round_trip() -> void:
 	var marker := church.find_child("door_outside", true, false) as Node3D if church != null else null
 	assert_not_null(marker, "the church model's door_outside")
 	if marker != null:
-		assert_true(door.global_position.distance_to(marker.global_position) < 0.01, "the door at door_outside")
+		# The church door lies up its steps beyond the walkable bounds: the HouseDoor at their foot.
+		var d := Vector2(door.global_position.x - marker.global_position.x, door.global_position.z - marker.global_position.z)
+		assert_true(absf(d.x) < 0.05 and d.y > 0.0 and d.y < 1.6, "the door at the foot of the church steps (%s)" % d)
 	# Closed at night, with the next opening.
 	_set_time(TimeManager.day, 21 * 60)
 	player.global_transform = door.exit_transform()

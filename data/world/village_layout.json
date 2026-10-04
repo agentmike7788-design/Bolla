@@ -177,7 +177,7 @@
     {"id": "door_inn", "type": "HouseDoor", "house": "v_inn", "room_id": "inn", "display_name": "Holderkrug", "open_windows": [410, 1410]},
     {"id": "door_surgery", "type": "HouseDoor", "house": "v_surgery", "room_id": "surgery", "display_name": "Wundarztstube", "open_windows": [475, 720, 840, 1080]},
     {"id": "door_office", "type": "HouseDoor", "house": "v_office", "room_id": "office", "display_name": "Amtsstube", "open_windows": [475, 720, 785, 960]},
-    {"id": "door_church", "type": "HouseDoor", "house": "v_church", "room_id": "church", "display_name": "die Kirche", "open_windows": [360, 1200]},
+    {"id": "door_church", "type": "HouseDoor", "house": "v_church", "room_id": "church", "pos": [0.0, -10.7], "display_name": "die Kirche", "open_windows": [360, 1200]},
     {"id": "counter_smith", "type": "ShopCounter", "pos": [-16.8, -2.0], "rot_y": 90.0, "shop_id": "smith", "reach": [1.6, 1.4, 2.6]},
     {"id": "counter_grocer", "type": "ShopCounter", "pos": [-14.3, 7.0], "rot_y": 90.0, "shop_id": "grocer", "reach": [1.6, 1.4, 2.4]},
     {"id": "village_board", "type": "VillageBoard", "pos": [-7.0, 5.1], "rot_y": 0.0, "reach": [2.0, 1.4, 1.8], "reach_offset": [0.0, 0.7, 0.6]},

@@ -16,6 +16,9 @@ const InteriorBuild := preload("res://src/world/interiors/interior_build.gd")
 const SITE_SCENE := "res://src/entities/building_site/building_site.tscn"
 const DOOR_SCENE := "res://src/entities/building_door/building_door.tscn"
 const EXTERIOR_SCRIPT := "res://src/world/graveyard/building_exterior.gd"
+## G7 round 1: the crypt stair (walk-through portal, the sod cover over the pit until level 1).
+const STAIR_PORTAL_SCRIPT := "res://src/world/interiors/stair_portal.gd"
+const SITE_COVER_SCRIPT := "res://src/entities/building_site/site_cover.gd"
 ## §3.1: node name → script (groups / save_id / save_order are set by the scripts themselves:
 ## buildings 32, ossuary 36, chapel 37).
 const SYSTEMS := [
@@ -77,14 +80,69 @@ static func build_sites(ctx: Ctx, entities: Node3D) -> void:
 		body.collision_layer = Ctx.WORLD_LAYER
 		body.collision_mask = 0
 		ctx.add(node, body)
-		var shape := CollisionShape3D.new()
-		shape.name = "Footprint"
-		var box := BoxShape3D.new()
-		box.size = Vector3(fp.size.x, h, fp.size.y)
-		shape.shape = box
-		shape.position = Vector3(fp.get_center().x, h * 0.5, fp.get_center().y)
-		ctx.add(body, shape)
+		if site.has("stair"):
+			_stair_collision(ctx, body, fp, h, site.stair)
+			_stair_cover(ctx, entities, site)
+		else:
+			_box_shape(ctx, body, "Footprint", fp, 0.0, h)
 		_build_exterior(ctx, node, site, cfg)
+
+
+## G7 round 1: the footprint around the stair passage ("Footprint" behind it, "FootprintWest/East"
+## beside it), the plug over the passage until level 1 (meta max_level 0) and the stair cheeks from
+## level 1 (meta min_level 1, from below the stair foot) – BuildingSite._apply_level_shapes.
+static func _stair_collision(ctx: Ctx, body: StaticBody3D, fp: Rect2, h: float, st: Dictionary) -> void:
+	var ps: Array = st.passage
+	var pass_rect := Rect2(float(ps[0]), float(ps[1]), float(ps[2]) - float(ps[0]), float(ps[3]) - float(ps[1]))
+	_box_shape(ctx, body, "Footprint", Rect2(fp.position.x, fp.position.y, fp.size.x, pass_rect.position.y - fp.position.y), 0.0, h)
+	_box_shape(ctx, body, "FootprintWest", Rect2(fp.position.x, pass_rect.position.y, pass_rect.position.x - fp.position.x,
+			fp.end.y - pass_rect.position.y), 0.0, h)
+	_box_shape(ctx, body, "FootprintEast", Rect2(pass_rect.end.x, pass_rect.position.y, fp.end.x - pass_rect.end.x,
+			fp.end.y - pass_rect.position.y), 0.0, h)
+	var plug := _box_shape(ctx, body, "PassagePlug", pass_rect, 0.0, h)
+	plug.set_meta(&"max_level", 0)
+	var depth := float(st.depth)
+	var k := 0
+	for c: Array in st.get("cheeks", []):
+		k += 1
+		var r := Rect2(float(c[0]), float(c[1]), float(c[2]) - float(c[0]), float(c[3]) - float(c[1]))
+		var cheek := _box_shape(ctx, body, "Cheek%d" % k, r, -depth - 0.2, float(st.get("cheek_height", 1.2)))
+		cheek.set_meta(&"min_level", 1)
+
+
+static func _box_shape(ctx: Ctx, body: Node3D, shape_name: String, r: Rect2, y0: float, y1: float) -> CollisionShape3D:
+	var shape := CollisionShape3D.new()
+	shape.name = shape_name
+	var box := BoxShape3D.new()
+	box.size = Vector3(r.size.x, y1 - y0, r.size.y)
+	shape.shape = box
+	shape.position = Vector3(r.get_center().x, (y0 + y1) * 0.5, r.get_center().y)
+	ctx.add(body, shape)
+	return shape
+
+
+## G7 round 1: Entities/<site>_cover – the sod patch (cover_asset) over the stair pit with a walkable
+## slab, shown until the building reaches level 1 (SiteCover).
+static func _stair_cover(ctx: Ctx, entities: Node3D, site: Dictionary) -> void:
+	var st: Dictionary = site.stair
+	if not st.has("cover_rect"):
+		return
+	var cover := Node3D.new()
+	cover.name = String(site.id) + "_cover"
+	cover.set_script(load(SITE_COVER_SCRIPT))
+	cover.set("building_id", StringName(site.building))
+	cover.transform = ctx.ground_xform(Ctx.v2(site.pos), float(site.rot_y))
+	ctx.add(entities, cover)
+	var model := (load(Ctx.model_path(String(st.cover_asset))) as PackedScene).instantiate() as Node3D
+	model.name = "Model"
+	ctx.add(cover, model)
+	var body := StaticBody3D.new()
+	body.name = "Collision"
+	body.collision_layer = Ctx.WORLD_LAYER
+	body.collision_mask = 0
+	ctx.add(cover, body)
+	var c: Array = st.cover_rect
+	_box_shape(ctx, body, "Slab", Rect2(float(c[0]), float(c[1]), float(c[2]) - float(c[0]), float(c[3]) - float(c[1])), -0.3, 0.004)
 
 
 static func _build_exterior(ctx: Ctx, site_node: Node3D, site: Dictionary, cfg: Dictionary) -> void:
@@ -153,6 +211,18 @@ static func build_doors(ctx: Ctx, entities: Node3D) -> void:
 		node.set("building_id", StringName(d.params.building))
 		node.transform = ctx.ground_xform(Ctx.v2(d.pos), float(d.rot_y))
 		ctx.add(entities, node)
+		if d.has("stair_trigger"):
+			# G7 round 1: walking down the crypt stair into the doorway uses the door.
+			var st: Dictionary = d.stair_trigger
+			var area := Area3D.new()
+			area.name = "StairPortal"
+			area.set_script(load(STAIR_PORTAL_SCRIPT))
+			area.set("direction", Ctx.v2(st.dir))
+			area.set("target_path", NodePath(".."))
+			ctx.add(node, area)
+			var r: Array = st.rect
+			_box_shape(ctx, area, "Shape", Rect2(float(r[0]), float(r[1]), float(r[2]) - float(r[0]), float(r[3]) - float(r[1])),
+					-0.2, float(st.get("height", 2.0)))
 
 
 # --- interiors (§4.7) -----------------------------------------------------------------------
