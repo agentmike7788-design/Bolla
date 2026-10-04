@@ -610,7 +610,7 @@ def build_mesh():
     shovel = build_shovel()
     # leather strap across the back and chest
     strap = L.prim("torus", loc=(0, back_y * 0.5 + HUNCH * 0.5, 1.02), rot=(0, 34, 0), major_radius=0.3,
-                   minor_radius=0.012, major_segments=24, minor_segments=4, scale=(1, 0.76, 1))
+                   minor_radius=0.012, major_segments=16, minor_segments=4, scale=(1, 0.76, 1))  # G7 R2: 24 -> 16 segments (tri budget)
     parts.append(W("spine", _painted(strap, LEATHER, var=0.2, ao=0.0, top=0.3, seed=18)))
 
     # --- lantern on the belt: caged glass, roof, handle, hook ------------------------------
@@ -977,11 +977,14 @@ def build(debug: bool = False):
     _attach_shovel(arm, shovel)
     rig.bone_marker(arm, "hips", "light_lantern", lp - Vector((0, 0, dz)))
     rig.bone_marker(arm, TOOL, "shovel_blade", SHOVEL_G0 + _D0 * BLADE_MID)
-    for entry in ACTIONS:
+    import asset_character_tools as T  # G7 Runde 2 Werkzeuge (imports this module)
+    tools = T.build_tools()
+    T.attach(arm, tools)
+    for entry in ACTIONS + tuple(T.actions()):
         name, frames, fn = entry[:3]
         rig.add_action(arm, mesh, name, frames, fn, entry[3] if len(entry) > 3 else None)
     if debug:
-        return arm, mesh, shovel
+        return arm, mesh, shovel, tools
     L.export_rigged(arm, NAME, "characters")
     F._stable_glb(L.os.path.join(L.ROOT, "assets", "models", "characters", NAME + ".glb"))
 
