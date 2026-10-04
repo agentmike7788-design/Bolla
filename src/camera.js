@@ -21,6 +21,7 @@ export function createCameraRig(camera, dom, halfExtent) {
 
   const keys = new Set();
   let locked = false; // while a menu is open the keys and mouse leave the camera alone
+  let driving = false; // WASD drives a vehicle instead, see follow
   const isTyping = () => document.activeElement?.tagName === 'INPUT';
   window.addEventListener('keydown', (e) => {
     if (!isTyping() && !locked && !e.ctrlKey && !e.metaKey) keys.add(e.key.toLowerCase());
@@ -52,10 +53,12 @@ export function createCameraRig(camera, dom, halfExtent) {
     forward.y = 0;
     forward.normalize();
     right.crossVectors(forward, up);
-    if (keys.has('w') || keys.has('arrowup')) move.add(forward);
-    if (keys.has('s') || keys.has('arrowdown')) move.sub(forward);
-    if (keys.has('d') || keys.has('arrowright')) move.add(right);
-    if (keys.has('a') || keys.has('arrowleft')) move.sub(right);
+    if (!driving) {
+      if (keys.has('w') || keys.has('arrowup')) move.add(forward);
+      if (keys.has('s') || keys.has('arrowdown')) move.sub(forward);
+      if (keys.has('d') || keys.has('arrowright')) move.add(right);
+      if (keys.has('a') || keys.has('arrowleft')) move.sub(right);
+    }
     if (move.lengthSq() > 0) {
       // Move faster when zoomed out.
       const speed = controls.getDistance() * 0.9 * dt;
@@ -97,11 +100,40 @@ export function createCameraRig(camera, dom, halfExtent) {
     flight = { from: controls.target.clone(), to: new THREE.Vector3(x, 0, z), t: 0 };
   }
 
+  // Straight there, for the minimap.
+  function jumpTo(x, z) {
+    flight = null;
+    flightStep.set(x - controls.target.x, 0, z - controls.target.z);
+    camera.position.add(flightStep);
+    controls.target.add(flightStep);
+  }
+
+  // Keeps a driven vehicle in view: the focus rides along, and while it drives
+  // forwards the camera swings slowly round behind it.
+  function follow(pos, heading, swing, dt) {
+    flight = null;
+    flightStep.set(pos.x - controls.target.x, 0, pos.z - controls.target.z);
+    camera.position.add(flightStep);
+    controls.target.add(flightStep);
+    if (!swing) return;
+    offset.subVectors(camera.position, controls.target);
+    const now = Math.atan2(offset.x, offset.z);
+    const want = heading + Math.PI;
+    const diff = ((want - now + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+    offset.applyAxisAngle(up, diff * Math.min(1, dt * 1.2 * swing));
+    camera.position.copy(controls.target).add(offset);
+    camera.lookAt(controls.target);
+  }
+
+  function setDriving(on) {
+    driving = on;
+  }
+
   // Big maps let the camera go further out.
   function setExtent(half) {
     extent = half;
     controls.maxDistance = Math.max(90, half * 2.6);
   }
 
-  return { controls, update, setLocked, orbit, flyTo, setExtent };
+  return { controls, update, setLocked, orbit, flyTo, jumpTo, follow, setDriving, setExtent };
 }
