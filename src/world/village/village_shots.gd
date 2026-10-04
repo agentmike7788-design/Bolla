@@ -41,7 +41,10 @@ const P7_SHOTS: Array[Dictionary] = [
 	{"name": "p7_10_inn_day", "day": 41, "minute": 750, "room": "inn", "player": Vector2(0.9, 1.3)},
 	{"name": "p7_10b_inn_night", "day": 41, "minute": 1150, "room": "inn", "player": Vector2(0.9, 1.3)},
 	{"name": "p7_11_surgery", "day": 41, "minute": 600, "room": "surgery", "player": Vector2(-0.9, 1.2)},
+	{"name": "p7_11b_surgery_night", "day": 41, "minute": 1150, "room": "surgery", "player": Vector2(-0.9, 1.2)},
 	{"name": "p7_12_office", "day": 41, "minute": 600, "room": "office", "player": Vector2(0.9, 0.6)},
+	# G7 round 1 (light): the rooms at night as well.
+	{"name": "p7_12b_office_night", "day": 41, "minute": 1150, "room": "office", "player": Vector2(0.9, 0.6)},
 	{"name": "p7_30_lecture_night", "day": 42, "minute": 1395, "room": "surgery", "player": Vector2(-2.3, 1.9), "stage": "lecture"},
 	{"name": "p7_vis_village_z12", "day": 41, "minute": 600, "focus": Vector2(-2.5, -1.0), "distance": 74.0, "pitch": 85.0,
 			"player": Vector2(0.0, 30.0), "stage": "vis", "zoom": 12.0},
