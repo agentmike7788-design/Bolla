@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ToolAnimConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/entities/player/tool_anim_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+held_tools = Dictionary[StringName, StringName]({&"dig": &"shovel"})
+draw_clips = Dictionary[StringName, StringName]({&"shovel": &"shovel_draw"})
+stow_clips = Dictionary[StringName, StringName]({&"shovel": &"shovel_stow"})
+stow_walk_clips = Dictionary[StringName, StringName]({&"shovel": &"shovel_stow_walk"})
+hold_blend = 0.05
+stow_blend = 0.15
+bite_at = Dictionary[StringName, float]({&"dig": 0.16})
+toss_at = Dictionary[StringName, float]({&"dig": 0.78})
+blade_marker = &"shovel_blade"
+clod_amount = 6
+clod_lifetime = 0.75
+clod_size = 0.045
+clod_speed = 2.0
+clod_spread_deg = 22.0
+clod_direction = Vector3(0.75, 0.9, 0.35)
+clod_color = Color(0.305882, 0.247059, 0.192157, 1)

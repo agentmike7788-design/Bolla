@@ -16,6 +16,8 @@ var map: AudioEventMap
 var _rules: Dictionary[StringName, Dictionary] = {}
 var _work_cue: StringName = &""
 var _work_left: float = 0.0
+## G7 Runde 2: the player's tool clip sounds the work cue in step (work_beat) – no timer then.
+var _work_synced: bool = false
 var _carried: WeakRef = null
 var _carried_was_corpse: bool = false
 
@@ -62,6 +64,7 @@ func work_cue() -> StringName:
 
 func reset() -> void:
 	_work_cue = &""
+	_work_synced = false
 	_carried = null
 
 
@@ -112,7 +115,8 @@ func _on_action_started(label: String, duration_sec: float) -> void:
 	if player != null and player._action != null:
 		anim = player._action.animation
 	_work_cue = cue_for_action(label, anim)
-	if _work_cue == &"":
+	_work_synced = _work_cue != &"" and duration_sec > 0.0 and player != null and player.syncs_work_cue(anim)
+	if _work_cue == &"" or _work_synced:
 		return
 	audio.play(_work_cue)
 	_work_left = _interval()
@@ -122,6 +126,13 @@ func _on_action_started(label: String, duration_sec: float) -> void:
 
 func _on_action_finished(_completed: bool) -> void:
 	_work_cue = &""
+	_work_synced = false
+
+
+## The running action's work cue once, now (the player's tool clip calls it when the blade bites).
+func work_beat() -> void:
+	if _work_cue != &"" and _work_synced and not get_tree().paused:
+		audio.play(_work_cue)
 
 
 func _interval() -> float:
@@ -130,7 +141,7 @@ func _interval() -> float:
 
 func _process(delta: float) -> void:
 	_watch_hands()
-	if _work_cue == &"" or get_tree().paused:
+	if _work_cue == &"" or _work_synced or get_tree().paused:
 		return
 	_work_left -= delta
 	if _work_left <= 0.0:

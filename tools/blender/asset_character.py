@@ -889,7 +889,9 @@ def dig(t: float) -> dict:
                    _sh((0.55, -0.6, 0.4, 45.0, 90.0, 0.0), (0.0, 0.0, 1.0), _TWO))
     toss = rig.add(_body(14.0, 20.0), {"hips": (0, 0, 6.0, 0, 0.0, 0)},
                    _sh((0.65, -0.5, 0.8, 10.0, 75.0, 0.0), (1.0, 0.0, 0.6), _TWO))
-    keys = [(0.0, ready), (DIG_JAB, jab), (0.32, tread), (0.46, pry), (0.6, lift), (DIG_TOSS, toss)]
+    back = rig.add(_body(14.0, 6.0),
+                   _sh((0.45, -0.48, 0.4, 50.0, 100.0, 0.0), (0.0, 0.3, 1.0), _TWO))
+    keys = [(0.0, ready), (DIG_JAB, jab), (0.32, tread), (0.46, pry), (0.6, lift), (DIG_TOSS, toss), (0.9, back)]
     return rig.add(_stance(), rig.keyed(t, keys))
 
 

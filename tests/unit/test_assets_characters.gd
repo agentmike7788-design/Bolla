@@ -15,8 +15,9 @@ const CHARACTERS := {
 	"ph_chr_gravekeeper": {
 		"height": [1.72, 1.88],
 		"animations": {"idle": [1.6, 2.6], "walk": [0.4, 0.8], "carry_idle": [1.6, 2.6], "carry_walk": [0.5, 1.0],
-				"dig": [1.0, 1.4], "interact": [0.6, 1.0]},
-		"one_shot": ["interact"],
+				"dig": [1.0, 1.4], "dig_bare": [1.0, 1.4], "interact": [0.6, 1.0],
+				"shovel_draw": [0.4, 0.6], "shovel_stow": [0.35, 0.5], "shovel_stow_walk": [0.45, 0.6]},
+		"one_shot": ["interact", "shovel_draw", "shovel_stow", "shovel_stow_walk"],
 	},
 	"ph_chr_carter": {
 		"height": [1.6, 1.7],
@@ -30,7 +31,13 @@ const CHARACTERS := {
 		"one_shot": ["offer"],
 	},
 }
-const KRANICH_TRI_MAX := 9000  # PHASE4_DESIGN §8 budget (stricter than TRI_MAX)
+const KRANICH_TRI_MAX := 9000
+## G7 Runde 2: additive non-deforming bones (name -> parent) - the gravekeeper's shovel bone.
+const EXTRA_BONES := {"ph_chr_gravekeeper": {"tool": "spine"}}
+## Rest-model points of the shovel on the tool bone (Godot axes): the shaft ends at the D-grip and
+## at the blade socket (tools/blender/asset_character.py SHOVEL_G0 / SHOVEL_G1).
+const SHOVEL_G0 := Vector3(0.25, 0.49, -0.2)
+const SHOVEL_G1 := Vector3(-0.34, 1.3, -0.31)  # PHASE4_DESIGN §8 budget (stricter than TRI_MAX)
 
 
 ## Offline pose evaluator for one imported character.
@@ -183,6 +190,13 @@ func _rig(char_name: String) -> Rig:
 	return _rigs[char_name]
 
 
+func _bones(c: String) -> PackedStringArray:
+	var out := BONES.duplicate()
+	for b: String in EXTRA_BONES.get(c, {}):
+		out.append(b)
+	return out
+
+
 func _tris(mesh: Mesh) -> int:
 	var tris := 0
 	for s: int in mesh.get_surface_count():
@@ -224,7 +238,11 @@ func test_skeleton_has_the_eight_bones_and_hierarchy() -> void:
 		if sk == null:
 			fail(c + ": no skeleton")
 			continue
-		assert_eq(sk.get_bone_count(), BONES.size(), c + ": bone count")
+		var extra: Dictionary = EXTRA_BONES.get(c, {})
+		assert_eq(sk.get_bone_count(), BONES.size() + extra.size(), c + ": bone count")
+		for b: String in extra:
+			var e := sk.find_bone(b)
+			assert_true(e >= 0 and sk.get_bone_name(sk.get_bone_parent(e)) == extra[b], "%s: extra bone %s on %s" % [c, b, extra[b]])
 		for b: String in BONES:
 			var idx := sk.find_bone(b)
 			assert_true(idx >= 0, "%s: bone %s" % [c, b])
@@ -237,7 +255,7 @@ func test_skeleton_has_the_eight_bones_and_hierarchy() -> void:
 func test_skin_binds_all_bones() -> void:
 	for c: String in CHARACTERS:
 		var r := _rig(c)
-		assert_eq(r.bind_bone.size(), BONES.size(), c + ": skin binds")
+		assert_eq(r.bind_bone.size(), BONES.size() + (EXTRA_BONES.get(c, {}) as Dictionary).size(), c + ": skin binds")
 		assert_false(-1 in r.bind_bone, c + ": every bind resolves to a skeleton bone")
 
 
@@ -380,7 +398,9 @@ func test_model_faces_plus_z() -> void:
 func test_triangle_budget() -> void:
 	for c: String in CHARACTERS:
 		var r := _rig(c)
-		var tris := _tris(r.mesh_instance.mesh)
+		var tris := 0  # every mesh of the figure (the gravekeeper's shovel is its own node)
+		for n: Node in r.scene.find_children("*", "MeshInstance3D", true, false):
+			tris += _tris((n as MeshInstance3D).mesh)
 		assert_true(tris <= TRI_MAX, "%s: %d tris <= %d" % [c, tris, TRI_MAX])
 		assert_true(tris >= TRI_MIN, "%s: %d tris >= %d" % [c, tris, TRI_MIN])
 
@@ -437,7 +457,7 @@ func test_tracks_target_the_skeleton_only() -> void:
 				var path := anim.track_get_path(i)
 				assert_eq(root_node.get_node_or_null(NodePath(String(path.get_concatenated_names()))), r.skeleton,
 						"%s/%s track %s targets the skeleton" % [c, a, path])
-				assert_has(BONES, String(path.get_concatenated_subnames()), "%s/%s bone of %s" % [c, a, path])
+				assert_has(_bones(c), String(path.get_concatenated_subnames()), "%s/%s bone of %s" % [c, a, path])
 				assert_has([Animation.TYPE_POSITION_3D, Animation.TYPE_ROTATION_3D, Animation.TYPE_SCALE_3D],
 						anim.track_get_type(i), "%s/%s track type" % [c, a])
 
@@ -449,7 +469,7 @@ func test_loops_are_seamless() -> void:
 			var anim := r.animation(a)
 			if anim == null or anim.loop_mode == Animation.LOOP_NONE:
 				continue
-			for b: String in BONES:
+			for b: String in _bones(c):
 				var bi := r.skeleton.find_bone(b)
 				var p0 := r.local_pose(anim, bi, 0.0)
 				var p1 := r.local_pose(anim, bi, anim.length)
@@ -546,9 +566,10 @@ func test_carry_holds_arms_forward() -> void:
 				assert_true(absf(h.x) < absf(rest.x), "%s: %s hand drawn in towards the body" % [a, arm])
 
 
-func test_dig_bends_and_reaches_down() -> void:
+func test_dig_bare_bends_and_reaches_down() -> void:
+	# the old empty-handed dig (G7 Runde 2: axe / pickaxe / bare-handed work)
 	var r := _rig("ph_chr_gravekeeper")
-	var anim := r.animation(&"dig")
+	var anim := r.animation(&"dig_bare")
 	var rest_head := r.centroid(r.posed(null, "head", 0.0))
 	var max_fwd := -INF
 	var min_hand := INF
@@ -559,13 +580,72 @@ func test_dig_bends_and_reaches_down() -> void:
 		var h := r.hand(anim, "arm_l", t)
 		min_hand = minf(min_hand, h.y)
 		max_hand = maxf(max_hand, h.y)
-	assert_true(max_fwd > 0.2, "dig: upper body bends forward (%.2f m)" % max_fwd)
-	assert_true(min_hand < 0.8, "dig: hands go down to the blade (%.2f m)" % min_hand)
-	assert_true(max_hand - min_hand > 0.3, "dig: hands lift the earth (%.2f m)" % (max_hand - min_hand))
+	assert_true(max_fwd > 0.2, "dig_bare: upper body bends forward (%.2f m)" % max_fwd)
+	assert_true(min_hand < 0.8, "dig_bare: hands go down to the blade (%.2f m)" % min_hand)
+	assert_true(max_hand - min_hand > 0.3, "dig_bare: hands lift the earth (%.2f m)" % (max_hand - min_hand))
 	for k: int in 12:
 		var t := anim.length * k / 12.0
 		for leg: String in ["leg_l", "leg_r"]:
-			assert_almost(r.lowest_y(r.boot(anim, leg, t)), 0.0, 0.012, "dig: %s planted at t=%.2f" % [leg, t])
+			assert_almost(r.lowest_y(r.boot(anim, leg, t)), 0.0, 0.012, "dig_bare: %s planted at t=%.2f" % [leg, t])
+
+
+## G7 Runde 2: skeleton-space point carried by the tool bone (rest-model coordinates).
+func _shovel_point(r: Rig, anim: Animation, t: float, p: Vector3) -> Vector3:
+	var b := r.skeleton.find_bone("tool")
+	return r.global_pose(anim, b, t) * (r.global_rest(b).affine_inverse() * p)
+
+
+func _blade_tip(r: Rig, anim: Animation, t: float) -> Vector3:
+	var a := _shovel_point(r, anim, t, SHOVEL_G0)
+	var d := (_shovel_point(r, anim, t, SHOVEL_G1) - a).normalized()
+	return a + d * (SHOVEL_G0.distance_to(SHOVEL_G1) + 0.34)
+
+
+func test_dig_with_the_shovel() -> void:
+	var r := _rig("ph_chr_gravekeeper")
+	var anim := r.animation(&"dig")
+	var rest_head := r.centroid(r.posed(null, "head", 0.0))
+	var lowest := INF
+	var highest := -INF
+	var max_fwd := -INF
+	var tread := -INF
+	for k: int in 26:
+		var t := anim.length * k / 26.0
+		var tip := _blade_tip(r, anim, t)
+		lowest = minf(lowest, tip.y)
+		highest = maxf(highest, tip.y)
+		max_fwd = maxf(max_fwd, r.centroid(r.posed(anim, "head", t)).z - rest_head.z)
+		tread = maxf(tread, r.lowest_y(r.boot(anim, "leg_l", t)))
+		assert_true(tip.z > 0.2, "dig: blade in front of him at t=%.2f (%.2f)" % [t, tip.z])
+		assert_almost(r.lowest_y(r.boot(anim, "leg_r", t)), 0.0, 0.012, "dig: right foot planted at t=%.2f" % t)
+		assert_true(r.lowest_y(r.boot(anim, "leg_l", t)) > -0.012, "dig: left foot never in the ground")
+	assert_true(lowest < -0.1, "dig: the blade bites into the earth (%.2f m)" % lowest)
+	assert_true(highest > 0.6, "dig: the earth is lifted and thrown (%.2f m)" % highest)
+	assert_true(max_fwd > 0.08, "dig: leans over the blade (%.2f m)" % max_fwd)
+	assert_true(tread > 0.06, "dig: the left foot treads the blade in (%.2f m)" % tread)
+
+
+func test_shovel_on_the_back_in_the_other_clips() -> void:
+	var r := _rig("ph_chr_gravekeeper")
+	var tool := r.skeleton.find_bone("tool")
+	var rest := r.skeleton.get_bone_rest(tool)
+	for a: StringName in [&"idle", &"walk", &"carry_idle", &"carry_walk", &"dig_bare", &"interact"]:
+		var anim := r.animation(a)
+		for k: int in 5:
+			var p := r.local_pose(anim, tool, anim.length * k / 4.0)
+			assert_true(p.origin.distance_to(rest.origin) < 0.002 and
+					p.basis.get_rotation_quaternion().angle_to(rest.basis.get_rotation_quaternion()) < 0.01,
+					"%s: shovel on the back" % a)
+	# draw starts and the stows end on the back; draw ends / stow starts in the first dig frame
+	var dig := r.animation(&"dig")
+	for pair: Array in [[&"shovel_draw", 0.0, null], [&"shovel_stow", 1.0, null], [&"shovel_stow_walk", 1.0, null],
+			[&"shovel_draw", 1.0, dig], [&"shovel_stow", 0.0, dig]]:
+		var anim := r.animation(pair[0])
+		var p := r.local_pose(anim, tool, anim.length * float(pair[1]))
+		var want: Transform3D = rest if pair[2] == null else r.local_pose(pair[2], tool, 0.0)
+		assert_true(p.origin.distance_to(want.origin) < 0.005 and
+				p.basis.get_rotation_quaternion().angle_to(want.basis.get_rotation_quaternion()) < 0.02,
+				"%s at %d %%: shovel where it belongs" % [pair[0], int(float(pair[1]) * 100)])
 
 
 func test_interact_reaches_forward() -> void:

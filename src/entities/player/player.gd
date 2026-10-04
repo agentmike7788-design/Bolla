@@ -270,6 +270,7 @@ func set_build_mode(active: bool) -> void:
 ## EventBus.interior_changed(value) and then EventBus.interior_room_changed(interior_id) so
 ## rooms, camera, sun and environment follow (also after a load that did not change the value).
 func set_in_interior(value: bool, room: StringName = &"") -> void:
+	reset_tool()
 	in_interior = value
 	interior_id = (room if room != &"" else &"hut") if value else &""
 	EventBus.interior_changed.emit(value)
@@ -280,6 +281,7 @@ func set_in_interior(value: bool, room: StringName = &"") -> void:
 ## camera follow – also after a load that did not change it). Callers that also change the room call
 ## set_in_interior first, so region_changed comes after interior_changed / interior_room_changed.
 func set_region(id: StringName) -> void:
+	reset_tool()
 	region_id = id
 	EventBus.region_changed.emit(id)
 
@@ -296,6 +298,7 @@ func save_state() -> Dictionary:
 ## CorpseManager, rebuilds corpse nodes in its own load_state and re-attaches in post_load).
 func load_state(data: Dictionary) -> void:
 	cancel_timed_action()
+	reset_tool()
 	if _has_carried:
 		_forget_carried()
 	var saved_position: Variant = data.get("position")
@@ -450,6 +453,23 @@ func _tick_action(delta: float) -> void:
 
 func _update_animation(delta: float) -> void:
 	_animator.update(delta, _action, _is_carrying())
+
+
+## G7 Runde 2: the tool out of its place on the back (being drawn, in the hands or being stowed;
+## PlayerAnimator, data/config/tool_anim_config.tres) – &"" = the shovel is on the back.
+func held_tool() -> StringName:
+	return _animator.held_tool() if _animator != null else &""
+
+
+## Puts a drawn tool back on the back at once (loading, changing rooms). Not saved.
+func reset_tool() -> void:
+	if _animator != null:
+		_animator.reset_tool()
+
+
+## True if the action clip `clip` sounds its work cue in step with the tool's bite (AudioEvents).
+func syncs_work_cue(clip: StringName) -> bool:
+	return _animator != null and _animator.syncs_work_cue(clip)
 
 
 ## Phase 5 §3.4: highest tier of `kind` on the tool belt (ToolRules.tier; 0 = the old tool, and
