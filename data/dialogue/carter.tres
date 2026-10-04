@@ -106,7 +106,7 @@ next = &"menu"
 [sub_resource type="Resource" id="node_p6_intro"]
 script = ExtResource("1_0vtyj")
 id = &"p6_intro"
-text = "Der Gemeinderat hat getagt, Totengräber. Der Friedhof ist voll, und die Leute wollen ihre Toten nicht mehr auf dem Brett vor deiner Hütte liegen sehen, wie Fisch auf dem Markt. Unter der alten Eiche liegt die Gruft der Gemeinde, seit Jahren zugeschüttet. Meine Leute haben den Hals freigelegt. Oben am Kamm steht die Kapelle, ohne Dach. Und wenn du die ganz Alten ins Beinhaus bringst, wird unten im Hof Platz. Vier Münzen zahlt die Gemeinde für jede Umbettung."
+text = "Der Gemeinderat hat getagt, Totengräber. Der Friedhof ist voll, und deine Gruft unter der Eiche ist der Gemeinde zu eng geworden: zwei Nischen, ein Tisch, ein Beinhaus für drei. Ausbauen darfst du sie jetzt, mit Schiefer und Eisen aus der Stadt. Oben am Kamm steht die Kapelle, ohne Dach. Und wenn du die ganz Alten ins Beinhaus bringst, wird unten im Hof Platz. Vier Münzen zahlt die Gemeinde für jede Umbettung."
 choices = Array[ExtResource("2_cdonk")]([SubResource("p6_choice_01"), SubResource("p6_choice_02"), SubResource("p6_choice_03")])
 conditions = Array[String](["flag:buildings_open", "!flag:p6_intro"])
 fallback_next = &"p7_intro"
@@ -125,7 +125,7 @@ next = &"menu"
 [sub_resource type="Resource" id="node_p6_buildings"]
 script = ExtResource("1_0vtyj")
 id = &"p6_buildings"
-text = "Mit der Gruft, wenn du mich fragst. Unten ist es kühl, da hält sich eine Leiche einen Tag länger, und im Dorf muss sie keiner mehr auf dem Brett sehen. Die Kapelle braucht ein Dach, bevor einer darin beten mag. Für den Schuppen reichen Bretter und ein langer Nachmittag. Holz und Stein holst du selbst. Kalk, Schiefer und Nägel bringe ich aus Hollerbrück, die zahlst du, wenn gebaut wird."
+text = "Mit der Gruft, wenn du mich fragst. Mehr Nischen, mehr Kälte, da hält sich eine Leiche noch einen Tag länger, und ins Beinhaus passen mehr von den Alten. Die Kapelle braucht ein Dach, bevor einer darin beten mag. Für den Schuppen reichen Bretter und ein langer Nachmittag. Holz und Stein holst du selbst. Kalk, Schiefer und Nägel bringe ich aus Hollerbrück, die zahlst du, wenn gebaut wird."
 choices = Array[ExtResource("2_cdonk")]([SubResource("p6_choice_04"), SubResource("p6_choice_05")])
 
 [sub_resource type="Resource" id="p6_choice_06"]
@@ -368,7 +368,7 @@ next = &"intro_linen"
 [sub_resource type="Resource" id="node_intro"]
 script = ExtResource("1_0vtyj")
 id = &"intro"
-text = "Sieh an – ein lebendiges Gesicht hinter dem Tor. Das hatten wir hier oben lange nicht. Osric Faulhaber, Leichenkutscher von Hollerbrück. Jeden Morgen lege ich dir einen Toten auf die Bahre, du bringst ihn anständig unter die Erde, und die Gemeinde zahlt – je würdiger das Grab, desto besser."
+text = "Sieh an – ein lebendiges Gesicht hinter dem Tor. Das hatten wir hier oben lange nicht. Osric Faulhaber, Leichenkutscher von Hollerbrück. Jeden Morgen lege ich dir einen Toten auf die Bahre, du bringst ihn anständig unter die Erde, und die Gemeinde zahlt – je würdiger das Grab, desto besser. Unter der alten Eiche geht eine Treppe hinab in die Gruft. Da unten steht der Tisch, an dem du sie herrichtest, kühl und ohne Zuschauer."
 choices = Array[ExtResource("2_cdonk")]([SubResource("choice_001")])
 conditions = Array[String](["!flag:met_carter"])
 fallback_next = &"slice_done"

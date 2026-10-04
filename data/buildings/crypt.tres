@@ -12,12 +12,12 @@ script = ExtResource("2")
 level = 1
 model = ExtResource("m1")
 title = "Gruft geöffnet"
-inputs = Dictionary[StringName, int]({&"stone": 12, &"wood": 6, &"clay": 4, &"iron_fittings": 2})
-coins = 20
-minutes = 180
-coin_part_label = "Kalk und Mörtel aus Hollerbrück"
-text = "Der zugeschüttete Hals wird frei, Treppe und Gewölbe werden gemauert. Unten steht ein Steintisch – der Tisch vor der Hütte wird nicht mehr gebraucht."
-adds = PackedStringArray("Portal und Treppe", "Gruft-Tisch statt des Tischs vor der Hütte", "Waschbecken und Räucherschale", "2 Kühlnischen (× 0,5)", "Raumkühle × 0,8", "Beinhaus: 3 Plätze", "Hängelaterne")
+inputs = Dictionary[StringName, int]({})
+coins = 0
+minutes = 0
+coin_part_label = ""
+text = "Unter der alten Eiche führt eine Treppe hinab ins Gewölbe. Unten steht der Steintisch, an dem du die Toten untersuchst und herrichtest – kühl und ohne Zuschauer."
+adds = PackedStringArray("Portal und Treppe", "Gruft-Tisch", "Waschbecken und Räucherschale", "2 Kühlnischen (× 0,5)", "Raumkühle × 0,8", "Beinhaus: 3 Plätze", "Hängelaterne")
 
 [sub_resource type="Resource" id="level_2"]
 script = ExtResource("2")
@@ -53,6 +53,7 @@ site_id = "site_crypt"
 door_id = "door_crypt"
 room_id = &"crypt"
 levels = Array[ExtResource("2")]([SubResource("level_1"), SubResource("level_2"), SubResource("level_3")])
+start_level = 1
 allows_corpse = true
 prompt_enter = "[E] Gruft betreten"
 prompt_exit = "[E] Hinaufgehen"

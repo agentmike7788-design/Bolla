@@ -203,6 +203,9 @@ static func objective_state(tree: SceneTree, inv: Inventory) -> Dictionary:
 	out.merge(phase5_state(tree, inv))
 	out.merge(phase6_state(tree, inv))
 	out.merge(phase7_state(tree))
+	# 04.10.2026: in the crypt the carried corpse goes onto the crypt table (objective line).
+	var player := _first(tree, &"player")
+	out["in_crypt"] = player != null and player.get(&"interior_id") == &"crypt"
 	return out
 
 
@@ -293,15 +296,19 @@ static func chapter_progress(tree: SceneTree) -> Dictionary:
 	return out
 
 
-## Phase-6 part of the objective line: {} without Buildings or before buildings_open, else {p6: true,
+## Phase-6 part of the objective line: {} without Buildings, {crypt_level} before buildings_open (the
+## crypt from the start, 04.10.2026), else {p6: true,
 ## p6_intro, levels, goal_levels, goal_done, crypt_level, chapel_level, reinter_waiting (lifted, not
 ## reinterred), full_boxes / boxes (in the pack), next_lift (label of the next liftable old grave),
 ## ossuary_free, passage_unseen (sealed / grille but not looked at), devotion_name (the most restless
 ## ghost without a light, once the chapel stands)}.
 static func phase6_state(tree: SceneTree, inv: Inventory) -> Dictionary:
 	var buildings := _first(tree, BUILDINGS_GROUP) as Buildings
-	if buildings == null or not buildings.is_open():
+	if buildings == null:
 		return {}
+	if not buildings.is_open():
+		# Changed 04.10.2026: the crypt stands from day 1 – the corpse chain names it before Phase 6.
+		return {"crypt_level": buildings.level(&"crypt")} if buildings.level(&"crypt") >= 1 else {}
 	var cfg := buildings.buildings_config()
 	var levels := buildings.levels()
 	var out := {"p6": true, "p6_intro": GameState.flag_on(FLAG_P6_INTRO), "levels": levels,

@@ -138,6 +138,7 @@ func _ready() -> void:
 	EventBus.relationship_changed.connect(_mark_objective_dirty.unbind(5))
 	EventBus.region_changed.connect(_mark_objective_dirty.unbind(1))
 	EventBus.ground_consecrated.connect(_mark_objective_dirty.unbind(1))
+	EventBus.interior_room_changed.connect(_mark_objective_dirty.unbind(1))
 	EventBus.specimen_changed.connect(_mark_objective_dirty.unbind(2))
 	refresh_all()
 

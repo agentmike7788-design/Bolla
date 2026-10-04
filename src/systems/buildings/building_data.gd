@@ -14,6 +14,10 @@ extends Resource
 ## Outdoor model of level 0 (the site).
 @export var model_site: PackedScene
 @export var levels: Array[BuildingLevelData] = []
+## Level the building has from the start of a game, without a build (changed 04.10.2026, user's wish
+## „Gruft von Beginn an“: the crypt stands at level 1 from day 1). Buildings.level() never reports less;
+## older saves with a lower stored level are lifted to it on load (Buildings.post_load).
+@export var start_level: int = 0
 ## A corpse may be carried inside (crypt, chapel true; shed false).
 @export var allows_corpse: bool = true
 ## „[E] Gruft betreten" / „[E] Hinaufgehen".

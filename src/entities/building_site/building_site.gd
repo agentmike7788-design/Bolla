@@ -43,8 +43,15 @@ func _ready() -> void:
 	refresh()
 
 
-## buildings_open (the site and every level are shown from then on).
+## Shown (model + collision): from buildings_open, or before it once the building stands (changed
+## 04.10.2026: the crypt is at level 1 from the start, its portal and stair are there from day 1).
 func is_active() -> bool:
+	var b := buildings()
+	return b != null and (b.is_open() or b.level(building_id) >= 1)
+
+
+## The upgrade prompt / panel: only from buildings_open (Phase 6 §1.2).
+func can_build() -> bool:
 	var b := buildings()
 	return b != null and b.is_open()
 
@@ -82,11 +89,11 @@ func _apply_level_shapes(lvl: int) -> void:
 
 
 func can_interact(player: Player) -> bool:
-	return player != null and is_active() and _next() != null and not player.is_busy() and not is_instance_valid(player.carried)
+	return player != null and can_build() and _next() != null and not player.is_busy() and not is_instance_valid(player.carried)
 
 
 func get_interaction_prompt(player: Player) -> String:
-	if not is_active() or _next() == null:
+	if not can_build() or _next() == null:
 		return ""
 	if player != null and is_instance_valid(player.carried):
 		return Player.TEXT_HANDS_FULL
@@ -114,7 +121,7 @@ func block_reason(inv: Inventory) -> String:
 func request_upgrade() -> void:
 	var player := _acting_player()
 	var next := _next()
-	if player == null or next == null or player.is_busy() or is_instance_valid(player.carried) or not is_active():
+	if player == null or next == null or player.is_busy() or is_instance_valid(player.carried) or not can_build():
 		_warn(TEXT_BUSY)
 		return
 	var reason := block_reason(player.inventory)

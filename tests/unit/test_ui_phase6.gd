@@ -436,7 +436,7 @@ func test_objective_lines_phase6() -> void:
 	r.location = &"carried"
 	var world := {"crypt_level": 1, "chapel_level": 1}
 	var graves: Array[GraveRecord] = []
-	assert_eq(ObjectiveResolver.current([r] as Array[CorpseRecord], graves, null, 600, {}, world), "Bring die Leiche in die Gruft")
+	assert_eq(ObjectiveResolver.current([r] as Array[CorpseRecord], graves, null, 600, {}, world), "Bring die Leiche hinunter in die Gruft")
 	r.examined = true
 	r.dress = CorpseRecord.DRESS_SHROUD
 	r.shrouded = true
