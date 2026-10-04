@@ -199,6 +199,7 @@ func _handle_corpses() -> void:
 		if record.location == CorpseRecord.LOCATION_BURIED or not _time_left():
 			continue
 		_bury(record)
+	_leave_room()
 
 
 func _bury(record: CorpseRecord) -> void:
@@ -212,20 +213,58 @@ func _bury(record: CorpseRecord) -> void:
 	_dig_and_bury(record, plot, table)
 
 
-## Carries `record` onto the morgue table (unless it lies there) and opens its panel.
+## Carries `record` onto the morgue table (unless it lies there) and opens its panel. Since
+## 04.10.2026 the table is the crypt table from day 1: the bot carries the corpse through the real
+## BuildingDoor down the stair (and comes back up with it in _dig_and_bury / after the corpses).
 func _to_table(record: CorpseRecord) -> MorgueTable:
-	var table := world.get_node_by_layout_id("morgue_table") as MorgueTable
+	var table := _table()
 	if record.location != CorpseRecord.LOCATION_TABLE:
+		_leave_room()
 		_walk()
 		var node := manager.get_corpse_node(record.id)
 		node.interact(player)
 		_walk()
+		_enter_table_room(table)
 		table.interact(player)
 	else:
+		_enter_table_room(table)
 		table.interact(player)
 		UIState.clear()
 	UIState.clear()
 	return table
+
+
+## The active morgue table: the crypt table (from day 1, 04.10.2026); the old one in front of the hut
+## only in worlds without a crypt.
+func _table() -> MorgueTable:
+	for node: Node in tree.get_nodes_in_group(&"morgue_table"):
+		var t := node as MorgueTable
+		if t != null and t.is_active():
+			return t
+	return world.get_node_by_layout_id("morgue_table") as MorgueTable
+
+
+## Through the real BuildingDoor into the room of `table` (the crypt) – nothing for a table outside.
+func _enter_table_room(table: MorgueTable) -> void:
+	if table == null or table.room == &"" or player.interior_id == table.room:
+		return
+	_leave_hut()
+	var door := BuildingDoor.find(tree, table.room)
+	if door == null or not door.can_interact(player):
+		problems.append("day %d: cannot enter %s (%s)" % [TimeManager.day, table.room,
+				door.get_interaction_prompt(player) if door != null else "no door"])
+		return
+	var room := door.room()
+	HutPortal.arrive(player, room.spawn_transform(), true, room.room_id)
+
+
+## Up the stair again (to the BuildingDoor outside) when the bot is in a building room.
+func _leave_room() -> void:
+	if player.interior_id == &"" or player.interior_id == &"hut":
+		return
+	var door := BuildingDoor.find(tree, player.interior_id)
+	if door != null:
+		HutPortal.arrive(player, door.exit_transform(), false)
 
 
 ## Work at the table before the burial (Phase 3: examine → valuables → shroud). false = the
@@ -247,6 +286,7 @@ func _on_table(record: CorpseRecord, table: MorgueTable) -> bool:
 
 ## Marker → dig `plot` → carry from the table → bury → marker.
 func _dig_and_bury(record: CorpseRecord, plot: GravePlot, table: MorgueTable) -> void:
+	_leave_room()
 	# Marker ready before the pit is dug.
 	if inv().count(&"gravestone_simple") + inv().count(&"wooden_cross") == 0:
 		_craft_essentials()
@@ -255,9 +295,11 @@ func _dig_and_bury(record: CorpseRecord, plot: GravePlot, table: MorgueTable) ->
 	if graveyard.get_grave(plot.grave_id).state != GraveRecord.State.DUG:
 		problems.append("day %d: could not dig %s" % [TimeManager.day, plot.grave_id])
 		return
+	_enter_table_room(table)
 	table.interact(player)
 	UIState.clear()
 	table.request_pick_up()
+	_leave_room()
 	_walk()
 	plot.interact(player)  # bury
 	if graveyard.get_grave(plot.grave_id).state != GraveRecord.State.FILLED:

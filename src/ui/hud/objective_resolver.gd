@@ -29,7 +29,7 @@ extends RefCounted
 ## (the next affordable first) · „Findlinge brechen – Spitzhacke nötig“ · „Werkzeug: …“ ·
 ## „Setz den Meisterstein“; in the idle slot „Gräber ohne Namen: n“.
 ## Phase 6 (docs/PHASE6_DESIGN.md §7), `world` keys from CemeteryStatus.phase6_state(): in the corpse
-## chain „Bring die Leiche in die Gruft“ (instead of „zum Leichentisch“ once the crypt stands), „Die
+## chain „Bring die Leiche hinunter in die Gruft“ (instead of „zum Leichentisch“ once the crypt stands – in the game from day 1, 04.10.2026), „Die
 ## Kapelle steht – leg <Name> auf den Katafalk“ (a dressed, examined dead, not serviced, 08:00–17:00)
 ## and „Aussegnung am Altar halten“ (on the catafalque); corpses in a niche or on the catafalque
 ## count as unburied. After the Phase-5 line: Phase6Texts.objective (Osric · Bauplatz: Gruft ·
@@ -240,7 +240,11 @@ static func _corpse_step(corpse: CorpseRecord, graves: Array[GraveRecord], inv: 
 	if not corpse.examined and corpse.location == LOCATION_TABLE:
 		return TEXT_EXAMINE
 	if not corpse.examined and not table_taken:
-		return Phase6Texts.OBJ_TO_CRYPT if int(world.get("crypt_level", 0)) >= 1 else TEXT_TO_TABLE
+		if int(world.get("crypt_level", 0)) < 1:
+			return TEXT_TO_TABLE
+		if corpse.location == LOCATION_CARRIED and bool(world.get("in_crypt", false)):
+			return Phase6Texts.OBJ_ON_CRYPT_TABLE
+		return Phase6Texts.OBJ_TO_CRYPT
 	if not corpse.examined and corpse.location == LOCATION_CARRIED and not _has_state(graves, GraveRecord.State.DUG):
 		# The table is occupied and digging needs free hands.
 		return TEXT_TABLE_BUSY

@@ -80,7 +80,13 @@ func test_procrastinator() -> void:
 	var bot := await _play(&"procrastinator", 28)
 	var last: Dictionary = bot.rows.back()
 	assert_true(last.lost >= 3, "lost finds %d" % last.lost)
-	assert_true(bot.stench_events >= 1, "stench at the gate")
+	# 04.10.2026 („Gruft von Beginn an“): the waiting corpse lies on the crypt table from day 1, and the
+	# crypt keeps the smell in from CryptConfig.stench_exempt_min_level on (data decision, P8-pre report).
+	var crypt_cfg := Database.config(&"crypt_config") as CryptConfig
+	if crypt_cfg.stench_exempt and crypt_cfg.stench_exempt_min_level <= 1:
+		assert_eq(bot.stench_events, 0, "the crypt keeps the smell in – no stench at the gate")
+	else:
+		assert_true(bot.stench_events >= 1, "stench at the gate")
 	assert_true(bot.key_fallback, "the key fallback on day 12")
 	assert_true(bot.chapter_day > 0, "procrastinator: chapter six_pits reached (%d)" % bot.chapter_day)
 

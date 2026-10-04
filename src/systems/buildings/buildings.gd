@@ -66,6 +66,9 @@ var _unlock_seen_total: int = -1
 ## load_state got a Phase-6 state (not the empty {} of a migrated Phase-5 save): post_load then
 ## leaves the unlock to the next morning, as in play.
 var _loaded_v5: bool = false
+## Buildings whose loaded level was below their start_level (an older save, 04.10.2026: the crypt
+## from the start) – post_load moves the old table's corpse down and notes it once.
+var _lifted: Array[StringName] = []
 
 
 func _init() -> void:
@@ -90,9 +93,15 @@ func is_open() -> bool:
 	return _flag_on(_cfg().open_flag)
 
 
-## 0 (site) … 3.
+## 0 (site) … 3; never below BuildingData.start_level (the crypt: 1 from the start of a game).
 func level(building_id: StringName) -> int:
-	return int(_levels.get(building_id, 0))
+	return maxi(int(_levels.get(building_id, 0)), start_level(building_id))
+
+
+## BuildingData.start_level of `building_id` (0 when unknown).
+func start_level(building_id: StringName) -> int:
+	var data := building(building_id)
+	return data.start_level if data != null else 0
 
 
 ## {building_id: level} of every known building (0 included) and every stored level.
@@ -281,6 +290,7 @@ func load_state(data: Dictionary) -> void:
 	_spent.clear()
 	_unlock_seen_total = -1
 	_loaded_v5 = not data.is_empty()
+	_lifted.clear()
 	var saved: Variant = data.get("levels")
 	if saved is Dictionary:
 		for key: Variant in saved:
@@ -299,6 +309,9 @@ func load_state(data: Dictionary) -> void:
 				push_warning("[Buildings] saved level %d of '%s' clamped to %d" % [int(raw), id, n])
 			if n > 0:
 				_levels[id] = n
+	for info: BuildingData in all_buildings():
+		if info.start_level > 0 and int(_levels.get(info.id, 0)) < info.start_level:
+			_lifted.append(info.id)
 	var done: Variant = data.get("goal_done", false)
 	_goal_done = done is bool and done
 	_evict_pending = _counts(data.get("evict_pending", {}))
@@ -314,6 +327,7 @@ func post_load() -> void:
 		_open()
 	_evict_sites()
 	_flush_pending()
+	_repair_start_levels()
 	apply_levels()
 
 
@@ -360,6 +374,25 @@ func _on_crypt_level(new_level: int) -> void:
 	var ossuary := _first(OSSUARY_GROUP)
 	if ossuary != null and ossuary.has_method(&"on_crypt_level"):
 		ossuary.call(&"on_crypt_level", new_level)
+
+
+## Changed 04.10.2026 (user's wish „Gruft von Beginn an“): a save from before (v1–v6, crypt 0) gets
+## the crypt at level 1 through level() already; here a corpse on the old table in front of the hut
+## moves onto the crypt table with all its state (CorpseManager.relocate_table_corpse, its one note),
+## and the ossuary follows the level. Only once: the next save stores level 1.
+func _repair_start_levels() -> void:
+	if not _lifted.has(CRYPT):
+		_lifted.clear()
+		return
+	_lifted.clear()
+	var manager := _first(MANAGER_GROUP)
+	if manager != null and manager.has_method(&"relocate_table_corpse"):
+		var table := _crypt_table()
+		var xform := table.call(&"slot_transform") as Transform3D if table != null and table.has_method(&"slot_transform") else Transform3D.IDENTITY
+		manager.call(&"relocate_table_corpse", xform, null, CRYPT)
+	var ossuary := _first(OSSUARY_GROUP)
+	if ossuary != null and ossuary.has_method(&"on_crypt_level"):
+		ossuary.call(&"on_crypt_level", level(CRYPT))
 
 
 ## The MorgueTable in the crypt (room &"crypt") or null.

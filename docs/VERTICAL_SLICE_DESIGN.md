@@ -18,7 +18,7 @@ Gameplay-Werte sind **Vorschläge**; der Benutzer prüft sie beim Vertical-Slice
 1. **06:30** Tag beginnt. HUD-Zielzeile: „Der Leichenkutscher kommt gegen 07:40".
 2. **07:00** Leichenkutscher **Osric Faulhaber** schiebt seinen Karren vom Kutschweg ans Friedhofstor, **07:40** Ankunft an der **Ablage** (Bahre am Tor): liefert **eine Leiche** (Regeln §2.5). Er bleibt bis **10:00** (Dialog, **Leinen kaufen**), kommt **18:30–21:00** wieder ans Tor (Dialog, Leinen kaufen).
 3. Beim **ersten Gespräch** erklärt er in 2–3 Sätzen den Job, das Leichentuch (braucht Leinen) und wann er wiederkommt.
-4. Spieler **hebt die Leiche auf** (E), trägt sie (langsamer), legt sie auf den **Leichentisch** vor der Hütte (E).
+4. Spieler **hebt die Leiche auf** (E), trägt sie (langsamer), legt sie auf den **Leichentisch** vor der Hütte (E). *(Geändert 04.10.2026, Benutzerwunsch: Gruft von Beginn an – der Spieler trägt die Leiche durch die Tür unter der alten Eiche die Treppe hinab und legt sie auf den **Gruft-Tisch**; der Tisch vor der Hütte ist im Spiel nie aktiv, siehe PHASE6_DESIGN §2.2.)*
 5. **E am belegten Tisch** (Hände frei) öffnet das **Untersuchungs-Panel**:
    - **Untersuchen** (20 Min): deckt Todesursache-Details und Merkmale auf.
    - **Entscheidung** (nur wenn untersucht und Merkmal *Wertsachen* aufgedeckt): *Nehmen* (+Münzen, Grabqualität −2, Ruf sinkt) oder *Liegen lassen* (Grabqualität +1). Endgültig. Die Knöpfe zeigen die Folgen.

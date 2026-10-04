@@ -105,7 +105,7 @@ func test_day16_table_loads() -> void:
 	assert_true(GameState.has_flag(&"workshop_open"))
 	assert_false(GameState.has_flag(&"names_in_stone_complete"))
 	var on_table := _records_at(CorpseRecord.LOCATION_TABLE)
-	assert_eq(on_table.size(), 1, "corpse on the table in front of the hut")
+	assert_eq(on_table.size(), 1, "the corpse on the table (now the crypt table)")
 	if on_table.size() == 1:
 		var r: CorpseRecord = on_table[0]
 		var steps := 0
@@ -116,7 +116,9 @@ func test_day16_table_loads() -> void:
 		assert_true(r.is_harvested(&"hair"), "braid taken")
 		var now := TimeManager.total_minutes()
 		assert_true(r.balm_windows.size() >= 2 and r.balm_windows[0] <= now and now < r.balm_windows[1], "juniper window running")
-		assert_eq([r.room, r.slot_id, r.cold_windows, r.service_held], [&"", "", PackedInt32Array(), false], "Phase-6 defaults")
+		# 04.10.2026 (Gruft von Beginn an): post_load carries it down onto the crypt table (cold window opens).
+		assert_eq([r.room, r.slot_id, r.service_held], [&"crypt", "", false], "Phase-6 defaults, on the crypt table")
+		assert_eq(r.cold_windows.size(), 3, "the crypt's cold window")
 	await _check_and_resave()
 
 

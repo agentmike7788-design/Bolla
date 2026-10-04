@@ -59,12 +59,22 @@ func test_the_stair_outside_by_level() -> void:
 	assert_false(cover.visible, "level 3: the pit is open")
 	assert_true(plug.disabled and not cheek.disabled, "level 3: passage open, cheeks solid")
 	var buildings := world.get_node("Systems/Buildings") as Buildings
+	# 04.10.2026 (user: „Die Treppe in meinem Friedhof soll immer da sein"): the crypt never drops below
+	# level 1 – a stored 0 still shows the open stair at level 1.
 	buildings.load_state({"levels": {"crypt": 0, "chapel": 3, "shed": 3}})
 	EventBus.building_upgraded.emit(&"crypt", 0)
 	await tree.process_frame
-	assert_true(cover.visible and not (cover.get_node("Collision/Slab") as CollisionShape3D).disabled, "level 0: covered, walkable")
-	assert_true(not plug.disabled and cheek.disabled, "level 0: the footprint closed, no cheeks")
-	assert_false(door.can_interact(player), "level 0: no way in")
+	assert_eq(buildings.level(&"crypt"), 1, "level 0 stored → level 1")
+	assert_false(cover.visible, "the stair stays open")
+	assert_true((cover.get_node("Collision/Slab") as CollisionShape3D).disabled, "no sod slab over the pit")
+	assert_true(plug.disabled and not cheek.disabled, "level 1: passage open, cheeks solid")
+	assert_true(door.can_interact(player), "level 1: the way in")
+	# The cover itself still closes the pit below its min_open_level (a world without the start level).
+	cover.min_open_level = 2
+	cover.refresh()
+	assert_true(cover.visible and not (cover.get_node("Collision/Slab") as CollisionShape3D).disabled, "below min_open_level: covered, walkable")
+	cover.min_open_level = 1
+	cover.refresh()
 
 
 func test_walk_down_and_up_the_stair() -> void:

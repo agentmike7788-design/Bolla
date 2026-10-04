@@ -17,6 +17,7 @@ const Round2 := preload("res://src/world/graveyard/graveyard_shots_round2.gd")
 const Shovel := preload("res://src/world/graveyard/graveyard_shots_shovel.gd")
 const Burial := preload("res://src/world/graveyard/graveyard_shots_burial.gd")
 const Tools := preload("res://src/world/graveyard/graveyard_shots_tools.gd")
+const Gruft := preload("res://src/world/graveyard/graveyard_shots_gruft.gd")
 const SETTLE_FRAMES := 40
 ## Frames after a measurement switch (shadows off / freeze) before the counters are read.
 const MEASURE_FRAMES := 4
@@ -57,6 +58,8 @@ var _shovel: bool = false
 var _tools: bool = false
 ## --burial: G7 Runde 2 Bestatten – the dead laid into the pit, the grave filled (graveyard_shots_burial.gd).
 var _burial: bool = false
+## --gruft: P8-pre – the crypt from the start of a game (graveyard_shots_gruft.gd; docs/reviews/phase8_pre).
+var _gruft: bool = false
 var _distance: float = 0.0
 
 
@@ -81,6 +84,8 @@ func _run() -> void:
 			_tools = true
 		elif arg == "--burial":
 			_burial = true
+		elif arg == "--gruft":
+			_gruft = true
 		elif arg.begins_with("--distance="):
 			_distance = arg.trim_prefix("--distance=").to_float()
 	if _out == "":
@@ -101,6 +106,10 @@ func _run() -> void:
 	(world.get_node(^"Decor/Grass") as Node3D).visible = not _no_grass
 	var player := world.get_node(^"Player") as Node3D
 	var start := player.global_transform
+	if _gruft:
+		await Gruft.run(self, world, _out, _only)
+		quit()
+		return
 	_stage(world)
 	var table_spot := player.global_transform
 	if _round2:

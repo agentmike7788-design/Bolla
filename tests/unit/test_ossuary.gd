@@ -71,6 +71,9 @@ func before_each() -> void:
 	world.add_child(ossuary)
 	buildings = BuildingsDouble.new()
 	buildings.config = Phase6Fixtures.buildings_config()
+	# Fixture buildings (no start_level): the crypt can stand at level 0 here (04.10.2026).
+	for data: BuildingData in Phase6Fixtures.buildings():
+		buildings.building_table[data.id] = data
 	world.add_child(buildings)
 	rep = EventDouble.new()
 	rep.add_to_group(&"reputation")

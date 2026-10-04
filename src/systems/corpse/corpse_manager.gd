@@ -253,11 +253,12 @@ func _check_stench(day: int, at_total: int) -> void:
 	var cfg := _economy()
 	var t := _tables()
 	var crypt := _crypt_config()
+	var exempt := crypt.stench_exempt and crypt_level() >= crypt.stench_exempt_min_level
 	for record: CorpseRecord in _records.values():
 		if record.location == CorpseRecord.LOCATION_BURIED or CorpseDecay.is_balm_active(record, at_total):
 			continue
 		# Phase 6 §2.2: the crypt keeps the smell in (stench_exempt).
-		if crypt.stench_exempt and record.room != &"" and record.room == crypt.room_id:
+		if exempt and record.room != &"" and record.room == crypt.room_id:
 			continue
 		var fresh := CorpseDecay.freshness_at(record, maxi(at_total, record.last_decay_total), CorpseDecay.decay_per_hour(record, t), _balm_factor())
 		if fresh >= cfg.fresh_bad_threshold:

@@ -1904,11 +1904,19 @@ func test_phase6_sites_doors_and_gate() -> void:
 		assert_not_null(site, id)
 		assert_eq(site.building_id, StringName(P6_SITES[id][0]))
 		_assert_at(site, P6_SITES[id][1], id)
-		assert_false(site.visible, id + " hidden before buildings_open")
+		# 04.10.2026 (user's wish „Gruft von Beginn an“): the crypt stands at level 1 from the start.
+		if site.building_id == &"crypt":
+			assert_true(site.visible, id + " stands from the start")
+			assert_eq(site.get_interaction_prompt(world.get_player()), "", id + ": no upgrade before buildings_open")
+		else:
+			assert_false(site.visible, id + " hidden before buildings_open")
 	for id: String in P6_DOORS:
 		var door := world.get_node("Entities/" + id) as BuildingDoor
 		assert_eq(door.building_id, StringName(P6_DOORS[id]), id)
-		assert_false(door.is_open(), id + " closed at level 0")
+		if door.building_id == &"crypt":
+			assert_true(door.is_open(), id + " open from the start")
+		else:
+			assert_false(door.is_open(), id + " closed at level 0")
 	GameState.set_flag(&"buildings_open", true)
 	var buildings := world.get_node("Systems/Buildings") as Buildings
 	for level: int in [0, 1, 2, 3]:
@@ -1918,14 +1926,17 @@ func test_phase6_sites_doors_and_gate() -> void:
 			var site := world.get_node("Entities/" + id) as BuildingSite
 			assert_true(site.visible, id + " visible once open")
 			var data := Database.building(site.building_id) as BuildingData
-			var scene: PackedScene = data.model_site if level == 0 else data.level_data(level).model
+			# The crypt never goes below its start level 1 (level 0 → 1).
+			var shown := buildings.level(site.building_id)
+			assert_eq(shown, maxi(level, data.start_level), "%s level %d" % [id, level])
+			var scene: PackedScene = data.model_site if shown == 0 else data.level_data(shown).model
 			assert_not_null(scene, "%s model level %d" % [id, level])
 			var model := site.get_node_or_null("Model")
 			assert_not_null(model, "%s shows a model at level %d" % [id, level])
 			if model != null and scene != null:
 				assert_eq(model.scene_file_path, scene.resource_path, "%s level %d model" % [id, level])
 				var marker := model.find_child("door_outside", true, false) as Node3D
-				if level >= 1:
+				if shown >= 1:
 					var door := world.get_node("Entities/door_" + String(site.building_id)) as BuildingDoor
 					assert_true(door.is_open(), "door open at level %d" % level)
 					assert_almost(door.global_position.distance_to(marker.global_position), 0.0, 0.05, "door at door_outside of " + id)

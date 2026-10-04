@@ -96,13 +96,16 @@ func test_level_furniture_and_collision() -> void:
 		buildings.apply_levels()
 		for id: String in ROOMS:
 			var room := InteriorRoom.find(tree, StringName(id))
-			assert_eq(room.level, level, id)
+			# 04.10.2026: the crypt never goes below its start level 1.
+			var lvl := buildings.level(StringName(id))
+			assert_eq(room.level, lvl, id)
+			assert_eq(lvl, maxi(level, 1) if id == "crypt" else level, id + " level")
 			for node: Node in room.find_children("*", "Node3D", true, false):
 				if not (node.has_meta(&"min_level") or node.has_meta(&"max_level")):
 					continue
-				var shown := InteriorRoom.is_shown_at(node, level)
-				assert_eq((node as Node3D).visible, shown, "%s L%d %s visible" % [id, level, node.name])
-				assert_eq(node.process_mode == Node.PROCESS_MODE_DISABLED, not shown, "%s L%d %s physics" % [id, level, node.name])
+				var shown := InteriorRoom.is_shown_at(node, lvl)
+				assert_eq((node as Node3D).visible, shown, "%s L%d %s visible" % [id, lvl, node.name])
+				assert_eq(node.process_mode == Node.PROCESS_MODE_DISABLED, not shown, "%s L%d %s physics" % [id, lvl, node.name])
 	# The chapel pews: rough ones on level 1 only, the four pews from level 2.
 	var chapel := InteriorRoom.find(tree, &"chapel")
 	var rough := chapel.get_node("Furniture").find_children("pew_rough_*", "", false, false)
@@ -124,14 +127,15 @@ func test_crypt_table_niches_and_ossuary() -> void:
 	var crypt_followers := table.followers().map(func(n: Node) -> String: return String(n.name))
 	for name: String in ["SmokeBowl", "WashBasin"]:
 		assert_true(name in crypt_followers, "crypt table follower " + name)
+	# 04.10.2026 (Gruft von Beginn an): a stored crypt 0 is level 1 – the crypt table is always the active one.
 	for level: int in [0, 1]:
 		buildings.load_state({"levels": {"crypt": level}})
 		buildings.apply_levels()
 		old.refresh_active()
 		table.refresh_active()
-		assert_eq([old.is_active(), table.is_active()], [level == 0, level == 1], "exactly one active table at crypt %d" % level)
-		assert_eq(old.visible, level == 0)
-		assert_eq((world.get_node("Decor/Phase4Props/WashBasin") as Node3D).visible, level == 0, "wash basin follows")
+		assert_eq([old.is_active(), table.is_active()], [false, true], "exactly one active table (stored crypt %d)" % level)
+		assert_false(old.visible, "no table in front of the hut")
+		assert_false((world.get_node("Decor/Phase4Props/WashBasin") as Node3D).visible, "wash basin follows")
 	var niches := crypt.find_children("*", "", true, false).filter(func(n: Node) -> bool: return n is CryptNiche)
 	assert_eq(niches.size(), 6)
 	for n: Node in niches:

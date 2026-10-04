@@ -201,10 +201,7 @@ func _handle_corpses() -> void:
 		if record.location == CorpseRecord.LOCATION_DROPOFF and _table().corpse_id != "":
 			continue  # the table is busy – the next pass
 		_bury(record)
-
-
-func _table() -> MorgueTable:
-	return world.get_node_by_layout_id("morgue_table") as MorgueTable
+	_leave_room()
 
 
 static func _arrival_day(record: CorpseRecord) -> int:
@@ -270,9 +267,11 @@ func _balm_waiting() -> void:
 	if inv().count(&"juniper") == 0 and inv().count(&"coin") >= 2:
 		_buy(&"juniper", 1)
 	if _balm_ok(manager.get_record(id)):
+		_enter_table_room(_table())
 		_table().interact(player)
 		UIState.clear()
 		_table().request_balm()
+		_leave_room()
 
 
 ## East, north (Phase 3) and the Holunderwinkel once the key is there: its gate first.

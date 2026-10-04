@@ -4,6 +4,8 @@ Status: **v1 – Entwurf zur Benutzerfreigabe (Vertragsfragen §14 offen), danac
 Baut auf `docs/PHASE5_DESIGN.md` (Vertrag v1.1, freigegeben 28.09.2026), `docs/PHASE4_DESIGN.md`, `docs/PHASE3_DESIGN.md` und `docs/VERTICAL_SLICE_DESIGN.md` (§11 Hütte & Innenraum) auf. Was dieses Dokument nicht ändert, gilt dort unverändert weiter. Referenz-Build: **c5bd76d** (Gate G5 freigegeben).
 Gameplay-Werte sind **Vorschläge**; der Benutzer prüft sie beim Gate G6. ART STYLE LOCK „Gemaltes Diorama" ist aktiv: Phase 6 ändert den Stil nicht. Der Maler-Shader (`painted.gdshader`, `painted_common.gdshaderinc`, `painted_foliage.gdshader`) bleibt unverändert, ebenso die Atmosphären-Presets der Außenwelt. Die freigegebenen Abschnitte I–IV (Alter Hof, Ostwiese, Birkenhang, Holunderwinkel) und der Werkhof aus Phase 5 bleiben bitgleich, **außer** den in §4.1–§4.3 vollständig aufgezählten Eingriffen (Gruft-Bauplatz in der Südwestecke des Alten Hofs, Kirchpforte im Nordzaun des Birkenhangs, Schuppen-Tasche westlich der Hütte) und dem Rückbau des Leichentischs vor der Hütte, sobald die Gruft steht (§4.4).
 
+> **Änderung (geändert 04.10.2026, Benutzerwunsch: Gruft von Beginn an):** „Die Treppe in meinem Friedhof soll immer da sein – da muss ich ja die Leichen runterbringen und bearbeiten." Die Gruft steht ab Spielbeginn auf **Stufe 1** (`BuildingData.start_level = 1`, kostenlos, ohne Bauaktion): Treppe, Portal und Tür unter der Eiche sind von Tag 1 sichtbar und begehbar, die Grasdecke über dem Schacht fehlt, der **Gruft-Tisch** ist der einzige aktive Tisch. Der Tisch vor der Hütte ist im Spiel nie aktiv (er bleibt nur als stiller Knoten im Layout für Welten ohne Buildings-System). Alle Phase-2–5-Handgriffe finden von Anfang an unten am Gruft-Tisch statt. Ausbau auf Stufe 2 und 3 wie bisher ab `buildings_open`; das Kapitelziel `goal_levels crypt: 2` bleibt. Alte Stände (v1–v6, Gruft 0) werden in `Buildings.post_load` repariert (Gruft → 1, Leiche vom alten Tisch → Gruft-Tisch mit Notiz; kein Versionssprung). Die betroffenen Stellen unten sind markiert.
+
 **Benutzerentscheidungen (verbindlich, 28.09.2026)**
 - **Gebäude:** alle vier genannten Aufgaben:
   1. **Leichenhalle:** kühler Raum für mehrere Leichen, bremst den Verfall; Untersuchen und Herrichten finden dort statt.
@@ -34,7 +36,7 @@ Gameplay-Werte sind **Vorschläge**; der Benutzer prüft sie beim Gate G6. ART S
 ### 1.1 Erweiterter Kern-Loop
 ```
 Freischaltung (Kapitel „Namen in Stein") → Osric: Gemeinderat, Gruft, Kapelle, Beinhaus
-  → GRUFT unter der Eiche bauen (Stufe 1) → der Tisch vor der Hütte wandert hinab
+  → GRUFT unter der Eiche ausbauen (Stufe 2) – Stufe 1 steht ab Spielbeginn (geändert 04.10.2026, Benutzerwunsch: Gruft von Beginn an)
   → BEINHAUS: Gebeinkiste zimmern → altes Grab heben → Gebeine beisetzen → die Stelle ist wieder frei
   → Osric bringt wieder Leichen (eine je freie Stelle, wie bisher)
   → Bahre → GRUFT: Tisch (untersuchen, herrichten) · Kühlnische (warten lassen, Verfall gebremst)
@@ -48,7 +50,7 @@ Alle Phase-4-Handgriffe (Schritte, Funde, Herrichten, Verwertung, Räuchern) ble
 ### 1.2 Freischaltung
 - **Neues Spiel:** Phase 6 öffnet sich mit dem Phase-5-Kapitel `names_in_stone_complete` (gemessen am Tag 20–29, G5). Am ersten Morgen danach (erste Minute ≥ 06:00, idempotent) setzt `Buildings.apply_morning` das Flag `buildings_open`. Ab dann hat Osric den Knoten `p6_intro`, und die drei Bauplätze sowie die Kirchpforte erscheinen.
 - **Migrierte Stände (v4):** Ist `names_in_stone_complete` gesetzt, setzt `Buildings.post_load` `buildings_open` sofort (auch nach 06:00). Bei einem v5-Stand gilt wie beim Werkhof die Morgenregel (Speichern → Laden bitgleich).
-- Vor `buildings_open` sind Bauplätze, Kirchpforte (geschlossenes Tor im Zaun), Altgrab-Prompts, die Altarkerze bei Osric und das Gebeinkisten-Rezept unsichtbar bzw. ohne Prompt. Der Leichentisch vor der Hütte arbeitet unverändert weiter, bis die Gruft Stufe 1 hat (§2.2). Frühere Spielphasen laufen dadurch unverändert.
+- Vor `buildings_open` sind Bauplätze, Kirchpforte (geschlossenes Tor im Zaun), Altgrab-Prompts, die Altarkerze bei Osric und das Gebeinkisten-Rezept unsichtbar bzw. ohne Prompt. ~~Der Leichentisch vor der Hütte arbeitet unverändert weiter, bis die Gruft Stufe 1 hat (§2.2).~~ (geändert 04.10.2026, Benutzerwunsch: Gruft von Beginn an): Die Gruft (Stufe 1) mit Gruft-Tisch, 2 Kühlnischen und Beinhaus-Nische steht ab Tag 1; vor `buildings_open` fehlt nur der Ausbau-Prompt am Portal.
 - Osric `p6_intro` (Leittext, P6 darf glätten): „Der Gemeinderat hat getagt, Totengräber. Der Friedhof ist voll, und die Leute wollen ihre Toten nicht mehr auf dem Brett vor deiner Hütte liegen sehen, wie Fisch auf dem Markt. Unter der alten Eiche liegt die Gruft der Gemeinde, seit Jahren zugeschüttet. Meine Leute haben den Hals freigelegt. Oben am Kamm steht die Kapelle, ohne Dach. Und wenn du die ganz Alten ins Beinhaus bringst, wird unten im Hof Platz. Vier Münzen zahlt die Gemeinde für jede Umbettung."
 
 ### 1.3 Zeitkosten (Spielminuten; TimedAction wie bisher)
@@ -72,7 +74,7 @@ Alle Phase-4-Handgriffe (Schritte, Funde, Herrichten, Verwertung, Räuchern) ble
 **A) Referenz: Phase-5-Endstand (würdevoll, v4-Fixture `slot_p5_day30_reverent`, Tag 30, ≈ 31 Münzen am Morgen, 18 Gräber, keine Lieferungen).** Der Bogen dauert **10 Tage**, das Kapitel fällt an B6. Richtwert Mensch; der Bot `reverent6` spielt ihn nach (§10).
 | Tag (Bogen) | Geschehen | Münzen früh → abends (§2.8) | Zielzeile (Beispiel) |
 |---|---|---|---|
-| 30 (B1) | Osric `p6_intro`. **Gruft 1** (20). 3 Gebeinkisten zimmern. `old_04`, `old_06`, `old_07` heben und beisetzen (+12). Der Tisch vor der Hütte ist fort. | 31 → 23 | „Sprich mit Osric" → „Bauplatz: Gruft" → „Altes Grab heben: Barbe Lindt" |
+| 30 (B1) | Osric `p6_intro`. ~~**Gruft 1** (20)~~ (steht schon, (geändert 04.10.2026, Benutzerwunsch: Gruft von Beginn an)). 3 Gebeinkisten zimmern. `old_04`, `old_06`, `old_07` heben und beisetzen (+12). Der Tisch vor der Hütte ist fort. | 31 → 23 | „Sprich mit Osric" → „Bauplatz: Gruft" → „Altes Grab heben: Barbe Lindt" |
 | 31 (B2) | Die erste Leiche seit Tagen. Bahre → Gruft → Tisch. **Kapelle 1** (25), 1 Altarkerze (2). **Erste Aussegnung** (+3), Leichenzug, Grab `old_04`, Stele mit Inschrift (+14). | 27 → 17 | „Bring die Leiche in die Gruft" → „Die Kapelle steht – leg die Tote auf den Katafalk" |
 | 32 (B3) | Leiche 2 mit Aussegnung (+17). **Schuppen 1** (10). | 21 → 26 | – |
 | 33 (B4) | Leiche 3 mit Aussegnung (+17). **Gruft 2** (30): 4 Kühlnischen, Beinhaus 5 Plätze, vermauerter Gang entdeckt (Hinweis). `old_02`, `old_05` heben (+8). | 30 → 23 | „Hinter dem Beinhaus zieht es kalt" |
@@ -101,8 +103,8 @@ Dann: Flag `roof_and_earth_complete`, `chapter_completed(&"roof_and_earth")`, Ab
 
 | Gebäude | St. | Titel | Material | Münzen (wofür) | Min | Neu auf dieser Stufe |
 |---|---|---|---|---|---|---|
-| **Gruft** `crypt` | 1 | Gruft geöffnet | 12 stone, 6 wood, 4 clay, 2 iron_fittings | **20** (Kalk und Mörtel aus Hollerbrück) | 180 | Portal und Treppe, Gewölbe, **Gruft-Tisch** (ersetzt den Tisch vor der Hütte, §2.2), Waschbecken und Räucherschale, **2 Kühlnischen** (× 0,5), Raumkühle × 0,8, **Beinhaus-Nische mit 3 Plätzen**, Hängelaterne |
-| | 2 | Kühlgewölbe | 4 workstone, 8 stone, 4 clay, 1 iron_bar | **30** (Schieferplatten für die Nischen) | 210 | **4 Kühlnischen** (alle × 0,4), Raumkühle × 0,7, **Beinhaus 5 Plätze**, Gebeinregal; hinter dem Beinhaus kommt ein **vermauerter Gang** zum Vorschein (Hinweis „Der kalte Zug", §2.3) |
+| **Gruft** `crypt` | 1 | Gruft geöffnet | ~~12 stone, 6 wood, 4 clay, 2 iron_fittings~~ – (ab Spielbeginn (geändert 04.10.2026, Benutzerwunsch: Gruft von Beginn an)) | ~~20~~ **0** | ~~180~~ – | Portal und Treppe, Gewölbe, **Gruft-Tisch** (ersetzt den Tisch vor der Hütte, §2.2), Waschbecken und Räucherschale, **2 Kühlnischen** (× 0,5), Raumkühle × 0,8, **Beinhaus-Nische mit 3 Plätzen**, Hängelaterne |
+| | 2 | Kühlgewölbe | 4 workstone, 8 stone, 4 clay, 1 iron_bar | ~~30~~ **35** (Schieferplatten, Kalk und Mörtel – Ausgleich für die entfallene Stufe 1, (geändert 04.10.2026, Benutzerwunsch: Gruft von Beginn an)) | 210 | **4 Kühlnischen** (alle × 0,4), Raumkühle × 0,7, **Beinhaus 5 Plätze**, Gebeinregal; hinter dem Beinhaus kommt ein **vermauerter Gang** zum Vorschein (Hinweis „Der kalte Zug", §2.3) |
 | | 3 | Tiefe Gruft | 6 workstone, 6 stone, 2 iron_bar | **35** (Eisengitter und Namenstafel) | 240 | **6 Kühlnischen** (alle × 0,3), Raumkühle × 0,6, **Beinhaus 6 Plätze**, Namenstafel, **Gitter im Gang** (Blick in die Tiefe, kaltes Licht, §2.3), Laterne am Portal |
 | **Kapelle** `chapel` | 1 | Kapelle unter Dach | 10 wood, 8 stone, 2 clay, 2 linen, 2 iron_fittings | **25** (Dachschiefer) | 240 | Dach, Altar mit Altartuch, **Katafalk**, 2 rohe Bänke, Altarkerzen; **Aussegnung** (Gebühr 3, Ruf +1), **Andacht** (+1) |
 | | 2 | Glocke und Gestühl | 8 wood, 3 workstone, 2 iron_bar | **30** (Totenglocke aus der Stadt) | 210 | Dachreiter mit **Glocke** (schwingt bei der Aussegnung; kein Ton, Agent 17 inaktiv), 4 Kirchenbänke, **2 Trauergäste**, Gebühr 5, Ruf +2, Andacht +2 |
@@ -111,17 +113,18 @@ Dann: Flag `roof_and_earth_complete`, `chapter_completed(&"roof_and_earth")`, Ab
 | | 2 | Werkhof-Anschluss | 10 wood, 2 iron_fittings | **15** (Achse für den Handkarren) | 120 | **32 Plätze**, an allen Stationen, Bauplätzen und am Stein-Panel: „Fehlendes aus dem Schuppen holen" (10 Min), Handkarren am Schuppen |
 | | 3 | Regale und Legen | 8 wood, 6 stone, 1 iron_bar | **20** (Eisenhaken und Regalwinkel) | 150 | **40 Plätze**, **doppelte Stapel** für Rohstoffe und Werkstoffe (`RESOURCE`, `MATERIAL`), Holen 0 Min, „Überschuss einlagern" an den Stationen |
 
-**Summen:** Stufe 1+2 aller Gebäude = **130 Münzen** (Pflicht für das Kapitel) · alle Stufen = **225 Münzen**. Material Stufe 1+2: 46 wood, 32 stone, 10 clay, 7 workstone, 3 iron_bar, 8 iron_fittings, 2 linen. Das entspricht bei vollen Tagesmengen aus Phase 5 (§2.2 dort: Holz 10, Stein 12, Erz 3) etwa 5 Sammeltagen, die sich über den Bogen verteilen.
+**Summen** ((geändert 04.10.2026, Benutzerwunsch: Gruft von Beginn an): ohne Gruft 1, Gruft 2 = 35 → **115** Pflicht / **210** alle Stufen; Material −12 stone, −6 wood, −4 clay, −2 iron_fittings)**:** Stufe 1+2 aller Gebäude = **130 Münzen** (Pflicht für das Kapitel) · alle Stufen = **225 Münzen**. Material Stufe 1+2: 46 wood, 32 stone, 10 clay, 7 workstone, 3 iron_bar, 8 iron_fittings, 2 linen. Das entspricht bei vollen Tagesmengen aus Phase 5 (§2.2 dort: Holz 10, Stein 12, Erz 3) etwa 5 Sammeltagen, die sich über den Bogen verteilen.
 *Begründung Werte:* Die Gruft ist zuerst nötig (sie gibt Stellen frei, §2.3) und deshalb auf Stufe 1 am billigsten unter den großen Bauten. Die Kapelle kostet am meisten, weil Glocke und Fenster Stadtware sind. Der Schuppen ist Holzbau und billig, seine Stufe 2 lohnt sich aber erst mit vielen Stationen. Eisen bleibt knapp (3 Barren + 8 Beschläge ≈ 14 Erz ≈ 5 Tage Erzader, vieles liegt nach Phase 5 schon im Lager).
 
 - `BuildingsConfig`: `unlock_flag &"names_in_stone_complete"`, `open_flag &"buildings_open"`, `intro_minute 360`, `goal_levels {crypt: 2, chapel: 2, shed: 2}`, `goal_services 1`, `goal_reinterred 1`, `chapter_id &"roof_and_earth"`, `goal_flag &"roof_and_earth_complete"`, `cleared_flag &"building_sites_cleared"`.
-- Gebäude-Panel-Prompt: Stufe 0 „[E] Bauplatz: Gruft", danach am Außenmodell „[E] Gruft ausbauen (Stufe 2)" (seitlich am Bauplatz-Marker `build`, nicht an der Tür; die Tür ist das Portal). Voll ausgebaut: kein Ausbau-Prompt.
+- Gebäude-Panel-Prompt ((geändert 04.10.2026, Benutzerwunsch: Gruft von Beginn an): die Gruft hat nie Stufe 0; ihr Prompt „[E] Gruft ausbauen (Stufe 2)" erscheint ab `buildings_open`): Stufe 0 „[E] Bauplatz: Gruft", danach am Außenmodell „[E] Gruft ausbauen (Stufe 2)" (seitlich am Bauplatz-Marker `build`, nicht an der Tür; die Tür ist das Portal). Voll ausgebaut: kein Ausbau-Prompt.
 
 ### 2.2 Die Gruft – Leichenhalle unter der Eiche (`data/config/crypt_config.tres` – `CryptConfig`)
 **Entscheidung: ein Gebäude für Leichenhalle, Gruft und Beinhaus (Bestätigung §14.1).** *Begründung:* Kühle, Stille und Dunkelheit brauchen Leichenhalle und Beinhaus gleichermaßen. Ein Gebäude unter der Erde erfüllt den Benutzerwunsch („eine Gruft, wo man die Leichen bearbeitet") wörtlich. Zwei getrennte Gebäude würden dieselbe Einrichtung doppelt verlangen, einen vierten Bauplatz im vollen Alten Hof und einen weiteren Tragweg. Die Gruft liegt 11 m von der Bahre entfernt; der alte Tisch lag 14 m entfernt (§4.1).
 
 **Wo die Arbeit stattfindet – der Tischwechsel**
-- Bis **Gruft 1** arbeitet der Leichentisch vor der Hütte unverändert (Phase 2–5). Das frühe Spiel und alle Phase-2- bis Phase-5-Tests gelten weiter.
+- **(geändert 04.10.2026, Benutzerwunsch: Gruft von Beginn an):** Es gibt keinen Tischwechsel mehr im Spiel. Die Gruft hat ab Tag 1 Stufe 1, der Gruft-Tisch ist von Anfang an der eine aktive Tisch; Raumkühle × 0,8, 2 Kühlnischen × 0,5 und die Gestank-Ausnahme (`stench_exempt`) gelten ab Spielbeginn (Balance-Hinweis im P8-pre-Bericht). Die Schritte 1–4 unten laufen nur noch in Welten/Tests mit Gruft 0 (Fixture-Gebäudetabellen) und als **post_load-Reparatur** alter Stände: `Buildings.post_load` hebt Gruft 0 → 1 und ruft `CorpseManager.relocate_table_corpse` (Notiz „Die Leiche vom alten Tisch liegt jetzt unten in der Gruft.").
+- ~~Bis **Gruft 1** arbeitet der Leichentisch vor der Hütte unverändert (Phase 2–5). Das frühe Spiel und alle Phase-2- bis Phase-5-Tests gelten weiter.~~
 - Beim Abschluss von **Gruft 1** (`Buildings.upgrade(&"crypt")`, im selben Aufruf):
   1. Der **Gruft-Tisch** (`MorgueTable` im Gruft-Innenraum, `room &"crypt"`, `requires_level 1`) wird aktiv.
   2. Der **Tisch vor der Hütte** (`retire_at_level 1`) wird inaktiv: unsichtbar, ohne Kollision und ohne Prompt. Waschschüssel und Räucherschale verschwinden mit ihm (§4.4).
@@ -256,7 +259,7 @@ Osric 07:40 → Bahre am Tor (unverändert)
 **Ausgaben**
 | Posten | Münzen |
 |---|---|
-| Gruft 1 + 2 · Kapelle 1 + 2 · Schuppen 1 + 2 (Pflicht) | 20 + 30 + 25 + 30 + 10 + 15 = **130** |
+| Gruft 1 + 2 · Kapelle 1 + 2 · Schuppen 1 + 2 (Pflicht) | 20 + 30 + 25 + 30 + 10 + 15 = **130** ((geändert 04.10.2026, Benutzerwunsch: Gruft von Beginn an): Gruft 1 entfällt, Gruft 2 kostet 35 → **115**; Bilanz §2.8a) |
 | 1 Altarkerze für die erste Aussegnung (Pflicht) | 2 |
 | **Summe Pflicht** | **132 (72 %)** |
 | Freiwillig (so spielt `reverent6`): 4 weitere Aussegnungen und 2 Andachten (6 Kerzen) · **Gruft 3** an B10 | 12 + 35 = 47 |
@@ -272,6 +275,8 @@ Osric 07:40 → Bahre am Tor (unverändert)
 - Morgens nie unter **21** (B3). Ohne Gruft 3 endet der Bogen bei ≈ 38, mit Gruft 3 bei ≈ 5 (das war dann die eigene Wahl). B2 geht zwischenzeitlich auf 0: Kapelle und Kerze kosten 27, bevor Gebühr und Bestattung kommen. Wer vorsichtig ist, baut die Kapelle an B3.
 - *Warum nicht arm:* Jede Ausgabe ist ein bleibender Gewinn (Stufe, Stelle, Ritus). Kerzen sind der ruhige Dauerabfluss. Phase-4-Käufe (Leinen, Wacholder) bleiben jederzeit bezahlbar.
 - **Nach der sechsten Umbettung ist der Friedhof wieder voll.** Die höheren Gebühren der Kapellen-Stufen 2 und 3 (5 / 7) und die dritte bis sechste Kühlnische wirken dann erst, wenn es wieder freie Stellen gibt (§14.2).
+
+**§2.8a Nachrechnung (geändert 04.10.2026, Benutzerwunsch: Gruft von Beginn an).** Mit Gruft 1 ab Start spart der Spieler am Bogenbeginn 20 Münzen und 12 stone, 6 wood, 4 clay, 2 iron_fittings. Gemessen mit `reverent6` (v4-Fixture, 27 Münzen, 10 Tage) ohne Ausgleich: Kapitel weiter Tag 37, 5 Aussegnungen (vorher 3), 5 Umbettungen, Ende **47** (vorher 20, Testband 0–45), morgens nie unter 19. Die Bilanz kippt damit sichtbar ins Reiche. **Ausgleich (maßvoll): Gruft 2 kostet 35 statt 30 Münzen.** Pflicht 115 statt 130; der Spieler behält gegenüber dem Vertrag 15 Münzen Vorsprung, was Befund B6-1 (knapper Start) etwas entschärft. Probe mit 40: Ende 37, aber morgens einmal nur 9 (Testband ≥ 12, B3/B4 zu knapp) – deshalb 35. Gemessen mit 35: `reverent6` Kapitel Tag 37, Ende 42, morgens ≥ 14, 5 Aussegnungen; `mortician` Tag 38 (Ende 28); `mender6` Tag 37 (Ende 55); `harvester6` Tag 41 (Ende 111); `founder` (neues Spiel) Tag 27 (Ende 43). Material der entfallenen Stufe 1 wird nicht umgelegt (Eisen bleibt der Engpass über Gruft 2/Kapelle).
 
 **Andere Wege (Erwartung für W3)**
 | Weg | Start | Einnahmen | Ausgaben Phase 6 | Ende (≈ 10 Tage) | Bemerkung |
@@ -591,7 +596,7 @@ Kamera zur Erinnerung: Neigung 45°, Gier 0° (Blick nach Norden, −Z), FOV 30�
 ```
 - **Lage:** `site_crypt` (−9,0 | 6,9), `rot_y 0` (Tür nach Süden zur Kamera), Footprint lokal [−1,4, −1,3, 2,8, 2,6]. Portal mit Steingiebel und Eisentür an der Südseite, dahinter die Treppe unter einen flachen Grashügel nach Norden, Richtung Eiche. Der Bau bleibt 2,4 m vor dem Eichenstamm (Kollision r 0,6).
 - **Wege:** Bahre (4,4 | 8,3) → Zugang (−9,0 | 8,7): ≈ 13 m Weg, entlang dem Südzaun zwischen `old_08` und Zaun, frei ≥ 2,0 m. Bis zum alten Tisch waren es ≈ 14 m. Gruft → Altgräber (Mitte des Alten Hofs): 7–16 m. Gruft → Hüttentür: ≈ 14 m.
-- **Stufenmodelle:** Stufe 0 `ph_bld_crypt_site`: ein freigelegter, zugeschütteter Grufthals mit Erdhaufen, Brettern und Pflöcken (erscheint mit `buildings_open`; Osric: „meine Leute haben den Hals freigelegt"). Stufe 1 `ph_bld_crypt_l1`: gemauertes Portal, Tür, Hügel. Stufe 2 `_l2`: dazu Schieferdach auf dem Portal und Lüftungsschlitz im Hügel. Stufe 3 `_l3`: Eisengitter vor der Tür (offen), Laterne am Portal (Marker `light_lantern`, **ohne Schatten**, 2,2 m, `warm_lights`), eingemeißelter Sturz „Wir waren, was ihr seid."
+- **Stufenmodelle** ((geändert 04.10.2026, Benutzerwunsch: Gruft von Beginn an): im Spiel ab Tag 1 `ph_bld_crypt_l1`, Treppe offen, Grasdecke weg; `_site` nur noch in Fixture-Welten)**:** Stufe 0 `ph_bld_crypt_site`: ein freigelegter, zugeschütteter Grufthals mit Erdhaufen, Brettern und Pflöcken (erscheint mit `buildings_open`; Osric: „meine Leute haben den Hals freigelegt"). Stufe 1 `ph_bld_crypt_l1`: gemauertes Portal, Tür, Hügel. Stufe 2 `_l2`: dazu Schieferdach auf dem Portal und Lüftungsschlitz im Hügel. Stufe 3 `_l3`: Eisengitter vor der Tür (offen), Laterne am Portal (Marker `light_lantern`, **ohne Schatten**, 2,2 m, `warm_lights`), eingemeißelter Sturz „Wir waren, was ihr seid."
 
 **Versetzte bzw. geänderte Elemente am Gruft-Platz (vollständig):**
 | # | Element | vorher | nachher | Grund |
@@ -660,6 +665,7 @@ Birke (−1,4 | −22,2), Birke (12,8 | −21,4) und Hintergrundbaum (−7,6 | �
 Westmauer, Mauerstein, Ilses Wegpunkte, Steinhaufen, Kiste, Webstuhl und die Gang-Route bleiben bitgleich. W-Welt darf den Bauplatz um ±0,4 m schieben, wenn Routen- oder Ilse-Prüfung es verlangen.
 
 ### 4.4 Vor der Hütte – Rückbau des Leichentischs (Vorher/Nachher)
+- **(geändert 04.10.2026, Benutzerwunsch: Gruft von Beginn an):** Der Tisch vor der Hütte ist ab Spielbeginn inaktiv (unsichtbar, ohne Kollision und Prompt, Waschschüssel und Räucherschale mit ihm); die Trittstelle bleibt. Der Knoten `Entities/morgue_table` bleibt im Layout (Welten ohne Buildings-System, Debug/Screenshot-Werkzeuge).
 - **Ab Gruft 1** (zur Laufzeit, das Layout bleibt): Leichentisch `morgue_table` (−1,6 | −5,4), Waschschüssel `wash_basin` (−2,88 | −4,98) und Räucherschale `smoke_bowl` (auf dem Tisch) werden unsichtbar und ohne Kollision (`MorgueTable.retire_at_level 1`, Requisiten mit `follows_table`). Die Schaufel-Requisite (−2,0 | −6,8) bleibt als Werkzeug der Hütte.
 - Zurück bleibt eine **Trittstelle**: das Stück ohne Gras, das der Tisch schon bisher hatte, am Ende des Hofwegs. Das passt, denn hier wurde gearbeitet. Bau-Maske und Gras werden dafür nicht neu gebacken; die Zellen bleiben gesperrt (Zier dort erst später, §13).
 - **Vorher/Nachher (G6):** Aus derselben Kamera auf die Hütte rendert W-Welt: vorher mit Build `c5bd76d` (eigener Worktree, nur lesen), nachher mit Gruft 0 (Tisch noch da, Grufthals in der Ecke sichtbar) und nachher mit Gruft 1 (Tisch fort, Trittstelle, Gruft-Portal hinten links) → `p6_00a/b/c` (§11).

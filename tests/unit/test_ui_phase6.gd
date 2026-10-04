@@ -120,16 +120,16 @@ func test_building_panel_cards_costs_and_button() -> void:
 	assert_eq(panel.cards_box.get_child_count(), 3, "three cards side by side")
 	assert_eq(panel.row_text(&"stone"), "8× Stein 8 / 8")
 	assert_eq(panel.row_text(&"workstone"), "4× Werkstein 0 / 4")
-	assert_eq(panel.row_text(&"coin"), "Schieferplatten für die Nischen · 30 Münzen 12 / 30")
+	assert_eq(panel.row_text(&"coin"), "Schieferplatten, Kalk und Mörtel · 35 Münzen 12 / 35")
 	assert_eq(panel.costs_caption.text, "Was Stufe 2 braucht")
 	assert_eq(panel.build_button.text, "Stufe 2 bauen (210 Min)")
 	assert_true(panel.build_button.disabled)
 	assert_true(panel.reason_label.text.begins_with("Es fehlt: "), panel.reason_label.text)
-	assert_true(panel.reason_label.text.contains("18 Münzen"), panel.reason_label.text)
+	assert_true(panel.reason_label.text.contains("23 Münzen"), panel.reason_label.text)  # crypt 2: 35 (04.10.2026)
 	assert_false(panel.shed_bar.visible, "no shed yet: no fetch row")
 	for id: StringName in CRYPT_2:
 		inv.add_item(id, int(CRYPT_2[id]))
-	inv.add_item(&"coin", 18)
+	inv.add_item(&"coin", 23)
 	assert_false(panel.build_button.disabled, "refreshes on inventory changes")
 	assert_eq(panel.reason_label.text, "")
 	panel.build_button.pressed.emit()
@@ -436,7 +436,7 @@ func test_objective_lines_phase6() -> void:
 	r.location = &"carried"
 	var world := {"crypt_level": 1, "chapel_level": 1}
 	var graves: Array[GraveRecord] = []
-	assert_eq(ObjectiveResolver.current([r] as Array[CorpseRecord], graves, null, 600, {}, world), "Bring die Leiche in die Gruft")
+	assert_eq(ObjectiveResolver.current([r] as Array[CorpseRecord], graves, null, 600, {}, world), "Bring die Leiche hinunter in die Gruft")
 	r.examined = true
 	r.dress = CorpseRecord.DRESS_SHROUD
 	r.shrouded = true

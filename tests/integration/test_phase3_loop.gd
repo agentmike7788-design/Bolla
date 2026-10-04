@@ -107,7 +107,7 @@ func test_full_phase3_loop_with_round_trips() -> void:
 	assert_not_null(record, "delivery once plots are free")
 	if record == null:
 		return
-	var table := world.get_node_by_layout_id("morgue_table") as MorgueTable
+	var table := MorgueTable.active(tree)  # 04.10.2026: the crypt table from day 1
 	manager.get_corpse_node(record.id).interact(player)
 	table.interact(player)
 	table.request_examine()

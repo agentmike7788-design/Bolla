@@ -19,7 +19,7 @@ const TP_TARGETS: Dictionary[String, Array] = {
 	"hut": ["layout", "hut_door"],
 	"road": ["waypoint", "road_mid"],
 	"workbench": ["layout", "workbench"],
-	"table": ["layout", "morgue_table"],
+	"table": ["layout", "door_crypt"],  # 04.10.2026: the table is in the crypt from day 1 – its door
 }
 const HELP := [
 	"time HH:MM – Uhrzeit setzen (früher als jetzt = nächster Tag)",

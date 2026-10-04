@@ -232,7 +232,7 @@ func _bind() -> void:
 	care = world.get_node("Systems/CorpseCare") as CorpseCare
 	journal = world.get_node("Systems/Journal") as JournalManager
 	trade = world.get_node("Systems/NightTrade") as NightTrade
-	table = world.get_node_by_layout_id("morgue_table") as MorgueTable
+	table = MorgueTable.active(tree)  # 04.10.2026: the crypt table from day 1
 
 
 ## Save → load → identical collect_state(); rebinds the new world.

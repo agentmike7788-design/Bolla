@@ -120,18 +120,19 @@ func test_store_surplus_keeps_bone_boxes_and_candles() -> void:
 func test_phase6_panels_are_registered_and_drive_the_loop() -> void:
 	for id: StringName in [&"building", &"chapel", &"devotion"]:
 		assert_not_null(ui.get_panel(id), "panel %s in UIRoot" % id)
-	# The building panel builds crypt 1.
+	# The building panel builds crypt 2 (04.10.2026: crypt 1 stands from the start).
 	var site := world.get_node("Entities/site_crypt") as BuildingSite
-	var next := BuildingRules.next_level(site.building_data(), 0)
+	assert_eq(buildings.level(&"crypt"), 1, "crypt 1 from the start")
+	var next := BuildingRules.next_level(site.building_data(), buildings.level(&"crypt"))
 	_stock(next.inputs)
 	_stock({&"coin": next.coins})
 	site.interact(player)
 	var panel := ui.get_panel(&"building") as BuildingPanel
 	assert_true(panel.is_open, "building panel open")
-	assert_false(panel.build_button.disabled, "„Stufe 1 bauen\" enabled: %s" % panel.block_reason())
+	assert_false(panel.build_button.disabled, "„Stufe 2 bauen\" enabled: %s" % panel.block_reason())
 	panel.build_button.pressed.emit()
 	UIState.clear()
-	assert_eq(buildings.level(&"crypt"), 1, "crypt 1 through the panel")
+	assert_eq(buildings.level(&"crypt"), 2, "crypt 2 through the panel")
 	_levels({&"chapel": 1})
 	# The chapel panel holds the service.
 	var id := _corpse_on_catafalque()
