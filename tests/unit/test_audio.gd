@@ -331,3 +331,22 @@ func test_pause_menu_volume_sliders() -> void:
 	assert_true(FileAccess.file_exists(path), "saved at once")
 	menu.close()
 	menu.queue_free()
+
+
+func test_world_emitters_follow_region_and_room() -> void:
+	var player := await add_scene(PLAYER_SCENE) as Player
+	TimeManager.set_time(TimeManager.day, DAY_MINUTE)
+	player.global_position = Vector3(-24, 0, 397)
+	player.set_region(&"village")
+	await wait_frames(2)
+	assert_true(Audio.world.loops_playing() >= 3, "brook and forge run in the village (%d)" % Audio.world.loops_playing())
+	assert_true(Audio.world.listener.is_current(), "listener at the gravekeeper")
+	assert_almost(Audio.world.listener.global_position.y, player.global_position.y + Audio.config.listener_height, 0.01)
+	player.set_in_interior(true, &"inn")
+	await wait_frames(2)
+	assert_eq(Audio.world.loops_playing(), 0, "inside: outdoor sources stop")
+	player.set_in_interior(false)
+	player.set_region(&"graveyard")
+	await wait_frames(2)
+	assert_eq(Audio.world.loops_playing(), 0, "no village sources in the graveyard")
+	player.queue_free()
