@@ -226,12 +226,12 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 - **Bestatt-Bedingungen** (`conditions`, alle optional): `dress` (`shroud`/`gown`), `service` (Aussegnung gehalten), `prepared` (voll hergerichtet), `unharvested` (nichts verwertet, auch keine Präparate), `section` (Abschnitt des Grabs), `stone_shape`, `ornament`, `gilded`, `inscription`. Ein Verstoß, der sich nicht mehr heilen lässt (verwertet, falscher Abschnitt), lässt den Auftrag sofort scheitern; ein fehlendes Zeichen wartet.
 - **Stein auf einem Ruhezeit-Grab (neu, nur über Aufträge):** `old_01` (Wendel Gratz) und `old_08` (Dorothee Mahn) behalten seit Phase 6 ihren alten Stein („Um die weint noch jemand", Osric). Mit einem aktiven `stone`-Auftrag darf die Steinmetzbank für genau dieses Grab einen gestalteten Stein fertigen; „[E] Neuen Stein setzen (20 Min)" ersetzt den alten (Zustand bleibt `OLD`, das Grab bleibt nicht hebbar, keine Bezahlung, keine Qualität – nur der Auftrag, Ruf `marker_upgrade` +1). Der alte Stein lehnt danach an der Gruft-Treppe (dasselbe Modell, 0,9 ×). *Begründung:* Das sind genau die zwei Gräber, um die im Dorf noch jemand weint. Jetzt bekommen die Weinenden Gesichter.
 
-**Aufträge (Leitdaten, Texte P6/P3 dürfen glätten; Münzlöhne und Brücken-Spende G7 Runde 2 angepasst, B7-2)**
+**Aufträge (Leitdaten, Texte P6/P3 dürfen glätten; Münzlöhne G7 Runde 2 angepasst, B7-2)**
 | id | Auftraggeber | Art | Freigabe | Inhalt | Frist | Lohn: Münzen · Beziehung · Ruf |
 |---|---|---|---|---|---|---|
-| `o_fenner_linden` | Fenner | section | erstes Gespräch | „Der Lindenacker": Pforte, Stümpfe, Brombeeren und Steine räumen (§2.9); setzt `linden_granted` bei Annahme | – | 0 · +8 · +2 |
+| `o_fenner_linden` | Fenner | section | erstes Gespräch | „Der Lindenacker": Pforte, Stümpfe, Brombeeren und Steine räumen (§2.9); setzt `linden_granted` bei Annahme | – | **6** (G7 R2, vorher 0: Rodungslohn der Gemeinde) · +8 · +2 |
 | `o_fenner_well` | Fenner | deliver → Esch | erstes Gespräch | 4 `workstone` für die neue Brunnenfassung, beim Schmied abgeben | 4 | 6 · +6 (+4 Esch) · +1 |
-| `o_fenner_bridge` | Fenner | donate | `o_fenner_well` erledigt | „Die Holderbrücke": **30** Münzen (G7 Runde 2 angepasst, vorher 20) und 6 `wood` für neue Bohlen | 6 | 0 · +10 · +3 |
+| `o_fenner_bridge` | Fenner | donate | `o_fenner_well` erledigt | „Die Holderbrücke": 20 Münzen und 6 `wood` für neue Bohlen | 6 | 0 · +10 · +3 |
 | `o_rosine_berries` | Rosine | deliver | erstes Gespräch | 8 `elderberries` für den Holunderwein | 5 | 6 · +8 · 0 |
 | `o_rosine_tincture` | Rosine | deliver | `o_rosine_berries` erledigt | 2 `fever_tincture` (oder 2 `bitter_drops`) – „Jakob fiebert, und der Quast nimmt zu viel." | 4 | **6** (G7 R2, vorher 8) · +10 · 0 |
 | `o_esch_charcoal` | Esch | deliver | erstes Gespräch | 6 `charcoal` | 5 | 7 · +8 · 0 |
@@ -240,7 +240,7 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 | `o_lenz_service` | Lenz | bury | erstes Gespräch nach der Weihe | die nächste Lieferung nach Annahme: eingekleidet und **ausgesegnet** in der Kapelle (≥ Stufe 2, mit Trauergästen) | 3 | **4** (G7 R2, vorher 6) · +8 · +1 |
 | `o_lenz_poor` | Lenz | donate | Lenz „Vertraut" | „Armenspeisung": 12 Münzen und 4 `honey_cake` | 5 | 0 · +8 · +2 |
 | `o_quast_tincture` | Quast | deliver | erstes Gespräch | 2 `fever_tincture` | 5 | **7** (G7 R2, vorher 10) · +8 · 0 |
-| `o_quast_specimen` | Quast | deliver | `anatomy_known` | „Für das Kabinett": 1 Präparat im Glas (Herz, Lunge, Magen, Leber oder Nieren), Klarheit ≥ 0,6 (§2.6); die Folgen trug schon das Nehmen | 6 | **7** (G7 R2, vorher 10) · +10 · 0 |
+| `o_quast_specimen` | Quast | deliver | `anatomy_known` | „Für das Kabinett": 1 Präparat im Glas (Herz, Lunge, Magen, Leber oder Nieren), Klarheit ≥ 0,6 (§2.6); die Folgen trug schon das Nehmen | 6 | 10 · +10 · 0 |
 | `o_quast_antidote` | Quast | deliver | `anatomy_known`, Lehrsatz `l_stomach` | 2 `antidote` – „Der kleine Kehr hat vom Rattengift genascht. Ich habe nicht genug." | 2 | **9** (G7 R2, vorher 12) · +8 (+4 Rosine) · +1 |
 | `o_fenner_dropsy` | Fenner | deliver | Fenner „Vertraut", `anatomy_known` | 1 `dropsy_powder` – „Meine Beine, Totengräber. Sagen Sie es keinem." | 5 | **8** (G7 R2, vorher 10) · +8 · 0 |
 | `o_quast_cabinet` | Quast | deliver | Ansehen bei der Universität ≥ 2 | 1 `display_specimen` (beliebig) „für das Kabinett der Universität" | 6 | **11** (G7 R2, vorher 14) · +10 · 0 |
@@ -255,7 +255,7 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 - Tafel-Aufträge: Frist 1 = „bis morgen früh" (angenommen am Tag der Ausschreibung, abzugeben bis 06:00 des Folgetags) – außer `ob_gown`/`ob_tend` mit eigener Frist.
 - **Kapitel** zählt jeden erledigten Auftrag (§1.5). Auftraggeber für „4 verschiedene": Fenner, Rosine, Esch, Theres, Lenz, Quast, Liesel, Hagedorn, Gemeinde.
 - Die drei Arznei-Aufträge (`o_quast_antidote`, `o_fenner_dropsy`, Bittertropfen statt Tinktur) sind **zusätzliche** Wege für den anatomischen Spieler; jeder Kräuter-Auftrag bleibt ohne Präparat lösbar, und das Kapitel braucht keinen von ihnen.
-- *Begründung Lohn:* Ein Liefer-Auftrag ersetzt einen Laden-Verkauf mit Aufschlag (8 Holunderbeeren: bei Rosine 8–16 Münzen Ankauf, als Auftrag 6 + Beziehung +8). Aufträge lohnen also vor allem über die Beziehung. Steine und Bestattungen bringen mehr, weil sie Stunden kosten. Die zwei Spenden-Aufträge (`donate`) sind die Münzsenke des Dorfes: sie kosten 42 Münzen (G7 Runde 2 angepasst, vorher 32) und bringen Ruf und Beziehung, nie Münzen (§2.10).
+- *Begründung Lohn:* Ein Liefer-Auftrag ersetzt einen Laden-Verkauf mit Aufschlag (8 Holunderbeeren: bei Rosine 8–16 Münzen Ankauf, als Auftrag 6 + Beziehung +8). Aufträge lohnen also vor allem über die Beziehung. Steine und Bestattungen bringen mehr, weil sie Stunden kosten. Die zwei Spenden-Aufträge (`donate`) sind die Münzsenke des Dorfes: sie kosten 32 Münzen und bringen Ruf und Beziehung, nie Münzen (§2.10).
 
 ### 2.6 Anatomie – Präparate am Gruft-Tisch (`data/config/anatomy_config.tres` – `AnatomyConfig`, `data/anatomy/findings/<id>.tres` – `SpecimenFindingData`)
 **Eigene Identität: das Etikett.** Jedes Präparat trägt den Namen des Toten. Es ist kein Rohstoff und hat keine Punkte, sondern ein Einzelstück mit Herkunft: „Herz – Hedwig Lamprecht, 58 – Klarheit gut". Man kann es verkaufen, in Quasts Vorlesung geben (§2.6.4), in der Sammlung aufstellen (§2.7), zu einer Arznei ansetzen (§2.7), begutachten und deuten (§2.6.5) **oder dem Toten zurückgeben**. Darin liegt der Unterschied zu jedem Organhandel: Was hier genommen wird, bleibt jemandes, und der Weg zurück ins Grab steht offen, solange das Stück nicht verkauft, verbraucht oder in der Vorlesung geblieben ist.
@@ -263,13 +263,13 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 **Sieben Präparate** (`AnatomyConfig.organs`; je Leiche jedes höchstens einmal, **höchstens 3 Präparate je Leiche** – `max_per_corpse 3`, „Mehr nimmst du ihr nicht."):
 | organ | Etikett | Behältnis | Min | Grundpreis bei Quast | Qualität | Ruf | Pietät | Geist (Stimmung) | Rückgabe: Pietät | zeigt (Befund-Karten §2.6.5) | `res_tag` (nur Daten) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| `heart` | Herz | Glas oder Bündel | 20 | 7 | −2 | −3 | −8 | −5 | +3 | „stilles Herz" bei Gezeichneten, Altersherz | `&"will"` |
+| `heart` | Herz | Glas oder Bündel | 20 | **9** (G7 R2, vorher 7) | −2 | −3 | −8 | −5 | +3 | „stilles Herz" bei Gezeichneten, Altersherz | `&"will"` |
 | `lung` | Lunge | Glas oder Bündel | 20 | 4 | −2 | −3 | −6 | −5 | +3 | Wasser / kein Wasser, Fieberflecken | `&"breath"` |
 | `stomach` | Magen | Glas oder Bündel | 20 | 5 | −2 | −3 | −6 | −5 | +3 | weißer Belag (Gift), leer | `&"hunger"` |
 | `liver` | Leber | Glas oder Bündel | 20 | 5 | −2 | −3 | −6 | −5 | +3 | Trunk, Gelbsucht, Gift | `&"blood_heat"` |
 | `kidneys` | Nieren | Glas oder Bündel | 20 | 4 | −2 | −3 | −6 | −5 | +3 | Steine, Wassersucht | `&"water"` |
-| `eyes` | Augen | **nur Glas** (kleines, dunkles Glas mit zwei Siegeln) | 25 | 9 | −3 | −5 | **−12** | **−8** | +5 | Moortrübung, Fieberglanz | `&"sight"` |
-| `hand` | Hand (Knochen) | **nur Bündel** (in Leinen geschlagen, verschnürt) | 30 | 10 (als Knochenpräparat, §2.7) | −3 | −5 | **−12** | **−8** | +5 | Schwielen (Beruf), Schwurnarbe | `&"grip"` – Lehrpräparat und späterer Auferstehungs-Haken |
+| `eyes` | Augen | **nur Glas** (kleines, dunkles Glas mit zwei Siegeln) | 25 | **11** (G7 R2, vorher 9) | −3 | −5 | **−12** | **−8** | +5 | Moortrübung, Fieberglanz | `&"sight"` |
+| `hand` | Hand (Knochen) | **nur Bündel** (in Leinen geschlagen, verschnürt) | 30 | **12** (G7 R2, vorher 10; als Knochenpräparat, §2.7) | −3 | −5 | **−12** | **−8** | +5 | Schwielen (Beruf), Schwurnarbe | `&"grip"` – Lehrpräparat und späterer Auferstehungs-Haken |
 *Begründung:* Die inneren Organe sind das Material der Anatomie von 1834 und kosten gleich viel. Das Herz kostet etwas mehr Pietät, weil es das ist, was die Leute „den Menschen" nennen. Augen und Hand sind das, woran man einen Menschen erkennt. Deshalb kosten sie am meisten, zahlen am besten und werden am stillsten dargestellt. Die Grenze von drei Präparaten je Leiche verhindert, dass eine Leiche ausgeschlachtet wird, und hält die Anatomie als Einnahme unter der Bestattung (§2.10).
 
 **Nehmen (Registerkarte „Präparate" am Gruft-Tisch, §7)**
@@ -288,7 +288,7 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 - *Begründung:* Das Glas kostet 5 Münzen Ware (Glas 2 + Branntwein 3), das kleine Augenglas 6 (3 + 3). Das macht das Nehmen teuer und bewusst. Das Bündel ist der billige, eilige Weg und bestraft Eile mit Verfall, genau wie die Leichen selbst. Die Kälte der Gruft hilft auch hier, aber nur am Pult.
 
 #### 2.6.1 Verkaufen an Quast (Wundarztstube, Panel `&"anatomist"`, Münzen sofort)
-- Preis je Stück: `round(Grundpreis × (0,5 + 0,5 × Klarheit))`; Bündel × 0,5; Schaupräparat × 1,5 + 2; Knochenpräparat (Hand) = Grundpreis; dazu + **Ansehen bei der Universität** (§2.7, +1 je Stufe, höchstens +2) und Quast „Befreundet" +1. Beispiele: Herz im Glas bei 0,9 → 7 · Augen bei 0,8 → 8 · Leber-Bündel nach 3 h (0,63) → 2 · Hand als Knochenpräparat → 10 · Herz-Schaupräparat → 12.
+- Preis je Stück: `round(Grundpreis × (0,5 + 0,5 × Klarheit))`; Bündel × 0,5; Schaupräparat × 1,5 + 2; Knochenpräparat (Hand) = Grundpreis; dazu + **Ansehen bei der Universität** (§2.7, +1 je Stufe, höchstens +2) und Quast „Befreundet" +1. Beispiele (Grundpreise G7 Runde 2 angepasst): Herz im Glas bei 0,9 → 9 · Augen bei 0,8 → 10 · Leber-Bündel nach 3 h (0,63) → 2 · Hand als Knochenpräparat → 12 · Herz-Schaupräparat → ≈ 16.
 - Folgen des Verkaufs (nur Beziehung, §2.4): Pfarrer −4, Liesel −3, Hagedorn −2, Quast +2 (Augen/Hand: Pfarrer −6, Liesel −5). Ruf und Pietät trugen schon das Nehmen. `stats.specimens_sold` +1. Das Präparat ist danach für immer fort (`state sold`); der Totenzettel vermerkt „an Quast verkauft".
 - **Ilse nimmt keine Präparate** („Gläser nehme ich nicht. Was in Branntwein liegt, gehört schon dem Wundarzt."). Haar und Zähne bleiben bei ihr.
 
@@ -422,7 +422,7 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 | Pflegegeld | 12 × 4 (B2–B13) | 48 |
 | Bestattungen im Lindenacker | 8 × ≈ 13 (G6: 13,4 je Grab mit Stele) | 104 |
 | Aussegnungsgebühren | 4 × 5 (Kapelle 2) | 20 |
-| Aufträge (`neighbor7`: 10 Aufträge, davon 2 Spenden) | 6 + 6 + 8 + 7 + 12 + 6 + 10 + 10 + 0 + 0 | 65 |
+| Aufträge (`neighbor7`: 10 Aufträge + Lindenacker, davon 2 Spenden; G7 Runde 2 angepasst) | 6 (Lindenacker) + 6 + 6 + 6 + 7 + 10 + 4 + 7 + 8 + 0 + 0 | 60 |
 | Verkäufe im Dorf (Beeren, Kräuter, Salben, Totenhemden) | gedeckelt je Tag (§2.3) | 12 |
 | Geistergaben | ≈ 3 × 3 (Andächtig) | 8 |
 | **Verfügbar** | | **≈ 277** |
@@ -445,6 +445,16 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 | Einnahmen (ohne Pflegegeld) | 1 | 6 | 2 | 17 | 16 | 23 | 15 | 23 | 28 | 21 | 38 | 9 | 10 |
 | Abends | 21 | 21 | 27 | 40 | 40 | 55 | 66 | 41 | 63 | 76 | 88 | 61 | 63 |
 - Morgens nie unter **20** (B1). Pflicht ist nur die Weihe (10). Ohne die zwei Stufen 3 endet der Bogen bei ≈ 138, mit ihnen bei ≈ 63.
+
+**Nachmessung G7 Runde 2 (angepasst, B7-2):** Die Bots lagen mit den W0-Werten bei **91** (`neighbor7`) und **107** (`anatomist7`) – mehr Auftragslöhne und Dorfverkäufe als gerechnet, dazu billige Weihe und keine Spende, weil der Ruf-Bonus +10 Fenner und Lenz sofort „Vertraut" machte. Geändert (alle Werte in `data/`): Ruf-Startbonus [0, +2, +4, +6, +8] (§2.1); Auftragslöhne (§2.5) `o_rosine_tincture` 8→6, `o_esch_stone` 10→8, `o_mangold_stone` 12→10, `o_lenz_service` 6→4, `o_quast_tincture` 10→7, `o_quast_antidote` 12→9, `o_fenner_dropsy` 10→8, `o_quast_cabinet` 14→11, `o_liesel_gowns` 8→6, `o_hagedorn_place` 10→6, Tafel `ob_wood` 5→4, `ob_stone` 5→3, `ob_herbs` 8→6, `ob_yarn` 5→3, `ob_gown` 4→3, `ob_tend` 5→4; dafür `o_fenner_linden` 0→**6** (Rodungslohn: der erste Dorftag kostet jetzt Weihe 10 und eine Spende für die Abschrift, sonst fällt der Morgen B2 unter 5); Quast zahlt für Herz/Augen/Hand **9/11/12** statt 7/9/10 (§2.6, der anatomische Weg kauft Glas, Branntwein und Leinen). Gemessen (13 Tage, `tests/integration/test_phase7_playthrough.gd`):
+
+| Bot | Kapitel | Einnahmen | Ausgaben | Ende | Ziel | morgens min. | Aufträge |
+|---|---|---|---|---|---|---|---|
+| `neighbor7` | Tag 50 (B11) | 318 | 278 | **60** | ≈ 63 (−5 %) | 12 | 11 (8 Geber) |
+| `anatomist7` | Tag 50 (B11) | 381 | 330 | **71** | ≈ 77 (−8 %) | 13 | 13 (8 Geber) |
+| `save_load7` | = `neighbor7` | | | 60 | | 12 | |
+
+Abstand anatomisch − würdevoll **+11** (Ziel ≈ +14; der Bot `anatomist7` bezahlt dabei die Brücken-Spende, 20). Morgens nie unter 5 (G7 Runde 2; vorher Ziel 20).
 - *Warum die Pflicht so klein ist:* Das Dorf verkauft keine Gebäude. Seine Senke sind Dinge mit sozialem Lohn (Runde, Spende, Geschenk: Beziehung und Ruf, nie Münzen) und die Ware, die das Handwerk braucht. Ein knapper Spieler kann das alles lassen und kommt trotzdem ans Kapitel; ein voller Beutel hat jetzt Orte, an denen er sinnvoll leer wird. Eine echte Preisdynamik bleibt Phase 10 (G5-Befund E5, GP-03).
 
 **Andere Wege (Erwartung für W3)**
