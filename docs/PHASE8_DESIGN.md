@@ -1339,3 +1339,11 @@ P6 besitzt alle Dialoge, Begegnungen und Zeitpläne; P2 die Wunsch-, Ansichts- u
    - (a) **alle sieben lebenden Bewohner × 3 Schritte** (21 Schritte), Esch, Theres, Fenner als Priorität B.
    - (b) nur Rosine, Lenz, Quast und Liesel (12 Schritte, Lehrling und Geheimnis); Esch, Theres und Fenner bekommen ihre Geschichten in Phase 9. Spart ≈ 20 % in P4 und P6.
    - **Vorschlag: (a)** – das Dorf wirkt nur lebendig, wenn nicht nur die drei Verdächtigen eine Geschichte haben; die Prioritäten halten den Umfang „mittel".
+
+### §14 Benutzerentscheidungen (bindend, 04.10.2026)
+1. **Unterstrichener Name:** (c) **Seelfrau Liesel Dorn** – `StoryConfig.underlined = &"washer"`; Phase 8 zeigt nur den Verdacht.
+2. **Neue Grabstellen:** (b) **dritte Reihe im Lindenacker, 4 Stellen** (Südzaun 3,2 m nach Süden, ein Waldbaum versetzt).
+3. **Feste:** (a) **Kathreintanz (25. Nebelung) + Lichtgang (Vorabend des ersten Advents)**; Kathreintanz Priorität B.
+4. **Nachtgräber:** (a) **sichtbar, ohne Kampf**, Leiche bleibt immer im Grab; Schutz Grabkerze/Grabgitter/Nachtwächter; zweimal ertappt → Schultheiß oder laufen lassen.
+5. **Lehrling:** (a) **Jakob Wackernagel**, Rosines Sohn, **3 Münzen je Arbeitstag** aus der Lohndose.
+6. **Freundschafts-Geschichten:** (a) **alle sieben lebenden Bewohner × 3 Schritte**; Esch, Theres, Fenner Priorität B.
