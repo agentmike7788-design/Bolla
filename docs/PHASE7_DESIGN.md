@@ -94,8 +94,8 @@ Alle Handgriffe aus Phase 4–6 bleiben **unverändert**. Die Präparate sind ei
 | 46 (B7) | Leiche 4. Ilse (nachts): „Wer besucht im Dorf die Kranken?" → Hinweis *Drei Besucher*. | 59 → 66 | „Merkbuch: Wer besucht die Sterbenden?" |
 | 47 (B8) | Leiche 5. Pfarrer **Vertraut** → Sterbebuch → Hinweis *Das Zeichen im Sterbebuch*. Freiwillig: Kapelle 3 (40). | 70 → 41 | – |
 | 48 (B9) | **Trauerflor an Wiebke Hagedorns Kate.** Osric bringt sie (Geschichts-Leiche D1, gezeichnet). Totenhemd, Aussegnung, Lindenacker, Stein mit Mohn → `o_hagedorn_place`. | 45 → 63 | „Wiebke Hagedorns letzter Wunsch" |
-| 49 (B10) | Leiche 7. Liesel **Vertraut** → Hinweis *Was die Seelfrau sah*. | 67 → 76 | „Merkbuch: Hinweise passen zusammen" |
-| 50 (B11) | Leiche 8 (Lindenacker voll). Erkenntnis **„Vorher eingetragen"**. Stein für Wendel Gratz (`o_esch_stone`). | 80 → 88 | „Drei Bewohner vertraut: 2/3" |
+| 49 (B10) | Leiche 7. Liesel **Vertraut** (ihr Hinweis kommt erst ab B11, s. u.). | 67 → 76 | „Merkbuch: Hinweise passen zusammen" |
+| 50 (B11) | Leiche 8 (Lindenacker voll). Liesel → Hinweis *Was die Seelfrau sah* (frühestens 10 Tage nach `village_open`, G7 Runde 2 angepasst) → Erkenntnis **„Vorher eingetragen"**. Stein für Wendel Gratz (`o_esch_stone`). | 80 → 88 | „Drei Bewohner vertraut: 2/3" |
 | 51 (B12) | Dritter Bewohner **Vertraut** (Aufträge sind schon 7) → **Kapitel „Ein Name im Dorf"**. Freiwillig: Gruft 3 (35). | 92 → 61 | „Ein Name im Dorf: 4/4" |
 | 52 (B13) | Freies Spiel. Keine freie Stelle → keine Lieferung. Gemeindetafel, Tinkturen, Runden. | 65 → 63 | „Die Gemeindetafel hat neue Bitten" |
 
@@ -116,7 +116,7 @@ Dann: Flag `name_in_village_complete`, `chapter_completed(&"name_in_village")`, 
 **Was der Spieler herausfinden kann:**
 1. *Drei Besucher* (`c_v_three_visitors`, Ilse, nachts): „Ich hab ihm drei genannt: den Pfarrer, den Wundarzt und die Seelfrau. Er hat einen Namen unterstrichen. Welchen, hat er mir nicht gezeigt."
 2. *Das Zeichen im Sterbebuch* (`c_v_deathbook`, Pfarrer bei „Vertraut" **oder** die Abschrift in der Amtsstube bei Fenner „Vertraut" oder nach einer Spende): Am Rand des Sterbebuchs steht neben fünf Namen ein kleiner Dreistrich. Die Tinte ist älter als der Eintrag des Todestags. Jemand hat die Namen vorher eingetragen.
-3. *Was die Seelfrau sah* (`c_v_washing`, Liesel bei „Vertraut" **oder** wenn man ihr von Kaspar erzählt, nur mit Erkenntnis *Nicht Lorenz*): Sie hat das Zeichen seit dem Winter, als die Fähre kenterte, an den Toten gesehen und es Lorenz gemeldet, jedes Mal. Seit er fort ist, meldet sie es niemandem mehr. Sie schreibt die Namen in ihr Gesangbuch.
+3. *Was die Seelfrau sah* (`c_v_washing`, Liesel bei „Vertraut" **oder** wenn man ihr von Kaspar erzählt, nur mit Erkenntnis *Nicht Lorenz*; **beide Wege frühestens am 10. Tag nach `village_open`** (`village_open_days_gte:10`, B11 – nach Wiebke Hagedorns Totenwache), G7 Runde 2 angepasst): Sie hat das Zeichen seit dem Winter, als die Fähre kenterte, an den Toten gesehen und es Lorenz gemeldet, jedes Mal. Seit er fort ist, meldet sie es niemandem mehr. Sie schreibt die Namen in ihr Gesangbuch.
 4. *Drei Wochen alt* (`c_v_hagedorn`, Fund an D1 Wiebke Hagedorn, Schritt Wunden, Mindestfrische 0,3): Ihr Zeichen ist frisch verheilt, etwa drei Wochen alt. In ihrer Schürze steckt ein Zettel: „Für den Totengräber. Linde, Mohn, Totenhemd. Und schau nach, wer mich besucht hat. – W. H."
 
 **Erkenntnis (Pflicht fürs Kapitel):** `i_deathbook` „Vorher eingetragen" (Frage: „Wer schreibt die Namen auf?") = `c_v_deathbook` + `c_v_washing` + `c_v_three_visitors`. Text: „Im Sterbebuch steht das Zeichen neben Namen, deren Tod erst Wochen später eingetragen wurde. Liesel hat es an ihren Leibern gesehen, Lorenz hat nach denen gefragt, die die Kranken besuchen. Wer zeichnet, kommt ins Haus, solange sie noch leben, und schreibt sie vorher auf. Drei kommen in Frage. Eine davon hat Lorenz geholfen." Flag `insight_deathbook`.
@@ -144,7 +144,7 @@ Dann: Flag `name_in_village_complete`, `chapter_completed(&"name_in_village")`, 
 | `oldwoman` | **Wiebke Hagedorn**, 81 | Altenteilerin, sitzt am Brunnen, will „oben liegen, mit Blick auf die Linde" | klein, gebeugt, Stock, schwarzer Schal, ein Sträußchen getrockneter Mohn am Mieder | spitz, fröhlich, unerschrocken; redet vom Sterben wie vom Wetter | `seeds`, `honey_cake` | 30 |
 | (`carter`) | Osric Faulhaber | Leichenkutscher, wohnt in der Remise am Ostende des Angers, sitzt im Holderkrug | unverändert (`ph_chr_carter`), im Dorf ohne Karren (der Karren steht als Requisite in der Remise) | unverändert | – (keine Beziehung in Phase 7) | – |
 
-- **Startwert** beim ersten Gespräch: Spalte „Start" + `RelationshipConfig.rep_start_bonus` nach Ruf-Stufe [−10, −5, 0, +5, +10] (Verrufen … Gerühmt). Liesel und Pfarrer zusätzlich + `piety_start_bonus` [−5, 0, 0, +3, +5] (Hartherzig … Andächtig). *Begründung:* Das Dorf kennt den Totengräber vorher nur vom Hörensagen. Der Ruf ist genau dieses Hörensagen; die Pietät spüren nur die, die selbst mit Toten umgehen.
+- **Startwert** beim ersten Gespräch: Spalte „Start" + `RelationshipConfig.rep_start_bonus` nach Ruf-Stufe **[0, +2, +4, +6, +8]** (Verrufen … Gerühmt; G7 Runde 2 angepasst, vorher [−10, −5, 0, +5, +10]: niemand startet über „Bekannt", höchstens 38 – Fenner, Lenz, Hagedorn bei „Gerühmt"/„Andächtig"). Liesel und Pfarrer zusätzlich + `piety_start_bonus` [−5, 0, 0, +3, +5] (Hartherzig … Andächtig). *Begründung:* Das Dorf kennt den Totengräber vorher nur vom Hörensagen. Der Ruf ist genau dieses Hörensagen; die Pietät spüren nur die, die selbst mit Toten umgehen.
 - **Ilse Kranich** kommt nie ins Dorf (sie zeigt sich nicht bei Tag, Osric Phase 4). Sie spricht nachts an der Westmauer über das Dorf (§2.12) und bekommt keine Beziehung in Phase 7 (ihre Gespräche zählt weiter `NightTrade.talks`).
 - `VillagerData`: `npc_id`, `display_name`, `role`, `dialogue_id` (`v_<npc_id>`), `shop_id` („" = kein Laden), `gifts_liked`, `start_value`, `specimen_delta` (Beziehung je verkauftem Präparat: Pfarrer −4, Liesel −3, Hagedorn −2, Quast +2, sonst 0), `returned_delta` (je zurückgelegtem Präparat: Pfarrer +1, Liesel +2), `remarks` (Gerede §2.4), `home_door` (Haus-Id).
 
@@ -203,7 +203,7 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 | `specimen_sold` | `VillagerData.specimen_delta` | je an Quast verkauftem Präparat (Pfarrer −4, Liesel −3, Hagedorn −2, Quast +2) – „Im Dorf redet man." |
 | `specimen_returned` | `returned_delta` | Pfarrer +1, Liesel +2 |
 - Keine tägliche Abnahme, kein Verfall. Wer nicht hingeht, verliert nichts.
-- *Nachrechnung:* Von Start 20 bis „Vertraut" (40) braucht es 20 Punkte: zwei erledigte Aufträge (≈ 16) und vier Gesprächstage, oder ein Auftrag, zwei Geschenke und vier Tage. Bei einem Besuch am Tag erreicht man drei Personen auf „Vertraut" um B9–B11 (Bogen A). Liesel (Start 10) ist am schwersten, Fenner (30) am leichtesten.
+- *Nachrechnung:* Von Start 20 bis „Vertraut" (40) braucht es 20 Punkte: zwei erledigte Aufträge (≈ 16) und vier Gesprächstage, oder ein Auftrag, zwei Geschenke und vier Tage. Bei einem Besuch am Tag erreicht man drei Personen auf „Vertraut" um B9–B11 (Bogen A). Liesel (Start 10) ist am schwersten, Fenner (30) am leichtesten. *G7 Runde 2 angepasst:* Mit dem Ruf-Bonus 0…+8 startet niemand „Vertraut"; Aufträge und Geschenke machen Fenner, Rosine und Lenz trotzdem nach 1–3 Dorftagen vertraut. Den Kapiteltag (≈ B11) setzt deshalb der Liesel-Hinweis (§1.6, frühestens 10 Tage nach `village_open`), nicht die Beziehung.
 
 **Ruf und Pietät im Dorf (spürbar, nie sperrend)**
 - **Begrüßung** jeder Person nach Ruf-Stufe (5 Zeilen je Person in ihrem Dialog, Bedingung `rep_tier:<id>`), bei Liesel, Pfarrer und Quast zusätzlich nach Pietät (`piety_tier`). Beispiel Rosine: Verrufen „Du bist der vom Hügel. Setz dich ans Fenster, da sieht dich keiner." · Gerühmt „Wackernagel hat für dich einen Stuhl am Ofen frei. Den kriegt sonst nur der Pfarrer."
@@ -226,36 +226,36 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 - **Bestatt-Bedingungen** (`conditions`, alle optional): `dress` (`shroud`/`gown`), `service` (Aussegnung gehalten), `prepared` (voll hergerichtet), `unharvested` (nichts verwertet, auch keine Präparate), `section` (Abschnitt des Grabs), `stone_shape`, `ornament`, `gilded`, `inscription`. Ein Verstoß, der sich nicht mehr heilen lässt (verwertet, falscher Abschnitt), lässt den Auftrag sofort scheitern; ein fehlendes Zeichen wartet.
 - **Stein auf einem Ruhezeit-Grab (neu, nur über Aufträge):** `old_01` (Wendel Gratz) und `old_08` (Dorothee Mahn) behalten seit Phase 6 ihren alten Stein („Um die weint noch jemand", Osric). Mit einem aktiven `stone`-Auftrag darf die Steinmetzbank für genau dieses Grab einen gestalteten Stein fertigen; „[E] Neuen Stein setzen (20 Min)" ersetzt den alten (Zustand bleibt `OLD`, das Grab bleibt nicht hebbar, keine Bezahlung, keine Qualität – nur der Auftrag, Ruf `marker_upgrade` +1). Der alte Stein lehnt danach an der Gruft-Treppe (dasselbe Modell, 0,9 ×). *Begründung:* Das sind genau die zwei Gräber, um die im Dorf noch jemand weint. Jetzt bekommen die Weinenden Gesichter.
 
-**Aufträge (Leitdaten, Texte P6/P3 dürfen glätten)**
+**Aufträge (Leitdaten, Texte P6/P3 dürfen glätten; Münzlöhne und Brücken-Spende G7 Runde 2 angepasst, B7-2)**
 | id | Auftraggeber | Art | Freigabe | Inhalt | Frist | Lohn: Münzen · Beziehung · Ruf |
 |---|---|---|---|---|---|---|
 | `o_fenner_linden` | Fenner | section | erstes Gespräch | „Der Lindenacker": Pforte, Stümpfe, Brombeeren und Steine räumen (§2.9); setzt `linden_granted` bei Annahme | – | 0 · +8 · +2 |
 | `o_fenner_well` | Fenner | deliver → Esch | erstes Gespräch | 4 `workstone` für die neue Brunnenfassung, beim Schmied abgeben | 4 | 6 · +6 (+4 Esch) · +1 |
-| `o_fenner_bridge` | Fenner | donate | `o_fenner_well` erledigt | „Die Holderbrücke": 20 Münzen und 6 `wood` für neue Bohlen | 6 | 0 · +10 · +3 |
+| `o_fenner_bridge` | Fenner | donate | `o_fenner_well` erledigt | „Die Holderbrücke": **30** Münzen (G7 Runde 2 angepasst, vorher 20) und 6 `wood` für neue Bohlen | 6 | 0 · +10 · +3 |
 | `o_rosine_berries` | Rosine | deliver | erstes Gespräch | 8 `elderberries` für den Holunderwein | 5 | 6 · +8 · 0 |
-| `o_rosine_tincture` | Rosine | deliver | `o_rosine_berries` erledigt | 2 `fever_tincture` (oder 2 `bitter_drops`) – „Jakob fiebert, und der Quast nimmt zu viel." | 4 | 8 · +10 · 0 |
+| `o_rosine_tincture` | Rosine | deliver | `o_rosine_berries` erledigt | 2 `fever_tincture` (oder 2 `bitter_drops`) – „Jakob fiebert, und der Quast nimmt zu viel." | 4 | **6** (G7 R2, vorher 8) · +10 · 0 |
 | `o_esch_charcoal` | Esch | deliver | erstes Gespräch | 6 `charcoal` | 5 | 7 · +8 · 0 |
-| `o_esch_stone` | Esch | stone | Esch „Bekannt", `o_esch_charcoal` erledigt | „Ein Stein für den Meister": Wendel Gratz (`old_01`), sein Lehrmeister; Bogenstein mit Fackel | 6 | 10 · +10 · +1 |
-| `o_mangold_stone` | Theres | stone | Theres „Bekannt" | „Ein Stein für die Mutter": Dorothee Mahn (`old_08`); Stele mit Mohn und Inschrift | 6 | 12 · +10 · +1 |
-| `o_lenz_service` | Lenz | bury | erstes Gespräch nach der Weihe | die nächste Lieferung nach Annahme: eingekleidet und **ausgesegnet** in der Kapelle (≥ Stufe 2, mit Trauergästen) | 3 | 6 · +8 · +1 |
+| `o_esch_stone` | Esch | stone | Esch „Bekannt", `o_esch_charcoal` erledigt | „Ein Stein für den Meister": Wendel Gratz (`old_01`), sein Lehrmeister; Bogenstein mit Fackel | 6 | **8** (G7 R2, vorher 10) · +10 · +1 |
+| `o_mangold_stone` | Theres | stone | Theres „Bekannt" | „Ein Stein für die Mutter": Dorothee Mahn (`old_08`); Stele mit Mohn und Inschrift | 6 | **10** (G7 R2, vorher 12) · +10 · +1 |
+| `o_lenz_service` | Lenz | bury | erstes Gespräch nach der Weihe | die nächste Lieferung nach Annahme: eingekleidet und **ausgesegnet** in der Kapelle (≥ Stufe 2, mit Trauergästen) | 3 | **4** (G7 R2, vorher 6) · +8 · +1 |
 | `o_lenz_poor` | Lenz | donate | Lenz „Vertraut" | „Armenspeisung": 12 Münzen und 4 `honey_cake` | 5 | 0 · +8 · +2 |
-| `o_quast_tincture` | Quast | deliver | erstes Gespräch | 2 `fever_tincture` | 5 | 10 · +8 · 0 |
-| `o_quast_specimen` | Quast | deliver | `anatomy_known` | „Für das Kabinett": 1 Präparat im Glas (Herz, Lunge, Magen, Leber oder Nieren), Klarheit ≥ 0,6 (§2.6); die Folgen trug schon das Nehmen | 6 | 10 · +10 · 0 |
-| `o_quast_antidote` | Quast | deliver | `anatomy_known`, Lehrsatz `l_stomach` | 2 `antidote` – „Der kleine Kehr hat vom Rattengift genascht. Ich habe nicht genug." | 2 | 12 · +8 (+4 Rosine) · +1 |
-| `o_fenner_dropsy` | Fenner | deliver | Fenner „Vertraut", `anatomy_known` | 1 `dropsy_powder` – „Meine Beine, Totengräber. Sagen Sie es keinem." | 5 | 10 · +8 · 0 |
-| `o_quast_cabinet` | Quast | deliver | Ansehen bei der Universität ≥ 2 | 1 `display_specimen` (beliebig) „für das Kabinett der Universität" | 6 | 14 · +10 · 0 |
-| `o_liesel_gowns` | Liesel | deliver | Liesel „Bekannt" | 2 `burial_gown` – „für die, die nicht zu dir hinaufkommen" | 6 | 8 · +8 · 0 |
-| `o_hagedorn_place` | Hagedorn (nach ihrem Tod: Liesel) | bury | erstes Gespräch mit ihr, sonst bei ihrer Ankunft | D1 Wiebke Hagedorn (§2.9): Lindenacker, Totenhemd, Stein mit Mohn, **unverwertet** | 3 Tage ab Ankunft | 10 · +8 Liesel · +2; gescheitert: Liesel −10, Lenz −5 |
-| `ob_wood` | Gemeinde (Tafel) | deliver → Fenner | `village_open` | 10 `wood` „für den Gemeindezaun" | 1 | 5 · +3 Fenner · 0 |
-| `ob_stone` | Gemeinde | deliver → Fenner | `village_open` | 8 `stone` „für den Weg zur Kirche" | 1 | 5 · +3 Fenner · 0 |
-| `ob_herbs` | Gemeinde | deliver → Quast | `village_open` | 4 `herb_bundle` „für die Armen im Winter" | 1 | 8 · +3 Quast · 0 |
-| `ob_yarn` | Gemeinde | deliver → Liesel | `village_open` | 6 `yarn` | 1 | 5 · +3 Liesel · 0 |
-| `ob_gown` | Gemeinde | bury | `linden_consecrated` | die nächste Lieferung im Totenhemd | 2 | 4 · 0 · +1 |
-| `ob_tend` | Gemeinde | tend | `linden_consecrated` | alle belegten Gräber im Lindenacker an 2 Morgen in Folge ohne Pflegeabzug | 4 | 5 · 0 · +1 |
+| `o_quast_tincture` | Quast | deliver | erstes Gespräch | 2 `fever_tincture` | 5 | **7** (G7 R2, vorher 10) · +8 · 0 |
+| `o_quast_specimen` | Quast | deliver | `anatomy_known` | „Für das Kabinett": 1 Präparat im Glas (Herz, Lunge, Magen, Leber oder Nieren), Klarheit ≥ 0,6 (§2.6); die Folgen trug schon das Nehmen | 6 | **7** (G7 R2, vorher 10) · +10 · 0 |
+| `o_quast_antidote` | Quast | deliver | `anatomy_known`, Lehrsatz `l_stomach` | 2 `antidote` – „Der kleine Kehr hat vom Rattengift genascht. Ich habe nicht genug." | 2 | **9** (G7 R2, vorher 12) · +8 (+4 Rosine) · +1 |
+| `o_fenner_dropsy` | Fenner | deliver | Fenner „Vertraut", `anatomy_known` | 1 `dropsy_powder` – „Meine Beine, Totengräber. Sagen Sie es keinem." | 5 | **8** (G7 R2, vorher 10) · +8 · 0 |
+| `o_quast_cabinet` | Quast | deliver | Ansehen bei der Universität ≥ 2 | 1 `display_specimen` (beliebig) „für das Kabinett der Universität" | 6 | **11** (G7 R2, vorher 14) · +10 · 0 |
+| `o_liesel_gowns` | Liesel | deliver | Liesel „Bekannt" | 2 `burial_gown` – „für die, die nicht zu dir hinaufkommen" | 6 | **6** (G7 R2, vorher 8) · +8 · 0 |
+| `o_hagedorn_place` | Hagedorn (nach ihrem Tod: Liesel) | bury | erstes Gespräch mit ihr, sonst bei ihrer Ankunft | D1 Wiebke Hagedorn (§2.9): Lindenacker, Totenhemd, Stein mit Mohn, **unverwertet** | 3 Tage ab Ankunft | **6** (G7 R2, vorher 10) · +8 Liesel · +2; gescheitert: Liesel −10, Lenz −5 |
+| `ob_wood` | Gemeinde (Tafel) | deliver → Fenner | `village_open` | 10 `wood` „für den Gemeindezaun" | 1 | **4** (G7 R2, vorher 5) · +3 Fenner · 0 |
+| `ob_stone` | Gemeinde | deliver → Fenner | `village_open` | 8 `stone` „für den Weg zur Kirche" | 1 | **3** (G7 R2, vorher 5) · +3 Fenner · 0 |
+| `ob_herbs` | Gemeinde | deliver → Quast | `village_open` | 4 `herb_bundle` „für die Armen im Winter" | 1 | **6** (G7 R2, vorher 8) · +3 Quast · 0 |
+| `ob_yarn` | Gemeinde | deliver → Liesel | `village_open` | 6 `yarn` | 1 | **3** (G7 R2, vorher 5) · +3 Liesel · 0 |
+| `ob_gown` | Gemeinde | bury | `linden_consecrated` | die nächste Lieferung im Totenhemd | 2 | **3** (G7 R2, vorher 4) · 0 · +1 |
+| `ob_tend` | Gemeinde | tend | `linden_consecrated` | alle belegten Gräber im Lindenacker an 2 Morgen in Folge ohne Pflegeabzug | 4 | **4** (G7 R2, vorher 5) · 0 · +1 |
 - Tafel-Aufträge: Frist 1 = „bis morgen früh" (angenommen am Tag der Ausschreibung, abzugeben bis 06:00 des Folgetags) – außer `ob_gown`/`ob_tend` mit eigener Frist.
 - **Kapitel** zählt jeden erledigten Auftrag (§1.5). Auftraggeber für „4 verschiedene": Fenner, Rosine, Esch, Theres, Lenz, Quast, Liesel, Hagedorn, Gemeinde.
 - Die drei Arznei-Aufträge (`o_quast_antidote`, `o_fenner_dropsy`, Bittertropfen statt Tinktur) sind **zusätzliche** Wege für den anatomischen Spieler; jeder Kräuter-Auftrag bleibt ohne Präparat lösbar, und das Kapitel braucht keinen von ihnen.
-- *Begründung Lohn:* Ein Liefer-Auftrag ersetzt einen Laden-Verkauf mit Aufschlag (8 Holunderbeeren: bei Rosine 8–16 Münzen Ankauf, als Auftrag 6 + Beziehung +8). Aufträge lohnen also vor allem über die Beziehung. Steine und Bestattungen bringen mehr, weil sie Stunden kosten. Die zwei Spenden-Aufträge (`donate`) sind die Münzsenke des Dorfes: sie kosten 32 Münzen und bringen Ruf und Beziehung, nie Münzen (§2.10).
+- *Begründung Lohn:* Ein Liefer-Auftrag ersetzt einen Laden-Verkauf mit Aufschlag (8 Holunderbeeren: bei Rosine 8–16 Münzen Ankauf, als Auftrag 6 + Beziehung +8). Aufträge lohnen also vor allem über die Beziehung. Steine und Bestattungen bringen mehr, weil sie Stunden kosten. Die zwei Spenden-Aufträge (`donate`) sind die Münzsenke des Dorfes: sie kosten 42 Münzen (G7 Runde 2 angepasst, vorher 32) und bringen Ruf und Beziehung, nie Münzen (§2.10).
 
 ### 2.6 Anatomie – Präparate am Gruft-Tisch (`data/config/anatomy_config.tres` – `AnatomyConfig`, `data/anatomy/findings/<id>.tres` – `SpecimenFindingData`)
 **Eigene Identität: das Etikett.** Jedes Präparat trägt den Namen des Toten. Es ist kein Rohstoff und hat keine Punkte, sondern ein Einzelstück mit Herkunft: „Herz – Hedwig Lamprecht, 58 – Klarheit gut". Man kann es verkaufen, in Quasts Vorlesung geben (§2.6.4), in der Sammlung aufstellen (§2.7), zu einer Arznei ansetzen (§2.7), begutachten und deuten (§2.6.5) **oder dem Toten zurückgeben**. Darin liegt der Unterschied zu jedem Organhandel: Was hier genommen wird, bleibt jemandes, und der Weg zurück ins Grab steht offen, solange das Stück nicht verkauft, verbraucht oder in der Vorlesung geblieben ist.
@@ -1175,7 +1175,7 @@ Regeln wie Phase 3–6 (Fixtures statt fremder Moduldaten, Fehler-Logger, Watchd
 - **Playthrough-Bot (W3):** `phase7_bot.gd` erweitert `Phase6Bot` um Reisen (echte Portale, Wegminuten über die Uhr), Dialoge über den echten `DialogueRunner`, Laden-, Auftrags-, Geschenk-, Wundarzt- und Pult-Panel, Lindenacker räumen, Weihe, Präparate über die echte Präparate-Karte (zweistufig), Rückgabe am Grab. **Münzbuch je Strategie** (+ Zwecke `village`, `donation`, `round`, `consecration`; Einnahmen „Auftrag", „Verkauf im Dorf", „Präparat", „Vorlesung", „Sammlung", „Arznei").
   | Strategie | Start | Tage | Verhalten | Erwartung |
   |---|---|---|---|---|
-  | `neighbor7` | v5 `day40_reverent` | 13 | Bogen A §1.4, keine Präparate | Kapitel ≤ B13; Ende 30–110; Morgenstand nie < 15; ≥ 8 Aufträge; Pietät nicht gesunken |
+  | `neighbor7` | v5 `day40_reverent` | 13 | Bogen A §1.4, keine Präparate | Kapitel B11–B13 (G7 Runde 2 angepasst); Ende 30–110; Morgenstand nie < 5 (G7 Runde 2 angepasst, vorher 15); ≥ 8 Aufträge; Pietät nicht gesunken |
   | `anatomist7` | v5 `day40_reverent` | 13 | Besteck angenommen; jede Leiche außer D1 Herz + Augen + Hand; 10 an Quast, 7 in die Sammlung, 4 in Vorlesungen | Kapitel erreicht (Sterbebuch über die Amtsstube); Pfarrer und Liesel höchstens „Bekannt"; Ende ≤ `neighbor7` + 40 (Anatomie nicht dominant, §2.10); Ansehen ≥ 2; Geister der Lindenacker-Gräber unruhig |
   | `scholar7` | v5 `day41_mender` | 13 | Herz, Leber, Magen im Glas; alles begutachten und deuten, Arzneien für die Arznei-Aufträge, zwei Bündel ins Kühlfach und einlegen, zwei Gläser zurücklegen | jede mögliche Deutung richtig gefunden; falsche Versuche ohne Folgen; `i_burn_it` (wenn eine gezeichnete Leiche kam); Rückgabe hebt die Stimmung; Ende ≤ `neighbor7` + 40; Kapitel erreicht |
   | `penitent7` | v5 `day45_harvester` | 13 | keine Präparate, Spenden 2/Tag, Runden, Geschenke | Ruf steigt ≥ eine Stufe; Kapitel erreicht |
