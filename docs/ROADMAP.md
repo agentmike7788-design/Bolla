@@ -117,3 +117,9 @@ Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe, Vertragsfragen §14 offen):
 - **Darstellung:** **angedeutet** wie die bisherige Verwertung – Tuch über der Leiche, Werkzeug-Geräusch, Abblende; Organe nur als verschlossene Gläser/Bündel im Inventar. Kein Blut, keine offenen Wunden (ART STYLE LOCK).
 - **Zweck (alle vier):** Verkauf an einen Anatomen („Präparate", 1834, kostet Pietät/Ruf, Geister unruhig) · Forschung/Hinweise (wahre Todesursache, z. B. Gift → Merkbuch) · Handwerk (Salben, Tinkturen, Präparate an neuer Station) · später Zutat für die Auferstehung (Phase 13).
 - Eigene Mechanik, keine Übernahme aus anderen Spielen.
+
+## Benutzerwunsch 04.10.2026 – Angeln (für Phase 11 „Welt erweitern")
+- Neuer Ort **Mühlteich** bei der alten Mühle (bisher nur in Jost Hemmerlings Totengeschichte erwähnt), mit Steg.
+- **Angel**, **Köder** (Würmer vom Friedhof, Brot, Maden …), mehrere **Fischarten** nach Tages- und Jahreszeit, Fische verkaufen und kochen.
+- Sichtbare Abläufe wie gewohnt: Angel in der Hand (Rig-Knochen `tool`), Ton, Karten-Eintrag.
+- Entscheidung: kommt mit Phase 11, Phase 8 bleibt unverändert.
