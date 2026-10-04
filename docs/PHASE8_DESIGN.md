@@ -534,7 +534,7 @@ Die Dorfbewohner, die einen Toten auf dem Hügel haben, kommen selbst herauf. Si
 | **Eingefroren** | `src/world/art_prototype/*`, `src/entities/player/player_proto.*`, `data/art_prototype/*`, **Maler-Shader**, `data/atmosphere/*`, `lib_faces.py` (nur benutzen), alle Gebäude, Innenräume außer den genannten Einträgen in `inn`/`church`, Abschnitte I–V außer der Lindenacker-Reihe 3, Dorf-Plan außer den Markern §4.7, Präparate- und Anatomie-Systeme aus Phase 7 |
 
 ✦ **Datenklassen (W0, Lead):** `NpcLifeConfig`, `ChatterData`, `VisitorConfig`, `KinData`, `WishData`, `GraveCareConfig`, `ApprenticeConfig`, `ApprenticeTaskData`, `FriendStoryData`, `FriendStepData`, `FavorData`, `FestivalData`, `WandererData`, `RobberConfig`, `NightPathData`, `NightVisitData`. Erweiterungen: `VillagerData` (+ `circle`, `mood_lines`, `story_id`, `favor_id`, `visit_grave`, `visit_every_days`, `graveyard_npc`), `OrderData` (+ `category`, Arten `meet`/`task`), `OrdersConfig` (+ `max_active_friend`), `CorpseRecord` (+ `kin_house`), `GraveRecord` (+ `disturbed`, `extra_lines`), `InsightData` (+ `any_clues`, `any_count`), `ActionConfig`-Stichwörter (+ `noisy`), `ReputationConfig.event_points` (+ 10), `PietyConfig.events` (+ 4), `RelationshipConfig.gains` (+ 13), `GhostLines` (+ 5 Pools), `StoryConfig` (+ `underlined`).
-Bei nur fünf Agents übernimmt P1 zusätzlich P7, P4 zusätzlich P3 ist **nicht** erlaubt (beide hängen am Planer); stattdessen P2 + P7 und P3 + P1.
+Bei nur fünf Agents: **P1 + P3** (beide bauen Laufzeit-Zeitpläne), **P2 + P7** (Grab und Nacht hängen am selben Grabzustand), P4, P5, P6.
 
 ### 3.2.1 Klassen → Dateien
 | Klasse | Datei | Art |
@@ -879,3 +879,188 @@ Neue Listen (wie Phase 7 W0-Notiz 9): `chatter(s)` (`data/npc_life/chatter`, nac
 
 ### 3.6 Eingaben
 Keine neuen Tasten. Alles läuft über [E], Dialoge und Panels. Die Kreidetafel, die Lohndose und die Gefallen sind normale Interaktionen.
+
+---
+
+## 4. Welt, Orte & Sichtprüfungen (W-Welt)
+
+### 4.1 Grundsatz
+Phase 8 baut **keine neue Region und keinen neuen Raum**. Friedhof, Dorf und die Innenräume bekommen Marker, Plätze, Wege und wenige Requisiten; einzig der Lindenacker wächst um eine Reihe (§4.4, Bestätigung §14.2). Die Kamera-Regel aus Phase 6/7 gilt weiter: Was südlich steht, verdeckt; deshalb liegen die neuen Plätze an den Gräbern **am Fußende zur Kamera**, und keine neue Requisite ist höher als 1,4 m.
+
+### 4.2 Besucherplätze und Besucherrouten (Friedhof)
+- **Besucherplatz** `gv_<plot_id>` für **jede** Grabstelle und jedes Altgrab (`plot_01…12`, `h_01…06`, `l_01…12`, `old_01…08`): 0,9 m vor dem Fußende des Hügels, Blick zum Stein, beim Welt-Bau aus der Lage des Plots berechnet und ins Layout geschrieben (`visitor_spots`). Kniende Figur: Kopf 0,95 m, stehende 1,6 m.
+- **Route** `visitor_routes[plot_id]`: Wegpunkt-Polylinie `road_end → road_mid → gate_outside → gate_inside → …` über die bestehenden Hofwege und Durchgänge (Ostwiese `w_east_pass`, Birkenhang-Durchgang, Pförtchen Holunderwinkel, Lindenacker-Pforte `w_linden_n`) bis `gv_<plot_id>`. W-Welt backt sie (Flood-Fill-Pfad, geglättet auf Wegpunkte) und legt fehlende Zwischenpunkte `vw_*` an. Rückweg = umgekehrt.
+- **Lichtgang-Plätze:** `lights_lenz` (Kirchhof, 1,5 m vor der Kapellentür, Blick nach Süden), `lights_crowd_1…8` (Halbkreis auf dem Kirchhof-Vorplatz, je ≥ 0,9 m Abstand), `lights_gate` (Veit, außen am Tor).
+
+### 4.3 Lehrlingsecke an der Hütte und Plätze am Tor
+| # | Element | Lage | Hinweise |
+|---|---|---|---|
+| A1 | Kreidetafel `apprentice_board` (`ph_prop_chalkboard`) | an der Hüttenwand rechts neben der Tür, ≤ 2 m von ihr, auf der Kameraseite | Marker `use`; Bau-Maske gesperrt (Footprint + 0,4 m) |
+| A2 | Jakobs Kiste `apprentice_box` (`ph_prop_apprentice_box`, Kiste mit Blechdose für den Lohn) | neben der Tafel | `extends Chest`, Kollision |
+| A3 | Bank für die Brotzeit (`ph_prop_apprentice_bench`, schmale Bank unter der Traufe) | an der Hüttenwand neben der Kiste | Sitzplatz `apprentice_lunch` |
+| A4 | Regenfass `rain_barrel` (`ph_prop_rain_barrel`) | an der Hüttenecke unter der Dachrinne, nicht im Zugang der Werkbank | Marker `use` |
+| G1 | Veits Platz am Tor `veit_gate` | außen am westlichen Torpfeiler (−0,4 \| 9,6), 0,8 m südlich, außerhalb des Torwegs | Sitzplatz, Blick nach Osten |
+| G2 | Hannes Platz am Tor `peddler_gate` | außen am östlichen Torpfeiler (2,6 \| 9,6), 1,0 m südlich | Kiepe abgestellt (Kindmesh), Laden-Marker `counter` |
+- Die Wege Hüttentür ↔ Werkbank, ↔ Gruft, ↔ Tor und der Gang zum Pförtchen bleiben ≥ 1,5 m frei (Flood-Fill wie Phase 5/6).
+
+### 4.4 Die dritte Reihe im Lindenacker (Bestätigung §14.2)
+```
+ z  9,6 ════ Ostwiese-Südzaun ════[LINDENACKER-PFORTE]══════════════
+ z 12,8 │  l_01   l_02   l_03   l_04        (Phase 7, unverändert)   │
+ z 16,9 │  l_05   l_06   l_07   l_08                                 │
+ z 21,0 │  l_09   l_10   l_11   l_12        NEU (x 13,6 · 15,9 · 18,2 · 20,5)
+ z 22,8 └══ Südzaun (verschoben von z 19,6) ══════════════════════════┘
+   x 11,5                                                        x 21,5   · Wegstein (8,4|24,4) unverändert westlich
+```
+| # | Element | vorher | nachher | Grund |
+|---|---|---|---|---|
+| L10 | Plots `l_09…l_12` | – | Reihe 3 bei z 21,0 im Raster der Reihen 1–2 (Abstand 4,1 m), W-Welt ±0,4 m | §2.8 |
+| L11 | Südzaun Lindenacker | [[11,5, 19,6], [21,5, 19,6]] | [[11,5, 22,8], [21,5, 22,8]], West- und Ostzaun bis z 22,8 verlängert, `extra_walls` auf denselben Linien | Platz für Reihe 3 + Südstreifen 0,8 m |
+| L12 | Waldbaum `forest.trees[7]` | Phase-7-Lage (16,5 \| 22,0, ggf. nach L6 versetzt) | **(16,5 \| 27,5)**, außerhalb der Laufgrenze | stand in Reihe 3 |
+| L13 | Hindernisse | – | `obs_l_stump_9` (Baumstumpf bei `l_10`), `obs_l_bramble_9` (Brombeere bei `l_12`) | §2.8 |
+| L14 | Bau-Maske, Gras, Boden | Lindenacker bis z 19,6 | Rechteck bis z 22,8, neu gebacken; Boden unter Reihe 3 geglättet, `ph_env_ground_graveyard` neu exportiert (Größe unverändert) | – |
+| L15 | Kameragrenze | `camera_bounds.max.z` 23 | **24**, nur wenn Reihe 3 bei Zoom 12 sonst den Kopf am Südrand abschneidet (Prüfung §4.8) | bedingt |
+- `walkable_bounds` bleiben (max z 25,2). Die Route Bahre ↔ Wegstein und der Kutschweg bleiben unberührt.
+
+### 4.5 Wege der Nacht (Friedhof)
+- **Räuberweg:** `robber_far` (−22,0 \| −6,0, Waldrand wie Ilses `trader_far`) → `robber_wall_out` (−12,4 \| 1,5) → über die Westmauer des Alten Hofs (sichtbar: steigt hinüber, Clip `climb`, 2 s) → `robber_wall_in` (−10,6 \| 1,5) → Besucherroute bis `gv_<ziel>`. Flucht umgekehrt im Laufschritt. Kein Teil des Weges darf Ilses Platz (−12,1 \| −2,6) kreuzen, solange sie dort steht (er kommt erst um 01:30, Ilse geht 03:20 – W-Welt hält ≥ 3 m Abstand).
+- Der Räuber gräbt am Besucherplatz `gv_<plot>` mit Blick zum Grab; der Aushub (`ph_prop_grave_disturbed`) liegt am Fußende.
+
+### 4.6 Dorf und Innenräume
+| # | Element | Lage | Hinweise |
+|---|---|---|---|
+| D1 | Türplätze der Krankenlicht-Häuser `v_ott_door`, `v_kehr_door` | am Rand der Laufgrenze vor `house_ott` (26,5 \| 3) bzw. `house_kehr` (−25,5 \| −12): (23,4 \| 3,0) und (−24,6 \| −10,2) | Besucher gehen hin, „klopfen" (`knock`, 1 s) und gehen hinein (Zeitplan-Sprung hinter die Laufgrenze, wie Phase-7-Hausbesuche) |
+| D2 | Beobachtungsplätze `watch_ott`, `watch_kehr` (`WatchSpot`) | im Schatten unter der Remisen-Traufe (19,5 \| 5,4) bzw. an der Westecke des Amtshauses (−20,0 \| −9,6) | ≤ 12 m bis zum Türplatz, frei sichtbar (§4.8); Prompt nur in Krankenlicht-Nächten |
+| D3 | Krankenlicht `SickLight` | Marker `light_window` von `house_ott`/`house_kehr` | das vorhandene Fensterlicht bleibt die ganze Nacht an, dazu eine Kerze als leuchtendes Material im Fenster (kein neues Licht) |
+| D4 | Veits Plätze | Kirchtür-Stufe `v_church_step` (1,6 \| −10,8), Brückenplatz `v_bridge_sit` (−23,8 \| 2,6), Brunnenbank (bestehend `v_well_bench`) | sitzend |
+| D5 | Hannes Stand `v_well_peddler` | (−1,8 \| −1,2) am Brunnen, Kiepe abgestellt | Laden-Marker `counter` |
+| D6 | Gaststube (`inn_layout.json`) | Kathrein-Schmuck (Tannengrün, Bänder an zwei Balken, Tische an der Wand: zweite Möbelstellung mit `fest_flag`), Spielmann-Platz am Ofen, Tanzfläche 3 × 2,5 m | `FestDecor`, `min/max_level` → `fest_flag` (✦ Layout-Feld, nur Darstellung) |
+| D7 | Kirche (`church_layout.json`) | Archivschrank `ArchiveCabinet` an der Nordwand neben der Sakristeitür (`ph_int_church_archive`), Namenstafel `MemorialPlate` am bestehenden Gedenkbrett | Raum hell wie G7 |
+- Dorf-Wegpunkte für Jakob (`v_in_inn_jakob`), Veit (`v_remise_sleep`, unsichtbar), Hanne (`v_peddler_in` an der Brücke, `v_peddler_out` = Brückenportal) und die Lichtgang-Sammlung (`v_lights_gather`, Holderbrücke).
+
+### 4.7 Eingriffe am Friedhof und im Dorf (vollständig; Layout-Diff-Test gegen `tests/fixtures/phase8/layout_p7.json` und `village_layout_p7.json`)
+Friedhof: **L10–L15** (§4.4), **A1–A4**, **G1–G2** (§4.3), Besucherplätze und -routen (§4.2, nur neue Einträge `visitor_spots`, `visitor_routes`, `vw_*`), Räuberweg (§4.5, neue Wegpunkte), Lichtgang-Plätze, neue Npc-Einträge (§3.1). Dorf: **D1–D5** (neue Marker und Wegpunkte), Räume: **D6–D7**. **Nicht bewegt:** alles andere, insbesondere Hütte, Tor, Bahre, Gruft, Kapelle, Schuppen, Werkhof, alle Gräber der Phasen 2–7, Pflegestellen, Ilses Platz, die Dorfhäuser und alle Phase-7-Wegpunkte.
+
+### 4.8 Sichtprüfung und Wege (Kamerastrahl-Test, Pflicht; Verfahren Phase 6 §4.5)
+1. **Besucher:** an **jedem** Besucherplatz Kopf kniend (0,95 m) und stehend (1,6 m) frei bei Zoom 12, 22, 24 (Spielerkamera mit Fokus auf dem Platz). Scheitert ein Platz (z. B. unter der Eichenkrone), verschiebt W-Welt ihn seitlich neben den Hügel (±0,7 m) und meldet es.
+2. **Lehrling:** an jeder Pflegestelle und jedem Grab, an dem er gießt oder Kerzen setzt, sein Kopf (1,4 m) frei bei Zoom 22; Tafel, Kiste, Bank und Regenfass bei Zoom 22 im Bild.
+3. **Nacht:** Zielplätze des Räubers (alle Gräber der Reihen 2–3 im Lindenacker und der jüngsten 6 Gräber) bei Zoom 22 frei; die Westmauer an `robber_wall_*` im Bild.
+4. **Dorf:** Beobachtungsplätze → Türplätze frei (Strahl in Kopfhöhe); Türplätze aus der Spielkamera am Beobachtungsplatz im Bild; Veit und Hanne an allen Plätzen frei.
+5. **Lichtgang:** Übersicht Zoom 24 über Alter Hof + Kirchhof, mindestens 70 % der Grabkerzen frei sichtbar; Lenz an `lights_lenz` frei.
+6. **Wege** (Flood-Fill 1,5 m): jede Besucherroute frei (Strahl in Hüfthöhe, Toleranz 0,3 m), Hüttentür ↔ Tafel ↔ Regenfass, Reihe 3 ↔ Pforte; kein Platz in einer Kollision. Bilder `p8_vis_*` (§11).
+
+### 4.9 Licht
+- **Grabkerzen:** Glas mit Flamme als leuchtendes Material (`mat_emissive_warm`, Flackern über `flame_glow.gdshader` aus G7, kein `TIME`-Overhead pro Kerze: ein gemeinsamer Parameter). Dazu ein **Pool von 6 Omni-Lichtern** (`#F2A93B`, Energie 0,5, Reichweite 2,2 m, **ohne Schatten**), die `GraveCare` den 6 brennenden Kerzen nächst dem Kamerafokus zuteilt (2 Hz). Alle übrigen Kerzen leuchten nur über das Material. Gilt auch am Lichtgang.
+- **Laternen im Lichtgang-Zug:** nur leuchtendes Material (Regel Phase 7: keine Lichter an Figuren). Jakobs Laterne ebenso. Lambert: ein leuchtender Spalt in der Blendlaterne.
+- **Krankenlicht:** vorhandenes Fensterlicht bleibt an (kein neues Licht).
+- **Gaststube am Kathreintanz:** Licht wie Phase 7 Abend; der Ofen flackert wie gehabt. Räume bleiben auf den hellen G7-Werten (Forward+ und Web-Gamma).
+
+---
+
+## 5. Speichern & Migration (P6)
+
+### 5.1 Format v7 (Ergänzungen)
+```
+format_version: 7
+data.autoloads.GameState.stats   + visits_seen, visits_total, wishes_done, wishes_failed, tips_coins, flowers_planted, candles_lit,
+                                   mortsafes_set, graves_disturbed, graves_closed, apprentice_days, apprentice_jobs, apprentice_mistakes,
+                                   apprentice_wage, friend_steps, favors_used, favors_returned, alms_given, chatters_seen, listens, dances,
+                                   night_visits_observed, robber_encounters, coins_spent_apprentice, coins_spent_alms, coins_spent_peddler
+data.autoloads.GameState.flags   + p8_open, p8_open_day: 53, linden_row3_granted, apprentice_hired, robber_known, ott_dead,
+                                   fest_kathrein_day: 54, fest_lights_day: 58, lights_held, lights_all, visit_<npc>_day, friend_<npc>_<n>,
+                                   promise_liesel_book, insight_underlined, who_comes_up_complete, clue_c_n_* (bestehendes Muster)
+data.nodes.corpse_manager.records[] + kin_house: "house_kehr"
+data.nodes.graveyard.graves[]    + disturbed: false, extra_lines: ["Ruhe sanft"]; + l_09…l_12 (aus dem Layout, LOCKED bis geräumt)
+data.nodes.npc_life              {"open_day": 53, "events": {"apprentice_hired": 54, …}, "event_npcs": {…}, "listened": {"washer": 56},
+                                  "chatter_day": {"ch_inn_carter": 55}, "goal_done": false}
+data.nodes.visitors              {"plan_day": 57, "plan": [{"visit_id": "v_57_1", "kin_id": "kin_kehr", "graves": ["l_02"], "slot": 570}],
+                                  "goodwill": {"kin_kehr": 7}, "last_visit": {"l_02": 55}, "wishes": [{"wish_id": "w_0003", "kind": "flowers",
+                                  "grave_id": "l_02", "kin_id": "kin_kehr", "state": "accepted", "day": 55, "candle_seen": false}],
+                                  "tips_today": {"day": 57, "coins": 2}, "tips_on_stone": {"l_02": [2, "kin_kehr"]}, "pleased_today": 1,
+                                  "noise_day": 0, "rumor_seen": ["corpse_0031"], "next_wish": 4}
+data.nodes.grave_care            {"flowers": {"l_02": {"planted": 79200, "watered": 81600, "wreath": false}}, "bouquets": {"l_02": 80100},
+                                  "candles": {"l_05": 82500}, "lit_nights": {"l_05": 57}, "mortsafes": {"l_10": 81000}, "disturbed": [],
+                                  "can_fill": {"player": 4, "apprentice": 6}, "light_pool": []}
+data.nodes.apprentice            {"hired": true, "hire_day": 53, "levels": {"rake": 2, "weed": 1}, "jobs": {"rake": 13}, "teach": "",
+                                  "board": [{"task": "rake", "area": "yard"}, …], "plan_day": 57, "plan": […], "progress": 3,
+                                  "morale": 4, "unpaid": 0, "praised_day": 56, "scolded_day": 0, "mistakes_today": 1}
+data.nodes.apprentice_box        {"storage": Inventory.save_state(), "coins": 9}
+data.nodes.friendship            {"steps": {"innkeeper": 2, …}, "step_day": {…}, "favor_day": {"smith": 58}, "owed": {"smith": "of_esch_return_1"},
+                                  "locked_until": {}, "shield": 0, "watch_night": 0}
+data.nodes.festivals             {"days": {"fest_kathrein": 54, "fest_lights": 58}, "state": {"fest_kathrein": "ended"}, "presence": {…},
+                                  "danced": ["grocer"], "lights_result": "all"}
+data.nodes.wanderers             {"alms": 3, "alms_day": 56, "talks": {"peddler": 2}, "peddler_stock": {"day": 55, "left": {…}, "bought": {…}}}
+data.nodes.night_robber          {"target_day": 58, "target": "l_09", "encounters": 1, "disturbed": 0, "last_night": 58, "fate": ""}
+data.nodes.night_paths           {"observed": ["c_n_quast_visit"], "deaths": {"np_ott": 58}}
+```
+Nicht gespeichert: Laufzeit-Zeitpläne (aus Plan + Uhr), Launen (aus Tag + Ereignissen), Begegnungen, die gerade laufen, Licht-Pool, LOD-Stufen. Speichern ist während einer TimedAction gesperrt (wie bisher), sonst überall erlaubt, auch während eines Besuchs oder am Lichtgang: Nach dem Laden stehen alle Figuren dort, wo Plan und Uhr sie hinsetzen (bitgleich).
+
+### 5.2 Migration v6 → v7 (Phase-7-Spielstände müssen laden)
+`SaveMigration.migrate_6_to_7` läuft in `read_doc` nach `decode_state` (Kette 1→…→7), rein, auf einer tiefen Kopie.
+1. **Leichen:** alle Records + `kin_house`. Für Records mit Grab im Abschnitt `linden` und Ankunft ab `village_open_day` berechnet die Migration ihn über die reine Funktion `VillageRules.mourning_house_for(arrival_day, seed, houses)` (aus `Village.mourning_house`, P6 zieht sie heraus, Ergebnis bitgleich zum Phase-7-Trauerflor); sonst "".
+2. **Gräber:** + `disturbed false`, `extra_lines []`. Die Plots `l_09…l_12` fehlen im v6-Stand und entstehen beim Laden aus dem Layout als `LOCKED` (tolerante Graveyard-Regel aus Phase 4).
+3. `nodes.npc_life = {}`, `visitors`, `grave_care`, `apprentice`, `apprentice_box`, `friendship`, `festivals`, `wanderers`, `night_robber`, `night_paths` = `{}` über `SaveMigration.V7_EMPTY_NODES`, eingefügt erst, wenn W-Welt die Knoten anlegt (wie Phase 4–7).
+4. Stats (§2.11) = 0. Flags: keine. `p8_open` setzt `NpcLife.post_load` zur Laufzeit, wenn `name_in_village_complete` gilt.
+5. Spieler, Inventare, Präparate, Aufträge der Phase 7: unverändert. Phase-7-Aufträge behalten `category ""`.
+6. Die Bau-Maske wächst um Reihe 3; im v6-Stand liegt dort keine Zier (vorher Zaun und Wald), es muss nichts geräumt werden.
+
+**Fixtures (W0, Lead, vor jeder Phase-8-Code-Änderung mit dem Stand G7 + Gruft-Umbau erzeugt, über `Phase7Bot` + echte Systeme):** `tests/fixtures/saves_v6/`
+- `slot_p7_day53_neighbor.json`: `neighbor7`-Endstand, 07:00 Tag 53, `name_in_village_complete`, Lindenacker voll, alle acht „Vertraut", Münzen gemessen (≈ 60). Start für `kindly8`, `lazy8`, `night8`, `save_load8`.
+- `slot_p7_day53_anatomist.json`: `anatomist7`-Endstand (≈ 71, Präparate verkauft – auch von Lindenacker-Toten mit Angehörigen). Start für `anatomist8`.
+- `slot_p7_day50_eve.json`: `neighbor7` am Abend des Kapiteltags (Öffnung am nächsten Morgen).
+- `slot_p7_founder.json`: `founder7`-Endstand (neues Spiel). Start für `founder8`.
+- `slot_p7_mid_inn.json`: mitten in Phase 7, Spieler in der Gaststube, Kapitel offen (Phase 8 bleibt zu, Begegnungen laufen).
+- `slot_p7_crypt_corpse.json`: Leiche auf dem Gruft-Tisch (Stand mit Gruft-Umbau), Spieler in der Gruft – Liesels „Totenwäsche" und Totenwache nach der Migration möglich.
+Dazu `make_v6_saves.gd` + `_driver.gd` (historisches Werkzeug) und `tests/fixtures/phase8/{layout_p7,village_layout_p7}.json` (bytegleich zum Stand). Lade-Wächter `tests/integration/test_saves_v6_load.gd` (Lead). v5…v1-Fixtures laden weiter (Kette bis 7).
+
+---
+
+## 6. Debug-Konsole (W-UI) – neue Befehle
+`p8 open` · `moods` (heute) · `mood <npc> <plain|cheerful|low|cross>` · `chatter <id>` (jetzt abspielen) · `react <event>` · `visits` (Plan heute) · `visit <kin|npc> [grave]` (jetzt, mit echtem Weg) · `goodwill <kin> <n>` · `wish <grave> <kind>` · `wishes` · `tip <grave> <n>` · `flowers <grave> [fresh|wilted|wreath]` · `candle <grave|all>` · `mortsafe <grave>` · `disturb <grave>` · `apprentice hire` · `apprentice level <task> <0-2>` · `apprentice plan` · `apprentice morale <0-5>` · `box coins <n>` · `step <npc> <0-3>` · `favor <npc>` (Abklingzeit zurücksetzen) · `fest <kathrein|lights> [today|now]` · `lights all` · `peddler` (Hanne heute) · `alms <n>` · `robber <tonight|now|second|gone>` · `nightpath <ott|kehr> [now]` · `observe <clue>` · `underlined <priest|surgeon|washer>` · `d2` (Ott morgen fällig) · `vis8` (Sichtprüfung §4.8 im laufenden Spiel) · `goal8`. Bestehend und weiter nutzbar: `npclod`, `tp`, `time`, `rel`.
+
+---
+
+## 7. UI (W-UI)
+
+### 7.1 Kreidetafel – Arbeitsliste (`&"apprentice_board"`)
+Kreidegrau auf Schiefer (eigene Formensprache, Pergament-Rahmen wie die übrigen Panels): oben „Jakob – Arbeitsliste", drei Zeilen mit Auswahl Aufgabe (nur Angelernte wählbar, Ungelernte grau mit „noch nicht gezeigt") und Bereich; rechts Jakobs Stufen als Kreidestriche je Aufgabe (|, ||) mit „noch 4 Stellen bis Geübt" als Fußzeile; unten Lohndose „9 Münzen (3 Tage)" mit Knopf „Münzen einlegen" und Zustand („bezahlt bis morgen" / „schuldet 6"). Darunter die geschätzte Arbeit: „≈ 12 Laubstellen, dann Unkraut im Lindenacker" (aus dem Planer). Knopf „Zeig mir, was du heute geschafft hast" öffnet die Liste der heutigen Stellen.
+
+### 7.2 Wunsch-Karte (im Dialog mit Besuchern) und Grab-Tooltip
+- **Wunsch-Karte:** Name des Besuchers, Grab („Hedwig Lamprecht, Lindenacker"), Bitte als Zitat, Art als Symbol (Blume, Kerze, Rechen, Meißel, Vase), Frist „bis zum nächsten Besuch (≈ in 3 Tagen)", Lohnzeile ohne Zahl („Die Kehrs werden es dir danken."), Knöpfe „Das mache ich." / „Ich kann es nicht versprechen." Höchstens drei offene: sonst gedimmt mit „Drei Wünsche sind schon offen."
+- **Grab-Tooltip** (bestehend, erweitert): Blumen frisch/welk („gießen in ≈ 1 Tag"), Kerze brennt, Grabgitter seit n Tagen, aufgewühlt, Angehörige mit Wort („Die Kehrs: zufrieden"), offener Wunsch, Münzen auf dem Stein.
+
+### 7.3 Gefallen
+Dialogzeile „[Gefallen] …" mit Abklingzeit („in 3 Tagen wieder"); bei Wahl (Esch, Lenz, Fenner) ein kleines Auswahl-Panel `&"favor"` (Gegenstand, Grab oder Nacht). Offene Gegengefallen stehen unter „Aufträge" mit eigener Überschrift „Was du schuldest".
+
+### 7.4 Merkbuch
+- **„Hollerbrück"** (Phase 7) je Karte zusätzlich: heutige Laune als Wort („heute bedrückt"), **drei Geschichtspunkte** (gefüllt = erledigt, umrandet = jetzt möglich) mit dem Titel des nächsten Schritts, „Gefallen bereit" bzw. „in 2 Tagen". Neue Karten: Jakob (Stufen je Aufgabe, Zufriedenheit als Satz), Veit (Almosen gegeben n), Hanne („nächster Besuch in 4 Tagen").
+- **Neue Seite „Angehörige":** je Haushalt und Bewohner mit Toten oben: Name, Haus, Gräber, Wohlwollen als Wort (5 Wörter: „verbittert", „enttäuscht", „ruhig", „zufrieden", „dankbar"), letzter und nächster Besuch („kommt in ≈ 2 Tagen"), offene Wünsche mit Häkchen-Zustand („Blumen ✓ · frisch bis morgen").
+- **„Aufträge":** Kategorie „Freundschaft" getrennt von den Phase-7-Aufträgen.
+- **Merkbuch-Erkenntnis** `i_underlined`: zeigt die Pflicht-Hinweise und „zwei von vier" als eigene Gruppe mit Zähler.
+
+### 7.5 HUD
+- **Begegnungs-Blasen** wie Gerede (`chatter_bubbles.gd`, eine Begegnung zugleich, Namen der Sprechenden klein darunter).
+- **Fest-Banner** (`fest_banner.gd`) um 06:00 und 15:00 am Festtag, 4 s: „Heute Abend: Lichtgang" / „Kathreintanz im Holderkrug (ab 19:00)".
+- **Zielzeilen** (`ObjectiveResolver`, nach den Ketten aus Phase 4–7): „Sprich mit Osric" · „Rosine will dich sprechen" · „Kreidetafel: Arbeitsliste für Jakob" · „Zeig Jakob, wie man harkt" · „Martha Kehr wartet am Grab" (solange ein Besucher wartet und der Spieler auf dem Friedhof ist) · „Wunsch: Blumen für Hedwig Lamprecht (≈ 2 Tage)" (dringendster) · „Lohndose leer – Jakob arbeitet morgen umsonst" · „Hanne Vogelsang ist am Tor (bis 16:20)" · „Heute Abend ist Lichtgang" → „Kein Grab ohne Licht: 31/34" · „Merkbuch: Wer geht nachts zu den Kranken?" · „Bei den Otts brennt Licht" (nach `c_n_veit`) · „Ein Grab ist aufgewühlt" · „Wer heraufkommt: 3/4" · danach „Die Gemeindetafel hat neue Bitten".
+- **Prompts:** „[E] Mit Martha Kehr reden" · „[E] Zwei Münzen auf dem Stein (Martha Kehr)" · „[E] Grabblumen setzen (15 Min)" · „[E] Blumen gießen (5 Min)" / gedimmt „Die Gießkanne ist leer." · „[E] Gießkanne füllen" · „[E] Grabkerze anzünden (3 Min)" / vor 15:00 gedimmt „Erst am Nachmittag." · „[E] Grabgitter aufsetzen (20 Min)" · „[E] Grab wieder schließen (30 Min)" · „[E] Zeile nachmeißeln: ‚Ruhe sanft' (30 Min)" · „[E] Arbeitsliste für Jakob" · „[E] Jakobs Kiste" · „[E] Veit eine Münze geben" · „[E] Im Schatten warten (bis ≈ 22:20)" · „[E] Im Archiv helfen (60 Min)" · „[E] Namen für Theres abschreiben (20 Min)".
+
+### 7.6 Tageszusammenfassung und Register
+- **Tageszusammenfassung** + „Besuche" (wer, an welchem Grab, wie es aussah), „Wünsche" (erfüllt, neu, verfallen), „Trinkgeld", „Jakob" (Stellen je Aufgabe, Fehler mit Ort, Lohn, „Morgen: …"), „Die Nacht" (Grabräuber gesehen / verscheucht / Grab aufgewühlt, Krankenlicht).
+- **Grabregister:** Spalte „Angehörige" (Haus) und Symbole für Blumen, Kerze, Gitter; der Vermerk „vorgemerkt: Fenner" an `l_12` (Fenner 2).
+
+### 7.7 Abschluss-Panel
+Variante `&"who_comes_up"` (§1.5).
+
+### 7.8 Karte (Phase-7-`MapCanvas`, Marker-Ebene – kein Neubacken des Blatts außer für Reihe 3 und die neuen Requisiten)
+| Marker | Wo | Wann |
+|---|---|---|
+| Besucher (kleine dunkle Figur, Name im Tooltip) | an ihrem Grab bzw. auf dem Weg | während des Besuchs |
+| Jakob (Figur mit Rechen, Tooltip „harkt im Alten Hof") | aktuelle Stelle | Arbeitszeit |
+| Wünsche (Blüte am Grab, Tooltip mit Frist) | Grab | offen |
+| Münzen auf dem Stein | Grab | bis genommen |
+| Hanne (Kiepe, Tooltip Zeiten) | Brunnen / Tor | ihr Tag; im Kalender-Tooltip „nächster Besuch" |
+| Veit (Becher) | aktueller Platz | sichtbar |
+| Krankenlicht (Fenster) | Haus | erst ab `c_n_veit` |
+| Fest (Laterne / Fiedel) | Friedhof + Brücke / Holderkrug | am Festtag |
+| Aufgewühltes Grab (offene Erde) | Grab | bis geschlossen |
+| Grabräuber | **nie** (man muss nachts selbst hinsehen) | – |
