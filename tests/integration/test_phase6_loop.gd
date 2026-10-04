@@ -67,9 +67,10 @@ func test_phase6_loop_to_roof_and_earth_with_round_trips() -> void:
 	_osric([&"p6_intro"])
 	assert_true(GameState.has_flag(&"p6_intro"), "Osric told about the council")
 	var old_table := world.get_node_by_layout_id("morgue_table") as MorgueTable
-	assert_true(old_table.is_active(), "the old table works until crypt 1")
-	_build(&"crypt")
-	assert_eq(buildings.level(&"crypt"), 1)
+	# 04.10.2026 (user's wish „Gruft von Beginn an“): the crypt stands at level 1 from the start – the
+	# Phase-5 save gets it on load, nothing to build; the table in front of the hut never works.
+	assert_eq(buildings.level(&"crypt"), 1, "crypt 1 without a build")
+	assert_eq((world.get_node("Entities/site_crypt") as BuildingSite).get_interaction_prompt(player), "[E] Gruft ausbauen (Stufe 2)")
 	assert_false(old_table.is_active() or old_table.visible, "§4.4: the table in front of the hut is gone")
 	assert_false((world.get_node("Decor/Phase4Props/WashBasin") as Node3D).visible, "the wash basin went with it")
 	var door := BuildingDoor.find(tree, &"crypt")

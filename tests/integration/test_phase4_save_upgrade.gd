@@ -164,8 +164,8 @@ func _loom_gown_and_designed_stone(inv: Inventory) -> void:
 	assert_not_null(record, "the corpse of day 14")
 	if record == null:
 		return
-	var table := world.get_node_by_layout_id("morgue_table") as MorgueTable
-	world.corpse_manager.put_down(record.id, &"table", table.slot_transform(), table.slot_node())
+	var table := MorgueTable.active(tree)  # 04.10.2026: the crypt table from the start
+	world.corpse_manager.put_down(record.id, &"table", table.slot_transform(), table.slot_node(), table.room)
 	var care := tree.get_first_node_in_group(&"corpse_care") as CorpseCare
 	care.exam_all_instant(record.id)
 	if record.needs_valuables_decision():

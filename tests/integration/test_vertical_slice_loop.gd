@@ -221,7 +221,7 @@ func _bind_world() -> void:
 	player.instant_actions = true
 	manager = world.corpse_manager
 	graveyard = world.graveyard
-	table = world.get_node_by_layout_id("morgue_table") as MorgueTable
+	table = MorgueTable.active(tree)  # 04.10.2026: the crypt table from day 1
 
 
 func _fresh_points(record: CorpseRecord) -> int:

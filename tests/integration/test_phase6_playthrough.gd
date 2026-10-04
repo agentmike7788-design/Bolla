@@ -90,7 +90,9 @@ func test_mortician() -> void:
 	for c: Dictionary in bot.mortician_checks:
 		# §2.2: the fine traces (cause, min_freshness 0.6) survive while the cold keeps the corpse
 		# „frisch" – no find lost by decay while the formula says ≥ 0.6 (Liegezeit ≤ 20 h at crypt 2).
-		if float(c.freshness) >= 0.6:
+		# The finds resolve at the end of the examination (35 min later): a margin of 0.02 for that
+		# (04.10.2026: with crypt 1 from the start the arc runs earlier and hit 0.601 → 0.59x at the end).
+		if float(c.freshness) >= 0.62:
 			assert_eq(int(c.lost), 0, "%s: no find lost at freshness %.3f (%d min, crypt %d)" % [c.id, c.freshness, c.lay_minutes, c.crypt])
 			kept += 1
 		assert_almost(float(c.freshness), float(c.expected), 1e-6, "%s: freshness = CorpseDecay formula" % c.id)

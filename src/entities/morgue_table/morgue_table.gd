@@ -508,6 +508,23 @@ static func _is_carrying(player: Player) -> bool:
 	return is_instance_valid(player.carried)
 
 
+## The one active table in `tree` (04.10.2026: the crypt table from day 1; the old one in front of
+## the hut only in worlds without a Buildings node), else the first table, else null.
+static func active(tree: SceneTree) -> MorgueTable:
+	if tree == null:
+		return null
+	var first: MorgueTable = null
+	for node: Node in tree.get_nodes_in_group(GROUP):
+		var table := node as MorgueTable
+		if table == null:
+			continue
+		if table.is_active():
+			return table
+		if first == null:
+			first = table
+	return first
+
+
 ## Buildings.level(&"crypt") in [requires_level, retire_at_level) (retire 0 = never); without a
 ## Buildings node the crypt is at level 0 (the old table stays active).
 func is_active() -> bool:

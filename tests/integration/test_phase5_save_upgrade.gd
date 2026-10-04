@@ -1,9 +1,9 @@
 extends TestCase
 ## P6 (docs/PHASE6_DESIGN.md §2.2, §5.2, §10): Phase-5 saves (format v4, tests/fixtures/saves_v4/)
 ## in the Phase-6 build, through the real SaveManager into the real world.
-## - slot_p5_day16_table: the corpse on the table in front of the hut stays there (room "", crypt
-##   level 0 → the old table stays active) and is workable as before (examination step 3 at the
-##   real MorgueTable); the v5 resave carries interior_id and the new record fields.
+## - slot_p5_day16_table (changed 04.10.2026, „Gruft von Beginn an“): the load lifts the crypt to level 1
+##   and carries the corpse from the old table down onto the crypt table with all its states (one note);
+##   workable there (examination step 3); the resave carries interior_id and the new record fields.
 ## - slot_p5_day16_carry: the gravekeeper carries the day's corpse outside (interior_id ""); the
 ##   hut still refuses a corpse.
 ## - slot_p5_interior: the gravekeeper is in the hut (interior_id "hut", the hut room active).
@@ -57,37 +57,47 @@ func after_each() -> void:
 	TestCase.remove_user_dir(saves_dir)
 
 
-func test_day16_table_corpse_stays_workable_at_the_old_table() -> void:
+## Changed 04.10.2026 (user's wish „Gruft von Beginn an“): the crypt stands at level 1 from the start,
+## so the load (Buildings.post_load) carries the corpse from the old table down onto the crypt table
+## with all its states (one note); it stays workable there (step 3, then the rest and the burial).
+func test_day16_table_corpse_goes_down_to_the_crypt_table() -> void:
+	var notes: PackedStringArray = []
+	var on_note := func(text: String, _kind: StringName) -> void: notes.append(text)
+	EventBus.notification_requested.connect(on_note)
 	await _load("slot_p5_day16_table")
+	EventBus.notification_requested.disconnect(on_note)
 	if world == null:
 		return
 	var player := world.get_player()
 	assert_eq([player.in_interior, player.interior_id], [false, &""], "outside")
 	var record := _table_record()
-	assert_not_null(record, "the corpse on the table in front of the hut")
+	assert_not_null(record, "the corpse on the table")
 	if record == null:
 		return
-	assert_eq([record.room, record.slot_id, record.cold_windows, record.service_held, record.service_day],
-			[&"", "", PackedInt32Array(), false, 0], "§5.2 step 2: Phase-6 defaults")
-	assert_eq(record.exam_done.size(), 2, "2 of 4 steps")
-	var table := world.get_node_by_layout_id("morgue_table") as MorgueTable
-	assert_not_null(table, "the old table")
-	assert_true(table.is_active(), "§2.2: crypt level 0 → the old table stays active")
-	assert_true(table.visible, "the table is still there")
-	var buildings := world.get_node_or_null("Systems/Buildings")
-	if buildings != null:
-		assert_eq(int(buildings.call(&"level", &"crypt")), 0, "crypt level 0 after the load")
-	# Step 3 at the real table, like in Phase 5.
+	assert_eq([record.room, record.slot_id, record.service_held, record.service_day], [&"crypt", "", false, 0],
+			"§5.2 step 2: Phase-6 defaults, room crypt after the repair")
+	assert_eq(record.cold_windows.size(), 3, "the crypt's cold window opens at the load")
+	assert_eq(notes.count(CorpseManager.NOTE_RELOCATED), 1, "one note")
+	assert_eq(record.exam_done.size(), 2, "2 of 4 steps kept")
+	assert_true(record.is_harvested(&"hair"), "the braid stays taken")
+	assert_false(record.balm_windows.is_empty(), "the juniper window stays")
+	var old := world.get_node_by_layout_id("morgue_table") as MorgueTable
+	assert_false(old.is_active() or old.visible, "the old table is gone")
+	var buildings := world.get_node("Systems/Buildings")
+	assert_eq(int(buildings.call(&"level", &"crypt")), 1, "crypt level 1 after the load")
+	var crypt_table := MorgueTable.active(tree)
+	assert_eq(crypt_table.room, &"crypt")
+	assert_eq(crypt_table.corpse_id, record.id, "on the crypt table")
+	# Step 3 at the crypt table, down the stair.
+	HutPortal.arrive(player, InteriorRoom.find(tree, &"crypt").spawn_transform(), true, &"crypt")
 	player.instant_actions = true
 	var care := tree.get_first_node_in_group(&"corpse_care") as CorpseCare
 	var step: StringName = care.open_steps(record.id)[0]
-	table.interact(player)
+	crypt_table.interact(player)
 	UIState.clear()
-	table.request_exam_step(step)
-	assert_eq(record.exam_done.size(), 3, "step 3 (%s) at the old table" % step)
-	assert_true(record.is_harvested(&"hair"), "the braid stays taken")
-	assert_false(record.balm_windows.is_empty(), "the juniper window stays")
-	assert_eq(warnings.take(), PackedStringArray(), "no warnings at the old table")
+	crypt_table.request_exam_step(step)
+	assert_eq(record.exam_done.size(), 3, "step 3 (%s) at the crypt table" % step)
+	assert_eq(warnings.take(), PackedStringArray(), "no warnings at the crypt table")
 	await _resave_round_trip()
 	if _crypt_ready():
 		await _crypt_takes_the_table_corpse(record.id)
@@ -148,30 +158,15 @@ func test_interior_save_in_the_hut() -> void:
 
 # --- W2 part (crypt in the world, P1 + P2 merged) -------------------------------------------------
 
-## §10: build crypt 1 → the corpse lies on the crypt table with its steps, finds, braid and juniper
-## window; the rest of the examination down there; then buried.
+## §10 (changed 04.10.2026: no build – the crypt stands from the start): the corpse lies on the crypt
+## table with its steps, finds, braid and juniper window; the rest of the examination down there; then buried.
 func _crypt_takes_the_table_corpse(corpse_id: String) -> void:
 	var player := world.get_player()
-	var inv := player.inventory
-	var buildings := world.get_node("Systems/Buildings")
 	var record := world.corpse_manager.get_record(corpse_id)
-	var steps := record.exam_done.duplicate()
-	var finds := record.finds_revealed.duplicate()
-	var balm := record.balm_windows.duplicate()
-	for id: StringName in [&"stone", &"wood", &"clay", &"iron_fittings"]:
-		inv.add_item(id, 20)
-	inv.add_item(&"coin", 40)
-	# §6 `build crypt 1` (debug): the same rules except material and time – a Phase-5 save of day 16
-	# has no buildings_open yet, the debug build opens the sites first.
-	GameState.set_flag(&"buildings_open", true)
-	assert_true(bool(buildings.call(&"upgrade", &"crypt", inv)), "crypt 1 built")
-	UIState.clear()
-	assert_eq(record.location, CorpseRecord.LOCATION_TABLE, "still on a table")
-	assert_eq(record.room, &"crypt", "§2.2: carried down to the crypt table")
-	assert_eq([record.exam_done, record.finds_revealed, record.balm_windows], [steps, finds, balm], "all states kept")
+	assert_eq([record.location, record.room], [CorpseRecord.LOCATION_TABLE, &"crypt"], "still on the crypt table after the resave")
 	assert_true(record.is_harvested(&"hair"))
 	var old_table := world.get_node_by_layout_id("morgue_table") as MorgueTable
-	assert_false(old_table.is_active(), "the old table retired")
+	assert_false(old_table.is_active(), "the old table never works")
 	var crypt := InteriorRoom.find(tree, &"crypt")
 	var tables := crypt.find_children("*", "", true, false).filter(func(n: Node) -> bool: return n is MorgueTable)
 	assert_eq(tables.size(), 1, "the crypt table")
