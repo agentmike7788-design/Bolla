@@ -393,7 +393,8 @@ func carve() -> void:
 	var id := grave_id
 	var minutes := int(current_preview.get("minutes", 0))
 	if p != null and p.has_method(&"start_timed_action"):
-		p.call(&"start_timed_action", TEXT_CARVE_LABEL, minutes, _finish_carve.bind(id, d, inv), false, ANIM)
+		p.call(&"start_timed_action", TEXT_CARVE_LABEL, minutes, _finish_carve.bind(id, d, inv), false,
+				ToolAnimConfig.clip_for(&"stone_carve", ANIM))
 	else:
 		_finish_carve(id, d, inv)
 

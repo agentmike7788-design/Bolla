@@ -126,7 +126,9 @@ func request_craft(recipe_id: StringName) -> void:
 		var missing := CraftingSystem.missing(recipe, inv)
 		_warn(TEXT_MISSING % _describe(missing) if not missing.is_empty() else TEXT_NO_ROOM)
 		return
-	player.start_timed_action(LABEL_CRAFT % _recipe_name(recipe), recipe.craft_minutes, _finish_craft.bind(recipe, inv), false, ANIM)
+	# G7 Runde 2 (Werkzeuge): the station's tool clip (workbench: saw, forge: hammer, mason: chisel)
+	player.start_timed_action(LABEL_CRAFT % _recipe_name(recipe), recipe.craft_minutes, _finish_craft.bind(recipe, inv), false,
+			ToolAnimConfig.clip_for(StringName("station_" + String(station)), ANIM))
 
 
 func _finish_craft(recipe: RecipeData, inv: Inventory) -> void:

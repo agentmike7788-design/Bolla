@@ -16,8 +16,16 @@ const CHARACTERS := {
 		"height": [1.72, 1.88],
 		"animations": {"idle": [1.6, 2.6], "walk": [0.4, 0.8], "carry_idle": [1.6, 2.6], "carry_walk": [0.5, 1.0],
 				"dig": [1.0, 1.4], "dig_bare": [1.0, 1.4], "interact": [0.6, 1.0],
-				"shovel_draw": [0.4, 0.6], "shovel_stow": [0.35, 0.5], "shovel_stow_walk": [0.45, 0.6]},
-		"one_shot": ["interact", "shovel_draw", "shovel_stow", "shovel_stow_walk"],
+				"shovel_draw": [0.4, 0.6], "shovel_stow": [0.35, 0.5], "shovel_stow_walk": [0.45, 0.6],
+				# G7 Runde 2 (Werkzeuge): belt tools – work loops, draw / stow from and into the tool bag
+				"chop": [0.9, 1.3], "pick": [1.0, 1.4], "hammer": [0.45, 0.8], "chisel": [0.4, 0.7], "saw": [0.9, 1.2],
+				"axe_draw": [0.3, 0.5], "axe_stow": [0.3, 0.45], "axe_stow_walk": [0.45, 0.6],
+				"pick_draw": [0.3, 0.5], "pick_stow": [0.3, 0.45], "pick_stow_walk": [0.45, 0.6],
+				"hammer_draw": [0.3, 0.5], "hammer_stow": [0.3, 0.45], "hammer_stow_walk": [0.45, 0.6],
+				"saw_draw": [0.3, 0.5], "saw_stow": [0.3, 0.45], "saw_stow_walk": [0.45, 0.6]},
+		"one_shot": ["interact", "shovel_draw", "shovel_stow", "shovel_stow_walk", "axe_draw", "axe_stow", "axe_stow_walk",
+				"pick_draw", "pick_stow", "pick_stow_walk", "hammer_draw", "hammer_stow", "hammer_stow_walk",
+				"saw_draw", "saw_stow", "saw_stow_walk"],
 	},
 	"ph_chr_carter": {
 		"height": [1.6, 1.7],

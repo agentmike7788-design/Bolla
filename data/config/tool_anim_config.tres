@@ -4,13 +4,15 @@
 
 [resource]
 script = ExtResource("1")
-held_tools = Dictionary[StringName, StringName]({&"dig": &"shovel"})
-draw_clips = Dictionary[StringName, StringName]({&"shovel": &"shovel_draw"})
-stow_clips = Dictionary[StringName, StringName]({&"shovel": &"shovel_stow"})
-stow_walk_clips = Dictionary[StringName, StringName]({&"shovel": &"shovel_stow_walk"})
+held_tools = Dictionary[StringName, StringName]({&"chisel": &"chisel", &"chop": &"axe", &"dig": &"shovel", &"hammer": &"hammer", &"pick": &"pickaxe", &"saw": &"saw"})
+draw_clips = Dictionary[StringName, StringName]({&"axe": &"axe_draw", &"chisel": &"hammer_draw", &"hammer": &"hammer_draw", &"pickaxe": &"pick_draw", &"saw": &"saw_draw", &"shovel": &"shovel_draw"})
+stow_clips = Dictionary[StringName, StringName]({&"axe": &"axe_stow", &"chisel": &"hammer_stow", &"hammer": &"hammer_stow", &"pickaxe": &"pick_stow", &"saw": &"saw_stow", &"shovel": &"shovel_stow"})
+stow_walk_clips = Dictionary[StringName, StringName]({&"axe": &"axe_stow_walk", &"chisel": &"hammer_stow_walk", &"hammer": &"hammer_stow_walk", &"pickaxe": &"pick_stow_walk", &"saw": &"saw_stow_walk", &"shovel": &"shovel_stow_walk"})
 hold_blend = 0.05
 stow_blend = 0.15
-bite_at = Dictionary[StringName, float]({&"dig": 0.16})
+hold_blends = Dictionary[StringName, float]({&"chisel": 0.25})
+bite_at = Dictionary[StringName, float]({&"chisel": 0.5, &"chop": 0.42, &"dig": 0.16, &"hammer": 0.5, &"pick": 0.45, &"saw": 0.08})
+beat_cues = Dictionary[StringName, StringName]({&"chisel": &"chisel", &"chop": &"chop", &"hammer": &"hammer", &"pick": &"pick_stone", &"saw": &"saw"})
 toss_at = Dictionary[StringName, float]({&"dig": 0.78})
 blade_marker = &"shovel_blade"
 clod_amount = 6
@@ -23,3 +25,15 @@ clod_color = Color(0.305882, 0.247059, 0.192157, 1)
 carry_aside_position = Vector3(-0.85, 0, 0.35)
 carry_aside_yaw_deg = 90.0
 carry_aside_rate = 9.0
+tool_meshes = Dictionary[StringName, PackedStringArray]({&"axe": PackedStringArray("Axe"), &"chisel": PackedStringArray("Hammer", "Chisel"), &"hammer": PackedStringArray("Hammer"), &"pickaxe": PackedStringArray("Pickaxe"), &"saw": PackedStringArray("Saw"), &"shovel": PackedStringArray("Shovel")})
+resting_visible = Array[StringName]([&"shovel"])
+draw_show_at = Dictionary[StringName, float]({&"axe_draw": 0.36, &"hammer_draw": 0.36, &"pick_draw": 0.36, &"saw_draw": 0.36})
+stow_hide_at = Dictionary[StringName, float]({&"axe_stow": 0.7, &"axe_stow_walk": 0.6, &"hammer_stow": 0.7, &"hammer_stow_walk": 0.6, &"pick_stow": 0.7, &"pick_stow_walk": 0.6, &"saw_stow": 0.7, &"saw_stow_walk": 0.6})
+chip_markers = Dictionary[StringName, StringName]({&"chisel": &"chisel_edge", &"chop": &"axe_edge", &"pick": &"pick_tip"})
+chip_colors = Dictionary[StringName, Color]({&"chisel": Color(0.71, 0.69, 0.65, 1), &"chop": Color(0.63, 0.54, 0.39, 1), &"pick": Color(0.54, 0.53, 0.5, 1)})
+chip_amount = 5
+chip_lifetime = 0.5
+chip_size = 0.03
+chip_speed = 1.6
+chip_spread_deg = 55.0
+action_clips = Dictionary[StringName, StringName]({&"build_site": &"hammer", &"building_upgrade": &"hammer", &"grave_marker": &"hammer", &"stone_carve": &"chisel", &"station_forge": &"hammer", &"station_mason": &"chisel", &"station_workbench": &"saw"})

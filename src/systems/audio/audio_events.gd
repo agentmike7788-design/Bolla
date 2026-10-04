@@ -115,6 +115,10 @@ func _on_action_started(label: String, duration_sec: float) -> void:
 	if player != null and player._action != null:
 		anim = player._action.animation
 	_work_cue = cue_for_action(label, anim)
+	# G7 Runde 2 (Werkzeuge): a tool clip with its own beat cue (chop, pick_stone, hammer, …) wins
+	var beat: StringName = player.beat_cue(anim) if player != null else &""
+	if beat != &"":
+		_work_cue = beat
 	_work_synced = _work_cue != &"" and duration_sec > 0.0 and player != null and player.syncs_work_cue(anim)
 	if _work_cue == &"" or _work_synced:
 		return
