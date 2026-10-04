@@ -236,7 +236,8 @@ func interact(player: Player) -> void:
 		GraveRecord.State.EMPTY:
 			player.start_timed_action(LABEL_DIG, _dig_minutes(player), _finish_dig.bind(player), true, ANIM_DIG)
 		GraveRecord.State.DUG:
-			player.start_timed_action(LABEL_BURY, _bury_minutes(player), _finish_bury.bind(player.carried_id), true, ANIM_DIG)
+			# G7 Runde 2 (Bestatten): he lays the dead into the pit and fills it (PlayerBurial).
+			player.start_burial(LABEL_BURY, _bury_minutes(player), _finish_bury.bind(player.carried_id), self)
 		GraveRecord.State.FILLED:
 			var options := available_markers(player.inventory)
 			if options.size() == 1:
@@ -330,6 +331,12 @@ func _move_out(player: Player) -> void:
 			best = e
 			break
 	player.global_position = to_global(Vector3(best.x, local.y, best.y))
+
+
+## G7 Runde 2 (Bestatten): whether the player could stand at `spot` (global, on the ground) – the
+## burial step to the pit's side (PlayerBurial.stand_transform).
+func spot_is_free(player: Player, spot: Vector3) -> bool:
+	return not is_inside_tree() or _exit_is_free(player, spot)
 
 
 ## Whether the player's capsule, standing at `spot` (lifted by EXIT_CLEARANCE off the ground),

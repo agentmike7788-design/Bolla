@@ -134,23 +134,24 @@ func test_bury_and_lift_use_the_same_clip() -> void:
 	assert_eq(_p.held_tool(), &"shovel")
 
 
-func test_burying_lays_the_carried_corpse_aside() -> void:
+## G7 Runde 2 (Bestatten): the corpse is never laid aside any more – without a plot (no burial
+## presentation) the burial clip digs with the shovel and the dead stays in the CarrySocket;
+## the burial at a pit lays it into the grave (test_player_burial.gd).
+func test_burial_clip_without_a_pit_keeps_the_corpse_in_the_arms() -> void:
 	_p = await _player()
 	var rest := _p.carry_socket.transform
-	_p.attach_carried(Node3D.new(), "c1")
-	_p.start_timed_action("Bestatten", 30, func() -> void: pass, true, GravePlot.ANIM_DIG)
+	var node := Node3D.new()
+	_p.attach_carried(node, "c1")
+	_p.start_timed_action("Bestatten", 30, func() -> void: pass, true, _cfg().burial_action_clip)
 	var anim := _anim()
 	_tick_until(func() -> bool: return anim.current_animation == &"dig", 1.0)
+	assert_eq(_p.held_tool(), &"shovel")
 	_tick(15)
-	assert_true(_p.carry_socket.position.distance_to(_cfg().carry_aside_position) < 0.05,
-			"corpse beside him while the shovel is out (%s)" % _p.carry_socket.position)
+	assert_true(_p.carry_socket.transform.is_equal_approx(rest), "the socket stays")
+	assert_true(node.transform.is_equal_approx(Transform3D.IDENTITY), "in his arms")
 	_p.cancel_timed_action()
-	_tick_until(func() -> bool: return _p.held_tool() == &"", 1.0)
-	_tick(30)
-	assert_true(_p.carry_socket.transform.is_equal_approx(rest) or
-			_p.carry_socket.position.distance_to(rest.origin) < 0.01, "back in his arms")
 	_p.load_state(_p.save_state())
-	assert_true(_p.carry_socket.transform.is_equal_approx(rest), "a load restores the socket")
+	assert_true(_p.carry_socket.transform.is_equal_approx(rest), "a load keeps the socket")
 
 
 func test_cancel_by_walking_stows_while_walking() -> void:

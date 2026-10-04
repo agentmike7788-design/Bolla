@@ -11,6 +11,9 @@ extends RefCounted
 ## G7 Runde 2 (Werkzeuge): the same for the belt tools – axe (chop), pickaxe (pick), hammer
 ## (hammer, chisel with the chisel in the left fist) and saw (saw): drawn from the tool bag at the
 ## right hip, visible only while out (ToolProps), chips at the bite, the cue in step (beat_cue).
+## G7 Runde 2 (Bestatten): the burial action clip (tool_anim_config burial_action_clip) is played by
+## PlayerBurial's sequence – step to the pit, lay the dead into it, silence – and then fills the grave
+## with the shovel (the fill clip's tool phases; every throw raises the earth, dirt_pour in step).
 
 enum ToolPhase { BACK, DRAW, HOLD, STOW }
 
@@ -29,8 +32,8 @@ var _stow_walk: bool = false
 var _last_pos: float = -1.0
 var _clods: CPUParticles3D
 var _blade: Node3D
-## The CarrySocket's own transform (a carried corpse is laid aside while the shovel is out).
-var _socket_rest: Transform3D
+## G7 Runde 2 (Bestatten): the laying-into-the-grave sequence of a burial (player_burial.gd).
+var burial: PlayerBurial
 ## Chip bursts per action clip (wood chips, stone splinters) and the last shown tool state.
 var _chips: Dictionary[StringName, CPUParticles3D] = {}
 var _shown: Array = []
@@ -44,7 +47,7 @@ func _init(player: Player) -> void:
 	if tools == null:
 		tools = ToolAnimConfig.new()
 	_blade = player.model.find_child(String(tools.blade_marker), true, false) as Node3D
-	_socket_rest = player.carry_socket.transform if player.carry_socket != null else Transform3D.IDENTITY
+	burial = PlayerBurial.new(player, tools)
 	props = ToolProps.new(player.model, tools)
 
 
@@ -62,24 +65,51 @@ func attach_lantern() -> void:
 func update(delta: float, action: Player.TimedAction, carrying: bool) -> void:
 	var velocity := _player.velocity
 	var moving := Vector2(velocity.x, velocity.z).length() > Player.MOVING_SPEED
+	burial.update(delta, action)
 	if anim == null:
 		_waddle(delta, moving and action == null)
 		return
+	var clip := clip_of(action)
 	var blend := _player.anim_blend
-	var wanted := _tool_animation(moving, action)
+	var wanted := _tool_animation(moving, clip)
 	if wanted != &"":
 		if phase == ToolPhase.HOLD:
 			blend = tools.hold_blends.get(_hold_clip, tools.hold_blend)
 		elif phase == ToolPhase.STOW:
 			blend = tools.stow_blend
 	else:
-		wanted = _wanted_animation(moving, action, carrying)
-	if wanted != &"" and (anim.current_animation != wanted or not anim.is_playing()):
+		wanted = _wanted_animation(moving, clip, carrying)
+	if wanted != &"" and (anim.current_animation != wanted or not anim.is_playing()) and not _held_end(wanted):
 		anim.play(wanted, blend)
 	if phase == ToolPhase.HOLD:
-		_hold_events()
+		_hold_events(action)
 	_update_props()
-	_place_carried(delta, carrying)
+
+
+## The burial's one-shot clips (lowering, silence) hold their last frame instead of starting over.
+func _held_end(clip: StringName) -> bool:
+	return (clip == tools.burial_lower_clip or clip == tools.burial_mourn_clip) and anim.assigned_animation == clip
+
+
+## The clip the running `action` shows now (&"" = none): its own, or for the burial clip the step of
+## the burial sequence (PlayerBurial.clip).
+func clip_of(action: Player.TimedAction) -> StringName:
+	if action == null:
+		return &""
+	if action.animation == tools.burial_action_clip:
+		return burial.clip(action)
+	return action.animation
+
+
+## Real seconds of the burial sequence (-1 = no rig: the usual bar, no presentation).
+func burial_seconds() -> float:
+	return tools.burial_seconds(anim)
+
+
+## Starts the burial presentation at `plot` (Player.start_burial, before the action starts).
+func begin_burial(plot: GravePlot) -> void:
+	if anim != null and plot != null:
+		burial.begin(plot)
 
 
 ## The tool the gravekeeper has out of its place on the back (drawing, holding or stowing); &"" =
@@ -90,6 +120,8 @@ func held_tool() -> StringName:
 
 ## True if the running action clip `clip` sounds its work cue in step with the tool (work_beat).
 func syncs_work_cue(clip: StringName) -> bool:
+	if anim != null and clip == tools.burial_action_clip:
+		return _needs_tool(tools.burial_fill_clip) != &""
 	return anim != null and tools.bite_at.has(clip) and _needs_tool(clip) != &""
 
 
@@ -105,30 +137,13 @@ func reset_tool() -> void:
 	_hold_clip = &""
 	_last_pos = -1.0
 	_update_props()
-	if _player.carry_socket != null:
-		_player.carry_socket.transform = _socket_rest
+	burial.reset()
 	if anim == null:
 		return
 	var rest := &"carry_idle" if is_instance_valid(_player.carried) and anim.has_animation(&"carry_idle") else &"idle"
 	if anim.has_animation(rest):
 		anim.play(rest, 0.0)
 		anim.seek(0.0, true)
-
-
-## Burying with a corpse in the arms: while the shovel is out the corpse lies beside him (the
-## shovel would cut through it), afterwards it is in his arms again.
-func _place_carried(delta: float, carrying: bool) -> void:
-	var socket := _player.carry_socket
-	if socket == null:
-		return
-	var aside := carrying and (phase == ToolPhase.DRAW or phase == ToolPhase.HOLD)
-	var target := _socket_rest
-	if aside:
-		target = Transform3D(Basis(Vector3.UP, deg_to_rad(tools.carry_aside_yaw_deg)), tools.carry_aside_position)
-	if socket.transform.is_equal_approx(target):
-		return
-	var w := 1.0 if delta <= 0.0 else clampf(1.0 - exp(-tools.carry_aside_rate * delta), 0.0, 1.0)
-	socket.transform = socket.transform.interpolate_with(target, w)
 
 
 # --- tool phases ------------------------------------------------------------------------
@@ -145,16 +160,16 @@ func _needs_tool(clip: StringName) -> StringName:
 
 
 ## The clip of the current tool phase (advancing the phase), &"" when the tool is on the back.
-func _tool_animation(moving: bool, action: Player.TimedAction) -> StringName:
-	var need := _needs_tool(action.animation) if action != null else &""
+func _tool_animation(moving: bool, clip: StringName) -> StringName:
+	var need := _needs_tool(clip) if clip != &"" else &""
 	match phase:
 		ToolPhase.BACK:
 			if need != &"":
-				return _start_draw(need, action.animation)
+				return _start_draw(need, clip)
 		ToolPhase.DRAW:
 			if need != _tool:
-				return _start_stow(moving) if need == &"" else _start_draw(need, action.animation)
-			_hold_clip = action.animation
+				return _start_stow(moving) if need == &"" else _start_draw(need, clip)
+			_hold_clip = clip
 			if _finished(tools.draw_clips[_tool]):
 				phase = ToolPhase.HOLD
 				_last_pos = -1.0
@@ -163,13 +178,13 @@ func _tool_animation(moving: bool, action: Player.TimedAction) -> StringName:
 		ToolPhase.HOLD:
 			if need != _tool:
 				return _start_stow(moving)
-			if action.animation != _hold_clip:
-				_hold_clip = action.animation
+			if clip != _hold_clip:
+				_hold_clip = clip
 				_last_pos = -1.0
 			return _hold_clip
 		ToolPhase.STOW:
 			if need != &"":
-				return _start_draw(need, action.animation)
+				return _start_draw(need, clip)
 			if _finished(_stow_clip()):
 				phase = ToolPhase.BACK
 				_tool = &""
@@ -216,8 +231,10 @@ func _finished(clip: StringName) -> bool:
 	return not anim.is_playing() or anim.current_animation_position >= anim.current_animation_length - 0.0001
 
 
-## HOLD: the blade's bite → AudioEvents.work_beat(); the throw → a few earth clods.
-func _hold_events() -> void:
+## HOLD: the blade's bite → AudioEvents.work_beat(); the throw → a few earth clods. Filling a grave
+## (the burial action): the throw sounds the cue (dirt_pour), the clods go into the pit and the
+## earth rises (PlayerBurial.on_throw).
+func _hold_events(action: Player.TimedAction = null) -> void:
 	if anim.current_animation != _hold_clip or anim.current_animation_length <= 0.0:
 		return
 	var pos := anim.current_animation_position / anim.current_animation_length
@@ -225,12 +242,15 @@ func _hold_events() -> void:
 	_last_pos = pos
 	if last < 0.0:
 		return
-	if _passed(last, pos, float(tools.bite_at.get(_hold_clip, -1.0))):
-		var audio := _player.get_node_or_null(^"/root/Audio")
-		if audio != null and audio.get(&"events") != null:
-			audio.events.call(&"work_beat")
-	if _passed(last, pos, float(tools.toss_at.get(_hold_clip, -1.0))):
-		throw_clods()
+	var filling := action != null and action.animation == tools.burial_action_clip
+	var bite := float(tools.bite_at.get(_hold_clip, -1.0))
+	var toss := float(tools.toss_at.get(_hold_clip, -1.0))
+	if _passed(last, pos, toss if filling else bite):
+		_work_beat()
+	if _passed(last, pos, toss):
+		throw_clods(tools.burial_clod_direction if filling else tools.clod_direction)
+		if filling:
+			burial.on_throw()
 	if tools.chip_markers.has(_hold_clip) and _passed(last, pos, float(tools.bite_at.get(_hold_clip, -1.0))):
 		throw_chips(_hold_clip)
 
@@ -289,8 +309,14 @@ func throw_chips(clip: StringName) -> void:
 	p.restart()
 
 
-## A few painted earth crumbs leave the blade (one-shot burst, world space).
-func throw_clods() -> void:
+func _work_beat() -> void:
+	var audio := _player.get_node_or_null(^"/root/Audio")
+	if audio != null and audio.get(&"events") != null:
+		audio.events.call(&"work_beat")
+
+
+## A few painted earth crumbs leave the blade (one-shot burst, world space; `direction` player-local).
+func throw_clods(direction: Vector3 = Vector3.ZERO) -> void:
 	if not _player.is_inside_tree() or tools.clod_amount <= 0:
 		return
 	if _clods == null:
@@ -298,7 +324,8 @@ func throw_clods() -> void:
 		_player.add_child(_clods)
 	var from := _blade.global_position if _blade != null else _player.global_position + Vector3.UP
 	_clods.global_position = from
-	_clods.direction = (_player.global_basis * tools.clod_direction).normalized()
+	var dir := direction if direction != Vector3.ZERO else tools.clod_direction
+	_clods.direction = (_player.global_basis * dir).normalized()
 	_clods.restart()
 
 
@@ -336,9 +363,9 @@ func _burst(node_name: String, amount: int, lifetime: float, size: float, speed:
 
 # --- plain clips ------------------------------------------------------------------------
 
-func _wanted_animation(moving: bool, action: Player.TimedAction, carrying: bool) -> StringName:
-	if action != null and anim.has_animation(action.animation):
-		return action.animation
+func _wanted_animation(moving: bool, clip: StringName, carrying: bool) -> StringName:
+	if clip != &"" and anim.has_animation(clip):
+		return clip
 	var wanted := &"idle"
 	if carrying:
 		wanted = &"carry_walk" if moving else &"carry_idle"
