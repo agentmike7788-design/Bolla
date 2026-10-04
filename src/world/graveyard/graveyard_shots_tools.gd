@@ -12,11 +12,12 @@ const JPG_QUALITY := 0.9
 const GAME_DISTANCE := 14.0
 const CLOSE_OFFSET := Vector3(1.6, 1.4, 3.2)
 const CLOSE_LOOK := 0.85
-## series -> [[entity, stand offset (world, from the entity), yaw (deg; 90 = facing +X), clip], ...]
+## series -> [[entity, stand offset (world, from the entity), yaw (deg; 90 = facing +X), clip
+## (, distance in front of the entity along its local +Z instead of offset / yaw)], ...]
 ## and its moments [name, clip, fraction] (fraction of the clip's first pass).
 const SERIES := {
 	"axe": {
-		"at": [["Entities/obs_l_bramble_1", Vector3(-1.75, 0.0, 0.2), 90.0, &"chop"]],
+		"at": [["Entities/gather_alder_1", Vector3(-0.95, 0.0, 0.0), 90.0, &"chop"]],
 		"moments": [["01_bag", &"axe_draw", 0.45], ["02_ready", &"chop", 0.1], ["03_over", &"chop", 0.34],
 				["04_hit", &"chop", 0.44], ["05_follow", &"chop", 0.58], ["06_lift", &"chop", 0.8],
 				["07_stow", &"axe_stow", 0.45], ["08_back", &"idle", 0.1]],
@@ -29,8 +30,8 @@ const SERIES := {
 	},
 	"hammer": {
 		"at": [["Entities/plot_02", Vector3(-1.05, 0.0, 0.45), 90.0, &"hammer"],
-				["Entities/workbench", Vector3(-0.9, 0.0, 0.0), 90.0, &"chisel"],
-				["Entities/workbench", Vector3(-0.9, 0.0, 0.0), 90.0, &"saw"]],
+				["Entities/workbench", Vector3.ZERO, 0.0, &"chisel", 0.95],
+				["Entities/workbench", Vector3.ZERO, 0.0, &"saw", 0.95]],
 		"moments": [["01_bag", &"hammer_draw", 0.45], ["02_up", &"hammer", 0.15], ["03_hit", &"hammer", 0.52],
 				["04_chisel_up", &"chisel", 0.15], ["05_chisel_hit", &"chisel", 0.52],
 				["06_saw_push", &"saw", 0.1], ["07_saw_pull", &"saw", 0.55], ["08_stow", &"saw_stow", 0.45]],
@@ -72,13 +73,15 @@ static func run(tree: SceneTree, world: Node3D, out: String, only: PackedStringA
 				if player.get(&"_action") != null:
 					player.call(&"cancel_timed_action")
 			_step_until(player, anim, clip, float(m[2]))
+			clock.call(&"load_state", {"day": 1, "minute_of_day": 640})  # the long action ran the clock on
+			clock.call(&"emit_refresh")
 			_freeze_bursts(player)
 			for cam_name: String in ["game", "close"]:
 				if cam_name == "game":
 					game_cam.make_current()
 					rig.call(&"snap")
 				else:
-					close.global_position = player.global_position + CLOSE_OFFSET
+					close.global_position = player.global_position + Basis(Vector3.UP, player.rotation.y - PI / 2.0) * CLOSE_OFFSET
 					close.look_at(player.global_position + Vector3(0.0, CLOSE_LOOK, 0.0))
 					close.make_current()
 				for i: int in SETTLE_FRAMES:
@@ -95,7 +98,14 @@ static func run(tree: SceneTree, world: Node3D, out: String, only: PackedStringA
 
 static func _start(tree: SceneTree, world: Node3D, player: CharacterBody3D, rig: Node3D, at: Array) -> void:
 	var target := world.get_node(NodePath(String(at[0]))) as Node3D
-	player.global_transform = Transform3D(Basis(Vector3.UP, deg_to_rad(float(at[2]))), target.global_position + (at[1] as Vector3))
+	target.visible = true  # gather nodes behind a story flag
+	var yaw := deg_to_rad(float(at[2]))
+	var stand := target.global_position + (at[1] as Vector3)
+	if at.size() > 4:
+		var front := target.global_basis.z.normalized()
+		stand = target.global_position + front * float(at[4])
+		yaw = atan2(-front.x, -front.z)
+	player.global_transform = Transform3D(Basis(Vector3.UP, yaw), stand)
 	rig.call(&"snap")
 	for i: int in 10:
 		await tree.process_frame
