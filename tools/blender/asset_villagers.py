@@ -342,7 +342,7 @@ BLUSH = L.hexc("#D97F6C")
 MOUTH = L.hexc("#7A3E36")
 IRIS_BROWN = L.hexc("#5A3A26")
 IRIS_HAZEL = L.hexc("#6A5530")
-IRIS_BLUE = L.hexc("#4E6878")
+IRIS_BLUE = L.hexc("#5A6A7A")         # a muted grey-blue (no saturated cold colour, ART_DIRECTION §3)
 IRIS_GREY = L.hexc("#5E6A6C")
 IRIS_DARK = L.hexc("#3A2A20")
 
@@ -1791,7 +1791,8 @@ def washer():
           out=0.005, crown=0.003, part_u=0.0, seed=31)
     hood, _ = _cloth_cover(parts, face, WA_SHAWL, WA_SHAWL_DARK, [(0.0, 0.58), (0.5, 0.52), (0.9, 0.22), (1.12, -0.3),
                                                                (1.3, -0.78), (1.6, -0.96), (math.pi, -0.96)],
-                           out=lambda ph, w: 0.022 + 0.012 * max(0.0, math.cos(ph)) + 0.02 * _s01((-w - 0.1) / 0.6),
+                           out=lambda ph, w: 0.022 + 0.012 * max(0.0, math.cos(ph)) + 0.02 * _s01((-w - 0.1) / 0.6)
+                           + 0.014 * abs(math.sin(ph)),
                            crown=0.012, folds=6.0, rim=0.012 * face.k, rim_phi=1.35, lumps=0.008, seed=32,
                            name="shawl_hood")
     _tint(hood, lambda co, nr: (1.0 - 0.1 * max(0.0, math.sin(co.x * 50.0 + co.z * 20.0)), None, 0.0))
