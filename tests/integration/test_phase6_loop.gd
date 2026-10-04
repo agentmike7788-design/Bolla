@@ -272,6 +272,9 @@ func _exit(id: StringName) -> void:
 	exit.interact(player)
 	await _until_arrived()
 	assert_eq(player.interior_id, &"", "outside again")
+	if id == &"crypt":
+		# G7 round 1: out at the foot of the crypt stair – up it onto the graveyard.
+		await _walk([Vector2(-9.0, 9.2)])
 
 
 func _until_arrived() -> void:

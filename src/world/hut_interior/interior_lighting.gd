@@ -2,7 +2,7 @@ class_name InteriorLighting
 extends Node
 ## Lights an interior room by the game clock (docs §11, values: InteriorConfig): the window
 ## glow (cool blue at night, warm by day, no shadow), the hanging lantern (shadow at night),
-## the candles (night only), the interior's ambient / background / exposure and its soft sun,
+## the candles (night only), the soft fill lights (G7 round 1), the interior's ambient / background / exposure and its soft sun,
 ## blended by InteriorConfig.daylight(TimeManager minute). Lights are found by their meta
 ## "interior_role" (window, lantern, candle) below the InteriorRoom (Phase 6 §3.4: the hut and
 ## the buildings' rooms, each with its own config – Database.interior_config(room_id); in the
@@ -14,6 +14,8 @@ const META_ROLE := &"interior_role"
 const ROLE_WINDOW := &"window"
 const ROLE_LANTERN := &"lantern"
 const ROLE_CANDLE := &"candle"
+## G7 round 1: the room's soft fill lights (InteriorConfig fill_*).
+const ROLE_FILL := &"fill"
 const META_BASE := &"base_energy"
 const META_SCALE := &"scale"
 ## Lights below this energy are hidden (as the AtmosphereController does).
@@ -28,7 +30,7 @@ var sun: DirectionalLight3D
 ## Daylight share of the last apply (NAN before the first).
 var daylight: float = NAN
 
-var _lights: Dictionary[StringName, Array] = {ROLE_WINDOW: [], ROLE_LANTERN: [], ROLE_CANDLE: []}
+var _lights: Dictionary[StringName, Array] = {ROLE_WINDOW: [], ROLE_LANTERN: [], ROLE_CANDLE: [], ROLE_FILL: []}
 var _applied_minute: float = NAN
 
 
@@ -81,6 +83,10 @@ func apply_daylight(t: float) -> void:
 		light.shadow_enabled = daylight < c.lantern_shadow_below
 	for light: Light3D in _lights[ROLE_CANDLE]:
 		_set_energy(light, lerpf(c.candle_night_energy, c.candle_day_energy, daylight))
+	for light: Light3D in _lights[ROLE_FILL]:
+		light.light_color = c.fill_night_color.lerp(c.fill_day_color, daylight)
+		_set_energy(light, lerpf(c.fill_night_energy, c.fill_day_energy, daylight))
+		light.shadow_enabled = false
 	if environment != null:
 		environment.background_color = c.background_color
 		environment.ambient_light_color = c.ambient_night_color.lerp(c.ambient_day_color, daylight)

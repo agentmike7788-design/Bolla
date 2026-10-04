@@ -38,7 +38,13 @@ void fragment() {
 	// The overlay sees the same vertex paint as the painted pass, so the multiply factor
 	// target / base turns the painted colour into a desaturated, grey-green stained one
 	// (brush noise and light scale all channels alike and cancel out).
-	vec3 base = max(COLOR.rgb, vec3(0.004));
+	vec3 base = COLOR.rgb;
+#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+	// G7 round 1 (light): see painted_common.gdshaderinc – vertex paint is one gamma step darker in
+	// the Compatibility renderer (web export) without this.
+	base = pow(max(base, vec3(0.0)), vec3(1.0 / 2.2));
+#endif
+	base = max(base, vec3(0.004));
 	float lum = dot(base, vec3(0.299, 0.587, 0.114));
 	vec3 s = stain_color.rgb;
 	vec3 hue = mix(vec3(1.0), s / max(dot(s, vec3(0.299, 0.587, 0.114)), 0.001), hue_strength);

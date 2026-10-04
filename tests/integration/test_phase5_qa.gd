@@ -334,7 +334,8 @@ func test_alder_stages_are_seen_from_the_gameplay_camera() -> void:
 
 func test_workyard_smoke_reads_by_day_within_the_budget() -> void:
 	var forge := world.get_node("Entities/station_forge")
-	var smokes := forge.find_children("*", "CPUParticles3D", true, false)
+	# G7 round 1: the ember light's sparks (FlickerLight, profile forge) are not smoke.
+	var smokes := forge.find_children("*", "CPUParticles3D", true, false).filter(func(n: Node) -> bool: return n.name != &"Embers")
 	assert_eq(smokes.size(), 2, "chimney + kiln")
 	for node: Node in smokes:
 		var p := node as CPUParticles3D

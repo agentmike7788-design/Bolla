@@ -114,6 +114,7 @@ class Ground:
         self.tree = lay["tree"]["pos"]
         self.hut = lay["hut"]["pos"]
         self.zones = []  # (pos, rot, rect, h0)
+        self.pits = []   # (pos, rot, stair, h0) - G7 round 1
         plot_rect = g["plot_flat_rect"]
         margin = g["station_flat_margin"]
         for pl in lay["plots"]:
@@ -207,6 +208,10 @@ class Ground:
             self.zones.append(zone)
             old.append(zone)
             self.trodden.append(site["access"])
+            if "stair" in site:
+                # G7 round 1: the crypt stair goes down into the earth - a ramp pit in the site's
+                # flat zone (layout buildings.sites[].stair: local rect, top_z -> 0, bottom_z -> depth).
+                self.pits.append((site["pos"], site["rot_y"], site["stair"], zone[3]))
 
     # --- masks (same edge noise as the prototype path) ---
     def path_mask(self, x, z):
@@ -235,7 +240,25 @@ class Ground:
             w = 1.0 - _smoothstep(out / self.falloff)
             if w > best_w:
                 best_w, best_h = w, h0
-        return h + (best_h - h) * best_w
+        h = h + (best_h - h) * best_w
+        for pos, rot, st, h0 in self.pits:
+            lx, lz = _to_local(x, z, pos, rot)
+            r = st["rect"]
+            if r[0] < lx < r[2] and r[1] < lz < r[3]:
+                t = max(0.0, min(1.0, (st["top_z"] - lz) / (st["top_z"] - st["bottom_z"])))
+                # below the stone treads (they and the stair's own collision carry the gravekeeper)
+                h = h0 - st["depth"] * t - st.get("under", 0.0)
+        return h
+
+    def pit_cover(self):
+        """G7 round 1: the flat sod patch that closes the stair pit until the crypt is built (same
+        grid, colours and flat height as the ground around it; lies 4 mm above)."""
+        out = []
+        for pos, rot, st, h0 in self.pits:
+            c = st.get("cover_rect")
+            if c:
+                out.append((pos, rot, c, h0))
+        return out
 
     def colour(self, x, z):
         n1 = noise.noise(Vector((x * 0.35, z * 0.35, 7.0)))
@@ -265,6 +288,11 @@ class Ground:
             q = _smoothstep((inside + 1.0) / 2.0)
             n3 = noise.noise(Vector((x * 0.9, z * 0.9, 11.0)))
             c = L.mix(c, L.mix(STONE_FLOOR, STONE_FLOOR_DARK, 0.5 + 0.5 * n3), q * 0.85)
+        for pos, rot, st, h0 in self.pits:   # dark earth under the stair treads
+            lx, lz = _to_local(x, z, pos, rot)
+            r = st["rect"]
+            if r[0] < lx < r[2] and r[1] < lz < r[3]:
+                c = L.scale_c(DIRT_DARK, 0.6)
         f = 1.0 + n2 * 0.06
         return [L._to_lin(min(1.0, ch * f)) for ch in c]
 
@@ -302,6 +330,46 @@ def build():
     # no pivot shift for the ground: z = 0 stays the reference plane
     L.smooth(obj, 80)
     L.export(obj, NAME, "environment")
+    for pos, rot, rect, h0 in gr.pit_cover():
+        _pit_cover(gr, pos, rot, rect, h0)
+
+
+COVER_NAME = "ph_env_crypt_pit_cover"
+
+
+def _pit_cover(gr, pos, rot, rect, h0):
+    """A flat patch over the stair pit (local rect x0, z0, x1, z1 of the site; pivot = site origin,
+    Godot local axes), painted with the ground colours at the world points."""
+    L.reset(31)
+    step = gr.cell / 2
+    nxp = max(1, int(round((rect[2] - rect[0]) / step)))
+    nzp = max(1, int(round((rect[3] - rect[1]) / step)))
+    r = math.radians(rot)
+    verts, cols = [], []
+    for j in range(nzp + 1):
+        lz = rect[1] + (rect[3] - rect[1]) * j / nzp
+        for i in range(nxp + 1):
+            lx = rect[0] + (rect[2] - rect[0]) * i / nxp
+            wx = pos[0] + lx * math.cos(r) + lz * math.sin(r)
+            wz = pos[1] - lx * math.sin(r) + lz * math.cos(r)
+            verts.append((lx, -lz, 0.004))
+            cols.append(gr.colour(wx, wz))
+    w = nxp + 1
+    faces = [(j * w + i, j * w + i + w, j * w + i + w + 1, j * w + i + 1) for j in range(nzp) for i in range(nxp)]
+    me = bpy.data.meshes.new(COVER_NAME)
+    me.from_pydata(verts, [], faces)
+    me.update()
+    if me.polygons[0].normal.z < 0.0:
+        me.flip_normals()
+    attr = me.color_attributes.new("Col", "FLOAT_COLOR", "CORNER")
+    me.color_attributes.active_color = attr
+    for li, loop in enumerate(me.loops):
+        attr.data[li].color = (*cols[loop.vertex_index], 1.0)
+    obj = bpy.data.objects.new(COVER_NAME, me)
+    bpy.context.collection.objects.link(obj)
+    L.set_mat(obj, L.MAT_GROUND)
+    L.smooth(obj, 80)
+    L.export(obj, COVER_NAME, "environment")
 
 
 if __name__ == "__main__":

@@ -49,6 +49,17 @@ extends Resource
 @export var stove_range: float = 6.0
 @export var stove_flicker: float = 0.18
 
+@export_group("Fill light")
+## G7 round 1 (light): soft fill lights of a room (layout "fill_lights" [x, y, z], no shadow) – the warm
+## "room light" a painted interior has: faces, furniture and floor readable by day and night in both
+## renderers (the Compatibility renderer has no SSIL / SDFGI bounce). 0 energy = none (hut, Phase 6).
+@export var fill_night_color: Color = Color("#ffcf9a")
+@export var fill_night_energy: float = 0.0
+@export var fill_day_color: Color = Color("#fff0d8")
+@export var fill_day_energy: float = 0.0
+@export var fill_range: float = 7.0
+@export var fill_attenuation: float = 0.8
+
 @export_group("Ambient & sun")
 @export var ambient_night_color: Color = Color(0.2, 0.26, 0.42)
 @export var ambient_night_energy: float = 0.35

@@ -31,7 +31,8 @@ const SYSTEMS := [
 	["NpcLod", "res://src/systems/npc/npc_lod.gd"],
 ]
 ## Interiors/<Name> per village room (§4.3).
-const ROOM_NODES := {"inn": "InnInterior", "surgery": "SurgeryInterior", "office": "OfficeInterior"}
+## G7 round 1: the village church walk-in as well.
+const ROOM_NODES := {"inn": "InnInterior", "surgery": "SurgeryInterior", "office": "OfficeInterior", "church": "ChurchInterior"}
 
 
 static func build_systems(ctx: Ctx, systems: Node) -> void:

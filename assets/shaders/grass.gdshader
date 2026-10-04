@@ -43,7 +43,13 @@ void vertex() {
 }
 
 void fragment() {
-	vec3 col = COLOR.rgb * tint.rgb;
+	vec3 vc = COLOR.rgb;
+#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+	// G7 round 1 (light): see painted_common.gdshaderinc – vertex paint is one gamma step darker in
+	// the Compatibility renderer (web export) without this.
+	vc = pow(max(vc, vec3(0.0)), vec3(1.0 / 2.2));
+#endif
+	vec3 col = vc * tint.rgb;
 	float pn = texture(patch_noise, world_pos.xz * patch_scale).r;
 	col = mix(col, col * patch_color.rgb, smoothstep(0.45, 0.75, pn) * patch_strength);
 	ALBEDO = col;

@@ -41,7 +41,13 @@ const P7_SHOTS: Array[Dictionary] = [
 	{"name": "p7_10_inn_day", "day": 41, "minute": 750, "room": "inn", "player": Vector2(0.9, 1.3)},
 	{"name": "p7_10b_inn_night", "day": 41, "minute": 1150, "room": "inn", "player": Vector2(0.9, 1.3)},
 	{"name": "p7_11_surgery", "day": 41, "minute": 600, "room": "surgery", "player": Vector2(-0.9, 1.2)},
+	{"name": "p7_11b_surgery_night", "day": 41, "minute": 1150, "room": "surgery", "player": Vector2(-0.9, 1.2)},
 	{"name": "p7_12_office", "day": 41, "minute": 600, "room": "office", "player": Vector2(0.9, 0.6)},
+	# G7 round 1 (light): the rooms at night as well.
+	{"name": "p7_12b_office_night", "day": 41, "minute": 1150, "room": "office", "player": Vector2(0.9, 0.6)},
+	# G7 round 1: the village church walk-in (Lenz before the chancel in the afternoon, the evening light).
+	{"name": "p7_13_church_day", "day": 41, "minute": 990, "room": "church", "player": Vector2(0.5, 1.6)},
+	{"name": "p7_13b_church_evening", "day": 41, "minute": 1170, "room": "church", "player": Vector2(0.5, 1.6)},
 	{"name": "p7_30_lecture_night", "day": 42, "minute": 1395, "room": "surgery", "player": Vector2(-2.3, 1.9), "stage": "lecture"},
 	{"name": "p7_vis_village_z12", "day": 41, "minute": 600, "focus": Vector2(-2.5, -1.0), "distance": 74.0, "pitch": 85.0,
 			"player": Vector2(0.0, 30.0), "stage": "vis", "zoom": 12.0},
@@ -335,7 +341,7 @@ func _vis_spots(world: Node3D) -> Array[Dictionary]:
 	var village := _village(world)
 	var out: Array[Dictionary] = []
 	var buildings := village.get_node(^"Buildings")
-	var houses := {"door_inn": "v_inn", "door_surgery": "v_surgery", "door_office": "v_office"}
+	var houses := {"door_inn": "v_inn", "door_surgery": "v_surgery", "door_office": "v_office", "door_church": "v_church"}
 	for id: String in houses:
 		var door := village.get_node(NodePath("Entities/" + id)) as Node3D
 		var stand: Vector3 = (door.call(&"exit_transform") as Transform3D) * Vector3(0.0, 0.0, 0.5)

@@ -27,6 +27,7 @@ const TABLE_SCRIPT := "res://src/entities/morgue_table/morgue_table.gd"
 const MOURNER_SCRIPT := "res://src/entities/mourner_set/mourner_set.gd"
 const INTERACTABLE_SCRIPT := "res://src/components/interactable.gd"
 const FLICKER := "res://src/world/atmosphere/flicker_light.gd"
+const STAIR_PORTAL_SCRIPT := "res://src/world/interiors/stair_portal.gd"
 const CONFIG_PATH := "res://data/config/interiors/%s.tres"
 const SMOKE_TEXTURE := "res://assets/vfx/ph_vfx_smoke_wisp.png"
 const SMOKE_MATERIAL := "res://assets/materials/mat_vfx_smoke.tres"
@@ -122,6 +123,20 @@ static func build(layout: Dictionary) -> Node3D:
 	# Phase 7: a village room leads back to its HouseDoor (RoomExit.door_id; the region stays).
 	exit.set("door_id", StringName(layout.get("door_id", "")))
 	_add(entities, exit, root)
+	if layout.has("stair_exit"):
+		# G7 round 1: walking up the crypt stair (high enough to be seen) uses the RoomExit.
+		var se: Dictionary = layout.stair_exit
+		var area := Area3D.new()
+		area.name = "StairPortal"
+		area.set_script(load(STAIR_PORTAL_SCRIPT))
+		area.set("direction", _v2(se.dir))
+		area.set("target_path", NodePath("../room_exit"))
+		_add(entities, area, root)
+		var r: Array = se.rect
+		var yr: Array = se.get("y", [0.0, 4.0])
+		var rr := Rect2(float(r[0]), float(r[1]), float(r[2]) - float(r[0]), float(r[3]) - float(r[1]))
+		_box(root, area, "Shape", Vector3(rr.get_center().x, (float(yr[0]) + float(yr[1])) * 0.5, rr.get_center().y),
+				Vector3(rr.size.x, float(yr[1]) - float(yr[0]), rr.size.y))
 	var counts := {}
 	for item: Dictionary in layout.items:
 		_build_item(root, furniture, entities, colliders, item, counts, cfg)
@@ -142,6 +157,8 @@ static func build(layout: Dictionary) -> Node3D:
 		var parts := _group(root, "Particles")
 		for p: Dictionary in layout.particles:
 			_add(parts, _particles(p), root)
+	if layout.has("fill_lights"):
+		_fill_lights(root, layout.fill_lights, cfg)
 	var lighting := Node.new()
 	lighting.name = "Lighting"
 	lighting.set_script(load(LIGHTING_SCRIPT))
@@ -528,6 +545,27 @@ static func _marker_lights(root: Node3D, model: Node3D, asset: String, overrides
 		_add(model, light, root)
 
 
+## G7 round 1 (light): FillLights/Fill_<k> at the layout's fill_lights [x, y, z] (room-local) – soft
+## warm omni lights without shadow (role fill: InteriorLighting blends fill_night → fill_day).
+static func _fill_lights(root: Node3D, points: Array, cfg: Resource) -> void:
+	var group := _group(root, "FillLights")
+	var k := 0
+	for p: Array in points:
+		k += 1
+		var omni := OmniLight3D.new()
+		omni.name = "Fill_%d" % k
+		omni.position = _v3(p)
+		omni.omni_range = float(cfg.get("fill_range"))
+		omni.omni_attenuation = float(cfg.get("fill_attenuation"))
+		omni.light_color = cfg.get("fill_day_color")
+		omni.light_energy = float(cfg.get("fill_day_energy"))
+		omni.shadow_enabled = false
+		omni.light_specular = 0.2
+		omni.set_meta(META_ROLE, &"fill")
+		omni.set_meta(&"base_energy", omni.light_energy)
+		_add(group, omni, root)
+
+
 static func _default_role(marker_name: String) -> StringName:
 	if marker_name.begins_with("light_window"):
 		return &"window"
@@ -559,6 +597,23 @@ static func _room_collision(root: Node3D, colliders: Node3D, layout: Dictionary)
 		k += 1
 		var r := Rect2(float(w[0]), float(w[1]), float(w[2]) - float(w[0]), float(w[3]) - float(w[1]))
 		_box(root, body, "Wall_%d" % k, Vector3(r.get_center().x, h * 0.5, r.get_center().y), Vector3(r.size.x, h, r.size.y))
+	# G7 round 1: walkable ramps (the crypt stair): {from [x, y, z], to [x, y, z], width}, a 0.3 m slab
+	# whose top runs from `from` to `to` (along z).
+	k = 0
+	for rp: Dictionary in layout.get("ramps", []):
+		k += 1
+		var a := _v3(rp.from)
+		var b := _v3(rp.to)
+		var d := b - a
+		var shape := CollisionShape3D.new()
+		shape.name = "Ramp_%d" % k
+		var box := BoxShape3D.new()
+		box.size = Vector3(float(rp.width), 0.3, d.length())
+		shape.shape = box
+		# Ramps run along z (a stair rising towards the camera): a rotation about X tilts the slab.
+		var basis := Basis(Vector3.RIGHT, -atan2(d.y, d.z))
+		shape.transform = Transform3D(basis, (a + b) * 0.5 - basis.y * 0.15)
+		_add(body, shape, root)
 
 
 ## One box around a piece (`aabb` = its mesh bounds in the frame of `xform`), shrunk by `inset`

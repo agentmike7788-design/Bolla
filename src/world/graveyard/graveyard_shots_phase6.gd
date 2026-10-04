@@ -57,6 +57,13 @@ const P6_SHOTS: Array[Dictionary] = [
 			"player": Vector2(-12.6, -6.1)},
 	{"name": "world_p6_04_shed_l3_night", "day": 30, "minute": 1350, "focus": Vector2(-12.9, -6.4), "distance": 22.0,
 			"player": Vector2(-12.6, -6.1)},
+	# G7 round 1: the crypt stair going down into the earth – from the Alter Hof, on the way down, at its
+	# foot in the crypt room.
+	{"name": "g7_crypt_stairs_outside_day", "levels": [3, 3, 3], "day": 30, "minute": 660, "focus": Vector2(-9.0, 8.0), "distance": 11.0,
+			"player": Vector2(-7.5, 10.4)},
+	{"name": "g7_crypt_stairs_descending", "levels": [3, 3, 3], "day": 30, "minute": 660, "focus": Vector2(-9.0, 8.0), "distance": 11.0,
+			"player": Vector2(-9.0, 8.05)},
+	{"name": "g7_crypt_stairs_bottom", "levels": [3, 3, 3], "room": "crypt", "day": 30, "minute": 660, "player": Vector2(0.0, 2.35)},
 	{"name": "world_p6_01_overview_day", "levels": [3, 3, 3], "day": 30, "minute": 660, "focus": Vector2(-1.5, -8.0), "distance": 52.0},
 	{"name": "world_p6_01b_overview_zoom24", "day": 30, "minute": 660, "focus": Vector2(-4.0, -3.0), "distance": 24.0, "player": Vector2(-4.4, -3.6)},
 	# Interiors with the gravekeeper, from the room's own camera profile.

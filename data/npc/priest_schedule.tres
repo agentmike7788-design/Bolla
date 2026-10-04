@@ -39,7 +39,7 @@ region = &"village"
 script = ExtResource("1_h8iy5")
 start_minute = 960
 activity = &"shop"
-path = PackedStringArray("v_church_door")
+path = PackedStringArray("v_in_church_altar")
 dialogue_id = &"v_priest"
 region = &"village"
 

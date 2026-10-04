@@ -276,6 +276,10 @@ static func _build_entities(ctx: Ctx, entities: Node3D, buildings: Node3D) -> vo
 				var house := buildings.get_node(String(ent.house)) as Node3D
 				var marker := house.find_child("door_outside", true, false) as Node3D
 				var at := house.transform * Ctx.rel_xform(marker, house).origin
+				if ent.has("pos"):
+					# G7 round 1: the church door lies up its steps beyond the walkable bounds – the
+					# HouseDoor stands at the foot of the steps (layout pos), facing away like at the marker.
+					at = ctx.ground_xform(Ctx.v2(ent.pos), 0.0).origin
 				var away := Vector2(at.x - house.position.x, at.z - house.position.z)
 				var door := _instance(DOOR_SCENE, String(ent.id))
 				door.transform = Transform3D(Basis(Vector3.UP, atan2(away.x, away.y)), at)

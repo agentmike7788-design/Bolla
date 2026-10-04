@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="FlickerProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/world/fx/flicker_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+amplitude = 0.18
+frequency = 1.8
+noise_mix = 0.85
+jitter = 0.4
+jitter_frequency = 9.0
+gust_depth = 0.12
+gust_rate = 0.12
+color_wobble = 0.08
+lod_distance = 24.0

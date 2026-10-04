@@ -30,6 +30,13 @@ float triplanar(sampler2D tex, vec3 p, vec3 n, float s) {
 
 // Vertex paint × tint, brush strokes and large colour patches at world position p.
 vec3 painted_colour(vec3 vertex_colour, vec3 p, vec3 n) {
+	// G7 round 1 (light): the Compatibility renderer (web export) reads the imported vertex paint
+	// one gamma step darker than Forward+ (dark paint went almost black: floors, wainscots, cloth –
+	// measured: same room, same lights, mean luma 0.03 vs 0.28). Lifting it here makes both
+	// renderers show the same painted colour (measured 0.276 / 0.276).
+#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+	vertex_colour = pow(max(vertex_colour, vec3(0.0)), vec3(1.0 / 2.2));
+#endif
 	vec3 col = vertex_colour * tint.rgb;
 	float b = triplanar(brush_noise, p, n, brush_scale);
 	col *= mix(1.0 - brush_strength, 1.0 + brush_strength, b);

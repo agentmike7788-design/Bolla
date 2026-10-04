@@ -100,7 +100,7 @@ func run(command: String, args: PackedStringArray) -> Dictionary:
 			return _cmd_fps(args)
 		"instant":
 			return _cmd_instant(args)
-	# Phase 7 "room <inn|surgery|office>" before Phase 6's rooms.
+	# Phase 7 "room <inn|surgery|office|church>" before Phase 6's rooms.
 	if command == "room" and DebugCommandsPhase7.takes_room(args):
 		return _phase7.run(command, args)
 	# Phase 6 "build <crypt|chapel|shed|all> [1-3]" before Phase 5's "build <station|all>".

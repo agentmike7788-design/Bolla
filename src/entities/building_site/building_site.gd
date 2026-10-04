@@ -63,6 +63,22 @@ func refresh() -> void:
 		process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED
 	if on:
 		_show_model(level())
+		_apply_level_shapes(level())
+
+
+## G7 round 1: collision shapes with meta min_level / max_level (the crypt stair: the plug over the
+## passage until level 1, the stair cheeks from level 1) are only enabled within their levels.
+func _apply_level_shapes(lvl: int) -> void:
+	var body := get_node_or_null(^"Collision")
+	if body == null:
+		return
+	for node: Node in body.get_children():
+		var shape := node as CollisionShape3D
+		if shape == null or not (shape.has_meta(&"min_level") or shape.has_meta(&"max_level")):
+			continue
+		var lo := int(shape.get_meta(&"min_level", 0))
+		var hi := int(shape.get_meta(&"max_level", 99))
+		shape.disabled = lvl < lo or lvl > hi
 
 
 func can_interact(player: Player) -> bool:

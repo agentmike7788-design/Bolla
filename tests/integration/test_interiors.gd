@@ -80,8 +80,10 @@ func test_spawn_and_exit_are_walkable() -> void:
 	await tree.physics_frame
 	for id: String in ROOMS:
 		var room := InteriorRoom.find(tree, StringName(id))
+		# G7 round 1: the crypt's RoomExit stands on its (now walkable) stair – the free spot is in front of it.
+		var before_exit := Vector3(0, 0, -0.55) if id == "crypt" else Vector3(0, 0, -0.4)
 		for p: Vector3 in [room.spawn_transform().origin, (room.find_children("*", "", true, false).filter(
-				func(n: Node) -> bool: return n is RoomExit)[0] as Node3D).global_position + Vector3(0, 0, -0.4)]:
+				func(n: Node) -> bool: return n is RoomExit)[0] as Node3D).global_position + before_exit]:
 			assert_true(_capsule_free(p), "%s: the gravekeeper fits at %s" % [id, p])
 			var hit := world.get_world_3d().direct_space_state.intersect_ray(
 					PhysicsRayQueryParameters3D.create(p + Vector3.UP, p + Vector3.DOWN, 1))
@@ -202,7 +204,9 @@ func test_chapel_rite_lights_follow_the_altar() -> void:
 
 const VILLAGE_ROOMS := {"inn": ["InnInterior", Vector3(240, 0, -200), "door_inn", ["v_in_inn_bar", "v_in_inn_table", "v_in_inn_corner"]],
 		"surgery": ["SurgeryInterior", Vector3(300, 0, -200), "door_surgery", ["v_in_surgery_desk"]],
-		"office": ["OfficeInterior", Vector3(360, 0, -200), "door_office", ["v_in_office_desk"]]}
+		"office": ["OfficeInterior", Vector3(360, 0, -200), "door_office", ["v_in_office_desk"]],
+		# G7 round 1: the village church walk-in.
+		"church": ["ChurchInterior", Vector3(420, 0, -200), "door_church", ["v_in_church_altar"]]}
 
 
 func test_village_rooms_at_their_origins_with_door_exits() -> void:
