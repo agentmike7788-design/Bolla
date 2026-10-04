@@ -135,3 +135,144 @@ Dann: Flag `who_comes_up_complete`, `chapter_completed(&"who_comes_up")`, Abschl
 - **Liesel weiß nichts davon.** Ihre Geschichte (§2.4) bleibt warm; mit der Erkenntnis bekommt ihr dritter Schritt eine zusätzliche, stille Zeile, die nichts verrät.
 
 **Nächster Erzählschritt (Phase 9, benannt): „Wer weiß, wann?"** Die Kladde endet mit einer Liste von Daten. Phase 9 (Quests) macht daraus eine Kette: Zu jedem Datum gehört ein Toter auf dem Hügel, und zu jedem Toten ein Fenster mit einem Licht, das jemand gesehen hat.
+
+---
+## 2. Spielwerte (Vorschläge, alle in `data/`)
+
+### 2.1 Das Dorf lebt (`data/config/npc_life_config.tres` – `NpcLifeConfig`, `data/npc_life/chatter/<id>.tres` – `ChatterData`)
+**Entscheidung: drei kleine Bausteine auf dem bestehenden `Npc`-, Gerede- und Dialog-System, keine neue KI.** Tagesabläufe bleiben deterministisch aus der Uhr (Phase 2/7). Neu sind Launen (eine Zahl am Morgen), Begegnungen (Sprechblasen, wenn zwei am selben Ort sind) und Reaktionen (Gerede-Zeilen auf Ereignisse). *Begründung:* Ein Dorf wirkt lebendig, wenn man sieht, dass die Leute einander kennen und dass sie sich an gestern erinnern. Eine Wegfindungs- oder Bedürfnis-KI würde das CPU-Budget im Browser sprengen (§9) und die Tagesabläufe, nach denen sich der Spieler richtet, unberechenbar machen.
+
+#### 2.1.1 Launen
+- Jeder Dorfbewohner hat **eine Laune je Tag**: `cheerful` „heiter", `plain` „wie immer", `low` „bedrückt", `cross` „gereizt". `MoodRules.roll(npc_id, day)` würfelt um 06:00 deterministisch aus Tag und `npc_id` (Gewichte `mood_weights` {plain 70, cheerful 15, low 10, cross 5}). Danach gelten **Vorrangregeln** (erste passende gewinnt, `NpcLifeConfig.mood_rules`):
+  | Vorrang | Auslöser | Laune | Wer |
+  |---|---|---|---|
+  | 1 | Festtag (§2.7) | heiter | alle |
+  | 2 | Trauerflor an einem Haus aus dem eigenen Kreis (✦ `VillagerData.circle`) heute oder gestern | bedrückt | der Kreis (z. B. Liesel: beide Katen) |
+  | 3 | gestern ein Geschichtsschritt dieser Person erledigt | heiter | die Person |
+  | 4 | gestern schlechtes Gerede über den Totengräber (`lecture_rumor`, Präparat eines Dorftoten verkauft, aufgewühltes Grab) | gereizt | Pfarrer, Liesel (Präparate), Fenner (Grab) |
+  | 5 | Krankenlicht im Dorf (§1.6) | bedrückt | Quast, Lenz, Liesel (sie wissen es) |
+- **Wirkung** (nur ab `p8_open`; vorher nur der Begrüßungstext): Begrüßung aus ✦ `VillagerData.mood_lines[mood]` (2 je Laune); Gespräch des Tages **heiter +2** statt +1, **gereizt 0**; „gereizt" bietet heute keinen neuen Auftrag und keinen Geschichtsschritt an („Heute nicht, Totengräber. Morgen."), Läden und Abgaben gehen normal; **„bedrückt"** öffnet die Dialogzeile **„[Zuhören]"** (10 Min, +3, einmal je Tag und Person). Bedrückte Figuren stehen mit gesenktem Kopf (`idle_low`, §8.2).
+- Die Laune steht im Merkbuch („Hollerbrück": „heute bedrückt") und im Karten-Tooltip, nie als Zahl. Nicht gespeichert (aus Tag und gespeicherten Ereignissen abgeleitet, §5.1).
+- *Begründung:* Eine Laune je Tag gibt jedem Gang ins Dorf ein kleines Gesicht, ohne den Spieler zu bestrafen: „gereizt" verschiebt nur, „bedrückt" ist eine Gelegenheit.
+
+#### 2.1.2 Begegnungen (Sprechblasen zwischen zwei Leuten)
+- Eine Begegnung (`ChatterData`) gehört zu zwei Personen, einem Ort (Wegpunkt) und einem Zeitfenster, das ihre bestehenden Zeitpläne schon überlappen lassen. Sind beide da und ist der Totengräber in derselben Region **≤ 10 m** nah (und in keinem Dialog), wechseln sie 2–4 Zeilen als Sprechblasen (3,5 s je Zeile, die Sprechenden drehen sich zueinander, `talk`). Höchstens **eine Begegnung zugleich** je Region, jede höchstens **einmal am Tag**; Bedingungen in der Dialog-Syntax (`rel_tier`, `flag`, `rep_tier`, `mood` …).
+- **16 Begegnungen** (P6 schreibt sie, je 2–4 Zeilen; Leitzeilen):
+  | id | wer | wo · wann | Leitzeilen |
+  |---|---|---|---|
+  | `ch_well_spin` | Theres · Liesel | Brunnen 16:00–16:30 | T: „Du spinnst zu dünn, Dorn. Das reißt." – L: „Für die Toten reicht's. Die ziehen nicht dran." |
+  | `ch_linden_bench` | Esch · Fenner | Linde 17:34–18:00 | F: „Der Brunnen hält, Esch." – E: „Der hält länger als wir." |
+  | `ch_inn_council` | Lenz · Fenner | Gaststube 18:10–20:00 | F: „Wieder drei im Sterbebuch diesen Monat, Hochwürden." – L: „Ich zähle nicht, Fenner. Ich schreibe." |
+  | `ch_inn_carter` | Rosine · Osric | Gaststube 14:05–17:30 | R: „Faulhaber, du riechst nach Hügel." – O: „Der Hügel riecht nach mir. Das ist was anderes." |
+  | `ch_bridge_water` | Quast · Veit | Holderbrücke 18:06–19:30 | V: „Sie schauen jeden Abend ins Wasser, Doktor." – Q: „Und Sie jeden Abend mir zu." |
+  | `ch_church_alms` | Lenz · Veit | Kirchtür 08:00–11:30 | L: „Hast du gegessen, Veit?" – V: „Gestern, Hochwürden. Ich spar mir den Rest." |
+  | `ch_rumor_robber` | Rosine · Osric | Gaststube, ab `p8_open_day` + 2 | O: „Drüben bei Ellbach haben sie wieder eins offen gefunden." – R: „Bei uns nicht. Bei uns liegt einer auf dem Hügel, der nicht schläft." (setzt `robber_known`, §2.6.3) |
+  | `ch_inn_jakob` | Rosine · Jakob | Gaststube 17:00–21:00 | R: „Hast du dir die Hände gewaschen?" – J: „Zweimal. Die Erde geht nicht ab." |
+  | `ch_gate_jakob` | Jakob · Osric | Friedhofstor 07:55–08:20 | J: „Was bringst du heute, Herr Faulhaber?" – O: „Heute nichts, Junge. Freu dich nicht zu früh." |
+  | `ch_grave_kehr` | Martha Kehr · Jakob | an ihrem Grab, wenn Jakob in der Nähe arbeitet | J: „Ich mach nur das Laub weg, Frau Kehr." – M: „Mach nur. Er hat Laub nie leiden können." |
+  | `ch_market_rival` | Hanne · Theres | Anger, Hanne-Tag 10:00–14:00 | T: „Bei mir kostet der Zwirn einen." – H: „Bei Ihnen kostet er auch einen, wenn er reißt." |
+  | `ch_gate_peddler` | Hanne · Veit | Friedhofstor, Hanne-Tag 15:40–16:20 | H: „Immer noch hier, Veit?" – V: „Wo soll ich hin? Die Toten geben nichts, aber sie nehmen auch nichts." |
+  | `ch_smith_mayor` | Esch · Fenner | Amboss 12:20–13:00 | F: „Ein Gitter für jedes frische Grab, Esch? Was kostet das die Gemeinde?" – E: „Weniger als ein offenes." (nur `robber_known`) |
+  | `ch_surgery_priest` | Quast · Lenz | Kirchplatz 11:30–11:40 | L: „Bei den Otts brennt Licht." – Q: „Ich weiß. Ich war schon da." (nur bei Krankenlicht) |
+  | `ch_lights_prepare` | Lenz · Liesel | Kirchtür, Tag vor dem Lichtgang | Li: „Wie viele Kerzen dieses Jahr?" – L: „Eine mehr als letztes. Wie jedes Jahr." |
+  | `ch_after_lights` | Theres · Rosine | Brunnen, Tag nach dem Lichtgang | T: „Oben brannte jedes Grab. Hat er alle selbst angezündet?" – R: „Er und mein Junge." (nur `lights_all`) |
+- Begegnungen sind **reine Darstellung** außer `ch_rumor_robber` (setzt ein Flag, keinen Spielwert). Sie laufen ab `village_open` (§1.2); Begegnungen mit Phase-8-Figuren (Jakob, Veit, Hanne, Angehörige) erscheinen natürlich erst ab `p8_open`.
+
+#### 2.1.3 Reaktionen auf das Tun des Spielers
+- Das Phase-7-Gerede (Sprechblase einmal je Tag und Person bei 4 m) bekommt einen neuen obersten Vorrang: **Ereignis** (`NpcLifeConfig.reactions`, höchstens 2 Tage alt) → Beziehung „Befreundet" → Pietät → Ruf (die Phase-7-Reihenfolge bleibt darunter).
+  | Ereignis | Wer reagiert | Beispielzeile (P2 schreibt 1–2 je Person und Ereignis) |
+  |---|---|---|
+  | `apprentice_hired` | alle | Esch: „Der Wackernagel-Junge harkt jetzt bei dir? Gib ihm einen Stiel, der zu ihm passt." |
+  | `jakob_scolded` | Rosine | „Er sagt, du warst streng. Gut. Ich bin's nicht genug." |
+  | `wish_done` (Haushalt) | alle, die den Haushalt im Kreis haben | Theres: „Die Kehr sagt, das Grab sieht aus wie ein Garten. Sie hat geweint. Das ist gut." |
+  | `grave_disturbed` | alle | Fenner: „Ein offenes Grab auf dem Hügel. Das kommt ins Protokoll, Totengräber. Nicht gegen dich." |
+  | `robber_reported` / `robber_let_go` | alle / Liesel, Veit | Rosine: „Den Grell haben sie in die Stadt gebracht. Der hat bei mir noch zwei Bier offen." · Liesel: „Du hast ihn laufen lassen. Das hätte Lorenz auch getan." |
+  | `lights_all` | alle | Lenz: „Kein Grab ohne Licht. Das hatten wir noch nie." |
+  | `kathrein_danced` | Tanzpartner, Rosine | Theres: „Du trittst wie einer, der Erde gewohnt ist." |
+  | `noise_at_grave` | Haushalt, Lenz | Lenz: „Man sagt, du hast gehackt, während der Brandt gebetet hat. Hack ein andermal." |
+- Reaktionen ändern keinen Spielwert; die Folgen tragen die auslösenden Systeme (§2.2.4).
+
+#### 2.1.4 Bewohner auf dem Friedhof
+Die Dorfbewohner, die einen Toten auf dem Hügel haben, kommen selbst herauf. Sie gehen den Kutschweg (Region-Übergang wie bei Osric: im Dorf gehen sie über die Holderbrücke hinaus, auf dem Friedhof erscheinen sie 30 Min später am Wegende `road_end`) und folgen dem Besuchsablauf §2.2.3.
+| Person | Grab | Abstand | Zeit am Grab (Besuchstag) | Im Dorf an diesem Tag |
+|---|---|---|---|---|
+| Ulrich Esch | `old_01` Wendel Gratz (sein Lehrmeister) | alle 6 Tage | 13:40–14:30 | Schmiede 13:00–15:00 zu („Bin oben beim Meister.") |
+| Theres Mangold | `old_08` Dorothee Mahn (ihre Mutter) | alle 5 Tage | 14:40–15:10 | Laden 14:05–16:00 zu |
+| Liesel Dorn | D1 Wiebke Hagedorn, Gräber mit `kin_house` der beiden Katen, S5 „Kaspar Dorn" (erst ab `insight_not_lorenz`) | alle 4 Tage | 09:40–10:40 (statt der Totenwache) | – |
+| Lenz, Fenner, Rosine | – | nur am Lichtgang (§2.7) und in Geschichtsschritten (§2.4) | – | – |
+| Quast | – | **nie** („Ich sehe die Toten lieber vorher, Totengräber.") – auch am Lichtgang bleibt er an der Brücke | – | – |
+- Technisch hat jede dieser Personen einen zweiten `Npc` in der Friedhofs-Region (`npc_<id>_g`, wie `npc_priest` seit Phase 7), dessen Einträge über `today_flag` (`visit_<npc>_day`, vom Besuchsplan gesetzt, bzw. `fest_<id>_day`) nur am Besuchstag gelten; die Dorf-Einträge desselben Tags werden über dieselben Flags verborgen (gleicher `start_minute`, gültiger `today_flag` gewinnt, Phase 7 §3.4).
+
+### 2.2 Besucher & Trauernde (`data/config/visitor_config.tres` – `VisitorConfig`, `data/visitors/kin/<id>.tres` – `KinData`, `data/visitors/wishes/<id>.tres` – `WishData`)
+**Eigene Identität: der Besuch wird gesehen, nicht gemeldet.** Es gibt keine Liste „Besucher heute: 3". Man sieht eine Frau mit einem Korb am Tor, man sieht, wo sie kniet, und man sieht hinterher, ob zwei Münzen auf dem Stein liegen.
+
+#### 2.2.1 Die Angehörigen
+| kin_id | Name | Haus (`mourning_houses`) | Figur (§8.1) | Stimme | bringt |
+|---|---|---|---|---|---|
+| `kin_kehr` | **Martha Kehr**, 41, Witwe eines Tagelöhners, Mutter von Paul | `house_kehr` | `ph_chr_mourner_w_a`: dunkles Wolltuch, Schürze, Korb mit Heidekraut | knapp, höflich, praktisch; dankt mit Arbeit, nicht mit Worten | Heidekraut |
+| `kin_brandt` | **Hinrich Brandt**, 34, Fuhrknecht | `house_brandt` | `ph_chr_mourner_m_a`: Kittel, Halstuch, den Hut in der Hand | stockend, bedankt sich zu oft | Tannengrün |
+| `kin_ott` | **Gesa Ott**, 26, Bauerntochter | `house_ott` | `ph_chr_mourner_w_b`: helles Kopftuch, schwarzer Rock, Umschlagtuch | jung, direkt, fragt viel | Strohblumen |
+| `kin_sieber` | **Johann Sieber**, 71, Altknecht | `house_sieber` | `ph_chr_mourner_m_b`: Stock, langer Mantel, Schlapphut | redet mit dem Grab, nicht mit dir | nichts außer seinem Stock |
+| (Bewohnerin) | Liesel Dorn | `cottage_dorn`, `cottage_hagedorn` | `ph_chr_v_washer` | §2.1.4 | einen Wollfaden um einen Zweig |
+| (Bewohner) | Esch, Theres | – (feste Gräber) | `ph_chr_v_smith`, `_grocer` | §2.1.4 | Esch nichts, Theres einen Topf Christrosen |
+- **Zuordnung:** ✦ `CorpseRecord.kin_house` = `Village.mourning_house(Ankunftstag)` (seit Phase 7 deterministisch aus Tag und Seed, der Trauerflor). Gesetzt bei der Lieferung ab `village_open`; für ältere Lindenacker-Tote berechnet die Migration ihn nach (§5.2). Tote ohne `kin_house` (Phase 2–6, „von außerhalb", S1–S4) bekommen keinen Besuch, nur am Lichtgang eine Kerze von dir (§2.7.2).
+- Je Angehörigem ein **Wohlwollen** 0…10 (Start 5, gespeichert in `Visitors`), nicht als Zahl angezeigt, nur als Wort im Grab-Tooltip („Die Kehrs: zufrieden"). Es bestimmt die Trinkgeldhöhe (§2.2.5) und ob ein Wunsch kommt (≥ 2).
+
+#### 2.2.2 Besuchsplan
+- `Visitors.plan_day(day)` legt um **06:00** fest, wer heute kommt (deterministisch aus Tag, Grab-Seeds und dem Zustand um 06:00; gespeichert, damit Laden bitgleich bleibt). Regeln (`VisitorConfig`):
+  - **Erster Besuch** am Tag nach der Bestattung (`first_delay_days 1`), immer mit Blumen.
+  - **Trauerzeit** 21 Tage ab Bestattung (`mourning_days 21`): Abstand **3 Tage** (+ 0/1 aus dem Seed, `interval_mourning 3`); danach **7 Tage** (`interval_late 7`).
+  - Hat ein Haushalt mehrere Gräber, geht er bei einem Besuch alle ab (eine Runde, je Grab ≈ 15 Min).
+  - Höchstens **3 Besuche am Tag** (`max_visits_day 3`) in drei Zeitfenstern **09:30 · 12:30 · 15:00** (`slots`), höchstens **2 Besucher zugleich** (`max_concurrent 2`); Überzählige verschieben sich auf morgen. Bewohner haben ihre eigenen Zeiten (§2.1.4) und zählen mit.
+  - Kein Besuch bei Nacht, am Lichtgang-Tag (dann kommen alle abends), vor `p8_open` oder an einem Grab im Zustand `DUG`.
+- *Begründung:* Mit 8–14 Gräbern mit Angehörigen ergibt das 1–3 Besuche am Tag: genug, dass jeden Tag jemand kommt, zu wenig, dass der Friedhof voll wirkt.
+
+#### 2.2.3 Ablauf eines Besuchs (sichtbar, Zeitplan aus `ScheduleBuilder`, §3.4)
+| Phase | Dauer (Spielmin) | Was man sieht | Animation (§8.2) |
+|---|---|---|---|
+| Ankommen | ≈ 8 | vom Wegende `road_end` den Kutschweg herauf, durch das Tor | `walk` (Männer nehmen am Tor den Hut ab: Kindmesh `hat_head` → `hat_hand`) |
+| Zum Grab | 3–10 | über die gebackene Route `visitor_routes[plot]` zum Besucherplatz `gv_<plot>` am Fußende, Blick zum Stein | `walk` |
+| Blumen ablegen | 2 | beugt sich vor und legt den Strauß auf den Hügel (Kindmesh `bouquet` wandert aus der Hand auf das Grab) | `lay_flowers` |
+| Trauern | 30 | Frauen knien, Männer stehen mit gesenktem Kopf und dem Hut vor dem Bauch; keine Tränen, keine Laute außer Kleiderrascheln und Atem | `kneel_in` → `kneel` → `kneel_out` bzw. `mourn_stand` |
+| Ansehen | 2 | richtet sich auf, sieht über das Grab; Sprechblase mit der Zeile nach dem Zustand (§2.2.4) | `idle_low` |
+| Warten | 10 (nur mit Wunsch oder Trinkgeld) | bleibt am Grab stehen; kommt der Totengräber auf 4 m, dreht sie sich zu ihm („[E] Mit Martha Kehr reden") | `idle` / `talk` |
+| Gehen | ≈ 12 | denselben Weg zurück | `walk` |
+- Ein Besuch dauert 60–90 Spielminuten (30–45 s Echtzeit). Ein Gespräch ist in jeder Phase möglich; eine Kniende steht dafür erst auf.
+- **Ruhe am Grab:** Läuft eine laute Handlung (Graben, Fällen, Hauen, Hämmern, Sägen, Steinbruch; ✦ Stichwort `noisy` der TimedAction) **≤ 8 m** von einer trauernden Person, gibt es einmal je Besuch eine Blase und **Ruf −1** (`visit_noise`, höchstens einmal je Tag). Jakob arbeitet nie an einem Grab, an dem gerade jemand trauert („Jakob lässt die Kehr in Ruhe.").
+- **Trinkgeld ohne Gespräch:** Ist der Totengräber nicht da, legt der Besucher die Münzen auf den Stein (Kindmesh `coins` am Marker `inscription`) mit einem Zettel: „[E] Zwei Münzen auf dem Stein (Martha Kehr)". Sie bleiben liegen, bis man sie nimmt (Geister und Grabräuber nehmen nichts).
+
+#### 2.2.4 Wie das Grab angesehen wird (`GraveView`, einmal je Besuch und Grab)
+| Zustand (Vorrang von oben) | Bedingung | Ruf | Wohlwollen | Leitzeile |
+|---|---|---|---|---|
+| aufgewühlt | ✦ `GraveRecord.disturbed` | **−3** (`visit_disturbed`) | −4 | „Wer war das? Wer war an ihm?" |
+| verwahrlost | Pflegestelle des Grabs ≥ Stufe 2 | −1 (`visit_neglected`) | −1 | „Das Unkraut ist schneller als du." |
+| ohne Stein | kein Zeichen | 0 | 0 | „Noch kein Name. Das kommt, sagt man." |
+| gepflegt | Pflegestelle ≤ 1 und Zeichen | +1 (`visit_pleased`, höchstens 2 je Tag) | +1 | „Sauber. Das hätte ihm gefallen." |
+| zusätzlich: frische Blumen, Kerze letzte Nacht oder Vase | §2.3 | – | +1 (einmal) | „Jemand hat ihr ein Licht hingestellt." |
+| zusätzlich: ein Präparat dieses Toten wurde verkauft (einmal je Toter) | `Specimens` Zustand `sold` | −1 (`visit_specimen_rumor`) | −3 | „Beim Quast, sagen sie, steht ein Glas. Mit seinem Namen." |
+- Präparate, die ins Grab zurückgelegt sind (Phase 7 „beisetzen"), zählen nicht. Wer seine Toten würdig hält, gewinnt am Tag 1–2 Ruf; wer sie verwahrlosen lässt, verliert so viel wie bei einem schlechten Grabzeichen.
+
+#### 2.2.5 Wünsche & Trinkgeld
+| Art (`WishData.kind`) | Bitte (Leittext) | Erfüllt beim nächsten Besuch, wenn … | Weg |
+|---|---|---|---|
+| `tend` | „Hältst du es sauber, bis ich wiederkomme?" | Pflegestelle des Grabs ≤ Stufe 1 | Pflege (Phase 3) oder Jakob |
+| `flowers` | „Ein paar Blumen. Heide, wenn's geht, die hält den Winter." | frische Grabblumen auf dem Grab (§2.3) | Setzen + Gießen oder Jakob |
+| `candle` | „Stell ihm einmal ein Licht hin. Er hatte Angst im Dunkeln." | seit dem Wunsch mindestens eine Nacht mit brennender Grabkerze | selbst oder Jakob |
+| `line` | „Kannst du ‚Ruhe sanft' darunter setzen?" (Zeile aus `WishData.line_text`, 6 Vorlagen) | die Zeile steht auf dem Stein | „[E] Zeile nachmeißeln (30 Min, 1 Tinte)" am Grab; nur bei gestaltetem Stein mit < 4 Zeilen, sonst wird `line` nicht gewählt |
+| `vase` | „Eine Vase, damit die Blumen nicht umfallen." | eine Grabvase (`deco_grave_vase`) ≤ 1,5 m vom Grab | Baumodus (Phase 3) |
+- **Angebot:** im Gespräch mit einem wartenden Besucher (Wohlwollen ≥ 2). Gewählt wird die erste noch nicht erfüllte Art in der Reihenfolge [`tend` (nur wenn verwahrlost), `flowers`, `candle`, `line`, `vase`], mit dem Seed des Grabs gedreht. Höchstens **ein offener Wunsch je Grab**, **3 offene insgesamt** (`max_open 3`). Karte im Dialog mit „Das mache ich." / „Ich kann es nicht versprechen." (ohne Folgen). **Frist:** der nächste Besuch (3–7 Tage).
+- **Lohn beim erfüllten Besuch:** Trinkgeld **1** (`tip_base`) **+1** bei Wohlwollen ≥ 6 **+1** bei Grabqualität ≥ 15 → **1–3 Münzen**, höchstens **4 Münzen am Tag** (`tip_cap_day 4`, darüber nur Dank); Ruf **+1** (`wish_done`); Wohlwollen +2; `stats.wishes_done`, `stats.tips_coins`. Bewohner zahlen kein Geld: **Beziehung +4** (`wish_done_villager`); Esch legt einmal 2 `iron_fittings` hin. **Nicht erfüllt:** Wohlwollen −2, der Wunsch verfällt (`stats.wishes_failed`), kein Ruf-Abzug.
+- *Begründung Trinkgeld:* Im Bogen A kommen ≈ 9 erfüllte Wünsche zusammen, davon ≈ 8 mit Geld, zusammen **≈ 18 Münzen**: etwa 12 % der Einnahmen und weniger als das Pflegegeld (36). Die Tageskappe verhindert, dass ein Abend mit vielen Besuchern zur Kasse wird. Die eigentliche Belohnung ist der Ruf, der über Bezahlung und Pflegegeld weiterwirkt (Phase 3). Eine echte Preisdynamik bleibt Phase 10.
+
+### 2.3 Grabpflege neu: Blumen, Kerzen, Grabgitter (`data/config/grave_care_config.tres` – `GraveCareConfig`)
+**Entscheidung: vier kleine Zustände je Grab im neuen System `GraveCare`, getrennt von Zier (Phase 3) und Qualität (sie ändern die Qualität nicht).** *Begründung:* Die Grabqualität ist mit dem Zeichen abgeschlossen (Phase 3–5). Blumen und Kerzen sind das, was danach kommt: Pflege für die Lebenden und die Geister, nicht für die Abrechnung.
+| Zustand | Wie | Hält | Wirkung | Kosten |
+|---|---|---|---|---|
+| **Grabblumen** (Winterheide und Christrosen) | „[E] Grabblumen setzen (15 Min)" auf `FILLED`/`MARKED` | **frisch** 2 Tage ab dem letzten Gießen (`flower_fresh_minutes 2880`), **welk** bis Tag 4 (`flower_wilt_minutes 5760`), danach verdorrt und fort | frisch: Geist **+1** (`care`), Besucher +1 Wohlwollen, Wunsch `flowers` | 1 `flower_seedlings` (Theres 2, Hanne 2) |
+| Gießen | „[E] Blumen gießen (5 Min)" | setzt „frisch" | – | `watering_can` (Esch 4, Hanne 4), 6 Füllungen, „[E] Gießkanne füllen" am **Regenfass** an der Hütte (2 Min) |
+| **Strauß der Besucher** | legt der Besucher ab (§2.2.3) | 2 Tage | Geist +1 (nicht zusätzlich zu Grabblumen) | – |
+| **Grabkerze** (Kerze im Glas) | „[E] Grabkerze anzünden (3 Min)" ab 15:00 | bis 07:00 | Geist **+1** in dieser Nacht, Wunsch `candle`, **der Grabräuber meidet das Grab** | 1 `grave_candle` (Theres 1, Hanne 1; Lenz schickt 12 zum Lichtgang) |
+| **Grabgitter** (eisernes Gitter über dem Hügel, wie es 1834 gegen Leichenräuber üblich war) | „[E] Grabgitter aufsetzen (20 Min)" | bis man es abnimmt, frühestens nach **10 Tagen** („bis die Erde sich gesetzt hat") | der Grabräuber kommt an dieses Grab nie; Pflege und Blumen gehen durch das Gitter | 1 `mortsafe` (Esch **12** ab `robber_known`, mit Esch Schritt 2 **8**; wiederverwendbar) |
+| **Aufgewühlt** | der Grabräuber war ungestört bis 05:00 (§2.6.3) | bis man es schließt: „[E] Grab wieder schließen (30 Min)" | Geist **−3**, Pflegestelle Stufe 3, Besucher Ruf −3 | – |
+- Der Pflegeanteil an der Geisterstimmung ist **höchstens +2** (Blumen oder Strauß +1, Kerze +1; ✦ `GhostMood.score(…, care)`); beraubte Seelen bleiben wie in Phase 6/7 höchstens gleichmütig.
+- Die Leiche bleibt **immer** im Grab. *Begründung:* Phase 8 entfernt keine Toten; der Nachtgräber kommt vor dem Morgen nicht tief genug, und das soll so bleiben, bis ein späterer Vertrag es anders will (§13).
