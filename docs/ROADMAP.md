@@ -12,7 +12,7 @@ Regel: **BAUE → TESTE → ZEIGE → WARTE AUF FREIGABE.** Keine Phase startet 
 | 5 | Crafting und Ressourcen | ✅ freigegeben (28.09.2026) |
 | 6 | Gebäude | ✅ freigegeben (03.10.2026) |
 | 7 | Dorf | ✅ freigegeben (04.10.2026) |
-| 8 | NPCs | 🔵 Planung – Umfang wird mit dem Benutzer abgestimmt |
+| 8 | NPCs | 🔵 Planung – Vertrag `docs/PHASE8_DESIGN.md` (Entwurf v1, Vertragsfragen §14 offen) |
 | 9 | Quests | – |
 | 10 | Wirtschaft | – |
 | 11 | Welt erweitern | – |
@@ -101,6 +101,16 @@ Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe, Vertragsfragen §14 offen):
 - Der **Lindenacker** (8 neue Grabstellen südlich der Ostwiese, vom Pfarrer geweiht) macht das Dorf zur Quelle neuer Toter; Geschichts-Leiche D1 Wiebke Hagedorn
 - Geheimnis-Ausschnitt „Wer besucht die Sterbenden?" (Erkenntnis „Vorher eingetragen"), nächster Schritt „Der unterstrichene Name" (Phase 8)
 - Kapitel „Ein Name im Dorf", Münzrechnung, Save-Format v6 mit Migration der Phase-6-Stände, Wellenplan W0–W3 (W1 mit 7 Paketen), Vertragsfragen §14
+
+## PHASE 8 – NPCs (Plan)
+
+Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe, Vertragsfragen §14 offen): **`docs/PHASE8_DESIGN.md`**. Umfang „mittel" (10 Spieltage, Kapitel „Wer heraufkommt"). Inhalt:
+- **Dorfleben:** Launen je Tag (heiter, bedrückt, gereizt, „Zuhören"), 16 Begegnungen zwischen Bewohnern als Sprechblasen, Reaktionen auf das Tun des Spielers; Esch, Theres und Liesel besuchen ihre Toten auf dem Hügel
+- **Besucher & Trauernde:** vier Angehörige der Dorfhäuser (Kehr, Brandt, Ott, Sieber) kommen sichtbar zu ihren Gräbern (Blumen ablegen, knien, stehen), sehen das Grab an (Ruf ±), äußern Wünsche (pflegen, Blumen, Kerze, Inschrift-Zeile, Vase) und geben kleines Trinkgeld (Kappe 4/Tag); Grabpflege neu: Grabblumen mit Gießen, Grabkerzen, Grabgitter
+- **Lehrling Jakob Wackernagel** (Rosines Sohn): Arbeitsliste an der Kreidetafel, Harken, Jäten, Gießen, Kerzen; Anlernen durch Vormachen und Übung, Fehler, Lohn 3/Tag; klare Grenze zu Phase 14
+- **Neue Figuren:** Bettler Veit Ammer (Zeuge der Nacht), Wanderhändlerin Hanne Vogelsang, Nachtgräber Lambert Grell (ohne Kampf, die Leiche bleibt im Grab)
+- **Freundschaft:** drei Schritte je Bewohner, Gefallen und Gegengefallen; **Feste:** Kathreintanz (25. Nebelung) und der Hollerbrücker **Lichtgang** (Vorabend des Advents)
+- Geheimnis-Ausschnitt „Der unterstrichene Name" (Krankenlicht, Nachtbesuche, D2 Gerhard Ott, Lorenz' zweite Kladde), dritte Reihe im Lindenacker (4 Stellen), Save-Format v7 mit Migration der Phase-7-Stände, Wellenplan W0–W3 (W1 mit 7 Paketen), Vertragsfragen §14
 
 ## Benutzerwunsch 03.10.2026 – Organe & Anatomie (eigene spätere Phase/Erweiterung)
 - **Wann:** als eigene Erweiterung **nach Phase 6** (nicht in Phase 6). Einordnung wird vor dem Start mit dem Benutzer abgestimmt (Vorschlag: zusammen mit Phase 7 „Dorf", wo der Wundarzt/Anatom der Stadt eingeführt wird).
