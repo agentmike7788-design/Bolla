@@ -1,0 +1,69 @@
+[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/systems/audio/audio_cue.gd" id="1_cue"]
+[ext_resource type="Script" path="res://src/systems/audio/audio_cue_library.gd" id="2_lib"]
+
+[sub_resource type="Resource" id="cue_mus_title"]
+script = ExtResource("1_cue")
+id = &"mus_title"
+files = PackedStringArray("res://assets/audio/music/ph_mus_title.ogg")
+bus = &"Music"
+volume_db = -9
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 1
+
+[sub_resource type="Resource" id="cue_mus_day"]
+script = ExtResource("1_cue")
+id = &"mus_day"
+files = PackedStringArray("res://assets/audio/music/ph_mus_day.ogg")
+bus = &"Music"
+volume_db = -10
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 1
+
+[sub_resource type="Resource" id="cue_mus_night"]
+script = ExtResource("1_cue")
+id = &"mus_night"
+files = PackedStringArray("res://assets/audio/music/ph_mus_night.ogg")
+bus = &"Music"
+volume_db = -10
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 1
+
+[sub_resource type="Resource" id="cue_mus_village"]
+script = ExtResource("1_cue")
+id = &"mus_village"
+files = PackedStringArray("res://assets/audio/music/ph_mus_village.ogg")
+bus = &"Music"
+volume_db = -10
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 1
+
+[resource]
+script = ExtResource("2_lib")
+library_id = &"music"
+cues = Array[ExtResource("1_cue")]([SubResource("cue_mus_title"), SubResource("cue_mus_day"), SubResource("cue_mus_night"), SubResource("cue_mus_village")])

@@ -1,0 +1,459 @@
+[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=33 format=3]
+
+[ext_resource type="Script" path="res://src/systems/audio/audio_cue.gd" id="1_cue"]
+[ext_resource type="Script" path="res://src/systems/audio/audio_cue_library.gd" id="2_lib"]
+
+[sub_resource type="Resource" id="cue_amb_graveyard_day"]
+script = ExtResource("1_cue")
+id = &"amb_graveyard_day"
+files = PackedStringArray("res://assets/audio/ambience/ph_amb_graveyard_day.ogg")
+bus = &"Ambience"
+volume_db = -10
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_graveyard_dusk"]
+script = ExtResource("1_cue")
+id = &"amb_graveyard_dusk"
+files = PackedStringArray("res://assets/audio/ambience/ph_amb_graveyard_dusk.ogg")
+bus = &"Ambience"
+volume_db = -10
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_graveyard_night"]
+script = ExtResource("1_cue")
+id = &"amb_graveyard_night"
+files = PackedStringArray("res://assets/audio/ambience/ph_amb_graveyard_night.ogg")
+bus = &"Ambience"
+volume_db = -11
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_forest_edge"]
+script = ExtResource("1_cue")
+id = &"amb_forest_edge"
+files = PackedStringArray("res://assets/audio/ambience/ph_amb_forest_edge.ogg")
+bus = &"Ambience"
+volume_db = -11
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_village_day"]
+script = ExtResource("1_cue")
+id = &"amb_village_day"
+files = PackedStringArray("res://assets/audio/ambience/ph_amb_village_day.ogg")
+bus = &"Ambience"
+volume_db = -11
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_village_night"]
+script = ExtResource("1_cue")
+id = &"amb_village_night"
+files = PackedStringArray("res://assets/audio/ambience/ph_amb_village_night.ogg")
+bus = &"Ambience"
+volume_db = -11
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_hut"]
+script = ExtResource("1_cue")
+id = &"amb_hut"
+files = PackedStringArray("res://assets/audio/ambience/ph_amb_hut.ogg")
+bus = &"Ambience"
+volume_db = -12
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_inn"]
+script = ExtResource("1_cue")
+id = &"amb_inn"
+files = PackedStringArray("res://assets/audio/ambience/ph_amb_inn.ogg")
+bus = &"Ambience"
+volume_db = -11
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_surgery"]
+script = ExtResource("1_cue")
+id = &"amb_surgery"
+files = PackedStringArray("res://assets/audio/ambience/ph_amb_surgery.ogg")
+bus = &"Ambience"
+volume_db = -14
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_office"]
+script = ExtResource("1_cue")
+id = &"amb_office"
+files = PackedStringArray("res://assets/audio/ambience/ph_amb_office.ogg")
+bus = &"Ambience"
+volume_db = -13
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_chapel"]
+script = ExtResource("1_cue")
+id = &"amb_chapel"
+files = PackedStringArray("res://assets/audio/ambience/ph_amb_chapel.ogg")
+bus = &"Ambience"
+volume_db = -12
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_crypt"]
+script = ExtResource("1_cue")
+id = &"amb_crypt"
+files = PackedStringArray("res://assets/audio/ambience/ph_amb_crypt.ogg")
+bus = &"Ambience"
+volume_db = -12
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_shed"]
+script = ExtResource("1_cue")
+id = &"amb_shed"
+files = PackedStringArray("res://assets/audio/ambience/ph_amb_shed.ogg")
+bus = &"Ambience"
+volume_db = -14
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_title"]
+script = ExtResource("1_cue")
+id = &"amb_title"
+files = PackedStringArray("res://assets/audio/ambience/ph_amb_title.ogg")
+bus = &"Ambience"
+volume_db = -12
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_loop_brook"]
+script = ExtResource("1_cue")
+id = &"loop_brook"
+files = PackedStringArray("res://assets/audio/ambience/ph_loop_brook.ogg")
+bus = &"Ambience"
+volume_db = -8
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = true
+max_distance = 22
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_loop_forge"]
+script = ExtResource("1_cue")
+id = &"loop_forge"
+files = PackedStringArray("res://assets/audio/ambience/ph_loop_forge.ogg")
+bus = &"Ambience"
+volume_db = -10
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = true
+max_distance = 16
+unit_size = 3
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_bird_a"]
+script = ExtResource("1_cue")
+id = &"bird_a"
+files = PackedStringArray("res://assets/audio/ambience/ph_bird_a_1.ogg", "res://assets/audio/ambience/ph_bird_a_2.ogg")
+bus = &"Ambience"
+volume_db = -17
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_bird_b"]
+script = ExtResource("1_cue")
+id = &"bird_b"
+files = PackedStringArray("res://assets/audio/ambience/ph_bird_b_1.ogg", "res://assets/audio/ambience/ph_bird_b_2.ogg")
+bus = &"Ambience"
+volume_db = -18
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_bird_c"]
+script = ExtResource("1_cue")
+id = &"bird_c"
+files = PackedStringArray("res://assets/audio/ambience/ph_bird_c_1.ogg", "res://assets/audio/ambience/ph_bird_c_2.ogg")
+bus = &"Ambience"
+volume_db = -19
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_crow"]
+script = ExtResource("1_cue")
+id = &"crow"
+files = PackedStringArray("res://assets/audio/ambience/ph_crow_1.ogg", "res://assets/audio/ambience/ph_crow_2.ogg")
+bus = &"Ambience"
+volume_db = -20
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_owl"]
+script = ExtResource("1_cue")
+id = &"owl"
+files = PackedStringArray("res://assets/audio/ambience/ph_owl_1.ogg", "res://assets/audio/ambience/ph_owl_2.ogg")
+bus = &"Ambience"
+volume_db = -14
+volume_jitter_db = 3
+pitch_jitter = 0.03
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_owl_short"]
+script = ExtResource("1_cue")
+id = &"owl_short"
+files = PackedStringArray("res://assets/audio/ambience/ph_owl_short.ogg")
+bus = &"Ambience"
+volume_db = -16
+volume_jitter_db = 3
+pitch_jitter = 0.03
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_chicken"]
+script = ExtResource("1_cue")
+id = &"chicken"
+files = PackedStringArray("res://assets/audio/ambience/ph_chicken_1.ogg", "res://assets/audio/ambience/ph_chicken_2.ogg", "res://assets/audio/ambience/ph_chicken_3.ogg")
+bus = &"Ambience"
+volume_db = -20
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_hammer_far"]
+script = ExtResource("1_cue")
+id = &"hammer_far"
+files = PackedStringArray("res://assets/audio/ambience/ph_hammer_far_1.ogg", "res://assets/audio/ambience/ph_hammer_far_2.ogg")
+bus = &"Ambience"
+volume_db = -18
+volume_jitter_db = 3
+pitch_jitter = 0.02
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_cup_clink"]
+script = ExtResource("1_cue")
+id = &"cup_clink"
+files = PackedStringArray("res://assets/audio/ambience/ph_cup_clink_1.ogg", "res://assets/audio/ambience/ph_cup_clink_2.ogg", "res://assets/audio/ambience/ph_cup_clink_3.ogg")
+bus = &"Ambience"
+volume_db = -16
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_drip_spot"]
+script = ExtResource("1_cue")
+id = &"drip_spot"
+files = PackedStringArray("res://assets/audio/ambience/ph_drip_spot_1.ogg", "res://assets/audio/ambience/ph_drip_spot_2.ogg", "res://assets/audio/ambience/ph_drip_spot_3.ogg")
+bus = &"Ambience"
+volume_db = -16
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_wood_creak"]
+script = ExtResource("1_cue")
+id = &"wood_creak"
+files = PackedStringArray("res://assets/audio/ambience/ph_wood_creak_1.ogg", "res://assets/audio/ambience/ph_wood_creak_2.ogg")
+bus = &"Ambience"
+volume_db = -18
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_page_turn_far"]
+script = ExtResource("1_cue")
+id = &"page_turn_far"
+files = PackedStringArray("res://assets/audio/ambience/ph_page_turn_far.ogg")
+bus = &"Ambience"
+volume_db = -20
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_fire_pop"]
+script = ExtResource("1_cue")
+id = &"fire_pop"
+files = PackedStringArray("res://assets/audio/ambience/ph_fire_pop_1.ogg", "res://assets/audio/ambience/ph_fire_pop_2.ogg")
+bus = &"Ambience"
+volume_db = -18
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_wind_gust"]
+script = ExtResource("1_cue")
+id = &"wind_gust"
+files = PackedStringArray("res://assets/audio/ambience/ph_wind_gust_1.ogg", "res://assets/audio/ambience/ph_wind_gust_2.ogg")
+bus = &"Ambience"
+volume_db = -14
+volume_jitter_db = 3
+pitch_jitter = 0.04
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[resource]
+script = ExtResource("2_lib")
+library_id = &"ambience"
+cues = Array[ExtResource("1_cue")]([SubResource("cue_amb_graveyard_day"), SubResource("cue_amb_graveyard_dusk"), SubResource("cue_amb_graveyard_night"), SubResource("cue_amb_forest_edge"), SubResource("cue_amb_village_day"), SubResource("cue_amb_village_night"), SubResource("cue_amb_hut"), SubResource("cue_amb_inn"), SubResource("cue_amb_surgery"), SubResource("cue_amb_office"), SubResource("cue_amb_chapel"), SubResource("cue_amb_crypt"), SubResource("cue_amb_shed"), SubResource("cue_amb_title"), SubResource("cue_loop_brook"), SubResource("cue_loop_forge"), SubResource("cue_bird_a"), SubResource("cue_bird_b"), SubResource("cue_bird_c"), SubResource("cue_crow"), SubResource("cue_owl"), SubResource("cue_owl_short"), SubResource("cue_chicken"), SubResource("cue_hammer_far"), SubResource("cue_cup_clink"), SubResource("cue_drip_spot"), SubResource("cue_wood_creak"), SubResource("cue_page_turn_far"), SubResource("cue_fire_pop"), SubResource("cue_wind_gust")])

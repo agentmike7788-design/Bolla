@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="AudioAmbienceProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/audio/audio_ambience_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"forest_edge"
+bed = &"amb_forest_edge"
+bed_volume_db = 0.0
+spots = Array[Dictionary]([{
+"cue": &"bird_a",
+"max": 15.0,
+"min": 6.0
+}, {
+"cue": &"bird_c",
+"max": 25.0,
+"min": 10.0
+}, {
+"cue": &"wood_creak",
+"max": 35.0,
+"min": 15.0
+}, {
+"cue": &"crow",
+"max": 80.0,
+"min": 30.0
+}])
+reverb_wet = 0.0
+reverb_room_size = 0.5

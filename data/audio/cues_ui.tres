@@ -1,0 +1,129 @@
+[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://src/systems/audio/audio_cue.gd" id="1_cue"]
+[ext_resource type="Script" path="res://src/systems/audio/audio_cue_library.gd" id="2_lib"]
+
+[sub_resource type="Resource" id="cue_ui_click"]
+script = ExtResource("1_cue")
+id = &"ui_click"
+files = PackedStringArray("res://assets/audio/ui/ph_ui_click_1.ogg", "res://assets/audio/ui/ph_ui_click_2.ogg")
+bus = &"UI"
+volume_db = -14
+volume_jitter_db = 1.5
+pitch_jitter = 0.04
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.03
+max_voices = 2
+
+[sub_resource type="Resource" id="cue_ui_hover"]
+script = ExtResource("1_cue")
+id = &"ui_hover"
+files = PackedStringArray("res://assets/audio/ui/ph_ui_hover.ogg")
+bus = &"UI"
+volume_db = -24
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.06
+max_voices = 1
+
+[sub_resource type="Resource" id="cue_ui_open"]
+script = ExtResource("1_cue")
+id = &"ui_open"
+files = PackedStringArray("res://assets/audio/ui/ph_ui_open.ogg")
+bus = &"UI"
+volume_db = -14
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.1
+max_voices = 2
+
+[sub_resource type="Resource" id="cue_ui_close"]
+script = ExtResource("1_cue")
+id = &"ui_close"
+files = PackedStringArray("res://assets/audio/ui/ph_ui_close.ogg")
+bus = &"UI"
+volume_db = -15
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.1
+max_voices = 2
+
+[sub_resource type="Resource" id="cue_ui_error"]
+script = ExtResource("1_cue")
+id = &"ui_error"
+files = PackedStringArray("res://assets/audio/ui/ph_ui_error.ogg")
+bus = &"UI"
+volume_db = -13
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.25
+max_voices = 2
+
+[sub_resource type="Resource" id="cue_ui_page"]
+script = ExtResource("1_cue")
+id = &"ui_page"
+files = PackedStringArray("res://assets/audio/ui/ph_ui_page_1.ogg", "res://assets/audio/ui/ph_ui_page_2.ogg", "res://assets/audio/ui/ph_ui_page_3.ogg")
+bus = &"UI"
+volume_db = -13
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.08
+max_voices = 2
+
+[sub_resource type="Resource" id="cue_ui_notify"]
+script = ExtResource("1_cue")
+id = &"ui_notify"
+files = PackedStringArray("res://assets/audio/ui/ph_ui_notify.ogg")
+bus = &"UI"
+volume_db = -18
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.4
+max_voices = 2
+
+[sub_resource type="Resource" id="cue_ui_reward"]
+script = ExtResource("1_cue")
+id = &"ui_reward"
+files = PackedStringArray("res://assets/audio/ui/ph_ui_reward.ogg")
+bus = &"UI"
+volume_db = -15
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.4
+max_voices = 2
+
+[resource]
+script = ExtResource("2_lib")
+library_id = &"ui"
+cues = Array[ExtResource("1_cue")]([SubResource("cue_ui_click"), SubResource("cue_ui_hover"), SubResource("cue_ui_open"), SubResource("cue_ui_close"), SubResource("cue_ui_error"), SubResource("cue_ui_page"), SubResource("cue_ui_notify"), SubResource("cue_ui_reward")])

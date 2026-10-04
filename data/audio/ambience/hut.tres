@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="AudioAmbienceProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/audio/audio_ambience_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hut"
+bed = &"amb_hut"
+bed_volume_db = 0.0
+spots = Array[Dictionary]([{
+"cue": &"fire_pop",
+"max": 10.0,
+"min": 4.0
+}, {
+"cue": &"wood_creak",
+"max": 50.0,
+"min": 20.0
+}])
+reverb_wet = 0.06
+reverb_room_size = 0.25

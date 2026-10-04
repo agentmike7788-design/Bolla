@@ -20,7 +20,13 @@ UIState="*res://src/core/ui_state.gd"
 TimeManager="*res://src/systems/time/time_manager.gd"
 GameState="*res://src/systems/game_state/game_state.gd"
 SaveManager="*res://src/systems/save/save_manager.gd"
+Audio="*res://src/systems/audio/audio_manager.gd"
 Debug="*res://src/debug/debug_console.tscn"
+
+[audio]
+
+driver/driver.web="ScriptProcessor"
+general/default_playback_type.web=0
 
 [debug]
 

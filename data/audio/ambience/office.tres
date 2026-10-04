@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AudioAmbienceProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/audio/audio_ambience_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"office"
+bed = &"amb_office"
+bed_volume_db = 0.0
+spots = Array[Dictionary]([{
+"cue": &"page_turn_far",
+"max": 25.0,
+"min": 10.0
+}])
+reverb_wet = 0.1
+reverb_room_size = 0.35
