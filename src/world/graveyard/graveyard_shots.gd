@@ -15,6 +15,7 @@ extends SceneTree
 
 const Round2 := preload("res://src/world/graveyard/graveyard_shots_round2.gd")
 const Shovel := preload("res://src/world/graveyard/graveyard_shots_shovel.gd")
+const Burial := preload("res://src/world/graveyard/graveyard_shots_burial.gd")
 const Tools := preload("res://src/world/graveyard/graveyard_shots_tools.gd")
 const SETTLE_FRAMES := 40
 ## Frames after a measurement switch (shadows off / freeze) before the counters are read.
@@ -54,6 +55,8 @@ var _shovel: bool = false
 ## --tools: G7 Runde 2 Werkzeuge – axe, pickaxe, hammer / chisel / saw (graveyard_shots_tools.gd;
 ## --shots=axe,pick,hammer picks series).
 var _tools: bool = false
+## --burial: G7 Runde 2 Bestatten – the dead laid into the pit, the grave filled (graveyard_shots_burial.gd).
+var _burial: bool = false
 var _distance: float = 0.0
 
 
@@ -76,6 +79,8 @@ func _run() -> void:
 			_shovel = true
 		elif arg == "--tools":
 			_tools = true
+		elif arg == "--burial":
+			_burial = true
 		elif arg.begins_with("--distance="):
 			_distance = arg.trim_prefix("--distance=").to_float()
 	if _out == "":
@@ -108,6 +113,10 @@ func _run() -> void:
 		return
 	if _tools:
 		await Tools.run(self, world, _out, _only)
+		quit()
+		return
+	if _burial:
+		await Burial.run(self, world, _out, _only)
 		quit()
 		return
 	var rig := world.get_node(^"CameraRig") as Node3D

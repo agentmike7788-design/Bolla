@@ -168,7 +168,10 @@ func _watch_hands() -> void:
 			audio.play(map.corpse_pickup_cue if _carried_was_corpse else map.pickup_cue)
 	else:
 		_carried = null
-		if not audio.settling():
+		# G7 Runde 2 (Bestatten): a corpse that left the hands into the grave (its node freed by
+		# Graveyard.bury) already sounded corpse_down in the pit (PlayerBurial) – corpse_buried pours.
+		var buried := before != null and before.is_queued_for_deletion()
+		if not audio.settling() and not buried:
 			audio.play(map.corpse_putdown_cue if _carried_was_corpse else map.putdown_cue)
 
 

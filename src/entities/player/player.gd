@@ -218,7 +218,10 @@ func detach_carried() -> Node3D:
 ## bar fills (actions.real_seconds_for(game_minutes) real seconds), the rest at the end,
 ## then on_done is called. Refused (false) while another action runs. Allowed while LOCKED
 ## (panel buttons pass cancellable = false). Movement input cancels a cancellable action.
-func start_timed_action(label: String, game_minutes: int, on_done: Callable, cancellable: bool = true, animation: StringName = &"interact") -> bool:
+## G7 Runde 2: `real_seconds` > 0 replaces the bar's real duration (a presentation sequence such as
+## the burial) – the game minutes stay `game_minutes`.
+func start_timed_action(label: String, game_minutes: int, on_done: Callable, cancellable: bool = true, animation: StringName = &"interact",
+		real_seconds: float = -1.0) -> bool:
 	if is_busy():
 		return false
 	var action := TimedAction.new()
@@ -227,13 +230,30 @@ func start_timed_action(label: String, game_minutes: int, on_done: Callable, can
 	action.on_done = on_done
 	action.cancellable = cancellable
 	action.animation = animation
-	action.duration = 0.0 if instant_actions else maxf(actions.real_seconds_for(action.minutes), 0.0)
+	var seconds := real_seconds if real_seconds > 0.0 else actions.real_seconds_for(action.minutes)
+	action.duration = 0.0 if instant_actions else maxf(seconds, 0.0)
 	_runner.start(action)
 	if instant_actions:
 		_tick_action(0.0)
 	else:
 		_update_animation(0.0)
 	return true
+
+
+## G7 Runde 2 (Bestatten): the burial at the open grave `plot` as a timed action (cancellable) with
+## the burial clip: he steps to the pit, lays the carried dead into it, stands in silence and fills
+## it (PlayerBurial; the bar runs for that sequence, the game minutes are `game_minutes`). Without a
+## rig or with instant_actions: the plain action with the fill clip's shovel.
+func start_burial(label: String, game_minutes: int, on_done: Callable, plot: GravePlot) -> bool:
+	if is_busy() or _animator == null:
+		return false
+	var seconds := -1.0 if instant_actions else _animator.burial_seconds()
+	if seconds > 0.0:
+		_animator.begin_burial(plot)
+	if start_timed_action(label, game_minutes, on_done, true, _animator.tools.burial_action_clip, seconds):
+		return true
+	_animator.burial.reset()
+	return false
 
 
 ## Stops the running action: minutes already advanced stay, on_done is NOT called.

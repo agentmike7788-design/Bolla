@@ -943,6 +943,42 @@ def shovel_stow_walk(t: float) -> dict:
     return out
 
 
+# --- G7 Runde 2 (Bestatten): laying the dead into the grave ---------------------------------
+# The corpse itself is moved by code (PlayerBurial): from the arms down onto the pit floor while
+# the hands go down with it. Rigid arms, no knees: he bows from the hips (the hips sink and slide
+# back, the planted legs read as bent knees), the arms swing down in front of him.
+
+def _lower_keys() -> tuple:
+    carry = carry_idle(0.0)
+    lean = rig.add(_stance(), _body(14.0), {"arm_l": (-62.0, 14.0, 0.0), "arm_r": (-62.0, -14.0, 0.0)})
+    bow = rig.add(_stance(), {"spine": (50.0, 0.0, 0.0), "head": (-20.0, 0.0, 0.0),
+                              "hips": (6.0, 0.0, 0.0, 0.0, 0.03, -0.09),
+                              "arm_l": (-88.0, 12.0, 0.0), "arm_r": (-88.0, -12.0, 0.0)})
+    let = rig.add(_stance(), {"spine": (54.0, 0.0, 0.0), "head": (-12.0, 0.0, 0.0),
+                              "hips": (6.0, 0.0, 0.0, 0.0, 0.03, -0.1),
+                              "arm_l": (-80.0, 8.0, 0.0), "arm_r": (-80.0, -8.0, 0.0)})
+    return carry, lean, bow, let
+
+
+def corpse_lower(t: float) -> dict:
+    """54 frames = 1.8 s one-shot (ToolAnimConfig.burial_lower_seconds): from carrying, he leans
+    over the open grave and bows deep with the dead on his lowered arms, lets go and stays bowed
+    (the corpse sinks onto the pit floor, PlayerBurial)."""
+    carry, lean, bow, let = _lower_keys()
+    return rig.keyed(t, [(0.0, carry), (0.22, lean), (0.58, bow), (0.82, let), (1.0, let)], wrap=False)
+
+
+def mourn(t: float) -> dict:
+    """30 frames = 1.0 s one-shot (burial_silence_seconds): a moment of silence - he straightens up
+    from the bow, the hands folded low in front, the head bowed; ends at rest (the shovel draw
+    starts from there)."""
+    let = _lower_keys()[3]
+    bowed = {"spine": (6.0, 0.0, 0.0), "head": (22.0, 0.0, 0.0),
+             "arm_l": (-26.0, 24.0, 0.0), "arm_r": (-26.0, -24.0, 0.0), "feet": {"leg_l": 0.0, "leg_r": 0.0}}
+    rest = {"feet": {"leg_l": 0.0, "leg_r": 0.0}}
+    return rig.keyed(t, [(0.0, let), (0.35, bowed), (0.82, bowed), (1.0, rest)], wrap=False)
+
+
 ACTIONS = (  # (name, frames at 30 fps, pose function[, post hook])
     ("idle-loop", 60, idle),
     ("walk-loop", 16, walk),
@@ -954,6 +990,8 @@ ACTIONS = (  # (name, frames at 30 fps, pose function[, post hook])
     ("shovel_stow", 12, shovel_stow, _hold(shovel_stow)),
     ("shovel_stow_walk", 16, shovel_stow_walk, _hold(shovel_stow_walk)),
     ("interact", 24, interact),
+    ("corpse_lower", 54, corpse_lower),
+    ("mourn", 30, mourn),
 )
 
 
