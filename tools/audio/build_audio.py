@@ -78,7 +78,7 @@ class Spec:
 # Target loudness per category (G7 Runde 2, docs/reviews/phase7_round2/perf_audio.md): beds and music
 # stay in the background, steps never nag, UI is discreet. One-shots: max. momentary loudness (400 ms);
 # beds / music: integrated loudness.
-TARGETS = {"bed": -34.0, "emitter": -30.0, "spot": -36.0, "music": -28.0, "sfx": -27.0, "step": -37.0, "ui": -34.0}
+TARGETS = {"bed": -35.0, "emitter": -30.0, "spot": -39.0, "music": -28.0, "sfx": -27.0, "step": -42.0, "ui": -38.0}
 # A one-shot is peak-normalised to this before its level is set by volume_db.
 ONESHOT_PEAK = 0.89
 # Energy share 2–5 kHz above which a one-shot gets a broad dip there (analyze_audio "harsh").
@@ -162,7 +162,7 @@ def MUS(id, gen, **kw):
 
 CATALOG: list[Spec] = [
     # footsteps (player 2D; villagers through Audio.play_at → 3D)
-    S("step_grass", sfx.step_grass, 6, pitch_jitter=0.1, volume_jitter_db=2.5, max_voices=4, max_distance=14, loud=-38),
+    S("step_grass", sfx.step_grass, 6, pitch_jitter=0.1, volume_jitter_db=2.5, max_voices=4, max_distance=14, loud=-43),
     S("step_earth", sfx.step_earth, 6, pitch_jitter=0.1, volume_jitter_db=2.5, max_voices=4, max_distance=14),
     S("step_stone", sfx.step_stone, 6, pitch_jitter=0.09, volume_jitter_db=2.5, max_voices=4, max_distance=14),
     S("step_wood", sfx.step_wood, 6, pitch_jitter=0.09, volume_jitter_db=2.5, max_voices=4, max_distance=14),
@@ -215,8 +215,8 @@ CATALOG: list[Spec] = [
     S("build_remove", sfx.build_remove, 1, volume_db=-11),
     S("sleep", sfx.sleep, 1, volume_db=-12, cooldown=2.0),
     # UI
-    UI("ui_click", sfx.ui_click, 2, volume_db=-14, pitch_jitter=0.04, cooldown=0.03, loud=-37),
-    UI("ui_hover", sfx.ui_hover, 1, volume_db=-24, pitch_jitter=0.05, cooldown=0.06, max_voices=1, loud=-46),
+    UI("ui_click", sfx.ui_click, 2, volume_db=-14, pitch_jitter=0.04, cooldown=0.03, loud=-40),
+    UI("ui_hover", sfx.ui_hover, 1, volume_db=-24, pitch_jitter=0.05, cooldown=0.06, max_voices=1, loud=-48),
     UI("ui_open", sfx.ui_open, 1, volume_db=-14, cooldown=0.1),
     UI("ui_close", sfx.ui_close, 1, volume_db=-15, cooldown=0.1),
     UI("ui_error", sfx.ui_error, 1, volume_db=-13, cooldown=0.25),
@@ -224,10 +224,10 @@ CATALOG: list[Spec] = [
     UI("ui_notify", sfx.ui_notify, 1, volume_db=-18, cooldown=0.4),
     UI("ui_reward", sfx.ui_reward, 1, volume_db=-15, cooldown=0.4),
     # ambience beds (loops)
-    AMB("amb_graveyard_day", amb.amb_graveyard_day, loop=True, volume_db=-10, loud=-35),
-    AMB("amb_graveyard_dusk", amb.amb_graveyard_dusk, loop=True, volume_db=-10, loud=-35),
-    AMB("amb_graveyard_night", amb.amb_graveyard_night, loop=True, volume_db=-11, loud=-35),
-    AMB("amb_forest_edge", amb.amb_forest_edge, loop=True, volume_db=-11, loud=-35),
+    AMB("amb_graveyard_day", amb.amb_graveyard_day, loop=True, volume_db=-10, loud=-36),
+    AMB("amb_graveyard_dusk", amb.amb_graveyard_dusk, loop=True, volume_db=-10, loud=-36),
+    AMB("amb_graveyard_night", amb.amb_graveyard_night, loop=True, volume_db=-11, loud=-36),
+    AMB("amb_forest_edge", amb.amb_forest_edge, loop=True, volume_db=-11, loud=-36),
     AMB("amb_village_day", amb.amb_village_day, loop=True, volume_db=-11),
     AMB("amb_village_night", amb.amb_village_night, loop=True, volume_db=-11),
     AMB("amb_hut", amb.amb_hut, loop=True, volume_db=-12),
