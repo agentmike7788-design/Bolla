@@ -373,7 +373,7 @@ class Face:
             r += self.cheeks * 0.075 * _g(n, (sx * 0.5, -0.8, -0.28), 0.32)
             r -= 0.045 * _g(n, (sx * 0.34, -0.92, 0.13), 0.15)                 # eye sockets
             r += 0.03 * self.brow_ridge * _g(n, (sx * 0.3, -0.9, 0.35), 0.2)
-            r -= 0.06 * self.age * _g(n, (sx * 0.56, -0.74, -0.42), 0.24)      # hollow cheeks
+            r -= 0.08 * self.age * _g(n, (sx * 0.56, -0.74, -0.42), 0.24)      # hollow cheeks
             r -= 0.035 * self.age * _g(n, (sx * 0.74, -0.58, 0.3), 0.22)       # temples
         r += 0.035 * self.muzzle * _g(n, (0.0, -0.86, -0.5), 0.3)
         r += 0.035 * _g(n, (0.0, -0.98, 0.0), 0.13)                            # nose root
@@ -430,7 +430,10 @@ _RES = [1.0]   # resolution factor of the face parts (the seated figures use a c
 def _oell(color, at: Vector, nrm: Vector, scale, seg: int = 8, rings: int = 5, roll: float = 0.0, local=None, **pk):
     """Ellipsoid oriented to a surface: local -Y = out of the surface (nrm), X horizontal."""
     seg, rings = max(6, round(seg * _RES[0])), max(4, round(rings * _RES[0]))
-    o = L.prim("sphere", radius=1.0, scale=scale, segments=seg, ring_count=rings)
+    # poles along local Y: seen from the front the outline is the (finer) segment circle
+    o = L.prim("sphere", radius=1.0, rot=(90, 0, 0), segments=seg, ring_count=rings)
+    for v in o.data.vertices:
+        v.co = Vector((v.co.x * scale[0], v.co.y * scale[1], v.co.z * scale[2]))
     if local:
         for v in o.data.vertices:
             local(v)
@@ -586,6 +589,34 @@ def _cloth_cover(parts, face: Face, color, shade, knots, *, out=0.016, crown: fl
     return obj, edge
 
 
+def _frill(parts, face: Face, edge, color, width: float, phi_max: float, pleats: float = 26.0, seed: int = 0,
+           add=None) -> None:
+    """Pleated linen ruffle round the face along the front of a cover's edge: a band facing forward,
+    the pleats waved in depth and painted light/dark."""
+    add = add or (lambda o: parts.append(W("head", o)))
+    n = len(edge)
+    idx = [j for j in range(n) if abs(-math.pi + math.tau * j / n) <= phi_max]
+    fr = []
+    for a, b in zip(idx, idx[1:]):
+        for t in (0.0, 0.2, 0.4, 0.6, 0.8):
+            fr.append(edge[a].lerp(edge[b], t) + Vector((0, -0.004, 0)))
+    fr.append(edge[idx[-1]] + Vector((0, -0.004, 0)))
+    frill = sweep(fr, width, n=6, flat=0.32, name="frill", normals=[Vector((0, -1, 0.0)) for _ in fr])
+    c = face.c
+
+    def beta(co):
+        return math.atan2(co.z - c.z, co.x - c.x)
+    for v in frill.data.vertices:
+        d = v.co - c
+        rad = Vector((d.x, 0.0, d.z)).normalized()
+        v.co += rad * 0.003   # flare outwards a little
+        v.co.y -= 0.006 * math.sin(beta(v.co) * pleats)
+    _painted(frill, color, var=0.06, ao=0.0, top=0.25, seed=seed, hue_shift=LINEN_SHADE)
+    _tint(frill, lambda co, nr: (1.0 - 0.24 * max(0.0, -math.sin(beta(co) * pleats)), LINEN_SHADE,
+                                 0.3 * max(0.0, -math.sin(beta(co) * pleats))))
+    add(frill)
+
+
 def _head(parts, c: Vector, s: Vector, skin, *, seed: int, nose: str = "round", nose_s: float = 1.0,
           brow=None, brow_w: float = 1.0, brow_tilt: float = 0.0, brow_arch: float = 1.0, eyes: float = 1.0,
           lids: float = 0.15, mouth: str = "smile", smile: float = 1.0, lip=None, ears: bool = True,
@@ -596,7 +627,7 @@ def _head(parts, c: Vector, s: Vector, skin, *, seed: int, nose: str = "round", 
     (kind / worried), < 0 lowers them (stern). lids: 0.1 wide awake .. 0.45 heavy. mouth: smile,
     laugh, thin, stern, kind. Front = -Y. Returns a dict of useful points and the Face."""
     add = add or (lambda o: parts.append(W("head", o)))
-    _RES[0] = 1.0 if detail else 0.62
+    _RES[0] = 1.0 if detail else 0.55
     face = Face(c, s, jaw=jaw, chin=chin, cheeks=cheeks, age=age, muzzle=muzzle)
     k = face.k
     head = L.prim("sphere", loc=(0, 0, 0), radius=1.0, segments=seg, ring_count=rings)
@@ -641,30 +672,33 @@ def _head(parts, c: Vector, s: Vector, skin, *, seed: int, nose: str = "round", 
     _tint(head, shade)
     add(head)
     pts = {"eye": [], "c": c, "s": s, "face": face}
-    eye_k = eyes * k
+    eye_k = eyes * k * 1.08
     for sx in (-1, 1):
         u = sx * ex
         nrm = face.nrm(u, ez)
         e = face.pt(u, ez, -0.0035 * k)
         pts["eye"].append(face.pt(u, ez))
         sw, sd, sh = 0.0235 * eye_k, 0.0115 * eye_k, 0.0165 * eye_k
-        add(_oell(SCLERA, e, nrm, (sw, sd, sh), seg=10, rings=6, ao=0.0, var=0.03, top=0.0, seed=seed + 1))
+        add(_oell(SCLERA, e, nrm, (sw, sd, sh), seg=14, rings=8, ao=0.0, var=0.03, top=0.0, seed=seed + 1))
         ic = e + nrm * (0.0082 * eye_k) + Vector((0, 0, -0.001 * k))
-        add(_oell(iris, ic, nrm, (0.0128 * eye_k, 0.0042 * eye_k, 0.0136 * eye_k), seg=10, rings=5, ao=0.0, var=0.08,
+        add(_oell(iris, ic, nrm, (0.0128 * eye_k, 0.0042 * eye_k, 0.0136 * eye_k), seg=16, rings=6, ao=0.0, var=0.08,
                   top=0.0, seed=seed + 2))
-        add(_oell(PUPIL, ic + nrm * (0.0036 * eye_k), nrm, (0.0062 * eye_k, 0.0016 * eye_k, 0.0068 * eye_k), seg=8,
+        add(_oell(PUPIL, ic + nrm * (0.0036 * eye_k), nrm, (0.0062 * eye_k, 0.0016 * eye_k, 0.0068 * eye_k), seg=12,
                   rings=4, ao=0.0, var=0.0, top=0.0))
         if detail:
             add(_oell(GLEAM, ic + nrm * (0.0052 * eye_k) + Vector((0.0035 * k, 0.0, 0.0042 * k)), nrm,
                       (0.0027 * k, 0.0012 * k, 0.0027 * k), seg=6, rings=3, ao=0.0, var=0.0, top=0.0))
         # the upper lid: a skin cap over the top of the eye, its lower edge drawn by the lash line
         cover = max(0.05, min(0.6, lids))
-        zc = sh * 1.1 * (1.0 - 2.0 * cover)
+        zc = sh * 1.1 * (1.0 - 2.0 * cover) - sh * 0.3 * 0.7
         lw, ld, lh = sw * 1.1, sd * 1.25, sh * 1.1
 
-        def lidf(v, zc=zc):
-            if v.co.z < zc:
-                v.co.z = zc
+        arch = sh * 0.3   # the lid edge arches over the iris (awake, friendly), lowest at the corners
+
+        def lidf(v, zc=zc, arch=arch, lw=lw):
+            z0 = zc + arch * (1.0 - min(1.0, (v.co.x / lw) ** 2))
+            if v.co.z < z0:
+                v.co.z = z0
         lidc = L.mix(skin, FACE_SHADE, 0.25)
         add(_oell(lidc, e, nrm, (lw, ld, lh), seg=12, rings=7, local=lidf, ao=0.0, var=0.04, top=0.15, seed=seed + 3))
         xm = lw * math.sqrt(max(0.0, 1.0 - (zc / lh) ** 2))
@@ -673,11 +707,11 @@ def _head(parts, c: Vector, s: Vector, skin, *, seed: int, nose: str = "round", 
         for i in range(7):
             t = -1.0 + 2.0 * i / 6
             x = t * xm * 0.98
-            y = -ld * math.sqrt(max(0.0, 1.0 - (x / lw) ** 2 - (zc / lh) ** 2)) * 1.02
-            lash.append(m_eye @ Vector((x * sx, y, zc + 0.0006 * k)))
-        lash.append(m_eye @ Vector((sx * xm * 1.18, -ld * 0.25, zc + 0.003 * k)))   # a small flick outwards
+            za = zc + arch * (1.0 - (x / lw) ** 2)
+            y = -ld * math.sqrt(max(0.0, 1.0 - (x / lw) ** 2 - (za / lh) ** 2)) * 1.02
+            lash.append(m_eye @ Vector((x * sx, y, za + 0.0006 * k)))
         lr = 0.0021 * k
-        add(_painted(sweep(lash, [lr * 0.6, lr, lr * 1.2, lr * 1.25, lr * 1.25, lr * 1.2, lr, lr * 0.5], n=5 if detail else 4,
+        add(_painted(sweep(lash, [lr * 0.5, lr, lr * 1.2, lr * 1.25, lr * 1.3, lr * 1.3, lr * 1.0], n=5 if detail else 4,
                            name="lash"), LASH, ao=0.0, var=0.05, top=0.0))
         if detail and age > 0.3:   # lower lid / bags
             bag = []
@@ -690,41 +724,63 @@ def _head(parts, c: Vector, s: Vector, skin, *, seed: int, nose: str = "round", 
             add(_painted(sweep(bag, [0.0015 * k, 0.0026 * k, 0.003 * k, 0.0026 * k, 0.0015 * k], n=5, name="bag"),
                          L.mix(skin, FACE_SHADE, 0.35), ao=0.0, var=0.04, top=0.1))
         if brow is not None:
-            us = [0.1, 0.22, 0.36, 0.5]
-            arch = [0.0, 0.035, 0.032, 0.0]
-            tilt = [0.12, 0.055, 0.0, -0.035]
-            bw = [0.0058, 0.0072, 0.0062, 0.0034]
-            bp = [face.pt(sx * uu * eye_gap ** 0.5, 0.35 + arch[i] * brow_arch + brow_tilt * tilt[i] - (0.02 if i == 3 else 0.0),
+            us = [0.09, 0.17, 0.26, 0.36, 0.45, 0.53]
+            arch = [0.0, 0.022, 0.034, 0.034, 0.02, -0.01]
+            tilt = [0.12, 0.08, 0.04, 0.0, -0.02, -0.04]
+            bw = [0.0052, 0.0068, 0.0072, 0.0064, 0.005, 0.0028]
+            bp = [face.pt(sx * uu * eye_gap ** 0.5, 0.37 + arch[i] * brow_arch + brow_tilt * tilt[i] - (0.012 if i == 5 else 0.0),
                           0.0035 * k) for i, uu in enumerate(us)]
-            br = sweep(bp, [r * brow_w * k for r in bw], n=6, flat=0.55, name="brow",
+            br = sweep(bp, [r * brow_w * k for r in bw], n=6, flat=0.5, name="brow",
                        normals=[face.nrm(sx * uu, 0.36) for uu in us])
-            add(_painted(br, brow, ao=0.0, var=0.12, top=0.25, seed=seed + 4))
+            L.jitter(br, 0.0018 * k * brow_w, 60.0, seed + 4 + sx)
+            _painted(br, brow, ao=0.0, var=0.12, top=0.1, seed=seed + 4)
+            _tint(br, lambda co, nr: (1.0 - 0.18 * max(0.0, math.sin(co.x * 900.0 + co.z * 400.0)), None, 0.0))
+            add(br)
+    # age: painted lines (thin strokes on the skin - too fine for the head's vertex colours)
+    if age > 0.25:
+        line_c = L.mix(skin, FACE_SHADE, 0.45)
+
+        def stroke(uw, r):
+            ps = [face.pt(u, w, 0.0006 * k) for u, w in uw]
+            add(_painted(sweep(ps, [r * k * (0.5 + 0.5 * math.sin(math.pi * (i + 0.5) / len(ps))) for i in range(len(ps))],
+                               n=4, flat=0.4, normals=[face.nrm(u, w) for u, w in uw], name="line"),
+                         line_c, ao=0.0, var=0.04, top=0.0))
+        for sx in (-1, 1):
+            stroke([(sx * 0.15, -0.19), (sx * 0.21, -0.3), (sx * 0.25, mz + 0.03)], 0.0024 * min(1.0, age + 0.2))
+            if age > 0.5:   # crow's feet, marionette lines
+                for dz in (-0.06, 0.0, 0.06):
+                    stroke([(sx * (ex + 0.21), ez + dz * 0.6), (sx * (ex + 0.3), ez + dz * 1.4)], 0.0018)
+                stroke([(sx * 0.26, mz - 0.05), (sx * 0.27, mz - 0.15)], 0.0016 * age)
+        if age > 0.5 and detail:   # forehead lines (hidden under a cap or hair where there is one)
+            for wz in (0.52, 0.6):
+                stroke([(-0.3, wz - 0.02), (-0.15, wz), (0.0, wz + 0.01), (0.15, wz), (0.3, wz - 0.02)], 0.0016 * age)
     # nose: a soft bridge growing out of the face, a rounded tip, the wings
     ns = nose_s * k
-    tip_out = {"round": 0.015, "button": 0.011, "straight": 0.013, "long": 0.015, "hook": 0.016}.get(nose, 0.016) * nose_s * k
+    tip_out = {"round": 0.0125, "button": 0.0095, "straight": 0.0115, "long": 0.013, "hook": 0.014}.get(nose, 0.016) * nose_s * k
     tip_w = {"round": -0.15, "button": -0.13, "straight": -0.16, "long": -0.17, "hook": -0.18}.get(nose, -0.18)
     tip_r = {"round": (0.024, 0.021, 0.021), "button": (0.019, 0.016, 0.016), "straight": (0.017, 0.017, 0.017),
              "long": (0.017, 0.018, 0.018), "hook": (0.018, 0.019, 0.019)}.get(nose, (0.02, 0.02, 0.02))
     nose_col = L.mix(skin, cc, 0.22)
     bump = 0.005 * ns if nose == "hook" else 0.0
     ridge = [face.pt(0.0, 0.06, -0.008 * k), face.pt(0.0, -0.02, 0.002 * ns + bump * 0.5),
-             face.pt(0.0, -0.06, tip_out * 0.62 + bump), face.pt(0.0, tip_w + 0.03, tip_out * 0.88)]
+             face.pt(0.0, -0.06, tip_out * 0.66 + bump), face.pt(0.0, tip_w + 0.02, tip_out * 0.95)]
     rr = {"round": 0.0115, "button": 0.009, "straight": 0.0085, "long": 0.009, "hook": 0.0095}.get(nose, 0.011) * ns
-    add(_painted(sweep(ridge, [rr * 0.6, rr * 0.85, rr * 1.1, rr * 1.3], n=10 if detail else 6, flat=0.85, name="nose"), L.mix(skin, nose_col, 0.4), ao=0.0,
+    add(_painted(sweep(ridge, [rr * 0.6, rr * 0.9, rr * 1.25, rr * 1.55], n=10 if detail else 6, flat=0.85, name="nose"), L.mix(skin, nose_col, 0.4), ao=0.0,
                  var=0.05, top=0.08, seed=seed + 5))
     tip = face.pt(0.0, tip_w, tip_out)
     tnrm = (face.nrm(0.0, tip_w) + Vector((0, 0, -0.15 if nose == "hook" else 0.0))).normalized()
-    add(_oell(nose_col, tip, tnrm, tuple(r * nose_s * k for r in tip_r), seg=12, rings=7, ao=0.0, var=0.05, top=0.2,
+    add(_oell(nose_col, tip, tnrm, tuple(r * nose_s * k for r in tip_r), seg=16, rings=9, ao=0.0, var=0.05, top=0.2,
               seed=seed + 6))
+    wing = 1.0 if nose in ("round", "button") else 0.75
     for sx in ((-1, 1) if detail else ()):
-        wp = face.pt(sx * 0.12 * (nose_s ** 0.5), tip_w - 0.02, tip_out * 0.35)
-        add(_oell(L.mix(nose_col, FACE_SHADE, 0.15), wp, face.nrm(sx * 0.12, tip_w), (0.011 * ns, 0.009 * ns, 0.0095 * ns),
-                  seg=8, rings=5, roll=sx * 20, ao=0.0, var=0.05, seed=seed + 7))
+        wp = face.pt(sx * 0.11 * wing * (nose_s ** 0.5), tip_w - 0.01, tip_out * 0.15)
+        add(_oell(L.mix(nose_col, FACE_SHADE, 0.15), wp, face.nrm(sx * 0.12, tip_w), (0.0095 * ns * wing, 0.008 * ns * wing, 0.0085 * ns * wing),
+                  seg=10, rings=6, roll=sx * 20, ao=0.0, var=0.05, seed=seed + 7))
     pts["nose"] = tip
     # mouth
     lipc = lip or L.mix(cc, MOUTH, 0.25)
     pts["mouth"] = face.pt(0.0, mz)
-    mw = 0.2 * mouth_w
+    mw = 0.22 * mouth_w
     curve = {"smile": 0.045, "laugh": 0.06, "kind": 0.035, "thin": 0.0, "stern": -0.025}.get(mouth, 0.03) * smile
     mpts, mrad = [], []
     for i in range(7):
@@ -749,14 +805,14 @@ def _head(parts, c: Vector, s: Vector, skin, *, seed: int, nose: str = "round", 
                   (0.012 * k * mouth_w, 0.004 * k, 0.0045 * k), seg=8, rings=4, ao=0.0, var=0.04, top=0.3, seed=seed + 9))
     if ears:
         for sx in (-1, 1):
-            d = Vector((sx * 1.0, 0.06, -0.06)).normalized()
+            d = Vector((sx * 1.0, 0.1, -0.06)).normalized()
             base = face.world(d)
             en = face.normal(d)
-            ec = base + en * 0.004 * k
-            add(_oell(L.mix(skin, cc, 0.3), ec, en, (0.026 * k, 0.012 * k, 0.037 * k), seg=10, rings=6,
+            ec = base + en * 0.001 * k
+            add(_oell(L.mix(skin, cc, 0.3), ec, en, (0.023 * k, 0.011 * k, 0.034 * k), seg=10, rings=6,
                       roll=0.0, ao=0.0, var=0.06, top=0.1, seed=seed + 10))
             if detail:
-                add(_oell(L.mix(skin, FACE_SHADE, 0.45), ec + en * 0.009 * k + Vector((0, -0.003 * k, 0)), en,
+                add(_oell(L.mix(skin, FACE_SHADE, 0.3), ec + en * 0.0065 * k + Vector((0, -0.003 * k, 0)), en,
                           (0.014 * k, 0.004 * k, 0.022 * k), seg=8, rings=4, ao=0.0, var=0.04, top=0.0))
     _RES[0] = 1.0
     return pts
@@ -1253,13 +1309,8 @@ def grocer():
     _, edge = _cloth_cover(parts, face, GR_BONNET, LINEN_SHADE, bk,
                            out=lambda ph, w: 0.014 + 0.035 * max(0.0, -math.cos(ph)) * _s01((w + 0.1) / 0.8),
                            crown=0.01, folds=9.0, seed=32, name="bonnet")
-    # frill round the face: a wavy ruffle standing round the bonnet's edge
-    n = len(edge)
-    fr = [edge[j] + Vector((0, -0.004, 0)) for j in range(n) if abs(-math.pi + math.tau * j / n) <= 1.5]
-    frill = sweep(fr, 0.017 * face.k, n=6, flat=0.35, name="frill", normals=[Vector((0, -1, 0.0)) for _ in fr])
-    for v in frill.data.vertices:
-        v.co.y += 0.005 * math.sin(v.co.x * 140.0 + v.co.z * 90.0)
-    parts.append(W("head", _painted(frill, GR_BONNET, var=0.08, ao=0.0, top=0.3, seed=33, hue_shift=LINEN_SHADE)))
+    # frill round the face: a pleated ruffle standing round the bonnet's edge
+    _frill(parts, face, edge, GR_BONNET, 0.019 * face.k, 1.5, seed=33)
     bow = face.world(Face.around(0.0, -0.97), 0.02)
     for sx in (-1, 1):  # ribbons tied under the chin
         p0 = face.world(Face.around(sx * 1.38, -0.55), 0.016)
@@ -1505,16 +1556,15 @@ def mayor():
     c = Vector((0.0, -0.03, 1.63))
     s = Vector((0.118, 0.13, 0.155))
     pts = _head(parts, c, s, SKIN_PALE, seed=30, nose="hook", nose_s=1.0, brow=MY_HAIR_DARK, brow_w=1.0, brow_tilt=-0.25,
-                brow_arch=0.8, mouth="thin", smile=1.0, lip=LIP_PALE, cheeks=0.3, jaw=0.84, chin=0.06, age=0.75,
+                brow_arch=0.8, mouth="kind", smile=0.35, lip=LIP_PALE, cheeks=0.3, jaw=0.84, chin=0.06, age=0.75,
                 lids=0.22, iris=IRIS_GREY, muzzle=0.8)
     face = pts["face"]
     _hair(parts, face, MY_HAIR, MY_HAIR_DARK, [(0.0, 0.62), (0.35, 0.56), (0.7, 0.36), (1.1, 0.14), (1.45, 0.04),
                                                (1.8, -0.3), (math.pi, -0.5)], out=0.007, crown=0.008, comb="back",
           tuft=0.0, seed=31)
     for sx in (-1, 1):   # side rolls (old fashion) over the ears
-        r0 = face.world(Face.around(sx * 1.9, -0.02), 0.012)
-        r1 = face.world(Face.around(sx * 1.45, -0.12), 0.014)
-        parts.append(W("head", _painted(sweep([r0, r1], [0.022, 0.02], n=8, name="roll"), MY_HAIR, var=0.12, ao=0.1,
+        rp = [face.world(Face.around(sx * a, w), 0.012) for a, w in ((2.1, 0.0), (1.85, -0.04), (1.6, -0.1))]
+        parts.append(W("head", _painted(sweep(rp, [0.014, 0.018, 0.015], n=8, name="roll"), MY_HAIR, var=0.12, ao=0.1,
                                         seed=32, hue_shift=MY_HAIR_DARK)))
     q0 = face.world(Face.around(math.pi, -0.35), 0.008)
     parts.append(W("head", _painted(sweep([q0, q0 + Vector((0, 0.03, -0.08)), q0 + Vector((0, 0.03, -0.2))], [0.022, 0.018, 0.01],
@@ -1735,7 +1785,7 @@ def washer():
     s = Vector((0.13, 0.132, 0.142))
     pts = _head(parts, c, s, SKIN_OLD, seed=30, nose="straight", nose_s=1.0, brow=WA_HAIR, brow_w=1.0, brow_tilt=0.45,
                 brow_arch=0.9, mouth="kind", smile=0.75, cheeks=0.65, cheek_col=L.hexc("#D47462"), jaw=0.95, chin=0.02,
-                age=0.35, lids=0.2, iris=IRIS_BLUE, ears=False)
+                age=0.2, lids=0.2, iris=IRIS_BLUE, ears=False)
     face = pts["face"]
     _hair(parts, face, WA_HAIR, WA_HAIR_GREY, [(0.0, 0.42), (0.6, 0.34), (1.0, 0.08), (1.3, -0.16), (math.pi, -0.5)],
           out=0.005, crown=0.003, part_u=0.0, seed=31)
@@ -1801,7 +1851,7 @@ OW_SHAWL = L.hexc("#1F1E1F")
 OW_FRINGE = L.hexc("#333032")
 OW_CAP = L.hexc("#D8D1C2")
 OW_HAIR = L.hexc("#C8C4BE")
-OW_HAIR_DARK = L.hexc("#AFA89C")
+OW_HAIR_DARK = L.hexc("#8E877C")
 POPPY = L.hexc("#8A4A3C")          # dried poppy: dull, brownish red
 POPPY_DARK = L.hexc("#5E3A32")
 POPPY_STEM = L.hexc("#7C7456")
@@ -1895,20 +1945,15 @@ def oldwoman():
     s = Vector((0.12, 0.124, 0.13))
     pts = _head(parts, c, s, SKIN_OLD, seed=30, nose="hook", nose_s=0.9, brow=OW_HAIR_DARK, brow_w=0.9, brow_tilt=0.8,
                 brow_arch=1.0, mouth="kind", smile=1.0, lip=LIP_PALE, cheeks=0.6, jaw=0.88, chin=0.08, age=1.0,
-                eyes=0.96, lids=0.26, iris=IRIS_GREY, muzzle=0.9)
+                eyes=0.96, lids=0.26, iris=IRIS_GREY, muzzle=0.9, ears=False)
     face = pts["face"]
-    _hair(parts, face, OW_HAIR, OW_HAIR_DARK, [(0.0, 0.36), (0.7, 0.28), (1.2, 0.0), (1.5, -0.22), (math.pi, -0.38)],
+    _hair(parts, face, OW_HAIR, OW_HAIR_DARK, [(0.0, 0.52), (0.7, 0.44), (1.2, 0.05), (1.5, -0.22), (math.pi, -0.38)],
           out=0.006, crown=0.004, part_u=0.0, tuft=0.004, seed=31)
-    _, edge = _cloth_cover(parts, face, OW_CAP, LINEN_SHADE, [(0.0, 0.64), (0.7, 0.54), (1.2, 0.08), (1.5, -0.3),
+    _, edge = _cloth_cover(parts, face, OW_CAP, LINEN_SHADE, [(0.0, 0.76), (0.7, 0.64), (1.2, 0.1), (1.5, -0.3),
                                                              (2.2, -0.42), (math.pi, -0.4)],
                            out=lambda ph, w: 0.014 + 0.045 * max(0.0, -math.cos(ph)) ** 2 * _s01((w + 0.35) / 0.6),
                            crown=0.006, folds=10.0, seed=33, name="cap")
-    n = len(edge)
-    fr = [edge[j] + Vector((0, -0.003, 0)) for j in range(n) if abs(-math.pi + math.tau * j / n) <= 1.55]
-    frill = sweep(fr, 0.014 * face.k / 0.9, n=6, flat=0.4, normals=[Vector((0, -1, 0.0)) for _ in fr], name="frill")
-    for v in frill.data.vertices:
-        v.co.y += 0.004 * math.sin(v.co.x * 150.0 + v.co.z * 100.0)
-    parts.append(W("head", _painted(frill, OW_CAP, var=0.08, ao=0.0, top=0.3, seed=34, hue_shift=LINEN_SHADE)))
+    _frill(parts, face, edge, OW_CAP, 0.014 * face.k, 1.55, seed=34)
     mesh = L.join(parts, rig.MESH)
     _global_light(mesh, 1.42)
     L.smooth(mesh, 55)
