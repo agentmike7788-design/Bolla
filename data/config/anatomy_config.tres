@@ -6,7 +6,7 @@
 script = ExtResource("1")
 organs = Dictionary[StringName, Dictionary]({
 &"eyes": {
-"base_price": 9,
+"base_price": 11,
 "containers": [&"jar"],
 "label": "Augen",
 "lecture_bonus": 3,
@@ -26,7 +26,7 @@ organs = Dictionary[StringName, Dictionary]({
 }
 },
 &"hand": {
-"base_price": 10,
+"base_price": 12,
 "containers": [&"bundle"],
 "label": "Hand",
 "lecture_bonus": 4,
@@ -47,7 +47,7 @@ organs = Dictionary[StringName, Dictionary]({
 }
 },
 &"heart": {
-"base_price": 7,
+"base_price": 9,
 "containers": [&"jar", &"bundle"],
 "label": "Herz",
 "lecture_bonus": 2,

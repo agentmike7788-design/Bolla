@@ -10,7 +10,7 @@ const ORGANS: Array[StringName] = [&"heart", &"lung", &"stomach", &"liver", &"ki
 ## mood, return_piety, sell_rel {priest, washer, oldwoman}, lecture_bonus, medicine, res_tag,
 ## res_weight (+ res_role for the hand)} – §2.6 table, §2.6.4 Organzuschlag, §2.7 medicine, Phase-13 hooks.
 @export var organs: Dictionary[StringName, Dictionary] = {
-	&"heart": {"label": "Herz", "containers": [&"jar", &"bundle"], "minutes": 20, "base_price": 7, "quality": -2,
+	&"heart": {"label": "Herz", "containers": [&"jar", &"bundle"], "minutes": 20, "base_price": 9, "quality": -2,
 			"reputation_event": &"organ_taken", "piety": -8, "mood": -5, "return_piety": 3,
 			"sell_rel": {&"priest": -4, &"washer": -3, &"oldwoman": -2}, "lecture_bonus": 2, "medicine": false,
 			"res_tag": &"will", "res_weight": 3},
@@ -30,11 +30,11 @@ const ORGANS: Array[StringName] = [&"heart", &"lung", &"stomach", &"liver", &"ki
 			"reputation_event": &"organ_taken", "piety": -6, "mood": -5, "return_piety": 3,
 			"sell_rel": {&"priest": -4, &"washer": -3, &"oldwoman": -2}, "lecture_bonus": 1, "medicine": true,
 			"res_tag": &"water", "res_weight": 1},
-	&"eyes": {"label": "Augen", "containers": [&"jar"], "minutes": 25, "base_price": 9, "quality": -3,
+	&"eyes": {"label": "Augen", "containers": [&"jar"], "minutes": 25, "base_price": 11, "quality": -3,
 			"reputation_event": &"organ_taken_grave", "piety": -12, "mood": -8, "return_piety": 5,
 			"sell_rel": {&"priest": -6, &"washer": -5, &"oldwoman": -2}, "lecture_bonus": 3, "medicine": false,
 			"res_tag": &"sight", "res_weight": 2},
-	&"hand": {"label": "Hand", "containers": [&"bundle"], "minutes": 30, "base_price": 10, "quality": -3,
+	&"hand": {"label": "Hand", "containers": [&"bundle"], "minutes": 30, "base_price": 12, "quality": -3,
 			"reputation_event": &"organ_taken_grave", "piety": -12, "mood": -8, "return_piety": 5,
 			"sell_rel": {&"priest": -6, &"washer": -5, &"oldwoman": -2}, "lecture_bonus": 4, "medicine": false,
 			"res_tag": &"grip", "res_weight": 3, "res_role": &"frame"},

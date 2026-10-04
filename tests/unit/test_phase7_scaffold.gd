@@ -372,9 +372,10 @@ func test_extended_data_classes() -> void:
 	assert_eq((Database.config(&"economy_config") as EconomyConfig).harvest_malus, e.harvest_malus, "economy_config.tres (P4)")
 
 
-## Values changed in the data (and the class default) after the W0 hand-over; the fixtures keep the W0 values
-## (W0-Notizen 5). G7 Runde 2 (B7-1): the reputation start bonus 0/2/4/6/8 – nobody starts above „Bekannt".
-const DATA_CHANGED_AFTER_W0 := {&"relationship_config": {&"rep_start_bonus": [0, 2, 4, 6, 8]}}
+## Properties changed in the data (and the class default together) after the W0 hand-over; the fixtures keep the
+## W0 values (W0-Notizen 5). G7 Runde 2: B7-1 the reputation start bonus 0/2/4/6/8 (nobody starts above „Bekannt"),
+## B7-2 Quast's prices for heart / eyes / hand +2 (9 / 11 / 12).
+const DATA_CHANGED_AFTER_W0 := {&"relationship_config": [&"rep_start_bonus"], &"anatomy_config": [&"organs"]}
 
 
 func test_config_files_in_data_match_the_fixtures() -> void:
@@ -387,17 +388,28 @@ func test_config_files_in_data_match_the_fixtures() -> void:
 			continue
 		assert_eq((real.get_script() as Script).get_global_name(), (fixture.get_script() as Script).get_global_name(), String(name))
 		var defaults: Resource = (real.get_script() as GDScript).new()
-		var changed: Dictionary = DATA_CHANGED_AFTER_W0.get(name, {})
+		var changed: Array = DATA_CHANGED_AFTER_W0.get(name, [])
 		for prop: Dictionary in real.get_property_list():
 			if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
-				if changed.has(StringName(prop.name)):
-					# Deliberately changed after the hand-over: data = class default = the new value; the fixture keeps W0.
-					assert_eq(Array(real.get(prop.name)), changed[StringName(prop.name)], "%s.%s (changed)" % [name, prop.name])
-					assert_eq(Array(defaults.get(prop.name)), changed[StringName(prop.name)], "%s.%s = class default" % [name, prop.name])
+				if StringName(prop.name) in changed:
+					# Deliberately changed after the hand-over: data = class default; the fixture keeps W0.
+					assert_eq(real.get(prop.name), defaults.get(prop.name), "%s.%s (changed) = class default" % [name, prop.name])
 					continue
 				assert_eq(real.get(prop.name), fixture.get(prop.name), "%s.%s" % [name, prop.name])
 				assert_eq(defaults.get(prop.name), fixture.get(prop.name), "%s.%s = class default" % [name, prop.name])
 
+	var rel_cfg := Database.config(&"relationship_config") as RelationshipConfig
+	assert_eq(Array(rel_cfg.rep_start_bonus), [0, 2, 4, 6, 8], "G7 Runde 2 (B7-1)")
+	var anat := Database.config(&"anatomy_config") as AnatomyConfig
+	var fixture_anat := Phase7Fixtures.anatomy_config()
+	for organ: StringName in anat.organs:
+		var want: int = {&"heart": 9, &"eyes": 11, &"hand": 12}.get(organ, int(fixture_anat.organs[organ].base_price))
+		assert_eq(int(anat.organs[organ].base_price), want, "G7 Runde 2 (B7-2): base_price %s" % organ)
+		var rest: Dictionary = (anat.organs[organ] as Dictionary).duplicate(true)
+		var rest_fixture: Dictionary = (fixture_anat.organs[organ] as Dictionary).duplicate(true)
+		rest.erase("base_price")
+		rest_fixture.erase("base_price")
+		assert_eq(rest, rest_fixture, "%s: everything else = W0" % organ)
 
 func test_village_relationship_orders_npc_config_values() -> void:
 	var v := Phase7Fixtures.village_config()
