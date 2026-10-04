@@ -389,3 +389,108 @@ Die Dorfbewohner, die einen Toten auf dem Hügel haben, kommen selbst herauf. Si
   - „Lauf. Und komm nicht wieder." → `robber_let_go`: Pietät **+2**, Liesel **+2**, Fenner **−2** (er hört es von Veit); Lambert ist fort. Später Veit: „Der Grell hat Arbeit in der Ziegelei. Er lässt grüßen. Nicht dich, aber er meint dich."
 - **Nie gestellt:** Nach der **dritten** aufgewühlten Nacht fängt ihn Fenners Nachtwächter (`robber_caught_watch`, kein Ruf). Fenner: „Drei offene Gräber, Totengräber. Drei." Danach ist Ruhe.
 - Er nimmt nichts, er kämpft nicht, er tut dem Totengräber nichts. Eine Leiche verlässt das Grab nie (§2.3). Er erscheint nicht am Lichtgang und in keiner Nacht mit Kerze an seinem Ziel.
+
+### 2.7 Dorffeste (`data/festivals/<id>.tres` – `FestivalData`)
+**Entscheidung: zwei Feste, die zum Kalender passen (Spieltag 1 = 3. Gilbhart 1834, Phase 5): der Kathreintanz und der Lichtgang** (Bestätigung §14.3). *Begründung:* Phase 8 beginnt Ende Nebelung (Bogen A: 24. Nebelung). Erntedank und Kirchweih (St. Gallus, 16. Gilbhart) sind dann vorbei. „Kathrein stellt den Tanz ein" ist der letzte Tanz vor dem Advent, und der Lichtgang ist ein **eigener Hollerbrücker Brauch**, der aus der Geschichte des Dorfes kommt (Fährwinter) und genau zum Friedhof passt. Kein Fest ist Pflicht fürs Kapitel (§1.5).
+
+#### 2.7.1 Kathreintanz (`fest_kathrein`, 25. Nebelung = Spieltag 54, Priorität B)
+- **19:00–23:00 in der Gaststube.** Ein Spielmann vom „Stumpf" sitzt mit der Fiedel am Ofen (`ph_chr_fiddler`, sitzend, ohne Rig, Bogenarm als Kindmesh in einem einfachen GDScript-Wiegen), Musik `ph_mus_dance` (Kontext `fest`, ersetzt die Dorfmusik). Tische an die Wand gerückt, Tannengrün und Bänder an den Balken (Kathrein-Schmuck nur an diesem Tag, §4.7).
+- Da sind (Fest-Einträge mit `today_flag fest_kathrein_day`): Rosine, Esch, Theres, Fenner, Osric, Jakob, Lenz (19:00–20:00, „bis die Musik zu schnell wird"), Liesel (20:00–21:00), Hanne, wenn ihr Tag ist; Quast nicht. Paare tanzen auf der freien Fläche (`dance`, langsames Drehen und Wiegen; die starren Arme liegen auf den Schultern, §8.2).
+- **Spieler:** ≥ 30 Min in der Gaststube → +2 bei allen Anwesenden (einmal, wie die Runde aus Phase 7) · „[E] Mit Theres tanzen (15 Min)" mit Partnern ≥ „Bekannt", höchstens 2, je **+3** (`kathrein_danced`) · die Runde (5) wie in Phase 7. Um 23:00: Rosine „Kathrein stellt den Tanz ein. Bis Weihnachten wird hier gesessen."
+- Liegt Spieltag 54 vor `p8_open_day`, fällt der Kathreintanz in diesem Spiel aus (keine Verschiebung).
+
+#### 2.7.2 Lichtgang (`fest_lights`, Vorabend des ersten Advents, 29. Nebelung = Spieltag 58, Priorität A)
+- **Der Brauch:** Seit dem Fährwinter tragen die Hollerbrücker am Abend vor dem ersten Advent Lichter zu ihren Toten hinauf, „damit die, die im Wasser geblieben sind, den Weg sehen". Bis Lorenz fortging, war der Hügel an diesem Abend voller Lichter; letztes Jahr ging niemand hinauf.
+- **Ablauf (alles sichtbar):**
+  | Zeit | Ort | Geschehen |
+  |---|---|---|
+  | 07:40 | Bahre | Osric bringt 12 `grave_candle` vom Pfarrer: „Für die, zu denen keiner hinaufgeht." |
+  | 16:00 | Dorf, Holderbrücke | alle sammeln sich mit Laternen (leuchtendes Material, kein Licht an Figuren) |
+  | 16:45–17:00 | Friedhof, Kutschweg → Tor | der Zug kommt herauf: Lenz vorn, dann Haushalte und Bewohner, Jakob trägt die Laterne für seine Mutter (Region-Übergang an `road_end` wie bei Besuchen) |
+  | 17:00–17:40 | an den Gräbern | jede Familie stellt ihre Lichter auf ihre Gräber und steht oder kniet 10 Min (Besuchsablauf §2.2.3 ohne Wunsch); Theres verbrennt am Kirchhof die Seiten (wenn Schritt 2) |
+  | 17:40 | Kirchhof vor der Kapelle | Lenz spricht drei Sätze (kein Predigt-Minispiel): „Wir zünden kein Licht für Gott an. Der sieht auch so. Wir zünden es für die an, die den Weg vergessen haben." Glocke der Kapelle (ab Stufe 2, sonst Handglocke). Lenz Schritt 3: du liest die Namen. |
+  | 18:00–18:30 | Tor → Kutschweg | der Zug geht hinunter; die Lichter brennen bis 07:00 |
+- **Spieler:** Lenz' 12 Kerzen auf Gräber **ohne** Angehörige stellen und anzünden (3 Min je Grab; Jakob nicht, er hat frei). Die Zielzeile zählt mit: „Kein Grab ohne Licht: 31/34". Brennt um **18:00** auf jedem belegten Grab ein Licht → `lights_all`: **Ruf +3**, alle Bewohner **+2**, Lenz +3, jeder Haushalt Wohlwollen +2, Pietät +2. Sonst bei ≥ der Hälfte `lights_some`: Ruf +1. (Bogen A: ≈ 34 belegte Gräber, davon ≈ 14 mit Angehörigen; 12 Kerzen von Lenz + ≥ 8 eigene.)
+- **Geister:** Auf Gräbern mit Licht zeigen sich die Geister in dieser Nacht schon ab 17:00, eine halbe Stunde lang nur als blasser Schimmer (Alpha 0,35, nur der Totengräber sieht sie; `GhostManager.early_window`, reine Darstellung), danach normal. Ihre Stimmung bekommt für diese Nacht +2 statt +1 für die Kerze. Eigener Zeilen-Pool `by_lights`.
+- **Kein Grabräuber, keine Besuche bei Tag, Jakob frei, Ilse kommt nicht** („Am Lichtgang? Zu viel Licht für eine wie mich.").
+- **Verschiebung (einmal je Spiel):** Liegt Spieltag 58 **vor** `p8_open_day + 3`, findet der Lichtgang an `p8_open_day + 3` statt. Lenz: „Wir haben ihn verschoben. Der Hügel war nicht so weit." Flag `lights_held` nach dem Fest; danach kein zweiter Lichtgang in Phase 8.
+
+### 2.8 Die dritte Reihe im Lindenacker (`data/sections/linden.tres` erweitert, Bestätigung §14.2)
+**Vorschlag: Fenner gibt vier weitere Stellen `l_09…l_12` als dritte Reihe am Südrand des Lindenackers.** *Begründung:* Am Phase-7-Ende ist der Lindenacker voll (G7: alle Bots), es kommen keine Lieferungen mehr. Ohne neue Tote gäbe es in Phase 8 keine ersten Besuche, keinen Grund für den Nachtgräber und keinen Platz für D2. Vier Stellen tragen ≈ 4 Lieferungen im Bogen A, eine davon ist für D2 reserviert. Der Acker ist schon geweiht („Geweiht ist der ganze Acker, nicht die Reihe." – Lenz).
+- Freigabe: erstes Gespräch mit Fenner ab `p8_open` (Flag `linden_row3_granted`, Notiz „Die Gemeinde gibt dir die dritte Reihe am Lindenacker."). Hindernisse ab der Freigabe: 1 Baumstumpf (`stump`, 30 Min, Axt-Faktor) und 1 Brombeere (`bramble`, 40 Min) = 70 Min. Die Plots öffnen, sobald beide geräumt sind (`ExpansionManager.try_unlock`, die Weihe gilt schon).
+- Lage, Zaun und versetzte Elemente: §4.7 (L10–L13). Ohne Freigabe durch den Benutzer (§14.2 Option a) gibt es nur **eine** Stelle `l_09` am Westrand für D2, und der Bogen hat 1 statt 4 Lieferungen.
+
+### 2.9 D2 Gerhard Ott (Geschichts-Leiche, `data/story/d2_ott.tres`, `data/finds/f_d2_*.tres`)
+- **Gerhard Ott**, 74, Altbauer, `old_age` (laut Osric „das Herz, sagt Quast"), Merkmal `strange_wound` (gezeichnet), Look alter Mann (`ph_prop_corpse_03`), keine Wertsachen. Reihenfolge 7 nach D1. ✦ `StoryCorpseData.due_flag &"ott_dead"` setzt `NightPaths` in der Todesnacht (02:10); geliefert am Morgen danach (Osric 07:40), nur mit freier Stelle (in der dritten Reihe reserviert, Phase-4-Reservierungsregel). `kin_house` = `house_ott` (Gesa Ott besucht ab dem Tag nach der Bestattung).
+- Osric bei der Ankunft: „Der alte Ott. Heute Nacht. Liesel war schon da, als ich kam. Sie ist immer schon da."
+- **Funde** (Phase-4-Untersuchung): `f_d2_bottle` (Taschen, 0,0) „Ein Fläschchen, halb leer. Auf dem Etikett: ‚nach Quast – drei Tropfen am Abend'." · `f_d2_wax` (Kleidung, 0,0) „Ein Wachstropfen am Kragen. Kirchenkerzen tropfen so." · `f_d2_shirt` (Kleidung, 0,0) „Das Hemd unter dem Kittel ist frisch gewaschen und gestärkt. Wer wäscht einen Mann, bevor er tot ist?" · `f_d2_mark` (Wunden, 0,3, **ersetzt** `f_mark`) „Das Zeichen über dem Herzen, verheilt seit gut drei Wochen. Wie bei der Hagedorn." Sind `f_d2_bottle`, `f_d2_wax` und `f_d2_shirt` aufgedeckt → Hinweis `c_n_ott_three` (§1.6).
+- Geist (`by_story`): „Drei waren da. Einer hat gebetet, einer hat gezählt, eine hat gewartet." · „Gesa hat Strohblumen gebracht. Die halten länger als ich."
+
+### 2.10 Münzrechnung (würdevoller Spieler, Bogen A)
+**Ausgangslage (G7, `qa_playthrough.md`):** `neighbor7` endet mit **60** Münzen, `anatomist7` mit **71** (G7 Runde 2). Phase 8 bringt **wenig neue Einnahmen** (4 Bestattungen in der dritten Reihe, Trinkgeld, Verkäufe an Hanne) und **laufende, kleine Ausgaben** (Lehrling 3/Tag, Kerzen, Setzlinge, Almosen, Grabgitter). Ziel: Der Beutel wächst nicht schneller als in Phase 7 (dort +40 in 13 Tagen), und **Trinkgeld bleibt unter 15 % der Einnahmen**.
+
+| Einnahmen (10 Tage) | Rechnung | Münzen |
+|---|---|---|
+| Start (B1 früh) | W0-Messung | ≈ 60 |
+| Pflegegeld | 9 × 4 (B2–B10) | 36 |
+| Bestattungen in der dritten Reihe | 4 × ≈ 13 (G6/G7: ≈ 13 je Grab mit Stele) | 52 |
+| Aussegnungsgebühren | 3 × 5 | 15 |
+| **Trinkgeld** | 8 Wünsche mit Geld, je 2 (Kappe 4/Tag) | **18** |
+| Verkäufe im Dorf und an Hanne (Kräuter, Garn, Wundsalbe) | gedeckelt je Tag (Phase 7 §2.3) | 25 |
+| Geistergaben | Lichtgang, Andächtig | 5 |
+| **Verfügbar** | | **≈ 211** |
+
+| Ausgaben | Münzen |
+|---|---|
+| Lehrling: Lohn 8 Arbeitstage × 3 · Kinderrechen 3 · Gießkanne 4 | 24 · 7 |
+| Grabblumen (4 Setzlinge) · Grabkerzen (14 eigene) · Wachskranz | 8 · 14 · 5 |
+| Grabgitter (freiwillig) | 12 |
+| Almosen (4 Tage) · Runde am Kathreintanz · Geschenke | 4 · 5 · 12 |
+| Namenstafel (Tinte + Blattgold, Rosine Schritt 2) | 7 |
+| Bestattungsware (Leinen, Wacholder, Altarkerzen für 4 Leichen) | 24 |
+| Kleinkram (Tinte für Inschrift-Wünsche) | 1 |
+| **Summe** | **123 (58 %)** |
+
+| | B1 | B2 | B3 | B4 | B5 | B6 | B7 | B8 | B9 | B10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Morgens (+4 ab B2) | 60 | 57 | 56 | 65 | 67 | 64 | 70 | 82 | 83 | 90 |
+| Ausgaben | 7 | 8 | 19 | 8 | 22 | 5 | 16 | 12 | 19 | 7 |
+| Einnahmen (ohne Pflegegeld) | 0 | 3 | 24 | 6 | 15 | 7 | 24 | 9 | 22 | 5 |
+| Abends | 53 | 52 | 61 | 63 | 60 | 66 | 78 | 79 | 86 | **88** |
+- Morgens nie unter **56**; Ende ≈ **88** (+28 in 10 Tagen, langsamer als Phase 7). Ohne Grabgitter und Wachskranz ≈ 105, ohne Lehrling ≈ 119 (dafür ≈ 25 Stunden mehr Pflege). Trinkgeld = **16 %** der neuen Einnahmen ohne Start, 9 % des Verfügbaren.
+- **Andere Wege (Erwartung für W3):**
+  | Weg | Start | Ende (≈ 10 Tage) | Bemerkung |
+  |---|---|---|---|
+  | `kindly8` (v6 neighbor) | 60 | 75–100 | Bogen A; Kapitel B8–B10 |
+  | `anatomist8` (v6 anatomist) | 71 | 80–110 | Präparate an 3 Lieferungen; Trinkgeld kleiner (Gerede §2.2.4), Lenz und Liesel höchstens „Bekannt": Kladde über Fenner |
+  | `lazy8` (v6 neighbor, kein Lehrling, keine Wünsche angenommen) | 60 | 95–125 | Kapitel **nicht** erreicht (gewollt: Bedingungen 1 und 2) – bis zum Abbruch keine Fehler |
+  | `night8` (v6 neighbor, jede Nacht wach, nie ein Gitter) | 60 | 85–110 | alle Beobachtungen, Lambert gestellt (beide Ausgänge über zwei Läufe), Kapitel erreicht |
+  | `founder8` (v6 founder, neues Spiel) | ≈ 40–90 | wie A | Kapitel ≤ Tag 68, Lichtgang ggf. verschoben |
+- *Prüfregel:* Ende ≤ Start + 50 bei allen Wegen, Morgen nie < 5, Trinkgeld ≤ 25 je Bogen. Liegt `kindly8` über Start + 50, senkt P2 zuerst `tip_cap_day` auf 3, danach P3 den Lohn nicht (er ist die Senke), sondern P2 die Hanne-Ankaufspreise um 1.
+
+### 2.11 Items, Ruf, Pietät, Geister, Statistik
+**Neue Items** (`data/items/*`, Phase 8)
+| id | Name | Kategorie | Stapel | Herkunft | Zweck |
+|---|---|---|---|---|---|
+| `flower_seedlings` | Grabblumen (Heide, Christrosen im Topf) | MATERIAL | 10 | Theres 2, Hanne 2 | §2.3 |
+| `grave_candle` | Grabkerze im Glas | MATERIAL | 10 | Theres 1, Hanne 1, Lenz (Lichtgang) | §2.3 |
+| `watering_can` | Gießkanne | TOOL | 1 | Esch 4, Hanne 4 | Gießen (Füllstand in `GraveCare`) |
+| `apprentice_rake` | Kinderrechen | TOOL | 1 | Esch 3 | nur in Jakobs Kiste sinnvoll |
+| `mortsafe` | Grabgitter | GOODS | 4 | Esch 12 / 8 | §2.3 |
+| `wax_wreath` | Wachskranz | GOODS | 5 | Hanne 5 | §2.6.2 |
+| `register_extract` | Abschrift aus dem Grabregister | GOODS | 5 | Hütte, Register (20 Min, 1 Tinte) | Theres 2, Lenz 1 |
+| `memorial_plate` | Namenstafel „Konrad Wackernagel" | CRAFTED | 1 | Steinmetzbank, 40 Min | Rosine 2 |
+| `quast_crate` | versiegelte Kiste für die Stadt | GOODS | 1 | Quast | Quast 2 |
+| `lorenz_ledger_2` | Lorenz' zweite Kladde | GOODS | 1 | Pfarrarchiv | im Merkbuch lesen → `c_n_kladde`; kann nicht verkauft werden |
+- Neues Rezept `memorial_plate` (Station Steinmetzbank, `requires_flag friend_innkeeper_2`). Neue Laden-Einträge: Theres + `flower_seedlings` 2 · 4, `grave_candle` 1 · 6; Esch + `watering_can` 4 · 1, `apprentice_rake` 3 · 1, `mortsafe` 12 · 2 (ab `robber_known`, 8 nach Esch Schritt 2).
+
+**Ruf** (`ReputationConfig.event_points` +): `visit_pleased +1`, `visit_neglected −1`, `visit_disturbed −3`, `visit_noise −1`, `visit_specimen_rumor −1`, `wish_done +1`, `robber_reported +3`, `lights_all +3`, `lights_some +1`, `fenner_watch +1`. Tageskappe für `visit_pleased` 2.
+**Pietät** (`PietyConfig.events` +): `alms +1`, `listen +1` (Zuhören), `robber_let_go +2`, `lights_all +2`. Kein neues Minus: die Folgen des Verwahrlosens trägt der Ruf.
+**Beziehung** (`RelationshipConfig.gains` +): `talk_cheerful 2`, `listen 3`, `danced 3`, `kathrein 2`, `wish_done_villager 4`, `friend_step_1/2/3` 6/8/10, `favor_returned 4`, `favor_unreturned −6`, `lights_all 2`, `jakob_scolded −1` (Rosine), `jakob_unpaid −2` (Rosine).
+**Geister:** `GhostMood.score(…, care)` mit `care` ≤ +2 (Blumen/Strauß +1, Kerze +1, am Lichtgang Kerze +2, Lenz' Fürbitte +3 als eigener Posten `prayer`, gedeckelt wie Andacht Phase 6), `disturbed −3`. Neue Pools in `GhostLines`: `by_flowers` („Es riecht nach Heide. Das kenne ich vom Hof."), `by_candle` („Ein Licht. Für mich?"), `by_visited` („Sie war da. Sie hat nicht geweint. Das ist ihre Art."), `by_disturbed` („Jemand war an mir. Nicht du. Du gräbst anders."), `by_lights` („So viele Lichter. Ich dachte, ich bin allein hier oben."). Vorrang: `disturbed` > `robbed_organ` (P7) > `robbed` > `lights` > `visited` > `candle` > `flowers` > bisherige.
+**Statistik** (`GameState.DEFAULT_STATS` +): `visits_seen`, `visits_total`, `wishes_done`, `wishes_failed`, `tips_coins`, `flowers_planted`, `candles_lit`, `mortsafes_set`, `graves_disturbed`, `graves_closed`, `apprentice_days`, `apprentice_jobs`, `apprentice_mistakes`, `apprentice_wage`, `friend_steps`, `favors_used`, `favors_returned`, `alms_given`, `chatters_seen`, `listens`, `dances`, `night_visits_observed`, `robber_encounters`, `coins_spent_apprentice`, `coins_spent_alms`, `coins_spent_peddler`.
+**Münz-Zwecke** (`GameState.COIN_REASONS` +): `&"apprentice"`, `&"alms"`, `&"peddler"`. Einnahmen-Gründe: „Trinkgeld", „Verkauf an Hanne".
+
+### 2.12 Osric und Ilse
+- **Osric** (`carter.tres`, `carter_village.tres`, P6): `p8_intro` (§1.2) · Lichtgang-Kerzen (§2.7.2) · nach der ersten Nacht des Nachtgräbers: „Ich hab auf dem Weg einen gesehen, um zwei, mit Spaten. Ich hab nicht angehalten. Ich halte nie an." (setzt `robber_known`, falls noch nicht) · D2 (§2.9) · im Dorf über Jakob: „Der Junge fragt mir Löcher in den Bauch. Wie tief, wie lang, wie schwer. Ich sag ihm: frag den da oben." Keine Beziehung in Phase 8 (wie Phase 7).
+- **Ilse** (`trader.tres`, P6), neue Fragen ab `p8_open`: „Kennst du einen Grell?" (ab `robber_known`) → „Der gräbt für die Stadt. Ich kaufe nur, was über der Erde liegt. Das ist ein Unterschied, auch wenn du ihn nicht siehst." · „Was weißt du über Veit?" → „Veit sieht alles und verkauft nichts davon. Das mag ich an ihm." · Am Lichtgang kommt sie nicht (Eintrag mit `today_flag fest_lights_day` verbirgt sie). Ilse bleibt ohne Beziehung und ohne Besuch am Grab.
