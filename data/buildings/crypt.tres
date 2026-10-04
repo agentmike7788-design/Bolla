@@ -25,9 +25,9 @@ level = 2
 model = ExtResource("m2")
 title = "Kühlgewölbe"
 inputs = Dictionary[StringName, int]({&"workstone": 4, &"stone": 8, &"clay": 4, &"iron_bar": 1})
-coins = 30
+coins = 40
 minutes = 210
-coin_part_label = "Schieferplatten für die Nischen"
+coin_part_label = "Schieferplatten, Kalk und Mörtel"
 text = "Schieferbänke in den Wandnischen halten die Kälte. Hinter dem Beinhaus kommt beim Ausbau eine vermauerte Tür zum Vorschein."
 adds = PackedStringArray("4 Kühlnischen (× 0,4)", "Raumkühle × 0,7", "Beinhaus: 5 Plätze", "Gebeinregal", "Eine vermauerte Tür")
 

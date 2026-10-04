@@ -198,7 +198,7 @@ func _install(version: String, name: String) -> Error:
 
 ## Id of the corpse on the table in the fixture file ("" = none), read straight from the JSON.
 func _table_corpse_in_file(version: String, name: String) -> String:
-	var dir := {"v1": "saves_v1", "v2": "saves_v2", "v3": "saves_v3", "v4": "saves_v4"}.get(version, "saves_v5")
+	var dir: String = {"v1": "saves_v1", "v2": "saves_v2", "v3": "saves_v3", "v4": "saves_v4"}.get(version, "saves_v5")
 	var text := FileAccess.get_file_as_string("res://tests/fixtures/%s/%s.json" % [dir, name])
 	var found := [""]
 	var parsed: Variant = JSON.parse_string(text)

@@ -2210,7 +2210,8 @@ func test_carter_p6_intro_once_from_buildings_open() -> void:
 	_go(r, &"remark_skipped")
 	assert_eq(_id(r), &"p6_intro")
 	var text := r.current_text()
-	for word: String in ["Gemeinderat", "Brett vor deiner Hütte", "alten Eiche", "Gruft", "Kapelle", "Beinhaus", "Vier Münzen"]:
+	# 04.10.2026 (Gruft von Beginn an): the council lets the gravekeeper extend his crypt under the oak.
+	for word: String in ["Gemeinderat", "Gruft unter der Eiche", "Ausbauen", "Gruft", "Kapelle", "Beinhaus", "Vier Münzen"]:
 		assert_true(text.contains(word), word)
 	assert_true(GameState.has_flag(&"p6_intro"))
 	_go(r, &"menu")

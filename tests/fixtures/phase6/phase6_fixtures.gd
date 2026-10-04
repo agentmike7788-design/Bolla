@@ -151,6 +151,10 @@ static func room_config(room_id: StringName) -> InteriorConfig:
 static func buildings_at(levels: Dictionary, tree: SceneTree = null) -> Buildings:
 	var b := Buildings.new()
 	b.config = buildings_config()
+	# The fixture buildings (no start_level): the level-0 mechanics stay testable without a world
+	# (04.10.2026: the game data starts the crypt at level 1).
+	for data: BuildingData in buildings():
+		b.building_table[data.id] = data
 	var saved := {}
 	for id: Variant in levels:
 		saved[String(id)] = int(levels[id])

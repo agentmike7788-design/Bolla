@@ -195,7 +195,8 @@ func test_node_stubs_instantiate_with_groups() -> void:
 		node.free()
 	var b := Buildings.new()
 	assert_eq(b.site_rects, [] as Array[Rect2], "Buildings.site_rects export")
-	assert_eq([b.level(&"crypt"), b.level(&"chapel"), b.level(&"shed")], [0, 0, 0], "§12: stub level 0 (old table active)")
+	# 04.10.2026 (Gruft von Beginn an): the crypt's start level 1 from the game data.
+	assert_eq([b.level(&"crypt"), b.level(&"chapel"), b.level(&"shed")], [1, 0, 0], "§12: new Buildings – crypt 1, the rest sites")
 	b.free()
 	for cls: String in ["BuildingSite", "CryptNiche", "OssuaryShelf", "SealedPassage", "Catafalque", "ChapelAltar", "MournerSet",
 			"InteriorRoom", "RoomExit", "BuildingDoor"]:

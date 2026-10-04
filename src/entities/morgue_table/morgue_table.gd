@@ -13,6 +13,9 @@ extends Node3D
 ## hut retires at crypt 1, the crypt table starts there, so exactly one table is active. An inactive
 ## table is hidden, without collision and prompt, sees no corpse; props with meta "follows_table"
 ## (its own children, or nodes of the world whose meta names this table) follow it.
+## Changed 04.10.2026 (user's wish „Gruft von Beginn an“): the crypt has level 1 from the start of a game
+## (BuildingData.start_level), so in play the crypt table is always the active one and the old table never
+## works; it stays in the layout for worlds without a Buildings node. MorgueTable.active(tree) finds it.
 
 const GROUP := &"morgue_table"
 const MANAGER_GROUP := &"corpse_manager"
