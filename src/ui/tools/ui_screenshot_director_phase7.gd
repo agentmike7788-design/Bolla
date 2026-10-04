@@ -4,9 +4,11 @@ extends Node
 ## systems. The Phase-7 systems the world does not have yet (Systems/Village, Relationships,
 ## VillageShops, Orders, Specimens, Lectures, Deductions; the pult's cold box and the collection shelf –
 ## W-Welt's builder adds them) are added at runtime from their own scripts / scenes; nothing is written to
-## the world files. Without the village scene (W-Welt, W2) the village panels are shot over the
-## graveyard and Rosine's remark over a stand-in of her model at the gate – the final series with the
-## village is the lead's / QA's (§11).
+## the world files. W3 (QA7): the village panels are shot in the real village region (Regions/Village,
+## RegionTravel.arrive – the region's camera, its Npcs at their schedule spots): the shop at Theres'
+## window, the gift and the round in the Holderkrug, the board at the linden, Rosine's remark at the well
+## (her real Npc), the arrival with the place name at the bridge, Quast's panel in the surgery and the
+## lecture there on a lecture night (Quast at the lectern by his schedule).
 ## Shots (1280×720, <out>/ui_<name>.jpg), the §11 number in brackets:
 ##   organs_armed (17) · organ_veil (18) · shop (19) · anatomist (20) · board (21) · journal_village,
 ##   journal_orders (22) · remark (23) · insight_deathbook (27) · chapter_name_in_village (28) ·
@@ -332,12 +334,47 @@ func _place_player(at: Vector3, facing: float = PI) -> void:
 
 func _at_gate() -> void:
 	_out_of_rooms()
+	_to_graveyard()
 	var gate := _world.get_waypoint(&"dropoff")
 	_place_player(gate + Vector3(1.2, 0.0, 2.6))
 
 
+## Back on the graveyard (the region of the most shots) – RegionTravel's arrival without the clock.
+func _to_graveyard() -> void:
+	if _player.region_id == &"graveyard":
+		return
+	if _player.in_interior:
+		HutPortal.arrive(_player, Transform3D(Basis.IDENTITY, _player.global_position), false)
+	var gate := _world.get_waypoint(&"dropoff")
+	RegionTravel.arrive(_player, &"graveyard", Transform3D(Basis(Vector3.UP, PI), gate + Vector3(1.2, 0.0, 2.6)), 0)
+
+
+## In Hollerbrück at the region-local spot (x, z) facing `facing` (0 = south), or inside `room` (its
+## spawn, then the region-local room spot). The village Npcs place themselves from the clock.
+func _in_village(local: Vector2, facing: float = PI, room: StringName = &"", room_spot: Vector2 = Vector2.INF) -> void:
+	_unframe()
+	if _player.in_interior:
+		HutPortal.arrive(_player, Transform3D(Basis.IDENTITY, _player.global_position), false)
+	var v := RegionRoot.find(get_tree(), &"village")
+	var at := v.global_position + Vector3(local.x, 0.0, local.y)
+	at.y = v.ground_height(Vector2(at.x, at.z))
+	RegionTravel.arrive(_player, &"village", Transform3D(Basis(Vector3.UP, facing), at), 0)
+	if room != &"":
+		var r := InteriorRoom.find(get_tree(), room)
+		HutPortal.arrive(_player, r.spawn_transform(), true, room)
+		if room_spot != Vector2.INF:
+			var p := r.global_transform * Vector3(room_spot.x, 0.0, room_spot.y)
+			_player.global_transform = Transform3D(Basis(Vector3.UP, facing), p)
+	for npc: Node in get_tree().get_nodes_in_group(&"npc"):
+		if npc.has_method(&"refresh"):
+			npc.call(&"refresh")
+	_world.get_node(^"CameraRig").call(&"snap")
+	await get_tree().process_frame
+
+
 func _in_crypt() -> void:
 	_unframe()
+	_to_graveyard()
 	var room := InteriorRoom.find(get_tree(), &"crypt")
 	if room == null:
 		push_error("[UiShotsP7] no crypt room")
@@ -354,6 +391,7 @@ func _in_crypt() -> void:
 func _out_of_rooms() -> void:
 	if _player.in_interior:
 		HutPortal.arrive(_player, Transform3D(Basis.IDENTITY, _world.get_waypoint(&"dropoff") + Vector3(0.0, 0.0, -2.0)), false)
+	_to_graveyard()
 
 
 ## A running TimedAction (veil shots) holds still for the picture: the player stops processing once
@@ -376,8 +414,8 @@ func _finish_actions() -> void:
 
 ## Arriving: the place name bottom left and the objective line of the arc.
 func _hud_village_shot() -> void:
-	_at_gate()
 	TimeManager.set_time(DAY, 640)
+	await _in_village(Vector2(-24.6, 1.5), deg_to_rad(90.0))
 	GameState.set_flag(&"linden_granted", false)
 	_ui.hud.refresh_all()
 	_ui.region_label.show_region(&"village")
@@ -389,8 +427,8 @@ func _hud_village_shot() -> void:
 
 ## Theres at her shop window, „Befreundet": gold leaf, one coin less from 4 up.
 func _shop_shot() -> void:
-	_at_gate()
 	TimeManager.set_time(DAY, 600)
+	await _in_village(Vector2(-12.4, 7.6), deg_to_rad(-90.0))
 	_pack({&"coin": 23, &"herbs": 6, &"elderberries": 9, &"yarn": 3, &"shovel_iron": 1})
 	_ui.open_panel(&"shop", {"shop_id": &"grocer", "inventory": _player.inventory, "player": _player})
 	var panel := _ui.get_panel(&"shop") as ShopPanel
@@ -399,7 +437,8 @@ func _shop_shot() -> void:
 
 
 func _gift_shot() -> void:
-	_at_gate()
+	TimeManager.set_time(DAY, 760)
+	await _in_village(Vector2(15.0, -9.0), PI, &"inn", Vector2(0.9, 1.3))
 	_pack({&"coin": 12, &"honey_cake": 2, &"herb_bundle": 1, &"wood": 4, &"elderberries": 3, &"shovel_iron": 1})
 	GameState.set_flag(&"gifts_known_innkeeper", true)
 	_ui.open_panel(&"gift", {"npc_id": &"innkeeper", "inventory": _player.inventory, "player": _player})
@@ -407,7 +446,8 @@ func _gift_shot() -> void:
 
 
 func _board_shot() -> void:
-	_at_gate()
+	TimeManager.set_time(DAY, 760)
+	await _in_village(Vector2(-6.4, 7.4), PI)
 	_pack({&"coin": 18, &"wood": 6, &"stone": 3, &"shovel_iron": 1})
 	_orders.apply_morning(TimeManager.day)
 	var ids: Array[StringName] = _orders.board()
@@ -418,20 +458,13 @@ func _board_shot() -> void:
 	await get_tree().process_frame
 
 
-## Rosine's remark – over a stand-in of her model at the gate (the village scene is W-Welt's).
+## Rosine's remark – her real Npc at the well (06:10–06:40, §2.2), the gravekeeper passing by.
 func _remark_shot() -> void:
-	_at_gate()
-	TimeManager.set_time(DAY, 680)
-	var stand := (preload("res://src/ui/tools/ui_shot_npc_stand_in.gd") as GDScript).new() as Node3D
-	stand.name = "ShotRosine"
-	stand.set(&"npc_id", &"innkeeper")
-	_world.add_child(stand)
-	var model := (load(INNKEEPER_MODEL) as PackedScene).instantiate() as Node3D
-	stand.add_child(model)
-	var at := _player.global_position + Vector3(-1.6, 0.0, -0.6)
-	at.y = _world.ground_height(Vector2(at.x, at.z))
-	stand.global_transform = Transform3D(Basis(Vector3.UP, 0.6), at)
-	_frame(at + Vector3(0.8, 0.0, 0.0), 9.0)
+	TimeManager.set_time(DAY + 1, 385)
+	await _in_village(Vector2(3.2, 0.4), deg_to_rad(-140.0))
+	var rosine := _ui.remark_bubbles.find_npc(&"innkeeper")
+	if rosine != null:
+		_frame(rosine.global_position.lerp(_player.global_position, 0.5), 10.0)
 	await get_tree().process_frame
 	EventBus.villager_remarked.emit(&"innkeeper", "Wackernagel hat für dich einen Stuhl am Ofen frei. Den kriegt sonst nur der Pfarrer.")
 
@@ -524,8 +557,9 @@ func _anatomist_shot() -> void:
 	var display := _piece(b, &"stomach", SpecimenRecord.CONTAINER_JAR)
 	_specimens.make_display(display, _player.inventory)
 	GameState.stats[&"university_standing"] = 1
-	_at_gate()
-	_ui.open_panel(&"anatomist", {"speaker": _player, "inventory": _player.inventory})
+	TimeManager.set_time(TimeManager.day, 600)
+	await _in_village(Vector2(14.6, -2.0), PI, &"surgery", Vector2(0.4, 0.6))
+	_ui.open_panel(&"anatomist", {"speaker": _ui.remark_bubbles.find_npc(&"surgeon"), "inventory": _player.inventory})
 	await get_tree().process_frame
 
 
@@ -604,8 +638,8 @@ func _lecture_shot() -> void:
 	_piece(a, &"heart", SpecimenRecord.CONTAINER_JAR)
 	_piece(a, &"liver", SpecimenRecord.CONTAINER_JAR)
 	_lecture_night()
-	_at_gate()
-	_ui.open_panel(&"lecture", {"speaker": _player, "inventory": _player.inventory, "player": _player})
+	await _in_village(Vector2(14.6, -2.0), PI, &"surgery", Vector2(-1.2, 1.4))
+	_ui.open_panel(&"lecture", {"speaker": _ui.remark_bubbles.find_npc(&"surgeon"), "inventory": _player.inventory, "player": _player})
 	await get_tree().process_frame
 
 
@@ -616,8 +650,8 @@ func _lecture_veil_shot() -> void:
 	var a := _on_table("Hedwig Lamprecht", 58, &"fever")
 	_piece(a, &"heart", SpecimenRecord.CONTAINER_JAR)
 	_lecture_night()
-	_at_gate()
-	_ui.open_panel(&"lecture", {"speaker": _player, "inventory": _player.inventory, "player": _player})
+	await _in_village(Vector2(14.6, -2.0), PI, &"surgery", Vector2(-1.2, 1.4))
+	_ui.open_panel(&"lecture", {"speaker": _ui.remark_bubbles.find_npc(&"surgeon"), "inventory": _player.inventory, "player": _player})
 	var panel := _ui.get_panel(&"lecture") as LecturePanel
 	_player.instant_actions = false
 	panel.request_hold()
