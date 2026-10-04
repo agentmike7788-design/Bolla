@@ -25,6 +25,12 @@ const GRAVE_TEXTS: Dictionary[StringName, String] = {&"free": "Freie Grabstelle"
 const MARGIN := 30.0
 ## Smallest font a section name shrinks to while it does not fit its area.
 const MIN_AREA_FONT := 14
+## The static sheet is painted in this many layers (paper and tufts · the wood in WOOD_PARTS slices · land
+## and ways · trees, houses, graves · labels and frame). A bake ahead of time (map closed) paints one layer
+## per frame, so no frame carries the whole sheet (≈ 15 ms instead of ≈ 75 ms on a desktop CPU); a bake
+## while the map is shown paints all at once.
+const WOOD_PARTS := 4
+const LAYERS := 4 + WOOD_PARTS
 
 var cfg: MapConfig
 var layout: MapLayout
@@ -52,7 +58,7 @@ var hotspots: Array[Dictionary] = []
 
 ## Sheets baked so far (tests: a re-open with the same state bakes nothing).
 var bake_count: int = 0
-## Times paint_static() ran (one per bake once the bake was drawn).
+## Sheets painted completely (all LAYERS of a bake drawn).
 var paint_count: int = 0
 
 var _font: Font
@@ -60,20 +66,25 @@ var _font: Font
 var _ci: CanvasItem
 ## Size of the sheet being painted (px, map coordinates).
 var _sheet: Vector2 = Vector2.ZERO
-## Region -> {viewport: SubViewport, painter: SheetPainter, key: String}.
+## Region -> {viewport: SubViewport, painters: Array[SheetPainter], key: String, pending: int}; pending =
+## the next layer to paint while a bake is spread over frames (-1 = done).
 var _bakes: Dictionary[StringName, Dictionary] = {}
 var _view: TextureRect
+## Wood placement per region and sheet geometry (_wood_points).
+static var _wood_cache: Dictionary[String, Array] = {}
 var _marks: Control
 
 
-## Draws the static sheet of one region inside its SubViewport (snapshot of the canvas state at bake time).
+## Draws one layer of the static sheet of a region inside its SubViewport (snapshot of the canvas state
+## at bake time).
 class SheetPainter extends Control:
 	var canvas: MapCanvas
 	var snap: Dictionary = {}
+	var layer: int = 0
 
 	func _draw() -> void:
 		if canvas != null:
-			canvas.paint_static(self, snap)
+			canvas.paint_static(self, snap, layer)
 
 
 ## The live overlay over the baked sheet.
@@ -102,16 +113,19 @@ func _init() -> void:
 	marks.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_marks = marks
 	add_child(_marks)
+	set_process(false)
 
 
-## Shows `region_id` of `the_layout` with the live `context` (MapState.context).
-func show_region(region_id: StringName, the_layout: MapLayout, context: Dictionary, config: MapConfig) -> void:
+## Shows `region_id` of `the_layout` with the live `context` (MapState.context). `ahead` = a bake for later
+## (map closed): a changed sheet is painted one layer per frame instead of all in this frame.
+func show_region(region_id: StringName, the_layout: MapLayout, context: Dictionary, config: MapConfig,
+		ahead: bool = false) -> void:
 	region = region_id
 	layout = the_layout
 	ctx = context
 	cfg = config
 	_rebuild()
-	_bake()
+	_bake(ahead)
 	_marks.queue_redraw()
 
 
@@ -164,7 +178,7 @@ func _bake_scale() -> float:
 	return clampf(snappedf(s, 0.05), 0.5, 2.0)
 
 
-func _bake() -> void:
+func _bake(spread: bool = false) -> void:
 	if layout == null or cfg == null:
 		_view.texture = null
 		return
@@ -176,28 +190,75 @@ func _bake() -> void:
 		vp.disable_3d = true
 		vp.transparent_bg = false
 		vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
-		var painter := SheetPainter.new()
-		painter.canvas = self
-		painter.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		vp.add_child(painter)
+		var painters: Array[SheetPainter] = []
+		for layer: int in LAYERS:
+			var painter := SheetPainter.new()
+			painter.canvas = self
+			painter.layer = layer
+			painter.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			painter.visible = false          # shown (and so drawn) when its layer is due
+			vp.add_child(painter)
+			painters.append(painter)
 		add_child(vp)
-		b = {"viewport": vp, "painter": painter, "key": ""}
+		b = {"viewport": vp, "painters": painters, "key": "", "pending": -1}
 		_bakes[region] = b
 	_view.texture = (b.viewport as SubViewport).get_texture()
 	if b.key == key:
+		if not spread and int(b.pending) >= 0:
+			_finish(b)
 		return
 	b.key = key
 	bake_count += 1
 	var sheet := sheet_size()
 	var s := _bake_scale()
 	var vp: SubViewport = b.viewport
-	var painter: SheetPainter = b.painter
 	vp.size = Vector2i(ceili(sheet.x * s), ceili(sheet.y * s))
 	vp.canvas_transform = Transform2D.IDENTITY.scaled(Vector2(s, s))
-	painter.size = sheet
-	painter.snap = static_snapshot()
-	painter.queue_redraw()
-	vp.render_target_update_mode = SubViewport.UPDATE_ONCE
+	var snap := static_snapshot()
+	for painter: SheetPainter in b.painters:
+		painter.size = sheet
+		painter.snap = snap
+	b.pending = 0
+	if spread:
+		set_process(true)
+	else:
+		_finish(b)
+
+
+## Paints the remaining layers of bake `b` now and renders it once.
+func _finish(b: Dictionary) -> void:
+	var painters: Array[SheetPainter] = b.painters
+	for layer: int in range(int(b.pending), LAYERS):
+		painters[layer].visible = true
+		painters[layer].queue_redraw()
+	b.pending = -1
+	(b.viewport as SubViewport).render_target_update_mode = SubViewport.UPDATE_ONCE
+
+
+## A bake spread over frames: one layer of one sheet per frame; the sheet renders after its last layer.
+func _process(_delta: float) -> void:
+	for id: StringName in _bakes:
+		var b := _bakes[id]
+		var layer := int(b.pending)
+		if layer < 0:
+			continue
+		var painter: SheetPainter = b.painters[layer]
+		painter.visible = true
+		painter.queue_redraw()
+		b.pending = layer + 1
+		if layer + 1 >= LAYERS:
+			b.pending = -1
+			(b.viewport as SubViewport).render_target_update_mode = SubViewport.UPDATE_ONCE
+		return
+	set_process(false)
+
+
+## True while a sheet is still being painted layer by layer.
+func baking() -> bool:
+	for id: StringName in _bakes:
+		if int(_bakes[id].pending) >= 0:
+			return true
+	return false
 
 
 ## Sheet position (px) of a region-local position (m).
@@ -426,9 +487,10 @@ func order_markers() -> Array[Dictionary]:
 
 # --- paint ----------------------------------------------------------------------------------
 
-## Paints the static sheet (everything but the people, the orders and the hat) on `ci` – the baked layer.
-## `snap` is the state of the bake (static_snapshot()); the live state is restored afterwards.
-func paint_static(ci: CanvasItem, snap: Dictionary) -> void:
+## Paints the static sheet (everything but the people, the orders and the hat) on `ci` – the baked layer;
+## `layer` 0..LAYERS-1 one part of it, -1 all. `snap` is the state of the bake (static_snapshot()); the live
+## state is restored afterwards.
+func paint_static(ci: CanvasItem, snap: Dictionary, layer: int = -1) -> void:
 	if snap.is_empty() or snap.layout == null or snap.cfg == null:
 		return
 	var live := static_snapshot()
@@ -436,22 +498,30 @@ func paint_static(ci: CanvasItem, snap: Dictionary) -> void:
 	_ci = ci
 	_font = get_theme_default_font()
 	var sheet := Rect2(Vector2.ZERO, _sheet)
-	ci.draw_texture_rect(MapPaint.paper(cfg), sheet, false)
-	_draw_tufts()
-	_draw_surround()
-	_draw_sections()
-	_draw_waters()
-	_draw_ways()
-	_draw_fences()
-	_draw_cliffs()
-	_draw_trees()
-	_draw_buildings()
-	_draw_graves()
-	_draw_landmarks()
-	_draw_labels()
-	_draw_frame(sheet)
+	if layer <= 0:
+		ci.draw_texture_rect(MapPaint.paper(cfg), sheet, false)
+		_draw_tufts()
+	for part: int in WOOD_PARTS:
+		if layer < 0 or layer == 1 + part:
+			_draw_surround(part)
+	var land := 1 + WOOD_PARTS
+	if layer < 0 or layer == land:
+		_draw_sections()
+		_draw_waters()
+		_draw_ways()
+		_draw_fences()
+		_draw_cliffs()
+	if layer < 0 or layer == land + 1:
+		_draw_trees()
+		_draw_buildings()
+		_draw_graves()
+		_draw_landmarks()
+	if layer < 0 or layer == land + 2:
+		_draw_labels()
+		_draw_frame(sheet)
 	_apply(live)
-	paint_count += 1
+	if layer < 0 or layer == LAYERS - 1:
+		paint_count += 1
 
 
 ## Paints the live layer (people, order seals, the gravekeeper's hat) on `ci` – redrawn on every show.
@@ -497,10 +567,28 @@ func _draw_tufts() -> void:
 
 ## The wood around the graveyard: small trees on a jittered grid over the paper beyond the walkable
 ## bounds, denser further out, never on a way, a section or a building.
-func _draw_surround() -> void:
+func _draw_surround(part: int = -1) -> void:
+	var fill := Color(cfg.tree, cfg.tree.a * 0.8)
+	var rim := Color(cfg.tree_dark, 0.45)
+	var pts := _wood_points()
+	var from := 0 if part < 0 else pts.size() * part / WOOD_PARTS
+	var to := pts.size() if part < 0 else pts.size() * (part + 1) / WOOD_PARTS
+	for i: int in range(from, to):
+		var t: Array = pts[i]
+		MapPaint.tree(_ci, t[0], t[1], fill, rim, &"bush", t[2])
+
+
+## The wood's trees [sheet point, radius px, seed] – placed once per region and sheet geometry and cached
+## (the placement tests every grid point against all ways and sections: most of a bake's time).
+func _wood_points() -> Array:
+	var key := "%s|%s|%s|%s" % [region, _sheet, map_scale, map_offset]
+	if _wood_cache.has(key):
+		return _wood_cache[key]
+	var out: Array = []
 	var spacing: float = cfg.surround_forest.get(region, 0.0)
 	if spacing <= 0.0 or layout.bounds.size == Vector2.ZERO:
-		return
+		_wood_cache[key] = out
+		return out
 	var tl := (Vector2.ZERO - map_offset) / map_scale + layout.view.position
 	var br := (_sheet - map_offset) / map_scale + layout.view.position
 	var rng := RandomNumberGenerator.new()
@@ -524,10 +612,14 @@ func _draw_surround() -> void:
 			for c: Rect2 in clear:
 				free = free and not c.has_point(on_sheet)
 			if free and out_by > 0.0 and rng.randf() < clampf(0.35 + out_by * 0.12, 0.0, 0.95) and _free_for_wood(p):
-				MapPaint.tree(_ci, _m(p), r * map_scale, Color(cfg.tree, cfg.tree.a * 0.8), Color(cfg.tree_dark, 0.45), &"bush", row * 31 + int(x))
+				out.append([on_sheet, r * map_scale, row * 31 + int(x)])
 			x += spacing
 		y += spacing * 0.86
 		row += 1
+	if _wood_cache.size() > 8:
+		_wood_cache.clear()
+	_wood_cache[key] = out
+	return out
 
 
 static func _outside_by(r: Rect2, p: Vector2) -> float:

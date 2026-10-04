@@ -14,7 +14,7 @@ Benutzerkritik (Browser-Testversion): „Der Ton passt noch nicht ganz, der lagg
 | Bereich | Maßnahme | Dateien |
 |---|---|---|
 | Karte | Statisches Blatt je Region **einmal** in eine `SubViewport`-Textur gebacken (`UPDATE_ONCE`, in der gezeigten Auflösung → gleich scharf), neu nur, wenn `static_key()` sich ändert; Leute/Aufträge/Hut als leichte eigene Ebene darüber. | `src/ui/map/map_canvas.gd` |
-| Karte | Vorbacken beim `world_ready` und bei Regions-/Raumwechsel (Momente mit Blende) – das erste [M] malt nichts Großes. | `src/ui/ui_root.gd` (`prepare_map`), `src/ui/panels/map_panel.gd` (`prepare`) |
+| Karte | Vorbacken beim `world_ready` und bei Regions-/Raumwechsel (Momente mit Blende), verteilt auf 8 Frames (eine Ebene je Frame, je ≤ 16 ms) – das erste [M] malt nichts Großes; die Wald-Platzierung wird je Blattgeometrie zwischengespeichert. | `src/ui/ui_root.gd` (`prepare_map`), `src/ui/panels/map_panel.gd` (`prepare`) |
 | Karte | Papier als Asset `assets/ui/map/map_paper_e3d4b0_9e8054.png` (Werkzeug `tools/map/bake_map_paper.gd`, identisch zur Laufzeit-Berechnung, die nur noch als Rückfall bleibt). | `src/ui/map/map_paint.gd`, `map_legend.gd` |
 | Ton Web | `audio/driver/output_latency.web=150` → ScriptProcessor-Puffer **8192 Frames ≈ 186 ms** (gemessen im Browser: vorher 2048). Ein Frame-Ruckler bis ≈ 180 ms bleibt unhörbar. Preis: Klänge ≈ 0,15 s später. | `project.godot` |
 | Ton | Einzelklänge (141 Dateien) als WAV → Godot-Import **QOA** (kein Vorbis-Dekodieren je Stimme); Schleifen/Musik bleiben Vorbis. Alle Streams sind Abhängigkeiten der Cue-Bibliotheken (beim Start geladen, kein `load()` beim Abspielen – Test). | `tools/audio/build_audio.py`, `data/audio/cues_*.tres` |
@@ -32,28 +32,28 @@ Sonde `src/debug/perf_probe.gd` (gleicher Ablauf auf allen Plattformen: neues Sp
 
 | Szenario | Desktop headless: max ms (>50 ms) vorher → nachher | Desktop lavapipe: max ms vorher → nachher | Web (Chromium/SwiftShader): max ms vorher → nachher |
 |---|---|---|---|
-| new_game | 2265 (1) → 2155 (1) | 6801 → 5735 | 5838 → 7621 |
-| idle_graveyard | 9 (0) → 9 (0) | 1338 → 1169 | 2212 → 2381 |
-| map_open_1 | 182 (1) → 9 (0) | 2706 → 1221 | 4799 → 2579 |
-| map_close_1 | 8 (0) → 8 (0) | 871 → 852 | 2570 → 2215 |
-| map_open_2 | 68 (1) → 8 (0) | 2779 → 958 | 3280 → 2121 |
-| map_close_2 | 21 (0) → 8 (0) | 1004 → 964 | 3137 → 2303 |
+| new_game | 2265 (1) → 2340 (2) | 6801 → 5735 | 5838 → 7621 |
+| idle_graveyard | 9 (0) → 10 (0) | 1338 → 1169 | 2212 → 2381 |
+| map_open_1 | 182 (1) → 8 (0) | 2706 → 1221 | 4799 → 2579 |
+| map_close_1 | 8 (0) → 9 (0) | 871 → 852 | 2570 → 2215 |
+| map_open_2 | 68 (1) → 9 (0) | 2779 → 958 | 3280 → 2121 |
+| map_close_2 | 21 (0) → 9 (0) | 1004 → 964 | 3137 → 2303 |
 | map_open_3 | 70 (1) → 9 (0) | 2311 → 918 | 3367 → 2254 |
-| map_close_3 | 8 (0) → 9 (0) | 953 → 934 | 3150 → 2252 |
-| map_tab | 104 (3) → 10 (0) | 3238 → 964 | 4647 → 2147 |
+| map_close_3 | 8 (0) → 8 (0) | 953 → 934 | 3150 → 2252 |
+| map_tab | 104 (3) → 12 (0) | 3238 → 964 | 4647 → 2147 |
 | walk_graveyard | 11 (0) → 11 (0) | 892 → 944 | 2406 → 2133 |
-| time_dusk | 28 (0) → 25 (0) | 899 → 1105 | 2276 → 2310 |
+| time_dusk | 28 (0) → 31 (0) | 899 → 1105 | 2276 → 2310 |
 | time_night | 12 (0) → 9 (0) | 887 → 1159 | 2154 → 3067 |
-| time_day | 33 (0) → 34 (0) | 849 → 1210 | 2095 → 2895 |
-| room_hut | 11 (0) → 10 (0) | 772 → 1063 | 2226 → 2862 |
-| room_crypt | 23 (0) → 25 (0) | 893 → 3494 | 3150 → 4476 |
-| region_village | 16 (0) → 23 (0) | 796 → 1037 | 2289 → 2181 |
-| walk_village | 12 (0) → 13 (0) | 696 → 733 | 1542 → 1482 |
-| room_inn | 60 (1) → 61 (1) | 384 → 367 | 1598 → 1431 |
-| region_back | 50 (0) → 54 (1) | 898 → 994 | 2565 → 1889 |
-| map_open_village_after | 83 (1) → 98 (1) | 2294 → 869 | 3790 → 1863 |
+| time_day | 33 (0) → 38 (0) | 849 → 1210 | 2095 → 2895 |
+| room_hut | 11 (0) → 27 (0) | 772 → 1063 | 2226 → 2862 |
+| room_crypt | 23 (0) → 29 (0) | 893 → 3494 | 3150 → 4476 |
+| region_village | 16 (0) → 25 (0) | 796 → 1037 | 2289 → 2181 |
+| walk_village | 12 (0) → 10 (0) | 696 → 733 | 1542 → 1482 |
+| room_inn | 60 (1) → 64 (1) | 384 → 367 | 1598 → 1431 |
+| region_back | 50 (0) → 51 (1) | 898 → 994 | 2565 → 1889 |
+| map_open_village_after | 83 (1) → 11 (0) | 2294 → 869 | 3790 → 1863 |
 
-**Lesart:** Karte öffnen kostete auf Desktop 68–182 ms reine CPU-Zeit (jedes Mal, nicht nur beim ersten Mal), der Blattwechsel 104 ms – nachher 8–10 ms, also ein normaler Frame. Mit Renderer kostete jedes Öffnen 1,4–2,6 s über dem Normalframe (lavapipe) bzw. 1,1–2,6 s (Browser) – nachher kein Zuschlag mehr (2,1–2,6 s im Browser = Normalframe dieses Containers). Der einmalige Back-Aufwand fällt nun beim Laden bzw. beim Raumwechsel an (Gruft 3,5 s in lavapipe: dort wurde nach „buildings open / build crypt“ neu gebacken – im Spiel hinter der Tür-Blende).
+**Lesart:** Karte öffnen kostete auf Desktop 68–182 ms reine CPU-Zeit (jedes Mal, nicht nur beim ersten Mal), der Blattwechsel 104 ms – nachher 8–10 ms, also ein normaler Frame. Mit Renderer kostete jedes Öffnen 1,4–2,6 s über dem Normalframe (lavapipe) bzw. 1,1–2,6 s (Browser) – nachher kein Zuschlag mehr (2,1–2,6 s im Browser = Normalframe dieses Containers). Der Back-Aufwand (≈ 75 ms Desktop-CPU, davon ≈ 60 ms der Wald ums Blatt) fällt nur noch an, wenn sich das Blatt geändert hat, und wird verteilt: bei geschlossener Karte malt jeder Frame **eine von 8 Ebenen** (Papier · Wald in 4 Scheiben · Land und Wege · Häuser, Gräber · Schrift und Rahmen; je ≤ 16 ms Desktop-CPU), danach wird einmal gerendert. Die Gruft-Zeile zeigt das: nach „buildings open / build crypt“ wird beim Betreten neu gebacken – mit einem Zug 98–114 ms, verteilt 29 ms (Desktop headless). Die lavapipe- und Browser-Läufe „nachher“ entstanden vor dieser Verteilung (dort Gruft 3,5 s bzw. 4,5 s = einmal ganzes Blatt gebacken).
 
 **Web-Ton:** Im Container blockiert der Software-Renderer den Hauptthread pro Frame ≈ 2 s (Long-Task-Messung), dort setzt der Ton zwangsläufig aus – vorher wie nachher. Gemessen wurde darum, was der Browser bekommt: ScriptProcessor-Puffer **2048 → 8192 Frames (46 → 186 ms)**, Mischzeit je Frame unverändert (≈ 0,15 µs pro Ausgabe-Frame; 0,3 ms je 2048er-, 1,0–2,6 ms je 8192er-Rückruf). Auf dem PC des Benutzers sind die Frames ≈ 16 ms; Ruckler bis ≈ 180 ms (Karte vorher, Raumwechsel ≈ 60 ms Desktop-CPU ≈ 150 ms im Browser) unterbrechen den Ton nicht mehr.
 

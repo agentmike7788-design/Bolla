@@ -11,6 +11,7 @@ const SPIKE_MS := 50.0
 var _out: String = ""
 var _only: String = ""
 var _last_usec: int = 0
+var _nodes: int = 0
 var _label: String = "boot"
 var _frames: Dictionary = {}
 var _order: PackedStringArray = []
@@ -35,6 +36,14 @@ func _on_frame() -> void:
 			_frames[_label] = []
 			_order.append(_label)
 		(_frames[_label] as Array).append(ms)
+		var nodes := int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))
+		if ms > SPIKE_MS:
+			# Where the spike went: script/process time, physics, new nodes, resources.
+			print("[Perf] spike %s %.0f ms · process %.0f ms · physics %.0f ms · nodes %+d · resources %d" % [_label, ms,
+					Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
+					Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0, nodes - _nodes,
+					int(Performance.get_monitor(Performance.OBJECT_RESOURCE_COUNT))])
+		_nodes = nodes
 	_last_usec = now
 
 
@@ -58,7 +67,9 @@ func _secs(s: float) -> void:
 func _cmd(line: String) -> void:
 	var dbg: Node = get_tree().root.get_node_or_null(^"Debug")
 	if dbg != null and dbg.has_method(&"execute"):
+		var t0 := Time.get_ticks_usec()
 		var r: Dictionary = dbg.call(&"execute", line)
+		print("[Perf] command %s took %.1f ms" % [line, (Time.get_ticks_usec() - t0) / 1000.0])
 		print("[Perf] > %s → %s %s" % [line, r.get("ok"), str(r.get("text", "")).left(80).replace("\n", " ")])
 
 

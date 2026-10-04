@@ -91,7 +91,7 @@ func prepare(ctx: Dictionary) -> void:
 		_build()
 	for region: StringName in REGIONS:
 		if tab_allowed(region):
-			canvas.show_region(region, MapLayout.of(region, config), context, config)
+			canvas.show_region(region, MapLayout.of(region, config), context, config, true)
 	context = {}
 
 

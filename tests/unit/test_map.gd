@@ -366,11 +366,16 @@ func test_static_sheet_is_baked_once_and_only_on_change() -> void:
 func test_map_is_prepared_before_the_first_open() -> void:
 	await _setup()
 	ui.prepare_map()
-	await wait_frames(2)
+	await wait_frames(1)
 	var map := _map()
 	assert_false(map.is_open, "preparing does not open the map")
 	assert_false(map.visible)
 	assert_true(map.canvas.bake_count >= 1, "the graveyard sheet is baked ahead")
+	assert_true(map.canvas.baking(), "… spread over frames, one layer at a time")
+	assert_eq(map.canvas.paint_count, 0, "no frame paints the whole sheet")
+	for i: int in MapCanvas.LAYERS + 2:
+		await wait_frames(1)
+	assert_false(map.canvas.baking())
 	assert_true(map.canvas.paint_count >= 1, "… and painted while hidden")
 	var bakes := map.canvas.bake_count
 	ui.open_map()
