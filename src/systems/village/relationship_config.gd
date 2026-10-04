@@ -9,7 +9,7 @@ extends Resource
 @export var gains: Dictionary[StringName, int] = {&"talk": 1, &"gift": 4, &"round": 2, &"donation": 1, &"order_failed": -4}
 ## Start bonus by reputation tier (disreputable … renowned) and – for piety_sensitive villagers –
 ## by piety tier (hardhearted … devout).
-@export var rep_start_bonus: PackedInt32Array = [-10, -5, 0, 5, 10]
+@export var rep_start_bonus: PackedInt32Array = [0, 2, 4, 6, 8]
 @export var piety_start_bonus: PackedInt32Array = [-5, 0, 0, 3, 5]
 ## Shop prices (§2.3): −discount on goods from discount_min_price at discount_tier or higher;
 ## +surcharge per item at surcharge_rep_tier; buying from the player +friend_buy_bonus from

@@ -372,6 +372,11 @@ func test_extended_data_classes() -> void:
 	assert_eq((Database.config(&"economy_config") as EconomyConfig).harvest_malus, e.harvest_malus, "economy_config.tres (P4)")
 
 
+## Values changed in the data (and the class default) after the W0 hand-over; the fixtures keep the W0 values
+## (W0-Notizen 5). G7 Runde 2 (B7-1): the reputation start bonus 0/2/4/6/8 – nobody starts above „Bekannt".
+const DATA_CHANGED_AFTER_W0 := {&"relationship_config": {&"rep_start_bonus": [0, 2, 4, 6, 8]}}
+
+
 func test_config_files_in_data_match_the_fixtures() -> void:
 	for name: StringName in Phase7Fixtures.CONFIG_NAMES:
 		var real := Database.config(name)
@@ -382,8 +387,14 @@ func test_config_files_in_data_match_the_fixtures() -> void:
 			continue
 		assert_eq((real.get_script() as Script).get_global_name(), (fixture.get_script() as Script).get_global_name(), String(name))
 		var defaults: Resource = (real.get_script() as GDScript).new()
+		var changed: Dictionary = DATA_CHANGED_AFTER_W0.get(name, {})
 		for prop: Dictionary in real.get_property_list():
 			if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
+				if changed.has(StringName(prop.name)):
+					# Deliberately changed after the hand-over: data = class default = the new value; the fixture keeps W0.
+					assert_eq(Array(real.get(prop.name)), changed[StringName(prop.name)], "%s.%s (changed)" % [name, prop.name])
+					assert_eq(Array(defaults.get(prop.name)), changed[StringName(prop.name)], "%s.%s = class default" % [name, prop.name])
+					continue
 				assert_eq(real.get(prop.name), fixture.get(prop.name), "%s.%s" % [name, prop.name])
 				assert_eq(defaults.get(prop.name), fixture.get(prop.name), "%s.%s = class default" % [name, prop.name])
 
