@@ -108,7 +108,7 @@ const MARKERS := {
 	"ph_int_surgery_bench": ["seat_1", "seat_2", "seat_3"],
 	"ph_int_office_room": ["door_inside", "spawn_inside", "light_window_1"],
 	"ph_int_office_desk": ["light_candle"],
-	"ph_int_pult": ["use", "cold"],
+	"ph_int_pult": ["use", "cold", "light_candle"],  # QA7: the candle on the pult (p7_16)
 	"ph_int_collection_shelf": ["slot_1", "slot_2", "slot_3", "slot_4", "slot_5", "slot_6", "slot_7", "use"],
 }
 ## Lantern glass / candle flame / lamp chimney (mat_emissive_warm, like the hut's lantern).

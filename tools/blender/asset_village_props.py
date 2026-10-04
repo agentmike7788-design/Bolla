@@ -252,7 +252,7 @@ def ribbon():
     parts.append(VB._box_paint(L.prim("sphere", loc=(0, 0, 0), radius=1.0, scale=(0.05, 0.03, 0.045), segments=6, ring_count=4),
                                RIBBON))
     for sx in (-1, 1):
-        loop = L.prim("sphere", loc=(sx * 0.12, 0.0, 0.015), radius=1.0, scale=(0.1, 0.02, 0.06), segments=6, ring_count=4,
+        loop = L.prim("sphere", loc=(sx * 0.12, 0.0, -0.005), radius=1.0, scale=(0.1, 0.02, 0.055), segments=6, ring_count=4,
                       rot=(0, sx * 15, 0))
         parts.append(VB._box_paint(loop, RIBBON, top=0.4))
         tail = L.prim("cube", scale=(0.038, 0.006, 0.33))
