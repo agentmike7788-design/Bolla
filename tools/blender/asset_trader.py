@@ -18,6 +18,7 @@ import bmesh
 from mathutils import Matrix, Vector, noise
 
 import lib_painted as L
+import lib_faces as F
 import rig
 from asset_carter import loft, sweep, _tint, _thicken, _loops, _n
 
@@ -265,74 +266,26 @@ def _arms(parts) -> None:
 
 
 def _head(parts) -> None:
+    """G7 Änderungsrunde 1: the shared sculpted head (lib_faces) - a long narrow face with a pointed
+    chin and hollow cheeks, awake grey eyes under heavy calm lids, thin brows raised a little at the
+    inner end (polite attention), a long straight nose, a thin kind mouth; iron-grey hair parted in the
+    middle as a shell, two strands falling out of the hood. Pale, but warm (blush, not grey)."""
     h = HEAD_C
-    head = L.prim("sphere", loc=h, radius=1.0, segments=18, ring_count=12, scale=tuple(HEAD_S))
-    for v in head.data.vertices:  # a long pointed chin, high cheekbones, hollow cheeks
-        d = v.co - h
-        if d.z < -0.05:
-            v.co.x *= 1.0 - 0.3 * min(1.0, (-d.z - 0.05) / 0.08)
-            v.co.z -= 0.012 * min(1.0, (-d.z - 0.05) / 0.08)
-        if d.y < -0.04 and -0.05 < d.z < -0.005:
-            v.co.x *= 0.93
-        if d.y < -0.04 and 0.0 < d.z < 0.03:
-            v.co.x *= 1.05
-    _painted(head, SKIN, ao=0.18, var=0.06, seed=30, zrange=(h.z - 0.15, h.z + 0.14))
-
-    def face(co, nr):
-        d = co - h
-        for sx in (-1, 1):
-            if (Vector((d.x - sx * 0.06, d.y + 0.085, d.z + 0.03))).length < 0.036:
-                return 1.0, SKIN_HOLLOW, 0.55                  # hollow cheeks
-            if (Vector((d.x - sx * 0.04, d.y + 0.1, d.z - 0.025))).length < 0.03:
-                return 1.0, SKIN_HOLLOW, 0.5                   # shadowed sockets
-        if d.z > 0.06 and d.y < 0.0:
-            return 1.0, SKIN_WARM, 0.15
-        return 1.0, None, 0.0
-    _tint(head, face)
-    parts.append(W("head", head))
-    # long straight nose with a slight hook
-    nb, nm, nt = h + Vector((0, -0.104, 0.02)), h + Vector((0, -0.126, -0.006)), h + Vector((0, -0.132, -0.028))
-    parts.append(W("head", _painted(sweep([nb, nm, nt], [0.014, 0.0145, 0.012], n=8, name="nose"), SKIN, ao=0.0,
-                                    var=0.05, seed=31)))
-    parts.append(W("head", L.part("sphere", L.mix(SKIN, SKIN_WARM, 0.4), loc=nt + Vector((0, 0.004, -0.004)),
-                                  radius=0.0135, segments=8, ring_count=5, paint_kw={"ao": 0.0})))
+    s = Vector((0.1, 0.112, 0.134))
+    skin = L.mix(SKIN, SKIN_WARM, 0.4)
+    pts = F._head(parts, h, s, skin, seed=30, nose="long", nose_s=1.15, brow=L.scale_c(HAIR, 0.7), brow_w=0.95,
+                  brow_tilt=0.35, brow_arch=0.8, mouth="kind", smile=0.5, lip=LIP, cheeks=0.4,
+                  cheek_col=L.hexc("#C98C7E"), jaw=0.8, chin=0.07, age=0.5, lids=0.36, iris=F.IRIS_GREY, muzzle=0.85,
+                  ears=False, seg=22, rings=16, res=0.8, shade_col=L.mix(F.FACE_SHADE, SKIN_HOLLOW, 0.4),
+                  cull=lambda n: n.y > 0.25 or n.z > 0.6)
+    face = pts["face"]
+    F._hair(parts, face, HAIR, L.scale_c(HAIR, 0.72), [(0.0, 0.5), (0.5, 0.42), (1.0, 0.14), (1.4, -0.22),
+                                                       (1.8, -0.4), (math.pi, -0.5)], out=0.005, crown=0.004,
+            part_u=0.0, tuft=0.004, seed=34, n=20, m=5)
     for sx in (-1, 1):
-        ec = h + Vector((sx * 0.04, -0.093, 0.024))
-        parts.append(W("head", L.part("sphere", EYE, loc=ec, radius=0.014, segments=8, ring_count=5,
-                                      paint_kw={"ao": 0.0, "top": 0.0, "var": 0.0})))
-        parts.append(W("head", L.part("sphere", GLEAM, loc=ec + Vector((sx * 0.004, -0.012, -0.003)), radius=0.0035,
-                                      segments=5, ring_count=3, paint_kw={"ao": 0.0, "top": 0.0, "var": 0.0})))
-        # heavy lids, lowered: a calm, downcast look that does not blink
-        lid = L.prim("sphere", radius=0.0165, segments=8, ring_count=5)
-        for v in lid.data.vertices:
-            v.co.z = max(v.co.z, -0.004)
-        _xf(lid, Matrix.Translation(ec + Vector((0, 0.001, 0.0))) @ Matrix.Rotation(math.radians(sx * 10), 4, "Y")
-            @ Matrix.Rotation(math.radians(-14), 4, "X"))
-        parts.append(W("head", _painted(lid, L.mix(SKIN, SKIN_HOLLOW, 0.35), ao=0.0, var=0.04, seed=32)))
-        # thin, straight grey brows, slightly raised at the inner end (polite attention)
-        brow = sweep([h + Vector((sx * 0.016, -0.103, 0.049)), h + Vector((sx * 0.04, -0.101, 0.053)),
-                      h + Vector((sx * 0.064, -0.084, 0.046))], [0.0035, 0.0045, 0.0025], n=6, name="brow")
-        parts.append(W("head", _painted(brow, L.scale_c(HAIR, 0.7), ao=0.0, var=0.1, top=0.2, seed=33)))
-    # thin closed lips, the corners drawn in
-    parts.append(W("head", L.part("sphere", LIP, loc=h + Vector((0, -0.097, -0.062)), radius=1.0,
-                                  scale=(0.019, 0.006, 0.0045), segments=10, ring_count=5,
-                                  paint_kw={"ao": 0.0, "var": 0.05})))
-    # iron-grey hair parted in the middle, two strands falling out of the hood
-    hair = L.prim("sphere", loc=h + Vector((0, 0.008, 0.012)), radius=1.0, segments=16, ring_count=10,
-                  scale=(HEAD_S.x + 0.008, HEAD_S.y + 0.006, HEAD_S.z + 0.004))
-    bm = bmesh.new()
-    bm.from_mesh(hair.data)
-    bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < h.z + 0.03 and v.co.y < h.y + 0.02], context="VERTS")
-    bm.to_mesh(hair.data)
-    bm.free()
-    _painted(hair, HAIR, var=0.2, ao=0.2, top=0.2, seed=34)
-    _tint(hair, lambda co, nr: (1.0 - 0.18 * max(0.0, math.sin(co.x * 160.0)) ** 2 if abs(co.x) > 0.004 else 0.6,
-                                None, 0.0))
-    parts.append(W("head", hair))
-    for sx in (-1, 1):
-        root = h + Vector((sx * 0.08, -0.06, 0.06))
-        pts = [root, root + Vector((sx * 0.012, -0.012, -0.07)), root + Vector((sx * 0.004, -0.018, -0.15))]
-        strand = sweep(pts, [0.014, 0.012, 0.004], n=5, name="strand")
+        root = face.world(F.Face.around(sx * 1.05, 0.2), 0.006)
+        pts_ = [root, root + Vector((sx * 0.012, -0.012, -0.07)), root + Vector((sx * 0.004, -0.018, -0.15))]
+        strand = sweep(pts_, [0.012, 0.011, 0.004], n=5, name="strand")
         L.jitter(strand, 0.002, 30.0, 35 + sx)
         parts.append(W("head", _painted(strand, HAIR, var=0.2, ao=0.0, top=0.3, seed=35 + sx)))
 
@@ -658,6 +611,7 @@ def build():
     for name, frames, fn in ACTIONS:
         rig.add_action(arm, mesh, name, frames, fn)
     L.export_rigged(arm, NAME, "characters")
+    F._stable_glb(L.os.path.join(L.ROOT, "assets", "models", "characters", NAME + ".glb"))
 
 
 if __name__ == "__main__":
