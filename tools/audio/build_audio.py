@@ -61,6 +61,33 @@ class Spec:
     quality: float = 0.45          # libsndfile compression_level: 0 = best quality, 1 = smallest
     library: str = "sfx"
     extra: dict = field(default_factory=dict)
+    # Loudness in the game (LUFS = file loudness + volume_db; before the user's bus sliders). None = the
+    # category's target (TARGETS); analyze_audio.py checks every file against target ± TARGET_BAND.
+    loud: float | None = None
+
+
+# Target loudness per category (G7 Runde 2, docs/reviews/phase7_round2/perf_audio.md): beds and music
+# stay in the background, steps never nag, UI is discreet. One-shots: max. momentary loudness (400 ms);
+# beds / music: integrated loudness.
+TARGETS = {"bed": -30.0, "emitter": -26.0, "spot": -31.0, "music": -24.0, "sfx": -20.0, "step": -28.0, "ui": -26.0}
+TARGET_BAND = 3.0
+
+
+def category(sp: "Spec") -> str:
+    if sp.bus == "Music":
+        return "music"
+    if sp.bus == "UI":
+        return "ui"
+    if sp.bus == "Ambience":
+        if sp.loop:
+            return "emitter" if sp.positional else "bed"
+        return "spot"
+    return "step" if sp.id.startswith("step_") else "sfx"
+
+
+def target_of(sp: "Spec") -> tuple[float, float]:
+    t = sp.loud if sp.loud is not None else TARGETS[category(sp)]
+    return (t - TARGET_BAND, t + TARGET_BAND)
 
 
 def S(id, gen, v=1, **kw):
