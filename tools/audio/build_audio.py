@@ -71,12 +71,14 @@ class Spec:
     # Loudness in the game (LUFS = file loudness + volume_db; before the user's bus sliders). None = the
     # category's target (TARGETS); analyze_audio.py checks every file against target ± TARGET_BAND.
     loud: float | None = None
+    # Bright by nature (songbirds sit at 2–5 kHz): no harsh dip, not flagged as harsh.
+    bright: bool = False
 
 
 # Target loudness per category (G7 Runde 2, docs/reviews/phase7_round2/perf_audio.md): beds and music
 # stay in the background, steps never nag, UI is discreet. One-shots: max. momentary loudness (400 ms);
 # beds / music: integrated loudness.
-TARGETS = {"bed": -34.0, "emitter": -30.0, "spot": -36.0, "music": -28.0, "sfx": -27.0, "step": -37.0, "ui": -33.0}
+TARGETS = {"bed": -34.0, "emitter": -30.0, "spot": -36.0, "music": -28.0, "sfx": -27.0, "step": -37.0, "ui": -34.0}
 # A one-shot is peak-normalised to this before its level is set by volume_db.
 ONESHOT_PEAK = 0.89
 # Energy share 2–5 kHz above which a one-shot gets a broad dip there (analyze_audio "harsh").
@@ -213,8 +215,8 @@ CATALOG: list[Spec] = [
     S("build_remove", sfx.build_remove, 1, volume_db=-11),
     S("sleep", sfx.sleep, 1, volume_db=-12, cooldown=2.0),
     # UI
-    UI("ui_click", sfx.ui_click, 2, volume_db=-14, pitch_jitter=0.04, cooldown=0.03, loud=-36),
-    UI("ui_hover", sfx.ui_hover, 1, volume_db=-24, pitch_jitter=0.05, cooldown=0.06, max_voices=1, loud=-42),
+    UI("ui_click", sfx.ui_click, 2, volume_db=-14, pitch_jitter=0.04, cooldown=0.03, loud=-37),
+    UI("ui_hover", sfx.ui_hover, 1, volume_db=-24, pitch_jitter=0.05, cooldown=0.06, max_voices=1, loud=-46),
     UI("ui_open", sfx.ui_open, 1, volume_db=-14, cooldown=0.1),
     UI("ui_close", sfx.ui_close, 1, volume_db=-15, cooldown=0.1),
     UI("ui_error", sfx.ui_error, 1, volume_db=-13, cooldown=0.25),
@@ -240,15 +242,15 @@ CATALOG: list[Spec] = [
     AMB("loop_brook", amb.loop_brook, loop=True, positional=True, volume_db=-8, max_distance=22, unit_size=4),
     AMB("loop_forge", amb.loop_forge, loop=True, positional=True, volume_db=-10, max_distance=16, unit_size=3),
     # spots
-    SPOT("bird_a", amb.bird_a, 2, volume_db=-17),
-    SPOT("bird_b", amb.bird_b, 2, volume_db=-18),
-    SPOT("bird_c", amb.bird_c, 2, volume_db=-19),
+    SPOT("bird_a", amb.bird_a, 2, volume_db=-17, bright=True),
+    SPOT("bird_b", amb.bird_b, 2, volume_db=-18, bright=True),
+    SPOT("bird_c", amb.bird_c, 2, volume_db=-19, bright=True),
     SPOT("crow", amb.crow, 2, volume_db=-20),
     SPOT("owl", amb.owl, 2, volume_db=-14, pitch_jitter=0.03),
     SPOT("owl_short", amb.owl_short, 1, volume_db=-16, pitch_jitter=0.03),
     SPOT("chicken", amb.chicken, 3, volume_db=-20),
     SPOT("hammer_far", amb.hammer_far, 2, volume_db=-18, pitch_jitter=0.02),
-    SPOT("cup_clink", amb.cup_clink, 3, volume_db=-16),
+    SPOT("cup_clink", amb.cup_clink, 3, volume_db=-16, bright=True),
     SPOT("drip_spot", amb.drip_spot, 3, volume_db=-16),
     SPOT("wood_creak", amb.wood_creak, 2, volume_db=-18),
     SPOT("page_turn_far", amb.page_turn_far, 1, volume_db=-20),
@@ -306,9 +308,10 @@ def finish(spec: Spec, x: np.ndarray) -> np.ndarray:
     """G7 Runde 2 clean-up: DC off; one-shots: harsh dip, fades (no click at start / end), peak level."""
     if long_form(spec):
         return x - np.mean(x, axis=0)          # beds (circular: an offset keeps the seam) and music: DC only
-    x = x - np.mean(x, axis=0)
+    from scipy import signal as sps
+    x = sps.sosfiltfilt(sps.butter(2, 20.0 / (spec.sr * 0.5), "highpass", output="sos"), x, axis=0)
     for depth in (3.0, 6.0, 9.0):
-        if harsh_share(x, spec.sr) <= HARSH_SHARE:
+        if spec.bright or harsh_share(x, spec.sr) <= HARSH_SHARE:
             break
         x = _dip(x, spec.sr, depth)
     n_in = min(int(0.005 * spec.sr), x.shape[0] // 4)
@@ -318,9 +321,33 @@ def finish(spec: Spec, x: np.ndarray) -> np.ndarray:
     shape = (slice(None),) + (None,) * (x.ndim - 1)
     x[:n_in] *= w_in[shape]
     x[-n_out:] *= w_out[shape]
+    # The remaining DC under a window that is zero at both ends (the silent edges stay silent).
+    w = np.sin(np.linspace(0.0, np.pi, x.shape[0])) ** 2
+    w /= np.mean(w)
+    x = x - np.mean(x, axis=0) * w[shape]
     x[0] = 0.0
     x[-1] = 0.0
     return x * (ONESHOT_PEAK / (np.max(np.abs(x)) + 1e-12))
+
+
+# Variants of a one-shot keep at most this much of their loudness difference (the play jitter adds more).
+VARIANT_SPREAD_DB = 1.5
+
+
+def even_variants(spec: Spec, xs: list[np.ndarray]) -> list[np.ndarray]:
+    """Pulls the variants of a one-shot towards their common loudness (±VARIANT_SPREAD_DB), never
+    above the one-shot peak – so no variant is a surprise jump in level."""
+    if len(xs) < 2 or long_form(spec):
+        return xs
+    louds = [loudness.of(x, spec.sr, False) for x in xs]
+    mean = float(10.0 * np.log10(np.mean(10.0 ** (np.array(louds) / 10.0))))
+    out = []
+    for x, lo in zip(xs, louds):
+        want = float(np.clip(lo, mean - VARIANT_SPREAD_DB, mean + VARIANT_SPREAD_DB))
+        g = 10.0 ** ((want - lo) / 20.0)
+        g = min(g, 0.95 / (float(np.max(np.abs(x))) + 1e-12))
+        out.append((x * g).astype(np.float32))
+    return out
 
 
 def write_wav(path: str, x: np.ndarray, sr: int) -> None:
@@ -421,8 +448,9 @@ def main() -> int:
     for sp in CATALOG:
         if args.only and args.only not in sp.id:
             continue
+        rendered = even_variants(sp, [render(sp, i) for i in range(sp.variants)])
         for i in range(sp.variants):
-            x = render(sp, i)
+            x = rendered[i]
             path = os.path.join(ASSET_DIR, sp.folder, file_name(sp, i))
             if ext(sp) == "wav":
                 write_wav(path, x, sp.sr)

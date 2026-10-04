@@ -222,14 +222,16 @@ func test_runtime_modules_load_nothing() -> void:
 
 
 func test_music_and_soundscape_run_on_while_paused() -> void:
-	Audio.ambience.set_profile(&"graveyard_day", 0.05)
-	Audio.music.context = &"day"
-	assert_true(Audio.music.play_now(), "a day piece starts")
-	await wait_frames(3)
+	# A player that cannot process is paused by the engine – every player of the manager (beds, music,
+	# voices, emitters) must keep processing under the pause menu's tree pause.
 	tree.paused = true
-	await wait_frames(5)
-	assert_true(Audio.ambience.bed_playing(), "bed plays on under the pause menu")
-	assert_true(Audio.music.is_playing(), "music plays on under the pause menu")
+	await wait_frames(2)
+	var players := Audio.find_children("*", "AudioStreamPlayer", true, false)
+	players.append_array(Audio.find_children("*", "AudioStreamPlayer3D", true, false))
+	assert_true(players.size() >= 10, "players found (%d)" % players.size())
+	for p: Node in players:
+		assert_true(p.can_process(), "%s runs on while the tree is paused" % p.name)
+		assert_false(bool(p.get(&"stream_paused")), "%s not stream-paused" % p.name)
 	assert_eq(Audio.process_mode, Node.PROCESS_MODE_ALWAYS)
 	tree.paused = false
 

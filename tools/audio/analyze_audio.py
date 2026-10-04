@@ -105,13 +105,18 @@ def analyse(sp, i: int) -> dict:
     seam = float(abs(x[0] - x[-1])) / usual
     q = int(0.25 * sr)
     seam_level = 0.0
+    usual_step = 0.0
     if sp.loop and x.size > 2 * q:
         seam_level = abs(db(np.sqrt(np.mean(x[-q:] ** 2))) - db(np.sqrt(np.mean(x[:q] ** 2))))
+        # The level step between any two neighbouring 250 ms windows inside the loop: a seam is only a
+        # problem when it steps more than the sound itself usually does.
+        lv = [db(np.sqrt(np.mean(x[k:k + q] ** 2))) for k in range(0, x.size - q, q)]
+        usual_step = float(np.percentile(np.abs(np.diff(lv)), 95)) if len(lv) > 2 else 0.0
     row = {
         "file": os.path.basename(path), "id": sp.id, "bus": sp.bus, "loop": sp.loop, "secs": x.size / sr, "sr": sr,
         "peak_db": db(peak), "clipped": int(np.sum(np.abs(x) >= 0.999)), "dc": float(np.mean(x)),
         "lufs": lufs, "volume_db": vol, "game_lufs": lufs + vol,
-        "first": float(abs(x[0])), "last": float(abs(x[-1])), "seam": seam, "seam_level_db": seam_level,
+        "first": float(abs(x[0])), "last": float(abs(x[-1])), "seam": seam, "seam_level_db": seam_level, "usual_step_db": usual_step,
         "harsh": harsh, "ring_db": ring, "ring_hz": ring_f, "floor_db": floor, "tail": tail,
     }
     row["target"] = ba.target_of(sp)
@@ -128,7 +133,7 @@ def problems(r: dict, sp) -> list[str]:
     if r["loop"]:
         if r["seam"] > SEAM_RATIO:
             out.append("seam")
-        if r["seam_level_db"] > SEAM_LEVEL_DB:
+        if r["seam_level_db"] > max(SEAM_LEVEL_DB, 1.25 * r.get("usual_step_db", 0.0)):
             out.append("seam-level")
         # Crickets (3.8–5.3 kHz) are tonal by design; any other narrow peak in a bed is a whistle / ring.
         if sp.bus == "Ambience" and r["ring_db"] > RING_DB and not 3800 <= r["ring_hz"] <= 5300:
@@ -138,7 +143,7 @@ def problems(r: dict, sp) -> list[str]:
             out.append("edge-click")
         if r["tail"] > TAIL_MAX and sp.bus != "Music":
             out.append("long-tail")
-        if r["harsh"] > HARSH_SHARE and sp.bus != "UI":
+        if r["harsh"] > HARSH_SHARE and sp.bus != "UI" and not sp.bright:
             out.append("harsh")
     lo, hi = r["target"]
     if not lo <= r["game_lufs"] <= hi:
@@ -178,7 +183,7 @@ def spectrogram(cue: str, out: str, seconds: float = 24.0, title: str = "") -> N
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     sp = {s.id: s for s in ba.CATALOG}[cue]
-    x, sr = sf.read(os.path.join(ba.ASSET_DIR, sp.folder, ba.file_name(sp, 0)))
+    x, sr = sf.read(file_path(sp, 0))
     if x.ndim > 1:
         x = x.mean(axis=1)
     x = np.tile(x, int(np.ceil(seconds * sr / x.size)) + 1)[: int(seconds * sr)]   # two loop passes show the seam
@@ -205,10 +210,17 @@ def main() -> int:
     ap.add_argument("--json", default="")
     ap.add_argument("--md", default="")
     ap.add_argument("--only", default="")
-    ap.add_argument("--spectro", nargs="+", default=None, help="<cue_id> <out.png> [seconds]")
+    ap.add_argument("--spectro", nargs="+", default=None, help="<cue_id> <out.png> [seconds] [title]")
+    ap.add_argument("--cues", default="", help="read volume_db from the cues_*.tres in this directory")
+    ap.add_argument("--assets", default="", help="analyse another copy of assets/audio (e.g. the files before a change)")
     args = ap.parse_args()
+    if args.assets:
+        ba.ASSET_DIR = os.path.abspath(args.assets)
+    if args.cues:
+        ba.DATA_DIR = os.path.abspath(args.cues)
     if args.spectro:
-        spectrogram(args.spectro[0], args.spectro[1], float(args.spectro[2]) if len(args.spectro) > 2 else 24.0)
+        spectrogram(args.spectro[0], args.spectro[1], float(args.spectro[2]) if len(args.spectro) > 2 else 24.0,
+                    args.spectro[3] if len(args.spectro) > 3 else "")
         return 0
     rows = all_rows(args.only)
     bad = [r for r in rows if r["problems"]]

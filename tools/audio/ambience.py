@@ -46,12 +46,12 @@ def _wind(rng, sr, n, strength=1.0, lo=120.0, hi=900.0, gust=0.6, g=None):
     later, as a gust "arrives") and add a low rumble; calm stays soft but never silent."""
     g = gust_curve(rng, n, sr, gust) if g is None else g
     rumble = s.loop_filter_band(s.brown(rng, n), sr, 35.0, lo * 1.2, 1.0)
-    body_dark = s.loop_filter_band(s.pink(rng, n), sr, lo, hi * 0.7, 1.0)
-    body_bright = s.loop_filter_band(s.pink(rng, n), sr, lo * 1.4, hi * 1.3, 1.0)
-    air = s.loop_filter_band(s.pink(rng, n), sr, hi * 1.2, min(hi * 3.0, 4200.0), 1.0)
+    body_dark = s.loop_filter_band(s.pink(rng, n), sr, lo, hi * 0.7, 1.5)
+    body_bright = s.loop_filter_band(s.pink(rng, n), sr, lo * 1.4, hi * 1.2, 1.5)
+    air = s.loop_filter_band(s.pink(rng, n), sr, hi * 1.2, min(hi * 2.5, 3000.0), 1.5)
     gl = _delay(g, sr, 0.35)
     body = body_dark * (1.0 - gl * 0.5) + body_bright * gl * 0.7
-    x = rumble * 0.35 * g + body * g + air * 0.06 * gl ** 2
+    x = rumble * 0.35 * g + body * g + air * 0.04 * gl ** 2
     return x * strength
 
 

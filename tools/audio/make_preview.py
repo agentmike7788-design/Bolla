@@ -7,7 +7,11 @@ Friedhof am Tag (Wind, Vögel, Schritte im Gras) → Graben und Erde schütten �
 (Anger: Stimmen, Hühner, Schmied, Bach, Glocke, Schritte auf Pflaster) → Gaststube (Tür,
 Holzboden, Becher, Münzen) → Friedhof in der Nacht (Grillen, Eule, Geist) → Musik-Ausschnitt.
 Levels follow the cue catalogue (volume_db) and the default bus volumes, so the balance is
-close to the game. Default output: docs/reviews/phase7_round2/audio_preview.ogg
+close to the game. Default output: docs/reviews/phase7_round2/audio_preview_v2.ogg
+
+G7 Runde 2: the levels are the measured ones (build_audio.measured_volume – exactly what the cue
+libraries get), the files may be .wav or .ogg, and 20 s of the graveyard wind outside (day, then
+night, 20 s each) are appended – the soundscape alone, as it is heard standing still.
 """
 from __future__ import annotations
 
@@ -25,6 +29,7 @@ import build_audio as ba  # noqa: E402
 SR = 32000
 BUS = {"Music": 0.55, "Ambience": 0.8, "SFX": 0.9, "UI": 0.7}
 SPECS = {sp.id: sp for sp in ba.CATALOG}
+VOLUME = {sp.id: ba.measured_volume(sp)[0] for sp in ba.CATALOG}
 rng = np.random.default_rng(7)
 
 
@@ -40,7 +45,7 @@ def load(name: str) -> np.ndarray:
         x = np.stack([np.interp(t_new, t_old, x[:, c]) for c in range(x.shape[1])], axis=1)
     if x.shape[1] == 1:
         x = np.repeat(x, 2, axis=1)
-    gain = 10 ** (sp.volume_db / 20.0) * BUS.get(sp.bus, 1.0)
+    gain = 10 ** (VOLUME[sp.id] / 20.0) * BUS.get(sp.bus, 1.0)
     return x * gain
 
 
@@ -78,8 +83,8 @@ def steps(m: Mix, cue: str, t0: float, t1: float, every: float = 0.42, db: float
 
 
 def main() -> int:
-    out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ba.ROOT, "docs", "reviews", "phase7_round2", "audio_preview.ogg")
-    m = Mix(88.0)
+    out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ba.ROOT, "docs", "reviews", "phase7_round2", "audio_preview_v2.ogg")
+    m = Mix(129.0)
     # A · Friedhof am Tag (0–14)
     m.bed("amb_graveyard_day", 0.0, 29.0, 1.5)
     for t, c, p in ((1.5, "bird_a", -0.5), (5.0, "bird_b", 0.6), (9.0, "crow", -0.2), (11.0, "bird_c", 0.4),
@@ -134,6 +139,9 @@ def main() -> int:
     env[: 2 * SR] = np.linspace(0, 1, 2 * SR)
     env[-4 * SR:] = np.linspace(1, 0, 4 * SR) ** 2
     m.add("mus_night", 67.5, 4.0, 0.0, seg * env[:, None])
+    # Nur Wind (88–128): Friedhof draußen am Tag (20 s), dann in der Nacht (20 s) – ohne Spots.
+    m.bed("amb_graveyard_day", 88.0, 108.6, 1.0, 0.0, 17.0)
+    m.bed("amb_graveyard_night", 107.4, 128.5, 1.2, 0.0, 9.0)
     x = m.buf
     x = x / (np.max(np.abs(x)) + 1e-9) * 0.89
     os.makedirs(os.path.dirname(out), exist_ok=True)
