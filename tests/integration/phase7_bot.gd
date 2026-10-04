@@ -26,7 +26,8 @@ extends Phase6Bot
 
 const VILLAGERS: Array[StringName] = [&"mayor", &"priest", &"innkeeper", &"smith", &"grocer", &"surgeon", &"washer", &"oldwoman"]
 ## Indoor waypoints → the house door.
-const INDOOR_DOORS := {"v_in_office": &"door_office", "v_in_inn": &"door_inn", "v_in_surgery": &"door_surgery"}
+const INDOOR_DOORS := {"v_in_office": &"door_office", "v_in_inn": &"door_inn", "v_in_surgery": &"door_surgery",
+		"v_in_church": &"door_church"}
 const LEAVE_FOR_VILLAGE := 810
 const LEAVE_VILLAGE := 1050
 const VILLAGE_WALK := 2

@@ -8,8 +8,8 @@ extends TestCase
 ## (§9, also the Compatibility renderer's default limit per object), ≤ 2 with shadow, and every
 ## room has its soft fill light (role fill).
 
-const ROOMS := ["inn", "surgery", "office", "crypt", "chapel", "shed"]
-const NEW_ROOMS := ["inn", "surgery", "office", "crypt"]
+const ROOMS := ["inn", "surgery", "office", "church", "crypt", "chapel", "shed"]
+const NEW_ROOMS := ["inn", "surgery", "office", "church", "crypt"]
 const SCENE := "res://src/world/interiors/%s_interior.tscn"
 ## Minimum illumination (see the class comment) at night (t 0) and by day (t 1) – the values of the
 ## Phase-6 chapel and hut that the user approved lie above, the old village rooms below

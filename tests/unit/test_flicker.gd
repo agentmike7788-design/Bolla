@@ -80,7 +80,7 @@ func test_old_script_path_still_flickers() -> void:
 
 
 func test_flickering_lights_per_room_are_bounded() -> void:
-	for id: String in ["inn", "surgery", "office", "crypt", "chapel", "shed"]:
+	for id: String in ["inn", "surgery", "office", "church", "crypt", "chapel", "shed"]:
 		var room := (load(ROOM_SCENE % id) as PackedScene).instantiate() as Node3D
 		var n := room.find_children("*", "Light3D", true, false).filter(func(x: Node) -> bool: return x is FlickerLight).size()
 		assert_true(n <= MAX_FLICKER_PER_ROOM, "%s: ≤ %d flickering lights (%d)" % [id, MAX_FLICKER_PER_ROOM, n])

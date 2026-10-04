@@ -202,7 +202,9 @@ func test_chapel_rite_lights_follow_the_altar() -> void:
 
 const VILLAGE_ROOMS := {"inn": ["InnInterior", Vector3(240, 0, -200), "door_inn", ["v_in_inn_bar", "v_in_inn_table", "v_in_inn_corner"]],
 		"surgery": ["SurgeryInterior", Vector3(300, 0, -200), "door_surgery", ["v_in_surgery_desk"]],
-		"office": ["OfficeInterior", Vector3(360, 0, -200), "door_office", ["v_in_office_desk"]]}
+		"office": ["OfficeInterior", Vector3(360, 0, -200), "door_office", ["v_in_office_desk"]],
+		# G7 round 1: the village church walk-in.
+		"church": ["ChurchInterior", Vector3(420, 0, -200), "door_church", ["v_in_church_altar"]]}
 
 
 func test_village_rooms_at_their_origins_with_door_exits() -> void:

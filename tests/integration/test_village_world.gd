@@ -343,7 +343,7 @@ func test_routes_flood_fill_and_schedule_paths() -> void:
 	var reach := _flood(Vector2(ORIGIN.x - 24.5, ORIGIN.z + 1.5), FLOOD_STEP, area, 0.75)
 	assert_true(reach.size() > 1000, "%d cells reachable" % reach.size())
 	var targets := {}
-	for id: String in ["door_inn", "door_surgery", "door_office"]:
+	for id: String in ["door_inn", "door_surgery", "door_office", "door_church"]:
 		targets[id] = (village.get_node("Entities/" + id) as HouseDoor).exit_transform().origin
 	for id: String in ["counter_smith", "counter_grocer", "village_board"]:
 		targets[id] = (village.get_node("Entities/" + id) as Node3D).global_position
@@ -536,9 +536,10 @@ func _cut_at(p: Vector3, eye: Vector3, target: Vector3) -> float:
 func _spots() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var buildings := village.get_node("Buildings")
-	for id: String in ["door_inn", "door_surgery", "door_office"]:
+	for id: String in ["door_inn", "door_surgery", "door_office", "door_church"]:
 		var door := village.get_node("Entities/" + id) as HouseDoor
-		var house := buildings.get_node({"door_inn": "v_inn", "door_surgery": "v_surgery", "door_office": "v_office"}[id]) as Node3D
+		var house := buildings.get_node({"door_inn": "v_inn", "door_surgery": "v_surgery", "door_office": "v_office",
+				"door_church": "v_church"}[id]) as Node3D
 		var stand := _free_near(door.exit_transform() * Vector3(0.0, 0.0, 0.5))
 		out.append({"name": id, "stand": stand, "exclude": [house],
 				"points": {"head": stand + Vector3(0, 1.7, 0), "door": door.global_position + Vector3(0, 1.2, 0)}})
