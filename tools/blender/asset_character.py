@@ -17,6 +17,7 @@ import bmesh
 from mathutils import Matrix, Vector
 
 import lib_painted as L
+import lib_faces as F
 import rig
 
 NAME = "ph_chr_gravekeeper"
@@ -435,92 +436,42 @@ def build_mesh():
         parts.append(W(bone, L.part("sphere", SKIN, loc=hand_c + Vector((-sx * 0.03, -0.06, -0.025)), radius=0.013,
                                     segments=6, ring_count=4, paint_kw={"ao": 0.0})))
 
-    # --- head: melancholic-kind face that reads under the brim --------------------------
+    # --- head: melancholic-kind, weathered face under the brim (G7 Änderungsrunde 1: the shared
+    # sculpted head of lib_faces - awake eyes under heavy tired lids, raised inner brows, a long soft
+    # nose, grey hair and a full grey beard as shells over the skull, painted age lines) -------------
     head_c = Vector((0, HUNCH - 0.07, 1.5))
-    head = L.prim("sphere", loc=head_c, radius=0.15, segments=20, ring_count=12, scale=(0.95, 1, 1.08))
-    for v in head.data.vertices:  # cheekbones, a slightly longer jaw
+    s = Vector((0.142, 0.148, 0.163))
+    pts = F._head(parts, head_c, s, SKIN, seed=30, nose="long", nose_s=1.55, brow=BROW, brow_w=1.7, brow_tilt=0.75,
+                  brow_arch=0.7, mouth="kind", smile=0.5, cheeks=0.7, cheek_col=BLUSH, jaw=1.0, chin=0.0,
+                  age=0.7, lids=0.34, iris=F.IRIS_GREY, muzzle=1.05, seg=22, rings=14, res=0.72,
+                  cull=lambda n: n.z > 0.62 or (n.z < -0.55 and n.y < -0.1), nose_wings=True)
+    face = pts["face"]
+    # grey hair: a ragged fringe from in front of the ears round the back, below the hat band
+    hair_c = L.mix(BEARD, BROW, 0.2)
+    F._hair(parts, face, hair_c, L.scale_c(BEARD, 0.8), [(1.05, -0.06), (1.5, -0.24), (2.1, -0.32), (math.pi, -0.38)],
+            top=[(1.05, 0.3), (1.5, 0.42), (math.pi, 0.5)], phi=(1.05, TAU - 1.05), out=0.009, crown=0.0,
+            tuft=0.022, seed=31, n=20, m=4)
+    # full grey beard: a shell from the cheeks over the jaw, a gentle point at the chin
+    beard, _, _ = F._shell(face, [(0.0, -1.0)], top=[(0.0, -0.64), (0.3, -0.52), (0.55, -0.4), (0.9, -0.28),
+                                                     (1.3, -0.16), (1.6, -0.1)],
+                           phi=(-1.6, 1.6), out=lambda ph, w: 0.008 + 0.06 * F._s01((-w - 0.42) / 0.5) *
+                           (0.4 + 0.6 * max(0.0, math.cos(ph))), crown=0.0, n=22, m=6, tuck=0.003, lumps=0.007,
+                           seed=32, name="beard")
+    for v in beard.data.vertices:   # a soft point at the chin
         d = v.co - head_c
-        if d.y < -0.05 and -0.06 < d.z < 0.03:
-            v.co.x *= 1.0 + 0.08 * _smooth01((abs(d.x) - 0.04) / 0.06)
-        if d.z < -0.06:
-            v.co.z -= 0.012
-    _painted(head, SKIN, ao=0.15, var=0.06, seed=30, zrange=(head_c.z - 0.17, head_c.z + 0.16))
-
-    def face_tint(co, n):
-        d = co - head_c
-        for sx in (-1, 1):  # soft cheek blush and shadowed eye sockets
-            if (Vector((d.x - sx * 0.075, d.y + 0.12, d.z + 0.03))).length < 0.05:
-                return BLUSH, 0.45
-            if (Vector((d.x - sx * 0.058, d.y + 0.13, d.z - 0.035))).length < 0.04:
-                return (0.8, 0.74, 0.74)
-        return None
-    _tint(head, face_tint)
-    parts.append(W("head", head))
-    # long, droopy nose with a round tip and nostril wings
-    nb = head_c + Vector((0, -0.125, 0.03))
-    nm = head_c + Vector((0, -0.215, -0.015))
-    nt = head_c + Vector((0, -0.262, -0.05))
-    for a, b, r0, r1 in ((nb, nm, 0.034, 0.03), (nm, nt, 0.03, 0.026)):
-        parts.append(W("head", _painted(L.tube(a, b, r0, 12, r_end=r1), L.scale_c(SKIN, 0.95), ao=0.0, var=0.05,
-                                        seed=31)))
-    parts.append(W("head", L.part("sphere", L.mix(SKIN, BLUSH, 0.35), loc=nm, radius=0.031, segments=10,
-                                  ring_count=6, paint_kw={"ao": 0.0})))
-    parts.append(W("head", L.part("sphere", L.mix(SKIN, BLUSH, 0.5), loc=nt, radius=0.034, segments=12,
-                                  ring_count=8, scale=(1.05, 1.0, 0.95), paint_kw={"ao": 0.0, "var": 0.04})))
-    for sx in (-1, 1):
-        parts.append(W("head", L.part("sphere", L.mix(SKIN, BLUSH, 0.3), loc=nt + Vector((sx * 0.026, 0.02, -0.006)),
-                                      radius=0.016, segments=8, ring_count=5, paint_kw={"ao": 0.0})))
-    for sx in (-1, 1):
-        ec = head_c + Vector((sx * 0.058, -0.128, 0.035))
-        # eyeball, a warm glint, a heavy drooping lid (kind, a little tired)
-        parts.append(W("head", L.part("sphere", EYE, loc=ec, radius=0.024, segments=10, ring_count=6,
-                                      paint_kw={"ao": 0.0, "top": 0.0, "var": 0.0})))
-        parts.append(W("head", L.part("sphere", (0.93, 0.9, 0.84), loc=ec + Vector((sx * 0.008, -0.021, -0.004)),
-                                      radius=0.0068, segments=6, ring_count=4,
-                                      paint_kw={"ao": 0.0, "top": 0.0, "var": 0.0})))
-        lid = L.prim("sphere", radius=0.0275, segments=10, ring_count=6)
-        for v in lid.data.vertices:
-            v.co.z = max(v.co.z, 0.002)
-        _xf(lid, Matrix.Translation(ec + Vector((0, 0.002, 0.001))) @ Matrix.Rotation(math.radians(sx * 14), 4, "Y")
-            @ Matrix.Rotation(math.radians(8), 4, "X"))
-        parts.append(W("head", _painted(lid, L.scale_c(SKIN, 0.9), ao=0.0, var=0.04, seed=32)))
-        # bushy brows, the inner ends raised (melancholic-kind)
-        brow = L.prim("sphere", radius=1.0, segments=10, ring_count=6, scale=(0.056, 0.024, 0.021))
-        L.jitter(brow, 0.005, 40.0, 33 + sx)
-        _xf(brow, Matrix.Translation(head_c + Vector((sx * 0.066, -0.146, 0.062)))
-            @ Matrix.Rotation(math.radians(sx * 16), 4, "Y") @ Matrix.Rotation(math.radians(sx * 12), 4, "Z"))
-        parts.append(W("head", _painted(brow, BROW, ao=0.0, var=0.12, top=0.3, seed=34)))
-        # ears and grey hair tufts poking out under the hat
-        parts.append(W("head", L.part("sphere", L.mix(SKIN, BLUSH, 0.2), loc=head_c + Vector((sx * 0.142, 0.0, 0.0)),
-                                      radius=0.035, segments=10, ring_count=6, scale=(0.45, 0.8, 1.2),
-                                      paint_kw={"ao": 0.0})))
-        for k, (dy, dz, ln) in enumerate(((0.03, 0.05, 0.07), (0.08, 0.04, 0.08), (0.12, 0.02, 0.06))):
-            root = head_c + Vector((sx * 0.13, dy, dz))
-            tip = root + Vector((sx * 0.05, 0.02, -ln))
-            parts.append(W("head", _painted(L.tube(root, tip, 0.024, 6, r_end=0.006), BEARD, ao=0.0, var=0.12,
-                                            seed=35 + k)))
-    for k, dx in enumerate((-0.06, 0.06)):  # short hair at the back (the scarf collar stays visible)
-        root = head_c + Vector((dx, 0.125, 0.045))
-        parts.append(W("head", _painted(L.tube(root, root + Vector((dx * 0.5, 0.04, -0.06)), 0.026, 6, r_end=0.007),
-                                        BEARD, ao=0.0, var=0.12, seed=38 + k)))
-    # full grey beard with a drooping moustache
-    beard = L.prim("sphere", loc=head_c + Vector((0, -0.095, -0.12)), radius=0.1, segments=14, ring_count=9,
-                   scale=(1.02, 0.66, 0.92))
-    for v in beard.data.vertices:  # a gentle point at the chin, fuller on the cheeks
-        d = v.co - (head_c + Vector((0, -0.095, -0.12)))
-        if d.z < -0.03:
-            v.co.x *= 1.0 - 0.35 * _smooth01((-d.z - 0.03) / 0.06)
-            v.co.z -= 0.02 * _smooth01((-d.z - 0.03) / 0.06)
-    L.jitter(beard, 0.013, 14.0, 9)
-    _painted(beard, BEARD, var=0.16, ao=0.35, top=0.3, seed=9)
-    _tint(beard, lambda co, n: (1.12, 1.12, 1.1) if n.z > 0.3 else None)
+        if d.z < -0.12 and d.y < 0.0:
+            v.co.z -= 0.035 * max(0.0, 1.0 - abs(d.x) / 0.07) * F._s01((-d.z - 0.12) / 0.08)
+    L.jitter(beard, 0.006, 9.0, 32)
+    _painted(beard, L.mix(BEARD, BROW, 0.35), var=0.12, ao=0.0, top=0.25, seed=33, hue_shift=BEARD)
+    F._tint(beard, lambda co, nr: (1.0 - 0.14 * max(0.0, math.sin(co.x * 160.0 + F._n(co, 9.0) * 3.0)), BROW,
+                                   0.35 * max(0.0, nr.z) + 0.2 * max(0.0, F._n(co, 14.0, 2.0))))
     parts.append(W("head", beard))
-    for sx in (-1, 1):
-        mo = L.prim("sphere", radius=1.0, segments=10, ring_count=6, scale=(0.05, 0.022, 0.02))
-        L.jitter(mo, 0.004, 30.0, 40 + sx)
-        _xf(mo, Matrix.Translation(head_c + Vector((sx * 0.04, -0.19, -0.075)))
-            @ Matrix.Rotation(math.radians(sx * 30), 4, "Y") @ Matrix.Rotation(math.radians(sx * 18), 4, "Z"))
-        parts.append(W("head", _painted(mo, L.scale_c(BROW, 1.02), ao=0.0, var=0.1, top=0.3, seed=41)))
+    for sx in (-1, 1):   # the drooping moustache: two soft lobes from under the nose down past the mouth
+        uw = ((sx * 0.02, -0.33), (sx * 0.16, -0.39), (sx * 0.27, -0.52), (sx * 0.3, -0.64))
+        mo = F.sweep([face.pt(u, w, o) for (u, w), o in zip(uw, (0.012, 0.017, 0.015, 0.01))], [0.013, 0.018, 0.014, 0.008],
+                     n=6, flat=0.75, name="moustache", normals=[face.nrm(u, w) for u, w in uw])
+        L.jitter(mo, 0.002, 30.0, 40 + sx)
+        parts.append(W("head", _painted(mo, L.scale_c(BROW, 1.02), ao=0.0, var=0.12, top=0.3, seed=41, hue_shift=BEARD)))
 
     # --- wide, floppy, crooked hat with pinched crown, worn brim, patch and feather ------
     hat_parts = []
@@ -777,6 +728,7 @@ def build():
     for name, frames, fn in ACTIONS:
         rig.add_action(arm, mesh, name, frames, fn)
     L.export_rigged(arm, NAME, "characters")
+    F._stable_glb(L.os.path.join(L.ROOT, "assets", "models", "characters", NAME + ".glb"))
 
 
 if __name__ == "__main__":
