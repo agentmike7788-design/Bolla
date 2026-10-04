@@ -28,6 +28,7 @@ outdoor_profiles = Dictionary[String, StringName]({
 })
 room_profiles = Dictionary[StringName, StringName]({
 &"chapel": &"chapel",
+&"church": &"chapel",
 &"crypt": &"crypt",
 &"hut": &"hut",
 &"inn": &"inn",
@@ -60,6 +61,7 @@ region_surfaces = Dictionary[StringName, StringName]({
 })
 room_surfaces = Dictionary[StringName, StringName]({
 &"chapel": &"stone",
+&"church": &"stone",
 &"crypt": &"stone",
 &"hut": &"wood",
 &"inn": &"wood",
