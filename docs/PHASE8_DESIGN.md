@@ -262,7 +262,7 @@ Die Dorfbewohner, die einen Toten auf dem Hügel haben, kommen selbst herauf. Si
 | `vase` | „Eine Vase, damit die Blumen nicht umfallen." | eine Grabvase (`deco_grave_vase`) ≤ 1,5 m vom Grab | Baumodus (Phase 3) |
 - **Angebot:** im Gespräch mit einem wartenden Besucher (Wohlwollen ≥ 2). Gewählt wird die erste noch nicht erfüllte Art in der Reihenfolge [`tend` (nur wenn verwahrlost), `flowers`, `candle`, `line`, `vase`], mit dem Seed des Grabs gedreht. Höchstens **ein offener Wunsch je Grab**, **3 offene insgesamt** (`max_open 3`). Karte im Dialog mit „Das mache ich." / „Ich kann es nicht versprechen." (ohne Folgen). **Frist:** der nächste Besuch (3–7 Tage).
 - **Lohn beim erfüllten Besuch:** Trinkgeld **1** (`tip_base`) **+1** bei Wohlwollen ≥ 6 **+1** bei Grabqualität ≥ 15 → **1–3 Münzen**, höchstens **4 Münzen am Tag** (`tip_cap_day 4`, darüber nur Dank); Ruf **+1** (`wish_done`); Wohlwollen +2; `stats.wishes_done`, `stats.tips_coins`. Bewohner zahlen kein Geld: **Beziehung +4** (`wish_done_villager`); Esch legt einmal 2 `iron_fittings` hin. **Nicht erfüllt:** Wohlwollen −2, der Wunsch verfällt (`stats.wishes_failed`), kein Ruf-Abzug.
-- *Begründung Trinkgeld:* Im Bogen A kommen ≈ 9 erfüllte Wünsche zusammen, davon ≈ 8 mit Geld, zusammen **≈ 18 Münzen**: etwa 12 % der Einnahmen und weniger als das Pflegegeld (36). Die Tageskappe verhindert, dass ein Abend mit vielen Besuchern zur Kasse wird. Die eigentliche Belohnung ist der Ruf, der über Bezahlung und Pflegegeld weiterwirkt (Phase 3). Eine echte Preisdynamik bleibt Phase 10.
+- *Begründung Trinkgeld:* Im Bogen A kommen ≈ 9 erfüllte Wünsche zusammen, davon ≈ 8 mit Geld, zusammen **≈ 18 Münzen**: etwa ein Sechstel der neuen Einnahmen (9 % des Verfügbaren, §2.10) und die Hälfte des Pflegegelds (36). Die Tageskappe verhindert, dass ein Abend mit vielen Besuchern zur Kasse wird. Die eigentliche Belohnung ist der Ruf, der über Bezahlung und Pflegegeld weiterwirkt (Phase 3). Eine echte Preisdynamik bleibt Phase 10.
 
 ### 2.3 Grabpflege neu: Blumen, Kerzen, Grabgitter (`data/config/grave_care_config.tres` – `GraveCareConfig`)
 **Entscheidung: vier kleine Zustände je Grab im neuen System `GraveCare`, getrennt von Zier (Phase 3) und Qualität (sie ändern die Qualität nicht).** *Begründung:* Die Grabqualität ist mit dem Zeichen abgeschlossen (Phase 3–5). Blumen und Kerzen sind das, was danach kommt: Pflege für die Lebenden und die Geister, nicht für die Abrechnung.
@@ -427,7 +427,7 @@ Die Dorfbewohner, die einen Toten auf dem Hügel haben, kommen selbst herauf. Si
 - Geist (`by_story`): „Drei waren da. Einer hat gebetet, einer hat gezählt, eine hat gewartet." · „Gesa hat Strohblumen gebracht. Die halten länger als ich."
 
 ### 2.10 Münzrechnung (würdevoller Spieler, Bogen A)
-**Ausgangslage (G7, `qa_playthrough.md`):** `neighbor7` endet mit **60** Münzen, `anatomist7` mit **71** (G7 Runde 2). Phase 8 bringt **wenig neue Einnahmen** (4 Bestattungen in der dritten Reihe, Trinkgeld, Verkäufe an Hanne) und **laufende, kleine Ausgaben** (Lehrling 3/Tag, Kerzen, Setzlinge, Almosen, Grabgitter). Ziel: Der Beutel wächst nicht schneller als in Phase 7 (dort +40 in 13 Tagen), und **Trinkgeld bleibt unter 15 % der Einnahmen**.
+**Ausgangslage (G7, `qa_playthrough.md`):** `neighbor7` endet mit **60** Münzen, `anatomist7` mit **71** (G7 Runde 2). Phase 8 bringt **wenig neue Einnahmen** (4 Bestattungen in der dritten Reihe, Trinkgeld, Verkäufe an Hanne) und **laufende, kleine Ausgaben** (Lehrling 3/Tag, Kerzen, Setzlinge, Almosen, Grabgitter). Ziel: Der Beutel wächst nicht schneller als in Phase 7 (dort +40 in 13 Tagen), und **Trinkgeld bleibt bei höchstens einem Sechstel der neuen Einnahmen**.
 
 | Einnahmen (10 Tage) | Rechnung | Münzen |
 |---|---|---|
@@ -494,3 +494,388 @@ Die Dorfbewohner, die einen Toten auf dem Hügel haben, kommen selbst herauf. Si
 ### 2.12 Osric und Ilse
 - **Osric** (`carter.tres`, `carter_village.tres`, P6): `p8_intro` (§1.2) · Lichtgang-Kerzen (§2.7.2) · nach der ersten Nacht des Nachtgräbers: „Ich hab auf dem Weg einen gesehen, um zwei, mit Spaten. Ich hab nicht angehalten. Ich halte nie an." (setzt `robber_known`, falls noch nicht) · D2 (§2.9) · im Dorf über Jakob: „Der Junge fragt mir Löcher in den Bauch. Wie tief, wie lang, wie schwer. Ich sag ihm: frag den da oben." Keine Beziehung in Phase 8 (wie Phase 7).
 - **Ilse** (`trader.tres`, P6), neue Fragen ab `p8_open`: „Kennst du einen Grell?" (ab `robber_known`) → „Der gräbt für die Stadt. Ich kaufe nur, was über der Erde liegt. Das ist ein Unterschied, auch wenn du ihn nicht siehst." · „Was weißt du über Veit?" → „Veit sieht alles und verkauft nichts davon. Das mag ich an ihm." · Am Lichtgang kommt sie nicht (Eintrag mit `today_flag fest_lights_day` verbirgt sie). Ilse bleibt ohne Beziehung und ohne Besuch am Grab.
+
+---
+
+## 3. Architektur
+
+### 3.1 Neue Knoten
+**Systemknoten** (unter `WorldRoot/Systems`, vom Welt-Builder angelegt; keine neuen Autoloads):
+| Knoten | Klasse | Gruppen | save_id / save_order |
+|---|---|---|---|
+| `NpcLife` | `NpcLife` | `npc_life`, `saveable` | `npc_life` / **70** |
+| `Visitors` | `Visitors` | `visitors`, `saveable` | `visitors` / **71** |
+| `GraveCare` | `GraveCare` | `grave_care`, `saveable` | `grave_care` / **72** |
+| `Apprentice` | `Apprentice` | `apprentice`, `saveable` | `apprentice` / **73** |
+| `Friendship` | `Friendship` | `friendship`, `saveable` | `friendship` / **74** |
+| `Festivals` | `Festivals` | `festivals`, `saveable` | `festivals` / **75** |
+| `Wanderers` | `Wanderers` | `wanderers`, `saveable` | `wanderers` / **76** |
+| `NightRobber` | `NightRobber` | `night_robber`, `saveable` | `night_robber` / **77** |
+| `NightPaths` | `NightPaths` | `night_paths`, `saveable` | `night_paths` / **78** |
+| `ChatterRunner` | `ChatterRunner` | `chatter` | – (nicht gespeichert) |
+
+**Entitäten** – Friedhof: `Entities/npc_apprentice`, `npc_kin_kehr|brandt|ott|sieber`, `npc_innkeeper_g`, `npc_smith_g`, `npc_grocer_g`, `npc_mayor_g`, `npc_washer_g` (der Pfarrer nutzt `npc_priest` aus Phase 7), `npc_beggar_g`, `npc_peddler_g`, `npc_robber` (alle `Npc`, Region graveyard; ohne Plan unsichtbar wie verborgene Npc), `apprentice_board` (`ApprenticeBoard`), `apprentice_box` (`ApprenticeBox extends Chest`, saveable `apprentice_box` / **79**), `rain_barrel` (`RainBarrel`), je Grab ein `TipStone` (Kind des `GravePlot`, ohne eigenes Speichern – Zustand in `Visitors`), Abschnitt-Erweiterung `linden` (Plots `l_09…l_12`, 2 Hindernisse). Dorf: `npc_apprentice_v`, `npc_beggar`, `npc_peddler` (Region village), `WatchSpot` × 2 (`watch_ott`, `watch_kehr`), `SickLight` × 2 (an den Fenstermarkern der Häuser), in der Gaststube `FestDecor` (Kathrein) + `ph_chr_fiddler`, in der Kirche `ArchiveCabinet` (`src/entities/archive_cabinet/*`) und die Namenstafel am Gedenkbrett (`MemorialPlate`, sichtbar ab Rosine 2).
+
+### 3.2 Module & Besitz (Phase 8)
+| Modul | Besitzt (Pfade) |
+|---|---|
+| **Lead** (W0 + laufend) | `project.godot`, `src/core/*` (EventBus, Database), alle **Datenklassen ✦**, alle **Stubs** (bis zur Übergabe), `tests/run_tests.gd`, `tests/framework/*`, `tests/fixtures/*` (inkl. **`saves_v6/*`**, `phase8/*`), `tests/integration/test_saves_v6_load.gd`, `tests/unit/test_phase8_scaffold.gd`, `docs/*`, `CLAUDE.md` |
+| **P1 Dorfleben & Figurenlast** | `src/systems/npc_life/{npc_life,mood_rules,chatter_runner,reaction_rules}.gd` (neu), `src/systems/npc/{schedule_builder,npc_lod,schedule_resolver}.gd`, `src/entities/npc/{npc,npc_pose}.gd` (Laufzeit-Zeitplan, Hut-/Strauß-Kindmeshes, `idle_low`, LOD-Kappen je Region), `src/systems/village/relationships.gd` (nur Gerede-Vorrang „Ereignis" und die neuen `gains`), `data/config/{npc_life_config,npc_config,relationship_config}.tres`, `tests/unit/{test_moods,test_chatter,test_schedule_builder,test_npc_lod,test_reactions}.gd` |
+| **P2 Besucher, Wünsche & Grabpflege** | `src/systems/visitors/{visitors,visit_rules,wish_rules,grave_view}.gd` (neu), `src/systems/grave_care/{grave_care,grave_care_rules}.gd` (neu), `src/entities/{tip_stone,rain_barrel}/*` (neu), `src/entities/grave/{grave_plot,grave_plot_visuals}.gd` (alle neuen Prompts und Kindmeshes: Blumen, Kerze, Gitter, aufgewühlt, Münzen, Zeile nachmeißeln), `src/systems/graveyard/graveyard.gd` (nur `disturbed`, `append_inscription`, `replace_name_line`), `src/systems/ghosts/{ghost_mood,ghost_manager}.gd` (`care`, `disturbed`, `prayer`, `early_window`, neue Pools), `src/systems/corpse/corpse_manager.gd` (nur `kin_house` bei der Lieferung), `data/visitors/*`, `data/config/{visitor_config,grave_care_config,reputation_config,piety_config,ghost_config}.tres`, `data/ghosts/ghost_lines.tres`, `tests/unit/{test_visitors,test_wishes,test_grave_view,test_grave_care,test_ghosts}.gd` |
+| **P3 Lehrling** | `src/systems/apprentice/{apprentice,apprentice_rules,apprentice_planner}.gd` (neu), `src/entities/{apprentice_board,apprentice_box}/*` (neu), `src/systems/cleanliness/cleanliness_manager.gd` (nur `tend_by(spot_id, actor)` ohne Inventar-Prüfung), `data/apprentice/*`, `data/config/apprentice_config.tres`, `tests/unit/{test_apprentice,test_apprentice_planner,test_apprentice_rules}.gd`, `tests/integration/test_apprentice_day.gd` |
+| **P4 Freundschaft, Gefallen & Feste** | `src/systems/friendship/{friendship,friend_rules,favor_rules}.gd` (neu), `src/systems/festivals/{festivals,festival_rules}.gd` (neu), `src/systems/village/{orders,order_rules}.gd` (Kategorie `friend`, Arten `meet`/`task`, `max_active_friend`), `src/entities/{fest_decor,memorial_plate,archive_cabinet,fiddler}/*` (neu), `data/friendship/*`, `data/festivals/*`, `data/orders/of_*.tres` (Freundschafts- und Gegengefallen-Aufträge), `data/recipes/memorial_plate.tres`, `data/config/orders_config.tres`, `tests/unit/{test_friendship,test_favors,test_festivals,test_orders}.gd`, `tests/integration/test_lights_evening.gd` |
+| **P5 Assets** | `tools/blender/{asset_apprentice,asset_mourners,asset_wanderers,asset_props_phase8}.py` (neu), `tools/blender/{asset_villagers,asset_character,asset_items}.py` (nur neue Clips bzw. Icons), `tools/blender/rig.py` (nur neue Pose-Helfer, additiv), `tools/blender/build_all.py`, `assets/models/**` (nur Phase-8-Dateien und die neu exportierten Figuren mit Zusatz-Clips), `art_source/blender/**` (Phase 8), `tests/unit/test_assets_phase8.gd`, `docs/reviews/phase8_assets/*` |
+| **P6 Dialog, Geschichte & Speichern** | `data/dialogue/*` (alle bestehenden + neu `v_apprentice`, `beggar`, `peddler`, `robber`, `kin_kehr|brandt|ott|sieber`, `lights_lenz`), `data/npc_life/chatter/*` (Texte), `data/npc/*_schedule.tres` (neue Figuren, Fest-, Besuchs- und Nachtweg-Einträge), `src/systems/dialogue/{dialogue_conditions,dialogue_actions}.gd`, `src/systems/journal/journal_manager.gd` (nur `any_clues`), `src/systems/story/story_director.gd` (D2), `data/story/d2_ott.tres`, `data/finds/f_d2_*.tres`, `data/journal/{clues,insights}/*` (Phase 8, alle drei Varianten von `i_underlined`), `src/systems/save/{save_migration,save_file_io,save_manager}.gd`, `src/systems/game_state/game_state.gd` (Stats, Zwecke), `data/config/story_config.tres` (`underlined`), `tests/unit/{test_dialogue,test_save,test_save_migration,test_story,test_journal,test_game_state}.gd`, `tests/integration/test_phase7_save_upgrade.gd` |
+| **P7 Nacht & Wanderer** | `src/systems/night/{night_robber,robber_rules,night_paths,night_path_rules}.gd` (neu), `src/systems/village/wanderers.gd` (neu), `src/entities/{watch_spot,sick_light}/*` (neu), `data/night/*`, `data/village/wanderers/*`, `data/shops/*` (Hanne neu; Theres/Esch-Zusätze), `data/config/robber_config.tres`, `data/items/*` (Phase-8-Items), `tests/unit/{test_night_robber,test_night_paths,test_wanderers,test_shops_phase8}.gd`, `tests/integration/test_night_watch.gd` |
+| **W-Welt** (W2) | `data/world/graveyard_layout.json` (dritte Reihe, Besucherplätze, Routen, Lehrlingsecke, Regenfass, Räuberweg, Veit-/Hanne-Plätze §4.7), `data/world/village_layout.json` (Krankenlicht-Marker, Beobachtungsplätze, Veit/Hanne), `data/world/interiors/{inn,church}_layout.json` (Kathrein-Schmuck, Spielmann, Archivschrank, Namenstafel), `src/world/graveyard/*` (neu `graveyard_build_phase8.gd`, `graveyard_shots_phase8.gd`), `src/world/village/*` (neu `village_build_phase8.gd`; `village_shots.gd` + `--phase8`), `src/world/interiors/*`, `tools/blender/asset_ground_graveyard.py` (nur Lindenacker-Reihe 3), `tests/integration/{test_graveyard_world,test_village_world,test_phase8_loop,test_interiors,test_visit_routes}.gd`, `docs/reviews/phase8_round1/*` |
+| **W-UI** (W2) | `src/ui/**` (neu `panels/{apprentice_board_panel,wish_card,favor_panel,fest_panel}.gd`, `hud/{chatter_bubbles,fest_banner}.gd`, `phase8_texts.gd`; Merkbuch-Seiten „Angehörige", „Hollerbrück" (+ Laune, Geschichtspunkte), Grab-Tooltip, Tageszusammenfassung, Abschluss-Panel; `src/ui/map/*` Marker §7.8), `src/debug/*` (neu `debug_commands_phase8.gd`; außer `asset_preview.gd`, `screenshot_capture.gd`), `tests/unit/{test_ui_phase8,test_objective,test_map_phase8}.gd`, `tests/integration/test_ui_flow.gd` |
+| **W-Ton** (W2, Agent 17) | `tools/audio/build_audio.py` (nur neue Cues), `assets/audio/**` (nur neue `ph_*`), `data/audio/{audio_config,audio_events}.tres`, `data/audio/cues_*.tres` (generiert), `src/systems/audio/{audio_world,audio_events}.gd` (nur neue Emitter/Regeln), `tests/unit/test_audio_phase8.gd`, `docs/reviews/phase8_round1/audio_list.md` |
+| **W3 QA** | `tests/integration/{phase3_bot,…,phase7_bot,phase8_bot,test_phase8_playthrough,test_phase8_qa,test_save_fuzzer}.gd`, `docs/reviews/phase8_wip/*` |
+| **Eingefroren** | `src/world/art_prototype/*`, `src/entities/player/player_proto.*`, `data/art_prototype/*`, **Maler-Shader**, `data/atmosphere/*`, `lib_faces.py` (nur benutzen), alle Gebäude, Innenräume außer den genannten Einträgen in `inn`/`church`, Abschnitte I–V außer der Lindenacker-Reihe 3, Dorf-Plan außer den Markern §4.7, Präparate- und Anatomie-Systeme aus Phase 7 |
+
+✦ **Datenklassen (W0, Lead):** `NpcLifeConfig`, `ChatterData`, `VisitorConfig`, `KinData`, `WishData`, `GraveCareConfig`, `ApprenticeConfig`, `ApprenticeTaskData`, `FriendStoryData`, `FriendStepData`, `FavorData`, `FestivalData`, `WandererData`, `RobberConfig`, `NightPathData`, `NightVisitData`. Erweiterungen: `VillagerData` (+ `circle`, `mood_lines`, `story_id`, `favor_id`, `visit_grave`, `visit_every_days`, `graveyard_npc`), `OrderData` (+ `category`, Arten `meet`/`task`), `OrdersConfig` (+ `max_active_friend`), `CorpseRecord` (+ `kin_house`), `GraveRecord` (+ `disturbed`, `extra_lines`), `InsightData` (+ `any_clues`, `any_count`), `ActionConfig`-Stichwörter (+ `noisy`), `ReputationConfig.event_points` (+ 10), `PietyConfig.events` (+ 4), `RelationshipConfig.gains` (+ 13), `GhostLines` (+ 5 Pools), `StoryConfig` (+ `underlined`).
+Bei nur fünf Agents übernimmt P1 zusätzlich P7, P4 zusätzlich P3 ist **nicht** erlaubt (beide hängen am Planer); stattdessen P2 + P7 und P3 + P1.
+
+### 3.2.1 Klassen → Dateien
+| Klasse | Datei | Art |
+|---|---|---|
+| `NpcLifeConfig`, `ChatterData` | `src/systems/npc_life/{npc_life_config,chatter_data}.gd` | ✦ |
+| `NpcLife`, `MoodRules`, `ChatterRunner`, `ReactionRules` | `src/systems/npc_life/{npc_life,mood_rules,chatter_runner,reaction_rules}.gd` | Stub (P1) |
+| `ScheduleBuilder` | `src/systems/npc/schedule_builder.gd` | Stub (P1) |
+| `VisitorConfig`, `KinData`, `WishData` | `src/systems/visitors/{visitor_config,kin_data,wish_data}.gd` | ✦ |
+| `Visitors`, `VisitRules`, `WishRules`, `GraveView` | `src/systems/visitors/{visitors,visit_rules,wish_rules,grave_view}.gd` | Stub (P2) |
+| `GraveCareConfig` | `src/systems/grave_care/grave_care_config.gd` | ✦ |
+| `GraveCare`, `GraveCareRules` | `src/systems/grave_care/{grave_care,grave_care_rules}.gd` | Stub (P2) |
+| `TipStone`, `RainBarrel` | `src/entities/{tip_stone,rain_barrel}/*.gd` (+ `.tscn`) | Stub (P2) |
+| `ApprenticeConfig`, `ApprenticeTaskData` | `src/systems/apprentice/{apprentice_config,apprentice_task_data}.gd` | ✦ |
+| `Apprentice`, `ApprenticeRules`, `ApprenticePlanner` | `src/systems/apprentice/{apprentice,apprentice_rules,apprentice_planner}.gd` | Stub (P3) |
+| `ApprenticeBoard`, `ApprenticeBox` | `src/entities/{apprentice_board,apprentice_box}/*.gd` (+ `.tscn`; Box `extends Chest`) | Stub (P3) |
+| `FriendStoryData`, `FriendStepData`, `FavorData`, `FestivalData` | `src/systems/friendship/{friend_story_data,friend_step_data,favor_data}.gd`, `src/systems/festivals/festival_data.gd` | ✦ |
+| `Friendship`, `FriendRules`, `FavorRules`, `Festivals`, `FestivalRules` | `src/systems/friendship/*.gd`, `src/systems/festivals/*.gd` | Stub (P4) |
+| `FestDecor`, `MemorialPlate`, `ArchiveCabinet`, `Fiddler` | `src/entities/{fest_decor,memorial_plate,archive_cabinet,fiddler}/*.gd` (+ `.tscn`) | Stub (P4) |
+| `WandererData`, `RobberConfig`, `NightPathData`, `NightVisitData` | `src/systems/village/wanderer_data.gd`, `src/systems/night/{robber_config,night_path_data,night_visit_data}.gd` | ✦ |
+| `Wanderers`, `NightRobber`, `RobberRules`, `NightPaths`, `NightPathRules` | `src/systems/village/wanderers.gd`, `src/systems/night/*.gd` | Stub (P7) |
+| `WatchSpot`, `SickLight` | `src/entities/{watch_spot,sick_light}/*.gd` (+ `.tscn`) | Stub (P7) |
+| `ApprenticeBoardPanel`, `WishCard`, `FavorPanel`, `FestPanel`, `ChatterBubbles`, `FestBanner` | `src/ui/panels/*.gd`, `src/ui/hud/*.gd` | W-UI |
+
+### 3.3 EventBus – neue Signale (Ergänzung `src/core/event_bus.gd`)
+```gdscript
+# Dorfleben (NpcLife, ChatterRunner)
+signal moods_rolled(day: int)
+signal chatter_line(chatter_id: StringName, npc_id: StringName, text: String)
+# Besucher (Visitors); phase: &"arriving" | &"mourning" | &"waiting" | &"leaving" | &"gone"
+signal visitor_changed(visit_id: String, kin_id: StringName, grave_id: String, phase: StringName)
+signal grave_viewed(grave_id: String, kin_id: StringName, view: StringName)
+# Wünsche (Visitors); state: &"offered" | &"accepted" | &"done" | &"failed"
+signal wish_changed(wish_id: String, state: StringName)
+# Grabpflege (GraveCare); kind: &"flowers" | &"bouquet" | &"candle" | &"mortsafe" | &"disturbed" | &"tip"
+signal grave_care_changed(grave_id: String, kind: StringName, active: bool)
+# Lehrling (Apprentice)
+signal apprentice_job_done(task_id: StringName, spot_id: String, mistake: bool)
+signal apprentice_level_changed(task_id: StringName, level: int)
+# Freundschaft (Friendship); state: &"used" | &"returned" | &"unreturned"
+signal friend_step_completed(npc_id: StringName, step: int)
+signal favor_changed(npc_id: StringName, favor_id: StringName, state: StringName)
+# Feste (Festivals); state: &"announced" | &"running" | &"ended" | &"cancelled"
+signal festival_changed(fest_id: StringName, state: StringName)
+# Nacht (NightRobber; kind: &"arrived" | &"seen" | &"fled" | &"caught" | &"disturbed" | &"gone") und Krankenlicht (NightPaths)
+signal robber_event(kind: StringName, grave_id: String)
+signal night_visit(path_id: StringName, npc_id: StringName, phase: StringName)   # &"enter" | &"leave" | &"observed"
+```
+Regel wie Phase 3–7: **Listener ändern keinen Spielzustand.** Wer ändert, ruft direkt auf: `Visitors` (Uhr, Npc-Plan) → `GraveView.view` → `Reputation.event`, eigenes Wohlwollen; Dialog → `Visitors.accept_wish/hand_tip`; `Visitors.on_visit_end` → `WishRules.check` → `payment_received(tip, "Trinkgeld")`, `Relationships.add` (Bewohner), `NpcLife.check_goal`; `GravePlot` → `GraveCare.plant/water/light/set_mortsafe/close_disturbed`, `Graveyard.append_inscription`; `Apprentice` (Ende einer Stelle) → `CleanlinessManager.tend_by`, `GraveCare.water/light`, `NpcLife.check_goal`; `Apprentice.pay_wage` → `GameState.note_coins_spent(3, &"apprentice")`; `DialogueActions` → `Friendship.offer/accept_step/use_favor`, `Apprentice.hire/teach/praise/scold`, `Wanderers.give_alms`, `NightRobber.resolve`, `Festivals.dance`; `Orders.complete` (Kategorie `friend`) → `Friendship.note_order_done` → `Relationships.add`, `NpcLife.check_goal`; `Festivals.apply_minute` → `Festivals.evaluate_lights` → `Reputation.event`, `Relationships.add`, `Visitors.add_goodwill`, `GhostManager.set_early_window`; `NightRobber.apply_minute` → `GraveCare.set_disturbed`, `CleanlinessManager.set_level`; `NightPaths.apply_minute` → `GameState.set_flag(ott_dead)`, `JournalManager.add_clue`; `StoryDirector` liest `ott_dead` (D2). `coins_spent` erhöht `stats.coins_spent` im Sender über `GameState.note_coins_spent`.
+
+### 3.4 Logik-Klassen (Signaturen = Vertrag)
+
+**Dorfleben & Figurenlast (P1)**
+```gdscript
+class_name NpcLifeConfig extends Resource            # ✦ data/config/npc_life_config.tres
+@export var open_flag: StringName = &"p8_open"; @export var open_day_flag: StringName = &"p8_open_day"
+@export var unlock_flag: StringName = &"name_in_village_complete"; @export var intro_minute: int = 360
+@export var moods: Array[StringName] = [&"plain", &"cheerful", &"low", &"cross"]
+@export var mood_weights: Dictionary[StringName, int] = {&"plain": 70, &"cheerful": 15, &"low": 10, &"cross": 5}
+@export var mood_rules: Array[Dictionary] = []       # [{trigger, mood, npcs}] in Vorrang-Reihenfolge §2.1.1
+@export var talk_gain_by_mood: Dictionary[StringName, int] = {&"plain": 1, &"cheerful": 2, &"low": 1, &"cross": 0}
+@export var listen_minutes: int = 10
+@export var chatter_distance: float = 10.0; @export var chatter_line_seconds: float = 3.5
+@export var reactions: Dictionary[StringName, int] = {}   # Ereignis → Tage gültig (2)
+@export var goal_levels: int = 2; @export var goal_wishes: int = 5; @export var goal_kin: int = 3
+@export var goal_steps: int = 6; @export var goal_full_stories: int = 1; @export var goal_insight: StringName = &"i_underlined"
+@export var chapter_id: StringName = &"who_comes_up"; @export var goal_flag: StringName = &"who_comes_up_complete"
+class_name MoodRules extends RefCounted
+static func roll(npc_id: StringName, day: int, cfg: NpcLifeConfig) -> StringName
+static func apply_rules(base: StringName, npc_id: StringName, day: int, events: Dictionary, cfg: NpcLifeConfig, villager: VillagerData) -> StringName
+class_name NpcLife extends Node                       # Gruppe npc_life, saveable npc_life / 70
+func is_open() -> bool; func open_day() -> int
+func apply_morning(day: int) -> void                  # 06:00: p8_open (idempotent), Launen würfeln, moods_rolled
+func post_load() -> void                              # v6 mit name_in_village_complete → p8_open sofort
+func mood(npc_id: StringName) -> StringName           # heutige Laune (abgeleitet, nicht gespeichert)
+func note_event(event: StringName, npcs: Array[StringName] = []) -> void   # merkt Tag + Ereignis (Launen/Reaktionen)
+func reaction_for(npc_id: StringName) -> StringName   # jüngstes gültiges Ereignis oder &""
+func listen_block_reason(npc_id: StringName) -> String; func listen(npc_id: StringName) -> bool
+func check_goal() -> bool                             # §1.5, genau einmal
+func goal_progress() -> Dictionary                    # {levels, wishes, kin, steps, full, insight} für die Zielzeile
+func save_state() -> Dictionary; func load_state(data: Dictionary) -> void
+class_name ChatterData extends Resource               # ✦ data/npc_life/chatter/<id>.tres
+@export var id: StringName; @export var region: StringName = &"village"; @export var npcs: Array[StringName] = []   # [a, b]
+@export var place: StringName                          # Wegpunkt
+@export var window: Vector2i                           # Minuten [von, bis]
+@export var conditions: PackedStringArray = []        # Dialog-Syntax; + mood:<npc>:<mood>, fest_day:<id>, sick_light
+@export var lines: PackedStringArray = []             # abwechselnd a/b, 2–4
+@export var sets_flag: StringName = &""               # nur ch_rumor_robber
+class_name ChatterRunner extends Node                 # Gruppe chatter, 2 Hz, eine Begegnung je Region zugleich
+func update_now() -> void; func running(region_id: StringName) -> StringName
+func seen_today(chatter_id: StringName) -> bool       # aus Tag + gespeicherter Liste in NpcLife (once/day)
+class_name ReactionRules extends RefCounted
+static func remark_key(npc_id: StringName, life: NpcLife, rel: Relationships) -> StringName   # Ereignis > friend > piety > rep
+class_name ScheduleBuilder extends RefCounted         # Laufzeit-Zeitpläne (Besuche, Lehrling, Feste, Räuber)
+static func walk(from_wp: StringName, path: PackedStringArray, start_minute: int, region: StringName, world: Node) -> ScheduleEntry
+#   travel_minutes aus der Polylinie: Länge / NpcConfig.walk_m_per_minute (3,2)
+static func stay(at_wp: StringName, start_minute: int, animation: StringName, dialogue_id: StringName = &"", visible := true) -> ScheduleEntry
+static func build(entries: Array[ScheduleEntry]) -> NpcSchedule   # sortiert, Lücken = unsichtbar
+# Npc (P1): func set_runtime_schedule(s: NpcSchedule) -> void   # ersetzt den Daten-Zeitplan bis clear_runtime_schedule(); nicht gespeichert
+#           func clear_runtime_schedule() -> void
+#   Kindmeshes nach Animation: Meta `show_with` am Kindmesh (hat_hand nur in mourn_stand/kneel, bouquet bis lay_flowers-Ende,
+#   lantern_prop am Lichtgang) – Muster ToolProps, ohne neue Knoten zur Laufzeit
+# NpcLod (P1): Kappen je Region: NpcConfig.max_full (6) bleibt; + max_visible_graveyard 9 (Lichtgang 16), Rang nach Abstand;
+#   Stufe 2 für stehende Figuren (idle/kneel/mourn) ab 26 m statt 40 m; Lichtgang: Stufe-1-Rate 3 Hz
+# ScheduleResolver (P1): unverändert; Laufzeit-Zeitpläne nutzen dieselbe Auswertung
+# Relationships (P1): remark_text() fragt zuerst ReactionRules; note_talk() nutzt NpcLife.mood → talk_gain_by_mood
+```
+
+**Besucher, Wünsche & Grabpflege (P2)**
+```gdscript
+class_name VisitorConfig extends Resource            # ✦ data/config/visitor_config.tres
+@export var first_delay_days: int = 1; @export var mourning_days: int = 21
+@export var interval_mourning: int = 3; @export var interval_late: int = 7
+@export var max_visits_day: int = 3; @export var max_concurrent: int = 2
+@export var slots: PackedInt32Array = [570, 750, 900]
+@export var flowers_chance_late: float = 0.4; @export var mourn_minutes: int = 30; @export var wait_minutes: int = 10
+@export var noise_distance: float = 8.0; @export var talk_distance: float = 4.0
+@export var goodwill_start: int = 5; @export var goodwill_wish_min: int = 2
+@export var view_effects: Dictionary[StringName, Dictionary] = {}   # disturbed/neglected/bare/kept/bonus/specimen → {rep_event, goodwill}
+@export var pleased_cap_day: int = 2
+@export var max_open: int = 3; @export var tip_base: int = 1; @export var tip_goodwill_min: int = 6
+@export var tip_quality_min: int = 15; @export var tip_cap_day: int = 4
+@export var wish_goodwill: int = 2; @export var wish_fail_goodwill: int = -2; @export var villager_wish_rel: int = 4
+class_name KinData extends Resource                  # ✦ data/visitors/kin/<id>.tres
+@export var kin_id: StringName; @export var display_name: String; @export var house: StringName
+@export var npc_path_id: StringName                  # Npc-Layout-Id auf dem Friedhof (npc_kin_kehr …) bzw. npc_<villager>_g
+@export var villager_id: StringName = &""            # gesetzt: Bewohner (zahlt mit Beziehung)
+@export var kneels: bool = true; @export var bouquet_model: StringName = &""; @export var dialogue_id: StringName
+@export var fixed_graves: PackedStringArray = []     # old_01, old_08, D1-/S5-Grab
+@export var visit_every_days: int = 0; @export var visit_minute: int = 0   # Bewohner (§2.1.4); 0 = Haushalt nach Plan
+class_name WishData extends Resource                 # ✦ data/visitors/wishes/<id>.tres
+@export var id: StringName; @export var kind: StringName   # &"tend" | &"flowers" | &"candle" | &"line" | &"vase"
+@export var ask_text: String; @export var done_text: String; @export var failed_text: String
+@export var line_text: String = ""                   # nur kind line
+class_name Visitors extends Node                     # Gruppe visitors, saveable visitors / 71
+func plan_day(day: int) -> Array[Dictionary]         # 06:00, deterministisch; [{visit_id, kin_id, graves, slot}] gespeichert
+func visit_of(kin_id: StringName) -> Dictionary; func active_visits() -> Array[Dictionary]
+func goodwill(kin_id: StringName) -> int; func add_goodwill(kin_id: StringName, delta: int) -> void
+func kin_for_grave(grave_id: String) -> StringName
+func offer_wish(visit_id: String) -> Dictionary      # {} | {wish_id, kind, grave_id, text}
+func accept_wish(wish_id: String) -> bool
+func open_wishes() -> Array[Dictionary]
+func hand_tip(visit_id: String, inv: Inventory) -> int   # im Gespräch; sonst TipStone
+func note_noise(pos: Vector3, action_id: StringName) -> void   # Player-TimedAction mit Stichwort noisy
+func on_visit_phase(visit_id: String, phase: StringName) -> void   # vom Npc-Plan (Ansehen, Ende)
+func save_state() -> Dictionary; func load_state(data: Dictionary) -> void
+class_name GraveView extends RefCounted
+static func view(grave_id: String, tree: SceneTree, cfg: VisitorConfig) -> Dictionary   # {view, bonus, specimen_rumor}
+class_name WishRules extends RefCounted
+static func choose(grave_id: String, kin_id: StringName, day: int, tree: SceneTree) -> StringName   # Wunsch-Id oder &""
+static func fulfilled(wish: Dictionary, tree: SceneTree) -> bool
+static func tip(goodwill: int, quality: int, paid_today: int, cfg: VisitorConfig) -> int
+class_name GraveCareConfig extends Resource          # ✦
+@export var flower_item: StringName = &"flower_seedlings"; @export var plant_minutes: int = 15
+@export var flower_fresh_minutes: int = 2880; @export var flower_wilt_minutes: int = 5760
+@export var water_minutes: int = 5; @export var can_item: StringName = &"watering_can"; @export var can_fills: int = 6; @export var refill_minutes: int = 2
+@export var bouquet_minutes: int = 2880; @export var wreath_item: StringName = &"wax_wreath"
+@export var candle_item: StringName = &"grave_candle"; @export var candle_minutes: int = 3; @export var candle_from_minute: int = 900; @export var candle_until_minute: int = 420
+@export var mortsafe_item: StringName = &"mortsafe"; @export var mortsafe_set_minutes: int = 20; @export var mortsafe_remove_minutes: int = 10; @export var mortsafe_min_days: int = 10
+@export var close_minutes: int = 30; @export var line_minutes: int = 30; @export var line_item: StringName = &"ink"
+@export var care_cap: int = 2; @export var disturbed_mood: int = -3; @export var lights_candle_mood: int = 2
+class_name GraveCare extends Node                    # Gruppe grave_care, saveable grave_care / 72
+func flowers_state(grave_id: String) -> StringName  # &"" | &"fresh" | &"wilted" | &"wreath"
+func plant_block_reason(grave_id: String, inv: Inventory) -> String; func plant(grave_id: String, inv: Inventory) -> bool
+func water(grave_id: String, by_apprentice := false) -> bool
+func can_fill(owner: StringName = &"player") -> int; func refill(owner: StringName = &"player") -> void
+func place_bouquet(grave_id: String) -> void
+func candle_lit(grave_id: String) -> bool; func light(grave_id: String, inv: Inventory) -> bool   # Apprentice übergibt seine Kiste
+func lit_last_night(grave_id: String) -> bool
+func has_mortsafe(grave_id: String) -> bool; func set_mortsafe(grave_id: String, on: bool, inv: Inventory) -> bool
+func is_disturbed(grave_id: String) -> bool; func set_disturbed(grave_id: String) -> void; func close_disturbed(grave_id: String) -> bool
+func care_bonus(grave_id: String) -> int             # ≤ care_cap; GhostMood liest es
+func save_state() -> Dictionary; func load_state(data: Dictionary) -> void
+# Graveyard (P2): + func append_inscription(grave_id: String, line: String) -> bool   # GraveRecord.extra_lines, StoneVisual neu
+#                 + func replace_name_line(grave_id: String, name: String) -> bool     # Liesel 1 (S5 → Kaspar Dorn)
+# GraveRecord ✦ + var disturbed: bool = false; var extra_lines: PackedStringArray = []   # tolerant
+# GravePlot (P2): Prompts in dieser Reihenfolge nach den Phase-3–7-Prompts: Münzen nehmen · Grab schließen (aufgewühlt) ·
+#   Blumen gießen · Grabblumen setzen / Wachskranz legen · Grabkerze anzünden · Grabgitter auf/ab · Zeile nachmeißeln
+# GhostMood (P2): static func score(quality, dirt_level, decor_bonus, clean, cfg, robbed := 0, devotion := 0, care := 0) -> int
+# GhostManager (P2): func set_early_window(from_minute: int, minutes: int, graves: PackedStringArray) -> void   # Lichtgang, Darstellung
+# CorpseRecord ✦ + var kin_house: StringName = &""; CorpseManager (P2) setzt es bei der Lieferung ab village_open
+# TipStone (P2): Kindmesh coins am Marker inscription; „[E] %d Münzen auf dem Stein (%s)" → Visitors.take_tip(grave_id, inv)
+# RainBarrel (P2): „[E] Gießkanne füllen (2 Min)" → GraveCare.refill
+```
+
+**Lehrling (P3)**
+```gdscript
+class_name ApprenticeConfig extends Resource         # ✦ data/config/apprentice_config.tres
+@export var npc_id: StringName = &"apprentice"; @export var hire_flag: StringName = &"apprentice_hired"
+@export var arrive_minute: int = 495; @export var start_minute: int = 510; @export var lunch: Vector2i = Vector2i(720, 750)
+@export var end_minute: int = 930; @export var wage: int = 3; @export var unpaid_limit: int = 3
+@export var day_off_mod: int = 7; @export var day_off_rest: int = 2
+@export var practice_jobs: int = 12; @export var teach_distance: float = 4.0
+@export var mistake_rate: PackedFloat32Array = [1.0, 0.08, 0.02]   # Stufe 0 nie (kann nicht), 1, 2
+@export var morale_start: int = 3; @export var morale_fast: int = 4; @export var morale_slow: int = 1
+@export var fast_factor: float = 0.9; @export var slow_factor: float = 1.2; @export var scold_mistake_factor: float = 0.5
+@export var board_lines: int = 3; @export var box_slots: int = 6
+class_name ApprenticeTaskData extends Resource       # ✦ data/apprentice/tasks/<id>.tres
+@export var id: StringName                           # rake | weed | water | candle
+@export var label: String; @export var minutes: PackedInt32Array = [0, 15, 10]
+@export var tool_item: StringName = &""; @export var consumes: StringName = &""
+@export var spot_kind: StringName                    # leaves | weeds | flowers | candle
+@export var from_minute: int = 0                     # candle 900
+@export var animation: StringName; @export var mistake_kind: StringName; @export var mistake_text: String
+class_name ApprenticeRules extends RefCounted
+static func minutes_for(task: ApprenticeTaskData, level: int, morale: int, cfg: ApprenticeConfig) -> int
+static func mistake(task_id: StringName, spot_id: String, day: int, level: int, scolded: bool, cfg: ApprenticeConfig) -> bool
+static func works_today(day: int, hired: bool, unpaid: int, fest_today: bool, cfg: ApprenticeConfig) -> bool
+class_name ApprenticePlanner extends RefCounted     # reine Planung, wiederverwendbar (Phase 14)
+static func plan(day: int, from_minute: int, lines: Array[Dictionary], state: Dictionary, tree: SceneTree, cfg: ApprenticeConfig) -> Array[Dictionary]
+#   [{task, spot_id, grave_id, start, work_minutes, path}] – nächste Stelle zuerst, überspringt trauernde Gräber, fügt Regenfass-Gänge ein
+class_name Apprentice extends Node                   # Gruppe apprentice, saveable apprentice / 73
+func is_hired() -> bool; func hire() -> void         # Rosine 1
+func level(task_id: StringName) -> int; func jobs(task_id: StringName) -> int
+func board_lines() -> Array[Dictionary]; func set_board_lines(lines: Array[Dictionary]) -> void   # [{task, area}]
+func teach_block_reason(task_id: StringName, player: Player) -> String; func start_teach(task_id: StringName) -> void
+func note_player_job(task_kind: StringName, pos: Vector3) -> void   # Spieler fertig → ggf. Angelernt
+func praise() -> bool; func scold() -> bool; func morale() -> int
+func unpaid_days() -> int; func pay_wage() -> bool  # 15:30 aus ApprenticeBox.coins
+func today_plan() -> Array[Dictionary]               # aus Liste + Zustand um start_minute, gespeichert mit Fortschritt
+func apply_minute(day: int, minute: int) -> void     # Ende einer Stelle → Wirkung, apprentice_job_done; Npc-Laufzeitplan
+func save_state() -> Dictionary; func load_state(data: Dictionary) -> void
+# ApprenticeBox extends Chest: saveable apprentice_box / 79, 6 Plätze + var coins: int; Panel &"chest" mit Münzfach
+# ApprenticeBoard: „[E] Arbeitsliste für Jakob" → Panel &"apprentice_board"; vor hire: „Eine leere Kreidetafel."
+# CleanlinessManager (P3): + func tend_by(spot_id: String, actor: StringName) -> bool   # ohne Inventar, gleiche Wirkung wie tend
+```
+
+**Freundschaft, Gefallen & Feste (P4)**
+```gdscript
+class_name FriendStepData extends Resource          # ✦ (Unterressource)
+@export var step: int; @export var title: String; @export var min_value: int
+@export var conditions: PackedStringArray = []      # Dialog-Syntax (insight_not_lorenz, robber_known, apprentice_level_gte:2 …)
+@export var order_ids: Array[StringName] = []       # of_<npc>_<n>[_alt]; erste erfüllbare Variante
+@export var start_node: StringName; @export var end_node: StringName
+@export var reward_rel: int; @export var reward_rep: int = 0; @export var reward_flag: StringName = &""
+@export var gap_days: int = 1; @export var fallback_event: StringName = &""   # Ersatztermin
+class_name FriendStoryData extends Resource         # ✦ data/friendship/stories/<npc_id>.tres
+@export var npc_id: StringName; @export var steps: Array[FriendStepData] = []; @export var favor_id: StringName
+class_name FavorData extends Resource               # ✦ data/friendship/favors/<id>.tres
+@export var id: StringName; @export var npc_id: StringName; @export var label: String
+@export var effect: StringName                      # rumor_shield | free_iron | order_ware | prayer | night_watch | free_medicine | corpse_wash
+@export var params: Dictionary = {}; @export var cooldown_days: int = 5
+@export var return_orders: Array[StringName] = []; @export var return_after_days: int = 1; @export var return_days: int = 3
+@export var returned_rel: int = 4; @export var unreturned_rel: int = -6; @export var lock_days: int = 7
+class_name Friendship extends Node                  # Gruppe friendship, saveable friendship / 74
+func step_done(npc_id: StringName) -> int           # 0…3
+func offerable_step(npc_id: StringName) -> int      # 0 = keiner (Schwelle, Laune gereizt, Abstand)
+func accept_step(npc_id: StringName) -> bool        # nimmt den Auftrag of_* an
+func note_order_done(order_id: StringName) -> void  # Orders → Schritt fertig → friend_step_completed, Lohn
+func steps_total() -> int; func full_stories() -> int
+func favor_block_reason(npc_id: StringName) -> String
+func use_favor(npc_id: StringName, choice: StringName = &"") -> bool
+func favor_shield_active() -> bool; func consume_shield(event: StringName) -> bool   # Rosine
+func night_watch_tonight() -> bool                  # Fenner
+func apply_morning(day: int) -> void                # Gegengefallen anbieten / verfallen lassen
+func save_state() -> Dictionary; func load_state(data: Dictionary) -> void
+# OrderData ✦ + @export var category: StringName = &""   # &"" = Phase 7 | &"friend"
+#   kind + &"meet" (conditions {npc, place, window, times}) und &"task" (conditions {action_id, place})
+# OrdersConfig ✦ + @export var max_active_friend: int = 2
+# Orders (P4): category friend zählt getrennt; func note_meet(npc_id, place_id) -> void; func note_task(action_id: StringName) -> void
+class_name FestivalData extends Resource            # ✦ data/festivals/<id>.tres
+@export var id: StringName; @export var calendar_day: int                       # 54 / 58 (Spieltag)
+@export var shift_rule: StringName = &"none"         # &"none" | &"open_plus" (Lichtgang: p8_open_day + shift_days)
+@export var shift_days: int = 3; @export var day_flag: StringName              # fest_kathrein_day / fest_lights_day
+@export var window: Vector2i; @export var region: StringName; @export var music_context: StringName
+@export var effects: Dictionary = {}                 # §2.7: presence_rel, dance_rel, lights_all {...}
+class_name Festivals extends Node                    # Gruppe festivals, saveable festivals / 75
+func fest_day(fest_id: StringName) -> int            # wirksamer Tag (nach Verschiebung) oder −1
+func today() -> StringName; func running() -> StringName
+func apply_morning(day: int) -> void                 # day_flag setzen, Ankündigung, Osrics Kerzen (Lichtgang)
+func apply_minute(day: int, minute: int) -> void     # Fenster, 18:00 Auswertung, Ende
+func dance_block_reason(npc_id: StringName) -> String; func dance(npc_id: StringName) -> bool
+func lights_count() -> Vector2i                      # (brennend, belegt) für die Zielzeile
+func save_state() -> Dictionary; func load_state(data: Dictionary) -> void
+# ArchiveCabinet (P4): Kirche, „[E] Im Archiv helfen (60 Min)" mit Lenz-Schritt 2 oder Gemeindeschlüssel → Orders.note_task(&"archive_help")
+#   → Item lorenz_ledger_2; ohne beides: „Das Archiv ist verschlossen."
+# MemorialPlate (P4): sichtbar ab friend_innkeeper_2; Fiddler (P4): sitzend, Bogenarm-Wiegen nur im Fest-Fenster
+```
+
+**Nacht & Wanderer (P7)**
+```gdscript
+class_name WandererData extends Resource            # ✦ data/village/wanderers/<id>.tres
+@export var id: StringName; @export var display_name: String; @export var dialogue_id: StringName
+@export var shop_id: StringName = &""; @export var every_days: int = 0; @export var day_rest: int = 0   # Hanne 6 / 1
+@export var alms_coins: int = 0; @export var alms_piety: StringName = &""; @export var alms_for_clue: int = 0   # Veit 1 / alms / 3
+@export var clue_id: StringName = &""
+class_name Wanderers extends Node                    # Gruppe wanderers, saveable wanderers / 76
+func present(id: StringName) -> bool; func peddler_day(day: int) -> bool
+func alms_block_reason(inv: Inventory) -> String; func give_alms(inv: Inventory) -> bool   # Pietät, Zähler, ggf. c_n_veit
+func alms_count() -> int
+func save_state() -> Dictionary; func load_state(data: Dictionary) -> void
+class_name RobberConfig extends Resource            # ✦ data/config/robber_config.tres
+@export var start_offset_days: int = 4; @export var fresh_days: int = 5; @export var chance: float = 0.35
+@export var min_gap_nights: int = 2; @export var first_guaranteed: bool = true
+@export var arrive_minute: int = 90; @export var dig_from: int = 110; @export var dig_until: int = 300
+@export var notice_distance: float = 10.0; @export var watch_catch_after: int = 3
+@export var report_rep: StringName = &"robber_reported"; @export var let_go_piety: StringName = &"robber_let_go"
+class_name NightRobber extends Node                  # Gruppe night_robber, saveable night_robber / 77
+func tonight_target(day: int) -> String              # Grab-Id oder "" (deterministisch, gespeichert ab 00:00)
+func apply_minute(day: int, minute: int) -> void     # Auftritt, Graben, Bemerken, 05:00 aufgewühlt
+func encounters() -> int; func fate() -> StringName  # &"" | &"reported" | &"let_go" | &"caught_watch"
+func resolve(choice: StringName) -> void             # Dialog robber (2. Begegnung)
+func save_state() -> Dictionary; func load_state(data: Dictionary) -> void
+class_name NightVisitData extends Resource          # ✦ Unterressource
+@export var npc_id: StringName; @export var night_offset: int; @export var enter_minute: int; @export var leave_minute: int
+@export var clue_id: StringName; @export var animation: StringName = &"walk"
+class_name NightPathData extends Resource           # ✦ data/night/paths/<id>.tres
+@export var id: StringName; @export var house: StringName; @export var patient: String
+@export var start_offset: int; @export var end_offset: int; @export var visits: Array[NightVisitData] = []
+@export var death_offset: int = -1; @export var death_minute: int = 130; @export var death_flag: StringName = &""
+@export var watch_spot: StringName
+class_name NightPaths extends Node                   # Gruppe night_paths, saveable night_paths / 78
+func sick_houses(day: int, minute: int) -> PackedStringArray   # für SickLight, Karte (ab c_n_veit), Launen
+func next_visit(path_id: StringName, day: int, minute: int) -> Dictionary
+func wait_minutes(spot_id: StringName) -> int        # WatchSpot: bis 10 Min vor dem nächsten Besuch, ≤ 120
+func apply_minute(day: int, minute: int) -> void     # Tod (Flag), Beobachtung beim Hinausgehen (≤ 12 m, Region village)
+func observed(clue_id: StringName) -> bool
+func save_state() -> Dictionary; func load_state(data: Dictionary) -> void
+```
+
+**Dialog, Geschichte & Speichern (P6)**
+```gdscript
+# DialogueConditions (P6) +: mood:<npc>:<mood> · step_gte:<npc>:<n> · step_offerable:<npc> · favor_ready:<npc> · favor_owed:<npc>
+#   · apprentice_hired · apprentice_level_gte:<task>:<n> · apprentice_mistake_today · wish_offerable · visit_waiting
+#   · fest_today:<id> · fest_running:<id> · alms_gte:<n> · robber_known · robber_fate:<f> · sick_light:<house> · observed:<clue>
+#   · p8_open · insight:<id> (bestehend) · underlined:<npc>
+# DialogueActions (P6) +: listen:<npc> · step_accept:<npc> · favor_use:<npc>[:<choice>] · apprentice_hire · apprentice_teach:<task>
+#   · apprentice_praise · apprentice_scold · wish_offer · wish_accept · tip_hand · alms · dance:<npc> · robber_resolve:<choice>
+#   · give_item:<id>:<n> (bestehend) · meet:<place> (Orders.note_meet)
+# InsightData ✦ + @export var any_clues: Array[StringName] = []; @export var any_count: int = 0
+#   JournalManager (P6): Erkenntnis verknüpfbar, wenn alle clues und ≥ any_count aus any_clues gefunden sind (Panel zeigt beide Gruppen)
+# StoryConfig ✦ + @export var underlined: StringName = &"washer"   # priest | surgeon | washer (§14.1); wählt die Textvariante
+# StoryDirector (P6): D2 über bestehende due_flag-Regel (ott_dead), Reservierung im Abschnitt linden (Reihe 3)
+# SaveMigration (P6): CURRENT := 7; + static func migrate_6_to_7(state: Dictionary, meta: Dictionary) -> Dictionary
+#   V7_EMPTY_NODES := ["npc_life", "visitors", "grave_care", "apprentice", "friendship", "festivals", "wanderers", "night_robber", "night_paths", "apprentice_box"]
+# SaveFileIO.FORMAT_VERSION = 7; read_doc akzeptiert 1…7
+# GameState.DEFAULT_STATS + die 26 Stats aus §2.11; COIN_REASONS + &"apprentice", &"alms", &"peddler"
+# ActionConfig ✦ + @export var noisy_actions: Array[StringName] = [&"dig", &"chop", &"pick", &"hammer", &"chisel", &"saw", &"quarry"]
+```
+
+### 3.5 Database (Lead)
+Neue Listen (wie Phase 7 W0-Notiz 9): `chatter(s)` (`data/npc_life/chatter`, nach id), `kin` (`data/visitors/kin`, Schlüssel `kin_id`), `wish(es)` (`data/visitors/wishes`, nach id), `apprentice_task(s)` (`data/apprentice/tasks`, Reihenfolge rake, weed, water, candle über `order`), `friend_story(ies)` (`data/friendship/stories`, Schlüssel `npc_id`), `favor(s)`, `festival(s)` (nach `calendar_day`), `wanderer(s)`, `night_path(s)` (nach `start_offset`). Leere/fehlende Ordner = leere Listen.
+
+### 3.6 Eingaben
+Keine neuen Tasten. Alles läuft über [E], Dialoge und Panels. Die Kreidetafel, die Lohndose und die Gefallen sind normale Interaktionen.
