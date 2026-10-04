@@ -9,7 +9,7 @@
 | G4 | Leichensystem erweitern | ✅ **PASSED** (Runde 1; 1473 Tests; Bilder `docs/reviews/phase4_round1/`; Lampe 2,2/4,5 m und Verfall-Sichtweite 40 m mit freigegeben) | 28.09.2026 | ✅ „Phase 4 freigegeben" (28.09.2026) |
 | G5 | Crafting und Ressourcen | ✅ **PASSED** (Runde 1; 1748 Tests; Bilder `docs/reviews/phase5_round1/`; Werkhof-Lage, Erlen-Verschiebung und Tempo wie gebaut freigegeben, Münzausgleich Verwerten → Phase 10) | 28.09.2026 | ✅ „Phase 5 freigegeben" (28.09.2026) |
 | G6 | Gebäude | ✅ **PASSED** (Runde 1; 2017 Tests; Bilder `docs/reviews/phase6_round1/`; Tempo, Schuppen-Ausnahmen, Taschengröße und Gruft-Kamera wie gebaut freigegeben) | 03.10.2026 | ✅ „Phase 6 freigegeben" (03.10.2026) |
-| G7 | Dorf | 🔴 **Runde 1 FAILED** → Änderungsrunde 1 (04.10.2026, Benutzer: Ton fehlt komplett → alle Sounds bauen; Innenräume im Dorf, v. a. Amtsstube, viel zu dunkel; Gesichter der Dorfbewohner passen nicht) | 04.10.2026 | ⏳ wartet auf „Phase 7 freigegeben" |
+| G7 | Dorf | 🟡 **PENDING Runde 2** (nach Änderungsrunde 1: Ton komplett, Innenräume + Gruft heller (auch Web-Renderer), Gruft-Treppe, Flackern, begehbare Dorfkirche, Karte [M], neue Gesichter aller Figuren; 2418 Tests; Bilder `docs/reviews/phase7_round2/`) | 04.10.2026 | ⏳ wartet auf „Phase 7 freigegeben" |
 
 **ART STYLE LOCK:** ✅ **ACTIVE** seit 27.09.2026 (Referenz: `src/world/art_prototype/`, Screenshots `docs/reviews/phase1_round1/`). Keine grundlegende Stiländerung ohne Benutzerfreigabe.
 
