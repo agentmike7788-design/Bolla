@@ -23,6 +23,7 @@ import bmesh
 from mathutils import Matrix, Vector, noise
 
 import lib_painted as L
+import lib_faces as F
 import asset_props_slice as P
 
 SHIRT = L.hexc("#B7C2B0")        # fog colour of the palette
@@ -90,16 +91,42 @@ def _hood(parts):
         if v.co.y < -0.1:                                           # flatten the face side a little
             v.co.y = -0.1 + (v.co.y + 0.1) * 0.6
     L.jitter(h, 0.008, 5.0, 3)
+    # G7R1: the face opening is cut open (the face sits in the dark hollow behind it)
+    bm = bmesh.new()
+    bm.from_mesh(h.data)
+    bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.calc_center_median().y < -0.06
+                               and (f.calc_center_median().x / 0.094) ** 2 + ((f.calc_center_median().z - 1.33) / 0.115) ** 2
+                               < 1.0], context="FACES")
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
+    bm.to_mesh(h.data)
+    bm.free()
     parts.append(h)
-    void = L.prim("sphere", loc=(0, -0.118, 1.33), radius=0.1, segments=12, ring_count=7, scale=(0.95, 0.42, 1.2))
-    parts.append(void)
+    void = L.prim("sphere", loc=(0, -0.07, 1.33), radius=0.1, segments=12, ring_count=7, scale=(1.05, 0.5, 1.3))
+    parts.append(void)                                              # the dark hollow round the face
     rim = L.prim("torus", loc=(0, -0.13, 1.335), rot=(90, 0, 0), major_radius=0.105, minor_radius=0.024,
                  major_segments=14, minor_segments=5, scale=(0.95, 1.0, 1.25))
     parts.append(rim)
-    for sx in (-1, 1):                                              # two faint glints deep in the hood
-        parts.append(L.prim("ico", loc=(sx * 0.035, -0.152, 1.35), radius=0.011, subdivisions=1,
-                            scale=(1.0, 0.6, 0.8)))
     return h, void, rim
+
+
+def _face(parts) -> None:
+    """G7 Änderungsrunde 1: the shared sculpted head (lib_faces) inside the hood - the same face
+    build as the living, but cool and pale like the fog: soft lids over sorrowful, kind eyes with a
+    turquoise iris (the ghost colour), the inner brows raised, a faint mouth. Painted opaque (alpha 1:
+    the hem fade does not touch it)."""
+    skin = L.mix(HAND, SHIRT, 0.35)
+    first = len(parts)
+    c = Vector((0.0, -0.082, 1.325))
+    F._head(None, c, Vector((0.084, 0.09, 0.104)), skin, seed=730, nose="straight",
+            nose_s=0.9, brow=L.mix(SHIRT_FOLD, HOOD_VOID, 0.25), brow_w=0.85, brow_tilt=0.7, brow_arch=0.8,
+            mouth="kind", smile=0.25, lip=L.mix(SHIRT_FOLD, skin, 0.4), ears=False, cheeks=0.35,
+            cheek_col=L.hexc("#B3C6C2"), jaw=0.9, chin=0.03, age=0.2, lids=0.3, iris=L.mix(SOUL, SHIRT_FOLD, 0.35),
+            add=parts.append, seg=18, rings=12, res=0.6, sclera=L.hexc("#DCE5DF"), pupil=HOOD_VOID,
+            gleam=SOUL_CORE, lash=L.mix(HOOD_VOID, SHIRT_FOLD, 0.35), shade_col=SHIRT_FOLD,
+            mouth_col=L.mix(SHIRT_FOLD, HOOD_VOID, 0.45), nose_wings=False, cull=lambda n: n.y > 0.15)
+    shadow = L.mix(SHIRT_FOLD, HOOD_VOID, 0.8)   # the hood's shadow falls round the face
+    F._tint(parts[first], lambda co, nr: (1.0, shadow, 0.85 * F._s01((((co.x - c.x) / 0.084) ** 2
+                                                                     + ((co.z - c.z) / 0.104) ** 2 - 0.25) / 0.6)))
 
 
 def _sleeves(parts):
@@ -163,7 +190,6 @@ def ghost():
     zmin = min(v.co.z for v in robe.data.vertices)
     parts = [robe]
     hood, void, rim = _hood(parts)
-    glints = parts[-2:]
     sleeves = _sleeves(parts)
     hands = []
     for sx in (-1, 1):                                              # hands cupping the light
@@ -173,9 +199,10 @@ def ghost():
         parts.append(hnd)
         hands.append(hnd)
     for o in parts:
-        role = ("void" if o is void else "glint" if o in glints else "cuff" if o in sleeves[1::2]
+        role = ("void" if o is void else "cuff" if o in sleeves[1::2]
                 else "hand" if o in hands else "shirt")
         _paint_part(o, role, zmin)
+    _face(parts)
     body = L.join(parts, "ph_chr_ghost")
     # the soul light: its own mesh node so it can get a glowing material
     orb_c = Vector((0.0, -0.34, 0.915))
@@ -198,6 +225,7 @@ def ghost():
     L.smooth(body, 60)
     L.smooth(orb, 80)
     L.export(body, "ph_chr_ghost", "characters")
+    F._stable_glb(L.os.path.join(L.ROOT, "assets", "models", "characters", "ph_chr_ghost.glb"))
     print(f"[asset]   soul_orb tris={sum(len(p.vertices) - 2 for p in orb.data.polygons)}")
 
 
