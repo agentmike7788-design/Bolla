@@ -25,6 +25,8 @@ var _stow_walk: bool = false
 var _last_pos: float = -1.0
 var _clods: CPUParticles3D
 var _blade: Node3D
+## The CarrySocket's own transform (a carried corpse is laid aside while the shovel is out).
+var _socket_rest: Transform3D
 
 
 func _init(player: Player) -> void:
@@ -35,6 +37,7 @@ func _init(player: Player) -> void:
 	if tools == null:
 		tools = ToolAnimConfig.new()
 	_blade = player.model.find_child(String(tools.blade_marker), true, false) as Node3D
+	_socket_rest = player.carry_socket.transform if player.carry_socket != null else Transform3D.IDENTITY
 
 
 ## Moves the Lantern light onto the rig's light_lantern marker, so it swings with the hips.
@@ -64,6 +67,7 @@ func update(delta: float, action: Player.TimedAction, carrying: bool) -> void:
 		anim.play(wanted, blend)
 	if phase == ToolPhase.HOLD:
 		_hold_events()
+	_place_carried(delta, carrying)
 
 
 ## The tool the gravekeeper has out of its place on the back (drawing, holding or stowing); &"" =
@@ -83,12 +87,30 @@ func reset_tool() -> void:
 	_tool = &""
 	_hold_clip = &""
 	_last_pos = -1.0
+	if _player.carry_socket != null:
+		_player.carry_socket.transform = _socket_rest
 	if anim == null:
 		return
 	var rest := &"carry_idle" if is_instance_valid(_player.carried) and anim.has_animation(&"carry_idle") else &"idle"
 	if anim.has_animation(rest):
 		anim.play(rest, 0.0)
 		anim.seek(0.0, true)
+
+
+## Burying with a corpse in the arms: while the shovel is out the corpse lies beside him (the
+## shovel would cut through it), afterwards it is in his arms again.
+func _place_carried(delta: float, carrying: bool) -> void:
+	var socket := _player.carry_socket
+	if socket == null:
+		return
+	var aside := carrying and (phase == ToolPhase.DRAW or phase == ToolPhase.HOLD)
+	var target := _socket_rest
+	if aside:
+		target = Transform3D(Basis(Vector3.UP, deg_to_rad(tools.carry_aside_yaw_deg)), tools.carry_aside_position)
+	if socket.transform.is_equal_approx(target):
+		return
+	var w := 1.0 if delta <= 0.0 else clampf(1.0 - exp(-tools.carry_aside_rate * delta), 0.0, 1.0)
+	socket.transform = socket.transform.interpolate_with(target, w)
 
 
 # --- tool phases ------------------------------------------------------------------------

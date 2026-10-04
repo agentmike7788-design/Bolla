@@ -134,6 +134,25 @@ func test_bury_and_lift_use_the_same_clip() -> void:
 	assert_eq(_p.held_tool(), &"shovel")
 
 
+func test_burying_lays_the_carried_corpse_aside() -> void:
+	_p = await _player()
+	var rest := _p.carry_socket.transform
+	_p.attach_carried(Node3D.new(), "c1")
+	_p.start_timed_action("Bestatten", 30, func() -> void: pass, true, GravePlot.ANIM_DIG)
+	var anim := _anim()
+	_tick_until(func() -> bool: return anim.current_animation == &"dig", 1.0)
+	_tick(15)
+	assert_true(_p.carry_socket.position.distance_to(_cfg().carry_aside_position) < 0.05,
+			"corpse beside him while the shovel is out (%s)" % _p.carry_socket.position)
+	_p.cancel_timed_action()
+	_tick_until(func() -> bool: return _p.held_tool() == &"", 1.0)
+	_tick(30)
+	assert_true(_p.carry_socket.transform.is_equal_approx(rest) or
+			_p.carry_socket.position.distance_to(rest.origin) < 0.01, "back in his arms")
+	_p.load_state(_p.save_state())
+	assert_true(_p.carry_socket.transform.is_equal_approx(rest), "a load restores the socket")
+
+
 func test_cancel_by_walking_stows_while_walking() -> void:
 	_p = await _player()
 	_p.start_timed_action("Grab ausheben", 60, func() -> void: pass, true, &"dig")

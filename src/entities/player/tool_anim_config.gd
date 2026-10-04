@@ -33,3 +33,9 @@ extends Resource
 @export var clod_spread_deg: float = 22.0
 @export var clod_direction: Vector3 = Vector3(0.75, 0.9, 0.35)
 @export var clod_color: Color = Color("#4E3F31")
+## Burying while carrying: the corpse is laid down beside him (CarrySocket, player-local; he faces
+## +Z, his right is -X) while the shovel is out, and taken up again when it is stowed.
+@export var carry_aside_position: Vector3 = Vector3(-0.85, 0.0, 0.35)
+@export var carry_aside_yaw_deg: float = 90.0
+## How fast the socket moves there and back (1/s, exponential).
+@export var carry_aside_rate: float = 9.0
