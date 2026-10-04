@@ -368,6 +368,10 @@ func _in_village(local: Vector2, facing: float = PI, room: StringName = &"", roo
 	for npc: Node in get_tree().get_nodes_in_group(&"npc"):
 		if npc.has_method(&"refresh"):
 			npc.call(&"refresh")
+	# Today's proximity remarks said (once a day) and their bubbles away – the panels stay readable.
+	for id: StringName in DialogueActions.VILLAGERS:
+		_rel.remark(id)
+	_ui.remark_bubbles.clear()
 	_world.get_node(^"CameraRig").call(&"snap")
 	await get_tree().process_frame
 
@@ -467,6 +471,7 @@ func _remark_shot() -> void:
 		_frame(rosine.global_position.lerp(_player.global_position, 0.5), 10.0)
 	await get_tree().process_frame
 	EventBus.villager_remarked.emit(&"innkeeper", "Wackernagel hat für dich einen Stuhl am Ofen frei. Den kriegt sonst nur der Pfarrer.")
+	_ui.remark_bubbles.set(&"_left", 600.0)  # held for the capture (lavapipe settles slower than 4 s)
 
 
 func _journal_village_shot() -> void:
