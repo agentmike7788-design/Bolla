@@ -327,3 +327,67 @@ func test_legend_toggles() -> void:
 	map.toggle_legend()
 	assert_true(map.legend.visible)
 	await wait_frames(2)
+
+
+# --- G7 Runde 2: performance -------------------------------------------------------------------
+
+func test_static_sheet_is_baked_once_and_only_on_change() -> void:
+	await _setup()
+	ui.open_map()
+	await wait_frames(2)
+	var c := _map().canvas
+	var bakes := c.bake_count
+	var paints := c.paint_count
+	assert_true(bakes >= 1 and paints >= 1, "the first sheet is baked and painted (%d / %d)" % [bakes, paints])
+	assert_not_null(c.baked_texture(&"graveyard"), "the sheet is a texture")
+	ui.close_all()
+	await wait_frames(1)
+	for i: int in 3:
+		ui.open_map()
+		await wait_frames(2)
+		ui.close_all()
+		await wait_frames(1)
+	assert_eq(c.bake_count, bakes, "re-opening with the same state bakes nothing")
+	assert_eq(c.paint_count, paints, "… and paints no sheet")
+	ui.open_map()
+	await wait_frames(2)
+	var key := c.static_key()
+	c.show_region(c.region, c.layout, c.ctx, c.cfg)
+	assert_eq(c.static_key(), key)
+	assert_eq(c.bake_count, bakes, "a refresh (people moved) only redraws the markers")
+	ui.close_all()
+	GameState.set_flag(&"linden_granted", true)
+	ui.open_map()
+	await wait_frames(2)
+	assert_eq(c.bake_count, bakes + 1, "a section granted: the sheet is baked again, once")
+	assert_eq(c.paint_count, paints + 1)
+
+
+func test_map_is_prepared_before_the_first_open() -> void:
+	await _setup()
+	ui.prepare_map()
+	await wait_frames(2)
+	var map := _map()
+	assert_false(map.is_open, "preparing does not open the map")
+	assert_false(map.visible)
+	assert_true(map.canvas.bake_count >= 1, "the graveyard sheet is baked ahead")
+	assert_true(map.canvas.paint_count >= 1, "… and painted while hidden")
+	var bakes := map.canvas.bake_count
+	ui.open_map()
+	await wait_frames(2)
+	assert_eq(map.canvas.bake_count, bakes, "the first M bakes nothing")
+	ui.close_all()
+
+
+func test_paper_comes_from_the_baked_asset() -> void:
+	var path := MapPaint.paper_asset_path(cfg.paper, cfg.paper_dark)
+	assert_true(ResourceLoader.exists(path), "tools/map/bake_map_paper.gd wrote %s" % path)
+	var tex := MapPaint.paper(cfg)
+	assert_eq(tex.resource_path, path, "no paper computed at runtime")
+	var img := (load(path) as Texture2D).get_image()
+	assert_eq(img.get_size(), MapPaint.PAPER_SIZE)
+	var fresh := MapPaint.paper_image(cfg.paper, cfg.paper_dark)
+	for p: Vector2i in [Vector2i(0, 0), Vector2i(210, 150), Vector2i(419, 299), Vector2i(57, 233)]:
+		var a := img.get_pixelv(p)
+		var b := fresh.get_pixelv(p)
+		assert_true(absf(a.r - b.r) + absf(a.g - b.g) + absf(a.b - b.b) < 0.02, "baked = generated at %s" % p)

@@ -109,6 +109,9 @@ func _ready() -> void:
 	EventBus.game_loaded.connect(_on_game_refresh.unbind(1))
 	EventBus.new_game_started.connect(_on_game_refresh)
 	EventBus.ui_modal_changed.connect(_on_ui_modal_changed)
+	# G7 Runde 2: a region or room change (a moment that hitches anyway) re-bakes a changed map sheet.
+	EventBus.region_changed.connect(_queue_prepare_map.unbind(1))
+	EventBus.interior_room_changed.connect(_queue_prepare_map.unbind(1))
 	dialogue_box.closed.connect(_on_dialogue_closed)
 	if hud.map_badge != null:
 		hud.map_badge.pressed.connect(toggle_map)
@@ -417,6 +420,10 @@ func _on_world_ready(_world: Node) -> void:
 		return
 	_bind_player(get_tree().get_first_node_in_group(PLAYER_GROUP))
 	hud.refresh_all()
+	prepare_map.call_deferred()
+
+
+func _queue_prepare_map() -> void:
 	prepare_map.call_deferred()
 
 

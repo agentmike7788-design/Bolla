@@ -390,6 +390,7 @@ def library_tres(lib: str, specs: list[Spec]) -> str:
             f"streams = Array[AudioStream]([{streams}])",
             f'bus = &"{sp.bus}"',
             f"volume_db = {_f(sp.volume_db)}",
+            f"target_lufs = {_f(target(sp))}",
             f"volume_jitter_db = {_f(sp.volume_jitter_db)}",
             f"pitch_jitter = {_f(sp.pitch_jitter)}",
             f"loop = {'true' if sp.loop else 'false'}",
