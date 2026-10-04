@@ -189,7 +189,8 @@ func _collect_kiln() -> bool:
 	if not job.is_empty() and bool(job.get("ready", false)) and player.region_id == &"graveyard":
 		_to_room(&"")
 	if not job.is_empty() and bool(job.get("ready", false)) and not inv().can_add(&"charcoal", int(job.get("amount", 3))):
-		_store_surplus6(true)
+		_free_slots(2)
+		_to_room(&"")
 	return super._collect_kiln()
 
 
@@ -561,6 +562,11 @@ func _shop_wishes(shop_id: StringName) -> Array[Dictionary]:
 	return out
 
 
+## The anatomist buys jars, spirits and wax once the case is his and corpses come (the Lindenacker open).
+func _anatomy_buys() -> bool:
+	return flags.anatomy and GameState.flag_on(&"anatomy_known") and expansion.is_unlocked(&"linden") and inv().count(&"coin") >= 20
+
+
 ## How many of `item` the pack keeps back from a sale (orders, gathering wants, the pult).
 func _keep(item: StringName) -> int:
 	var keep := _want(item) + _order_need(item)
@@ -582,17 +588,17 @@ func _keep(item: StringName) -> int:
 func _buy_need(item: StringName) -> int:
 	match item:
 		&"honey_cake":
-			var want := (GIFT_TARGETS.size() if flags.gifts else 0) + _order_need(&"honey_cake")
+			var want := ((2 if flags.anatomy else GIFT_TARGETS.size()) if flags.gifts else 0) + _order_need(&"honey_cake")
 			return maxi(0, want - inv().count(item))
 		&"spirits":
-			var want := _tinctures_wanted() + (3 if flags.anatomy else 0)
+			var want := _tinctures_wanted() + (2 if _anatomy_buys() else 0)
 			return maxi(0, want - inv().count(item))
 		&"prep_jar":
-			return maxi(0, (2 if flags.anatomy else 0) - inv().count(item))
+			return maxi(0, (2 if _anatomy_buys() else 0) - inv().count(item))
 		&"prep_jar_small":
-			return maxi(0, (1 if flags.anatomy else 0) - inv().count(item))
+			return maxi(0, (2 if _anatomy_buys() else 0) - inv().count(item))
 		&"beeswax":
-			return maxi(0, (3 if flags.anatomy else 0) - inv().count(item))
+			return maxi(0, (3 if _anatomy_buys() else 0) - inv().count(item))
 	return 0
 
 
@@ -613,7 +619,7 @@ func _use_shop(shop_id: StringName) -> void:
 
 
 func _gift_for(npc_id: StringName) -> StringName:
-	if not flags.gifts or not npc_id in GIFT_TARGETS:
+	if not flags.gifts or not npc_id in GIFT_TARGETS or (flags.anatomy and npc_id in [&"priest", &"washer"]):
 		return &""
 	var data := rel.villager(npc_id)
 	if data == null:
@@ -779,8 +785,10 @@ func _build_pult() -> void:
 		return
 	var data := Database.station(&"pult") as StationData
 	if data == null or inv().count(&"coin") - data.build_coins < RESERVE7:
+		_note_wait(&"pult", "coins %d" % inv().count(&"coin"))
 		return
 	if not _fits(data.build_minutes + CRYPT_WALK):
+		_note_wait(&"pult", "no time")
 		return
 	if not _to_room(&"crypt"):
 		return
@@ -810,7 +818,7 @@ func _pult_work() -> void:
 	if not _pult_built():
 		return
 	var r := Database.recipe(TINCTURE) as RecipeData
-	while _tinctures_wanted() > 0 and r != null and CraftingSystem.can_craft(r, inv()) and _fits(r.minutes + CRYPT_WALK):
+	while _tinctures_wanted() > 0 and r != null and CraftingSystem.can_craft(r, inv()) and _fits(r.craft_minutes + CRYPT_WALK):
 		if not _to_room(&"crypt"):
 			return
 		var bench := _pult()
@@ -878,6 +886,20 @@ func _order_design(o: OrderData) -> StoneDesign:
 	return d
 
 
+func _mark6(plot: GravePlot) -> void:
+	var markers := inv().count(&"gravestone_simple") + inv().count(&"wooden_cross")
+	var prompt := plot.get_interaction_prompt(player)
+	# A burial begun before 13:30 is finished with its marker (the deadline only stops new work).
+	var deadline := _deadline
+	_deadline = EVENING
+	super._mark6(plot)
+	_deadline = deadline
+	if graveyard.get_grave(plot.grave_id).state != GraveRecord.State.MARKED:
+		_t7("no marker on %s: markers %d, prompt %s, wood %d stone %d, free slots %d" % [plot.grave_id, markers, prompt,
+				inv().count(&"wood"), inv().count(&"stone"),
+				inv().get_slots().filter(func(sl: Dictionary) -> bool: return sl.is_empty() or String(sl.get("id", "")) == "").size()])
+
+
 ## D1 (and every grave with a bury order) gets the order's ornament (poppy for Wiebke Hagedorn).
 func _design_for(grave_id: String, shape: StringName) -> StoneDesign:
 	var d := super._design_for(grave_id, shape)
@@ -915,10 +937,64 @@ func _stock_organ(_organ: StringName, _container: StringName) -> void:
 	pass
 
 
-## Bundled hands → bone specimens; pieces to the collection shelf.
+## Items the pack keeps by hand (the rest may wait in the shed when slots are wanted).
+const PACK_KEEP: Array[StringName] = [&"coin", &"linen", &"shroud", &"burial_gown", &"gravestone_simple", &"wooden_cross", &"ink",
+		&"prep_jar", &"prep_jar_small", &"spirits", &"beeswax", &"honey_cake", &"altar_candle", &"herbs", &"elderberries",
+		&"fever_tincture", &"gold_leaf", &"wood", &"stone", &"workstone", &"iron_bar", &"iron_fittings", &"charcoal", &"juniper"]
+
+
+## At least `n` empty slots: plain goods (not tools, not specimens, not PACK_KEEP) go into the shed.
+func _free_slots(n: int) -> void:
+	var empty := inv().get_slots().filter(func(sl: Dictionary) -> bool: return sl.is_empty() or String(sl.get("id", "")) == "").size()
+	if empty >= n or buildings.level(&"shed") < 1 or player.carried_id != "" or player.region_id != &"graveyard":
+		return
+	var moves := {}
+	for sl: Dictionary in inv().get_slots():
+		if empty >= n:
+			break
+		if sl.is_empty() or String(sl.get("uid", "")) != "":
+			continue
+		var id := StringName(String(sl.get("id", "")))
+		var item := Database.item(id) as ItemData
+		if id == &"" or id in PACK_KEEP or item == null or item.category == ItemData.Category.TOOL or moves.has(id):
+			continue
+		moves[id] = inv().count(id)
+		empty += 1
+	if moves.is_empty() or not _to_room(&"shed"):
+		return
+	var store := ShedStore.find(tree)
+	store.interact(player)
+	for id: StringName in moves:
+		ChestTransfer.move(inv(), store.store(), id, int(moves[id]))
+		stored[id] = int(stored.get(id, 0)) + int(moves[id])
+	UIState.clear()
+	_t7("shed: %s" % str(moves))
+
+
+func _handle_corpses() -> void:
+	if p7_open():
+		_free_slots(7 if flags.anatomy and GameState.flag_on(&"anatomy_known") else 3)
+	super._handle_corpses()
+
+
+## Bundled hands → bone specimens; pieces to the collection shelf; a spoiled bundle goes back into its
+## grave („Präparat beisetzen", §2.6.2 – the only thing left for it).
 func _anatomy_pult() -> void:
 	for uid: String in specimens.held():
 		var spec := specimens.get_record(uid)
+		if spec.container == SpecimenRecord.CONTAINER_BUNDLE and specimens.is_spoiled(uid) and inv().has_uid(uid):
+			var grave_id := ""
+			for g: GraveRecord in graveyard.graves():
+				if g.corpse_id == spec.corpse_id:
+					grave_id = g.id
+			if grave_id != "" and specimens.return_block_reason(uid, grave_id) == "" and _fits(20):
+				_to_room(&"")
+				_walk()
+				var plot := world.get_node_by_layout_id(grave_id) as GravePlot
+				plot.interact(player)
+				UIState.clear()
+				_t7("returned spoiled %s of %s to %s: %s" % [spec.organ, spec.corpse_id, grave_id, specimens.get_record(uid).state])
+			continue
 		if spec.organ == &"hand" and spec.container == SpecimenRecord.CONTAINER_BUNDLE and inv().has_uid(uid) \
 				and inv().count(&"beeswax") >= 1 and inv().count(&"linen") >= 2 and _fits(70):
 			if not _to_room(&"crypt"):
@@ -979,7 +1055,7 @@ func _shelf_has(shelf: Node, organ: StringName) -> bool:
 ## Held pieces Quast may buy now (not wanted on the shelf or for tonight's lecture).
 func _to_sell() -> PackedStringArray:
 	var out := PackedStringArray()
-	var keep_lecture := _lecture_piece() if flags.lectures else ""
+	var keep_lecture := _lecture_piece() if flags.lectures and lectures.invited() else ""
 	for uid: String in specimens.held():
 		var spec := specimens.get_record(uid)
 		if uid == keep_lecture or not inv().has_uid(uid) or specimens.sell_block_reason(uid, inv()) != "":
