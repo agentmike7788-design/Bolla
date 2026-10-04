@@ -196,7 +196,7 @@ def _wield(pose_fn, name: str = ""):
     last = {}
 
     def post(arm, t):
-        if t <= 0.0:
+        if t <= 0.0 or (t >= 1.0 and name.endswith("-loop")):   # a loop's last frame == its first
             last.clear()
         pose = pose_fn(t)
         if "w_fist" not in pose:
