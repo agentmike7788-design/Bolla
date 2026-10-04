@@ -90,7 +90,7 @@ Render (Satz G7, llvmpipe, `render_stats_p7_*.txt`): Dorf Spielzoom Draw Calls �
 
 ## 6. Tests
 
-Volle Suite am Ende (nach Import, nach dem letzten Code-Stand): **RESULT PASS (2372 bestanden, 0 fehlgeschlagen)**. Darin u. a. `test_phase7_qa` (unit 10, integration 7), `test_phase7_playthrough` (3 Strategien × 13 Tage, Zahlen wie in §3), Save-Fuzzer 14/14 (v6 echt 92 geladen / 21 abgelehnt). Die einzige `ERROR`-Zeile im Log ist der absichtliche Selbsttest des Test-Frameworks.
+Volle Suite am Ende (nach Import, nach dem letzten Code-Stand): **RESULT PASS (2372 bestanden, 0 fehlgeschlagen)**. G7 Runde 2 (Balance, Branch `vs/g7r2-balance`): **RESULT PASS (2445 bestanden, 0 fehlgeschlagen)**, Fuzzer v6 echt 92 geladen / 21 abgelehnt. Darin u. a. `test_phase7_qa` (unit 10, integration 7), `test_phase7_playthrough` (3 Strategien × 13 Tage, Zahlen wie in §3), Save-Fuzzer 14/14 (v6 echt 92 geladen / 21 abgelehnt). Die einzige `ERROR`-Zeile im Log ist der absichtliche Selbsttest des Test-Frameworks.
 
 ## 7. Screenshot-Satz Gate G7 (`docs/reviews/phase7_round1/`, 1280×720, echter Renderer)
 
