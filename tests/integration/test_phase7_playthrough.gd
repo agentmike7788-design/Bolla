@@ -49,8 +49,8 @@ func after_each() -> void:
 	TestCase.remove_user_dir(saves_dir)
 
 
-## §1.4 arc A / §2.10 / §10 neighbor7: the chapter by B13 (day 52), the end 30–110 (§2.10: ≈ 63 with
-## chapel 3 and crypt 3), the morning never below 15, ≥ 6 orders (§10: 8), piety not fallen, the
+## §1.4 arc A / §2.10 / §10 neighbor7: the chapter by B13 (day 52) and not before B11 (G7 Runde 2, B7-1: ≈ day 10–13
+## after village_open), the end 30–110 (§2.10: ≈ 63 with chapel 3 and crypt 3), the morning never below 5 (G7 Runde 2), ≥ 6 orders (§10: 8), piety not fallen, the
 ## Lindenacker consecrated and open, D1 buried with its order.
 func test_neighbor7() -> void:
 	var bot := await _play_fixture(&"neighbor7")
@@ -60,8 +60,9 @@ func test_neighbor7() -> void:
 	neighbor_end = end
 	assert_eq(bot.start_coins, 20, "the measured start purse (W0 note 1)")
 	assert_true(bot.chapter7_day > 0 and bot.chapter7_day <= 52, "neighbor7: chapter by B13 (%d)" % bot.chapter7_day)
+	assert_true(bot.chapter7_day - bot.open7_day >= 10, "neighbor7: chapter not before B11 (%d, open %d)" % [bot.chapter7_day, bot.open7_day])
 	assert_true(end >= 30 and end <= 110, "end 30–110 (%d)" % end)
-	assert_true(bot.lowest_morning_p7 >= 15, "morning never below 15 (%d)" % bot.lowest_morning_p7)
+	assert_true(bot.lowest_morning_p7 >= 5, "morning never below 5 (%d)" % bot.lowest_morning_p7)
 	assert_true(bot.orders.done_count() >= 6, "≥ 6 orders (%d)" % bot.orders.done_count())
 	assert_true(GameState.get_stat(&"piety") >= 90, "piety not fallen (%d)" % GameState.get_stat(&"piety"))
 	assert_eq(GameState.get_stat(&"specimens_taken"), 0, "no specimens")
@@ -78,6 +79,8 @@ func test_anatomist7() -> void:
 	assert_true(GameState.flag_on(&"anatomy_known"), "the case accepted")
 	assert_true(GameState.get_stat(&"specimens_taken") >= 9, "specimens taken (%d)" % GameState.get_stat(&"specimens_taken"))
 	assert_true(bot.chapter7_day > 0, "anatomist7: chapter (%d)" % bot.chapter7_day)
+	assert_true(bot.chapter7_day - bot.open7_day >= 10, "anatomist7: chapter not before B11 (%d, open %d)" % [bot.chapter7_day, bot.open7_day])
+	assert_true(bot.lowest_morning_p7 >= 5, "morning never below 5 (%d)" % bot.lowest_morning_p7)
 	for npc: StringName in [&"priest", &"washer"]:
 		assert_true(RelationshipRules.tier_index(bot.rel.tier(npc)) <= RelationshipRules.tier_index(&"acquainted"),
 				"%s at most „Bekannt“ (%s, %d)" % [npc, bot.rel.tier(npc), bot.rel.value(npc)])

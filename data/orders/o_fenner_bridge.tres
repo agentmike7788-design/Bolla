@@ -9,12 +9,12 @@ giver = &"mayor"
 recipient = &""
 kind = &"donate"
 title = "Die Holderbrücke"
-request_text = "Zwanzig Münzen und sechs Bretter für neue Bohlen."
+request_text = "Dreißig Münzen und sechs Bretter für neue Bohlen."
 thanks_text = "Fenner zählt die zwanzig Münzen laut nach, zweimal. „Die Holderbrücke wird es Ihnen danken. Und die Gemeinde auch, zu Protokoll.“"
 items = Dictionary[StringName, int]({
 &"wood": 6
 })
-coins = 20
+coins = 30
 target = ""
 conditions = {}
 days_limit = 6

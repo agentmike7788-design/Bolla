@@ -242,7 +242,7 @@ next = &"menu"
 [sub_resource type="Resource" id="v_mayor_node_o_o_fenner_bridge"]
 script = ExtResource("1")
 id = &"o_o_fenner_bridge"
-text = "Die Holderbrücke. Zwei Bohlen sind morsch, eine dritte ist fort, keiner weiß wohin, ich vermute Kehr. Zwanzig Münzen und sechs Bretter. Die Gemeinde kann es nicht, die Armenkasse darf es nicht, also frage ich Sie. Inoffiziell. Mit Quittung."
+text = "Die Holderbrücke. Zwei Bohlen sind morsch, eine dritte ist fort, keiner weiß wohin, ich vermute Kehr. Dreißig Münzen und sechs Bretter. Die Gemeinde kann es nicht, die Armenkasse darf es nicht, also frage ich Sie. Inoffiziell. Mit Quittung."
 choices = Array[ExtResource("2")]([SubResource("v_mayor_c026"), SubResource("v_mayor_c027")])
 
 [sub_resource type="Resource" id="v_mayor_c028"]
@@ -292,7 +292,7 @@ next = &"menu"
 [sub_resource type="Resource" id="v_mayor_node_t_o_fenner_bridge"]
 script = ExtResource("1")
 id = &"t_o_fenner_bridge"
-text = "Zwanzig Münzen. Ich zähle: zwanzig. Und sechs Bretter, ich zähle: sechs. Die Gemeinde dankt, schriftlich und mündlich, in dieser Reihenfolge."
+text = "Dreißig Münzen. Ich zähle: dreißig. Und sechs Bretter, ich zähle: sechs. Die Gemeinde dankt, schriftlich und mündlich, in dieser Reihenfolge."
 choices = Array[ExtResource("2")]([SubResource("v_mayor_c032")])
 
 [sub_resource type="Resource" id="v_mayor_c033"]
