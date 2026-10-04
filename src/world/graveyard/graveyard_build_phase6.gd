@@ -102,6 +102,24 @@ static func _stair_collision(ctx: Ctx, body: StaticBody3D, fp: Rect2, h: float, 
 	var plug := _box_shape(ctx, body, "PassagePlug", pass_rect, 0.0, h)
 	plug.set_meta(&"max_level", 0)
 	var depth := float(st.depth)
+	# The walkable stair (the ground lies `under` below the treads): the landing at ground level in
+	# front, then the ramp down to the door – from level 1.
+	var top := float(st.top_z)
+	var bottom := float(st.bottom_z)
+	var w := pass_rect.size.x
+	var landing := _box_shape(ctx, body, "StairLanding", Rect2(pass_rect.position.x, top, w, float(st.get("landing", top + 0.2)) - top),
+			-0.3, 0.0)
+	landing.set_meta(&"min_level", 1)
+	var ramp := CollisionShape3D.new()
+	ramp.name = "StairRamp"
+	var ramp_len := Vector2(top - bottom, depth).length()
+	var box := BoxShape3D.new()
+	box.size = Vector3(w, 0.3, ramp_len + 0.1)
+	ramp.shape = box
+	var basis := Basis(Vector3.RIGHT, -atan2(depth, top - bottom))
+	ramp.transform = Transform3D(basis, Vector3(pass_rect.get_center().x, -depth * 0.5, (top + bottom) * 0.5) - basis.y * 0.15)
+	ramp.set_meta(&"min_level", 1)
+	ctx.add(body, ramp)
 	var k := 0
 	for c: Array in st.get("cheeks", []):
 		k += 1
@@ -119,6 +137,20 @@ static func _box_shape(ctx: Ctx, body: Node3D, shape_name: String, r: Rect2, y0:
 	shape.position = Vector3(r.get_center().x, (y0 + y1) * 0.5, r.get_center().y)
 	ctx.add(body, shape)
 	return shape
+
+
+## G7 round 1: the height of the stair treads (ramp) of `building`'s site at world `p`, NAN when
+## `p` is not on a stair.
+static func _stair_height(ctx: Ctx, building: String, p: Vector2) -> float:
+	for site: Dictionary in ctx.layout.get("buildings", {}).get("sites", []):
+		if String(site.building) != building or not site.has("stair"):
+			continue
+		var st: Dictionary = site.stair
+		var origin := Ctx.v2(site.pos)
+		var local := (p - origin).rotated(deg_to_rad(float(site.rot_y)))
+		var t := clampf((float(st.top_z) - local.y) / (float(st.top_z) - float(st.bottom_z)), 0.0, 1.0)
+		return ctx.ground_xform(origin, 0.0).origin.y - float(st.depth) * t
+	return NAN
 
 
 ## G7 round 1: Entities/<site>_cover – the sod patch (cover_asset) over the stair pit with a walkable
@@ -210,6 +242,9 @@ static func build_doors(ctx: Ctx, entities: Node3D) -> void:
 		node.name = d.id
 		node.set("building_id", StringName(d.params.building))
 		node.transform = ctx.ground_xform(Ctx.v2(d.pos), float(d.rot_y))
+		var on_stair := _stair_height(ctx, String(d.params.building), Ctx.v2(d.pos))
+		if not is_nan(on_stair):
+			node.position.y = on_stair   # G7 round 1: on the stair treads, not on the ground under them
 		ctx.add(entities, node)
 		if d.has("stair_trigger"):
 			# G7 round 1: walking down the crypt stair into the doorway uses the door.

@@ -296,12 +296,12 @@ CR_DOOR_W = 0.84
 CR_DOOR_SPRING = 1.28    # the door's round head springs here -> top 1.70
 CR_EAVE = 1.9            # the gable starts here
 CR_APEX = 2.2            # apex of the stone gable (under the coping)
-CR_THROAT = -2.1         # G7 round 1: the stair starts 0.8 m in front of the footprint edge (ground level)
+CR_THROAT = -1.65        # G7 round 1: the stair starts 0.35 m in front of the footprint edge (ground level)
 CR_WING = 0.5            # inner face of the wing walls (x)
 CR_WING_OUT = 0.95       # outer face of the stair cheeks (they hide the sloped ground of the pit)
 CR_DEPTH = 1.0           # G7 round 1: the stair goes this far down into the earth (the ground has the pit,
                          # graveyard_layout.json buildings.sites[crypt].stair, asset_ground_graveyard.py)
-CR_STEPS = 6
+CR_STEPS = 5
 
 
 def _crypt_hill_h(x: float, y: float) -> float:
@@ -424,16 +424,21 @@ def _crypt_front(parts, level: int) -> dict:
     for k in range(n):
         yc = CR_THROAT + ln_t * (k + 0.5)
         top_z = -CR_DEPTH * ((k + 0.5) / n)
-        dark = 0.95 - 0.09 * k
+        dark = 1.0 - 0.08 * k
         t = _stone((0.0, yc, (top_z - CR_DEPTH - 0.25) / 2), (CR_WING - 0.01, ln_t / 2 + 0.005, (top_z + CR_DEPTH + 0.25) / 2),
-                   STONE_DARK, seed=250 + k, jit=0.004, var=0.18, ao=0.0, top=0.35)
-        P._modulate(t, lambda co, dark=dark, yc=yc: dark * (0.7 if co.y > yc + ln_t * 0.25 else 1.0))
+                   STONE_PALE, seed=250 + k, jit=0.004, var=0.18, ao=0.0, top=0.35)
+        # the back of each tread lies in the shadow of the next step down (reads as steps from above,
+        # also through the ground mist that gathers in the stair: pale stone)
+        P._modulate(t, lambda co, dark=dark, yc=yc: dark * (0.5 if co.y > yc + ln_t * 0.1 else 1.0))
         parts.append(t)
-        # the nosing: a lit stone edge on each tread
-        parts.append(_box((0.0, yc - ln_t / 2 + 0.03, top_z + 0.012), (CR_WING - 0.03, 0.03, 0.012),
-                          L.scale_c(STONE_PALE, dark * 0.95), seed=260 + k, var=0.1, ao=0.0, top=0.3))
+        # the nosing: a lit, worn stone edge on each tread
+        parts.append(_box((0.0, yc - ln_t / 2 + 0.035, top_z + 0.014), (CR_WING - 0.03, 0.035, 0.014),
+                          L.scale_c(STONE_PALE, 1.2 * dark), seed=260 + k, var=0.1, ao=0.0, top=0.3))
     floor = _box((0.0, y - 0.1, -CR_DEPTH + 0.012), (CR_WING, 0.1, 0.012), L.scale_c(STONE_DARK, 0.45), seed=265, var=0.1, ao=0.0)
     parts.append(floor)
+    # the landing at ground level in front of the first tread (the ground dips under the stair)
+    parts.append(_stone((0.0, CR_THROAT - 0.1, -0.12), (CR_WING + 0.12, 0.1, 0.12), STONE_PALE, seed=268, jit=0.004, var=0.15,
+                        top=0.35))
     # retaining walls of the hill left and right of the portal (rubble, falling outwards)
     for sx in (-1, 1):
         a0, a1 = CR_HW - 0.02, 1.38

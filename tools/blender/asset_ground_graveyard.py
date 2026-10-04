@@ -246,7 +246,8 @@ class Ground:
             r = st["rect"]
             if r[0] < lx < r[2] and r[1] < lz < r[3]:
                 t = max(0.0, min(1.0, (st["top_z"] - lz) / (st["top_z"] - st["bottom_z"])))
-                h = h0 - st["depth"] * t
+                # below the stone treads (they and the stair's own collision carry the gravekeeper)
+                h = h0 - st["depth"] * t - st.get("under", 0.0)
         return h
 
     def pit_cover(self):
@@ -287,6 +288,11 @@ class Ground:
             q = _smoothstep((inside + 1.0) / 2.0)
             n3 = noise.noise(Vector((x * 0.9, z * 0.9, 11.0)))
             c = L.mix(c, L.mix(STONE_FLOOR, STONE_FLOOR_DARK, 0.5 + 0.5 * n3), q * 0.85)
+        for pos, rot, st, h0 in self.pits:   # dark earth under the stair treads
+            lx, lz = _to_local(x, z, pos, rot)
+            r = st["rect"]
+            if r[0] < lx < r[2] and r[1] < lz < r[3]:
+                c = L.scale_c(DIRT_DARK, 0.6)
         f = 1.0 + n2 * 0.06
         return [L._to_lin(min(1.0, ch * f)) for ch in c]
 

@@ -13,7 +13,7 @@ extends TestCase
 const TIMEOUT := 400.0
 const SLOT := 97
 const FIXTURE := "slot_p6_day40_reverent"
-const STAIR_TOP := Vector2(-9.0, 9.2)
+const STAIR_TOP := Vector2(-9.0, 8.85)
 const BIER_STAND := Vector2(1.75, 9.2)
 ## The crypt site's flat height minus this = the stair foot at least (layout stair depth 1.0).
 const MIN_DEPTH := 0.7
@@ -105,7 +105,7 @@ func test_walk_down_and_up_the_stair() -> void:
 	for i: int in 90:
 		await tree.physics_frame
 	_release()
-	assert_true(player.global_position.z > 8.9 and player.global_position.y > site_y - 0.15, "walked up onto the graveyard %s" %
+	assert_true(player.global_position.z > 8.6 and player.global_position.y > site_y - 0.15, "walked up onto the graveyard %s" %
 			player.global_position)
 	assert_eq(player.interior_id, &"", "the stair does not pull back in going up")
 
@@ -113,7 +113,7 @@ func test_walk_down_and_up_the_stair() -> void:
 func test_save_load_on_the_stairs() -> void:
 	if world == null:
 		return
-	_place(Vector2(-9.0, 8.3), PI)
+	_place(Vector2(-9.0, 8.1), PI)
 	await _settle()
 	var y_out := player.global_position.y
 	await _round_trip("on the stair outside")

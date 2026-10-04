@@ -530,9 +530,9 @@
     "sites": [
       {"id": "site_crypt", "building": "crypt", "pos": [-9.0, 6.9], "rot_y": 0.0, "footprint": [-1.4, -1.3, 2.8, 2.6], "access": [-9.0, 8.7], "height": 2.4, "door_marker": "door_outside",
         "stair": {"_comment": "G7 Änderungsrunde 1: die Grufttreppe führt durch den Torbogen in die Erde (Rampe im Boden, Rechteck lokal [x0, z0, x1, z1]: top_z = Bodenhöhe, bottom_z = Tiefe depth vor der Tür). passage = Durchgang in der Footprint-Kollision (ab Stufe 1), cheeks = Wangenmauern der Treppe (Kollision ab Stufe 1), cover_rect = Grasdecke über der Grube bis Stufe 1, trigger = Übergang in den Gruft-Raum am Fuß der Treppe (lokal am Türknoten, Laufrichtung dir).",
-          "rect": [-0.62, 0.12, 0.62, 2.1], "top_z": 2.1, "bottom_z": 0.42, "depth": 1.0,
-          "passage": [-0.5, 0.42, 0.5, 1.3], "cheeks": [[-0.95, 1.3, -0.5, 2.1], [0.5, 1.3, 0.95, 2.1]], "cheek_height": 1.3,
-          "cover_rect": [-0.97, -0.05, 0.97, 2.2], "cover_asset": "ph_env_crypt_pit_cover"}},
+          "rect": [-0.62, 0.12, 0.62, 1.65], "top_z": 1.65, "bottom_z": 0.42, "depth": 1.0, "under": 0.3, "landing": 1.85,
+          "passage": [-0.5, 0.42, 0.5, 1.3], "cheeks": [[-0.95, 1.3, -0.5, 1.65], [0.5, 1.3, 0.95, 1.65]], "cheek_height": 1.3,
+          "cover_rect": [-0.97, -0.05, 0.97, 1.75], "cover_asset": "ph_env_crypt_pit_cover"}},
       {"id": "site_chapel", "building": "chapel", "pos": [4.5, -25.5], "rot_y": 0.0, "footprint": [-2.6, -3.5, 5.2, 7.0], "access": [4.5, -21.5], "height": 6.0, "door_marker": "door_outside"},
       {"id": "site_shed", "building": "shed", "pos": [-12.9, -9.0], "rot_y": 0.0, "footprint": [-1.6, -1.8, 3.2, 3.6], "access": [-12.8, -6.3], "height": 3.0, "door_marker": "door_outside"}
     ],

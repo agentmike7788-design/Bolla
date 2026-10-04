@@ -13,7 +13,7 @@
   "wall_height": 5.0,
   "floor": [-4.4, -4.8, 4.4, 3.4],
   "_stair": "G7 Änderungsrunde 1: die Treppe ist begehbar (ramps: Rampe über den Stufen bis zum Absatz, Schachtwände bis z 6,5); wer sie weit genug hinaufgeht (stair_exit, Laufrichtung +z), geht hinaus wie mit [E] an room_exit – oben am Fuß der Grufttreppe draußen.",
-  "ramps": [{"from": [0.0, 0.0, 2.7], "to": [0.0, 2.6, 5.7], "width": 1.2}, {"from": [0.0, 2.6, 5.7], "to": [0.0, 2.6, 6.3], "width": 1.2}],
+  "ramps": [{"from": [0.0, 0.0, 2.9], "to": [0.0, 2.6, 5.8], "width": 1.2}, {"from": [0.0, 2.6, 5.8], "to": [0.0, 2.6, 6.3], "width": 1.2}],
   "stair_exit": {"rect": [-0.6, 4.4, 0.6, 6.25], "y": [0.8, 5.0], "dir": [0.0, 1.0]},
   "walls": [
     [-4.4, -3.25, -3.75, 2.8], [3.75, -3.25, 4.4, 2.8],

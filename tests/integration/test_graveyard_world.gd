@@ -2339,6 +2339,8 @@ func test_phase7_layout_diff_against_phase6() -> void:
 		"+_waypoints_phase7", "+waypoints.w_east_pass", "+waypoints.w_linden_n", "+waypoints.linden_spot",  # N1
 		"+waypoints.tp_linden", "+waypoints.from_village", "+waypoint_facing.linden_spot", "+waypoint_facing.from_village",
 		"+entities[npc_priest]",                                                              # N2
+		# G7 round 1: the crypt stair goes down into the earth (user request after G7).
+		"+buildings.sites[site_crypt].stair", "~building_doors[door_crypt].pos", "+building_doors[door_crypt].stair_trigger",
 	]
 	for id: String in P7_LINDEN:
 		allowed.append("+plots[%s]" % id)
@@ -2357,7 +2359,10 @@ func test_phase7_layout_diff_against_phase6() -> void:
 	assert_eq(layout.road, old.road, "the coach road")
 	assert_eq(layout.walkable_bounds, old.walkable_bounds, "§4.6: walkable_bounds stay")
 	assert_eq(layout.camera_bounds, old.camera_bounds, "§4.6: camera_bounds stay")
-	assert_eq(layout.buildings, old.buildings, "Phase-6 buildings")
+	# G7 round 1: the crypt site gets its stair – the rest stays.
+	var buildings_now: Dictionary = layout.buildings.duplicate(true)
+	(buildings_now.sites[0] as Dictionary).erase("stair")
+	assert_eq(buildings_now, old.buildings, "Phase-6 buildings")
 	for e: Dictionary in old.entities:
 		assert_eq(_by_id(layout.entities, String(e.id)), e, String(e.id))
 	var linden := _v2(layout.sections[layout.sections.size() - 1].rect)

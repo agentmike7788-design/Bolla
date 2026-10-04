@@ -80,8 +80,10 @@ func test_spawn_and_exit_are_walkable() -> void:
 	await tree.physics_frame
 	for id: String in ROOMS:
 		var room := InteriorRoom.find(tree, StringName(id))
+		# G7 round 1: the crypt's RoomExit stands on its (now walkable) stair – the free spot is in front of it.
+		var before_exit := Vector3(0, 0, -0.55) if id == "crypt" else Vector3(0, 0, -0.4)
 		for p: Vector3 in [room.spawn_transform().origin, (room.find_children("*", "", true, false).filter(
-				func(n: Node) -> bool: return n is RoomExit)[0] as Node3D).global_position + Vector3(0, 0, -0.4)]:
+				func(n: Node) -> bool: return n is RoomExit)[0] as Node3D).global_position + before_exit]:
 			assert_true(_capsule_free(p), "%s: the gravekeeper fits at %s" % [id, p])
 			var hit := world.get_world_3d().direct_space_state.intersect_ray(
 					PhysicsRayQueryParameters3D.create(p + Vector3.UP, p + Vector3.DOWN, 1))

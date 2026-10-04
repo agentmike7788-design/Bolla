@@ -11,11 +11,15 @@ const BUILDINGS_GROUP := &"buildings"
 @export var building_id: StringName = &"crypt"
 @export var min_open_level: int = 1
 
+var _applied := false
+var _poll := 0.0
+
 
 func _ready() -> void:
 	EventBus.building_upgraded.connect(func(_id: StringName, _l: int) -> void: refresh())
 	EventBus.game_loaded.connect(func(_s: int) -> void: refresh())
 	EventBus.new_game_started.connect(refresh)
+	EventBus.time_tick.connect(func(_d: int, _m: int) -> void: refresh())
 	refresh()
 
 
@@ -26,8 +30,19 @@ func is_covering() -> bool:
 	return lvl < min_open_level
 
 
+## Levels can also change by Buildings.load_state alone (debug, shots): a cheap check twice a second.
+func _process(delta: float) -> void:
+	_poll -= delta
+	if _poll <= 0.0:
+		_poll = 0.5
+		refresh()
+
+
 func refresh() -> void:
 	var on := is_covering()
+	if on == visible and is_node_ready() and _applied:
+		return
+	_applied = true
 	visible = on
 	for node: Node in find_children("*", "CollisionShape3D", true, false):
 		(node as CollisionShape3D).disabled = not on

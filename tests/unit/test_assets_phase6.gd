@@ -112,7 +112,7 @@ const FOOTPRINTS := {"crypt": Vector2(2.8, 2.6), "chapel": Vector2(5.2, 7.0), "s
 const FOOTPRINT_SLACK := 0.2
 ## G7 round 1: the crypt stair (levels 1–3) reaches this far below the ground and in front of the footprint.
 const CRYPT_STAIR_DEPTH := 1.4
-const CRYPT_STAIR_FRONT := 0.85
+const CRYPT_STAIR_FRONT := 0.4
 const CRYPT_STAIR_LEVELS: Array[String] = ["ph_bld_crypt_l1", "ph_bld_crypt_l2", "ph_bld_crypt_l3"]
 const LEVELS := {
 	"crypt": ["ph_bld_crypt_site", "ph_bld_crypt_l1", "ph_bld_crypt_l2", "ph_bld_crypt_l3"],
@@ -286,7 +286,7 @@ func test_crypt_is_low_with_a_door_and_stairs_to_the_south() -> void:
 	# G7 round 1: treads of the stair going down into the earth in front of the door
 	var treads := 0
 	for p: Vector3 in _vertices(inst):
-		if absf(p.x) < 0.45 and p.z > 0.45 and p.z < 2.1 and p.y > -1.0 and p.y < 0.02:
+		if absf(p.x) < 0.45 and p.z > 0.45 and p.z < 1.65 and p.y > -1.0 and p.y < 0.02:
 			treads += 1
 	assert_true(treads > 30, "the stair between the cheeks (%d vertices)" % treads)
 	var door := _marker(inst, "door_outside").origin
