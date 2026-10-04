@@ -74,7 +74,7 @@
     "ph_bld_v_inn2": [-3.85, -2.93, 4.4, 2.93]
   },
   "buildings": [
-    {"id": "v_church", "model": "ph_bld_v_church", "pos": [0.0, -18.0], "rot_y": 0.0, "door": [0.0, -11.9], "enterable": false, "max_height": 17.0},
+    {"id": "v_church", "model": "ph_bld_v_church", "pos": [0.0, -18.0], "rot_y": 0.0, "door": [0.0, -11.9], "enterable": true, "room": "church", "max_height": 17.0},
     {"id": "v_office", "model": "ph_bld_v_office", "pos": [-15.0, -14.0], "rot_y": 0.0, "door": [-15.0, -10.4], "enterable": true, "room": "office", "max_height": 8.5},
     {"id": "v_inn", "model": "ph_bld_v_inn", "pos": [15.0, -14.0], "rot_y": 0.0, "door": [15.0, -10.4], "enterable": true, "room": "inn", "max_height": 8.5,
       "collision": [[-5.25, -3.6, 5.25, 3.7]], "_collision": "ohne die Stufen vor der Tür (Rosine wartet an v_inn_door)."},
@@ -177,6 +177,7 @@
     {"id": "door_inn", "type": "HouseDoor", "house": "v_inn", "room_id": "inn", "display_name": "Holderkrug", "open_windows": [410, 1410]},
     {"id": "door_surgery", "type": "HouseDoor", "house": "v_surgery", "room_id": "surgery", "display_name": "Wundarztstube", "open_windows": [475, 720, 840, 1080]},
     {"id": "door_office", "type": "HouseDoor", "house": "v_office", "room_id": "office", "display_name": "Amtsstube", "open_windows": [475, 720, 785, 960]},
+    {"id": "door_church", "type": "HouseDoor", "house": "v_church", "room_id": "church", "display_name": "die Kirche", "open_windows": [360, 1200]},
     {"id": "counter_smith", "type": "ShopCounter", "pos": [-16.8, -2.0], "rot_y": 90.0, "shop_id": "smith", "reach": [1.6, 1.4, 2.6]},
     {"id": "counter_grocer", "type": "ShopCounter", "pos": [-14.3, 7.0], "rot_y": 90.0, "shop_id": "grocer", "reach": [1.6, 1.4, 2.4]},
     {"id": "village_board", "type": "VillageBoard", "pos": [-7.0, 5.1], "rot_y": 0.0, "reach": [2.0, 1.4, 1.8], "reach_offset": [0.0, 0.7, 0.6]},
@@ -235,14 +236,14 @@
     "ph_bld_v_inn/light_lantern": {"color": "#ffae55", "energy": 2.6, "range": 8.0, "shadow": true, "flicker": true},
     "ph_bld_v_church/light_door": {"color": "#ffae55", "energy": 2.2, "range": 7.0, "shadow": true, "flicker": true},
     "ph_prop_lantern_post/light_lantern": {"color": "#ffae55", "energy": 2.0, "range": 6.0, "shadow": false, "flicker": true},
-    "ph_bld_v_inn/light_window_1": {"color": "#ff9c45", "energy": 1.1, "range": 4.0, "shadow": false, "flicker": false, "out": 0.6},
-    "ph_bld_v_inn/light_window_2": {"color": "#ff9c45", "energy": 1.1, "range": 4.0, "shadow": false, "flicker": false, "out": 0.6},
-    "ph_bld_v_office/light_window_2": {"color": "#ff9c45", "energy": 0.9, "range": 3.5, "shadow": false, "flicker": false, "out": 0.6, "until": 1260},
-    "ph_bld_v_cottage_a/light_window": {"color": "#ff9c45", "energy": 0.8, "range": 3.0, "shadow": false, "flicker": false, "out": 0.5, "until": 1320},
-    "ph_bld_v_cottage_b/light_window": {"color": "#ff9c45", "energy": 0.8, "range": 3.0, "shadow": false, "flicker": false, "out": 0.5, "until": 1320},
-    "ph_bld_v_house_a/light_window": {"color": "#ff9c45", "energy": 0.8, "range": 3.0, "shadow": false, "flicker": false, "out": 0.5, "until": 1260},
-    "ph_bld_v_house_b/light_window": {"color": "#ff9c45", "energy": 0.8, "range": 3.0, "shadow": false, "flicker": false, "out": 0.5, "until": 1260},
-    "ph_bld_v_house_c/light_window": {"color": "#ff9c45", "energy": 0.8, "range": 3.0, "shadow": false, "flicker": false, "out": 0.5, "until": 1260},
+    "ph_bld_v_inn/light_window_1": {"color": "#ff9c45", "energy": 1.1, "range": 4.0, "shadow": false, "flicker": true, "out": 0.6},
+    "ph_bld_v_inn/light_window_2": {"color": "#ff9c45", "energy": 1.1, "range": 4.0, "shadow": false, "flicker": true, "out": 0.6},
+    "ph_bld_v_office/light_window_2": {"color": "#ff9c45", "energy": 0.9, "range": 3.5, "shadow": false, "flicker": true, "out": 0.6, "until": 1260},
+    "ph_bld_v_cottage_a/light_window": {"color": "#ff9c45", "energy": 0.8, "range": 3.0, "shadow": false, "flicker": true, "out": 0.5, "until": 1320},
+    "ph_bld_v_cottage_b/light_window": {"color": "#ff9c45", "energy": 0.8, "range": 3.0, "shadow": false, "flicker": true, "out": 0.5, "until": 1320},
+    "ph_bld_v_house_a/light_window": {"color": "#ff9c45", "energy": 0.8, "range": 3.0, "shadow": false, "flicker": true, "out": 0.5, "until": 1260},
+    "ph_bld_v_house_b/light_window": {"color": "#ff9c45", "energy": 0.8, "range": 3.0, "shadow": false, "flicker": true, "out": 0.5, "until": 1260},
+    "ph_bld_v_house_c/light_window": {"color": "#ff9c45", "energy": 0.8, "range": 3.0, "shadow": false, "flicker": true, "out": 0.5, "until": 1260},
     "ph_bld_v_smithy/light_ember": {"color": "#e07a3a", "energy": 0.5, "range": 3.5, "shadow": false, "flicker": true}
   },
   "bank_walls": {
@@ -261,9 +262,10 @@
     "outer_density": 0.5, "outer_margin": 3.0, "visibility_range": 50.0
   },
   "interiors": {
-    "_comment": "§4.3: Räume in der Reihe bei z −200, 60 m auseinander (Gruft 60, Kapelle 120, Schuppen 180).",
+    "_comment": "§4.3: Räume in der Reihe bei z −200, 60 m auseinander (Gruft 60, Kapelle 120, Schuppen 180); G7 Runde 1: die Kirche bei 420.",
     "inn": {"origin": [240.0, 0.0, -200.0], "door": "door_inn"},
     "surgery": {"origin": [300.0, 0.0, -200.0], "door": "door_surgery"},
-    "office": {"origin": [360.0, 0.0, -200.0], "door": "door_office"}
+    "office": {"origin": [360.0, 0.0, -200.0], "door": "door_office"},
+    "church": {"origin": [420.0, 0.0, -200.0], "door": "door_church"}
   }
 }

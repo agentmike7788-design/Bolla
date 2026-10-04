@@ -1,0 +1,42 @@
+{
+  "_comment": "Die Dorfkirche St. Gallus innen (G7 Änderungsrunde 1, Muster der drei Dorf-Innenräume, docs/PHASE7_DESIGN.md §4.3), gebaut von src/world/interiors/interior_build.gd; Koordinaten wie crypt_layout.json (Boden-Mitte = (0, 0), x rechts, z zur Kamera). Schiff innen x −3,2…3,2, z −4,5…4,5, Chor (Stufe 0,18 m) z −4,5…−2,7, Tür in der Südwand bei x 0. Altar mit Kerzen im Chor vor dem bunten Nordfenster, Leuchter daneben (ohne eigenes Licht), Kanzel an der Ostwand, vier Bankreihen beiderseits des Mittelgangs zum Altar gewandt, Taufstein und Opferstock an der Tür, Gedenkbrett an der Westwand. Lichter: zwei hohe Seitenfenster und das Chorfenster (Rolle window), der Kerzenring über dem Schiff (lantern, nachts mit Schatten), die Altarkerzen (candle), ein weiches Füll-Licht. Pfarrer Lenz nachmittags vor dem Chor (v_in_church_altar).",
+  "room_id": "church",
+  "building": "",
+  "region": "village",
+  "door_id": "door_church",
+  "room": "ph_int_church_room",
+  "fill_lights": [[0.0, 3.0, 0.6]],
+  "door_inside": [0.0, 4.2],
+  "spawn_inside": [0.0, 3.65],
+  "walkway": 1.0,
+  "camera_bounds": {"min": [-1.0, -2.2], "max": [1.0, 1.6]},
+  "sun_rotation_deg": [-52.0, 35.0, 0.0],
+  "sun_shadow": false,
+  "wall_height": 3.0,
+  "floor": [-3.7, -4.9, 3.7, 4.95],
+  "walls": [
+    [-3.7, -4.9, -3.2, 4.9], [3.2, -4.9, 3.7, 4.9],
+    [-3.7, -4.9, 3.7, -4.5],
+    [-3.7, 4.5, -0.6, 4.95], [0.6, 4.5, 3.7, 4.95], [-0.6, 4.95, 0.6, 5.3],
+    [-3.2, -4.5, 3.2, -2.75]
+  ],
+  "items": [
+    {"asset": "ph_int_altar", "id": "Altar", "pos": [0.0, -3.85], "y": 0.18, "rot_y": 0.0, "mount": "flat"},
+    {"asset": "ph_int_candelabrum", "pos": [1.45, -3.3], "y": 0.18, "rot_y": 0.0, "mount": "flat", "light_roles": {"light_candle": "none"}},
+    {"asset": "ph_int_church_pulpit", "id": "Pulpit", "pos": [2.6, -1.7], "rot_y": -90.0, "mount": "floor"},
+    {"asset": "ph_int_pew", "pos": [-1.6, -1.5], "rot_y": 180.0, "mount": "floor", "collision_inset": 0.1},
+    {"asset": "ph_int_pew", "pos": [1.6, -1.5], "rot_y": 180.0, "mount": "floor", "collision_inset": 0.1},
+    {"asset": "ph_int_pew", "pos": [-1.6, -0.2], "rot_y": 180.0, "mount": "floor", "collision_inset": 0.1},
+    {"asset": "ph_int_pew", "pos": [1.6, -0.2], "rot_y": 180.0, "mount": "floor", "collision_inset": 0.1},
+    {"asset": "ph_int_pew", "pos": [-1.6, 1.1], "rot_y": 180.0, "mount": "floor", "collision_inset": 0.1},
+    {"asset": "ph_int_pew", "pos": [1.6, 1.1], "rot_y": 180.0, "mount": "floor", "collision_inset": 0.1},
+    {"asset": "ph_int_pew", "pos": [-1.6, 2.4], "rot_y": 180.0, "mount": "floor", "collision_inset": 0.1},
+    {"asset": "ph_int_pew", "pos": [1.6, 2.4], "rot_y": 180.0, "mount": "floor", "collision_inset": 0.1},
+    {"asset": "ph_int_church_font", "id": "Font", "pos": [-2.3, 3.5], "rot_y": 0.0, "mount": "floor"},
+    {"asset": "ph_int_church_poor_box", "id": "PoorBox", "pos": [1.25, 3.75], "rot_y": 0.0, "mount": "floor"},
+    {"asset": "ph_int_church_memorial", "id": "Memorial", "pos": [-3.12, -0.9], "y": 1.0, "rot_y": 90.0, "mount": "hang"}
+  ],
+  "waypoints": {
+    "v_in_church_altar": [0.0, -2.3, 0.0]
+  }
+}

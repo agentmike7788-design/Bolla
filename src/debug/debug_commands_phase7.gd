@@ -1,7 +1,7 @@
 class_name DebugCommandsPhase7
 extends RefCounted
 ## Phase-7 commands of the debug console (docs/PHASE7_DESIGN.md §6), dispatched by DebugCommands.run():
-## village open · region · room <inn|surgery|office> · tp <village|anger|linden> · rel · orders · order ·
+## village open · region · room <inn|surgery|office|church> · tp <village|anger|linden> · rel · orders · order ·
 ## board · linden · anatomy · specimen · specimens · spoil · shelf · standing · lecture · rumor · cards ·
 ## deduce · teach · medicine · hidden · hagedorn · npclod · remark · vis7 · goal7. Every command goes
 ## through the public API of the system (found by its group); without it: "Keine Spielwelt geladen.".
@@ -13,7 +13,7 @@ const COMMANDS: PackedStringArray = ["village", "region", "rel", "orders", "orde
 		"hagedorn", "npclod", "remark", "vis7", "goal7"]
 const HELP: PackedStringArray = [
 	"village open – Dorf sofort öffnen · region <graveyard|village> – Region wechseln (ohne Zeit)",
-	"room <inn|surgery|office> – in einen Dorf-Innenraum · tp <village|anger|linden> – teleportieren",
+	"room <inn|surgery|office|church> – in einen Dorf-Innenraum · tp <village|anger|linden> – teleportieren",
 	"rel <npc|all> <0-100> – Beziehung setzen · remark <npc> – Gerede-Blase zeigen",
 	"orders – Aufträge mit Zustand und Frist · order <id> <offer|accept|done|fail> · board – Tafel neu würfeln",
 	"linden <grant|clear|consecrate|open> – Lindenacker freigeben / räumen / weihen / öffnen",
@@ -26,7 +26,7 @@ const HELP: PackedStringArray = [
 ]
 const TEXT_NO_WORLD := "Keine Spielwelt geladen."
 const REASON_DEBUG := "Debug"
-const VILLAGE_ROOMS: Array[StringName] = [&"inn", &"surgery", &"office"]
+const VILLAGE_ROOMS: Array[StringName] = [&"inn", &"surgery", &"office", &"church"]
 const REGIONS: Array[StringName] = [&"graveyard", &"village"]
 ## tp target -> [region, waypoint, fallback (region-local for the village)].
 const TP_TARGETS: Dictionary[String, Array] = {
@@ -154,7 +154,7 @@ func _cmd_room(args: PackedStringArray) -> Dictionary:
 	if p == null:
 		return _error(TEXT_NO_WORLD)
 	if not takes_room(args):
-		return _error("Format: room <inn|surgery|office>")
+		return _error("Format: room <inn|surgery|office|church>")
 	var target := StringName(args[0].to_lower())
 	var room := InteriorRoom.find(p.get_tree(), target)
 	if room == null:

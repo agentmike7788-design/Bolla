@@ -48,7 +48,7 @@ background_mode = 1
 background_color = Color(0.0196078, 0.0235294, 0.027451, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.3608, 0.4, 0.4392, 1)
-ambient_light_energy = 0.6
+ambient_light_energy = 0.75
 tonemap_mode = 4
 ssao_enabled = true
 ssao_radius = 0.6
@@ -175,7 +175,7 @@ size = Vector2(0.22, 0.22)
 offsets = PackedFloat32Array(0, 0.3, 0.7, 1)
 colors = PackedColorArray(0.7254902, 0.76862746, 0.8117647, 0, 0.7254902, 0.76862746, 0.8117647, 0.28, 0.7254902, 0.76862746, 0.8117647, 0.224, 0.7254902, 0.76862746, 0.8117647, 0)
 
-[node name="CryptInterior" type="Node3D" unique_id=86400097]
+[node name="CryptInterior" type="Node3D" unique_id=1367845361]
 script = ExtResource("1_flu37")
 room_id = &"crypt"
 config = ExtResource("2_qda5l")
@@ -187,7 +187,7 @@ building_id = &"crypt"
 
 [node name="Room" type="Node3D" parent="." unique_id=1879120704 instance=ExtResource("3_l8eng")]
 
-[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1306769979]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1679273187]
 transform = Transform3D(0.90630776, -0.36599818, 0.21130912, 0, 0.49999997, 0.86602545, -0.42261827, -0.7848856, 0.45315385, 0, 0, 0)
 visible = false
 light_angular_distance = 2.0
@@ -195,15 +195,15 @@ shadow_blur = 2.0
 directional_shadow_mode = 0
 directional_shadow_max_distance = 18.0
 
-[node name="Spawn" type="Marker3D" parent="." unique_id=1002845308]
+[node name="Spawn" type="Marker3D" parent="." unique_id=1211439157]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 2.25)
 
-[node name="Furniture" type="Node3D" parent="." unique_id=947351617]
+[node name="Furniture" type="Node3D" parent="." unique_id=1613237545]
 
 [node name="crypt_stair_1" type="Node3D" parent="Furniture" unique_id=44795237 instance=ExtResource("4_rejqy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.85)
 
-[node name="Light_window_1" type="OmniLight3D" parent="Furniture/crypt_stair_1" unique_id=1533823024]
+[node name="Light_window_1" type="OmniLight3D" parent="Furniture/crypt_stair_1" unique_id=290105136]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.8, 3.2)
 light_color = Color(0.603922, 0.658824, 0.721569, 1)
 light_energy = 1.4
@@ -220,10 +220,10 @@ metadata/follows_table = "MorgueTable"
 [node name="crypt_lantern_1" type="Node3D" parent="Furniture" unique_id=755024437 instance=ExtResource("6_a407r")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, -0.35)
 
-[node name="Light_ceiling" type="OmniLight3D" parent="Furniture/crypt_lantern_1" unique_id=6240815]
+[node name="Light_ceiling" type="OmniLight3D" parent="Furniture/crypt_lantern_1" unique_id=560047308]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.04, 0)
 light_color = Color(1, 0.68235296, 0.33333334, 1)
-light_energy = 2.2
+light_energy = 2.0
 shadow_enabled = true
 shadow_blur = 1.5
 omni_range = 7.0
@@ -231,12 +231,12 @@ omni_attenuation = 1.4
 script = ExtResource("7_va0mi")
 amount = 0.06
 metadata/interior_role = &"lantern"
-metadata/base_energy = 2.2
+metadata/base_energy = 2.0
 
 [node name="candle_niche_1" type="Node3D" parent="Furniture" unique_id=693889075 instance=ExtResource("8_hnv6w")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.75, 1.85, -2.62)
 
-[node name="Light_candle" type="OmniLight3D" parent="Furniture/candle_niche_1" unique_id=2022087119]
+[node name="Light_candle" type="OmniLight3D" parent="Furniture/candle_niche_1" unique_id=61335254]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0.05)
 light_color = Color(1, 0.627451, 0.2509804, 1)
 light_energy = 0.8
@@ -247,10 +247,10 @@ script = ExtResource("7_va0mi")
 metadata/interior_role = &"candle"
 metadata/base_energy = 0.8
 
-[node name="candle_niche_2" type="Node3D" parent="Furniture" unique_id=1400814744 instance=ExtResource("8_hnv6w")]
+[node name="candle_niche_2" type="Node3D" parent="Furniture" unique_id=662841194 instance=ExtResource("8_hnv6w")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.75, 1.85, -2.62)
 
-[node name="Light_candle" type="OmniLight3D" parent="Furniture/candle_niche_2" unique_id=1100729989]
+[node name="Light_candle" type="OmniLight3D" parent="Furniture/candle_niche_2" unique_id=1863222385]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0.05)
 light_color = Color(1, 0.627451, 0.2509804, 1)
 light_energy = 0.8
@@ -271,40 +271,40 @@ transform = Transform3D(0.90630776, 0, 0.42261827, 0, 1, 0, -0.42261827, 0, 0.90
 [node name="herbs_1" type="Node3D" parent="Furniture" unique_id=547036277 instance=ExtResource("11_carkt")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -1.95, 1.75, 2.62)
 
-[node name="Entities" type="Node3D" parent="." unique_id=1750213725]
+[node name="Entities" type="Node3D" parent="." unique_id=1514589184]
 
-[node name="room_exit" type="Node3D" parent="Entities" unique_id=1882911348 instance=ExtResource("12_g10js")]
+[node name="room_exit" type="Node3D" parent="Entities" unique_id=1245863396 instance=ExtResource("12_g10js")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.35)
 script = ExtResource("13_m58rk")
 building_id = &"crypt"
 
-[node name="MorgueTable" type="Node3D" parent="Entities" unique_id=948952534 groups=["morgue_table"]]
+[node name="MorgueTable" type="Node3D" parent="Entities" unique_id=458401915 groups=["morgue_table"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.35)
 script = ExtResource("14_37ga4")
 room = &"crypt"
 requires_level = 1
 
-[node name="Interactable" type="Area3D" parent="Entities/MorgueTable" unique_id=2089859064]
+[node name="Interactable" type="Area3D" parent="Entities/MorgueTable" unique_id=1096346683]
 collision_layer = 8
 collision_mask = 0
 monitoring = false
 priority = 5
 script = ExtResource("15_obf0n")
 
-[node name="Shape" type="CollisionShape3D" parent="Entities/MorgueTable/Interactable" unique_id=1904512022]
+[node name="Shape" type="CollisionShape3D" parent="Entities/MorgueTable/Interactable" unique_id=1965649312]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_txl7o")
 
 [node name="Model" type="Node3D" parent="Entities/MorgueTable" unique_id=1268775565 instance=ExtResource("16_oyj1b")]
 
-[node name="UsePos" type="Marker3D" parent="Entities/MorgueTable" unique_id=1671360493]
+[node name="UsePos" type="Marker3D" parent="Entities/MorgueTable" unique_id=1555943122]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.95000005)
 
 [node name="SmokeBowl" type="Node3D" parent="Entities/MorgueTable" unique_id=2103336368 instance=ExtResource("17_x7hk2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 0.84, -0.38)
 metadata/follows_table = "MorgueTable"
 
-[node name="niche_1" type="Node3D" parent="Entities" unique_id=123940042 groups=["crypt_niche"] instance=ExtResource("18_vc4nh")]
+[node name="niche_1" type="Node3D" parent="Entities" unique_id=1766865829 groups=["crypt_niche"] instance=ExtResource("18_vc4nh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.75, 0, -2.31)
 script = ExtResource("19_gdtd0")
 slot_id = "niche_1"
@@ -312,85 +312,85 @@ slot_id = "niche_1"
 [node name="Model" type="Node3D" parent="Entities/niche_1" unique_id=308951658 instance=ExtResource("20_36vlk")]
 metadata/min_level = 1
 
-[node name="UsePos" type="Marker3D" parent="Entities/niche_1" unique_id=234594943]
+[node name="UsePos" type="Marker3D" parent="Entities/niche_1" unique_id=1259586926]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.9599999)
 
-[node name="niche_2" type="Node3D" parent="Entities" unique_id=1426284626 groups=["crypt_niche"] instance=ExtResource("18_vc4nh")]
+[node name="niche_2" type="Node3D" parent="Entities" unique_id=913713290 groups=["crypt_niche"] instance=ExtResource("18_vc4nh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.75, 0, -2.31)
 script = ExtResource("19_gdtd0")
 slot_id = "niche_2"
 
-[node name="Model" type="Node3D" parent="Entities/niche_2" unique_id=1846016216 instance=ExtResource("20_36vlk")]
+[node name="Model" type="Node3D" parent="Entities/niche_2" unique_id=68408841 instance=ExtResource("20_36vlk")]
 metadata/min_level = 1
 
-[node name="UsePos" type="Marker3D" parent="Entities/niche_2" unique_id=923773020]
+[node name="UsePos" type="Marker3D" parent="Entities/niche_2" unique_id=1288618782]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.9599999)
 
-[node name="niche_3" type="Node3D" parent="Entities" unique_id=1098757672 groups=["crypt_niche"] instance=ExtResource("18_vc4nh")]
+[node name="niche_3" type="Node3D" parent="Entities" unique_id=391999522 groups=["crypt_niche"] instance=ExtResource("18_vc4nh")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.31, 0, -0.7)
 script = ExtResource("19_gdtd0")
 slot_id = "niche_3"
 min_level = 2
 
-[node name="Model" type="Node3D" parent="Entities/niche_3" unique_id=1562063477 instance=ExtResource("20_36vlk")]
+[node name="Model" type="Node3D" parent="Entities/niche_3" unique_id=960942806 instance=ExtResource("20_36vlk")]
 metadata/min_level = 2
 
-[node name="UsePos" type="Marker3D" parent="Entities/niche_3" unique_id=2035247806]
+[node name="UsePos" type="Marker3D" parent="Entities/niche_3" unique_id=2000821164]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.01)
 
 [node name="Sealed" type="Node3D" parent="Entities/niche_3" unique_id=1117803308 instance=ExtResource("21_5n5bc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.8)
 metadata/max_level = 1
 
-[node name="niche_4" type="Node3D" parent="Entities" unique_id=2040802425 groups=["crypt_niche"] instance=ExtResource("18_vc4nh")]
+[node name="niche_4" type="Node3D" parent="Entities" unique_id=417991918 groups=["crypt_niche"] instance=ExtResource("18_vc4nh")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 3.31, 0, -0.7)
 script = ExtResource("19_gdtd0")
 slot_id = "niche_4"
 min_level = 2
 
-[node name="Model" type="Node3D" parent="Entities/niche_4" unique_id=1286659907 instance=ExtResource("20_36vlk")]
+[node name="Model" type="Node3D" parent="Entities/niche_4" unique_id=70531295 instance=ExtResource("20_36vlk")]
 metadata/min_level = 2
 
-[node name="UsePos" type="Marker3D" parent="Entities/niche_4" unique_id=424453307]
+[node name="UsePos" type="Marker3D" parent="Entities/niche_4" unique_id=1567075200]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.01)
 
-[node name="Sealed" type="Node3D" parent="Entities/niche_4" unique_id=1021097412 instance=ExtResource("21_5n5bc")]
+[node name="Sealed" type="Node3D" parent="Entities/niche_4" unique_id=1519234060 instance=ExtResource("21_5n5bc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.8)
 metadata/max_level = 1
 
-[node name="niche_5" type="Node3D" parent="Entities" unique_id=962352977 groups=["crypt_niche"] instance=ExtResource("18_vc4nh")]
+[node name="niche_5" type="Node3D" parent="Entities" unique_id=905974908 groups=["crypt_niche"] instance=ExtResource("18_vc4nh")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.31, 0, 1.5)
 script = ExtResource("19_gdtd0")
 slot_id = "niche_5"
 min_level = 3
 
-[node name="Model" type="Node3D" parent="Entities/niche_5" unique_id=264323369 instance=ExtResource("20_36vlk")]
+[node name="Model" type="Node3D" parent="Entities/niche_5" unique_id=85092123 instance=ExtResource("20_36vlk")]
 metadata/min_level = 3
 
-[node name="UsePos" type="Marker3D" parent="Entities/niche_5" unique_id=262355287]
+[node name="UsePos" type="Marker3D" parent="Entities/niche_5" unique_id=1489744778]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.01)
 
-[node name="Sealed" type="Node3D" parent="Entities/niche_5" unique_id=1173308452 instance=ExtResource("21_5n5bc")]
+[node name="Sealed" type="Node3D" parent="Entities/niche_5" unique_id=1346483829 instance=ExtResource("21_5n5bc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.8)
 metadata/max_level = 2
 
-[node name="niche_6" type="Node3D" parent="Entities" unique_id=350441776 groups=["crypt_niche"] instance=ExtResource("18_vc4nh")]
+[node name="niche_6" type="Node3D" parent="Entities" unique_id=860320849 groups=["crypt_niche"] instance=ExtResource("18_vc4nh")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 3.31, 0, 1.5)
 script = ExtResource("19_gdtd0")
 slot_id = "niche_6"
 min_level = 3
 
-[node name="Model" type="Node3D" parent="Entities/niche_6" unique_id=740654687 instance=ExtResource("20_36vlk")]
+[node name="Model" type="Node3D" parent="Entities/niche_6" unique_id=719394540 instance=ExtResource("20_36vlk")]
 metadata/min_level = 3
 
-[node name="UsePos" type="Marker3D" parent="Entities/niche_6" unique_id=1379409843]
+[node name="UsePos" type="Marker3D" parent="Entities/niche_6" unique_id=1323386883]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.01)
 
-[node name="Sealed" type="Node3D" parent="Entities/niche_6" unique_id=1052710988 instance=ExtResource("21_5n5bc")]
+[node name="Sealed" type="Node3D" parent="Entities/niche_6" unique_id=588156855 instance=ExtResource("21_5n5bc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.8)
 metadata/max_level = 2
 
-[node name="OssuaryShelf" parent="Entities" unique_id=453708965 groups=["ossuary_shelf"] instance=ExtResource("22_ej77n")]
+[node name="OssuaryShelf" parent="Entities" unique_id=404440180 groups=["ossuary_shelf"] instance=ExtResource("22_ej77n")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 0.15, -4.17)
 script = ExtResource("23_ufbtg")
 
@@ -412,10 +412,10 @@ transform = Transform3D(0.9, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 transform = Transform3D(1.1111112, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.16, -0.22)
 metadata/min_level = 3
 
-[node name="UsePos" type="Marker3D" parent="Entities/OssuaryShelf" unique_id=1640338202]
+[node name="UsePos" type="Marker3D" parent="Entities/OssuaryShelf" unique_id=1379236544]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15, 1.3200002)
 
-[node name="SealedPassage" parent="Entities" unique_id=821646965 groups=["sealed_passage"] instance=ExtResource("26_msxy0")]
+[node name="SealedPassage" parent="Entities" unique_id=2135006349 groups=["sealed_passage"] instance=ExtResource("26_msxy0")]
 transform = Transform3D(0.7880108, 0, -0.6156615, 0, 1, 0, 0.6156615, 0, 0.7880108, 1.02, 0.15, -3.62)
 script = ExtResource("27_f4hv8")
 
@@ -435,10 +435,10 @@ shape = SubResource("BoxShape3D_jtu2b")
 [node name="Grille" type="Node3D" parent="Entities/SealedPassage" unique_id=1367115775 instance=ExtResource("29_lc4ku")]
 visible = false
 
-[node name="PultPlace" type="Node3D" parent="Entities" unique_id=1913706696]
+[node name="PultPlace" type="Node3D" parent="Entities" unique_id=1336566122]
 metadata/min_level = 1
 
-[node name="site_pult" parent="Entities/PultPlace" unique_id=380547402 instance=ExtResource("30_ofc7t")]
+[node name="site_pult" parent="Entities/PultPlace" unique_id=1017105638 instance=ExtResource("30_ofc7t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -1.95, 0, 2.38)
 script = ExtResource("31_yg22k")
 station_id = &"pult"
@@ -458,7 +458,7 @@ shape = SubResource("BoxShape3D_ppcia")
 [node name="Model" type="Node3D" parent="Entities/PultPlace/site_pult" unique_id=1899640810 instance=ExtResource("32_y3eug")]
 transform = Transform3D(1.150443, 0, 0, 0, 1, 0, 0, 0, 0.822867, 0.00090026855, 0, -0.00022125244)
 
-[node name="station_pult" type="Node3D" parent="Entities/PultPlace" unique_id=1924156451]
+[node name="station_pult" type="Node3D" parent="Entities/PultPlace" unique_id=897091950]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -1.95, 0, 2.38)
 script = ExtResource("33_ly7c1")
 station = &"pult"
@@ -466,7 +466,7 @@ requires_built = true
 
 [node name="Model" type="Node3D" parent="Entities/PultPlace/station_pult" unique_id=305125647 instance=ExtResource("34_3se2g")]
 
-[node name="Light_candle" type="OmniLight3D" parent="Entities/PultPlace/station_pult/Model" unique_id=1213550984]
+[node name="Light_candle" type="OmniLight3D" parent="Entities/PultPlace/station_pult/Model" unique_id=1901532107]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.56, 1.1290001, 0.2)
 light_color = Color(1, 0.627451, 0.2509804, 1)
 light_energy = 0.8
@@ -477,20 +477,20 @@ script = ExtResource("7_va0mi")
 metadata/interior_role = &"candle"
 metadata/base_energy = 0.8
 
-[node name="Collision" type="StaticBody3D" parent="Entities/PultPlace/station_pult" unique_id=494424330]
+[node name="Collision" type="StaticBody3D" parent="Entities/PultPlace/station_pult" unique_id=1099163034]
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Entities/PultPlace/station_pult/Collision" unique_id=267421049]
+[node name="Shape" type="CollisionShape3D" parent="Entities/PultPlace/station_pult/Collision" unique_id=1146517117]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00090026855, 0.566391, -0.00022125244)
 shape = SubResource("BoxShape3D_ql6to")
 
-[node name="PultStore" type="Node3D" parent="Entities/PultPlace/station_pult" unique_id=364661754 groups=["saveable"] instance=ExtResource("35_uo13c")]
+[node name="PultStore" type="Node3D" parent="Entities/PultPlace/station_pult" unique_id=1209394900 groups=["saveable"] instance=ExtResource("35_uo13c")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.65)
 script = ExtResource("36_m65bd")
 save_id = "pult_store"
 save_order = 62
 
-[node name="CollectionShelf" parent="Entities/PultPlace/station_pult" unique_id=1760131689 groups=["saveable"] instance=ExtResource("37_tgye6")]
+[node name="CollectionShelf" parent="Entities/PultPlace/station_pult" unique_id=432856399 groups=["saveable"] instance=ExtResource("37_tgye6")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, 0, -0.12000036)
 script = ExtResource("38_lhle8")
 save_id = "collection_shelf"
@@ -512,165 +512,165 @@ script = ExtResource("39_i7apg")
 
 [node name="Model" type="Node3D" parent="Entities/PultPlace/station_pult/CollectionShelf" unique_id=1226099291 instance=ExtResource("40_w4yft")]
 
-[node name="Collision" type="StaticBody3D" parent="Entities/PultPlace/station_pult/CollectionShelf" unique_id=960740496]
+[node name="Collision" type="StaticBody3D" parent="Entities/PultPlace/station_pult/CollectionShelf" unique_id=1211308799]
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Entities/PultPlace/station_pult/CollectionShelf/Collision" unique_id=315497606]
+[node name="Shape" type="CollisionShape3D" parent="Entities/PultPlace/station_pult/CollectionShelf/Collision" unique_id=1577520053]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6293945e-06, 1.0149994, 0)
 shape = SubResource("BoxShape3D_p1ax5")
 
-[node name="Colliders" type="Node3D" parent="." unique_id=600359089]
+[node name="Colliders" type="Node3D" parent="." unique_id=1681531002]
 
-[node name="Room" type="StaticBody3D" parent="Colliders" unique_id=174716620]
+[node name="Room" type="StaticBody3D" parent="Colliders" unique_id=1647536620]
 collision_mask = 0
 
-[node name="Floor" type="CollisionShape3D" parent="Colliders/Room" unique_id=236681574]
+[node name="Floor" type="CollisionShape3D" parent="Colliders/Room" unique_id=1995954766]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, -0.7000003)
 shape = SubResource("BoxShape3D_wtxke")
 
-[node name="Wall_1" type="CollisionShape3D" parent="Colliders/Room" unique_id=2085009177]
+[node name="Wall_1" type="CollisionShape3D" parent="Colliders/Room" unique_id=922905432]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.0750003, 1.5, -0.2249999)
 shape = SubResource("BoxShape3D_uotrc")
 
-[node name="Wall_2" type="CollisionShape3D" parent="Colliders/Room" unique_id=332995045]
+[node name="Wall_2" type="CollisionShape3D" parent="Colliders/Room" unique_id=1757681536]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.075, 1.5, -0.2249999)
 shape = SubResource("BoxShape3D_r5e0n")
 
-[node name="Wall_3" type="CollisionShape3D" parent="Colliders/Room" unique_id=2102156217]
+[node name="Wall_3" type="CollisionShape3D" parent="Colliders/Room" unique_id=976710829]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 1.5, 3.075)
 shape = SubResource("BoxShape3D_c402q")
 
-[node name="Wall_4" type="CollisionShape3D" parent="Colliders/Room" unique_id=1703083235]
+[node name="Wall_4" type="CollisionShape3D" parent="Colliders/Room" unique_id=1677683672]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 1.5, 3.075)
 shape = SubResource("BoxShape3D_otkv4")
 
-[node name="Wall_5" type="CollisionShape3D" parent="Colliders/Room" unique_id=235299297]
+[node name="Wall_5" type="CollisionShape3D" parent="Colliders/Room" unique_id=1879895214]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 1.5, 3.8500001)
 shape = SubResource("BoxShape3D_hfypu")
 
-[node name="Wall_6" type="CollisionShape3D" parent="Colliders/Room" unique_id=1563660042]
+[node name="Wall_6" type="CollisionShape3D" parent="Colliders/Room" unique_id=584212536]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 1.5, 3.8500001)
 shape = SubResource("BoxShape3D_rqtlx")
 
-[node name="Wall_7" type="CollisionShape3D" parent="Colliders/Room" unique_id=98739810]
+[node name="Wall_7" type="CollisionShape3D" parent="Colliders/Room" unique_id=111052179]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 4.025)
 shape = SubResource("BoxShape3D_xiouq")
 
-[node name="Wall_8" type="CollisionShape3D" parent="Colliders/Room" unique_id=1436280385]
+[node name="Wall_8" type="CollisionShape3D" parent="Colliders/Room" unique_id=726479399]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9, 1.5, -3)
 shape = SubResource("BoxShape3D_bmp2n")
 
-[node name="Wall_9" type="CollisionShape3D" parent="Colliders/Room" unique_id=88339608]
+[node name="Wall_9" type="CollisionShape3D" parent="Colliders/Room" unique_id=875188266]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9, 1.5, -3)
 shape = SubResource("BoxShape3D_harw5")
 
-[node name="Wall_10" type="CollisionShape3D" parent="Colliders/Room" unique_id=1178259953]
+[node name="Wall_10" type="CollisionShape3D" parent="Colliders/Room" unique_id=808172340]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5999999, 1.5, -4.025)
 shape = SubResource("BoxShape3D_63wog")
 
-[node name="Wall_11" type="CollisionShape3D" parent="Colliders/Room" unique_id=1688292781]
+[node name="Wall_11" type="CollisionShape3D" parent="Colliders/Room" unique_id=1961249400]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1.5, -4.025)
 shape = SubResource("BoxShape3D_wqbfa")
 
-[node name="Wall_12" type="CollisionShape3D" parent="Colliders/Room" unique_id=1511204768]
+[node name="Wall_12" type="CollisionShape3D" parent="Colliders/Room" unique_id=715302437]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -4.65)
 shape = SubResource("BoxShape3D_48w5x")
 
-[node name="Wall_13" type="CollisionShape3D" parent="Colliders/Room" unique_id=2119907363]
+[node name="Wall_13" type="CollisionShape3D" parent="Colliders/Room" unique_id=1775144175]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -3.85)
 shape = SubResource("BoxShape3D_gwjln")
 
-[node name="MorgueTable" type="StaticBody3D" parent="Colliders" unique_id=451761153]
+[node name="MorgueTable" type="StaticBody3D" parent="Colliders" unique_id=1690685899]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.35)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/MorgueTable" unique_id=1220375086]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/MorgueTable" unique_id=843121106]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.018528223, 0.4438917, 0.11336726)
 shape = SubResource("BoxShape3D_l10hb")
 
-[node name="WashBasin" type="StaticBody3D" parent="Colliders" unique_id=298942188]
+[node name="WashBasin" type="StaticBody3D" parent="Colliders" unique_id=1150936591]
 transform = Transform3D(0.90630776, 0, -0.42261827, 0, 1, 0, 0.42261827, 0, 0.90630776, 1.75, 0, 0.35)
 collision_mask = 0
 metadata/min_level = 1
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/WashBasin" unique_id=938198080]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/WashBasin" unique_id=1472607031]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4147126, 0)
 shape = SubResource("BoxShape3D_uwm44")
 
-[node name="niche_1" type="StaticBody3D" parent="Colliders" unique_id=25754455]
+[node name="niche_1" type="StaticBody3D" parent="Colliders" unique_id=300336477]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.75, 0, -2.31)
 collision_mask = 0
 metadata/min_level = 1
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/niche_1" unique_id=114656823]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/niche_1" unique_id=405170474]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00060129166, 0.81961614, 0.03850922)
 shape = SubResource("BoxShape3D_j6lsn")
 
-[node name="niche_2" type="StaticBody3D" parent="Colliders" unique_id=474750109]
+[node name="niche_2" type="StaticBody3D" parent="Colliders" unique_id=706754230]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.75, 0, -2.31)
 collision_mask = 0
 metadata/min_level = 1
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/niche_2" unique_id=1905831763]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/niche_2" unique_id=830675677]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00060129166, 0.81961614, 0.03850922)
 shape = SubResource("BoxShape3D_r2vgs")
 
-[node name="niche_3" type="StaticBody3D" parent="Colliders" unique_id=2033532763]
+[node name="niche_3" type="StaticBody3D" parent="Colliders" unique_id=637870164]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.31, 0, -0.7)
 collision_mask = 0
 metadata/min_level = 2
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/niche_3" unique_id=1830867385]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/niche_3" unique_id=585295249]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00060129166, 0.81961614, 0.03850922)
 shape = SubResource("BoxShape3D_qjtp1")
 
-[node name="niche_4" type="StaticBody3D" parent="Colliders" unique_id=325225804]
+[node name="niche_4" type="StaticBody3D" parent="Colliders" unique_id=1658351723]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 3.31, 0, -0.7)
 collision_mask = 0
 metadata/min_level = 2
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/niche_4" unique_id=497529185]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/niche_4" unique_id=250729086]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00060129166, 0.81961614, 0.03850922)
 shape = SubResource("BoxShape3D_s016p")
 
-[node name="niche_5" type="StaticBody3D" parent="Colliders" unique_id=1751041340]
+[node name="niche_5" type="StaticBody3D" parent="Colliders" unique_id=1559917783]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.31, 0, 1.5)
 collision_mask = 0
 metadata/min_level = 3
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/niche_5" unique_id=1278258580]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/niche_5" unique_id=392600270]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00060129166, 0.81961614, 0.03850922)
 shape = SubResource("BoxShape3D_khmwk")
 
-[node name="niche_6" type="StaticBody3D" parent="Colliders" unique_id=2023064665]
+[node name="niche_6" type="StaticBody3D" parent="Colliders" unique_id=1612245339]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 3.31, 0, 1.5)
 collision_mask = 0
 metadata/min_level = 3
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/niche_6" unique_id=50187279]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/niche_6" unique_id=1020768493]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00060129166, 0.81961614, 0.03850922)
 shape = SubResource("BoxShape3D_53kyw")
 
-[node name="bone_rack_1" type="StaticBody3D" parent="Colliders" unique_id=798343398]
+[node name="bone_rack_1" type="StaticBody3D" parent="Colliders" unique_id=1047766618]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.9, 0, 1.95)
 collision_mask = 0
 metadata/min_level = 2
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/bone_rack_1" unique_id=1123000478]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/bone_rack_1" unique_id=1191896752]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8527125, 0)
 shape = SubResource("BoxShape3D_qe88w")
 
-[node name="bucket_1" type="StaticBody3D" parent="Colliders" unique_id=1393673160]
+[node name="bucket_1" type="StaticBody3D" parent="Colliders" unique_id=1941232431]
 transform = Transform3D(0.90630776, 0, 0.42261827, 0, 1, 0, -0.42261827, 0, 0.90630776, 0.88, 0, 1.95)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/bucket_1" unique_id=1834808122]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/bucket_1" unique_id=1808043340]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.23553747, 0)
 shape = SubResource("BoxShape3D_7y20y")
 
-[node name="Particles" type="Node3D" parent="." unique_id=855236751]
+[node name="Particles" type="Node3D" parent="." unique_id=247265999]
 
-[node name="ShaftMotes" type="CPUParticles3D" parent="Particles" unique_id=836189379]
+[node name="ShaftMotes" type="CPUParticles3D" parent="Particles" unique_id=1820765240]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 3.4)
 cast_shadow = 0
 visibility_range_end = 40.0
@@ -688,19 +688,19 @@ initial_velocity_max = 0.06
 scale_amount_min = 0.6
 color_ramp = SubResource("Gradient_il8q4")
 
-[node name="FillLights" type="Node3D" parent="." unique_id=1621729796]
+[node name="FillLights" type="Node3D" parent="." unique_id=164111492]
 
-[node name="Fill_1" type="OmniLight3D" parent="FillLights" unique_id=663108556]
+[node name="Fill_1" type="OmniLight3D" parent="FillLights" unique_id=113686545]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0.4)
 light_color = Color(0.8471, 0.8627, 0.8784, 1)
-light_energy = 0.6
+light_energy = 0.75
 light_specular = 0.2
 omni_range = 9.0
 omni_attenuation = 0.8
 metadata/interior_role = &"fill"
-metadata/base_energy = 0.6
+metadata/base_energy = 0.75
 
-[node name="Lighting" type="Node" parent="." unique_id=7675568]
+[node name="Lighting" type="Node" parent="." unique_id=1821575927]
 script = ExtResource("42_3gvxg")
 
 [editable path="Entities/OssuaryShelf"]
