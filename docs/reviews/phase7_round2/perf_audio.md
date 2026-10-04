@@ -53,6 +53,8 @@ Sonde `src/debug/perf_probe.gd` (gleicher Ablauf auf allen Plattformen: neues Sp
 | region_back | 50 (0) → 51 (1) | 898 → 994 | 2565 → 1889 |
 | map_open_village_after | 83 (1) → 11 (0) | 2294 → 869 | 3790 → 1863 |
 
+Die übrigen Zeilen schwanken im Container um ±30 % (Software-Rendering, parallel laufende Jobs) und zeigen keine gerichtete Änderung.
+
 **Lesart:** Karte öffnen kostete auf Desktop 68–182 ms reine CPU-Zeit (jedes Mal, nicht nur beim ersten Mal), der Blattwechsel 104 ms – nachher 8–10 ms, also ein normaler Frame. Mit Renderer kostete jedes Öffnen 1,4–2,6 s über dem Normalframe (lavapipe) bzw. 1,1–2,6 s (Browser) – nachher kein Zuschlag mehr (2,1–2,6 s im Browser = Normalframe dieses Containers). Der Back-Aufwand (≈ 75 ms Desktop-CPU, davon ≈ 60 ms der Wald ums Blatt) fällt nur noch an, wenn sich das Blatt geändert hat, und wird verteilt: bei geschlossener Karte malt jeder Frame **eine von 8 Ebenen** (Papier · Wald in 4 Scheiben · Land und Wege · Häuser, Gräber · Schrift und Rahmen; je ≤ 16 ms Desktop-CPU), danach wird einmal gerendert. Die Gruft-Zeile zeigt das: nach „buildings open / build crypt“ wird beim Betreten neu gebacken – mit einem Zug 98–114 ms, verteilt 29 ms (Desktop headless). Die lavapipe- und Browser-Läufe „nachher“ entstanden vor dieser Verteilung (dort Gruft 3,5 s bzw. 4,5 s = einmal ganzes Blatt gebacken).
 
 **Web-Ton:** Im Container blockiert der Software-Renderer den Hauptthread pro Frame ≈ 2 s (Long-Task-Messung), dort setzt der Ton zwangsläufig aus – vorher wie nachher. Gemessen wurde darum, was der Browser bekommt: ScriptProcessor-Puffer **2048 → 8192 Frames (46 → 186 ms)**, Mischzeit je Frame unverändert (≈ 0,15 µs pro Ausgabe-Frame; 0,3 ms je 2048er-, 1,0–2,6 ms je 8192er-Rückruf). Auf dem PC des Benutzers sind die Frames ≈ 16 ms; Ruckler bis ≈ 180 ms (Karte vorher, Raumwechsel ≈ 60 ms Desktop-CPU ≈ 150 ms im Browser) unterbrechen den Ton nicht mehr.
@@ -62,7 +64,7 @@ Sonde `src/debug/perf_probe.gd` (gleicher Ablauf auf allen Plattformen: neues Sp
 | Spitze | Desktop-CPU | Ursache | Stand |
 |---|---|---|---|
 | Neues Spiel / Laden | ≈ 2,2 s | Weltaufbau | einmalig hinter dem Ladebild, unverändert |
-| Gaststube betreten | ≈ 60 ms | Raum aktivieren | im Browser ≈ 150 ms < 186 ms Puffer, hinter der Tür-Blende |
+| Gaststube betreten | ≈ 60 ms | Raum aktivieren (Befehl selbst 6 ms, `_process` 5 ms; der Rest fällt außerhalb der Skripte an – Sichtbarkeit/Physik-Umschaltung) | im Browser ≈ 150 ms < 186 ms Puffer, hinter der Tür-Blende |
 | Zurück zum Friedhof | ≈ 54 ms | Regionswechsel + Karte vorbacken (nur bei Änderung) | hinter der Reise-Blende |
 | Erster Anblick eines Materials (Browser) | – | WebGL kompiliert Shader beim ersten Zeichnen | nicht messbar im Container (Software-GL); eine Vorkompilierung aller Materialien beim Laden wäre der nächste Schritt, wenn der Benutzer weiter Ruckler beim ersten Betreten eines Raums hört |
 
