@@ -11,5 +11,5 @@ jitter = 0.25
 jitter_frequency = 6.0
 gust_depth = 0.04
 gust_rate = 0.1
-color_wobble = 0.04
+color_wobble = 0.0
 lod_distance = 30.0

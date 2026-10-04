@@ -204,7 +204,7 @@ func test_lighting_follows_the_room_config_and_pauses_while_hidden() -> void:
 	assert_eq(lighting.config, Database.interior_config(&"crypt"), "InteriorLighting reads the room's config")
 	assert_false(lighting.is_processing(), "§9: hidden room – no lighting updates")
 	lighting.apply_daylight(1.0)
-	assert_almost(shaft.light_energy, 0.7, 0.001, "§4.8: shaft by day 0.7")
+	assert_almost(shaft.light_energy, 1.4, 0.001, "§4.8 (G7 round 1: brighter): shaft by day 1.4")
 	assert_true(crypt.environment.fog_enabled, "cold air")
 	assert_almost(crypt.environment.fog_density, 0.02, 0.0001)
 	lighting.apply_daylight(0.0)

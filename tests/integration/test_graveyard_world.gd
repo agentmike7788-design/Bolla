@@ -486,7 +486,15 @@ func test_only_foliage_and_grass_materials_are_animated() -> void:
 		var mat := load("res://assets/materials/" + file) as ShaderMaterial
 		if mat == null:
 			continue
-		var animated := _shader_source(mat.shader.resource_path).contains("TIME")
+		var src := _shader_source(mat.shader.resource_path)
+		if file == "mat_emissive_warm.tres":
+			# G7 round 1: the flame glow flickers with TIME in fragment() only and without discard –
+			# Godot counts a material as animated (static shadow maps redrawn) only for vertex TIME or
+			# fragment TIME with discard.
+			var vertex_body := src.get_slice("void vertex()", 1).get_slice("\nvoid ", 0) if src.contains("void vertex()") else ""
+			assert_false(vertex_body.contains("TIME") or src.contains("discard"), "%s: TIME only in fragment(), no discard" % file)
+			continue
+		var animated := src.contains("TIME")
 		assert_eq(animated, file in ["mat_foliage.tres", "mat_grass.tres"], "%s uses TIME: %s" % [file, animated])
 	assert_eq((load(FOLIAGE_MATERIAL) as ShaderMaterial).shader.resource_path, FOLIAGE_SHADER)
 	var foliage_layer := 1 << 1
@@ -1297,7 +1305,8 @@ func test_phase5_forge_light_and_smoke() -> void:
 		if String(p.section) == "elder":
 			var d := _flat(light.global_position - (world.get_node_by_layout_id(p.id) as Node3D).global_position).length()
 			assert_true(d > light.omni_range, "the glow stays out of %s (%.2f m)" % [p.id, d])
-	var smokes := forge.find_children("*", "CPUParticles3D", true, false)
+	# G7 round 1: the ember light's sparks (FlickerLight, profile forge) are not smoke.
+	var smokes := forge.find_children("*", "CPUParticles3D", true, false).filter(func(n: Node) -> bool: return n.name != &"Embers")
 	assert_eq(smokes.size(), 2, "chimney + kiln")
 	for s: Node in smokes:
 		var p := s as CPUParticles3D

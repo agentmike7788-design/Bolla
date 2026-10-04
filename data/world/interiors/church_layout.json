@@ -9,7 +9,7 @@
   "door_inside": [0.0, 4.2],
   "spawn_inside": [0.0, 3.65],
   "walkway": 1.0,
-  "camera_bounds": {"min": [-1.0, -2.2], "max": [1.0, 1.6]},
+  "camera_bounds": {"min": [-1.0, -2.8], "max": [1.0, 1.6]},
   "sun_rotation_deg": [-52.0, 35.0, 0.0],
   "sun_shadow": false,
   "wall_height": 3.0,
