@@ -26,6 +26,9 @@ import { ENEMY_MODES, CREATURES, TURRET, LASER, ARTILLERY } from './enemies.js';
 import { createEnemyView } from './enemyView.js';
 import { CHAPTERS, STORY, PERKS, perksFor, loadCampaign, finishCampaignMap, pickPerk, nextCampaignMap, chapterIndexOf, opensChapter } from './campaign.js';
 import { createRadio, createCampaignView, showChapterCard, perkChoice } from './campaignView.js';
+import { VEHICLES, MAX_VEHICLES } from './vehicles.js';
+import { createVehicleView } from './vehicleView.js';
+import { createMinimap } from './minimap.js';
 import './style.css';
 
 const canvas = document.getElementById('scene');
@@ -99,11 +102,15 @@ const enemyView = createEnemyView({
     else if (f.type === 'death') audio.play.squish(s.pan, s.level, f.kind === 'brute');
     else if (f.type === 'boom' || f.type === 'nestDeath') audio.play.boom(s.pan, s.level, f.type === 'nestDeath' || f.big);
     else if (f.type === 'shellFire') audio.play.cannon(s.pan, s.level);
-    else if (f.type === 'shellHit') audio.play.boom(s.pan, s.level, true);
+    else if (f.type === 'shellHit') audio.play.boom(s.pan, s.level, !f.small);
+    else if (f.type === 'tankFire') audio.play.cannon(s.pan, s.level);
+    else if (f.type === 'bump') audio.play.boom(s.pan, s.level * 0.5, false);
     else if (f.type === 'nestBorn') audio.play.acid(s.pan, s.level);
   },
 });
 scene.add(enemyView.group);
+const vehicleView = createVehicleView({ effects });
+scene.add(vehicleView.group);
 const dayNight = createDayNight({ scene, renderer, sun, hemi });
 let zoom = 40; // camera distance to the point it looks at
 const camRight = new THREE.Vector3();
@@ -174,6 +181,9 @@ function loadWorld(seed, mapScenario = null, saved = null, biome = 'meadow', ene
   // A loaded game brings its own enemies; a new map gets the chosen mode.
   factory = createFactory(world, { start: mapScenario?.start, enemies: saved ? 'off' : (mapScenario?.enemies ?? enemies), grace: mapScenario?.grace ?? null });
   enemyView.setWorld(world, factory.enemies.chunks);
+  stopDriving(true);
+  vehicleView.setWorld(world);
+  minimap.setWorld(world);
   missions = mapScenario ? createMissions(mapScenario, factory) : null;
   if (saved) {
     factory.load(saved.factory, saved.v);
@@ -272,6 +282,8 @@ function renderProgress() {
   const chestNote = (selected?.type === 'requester' || selected?.type === 'provider') && document.getElementById('chest-note');
   if (chestNote) chestNote.textContent = chestLine(selected);
   // The train panel's status line follows the train; the rest stays clickable.
+  const vehicleNote = selected?.vehicle && document.getElementById('vehicle-note');
+  if (vehicleNote) vehicleNote.innerHTML = vehicleLine(selected);
   const note = selected?.path && document.getElementById('train-note');
   if (note) note.innerHTML = `${trainLine(selected)}${selected.total ? `<br>${cargoText(selected.cargo)}` : ''}`;
 
@@ -507,7 +519,7 @@ function watchEnemies() {
   e.alerts.length = 0;
   if (e.destroyed.length) {
     for (const b of e.destroyed) {
-      if (!factory.get(b.tile)) for (const i of factory.footprint(b)) meshes.setDecorHidden(i, false);
+      if (!factory.get(b.tile)) for (const i of factory.footprint(b)) showDecor(i);
       if (b === selected) openPanel(null);
     }
     if (!inTitle && factory.time - lossToastAt > 8) {
@@ -1035,6 +1047,7 @@ function openPanel(b) {
 
 function renderPanel() {
   const b = selected;
+  if (b.vehicle) return renderVehicle(b);
   if (b.path) return renderSchedule(b);
   if (b.type === 'silo') return renderSilo(b);
   if (b.type === 'requester' || b.type === 'provider') return renderChest(b);
@@ -1179,6 +1192,12 @@ recipeList.addEventListener('click', (e) => {
   const wish = e.target.closest('[data-wish]');
   const want = e.target.closest('[data-want]');
   if (e.target.closest('[data-launch]')) return startLaunch(selected);
+  if (e.target.closest('[data-drive]')) {
+    if (driving === selected) stopDriving();
+    else startDriving(selected);
+    renderPanel();
+    return;
+  }
   if (opt) factory.setRecipe(selected, opt.dataset.recipe);
   else if (mode) factory.setMode(selected, mode.dataset.mode);
   else if (add) factory.railways.setSchedule(selected, [...selected.schedule, Number(add.dataset.stop)]);
@@ -1232,9 +1251,10 @@ function showTile(tile) {
   }
   const building = factory.get(tile);
   const train = factory.trainOn(tile);
-  const check = tool === 'remove' ? { ok: !!(building || train), reason: building || train ? '' : 'Hier steht nichts' } : tool && canBuild(tile);
+  const vehicle = factory.vehicles.near(tile.x, tile.z, 0.35);
+  const check = tool === 'remove' ? { ok: !!(building || train || vehicle), reason: building || train || vehicle ? '' : 'Hier steht nichts' } : tool && canBuild(tile);
   const overBelt = check?.ok && tool !== 'remove' && tool !== 'belt' && building?.type === 'belt';
-  canvas.style.cursor = !tool && (train || hasRecipes(building)) ? 'pointer' : '';
+  canvas.style.cursor = !tool && (vehicle || train || hasRecipes(building)) ? 'pointer' : '';
   marker.visible = !tool;
   marker.position.set(tile.position.x, Math.max(tile.height, 0.28) + 0.03, tile.position.z);
   ghost.show(tool, tile, tool === 'remove' || overBelt ? building?.dir ?? 0 : dir, check?.ok, tool === 'artillery' ? factory.enemies.artilleryRange() : null);
@@ -1242,7 +1262,10 @@ function showTile(tile) {
   factoryView.showDroneRange(DRONE_TOOLS.has(tool) || (!tool && DRONE_TOOLS.has(building?.type)));
 
   const terrain = TERRAIN[tile.terrain];
-  if (train) {
+  if (vehicle) {
+    tileName.textContent = vehicle.name;
+    tileDetail.innerHTML = `${vehicleLine(vehicle).split('<br>').slice(0, 2).join(' · ')}${tool ? '' : vehicle === driving ? ' · Enter: aussteigen' : ' · Klick: Fenster, Enter: einsteigen'}`;
+  } else if (train) {
     tileName.textContent = `Zug ${train.id}`;
     const stops = train.schedule.map((i) => stationOf(i)?.name ?? '?').join(' → ');
     tileDetail.textContent = `${trainLine(train)} · Fahrplan ${stops || 'leer'}${tool ? '' : ' · Klick: Fahrplan'}`;
@@ -1446,7 +1469,7 @@ const DRONE_TOOLS = new Set(['dronePort', 'provider', 'requester']);
 const DEFENSE_TOOLS = new Set(['wall', 'turret', 'laser', 'artillery']);
 const help = document.getElementById('help');
 const HELP = {
-  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['Y', 'Erdwärme'], ['Ö Ä #', 'Ökostrom'], ['O P I K', 'Öl'], ['G B Z J', 'Bahn'], ['F V C', 'Drohnen'], ['H', 'Silo'], [', . - Ü', 'Abwehr'], ['X', 'abreißen'], ['T', 'Forschung'], ['L', 'Statistik'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
+  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['Y', 'Erdwärme'], ['Ö Ä #', 'Ökostrom'], ['O P I K', 'Öl'], ['G B Z J', 'Bahn'], ['F V C', 'Drohnen'], ['H', 'Silo'], [', . - Ü', 'Abwehr'], ['+ *', 'Fahrzeuge'], ['Enter', 'einsteigen'], ['X', 'abreißen'], ['T', 'Forschung'], ['L', 'Statistik'], ['M', 'Karten'], ['Tab', 'Minikarte'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
@@ -1477,11 +1500,14 @@ const HELP = {
   laser: [['Klick', 'Laserturm setzen'], ['Strom', `${POWER_USE.laser} MW beim Feuern`], ['Reichweite', `${LASER.range} Felder`], ['Esc', 'fertig']],
   artillery: [['Klick', 'Artillerie setzen (3 × 3)'], ['Granaten', 'per Band oder Anfragekiste'], ['Ziel', 'Nester in Reichweite'], ['Esc', 'fertig']],
   silo: [['Klick', 'Raketensilo setzen'], ['Braucht', '3 × 3 freie Felder'], ['Bänder', 'an jede Seite'], ['Ohne Werkzeug klicken', 'Etappen, Start']],
+  car: [['Klick', 'Geländewagen aufs Land setzen'], ['R', 'Richtung drehen'], ['Enter', 'einsteigen'], ['Esc', 'fertig']],
+  panzer: [['Klick', 'Panzer aufs Land setzen'], ['R', 'Richtung drehen'], ['Enter', 'einsteigen'], ['Esc', 'fertig']],
+  drive: [['W S', 'Gas, rückwärts'], ['A D', 'lenken'], ['Leertaste', 'bremsen'], ['Q E / Rechte Maus', 'Kamera drehen'], ['Mausrad', 'zoomen'], ['Enter / Esc', 'aussteigen'], ['Tab', 'Minikarte']],
   remove: [['Klick / Ziehen', 'abreißen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
 };
 
 function renderHelp() {
-  help.innerHTML = HELP[tool ?? 'none'].map(([k, t]) => `<span><kbd>${k}</kbd> ${t}</span>`).join('');
+  help.innerHTML = HELP[driving && !tool ? 'drive' : tool ?? 'none'].map(([k, t]) => `<span><kbd>${k}</kbd> ${t}</span>`).join('');
 }
 
 function setTool(next) {
@@ -1506,6 +1532,7 @@ function setTool(next) {
 function canBuild(tile) {
   const existing = factory.get(tile);
   if (tool === 'train') return factory.canAddTrain(tile);
+  if (VEHICLES[tool]) return factory.canAddVehicle(tool, tile);
   // Dragging a rail over track joins it.
   if (tool === 'rail' && (existing?.type === 'rail' || existing?.type === 'station')) return { ok: true, reason: '' };
   // Dragging a belt over a belt just turns it; a pipe over a pipe changes nothing.
@@ -1533,11 +1560,12 @@ function buildAt(tile) {
     const removed = factory.remove(tile);
     if (removed) {
       // A signal leaves its rail behind, which keeps the ground clear.
-      if (!factory.get(tile)) for (const i of factory.footprint(removed)) meshes.setDecorHidden(i, false);
+      if (!factory.get(tile)) for (const i of factory.footprint(removed)) showDecor(i);
       audio.play.remove();
       effects.remove(tile, removed.type);
+      if (removed.vehicle && removed.vehicle === driving) stopDriving();
     }
-    if (removed && (removed === selected || removed.train === selected)) openPanel(null);
+    if (removed && (removed === selected || removed.train === selected || removed.vehicle === selected)) openPanel(null);
   } else {
     const existing = factory.get(tile);
     if (tool === 'belt' && existing?.type === 'belt') {
@@ -1547,6 +1575,16 @@ function buildAt(tile) {
       // Already a pipe here.
     } else if (tool === 'rail' && (existing?.type === 'rail' || existing?.type === 'station')) {
       // Track is here already; the drag links it.
+    } else if (VEHICLES[tool]) {
+      const v = factory.addVehicle(tool, tile, dir);
+      if (v) {
+        audio.play.build('drill');
+        effects.build(tile, true);
+        showToast(`${v.name} bereit`, 'Klick drauf oder Enter in der Nähe: einsteigen. WASD fährt, am Lager lädt er Munition.');
+      } else {
+        audio.play.deny();
+        showToast('Hier passt kein Fahrzeug', factory.canAddVehicle(tool, tile).reason);
+      }
     } else if (tool === 'train') {
       const t = factory.addTrain(tile);
       if (t) {
@@ -1578,7 +1616,7 @@ function buildAlong(tile) {
     if (!lastTile || factory.get(tile)?.type === 'pole') lastTile = tile;
     return;
   }
-  if (tool === 'train') {
+  if (tool === 'train' || VEHICLES[tool]) {
     if (!lastTile) buildAt(tile);
     lastTile = tile;
     return;
@@ -1624,8 +1662,8 @@ window.addEventListener('pointerup', (e) => {
   if (tool || moved > 6) return;
   setPointer(e);
   const tile = pickTile();
-  const b = tile && (factory.trainOn(tile) ?? factory.get(tile));
-  openPanel(b?.path || hasRecipes(b) ? b : null);
+  const b = tile && (factory.vehicles.near(tile.x, tile.z, 0.35) ?? factory.trainOn(tile) ?? factory.get(tile));
+  openPanel(b?.path || b?.vehicle || hasRecipes(b) ? b : null);
 });
 
 for (const b of toolButtons) b.addEventListener('click', () => setTool(b.dataset.tool));
@@ -1639,6 +1677,7 @@ function escape() {
   else if (!mapsMenu.hidden || !winMenu.hidden) mapsMenu.hidden = winMenu.hidden = true;
   else if (menu.isOpen) menu.back();
   else if (researchView.isOpen) researchView.close();
+  else if (driving) stopDriving();
   else if (selected) openPanel(null);
   else if (tool) setTool(tool);
   else openPause();
@@ -1675,10 +1714,22 @@ window.addEventListener('keydown', (e) => {
   const defenseKey = { ',': 'wall', '.': 'turret', '-': 'laser', 'ü': 'artillery', '[': 'artillery' }[key];
   // Renewables: Ö Ä # on a German keyboard, ; ' \ in the same places on others.
   const greenKey = { 'ö': 'solar', ';': 'solar', 'ä': 'wind', "'": 'wind', '#': 'battery', '\\': 'battery' }[key];
+  // Vehicles on + and * (] and } on other keyboards), Enter gets in or out.
+  const vehicleKey = { '+': 'car', ']': 'car', '*': 'panzer', '}': 'panzer' }[key];
+  if (key === 'tab') {
+    e.preventDefault();
+    return toggleMinimap();
+  }
+  if (key === 'enter') {
+    e.preventDefault();
+    return driving ? stopDriving() : enterNearest();
+  }
   if (key === ' ') {
     e.preventDefault();
+    if (driving) return; // the brake, see driveInput
     return lookAtAttack();
   }
+  if (vehicleKey) return setTool(vehicleKey);
   if (numbered) setTool(numbered);
   else if (oilKey) setTool(oilKey);
   else if (defenseKey) setTool(defenseKey);
@@ -1740,6 +1791,146 @@ function showRocketWin() {
   winMenu.hidden = false;
 }
 
+// --- Vehicles and the minimap --------------------------------------------------------
+
+let driving = null; // the vehicle the player sits in
+const driveKeys = new Set();
+const DRIVE_KEYS = new Set(['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ']);
+const drivePanel = document.getElementById('drive');
+const vehiclePos = new THREE.Vector3();
+const kmh = (v) => Math.round(Math.abs(v.speed) * 12);
+
+window.addEventListener('keydown', (e) => {
+  const key = e.key.toLowerCase();
+  if (driving && DRIVE_KEYS.has(key) && !e.ctrlKey && !e.metaKey && document.activeElement?.tagName !== 'INPUT') driveKeys.add(key);
+});
+window.addEventListener('keyup', (e) => driveKeys.delete(e.key.toLowerCase()));
+window.addEventListener('blur', () => driveKeys.clear());
+
+// WASD (or the arrows) to the throttle and the wheel, Space brakes.
+function driveInput() {
+  const input = factory.vehicles.input;
+  const on = (a, b) => driveKeys.has(a) || driveKeys.has(b);
+  const blocked = !driving || menu.isOpen || menuOpen() || launch.active;
+  input.throttle = blocked ? 0 : (on('w', 'arrowup') ? 1 : 0) - (on('s', 'arrowdown') ? 1 : 0);
+  input.steer = blocked ? 0 : (on('a', 'arrowleft') ? 1 : 0) - (on('d', 'arrowright') ? 1 : 0);
+  input.brake = blocked || driveKeys.has(' ');
+}
+
+function startDriving(v) {
+  if (!v || !factory.vehicles.list.includes(v)) return;
+  driving = v;
+  factory.vehicles.drive(v);
+  rig.setDriving(true);
+  driveKeys.clear();
+  if (tool) setTool(tool);
+  audio.play.start();
+  drivePanel.hidden = false;
+  renderDrive();
+  renderHelp();
+}
+
+// `quiet`: no sound, when a new map starts.
+function stopDriving(quiet = false) {
+  if (!driving) return;
+  driving = null;
+  factory?.vehicles.drive(null);
+  rig.setDriving(false);
+  driveKeys.clear();
+  drivePanel.hidden = true;
+  if (!quiet) audio.play.click();
+  renderHelp();
+  if (selected?.vehicle) renderPanel();
+}
+
+// Enter: into the selected vehicle, or the one nearest to the middle of the screen.
+function enterNearest() {
+  if (inTitle || menuOpen()) return;
+  if (selected?.vehicle) return startDriving(selected);
+  const f = rig.controls.target;
+  const x = (f.x - world.tiles[0].position.x) / TILE;
+  const z = (f.z - world.tiles[0].position.z) / TILE;
+  const v = factory.vehicles.near(x, z, 9);
+  if (v) return startDriving(v);
+  audio.play.deny();
+  showToast('Kein Fahrzeug in der Nähe', factory.vehicles.list.length ? 'Fahr mit der Kamera hin oder klick eins an.' : unlockVehicleHint());
+}
+
+function unlockVehicleHint() {
+  return factory.research.unlocked.has('car') ? 'Setz mit + einen Geländewagen aufs Land.' : unlockHint('car');
+}
+
+const ammoText = (v) => {
+  const spec = VEHICLES[v.kind];
+  const shells = spec.cannon ? ` · Granaten ${v.shells}/${spec.cannon.store}` : '';
+  return `Munition ${v.ammo}/${spec.gun.store}${shells}`;
+};
+
+function vehicleLine(v) {
+  const spec = VEHICLES[v.kind];
+  const state = v === driving ? `fährt ${kmh(v)} km/h` : Math.abs(v.speed) > 0.2 ? 'rollt aus' : 'parkt';
+  const empty = !v.ammo && !v.shots && (!spec.cannon || (!v.shells && !v.rounds));
+  return `${Math.ceil(v.hp)}/${spec.hp} Lebenspunkte · ${state}<br>${ammoText(v)}${empty ? ' · leer: neben einem Lager parken' : ''}<br>${num(Math.round(v.odo))} Felder gefahren · ${num(v.kills)} Abschüsse`;
+}
+
+function renderVehicle(v) {
+  const spec = VEHICLES[v.kind];
+  recipeLabel.textContent = v.name;
+  recipeList.innerHTML = `<p class="panel-note" id="vehicle-note">${vehicleLine(v)}</p>
+    <p class="panel-note">${spec.cannon ? 'Maschinengewehr gegen Käfer, Kanone gegen Nester und Panzerkäfer. Walzt Bäume platt.' : 'Schnell, mit Maschinengewehr auf dem Dach. Mit Schwung überfährt er Käfer.'} Geparkt schießt er nur auf Käfer, wer fährt, greift auch Nester an. Neben einem Lager lädt er ${spec.cannon ? 'Munition und Granaten' : 'Munition'}.</p>
+    <button type="button" class="launch-go" data-drive>${v === driving ? 'Aussteigen' : 'Einsteigen'} <kbd>Enter</kbd></button>`;
+}
+
+// The small dashboard while driving.
+function renderDrive() {
+  if (!driving) return;
+  const spec = VEHICLES[driving.kind];
+  const frac = Math.max(0, driving.hp / spec.hp);
+  drivePanel.innerHTML = `<p class="label">${driving.name}</p>
+    <p class="drive-speed"><b>${kmh(driving)}</b> km/h</p>
+    <div class="power-bar" title="Lebenspunkte"><i style="width:${frac * 100}%;background:hsl(${frac * 120},70%,50%)"></i></div>
+    <p class="power-text">${ammoText(driving)}</p>`;
+}
+
+// Vehicles destroyed, trees flattened.
+function watchVehicles() {
+  const vs = factory.vehicles;
+  while (vs.fresh.length) meshes.setDecorHidden(vs.fresh.pop(), true);
+  for (const ev of vs.events) {
+    if (ev.type !== 'lost') continue;
+    if (ev.vehicle === driving) stopDriving(true);
+    if (ev.vehicle === selected) openPanel(null);
+    if (!inTitle) showToast(`${ev.vehicle.name} zerstört`, 'Die Käfer haben ihn erwischt. Ein neues Fahrzeug setzt man wieder mit dem Werkzeug.');
+  }
+  vs.events.length = 0;
+}
+
+// Trees a tank flattened stay flat when a building there comes down.
+function showDecor(i) {
+  if (!factory.vehicles.flattened.has(i)) meshes.setDecorHidden(i, false);
+}
+
+const minimapBox = document.getElementById('minimap');
+const MINIMAP_KEY = 'bolla.minimap';
+const minimap = createMinimap({
+  root: minimapBox,
+  onPick(x, z) {
+    if (!driving && !launch.active) rig.jumpTo(x, z);
+  },
+});
+try {
+  minimapBox.classList.toggle('closed', localStorage.getItem(MINIMAP_KEY) === 'closed');
+} catch {}
+function toggleMinimap() {
+  const closed = !minimapBox.classList.contains('closed');
+  minimapBox.classList.toggle('closed', closed);
+  audio.play.click();
+  try {
+    localStorage.setItem(MINIMAP_KEY, closed ? 'closed' : 'open');
+  } catch {}
+}
+document.getElementById('minimap-toggle').addEventListener('click', toggleMinimap);
+
 // --- Weather and achievements ------------------------------------------------------
 
 const weatherLabel = document.getElementById('weather');
@@ -1799,6 +1990,7 @@ function showAchievement() {
 const STEP = 1 / 60;
 let pending = 0;
 let legendTimer = 0;
+let minimapTimer = 0;
 let soundTimer = 0;
 const IDLE = { buildings: new Map() }; // what the machine sounds hear while paused
 const hornTrips = new WeakMap(); // train -> trips when its horn last sounded
@@ -1819,6 +2011,7 @@ renderer.setAnimationLoop(() => {
   dayNight.setStorm(weather.strength);
   if (!paused) pending += dt;
   factory.setDaylight(sunlightAt(dayNight.time));
+  driveInput();
   while (pending >= STEP) {
     factory.tick(STEP);
     pending -= STEP;
@@ -1839,6 +2032,17 @@ renderer.setAnimationLoop(() => {
   weatherView.update(paused ? 0 : dt, elapsed, focus, weather, dayNight.night, factory, graphics.particles && !paused);
   enemyView.update(paused ? 0 : dt, elapsed, factory, camera, dayNight.night);
   watchEnemies();
+  vehicleView.update(paused ? 0 : dt, factory, camera, dayNight.night, selected?.vehicle ? selected : null);
+  watchVehicles();
+  if (driving && !launch.active) {
+    const v = driving;
+    rig.follow(vehicleView.positionOf(v, vehiclePos), v.heading, v.speed > 2 && factory.vehicles.input.steer === 0 ? 1 : v.speed > 2 ? 0.4 : 0, dt);
+  }
+  minimapTimer += dt;
+  if (minimapTimer > 0.2) {
+    minimapTimer = 0;
+    minimap.draw(factory, camera, rig.controls.target, selected?.vehicle ? selected : null, elapsed);
+  }
   audio.setNight(dayNight.night);
   soundTimer += dt;
   if (soundTimer > 0.1) {
@@ -1855,6 +2059,7 @@ renderer.setAnimationLoop(() => {
       }
     }
     renderWeather();
+    renderDrive();
     clockLabel.textContent = dayNight.clock();
     clockIcon.textContent = dayNight.night > 0.5 ? '☾' : '☀';
   }

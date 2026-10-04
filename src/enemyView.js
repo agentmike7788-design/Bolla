@@ -364,6 +364,21 @@ export function createEnemyView({ effects, onFx }) {
           const a = rnd(0, Math.PI * 2);
           effects.emit({ x: x + Math.cos(a) * 1.3, y: y + 0.15, z: z + Math.sin(a) * 1.3, vx: Math.cos(a) * rnd(1, 2), vy: rnd(0.1, 0.5), vz: Math.sin(a) * rnd(1, 2), life: rnd(0.8, 1.4), size: rnd(0.25, 0.4), grow: 1.5, color: effects.color(0xb5a27a, 0.1), gravity: 0, drag: 2, fade: 0.5 });
         }
+      } else if (f.type === 'tankFire') {
+        // The tank's cannon: a flash and a puff of smoke at the muzzle.
+        const mx = x + Math.sin(f.aim) * 0.95;
+        const mz = z + Math.cos(f.aim) * 0.95;
+        for (let i = 0; i < 10; i++) {
+          effects.emit({ x: mx, y: y + 0.55, z: mz, vx: Math.sin(f.aim) * rnd(2, 4) + rnd(-0.5, 0.5), vy: rnd(0.2, 1), vz: Math.cos(f.aim) * rnd(2, 4) + rnd(-0.5, 0.5), life: rnd(0.1, 0.22), size: rnd(0.15, 0.25), grow: 1.5, color: effects.color(i % 2 ? 0xff9a2a : 0xffe080, 0.15), gravity: 0, drag: 4 }, true);
+        }
+        for (let i = 0; i < 8; i++) {
+          effects.emit({ x: mx, y: y + 0.55, z: mz, vx: Math.sin(f.aim) * rnd(0.3, 1.5) + rnd(-0.4, 0.4), vy: rnd(0.2, 0.8), vz: Math.cos(f.aim) * rnd(0.3, 1.5) + rnd(-0.4, 0.4), life: rnd(0.9, 1.5), size: rnd(0.22, 0.38), grow: 1.8, color: effects.color(0x8a8478, 0.1), gravity: 0.1, drag: 1.5, fade: 0.6 });
+        }
+      } else if (f.type === 'bump') {
+        // A vehicle crashed into something: dust and a few bits.
+        for (let i = 0; i < 10; i++) {
+          effects.emit({ x, y: y + 0.25, z, vx: rnd(-1.2, 1.2), vy: rnd(0.4, 1.6), vz: rnd(-1.2, 1.2), life: rnd(0.5, 0.9), size: rnd(0.12, 0.22), grow: 1.4, color: effects.color(0x9d9585, 0.1), gravity: -1, drag: 2, fade: 0.6 });
+        }
       } else if (f.type === 'nestBorn') {
         // The ground bursts open: purple goo and egg shells.
         for (let i = 0; i < 26; i++) {
@@ -371,7 +386,7 @@ export function createEnemyView({ effects, onFx }) {
         }
       } else if (f.type === 'nestDeath' || f.type === 'boom' || f.type === 'shellHit') {
         // Fire, smoke and flying debris.
-        const big = f.type !== 'boom' || f.big;
+        const big = (f.type !== 'boom' || f.big) && !f.small;
         if (f.type === 'shellHit') {
           // A shell digs in: a fountain of earth and a flash.
           for (let i = 0; i < 26; i++) {

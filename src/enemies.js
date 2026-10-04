@@ -109,7 +109,14 @@ const NEIGHBOURS = [
 
 // `at(x, z)` is the building on a tile, `demolish(b)` takes one away for good,
 // `now()` the factory clock. `onKill(kind)` and friends feed the statistics.
-export function createEnemies({ world, buildings, research, at, demolish, sizeOf = () => 1, now, mode: startMode = 'off', grace = null }) {
+// Vehicles (see vehicles.js) come in through `vehicles()`, the list of them, and
+// `hurtVehicle(v, damage)`: creatures that are shot by one or meet one on an
+// attack hunt it down (`hunt`, the vehicle's id) and bite it.
+const HUNT_NOTICE = 3; // tiles at which attackers turn on a vehicle
+const HUNT_LOSE = 14; // tiles at which hunters give up
+const HUNT_REACH = 0.55; // a vehicle's half width, added to a creature's reach
+
+export function createEnemies({ world, buildings, research, at, demolish, sizeOf = () => 1, now, mode: startMode = 'off', grace = null, vehicles = () => [], hurtVehicle = () => {} }) {
   const size = world.size;
   const chunks = Math.ceil(size / CHUNK);
   let smog = new Float32Array(chunks * chunks);
@@ -348,12 +355,13 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
       if (n.hp < n.max && clock - n.hurtAt > 10) n.hp = Math.min(n.max, n.hp + 3 * dt);
       if (n.born !== undefined && n.hp >= n.max) delete n.born; // grown up
       // Under fire, the nest and its colony send defenders at the turret that shoots.
-      const alarm = nests.find((m) => clock - m.hurtAt < 4 && m.shooter != null && Math.hypot(m.x - n.x, m.z - n.z) < 9);
+      const alarm = nests.find((m) => clock - m.hurtAt < 4 && (m.shooter != null || m.hunter != null) && Math.hypot(m.x - n.x, m.z - n.z) < 9);
       if (alarm && creatures.length < MAX_CREATURES) {
         const out = creatures.filter((c) => c.nest === n.id && c.defend).length;
         if (out < DEFENDERS && (n.spawnCool = (n.spawnCool ?? 0) - dt) <= 0) {
           n.spawnCool = alarm === n ? 1.2 : 2.4;
           spawn(pickKind(n.anger + 30), n, null, alarm.shooter);
+          if (alarm.shooter == null) Object.assign(creatures[creatures.length - 1], { defend: true, hunt: alarm.hunter });
         }
       }
       // Shelled by artillery: the colony storms the gun, in any mode and grace.
@@ -569,9 +577,60 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
     push(fx, { type: 'boom', x: b.tile.x, z: b.tile.z, big: b.type === 'silo' || isGun(b) });
   }
 
+  // Chasing a vehicle: straight at it, biting once in reach. False once it is
+  // gone or too far, then the creature carries on with what it did before.
+  function hunt(c, kind, dt) {
+    const v = vehicles().find((o) => o.id === c.hunt);
+    const d = v ? Math.hypot(v.x - c.x, v.z - c.z) : Infinity;
+    if (!v || d > HUNT_LOSE) {
+      c.hunt = null;
+      if (c.defend && c.goal === null) c.home = true;
+      return false;
+    }
+    c.bite = null;
+    c.heading = Math.atan2(v.x - c.x, v.z - c.z);
+    if (d <= kind.reach + HUNT_REACH) {
+      if (c.cool <= 0) {
+        c.cool = 1 / kind.rate;
+        if (kind.reach > 2) push(fx, { type: 'acid', x: c.x, z: c.z, x2: v.x, z2: v.z });
+        else c.lunge = 0.25;
+        hurtVehicle(v, kind.damage * (1 + evo));
+      }
+      return true;
+    }
+    const step = Math.min(d - kind.reach - HUNT_REACH * 0.5, kind.speed * dt);
+    if (step <= 0) return true;
+    const nx = c.x + ((v.x - c.x) / d) * step;
+    const nz = c.z + ((v.z - c.z) / d) * step;
+    const ix = Math.round(nx);
+    const iz = Math.round(nz);
+    // A building in the way: chew through it as usual, the hunt is over.
+    const blocker = at(ix, iz);
+    if (isSolid(blocker)) {
+      c.hunt = null;
+      c.bite = blocker.index;
+      return true;
+    }
+    if (!walkable(tileAt(ix, iz))) {
+      if (walkable(tileAt(ix, Math.round(c.z)))) c.x = nx;
+      else if (walkable(tileAt(Math.round(c.x), iz))) c.z = nz;
+      else c.hunt = null;
+      return true;
+    }
+    c.walk += step * 6;
+    c.x = nx;
+    c.z = nz;
+    return true;
+  }
+
   function moveCreature(c, dt) {
     const kind = CREATURES[c.kind];
     c.cool -= dt;
+    // Attackers and defenders turn on a vehicle that comes close.
+    if (c.hunt == null && !c.settle && (c.group !== null || c.defend)) {
+      for (const v of vehicles()) if (Math.hypot(v.x - c.x, v.z - c.z) < HUNT_NOTICE) c.hunt = v.id;
+    }
+    if (c.hunt != null && hunt(c, kind, dt)) return;
     // Biting: stay and chew until the building falls.
     if (c.bite !== null) {
       const there = at(c.bite % size, Math.floor(c.bite / size));
@@ -722,8 +781,10 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
 
   function hurtCreature(c, damage, from) {
     c.hp -= Math.max(1, damage - CREATURES[c.kind].armor);
-    // Shot from close by: go for the shooter.
-    if (from && c.goal === null && c.bite === null && Math.hypot(from.tile.x - c.x, from.tile.z - c.z) < 6) c.goal = from.index;
+    // Shot from close by: go for the shooter, a vehicle from a little further.
+    if (from?.vehicle) {
+      if (c.hunt == null && !c.settle && Math.hypot(from.x - c.x, from.z - c.z) < 9) c.hunt = from.id;
+    } else if (from && c.goal === null && c.bite === null && Math.hypot(from.tile.x - c.x, from.tile.z - c.z) < 6) c.goal = from.index;
     if (c.hp > 0) return;
     c.dead = true;
     killed++;
@@ -735,10 +796,15 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
     if (n.dead) return;
     n.hp -= damage;
     n.hurtAt = clock;
+    n.hunter = null;
     if (from?.type === 'artillery') {
       // Shells come from too far for defenders: the whole colony marches on the gun.
       n.shooter = null;
       for (const m of nests) if (Math.hypot(m.x - n.x, m.z - n.z) < 9) m.shelledBy = from.index;
+    } else if (from?.vehicle) {
+      // A vehicle: the defenders hunt it down.
+      n.shooter = null;
+      n.hunter = from.id;
     } else n.shooter = from?.index ?? null;
     if (n.hp > 0) return;
     n.dead = true;
@@ -979,7 +1045,7 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
       shelled,
       flying: flying.map(({ done, ...s }) => s),
       smog: Array.from(smog, (s) => Math.round(s * 10) / 10),
-      nests: nests.map(({ shooter, spawnCool, ...n }) => n),
+      nests: nests.map(({ shooter, hunter, spawnCool, ...n }) => n),
       creatures: creatures.map(({ lunge, path, ...c }) => c),
       groups: groups.map(({ path, ...g }) => g),
       ruins: [...ruins],
@@ -1031,6 +1097,8 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
     load,
     smogAt,
     hurtBuilding,
+    hurtCreature,
+    hurtNest,
     // Sends a wave from a nest right away, for testing.
     attack(n, anger = 100) {
       n.anger = Math.max(n.anger, anger);

@@ -5,6 +5,7 @@ import { createRailways, isTrack, axisBits, STATION_CAP } from './trains.js';
 import { createDrones, isChest } from './drones.js';
 import { biomeOf, weatherAt, weatherEffect } from './biomes.js';
 import { createEnemies, isTurret } from './enemies.js';
+import { createVehicles, isVehicleType } from './vehicles.js';
 
 // Grid directions: 0 north (-z), 1 east (+x), 2 south (+z), 3 west (-x).
 export const DIRS = [
@@ -84,6 +85,8 @@ export const BUILDINGS = {
   station: { name: 'Bahnhof' },
   signal: { name: 'Signal' },
   train: { name: 'Zug', vehicle: true }, // not a building: a train on the track, see trains.js
+  car: { name: 'Geländewagen', vehicle: true }, // not buildings either: they drive freely, see vehicles.js
+  panzer: { name: 'Panzer', vehicle: true },
   silo: { name: 'Raketensilo', size: 3 },
   dronePort: { name: 'Drohnenhafen' },
   provider: { name: 'Angebotskiste' },
@@ -309,8 +312,13 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
     return b;
   }
 
-  // A train standing on the tile goes first, the track under it with the next click.
+  // A vehicle or a train standing on the tile goes first, the track under it with the next click.
   function remove(tile) {
+    const vehicle = tile && vehicles.near(tile.x, tile.z, 0.3);
+    if (vehicle) {
+      vehicles.remove(vehicle);
+      return { type: vehicle.kind, tile, vehicle };
+    }
     const train = railways.trainOn(tile);
     if (train) {
       railways.removeTrain(train);
@@ -386,8 +394,26 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
     now: () => time,
     mode: enemyMode,
     grace,
+    vehicles: () => vehicles.list,
+    hurtVehicle: (v, damage) => vehicles.hurt(v, damage),
   });
   enemies.start();
+
+  // --- Vehicles -----------------------------------------------------------------------
+
+  const vehicles = createVehicles({
+    world,
+    buildings,
+    at,
+    research,
+    stored,
+    enemies,
+    // Ammunition a vehicle loads leaves the storage: that counts as used up.
+    consume(kind, n) {
+      stored[kind] -= n;
+      history.consume(kind, n);
+    },
+  });
 
   // Parts drones delivered during the last minute.
   function flownPerMinute() {
@@ -1106,6 +1132,7 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
 
   const count = (type) => {
     if (type === 'train') return railways.trains.length;
+    if (isVehicleType(type)) return vehicles.count(type);
     if (type === 'siloStage') {
       let best = 0;
       for (const b of buildings.values()) if (b.type === 'silo') best = Math.max(best, b.stage);
@@ -1144,6 +1171,7 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
     }
     for (const b of buildings.values()) if (b.type === 'drill') tickDrill(b, dt);
     enemies.tick(dt, (b) => (b.net ? b.net.satisfaction : 0));
+    vehicles.tick(dt);
   }
 
   // Plain data for a save game. The world itself is rebuilt from its seed,
@@ -1158,6 +1186,7 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
       flyLog: [...flyLog],
       drones: drones.save(),
       enemies: enemies.save(),
+      vehicles: vehicles.save(),
       launched,
       history: history.save(),
       shipLog: [...shipLog],
@@ -1206,6 +1235,7 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
     drones.load(data.drones);
     // Before version 8 there were no enemies: old games stay peaceful.
     enemies.load(data.enemies ?? { mode: 'off' });
+    vehicles.load(data.vehicles);
     updateShapes();
   }
 
@@ -1246,6 +1276,9 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
     flownPerMinute,
     drones,
     enemies,
+    vehicles,
+    addVehicle: (kind, tile, dir) => vehicles.add(kind, tile, Math.atan2(DIRS[dir].x, DIRS[dir].z)),
+    canAddVehicle: (kind, tile) => vehicles.canAdd(kind, tile),
     setRequest: (b, kind, want) => drones.setRequest(b, kind, want),
     history,
     launches,

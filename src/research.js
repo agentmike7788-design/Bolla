@@ -252,6 +252,22 @@ export const RESEARCH = [
     boosts: { artillery: 1.4 },
   },
   {
+    id: 'vehicles',
+    name: 'Fahrzeuge',
+    desc: 'Der Geländewagen: schnell, mit Maschinengewehr auf dem Dach. Enter steigt ein, WASD fährt, wer schnell genug ist, überfährt Käfer. Am Lager lädt er Munition.',
+    cost: { gear: 40, ironPlate: 40, ammo: 20 },
+    requires: ['defense', 'constructor'],
+    unlocks: ['car'],
+  },
+  {
+    id: 'tanks',
+    name: 'Panzer',
+    desc: 'Langsam und schwer gepanzert, mit einer Kanone gegen Nester und Panzerkäfer. Walzt Bäume platt. Lädt Munition und Granaten am Lager.',
+    cost: { steel: 60, gear: 40, shell: 15 },
+    requires: ['vehicles', 'artillery'],
+    unlocks: ['panzer'],
+  },
+  {
     id: 'solarPower',
     name: 'Solarenergie',
     desc: 'Solarpanels: bis zu 3 MW, solange die Sonne scheint. Kein Brennstoff, kein Smog, aber nachts nichts.',

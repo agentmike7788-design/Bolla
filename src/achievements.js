@@ -59,6 +59,8 @@ export const ACHIEVEMENTS = [
   { id: 'shelled', icon: '💣', name: 'Donnerhall', desc: 'Zerstöre ein Nest mit Artillerie.', check: ({ factory }) => factory.enemies.shelled >= 1 },
   { id: 'barrage', icon: '🎆', name: 'Trommelfeuer', desc: 'Zerstöre 20 Nester mit Artillerie in einer Fabrik.', check: ({ factory }) => factory.enemies.shelled >= 20 },
   { id: 'settlers', icon: '🛡️', name: 'Grenzschutz', desc: 'Fang 10 Siedler ab, bevor sie ein neues Nest gründen.', check: ({ factory }) => factory.enemies.stopped >= 10 },
+  { id: 'roadTrip', icon: '🚙', name: 'Spritztour', desc: 'Fahr mit deinen Fahrzeugen 1.000 Felder weit.', check: ({ factory }) => factory.vehicles.driven >= 1000 },
+  { id: 'roadkill', icon: '🛞', name: 'Plattgemacht', desc: 'Überfahr 50 Käfer.', check: ({ factory }) => factory.vehicles.crushed >= 50 },
   { id: 'cleared', icon: '🕊️', name: 'Ruhe im Land', desc: 'Zerstöre jedes Nest auf einer Karte mit Gegnern.', check: ({ factory }) => factory.enemies.active && factory.enemies.nestsKilled > 0 && factory.enemies.nests.length === 0 },
   { id: 'desert', icon: '🏜️', name: 'Wüstenfuchs', desc: `Schaff eine Karte in der ${biomeOf('desert').name}.`, check: (ctx) => finishedBiome(ctx, 'desert') },
   { id: 'snow', icon: '❄️', name: 'Eisbrecher', desc: 'Schaff eine Schneekarte.', check: (ctx) => finishedBiome(ctx, 'snow') },

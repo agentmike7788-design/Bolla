@@ -1819,6 +1819,8 @@ export function createGhost() {
     rail: { geo: box(0.84, 0.1, 1), arrow: 0.14 },
     station: { geo: mergeGeometries([box(1, 0.06, 0.9).translate(0, 1.03, 0), box(0.05, 1, 0.05).translate(-0.42, 0, -0.38), box(0.05, 1, 0.05).translate(0.42, 0, -0.38), box(0.05, 1, 0.05).translate(-0.42, 0, 0.38), box(0.05, 1, 0.05).translate(0.42, 0, 0.38), box(0.84, 0.1, 1)]), arrow: 0.14 },
     train: { geo: mergeGeometries([box(0.48, 0.5, 0.9).translate(0, 0.12, 0), box(0.48, 0.5, 0.9).translate(0, 0.12, 1)]), arrow: 0.75 },
+    car: { geo: mergeGeometries([box(0.62, 0.3, 1.06).translate(0, 0.12, 0), box(0.5, 0.2, 0.4).translate(0, 0.42, 0.1)]), arrow: 0.7 },
+    panzer: { geo: mergeGeometries([box(0.84, 0.32, 1.34).translate(0, 0.04, 0), new THREE.CylinderGeometry(0.3, 0.34, 0.2, 8).translate(0, 0.46, 0.05), new THREE.CylinderGeometry(0.045, 0.05, 0.7, 8).rotateX(Math.PI / 2).translate(0, 0.5, -0.6)]), arrow: 0.62 },
     silo: { geo: mergeGeometries([box(2.9, 0.6, 2.9), box(0.44, 6, 0.44).translate(0.92, 0, 0.92), new THREE.CylinderGeometry(0.3, 0.3, 4.4, 12).translate(0, 2.8, 0)]), arrow: null },
     signal: { geo: mergeGeometries([box(0.84, 0.1, 1), new THREE.CylinderGeometry(0.03, 0.03, 0.9, 6).translate(0.4, 0.45, 0), box(0.14, 0.24, 0.14).translate(0.4, 0.86, 0)]), arrow: 0.14 },
     dronePort: { geo: mergeGeometries([box(0.94, 0.12, 0.94), new THREE.CylinderGeometry(0.03, 0.03, 0.8, 6).translate(0.38, 0.4, 0.38)]), arrow: null },

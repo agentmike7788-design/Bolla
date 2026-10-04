@@ -454,7 +454,7 @@ export const SCENARIOS = [
         name: 'Die Welle',
         desc: 'Der Smog hat sie geweckt. Halte stand, bis 30 Gegner gefallen sind. Mauern vor den Türmen halten sie auf, zerstörte Gebäude baust du im Gegner-Fenster wieder auf.',
         goals: [{ kills: 30 }],
-        reward: { unlocks: ['laser'], boosts: { weapons: 1.5 }, text: 'Laserturm, Türme +50 % Schaden' },
+        reward: { unlocks: ['laser', 'car'], boosts: { weapons: 1.5 }, text: 'Laserturm, Geländewagen, Türme +50 % Schaden' },
       },
       {
         name: 'Gegenangriff',
@@ -486,7 +486,7 @@ export const SCENARIOS = [
         name: 'Wanderschaft',
         desc: 'Wo der Smog dick ist, gründen Siedler neue Nester. Im Gegner-Fenster steht, wann welche losziehen. Fang sie ab und halte 30 Gegner auf.',
         goals: [{ kills: 30 }],
-        reward: { unlocks: ['artillery'], text: 'Artillerie, die Granaten verschießt' },
+        reward: { unlocks: ['artillery', 'car'], text: 'Artillerie, die Granaten verschießt, und der Geländewagen' },
       },
       {
         name: 'Lange Rohre',
@@ -498,7 +498,7 @@ export const SCENARIOS = [
         name: 'Trommelfeuer',
         desc: 'Feuer frei. Jedes beschossene Nest schickt seine Käfer zum Geschütz: Mauern und Türme drumherum. Fünf Nester mit Granaten zerstören.',
         goals: [{ shelled: 5 }],
-        reward: { boosts: { weapons: 1.5 }, text: 'Alle Türme +50 % Schaden' },
+        reward: { unlocks: ['panzer'], boosts: { weapons: 1.5 }, text: 'Panzer, alle Türme +50 % Schaden' },
       },
       {
         name: 'Brandschneise',

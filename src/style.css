@@ -149,6 +149,26 @@ button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 }
 .mined:empty { visibility: hidden; }
 
+/* The minimap sits above the ore list; Tab folds it away. */
+.minimap { margin-bottom: 10px; }
+.minimap .label { display: flex; justify-content: space-between; align-items: center; }
+.minimap .label button { padding: 0 4px; font: 500 10px var(--font-data); letter-spacing: 0; }
+.minimap canvas { display: block; width: 200px; height: 200px; border-radius: 3px; border: 1px solid var(--edge); cursor: crosshair; image-rendering: pixelated; touch-action: none; }
+.minimap.closed canvas { display: none; }
+.minimap.closed { margin-bottom: 4px; }
+
+/* The dashboard while driving a vehicle. */
+.hud-drive {
+  bottom: calc(132px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 200px;
+  text-align: center;
+}
+.hud-drive .drive-speed { margin: 0 0 6px; font: 600 15px var(--font-display); color: var(--ink-dim); letter-spacing: 0.06em; }
+.hud-drive .drive-speed b { font: 700 32px/1 var(--font-display); color: var(--signal); margin-right: 4px; }
+.hud-drive .power-text { margin: 6px 0 0; }
+
 .hud-tools {
   bottom: calc(56px + env(safe-area-inset-bottom, 0px));
   right: 16px;

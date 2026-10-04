@@ -3,7 +3,7 @@
 // close, and a slow generative background tune. No audio files needed.
 
 const SETTINGS_KEY = 'bolla-audio';
-const MACHINE_TYPES = ['drill', 'furnace', 'assembler', 'constructor', 'belt', 'power', 'pump', 'refinery', 'train', 'drone'];
+const MACHINE_TYPES = ['drill', 'furnace', 'assembler', 'constructor', 'belt', 'power', 'pump', 'refinery', 'train', 'drone', 'engine'];
 const LOOP_SECONDS = 2.4;
 
 function loadSettings() {
@@ -223,6 +223,14 @@ export function createAudio() {
       hiss({ filter: 'lowpass', freq: 1800, to: 120, attack: 0.01, decay: 1.8, peak: 0.7, t });
       hiss({ filter: 'highpass', freq: 3000, attack: 0.002, decay: 0.25, peak: 0.25, t });
     },
+    // Getting into a vehicle: the starter whirs, the engine catches.
+    start() {
+      if (!ctx) return;
+      const t = now();
+      for (let i = 0; i < 3; i++) tone({ type: 'sawtooth', freq: 55, to: 70, attack: 0.02, decay: 0.12, peak: 0.08, t: t + i * 0.13 });
+      tone({ type: 'sawtooth', freq: 45, to: 95, attack: 0.03, decay: 0.5, peak: 0.12, t: t + 0.4 });
+      hiss({ filter: 'lowpass', freq: 500, to: 150, attack: 0.05, decay: 0.6, peak: 0.25, t: t + 0.4 });
+    },
     // A storm breaks: a gust of wind, or the rumble of the volcano.
     storm(biome) {
       if (!ctx) return;
@@ -392,6 +400,12 @@ export function createAudio() {
       const buzz = Math.sin(TAU * f * t) * 0.14 + Math.sin(TAU * f * 2 * t) * 0.07 + Math.sin(TAU * f * 3.02 * t) * 0.03;
       return buzz * (0.8 + 0.2 * Math.sin(TAU * 12 * t)) + low(s, 'w', 0.6) * 0.12;
     },
+    // A diesel engine: firing pulses over a low rumble.
+    engine: (t, s) => {
+      const fire = pulse(t, 1 / 25, 5);
+      const body = Math.sin(TAU * 50 * t) * 0.3 + Math.sin(TAU * 100 * t + 0.4) * 0.15;
+      return (body * (0.6 + fire * 0.6) + low(s, 'e', 0.2) * 0.5 * fire) * 0.7;
+    },
     // A soft rattle of rollers.
     belt: (t, s) => {
       const roll = low(s, 'b', 0.5) * (0.4 + 0.6 * pulse(t, 0.1, 12));
@@ -409,13 +423,13 @@ export function createAudio() {
     const pan = ctx.createStereoPanner();
     src.connect(gain).connect(pan).connect(machineBus);
     src.start(ctx.currentTime + Math.random() * 0.3);
-    loops[type] = { gain, pan };
+    loops[type] = { gain, pan, src };
   }
 
   // Machines are heard by how close they are to the spot the camera looks at.
   // One loop per machine type is mixed from all working machines, so a big
   // factory costs no more than a small one.
-  const LEVEL = { drill: 0.5, furnace: 0.75, assembler: 0.7, constructor: 0.6, belt: 0.25, power: 0.6, pump: 0.55, refinery: 0.55, train: 0.7, drone: 0.4 };
+  const LEVEL = { drill: 0.5, furnace: 0.75, assembler: 0.7, constructor: 0.6, belt: 0.25, power: 0.6, pump: 0.55, refinery: 0.55, train: 0.7, drone: 0.4, engine: 0.7 };
   function updateMachines(factory, focus, right, zoom) {
     if (!ctx || ctx.state !== 'running') return;
     const radius = 3 + zoom * 0.18;
@@ -455,7 +469,22 @@ export function createAudio() {
       sum.drone = (sum.drone ?? 0) + w;
       panSum.drone = (panSum.drone ?? 0) + w * Math.max(-1, Math.min(1, (dx * right.x + dz * right.z) / (radius * 2)));
     }
+    // Engines idle low and rev up with the speed.
+    let rev = 0;
+    for (const v of factory.vehicles?.list ?? []) {
+      const o = factory.world.tiles[0].position; // vehicles count in tiles from the corner
+      const dx = o.x + v.x - focus.x;
+      const dz = o.z + v.z - focus.z;
+      const d2 = (dx * dx + dz * dz) / (radius * radius);
+      if (d2 > 30) continue;
+      const fast = Math.min(1, Math.abs(v.speed) / (v.kind === 'panzer' ? 4 : 8));
+      const w = (v === factory.vehicles.driving ? 0.5 + fast : 0.15 + fast * 0.8) / (1 + d2);
+      sum.engine = (sum.engine ?? 0) + w;
+      panSum.engine = (panSum.engine ?? 0) + w * Math.max(-1, Math.min(1, (dx * right.x + dz * right.z) / (radius * 2)));
+      rev = Math.max(rev, fast * (v.kind === 'panzer' ? 0.7 : 1));
+    }
     const t = ctx.currentTime;
+    loops.engine.src.playbackRate.setTargetAtTime(0.7 + rev * 0.9, t, 0.2);
     for (const type of MACHINE_TYPES) {
       const s = sum[type] ?? 0;
       // Many machines get louder, but slower than they add up.
