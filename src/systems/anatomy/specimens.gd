@@ -406,14 +406,31 @@ func load_state(data: Dictionary) -> void:
 				_spoiled_noted.append(str(v))
 
 
-## A held uid without an inventory slot anywhere → a warning, the state stays (fuzzer).
+## A held uid without an inventory slot anywhere → a warning, the state stays (fuzzer). A uid in two
+## inventories (damaged save: pack and cold drawer) stays in the first – the player's pack first, then
+## tree order – and is dropped from the others with a warning (G7 Runde 2, fuzzer).
 func post_load() -> void:
-	if not is_inside_tree() or _records.is_empty():
+	if not is_inside_tree():
 		return
 	var found := {}
+	var inventories: Array[Inventory] = []
+	var player := get_tree().get_first_node_in_group(&"player")
 	for node: Node in get_tree().root.find_children("*", "Inventory", true, false):
-		for uid: String in (node as Inventory).uids():
+		if player != null and player.is_ancestor_of(node):
+			inventories.push_front(node as Inventory)
+		else:
+			inventories.append(node as Inventory)
+	for inv: Inventory in inventories:
+		for uid: String in inv.uids():
+			if uid == "":
+				continue
+			if found.has(uid):
+				push_warning("[Specimens] saved piece %s in two places – dropped from %s" % [uid, inv.get_path()])
+				inv.remove_uid(uid)
+				continue
 			found[uid] = true
+	if _records.is_empty():
+		return
 	for uid: String in held():
 		if not found.has(uid):
 			push_warning("[Specimens] held specimen %s has no inventory slot" % uid)

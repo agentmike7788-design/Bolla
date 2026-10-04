@@ -27,8 +27,9 @@ Regressionstests: `tests/unit/test_phase7_qa.gd` (ohne Welt) und `tests/integrat
 
 ## 2. Offene Punkte / Entscheidungen für den Benutzer
 
-- **B7-1 (Balance, Kapitel zu früh):** „Ein Name im Dorf“ fällt bei beiden Bots an **Tag 42 (B3)** statt um B12. Ursache: der Ruf „Gerühmt“ (+10 Bonus) macht Fenner (30) und Lenz (25 + 10 + 5) schon beim ersten Treffen „vertraut“; der Register-Hinweis kommt sofort über Fenner, der Liesel-Hinweis über Kaspar, Ilse bringt in der ersten Nacht `i_deathbook`; 6 Aufträge von 4 Gebern sind bis B3 erledigt. **Keine Werte geändert.** Vorschlag: Startwerte der Beziehungen oder den Ruf-Bonus senken (z. B. Bonus +5, Fenner 20), oder Kapitel zusätzlich an „Lindenacker belegt ≥ 3“ binden.
-- **B7-2 (Münzen):** Ende nach 13 Tagen neighbor7 ≈ **91**, anatomist7 ≈ **107** (Vertrag ≈ 63 / ≈ 77). Mehr Einnahmen aus Aufträgen (57–85) und Dorfverkauf (25) als in §2.12 gerechnet; der Abstand anatomisch/würdevoll stimmt ungefähr (+16 statt +14).
+- **B7-1 (Balance, Kapitel zu früh) – ✅ G7 Runde 2:** vorher Tag 42 (B3) bei allen Bots (Ruf-Bonus +10 machte Fenner/Lenz sofort „Vertraut“, alle drei Hinweise am ersten Tag). Jetzt: `RelationshipConfig.rep_start_bonus` [−10, −5, 0, +5, +10] → **[0, +2, +4, +6, +8]** (niemand startet über „Bekannt“, höchstens 38) und Liesels Hinweis `c_v_washing` (beide Wege, `v_washer.tres`) zusätzlich `village_open_days_gte:10`. Kapitel bei **allen drei Bots Tag 50 = B11** (10 Tage nach `village_open`); der verwertende Weg (`anatomist7`, Liesel 0–8, Pfarrer ≤ „Bekannt“) erreicht es über Kaspar + Amtsstube. Der Playthrough-Test prüft jetzt „nicht vor B11“.
+- **B7-2 (Münzen) – ✅ G7 Runde 2:** vorher Ende 91 / 107. Geändert: Auftragslöhne (vor allem mittlere und späte Aufträge −2…−4, Tafel −1…−2, s. `PHASE7_DESIGN.md` §2.5), `o_fenner_linden` 0 → 6 (Rodungslohn, sonst fiele der Morgen B2 unter 5: die Weihe kostet jetzt 10 und die Abschrift eine Spende), Quast-Grundpreise Herz/Augen/Hand 7/9/10 → 9/11/12. Ende **neighbor7 60** (Ziel ≈ 63, −5 %), **anatomist7 71** (≈ 77, −8 %), Abstand **+11** (Ziel ≈ +14), morgens min. 12 / 13. Der Test prüft „morgens nie unter 5“ (vorher 15).
+- **Bot-Eigenheiten (nicht geändert, nur gemeldet):** `anatomist7` nimmt trotz `donations: false` die Brücken-Spende an (Dialogpfad nach einer Tafel-Abgabe, kostet 20); `neighbor7` nimmt `o_quast_specimen`/`o_lenz_poor` an und lässt sie verfallen; `o_hagedorn_place` scheitert bei `anatomist7`. Die Bot-Endstände reagieren stark auf kleine Datenänderungen (±20 Münzen bei `anatomist7`).
 - **E7-1 (p7_03-Uhrzeit):** Motiv „Brunnen 14:30“ jetzt 16:15 (Theres' Pause verschoben, Fenner ab 16:05 an der Tafel). Bitte bestätigen oder Uhrzeit des Motivs ändern.
 - **E7-2 (QA7-13):** Grabzeichen vor „Präparat beisetzen“. Bitte bestätigen.
 - **E7-3 (Lindenacker `l_04`/`l_08`):** Aushub am Fußende statt seitlich (QA7-12).
@@ -43,29 +44,31 @@ Regressionstests: `tests/unit/test_phase7_qa.gd` (ohne Welt) und `tests/integrat
 
 | Strategie | Start | Tage | Kapitel (Tag) | Einnahmen | Ausgaben | Ende | morgens min. | Aufträge (Geber) | Präparate | Vertraut |
 |---|---|---|---|---|---|---|---|---|---|---|
-| neighbor7 | v5 `slot_p6_day40_reverent`, 20 Münzen | 13 | 42 | 324 (burial 117, stipend 52, gift 27, reinter 4, service 39, order 60, village_sale 25) | 253 (round 15, village 61, consecration 5, osric 14, build 12, ilse 46, building 75, donation 25) | 91 | 16 | 10 (7) | 0 | 8 |
-| anatomist7 | dto. | 13 | 42 | 383 (burial 84, stipend 56, gift 6, reinter 4, service 32, order 85, village_sale 25, specimen 76, lecture 7, collection 8) | 296 (round 15, village 118, consecration 5, osric 30, build 12, ilse 41, building 75) | 107 | 17 | 13 (7) | 16 genommen | 5 (Lenz/Liesel ≤ Bekannt) |
-| save_load7 | dto. | 13 | 42 | = neighbor7 | = neighbor7 | 91 | 16 | = | = | = |
+| neighbor7 | v5 `slot_p6_day40_reverent`, 20 Münzen | 13 | 50 | 318 (burial 117, stipend 52, gift 27, reinter 4, service 37, order 56, village_sale 25) | 278 (donation 42, round 20, village 61, consecration 10, osric 14, build 12, ilse 44, building 75) | 60 | 12 | 11 (7) | 0 | 8 |
+| anatomist7 | dto. | 13 | 50 | 381 (burial 88, stipend 56, gift 7, reinter 4, service 32, order 71, village_sale 20, specimen 88, lecture 7, collection 8) | 330 (donation 25, round 15, village 110, consecration 10, osric 39, build 12, ilse 44, building 75) | 71 | 13 | 13 (7) | 16 genommen | 5 (Lenz/Liesel ≤ Bekannt) |
+| save_load7 | dto. | 13 | 50 | = neighbor7 | = neighbor7 | 60 | 12 | = | = | = |
 
-Tag für Tag (anatomist7):
+*G7 Runde 2 (Balance B7-1/B7-2):* vorher Kapitel 42 / 42, Ende 91 / 107, morgens min. 16 / 17, Aufträge 10 / 13.
+
+Tag für Tag (anatomist7, G7 Runde 2):
 
 | Tag | Münzen früh | Ausgaben (Zweck) | Einnahmen (Quelle) | Münzen abends | Aufträge erledigt (Geber) | aktiv | Vertraut | Beziehungen Fe/Le/Ro/Es/Th/Qu/Li/Ha | Lindenacker | Präparate gen./verk. | Ansehen | Erkenntnis | Kapitel |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 40 | 20 | round 5, village 3, consecration 5 | order 6, stipend 4 | 17 | 2 (1) | 3 | 3 | 59/41/38/30/31/31/26/41 | – | 0/0 | 0 | ✓ | offen |
-| 41 | 17 | round 5, village 14 | order 17, stipend 4 | 19 | 4 (3) | 4 | 5 | 67/42/41/31/42/32/27/42 | offen | 0/0 | 0 | ✓ | offen |
-| 42 | 19 | osric 2, village 25, build 12, ilse 2 | service 5, burial 12, order 23, village_sale 2, stipend 4 | 24 | 7 (6) | 4 | 7 | 72/44/50/40/43/43/30/43 | offen | 2/0 | 0 | ✓ | ✓ |
-| 43 | 24 | osric 2, village 13, ilse 4 | burial 9, order 8, collection 8, stipend 4 | 34 | 8 (6) | 4 | 7 | 77/45/61/41/44/44/31/44 | offen | 5/0 | 1 | ✓ | ✓ |
-| 44 | 34 | village 13, ilse 6 | village_sale 2, stipend 4 | 21 | 8 (6) | 4 | 7 | 82/46/62/42/45/45/32/45 | offen | 7/0 | 1 | ✓ | ✓ |
-| 45 | 21 | village 2, building 35, ilse 2 | service 5, burial 8, village_sale 3, order 10, specimen 18, stipend 4 | 30 | 9 (6) | 4 | 6 | 87/37/67/43/46/58/25/42 | offen | 7/2 | 1 | ✓ | ✓ |
-| 46 | 30 | osric 2, village 13, ilse 4 | service 5, burial 12, village_sale 3, reinter 4, gift 2, stipend 4 | 41 | 9 (6) | 4 | 6 | 92/38/68/44/47/59/26/43 | offen | 10/2 | 1 | ✓ | ✓ |
-| 47 | 41 | osric 11, village 17, ilse 2 | service 5, burial 7, order 6, village_sale 3, stipend 4 | 36 | 10 (7) | 2 | 7 | 97/47/69/41/48/60/23/44 | offen | 13/2 | 1 | ✓ | ✓ |
-| 49 | 36 | osric 11, round 5, village 3, ilse 15 | burial 17, order 5, village_sale 3, specimen 47, service 5, gift 2, stipend 8, lecture 7 | 96 | 11 (7) | 1 | 5 | 100/11/72/42/49/74/0/34 | offen | 13/7 | 1 | ✓ | ✓ |
-| 50 | 96 | osric 2, village 2, building 40, ilse 6 | burial 10, gift 2, stipend 4 | 62 | 11 (7) | 1 | 5 | 100/11/77/43/50/75/1/34 | offen | 13/7 | 1 | ✓ | ✓ |
-| 51 | 62 | village 13 | village_sale 3, service 7, burial 9, specimen 11, stipend 4 | 83 | 11 (7) | 0 | 5 | 100/1/78/44/51/78/0/32 | offen | 16/8 | 1 | ✓ | ✓ |
-| 52 | 83 | – | village_sale 3, stipend 4 | 90 | 11 (7) | 1 | 5 | 100/2/83/45/52/79/3/32 | offen | 16/8 | 1 | ✓ | ✓ |
-| 53 | 90 | – | order 10, village_sale 3, stipend 4 | 107 | 13 (7) | 1 | 5 | 100/3/88/46/53/80/6/32 | offen | 16/8 | 1 | ✓ | ✓ |
+| 40 | 20 | donation 5, round 5, village 3, consecration 10 | order 12, stipend 4 | 13 | 2 (1) | 3 | 1 | 58/39/36/28/29/29/24/39 | – | 0/0 | 0 | – | offen |
+| 41 | 13 | round 5, village 7 | order 14, stipend 4 | 19 | 4 (3) | 4 | 4 | 66/40/39/29/40/30/25/40 | offen | 0/0 | 0 | – | offen |
+| 42 | 19 | osric 2, village 26, build 12 | service 5, burial 15, order 13, village_sale 2, gift 3, stipend 4 | 21 | 6 (5) | 4 | 5 | 71/41/48/38/41/31/26/41 | offen | 0/0 | 0 | – | offen |
+| 43 | 21 | osric 2, village 13, ilse 4 | burial 9, order 16, collection 8, stipend 4 | 39 | 8 (6) | 4 | 6 | 76/42/59/39/42/42/27/42 | offen | 3/0 | 1 | – | offen |
+| 44 | 39 | village 14, ilse 6 | village_sale 2, stipend 4 | 25 | 8 (6) | 4 | 7 | 81/43/60/40/43/43/28/43 | offen | 6/0 | 1 | – | offen |
+| 45 | 25 | village 6, building 35, ilse 4 | service 5, burial 7, village_sale 3, specimen 21, stipend 4 | 20 | 8 (6) | 3 | 6 | 86/35/61/41/44/44/23/40 | offen | 7/2 | 1 | – | offen |
+| 46 | 20 | osric 2, village 5, ilse 4 | service 5, burial 11, village_sale 1, reinter 4, stipend 4 | 34 | 8 (6) | 4 | 6 | 91/36/62/42/45/45/24/41 | offen | 10/2 | 1 | – | offen |
+| 47 | 34 | osric 11, village 11 | service 5, burial 7, village_sale 3, stipend 4, order 4 | 35 | 9 (6) | 2 | 5 | 96/37/63/39/46/46/25/42 | offen | 13/2 | 1 | – | offen |
+| 49 | 35 | osric 11, round 5, village 5, ilse 13 | service 5, burial 8, order 4, village_sale 3, specimen 43, stipend 8, lecture 7 | 79 | 10 (6) | 3 | 5 | 100/14/66/40/47/58/4/34 | offen | 13/6 | 1 | – | offen |
+| 50 | 79 | osric 8, village 2, building 40, ilse 7 | burial 11, gift 2, stipend 4 | 39 | 10 (6) | 3 | 5 | 100/10/71/41/48/59/1/34 | offen | 13/6 | 1 | ✓ | ✓ |
+| 51 | 39 | osric 3, donation 20, village 13, ilse 6 | burial 11, village_sale 3, gift 2, specimen 24, stipend 4 | 41 | 11 (6) | 2 | 5 | 100/0/72/42/49/64/0/30 | offen | 16/8 | 1 | ✓ | ✓ |
+| 52 | 41 | village 3 | service 7, burial 9, order 4, stipend 4 | 62 | 12 (7) | 1 | 5 | 96/8/77/43/50/65/1/30 | offen | 16/8 | 1 | ✓ | ✓ |
+| 53 | 62 | village 2 | order 4, village_sale 3, stipend 4 | 71 | 13 (7) | 1 | 5 | 100/8/82/44/51/66/2/30 | offen | 16/8 | 1 | ✓ | ✓ |
 
-(Tag 48 fehlt: Vorlesungsnacht über Mitternacht, s. o. · Spalte Lindenacker: „offen“ = freigegeben.)
+(Tag 48 fehlt: Vorlesungsnacht über Mitternacht · Spalte Lindenacker: „offen“ = freigegeben.)
 
 ## 4. Save-Fuzzer
 
@@ -87,7 +90,7 @@ Render (Satz G7, llvmpipe, `render_stats_p7_*.txt`): Dorf Spielzoom Draw Calls �
 
 ## 6. Tests
 
-Volle Suite am Ende (nach Import, nach dem letzten Code-Stand): **RESULT PASS (2372 bestanden, 0 fehlgeschlagen)**. Darin u. a. `test_phase7_qa` (unit 10, integration 7), `test_phase7_playthrough` (3 Strategien × 13 Tage, Zahlen wie in §3), Save-Fuzzer 14/14 (v6 echt 92 geladen / 21 abgelehnt). Die einzige `ERROR`-Zeile im Log ist der absichtliche Selbsttest des Test-Frameworks.
+Volle Suite am Ende (nach Import, nach dem letzten Code-Stand): **RESULT PASS (2372 bestanden, 0 fehlgeschlagen)**. G7 Runde 2 (Balance, Branch `vs/g7r2-balance`): **RESULT PASS (2445 bestanden, 0 fehlgeschlagen)**, Fuzzer v6 echt 92 geladen / 21 abgelehnt. Darin u. a. `test_phase7_qa` (unit 10, integration 7), `test_phase7_playthrough` (3 Strategien × 13 Tage, Zahlen wie in §3), Save-Fuzzer 14/14 (v6 echt 92 geladen / 21 abgelehnt). Die einzige `ERROR`-Zeile im Log ist der absichtliche Selbsttest des Test-Frameworks.
 
 ## 7. Screenshot-Satz Gate G7 (`docs/reviews/phase7_round1/`, 1280×720, echter Renderer)
 

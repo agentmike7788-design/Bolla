@@ -158,13 +158,13 @@ actions = Array[String](["order_turn_in:ob_yarn"])
 script = ExtResource("2")
 text = "Du wäschst die Toten …"
 next = &"washing"
-conditions = Array[String](["rel_tier:washer:trusted", "!clue_known:c_v_washing"])
+conditions = Array[String](["rel_tier:washer:trusted", "village_open_days_gte:10", "!clue_known:c_v_washing"])
 
 [sub_resource type="Resource" id="v_washer_c015"]
 script = ExtResource("2")
 text = "Kaspar war nicht der aus dem Moor."
 next = &"kaspar"
-conditions = Array[String](["flag:insight_not_lorenz", "!clue_known:c_v_washing"])
+conditions = Array[String](["flag:insight_not_lorenz", "village_open_days_gte:10", "!clue_known:c_v_washing"])
 
 [sub_resource type="Resource" id="v_washer_c016"]
 script = ExtResource("2")
