@@ -14,6 +14,7 @@ extends SceneTree
 ## grass the camera draws; shadow_live / shadow_static = frame primitives − camera primitives.
 
 const Round2 := preload("res://src/world/graveyard/graveyard_shots_round2.gd")
+const Shovel := preload("res://src/world/graveyard/graveyard_shots_shovel.gd")
 const SETTLE_FRAMES := 40
 ## Frames after a measurement switch (shadows off / freeze) before the counters are read.
 const MEASURE_FRAMES := 4
@@ -47,6 +48,8 @@ var _only: PackedStringArray = []
 ## --round2: the change-round-2 set instead (hut, interior, chest / register – graveyard_shots_round2.gd).
 var _no_grass: bool = false
 var _round2: bool = false
+## --shovel: G7 Runde 2 – drawing, digging with and stowing the shovel (graveyard_shots_shovel.gd).
+var _shovel: bool = false
 var _distance: float = 0.0
 
 
@@ -65,6 +68,8 @@ func _run() -> void:
 			_no_grass = true
 		elif arg == "--round2":
 			_round2 = true
+		elif arg == "--shovel":
+			_shovel = true
 		elif arg.begins_with("--distance="):
 			_distance = arg.trim_prefix("--distance=").to_float()
 	if _out == "":
@@ -89,6 +94,10 @@ func _run() -> void:
 	var table_spot := player.global_transform
 	if _round2:
 		await Round2.run(self, world, _out, _only)
+		quit()
+		return
+	if _shovel:
+		await Shovel.run(self, world, _out, _only)
 		quit()
 		return
 	var rig := world.get_node(^"CameraRig") as Node3D

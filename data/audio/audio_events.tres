@@ -125,6 +125,7 @@ action_keywords = Dictionary[String, StringName]({
 })
 action_animation_cues = Dictionary[StringName, StringName]({
 &"dig": &"dig",
+&"dig_bare": &"dig",
 &"interact": &"cloth",
 &"push_cart": &"crate",
 &"work": &"hammer"

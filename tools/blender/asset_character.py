@@ -14,7 +14,7 @@ import random
 
 import bpy  # must be imported before bmesh
 import bmesh
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Quaternion, Vector
 
 import lib_painted as L
 import lib_faces as F
@@ -52,6 +52,10 @@ MUD = L.hexc("#6B5A48")          # palette: earth / paths (dusty hem, boots)
 
 HUNCH = -0.09   # forward lean of the upper body (towards -Y)
 WAIST_Z = 0.86  # coat below -> hips, above -> spine (the seam hides under the belt)
+SHOVEL = "Shovel"
+TOOL = "tool"
+SHOVEL_G0 = Vector((0.25, 0.2, 0.49))     # shaft end at the D-grip (left hip, on the back)
+SHOVEL_G1 = Vector((-0.34, 0.31, 1.3))    # shaft end at the blade socket (behind the right shoulder)
 LANTERN = Vector((0.31, HUNCH * 0.3 - 0.07, 0.727772))  # approved belt-lantern light position
 TAU = 2.0 * math.pi
 W = rig.weight
@@ -220,6 +224,53 @@ def _on_coat(x_sign: float, z: float, a_deg: float, out: float = 0.0) -> Vector:
     rx, ry, cy = coat_r(z)
     a = math.radians(a_deg)
     return Vector((math.cos(a) * (rx + out) * x_sign, cy + math.sin(a) * (ry + out), z))
+
+
+def build_shovel():
+    """The D-grip shovel as its own mesh "Shovel" (G7 Runde 2: drawn from the back for digging),
+    modelled in its approved place strapped diagonally to the back, blade up behind the right
+    shoulder. Bone-parented to the "tool" bone in build()."""
+    g0, g1 = SHOVEL_G0, SHOVEL_G1
+    d = (g1 - g0).normalized()
+    sp = []
+    sp.append((_painted(L.tube(g0, g1, 0.021, 10), WOOD, var=0.22, seed=15, hue_shift=L.hexc("#5A4230"))))
+    # D-grip at the lower end
+    sm = _frame(g0, d, (0, 1, 0))
+    grip = L.prim("torus", loc=(0, -0.05, 0), major_radius=0.04, minor_radius=0.011, major_segments=12,
+                  minor_segments=4, rot=(0, 90, 0), scale=(1, 1.1, 1))
+    sp.append((_painted(_xf(grip, sm), WOOD, var=0.2, ao=0.0, top=0.3, seed=16)))
+    sp.append((_painted(_xf(L.tube((0, -0.012, 0), (0, 0.03, 0), 0.024, 8), sm), IRON, var=0.2, ao=0.0,
+                                     seed=16)))
+    # iron socket and a rounded spade blade (normal facing out of his back)
+    bm_ = _frame(g1, d, (0, 1, 0.0))
+    sp.append((_painted(_xf(L.tube((0, -0.02, 0), (0, 0.08, 0), 0.024, 10, r_end=0.03), bm_), IRON,
+                                     var=0.25, ao=0.0, seed=17)))
+    outline = []
+    for k in range(17):
+        t = k / 16.0
+        a = math.pi * (1.0 - t)
+        outline.append((math.cos(a) * 0.1, 0.2 + math.sin(a) * 0.14))   # rounded point
+    outline = [(-0.105, 0.075), (-0.1, 0.2)] + outline[1:-1] + [(0.1, 0.2), (0.105, 0.075), (0.03, 0.07),
+                                                                  (-0.03, 0.07)]
+    bmb = bmesh.new()
+    top = [bmb.verts.new((x, y, 0.006)) for x, y in outline]
+    bot = [bmb.verts.new((x, y, -0.006)) for x, y in outline]
+    bmb.faces.new(top)
+    bmb.faces.new(list(reversed(bot)))
+    n_ = len(outline)
+    for k in range(n_):
+        bmb.faces.new((top[k], bot[k], bot[(k + 1) % n_], top[(k + 1) % n_]))
+    bmesh.ops.recalc_face_normals(bmb, faces=bmb.faces[:])
+    blade = _obj(bmb, "blade")
+    for v in blade.data.vertices:  # dished
+        v.co.z += 0.9 * v.co.x ** 2
+    L.jitter(blade, 0.003, 8.0, 16)
+    _xf(blade, bm_)
+    _painted(blade, IRON, var=0.3, ao=0.0, top=0.25, hue_shift=L.hexc("#6A4A3A"), seed=16)
+    sp.append(blade)
+    obj = L.join(sp, SHOVEL)
+    L.smooth(obj, 55)
+    return obj
 
 
 def build_mesh():
@@ -554,45 +605,9 @@ def build_mesh():
         parts.append(W("head", _xf(o, hm)))
 
     # --- shovel strapped diagonally to the back (blade up behind the right shoulder) --------
+    # G7 Runde 2: its own mesh "Shovel" on the "tool" bone (build_shovel), drawn for digging
     back_y = 0.25
-    g0 = Vector((0.25, back_y - 0.05, 0.49))
-    g1 = Vector((-0.34, back_y + 0.06, 1.3))
-    d = (g1 - g0).normalized()
-    parts.append(W("spine", _painted(L.tube(g0, g1, 0.021, 10), WOOD, var=0.22, seed=15, hue_shift=L.hexc("#5A4230"))))
-    # D-grip at the lower end
-    sm = _frame(g0, d, (0, 1, 0))
-    grip = L.prim("torus", loc=(0, -0.05, 0), major_radius=0.04, minor_radius=0.011, major_segments=12,
-                  minor_segments=4, rot=(0, 90, 0), scale=(1, 1.1, 1))
-    parts.append(W("spine", _painted(_xf(grip, sm), WOOD, var=0.2, ao=0.0, top=0.3, seed=16)))
-    parts.append(W("spine", _painted(_xf(L.tube((0, -0.012, 0), (0, 0.03, 0), 0.024, 8), sm), IRON, var=0.2, ao=0.0,
-                                     seed=16)))
-    # iron socket and a rounded spade blade (normal facing out of his back)
-    bm_ = _frame(g1, d, (0, 1, 0.0))
-    parts.append(W("spine", _painted(_xf(L.tube((0, -0.02, 0), (0, 0.08, 0), 0.024, 10, r_end=0.03), bm_), IRON,
-                                     var=0.25, ao=0.0, seed=17)))
-    outline = []
-    for k in range(17):
-        t = k / 16.0
-        a = math.pi * (1.0 - t)
-        outline.append((math.cos(a) * 0.1, 0.2 + math.sin(a) * 0.14))   # rounded point
-    outline = [(-0.105, 0.075), (-0.1, 0.2)] + outline[1:-1] + [(0.1, 0.2), (0.105, 0.075), (0.03, 0.07),
-                                                                  (-0.03, 0.07)]
-    bmb = bmesh.new()
-    top = [bmb.verts.new((x, y, 0.006)) for x, y in outline]
-    bot = [bmb.verts.new((x, y, -0.006)) for x, y in outline]
-    bmb.faces.new(top)
-    bmb.faces.new(list(reversed(bot)))
-    n_ = len(outline)
-    for k in range(n_):
-        bmb.faces.new((top[k], bot[k], bot[(k + 1) % n_], top[(k + 1) % n_]))
-    bmesh.ops.recalc_face_normals(bmb, faces=bmb.faces[:])
-    blade = _obj(bmb, "blade")
-    for v in blade.data.vertices:  # dished
-        v.co.z += 0.9 * v.co.x ** 2
-    L.jitter(blade, 0.003, 8.0, 16)
-    _xf(blade, bm_)
-    _painted(blade, IRON, var=0.3, ao=0.0, top=0.25, hue_shift=L.hexc("#6A4A3A"), seed=16)
-    parts.append(W("spine", blade))
+    shovel = build_shovel()
     # leather strap across the back and chest
     strap = L.prim("torus", loc=(0, back_y * 0.5 + HUNCH * 0.5, 1.02), rot=(0, 34, 0), major_radius=0.3,
                    minor_radius=0.012, major_segments=24, minor_segments=4, scale=(1, 0.76, 1))
@@ -629,7 +644,7 @@ def build_mesh():
 
     mesh = L.join(parts, rig.MESH)
     L.smooth(mesh, 55)
-    return mesh, lp
+    return mesh, lp, shovel
 
 
 def joints(dz: float) -> dict:
@@ -645,6 +660,7 @@ def joints(dz: float) -> dict:
     for sx in (-1, 1):
         j[_side(sx, "arm")] = (p(sx * 0.25, HUNCH * 0.9, 1.22), p(sx * 0.31, HUNCH - 0.1, 0.8))
         j[_side(sx, "leg")] = (p(sx * 0.1, 0, 0.8), p(sx * 0.1, 0, 0.08))  # hip joint hidden in the coat
+    j[TOOL] = (p(*SHOVEL_G0), p(*SHOVEL_G1))  # G7 Runde 2: the shovel's own bone (child of spine)
     return j
 
 
@@ -682,8 +698,9 @@ def _stance() -> dict:
     return {"leg_l": (-9.0, 0.0, 0.0), "leg_r": (9.0, 0.0, 0.0), "feet": {"leg_l": 0.0, "leg_r": 0.0}}
 
 
-def dig(t: float) -> dict:
-    """36 frames = 1.2 s: jab the blade in, lever, lift, toss the earth to the right.
+def dig_bare(t: float) -> dict:
+    """36 frames = 1.2 s, empty hands (the old dig; G7 Runde 2: now for axe / pickaxe / bare-handed
+    work until those tools get their own clips): jab, lever, lift, toss to the right.
     (Arms hang from the spine: a forward bend swings them back, so they rotate
     further forward to keep the hands low in front.)"""
     wind = {"spine": (10.0, 0.0, 6.0), "head": (-4.0, 0.0, 0.0),
@@ -708,25 +725,263 @@ def interact(t: float) -> dict:
                    {"feet": {"leg_l": 0.0, "leg_r": 0.0}})
 
 
-ACTIONS = (  # (name, frames at 30 fps, pose function)
+# --- G7 Runde 2: the shovel in the hands ----------------------------------------------
+# The shovel hangs on its own bone "tool" (child of spine; rest = strapped to the back), so every
+# other clip leaves it on the back. The shovel clips key it like every other bone: a pose may carry
+#   "shovel": (tip x, y, z, elev, az, 0) - armature space: the blade's point and the direction from
+#             it up the shaft to the D-grip (elev above the horizon, az: 0 = towards +Y (behind),
+#             +90 = towards -X (his right); degrees)
+#   "face":   (x, y, z)                  - which way the hollow of the blade faces (hint)
+#   "grab":   (attach, w_r, w_l, s_r, s_l) - attach 0 = on the back .. 1 = at the "shovel" pose;
+#             w_* = how firmly each hand holds the shaft (0 = the free arm pose, 1 = fist on the
+#             shaft), s_* = where along the shaft (m from the D-grip end) it wants to hold.
+# _hold() (rig.add_action post hook) places the tool bone and turns each holding arm so its fist
+# sits on the shaft: the arms are rigid, so the fist stays at arm's length from the shoulder and
+# slides along the shaft to the reachable point nearest s_*. The key poses were searched offline
+# for both fists on the shaft, the right one near the D-grip, and the shaft clear of hat and body.
+
+GRIP_BACK = 0.05                                  # D-grip centre behind the shaft end SHOVEL_G0
+SHAFT = (SHOVEL_G1 - SHOVEL_G0).length            # shaft end to the blade socket
+TIP = SHAFT + 0.34                                # shaft end to the blade's point
+BLADE_MID = SHAFT + 0.2                           # centre of the blade (the earth clods leave here)
+FIST = {sx: Vector((sx * 0.31, HUNCH - 0.122, 0.718)) for sx in (-1, 1)}   # fist centre at rest
+_D0 = (SHOVEL_G1 - SHOVEL_G0).normalized()
+SHOVEL_NORMAL = _frame(SHOVEL_G0, _D0, (0, 1, 0)).col[2].to_3d()            # blade hollow at rest
+_DEBUG = None
+
+
+def _up(elev: float, az: float) -> Vector:
+    e, a = math.radians(elev), math.radians(az)
+    return Vector((-math.sin(a) * math.cos(e), math.cos(a) * math.cos(e), math.sin(e)))
+
+
+def _spec(grip, aim) -> tuple:
+    """(tip, elev, az) form of a shovel with its D-grip at `grip`, the shaft pointing at `aim`."""
+    d = (Vector(aim) - Vector(grip)).normalized()
+    tip = Vector(grip) + d * (GRIP_BACK + TIP)
+    up = -d
+    return (tip.x, tip.y, tip.z, math.degrees(math.asin(max(-1.0, min(1.0, up.z)))),
+            math.degrees(math.atan2(-up.x, up.y)), 0.0)
+
+
+def _spec_matrix(sv, face) -> Matrix:
+    up = _up(sv[3], sv[4])
+    return _frame(Vector(sv[:3]) + up * TIP, -up, Vector(face[:3]))
+
+
+def _rest_tool(arm) -> Matrix:
+    """The tool bone where the spine carries it (on the back) in the current pose."""
+    sp = arm.pose.bones["spine"]
+    return sp.matrix @ arm.data.bones["spine"].matrix_local.inverted() @ arm.data.bones[TOOL].matrix_local
+
+
+def _mix(a: Matrix, b: Matrix, w: float) -> Matrix:
+    if w <= 0.0:
+        return a.copy()
+    if w >= 1.0:
+        return b.copy()
+    m = a.to_quaternion().slerp(b.to_quaternion(), w).to_matrix().to_4x4()
+    m.translation = a.translation.lerp(b.translation, w)
+    return m
+
+
+def _shaft_point(origin: Vector, d: Vector, centre: Vector, radius: float, s_pref: float, s_last=None) -> tuple:
+    """Where along the shaft (origin + s d) a fist at `radius` from `centre` holds it: of the (up to
+    two) reachable points the one nearest to where it held last frame (s_last; the hand slides, it
+    never jumps) and to s_pref, clamped to the shaft [-GRIP_BACK, SHAFT + 0.06] (the iron socket);
+    out of reach: the nearest shaft point. Returns (s, miss in m)."""
+    lo, hi = -GRIP_BACK, SHAFT + 0.06
+    o = origin - centre
+    b = d.dot(o)
+    disc = b * b - (o.dot(o) - radius * radius)
+    roots = [-b] if disc < 0.0 else [-b - math.sqrt(disc), -b + math.sqrt(disc)]
+    ref = s_pref if s_last is None else s_last
+
+    def cost(x):
+        return abs(x - ref) + 0.3 * abs(x - s_pref)
+    s = min(max(min(roots, key=cost), lo), hi)
+    return s, abs((o + d * s).length - radius)
+
+
+def _fist(arm, bone: str) -> Vector:
+    pb = arm.pose.bones[bone]
+    return pb.matrix @ arm.data.bones[bone].matrix_local.inverted() @ FIST[1 if bone == "arm_l" else -1]
+
+
+def _aim_arm(arm, bone: str, target: Vector, w: float) -> None:
+    pb = arm.pose.bones[bone]
+    head = pb.head.copy()
+    q = Quaternion().slerp((_fist(arm, bone) - head).rotation_difference(target - head), w)
+    pb.matrix = Matrix.Translation(head) @ q.to_matrix().to_4x4() @ Matrix.Translation(-head) @ pb.matrix
+    bpy.context.view_layer.update()
+
+
+def _hold(pose_fn):
+    """rig.add_action post hook for the shovel clips (see above)."""
+    last = {}
+
+    def post(arm, t):
+        if t <= 0.0:
+            last.clear()
+        pose = pose_fn(t)
+        if "grab" not in pose:
+            return
+        attach, w_r, w_l, s_r, s_l = tuple(pose["grab"])[:5]
+        # the right fist leads: it reaches for the shaft point s_r of the wanted placement, and the
+        # shovel then sits in the fist where it actually arrived (rigid arms cannot always reach
+        # exactly; the shovel follows the hand instead of the hand missing the shaft)
+        m = _mix(_rest_tool(arm), _spec_matrix(pose["shovel"], pose["face"]), attach)
+        d = m.col[1].to_3d().normalized()
+        if w_r > 0.001:
+            _aim_arm(arm, "arm_r", m.translation + d * s_r, w_r)
+            held = m.copy()
+            held.translation = _fist(arm, "arm_r") - d * s_r
+            m = _mix(m, held, attach * w_r)
+        arm.pose.bones[TOOL].matrix = m
+        bpy.context.view_layer.update()
+        origin = m.translation.copy()
+        if w_l > 0.001:
+            radius = (FIST[1] - arm.data.bones["arm_l"].head_local).length
+            s, miss = _shaft_point(origin, d, arm.pose.bones["arm_l"].head, radius, s_l, last.get("arm_l"))
+            last["arm_l"] = s
+            _aim_arm(arm, "arm_l", origin + d * s, w_l)
+            if _DEBUG is not None:
+                _DEBUG.append((t, "arm_l", round(s, 3), round(miss, 3)))
+        else:
+            last.pop("arm_l", None)
+    return post
+
+
+def _sh(spec, face, grab) -> dict:
+    return {"shovel": tuple(spec), "face": tuple(face), "grab": tuple(grab) + (0.0,)}
+
+
+_REST = _spec(SHOVEL_G0 - _D0 * GRIP_BACK, SHOVEL_G1)
+_TWO = (1.0, 1.0, 1.0, 0.0, 0.45)                 # both fists: right at the D-grip, left lower down
+_TOWARDS_HIM = (0.0, 1.0, 0.25)                   # hollow towards him (the earth stays on when levering)
+
+
+def _body(spine: float, twist: float = 0.0, head: float = None, **more) -> dict:
+    """Upper-body bend (rx) and twist (rz) of the spine, the head counter-bending to keep the gaze."""
+    pose = {"spine": (spine, 0.0, twist), "head": (-(spine * 0.55) if head is None else head, 0.0, -twist * 0.4)}
+    pose.update(more)
+    return pose
+
+
+def _dig_ready() -> dict:
+    return rig.add(_body(14.0), {"arm_r": (-70.0, 0.0, 0.0), "arm_l": (-60.0, 0.0, 0.0)},
+                   _sh((0.3, -0.42, 0.05, 70.0, 120.0, 0.0), _TOWARDS_HIM, _TWO))
+
+
+def dig(t: float) -> dict:
+    """39 frames = 1.3 s, the shovel in both hands: the blade jabs into the earth beside his left
+    foot, the left foot treads it in, the scoop lifts the earth and throws it off to the left
+    (the earth clods leave at DIG_TOSS of the cycle, the jab sounds at DIG_JAB)."""
+    ready = _dig_ready()
+    jab = rig.add(_body(22.0), {"hips": (3.0, 0, 0, 0, -0.01, -0.02)},
+                  _sh((0.25, -0.4, -0.08, 75.0, 135.0, 0.0), _TOWARDS_HIM, _TWO))
+    tread = rig.add(_body(20.0, -10.0), {"hips": (3.0, 0, 0, 0, -0.01, -0.01), "leg_l": (-18.0, -6.0, 0.0),
+                                         "feet": {"leg_l": 0.11, "leg_r": 0.0}},
+                    _sh((0.3, -0.4, -0.2, 75.0, 120.0, 0.0), _TOWARDS_HIM, _TWO))
+    pry = rig.add(_body(18.0, -6.0), {"hips": (1.0, 0, 0, 0, 0.0, -0.01)},
+                  _sh((0.42, -0.5, 0.12, 60.0, 100.0, 0.0), (0.0, 0.6, 1.0), _TWO))
+    lift = rig.add(_body(14.0, -10.0),
+                   _sh((0.55, -0.6, 0.4, 45.0, 90.0, 0.0), (0.0, 0.0, 1.0), _TWO))
+    toss = rig.add(_body(14.0, 20.0), {"hips": (0, 0, 6.0, 0, 0.0, 0)},
+                   _sh((0.65, -0.5, 0.8, 10.0, 75.0, 0.0), (1.0, 0.0, 0.6), _TWO))
+    back = rig.add(_body(14.0, 6.0),
+                   _sh((0.45, -0.48, 0.4, 50.0, 100.0, 0.0), (0.0, 0.3, 1.0), _TWO))
+    keys = [(0.0, ready), (DIG_JAB, jab), (0.32, tread), (0.46, pry), (0.6, lift), (DIG_TOSS, toss), (0.9, back)]
+    return rig.add(_stance(), rig.keyed(t, keys))
+
+
+DIG_JAB = 0.16
+DIG_TOSS = 0.78
+
+
+def _draw_keys() -> list:
+    """Back -> hands: the right hand reaches back over the shoulder to the socket, pulls the shovel up
+    and round the right side (blade up like a staff), tips the blade forward and down while the left
+    hand catches the shaft (= the first dig pose)."""
+    st = _stance()
+    rest = rig.add(st, {"leg_l": (9.0, 0.0, 0.0), "leg_r": (-9.0, 0.0, 0.0)},   # feet together as at rest
+                   _sh(_REST, SHOVEL_NORMAL, (0.0, 0.0, 0.0, 0.95, 0.45)))
+    reach = rig.add(st, _body(4.0, 8.0, head=2.0), {"arm_r": (30.0, 0.0, 20.0)},
+                    _sh(_REST, SHOVEL_NORMAL, (0.0, 1.0, 0.0, SHAFT + 0.03, 0.45)))
+    staff = rig.add(st, _body(6.0, 4.0), {"arm_l": (-20.0, 0.0, 0.0)},
+                    _sh(_spec((-0.42, 0.05, 0.62), (-0.42, -0.15, 2.0)), (0.0, -1.0, 0.0), (1.0, 1.0, 0.0, 0.5, 0.45)))
+    tip = rig.add(st, _body(10.0), {"arm_l": (-45.0, 0.0, 0.0)},
+                  _sh(_spec((-0.3, -0.2, 1.05), (-0.05, -1.2, 0.25)), (0.0, 0.3, 1.0), (1.0, 1.0, 0.6, 0.25, 0.6)))
+    return [rest, reach, staff, tip, rig.add(st, _dig_ready())]
+
+
+def shovel_draw(t: float) -> dict:
+    """15 frames = 0.5 s one-shot: from the back into both hands (ends in the first dig pose)."""
+    rest, reach, staff, tip, ready = _draw_keys()
+    return rig.keyed(t, [(0.0, rest), (0.32, reach), (0.58, staff), (0.8, tip), (1.0, ready)], wrap=False)
+
+
+def shovel_stow(t: float) -> dict:
+    """12 frames = 0.4 s one-shot: the draw backwards (first dig pose -> on the back, at rest)."""
+    rest, reach, staff, tip, ready = _draw_keys()
+    return rig.keyed(t, [(0.0, ready), (0.22, tip), (0.45, staff), (0.72, reach), (1.0, rest)], wrap=False)
+
+
+def shovel_stow_walk(t: float) -> dict:
+    """16 frames = one walk cycle (0.53 s) one-shot: stowing while already walking off (the action was
+    cancelled by moving). Ends exactly in walk's first frame, so walk continues seamlessly."""
+    g = walk(t)
+    upper = shovel_stow(min(1.0, t / 0.85))
+    out = dict(g)
+    fade = rig.ease((t - 0.7) / 0.3)   # the arms settle into the walk swing at the end
+    for bone in ("arm_l", "arm_r"):
+        a = tuple(upper.get(bone, rig.ZERO)) + rig.ZERO[len(upper.get(bone, rig.ZERO)):]
+        b = tuple(g.get(bone, rig.ZERO)) + rig.ZERO[len(g.get(bone, rig.ZERO)):]
+        out[bone] = tuple(x + (y - x) * fade for x, y in zip(a, b))
+    out["shovel"], out["face"] = upper["shovel"], upper["face"]
+    out["grab"] = tuple(v * (1.0 - fade) if i in (1, 2) else v for i, v in enumerate(upper["grab"]))
+    return out
+
+
+ACTIONS = (  # (name, frames at 30 fps, pose function[, post hook])
     ("idle-loop", 60, idle),
     ("walk-loop", 16, walk),
     ("carry_idle-loop", 60, carry_idle),
     ("carry_walk-loop", 20, carry_walk),
-    ("dig-loop", 36, dig),
+    ("dig-loop", 39, dig, _hold(dig)),
+    ("dig_bare-loop", 36, dig_bare),
+    ("shovel_draw", 15, shovel_draw, _hold(shovel_draw)),
+    ("shovel_stow", 12, shovel_stow, _hold(shovel_stow)),
+    ("shovel_stow_walk", 16, shovel_stow_walk, _hold(shovel_stow_walk)),
     ("interact", 24, interact),
 )
 
 
-def build():
-    mesh, lp = build_mesh()
+def _attach_shovel(arm, shovel) -> None:
+    """The shovel mesh follows the tool bone (glTF: a node below the joint -> BoneAttachment3D)."""
+    shovel.parent = arm
+    shovel.parent_type = "BONE"
+    shovel.parent_bone = TOOL
+    bpy.context.view_layer.update()
+    shovel.matrix_world = Matrix.Identity(4)
+
+
+def build(debug: bool = False):
+    global _DEBUG
+    _DEBUG = [] if debug else None
+    mesh, lp, shovel = build_mesh()
     dz = rig.ground(mesh)
     assert abs(dz) < 1e-3, f"soles should stand on z = 0 (shift {dz})"  # keeps the approved lantern position
-    arm = rig.build_armature(joints(dz))
+    arm = rig.build_armature(joints(dz), extra={TOOL: ("spine", SHOVEL_NORMAL)})
     rig.bind(mesh, arm)
+    _attach_shovel(arm, shovel)
     rig.bone_marker(arm, "hips", "light_lantern", lp - Vector((0, 0, dz)))
-    for name, frames, fn in ACTIONS:
-        rig.add_action(arm, mesh, name, frames, fn)
+    rig.bone_marker(arm, TOOL, "shovel_blade", SHOVEL_G0 + _D0 * BLADE_MID)
+    for entry in ACTIONS:
+        name, frames, fn = entry[:3]
+        rig.add_action(arm, mesh, name, frames, fn, entry[3] if len(entry) > 3 else None)
+    if debug:
+        return arm, mesh, shovel
     L.export_rigged(arm, NAME, "characters")
     F._stable_glb(L.os.path.join(L.ROOT, "assets", "models", "characters", NAME + ".glb"))
 

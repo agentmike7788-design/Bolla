@@ -20,6 +20,11 @@ bend) until its lowest vertex sits h metres above its rest height (h = 0: plante
 Action names ending in "-loop" are looped by the Godot importer, which strips the
 suffix (idle-loop -> "idle"); loop pose functions must satisfy pose(0) == pose(1).
 Root motion is off: the root bone never moves (movement comes from code).
+Additive extra bones (G7 Runde 2, the gravekeeper's shovel): build_armature(joints, extra=...)
+adds non-deforming bones such as "tool" (child of "spine") that carry a bone-parented prop.
+Figures without extras are built exactly as before. An action's optional post(arm, t) hook
+runs after the pose (and the feet) are applied and may set pose matrices directly (e.g. the
+tool bone and hands aimed onto a held shaft) before every bone is keyframed.
 """
 import math
 
@@ -76,8 +81,11 @@ def ground(mesh) -> float:
 
 # --- armature -------------------------------------------------------------
 
-def build_armature(joints: dict):
-    """joints: bone -> (head, tail) in model space. Returns the armature object."""
+def build_armature(joints: dict, extra: dict = None):
+    """joints: bone -> (head, tail) in model space. Returns the armature object.
+    extra (optional): bone -> (parent, z_axis or None) for additional non-deforming bones (their
+    head/tail also in joints); z_axis aligns the bone roll (Z axis) to that vector."""
+    extra = extra or {}
     scene = bpy.context.scene
     scene.render.fps = FPS
     scene.render.fps_base = 1.0
@@ -97,6 +105,16 @@ def build_armature(joints: dict):
         if PARENTS[name]:
             data.edit_bones[name].parent = data.edit_bones[PARENTS[name]]
             data.edit_bones[name].use_connect = False
+    for name in sorted(extra):
+        parent, z_axis = extra[name]
+        eb = data.edit_bones.new(name)
+        eb.head, eb.tail = Vector(joints[name][0]), Vector(joints[name][1])
+        eb.roll = 0.0
+        if z_axis is not None:
+            eb.align_roll(Vector(z_axis))
+        eb.use_deform = False
+        eb.parent = data.edit_bones[parent]
+        eb.use_connect = False
     bpy.ops.object.mode_set(mode="OBJECT")
     for pb in arm.pose.bones:
         pb.rotation_mode = "QUATERNION"
@@ -240,17 +258,24 @@ def reset_pose(arm) -> None:
     bpy.context.view_layer.update()
 
 
-def add_action(arm, mesh, name: str, frames: int, pose_fn):
-    """Keyframe every bone (rotation + location) on every frame 0..frames."""
+def bone_names(arm) -> list:
+    """BONES followed by the armature's extra bones (sorted)."""
+    return list(BONES) + sorted(b.name for b in arm.data.bones if b.name not in BONES)
+
+
+def add_action(arm, mesh, name: str, frames: int, pose_fn, post=None):
+    """Keyframe every bone (rotation + location) on every frame 0..frames.
+    post(arm, t) (optional) runs after the pose and the feet are applied, before the keys."""
     act = bpy.data.actions.new(name)
     act.use_fake_user = True
     ad = arm.animation_data or arm.animation_data_create()
     ad.action = act
     rest = {b.name: b.matrix_local.to_3x3() for b in arm.data.bones}
     feet = _foot_verts(arm, mesh)
+    names = bone_names(arm)
     for f in range(frames + 1):
         pose = pose_fn(f / frames)
-        for bone in BONES:
+        for bone in names:
             _apply(arm, rest, bone, pose.get(bone, ZERO))
         targets = pose.get("feet")
         if targets:
@@ -263,7 +288,10 @@ def add_action(arm, mesh, name: str, frames: int, pose_fn):
                     # pose location lives in the bone's rest frame: local +Y = rest axis towards the foot
                     down = rest[leg] @ Vector((0.0, 1.0, 0.0))
                     pb.location = pb.location + Vector((0.0, err / min(-0.2, down.z), 0.0))
-        for bone in BONES:
+        if post is not None:
+            bpy.context.view_layer.update()
+            post(arm, f / frames)
+        for bone in names:
             pb = arm.pose.bones[bone]
             pb.keyframe_insert("rotation_quaternion", frame=f, group=bone)
             pb.keyframe_insert("location", frame=f, group=bone)
