@@ -5,6 +5,7 @@
   "region": "village",
   "door_id": "door_surgery",
   "room": "ph_int_surgery_room",
+  "fill_lights": [[0.0, 2.5, 0.6]],
   "door_inside": [-1.5, 2.25],
   "spawn_inside": [-1.5, 1.7],
   "walkway": 0.9,

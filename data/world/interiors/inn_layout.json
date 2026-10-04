@@ -5,6 +5,7 @@
   "region": "village",
   "door_id": "door_inn",
   "room": "ph_int_inn_room",
+  "fill_lights": [[0.0, 2.6, 0.8]],
   "door_inside": [1.6, 2.75],
   "spawn_inside": [1.6, 2.15],
   "walkway": 0.9,

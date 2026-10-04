@@ -142,6 +142,8 @@ static func build(layout: Dictionary) -> Node3D:
 		var parts := _group(root, "Particles")
 		for p: Dictionary in layout.particles:
 			_add(parts, _particles(p), root)
+	if layout.has("fill_lights"):
+		_fill_lights(root, layout.fill_lights, cfg)
 	var lighting := Node.new()
 	lighting.name = "Lighting"
 	lighting.set_script(load(LIGHTING_SCRIPT))
@@ -526,6 +528,27 @@ static func _marker_lights(root: Node3D, model: Node3D, asset: String, overrides
 				light.visible = false
 		light.set_meta(&"base_energy", light.light_energy)
 		_add(model, light, root)
+
+
+## G7 round 1 (light): FillLights/Fill_<k> at the layout's fill_lights [x, y, z] (room-local) – soft
+## warm omni lights without shadow (role fill: InteriorLighting blends fill_night → fill_day).
+static func _fill_lights(root: Node3D, points: Array, cfg: Resource) -> void:
+	var group := _group(root, "FillLights")
+	var k := 0
+	for p: Array in points:
+		k += 1
+		var omni := OmniLight3D.new()
+		omni.name = "Fill_%d" % k
+		omni.position = _v3(p)
+		omni.omni_range = float(cfg.get("fill_range"))
+		omni.omni_attenuation = float(cfg.get("fill_attenuation"))
+		omni.light_color = cfg.get("fill_day_color")
+		omni.light_energy = float(cfg.get("fill_day_energy"))
+		omni.shadow_enabled = false
+		omni.light_specular = 0.2
+		omni.set_meta(META_ROLE, &"fill")
+		omni.set_meta(&"base_energy", omni.light_energy)
+		_add(group, omni, root)
 
 
 static func _default_role(marker_name: String) -> StringName:

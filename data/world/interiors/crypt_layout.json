@@ -3,6 +3,7 @@
   "room_id": "crypt",
   "building": "crypt",
   "room": "ph_int_crypt_room",
+  "fill_lights": [[0.0, 2.6, 0.4]],
   "door_inside": [0.0, 3.35],
   "spawn_inside": [0.0, 2.25],
   "walkway": 0.9,
