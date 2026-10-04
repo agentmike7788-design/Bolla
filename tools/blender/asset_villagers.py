@@ -33,6 +33,12 @@ and counting over the counter, washer: hand-spinning) and sit (Hagedorn: on the 
 
 Front faces -Y (Blender) = +Z (Godot); pivot between the feet on the ground.
 
+G7 Änderungsrunde 1 (faces): every head is built by _head() on a sculpted skull (class Face) with awake
+eyes (white, iris, pupil, gleam, arched upper lid + lash line), a soft nose growing out of the face, a
+shaped mouth, brows, warm painted skin with blush, and painted age lines where the figure is old;
+hair (_hair) and head cloths (_cloth_cover, _frill) are shells over that skull cut along hairline /
+hem curves. The seated figures use the same head, coarser (detail=False).
+
 Run:  python tools/blender/build_all.py asset_villagers
 """
 import json
@@ -571,7 +577,7 @@ def _cloth_cover(parts, face: Face, color, shade, knots, *, out=0.016, crown: fl
     def cloth(co, nr):
         d = co - c
         a = math.atan2(d.x, -d.y)
-        f = 1.0 - 0.1 * max(0.0, math.sin(a * folds + _n(co, 6.0, seed) * 2.0)) * _s01(0.8 - d.z / face.s.z)
+        f = 1.0 - 0.17 * max(0.0, math.sin(a * folds + _n(co, 6.0, seed) * 2.0)) * _s01(1.0 - 0.6 * d.z / face.s.z)
         f *= 0.9 + 0.1 * _s01((d.z / face.s.z + 0.8) / 1.2)
         return f, None, 0.0
     _tint(obj, cloth)
@@ -981,7 +987,7 @@ ROS_DRESS_DARK = L.hexc("#55514B")
 ROS_APRON = L.hexc("#7A4A32")
 ROS_APRON_DARK = L.hexc("#5A3626")
 ROS_BODICE = L.hexc("#4E4640")
-ROS_SCARF = L.hexc("#D6CFC0")
+ROS_SCARF = L.hexc("#CFC6B3")
 ROS_HAIR = L.hexc("#5E4430")
 ROS_HAIR_DARK = L.hexc("#3E2C20")
 
@@ -1051,7 +1057,7 @@ def innkeeper():
     _cloth_cover(parts, face, ROS_SCARF, LINEN_SHADE, [(0.0, 0.66), (0.6, 0.58), (1.05, 0.2), (1.4, -0.22),
                                                       (2.0, -0.55), (math.pi, -0.7)],
                  out=lambda ph, w: 0.016 + 0.006 * max(0.0, math.cos(ph)), crown=0.006, folds=7.0, rim=0.0095 * face.k,
-                 rim_phi=1.9, seed=32, name="scarf")
+                 rim_phi=1.9, lumps=0.006, seed=32, name="scarf")
     knot = c + Vector((0.0, s.y + 0.03, -0.07))
     parts.append(W("head", _ell(ROS_SCARF, knot, (0.04, 0.032, 0.035), seg=8, rings=5, seed=34, jit=0.004)))
     for sx in (-1, 1):
