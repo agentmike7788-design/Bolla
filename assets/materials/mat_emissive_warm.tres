@@ -1,9 +1,14 @@
-[gd_resource type="StandardMaterial3D" format=3]
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/flame_glow.gdshader" id="1"]
 
 [resource]
 resource_name = "mat_emissive_warm"
-shading_mode = 0
-albedo_color = Color(1, 0.78, 0.42, 1)
-emission_enabled = true
-emission = Color(1, 0.66, 0.23, 1)
-emission_energy_multiplier = 2.5
+shader = ExtResource("1")
+shader_parameter/glow_color = Color(1, 0.78, 0.42, 1)
+shader_parameter/glow_energy = 1.0
+shader_parameter/flicker_amount = 0.18
+shader_parameter/flicker_speed = 1.7
+shader_parameter/jitter_speed = 8.5
+shader_parameter/dim_color = Color(1, 0.56, 0.24, 1)
+shader_parameter/wobble = 0.35
