@@ -310,3 +310,21 @@ func test_volume_setting_saved_and_loaded() -> void:
 	assert_eq(cfg.load(path), OK)
 	assert_true(cfg.has_section(AudioSettings.SECTION), "own [audio] section")
 	assert_false(path.contains("save"), "not in the save slot")
+
+
+func test_pause_menu_volume_sliders() -> void:
+	_dir = TestCase.user_dir("test_audio_menu")
+	var path := _dir.path_join("settings.cfg")
+	Audio.load_settings(path)
+	var menu := PauseMenu.new()
+	tree.root.add_child(menu)
+	menu.open({})
+	menu.sound_button.pressed.emit()
+	assert_true(menu.volume_box.is_visible_in_tree(), "sliders shown")
+	assert_eq(menu.volume_box.sliders.size(), AudioConfig.BUSES.size(), "one slider per bus")
+	assert_almost(menu.volume_box.sliders[&"Music"].value, roundf(Audio.get_volume(&"Music") * 100.0), 0.01)
+	menu.volume_box.sliders[&"Music"].value = 40.0
+	assert_almost(Audio.get_volume(&"Music"), 0.4, 0.001)
+	assert_true(FileAccess.file_exists(path), "saved at once")
+	menu.close()
+	menu.queue_free()

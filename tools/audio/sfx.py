@@ -13,13 +13,14 @@ import synth as s
 # --- footsteps ---------------------------------------------------------------------------
 
 def step_grass(rng, sr):
-    n = s.secs(sr, 0.22)
-    swish = s.bandpass(rng.standard_normal(n), sr, 1500, 6500) * s.env_ad(sr, n, 0.012, 0.045)
-    crunch = s.grains(rng, sr, 0.22, 260, 2500, 9000, 0.004,
-                      density_env=lambda p: float(np.exp(-p * 7)))
-    thump = s.lowpass(rng.standard_normal(n), sr, 220) * s.env_ad(sr, n, 0.004, 0.03)
-    x = swish * 0.5 + crunch * 0.7 + thump * 0.8
-    return s.fade(s.normalize(x, 0.7), sr, 0.002, 0.03)
+    """Soft: a muffled heel thump and a short crush of stalks, little top end."""
+    n = s.secs(sr, 0.16)
+    thump = s.lowpass(rng.standard_normal(n), sr, 180, 2) * s.env_ad(sr, n, 0.006, 0.03)
+    crush = s.grains(rng, sr, 0.16, 520, 700, 3800, 0.005,
+                     density_env=lambda p: float(np.exp(-p * 9)))
+    swish = s.bandpass(rng.standard_normal(n), sr, 900, 3200) * s.env_ad(sr, n, 0.008, 0.02)
+    x = thump * 1.6 + crush * 0.8 + swish * 0.25
+    return s.fade(s.normalize(s.lowpass(x, sr, 4500), 0.7), sr, 0.002, 0.03)
 
 
 def step_earth(rng, sr):
@@ -42,37 +43,33 @@ def step_stone(rng, sr):
 
 
 def step_wood(rng, sr):
-    n = s.secs(sr, 0.26)
-    exc = rng.standard_normal(n) * s.env_ad(sr, n, 0.001, 0.006)
-    f0 = 170 * rng.uniform(0.9, 1.12)
-    body = (s.resonator(exc, sr, f0, 6) * 1.6 + s.resonator(exc, sr, f0 * 2.3, 9) * 0.8
-            + s.resonator(exc, sr, f0 * 4.1, 12) * 0.35)
-    creak = 0.0
-    if rng.uniform() < 0.35:
-        cn = s.secs(sr, 0.18)
-        fm = 420 * rng.uniform(0.8, 1.3) * (1 + 0.04 * np.sin(s.TAU * 31 * s.tline(sr, cn)))
-        c = s.sine(sr, cn, fm) * s.env_ad(sr, cn, 0.05, 0.05) * 0.12
-        creak = s.fit(s.pad(c, sr, 0.04), n)
-    x = body + s.lowpass(exc, sr, 2500) * 0.3 + creak
-    return s.fade(s.normalize(x, 0.7), sr, 0.0005, 0.04)
+    """A hollow knock on floor boards, now and then a small creak."""
+    n = s.secs(sr, 0.3)
+    knock = s.fit(wood(rng, sr, 150 * rng.uniform(0.9, 1.12), 0.05, 0.3), n)
+    heel = s.lowpass(rng.standard_normal(n), sr, 240) * s.env_ad(sr, n, 0.003, 0.02)
+    x = knock + heel * 0.6
+    if rng.uniform() < 0.3:
+        c = _creak(rng, sr, 0.16, 90, 70, 0.3)
+        s.mix_at(x, c * 0.18, s.secs(sr, 0.05))
+    return s.fade(s.normalize(s.lowpass(x, sr, 5000), 0.7), sr, 0.0005, 0.05)
 
 
 # --- digging & soil ----------------------------------------------------------------------
 
 def dig(rng, sr):
-    n = s.secs(sr, 0.75)
-    t = s.tline(sr, n)
-    # blade pushed into soil: a short gritty scrape, then the clod lifted and dropped
-    scrape_env = np.clip((t - 0.0) / 0.03, 0, 1) * np.exp(-np.maximum(t - 0.03, 0) / 0.09) * (t < 0.3)
-    scrape = s.bandpass(rng.standard_normal(n), sr, 700, 3800) * scrape_env
-    tick = s.partials(sr, n, 1900 * rng.uniform(0.9, 1.1), [1, 2.4], [0.25, 0.1], [0.02, 0.01], rng)
-    drop = np.zeros(n)
+    """Blade into soil (a short gritty bite), the clod lifted and dropped beside the pit."""
+    n = s.secs(sr, 0.8)
+    out = np.zeros(n)
+    bite = s.grains(rng, sr, 0.16, 1400, 400, 2600, 0.006, density_env=lambda p: float(np.exp(-p * 4)))
+    s.mix_at(out, bite, 0, 0.9)
+    s.mix_at(out, s.lowpass(rng.standard_normal(s.secs(sr, 0.12)), sr, 300) * s.env_ad(sr, s.secs(sr, 0.12), 0.002, 0.03), 0, 0.9)
+    tick = s.partials(sr, s.secs(sr, 0.12), 1700 * rng.uniform(0.9, 1.1), [1, 2.4], [0.2, 0.08], [0.02, 0.01], rng)
+    s.mix_at(out, tick, 0, 0.6)
     k = s.secs(sr, rng.uniform(0.38, 0.46))
-    thud = s.lowpass(rng.standard_normal(s.secs(sr, 0.2)), sr, 260) * s.env_ad(sr, s.secs(sr, 0.2), 0.004, 0.05)
-    s.mix_at(drop, thud, k, 1.1)
-    s.mix_at(drop, s.grains(rng, sr, 0.25, 260, 900, 5000, 0.006, lambda p: float(np.exp(-p * 5))), k, 0.6)
-    x = scrape * 0.8 + tick * 0.6 + drop
-    return s.fade(s.normalize(x, 0.75), sr, 0.002, 0.05)
+    thud = s.lowpass(rng.standard_normal(s.secs(sr, 0.2)), sr, 220) * s.env_ad(sr, s.secs(sr, 0.2), 0.004, 0.05)
+    s.mix_at(out, thud, k, 1.3)
+    s.mix_at(out, s.grains(rng, sr, 0.3, 700, 500, 3500, 0.006, lambda p: float(np.exp(-p * 6))), k, 0.55)
+    return s.fade(s.normalize(s.lowpass(out, sr, 5000), 0.75), sr, 0.002, 0.05)
 
 
 def dirt_pour(rng, sr):
@@ -99,15 +96,20 @@ def stone_set(rng, sr):
 
 # --- crafts & stations -------------------------------------------------------------------
 
-def _wood_hit(rng, sr, dur, f0, decay, bright):
+def wood(rng, sr, f0, decay, click=0.25, dur=None):
+    """Modal wood knock: a few inharmonic modes with short decays plus a muffled click."""
+    dur = dur or max(0.15, decay * 6)
     n = s.secs(sr, dur)
-    exc = rng.standard_normal(n) * s.env_ad(sr, n, 0.0005, 0.004)
-    modes = [1.0, 2.1, 3.3, 5.2]
-    out = np.zeros(n)
-    for i, m in enumerate(modes):
-        out += s.resonator(exc, sr, f0 * m * rng.uniform(0.97, 1.03), 10 + i * 4) * (0.9 / (i + 1))
-    out *= s.env_ad(sr, n, 0.0, decay)
-    return out + s.highpass(exc, sr, 2000) * bright
+    ratios = [1.0, 1.58, 2.31, 3.24, 4.47]
+    amps = [1.0, 0.55, 0.35, 0.2, 0.1]
+    decays = [decay, decay * 0.6, decay * 0.4, decay * 0.28, decay * 0.2]
+    x = s.partials(sr, n, f0, ratios, amps, decays, rng, attack=0.0008, detune=0.02)
+    clk = s.lowpass(rng.standard_normal(n), sr, 3000) * s.env_ad(sr, n, 0.0003, 0.003)
+    return x + clk * click
+
+
+def _wood_hit(rng, sr, dur, f0, decay, bright):
+    return s.fit(wood(rng, sr, f0, decay, 0.15 + bright * 0.5, dur), s.secs(sr, dur))
 
 
 def chop(rng, sr):
@@ -253,16 +255,17 @@ def smoke_hiss(rng, sr):
 # --- objects -----------------------------------------------------------------------------
 
 def _creak(rng, sr, dur, f_lo, f_hi, rough=0.4):
+    """Stick-slip friction of an old hinge: a jittery pulse train through wood formants."""
     n = s.secs(sr, dur)
     t = s.tline(sr, n)
     curve = f_lo + (f_hi - f_lo) * (0.5 - 0.5 * np.cos(np.pi * np.clip(t / dur, 0, 1)))
-    jitter = 1.0 + 0.06 * s.lowpass(rng.standard_normal(n), sr, 30) * 3
-    f = curve * jitter
-    # stick-slip friction: pulse train through wood resonances
+    jitter = 1.0 + 0.25 * s.lowpass(rng.standard_normal(n), sr, 25) * 4
+    f = np.maximum(curve * jitter, 8.0)
     ph = np.cumsum(f / sr)
     pulses = (np.diff(np.floor(ph), prepend=0.0) > 0).astype(float)
     pulses *= 1.0 + rough * rng.standard_normal(n)
-    body = s.resonator(pulses, sr, 900, 5) + s.resonator(pulses, sr, 1700, 7) * 0.6 + s.resonator(pulses, sr, 380, 4) * 0.5
+    body = s.bandpass(pulses, sr, 350, 2600) + 0.6 * s.resonator(pulses, sr, 820, 4) + 0.4 * s.resonator(pulses, sr, 1500, 5)
+    body = s.normalize(body, 1.0)
     return body * s.env_asr(sr, n, dur * 0.2, dur * 0.3)
 
 
@@ -568,9 +571,9 @@ def ui_error(rng, sr):
     """Gently 'locked': two low muted wood knocks, the second a little lower."""
     n = s.secs(sr, 0.35)
     out = np.zeros(n)
-    s.mix_at(out, _wood_hit(rng, sr, 0.2, 240, 0.03, 0.05), 0, 0.8)
-    s.mix_at(out, _wood_hit(rng, sr, 0.2, 200, 0.035, 0.05), s.secs(sr, 0.11), 0.7)
-    return s.fade(s.normalize(out, 0.35), sr, 0.0005, 0.05)
+    s.mix_at(out, wood(rng, sr, 230, 0.035, 0.05), 0, 0.8)
+    s.mix_at(out, wood(rng, sr, 190, 0.04, 0.05), s.secs(sr, 0.11), 0.7)
+    return s.fade(s.normalize(s.lowpass(out, sr, 2200), 0.35), sr, 0.0005, 0.05)
 
 
 def ui_page(rng, sr):

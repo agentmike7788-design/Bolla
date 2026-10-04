@@ -202,10 +202,10 @@ CATALOG: list[Spec] = [
     SPOT("fire_pop", amb.fire_pop, 2, volume_db=-18),
     SPOT("wind_gust", amb.wind_gust, 2, volume_db=-14, pitch_jitter=0.04),
     # music
-    MUS("mus_title", music.mus_title, volume_db=-9),
-    MUS("mus_day", music.mus_day, volume_db=-10),
-    MUS("mus_night", music.mus_night, volume_db=-10),
-    MUS("mus_village", music.mus_village, volume_db=-10),
+    MUS("mus_title", music.mus_title, volume_db=-5),
+    MUS("mus_day", music.mus_day, volume_db=-6),
+    MUS("mus_night", music.mus_night, volume_db=-6),
+    MUS("mus_village", music.mus_village, volume_db=-6),
 ]
 
 

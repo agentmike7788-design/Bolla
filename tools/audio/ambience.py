@@ -125,13 +125,13 @@ def amb_graveyard_day(rng, sr):
 
 def amb_graveyard_dusk(rng, sr):
     n = s.secs(sr, LOOP)
-    x = _wind(rng, sr, n, 0.8, 100, 700, 0.5) + _leaves(rng, sr, n, 250) * 0.15 + _crickets(rng, sr, n, 2, 0.08)
+    x = _wind(rng, sr, n, 0.8, 100, 700, 0.5) + _leaves(rng, sr, n, 250) * 0.15 + _crickets(rng, sr, n, 2, 0.05)
     return _finish(x, sr, rng, 0.45)
 
 
 def amb_graveyard_night(rng, sr):
     n = s.secs(sr, LOOP)
-    x = _wind(rng, sr, n, 0.5, 90, 600, 0.6) + _crickets(rng, sr, n, 5, 0.22)
+    x = _wind(rng, sr, n, 0.5, 90, 600, 0.6) + _crickets(rng, sr, n, 5, 0.12)
     return _finish(x, sr, rng, 0.45)
 
 
@@ -156,7 +156,7 @@ def amb_village_day(rng, sr):
 
 def amb_village_night(rng, sr):
     n = s.secs(sr, LOOP)
-    x = _wind(rng, sr, n, 0.45, 90, 600, 0.5) + _crickets(rng, sr, n, 4, 0.16) + _brook(rng, sr, n, 0.1)
+    x = _wind(rng, sr, n, 0.45, 90, 600, 0.5) + _crickets(rng, sr, n, 4, 0.09) + _brook(rng, sr, n, 0.1)
     return _finish(x, sr, rng, 0.45)
 
 
@@ -213,7 +213,7 @@ def amb_shed(rng, sr):
 
 def amb_title(rng, sr):
     n = s.secs(sr, LOOP)
-    x = _wind(rng, sr, n, 0.6, 90, 500, 0.6) + _crickets(rng, sr, n, 2, 0.06)
+    x = _wind(rng, sr, n, 0.6, 90, 500, 0.6) + _crickets(rng, sr, n, 2, 0.04)
     return _finish(x, sr, rng, 0.35)
 
 
