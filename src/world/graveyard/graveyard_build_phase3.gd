@@ -37,6 +37,8 @@ const SYSTEMS := [
 ## GravePlot.footprint / old-grave rect (plot-local XZ) – mirrors grave_plot.gd / the grass.
 const PLOT_RECT := Rect2(-0.72, -1.25, 2.32, 2.5)
 const OLD_RECT := Rect2(-0.62, -1.35, 1.24, 2.35)
+## A plot without the side heap (pit_variant foot): the 1.44 × 2.5 m place itself.
+const PLOT_FOOT_RECT := Rect2(-0.72, -1.25, 1.44, 2.5)
 const MARKER_RECT := Rect2(-0.3, -1.25, 0.6, 0.35)
 ## Hut door access (like the grass keep-out).
 const DOOR_RECT := Rect2(-0.9, -1.0, 1.8, 1.8)
@@ -329,8 +331,11 @@ static func mask_shapes(ctx: Ctx) -> Dictionary:
 	var grave_ring := float(cfg.grave_ring)
 	for p: Dictionary in layout.plots:
 		var xf := {"pos": Ctx.v2(p.pos), "rot": float(p.rot_y)}
-		blocked.append(_rect(xf, PLOT_RECT.merge(MARKER_RECT)))
-		ring.append(_rect(xf, PLOT_RECT.merge(MARKER_RECT).grow(grave_ring)))
+		# QA7 (§4.6 L1): a plot with pit_variant foot (l_04 / l_08 at the Lindenacker's east fence) has no
+		# side heap (+X) – its spoil heap lies at the foot end while it is open.
+		var rect := PLOT_FOOT_RECT if String(p.get("pit_variant", "")) == "foot" else PLOT_RECT
+		blocked.append(_rect(xf, rect.merge(MARKER_RECT)))
+		ring.append(_rect(xf, rect.merge(MARKER_RECT).grow(grave_ring)))
 		var foot := Rect2(-0.72, PLOT_RECT.end.y, 1.44, float(cfg.grave_foot_strip))
 		route.append(_rect(xf, foot))
 	for g: Dictionary in layout.old_graves:

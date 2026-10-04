@@ -24,6 +24,9 @@ static func build_plot(ctx: Ctx, parent: Node, g: Dictionary, old: bool) -> void
 	plot.set("is_old", old)
 	if not old:
 		plot.set("section_id", StringName(g.get("section", "yard")))
+		# QA7 (§4.6 L1): l_04 / l_08 stand at the Lindenacker's east fence – their spoil heap lies at the
+		# foot end (like a lifted old grave), the side heap would reach through the fence.
+		plot.set("pit_variant", StringName(g.get("pit_variant", "")))
 	plot.transform = ctx.ground_xform(Ctx.v2(g.pos), float(g.rot_y))
 	if old:
 		plot.set("old_stone", g.stone)

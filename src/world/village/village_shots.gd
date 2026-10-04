@@ -10,7 +10,7 @@ extends "res://src/world/graveyard/graveyard_shots_phase6.gd"
 ## through Player.set_in_interior (the room's own profile and light). The gameplay shots use the
 ## village camera as the player gets it ("game": zoom), overview shots a free focus ("focus" +
 ## "distance"). Staged ("stage"): the contact sheet (the eight figures in a row, idle, names below),
-## Osric on his way into the Holderkrug, the lecture (LectureSet.show_lecture, Quast at the lectern),
+## the lecture (LectureSet.show_lecture; Quast at the lectern by his schedule on a lecture night),
 ## the mourning ribbon at the Hagedorn cottage with Liesel in front, the sight rays (p7_vis_*:
 ## village_sight.gd – the check of test_village_world, seen from above). "ui": the HUD is shown
 ## (the prompt). Staged figures stand still (process off) and are given back to their schedule after.
@@ -28,9 +28,9 @@ const P7_SHOTS: Array[Dictionary] = [
 	{"name": "p7_01_arrival_bridge_morning", "day": 41, "minute": 470, "player": Vector2(-24.6, 1.5), "game": 22.0},
 	{"name": "p7_02_anger_overview_day", "day": 41, "minute": 600, "player": Vector2(0.6, -0.4), "game": 26.0},
 	{"name": "p7_02b_anger_overview_far", "day": 41, "minute": 600, "focus": Vector2(-2.0, -6.0), "distance": 46.0, "player": Vector2(0.6, -0.4)},
-	{"name": "p7_03_anger_afternoon", "day": 41, "minute": 870, "player": Vector2(-1.5, 2.6), "game": 24.0},
+	{"name": "p7_03_anger_afternoon", "day": 41, "minute": 975, "player": Vector2(-1.5, 2.6), "game": 24.0},
 	{"name": "p7_04_anger_dusk", "day": 41, "minute": 1100, "player": Vector2(-3.0, 1.0), "game": 24.0},
-	{"name": "p7_05_village_night", "day": 41, "minute": 1318, "player": Vector2(6.0, -4.6), "game": 24.0, "stage": "osric_walk"},
+	{"name": "p7_05_village_night", "day": 41, "minute": 1318, "player": Vector2(6.0, -4.6), "game": 24.0},
 	{"name": "p7_06_contact_sheet", "day": 41, "minute": 600, "focus": Vector2(1.4, 0.0), "distance": 14.0, "player": Vector2(0.0, 20.0),
 			"stage": "sheet"},
 	{"name": "p7_07_smithy_esch", "day": 41, "minute": 1000, "player": Vector2(-14.6, -0.9), "facing": 95.0, "game": 14.0, "ui": true},
@@ -40,7 +40,7 @@ const P7_SHOTS: Array[Dictionary] = [
 	{"name": "p7_10b_inn_night", "day": 41, "minute": 1150, "room": "inn", "player": Vector2(0.9, 1.3)},
 	{"name": "p7_11_surgery", "day": 41, "minute": 600, "room": "surgery", "player": Vector2(-0.9, 1.2)},
 	{"name": "p7_12_office", "day": 41, "minute": 600, "room": "office", "player": Vector2(0.9, 0.6)},
-	{"name": "p7_30_lecture_night", "day": 41, "minute": 1350, "room": "surgery", "player": Vector2(-2.3, 1.9), "stage": "lecture"},
+	{"name": "p7_30_lecture_night", "day": 42, "minute": 1395, "room": "surgery", "player": Vector2(-2.3, 1.9), "stage": "lecture"},
 	{"name": "p7_vis_village_z12", "day": 41, "minute": 600, "focus": Vector2(-2.5, -1.0), "distance": 74.0, "pitch": 85.0,
 			"player": Vector2(0.0, 30.0), "stage": "vis", "zoom": 12.0},
 	{"name": "p7_vis_village_z22", "day": 41, "minute": 600, "focus": Vector2(-2.5, -1.0), "distance": 74.0, "pitch": 85.0,
@@ -198,14 +198,11 @@ func _stage_village(world: Node3D, shot: Dictionary) -> void:
 	match String(shot.get("stage", "")):
 		"sheet":
 			_stage_sheet(world)
-		"osric_walk":
-			# On his way from the bridge into the Holderkrug (the schedule jumps there at 22:00).
-			_stage_npc(world, "npc_carter_v", _vpos(world, Vector2(9.6, -6.4)), rad_to_deg(atan2(5.4, -3.2)), &"walk", 0.35)
 		"lecture":
 			var room := _room(&"surgery")
 			for node: Node in room.find_children("*", "LectureSet", true, false):
 				node.call(&"show_lecture", &"heart")
-			_stage_npc(world, "npc_surgeon", room.global_transform * Vector3(0.25, 0.0, -1.15), 0.0, &"talk", 0.6)
+			# QA7: Quast stands at the lectern by his schedule (lecture night, today_flag entries).
 		"mourning":
 			var ribbon := _village(world).find_child("ribbon_cottage_hagedorn", true, false) as Node3D
 			if ribbon != null:

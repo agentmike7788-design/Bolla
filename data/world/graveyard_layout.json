@@ -75,11 +75,11 @@
     {"id": "l_01", "pos": [13.6, 12.8], "rot_y": 1.0, "section": "linden"},
     {"id": "l_02", "pos": [15.9, 12.8], "rot_y": -2.0, "section": "linden"},
     {"id": "l_03", "pos": [18.2, 12.8], "rot_y": 2.0, "section": "linden"},
-    {"id": "l_04", "pos": [20.5, 12.8], "rot_y": -1.0, "section": "linden"},
+    {"id": "l_04", "pos": [20.5, 12.8], "rot_y": -1.0, "section": "linden", "pit_variant": "foot"},
     {"id": "l_05", "pos": [13.6, 16.9], "rot_y": -1.0, "section": "linden"},
     {"id": "l_06", "pos": [15.9, 16.9], "rot_y": 2.0, "section": "linden"},
     {"id": "l_07", "pos": [18.2, 16.9], "rot_y": -2.0, "section": "linden"},
-    {"id": "l_08", "pos": [20.5, 16.9], "rot_y": 1.0, "section": "linden"}
+    {"id": "l_08", "pos": [20.5, 16.9], "rot_y": 1.0, "section": "linden", "pit_variant": "foot"}
   ],
   "_clearables": "Hindernisse (§1.2, §2.1). footprint = lokales XZ-Rechteck [x, z, w, d] (Bau-Sperre + Gras-Maske). Zaunlücken: fence.ruins.",
   "clearables": [

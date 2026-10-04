@@ -54,9 +54,15 @@ BARK_DARK = L.hexc("#3E3229")
 LEAF_A = L.hexc("#4A5E3A")
 LEAF_B = L.hexc("#647A48")
 LEAF_C = L.hexc("#768A50")
-WATER = L.hexc("#4A5654")
-WATER_DEEP = L.hexc("#323C3E")
-WATER_LIGHT = L.hexc("#7A8682")
+# QA7 (G7 art): the brook read flat grey – a painted stream now: dark ink-green depth in the middle,
+# the green banks mirrored along the edges, brown shallows, broken pale-sky streaks and a few warm glints
+# laid as flat brush dabs per face (ART_DIRECTION §3: no saturated cold colour).
+WATER = L.hexc("#3F504C")
+WATER_DEEP = L.hexc("#283634")
+WATER_LIGHT = L.hexc("#9DAA9E")
+WATER_REFLECT = L.hexc("#4D5A3C")
+WATER_SHALLOW = L.hexc("#5A503E")
+WATER_GLINT = L.hexc("#C4BC98")
 BANK = L.hexc("#5E5444")
 RIBBON = L.hexc("#1E1C1D")
 RIBBON_SHEEN = L.hexc("#3A3638")
@@ -239,17 +245,18 @@ def sign():
 
 
 def ribbon():
-    """Mourning ribbon: a black bow with two tails, pivot at the knot (top)."""
+    """Mourning ribbon: a black bow with two tails, pivot at the knot (top). QA7 (G7 art): about 1.7× the
+    first size – at the game zoom the bow on the door was a dark speck."""
     L.reset(7250)
     parts = []
-    parts.append(VB._box_paint(L.prim("sphere", loc=(0, 0, 0), radius=1.0, scale=(0.03, 0.02, 0.028), segments=6, ring_count=4),
+    parts.append(VB._box_paint(L.prim("sphere", loc=(0, 0, 0), radius=1.0, scale=(0.05, 0.03, 0.045), segments=6, ring_count=4),
                                RIBBON))
     for sx in (-1, 1):
-        loop = L.prim("sphere", loc=(sx * 0.07, 0.0, 0.01), radius=1.0, scale=(0.06, 0.012, 0.035), segments=6, ring_count=4,
+        loop = L.prim("sphere", loc=(sx * 0.12, 0.0, 0.015), radius=1.0, scale=(0.1, 0.02, 0.06), segments=6, ring_count=4,
                       rot=(0, sx * 15, 0))
         parts.append(VB._box_paint(loop, RIBBON, top=0.4))
-        tail = L.prim("cube", scale=(0.022, 0.004, 0.2))
-        tail.data.transform(Matrix.Translation((sx * 0.04, 0.0, -0.21)) @ Matrix.Rotation(math.radians(sx * 8), 4, "Y"))
+        tail = L.prim("cube", scale=(0.038, 0.006, 0.33))
+        tail.data.transform(Matrix.Translation((sx * 0.07, 0.0, -0.35)) @ Matrix.Rotation(math.radians(sx * 8), 4, "Y"))
         parts.append(VB._box_paint(tail, RIBBON, top=0.3, var=0.1))
     obj = L.join(parts, "ph_prop_v_ribbon")
     attr = obj.data.color_attributes["Col"]
@@ -354,11 +361,12 @@ def brook():
     L.reset(7290)
     parts = []
     hl = 22.0
-    ny = 44
+    ny = 60
     bm = bmesh.new()
     rows = []
-    us = (-1.6, -1.25, -0.9, -0.3, 0.3, 0.9, 1.25, 1.6)
-    zs = (0.0, 0.07, 0.025, 0.02, 0.02, 0.025, 0.07, 0.0)   # flat painted water a hair over the ground, a bank lip
+    # QA7: finer across the water (brush dabs per face), the bank lip as before
+    us = (-1.6, -1.25, -0.9, -0.6, -0.3, 0.0, 0.3, 0.6, 0.9, 1.25, 1.6)
+    zs = (0.0, 0.07, 0.025, 0.02, 0.02, 0.02, 0.02, 0.02, 0.025, 0.07, 0.0)   # flat painted water a hair over the ground
     for j in range(ny + 1):
         y = -hl + 2 * hl * j / ny
         cx = _brook_x(y)
@@ -373,15 +381,32 @@ def brook():
     o = bpy.data.objects.new("brook", me)
     bpy.context.collection.objects.link(o)
 
-    def fn(co, vi):
-        u = abs(co.x - _brook_x(co.y))
-        n = noise.noise(Vector((co.x * 0.8, co.y * 0.35, 3.0)))
-        streak = max(0.0, math.sin(co.y * 2.2 + co.x * 1.3 + n * 3.0)) ** 6
+    def dab(c):
+        """One brush dab: the colour of the face centre `c` (flat per face – painted strokes, not a gradient)."""
+        u = abs(c.x - _brook_x(c.y))
         if u > 1.2:
+            n = noise.noise(Vector((c.x * 0.8, c.y * 0.35, 3.0)))
             return L.mix(BANK, MOSS, 0.4 + 0.3 * n)
-        c = L.mix(WATER, WATER_DEEP, max(0.0, 1.0 - u / 0.9) * 0.6 + 0.2 * n)
-        return L.mix(c, WATER_LIGHT, 0.35 * streak)
-    P._paint_fn(o, fn)
+        flow = noise.noise(Vector((c.x * 1.7, c.y * 0.22, 7.0)))         # long strokes along the flow
+        fine = noise.noise(Vector((c.x * 3.1, c.y * 0.9, 11.0)))
+        deep = max(0.0, 1.0 - u / 0.75)
+        col = L.mix(WATER, WATER_DEEP, min(1.0, deep * 0.75 + 0.25 * flow))
+        edge = max(0.0, (u - 0.45) / 0.55)                                 # the banks mirrored in the water
+        col = L.mix(col, WATER_REFLECT, min(0.75, edge * (0.6 + 0.3 * fine)))
+        if u > 0.82:
+            col = L.mix(col, WATER_SHALLOW, 0.45 + 0.2 * fine)
+        streak = max(0.0, math.sin(c.y * 1.9 + c.x * 1.1 + flow * 4.0)) ** 8
+        col = L.mix(col, WATER_LIGHT, 0.55 * streak * (1.0 - edge * 0.6))
+        if fine > 0.55 and deep > 0.2:
+            col = L.mix(col, WATER_GLINT, 0.35)
+        return col
+
+    attr = me.color_attributes.new("Col", "FLOAT_COLOR", "CORNER")
+    me.color_attributes.active_color = attr
+    for poly in me.polygons:
+        col = dab(poly.center)
+        for li in poly.loop_indices:
+            attr.data[li].color = (L._to_lin(col[0]), L._to_lin(col[1]), L._to_lin(col[2]), 1.0)
     L.set_mat(o, L.MAT_PAINTED)
     parts.append(o)
     for k in range(40):   # stones along the banks and a few in the water

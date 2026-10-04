@@ -33,8 +33,8 @@ const TEXT_NEEDS_TIER := "Erst „%s“"
 const TEXT_STRANGER := "Erst „Bekannt“ – einem Fremden traut man nur eine Bitte zu."
 const TEXT_NEEDS_TEACHING := "Dir fehlt das Wissen dafür."
 const TEXT_NEEDS_STANDING := "Dafür reicht dein Ansehen bei der Universität noch nicht."
-const TIERS: Array[StringName] = [&"stranger", &"acquainted", &"trusted", &"friend"]
-const TIER_WORDS: Array[String] = ["Fremd", "Bekannt", "Vertraut", "Befreundet"]
+const TIERS: Array[StringName] = RelationshipRules.TIERS
+const TIER_WORDS: Array[String] = RelationshipRules.WORDS
 const SPECIMEN_ITEMS: Array[StringName] = [&"specimen_jar", &"specimen_bundle", &"display_specimen", &"bone_specimen"]
 const COIN_ITEM := &"coin"
 const NEXT_DELIVERY := "next_delivery"
@@ -249,25 +249,20 @@ static func section_of(grave_id: String) -> StringName:
 	return &""
 
 
-## Index of a relationship tier (−1 = unknown / &"").
+## Index of a relationship tier (−1 = unknown / &"") – RelationshipRules (QA7: one source for tiers).
 static func tier_index(t: StringName) -> int:
-	return TIERS.find(t)
+	return RelationshipRules.tier_index(t)
 
 
 static func tier_word(t: StringName) -> String:
-	var i := tier_index(t)
-	return TIER_WORDS[i] if i >= 0 else String(t)
+	var w := RelationshipRules.word(t)
+	return w if w != "" else String(t)
 
 
-## Relationship tier of a value after the config thresholds (= RelationshipRules.tier, kept here so the
-## order rules do not depend on another package's stub).
+## Relationship tier of a value = RelationshipRules.tier (QA7: P2 was a stub when this was written;
+## a malformed threshold list now falls back to the default 15/40/70 there, as everywhere else).
 static func rel_tier(value: int, cfg: RelationshipConfig) -> StringName:
-	var thresholds := cfg.tier_thresholds if cfg != null else PackedInt32Array([15, 40, 70])
-	var out := TIERS[0]
-	for i: int in mini(thresholds.size(), TIERS.size() - 1):
-		if value >= thresholds[i]:
-			out = TIERS[i + 1]
-	return out
+	return RelationshipRules.tier(value, cfg)
 
 
 static func _flag(flag: StringName, state: Dictionary) -> bool:

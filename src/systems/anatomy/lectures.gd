@@ -16,6 +16,12 @@ const STAT_ATTENDED := &"lectures_attended"
 const FLAG_PIETY_USED_DAY := &"piety_used_day"
 const LECTURE_REL := 3
 const MORNING_HOUR := 6
+## QA7: Quast's schedule (data/npc/surgeon_schedule.tres) stands him at the lectern on a lecture night
+## through ScheduleEntry.today_flag – FLAG_NIGHT = the lecture day N (his 22:55 / 23:00 entries),
+## FLAG_AFTER = N + 1 (00:00 at the lectern, 00:30 home). Set on every hour_changed from the clock
+## alone (deterministic); without them he is home since 19:30 and nobody could ask for a lecture.
+const FLAG_NIGHT := &"lecture_night_day"
+const FLAG_AFTER := &"lecture_after_day"
 const REASON_FEE := "Honorar der Vorlesung"
 const REASON_LECTURE := "Anatomie-Vorlesung"
 const REASON_RUMOR := "Gerede: Licht bei Quast"
@@ -262,5 +268,16 @@ func _first(group: StringName) -> Node:
 
 
 func _on_hour_changed(day: int, hour: int) -> void:
+	sync_night_flags(day)
 	if hour >= MORNING_HOUR:
 		apply_morning(day)
+
+
+## FLAG_NIGHT = `day` on a lecture day (Tag % every_days == 0), FLAG_AFTER = `day` on the day after
+## one; other days leave both as they are (a stale value never equals the current day).
+func sync_night_flags(day: int) -> void:
+	var every := maxi(int(_cfg().lecture.get("every_days", 3)), 1)
+	if day > 0 and posmod(day, every) == 0 and int(GameState.get_flag(FLAG_NIGHT, -1)) != day:
+		GameState.set_flag(FLAG_NIGHT, day)
+	if day - 1 > 0 and posmod(day - 1, every) == 0 and int(GameState.get_flag(FLAG_AFTER, -1)) != day:
+		GameState.set_flag(FLAG_AFTER, day)

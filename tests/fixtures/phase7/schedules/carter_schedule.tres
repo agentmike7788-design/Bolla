@@ -112,6 +112,15 @@ path = PackedStringArray("v_road_in")
 visible = false
 region = &"village"
 
+[sub_resource type="Resource" id="Resource_qa7in"]
+script = ExtResource("1_7mkef")
+start_minute = 1315
+travel_minutes = 5
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_remise", "v_inn_door")
+region = &"village"
+
 [sub_resource type="Resource" id="Resource_o2bku"]
 script = ExtResource("1_7mkef")
 start_minute = 1320
@@ -131,4 +140,4 @@ region = &"village"
 script = ExtResource("2_u0cri")
 npc_id = &"carter"
 display_name = "Osric Faulhaber"
-entries = Array[ExtResource("1_7mkef")]([SubResource("Resource_p3w5k"), SubResource("Resource_as5ct"), SubResource("Resource_nfqci"), SubResource("Resource_yjv0w"), SubResource("Resource_qlrk4"), SubResource("Resource_k3elf"), SubResource("Resource_bn6f3"), SubResource("Resource_716km"), SubResource("Resource_xec6l"), SubResource("Resource_33eyg"), SubResource("Resource_aeqkj"), SubResource("Resource_6c31a"), SubResource("Resource_liwuv"), SubResource("Resource_vwqxb"), SubResource("Resource_o2bku"), SubResource("Resource_32g2u")])
+entries = Array[ExtResource("1_7mkef")]([SubResource("Resource_p3w5k"), SubResource("Resource_as5ct"), SubResource("Resource_nfqci"), SubResource("Resource_yjv0w"), SubResource("Resource_qlrk4"), SubResource("Resource_k3elf"), SubResource("Resource_bn6f3"), SubResource("Resource_716km"), SubResource("Resource_xec6l"), SubResource("Resource_33eyg"), SubResource("Resource_aeqkj"), SubResource("Resource_6c31a"), SubResource("Resource_liwuv"), SubResource("Resource_vwqxb"), SubResource("Resource_qa7in"), SubResource("Resource_o2bku"), SubResource("Resource_32g2u")])

@@ -21,7 +21,7 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_m247r"]
 script = ExtResource("1_dfj8i")
-start_minute = 840
+start_minute = 960
 travel_minutes = 5
 activity = &"walk"
 animation = &"walk"
@@ -30,7 +30,7 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_6bmho"]
 script = ExtResource("1_dfj8i")
-start_minute = 845
+start_minute = 965
 animation = &"talk"
 path = PackedStringArray("v_well")
 dialogue_id = &"v_grocer"
@@ -38,7 +38,7 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_cvoyc"]
 script = ExtResource("1_dfj8i")
-start_minute = 870
+start_minute = 990
 travel_minutes = 5
 activity = &"walk"
 animation = &"walk"
@@ -47,7 +47,7 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_yxotm"]
 script = ExtResource("1_dfj8i")
-start_minute = 875
+start_minute = 995
 activity = &"shop"
 animation = &"work"
 path = PackedStringArray("v_shop_window")
