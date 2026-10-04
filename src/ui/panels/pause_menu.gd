@@ -2,12 +2,14 @@ class_name PauseMenu
 extends UIPanel
 ## &"pause" – context {}. UIRoot pauses the SceneTree while it is open.
 ## Fortsetzen · Speichern (slot 1, only if SaveManager.can_save()) · Laden (slot 0 Autosave /
-## slot 1 Schnellspeicher with "Tag 2, 06:00") · Zum Titel · Beenden (both confirm once).
+## slot 1 Schnellspeicher with "Tag 2, 06:00") · Ton (volume sliders, AudioVolumeBox – user
+## settings, not the save) · Zum Titel · Beenden (both confirm once).
 
 const TEXT_TITLE := "Pause"
 const TEXT_RESUME := "Fortsetzen"
 const TEXT_SAVE := "Speichern (Schnellspeicher)"
 const TEXT_LOAD := "Laden …"
+const TEXT_SOUND := "Ton …"
 const TEXT_BACK := "Zurück"
 const TEXT_TITLE_SCREEN := "Zum Titel"
 const TEXT_QUIT := "Beenden"
@@ -29,6 +31,8 @@ const ACTION_QUIT := &"quit"
 var resume_button: Button
 var save_button: Button
 var load_button: Button
+var sound_button: Button
+var volume_box: AudioVolumeBox
 var title_button: Button
 var quit_button: Button
 var status_label: Label
@@ -37,6 +41,7 @@ var slot_buttons: Dictionary[int, Button] = {}
 
 var _main_box: VBoxContainer
 var _load_box: VBoxContainer
+var _sound_box: VBoxContainer
 ## Action waiting for its confirming second press (&"" = none).
 var _confirm: StringName = &""
 
@@ -50,6 +55,7 @@ func _build() -> void:
 	resume_button = _add_button(_main_box, TEXT_RESUME, request_close, &"AccentButton")
 	save_button = _add_button(_main_box, TEXT_SAVE, _on_save_pressed)
 	load_button = _add_button(_main_box, TEXT_LOAD, _show_load.bind(true))
+	sound_button = _add_button(_main_box, TEXT_SOUND, _show_sound.bind(true))
 	title_button = _add_button(_main_box, TEXT_TITLE_SCREEN, _on_confirmable.bind(ACTION_TITLE))
 	quit_button = _add_button(_main_box, TEXT_QUIT, _on_confirmable.bind(ACTION_QUIT))
 	box.add_child(_main_box)
@@ -59,6 +65,12 @@ func _build() -> void:
 	_add_button(_load_box, TEXT_BACK, _show_load.bind(false))
 	_load_box.visible = false
 	box.add_child(_load_box)
+	_sound_box = UIKit.vbox(10)
+	volume_box = AudioVolumeBox.new()
+	_sound_box.add_child(volume_box)
+	_add_button(_sound_box, TEXT_BACK, _show_sound.bind(false))
+	_sound_box.visible = false
+	box.add_child(_sound_box)
 	status_label = UIKit.label("", &"DimLabel", true)
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	status_label.custom_minimum_size.x = panel_width - 80.0
@@ -70,6 +82,7 @@ func _on_opened() -> void:
 	_confirm = &""
 	_set_status("")
 	_load_box.visible = false
+	_sound_box.visible = false
 	_main_box.visible = true
 
 
@@ -110,6 +123,16 @@ func _show_load(show_slots: bool) -> void:
 	_confirm = &""
 	_load_box.visible = show_slots
 	_main_box.visible = not show_slots
+	refresh()
+	focus_default()
+
+
+func _show_sound(show_sliders: bool) -> void:
+	_confirm = &""
+	_sound_box.visible = show_sliders
+	_main_box.visible = not show_sliders
+	if show_sliders:
+		volume_box.refresh()
 	refresh()
 	focus_default()
 

@@ -1,0 +1,504 @@
+[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=78 format=3]
+
+[ext_resource type="Script" path="res://src/systems/audio/audio_cue.gd" id="1_cue"]
+[ext_resource type="Script" path="res://src/systems/audio/audio_cue_library.gd" id="2_lib"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_amb_graveyard_day.ogg" id="s_amb_graveyard_day_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_amb_graveyard_dusk.ogg" id="s_amb_graveyard_dusk_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_amb_graveyard_night.ogg" id="s_amb_graveyard_night_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_amb_forest_edge.ogg" id="s_amb_forest_edge_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_amb_village_day.ogg" id="s_amb_village_day_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_amb_village_night.ogg" id="s_amb_village_night_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_amb_hut.ogg" id="s_amb_hut_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_amb_inn.ogg" id="s_amb_inn_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_amb_surgery.ogg" id="s_amb_surgery_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_amb_office.ogg" id="s_amb_office_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_amb_chapel.ogg" id="s_amb_chapel_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_amb_crypt.ogg" id="s_amb_crypt_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_amb_shed.ogg" id="s_amb_shed_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_amb_title.ogg" id="s_amb_title_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_loop_brook.ogg" id="s_loop_brook_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_loop_forge.ogg" id="s_loop_forge_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_bird_a_1.ogg" id="s_bird_a_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_bird_a_2.ogg" id="s_bird_a_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_bird_b_1.ogg" id="s_bird_b_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_bird_b_2.ogg" id="s_bird_b_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_bird_c_1.ogg" id="s_bird_c_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_bird_c_2.ogg" id="s_bird_c_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_crow_1.ogg" id="s_crow_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_crow_2.ogg" id="s_crow_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_owl_1.ogg" id="s_owl_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_owl_2.ogg" id="s_owl_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_owl_short.ogg" id="s_owl_short_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_chicken_1.ogg" id="s_chicken_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_chicken_2.ogg" id="s_chicken_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_chicken_3.ogg" id="s_chicken_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_hammer_far_1.ogg" id="s_hammer_far_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_hammer_far_2.ogg" id="s_hammer_far_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_cup_clink_1.ogg" id="s_cup_clink_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_cup_clink_2.ogg" id="s_cup_clink_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_cup_clink_3.ogg" id="s_cup_clink_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_drip_spot_1.ogg" id="s_drip_spot_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_drip_spot_2.ogg" id="s_drip_spot_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_drip_spot_3.ogg" id="s_drip_spot_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_wood_creak_1.ogg" id="s_wood_creak_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_wood_creak_2.ogg" id="s_wood_creak_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_page_turn_far.ogg" id="s_page_turn_far_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_fire_pop_1.ogg" id="s_fire_pop_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_fire_pop_2.ogg" id="s_fire_pop_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_wind_gust_1.ogg" id="s_wind_gust_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_wind_gust_2.ogg" id="s_wind_gust_2"]
+
+[sub_resource type="Resource" id="cue_amb_graveyard_day"]
+script = ExtResource("1_cue")
+id = &"amb_graveyard_day"
+streams = Array[AudioStream]([ExtResource("s_amb_graveyard_day_1")])
+bus = &"Ambience"
+volume_db = -10
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_graveyard_dusk"]
+script = ExtResource("1_cue")
+id = &"amb_graveyard_dusk"
+streams = Array[AudioStream]([ExtResource("s_amb_graveyard_dusk_1")])
+bus = &"Ambience"
+volume_db = -10
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_graveyard_night"]
+script = ExtResource("1_cue")
+id = &"amb_graveyard_night"
+streams = Array[AudioStream]([ExtResource("s_amb_graveyard_night_1")])
+bus = &"Ambience"
+volume_db = -11
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_forest_edge"]
+script = ExtResource("1_cue")
+id = &"amb_forest_edge"
+streams = Array[AudioStream]([ExtResource("s_amb_forest_edge_1")])
+bus = &"Ambience"
+volume_db = -11
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_village_day"]
+script = ExtResource("1_cue")
+id = &"amb_village_day"
+streams = Array[AudioStream]([ExtResource("s_amb_village_day_1")])
+bus = &"Ambience"
+volume_db = -11
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_village_night"]
+script = ExtResource("1_cue")
+id = &"amb_village_night"
+streams = Array[AudioStream]([ExtResource("s_amb_village_night_1")])
+bus = &"Ambience"
+volume_db = -11
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_hut"]
+script = ExtResource("1_cue")
+id = &"amb_hut"
+streams = Array[AudioStream]([ExtResource("s_amb_hut_1")])
+bus = &"Ambience"
+volume_db = -12
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_inn"]
+script = ExtResource("1_cue")
+id = &"amb_inn"
+streams = Array[AudioStream]([ExtResource("s_amb_inn_1")])
+bus = &"Ambience"
+volume_db = -11
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_surgery"]
+script = ExtResource("1_cue")
+id = &"amb_surgery"
+streams = Array[AudioStream]([ExtResource("s_amb_surgery_1")])
+bus = &"Ambience"
+volume_db = -14
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_office"]
+script = ExtResource("1_cue")
+id = &"amb_office"
+streams = Array[AudioStream]([ExtResource("s_amb_office_1")])
+bus = &"Ambience"
+volume_db = -13
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_chapel"]
+script = ExtResource("1_cue")
+id = &"amb_chapel"
+streams = Array[AudioStream]([ExtResource("s_amb_chapel_1")])
+bus = &"Ambience"
+volume_db = -12
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_crypt"]
+script = ExtResource("1_cue")
+id = &"amb_crypt"
+streams = Array[AudioStream]([ExtResource("s_amb_crypt_1")])
+bus = &"Ambience"
+volume_db = -12
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_shed"]
+script = ExtResource("1_cue")
+id = &"amb_shed"
+streams = Array[AudioStream]([ExtResource("s_amb_shed_1")])
+bus = &"Ambience"
+volume_db = -14
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_amb_title"]
+script = ExtResource("1_cue")
+id = &"amb_title"
+streams = Array[AudioStream]([ExtResource("s_amb_title_1")])
+bus = &"Ambience"
+volume_db = -12
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_loop_brook"]
+script = ExtResource("1_cue")
+id = &"loop_brook"
+streams = Array[AudioStream]([ExtResource("s_loop_brook_1")])
+bus = &"Ambience"
+volume_db = -8
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = true
+max_distance = 22
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_loop_forge"]
+script = ExtResource("1_cue")
+id = &"loop_forge"
+streams = Array[AudioStream]([ExtResource("s_loop_forge_1")])
+bus = &"Ambience"
+volume_db = -10
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = true
+max_distance = 16
+unit_size = 3
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_bird_a"]
+script = ExtResource("1_cue")
+id = &"bird_a"
+streams = Array[AudioStream]([ExtResource("s_bird_a_1"), ExtResource("s_bird_a_2")])
+bus = &"Ambience"
+volume_db = -17
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_bird_b"]
+script = ExtResource("1_cue")
+id = &"bird_b"
+streams = Array[AudioStream]([ExtResource("s_bird_b_1"), ExtResource("s_bird_b_2")])
+bus = &"Ambience"
+volume_db = -18
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_bird_c"]
+script = ExtResource("1_cue")
+id = &"bird_c"
+streams = Array[AudioStream]([ExtResource("s_bird_c_1"), ExtResource("s_bird_c_2")])
+bus = &"Ambience"
+volume_db = -19
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_crow"]
+script = ExtResource("1_cue")
+id = &"crow"
+streams = Array[AudioStream]([ExtResource("s_crow_1"), ExtResource("s_crow_2")])
+bus = &"Ambience"
+volume_db = -20
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_owl"]
+script = ExtResource("1_cue")
+id = &"owl"
+streams = Array[AudioStream]([ExtResource("s_owl_1"), ExtResource("s_owl_2")])
+bus = &"Ambience"
+volume_db = -14
+volume_jitter_db = 3
+pitch_jitter = 0.03
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_owl_short"]
+script = ExtResource("1_cue")
+id = &"owl_short"
+streams = Array[AudioStream]([ExtResource("s_owl_short_1")])
+bus = &"Ambience"
+volume_db = -16
+volume_jitter_db = 3
+pitch_jitter = 0.03
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_chicken"]
+script = ExtResource("1_cue")
+id = &"chicken"
+streams = Array[AudioStream]([ExtResource("s_chicken_1"), ExtResource("s_chicken_2"), ExtResource("s_chicken_3")])
+bus = &"Ambience"
+volume_db = -20
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_hammer_far"]
+script = ExtResource("1_cue")
+id = &"hammer_far"
+streams = Array[AudioStream]([ExtResource("s_hammer_far_1"), ExtResource("s_hammer_far_2")])
+bus = &"Ambience"
+volume_db = -18
+volume_jitter_db = 3
+pitch_jitter = 0.02
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_cup_clink"]
+script = ExtResource("1_cue")
+id = &"cup_clink"
+streams = Array[AudioStream]([ExtResource("s_cup_clink_1"), ExtResource("s_cup_clink_2"), ExtResource("s_cup_clink_3")])
+bus = &"Ambience"
+volume_db = -16
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_drip_spot"]
+script = ExtResource("1_cue")
+id = &"drip_spot"
+streams = Array[AudioStream]([ExtResource("s_drip_spot_1"), ExtResource("s_drip_spot_2"), ExtResource("s_drip_spot_3")])
+bus = &"Ambience"
+volume_db = -16
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_wood_creak"]
+script = ExtResource("1_cue")
+id = &"wood_creak"
+streams = Array[AudioStream]([ExtResource("s_wood_creak_1"), ExtResource("s_wood_creak_2")])
+bus = &"Ambience"
+volume_db = -18
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_page_turn_far"]
+script = ExtResource("1_cue")
+id = &"page_turn_far"
+streams = Array[AudioStream]([ExtResource("s_page_turn_far_1")])
+bus = &"Ambience"
+volume_db = -20
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_fire_pop"]
+script = ExtResource("1_cue")
+id = &"fire_pop"
+streams = Array[AudioStream]([ExtResource("s_fire_pop_1"), ExtResource("s_fire_pop_2")])
+bus = &"Ambience"
+volume_db = -18
+volume_jitter_db = 3
+pitch_jitter = 0.06
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[sub_resource type="Resource" id="cue_wind_gust"]
+script = ExtResource("1_cue")
+id = &"wind_gust"
+streams = Array[AudioStream]([ExtResource("s_wind_gust_1"), ExtResource("s_wind_gust_2")])
+bus = &"Ambience"
+volume_db = -14
+volume_jitter_db = 3
+pitch_jitter = 0.04
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
+[resource]
+script = ExtResource("2_lib")
+library_id = &"ambience"
+cues = Array[ExtResource("1_cue")]([SubResource("cue_amb_graveyard_day"), SubResource("cue_amb_graveyard_dusk"), SubResource("cue_amb_graveyard_night"), SubResource("cue_amb_forest_edge"), SubResource("cue_amb_village_day"), SubResource("cue_amb_village_night"), SubResource("cue_amb_hut"), SubResource("cue_amb_inn"), SubResource("cue_amb_surgery"), SubResource("cue_amb_office"), SubResource("cue_amb_chapel"), SubResource("cue_amb_crypt"), SubResource("cue_amb_shed"), SubResource("cue_amb_title"), SubResource("cue_loop_brook"), SubResource("cue_loop_forge"), SubResource("cue_bird_a"), SubResource("cue_bird_b"), SubResource("cue_bird_c"), SubResource("cue_crow"), SubResource("cue_owl"), SubResource("cue_owl_short"), SubResource("cue_chicken"), SubResource("cue_hammer_far"), SubResource("cue_cup_clink"), SubResource("cue_drip_spot"), SubResource("cue_wood_creak"), SubResource("cue_page_turn_far"), SubResource("cue_fire_pop"), SubResource("cue_wind_gust")])

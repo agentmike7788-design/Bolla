@@ -1,0 +1,176 @@
+[gd_resource type="Resource" script_class="AudioEventMap" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/audio/audio_event_map.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+signal_cues = Dictionary[String, String]({
+"corpse_buried": "dirt_pour",
+"grave_stone_set": "stone_set",
+"payment_received": "coins",
+"coins_spent": "coins",
+"shop_trade": "coins",
+"trader_trade": "coins",
+"obstacle_cleared": "rustle",
+"section_unlocked": "ui_reward",
+"cemetery_completed": "chapter",
+"chapter_completed": "chapter",
+"decor_changed@2=true": "build_place",
+"decor_changed@2=false": "build_remove",
+"build_mode_changed@0=true": "ui_open",
+"build_mode_changed@0=false": "ui_close",
+"ghost_spoke": "ghost_appear",
+"ghost_spoke@1=content": "ghost_content",
+"ghost_spoke@1=restless": "ghost_restless",
+"ghost_night_changed@0=true": "ghost_night",
+"corpse_harvested": "cloth",
+"story_corpse_arrived": "small_bell",
+"clue_found": "quill",
+"insight_unlocked": "ui_reward",
+"station_built": "hammer",
+"building_upgraded": "hammer",
+"workshop_job_changed@0=forge@2=started": "bellows",
+"workshop_job_changed@0=mason@2=started": "chisel",
+"workshop_job_changed@0=loom@2=started": "loom",
+"workshop_job_changed@0=pult@2=started": "quill",
+"workshop_job_changed@2=started": "hammer",
+"workshop_job_changed@2=ready": "ui_notify",
+"workshop_job_changed@2=collected": "pickup",
+"resource_gathered": "pickup",
+"tool_tier_changed": "anvil",
+"stone_order_changed@2=ready": "chisel",
+"bones_lifted": "dirt_pour",
+"bones_reinterred": "dirt_pour",
+"funeral_held": "small_bell",
+"devotion_held": "small_bell",
+"shed_supply_moved": "crate",
+"screen_fade_requested": "door_open",
+"interior_changed": "door_close",
+"region_changed": "travel",
+"villager_remarked": "remark",
+"order_changed@1=offered": "ui_notify",
+"order_changed@1=accepted": "quill",
+"order_changed@1=completed": "ui_reward",
+"specimen_changed@1=taken": "glass_seal",
+"specimen_changed@1=sealed": "glass_seal",
+"specimen_changed@1=sold": "coins",
+"specimen_changed@1=displayed": "putdown",
+"specimen_changed@1=returned": "dirt_pour",
+"ground_consecrated": "small_bell",
+"collection_set_completed": "ui_reward",
+"lecture_held": "ui_page",
+"cause_deduced": "quill",
+"notification_requested@1=warning": "ui_error",
+"notification_requested@1=reward": "ui_reward",
+"notification_requested@1=info": "ui_notify",
+"dialogue_requested": "ui_open",
+"dialogue_ended": "ui_close",
+"game_saved": "quill"
+})
+action_keywords = Dictionary[String, StringName]({
+"grab ausheben": &"dig",
+"altes grab heben": &"dig",
+"bestatten": &"dirt_pour",
+"gebeine beisetzen": &"dirt_pour",
+"präparat beisetzen": &"dig",
+"zuschütten": &"dirt_pour",
+"ausgraben": &"dig",
+"lehm": &"dig",
+"inschrift": &"chisel",
+"zierde": &"chisel",
+"stein setzen": &"stone_set",
+"waschen": &"wash",
+"totenhemd": &"cloth",
+"aufbahren": &"cloth",
+"leichentuch": &"cloth",
+"räuchern": &"smoke_hiss",
+"ohne hinzusehen": &"anatomy_tool",
+"über das gesicht": &"anatomy_tool",
+"in leinen": &"anatomy_tool",
+"zähne": &"anatomy_tool",
+"zopf": &"snip",
+"einlegen": &"glass_seal",
+"schaupräparat": &"glass_seal",
+"ansetzen": &"glass_seal",
+"knochenpräparat": &"scrub",
+"begutachten": &"cloth",
+"untersuch": &"cloth",
+"durchsehen": &"cloth",
+"ansehen": &"cloth",
+"prüfen": &"cloth",
+"durchsuchen": &"cloth",
+"fällen": &"chop",
+"roden": &"chop",
+"zurückschneiden": &"snip",
+"durchschneiden": &"snip",
+"kräuter": &"snip",
+"beeren": &"rustle",
+"flachs": &"rustle",
+"erz abbauen": &"pick_stone",
+"bruchstein": &"pick_stone",
+"werkstein": &"pick_stone",
+"brechen": &"pick_stone",
+"räumen": &"crate",
+"aufschließen": &"chest_open",
+"reparieren": &"hammer",
+"laub": &"rustle",
+"unkraut": &"rustle",
+"aussegnung": &"small_bell",
+"andacht": &"small_bell",
+"holen": &"crate",
+"bauen": &"hammer",
+"herstellen": &"saw",
+"setzen": &"hammer",
+"sammeln": &"rustle"
+})
+action_animation_cues = Dictionary[StringName, StringName]({
+&"dig": &"dig",
+&"interact": &"cloth",
+&"push_cart": &"crate",
+&"work": &"hammer"
+})
+work_intervals = Dictionary[StringName, float]({
+&"anatomy_tool": 2.4,
+&"chisel": 0.55,
+&"chop": 0.85,
+&"cloth": 1.6,
+&"crate": 1.4,
+&"dig": 0.95,
+&"dirt_pour": 1.5,
+&"glass_seal": 2.5,
+&"hammer": 0.6,
+&"pick_stone": 0.8,
+&"rustle": 0.9,
+&"saw": 1.05,
+&"scrub": 1.0,
+&"small_bell": 5.0,
+&"smoke_hiss": 1.6,
+&"snip": 0.9,
+&"stone_set": 1.6,
+&"wash": 1.4
+})
+work_interval = 0.9
+panel_open_cues = Dictionary[StringName, StringName]({
+&"chest": &"chest_open",
+&"day_summary": &"sleep",
+&"grave_register": &"ui_page",
+&"journal": &"ui_page",
+&"shop": &"coins",
+&"trader": &"coins"
+})
+panel_close_cues = Dictionary[StringName, StringName]({
+&"chest": &"chest_close",
+&"day_summary": &"",
+&"journal": &"ui_page"
+})
+panel_open = &"ui_open"
+panel_close = &"ui_close"
+button_press = &"ui_click"
+button_hover = &"ui_hover"
+page_panels = Array[StringName]([&"journal", &"grave_register"])
+page_cue = &"ui_page"
+pickup_cue = &"pickup"
+putdown_cue = &"putdown"
+corpse_pickup_cue = &"cloth"
+corpse_putdown_cue = &"corpse_down"
+hook_aliases = Dictionary[StringName, StringName]({})

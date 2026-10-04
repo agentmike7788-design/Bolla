@@ -1,0 +1,251 @@
+[gd_resource type="Resource" script_class="AudioConfig" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/systems/audio/audio_config.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/audio/audio_cue_library.gd" id="2_libscript"]
+[ext_resource type="Resource" path="res://data/audio/cues_sfx.tres" id="lib_sfx"]
+[ext_resource type="Resource" path="res://data/audio/cues_ui.tres" id="lib_ui"]
+[ext_resource type="Resource" path="res://data/audio/cues_ambience.tres" id="lib_ambience"]
+[ext_resource type="Resource" path="res://data/audio/cues_music.tres" id="lib_music"]
+
+[resource]
+script = ExtResource("1")
+libraries = Array[ExtResource("2_libscript")]([ExtResource("lib_sfx"), ExtResource("lib_ui"), ExtResource("lib_ambience"), ExtResource("lib_music")])
+profile_dir = "res://data/audio/ambience"
+event_map_path = "res://data/audio/audio_events.tres"
+dawn_start = 300
+day_start = 450
+dusk_start = 1110
+night_start = 1260
+outdoor_profiles = Dictionary[String, StringName]({
+"graveyard/dawn": &"graveyard_dawn",
+"graveyard/day": &"graveyard_day",
+"graveyard/dusk": &"graveyard_dusk",
+"graveyard/night": &"graveyard_night",
+"village/dawn": &"village_dawn",
+"village/day": &"village_day",
+"village/dusk": &"village_dusk",
+"village/night": &"village_night"
+})
+room_profiles = Dictionary[StringName, StringName]({
+&"chapel": &"chapel",
+&"crypt": &"crypt",
+&"hut": &"hut",
+&"inn": &"inn",
+&"office": &"office",
+&"shed": &"shed",
+&"surgery": &"surgery"
+})
+zone_profiles = Array[Dictionary]([{
+"phases": PackedStringArray("dawn", "day", "dusk"),
+"profile": &"forest_edge",
+"rect": Rect2(-11.5, -20, 9.5, 7.5),
+"region": &"graveyard"
+}, {
+"phases": PackedStringArray("dawn", "day", "dusk"),
+"profile": &"forest_edge",
+"rect": Rect2(-24, -46, 11.5, 80),
+"region": &"graveyard"
+}])
+title_profile = &"title"
+ambience_fade = 2.5
+step_cues = Dictionary[StringName, StringName]({
+&"earth": &"step_earth",
+&"grass": &"step_grass",
+&"stone": &"step_stone",
+&"wood": &"step_wood"
+})
+region_surfaces = Dictionary[StringName, StringName]({
+&"graveyard": &"grass",
+&"village": &"grass"
+})
+room_surfaces = Dictionary[StringName, StringName]({
+&"chapel": &"stone",
+&"crypt": &"stone",
+&"hut": &"wood",
+&"inn": &"wood",
+&"office": &"wood",
+&"shed": &"wood",
+&"surgery": &"wood"
+})
+surface_zones = Array[Dictionary]([{
+"rect": Rect2(21.5, -12, 10, 21.6),
+"region": &"graveyard",
+"surface": &"stone"
+}, {
+"line": PackedVector2Array(1.2, 13, 0.8, 8, 0, 4, -0.8, 0.5, -2.2, -2.8, -4.2, -4.6),
+"region": &"graveyard",
+"surface": &"stone",
+"width": 1.7
+}, {
+"line": PackedVector2Array(1.1, 9.2, 1.2, 12.2, 1.9, 15.5, 3.3, 19, 6.2, 22.2, 9.1, 25.4, 12, 28.6, 15, 31.9, 17.6, 34.8),
+"region": &"graveyard",
+"surface": &"earth",
+"width": 2.4
+}, {
+"rect": Rect2(-28.5, 0.3, 5, 2.4),
+"region": &"village",
+"surface": &"wood"
+}, {
+"rect": Rect2(-2.8, -12.4, 5.6, 3),
+"region": &"village",
+"surface": &"stone"
+}, {
+"circle": Vector3(0, -3, 4.6),
+"region": &"village",
+"surface": &"stone"
+}, {
+"line": PackedVector2Array(-20.5, -9.3, 20.5, -9.3),
+"region": &"village",
+"surface": &"stone",
+"width": 2.4
+}, {
+"line": PackedVector2Array(0, -7.2, 0, -9.4),
+"region": &"village",
+"surface": &"stone",
+"width": 2.6
+}, {
+"line": PackedVector2Array(3.8, -2.2, 10, -2, 14.8, -2),
+"region": &"village",
+"surface": &"stone",
+"width": 2.2
+}, {
+"line": PackedVector2Array(-3.8, -2, -9, -0.4, -12.6, 0.6, -17.5, 1.6, -22.6, 1.5),
+"region": &"village",
+"surface": &"stone",
+"width": 2.2
+}, {
+"line": PackedVector2Array(-12, -9.3, -12.6, 0.6),
+"region": &"village",
+"surface": &"stone",
+"width": 1.8
+}, {
+"line": PackedVector2Array(12, -9.3, 12.6, -2),
+"region": &"village",
+"surface": &"stone",
+"width": 1.8
+}, {
+"line": PackedVector2Array(-32, 1.5, -28.8, 1.5),
+"region": &"village",
+"surface": &"earth",
+"width": 1.8
+}, {
+"line": PackedVector2Array(-21.6, 2.2, -22.6, 6, -23.4, 8.5),
+"region": &"village",
+"surface": &"earth",
+"width": 1.8
+}, {
+"line": PackedVector2Array(-15.5, 1.8, -13.6, 7),
+"region": &"village",
+"surface": &"earth",
+"width": 1.8
+}, {
+"line": PackedVector2Array(-3, 1.2, -6, 5.6, -6, 10.2),
+"region": &"village",
+"surface": &"earth",
+"width": 1.8
+}, {
+"line": PackedVector2Array(2.8, 1, 6, 5.6, 6, 10),
+"region": &"village",
+"surface": &"earth",
+"width": 1.8
+}, {
+"line": PackedVector2Array(10, -2, 12.5, 4, 15.2, 8),
+"region": &"village",
+"surface": &"earth",
+"width": 1.8
+}, {
+"line": PackedVector2Array(-16.4, -2, -12.8, -1),
+"region": &"village",
+"surface": &"earth",
+"width": 1.8
+}, {
+"line": PackedVector2Array(-20.5, -9.3, -22.5, -11.5),
+"region": &"village",
+"surface": &"earth",
+"width": 1.8
+}, {
+"line": PackedVector2Array(20.5, -9.3, 23, -10.5),
+"region": &"village",
+"surface": &"earth",
+"width": 1.8
+}])
+player_step_length = 1.1
+npc_step_length = 0.85
+teleport_distance = 2.5
+npc_step_volume_db = -5.0
+npc_step_range = 14.0
+npc_step_voices = 3
+music_tracks = Dictionary[StringName, PackedStringArray]({
+&"day": PackedStringArray("mus_day"),
+&"night": PackedStringArray("mus_night"),
+&"title": PackedStringArray("mus_title"),
+&"village": PackedStringArray("mus_village", "mus_day")
+})
+music_pause_min = 45.0
+music_pause_max = 120.0
+music_first_delay = 8.0
+music_fade_out = 4.0
+emitters = Array[Dictionary]([{
+"cue": &"loop_brook",
+"pos": Vector3(-26.2, 0.3, -16),
+"region": &"village"
+}, {
+"cue": &"loop_brook",
+"pos": Vector3(-26.2, 0.3, -1),
+"region": &"village"
+}, {
+"cue": &"loop_brook",
+"pos": Vector3(-26.2, 0.3, 13),
+"region": &"village"
+}, {
+"cue": &"loop_forge",
+"hours": Vector2i(7, 19),
+"pos": Vector3(-19.5, 0.8, -2),
+"region": &"village"
+}])
+spot_emitters = Array[Dictionary]([{
+"cue": &"anvil",
+"hours": Vector2i(7, 18),
+"max": 11.0,
+"min": 4.0,
+"pos": Vector3(-19.5, 1, -2),
+"region": &"village"
+}, {
+"cue": &"chicken",
+"hours": Vector2i(6, 20),
+"max": 34.0,
+"min": 12.0,
+"pos": Vector3(-6, 0.3, 16),
+"region": &"village",
+"volume_db": 6.0
+}, {
+"cue": &"chicken",
+"hours": Vector2i(6, 20),
+"max": 40.0,
+"min": 15.0,
+"pos": Vector3(6, 0.3, 16),
+"region": &"village",
+"volume_db": 6.0
+}])
+cart_npc = &"carter"
+cart_cue = &"cart_roll"
+bell_cue = &"church_bell"
+bell_hours = PackedInt32Array(6, 12, 18)
+bell_strikes = 3
+bell_interval = 2.6
+bell_region = &"village"
+bell_position = Vector3(0, 12, -18)
+bell_far_db = -12.0
+listener_height = 1.6
+pool_2d = 12
+pool_3d = 10
+pool_ui = 4
+settle_seconds = 0.8
+default_volumes = Dictionary[StringName, float]({
+&"Ambience": 0.8,
+&"Master": 0.8,
+&"Music": 0.55,
+&"SFX": 0.9,
+&"UI": 0.7
+})
+settings_path = "user://settings.cfg"

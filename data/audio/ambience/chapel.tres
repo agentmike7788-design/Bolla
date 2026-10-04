@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AudioAmbienceProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/audio/audio_ambience_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"chapel"
+bed = &"amb_chapel"
+bed_volume_db = 0.0
+spots = Array[Dictionary]([{
+"cue": &"drip_spot",
+"max": 60.0,
+"min": 25.0,
+"volume_db": -6.0
+}])
+reverb_wet = 0.28
+reverb_room_size = 0.85

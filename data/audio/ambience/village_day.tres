@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="AudioAmbienceProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/audio/audio_ambience_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"village_day"
+bed = &"amb_village_day"
+bed_volume_db = 0.0
+spots = Array[Dictionary]([{
+"cue": &"bird_b",
+"max": 40.0,
+"min": 15.0
+}, {
+"cue": &"bird_a",
+"max": 45.0,
+"min": 20.0
+}, {
+"cue": &"hammer_far",
+"hours": Vector2i(7, 18),
+"max": 60.0,
+"min": 25.0
+}])
+reverb_wet = 0.0
+reverb_room_size = 0.5

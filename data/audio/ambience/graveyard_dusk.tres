@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="AudioAmbienceProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/audio/audio_ambience_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"graveyard_dusk"
+bed = &"amb_graveyard_dusk"
+bed_volume_db = 0.0
+spots = Array[Dictionary]([{
+"cue": &"crow",
+"max": 60.0,
+"min": 25.0
+}, {
+"cue": &"bird_b",
+"max": 45.0,
+"min": 20.0
+}, {
+"cue": &"owl_short",
+"hours": Vector2i(19, 24),
+"max": 110.0,
+"min": 50.0
+}])
+reverb_wet = 0.0
+reverb_room_size = 0.5

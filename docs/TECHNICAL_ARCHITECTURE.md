@@ -91,6 +91,15 @@ tools/godot_run.sh -s res://src/ui/tools/icon_renderer.gd                       
 ```
 Hinweis: Der Szenen-Builder braucht einen echten Renderer (nicht `--headless`), weil MultiMesh-Daten sonst verworfen werden.
 
+### Audio (G7 Änderungsrunde 1)
+
+- **Autoload `Audio`** (`src/systems/audio/audio_manager.gd`, `PROCESS_MODE_ALWAYS`): Busse `Master` (Hard-Limiter) → `Music`, `Ambience`, `SFX` (Raumhall, nur in Kapelle/Gruft/Räumen aktiv), `UI` (`default_bus_layout.tres`; fehlende Busse legt der Manager an). Module: `AudioVoices` (feste Pools 12 × 2D, 10 × 3D, 4 × UI; pro Cue Cooldown + `max_voices`), `AudioAmbience` (zwei Beds mit Überblendung, Spots um den Hörer, Hall pro Profil), `AudioMusic` (ein Stück, dann 45–120 s Pause; Kontextwechsel blendet aus), `AudioWorld` (AudioListener3D am Totengräber – die Kamera hängt 20 m entfernt –, Schritte nach Untergrund, Dorfbewohner-Schritte positional ≤ 14 m / max. 3, Osrics Karren, Bach/Esse/Amboss/Hühner positional, Glocke 6/12/18 Uhr), `AudioEvents` (EventBus → Cue, TimedAction-Arbeitsgeräusch per Stichwort/Animation, alle Buttons/Panels über `SceneTree.node_added`, `MorgueTable.sound_hook`, getragene Leiche). Nur Darstellung – ändert keinen Spielzustand.
+- **Daten:** `data/audio/audio_config.tres` (Profile je Region/Tageszeit/Raum/Zone, Untergrund-Zonen, Musik, Emitter, Glocke, Stimmen, Standard-Lautstärken), `audio_events.tres` (Signal-Regeln `signal@index=wert`, Aktions-Stichwörter), `ambience/*.tres` (17 Profile), `cues_*.tres` (vom Generator geschrieben; Streams als echte ext_resources – eine `PackedStringArray` mit res://-Pfaden leert der 4.7-Export).
+- **Lautstärke:** Pausemenü → „Ton …“ (5 Regler), gespeichert in `user://settings.cfg` `[audio]` – nicht im Spielstand.
+- **Klänge:** `python tools/audio/build_audio.py` (numpy, scipy, soundfile; deterministisch) → `assets/audio/**/ph_*.ogg` (Vorbis, 6,1 MiB); `python tools/audio/make_preview.py` → Hörprobe. Danach `godot --headless --path . --import`.
+- **Web (Preset „Web“, ohne Threads):** Godot 4.7 hat neben dem AudioWorklet einen **ScriptProcessor-Treiber**. Gesetzt: `audio/driver/driver.web="ScriptProcessor"` (Mischen ohne AudioWorklet; ohne Threads mischt auch der Worklet-Treiber auf dem Hauptthread, also kein Nachteil) und `audio/general/default_playback_type.web=0` (Stream statt „Sample“: die Sample-Wiedergabe wartet auf das Positions-Worklet und bleibt stumm, wenn es blockiert ist). Dazu im Preset `html/head_include` ein Platzhalter für `audioWorklet`, falls der Browser es gar nicht anbietet (unsicherer Kontext) – sonst bricht `GodotAudio.init` mit TypeError ab. Geprüft mit Chromium (Playwright): normal, `addModule` abgelehnt, `audioWorklet` entfernt → jeweils hörbarer Pegel (Peak ≈ 0,14–0,16 am Ausgang); mit Standard-Einstellungen sind die beiden blockierten Fälle stumm.
+- **Budget:** keine Knoten-Neuerzeugung beim Abspielen, ≤ 26 Einmal-Stimmen + 2 Beds + 1 Musik + ≤ 5 Emitter + Karren; Polling 4 Hz (Kontext), Schritte/Emitter pro Frame ohne Allokation.
+
 ## 5. Tests
 
 ```

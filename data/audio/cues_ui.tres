@@ -1,0 +1,140 @@
+[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=22 format=3]
+
+[ext_resource type="Script" path="res://src/systems/audio/audio_cue.gd" id="1_cue"]
+[ext_resource type="Script" path="res://src/systems/audio/audio_cue_library.gd" id="2_lib"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_click_1.ogg" id="s_ui_click_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_click_2.ogg" id="s_ui_click_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_hover.ogg" id="s_ui_hover_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_open.ogg" id="s_ui_open_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_close.ogg" id="s_ui_close_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_error.ogg" id="s_ui_error_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_page_1.ogg" id="s_ui_page_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_page_2.ogg" id="s_ui_page_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_page_3.ogg" id="s_ui_page_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_notify.ogg" id="s_ui_notify_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_reward.ogg" id="s_ui_reward_1"]
+
+[sub_resource type="Resource" id="cue_ui_click"]
+script = ExtResource("1_cue")
+id = &"ui_click"
+streams = Array[AudioStream]([ExtResource("s_ui_click_1"), ExtResource("s_ui_click_2")])
+bus = &"UI"
+volume_db = -14
+volume_jitter_db = 1.5
+pitch_jitter = 0.04
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.03
+max_voices = 2
+
+[sub_resource type="Resource" id="cue_ui_hover"]
+script = ExtResource("1_cue")
+id = &"ui_hover"
+streams = Array[AudioStream]([ExtResource("s_ui_hover_1")])
+bus = &"UI"
+volume_db = -24
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.06
+max_voices = 1
+
+[sub_resource type="Resource" id="cue_ui_open"]
+script = ExtResource("1_cue")
+id = &"ui_open"
+streams = Array[AudioStream]([ExtResource("s_ui_open_1")])
+bus = &"UI"
+volume_db = -14
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.1
+max_voices = 2
+
+[sub_resource type="Resource" id="cue_ui_close"]
+script = ExtResource("1_cue")
+id = &"ui_close"
+streams = Array[AudioStream]([ExtResource("s_ui_close_1")])
+bus = &"UI"
+volume_db = -15
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.1
+max_voices = 2
+
+[sub_resource type="Resource" id="cue_ui_error"]
+script = ExtResource("1_cue")
+id = &"ui_error"
+streams = Array[AudioStream]([ExtResource("s_ui_error_1")])
+bus = &"UI"
+volume_db = -13
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.25
+max_voices = 2
+
+[sub_resource type="Resource" id="cue_ui_page"]
+script = ExtResource("1_cue")
+id = &"ui_page"
+streams = Array[AudioStream]([ExtResource("s_ui_page_1"), ExtResource("s_ui_page_2"), ExtResource("s_ui_page_3")])
+bus = &"UI"
+volume_db = -13
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.08
+max_voices = 2
+
+[sub_resource type="Resource" id="cue_ui_notify"]
+script = ExtResource("1_cue")
+id = &"ui_notify"
+streams = Array[AudioStream]([ExtResource("s_ui_notify_1")])
+bus = &"UI"
+volume_db = -18
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.4
+max_voices = 2
+
+[sub_resource type="Resource" id="cue_ui_reward"]
+script = ExtResource("1_cue")
+id = &"ui_reward"
+streams = Array[AudioStream]([ExtResource("s_ui_reward_1")])
+bus = &"UI"
+volume_db = -15
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.4
+max_voices = 2
+
+[resource]
+script = ExtResource("2_lib")
+library_id = &"ui"
+cues = Array[ExtResource("1_cue")]([SubResource("cue_ui_click"), SubResource("cue_ui_hover"), SubResource("cue_ui_open"), SubResource("cue_ui_close"), SubResource("cue_ui_error"), SubResource("cue_ui_page"), SubResource("cue_ui_notify"), SubResource("cue_ui_reward")])
