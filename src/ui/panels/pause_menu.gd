@@ -25,6 +25,9 @@ const SLOT_NAMES: Dictionary[int, String] = {0: "Autosave", 1: "Schnellspeicher"
 const SAVE_SLOT := 1
 const ACTION_TITLE := &"title"
 const ACTION_QUIT := &"quit"
+## G7 Änderungsrunde 1: „Karte" opens the map in place of the pause menu (UIRoot, action &"map").
+const TEXT_MAP := "Karte [M]"
+const ACTION_MAP := &"map"
 
 @export var panel_width: float = 520.0
 
@@ -35,6 +38,7 @@ var sound_button: Button
 var volume_box: AudioVolumeBox
 var title_button: Button
 var quit_button: Button
+var map_button: Button
 var status_label: Label
 ## slot -> Button
 var slot_buttons: Dictionary[int, Button] = {}
@@ -53,6 +57,7 @@ func _build() -> void:
 	_make_header(box, TEXT_TITLE, false)
 	_main_box = UIKit.vbox(10)
 	resume_button = _add_button(_main_box, TEXT_RESUME, request_close, &"AccentButton")
+	map_button = _add_button(_main_box, TEXT_MAP, action_requested.emit.bind(ACTION_MAP))
 	save_button = _add_button(_main_box, TEXT_SAVE, _on_save_pressed)
 	load_button = _add_button(_main_box, TEXT_LOAD, _show_load.bind(true))
 	sound_button = _add_button(_main_box, TEXT_SOUND, _show_sound.bind(true))

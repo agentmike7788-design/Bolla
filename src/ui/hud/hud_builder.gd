@@ -36,6 +36,8 @@ static func build_clock_panel(hud: GameHud) -> void:
 	hud.journal_badge.add_child(hud.journal_label)
 	hud.journal_badge.visible = false
 	row.add_child(hud.journal_badge)
+	hud.map_badge = MapBadge.new()
+	row.add_child(hud.map_badge)
 	box.add_child(row)
 	box.add_child(UIKit.separator())
 	var objective_row := UIKit.hbox(10)

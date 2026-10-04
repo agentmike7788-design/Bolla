@@ -1383,6 +1383,8 @@ func _contexts() -> Dictionary[StringName, Dictionary]:
 		&"pult": {"station": &"pult", "inventory": inv, "player": player},
 		&"collection": {"inventory": inv},
 		&"deduction": {"corpse_id": "corpse_0001"},
+		# G7 Änderungsrunde 1: the map opens without any system, too.
+		&"map": {},
 	}
 
 

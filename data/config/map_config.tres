@@ -1,0 +1,173 @@
+[gd_resource type="Resource" script_class="MapConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/map/map_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+layouts = Dictionary[StringName, String]({
+&"graveyard": "res://data/world/graveyard_layout.json",
+&"village": "res://data/world/village_layout.json"
+})
+tab_titles = Dictionary[StringName, String]({
+&"graveyard": "Friedhof",
+&"village": "Hollerbrück"
+})
+map_titles = Dictionary[StringName, String]({
+&"graveyard": "Der Friedhof am Hügel",
+&"village": "Hollerbrück"
+})
+views = Dictionary[StringName, Rect2]({
+&"graveyard": Rect2(-18, -34, 54, 62),
+&"village": Rect2(-37, -28, 68, 48)
+})
+tab_flags = Dictionary[StringName, StringName]({
+&"village": &"village_open"
+})
+step_metres = 0.75
+scale_steps = 10
+scale_text = "%d Schritt"
+labels = Dictionary[String, String]({
+"board": "Gemeindetafel",
+"bridge": "Holderbrücke",
+"cottage_dorn": "Kate Dorn",
+"cottage_hagedorn": "Kate Hagedorn",
+"house_brandt": "Wohnhaus",
+"house_kehr": "Wohnhaus",
+"house_ott": "Wohnhaus",
+"house_sieber": "Wohnhaus",
+"hut": "Hütte",
+"linden": "Linde",
+"notice_board": "Friedhofstafel",
+"obs_c_gate": "Kirchpforte",
+"road_exit": "Wegstein",
+"shrine": "Bildstock",
+"site_chapel": "Kapelle",
+"site_crypt": "Gruft",
+"site_shed": "Schuppen",
+"v_church": "Kirche",
+"v_inn": "Holderkrug",
+"v_inn2": "Zum Stumpf",
+"v_office": "Amtshaus",
+"v_remise": "Remise",
+"v_shop": "Krämerladen",
+"v_smithy": "Schmiede",
+"v_surgery": "Wundarztstube",
+"wash_stones": "Waschplatz",
+"well": "Brunnen"
+})
+fallback_building_label = "Haus"
+label_at = Dictionary[String, Vector2]({
+"anger": Vector2(0, 2.4),
+"churchyard": Vector2(4.75, -31.2),
+"elder": Vector2(-6.75, -16.6),
+"north": Vector2(4.75, -13.6),
+"road_village": Vector2(-33.2, -0.7),
+"workyard": Vector2(-1.4, -10.4),
+"yard": Vector2(7.4, -5.8)
+})
+feature_labels = Dictionary[String, String]({
+"anger": "Anger",
+"brook": "Hollerbach",
+"forest": "Wald",
+"road": "Kutschweg",
+"road_village": "← Zum Friedhof",
+"workyard": "Werkhof"
+})
+village_landmarks = Dictionary[String, StringName]({
+"board": &"board",
+"bridge": &"bridge",
+"linden": &"linden",
+"shrine": &"shrine",
+"wash_stones": &"wash",
+"well": &"well"
+})
+building_glyphs = Dictionary[String, StringName]({
+"site_chapel": &"cross",
+"site_crypt": &"crypt",
+"v_church": &"cross",
+"v_inn": &"mug",
+"v_office": &"seal",
+"v_shop": &"scales",
+"v_smithy": &"anvil",
+"v_surgery": &"bowl"
+})
+hidden_sections = PackedStringArray("linden")
+unknown_section_text = "?"
+buildings_flag = &"buildings_open"
+room_places = Dictionary[StringName, String]({
+&"chapel": "site_chapel",
+&"crypt": "site_crypt",
+&"hut": "hut",
+&"inn": "v_inn",
+&"office": "v_office",
+&"shed": "site_shed",
+&"surgery": "v_surgery"
+})
+room_regions = Dictionary[StringName, StringName]({
+&"chapel": &"graveyard",
+&"crypt": &"graveyard",
+&"hut": &"graveyard",
+&"inn": &"village",
+&"office": &"village",
+&"shed": &"graveyard",
+&"surgery": &"village"
+})
+room_radius = 30.0
+npc_places = Dictionary[StringName, String]({
+&"carter": "v_remise",
+&"council": "board",
+&"grocer": "v_shop",
+&"innkeeper": "v_inn",
+&"mayor": "v_office",
+&"oldwoman": "cottage_hagedorn",
+&"priest": "v_church",
+&"smith": "v_smithy",
+&"surgeon": "v_surgery",
+&"washer": "cottage_dorn"
+})
+shop_places = Dictionary[StringName, String]({
+&"grocer": "v_shop",
+&"inn": "v_inn",
+&"priest": "v_church",
+&"smith": "v_smithy",
+&"surgeon": "v_surgery",
+&"washer": "wash_stones"
+})
+burial_fallback_place = "dropoff"
+known_people = Dictionary[StringName, StringName]({
+&"carter": &"carter",
+&"trader": &"trader"
+})
+paper = Color(0.89, 0.83, 0.69, 1)
+paper_dark = Color(0.62, 0.5, 0.33, 1)
+ink = Color(0.24, 0.16, 0.1, 1)
+ink_faded = Color(0.42, 0.33, 0.23, 0.72)
+sepia = Color(0.48, 0.32, 0.18, 1)
+roof = Color(0.64, 0.33, 0.24, 1)
+roof_site = Color(0.55, 0.47, 0.36, 0.5)
+meadow = Color(0.58, 0.64, 0.42, 0.32)
+tree = Color(0.45, 0.52, 0.32, 0.5)
+tree_dark = Color(0.24, 0.3, 0.18, 0.62)
+tuft = Color(0.38, 0.4, 0.22, 0.5)
+tuft_density = 2.6
+surround_forest = Dictionary[StringName, float]({
+&"graveyard": 2.7
+})
+water = Color(0.36, 0.52, 0.62, 0.5)
+road = Color(0.74, 0.6, 0.4, 0.55)
+paving = Color(0.7, 0.62, 0.5, 0.45)
+locked_wash = Color(0.45, 0.38, 0.3, 0.22)
+grave_tended = Color(0.36, 0.48, 0.28, 1)
+objective = Color(0.62, 0.17, 0.13, 1)
+player_mark = Color(0.13, 0.09, 0.06, 1)
+player_ring = Color(0.95, 0.74, 0.32, 1)
+person = Color(0.33, 0.25, 0.42, 1)
+carter = Color(0.45, 0.25, 0.12, 1)
+font_area = 24
+font_building = 17
+font_small = 14
+font_title = 30
+grave_radius = 4.0
+player_radius = 15.0
+person_radius = 6.5
+hotspot_radius = 16.0
