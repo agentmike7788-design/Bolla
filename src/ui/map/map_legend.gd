@@ -25,7 +25,7 @@ func _draw() -> void:
 		return
 	var font := get_theme_default_font()
 	var r := Rect2(Vector2.ZERO, size)
-	draw_texture_rect(MapPaint.paper_texture(cfg.paper, cfg.paper_dark), r, false)
+	draw_texture_rect(MapPaint.paper(cfg), r, false)
 	draw_rect(r.grow(-10.0), cfg.ink, false, 2.0)
 	draw_rect(r.grow(-15.0), Color(cfg.ink, 0.6), false, 0.8)
 	var title_w := font.get_string_size(TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, cfg.font_building + 5).x

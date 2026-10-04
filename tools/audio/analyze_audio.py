@@ -29,40 +29,18 @@ sys.path.insert(0, HERE)
 
 import build_audio as ba  # noqa: E402
 
-try:
-    import pyloudnorm as pyln
-except ImportError:  # pragma: no cover
-    pyln = None
+import loudness  # noqa: E402
 
 EDGE_CLICK = 0.01            # first / last sample of a one-shot above this = audible click
 SEAM_RATIO = 6.0             # wrap jump > this × the 99.9th percentile of |diff| = seam click
 SEAM_LEVEL_DB = 1.5          # RMS of the last vs the first 250 ms of a loop
-HARSH_SHARE = 0.35           # energy share 2–5 kHz
-RING_DB = {"Ambience": 18.0, "Music": 99.0, "SFX": 30.0, "UI": 99.0}   # narrow peak above smoothed spectrum
+HARSH_SHARE = 0.5            # energy share 2–5 kHz of a one-shot (build_audio dips above 0.45)
+RING_DB = 18.0               # narrow peak above the smoothed spectrum of a bed (whistle, metallic ring)
 TAIL_MAX = 1.5               # seconds below -40 dB of peak at the end of a one-shot
 
 
 def db(v: float) -> float:
     return 20.0 * np.log10(max(v, 1e-9))
-
-
-def loudness(x: np.ndarray, sr: int, integrated: bool) -> float:
-    """LUFS: integrated (beds, music) or max. momentary 400 ms (one-shots)."""
-    if pyln is None:
-        return db(np.sqrt(np.mean(x ** 2))) - 0.691
-    meter = pyln.Meter(sr)
-    y = x if x.ndim == 1 else x.mean(axis=1)
-    if integrated and y.size >= sr:
-        return float(meter.integrated_loudness(y))
-    n = int(0.4 * sr)
-    if y.size < n:
-        y = np.concatenate([y, np.zeros(n - y.size)])
-    # K-weighting of pyloudnorm's meter, then the loudest 400 ms window (100 ms hop).
-    k = y.copy()
-    for f in meter._filters.values():
-        k = f.apply_filter(k)
-    p = np.convolve(k ** 2, np.ones(n) / n, mode="valid")[:: max(1, int(0.1 * sr))]
-    return float(-0.691 + 10.0 * np.log10(max(np.max(p), 1e-12)))
 
 
 def ring_db(x: np.ndarray, sr: int) -> tuple[float, float]:
@@ -79,14 +57,40 @@ def ring_db(x: np.ndarray, sr: int) -> tuple[float, float]:
     return float(prom[i]), float(f[i])
 
 
-def analyse(sp, i: int) -> dict:
+def cue_volumes() -> dict[str, float]:
+    """volume_db per cue as the game has it (data/audio/cues_*.tres)."""
+    import re
+    out = {}
+    for lib in ("sfx", "ui", "ambience", "music"):
+        path = os.path.join(ba.DATA_DIR, f"cues_{lib}.tres")
+        if os.path.exists(path):
+            text = open(path, encoding="utf-8").read()
+            for m in re.finditer(r'id = &"(\w+)"(?:.|\n)*?volume_db = (-?[0-9.]+)', text):
+                out[m.group(1)] = float(m.group(2))
+    return out
+
+
+VOLUMES: dict[str, float] = {}
+
+
+def file_path(sp, i: int) -> str:
+    """The cue's file – the other format when the data still names that one (before a rebuild)."""
     path = os.path.join(ba.ASSET_DIR, sp.folder, ba.file_name(sp, i))
+    if not os.path.exists(path):
+        other = os.path.join(ba.ASSET_DIR, sp.folder, ba.file_name(sp, i, "ogg" if ba.ext(sp) == "wav" else "wav"))
+        if os.path.exists(other):
+            return other
+    return path
+
+
+def analyse(sp, i: int) -> dict:
+    path = file_path(sp, i)
     x, sr = sf.read(path, always_2d=False)
     if x.ndim > 1:
         x = x.mean(axis=1)
     peak = float(np.max(np.abs(x))) + 1e-12
-    integrated = sp.loop or sp.bus == "Music"
-    lufs = loudness(x, sr, integrated)
+    lufs = loudness.of(x, sr, ba.long_form(sp))
+    vol = VOLUMES.get(sp.id, sp.volume_db)
     f, p = sps.welch(x, sr, nperseg=min(4096, x.size))
     total = float(np.sum(p)) + 1e-20
     harsh = float(np.sum(p[(f >= 2000) & (f <= 5000)])) / total
@@ -100,11 +104,13 @@ def analyse(sp, i: int) -> dict:
     usual = float(np.percentile(d, 99.9)) + 1e-9
     seam = float(abs(x[0] - x[-1])) / usual
     q = int(0.25 * sr)
-    seam_level = abs(db(np.sqrt(np.mean(x[-q:] ** 2))) - db(np.sqrt(np.mean(x[:q] ** 2)))) if x.size > 2 * q else 0.0
+    seam_level = 0.0
+    if sp.loop and x.size > 2 * q:
+        seam_level = abs(db(np.sqrt(np.mean(x[-q:] ** 2))) - db(np.sqrt(np.mean(x[:q] ** 2))))
     row = {
-        "file": ba.file_name(sp, i), "id": sp.id, "bus": sp.bus, "loop": sp.loop, "secs": x.size / sr, "sr": sr,
+        "file": os.path.basename(path), "id": sp.id, "bus": sp.bus, "loop": sp.loop, "secs": x.size / sr, "sr": sr,
         "peak_db": db(peak), "clipped": int(np.sum(np.abs(x) >= 0.999)), "dc": float(np.mean(x)),
-        "lufs": lufs, "volume_db": sp.volume_db, "game_lufs": lufs + sp.volume_db,
+        "lufs": lufs, "volume_db": vol, "game_lufs": lufs + vol,
         "first": float(abs(x[0])), "last": float(abs(x[-1])), "seam": seam, "seam_level_db": seam_level,
         "harsh": harsh, "ring_db": ring, "ring_hz": ring_f, "floor_db": floor, "tail": tail,
     }
@@ -124,15 +130,16 @@ def problems(r: dict, sp) -> list[str]:
             out.append("seam")
         if r["seam_level_db"] > SEAM_LEVEL_DB:
             out.append("seam-level")
+        # Crickets (3.8–5.3 kHz) are tonal by design; any other narrow peak in a bed is a whistle / ring.
+        if sp.bus == "Ambience" and r["ring_db"] > RING_DB and not 3800 <= r["ring_hz"] <= 5300:
+            out.append("ring@%d" % r["ring_hz"])
     else:
         if r["first"] > EDGE_CLICK or r["last"] > EDGE_CLICK:
             out.append("edge-click")
-        if r["tail"] > TAIL_MAX:
+        if r["tail"] > TAIL_MAX and sp.bus != "Music":
             out.append("long-tail")
-    if r["harsh"] > HARSH_SHARE and sp.bus != "UI":
-        out.append("harsh")
-    if r["ring_db"] > RING_DB.get(sp.bus, 99.0):
-        out.append("ring@%d" % r["ring_hz"])
+        if r["harsh"] > HARSH_SHARE and sp.bus != "UI":
+            out.append("harsh")
     lo, hi = r["target"]
     if not lo <= r["game_lufs"] <= hi:
         out.append("level")
@@ -140,12 +147,15 @@ def problems(r: dict, sp) -> list[str]:
 
 
 def all_rows(only: str = "") -> list[dict]:
+    VOLUMES.clear()
+    VOLUMES.update(cue_volumes())
     rows = []
     for sp in ba.CATALOG:
         if only and only not in sp.id:
             continue
         for i in range(sp.variants):
-            rows.append(analyse(sp, i))
+            if os.path.exists(file_path(sp, i)):
+                rows.append(analyse(sp, i))
     return rows
 
 

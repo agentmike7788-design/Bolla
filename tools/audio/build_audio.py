@@ -7,8 +7,14 @@ Needs numpy, scipy, soundfile (libsndfile with Vorbis). Deterministic: every fil
 own seed derived from its id, so a rebuild produces the same audio.
 
 Writes
-  assets/audio/{sfx,ui,ambience,music}/ph_<id>[_<n>].ogg   (placeholder prefix ph_)
-  data/audio/cues_{sfx,ui,ambience,music}.tres             (AudioCueLibrary, read by Audio)
+  assets/audio/{sfx,ui,ambience,music}/ph_<id>[_<n>].wav|.ogg  (placeholder prefix ph_)
+  data/audio/cues_{sfx,ui,ambience,music}.tres                 (AudioCueLibrary, read by Audio)
+
+G7 Runde 2: one-shots (SFX, UI, spots) are 16-bit WAV (Godot imports them as QOA: no Vorbis decoding
+per voice on the browser's main thread); loops and music stay Vorbis. Every file gets its DC removed,
+one-shots a 5 ms fade-in / 10 ms fade-out and a gentle 2–5 kHz dip when they are harsh; every cue's
+volume_db is computed from the measured loudness of its files so that it plays at its target
+loudness (TARGETS, see analyze_audio.py and docs/reviews/phase7_round2/perf_audio.md).
 
 The catalog below is the single source for files AND cue settings (bus, volume, pitch
 jitter, loop, positional range, cooldown, voices). Ambience profiles, the event map and
@@ -29,6 +35,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 import ambience as amb  # noqa: E402
+import loudness  # noqa: E402
 import music  # noqa: E402
 import sfx  # noqa: E402
 
@@ -48,7 +55,7 @@ class Spec:
     variants: int = 1
     bus: str = "SFX"
     folder: str = "sfx"
-    volume_db: float = 0.0
+    volume_db: float = 0.0             # G7 Runde 2: set by measured_volume() from the files (fallback only)
     volume_jitter_db: float = 1.5
     pitch_jitter: float = 0.05
     loop: bool = False
@@ -69,7 +76,13 @@ class Spec:
 # Target loudness per category (G7 Runde 2, docs/reviews/phase7_round2/perf_audio.md): beds and music
 # stay in the background, steps never nag, UI is discreet. One-shots: max. momentary loudness (400 ms);
 # beds / music: integrated loudness.
-TARGETS = {"bed": -30.0, "emitter": -26.0, "spot": -31.0, "music": -24.0, "sfx": -20.0, "step": -28.0, "ui": -26.0}
+TARGETS = {"bed": -34.0, "emitter": -30.0, "spot": -36.0, "music": -28.0, "sfx": -27.0, "step": -37.0, "ui": -33.0}
+# A one-shot is peak-normalised to this before its level is set by volume_db.
+ONESHOT_PEAK = 0.89
+# Energy share 2–5 kHz above which a one-shot gets a broad dip there (analyze_audio "harsh").
+HARSH_SHARE = 0.45
+# volume_db is kept in this range (a cue far off its target is a generator problem, not a level one).
+VOLUME_RANGE = (-40.0, 6.0)
 TARGET_BAND = 3.0
 
 
@@ -83,6 +96,19 @@ def category(sp: "Spec") -> str:
             return "emitter" if sp.positional else "bed"
         return "spot"
     return "step" if sp.id.startswith("step_") else "sfx"
+
+
+def ext(sp: "Spec") -> str:
+    """wav for one-shots (cheap to mix, QOA in Godot), ogg for loops and music."""
+    return "ogg" if sp.loop or sp.bus == "Music" else "wav"
+
+
+def long_form(sp: "Spec") -> bool:
+    return sp.loop or sp.bus == "Music"
+
+
+def target(sp: "Spec") -> float:
+    return sp.loud if sp.loud is not None else TARGETS[category(sp)]
 
 
 def target_of(sp: "Spec") -> tuple[float, float]:
@@ -134,10 +160,10 @@ def MUS(id, gen, **kw):
 
 CATALOG: list[Spec] = [
     # footsteps (player 2D; villagers through Audio.play_at → 3D)
-    S("step_grass", sfx.step_grass, 4, volume_db=-15, pitch_jitter=0.08, max_voices=4, max_distance=14),
-    S("step_earth", sfx.step_earth, 4, volume_db=-14, pitch_jitter=0.08, max_voices=4, max_distance=14),
-    S("step_stone", sfx.step_stone, 4, volume_db=-16, pitch_jitter=0.07, max_voices=4, max_distance=14),
-    S("step_wood", sfx.step_wood, 4, volume_db=-13, pitch_jitter=0.07, max_voices=4, max_distance=14),
+    S("step_grass", sfx.step_grass, 6, pitch_jitter=0.1, volume_jitter_db=2.5, max_voices=4, max_distance=14, loud=-38),
+    S("step_earth", sfx.step_earth, 6, pitch_jitter=0.1, volume_jitter_db=2.5, max_voices=4, max_distance=14),
+    S("step_stone", sfx.step_stone, 6, pitch_jitter=0.09, volume_jitter_db=2.5, max_voices=4, max_distance=14),
+    S("step_wood", sfx.step_wood, 6, pitch_jitter=0.09, volume_jitter_db=2.5, max_voices=4, max_distance=14),
     # grave work
     S("dig", sfx.dig, 3, volume_db=-7, pitch_jitter=0.07),
     S("dirt_pour", sfx.dirt_pour, 2, volume_db=-8),
@@ -169,12 +195,12 @@ CATALOG: list[Spec] = [
     S("putdown", sfx.putdown, 2, volume_db=-11, cooldown=0.1),
     S("corpse_down", sfx.corpse_down, 2, volume_db=-8, cooldown=0.3),
     S("glass_seal", sfx.glass_seal, 2, volume_db=-11, cooldown=0.3),
-    S("anatomy_tool", sfx.anatomy_tool, 2, volume_db=-18, cooldown=0.5),
+    S("anatomy_tool", sfx.anatomy_tool, 2, volume_db=-18, cooldown=0.5, loud=-31),
     S("cart_roll", sfx.cart_roll, 1, volume_db=-12, loop=True, positional=True, max_distance=30, unit_size=5,
       pitch_jitter=0.0, volume_jitter_db=0.0, max_voices=1),
     # bells, spirits, story
     S("church_bell", sfx.church_bell, 1, volume_db=-8, positional=True, max_distance=120, unit_size=30,
-      pitch_jitter=0.0, volume_jitter_db=0.0, max_voices=2),
+      pitch_jitter=0.0, volume_jitter_db=0.0, max_voices=2, loud=-24),
     S("small_bell", sfx.small_bell, 1, volume_db=-12, pitch_jitter=0.0, cooldown=1.0),
     S("ghost_appear", sfx.ghost_appear, 1, volume_db=-14, pitch_jitter=0.03, cooldown=4.0, max_voices=2),
     S("ghost_content", sfx.ghost_content, 1, volume_db=-12, pitch_jitter=0.0, cooldown=2.0, max_voices=1),
@@ -182,13 +208,13 @@ CATALOG: list[Spec] = [
     S("ghost_night", sfx.ghost_night, 1, volume_db=-12, pitch_jitter=0.0, cooldown=10.0, max_voices=1),
     S("chapter", sfx.chapter, 1, volume_db=-8, pitch_jitter=0.0, volume_jitter_db=0.0, cooldown=5.0, max_voices=1),
     S("travel", sfx.travel, 1, volume_db=-12, pitch_jitter=0.03, cooldown=0.5, max_voices=1),
-    S("remark", sfx.remark, 2, volume_db=-18, cooldown=0.6, max_voices=1),
+    S("remark", sfx.remark, 2, volume_db=-18, cooldown=0.6, max_voices=1, loud=-33),
     S("build_place", sfx.build_place, 2, volume_db=-10),
     S("build_remove", sfx.build_remove, 1, volume_db=-11),
     S("sleep", sfx.sleep, 1, volume_db=-12, cooldown=2.0),
     # UI
-    UI("ui_click", sfx.ui_click, 2, volume_db=-14, pitch_jitter=0.04, cooldown=0.03),
-    UI("ui_hover", sfx.ui_hover, 1, volume_db=-24, pitch_jitter=0.05, cooldown=0.06, max_voices=1),
+    UI("ui_click", sfx.ui_click, 2, volume_db=-14, pitch_jitter=0.04, cooldown=0.03, loud=-36),
+    UI("ui_hover", sfx.ui_hover, 1, volume_db=-24, pitch_jitter=0.05, cooldown=0.06, max_voices=1, loud=-42),
     UI("ui_open", sfx.ui_open, 1, volume_db=-14, cooldown=0.1),
     UI("ui_close", sfx.ui_close, 1, volume_db=-15, cooldown=0.1),
     UI("ui_error", sfx.ui_error, 1, volume_db=-13, cooldown=0.25),
@@ -196,10 +222,10 @@ CATALOG: list[Spec] = [
     UI("ui_notify", sfx.ui_notify, 1, volume_db=-18, cooldown=0.4),
     UI("ui_reward", sfx.ui_reward, 1, volume_db=-15, cooldown=0.4),
     # ambience beds (loops)
-    AMB("amb_graveyard_day", amb.amb_graveyard_day, loop=True, volume_db=-10),
-    AMB("amb_graveyard_dusk", amb.amb_graveyard_dusk, loop=True, volume_db=-10),
-    AMB("amb_graveyard_night", amb.amb_graveyard_night, loop=True, volume_db=-11),
-    AMB("amb_forest_edge", amb.amb_forest_edge, loop=True, volume_db=-11),
+    AMB("amb_graveyard_day", amb.amb_graveyard_day, loop=True, volume_db=-10, loud=-35),
+    AMB("amb_graveyard_dusk", amb.amb_graveyard_dusk, loop=True, volume_db=-10, loud=-35),
+    AMB("amb_graveyard_night", amb.amb_graveyard_night, loop=True, volume_db=-11, loud=-35),
+    AMB("amb_forest_edge", amb.amb_forest_edge, loop=True, volume_db=-11, loud=-35),
     AMB("amb_village_day", amb.amb_village_day, loop=True, volume_db=-11),
     AMB("amb_village_night", amb.amb_village_night, loop=True, volume_db=-11),
     AMB("amb_hut", amb.amb_hut, loop=True, volume_db=-12),
@@ -240,9 +266,9 @@ def seed_for(name: str) -> int:
     return int.from_bytes(hashlib.sha256(name.encode()).digest()[:8], "little")
 
 
-def file_name(spec: Spec, i: int) -> str:
+def file_name(spec: Spec, i: int, extension: str = "") -> str:
     suffix = f"_{i + 1}" if spec.variants > 1 else ""
-    return f"ph_{spec.id}{suffix}.ogg"
+    return f"ph_{spec.id}{suffix}.{extension or ext(spec)}"
 
 
 def res_path(spec: Spec, i: int) -> str:
@@ -253,10 +279,73 @@ def render(spec: Spec, i: int) -> np.ndarray:
     rng = np.random.default_rng(seed_for(f"{spec.id}#{i}"))
     x = spec.gen(rng, spec.sr)
     x = np.nan_to_num(np.asarray(x, dtype=np.float64))
+    x = finish(spec, x)
     peak = np.max(np.abs(x)) + 1e-12
     if peak > 0.98:
         x = x * (0.98 / peak)
     return x.astype(np.float32)
+
+
+def harsh_share(x: np.ndarray, sr: int) -> float:
+    from scipy import signal as sps
+    y = x if x.ndim == 1 else x.mean(axis=1)
+    f, p = sps.welch(y, sr, nperseg=min(4096, y.size))
+    return float(np.sum(p[(f >= 2000) & (f <= 5000)])) / (float(np.sum(p)) + 1e-20)
+
+
+def _dip(x: np.ndarray, sr: int, depth_db: float) -> np.ndarray:
+    """Broad bell cut around 3.2 kHz (2–5 kHz), zero phase."""
+    from scipy import signal as sps
+    g = 10 ** (-depth_db / 20.0)
+    b, a = sps.iirpeak(3200.0 / (sr * 0.5), 0.9)
+    band = sps.filtfilt(b, a, x, axis=0)
+    return x - band * (1.0 - g)
+
+
+def finish(spec: Spec, x: np.ndarray) -> np.ndarray:
+    """G7 Runde 2 clean-up: DC off; one-shots: harsh dip, fades (no click at start / end), peak level."""
+    if long_form(spec):
+        return x - np.mean(x, axis=0)          # beds (circular: an offset keeps the seam) and music: DC only
+    x = x - np.mean(x, axis=0)
+    for depth in (3.0, 6.0, 9.0):
+        if harsh_share(x, spec.sr) <= HARSH_SHARE:
+            break
+        x = _dip(x, spec.sr, depth)
+    n_in = min(int(0.005 * spec.sr), x.shape[0] // 4)
+    n_out = min(int(0.010 * spec.sr), x.shape[0] // 4)
+    w_in = np.sin(np.linspace(0.0, np.pi / 2, n_in)) ** 2
+    w_out = np.cos(np.linspace(0.0, np.pi / 2, n_out)) ** 2
+    shape = (slice(None),) + (None,) * (x.ndim - 1)
+    x[:n_in] *= w_in[shape]
+    x[-n_out:] *= w_out[shape]
+    x[0] = 0.0
+    x[-1] = 0.0
+    return x * (ONESHOT_PEAK / (np.max(np.abs(x)) + 1e-12))
+
+
+def write_wav(path: str, x: np.ndarray, sr: int) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    sf.write(path, x, sr, subtype="PCM_16")
+
+
+def measured_volume(spec: Spec) -> tuple[float, float]:
+    """(volume_db that puts the cue at its target, mean file loudness) – from the files on disk."""
+    louds = []
+    for i in range(spec.variants):
+        x, sr = sf.read(os.path.join(ASSET_DIR, spec.folder, file_name(spec, i)))
+        louds.append(loudness.of(x, sr, long_form(spec)))
+    mean = float(10.0 * np.log10(np.mean(10.0 ** (np.array(louds) / 10.0))))
+    vol = float(np.clip(target(spec) - mean, *VOLUME_RANGE))
+    return round(vol, 1), mean
+
+
+def remove_stale(spec: Spec, i: int) -> None:
+    """A file that changed format leaves its old twin (and its .import) behind – remove them."""
+    other = "ogg" if ext(spec) == "wav" else "wav"
+    old = os.path.join(ASSET_DIR, spec.folder, file_name(spec, i, other))
+    for f in (old, old + ".import"):
+        if os.path.exists(f):
+            os.remove(f)
 
 
 def write_ogg(path: str, x: np.ndarray, sr: int, quality: float) -> None:
@@ -334,12 +423,20 @@ def main() -> int:
         for i in range(sp.variants):
             x = render(sp, i)
             path = os.path.join(ASSET_DIR, sp.folder, file_name(sp, i))
-            write_ogg(path, x, sp.sr, sp.quality)
+            if ext(sp) == "wav":
+                write_wav(path, x, sp.sr)
+            else:
+                write_ogg(path, x, sp.sr, sp.quality)
+            remove_stale(sp, i)
             size = os.path.getsize(path)
             total += size
             dur = x.shape[0] / sp.sr
             print(f"{sp.folder:9s} {file_name(sp, i):34s} {dur:6.2f} s {size / 1024:7.1f} KB")
     print(f"rendered {total / 1024 / 1024:.2f} MB")
+    for sp in CATALOG:
+        sp.volume_db, mean = measured_volume(sp)
+        print(f"level {sp.id:22s} file {mean:6.1f} LUFS  volume_db {sp.volume_db:6.1f} → {mean + sp.volume_db:6.1f}"
+              f" (target {target(sp):.0f})")
     if not args.no_write_data:
         os.makedirs(DATA_DIR, exist_ok=True)
         for lib in ("sfx", "ui", "ambience", "music"):

@@ -417,6 +417,15 @@ func _on_world_ready(_world: Node) -> void:
 		return
 	_bind_player(get_tree().get_first_node_in_group(PLAYER_GROUP))
 	hud.refresh_all()
+	prepare_map.call_deferred()
+
+
+## Bakes the map sheets while the world is still loading (G7 Runde 2: no stutter on the first M).
+func prepare_map() -> void:
+	if not is_inside_tree() or is_open(PANEL_MAP):
+		return
+	var panel := _panel(PANEL_MAP) as MapPanel
+	panel.prepare(MapState.context(get_tree(), MapPanel.map_config()))
 
 
 func _on_game_refresh() -> void:

@@ -5,6 +5,9 @@ extends Node
 ## positional and quieter), Osric's cart, positional loops (brook, forge) and spot sources (the
 ## smith's anvil), the church bell on the hour. Reads positions only – changes nothing.
 
+## Metres beyond a loop emitter's max_distance at which it still runs (no audible start at the edge).
+const EMITTER_MARGIN := 4.0
+
 var audio: AudioManager
 var listener: AudioListener3D
 
@@ -158,6 +161,10 @@ func _update_emitters(player: Player, delta: float) -> void:
 		var on := outside and StringName(e.get("region", &"")) == player.region_id \
 				and AudioAmbience.hour_in(hour, e.get("hours", Vector2i(-1, -1)))
 		var p: AudioStreamPlayer3D = _loops.get(i, null)
+		# G7 Runde 2: a loop beyond its range is stopped, not mixed silently (Vorbis decoding on the
+		# browser's main thread) – it starts again at a random point when the listener comes close.
+		if on and not in_range(i, e):
+			on = false
 		if not on:
 			if p != null and p.playing:
 				p.stop()
@@ -180,6 +187,21 @@ func _update_emitters(player: Player, delta: float) -> void:
 			if AudioAmbience.hour_in(hour, e.get("hours", Vector2i(-1, -1))):
 				audio.play(StringName(e.get("cue", &"")), _world_pos(e), float(e.get("volume_db", 0.0)))
 		_spot_timers[i] = left
+
+
+## The listener is within the range of emitter `i` (its cue's max_distance + EMITTER_MARGIN).
+func in_range(i: int, e: Dictionary) -> bool:
+	var reach := 0.0
+	var p: AudioStreamPlayer3D = _loops.get(i, null)
+	if p != null:
+		reach = p.max_distance
+	else:
+		var cue := audio.cue(StringName(e.get("cue", &"")))
+		reach = cue.max_distance if cue != null else 0.0
+	if reach <= 0.0:
+		return true
+	reach += EMITTER_MARGIN
+	return listener.global_position.distance_squared_to(_world_pos(e)) <= reach * reach
 
 
 func loops_playing() -> int:

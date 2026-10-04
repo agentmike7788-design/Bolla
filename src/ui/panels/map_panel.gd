@@ -80,6 +80,21 @@ func _refresh() -> void:
 	canvas.show_region(current_region, MapLayout.of(current_region, config), context, config)
 
 
+## Bakes the sheets of every allowed region ahead with `ctx` (MapState.context) while the panel stays
+## closed – UIRoot calls it when a world is ready, so the first M paints nothing big (G7 Runde 2).
+func prepare(ctx: Dictionary) -> void:
+	if is_open:
+		return
+	context = ctx
+	if not _built:
+		_built = true
+		_build()
+	for region: StringName in REGIONS:
+		if tab_allowed(region):
+			canvas.show_region(region, MapLayout.of(region, config), context, config)
+	context = {}
+
+
 ## The sheet of `region` can be shown: the graveyard always, the village from its tab flag (village_open)
 ## – or while the gravekeeper is there.
 func tab_allowed(region: StringName) -> bool:
