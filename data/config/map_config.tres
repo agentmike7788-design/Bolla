@@ -17,8 +17,8 @@ map_titles = Dictionary[StringName, String]({
 &"village": "Hollerbrück"
 })
 views = Dictionary[StringName, Rect2]({
-&"graveyard": Rect2(-20, -36, 58, 72),
-&"village": Rect2(-37, -30, 68, 52)
+&"graveyard": Rect2(-18, -34, 54, 62),
+&"village": Rect2(-37, -28, 68, 48)
 })
 tab_flags = Dictionary[StringName, StringName]({
 &"village": &"village_open"
@@ -56,12 +56,21 @@ labels = Dictionary[String, String]({
 "well": "Brunnen"
 })
 fallback_building_label = "Haus"
+label_at = Dictionary[String, Vector2]({
+"anger": Vector2(0, 2.4),
+"churchyard": Vector2(4.75, -31.2),
+"elder": Vector2(-6.75, -16.6),
+"north": Vector2(4.75, -13.6),
+"road_village": Vector2(-33.2, -0.7),
+"workyard": Vector2(-1.4, -10.4),
+"yard": Vector2(7.4, -5.8)
+})
 feature_labels = Dictionary[String, String]({
 "anger": "Anger",
 "brook": "Hollerbach",
 "forest": "Wald",
 "road": "Kutschweg",
-"road_village": "Kutschweg zum Friedhof",
+"road_village": "← Zum Friedhof",
 "workyard": "Werkhof"
 })
 village_landmarks = Dictionary[String, StringName]({
@@ -132,13 +141,18 @@ known_people = Dictionary[StringName, StringName]({
 paper = Color(0.89, 0.83, 0.69, 1)
 paper_dark = Color(0.62, 0.5, 0.33, 1)
 ink = Color(0.24, 0.16, 0.1, 1)
-ink_faded = Color(0.42, 0.33, 0.23, 0.55)
+ink_faded = Color(0.42, 0.33, 0.23, 0.72)
 sepia = Color(0.48, 0.32, 0.18, 1)
 roof = Color(0.64, 0.33, 0.24, 1)
 roof_site = Color(0.55, 0.47, 0.36, 0.5)
 meadow = Color(0.58, 0.64, 0.42, 0.32)
-tree = Color(0.36, 0.45, 0.3, 0.72)
-tree_dark = Color(0.22, 0.3, 0.2, 0.8)
+tree = Color(0.45, 0.52, 0.32, 0.5)
+tree_dark = Color(0.24, 0.3, 0.18, 0.62)
+tuft = Color(0.38, 0.4, 0.22, 0.5)
+tuft_density = 2.6
+surround_forest = Dictionary[StringName, float]({
+&"graveyard": 2.7
+})
 water = Color(0.36, 0.52, 0.62, 0.5)
 road = Color(0.74, 0.6, 0.4, 0.55)
 paving = Color(0.7, 0.62, 0.5, 0.45)
@@ -149,7 +163,7 @@ player_mark = Color(0.13, 0.09, 0.06, 1)
 player_ring = Color(0.95, 0.74, 0.32, 1)
 person = Color(0.33, 0.25, 0.42, 1)
 carter = Color(0.45, 0.25, 0.12, 1)
-font_area = 26
+font_area = 24
 font_building = 17
 font_small = 14
 font_title = 30

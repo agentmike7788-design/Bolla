@@ -14,6 +14,8 @@ var region_id: StringName
 ## Region origin in the world (layout "origin"; the graveyard has none = 0).
 var origin: Vector3 = Vector3.ZERO
 var view: Rect2
+## The walkable area (layout walkable_bounds; empty without).
+var bounds: Rect2 = Rect2()
 ## [{id, rect: Rect2}] – graveyard sections.
 var sections: Array[Dictionary] = []
 ## Fence lines (each a PackedVector2Array of two points).
@@ -86,6 +88,9 @@ func build(region: StringName, d: Dictionary, cfg: MapConfig) -> void:
 	var o: Variant = d.get("origin")
 	if o is Array and (o as Array).size() >= 3:
 		origin = Vector3(float(o[0]), float(o[1]), float(o[2]))
+	var wb: Dictionary = d.get("walkable_bounds", {})
+	if wb.has("min") and wb.has("max"):
+		bounds = Rect2(v2(wb.min), v2(wb.max) - v2(wb.min))
 	if region == VILLAGE:
 		_build_village(d, cfg)
 	else:
@@ -294,7 +299,7 @@ func _landmark(id: String, pos: Vector2, glyph: StringName, cfg: MapConfig) -> v
 func _area(key: String, pos: Vector2, angle: float, cfg: MapConfig) -> void:
 	var text: String = cfg.feature_labels.get(key, "")
 	if text != "":
-		area_labels.append({"key": key, "text": text, "pos": pos, "angle": angle})
+		area_labels.append({"key": key, "text": text, "pos": cfg.label_at.get(key, pos), "angle": angle})
 
 
 func _way(w: Dictionary, kind: StringName) -> void:

@@ -19,23 +19,14 @@ const TEXT_YOU_IN := "Du bist hier: %s"
 const TEXT_SITE := "%s (Bauplatz)"
 const GRAVE_TEXTS: Dictionary[StringName, String] = {&"free": "Freie Grabstelle", &"taken": "Belegtes Grab",
 		&"tended": "Gepflegtes Grab mit Grabzeichen"}
-const LEGEND_TITLE := "Zeichenerklärung"
-const LEGEND: Array[Array] = [
-	[&"player", "Du (Blickrichtung)"], [&"carter", "Osric mit Karren"], [&"person", "Bekannte Leute"],
-	[&"order", "Auftrag / Abgabeort"], [&"free", "Grabstelle frei"], [&"taken", "Grab belegt"],
-	[&"tended", "Grab gepflegt"], [&"locked", "Noch gesperrt"], [&"road", "Weg"], [&"fence", "Zaun"],
-	[&"water", "Wasser"], [&"tree", "Baum"],
-]
-const MARGIN := 34.0
+const MARGIN := 30.0
+## Smallest font a section name shrinks to while it does not fit its area.
+const MIN_AREA_FONT := 14
 
 var cfg: MapConfig
 var layout: MapLayout
 var ctx: Dictionary = {}
 var region: StringName = &""
-var legend_visible: bool = true:
-	set(value):
-		legend_visible = value
-		queue_redraw()
 
 ## px per metre and the top-left of the view on the sheet.
 var map_scale: float = 1.0
@@ -218,6 +209,9 @@ func _rebuild_people() -> void:
 		if StringName(str(person.get("region", "graveyard"))) != region:
 			continue
 		var local := layout.local_of(person.world, cfg)
+		var inside := layout.in_room(person.world, cfg)
+		if inside:
+			local = _door_of(local)
 		if not layout.view.grow(2.0).has_point(local):
 			continue
 		var point := world_to_map(local)
@@ -227,7 +221,7 @@ func _rebuild_people() -> void:
 		point += Vector2(n * 14.0, -n * 4.0)
 		var kind: StringName = person.kind
 		var first := str(person.name).get_slice(" ", 0)
-		markers.append({"kind": kind, "point": point, "name": first, "text": str(person.name), "id": person.id})
+		markers.append({"kind": kind, "point": point, "name": first, "text": str(person.name), "id": person.id, "inside": inside})
 		_spot(point, cfg.person_radius + 6.0, str(person.name))
 
 
@@ -247,6 +241,14 @@ func _rebuild_orders() -> void:
 		var text := TEXT_ORDER % str(o.get("title", ""))
 		markers.append({"kind": &"order", "point": point, "name": "", "text": text, "id": o.get("id", &"")})
 		_spot(point, 10.0, text)
+
+
+## The door in front of the building at `place` (a person inside is drawn there), else the place itself.
+func _door_of(place: Vector2) -> Vector2:
+	for b: Dictionary in layout.buildings:
+		if b.center == place:
+			return b.get("door", place)
+	return place
 
 
 func _section_shown(id: StringName) -> bool:
@@ -293,6 +295,8 @@ func _draw() -> void:
 	_font = get_theme_default_font()
 	var sheet := Rect2(Vector2.ZERO, size)
 	draw_texture_rect(MapPaint.paper_texture(cfg.paper, cfg.paper_dark), sheet, false)
+	_draw_tufts()
+	_draw_surround()
 	_draw_sections()
 	_draw_waters()
 	_draw_ways()
@@ -305,8 +309,6 @@ func _draw() -> void:
 	_draw_labels()
 	_draw_markers()
 	_draw_frame(sheet)
-	if legend_visible:
-		_draw_legend()
 
 
 func _m(local: Vector2) -> Vector2:
@@ -318,6 +320,87 @@ func _mp(pts: PackedVector2Array) -> PackedVector2Array:
 	for p: Vector2 in pts:
 		out.append(_m(p))
 	return out
+
+
+## Sparse grass tufts over the whole sheet (seeded – the same every time), not on buildings and water.
+func _draw_tufts() -> void:
+	var v := layout.view
+	var count := int(v.size.x * v.size.y / 100.0 * cfg.tuft_density)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(region)
+	for i: int in count:
+		var local := Vector2(rng.randf_range(v.position.x, v.end.x), rng.randf_range(v.position.y, v.end.y))
+		var skip := false
+		for w: Dictionary in layout.waters:
+			if absf(local.x - (w.points as PackedVector2Array)[0].x) < float(w.half_width) + 1.0:
+				skip = true
+		if skip:
+			continue
+		var p := _m(local)
+		var h := rng.randf_range(3.0, 5.5)
+		for k: int in 3:
+			var x := (k - 1) * 2.4
+			draw_line(p + Vector2(x, 0.0), p + Vector2(x * 1.6 + rng.randf_range(-0.6, 0.6), -h + absf(x) * 0.4), cfg.tuft, 1.0, true)
+
+
+## The wood around the graveyard: small trees on a jittered grid over the paper beyond the walkable
+## bounds, denser further out, never on a way, a section or a building.
+func _draw_surround() -> void:
+	var spacing: float = cfg.surround_forest.get(region, 0.0)
+	if spacing <= 0.0 or layout.bounds.size == Vector2.ZERO:
+		return
+	var tl := (Vector2.ZERO - map_offset) / map_scale + layout.view.position
+	var br := (size - map_offset) / map_scale + layout.view.position
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(String(region) + "wood")
+	var keep := layout.bounds.grow(1.2)
+	# Paper left free for the cartouche, the compass, the scale and the area names.
+	var clear: Array[Rect2] = [Rect2(20.0, 20.0, 380.0, 110.0), Rect2(size.x - 160.0, 30.0, 150.0, 140.0),
+			Rect2(20.0, size.y - 110.0, 200.0, 100.0)]
+	for a: Dictionary in layout.area_labels:
+		clear.append(Rect2(_m(a.pos) - Vector2(70.0, 22.0), Vector2(140.0, 44.0)))
+	var y := tl.y
+	var row := 0
+	while y < br.y:
+		var x := tl.x + (spacing * 0.5 if row % 2 == 1 else 0.0)
+		while x < br.x:
+			var p := Vector2(x + rng.randf_range(-0.9, 0.9), y + rng.randf_range(-0.9, 0.9)) * 1.0
+			var r := rng.randf_range(0.9, 1.5)
+			var out_by := _outside_by(keep, p)
+			var on_sheet := _m(p)
+			var free := true
+			for c: Rect2 in clear:
+				free = free and not c.has_point(on_sheet)
+			if free and out_by > 0.0 and rng.randf() < clampf(0.35 + out_by * 0.12, 0.0, 0.95) and _free_for_wood(p):
+				MapPaint.tree(self, _m(p), r * map_scale, Color(cfg.tree, cfg.tree.a * 0.8), Color(cfg.tree_dark, 0.45), &"bush", row * 31 + int(x))
+			x += spacing
+		y += spacing * 0.86
+		row += 1
+
+
+static func _outside_by(r: Rect2, p: Vector2) -> float:
+	var dx := maxf(r.position.x - p.x, p.x - r.end.x)
+	var dy := maxf(r.position.y - p.y, p.y - r.end.y)
+	return maxf(dx, dy)
+
+
+func _free_for_wood(p: Vector2) -> bool:
+	for s: Dictionary in layout.sections:
+		if (s.rect as Rect2).grow(1.0).has_point(p):
+			return false
+	for w: Dictionary in layout.ways:
+		var pts: PackedVector2Array = w.points
+		for i: int in pts.size() - 1:
+			var q := Geometry2D.get_closest_point_to_segment(p, pts[i], pts[i + 1])
+			if q.distance_to(p) < float(w.width) * 0.5 + 1.6:
+				return false
+	for t: Dictionary in layout.trees:
+		if (t.pos as Vector2).distance_to(p) < float(t.size) * 0.5 + 0.6:
+			return false
+	for l: Dictionary in layout.landmarks:
+		if (l.pos as Vector2).distance_to(p) < 2.0:
+			return false
+	return true
 
 
 func _draw_sections() -> void:
@@ -414,19 +497,7 @@ func _draw_buildings() -> void:
 				MapPaint.dashed(self, poly[k], poly[(k + 1) % 4], cfg.sepia, 1.4, 5.0, 4.0, false)
 			draw_colored_polygon(poly, cfg.roof_site)
 			continue
-		var shadow := PackedVector2Array()
-		for p: Vector2 in poly:
-			shadow.append(p + Vector2(3.0, 3.5))
-		draw_colored_polygon(shadow, Color(0.15, 0.09, 0.05, 0.28))
-		draw_colored_polygon(poly, cfg.roof)
-		# Ridge along the long side, the shaded half of the roof.
-		var long_x: bool = b.size.x >= b.size.y
-		var a := (poly[0] + poly[3]) * 0.5 if long_x else (poly[0] + poly[1]) * 0.5
-		var e := (poly[1] + poly[2]) * 0.5 if long_x else (poly[3] + poly[2]) * 0.5
-		var half := PackedVector2Array([a, e, poly[2], poly[3]]) if long_x else PackedVector2Array([a, e, poly[2], poly[1]])
-		draw_colored_polygon(half, Color(0.2, 0.08, 0.05, 0.18))
-		draw_line(a, e, Color(cfg.ink, 0.8), 1.2, true)
-		MapPaint.ink_line(self, poly, cfg.ink, 1.6, i, 0.5, true)
+		MapPaint.house(self, poly, b.size.x >= b.size.y, cfg.roof, cfg.ink, i)
 		if b.glyph != &"":
 			MapPaint.roof_glyph(self, b.glyph, _m(b.center), clampf(map_scale / 12.0, 0.8, 1.4), Color(cfg.paper, 0.92))
 
@@ -444,9 +515,7 @@ func _draw_graves() -> void:
 				draw_circle(p, r, cfg.sepia, true, -1.0, true)
 				draw_arc(p, r, 0.0, TAU, 14, cfg.ink, 1.0, true)
 			&"tended":
-				draw_circle(p, r + 2.0, Color(cfg.grave_tended, 0.55), true, -1.0, true)
-				draw_circle(p, r - 0.5, cfg.ink, true, -1.0, true)
-				draw_line(p + Vector2(0.0, -r - 3.0), p + Vector2(0.0, -r + 1.0), cfg.ink, 1.2, true)
+				MapPaint.tended_grave(self, p, r, cfg.ink, cfg.grave_tended)
 
 
 func _draw_landmarks() -> void:
@@ -465,9 +534,16 @@ func _draw_labels() -> void:
 			continue
 		var open: bool = section_view.get(s.id) == &"open"
 		var color := Color(cfg.sepia, 0.9) if open else cfg.ink_faded
-		var at := _m(s.rect.get_center())
-		var size_px := cfg.font_area if text != cfg.unknown_section_text else cfg.font_area + 10
-		MapPaint.label(self, _font, at, text.to_upper() if text != cfg.unknown_section_text else text, size_px, color, halo, true, 3.0)
+		var at := _m(cfg.label_at.get(String(s.id), s.rect.get_center()))
+		if text == cfg.unknown_section_text:
+			MapPaint.label(self, _font, at, text, cfg.font_area + 14, color, halo)
+			continue
+		var caps := text.to_upper()
+		var fit: float = s.rect.size.x * map_scale * 0.96
+		var size_px := cfg.font_area
+		while size_px > MIN_AREA_FONT and MapPaint.spaced_width(_font, caps, size_px, size_px * 0.14) > fit:
+			size_px -= 1
+		MapPaint.label(self, _font, at, caps, size_px, color, halo, true, size_px * 0.14)
 	for a: Dictionary in layout.area_labels:
 		var at := _m(a.pos)
 		var ang: float = a.angle
@@ -482,9 +558,18 @@ func _draw_labels() -> void:
 		if not b.id in shown_buildings:
 			continue
 		var bottom := 0.0
+		var left := INF
+		var right := -INF
 		for p: Vector2 in b.poly:
 			bottom = maxf(bottom, _m(p).y)
-		MapPaint.label(self, _font, Vector2(_m(b.center).x, bottom + cfg.font_building * 0.8), b.label, cfg.font_building, cfg.ink, halo)
+			left = minf(left, _m(p).x)
+			right = maxf(right, _m(p).x)
+		var w := _font.get_string_size(b.label, HORIZONTAL_ALIGNMENT_LEFT, -1, cfg.font_building).x
+		if w + 16.0 < right - left and float(b.size.y) * map_scale > 70.0:
+			# Written on the roof, under its glyph (old estate maps name the big houses in place).
+			MapPaint.label(self, _font, _m(b.center) + Vector2(0.0, 20.0), b.label, cfg.font_building, cfg.ink, Color(cfg.paper, 0.9))
+		else:
+			MapPaint.label(self, _font, Vector2(_m(b.center).x, bottom + cfg.font_building * 0.8), b.label, cfg.font_building, cfg.ink, halo)
 	for l: Dictionary in layout.landmarks:
 		if not labels.has(l.id) or l.label == "":
 			continue
@@ -503,7 +588,7 @@ func _draw_markers() -> void:
 				MapPaint.label(self, _font, p + Vector2(0.0, -16.0), str(m.name), cfg.font_small, cfg.carter.darkened(0.3), halo)
 			_:
 				MapPaint.figure(self, p, cfg.person_radius, cfg.person.lightened(0.35), cfg.ink)
-				MapPaint.label(self, _font, p + Vector2(0.0, -cfg.person_radius - 10.0), str(m.name), cfg.font_small, cfg.person.darkened(0.3), halo)
+				MapPaint.label(self, _font, p + Vector2(cfg.person_radius + 4.0, 0.0), str(m.name), cfg.font_small, cfg.person.darkened(0.3), halo, false)
 	if player_point != Vector2.INF:
 		MapPaint.hat_marker(self, player_point, cfg.player_radius, player_heading, cfg.player_mark, cfg.player_ring, cfg.paper)
 
@@ -530,55 +615,3 @@ func _draw_frame(sheet: Rect2) -> void:
 		draw_rect(box, cfg.ink, false, 1.6)
 		draw_rect(box.grow(-4.0), Color(cfg.ink, 0.6), false, 0.8)
 		draw_string(_font, box.position + Vector2(24.0, cfg.font_title + 8.0), title, HORIZONTAL_ALIGNMENT_LEFT, -1, cfg.font_title, cfg.sepia.darkened(0.2))
-
-
-func _draw_legend() -> void:
-	var row := 26.0
-	var w := 250.0
-	var h := 44.0 + LEGEND.size() * row
-	var box := Rect2(Vector2(size.x - w - 34.0, size.y - h - 34.0), Vector2(w, h))
-	draw_rect(box.grow(2.0), Color(0.15, 0.09, 0.05, 0.2), true)
-	draw_rect(box, Color(cfg.paper.lightened(0.04), 0.96), true)
-	draw_rect(box, cfg.ink, false, 1.4)
-	draw_rect(box.grow(-4.0), Color(cfg.ink, 0.5), false, 0.8)
-	draw_string(_font, box.position + Vector2(16.0, 28.0), LEGEND_TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, cfg.font_building, cfg.sepia.darkened(0.2))
-	for i: int in LEGEND.size():
-		var key: StringName = LEGEND[i][0]
-		var c := box.position + Vector2(30.0, 48.0 + i * row)
-		_legend_glyph(key, c)
-		draw_string(_font, c + Vector2(26.0, 6.0), str(LEGEND[i][1]), HORIZONTAL_ALIGNMENT_LEFT, -1, cfg.font_small + 1, cfg.ink)
-
-
-func _legend_glyph(key: StringName, c: Vector2) -> void:
-	var r := cfg.grave_radius
-	match key:
-		&"player":
-			MapPaint.hat_marker(self, c, 9.0, Vector2.ZERO, cfg.player_mark, cfg.player_ring, cfg.paper)
-		&"carter":
-			MapPaint.cart(self, c, 0.8, cfg.ink, cfg.carter.lightened(0.35))
-		&"person":
-			MapPaint.figure(self, c, cfg.person_radius, cfg.person.lightened(0.35), cfg.ink)
-		&"order":
-			MapPaint.seal(self, c + Vector2(0.0, -3.0), 6.0, cfg.objective, cfg.ink)
-		&"free":
-			draw_arc(c, r, 0.0, TAU, 14, Color(cfg.ink, 0.8), 1.2, true)
-		&"taken":
-			draw_circle(c, r, cfg.sepia, true, -1.0, true)
-			draw_arc(c, r, 0.0, TAU, 14, cfg.ink, 1.0, true)
-		&"tended":
-			draw_circle(c, r + 2.0, Color(cfg.grave_tended, 0.55), true, -1.0, true)
-			draw_circle(c, r - 0.5, cfg.ink, true, -1.0, true)
-		&"locked":
-			var rr := Rect2(c - Vector2(10.0, 7.0), Vector2(20.0, 14.0))
-			draw_rect(rr, cfg.locked_wash, true)
-			MapPaint.hatch(self, rr, Color(cfg.ink_faded, 0.5), 5.0)
-		&"road":
-			draw_line(c - Vector2(11.0, 0.0), c + Vector2(11.0, 0.0), cfg.road, 7.0, true)
-			draw_line(c + Vector2(-11.0, -3.5), c + Vector2(11.0, -3.5), cfg.ink, 1.0, true)
-			draw_line(c + Vector2(-11.0, 3.5), c + Vector2(11.0, 3.5), cfg.ink, 1.0, true)
-		&"fence":
-			MapPaint.dashed(self, c - Vector2(11.0, 0.0), c + Vector2(11.0, 0.0), cfg.ink, 1.4, 6.0, 3.0, true)
-		&"water":
-			draw_line(c - Vector2(11.0, 0.0), c + Vector2(11.0, 0.0), cfg.water, 8.0, true)
-		&"tree":
-			MapPaint.tree(self, c, 8.0, cfg.tree, cfg.tree_dark, &"tree", 3)

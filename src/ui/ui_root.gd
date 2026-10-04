@@ -110,6 +110,8 @@ func _ready() -> void:
 	EventBus.new_game_started.connect(_on_game_refresh)
 	EventBus.ui_modal_changed.connect(_on_ui_modal_changed)
 	dialogue_box.closed.connect(_on_dialogue_closed)
+	if hud.map_badge != null:
+		hud.map_badge.pressed.connect(toggle_map)
 	region_label = RegionLabel.new()
 	root_control.add_child(region_label)
 	veil = ScreenVeil.new()

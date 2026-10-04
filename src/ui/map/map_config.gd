@@ -14,8 +14,8 @@ extends Resource
 @export var map_titles: Dictionary[StringName, String] = {&"graveyard": "Der Friedhof am Hügel", &"village": "Hollerbrück"}
 ## Region → the region-local rect [x, z, w, d] the sheet shows (fit, north up).
 @export var views: Dictionary[StringName, Rect2] = {
-	&"graveyard": Rect2(-20.0, -36.0, 58.0, 72.0),
-	&"village": Rect2(-37.0, -30.0, 68.0, 52.0),
+	&"graveyard": Rect2(-18.0, -34.0, 54.0, 62.0),
+	&"village": Rect2(-37.0, -28.0, 68.0, 48.0),
 }
 ## The tab of a region is offered only while this GameState flag is on (&"" = always).
 @export var tab_flags: Dictionary[StringName, StringName] = {&"village": &"village_open"}
@@ -56,6 +56,13 @@ extends Resource
 	"shrine": "Bildstock",
 }
 @export var fallback_building_label: String = "Haus"
+## Where a section or area name is written (region-local, m) when the middle of its area is taken by
+## graves, buildings or the player's usual spot; others are centred.
+@export var label_at: Dictionary[String, Vector2] = {
+	"yard": Vector2(7.4, -5.8), "north": Vector2(4.75, -13.6), "churchyard": Vector2(4.75, -31.2),
+	"elder": Vector2(-6.75, -16.6), "workyard": Vector2(-1.4, -10.4), "road_village": Vector2(-33.2, -0.7),
+	"anger": Vector2(0.0, 2.4),
+}
 ## Area names drawn large and letter-spaced: feature → text (road, forest, workyard, anger, brook).
 @export var feature_labels: Dictionary[String, String] = {
 	"road": "Kutschweg",
@@ -63,7 +70,7 @@ extends Resource
 	"workyard": "Werkhof",
 	"anger": "Anger",
 	"brook": "Hollerbach",
-	"road_village": "Kutschweg zum Friedhof",
+	"road_village": "← Zum Friedhof",
 }
 ## Village props shown as landmarks (prop id → glyph).
 @export var village_landmarks: Dictionary[String, StringName] = {
@@ -113,13 +120,19 @@ extends Resource
 @export var paper: Color = Color(0.89, 0.83, 0.69)
 @export var paper_dark: Color = Color(0.62, 0.5, 0.33)
 @export var ink: Color = Color(0.24, 0.16, 0.1)
-@export var ink_faded: Color = Color(0.42, 0.33, 0.23, 0.55)
+@export var ink_faded: Color = Color(0.42, 0.33, 0.23, 0.72)
 @export var sepia: Color = Color(0.48, 0.32, 0.18)
 @export var roof: Color = Color(0.64, 0.33, 0.24)
 @export var roof_site: Color = Color(0.55, 0.47, 0.36, 0.5)
 @export var meadow: Color = Color(0.58, 0.64, 0.42, 0.32)
-@export var tree: Color = Color(0.36, 0.45, 0.3, 0.72)
-@export var tree_dark: Color = Color(0.22, 0.3, 0.2, 0.8)
+@export var tree: Color = Color(0.45, 0.52, 0.32, 0.5)
+@export var tree_dark: Color = Color(0.24, 0.3, 0.18, 0.62)
+@export var tuft: Color = Color(0.38, 0.4, 0.22, 0.5)
+## Grass tufts scattered over the sheet (per 100 m2).
+@export var tuft_density: float = 2.6
+## Regions drawn inside a wood: the paper beyond the walkable bounds is filled with small trees this many
+## metres apart (not on the ways, the sections and the buildings).
+@export var surround_forest: Dictionary[StringName, float] = {&"graveyard": 2.7}
 @export var water: Color = Color(0.36, 0.52, 0.62, 0.5)
 @export var road: Color = Color(0.74, 0.6, 0.4, 0.55)
 @export var paving: Color = Color(0.7, 0.62, 0.5, 0.45)
@@ -132,7 +145,7 @@ extends Resource
 @export var carter: Color = Color(0.45, 0.25, 0.12)
 @export_group("Sizes")
 ## Font sizes at the 1920×1080 base.
-@export var font_area: int = 26
+@export var font_area: int = 24
 @export var font_building: int = 17
 @export var font_small: int = 14
 @export var font_title: int = 30

@@ -12,13 +12,15 @@ const TEXT_LEGEND_OFF := "Legende ausblenden"
 const TEXT_HINT := "[ / ] Blatt wechseln · Maus über Orte zeigt Näheres · [M] oder [Esc] schließen"
 const REGIONS: Array[StringName] = [&"graveyard", &"village"]
 
-@export var sheet_size: Vector2 = Vector2(1500.0, 860.0)
+@export var sheet_size: Vector2 = Vector2(1440.0, 860.0)
+@export var legend_width: float = 300.0
 
 var config: MapConfig
 var canvas: MapCanvas
 var current_region: StringName = &"graveyard"
 var tab_buttons: Dictionary[StringName, Button] = {}
 var legend_button: Button
+var legend: MapLegend
 
 
 func _build() -> void:
@@ -46,13 +48,17 @@ func _build() -> void:
 	close_x.pressed.connect(request_close)
 	head.add_child(close_x)
 	box.add_child(head)
-	var page := UIKit.panel(&"LedgerPagePanel")
-	page.add_theme_stylebox_override(&"panel", StyleBoxEmpty.new())
-	box.add_child(page)
+	var spread := UIKit.hbox(8)
+	box.add_child(spread)
 	canvas = MapCanvas.new()
 	canvas.name = "MapCanvas"
 	canvas.custom_minimum_size = sheet_size
-	page.add_child(canvas)
+	spread.add_child(canvas)
+	legend = MapLegend.new()
+	legend.name = "MapLegend"
+	legend.cfg = config
+	legend.custom_minimum_size = Vector2(legend_width, sheet_size.y)
+	spread.add_child(legend)
 	var hint := UIKit.label(TEXT_HINT, &"DimLabel")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
@@ -70,7 +76,7 @@ func _refresh() -> void:
 		var b := tab_buttons[region]
 		b.visible = tab_allowed(region)
 		b.theme_type_variation = &"JournalTabSelected" if region == current_region else &"JournalTabButton"
-	legend_button.text = TEXT_LEGEND_OFF if canvas.legend_visible else TEXT_LEGEND_ON
+	legend_button.text = TEXT_LEGEND_OFF if legend.visible else TEXT_LEGEND_ON
 	canvas.show_region(current_region, MapLayout.of(current_region, config), context, config)
 
 
@@ -108,7 +114,7 @@ func turn_sheet(step: int) -> void:
 
 
 func toggle_legend() -> void:
-	canvas.legend_visible = not canvas.legend_visible
+	legend.visible = not legend.visible
 	refresh()
 
 

@@ -113,29 +113,76 @@ static func dab(ci: CanvasItem, at: Vector2, r: float, color: Color, seed: int) 
 		ci.draw_circle(at + Vector2(cos(a), sin(a)) * r * 0.22, r * (1.0 - i * 0.12), c, true, -1.0, true)
 
 
-## A tree seen from above: a crown of dabs with a scalloped ink rim and a shadow to the south-east.
+## A tree seen from above, painted: a soft shadow, washes of two greens, a broken ink rim of small
+## scallops and a trunk dot. Birches lighter and looser, elders with dark berries, the old linden broad.
 static func tree(ci: CanvasItem, at: Vector2, r: float, fill: Color, rim: Color, kind: StringName, seed: int) -> void:
-	var shadow := Color(0.2, 0.15, 0.1, 0.14)
-	ci.draw_circle(at + Vector2(r * 0.28, r * 0.32), r * 0.95, shadow, true, -1.0, true)
-	var lobes := 7 if kind != &"bush" else 5
+	ci.draw_circle(at + Vector2(r * 0.3, r * 0.34), r * 0.92, Color(0.25, 0.18, 0.1, 0.12), true, -1.0, true)
+	var lobes := 8 if kind != &"bush" else 6
 	if kind == &"birch":
-		fill = fill.lightened(0.25)
+		fill = Color(fill.lightened(0.28), fill.a * 0.9)
+	var light := Color(fill.lightened(0.18), fill.a * 0.7)
 	for i: int in lobes:
 		var a := TAU * i / lobes + seed * 0.7
-		dab(ci, at + Vector2(cos(a), sin(a)) * r * 0.42, r * 0.58, fill, seed + i)
-	dab(ci, at, r * 0.6, fill.darkened(0.12), seed)
+		var rr := r * (0.5 + 0.08 * sin(seed * 3.1 + i * 2.3))
+		dab(ci, at + Vector2(cos(a), sin(a)) * r * 0.42, rr, fill, seed + i)
+	dab(ci, at + Vector2(-r * 0.15, -r * 0.18), r * 0.48, light, seed + 5)
+	var width := 1.0 if r > 7.0 else 0.8
 	for i: int in lobes:
 		var a := TAU * i / lobes + seed * 0.7
-		var c := at + Vector2(cos(a), sin(a)) * r * 0.55
-		ci.draw_arc(c, r * 0.45, a - 1.1, a + 1.1, 7, rim, 1.1, true)
+		if (i + seed) % 4 == 0:
+			continue
+		var c := at + Vector2(cos(a), sin(a)) * r * 0.6
+		ci.draw_arc(c, r * 0.4, a - 0.95, a + 0.95, 6, rim, width, true)
 	if kind == &"elder":
-		for i: int in 5:
+		for i: int in 6:
 			var a := seed * 1.3 + i * 1.9
-			ci.draw_circle(at + Vector2(cos(a), sin(a)) * r * 0.45, maxf(r * 0.08, 1.2), Color(0.25, 0.12, 0.2, 0.85), true, -1.0, true)
-	elif kind == &"birch":
-		ci.draw_line(at + Vector2(0.0, -r * 0.2), at + Vector2(0.0, r * 0.25), Color(0.95, 0.93, 0.86, 0.9), 1.6, true)
-	elif kind == &"linden":
-		ci.draw_circle(at, r * 0.12, rim, true, -1.0, true)
+			ci.draw_circle(at + Vector2(cos(a), sin(a)) * r * 0.45, maxf(r * 0.07, 1.2), Color(0.25, 0.12, 0.2, 0.8), true, -1.0, true)
+	if kind != &"bush":
+		ci.draw_circle(at + Vector2(r * 0.08, r * 0.1), maxf(r * 0.07, 1.0), Color(rim, 0.8), true, -1.0, true)
+
+
+## A house seen from above: shadow, the roof wash, the shaded half, ridge and wobbly ink outline.
+static func house(ci: CanvasItem, poly: PackedVector2Array, long_x: bool, roof: Color, ink: Color, seed: int) -> void:
+	var shadow := PackedVector2Array()
+	for p: Vector2 in poly:
+		shadow.append(p + Vector2(3.0, 3.5))
+	ci.draw_colored_polygon(shadow, Color(0.15, 0.09, 0.05, 0.26))
+	ci.draw_colored_polygon(poly, roof)
+	var inner := PackedVector2Array()
+	var c := (poly[0] + poly[2]) * 0.5
+	for p: Vector2 in poly:
+		inner.append(c + (p - c) * 0.86)
+	ci.draw_colored_polygon(inner, Color(roof.lightened(0.08), 0.6))
+	var a := (poly[0] + poly[3]) * 0.5 if long_x else (poly[0] + poly[1]) * 0.5
+	var e := (poly[1] + poly[2]) * 0.5 if long_x else (poly[3] + poly[2]) * 0.5
+	var half := PackedVector2Array([a, e, poly[2], poly[3]]) if long_x else PackedVector2Array([a, e, poly[2], poly[1]])
+	ci.draw_colored_polygon(half, Color(0.22, 0.08, 0.04, 0.2))
+	# Roof tiles: a few thin strokes across the slope.
+	var along := e - a
+	var across := (poly[3] - poly[0]) if long_x else (poly[1] - poly[0])
+	var n := maxi(2, int(along.length() / 9.0))
+	for k: int in range(1, n):
+		var p := a + along * (float(k) / n)
+		ci.draw_line(p - across * 0.42, p + across * 0.42, Color(ink, 0.16), 1.0, true)
+	ci.draw_line(a, e, Color(ink, 0.8), 1.3, true)
+	ink_line(ci, poly, ink, 1.6, seed, 0.5, true)
+
+
+## A tended grave: a small green wreath around the stone.
+static func tended_grave(ci: CanvasItem, p: Vector2, r: float, ink: Color, green: Color) -> void:
+	ci.draw_circle(p, r + 2.2, Color(green, 0.45), true, -1.0, true)
+	for i: int in 6:
+		var a := TAU * i / 6.0
+		ci.draw_circle(p + Vector2(cos(a), sin(a)) * (r + 1.6), 1.3, green.darkened(0.2), true, -1.0, true)
+	ci.draw_circle(p, r - 0.6, ink, true, -1.0, true)
+
+
+## Small rule ornament (legend): two lines and a diamond.
+static func ornament(ci: CanvasItem, c: Vector2, half: float, ink: Color, rule: Color) -> void:
+	for side: float in [-1.0, 1.0]:
+		ci.draw_line(c + Vector2(side * 12.0, -1.5), c + Vector2(side * half, -1.5), Color(rule, 0.9), 1.2, true)
+		ci.draw_line(c + Vector2(side * 12.0, 1.5), c + Vector2(side * half, 1.5), Color(rule, 0.6), 0.8, true)
+	ci.draw_colored_polygon(PackedVector2Array([c + Vector2(0.0, -6.0), c + Vector2(6.0, 0.0), c + Vector2(0.0, 6.0), c + Vector2(-6.0, 0.0)]), ink)
 
 
 ## Hachures along a rock edge (ticks on the low side).

@@ -14,6 +14,8 @@ extends Node
 ##   journal_orders (22) · remark (23) · insight_deathbook (27) · chapter_name_in_village (28) ·
 ##   collection (29) · lecture_veil (30) · deduction (31) · pult_medicines (32) · organs_eyes (33) ·
 ##   gift · lecture · hud_village · day_summary · register
+## G7 Änderungsrunde 1 (the map, key M): map_friedhof · map_dorf · map_hud (run last – they unlock sections
+## and accept orders for the markers).
 ##   GODOT=… tools/godot_run.sh --resolution 1280x720 -s res://src/ui/tools/ui_screenshots.gd -- --phase7 --out=/abs/dir [--shots=shop,gift]
 
 const SAVE_DIR := "user://ui_shot_saves_p7"
@@ -123,6 +125,9 @@ func _run() -> void:
 	await _shot("ghost_returned", _ghost_returned_shot)
 	await _shot("ghost_organ", _ghost_organ_shot)
 	await _shot("chapter_name_in_village", _chapter_shot)
+	await _shot("map_hud", _map_hud_shot)
+	await _shot("map_friedhof", _map_graveyard_shot)
+	await _shot("map_dorf", _map_village_shot)
 	for slot: int in [0, 1]:
 		SaveManager.delete_save(slot)
 	SaveManager.save_dir = SaveManager.DEFAULT_SAVE_DIR
@@ -835,3 +840,60 @@ func _chapter_shot() -> void:
 	context["insights_phase7"] = PackedStringArray(["i_deathbook"])
 	_ui.open_panel(&"slice_summary", context)
 	await get_tree().process_frame
+
+
+# --- the map (G7 Änderungsrunde 1) ---------------------------------------------------------------
+
+## The cemetery of the arc: east, north, elder and the churchyard cleared, the Lindenacker granted (still
+## locked), two open orders (Esch's charcoal in the village, the parish's tending on the Lindenacker).
+func _map_stage() -> void:
+	GameState.set_flag(&"has_elder_key", true)
+	var expansion := get_tree().get_first_node_in_group(&"expansion") as ExpansionManager
+	for id: StringName in [&"east", &"north", &"elder", &"churchyard"]:
+		if expansion != null:
+			expansion.unlock(id)
+	for id: StringName in [&"o_esch_charcoal", &"o_mangold_stone", &"o_fenner_linden"]:
+		if _orders.state(id) != Orders.STATE_ACCEPTED:
+			_orders.offer(id)
+			_orders.accept(id)
+	_ui.notifications.clear()
+
+
+## The HUD with the map button (compass + [M]) beside the Merkbuch.
+func _map_hud_shot() -> void:
+	_map_stage()
+	TimeManager.set_time(DAY, 610)
+	_at_gate()
+	_place_player(Vector3(-2.6, 0.0, -2.4), deg_to_rad(120.0))
+	await get_tree().process_frame
+
+
+func _map_graveyard_shot() -> void:
+	_map_stage()
+	TimeManager.set_time(DAY, 470)
+	_at_gate()
+	_place_player(Vector3(-3.4, 0.0, -1.2), deg_to_rad(60.0))
+	for npc: Node in get_tree().get_nodes_in_group(&"npc"):
+		if npc.has_method(&"refresh"):
+			npc.call(&"refresh")
+	_ui.open_map()
+	await get_tree().process_frame
+
+
+## Hollerbrück at half past ten (the shops open), the gravekeeper at the well, the pointer over the smithy.
+func _map_village_shot() -> void:
+	_map_stage()
+	TimeManager.set_time(DAY, 630)
+	await _in_village(Vector2(1.6, 0.4), deg_to_rad(200.0))
+	_ui.open_map()
+	await get_tree().process_frame
+	var canvas := (_ui.get_panel(&"map") as MapPanel).canvas
+	var lay := MapLayout.of(&"village", canvas.cfg)
+	var at := canvas.get_global_transform_with_canvas() * canvas.world_to_map(lay.places["v_smithy"])
+	get_viewport().warp_mouse(at)
+	var ev := InputEventMouseMotion.new()
+	ev.position = at
+	ev.global_position = at
+	Input.parse_input_event(ev)
+	for i: int in 40:
+		await get_tree().process_frame

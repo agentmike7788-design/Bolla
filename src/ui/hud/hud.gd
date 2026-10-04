@@ -71,6 +71,8 @@ var reputation_meter: ReputationMeter
 var build_bar: BuildBar
 var journal_badge: HBoxContainer
 var journal_label: Label
+## G7 Änderungsrunde 1: the map button (compass + [M]) beside the Merkbuch; UIRoot opens the map.
+var map_badge: MapBadge
 
 ## item id -> {chip: Control, count: Label, caption: Label (crafted items only)}
 var _chips: Dictionary[StringName, Dictionary] = {}
