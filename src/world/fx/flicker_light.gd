@@ -20,6 +20,7 @@ const META_ROLE := &"interior_role"
 const META_PROFILE := &"flicker_profile"
 ## Seconds between LOD distance checks.
 const LOD_CHECK := 0.5
+const EMBER_TEXTURE := "res://assets/vfx/ph_vfx_smoke_wisp.png"
 
 ## Legacy (scenes built before the profiles): used only when no profile resolves.
 @export var amount: float = 0.12
@@ -115,7 +116,7 @@ static func make_embers(p: FlickerProfile) -> CPUParticles3D:
 	var ramp := Gradient.new()
 	ramp.offsets = PackedFloat32Array([0.0, 0.15, 0.7, 1.0])
 	var c := p.ember_color
-	ramp.colors = PackedColorArray([Color(c, 0.0), Color(c * 1.6, 1.0), Color(c, 0.7), Color(c, 0.0)])
+	ramp.colors = PackedColorArray([Color(c, 0.0), Color(c, 0.9), Color(c * 0.8, 0.6), Color(c * 0.6, 0.0)])
 	parts.color_ramp = ramp
 	parts.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	parts.fixed_fps = 30
@@ -129,8 +130,10 @@ static func make_embers(p: FlickerProfile) -> CPUParticles3D:
 		_ember_material.vertex_color_use_as_albedo = true
 		_ember_material.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 		_ember_material.no_depth_test = false
+		# soft round motes (the painted smoke wisp), not hard squares
+		_ember_material.albedo_texture = load(EMBER_TEXTURE) as Texture2D
 	var quad := QuadMesh.new()
-	quad.size = Vector2(0.025, 0.025)
+	quad.size = Vector2(0.035, 0.035)
 	quad.material = _ember_material
 	parts.mesh = quad
 	parts.emitting = true

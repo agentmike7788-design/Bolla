@@ -36,15 +36,15 @@ func _run() -> void:
 		quit(2)
 		return
 	DirAccess.make_dir_recursive_absolute(out)
-	var room := (load("res://src/world/interiors/%s_interior.tscn" % room_id) as PackedScene).instantiate() as InteriorRoom
+	var room := (load("res://src/world/interiors/%s_interior.tscn" % room_id) as PackedScene).instantiate() as Node3D
 	root.add_child(room)
 	await process_frame
-	room.apply_room(StringName(room_id))
-	var lighting := room.get_node(^"Lighting") as InteriorLighting
+	room.call(&"apply_room", StringName(room_id))
+	var lighting := room.get_node(^"Lighting")
 	lighting.set_process(false)
-	lighting.apply_daylight(0.0)
+	lighting.call(&"apply_daylight", 0.0)
 	var cam := Camera3D.new()
-	cam.environment = room.environment
+	cam.environment = room.get(&"environment")
 	cam.fov = 40.0
 	root.add_child(cam)
 	cam.global_position = room.global_transform * (SHOTS[room_id].eye as Vector3)
