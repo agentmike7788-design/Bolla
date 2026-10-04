@@ -17,6 +17,8 @@ const MAX_PER_KIND = 300;
 const MAX_BARS = 400;
 const MAX_LINES = 160;
 const MAX_RUINS = 400;
+const MAX_SHELLS = 80;
+const BIG = new Set(['silo', 'artillery']);
 const flat = (color, extra) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.1, flatShading: true, ...extra });
 
 // A beetle facing +z: abdomen, thorax, head with mandibles; legs in two sets of
@@ -135,6 +137,12 @@ export function createEnemyView({ effects, onFx }) {
   const beams = instanced(lineGeo, new THREE.MeshBasicMaterial({ color: 0xff4030, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }), MAX_LINES, false);
   const lines = []; // { laser, from, to, life }
 
+  // Artillery shells in the air, on a high arc with a smoke trail.
+  const shellGeo = new THREE.SphereGeometry(0.11, 8, 6).scale(1, 1, 2.2);
+  const shellMesh = instanced(shellGeo, new THREE.MeshStandardMaterial({ color: 0x2a2a24, emissive: 0xff7a2a, emissiveIntensity: 0.6, roughness: 0.5 }), MAX_SHELLS, false);
+  const shellPos = new THREE.Vector3();
+  const shellNext = new THREE.Vector3();
+
   // Rubble where creatures tore a building down, until it is rebuilt.
   const rubbleGeo = mergeGeometries([
     new THREE.CircleGeometry(0.55, 12).rotateX(-Math.PI / 2).translate(0, 0.02, 0),
@@ -223,6 +231,8 @@ export function createEnemyView({ effects, onFx }) {
       const hurt = n.hp < n.max;
       v.eggMat.emissiveIntensity = (0.6 + angry * 0.8 + Math.sin(elapsed * (2 + angry * 4) + n.id) * 0.4) * (1 + night);
       v.mat.emissive.setHex(hurt ? 0x401010 : 0x000000);
+      // A young nest grows as it heals into its full size.
+      v.group.scale.setScalar(n.born !== undefined ? 0.45 + 0.55 * Math.min(1, n.hp / n.max) : 1);
     }
     for (const [id, v] of nestViews) {
       if (alive.has(id)) continue;
@@ -294,7 +304,7 @@ export function createEnemyView({ effects, onFx }) {
     const enemies = factory.enemies;
     for (const b of enemies.damaged) {
       if (b.hp === undefined || factory.at(b.tile.x, b.tile.z) !== b) continue;
-      const big = b.type === 'silo';
+      const big = BIG.has(b.type);
       bar(b.tile.position.x, b.tile.height + (big ? 3.5 : 1.25), b.tile.position.z, Math.max(0, b.hp / enemies.maxHp(b)), big ? 1.6 : 0.8);
     }
     for (const nest of enemies.nests) if (nest.hp < nest.max) bar(wx(nest.x), groundAt(nest.x, nest.z) + 1.3, wz(nest.z), nest.hp / nest.max, 1.4);
@@ -337,9 +347,40 @@ export function createEnemyView({ effects, onFx }) {
         for (let i = 0; i < (big ? 22 : 12); i++) {
           effects.emit({ x, y: y + 0.15, z, vx: rnd(-1.6, 1.6), vy: rnd(0.8, 2.6), vz: rnd(-1.6, 1.6), life: rnd(0.5, 0.9), size: rnd(0.06, 0.12) * (big ? 1.4 : 1), grow: 0, color: effects.color(i % 3 ? 0x6fbf2a : 0x3a2a20, 0.2), gravity: -9, drag: 0.4, floor: y });
         }
-      } else if (f.type === 'nestDeath' || f.type === 'boom') {
+      } else if (f.type === 'shellFire') {
+        // Fire and a cloud of smoke out of the muzzle, high above the gun.
+        const aim = f.from?.aim ?? 0;
+        const mx = x - Math.sin(aim) * 1.9 * TILE;
+        const mz = z - Math.cos(aim) * 1.9 * TILE;
+        const my = y + 2.2;
+        for (let i = 0; i < 14; i++) {
+          effects.emit({ x: mx, y: my, z: mz, vx: -Math.sin(aim) * rnd(2, 5) + rnd(-0.6, 0.6), vy: rnd(1, 3), vz: -Math.cos(aim) * rnd(2, 5) + rnd(-0.6, 0.6), life: rnd(0.15, 0.3), size: rnd(0.2, 0.35), grow: 1.5, color: effects.color(i % 2 ? 0xff9a2a : 0xffe080, 0.15), gravity: 0, drag: 4 }, true);
+        }
+        for (let i = 0; i < 16; i++) {
+          effects.emit({ x: mx + rnd(-0.2, 0.2), y: my, z: mz + rnd(-0.2, 0.2), vx: -Math.sin(aim) * rnd(0.5, 2.5) + rnd(-0.8, 0.8), vy: rnd(0.2, 1.4), vz: -Math.cos(aim) * rnd(0.5, 2.5) + rnd(-0.8, 0.8), life: rnd(1.4, 2.6), size: rnd(0.35, 0.6), grow: 2.2, color: effects.color(0x8a8478, 0.1), gravity: 0.15, drag: 1.4, fade: 0.6 });
+        }
+        // Dust kicked up around the pad.
+        for (let i = 0; i < 10; i++) {
+          const a = rnd(0, Math.PI * 2);
+          effects.emit({ x: x + Math.cos(a) * 1.3, y: y + 0.15, z: z + Math.sin(a) * 1.3, vx: Math.cos(a) * rnd(1, 2), vy: rnd(0.1, 0.5), vz: Math.sin(a) * rnd(1, 2), life: rnd(0.8, 1.4), size: rnd(0.25, 0.4), grow: 1.5, color: effects.color(0xb5a27a, 0.1), gravity: 0, drag: 2, fade: 0.5 });
+        }
+      } else if (f.type === 'nestBorn') {
+        // The ground bursts open: purple goo and egg shells.
+        for (let i = 0; i < 26; i++) {
+          effects.emit({ x, y: y + 0.2, z, vx: rnd(-2, 2), vy: rnd(1, 3.5), vz: rnd(-2, 2), life: rnd(0.6, 1.1), size: rnd(0.08, 0.16), grow: 0, color: effects.color(i % 3 ? 0xb04dff : 0x4a3044, 0.2), gravity: -9, drag: 0.4, floor: y });
+        }
+      } else if (f.type === 'nestDeath' || f.type === 'boom' || f.type === 'shellHit') {
         // Fire, smoke and flying debris.
-        const big = f.type === 'nestDeath' || f.big;
+        const big = f.type !== 'boom' || f.big;
+        if (f.type === 'shellHit') {
+          // A shell digs in: a fountain of earth and a flash.
+          for (let i = 0; i < 26; i++) {
+            effects.emit({ x: x + rnd(-0.3, 0.3), y: y + 0.2, z: z + rnd(-0.3, 0.3), vx: rnd(-2.2, 2.2), vy: rnd(3, 7), vz: rnd(-2.2, 2.2), life: rnd(0.8, 1.4), size: rnd(0.08, 0.18), grow: 0, color: effects.color(0x4a3a28, 0.15), gravity: -12, drag: 0.3, floor: y });
+          }
+          for (let i = 0; i < 8; i++) {
+            effects.emit({ x, y: y + 0.4, z, vx: rnd(-1, 1), vy: rnd(0, 1), vz: rnd(-1, 1), life: 0.18, size: rnd(0.8, 1.3), grow: 3, color: effects.color(0xfff0b0, 0.05), gravity: 0, drag: 3 }, true);
+          }
+        }
         for (let i = 0; i < (big ? 40 : 22); i++) {
           effects.emit({ x, y: y + 0.3, z, vx: rnd(-2.5, 2.5), vy: rnd(1, 4), vz: rnd(-2.5, 2.5), life: rnd(0.3, 0.7), size: rnd(0.12, 0.25) * (big ? 1.4 : 1), grow: 1, color: effects.color(i % 2 ? 0xff9a2a : 0xffd060, 0.2), gravity: -2, drag: 2.5 }, true);
         }
@@ -376,6 +417,33 @@ export function createEnemyView({ effects, onFx }) {
     tracers.instanceMatrix.needsUpdate = beams.instanceMatrix.needsUpdate = true;
   }
 
+  // Height of a shell over the ground on its arc, t from 0 to 1.
+  function shellPoint(s, t, out) {
+    const d = Math.hypot(s.x2 - s.x, s.z2 - s.z);
+    const x = s.x + (s.x2 - s.x) * t;
+    const z = s.z + (s.z2 - s.z) * t;
+    const base = groundAt(s.x, s.z) + 2.2 + (groundAt(s.x2, s.z2) - groundAt(s.x, s.z) - 2.2) * t;
+    return out.set(wx(x), base + 4 * (2 + d * 0.32) * t * (1 - t), wz(z));
+  }
+
+  function drawShells(enemies) {
+    let n = 0;
+    for (const s of enemies.flying) {
+      if (n >= MAX_SHELLS) break;
+      const t = Math.min(1, s.t / s.dur);
+      shellPoint(s, t, shellPos);
+      shellPoint(s, Math.min(1, t + 0.02), shellNext);
+      dummy.position.copy(shellPos);
+      dummy.scale.set(1, 1, 1);
+      dummy.lookAt(shellNext);
+      dummy.updateMatrix();
+      shellMesh.setMatrixAt(n++, dummy.matrix);
+      if (Math.random() < 0.6) effects.emit({ x: shellPos.x, y: shellPos.y, z: shellPos.z, vx: rnd(-0.1, 0.1), vy: rnd(0, 0.2), vz: rnd(-0.1, 0.1), life: rnd(0.5, 0.9), size: rnd(0.12, 0.2), grow: 1.4, color: effects.color(0x9a948a, 0.1), gravity: 0, drag: 1, fade: 0.5 });
+    }
+    shellMesh.count = n;
+    shellMesh.instanceMatrix.needsUpdate = true;
+  }
+
   function drawRuins(enemies) {
     const list = enemies.ruins;
     // Rebuilt only when the list changes.
@@ -389,7 +457,7 @@ export function createEnemyView({ effects, onFx }) {
       const z = Math.floor(r.index / world.size);
       dummy.position.set(wx(x), groundAt(x, z), wz(z));
       dummy.rotation.set(0, (r.index * 2.399) % (Math.PI * 2), 0);
-      dummy.scale.setScalar(r.type === 'silo' ? 2.6 : 1);
+      dummy.scale.setScalar(BIG.has(r.type) ? 2.6 : 1);
       dummy.updateMatrix();
       rubble.setMatrixAt(n++, dummy.matrix);
     }
@@ -408,6 +476,7 @@ export function createEnemyView({ effects, onFx }) {
     drawCreatures(enemies, elapsed);
     playFx(enemies, factory);
     drawLines(dt);
+    drawShells(enemies);
     drawBars(factory, camera);
     drawRuins(enemies);
     eyeMat.emissiveIntensity = 1.6 * (1 + night * 1.5);
@@ -427,7 +496,7 @@ export function createEnemyView({ effects, onFx }) {
     lines.length = 0;
     ruinsSeen = -1;
     for (const set of Object.values(kinds)) for (const mesh of Object.values(set)) mesh.count = 0;
-    eyes.count = sacs.count = barBack.count = barFill.count = tracers.count = beams.count = rubble.count = 0;
+    eyes.count = sacs.count = barBack.count = barFill.count = tracers.count = beams.count = rubble.count = shellMesh.count = 0;
   }
 
   return {

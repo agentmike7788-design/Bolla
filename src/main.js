@@ -22,7 +22,7 @@ import { DRONES_PER_PORT, DRONE_RANGE, DRONE_SPEED, PROVIDER_CAP, REQUEST_AMOUNT
 import { BIOMES, biomeOf, weatherEffect } from './biomes.js';
 import { createWeatherView } from './weatherView.js';
 import { createAchievements } from './achievements.js';
-import { ENEMY_MODES, CREATURES, TURRET, LASER } from './enemies.js';
+import { ENEMY_MODES, CREATURES, TURRET, LASER, ARTILLERY } from './enemies.js';
 import { createEnemyView } from './enemyView.js';
 import { CHAPTERS, STORY, PERKS, perksFor, loadCampaign, finishCampaignMap, pickPerk, nextCampaignMap, chapterIndexOf, opensChapter } from './campaign.js';
 import { createRadio, createCampaignView, showChapterCard, perkChoice } from './campaignView.js';
@@ -98,6 +98,9 @@ const enemyView = createEnemyView({
     else if (f.type === 'acid') audio.play.acid(s.pan, s.level);
     else if (f.type === 'death') audio.play.squish(s.pan, s.level, f.kind === 'brute');
     else if (f.type === 'boom' || f.type === 'nestDeath') audio.play.boom(s.pan, s.level, f.type === 'nestDeath' || f.big);
+    else if (f.type === 'shellFire') audio.play.cannon(s.pan, s.level);
+    else if (f.type === 'shellHit') audio.play.boom(s.pan, s.level, true);
+    else if (f.type === 'nestBorn') audio.play.acid(s.pan, s.level);
   },
 });
 scene.add(enemyView.group);
@@ -433,8 +436,14 @@ function renderEnemies() {
     enemyState.textContent = 'alle Nester zerstört';
     enemyText.textContent = `${num(s.killed)} Gegner besiegt, ${s.nestsKilled} Nester ausgeräuchert. Die Insel gehört dir.`;
   } else {
-    enemyState.textContent = s.mode === 'peaceful' ? 'friedlich' : s.graceLeft > 0 ? `ruhig · ${clock(s.graceLeft)}` : 'ruhig';
-    const why = s.mode === 'peaceful' ? 'Nester wehren sich nur, wenn Türme auf sie schießen.' : s.graceLeft > 0 ? 'Bis dahin greift niemand an. Smog aus Bohrern, Öfen und Kraftwerken lockt die Nester an.' : 'Smog lockt Angriffe an: Mauern und Türme um die Fabrik!';
+    enemyState.textContent = s.settlers ? 'Siedler unterwegs' : s.mode === 'peaceful' ? 'friedlich' : s.graceLeft > 0 ? `ruhig · ${clock(s.graceLeft)}` : 'ruhig';
+    const why = s.settlers
+      ? 'Ein Trupp sucht einen Platz für ein neues Nest. Abfangen, bevor er ankommt!'
+      : s.mode === 'peaceful'
+      ? 'Nester wehren sich nur, wenn Türme auf sie schießen.'
+      : s.graceLeft > 0
+      ? `Bis dahin greift niemand an. Smog aus Bohrern, Öfen und Kraftwerken lockt die Nester an${s.expands ? ', und wo er hinzieht, breiten sie sich aus' : ''}.`
+      : `Smog lockt Angriffe an: Mauern und Türme um die Fabrik!${s.expands ? ' Wo er hinzieht, gründen Siedler neue Nester.' : ''}`;
     enemyText.textContent = `${s.nests} Nester · Evolution ${pct(s.evo)} · ${smog} · ${why}`;
   }
   const actions = `${s.ruins ? `<button type="button" data-rebuild>Trümmer aufbauen (${s.ruins})</button>` : ''}${factory.enemies.lastAttack ? '<button type="button" class="link" data-look>Hinsehen <kbd>Leertaste</kbd></button>' : ''}`;
@@ -482,9 +491,18 @@ function watchEnemies() {
   const e = factory.enemies;
   for (const a of e.alerts) {
     if (inTitle) continue;
+    if (a.type === 'settlers') {
+      showToast('Siedler unterwegs', `${a.count} Käfer ziehen in den ${compass(a.x, a.z)}, um ein neues Nest zu gründen. Fang sie ab! Leertaste: hinsehen.`);
+      continue;
+    }
+    if (a.type === 'nest') {
+      showToast('Neues Nest', `Im ${compass(a.x, a.z)} ist ein neues Nest entstanden. Noch ist es klein und schwach.`);
+      continue;
+    }
     const where = compass(a.nest.x, a.nest.z);
     audio.play.alarm();
-    showToast('Angriff!', `${a.count} ${a.count === 1 ? 'Gegner kommt' : 'Gegner kommen'} aus dem ${where}. Ziel: ${BUILDINGS[a.target.type].name}. Leertaste: hinsehen.`);
+    if (a.type === 'counter') showToast('Gegenangriff!', `${a.count} ${a.count === 1 ? 'Gegner stürmt' : 'Gegner stürmen'} aus dem ${where} auf deine Artillerie. Leertaste: hinsehen.`);
+    else showToast('Angriff!', `${a.count} ${a.count === 1 ? 'Gegner kommt' : 'Gegner kommen'} aus dem ${where}. Ziel: ${BUILDINGS[a.target.type].name}. Leertaste: hinsehen.`);
   }
   e.alerts.length = 0;
   if (e.destroyed.length) {
@@ -1219,7 +1237,7 @@ function showTile(tile) {
   canvas.style.cursor = !tool && (train || hasRecipes(building)) ? 'pointer' : '';
   marker.visible = !tool;
   marker.position.set(tile.position.x, Math.max(tile.height, 0.28) + 0.03, tile.position.z);
-  ghost.show(tool, tile, tool === 'remove' || overBelt ? building?.dir ?? 0 : dir, check?.ok);
+  ghost.show(tool, tile, tool === 'remove' || overBelt ? building?.dir ?? 0 : dir, check?.ok, tool === 'artillery' ? factory.enemies.artilleryRange() : null);
   factoryView.showSupply(tool === 'pole' || POWER_TOOLS.includes(tool) || tool === 'battery' || usesPower({ type: tool }) || (!tool && (building?.type === 'pole' || POWER_TOOLS.includes(building?.type) || building?.type === 'battery')));
   factoryView.showDroneRange(DRONE_TOOLS.has(tool) || (!tool && DRONE_TOOLS.has(building?.type)));
 
@@ -1345,6 +1363,10 @@ function showTile(tile) {
     tileName.textContent = 'Laserturm';
     const state = { work: 'Feuert', idle: 'Wachsam', nopower: 'Kein Strom: feuert nicht' }[building.state] ?? '';
     tileDetail.textContent = `${state} · Reichweite ${LASER.range} · ${building.net ? `Strom ${POWER_USE.laser} MW beim Feuern` : 'Braucht einen Strommast in der Nähe'} · ${hpText(building)}`;
+  } else if (building?.type === 'artillery') {
+    tileName.textContent = 'Artillerie';
+    const state = { work: 'Feuert', idle: 'Kein Nest in Reichweite', empty: 'Keine Granaten: Band oder Anfragekiste mit Granaten anschließen' }[building.state] ?? '';
+    tileDetail.textContent = `${state} · Granaten ${building.shells ?? 0}/${ARTILLERY.store} · Reichweite ${Math.round(factory.enemies.artilleryRange())} · ${hpText(building)}`;
   } else if (building?.type === 'storage') {
     tileName.textContent = 'Lager';
     tileDetail.textContent = building.received
@@ -1353,7 +1375,8 @@ function showTile(tile) {
   } else if (!building && factory.enemies.nestAt(tile)) {
     const nest = factory.enemies.nestAt(tile);
     tileName.textContent = 'Nest';
-    tileDetail.textContent = `${Math.ceil(nest.hp)}/${nest.max} Lebenspunkte · ${nest.anger >= 45 ? 'Wütend: bald kommt eine Welle' : 'Saugt Smog auf und wird wütend'} · Türme in Reichweite schießen darauf`;
+    tileName.textContent = nest.born !== undefined && nest.hp < nest.max ? 'Junges Nest' : 'Nest';
+    tileDetail.textContent = `${Math.ceil(nest.hp)}/${nest.max} Lebenspunkte · ${nest.anger >= 45 ? 'Wütend: bald kommt eine Welle' : 'Saugt Smog auf und wird wütend'} · Türme und Artillerie in Reichweite schießen darauf`;
   } else if (!building && factory.enemies.ruins.some((r) => r.index === tile.z * world.size + tile.x)) {
     const r = factory.enemies.ruins.find((x) => x.index === tile.z * world.size + tile.x);
     tileName.textContent = `Trümmer · ${BUILDINGS[r.type].name}`;
@@ -1368,7 +1391,7 @@ function showTile(tile) {
     tileName.textContent = terrain.name;
     tileDetail.textContent = `${TERRAIN_NOTE[tile.terrain] ?? (terrain.buildable ? 'Bebaubar' : 'Nicht bebaubar')} · Feld ${tile.x}, ${tile.z}`;
   }
-  if (building?.hp !== undefined && !['wall', 'turret', 'laser'].includes(building.type)) tileDetail.textContent += ` · beschädigt: ${hpText(building)}`;
+  if (building?.hp !== undefined && !['wall', 'turret', 'laser', 'artillery'].includes(building.type)) tileDetail.textContent += ` · beschädigt: ${hpText(building)}`;
   if (check && !check.ok && check.reason) tileDetail.textContent = check.reason;
   else if (overBelt) tileDetail.textContent = `Ersetzt das Bandstück · Ausgang nach ${DIR_NAMES[building.dir]}`;
 }
@@ -1420,10 +1443,10 @@ let shapesDirty = false;
 
 const toolButtons = document.querySelectorAll('.tool[data-tool]');
 const DRONE_TOOLS = new Set(['dronePort', 'provider', 'requester']);
-const DEFENSE_TOOLS = new Set(['wall', 'turret', 'laser']);
+const DEFENSE_TOOLS = new Set(['wall', 'turret', 'laser', 'artillery']);
 const help = document.getElementById('help');
 const HELP = {
-  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['Y', 'Erdwärme'], ['Ö Ä #', 'Ökostrom'], ['O P I K', 'Öl'], ['G B Z J', 'Bahn'], ['F V C', 'Drohnen'], ['H', 'Silo'], [', . -', 'Abwehr'], ['X', 'abreißen'], ['T', 'Forschung'], ['L', 'Statistik'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
+  none: [['Esc', 'Menü'], ['Linke Maus', 'verschieben'], ['Rechte Maus / Q E', 'drehen'], ['Mausrad', 'zoomen'], ['WASD', 'bewegen'], ['1–0', 'bauen'], ['Y', 'Erdwärme'], ['Ö Ä #', 'Ökostrom'], ['O P I K', 'Öl'], ['G B Z J', 'Bahn'], ['F V C', 'Drohnen'], ['H', 'Silo'], [', . - Ü', 'Abwehr'], ['X', 'abreißen'], ['T', 'Forschung'], ['L', 'Statistik'], ['M', 'Karten'], ['N', 'Tag/Nacht'], ['U', 'Ton']],
   drill: [['Klick', 'Bohrer auf Erz setzen'], ['R', 'Ausgang drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   belt: [['Ziehen', 'Band verlegen'], ['R', 'drehen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
   storage: [['Klick', 'Lager setzen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
@@ -1452,6 +1475,7 @@ const HELP = {
   wall: [['Klick / Ziehen', 'Mauer bauen'], ['Gegner', 'beißen sich langsam durch'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen']],
   turret: [['Klick', 'Geschützturm setzen'], ['Munition', 'per Band oder Anfragekiste'], ['Reichweite', `${TURRET.range} Felder`], ['Esc', 'fertig']],
   laser: [['Klick', 'Laserturm setzen'], ['Strom', `${POWER_USE.laser} MW beim Feuern`], ['Reichweite', `${LASER.range} Felder`], ['Esc', 'fertig']],
+  artillery: [['Klick', 'Artillerie setzen (3 × 3)'], ['Granaten', 'per Band oder Anfragekiste'], ['Ziel', 'Nester in Reichweite'], ['Esc', 'fertig']],
   silo: [['Klick', 'Raketensilo setzen'], ['Braucht', '3 × 3 freie Felder'], ['Bänder', 'an jede Seite'], ['Ohne Werkzeug klicken', 'Etappen, Start']],
   remove: [['Klick / Ziehen', 'abreißen'], ['Esc', 'fertig'], ['Rechte Maus', 'Kamera drehen'], ['WASD', 'bewegen']],
 };
@@ -1647,7 +1671,8 @@ window.addEventListener('keydown', (e) => {
   if (key === 't' && missions) return showToast('Missionskarte', 'Hier schalten Missionen neue Gebäude frei, nicht der Forschungsbaum.');
   const numbered = /^[0-9]$/.test(key) && ['drill', 'belt', 'storage', 'furnace', 'assembler', 'splitter', 'merger', 'constructor', 'power', 'pole'][(Number(key) + 9) % 10];
   const oilKey = { y: 'geo', o: 'pump', p: 'pipe', i: 'refinery', k: 'tank', g: 'rail', b: 'station', z: 'train', j: 'signal', f: 'dronePort', v: 'provider', c: 'requester', h: 'silo' }[key];
-  const defenseKey = { ',': 'wall', '.': 'turret', '-': 'laser' }[key];
+  // Artillery on Ü, or [ in the same place on other keyboards.
+  const defenseKey = { ',': 'wall', '.': 'turret', '-': 'laser', 'ü': 'artillery', '[': 'artillery' }[key];
   // Renewables: Ö Ä # on a German keyboard, ; ' \ in the same places on others.
   const greenKey = { 'ö': 'solar', ';': 'solar', 'ä': 'wind', "'": 'wind', '#': 'battery', '\\': 'battery' }[key];
   if (key === ' ') {

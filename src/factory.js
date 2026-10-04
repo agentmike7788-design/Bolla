@@ -34,6 +34,7 @@ export const ITEMS = {
   fuel: { name: 'Treibstoff', color: 0xd8432c, shape: 'canister' },
   processor: { name: 'Prozessor', color: 0x7b5ce6, shape: 'cpu' },
   ammo: { name: 'Munition', color: 0xd9a441, shape: 'ammo' },
+  shell: { name: 'Granate', color: 0x6b7a3a, shape: 'shell' },
 };
 
 // Machines turn one input item into one output item.
@@ -51,6 +52,8 @@ export const CONSTRUCTOR_RECIPES = {
   processor: { time: 4, needs: { circuit: 2, plastic: 1 }, makes: 'processor', unlock: 'refinery' },
   // Shown once turrets are unlocked: a box of cartridges, ten shots.
   ammo: { time: 1.5, needs: { ironPlate: 1, copperIngot: 1 }, makes: 'ammo', unlock: 'turret' },
+  // Shown once artillery is unlocked: a steel case packed with cartridge powder.
+  shell: { time: 4, needs: { steel: 1, ammo: 2 }, makes: 'shell', unlock: 'artillery' },
 };
 
 // The refinery turns oil from its pipes into items; the player picks the recipe.
@@ -88,6 +91,7 @@ export const BUILDINGS = {
   wall: { name: 'Mauer' },
   turret: { name: 'Geschützturm' },
   laser: { name: 'Laserturm' },
+  artillery: { name: 'Artillerie', size: 3 },
   solar: { name: 'Solarpanel' },
   wind: { name: 'Windrad' },
   battery: { name: 'Akku' },
@@ -119,7 +123,7 @@ const SPLITTER_BUFFER = 2;
 const opposite = (dir) => (dir + 2) % 4;
 export const isMachine = (b) => b?.type === 'furnace' || b?.type === 'assembler';
 // Buildings that never hand items on.
-const NO_OUTPUT = new Set(['storage', 'power', 'geo', 'pole', 'pump', 'pipe', 'tank', 'rail', 'station', 'signal', 'silo', 'dronePort', 'provider', 'wall', 'turret', 'laser', 'solar', 'wind', 'battery']);
+const NO_OUTPUT = new Set(['storage', 'power', 'geo', 'pole', 'pump', 'pipe', 'tank', 'rail', 'station', 'signal', 'silo', 'dronePort', 'provider', 'wall', 'turret', 'laser', 'artillery', 'solar', 'wind', 'battery']);
 
 // Power. A coal power plant burns coal from belts and feeds every network it is
 // connected to. Poles carry the power: wires reach from pole to pole, and a pole
@@ -295,6 +299,7 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
     if (type === 'requester') Object.assign(b, { items: {}, total: 0, request: null, want: 25, received: 0, handed: 0 });
     if (type === 'turret') Object.assign(b, { ammo: 0, shots: 0, aim: 0, state: 'empty', fired: 0 });
     if (type === 'laser') Object.assign(b, { aim: 0, state: 'idle', fired: 0 });
+    if (type === 'artillery') Object.assign(b, { shells: 0, aim: 0, state: 'empty', fired: 0 });
     if (type === 'solar' || type === 'wind') Object.assign(b, { state: 'idle', made: 0 });
     if (type === 'battery') Object.assign(b, { charge: 0, state: 'idle' });
     buildings.set(b.index, b);
@@ -853,7 +858,7 @@ export function createFactory(world, { start, enemies: enemyMode = 'off', grace 
       return true;
     }
     if (target.type === 'provider') return drones.accept(target, kind);
-    if (target.type === 'turret') {
+    if (target.type === 'turret' || target.type === 'artillery') {
       if (!enemies.accept(target, kind)) return false;
       history.consume(kind);
       return true;

@@ -43,6 +43,7 @@ const LINES = {
   circuit: { recipe: 'circuit', inputs: ['ironPlate', 'wire'] },
   steel: { recipe: 'steel', inputs: ['ironIngot', 'coal'] },
   ammo: { recipe: 'ammo', inputs: ['ironPlate', 'copperIngot'] },
+  shell: { recipe: 'shell', feeds: ['steel', 'ammo'] },
   // Oil lines: pump, pipes, refinery, with a pole and a power plant beside them.
   plastic: { refinery: 'plastic' },
   fuel: { refinery: 'fuel' },
@@ -397,12 +398,21 @@ function planScenario(s) {
       // walls carried up to it, then a minute of shooting.
       if (g.kills) {
         const grace = Math.max(0, (s.grace ?? 900) - total);
-        wait = Math.max(wait, grace + (g.kills / 5) * 120);
+        // Hard maps send waves half again as often, and bigger ones.
+        const pace = s.enemies === 'hard' ? 2 : 1;
+        wait = Math.max(wait, grace + (g.kills / 5 / pace) * 120);
         continue;
       }
       if (g.nests) {
         build += g.nests * 8 * BUILD_SECONDS.building;
         wait = Math.max(wait, g.nests * 60);
+        continue;
+      }
+      // Artillery stands: shells fly every few seconds, a nest takes two or three,
+      // and the counterattack on the gun has to be fought off now and then.
+      if (g.shelled) {
+        build += 6 * BUILD_SECONDS.building;
+        wait = Math.max(wait, g.shelled * 45);
         continue;
       }
       if (g.oil) {

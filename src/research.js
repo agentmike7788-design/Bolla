@@ -236,6 +236,22 @@ export const RESEARCH = [
     boosts: { weapons: 1.4 },
   },
   {
+    id: 'artillery',
+    name: 'Artillerie',
+    desc: 'Ein schweres Geschütz (3 × 3) mit 30 Feldern Reichweite, das Nester von weitem beschießt. Der Konstruktor baut Granaten aus Stahl und Munition. Beschossene Nester greifen das Geschütz an.',
+    cost: { steel: 60, gear: 40, ammo: 40 },
+    requires: ['hardAmmo'],
+    unlocks: ['artillery'],
+  },
+  {
+    id: 'longBarrels',
+    name: 'Lange Rohre',
+    desc: 'Artillerie schießt 40 % weiter.',
+    cost: { steel: 50, circuit: 40, shell: 20 },
+    requires: ['artillery'],
+    boosts: { artillery: 1.4 },
+  },
+  {
     id: 'solarPower',
     name: 'Solarenergie',
     desc: 'Solarpanels: bis zu 3 MW, solange die Sonne scheint. Kein Brennstoff, kein Smog, aber nachts nichts.',
@@ -294,7 +310,7 @@ export const RESEARCH = [
 ];
 
 // Factory stats that research can multiply. 1 is the starting value.
-export const STATS = ['belt', 'drill', 'furnace', 'assembler', 'constructor', 'power', 'pump', 'refinery', 'train', 'drone', 'weapons', 'renewable', 'battery'];
+export const STATS = ['belt', 'drill', 'furnace', 'assembler', 'constructor', 'power', 'pump', 'refinery', 'train', 'drone', 'weapons', 'renewable', 'battery', 'artillery'];
 
 export const START_UNLOCKED = ['drill', 'belt', 'storage'];
 

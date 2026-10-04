@@ -12,6 +12,11 @@
 // under fire sends defenders out. The creatures grow stronger over time, with
 // the smog they swallow and with every nest that falls (evolution).
 //
+// Nests spread: now and then a colony sends a few settlers out to found a new
+// nest where the smog is thick, but not right next to the factory. Artillery
+// lobs shells at nests far beyond the reach of turrets; a colony under shell
+// fire answers with a counterattack on the gun.
+//
 // In the mode 'off' nothing of this exists. 'peaceful' keeps the nests quiet
 // until someone shoots at them.
 import { TERRAIN, mulberry32 } from './world.js';
@@ -19,8 +24,8 @@ import { TERRAIN, mulberry32 } from './world.js';
 export const ENEMY_MODES = {
   off: { name: 'Aus', desc: 'Keine Nester und keine Angriffe' },
   peaceful: { name: 'Friedlich', desc: 'Nester wehren sich nur, wenn man auf sie schießt', attacks: false, grace: 0, evo: 0.5, nests: 1, absorb: 1 },
-  normal: { name: 'Normal', desc: 'Smog lockt Angriffe an, frühestens nach 15 Minuten', attacks: true, grace: 900, evo: 1, nests: 1, absorb: 1 },
-  hard: { name: 'Schwer', desc: 'Mehr Nester, frühere und größere Angriffe, schnellere Evolution', attacks: true, grace: 480, evo: 1.8, nests: 1.5, absorb: 1.5 },
+  normal: { name: 'Normal', desc: 'Smog lockt Angriffe an, frühestens nach 15 Minuten. Nester breiten sich im Smog aus', attacks: true, grace: 900, evo: 1, nests: 1, absorb: 1, expand: 360 },
+  hard: { name: 'Schwer', desc: 'Mehr Nester, frühere und größere Angriffe, schnellere Evolution und Ausbreitung', attacks: true, grace: 480, evo: 1.8, nests: 1.5, absorb: 1.5, expand: 210 },
 };
 
 // cost: anger a nest spends on one; evo: evolution from which a nest sends them.
@@ -48,6 +53,18 @@ const MAX_ANGER = 400;
 const DEFENDERS = 6; // defenders a nest keeps out at once while it is shot
 const MAX_CREATURES = 260;
 
+// Expansion: every `expand` seconds of the mode (give or take a quarter) a colony
+// sends SETTLERS to a spot EXPAND_NEAR..EXPAND_FAR tiles away with at least
+// EXPAND_SMOG smog over it and no building within SETTLE_AWAY tiles. The map
+// holds at most MAX_NESTS times the nests it started with.
+const EXPAND_NEAR = 6;
+const EXPAND_FAR = 18;
+const EXPAND_SMOG = 0.8;
+const SETTLE_AWAY = 8;
+const SETTLERS = 3;
+const MAX_NESTS = 2;
+const COUNTER_COOL = 30; // seconds between two counterattacks of a nest on artillery
+
 // Evolution per second, per unit of smog swallowed and per fallen nest.
 const EVO_TIME = 1 / (60 * 60 * 7);
 const EVO_SMOG = 1 / 30000;
@@ -59,10 +76,16 @@ export const LASER_RANGE = 9.5;
 export const TURRET = { range: TURRET_RANGE, rate: 4, damage: 6, shots: 10, store: 20 }; // shots per ammo, ammo kept
 export const LASER = { range: LASER_RANGE, rate: 2.2, damage: 14 };
 export const isTurret = (b) => b?.type === 'turret' || b?.type === 'laser';
+// Artillery: shells from belts, one every `reload` seconds, flying `flight` tiles
+// a second; each blast hurts everything within `radius`. It only aims at nests.
+export const ARTILLERY_RANGE = 30;
+export const ARTILLERY = { range: ARTILLERY_RANGE, reload: 6, damage: 240, radius: 2.5, store: 10, flight: 11 };
+const ARTILLERY_TURN = 1.1;
+export const isGun = (b) => isTurret(b) || b?.type === 'artillery';
 const TURN = 7; // radians per second a turret head turns
 
 // Hit points of buildings; everything else has DEFAULT_HP.
-export const BUILDING_HP = { wall: 600, turret: 350, laser: 420, silo: 3000, storage: 260, power: 300, geo: 320, refinery: 300, tank: 300, constructor: 260, furnace: 220, assembler: 220, drill: 160, pump: 160, pole: 110, pipe: 90, dronePort: 220, solar: 120, wind: 200, battery: 260 };
+export const BUILDING_HP = { wall: 600, turret: 350, laser: 420, artillery: 900, silo: 3000, storage: 260, power: 300, geo: 320, refinery: 300, tank: 300, constructor: 260, furnace: 220, assembler: 220, drill: 160, pump: 160, pole: 110, pipe: 90, dronePort: 220, solar: 120, wind: 200, battery: 260 };
 const DEFAULT_HP = 150;
 export const maxHp = (b) => BUILDING_HP[b.type] ?? DEFAULT_HP;
 // Creatures walk over these and never bite them.
@@ -107,6 +130,11 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
   let waves = 0;
   let smogMade = 0; // smog per minute, smoothed
   let lastAttack = null; // { x, z, time } of the last wave or bite
+  let expandCool = null; // seconds until colonies try to spread again
+  let founded = 0; // nests settlers founded
+  let stopped = 0; // settlers killed on their way
+  let shelled = 0; // nests artillery destroyed
+  let flying = []; // artillery shells in the air
   let clock = 0;
   const damaged = new Set(); // buildings below full hit points
   const fx = []; // shots, hits and deaths for the view
@@ -129,25 +157,31 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
 
   // Nests sit in small colonies far from the middle of the map and from anything
   // built already, on free land without ore.
+  const wantNests = () => Math.max(3, Math.round(((size * size) / 820) * (params().nests ?? 1)));
+  const maxNests = () => wantNests() * MAX_NESTS;
+  const freeLand = (x, z) => {
+    for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
+      const t = tileAt(x + dx, z + dz);
+      if (!walkable(t) || t.ore || t.vent || at(x + dx, z + dz)) return false;
+    }
+    return true;
+  };
+  const builtNear = (x, z, d) => {
+    for (const b of buildings.values()) if (Math.hypot(b.tile.x - x, b.tile.z - z) < d) return true;
+    return false;
+  };
+  // A nest fits on free land inside the map, apart from other nests and `away`
+  // tiles from any building.
+  const nestFits = (x, z, away) =>
+    x > 2 && z > 2 && x < size - 3 && z < size - 3 && freeLand(x, z) &&
+    !nests.some((n) => Math.hypot(n.x - x, n.z - z) < 3.2) && !builtNear(x, z, away);
+
   function placeNests() {
     nests = [];
-    const p = params();
-    const want = Math.max(3, Math.round(((size * size) / 820) * (p.nests ?? 1)));
+    const want = wantNests();
     const c = (size - 1) / 2;
     const away = Math.max(16, size * 0.3);
-    const built = [...buildings.values()];
-    const free = (x, z) => {
-      for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
-        const t = tileAt(x + dx, z + dz);
-        if (!walkable(t) || t.ore || t.vent || at(x + dx, z + dz)) return false;
-      }
-      return true;
-    };
-    const fits = (x, z) =>
-      x > 2 && z > 2 && x < size - 3 && z < size - 3 && free(x, z) &&
-      Math.hypot(x - c, z - c) >= away &&
-      !nests.some((n) => Math.hypot(n.x - x, n.z - z) < 3.2) &&
-      !built.some((b) => Math.hypot(b.tile.x - x, b.tile.z - z) < 14);
+    const fits = (x, z) => Math.hypot(x - c, z - c) >= away && nestFits(x, z, 14);
     for (let tries = 0; nests.length < want && tries < 3000; tries++) {
       const x = Math.floor(rand() * size);
       const z = Math.floor(rand() * size);
@@ -165,9 +199,63 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
     }
   }
 
-  function addNest(x, z) {
+  function addNest(x, z, young = false) {
     const max = Math.round(NEST_HP * (1 + evo));
-    nests.push({ id: nextId++, x, z, hp: max, max, anger: 0, cool: 40 + rand() * 80, hurtAt: -99, shooter: null, seed: rand() });
+    const n = { id: nextId++, x, z, hp: max, max, anger: 0, cool: 40 + rand() * 80, hurtAt: -99, shooter: null, seed: rand() };
+    // A new nest starts weak and quiet and grows into its full size.
+    if (young) Object.assign(n, { hp: Math.round(max * 0.4), cool: 90 + rand() * 60, born: clock });
+    nests.push(n);
+    return n;
+  }
+
+  // Settlers set out from a colony to the smoggiest free spot in reach.
+  function expand() {
+    if (!nests.length || nests.length >= maxNests() || creatures.some((c) => c.settle) || creatures.length > MAX_CREATURES - SETTLERS) return false;
+    let best = null;
+    let bestScore = 0;
+    for (let k = 0; k < 80; k++) {
+      const n = nests[Math.floor(rand() * nests.length)];
+      const a = rand() * Math.PI * 2;
+      const d = EXPAND_NEAR + rand() * (EXPAND_FAR - EXPAND_NEAR);
+      const x = Math.round(n.x + Math.cos(a) * d);
+      const z = Math.round(n.z + Math.sin(a) * d);
+      if (!nestFits(x, z, SETTLE_AWAY)) continue;
+      const s = smogAt(x, z);
+      if (s < EXPAND_SMOG) continue;
+      const score = s * (0.6 + rand() * 0.8);
+      if (score > bestScore) {
+        bestScore = score;
+        best = { from: n, x, z };
+      }
+    }
+    if (!best) return false;
+    const party = { x: best.x, z: best.z, id: nextId++ };
+    for (let i = 0; i < SETTLERS; i++) {
+      spawn(i === 0 && evo >= CREATURES.brute.evo ? 'brute' : 'crawler', best.from, null);
+      creatures[creatures.length - 1].settle = { ...party };
+    }
+    lastAttack = { x: best.x, z: best.z, time: now() }; // the camera can follow them
+    push(alerts, { type: 'settlers', nest: best.from, x: best.x, z: best.z, count: SETTLERS }, 20);
+    return true;
+  }
+
+  // A settler at its spot: the first one founds the nest, the others move in.
+  function settle(c) {
+    const st = c.settle;
+    c.dead = true;
+    if (nests.some((n) => Math.hypot(n.x - st.x, n.z - st.z) < 3.5)) return;
+    if (nests.length >= maxNests() || !nestFits(st.x, st.z, 3)) {
+      // Someone built there in the meantime: back home.
+      c.dead = false;
+      c.settle = null;
+      c.path = null;
+      c.home = true;
+      return;
+    }
+    addNest(st.x, st.z, true);
+    founded++;
+    push(fx, { type: 'nestBorn', x: st.x, z: st.z });
+    push(alerts, { type: 'nest', x: st.x, z: st.z }, 20);
   }
 
   // Building is not allowed right next to a nest.
@@ -180,6 +268,7 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
     if (mode === 'off') {
       creatures = [];
       groups = [];
+      flying = [];
       return;
     }
     if (!nests.length) placeNests();
@@ -257,6 +346,7 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
       n.anger = Math.min(MAX_ANGER, n.anger + take * (p.absorb ?? 1));
       n.cool -= dt;
       if (n.hp < n.max && clock - n.hurtAt > 10) n.hp = Math.min(n.max, n.hp + 3 * dt);
+      if (n.born !== undefined && n.hp >= n.max) delete n.born; // grown up
       // Under fire, the nest and its colony send defenders at the turret that shoots.
       const alarm = nests.find((m) => clock - m.hurtAt < 4 && m.shooter != null && Math.hypot(m.x - n.x, m.z - n.z) < 9);
       if (alarm && creatures.length < MAX_CREATURES) {
@@ -266,10 +356,30 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
           spawn(pickKind(n.anger + 30), n, null, alarm.shooter);
         }
       }
+      // Shelled by artillery: the colony storms the gun, in any mode and grace.
+      if (n.counterCool > 0) n.counterCool -= dt;
+      else if (n.shelledBy != null) {
+        const gun = buildings.get(n.shelledBy);
+        n.shelledBy = null;
+        if (gun?.type === 'artillery' && at(gun.tile.x, gun.tile.z) === gun) {
+          n.counterCool = COUNTER_COOL;
+          n.anger = Math.min(MAX_ANGER, n.anger + 25);
+          sendWave(n, gun);
+        }
+      }
       if (!p.attacks || !graceOver || n.cool > 0 || n.anger < WAVE_ANGER) continue;
       sendWave(n);
     }
     evo += (1 - evo) * EVO_TIME * dt * (p.evo ?? 1);
+    // Now and then the colonies spread into the smog.
+    if (p.expand && graceOver) {
+      expandCool ??= p.expand * (0.75 + rand() * 0.5);
+      expandCool -= dt;
+      if (expandCool <= 0) {
+        expandCool = p.expand * (0.75 + rand() * 0.5);
+        if (!expand()) expandCool *= 0.25; // nowhere to go yet: look again soon
+      }
+    }
   }
 
   function pickKind(budget) {
@@ -285,9 +395,11 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
     return kinds[0][0];
   }
 
-  function sendWave(n) {
+  // A wave goes for the nearest polluting building, or for `target`.
+  function sendWave(n, target = null) {
     if (creatures.length >= MAX_CREATURES) return;
-    const target = targetFor(n.x, n.z);
+    const counter = !!target;
+    target ??= targetFor(n.x, n.z);
     if (!target) return;
     const group = { id: nextId++, nest: n.id, target: target.index, path: null, home: false };
     let budget = Math.min(n.anger, 50 + 600 * evo);
@@ -307,7 +419,7 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
     n.cool = (60 + rand() * 70) / (mode === 'hard' ? 1.6 : 1);
     waves++;
     lastAttack = { x: target.tile.x, z: target.tile.z, time: now() };
-    push(alerts, { nest: n, target, count }, 20);
+    push(alerts, { type: counter ? 'counter' : 'wave', nest: n, target, count }, 20);
   }
 
   function spawn(kind, n, groupId, goal = null) {
@@ -454,7 +566,7 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
     lost++;
     demolish(b);
     push(destroyed, b, 200);
-    push(fx, { type: 'boom', x: b.tile.x, z: b.tile.z, big: b.type === 'silo' || isTurret(b) });
+    push(fx, { type: 'boom', x: b.tile.x, z: b.tile.z, big: b.type === 'silo' || isGun(b) });
   }
 
   function moveCreature(c, dt) {
@@ -492,6 +604,25 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
       }
       tx = goalB.tile.x;
       tz = goalB.tile.z;
+    } else if (c.settle) {
+      // Settlers walk their own way to the spot of the new nest.
+      const st = c.settle;
+      if (Math.hypot(st.x - c.x, st.z - c.z) < 1.6) {
+        settle(c);
+        return;
+      }
+      if (!c.path) {
+        c.path = findPath(c.x, c.z, { tile: { x: st.x, z: st.z } }) ?? [];
+        c.step = 0;
+      }
+      tx = st.x;
+      tz = st.z;
+      if (c.step < c.path.length) {
+        const i = c.path[c.step];
+        tx = (i % size) + c.ox;
+        tz = Math.floor(i / size) + c.oz;
+        if (Math.hypot(tx - c.x, tz - c.z) < 0.45) c.step++;
+      }
     } else {
       const group = c.group !== null ? groupById(c.group) : null;
       if (!group || group.home || c.home) {
@@ -578,6 +709,11 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
 
   // Ammunition from belts (and requester chests) on any side.
   function accept(b, kind) {
+    if (b.type === 'artillery') {
+      if (kind !== 'shell' || (b.shells ?? 0) >= ARTILLERY.store) return false;
+      b.shells = (b.shells ?? 0) + 1;
+      return true;
+    }
     if (b.type !== 'turret' || kind !== 'ammo') return false;
     if ((b.ammo ?? 0) >= TURRET.store) return false;
     b.ammo = (b.ammo ?? 0) + 1;
@@ -591,16 +727,23 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
     if (c.hp > 0) return;
     c.dead = true;
     killed++;
+    if (c.settle) stopped++;
     push(fx, { type: 'death', x: c.x, z: c.z, kind: c.kind });
   }
 
   function hurtNest(n, damage, from) {
+    if (n.dead) return;
     n.hp -= damage;
     n.hurtAt = clock;
-    n.shooter = from?.index ?? null;
+    if (from?.type === 'artillery') {
+      // Shells come from too far for defenders: the whole colony marches on the gun.
+      n.shooter = null;
+      for (const m of nests) if (Math.hypot(m.x - n.x, m.z - n.z) < 9) m.shelledBy = from.index;
+    } else n.shooter = from?.index ?? null;
     if (n.hp > 0) return;
     n.dead = true;
     nestsKilled++;
+    if (from?.type === 'artillery') shelled++;
     evo += (1 - evo) * EVO_NEST * (params().evo ?? 1);
     push(fx, { type: 'nestDeath', x: n.x, z: n.z });
     for (const c of creatures) if (c.nest === n.id && c.goal === null) c.home = true;
@@ -667,13 +810,89 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
     else hurtNest(target, damage, b);
   }
 
+  const artilleryRange = () => ARTILLERY.range * (research.stats.artillery ?? 1);
+
+  // The gun turns slowly to the nearest nest in reach and lobs a shell at it.
+  function tickArtillery(b, dt) {
+    let s = aim.get(b);
+    if (!s) aim.set(b, (s = { target: null, cool: 0, scan: 0 }));
+    s.cool -= dt;
+    s.scan -= dt;
+    const range = artilleryRange();
+    let target = s.target;
+    if (target && (target.dead || Math.hypot(target.x - b.tile.x, target.z - b.tile.z) > range)) target = null;
+    if (!target && s.scan <= 0) {
+      s.scan = 1;
+      let bestD = range;
+      for (const n of nests) {
+        const d = Math.hypot(n.x - b.tile.x, n.z - b.tile.z);
+        if (!n.dead && d < bestD) {
+          bestD = d;
+          target = n;
+        }
+      }
+    }
+    s.target = target;
+    if (!target) {
+      b.state = b.shells ? 'idle' : 'empty';
+      return;
+    }
+    const want = Math.atan2(-(target.x - b.tile.x), -(target.z - b.tile.z));
+    const cur = b.aim ?? 0;
+    let diff = ((want - cur + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+    const turn = Math.min(Math.abs(diff), ARTILLERY_TURN * dt) * Math.sign(diff);
+    b.aim = cur + turn;
+    diff -= turn;
+    if (!b.shells) {
+      b.state = 'empty';
+      return;
+    }
+    b.state = 'work';
+    if (Math.abs(diff) > 0.05 || s.cool > 0) return;
+    s.cool = ARTILLERY.reload;
+    b.shells--;
+    b.fired = (b.fired ?? 0) + 1;
+    const d = Math.hypot(target.x - b.tile.x, target.z - b.tile.z);
+    // A little spread, more the further it flies.
+    const spread = 0.3 + d * 0.02;
+    const shell = { x: b.tile.x, z: b.tile.z, x2: target.x + (rand() - 0.5) * spread, z2: target.z + (rand() - 0.5) * spread, t: 0, dur: 1 + d / ARTILLERY.flight, from: b.index };
+    flying.push(shell);
+    push(fx, { type: 'shellFire', x: b.tile.x, z: b.tile.z, x2: shell.x2, z2: shell.z2, from: b });
+  }
+
+  // Shells land: a blast that hurts nests and creatures around.
+  function tickShells(dt) {
+    for (const s of flying) {
+      s.t += dt;
+      if (s.t < s.dur) continue;
+      s.done = true;
+      const gun = buildings.get(s.from);
+      const from = gun?.type === 'artillery' ? gun : null;
+      const damage = ARTILLERY.damage * research.stats.weapons;
+      const r = ARTILLERY.radius;
+      for (const n of nests) {
+        const d = Math.hypot(n.x - s.x2, n.z - s.z2);
+        if (d < r + 1) hurtNest(n, damage * (1 - (0.5 * d) / (r + 1)), from);
+      }
+      for (const c of creatures) {
+        const d = Math.hypot(c.x - s.x2, c.z - s.z2);
+        if (!c.dead && d < r) hurtCreature(c, damage * 0.5 * (1 - (0.6 * d) / r), null);
+      }
+      push(fx, { type: 'shellHit', x: s.x2, z: s.z2 });
+    }
+    if (flying.some((s) => s.done)) flying = flying.filter((s) => !s.done);
+  }
+
   // --- Tick ------------------------------------------------------------------------
 
   let slow = 0;
   function tick(dt, laserSpeed) {
     if (!active()) {
       // Turrets still turn idle so they do not look broken.
-      for (const b of buildings.values()) if (isTurret(b)) b.state = b.type === 'laser' || b.ammo || b.shots ? 'idle' : 'empty';
+      for (const b of buildings.values()) {
+        if (isTurret(b)) b.state = b.type === 'laser' || b.ammo || b.shots ? 'idle' : 'empty';
+        else if (b.type === 'artillery') b.state = b.shells ? 'idle' : 'empty';
+      }
       return;
     }
     clock += dt;
@@ -684,7 +903,11 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
       slow = 0;
     }
     for (const c of creatures) moveCreature(c, dt);
-    for (const b of buildings.values()) if (isTurret(b)) tickTurret(b, dt, b.type === 'laser' ? laserSpeed(b) : 1);
+    for (const b of buildings.values()) {
+      if (isTurret(b)) tickTurret(b, dt, b.type === 'laser' ? laserSpeed(b) : 1);
+      else if (b.type === 'artillery') tickArtillery(b, dt);
+    }
+    if (flying.length) tickShells(dt);
     if (creatures.some((c) => c.dead)) creatures = creatures.filter((c) => !c.dead);
     if (nests.some((n) => n.dead)) nests = nests.filter((n) => !n.dead);
     // Groups without members are done.
@@ -722,17 +945,21 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
   // Totals for the HUD.
   function summary() {
     let attacking = 0;
-    for (const c of creatures) if (c.group !== null || c.goal !== null) attacking++;
+    let settlers = 0;
+    for (const c of creatures) {
+      if (c.group !== null || c.goal !== null) attacking++;
+      else if (c.settle) settlers++;
+    }
     let turrets = 0;
     let empty = 0;
     for (const b of buildings.values()) {
-      if (!isTurret(b)) continue;
+      if (!isGun(b)) continue;
       turrets++;
       if (b.state === 'empty' || b.state === 'nopower') empty++;
     }
     const p = params();
     const graceLeft = Math.max(0, (graceTime ?? p.grace ?? 0) - now());
-    return { mode, nests: nests.length, creatures: creatures.length, attacking, evo, killed, nestsKilled, lost, waves, smog: smogMade, turrets, empty, ruins: ruins.length, graceLeft, attacks: !!p.attacks };
+    return { mode, nests: nests.length, creatures: creatures.length, attacking, settlers, evo, killed, nestsKilled, lost, waves, smog: smogMade, turrets, empty, ruins: ruins.length, graceLeft, attacks: !!p.attacks, expands: !!p.expand, founded, stopped, shelled };
   }
 
   function save() {
@@ -746,9 +973,14 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
       waves,
       nextId,
       clock,
+      expandCool,
+      founded,
+      stopped,
+      shelled,
+      flying: flying.map(({ done, ...s }) => s),
       smog: Array.from(smog, (s) => Math.round(s * 10) / 10),
       nests: nests.map(({ shooter, spawnCool, ...n }) => n),
-      creatures: creatures.map(({ lunge, ...c }) => c),
+      creatures: creatures.map(({ lunge, path, ...c }) => c),
       groups: groups.map(({ path, ...g }) => g),
       ruins: [...ruins],
       lastAttack,
@@ -766,9 +998,14 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
     waves = data.waves ?? 0;
     nextId = data.nextId ?? 1;
     clock = data.clock ?? 0;
+    expandCool = data.expandCool ?? null;
+    founded = data.founded ?? 0;
+    stopped = data.stopped ?? 0;
+    shelled = data.shelled ?? 0;
+    flying = (data.flying ?? []).map((s) => ({ ...s }));
     if (data.smog?.length === smog.length) smog = Float32Array.from(data.smog);
     nests = (data.nests ?? []).map((n) => ({ ...n, shooter: null }));
-    creatures = (data.creatures ?? []).map((c) => ({ ...c }));
+    creatures = (data.creatures ?? []).map((c) => ({ ...c, path: null }));
     groups = (data.groups ?? []).map((g) => ({ ...g, path: null }));
     ruins = [...(data.ruins ?? [])];
     lastAttack = data.lastAttack ?? null;
@@ -815,6 +1052,19 @@ export function createEnemies({ world, buildings, research, at, demolish, sizeOf
     get nestsKilled() {
       return nestsKilled;
     },
+    get founded() {
+      return founded;
+    },
+    get stopped() {
+      return stopped;
+    },
+    get shelled() {
+      return shelled;
+    },
+    get flying() {
+      return flying;
+    },
+    artilleryRange,
     get nests() {
       return nests;
     },

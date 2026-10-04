@@ -43,7 +43,7 @@ export const CHAPTERS = [
     id: 'unrest',
     name: 'Unruhige Erde',
     text: 'Das Netz wächst, und die Erde wehrt sich. Ein Vulkan grollt, Drohnen schwirren, und im Süden regt sich etwas in den Hügeln.',
-    maps: ['hub', 'volcano', 'bugLands'],
+    maps: ['hub', 'volcano', 'bugLands', 'broodMoor'],
   },
   {
     id: 'beacon',
@@ -64,6 +64,7 @@ export const PERKS = {
   train: { name: 'Leichtbauwaggons', text: 'Züge +15 %', icon: '🚂', boosts: { train: 1.15 } },
   drone: { name: 'Kohlefaserrotoren', text: 'Drohnen +15 %', icon: '🚁', boosts: { drone: 1.15 } },
   weapons: { name: 'Panzerbrechende Munition', text: 'Türme +15 % Schaden', icon: '🎯', boosts: { weapons: 1.15 } },
+  artillery: { name: 'Gezogene Rohre', text: 'Artillerie +15 % Reichweite', icon: '💣', boosts: { artillery: 1.15 } },
   green: { name: 'Spiegelglas', text: 'Solar und Wind +15 %', icon: '☀️', boosts: { renewable: 1.15 } },
   battery: { name: 'Dichte Zellen', text: 'Akkus +20 %', icon: '🔋', boosts: { battery: 1.2 } },
 };
@@ -254,9 +255,28 @@ export const STORY = {
     ],
     outro: [
       ['sanna', 'Die Hügel sind ruhig. Die Krabbler ziehen sich zurück.'],
-      ['mara', 'Kapitel vier ist geschafft. Ab jetzt bauen wir sauberer, damit wir sie nicht wieder wecken.'],
+      ['sanna', 'Aber nicht alle. Ein Schwarm zieht nach Norden ins Moor, und dort bauen sie neue Nester.'],
     ],
     perks: ['weapons', 'green', 'drill'],
+  },
+  broodMoor: {
+    brief: 'Ein dichter Wald voller Nester, die wandern. Wo der Smog hinzieht, gründen sie neue. Hier kommt die Artillerie zum Einsatz.',
+    intro: [
+      ['sanna', 'Das Brutmoor. Von oben sehe ich Dutzende Nester, und es werden jeden Tag mehr.'],
+      ['okke', 'Die Viecher ziehen dem Smog hinterher. Wir brauchen Stahl und Munition, bevor sie uns finden.'],
+    ],
+    missions: [
+      null,
+      [['sanna', 'Da ziehen welche los! Kleine Trupps, drei, vier Käfer. Wenn sie ankommen, steht dort bald ein neues Nest.']],
+      [['okke', 'Ich hab was Großes für dich: Artillerie. Reicht dreißig Felder weit. Granaten macht der Konstruktor aus Stahl und Munition.']],
+      [['okke', 'Vorsicht: Ein beschossenes Nest schickt alles, was es hat, zum Geschütz. Mauern drumherum!'], ['sanna', 'Ich gebe dir die Ziele durch. Feuer frei.']],
+      [['mara', 'Gute Arbeit. Jetzt räum das Moor ganz auf, damit sie nicht zurückkommen.']],
+    ],
+    outro: [
+      ['sanna', 'Das Moor brennt nicht mehr, und kein Käfer zieht mehr los. Ruhe.'],
+      ['mara', 'Kapitel vier ist geschafft. Ab jetzt bauen wir sauberer, damit wir sie nicht wieder wecken.'],
+    ],
+    perks: ['artillery', 'weapons', 'furnace'],
   },
   sunCoast: {
     brief: 'Eine sonnige Wüstenküste mit wenig Kohle und wachsamen Nestern. Hier läuft die Fabrik auf Sonne, Wind und Akkus.',

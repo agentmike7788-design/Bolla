@@ -26,6 +26,7 @@
 //                   { flown: count }            drones deliver that many more parts
 //                   { kills: count }            defeat that many more creatures
 //                   { nests: count }            destroy that many more nests
+//                   { shelled: count }          destroy that many more nests with artillery
 //                   { silo: stages }            a rocket silo with that many stages built
 //                   { launched: count }         start that many more rockets
 //     reward      { unlocks, boosts, text } like a research entry, see research.js
@@ -464,6 +465,50 @@ export const SCENARIOS = [
     ],
   },
   {
+    id: 'broodMoor',
+    name: 'Brutmoor',
+    desc: 'Ein dichter Wald voller Nester, die wandern: wo der Smog hinzieht, gründen sie neue. Türme halten sie auf, Artillerie räumt das Moor von weitem.',
+    level: 4,
+    seed: 5150,
+    map: { size: 80, ores: { iron: 5, copper: 4, coal: 4, stone: 3 }, land: 0.05, coast: 0.84, forest: 0.7, rock: 0.35, richness: 1.5 },
+    enemies: 'hard',
+    grace: 420,
+    start: ['drill', 'belt', 'storage', 'furnace', 'assembler', 'splitter', 'merger', 'constructor', 'power', 'pole', 'wall', 'turret'],
+    par: 44,
+    missions: [
+      {
+        name: 'Stahlwerk',
+        desc: 'Die Nester hier sind zahlreich und ruhelos. Erst Stahl und Munition, dann Türme an den Rand der Fabrik.',
+        goals: [{ deliver: 'steel', count: 30 }, { deliver: 'ammo', count: 30 }],
+        reward: { unlocks: ['laser'], boosts: { drill: 1.5 }, text: 'Laserturm, Bohrer +50 %' },
+      },
+      {
+        name: 'Wanderschaft',
+        desc: 'Wo der Smog dick ist, gründen Siedler neue Nester. Im Gegner-Fenster steht, wann welche losziehen. Fang sie ab und halte 30 Gegner auf.',
+        goals: [{ kills: 30 }],
+        reward: { unlocks: ['artillery'], text: 'Artillerie, die Granaten verschießt' },
+      },
+      {
+        name: 'Lange Rohre',
+        desc: 'Die Artillerie (3 × 3) reicht 30 Felder weit. Der Konstruktor baut Granaten aus Stahl und Munition, ein Band bringt sie zum Geschütz.',
+        goals: [{ build: 'artillery', count: 2 }, { deliver: 'shell', count: 10 }],
+        reward: { boosts: { artillery: 1.4, constructor: 1.5 }, text: 'Artillerie +40 % Reichweite, Konstruktor +50 %' },
+      },
+      {
+        name: 'Trommelfeuer',
+        desc: 'Feuer frei. Jedes beschossene Nest schickt seine Käfer zum Geschütz: Mauern und Türme drumherum. Fünf Nester mit Granaten zerstören.',
+        goals: [{ shelled: 5 }],
+        reward: { boosts: { weapons: 1.5 }, text: 'Alle Türme +50 % Schaden' },
+      },
+      {
+        name: 'Brandschneise',
+        desc: 'Räum das Moor: noch einmal sechs Nester, egal womit.',
+        goals: [{ nests: 6 }],
+        reward: { text: 'Das Moor ist frei' },
+      },
+    ],
+  },
+  {
     id: 'sunCoast',
     name: 'Sonnenküste',
     desc: 'Eine Wüstenküste mit viel Sonne und wenig Kohle. Jeder Schornstein macht Smog, und Smog weckt die Nester. Hier läuft die Fabrik auf Sonne, Wind und Akkus.',
@@ -566,6 +611,7 @@ export function createMissions(scenario, factory) {
   let baseFlown = factory.flown;
   let baseKills = factory.enemies.killed;
   let baseNests = factory.enemies.nestsKilled;
+  let baseShelled = factory.enemies.shelled;
   let reached = new Set(); // rate goals met once stay met
   let finishedAt = null;
 
@@ -579,6 +625,7 @@ export function createMissions(scenario, factory) {
     if (goal.flown) return { flown: true, have: factory.flown - baseFlown, need: goal.flown };
     if (goal.kills) return { kills: true, have: factory.enemies.killed - baseKills, need: goal.kills };
     if (goal.nests) return { nests: true, have: factory.enemies.nestsKilled - baseNests, need: goal.nests };
+    if (goal.shelled) return { shelled: true, have: factory.enemies.shelled - baseShelled, need: goal.shelled };
     if (goal.powered) return { powered: true, have: reached.has(i) ? goal.powered : factory.powered(), need: goal.powered };
     if (goal.green) return { green: true, have: reached.has(i) ? goal.green : Math.floor(factory.powerSummary().clean), need: goal.green };
     if (goal.stored) return { stored: true, have: reached.has(i) ? goal.stored : Math.floor(factory.storedEnergy()), need: goal.stored };
@@ -616,11 +663,12 @@ export function createMissions(scenario, factory) {
       baseFlown = factory.flown;
       baseKills = factory.enemies.killed;
       baseNests = factory.enemies.nestsKilled;
+      baseShelled = factory.enemies.shelled;
       reached = new Set();
       if (!this.current) finishedAt = factory.time;
       return m;
     },
-    save: () => ({ index, base, basePumped, baseShipped, baseLaunched, baseFlown, baseKills, baseNests, reached: [...reached], finishedAt }),
+    save: () => ({ index, base, basePumped, baseShipped, baseLaunched, baseFlown, baseKills, baseNests, baseShelled, reached: [...reached], finishedAt }),
     load(data) {
       if (!data) return;
       index = Math.min(data.index ?? 0, scenario.missions.length);
@@ -631,6 +679,7 @@ export function createMissions(scenario, factory) {
       baseFlown = data.baseFlown ?? 0;
       baseKills = data.baseKills ?? 0;
       baseNests = data.baseNests ?? 0;
+      baseShelled = data.baseShelled ?? 0;
       reached = new Set(data.reached ?? []);
       finishedAt = data.finishedAt ?? null;
     },
