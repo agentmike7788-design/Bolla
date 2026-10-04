@@ -285,3 +285,61 @@ func test_qa7_12_lindenacker_east_graves_keep_the_pit_inside_the_fence() -> void
 			assert_true(p.x <= 21.45 and p.x >= 11.55 and p.z <= 19.55, "%s: the open pit at %s stays inside the Lindenacker" % [id, p])
 	for id: String in ["l_04", "l_08"]:
 		assert_eq((world.get_node_by_layout_id(id) as GravePlot).pit_variant, &"foot", id + ": spoil heap at the foot end")
+
+
+
+# --- QA7-13 -----------------------------------------------------------------------------------------
+
+## A FILLED grave whose dead's specimen is in the pack: [E] sets the marker first (the payment and
+## the quality hang on it); „Präparat beisetzen“ follows on the MARKED grave. Before, the pack's
+## specimen pre-empted the marker and the grave could not be marked by [E] at all.
+func test_qa7_13_marker_before_the_specimen_return_on_a_filled_grave() -> void:
+	if not await _load_fixture():
+		return
+	var gy := world.graveyard
+	var grave: GraveRecord = null
+	for g: GraveRecord in gy.graves():
+		if g.state == GraveRecord.State.MARKED and g.corpse_id != "" and world.corpse_manager.get_record(g.corpse_id) != null:
+			grave = g
+			break
+	assert_not_null(grave, "a marked grave with its record")
+	if grave == null:
+		return
+	grave.state = GraveRecord.State.FILLED
+	grave.marker_id = &""
+	var specimens := world.get_node("Systems/Specimens") as Specimens
+	var spec := Phase7Fixtures.specimen(&"heart", SpecimenRecord.CONTAINER_JAR, 0.9, world.corpse_manager.get_record(grave.corpse_id),
+			TimeManager.total_minutes())
+	specimens.load_state({"next": 1, "records": [spec.to_dict()]})
+	var inv := player.inventory
+	_make_room(inv, 3)
+	assert_true(inv.add_unique(Specimens.ITEM_JAR, spec.uid), "the jar in the pack")
+	if inv.count(&"wooden_cross") == 0:
+		inv.add_item(&"wooden_cross", 1)
+	var plot := world.get_node_by_layout_id(grave.id) as GravePlot
+	player.global_position = plot.global_position + Vector3(0.0, 0.0, 1.6)
+	assert_ne(plot.return_prompt(inv), "", "the specimen could go back")
+	var prompt := plot.get_interaction_prompt(player)
+	assert_false(prompt.begins_with("[E] Präparat beisetzen"), "the marker first (%s)" % prompt)
+	plot.interact(player)
+	UIState.clear()
+	if gy.get_grave(grave.id).state == GraveRecord.State.FILLED:
+		plot.request_marker(&"wooden_cross" if inv.count(&"gravestone_simple") == 0 else &"gravestone_simple")
+		UIState.clear()
+	assert_eq(gy.get_grave(grave.id).state, GraveRecord.State.MARKED, "marked")
+	assert_true(inv.has_uid(spec.uid), "the specimen still in the pack")
+	assert_true(plot.get_interaction_prompt(player).begins_with("[E] Präparat beisetzen"), "then the return (%s)" % plot.get_interaction_prompt(player))
+
+
+func _make_room(inv: Inventory, free: int) -> void:
+	var empty := inv.get_slots().filter(func(s: Dictionary) -> bool: return s.is_empty() or String(s.get("id", "")) == "").size()
+	for s: Dictionary in inv.get_slots():
+		if empty >= free:
+			return
+		if s.is_empty() or String(s.get("uid", "")) != "":
+			continue
+		var id := StringName(String(s.get("id", "")))
+		if id == &"" or id == &"coin" or id == &"wooden_cross" or id == &"gravestone_simple":
+			continue
+		inv.remove_item(id, int(s.get("amount", 1)))
+		empty += 1

@@ -30,10 +30,10 @@ const P7_SHOTS: Array[Dictionary] = [
 	{"name": "p7_02b_anger_overview_far", "day": 41, "minute": 600, "focus": Vector2(-2.0, -6.0), "distance": 46.0, "player": Vector2(0.6, -0.4)},
 	{"name": "p7_03_anger_afternoon", "day": 41, "minute": 975, "player": Vector2(-1.5, 2.6), "game": 24.0},
 	{"name": "p7_04_anger_dusk", "day": 41, "minute": 1100, "player": Vector2(-3.0, 1.0), "game": 24.0},
-	{"name": "p7_05_village_night", "day": 41, "minute": 1318, "player": Vector2(6.0, -4.6), "game": 24.0},
+	{"name": "p7_05_village_night", "day": 41, "minute": 1318, "player": Vector2(11.5, -3.2), "game": 24.0},
 	{"name": "p7_06_contact_sheet", "day": 41, "minute": 600, "focus": Vector2(1.4, 0.0), "distance": 14.0, "player": Vector2(0.0, 20.0),
 			"stage": "sheet"},
-	{"name": "p7_07_smithy_esch", "day": 41, "minute": 1000, "player": Vector2(-14.6, -0.9), "facing": 95.0, "game": 14.0, "ui": true},
+	{"name": "p7_07_smithy_esch", "day": 41, "minute": 1000, "player": Vector2(-16.0, -0.4), "facing": 110.0, "game": 18.0, "ui": true},
 	{"name": "p7_08_shop_theres", "day": 41, "minute": 600, "player": Vector2(-11.9, 7.7), "facing": 90.0, "game": 16.0, "ui": true},
 	{"name": "p7_09_church_lenz", "day": 41, "minute": 600, "player": Vector2(1.6, -8.0), "facing": 20.0, "game": 22.0},
 	{"name": "p7_10_inn_day", "day": 41, "minute": 750, "room": "inn", "player": Vector2(0.9, 1.3)},
@@ -120,6 +120,10 @@ func _vpos(world: Node3D, p: Vector2) -> Vector3:
 func _shoot_village(world: Node3D, shot: Dictionary, report: PackedStringArray) -> void:
 	var clock := root.get_node(^"TimeManager")
 	clock.call(&"load_state", {"day": int(shot.day), "minute_of_day": int(shot.minute)})
+	# The clock jumps without hour_changed: the lecture-night flags as the running clock sets them (QA7).
+	var lectures := world.get_node_or_null(^"Systems/Lectures")
+	if lectures != null and lectures.has_method(&"sync_night_flags"):
+		lectures.call(&"sync_night_flags", int(shot.day))
 	var player := world.get_node(^"Player") as Node3D
 	var rig := world.get_node(^"CameraRig") as Node3D
 	var room_id := StringName(shot.get("room", ""))

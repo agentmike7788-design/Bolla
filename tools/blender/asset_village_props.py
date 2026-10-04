@@ -56,7 +56,7 @@ LEAF_B = L.hexc("#647A48")
 LEAF_C = L.hexc("#768A50")
 # QA7 (G7 art): the brook read flat grey – a painted stream now: dark ink-green depth in the middle,
 # the green banks mirrored along the edges, brown shallows, broken pale-sky streaks and a few warm glints
-# laid as flat brush dabs per face (ART_DIRECTION §3: no saturated cold colour).
+# laid as long strokes along the flow (ART_DIRECTION §3: no saturated cold colour).
 WATER = L.hexc("#3F504C")
 WATER_DEEP = L.hexc("#283634")
 WATER_LIGHT = L.hexc("#9DAA9E")
@@ -364,7 +364,7 @@ def brook():
     ny = 60
     bm = bmesh.new()
     rows = []
-    # QA7: finer across the water (brush dabs per face), the bank lip as before
+    # QA7: finer across the water (room for the strokes), the bank lip as before
     us = (-1.6, -1.25, -0.9, -0.6, -0.3, 0.0, 0.3, 0.6, 0.9, 1.25, 1.6)
     zs = (0.0, 0.07, 0.025, 0.02, 0.02, 0.02, 0.02, 0.02, 0.025, 0.07, 0.0)   # flat painted water a hair over the ground
     for j in range(ny + 1):
@@ -382,7 +382,7 @@ def brook():
     bpy.context.collection.objects.link(o)
 
     def dab(c):
-        """One brush dab: the colour of the face centre `c` (flat per face – painted strokes, not a gradient)."""
+        """The paint at `c`: long strokes along the flow (noise stretched in y), the banks mirrored."""
         u = abs(c.x - _brook_x(c.y))
         if u > 1.2:
             n = noise.noise(Vector((c.x * 0.8, c.y * 0.35, 3.0)))
@@ -401,12 +401,7 @@ def brook():
             col = L.mix(col, WATER_GLINT, 0.35)
         return col
 
-    attr = me.color_attributes.new("Col", "FLOAT_COLOR", "CORNER")
-    me.color_attributes.active_color = attr
-    for poly in me.polygons:
-        col = dab(poly.center)
-        for li in poly.loop_indices:
-            attr.data[li].color = (L._to_lin(col[0]), L._to_lin(col[1]), L._to_lin(col[2]), 1.0)
+    P._paint_fn(o, lambda co, vi: dab(co))
     L.set_mat(o, L.MAT_PAINTED)
     parts.append(o)
     for k in range(40):   # stones along the banks and a few in the water

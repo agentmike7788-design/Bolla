@@ -50,14 +50,14 @@ start_minute = 900
 travel_minutes = 5
 activity = &"walk"
 animation = &"walk"
-path = PackedStringArray("v_dorn_door", "v_well")
+path = PackedStringArray("v_dorn_door", "v_well_w")
 region = &"village"
 
 [sub_resource type="Resource" id="Resource_j1n20"]
 script = ExtResource("1_rnbvr")
 start_minute = 905
 animation = &"talk"
-path = PackedStringArray("v_well")
+path = PackedStringArray("v_well_w")
 dialogue_id = &"v_washer"
 region = &"village"
 
@@ -67,7 +67,7 @@ start_minute = 990
 travel_minutes = 5
 activity = &"walk"
 animation = &"walk"
-path = PackedStringArray("v_well", "v_dorn_door")
+path = PackedStringArray("v_well_w", "v_dorn_door")
 region = &"village"
 
 [sub_resource type="Resource" id="Resource_7ggjs"]

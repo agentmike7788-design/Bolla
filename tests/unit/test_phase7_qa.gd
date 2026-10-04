@@ -199,9 +199,9 @@ func test_qa7_05_theres_and_liesel_meet_at_the_well() -> void:
 	for minute: int in range(0, 1440):
 		var g := _at(&"grocer", minute, 41)
 		var w := _at(&"washer", minute, 41)
-		if g.visible and w.visible and g.travel_minutes == 0 and w.travel_minutes == 0 and _end(g) == "v_well" and _end(w) == "v_well":
+		if g.visible and w.visible and g.travel_minutes == 0 and w.travel_minutes == 0 and _end(g) == "v_well" and _end(w) == "v_well_w":
 			together.append(minute)
-	assert_false(together.is_empty(), "Theres and Liesel stand at the well together")
+	assert_false(together.is_empty(), "Theres and Liesel stand at the well together (Liesel on its west side, v_well_w)")
 	assert_eq([together.front(), together.back()], [965, 989], "16:05–16:30")
 	var at := 975
 	assert_eq(_end(_at(&"mayor", at, 41)), "v_board", "Fenner at the board")
