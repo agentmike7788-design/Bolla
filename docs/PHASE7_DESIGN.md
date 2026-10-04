@@ -450,8 +450,8 @@ Alle Zeitpläne laufen deterministisch aus der Uhr (bestehendes `ScheduleResolve
 
 | Bot | Kapitel | Einnahmen | Ausgaben | Ende | Ziel | morgens min. | Aufträge |
 |---|---|---|---|---|---|---|---|
-| `neighbor7` | Tag 50 (B11) | 318 | 278 | **60** | ≈ 63 (−5 %) | 12 | 11 (8 Geber) |
-| `anatomist7` | Tag 50 (B11) | 381 | 330 | **71** | ≈ 77 (−8 %) | 13 | 13 (8 Geber) |
+| `neighbor7` | Tag 50 (B11) | 318 | 278 | **60** | ≈ 63 (−5 %) | 12 | 11 (7 Geber) |
+| `anatomist7` | Tag 50 (B11) | 381 | 330 | **71** | ≈ 77 (−8 %) | 13 | 13 (7 Geber) |
 | `save_load7` | = `neighbor7` | | | 60 | | 12 | |
 
 Abstand anatomisch − würdevoll **+11** (Ziel ≈ +14; der Bot `anatomist7` bezahlt dabei die Brücken-Spende, 20). Morgens nie unter 5 (G7 Runde 2; vorher Ziel 20).
