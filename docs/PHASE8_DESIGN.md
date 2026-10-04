@@ -1064,3 +1064,88 @@ Variante `&"who_comes_up"` (§1.5).
 | Fest (Laterne / Fiedel) | Friedhof + Brücke / Holderkrug | am Festtag |
 | Aufgewühltes Grab (offene Erde) | Grab | bis geschlossen |
 | Grabräuber | **nie** (man muss nachts selbst hinsehen) | – |
+
+---
+
+## 8. Figuren, Animationen, Assets & Ton (P5, W-Ton; Stil gesperrt, alle `ph_`, `lib_painted.py` / `lib_faces.py` / geteilte Materialien)
+
+### 8.1 Neue Figuren
+| Asset | Wer | Rig | Dreiecke | Hinweise |
+|---|---|---|---|---|
+| `ph_chr_apprentice` | Jakob Wackernagel | gemeinsames Rig **mit `tool`** (9 Knochen, wie der Totengräber seit G7 Runde 2) | ≤ 8 000 | ≈ 1,45 m, 4,5 Kopfhöhen; Gesicht über `lib_faces._head()` (rund, große Augen, Sommersprossen als Vertex-Farbe, keine Falten); Kittel bis zum Knie (verdeckt die starren Beine beim Bücken); Werkzeug-Meshes am `tool`: Kinderrechen, Gießkanne, Besen, Laterne (Lichtgang) – Sichtbarkeit nach Clip wie `ToolProps` |
+| `ph_chr_mourner_w_a`, `_w_b` | Martha Kehr, Gesa Ott | 8 Knochen | je ≤ 7 500 | ein Aufbau mit zwei Parametersätzen (Alter, Tuch, Rocklänge bodenlang – **Knien nur mit langem Rock**), Kindmesh `bouquet` (Heidekraut bzw. Strohblumen) an `arm_r`, `basket` an `arm_l` (Martha) |
+| `ph_chr_mourner_m_a`, `_m_b` | Hinrich Brandt, Johann Sieber | 8 Knochen | je ≤ 7 500 | Kindmeshes `hat_head` / `hat_hand` (Hut auf dem Kopf bzw. in der Hand vor dem Bauch), Johann mit Stock (`arm_l`), Hinrich mit Tannengrün |
+| `ph_chr_beggar` | Veit Ammer | 8 Knochen | ≤ 8 500 | steifes rechtes Bein (in der Ruhehaltung gestreckt), Stock, Blechbecher (Kindmesh), Fischerkappe; sitzt an Mauer und Stufe (`sit_beg`) |
+| `ph_chr_peddler` | Hanne Vogelsang | 8 Knochen | ≤ 9 000 (Kiepe ≤ 1 800 davon) | Kiepe als Teil des Rückens (`spine`), Glöckchen als eigene kleine Teile, Wanderstab an `arm_l`; zum Verkaufen steht die Kiepe neben ihr (`ph_prop_peddler_kiepe`, Wechsel über `show_with`) |
+| `ph_chr_robber` | Lambert Grell | 9 Knochen mit `tool` | ≤ 8 500 | Kapuze, Halstuch (Kindmesh, beim Stellen heruntergezogen: das Gesicht ist dann lesbar und „schön" im Sinne von G7 – müde, jung, nicht böse), Spaten am `tool`, Blendlaterne an `arm_l` (leuchtender Spalt, kein Licht), Sack über der Schulter |
+| `ph_chr_fiddler` | Spielmann vom „Stumpf" | **ohne Rig**, sitzend | ≤ 2 500 | Kindmesh `bow` (Bogenarm), das Wiegen macht GDScript im Fest-Fenster |
+- **Gesichter:** alle über den gemeinsamen Aufbau `lib_faces.py` (G7 Änderungsrunde 1, eingefroren: nur neue Parameter-Sätze). Nachweis wie G7: Aufstellung aller neuen Figuren neben den acht Dorfbewohnern und dem Totengräber, gleiche Kamera, Tag und Laternenlicht (`docs/reviews/phase8_assets/faces_lineup.jpg`).
+- **Starre Arme ohne Ellbogen, Beine ohne Knie** (Rig-Grenze, bewusst): Jede Pose muss mit ganzen Arm- und Beinteilen lesbar sein. Knien = Hüfte tief, Beine über die Fuß-Regel in Rock oder Mantel geschoben, Oberkörper vor; Hände „gefaltet" = beide Arme schräg nach vorn-innen, die Hände treffen sich vor dem Bauch; nichts wird an die Brust oder ans Gesicht geführt.
+
+### 8.2 Neue Animationen (Clips; `-loop` wird geschleift)
+| Gruppe | Clips (Frames bei 30 fps) | Für |
+|---|---|---|
+| **Besuch & Trauer** (8 Knochen, Pose-Helfer in `rig.py`, additiv) | `idle_low-loop` 90 (Kopf −14°, Schultern vor) · `kneel_in` 24 · `kneel-loop` 90 (Atmen, Kopf gesenkt) · `kneel_out` 24 · `lay_flowers` 45 (Bücken 35°, `arm_r` vor 70°, Strauß bei Frame 30 abgelegt) · `mourn_stand-loop` 90 (Hut vor dem Bauch, Kopf gesenkt, Gewicht wechselt) · `knock` 20 · `lantern_walk-loop` 22 (`arm_l` 30° vor mit Laterne) | Angehörige; Theres, Liesel, Rosine (knien), Esch, Fenner, Lenz (stehen); alle acht Bewohner `idle_low`, `lantern_walk`; Lenz, Quast, Liesel `knock` |
+| **Fest** (8 und 9 Knochen) | `dance-loop` 48 (Wiegen und Schritt auf der Stelle, Arme auf den Schultern des Gegenübers; das Drehen um die Paarmitte macht der Npc-Code langsam) · `clap-loop` 24 (Zuschauer) | Rosine, Esch, Theres, Fenner, Liesel, Hanne, Jakob, Totengräber |
+| **Jakob** (9 Knochen) | `idle-loop`, `walk-loop`, `talk-loop` · `rake-loop` 40 (Rechen am `tool`, beide Arme vor, Ziehen zum Körper) · `weed-loop` 36 (Bücken 50°, Hüfte −0,2 m, `arm_r` zum Boden) · `water-loop` 40 (Kanne am `tool` 35° geneigt) · `candle` 45 (Bücken, `arm_r` tief vor) · `watch-loop` 72 (Arme leicht zurück, Kopf folgt) · `read_board` 40 · `sit_eat-loop` 72 · `sweep-loop` 36 (Besen) · `carry_can_walk-loop` 20 · `oops` 18 (Schreck nach einem Fehler) · `whistle-loop` 72 (Kopf schräg) | Lehrling |
+| **Wanderer** (8 Knochen) | Veit: `sit_beg-loop` 90, `stand_up` 30, `walk_stiff-loop` 24 (steifes Bein) · Hanne: `offer-loop` 60 (wie Ilses `offer`), `kiepe_off` 30 / `kiepe_on` 30 | Veit, Hanne |
+| **Nacht** (9 Knochen) | Lambert: `dig_night-loop` 39 (wie `dig` des Totengräbers, gebückter), `startle` 15, `run-loop` 14, `climb` 60, `sit_ground-loop` 72 (gestellt), `talk-loop` | Grabräuber |
+| **Totengräber** (9 Knochen, nur additiv) | `kneel_place` 45 (Kerze/Blumen ans Grab) · `water-loop` 40 (Kanne am `tool`) · `sit_bench-loop` 90 (Bank unter der Linde, Totenwache) · `dance-loop` 48 | Spieler |
+- Die acht Dorfbewohner werden mit den Zusatz-Clips **neu exportiert**; Geometrie, Gesichter, Materialien und die bestehenden Clips bleiben bitgleich (Test vergleicht Mesh-Hash und Clip-Liste). Osric tanzt nicht („Ich fahr nur."), Quast kniet nicht.
+- Bilder je Clip als Kontaktbogen (Spielkamera + nah) in `docs/reviews/phase8_assets/anim_*.jpg`, wie die Bestatten-Bildfolge in G7 Runde 2.
+
+### 8.3 Ton (W-Ton, `tools/audio/build_audio.py`, alles prozedural und eigenständig)
+| Cue | Art | Auslöser | Hinweise |
+|---|---|---|---|
+| `rake_leaves` · `weed_pull` | sfx 3D | Harken / Jäten (Spieler und Jakob) | bestehende Pflege-Klänge wiederverwenden, wenn vorhanden; sonst neu |
+| `water_pour` · `barrel_fill` | sfx 3D | Gießen · Regenfass | 2–3 Varianten, ±1,5 dB |
+| `match_strike` + `candle_glass` | sfx 3D | Grabkerze anzünden | leise |
+| `cloth_kneel` · `flowers_lay` | sfx 3D | Knien/Aufstehen · Strauß | sehr leise (−6 dB unter Schritten), kein Weinen, keine Stimme |
+| `coins_stone` | sfx 3D | Münzen auf dem Stein ablegen/nehmen | |
+| `chalk_write` | ui | Arbeitsliste | |
+| `whistle_tune` | sfx 3D | Jakob bei guter Laune, höchstens alle 30 s | 3 eigene kurze Melodien (keine bekannten Lieder) |
+| `tin_cup` | sfx 3D | Almosen | |
+| `kiepe_bells` | Emitter-Schleife ≤ 12 m | Hanne unterwegs | stoppt beim Stehen |
+| `spade_night` | sfx 3D ≤ 25 m | Grabräuber gräbt | gedämpfter als das eigene Graben |
+| `run_gravel` · `climb_wall` | sfx 3D | Flucht, Mauer | |
+| `knock_door` | sfx 3D | Nachtbesuch im Dorf | |
+| `mortsafe_set` | sfx 3D | Grabgitter | Eisen auf Erde |
+| `mus_dance` | Musik (Vorbis) | Kathreintanz, Kontext `fest` | eigene Fiedel-Melodie im Dreiertakt |
+| `amb_inn_fest` | Atmosphäre (Vorbis) | Gaststube am Fest, ersetzt das Gaststuben-Bett | Stimmengewirr ohne Wörter, Stampfen im Takt |
+| `mus_lights` | Musik (Vorbis) | Lichtgang 16:30–18:30 | langsame, gestrichene Töne, ruhig, kein Choral |
+| Glocke | bestehend | Lichtgang 17:40 | Kapellenglocke bzw. Handglocke |
+- Einzelklänge als WAV (Import QOA), Schleifen und Musik Vorbis; Lautheit nach `target_lufs` (G7 Runde 2); Klangliste `docs/reviews/phase8_round1/audio_list.md`, Hörprobe `audio_preview_p8.ogg`. **Budget:** keine neuen Stimmen-Pools, höchstens 3 neue Emitter gleichzeitig, eine Musik zugleich (der Kontext `fest` ersetzt die Dorf- bzw. Friedhofsmusik), keine Knoten-Neuerzeugung beim Abspielen.
+
+### 8.4 Requisiten und Icons
+| Asset | Zweck | Dreiecke | Hinweise |
+|---|---|---|---|
+| `ph_prop_grave_flowers`, `_grave_flowers_wilted` | Winterheide und Christrosen auf dem Hügel | je ≤ 500 | welk = dieselbe Form, braun-grau gemalt, Blüten hängend |
+| `ph_prop_wax_wreath` | Wachskranz | ≤ 600 | blasse, zu glatte Blüten |
+| `ph_prop_bouquet_heath`, `_fir`, `_straw`, `_rose` | Sträuße der Besucher (Kindmesh und abgelegt) | je ≤ 250 | |
+| `ph_prop_grave_candle` | Grabkerze im Glas | ≤ 120 | MultiMesh-tauglich; Flamme `mat_emissive_warm` |
+| `ph_prop_mortsafe` | eisernes Grabgitter | ≤ 1 200 | Höhe ≤ 1,1 m, Gitterstäbe als Flachbänder |
+| `ph_prop_grave_disturbed` | aufgeworfene Erde am Fußende, Spatenspuren | ≤ 800 | `mat_ground`, kein Loch bis zur Leiche |
+| `ph_prop_tip_coins` | zwei, drei Münzen und ein gefalteter Zettel auf dem Stein | ≤ 150 | |
+| `ph_prop_chalkboard`, `_apprentice_box`, `_apprentice_bench`, `_rain_barrel` | Lehrlingsecke | ≤ 600 / 500 / 400 / 600 | Tafel mit Kreidestrichen (Textur ohne lesbaren Text außer „Jakob") |
+| `ph_tool_rake_small`, `_watering_can`, `_broom`, `_lantern_hand`, `_spade_robber`, `_lantern_blind` | Werkzeug-Meshes am `tool` | je ≤ 300 | |
+| `ph_prop_peddler_kiepe`, `ph_prop_tin_cup` | abgestellte Kiepe, Becher | ≤ 1 500 / 100 | |
+| `ph_int_church_archive`, `ph_int_memorial_plate`, `ph_int_inn_fest_decor` | Archivschrank, Namenstafel, Tannengrün und Bänder | ≤ 1 200 / 200 / 800 | |
+| `ph_item_flower_seedlings`, `_grave_candle`, `_watering_can`, `_apprentice_rake`, `_mortsafe`, `_wax_wreath`, `_register_extract`, `_memorial_plate`, `_quast_crate`, `_lorenz_ledger_2` | Item-Icons | ≤ 800 | Kladde: schmales, abgegriffenes Heft mit Faden, kein lesbarer Text |
+- **Wiederverwenden:** Zaun, Baumstumpf, Brombeere (Reihe 3), Grabvase (Zier), Laternenpfahl, Trauergäste-Haltung, `ph_prop_grave_mound_fresh`, Phase-7-Gaststube.
+- **Kein Gore, kein Grusel um seiner selbst willen:** Das aufgewühlte Grab zeigt nur Erde, nie den Toten. Trauer ist Haltung, kein Ausdruck. Kein Rot außer dem kleinen Band an Hannes Kiepe.
+
+## 9. Performance-Budget (Phase 8; Messung mit `graveyard_shots_phase8.gd --cpu`, `village_shots.gd --phase8` und `perf_probe_run.gd` + Web `--perf-probe`)
+| Größe | Budget | Begründung |
+|---|---|---|
+| FPS | 60 @ 1080p Mittelklasse-GPU; **Web (Compatibility)** ohne Frame > 50 ms beim Beginn eines Besuchs, des Lichtgangs und des Kathreintanzes | G7-Lehre Browser |
+| Figuren mit Skelett, Friedhof | **≤ 9** im Alltag (Osric, Ilse nachts, Jakob, 2 Besucher, 1–2 Bewohner, Veit, Hanne, Lambert nachts); **≤ 16 am Lichtgang** | `NpcLod`: `max_full 6` bleibt; stehende Figuren ab 26 m Stufe 2; am Lichtgang Stufe-1-Rate 3 Hz |
+| Figuren, Dorf / Gaststube am Fest | ≤ 12 / ≤ 10 + Spielmann | wie Phase 7 |
+| Kamera-Dreiecke inkl. Gras (Spiel-Zoom) | < 500 k, auch Lichtgang Übersicht | 16 Figuren × ≤ 9 k ≈ 140 k – Prüfbild `perf_p8_03` |
+| Draw Calls Friedhof | ≤ 650 Alltag, **≤ 750 Lichtgang** | Grabkerzen als **ein** MultiMesh (Glas + Flamme), Blumen je Grab ≤ 40 Meshes |
+| Lichter | Schatten ≤ 4 (unverändert), sichtbar ≤ 25; **Kerzen-Pool 6 Omni ohne Schatten** | Compatibility-Renderer: ≤ 8 Lichter je Mesh; der Pool hält jedes Grab unter 3 Kerzenlichtern |
+| Partikel | ≤ 60 (unverändert) | neu nur 3 Erdbröckchen beim Räuber, 4 Funken beim Anzünden |
+| Skripte CPU/Frame (headless, Uhr läuft, Median über ≥ 3 Läufe, relativ in derselben Messung) | Friedhof Tag mit Jakob und 2 Besuchern: Phase-8-Anteil **≤ +0,2 ms** · Lichtgang **≤ +0,5 ms** · Dorf **≤ +0,1 ms** | Planer nur um 06:00 / 08:25 / bei Listenänderung (≤ 2 ms, notfalls auf 2 Frames verteilt wie die Karte in G7); `ChatterRunner` und Licht-Pool 2 Hz; Besucher, Lehrling, Feste, Nacht ereignis- bzw. minutengetrieben ohne `_process` |
+| Audio | ≤ 26 Einmal-Stimmen, ≤ 3 neue Emitter, 1 Musik | Web: Mischen auf dem Hauptthread (G7) |
+| Lichtgang-Zug | 12 Npc wechseln gleichzeitig die Region → ≤ 4 ms in einem Frame | `refresh()` je Npc ≤ 0,3 ms; der Zug startet gestaffelt (alle 20 Spielsekunden einer) |
+| Spielstand / Laden | < 400 kB (+ ≈ 8 kB) / < 1 s | |
+*Plan B (in dieser Reihenfolge, bevor Inhalte fallen):* `max_full` 4, Lichtgang Stufe-1-Rate 2 Hz, Kerzen-Pool 4, Lichtgang-Zug nur Angehörige + Lenz + 4 Bewohner.
