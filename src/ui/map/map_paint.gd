@@ -6,6 +6,7 @@ extends RefCounted
 ## map looks the same every time it opens).
 
 const PAPER_SIZE := Vector2i(420, 300)
+const PAPER_DIR := "res://assets/ui/map"
 ## Pixels between two wobble samples of an ink line.
 const WOBBLE_STEP := 7.0
 
@@ -13,11 +14,34 @@ static var _paper: Texture2D
 static var _paper_key: String = ""
 
 
-## The parchment: paper colour mottled by two noises, darker towards the edges, a few stains.
+## The parchment: paper colour mottled by two noises, darker towards the edges, a few stains. Baked
+## ahead into assets/ui/map/ (tools/map/bake_map_paper.gd, file name = the two colours) and only
+## computed here when no baked sheet matches the colours (G7 Runde 2: 126 000 noise pixels cost a
+## visible stutter in the browser).
 static func paper_texture(paper: Color, dark: Color) -> Texture2D:
 	var key := "%s|%s" % [paper.to_html(), dark.to_html()]
 	if _paper != null and _paper_key == key:
 		return _paper
+	var baked := paper_asset_path(paper, dark)
+	_paper = load(baked) as Texture2D if ResourceLoader.exists(baked) else null
+	if _paper == null:
+		_paper =ImageTexture.create_from_image(paper_image(paper, dark))
+	_paper_key = key
+	return _paper
+
+
+## The paper of `cfg`.
+static func paper(cfg: MapConfig) -> Texture2D:
+	return paper_texture(cfg.paper, cfg.paper_dark)
+
+
+## Where the baked parchment for these colours lives.
+static func paper_asset_path(paper: Color, dark: Color) -> String:
+	return PAPER_DIR.path_join("map_paper_%s_%s.png" % [paper.to_html(false), dark.to_html(false)])
+
+
+## The parchment as an image (deterministic – the tool bakes exactly this).
+static func paper_image(paper: Color, dark: Color) -> Image:
 	var noise := FastNoiseLite.new()
 	noise.seed = 1701
 	noise.frequency = 0.012
@@ -37,9 +61,7 @@ static func paper_texture(paper: Color, dark: Color) -> Texture2D:
 			var edge := clampf(1.0 - minf(ex, ey) * 9.0, 0.0, 1.0)
 			var t := clampf(0.1 + n * 0.32 + f * 0.08 + edge * edge * 0.55, 0.0, 1.0)
 			img.set_pixel(x, y, paper.lerp(dark, t * 0.62))
-	_paper = ImageTexture.create_from_image(img)
-	_paper_key = key
-	return _paper
+	return img
 
 
 ## `pts` subdivided and nudged sideways by a smooth, seeded noise – a pen line, not a vector line.

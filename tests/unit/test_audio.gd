@@ -53,7 +53,9 @@ func test_every_cue_has_existing_files() -> void:
 			if s == null:
 				continue
 			var path := s.resource_path
-			assert_true(path.get_file().begins_with("ph_") and path.ends_with(".ogg"), "placeholder ogg %s" % path)
+			# G7 Runde 2: one-shots are WAV (QOA – cheap to mix in the browser), loops and music Vorbis.
+			var ext := ".ogg" if c.loop or c.bus == &"Music" else ".wav"
+			assert_true(path.get_file().begins_with("ph_") and path.ends_with(ext), "placeholder %s %s" % [ext, path])
 			assert_true(FileAccess.file_exists(path), "file %s of %s" % [path, id])
 
 

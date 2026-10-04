@@ -2,24 +2,25 @@
 
 [ext_resource type="Script" path="res://src/systems/audio/audio_cue.gd" id="1_cue"]
 [ext_resource type="Script" path="res://src/systems/audio/audio_cue_library.gd" id="2_lib"]
-[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_click_1.ogg" id="s_ui_click_1"]
-[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_click_2.ogg" id="s_ui_click_2"]
-[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_hover.ogg" id="s_ui_hover_1"]
-[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_open.ogg" id="s_ui_open_1"]
-[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_close.ogg" id="s_ui_close_1"]
-[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_error.ogg" id="s_ui_error_1"]
-[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_page_1.ogg" id="s_ui_page_1"]
-[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_page_2.ogg" id="s_ui_page_2"]
-[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_page_3.ogg" id="s_ui_page_3"]
-[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_notify.ogg" id="s_ui_notify_1"]
-[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_reward.ogg" id="s_ui_reward_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_click_1.wav" id="s_ui_click_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_click_2.wav" id="s_ui_click_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_hover.wav" id="s_ui_hover_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_open.wav" id="s_ui_open_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_close.wav" id="s_ui_close_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_error.wav" id="s_ui_error_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_page_1.wav" id="s_ui_page_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_page_2.wav" id="s_ui_page_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_page_3.wav" id="s_ui_page_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_notify.wav" id="s_ui_notify_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_reward.wav" id="s_ui_reward_1"]
 
 [sub_resource type="Resource" id="cue_ui_click"]
 script = ExtResource("1_cue")
 id = &"ui_click"
 streams = Array[AudioStream]([ExtResource("s_ui_click_1"), ExtResource("s_ui_click_2")])
 bus = &"UI"
-volume_db = -14
+volume_db = -20.1
+target_lufs = -40
 volume_jitter_db = 1.5
 pitch_jitter = 0.04
 loop = false
@@ -34,7 +35,8 @@ script = ExtResource("1_cue")
 id = &"ui_hover"
 streams = Array[AudioStream]([ExtResource("s_ui_hover_1")])
 bus = &"UI"
-volume_db = -24
+volume_db = -29.1
+target_lufs = -48
 volume_jitter_db = 1.5
 pitch_jitter = 0.05
 loop = false
@@ -49,7 +51,8 @@ script = ExtResource("1_cue")
 id = &"ui_open"
 streams = Array[AudioStream]([ExtResource("s_ui_open_1")])
 bus = &"UI"
-volume_db = -14
+volume_db = -22.6
+target_lufs = -38
 volume_jitter_db = 1.5
 pitch_jitter = 0.05
 loop = false
@@ -64,7 +67,8 @@ script = ExtResource("1_cue")
 id = &"ui_close"
 streams = Array[AudioStream]([ExtResource("s_ui_close_1")])
 bus = &"UI"
-volume_db = -15
+volume_db = -21.9
+target_lufs = -38
 volume_jitter_db = 1.5
 pitch_jitter = 0.05
 loop = false
@@ -79,7 +83,8 @@ script = ExtResource("1_cue")
 id = &"ui_error"
 streams = Array[AudioStream]([ExtResource("s_ui_error_1")])
 bus = &"UI"
-volume_db = -13
+volume_db = -19.6
+target_lufs = -38
 volume_jitter_db = 1.5
 pitch_jitter = 0.05
 loop = false
@@ -94,7 +99,8 @@ script = ExtResource("1_cue")
 id = &"ui_page"
 streams = Array[AudioStream]([ExtResource("s_ui_page_1"), ExtResource("s_ui_page_2"), ExtResource("s_ui_page_3")])
 bus = &"UI"
-volume_db = -13
+volume_db = -24.5
+target_lufs = -38
 volume_jitter_db = 1.5
 pitch_jitter = 0.05
 loop = false
@@ -109,7 +115,8 @@ script = ExtResource("1_cue")
 id = &"ui_notify"
 streams = Array[AudioStream]([ExtResource("s_ui_notify_1")])
 bus = &"UI"
-volume_db = -18
+volume_db = -27.9
+target_lufs = -38
 volume_jitter_db = 1.5
 pitch_jitter = 0.05
 loop = false
@@ -124,7 +131,8 @@ script = ExtResource("1_cue")
 id = &"ui_reward"
 streams = Array[AudioStream]([ExtResource("s_ui_reward_1")])
 bus = &"UI"
-volume_db = -15
+volume_db = -27.6
+target_lufs = -38
 volume_jitter_db = 1.5
 pitch_jitter = 0.05
 loop = false

@@ -9,16 +9,16 @@ bed = &"amb_graveyard_day"
 bed_volume_db = 0.0
 spots = Array[Dictionary]([{
 "cue": &"bird_a",
-"max": 20.0,
-"min": 8.0
+"max": 32.0,
+"min": 12.8
 }, {
 "cue": &"bird_b",
-"max": 30.0,
-"min": 12.0
+"max": 48.0,
+"min": 19.2
 }, {
 "cue": &"bird_c",
-"max": 40.0,
-"min": 15.0
+"max": 64.0,
+"min": 24.0
 }, {
 "cue": &"crow",
 "max": 100.0,

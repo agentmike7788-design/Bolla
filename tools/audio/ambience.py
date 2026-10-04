@@ -9,23 +9,63 @@ import numpy as np
 import synth as s
 
 LOOP = 24.0
+# Outdoor beds loop over 48 s (G7 Runde 2): the gusts of a 24 s loop were recognisable.
+LOOP_OUT = 48.0
 
 
 # --- building blocks ---------------------------------------------------------------------
 
-def _wind(rng, sr, n, strength=1.0, lo=120.0, hi=900.0, gust=0.6):
-    base = s.loop_filter_band(s.pink(rng, n), sr, lo, hi, 1.5)
-    whistle = s.loop_filter_band(s.pink(rng, n), sr, hi * 0.9, hi * 2.2, 3.0) * 0.25
-    mod = s.loop_lfo(rng, sr, n, 5, gust)
-    mod2 = s.loop_lfo(rng, sr, n, 9, gust * 0.6)
-    return (base * mod + whistle * mod2 ** 2) * strength
+def gust_curve(rng, n, sr, gust=0.6, slowest=40.0, fastest=4.0):
+    """Irregular gust envelope in [1 - gust, 1], periodic over n samples (seamless loops).
 
-
-def _leaves(rng, sr, n, density=600.0):
+    Sum of many integer-cycle components between periods `slowest` and `fastest` seconds with a
+    1/f amplitude fall-off and random phases, then a soft saturation: calm stretches, a few
+    stronger gusts at irregular spacing – no regular "breathing", never down to silence.
+    """
     dur = n / sr
-    mod = s.loop_lfo(rng, sr, n, 6, 0.9)
-    g = s.grains(rng, sr, dur, density, 1800, 8000, 0.01, wrap=True)
-    return g * mod ** 2
+    t = np.arange(n) / n
+    k_lo = max(1, int(round(dur / slowest)))
+    k_hi = max(k_lo + 1, int(round(dur / fastest)))
+    out = np.zeros(n)
+    for k in range(k_lo, k_hi + 1):
+        out += rng.uniform(0.2, 1.0) / k ** 0.9 * np.sin(s.TAU * k * t + rng.uniform(0, s.TAU))
+    out /= np.std(out) + 1e-12
+    shaped = 1.0 / (1.0 + np.exp(-1.6 * (out - 0.3)))           # gusts rise softly, calm is longer
+    shaped = (shaped - shaped.min()) / (shaped.max() - shaped.min() + 1e-12)
+    return 1.0 - gust + gust * shaped
+
+
+def _delay(x, sr, seconds):
+    return np.roll(x, int(seconds * sr))
+
+
+def _wind(rng, sr, n, strength=1.0, lo=120.0, hi=900.0, gust=0.6, g=None):
+    """Natural wind (G7 Runde 2): broadband filtered noise in three bands with gentle slopes – no
+    resonant band (the old "whistle" layer is gone) – and one slow, irregular gust curve. Gusts
+    swell the body, brighten it a little (the bright band follows the curve squared and a little
+    later, as a gust "arrives") and add a low rumble; calm stays soft but never silent."""
+    g = gust_curve(rng, n, sr, gust) if g is None else g
+    rumble = s.loop_filter_band(s.brown(rng, n), sr, 35.0, lo * 1.2, 1.0)
+    body_dark = s.loop_filter_band(s.pink(rng, n), sr, lo, hi * 0.7, 1.5)
+    body_bright = s.loop_filter_band(s.pink(rng, n), sr, lo * 1.4, hi * 1.2, 1.5)
+    air = s.loop_filter_band(s.pink(rng, n), sr, hi * 1.2, min(hi * 2.5, 3000.0), 1.5)
+    gl = _delay(g, sr, 0.35)
+    body = body_dark * (1.0 - gl * 0.5) + body_bright * gl * 0.7
+    x = rumble * 0.35 * g + body * g + air * 0.04 * gl ** 2
+    return x * strength
+
+
+
+def _leaves(rng, sr, n, density=600.0, g=None):
+    """Leaf rustle: soft grains 1.2–5 kHz (no hiss above), loud only in the gusts of `g`."""
+    dur = n / sr
+    if g is None:
+        mod = s.loop_lfo(rng, sr, n, 6, 0.9) ** 2
+    else:
+        mod = np.clip((g - g.min()) / (g.max() - g.min() + 1e-12), 0, 1) ** 2.5
+    gr = s.grains(rng, sr, dur, density, 1200, 5000, 0.014, wrap=True)
+    gr = s.spectral(gr, sr, s.band_gain(1200, 5000, 1.0))
+    return gr * mod
 
 
 def _crickets(rng, sr, n, count=4, level=1.0):
@@ -118,26 +158,29 @@ def _finish(x, sr, rng, peak, reverb_wet=0.0, reverb_len=1.5, reverb_decay=0.5):
 # --- beds --------------------------------------------------------------------------------
 
 def amb_graveyard_day(rng, sr):
-    n = s.secs(sr, LOOP)
-    x = _wind(rng, sr, n, 1.0) + _leaves(rng, sr, n, 500) * 0.25
+    n = s.secs(sr, LOOP_OUT)
+    g = gust_curve(rng, n, sr, 0.55)
+    x = _wind(rng, sr, n, 1.0, 110, 800, g=g) + _leaves(rng, sr, n, 260, g) * 0.12
     return _finish(x, sr, rng, 0.5)
 
 
 def amb_graveyard_dusk(rng, sr):
-    n = s.secs(sr, LOOP)
-    x = _wind(rng, sr, n, 0.8, 100, 700, 0.5) + _leaves(rng, sr, n, 250) * 0.15 + _crickets(rng, sr, n, 2, 0.05)
+    n = s.secs(sr, LOOP_OUT)
+    g = gust_curve(rng, n, sr, 0.5)
+    x = _wind(rng, sr, n, 0.8, 100, 700, g=g) + _leaves(rng, sr, n, 140, g) * 0.08 + _crickets(rng, sr, n, 2, 0.035)
     return _finish(x, sr, rng, 0.45)
 
 
 def amb_graveyard_night(rng, sr):
-    n = s.secs(sr, LOOP)
-    x = _wind(rng, sr, n, 0.5, 90, 600, 0.6) + _crickets(rng, sr, n, 5, 0.12)
+    n = s.secs(sr, LOOP_OUT)
+    x = _wind(rng, sr, n, 0.6, 90, 600, 0.5) + _crickets(rng, sr, n, 3, 0.06)
     return _finish(x, sr, rng, 0.45)
 
 
 def amb_forest_edge(rng, sr):
-    n = s.secs(sr, LOOP)
-    x = _wind(rng, sr, n, 0.9, 200, 1600, 0.7) + _leaves(rng, sr, n, 1300) * 0.55
+    n = s.secs(sr, LOOP_OUT)
+    g = gust_curve(rng, n, sr, 0.6)
+    x = _wind(rng, sr, n, 0.9, 160, 1200, g=g) + _leaves(rng, sr, n, 700, g) * 0.3
     creak = np.zeros(n)
     for _ in range(3):
         cn = s.secs(sr, 1.2)
@@ -148,15 +191,16 @@ def amb_forest_edge(rng, sr):
 
 
 def amb_village_day(rng, sr):
-    n = s.secs(sr, LOOP)
-    x = (_wind(rng, sr, n, 0.4, 120, 700, 0.5) + _murmur(rng, sr, n, 7, 0.35)
-         + _brook(rng, sr, n, 0.12) + _leaves(rng, sr, n, 200) * 0.1)
+    n = s.secs(sr, LOOP_OUT)
+    g = gust_curve(rng, n, sr, 0.45)
+    x = (_wind(rng, sr, n, 0.35, 120, 700, g=g) + _murmur(rng, sr, n, 9, 0.3)
+         + _brook(rng, sr, n, 0.1) + _leaves(rng, sr, n, 120, g) * 0.06)
     return _finish(x, sr, rng, 0.5, 0.15, 1.2, 0.4)
 
 
 def amb_village_night(rng, sr):
-    n = s.secs(sr, LOOP)
-    x = _wind(rng, sr, n, 0.45, 90, 600, 0.5) + _crickets(rng, sr, n, 4, 0.09) + _brook(rng, sr, n, 0.1)
+    n = s.secs(sr, LOOP_OUT)
+    x = _wind(rng, sr, n, 0.45, 90, 600, 0.5) + _crickets(rng, sr, n, 3, 0.05) + _brook(rng, sr, n, 0.08)
     return _finish(x, sr, rng, 0.45)
 
 
@@ -212,8 +256,8 @@ def amb_shed(rng, sr):
 
 
 def amb_title(rng, sr):
-    n = s.secs(sr, LOOP)
-    x = _wind(rng, sr, n, 0.6, 90, 500, 0.6) + _crickets(rng, sr, n, 2, 0.04)
+    n = s.secs(sr, LOOP_OUT)
+    x = _wind(rng, sr, n, 0.6, 90, 500, 0.5) + _crickets(rng, sr, n, 2, 0.03)
     return _finish(x, sr, rng, 0.35)
 
 
@@ -391,9 +435,15 @@ def fire_pop(rng, sr):
 
 
 def wind_gust(rng, sr):
-    n = s.secs(sr, 4.0)
+    """One gust passing (G7 Runde 2): the bed's wind bands under a slow asymmetric swell (rise 2.2 s,
+    fall 3.3 s), a little brighter at the top – no grain hiss."""
+    dur = 5.5
+    n = s.secs(sr, dur)
     t = s.tline(sr, n)
-    env = np.sin(np.pi * np.clip(t / 4.0, 0, 1)) ** 2
-    x = s.bandpass(s.pink(rng, n), sr, 200, 1400) * env
-    x += s.grains(rng, sr, 4.0, 900, 2000, 8000, 0.01, lambda p: float(np.sin(np.pi * p) ** 3)) * 0.4
-    return s.fade(s.normalize(x, 0.35), sr, 0.1, 0.5)
+    rise = 2.2
+    env = np.where(t < rise, np.sin(np.pi * 0.5 * t / rise) ** 2,
+                   np.cos(np.pi * 0.5 * np.clip((t - rise) / (dur - rise), 0, 1)) ** 2)
+    body = s.bandpass(s.pink(rng, n), sr, 150, 900, 1)
+    bright = s.bandpass(s.pink(rng, n), sr, 400, 1800, 1)
+    x = body * env + bright * env ** 3 * 0.35
+    return s.fade(s.normalize(x, 0.35), sr, 0.2, 0.5)

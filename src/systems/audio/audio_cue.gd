@@ -5,11 +5,15 @@ extends Resource
 ## values. Streams are real resource dependencies, so an export carries them.
 
 @export var id: StringName
-## The variants (.ogg).
+## The variants (one-shots .wav – imported as QOA –, loops and music .ogg).
 @export var streams: Array[AudioStream] = []
 ## &"Music" | &"Ambience" | &"SFX" | &"UI".
 @export var bus: StringName = &"SFX"
+## Set by build_audio.py so that the cue plays at target_lufs (measured loudness of its files).
 @export var volume_db: float = 0.0
+## Intended loudness in the game (LUFS, file + volume_db, before the user's sliders; G7 Runde 2):
+## integrated for loops / music, max. momentary (400 ms) for one-shots. 0 = not levelled.
+@export var target_lufs: float = 0.0
 ## ± random spread per play.
 @export var volume_jitter_db: float = 0.0
 ## ± random pitch-scale spread per play (0.05 = ±5 %).
