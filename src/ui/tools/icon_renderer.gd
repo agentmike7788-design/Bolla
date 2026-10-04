@@ -111,7 +111,9 @@ const MODELS: Dictionary[StringName, String] = {
 }
 ## Ids framed as a portrait: only the top PORTRAIT_SHARE of the model, seen from the front.
 const PORTRAIT_PREFIX := "villager_"
-const PORTRAIT_SHARE := 0.34
+const PORTRAIT_SHARE := 0.26
+## Width (m) the portrait frame may span at most (head and shoulders).
+const PORTRAIT_WIDTH := 0.46
 const PORTRAIT_DIR := Vector3(0.3, 0.12, 1.0)
 
 var _filter: String = ""
@@ -153,6 +155,12 @@ func _run() -> void:
 		if portrait:
 			box.position.y += box.size.y * (1.0 - PORTRAIT_SHARE)
 			box.size.y *= PORTRAIT_SHARE
+			# head and shoulders only: arms, staffs and bags must not widen the frame
+			var c := box.get_center()
+			box.size.x = minf(box.size.x, PORTRAIT_WIDTH)
+			box.size.z = minf(box.size.z, PORTRAIT_WIDTH)
+			box.position.x = c.x - box.size.x * 0.5
+			box.position.z = c.z - box.size.z * 0.5
 		_frame(cam, box, PORTRAIT_DIR if portrait else VIEW_DIR)
 		for i: int in SETTLE_FRAMES:
 			await process_frame
