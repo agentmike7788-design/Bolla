@@ -121,7 +121,8 @@ func request_upgrade() -> void:
 	if reason != "":
 		_warn(reason)
 		return
-	player.start_timed_action(LABEL_BUILD % [_name(), next.level], next.minutes, _finish_upgrade.bind(player.inventory), false, ANIM)
+	player.start_timed_action(LABEL_BUILD % [_name(), next.level], next.minutes, _finish_upgrade.bind(player.inventory), false,
+			ToolAnimConfig.clip_for(&"building_upgrade", ANIM))
 
 
 ## Shed ≥ 2: fetch the missing building materials (ShedSupply; coins are never fetched).

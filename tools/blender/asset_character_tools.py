@@ -179,6 +179,8 @@ def attach(arm, tools: dict) -> None:
         obj.matrix_world = Matrix.Identity(4)
     for kind, (name, p) in MARKERS.items():
         rig.bone_marker(arm, C.TOOL, name, REST @ Vector(p))
+    d = chisel_rest_dir()   # the chisel's edge (stone chips leave here)
+    rig.bone_marker(arm, "arm_l", "chisel_edge", C.FIST[1] + d * (CHISEL_LEN - CHISEL_HOLD))
 
 
 # --- the hold -------------------------------------------------------------------------
@@ -211,6 +213,8 @@ def _wield(pose_fn, name: str = ""):
         face = n.cross(d)
         origin = fist - d * s_r
         m = C._frame(origin, d, face)
+        if pose.get("w_home", (0.0,))[0] >= 0.5:   # hidden in the bag: the bone rests on the back
+            m = C._rest_tool(arm)
         arm.pose.bones[C.TOOL].matrix = m
         bpy.context.view_layer.update()
         miss_l = 0.0
@@ -254,7 +258,7 @@ def _chop_keys() -> list:
     ax = AXE_AXIS
     wind = _pose(C._body(4.0, -25.0, head=-2.0), _w((-0.25, -0.5, 1.22), 50.0, 40.0, ax, (0.14, 0.03, 1.0, 1.0)),
                  {"arm_r": (-90.0, 0.0, 0.0), "arm_l": (-90.0, 0.0, -30.0)})
-    over = _pose(C._body(8.0, -14.0, head=-4.0), _w((-0.3, -0.52, 1.3), 70.0, 125.0, ax, (0.13, 0.03, 1.0, 1.0)),
+    over = _pose(C._body(8.0, -18.0, head=-4.0), _w((-0.25, -0.52, 1.27), 70.0, 125.0, ax, (0.13, 0.03, 1.0, 1.0)),
                  {"arm_r": (-100.0, 0.0, 0.0), "arm_l": (-100.0, 0.0, -20.0)})
     strike = _pose(C._body(16.0, 6.0), _w((-0.05, -0.62, 1.02), -32.0, 182.0, ax, (0.12, 0.03, 1.0, 1.0)),
                    {"arm_r": (-85.0, 0.0, 0.0), "arm_l": (-85.0, 0.0, 0.0), "hips": (3.0, 0, 0, 0, -0.01, -0.02)})
@@ -279,9 +283,9 @@ PICK_AXIS = (0.8, -0.1, 0.35)
 
 def _pick_keys() -> list:
     ax = PICK_AXIS
-    wind = _pose(C._body(2.0, -22.0, head=-4.0), _w((-0.24, -0.5, 1.26), 64.0, 30.0, ax, (0.14, 0.03, 1.0, 1.0)),
+    wind = _pose(C._body(2.0, -28.0, head=-4.0), _w((-0.22, -0.5, 1.24), 64.0, 30.0, ax, (0.14, 0.03, 1.0, 1.0)),
                  {"arm_r": (-95.0, 0.0, 0.0), "arm_l": (-95.0, 0.0, -30.0)})
-    over = _pose(C._body(8.0, -12.0, head=-4.0), _w((-0.3, -0.52, 1.32), 74.0, 130.0, ax, (0.13, 0.03, 1.0, 1.0)),
+    over = _pose(C._body(8.0, -18.0, head=-4.0), _w((-0.25, -0.52, 1.28), 74.0, 130.0, ax, (0.13, 0.03, 1.0, 1.0)),
                  {"arm_r": (-100.0, 0.0, 0.0), "arm_l": (-100.0, 0.0, -20.0)})
     strike = _pose(C._body(30.0, 4.0), _w((-0.04, -0.56, 0.84), -58.0, 182.0, ax, (0.12, 0.03, 1.0, 1.0)),
                    {"arm_r": (-60.0, 0.0, 0.0), "arm_l": (-60.0, 0.0, 0.0), "hips": (4.0, 0, 0, 0, -0.02, -0.02)})
@@ -377,7 +381,8 @@ def _bag(first: dict, kind: str) -> list:
     s_r = 0.04 if kind != "saw" else 0.05
     # in the bag the haft points up and out past the right arm (pulled out by its end)
     rest = _pose({"leg_l": (9.0, 0.0, 0.0), "leg_r": (-9.0, 0.0, 0.0)},
-                 _w((-0.36, 0.0, 0.7), BAG_DIR[0], BAG_DIR[1], (1.0, 0.0, 0.0), (s_r, first["w_grip"][1], 0.0, 0.0)))
+                 _w((-0.36, 0.0, 0.7), BAG_DIR[0], BAG_DIR[1], (1.0, 0.0, 0.0), (s_r, first["w_grip"][1], 0.0, 0.0),
+                    w_home=(1.0,)))
     bag = _pose(C._body(6.0, -6.0), _w((-0.4, 0.05, 0.76), BAG_DIR[0], BAG_DIR[1], (1.0, 0.0, 0.0),
                                        (s_r, first["w_grip"][1], 1.0, 0.0)),
                 {"arm_r": (10.0, 0.0, -10.0)})
@@ -417,8 +422,9 @@ def make_stow_walk(stow_fn):
             a = tuple(upper.get(bone, rig.ZERO)) + rig.ZERO[len(upper.get(bone, rig.ZERO)):]
             b = tuple(g.get(bone, rig.ZERO)) + rig.ZERO[len(g.get(bone, rig.ZERO)):]
             out[bone] = tuple(x + (y - x) * fade for x, y in zip(a, b))
-        for k in ("w_fist", "w_dir", "w_axis"):
-            out[k] = upper[k]
+        for k in ("w_fist", "w_dir", "w_axis", "w_home"):
+            if k in upper:
+                out[k] = upper[k]
         out["w_grip"] = tuple(v * (1.0 - fade) if i in (2, 3) else v for i, v in enumerate(upper["w_grip"]))
         return out
     return stow_walk

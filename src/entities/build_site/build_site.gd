@@ -91,7 +91,8 @@ func request_build() -> void:
 	if reason != "":
 		_warn(reason)
 		return
-	player.start_timed_action(LABEL_BUILD % data.display_name, data.build_minutes, _finish_build.bind(player.inventory), false, ANIM)
+	player.start_timed_action(LABEL_BUILD % data.display_name, data.build_minutes, _finish_build.bind(player.inventory), false,
+			ToolAnimConfig.clip_for(&"build_site", ANIM))
 
 
 func _finish_build(inv: Inventory) -> void:

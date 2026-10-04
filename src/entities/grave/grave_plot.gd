@@ -247,7 +247,7 @@ func interact(player: Player) -> void:
 		GraveRecord.State.MARKED:
 			var better := upgrade_marker_id(player.inventory)
 			player.start_timed_action(LABEL_UPGRADE % [_item_name(better), _item_name(grave.marker_id)], actions.marker_minutes,
-					_finish_upgrade.bind(better, player.inventory), true, ANIM_MARKER)
+					_finish_upgrade.bind(better, player.inventory), true, ToolAnimConfig.clip_for(&"grave_marker", ANIM_MARKER))
 
 
 ## Marker-choice panel: places `id` (timed, not cancellable) for the player who asked.
@@ -283,7 +283,7 @@ func upgrade_marker_id(inv: Inventory) -> StringName:
 
 func _start_marker(player: Player, id: StringName, cancellable: bool) -> void:
 	player.start_timed_action(LABEL_MARKER % _item_name(id), _actions(player).marker_minutes,
-			_finish_marker.bind(id, player.inventory), cancellable, ANIM_MARKER)
+			_finish_marker.bind(id, player.inventory), cancellable, ToolAnimConfig.clip_for(&"grave_marker", ANIM_MARKER))
 
 
 func _finish_dig(player: Player) -> void:

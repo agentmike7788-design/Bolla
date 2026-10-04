@@ -455,8 +455,9 @@ func _update_animation(delta: float) -> void:
 	_animator.update(delta, _action, _is_carrying())
 
 
-## G7 Runde 2: the tool out of its place on the back (being drawn, in the hands or being stowed;
-## PlayerAnimator, data/config/tool_anim_config.tres) – &"" = the shovel is on the back.
+## G7 Runde 2: the tool out of its resting place (being drawn, in the hands or being stowed;
+## PlayerAnimator, data/config/tool_anim_config.tres): &"shovel", &"axe", &"pickaxe", &"hammer",
+## &"chisel", &"saw" – &"" = the shovel on the back, the belt tools in the bag.
 func held_tool() -> StringName:
 	return _animator.held_tool() if _animator != null else &""
 
@@ -470,6 +471,11 @@ func reset_tool() -> void:
 ## True if the action clip `clip` sounds its work cue in step with the tool's bite (AudioEvents).
 func syncs_work_cue(clip: StringName) -> bool:
 	return _animator != null and _animator.syncs_work_cue(clip)
+
+
+## The work cue the tool clip `clip` sounds at its bite (axe: chop, …); &"" = the label's cue.
+func beat_cue(clip: StringName) -> StringName:
+	return _animator.beat_cue(clip) if _animator != null else &""
 
 
 ## Phase 5 §3.4: highest tier of `kind` on the tool belt (ToolRules.tier; 0 = the old tool, and

@@ -8,12 +8,16 @@ extends RefCounted
 ## hands (HOLD; the blade's bite sounds the work cue, the throw drops a few earth clods) and puts
 ## it back when the action ends or is cancelled (STOW, the walking variant when moving off).
 ## reset_tool() puts it back at once (loading, changing rooms).
+## G7 Runde 2 (Werkzeuge): the same for the belt tools – axe (chop), pickaxe (pick), hammer
+## (hammer, chisel with the chisel in the left fist) and saw (saw): drawn from the tool bag at the
+## right hip, visible only while out (ToolProps), chips at the bite, the cue in step (beat_cue).
 
 enum ToolPhase { BACK, DRAW, HOLD, STOW }
 
 ## The rig's AnimationPlayer anywhere under the Model (null = procedural waddle).
 var anim: AnimationPlayer
 var tools: ToolAnimConfig
+var props: ToolProps
 var phase: ToolPhase = ToolPhase.BACK
 var _player: Player
 var _walk_time: float = 0.0
@@ -27,6 +31,9 @@ var _clods: CPUParticles3D
 var _blade: Node3D
 ## The CarrySocket's own transform (a carried corpse is laid aside while the shovel is out).
 var _socket_rest: Transform3D
+## Chip bursts per action clip (wood chips, stone splinters) and the last shown tool state.
+var _chips: Dictionary[StringName, CPUParticles3D] = {}
+var _shown: Array = []
 
 
 func _init(player: Player) -> void:
@@ -38,6 +45,7 @@ func _init(player: Player) -> void:
 		tools = ToolAnimConfig.new()
 	_blade = player.model.find_child(String(tools.blade_marker), true, false) as Node3D
 	_socket_rest = player.carry_socket.transform if player.carry_socket != null else Transform3D.IDENTITY
+	props = ToolProps.new(player.model, tools)
 
 
 ## Moves the Lantern light onto the rig's light_lantern marker, so it swings with the hips.
@@ -60,13 +68,17 @@ func update(delta: float, action: Player.TimedAction, carrying: bool) -> void:
 	var blend := _player.anim_blend
 	var wanted := _tool_animation(moving, action)
 	if wanted != &"":
-		blend = tools.hold_blend if phase == ToolPhase.HOLD else (tools.stow_blend if phase == ToolPhase.STOW else blend)
+		if phase == ToolPhase.HOLD:
+			blend = tools.hold_blends.get(_hold_clip, tools.hold_blend)
+		elif phase == ToolPhase.STOW:
+			blend = tools.stow_blend
 	else:
 		wanted = _wanted_animation(moving, action, carrying)
 	if wanted != &"" and (anim.current_animation != wanted or not anim.is_playing()):
 		anim.play(wanted, blend)
 	if phase == ToolPhase.HOLD:
 		_hold_events()
+	_update_props()
 	_place_carried(delta, carrying)
 
 
@@ -81,12 +93,18 @@ func syncs_work_cue(clip: StringName) -> bool:
 	return anim != null and tools.bite_at.has(clip) and _needs_tool(clip) != &""
 
 
+## The work cue the tool clip `clip` sounds at its bite (&"" = the label's keyword cue).
+func beat_cue(clip: StringName) -> StringName:
+	return tools.beat_cues.get(clip, &"") if syncs_work_cue(clip) else &""
+
+
 ## Puts the tool back on the back at once and shows the rest clip (loading, changing rooms).
 func reset_tool() -> void:
 	phase = ToolPhase.BACK
 	_tool = &""
 	_hold_clip = &""
 	_last_pos = -1.0
+	_update_props()
 	if _player.carry_socket != null:
 		_player.carry_socket.transform = _socket_rest
 	if anim == null:
@@ -118,7 +136,7 @@ func _place_carried(delta: float, carrying: bool) -> void:
 ## Tool kind the clip is held with (all its clips exist), else &"".
 func _needs_tool(clip: StringName) -> StringName:
 	var kind: StringName = tools.held_tools.get(clip, &"")
-	if kind == &"" or not anim.has_animation(clip):
+	if kind == &"" or not anim.has_animation(clip) or not props.has(kind):
 		return &""
 	for clips: Dictionary in [tools.draw_clips, tools.stow_clips]:
 		if not anim.has_animation(clips.get(kind, &"")):
@@ -213,6 +231,37 @@ func _hold_events() -> void:
 			audio.events.call(&"work_beat")
 	if _passed(last, pos, float(tools.toss_at.get(_hold_clip, -1.0))):
 		throw_clods()
+	if tools.chip_markers.has(_hold_clip) and _passed(last, pos, float(tools.bite_at.get(_hold_clip, -1.0))):
+		throw_chips(_hold_clip)
+
+
+## Which tool shows: the one being drawn once the fist is at the bag, the held one, the one being
+## stowed until it is back in the bag; at rest only the shovel on the back (ToolProps).
+func _update_props() -> void:
+	var state: Array = [&"", false]
+	if phase != ToolPhase.BACK and anim != null:
+		var shown := true
+		if phase == ToolPhase.DRAW:
+			var draw: StringName = tools.draw_clips.get(_tool, &"")
+			shown = _clip_pos(draw) >= float(tools.draw_show_at.get(draw, 0.0))
+		elif phase == ToolPhase.STOW:
+			var stow := _stow_clip()
+			shown = _clip_pos(stow) < float(tools.stow_hide_at.get(stow, 2.0))
+		state = [_tool, shown]
+	if state == _shown:
+		return
+	_shown = state
+	if state[0] == &"":
+		props.rest()
+	else:
+		props.show(state[0], state[1])
+
+
+## Fraction of the one-shot `clip` played (0 while it is not the assigned clip yet).
+func _clip_pos(clip: StringName) -> float:
+	if anim.assigned_animation != clip or anim.current_animation_length <= 0.0:
+		return 0.0
+	return anim.current_animation_position / anim.current_animation_length
 
 
 ## True if the cycle position went from `a` to `b` (wrapping at 1) across `mark`.
@@ -222,6 +271,22 @@ static func _passed(a: float, b: float, mark: float) -> bool:
 	if b >= a:
 		return a < mark and mark <= b
 	return mark > a or mark <= b
+
+
+## A few chips leave the striking point of the tool clip `clip` (wood / stone; one-shot, world space).
+func throw_chips(clip: StringName) -> void:
+	if not _player.is_inside_tree() or tools.chip_amount <= 0:
+		return
+	var p: CPUParticles3D = _chips.get(clip)
+	if p == null:
+		p = _burst("Chips_" + String(clip), tools.chip_amount, tools.chip_lifetime, tools.chip_size, tools.chip_speed,
+				tools.chip_spread_deg, tools.chip_colors.get(clip, Color.GRAY))
+		_chips[clip] = p
+		_player.add_child(p)
+	var at := _player.model.find_child(String(tools.chip_markers[clip]), true, false) as Node3D
+	p.global_position = at.global_position if at != null else _player.global_position + Vector3.UP * 0.6
+	p.direction = (_player.global_basis * Vector3(0.0, 1.0, 0.6)).normalized()
+	p.restart()
 
 
 ## A few painted earth crumbs leave the blade (one-shot burst, world space).
@@ -238,25 +303,31 @@ func throw_clods() -> void:
 
 
 func _make_clods() -> CPUParticles3D:
+	return _burst("EarthClods", tools.clod_amount, tools.clod_lifetime, tools.clod_size, tools.clod_speed,
+			tools.clod_spread_deg, tools.clod_color)
+
+
+func _burst(node_name: String, amount: int, lifetime: float, size: float, speed: float, spread: float,
+		color: Color) -> CPUParticles3D:
 	var p := CPUParticles3D.new()
-	p.name = "EarthClods"
+	p.name = node_name
 	p.top_level = true
 	p.one_shot = true
 	p.emitting = false
-	p.amount = tools.clod_amount
-	p.lifetime = tools.clod_lifetime
+	p.amount = amount
+	p.lifetime = lifetime
 	p.explosiveness = 0.85
-	p.spread = tools.clod_spread_deg
-	p.initial_velocity_min = tools.clod_speed * 0.6
-	p.initial_velocity_max = tools.clod_speed
+	p.spread = spread
+	p.initial_velocity_min = speed * 0.6
+	p.initial_velocity_max = speed
 	p.scale_amount_min = 0.6
 	p.scale_amount_max = 1.2
 	p.angular_velocity_min = -360.0
 	p.angular_velocity_max = 360.0
 	var mesh := BoxMesh.new()
-	mesh.size = Vector3.ONE * tools.clod_size
+	mesh.size = Vector3.ONE * size
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = tools.clod_color
+	mat.albedo_color = color
 	mat.roughness = 1.0
 	mesh.material = mat
 	p.mesh = mesh
