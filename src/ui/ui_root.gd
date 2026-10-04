@@ -24,6 +24,8 @@ const PANEL_INVENTORY := &"inventory"
 const PANEL_OVERVIEW := &"cemetery_overview"
 const PANEL_DAY_SUMMARY := &"day_summary"
 const PANEL_JOURNAL := &"journal"
+const PANEL_MAP := &"map"
+const ACTION_MAP_TOGGLE := &"map_toggle"
 const JOURNAL_GROUP := &"journal"
 const BUILD_MODE_GROUP := &"build_mode"
 const DEBUG_MODAL := &"debug"
@@ -59,6 +61,8 @@ const PANEL_SCRIPTS: Dictionary[StringName, Script] = {
 	&"pult": preload("res://src/ui/panels/pult_panel.gd"),
 	&"collection": preload("res://src/ui/panels/collection_panel.gd"),
 	&"deduction": preload("res://src/ui/panels/deduction_panel.gd"),
+	# G7 Änderungsrunde 1: the map
+	&"map": preload("res://src/ui/panels/map_panel.gd"),
 }
 
 ## Called for "Beenden" (tests replace it).
@@ -161,6 +165,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed(PANEL_JOURNAL):
 		_consume()
 		toggle_journal()
+	elif InputMap.has_action(ACTION_MAP_TOGGLE) and event.is_action_pressed(ACTION_MAP_TOGGLE):
+		_consume()
+		toggle_map()
 	elif top() == DialogueBox.MODAL_ID and dialogue_box.handle_choice_input(event):
 		_consume()
 	elif not _stack.is_empty() and event.is_action_pressed(&"interact"):
@@ -246,6 +253,22 @@ func open_journal(page: StringName = &"people") -> void:
 	if journal == null or not journal.has_method(&"panel_context"):
 		return
 	open_panel(PANEL_JOURNAL, journal.call(&"panel_context", page))
+
+
+## M: opens the map when nothing is open (not in build mode), closes it when on top.
+func toggle_map() -> void:
+	if top() == PANEL_MAP:
+		close_panel(PANEL_MAP)
+	elif _stack.is_empty() and not _build_mode_active():
+		open_map()
+
+
+## Opens the map with a fresh snapshot (MapState.context) – on the sheet of `region` if given.
+func open_map(region: StringName = &"") -> void:
+	var ctx := MapState.context(get_tree() if is_inside_tree() else null, MapPanel.map_config())
+	if region != &"":
+		ctx["region_override"] = region
+	open_panel(PANEL_MAP, ctx)
 
 
 func _build_mode_active() -> bool:
@@ -372,6 +395,10 @@ func _on_panel_action(action: StringName) -> void:
 			quit_handler.call()
 		PANEL_OVERVIEW:
 			open_overview()
+		PANEL_MAP:
+			# From the pause menu: the map replaces it (the tree pause ends, the modal pause holds).
+			close_panel(PANEL_PAUSE)
+			open_map()
 
 
 func _on_dialogue_requested(dialogue_id: StringName, speaker: Node) -> void:
