@@ -119,6 +119,9 @@ func _run() -> void:
 	await _shot("insight_deathbook", _insight_shot)
 	await _shot("register", _register_shot)
 	await _shot("day_summary", _day_summary_shot)
+	await _shot("specimen_return", _return_shot)
+	await _shot("ghost_returned", _ghost_returned_shot)
+	await _shot("ghost_organ", _ghost_organ_shot)
 	await _shot("chapter_name_in_village", _chapter_shot)
 	for slot: int in [0, 1]:
 		SaveManager.delete_save(slot)
@@ -468,7 +471,7 @@ func _remark_shot() -> void:
 	await _in_village(Vector2(3.2, 0.4), deg_to_rad(-140.0))
 	var rosine := _ui.remark_bubbles.find_npc(&"innkeeper")
 	if rosine != null:
-		_frame(rosine.global_position.lerp(_player.global_position, 0.5), 10.0)
+		_frame(rosine.global_position.lerp(_player.global_position, 0.2) + Vector3(0.0, 0.0, -0.6), 10.0)
 	await get_tree().process_frame
 	EventBus.villager_remarked.emit(&"innkeeper", "Wackernagel hat für dich einen Stuhl am Ofen frei. Den kriegt sonst nur der Pfarrer.")
 	_ui.remark_bubbles.set(&"_left", 600.0)  # held for the capture (lavapipe settles slower than 4 s)
@@ -681,7 +684,10 @@ func _register_shot() -> void:
 	_anatomy()
 	_at_gate()
 	var entries: Array = Desk.register_entries(_graveyard, _corpses)
-	var ctx := {"entries": entries, "total": _graveyard.total_quality(), "rating": _graveyard.rating()}
+	# As Desk.register_context: total / rating from CemeteryScore (graves + decor − dirt), like the HUD.
+	var score := get_tree().get_first_node_in_group(&"cemetery_score") as CemeteryScore
+	var ctx := {"entries": entries, "total": score.total() if score != null else _graveyard.total_quality(),
+			"rating": score.rating() if score != null else _graveyard.rating()}
 	if not entries.is_empty():
 		(entries[0] as Dictionary)["specimens"] = {"taken": 2, "returned": 1}
 		(entries[1] as Dictionary)["deduced"] = true
@@ -706,8 +712,114 @@ func _day_summary_shot() -> void:
 	await get_tree().process_frame
 
 
+# --- p7_24 / p7_25: specimens back in the grave, the ghosts (W3) ---------------------------------
+
+const RETURN_PLOT := "plot_05"
+const ORGAN_PLOT := "l_02"
+
+
+## A dead buried with a piece of it in the pack (harvested through Specimens, marked); the uid.
+func _bury_robbed(plot_id: String, name: String, age: int, cause: StringName, organ: StringName) -> String:
+	var plot := _world.get_node_by_layout_id(plot_id) as Node3D
+	var rec := CorpseRecord.new()
+	rec.display_name = name
+	rec.age = age
+	rec.cause_id = cause
+	var spawned := _corpses.spawn_corpse(rec, plot.global_transform, &"ground")
+	spawned.examined = true
+	spawned.exam_done.assign(CorpseRecord.STEPS)
+	if spawned.needs_valuables_decision():
+		spawned.valuables_decision = CorpseRecord.DECISION_LEFT
+	spawned.washed = true
+	spawned.freshness = 0.9
+	var uid := _piece(spawned, organ, SpecimenRecord.CONTAINER_JAR)
+	# CorpseCare.harvest_organ notes the taken organ on the record; Specimens.harvest only makes the piece.
+	if uid != "" and not spawned.harvested.has(organ):
+		spawned.harvested.append(organ)
+	spawned.shrouded = true
+	spawned.dress = CorpseRecord.DRESS_SHROUD
+	if _graveyard.get_grave(plot_id).state == GraveRecord.State.EMPTY:
+		_graveyard.dig(plot_id)
+	_graveyard.bury(plot_id, spawned.id)
+	var purse := Inventory.new()
+	purse.add_item(&"wooden_cross", 1)
+	_graveyard.place_marker(plot_id, &"wooden_cross", purse)
+	purse.free()
+	return uid
+
+
+## p7_24 (1): „Präparat beisetzen" at the grave – the bar running, the line under it.
+func _return_shot() -> void:
+	_anatomy()
+	_organ_pack()
+	_at_gate()
+	TimeManager.set_time(TimeManager.day, 900)
+	if _graveyard.get_grave(RETURN_PLOT).state != GraveRecord.State.EMPTY:
+		return
+	var uid := _bury_robbed(RETURN_PLOT, "Agnes Wolter", 66, &"fever", &"heart")
+	var plot := _world.get_node_by_layout_id(RETURN_PLOT) as GravePlot
+	_place_player(plot.global_position + Vector3(0.0, 0.0, 1.5), PI)
+	_frame(plot.global_position, 9.0)
+	_ui.notifications.clear()
+	_ui.reward_card.visible = false
+	await get_tree().process_frame
+	if uid == "" or not plot.get_interaction_prompt(_player).begins_with("[E] Präparat beisetzen"):
+		push_warning("[UiShotsP7] specimen_return: no return prompt (%s)" % plot.get_interaction_prompt(_player))
+	_player.instant_actions = false
+	plot.interact(_player)
+	await _hold_action(1.4)
+
+
+## p7_24 (2): the next night the ghost of that grave speaks its by_returned line.
+func _ghost_returned_shot() -> void:
+	await _ghost_night([RETURN_PLOT], 8.0)
+
+
+## p7_25: a ghost missing its organ (by_organ) over a Lindenacker grave.
+func _ghost_organ_shot() -> void:
+	_anatomy()
+	_at_gate()
+	GameState.set_flag(&"linden_consecrated", true)
+	var expansion := get_tree().get_first_node_in_group(&"expansion") as ExpansionManager
+	if expansion != null and not expansion.is_unlocked(&"linden"):
+		expansion.unlock(&"linden")
+	_organ_pack()
+	if _graveyard.get_grave(ORGAN_PLOT) != null and _graveyard.get_grave(ORGAN_PLOT).state == GraveRecord.State.EMPTY:
+		var uid := _bury_robbed(ORGAN_PLOT, "Gerlinde Hamm", 54, &"fever", &"liver")
+		_player.inventory.remove_uid(uid)
+	await _ghost_night([ORGAN_PLOT], 9.0)
+
+
+## The next ghost night: the ghosts of `plots` walk and speak (listen() as [E] does).
+func _ghost_night(plots: Array, distance: float) -> void:
+	_unframe()
+	TimeManager.set_time(TimeManager.day + 1, 1335)
+	var ghosts := _world.get_node(^"Systems/Ghosts") as GhostManager
+	var plot := _world.get_node_by_layout_id(plots[0]) as Node3D
+	_place_player(plot.global_position + Vector3(0.6, 0.0, 1.7), PI)
+	for i: int in 5:
+		await get_tree().process_frame
+	ghosts.reselect()
+	ghosts.update_visuals(TimeManager.get_minute_f())
+	var spoke := false
+	for g: Ghost in ghosts.active_ghosts():
+		if g.grave_id in plots:
+			# The bubble stays up for the slow software renderer.
+			g.say(ghosts.listen(g.grave_id, _player), 600.0)
+			spoke = true
+	if not spoke:
+		push_warning("[UiShotsP7] no ghost at %s" % str(plots))
+	_frame(plot.global_position, distance)
+	_ui.notifications.clear()
+	_ui.reward_card.visible = false
+	await get_tree().process_frame
+
+
 func _chapter_shot() -> void:
 	_at_gate()
+	# The ghost shots before leave their bubbles up (600 s for the software renderer).
+	for g: Ghost in (_world.get_node(^"Systems/Ghosts") as GhostManager).active_ghosts():
+		g.bubble.visible = false
 	var context := _village.chapter_context()
 	# The staged world has no bot history; the panel is shown as at the end of arc A (§1.4).
 	context["village_days"] = 12
