@@ -17,6 +17,11 @@ func _init(npc: Npc) -> void:
 	_npc = npc
 
 
+## Forget the cached polylines (a runtime schedule came or went).
+func clear_cache() -> void:
+	_paths.clear()
+
+
 func path(e: ScheduleEntry) -> Dictionary:
 	var key := e.get_instance_id()
 	if _paths.has(key):

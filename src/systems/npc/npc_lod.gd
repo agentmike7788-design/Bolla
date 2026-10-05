@@ -7,17 +7,31 @@ extends Node
 ## of the active region closer than remark_distance to the gravekeeper is reported to
 ## Relationships.remark (once per person and day – Relationships has the last word). Not saved: the
 ## levels follow from the positions.
+## Phase 8 (docs/PHASE8_DESIGN.md §3.4, §9, P1): on the graveyard at most max_visible_graveyard figures are
+## drawn (max_visible_fest on the night of the lights), ranked by distance – the rest is culled (not drawn,
+## level 2); max_full stays. Standing figures (idle / kneel / mourn) on the graveyard rest from
+## stand_rest_distance (26 m) instead of lod_rest_distance (§9 is the graveyard budget; the village keeps
+## Phase 7); on the night of the lights level 1 evaluates at fest_reduced_interval
+## (3 Hz).
 
 const GROUP := &"npc_lod"
 const RELATIONSHIPS_GROUP := &"relationships"
+const FESTIVALS_GROUP := &"festivals"
+const FEST_LIGHTS := &"fest_lights"
+const GRAVEYARD := &"graveyard"
+## Animation prefixes of a standing figure (§3.4: idle / kneel / mourn).
+const STANDING_PREFIXES: PackedStringArray = ["idle", "kneel", "mourn"]
 
 ## null = data/config/npc_config.tres (resolved lazily).
 var config: NpcConfig
 ## Tests: the focus point instead of the camera rig's target / the player.
 var focus_override: Variant = null
+## Tests: the running festival instead of Festivals.running() (null = ask the system).
+var fest_override: Variant = null
 
 var _levels: Dictionary = {}  # Npc instance id -> level
 var _elapsed: float = 0.0
+var _visible: int = 0
 ## npc_id -> TimeManager.day of the last remark call.
 var _remark_day: Dictionary = {}
 
@@ -44,38 +58,85 @@ func update_now() -> void:
 	var player := tree.get_first_node_in_group(&"player") as Node3D
 	var ranked: Array = []  # [distance, npc]
 	var levels := {}
+	var lights := lights_night()
+	var interval := cfg.fest_reduced_interval if lights else 0.0
 	for node: Node in tree.get_nodes_in_group(Npc.GROUP):
 		var npc := node as Npc
 		if npc == null or not npc.is_inside_tree():
 			continue
 		if npc.npc_config == null:
 			npc.npc_config = cfg
+		npc.set_lod_interval(interval)
 		if npc.region_id != region or not npc.is_present():
 			levels[npc.get_instance_id()] = 2
 			npc.set_lod(2)
+			npc.set_culled(false)
 			continue
 		ranked.append([_flat_distance(npc.global_position, focus), npc])
 		if player != null and _flat_distance(npc.global_position, player.global_position) < cfg.remark_distance:
 			_remark(npc)
 	ranked.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
 	var full := 0
+	var cap := visible_cap(region)
+	var shown := 0
 	for pair: Array in ranked:
 		var dist: float = pair[0]
 		var npc: Npc = pair[1]
 		var level := 2
-		if dist <= cfg.lod_full_distance and full < cfg.max_full:
-			level = 0
-			full += 1
-		elif dist <= cfg.lod_rest_distance:
-			level = 1
+		var culled := cap >= 0 and shown >= cap
+		if not culled:
+			shown += 1
+			var rest := cfg.stand_rest_distance if region == GRAVEYARD and is_standing(npc) else cfg.lod_rest_distance
+			if dist <= cfg.lod_full_distance and full < cfg.max_full:
+				level = 0
+				full += 1
+			elif dist <= rest:
+				level = 1
 		levels[npc.get_instance_id()] = level
 		npc.set_lod(level)
+		npc.set_culled(culled)
 	_levels = levels
+	_visible = shown
 
 
 ## 0 full · 1 reduced · 2 resting (0 for an Npc the last update did not see).
 func lod_of(npc: Npc) -> int:
 	return int(_levels.get(npc.get_instance_id(), 0)) if npc != null else 0
+
+
+## Drawn figures of the active region at the last update (Phase 8 cap).
+func visible_count() -> int:
+	return _visible
+
+
+## Visible cap of `region_id`: graveyard max_visible_graveyard (max_visible_fest on the night of the
+## lights); -1 = none (village, interiors: Phase 7 budget).
+func visible_cap(region_id: StringName) -> int:
+	if region_id != GRAVEYARD:
+		return -1
+	var cfg := _config()
+	return cfg.max_visible_fest if lights_night() else cfg.max_visible_graveyard
+
+
+## The night of the lights is running (Festivals.running() == fest_lights).
+func lights_night() -> bool:
+	if fest_override != null:
+		return StringName(str(fest_override)) == FEST_LIGHTS
+	var fest := get_tree().get_first_node_in_group(FESTIVALS_GROUP) if is_inside_tree() else null
+	return fest != null and fest.has_method(&"running") and StringName(str(fest.call(&"running"))) == FEST_LIGHTS
+
+
+## A standing figure (not walking, animation idle* / kneel* / mourn*).
+static func is_standing(npc: Npc) -> bool:
+	if npc == null or npc.is_walking():
+		return false
+	var anim := String(npc.current_animation())
+	if anim == "":
+		anim = String(npc.entry.animation) if npc.entry != null else "idle"
+	for prefix: String in STANDING_PREFIXES:
+		if anim.begins_with(prefix):
+			return true
+	return false
 
 
 ## Npc with level 0 at the last update.

@@ -109,6 +109,14 @@ var npc_config: NpcConfig
 var _lod: int = 0
 var _lod_elapsed: float = 0.0
 var _region_active: bool = true
+## Phase 8: the runtime schedule (set_runtime_schedule; null = data), the current animation, the child
+## meshes with a show_with / hide_with meta ([mesh, show list, hide list, hide_after]), the level-1 interval
+## override (night of the lights) and the visible cap (NpcLod).
+var _runtime: NpcSchedule
+var _current_anim: StringName = &""
+var _props: Array = []
+var lod_interval_override: float = 0.0
+var _culled: bool = false
 
 
 func _init() -> void:
@@ -131,6 +139,7 @@ func _ready() -> void:
 	if _model != null:
 		found = _model.find_children("*", "AnimationPlayer", true, false)
 	_anim = found[0] as AnimationPlayer if not found.is_empty() else null
+	_collect_props()
 	# The cargo lies on the cart's slot_corpse marker (+X = the corpse's long axis).
 	var slot := cart.find_child(CART_SLOT, true, false) as Node3D
 	if slot != null and cargo.get_parent() != slot:
@@ -188,7 +197,13 @@ func interact(player: Player) -> void:
 
 
 func first_name() -> String:
-	var full := _schedule().display_name if _schedule() != null else String(npc_id)
+	var full := _schedule().display_name if _schedule() != null else ""
+	if full == "" and _runtime != null:
+		if schedule == null and npc_id != &"":
+			schedule = Database.schedule(npc_id) as NpcSchedule
+		full = schedule.display_name if schedule != null else ""
+	if full == "":
+		full = String(npc_id)
 	return full.get_slice(" ", 0)
 
 
@@ -253,16 +268,54 @@ func lod() -> int:
 	return _lod
 
 
-## STUB (P1) – Phase 8 (docs/PHASE8_DESIGN.md §3.4): a runtime schedule (ScheduleBuilder – visits, the
-## apprentice, festivals, the robber) replaces the data schedule until clear_runtime_schedule(); not saved
-## (rebuilt from plan + clock). W0: inert.
-func set_runtime_schedule(_s: NpcSchedule) -> void:
-	pass
+## Phase 8 (docs/PHASE8_DESIGN.md §3.4, P1): a runtime schedule (ScheduleBuilder – visits, the apprentice,
+## festivals, the robber) replaces the data schedule until clear_runtime_schedule(); not saved (the owner
+## rebuilds it from its plan + the clock after a load). null = clear_runtime_schedule().
+func set_runtime_schedule(s: NpcSchedule) -> void:
+	if s == null:
+		clear_runtime_schedule()
+		return
+	_runtime = s
+	_after_schedule_change()
 
 
-## STUB (P1) – back to the data schedule. W0: inert.
+## Back to the data schedule (data/npc/<npc_id>; none → hidden).
 func clear_runtime_schedule() -> void:
-	pass
+	if _runtime == null:
+		return
+	_runtime = null
+	_after_schedule_change()
+
+
+## The runtime schedule (null = the data schedule is active).
+func runtime_schedule() -> NpcSchedule:
+	return _runtime
+
+
+## The animation the figure plays (or would play) right now (&"" = hidden / none) – the show_with meshes
+## follow it.
+func current_animation() -> StringName:
+	return _current_anim
+
+
+## Phase 8 (§3.4, §9): NpcLod sets the level-1 evaluation interval on the night of the lights (3 Hz);
+## <= 0 = NpcConfig.reduced_interval.
+func set_lod_interval(seconds: float) -> void:
+	lod_interval_override = seconds
+
+
+## Phase 8 (§9): beyond the visible cap of the region (NpcLod) the figure is not drawn (it keeps its
+## place, prompt and collision from the clock).
+func set_culled(on: bool) -> void:
+	if on == _culled:
+		return
+	_culled = on
+	if _model != null:
+		_model.visible = not on
+
+
+func is_culled() -> bool:
+	return _culled
 
 
 ## Whether the gravekeeper is in this Npc's region (Player.region_id; graveyard without a player).
@@ -302,6 +355,13 @@ func debug_teleport(world_pos: Vector3) -> void:
 func _update(delta: float) -> void:
 	var sched := _schedule()
 	if sched == null or sched.entries.is_empty():
+		# Phase 8 (§3.1): an Npc without a plan (the new graveyard figures before their runtime schedule)
+		# is hidden like one at home.
+		entry = null
+		if is_node_ready():
+			_set_state(false, false, false)
+			_current_anim = &""
+			_apply_props()
 		return
 	var minute_f := TimeManager.get_minute_f()
 	entry = ScheduleResolver.entry_at(sched, int(minute_f), TimeManager.day)
@@ -314,6 +374,8 @@ func _update(delta: float) -> void:
 		# W-Welt (Phase 7): an entry of the other region (Osric's village day, the priest's
 		# consecration walk) names waypoints this Npc's world does not have – hidden, no path.
 		_set_state(false, false, false)
+		_current_anim = &""
+		_apply_props()
 		return
 	var path := _pose.path(entry)
 	var sample := _pose.sample(path, progress)
@@ -366,10 +428,10 @@ func _set_state(present: bool, talkable: bool, with_cart: bool) -> void:
 
 
 func _update_animation() -> void:
-	if _anim == null or not _present:
-		return
-	if _lod >= 2 or not _region_active:
-		_pause_animation()
+	if not _present or entry == null:
+		if _current_anim != &"":
+			_current_anim = &""
+			_apply_props()
 		return
 	# Held by debug_teleport in the middle of a walk: he waits (idle) instead of walking on the spot.
 	var wanted := entry.animation if _held_entry == null or entry.travel_minutes == 0 else ANIM_IDLE
@@ -377,6 +439,14 @@ func _update_animation() -> void:
 	if is_walking():
 		wanted = ANIM_PUSH if entry.with_cart else ANIM_WALK
 		designed = push_anim_speed if entry.with_cart else walk_anim_speed
+	if wanted != _current_anim or not _props.is_empty():
+		_current_anim = wanted
+		_apply_props()
+	if _anim == null:
+		return
+	if _lod >= 2 or not _region_active:
+		_pause_animation()
+		return
 	if not _anim.has_animation(wanted):
 		wanted = ANIM_IDLE
 	if not _anim.has_animation(wanted):
@@ -409,7 +479,76 @@ func _lod_interval() -> float:
 		npc_config = Database.config(&"npc_config") as NpcConfig
 		if npc_config == null:
 			npc_config = NpcConfig.new()
-	return npc_config.reduced_interval
+	return lod_interval_override if lod_interval_override > 0.0 else npc_config.reduced_interval
+
+
+## Phase 8 (§3.4, „Muster ToolProps"): child meshes of the model with the meta show_with (animation names –
+## Array, PackedStringArray or "a,b") are shown only while the figure plays one of them; hide_with hides
+## them in those; hide_after (an animation name) hides them for good once the schedule has passed the entry
+## with that animation (the bouquet after lay_flowers). No nodes are created at runtime.
+func _collect_props() -> void:
+	_props.clear()
+	if _model == null:
+		return
+	var stack: Array[Node] = [_model]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		for c: Node in n.get_children():
+			stack.append(c)
+		var node3d := n as Node3D
+		if node3d == null or node3d == _model:
+			continue
+		if node3d.has_meta(&"show_with") or node3d.has_meta(&"hide_with"):
+			_props.append([node3d, _names(node3d.get_meta(&"show_with", "")), _names(node3d.get_meta(&"hide_with", "")),
+					StringName(str(node3d.get_meta(&"hide_after", "")))])
+
+
+## Visibility of the show_with meshes for the current animation (and the schedule position).
+func _apply_props() -> void:
+	for p: Array in _props:
+		var node: Node3D = p[0]
+		if not is_instance_valid(node):
+			continue
+		var show_list: Array[StringName] = p[1]
+		var hide_list: Array[StringName] = p[2]
+		var shown := _current_anim != &"" and (show_list.is_empty() or _current_anim in show_list)
+		if _current_anim in hide_list:
+			shown = false
+		var after: StringName = p[3]
+		if shown and after != &"" and _passed_animation(after):
+			shown = false
+		node.visible = shown
+
+
+## The schedule has an entry with `anim` that started before the current entry (sorted by start).
+func _passed_animation(anim: StringName) -> bool:
+	var sched := _schedule()
+	if sched == null or entry == null:
+		return false
+	for e: ScheduleEntry in sched.entries:
+		if e != null and e != entry and e.animation == anim and e.start_minute < entry.start_minute:
+			return true
+	return false
+
+
+## True if the show_with mesh `mesh_name` is visible (tests, screenshots).
+func prop_shown(mesh_name: String) -> bool:
+	for p: Array in _props:
+		if is_instance_valid(p[0]) and (p[0] as Node3D).name == mesh_name:
+			return (p[0] as Node3D).visible
+	return false
+
+
+static func _names(raw: Variant) -> Array[StringName]:
+	var out: Array[StringName] = []
+	if raw is String or raw is StringName:
+		for part: String in str(raw).split(",", false):
+			if part.strip_edges() != "":
+				out.append(StringName(part.strip_edges()))
+	elif raw is Array or raw is PackedStringArray:
+		for v: Variant in raw:
+			out.append(StringName(str(v)))
+	return out
 
 
 ## Corpse on the cart: on the way in before the delivery minute, or all day after a skipped one
@@ -508,9 +647,27 @@ func _world() -> Node:
 
 
 func _schedule() -> NpcSchedule:
+	if _runtime != null:
+		return _runtime
 	if schedule == null and npc_id != &"":
 		schedule = Database.schedule(npc_id) as NpcSchedule
 	return schedule
+
+
+## A runtime schedule came or went: fresh paths, no debug hold, the cart only for a data schedule with
+## one, placed from the clock at once.
+func _after_schedule_change() -> void:
+	_pose.clear_cache()
+	_held_entry = null
+	_hidden_minute = -1
+	_uses_cart = _runtime == null and _schedule_uses_cart()
+	if not _uses_cart and is_node_ready():
+		cart.visible = false
+		cart_shape.set_deferred(&"disabled", true)
+		cargo.visible = false
+		_with_cart = false
+	if is_node_ready():
+		refresh()
 
 
 static func _flat(v: Vector3) -> Vector3:
