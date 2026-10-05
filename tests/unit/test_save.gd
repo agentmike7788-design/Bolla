@@ -600,3 +600,51 @@ func test_journal_state_survives_the_save_file() -> void:
 	other.load_state(read.state.nodes.journal)
 	assert_eq(other.save_state(), journal.save_state())
 	assert_true(other.has_insight(&"i_warnings"))
+
+
+# --- Phase 8 (P6, docs/PHASE8_DESIGN.md §5.1) --------------------------------------------------
+
+func test_phase8_v7_document_round_trip() -> void:
+	# The §5.1 parts written as the contract shows them: the stats, the record / grave fields and the Phase-8
+	# node states pass the file unchanged (format 7, no migration).
+	GameState.add_stat(&"wishes_done", 3)
+	GameState.note_coins_spent(3, &"apprentice")
+	GameState.set_flag(&"p8_open", true)
+	GameState.set_flag(&"p8_open_day", 53)
+	var record := CorpseRecord.new()
+	record.id = "corpse_0033"
+	record.kin_house = &"house_kehr"
+	var grave := GraveRecord.new()
+	grave.id = "l_02"
+	grave.disturbed = true
+	grave.extra_lines = PackedStringArray(["Ruhe sanft"])
+	var state := {"autoloads": {"TimeManager": TimeManager.save_state(), "GameState": GameState.save_state()},
+			"nodes": {"corpse_manager": {"corpses": [record.to_dict()]}, "graveyard": {"graves": [grave.to_dict()]},
+			"npc_life": {"open_day": 53, "events": {"apprentice_hired": 54}, "listened": {"washer": 56}, "goal_done": false},
+			"visitors": {"plan_day": 57, "plan": [{"visit_id": "v_57_1", "kin_id": "kin_kehr", "graves": ["l_02"], "slot": 570}],
+				"goodwill": {"kin_kehr": 7}, "tips_on_stone": {"l_02": [2, "kin_kehr"]}},
+			"apprentice_box": {"storage": {}, "coins": 9}}}
+	assert_eq(SaveFileIO.ensure_dir(TEST_DIR), OK)
+	assert_eq(SaveFileIO.write_doc(TEST_DIR, 2, SaveFileIO.make_doc(SaveFileIO.make_meta(WORLD), state)), OK)
+	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(TEST_DIR.path_join("slot_2.json")))
+	assert_eq(int(doc.format_version), 7, "§5.1: format_version 7")
+	var read := {}
+	assert_eq(SaveFileIO.read_doc(TEST_DIR, 2, read), OK)
+	assert_eq(read.state, state, "v7 file round trip (no migration of a current file)")
+	var r := CorpseRecord.from_dict(read.state.nodes.corpse_manager.corpses[0])
+	assert_eq(r.kin_house, &"house_kehr")
+	var g := GraveRecord.from_dict(read.state.nodes.graveyard.graves[0])
+	assert_eq([g.disturbed, g.extra_lines], [true, PackedStringArray(["Ruhe sanft"])])
+	GameState.reset()
+	GameState.load_state(read.state.autoloads.GameState)
+	assert_eq([GameState.get_stat(&"wishes_done"), GameState.get_stat(&"coins_spent_apprentice"), GameState.get_flag(&"p8_open_day")],
+			[3, 3, 53])
+
+
+func test_phase8_stats_are_saved_with_every_game() -> void:
+	await _start_world()
+	assert_eq(SaveManager.save_game(3), OK)
+	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(TEST_DIR.path_join("slot_3.json")))
+	var state: Dictionary = JSON.to_native(doc.data)
+	for key: StringName in SaveMigration.V7_NEW_STATS:
+		assert_eq(state.autoloads.GameState.stats.get(key), 0, "§5.1 stat %s" % key)
