@@ -119,7 +119,7 @@ script = ExtResource("1")
 id = &"p8_hill"
 text = "Bin oben beim Meister. Red nicht so laut. Er mochte keinen, der redet."
 choices = Array[ExtResource("2")]([SubResource("p8_p8_hill_c01")])
-conditions = Array[String](["region:graveyard"])
+conditions = Array[String](["p8_open", "region:graveyard"])
 fallback_next = &"start"
 actions = Array[String](["talked:smith"])
 

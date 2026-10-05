@@ -87,7 +87,7 @@ def favor_thanks(npc):
 
 def hill(npc, text):
     """§2.1.4: the greeting when the villager stands on the cemetery (npc_<id>_g uses the same dialogue)."""
-    return N("p8_hill", text, back(), ["region:graveyard"], "start", ["talked:%s" % npc])
+    return N("p8_hill", text, back(), ["p8_open", "region:graveyard"], "start", ["talked:%s" % npc])
 
 
 # --- Osric (carter.tres, carter_village.tres) ---------------------------------------------------------------

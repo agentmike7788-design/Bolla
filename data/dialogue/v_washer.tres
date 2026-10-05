@@ -124,7 +124,7 @@ script = ExtResource("1")
 id = &"p8_hill"
 text = "Ich bin bei meinen. Die Hagedorn und die anderen. Ich hab ihnen einen Faden gebracht. Frag nicht, wofür."
 choices = Array[ExtResource("2")]([SubResource("p8_p8_hill_c01")])
-conditions = Array[String](["region:graveyard"])
+conditions = Array[String](["p8_open", "region:graveyard"])
 fallback_next = &"start"
 actions = Array[String](["talked:washer"])
 

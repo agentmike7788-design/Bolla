@@ -14,19 +14,29 @@ const EVENING := 1140  # 19:00
 ## A new game starts "Unauffällig" (docs/PHASE3_DESIGN.md §2.6); reset() leaves the stat at 0.
 const NEW_GAME_REPUTATION := 25
 
-const CONDITION_GRAMMAR := ("^!?(has_item:[a-z_]+(:\\d+)?|flag:[a-z_0-9]+|stat_gte:[a-z_]+:-?\\d+|stat_lt:[a-z_]+:-?\\d+|time_between:\\d+:\\d+|flag_eq:[a-z_]+:.*|flag_today:[a-z_]+|day_gte:\\d+|day_odd|day_even|piety_tier:(hardhearted|callous|matter_of_fact|considerate|devout)|trader_talks_gte:\\d+|clue_known:c_[a-z_0-9]+|flag_night:[a-z_]+"
+const CONDITION_GRAMMAR := ("^!?(has_item:[a-z_]+(:\\d+)?|flag:[a-z_0-9]+|stat_gte:[a-z_]+:-?\\d+|stat_lt:[a-z_]+:-?\\d+|time_between:\\d+:\\d+|flag_eq:[a-z_]+:.*|flag_today:[a-z_0-9]+|day_gte:\\d+|day_odd|day_even|piety_tier:(hardhearted|callous|matter_of_fact|considerate|devout)|trader_talks_gte:\\d+|clue_known:c_[a-z_0-9]+|flag_night:[a-z_]+"
 		# Phase 7 (P6, docs/PHASE7_DESIGN.md §3.4)
 		+ "|rel_gte:[a-z_]+:\\d+|rel_tier:[a-z_]+:(stranger|acquainted|trusted|friend)|met:[a-z_]+|rep_tier:(disreputable|unremarkable|respected|esteemed|renowned)"
-		+ "|order:[a-z_]+:(none|offered|accepted|completed|failed)|order_offerable:[a-z_]+|order_ready:[a-z_]+|shop_open:[a-z_]+|region:[a-z_]+"
-		+ "|specimens_held_gte:\\d+|specimen_sold_any|alive:[a-z_]+|lecture_tonight|village_open_days_gte:\\d+|flag_days_gte:[a-z_]+:\\d+"
-		+ "|village_can:(round|donate|consecrate)|mourning_today)$")
-const ACTION_GRAMMAR := ("^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_]+|take_item:[a-z_]+:\\d+(:[a-z_]+)?|give_item:[a-z_]+:\\d+|stat_add:[a-z_]+:-?\\d+|notify:.+|open_panel:[a-z_]+|open_trade|add_clue:c_[a-z_0-9]+|trader_tools|trader_talked|set_flag_night:[a-z_]+"
+		+ "|order:[a-z_0-9]+:(none|offered|accepted|completed|failed)|order_offerable:[a-z_0-9]+|order_ready:[a-z_0-9]+|shop_open:[a-z_]+|region:[a-z_]+"
+		+ "|specimens_held_gte:\\d+|specimen_sold_any|alive:[a-z_]+|lecture_tonight|village_open_days_gte:\\d+|flag_days_gte:[a-z_0-9]+:\\d+"
+		+ "|village_can:(round|donate|consecrate)|mourning_today"
+		# Phase 8 (P6, docs/PHASE8_DESIGN.md §3.4 + W0-Notizen 10)
+		+ "|p8_open|open_days_gte:\\d+|mood:[a-z_]+:(plain|cheerful|low|cross)|step_gte:[a-z_]+:\\d+|step_offerable:[a-z_]+"
+		+ "|favor_ready:[a-z_]+|favor_owed:[a-z_]+|apprentice_hired|apprentice_level_gte:([a-z_]+:)?\\d+|apprentice_mistake_today"
+		+ "|wish_offerable|visit_waiting|tip_due|fest_(today|day|running|eve|after):[a-z_]+|alms_gte:\\d+|robber_known"
+		+ "|robber_fate:(none|reported|let_go|caught_watch)|sick_light(:[a-z_]+)?|observed:c_[a-z_0-9]+|underlined:(priest|surgeon|washer)"
+		+ "|insight:i_[a-z_]+)$")
+const ACTION_GRAMMAR := ("^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_0-9]+|take_item:[a-z_]+:\\d+(:[a-z_]+)?|give_item:[a-z_]+:\\d+|stat_add:[a-z_]+:-?\\d+|notify:.+|open_panel:[a-z_]+|open_trade|add_clue:c_[a-z_0-9]+|trader_tools|trader_talked|set_flag_night:[a-z_]+"
 		# Phase 7 (P6)
-		+ "|meet:[a-z_]+|talked:[a-z_]+|open_shop:[a-z_]+|open_gifts:[a-z_]+|order_offer:[a-z_]+|order_accept:[a-z_]+|order_turn_in:[a-z_]+"
-		+ "|buy_round|donate|consecrate_pay|anatomy_case|open_anatomist|open_lecture|lecture_invite|rel_add:[a-z_]+:-?\\d+|set_flag_day:[a-z_]+)$")
+		+ "|meet:[a-z_0-9]+|talked:[a-z_]+|open_shop:[a-z_]+|open_gifts:[a-z_]+|order_offer:[a-z_0-9]+|order_accept:[a-z_0-9]+|order_turn_in:[a-z_0-9]+"
+		+ "|buy_round|donate|consecrate_pay|anatomy_case|open_anatomist|open_lecture|lecture_invite|rel_add:[a-z_]+:-?\\d+|set_flag_day:[a-z_0-9]+"
+		# Phase 8 (P6)
+		+ "|listen:[a-z_]+|step_accept:[a-z_]+|favor_use:[a-z_]+(:[a-z_]+)?|apprentice_hire|apprentice_teach:[a-z_]+|apprentice_praise"
+		+ "|apprentice_scold|wish_offer|wish_accept|tip_hand|alms|dance:[a-z_]+|robber_resolve:(reported|let_go)|task:[a-z_]+"
+		+ "|note_event:[a-z_]+)$")
 ## Negations the data may use (flag-like conditions, docs/PHASE4_DESIGN.md §3.4).
 const NEGATABLE: PackedStringArray = ["!flag:", "!piety_tier:", "!flag_night:", "!trader_talks_gte:", "!clue_known:", "!met:",
-		"!rel_tier:", "!alive:", "!flag_today:"]
+		"!rel_tier:", "!alive:", "!flag_today:", "!flag_days_gte:", "!step_gte:", "!apprentice_level_gte:"]
 
 
 ## Inventory double with limited room: add_item keeps at most `room` items.
@@ -2235,7 +2245,14 @@ func test_carter_p6_intro_comes_after_p5_intro() -> void:
 	_go(r, &"remark_skipped")
 	assert_eq(_id(r), &"p6_intro", "the next conversation")
 	assert_eq(_carter().get_node_by_id(&"p6_intro").fallback_next, &"p7_intro", "Phase 7: p7_intro next")
-	assert_eq(_carter().get_node_by_id(&"p7_intro").fallback_next, &"p4_rumor", "the chain continues as before")
+	# Phase 8 (P6): p7_intro → p8_intro → p8_robber_seen → p8_robber_seen_b → p8_lights → p4_rumor.
+	var next := _carter().get_node_by_id(&"p7_intro").fallback_next
+	var chain: Array[StringName] = []
+	while String(next).begins_with("p8_"):
+		chain.append(next)
+		next = _carter().get_node_by_id(next).fallback_next
+	assert_eq(chain, [&"p8_intro", &"p8_robber_seen", &"p8_robber_seen_b", &"p8_lights"] as Array[StringName], "Phase 8 in between")
+	assert_eq(next, &"p4_rumor", "the chain continues as before")
 
 
 func test_carter_altar_candles_two_coins_each() -> void:
@@ -2623,3 +2640,718 @@ func test_phase7_wiebke_alive_then_gone() -> void:
 	assert_ne(_id(r), &"hagedorn_gate")
 	rel.free()
 	_p7_clear()
+
+
+# --- Phase 8 (P6, docs/PHASE8_DESIGN.md §1.2, §1.6, §2.1–§2.13, §3.4) -----------------------------------
+
+const P8_NEW: PackedStringArray = ["v_apprentice", "beggar", "peddler", "robber", "kin_kehr", "kin_brandt", "kin_ott", "kin_sieber",
+		"lights_lenz"]
+const P8_ALL: PackedStringArray = ["carter", "carter_village", "trader", "v_innkeeper", "v_smith", "v_grocer", "v_priest", "v_mayor",
+		"v_surgeon", "v_washer", "v_oldwoman", "priest_linden", "v_apprentice", "beggar", "peddler", "robber", "kin_kehr", "kin_brandt",
+		"kin_ott", "kin_sieber", "lights_lenz"]
+const P8_VILLAGERS := {"innkeeper": "rosine", "smith": "esch", "grocer": "mangold", "priest": "lenz", "mayor": "fenner",
+		"surgeon": "quast", "washer": "liesel"}
+
+
+class P8Life extends Node:
+	var open := true
+	var moods: Dictionary = {}
+	var calls: Array = []
+
+	func _init() -> void:
+		add_to_group(&"npc_life")
+
+	func is_open() -> bool:
+		return open
+
+	func mood(npc_id: StringName) -> StringName:
+		return moods.get(npc_id, &"plain")
+
+	func listen(npc_id: StringName) -> bool:
+		calls.append(["listen", npc_id])
+		return true
+
+	func note_event(event: StringName, npcs: Array[StringName] = []) -> void:
+		calls.append(["event", event, npcs])
+
+
+class P8Friend extends Node:
+	var steps: Dictionary = {}
+	var offerable: Dictionary = {}
+	var blocked: Dictionary = {}
+	var owed: Dictionary = {}
+	var calls: Array = []
+
+	func _init() -> void:
+		add_to_group(&"friendship")
+
+	func step_done(npc_id: StringName) -> int:
+		return int(steps.get(npc_id, 0))
+
+	func offerable_step(npc_id: StringName) -> int:
+		return int(offerable.get(npc_id, 0))
+
+	func favor_block_reason(npc_id: StringName) -> String:
+		return str(blocked.get(npc_id, ""))
+
+	func accept_step(npc_id: StringName) -> bool:
+		calls.append(["accept", npc_id])
+		return true
+
+	func use_favor(npc_id: StringName, choice: StringName = &"") -> bool:
+		calls.append(["favor", npc_id, choice])
+		return true
+
+	func save_state() -> Dictionary:
+		return {"owed": owed}
+
+
+class P8Apprentice extends Node:
+	var hired := false
+	var levels: Dictionary = {}
+	var state: Dictionary = {}
+	var calls: Array = []
+
+	func _init() -> void:
+		add_to_group(&"apprentice")
+
+	func is_hired() -> bool:
+		return hired
+
+	func level(task_id: StringName) -> int:
+		return int(levels.get(task_id, 0))
+
+	func save_state() -> Dictionary:
+		return state
+
+	func hire() -> void:
+		calls.append(["hire"])
+		hired = true
+
+	func start_teach(task_id: StringName) -> void:
+		calls.append(["teach", task_id])
+
+	func praise() -> bool:
+		calls.append(["praise"])
+		return true
+
+	func scold() -> bool:
+		calls.append(["scold"])
+		return true
+
+
+class P8Visitors extends Node:
+	var visits: Dictionary = {}
+	var good: Dictionary = {}
+	var wishes: Array = []
+	var offer := {}
+	var due := -1
+	var calls: Array = []
+
+	func _init() -> void:
+		add_to_group(&"visitors")
+
+	func visit_of(kin_id: StringName) -> Dictionary:
+		return visits.get(kin_id, {})
+
+	func goodwill(kin_id: StringName) -> int:
+		return int(good.get(kin_id, 5))
+
+	func open_wishes() -> Array[Dictionary]:
+		var out: Array[Dictionary] = []
+		out.assign(wishes)
+		return out
+
+	func offer_wish(visit_id: String) -> Dictionary:
+		calls.append(["offer", visit_id])
+		return offer
+
+	func accept_wish(wish_id: String) -> bool:
+		calls.append(["accept", wish_id])
+		return true
+
+	func hand_tip(visit_id: String, inv: Inventory) -> int:
+		calls.append(["tip", visit_id, inv != null])
+		return 2
+
+
+class P8DueVisitors extends P8Visitors:
+	func tip_due(_visit_id: String) -> int:
+		return due
+
+
+class P8Fest extends Node:
+	var today_id := &""
+	var running_id := &""
+	var days: Dictionary = {}
+	var calls: Array = []
+
+	func _init() -> void:
+		add_to_group(&"festivals")
+
+	func today() -> StringName:
+		return today_id
+
+	func running() -> StringName:
+		return running_id
+
+	func fest_day(fest_id: StringName) -> int:
+		return int(days.get(fest_id, -1))
+
+	func dance(npc_id: StringName) -> bool:
+		calls.append(["dance", npc_id])
+		return true
+
+
+class P8Night extends Node:
+	var alms := 0
+	var fate_id := &""
+	var houses := PackedStringArray()
+	var seen: Array = []
+	var calls: Array = []
+
+	func _init() -> void:
+		add_to_group(&"wanderers")
+		add_to_group(&"night_robber")
+		add_to_group(&"night_paths")
+		add_to_group(&"orders")
+
+	func alms_count() -> int:
+		return alms
+
+	func give_alms(inv: Inventory) -> bool:
+		calls.append(["alms", inv != null])
+		alms += 1
+		return true
+
+	func fate() -> StringName:
+		return fate_id
+
+	func resolve(choice: StringName) -> void:
+		calls.append(["resolve", choice])
+		fate_id = choice
+
+	func sick_houses(_day: int, _minute: int) -> PackedStringArray:
+		return houses
+
+	func observed(clue_id: StringName) -> bool:
+		return seen.has(clue_id)
+
+	func note_meet(npc_id: StringName, place_id: StringName) -> void:
+		calls.append(["meet", npc_id, place_id])
+
+	func note_task(action_id: StringName) -> void:
+		calls.append(["task", action_id])
+
+
+class P8Journal extends Node:
+	var clues: Array = []
+	var insights: Array = []
+
+	func _init() -> void:
+		add_to_group(&"journal")
+
+	func add_clue(id: StringName, _corpse_id: String = "", _silent: bool = false) -> bool:
+		if clues.has(id):
+			return false
+		clues.append(id)
+		GameState.set_flag(StringName("clue_" + String(id)), true)
+		return true
+
+	func has_insight(id: StringName) -> bool:
+		return insights.has(id)
+
+
+func _p8_reachable(d: DialogueData) -> Dictionary:
+	var seen := {}
+	var todo: Array[StringName] = [d.start_node]
+	while not todo.is_empty():
+		var id: StringName = todo.pop_back()
+		if id == &"" or seen.has(id):
+			continue
+		seen[id] = true
+		var n := d.get_node_by_id(id)
+		if n == null:
+			continue
+		todo.append(n.fallback_next)
+		for c: DialogueChoice in n.choices:
+			todo.append(c.next)
+	return seen
+
+
+func test_phase8_dialogues_are_well_formed() -> void:
+	var cond_re := RegEx.create_from_string(CONDITION_GRAMMAR)
+	var action_re := RegEx.create_from_string(ACTION_GRAMMAR)
+	for id: String in P8_ALL:
+		var d := _v(id)
+		assert_not_null(d, id)
+		if d == null:
+			continue
+		assert_eq(String(d.id), id)
+		assert_ne(d.speaker_name, "", id + " speaker")
+		var ids := {}
+		for n: DialogueNode in d.nodes:
+			assert_false(ids.has(n.id), "%s: unique %s" % [id, n.id])
+			ids[n.id] = true
+		assert_true(ids.has(d.start_node), id + " start")
+		var reach := _p8_reachable(d)
+		for n: DialogueNode in d.nodes:
+			assert_true(n.text.strip_edges().length() > 0, "%s.%s text" % [id, n.id])
+			assert_false(n.text.contains("TODO") or n.text.contains("<"), "%s.%s placeholder" % [id, n.id])
+			assert_true(n.fallback_next == &"" or ids.has(n.fallback_next), "%s.%s fallback" % [id, n.id])
+			assert_true(reach.has(n.id), "%s.%s reachable" % [id, n.id])
+			var conds: Array[String] = n.conditions.duplicate()
+			var acts: Array[String] = n.actions.duplicate()
+			for c: DialogueChoice in n.choices:
+				assert_true(c.next == &"" or ids.has(c.next), "%s.%s → %s" % [id, n.id, c.next])
+				assert_true(c.text.strip_edges().length() > 0, "%s.%s choice text" % [id, n.id])
+				conds.append_array(c.conditions)
+				acts.append_array(c.actions)
+			for c: String in conds:
+				assert_not_null(cond_re.search(c), "%s: condition '%s'" % [id, c])
+			for a: String in acts:
+				assert_not_null(action_re.search(a), "%s: action '%s'" % [id, a])
+
+
+func test_phase8_every_story_step_and_order_has_its_dialogue() -> void:
+	for npc: String in P8_VILLAGERS:
+		var d := _v("v_" + npc)
+		var story := load("res://tests/fixtures/phase8/friendship/stories/%s.tres" % npc) as FriendStoryData
+		for st: FriendStepData in story.steps:
+			assert_not_null(d.get_node_by_id(st.start_node), "%s: %s" % [npc, st.start_node])
+			assert_not_null(d.get_node_by_id(st.end_node), "%s: %s" % [npc, st.end_node])
+		assert_true(_dialogue_has(d, "step_accept:" + npc) or _dialogue_has_node_action(d, "step_accept:" + npc), npc + " accepts a step")
+		assert_true(_dialogue_has(d, "favor_ready:" + npc), npc + " offers the favour")
+		assert_true(_dialogue_has(d, "mood:%s:low" % npc), npc + ": [Zuhören]")
+		assert_true(_dialogue_has(d, "mood:%s:cross" % npc), npc + ": „Heute nicht“")
+		var favor := load("res://tests/fixtures/phase8/friendship/favors/fav_%s.tres" % npc) as FavorData
+		for oid: StringName in favor.return_orders:
+			assert_true(_dialogue_has(d, "order_offerable:" + String(oid)), "%s offered" % oid)
+			assert_true(_dialogue_has(d, "order_turn_in:" + String(oid)), "%s handed in" % oid)
+	var all_dialogues := {}
+	for id: String in P8_ALL:
+		all_dialogues[id] = _v(id)
+	for f: String in DirAccess.get_files_at("res://tests/fixtures/phase8/orders"):
+		if not f.ends_with(".tres"):
+			continue
+		var o := load("res://tests/fixtures/phase8/orders/" + f) as OrderData
+		if String(o.id).contains("_return_"):
+			continue
+		var who := String(o.recipient if o.recipient != &"" else o.giver)
+		var d: DialogueData = all_dialogues.get("v_" + who, all_dialogues.get(who))
+		assert_not_null(d, "%s: dialogue of %s" % [o.id, who])
+		if o.kind == &"deliver":
+			assert_true(_dialogue_has(d, "order_turn_in:" + String(o.id)), "%s handed to %s" % [o.id, who])
+		elif o.kind == &"meet":
+			var place := String(o.conditions.get("place", ""))
+			assert_true(_dialogue_has(_v("v_" + String(o.giver)), "meet:" + place), "%s: meet:%s" % [o.id, place])
+
+
+func _dialogue_has_node_action(d: DialogueData, entry: String) -> bool:
+	for n: DialogueNode in d.nodes:
+		if entry in n.actions:
+			return true
+	return false
+
+
+func test_phase8_conditions() -> void:
+	var life := P8Life.new()
+	var friend := P8Friend.new()
+	var app := P8Apprentice.new()
+	var vis := P8Visitors.new()
+	var fest := P8Fest.new()
+	var night := P8Night.new()
+	var journal := P8Journal.new()
+	for n: Node in [life, friend, app, vis, fest, night, journal]:
+		tree.root.add_child(n)
+	TimeManager.day = 57
+	TimeManager.minute_of_day = 600
+	GameState.set_flag(&"p8_open_day", 53)
+	assert_true(_check("p8_open"))
+	life.open = false
+	assert_false(_check("p8_open"), "NpcLife decides")
+	assert_false(_check("open_days_gte:2"), "closed → never")
+	life.open = true
+	assert_true(_check("open_days_gte:4"))
+	assert_false(_check("open_days_gte:5"))
+	life.moods[&"washer"] = &"low"
+	assert_true(_check("mood:washer:low"))
+	assert_false(_check("mood:washer:cross"))
+	assert_true(_check("mood:smith:plain"), "default plain")
+	assert_false(_check("mood:smith:grumpy"), "unknown mood → invalid")
+	friend.steps[&"innkeeper"] = 2
+	friend.offerable[&"innkeeper"] = 3
+	assert_true(_check("step_gte:innkeeper:2"))
+	assert_false(_check("step_gte:innkeeper:3"))
+	assert_true(_check("step_offerable:innkeeper"))
+	assert_false(_check("step_offerable:smith"))
+	friend.blocked[&"smith"] = "Noch nicht."
+	assert_false(_check("favor_ready:smith"))
+	assert_true(_check("favor_ready:grocer"))
+	friend.owed["smith"] = "of_esch_return_1"
+	assert_true(_check("favor_owed:smith"))
+	assert_false(_check("favor_owed:grocer"))
+	assert_false(_check("apprentice_hired"))
+	app.hired = true
+	assert_true(_check("apprentice_hired"))
+	app.levels[&"rake"] = 2
+	assert_true(_check("apprentice_level_gte:rake:2"))
+	assert_false(_check("apprentice_level_gte:weed:1"))
+	assert_true(_check("apprentice_level_gte:2"), "any task (FriendStepData)")
+	assert_false(_check("apprentice_mistake_today"))
+	app.state = {"plan_day": 57, "mistakes_today": 1}
+	assert_true(_check("apprentice_mistake_today"))
+	app.state = {"plan_day": 56, "mistakes_today": 1}
+	assert_false(_check("apprentice_mistake_today"), "yesterday's plan")
+	var kin := {"kin_id": &"kin_kehr"}
+	assert_false(_check("wish_offerable", kin), "no visit today")
+	vis.visits[&"kin_kehr"] = {"visit_id": "v_57_1", "kin_id": "kin_kehr", "graves": ["l_02"], "slot": 570, "phase": "waiting"}
+	assert_true(_check("wish_offerable", kin))
+	assert_true(_check("visit_waiting", kin))
+	vis.wishes = [{"wish_id": "w_1", "grave_id": "l_02", "kin_id": "kin_kehr", "state": "accepted"}]
+	assert_false(_check("wish_offerable", kin), "one open wish per grave")
+	vis.wishes = [{"grave_id": "l_05", "state": "accepted"}, {"grave_id": "l_06", "state": "accepted"}, {"grave_id": "l_07", "state": "offered"}]
+	assert_false(_check("wish_offerable", kin), "three open")
+	vis.wishes = [{"grave_id": "l_05", "state": "done"}]
+	vis.good[&"kin_kehr"] = 1
+	assert_false(_check("wish_offerable", kin), "goodwill < 2")
+	vis.good[&"kin_kehr"] = 2
+	assert_true(_check("wish_offerable", kin))
+	(vis.visits[&"kin_kehr"] as Dictionary)["phase"] = "mourning"
+	assert_false(_check("visit_waiting", kin))
+	assert_false(_check("tip_due", kin))
+	(vis.visits[&"kin_kehr"] as Dictionary)["tip"] = 2
+	assert_true(_check("tip_due", kin), "the plan entry's tip")
+	fest.today_id = &"fest_lights"
+	fest.running_id = &"fest_lights"
+	fest.days = {&"fest_lights": 58, &"fest_kathrein": 54}
+	assert_true(_check("fest_today:lights") and _check("fest_today:fest_lights") and _check("fest_day:lights"))
+	assert_true(_check("fest_running:lights"))
+	assert_false(_check("fest_running:kathrein"))
+	assert_true(_check("fest_eve:lights"), "57 = 58 − 1")
+	assert_false(_check("fest_after:lights"))
+	TimeManager.day = 59
+	assert_true(_check("fest_after:lights"))
+	assert_false(_check("fest_after:kathrein"))
+	night.alms = 3
+	assert_true(_check("alms_gte:3"))
+	assert_false(_check("alms_gte:4"))
+	assert_false(_check("robber_known"))
+	GameState.set_flag(&"robber_known", true)
+	assert_true(_check("robber_known"))
+	assert_true(_check("robber_fate:none"))
+	night.fate_id = &"let_go"
+	assert_true(_check("robber_fate:let_go"))
+	assert_false(_check("robber_fate:reported"))
+	assert_false(_check("robber_fate:hanged"), "unknown fate → invalid")
+	assert_false(_check("sick_light"))
+	night.houses = PackedStringArray(["house_ott"])
+	assert_true(_check("sick_light") and _check("sick_light:house_ott"))
+	assert_false(_check("sick_light:house_kehr"))
+	night.seen = [&"c_n_quast_visit"]
+	assert_true(_check("observed:c_n_quast_visit"))
+	assert_false(_check("observed:c_n_lenz_visit"))
+	assert_true(_check("underlined:washer"), "§14.1")
+	assert_false(_check("underlined:priest"))
+	assert_false(_check("underlined:osric"), "invalid")
+	assert_false(_check("insight:i_underlined"))
+	journal.insights = [&"i_underlined"]
+	assert_true(_check("insight:i_underlined"))
+	expect_errors(0)
+
+
+func test_phase8_conditions_without_systems() -> void:
+	# A Phase-7 world (no Phase-8 nodes): everything false, nothing breaks; p8_open falls back to the flag.
+	assert_false(_check("p8_open"))
+	GameState.set_flag(&"p8_open", true)
+	assert_true(_check("p8_open"))
+	for c: String in ["step_gte:innkeeper:1", "step_offerable:innkeeper", "favor_ready:smith", "favor_owed:smith", "apprentice_hired",
+			"apprentice_mistake_today", "wish_offerable", "visit_waiting", "tip_due", "fest_today:lights", "fest_eve:lights",
+			"alms_gte:1", "robber_fate:let_go", "sick_light", "observed:c_n_veit", "insight:i_underlined"]:
+		assert_false(_check(c), c)
+	assert_true(_check("mood:priest:plain"), "no NpcLife → plain")
+	assert_true(_check("robber_fate:none"))
+	GameState.set_flag(&"apprentice_hired", true)
+	assert_true(_check("apprentice_hired"), "flag fallback")
+	GameState.set_flag(&"clue_c_n_veit", true)
+	assert_true(_check("observed:c_n_veit"), "the journal flag counts")
+
+
+func test_phase8_actions() -> void:
+	var life := P8Life.new()
+	var friend := P8Friend.new()
+	var app := P8Apprentice.new()
+	var vis := P8Visitors.new()
+	var fest := P8Fest.new()
+	var night := P8Night.new()
+	for n: Node in [life, friend, app, vis, fest, night]:
+		tree.root.add_child(n)
+	var inv := _inv({&"coin": 5})
+	var speaker := SpeakerDouble.new()
+	speaker.npc_id = &"smith"
+	tree.root.add_child(speaker)
+	var ctx := {"inventory": inv, "speaker": speaker}
+	_apply("listen:washer", ctx)
+	_apply("note_event:lights_all", ctx)
+	assert_eq(life.calls, [["listen", &"washer"], ["event", &"lights_all", [] as Array[StringName]]])
+	_apply("step_accept:innkeeper", ctx)
+	_apply("favor_use:smith:steel_rod", ctx)
+	_apply("favor_use:grocer", ctx)
+	assert_eq(friend.calls, [["accept", &"innkeeper"], ["favor", &"smith", &"steel_rod"], ["favor", &"grocer", &""]])
+	_apply("apprentice_hire", ctx)
+	_apply("apprentice_teach:weed", ctx)
+	_apply("apprentice_praise", ctx)
+	_apply("apprentice_scold", ctx)
+	assert_eq(app.calls, [["hire"], ["teach", &"weed"], ["praise"], ["scold"]])
+	_apply("dance:grocer", ctx)
+	assert_eq(fest.calls, [["dance", &"grocer"]])
+	_apply("alms", ctx)
+	_apply("robber_resolve:let_go", ctx)
+	_apply("meet:v_linden", ctx)
+	_apply("task:lights_names", ctx)
+	assert_eq(night.calls, [["alms", true], ["resolve", &"let_go"], ["meet", &"smith", &"v_linden"], ["task", &"lights_names"]])
+	var rel := _p7_world()
+	_apply("meet:smith", ctx)
+	assert_eq(rel.calls, [["meet", &"smith"]], "meet:<villager> stays Phase 7")
+	# Wishes and tips of the speaker's visit.
+	var panels: Array = []
+	var on_panel := func(panel: StringName, c: Dictionary) -> void: panels.append([panel, c.get("offer"), c.get("kin_id")])
+	EventBus.ui_panel_requested.connect(on_panel)
+	var kctx := {"inventory": inv, "speaker": null, "kin_id": &"kin_kehr"}
+	_apply("wish_offer", kctx)
+	assert_eq(vis.calls, [], "no visit – nothing offered")
+	vis.visits[&"kin_kehr"] = {"visit_id": "v_57_1", "kin_id": "kin_kehr", "graves": ["l_02"]}
+	_apply("wish_offer", kctx)
+	assert_eq(panels, [], "an empty offer opens no card")
+	vis.offer = {"wish_id": "w_0003", "kind": "flowers", "grave_id": "l_02", "text": "Ein paar Blumen."}
+	_apply("wish_offer", kctx)
+	assert_eq(panels, [[&"wish_card", vis.offer, &"kin_kehr"]], "the wish card")
+	assert_eq(kctx.get("wish_offer"), vis.offer, "kept in the context")
+	_apply("wish_accept", kctx)
+	_apply("tip_hand", kctx)
+	assert_eq(vis.calls, [["offer", "v_57_1"], ["offer", "v_57_1"], ["accept", "w_0003"], ["tip", "v_57_1", true]])
+	vis.calls.clear()
+	vis.wishes = [{"wish_id": "w_0009", "kin_id": "kin_kehr", "state": "offered"}]
+	_apply("wish_accept", {"inventory": inv, "speaker": null, "kin_id": &"kin_kehr"})
+	assert_eq(vis.calls, [["accept", "w_0009"]], "without the context: the speaker's offered wish")
+	EventBus.ui_panel_requested.disconnect(on_panel)
+	expect_errors(0)
+
+
+func test_phase8_tip_due_asks_visitors_first() -> void:
+	var vis := P8DueVisitors.new()
+	tree.root.add_child(vis)
+	vis.visits[&"kin_ott"] = {"visit_id": "v_60_2", "tip": 3}
+	vis.due = 0
+	assert_false(_check("tip_due", {"kin_id": &"kin_ott"}), "Visitors.tip_due wins over the plan entry")
+	vis.due = 2
+	assert_true(_check("tip_due", {"kin_id": &"kin_ott"}))
+
+
+func _p8_carter_ready() -> void:
+	_carter_p4_ready()
+	for f: StringName in [&"workshop_open", &"buildings_open", &"p5_intro", &"p6_intro", &"village_open", &"p7_intro"]:
+		GameState.set_flag(f, true)
+
+
+func test_phase8_osric_intro_once_after_p8_open() -> void:
+	_p8_carter_ready()
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_ne(_id(r), &"p8_intro", "Phase 8 not open yet")
+	GameState.set_flag(&"p8_open", true)
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p8_intro")
+	assert_true(r.current_text().begins_with("Unten reden sie über dich, Totengräber.") and r.current_text().ends_with("Ich fahr nur."),
+			"§1.2 leading text")
+	_go(r, &"p8_who")
+	assert_true(r.current_text().contains("Heide"), "first: the visitors")
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_ne(_id(r), &"p8_intro", "once")
+	var texts: Array = []
+	for i: int in 4:
+		r = DialogueRunner.new()
+		r.start(_carter(), _ctx(_inv()))
+		r._enter(&"p8_who")
+		texts.append(_id(r))
+	assert_eq(texts, [&"p8_who_2", &"p8_who_3", &"p8_who", &"p8_who_2"], "wechselnd: Besucher, Veit, Hanne")
+
+
+func test_phase8_osric_robber_line_sets_robber_known() -> void:
+	_p8_carter_ready()
+	GameState.set_flag(&"p8_open", true)
+	GameState.set_flag(&"p8_intro", true)
+	GameState.stats[&"robber_encounters"] = 1
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p8_robber_seen")
+	assert_true(r.current_text().contains("Ich halte nie an."), "§2.12")
+	assert_true(GameState.flag_on(&"robber_known"))
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_ne(_id(r), &"p8_robber_seen", "once")
+
+
+func test_phase8_fenner_grants_the_third_row_once() -> void:
+	var rel := _p7_world({&"mayor": 45}, [&"mayor"])
+	var r := DialogueRunner.new()
+	r.start(_v("v_mayor"), _ctx(_inv()))
+	assert_ne(_id(r), &"p8_row3", "before p8_open")
+	GameState.set_flag(&"p8_open", true)
+	r.start(_v("v_mayor"), _ctx(_inv()))
+	assert_eq(_id(r), &"p8_row3")
+	assert_true(GameState.flag_on(&"linden_row3_granted"))
+	assert_true(notes.any(func(n: Array) -> bool: return n[0] == "Die Gemeinde gibt dir die dritte Reihe am Lindenacker."), "§2.8 note")
+	r.start(_v("v_mayor"), _ctx(_inv()))
+	assert_ne(_id(r), &"p8_row3", "once")
+	rel.free()
+
+
+func test_phase8_rosine_hires_jakob_with_step_one() -> void:
+	var rel := _p7_world({&"innkeeper": 45}, [&"innkeeper"])
+	var friend := P8Friend.new()
+	var app := P8Apprentice.new()
+	var life := P8Life.new()
+	for n: Node in [friend, app, life]:
+		tree.root.add_child(n)
+	friend.offerable[&"innkeeper"] = 1
+	var r := DialogueRunner.new()
+	r.start(_v("v_innkeeper"), _ctx(_inv()))
+	_go(r, &"menu")
+	_go(r, &"story_1")
+	assert_true(r.current_text().contains("Er soll lernen, was die Leute brauchen, auch wenn sie es nicht wollen."), "§2.13 Rosine 1")
+	_go(r, &"story_1_yes")
+	assert_eq(friend.calls, [["accept", &"innkeeper"]])
+	assert_eq(app.calls, [["hire"]], "§2.5.1: hired through Rosine 1")
+	life.moods[&"innkeeper"] = &"cross"
+	friend.offerable[&"innkeeper"] = 0
+	r.start(_v("v_innkeeper"), _ctx(_inv()))
+	_go(r, &"menu")
+	_go(r, &"story_cross")
+	assert_eq(r.current_text(), "Heute nicht, Totengräber. Morgen.", "§2.1.1")
+	rel.free()
+
+
+func test_phase8_veit_tells_of_the_three_after_the_alms() -> void:
+	var night := P8Night.new()
+	var journal := P8Journal.new()
+	tree.root.add_child(night)
+	tree.root.add_child(journal)
+	var r := DialogueRunner.new()
+	TimeManager.minute_of_day = 600
+	r.start(_v("beggar"), _ctx(_inv({&"coin": 3})))
+	assert_eq(_id(r), &"first")
+	assert_true(r.current_text().contains("siebzehn"))
+	_go(r, &"menu")
+	_go(r, &"alms")
+	assert_eq(_id(r), &"alms_plain", "first alms: a nod")
+	assert_eq(night.calls, [["alms", true]])
+	journal.add_clue(&"c_n_veit")  # Wanderers gives it with the third alms (§2.6.1)
+	r.start(_v("beggar"), _ctx(_inv({&"coin": 3})))
+	_go(r, &"menu")
+	assert_false(r.available_choices().any(func(c: DialogueChoice) -> bool: return c.next == &"alms"), "once a day")
+	TimeManager.day += 1
+	r.start(_v("beggar"), _ctx(_inv({&"coin": 3})))
+	_go(r, &"menu")
+	_go(r, &"alms")
+	assert_eq(_id(r), &"alms")
+	assert_true(r.current_text().begins_with("Du gibst, ohne zu fragen, was ich damit mache."), "§2.13")
+	_go(r, &"three")
+	assert_true(r.current_text().contains("Der Pfarrer mit der Laterne, der Doktor mit dem Koffer, die Dorn mit dem Tuch."), "§1.6 item 1")
+	TimeManager.minute_of_day = 1300
+	night.houses = PackedStringArray(["house_ott"])
+	r.start(_v("beggar"), _ctx(_inv()))
+	assert_eq(_id(r), &"night_ott")
+	assert_true(r.current_text().begins_with("Bei den Otts brennt Licht. Seit gestern."), "§2.13 at the well bench")
+
+
+func test_phase8_lambert_two_ways_and_the_clue() -> void:
+	var night := P8Night.new()
+	var journal := P8Journal.new()
+	tree.root.add_child(night)
+	tree.root.add_child(journal)
+	var r := DialogueRunner.new()
+	r.start(_v("robber"), _ctx(_inv()))
+	assert_true(r.current_text().contains("Ich nehm nichts."))
+	_go(r, &"who")
+	assert_eq(journal.clues, [&"c_n_robber"], "Wer zahlt dich? → c_n_robber")
+	assert_true(r.current_text().begins_with("Ein Herr mit einem Koffer."))
+	_go(r, &"reported")
+	assert_eq(night.calls, [["resolve", &"reported"]])
+	r.start(_v("robber"), _ctx(_inv()))
+	_go(r, &"let_go")
+	assert_eq(night.calls, [["resolve", &"reported"], ["resolve", &"let_go"]])
+
+
+func test_phase8_liesel_promise_and_the_quiet_line() -> void:
+	var rel := _p7_world({&"washer": 75}, [&"washer"])
+	var journal := P8Journal.new()
+	tree.root.add_child(journal)
+	var d := _v("v_washer")
+	var r := DialogueRunner.new()
+	r.start(d, _ctx(_inv()))
+	r._enter(&"story_3_meet")
+	assert_true(r.current_text().ends_with("Versprich es."), "§2.13 Liesel 3")
+	_go(r, &"story_3_promise")
+	assert_true(GameState.flag_on(&"promise_liesel_book"))
+	assert_eq(_id(r), &"story_3_promise_plain", "without i_underlined: no extra line")
+	journal.insights = [&"i_underlined"]
+	r.start(d, _ctx(_inv()))
+	r._enter(&"story_3_meet")
+	_go(r, &"story_3_promise")
+	assert_true(r.current_text().begins_with("Sie schlägt die letzte Seite auf und wieder zu, bevor du lesen kannst."), "§2.4 Liesel 3")
+	rel.free()
+
+
+func test_phase8_jakob_is_taught_only_what_he_cannot() -> void:
+	var app := P8Apprentice.new()
+	tree.root.add_child(app)
+	app.hired = true
+	app.levels = {&"rake": 1}
+	GameState.set_flag(&"p8_jakob_met", 50)
+	TimeManager.day = 51
+	var r := DialogueRunner.new()
+	r.start(_v("v_apprentice"), _ctx(_inv()))
+	assert_eq(_id(r), &"early", "„Herr Totengräber“ for three days")
+	_go(r, &"menu")
+	var teach: Array = []
+	for c: DialogueChoice in r.available_choices():
+		for a: String in c.actions:
+			if a.begins_with("apprentice_teach:"):
+				teach.append(a)
+	assert_eq(teach, ["apprentice_teach:weed", "apprentice_teach:water", "apprentice_teach:candle"], "rake is learned")
+	assert_false(r.available_choices().any(func(c: DialogueChoice) -> bool: return c.next == &"scolded"), "no mistake, no scolding")
+	TimeManager.day = 54
+	r.start(_v("v_apprentice"), _ctx(_inv()))
+	assert_eq(_id(r), &"greet", "after three days he forgets the title")
+	_go(r, &"menu")
+	_go(r, &"dead")
+	assert_eq(r.current_text(), "Die Toten fasst du an. Das hat Mutter gesagt. Ich mach das Laub.", "§2.5.6")
+
+
+func test_phase8_kin_offer_a_wish_and_tip() -> void:
+	for id: String in ["kin_kehr", "kin_brandt", "kin_ott", "kin_sieber"]:
+		var d := _v(id)
+		assert_true(_dialogue_has(d, "wish_offerable") and _dialogue_has(d, "wish_offer") and _dialogue_has(d, "tip_due"), id)
+		var accept := false
+		for n: DialogueNode in d.nodes:
+			for c: DialogueChoice in n.choices:
+				if "wish_accept" in c.actions:
+					accept = c.text == "Das mache ich."
+		assert_true(accept, id + ": „Das mache ich.“ (§2.2.5)")
+	assert_true(_v("kin_ott").get_node_by_id(&"first").text.begins_with("War er schwer?"), "§2.13 Gesa Ott")
+	assert_true(_v("kin_sieber").get_node_by_id(&"greet").text.contains("So, Grete. Der Totengräber hat gefegt."), "§2.13 Sieber")
+
+
+func test_phase8_lenz_speech_at_the_lights() -> void:
+	var fest := P8Fest.new()
+	tree.root.add_child(fest)
+	var r := DialogueRunner.new()
+	r.start(_v("lights_lenz"), _ctx(_inv()))
+	assert_eq(_id(r), &"after", "no Lichtgang running")
+	fest.running_id = &"fest_lights"
+	r.start(_v("lights_lenz"), _ctx(_inv()))
+	assert_eq(_id(r), &"speech")
+	assert_true(r.current_text().begins_with("Wir zünden kein Licht für Gott an. Der sieht auch so."), "§2.13 Lenz am Lichtgang")
