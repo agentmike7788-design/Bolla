@@ -13,7 +13,7 @@ extends Resource
 @export var stench_exempt: bool = true
 ## From this crypt level on the exemption holds (04.10.2026: the crypt stands at level 1 from the start;
 ## 1 = the crypt keeps the smell in from day 1, 2 = the early crypt still lets it out as in Phase 4).
-@export var stench_exempt_min_level: int = 1
+@export var stench_exempt_min_level: int = 2
 ## Lifting an old grave (base minutes, the Phase-5 shovel tier factors apply), reinterring, the
 ## parish's fee per reinterment.
 @export var lift_minutes: int = 60

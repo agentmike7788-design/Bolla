@@ -382,6 +382,10 @@ func test_no_stench_from_the_crypt() -> void:
 	manager.put_down(r.id, &"niche", Transform3D.IDENTITY, null, &"crypt", "niche_1")
 	# 48 h later: 24 effective hours × 0.05 – rotten even in the niche.
 	assert_true(CorpseDecay.freshness_at(r, _now() + 48 * 60, 0.05, 0.25) < 0.1)
+	# 05.10.2026 (user decision): the crypt keeps the smell in only from stench_exempt_min_level on.
+	var cfg := manager.crypt_config.duplicate() as CryptConfig
+	cfg.stench_exempt_min_level = manager.crypt_level()
+	manager.crypt_config = cfg
 	manager._check_stench(3, _now() + 48 * 60)
 	assert_eq(rep.calls, [], "the crypt keeps the smell in")
 	manager.put_down(r.id, &"ground", Transform3D.IDENTITY, null, &"")
@@ -392,6 +396,10 @@ func test_no_stench_from_the_crypt() -> void:
 	manager.put_down(r.id, &"niche", Transform3D.IDENTITY, null, &"crypt", "niche_1")
 	manager._check_stench(4, _now() + 72 * 60)
 	assert_eq(rep.calls.filter(func(c: Array) -> bool: return c[1] == &"stench").size(), 2, "stench_exempt false")
+	manager.crypt_config = cfg.duplicate() as CryptConfig
+	manager.crypt_config.stench_exempt_min_level = manager.crypt_level() + 1
+	manager._check_stench(5, _now() + 96 * 60)
+	assert_eq(rep.calls.filter(func(c: Array) -> bool: return c[1] == &"stench").size(), 3, "below stench_exempt_min_level the crypt still stinks")
 
 
 func test_mark_service() -> void:
