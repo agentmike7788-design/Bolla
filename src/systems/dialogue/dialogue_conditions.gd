@@ -25,7 +25,8 @@ extends RefCounted
 ## fest_running:<id> · fest_eve:<id> (the fest is tomorrow) · fest_after:<id> (it was yesterday) – <id> with
 ## or without the prefix fest_ · alms_gte:<n> · robber_known · robber_fate:<none|reported|let_go|caught_watch> ·
 ## sick_light[:<house>] (NightPaths.sick_houses now) · observed:<clue> · underlined:<priest|surgeon|washer>
-## (StoryConfig.underlined) · insight:<id> (the journal has it).
+## (StoryConfig.underlined) · insight:<id> (the journal has it) · ware_ready (Theres' order from Hanne's basket is in
+## her shop, Friendship.ware_ready – P4).
 
 enum _Result { FALSE, TRUE, INVALID }
 
@@ -313,6 +314,12 @@ static func _evaluate(text: String, context: Dictionary) -> _Result:
 			if text.contains(":"):
 				return _Result.INVALID
 			return _bool(StringName(str(visit_of_speaker(context).get("phase", ""))) == &"waiting")
+		"ware_ready":
+			if text.contains(":"):
+				return _Result.INVALID
+			var friendship := DialogueSyntax.system(&"friendship")
+			var ware: Variant = friendship.call(&"ware_ready") if friendship != null and friendship.has_method(&"ware_ready") else {}
+			return _bool(ware is Dictionary and not (ware as Dictionary).is_empty())
 		"tip_due":
 			if text.contains(":"):
 				return _Result.INVALID

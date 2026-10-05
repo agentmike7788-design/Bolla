@@ -106,6 +106,7 @@ script = ExtResource("2")
 text = "[Geschichte] Ich sitz mit dir."
 next = &"story_2_vigil"
 conditions = Array[String](["order:of_liesel_2:accepted", "region:graveyard", "time_between:1290:1439"])
+actions = Array[String](["task:vigil"])
 
 [sub_resource type="Resource" id="p8_menu_menu_17"]
 script = ExtResource("2")

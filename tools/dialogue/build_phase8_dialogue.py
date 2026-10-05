@@ -284,8 +284,11 @@ def grocer():
          ("of_mangold_return_2", "Garn für den Laden", "Vier Strang Garn. Meins ist alle, und die Dorn spinnt nur für Tote.",
           "Gut.", "Vier Strang. Schönes Garn. Fast zu schön zum Verkaufen.")],
         "Einen Tanz? Mit dem Totengräber? Na gut. Aber Sie zählen nicht mit. Ich zähle.",
-        [C("[Auftrag] Hier sind die Namen.", "story_2_turn_in", ["order_ready:of_mangold_2"], ["order_turn_in:of_mangold_2"])],
-        [N("story_2_turn_in", "Neun Namen. Sieben davon im Buch. Zwei haben bar gezahlt. Die zwei hat Mutter nie gemocht.",
+        [C("[Auftrag] Hier sind die Namen.", "story_2_turn_in", ["order_ready:of_mangold_2"], ["order_turn_in:of_mangold_2"]),
+         C("[Gefallen] Ist meine Bestellung da?", "p8_ware", ["ware_ready"], ["take_ware"])],
+        [N("p8_ware", "Da. Aus Hannes Kiepe, zu Hannes Preis. Ich hab nichts draufgeschlagen. Das tut mir mehr weh als Ihnen.",
+           back("Danke, Theres.")),
+         N("story_2_turn_in", "Neun Namen. Sieben davon im Buch. Zwei haben bar gezahlt. Die zwei hat Mutter nie gemocht.",
            back("…"))])
     nodes.insert(0, hill("grocer", "Ich bin bei Mutter. Fünf Minuten, dann muss ich zurück, der Laden ist zu, und ein "
                          "geschlossener Laden kostet."))
@@ -478,7 +481,7 @@ def washer():
          C("[Geschichte] Wiebke", "story_1_alt", ["step_offerable:washer", "!step_gte:washer:1", "!flag:insight_not_lorenz"]),
          C("Über Kaspars Stein", "story_1_done", ["flag:friend_washer_1", "!flag:p8_told_washer_1"], ["set_flag:p8_told_washer_1"]),
          C("[Geschichte] Ich sitz mit dir.", "story_2_vigil", ["order:of_liesel_2:accepted", "region:graveyard",
-                                                                "time_between:1290:1439"]),
+                                                                "time_between:1290:1439"], ["task:vigil"]),
          C("[Geschichte] Ich bin da.", "story_3_meet", ["order:of_liesel_3:accepted", "region:village"], ["meet:v_dorn_door"])],
         [N("story_1", "Er heißt nicht Lorenz. Er heißt Kaspar. Kaspar Dorn. Setz seinen Namen auf den Stein, Totengräber. "
            "Mit Tinte, ordentlich. Dann weiß wenigstens der Stein, wer er war.",

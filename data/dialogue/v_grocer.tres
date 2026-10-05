@@ -102,6 +102,13 @@ next = &"story_2_turn_in"
 conditions = Array[String](["order_ready:of_mangold_2"])
 actions = Array[String](["order_turn_in:of_mangold_2"])
 
+[sub_resource type="Resource" id="p8_menu_menu_16"]
+script = ExtResource("2")
+text = "[Gefallen] Ist meine Bestellung da?"
+next = &"p8_ware"
+conditions = Array[String](["ware_ready"])
+actions = Array[String](["take_ware"])
+
 [sub_resource type="Resource" id="p8_p8_hill_c01"]
 script = ExtResource("2")
 text = "…"
@@ -372,6 +379,17 @@ id = &"dance"
 text = "Einen Tanz? Mit dem Totengräber? Na gut. Aber Sie zählen nicht mit. Ich zähle."
 choices = Array[ExtResource("2")]([SubResource("p8_dance_c01")])
 
+[sub_resource type="Resource" id="p8_p8_ware_c01"]
+script = ExtResource("2")
+text = "Danke, Theres."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_p8_ware"]
+script = ExtResource("1")
+id = &"p8_ware"
+text = "Da. Aus Hannes Kiepe, zu Hannes Preis. Ich hab nichts draufgeschlagen. Das tut mir mehr weh als Ihnen."
+choices = Array[ExtResource("2")]([SubResource("p8_p8_ware_c01")])
+
 [sub_resource type="Resource" id="p8_story_2_turn_in_c01"]
 script = ExtResource("2")
 text = "…"
@@ -501,7 +519,7 @@ next = &"bye"
 script = ExtResource("1")
 id = &"menu"
 text = "Eins, zwei – ja? Ich höre."
-choices = Array[ExtResource("2")]([SubResource("v_grocer_c007"), SubResource("v_grocer_c008"), SubResource("v_grocer_c009"), SubResource("v_grocer_c010"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("p8_menu_menu_04"), SubResource("p8_menu_menu_05"), SubResource("p8_menu_menu_06"), SubResource("p8_menu_menu_07"), SubResource("p8_menu_menu_08"), SubResource("p8_menu_menu_09"), SubResource("p8_menu_menu_10"), SubResource("p8_menu_menu_11"), SubResource("p8_menu_menu_12"), SubResource("p8_menu_menu_13"), SubResource("p8_menu_menu_14"), SubResource("p8_menu_menu_15"), SubResource("v_grocer_c011"), SubResource("v_grocer_c012")])
+choices = Array[ExtResource("2")]([SubResource("v_grocer_c007"), SubResource("v_grocer_c008"), SubResource("v_grocer_c009"), SubResource("v_grocer_c010"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("p8_menu_menu_04"), SubResource("p8_menu_menu_05"), SubResource("p8_menu_menu_06"), SubResource("p8_menu_menu_07"), SubResource("p8_menu_menu_08"), SubResource("p8_menu_menu_09"), SubResource("p8_menu_menu_10"), SubResource("p8_menu_menu_11"), SubResource("p8_menu_menu_12"), SubResource("p8_menu_menu_13"), SubResource("p8_menu_menu_14"), SubResource("p8_menu_menu_15"), SubResource("p8_menu_menu_16"), SubResource("v_grocer_c011"), SubResource("v_grocer_c012")])
 
 [sub_resource type="Resource" id="v_grocer_c013"]
 script = ExtResource("2")
@@ -580,4 +598,4 @@ script = ExtResource("3")
 id = &"v_grocer"
 speaker_name = "Theres Mangold"
 start_node = &"p8_hill"
-nodes = Array[ExtResource("1")]([SubResource("v_grocer_node_start"), SubResource("v_grocer_node_greet_disreputable"), SubResource("v_grocer_node_greet_unremarkable"), SubResource("v_grocer_node_greet_respected"), SubResource("v_grocer_node_greet_esteemed"), SubResource("v_grocer_node_greet_renowned"), SubResource("v_grocer_node_menu"), SubResource("v_grocer_node_o_o_mangold_stone"), SubResource("v_grocer_node_o_o_mangold_stone_yes"), SubResource("v_grocer_node_buntes"), SubResource("v_grocer_node_mahn"), SubResource("v_grocer_node_bye"), SubResource("v_grocer_node_bye_plain"), SubResource("p8_node_p8_hill"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_favor_done"), SubResource("p8_node_o_of_mangold_return_1"), SubResource("p8_node_o_of_mangold_return_1_yes"), SubResource("p8_node_t_of_mangold_return_1"), SubResource("p8_node_o_of_mangold_return_2"), SubResource("p8_node_o_of_mangold_return_2_yes"), SubResource("p8_node_t_of_mangold_return_2"), SubResource("p8_node_dance"), SubResource("p8_node_story_2_turn_in")])
+nodes = Array[ExtResource("1")]([SubResource("v_grocer_node_start"), SubResource("v_grocer_node_greet_disreputable"), SubResource("v_grocer_node_greet_unremarkable"), SubResource("v_grocer_node_greet_respected"), SubResource("v_grocer_node_greet_esteemed"), SubResource("v_grocer_node_greet_renowned"), SubResource("v_grocer_node_menu"), SubResource("v_grocer_node_o_o_mangold_stone"), SubResource("v_grocer_node_o_o_mangold_stone_yes"), SubResource("v_grocer_node_buntes"), SubResource("v_grocer_node_mahn"), SubResource("v_grocer_node_bye"), SubResource("v_grocer_node_bye_plain"), SubResource("p8_node_p8_hill"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_favor_done"), SubResource("p8_node_o_of_mangold_return_1"), SubResource("p8_node_o_of_mangold_return_1_yes"), SubResource("p8_node_t_of_mangold_return_1"), SubResource("p8_node_o_of_mangold_return_2"), SubResource("p8_node_o_of_mangold_return_2_yes"), SubResource("p8_node_t_of_mangold_return_2"), SubResource("p8_node_dance"), SubResource("p8_node_p8_ware"), SubResource("p8_node_story_2_turn_in")])

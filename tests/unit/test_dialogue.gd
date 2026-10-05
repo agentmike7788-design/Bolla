@@ -25,7 +25,7 @@ const CONDITION_GRAMMAR := ("^!?(has_item:[a-z_]+(:\\d+)?|flag:[a-z_0-9]+|stat_g
 		+ "|favor_ready:[a-z_]+|favor_owed:[a-z_]+|apprentice_hired|apprentice_level_gte:([a-z_]+:)?\\d+|apprentice_mistake_today"
 		+ "|wish_offerable|visit_waiting|tip_due|fest_(today|day|running|eve|after):[a-z_]+|alms_gte:\\d+|robber_known"
 		+ "|robber_fate:(none|reported|let_go|caught_watch)|sick_light(:[a-z_]+)?|observed:c_[a-z_0-9]+|underlined:(priest|surgeon|washer)"
-		+ "|insight:i_[a-z_]+)$")
+		+ "|insight:i_[a-z_]+|ware_ready)$")
 const ACTION_GRAMMAR := ("^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_0-9]+|take_item:[a-z_]+:\\d+(:[a-z_]+)?|give_item:[a-z_]+:\\d+|stat_add:[a-z_]+:-?\\d+|notify:.+|open_panel:[a-z_]+|open_trade|add_clue:c_[a-z_0-9]+|trader_tools|trader_talked|set_flag_night:[a-z_]+"
 		# Phase 7 (P6)
 		+ "|meet:[a-z_0-9]+|talked:[a-z_]+|open_shop:[a-z_]+|open_gifts:[a-z_]+|order_offer:[a-z_0-9]+|order_accept:[a-z_0-9]+|order_turn_in:[a-z_0-9]+"
@@ -33,7 +33,7 @@ const ACTION_GRAMMAR := ("^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_0-9]+|take
 		# Phase 8 (P6)
 		+ "|listen:[a-z_]+|step_accept:[a-z_]+|favor_use:[a-z_]+(:[a-z_]+)?|apprentice_hire|apprentice_teach:[a-z_]+|apprentice_praise"
 		+ "|apprentice_scold|wish_offer|wish_accept|tip_hand|alms|dance:[a-z_]+|robber_resolve:(reported|let_go)|task:[a-z_]+"
-		+ "|note_event:[a-z_]+)$")
+		+ "|note_event:[a-z_]+|take_ware)$")
 ## Negations the data may use (flag-like conditions, docs/PHASE4_DESIGN.md §3.4).
 const NEGATABLE: PackedStringArray = ["!flag:", "!piety_tier:", "!flag_night:", "!trader_talks_gte:", "!clue_known:", "!met:",
 		"!rel_tier:", "!alive:", "!flag_today:", "!flag_days_gte:", "!step_gte:", "!apprentice_level_gte:"]
@@ -2705,6 +2705,15 @@ class P8Friend extends Node:
 	func save_state() -> Dictionary:
 		return {"owed": owed}
 
+	var ware := {}
+
+	func ware_ready() -> Dictionary:
+		return ware
+
+	func take_ware(inv: Inventory) -> bool:
+		calls.append(["ware", inv != null])
+		return true
+
 
 class P8Apprentice extends Node:
 	var hired := false
@@ -3098,6 +3107,11 @@ func test_phase8_actions() -> void:
 	_apply("favor_use:smith:steel_rod", ctx)
 	_apply("favor_use:grocer", ctx)
 	assert_eq(friend.calls, [["accept", &"innkeeper"], ["favor", &"smith", &"steel_rod"], ["favor", &"grocer", &""]])
+	assert_false(_check("ware_ready"))
+	friend.ware = {"item": "grave_candle", "day": 57, "price": 1}
+	assert_true(_check("ware_ready"), "Theres' order is in the shop (P4)")
+	_apply("take_ware", ctx)
+	assert_eq(friend.calls.back(), ["ware", true])
 	_apply("apprentice_hire", ctx)
 	_apply("apprentice_teach:weed", ctx)
 	_apply("apprentice_praise", ctx)
