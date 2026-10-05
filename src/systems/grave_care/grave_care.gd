@@ -235,7 +235,7 @@ func candle_lit(grave_id: String) -> bool:
 
 ## "" or why no candle can be lit (FILLED / MARKED, from 15:00, not burning yet, a grave_candle in `inv`).
 func light_block_reason(grave_id: String, inv: Inventory) -> String:
-	if not _occupied(grave_id):
+	if not _tended(grave_id):
 		return TEXT_NOT_HERE
 	if candle_lit(grave_id):
 		return TEXT_CANDLE_BURNS
@@ -259,7 +259,7 @@ func light(grave_id: String, inv: Inventory) -> bool:
 ## A candle without taking one (debug, Lenz's candles already in hand, the apprentice's broken candle that
 ## still burns). false = no grave or burning already.
 func light_free(grave_id: String) -> bool:
-	if not _occupied(grave_id) or candle_lit(grave_id):
+	if not _tended(grave_id) or candle_lit(grave_id):
 		return false
 	var now := TimeManager.total_minutes()
 	_candles[grave_id] = now
@@ -572,7 +572,7 @@ func _focus() -> Vector3:
 # --- lookups -------------------------------------------------------------------------------------
 
 func _place_block_reason(grave_id: String) -> String:
-	if not _occupied(grave_id):
+	if not _tended(grave_id):
 		return TEXT_NOT_HERE
 	if is_disturbed(grave_id):
 		return TEXT_DISTURBED
@@ -591,6 +591,14 @@ func _occupied(grave_id: String) -> bool:
 		return true
 	var grave := graveyard.get_grave(grave_id)
 	return grave != null and grave.state in [GraveRecord.State.FILLED, GraveRecord.State.MARKED]
+
+
+## Flowers and candles also go on the rest-period graves (OLD: old_01…08 – Theres' mother, Esch's master).
+func _tended(grave_id: String) -> bool:
+	if _occupied(grave_id):
+		return true
+	var grave := _grave(grave_id)
+	return grave != null and grave.state == GraveRecord.State.OLD
 
 
 func _grave(grave_id: String) -> GraveRecord:
