@@ -38,6 +38,14 @@ extends TestCase
 ## uid twice / missing, specimens.records, order states, relationship values outside 0…100, returned ⊄
 ## harvested). A loaded state also has: every uid in at most one slot, the region one of the world's,
 ## relationships 0…100, known order states, returned ⊆ harvested.
+## Phase 8 (P6, docs/PHASE8_DESIGN.md §5, §10): the game save is format v7 (migration 6 → 7 on every older
+## load: kin_house, the grave fields disturbed / extra_lines, empty Phase-8 nodes, the 26 stats); the six Phase-7
+## fixtures (tests/fixtures/saves_v6/) are fuzzed (with them the whole chain v1 → … → v7 runs on every older
+## fixture above), and a v7 save gets targeted mutations of the Phase-8 parts (kin_house unknown / of the wrong
+## type, disturbed / extra_lines garbage, nonsense in the Phase-8 node states, Phase-8 stats of the wrong type).
+## A loaded state also has: every kin_house a name, extra_lines only strings, the Phase-8 stats integers.
+## (W3 adds the real mid-Phase-8 v7 save and the checks of §10 that need P2–P7: one wish per grave, ≤ 3 open,
+## the plan only for today, no mortsafe on an EMPTY grave, disturbed only on occupied graves.)
 
 const TIMEOUT := 600.0
 const SLOT := 94
@@ -82,6 +90,8 @@ const P7_KEYS: PackedStringArray = ["village", "relationships", "village_shops",
 const P7_CASES := 60
 const P7_SHARE := 0.25
 const ORDER_STATES: Array[StringName] = [&"", &"offered", &"accepted", &"completed", &"failed"]
+## Share of the mutations per v6 fixture (six files of the Phase-7 end states – each load is a full world).
+const V6_FIXTURE_SHARE := 0.1
 const OK_TEXTS: PackedStringArray = [SaveManager.TEXT_CORRUPT, SaveManager.TEXT_NEWER_VERSION]
 
 var saves_dir := TestCase.user_dir("test_saves_fuzz")
@@ -598,6 +608,14 @@ func _check_consistent(what: String) -> void:
 	for r: CorpseRecord in world.corpse_manager.records():
 		for organ: StringName in r.returned:
 			assert_true(organ in r.harvested, "%s: %s returned %s was harvested" % [what, r.id, organ])
+	# Phase 8 (P6): the migrated / loaded Phase-8 record and grave fields are well-typed.
+	for r: CorpseRecord in world.corpse_manager.records():
+		assert_true(r.kin_house is StringName, "%s: %s kin_house is a name" % [what, r.id])
+	for g: GraveRecord in world.graveyard.graves():
+		for line: String in g.extra_lines:
+			assert_true(line is String and line != "", "%s: %s extra line" % [what, g.id])
+	for key: StringName in SaveMigration.V7_NEW_STATS:
+		assert_true(GameState.stats.get(key) is int, "%s: stat %s is an int" % [what, key])
 	assert_true(TimeManager.running, what + ": the clock runs")
 	TimeManager.running = false
 	# The loaded state is stable: save → load gives the same state.
@@ -1036,3 +1054,84 @@ func test_fuzz_v6_phase7_parts() -> void:
 		d.data = JSON.from_native(st)
 		await _load_doc(d, "p7 targeted: " + what)
 	print("FUZZ v6 (Phase 7 parts): %d loaded, %d rejected" % [stats.ok, stats.rejected])
+
+
+## Phase 8 (P6, docs/PHASE8_DESIGN.md §10): the six v6 fixtures through the v6 → v7 migration and the JSON /
+## native layers.
+func test_fuzz_v6_fixtures() -> void:
+	for id: String in Phase8Fixtures.SAVES_V6:
+		var text := FileAccess.get_file_as_string(Phase8Fixtures.save_v6_path(id))
+		assert_ne(text, "", id)
+		assert_eq(int((JSON.parse_string(text) as Dictionary).format_version), 6, id)
+		await _fuzz_text(text, id, V6_FIXTURE_SHARE)
+	print("FUZZ v6 fixtures: %d loaded, %d rejected" % [stats.ok, stats.rejected])
+
+
+## Phase 8 (P6): a v7 save with targeted mutations of the Phase-8 parts (§5.1). Nodes the world does not have
+## yet (W-Welt adds them in W2) are ignored with a warning; the record / grave fields and the stats load tolerantly.
+func test_fuzz_v7_phase8_parts() -> void:
+	var text := await _make_v5_save()
+	var doc: Dictionary = JSON.parse_string(text)
+	assert_eq(int(doc.format_version), 7, "saved as v7")
+	var state := SaveFileIO.decode_state(doc.get("data"))
+	for case: int in 10:
+		var st := state.duplicate(true)
+		var what := ""
+		var records: Array = st.nodes.corpse_manager.corpses if st.nodes.get("corpse_manager") is Dictionary \
+				and st.nodes.corpse_manager.get("corpses") is Array else []
+		var graves: Array = st.nodes.graveyard.graves if st.nodes.get("graveyard") is Dictionary \
+				and st.nodes.graveyard.get("graves") is Array else []
+		match case:
+			0:
+				for r: Variant in records:
+					if r is Dictionary:
+						r["kin_house"] = "house_atlantis"
+				what = "kin_house unknown"
+			1:
+				for r: Variant in records:
+					if r is Dictionary:
+						r["kin_house"] = [3, "house_kehr"]
+				what = "kin_house of the wrong type"
+			2:
+				for g: Variant in graves:
+					if g is Dictionary:
+						g["disturbed"] = "yes"
+						g["extra_lines"] = [7, "", null, "Ruhe sanft"]
+				what = "disturbed / extra_lines garbage"
+			3:
+				for g: Variant in graves:
+					if g is Dictionary:
+						g["disturbed"] = true
+						g["extra_lines"] = "Ruhe sanft"
+				what = "disturbed on every grave, extra_lines a string"
+			4:
+				st.nodes["visitors"] = {"plan_day": "x", "plan": [{"visit_id": 3, "kin_id": "kin_x", "graves": "l_02"}],
+						"wishes": [{"wish_id": "w_1", "grave_id": "nowhere"}, 5], "tips_on_stone": {"l_02": [-4, 9]}}
+				what = "visitors: plan kaputt, wish on an unknown grave"
+			5:
+				st.nodes["apprentice"] = {"hired": "yes", "levels": {"rake": 7, "weed": -1}, "board": "x", "morale": 99}
+				st.nodes["apprentice_box"] = {"storage": 3, "coins": -12}
+				what = "apprentice: levels outside 0…2, negative coins in the box"
+			6:
+				st.nodes["friendship"] = {"steps": {"innkeeper": 9, "smith": -2}, "owed": 4, "favor_day": "x"}
+				st.nodes["festivals"] = {"days": {"fest_lights": 3, "fest_kathrein": "x"}, "state": {"fest_lights": "eaten"}}
+				what = "friendship steps > 3, a fest day in the past"
+			7:
+				st.nodes["npc_life"] = {"open_day": -5, "events": [1, 2], "goal_done": "maybe"}
+				st.nodes["wanderers"] = {"alms": -3, "peddler_stock": 7}
+				st.nodes["night_robber"] = {"target": 12, "encounters": "two", "fate": "hanged"}
+				st.nodes["night_paths"] = {"observed": "all", "deaths": {"np_ott": "x"}}
+				what = "night and village nonsense"
+			8:
+				for key: StringName in SaveMigration.V7_NEW_STATS:
+					st.autoloads.GameState.stats[key] = "many" if int(String(key).length()) % 2 == 0 else -1.5
+				what = "Phase-8 stats of the wrong type"
+			9:
+				st.autoloads.GameState.flags[&"p8_open"] = "x"
+				st.autoloads.GameState.flags[&"p8_open_day"] = [53]
+				st.autoloads.GameState.flags[&"ott_dead"] = {"day": 58}
+				what = "Phase-8 flags of the wrong type"
+		var d: Dictionary = doc.duplicate(true)
+		d.data = JSON.from_native(st)
+		await _load_doc(d, "p8 targeted: " + what)
+	print("FUZZ v7 (Phase 8 parts): %d loaded, %d rejected" % [stats.ok, stats.rejected])
