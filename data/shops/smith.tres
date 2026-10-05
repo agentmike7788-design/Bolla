@@ -8,6 +8,10 @@ id = &"smith"
 npc_id = &"smith"
 title = "Schmiede"
 sells = Dictionary[StringName, Dictionary]({
+&"apprentice_rake": {
+"per_day": 1,
+"price": 3
+},
 &"iron_bar": {
 "per_day": 2,
 "price": 6
@@ -16,10 +20,23 @@ sells = Dictionary[StringName, Dictionary]({
 "per_day": 6,
 "price": 3
 },
+&"mortsafe": {
+"per_day": 2,
+"price": 12,
+"price_after_flag": {
+"flag": &"friend_smith_2",
+"price": 8
+},
+"requires_flag": &"robber_known"
+},
 &"steel_rod": {
 "friend_extra": 2,
 "per_day": 2,
 "price": 6
+},
+&"watering_can": {
+"per_day": 1,
+"price": 4
 }
 })
 buys = Dictionary[StringName, Dictionary]({

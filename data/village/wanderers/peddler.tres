@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="WandererData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/wanderer_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"peddler"
+display_name = "Hanne Vogelsang"
+dialogue_id = &"peddler"
+shop_id = &"peddler"
+every_days = 6
+day_rest = 1
+alms_coins = 0
+alms_piety = &""
+alms_for_clue = 0
+clue_id = &""

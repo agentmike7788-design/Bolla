@@ -16,10 +16,18 @@ sells = Dictionary[StringName, Dictionary]({
 "per_day": 4,
 "price": 1
 },
+&"flower_seedlings": {
+"per_day": 4,
+"price": 2
+},
 &"gold_leaf": {
 "per_day": 1,
 "price": 6,
 "requires_tier": &"friend"
+},
+&"grave_candle": {
+"per_day": 6,
+"price": 1
 },
 &"honey_cake": {
 "per_day": 4,

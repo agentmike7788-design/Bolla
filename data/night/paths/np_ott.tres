@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="NightPathData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/night/night_path_data.gd" id="1_0optb"]
+[ext_resource type="Script" path="res://src/systems/night/night_visit_data.gd" id="2_v4x0t"]
+
+[sub_resource type="Resource" id="Resource_xj08q"]
+script = ExtResource("2_v4x0t")
+npc_id = &"surgeon"
+night_offset = 3
+enter_minute = 1350
+leave_minute = 1390
+clue_id = &"c_n_quast_visit"
+
+[sub_resource type="Resource" id="Resource_mh5j2"]
+script = ExtResource("2_v4x0t")
+npc_id = &"priest"
+night_offset = 4
+enter_minute = 1260
+leave_minute = 1300
+clue_id = &"c_n_lenz_visit"
+animation = &"lantern_walk"
+
+[sub_resource type="Resource" id="Resource_sm043"]
+script = ExtResource("2_v4x0t")
+npc_id = &"washer"
+night_offset = 4
+enter_minute = 160
+leave_minute = 330
+clue_id = &"c_n_liesel_watch"
+
+[resource]
+script = ExtResource("1_0optb")
+id = &"np_ott"
+house = &"house_ott"
+patient = "Gerhard Ott"
+start_offset = 3
+end_offset = 4
+visits = Array[ExtResource("2_v4x0t")]([SubResource("Resource_xj08q"), SubResource("Resource_mh5j2"), SubResource("Resource_sm043")])
+death_offset = 4
+death_flag = &"ott_dead"
+watch_spot = &"watch_ott"

@@ -230,7 +230,13 @@ func bouquet_fresh(grave_id: String) -> bool:
 # --- candles -------------------------------------------------------------------------------------
 
 func candle_lit(grave_id: String) -> bool:
-	return _candles.has(grave_id) and GraveCareRules.candle_burning(int(_candles[grave_id]), TimeManager.total_minutes(), _cfg())
+	return candle_lit_at(grave_id, TimeManager.total_minutes())
+
+
+## A candle burned on `grave_id` at total minute `total` (the robber decides at 00:00 and comes at 01:30 – also
+## after a time skip).
+func candle_lit_at(grave_id: String, total: int) -> bool:
+	return _candles.has(grave_id) and GraveCareRules.candle_burning(int(_candles[grave_id]), total, _cfg())
 
 
 ## "" or why no candle can be lit (FILLED / MARKED, from 15:00, not burning yet, a grave_candle in `inv`).

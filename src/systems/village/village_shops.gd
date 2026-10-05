@@ -21,6 +21,11 @@ const REGION_VILLAGE := &"village"
 ## Stock and the daily buying limit reset at this minute of day (06:00).
 const RESET_MINUTE := 360
 const TEXT_CLOSED := "Gerade steht niemand am Laden."
+# Phase 8 (docs/PHASE8_DESIGN.md §2.6.2, §2.11, W0 note 10; P7): Hanne's shop opens by Wanderers.shop_open
+# (her two stands), selling to her pays „Verkauf an Hanne"; rows with requires_flag (Esch's mortsafe from
+# robber_known) are only offered with the flag, price_after_flag {flag, price} lowers the base price.
+const WANDERERS_GROUP := &"wanderers"
+const PAYMENT_REASON_PEDDLER := "Verkauf an Hanne"
 
 @export var save_id: String = "village_shops"
 @export var save_order: int = 52
@@ -56,6 +61,9 @@ func is_open(shop_id: StringName) -> bool:
 	var s := shop(shop_id)
 	if s == null:
 		return false
+	var wanderers := _system(WANDERERS_GROUP)
+	if wanderers != null and wanderers.has_method(&"has_shop") and bool(wanderers.call(&"has_shop", shop_id)):
+		return bool(wanderers.call(&"shop_open", shop_id))
 	var npc := npc_node(shop_id)
 	if npc != null:
 		return npc.is_present() and npc.is_talkable() and not npc.is_walking() and npc.entry != null \
@@ -90,6 +98,8 @@ func offers(shop_id: StringName) -> Array[Dictionary]:
 	var rel := _rel_tier(s)
 	var open := is_open(shop_id)
 	for item: StringName in s.sells:
+		if not ShopRules.row_available(s.sells[item]):
+			continue
 		var p := sell_price(shop_id, item)
 		var left := stock_left(shop_id, item)
 		var reason := TEXT_CLOSED if not open else ShopRules.buy_block_reason(s, item, 1, left, inv, p, rel)
@@ -118,7 +128,7 @@ func sell_price(shop_id: StringName, item: StringName) -> int:
 	var s := shop(shop_id)
 	if s == null or not s.sells.has(item):
 		return 0
-	return ShopRules.price(ShopRules.row_price(s.sells[item]), _rep_tier(), _rel_tier(s), _cfg())
+	return ShopRules.price(ShopRules.row_price_now(s.sells[item]), _rep_tier(), _rel_tier(s), _cfg())
 
 
 ## Unit price the shop pays the player for `item` now (0 = not bought here).
@@ -199,7 +209,7 @@ func sell(shop_id: StringName, item: StringName, n: int, inv: Inventory) -> int:
 	_roll_day()
 	_change(_bought_left, shop_id, item, ShopRules.row_per_day(s.buys[item], RelationshipRules.TIERS[0]), -n)
 	if coins > 0:
-		EventBus.payment_received.emit(coins, PAYMENT_REASON)
+		EventBus.payment_received.emit(coins, PAYMENT_REASON_PEDDLER if s.coin_reason == &"peddler" else PAYMENT_REASON)
 	EventBus.shop_trade.emit(shop_id, coins, {item: n}, {})
 	return coins
 

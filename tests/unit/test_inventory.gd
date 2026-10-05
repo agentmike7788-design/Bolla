@@ -73,6 +73,17 @@ const ITEMS := {
 	&"corpse_balm": ["Totensalbe", ItemData.Category.MATERIAL, 10],
 	&"honey_cake": ["Honigkuchen", ItemData.Category.GOODS, 10],
 	&"elder_wine": ["Holunderwein", ItemData.Category.GOODS, 5],
+	# Phase 8 (P7, §2.11)
+	&"flower_seedlings": ["Grabblumen", ItemData.Category.MATERIAL, 10],
+	&"grave_candle": ["Grabkerze", ItemData.Category.MATERIAL, 10],
+	&"watering_can": ["Gießkanne", ItemData.Category.TOOL, 1],
+	&"apprentice_rake": ["Kinderrechen", ItemData.Category.TOOL, 1],
+	&"mortsafe": ["Grabgitter", ItemData.Category.GOODS, 4],
+	&"wax_wreath": ["Wachskranz", ItemData.Category.GOODS, 5],
+	&"register_extract": ["Abschrift aus dem Grabregister", ItemData.Category.GOODS, 5],
+	&"memorial_plate": ["Namenstafel „Konrad Wackernagel“", ItemData.Category.CRAFTED, 1],
+	&"quast_crate": ["Versiegelte Kiste", ItemData.Category.GOODS, 1],
+	&"lorenz_ledger_2": ["Lorenz' zweite Kladde", ItemData.Category.GOODS, 1],
 }
 
 
