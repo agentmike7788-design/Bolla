@@ -361,6 +361,8 @@ script = ExtResource("1")
 id = &"story_1"
 text = "Er heißt nicht Lorenz. Er heißt Kaspar. Kaspar Dorn. Setz seinen Namen auf den Stein, Totengräber. Mit Tinte, ordentlich. Dann weiß wenigstens der Stein, wer er war."
 choices = Array[ExtResource("2")]([SubResource("p8_story_1_c01"), SubResource("p8_story_1_c02")])
+conditions = Array[String](["flag:insight_not_lorenz"])
+fallback_next = &"story_1_alt"
 
 [sub_resource type="Resource" id="p8_story_1_alt_c01"]
 script = ExtResource("2")

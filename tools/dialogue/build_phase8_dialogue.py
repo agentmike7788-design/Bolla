@@ -482,7 +482,8 @@ def washer():
          C("[Geschichte] Ich bin da.", "story_3_meet", ["order:of_liesel_3:accepted", "region:village"], ["meet:v_dorn_door"])],
         [N("story_1", "Er heißt nicht Lorenz. Er heißt Kaspar. Kaspar Dorn. Setz seinen Namen auf den Stein, Totengräber. "
            "Mit Tinte, ordentlich. Dann weiß wenigstens der Stein, wer er war.",
-           [C("Das mache ich.", "story_1_yes", act=["step_accept:washer"]), C("Später.", "menu")]),
+           [C("Das mache ich.", "story_1_yes", act=["step_accept:washer"]), C("Später.", "menu")],
+           ["flag:insight_not_lorenz"], "story_1_alt"),
          N("story_1_alt", "Die Hagedorn. Halt ihr das Grab sauber, drei Morgen, und stell ihr eine Nacht ein Licht hin. Sie hat "
            "im Dunkeln nie schlafen können. Sie hat es keinem gesagt. Mir schon.",
            [C("Das mache ich.", "story_1_yes", act=["step_accept:washer"]), C("Später.", "menu")]),
