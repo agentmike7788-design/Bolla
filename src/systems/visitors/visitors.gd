@@ -76,6 +76,8 @@ var kin_data: Array[KinData] = []
 var villager_data: Dictionary[StringName, VillagerData] = {}
 
 var _plan_day: int = -1
+## The plan was made with Phase 8 open (an opening after 06:00 plans the rest of that day once more).
+var _planned_open: bool = false
 var _plan: Array[Dictionary] = []
 var _goodwill: Dictionary[StringName, int] = {}
 ## grave → day of the last look; kin → day of a villager's last visit.
@@ -111,9 +113,13 @@ func plan_day(day: int) -> Array[Dictionary]:
 	_plan.clear()
 	_announced.clear()
 	_plan_day = day
+	_planned_open = _open() and day >= _open_day()
 	var cfg := _cfg()
 	if not _open() or day < _open_day() or _lights_day() == day:
 		return _plan.duplicate(true)
+	# Planned late (the opening after 06:00, a load without a plan): only visits still to come today.
+	var late := TimeManager.day == day and TimeManager.minute_of_day > PLAN_MINUTE
+	var now_minute := TimeManager.minute_of_day
 	var villagers: Array[Dictionary] = []
 	var windows: Array = []
 	var households: Array = []
@@ -144,11 +150,17 @@ func plan_day(day: int) -> Array[Dictionary]:
 	var slots := VisitRules.assign_slots(households.size(), windows.slice(0, villagers.size()), length, cfg)
 	var list: Array[Dictionary] = villagers.duplicate()
 	for i: int in households.size():
-		if slots[i] < 0:
+		if slots[i] < 0 or (late and slots[i] < now_minute):
 			continue
 		var kin: KinData = households[i][2]
 		var graves: PackedStringArray = households[i][3]
 		list.append(_entry(kin, graves, slots[i], _travel(kin, graves), day))
+	if late:
+		var keep: Array[Dictionary] = []
+		for e: Dictionary in list:
+			if int(e.start) >= now_minute:
+				keep.append(e)
+		list = keep
 	list.sort_custom(_by_start)
 	for i: int in list.size():
 		var e := list[i]
@@ -482,7 +494,7 @@ func on_visit_phase(visit_id: String, phase: StringName) -> void:
 
 ## The current minute (helper; time_tick calls it).
 func apply_minute(day: int, minute: int) -> void:
-	if _plan_day != day and minute >= PLAN_MINUTE:
+	if minute >= PLAN_MINUTE and (_plan_day != day or (not _planned_open and _open() and _plan.is_empty())):
 		plan_day(day)
 	for v: Dictionary in _plan:
 		_advance(v)
@@ -502,12 +514,13 @@ func save_state() -> Dictionary:
 	return {"plan_day": _plan_day, "plan": _plan.duplicate(true), "goodwill": gw, "last_visit": _last_visit.duplicate(),
 			"last_kin": _last_kin.duplicate(), "wishes": _wishes.duplicate(true), "tips_today": {"day": _tips_day, "coins": _tips_coins},
 			"tips_on_stone": _stones.duplicate(true), "pleased_today": _pleased, "pleased_day": _pleased_day,
-			"noise_day": _noise_day, "rumor_seen": rumor, "next_wish": _next_wish}
+			"noise_day": _noise_day, "rumor_seen": rumor, "next_wish": _next_wish, "plan_open": _planned_open}
 
 
 ## Tolerant: damaged entries are dropped; a plan of another day stays until the next 06:00 replans.
 func load_state(data: Dictionary) -> void:
 	_plan_day = _int(data.get("plan_day"), -1)
+	_planned_open = typeof(data.get("plan_open")) != TYPE_BOOL or bool(data.get("plan_open"))
 	_plan.clear()
 	var plan: Variant = data.get("plan", [])
 	if plan is Array:

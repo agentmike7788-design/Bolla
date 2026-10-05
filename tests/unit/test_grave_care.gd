@@ -507,3 +507,55 @@ func test_tip_stone_and_rain_barrel() -> void:
 	plot.queue_free()
 	(w.corpses as Node).queue_free()
 	await wait_frames(1)
+
+
+## Orders read by the plot's name_line task (P4): active / order_data / note_task.
+class OrdersDouble extends Node:
+	var orders: Dictionary = {}
+	var tasks: Array = []
+
+	func _init() -> void:
+		add_to_group(&"orders")
+
+	func active() -> Array[StringName]:
+		var out: Array[StringName] = []
+		for id: Variant in orders:
+			out.append(StringName(id))
+		return out
+
+	func order_data(id: StringName) -> OrderData:
+		return orders.get(id) as OrderData
+
+	func note_task(action_id: StringName) -> void:
+		tasks.append(action_id)
+
+
+func test_grave_plot_name_line_task() -> void:
+	var w: Dictionary = await _plot_world()
+	var plot: GravePlot = w.plot
+	var player: Player = w.player
+	var pinv: Inventory = w.inv
+	graveyard.get_grave("l_09").design = {"shape": "stone_round", "inscription": "", "ornament": "", "gilded": false,
+			"text": ["Lorenz Aschau (?)", "† 1834"]}
+	var orders := OrdersDouble.new()
+	tree.root.add_child(orders)
+	assert_true(plot.get_interaction_prompt(player).begins_with("Grab von"), "no task: nothing")
+	var o := OrderData.new()
+	o.id = &"of_liesel_1"
+	o.kind = &"task"
+	o.target = "l_09"
+	o.conditions = {"action_id": &"name_line", "item": &"ink", "minutes": 40}
+	orders.orders[&"of_liesel_1"] = o
+	assert_eq(plot.get_interaction_prompt(player), "Für den Namen fehlt Tinte.")
+	pinv.add_item(&"ink", 1)
+	assert_eq(plot.get_interaction_prompt(player), "[E] Namen nachmeißeln (40 Min, 1 Tinte)")
+	plot.interact(player)
+	await wait_frames(1)
+	assert_eq(StoneDesign.from_dict(graveyard.get_grave("l_09").design).text[0], "Kaspar Dorn")
+	assert_eq(orders.tasks, [&"name_line"], "Orders.note_task(&\"name_line\")")
+	assert_eq(pinv.count(&"ink"), 0)
+	orders.queue_free()
+	(w.player as Node).queue_free()
+	plot.queue_free()
+	(w.corpses as Node).queue_free()
+	await wait_frames(1)

@@ -82,8 +82,15 @@ const CARE_CANDLE := &"candle"
 const CARE_MORTSAFE_ON := &"mortsafe_on"
 const CARE_MORTSAFE_OFF := &"mortsafe_off"
 const CARE_LINE := &"line"
+## §2.4 Liesel 1 (P4's order of_liesel_1, task name_line): Kaspar's real name on the stone of S5.
+const CARE_NAME := &"name_line"
 const CARE_ORDER: Array[StringName] = [CARE_COINS, CARE_CLOSE, CARE_WATER, CARE_PLANT, CARE_WREATH, CARE_CANDLE, CARE_MORTSAFE_ON,
-		CARE_MORTSAFE_OFF, CARE_LINE]
+		CARE_MORTSAFE_OFF, CARE_LINE, CARE_NAME]
+const ORDERS_TASK_GROUP := &"orders"
+const PROMPT_NAME := "[E] Namen nachmeißeln (%d Min, 1 Tinte)"
+const LABEL_NAME := "Namen nachmeißeln"
+const NAME_MINUTES := 40
+const NAME_FALLBACK := "Kaspar Dorn"
 const PROMPT_COINS := "[E] %d Münzen auf dem Stein (%s)"
 const PROMPT_CLOSE := "[E] Grab wieder schließen (%d Min)"
 const PROMPT_WATER := "[E] Blumen gießen (%d Min)"
@@ -587,6 +594,11 @@ func _care_state(action: StringName, player: Player) -> int:
 			if graveyard == null or not graveyard.can_append_inscription(grave_id) or inv == null:
 				return -1
 			return 1 if inv.has(care.get_config().line_item if care != null else &"ink") else 0
+		CARE_NAME:
+			var order := _name_order()
+			if order == null or grave.design.is_empty() or inv == null:
+				return -1
+			return 1 if inv.has(StringName(str(order.conditions.get("item", "ink")))) else 0
 	return -1
 
 
@@ -619,6 +631,11 @@ func care_prompt(action: StringName, player: Player) -> String:
 			if inv == null or not inv.has(cfg.line_item):
 				return "Für die Zeile fehlt Tinte."
 			return PROMPT_LINE % [_wish_line(), cfg.line_minutes]
+		CARE_NAME:
+			var order := _name_order()
+			if inv == null or order == null or not inv.has(StringName(str(order.conditions.get("item", "ink")))):
+				return "Für den Namen fehlt Tinte."
+			return PROMPT_NAME % int(order.conditions.get("minutes", NAME_MINUTES))
 	return ""
 
 
@@ -656,6 +673,12 @@ func _start_care(action: StringName, player: Player) -> void:
 			if player.start_timed_action(LABEL_LINE, cfg.line_minutes, _finish_care.bind(action, inv, player), true,
 					ToolAnimConfig.clip_for(&"grave_marker", ANIM_MARKER)):
 				_note_noise(&"chisel")
+		CARE_NAME:
+			var order := _name_order()
+			var minutes := int(order.conditions.get("minutes", NAME_MINUTES)) if order != null else NAME_MINUTES
+			if player.start_timed_action(LABEL_NAME, minutes, _finish_care.bind(action, inv, player), true,
+					ToolAnimConfig.clip_for(&"grave_marker", ANIM_MARKER)):
+				_note_noise(&"chisel")
 
 
 ## The end of a care action: the effect through GraveCare / Graveyard (the same calls as the apprentice's);
@@ -685,6 +708,17 @@ func _finish_care(action: StringName, inv: Inventory, player: Player) -> void:
 			ok = line != "" and graveyard != null and inv != null and inv.has(item) and graveyard.append_inscription(grave_id, line)
 			if ok:
 				inv.remove_item(item, 1)
+		CARE_NAME:
+			var order := _name_order()
+			var item := StringName(str(order.conditions.get("item", "ink"))) if order != null else &"ink"
+			var graveyard := _graveyard()
+			ok = order != null and graveyard != null and inv != null and inv.has(item) \
+					and graveyard.replace_name_line(grave_id, _true_name())
+			if ok:
+				inv.remove_item(item, 1)
+				var orders := _first_in(ORDERS_TASK_GROUP)
+				if orders != null and orders.has_method(&"note_task"):
+					orders.call(&"note_task", CARE_NAME)
 	if not ok:
 		EventBus.notification_requested.emit(TEXT_CARE_FAILED, &"warning")
 		return
@@ -692,6 +726,36 @@ func _finish_care(action: StringName, inv: Inventory, player: Player) -> void:
 		var apprentice := _first_in(APPRENTICE_GROUP)
 		if apprentice != null and apprentice.has_method(&"note_player_job") and is_instance_valid(player):
 			apprentice.call(&"note_player_job", action, global_position)
+
+
+## The active task order name_line whose target is this grave or the story of its dead (null = none).
+func _name_order() -> OrderData:
+	var orders := _first_in(ORDERS_TASK_GROUP)
+	if orders == null or not orders.has_method(&"active") or not orders.has_method(&"order_data"):
+		return null
+	var grave := _grave()
+	var manager := _manager()
+	var record: CorpseRecord = manager.get_record(grave.corpse_id) if manager != null and grave != null else null
+	for id: StringName in orders.call(&"active"):
+		var o := orders.call(&"order_data", id) as OrderData
+		if o == null or o.kind != &"task" or StringName(str(o.conditions.get("action_id", ""))) != CARE_NAME:
+			continue
+		if o.target == grave_id or (record != null and record.story_id != &"" and o.target == String(record.story_id)):
+			return o
+	return null
+
+
+## The real name of the dead (the insight that renames its story, else Kaspar Dorn).
+func _true_name() -> String:
+	var grave := _grave()
+	var manager := _manager()
+	var record: CorpseRecord = manager.get_record(grave.corpse_id) if manager != null and grave != null else null
+	if record != null and record.story_id != &"":
+		for res: Resource in Database.insights():
+			var insight := res as InsightData
+			if insight != null and insight.rename_story == record.story_id and insight.rename_to != "":
+				return insight.rename_to
+	return NAME_FALLBACK
 
 
 ## The line of an accepted line wish at this grave ("" = none).

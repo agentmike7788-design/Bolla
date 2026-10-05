@@ -254,6 +254,22 @@ func test_next_visit_in_mourning_rhythm() -> void:
 	assert_eq(h.plan(due).size(), 1, "day %d" % due)
 
 
+func test_opening_after_six_plans_the_rest_of_the_day() -> void:
+	h.bury("l_01", &"house_kehr", 54)
+	h.bury("l_02", &"house_brandt", 54)
+	GameState.set_flag(&"p8_open", false)
+	TimeManager.load_state({"day": 55, "minute_of_day": 359})
+	TimeManager.advance(1)
+	assert_eq(h.visitors.save_state().plan, [], "not open yet at 06:00")
+	TimeManager.advance(300)
+	GameState.set_flag(&"p8_open", true)
+	TimeManager.advance(1)
+	var plan: Array = h.visitors.save_state().plan
+	assert_eq(plan.size(), 1, "opened at 11:01: only the visit still to come")
+	assert_eq(int(plan[0].slot), 750)
+	assert_true(h.visitors.save_state().plan_open)
+
+
 func test_fixture_phase_key_still_works() -> void:
 	var v := Phase8Fixtures.visit_now(&"kin_kehr", "l_02", &"mourning", tree, 55)
 	assert_eq(v.active_visits().size(), 1)
