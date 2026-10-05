@@ -116,6 +116,8 @@ static func flat(v: Vector3) -> Vector3:
 
 
 func _waypoint(id: StringName) -> Vector3:
+	if String(id).begins_with("@"):
+		return ScheduleBuilder.point(null, String(id))
 	var w := _npc._world()
 	if w == null:
 		push_warning("[Npc] %s: no world with waypoints" % _npc.name)

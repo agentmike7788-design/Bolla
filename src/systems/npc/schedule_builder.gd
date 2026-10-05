@@ -11,6 +11,8 @@ extends RefCounted
 ## - build: sorted by start_minute (equal starts keep their order – the later one wins, as in data);
 ##   gaps are invisible: before the first entry (from 00:00) and after a closing walk (the figure has
 ##   left through the gate / over the bridge).
+## - Points: a path element is a waypoint id of the world, or a literal "@x,y,z" (point_id) for places that
+##   have no waypoint (the apprentice's care spots); Npc / NpcPose resolve both the same way (point).
 
 const ACTIVITY_WALK := &"walk"
 const ACTIVITY_STAY := &"stay"
@@ -103,12 +105,46 @@ static func path_length(path: PackedStringArray, world: Node) -> float:
 	if world == null or not world.has_method(&"get_waypoint") or path.size() < 2:
 		return 0.0
 	var total := 0.0
-	var prev: Vector3 = world.call(&"get_waypoint", StringName(path[0]))
+	var prev := point(world, path[0])
 	for k: int in range(1, path.size()):
-		var p: Vector3 = world.call(&"get_waypoint", StringName(path[k]))
+		var p := point(world, path[k])
 		total += Vector2(p.x - prev.x, p.z - prev.z).length()
 		prev = p
 	return total
+
+
+## World position of a path element: "@x,y,z" literally, else world.get_waypoint(id) (Vector3.ZERO
+## without a world).
+static func point(world: Node, id: String) -> Vector3:
+	if id.begins_with("@"):
+		var parts := id.substr(1).split(",")
+		if parts.size() == 3:
+			return Vector3(parts[0].to_float(), parts[1].to_float(), parts[2].to_float())
+		return Vector3.ZERO
+	if world == null or not world.has_method(&"get_waypoint"):
+		return Vector3.ZERO
+	return world.call(&"get_waypoint", StringName(id))
+
+
+## The literal path element of `pos` ("@x,y,z", centimetre precision – deterministic in saves and tests).
+static func point_id(pos: Vector3) -> String:
+	return "@%.2f,%.2f,%.2f" % [pos.x, pos.y, pos.z]
+
+
+## The world knows the waypoint `id` (literals always) – without a warning.
+static func has_point(world: Node, id: String) -> bool:
+	if id.begins_with("@"):
+		return true
+	if world == null or id == "":
+		return false
+	if world.has_method(&"_waypoint_marker") and world.call(&"_waypoint_marker", StringName(id)) != null:
+		return true
+	if world.get_node_or_null(NodePath("Waypoints/" + id)) != null:
+		return true
+	if world.has_method(&"_outer_world"):
+		var outer: Node = world.call(&"_outer_world")
+		return outer != null and outer.get_node_or_null(NodePath("Waypoints/" + id)) != null
+	return false
 
 
 static func _speed() -> float:
