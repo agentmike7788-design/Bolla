@@ -337,7 +337,7 @@ func apply_minute(day: int, minute: int) -> void:
 		_new_day(day)
 	if not works_today(day):
 		return
-	if _plan_day != day and minute >= cfg.start_minute - 5:
+	if _plan_day != day and minute >= board_minute():
 		_make_plan(day)
 	if _plan_day == day:
 		_apply_effects(day, minute)
@@ -380,7 +380,7 @@ func graveyard_schedule(day: int) -> NpcSchedule:
 		return ScheduleBuilder.build(entries)
 	entries.append(ScheduleBuilder.walk(StringName(route[0]), route.slice(1), cfg.arrive_minute, &"graveyard", world))
 	var here := route[route.size() - 1]
-	entries.append(ScheduleBuilder.stay(StringName(here), cfg.start_minute - 5, &"read_board", DIALOGUE))
+	entries.append(ScheduleBuilder.stay(StringName(here), board_minute(), &"read_board", DIALOGUE))
 	var teaching := _teach != &"" and _watch_point != "" and _watch_minute >= 0
 	var cut := _watch_minute if teaching else 99999
 	if _plan_day == day:
@@ -441,6 +441,21 @@ func village_schedule(day: int) -> NpcSchedule:
 	for e: ScheduleEntry in entries:
 		e.region = &"village"
 	return ScheduleBuilder.build(entries)
+
+
+## When he reads the board: 08:25 (start_minute − 5), later when the walk up from the road end takes longer.
+func board_minute() -> int:
+	var cfg := _cfg()
+	var route := _known(ROUTE_IN, _world())
+	var board := _place(WP_BOARD)
+	if board != "":
+		route.append(board)
+	return maxi(cfg.start_minute - 5, cfg.arrive_minute + ScheduleBuilder.travel_minutes(route, _world()))
+
+
+## When the work begins: 08:30 (start_minute), at least 5 minutes after reading the board.
+func work_minute() -> int:
+	return maxi(_cfg().start_minute, board_minute() + 5)
 
 
 ## Where he is now (the Npc, else the end of the current plan step / the watch point).
@@ -588,7 +603,7 @@ func _make_plan(day: int) -> void:
 	_progress = 0
 	var items := _box_items()
 	_missing = ApprenticePlanner.missing_items(_board, items, _planner_state(items, ""))
-	_plan = ApprenticePlanner.plan(day, _cfg().start_minute, _board, _planner_state(items, _place(WP_BOARD)), get_tree(), _cfg())
+	_plan = ApprenticePlanner.plan(day, work_minute(), _board, _planner_state(items, _place(WP_BOARD)), get_tree(), _cfg())
 	refresh_npcs()
 
 
@@ -597,7 +612,7 @@ func _replan_from_running(minute: int) -> void:
 	var keep := _progress
 	while keep < _plan.size() and int(_plan[keep].start) <= minute:
 		keep += 1
-	var from := maxi(minute, _cfg().start_minute)
+	var from := maxi(minute, work_minute())
 	var here := _place(WP_BOARD)
 	if keep > 0:
 		from = maxi(from, int(_plan[keep - 1].end))
@@ -617,7 +632,7 @@ func _replan_from(minute: int, here: String) -> void:
 		done[str(e.spot_id)] = true
 	var state := _planner_state(_box_items(), here)
 	state["done"] = done.keys()
-	_plan.append_array(ApprenticePlanner.plan(_plan_day, maxi(minute, _cfg().start_minute), _board, state, get_tree(), _cfg()))
+	_plan.append_array(ApprenticePlanner.plan(_plan_day, maxi(minute, work_minute()), _board, state, get_tree(), _cfg()))
 	refresh_npcs()
 
 
