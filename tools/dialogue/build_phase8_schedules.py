@@ -15,7 +15,7 @@ prefix "p8_"); on a day without the flag nothing changes (ScheduleResolver skips
   peddler_day              – Hanne's day (day % 6 == 1, §2.6; Wanderers, P7)
   apprentice_off_day       – Jakob's free day in the inn (§2.5.1; Apprentice, P3)
 Waypoints of W-Welt (§4.2–§4.6): veit_gate, peddler_gate, lights_gate, gv_<plot>, v_church_step, v_bridge_sit,
-v_well_peddler, v_remise_sleep, v_peddler_in, v_peddler_out, v_lights_gather, v_in_inn_jakob, v_ott_door,
+v_well_peddler, v_remise_sleep, v_peddler_in, v_peddler_out, v_in_inn_jakob, v_ott_door,
 v_kehr_door; the dance places v_in_inn_fest_1…4 are a P6 request to W-Welt (D6 Tanzfläche).
 """
 import json
@@ -155,16 +155,24 @@ LIGHTS = "fest_lights_day"
 KATHREIN = "fest_kathrein_day"
 
 
+## The gathering place of the Lichtgang at the Holderbrücke: W-Welt names it v_lights_gather (§4.6); until that
+## waypoint exists the bridge itself (v_bridge) is used – the routes run over checked village segments.
+GATHER = "v_bridge"
+TO_BRIDGE = {"v_inn_door": ["v_anger_w"], "v_anvil": ["v_anger_w"], "v_board": ["v_anger_w"], "v_shop_window": ["v_well"],
+             "v_church_door": ["v_well"], "v_dorn_door": ["v_well"], "v_surgery_door": ["v_well"]}
+
+
 def lights(home, back_to, back_dialogue="", back_activity="idle", back_anim="idle", back_visible=True):
     """§2.7.2: from `home` to the Holderbrücke at 16:00 with the lanterns, up the hill at 16:30 (hidden in the village
-    from 16:40 – the procession is P4's runtime schedule on the cemetery), back after the descent at 18:45."""
+    from 16:35 – the procession is P4's runtime schedule on the cemetery), back after the descent at 18:45."""
     out_from = DOOR.get(home, home)
+    back_door = DOOR.get(back_to, back_to)
     entries = [
-        walk(950, [out_from, "v_lights_gather"], 10, LIGHTS),
-        stay(960, "v_lights_gather", "", LIGHTS, animation="idle"),
-        walk(990, ["v_lights_gather", "v_road_in"], 5, LIGHTS, animation="lantern_walk"),
+        walk(950, [out_from] + TO_BRIDGE[out_from] + [GATHER], 10, LIGHTS),
+        stay(960, GATHER, "", LIGHTS, animation="idle"),
+        walk(990, [GATHER, "v_road_in"], 5, LIGHTS, animation="lantern_walk"),
         hide(995, "v_road_in", LIGHTS),
-        walk(1125, ["v_road_in", "v_lights_gather", DOOR.get(back_to, back_to)], 12, LIGHTS, animation="lantern_walk"),
+        walk(1125, ["v_road_in", GATHER] + TO_BRIDGE[back_door] + [back_door], 12, LIGHTS, animation="lantern_walk"),
     ]
     last = E(1137, [back_to], back_activity, back_anim, 0, back_dialogue, back_visible, "village", LIGHTS)
     entries.append(last)
@@ -286,13 +294,9 @@ def washer():
 
 
 def carter():
-    patch("carter", [
-        # §2.7.1: Osric leaves his evening spot early for the dance (he does not dance – "Ich fahr nur.").
-        walk(1110, ["evening_spot", "road_mid", "road_end"], 20, KATHREIN, region=""),
-        hide(1130, "road_end", KATHREIN, region=""),
-        walk(1140, ["v_road_in", "v_bridge", "v_inn_door"], 6, KATHREIN),
-        stay(1146, "v_in_inn_corner", "carter_village", KATHREIN),
-    ])
+    # Osric keeps his Phase-7 schedule (the carter fixture of W-Welt): on Kathrein he is in the inn from 21:55 as
+    # every evening – he does not dance ("Ich fahr nur.", §8.2).
+    patch("carter", [])
 
 
 def beggar():

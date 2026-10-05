@@ -26,14 +26,14 @@ start_minute = 950
 travel_minutes = 10
 activity = &"walk"
 animation = &"walk"
-path = PackedStringArray("v_board", "v_lights_gather")
+path = PackedStringArray("v_board", "v_anger_w", "v_bridge")
 region = &"village"
 today_flag = &"fest_lights_day"
 
 [sub_resource type="Resource" id="p8_mayor_04"]
 script = ExtResource("1_ttn2y")
 start_minute = 960
-path = PackedStringArray("v_lights_gather")
+path = PackedStringArray("v_bridge")
 region = &"village"
 today_flag = &"fest_lights_day"
 
@@ -43,7 +43,7 @@ start_minute = 990
 travel_minutes = 5
 activity = &"walk"
 animation = &"lantern_walk"
-path = PackedStringArray("v_lights_gather", "v_road_in")
+path = PackedStringArray("v_bridge", "v_road_in")
 region = &"village"
 today_flag = &"fest_lights_day"
 
@@ -62,7 +62,7 @@ start_minute = 1125
 travel_minutes = 12
 activity = &"walk"
 animation = &"lantern_walk"
-path = PackedStringArray("v_road_in", "v_lights_gather", "v_board")
+path = PackedStringArray("v_road_in", "v_bridge", "v_anger_w", "v_board")
 region = &"village"
 today_flag = &"fest_lights_day"
 
@@ -77,7 +77,7 @@ today_flag = &"fest_lights_day"
 [sub_resource type="Resource" id="p8_mayor_09"]
 script = ExtResource("1_ttn2y")
 start_minute = 965
-path = PackedStringArray("v_lights_gather")
+path = PackedStringArray("v_bridge")
 region = &"village"
 today_flag = &"fest_lights_day"
 

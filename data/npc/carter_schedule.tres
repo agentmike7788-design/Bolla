@@ -3,41 +3,6 @@
 [ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1_s38po"]
 [ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2_xkmdj"]
 
-[sub_resource type="Resource" id="p8_carter_01"]
-script = ExtResource("1_s38po")
-start_minute = 1110
-travel_minutes = 20
-activity = &"walk"
-animation = &"walk"
-path = PackedStringArray("evening_spot", "road_mid", "road_end")
-today_flag = &"fest_kathrein_day"
-
-[sub_resource type="Resource" id="p8_carter_02"]
-script = ExtResource("1_s38po")
-start_minute = 1130
-activity = &"home"
-path = PackedStringArray("road_end")
-visible = false
-today_flag = &"fest_kathrein_day"
-
-[sub_resource type="Resource" id="p8_carter_03"]
-script = ExtResource("1_s38po")
-start_minute = 1140
-travel_minutes = 6
-activity = &"walk"
-animation = &"walk"
-path = PackedStringArray("v_road_in", "v_bridge", "v_inn_door")
-region = &"village"
-today_flag = &"fest_kathrein_day"
-
-[sub_resource type="Resource" id="p8_carter_04"]
-script = ExtResource("1_s38po")
-start_minute = 1146
-path = PackedStringArray("v_in_inn_corner")
-dialogue_id = &"carter_village"
-region = &"village"
-today_flag = &"fest_kathrein_day"
-
 [sub_resource type="Resource" id="night_home"]
 script = ExtResource("1_s38po")
 activity = &"home"
@@ -175,4 +140,4 @@ region = &"village"
 script = ExtResource("2_xkmdj")
 npc_id = &"carter"
 display_name = "Osric Faulhaber"
-entries = Array[ExtResource("1_s38po")]([SubResource("night_home"), SubResource("morning_arrive"), SubResource("morning_dropoff"), SubResource("morning_leave"), SubResource("day_home"), SubResource("evening_arrive"), SubResource("evening_smoke"), SubResource("evening_leave"), SubResource("late_home"), SubResource("v_walk_remise"), SubResource("v_remise"), SubResource("v_walk_inn"), SubResource("v_inn_afternoon"), SubResource("v_away"), SubResource("v_walk_inn_night"), SubResource("v_inn_night"), SubResource("v_night_home"), SubResource("p8_carter_01"), SubResource("p8_carter_02"), SubResource("p8_carter_03"), SubResource("p8_carter_04")])
+entries = Array[ExtResource("1_s38po")]([SubResource("night_home"), SubResource("morning_arrive"), SubResource("morning_dropoff"), SubResource("morning_leave"), SubResource("day_home"), SubResource("evening_arrive"), SubResource("evening_smoke"), SubResource("evening_leave"), SubResource("late_home"), SubResource("v_walk_remise"), SubResource("v_remise"), SubResource("v_walk_inn"), SubResource("v_inn_afternoon"), SubResource("v_away"), SubResource("v_walk_inn_night"), SubResource("v_inn_night"), SubResource("v_night_home")])

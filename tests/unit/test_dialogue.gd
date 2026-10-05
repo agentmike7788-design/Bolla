@@ -3449,10 +3449,10 @@ func test_phase8_schedule_overlays() -> void:
 	e = _at("washer", &"fest_kathrein_day", 1300)
 	assert_false(e.visible, "and home after nine")
 	e = _at("carter", &"fest_kathrein_day", 1200)
-	assert_eq([e.region, e.path[-1]], [&"village", "v_in_inn_corner"], "Osric comes down to the dance")
+	assert_eq([e.region, e.path[-1]], [&"", "evening_spot"], "Osric keeps his Phase-7 evening (the W-Welt fixture)")
 	for npc: String in ["innkeeper", "smith", "grocer", "mayor", "priest", "washer"]:
 		e = _at(npc, &"fest_lights_day", 970)
-		assert_eq(e.path[-1], "v_lights_gather", npc + ": gathering at the Holderbrücke 16:00")
+		assert_eq(e.path[-1], "v_bridge", npc + ": gathering at the Holderbrücke 16:00")
 		e = _at(npc, &"fest_lights_day", 1050)
 		assert_false(e.visible, npc + ": up the hill (P4's procession)")
 	e = _at("surgeon", &"fest_lights_day", 1050)

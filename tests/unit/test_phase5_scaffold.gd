@@ -485,7 +485,7 @@ func test_save_format_v4_and_migration_chain() -> void:
 	assert_eq(SaveMigration.V4_EMPTY_NODES, PackedStringArray(["workshop", "gathering", "stonemasonry"]))
 	var state := {"autoloads": {"TimeManager": {"day": 5}, "GameState": {"stats": {}, "flags": {}}}, "nodes": {"corpse_manager": {}}}
 	# Phase 6 (P6): migrate_4_to_5 implemented – only the Phase-6 nodes / stats are added.
-	assert_eq((SaveMigration.migrate(state, 4).nodes as Dictionary).keys(), ["corpse_manager"] + Array(SaveMigration.V5_EMPTY_NODES) + Array(SaveMigration.V6_EMPTY_NODES), "v4 → v5 → v6 → v7 (Phase 7: + V6 nodes; Phase 8 W0: v7 identity)")
+	assert_eq((SaveMigration.migrate(state, 4).nodes as Dictionary).keys(), ["corpse_manager"] + Array(SaveMigration.V5_EMPTY_NODES) + Array(SaveMigration.V6_EMPTY_NODES) + Array(SaveMigration.V7_EMPTY_NODES), "v4 → v5 → v6 → v7 (Phase 7: + V6 nodes; Phase 8: + V7 nodes)")
 	assert_eq(SaveMigration.migrate(state, SaveMigration.CURRENT + 1), {}, "newer → corrupt")
 	var v4 := SaveMigration.migrate_3_to_4(state, {"day": 5})
 	assert_eq((v4.nodes as Dictionary).keys(), ["corpse_manager", "workshop", "gathering", "stonemasonry"], "P6: empty Phase-5 nodes")

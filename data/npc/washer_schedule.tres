@@ -173,14 +173,14 @@ start_minute = 950
 travel_minutes = 10
 activity = &"walk"
 animation = &"walk"
-path = PackedStringArray("v_dorn_door", "v_lights_gather")
+path = PackedStringArray("v_dorn_door", "v_well", "v_bridge")
 region = &"village"
 today_flag = &"fest_lights_day"
 
 [sub_resource type="Resource" id="p8_washer_20"]
 script = ExtResource("1_rnbvr")
 start_minute = 960
-path = PackedStringArray("v_lights_gather")
+path = PackedStringArray("v_bridge")
 region = &"village"
 today_flag = &"fest_lights_day"
 
@@ -190,7 +190,7 @@ start_minute = 990
 travel_minutes = 5
 activity = &"walk"
 animation = &"lantern_walk"
-path = PackedStringArray("v_lights_gather", "v_road_in")
+path = PackedStringArray("v_bridge", "v_road_in")
 region = &"village"
 today_flag = &"fest_lights_day"
 
@@ -209,7 +209,7 @@ start_minute = 1125
 travel_minutes = 12
 activity = &"walk"
 animation = &"lantern_walk"
-path = PackedStringArray("v_road_in", "v_lights_gather", "v_dorn_door")
+path = PackedStringArray("v_road_in", "v_bridge", "v_well", "v_dorn_door")
 region = &"village"
 today_flag = &"fest_lights_day"
 
