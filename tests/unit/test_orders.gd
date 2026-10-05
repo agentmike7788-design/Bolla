@@ -57,14 +57,14 @@ class CorpsesDouble extends Node:
 
 
 class GravesDouble extends Node:
-	var graves: Dictionary = {}
+	var by_id: Dictionary = {}
 	var sections: Dictionary = {}
 
 	func _init() -> void:
 		add_to_group(&"graveyard")
 
 	func get_grave(id: String) -> GraveRecord:
-		return graves.get(id)
+		return by_id.get(id)
 
 	func section_of(id: String) -> StringName:
 		return sections.get(id, &"yard")
@@ -74,6 +74,12 @@ class GravesDouble extends Node:
 		for id: String in sections:
 			if sections[id] == section_id:
 				out.append(id)
+		return out
+
+	func graves() -> Array[GraveRecord]:
+		var out: Array[GraveRecord] = []
+		for id: String in by_id:
+			out.append(by_id[id])
 		return out
 
 
@@ -370,7 +376,7 @@ func test_hagedorn_order_deadline_counts_from_her_arrival() -> void:
 	d.shape = &"stone_cross"
 	d.ornament = &"orn_poppy"
 	g.design = d.to_dict()
-	graves.graves["l_03"] = g
+	graves.by_id["l_03"] = g
 	r.dress = &"gown"
 	orders.note_grave_completed("l_03", "c_d1")
 	assert_eq(orders.state(&"o_hagedorn_place"), &"completed")
@@ -395,7 +401,7 @@ func test_next_delivery_is_the_first_corpse_after_acceptance() -> void:
 	g.id = "l_01"
 	g.state = GraveRecord.State.MARKED
 	g.corpse_id = "c_before"
-	graves.graves["l_01"] = g
+	graves.by_id["l_01"] = g
 	before.service_held = true
 	orders.note_grave_completed("l_01", "c_before")
 	assert_eq(orders.state(&"o_lenz_service"), &"accepted", "arrived before the acceptance")
@@ -412,7 +418,7 @@ func test_stone_order_completes_on_the_stone() -> void:
 	var g := GraveRecord.new()
 	g.id = "old_08"
 	g.state = GraveRecord.State.OLD
-	graves.graves["old_08"] = g
+	graves.by_id["old_08"] = g
 	orders.note_stone_set("old_08")
 	assert_eq(orders.state(&"o_mangold_stone"), &"accepted")
 	var d := StoneDesign.new()
@@ -432,7 +438,7 @@ func test_tend_needs_mornings_in_a_row() -> void:
 	var g := GraveRecord.new()
 	g.id = "l_01"
 	g.state = GraveRecord.State.MARKED
-	graves.graves["l_01"] = g
+	graves.by_id["l_01"] = g
 	orders.apply_morning(42)
 	assert_eq(orders.state(&"ob_tend"), &"accepted", "1/2")
 	orders.apply_morning(43)
@@ -482,3 +488,135 @@ func test_save_load_round_trip() -> void:
 	back.load_state({"states": {"o_esch_charcoal": "eaten", "nope": "accepted"}, "board_day": "x"})
 	assert_eq([back.state(&"o_esch_charcoal"), back.state(&"nope"), back.save_state().board_day], [&"", &"", 0], "tolerant")
 	back.free()
+
+
+# --- Phase 8 (P4, docs/PHASE8_DESIGN.md §3.4, W0-Notizen 12) -------------------------------------------
+
+func _specimens_with(held_in_inv: bool) -> Specimens:
+	var specimens := Specimens.new()
+	tree.root.add_child(specimens)
+	var spec := Phase7Fixtures.specimen(&"heart", SpecimenRecord.CONTAINER_JAR, 0.9, null, TimeManager.total_minutes())
+	specimens.load_state({"next": 9999, "records": [spec.to_dict()]})
+	if held_in_inv:
+		assert_true(inv.add_unique(&"specimen_jar", spec.uid))
+	return specimens
+
+
+func test_specimen_handover_goes_to_the_cabinet() -> void:
+	var specimens := _specimens_with(true)
+	var uid: String = specimens.held()[0]
+	orders._accept(orders.order_data(&"o_quast_specimen"), 41)
+	assert_true(orders.turn_in(&"o_quast_specimen", inv))
+	assert_false(inv.has_uid(uid))
+	assert_eq(specimens.get_record(uid).state, &"lectured", "W0-Notizen 12: in Quast's cabinet, no „held“ record left")
+	assert_eq(specimens.held(), PackedStringArray())
+	specimens.free()
+
+
+func test_post_load_repairs_the_orphaned_handover() -> void:
+	var specimens := _specimens_with(false)
+	var orphan: String = specimens.held()[0]
+	var kept := Phase7Fixtures.specimen(&"lung", SpecimenRecord.CONTAINER_JAR, 0.9, null, TimeManager.total_minutes())
+	var data := specimens.save_state()
+	(data.records as Array).append(kept.to_dict())
+	specimens.load_state(data)
+	tree.root.add_child(inv)
+	assert_true(inv.add_unique(&"specimen_jar", kept.uid))
+	orders.post_load()
+	assert_eq(specimens.get_record(orphan).state, &"held", "no completed specimen order – nothing to repair")
+	orders.load_state({"states": {"o_quast_specimen": "completed"}, "progress": {"done:o_quast_specimen": 1}})
+	orders.post_load()
+	assert_eq(specimens.get_record(orphan).state, &"lectured", "the Phase-7 handover state repaired")
+	assert_eq(specimens.get_record(kept.uid).state, &"held", "a piece in a pack stays")
+	tree.root.remove_child(inv)
+	specimens.free()
+
+
+func test_friend_orders_kinds_and_category() -> void:
+	for id: StringName in Phase8Fixtures.order_ids():
+		orders.order_table[id] = Phase8Fixtures.order(id)
+	orders.config = Phase8Fixtures.orders_config()
+	assert_false(orders.offers().has(&"of_esch_1"), "the Friendship offers friend orders")
+	assert_eq(OrderRules.friend_block_reason(_p8(&"of_esch_1"), {"state": &"completed"}, 0, orders.config), "", "may run again")
+	assert_eq(OrderRules.friend_block_reason(_p8(&"of_esch_1"), {"state": &"accepted"}, 0, orders.config), OrderRules.TEXT_ACCEPTED)
+	assert_eq(OrderRules.friend_block_reason(_p8(&"of_esch_1"), {}, 2, orders.config), OrderRules.TEXT_MAX_FRIEND)
+	assert_eq(OrderRules.friend_block_reason(_p8(&"of_liesel_1"), {"flags": {}}, 0, orders.config), OrderRules.TEXT_NOT_YET)
+	assert_true(OrderRules.meet_matches(_p8(&"of_quast_3"), &"surgeon", &"v_bridge", 1100))
+	assert_false(OrderRules.meet_matches(_p8(&"of_quast_3"), &"surgeon", &"v_bridge", 1200), "after 19:30")
+	assert_true(OrderRules.task_matches(_p8(&"of_liesel_2"), &"vigil", 10), "no window – any time (the next corpse)")
+	assert_false(OrderRules.task_matches(_p8(&"of_liesel_2"), &"archive_help", 1290))
+	assert_eq(OrderRules.gives(_p8(&"of_mangold_3")), {&"flower_seedlings": 3} as Dictionary[StringName, int])
+	assert_true(OrderRules.time_ok(_p8(&"of_quast_2"), 460))
+	assert_false(OrderRules.time_ok(_p8(&"of_quast_2"), 461))
+	# A finished friend order: no Phase-7 counters, no Phase-7 penalty on failing.
+	var done_before := GameState.get_stat(&"orders_done")
+	orders._accept(_p8(&"of_lenz_2"), 41)
+	orders.complete(&"of_lenz_2")
+	assert_eq([orders.done_count(), GameState.get_stat(&"orders_done")], [0, done_before])
+	orders._accept(_p8(&"of_quast_return_1"), 41)
+	orders.fail(&"of_quast_return_1")
+	assert_eq([orders.state(&"of_quast_return_1"), rel.calls, rep.calls], [&"failed", [], []], "the Friendship applies −6")
+
+
+func test_friend_tend_on_a_story_grave_with_candle_nights() -> void:
+	for id: StringName in Phase8Fixtures.order_ids():
+		orders.order_table[id] = Phase8Fixtures.order(id)
+	var r := Phase5Fixtures.corpse(81, &"old_age", &"d1_hagedorn")
+	corpses.recs.append(r)
+	var g := GraveRecord.new()
+	g.id = "l_01"
+	g.state = GraveRecord.State.MARKED
+	g.corpse_id = r.id
+	graves.by_id["l_01"] = g
+	graves.sections["l_01"] = &"linden"
+	var care := CandleCareDouble.new()
+	tree.root.add_child(care)
+	orders._accept(_p8(&"of_liesel_1_alt"), 41)
+	for day: int in [42, 43, 44]:
+		orders.apply_morning(day)
+	assert_eq(orders.state(&"of_liesel_1_alt"), Orders.STATE_ACCEPTED, "three mornings, but no candle night yet")
+	care.lit_nights = ["l_01"]
+	orders.apply_morning(45)
+	assert_eq(orders.state(&"of_liesel_1_alt"), Orders.STATE_COMPLETED, "Wiebke: tended + a night with a candle")
+	care.free()
+
+
+func test_flowers_fresh_three_kinless_graves_three_mornings() -> void:
+	for id: StringName in Phase8Fixtures.order_ids():
+		orders.order_table[id] = Phase8Fixtures.order(id)
+	var care := CandleCareDouble.new()
+	tree.root.add_child(care)
+	for i: int in 4:
+		var g := GraveRecord.new()
+		g.id = "old_%02d" % (i + 1)
+		g.state = GraveRecord.State.MARKED
+		graves.by_id[g.id] = g
+	orders._accept(_p8(&"of_mangold_3"), 41)
+	care.fresh = ["old_01", "old_02"]
+	orders.apply_morning(42)
+	assert_eq(orders._progress.get("of_mangold_3"), 0, "two of three")
+	care.fresh = ["old_01", "old_02", "old_03"]
+	orders.apply_morning(43)
+	orders.apply_morning(44)
+	assert_eq(orders.state(&"of_mangold_3"), Orders.STATE_ACCEPTED)
+	orders.apply_morning(45)
+	assert_eq(orders.state(&"of_mangold_3"), Orders.STATE_COMPLETED, "fresh until the third morning")
+	care.free()
+
+
+func _p8(id: StringName) -> OrderData:
+	return Phase8Fixtures.order(id)
+
+
+class CandleCareDouble extends Node:
+	var lit_nights: Array = []
+	var fresh: Array = []
+
+	func _init() -> void:
+		add_to_group(&"grave_care")
+
+	func lit_last_night(grave_id: String) -> bool:
+		return lit_nights.has(grave_id)
+
+	func flowers_state(grave_id: String) -> StringName:
+		return &"fresh" if fresh.has(grave_id) else &""
