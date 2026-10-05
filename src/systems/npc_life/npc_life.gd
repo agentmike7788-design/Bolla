@@ -162,9 +162,12 @@ func mood_on(npc_id: StringName, day: int) -> StringName:
 		_override_day = TimeManager.day
 	if day == TimeManager.day and mood_override.has(npc_id):
 		return mood_override[npc_id]
+	var data := villager(npc_id)
+	if data == null:
+		return MOOD_PLAIN  # §2.1.1: moods are the villagers'; Osric, Ilse, mourners stay as they are
 	var cfg := _cfg()
 	var base := MoodRules.roll(npc_id, day, cfg)
-	return MoodRules.apply_rules(base, npc_id, day, mood_events(day), cfg, villager(npc_id))
+	return MoodRules.apply_rules(base, npc_id, day, mood_events(day), cfg, data)
 
 
 ## Debug / tests: forces today's mood of `npc_id` (&"" = back to the rules).
