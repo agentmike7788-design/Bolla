@@ -11,10 +11,22 @@ extends RefCounted
 
 const CURRENT := 7
 ## Save ids of the Phase-8 system nodes / stores that get an empty state in migrate_6_to_7
-## (docs/PHASE8_DESIGN.md §3.1, §3.4, §5.2 step 3). Inserted only once W-Welt adds the nodes (like
-## V4–V6); SaveManager.without_absent_defaults already drops them while the world has no such node.
+## (docs/PHASE8_DESIGN.md §3.1, §3.4, §5.2 step 3). migrate_6_to_7 inserts them (like V4–V6);
+## SaveManager.without_absent_defaults drops them again while the world has no such node (W-Welt adds them).
 const V7_EMPTY_NODES: PackedStringArray = ["npc_life", "visitors", "grave_care", "apprentice", "friendship", "festivals",
 		"wanderers", "night_robber", "night_paths", "apprentice_box"]
+## Phase-8 statistics that start at 0 (§5.2 step 4; = the Phase-8 part of GameState.DEFAULT_STATS, §2.11,
+## incl. the ledger stats of the coin purposes apprentice, alms, peddler).
+const V7_NEW_STATS: Array[StringName] = [&"visits_seen", &"visits_total", &"wishes_done", &"wishes_failed", &"tips_coins",
+		&"flowers_planted", &"candles_lit", &"mortsafes_set", &"graves_disturbed", &"graves_closed", &"apprentice_days",
+		&"apprentice_jobs", &"apprentice_mistakes", &"apprentice_wage", &"friend_steps", &"favors_used", &"favors_returned",
+		&"alms_given", &"chatters_seen", &"listens", &"dances", &"night_visits_observed", &"robber_encounters",
+		&"coins_spent_apprentice", &"coins_spent_alms", &"coins_spent_peddler"]
+## §5.2 step 2: the new GraveRecord fields and their defaults (= GraveRecord.to_dict of a new grave).
+const V7_GRAVE_DEFAULTS := {"disturbed": false, "extra_lines": []}
+## §5.2 step 1: plots of the Lindenacker (layout ids l_01…l_12).
+const LINDEN_PLOT_PREFIX := "l_"
+const MINUTES_PER_DAY := 1440
 ## Save ids of the Phase-7 system nodes / stores that get an empty state in migrate_5_to_6
 ## (docs/PHASE7_DESIGN.md §3.1, §5.2 step 5 – §3.4 names the first six, §5.2 all nine; W0-Notizen).
 ## migrate_5_to_6 inserts them; SaveManager.without_absent_defaults drops them again while the world
@@ -309,12 +321,90 @@ static func migrate_5_to_6(state: Dictionary, _meta: Dictionary) -> Dictionary:
 	return out
 
 
-## STUB (P6) – docs/PHASE8_DESIGN.md §5.2 steps 1–6 on a deep copy of a v6 state. W0: the identity
-## (fail-safe – every from_dict / load_state tolerates the missing Phase-8 keys: CorpseRecord.kin_house "",
-## GraveRecord.disturbed false / extra_lines []). P6 adds kin_house (Village.mourning_house_for for
-## Lindenacker records from village_open_day), the grave fields, V7_EMPTY_NODES and the stats (§2.11).
+## docs/PHASE8_DESIGN.md §5.2 steps 1–6 on a deep copy of a v6 state (run exactly once; idempotent on
+## its own output).
+## 1. Corpse records + kin_house: for a record buried in the Lindenacker (grave l_*) that arrived on or
+##    after village_open_day and is no story corpse, the Phase-7 mourning ribbon of its arrival day
+##    (Village.mourning_house_for over VillageConfig.mourning_houses without the Hagedorn cottage), else "".
+##    An existing non-empty kin_house is kept.
+## 2. Graves + disturbed false, extra_lines [] (existing keys are kept). l_09…l_12 stay absent and come
+##    LOCKED from the layout (Graveyard's tolerant rule).
+## 3. Empty states for V7_EMPTY_NODES; SaveManager.without_absent_defaults drops them again while the
+##    world has no such node (like V4–V6).
+## 4. New stats (V7_NEW_STATS) = 0; no flags – p8_open comes from NpcLife.post_load.
+## 5./6. Player, inventories, specimens, Phase-7 orders (category ""), build mask: unchanged.
 static func migrate_6_to_7(state: Dictionary, _meta: Dictionary) -> Dictionary:
-	return state.duplicate(true)
+	var out := state.duplicate(true)
+	var autoloads := _sub(out, "autoloads")
+	var nodes := _sub(out, "nodes")
+	var game_state := _sub(autoloads, "GameState")
+	var stats := _sub(game_state, "stats")
+	var flags := _sub(game_state, "flags")
+	# 1. kin_house of the Lindenacker dead (= the Phase-7 mourning ribbon).
+	var open_day := _to_int(_get_key(flags, "village_open_day"), 0)
+	var village: Variant = nodes.get("village")
+	if village is Dictionary:
+		open_day = maxi(open_day, _to_int((village as Dictionary).get("open_day"), 0))
+	var houses := ribbon_houses()
+	var corpse_state: Variant = nodes.get("corpse_manager")
+	if corpse_state is Dictionary and (corpse_state as Dictionary).get("corpses") is Array:
+		for r: Variant in (corpse_state as Dictionary).corpses:
+			if not r is Dictionary:
+				continue
+			var record := r as Dictionary
+			var saved: Variant = record.get("kin_house")
+			if (saved is String or saved is StringName) and str(saved) != "":
+				continue
+			record["kin_house"] = String(kin_house_v6(record, open_day, houses))
+	# 2. The new grave fields.
+	var graveyard: Variant = nodes.get("graveyard")
+	if graveyard is Dictionary and (graveyard as Dictionary).get("graves") is Array:
+		for grave: Variant in (graveyard as Dictionary).graves:
+			if grave is Dictionary:
+				for key: String in V7_GRAVE_DEFAULTS:
+					if not (grave as Dictionary).has(key):
+						(grave as Dictionary)[key] = V7_GRAVE_DEFAULTS[key].duplicate() if V7_GRAVE_DEFAULTS[key] is Array else V7_GRAVE_DEFAULTS[key]
+	# 3. Empty states for the new system nodes / Jakob's box.
+	for id: String in V7_EMPTY_NODES:
+		if not nodes.get(id) is Dictionary:
+			nodes[id] = {}
+	# 4. The Phase-8 statistics start at 0.
+	for key: StringName in V7_NEW_STATS:
+		if not _has_key(stats, String(key)):
+			_set_key(stats, String(key), 0)
+	return out
+
+
+## §5.2 step 1 for one v6 record dictionary: the ribbon house of a non-story Lindenacker corpse that
+## arrived from `open_day` on (open_day 0 = the village never opened → ""), else &"".
+static func kin_house_v6(record: Dictionary, open_day: int, houses: PackedStringArray) -> StringName:
+	if open_day <= 0 or houses.is_empty():
+		return &""
+	if not str(record.get("grave_id", "")).begins_with(LINDEN_PLOT_PREFIX):
+		return &""
+	if str(record.get("story_id", "")) != "":
+		return &""
+	var arrival: Variant = record.get("arrival_total_minutes")
+	if not (arrival is int or arrival is float):
+		return &""
+	var day := floori(float(arrival) / MINUTES_PER_DAY) + 1
+	if day < open_day:
+		return &""
+	return Village.mourning_house_for(day, _to_int(record.get("seed"), 0), houses)
+
+
+## The houses of the Phase-7 mourning ribbon (VillageConfig.mourning_houses without Wiebke Hagedorn's
+## cottage – her ribbon is her own story, Village._ribbon_houses).
+static func ribbon_houses() -> PackedStringArray:
+	var cfg: VillageConfig = null
+	if Database.has_method(&"config"):
+		cfg = Database.config(&"village_config") as VillageConfig
+	var all: PackedStringArray = cfg.mourning_houses if cfg != null else VillageConfig.new().mourning_houses
+	var out := PackedStringArray()
+	for h: String in all:
+		if h != String(Village.HAGEDORN_HOUSE):
+			out.append(h)
+	return out
 
 
 ## §5.2 step 1 on one saved Inventory state ({slots, currency}) in place: TOOL items → "tools".
