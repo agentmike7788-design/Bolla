@@ -239,6 +239,12 @@ func test_only_lanterns_and_candles_glow() -> void:
 	for name: String in _static_names() + VILLAGERS.keys():
 		if name in MAY_GLOW:
 			continue
+		if VILLAGERS.has(name):   # Phase 8: the procession lantern (child mesh lantern_prop) may glow, the body not
+			var body := _rig(name).mesh_instance
+			for s: int in body.mesh.get_surface_count():
+				var mat := body.mesh.surface_get_material(s)
+				assert_false(mat != null and mat.resource_path == EMISSIVE, name + " body has no emissive surface")
+			continue
 		assert_false(EMISSIVE in _material_paths(name), name + " has no emissive surface")
 	for name: String in MAY_GLOW:
 		assert_true(EMISSIVE in _material_paths(name), name + " has its lantern / candle glass")
@@ -574,7 +580,9 @@ func test_villager_animations() -> void:
 		names.sort()
 		var expected: Array = (VILLAGERS[c].animations as Array).duplicate()
 		expected.sort()
-		assert_eq(names, expected, c + ": animation set")
+		# Phase 8 (P5) re-exported the villagers with additional clips (test_assets_phase8): the Phase-7 set stays
+		for a: String in expected:
+			assert_has(names, a, c + ": Phase-7 animation " + a)
 		for a: String in expected:
 			var anim := r.animation(a)
 			if anim == null:

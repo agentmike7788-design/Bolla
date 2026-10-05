@@ -194,7 +194,9 @@ def kiepe(name: str = "kiepe"):
         elif kind == "cup":
             parts.append(L.part("cyl", PR.TIN_DARK, loc=at, radius=0.032, depth=0.05, vertices=7, paint_kw={"ao": 0.1, "top": 0.4}))
         else:
-            parts.append(_xform(PR.lantern_hand(0.7, "kl"), at + Vector((0, 0, 0.06))))
+            kl = _xform(PR.lantern_hand(0.7, "kl"), at + Vector((0, 0, 0.06)))
+            L.set_mat(kl, L.MAT_PAINTED)   # an unlit spare lantern (no glow by day)
+            parts.append(kl)
     for k in range(5):   # little bells on a cord round the rim
         a = math.pi * (0.15 + 0.7 * k / 4)
         at = Vector((math.cos(a) * 0.255, 0.32 - math.sin(a) * 0.17, 1.4))

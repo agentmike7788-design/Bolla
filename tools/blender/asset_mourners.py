@@ -88,6 +88,7 @@ def export_figure(name: str, mesh, joints: dict, actions, *, extra=None, childre
     arm = rig.build_armature(j, extra=extra)
     rig.bind(mesh, arm)
     extras = {}
+    names = {e[0][:-5] if e[0].endswith("-loop") else e[0] for e in actions}
     for cname, bone, obj, show in children:
         obj.data.transform(Matrix.Translation(-shift))
         obj.name = cname
@@ -97,7 +98,7 @@ def export_figure(name: str, mesh, joints: dict, actions, *, extra=None, childre
         obj.parent_bone = bone
         bpy.context.view_layer.update()
         obj.matrix_world = Matrix.Identity(4)
-        extras[cname] = {"show_with": ",".join(show)}
+        extras[cname] = {"show_with": ",".join(c for c in show if c in names)}
     for cname, more in (extras_more or {}).items():
         extras.setdefault(cname, {}).update(more)
     for mname, bone, loc in markers:
@@ -173,7 +174,7 @@ def kneel_loop(k: dict):
     return fn
 
 
-def lay_flowers(bend: float = 38.0, drop: float = 0.14, reach: float = 92.0):
+def lay_flowers(bend: float = 50.0, drop: float = 0.25, reach: float = 80.0):
     """45 frames one-shot: bends forward (spine ~35-40 deg, the hips a little down and back), the right
     arm reaches forward and down to the mound, lays the bunch down at frame 30 (t = 0.667) and comes back
     up. (Arms hang from the spine: a forward bend swings them back, so the arm turns further forward.)"""
@@ -352,7 +353,8 @@ def _woman(name: str, cfg: dict):
     c = Vector((0.0, -0.03, 1.45))
     s = Vector((0.13, 0.132, 0.142)) * (1.0 if sl > 0.95 else 0.97)
     f = cfg["face"]
-    pts = _head(parts, c, s, cfg["skin"], seed=30, brow=cfg["hair"], ears=False, **f)
+    pts = _head(parts, c, s, cfg["skin"], seed=30, brow=cfg["hair"], ears=False, seg=24, rings=16,
+                cull=lambda n: n.z > 0.62 or (n.y > 0.3 and n.z > 0.2), **f)
     face = pts["face"]
     _hair(parts, face, cfg["hair"], cfg["hair_dark"], [(0.0, 0.42), (0.6, 0.34), (1.0, 0.08), (1.3, -0.16), (math.pi, -0.5)],
           out=0.005, crown=0.003, part_u=0.0, seed=31)
@@ -461,7 +463,7 @@ def _hat(c: Vector, s: Vector, color, dark, *, brim: float, crown_h: float, slou
     back), a rounded crown, a band. One object."""
     parts = []
     hz = c.z + s.z * 0.4
-    b = L.prim("cyl", loc=(0, c.y, hz), radius=1.0, depth=0.012, vertices=18, scale=(s.x + brim, s.y + brim, 1.0))
+    b = L.prim("cyl", loc=(0, c.y, hz), radius=1.0, depth=0.012, vertices=14, scale=(s.x + brim, s.y + brim, 1.0))
     for v in b.data.vertices:
         r = math.hypot(v.co.x / (s.x + brim), (v.co.y - c.y) / (s.y + brim))
         a = math.atan2(v.co.y - c.y, v.co.x)
@@ -529,7 +531,7 @@ def _man(name: str, cfg: dict):
                      (0.98, 0.2, 0.162, -0.01 + hb * 0.3), (1.1, 0.206, 0.168, -0.01 + hb * 0.6),
                      (1.22, 0.214, 0.17, hb * 0.9), (1.3, 0.21, 0.162, hb), (1.35, 0.17, 0.13, hb * 1.05),
                      (1.38, 0.1, 0.085, hb * 1.1)))
-        coat = _body(prof, cfg["coat"], cfg["coat_dark"], n=26, seed=3, fold=0.012, fold_top=0.95, part_front=0.3, part_w=0.45)
+        coat = _body(prof, cfg["coat"], cfg["coat_dark"], n=22, seed=3, fold=0.012, fold_top=0.95, part_front=0.3, part_w=0.45)
         _tint(coat, lambda co, nr: (1.0, L.scale_c(cfg["coat"], 1.2), 0.25 * max(0.0, nr.z)))
         parts.append(rig.weight_split_z(coat, waist, "hips", "spine"))
         for k in range(4):   # horn buttons
@@ -566,13 +568,14 @@ def _man(name: str, cfg: dict):
     c = Vector((0.0, hb - 0.03, top + 0.16))
     s = Vector((0.136, 0.14, 0.152)) * (0.98 if bent else 1.0)
     f = cfg["face"]
-    pts = _head(parts, c, s, cfg["skin"], seed=30, brow=cfg["hair_dark"] if not bent else cfg["hair"], **f)
+    pts = _head(parts, c, s, cfg["skin"], seed=30, brow=cfg["hair_dark"] if not bent else cfg["hair"], seg=24, rings=16,
+                cull=lambda n: n.z > 0.62, **f)
     face = pts["face"]
     _hair(parts, face, cfg["hair"], cfg["hair_dark"], [(0.0, 0.5), (0.5, 0.44), (1.0, 0.18), (1.3, -0.08), (1.7, -0.22),
                                                        (math.pi, -0.42)], out=0.006, crown=0.004, tuft=0.005, seed=31)
     if cfg["beard"] is not None:   # white stubble round the jaw
         beard, _, _ = _shell(face, [(0.0, -0.99)], top=[(0.0, -0.72), (0.4, -0.62), (0.8, -0.42), (1.3, -0.16), (1.62, -0.06)],
-                             phi=(-1.62, 1.62), out=0.004, crown=0.0, n=20, m=5, tuck=0.002, seed=32, name="stubble")
+                             phi=(-1.62, 1.62), out=0.004, crown=0.0, n=16, m=4, tuck=0.002, seed=32, name="stubble")
         _painted(beard, cfg["beard"], var=0.2, ao=0.0, top=0.2, seed=33, hue_shift=cfg["skin"])
         _tint(beard, lambda co, nr: (1.0, cfg["skin"], 0.55 + 0.3 * max(0.0, _n(co, 60.0, 3.0))))
         parts.append(W("head", beard))
