@@ -302,3 +302,53 @@ def add_action(arm, mesh, name: str, frames: int, pose_fn, post=None):
     ad.action = None
     reset_pose(arm)
     return act
+
+
+# --- Phase 8 pose helpers (additive; docs/PHASE8_DESIGN.md §8.2) -------------------------------------
+# Visits, mourning, the festivals. Rigid arms without elbows, legs without knees: every pose reads with
+# whole arm and leg parts. Kneeling = the hips sink, the legs swing back and slide into the skirt or
+# coat (feet rule), the upper body leans forward; "folded hands" = both arms slanted forward-inward so
+# the hands meet in front of the belly; nothing is brought to the chest or the face.
+
+def folded(fwd: float = 26.0, inward: float = 24.0) -> dict:
+    """Both arms slanted forward and inward, the hands meet in front of the belly."""
+    return {"arm_l": (-fwd, inward, 0.0), "arm_r": (-fwd, -inward, 0.0)}
+
+
+def bowed(head: float = 14.0, shoulders: float = 4.0) -> dict:
+    """Head lowered (+rx leans it forward), shoulders a little forward."""
+    return {"spine": (shoulders, 0.0, 0.0), "head": (head, 0.0, 0.0),
+            "arm_l": (-shoulders * 1.2, 2.0, 0.0), "arm_r": (-shoulders * 1.2, -2.0, 0.0)}
+
+
+def kneel(drop: float = 0.4, legs: float = 12.0, lean: float = 14.0, head: float = 18.0, back: float = 0.03,
+          hands: tuple = (30.0, 22.0)) -> dict:
+    """Kneeling on the ground: the hips sink by `drop` (and slide `back` m backwards), both legs swing
+    back by `legs` degrees and are pushed up into the skirt until the feet touch the ground (hidden under it), the upper
+    body leans forward, the head is bowed, the hands are folded."""
+    p = add({"hips": (0.0, 0.0, 0.0, 0.0, back, -drop), "spine": (lean, 0.0, 0.0), "head": (head, 0.0, 0.0),
+             "leg_l": (legs, 0.0, -3.0), "leg_r": (legs, 0.0, 3.0)}, folded(*hands))
+    p["feet"] = {"leg_l": 0.0, "leg_r": 0.0}
+    return p
+
+
+def weight_shift(t: float, amount: float = 1.0, cycles: int = 1) -> dict:
+    """Slow shift of the weight from one leg to the other (standing still a long while)."""
+    s = math.sin(TAU * t * cycles)
+    return {"hips": (0.0, 1.6 * amount * s, 0.0, 0.006 * amount * s, 0.0, 0.0),
+            "spine": (0.0, -1.4 * amount * s, 0.0), "feet": {"leg_l": 0.0, "leg_r": 0.0}}
+
+
+def step_in_place(t: float, lift: float = 0.035, sway: float = 3.0, beats: int = 2) -> dict:
+    """Swaying from foot to foot on the spot (the dance): the weight goes over, the free foot lifts."""
+    s = math.sin(TAU * t * beats)
+    return {"hips": (0.0, sway * s, 0.0, 0.012 * s, 0.0, 0.008 * abs(s)), "spine": (0.0, -sway * 0.8 * s, 0.0),
+            "head": (0.0, -sway * 0.4 * s, 0.0),
+            "feet": {"leg_l": lift * max(0.0, -s) ** 1.5, "leg_r": lift * max(0.0, s) ** 1.5}}
+
+
+def once(keys: list):
+    """One-shot pose function from key poses (ends exactly at the last key; wrap off)."""
+    def fn(t: float) -> dict:
+        return keyed(t, keys, wrap=False)
+    return fn
