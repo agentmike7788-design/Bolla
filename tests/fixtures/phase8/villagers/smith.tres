@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/villager_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"smith"
+display_name = "Ulrich Esch"
+role = "Schmied"
+dialogue_id = &"v_smith"
+shop_id = &"smith"
+home_door = &""
+gifts_liked = Array[StringName]([&"elder_wine", &"iron_ore"])
+start_value = 15
+specimen_delta = 0
+returned_delta = 0
+piety_sensitive = false
+remarks = Dictionary[StringName, PackedStringArray]({
+&"event_apprentice_hired": PackedStringArray("Der Wackernagel-Junge harkt jetzt bei dir? Gib ihm einen Stiel, der zu ihm passt."),
+&"friend": PackedStringArray("Hab dir einen Nagel geschmiedet. Einen guten. Für den Sarg von jemandem, der ihn verdient."),
+&"rep_disreputable": PackedStringArray("Hm."),
+&"rep_esteemed": PackedStringArray("Die Beschläge halten? Gut."),
+&"rep_renowned": PackedStringArray("Totengräber. Komm. Die Esse ist warm."),
+&"rep_respected": PackedStringArray("Gute Arbeit, oben. Hab\'s gesehen."),
+&"rep_unremarkable": PackedStringArray("Totengräber."),
+&"specimens": PackedStringArray("Quast will kleinere Messer. Ich mach sie. Ich mag es nicht.")
+})
+circle = Array[StringName]([&"house_brandt"])
+mood_lines = Dictionary[StringName, PackedStringArray]({
+&"cheerful": PackedStringArray("Heute klingt der Amboss richtig.", "Gutes Wetter zum Schmieden. Also jedes."),
+&"cross": PackedStringArray("Heute nicht, Totengräber. Morgen.", "Nicht jetzt. Das Eisen wird kalt."),
+&"low": PackedStringArray("Ich hab heute an den Meister gedacht. Lass gut sein.", "Das Feuer will nicht recht."),
+&"plain": PackedStringArray("Der Hammer wartet. Was gibt\'s?", "Eisen ist geduldig. Ich nicht.")
+})
+story_id = &"smith"
+favor_id = &"fav_smith"
+visit_grave = "old_01"
+visit_every_days = 6
+graveyard_npc = &"npc_smith_g"

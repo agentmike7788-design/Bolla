@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="FavorData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/friendship/favor_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"fav_surgeon"
+npc_id = &"surgeon"
+label = "Arznei umsonst"
+effect = &"free_medicine"
+params = {
+"items": {
+&"fever_tincture": 2
+}
+}
+cooldown_days = 5
+return_orders = Array[StringName]([&"of_quast_return_1", &"of_quast_return_2"])
+return_after_days = 1
+return_days = 3
+returned_rel = 4
+unreturned_rel = -6
+lock_days = 7

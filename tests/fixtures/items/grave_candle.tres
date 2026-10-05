@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"grave_candle"
+display_name = "Grabkerze"
+description = "Eine Kerze im Glas. Brennt vom Nachmittag bis zum Hahnenschrei auf einem Grab."
+category = 6
+max_stack = 10
+tool_kind = &""
+tool_tier = 0
+unique = false

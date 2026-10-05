@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"of_mangold_3"
+giver = &"grocer"
+recipient = &""
+kind = &"task"
+title = "Für die ohne Namen"
+request_text = "Drei Töpfe Christrosen, für drei, zu denen keiner kommt. Halt sie frisch bis zum dritten Morgen."
+thanks_text = "Danke, Totengräber."
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"action_id": &"flowers_fresh",
+"count": 3,
+"gives": {
+&"flower_seedlings": 3
+},
+"kinless": true,
+"mornings": 3
+}
+days_limit = 0
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 0
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 208
+accept_flag = &""
+category = &"friend"

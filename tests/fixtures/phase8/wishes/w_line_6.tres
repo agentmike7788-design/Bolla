@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="WishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/visitors/wish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"w_line_6"
+kind = &"line"
+ask_text = "Kannst du ‚Sein Tagwerk ist getan' darunter setzen?"
+done_text = "Da steht es. Jetzt ist es wahr."
+failed_text = "Nichts. Na ja. Du hast viele."
+line_text = "Sein Tagwerk ist getan"

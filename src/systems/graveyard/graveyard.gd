@@ -741,6 +741,18 @@ func replace_old_marker(grave_id: String, design: StoneDesign) -> bool:
 	return true
 
 
+## STUB (P2) – Phase 8 (docs/PHASE8_DESIGN.md §2.2.5, §3.4): a line chiselled onto a designed stone
+## with < 4 lines (wish line) → GraveRecord.extra_lines, StoneVisual rebuilt. W0: false.
+func append_inscription(_grave_id: String, _line: String) -> bool:
+	return false
+
+
+## STUB (P2) – Phase 8 (§2.4 Liesel 1): the name line of S5 („Lorenz Aschau (?)" → „Kaspar Dorn").
+## W0: false.
+func replace_name_line(_grave_id: String, _name: String) -> bool:
+	return false
+
+
 ## An accepted stone order targets `grave_id` (Orders, group orders) – only then may an old grave
 ## get a new stone (Stonemasonry, GravePlot).
 func has_stone_order(grave_id: String) -> bool:

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="FavorData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/friendship/favor_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"fav_innkeeper"
+npc_id = &"innkeeper"
+label = "Ein Wort im Krug"
+effect = &"rumor_shield"
+params = {
+"days": 5,
+"events": [&"lecture_rumor", &"visit_neglected", &"visit_disturbed", &"visit_noise", &"visit_specimen_rumor", &"grave_disturbed"]
+}
+cooldown_days = 5
+return_orders = Array[StringName]([&"of_rosine_return_1", &"of_rosine_return_2"])
+return_after_days = 1
+return_days = 3
+returned_rel = 4
+unreturned_rel = -6
+lock_days = 7

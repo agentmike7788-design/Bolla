@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="FriendStoryData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/friendship/friend_story_data.gd" id="1_luqhs"]
+[ext_resource type="Script" path="res://src/systems/friendship/friend_step_data.gd" id="2_dqvxo"]
+
+[sub_resource type="Resource" id="Resource_76mrx"]
+script = ExtResource("2_dqvxo")
+step = 1
+title = "Meister Gratz"
+min_value = 40
+conditions = PackedStringArray()
+order_ids = Array[StringName]([&"of_esch_1"])
+start_node = &"story_1"
+end_node = &"story_1_done"
+reward_rel = 6
+reward_flag = &"friend_smith_1"
+
+[sub_resource type="Resource" id="Resource_4436x"]
+script = ExtResource("2_dqvxo")
+step = 2
+title = "Ein Gitter für die Frischen"
+min_value = 55
+conditions = PackedStringArray("flag:robber_known")
+order_ids = Array[StringName]([&"of_esch_2"])
+start_node = &"story_2"
+end_node = &"story_2_done"
+reward_rel = 8
+reward_flag = &"friend_smith_2"
+
+[sub_resource type="Resource" id="Resource_egj2r"]
+script = ExtResource("2_dqvxo")
+step = 3
+title = "Feierabend unter der Linde"
+min_value = 70
+conditions = PackedStringArray()
+order_ids = Array[StringName]([&"of_esch_3"])
+start_node = &"story_3"
+end_node = &"story_3_done"
+reward_rel = 10
+reward_flag = &"friend_smith_3"
+
+[resource]
+script = ExtResource("1_luqhs")
+npc_id = &"smith"
+steps = Array[ExtResource("2_dqvxo")]([SubResource("Resource_76mrx"), SubResource("Resource_4436x"), SubResource("Resource_egj2r")])
+favor_id = &"fav_smith"

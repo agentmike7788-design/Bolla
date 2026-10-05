@@ -1,0 +1,82 @@
+[gd_resource type="Resource" script_class="NpcLifeConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/npc_life_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+open_flag = &"p8_open"
+open_day_flag = &"p8_open_day"
+unlock_flag = &"name_in_village_complete"
+intro_minute = 360
+moods = Array[StringName]([&"plain", &"cheerful", &"low", &"cross"])
+mood_weights = Dictionary[StringName, int]({
+&"cheerful": 15,
+&"cross": 5,
+&"low": 10,
+&"plain": 70
+})
+mood_rules = Array[Dictionary]([{
+"days": 0,
+"events": [],
+"mood": &"cheerful",
+"npcs": [],
+"trigger": &"festival"
+}, {
+"days": 2,
+"events": [],
+"mood": &"low",
+"npcs": [],
+"trigger": &"mourning_circle"
+}, {
+"days": 1,
+"events": [],
+"mood": &"cheerful",
+"npcs": [],
+"trigger": &"own_step"
+}, {
+"days": 1,
+"events": [&"lecture_rumor", &"specimen_sold_villager"],
+"mood": &"cross",
+"npcs": [&"priest", &"washer"],
+"trigger": &"rumor"
+}, {
+"days": 1,
+"events": [&"grave_disturbed"],
+"mood": &"cross",
+"npcs": [&"mayor"],
+"trigger": &"rumor"
+}, {
+"days": 0,
+"events": [],
+"mood": &"low",
+"npcs": [&"surgeon", &"priest", &"washer"],
+"trigger": &"sick_light"
+}])
+talk_gain_by_mood = Dictionary[StringName, int]({
+&"cheerful": 2,
+&"cross": 0,
+&"low": 1,
+&"plain": 1
+})
+listen_minutes = 10
+chatter_distance = 10.0
+chatter_line_seconds = 3.5
+reactions = Dictionary[StringName, int]({
+&"apprentice_hired": 2,
+&"grave_disturbed": 2,
+&"jakob_scolded": 2,
+&"kathrein_danced": 2,
+&"lights_all": 2,
+&"noise_at_grave": 2,
+&"robber_let_go": 2,
+&"robber_reported": 2,
+&"wish_done": 2
+})
+goal_levels = 2
+goal_wishes = 5
+goal_kin = 3
+goal_steps = 6
+goal_full_stories = 1
+goal_insight = &"i_underlined"
+chapter_id = &"who_comes_up"
+goal_flag = &"who_comes_up_complete"

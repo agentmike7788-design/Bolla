@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="InsightData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/insight_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"i_underlined"
+order = 30
+title = "Der unterstrichene Name"
+question = "Wen hat Lorenz verdächtigt?"
+text = "Lorenz hat den Wundarzt unterstrichen. Quast geht zu jedem Krankenlicht, auch wenn ihn keiner holt, und er schreibt nicht auf, was er dort lässt. Vielleicht wollte Lorenz ihn fragen. Vielleicht hat er es nicht mehr gewagt. Auf der Seite steht nicht, welches von beiden."
+requires = Array[StringName]([&"c_n_veit", &"c_n_kladde"])
+sets_flag = &"insight_underlined"
+optional = false
+rename_story = &""
+rename_to = ""
+any_clues = Array[StringName]([&"c_n_quast_visit", &"c_n_lenz_visit", &"c_n_liesel_watch", &"c_n_ott_three"])
+any_count = 2

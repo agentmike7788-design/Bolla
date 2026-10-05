@@ -106,6 +106,10 @@ var hidden_cause: StringName = &""
 var returned: Array[StringName] = []
 ## The cause the player deduced (Deductions.deduce; &"" = not deduced).
 var revealed_cause: StringName = &""
+# Phase 8 (docs/PHASE8_DESIGN.md §2.2.1, §3.4, §5.1) – in to_dict / from_dict (missing = default).
+## The mourning household (Village.mourning_house of the arrival day; set at the delivery from
+## village_open on – CorpseManager, P2; &"" = no kin, no visits).
+var kin_house: StringName = &""
 
 
 func has_trait(t: StringName) -> bool:
@@ -221,6 +225,7 @@ func to_dict() -> Dictionary:
 		"hidden_cause": hidden_cause,
 		"returned": returned.duplicate(),
 		"revealed_cause": revealed_cause,
+		"kin_house": kin_house,
 	}
 
 
@@ -276,6 +281,8 @@ static func from_dict(d: Dictionary) -> CorpseRecord:
 	r.hidden_cause = StringName(_to_str(d.get("hidden_cause"), ""))
 	r.returned = _only(_to_name_array(d.get("returned")), r.harvested)
 	r.revealed_cause = StringName(_to_str(d.get("revealed_cause"), ""))
+	# Phase 8 (§3.4, §5.1) – missing = "".
+	r.kin_house = StringName(_to_str(d.get("kin_house"), ""))
 	return r
 
 

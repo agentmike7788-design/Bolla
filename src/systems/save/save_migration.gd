@@ -3,12 +3,18 @@ extends RefCounted
 ## Upgrades a decoded save state ({autoloads, nodes}) to the CURRENT format
 ## (docs/PHASE3_DESIGN.md §5.2, §3.4 "Speichern"; docs/PHASE4_DESIGN.md §5.2: chain 1→2→3;
 ## docs/PHASE5_DESIGN.md §5.2: chain 1→2→3→4; docs/PHASE6_DESIGN.md §5.2: chain 1→…→5;
-## docs/PHASE7_DESIGN.md §5.2: chain 1→…→6). Applied by SaveFileIO.read_doc after
+## docs/PHASE7_DESIGN.md §5.2: chain 1→…→6; docs/PHASE8_DESIGN.md §5.2: chain 1→…→7). Applied by
+## SaveFileIO.read_doc after
 ## decode_state; the normal load path follows and the next save writes CURRENT.
 ## Pure: never touches the scene tree, never changes its input or an autoload (migrate_3_to_4 only
 ## reads item categories from Database).
 
-const CURRENT := 6
+const CURRENT := 7
+## Save ids of the Phase-8 system nodes / stores that get an empty state in migrate_6_to_7
+## (docs/PHASE8_DESIGN.md §3.1, §3.4, §5.2 step 3). Inserted only once W-Welt adds the nodes (like
+## V4–V6); SaveManager.without_absent_defaults already drops them while the world has no such node.
+const V7_EMPTY_NODES: PackedStringArray = ["npc_life", "visitors", "grave_care", "apprentice", "friendship", "festivals",
+		"wanderers", "night_robber", "night_paths", "apprentice_box"]
 ## Save ids of the Phase-7 system nodes / stores that get an empty state in migrate_5_to_6
 ## (docs/PHASE7_DESIGN.md §3.1, §5.2 step 5 – §3.4 names the first six, §5.2 all nine; W0-Notizen).
 ## migrate_5_to_6 inserts them; SaveManager.without_absent_defaults drops them again while the world
@@ -90,6 +96,8 @@ static func migrate(state: Dictionary, from_version: int, meta: Dictionary = {})
 		out = migrate_4_to_5(out, meta)
 	if from_version <= 5:
 		out = migrate_5_to_6(out, meta)
+	if from_version <= 6:
+		out = migrate_6_to_7(out, meta)
 	return out
 
 
@@ -299,6 +307,14 @@ static func migrate_5_to_6(state: Dictionary, _meta: Dictionary) -> Dictionary:
 		if not _has_key(stats, String(key)):
 			_set_key(stats, String(key), 0)
 	return out
+
+
+## STUB (P6) – docs/PHASE8_DESIGN.md §5.2 steps 1–6 on a deep copy of a v6 state. W0: the identity
+## (fail-safe – every from_dict / load_state tolerates the missing Phase-8 keys: CorpseRecord.kin_house "",
+## GraveRecord.disturbed false / extra_lines []). P6 adds kin_house (Village.mourning_house_for for
+## Lindenacker records from village_open_day), the grave fields, V7_EMPTY_NODES and the stats (§2.11).
+static func migrate_6_to_7(state: Dictionary, _meta: Dictionary) -> Dictionary:
+	return state.duplicate(true)
 
 
 ## §5.2 step 1 on one saved Inventory state ({slots, currency}) in place: TOOL items → "tools".

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/crafting/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"memorial_plate"
+display_name = "Namenstafel"
+inputs = Dictionary[StringName, int]({
+&"gold_leaf": 1,
+&"ink": 1,
+&"workstone": 1
+})
+output_id = &"memorial_plate"
+output_amount = 1
+craft_minutes = 40
+station = &"mason"
+category = &"grave"
+background = false
+requires_flag = &"friend_innkeeper_2"

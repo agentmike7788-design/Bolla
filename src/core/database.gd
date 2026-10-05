@@ -45,6 +45,16 @@ const TEACHING_DIR := "res://data/anatomy/teachings"
 const DEDUCTION_DIR := "res://data/anatomy/deductions"
 ## Region configs data/config/regions/<region_id>.tres (RegionConfig, keyed by region_id).
 const REGION_CONFIG_DIR := "res://data/config/regions"
+# Phase 8 (docs/PHASE8_DESIGN.md §3.5)
+const CHATTER_DIR := "res://data/npc_life/chatter"
+const KIN_DIR := "res://data/visitors/kin"
+const WISH_DIR := "res://data/visitors/wishes"
+const APPRENTICE_TASK_DIR := "res://data/apprentice/tasks"
+const FRIEND_STORY_DIR := "res://data/friendship/stories"
+const FAVOR_DIR := "res://data/friendship/favors"
+const FESTIVAL_DIR := "res://data/festivals"
+const WANDERER_DIR := "res://data/village/wanderers"
+const NIGHT_PATH_DIR := "res://data/night/paths"
 
 var _items: Dictionary = {}       # StringName -> ItemData
 var _recipes: Dictionary = {}     # StringName -> RecipeData
@@ -76,6 +86,15 @@ var _sets: Dictionary = {}        # StringName -> CollectionSetData
 var _teachings: Dictionary = {}   # StringName -> TeachingData
 var _deductions: Dictionary = {}  # StringName -> DeductionData
 var _region_configs: Dictionary = {}  # StringName (region_id) -> RegionConfig
+var _chatters: Dictionary = {}    # StringName -> ChatterData
+var _kin: Dictionary = {}         # StringName (kin_id) -> KinData
+var _wishes: Dictionary = {}      # StringName -> WishData
+var _apprentice_tasks: Dictionary = {}  # StringName -> ApprenticeTaskData
+var _friend_stories: Dictionary = {}    # StringName (npc_id) -> FriendStoryData
+var _favors: Dictionary = {}      # StringName -> FavorData
+var _festivals: Dictionary = {}   # StringName -> FestivalData
+var _wanderers: Dictionary = {}   # StringName -> WandererData
+var _night_paths: Dictionary = {} # StringName -> NightPathData
 var _icons: Dictionary = {}       # StringName -> Texture2D
 var _placeholder: Texture2D
 
@@ -121,6 +140,15 @@ func reload() -> void:
 	_teachings = _load_dir(TEACHING_DIR, "id")
 	_deductions = _load_dir(DEDUCTION_DIR, "id")
 	_region_configs = _load_dir(REGION_CONFIG_DIR, "region_id")
+	_chatters = _load_dir(CHATTER_DIR, "id")
+	_kin = _load_dir(KIN_DIR, "kin_id")
+	_wishes = _load_dir(WISH_DIR, "id")
+	_apprentice_tasks = _load_dir(APPRENTICE_TASK_DIR, "id")
+	_friend_stories = _load_dir(FRIEND_STORY_DIR, "npc_id")
+	_favors = _load_dir(FAVOR_DIR, "id")
+	_festivals = _load_dir(FESTIVAL_DIR, "id")
+	_wanderers = _load_dir(WANDERER_DIR, "id")
+	_night_paths = _load_dir(NIGHT_PATH_DIR, "id")
 
 
 func item(id: StringName) -> Resource:
@@ -411,6 +439,99 @@ func deductions() -> Array:
 ## data/config/regions/<region_id>.tres (RegionConfig), null if unknown.
 func region_config(id: StringName) -> Resource:
 	return _region_configs.get(id)
+
+
+# --- Phase 8 (docs/PHASE8_DESIGN.md §3.5) -------------------------------------------------------
+# Empty / missing folders = empty lists.
+
+## data/npc_life/chatter/<id>.tres (ChatterData), null if unknown.
+func chatter(id: StringName) -> Resource:
+	return _chatters.get(id)
+
+
+## All chatters, sorted by id.
+func chatters() -> Array:
+	return _sorted(_chatters.values(), "id")
+
+
+## data/visitors/kin/<kin_id>.tres (KinData), null if unknown.
+func kin(kin_id: StringName) -> Resource:
+	return _kin.get(kin_id)
+
+
+## All kin (households and visiting villagers), sorted by kin_id.
+func kin_list() -> Array:
+	return _sorted(_kin.values(), "kin_id")
+
+
+## data/visitors/wishes/<id>.tres (WishData), null if unknown.
+func wish(id: StringName) -> Resource:
+	return _wishes.get(id)
+
+
+## All wish templates, sorted by id.
+func wishes() -> Array:
+	return _sorted(_wishes.values(), "id")
+
+
+## data/apprentice/tasks/<id>.tres (ApprenticeTaskData), null if unknown.
+func apprentice_task(id: StringName) -> Resource:
+	return _apprentice_tasks.get(id)
+
+
+## All apprentice tasks, sorted by `order` (rake, weed, water, candle; ties by id).
+func apprentice_tasks() -> Array:
+	return _sorted(_apprentice_tasks.values(), "order")
+
+
+## data/friendship/stories/<npc_id>.tres (FriendStoryData), null if unknown.
+func friend_story(npc_id: StringName) -> Resource:
+	return _friend_stories.get(npc_id)
+
+
+## All friendship stories, sorted by npc_id.
+func friend_stories() -> Array:
+	return _sorted(_friend_stories.values(), "npc_id")
+
+
+## data/friendship/favors/<id>.tres (FavorData), null if unknown.
+func favor(id: StringName) -> Resource:
+	return _favors.get(id)
+
+
+## All favours, sorted by id.
+func favors() -> Array:
+	return _sorted(_favors.values(), "id")
+
+
+## data/festivals/<id>.tres (FestivalData), null if unknown.
+func festival(id: StringName) -> Resource:
+	return _festivals.get(id)
+
+
+## All festivals, sorted by calendar_day (ties by id).
+func festivals() -> Array:
+	return _sorted(_festivals.values(), "calendar_day")
+
+
+## data/village/wanderers/<id>.tres (WandererData), null if unknown.
+func wanderer(id: StringName) -> Resource:
+	return _wanderers.get(id)
+
+
+## All wanderers, sorted by id.
+func wanderers() -> Array:
+	return _sorted(_wanderers.values(), "id")
+
+
+## data/night/paths/<id>.tres (NightPathData), null if unknown.
+func night_path(id: StringName) -> Resource:
+	return _night_paths.get(id)
+
+
+## All sick-light paths, sorted by start_offset (ties by id).
+func night_paths() -> Array:
+	return _sorted(_night_paths.values(), "start_offset")
 
 
 func corpse_tables() -> Resource:

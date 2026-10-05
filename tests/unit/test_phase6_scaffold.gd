@@ -105,7 +105,7 @@ const EXISTING_ARITY := [
 	["res://src/systems/corpse/corpse_manager.gd", "relocate_table_corpse", 3],
 	["res://src/systems/corpse/corpse_manager.gd", "mark_service", 2],
 	["res://src/systems/graveyard/graveyard.gd", "lift_old", 1],
-	["res://src/systems/ghosts/ghost_mood.gd", "score", 7],
+	["res://src/systems/ghosts/ghost_mood.gd", "score", 8],  # Phase 8 W0: + care
 	["res://src/entities/player/player.gd", "set_in_interior", 2],
 	["res://src/world/hut_interior/hut_portal.gd", "travel", 5],
 	["res://src/world/hut_interior/hut_portal.gd", "arrive", 4],
@@ -538,12 +538,12 @@ func test_database_phase6_folders() -> void:
 
 
 func test_save_format_v5_and_migration_chain() -> void:
-	assert_eq(SaveMigration.CURRENT, 6)  # Phase 7 W0: v6
-	assert_eq(SaveFileIO.FORMAT_VERSION, 6)
-	assert_eq(SaveManager.FORMAT_VERSION, 6)
+	assert_eq(SaveMigration.CURRENT, 7)  # Phase 7 W0: v6, Phase 8 W0: v7
+	assert_eq(SaveFileIO.FORMAT_VERSION, 7)
+	assert_eq(SaveManager.FORMAT_VERSION, 7)
 	assert_eq(SaveMigration.V5_EMPTY_NODES, PackedStringArray(["buildings", "ossuary", "chapel", "shed_store"]))
 	var state := {"autoloads": {"TimeManager": {"day": 5}, "GameState": {"stats": {}, "flags": {}}}, "nodes": {"corpse_manager": {}}}
-	assert_eq(SaveMigration.migrate(state, 6), state, "current version unchanged (Phase 7: v6)")
+	assert_eq(SaveMigration.migrate(state, SaveMigration.CURRENT), state, "current version unchanged (Phase 7: v6, Phase 8: v7)")
 	assert_eq(SaveMigration.migrate(state, SaveMigration.CURRENT + 1), {}, "newer → corrupt")
 	var v5 := SaveMigration.migrate_4_to_5(state, {"day": 5})
 	assert_false(is_same(v5, state), "deep copy")

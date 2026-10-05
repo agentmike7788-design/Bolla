@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/villager_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"surgeon"
+display_name = "Severin Quast"
+role = "Wundarzt und Geburtshelfer"
+dialogue_id = &"v_surgeon"
+shop_id = &"surgeon"
+home_door = &"door_surgery"
+gifts_liked = Array[StringName]([&"spirits", &"herb_bundle"])
+start_value = 20
+specimen_delta = 2
+returned_delta = 0
+piety_sensitive = false
+remarks = Dictionary[StringName, PackedStringArray]({
+&"friend": PackedStringArray("Kommen Sie heute Abend auf ein Glas. Branntwein, aber der zum Trinken."),
+&"piety_devout": PackedStringArray("Sie riechen nach Wacholder und Wachs. Die Ihren haben es gut."),
+&"piety_hardhearted": PackedStringArray("Sie sind zügig geworden, Totengräber. Ich sage es ohne Vorwurf."),
+&"rep_disreputable": PackedStringArray("Totengräber. Man redet über Sie. Über mich auch. Wir sollten uns setzen."),
+&"rep_esteemed": PackedStringArray("Man spricht in der Stadt von Ihrer Arbeit. Nicht laut."),
+&"rep_renowned": PackedStringArray("Totengräber. Die Toten lehren die Lebenden. Bei Ihnen lernen sie Anstand."),
+&"rep_respected": PackedStringArray("Totengräber. Sie haben ruhige Hände, sagt man. Das ist selten."),
+&"rep_unremarkable": PackedStringArray("Guten Tag. Waschen Sie sich die Hände, bevor Sie essen."),
+&"specimens": PackedStringArray("Die Universität fragt nach Ihnen. Ich sage, Sie seien zuverlässig. Das stimmt.")
+})
+circle = Array[StringName]([])
+mood_lines = Dictionary[StringName, PackedStringArray]({
+&"cheerful": PackedStringArray("Heute ist keiner gestorben. Ich zähle das.", "Sie kommen mir gelegen, Totengräber."),
+&"cross": PackedStringArray("Heute nicht, Totengräber. Morgen.", "Ich habe keine Zeit für Höflichkeiten."),
+&"low": PackedStringArray("Ich habe heute Nacht nicht geschlafen. Das sieht man, ich weiß.", "Es gibt Fenster, an denen ich nicht vorbeigehen kann."),
+&"plain": PackedStringArray("Totengräber. Sie sehen gesund aus. Leider.", "Was führt Sie her? Ein Wehwehchen?")
+})
+story_id = &"surgeon"
+favor_id = &"fav_surgeon"
+visit_grave = ""
+visit_every_days = 0
+graveyard_npc = &""

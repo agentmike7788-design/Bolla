@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="GraveCareConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/grave_care/grave_care_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+flower_item = &"flower_seedlings"
+plant_minutes = 15
+flower_fresh_minutes = 2880
+flower_wilt_minutes = 5760
+water_minutes = 5
+can_item = &"watering_can"
+can_fills = 6
+refill_minutes = 2
+bouquet_minutes = 2880
+wreath_item = &"wax_wreath"
+candle_item = &"grave_candle"
+candle_minutes = 3
+candle_from_minute = 900
+candle_until_minute = 420
+mortsafe_item = &"mortsafe"
+mortsafe_set_minutes = 20
+mortsafe_remove_minutes = 10
+mortsafe_min_days = 10
+close_minutes = 30
+line_minutes = 30
+line_item = &"ink"
+care_cap = 2
+disturbed_mood = -3
+lights_candle_mood = 2

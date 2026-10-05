@@ -16,3 +16,7 @@ extends Resource
 ## Story corpse renamed on unlock (S5 → "Kaspar Dorn").
 @export var rename_story: StringName = &""
 @export var rename_to: String = ""
+# Phase 8 (docs/PHASE8_DESIGN.md §1.6, §3.4): linkable when all `requires` and at least any_count of
+# any_clues are found (i_underlined: c_n_veit + c_n_kladde + 2 of 4); any_count 0 = no such group.
+@export var any_clues: Array[StringName] = []
+@export var any_count: int = 0

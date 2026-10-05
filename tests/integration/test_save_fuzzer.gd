@@ -225,7 +225,7 @@ func test_fuzz_v5_save_with_phase6_parts() -> void:
 	var text := await _make_v5_save()
 	var doc: Dictionary = JSON.parse_string(text)
 	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, "current format (v5)")
-	assert_eq(SaveFileIO.FORMAT_VERSION, 6)  # Phase 7 W0: v6
+	assert_eq(SaveFileIO.FORMAT_VERSION, 7)  # Phase 7 W0: v6, Phase 8 W0: v7
 	await _fuzz_text(text, "p6", P6_SHARE)
 	var state := SaveFileIO.decode_state(doc.get("data"))
 	var paths: Array = []
@@ -995,7 +995,7 @@ func test_fuzz_v5_fixtures() -> void:
 func test_fuzz_v6_phase7_parts() -> void:
 	var text := await _make_v5_save()
 	var doc: Dictionary = JSON.parse_string(text)
-	assert_eq(int(doc.format_version), 6, "saved as v6")
+	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, "saved as the current format (Phase 7: v6, Phase 8: v7)")
 	var state := SaveFileIO.decode_state(doc.get("data"))
 	for case: int in 8:
 		var st := state.duplicate(true)

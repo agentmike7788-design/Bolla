@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ApprenticeTaskData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/apprentice/apprentice_task_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"rake"
+label = "Laub harken"
+minutes = PackedInt32Array(0, 15, 10)
+tool_item = &"apprentice_rake"
+consumes = &""
+spot_kind = &"leaves"
+from_minute = 0
+animation = &"rake"
+mistake_kind = &"neighbour_leaves"
+mistake_text = "Oh. Das war nicht das richtige Grab."
+order = 1

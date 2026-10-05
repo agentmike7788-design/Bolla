@@ -12,3 +12,6 @@ extends Resource
 @export var finale_story: StringName = &"s5_moor"
 @export_multiline var key_fallback_text: String = ""
 @export var reserve_note: String = "Heute nichts. Aber halt eine Grube frei."
+# Phase 8 (docs/PHASE8_DESIGN.md §1.6, §14.1 – user decision 04.10.2026): whose name Lorenz underlined –
+# &"priest" | &"surgeon" | &"washer"; selects the text variant of i_underlined.
+@export var underlined: StringName = &"washer"

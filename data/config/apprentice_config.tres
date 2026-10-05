@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ApprenticeConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/apprentice/apprentice_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"apprentice"
+hire_flag = &"apprentice_hired"
+arrive_minute = 495
+start_minute = 510
+lunch = Vector2i(720, 750)
+end_minute = 930
+wage = 3
+unpaid_limit = 3
+day_off_mod = 7
+day_off_rest = 2
+practice_jobs = 12
+teach_distance = 4.0
+mistake_rate = PackedFloat32Array(1, 0.08, 0.02)
+morale_start = 3
+morale_fast = 4
+morale_slow = 1
+fast_factor = 0.9
+slow_factor = 1.2
+scold_mistake_factor = 0.5
+board_lines = 3
+box_slots = 6

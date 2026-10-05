@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChatterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/chatter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ch_gate_peddler"
+region = &"graveyard"
+npcs = Array[StringName]([&"peddler", &"beggar"])
+place = &"peddler_gate"
+window = Vector2i(940, 980)
+conditions = PackedStringArray("p8_open")
+lines = PackedStringArray("Immer noch hier, Veit?", "Wo soll ich hin? Die Toten geben nichts, aber sie nehmen auch nichts.")
+sets_flag = &""

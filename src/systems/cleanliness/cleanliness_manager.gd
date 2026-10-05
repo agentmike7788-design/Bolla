@@ -123,6 +123,18 @@ func tend(spot_id: String, inv: Inventory) -> bool:
 	return true
 
 
+## STUB (P3) – Phase 8 (docs/PHASE8_DESIGN.md §2.5.2, §3.4): the apprentice's tending – the same effect
+## as tend() without the inventory check (actor &"apprentice"). W0: false.
+func tend_by(_spot_id: String, _actor: StringName) -> bool:
+	return false
+
+
+## STUB (P3) – Phase 8 (§2.3, §2.6.3, §3.3): NightRobber sets the care spot of a dug-at / disturbed grave
+## to `level` (+1 / 3). §3.4 names no signature – W0 fixes this one. W0: inert.
+func set_level(_spot_id: String, _level: int) -> void:
+	pass
+
+
 func penalty() -> int:
 	var by_level := _cfg().penalty_by_level
 	var sum := 0

@@ -17,6 +17,9 @@ extends Resource
 ## Action → tool kind whose tier sets its minutes.
 @export var action_tools: Dictionary[StringName, StringName] = {&"dig": &"shovel", &"bury": &"shovel"}
 @export var tool_minute_step: int = 5
+# Phase 8 (docs/PHASE8_DESIGN.md §2.2.3, §3.4): loud actions (TimedAction keyword noisy) – ≤ 8 m from a
+# mourner they cost reputation (Visitors.note_noise).
+@export var noisy_actions: Array[StringName] = [&"dig", &"chop", &"pick", &"hammer", &"chisel", &"saw", &"quarry"]
 
 
 func real_seconds_for(game_minutes: int) -> float:

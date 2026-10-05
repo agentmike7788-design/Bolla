@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="FavorData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/friendship/favor_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"fav_mayor"
+npc_id = &"mayor"
+label = "Der Nachtwächter"
+effect = &"night_watch"
+params = {
+"rep_event": &"fenner_watch"
+}
+cooldown_days = 5
+return_orders = Array[StringName]([&"of_fenner_return_1", &"of_fenner_return_2"])
+return_after_days = 1
+return_days = 3
+returned_rel = 4
+unreturned_rel = -6
+lock_days = 7

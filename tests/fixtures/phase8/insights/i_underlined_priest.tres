@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="InsightData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/insight_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"i_underlined"
+order = 30
+title = "Der unterstrichene Name"
+question = "Wen hat Lorenz verdächtigt?"
+text = "Lorenz hat den Pfarrer unterstrichen. Lenz schreibt die Namen ins Sterbebuch, manchmal, bevor einer tot ist, und er geht zu jedem, der den Versehgang braucht. Vielleicht wusste Lorenz, warum die Tinte früher da ist. Vielleicht hat er sich nur gewundert. Auf der Seite steht nicht, welches von beiden."
+requires = Array[StringName]([&"c_n_veit", &"c_n_kladde"])
+sets_flag = &"insight_underlined"
+optional = false
+rename_story = &""
+rename_to = ""
+any_clues = Array[StringName]([&"c_n_quast_visit", &"c_n_lenz_visit", &"c_n_liesel_watch", &"c_n_ott_three"])
+any_count = 2

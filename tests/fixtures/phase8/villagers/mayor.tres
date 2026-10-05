@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/villager_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"mayor"
+display_name = "Gottlieb Fenner"
+role = "Schultheiß"
+dialogue_id = &"v_mayor"
+shop_id = &""
+home_door = &"door_office"
+gifts_liked = Array[StringName]([&"ink", &"honey_cake"])
+start_value = 30
+specimen_delta = 0
+returned_delta = 0
+piety_sensitive = false
+remarks = Dictionary[StringName, PackedStringArray]({
+&"event_grave_disturbed": PackedStringArray("Ein offenes Grab auf dem Hügel. Das kommt ins Protokoll, Totengräber. Nicht gegen dich."),
+&"friend": PackedStringArray("Unter uns: Die Beine sind besser. Amtlich weiß ich davon nichts."),
+&"rep_disreputable": PackedStringArray("Totengräber. Es liegen Beschwerden vor. Schriftlich. Guten Tag."),
+&"rep_esteemed": PackedStringArray("Ich habe Sie lobend ins Protokoll geschrieben. Zweimal. Das ist ein Rekord."),
+&"rep_renowned": PackedStringArray("Mein verehrter Totengräber! Ich arbeite an einer Satzung für Ihre Ehrung."),
+&"rep_respected": PackedStringArray("Totengräber! Die Gemeinde ist zufrieden. Das darf ich amtlich sagen."),
+&"rep_unremarkable": PackedStringArray("Guten Tag. Die Amtsstube hat bis sechzehn Uhr geöffnet."),
+&"specimens": PackedStringArray("Man redet über Gläser vom Hügel. Ich habe es nicht zu Protokoll genommen. Noch nicht.")
+})
+circle = Array[StringName]([&"house_sieber"])
+mood_lines = Dictionary[StringName, PackedStringArray]({
+&"cheerful": PackedStringArray("Die Beine tragen heute. Das ist schon was.", "Ein ordentlicher Tag. Alles in den Büchern."),
+&"cross": PackedStringArray("Heute nicht, Totengräber. Morgen.", "Das kommt ins Protokoll. Nicht gegen dich. Noch nicht."),
+&"low": PackedStringArray("Die Beine. Lassen wir das.", "Heute ist mir das Amtshaus zu groß."),
+&"plain": PackedStringArray("Totengräber. Die Gemeinde hört.", "Kurz, bitte. Die Akten warten.")
+})
+story_id = &"mayor"
+favor_id = &"fav_mayor"
+visit_grave = ""
+visit_every_days = 0
+graveyard_npc = &"npc_mayor_g"

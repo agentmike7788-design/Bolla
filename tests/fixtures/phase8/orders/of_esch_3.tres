@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"of_esch_3"
+giver = &"smith"
+recipient = &""
+kind = &"meet"
+title = "Feierabend unter der Linde"
+request_text = "Setz dich abends mal zu mir unter die Linde. Zweimal. Einmal ist Zufall."
+thanks_text = "Danke, Totengräber."
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"minutes": 20,
+"npc": &"smith",
+"place": &"v_linden",
+"times": 2,
+"window": [1054, 1140]
+}
+days_limit = 0
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 0
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 205
+accept_flag = &""
+category = &"friend"

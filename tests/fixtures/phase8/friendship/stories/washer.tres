@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="FriendStoryData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/friendship/friend_story_data.gd" id="1_brg2h"]
+[ext_resource type="Script" path="res://src/systems/friendship/friend_step_data.gd" id="2_pexwj"]
+
+[sub_resource type="Resource" id="Resource_tsudm"]
+script = ExtResource("2_pexwj")
+step = 1
+title = "Kaspar"
+min_value = 40
+conditions = PackedStringArray()
+order_ids = Array[StringName]([&"of_liesel_1", &"of_liesel_1_alt"])
+start_node = &"story_1"
+end_node = &"story_1_done"
+reward_rel = 6
+reward_flag = &"friend_washer_1"
+
+[sub_resource type="Resource" id="Resource_nqry8"]
+script = ExtResource("2_pexwj")
+step = 2
+title = "Die Totenwache"
+min_value = 55
+conditions = PackedStringArray()
+order_ids = Array[StringName]([&"of_liesel_2"])
+start_node = &"story_2"
+end_node = &"story_2_done"
+reward_rel = 8
+reward_flag = &"friend_washer_2"
+fallback_event = &"next_corpse"
+
+[sub_resource type="Resource" id="Resource_q0n1x"]
+script = ExtResource("2_pexwj")
+step = 3
+title = "Das Gesangbuch"
+min_value = 70
+conditions = PackedStringArray()
+order_ids = Array[StringName]([&"of_liesel_3"])
+start_node = &"story_3"
+end_node = &"story_3_done"
+reward_rel = 10
+reward_flag = &"friend_washer_3"
+
+[resource]
+script = ExtResource("1_brg2h")
+npc_id = &"washer"
+steps = Array[ExtResource("2_pexwj")]([SubResource("Resource_tsudm"), SubResource("Resource_nqry8"), SubResource("Resource_q0n1x")])
+favor_id = &"fav_washer"
