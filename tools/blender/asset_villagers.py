@@ -356,14 +356,84 @@ def _export(arm, name: str) -> None:
     _stable_glb(L.os.path.join(L.ROOT, "assets", "models", CAT, name + ".glb"))
 
 
+# Phase 8 (docs/PHASE8_DESIGN.md §8.2): additional clips per villager, re-exported with the Phase-7 geometry,
+# faces, materials and clips unchanged (test_assets_phase8 compares the mesh hash and the old clips). Sets:
+# low = idle_low, lantern = lantern_walk (+ child mesh `lantern_prop`), kneel = kneel_in / kneel / kneel_out,
+# lay = lay_flowers, mourn = mourn_stand, knock, dance, clap. keep_r: the right arm holds a tool that is part
+# of the body (Esch's hammer, Fenner's staff) and stays where it is in dance / mourn_stand.
+P8_CLIPS = {
+    "ph_chr_v_innkeeper": {"sets": ("low", "lantern", "kneel", "lay", "dance", "clap")},
+    "ph_chr_v_smith": {"sets": ("low", "lantern", "mourn", "dance"), "keep_r": True},
+    "ph_chr_v_grocer": {"sets": ("low", "lantern", "kneel", "lay", "dance", "clap")},
+    "ph_chr_v_priest": {"sets": ("low", "lantern", "mourn", "knock", "clap")},
+    "ph_chr_v_mayor": {"sets": ("low", "lantern", "mourn", "dance"), "keep_r": True},
+    "ph_chr_v_surgeon": {"sets": ("low", "lantern", "knock"), "lantern_side": -1},
+    "ph_chr_v_washer": {"sets": ("low", "lantern", "kneel", "lay", "knock", "dance", "clap")},
+    "ph_chr_v_oldwoman": {"sets": ("low", "lantern")},
+}
+
+
+def _fist(mesh, bone: str) -> Vector:
+    """The hand of a rigid arm: the centre of its lowest 8 cm (as test_assets_characters.Rig.hand)."""
+    gi = mesh.vertex_groups[bone].index
+    vs = [v.co.copy() for v in mesh.data.vertices if any(g.group == gi and g.weight > 0.5 for g in v.groups)]
+    z0 = min(v.z for v in vs)
+    sel = [v for v in vs if v.z < z0 + 0.08]
+    return sum(sel, Vector()) / len(sel)
+
+
+def _p8(name: str, mesh, actions):
+    """(extra actions, child meshes) of a villager for Phase 8."""
+    cfg = P8_CLIPS.get(name)
+    if cfg is None:
+        return [], []
+    import asset_mourners as M   # Phase 8 helpers (imports this module)
+    walk = dict((a[0], a[2]) for a in actions)["walk-loop"]
+    side = cfg.get("lantern_side", 1)
+    extra = M.p8_actions(set(cfg["sets"]), walk, lantern_side=side, kneel_pose=rig.kneel(0.42, 12.0, 14.0, 18.0, hands=(18.0, 28.0)),
+                         mourn={"hands": (16.0, 27.0)})
+    if cfg.get("keep_r"):
+        def keep(fn):
+            def g(t):
+                p = dict(fn(t))
+                p["arm_r"] = (-2.0, 0.0, 0.0)
+                return p
+            return g
+        extra = [(n, f, keep(fn) if n.startswith(("dance", "mourn")) else fn) for n, f, fn in extra]
+    kids = []
+    if "lantern" in cfg["sets"]:
+        bone = "arm_l" if side > 0 else "arm_r"
+        kids.append(M.child("lantern_prop", bone, M.lantern_child(_fist(mesh, bone)), ("lantern_walk",)))
+    return extra, kids
+
+
 def _rigged(name: str, mesh, joints: dict, actions) -> None:
+    extra, kids = _p8(name, mesh, actions)
     dz = rig.ground(mesh)
     j = {b: (tuple(Vector(h) - Vector((0, 0, dz))), tuple(Vector(t) - Vector((0, 0, dz)))) for b, (h, t) in joints.items()}
     arm = rig.build_armature(j)
     rig.bind(mesh, arm)
-    for an, frames, fn in actions:
+    for an, frames, fn in tuple(actions) + tuple(extra):
         rig.add_action(arm, mesh, an, frames, fn)
-    _export(arm, name)
+    if not kids:
+        _export(arm, name)
+        return
+    import asset_mourners as M
+    extras = {}
+    for cname, bone, obj, show in kids:
+        obj.data.transform(Matrix.Translation(Vector((0, 0, -dz))))
+        obj.name = cname
+        obj.data.name = cname
+        obj.parent = arm
+        obj.parent_type = "BONE"
+        obj.parent_bone = bone
+        bpy.context.view_layer.update()
+        obj.matrix_world = Matrix.Identity(4)
+        extras[cname] = {"show_with": ",".join(show)}
+    L.export_rigged(arm, name, CAT)
+    path = L.os.path.join(L.ROOT, "assets", "models", CAT, name + ".glb")
+    M.set_extras(path, extras)
+    _stable_glb(path)
 
 
 def _joints(hip_z: float, waist_z: float, neck: Vector, head_top: Vector, shoulders: dict, wrists: dict,

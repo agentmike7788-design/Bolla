@@ -425,7 +425,7 @@ def _woman(name: str, cfg: dict):
                                                            "arm_r": (-5.0, -4.0, 4.0)})),
         ("walk-loop", 20, walk),
         ("talk-loop", 72, _talk(talk_keys, 0.9)),
-    ] + p8_actions({"low", "kneel", "lay", "lantern"}, walk, kneel_pose=rig.kneel(0.42, 12.0, 14.0, 18.0))
+    ] + p8_actions({"low", "kneel", "lay", "lantern"}, walk, kneel_pose=rig.kneel(0.42, 12.0, 14.0, 18.0, hands=(18.0, 28.0)))
     if sc != 1.0:
         _scale(mesh, joints, kids, sc)
         pts["nose"] = pts["nose"] * sc
@@ -460,7 +460,7 @@ def _hat(c: Vector, s: Vector, color, dark, *, brim: float, crown_h: float, slou
     """A felt hat over a head (centre c, semi-axes s): the brim (slouch = how far it droops at front and
     back), a rounded crown, a band. One object."""
     parts = []
-    hz = c.z + s.z * 0.55
+    hz = c.z + s.z * 0.4
     b = L.prim("cyl", loc=(0, c.y, hz), radius=1.0, depth=0.012, vertices=18, scale=(s.x + brim, s.y + brim, 1.0))
     for v in b.data.vertices:
         r = math.hypot(v.co.x / (s.x + brim), (v.co.y - c.y) / (s.y + brim))
@@ -571,10 +571,10 @@ def _man(name: str, cfg: dict):
     _hair(parts, face, cfg["hair"], cfg["hair_dark"], [(0.0, 0.5), (0.5, 0.44), (1.0, 0.18), (1.3, -0.08), (1.7, -0.22),
                                                        (math.pi, -0.42)], out=0.006, crown=0.004, tuft=0.005, seed=31)
     if cfg["beard"] is not None:   # white stubble round the jaw
-        beard, _, _ = _shell(face, [(0.0, -0.99)], top=[(0.0, -0.6), (0.4, -0.5), (0.8, -0.3), (1.3, -0.06), (1.62, 0.02)],
+        beard, _, _ = _shell(face, [(0.0, -0.99)], top=[(0.0, -0.72), (0.4, -0.62), (0.8, -0.42), (1.3, -0.16), (1.62, -0.06)],
                              phi=(-1.62, 1.62), out=0.004, crown=0.0, n=20, m=5, tuck=0.002, seed=32, name="stubble")
         _painted(beard, cfg["beard"], var=0.2, ao=0.0, top=0.2, seed=33, hue_shift=cfg["skin"])
-        _tint(beard, lambda co, nr: (1.0, cfg["skin"], 0.35 + 0.3 * max(0.0, _n(co, 60.0, 3.0))))
+        _tint(beard, lambda co, nr: (1.0, cfg["skin"], 0.55 + 0.3 * max(0.0, _n(co, 60.0, 3.0))))
         parts.append(W("head", beard))
     mesh = L.join(parts, rig.MESH)
     _global_light(mesh, top + 0.36)
@@ -588,9 +588,9 @@ def _man(name: str, cfg: dict):
     bpy.context.collection.objects.link(hat2)
     kids.append(child("hat_head", "head", hat, ("idle", "walk", "talk", "idle_low", "lay_flowers", "lantern_walk")))
     # the hat in the hands: held by the brim in the right fist, the crown towards him, in front of the belly
-    hz = c.z + s.z * 0.55
-    m = (Matrix.Translation(hands[-1] + Vector((0.05, -0.05, 0.0))) @ Matrix.Rotation(math.radians(-80.0), 4, "X")
-         @ Matrix.Translation(Vector(((s.x + cfg["brim"]) * 0.85, 0.0, 0.0)) - Vector((0.0, c.y, hz))))
+    hz = c.z + s.z * 0.4
+    m = (Matrix.Translation(hands[-1] + Vector((0.03, -0.04, -0.06))) @ Matrix.Rotation(math.radians(-80.0), 4, "X")
+         @ Matrix.Translation(Vector(((s.x + cfg["brim"]) * 0.45, 0.0, 0.0)) - Vector((0.0, c.y, hz))))
     hat2.data.transform(m)
     kids.append(child("hat_hand", "arm_r", hat2, ("mourn_stand",)))
     if cfg["bouquet"]:
@@ -612,7 +612,7 @@ def _man(name: str, cfg: dict):
     ]
     actions = [("idle-loop", 84, idle), ("walk-loop", 26 if bent else 20, walk), ("talk-loop", 72, _talk(talk_keys, 1.0))]
     actions += p8_actions({"low", "mourn", "lantern"} | (set() if cfg["stick"] else {"lay"}), walk, lantern_side=lan_side,
-                          mourn={"hands": (24.0, 22.0) if not cfg["stick"] else (26.0, 22.0)})
+                          mourn={"hands": (16.0, 27.0)})
     if cfg["stick"]:   # the stick stays planted: the left arm does not fold, it leans on the stick
         actions = [(n, fr, _keep_stick(fn) if n.startswith(("mourn", "idle_low", "lay")) else fn) for n, fr, fn in actions]
     export_figure(name, mesh, joints, actions, children=kids, markers=[face_marker(pts)])

@@ -32,7 +32,7 @@ import rig
 from asset_carter import loft, sweep, _tint, _n
 from asset_villagers import (Prof, _body, _sheet_on, _shoe, _leg_tube, _arm, _ell, _ring_band, _global_light, _joints,
                              _idle, _walk, _talk, _painted, _side, SKIN, BOOT, BOOT_WORN, LINEN_WHITE, LINEN_SHADE)
-from lib_faces import IRIS_HAZEL, _s01, _hair, _head
+from lib_faces import IRIS_HAZEL, _s01, _hair, _head, _oell
 import asset_mourners as M
 import asset_props_phase8 as PR
 
@@ -61,7 +61,7 @@ def _freckles(obj, c: Vector, s: Vector) -> None:
         if n.y > -0.55 or n.z < -0.45 or n.z > 0.2 or abs(n.x) > 0.75:
             return 1.0, None, 0.0
         dot = noise.noise(co * 260.0 + Vector((3.0, 1.0, 7.0)))
-        return 1.0, FRECKLE, (0.65 if dot > 0.38 else 0.0)
+        return 1.0, FRECKLE, (0.8 if dot > 0.3 else 0.0)
     _tint(obj, fn)
 
 
@@ -108,20 +108,25 @@ def build_mesh():
                          skin=KID_SKIN, seed=20 + sx * 3, hand_size=0.95, grip=True)
     # head: round, big awake eyes, a small round nose, freckles; tousled sandy hair with a fringe and a cowlick
     c = Vector((0.0, -0.025, 1.27))
-    s = Vector((0.13, 0.13, 0.138))
+    s = Vector((0.134, 0.13, 0.13))
     i0 = len(parts)
     pts = _head(parts, c, s, KID_SKIN, seed=30, nose="round", nose_s=0.82, brow=HAIR_DARK, brow_w=0.85, brow_tilt=0.2,
-                brow_arch=1.15, eyes=1.18, mouth="smile", smile=0.8, cheeks=0.95, jaw=0.86, chin=0.02, age=0.0, lids=0.1,
+                brow_arch=1.15, eyes=1.18, mouth="smile", smile=0.8, cheeks=1.0, jaw=1.02, chin=0.0, age=0.0, lids=0.1,
                 iris=IRIS_HAZEL, muzzle=0.9, mouth_w=0.9)
     _freckles(parts[i0], c, s)
     face = pts["face"]
-    _hair(parts, face, HAIR, HAIR_DARK, [(0.0, 0.3), (0.35, 0.36), (0.7, 0.26), (1.05, 0.1), (1.4, -0.14), (1.9, -0.3),
-                                         (math.pi, -0.42)], out=0.01, crown=0.012, tuft=0.016, seed=31)
-    for k, (u, w) in enumerate(((0.1, 0.92), (-0.12, 0.85), (0.22, 0.8))):   # the cowlick and a few unruly tufts
-        d = Vector((u, 0.25 + 0.1 * k, w)).normalized()
+    for k, (u, w) in enumerate(((-0.3, -0.08), (-0.22, -0.14), (-0.36, -0.18), (-0.27, -0.24), (-0.12, -0.05),
+                                (0.3, -0.09), (0.21, -0.15), (0.35, -0.2), (0.26, -0.25), (0.12, -0.04))):
+        parts.append(W("head", _oell(FRECKLE, face.pt(u, w, 0.0015), face.nrm(u, w), (0.0034, 0.001, 0.003), seg=5,
+                                     rings=3, ao=0.0, var=0.1, top=0.0, seed=40 + k)))
+    _hair(parts, face, HAIR, HAIR_DARK, [(0.0, 0.33), (0.3, 0.36), (0.7, 0.22), (1.05, 0.02), (1.4, -0.2), (1.9, -0.36),
+                                         (math.pi, -0.5)], out=0.008, crown=0.006, tuft=0.03, seed=31)
+    for k, (u, w) in enumerate(((0.1, 0.92), (-0.12, 0.85), (0.22, 0.8), (-0.3, 0.7), (0.4, 0.62), (0.0, 0.75),
+                                 (-0.45, 0.5), (0.5, 0.45), (0.15, 0.6), (-0.2, 0.55), (0.3, 0.3), (-0.33, 0.33))):   # the cowlick and a few unruly tufts
+        d = Vector((u, -0.5 + 0.12 * (k % 6) if k >= 6 else 0.25 + 0.1 * k, w)).normalized()
         p0 = face.world(d, 0.008)
-        parts.append(W("head", _painted(sweep([p0, p0 + face.normal(d) * 0.03 + Vector((0.01 * k, 0.012, 0.012))],
-                                              [0.014, 0.003], n=4, name="tuft"), HAIR, var=0.15, ao=0.0, top=0.3,
+        parts.append(W("head", _painted(sweep([p0, p0 + face.normal(d) * 0.028 + Vector((0.012 * (k % 3 - 1), 0.012, 0.012 - 0.004 * k))],
+                                              [0.016, 0.003], n=4, name="tuft"), HAIR, var=0.15, ao=0.0, top=0.3,
                                         seed=32 + k, hue_shift=HAIR_DARK)))
     mesh = L.join(parts, rig.MESH)
     _global_light(mesh, 1.42)

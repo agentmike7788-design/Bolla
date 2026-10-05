@@ -86,12 +86,28 @@ func _run() -> void:
 		"faces":
 			await _faces()
 		"clips":
-			for n: String in NEW + OLD:
-				if _filter == "" or n.contains(_filter):
+			for n: String in _all():
+				if _match(n) and ResourceLoader.exists(DIR + n + ".glb"):
 					await _clips(n)
 		"props":
 			await _props()
 	quit()
+
+
+func _match(n: String) -> bool:
+	if _filter == "":
+		return true
+	for f: String in _filter.split(","):
+		if n.contains(f):
+			return true
+	return false
+
+
+func _all() -> Array[String]:
+	var out: Array[String] = []
+	out.append_array(NEW)
+	out.append_array(OLD)
+	return out
 
 
 func _day() -> void:
@@ -158,19 +174,22 @@ func _label(text: String, pos: Vector3, size: int = 48) -> Label3D:
 
 
 func _lineup() -> void:
-	var names: Array[String] = NEW + ["ph_chr_gravekeeper", "ph_chr_v_innkeeper", "ph_chr_v_washer", "ph_chr_v_smith",
-			"ph_chr_v_priest"]
+	var names: Array[String] = []
+	names.append_array(NEW)
+	names.append_array(["ph_chr_gravekeeper", "ph_chr_v_innkeeper", "ph_chr_v_washer", "ph_chr_v_smith", "ph_chr_v_priest"])
 	var nodes: Array[Node] = []
 	var gap := 0.95
 	var x0 := -gap * (names.size() - 1) * 0.5
 	var lights: Array[OmniLight3D] = []
+	names.assign(names.filter(func(n: String) -> bool: return ResourceLoader.exists(DIR + n + ".glb")))
+	x0 = -gap * (names.size() - 1) * 0.5
 	for i: int in names.size():
 		var inst := _load(names[i])
 		inst.position = Vector3(x0 + gap * i, 0, 0)
 		_stage.add_child(inst)
 		_pose(inst, "idle", 0.0)
 		nodes.append(inst)
-		nodes.append(_label(LABELS.get(names[i], names[i]), Vector3(x0 + gap * i, -0.12, 0.45), 40))
+		nodes.append(_label(LABELS.get(names[i], names[i]), Vector3(x0 + gap * i, 0.08, 0.55), 30))
 		var lamp := OmniLight3D.new()
 		lamp.light_color = Color(1.0, 0.72, 0.42)
 		lamp.light_energy = 0.0
@@ -179,8 +198,8 @@ func _lineup() -> void:
 		_stage.add_child(lamp)
 		lights.append(lamp)
 	_cam.fov = 26
-	_cam.position = Vector3(0, 1.6, 15.5)
-	_cam.look_at(Vector3(0, 0.8, 0))
+	_cam.position = Vector3(0, 1.5, 12.0)
+	_cam.look_at(Vector3(0, 0.75, 0))
 	_day()
 	(await _shot()).save_jpg(_out.path_join("lineup_day.jpg"), 0.9)
 	_night()
@@ -207,8 +226,8 @@ func _face_point(inst: Node3D) -> Vector3:
 
 func _faces() -> void:
 	var tiles: Array = []
-	for n: String in NEW + OLD:
-		if _filter != "" and not n.contains(_filter):
+	for n: String in _all():
+		if not _match(n) or not ResourceLoader.exists(DIR + n + ".glb"):
 			continue
 		var inst := _load(n)
 		_stage.add_child(inst)
@@ -260,7 +279,7 @@ func _props() -> void:
 	var tiles: Array = []
 	for p: String in PROPS:
 		var path := "res://assets/models/%s.glb" % p
-		if not ResourceLoader.exists(path) or (_filter != "" and not p.contains(_filter)):
+		if not ResourceLoader.exists(path) or not _match(p):
 			continue
 		var inst := (load(path) as PackedScene).instantiate() as Node3D
 		_stage.add_child(inst)
