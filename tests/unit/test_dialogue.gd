@@ -3355,3 +3355,134 @@ func test_phase8_lenz_speech_at_the_lights() -> void:
 	r.start(_v("lights_lenz"), _ctx(_inv()))
 	assert_eq(_id(r), &"speech")
 	assert_true(r.current_text().begins_with("Wir zünden kein Licht für Gott an. Der sieht auch so."), "§2.13 Lenz am Lichtgang")
+
+
+# --- Phase 8 (P6): chatter texts (§2.1.2) and schedules (§2.1.4, §2.6, §2.7, §1.6) ------------------------
+
+func test_phase8_chatter_texts() -> void:
+	var cond_re := RegEx.create_from_string(CONDITION_GRAMMAR)
+	var files := DirAccess.get_files_at("res://data/npc_life/chatter")
+	var count := 0
+	for f: String in files:
+		if not f.ends_with(".tres"):
+			continue
+		count += 1
+		var c := load("res://data/npc_life/chatter/" + f) as ChatterData
+		var t := load("res://tests/fixtures/phase8/chatter/" + f) as ChatterData
+		assert_not_null(c, f)
+		assert_not_null(t, f + " template")
+		if c == null or t == null:
+			continue
+		assert_eq([c.id, c.region, c.npcs, c.place, c.window, c.sets_flag], [t.id, t.region, t.npcs, t.place, t.window, t.sets_flag],
+				String(c.id) + ": who / where / when as the template")
+		assert_true(c.lines.size() >= 2 and c.lines.size() <= 4, "%s: 2–4 lines" % c.id)
+		assert_eq([c.lines[0], c.lines[1]], [t.lines[0], t.lines[1]], "%s: the leading lines first (§2.1.2)" % c.id)
+		for line: String in c.lines:
+			assert_true(line.length() > 3 and not line.contains("TODO"), String(c.id))
+		for cond: String in c.conditions:
+			assert_not_null(cond_re.search(cond), "%s: condition '%s'" % [c.id, cond])
+	assert_eq(count, 16, "§2.1.2: 16 chatters")
+	assert_eq((load("res://data/npc_life/chatter/ch_rumor_robber.tres") as ChatterData).sets_flag, &"robber_known")
+
+
+const P8_SCHEDULES: PackedStringArray = ["innkeeper", "smith", "grocer", "mayor", "priest", "surgeon", "washer", "carter"]
+const P8_FLAGS: PackedStringArray = ["visit_smith_day", "visit_grocer_day", "visit_washer_day", "fest_kathrein_day", "fest_lights_day",
+		"night_np_ott_priest_day", "night_np_kehr_priest_day", "night_np_ott_surgeon_day", "night_np_kehr_surgeon_day",
+		"night_np_ott_washer_day", "beggar_gate_day", "peddler_day", "apprentice_off_day"]
+
+
+func _sched(npc: String) -> NpcSchedule:
+	return load("res://data/npc/%s_schedule.tres" % npc) as NpcSchedule
+
+
+func test_phase8_schedules_unchanged_without_their_flags() -> void:
+	# Phase 7 bitgleich: without a Phase-8 flag every minute resolves to a Phase-7 entry.
+	for npc: String in P8_SCHEDULES:
+		var s := _sched(npc)
+		assert_not_null(s, npc)
+		for e: ScheduleEntry in s.entries:
+			assert_true(e.today_flag == &"" or String(e.today_flag) in P8_FLAGS or e.today_flag in [&"linden_consecration_day",
+					&"lecture_night_day", &"lecture_after_day"], "%s: flag %s" % [npc, e.today_flag])
+		for t: int in range(0, 1440, 1):
+			var e := ScheduleResolver.entry_at(s, t, 57)
+			assert_true(e != null and not String(e.today_flag) in P8_FLAGS, "%s %d: a Phase-7 entry" % [npc, t])
+
+
+func _at(npc: String, flag: StringName, minute: int, day := 57) -> ScheduleEntry:
+	GameState.set_flag(flag, day)
+	var e := ScheduleResolver.entry_at(_sched(npc), minute, day)
+	GameState.clear_flag(flag)
+	return e
+
+
+func test_phase8_schedule_overlays() -> void:
+	# §2.1.4 visits.
+	var e := _at("smith", &"visit_smith_day", 830)
+	assert_eq([e.region, e.path[-1], e.dialogue_id, e.visible], [&"", "gv_old_01", &"v_smith", true], "Esch at Gratz' grave 13:40–14:30")
+	e = _at("smith", &"visit_smith_day", 800)
+	assert_eq([e.region, e.visible], [&"village", false], "on the way up: hidden in the village")
+	e = _at("smith", &"visit_smith_day", 1000)
+	assert_eq([e.path[-1], e.dialogue_id], ["v_anvil", &"v_smith"], "back at the anvil")
+	e = _at("grocer", &"visit_grocer_day", 890)
+	assert_eq([e.region, e.path[-1], e.animation], [&"", "gv_old_08", &"kneel"], "Theres kneels at old_08")
+	e = _at("washer", &"visit_washer_day", 600)
+	assert_eq([e.region, e.dialogue_id], [&"", &"v_washer"], "Liesel on the hill 09:40–10:40")
+	# §2.7.1 Kathrein, §2.7.2 Lichtgang.
+	e = _at("smith", &"fest_kathrein_day", 1200)
+	assert_eq([e.region, e.path[-1].begins_with("v_in_inn"), e.dialogue_id], [&"village", true, &"v_smith"], "Esch at the dance")
+	e = _at("washer", &"fest_kathrein_day", 1230)
+	assert_true(e.path[-1].begins_with("v_in_inn"), "Liesel 20:00–21:00")
+	e = _at("washer", &"fest_kathrein_day", 1300)
+	assert_false(e.visible, "and home after nine")
+	e = _at("carter", &"fest_kathrein_day", 1200)
+	assert_eq([e.region, e.path[-1]], [&"village", "v_in_inn_corner"], "Osric comes down to the dance")
+	for npc: String in ["innkeeper", "smith", "grocer", "mayor", "priest", "washer"]:
+		e = _at(npc, &"fest_lights_day", 970)
+		assert_eq(e.path[-1], "v_lights_gather", npc + ": gathering at the Holderbrücke 16:00")
+		e = _at(npc, &"fest_lights_day", 1050)
+		assert_false(e.visible, npc + ": up the hill (P4's procession)")
+	e = _at("surgeon", &"fest_lights_day", 1050)
+	assert_eq([e.path[-1], e.visible], ["v_bridge", true], "Quast stays at the bridge")
+	# §1.6 night visits.
+	e = _at("surgeon", &"night_np_ott_surgeon_day", 1350)
+	assert_eq([e.path[-1], e.animation], ["v_ott_door", &"knock"], "Quast knocks at the Otts' 22:30")
+	e = _at("surgeon", &"night_np_ott_surgeon_day", 1370)
+	assert_false(e.visible, "inside")
+	e = _at("surgeon", &"night_np_ott_surgeon_day", 1390)
+	assert_eq([e.path[-1], e.visible], ["v_ott_door", true], "comes out 23:10 (observation)")
+	e = _at("priest", &"night_np_kehr_priest_day", 1291)
+	assert_eq([e.path[-1], e.visible], ["v_kehr_door", true], "Lenz leaves the Kehrs 21:30")
+	e = _at("washer", &"night_np_ott_washer_day", 200)
+	assert_false(e.visible, "Liesel at the wake 02:40–05:30")
+	e = _at("washer", &"night_np_ott_washer_day", 331)
+	assert_eq([e.path[-1], e.visible], ["v_ott_door", true])
+
+
+func test_phase8_new_schedules() -> void:
+	var veit := _sched("beggar")
+	var hanne := _sched("peddler")
+	var jakob := _sched("apprentice")
+	for s: NpcSchedule in [veit, hanne, jakob]:
+		assert_not_null(s)
+	assert_eq([veit.npc_id, veit.display_name, hanne.npc_id, hanne.display_name, jakob.npc_id], [&"beggar", "Veit Ammer", &"peddler",
+			"Hanne Vogelsang", &"apprentice"])
+	var e := ScheduleResolver.entry_at(veit, 600, 56)
+	assert_eq([e.path[-1], e.dialogue_id, e.animation], ["v_church_step", &"beggar", &"sit_beg"], "Kirchtür 08:00–11:30")
+	e = ScheduleResolver.entry_at(veit, 900, 56)
+	assert_eq([e.region, e.path[-1]], [&"village", "v_bridge_sit"], "even day: the bridge")
+	e = _at("beggar", &"beggar_gate_day", 900, 55)
+	assert_eq([e.region, e.path[-1], e.dialogue_id], [&"", "veit_gate", &"beggar"], "odd day: outside the cemetery gate")
+	e = ScheduleResolver.entry_at(veit, 1300, 56)
+	assert_eq(e.path[-1], "v_well_bench", "21:00–23:30 at the well bench, in the dark")
+	e = _at("beggar", &"fest_lights_day", 1050, 58)
+	assert_eq([e.region, e.path[-1]], [&"", "lights_gate"], "at the Lichtgang he stands at the gate")
+	assert_false(ScheduleResolver.entry_at(hanne, 700, 56).visible, "Hanne only on her day")
+	e = _at("peddler", &"peddler_day", 700, 55)
+	assert_eq([e.path[-1], e.dialogue_id], ["v_well_peddler", &"peddler"], "10:00–14:00 at the well")
+	e = _at("peddler", &"peddler_day", 960, 55)
+	assert_eq([e.region, e.path[-1]], [&"", "peddler_gate"], "15:40–16:20 outside the cemetery gate")
+	e = ScheduleResolver.entry_at(jakob, 460, 56)
+	assert_eq(e.path[-1], "v_in_inn_jakob", "07:30 breakfast in the inn")
+	assert_false(ScheduleResolver.entry_at(jakob, 600, 56).visible, "on the hill (P3's runtime schedule)")
+	e = _at("apprentice", &"apprentice_off_day", 600, 58)
+	assert_eq([e.path[-1], e.visible], ["v_in_inn_jakob", true], "the free day in the inn")

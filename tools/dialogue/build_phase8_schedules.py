@@ -362,6 +362,7 @@ def apprentice():
         hide(1260, "v_inn_door"),
         # The free day (§2.5.1: "Jakob hilft heute im Krug").
         stay(465, "v_in_inn_jakob", "v_apprentice", off, animation="talk"),
+        stay(1020, "v_in_inn_jakob", "v_apprentice", off, animation="talk"),
         # Kathreintanz until 23:00; the Lichtgang: he carries his mother's lantern.
         stay(1260, "v_in_inn_jakob", "v_apprentice", KATHREIN),
         hide(1380, "v_inn_door", KATHREIN),
