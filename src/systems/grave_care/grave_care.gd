@@ -445,6 +445,11 @@ func load_state(data: Dictionary) -> void:
 	_light_left = 0.0
 
 
+## The rules in use (data/config/grave_care_config.tres unless a test set `config`).
+func get_config() -> GraveCareConfig:
+	return _cfg()
+
+
 # --- clock ---------------------------------------------------------------------------------------
 
 func _on_time_tick(_day: int, _minute: int) -> void:

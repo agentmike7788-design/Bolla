@@ -67,6 +67,45 @@ const LABEL_RETURN := "Präparat beisetzen"
 const TEXT_CANNOT_RETURN := "Das Präparat lässt sich hier nicht beisetzen."
 const PROMPT_NEW_STONE := "[E] Neuen Stein setzen (%d Min)"
 const LABEL_NEW_STONE := "Neuen Stein setzen"
+# Phase 8 (docs/PHASE8_DESIGN.md §1.3, §2.2.5, §2.3, §3.4, §7.5; P2): grave care after the Phase-3–7 prompts in
+# this order – coins on the stone (without a TipStone child) · close the disturbed grave · water the flowers ·
+# plant grave flowers / lay a wax wreath · light a grave candle · mortsafe on / off · chisel a wish line.
+const GRAVE_CARE_GROUP := &"grave_care"
+const VISITORS_GROUP := &"visitors"
+const APPRENTICE_GROUP := &"apprentice"
+const CARE_COINS := &"coins"
+const CARE_CLOSE := &"close"
+const CARE_WATER := &"water"
+const CARE_PLANT := &"plant"
+const CARE_WREATH := &"wreath"
+const CARE_CANDLE := &"candle"
+const CARE_MORTSAFE_ON := &"mortsafe_on"
+const CARE_MORTSAFE_OFF := &"mortsafe_off"
+const CARE_LINE := &"line"
+const CARE_ORDER: Array[StringName] = [CARE_COINS, CARE_CLOSE, CARE_WATER, CARE_PLANT, CARE_WREATH, CARE_CANDLE, CARE_MORTSAFE_ON,
+		CARE_MORTSAFE_OFF, CARE_LINE]
+const PROMPT_COINS := "[E] %d Münzen auf dem Stein (%s)"
+const PROMPT_CLOSE := "[E] Grab wieder schließen (%d Min)"
+const PROMPT_WATER := "[E] Blumen gießen (%d Min)"
+const PROMPT_PLANT := "[E] Grabblumen setzen (%d Min)"
+const PROMPT_WREATH := "[E] Wachskranz legen (%d Min)"
+const PROMPT_CANDLE := "[E] Grabkerze anzünden (%d Min)"
+const PROMPT_MORTSAFE_ON := "[E] Grabgitter aufsetzen (%d Min)"
+const PROMPT_MORTSAFE_OFF := "[E] Grabgitter abnehmen (%d Min)"
+const PROMPT_LINE := "[E] Zeile nachmeißeln: ‚%s' (%d Min)"
+const LABEL_CLOSE := "Grab wieder schließen"
+const LABEL_WATER := "Blumen gießen"
+const LABEL_PLANT := "Grabblumen setzen"
+const LABEL_WREATH := "Wachskranz legen"
+const LABEL_CANDLE := "Grabkerze anzünden"
+const LABEL_MORTSAFE_ON := "Grabgitter aufsetzen"
+const LABEL_MORTSAFE_OFF := "Grabgitter abnehmen"
+const LABEL_LINE := "Zeile nachmeißeln"
+const TEXT_CARE_FAILED := "Das geht hier gerade nicht."
+## The flowers ask for water when they are wilted or would wilt within a day (§2.5.2 "heute oder morgen").
+const WATER_SOON_MINUTES := 1440
+const ANIM_KNEEL := &"kneel_place"
+const ANIM_WATER := &"water"
 
 @export var grave_id: String = ""
 @export var is_old: bool = false
@@ -108,6 +147,8 @@ var state: int = GraveRecord.State.EMPTY
 var marker_id: StringName = &""
 ## Phase 5: StoneDesign.to_dict of the grave ({} = none) – drives the designed-stone visual.
 var design: Dictionary = {}
+## Phase 8: lines chiselled on afterwards (GraveRecord.extra_lines) – shown under the carved text.
+var extra_lines: PackedStringArray = []
 
 @onready var interactable: Interactable = get_node_or_null(^"Interactable") as Interactable
 
@@ -126,6 +167,7 @@ func _ready() -> void:
 	EventBus.grave_state_changed.connect(_on_grave_state_changed)
 	EventBus.grave_quality_changed.connect(_on_grave_quality_changed)
 	EventBus.time_tick.connect(_on_time_tick)
+	EventBus.grave_care_changed.connect(_on_grave_care_changed)
 	var grave := _grave()
 	if grave != null:
 		state = grave.state
@@ -133,10 +175,37 @@ func _ready() -> void:
 		state = GraveRecord.State.OLD if is_old else GraveRecord.State.EMPTY
 	marker_id = grave.marker_id if grave != null else &""
 	design = grave.design.duplicate(true) if grave != null else {}
+	extra_lines = grave.extra_lines.duplicate() if grave != null else PackedStringArray()
 	_apply_visual()
 
 
 func can_interact(player: Player) -> bool:
+	if _base_can_interact(player):
+		return true
+	return player != null and not player.is_busy() and _care_action(player, true) != &""
+
+
+func get_interaction_prompt(player: Player) -> String:
+	if _base_can_interact(player):
+		return _base_prompt(player)
+	var care := _care_action(player, false)
+	if care != &"":
+		return care_prompt(care, player)
+	return _base_prompt(player)
+
+
+func interact(player: Player) -> void:
+	if _base_can_interact(player):
+		_base_interact(player)
+		return
+	if player == null or player.is_busy():
+		return
+	var care := _care_action(player, true)
+	if care != &"":
+		_start_care(care, player)
+
+
+func _base_can_interact(player: Player) -> bool:
 	if player == null or player.is_busy():
 		return false
 	var grave := _grave()
@@ -160,7 +229,7 @@ func can_interact(player: Player) -> bool:
 	return false
 
 
-func get_interaction_prompt(player: Player) -> String:
+func _base_prompt(player: Player) -> String:
 	var grave := _grave()
 	if grave == null:
 		return ""
@@ -212,8 +281,8 @@ func get_interaction_prompt(player: Player) -> String:
 	return ""
 
 
-func interact(player: Player) -> void:
-	if not can_interact(player):
+func _base_interact(player: Player) -> void:
+	if not _base_can_interact(player):
 		return
 	var grave := _grave()
 	var actions := _actions(player)
@@ -234,7 +303,8 @@ func interact(player: Player) -> void:
 			player.start_timed_action(LABEL_LIFT, _ossuary().lift_minutes(player.inventory, _actions(player)),
 					_finish_lift.bind(player.inventory), true, ANIM_DIG)
 		GraveRecord.State.EMPTY:
-			player.start_timed_action(LABEL_DIG, _dig_minutes(player), _finish_dig.bind(player), true, ANIM_DIG)
+			if player.start_timed_action(LABEL_DIG, _dig_minutes(player), _finish_dig.bind(player), true, ANIM_DIG):
+				_note_noise(&"dig")
 		GraveRecord.State.DUG:
 			# G7 Runde 2 (Bestatten): he lays the dead into the pit and fills it (PlayerBurial).
 			player.start_burial(LABEL_BURY, _bury_minutes(player), _finish_bury.bind(player.carried_id), self)
@@ -453,6 +523,228 @@ func _finish_upgrade(id: StringName, inv: Inventory) -> void:
 		EventBus.notification_requested.emit(TEXT_CANNOT_MARK, &"warning")
 
 
+# --- Phase 8: grave care (P2) ------------------------------------------------------------------
+
+## The first care action at this grave for `player` in CARE_ORDER: `enabled_only` = only one that can run
+## now, else also a dimmed one (its prompt is the block reason). &"" = none.
+func _care_action(player: Player, enabled_only: bool) -> StringName:
+	var grave := _grave()
+	if grave == null or player == null or _is_carrying(player):
+		return &""
+	if not grave.state in [GraveRecord.State.FILLED, GraveRecord.State.MARKED, GraveRecord.State.OLD]:
+		return &""
+	var dimmed := &""
+	for action: StringName in CARE_ORDER:
+		var state := _care_state(action, player)
+		if state == 1:
+			return action
+		if state == 0 and dimmed == &"":
+			dimmed = action
+	return &"" if enabled_only else dimmed
+
+
+## 1 = possible now, 0 = shown dimmed (block reason), −1 = not offered here.
+func _care_state(action: StringName, player: Player) -> int:
+	var care := _grave_care()
+	var inv := player.inventory
+	var grave := _grave()
+	var fresh_grave := grave.state == GraveRecord.State.FILLED or grave.state == GraveRecord.State.MARKED
+	match action:
+		CARE_COINS:
+			if get_node_or_null(^"TipStone") != null:
+				return -1
+			return 1 if _coins_on_stone() > 0 else -1
+		CARE_CLOSE:
+			return 1 if care != null and care.is_disturbed(grave_id) else -1
+		CARE_WATER:
+			if care == null or inv == null or not inv.has(care.get_config().can_item):
+				return -1
+			var f := care.flowers_state(grave_id)
+			if f != GraveCare.FLOWERS_WILTED and not (f == GraveCare.FLOWERS_FRESH and care.fresh_minutes_left(grave_id) <= WATER_SOON_MINUTES):
+				return -1
+			return 1 if care.can_fill() > 0 else 0
+		CARE_PLANT:
+			return 1 if care != null and care.plant_block_reason(grave_id, inv) == "" else -1
+		CARE_WREATH:
+			return 1 if care != null and care.wreath_block_reason(grave_id, inv) == "" else -1
+		CARE_CANDLE:
+			if care == null or inv == null or not inv.has(care.get_config().candle_item) or care.candle_lit(grave_id):
+				return -1
+			return 1 if care.light_block_reason(grave_id, inv) == "" else 0
+		CARE_MORTSAFE_ON:
+			if care == null or not fresh_grave or care.has_mortsafe(grave_id) or inv == null or not inv.has(care.get_config().mortsafe_item):
+				return -1
+			return 1 if care.mortsafe_block_reason(grave_id, true, inv) == "" else 0
+		CARE_MORTSAFE_OFF:
+			if care == null or not care.has_mortsafe(grave_id):
+				return -1
+			return 1 if care.mortsafe_block_reason(grave_id, false, inv) == "" else 0
+		CARE_LINE:
+			var line := _wish_line()
+			if line == "":
+				return -1
+			var graveyard := _graveyard()
+			if graveyard == null or not graveyard.can_append_inscription(grave_id) or inv == null:
+				return -1
+			return 1 if inv.has(care.get_config().line_item if care != null else &"ink") else 0
+	return -1
+
+
+## The prompt of care action `action` (the block reason when it cannot run now).
+func care_prompt(action: StringName, player: Player) -> String:
+	var care := _grave_care()
+	var cfg := care.get_config() if care != null else GraveCareConfig.new()
+	var inv := player.inventory if player != null else null
+	match action:
+		CARE_COINS:
+			return PROMPT_COINS % [_coins_on_stone(), _tip_giver()]
+		CARE_CLOSE:
+			return PROMPT_CLOSE % _close_minutes(player)
+		CARE_WATER:
+			return PROMPT_WATER % cfg.water_minutes if care.can_fill() > 0 else GraveCare.TEXT_CAN_EMPTY
+		CARE_PLANT:
+			return PROMPT_PLANT % cfg.plant_minutes
+		CARE_WREATH:
+			return PROMPT_WREATH % cfg.plant_minutes
+		CARE_CANDLE:
+			var reason := care.light_block_reason(grave_id, inv)
+			return PROMPT_CANDLE % cfg.candle_minutes if reason == "" else reason
+		CARE_MORTSAFE_ON:
+			var reason := care.mortsafe_block_reason(grave_id, true, inv)
+			return PROMPT_MORTSAFE_ON % cfg.mortsafe_set_minutes if reason == "" else reason
+		CARE_MORTSAFE_OFF:
+			var reason := care.mortsafe_block_reason(grave_id, false, inv)
+			return PROMPT_MORTSAFE_OFF % cfg.mortsafe_remove_minutes if reason == "" else reason
+		CARE_LINE:
+			if inv == null or not inv.has(cfg.line_item):
+				return "Für die Zeile fehlt Tinte."
+			return PROMPT_LINE % [_wish_line(), cfg.line_minutes]
+	return ""
+
+
+func _start_care(action: StringName, player: Player) -> void:
+	var care := _grave_care()
+	var cfg := care.get_config() if care != null else GraveCareConfig.new()
+	var inv := player.inventory
+	match action:
+		CARE_COINS:
+			var visitors := _visitors()
+			if visitors != null:
+				visitors.take_tip(grave_id, inv)
+		CARE_CLOSE:
+			if player.start_timed_action(LABEL_CLOSE, _close_minutes(player), _finish_care.bind(action, inv, player), true, ANIM_DIG):
+				_note_noise(&"dig")
+		CARE_WATER:
+			player.start_timed_action(LABEL_WATER, cfg.water_minutes, _finish_care.bind(action, inv, player), true,
+					ToolAnimConfig.clip_for(&"grave_water", ANIM_WATER))
+		CARE_PLANT:
+			player.start_timed_action(LABEL_PLANT, cfg.plant_minutes, _finish_care.bind(action, inv, player), true,
+					ToolAnimConfig.clip_for(&"grave_flowers", ANIM_MARKER))
+		CARE_WREATH:
+			player.start_timed_action(LABEL_WREATH, cfg.plant_minutes, _finish_care.bind(action, inv, player), true,
+					ToolAnimConfig.clip_for(&"grave_flowers", ANIM_MARKER))
+		CARE_CANDLE:
+			player.start_timed_action(LABEL_CANDLE, cfg.candle_minutes, _finish_care.bind(action, inv, player), false,
+					ToolAnimConfig.clip_for(&"grave_candle", ANIM_MARKER))
+		CARE_MORTSAFE_ON:
+			player.start_timed_action(LABEL_MORTSAFE_ON, cfg.mortsafe_set_minutes, _finish_care.bind(action, inv, player), true,
+					ToolAnimConfig.clip_for(&"grave_marker", ANIM_MARKER))
+		CARE_MORTSAFE_OFF:
+			player.start_timed_action(LABEL_MORTSAFE_OFF, cfg.mortsafe_remove_minutes, _finish_care.bind(action, inv, player), true,
+					ToolAnimConfig.clip_for(&"grave_marker", ANIM_MARKER))
+		CARE_LINE:
+			if player.start_timed_action(LABEL_LINE, cfg.line_minutes, _finish_care.bind(action, inv, player), true,
+					ToolAnimConfig.clip_for(&"grave_marker", ANIM_MARKER)):
+				_note_noise(&"chisel")
+
+
+## The end of a care action: the effect through GraveCare / Graveyard (the same calls as the apprentice's);
+## watering and candles tell the apprentice (an apprentice watching learns it).
+func _finish_care(action: StringName, inv: Inventory, player: Player) -> void:
+	var care := _grave_care()
+	var ok := false
+	match action:
+		CARE_CLOSE:
+			ok = care != null and care.close_disturbed(grave_id)
+		CARE_WATER:
+			ok = care != null and care.water(grave_id)
+		CARE_PLANT:
+			ok = care != null and care.plant(grave_id, inv)
+		CARE_WREATH:
+			ok = care != null and care.lay_wreath(grave_id, inv)
+		CARE_CANDLE:
+			ok = care != null and care.light(grave_id, inv)
+		CARE_MORTSAFE_ON:
+			ok = care != null and care.set_mortsafe(grave_id, true, inv)
+		CARE_MORTSAFE_OFF:
+			ok = care != null and care.set_mortsafe(grave_id, false, inv)
+		CARE_LINE:
+			var line := _wish_line()
+			var item := care.get_config().line_item if care != null else &"ink"
+			var graveyard := _graveyard()
+			ok = line != "" and graveyard != null and inv != null and inv.has(item) and graveyard.append_inscription(grave_id, line)
+			if ok:
+				inv.remove_item(item, 1)
+	if not ok:
+		EventBus.notification_requested.emit(TEXT_CARE_FAILED, &"warning")
+		return
+	if action == CARE_WATER or action == CARE_CANDLE:
+		var apprentice := _first_in(APPRENTICE_GROUP)
+		if apprentice != null and apprentice.has_method(&"note_player_job") and is_instance_valid(player):
+			apprentice.call(&"note_player_job", action, global_position)
+
+
+## The line of an accepted line wish at this grave ("" = none).
+func _wish_line() -> String:
+	var visitors := _visitors()
+	if visitors == null:
+		return ""
+	for w: Dictionary in visitors.open_wishes():
+		if str(w.get("grave_id", "")) == grave_id and str(w.get("kind", "")) == "line" and str(w.get("state", "")) == "accepted":
+			return WishRules.line_of(w)
+	return ""
+
+
+func _coins_on_stone() -> int:
+	var visitors := _visitors()
+	return visitors.tip_on_stone(grave_id).x if visitors != null else 0
+
+
+func _tip_giver() -> String:
+	var visitors := _visitors()
+	return visitors.tip_giver(grave_id) if visitors != null else ""
+
+
+func _close_minutes(player: Player) -> int:
+	var care := _grave_care()
+	var base := care.get_config().close_minutes if care != null else 30
+	return _tool_minutes(player, &"dig", base)
+
+
+## A loud action at this grave (digging, closing, chiselling) disturbs a mourner ≤ 8 m (Visitors.note_noise).
+func _note_noise(action_id: StringName) -> void:
+	var visitors := _visitors()
+	if visitors != null and is_inside_tree():
+		visitors.note_noise(global_position, action_id)
+
+
+func _grave_care() -> GraveCare:
+	return _first_in(GRAVE_CARE_GROUP) as GraveCare
+
+
+func _visitors() -> Visitors:
+	return _first_in(VISITORS_GROUP) as Visitors
+
+
+func _first_in(group: StringName) -> Node:
+	return get_tree().get_first_node_in_group(group) if is_inside_tree() else null
+
+
+func _on_grave_care_changed(id: String, _kind: StringName, _active: bool) -> void:
+	if id == grave_id:
+		_visuals.apply_care()
+
+
 # --- visuals & collision ------------------------------------------------------------------
 
 func _on_grave_state_changed(id: String, new_state: int) -> void:
@@ -462,6 +754,7 @@ func _on_grave_state_changed(id: String, new_state: int) -> void:
 	var grave := _grave()
 	marker_id = grave.marker_id if grave != null else &""
 	design = grave.design.duplicate(true) if grave != null else {}
+	extra_lines = grave.extra_lines.duplicate() if grave != null else PackedStringArray()
 	_apply_visual()
 
 
@@ -472,6 +765,7 @@ func _on_grave_quality_changed(id: String, _quality: int) -> void:
 	var grave := _grave()
 	marker_id = grave.marker_id if grave != null else marker_id
 	design = grave.design.duplicate(true) if grave != null else design
+	extra_lines = grave.extra_lines.duplicate() if grave != null else extra_lines
 	_apply_visual()
 
 
@@ -479,6 +773,7 @@ func _on_grave_quality_changed(id: String, _quality: int) -> void:
 ## buildings_open (Phase 6).
 func _apply_visual() -> void:
 	_visuals.apply()
+	_visuals.apply_care()
 	_update_interactable()
 
 
@@ -487,7 +782,8 @@ func _update_interactable() -> void:
 		return
 	var open := state != GraveRecord.State.LOCKED
 	if state == GraveRecord.State.OLD:
-		open = is_old and _lift_open()
+		# Phase 8: flowers and candles also go on the rest-period graves once Phase 8 is open.
+		open = (is_old and _lift_open()) or (_grave_care() != null and GameState.flag_on(&"p8_open"))
 	if interactable.enabled == open and interactable.monitorable == open:
 		return
 	interactable.enabled = open

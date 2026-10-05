@@ -357,3 +357,153 @@ func test_stub_free_and_state_empty() -> void:
 	var fresh := GraveCare.new()
 	assert_eq(fresh.save_state().flowers, {})
 	fresh.free()
+
+
+# --- GravePlot prompts, TipStone, RainBarrel (§1.3, §3.4, §7.5) ------------------------------------
+
+const PLAYER_SCENE := "res://src/entities/player/player.tscn"
+const PLOT_SCENE := "res://src/entities/grave/grave_plot.tscn"
+const ACTIONS := "res://tests/fixtures/phase5/action_config_fixture.tres"
+
+
+func _plot_world() -> Dictionary:
+	var plot := (load(PLOT_SCENE) as PackedScene).instantiate() as GravePlot
+	plot.grave_id = "l_09"
+	tree.root.add_child(plot)
+	var state := graveyard.save_state()
+	graveyard.load_state(state)
+	var corpses := CorpseManager.new()
+	tree.root.add_child(corpses)
+	var player := (load(PLAYER_SCENE) as PackedScene).instantiate() as Player
+	var old_inv := player.get_node("Inventory")
+	player.remove_child(old_inv)
+	old_inv.free()
+	var fake := FakeInventory.new()
+	fake.name = "Inventory"
+	player.add_child(fake)
+	player.actions = load(ACTIONS) as ActionConfig
+	player.instant_actions = true
+	player.position = Vector3(0, 0, 5)
+	tree.root.add_child(player)
+	await wait_frames(2)
+	return {"plot": plot, "player": player, "inv": fake, "corpses": corpses}
+
+
+func test_grave_plot_care_prompts_in_order() -> void:
+	var w: Dictionary = await _plot_world()
+	var plot: GravePlot = w.plot
+	var player: Player = w.player
+	var pinv: Inventory = w.inv
+	assert_eq(plot.get_interaction_prompt(player).begins_with("Grab von"), true, "nothing to do: the info line")
+	assert_false(plot.can_interact(player))
+	pinv.add_item(&"flower_seedlings", 1)
+	pinv.add_item(&"grave_candle", 1)
+	assert_eq(plot.get_interaction_prompt(player), "[E] Grabblumen setzen (15 Min)", "flowers before the candle")
+	plot.interact(player)
+	await wait_frames(1)
+	assert_eq(care.flowers_state("l_09"), &"fresh")
+	assert_eq(plot.get_interaction_prompt(player), "Erst am Nachmittag.", "the candle dimmed before 15:00")
+	assert_false(plot.can_interact(player))
+	TimeManager.set_time(55, 960)
+	assert_eq(plot.get_interaction_prompt(player), "[E] Grabkerze anzünden (3 Min)")
+	plot.interact(player)
+	await wait_frames(1)
+	assert_true(care.candle_lit("l_09"))
+	assert_eq(pinv.count(&"grave_candle"), 0)
+	assert_not_null(plot.get_node_or_null(^"CareVisual/Candle"), "the candle shows")
+	assert_not_null(plot.get_node_or_null(^"CareVisual/Flowers"))
+	pinv.add_item(&"watering_can", 1)
+	TimeManager.advance(1500)
+	assert_eq(plot.get_interaction_prompt(player), "Die Gießkanne ist leer.", "wilting soon: water – the can is empty")
+	care.refill()
+	assert_eq(plot.get_interaction_prompt(player), "[E] Blumen gießen (5 Min)")
+	plot.interact(player)
+	await wait_frames(1)
+	assert_eq(care.can_fill(), 5)
+	pinv.add_item(&"mortsafe", 1)
+	assert_eq(plot.get_interaction_prompt(player), "[E] Grabgitter aufsetzen (20 Min)")
+	plot.interact(player)
+	await wait_frames(1)
+	assert_true(care.has_mortsafe("l_09"))
+	assert_not_null(plot.get_node_or_null(^"CareVisual/Mortsafe"))
+	assert_eq(plot.get_interaction_prompt(player), GraveCare.TEXT_MORTSAFE_DAYS % 10, "off only after 10 days (dimmed)")
+	care.set_disturbed("l_09")
+	assert_eq(plot.get_interaction_prompt(player), "[E] Grab wieder schließen (30 Min)", "closing first")
+	plot.interact(player)
+	await wait_frames(1)
+	assert_false(care.is_disturbed("l_09"))
+	(w.player as Node).queue_free()
+	plot.queue_free()
+	(w.corpses as Node).queue_free()
+	await wait_frames(1)
+
+
+func test_grave_plot_line_wish_and_coins_on_the_stone() -> void:
+	var w: Dictionary = await _plot_world()
+	var plot: GravePlot = w.plot
+	var player: Player = w.player
+	var pinv: Inventory = w.inv
+	graveyard.get_grave("l_09").design = {"shape": "stone_round", "inscription": "", "ornament": "", "gilded": false,
+			"text": ["Hedwig Lamprecht", "1790 – 1834"]}
+	var visitors := Phase8Fixtures.wish_open("l_09", &"line", tree)
+	var state := visitors.save_state()
+	state.wishes[0]["template"] = "w_line_1"
+	state.tips_on_stone = {"l_09": [2, "kin_kehr"]}
+	visitors.load_state(state)
+	assert_eq(plot.get_interaction_prompt(player), "[E] 2 Münzen auf dem Stein (Martha Kehr)", "coins first (no TipStone child)")
+	plot.interact(player)
+	assert_eq(pinv.count(&"coin"), 2)
+	assert_eq(plot.get_interaction_prompt(player), "Für die Zeile fehlt Tinte.")
+	pinv.add_item(&"ink", 1)
+	assert_eq(plot.get_interaction_prompt(player), "[E] Zeile nachmeißeln: ‚Ruhe sanft' (30 Min)")
+	plot.interact(player)
+	await wait_frames(1)
+	assert_eq(graveyard.get_grave("l_09").extra_lines, PackedStringArray(["Ruhe sanft"]))
+	assert_eq(pinv.count(&"ink"), 0)
+	assert_eq(plot.extra_lines, PackedStringArray(["Ruhe sanft"]), "the stone shows the new line")
+	visitors.queue_free()
+	(w.player as Node).queue_free()
+	plot.queue_free()
+	(w.corpses as Node).queue_free()
+	await wait_frames(1)
+
+
+func test_tip_stone_and_rain_barrel() -> void:
+	var w: Dictionary = await _plot_world()
+	var plot: GravePlot = w.plot
+	var player: Player = w.player
+	var pinv: Inventory = w.inv
+	var visitors := Phase8Fixtures.wish_open("l_09", &"flowers", tree)
+	var stone := (load("res://src/entities/tip_stone/tip_stone.tscn") as PackedScene).instantiate() as TipStone
+	plot.add_child(stone)
+	await wait_frames(1)
+	assert_eq(stone.grave_id, "l_09", "from the parent plot")
+	assert_false(stone.can_interact(player))
+	assert_false(stone.interactable.enabled)
+	var state := visitors.save_state()
+	state.tips_on_stone = {"l_09": [3, "kin_brandt"]}
+	visitors.load_state(state)
+	stone.refresh()
+	assert_true(stone.can_interact(player))
+	assert_eq(stone.get_interaction_prompt(player), "[E] 3 Münzen auf dem Stein (Hinrich Brandt)")
+	assert_true(plot.get_interaction_prompt(player).begins_with("Grab von"), "the plot leaves the coins to the TipStone")
+	stone.interact(player)
+	assert_eq(pinv.count(&"coin"), 3)
+	assert_false(stone.can_interact(player), "taken once")
+	var barrel := (load("res://src/entities/rain_barrel/rain_barrel.tscn") as PackedScene).instantiate() as RainBarrel
+	tree.root.add_child(barrel)
+	await wait_frames(1)
+	assert_eq(barrel.get_interaction_prompt(player), RainBarrel.TEXT_NO_CAN)
+	assert_false(barrel.can_interact(player))
+	pinv.add_item(&"watering_can", 1)
+	assert_eq(barrel.get_interaction_prompt(player), RainBarrel.PROMPT)
+	barrel.interact(player)
+	await wait_frames(1)
+	assert_eq(care.can_fill(), 6)
+	assert_eq(barrel.get_interaction_prompt(player), RainBarrel.TEXT_FULL)
+	barrel.queue_free()
+	visitors.queue_free()
+	(w.player as Node).queue_free()
+	plot.queue_free()
+	(w.corpses as Node).queue_free()
+	await wait_frames(1)
