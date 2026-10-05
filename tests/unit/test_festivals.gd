@@ -44,8 +44,13 @@ class VisitorsDouble extends Node:
 	func _init() -> void:
 		add_to_group(&"visitors")
 
+	var kin: Dictionary = {}
+
 	func add_goodwill(kin_id: StringName, delta: int) -> void:
 		calls.append([kin_id, delta])
+
+	func kin_for_grave(grave_id: String) -> StringName:
+		return kin.get(grave_id, &"")
 
 
 class GhostsDouble extends Node:
@@ -76,6 +81,12 @@ class CareDouble extends Node:
 
 	func candle_lit(grave_id: String) -> bool:
 		return lit.has(grave_id)
+
+	func light(grave_id: String, inv: Inventory) -> bool:
+		if lit.has(grave_id) or not inv.remove_item(&"grave_candle", 1):
+			return false
+		lit[grave_id] = true
+		return true
 
 
 class PlayerDouble extends Node:
@@ -174,6 +185,7 @@ func _new_fest() -> Festivals:
 	f.villager_ids.assign(Phase8Fixtures.STORY_NPCS)
 	f.household_ids.assign(Phase8Fixtures.HOUSEHOLD_KIN)
 	f.relationship_config = Phase8Fixtures.relationship_config()
+	f.kin_table.assign(Phase8Fixtures.kin_list())
 	return f
 
 
@@ -389,3 +401,71 @@ func test_data_matches_the_fixtures() -> void:
 		for key: Variant in f.effects:
 			assert_eq(d.effects.get(key), f.effects[key], "%s effects.%s" % [f.id, key])
 	assert_eq(Database.festivals().map(func(f: FestivalData) -> StringName: return f.id), [&"fest_kathrein", &"fest_lights"])
+
+
+# --- the procession and the families' lights ----------------------------------------------------------
+
+func test_procession_staggered_lenz_in_front() -> void:
+	var l := Phase8Fixtures.festival(&"fest_lights")
+	var plan := FestivalRules.procession(l, [{"npc": &"a", "graves": PackedStringArray(["l_01"])}, {"npc": &"lenz", "lead": true},
+			{"npc": &"b", "graves": PackedStringArray(["l_02"])}])
+	assert_eq(plan.map(func(e: Dictionary) -> StringName: return e.npc), [&"lenz", &"a", &"b"], "Lenz vorn")
+	assert_eq(plan.map(func(e: Dictionary) -> int: return e.arrive), [1005, 1012, 1020], "16:45–17:00, staggered")
+	assert_eq(plan.map(func(e: Dictionary) -> int: return e.at_grave), [1020, 1020, 1028], "≈ 8 minutes up, from 17:00")
+	assert_eq(plan.map(func(e: Dictionary) -> int: return e.leave), [1080, 1095, 1110], "down 18:00–18:30")
+	assert_true(plan.all(func(e: Dictionary) -> bool: return e.stand == 10 and e.at_grave + e.stand <= 1060), "10 minutes before the address")
+
+
+func test_families_light_their_graves_when_they_reach_them() -> void:
+	_open(53)
+	visitors.kin = {"l_01": &"kin_kehr", "l_02": &"kin_kehr", "l_03": &"kin_ott"}
+	_at(58, 400)
+	var plan := fest.procession_plan()
+	assert_eq(plan.map(func(e: Dictionary) -> StringName: return e.npc),
+			[&"npc_priest", &"npc_kin_kehr", &"npc_kin_ott", &"npc_smith_g", &"npc_grocer_g", &"npc_apprentice"])
+	assert_eq(plan[1].graves, PackedStringArray(["l_01", "l_02"]))
+	assert_eq(plan[3].graves, PackedStringArray(["old_01"]), "Esch at Meister Gratz")
+	_at(58, 1019)
+	assert_eq(care.lit, {}, "not before they are there")
+	_at(58, 1020)
+	assert_eq(care.lit.keys(), ["l_01", "l_02", "l_03"], "Kehr and Ott at 17:00")
+	_at(58, 1030)
+	assert_true(care.lit.has("old_01") and care.lit.has("old_08"))
+	var saved := fest.save_state()
+	assert_eq(saved.kin_lit, ["npc_kin_kehr", "npc_kin_ott", "npc_smith_g", "npc_grocer_g"])
+	care.lit.erase("l_01")
+	_at(58, 1040)
+	assert_false(care.lit.has("l_01"), "once per family")
+
+
+# --- display entities ----------------------------------------------------------------------------------
+
+func test_fest_decor_and_fiddler_only_on_the_day() -> void:
+	_open(53)
+	var decor := FestDecor.new()
+	var fiddler := Fiddler.new()
+	var bow := Node3D.new()
+	bow.name = "bow"
+	fiddler.add_child(bow)
+	_nodes.append_array([decor, fiddler])
+	tree.root.add_child(decor)
+	tree.root.add_child(fiddler)
+	assert_false(decor.visible, "day 53")
+	assert_false(fiddler.visible)
+	_at(54, 600)
+	decor.refresh()
+	fiddler.refresh()
+	assert_true(decor.visible, "Kathrein day")
+	assert_true(fiddler.visible)
+	assert_false(fiddler.playing(), "the bow rests outside the window")
+	_at(54, 1150)
+	assert_true(fiddler.playing())
+	fiddler._process(0.15)
+	assert_ne(bow.rotation.z, 0.0, "the bow arm sways")
+	_at(54, 1380)
+	fiddler._process(0.1)
+	assert_eq(bow.rotation.z, 0.0, "after 23:00")
+	TimeManager.day = 55
+	EventBus.day_started.emit(55)
+	assert_false(decor.visible)
+	assert_false(fiddler.visible)

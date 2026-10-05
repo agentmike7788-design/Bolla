@@ -32,6 +32,15 @@ const REPUTATION_GROUP := &"reputation"
 const PIETY_GROUP := &"piety"
 const VISITORS_GROUP := &"visitors"
 const GHOSTS_GROUP := &"ghosts"
+const NPC_GROUP := &"npc"
+const PRIEST_NPC := &"npc_priest"
+const APPRENTICE_NPC := &"npc_apprentice"
+const ROAD_END := &"road_end"
+const GRAVEYARD_REGION := &"graveyard"
+const LIGHTS_LENZ := &"lights_lenz"
+const LIGHTS_CROWD := "lights_crowd_%d"
+const CROWD_SPOTS := 8
+const FALLBACK_ROUTE: PackedStringArray = ["road_end", "road_mid", "gate_outside", "gate_inside"]
 const VILLAGE_REGION := &"village"
 const DEFAULT_ROOM := &"inn"
 const DEFAULT_CANDLE := &"grave_candle"
@@ -51,6 +60,8 @@ var fest_table: Dictionary[StringName, FestivalData] = {}
 var villager_ids: Array[StringName] = []
 ## Households whose goodwill lights_all raises; empty = Database.kin_list() without villager_id.
 var household_ids: Array[StringName] = []
+## The kin of the procession; empty = Database.kin_list() (tests inject fixtures).
+var kin_table: Array[KinData] = []
 ## Relationship tiers (dance ≥ „Bekannt"); null = data/config/relationship_config.tres.
 var relationship_config: RelationshipConfig
 
@@ -64,6 +75,8 @@ var _danced: Array[StringName] = []
 var _lights_result: StringName = &""
 var _candles_given: bool = false
 var _early_done: bool = false
+## Lichtgang: the participants (npc layout ids) whose own candles stand on their graves.
+var _kin_lit: Array[StringName] = []
 var _morning_day: int = 0
 
 
@@ -131,6 +144,8 @@ func apply_morning(day: int) -> void:
 			GameState.set_flag(f.day_flag, d)
 		if d == day and state(f.id) == &"":
 			_set_state(f.id, STATE_ANNOUNCED)
+			if f.id == LIGHTS:
+				apply_procession()
 			var text := str(f.effects.get("announce", ""))
 			if FestivalRules.shifted(f, d) and str(f.effects.get("shift_line", "")) != "":
 				text = (text + " " if text != "" else "") + str(f.effects.shift_line)
@@ -228,6 +243,79 @@ func evaluate_lights() -> StringName:
 
 
 ## &"" | all | some | none.
+## §2.7.2 the procession of today's Lichtgang: [{npc, graves, arrive, at_grave, stand, leave, lead}] – Lenz in
+## front, then every household and villager with a dead on the hill (Visitors.kin_for_grave; the
+## villagers' fixed graves), Jakob with his mother's lantern. Pure plan (not saved).
+func procession_plan() -> Array[Dictionary]:
+	var f := festival(LIGHTS)
+	var participants: Array = [{"npc": PRIEST_NPC, "graves": PackedStringArray(), "lead": true}]
+	var by_kin := {}
+	var visitors := _first(VISITORS_GROUP)
+	if visitors != null and visitors.has_method(&"kin_for_grave"):
+		for gid: String in _occupied_graves():
+			var kin := StringName(str(visitors.call(&"kin_for_grave", gid)))
+			if kin != &"":
+				if not by_kin.has(kin):
+					by_kin[kin] = PackedStringArray()
+				var list: PackedStringArray = by_kin[kin]
+				list.append(gid)
+				by_kin[kin] = list
+	for k: Variant in _kin_data():
+		var kin := k as KinData
+		if kin == null or kin.npc_path_id == &"":
+			continue
+		var graves: PackedStringArray = by_kin.get(kin.kin_id, PackedStringArray())
+		for gid: String in kin.fixed_graves:
+			if not graves.has(gid):
+				graves.append(gid)
+		if not graves.is_empty():
+			participants.append({"npc": kin.npc_path_id, "graves": graves})
+	participants.append({"npc": APPRENTICE_NPC, "graves": PackedStringArray()})
+	return FestivalRules.procession(f, participants)
+
+
+## Runtime schedules of the procession (ScheduleBuilder, Npc.set_runtime_schedule; rebuilt from plan +
+## clock after a load). Npc not in the world are skipped.
+func apply_procession() -> void:
+	if not is_inside_tree() or today() != LIGHTS:
+		return
+	var npcs := {}
+	for node: Node in get_tree().get_nodes_in_group(NPC_GROUP):
+		npcs[StringName(node.name)] = node
+		var id: Variant = node.get(&"npc_id")
+		if id != null and str(id) != "":
+			npcs[StringName(str(id))] = node
+	var world := get_tree().current_scene
+	var crowd := 0
+	for entry: Dictionary in procession_plan():
+		var npc: Node = npcs.get(entry.npc)
+		if npc == null or not npc.has_method(&"set_runtime_schedule"):
+			continue
+		var graves: PackedStringArray = entry.graves
+		var spot: StringName
+		if graves.is_empty():
+			spot = LIGHTS_LENZ if bool(entry.lead) else StringName(LIGHTS_CROWD % (crowd % CROWD_SPOTS + 1))
+			if not bool(entry.lead):
+				crowd += 1
+		else:
+			spot = StringName("gv_" + graves[0])
+		var route := _route(world, graves[0] if not graves.is_empty() else "")
+		var back := route.duplicate()
+		back.reverse()
+		var entries: Array[ScheduleEntry] = [
+			ScheduleBuilder.walk(ROAD_END, route, int(entry.arrive), GRAVEYARD_REGION, world),
+			ScheduleBuilder.stay(spot, int(entry.at_grave), &"mourn_stand" if not graves.is_empty() else &"idle"),
+			ScheduleBuilder.walk(spot, back, int(entry.leave), GRAVEYARD_REGION, world),
+		]
+		npc.call(&"set_runtime_schedule", ScheduleBuilder.build(entries))
+
+
+## Runtime schedules are not saved: rebuilt from plan + clock.
+func post_load() -> void:
+	if today() == LIGHTS and state(LIGHTS) != STATE_ENDED:
+		apply_procession()
+
+
 func lights_result() -> StringName:
 	return _lights_result
 
@@ -255,6 +343,7 @@ func save_state() -> Dictionary:
 		danced_ids.append(String(id))
 	return {"days": days, "state": states, "presence": {"since": _presence_since, "done": _presence_done},
 			"danced": danced_ids, "lights_result": String(_lights_result), "candles": _candles_given, "early": _early_done,
+			"kin_lit": _kin_lit.map(func(id: StringName) -> String: return String(id)),
 			"morning_day": _morning_day}
 
 
@@ -291,6 +380,12 @@ func load_state(data: Dictionary) -> void:
 	_lights_result = result if result in [FestivalRules.RESULT_ALL, FestivalRules.RESULT_SOME, FestivalRules.RESULT_NONE] else &""
 	_candles_given = data.get("candles", false) == true
 	_early_done = data.get("early", false) == true
+	_kin_lit.clear()
+	var lit: Variant = data.get("kin_lit", [])
+	if lit is Array:
+		for v: Variant in lit:
+			if (v is String or v is StringName) and not _kin_lit.has(StringName(str(v))):
+				_kin_lit.append(StringName(str(v)))
 	var morning: Variant = data.get("morning_day", 0)
 	_morning_day = maxi(0, int(morning)) if (morning is int or morning is float) else 0
 
@@ -330,8 +425,49 @@ func _lights_minute(f: FestivalData, minute: int) -> void:
 		var ghosts := _first(GHOSTS_GROUP)
 		if ghosts != null and ghosts.has_method(&"set_early_window"):
 			ghosts.call(&"set_early_window", int(early.get("from", 1020)), int(early.get("minutes", 30)), _lit_graves())
+	# The families put their own lights on their graves when they reach them (§2.7.2 17:00–17:40).
+	if minute >= FestivalRules._pair(f.effects.get("at_graves"), Vector2i(1020, 1060)).x and minute < f.window.y:
+		for entry: Dictionary in procession_plan():
+			var who: StringName = entry.npc
+			if _kin_lit.has(who) or minute < int(entry.at_grave) or (entry.graves as PackedStringArray).is_empty():
+				continue
+			_kin_lit.append(who)
+			_kin_lights(entry.graves)
 	if _lights_result == &"" and minute >= int(f.effects.get("check_minute", 1080)):
 		evaluate_lights()
+
+
+## A family's own candles on `graves` (GraveCare.light with a candle of their own each).
+func _kin_lights(graves: PackedStringArray) -> void:
+	var care := _first(GRAVE_CARE_GROUP)
+	if care == null or not care.has_method(&"light"):
+		return
+	var f := festival(LIGHTS)
+	var candle := StringName(str(f.effects.get("candle_item", DEFAULT_CANDLE))) if f != null else DEFAULT_CANDLE
+	for gid: String in graves:
+		if care.has_method(&"candle_lit") and bool(care.call(&"candle_lit", gid)):
+			continue
+		var own := Inventory.new()
+		own.slot_count = 1
+		own.add_item(candle, 1)
+		care.call(&"light", gid, own)
+		own.free()
+
+
+## The route up to `grave` (the world's visitor route when it has one, else road_end → gate).
+func _route(world: Node, grave: String) -> PackedStringArray:
+	if world != null and grave != "" and world.has_method(&"visitor_route"):
+		var r: Variant = world.call(&"visitor_route", grave)
+		if r is PackedStringArray and not (r as PackedStringArray).is_empty():
+			return r
+	var out := FALLBACK_ROUTE.duplicate()
+	if grave != "":
+		out.append("gv_" + grave)
+	return out
+
+
+func _kin_data() -> Array:
+	return kin_table if not kin_table.is_empty() else Database.kin_list()
 
 
 func _presence_minute(f: FestivalData, minute: int) -> void:
@@ -412,7 +548,7 @@ func _households() -> Array[StringName]:
 	if not household_ids.is_empty():
 		return household_ids.duplicate()
 	var out: Array[StringName] = []
-	for k: Variant in Database.kin_list():
+	for k: Variant in _kin_data():
 		if k is KinData and (k as KinData).villager_id == &"":
 			out.append((k as KinData).kin_id)
 	return out

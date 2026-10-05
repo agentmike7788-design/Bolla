@@ -88,6 +88,38 @@ static func lights_result(lit: int, occupied: int, fest: FestivalData) -> String
 	return RESULT_SOME if float(lit) >= float(occupied) * share else RESULT_NONE
 
 
+## §2.7.2 the procession of the Lichtgang, staggered: participants [{npc, graves, lead}] (lead = Lenz in
+## front) → [{npc, graves, arrive, at_grave, stand, leave}] – up the coach road in effects.arrive
+## (16:45–17:00), ≈ 8 minutes to the grave (at the latest when the 17:40 address leaves `stand` minutes),
+## `stand` minutes (10) at the graves, down again in effects.leave (18:00–18:30). Deterministic.
+static func procession(fest: FestivalData, participants: Array) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if fest == null:
+		return out
+	var ordered: Array = participants.filter(func(p: Variant) -> bool: return p is Dictionary and bool((p as Dictionary).get("lead", false)))
+	ordered.append_array(participants.filter(func(p: Variant) -> bool: return p is Dictionary and not bool((p as Dictionary).get("lead", false))))
+	var arrive := _pair(fest.effects.get("arrive"), Vector2i(1005, 1020))
+	var at := _pair(fest.effects.get("at_graves"), Vector2i(1020, 1060))
+	var leave := _pair(fest.effects.get("leave"), Vector2i(1080, 1110))
+	var stand := int(fest.effects.get("stand_minutes", 10))
+	var walk_up := int(fest.effects.get("walk_up_minutes", 8))
+	var n := ordered.size()
+	for i: int in n:
+		var p: Dictionary = ordered[i]
+		var a := arrive.x + (((arrive.y - arrive.x) * i) / (n - 1) if n > 1 else 0)
+		var g := clampi(a + walk_up, at.x, maxi(at.x, at.y - stand))
+		var l := leave.x + (((leave.y - leave.x) * i) / (n - 1) if n > 1 else 0)
+		out.append({"npc": StringName(str(p.get("npc", ""))), "graves": PackedStringArray(p.get("graves", PackedStringArray())),
+				"arrive": a, "at_grave": g, "stand": stand, "leave": l, "lead": bool(p.get("lead", false))})
+	return out
+
+
+static func _pair(raw: Variant, fallback: Vector2i) -> Vector2i:
+	if (raw is Array or raw is PackedInt32Array) and raw.size() >= 2:
+		return Vector2i(int(raw[0]), int(raw[1]))
+	return fallback
+
+
 ## An effects sub-dictionary (lights_all, lights_some, early_ghosts …) or {}.
 static func effect(fest: FestivalData, key: String) -> Dictionary:
 	var raw: Variant = fest.effects.get(key) if fest != null else null

@@ -423,3 +423,51 @@ func test_save_load_round_trip() -> void:
 	other.load_state({"steps": "x", "owed": {"a": 3}, "shield": -4, "prayer": "?", "wash": {"day": "x"}})
 	assert_eq([other.steps_total(), other.favor_owed(&"a"), other.save_state().shield, other.save_state().prayer], [0, &"", 0, {}])
 	other.free()
+
+
+# --- entities --------------------------------------------------------------------------------------
+
+func test_memorial_plate_from_rosine_2() -> void:
+	var plate := MemorialPlate.new()
+	tree.root.add_child(plate)
+	assert_false(plate.visible)
+	GameState.set_flag(&"friend_innkeeper_2", true)
+	EventBus.friend_step_completed.emit(&"innkeeper", 2)
+	assert_true(plate.visible, "the plate hangs on the memorial board")
+	plate.free()
+
+
+func test_archive_cabinet_lenz_or_the_parish_key() -> void:
+	GameState.clear_flag(&"archive_ledger_found")
+	var cabinet := (load("res://src/entities/archive_cabinet/archive_cabinet.tscn") as PackedScene).instantiate() as ArchiveCabinet
+	var hero := (load("res://src/entities/player/player.tscn") as PackedScene).instantiate() as Player
+	hero.instant_actions = true
+	tree.root.add_child(cabinet)
+	tree.root.add_child(hero)
+	TimeManager.minute_of_day = 1000
+	assert_eq(cabinet.get_interaction_prompt(hero), ArchiveCabinet.TEXT_LOCKED, "without Lenz 2 or the key")
+	cabinet.interact(hero)
+	assert_eq(hero.inventory.count(&"lorenz_ledger_2"), 0)
+	# Lenz 2 accepted: beside him 16:00–18:00.
+	friendship.load_state({"steps": {"priest": 1}, "step_day": {"priest": 50}})
+	rel.vals[&"priest"] = 55
+	assert_true(friendship.accept_step(&"priest"))
+	assert_eq(cabinet.get_interaction_prompt(hero), ArchiveCabinet.PROMPT)
+	TimeManager.minute_of_day = 900
+	cabinet.interact(hero)
+	assert_eq(orders.state(&"of_lenz_2"), Orders.STATE_ACCEPTED, "Lenz is there from 16:00")
+	TimeManager.minute_of_day = 1000
+	cabinet.interact(hero)
+	assert_eq(TimeManager.minute_of_day, 1060, "60 minutes")
+	assert_eq(friendship.step_done(&"priest"), 2)
+	assert_eq(hero.inventory.count(&"lorenz_ledger_2"), 1, "Lorenz' second ledger")
+	assert_false(cabinet.can_interact(hero), "found – nothing more to do")
+	# The key alone (Fenner 2) in another game: 08:00–18:00, the ledger once.
+	GameState.clear_flag(&"archive_ledger_found")
+	GameState.set_flag(&"archive_key", true)
+	TimeManager.minute_of_day = 500
+	assert_eq(cabinet.access(), "key")
+	cabinet.interact(hero)
+	assert_eq(hero.inventory.count(&"lorenz_ledger_2"), 2)
+	cabinet.free()
+	hero.free()
