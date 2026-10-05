@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChatterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/chatter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ch_market_rival"
+region = &"village"
+npcs = Array[StringName]([&"grocer", &"peddler"])
+place = &"v_well"
+window = Vector2i(600, 840)
+conditions = PackedStringArray("p8_open")
+lines = PackedStringArray("Bei mir kostet der Zwirn einen.", "Bei Ihnen kostet er auch einen, wenn er reißt.", "Bei mir reißt nichts.", "Herzchen, alles reißt. Die Frage ist nur, wann.")
+sets_flag = &""

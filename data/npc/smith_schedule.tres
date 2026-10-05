@@ -3,6 +3,181 @@
 [ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1_ipbtn"]
 [ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2_s8il1"]
 
+[sub_resource type="Resource" id="p8_smith_01"]
+script = ExtResource("1_ipbtn")
+start_minute = 780
+travel_minutes = 6
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_inn_door", "v_anger_w", "v_bridge", "v_road_in")
+region = &"village"
+today_flag = &"visit_smith_day"
+
+[sub_resource type="Resource" id="p8_smith_02"]
+script = ExtResource("1_ipbtn")
+start_minute = 786
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"visit_smith_day"
+
+[sub_resource type="Resource" id="p8_smith_03"]
+script = ExtResource("1_ipbtn")
+start_minute = 810
+travel_minutes = 10
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("road_end", "road_mid", "gate_outside", "gv_old_01")
+today_flag = &"visit_smith_day"
+
+[sub_resource type="Resource" id="p8_smith_04"]
+script = ExtResource("1_ipbtn")
+start_minute = 820
+activity = &"mourn"
+animation = &"mourn_stand"
+path = PackedStringArray("gv_old_01")
+dialogue_id = &"v_smith"
+today_flag = &"visit_smith_day"
+
+[sub_resource type="Resource" id="p8_smith_05"]
+script = ExtResource("1_ipbtn")
+start_minute = 870
+travel_minutes = 12
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("gv_old_01", "gate_outside", "road_mid", "road_end")
+today_flag = &"visit_smith_day"
+
+[sub_resource type="Resource" id="p8_smith_06"]
+script = ExtResource("1_ipbtn")
+start_minute = 882
+activity = &"home"
+path = PackedStringArray("road_end")
+visible = false
+today_flag = &"visit_smith_day"
+
+[sub_resource type="Resource" id="p8_smith_07"]
+script = ExtResource("1_ipbtn")
+start_minute = 895
+travel_minutes = 8
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_road_in", "v_bridge", "v_anger_w", "v_anvil")
+region = &"village"
+today_flag = &"visit_smith_day"
+
+[sub_resource type="Resource" id="p8_smith_08"]
+script = ExtResource("1_ipbtn")
+start_minute = 903
+activity = &"shop"
+animation = &"work"
+path = PackedStringArray("v_anvil")
+dialogue_id = &"v_smith"
+region = &"village"
+today_flag = &"visit_smith_day"
+
+[sub_resource type="Resource" id="p8_smith_09"]
+script = ExtResource("1_ipbtn")
+start_minute = 1136
+travel_minutes = 4
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_linden", "v_inn_door")
+region = &"village"
+today_flag = &"fest_kathrein_day"
+
+[sub_resource type="Resource" id="p8_smith_10"]
+script = ExtResource("1_ipbtn")
+start_minute = 1140
+path = PackedStringArray("v_in_inn_fest_1")
+dialogue_id = &"v_smith"
+region = &"village"
+today_flag = &"fest_kathrein_day"
+
+[sub_resource type="Resource" id="p8_smith_11"]
+script = ExtResource("1_ipbtn")
+start_minute = 1380
+activity = &"home"
+path = PackedStringArray("v_house_n")
+visible = false
+region = &"village"
+today_flag = &"fest_kathrein_day"
+
+[sub_resource type="Resource" id="p8_smith_12"]
+script = ExtResource("1_ipbtn")
+start_minute = 950
+travel_minutes = 10
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_anvil", "v_lights_gather")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_smith_13"]
+script = ExtResource("1_ipbtn")
+start_minute = 960
+path = PackedStringArray("v_lights_gather")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_smith_14"]
+script = ExtResource("1_ipbtn")
+start_minute = 990
+travel_minutes = 5
+activity = &"walk"
+animation = &"lantern_walk"
+path = PackedStringArray("v_lights_gather", "v_road_in")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_smith_15"]
+script = ExtResource("1_ipbtn")
+start_minute = 995
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_smith_16"]
+script = ExtResource("1_ipbtn")
+start_minute = 1125
+travel_minutes = 12
+activity = &"walk"
+animation = &"lantern_walk"
+path = PackedStringArray("v_road_in", "v_lights_gather", "v_anvil")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_smith_17"]
+script = ExtResource("1_ipbtn")
+start_minute = 1137
+activity = &"shop"
+animation = &"work"
+path = PackedStringArray("v_anvil")
+dialogue_id = &"v_smith"
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_smith_18"]
+script = ExtResource("1_ipbtn")
+start_minute = 1050
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_smith_19"]
+script = ExtResource("1_ipbtn")
+start_minute = 1054
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"fest_lights_day"
+
 [sub_resource type="Resource" id="Resource_ymel4"]
 script = ExtResource("1_ipbtn")
 activity = &"home"
@@ -81,4 +256,4 @@ region = &"village"
 script = ExtResource("2_s8il1")
 npc_id = &"smith"
 display_name = "Ulrich Esch"
-entries = Array[ExtResource("1_ipbtn")]([SubResource("Resource_ymel4"), SubResource("Resource_dneqq"), SubResource("Resource_7v111"), SubResource("Resource_6oka0"), SubResource("Resource_386d2"), SubResource("Resource_sq8i0"), SubResource("Resource_vcg37"), SubResource("Resource_36rf6"), SubResource("Resource_ixu1s")])
+entries = Array[ExtResource("1_ipbtn")]([SubResource("Resource_ymel4"), SubResource("Resource_dneqq"), SubResource("Resource_7v111"), SubResource("Resource_6oka0"), SubResource("Resource_386d2"), SubResource("Resource_sq8i0"), SubResource("Resource_vcg37"), SubResource("Resource_36rf6"), SubResource("Resource_ixu1s"), SubResource("p8_smith_01"), SubResource("p8_smith_02"), SubResource("p8_smith_03"), SubResource("p8_smith_04"), SubResource("p8_smith_05"), SubResource("p8_smith_06"), SubResource("p8_smith_07"), SubResource("p8_smith_08"), SubResource("p8_smith_09"), SubResource("p8_smith_10"), SubResource("p8_smith_11"), SubResource("p8_smith_12"), SubResource("p8_smith_13"), SubResource("p8_smith_14"), SubResource("p8_smith_15"), SubResource("p8_smith_16"), SubResource("p8_smith_17"), SubResource("p8_smith_18"), SubResource("p8_smith_19")])

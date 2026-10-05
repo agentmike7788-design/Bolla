@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChatterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/chatter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ch_smith_mayor"
+region = &"village"
+npcs = Array[StringName]([&"mayor", &"smith"])
+place = &"v_anvil"
+window = Vector2i(740, 780)
+conditions = PackedStringArray("flag:robber_known")
+lines = PackedStringArray("Ein Gitter für jedes frische Grab, Esch? Was kostet das die Gemeinde?", "Weniger als ein offenes.", "Das ist keine Rechnung.", "Doch. Nur keine für dein Buch.")
+sets_flag = &""

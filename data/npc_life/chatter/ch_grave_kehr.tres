@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChatterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/chatter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ch_grave_kehr"
+region = &"graveyard"
+npcs = Array[StringName]([&"apprentice", &"kin_kehr"])
+place = &""
+window = Vector2i(570, 960)
+conditions = PackedStringArray("apprentice_hired")
+lines = PackedStringArray("Ich mach nur das Laub weg, Frau Kehr.", "Mach nur. Er hat Laub nie leiden können.", "Ich bin gleich wieder weg.", "Lass dir Zeit. Er hatte nie welche.")
+sets_flag = &""

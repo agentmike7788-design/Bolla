@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChatterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/chatter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ch_inn_council"
+region = &"village"
+npcs = Array[StringName]([&"mayor", &"priest"])
+place = &"v_in_inn_table"
+window = Vector2i(1090, 1200)
+conditions = PackedStringArray()
+lines = PackedStringArray("Wieder drei im Sterbebuch diesen Monat, Hochwürden.", "Ich zähle nicht, Fenner. Ich schreibe.", "Einer muss ja zählen.", "Dann zählen Sie. Ich bete hinterher.")
+sets_flag = &""

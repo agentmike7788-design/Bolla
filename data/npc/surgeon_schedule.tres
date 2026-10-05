@@ -3,6 +3,132 @@
 [ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1_etcrm"]
 [ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2_5r3yp"]
 
+[sub_resource type="Resource" id="p8_surgeon_01"]
+script = ExtResource("1_etcrm")
+start_minute = 960
+travel_minutes = 6
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_surgery_door", "v_well", "v_bridge")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_surgeon_02"]
+script = ExtResource("1_etcrm")
+start_minute = 966
+path = PackedStringArray("v_bridge")
+dialogue_id = &"v_surgeon"
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_surgeon_03"]
+script = ExtResource("1_etcrm")
+start_minute = 1340
+travel_minutes = 10
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_surgery_door", "v_anger_w", "v_ott_door")
+region = &"village"
+today_flag = &"night_np_ott_surgeon_day"
+
+[sub_resource type="Resource" id="p8_surgeon_04"]
+script = ExtResource("1_etcrm")
+start_minute = 1350
+animation = &"knock"
+path = PackedStringArray("v_ott_door")
+region = &"village"
+today_flag = &"night_np_ott_surgeon_day"
+
+[sub_resource type="Resource" id="p8_surgeon_05"]
+script = ExtResource("1_etcrm")
+start_minute = 1351
+activity = &"home"
+path = PackedStringArray("v_ott_door")
+visible = false
+region = &"village"
+today_flag = &"night_np_ott_surgeon_day"
+
+[sub_resource type="Resource" id="p8_surgeon_06"]
+script = ExtResource("1_etcrm")
+start_minute = 1390
+path = PackedStringArray("v_ott_door")
+dialogue_id = &"v_surgeon"
+region = &"village"
+today_flag = &"night_np_ott_surgeon_day"
+
+[sub_resource type="Resource" id="p8_surgeon_07"]
+script = ExtResource("1_etcrm")
+start_minute = 1392
+travel_minutes = 10
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_ott_door", "v_anger_w", "v_surgery_door")
+region = &"village"
+today_flag = &"night_np_ott_surgeon_day"
+
+[sub_resource type="Resource" id="p8_surgeon_08"]
+script = ExtResource("1_etcrm")
+start_minute = 1402
+activity = &"home"
+path = PackedStringArray("v_surgery_door")
+visible = false
+region = &"village"
+today_flag = &"night_np_ott_surgeon_day"
+
+[sub_resource type="Resource" id="p8_surgeon_09"]
+script = ExtResource("1_etcrm")
+start_minute = 1340
+travel_minutes = 10
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_surgery_door", "v_anger_w", "v_kehr_door")
+region = &"village"
+today_flag = &"night_np_kehr_surgeon_day"
+
+[sub_resource type="Resource" id="p8_surgeon_10"]
+script = ExtResource("1_etcrm")
+start_minute = 1350
+animation = &"knock"
+path = PackedStringArray("v_kehr_door")
+region = &"village"
+today_flag = &"night_np_kehr_surgeon_day"
+
+[sub_resource type="Resource" id="p8_surgeon_11"]
+script = ExtResource("1_etcrm")
+start_minute = 1351
+activity = &"home"
+path = PackedStringArray("v_kehr_door")
+visible = false
+region = &"village"
+today_flag = &"night_np_kehr_surgeon_day"
+
+[sub_resource type="Resource" id="p8_surgeon_12"]
+script = ExtResource("1_etcrm")
+start_minute = 1390
+path = PackedStringArray("v_kehr_door")
+dialogue_id = &"v_surgeon"
+region = &"village"
+today_flag = &"night_np_kehr_surgeon_day"
+
+[sub_resource type="Resource" id="p8_surgeon_13"]
+script = ExtResource("1_etcrm")
+start_minute = 1392
+travel_minutes = 10
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_kehr_door", "v_anger_w", "v_surgery_door")
+region = &"village"
+today_flag = &"night_np_kehr_surgeon_day"
+
+[sub_resource type="Resource" id="p8_surgeon_14"]
+script = ExtResource("1_etcrm")
+start_minute = 1402
+activity = &"home"
+path = PackedStringArray("v_surgery_door")
+visible = false
+region = &"village"
+today_flag = &"night_np_kehr_surgeon_day"
+
 [sub_resource type="Resource" id="Resource_nspls"]
 script = ExtResource("1_etcrm")
 activity = &"home"
@@ -108,4 +234,4 @@ today_flag = &"lecture_after_day"
 script = ExtResource("2_5r3yp")
 npc_id = &"surgeon"
 display_name = "Severin Quast"
-entries = Array[ExtResource("1_etcrm")]([SubResource("Resource_nspls"), SubResource("Resource_xrgjx"), SubResource("Resource_d058b"), SubResource("Resource_cawe0"), SubResource("Resource_uj5n2"), SubResource("Resource_x5dx7"), SubResource("Resource_n2mmb"), SubResource("Resource_s8rde"), SubResource("Resource_j33mf"), SubResource("Resource_qa7l1"), SubResource("Resource_qa7l2"), SubResource("Resource_qa7l3")])
+entries = Array[ExtResource("1_etcrm")]([SubResource("Resource_nspls"), SubResource("Resource_xrgjx"), SubResource("Resource_d058b"), SubResource("Resource_cawe0"), SubResource("Resource_uj5n2"), SubResource("Resource_x5dx7"), SubResource("Resource_n2mmb"), SubResource("Resource_s8rde"), SubResource("Resource_j33mf"), SubResource("Resource_qa7l1"), SubResource("Resource_qa7l2"), SubResource("Resource_qa7l3"), SubResource("p8_surgeon_01"), SubResource("p8_surgeon_02"), SubResource("p8_surgeon_03"), SubResource("p8_surgeon_04"), SubResource("p8_surgeon_05"), SubResource("p8_surgeon_06"), SubResource("p8_surgeon_07"), SubResource("p8_surgeon_08"), SubResource("p8_surgeon_09"), SubResource("p8_surgeon_10"), SubResource("p8_surgeon_11"), SubResource("p8_surgeon_12"), SubResource("p8_surgeon_13"), SubResource("p8_surgeon_14")])

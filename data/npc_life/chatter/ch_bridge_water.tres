@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChatterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/chatter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ch_bridge_water"
+region = &"village"
+npcs = Array[StringName]([&"beggar", &"surgeon"])
+place = &"v_bridge"
+window = Vector2i(1086, 1170)
+conditions = PackedStringArray("p8_open")
+lines = PackedStringArray("Sie schauen jeden Abend ins Wasser, Doktor.", "Und Sie jeden Abend mir zu.", "Einer muss ja.", "Muss er nicht, Veit. Er tut es nur.")
+sets_flag = &""
