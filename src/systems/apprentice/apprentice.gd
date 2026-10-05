@@ -661,11 +661,12 @@ func _effect(e: Dictionary, day: int) -> void:
 	match task:
 		&"rake", &"weed":
 			var clean := _first(&"cleanliness")
-			if task == &"weed" and mistake:
+			done = clean != null and bool(clean.call(&"tend_by", spot, GROUP))
+			if done and task == &"weed" and mistake:
+				# Only a mistake where grave flowers grow (§2.5.2: „sonst kein Fehler").
 				mistake = care != null and StringName(str(care.call(&"flowers_state", grave))) in [&"fresh", &"wilted"]
 				if mistake and care.has_method(&"tear_flowers"):
 					care.call(&"tear_flowers", grave)
-			done = clean != null and bool(clean.call(&"tend_by", spot, GROUP))
 			if done and task == &"rake" and mistake:
 				var neighbour := _neighbour_leaves(spot)
 				if neighbour != "":

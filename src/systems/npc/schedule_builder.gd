@@ -97,7 +97,7 @@ static func travel_minutes(path: PackedStringArray, world: Node) -> int:
 	var length := path_length(path, world)
 	if length <= 0.0001:
 		return 0
-	return maxi(1, ceili(length / _speed()))
+	return maxi(1, ceili(length / _speed() - 0.0001))
 
 
 ## Flat length (m) of the waypoint polyline in `world` (0 without a world that knows get_waypoint).

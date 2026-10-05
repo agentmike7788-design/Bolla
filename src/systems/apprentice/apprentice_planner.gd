@@ -283,7 +283,7 @@ static func _walk_minutes(here: String, target: String, world: Node) -> int:
 	var a := ScheduleBuilder.point(world, here)
 	var b := ScheduleBuilder.point(world, target)
 	var d := Vector2(a.x - b.x, a.z - b.z).length()
-	return 0 if d <= 0.0001 else maxi(1, ceili(d / _speed()))
+	return 0 if d <= 0.0001 else maxi(1, ceili(d / _speed() - 0.0001))
 
 
 ## A named waypoint of the world (W-Welt), else `fallback` (where he stands).
