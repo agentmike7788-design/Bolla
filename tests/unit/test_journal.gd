@@ -421,13 +421,13 @@ func test_self_page_has_no_number() -> void:
 
 # --- real data (data/journal/**) --------------------------------------------------------------
 
-const PHASE7_INSIGHTS: Array[StringName] = [&"i_deathbook", &"i_burn_it"]
+const PHASE7_INSIGHTS: Array[StringName] = [&"i_deathbook", &"i_burn_it", &"i_underlined"]  # + Phase 8
 
 
 func test_real_clues_match_the_contract() -> void:
 	# Phase 6 (P3): c_crypt_draft is checked in test_ossuary.gd.
 	# Phase 7 (P6): the c_v_* clues are checked in test_phase7_clues_and_insights.
-	var clues: Array = Database.clues().filter(func(c: ClueData) -> bool: return c.id != &"c_crypt_draft" and not String(c.id).begins_with("c_v_"))
+	var clues: Array = Database.clues().filter(func(c: ClueData) -> bool: return c.id != &"c_crypt_draft" and not String(c.id).begins_with("c_v_") and not String(c.id).begins_with("c_n_"))
 	assert_eq(clues.size(), 18, "18 clues (§2.12)")
 	var ids: Array[StringName] = []
 	for c: ClueData in clues:
@@ -498,10 +498,12 @@ func test_real_data_links_every_insight() -> void:
 		j.add_clue(c.id)
 	var linked: Array[StringName] = []
 	for i: InsightData in Database.insights():
-		linked.append(j.try_link(i.requires))
+		var ids := i.requires.duplicate()
+		ids.append_array(i.any_clues.slice(0, i.any_count))  # Phase 8: + any_count of the any group
+		linked.append(j.try_link(ids))
 	assert_eq(linked, [&"i_warnings", &"i_marked", &"i_ferry", &"i_still_writing", &"i_not_lorenz", &"i_kranich", &"i_deathbook",
-			&"i_burn_it"] as Array[StringName], "Phase 7: + i_deathbook, i_burn_it")
-	assert_eq(j.self_page().insights_total, 6, "Phase 7: + i_deathbook (i_burn_it is optional)")
+			&"i_burn_it", &"i_underlined"] as Array[StringName], "Phase 7: + i_deathbook, i_burn_it; Phase 8: + i_underlined")
+	assert_eq(j.self_page().insights_total, 7, "Phase 7: + i_deathbook (i_burn_it is optional); Phase 8: + i_underlined")
 
 
 # --- Phase 7 (P6, docs/PHASE7_DESIGN.md §1.6, §2.6.5) -------------------------------------------
@@ -545,3 +547,188 @@ func test_deathbook_insight_links_from_its_three_clues() -> void:
 	EventBus.insight_unlocked.disconnect(cb)
 	GameState.clear_flag(&"insight_deathbook")
 	j.free()
+
+
+# --- Phase 8 (P6, docs/PHASE8_DESIGN.md §1.6, §3.4, §14.1) ---------------------------------------
+
+const ANY4: Array[StringName] = [&"c_n_quast_visit", &"c_n_lenz_visit", &"c_n_liesel_watch", &"c_n_ott_three"]
+
+
+func _underlined_journal() -> JournalManager:
+	var j := JournalManager.new()
+	j.insight_data = [Database.insight(&"i_underlined") as InsightData]
+	tree.root.add_child(j)
+	return j
+
+
+func test_phase8_clues_and_insight_data() -> void:
+	for id: StringName in [&"c_n_veit", &"c_n_quast_visit", &"c_n_lenz_visit", &"c_n_liesel_watch", &"c_n_ott_three", &"c_n_kladde", &"c_n_robber"]:
+		var c := Database.clue(id) as ClueData
+		var f := load("res://tests/fixtures/phase8/clues/%s.tres" % id) as ClueData
+		assert_not_null(c, String(id))
+		if c == null:
+			continue
+		assert_eq([c.kind, c.order, c.title], [f.kind, f.order, f.title], String(id))
+		assert_true(c.kind in ClueData.KINDS and c.text.length() >= 40, String(id))
+	assert_true((Database.clue(&"c_n_kladde") as ClueData).text.contains("Wer kommt, bevor man ruft?"), "§1.6 item 6")
+	var u := Database.insight(&"i_underlined") as InsightData
+	assert_eq([u.requires, u.any_clues, u.any_count, u.sets_flag, u.optional],
+			[[&"c_n_veit", &"c_n_kladde"] as Array[StringName], ANY4, 2, &"insight_underlined", false], "§1.6: all of 2 + 2 of 4")
+	assert_true(u.text.begins_with("Lorenz hat die Seelfrau unterstrichen."), "§14.1: the default file is the washer text")
+	assert_false(c_n_robber_in(u), "c_n_robber is no part of i_underlined")
+
+
+func c_n_robber_in(u: InsightData) -> bool:
+	return &"c_n_robber" in u.requires or &"c_n_robber" in u.any_clues
+
+
+func test_any_clues_link_rule() -> void:
+	var j := _underlined_journal()
+	for id: StringName in [&"c_n_veit", &"c_n_kladde", &"c_n_robber"] + ANY4:
+		j.add_clue(id)
+	assert_eq(j.try_link([&"c_n_veit", &"c_n_kladde"] as Array[StringName]), &"", "the required clues alone are not enough")
+	assert_eq(j.try_link([&"c_n_veit", &"c_n_kladde", &"c_n_lenz_visit"] as Array[StringName]), &"", "one of four is not enough")
+	assert_eq(j.try_link([&"c_n_veit", &"c_n_lenz_visit", &"c_n_ott_three"] as Array[StringName]), &"", "a required clue missing")
+	assert_eq(j.try_link([&"c_n_veit", &"c_n_kladde", &"c_n_lenz_visit", &"c_n_robber"] as Array[StringName]), &"",
+			"a foreign clue spoils the link")
+	assert_eq(j.try_link([&"c_n_ott_three", &"c_n_kladde", &"c_n_veit", &"c_n_quast_visit"] as Array[StringName]), &"i_underlined",
+			"order irrelevant")
+	assert_true(GameState.flag_on(&"insight_underlined"))
+	assert_true(j.has_insight(&"i_underlined"))
+	assert_eq(j.try_link([&"c_n_veit", &"c_n_kladde", &"c_n_lenz_visit", &"c_n_liesel_watch"] as Array[StringName]), &"", "only once")
+	GameState.clear_flag(&"insight_underlined")
+	j.free()
+
+
+func test_any_clues_all_four_and_unfound_clues() -> void:
+	var j := _underlined_journal()
+	j.add_clue(&"c_n_veit")
+	j.add_clue(&"c_n_kladde")
+	j.add_clue(&"c_n_quast_visit")
+	assert_eq(j.try_link([&"c_n_veit", &"c_n_kladde", &"c_n_quast_visit", &"c_n_lenz_visit"] as Array[StringName]), &"",
+			"every selected clue must be found")
+	for id: StringName in ANY4:
+		j.add_clue(id)
+	var all: Array[StringName] = [&"c_n_veit", &"c_n_kladde"]
+	all.append_array(ANY4)
+	assert_eq(j.try_link(all), &"i_underlined", "all four count as well")
+	GameState.clear_flag(&"insight_underlined")
+	j.free()
+
+
+func test_any_clues_open_question_and_ready() -> void:
+	var j := _underlined_journal()
+	assert_eq(j.open_questions().size(), 0)
+	j.add_clue(&"c_n_lenz_visit")
+	assert_eq(j.open_questions().size(), 1, "a clue of the any group opens the question")
+	var card: Dictionary = j.open_question_cards()[0]
+	assert_eq([card.found, card.needed, card.requires_found, card.requires_needed, card.any_found, card.any_count, card.any_total],
+			[1, 4, 0, 2, 1, 2, 4], "both groups on the card")
+	j.add_clue(&"c_n_veit")
+	j.add_clue(&"c_n_kladde")
+	assert_eq(j.ready_insights().size(), 0, "one of four – not ready")
+	j.add_clue(&"c_n_liesel_watch")
+	j.add_clue(&"c_n_quast_visit")
+	assert_eq(j.ready_insights().size(), 1, "all required + 2 of 4 → ready")
+	assert_eq(j.open_question_cards()[0].found, 4, "found counts the any group up to any_count")
+	j.free()
+
+
+func test_match_selection_is_pure_and_keeps_the_old_rule() -> void:
+	var plain := InsightData.new()
+	plain.id = &"i_plain"
+	plain.requires = [&"a", &"b"] as Array[StringName]
+	var any := InsightData.new()
+	any.id = &"i_any"
+	any.requires = [&"a"] as Array[StringName]
+	any.any_clues = [&"x", &"y", &"z"] as Array[StringName]
+	any.any_count = 1
+	var list: Array[InsightData] = [plain, any]
+	assert_eq(JournalManager.match_selection([&"b", &"a"] as Array[StringName], list, {}), &"i_plain")
+	assert_eq(JournalManager.match_selection([&"a"] as Array[StringName], list, {}), &"")
+	assert_eq(JournalManager.match_selection([&"z", &"a"] as Array[StringName], list, {}), &"i_any")
+	assert_eq(JournalManager.match_selection([&"z", &"a"] as Array[StringName], list, {&"i_any": 3}), &"", "unlocked")
+	assert_eq(JournalManager.match_selection([&"a", &"a", &"x"] as Array[StringName], list, {}), &"", "duplicates")
+	assert_eq(JournalManager.match_selection([] as Array[StringName], list, {}), &"")
+
+
+func test_underlined_variant_follows_story_config() -> void:
+	var base := Database.insight(&"i_underlined") as InsightData
+	var texts := {}
+	for choice: StringName in JournalManager.UNDERLINED_CHOICES:
+		var v := JournalManager.insight_variant(base, choice)
+		assert_not_null(v, String(choice))
+		assert_eq([v.id, v.requires, v.any_clues, v.any_count, v.sets_flag, v.title, v.question],
+				[base.id, base.requires, base.any_clues, base.any_count, base.sets_flag, base.title, base.question], "%s: same rule" % choice)
+		assert_true(v.text.ends_with("Auf der Seite steht nicht, welches von beiden."), String(choice))
+		texts[v.text] = choice
+	assert_eq(texts.size(), 3, "three different texts (§14.1)")
+	assert_true(JournalManager.insight_variant(base, &"priest").text.contains("den Pfarrer"))
+	assert_true(JournalManager.insight_variant(base, &"surgeon").text.contains("den Wundarzt"))
+	assert_true(JournalManager.insight_variant(base, &"washer").text.contains("die Seelfrau"))
+	assert_eq(JournalManager.insight_variant(base, &"nobody"), base, "unknown choice → the file")
+	var other := Database.insight(&"i_deathbook") as InsightData
+	assert_eq(JournalManager.insight_variant(other, &"priest"), other, "other insights unchanged")
+	assert_eq(JournalManager.underlined_choice(), &"washer", "§14.1: the user chose the washer")
+	assert_eq((Database.config(&"story_config") as StoryConfig).underlined, &"washer")
+	# The journal of the running game uses the configured variant.
+	var cfg := Database.config(&"story_config") as StoryConfig
+	cfg.underlined = &"surgeon"
+	var j := JournalManager.new()
+	tree.root.add_child(j)
+	assert_true(j.insight_by_id(&"i_underlined").text.contains("den Wundarzt"), "StoryConfig.underlined picks the text")
+	cfg.underlined = &"washer"
+	j.free()
+
+
+func test_three_traces_need_all_three_finds() -> void:
+	var j := JournalManager.new()
+	var manager := FakeRecords.new()
+	tree.root.add_child(manager)
+	tree.root.add_child(j)
+	var r := CorpseRecord.new()
+	r.id = "corpse_0040"
+	r.story_id = &"d2_ott"
+	manager.list.append(r)
+	r.finds_revealed = [&"f_d2_bottle"] as Array[StringName]
+	assert_false(j.add_clue(&"c_n_ott_three", r.id), "one find – no clue yet")
+	r.finds_revealed.append(&"f_d2_wax")
+	assert_false(j.add_clue(&"c_n_ott_three", r.id), "two finds")
+	assert_false(j.has_clue(&"c_n_ott_three"))
+	r.finds_revealed.append(&"f_d2_shirt")
+	assert_true(j.add_clue(&"c_n_ott_three", r.id), "all three (§2.9)")
+	assert_true(GameState.flag_on(&"clue_c_n_ott_three"))
+	assert_true(j.compound_complete(&"c_n_veit", "corpse_0040"), "ordinary clues are not held back")
+	for id: StringName in [&"f_d2_bottle", &"f_d2_wax", &"f_d2_shirt"]:
+		assert_eq((Database.find(id) as FindData).clue_id, &"c_n_ott_three", String(id))
+	assert_eq((Database.find(&"f_d2_mark") as FindData).clue_id, &"")
+	j.free()
+	manager.free()
+
+
+func test_three_traces_from_the_records_after_a_load() -> void:
+	var j := JournalManager.new()
+	var manager := FakeRecords.new()
+	tree.root.add_child(manager)
+	tree.root.add_child(j)
+	var r := CorpseRecord.new()
+	r.id = "corpse_0041"
+	r.finds_revealed = [&"f_d2_bottle", &"f_d2_wax"] as Array[StringName]
+	manager.list.append(r)
+	j.sync_from_records()
+	assert_false(j.has_clue(&"c_n_ott_three"))
+	r.finds_revealed.append(&"f_d2_shirt")
+	j.sync_from_records()
+	assert_true(j.has_clue(&"c_n_ott_three"))
+	j.free()
+	manager.free()
+
+
+class FakeRecords extends Node:
+	var list: Array[CorpseRecord] = []
+
+	func _init() -> void:
+		add_to_group(&"corpse_manager")
+
+	func records() -> Array[CorpseRecord]:
+		return list

@@ -17,11 +17,28 @@ extends RefCounted
 ## flag_days_gte:<flag>:<n> (the flag holds a day; at least n days since) · order_ready:<id> (accepted and
 ## its items in the context inventory) · village_can:<round|donate|consecrate> (Village's block reason is "")
 ## · mourning_today (a mourning ribbon hangs today).
+## Phase 8 (docs/PHASE8_DESIGN.md §3.4 + W0-Notizen 10, P6): p8_open (NpcLife.is_open / flag) · open_days_gte:<n>
+## (days since p8_open_day) · mood:<npc>:<mood> (NpcLife.mood) · step_gte:<npc>:<n> · step_offerable:<npc> ·
+## favor_ready:<npc> (Friendship.favor_block_reason "") · favor_owed:<npc> (a return favour is open) ·
+## apprentice_hired · apprentice_level_gte:<task>:<n> (no task → any task) · apprentice_mistake_today ·
+## wish_offerable / visit_waiting (the speaker's visit, see kin_of) · fest_today:<id> / fest_day:<id> ·
+## fest_running:<id> · fest_eve:<id> (the fest is tomorrow) · fest_after:<id> (it was yesterday) – <id> with
+## or without the prefix fest_ · alms_gte:<n> · robber_known · robber_fate:<none|reported|let_go|caught_watch> ·
+## sick_light[:<house>] (NightPaths.sick_houses now) · observed:<clue> · underlined:<priest|surgeon|washer>
+## (StoryConfig.underlined) · insight:<id> (the journal has it).
 
 enum _Result { FALSE, TRUE, INVALID }
 
 ## Phase 7: hide flags known without an Npc node in the world (§2.2: Wiebke Hagedorn after her death).
 const HIDE_FLAGS := {&"oldwoman": &"hagedorn_dead"}
+# Phase 8
+const P8_OPEN_FLAG := &"p8_open"
+const P8_OPEN_DAY_FLAG := &"p8_open_day"
+const ROBBER_KNOWN_FLAG := &"robber_known"
+const APPRENTICE_FLAG := &"apprentice_hired"
+const MOODS: Array[StringName] = [&"plain", &"cheerful", &"low", &"cross"]
+const ROBBER_FATES: PackedStringArray = ["none", "reported", "let_go", "caught_watch"]
+const APPRENTICE_TASKS: Array[StringName] = [&"rake", &"weed", &"water", &"candle"]
 
 
 ## True when every condition holds (an empty list holds).
@@ -224,7 +241,289 @@ static func _evaluate(text: String, context: Dictionary) -> _Result:
 				return _Result.INVALID
 			var since: Variant = GameState.get_flag(&"village_open_day")
 			return _bool((since is int or since is float) and TimeManager.day - int(since) >= int(n))
+		# Phase 8 (docs/PHASE8_DESIGN.md §3.4, W0-Notizen 10).
+		"p8_open":
+			if text.contains(":"):
+				return _Result.INVALID
+			return _bool(p8_open())
+		"open_days_gte":
+			var p := DialogueSyntax.parts(text, 1)
+			var n: Variant = DialogueSyntax.int_arg(p, 0, null)
+			if n == null:
+				return _Result.INVALID
+			var since: Variant = GameState.get_flag(P8_OPEN_DAY_FLAG)
+			return _bool(p8_open() and (since is int or since is float) and TimeManager.day - int(since) >= int(n))
+		"mood":
+			var p := DialogueSyntax.parts(text, 2)
+			if p.size() < 2 or p[0] == "" or not StringName(p[1]) in MOODS:
+				return _Result.INVALID
+			return _bool(mood_of(StringName(p[0])) == StringName(p[1]))
+		"step_gte":
+			var p := DialogueSyntax.parts(text, 2)
+			var n: Variant = DialogueSyntax.int_arg(p, 1, null)
+			if p.is_empty() or p[0] == "" or n == null:
+				return _Result.INVALID
+			var friendship := DialogueSyntax.system(&"friendship")
+			return _bool(friendship != null and friendship.has_method(&"step_done") and int(friendship.call(&"step_done", StringName(p[0]))) >= int(n))
+		"step_offerable":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			var friendship := DialogueSyntax.system(&"friendship")
+			return _bool(friendship != null and friendship.has_method(&"offerable_step") and int(friendship.call(&"offerable_step", StringName(p[0]))) > 0)
+		"favor_ready":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			var friendship := DialogueSyntax.system(&"friendship")
+			return _bool(friendship != null and friendship.has_method(&"favor_block_reason") and str(friendship.call(&"favor_block_reason", StringName(p[0]))) == "")
+		"favor_owed":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			return _bool(favor_owed(StringName(p[0])))
+		"apprentice_hired":
+			if text.contains(":"):
+				return _Result.INVALID
+			return _bool(apprentice_hired())
+		"apprentice_level_gte":
+			var p := DialogueSyntax.parts(text, 2)
+			if p.is_empty():
+				return _Result.INVALID
+			# apprentice_level_gte:<n> (any task, FriendStepData) or apprentice_level_gte:<task>:<n>.
+			var task := &""
+			var n: Variant = null
+			if p.size() == 1:
+				n = DialogueSyntax.int_arg(p, 0, null)
+			else:
+				task = StringName(p[0])
+				n = DialogueSyntax.int_arg(p, 1, null)
+			if n == null or (p.size() > 1 and p[0] == ""):
+				return _Result.INVALID
+			return _bool(apprentice_level(task) >= int(n))
+		"apprentice_mistake_today":
+			if text.contains(":"):
+				return _Result.INVALID
+			return _bool(apprentice_mistakes_today() > 0)
+		"wish_offerable":
+			if text.contains(":"):
+				return _Result.INVALID
+			return _bool(wish_offerable(context))
+		"visit_waiting":
+			if text.contains(":"):
+				return _Result.INVALID
+			return _bool(StringName(str(visit_of_speaker(context).get("phase", ""))) == &"waiting")
+		"fest_today", "fest_day", "fest_running", "fest_eve", "fest_after":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			return _bool(fest_check(DialogueSyntax.key(text), fest_id(p[0])))
+		"alms_gte":
+			var p := DialogueSyntax.parts(text, 1)
+			var n: Variant = DialogueSyntax.int_arg(p, 0, null)
+			if n == null:
+				return _Result.INVALID
+			var wanderers := DialogueSyntax.system(&"wanderers")
+			return _bool(wanderers != null and wanderers.has_method(&"alms_count") and int(wanderers.call(&"alms_count")) >= int(n))
+		"robber_known":
+			if text.contains(":"):
+				return _Result.INVALID
+			return _bool(GameState.flag_on(ROBBER_KNOWN_FLAG))
+		"robber_fate":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or not p[0] in ROBBER_FATES:
+				return _Result.INVALID
+			var robber := DialogueSyntax.system(&"night_robber")
+			var fate: StringName = robber.call(&"fate") if robber != null and robber.has_method(&"fate") else &""
+			return _bool(String(fate) == ("" if p[0] == "none" else p[0]))
+		"sick_light":
+			var p := DialogueSyntax.parts(text, 1)
+			var houses := sick_houses_now()
+			if p.is_empty():
+				return _bool(not houses.is_empty())
+			if p[0] == "":
+				return _Result.INVALID
+			return _bool(houses.has(p[0]))
+		"observed":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			var paths := DialogueSyntax.system(&"night_paths")
+			var seen := paths != null and paths.has_method(&"observed") and bool(paths.call(&"observed", StringName(p[0])))
+			return _bool(seen or GameState.flag_on(StringName(JournalManager.CLUE_FLAG_PREFIX + p[0])))
+		"underlined":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or not StringName(p[0]) in JournalManager.UNDERLINED_CHOICES:
+				return _Result.INVALID
+			return _bool(JournalManager.underlined_choice() == StringName(p[0]))
+		"insight":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			var journal := DialogueSyntax.system(&"journal")
+			return _bool(journal != null and journal.has_method(&"has_insight") and bool(journal.call(&"has_insight", StringName(p[0]))))
 	return _Result.INVALID
+
+
+# --- Phase 8 -----------------------------------------------------------------------------------
+
+## Phase 8 (§1.2): NpcLife.is_open() in the running world, else the flag p8_open.
+static func p8_open() -> bool:
+	var life := DialogueSyntax.system(&"npc_life")
+	if life != null and life.has_method(&"is_open"):
+		return bool(life.call(&"is_open"))
+	return GameState.flag_on(P8_OPEN_FLAG)
+
+
+## Phase 8 (§2.1.1): today's mood of `npc_id` (plain without NpcLife).
+static func mood_of(npc_id: StringName) -> StringName:
+	var life := DialogueSyntax.system(&"npc_life")
+	if life != null and life.has_method(&"mood"):
+		return StringName(str(life.call(&"mood", npc_id)))
+	return &"plain"
+
+
+## Phase 8 (§2.4): a return favour of `npc_id` is open (Friendship state "owed").
+static func favor_owed(npc_id: StringName) -> bool:
+	var friendship := DialogueSyntax.system(&"friendship")
+	if friendship == null or not friendship.has_method(&"save_state"):
+		return false
+	var state: Variant = friendship.call(&"save_state")
+	var owed: Variant = (state as Dictionary).get("owed", {}) if state is Dictionary else {}
+	if not owed is Dictionary:
+		return false
+	var value: Variant = (owed as Dictionary).get(String(npc_id), (owed as Dictionary).get(npc_id, ""))
+	return (value is String or value is StringName) and str(value) != ""
+
+
+## Phase 8 (§2.5): Jakob is hired (Apprentice, else the hire flag).
+static func apprentice_hired() -> bool:
+	var apprentice := DialogueSyntax.system(&"apprentice")
+	if apprentice != null and apprentice.has_method(&"is_hired"):
+		return bool(apprentice.call(&"is_hired"))
+	return GameState.flag_on(APPRENTICE_FLAG)
+
+
+## Phase 8: Jakob's level in `task` (0…2); task &"" = his best task.
+static func apprentice_level(task: StringName) -> int:
+	var apprentice := DialogueSyntax.system(&"apprentice")
+	if apprentice == null or not apprentice.has_method(&"level"):
+		return 0
+	if task != &"":
+		return int(apprentice.call(&"level", task))
+	var best := 0
+	for t: StringName in APPRENTICE_TASKS:
+		best = maxi(best, int(apprentice.call(&"level", t)))
+	return best
+
+
+## Phase 8: Jakob's mistakes today (Apprentice state mistakes_today of today's plan).
+static func apprentice_mistakes_today() -> int:
+	var apprentice := DialogueSyntax.system(&"apprentice")
+	if apprentice == null or not apprentice.has_method(&"save_state"):
+		return 0
+	var state: Variant = apprentice.call(&"save_state")
+	if not state is Dictionary:
+		return 0
+	var d := state as Dictionary
+	var day: Variant = d.get("plan_day", TimeManager.day)
+	var n: Variant = d.get("mistakes_today", 0)
+	if not (day is int or day is float) or int(day) != TimeManager.day or not (n is int or n is float):
+		return 0
+	return int(n)
+
+
+## Phase 8 (§2.2): the KinData id of the speaker – context.kin_id, else the speaker's npc_id when it is a
+## kin id (kin_kehr …), else the kin whose villager_id or npc_path_id is the speaker's (Esch → kin_smith).
+static func kin_of(context: Dictionary) -> StringName:
+	var given: Variant = context.get("kin_id")
+	if (given is String or given is StringName) and str(given) != "":
+		return StringName(str(given))
+	var speaker: Variant = context.get("speaker")
+	if not is_instance_valid(speaker):
+		return &""
+	var npc_id := StringName(str((speaker as Object).get(&"npc_id")))
+	var node_name := StringName(str((speaker as Node).name)) if speaker is Node else &""
+	if npc_id != &"" and Database.has_method(&"kin") and Database.kin(npc_id) != null:
+		return npc_id
+	if Database.has_method(&"kin_list"):
+		for k: Resource in Database.kin_list():
+			if not k is KinData:
+				continue
+			var kin := k as KinData
+			if (kin.villager_id != &"" and kin.villager_id == npc_id) or (kin.npc_path_id != &"" and (kin.npc_path_id == npc_id or kin.npc_path_id == node_name)):
+				return kin.kin_id
+	return &""
+
+
+## Phase 8: the planned visit of the speaker's kin today ({} = none).
+static func visit_of_speaker(context: Dictionary) -> Dictionary:
+	var kin := kin_of(context)
+	var visitors := DialogueSyntax.system(&"visitors")
+	if kin == &"" or visitors == null or not visitors.has_method(&"visit_of"):
+		return {}
+	var visit: Variant = visitors.call(&"visit_of", kin)
+	return visit if visit is Dictionary else {}
+
+
+## Phase 8 (§2.2.5): the speaker's visit could take a wish – a visit today, goodwill ≥ goodwill_wish_min,
+## fewer than max_open open wishes and none on its graves (Visitors.offer_wish decides the kind).
+static func wish_offerable(context: Dictionary) -> bool:
+	var visit := visit_of_speaker(context)
+	if visit.is_empty():
+		return false
+	var visitors := DialogueSyntax.system(&"visitors")
+	var cfg: VisitorConfig = null
+	if Database.has_method(&"config"):
+		cfg = Database.config(&"visitor_config") as VisitorConfig
+	if cfg == null:
+		cfg = VisitorConfig.new()
+	var kin := kin_of(context)
+	if visitors.has_method(&"goodwill") and int(visitors.call(&"goodwill", kin)) < cfg.goodwill_wish_min:
+		return false
+	var graves: Variant = visit.get("graves", [])
+	var open: Variant = visitors.call(&"open_wishes") if visitors.has_method(&"open_wishes") else []
+	var count := 0
+	for w: Variant in open:
+		if not w is Dictionary:
+			continue
+		var state := str((w as Dictionary).get("state", ""))
+		if state in ["done", "failed"]:
+			continue
+		count += 1
+		if graves is Array and (graves as Array).has(str((w as Dictionary).get("grave_id", ""))):
+			return false
+	return count < cfg.max_open
+
+
+## Phase 8: "lights" → &"fest_lights" (the prefix is optional in the data).
+static func fest_id(text: String) -> StringName:
+	return StringName(text if text.begins_with("fest_") else "fest_" + text)
+
+
+## Phase 8 (§2.7): fest_today / fest_day / fest_running / fest_eve / fest_after for `fest`.
+static func fest_check(key: String, fest: StringName) -> bool:
+	var festivals := DialogueSyntax.system(&"festivals")
+	if festivals == null:
+		return false
+	match key:
+		"fest_running":
+			return festivals.has_method(&"running") and StringName(str(festivals.call(&"running"))) == fest
+		"fest_eve", "fest_after":
+			if not festivals.has_method(&"fest_day"):
+				return false
+			var day := int(festivals.call(&"fest_day", fest))
+			return day > 0 and day == TimeManager.day + (1 if key == "fest_eve" else -1)
+	return festivals.has_method(&"today") and StringName(str(festivals.call(&"today"))) == fest
+
+
+## Phase 8 (§1.6): the houses with a sick light right now (NightPaths).
+static func sick_houses_now() -> PackedStringArray:
+	var paths := DialogueSyntax.system(&"night_paths")
+	if paths == null or not paths.has_method(&"sick_houses"):
+		return PackedStringArray()
+	var houses: Variant = paths.call(&"sick_houses", TimeManager.day, TimeManager.minute_of_day)
+	return houses if houses is PackedStringArray else PackedStringArray()
 
 
 ## Phase 7: the relationship value with `npc_id` (0 without Relationships).
