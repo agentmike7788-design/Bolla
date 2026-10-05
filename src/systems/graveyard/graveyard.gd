@@ -741,16 +741,70 @@ func replace_old_marker(grave_id: String, design: StoneDesign) -> bool:
 	return true
 
 
-## STUB (P2) – Phase 8 (docs/PHASE8_DESIGN.md §2.2.5, §3.4): a line chiselled onto a designed stone
-## with < 4 lines (wish line) → GraveRecord.extra_lines, StoneVisual rebuilt. W0: false.
-func append_inscription(_grave_id: String, _line: String) -> bool:
-	return false
+# --- Phase 8 (docs/PHASE8_DESIGN.md §2.2.5, §2.3, §2.4, §3.4; P2) -------------------------------
+
+## Lines a designed stone holds at most (carved text + chiselled-on lines, §2.2.5 "< 4 Zeilen").
+const MAX_STONE_LINES := 4
 
 
-## STUB (P2) – Phase 8 (§2.4 Liesel 1): the name line of S5 („Lorenz Aschau (?)" → „Kaspar Dorn").
-## W0: false.
-func replace_name_line(_grave_id: String, _name: String) -> bool:
-	return false
+## Lines on the stone of `grave_id` (carved text + extra_lines); 0 = no designed stone.
+func stone_line_count(grave_id: String) -> int:
+	var grave := get_grave(grave_id)
+	if grave == null or grave.design.is_empty():
+		return 0
+	return StoneDesign.from_dict(grave.design).text.size() + grave.extra_lines.size()
+
+
+## A line can still be chiselled onto the designed stone of this FILLED / MARKED grave (< 4 lines).
+func can_append_inscription(grave_id: String) -> bool:
+	var grave := get_grave(grave_id)
+	if grave == null or grave.design.is_empty():
+		return false
+	if grave.state != GraveRecord.State.MARKED and grave.state != GraveRecord.State.FILLED:
+		return false
+	var count := stone_line_count(grave_id)
+	return count > 0 and count < MAX_STONE_LINES
+
+
+## A line chiselled onto a designed stone with < 4 lines (wish line) → GraveRecord.extra_lines; the stone
+## visual is rebuilt (grave_quality_changed – the quality stays). false = no designed stone, full, empty
+## line or the line is there already.
+func append_inscription(grave_id: String, line: String) -> bool:
+	var text := line.strip_edges()
+	if text == "" or not can_append_inscription(grave_id):
+		return false
+	var grave := get_grave(grave_id)
+	if grave.extra_lines.has(text):
+		return false
+	grave.extra_lines.append(text)
+	EventBus.grave_quality_changed.emit(grave_id, grave.quality)
+	return true
+
+
+## §2.4 Liesel 1: the name line of a designed stone (S5 „Lorenz Aschau (?)" → „Kaspar Dorn") – the line of
+## the template's {name}, else the first carved line. The carved text changes (it is cut anew); the
+## quality stays. false = no designed stone, no text or the same name.
+func replace_name_line(grave_id: String, _name: String) -> bool:
+	var grave := get_grave(grave_id)
+	var text := _name.strip_edges()
+	if grave == null or grave.design.is_empty() or text == "":
+		return false
+	var design := StoneDesign.from_dict(grave.design)
+	if design.text.is_empty():
+		return false
+	var index := 0
+	var ins := Database.inscription(design.inscription) as InscriptionData if design.inscription != &"" else null
+	if ins != null:
+		for i: int in ins.lines.size():
+			if ins.lines[i].strip_edges() == "{name}":
+				index = mini(i, design.text.size() - 1)
+				break
+	if design.text[index] == text:
+		return false
+	design.text[index] = text
+	grave.design = design.to_dict()
+	EventBus.grave_quality_changed.emit(grave_id, grave.quality)
+	return true
 
 
 ## An accepted stone order targets `grave_id` (Orders, group orders) – only then may an old grave
