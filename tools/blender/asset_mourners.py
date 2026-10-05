@@ -129,6 +129,22 @@ def lantern_child(fist: Vector, swing: float = 30.0, sx: int = 1, scale: float =
     return lan
 
 
+def stubble(skull, c: Vector, s: Vector, color, amount: float = 0.5) -> None:
+    """Painted stubble on the skull (lib_faces head): jaw, chin and upper lip greyed with a fine speckle -
+    no shell (a shell's rim reads as a chin strap from close up)."""
+    def fn(co, nr):
+        d = co - c
+        n = Vector((d.x / s.x, d.y / s.y, d.z / s.z))
+        if n.y > 0.4:
+            return 1.0, None, 0.0
+        w = _s01((-n.z - 0.12) / 0.4) * _s01((0.4 - n.y) / 0.5)
+        if n.z > -0.42 and n.z < -0.2 and abs(n.x) < 0.25 and n.y < -0.5:   # the upper lip
+            w = max(w, 0.7)
+        speck = 0.75 + 0.25 * noise.noise(co * 90.0)
+        return 1.0, color, amount * w * speck
+    _tint(skull, fn)
+
+
 def face_marker(pts) -> tuple:
     """('face', 'head', point in front of the nose)."""
     return ("face", "head", tuple(pts["nose"] + Vector((0.0, -0.04, 0.0))))
@@ -568,17 +584,14 @@ def _man(name: str, cfg: dict):
     c = Vector((0.0, hb - 0.03, top + 0.16))
     s = Vector((0.136, 0.14, 0.152)) * (0.98 if bent else 1.0)
     f = cfg["face"]
+    i0 = len(parts)
     pts = _head(parts, c, s, cfg["skin"], seed=30, brow=cfg["hair_dark"] if not bent else cfg["hair"], seg=24, rings=16,
                 cull=lambda n: n.z > 0.62, **f)
     face = pts["face"]
     _hair(parts, face, cfg["hair"], cfg["hair_dark"], [(0.0, 0.5), (0.5, 0.44), (1.0, 0.18), (1.3, -0.08), (1.7, -0.22),
                                                        (math.pi, -0.42)], out=0.006, crown=0.004, tuft=0.005, seed=31)
     if cfg["beard"] is not None:   # white stubble round the jaw
-        beard, _, _ = _shell(face, [(0.0, -0.99)], top=[(0.0, -0.72), (0.4, -0.62), (0.8, -0.42), (1.3, -0.16), (1.62, -0.06)],
-                             phi=(-1.62, 1.62), out=0.004, crown=0.0, n=16, m=4, tuck=0.002, seed=32, name="stubble")
-        _painted(beard, cfg["beard"], var=0.2, ao=0.0, top=0.2, seed=33, hue_shift=cfg["skin"])
-        _tint(beard, lambda co, nr: (1.0, cfg["skin"], 0.55 + 0.3 * max(0.0, _n(co, 60.0, 3.0))))
-        parts.append(W("head", beard))
+        stubble(parts[i0], c, s, cfg["beard"], 0.55)
     mesh = L.join(parts, rig.MESH)
     _global_light(mesh, top + 0.36)
     L.smooth(mesh, 55)

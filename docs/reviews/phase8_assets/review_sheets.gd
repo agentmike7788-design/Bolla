@@ -176,9 +176,9 @@ func _label(text: String, pos: Vector3, size: int = 48) -> Label3D:
 func _lineup() -> void:
 	var names: Array[String] = []
 	names.append_array(NEW)
-	names.append_array(["ph_chr_gravekeeper", "ph_chr_v_innkeeper", "ph_chr_v_washer", "ph_chr_v_smith", "ph_chr_v_priest"])
+	names.append_array(OLD.slice(0, 9))   # the gravekeeper and the eight villagers
 	var nodes: Array[Node] = []
-	var gap := 0.95
+	var gap := 0.82
 	var x0 := -gap * (names.size() - 1) * 0.5
 	var lights: Array[OmniLight3D] = []
 	names.assign(names.filter(func(n: String) -> bool: return ResourceLoader.exists(DIR + n + ".glb")))
@@ -198,7 +198,7 @@ func _lineup() -> void:
 		_stage.add_child(lamp)
 		lights.append(lamp)
 	_cam.fov = 26
-	_cam.position = Vector3(0, 1.5, 12.0)
+	_cam.position = Vector3(0, 1.25, 10.5)
 	_cam.look_at(Vector3(0, 0.75, 0))
 	_day()
 	(await _shot()).save_jpg(_out.path_join("lineup_day.jpg"), 0.9)

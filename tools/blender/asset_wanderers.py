@@ -40,12 +40,6 @@ PLANT = M.PLANT
 TOOL = "tool"
 
 
-def _stubble(parts, face, color, skin, seed: int = 0, top=None):
-    beard, _, _ = _shell(face, [(0.0, -0.99)], top=top or [(0.0, -0.7), (0.4, -0.6), (0.8, -0.4), (1.3, -0.14), (1.62, -0.04)],
-                         phi=(-1.62, 1.62), out=0.0045, crown=0.0, n=20, m=5, tuck=0.002, seed=seed, name="stubble")
-    _painted(beard, color, var=0.2, ao=0.0, top=0.2, seed=seed + 1, hue_shift=skin)
-    _tint(beard, lambda co, nr: (1.0, skin, 0.62 + 0.25 * max(0.0, _n(co, 60.0, 3.0))))
-    parts.append(W("head", beard))
 
 
 # ======================================================================================================
@@ -97,13 +91,14 @@ def beggar():
     parts.append(W("spine", _painted(sweep(ring, 0.03, n=6, closed=True, name="scarf"), L.hexc("#5A5448"), var=0.2, ao=0.1, seed=5)))
     c = Vector((0.0, -0.04, 1.6))
     s = Vector((0.134, 0.14, 0.15))
+    i0 = len(parts)
     pts = _head(parts, c, s, VE_SKIN, seed=30, nose="hook", nose_s=1.1, brow=VE_HAIR, brow_w=1.2, brow_tilt=0.1, brow_arch=0.6,
                 mouth="thin", smile=0.2, cheeks=0.35, jaw=0.94, chin=0.03, age=0.6, lids=0.12, iris=IRIS_BLUE, eyes=1.05,
                 muzzle=0.95)
     face = pts["face"]
     _hair(parts, face, VE_HAIR, L.hexc("#6E6A62"), [(0.0, 0.42), (0.6, 0.3), (1.1, 0.04), (1.4, -0.22), (math.pi, -0.42)],
           out=0.005, crown=0.002, tuft=0.008, seed=31)
-    _stubble(parts, face, L.hexc("#9A968E"), VE_SKIN, seed=32)
+    M.stubble(parts[i0], c, s, L.hexc("#8E8A84"), 0.6)
     # the knitted fisherman's cap: a close shell with a rolled brim
     cap, edge = _cloth_cover(parts, face, VE_CAP, VE_CAP_DARK, [(0.0, 0.5), (0.8, 0.42), (1.4, 0.18), (math.pi, 0.02)],
                              out=lambda ph, w: 0.018 + 0.012 * _s01((w - 0.5) / 0.5), crown=0.03, folds=16.0, rim=0.016 * face.k,
@@ -338,13 +333,14 @@ def robber():
                          cuff=LA_COAT_DARK, cuff_r=0.056, skin=LA_SKIN, seed=20 + sx * 3, hand_size=1.0, grip=True)
     c = Vector((0.0, -0.035, 1.61))
     s = Vector((0.124, 0.134, 0.148))
+    i0 = len(parts)
     pts = _head(parts, c, s, LA_SKIN, seed=30, nose="straight", nose_s=1.05, brow=LA_HAIR, brow_w=1.0, brow_tilt=0.5, brow_arch=0.9,
                 mouth="kind", smile=0.15, lip=V.LIP_PALE, cheeks=0.3, jaw=0.86, chin=0.04, age=0.3, lids=0.3, iris=IRIS_HAZEL,
                 muzzle=0.9)
     face = pts["face"]
     _hair(parts, face, LA_HAIR, L.hexc("#2A2018"), [(0.0, 0.4), (0.6, 0.32), (1.1, 0.04), (1.4, -0.24), (math.pi, -0.45)],
           out=0.005, crown=0.002, tuft=0.01, seed=31)
-    _stubble(parts, face, L.hexc("#5A4A3C"), LA_SKIN, seed=32)
+    M.stubble(parts[i0], c, s, L.hexc("#6A5A4A"), 0.45)
     # the hood: a deep shell round the head, open at the face, falling onto the shoulders
     hood, _ = _cloth_cover(parts, face, LA_COAT, LA_COAT_DARK, [(0.0, 0.74), (0.55, 0.62), (0.95, 0.2), (1.15, -0.4), (1.35, -0.9),
                                                                (math.pi, -0.98)],
