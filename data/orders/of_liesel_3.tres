@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"of_liesel_3"
+giver = &"washer"
+recipient = &""
+kind = &"meet"
+title = "Das Gesangbuch"
+request_text = "Hier stehen sie alle. Die mit dem Zeichen. Wenn ich sterbe, kommt das Buch mit mir hinunter. Versprich es."
+thanks_text = "Danke, Totengräber."
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"gives_flag": &"promise_liesel_book",
+"npc": &"washer",
+"place": &"v_dorn_door",
+"times": 1,
+"window": [960, 1140]
+}
+days_limit = 0
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 0
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 221
+accept_flag = &""
+category = &"friend"

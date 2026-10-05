@@ -6,7 +6,10 @@ extends TestCase
 ## tests/fixtures/saves_v6).
 
 ## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
-const IMPLEMENTED: PackedStringArray = []
+const IMPLEMENTED: PackedStringArray = [
+	# P4
+	"Friendship", "FriendRules", "FavorRules", "Festivals", "FestivalRules", "FestDecor", "MemorialPlate", "ArchiveCabinet", "Fiddler",
+]
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
 	# P1
@@ -81,6 +84,11 @@ const METHODS := {
 	"Festivals": ["fest_day", "today", "running", "apply_morning", "apply_minute", "dance_block_reason", "dance", "lights_count",
 			"save_state", "load_state"],
 	"ArchiveCabinet": ["can_interact", "get_interaction_prompt", "interact"],
+	# P4 rules (static, no §3.4 signatures)
+	"FriendRules": ["offerable_step", "step_block_reason", "order_for", "step_of_order", "reward_rel", "own_condition"],
+	"FavorRules": ["block_reason", "offer_day", "deadline_day", "pick_return", "choice", "night_of", "items"],
+	"FestivalRules": ["effective_day", "shifted", "in_window", "guests_at", "presence_reached", "dance_block_reason", "lights_result",
+			"effect"],
 	"Wanderers": ["present", "peddler_day", "alms_block_reason", "give_alms", "alms_count", "save_state", "load_state"],
 	"NightRobber": ["tonight_target", "apply_minute", "encounters", "fate", "resolve", "save_state", "load_state"],
 	"NightPaths": ["sick_houses", "next_visit", "wait_minutes", "apply_minute", "observed", "save_state", "load_state"],

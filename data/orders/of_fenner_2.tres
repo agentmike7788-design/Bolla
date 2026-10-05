@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"of_fenner_2"
+giver = &"mayor"
+recipient = &""
+kind = &"meet"
+title = "Ein Platz mit Blick"
+request_text = "Ich möchte mir einen Platz ansehen. Für später. Sehr viel später, verstehen Sie. Mit Blick aufs Amtshaus, wenn man das von oben sieht."
+thanks_text = "Danke, Totengräber."
+items = Dictionary[StringName, int]({})
+coins = 0
+target = "l_12"
+conditions = {
+"gives_flag": &"archive_key",
+"npc": &"mayor",
+"place": &"gv_l_12",
+"times": 1,
+"window": [960, 1000]
+}
+days_limit = 0
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 0
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 213
+accept_flag = &""
+category = &"friend"

@@ -30,11 +30,9 @@ var TEST_SAVES := TestCase.user_dir("test_saves_v6")
 const SLOT := 7
 const RESAVE_SLOT := 8
 const BUILDINGS_P7 := {&"crypt": 3, &"chapel": 3, &"shed": 2}
-## W0 finding (W0-Notizen 13, Phase-7 bug): Orders.turn_in hands the heart jar of o_quast_specimen over with
-## Specimens.consume(uid, inv, &"sold") – consume only takes lectured / used, the fallback remove_uid
-## empties the slot, the record stays „held“ → every load of the anatomist state warns. Fix owner: P4
-## (orders.gd); then this exception goes.
-const KNOWN_ORPHAN := "[Specimens] held specimen sp_0001 has no inventory slot"
+## W0 finding (W0-Notizen 12, Phase-7 bug), fixed by P4: Orders.turn_in hands a specimen over with
+## Specimens.consume(uid, inv, &"lectured") (the cabinet); Orders.post_load repairs the fixture state
+## (the heart jar sp_0001 stayed „held“ without a slot) – the load is warning-free.
 
 var warnings: WarningLog
 
@@ -95,7 +93,8 @@ func test_day53_anatomist_loads() -> void:
 	assert_true(GameState.get_stat(&"specimens_sold") >= 8, "specimens sold (%d)" % GameState.get_stat(&"specimens_sold"))
 	assert_true(_linden_harvested() > 0, "harvested Lindenacker dead")
 	assert_eq(_free_in(&"linden"), 0)
-	await _check_and_resave([KNOWN_ORPHAN])
+	assert_ne(_specimen_state("sp_0001"), &"held", "the heart jar of o_quast_specimen is in the cabinet")
+	await _check_and_resave()
 
 
 ## The evening of the chapter day – Phase 8 opens the next morning (or at once for a migrated save, §1.2).
@@ -160,6 +159,12 @@ func _world() -> WorldRoot:
 
 func _player() -> Player:
 	return _world().get_player()
+
+
+func _specimen_state(uid: String) -> StringName:
+	var specimens := tree.get_first_node_in_group(&"specimens") as Specimens
+	var spec := specimens.get_record(uid) if specimens != null else null
+	return spec.state if spec != null else &""
 
 
 func _levels() -> Dictionary[StringName, int]:

@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="FestivalData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/festivals/festival_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"fest_kathrein"
+calendar_day = 54
+shift_rule = &"none"
+shift_days = 3
+day_flag = &"fest_kathrein_day"
+window = Vector2i(1140, 1380)
+region = &"village"
+music_context = &"fest"
+effects = {
+"dance_minutes": 15,
+"dance_partners": 2,
+"dance_rel": 3,
+"dance_tier": &"acquainted",
+"end_line": "Kathrein stellt den Tanz ein. Bis Weihnachten wird hier gesessen.",
+"guests": {
+&"grocer": [1140, 1380],
+&"innkeeper": [1140, 1380],
+&"mayor": [1140, 1380],
+&"priest": [1140, 1200],
+&"smith": [1140, 1380],
+&"washer": [1200, 1260]
+},
+"announce": "Heute Abend ist Kathreintanz im Holderkrug (ab 19:00).",
+"presence_minutes": 30,
+"presence_rel": 2,
+"room": &"inn",
+"round": 5
+}

@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="FriendStoryData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/friendship/friend_story_data.gd" id="1_35nul"]
+[ext_resource type="Script" path="res://src/systems/friendship/friend_step_data.gd" id="2_27heo"]
+
+[sub_resource type="Resource" id="Resource_xdbpv"]
+script = ExtResource("2_27heo")
+step = 1
+title = "Die Namen im Buch"
+min_value = 40
+conditions = PackedStringArray()
+order_ids = Array[StringName]([&"of_lenz_1"])
+start_node = &"story_1"
+end_node = &"story_1_done"
+reward_rel = 6
+reward_flag = &"friend_priest_1"
+
+[sub_resource type="Resource" id="Resource_l8vqk"]
+script = ExtResource("2_27heo")
+step = 2
+title = "Das Archiv"
+min_value = 55
+conditions = PackedStringArray()
+order_ids = Array[StringName]([&"of_lenz_2"])
+start_node = &"story_2"
+end_node = &"story_2_done"
+reward_rel = 8
+reward_flag = &"friend_priest_2"
+
+[sub_resource type="Resource" id="Resource_05exb"]
+script = ExtResource("2_27heo")
+step = 3
+title = "Das Wort am Lichtgang"
+min_value = 70
+conditions = PackedStringArray()
+order_ids = Array[StringName]([&"of_lenz_3"])
+start_node = &"story_3"
+end_node = &"story_3_done"
+reward_rel = 10
+reward_flag = &"friend_priest_3"
+fallback_event = &"lights_after"
+
+[resource]
+script = ExtResource("1_35nul")
+npc_id = &"priest"
+steps = Array[ExtResource("2_27heo")]([SubResource("Resource_xdbpv"), SubResource("Resource_l8vqk"), SubResource("Resource_05exb")])
+favor_id = &"fav_priest"

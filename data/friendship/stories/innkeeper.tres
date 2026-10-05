@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="FriendStoryData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/friendship/friend_story_data.gd" id="1_5gohu"]
+[ext_resource type="Script" path="res://src/systems/friendship/friend_step_data.gd" id="2_0xyk3"]
+
+[sub_resource type="Resource" id="Resource_ttech"]
+script = ExtResource("2_0xyk3")
+step = 1
+title = "Der Junge"
+min_value = 40
+conditions = PackedStringArray()
+order_ids = Array[StringName]([&"of_rosine_1"])
+start_node = &"story_1"
+end_node = &"story_1_done"
+reward_rel = 6
+reward_flag = &"friend_innkeeper_1"
+
+[sub_resource type="Resource" id="Resource_5d756"]
+script = ExtResource("2_0xyk3")
+step = 2
+title = "Konrads Name"
+min_value = 55
+conditions = PackedStringArray()
+order_ids = Array[StringName]([&"of_rosine_2"])
+start_node = &"story_2"
+end_node = &"story_2_done"
+reward_rel = 8
+reward_rep = 1
+reward_flag = &"friend_innkeeper_2"
+
+[sub_resource type="Resource" id="Resource_16t7c"]
+script = ExtResource("2_0xyk3")
+step = 3
+title = "Oben bei Jakob"
+min_value = 70
+conditions = PackedStringArray("apprentice_level_gte:2")
+order_ids = Array[StringName]([&"of_rosine_3"])
+start_node = &"story_3"
+end_node = &"story_3_done"
+reward_rel = 10
+reward_flag = &"friend_innkeeper_3"
+
+[resource]
+script = ExtResource("1_5gohu")
+npc_id = &"innkeeper"
+steps = Array[ExtResource("2_0xyk3")]([SubResource("Resource_ttech"), SubResource("Resource_5d756"), SubResource("Resource_16t7c")])
+favor_id = &"fav_innkeeper"

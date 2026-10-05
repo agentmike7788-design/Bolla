@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="FriendStoryData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/friendship/friend_story_data.gd" id="1_qol5r"]
+[ext_resource type="Script" path="res://src/systems/friendship/friend_step_data.gd" id="2_yc3tc"]
+
+[sub_resource type="Resource" id="Resource_mvp38"]
+script = ExtResource("2_yc3tc")
+step = 1
+title = "Unter Kollegen"
+min_value = 40
+conditions = PackedStringArray()
+order_ids = Array[StringName]([&"of_quast_1"])
+start_node = &"story_1"
+end_node = &"story_1_done"
+reward_rel = 6
+reward_flag = &"friend_surgeon_1"
+
+[sub_resource type="Resource" id="Resource_38yox"]
+script = ExtResource("2_yc3tc")
+step = 2
+title = "Die Kiste für die Stadt"
+min_value = 55
+conditions = PackedStringArray()
+order_ids = Array[StringName]([&"of_quast_2"])
+start_node = &"story_2"
+end_node = &"story_2_done"
+reward_rel = 8
+reward_flag = &"friend_surgeon_2"
+
+[sub_resource type="Resource" id="Resource_2s2m7"]
+script = ExtResource("2_yc3tc")
+step = 3
+title = "Was ich nicht aufschreibe"
+min_value = 70
+conditions = PackedStringArray()
+order_ids = Array[StringName]([&"of_quast_3"])
+start_node = &"story_3"
+end_node = &"story_3_done"
+reward_rel = 10
+reward_flag = &"friend_surgeon_3"
+
+[resource]
+script = ExtResource("1_qol5r")
+npc_id = &"surgeon"
+steps = Array[ExtResource("2_yc3tc")]([SubResource("Resource_mvp38"), SubResource("Resource_38yox"), SubResource("Resource_2s2m7")])
+favor_id = &"fav_surgeon"
