@@ -51,6 +51,26 @@ const LECTURES_GROUP := &"lectures"
 const CLEANLINESS_GROUP := &"cleanliness"
 const PLAYER_GROUP := &"player"
 const CHAPEL := &"chapel"
+## Phase 8 (docs/PHASE8_DESIGN.md §2.4, §3.4): friend orders (category friend) – friendship steps and
+## return favours; their own limit (max_active_friend), no Phase-7 counters, no Phase-7 penalties (the
+## Friendship gives the rewards and the −6 of an unreturned favour). Kinds meet / task.
+const KIND_MEET := &"meet"
+const KIND_TASK := &"task"
+const FRIENDSHIP_GROUP := &"friendship"
+const GRAVE_CARE_GROUP := &"grave_care"
+const VISITORS_GROUP := &"visitors"
+const APPRENTICE_GROUP := &"apprentice"
+const PROGRESS_MEET_DAY := "meet_day:"
+const PROGRESS_CANDLES := "candles:"
+const TASK_FLOWERS := &"flowers_fresh"
+const TASK_FIRST_DAY := &"apprentice_first_day"
+const UNTIL_NEXT_VISIT := &"next_visit"
+const FRESH := &"fresh"
+const VISIT_AT_GRAVE: Array[StringName] = [&"mourning", &"waiting"]
+## W0-Notizen 12: a specimen handed over in an order stays in Quast's cabinet – the record state
+## Specimens.consume knows for that („lectured = stays in his cabinet", SpecimenRecord). &"sold" was
+## refused by consume: the slot was emptied, the record stayed „held" (warning on every load).
+const SPECIMEN_HANDED_STATE := &"lectured"
 
 @export var save_id: String = "orders"
 @export var save_order: int = 53
@@ -113,6 +133,9 @@ func offers(giver: StringName = &"") -> Array[StringName]:
 	for o: OrderData in all_orders():
 		if giver != &"" and o.giver != giver:
 			continue
+		# Phase 8: friend orders come through the Friendship (story steps, return favours).
+		if is_friend(o):
+			continue
 		var reason := block_reason(o.id)
 		if reason == "" or reason == OrderRules.TEXT_MAX_ACTIVE:
 			out.append(o.id)
@@ -154,7 +177,23 @@ func block_reason(order_id: StringName) -> String:
 	var o := order_data(order_id)
 	if o == null:
 		return OrderRules.TEXT_NOT_YET
-	return OrderRules.offer_block_reason(o, offer_context(o), giver_tier(o.giver), active().size(), _cfg())
+	return OrderRules.offer_block_reason(o, offer_context(o), giver_tier(o.giver), active_count(o.category), _cfg())
+
+
+## Phase 8: accepted orders of `category` (&"" = Phase 7, &"friend" = friendship steps / return favours) –
+## each category has its own limit (max_active / max_active_friend).
+func active_count(category: StringName = &"") -> int:
+	var n := 0
+	for id: StringName in active():
+		var o := order_data(id)
+		if (o.category if o != null else &"") == category:
+			n += 1
+	return n
+
+
+## Phase 8: a friend order (OrderData.category friend).
+static func is_friend(o: OrderData) -> bool:
+	return o != null and o.category == OrderData.CATEGORY_FRIEND
 
 
 ## The context dictionary OrderRules.offer_block_reason reads (see order_rules.gd).
@@ -233,7 +272,12 @@ func _completed_ids() -> Array[StringName]:
 			var id := StringName(key.substr(PROGRESS_DONE.length()))
 			if not out.has(id) and int(_progress[key]) > 0:
 				out.append(id)
-	return out
+	# Phase 8: friend orders are no Phase-7 orders (chapter „Ein Name im Dorf", panels).
+	var phase7: Array[StringName] = []
+	for id: StringName in out:
+		if not is_friend(order_data(id)):
+			phase7.append(id)
+	return phase7
 
 
 # --- changes --------------------------------------------------------------------------------------
@@ -262,6 +306,17 @@ func accept(order_id: StringName) -> bool:
 	return true
 
 
+## Phase 8: a return favour the Friendship hands out (owed – no friend limit, no offer conditions
+## but the state: not while it runs).
+func accept_owed(order_id: StringName) -> bool:
+	var o := order_data(order_id)
+	if o == null or not is_friend(o) or state(order_id) == STATE_ACCEPTED:
+		return false
+	_accept(o, TimeManager.day)
+	EventBus.notification_requested.emit(TEXT_ACCEPTED % o.title, &"info")
+	return true
+
+
 ## deliver / donate atomic → complete. Items (with substitutes, matching specimens) and coins leave
 ## `inv`; coins are noted as &"donation".
 func turn_in(order_id: StringName, inv: Inventory) -> bool:
@@ -270,12 +325,16 @@ func turn_in(order_id: StringName, inv: Inventory) -> bool:
 		return false
 	if o.kind != KIND_DELIVER and o.kind != KIND_DONATE:
 		return false
-	if not OrderRules.deliver_ready(o, inv):
+	if not OrderRules.deliver_ready(o, inv) or not OrderRules.time_ok(o, TimeManager.minute_of_day):
 		return false
+	# Phase 8: or_items – the alternative set (Fenner: one dropsy powder instead of the poultice).
+	var items: Dictionary = o.items
+	if not OrderRules.items_ready(o, o.items, inv):
+		items = OrderRules.or_items(o)
 	var snapshot := inv.save_state()
 	var used_specimens := PackedStringArray()
-	for item: StringName in o.items:
-		var need := int(o.items[item])
+	for item: StringName in items:
+		var need := int(items[item])
 		if item in OrderRules.SPECIMEN_ITEMS:
 			var uids := OrderRules.matching_specimens(o, item, inv)
 			for i: int in need:
@@ -298,7 +357,7 @@ func turn_in(order_id: StringName, inv: Inventory) -> bool:
 	for uid: String in used_specimens:
 		var gone := false
 		if specimens != null and specimens.has_method(&"consume"):
-			gone = bool(specimens.call(&"consume", uid, inv, &"sold"))
+			gone = bool(specimens.call(&"consume", uid, inv, SPECIMEN_HANDED_STATE))
 		if not gone:
 			gone = inv.remove_uid(uid)
 		if not gone:
@@ -339,6 +398,21 @@ func complete(order_id: StringName) -> void:
 		var rep := _first(REPUTATION_GROUP)
 		if rep != null and rep.has_method(&"change"):
 			rep.call(&"change", o.reward_rep, reason)
+	if is_friend(o):
+		# Phase 8: a flag the meeting / task hands over (Fenner's archive key, Liesel's promise), then the
+		# Friendship: the step done (rewards) or the favour returned.
+		_progress.erase(PROGRESS_MEET_DAY + String(order_id))
+		_progress.erase(PROGRESS_CANDLES + String(order_id))
+		var flag := StringName(str(o.conditions.get("gives_flag", "")))
+		if flag != &"":
+			GameState.set_flag(flag, true)
+		EventBus.order_changed.emit(order_id, STATE_COMPLETED)
+		if o.thanks_text != "":
+			EventBus.notification_requested.emit(o.thanks_text, &"reward")
+		var friendship := _first(FRIENDSHIP_GROUP)
+		if friendship != null and friendship.has_method(&"note_order_done"):
+			friendship.call(&"note_order_done", order_id)
+		return
 	GameState.add_stat(STAT_DONE, 1)
 	EventBus.order_changed.emit(order_id, STATE_COMPLETED)
 	if o.thanks_text != "":
@@ -361,6 +435,13 @@ func fail(order_id: StringName) -> void:
 	if o.board:
 		_history[order_id] = TimeManager.day
 		_board.erase(order_id)
+	if is_friend(o):
+		# Phase 8: an unreturned favour – the Friendship applies −6 and the rest (§2.4).
+		_progress.erase(PROGRESS_MEET_DAY + String(order_id))
+		_progress.erase(PROGRESS_CANDLES + String(order_id))
+		EventBus.order_changed.emit(order_id, STATE_FAILED)
+		EventBus.notification_requested.emit(TEXT_FAILED % o.title, &"warning")
+		return
 	var reason := REASON_FAILED % o.title
 	if o.giver != COUNCIL and o.fail_rel.is_empty():
 		_rel_add(o.giver, int(_rel_cfg().gains.get(&"order_failed", -4)), reason)
@@ -407,16 +488,82 @@ func note_harvest(corpse_id: String) -> void:
 	_check_bury(corpse_id, "")
 
 
-## STUB (P4) – Phase 8 (docs/PHASE8_DESIGN.md §2.4, §3.4): a meeting of a meet order (npc at place in
-## its window; DialogueActions meet:<place>). W0: inert.
-func note_meet(_npc_id: StringName, _place_id: StringName) -> void:
-	pass
+## Phase 8 (docs/PHASE8_DESIGN.md §2.4, §3.4): a meeting of a meet order (DialogueActions meet:<place>) –
+## `npc_id` at `place_id` inside the order's window counts once per day; `times` meetings complete it.
+func note_meet(npc_id: StringName, place_id: StringName) -> void:
+	var minute := TimeManager.minute_of_day
+	for id: StringName in active():
+		var o := order_data(id)
+		if o == null or o.kind != KIND_MEET or not OrderRules.meet_matches(o, npc_id, place_id, minute):
+			continue
+		var key := PROGRESS_MEET_DAY + String(id)
+		if int(_progress.get(key, 0)) == TimeManager.day:
+			continue
+		_progress[key] = TimeManager.day
+		_progress[String(id)] = int(_progress.get(String(id), 0)) + 1
+		if int(_progress[String(id)]) >= OrderRules.meet_times(o):
+			complete(id)
 
 
-## STUB (P4) – Phase 8: a task of a task order done (archive_help, register_extract, vigil, lights_names …).
-## W0: inert.
-func note_task(_action_id: StringName) -> void:
-	pass
+## Phase 8: a task of a task order done (archive_help, lights_names, name_line, vigil, jakob_day_off,
+## apprentice_first_day …) – inside its window (when it has one) the accepted order completes.
+## flowers_fresh is checked by Orders itself (mornings / the giver's visit).
+func note_task(action_id: StringName) -> void:
+	var minute := TimeManager.minute_of_day
+	for id: StringName in active():
+		var o := order_data(id)
+		if o != null and o.kind == KIND_TASK and OrderRules.task_matches(o, action_id, minute):
+			complete(id)
+
+
+## Phase 8: the task order `order_id` that waits for `action_id` is accepted (ArchiveCabinet, prompts).
+func task_open(action_id: StringName) -> StringName:
+	for id: StringName in active():
+		var o := order_data(id)
+		if o != null and o.kind == KIND_TASK and OrderRules.task_action(o) == action_id:
+			return id
+	return &""
+
+
+## W0-Notizen 12: the Phase-7 turn_in left a handed-over specimen „held" without a slot (consume refused
+## &"sold"). Repairs saves with that state: a held record without any inventory slot is handed over
+## (consume → the cabinet state) when a completed order delivered such a piece. Runs before Specimens
+## (save order 53 < 54), so its post_load finds the record gone.
+func post_load() -> void:
+	var specimens := _first(SPECIMENS_GROUP)
+	if specimens == null or not specimens.has_method(&"held") or not specimens.has_method(&"get_record"):
+		return
+	var delivered := 0
+	var orders_with: Array[OrderData] = []
+	for o: OrderData in all_orders():
+		var pieces := 0
+		for item: StringName in o.items:
+			if item in OrderRules.SPECIMEN_ITEMS:
+				pieces += int(o.items[item])
+		if pieces > 0 and completions(o.id) > 0:
+			delivered += pieces * completions(o.id)
+			orders_with.append(o)
+	if delivered <= 0:
+		return
+	var slotted := {}
+	for node: Node in get_tree().root.find_children("*", "Inventory", true, false):
+		for uid: String in (node as Inventory).uids():
+			slotted[uid] = true
+	var held: PackedStringArray = specimens.call(&"held")
+	for uid: String in held:
+		if delivered <= 0:
+			break
+		if slotted.has(uid):
+			continue
+		var spec := specimens.call(&"get_record", uid) as SpecimenRecord
+		var item := SpecimenRules.item_for(spec.container) if spec != null else &""
+		if item == &"" or not orders_with.any(func(o: OrderData) -> bool: return OrderRules.specimen_fits(o, spec)):
+			continue
+		var tmp := Inventory.new()
+		tmp.slot_count = 1
+		if tmp.add_unique(item, uid) and bool(specimens.call(&"consume", uid, tmp, SPECIMEN_HANDED_STATE)):
+			delivered -= 1
+		tmp.free()
 
 
 ## Deadlines, the tend check, board offers (idempotent per day).
@@ -438,8 +585,34 @@ func apply_morning(day: int) -> void:
 		if o == null or o.kind != KIND_TEND:
 			continue
 		var key := String(id)
+		if is_friend(o):
+			# Phase 8: a grave or a story's grave (Esch old_01, Liesel's Wiebke d1_hagedorn), candle nights.
+			var graves := _target_graves(o.target)
+			_progress[key] = int(_progress.get(key, 0)) + 1 if _graves_tended(graves) else 0
+			var nights := int(o.conditions.get("candle_nights", 0))
+			if nights > 0 and _lit_last_night(graves):
+				_progress[PROGRESS_CANDLES + key] = int(_progress.get(PROGRESS_CANDLES + key, 0)) + 1
+			if int(_progress[key]) >= int(o.conditions.get("mornings", 1)) \
+					and int(_progress.get(PROGRESS_CANDLES + key, 0)) >= nights:
+				complete(id)
+			continue
 		_progress[key] = int(_progress.get(key, 0)) + 1 if _tended(StringName(o.target)) else 0
 		if int(_progress[key]) >= int(o.conditions.get("mornings", 1)):
+			complete(id)
+	# Phase 8: flowers_fresh tasks counted by mornings (Theres 3: three graves without kin, three mornings).
+	for id: StringName in active():
+		var o := order_data(id)
+		if o == null or o.kind != KIND_TASK or OrderRules.task_action(o) != TASK_FLOWERS:
+			continue
+		if StringName(str(o.conditions.get("until", ""))) == UNTIL_NEXT_VISIT and _visitors() != null:
+			continue
+		var key := String(id)
+		var fresh := _fresh_graves(o) >= int(o.conditions.get("count", 1))
+		# A morning counts from the day after the acceptance.
+		if day <= accepted_day(id):
+			continue
+		_progress[key] = int(_progress.get(key, 0)) + 1 if fresh else 0
+		if int(_progress[key]) >= maxi(1, int(o.conditions.get("mornings", 1))):
 			complete(id)
 	# Board: yesterday's offers expire, two new ones.
 	for id: StringName in _board:
@@ -532,10 +705,19 @@ func _accept(o: OrderData, day: int) -> void:
 	_accepted_day[o.id] = day
 	if o.kind == KIND_BURY and o.target == OrderRules.NEXT_DELIVERY:
 		_progress[PROGRESS_AT + String(o.id)] = TimeManager.total_minutes()
-	if o.kind == KIND_TEND:
+	if o.kind == KIND_TEND or o.kind == KIND_MEET or o.kind == KIND_TASK:
 		_progress[String(o.id)] = 0
+	_progress.erase(PROGRESS_MEET_DAY + String(o.id))
+	_progress.erase(PROGRESS_CANDLES + String(o.id))
 	if o.accept_flag != &"":
 		GameState.set_flag(o.accept_flag, true)
+	# Phase 8: what the giver hands over with the task (Theres' three pots, Quast's crate).
+	var gives := OrderRules.gives(o)
+	if not gives.is_empty():
+		var inv := _player_inventory()
+		if inv != null:
+			for item: StringName in gives:
+				inv.add_item(item, gives[item])
 	EventBus.order_changed.emit(o.id, STATE_ACCEPTED)
 
 
@@ -631,11 +813,22 @@ func _check_section_now(o: OrderData) -> void:
 ## penalty 0); at least one occupied grave.
 func _tended(section_id: StringName) -> bool:
 	var graveyard := _first(GRAVEYARD_GROUP)
-	var clean := _first(CLEANLINESS_GROUP)
 	if graveyard == null or not graveyard.has_method(&"plots_in_section"):
 		return false
-	var occupied := {}
+	var graves := PackedStringArray()
 	for gid: String in graveyard.call(&"plots_in_section", section_id):
+		graves.append(gid)
+	return _graves_tended(graves)
+
+
+## Phase 8: the occupied graves of `graves` (at least one) are free of a care malus.
+func _graves_tended(graves: PackedStringArray) -> bool:
+	var graveyard := _first(GRAVEYARD_GROUP)
+	var clean := _first(CLEANLINESS_GROUP)
+	if graveyard == null or not graveyard.has_method(&"get_grave"):
+		return false
+	var occupied := {}
+	for gid: String in graves:
 		var g := graveyard.call(&"get_grave", gid) as GraveRecord
 		if g != null and (g.state == GraveRecord.State.FILLED or g.state == GraveRecord.State.MARKED):
 			occupied[gid] = true
@@ -657,6 +850,107 @@ func _tended(section_id: StringName) -> bool:
 		if penalty != 0:
 			return false
 	return true
+
+
+## Phase 8: the graves a friend order means – a section, a grave id or a story id (its corpse's grave).
+func _target_graves(target: String) -> PackedStringArray:
+	var out := PackedStringArray()
+	var graveyard := _first(GRAVEYARD_GROUP)
+	if graveyard == null or target == "":
+		return out
+	if graveyard.has_method(&"plots_in_section"):
+		for gid: String in graveyard.call(&"plots_in_section", StringName(target)):
+			out.append(gid)
+	if not out.is_empty():
+		return out
+	if graveyard.has_method(&"get_grave") and graveyard.call(&"get_grave", target) != null:
+		out.append(target)
+		return out
+	var manager := _first(CORPSE_MANAGER_GROUP)
+	if manager == null or not manager.has_method(&"records") or not graveyard.has_method(&"graves"):
+		return out
+	var corpse := ""
+	for r: CorpseRecord in manager.call(&"records"):
+		if String(r.story_id) == target:
+			corpse = r.id
+	if corpse == "":
+		return out
+	for g: GraveRecord in graveyard.call(&"graves"):
+		if g.corpse_id == corpse:
+			out.append(g.id)
+	return out
+
+
+## Phase 8: a grave candle burned on one of `graves` last night (GraveCare.lit_last_night).
+func _lit_last_night(graves: PackedStringArray) -> bool:
+	var care := _first(GRAVE_CARE_GROUP)
+	if care == null or not care.has_method(&"lit_last_night"):
+		return false
+	for gid: String in graves:
+		if bool(care.call(&"lit_last_night", gid)):
+			return true
+	return false
+
+
+## Phase 8 flowers_fresh: graves with fresh flowers that count – the target, or (kinless) every
+## occupied grave without kin (Visitors.kin_for_grave; without Visitors every occupied grave).
+func _fresh_graves(o: OrderData) -> int:
+	var care := _first(GRAVE_CARE_GROUP)
+	var graveyard := _first(GRAVEYARD_GROUP)
+	if care == null or not care.has_method(&"flowers_state"):
+		return 0
+	var candidates := PackedStringArray()
+	if o.target != "":
+		candidates = _target_graves(o.target)
+	elif graveyard != null and graveyard.has_method(&"graves"):
+		var visitors := _visitors()
+		var kinless := OrderRules._truthy(o.conditions.get("kinless"))
+		for g: GraveRecord in graveyard.call(&"graves"):
+			if g.state != GraveRecord.State.FILLED and g.state != GraveRecord.State.MARKED:
+				continue
+			if kinless and visitors != null and visitors.has_method(&"kin_for_grave") \
+					and StringName(str(visitors.call(&"kin_for_grave", g.id))) != &"":
+				continue
+			candidates.append(g.id)
+	var n := 0
+	for gid: String in candidates:
+		if StringName(str(care.call(&"flowers_state", gid))) == FRESH:
+			n += 1
+	return n
+
+
+## Phase 8, every tick: Theres' „bis zu ihrem nächsten Besuch" (her visit at the grave with fresh
+## flowers) and Rosine's „Der Junge" (Jakob hired, the end of a work day after the acceptance – unless
+## the Apprentice reports apprentice_first_day itself).
+func _check_friend_live(day: int, minute: int) -> void:
+	for id: StringName in _states.keys():
+		if _states.get(id) != STATE_ACCEPTED:
+			continue
+		var o := order_data(id)
+		if o == null or o.kind != KIND_TASK:
+			continue
+		var action := OrderRules.task_action(o)
+		if action == TASK_FLOWERS and StringName(str(o.conditions.get("until", ""))) == UNTIL_NEXT_VISIT:
+			var visitors := _visitors()
+			if visitors == null or not visitors.has_method(&"kin_for_grave") or not visitors.has_method(&"visit_of"):
+				continue
+			var kin := StringName(str(visitors.call(&"kin_for_grave", o.target)))
+			var visit: Variant = visitors.call(&"visit_of", kin) if kin != &"" else {}
+			if visit is Dictionary and StringName(str((visit as Dictionary).get("phase", ""))) in VISIT_AT_GRAVE \
+					and _fresh_graves(o) >= 1 and day > accepted_day(id):
+				complete(id)
+		elif action == TASK_FIRST_DAY:
+			var apprentice := _first(APPRENTICE_GROUP)
+			if apprentice == null or not apprentice.has_method(&"is_hired") or not bool(apprentice.call(&"is_hired")):
+				continue
+			var cfg := Database.config(&"apprentice_config") as ApprenticeConfig
+			var end := cfg.end_minute if cfg != null else ApprenticeConfig.new().end_minute
+			if day > accepted_day(id) and minute >= end:
+				complete(id)
+
+
+func _visitors() -> Node:
+	return _first(VISITORS_GROUP)
 
 
 func _chapel_level() -> int:
@@ -704,6 +998,7 @@ func _on_time_tick(day: int, minute: int) -> void:
 		return
 	if minute >= _cfg().refresh_minute and day > _board_day:
 		apply_morning(day)
+	_check_friend_live(day, minute)
 
 
 func _player_inventory() -> Inventory:

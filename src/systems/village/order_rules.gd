@@ -23,6 +23,7 @@ const RESULT_DONE := &"done"
 const RESULT_WAIT := &"wait"
 const RESULT_BROKEN := &"broken"
 const TEXT_MAX_ACTIVE := "Vier Aufträge laufen schon."
+const TEXT_MAX_FRIEND := "Zwei Bitten von Freunden laufen schon."
 const TEXT_ACCEPTED := "Schon angenommen."
 const TEXT_COMPLETED := "Schon erledigt."
 const TEXT_FAILED := "Dafür ist es zu spät."
@@ -45,6 +46,8 @@ const NEXT_DELIVERY := "next_delivery"
 static func offer_block_reason(order: OrderData, state: Dictionary, rel_tier: StringName, active: int, cfg: OrdersConfig) -> String:
 	if order == null:
 		return TEXT_NOT_YET
+	if order.category == OrderData.CATEGORY_FRIEND:
+		return friend_block_reason(order, state, active, cfg)
 	match StringName(str(state.get("state", ""))):
 		&"accepted":
 			return TEXT_ACCEPTED
@@ -77,6 +80,108 @@ static func offer_block_reason(order: OrderData, state: Dictionary, rel_tier: St
 	if active >= limit:
 		return TEXT_MAX_ACTIVE
 	return ""
+
+
+## Phase 8 (docs/PHASE8_DESIGN.md §2.4): a friend order (story step / return favour) – the Friendship
+## checks thresholds, mood and gaps; here only: not while it runs, its flag, at most max_active_friend
+## friend orders at once (`active` counts the friend orders only). A completed / failed one may run again
+## (a return favour of a later favour).
+static func friend_block_reason(order: OrderData, state: Dictionary, active: int, cfg: OrdersConfig) -> String:
+	if StringName(str(state.get("state", ""))) == &"accepted":
+		return TEXT_ACCEPTED
+	if order.requires_flag != &"" and not _flag(order.requires_flag, state):
+		return TEXT_NOT_YET
+	var limit := cfg.max_active_friend if cfg != null else OrdersConfig.new().max_active_friend
+	if active >= limit:
+		return TEXT_MAX_FRIEND
+	return ""
+
+
+## Phase 8: items the giver hands over on acceptance (conditions.gives {item: n}).
+static func gives(order: OrderData) -> Dictionary[StringName, int]:
+	var out: Dictionary[StringName, int] = {}
+	var raw: Variant = order.conditions.get("gives") if order != null else null
+	if raw is Dictionary:
+		for key: Variant in raw:
+			var n := int((raw as Dictionary)[key]) if ((raw as Dictionary)[key] is int or (raw as Dictionary)[key] is float) else 0
+			if n > 0:
+				out[StringName(str(key))] = n
+	return out
+
+
+## Phase 8: by_minute – a delivery only up to that minute of the day (Quast's crate by 07:40).
+static func time_ok(order: OrderData, minute: int) -> bool:
+	if order == null or not order.conditions.has("by_minute"):
+		return true
+	return minute <= int(order.conditions.by_minute)
+
+
+## Phase 8: or_items – the alternative set of a delivery (Fenner: {dropsy_powder: 1}).
+static func or_items(order: OrderData) -> Dictionary:
+	var raw: Variant = order.conditions.get("or_items") if order != null else null
+	var out := {}
+	if raw is Dictionary:
+		for key: Variant in raw:
+			out[StringName(str(key))] = int((raw as Dictionary)[key])
+	return out
+
+
+## Every item of `items` (with the substitutes / matching specimens of `order`) is in `inv`.
+static func items_ready(order: OrderData, items: Dictionary, inv: Inventory) -> bool:
+	if items.is_empty():
+		return false
+	for item: Variant in items:
+		if available(order, StringName(str(item)), inv) < int(items[item]):
+			return false
+	return true
+
+
+## Phase 8 meet: `npc_id` at `place_id` inside the window [from, to] (conditions npc, place, window).
+static func meet_matches(order: OrderData, npc_id: StringName, place_id: StringName, minute: int) -> bool:
+	if order == null or order.kind != &"meet":
+		return false
+	var c := order.conditions
+	if c.has("npc") and StringName(str(c.npc)) != npc_id:
+		return false
+	if c.has("place") and StringName(str(c.place)) != place_id:
+		return false
+	return in_window(c.get("window"), minute)
+
+
+static func meet_times(order: OrderData) -> int:
+	return maxi(1, int(order.conditions.get("times", 1)))
+
+
+## Phase 8 task: the action id (conditions.action_id).
+static func task_action(order: OrderData) -> StringName:
+	return StringName(str(order.conditions.get("action_id", ""))) if order != null else &""
+
+
+## Phase 8 task: `action_id` is this order's and the minute lies in its window (none = any time).
+static func task_matches(order: OrderData, action_id: StringName, minute: int) -> bool:
+	if order == null or order.kind != &"task" or task_action(order) != action_id:
+		return false
+	return in_window(order.conditions.get("window"), minute)
+
+
+## [from, to] (Array / Vector2i) contains `minute`; anything else = no window.
+static func in_window(window: Variant, minute: int) -> bool:
+	if window is Vector2i:
+		return minute >= (window as Vector2i).x and minute <= (window as Vector2i).y
+	if (window is Array or window is PackedInt32Array) and window.size() >= 2:
+		return minute >= int(window[0]) and minute <= int(window[1])
+	return true
+
+
+## W0-Notizen 12: the specimen record `spec` fits a specimen delivery of `order` (organ / min_clarity
+## at harvest – the repair of saves where the handover left the record „held").
+static func specimen_fits(order: OrderData, spec: SpecimenRecord) -> bool:
+	if order == null or spec == null:
+		return false
+	var raw: Variant = order.conditions.get("organ")
+	if raw is Array and not raw.is_empty() and not (raw.has(String(spec.organ)) or raw.has(spec.organ)):
+		return false
+	return true
 
 
 ## Burial conditions of a bury order on `record` in `grave` (null = not buried yet): a violation that
@@ -124,9 +229,12 @@ static func stone_matches(order: OrderData, grave: GraveRecord) -> bool:
 static func deliver_ready(order: OrderData, inv: Inventory) -> bool:
 	if order == null or inv == null:
 		return false
+	var main_ok := true
 	for item: StringName in order.items:
 		if available(order, item, inv) < int(order.items[item]):
-			return false
+			main_ok = false
+	if not main_ok and not items_ready(order, or_items(order), inv):
+		return false
 	if order.kind == &"donate" and order.coins > 0 and inv.count(COIN_ITEM) < order.coins:
 		return false
 	return true
