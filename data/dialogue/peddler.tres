@@ -1,0 +1,213 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="peddler_first_c01"]
+script = ExtResource("2")
+text = "Zeig her."
+next = &"menu"
+
+[sub_resource type="Resource" id="peddler_node_first"]
+script = ExtResource("1")
+id = &"first"
+text = "Hanne Vogelsang, mit der Kiepe, aus dem Tal und über den Hügel. Grabkerzen, Blumen, die den Winter aushalten, Tinte, Blattgold, Herzchen – nein, Sie nicht. Sie sind zu ernst. Totengräber also. Kaufen Sie was, dann reden wir."
+choices = Array[ExtResource("2")]([SubResource("peddler_first_c01")])
+conditions = Array[String](["!flag:p8_hanne_met"])
+fallback_next = &"gate"
+actions = Array[String](["set_flag:p8_hanne_met"])
+
+[sub_resource type="Resource" id="peddler_gate_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="peddler_node_gate"]
+script = ExtResource("1")
+id = &"gate"
+text = "Grabkerzen, Herzchen – nein, Sie nicht, Sie sind zu ernst. Grabkerzen, Totengräber. Eine Münze das Stück, und sie brennen bis zum Hahnenschrei."
+choices = Array[ExtResource("2")]([SubResource("peddler_gate_c01")])
+conditions = Array[String](["region:graveyard"])
+fallback_next = &"greet"
+
+[sub_resource type="Resource" id="peddler_greet_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="peddler_node_greet"]
+script = ExtResource("1")
+id = &"greet"
+text = "Da ist er ja, der Ernste. Heute hab ich Heide und Christrosen im Topf, und Kerzen, und einen Kranz aus Wachs für die, die keine Zeit zum Gießen haben. Rechnen Sie mit: zwei, eins, fünf. Ich rechne schneller."
+choices = Array[ExtResource("2")]([SubResource("peddler_greet_c01")])
+
+[sub_resource type="Resource" id="peddler_menu_c01"]
+script = ExtResource("2")
+text = "Was hast du in der Kiepe?"
+conditions = Array[String](["shop_open:peddler"])
+actions = Array[String](["open_shop:peddler"])
+
+[sub_resource type="Resource" id="peddler_menu_c02"]
+script = ExtResource("2")
+text = "Was gibt's Neues im Tal?"
+next = &"news_1"
+
+[sub_resource type="Resource" id="peddler_menu_c03"]
+script = ExtResource("2")
+text = "Der Wachskranz – lohnt der?"
+next = &"wreath"
+
+[sub_resource type="Resource" id="peddler_menu_c04"]
+script = ExtResource("2")
+text = "Wohin gehst du von hier?"
+next = &"where"
+
+[sub_resource type="Resource" id="peddler_menu_c05"]
+script = ExtResource("2")
+text = "Bis in sechs Tagen."
+
+[sub_resource type="Resource" id="peddler_node_menu"]
+script = ExtResource("1")
+id = &"menu"
+text = "Na? Ich hab nicht ewig. Ich hab bis vier."
+choices = Array[ExtResource("2")]([SubResource("peddler_menu_c01"), SubResource("peddler_menu_c02"), SubResource("peddler_menu_c03"), SubResource("peddler_menu_c04"), SubResource("peddler_menu_c05")])
+
+[sub_resource type="Resource" id="peddler_wreath_c01"]
+script = ExtResource("2")
+text = "Verstehe."
+next = &"menu"
+
+[sub_resource type="Resource" id="peddler_node_wreath"]
+script = ExtResource("1")
+id = &"wreath"
+text = "Der hält ewig und welkt nie. Aber er riecht nach nichts, und die Toten merken das, sagt man. Wachs riecht nicht. Ich verkauf ihn trotzdem. Die Lebenden riechen ja auch nicht hin."
+choices = Array[ExtResource("2")]([SubResource("peddler_wreath_c01")])
+
+[sub_resource type="Resource" id="peddler_where_c01"]
+script = ExtResource("2")
+text = "Gute Reise."
+next = &"menu"
+
+[sub_resource type="Resource" id="peddler_node_where"]
+script = ExtResource("1")
+id = &"where"
+text = "Über den Hügel, den Waldweg nach Westen hinauf, wo die Händlerin mit dem Karren auch geht. Ich kenn sie nicht. Ich seh sie nur. Wir grüßen uns nicht. Das ist eine Abmachung."
+choices = Array[ExtResource("2")]([SubResource("peddler_where_c01")])
+
+[sub_resource type="Resource" id="peddler_news_1_c01"]
+script = ExtResource("2")
+text = "So."
+next = &"menu"
+
+[sub_resource type="Resource" id="peddler_node_news_1"]
+script = ExtResource("1")
+id = &"news_1"
+text = "In Ellbach haben sie wieder eins offen gefunden. Leer war es nicht, nur offen. Das macht es nicht besser."
+choices = Array[ExtResource("2")]([SubResource("peddler_news_1_c01")])
+conditions = Array[String](["!flag:p8_hanne_news_1"])
+fallback_next = &"news_2"
+actions = Array[String](["set_flag:p8_hanne_news_1"])
+
+[sub_resource type="Resource" id="peddler_news_2_c01"]
+script = ExtResource("2")
+text = "So."
+next = &"menu"
+
+[sub_resource type="Resource" id="peddler_node_news_2"]
+script = ExtResource("1")
+id = &"news_2"
+text = "Der Müller in Tannrode hat seine dritte Frau begraben. Die vierte hat schon abgesagt, bevor er gefragt hat. Kluge Frau."
+choices = Array[ExtResource("2")]([SubResource("peddler_news_2_c01")])
+conditions = Array[String](["!flag:p8_hanne_news_2"])
+fallback_next = &"news_3"
+actions = Array[String](["set_flag:p8_hanne_news_2"])
+
+[sub_resource type="Resource" id="peddler_news_3_c01"]
+script = ExtResource("2")
+text = "So."
+next = &"menu"
+
+[sub_resource type="Resource" id="peddler_node_news_3"]
+script = ExtResource("1")
+id = &"news_3"
+text = "Unten im Tal frieren die Wege schon nachts. Ich geh trotzdem. Wer stehen bleibt, friert schneller."
+choices = Array[ExtResource("2")]([SubResource("peddler_news_3_c01")])
+conditions = Array[String](["!flag:p8_hanne_news_3"])
+fallback_next = &"news_4"
+actions = Array[String](["set_flag:p8_hanne_news_3"])
+
+[sub_resource type="Resource" id="peddler_news_4_c01"]
+script = ExtResource("2")
+text = "So."
+next = &"menu"
+
+[sub_resource type="Resource" id="peddler_node_news_4"]
+script = ExtResource("1")
+id = &"news_4"
+text = "In der Stadt verkaufen sie Grabkerzen aus Paraffin. Die riechen nach Lampe. Meine riechen nach Biene. Merken Sie sich das."
+choices = Array[ExtResource("2")]([SubResource("peddler_news_4_c01")])
+conditions = Array[String](["!flag:p8_hanne_news_4"])
+fallback_next = &"news_5"
+actions = Array[String](["set_flag:p8_hanne_news_4"])
+
+[sub_resource type="Resource" id="peddler_news_5_c01"]
+script = ExtResource("2")
+text = "So."
+next = &"menu"
+
+[sub_resource type="Resource" id="peddler_node_news_5"]
+script = ExtResource("1")
+id = &"news_5"
+text = "Der Pfarrer in Ellbach hat einen Hund angeschafft, für den Friedhof. Der Hund schläft. Der Pfarrer auch."
+choices = Array[ExtResource("2")]([SubResource("peddler_news_5_c01")])
+conditions = Array[String](["!flag:p8_hanne_news_5"])
+fallback_next = &"news_6"
+actions = Array[String](["set_flag:p8_hanne_news_5"])
+
+[sub_resource type="Resource" id="peddler_news_6_c01"]
+script = ExtResource("2")
+text = "So."
+next = &"menu"
+
+[sub_resource type="Resource" id="peddler_node_news_6"]
+script = ExtResource("1")
+id = &"news_6"
+text = "Man sagt, in der Stadt zahlen sie für frische Tote mehr als für lebende Knechte. Ich sag nichts dazu. Ich verkaufe Kerzen."
+choices = Array[ExtResource("2")]([SubResource("peddler_news_6_c01")])
+conditions = Array[String](["!flag:p8_hanne_news_6"])
+fallback_next = &"news_7"
+actions = Array[String](["set_flag:p8_hanne_news_6"])
+
+[sub_resource type="Resource" id="peddler_news_7_c01"]
+script = ExtResource("2")
+text = "So."
+next = &"menu"
+
+[sub_resource type="Resource" id="peddler_node_news_7"]
+script = ExtResource("1")
+id = &"news_7"
+text = "Die Schäfer kommen dieses Jahr früher von der Höhe. Es wird ein langer Winter, sagen sie. Das sagen sie jedes Jahr."
+choices = Array[ExtResource("2")]([SubResource("peddler_news_7_c01")])
+conditions = Array[String](["!flag:p8_hanne_news_7"])
+fallback_next = &"news_8"
+actions = Array[String](["set_flag:p8_hanne_news_7"])
+
+[sub_resource type="Resource" id="peddler_news_8_c01"]
+script = ExtResource("2")
+text = "So."
+next = &"menu"
+
+[sub_resource type="Resource" id="peddler_node_news_8"]
+script = ExtResource("1")
+id = &"news_8"
+text = "Ich hab in Tannrode einen Brief für Hollerbrück. Für den Schultheiß. Er wird ihn zweimal lesen und einmal verstehen."
+choices = Array[ExtResource("2")]([SubResource("peddler_news_8_c01")])
+actions = Array[String](["clear_flag:p8_hanne_news_1", "clear_flag:p8_hanne_news_2", "clear_flag:p8_hanne_news_3", "clear_flag:p8_hanne_news_4", "clear_flag:p8_hanne_news_5", "clear_flag:p8_hanne_news_6", "clear_flag:p8_hanne_news_7"])
+
+[resource]
+script = ExtResource("3")
+id = &"peddler"
+speaker_name = "Hanne Vogelsang"
+start_node = &"first"
+nodes = Array[ExtResource("1")]([SubResource("peddler_node_first"), SubResource("peddler_node_gate"), SubResource("peddler_node_greet"), SubResource("peddler_node_menu"), SubResource("peddler_node_wreath"), SubResource("peddler_node_where"), SubResource("peddler_node_news_1"), SubResource("peddler_node_news_2"), SubResource("peddler_node_news_3"), SubResource("peddler_node_news_4"), SubResource("peddler_node_news_5"), SubResource("peddler_node_news_6"), SubResource("peddler_node_news_7"), SubResource("peddler_node_news_8")])

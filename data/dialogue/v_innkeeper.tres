@@ -4,6 +4,402 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
 
+[sub_resource type="Resource" id="p8_menu_menu_01"]
+script = ExtResource("2")
+text = "[Geschichte] Der Junge"
+next = &"story_1"
+conditions = Array[String](["step_offerable:innkeeper", "!step_gte:innkeeper:1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_02"]
+script = ExtResource("2")
+text = "Über Jakobs ersten Tag"
+next = &"story_1_done"
+conditions = Array[String](["flag:friend_innkeeper_1", "!flag:p8_told_innkeeper_1"])
+actions = Array[String](["set_flag:p8_told_innkeeper_1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_03"]
+script = ExtResource("2")
+text = "[Geschichte] Konrads Name"
+next = &"story_2"
+conditions = Array[String](["step_offerable:innkeeper", "step_gte:innkeeper:1", "!step_gte:innkeeper:2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_04"]
+script = ExtResource("2")
+text = "Über Konrads Tafel"
+next = &"story_2_done"
+conditions = Array[String](["flag:friend_innkeeper_2", "!flag:p8_told_innkeeper_2"])
+actions = Array[String](["set_flag:p8_told_innkeeper_2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_05"]
+script = ExtResource("2")
+text = "[Geschichte] Oben bei Jakob"
+next = &"story_3"
+conditions = Array[String](["step_offerable:innkeeper", "step_gte:innkeeper:2", "!step_gte:innkeeper:3"])
+
+[sub_resource type="Resource" id="p8_menu_menu_06"]
+script = ExtResource("2")
+text = "Über den Besuch oben"
+next = &"story_3_done"
+conditions = Array[String](["flag:friend_innkeeper_3", "!flag:p8_told_innkeeper_3"])
+actions = Array[String](["set_flag:p8_told_innkeeper_3"])
+
+[sub_resource type="Resource" id="p8_menu_menu_07"]
+script = ExtResource("2")
+text = "[Geschichte] …"
+next = &"story_cross"
+conditions = Array[String](["p8_open", "mood:innkeeper:cross", "!step_gte:innkeeper:3"])
+
+[sub_resource type="Resource" id="p8_menu_menu_08"]
+script = ExtResource("2")
+text = "[Zuhören]"
+next = &"listen"
+conditions = Array[String](["p8_open", "mood:innkeeper:low", "!flag_today:p8_listen_innkeeper"])
+actions = Array[String](["listen:innkeeper", "set_flag_day:p8_listen_innkeeper"])
+
+[sub_resource type="Resource" id="p8_menu_menu_09"]
+script = ExtResource("2")
+text = "[Gefallen] Ein Wort im Krug"
+next = &"favor"
+conditions = Array[String](["step_gte:innkeeper:3", "favor_ready:innkeeper"])
+
+[sub_resource type="Resource" id="p8_menu_menu_10"]
+script = ExtResource("2")
+text = "[Gegengefallen] Holunder für Rosine"
+next = &"o_of_rosine_return_1"
+conditions = Array[String](["order_offerable:of_rosine_return_1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_11"]
+script = ExtResource("2")
+text = "[Gegengefallen] Hier ist es: Holunder für Rosine"
+next = &"t_of_rosine_return_1"
+conditions = Array[String](["order_ready:of_rosine_return_1"])
+actions = Array[String](["order_turn_in:of_rosine_return_1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_12"]
+script = ExtResource("2")
+text = "[Gegengefallen] Ein Tag für Jakob"
+next = &"o_of_rosine_return_2"
+conditions = Array[String](["order_offerable:of_rosine_return_2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_13"]
+script = ExtResource("2")
+text = "[Gegengefallen] Hier ist es: Ein Tag für Jakob"
+next = &"t_of_rosine_return_2"
+conditions = Array[String](["order_ready:of_rosine_return_2"])
+actions = Array[String](["order_turn_in:of_rosine_return_2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_14"]
+script = ExtResource("2")
+text = "[Tanzen] Einen Tanz? (15 Min)"
+next = &"dance"
+conditions = Array[String](["fest_running:kathrein"])
+actions = Array[String](["dance:innkeeper"])
+
+[sub_resource type="Resource" id="p8_menu_menu_15"]
+script = ExtResource("2")
+text = "Wie macht sich Jakob?"
+next = &"p8_jakob"
+conditions = Array[String](["apprentice_hired"])
+
+[sub_resource type="Resource" id="p8_menu_menu_16"]
+script = ExtResource("2")
+text = "[Geschichte] Du bist heraufgekommen."
+next = &"story_3_meet"
+conditions = Array[String](["order:of_rosine_3:accepted", "region:graveyard"])
+actions = Array[String](["meet:apprentice_lunch"])
+
+[sub_resource type="Resource" id="p8_p8_hill_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_p8_hill"]
+script = ExtResource("1")
+id = &"p8_hill"
+text = "Hier oben ist es stiller, als ich dachte. Gar kein Krug, nirgends. Wie hältst du das aus, Totengräber?"
+choices = Array[ExtResource("2")]([SubResource("p8_p8_hill_c01")])
+conditions = Array[String](["region:graveyard"])
+fallback_next = &"start"
+actions = Array[String](["talked:innkeeper"])
+
+[sub_resource type="Resource" id="p8_story_1_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"story_1_yes"
+actions = Array[String](["step_accept:innkeeper", "apprentice_hire"])
+
+[sub_resource type="Resource" id="p8_story_1_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1"]
+script = ExtResource("1")
+id = &"story_1"
+text = "Du hast Augen wie einer, der nicht viel schläft. Gut. Mein Jakob schläft zu viel. Seit der Tinktur ist er nicht mehr zu halten, Totengräber, er klettert aufs Dach und redet mit den Hühnern. Nimm ihn mit hinauf. Er soll lernen, was die Leute brauchen, auch wenn sie es nicht wollen. Und etwas, das nicht nach Bier riecht."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_c01"), SubResource("p8_story_1_c02")])
+
+[sub_resource type="Resource" id="p8_story_1_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1_yes"]
+script = ExtResource("1")
+id = &"story_1_yes"
+text = "Morgen früh steht er am Tor, mit Brot in der Tasche. Einen Rechen in seiner Größe hat Esch, eine Gießkanne auch. Schreib ihm an die Tafel, was er tun soll. Lesen kann er. Zuhören weniger."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_yes_c01")])
+
+[sub_resource type="Resource" id="p8_story_1_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1_done"]
+script = ExtResource("1")
+id = &"story_1_done"
+text = "Er ist heimgekommen und hat gegessen wie zwei. Dann hat er gesagt: Mutter, oben ist es ruhiger als hier. Ich hab nicht gefragt, ob das gut ist. Ich hab ihm noch Brot gegeben."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_done_c01")])
+
+[sub_resource type="Resource" id="p8_story_2_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"story_2_yes"
+actions = Array[String](["step_accept:innkeeper"])
+
+[sub_resource type="Resource" id="p8_story_2_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2"]
+script = ExtResource("1")
+id = &"story_2"
+text = "Konrad. Mein Mann. Im Fährwinter ist er hinaus, wie die anderen, und das Wasser hat ihn behalten. Sechzehn haben sie wiedergefunden. Ihn nicht. Er hat kein Grab, Totengräber. Jakob war vier. Mach ihm eine Tafel mit seinem Namen, und bring sie dem Pfarrer. Dann hängt er wenigstens irgendwo."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_c01"), SubResource("p8_story_2_c02")])
+
+[sub_resource type="Resource" id="p8_story_2_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2_yes"]
+script = ExtResource("1")
+id = &"story_2_yes"
+text = "Konrad Wackernagel. Mit zwei a. Die Leute schreiben ihn immer falsch, als hätten sie ihn nie gekannt."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_yes_c01")])
+
+[sub_resource type="Resource" id="p8_story_2_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2_done"]
+script = ExtResource("1")
+id = &"story_2_done"
+text = "Ich war in der Kirche. Sie hängt am Gedenkbrett, gleich unter der Fähre. Ich hab sie angefasst. Sie war kalt. Er war auch immer kalt an den Händen. Danke, Totengräber. Das sag ich nicht zweimal."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_done_c01")])
+
+[sub_resource type="Resource" id="p8_story_3_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"story_3_yes"
+actions = Array[String](["step_accept:innkeeper"])
+
+[sub_resource type="Resource" id="p8_story_3_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3"]
+script = ExtResource("1")
+id = &"story_3"
+text = "Ich will ihn einmal sehen, oben bei dir. Bei der Arbeit, nicht beim Essen. Um drei, an der Bank bei deiner Hütte. Wenn er's kann. Wenn nicht, sag's mir vorher, dann komm ich nicht."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_c01"), SubResource("p8_story_3_c02")])
+
+[sub_resource type="Resource" id="p8_story_3_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3_yes"]
+script = ExtResource("1")
+id = &"story_3_yes"
+text = "Um drei. Ich bring Kuchen mit. Nicht für ihn. Für dich."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_yes_c01")])
+
+[sub_resource type="Resource" id="p8_story_3_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3_done"]
+script = ExtResource("1")
+id = &"story_3_done"
+text = "Er hält den Rechen wie du. Das hat er nicht von mir. Ich hab den ganzen Weg hinunter nichts gesagt, und Wackernagel sagt immer was. Das bleibt unter uns."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_done_c01")])
+
+[sub_resource type="Resource" id="p8_story_cross_c01"]
+script = ExtResource("2")
+text = "Morgen also."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_cross"]
+script = ExtResource("1")
+id = &"story_cross"
+text = "Heute nicht, Totengräber. Morgen."
+choices = Array[ExtResource("2")]([SubResource("p8_story_cross_c01")])
+
+[sub_resource type="Resource" id="p8_listen_c01"]
+script = ExtResource("2")
+text = "(Schweigen)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_listen"]
+script = ExtResource("1")
+id = &"listen"
+text = "Konrad hätte heute Namenstag gehabt. Ich weiß nicht, warum ich dir das sag. Ich stell ihm jedes Jahr ein Glas hin. Keiner trinkt es. Abends kipp ich es weg. … So. Jetzt ist es gesagt."
+choices = Array[ExtResource("2")]([SubResource("p8_listen_c01")])
+
+[sub_resource type="Resource" id="p8_favor_c01"]
+script = ExtResource("2")
+text = "Ja, bitte."
+next = &"favor_done"
+actions = Array[String](["favor_use:innkeeper"])
+
+[sub_resource type="Resource" id="p8_favor_c02"]
+script = ExtResource("2")
+text = "Ein andermal."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_favor"]
+script = ExtResource("1")
+id = &"favor"
+text = "Du willst, dass Wackernagel den Mund aufmacht? Für dich? Wenn die nächsten Tage einer was Schlechtes über dich sagt, red ich es klein. Das kann ich. Das ist mein Beruf."
+choices = Array[ExtResource("2")]([SubResource("p8_favor_c01"), SubResource("p8_favor_c02")])
+
+[sub_resource type="Resource" id="p8_favor_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_favor_done"]
+script = ExtResource("1")
+id = &"favor_done"
+text = "Abgemacht. Wenn einer über dich redet, red ich lauter. Das kann Wackernagel."
+choices = Array[ExtResource("2")]([SubResource("p8_favor_done_c01")])
+
+[sub_resource type="Resource" id="p8_o_of_rosine_return_1_c01"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_of_rosine_return_1_yes"
+actions = Array[String](["order_accept:of_rosine_return_1"])
+
+[sub_resource type="Resource" id="p8_o_of_rosine_return_1_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_rosine_return_1"]
+script = ExtResource("1")
+id = &"o_of_rosine_return_1"
+text = "Sechs Hände Holunderbeeren, wenn du welche findest. Der Wein wartet nicht."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_rosine_return_1_c01"), SubResource("p8_o_of_rosine_return_1_c02")])
+
+[sub_resource type="Resource" id="p8_o_of_rosine_return_1_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_rosine_return_1_yes"]
+script = ExtResource("1")
+id = &"o_of_rosine_return_1_yes"
+text = "Drei Tage. Dann sind sie mir zu weich."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_rosine_return_1_yes_c01")])
+
+[sub_resource type="Resource" id="p8_t_of_rosine_return_1_c01"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_t_of_rosine_return_1"]
+script = ExtResource("1")
+id = &"t_of_rosine_return_1"
+text = "Holunder. Sechs Hände. Du hast es nicht vergessen."
+choices = Array[ExtResource("2")]([SubResource("p8_t_of_rosine_return_1_c01")])
+
+[sub_resource type="Resource" id="p8_o_of_rosine_return_2_c01"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_of_rosine_return_2_yes"
+actions = Array[String](["order_accept:of_rosine_return_2"])
+
+[sub_resource type="Resource" id="p8_o_of_rosine_return_2_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_rosine_return_2"]
+script = ExtResource("1")
+id = &"o_of_rosine_return_2"
+text = "Gib dem Jungen einen Tag frei. Den Lohn trotzdem. Er schläft wieder zu wenig, seit er bei dir ist. Das ist auch nicht recht."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_rosine_return_2_c01"), SubResource("p8_o_of_rosine_return_2_c02")])
+
+[sub_resource type="Resource" id="p8_o_of_rosine_return_2_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_rosine_return_2_yes"]
+script = ExtResource("1")
+id = &"o_of_rosine_return_2_yes"
+text = "Einen Tag. Er wird maulen. Lass ihn."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_rosine_return_2_yes_c01")])
+
+[sub_resource type="Resource" id="p8_t_of_rosine_return_2_c01"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_t_of_rosine_return_2"]
+script = ExtResource("1")
+id = &"t_of_rosine_return_2"
+text = "Er hat bis Mittag geschlafen. Dann hat er gefragt, ob oben alles in Ordnung ist. Ich hab gesagt: Frag ihn selber."
+choices = Array[ExtResource("2")]([SubResource("p8_t_of_rosine_return_2_c01")])
+
+[sub_resource type="Resource" id="p8_dance_c01"]
+script = ExtResource("2")
+text = "(Zurück an den Tisch)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_dance"]
+script = ExtResource("1")
+id = &"dance"
+text = "Kathrein stellt den Tanz ein, aber noch nicht jetzt. Komm, Totengräber. Du trittst wie einer, der Erde gewohnt ist. Das macht nichts. Ich führe."
+choices = Array[ExtResource("2")]([SubResource("p8_dance_c01")])
+
+[sub_resource type="Resource" id="p8_p8_jakob_c01"]
+script = ExtResource("2")
+text = "Ich weiß."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_p8_jakob"]
+script = ExtResource("1")
+id = &"p8_jakob"
+text = "Er redet nur noch vom Hügel. Vom Laub, das von unten nach oben geharkt wird, nicht hin und her. Von dir. Wenn du streng bist, sag ich nichts. Wenn du zu streng bist, sag ich was. Laut."
+choices = Array[ExtResource("2")]([SubResource("p8_p8_jakob_c01")])
+
+[sub_resource type="Resource" id="p8_story_3_meet_c01"]
+script = ExtResource("2")
+text = "(Sich neben sie setzen)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3_meet"]
+script = ExtResource("1")
+id = &"story_3_meet"
+text = "Er hält den Rechen wie du. Das hat er nicht von mir. Schau, wie er pfeift. Das hat er von Konrad. Ich bleib noch ein bisschen. Er soll nicht merken, dass ich schau."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_meet_c01")])
+
 [sub_resource type="Resource" id="v_innkeeper_c001"]
 script = ExtResource("2")
 text = "…"
@@ -156,7 +552,7 @@ next = &"bye"
 script = ExtResource("1")
 id = &"menu"
 text = "Also, was darf's sein? Wackernagel hat nur zwei Ohren, aber die sind beide offen."
-choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c007"), SubResource("v_innkeeper_c008"), SubResource("v_innkeeper_c009"), SubResource("v_innkeeper_c010"), SubResource("v_innkeeper_c011"), SubResource("v_innkeeper_c012"), SubResource("v_innkeeper_c013"), SubResource("v_innkeeper_c014"), SubResource("v_innkeeper_c015"), SubResource("v_innkeeper_c016"), SubResource("v_innkeeper_c017")])
+choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c007"), SubResource("v_innkeeper_c008"), SubResource("v_innkeeper_c009"), SubResource("v_innkeeper_c010"), SubResource("v_innkeeper_c011"), SubResource("v_innkeeper_c012"), SubResource("v_innkeeper_c013"), SubResource("v_innkeeper_c014"), SubResource("v_innkeeper_c015"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("p8_menu_menu_04"), SubResource("p8_menu_menu_05"), SubResource("p8_menu_menu_06"), SubResource("p8_menu_menu_07"), SubResource("p8_menu_menu_08"), SubResource("p8_menu_menu_09"), SubResource("p8_menu_menu_10"), SubResource("p8_menu_menu_11"), SubResource("p8_menu_menu_12"), SubResource("p8_menu_menu_13"), SubResource("p8_menu_menu_14"), SubResource("p8_menu_menu_15"), SubResource("p8_menu_menu_16"), SubResource("v_innkeeper_c016"), SubResource("v_innkeeper_c017")])
 
 [sub_resource type="Resource" id="v_innkeeper_c018"]
 script = ExtResource("2")
@@ -322,5 +718,5 @@ choices = Array[ExtResource("2")]([SubResource("v_innkeeper_c033")])
 script = ExtResource("3")
 id = &"v_innkeeper"
 speaker_name = "Rosine Wackernagel"
-start_node = &"start"
-nodes = Array[ExtResource("1")]([SubResource("v_innkeeper_node_start"), SubResource("v_innkeeper_node_greet_disreputable"), SubResource("v_innkeeper_node_greet_unremarkable"), SubResource("v_innkeeper_node_greet_respected"), SubResource("v_innkeeper_node_greet_esteemed"), SubResource("v_innkeeper_node_greet_renowned"), SubResource("v_innkeeper_node_menu"), SubResource("v_innkeeper_node_o_o_rosine_berries"), SubResource("v_innkeeper_node_o_o_rosine_berries_yes"), SubResource("v_innkeeper_node_o_o_rosine_tincture"), SubResource("v_innkeeper_node_o_o_rosine_tincture_yes"), SubResource("v_innkeeper_node_t_o_rosine_berries"), SubResource("v_innkeeper_node_t_o_rosine_tincture"), SubResource("v_innkeeper_node_round"), SubResource("v_innkeeper_node_gossip"), SubResource("v_innkeeper_node_gossip_me"), SubResource("v_innkeeper_node_about_wiebke"), SubResource("v_innkeeper_node_about_wiebke_dead"), SubResource("v_innkeeper_node_bye"), SubResource("v_innkeeper_node_bye_plain")])
+start_node = &"p8_hill"
+nodes = Array[ExtResource("1")]([SubResource("v_innkeeper_node_start"), SubResource("v_innkeeper_node_greet_disreputable"), SubResource("v_innkeeper_node_greet_unremarkable"), SubResource("v_innkeeper_node_greet_respected"), SubResource("v_innkeeper_node_greet_esteemed"), SubResource("v_innkeeper_node_greet_renowned"), SubResource("v_innkeeper_node_menu"), SubResource("v_innkeeper_node_o_o_rosine_berries"), SubResource("v_innkeeper_node_o_o_rosine_berries_yes"), SubResource("v_innkeeper_node_o_o_rosine_tincture"), SubResource("v_innkeeper_node_o_o_rosine_tincture_yes"), SubResource("v_innkeeper_node_t_o_rosine_berries"), SubResource("v_innkeeper_node_t_o_rosine_tincture"), SubResource("v_innkeeper_node_round"), SubResource("v_innkeeper_node_gossip"), SubResource("v_innkeeper_node_gossip_me"), SubResource("v_innkeeper_node_about_wiebke"), SubResource("v_innkeeper_node_about_wiebke_dead"), SubResource("v_innkeeper_node_bye"), SubResource("v_innkeeper_node_bye_plain"), SubResource("p8_node_p8_hill"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_favor_done"), SubResource("p8_node_o_of_rosine_return_1"), SubResource("p8_node_o_of_rosine_return_1_yes"), SubResource("p8_node_t_of_rosine_return_1"), SubResource("p8_node_o_of_rosine_return_2"), SubResource("p8_node_o_of_rosine_return_2_yes"), SubResource("p8_node_t_of_rosine_return_2"), SubResource("p8_node_dance"), SubResource("p8_node_p8_jakob"), SubResource("p8_node_story_3_meet")])

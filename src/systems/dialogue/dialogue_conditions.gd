@@ -21,7 +21,7 @@ extends RefCounted
 ## (days since p8_open_day) · mood:<npc>:<mood> (NpcLife.mood) · step_gte:<npc>:<n> · step_offerable:<npc> ·
 ## favor_ready:<npc> (Friendship.favor_block_reason "") · favor_owed:<npc> (a return favour is open) ·
 ## apprentice_hired · apprentice_level_gte:<task>:<n> (no task → any task) · apprentice_mistake_today ·
-## wish_offerable / visit_waiting (the speaker's visit, see kin_of) · fest_today:<id> / fest_day:<id> ·
+## wish_offerable / visit_waiting / tip_due (the speaker's visit, see kin_of) · fest_today:<id> / fest_day:<id> ·
 ## fest_running:<id> · fest_eve:<id> (the fest is tomorrow) · fest_after:<id> (it was yesterday) – <id> with
 ## or without the prefix fest_ · alms_gte:<n> · robber_known · robber_fate:<none|reported|let_go|caught_watch> ·
 ## sick_light[:<house>] (NightPaths.sick_houses now) · observed:<clue> · underlined:<priest|surgeon|washer>
@@ -313,6 +313,10 @@ static func _evaluate(text: String, context: Dictionary) -> _Result:
 			if text.contains(":"):
 				return _Result.INVALID
 			return _bool(StringName(str(visit_of_speaker(context).get("phase", ""))) == &"waiting")
+		"tip_due":
+			if text.contains(":"):
+				return _Result.INVALID
+			return _bool(tip_due(context) > 0)
 		"fest_today", "fest_day", "fest_running", "fest_eve", "fest_after":
 			var p := DialogueSyntax.parts(text, 1)
 			if p.is_empty() or p[0] == "":
@@ -494,6 +498,19 @@ static func wish_offerable(context: Dictionary) -> bool:
 		if graves is Array and (graves as Array).has(str((w as Dictionary).get("grave_id", ""))):
 			return false
 	return count < cfg.max_open
+
+
+## Phase 8 (§2.2.5, P6 addition): coins the speaker's visit holds for the gravekeeper (a fulfilled wish) –
+## Visitors.tip_due(visit_id) when P2 offers it, else the plan entry's "tip".
+static func tip_due(context: Dictionary) -> int:
+	var visit := visit_of_speaker(context)
+	if visit.is_empty():
+		return 0
+	var visitors := DialogueSyntax.system(&"visitors")
+	if visitors != null and visitors.has_method(&"tip_due"):
+		return int(visitors.call(&"tip_due", str(visit.get("visit_id", ""))))
+	var tip: Variant = visit.get("tip", 0)
+	return int(tip) if (tip is int or tip is float) else 0
 
 
 ## Phase 8: "lights" → &"fest_lights" (the prefix is optional in the data).

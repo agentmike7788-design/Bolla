@@ -1,0 +1,239 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="v_apprentice_lights_c01"]
+script = ExtResource("2")
+text = "Stell sie hin."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_apprentice_node_lights"]
+script = ExtResource("1")
+id = &"lights"
+text = "Für Vater. Der liegt nicht hier. Ich stell sie trotzdem hin."
+choices = Array[ExtResource("2")]([SubResource("v_apprentice_lights_c01")])
+conditions = Array[String](["fest_today:lights", "region:graveyard"])
+fallback_next = &"first"
+
+[sub_resource type="Resource" id="v_apprentice_first_c01"]
+script = ExtResource("2")
+text = "An der Tafel. Da steht, was du tust."
+next = &"first_board"
+
+[sub_resource type="Resource" id="v_apprentice_first_c02"]
+script = ExtResource("2")
+text = "Erst mal hörst du zu."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_apprentice_node_first"]
+script = ExtResource("1")
+id = &"first"
+text = "Mutter sagt, ich soll lernen, was die Leute brauchen, auch wenn sie es nicht wollen. Wo fang ich an, Herr Totengräber? Ich kann lesen. Und schnell laufen. Und ich hab keine Angst. Fast keine."
+choices = Array[ExtResource("2")]([SubResource("v_apprentice_first_c01"), SubResource("v_apprentice_first_c02")])
+conditions = Array[String](["!flag:p8_jakob_met"])
+fallback_next = &"village"
+actions = Array[String](["set_flag_day:p8_jakob_met"])
+
+[sub_resource type="Resource" id="v_apprentice_first_board_c01"]
+script = ExtResource("2")
+text = "Gut."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_apprentice_node_first_board"]
+script = ExtResource("1")
+id = &"first_board"
+text = "Laub, Alter Hof. Das kann ich lesen. Das andere zeig ich mir dann, wenn du's mir zeigst."
+choices = Array[ExtResource("2")]([SubResource("v_apprentice_first_board_c01")])
+
+[sub_resource type="Resource" id="v_apprentice_village_c01"]
+script = ExtResource("2")
+text = "Morgen wieder."
+next = &"menu_v"
+
+[sub_resource type="Resource" id="v_apprentice_village_c02"]
+script = ExtResource("2")
+text = "Hilf deiner Mutter."
+
+[sub_resource type="Resource" id="v_apprentice_node_village"]
+script = ExtResource("1")
+id = &"village"
+text = "Morgen wieder? Mutter sagt, ich soll nicht so viel vom Hügel reden. Ich red trotzdem. Hier unten hört eh keiner zu, außer den Gläsern."
+choices = Array[ExtResource("2")]([SubResource("v_apprentice_village_c01"), SubResource("v_apprentice_village_c02")])
+conditions = Array[String](["region:village"])
+fallback_next = &"early"
+
+[sub_resource type="Resource" id="v_apprentice_early_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_apprentice_node_early"]
+script = ExtResource("1")
+id = &"early"
+text = "Guten Morgen, Herr Totengräber! Was machen wir heute?"
+choices = Array[ExtResource("2")]([SubResource("v_apprentice_early_c01")])
+conditions = Array[String](["!flag_days_gte:p8_jakob_met:3"])
+fallback_next = &"greet"
+
+[sub_resource type="Resource" id="v_apprentice_greet_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_apprentice_node_greet"]
+script = ExtResource("1")
+id = &"greet"
+text = "Morgen. Was machen wir heute? Ich hab schon angefangen. Ein bisschen."
+choices = Array[ExtResource("2")]([SubResource("v_apprentice_greet_c01")])
+
+[sub_resource type="Resource" id="v_apprentice_menu_c01"]
+script = ExtResource("2")
+text = "Ich zeig dir, wie man Laub harkt."
+next = &"teach"
+conditions = Array[String](["apprentice_hired", "!apprentice_level_gte:rake:1"])
+actions = Array[String](["apprentice_teach:rake"])
+
+[sub_resource type="Resource" id="v_apprentice_menu_c02"]
+script = ExtResource("2")
+text = "Ich zeig dir, wie man Unkraut jätet."
+next = &"teach"
+conditions = Array[String](["apprentice_hired", "!apprentice_level_gte:weed:1"])
+actions = Array[String](["apprentice_teach:weed"])
+
+[sub_resource type="Resource" id="v_apprentice_menu_c03"]
+script = ExtResource("2")
+text = "Ich zeig dir, wie man Blumen gießt."
+next = &"teach"
+conditions = Array[String](["apprentice_hired", "!apprentice_level_gte:water:1"])
+actions = Array[String](["apprentice_teach:water"])
+
+[sub_resource type="Resource" id="v_apprentice_menu_c04"]
+script = ExtResource("2")
+text = "Ich zeig dir, wie man eine Grabkerze anzündet."
+next = &"teach"
+conditions = Array[String](["apprentice_hired", "!apprentice_level_gte:candle:1"])
+actions = Array[String](["apprentice_teach:candle"])
+
+[sub_resource type="Resource" id="v_apprentice_menu_c05"]
+script = ExtResource("2")
+text = "Gut gemacht."
+next = &"praised"
+conditions = Array[String](["apprentice_hired", "!flag_today:p8_jakob_judged"])
+actions = Array[String](["apprentice_praise", "set_flag_day:p8_jakob_judged"])
+
+[sub_resource type="Resource" id="v_apprentice_menu_c06"]
+script = ExtResource("2")
+text = "Pass besser auf."
+next = &"scolded"
+conditions = Array[String](["apprentice_hired", "apprentice_mistake_today", "!flag_today:p8_jakob_judged"])
+actions = Array[String](["apprentice_scold", "set_flag_day:p8_jakob_judged"])
+
+[sub_resource type="Resource" id="v_apprentice_menu_c07"]
+script = ExtResource("2")
+text = "Hilfst du mir mit dem Toten?"
+next = &"dead"
+
+[sub_resource type="Resource" id="v_apprentice_menu_c08"]
+script = ExtResource("2")
+text = "Warum willst du das lernen?"
+next = &"why"
+
+[sub_resource type="Resource" id="v_apprentice_menu_c09"]
+script = ExtResource("2")
+text = "Weiter so."
+
+[sub_resource type="Resource" id="v_apprentice_node_menu"]
+script = ExtResource("1")
+id = &"menu"
+text = "Ja?"
+choices = Array[ExtResource("2")]([SubResource("v_apprentice_menu_c01"), SubResource("v_apprentice_menu_c02"), SubResource("v_apprentice_menu_c03"), SubResource("v_apprentice_menu_c04"), SubResource("v_apprentice_menu_c05"), SubResource("v_apprentice_menu_c06"), SubResource("v_apprentice_menu_c07"), SubResource("v_apprentice_menu_c08"), SubResource("v_apprentice_menu_c09")])
+
+[sub_resource type="Resource" id="v_apprentice_teach_c01"]
+script = ExtResource("2")
+text = "Dann schau."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_apprentice_node_teach"]
+script = ExtResource("1")
+id = &"teach"
+text = "Ich schau zu. Ich sag nichts. Ich frag erst hinterher. Vielleicht."
+choices = Array[ExtResource("2")]([SubResource("v_apprentice_teach_c01")])
+
+[sub_resource type="Resource" id="v_apprentice_praised_c01"]
+script = ExtResource("2")
+text = "Gut."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_apprentice_node_praised"]
+script = ExtResource("1")
+id = &"praised"
+text = "Sag's Mutter. Nein, sag's ihr nicht, sonst wird sie stolz, und dann ist sie unerträglich."
+choices = Array[ExtResource("2")]([SubResource("v_apprentice_praised_c01")])
+
+[sub_resource type="Resource" id="v_apprentice_scolded_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="v_apprentice_node_scolded"]
+script = ExtResource("1")
+id = &"scolded"
+text = "Ja, Herr Totengräber."
+choices = Array[ExtResource("2")]([SubResource("v_apprentice_scolded_c01")])
+
+[sub_resource type="Resource" id="v_apprentice_dead_c01"]
+script = ExtResource("2")
+text = "Recht hat sie."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_apprentice_node_dead"]
+script = ExtResource("1")
+id = &"dead"
+text = "Die Toten fasst du an. Das hat Mutter gesagt. Ich mach das Laub."
+choices = Array[ExtResource("2")]([SubResource("v_apprentice_dead_c01")])
+
+[sub_resource type="Resource" id="v_apprentice_why_c01"]
+script = ExtResource("2")
+text = "Ich sag's ihr nicht."
+next = &"menu"
+
+[sub_resource type="Resource" id="v_apprentice_node_why"]
+script = ExtResource("1")
+id = &"why"
+text = "Weil Vater kein Grab hat. Und weil oben einer sein muss, der es ordentlich macht, wenn einer eins hat. Das hab ich mir ausgedacht. Mutter weiß es nicht."
+choices = Array[ExtResource("2")]([SubResource("v_apprentice_why_c01")])
+
+[sub_resource type="Resource" id="v_apprentice_menu_v_c01"]
+script = ExtResource("2")
+text = "Hast du heute was gelernt?"
+next = &"learned"
+
+[sub_resource type="Resource" id="v_apprentice_menu_v_c02"]
+script = ExtResource("2")
+text = "Bis morgen, Jakob."
+
+[sub_resource type="Resource" id="v_apprentice_node_menu_v"]
+script = ExtResource("1")
+id = &"menu_v"
+text = "Kann ich morgen früher kommen? Nein? Gut. Dann pünktlich."
+choices = Array[ExtResource("2")]([SubResource("v_apprentice_menu_v_c01"), SubResource("v_apprentice_menu_v_c02")])
+
+[sub_resource type="Resource" id="v_apprentice_learned_c01"]
+script = ExtResource("2")
+text = "Das stimmt."
+next = &"menu_v"
+
+[sub_resource type="Resource" id="v_apprentice_node_learned"]
+script = ExtResource("1")
+id = &"learned"
+text = "Dass man das Laub von unten nach oben harkt. Nicht hin und her. Und dass die Kehr nicht weint, wenn man hinschaut. Nur wenn man weggeht."
+choices = Array[ExtResource("2")]([SubResource("v_apprentice_learned_c01")])
+
+[resource]
+script = ExtResource("3")
+id = &"v_apprentice"
+speaker_name = "Jakob Wackernagel"
+start_node = &"lights"
+nodes = Array[ExtResource("1")]([SubResource("v_apprentice_node_lights"), SubResource("v_apprentice_node_first"), SubResource("v_apprentice_node_first_board"), SubResource("v_apprentice_node_village"), SubResource("v_apprentice_node_early"), SubResource("v_apprentice_node_greet"), SubResource("v_apprentice_node_menu"), SubResource("v_apprentice_node_teach"), SubResource("v_apprentice_node_praised"), SubResource("v_apprentice_node_scolded"), SubResource("v_apprentice_node_dead"), SubResource("v_apprentice_node_why"), SubResource("v_apprentice_node_menu_v"), SubResource("v_apprentice_node_learned")])

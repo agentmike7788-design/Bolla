@@ -4,6 +4,405 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
 
+[sub_resource type="Resource" id="p8_menu_menu_01"]
+script = ExtResource("2")
+text = "[Geschichte] Unter Kollegen"
+next = &"story_1"
+conditions = Array[String](["step_offerable:surgeon", "!step_gte:surgeon:1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_02"]
+script = ExtResource("2")
+text = "Über die Wöchnerin"
+next = &"story_1_done"
+conditions = Array[String](["flag:friend_surgeon_1", "!flag:p8_told_surgeon_1"])
+actions = Array[String](["set_flag:p8_told_surgeon_1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_03"]
+script = ExtResource("2")
+text = "[Geschichte] Die Kiste für die Stadt"
+next = &"story_2"
+conditions = Array[String](["step_offerable:surgeon", "step_gte:surgeon:1", "!step_gte:surgeon:2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_04"]
+script = ExtResource("2")
+text = "Über die Kiste"
+next = &"story_2_done"
+conditions = Array[String](["flag:friend_surgeon_2", "!flag:p8_told_surgeon_2"])
+actions = Array[String](["set_flag:p8_told_surgeon_2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_05"]
+script = ExtResource("2")
+text = "[Geschichte] Was ich nicht aufschreibe"
+next = &"story_3"
+conditions = Array[String](["step_offerable:surgeon", "step_gte:surgeon:2", "!step_gte:surgeon:3"])
+
+[sub_resource type="Resource" id="p8_menu_menu_06"]
+script = ExtResource("2")
+text = "Über den Abend an der Brücke"
+next = &"story_3_done"
+conditions = Array[String](["flag:friend_surgeon_3", "!flag:p8_told_surgeon_3"])
+actions = Array[String](["set_flag:p8_told_surgeon_3"])
+
+[sub_resource type="Resource" id="p8_menu_menu_07"]
+script = ExtResource("2")
+text = "[Geschichte] …"
+next = &"story_cross"
+conditions = Array[String](["p8_open", "mood:surgeon:cross", "!step_gte:surgeon:3"])
+
+[sub_resource type="Resource" id="p8_menu_menu_08"]
+script = ExtResource("2")
+text = "[Zuhören]"
+next = &"listen"
+conditions = Array[String](["p8_open", "mood:surgeon:low", "!flag_today:p8_listen_surgeon"])
+actions = Array[String](["listen:surgeon", "set_flag_day:p8_listen_surgeon"])
+
+[sub_resource type="Resource" id="p8_menu_menu_09"]
+script = ExtResource("2")
+text = "[Gefallen] Arznei umsonst"
+next = &"favor"
+conditions = Array[String](["step_gte:surgeon:3", "favor_ready:surgeon"])
+
+[sub_resource type="Resource" id="p8_menu_menu_10"]
+script = ExtResource("2")
+text = "[Gegengefallen] Kräuterbündel"
+next = &"o_of_quast_return_1"
+conditions = Array[String](["order_offerable:of_quast_return_1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_11"]
+script = ExtResource("2")
+text = "[Gegengefallen] Hier ist es: Kräuterbündel"
+next = &"t_of_quast_return_1"
+conditions = Array[String](["order_ready:of_quast_return_1"])
+actions = Array[String](["order_turn_in:of_quast_return_1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_12"]
+script = ExtResource("2")
+text = "[Gegengefallen] Weingeist"
+next = &"o_of_quast_return_2"
+conditions = Array[String](["order_offerable:of_quast_return_2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_13"]
+script = ExtResource("2")
+text = "[Gegengefallen] Hier ist es: Weingeist"
+next = &"t_of_quast_return_2"
+conditions = Array[String](["order_ready:of_quast_return_2"])
+actions = Array[String](["order_turn_in:of_quast_return_2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_14"]
+script = ExtResource("2")
+text = "Besuchen Sie nie jemanden oben?"
+next = &"p8_graves"
+conditions = Array[String](["p8_open"])
+
+[sub_resource type="Resource" id="p8_menu_menu_15"]
+script = ExtResource("2")
+text = "[Geschichte] Ich bin da."
+next = &"story_3_meet"
+conditions = Array[String](["order:of_quast_3:accepted", "time_between:1086:1170"])
+actions = Array[String](["meet:v_bridge"])
+
+[sub_resource type="Resource" id="p8_menu_menu_16"]
+script = ExtResource("2")
+text = "[Auftrag] Hier ist die Wundsalbe."
+next = &"story_1_turn_in"
+conditions = Array[String](["order_ready:of_quast_1"])
+actions = Array[String](["order_turn_in:of_quast_1"])
+
+[sub_resource type="Resource" id="p8_story_1_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"story_1_yes"
+actions = Array[String](["step_accept:surgeon"])
+
+[sub_resource type="Resource" id="p8_story_1_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1"]
+script = ExtResource("1")
+id = &"story_1"
+text = "Die Wöchnerin bei den Siebers braucht Wundsalbe. Zwei Tiegel. Sie können das, hört man. Unter Kollegen, Totengräber. Wir arbeiten an beiden Enden derselben Sache."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_c01"), SubResource("p8_story_1_c02")])
+
+[sub_resource type="Resource" id="p8_story_1_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1_yes"]
+script = ExtResource("1")
+id = &"story_1_yes"
+text = "Danke. Ich sage ihr nicht, von wem. Sie würde fragen, wo Sie Ihre Hände sonst haben."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_yes_c01")])
+
+[sub_resource type="Resource" id="p8_story_1_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1_done"]
+script = ExtResource("1")
+id = &"story_1_done"
+text = "Die Siebers haben einen Sohn. Gesund, laut, hässlich. Die Mutter lebt. Ihre Salbe war gut. Ich habe es aufgeschrieben."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_done_c01")])
+
+[sub_resource type="Resource" id="p8_story_2_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"story_2_yes"
+actions = Array[String](["step_accept:surgeon", "give_item:quast_crate:1"])
+
+[sub_resource type="Resource" id="p8_story_2_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2"]
+script = ExtResource("1")
+id = &"story_2"
+text = "Diese Kiste muss morgen früh mit Faulhaber in die Stadt. Bis zwanzig vor acht an seinem Karren, an der Bahre. Sie ist versiegelt. Das Siegel ist für die Stadt, nicht für Sie. Aber ich bitte Sie trotzdem, es zu lassen."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_c01"), SubResource("p8_story_2_c02")])
+
+[sub_resource type="Resource" id="p8_story_2_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2_yes"]
+script = ExtResource("1")
+id = &"story_2_yes"
+text = "Danke. Faulhaber fragt nicht. Sie fragen. Das ist der Unterschied zwischen Ihnen."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_yes_c01")])
+
+[sub_resource type="Resource" id="p8_story_2_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2_done"]
+script = ExtResource("1")
+id = &"story_2_done"
+text = "Die Kiste ist angekommen. Die Stadt schreibt, sie sei zufrieden. Die Stadt ist nie zufrieden. Sie schreibt es nur."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_done_c01")])
+
+[sub_resource type="Resource" id="p8_story_3_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"story_3_yes"
+actions = Array[String](["step_accept:surgeon"])
+
+[sub_resource type="Resource" id="p8_story_3_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3"]
+script = ExtResource("1")
+id = &"story_3"
+text = "Kommen Sie abends an die Brücke, Totengräber. Ich erzähle Ihnen etwas, das ich nicht aufschreibe. Ich schreibe sonst alles auf."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_c01"), SubResource("p8_story_3_c02")])
+
+[sub_resource type="Resource" id="p8_story_3_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3_yes"]
+script = ExtResource("1")
+id = &"story_3_yes"
+text = "Nach sechs. Ich stehe am Geländer und schaue ins Wasser. Das tue ich immer."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_yes_c01")])
+
+[sub_resource type="Resource" id="p8_story_3_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3_done"]
+script = ExtResource("1")
+id = &"story_3_done"
+text = "Ich habe es Ihnen gesagt. Das genügt. Schreiben Sie es auch nicht auf. Einer von uns muss es vergessen dürfen."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_done_c01")])
+
+[sub_resource type="Resource" id="p8_story_cross_c01"]
+script = ExtResource("2")
+text = "Morgen also."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_cross"]
+script = ExtResource("1")
+id = &"story_cross"
+text = "Heute nicht, Totengräber. Morgen. Heute habe ich keine Geduld, nicht einmal für mich."
+choices = Array[ExtResource("2")]([SubResource("p8_story_cross_c01")])
+
+[sub_resource type="Resource" id="p8_listen_c01"]
+script = ExtResource("2")
+text = "(Schweigen)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_listen"]
+script = ExtResource("1")
+id = &"listen"
+text = "Heute war ein Kind bei mir, mit Fieber. Ich habe ihm Tropfen gegeben und der Mutter Hoffnung. Die Tropfen helfen meistens. Die Hoffnung nicht immer. … Danke. Sie hören zu wie ein Arzt. Das ist ein Kompliment, auch wenn es nicht so klingt."
+choices = Array[ExtResource("2")]([SubResource("p8_listen_c01")])
+
+[sub_resource type="Resource" id="p8_favor_c01"]
+script = ExtResource("2")
+text = "Danke, Doktor."
+next = &"favor_done"
+actions = Array[String](["favor_use:surgeon"])
+
+[sub_resource type="Resource" id="p8_favor_c02"]
+script = ExtResource("2")
+text = "Ein andermal."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_favor"]
+script = ExtResource("1")
+id = &"favor"
+text = "Fiebertinktur? Zwei Fläschchen. Umsonst. Ich schreibe es nicht auf, das ist das eigentliche Geschenk."
+choices = Array[ExtResource("2")]([SubResource("p8_favor_c01"), SubResource("p8_favor_c02")])
+
+[sub_resource type="Resource" id="p8_favor_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_favor_done"]
+script = ExtResource("1")
+id = &"favor_done"
+text = "Hier. Zwei Fläschchen. Ich schreibe es nicht auf. Das ist das Geschenk."
+choices = Array[ExtResource("2")]([SubResource("p8_favor_done_c01")])
+
+[sub_resource type="Resource" id="p8_o_of_quast_return_1_c01"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_of_quast_return_1_yes"
+actions = Array[String](["order_accept:of_quast_return_1"])
+
+[sub_resource type="Resource" id="p8_o_of_quast_return_1_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_quast_return_1"]
+script = ExtResource("1")
+id = &"o_of_quast_return_1"
+text = "Zwei Kräuterbündel. Für die Salben. Von Ihrem Hügel, wenn es geht, da wächst es ruhiger."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_quast_return_1_c01"), SubResource("p8_o_of_quast_return_1_c02")])
+
+[sub_resource type="Resource" id="p8_o_of_quast_return_1_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_quast_return_1_yes"]
+script = ExtResource("1")
+id = &"o_of_quast_return_1_yes"
+text = "Gut."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_quast_return_1_yes_c01")])
+
+[sub_resource type="Resource" id="p8_t_of_quast_return_1_c01"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_t_of_quast_return_1"]
+script = ExtResource("1")
+id = &"t_of_quast_return_1"
+text = "Schön getrocknet. Ich rieche den Hügel daran."
+choices = Array[ExtResource("2")]([SubResource("p8_t_of_quast_return_1_c01")])
+
+[sub_resource type="Resource" id="p8_o_of_quast_return_2_c01"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_of_quast_return_2_yes"
+actions = Array[String](["order_accept:of_quast_return_2"])
+
+[sub_resource type="Resource" id="p8_o_of_quast_return_2_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_quast_return_2"]
+script = ExtResource("1")
+id = &"o_of_quast_return_2"
+text = "Eine Flasche Weingeist. Fragen Sie nicht."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_quast_return_2_c01"), SubResource("p8_o_of_quast_return_2_c02")])
+
+[sub_resource type="Resource" id="p8_o_of_quast_return_2_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_quast_return_2_yes"]
+script = ExtResource("1")
+id = &"o_of_quast_return_2_yes"
+text = "Danke."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_quast_return_2_yes_c01")])
+
+[sub_resource type="Resource" id="p8_t_of_quast_return_2_c01"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_t_of_quast_return_2"]
+script = ExtResource("1")
+id = &"t_of_quast_return_2"
+text = "Danke. Und nein. Nicht zum Trinken."
+choices = Array[ExtResource("2")]([SubResource("p8_t_of_quast_return_2_c01")])
+
+[sub_resource type="Resource" id="p8_p8_graves_c01"]
+script = ExtResource("2")
+text = "Verstehe."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_p8_graves"]
+script = ExtResource("1")
+id = &"p8_graves"
+text = "Nie. Ich sehe die Toten lieber vorher, Totengräber. Hinterher gehören sie Ihnen."
+choices = Array[ExtResource("2")]([SubResource("p8_p8_graves_c01")])
+
+[sub_resource type="Resource" id="p8_story_3_meet_c01"]
+script = ExtResource("2")
+text = "Und die stillen Herzen?"
+next = &"story_3_heart"
+conditions = Array[String](["clue_known:c_v_still_heart"])
+
+[sub_resource type="Resource" id="p8_story_3_meet_c02"]
+script = ExtResource("2")
+text = "(Ins Wasser schauen)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3_meet"]
+script = ExtResource("1")
+id = &"story_3_meet"
+text = "Ich gehe zu jedem Licht im Fenster, Totengräber. Auch wenn mich keiner holt. Seit dem Fährwinter. Ich war zu spät damals. Siebzehnmal. Seitdem bin ich lieber zu früh. Manche sagen, das sei verdächtig. Manche haben recht, nur nicht so, wie sie denken."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_meet_c01"), SubResource("p8_story_3_meet_c02")])
+
+[sub_resource type="Resource" id="p8_story_3_heart_c01"]
+script = ExtResource("2")
+text = "(Schweigen)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3_heart"]
+script = ExtResource("1")
+id = &"story_3_heart"
+text = "Die stillen Herzen. Gesund, und stehen geblieben. Bei denen mit dem Zeichen. Ich habe sie gezählt, Totengräber. Ich bin Arzt, ich zähle. Es sind mehr, als ein Zufall erlaubt, und weniger, als ein Mörder braucht. Das ist das, was ich nicht aufschreibe."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_heart_c01")])
+
+[sub_resource type="Resource" id="p8_story_1_turn_in_c01"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1_turn_in"]
+script = ExtResource("1")
+id = &"story_1_turn_in"
+text = "Zwei Tiegel. Sauber. Ich bringe sie heute noch hin."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_turn_in_c01")])
+
 [sub_resource type="Resource" id="v_surgeon_c001"]
 script = ExtResource("2")
 text = "…"
@@ -286,7 +685,7 @@ next = &"bye"
 script = ExtResource("1")
 id = &"menu"
 text = "Was führt Sie zu mir?"
-choices = Array[ExtResource("2")]([SubResource("v_surgeon_c013"), SubResource("v_surgeon_c014"), SubResource("v_surgeon_c015"), SubResource("v_surgeon_c016"), SubResource("v_surgeon_c017"), SubResource("v_surgeon_c018"), SubResource("v_surgeon_c019"), SubResource("v_surgeon_c020"), SubResource("v_surgeon_c021"), SubResource("v_surgeon_c022"), SubResource("v_surgeon_c023"), SubResource("v_surgeon_c024"), SubResource("v_surgeon_c025"), SubResource("v_surgeon_c026"), SubResource("v_surgeon_c027"), SubResource("v_surgeon_c028"), SubResource("v_surgeon_c029"), SubResource("v_surgeon_c030"), SubResource("v_surgeon_c031")])
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c013"), SubResource("v_surgeon_c014"), SubResource("v_surgeon_c015"), SubResource("v_surgeon_c016"), SubResource("v_surgeon_c017"), SubResource("v_surgeon_c018"), SubResource("v_surgeon_c019"), SubResource("v_surgeon_c020"), SubResource("v_surgeon_c021"), SubResource("v_surgeon_c022"), SubResource("v_surgeon_c023"), SubResource("v_surgeon_c024"), SubResource("v_surgeon_c025"), SubResource("v_surgeon_c026"), SubResource("v_surgeon_c027"), SubResource("v_surgeon_c028"), SubResource("v_surgeon_c029"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("p8_menu_menu_04"), SubResource("p8_menu_menu_05"), SubResource("p8_menu_menu_06"), SubResource("p8_menu_menu_07"), SubResource("p8_menu_menu_08"), SubResource("p8_menu_menu_09"), SubResource("p8_menu_menu_10"), SubResource("p8_menu_menu_11"), SubResource("p8_menu_menu_12"), SubResource("p8_menu_menu_13"), SubResource("p8_menu_menu_14"), SubResource("p8_menu_menu_15"), SubResource("p8_menu_menu_16"), SubResource("v_surgeon_c030"), SubResource("v_surgeon_c031")])
 
 [sub_resource type="Resource" id="v_surgeon_c032"]
 script = ExtResource("2")
@@ -542,4 +941,4 @@ script = ExtResource("3")
 id = &"v_surgeon"
 speaker_name = "Severin Quast"
 start_node = &"start"
-nodes = Array[ExtResource("1")]([SubResource("v_surgeon_node_start"), SubResource("v_surgeon_node_ask_again"), SubResource("v_surgeon_node_invite"), SubResource("v_surgeon_node_invite_r"), SubResource("v_surgeon_node_greet_p_devout"), SubResource("v_surgeon_node_greet_p_hardhearted"), SubResource("v_surgeon_node_greet_disreputable"), SubResource("v_surgeon_node_greet_unremarkable"), SubResource("v_surgeon_node_greet_respected"), SubResource("v_surgeon_node_greet_esteemed"), SubResource("v_surgeon_node_greet_renowned"), SubResource("v_surgeon_node_menu"), SubResource("v_surgeon_node_case_yes"), SubResource("v_surgeon_node_case_no"), SubResource("v_surgeon_node_still_heart"), SubResource("v_surgeon_node_still_heart_more"), SubResource("v_surgeon_node_visits"), SubResource("v_surgeon_node_o_o_quast_tincture"), SubResource("v_surgeon_node_o_o_quast_tincture_yes"), SubResource("v_surgeon_node_o_o_quast_specimen"), SubResource("v_surgeon_node_o_o_quast_specimen_yes"), SubResource("v_surgeon_node_o_o_quast_antidote"), SubResource("v_surgeon_node_o_o_quast_antidote_yes"), SubResource("v_surgeon_node_o_o_quast_cabinet"), SubResource("v_surgeon_node_o_o_quast_cabinet_yes"), SubResource("v_surgeon_node_t_o_quast_tincture"), SubResource("v_surgeon_node_t_o_quast_specimen"), SubResource("v_surgeon_node_t_o_quast_antidote"), SubResource("v_surgeon_node_t_o_quast_cabinet"), SubResource("v_surgeon_node_t_ob_herbs"), SubResource("v_surgeon_node_bye"), SubResource("v_surgeon_node_bye_plain")])
+nodes = Array[ExtResource("1")]([SubResource("v_surgeon_node_start"), SubResource("v_surgeon_node_ask_again"), SubResource("v_surgeon_node_invite"), SubResource("v_surgeon_node_invite_r"), SubResource("v_surgeon_node_greet_p_devout"), SubResource("v_surgeon_node_greet_p_hardhearted"), SubResource("v_surgeon_node_greet_disreputable"), SubResource("v_surgeon_node_greet_unremarkable"), SubResource("v_surgeon_node_greet_respected"), SubResource("v_surgeon_node_greet_esteemed"), SubResource("v_surgeon_node_greet_renowned"), SubResource("v_surgeon_node_menu"), SubResource("v_surgeon_node_case_yes"), SubResource("v_surgeon_node_case_no"), SubResource("v_surgeon_node_still_heart"), SubResource("v_surgeon_node_still_heart_more"), SubResource("v_surgeon_node_visits"), SubResource("v_surgeon_node_o_o_quast_tincture"), SubResource("v_surgeon_node_o_o_quast_tincture_yes"), SubResource("v_surgeon_node_o_o_quast_specimen"), SubResource("v_surgeon_node_o_o_quast_specimen_yes"), SubResource("v_surgeon_node_o_o_quast_antidote"), SubResource("v_surgeon_node_o_o_quast_antidote_yes"), SubResource("v_surgeon_node_o_o_quast_cabinet"), SubResource("v_surgeon_node_o_o_quast_cabinet_yes"), SubResource("v_surgeon_node_t_o_quast_tincture"), SubResource("v_surgeon_node_t_o_quast_specimen"), SubResource("v_surgeon_node_t_o_quast_antidote"), SubResource("v_surgeon_node_t_o_quast_cabinet"), SubResource("v_surgeon_node_t_ob_herbs"), SubResource("v_surgeon_node_bye"), SubResource("v_surgeon_node_bye_plain"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_favor_done"), SubResource("p8_node_o_of_quast_return_1"), SubResource("p8_node_o_of_quast_return_1_yes"), SubResource("p8_node_t_of_quast_return_1"), SubResource("p8_node_o_of_quast_return_2"), SubResource("p8_node_o_of_quast_return_2_yes"), SubResource("p8_node_t_of_quast_return_2"), SubResource("p8_node_p8_graves"), SubResource("p8_node_story_3_meet"), SubResource("p8_node_story_3_heart"), SubResource("p8_node_story_1_turn_in")])

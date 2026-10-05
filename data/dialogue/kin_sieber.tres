@@ -1,0 +1,127 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="kin_sieber_first_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="kin_sieber_node_first"]
+script = ExtResource("1")
+id = &"first"
+text = "(Er redet mit dem Grab, nicht mit dir.) So, Grete. Da ist der Neue. Der gräbt ordentlich, sagen sie. Ich sag nichts. Ich schau es mir an."
+choices = Array[ExtResource("2")]([SubResource("kin_sieber_first_c01")])
+conditions = Array[String](["!flag:p8_met_kin_sieber"])
+fallback_next = &"greet"
+actions = Array[String](["set_flag:p8_met_kin_sieber"])
+
+[sub_resource type="Resource" id="kin_sieber_greet_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="kin_sieber_node_greet"]
+script = ExtResource("1")
+id = &"greet"
+text = "(Zum Grab.) So, Grete. Der Totengräber hat gefegt. Jetzt hast du es besser als ich."
+choices = Array[ExtResource("2")]([SubResource("kin_sieber_greet_c01")])
+
+[sub_resource type="Resource" id="kin_sieber_menu_c01"]
+script = ExtResource("2")
+text = "[Trinkgeld] …"
+next = &"tip"
+conditions = Array[String](["tip_due"])
+actions = Array[String](["tip_hand"])
+
+[sub_resource type="Resource" id="kin_sieber_menu_c02"]
+script = ExtResource("2")
+text = "[Wunsch] Kann ich etwas für das Grab tun?"
+next = &"wish"
+conditions = Array[String](["wish_offerable"])
+actions = Array[String](["wish_offer"])
+
+[sub_resource type="Resource" id="kin_sieber_menu_c03"]
+script = ExtResource("2")
+text = "Wer liegt hier?"
+next = &"who"
+
+[sub_resource type="Resource" id="kin_sieber_menu_c04"]
+script = ExtResource("2")
+text = "Ich lass Sie allein."
+
+[sub_resource type="Resource" id="kin_sieber_node_menu"]
+script = ExtResource("1")
+id = &"menu"
+text = "(Johann wartet.)"
+choices = Array[ExtResource("2")]([SubResource("kin_sieber_menu_c01"), SubResource("kin_sieber_menu_c02"), SubResource("kin_sieber_menu_c03"), SubResource("kin_sieber_menu_c04")])
+
+[sub_resource type="Resource" id="kin_sieber_wish_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"wish_yes"
+actions = Array[String](["wish_accept"])
+
+[sub_resource type="Resource" id="kin_sieber_wish_c02"]
+script = ExtResource("2")
+text = "Ich kann es nicht versprechen."
+next = &"wish_no"
+
+[sub_resource type="Resource" id="kin_sieber_node_wish"]
+script = ExtResource("1")
+id = &"wish"
+text = "(Zum Grab.) Grete, soll er's dir sauber halten, bis ich wiederkomm? Ja? Sie nickt. Sie hat immer genickt, wenn sie Nein gemeint hat. Diesmal mein ich, sie meint Ja."
+choices = Array[ExtResource("2")]([SubResource("kin_sieber_wish_c01"), SubResource("kin_sieber_wish_c02")])
+
+[sub_resource type="Resource" id="kin_sieber_wish_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="kin_sieber_node_wish_yes"]
+script = ExtResource("1")
+id = &"wish_yes"
+text = "(Zum Grab.) Hörst du, Grete? Er macht's."
+choices = Array[ExtResource("2")]([SubResource("kin_sieber_wish_yes_c01")])
+
+[sub_resource type="Resource" id="kin_sieber_wish_no_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="kin_sieber_node_wish_no"]
+script = ExtResource("1")
+id = &"wish_no"
+text = "(Zum Grab.) Er kann's nicht versprechen, Grete. Ehrlich ist er. Das ist schon was."
+choices = Array[ExtResource("2")]([SubResource("kin_sieber_wish_no_c01")])
+
+[sub_resource type="Resource" id="kin_sieber_tip_c01"]
+script = ExtResource("2")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="kin_sieber_node_tip"]
+script = ExtResource("1")
+id = &"tip"
+text = "(Er legt dir Münzen in die Hand, ohne hinzusehen.) Für dich, Grete. Nein, für ihn. Du brauchst ja nichts mehr."
+choices = Array[ExtResource("2")]([SubResource("kin_sieber_tip_c01")])
+
+[sub_resource type="Resource" id="kin_sieber_who_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="kin_sieber_node_who"]
+script = ExtResource("1")
+id = &"who"
+text = "(Zum Grab.) Er fragt, wer du bist, Grete. Einundfünfzig Jahre, sag ich ihm. Mehr nicht. Den Rest weißt du."
+choices = Array[ExtResource("2")]([SubResource("kin_sieber_who_c01")])
+
+[resource]
+script = ExtResource("3")
+id = &"kin_sieber"
+speaker_name = "Johann Sieber"
+start_node = &"first"
+nodes = Array[ExtResource("1")]([SubResource("kin_sieber_node_first"), SubResource("kin_sieber_node_greet"), SubResource("kin_sieber_node_menu"), SubResource("kin_sieber_node_wish"), SubResource("kin_sieber_node_wish_yes"), SubResource("kin_sieber_node_wish_no"), SubResource("kin_sieber_node_tip"), SubResource("kin_sieber_node_who")])

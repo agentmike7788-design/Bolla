@@ -17,7 +17,8 @@ extends RefCounted
 ## for the speaker's visit + the wish card, the offer is kept in context.wish_offer) · wish_accept (the offered
 ## wish) · tip_hand (Visitors.hand_tip) · alms (Wanderers.give_alms) · dance:<npc> (Festivals.dance) ·
 ## robber_resolve:<choice> (NightRobber.resolve) · meet:<place> (Orders.note_meet with the speaker; meet:<npc> of a
-## villager id stays Relationships.meet) · note_event:<event> (NpcLife.note_event).
+## villager id stays Relationships.meet) · note_event:<event> (NpcLife.note_event) · task:<action_id> (Orders.note_task – Lenz' names
+## at the Lichtgang, P6 addition).
 
 const NOTIFY_INFO := &"info"
 const NOTIFY_REWARD := &"reward"
@@ -224,6 +225,10 @@ static func apply(action: String, context: Dictionary) -> void:
 			var p := DialogueSyntax.parts(text, 1)
 			if DialogueSyntax.has_name(p, text):
 				_call(&"night_robber", &"resolve", [StringName(p[0])], text)
+		"task":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				_call(&"orders", &"note_task", [StringName(p[0])], text)
 		"note_event":
 			var p := DialogueSyntax.parts(text, 1)
 			if DialogueSyntax.has_name(p, text):

@@ -4,6 +4,477 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
 
+[sub_resource type="Resource" id="p8_menu_menu_01"]
+script = ExtResource("2")
+text = "[Geschichte] Die Beine"
+next = &"story_1"
+conditions = Array[String](["step_offerable:mayor", "!step_gte:mayor:1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_02"]
+script = ExtResource("2")
+text = "Über die Beine"
+next = &"story_1_done"
+conditions = Array[String](["flag:friend_mayor_1", "!flag:p8_told_mayor_1"])
+actions = Array[String](["set_flag:p8_told_mayor_1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_03"]
+script = ExtResource("2")
+text = "[Geschichte] Ein Platz mit Blick"
+next = &"story_2"
+conditions = Array[String](["step_offerable:mayor", "step_gte:mayor:1", "!step_gte:mayor:2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_04"]
+script = ExtResource("2")
+text = "Über den Platz mit Blick"
+next = &"story_2_done"
+conditions = Array[String](["flag:friend_mayor_2", "!flag:p8_told_mayor_2"])
+actions = Array[String](["set_flag:p8_told_mayor_2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_05"]
+script = ExtResource("2")
+text = "[Geschichte] Eine Runde von mir"
+next = &"story_3"
+conditions = Array[String](["step_offerable:mayor", "step_gte:mayor:2", "!step_gte:mayor:3"])
+
+[sub_resource type="Resource" id="p8_menu_menu_06"]
+script = ExtResource("2")
+text = "Über die Runde"
+next = &"story_3_done"
+conditions = Array[String](["flag:friend_mayor_3", "!flag:p8_told_mayor_3"])
+actions = Array[String](["set_flag:p8_told_mayor_3"])
+
+[sub_resource type="Resource" id="p8_menu_menu_07"]
+script = ExtResource("2")
+text = "[Geschichte] …"
+next = &"story_cross"
+conditions = Array[String](["p8_open", "mood:mayor:cross", "!step_gte:mayor:3"])
+
+[sub_resource type="Resource" id="p8_menu_menu_08"]
+script = ExtResource("2")
+text = "[Zuhören]"
+next = &"listen"
+conditions = Array[String](["p8_open", "mood:mayor:low", "!flag_today:p8_listen_mayor"])
+actions = Array[String](["listen:mayor", "set_flag_day:p8_listen_mayor"])
+
+[sub_resource type="Resource" id="p8_menu_menu_09"]
+script = ExtResource("2")
+text = "[Gefallen] Der Nachtwächter"
+next = &"favor"
+conditions = Array[String](["step_gte:mayor:3", "favor_ready:mayor"])
+
+[sub_resource type="Resource" id="p8_menu_menu_10"]
+script = ExtResource("2")
+text = "[Gegengefallen] Holz für den Gemeindezaun"
+next = &"o_of_fenner_return_1"
+conditions = Array[String](["order_offerable:of_fenner_return_1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_11"]
+script = ExtResource("2")
+text = "[Gegengefallen] Hier ist es: Holz für den Gemeindezaun"
+next = &"t_of_fenner_return_1"
+conditions = Array[String](["order_ready:of_fenner_return_1"])
+actions = Array[String](["order_turn_in:of_fenner_return_1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_12"]
+script = ExtResource("2")
+text = "[Gegengefallen] Die Armenkasse"
+next = &"o_of_fenner_return_2"
+conditions = Array[String](["order_offerable:of_fenner_return_2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_13"]
+script = ExtResource("2")
+text = "[Gegengefallen] Hier ist es: Die Armenkasse"
+next = &"t_of_fenner_return_2"
+conditions = Array[String](["order_ready:of_fenner_return_2"])
+actions = Array[String](["order_turn_in:of_fenner_return_2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_14"]
+script = ExtResource("2")
+text = "[Tanzen] Einen Tanz? (15 Min)"
+next = &"dance"
+conditions = Array[String](["fest_running:kathrein"])
+actions = Array[String](["dance:mayor"])
+
+[sub_resource type="Resource" id="p8_menu_menu_15"]
+script = ExtResource("2")
+text = "[Geschichte] Hier, die zwölfte Stelle."
+next = &"story_2_meet"
+conditions = Array[String](["order:of_fenner_2:accepted", "region:graveyard"])
+actions = Array[String](["meet:gv_l_12"])
+
+[sub_resource type="Resource" id="p8_menu_menu_16"]
+script = ExtResource("2")
+text = "[Geschichte] Ein Bier, Herr Schultheiß?"
+next = &"story_3_meet"
+conditions = Array[String](["order:of_fenner_3:accepted", "time_between:1085:1260"])
+actions = Array[String](["meet:v_in_inn_table"])
+
+[sub_resource type="Resource" id="p8_menu_menu_17"]
+script = ExtResource("2")
+text = "[Auftrag] Der Umschlag für die Beine."
+next = &"story_1_turn_in"
+conditions = Array[String](["order_ready:of_fenner_1"])
+actions = Array[String](["order_turn_in:of_fenner_1"])
+
+[sub_resource type="Resource" id="p8_p8_row3_c01"]
+script = ExtResource("2")
+text = "Danke, Herr Schultheiß."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_p8_row3"]
+script = ExtResource("1")
+id = &"p8_row3"
+text = "Totengräber, die Gemeinde hat getagt. Der Lindenacker ist voll, das haben wir bemerkt. Ich gebe Ihnen die dritte Reihe am Südrand, vier Stellen. Ein Stumpf ist da und eine Brombeere, die müssen weg, aber geweiht ist der ganze Acker, sagt der Pfarrer. Ich habe es aufgeschrieben."
+choices = Array[ExtResource("2")]([SubResource("p8_p8_row3_c01")])
+conditions = Array[String](["p8_open", "!flag:linden_row3_granted"])
+fallback_next = &"p8_robber"
+actions = Array[String](["set_flag:linden_row3_granted", "notify:Die Gemeinde gibt dir die dritte Reihe am Lindenacker.", "talked:mayor"])
+
+[sub_resource type="Resource" id="p8_p8_robber_c01"]
+script = ExtResource("2")
+text = "Gut."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_p8_robber"]
+script = ExtResource("1")
+id = &"p8_robber"
+text = "Den Grell haben wir. Er ist in der Stadt. Die Gemeinde dankt Ihnen, schriftlich folgt. Ein Grabräuber in Hollerbrück. Das kommt ins Protokoll, mit Ihrem Namen, auf der guten Seite."
+choices = Array[ExtResource("2")]([SubResource("p8_p8_robber_c01")])
+conditions = Array[String](["robber_fate:reported", "!flag:p8_fenner_robber"])
+fallback_next = &"p8_robber_watch"
+actions = Array[String](["set_flag:p8_fenner_robber", "talked:mayor"])
+
+[sub_resource type="Resource" id="p8_p8_robber_watch_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_p8_robber_watch"]
+script = ExtResource("1")
+id = &"p8_robber_watch"
+text = "Drei offene Gräber, Totengräber. Drei. Mein Nachtwächter hat ihn gefangen, am Waldrand, mit Sack und Spaten. Er ist in der Stadt. Ich hätte Sie lieber nicht erwähnt."
+choices = Array[ExtResource("2")]([SubResource("p8_p8_robber_watch_c01")])
+conditions = Array[String](["robber_fate:caught_watch", "!flag:p8_fenner_robber"])
+fallback_next = &"p8_robber_let_go"
+actions = Array[String](["set_flag:p8_fenner_robber", "talked:mayor"])
+
+[sub_resource type="Resource" id="p8_p8_robber_let_go_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_p8_robber_let_go"]
+script = ExtResource("1")
+id = &"p8_robber_let_go"
+text = "Veit sagt, Sie haben ihn laufen lassen. Den Grell. Ich sage dazu nichts. Amtlich nicht. Persönlich auch nicht. Das ist mehr, als Sie verdienen."
+choices = Array[ExtResource("2")]([SubResource("p8_p8_robber_let_go_c01")])
+conditions = Array[String](["robber_fate:let_go", "!flag:p8_fenner_robber"])
+fallback_next = &"p8_hill"
+actions = Array[String](["set_flag:p8_fenner_robber", "talked:mayor"])
+
+[sub_resource type="Resource" id="p8_p8_hill_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_p8_hill"]
+script = ExtResource("1")
+id = &"p8_hill"
+text = "Ah, Totengräber. Ich bin, sagen wir, dienstlich hier. Halb dienstlich. Der Rest ist meine Sache."
+choices = Array[ExtResource("2")]([SubResource("p8_p8_hill_c01")])
+conditions = Array[String](["region:graveyard"])
+fallback_next = &"start"
+actions = Array[String](["talked:mayor"])
+
+[sub_resource type="Resource" id="p8_story_1_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"story_1_yes"
+actions = Array[String](["step_accept:mayor"])
+
+[sub_resource type="Resource" id="p8_story_1_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1"]
+script = ExtResource("1")
+id = &"story_1"
+text = "Unter vier Augen, Totengräber. Die Wassersucht wird schlimmer. Einen Wacholderumschlag, wenn Sie haben. Zwei Hände Wacholder, eine Bahn Leinen. Oder das Pulver, falls Sie noch eins übrig haben. Diskret, bitte. Amtlich diskret."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_c01"), SubResource("p8_story_1_c02")])
+
+[sub_resource type="Resource" id="p8_story_1_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1_yes"]
+script = ExtResource("1")
+id = &"story_1_yes"
+text = "Ich trage es nicht ein. Das ist ein Opfer."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_yes_c01")])
+
+[sub_resource type="Resource" id="p8_story_1_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1_done"]
+script = ExtResource("1")
+id = &"story_1_done"
+text = "Die Beine sind besser. Nicht gut, aber besser. Ich habe heute zwei Treppen genommen, ohne zu zählen. Fast ohne."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_done_c01")])
+
+[sub_resource type="Resource" id="p8_story_2_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"story_2_yes"
+actions = Array[String](["step_accept:mayor"])
+
+[sub_resource type="Resource" id="p8_story_2_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2"]
+script = ExtResource("1")
+id = &"story_2"
+text = "Ich möchte mir einen Platz ansehen. Für später. Sehr viel später, verstehen Sie. In der dritten Reihe, mit Blick aufs Amtshaus, wenn man das von oben sieht. Ich komme um vier hinauf. Statt der Gemeindetafel."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_c01"), SubResource("p8_story_2_c02")])
+
+[sub_resource type="Resource" id="p8_story_2_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2_yes"]
+script = ExtResource("1")
+id = &"story_2_yes"
+text = "Um vier. Ich bringe das Register mit. Man weiß nie."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_yes_c01")])
+
+[sub_resource type="Resource" id="p8_story_2_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2_done"]
+script = ExtResource("1")
+id = &"story_2_done"
+text = "Die zwölfte Stelle. Ich habe sie mir vermerkt, nur vermerkt, nicht gesperrt. Und den Schlüssel haben Sie ja nun. Gehen Sie sparsam damit um. Akten verzeihen nichts."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_done_c01")])
+
+[sub_resource type="Resource" id="p8_story_3_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"story_3_yes"
+actions = Array[String](["step_accept:mayor"])
+
+[sub_resource type="Resource" id="p8_story_3_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3"]
+script = ExtResource("1")
+id = &"story_3"
+text = "Kommen Sie abends in den Krug. Heute zahle ich. Das kommt selten vor, ich habe es nachgerechnet."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_c01"), SubResource("p8_story_3_c02")])
+
+[sub_resource type="Resource" id="p8_story_3_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3_yes"]
+script = ExtResource("1")
+id = &"story_3_yes"
+text = "Ab sechs. Ich sitze am Tisch mit der Kerbe."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_yes_c01")])
+
+[sub_resource type="Resource" id="p8_story_3_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3_done"]
+script = ExtResource("1")
+id = &"story_3_done"
+text = "Ich habe Ihnen von meiner Frau erzählt. Das ist nicht amtlich. Das ist überhaupt nichts. Danke, dass Sie es so behandeln."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_done_c01")])
+
+[sub_resource type="Resource" id="p8_story_cross_c01"]
+script = ExtResource("2")
+text = "Morgen also."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_cross"]
+script = ExtResource("1")
+id = &"story_cross"
+text = "Heute nicht, Totengräber. Morgen. Im Rahmen der Öffnungszeiten."
+choices = Array[ExtResource("2")]([SubResource("p8_story_cross_c01")])
+
+[sub_resource type="Resource" id="p8_listen_c01"]
+script = ExtResource("2")
+text = "(Schweigen)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_listen"]
+script = ExtResource("1")
+id = &"listen"
+text = "Heute habe ich den Gemeindehaushalt dreimal gerechnet, und jedes Mal fehlten vier Münzen. Ich weiß, wo sie sind. Ich habe sie meiner Frau aufs Grab gelegt, unten bei St. Gallus. Jedes Jahr. … Das bleibt unter uns."
+choices = Array[ExtResource("2")]([SubResource("p8_listen_c01")])
+
+[sub_resource type="Resource" id="p8_favor_c01"]
+script = ExtResource("2")
+text = "Heute Nacht."
+next = &"favor_done"
+actions = Array[String](["favor_use:mayor"])
+
+[sub_resource type="Resource" id="p8_favor_c02"]
+script = ExtResource("2")
+text = "Ein andermal."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_favor"]
+script = ExtResource("1")
+id = &"favor"
+text = "Der Nachtwächter, eine Nacht auf Ihrem Hügel? Das lässt sich einrichten. Sagen Sie mir, welche. Heute? Gut. Ich trage es ein."
+choices = Array[ExtResource("2")]([SubResource("p8_favor_c01"), SubResource("p8_favor_c02")])
+
+[sub_resource type="Resource" id="p8_favor_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_favor_done"]
+script = ExtResource("1")
+id = &"favor_done"
+text = "Der Nachtwächter geht heute Nacht über den Hügel. Mit Laterne und Horn. Ich trage es ein."
+choices = Array[ExtResource("2")]([SubResource("p8_favor_done_c01")])
+
+[sub_resource type="Resource" id="p8_o_of_fenner_return_1_c01"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_of_fenner_return_1_yes"
+actions = Array[String](["order_accept:of_fenner_return_1"])
+
+[sub_resource type="Resource" id="p8_o_of_fenner_return_1_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_fenner_return_1"]
+script = ExtResource("1")
+id = &"o_of_fenner_return_1"
+text = "Zehn Scheit Holz für den Zaun der Gemeinde. Ordnungsgemäß."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_fenner_return_1_c01"), SubResource("p8_o_of_fenner_return_1_c02")])
+
+[sub_resource type="Resource" id="p8_o_of_fenner_return_1_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_fenner_return_1_yes"]
+script = ExtResource("1")
+id = &"o_of_fenner_return_1_yes"
+text = "Vermerkt."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_fenner_return_1_yes_c01")])
+
+[sub_resource type="Resource" id="p8_t_of_fenner_return_1_c01"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_t_of_fenner_return_1"]
+script = ExtResource("1")
+id = &"t_of_fenner_return_1"
+text = "Zehn. Ich zähle: zehn. Die Gemeinde dankt."
+choices = Array[ExtResource("2")]([SubResource("p8_t_of_fenner_return_1_c01")])
+
+[sub_resource type="Resource" id="p8_o_of_fenner_return_2_c01"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_of_fenner_return_2_yes"
+actions = Array[String](["order_accept:of_fenner_return_2"])
+
+[sub_resource type="Resource" id="p8_o_of_fenner_return_2_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_fenner_return_2"]
+script = ExtResource("1")
+id = &"o_of_fenner_return_2"
+text = "Fünf Münzen in die Armenkasse. Für die Ordnung, nicht für mich."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_fenner_return_2_c01"), SubResource("p8_o_of_fenner_return_2_c02")])
+
+[sub_resource type="Resource" id="p8_o_of_fenner_return_2_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_fenner_return_2_yes"]
+script = ExtResource("1")
+id = &"o_of_fenner_return_2_yes"
+text = "Vermerkt."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_fenner_return_2_yes_c01")])
+
+[sub_resource type="Resource" id="p8_t_of_fenner_return_2_c01"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_t_of_fenner_return_2"]
+script = ExtResource("1")
+id = &"t_of_fenner_return_2"
+text = "Fünf Münzen. Eins, zwei, drei, vier, fünf. Mit Ihrem Namen."
+choices = Array[ExtResource("2")]([SubResource("p8_t_of_fenner_return_2_c01")])
+
+[sub_resource type="Resource" id="p8_dance_c01"]
+script = ExtResource("2")
+text = "(Zurück an den Tisch)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_dance"]
+script = ExtResource("1")
+id = &"dance"
+text = "Ein Tanz? Ich tanze nur mit Protokoll. … Ach, was soll's. Kathrein steht nicht im Gesetz."
+choices = Array[ExtResource("2")]([SubResource("p8_dance_c01")])
+
+[sub_resource type="Resource" id="p8_story_2_meet_c01"]
+script = ExtResource("2")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2_meet"]
+script = ExtResource("1")
+id = &"story_2_meet"
+text = "Hier. Von hier sieht man das Dach vom Amtshaus, wenn die Linde kein Laub hat. Das genügt. Und das hier ist der Gemeindeschlüssel zum Archiv. Die Hälfte der Akten da drin gehört der Gemeinde. Die andere Hälfte dem Pfarrer, aber das muss er nicht wissen."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_meet_c01")])
+
+[sub_resource type="Resource" id="p8_story_3_meet_c01"]
+script = ExtResource("2")
+text = "(Trinken)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3_meet"]
+script = ExtResource("1")
+id = &"story_3_meet"
+text = "Prost. Meine Frau liegt unten auf dem alten Kirchhof bei St. Gallus, wo kein Totengräber mehr gräbt. Der Efeu ist über den Stein. Ich lasse ihn. Sie mochte Efeu. Ich nicht. Wir waren uns selten einig, und trotzdem."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_meet_c01")])
+
+[sub_resource type="Resource" id="p8_story_1_turn_in_c01"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1_turn_in"]
+script = ExtResource("1")
+id = &"story_1_turn_in"
+text = "Diskret überreicht. Danke. Amtlich hat es nicht stattgefunden."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_turn_in_c01")])
+
 [sub_resource type="Resource" id="v_mayor_c001"]
 script = ExtResource("2")
 text = "…"
@@ -170,7 +641,7 @@ next = &"bye"
 script = ExtResource("1")
 id = &"menu"
 text = "Womit kann die Gemeinde dienen?"
-choices = Array[ExtResource("2")]([SubResource("v_mayor_c007"), SubResource("v_mayor_c008"), SubResource("v_mayor_c009"), SubResource("v_mayor_c010"), SubResource("v_mayor_c011"), SubResource("v_mayor_c012"), SubResource("v_mayor_c013"), SubResource("v_mayor_c014"), SubResource("v_mayor_c015"), SubResource("v_mayor_c016"), SubResource("v_mayor_c017"), SubResource("v_mayor_c018"), SubResource("v_mayor_c019")])
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c007"), SubResource("v_mayor_c008"), SubResource("v_mayor_c009"), SubResource("v_mayor_c010"), SubResource("v_mayor_c011"), SubResource("v_mayor_c012"), SubResource("v_mayor_c013"), SubResource("v_mayor_c014"), SubResource("v_mayor_c015"), SubResource("v_mayor_c016"), SubResource("v_mayor_c017"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("p8_menu_menu_04"), SubResource("p8_menu_menu_05"), SubResource("p8_menu_menu_06"), SubResource("p8_menu_menu_07"), SubResource("p8_menu_menu_08"), SubResource("p8_menu_menu_09"), SubResource("p8_menu_menu_10"), SubResource("p8_menu_menu_11"), SubResource("p8_menu_menu_12"), SubResource("p8_menu_menu_13"), SubResource("p8_menu_menu_14"), SubResource("p8_menu_menu_15"), SubResource("p8_menu_menu_16"), SubResource("p8_menu_menu_17"), SubResource("v_mayor_c018"), SubResource("v_mayor_c019")])
 
 [sub_resource type="Resource" id="v_mayor_c020"]
 script = ExtResource("2")
@@ -399,5 +870,5 @@ choices = Array[ExtResource("2")]([SubResource("v_mayor_c041")])
 script = ExtResource("3")
 id = &"v_mayor"
 speaker_name = "Schultheiß Gottlieb Fenner"
-start_node = &"start"
-nodes = Array[ExtResource("1")]([SubResource("v_mayor_node_start"), SubResource("v_mayor_node_greet_disreputable"), SubResource("v_mayor_node_greet_unremarkable"), SubResource("v_mayor_node_greet_respected"), SubResource("v_mayor_node_greet_esteemed"), SubResource("v_mayor_node_greet_renowned"), SubResource("v_mayor_node_menu"), SubResource("v_mayor_node_o_o_fenner_linden"), SubResource("v_mayor_node_o_o_fenner_linden_yes"), SubResource("v_mayor_node_o_o_fenner_well"), SubResource("v_mayor_node_o_o_fenner_well_yes"), SubResource("v_mayor_node_o_o_fenner_bridge"), SubResource("v_mayor_node_o_o_fenner_bridge_yes"), SubResource("v_mayor_node_o_o_fenner_dropsy"), SubResource("v_mayor_node_o_o_fenner_dropsy_yes"), SubResource("v_mayor_node_t_o_fenner_bridge"), SubResource("v_mayor_node_t_o_fenner_dropsy"), SubResource("v_mayor_node_t_ob_wood"), SubResource("v_mayor_node_t_ob_stone"), SubResource("v_mayor_node_donated"), SubResource("v_mayor_node_register"), SubResource("v_mayor_node_register_read"), SubResource("v_mayor_node_lorenz"), SubResource("v_mayor_node_bye"), SubResource("v_mayor_node_bye_plain")])
+start_node = &"p8_row3"
+nodes = Array[ExtResource("1")]([SubResource("v_mayor_node_start"), SubResource("v_mayor_node_greet_disreputable"), SubResource("v_mayor_node_greet_unremarkable"), SubResource("v_mayor_node_greet_respected"), SubResource("v_mayor_node_greet_esteemed"), SubResource("v_mayor_node_greet_renowned"), SubResource("v_mayor_node_menu"), SubResource("v_mayor_node_o_o_fenner_linden"), SubResource("v_mayor_node_o_o_fenner_linden_yes"), SubResource("v_mayor_node_o_o_fenner_well"), SubResource("v_mayor_node_o_o_fenner_well_yes"), SubResource("v_mayor_node_o_o_fenner_bridge"), SubResource("v_mayor_node_o_o_fenner_bridge_yes"), SubResource("v_mayor_node_o_o_fenner_dropsy"), SubResource("v_mayor_node_o_o_fenner_dropsy_yes"), SubResource("v_mayor_node_t_o_fenner_bridge"), SubResource("v_mayor_node_t_o_fenner_dropsy"), SubResource("v_mayor_node_t_ob_wood"), SubResource("v_mayor_node_t_ob_stone"), SubResource("v_mayor_node_donated"), SubResource("v_mayor_node_register"), SubResource("v_mayor_node_register_read"), SubResource("v_mayor_node_lorenz"), SubResource("v_mayor_node_bye"), SubResource("v_mayor_node_bye_plain"), SubResource("p8_node_p8_row3"), SubResource("p8_node_p8_robber"), SubResource("p8_node_p8_robber_watch"), SubResource("p8_node_p8_robber_let_go"), SubResource("p8_node_p8_hill"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_favor_done"), SubResource("p8_node_o_of_fenner_return_1"), SubResource("p8_node_o_of_fenner_return_1_yes"), SubResource("p8_node_t_of_fenner_return_1"), SubResource("p8_node_o_of_fenner_return_2"), SubResource("p8_node_o_of_fenner_return_2_yes"), SubResource("p8_node_t_of_fenner_return_2"), SubResource("p8_node_dance"), SubResource("p8_node_story_2_meet"), SubResource("p8_node_story_3_meet"), SubResource("p8_node_story_1_turn_in")])

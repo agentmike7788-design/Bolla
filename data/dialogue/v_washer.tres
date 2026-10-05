@@ -4,6 +4,450 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
 
+[sub_resource type="Resource" id="p8_menu_menu_01"]
+script = ExtResource("2")
+text = "[Geschichte] Die Totenwache"
+next = &"story_2"
+conditions = Array[String](["step_offerable:washer", "step_gte:washer:1", "!step_gte:washer:2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_02"]
+script = ExtResource("2")
+text = "Über die Totenwache"
+next = &"story_2_done"
+conditions = Array[String](["flag:friend_washer_2", "!flag:p8_told_washer_2"])
+actions = Array[String](["set_flag:p8_told_washer_2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_03"]
+script = ExtResource("2")
+text = "[Geschichte] Das Gesangbuch"
+next = &"story_3"
+conditions = Array[String](["step_offerable:washer", "step_gte:washer:2", "!step_gte:washer:3"])
+
+[sub_resource type="Resource" id="p8_menu_menu_04"]
+script = ExtResource("2")
+text = "Über das Gesangbuch"
+next = &"story_3_done"
+conditions = Array[String](["flag:friend_washer_3", "!flag:p8_told_washer_3"])
+actions = Array[String](["set_flag:p8_told_washer_3"])
+
+[sub_resource type="Resource" id="p8_menu_menu_05"]
+script = ExtResource("2")
+text = "[Geschichte] …"
+next = &"story_cross"
+conditions = Array[String](["p8_open", "mood:washer:cross", "!step_gte:washer:3"])
+
+[sub_resource type="Resource" id="p8_menu_menu_06"]
+script = ExtResource("2")
+text = "[Zuhören]"
+next = &"listen"
+conditions = Array[String](["p8_open", "mood:washer:low", "!flag_today:p8_listen_washer"])
+actions = Array[String](["listen:washer", "set_flag_day:p8_listen_washer"])
+
+[sub_resource type="Resource" id="p8_menu_menu_07"]
+script = ExtResource("2")
+text = "[Gefallen] Totenwäsche"
+next = &"favor"
+conditions = Array[String](["step_gte:washer:3", "favor_ready:washer"])
+
+[sub_resource type="Resource" id="p8_menu_menu_08"]
+script = ExtResource("2")
+text = "[Gegengefallen] Leinen für die Toten"
+next = &"o_of_liesel_return_1"
+conditions = Array[String](["order_offerable:of_liesel_return_1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_09"]
+script = ExtResource("2")
+text = "[Gegengefallen] Hier ist es: Leinen für die Toten"
+next = &"t_of_liesel_return_1"
+conditions = Array[String](["order_ready:of_liesel_return_1"])
+actions = Array[String](["order_turn_in:of_liesel_return_1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_10"]
+script = ExtResource("2")
+text = "[Gegengefallen] Garn für die Spindel"
+next = &"o_of_liesel_return_2"
+conditions = Array[String](["order_offerable:of_liesel_return_2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_11"]
+script = ExtResource("2")
+text = "[Gegengefallen] Hier ist es: Garn für die Spindel"
+next = &"t_of_liesel_return_2"
+conditions = Array[String](["order_ready:of_liesel_return_2"])
+actions = Array[String](["order_turn_in:of_liesel_return_2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_12"]
+script = ExtResource("2")
+text = "[Tanzen] Einen Tanz? (15 Min)"
+next = &"dance"
+conditions = Array[String](["fest_running:kathrein"])
+actions = Array[String](["dance:washer"])
+
+[sub_resource type="Resource" id="p8_menu_menu_13"]
+script = ExtResource("2")
+text = "[Geschichte] Kaspar"
+next = &"story_1"
+conditions = Array[String](["step_offerable:washer", "!step_gte:washer:1", "flag:insight_not_lorenz"])
+
+[sub_resource type="Resource" id="p8_menu_menu_14"]
+script = ExtResource("2")
+text = "[Geschichte] Wiebke"
+next = &"story_1_alt"
+conditions = Array[String](["step_offerable:washer", "!step_gte:washer:1", "!flag:insight_not_lorenz"])
+
+[sub_resource type="Resource" id="p8_menu_menu_15"]
+script = ExtResource("2")
+text = "Über Kaspars Stein"
+next = &"story_1_done"
+conditions = Array[String](["flag:friend_washer_1", "!flag:p8_told_washer_1"])
+actions = Array[String](["set_flag:p8_told_washer_1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_16"]
+script = ExtResource("2")
+text = "[Geschichte] Ich sitz mit dir."
+next = &"story_2_vigil"
+conditions = Array[String](["order:of_liesel_2:accepted", "region:graveyard", "time_between:1290:1439"])
+
+[sub_resource type="Resource" id="p8_menu_menu_17"]
+script = ExtResource("2")
+text = "[Geschichte] Ich bin da."
+next = &"story_3_meet"
+conditions = Array[String](["order:of_liesel_3:accepted", "region:village"])
+actions = Array[String](["meet:v_dorn_door"])
+
+[sub_resource type="Resource" id="p8_p8_hill_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_p8_hill"]
+script = ExtResource("1")
+id = &"p8_hill"
+text = "Ich bin bei meinen. Die Hagedorn und die anderen. Ich hab ihnen einen Faden gebracht. Frag nicht, wofür."
+choices = Array[ExtResource("2")]([SubResource("p8_p8_hill_c01")])
+conditions = Array[String](["region:graveyard"])
+fallback_next = &"start"
+actions = Array[String](["talked:washer"])
+
+[sub_resource type="Resource" id="p8_story_2_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"story_2_yes"
+actions = Array[String](["step_accept:washer"])
+
+[sub_resource type="Resource" id="p8_story_2_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2"]
+script = ExtResource("1")
+id = &"story_2"
+text = "Halt einmal mit mir Totenwache. Wenn einer unten liegt, in deiner Gruft, komm ich um halb zehn die Treppe hinunter. Eine Stunde. Du musst nichts sagen. Du musst nur dableiben."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_c01"), SubResource("p8_story_2_c02")])
+
+[sub_resource type="Resource" id="p8_story_2_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2_yes"]
+script = ExtResource("1")
+id = &"story_2_yes"
+text = "Halb zehn. Lass die Lampe an."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_yes_c01")])
+
+[sub_resource type="Resource" id="p8_story_2_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2_done"]
+script = ExtResource("1")
+id = &"story_2_done"
+text = "Du bist geblieben. Die meisten gehen nach einer Viertelstunde, weil sie es nicht aushalten, wie still es ist. Es ist nicht still. Man muss nur lange genug sitzen."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_done_c01")])
+
+[sub_resource type="Resource" id="p8_story_3_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"story_3_yes"
+actions = Array[String](["step_accept:washer"])
+
+[sub_resource type="Resource" id="p8_story_3_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3"]
+script = ExtResource("1")
+id = &"story_3"
+text = "Komm einmal zu mir, an meine Tür, am Nachmittag. Ich will dir was zeigen. Nicht hier, wo alle stehen."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_c01"), SubResource("p8_story_3_c02")])
+
+[sub_resource type="Resource" id="p8_story_3_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3_yes"]
+script = ExtResource("1")
+id = &"story_3_yes"
+text = "Nachmittags. Klopf nicht, ich hör dich."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_yes_c01")])
+
+[sub_resource type="Resource" id="p8_story_3_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3_done"]
+script = ExtResource("1")
+id = &"story_3_done"
+text = "Du hast es versprochen. Ich hab's gehört. Das Buch auch."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_done_c01")])
+
+[sub_resource type="Resource" id="p8_story_cross_c01"]
+script = ExtResource("2")
+text = "Morgen also."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_cross"]
+script = ExtResource("1")
+id = &"story_cross"
+text = "Heute nicht, Totengräber. Morgen."
+choices = Array[ExtResource("2")]([SubResource("p8_story_cross_c01")])
+
+[sub_resource type="Resource" id="p8_listen_c01"]
+script = ExtResource("2")
+text = "(Schweigen)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_listen"]
+script = ExtResource("1")
+id = &"listen"
+text = "Heute hab ich eine gewaschen, die hat mich gekannt, als ich klein war. Sie hat mir Äpfel gegeben, wenn Kaspar mir meine weggenommen hat. Ich hab ihr die Haare gekämmt, wie sie es mochte. … Geh jetzt. Nein, bleib noch."
+choices = Array[ExtResource("2")]([SubResource("p8_listen_c01")])
+
+[sub_resource type="Resource" id="p8_favor_c01"]
+script = ExtResource("2")
+text = "Danke, Liesel."
+next = &"favor_done"
+actions = Array[String](["favor_use:washer"])
+
+[sub_resource type="Resource" id="p8_favor_c02"]
+script = ExtResource("2")
+text = "Ein andermal."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_favor"]
+script = ExtResource("1")
+id = &"favor"
+text = "Ich wasch dir einen. Morgen, halb zehn, in deiner Gruft. Ich komm runter. Leg Leinen und Hemd hin."
+choices = Array[ExtResource("2")]([SubResource("p8_favor_c01"), SubResource("p8_favor_c02")])
+
+[sub_resource type="Resource" id="p8_favor_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_favor_done"]
+script = ExtResource("1")
+id = &"favor_done"
+text = "Morgen, wenn einer unten liegt. Halb zehn. Leg Leinen und Hemd bereit, ich bring nur meine Hände mit."
+choices = Array[ExtResource("2")]([SubResource("p8_favor_done_c01")])
+
+[sub_resource type="Resource" id="p8_o_of_liesel_return_1_c01"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_of_liesel_return_1_yes"
+actions = Array[String](["order_accept:of_liesel_return_1"])
+
+[sub_resource type="Resource" id="p8_o_of_liesel_return_1_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_liesel_return_1"]
+script = ExtResource("1")
+id = &"o_of_liesel_return_1"
+text = "Zwei Bahnen Leinen. Für die Nächsten."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_liesel_return_1_c01"), SubResource("p8_o_of_liesel_return_1_c02")])
+
+[sub_resource type="Resource" id="p8_o_of_liesel_return_1_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_liesel_return_1_yes"]
+script = ExtResource("1")
+id = &"o_of_liesel_return_1_yes"
+text = "Gut."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_liesel_return_1_yes_c01")])
+
+[sub_resource type="Resource" id="p8_t_of_liesel_return_1_c01"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_t_of_liesel_return_1"]
+script = ExtResource("1")
+id = &"t_of_liesel_return_1"
+text = "Gutes Leinen. Das hält."
+choices = Array[ExtResource("2")]([SubResource("p8_t_of_liesel_return_1_c01")])
+
+[sub_resource type="Resource" id="p8_o_of_liesel_return_2_c01"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_of_liesel_return_2_yes"
+actions = Array[String](["order_accept:of_liesel_return_2"])
+
+[sub_resource type="Resource" id="p8_o_of_liesel_return_2_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_liesel_return_2"]
+script = ExtResource("1")
+id = &"o_of_liesel_return_2"
+text = "Vier Strang Garn."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_liesel_return_2_c01"), SubResource("p8_o_of_liesel_return_2_c02")])
+
+[sub_resource type="Resource" id="p8_o_of_liesel_return_2_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_liesel_return_2_yes"]
+script = ExtResource("1")
+id = &"o_of_liesel_return_2_yes"
+text = "Gut."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_liesel_return_2_yes_c01")])
+
+[sub_resource type="Resource" id="p8_t_of_liesel_return_2_c01"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_t_of_liesel_return_2"]
+script = ExtResource("1")
+id = &"t_of_liesel_return_2"
+text = "Vier. Danke."
+choices = Array[ExtResource("2")]([SubResource("p8_t_of_liesel_return_2_c01")])
+
+[sub_resource type="Resource" id="p8_dance_c01"]
+script = ExtResource("2")
+text = "(Zurück an den Tisch)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_dance"]
+script = ExtResource("1")
+id = &"dance"
+text = "Von acht bis neun, Totengräber, nicht länger. Ich tanz nicht gut. Ich tanz nur lang."
+choices = Array[ExtResource("2")]([SubResource("p8_dance_c01")])
+
+[sub_resource type="Resource" id="p8_story_1_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"story_1_yes"
+actions = Array[String](["step_accept:washer"])
+
+[sub_resource type="Resource" id="p8_story_1_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1"]
+script = ExtResource("1")
+id = &"story_1"
+text = "Er heißt nicht Lorenz. Er heißt Kaspar. Kaspar Dorn. Setz seinen Namen auf den Stein, Totengräber. Mit Tinte, ordentlich. Dann weiß wenigstens der Stein, wer er war."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_c01"), SubResource("p8_story_1_c02")])
+
+[sub_resource type="Resource" id="p8_story_1_alt_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"story_1_yes"
+actions = Array[String](["step_accept:washer"])
+
+[sub_resource type="Resource" id="p8_story_1_alt_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1_alt"]
+script = ExtResource("1")
+id = &"story_1_alt"
+text = "Die Hagedorn. Halt ihr das Grab sauber, drei Morgen, und stell ihr eine Nacht ein Licht hin. Sie hat im Dunkeln nie schlafen können. Sie hat es keinem gesagt. Mir schon."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_alt_c01"), SubResource("p8_story_1_alt_c02")])
+
+[sub_resource type="Resource" id="p8_story_1_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1_yes"]
+script = ExtResource("1")
+id = &"story_1_yes"
+text = "Gut. Ich seh nach. Nicht weil ich dir nicht trau. Weil ich nachseh."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_yes_c01")])
+
+[sub_resource type="Resource" id="p8_story_1_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1_done"]
+script = ExtResource("1")
+id = &"story_1_done"
+text = "Ich war oben. Hab's gesehen. Ich hab nichts gesagt, und du warst nicht da. Das war gut so."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_done_c01")])
+
+[sub_resource type="Resource" id="p8_story_2_vigil_c01"]
+script = ExtResource("2")
+text = "(Bleiben)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2_vigil"]
+script = ExtResource("1")
+id = &"story_2_vigil"
+text = "Setz dich. Da, auf die Stufe. … Die mit dem Zeichen wasch ich anders. Langsamer. Ich fang beim Herzen an und hör beim Herzen auf. Lorenz hat gesagt, das ist Aberglaube. Ich hab gesagt: Dann wasch du sie."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_vigil_c01")])
+
+[sub_resource type="Resource" id="p8_story_3_meet_c01"]
+script = ExtResource("2")
+text = "Ich verspreche es."
+next = &"story_3_promise"
+actions = Array[String](["set_flag:promise_liesel_book"])
+
+[sub_resource type="Resource" id="p8_node_story_3_meet"]
+script = ExtResource("1")
+id = &"story_3_meet"
+text = "Hier stehen sie alle. Die mit dem Zeichen. Ich hab sie gewaschen und hineingeschrieben, damit sie nicht nur bei mir sind. Wenn ich sterbe, kommt das Buch mit mir hinunter. Versprich es."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_meet_c01")])
+
+[sub_resource type="Resource" id="p8_story_3_promise_c01"]
+script = ExtResource("2")
+text = "(Gehen)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3_promise"]
+script = ExtResource("1")
+id = &"story_3_promise"
+text = "Sie schlägt die letzte Seite auf und wieder zu, bevor du lesen kannst. Dann legt sie das Buch zurück unter das Kissen. „Gut. Jetzt geh. Und sag es keinem. Auch Lenz nicht.“"
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_promise_c01")])
+conditions = Array[String](["insight:i_underlined"])
+fallback_next = &"story_3_promise_plain"
+
+[sub_resource type="Resource" id="p8_story_3_promise_plain_c01"]
+script = ExtResource("2")
+text = "(Gehen)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3_promise_plain"]
+script = ExtResource("1")
+id = &"story_3_promise_plain"
+text = "Gut. Jetzt geh. Und sag es keinem. Auch Lenz nicht."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_promise_plain_c01")])
+
 [sub_resource type="Resource" id="v_washer_c001"]
 script = ExtResource("2")
 text = "…"
@@ -191,7 +635,7 @@ next = &"bye"
 script = ExtResource("1")
 id = &"menu"
 text = "Na?"
-choices = Array[ExtResource("2")]([SubResource("v_washer_c010"), SubResource("v_washer_c011"), SubResource("v_washer_c012"), SubResource("v_washer_c013"), SubResource("v_washer_c014"), SubResource("v_washer_c015"), SubResource("v_washer_c016"), SubResource("v_washer_c017"), SubResource("v_washer_c018"), SubResource("v_washer_c019")])
+choices = Array[ExtResource("2")]([SubResource("v_washer_c010"), SubResource("v_washer_c011"), SubResource("v_washer_c012"), SubResource("v_washer_c013"), SubResource("v_washer_c014"), SubResource("v_washer_c015"), SubResource("v_washer_c016"), SubResource("v_washer_c017"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("p8_menu_menu_04"), SubResource("p8_menu_menu_05"), SubResource("p8_menu_menu_06"), SubResource("p8_menu_menu_07"), SubResource("p8_menu_menu_08"), SubResource("p8_menu_menu_09"), SubResource("p8_menu_menu_10"), SubResource("p8_menu_menu_11"), SubResource("p8_menu_menu_12"), SubResource("p8_menu_menu_13"), SubResource("p8_menu_menu_14"), SubResource("p8_menu_menu_15"), SubResource("p8_menu_menu_16"), SubResource("p8_menu_menu_17"), SubResource("v_washer_c018"), SubResource("v_washer_c019")])
 
 [sub_resource type="Resource" id="v_washer_c020"]
 script = ExtResource("2")
@@ -331,5 +775,5 @@ choices = Array[ExtResource("2")]([SubResource("v_washer_c032")])
 script = ExtResource("3")
 id = &"v_washer"
 speaker_name = "Liesel Dorn"
-start_node = &"start"
-nodes = Array[ExtResource("1")]([SubResource("v_washer_node_start"), SubResource("v_washer_node_hagedorn_gate"), SubResource("v_washer_node_greet_p_devout"), SubResource("v_washer_node_greet_p_hardhearted"), SubResource("v_washer_node_greet_disreputable"), SubResource("v_washer_node_greet_unremarkable"), SubResource("v_washer_node_greet_respected"), SubResource("v_washer_node_greet_esteemed"), SubResource("v_washer_node_greet_renowned"), SubResource("v_washer_node_menu"), SubResource("v_washer_node_washing"), SubResource("v_washer_node_kaspar"), SubResource("v_washer_node_about_wiebke"), SubResource("v_washer_node_wake"), SubResource("v_washer_node_wake_more"), SubResource("v_washer_node_o_o_liesel_gowns"), SubResource("v_washer_node_o_o_liesel_gowns_yes"), SubResource("v_washer_node_t_o_liesel_gowns"), SubResource("v_washer_node_t_ob_yarn"), SubResource("v_washer_node_bye"), SubResource("v_washer_node_bye_plain")])
+start_node = &"p8_hill"
+nodes = Array[ExtResource("1")]([SubResource("v_washer_node_start"), SubResource("v_washer_node_hagedorn_gate"), SubResource("v_washer_node_greet_p_devout"), SubResource("v_washer_node_greet_p_hardhearted"), SubResource("v_washer_node_greet_disreputable"), SubResource("v_washer_node_greet_unremarkable"), SubResource("v_washer_node_greet_respected"), SubResource("v_washer_node_greet_esteemed"), SubResource("v_washer_node_greet_renowned"), SubResource("v_washer_node_menu"), SubResource("v_washer_node_washing"), SubResource("v_washer_node_kaspar"), SubResource("v_washer_node_about_wiebke"), SubResource("v_washer_node_wake"), SubResource("v_washer_node_wake_more"), SubResource("v_washer_node_o_o_liesel_gowns"), SubResource("v_washer_node_o_o_liesel_gowns_yes"), SubResource("v_washer_node_t_o_liesel_gowns"), SubResource("v_washer_node_t_ob_yarn"), SubResource("v_washer_node_bye"), SubResource("v_washer_node_bye_plain"), SubResource("p8_node_p8_hill"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_favor_done"), SubResource("p8_node_o_of_liesel_return_1"), SubResource("p8_node_o_of_liesel_return_1_yes"), SubResource("p8_node_t_of_liesel_return_1"), SubResource("p8_node_o_of_liesel_return_2"), SubResource("p8_node_o_of_liesel_return_2_yes"), SubResource("p8_node_t_of_liesel_return_2"), SubResource("p8_node_dance"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_alt"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2_vigil"), SubResource("p8_node_story_3_meet"), SubResource("p8_node_story_3_promise"), SubResource("p8_node_story_3_promise_plain")])
