@@ -981,6 +981,166 @@ func _chapel(devotions: Dictionary) -> ChapelRites:
 	return chapel
 
 
+# --- Phase 8 (docs/PHASE8_DESIGN.md §2.3, §2.7.2, §2.11; P2) ---------------------------------
+
+## Friendship API used by the ghosts (group friendship): prayer_bonus(grave_id) (Lenz' favour, P4).
+class FriendshipDouble extends Node:
+	var prayer: Dictionary = {}
+
+	func _init() -> void:
+		add_to_group(&"friendship")
+
+	func prayer_bonus(grave_id: String) -> int:
+		return int(prayer.get(grave_id, 0))
+
+
+## Visitors API used by the ghosts (group visitors): visited_on(grave_id, night).
+class VisitorsDouble extends Node:
+	var visited: Dictionary = {}
+
+	func _init() -> void:
+		add_to_group(&"visitors")
+
+	func visited_on(grave_id: String, _night: int) -> bool:
+		return visited.has(grave_id)
+
+
+func test_phase8_score_adds_care() -> void:
+	assert_eq(GhostMood.score(7, 0, 0, clean_cfg, cfg, 0, 0, 0), GhostMood.score(7, 0, 0, clean_cfg, cfg), "care 0 = Phase 7")
+	assert_eq(GhostMood.score(7, 0, 0, clean_cfg, cfg, 0, 0, 2), GhostMood.score(7, 0, 0, clean_cfg, cfg) + 2)
+	assert_eq(GhostMood.score(7, 0, 0, clean_cfg, cfg, 0, 0, -3), GhostMood.score(7, 0, 0, clean_cfg, cfg) - 3, "disturbed")
+
+
+func _care() -> GraveCare:
+	var care := GraveCare.new()
+	care.config = Phase8Fixtures.grave_care_config()
+	world.add_child(care)
+	return care
+
+
+func test_phase8_mood_info_care_capped_for_robbed() -> void:
+	await _make_world(3)
+	var care := _care()
+	_mark("plot_01", 7, 0)
+	_mark("plot_02", 16, 0)
+	_mark("plot_03", 7, 0)
+	(corpses.recs["c_plot_02"] as CorpseRecord).harvested = [&"hair"] as Array[StringName]
+	TimeManager.load_state({"day": 3, "minute_of_day": 1000})
+	# plot_01: wooden cross 7 + 1 = 8 calm → a candle: 9 content.
+	care.light_free("plot_01")
+	assert_eq([ghosts.mood_info("plot_01").care, ghosts.mood_info("plot_01").score], [1, 9])
+	assert_eq(ghosts.mood_of("plot_01"), &"content")
+	# plot_02: robbed 16 + 1 − 5 = 12 – a robbed soul gets no care beyond 8 (stays at most calm).
+	care.light_free("plot_02")
+	assert_eq(ghosts.mood_info("plot_02").care, 1)
+	assert_eq(ghosts.mood_info("plot_02").score, 12, "already above the cap: the care adds nothing")
+	graveyard.get_grave("plot_02").quality = 11
+	assert_eq(ghosts.mood_info("plot_02").score, 8, "7 + 1 → capped at 8")
+	assert_eq(ghosts.mood_of("plot_02"), &"calm")
+	# plot_03: disturbed −3 (the dead stays in the grave).
+	care.set_disturbed("plot_03")
+	assert_eq([ghosts.mood_info("plot_03").care, ghosts.mood_info("plot_03").score], [-3, 5])
+	care.free()
+	assert_eq(ghosts.mood_info("plot_01").score, 8, "without GraveCare no care")
+
+
+func test_phase8_prayer_and_flowers() -> void:
+	await _make_world(2)
+	var care := _care()
+	var friend := FriendshipDouble.new()
+	world.add_child(friend)
+	_mark("plot_01", 5, 0)
+	_mark("plot_02", 11, 0)
+	(corpses.recs["c_plot_02"] as CorpseRecord).harvested = [&"hair", &"teeth"] as Array[StringName]
+	friend.prayer = {"plot_01": 3, "plot_02": 3}
+	assert_eq([ghosts.mood_info("plot_01").prayer, ghosts.mood_info("plot_01").score], [3, 9], "5 + 1 + 3")
+	assert_eq(ghosts.mood_info("plot_02").score, 5, "robbed 11 + 1 − 10 = 2, prayer +3 = 5")
+	var inv := FakeInventory.new()
+	inv.add_item(&"flower_seedlings", 1)
+	assert_true(care.plant("plot_01", inv))
+	assert_eq(ghosts.mood_info("plot_01").score, 10, "flowers +1")
+	care.free()
+	friend.free()
+
+
+func test_phase8_care_key_precedence() -> void:
+	assert_eq(GhostMood.care_key(true, true, true, true, true, true), &"disturbed")
+	assert_eq(GhostMood.care_key(false, true, true, true, true, true), &"robbed")
+	assert_eq(GhostMood.care_key(false, false, true, true, true, true), &"lights")
+	assert_eq(GhostMood.care_key(false, false, false, true, true, true), &"visited")
+	assert_eq(GhostMood.care_key(false, false, false, false, true, true), &"candle")
+	assert_eq(GhostMood.care_key(false, false, false, false, false, true), &"flowers")
+	assert_eq(GhostMood.care_key(false, false, false, false, false, false), &"")
+	var l := Phase8Fixtures.ghost_lines()
+	assert_eq(GhostMood.pick_care_line(l, &"flowers", 0), l.by_flowers[0])
+	assert_eq(GhostMood.pick_care_line(l, &"robbed", 0), "", "robbed: pick_line complains")
+	assert_eq(GhostMood.pick_care_line(GhostLines.new(), &"candle", 0), "", "empty pool")
+
+
+func test_phase8_listen_speaks_the_care_pools() -> void:
+	await _make_world(3)
+	ghosts.lines = Phase8Fixtures.ghost_lines()
+	var care := _care()
+	var visitors := VisitorsDouble.new()
+	world.add_child(visitors)
+	_mark("plot_01", 9, 0)
+	_mark("plot_02", 9, 0)
+	_mark("plot_03", 9, 0)
+	var l := ghosts.lines
+	TimeManager.load_state({"day": 3, "minute_of_day": 1320})
+	care.light_free("plot_01")
+	assert_eq(ghosts.listen("plot_01", null), l.by_candle[0], "a candle tonight")
+	visitors.visited = {"plot_02": true}
+	assert_eq(ghosts.listen("plot_02", null), l.by_visited[0])
+	care.set_disturbed("plot_03")
+	assert_eq(ghosts.listen("plot_03", null), l.by_disturbed[0])
+	GameState.set_flag(&"fest_lights_day", 3)
+	TimeManager.advance(61)
+	assert_eq(ghosts.listen("plot_01", null), l.by_lights[0], "the night of the lights")
+	(corpses.recs["c_plot_02"] as CorpseRecord).harvested = [&"hair"] as Array[StringName]
+	TimeManager.advance(61)
+	assert_false(Array(l.by_visited).has(ghosts.listen("plot_02", null)), "robbed before visited")
+	care.free()
+
+
+func test_phase8_early_window_is_display_only() -> void:
+	await _make_world(3)
+	_mark("plot_01", 9, 0)
+	_mark("plot_02", 9, 0)
+	_mark("plot_03", 9, 0)
+	TimeManager.load_state({"day": 5, "minute_of_day": 1010})
+	ghosts.set_early_window(1020, 30, PackedStringArray(["plot_01", "plot_03"]))
+	assert_false(ghosts.early_active(1010))
+	assert_true(ghosts.early_active(1020))
+	assert_true(ghosts.early_active(1049))
+	assert_false(ghosts.early_active(1050), "half an hour")
+	TimeManager.load_state({"day": 5, "minute_of_day": 1030})
+	ghosts.reselect()
+	assert_eq(_active_ids(), ["plot_01", "plot_03"], "only the lit graves")
+	ghosts.update_visuals(1030.0)
+	for g: Ghost in ghosts.active_ghosts():
+		assert_almost(g.fade, GhostManager.EARLY_ALPHA, 0.001, "a pale shimmer")
+	assert_eq(ghosts.mood_info("plot_01").score, 10, "no mood change")
+	assert_false(ghosts.gift_given("plot_01"))
+	TimeManager.load_state({"day": 6, "minute_of_day": 1030})
+	assert_false(ghosts.early_active(1030), "only that day")
+	ghosts.set_early_window(0, 0, PackedStringArray())
+	assert_eq(ghosts.early_graves(), PackedStringArray())
+
+
+func test_phase8_real_ghost_lines() -> void:
+	var real := Database.ghost_lines() as GhostLines
+	var fixture := Phase8Fixtures.ghost_lines()
+	for pool: StringName in [&"by_flowers", &"by_candle", &"by_visited", &"by_disturbed", &"by_lights"]:
+		var lines: PackedStringArray = real.get(pool)
+		assert_true(lines.size() >= 2, "%s ≥ 2 lines" % pool)
+		for line: String in fixture.get(pool):
+			assert_true(Array(lines).has(line), "§2.11 leading text %s: %s" % [pool, line])
+		for line: String in lines:
+			assert_true(line.length() <= 90, "≤ 90 characters: " + line)
+	assert_eq(real.by_story.get(&"d2_ott"), fixture.by_story.get(&"d2_ott"), "§2.9 D2")
+
+
 # --- helpers -------------------------------------------------------------------------------
 
 func _bare_manager() -> GhostManager:

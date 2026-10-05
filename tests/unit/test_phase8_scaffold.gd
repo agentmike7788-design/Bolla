@@ -260,9 +260,9 @@ func test_stub_members_on_existing_classes() -> void:
 		var names := _methods(load(path) as GDScript)
 		for method: String in EXISTING_STUBS[path]:
 			assert_true(names.has(method), "%s.%s" % [path.get_file(), method])
-	# GhostMood.score: the new care argument changes nothing until P2.
+	# GhostMood.score: the care argument is added as it is (P2).
 	var cfg := GhostConfig.new()
-	assert_eq(GhostMood.score(8, 1, 1, null, cfg, 1, 1, 2), GhostMood.score(8, 1, 1, null, cfg, 1, 1), "care ignored in W0")
+	assert_eq(GhostMood.score(8, 1, 1, null, cfg, 1, 1, 2), GhostMood.score(8, 1, 1, null, cfg, 1, 1) + 2, "care added (P2)")
 	assert_eq(Village.mourning_house_for(55, 7, PackedStringArray(["house_kehr"])), &"", "W0 stub (P6)")
 	var npc := Npc.new()
 	npc.set_runtime_schedule(NpcSchedule.new())

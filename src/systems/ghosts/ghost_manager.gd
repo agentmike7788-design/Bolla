@@ -40,6 +40,15 @@ const MINUTES_PER_DAY := 1440
 const LATE_MINUTE := 1260
 ## Minutes before noon still belong to the previous day's night.
 const NIGHT_SPLIT_MINUTE := 720
+# Phase 8 (docs/PHASE8_DESIGN.md §2.3, §2.7.2, §2.11, §3.4; P2): the care bonus of GraveCare, the prayer of
+# Lenz' favour (Friendship.prayer_bonus, P4 – a robbed soul stays at most calm like with a devotion), the
+# care pools of the lines and the early window of the night of the lights (a pale shimmer, display only).
+const GRAVE_CARE_GROUP := &"grave_care"
+const FRIENDSHIP_GROUP := &"friendship"
+const VISITORS_GROUP := &"visitors"
+## GameState flag (int day) of the night of the lights (FestivalData fest_lights.day_flag, P4).
+const LIGHTS_DAY_FLAG := &"fest_lights_day"
+const EARLY_ALPHA := 0.35
 
 @export var ghost_scene: PackedScene
 ## Decor/Ghosts
@@ -80,6 +89,9 @@ var _night_active: bool = false
 var _moods_dirty: bool = true
 ## Night in which the "no gift" line was shown (once per night, not saved).
 var _no_gift_night: int = -(1 << 30)
+## Phase 8: the early window of the night of the lights {day, from, minutes, graves} (not saved – display
+## only; Festivals sets it again).
+var _early: Dictionary = {}
 
 
 func _init() -> void:
@@ -95,11 +107,12 @@ func _ready() -> void:
 	EventBus.grave_completed.connect(_on_grave_completed)
 	EventBus.devotion_held.connect(_on_mood_input)
 	EventBus.world_ready.connect(_on_world_ready)
+	EventBus.grave_care_changed.connect(_on_care_changed)
 
 
 func _process(delta: float) -> void:
 	var minute := TimeManager.get_minute_f()
-	var active := forced or is_ghost_time(int(minute))
+	var active := forced or is_ghost_time(int(minute)) or early_active(int(minute))
 	if active != _night_active:
 		_night_active = active
 		EventBus.ghost_night_changed.emit(active)
@@ -170,6 +183,14 @@ func mood_info(grave_id: String) -> Dictionary:
 			+ GhostMood.robbed_penalty(corpse, _config(), anatomy)
 	var devotion := _devotion_bonus(grave_id, robbed, base)
 	var value := base + maxi(devotion, 0)
+	# Phase 8: care (flowers / candle ≤ care_cap, disturbed −3) and Lenz' prayer; the positive part keeps a
+	# robbed soul at most calm (devotion_robbed_cap, like the devotion).
+	var care := _care_bonus(grave_id)
+	var prayer := _prayer_bonus(grave_id)
+	var plus := maxi(care, 0) + prayer
+	if robbed > 0:
+		plus = mini(plus, maxi(_config().devotion_robbed_cap - value, 0))
+	value += plus + mini(care, 0)
 	return {
 		"score": value,
 		"mood": GhostMood.mood(value, _config()),
@@ -178,6 +199,8 @@ func mood_info(grave_id: String) -> Dictionary:
 		"dirt_level": dirt,
 		"decor_bonus": bonus,
 		"devotion": devotion,
+		"care": care,
+		"prayer": prayer,
 	}
 
 
@@ -208,11 +231,18 @@ func listen(grave_id: String, player: Player) -> String:
 		var traits: Array[StringName] = corpse.traits.duplicate() if corpse != null else []
 		var story: StringName = corpse.story_id if corpse != null else &""
 		var harvested: Array[StringName] = corpse.harvested.duplicate() if corpse != null else []
-		text = _returned_line(grave_id, corpse, line_seed(grave_id, day) + turn)
+		var seed := line_seed(grave_id, day) + turn
+		var key := _care_key(grave_id, corpse)
+		if key == GhostMood.CARE_DISTURBED:
+			text = GhostMood.pick_care_line(_lines(), key, seed)
+		if text == "":
+			text = _returned_line(grave_id, corpse, line_seed(grave_id, day) + turn)
 		if text == "":
 			text = _chapel_line(grave_id, corpse, line_seed(grave_id, day) + turn)
 		if text == "":
 			text = _design_line(grave_id, mood, corpse, line_seed(grave_id, day) + turn)
+		if text == "" and key != GhostMood.CARE_ROBBED:
+			text = GhostMood.pick_care_line(_lines(), key, seed)
 		if text == "":
 			text = GhostMood.pick_line(_lines(), mood, info.reason, traits, line_seed(grave_id, day) + turn, story, piety_tier(), harvested)
 		_said[grave_id] = {"total": now, "text": text, "mood": mood, "day": day, "turn": turn}
@@ -353,10 +383,29 @@ static func select_nearest(distances: Dictionary, current: PackedStringArray, ma
 	return out
 
 
-## STUB (P2) – Phase 8 (docs/PHASE8_DESIGN.md §2.7.2, §3.4): on the night of the lights the ghosts of
-## `graves` show from `from_minute` for `minutes` as a pale shimmer (alpha 0.35, display only). W0: inert.
-func set_early_window(_from_minute: int, _minutes: int, _graves: PackedStringArray) -> void:
-	pass
+## Phase 8 (docs/PHASE8_DESIGN.md §2.7.2, §3.4): on the night of the lights the ghosts of `graves` show
+## today from `from_minute` for `minutes` as a pale shimmer (alpha EARLY_ALPHA, display only – no gift, no
+## mood change). minutes ≤ 0 or no graves = off. Not saved (Festivals sets it again).
+func set_early_window(from_minute: int, minutes: int, graves: PackedStringArray) -> void:
+	if minutes <= 0 or graves.is_empty():
+		_early = {}
+	else:
+		_early = {"day": TimeManager.day, "from": posmod(from_minute, MINUTES_PER_DAY), "minutes": minutes, "graves": graves.duplicate()}
+	_reselect_left = 0.0
+
+
+## The early window of the night of the lights is running at `minute_of_day` (today).
+func early_active(minute_of_day: int) -> bool:
+	if _early.is_empty() or int(_early.day) != TimeManager.day:
+		return false
+	var since := minute_of_day - int(_early.from)
+	return since >= 0 and since < int(_early.minutes)
+
+
+## The graves of the early window (empty = none).
+func early_graves() -> PackedStringArray:
+	var graves: Variant = _early.get("graves", PackedStringArray())
+	return (graves as PackedStringArray).duplicate() if graves is PackedStringArray else PackedStringArray()
 
 
 func gift_given(grave_id: String) -> bool:
@@ -400,12 +449,21 @@ func piety_tier() -> StringName:
 
 ## Binds the pool to the nearest eligible graves (outside ghost time: releases all).
 func reselect() -> void:
-	if not (forced or is_ghost_time(TimeManager.minute_of_day)):
+	var early := not forced and not is_ghost_time(TimeManager.minute_of_day) and early_active(TimeManager.minute_of_day)
+	if not (forced or early or is_ghost_time(TimeManager.minute_of_day)):
 		_release_all()
 		return
 	var distances := {}
 	var origin := _player_position()
-	for id: String in eligible_graves():
+	var candidates := eligible_graves()
+	if early:
+		var graves := early_graves()
+		var keep := PackedStringArray()
+		for id: String in candidates:
+			if graves.has(id):
+				keep.append(id)
+		candidates = keep
+	for id: String in candidates:
 		var plot := _plot(id)
 		if plot != null:
 			var p := plot.global_position
@@ -434,6 +492,8 @@ func update_visuals(minute_f: float) -> void:
 		for id: String in _bound:
 			_bound[id].set_mood(mood_of(id))
 	var alpha := 1.0 if forced else fade_at(minute_f)
+	if not forced and alpha <= 0.0 and early_active(int(minute_f)):
+		alpha = EARLY_ALPHA
 	var player := _player()
 	var inside := player != null and player.in_interior
 	if _container != null:
@@ -548,6 +608,41 @@ func _on_grave_completed(grave_id: String, _corpse_id: String, _quality: int, _b
 
 func _on_mood_input(_id: String, _value: int) -> void:
 	_moods_dirty = true
+
+
+func _on_care_changed(_grave_id: String, _kind: StringName, _active: bool) -> void:
+	_moods_dirty = true
+
+
+## Phase 8: GraveCare.care_bonus (0 without GraveCare).
+func _care_bonus(grave_id: String) -> int:
+	var care := _first(GRAVE_CARE_GROUP)
+	if care == null or not care.has_method(&"care_bonus"):
+		return 0
+	return int(care.call(&"care_bonus", grave_id))
+
+
+## Phase 8: Lenz' prayer on this grave (Friendship.prayer_bonus, P4; 0 without it).
+func _prayer_bonus(grave_id: String) -> int:
+	var friendship := _first(FRIENDSHIP_GROUP)
+	if friendship == null or not friendship.has_method(&"prayer_bonus"):
+		return 0
+	return maxi(0, int(friendship.call(&"prayer_bonus", grave_id)))
+
+
+## Phase 8 §2.11: the care pool of tonight's line (GhostMood.care_key).
+func _care_key(grave_id: String, corpse: CorpseRecord) -> StringName:
+	var care := _first(GRAVE_CARE_GROUP) as GraveCare
+	var night := night_index(TimeManager.day, TimeManager.minute_of_day)
+	var disturbed := care != null and care.is_disturbed(grave_id)
+	var burning := care != null and care.candle_lit(grave_id)
+	var candle := burning or (care != null and care.lit_last_night(grave_id))
+	var flowers := care != null and (care.flowers_state(grave_id) == GraveCare.FLOWERS_FRESH or care.bouquet_fresh(grave_id))
+	var lights_day: Variant = GameState.get_flag(LIGHTS_DAY_FLAG, -1)
+	var lights := burning and (lights_day is int or lights_day is float) and int(lights_day) == night
+	var visitors := _first(VISITORS_GROUP)
+	var visited := visitors != null and visitors.has_method(&"visited_on") and bool(visitors.call(&"visited_on", grave_id, night))
+	return GhostMood.care_key(disturbed, GhostMood.robbed_count(corpse) > 0, lights, visited, candle, flowers)
 
 
 func _on_decor_changed(_uid: String, _decor_id: StringName, _placed: bool) -> void:
