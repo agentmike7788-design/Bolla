@@ -141,6 +141,30 @@ signal collection_set_completed(set_id: StringName, standing: int)
 signal lecture_held(day: int, organ: StringName, fee: int, rumor: bool)
 signal cause_deduced(corpse_id: String, cause_id: StringName)
 
+# --- Phase 8 (docs/PHASE8_DESIGN.md §3.3) ---------------------------------------------------------
+# Village life (NpcLife, ChatterRunner)
+signal moods_rolled(day: int)
+signal chatter_line(chatter_id: StringName, npc_id: StringName, text: String)
+## Visitors (Visitors); phase: &"arriving" | &"mourning" | &"waiting" | &"leaving" | &"gone"
+signal visitor_changed(visit_id: String, kin_id: StringName, grave_id: String, phase: StringName)
+signal grave_viewed(grave_id: String, kin_id: StringName, view: StringName)
+## Wishes (Visitors); state: &"offered" | &"accepted" | &"done" | &"failed"
+signal wish_changed(wish_id: String, state: StringName)
+## Grave care (GraveCare); kind: &"flowers" | &"bouquet" | &"candle" | &"mortsafe" | &"disturbed" | &"tip"
+signal grave_care_changed(grave_id: String, kind: StringName, active: bool)
+# Apprentice (Apprentice)
+signal apprentice_job_done(task_id: StringName, spot_id: String, mistake: bool)
+signal apprentice_level_changed(task_id: StringName, level: int)
+## Friendship (Friendship); favour state: &"used" | &"returned" | &"unreturned"
+signal friend_step_completed(npc_id: StringName, step: int)
+signal favor_changed(npc_id: StringName, favor_id: StringName, state: StringName)
+## Festivals (Festivals); state: &"announced" | &"running" | &"ended" | &"cancelled"
+signal festival_changed(fest_id: StringName, state: StringName)
+## Night (NightRobber; kind: &"arrived" | &"seen" | &"fled" | &"caught" | &"disturbed" | &"gone") and the
+## sick light (NightPaths; phase: &"enter" | &"leave" | &"observed")
+signal robber_event(kind: StringName, grave_id: String)
+signal night_visit(path_id: StringName, npc_id: StringName, phase: StringName)
+
 # UI
 signal ui_panel_requested(panel: StringName, context: Dictionary)
 signal ui_modal_changed(open: bool)

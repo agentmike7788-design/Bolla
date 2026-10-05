@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"register_extract"
+display_name = "Abschrift aus dem Grabregister"
+description = "Namen und Tage der Toten, sauber abgeschrieben aus dem Grabregister der Hütte."
+category = 5
+max_stack = 5
+tool_kind = &""
+tool_tier = 0
+unique = false

@@ -332,6 +332,14 @@ func mourning_house(day: int) -> StringName:
 	return StringName(houses[posmod(hash([arrived, newest.seed]), houses.size())])
 
 
+## STUB (P6) – Phase 8 (docs/PHASE8_DESIGN.md §2.2.1, §5.2 step 1): the pure part of mourning_house – the
+## house of a corpse that arrived on `arrival_day` with `seed` among `houses` (bit-identical to the Phase-7
+## mourning ribbon: houses[posmod(hash([arrival_day, seed]), houses.size())]); SaveMigration uses it for
+## kin_house. W0: &"" (P6 extracts it from mourning_house).
+static func mourning_house_for(_arrival_day: int, _seed: int, _houses: PackedStringArray) -> StringName:
+	return &""
+
+
 # --- chapter --------------------------------------------------------------------------------------
 
 ## {consecrated, orders_done, orders_givers, trusted, insight, done, total} (§1.5).

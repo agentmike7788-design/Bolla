@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="VillagerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/villager_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"innkeeper"
+display_name = "Rosine Wackernagel"
+role = "Wirtin des Holderkrugs"
+dialogue_id = &"v_innkeeper"
+shop_id = &"inn"
+home_door = &"door_inn"
+gifts_liked = Array[StringName]([&"honey_cake", &"herb_bundle"])
+start_value = 25
+specimen_delta = 0
+returned_delta = 0
+piety_sensitive = false
+remarks = Dictionary[StringName, PackedStringArray]({
+&"event_jakob_scolded": PackedStringArray("Er sagt, du warst streng. Gut. Ich bin\'s nicht genug."),
+&"event_robber_reported": PackedStringArray("Den Grell haben sie in die Stadt gebracht. Der hat bei mir noch zwei Bier offen."),
+&"friend": PackedStringArray("He, Totengräber! Komm nachher rein, ich hab Holunderwein vom letzten Jahr. Nur für dich und mich und Kehr, aber Kehr weiß es nicht."),
+&"rep_disreputable": PackedStringArray("Das ist der, bei dem die Taschen leichter werden. Wackernagel zählt nach."),
+&"rep_esteemed": PackedStringArray("Da kommt er! Wackernagel hat den guten Krug schon abgewischt."),
+&"rep_renowned": PackedStringArray("Platz da, der Totengräber! Brandt, rück zur Seite, du bist nicht tot, du kannst stehen."),
+&"rep_respected": PackedStringArray("Totengräber! Kehr hat gesagt, du grüßt nicht. Ich hab gesagt, du grüßt die Toten, das reicht."),
+&"rep_unremarkable": PackedStringArray("Der vom Hügel! Durst? Wackernagel hat immer Durst für zwei."),
+&"specimens": PackedStringArray("Bei Quast klirrt es wieder, wenn Faulhaber ablädt. Ich frag nicht. Ich hab ja Ohren.")
+})
+circle = Array[StringName]([&"house_kehr", &"house_brandt"])
+mood_lines = Dictionary[StringName, PackedStringArray]({
+&"cheerful": PackedStringArray("Heute läuft\'s, Totengräber. Sogar der Ofen zieht.", "Na, du siehst ja fast lebendig aus."),
+&"cross": PackedStringArray("Heute nicht, Totengräber. Morgen.", "Wenn du was willst, sag\'s schnell."),
+&"low": PackedStringArray("Lass mich. Nein, bleib. Ich weiß nicht.", "Heute ist so ein Tag. Du kennst die."),
+&"plain": PackedStringArray("Totengräber. Bier oder Neuigkeiten?", "Setz dich, wenn du willst. Steh, wenn du musst.")
+})
+story_id = &"innkeeper"
+favor_id = &"fav_innkeeper"
+visit_grave = ""
+visit_every_days = 0
+graveyard_npc = &"npc_innkeeper_g"

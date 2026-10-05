@@ -19,6 +19,11 @@ var completed_day: int = 0
 ## Phase 5 §3.4, §5.1: StoneDesign.to_dict of the designed stone ({} = none; marker_id is then
 ## the shape id). Saved always; from_dict normalises it through StoneDesign (tolerant).
 var design: Dictionary = {}
+## Phase 8 §2.3, §3.4, §5.1: the night digger was undisturbed until 05:00 (GraveCare.set_disturbed /
+## close_disturbed, P2) and the lines chiselled on afterwards (Graveyard.append_inscription, wish line).
+## Saved always; missing = default (tolerant).
+var disturbed: bool = false
+var extra_lines: PackedStringArray = []
 
 
 func to_dict() -> Dictionary:
@@ -31,6 +36,8 @@ func to_dict() -> Dictionary:
 		"breakdown": breakdown.duplicate(true),
 		"completed_day": completed_day,
 		"design": design.duplicate(true),
+		"disturbed": disturbed,
+		"extra_lines": Array(extra_lines),
 	}
 
 
@@ -46,6 +53,12 @@ static func from_dict(d: Dictionary) -> GraveRecord:
 	var raw_design: Variant = d.get("design", {})
 	if raw_design is Dictionary:
 		r.design = StoneDesign.from_dict(raw_design as Dictionary).to_dict()
+	r.disturbed = typeof(d.get("disturbed")) == TYPE_BOOL and bool(d.get("disturbed"))
+	var lines: Variant = d.get("extra_lines", [])
+	if lines is Array or lines is PackedStringArray:
+		for line: Variant in lines:
+			if (line is String or line is StringName) and String(line) != "":
+				r.extra_lines.append(String(line))
 	var entries: Variant = d.get("breakdown", [])
 	if entries is Array:
 		for entry: Variant in entries:

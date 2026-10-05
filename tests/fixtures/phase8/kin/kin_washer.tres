@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="KinData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/visitors/kin_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+kin_id = &"kin_washer"
+display_name = "Liesel Dorn"
+house = &"cottage_dorn"
+npc_path_id = &"npc_washer_g"
+villager_id = &"washer"
+kneels = true
+bouquet_model = &""
+dialogue_id = &"v_washer"
+fixed_graves = PackedStringArray()
+visit_every_days = 4
+visit_minute = 580
+first_offset = 1

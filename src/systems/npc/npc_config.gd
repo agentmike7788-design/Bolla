@@ -14,3 +14,11 @@ extends Resource
 @export var governor_hz: float = 2.0
 ## A villager closer than this (m) to the gravekeeper says its remark (once per day).
 @export var remark_distance: float = 4.0
+# Phase 8 (docs/PHASE8_DESIGN.md §3.2, §3.4, §9): runtime schedules walk 3.2 m per game minute
+# (1.6 m/s real time); visible caps per region (graveyard 9, 16 on the night of the lights); standing
+# figures (idle / kneel / mourn) rest from 26 m; level-1 rate 3 Hz on a festival.
+@export var walk_m_per_minute: float = 3.2
+@export var max_visible_graveyard: int = 9
+@export var max_visible_fest: int = 16
+@export var stand_rest_distance: float = 26.0
+@export var fest_reduced_interval: float = 0.33

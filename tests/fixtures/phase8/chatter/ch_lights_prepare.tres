@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChatterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/chatter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ch_lights_prepare"
+region = &"village"
+npcs = Array[StringName]([&"washer", &"priest"])
+place = &"v_church_door"
+window = Vector2i(960, 1000)
+conditions = PackedStringArray("fest_eve:fest_lights")
+lines = PackedStringArray("Wie viele Kerzen dieses Jahr?", "Eine mehr als letztes. Wie jedes Jahr.")
+sets_flag = &""

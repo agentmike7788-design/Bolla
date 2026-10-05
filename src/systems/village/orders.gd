@@ -407,6 +407,18 @@ func note_harvest(corpse_id: String) -> void:
 	_check_bury(corpse_id, "")
 
 
+## STUB (P4) – Phase 8 (docs/PHASE8_DESIGN.md §2.4, §3.4): a meeting of a meet order (npc at place in
+## its window; DialogueActions meet:<place>). W0: inert.
+func note_meet(_npc_id: StringName, _place_id: StringName) -> void:
+	pass
+
+
+## STUB (P4) – Phase 8: a task of a task order done (archive_help, register_extract, vigil, lights_names …).
+## W0: inert.
+func note_task(_action_id: StringName) -> void:
+	pass
+
+
 ## Deadlines, the tend check, board offers (idempotent per day).
 func apply_morning(day: int) -> void:
 	if day <= _board_day:

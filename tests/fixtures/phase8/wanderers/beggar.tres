@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="WandererData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/wanderer_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"beggar"
+display_name = "Veit Ammer"
+dialogue_id = &"beggar"
+shop_id = &""
+every_days = 0
+day_rest = 0
+alms_coins = 1
+alms_piety = &"alms"
+alms_for_clue = 3
+clue_id = &"c_n_veit"

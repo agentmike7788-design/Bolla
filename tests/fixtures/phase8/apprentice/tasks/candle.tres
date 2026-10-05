@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ApprenticeTaskData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/apprentice/apprentice_task_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"candle"
+label = "Grabkerzen"
+minutes = PackedInt32Array(0, 5, 4)
+tool_item = &""
+consumes = &"grave_candle"
+spot_kind = &"candle"
+from_minute = 900
+animation = &"candle"
+mistake_kind = &"candle_broken"
+mistake_text = "Die Kerze ist mir gebrochen. Sie brennt trotzdem. Ein bisschen schief."
+order = 4

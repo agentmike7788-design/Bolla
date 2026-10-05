@@ -253,6 +253,18 @@ func lod() -> int:
 	return _lod
 
 
+## STUB (P1) – Phase 8 (docs/PHASE8_DESIGN.md §3.4): a runtime schedule (ScheduleBuilder – visits, the
+## apprentice, festivals, the robber) replaces the data schedule until clear_runtime_schedule(); not saved
+## (rebuilt from plan + clock). W0: inert.
+func set_runtime_schedule(_s: NpcSchedule) -> void:
+	pass
+
+
+## STUB (P1) – back to the data schedule. W0: inert.
+func clear_runtime_schedule() -> void:
+	pass
+
+
 ## Whether the gravekeeper is in this Npc's region (Player.region_id; graveyard without a player).
 func region_active() -> bool:
 	return _region_active

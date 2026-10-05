@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ApprenticeTaskData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/apprentice/apprentice_task_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"weed"
+label = "Unkraut jäten"
+minutes = PackedInt32Array(0, 30, 20)
+tool_item = &""
+consumes = &""
+spot_kind = &"weeds"
+from_minute = 0
+animation = &"weed"
+mistake_kind = &"flowers_torn"
+mistake_text = "Oh. Die Blumen waren mit dran."
+order = 2

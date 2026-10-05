@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"of_fenner_3"
+giver = &"mayor"
+recipient = &""
+kind = &"meet"
+title = "Eine Runde von mir"
+request_text = "Komm abends in den Krug. Heute zahl ich."
+thanks_text = "Danke, Totengräber."
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"npc": &"mayor",
+"place": &"v_in_inn_table",
+"times": 1,
+"window": [1085, 1260]
+}
+days_limit = 0
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 0
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 214
+accept_flag = &""
+category = &"friend"

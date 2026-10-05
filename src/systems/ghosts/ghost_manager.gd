@@ -353,6 +353,12 @@ static func select_nearest(distances: Dictionary, current: PackedStringArray, ma
 	return out
 
 
+## STUB (P2) – Phase 8 (docs/PHASE8_DESIGN.md §2.7.2, §3.4): on the night of the lights the ghosts of
+## `graves` show from `from_minute` for `minutes` as a pale shimmer (alpha 0.35, display only). W0: inert.
+func set_early_window(_from_minute: int, _minutes: int, _graves: PackedStringArray) -> void:
+	pass
+
+
 func gift_given(grave_id: String) -> bool:
 	return _gifts.has(grave_id)
 

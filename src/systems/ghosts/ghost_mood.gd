@@ -43,8 +43,10 @@ const WEEDS_LEVEL := 2
 ## `robbed` = number of harvested kinds (robbed_count).
 ## Phase 6 (§2.4, §3.4): `devotion` = ChapelRules.devotion_bonus (already capped for robbed souls) is
 ## added as it is (negative values count as 0).
+## Phase 8 (§2.3, §2.11, §3.4): `care` = GraveCare.care_bonus (≤ care_cap) – STUB (P2): W0 ignores it
+## (the Phase-7 score stays bit-identical until P2 adds care, disturbed and prayer).
 static func score(quality: int, dirt_level: int, decor_bonus: int, clean: CleanlinessConfig, cfg: GhostConfig, robbed: int = 0,
-		devotion: int = 0) -> int:
+		devotion: int = 0, _care: int = 0) -> int:
 	var dirt := 0
 	if clean != null and not clean.grave_mood_by_level.is_empty():
 		var lvl := clampi(dirt_level, 0, clean.grave_mood_by_level.size() - 1)

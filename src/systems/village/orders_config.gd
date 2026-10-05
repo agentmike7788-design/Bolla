@@ -9,3 +9,5 @@ extends Resource
 @export var board_giver: StringName = &"council"
 ## Minute of the morning check (deadlines, board offers): 06:00.
 @export var refresh_minute: int = 360
+# Phase 8 (docs/PHASE8_DESIGN.md §2.4): friend orders count separately (at most 2 active).
+@export var max_active_friend: int = 2

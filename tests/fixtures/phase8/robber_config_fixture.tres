@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="RobberConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/night/robber_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+start_offset_days = 4
+fresh_days = 5
+chance = 0.35
+min_gap_nights = 2
+first_guaranteed = true
+arrive_minute = 90
+dig_from = 110
+dig_until = 300
+notice_distance = 10.0
+watch_catch_after = 3
+report_rep = &"robber_reported"
+let_go_piety = &"robber_let_go"

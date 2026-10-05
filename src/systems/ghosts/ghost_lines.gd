@@ -37,3 +37,11 @@ extends Resource
 # first night after a specimen was returned (by_returned).
 @export var by_organ: PackedStringArray = PackedStringArray()
 @export var by_returned: PackedStringArray = PackedStringArray()
+# Phase 8 (docs/PHASE8_DESIGN.md §2.11): fresh grave flowers, a candle last night, a visit today, the
+# grave disturbed, the night of the lights. Precedence: disturbed > robbed_organ > robbed > lights >
+# visited > candle > flowers > the earlier ones.
+@export var by_flowers: PackedStringArray = PackedStringArray()
+@export var by_candle: PackedStringArray = PackedStringArray()
+@export var by_visited: PackedStringArray = PackedStringArray()
+@export var by_disturbed: PackedStringArray = PackedStringArray()
+@export var by_lights: PackedStringArray = PackedStringArray()

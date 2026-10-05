@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="ShopData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/shop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"peddler"
+npc_id = &"peddler"
+title = "Hannes Kiepe"
+sells = Dictionary[StringName, Dictionary]({
+&"flower_seedlings": {
+"per_day": 6,
+"price": 2
+},
+&"gold_leaf": {
+"per_day": 1,
+"price": 6
+},
+&"grave_candle": {
+"per_day": 8,
+"price": 1
+},
+&"ink": {
+"per_day": 3,
+"price": 2
+},
+&"watering_can": {
+"per_day": 1,
+"price": 4
+},
+&"wax_wreath": {
+"per_day": 1,
+"price": 5
+}
+})
+buys = Dictionary[StringName, Dictionary]({
+&"elder_wine": {
+"per_day": 2,
+"price": 3
+},
+&"herb_bundle": {
+"per_day": 3,
+"price": 3
+},
+&"wound_salve": {
+"per_day": 2,
+"price": 4
+},
+&"yarn": {
+"per_day": 6,
+"price": 1
+}
+})
+coin_reason = &"peddler"

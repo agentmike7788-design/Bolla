@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="VisitorConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/visitors/visitor_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+first_delay_days = 1
+mourning_days = 21
+interval_mourning = 3
+interval_late = 7
+max_visits_day = 3
+max_concurrent = 2
+slots = PackedInt32Array(570, 750, 900)
+flowers_chance_late = 0.4
+mourn_minutes = 30
+wait_minutes = 10
+noise_distance = 8.0
+talk_distance = 4.0
+goodwill_start = 5
+goodwill_wish_min = 2
+view_effects = Dictionary[StringName, Dictionary]({
+&"bare": {
+"goodwill": 0,
+"rep_event": &""
+},
+&"bonus": {
+"goodwill": 1,
+"rep_event": &""
+},
+&"disturbed": {
+"goodwill": -4,
+"rep_event": &"visit_disturbed"
+},
+&"kept": {
+"goodwill": 1,
+"rep_event": &"visit_pleased"
+},
+&"neglected": {
+"goodwill": -1,
+"rep_event": &"visit_neglected"
+},
+&"specimen": {
+"goodwill": -3,
+"rep_event": &"visit_specimen_rumor"
+}
+})
+pleased_cap_day = 2
+max_open = 3
+tip_base = 1
+tip_goodwill_min = 6
+tip_quality_min = 15
+tip_cap_day = 4
+wish_goodwill = 2
+wish_fail_goodwill = -2
+villager_wish_rel = 4

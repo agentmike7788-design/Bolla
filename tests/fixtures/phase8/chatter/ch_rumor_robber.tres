@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChatterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/chatter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ch_rumor_robber"
+region = &"village"
+npcs = Array[StringName]([&"carter", &"innkeeper"])
+place = &"v_in_inn_bar"
+window = Vector2i(845, 1050)
+conditions = PackedStringArray("p8_open", "open_days_gte:2")
+lines = PackedStringArray("Drüben bei Ellbach haben sie wieder eins offen gefunden.", "Bei uns nicht. Bei uns liegt einer auf dem Hügel, der nicht schläft.")
+sets_flag = &"robber_known"

@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="FestivalData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/festivals/festival_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"fest_lights"
+calendar_day = 58
+shift_rule = &"open_plus"
+shift_days = 3
+day_flag = &"fest_lights_day"
+window = Vector2i(960, 1110)
+region = &"graveyard"
+music_context = &"lights"
+effects = {
+"arrive": [1005, 1020],
+"at_graves": [1020, 1060],
+"candles": 12,
+"candles_minute": 460,
+"check_minute": 1080,
+"early_ghosts": {
+"alpha": 0.35,
+"from": 1020,
+"minutes": 30
+},
+"gather_minute": 960,
+"ghost_candle_mood": 2,
+"leave": [1080, 1110],
+"lights_all": {
+"goodwill": 2,
+"piety_event": &"lights_all",
+"rel": {
+&"priest": 3
+},
+"rel_all": 2,
+"rep_event": &"lights_all"
+},
+"lights_some": {
+"rep_event": &"lights_some",
+"share": 0.5
+},
+"shift_line": "Wir haben ihn verschoben. Der Hügel war nicht so weit.",
+"speech": "Wir zünden kein Licht für Gott an. Der sieht auch so. Wir zünden es für die an, die den Weg vergessen haben. Und für die, die noch hier unten sind und ihn suchen.",
+"speech_minute": 1060
+}

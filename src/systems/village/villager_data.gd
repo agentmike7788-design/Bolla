@@ -23,3 +23,14 @@ extends Resource
 @export var piety_sensitive: bool = false
 ## Remarks (§2.4 Gerede) by key: rep_<tier>, piety_<tier>, friend, specimens.
 @export var remarks: Dictionary[StringName, PackedStringArray] = {}
+# Phase 8 (docs/PHASE8_DESIGN.md §2.1, §2.4, §3.2): the mourning circle (house ids whose ribbon makes
+# the villager „bedrückt", §2.1.1), the greeting by mood (2 per mood), the friendship story and its
+# favour, the own grave visits (§2.1.4: the main grave, every n days) and the graveyard Npc
+# (npc_<id>_g; &"" = none).
+@export var circle: Array[StringName] = []
+@export var mood_lines: Dictionary[StringName, PackedStringArray] = {}
+@export var story_id: StringName = &""
+@export var favor_id: StringName = &""
+@export var visit_grave: String = ""
+@export var visit_every_days: int = 0
+@export var graveyard_npc: StringName = &""

@@ -2,7 +2,10 @@ class_name OrderData
 extends Resource
 ## One order of a villager or the parish board (docs/PHASE7_DESIGN.md §2.5, §3.4): data/orders/<id>.tres.
 
-const KINDS: Array[StringName] = [&"deliver", &"bury", &"stone", &"tend", &"donate", &"section"]
+## Phase 8 (docs/PHASE8_DESIGN.md §2.4, §3.4) appends meet (conditions {npc, place, window, times}) and task
+## (conditions {action_id, place}).
+const KINDS: Array[StringName] = [&"deliver", &"bury", &"stone", &"tend", &"donate", &"section", &"meet", &"task"]
+const CATEGORY_FRIEND := &"friend"
 
 @export var id: StringName
 ## npc_id of the giver; &"council" = the parish board („die Gemeinde").
@@ -41,3 +44,6 @@ const KINDS: Array[StringName] = [&"deliver", &"bury", &"stone", &"tend", &"dona
 @export var order: int = 0
 ## Flag set on acceptance (o_fenner_linden: linden_granted).
 @export var accept_flag: StringName = &""
+# Phase 8 (docs/PHASE8_DESIGN.md §2.4, §3.4): &"" = a Phase-7 order | &"friend" (friendship steps and
+# return favours: their own limit OrdersConfig.max_active_friend).
+@export var category: StringName = &""
