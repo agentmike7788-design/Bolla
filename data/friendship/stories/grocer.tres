@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="FriendStoryData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/friendship/friend_story_data.gd" id="1_xv3fl"]
+[ext_resource type="Script" path="res://src/systems/friendship/friend_step_data.gd" id="2_kpaea"]
+
+[sub_resource type="Resource" id="Resource_ayf8x"]
+script = ExtResource("2_kpaea")
+step = 1
+title = "Mutters Grab"
+min_value = 40
+conditions = PackedStringArray()
+order_ids = Array[StringName]([&"of_mangold_1"])
+start_node = &"story_1"
+end_node = &"story_1_done"
+reward_rel = 6
+reward_flag = &"friend_grocer_1"
+
+[sub_resource type="Resource" id="Resource_ptp7h"]
+script = ExtResource("2_kpaea")
+step = 2
+title = "Das Anschreibebuch"
+min_value = 55
+conditions = PackedStringArray()
+order_ids = Array[StringName]([&"of_mangold_2"])
+start_node = &"story_2"
+end_node = &"story_2_done"
+reward_rel = 8
+reward_flag = &"friend_grocer_2"
+fallback_event = &"lights_after"
+
+[sub_resource type="Resource" id="Resource_hqm7c"]
+script = ExtResource("2_kpaea")
+step = 3
+title = "Für die ohne Namen"
+min_value = 70
+conditions = PackedStringArray()
+order_ids = Array[StringName]([&"of_mangold_3"])
+start_node = &"story_3"
+end_node = &"story_3_done"
+reward_rel = 10
+reward_rep = 1
+reward_flag = &"friend_grocer_3"
+
+[resource]
+script = ExtResource("1_xv3fl")
+npc_id = &"grocer"
+steps = Array[ExtResource("2_kpaea")]([SubResource("Resource_ayf8x"), SubResource("Resource_ptp7h"), SubResource("Resource_hqm7c")])
+favor_id = &"fav_grocer"

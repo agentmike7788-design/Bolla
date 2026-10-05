@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"of_rosine_3"
+giver = &"innkeeper"
+recipient = &""
+kind = &"meet"
+title = "Oben bei Jakob"
+request_text = "Ich will ihn einmal sehen, oben bei dir. Wenn er's kann. Um drei, an der Bank bei der Hütte."
+thanks_text = "Rosine sieht Jakob eine Weile zu. „Er hält den Rechen wie du. Das hat er nicht von mir.“"
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"npc": &"innkeeper",
+"place": &"apprentice_lunch",
+"times": 1,
+"window": [900, 940]
+}
+days_limit = 0
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 0
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 202
+accept_flag = &""
+category = &"friend"

@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"of_lenz_return_1"
+giver = &"priest"
+recipient = &""
+kind = &"deliver"
+title = "Kerzen für den Altar"
+request_text = "Vier Altarkerzen. Der Advent kommt."
+thanks_text = "„Altarkerzen. Der Advent kann kommen.“"
+items = Dictionary[StringName, int]({
+&"altar_candle": 4
+})
+coins = 0
+target = ""
+conditions = {}
+days_limit = 0
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 0
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 228
+accept_flag = &""
+category = &"friend"

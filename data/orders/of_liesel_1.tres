@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"of_liesel_1"
+giver = &"washer"
+recipient = &""
+kind = &"task"
+title = "Kaspar"
+request_text = "Er heißt nicht Lorenz. Er heißt Kaspar. Setz seinen Namen auf den Stein."
+thanks_text = "Liesel fährt mit dem Finger über den neuen Namen. „Kaspar. So hat er geheißen.“"
+items = Dictionary[StringName, int]({})
+coins = 0
+target = "s5_moor"
+conditions = {
+"action_id": &"name_line",
+"item": &"ink",
+"minutes": 40
+}
+days_limit = 0
+requires_flag = &"insight_not_lorenz"
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 0
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 218
+accept_flag = &""
+category = &"friend"

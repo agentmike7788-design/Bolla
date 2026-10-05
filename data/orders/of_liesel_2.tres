@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"of_liesel_2"
+giver = &"washer"
+recipient = &""
+kind = &"task"
+title = "Die Totenwache"
+request_text = "Halt einmal mit mir Totenwache. Wenn einer unten liegt, komm ich um halb zehn."
+thanks_text = "Liesel steht auf, als die Kerze heruntergebrannt ist. „Man ist nicht so allein dabei. Das hab ich vergessen.“"
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"action_id": &"vigil",
+"minute": 1290,
+"minutes": 60,
+"place": &"crypt"
+}
+days_limit = 0
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 0
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 220
+accept_flag = &""
+category = &"friend"

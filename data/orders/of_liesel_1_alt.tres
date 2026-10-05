@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"of_liesel_1_alt"
+giver = &"washer"
+recipient = &""
+kind = &"tend"
+title = "Wiebke"
+request_text = "Halt der Hagedorn das Grab sauber, drei Morgen, und stell ihr eine Nacht ein Licht hin."
+thanks_text = "Liesel steht eine Weile am Grab der Hagedorn. „Sie hätte nichts gesagt. Aber sie hätte es gesehen.“"
+items = Dictionary[StringName, int]({})
+coins = 0
+target = "d1_hagedorn"
+conditions = {
+"candle_nights": 1,
+"mornings": 3
+}
+days_limit = 0
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 0
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 219
+accept_flag = &""
+category = &"friend"

@@ -98,6 +98,7 @@ func test_database_finds_all_recipes() -> void:
 	var p5 := Phase5Fixtures.RECIPE_IDS.duplicate()
 	p5.append(&"bone_box")  # Phase 6 (P3, §2.6): tested in test_ossuary.gd
 	p5.append_array(Phase7Fixtures.RECIPE_IDS)  # Phase 7 (P7, §2.7): pult recipes, tested in test_recipes_phase7.gd
+	p5.append(&"memorial_plate")  # Phase 8 (P4, §2.11): Rosine 2, tested in test_friendship.gd
 	var workbench := Database.recipes(&"workbench").filter(func(r: RecipeData) -> bool: return not p5.has(r.id))
 	assert_eq(workbench.size(), expected.size())
 	assert_eq(Database.recipes().filter(func(r: RecipeData) -> bool: return not p5.has(r.id)).size(), expected.size(), "Phase-5 recipes: test_phase5_recipes_*")
@@ -370,7 +371,8 @@ func test_phase5_recipe_count_per_station() -> void:
 	assert_eq(Database.recipes(&"loom").size(), 3)
 	var workbench_p5 := Database.recipes(&"workbench").filter(func(r: RecipeData) -> bool: return P1_RECIPES.has(r.id))
 	assert_eq(workbench_p5.size(), 2, "ink, herb_bundle")
-	assert_eq(Database.recipes(&"mason"), [], "the mason's bench has stone shapes, no RecipeData")
+	assert_eq(Database.recipes(&"mason").filter(func(r: RecipeData) -> bool: return r.id != &"memorial_plate"), [],
+			"the mason's bench has stone shapes, no RecipeData (Phase 8: + memorial_plate)")
 
 
 func test_phase5_stations_in_data() -> void:
