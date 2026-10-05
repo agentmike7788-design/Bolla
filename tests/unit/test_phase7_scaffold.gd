@@ -339,7 +339,7 @@ func test_corpse_record_phase7_fields() -> void:
 	assert_eq([native.harvested, native.returned, native.hidden_cause, native.revealed_cause],
 			[r.harvested, r.returned, &"arsenic", &"arsenic"], "round trip")
 	assert_eq(back.to_dict().keys(), r.to_dict().keys(), "JSON round trip keeps the keys")
-	assert_eq(r.to_dict().size(), 38, "35 Phase-6 record fields + 3")
+	assert_eq(r.to_dict().size(), 39, "35 Phase-6 record fields + 3 (+ kin_house, Phase 8)")
 	var old := CorpseRecord.from_dict({"id": "c_2", "harvested": ["hair"]})
 	assert_eq([old.hidden_cause, old.returned, old.revealed_cause], [&"", [] as Array[StringName], &""], "tolerant")
 	var odd := CorpseRecord.from_dict({"harvested": ["teeth", "liver"], "returned": ["liver", "heart", "liver", 3]})
@@ -430,7 +430,7 @@ func test_village_relationship_orders_npc_config_values() -> void:
 	var n := Phase7Fixtures.npc_config()
 	assert_eq([n.lod_full_distance, n.lod_rest_distance, n.max_full, n.governor_hz, n.remark_distance], [26.0, 40.0, 6, 2.0, 4.0])
 	assert_almost(n.reduced_interval, 0.2)
-	assert_eq(OrderData.KINDS, [&"deliver", &"bury", &"stone", &"tend", &"donate", &"section"] as Array[StringName])
+	assert_eq(OrderData.KINDS.slice(0, 6), [&"deliver", &"bury", &"stone", &"tend", &"donate", &"section"] as Array[StringName], "Phase 8 appends meet, task")
 
 
 func test_anatomy_config_values() -> void:
@@ -717,14 +717,14 @@ func test_database_phase7_folders() -> void:
 
 
 func test_save_format_v6_and_migration_chain() -> void:
-	assert_eq(SaveMigration.CURRENT, 6)
-	assert_eq(SaveFileIO.FORMAT_VERSION, 6)
-	assert_eq(SaveManager.FORMAT_VERSION, 6)
+	assert_eq(SaveMigration.CURRENT, 7)  # Phase 8 W0: v7
+	assert_eq(SaveFileIO.FORMAT_VERSION, 7)
+	assert_eq(SaveManager.FORMAT_VERSION, 7)
 	assert_eq(SaveMigration.V6_EMPTY_NODES, PackedStringArray(["village", "relationships", "village_shops", "orders", "specimens",
 			"pult_store", "collection_shelf", "lectures", "deductions"]))
 	var state := {"autoloads": {"TimeManager": {"day": 5}, "GameState": {"stats": {}, "flags": {}}}, "nodes": {"corpse_manager": {}}}
-	assert_eq(SaveMigration.migrate(state, 6), state, "current version unchanged")
-	assert_eq(SaveMigration.migrate(state, 7), {}, "newer → corrupt")
+	assert_eq(SaveMigration.migrate(state, SaveMigration.CURRENT), state, "current version unchanged")
+	assert_eq(SaveMigration.migrate(state, SaveMigration.CURRENT + 1), {}, "newer → corrupt")
 	var v6 := SaveMigration.migrate_5_to_6(state, {"day": 5})
 	assert_false(is_same(v6, state), "deep copy")
 	assert_eq(state.nodes, {"corpse_manager": {}}, "input unchanged")

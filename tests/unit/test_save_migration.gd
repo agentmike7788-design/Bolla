@@ -88,7 +88,7 @@ func test_reputation_table() -> void:
 
 func test_current_version_is_three() -> void:
 	# Phase 5 W0: v4, Phase 6 W0: v5 (docs/PHASE6_DESIGN.md §5) – the name stays for the history of this test.
-	assert_eq(SaveMigration.CURRENT, 6)  # Phase 7 W0: v6
+	assert_eq(SaveMigration.CURRENT, 7)  # Phase 7 W0: v6, Phase 8 W0: v7
 	assert_eq(SaveFileIO.FORMAT_VERSION, SaveMigration.CURRENT)
 
 
@@ -706,8 +706,8 @@ func test_v4_round_trip_is_identical() -> void:
 
 
 func test_version_five_is_rejected() -> void:
-	# Phase 6 W0: CURRENT 5, Phase 7 W0: 6 – the name stays; a version above CURRENT is rejected.
-	assert_eq(SaveMigration.CURRENT, 6)
+	# Phase 6 W0: CURRENT 5, Phase 7 W0: 6, Phase 8 W0: 7 – the name stays; a version above CURRENT is rejected.
+	assert_eq(SaveMigration.CURRENT, 7)
 	assert_eq(Phase5Fixtures.install_save_v3("slot_p4_day7_table", TEST_DIR, SLOT), OK)
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
 	doc.format_version = SaveMigration.CURRENT + 1
@@ -927,8 +927,8 @@ func test_v5_round_trip_is_identical() -> void:
 
 
 func test_version_six_is_rejected() -> void:
-	# Phase 7 W0: CURRENT 6 – the name stays; a version above CURRENT is rejected.
-	assert_eq(SaveMigration.CURRENT, 6)
+	# Phase 7 W0: CURRENT 6, Phase 8 W0: 7 – the name stays; a version above CURRENT is rejected.
+	assert_eq(SaveMigration.CURRENT, 7)
 	assert_eq(Phase6Fixtures.install_save_v4("slot_p5_day30_reverent", TEST_DIR, SLOT), OK)
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
 	doc.format_version = SaveMigration.CURRENT + 1
@@ -1023,8 +1023,8 @@ func test_v6_doc_round_trip() -> void:
 	var read := _read_slot()
 	assert_eq(read.err, OK)
 	assert_eq(read.state, v6, "v6 → file → v6 identical (no migration)")
-	assert_eq(SaveMigration.migrate(v6, 6), v6)
-	assert_eq(SaveMigration.migrate(v6, 7), {}, "version 7 → refused")
+	assert_eq(SaveMigration.migrate(v6, 6), v6, "Phase 8 W0: migrate_6_to_7 is the identity")
+	assert_eq(SaveMigration.migrate(v6, SaveMigration.CURRENT + 1), {}, "a newer version → refused")
 	var nodes := {"village": {}, "orders": {}, "lectures": {}, "player": {}}
 	var out := SaveManager.without_absent_defaults(tree, nodes)
 	for id: String in ["village", "orders", "lectures"]:
