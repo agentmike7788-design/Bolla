@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChatterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/chatter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ch_linden_bench"
+region = &"village"
+npcs = Array[StringName]([&"mayor", &"smith"])
+place = &"v_linden"
+window = Vector2i(1054, 1080)
+conditions = PackedStringArray()
+lines = PackedStringArray("Der Brunnen hält, Esch.", "Der hält länger als wir.")
+sets_flag = &""

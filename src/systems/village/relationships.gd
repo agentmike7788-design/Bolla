@@ -10,6 +10,9 @@ extends Node
 ##   ids (Osric, Ilse, the council) are ignored.
 ## - Remarks (Gerede, §2.4): once per villager and day; precedence friend → piety hardhearted / devout →
 ##   specimens (after REMARK_SPECIMENS_AFTER sold specimens) → reputation tier.
+## - Phase 8 (docs/PHASE8_DESIGN.md §2.1.1, §2.1.3, §3.4, P1): with an NpcLife in the tree the remark asks
+##   ReactionRules first (an event of the last two days → event_<event> lines), and the talk of the day
+##   gains NpcLifeConfig.talk_gain_by_mood (cheerful +2, cross 0) once Phase 8 is open.
 
 const GROUP := &"relationships"
 const REASON_MEET := "Erste Begegnung"
@@ -110,7 +113,8 @@ func note_talk(npc_id: StringName) -> void:
 	if int(_talk_day.get(npc_id, -1)) == day:
 		return
 	_talk_day[npc_id] = day
-	add(npc_id, gain(&"talk"), REASON_TALK)
+	var life := _life()
+	add(npc_id, life.talk_gain(npc_id, gain(&"talk")) if life != null else gain(&"talk"), REASON_TALK)
 
 
 ## Talked to `npc_id` today.
@@ -170,6 +174,21 @@ func remark_text(npc_id: StringName, day: int) -> String:
 	var data := villager(npc_id)
 	if data == null:
 		return ""
+	var life := _life()
+	if life != null:
+		var key := ReactionRules.remark_key(npc_id, life, self)
+		var chosen: PackedStringArray = data.remarks.get(key, PackedStringArray())
+		return chosen[posmod(day, chosen.size())] if not chosen.is_empty() else ""
+	for key: StringName in remark_keys(npc_id):
+		var pool: PackedStringArray = data.remarks.get(key, PackedStringArray())
+		if not pool.is_empty():
+			return pool[posmod(day, pool.size())]
+	return ""
+
+
+## The Phase-7 remark keys of `npc_id` in precedence order (friend → piety → specimens → reputation tier →
+## rep_respected); ReactionRules puts the Phase-8 event keys in front.
+func remark_keys(npc_id: StringName) -> Array[StringName]:
 	var keys: Array[StringName] = []
 	if met(npc_id) and tier(npc_id) == RelationshipRules.TIERS[3]:
 		keys.append(KEY_FRIEND)
@@ -180,11 +199,7 @@ func remark_text(npc_id: StringName, day: int) -> String:
 		keys.append(KEY_SPECIMENS)
 	keys.append(StringName("rep_" + String(_rep_tier())))
 	keys.append(&"rep_respected")
-	for key: StringName in keys:
-		var pool: PackedStringArray = data.remarks.get(key, PackedStringArray())
-		if not pool.is_empty():
-			return pool[posmod(day, pool.size())]
-	return ""
+	return keys
 
 
 ## Every villager with specimen_delta (organ given: AnatomyConfig.organs[organ].sell_rel wins for
@@ -275,6 +290,10 @@ func _piety_tier() -> StringName:
 	if piety != null and piety.has_method(&"tier"):
 		return piety.call(&"tier")
 	return PietyRules.tier(GameState.get_stat(&"piety"), PietyRules._cfg(null))
+
+
+func _life() -> NpcLife:
+	return _system(&"npc_life") as NpcLife
 
 
 func _system(group: StringName) -> Node:

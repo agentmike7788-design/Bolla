@@ -22,6 +22,10 @@ const PROMPT_TALK := "[E] Mit %s reden"
 const ANIM_WALK := &"walk"
 const ANIM_PUSH := &"push_cart"
 const ANIM_IDLE := &"idle"
+## Phase 8 (§2.1.1, §2.1.2): a „bedrückt" figure stands with its head down; chatter partners talk.
+const ANIM_IDLE_LOW := &"idle_low"
+const ANIM_TALK := &"talk"
+const ANIM_LOW_MOOD := &"low"
 const FLAG_DELIVERY_SKIPPED := &"delivery_skipped"
 const CART_SLOT := "slot_corpse"
 ## Below this (m) a path segment has no direction.
@@ -117,6 +121,11 @@ var _current_anim: StringName = &""
 var _props: Array = []
 var lod_interval_override: float = 0.0
 var _culled: bool = false
+## ChatterRunner: the figure turns to its partner and talks (null = none).
+var _chatter_target: Node3D
+## Mood cache (NpcLife.mood is derived; asked once per game hour): [hour key, low].
+var _mood_key: int = -1
+var _mood_low: bool = false
 
 
 func _init() -> void:
@@ -270,11 +279,17 @@ func lod() -> int:
 
 ## Phase 8 (docs/PHASE8_DESIGN.md §3.4, P1): a runtime schedule (ScheduleBuilder – visits, the apprentice,
 ## festivals, the robber) replaces the data schedule until clear_runtime_schedule(); not saved (the owner
-## rebuilds it from its plan + the clock after a load). null = clear_runtime_schedule().
+## rebuilds it from its plan + the clock after a load). null = clear_runtime_schedule(). Entries without a
+## region take this Npc's region (ScheduleBuilder.stay has none).
 func set_runtime_schedule(s: NpcSchedule) -> void:
 	if s == null:
 		clear_runtime_schedule()
 		return
+	# ScheduleBuilder.stay knows no region: entries without one belong to this Npc's region.
+	if region_id != RegionRoot.GRAVEYARD:
+		for e: ScheduleEntry in s.entries:
+			if e != null and e.region == &"":
+				e.region = region_id
 	_runtime = s
 	_after_schedule_change()
 
@@ -316,6 +331,17 @@ func set_culled(on: bool) -> void:
 
 func is_culled() -> bool:
 	return _culled
+
+
+## Phase 8 (§2.1.2, ChatterRunner): while set (and standing) the figure turns to `target` and plays talk.
+func set_chatter_target(target: Node3D) -> void:
+	_chatter_target = target
+	if is_node_ready():
+		refresh()
+
+
+func chatter_target() -> Node3D:
+	return _chatter_target if is_instance_valid(_chatter_target) else null
 
 
 ## Whether the gravekeeper is in this Npc's region (Player.region_id; graveyard without a player).
@@ -396,6 +422,11 @@ func _update(delta: float) -> void:
 	elif not is_walking():
 		heading = _pose.waypoint_yaw(entry, heading)
 	var look := _pose.look_yaw(heading, not is_walking() and _talkable)
+	var partner := chatter_target()
+	if partner != null and not is_walking():
+		var to := _flat(partner.global_position - global_position)
+		if to.length_squared() > EPSILON:
+			look = wrapf(atan2(to.x, to.z) - heading, -PI, PI)
 	if delta < 0.0:
 		_heading = heading
 		_look = look
@@ -439,6 +470,10 @@ func _update_animation() -> void:
 	if is_walking():
 		wanted = ANIM_PUSH if entry.with_cart else ANIM_WALK
 		designed = push_anim_speed if entry.with_cart else walk_anim_speed
+	elif chatter_target() != null:
+		wanted = ANIM_TALK
+	elif wanted == ANIM_IDLE and _is_low():
+		wanted = ANIM_IDLE_LOW
 	if wanted != _current_anim or not _props.is_empty():
 		_current_anim = wanted
 		_apply_props()
@@ -454,6 +489,19 @@ func _update_animation() -> void:
 	if _anim.current_animation != wanted or not _anim.is_playing():
 		_anim.play(wanted, anim_blend)
 	_anim.speed_scale = ground_speed() / designed if designed > 0.0 else 1.0
+
+
+## NpcLife says „bedrückt" (only while the mood effects apply; asked once per game hour).
+func _is_low() -> bool:
+	if npc_id == &"" or not is_inside_tree():
+		return false
+	var key := floori(TimeManager.total_minutes() / 60.0)
+	if key != _mood_key:
+		_mood_key = key
+		var life := get_tree().get_first_node_in_group(&"npc_life")
+		_mood_low = life != null and life.has_method(&"moods_active") and bool(life.call(&"moods_active")) \
+				and StringName(str(life.call(&"mood", npc_id))) == ANIM_LOW_MOOD
+	return _mood_low
 
 
 func _pause_animation() -> void:

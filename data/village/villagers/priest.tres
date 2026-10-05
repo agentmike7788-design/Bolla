@@ -16,13 +16,30 @@ specimen_delta = -4
 returned_delta = 1
 piety_sensitive = true
 remarks = Dictionary[StringName, PackedStringArray]({
-&"rep_disreputable": PackedStringArray("Grüß Gott, Totengräber. Ich bete für alle. Auch für Sie. Vor allem."),
-&"rep_unremarkable": PackedStringArray("Grüß Gott! Ein schöner Tag. Oder ein gewöhnlicher. Beides ist ein Geschenk."),
-&"rep_respected": PackedStringArray("Grüß Gott, Totengräber! Ich habe am Sonntag von Ihnen gesprochen. Nicht namentlich."),
-&"rep_esteemed": PackedStringArray("Ah, der Totengräber! Die Gemeinde spricht gut von Ihnen. Ich auch, aber länger."),
-&"rep_renowned": PackedStringArray("Mein lieber Totengräber! Wenn Sie wüssten, wie oft Ihr Name in meinen Gebeten vorkommt."),
+&"event_apprentice_hired": PackedStringArray("Ein Junge auf dem Hügel. Gut. Die Toten sollen nicht nur Alte um sich haben."),
+&"event_grave_disturbed": PackedStringArray("Ein aufgewühltes Grab ist eine Wunde, Totengräber. Schließ sie."),
+&"event_lights_all": PackedStringArray("Kein Grab ohne Licht. Das hatten wir noch nie."),
+&"event_noise_at_grave": PackedStringArray("Man sagt, du hast gehackt, während der Brandt gebetet hat. Hack ein andermal."),
+&"event_robber_reported": PackedStringArray("Ich bete für den Grell. Das muss einer tun."),
+&"friend": PackedStringArray("Kommen Sie doch einmal am Abend in den Holderkrug. Ich lade Sie ein. Rosine wird es mir nicht glauben."),
 &"piety_devout": PackedStringArray("Sie gehen leise, Totengräber. Wie einer, der nichts wecken will."),
 &"piety_hardhearted": PackedStringArray("Totengräber. Ich bete. Sie müssen nichts sagen. Ich bete einfach."),
-&"friend": PackedStringArray("Kommen Sie doch einmal am Abend in den Holderkrug. Ich lade Sie ein. Rosine wird es mir nicht glauben."),
+&"rep_disreputable": PackedStringArray("Grüß Gott, Totengräber. Ich bete für alle. Auch für Sie. Vor allem."),
+&"rep_esteemed": PackedStringArray("Ah, der Totengräber! Die Gemeinde spricht gut von Ihnen. Ich auch, aber länger."),
+&"rep_renowned": PackedStringArray("Mein lieber Totengräber! Wenn Sie wüssten, wie oft Ihr Name in meinen Gebeten vorkommt."),
+&"rep_respected": PackedStringArray("Grüß Gott, Totengräber! Ich habe am Sonntag von Ihnen gesprochen. Nicht namentlich."),
+&"rep_unremarkable": PackedStringArray("Grüß Gott! Ein schöner Tag. Oder ein gewöhnlicher. Beides ist ein Geschenk."),
 &"specimens": PackedStringArray("Quast hat wieder Post vom Hügel, sagt man. Ich sage nichts. Ich bete nur länger.")
 })
+circle = Array[StringName]([])
+mood_lines = Dictionary[StringName, PackedStringArray]({
+&"cheerful": PackedStringArray("Ein guter Tag für die Lebenden, Totengräber.", "Heute singt sogar der Küster richtig."),
+&"cross": PackedStringArray("Heute nicht, Totengräber. Morgen.", "Was man über dich sagt, gefällt mir nicht."),
+&"low": PackedStringArray("Ich war die Nacht auf. Frag nicht, wo.", "Manche Tage sind länger als das Sterbebuch."),
+&"plain": PackedStringArray("Gott zum Gruß, Totengräber.", "Die Toten ruhen. Wir arbeiten.")
+})
+story_id = &"priest"
+favor_id = &"fav_priest"
+visit_grave = ""
+visit_every_days = 0
+graveyard_npc = &"npc_priest"

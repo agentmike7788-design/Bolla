@@ -16,13 +16,29 @@ specimen_delta = 2
 returned_delta = 0
 piety_sensitive = false
 remarks = Dictionary[StringName, PackedStringArray]({
-&"rep_disreputable": PackedStringArray("Totengräber. Man redet über Sie. Über mich auch. Wir sollten uns setzen."),
-&"rep_unremarkable": PackedStringArray("Guten Tag. Waschen Sie sich die Hände, bevor Sie essen."),
-&"rep_respected": PackedStringArray("Totengräber. Sie haben ruhige Hände, sagt man. Das ist selten."),
-&"rep_esteemed": PackedStringArray("Man spricht in der Stadt von Ihrer Arbeit. Nicht laut."),
-&"rep_renowned": PackedStringArray("Totengräber. Die Toten lehren die Lebenden. Bei Ihnen lernen sie Anstand."),
+&"event_apprentice_hired": PackedStringArray("Der Junge hatte Fieber, und jetzt harkt er. So schnell geht das manchmal. Meistens nicht."),
+&"event_grave_disturbed": PackedStringArray("Wer nachts gräbt, sucht selten Erde."),
+&"event_lights_all": PackedStringArray("Ich hab es von der Brücke gesehen. Hinauf geh ich nicht. Aber gesehen hab ich es."),
+&"event_robber_reported": PackedStringArray("Grell ist fort. Der Hügel schläft wieder. Ich vielleicht auch."),
+&"friend": PackedStringArray("Kommen Sie heute Abend auf ein Glas. Branntwein, aber der zum Trinken."),
 &"piety_devout": PackedStringArray("Sie riechen nach Wacholder und Wachs. Die Ihren haben es gut."),
 &"piety_hardhearted": PackedStringArray("Sie sind zügig geworden, Totengräber. Ich sage es ohne Vorwurf."),
-&"friend": PackedStringArray("Kommen Sie heute Abend auf ein Glas. Branntwein, aber der zum Trinken."),
+&"rep_disreputable": PackedStringArray("Totengräber. Man redet über Sie. Über mich auch. Wir sollten uns setzen."),
+&"rep_esteemed": PackedStringArray("Man spricht in der Stadt von Ihrer Arbeit. Nicht laut."),
+&"rep_renowned": PackedStringArray("Totengräber. Die Toten lehren die Lebenden. Bei Ihnen lernen sie Anstand."),
+&"rep_respected": PackedStringArray("Totengräber. Sie haben ruhige Hände, sagt man. Das ist selten."),
+&"rep_unremarkable": PackedStringArray("Guten Tag. Waschen Sie sich die Hände, bevor Sie essen."),
 &"specimens": PackedStringArray("Die Universität fragt nach Ihnen. Ich sage, Sie seien zuverlässig. Das stimmt.")
 })
+circle = Array[StringName]([])
+mood_lines = Dictionary[StringName, PackedStringArray]({
+&"cheerful": PackedStringArray("Heute ist keiner gestorben. Ich zähle das.", "Sie kommen mir gelegen, Totengräber."),
+&"cross": PackedStringArray("Heute nicht, Totengräber. Morgen.", "Ich habe keine Zeit für Höflichkeiten."),
+&"low": PackedStringArray("Ich habe heute Nacht nicht geschlafen. Das sieht man, ich weiß.", "Es gibt Fenster, an denen ich nicht vorbeigehen kann."),
+&"plain": PackedStringArray("Totengräber. Sie sehen gesund aus. Leider.", "Was führt Sie her? Ein Wehwehchen?")
+})
+story_id = &"surgeon"
+favor_id = &"fav_surgeon"
+visit_grave = ""
+visit_every_days = 0
+graveyard_npc = &""
