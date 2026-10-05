@@ -222,7 +222,8 @@ func test_real_config_matches_the_fixture() -> void:
 	assert_not_null(real)
 	# Phase 6 (§2.7): the data follows the Phase-6 fixture (Phase 4 + full_prep rule + service, devotion, reinterred).
 	# Phase 7 (P4, §2.11): + organ_taken, lecture_attended, specimen_returned(_grave) – the Phase-7 fixture.
-	var expected := Phase7Fixtures.piety_config()
+	# Phase 8 W0 (§2.11): + alms, listen, robber_let_go, lights_all – the Phase-8 fixture.
+	var expected := Phase8Fixtures.piety_config()
 	for prop: Dictionary in PietyConfig.new().get_property_list():
 		if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
 			assert_eq(real.get(prop.name), expected.get(prop.name), String(prop.name))

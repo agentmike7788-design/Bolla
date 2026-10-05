@@ -375,7 +375,8 @@ func test_extended_data_classes() -> void:
 ## Properties changed in the data (and the class default together) after the W0 hand-over; the fixtures keep the
 ## W0 values (W0-Notizen 5). G7 Runde 2: B7-1 the reputation start bonus 0/2/4/6/8 (nobody starts above „Bekannt"),
 ## B7-2 Quast's prices for heart / eyes / hand +2 (9 / 11 / 12).
-const DATA_CHANGED_AFTER_W0 := {&"relationship_config": [&"rep_start_bonus"], &"anatomy_config": [&"organs"]}
+## Phase 8 W0: relationship gains + 13 (§2.11; class default and data together).
+const DATA_CHANGED_AFTER_W0 := {&"relationship_config": [&"rep_start_bonus", &"gains"], &"anatomy_config": [&"organs"]}
 
 
 func test_config_files_in_data_match_the_fixtures() -> void:

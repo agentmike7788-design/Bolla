@@ -143,7 +143,8 @@ func test_real_config_matches_the_phase4_fixture() -> void:
 	# Phase 5 (§2.7): + event master_stone – the Phase-5 fixture is the Phase-4 one plus that event.
 	# Phase 6 (§2.7): + event reinterred – the Phase-6 fixture is the Phase-5 one plus that event.
 	# Phase 7 (P4, §2.11): + organ_taken, organ_taken_grave, lecture_rumor, donation, order_failed.
-	var phase4 := Phase7Fixtures.reputation_config()
+	# Phase 8 W0 (§2.11): + visit_*, wish_done, robber_reported, lights_all, lights_some, fenner_watch.
+	var phase4 := Phase8Fixtures.reputation_config()
 	for prop: Dictionary in ReputationConfig.new().get_property_list():
 		if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
 			assert_eq(real.get(prop.name), phase4.get(prop.name), String(prop.name))

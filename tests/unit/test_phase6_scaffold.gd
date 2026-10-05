@@ -105,7 +105,7 @@ const EXISTING_ARITY := [
 	["res://src/systems/corpse/corpse_manager.gd", "relocate_table_corpse", 3],
 	["res://src/systems/corpse/corpse_manager.gd", "mark_service", 2],
 	["res://src/systems/graveyard/graveyard.gd", "lift_old", 1],
-	["res://src/systems/ghosts/ghost_mood.gd", "score", 7],
+	["res://src/systems/ghosts/ghost_mood.gd", "score", 8],  # Phase 8 W0: + care
 	["res://src/entities/player/player.gd", "set_in_interior", 2],
 	["res://src/world/hut_interior/hut_portal.gd", "travel", 5],
 	["res://src/world/hut_interior/hut_portal.gd", "arrive", 4],
