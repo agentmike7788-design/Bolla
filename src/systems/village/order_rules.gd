@@ -97,10 +97,11 @@ static func friend_block_reason(order: OrderData, state: Dictionary, active: int
 	return ""
 
 
-## Phase 8: items the giver hands over on acceptance (conditions.gives {item: n}).
-static func gives(order: OrderData) -> Dictionary[StringName, int]:
+## Phase 8: items the giver hands over on acceptance (conditions.gives {item: n}); with `key`
+## "reward_items" the present on completion.
+static func gives(order: OrderData, field: String = "gives") -> Dictionary[StringName, int]:
 	var out: Dictionary[StringName, int] = {}
-	var raw: Variant = order.conditions.get("gives") if order != null else null
+	var raw: Variant = order.conditions.get(field) if order != null else null
 	if raw is Dictionary:
 		for key: Variant in raw:
 			var n := int((raw as Dictionary)[key]) if ((raw as Dictionary)[key] is int or (raw as Dictionary)[key] is float) else 0

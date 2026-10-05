@@ -10,14 +10,18 @@ recipient = &""
 kind = &"deliver"
 title = "Ein Gitter für die Frischen"
 request_text = "In der Stadt haben sie Gitter über den frischen Gräbern. Ich kann das auch. Bring mir Eisen und Kohle."
-thanks_text = "Danke, Totengräber."
+thanks_text = "Esch wiegt das Eisen in der Hand. „Gut. Das erste Gitter kriegst du so. Die andern kosten.“"
 items = Dictionary[StringName, int]({
 &"charcoal": 2,
 &"iron_bar": 4
 })
 coins = 0
 target = ""
-conditions = {}
+conditions = {
+"reward_items": {
+&"mortsafe": 1
+}
+}
 days_limit = 0
 requires_flag = &"robber_known"
 requires_orders = Array[StringName]([])

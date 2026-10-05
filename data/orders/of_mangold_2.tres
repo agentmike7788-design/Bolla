@@ -10,7 +10,7 @@ recipient = &""
 kind = &"deliver"
 title = "Das Anschreibebuch"
 request_text = "Im Buch der Mutter stehen noch Schulden von Toten. Schreib mir ab, wer davon oben liegt."
-thanks_text = "Danke, Totengräber."
+thanks_text = "Theres faltet die Abschrift zweimal. „Dann weiß ich jetzt, wem ich nichts mehr schulde.“"
 items = Dictionary[StringName, int]({
 &"register_extract": 1
 })

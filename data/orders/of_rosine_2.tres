@@ -10,7 +10,7 @@ recipient = &"priest"
 kind = &"deliver"
 title = "Konrads Name"
 request_text = "Konrad hat kein Grab. Das Wasser hat ihn behalten. Mach ihm eine Tafel mit seinem Namen, und bring sie dem Pfarrer."
-thanks_text = "Danke, Totengräber."
+thanks_text = "Rosine steht lange vor der Tafel. „Konrad Wackernagel. So hat ihn keiner mehr gesagt, seit dem Winter.“"
 items = Dictionary[StringName, int]({
 &"memorial_plate": 1
 })

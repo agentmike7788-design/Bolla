@@ -10,7 +10,7 @@ recipient = &""
 kind = &"deliver"
 title = "Weingeist"
 request_text = "Eine Flasche Weingeist. Fragen Sie nicht."
-thanks_text = "Danke, Totengräber."
+thanks_text = "Quast stellt die Flasche weg, ohne sie anzusehen. „Danke. Fragen Sie nicht.“"
 items = Dictionary[StringName, int]({
 &"spirits": 1
 })

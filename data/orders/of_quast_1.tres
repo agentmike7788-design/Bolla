@@ -10,7 +10,7 @@ recipient = &""
 kind = &"deliver"
 title = "Unter Kollegen"
 request_text = "Die Wöchnerin bei den Siebers braucht Wundsalbe. Zwei Tiegel. Sie können das, hört man."
-thanks_text = "Danke, Totengräber."
+thanks_text = "Quast prüft die Salbe am Handrücken. „Sauber gerührt. Die Wöchnerin wird es nicht wissen, aber ich.“"
 items = Dictionary[StringName, int]({
 &"wound_salve": 2
 })

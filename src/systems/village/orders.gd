@@ -406,6 +406,13 @@ func complete(order_id: StringName) -> void:
 		var flag := StringName(str(o.conditions.get("gives_flag", "")))
 		if flag != &"":
 			GameState.set_flag(flag, true)
+		# A small thing in return (Esch 2: the first mortsafe as a present, §2.4).
+		var presents := OrderRules.gives(o, "reward_items")
+		if not presents.is_empty():
+			var inv := _pay_into if _pay_into != null else _player_inventory()
+			if inv != null:
+				for item: StringName in presents:
+					inv.add_item(item, presents[item])
 		EventBus.order_changed.emit(order_id, STATE_COMPLETED)
 		if o.thanks_text != "":
 			EventBus.notification_requested.emit(o.thanks_text, &"reward")

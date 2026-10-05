@@ -10,7 +10,7 @@ recipient = &""
 kind = &"deliver"
 title = "Kräuter für den Laden"
 request_text = "Acht Bund Kräuter. Die Stadt will sie."
-thanks_text = "Danke, Totengräber."
+thanks_text = "„Kräuter. Die Stadt zahlt dafür mehr als für meine.“"
 items = Dictionary[StringName, int]({
 &"herbs": 8
 })

@@ -10,7 +10,7 @@ recipient = &""
 kind = &"deliver"
 title = "Werkstein für den Amboss"
 request_text = "Zwei Werksteine. Der Amboss braucht ein neues Bett."
-thanks_text = "Danke, Totengräber."
+thanks_text = "„Werkstein. Der Amboss wird's dir danken. Ich auch.“"
 items = Dictionary[StringName, int]({
 &"workstone": 2
 })

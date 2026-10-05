@@ -10,7 +10,7 @@ recipient = &""
 kind = &"deliver"
 title = "Die Beine"
 request_text = "Die Wassersucht wird schlimmer. Einen Wacholderumschlag, wenn du hast. Diskret."
-thanks_text = "Danke, Totengräber."
+thanks_text = "Fenner nimmt den Umschlag, ohne etwas zu sagen, und steckt ihn in die Rocktasche. „Danke. Und – unter uns.“"
 items = Dictionary[StringName, int]({
 &"juniper": 2,
 &"linen": 1

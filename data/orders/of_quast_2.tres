@@ -10,7 +10,7 @@ recipient = &"carter"
 kind = &"deliver"
 title = "Die Kiste für die Stadt"
 request_text = "Diese Kiste muss morgen früh mit Faulhaber in die Stadt. Bis zwanzig vor acht an seinem Karren."
-thanks_text = "Danke, Totengräber."
+thanks_text = "Osric hebt die Kiste auf den Karren und fragt nichts. Quast wird es erfahren."
 items = Dictionary[StringName, int]({
 &"quast_crate": 1
 })

@@ -276,12 +276,14 @@ func test_step_conditions_from_the_dialogue_syntax() -> void:
 	assert_eq(friendship.offerable_step(&"smith"), 0, "Esch 2 needs robber_known")
 	GameState.set_flag(&"robber_known", true)
 	assert_eq(friendship.offerable_step(&"smith"), 2)
+	orders.order_table[&"of_esch_2"] = Database.order_data(&"of_esch_2") as OrderData
 	assert_true(friendship.accept_step(&"smith"))
 	_inv().add_item(&"iron_bar", 4)
 	_inv().add_item(&"charcoal", 2)
 	assert_true(orders.turn_in(&"of_esch_2", _inv()))
 	assert_eq(friendship.step_done(&"smith"), 2)
 	assert_true(GameState.flag_on(&"friend_smith_2"), "the shop price 8 reads it")
+	assert_eq(_inv().count(&"mortsafe"), 1, "§2.4: the first mortsafe is a present")
 
 
 func test_friend_orders_count_apart() -> void:

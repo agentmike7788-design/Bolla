@@ -10,7 +10,7 @@ recipient = &""
 kind = &"deliver"
 title = "Die Namen im Buch"
 request_text = "Ich brauche Namen und Tage der Toten im Lindenacker fürs Sterbebuch. Schreib sie mir ab."
-thanks_text = "Danke, Totengräber."
+thanks_text = "Lenz trägt die Namen ein, ohne aufzusehen. „Tinte ist Tinte, Totengräber. Manchmal ist sie eben früher da.“"
 items = Dictionary[StringName, int]({
 &"register_extract": 1
 })
