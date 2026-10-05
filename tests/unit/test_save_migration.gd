@@ -13,6 +13,9 @@ extends TestCase
 ## interior_id from in_interior, the new record fields, the table corpse stays on the old table,
 ## empty Phase-6 nodes, new stats 0, nothing else changed), the chain from v1/v2/v3, the v5 round
 ## trip, version 6 rejected and the absent Phase-6 nodes dropped at runtime.
+## Phase 8 (docs/PHASE8_DESIGN.md §5.2): v6 → v7 on the six Phase-7 fixtures (tests/fixtures/saves_v6/:
+## kin_house = the Phase-7 mourning ribbon of the Lindenacker dead, the grave fields, empty Phase-8 nodes,
+## new stats 0, nothing else changed), the chain from v1…v5, the v7 round trip, version 8 rejected.
 
 ## Per-process save folder (TestCase.user_dir): parallel runs share user:// (flaky slots).
 var TEST_DIR := TestCase.user_dir("test_save_migration")
@@ -181,8 +184,10 @@ func test_new_nodes_get_empty_states() -> void:
 			assert_eq(s.nodes.get(id), {}, "%s: %s (chain → v5)" % [name, id])
 		for id: String in SaveMigration.V6_EMPTY_NODES:
 			assert_eq(s.nodes.get(id), {}, "%s: %s (chain → v6)" % [name, id])
+		for id: String in SaveMigration.V7_EMPTY_NODES:
+			assert_eq(s.nodes.get(id), {}, "%s: %s (chain → v7)" % [name, id])
 		assert_eq(s.nodes.size(), V1_NODES.size() + NEW_NODES.size() + V3_NODES.size() + SaveMigration.V4_EMPTY_NODES.size()
-				+ SaveMigration.V5_EMPTY_NODES.size() + SaveMigration.V6_EMPTY_NODES.size(), name)
+				+ SaveMigration.V5_EMPTY_NODES.size() + SaveMigration.V6_EMPTY_NODES.size() + SaveMigration.V7_EMPTY_NODES.size(), name)
 
 
 func test_new_plots_stay_absent() -> void:
@@ -1009,7 +1014,8 @@ func test_read_doc_migrates_every_v5_fixture() -> void:
 		var read := _read_slot()
 		assert_eq(read.err, OK, name)
 		var f := _fixture_v5(name)
-		assert_eq(read.state, SaveMigration.migrate_5_to_6(f.state, f.meta), "%s: read_doc applies 5 → 6" % name)
+		assert_eq(read.state, SaveMigration.migrate(f.state, 5, f.meta), "%s: read_doc applies 5 → 6 → 7" % name)
+		assert_eq(read.state, SaveMigration.migrate_6_to_7(SaveMigration.migrate_5_to_6(f.state, f.meta), f.meta), name + ": chain")
 
 
 func test_v6_doc_round_trip() -> void:
@@ -1023,7 +1029,7 @@ func test_v6_doc_round_trip() -> void:
 	var read := _read_slot()
 	assert_eq(read.err, OK)
 	assert_eq(read.state, v6, "v6 → file → v6 identical (no migration)")
-	assert_eq(SaveMigration.migrate(v6, 6), v6, "Phase 8 W0: migrate_6_to_7 is the identity")
+	assert_eq(SaveMigration.migrate(v6, 6), SaveMigration.migrate_6_to_7(v6, f.meta), "Phase 8: 6 → 7")
 	assert_eq(SaveMigration.migrate(v6, SaveMigration.CURRENT + 1), {}, "a newer version → refused")
 	var nodes := {"village": {}, "orders": {}, "lectures": {}, "player": {}}
 	var out := SaveManager.without_absent_defaults(tree, nodes)
@@ -1031,3 +1037,215 @@ func test_v6_doc_round_trip() -> void:
 		assert_false(out.has(id), "%s: an empty migrated state of an absent node is dropped" % id)
 	var kept := SaveManager.without_absent_defaults(tree, {"village": {"open_day": 3}})
 	assert_true(kept.has("village"), "a real state is kept")
+
+
+# --- Phase 8: v6 → v7 (docs/PHASE8_DESIGN.md §5.2, P6) --------------------------------------------
+
+const V7_RECORD_KEYS: PackedStringArray = ["kin_house"]
+
+
+func _fixture_v6(name: String) -> Dictionary:
+	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(Phase8Fixtures.save_v6_path(name)))
+	return {"meta": doc.meta, "state": SaveFileIO.decode_state(doc.data)}
+
+
+## The Phase-7 ribbon rule for one record (Village.mourning_house: the newest unburied corpse delivered
+## since village_open_day, houses[posmod(hash([arrived, seed]), n)] without the Hagedorn cottage).
+func _ribbon_of(r: Dictionary, open_day: int) -> String:
+	var houses := PackedStringArray()
+	for h: String in (Database.config(&"village_config") as VillageConfig).mourning_houses:
+		if h != "cottage_hagedorn":
+			houses.append(h)
+	var arrived := floori(float(r.arrival_total_minutes) / 1440.0) + 1
+	if arrived < open_day or str(r.get("story_id", "")) != "" or not str(r.get("grave_id", "")).begins_with("l_"):
+		return ""
+	return houses[posmod(hash([arrived, int(r.seed)]), houses.size())]
+
+
+func test_v6_fixtures_migrate_to_v7() -> void:
+	assert_eq(Phase8Fixtures.SAVES_V6.size(), 6, "§5.2: six v6 fixtures")
+	for name: String in Phase8Fixtures.SAVES_V6:
+		var f := _fixture_v6(name)
+		var before: Dictionary = f.state
+		assert_false(before.is_empty(), name + " decodes")
+		var s := SaveMigration.migrate_6_to_7(before, f.meta)
+		assert_false(is_same(s, before), "deep copy")
+		var open_day := int(_game_state(before).flags.get(&"village_open_day", 0))
+		# 1. kin_house on every record (= the Phase-7 ribbon for the Lindenacker dead); nothing else changes.
+		var old_records: Array = _corpses(before)
+		var new_records: Array = _corpses(s)
+		assert_eq(new_records.size(), old_records.size(), name + ": records")
+		var with_kin := 0
+		for i: int in new_records.size():
+			var r: Dictionary = (new_records[i] as Dictionary).duplicate()
+			assert_true(r.get("kin_house") is String, "%s: %s kin_house" % [name, r.id])
+			assert_eq(r.kin_house, _ribbon_of(old_records[i], open_day), "%s: %s kin_house = Phase-7 ribbon" % [name, r.id])
+			if r.kin_house != "":
+				with_kin += 1
+				assert_true(str(r.grave_id).begins_with("l_"), "%s: only Lindenacker dead" % name)
+			for key: String in V7_RECORD_KEYS:
+				if not (old_records[i] as Dictionary).has(key):
+					r.erase(key)
+			assert_eq(r, old_records[i], "%s: record %s otherwise unchanged" % [name, r.id])
+		if name in ["slot_p7_day53_neighbor", "slot_p7_day53_anatomist", "slot_p7_founder"]:
+			assert_eq(with_kin, 7, name + ": seven Lindenacker dead with kin (D1 is a story corpse)")
+		# 2. graves + disturbed / extra_lines, l_09…l_12 absent.
+		var old_graves: Array = before.nodes.graveyard.graves
+		var new_graves: Array = s.nodes.graveyard.graves
+		assert_eq(new_graves.size(), old_graves.size(), name + ": graves")
+		for i: int in new_graves.size():
+			var g: Dictionary = (new_graves[i] as Dictionary).duplicate()
+			assert_eq([g.disturbed, g.extra_lines], [false, []], "%s: %s Phase-8 defaults" % [name, g.id])
+			assert_false(str(g.id) in ["l_09", "l_10", "l_11", "l_12"], name + ": row 3 stays absent")
+			g.erase("disturbed")
+			g.erase("extra_lines")
+			assert_eq(g, old_graves[i], "%s: grave %s otherwise unchanged" % [name, g.id])
+		# 3. empty Phase-8 nodes; 4. stats 0, no flags.
+		for id: String in SaveMigration.V7_EMPTY_NODES:
+			assert_eq(s.nodes.get(id), {}, "%s: empty %s" % [name, id])
+		var stats: Dictionary = _game_state(s).stats
+		for key: StringName in SaveMigration.V7_NEW_STATS:
+			assert_eq(stats.get(key), 0, "%s: stat %s" % [name, key])
+		for key: Variant in _game_state(before).stats:
+			assert_eq(stats[key], _game_state(before).stats[key], "%s: stat %s kept" % [name, key])
+		assert_eq(_game_state(s).flags, _game_state(before).flags, name + ": no new flags (p8_open comes from NpcLife)")
+		assert_false(_game_state(s).flags.has(&"p8_open"), name + ": p8_open not set by the migration")
+		assert_eq(s.autoloads.TimeManager, before.autoloads.TimeManager, name + ": time")
+		# 5. player, orders, specimens … unchanged.
+		for id: Variant in before.nodes:
+			if not str(id) in ["corpse_manager", "graveyard"]:
+				assert_eq(s.nodes[id], before.nodes[id], "%s: %s unchanged" % [name, id])
+		assert_eq(s.nodes.size(), before.nodes.size() + SaveMigration.V7_EMPTY_NODES.size(), name + ": only the new nodes added")
+		assert_eq(SaveMigration.migrate_6_to_7(s, f.meta), s, name + ": idempotent on its own output")
+
+
+func test_kin_house_is_the_phase7_ribbon() -> void:
+	# Village.mourning_house_for = the formula of Village.mourning_house (Phase 7), extracted (§5.2 step 1).
+	var houses := PackedStringArray(["house_kehr", "house_brandt", "house_ott", "house_sieber", "cottage_dorn"])
+	for day: int in range(40, 70):
+		for seed: int in [0, 7, 332615, 388048]:
+			assert_eq(Village.mourning_house_for(day, seed, houses), StringName(houses[posmod(hash([day, seed]), houses.size())]))
+	assert_eq(Village.mourning_house_for(50, 1, PackedStringArray()), &"")
+	assert_eq(SaveMigration.ribbon_houses(), houses, "VillageConfig.mourning_houses without the Hagedorn cottage")
+	# The live ribbon: one unburied record delivered after the opening hangs at the same house.
+	var village := Village.new()
+	var manager := FakeCorpses.new()
+	tree.root.add_child(manager)
+	tree.root.add_child(village)
+	GameState.set_flag(&"village_open", true)
+	GameState.set_flag(&"village_open_day", 40)
+	var record := CorpseRecord.new()
+	record.id = "corpse_0099"
+	record.seed = 340534
+	record.arrival_total_minutes = (43 - 1) * 1440 + 460
+	record.location = CorpseRecord.LOCATION_DROPOFF
+	manager.list.append(record)
+	var live: StringName = village.mourning_house(43)
+	assert_ne(live, &"", "the ribbon hangs")
+	var d := record.to_dict()
+	d["grave_id"] = "l_02"
+	d.erase("kin_house")
+	assert_eq(SaveMigration.kin_house_v6(d, 40, SaveMigration.ribbon_houses()), live, "migration = live Phase-7 ribbon")
+	village.free()
+	manager.free()
+
+
+func test_v6_to_v7_is_tolerant() -> void:
+	var houses := SaveMigration.ribbon_houses()
+	assert_eq(SaveMigration.kin_house_v6({}, 40, houses), &"", "empty record")
+	assert_eq(SaveMigration.kin_house_v6({"grave_id": "l_01", "arrival_total_minutes": "x", "seed": 1}, 40, houses), &"")
+	assert_eq(SaveMigration.kin_house_v6({"grave_id": "l_01", "arrival_total_minutes": 100.0, "seed": 1}, 40, houses), &"",
+			"arrived before the opening")
+	assert_eq(SaveMigration.kin_house_v6({"grave_id": "old_03", "arrival_total_minutes": 60 * 1440, "seed": 1}, 40, houses), &"",
+			"not in the Lindenacker")
+	assert_eq(SaveMigration.kin_house_v6({"grave_id": "l_07", "story_id": "d1_hagedorn", "arrival_total_minutes": 60 * 1440,
+			"seed": 1}, 40, houses), &"", "story corpse")
+	assert_eq(SaveMigration.kin_house_v6({"grave_id": "l_01", "arrival_total_minutes": 60 * 1440, "seed": 1}, 0, houses), &"",
+			"village never opened")
+	assert_ne(SaveMigration.kin_house_v6({"grave_id": "l_01", "arrival_total_minutes": 60.0 * 1440, "seed": 1.0}, 40, houses), &"",
+			"JSON floats")
+	var state := {"autoloads": {"GameState": {"flags": {"village_open_day": 40}, "stats": {"burials": 3}}},
+			"nodes": {"corpse_manager": {"corpses": [7, {"id": "c", "grave_id": "l_01", "arrival_total_minutes": 60 * 1440,
+			"seed": 3, "kin_house": "house_ott"}, {"id": "d", "grave_id": "l_02", "arrival_total_minutes": 61 * 1440, "seed": 3}]},
+			"graveyard": {"graves": ["x", {"id": "l_01", "disturbed": true, "extra_lines": ["Ruhe sanft"]}]}}}
+	var out := SaveMigration.migrate_6_to_7(state, {})
+	var corpses: Array = out.nodes.corpse_manager.corpses
+	assert_eq(corpses[0], 7, "garbage kept")
+	assert_eq(corpses[1].kin_house, "house_ott", "an existing kin_house is kept")
+	assert_ne(corpses[2].kin_house, "", "derived")
+	assert_eq(out.nodes.graveyard.graves[1], {"id": "l_01", "disturbed": true, "extra_lines": ["Ruhe sanft"]}, "existing fields kept")
+	assert_eq(out.autoloads.GameState.stats[&"burials"], 3)
+	assert_eq(out.autoloads.GameState.stats[&"wishes_done"], 0)
+	var bare := SaveMigration.migrate_6_to_7({"autoloads": {}, "nodes": {}}, {})
+	for id: String in SaveMigration.V7_EMPTY_NODES:
+		assert_eq(bare.nodes.get(id), {}, id)
+
+
+func test_read_doc_migrates_every_v6_fixture() -> void:
+	for name: String in Phase8Fixtures.SAVES_V6:
+		assert_eq(Phase8Fixtures.install_save_v6(name, TEST_DIR, SLOT), OK)
+		var read := _read_slot()
+		assert_eq(read.err, OK, name)
+		var f := _fixture_v6(name)
+		assert_eq(read.state, SaveMigration.migrate_6_to_7(f.state, f.meta), "%s: read_doc applies 6 → 7" % name)
+
+
+func test_older_fixtures_chain_to_v7() -> void:
+	var cases: Array = []
+	for name: String in Phase7Fixtures.SAVES_V5:
+		var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(Phase7Fixtures.save_v5_path(name)))
+		cases.append([name, 5, doc])
+	for name: String in Phase6Fixtures.SAVES_V4:
+		cases.append([name, 4, JSON.parse_string(FileAccess.get_file_as_string(Phase6Fixtures.save_v4_path(name)))])
+	for name: String in Phase5Fixtures.SAVES_V3:
+		cases.append([name, 3, JSON.parse_string(FileAccess.get_file_as_string(Phase5Fixtures.save_v3_path(name)))])
+	for name: String in Phase4Fixtures.SAVES_V2:
+		cases.append([name, 2, JSON.parse_string(FileAccess.get_file_as_string(Phase4Fixtures.save_v2_path(name)))])
+	for name: String in Phase3Fixtures.SAVES_V1:
+		cases.append([name, 1, JSON.parse_string(FileAccess.get_file_as_string(Phase3Fixtures.save_v1_path(name)))])
+	assert_eq(cases.size(), 7 + 7 + 6 + 4 + 3, "§10: 7 v5, 7 v4, 6 v3, 4 v2, 3 v1 fixtures")
+	for c: Array in cases:
+		var doc: Dictionary = c[2]
+		var state := SaveMigration.migrate(SaveFileIO.decode_state(doc.data), int(c[1]), doc.meta)
+		assert_false(state.is_empty(), "%s: v%d → v7" % [c[0], c[1]])
+		for id: String in SaveMigration.V7_EMPTY_NODES:
+			assert_eq(state.nodes.get(id), {}, "%s: %s" % [c[0], id])
+		for key: StringName in SaveMigration.V7_NEW_STATS:
+			assert_eq(_game_state(state).stats.get(key), 0, "%s: %s" % [c[0], key])
+		for g: Variant in state.nodes.graveyard.get("graves", []):
+			assert_eq([g.disturbed, g.extra_lines], [false, []], "%s: grave %s" % [c[0], g.id])
+		for r: Variant in _corpses(state):
+			assert_eq(r.kin_house, "", "%s: before the village no kin" % c[0])
+
+
+func test_v7_round_trip_is_identical() -> void:
+	for name: String in Phase8Fixtures.SAVES_V6:
+		var f := _fixture_v6(name)
+		var migrated := SaveMigration.migrate_6_to_7(f.state, f.meta)
+		_write_doc(SaveFileIO.make_doc(f.meta, migrated))
+		var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
+		assert_eq(int(doc.format_version), 7, name)
+		var read := _read_slot()
+		assert_eq(read.err, OK, name)
+		assert_eq(read.state, migrated, "%s: v7 file round trip" % name)
+		_write_doc(SaveFileIO.make_doc(read.meta, read.state))
+		assert_eq(_read_slot().state, migrated, "%s: stable" % name)
+
+
+func test_version_eight_is_rejected() -> void:
+	assert_eq(SaveMigration.CURRENT, 7)
+	assert_eq(Phase8Fixtures.install_save_v6("slot_p7_mid_inn", TEST_DIR, SLOT), OK)
+	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
+	doc.format_version = 8
+	_write_doc(doc)
+	assert_eq(_read_slot().err, ERR_FILE_UNRECOGNIZED)
+	assert_true(SaveFileIO.is_newer_version(TEST_DIR, SLOT))
+	assert_eq(SaveMigration.migrate(_fixture_v6("slot_p7_mid_inn").state, 8), {})
+
+
+func test_absent_phase8_nodes_are_dropped_only_when_empty() -> void:
+	var nodes := {"npc_life": {}, "visitors": {"plan_day": 3}, "apprentice_box": {}, "graveyard": {}}
+	var out := SaveManager.without_absent_defaults(tree, nodes)
+	assert_false(out.has("npc_life") or out.has("apprentice_box"), "empty, no such node → dropped")
+	assert_eq(out.get("visitors"), {"plan_day": 3}, "non-empty states stay")
+	assert_eq(out.get("graveyard"), {})
