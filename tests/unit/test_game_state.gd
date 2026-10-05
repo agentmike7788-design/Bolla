@@ -17,7 +17,13 @@ const STAT_KEYS: Array[StringName] = [&"burials", &"valuables_taken", &"reputati
 		&"village_trips", &"orders_done", &"orders_failed", &"gifts_given", &"rounds_bought", &"donations",
 		&"specimens_taken", &"specimens_sold", &"specimens_researched", &"specimens_returned", &"specimens_collected",
 		&"medicines_made", &"lectures_attended", &"deductions", &"university_standing",
-		&"coins_spent_village", &"coins_spent_donation", &"coins_spent_round", &"coins_spent_consecration"]
+		&"coins_spent_village", &"coins_spent_donation", &"coins_spent_round", &"coins_spent_consecration",
+		# Phase 8 (P6, §2.11)
+		&"visits_seen", &"visits_total", &"wishes_done", &"wishes_failed", &"tips_coins", &"flowers_planted", &"candles_lit",
+		&"mortsafes_set", &"graves_disturbed", &"graves_closed", &"apprentice_days", &"apprentice_jobs", &"apprentice_mistakes",
+		&"apprentice_wage", &"friend_steps", &"favors_used", &"favors_returned", &"alms_given", &"chatters_seen", &"listens",
+		&"dances", &"night_visits_observed", &"robber_encounters",
+		&"coins_spent_apprentice", &"coins_spent_alms", &"coins_spent_peddler"]
 
 
 func test_defaults_after_reset() -> void:

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_n_kladde"
+title = "Lorenz' zweite Kladde"
+text = "Zwischen den Kirchenrechnungen von 1831 steckt ein schmales Heft in Lorenz' Hand. Auf der letzten beschriebenen Seite stehen drei Namen: A. Lenz · S. Quast · L. Dorn. Einer ist zweimal unterstrichen. Darunter: ‚Wer kommt, bevor man ruft?'"
+kind = &"page"
+order = 305

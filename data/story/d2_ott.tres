@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StoryCorpseData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/story/story_corpse_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"d2_ott"
+order = 7
+earliest_day = 1
+display_name = "Gerhard Ott"
+age = 74
+cause_id = &"old_age"
+traits = Array[StringName]([&"strange_wound"])
+valuables_coins = 0
+look = 2
+finds = Array[StringName]([&"f_d2_bottle", &"f_d2_wax", &"f_d2_shirt", &"f_d2_mark"])
+arrival_note = "Der alte Ott. Sie haben ihn noch einen Tag im Haus behalten, der Tochter wegen. Liesel war schon da, als ich kam. Sie ist immer schon da."
+is_finale = false
+after_flag = &""
+after_days = 0
+section = &"linden"
+requires_flag = &"p8_open"
+due_flag = &"ott_dead"

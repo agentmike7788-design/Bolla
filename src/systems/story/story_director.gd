@@ -8,6 +8,12 @@ extends RefCounted
 ## village_open_day + 8, only with linden_consecrated). Such a story only reserves a place while it
 ## can come (pending_count), and daily_checks sets its due_flag (hagedorn_dead) at 00:00 of the day it
 ## is due. The only side effect of this class: that flag (GameState), read from the running world.
+## Phase 8 (docs/PHASE8_DESIGN.md §2.9, P6): a story with a due_flag but without an after_flag is due when
+## ANOTHER system sets that flag (D2 Gerhard Ott: NightPaths sets ott_dead at 02:10 of the death night). It
+## comes from the day after the flag's day (a numeric value; a bare true counts from the next delivery) –
+## Osric fetches him the morning after (§1.4 B7, §1.6 "Lieferung an +6"). It reserves a plot from its
+## requires_flag on (p8_open; the Phase-4 reservation rule keeps one place in the third row free), and
+## daily_checks never sets such a flag itself.
 
 const CHECK_ELDER_KEY := &"elder_key"
 ## daily_checks: a story's due_flag was set today.
@@ -38,6 +44,11 @@ static func can_come(story: StoryCorpseData, day: int) -> bool:
 		return false
 	if story.requires_flag != &"" and not GameState.flag_on(story.requires_flag):
 		return false
+	if waits_for_event(story):
+		var at: Variant = GameState.get_flag(story.due_flag)
+		if at is int or at is float:
+			return day > int(at)
+		return GameState.flag_on(story.due_flag)
 	if story.after_flag != &"":
 		var since: Variant = GameState.get_flag(story.after_flag)
 		if not (since is int or since is float):
@@ -47,11 +58,17 @@ static func can_come(story: StoryCorpseData, day: int) -> bool:
 	return true
 
 
-## Phase 7: the due_flags of the story due on `day` (pure; daily_checks sets them).
+## Phase 8: the story's due_flag is set by another system (due_flag without after_flag – D2 ott_dead).
+static func waits_for_event(story: StoryCorpseData) -> bool:
+	return story != null and story.due_flag != &"" and story.after_flag == &""
+
+
+## Phase 7: the due_flags of the story due on `day` (pure; daily_checks sets them). Phase 8: not the flag of
+## a story that waits for another system's event (it is already set when the story is due).
 static func due_flags(day: int, delivered: PackedStringArray, last_story_day: int, stories: Array[StoryCorpseData], cfg: StoryConfig) -> Array[StringName]:
 	var out: Array[StringName] = []
 	var story := due_story(day, delivered, last_story_day, stories, cfg)
-	if story != null and story.due_flag != &"":
+	if story != null and story.due_flag != &"" and not waits_for_event(story):
 		out.append(story.due_flag)
 	return out
 
