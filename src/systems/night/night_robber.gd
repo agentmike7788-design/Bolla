@@ -67,6 +67,8 @@ func _init() -> void:
 
 func _ready() -> void:
 	EventBus.time_tick.connect(_on_time_tick)
+	if _last_total < 0:
+		_last_total = TimeManager.total_minutes()
 
 
 ## Grave id or "" – the target of night `day` (the night after that day; deterministic, saved from 00:00).
@@ -197,7 +199,7 @@ func load_state(data: Dictionary) -> void:
 	_state = s if s in [STATE_NONE, STATE_FLED, STATE_SITTING, STATE_DONE] else STATE_NONE
 	_decided = _int(data.get("decided"), _target_day if _target != "" else -1)
 	_pending_note = str(data.get("pending_note", ""))
-	_last_total = _int(data.get("last_total"), -1)
+	_last_total = _int(data.get("last_total"), TimeManager.total_minutes())
 
 
 # --- internals -----------------------------------------------------------------------------------

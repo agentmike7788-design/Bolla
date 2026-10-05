@@ -36,6 +36,8 @@ func _init() -> void:
 
 func _ready() -> void:
 	EventBus.time_tick.connect(_on_time_tick)
+	if _last_total < 0:
+		_last_total = TimeManager.total_minutes()
 
 
 ## Houses with the sick light in the window at (day, minute) – SickLight, the map (from c_n_veit on), the moods.
