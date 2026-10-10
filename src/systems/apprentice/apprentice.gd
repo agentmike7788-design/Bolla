@@ -615,6 +615,9 @@ func _new_day(day: int) -> void:
 	if _plan_day != day:
 		_plan.clear()
 		_progress = 0
+		# W-Welt (W2, test_phase8_loop): like load_state – a plan of an earlier day is gone, so a day without work
+		# (a festival) saves plan_day 0 before and after a load.
+		_plan_day = 0
 	_teach = &""
 	_watch_point = ""
 	_watch_minute = -1
