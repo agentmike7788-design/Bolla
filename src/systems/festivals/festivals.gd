@@ -284,6 +284,11 @@ func apply_procession() -> void:
 		return
 	var npcs := {}
 	for node: Node in get_tree().get_nodes_in_group(NPC_GROUP):
+		# W3 (QA8-15): the procession walks on the graveyard – the village figures of the same name (npc_priest in
+		# Hollerbrück) keep their own schedule (else Lenz walked „road_end" in the village and not up the hill).
+		var region: Variant = node.get(&"region_id")
+		if region != null and StringName(str(region)) != GRAVEYARD_REGION:
+			continue
 		npcs[StringName(node.name)] = node
 		var id: Variant = node.get(&"npc_id")
 		if id != null and str(id) != "":

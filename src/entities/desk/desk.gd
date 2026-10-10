@@ -72,7 +72,8 @@ func _finish_copy(player: Player) -> void:
 	var inv := player.inventory
 	if inv == null or not inv.remove_item(cfg.line_item, 1):
 		return
-	if not inv.add_item(cfg.extract_item, 1):
+	# add_item answers what did not fit: a full bag keeps the ink.
+	if inv.add_item(cfg.extract_item, 1) > 0:
 		inv.add_item(cfg.line_item, 1)
 
 

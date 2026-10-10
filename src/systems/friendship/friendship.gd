@@ -410,7 +410,9 @@ func _show_wash() -> bool:
 		return false
 	var day := TimeManager.day
 	var due := not _wash.is_empty() and int(_wash.get("day", 0)) == day and not _lights_today()
-	var entries: Array[ScheduleEntry] = _wash_entries() if due else []
+	var entries: Array[ScheduleEntry] = []
+	if due:
+		entries = _wash_entries()
 	if entries.is_empty():
 		if _wash_shown_day != 0 and _wash_shown_day != day:
 			npc.clear_runtime_schedule()
