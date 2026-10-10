@@ -65,9 +65,28 @@ signal_cues = Dictionary[String, String]({
 "notification_requested@1=info": "ui_notify",
 "dialogue_requested": "ui_open",
 "dialogue_ended": "ui_close",
-"game_saved": "quill"
+"game_saved": "quill",
+"chapter_completed@0=who_comes_up": "chapter_who",
+"payment_received@1=Trinkgeld": "",
+"coins_spent@1=alms": "",
+"coins_spent@1=apprentice": "",
+"robber_event@0=caught": "watchman_call",
+"wish_changed@1=accepted": "quill",
+"wish_changed@1=done": "ui_reward",
+"friend_step_completed": "ui_reward",
+"favor_changed@2=returned": "ui_reward",
+"apprentice_level_changed": "ui_notify"
 })
 action_keywords = Dictionary[String, StringName]({
+"grabblumen": &"weed_pull",
+"wachskranz": &"flowers_lay",
+"grabkerze": &"match_strike",
+"grabgitter": &"mortsafe_set",
+"nachmeißeln": &"chisel",
+"wieder schließen": &"dirt_pour",
+"gießkanne": &"barrel_fill",
+"gießen": &"water_pour",
+"archiv": &"quill",
 "grab ausheben": &"dig",
 "altes grab heben": &"dig",
 "bestatten": &"dirt_pour",
@@ -113,8 +132,8 @@ action_keywords = Dictionary[String, StringName]({
 "räumen": &"crate",
 "aufschließen": &"chest_open",
 "reparieren": &"hammer",
-"laub": &"rustle",
-"unkraut": &"rustle",
+"laub": &"rake_leaves",
+"unkraut": &"weed_pull",
 "aussegnung": &"small_bell",
 "andacht": &"small_bell",
 "holen": &"crate",
@@ -136,6 +155,13 @@ action_animation_cues = Dictionary[StringName, StringName]({
 &"work": &"hammer"
 })
 work_intervals = Dictionary[StringName, float]({
+&"barrel_fill": 2.0,
+&"flowers_lay": 1.4,
+&"match_strike": 3.0,
+&"mortsafe_set": 1.6,
+&"rake_leaves": 1.33,
+&"water_pour": 1.33,
+&"weed_pull": 1.2,
 &"anatomy_tool": 2.4,
 &"chisel": 0.55,
 &"chop": 0.85,
@@ -157,6 +183,7 @@ work_intervals = Dictionary[StringName, float]({
 })
 work_interval = 0.9
 panel_open_cues = Dictionary[StringName, StringName]({
+&"apprentice_board": &"chalk_write",
 &"chest": &"chest_open",
 &"day_summary": &"sleep",
 &"grave_register": &"ui_page",

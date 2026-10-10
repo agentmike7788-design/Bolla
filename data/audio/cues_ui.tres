@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=22 format=3]
+[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://src/systems/audio/audio_cue.gd" id="1_cue"]
 [ext_resource type="Script" path="res://src/systems/audio/audio_cue_library.gd" id="2_lib"]
@@ -13,6 +13,9 @@
 [ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_page_3.wav" id="s_ui_page_3"]
 [ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_notify.wav" id="s_ui_notify_1"]
 [ext_resource type="AudioStream" path="res://assets/audio/ui/ph_ui_reward.wav" id="s_ui_reward_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_chalk_write_1.wav" id="s_chalk_write_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_chalk_write_2.wav" id="s_chalk_write_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ui/ph_chalk_write_3.wav" id="s_chalk_write_3"]
 
 [sub_resource type="Resource" id="cue_ui_click"]
 script = ExtResource("1_cue")
@@ -142,7 +145,23 @@ unit_size = 4
 cooldown = 0.4
 max_voices = 2
 
+[sub_resource type="Resource" id="cue_chalk_write"]
+script = ExtResource("1_cue")
+id = &"chalk_write"
+streams = Array[AudioStream]([ExtResource("s_chalk_write_1"), ExtResource("s_chalk_write_2"), ExtResource("s_chalk_write_3")])
+bus = &"UI"
+volume_db = -22.4
+target_lufs = -38
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.2
+max_voices = 2
+
 [resource]
 script = ExtResource("2_lib")
 library_id = &"ui"
-cues = Array[ExtResource("1_cue")]([SubResource("cue_ui_click"), SubResource("cue_ui_hover"), SubResource("cue_ui_open"), SubResource("cue_ui_close"), SubResource("cue_ui_error"), SubResource("cue_ui_page"), SubResource("cue_ui_notify"), SubResource("cue_ui_reward")])
+cues = Array[ExtResource("1_cue")]([SubResource("cue_ui_click"), SubResource("cue_ui_hover"), SubResource("cue_ui_open"), SubResource("cue_ui_close"), SubResource("cue_ui_error"), SubResource("cue_ui_page"), SubResource("cue_ui_notify"), SubResource("cue_ui_reward"), SubResource("cue_chalk_write")])

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="AudioAmbienceProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/audio/audio_ambience_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"inn_fest"
+bed = &"amb_inn_fest"
+bed_volume_db = 0.0
+spots = Array[Dictionary]([{
+"cue": &"cup_clink",
+"max": 5.0,
+"min": 1.5
+}, {
+"cue": &"fire_pop",
+"max": 14.0,
+"min": 6.0
+}, {
+"cue": &"wood_creak",
+"max": 20.0,
+"min": 8.0
+}])
+reverb_wet = 0.1
+reverb_room_size = 0.4

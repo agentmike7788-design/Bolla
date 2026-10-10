@@ -3,6 +3,8 @@ extends Node
 ## Game events → sounds (AudioEventMap): every EventBus signal named in signal_cues, the timed
 ## actions (a work cue repeats while the bar fills), buttons and panels (SceneTree.node_added),
 ## the gravekeeper's hands (carried corpse) and MorgueTable.sound_hook. Listens only.
+## Phase 8 (docs/PHASE8_DESIGN.md §8.3): AudioConfig.positional_cues – the same key syntax, the sound plays at its
+## source (grave, Npc, node of a group) through AudioWorld.play_event.
 
 const ARG_SEP := "@"
 const VALUE_SEP := "="
@@ -14,6 +16,8 @@ var map: AudioEventMap
 
 ## signal name -> {"any": PackedStringArray cues, "rules": [[arg index, value, cues], …]}
 var _rules: Dictionary[StringName, Dictionary] = {}
+## Phase 8: signal name -> {"any": Dictionary rule, "rules": [[conditions, rule], …]} (AudioConfig.positional_cues).
+var _pos_rules: Dictionary[StringName, Dictionary] = {}
 var _work_cue: StringName = &""
 var _work_left: float = 0.0
 ## G7 Runde 2: the player's tool clip sounds the work cue in step (work_beat) – no timer then.
@@ -26,7 +30,7 @@ func setup(owner_audio: AudioManager, event_map: AudioEventMap) -> void:
 	audio = owner_audio
 	map = event_map if event_map != null else AudioEventMap.new()
 	_build_rules()
-	for sig_name: StringName in _rules:
+	for sig_name: StringName in connected_signals():
 		if not EventBus.has_signal(sig_name):
 			push_warning("[Audio] audio_events: EventBus has no signal '%s'" % sig_name)
 			continue
@@ -37,7 +41,11 @@ func setup(owner_audio: AudioManager, event_map: AudioEventMap) -> void:
 
 
 func connected_signals() -> Array[StringName]:
-	return _rules.keys()
+	var out: Array[StringName] = _rules.keys()
+	for sig_name: StringName in _pos_rules:
+		if not sig_name in out:
+			out.append(sig_name)
+	return out
 
 
 ## The cues `sig_name` plays for these arguments (the rule with most matching conditions
@@ -46,6 +54,18 @@ func cues_for(sig_name: StringName, args: Array) -> PackedStringArray:
 	var entry: Dictionary = _rules.get(sig_name, {})
 	if entry.is_empty():
 		return PackedStringArray()
+	return _match(entry, args)
+
+
+## Phase 8: the positional rule `sig_name` plays for these arguments ({} = none; same matching as cues_for).
+func positional_for(sig_name: StringName, args: Array) -> Dictionary:
+	var entry: Dictionary = _pos_rules.get(sig_name, {})
+	if entry.is_empty():
+		return {}
+	return _match(entry, args)
+
+
+static func _match(entry: Dictionary, args: Array) -> Variant:
 	for rule: Array in entry["rules"]:
 		var ok := true
 		for cond: Array in rule[0]:
@@ -74,20 +94,29 @@ func _build_rules() -> void:
 		var cues := PackedStringArray()
 		for c: String in map.signal_cues[key].split(CUE_SEP, false):
 			cues.append(c.strip_edges())
-		var parts := key.split(ARG_SEP)
-		var sig_name := StringName(parts[0])
-		if not _rules.has(sig_name):
-			_rules[sig_name] = {"any": PackedStringArray(), "rules": []}
-		if parts.size() == 1:
-			_rules[sig_name]["any"] = cues
-			continue
-		var conds: Array = []
-		for i in range(1, parts.size()):
-			conds.append([int(parts[i].get_slice(VALUE_SEP, 0)), parts[i].get_slice(VALUE_SEP, 1)])
-		(_rules[sig_name]["rules"] as Array).append([conds, cues])
-	for sig_name: StringName in _rules:
-		(_rules[sig_name]["rules"] as Array).sort_custom(func(a: Array, b: Array) -> bool:
-			return (a[0] as Array).size() > (b[0] as Array).size())
+		_add_rule(_rules, key, cues, PackedStringArray())
+	_pos_rules.clear()
+	var positional: Dictionary[String, Dictionary] = audio.config.positional_cues if audio != null and audio.config != null else {}
+	for key: String in positional:
+		_add_rule(_pos_rules, key, positional[key], {})
+	for table: Dictionary in [_rules, _pos_rules]:
+		for sig_name: StringName in table:
+			(table[sig_name]["rules"] as Array).sort_custom(func(a: Array, b: Array) -> bool:
+				return (a[0] as Array).size() > (b[0] as Array).size())
+
+
+static func _add_rule(table: Dictionary, key: String, value: Variant, empty: Variant) -> void:
+	var parts := key.split(ARG_SEP)
+	var sig_name := StringName(parts[0])
+	if not table.has(sig_name):
+		table[sig_name] = {"any": empty, "rules": []}
+	if parts.size() == 1:
+		table[sig_name]["any"] = value
+		return
+	var conds: Array = []
+	for i in range(1, parts.size()):
+		conds.append([int(parts[i].get_slice(VALUE_SEP, 0)), parts[i].get_slice(VALUE_SEP, 1)])
+	(table[sig_name]["rules"] as Array).append([conds, value])
 
 
 func _on_signal(...args: Array) -> void:
@@ -96,6 +125,9 @@ func _on_signal(...args: Array) -> void:
 		return
 	for c: String in cues_for(sig_name, args):
 		audio.play(StringName(c))
+	var rule := positional_for(sig_name, args)
+	if not rule.is_empty():
+		audio.world.play_event(rule, args)
 
 
 # --- timed actions ---------------------------------------------------------------------

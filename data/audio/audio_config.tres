@@ -181,7 +181,9 @@ music_tracks = Dictionary[StringName, PackedStringArray]({
 &"day": PackedStringArray("mus_day"),
 &"night": PackedStringArray("mus_night"),
 &"title": PackedStringArray("mus_title"),
-&"village": PackedStringArray("mus_village", "mus_day")
+&"village": PackedStringArray("mus_village", "mus_day"),
+&"fest": PackedStringArray("mus_dance"),
+&"lights": PackedStringArray("mus_lights")
 })
 music_pause_min = 45.0
 music_pause_max = 120.0
@@ -239,6 +241,178 @@ bell_region = &"village"
 bell_position = Vector3(0, 12, -18)
 bell_far_db = -12.0
 listener_height = 1.6
+npc_anim_cues = Dictionary[StringName, Dictionary]({
+&"candle": {
+"beats": PackedFloat32Array(0.3),
+"cue": &"match_strike",
+"height": 0.4
+},
+&"dig_night": {
+"beats": PackedFloat32Array(0.2),
+"cue": &"spade_night",
+"height": 0.3,
+"npcs": PackedStringArray("robber")
+},
+&"kneel": {
+"beats": PackedFloat32Array(0.4),
+"chance": 0.5,
+"cue": &"mourn_breath",
+"enter": &"cloth_kneel",
+"every": 14.0,
+"height": 0.8,
+"leave": &"cloth_kneel"
+},
+&"knock": {
+"beats": PackedFloat32Array(0.1),
+"cue": &"knock_door",
+"height": 1.3
+},
+&"lay_flowers": {
+"beats": PackedFloat32Array(0.66),
+"cue": &"flowers_lay",
+"enter": &"cloth_kneel",
+"height": 0.3
+},
+&"mourn_stand": {
+"beats": PackedFloat32Array(0.5),
+"chance": 0.4,
+"cue": &"mourn_breath",
+"every": 16.0,
+"height": 1.5
+},
+&"offer": {
+"enter": &"kiepe_set",
+"leave": &"kiepe_set",
+"npcs": PackedStringArray("peddler")
+},
+&"rake": {
+"beats": PackedFloat32Array(0.55),
+"cue": &"rake_leaves",
+"height": 0.2
+},
+&"sit_ground": {
+"enter": &"cloth",
+"npcs": PackedStringArray("robber")
+},
+&"sweep": {
+"beats": PackedFloat32Array(0.4),
+"cue": &"broom_sweep",
+"height": 0.1
+},
+&"water": {
+"beats": PackedFloat32Array(0.05),
+"cue": &"water_pour",
+"height": 0.3
+},
+&"weed": {
+"beats": PackedFloat32Array(0.5),
+"cue": &"weed_pull",
+"every": 2.3,
+"height": 0.2
+}
+})
+npc_sound_range = 25.0
+npc_walk_loops = Dictionary[StringName, StringName]({
+&"peddler": &"kiepe_bells"
+})
+npc_loop_voices = 2
+positional_cues = Dictionary[String, Dictionary]({
+"chatter_line": {
+"arg": 1,
+"at": &"npc",
+"cue": &"chatter_murmur",
+"height": 1.5
+},
+"chatter_line@0=apprentice": {
+"arg": 1,
+"at": &"npc",
+"cue": &"remark",
+"fallback_db": 0.0,
+"height": 1.3
+},
+"coins_spent@1=alms": {
+"at": &"npc",
+"cue": &"tin_cup",
+"fallback_db": 0.0,
+"height": 0.5,
+"id": &"beggar"
+},
+"coins_spent@1=apprentice": {
+"at": &"group",
+"cue": &"wage_tin",
+"fallback_db": -6.0,
+"height": 0.5,
+"id": &"apprentice_box"
+},
+"grave_care_changed@1=candle@2=true": {
+"arg": 0,
+"at": &"grave",
+"cue": &"candle_glass",
+"height": 0.3
+},
+"grave_care_changed@1=tip@2=false": {
+"arg": 0,
+"at": &"grave",
+"cue": &"coins_stone",
+"fallback_db": 0.0,
+"height": 0.6
+},
+"grave_care_changed@1=tip@2=true": {
+"arg": 0,
+"at": &"grave",
+"cue": &"coins_stone",
+"height": 0.6
+},
+"robber_event@0=fled": {
+"at": &"npc",
+"cue": &"cloth",
+"flee": true,
+"height": 1.0,
+"id": &"robber"
+}
+})
+flight = {
+"climb_cue": &"climb_wall",
+"climb_points": PackedStringArray("robber_fence_in", "robber_fence_out"),
+"climb_radius": 1.6,
+"npc": &"robber",
+"seconds": 60.0,
+"step_cue": &"run_gravel"
+}
+whistle = {
+"anims": PackedStringArray("sweep", "idle", "walk", "carry_can_walk"),
+"chance": 0.35,
+"check": 6.0,
+"cue": &"whistle_tune",
+"group": &"apprentice",
+"method": &"morale",
+"min": 4.0,
+"npc": &"apprentice"
+}
+fest_contexts = Dictionary[StringName, Dictionary]({
+&"fest_kathrein": {
+"music": &"fest",
+"profile": &"inn_fest",
+"rooms": PackedStringArray("inn")
+},
+&"fest_lights": {
+"music": &"lights",
+"regions": PackedStringArray("graveyard", "village")
+}
+})
+music_pauses = Dictionary[StringName, Vector2]({
+&"fest": Vector2(2, 5),
+&"lights": Vector2(4, 14)
+})
+fest_bells = Array[Dictionary]([{
+"cue": &"small_bell",
+"far_db": -12.0,
+"fest": &"fest_lights",
+"interval": 2.4,
+"minute": 1060,
+"npc": &"priest",
+"strikes": 3
+}])
 pool_2d = 12
 pool_3d = 10
 pool_ui = 4

@@ -238,6 +238,10 @@ func wanted_profile() -> StringName:
 	var p := player()
 	if p == null:
 		return config.title_profile if _on_title() else &""
+	# Phase 8 (§8.3): a running festival replaces the room's / region's soundscape (Kathreintanz in the inn).
+	var fest := world.fest_context(p)
+	if fest.has("profile"):
+		return StringName(fest["profile"])
 	if p.in_interior:
 		return config.room_profiles.get(p.interior_id, &"")
 	var phase := phase_at(TimeManager.minute_of_day)
@@ -248,11 +252,15 @@ func wanted_profile() -> StringName:
 	return config.outdoor_profiles.get("%s/%s" % [p.region_id, phase], &"")
 
 
-## Music context: title | village | night | day (&"" = none).
+## Music context: title | village | night | day | a festival's (config.fest_contexts) (&"" = none).
 func wanted_music() -> StringName:
 	var p := player()
 	if p == null:
 		return &"title" if _on_title() else &""
+	# Phase 8 (§8.3): context fest / lights replaces the village or graveyard music – one music at a time.
+	var fest := world.fest_context(p)
+	if fest.has("music"):
+		return StringName(fest["music"])
 	var phase := phase_at(TimeManager.minute_of_day)
 	if phase == &"night":
 		return &"night"
