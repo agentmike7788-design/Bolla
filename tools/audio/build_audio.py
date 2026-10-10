@@ -295,8 +295,8 @@ CATALOG: list[Spec] = [
     S("watchman_call", p8.watchman_call, 1, pitch_jitter=0.0, volume_jitter_db=0.0, loud=-34, max_voices=1, cooldown=10.0),
     S("chapter_who", p8.chapter_who, 1, pitch_jitter=0.0, volume_jitter_db=0.0, cooldown=5.0, max_voices=1),
     UI("chalk_write", p8.chalk_write, 3, cooldown=0.2, loud=-38),
-    AMB("amb_inn_fest", p8.amb_inn_fest, loop=True, loud=-33),
-    MUS("mus_dance", p8.mus_dance, loud=-28),
+    AMB("amb_inn_fest", p8.amb_inn_fest, loop=True, loud=-34),
+    MUS("mus_dance", p8.mus_dance, loud=-29),
     MUS("mus_lights", p8.mus_lights, loud=-30),
 ]
 
