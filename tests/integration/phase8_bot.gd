@@ -34,6 +34,9 @@ const ROW3 := &"linden_row3"
 const GATE_STAND := Vector2(1.2, 8.3)
 const LIGHTS_UP := 15 * 60
 const KATHREIN_GO := 19 * 60 + 30
+## The Phase-8 goods stay in the pack (never into the shed for room).
+const P8_KEEP: Array[StringName] = [&"grave_candle", &"flower_seedlings", &"watering_can", &"mortsafe", &"register_extract",
+		&"apprentice_rake", &"wax_wreath", &"lorenz_ledger_2", &"ink"]
 
 ## Phase-8 flags on top of the Phase-7 ones:
 ## "p8": plays Phase 8 · "apprentice": takes Jakob · "wishes": accepts and keeps wishes · "tips": takes the tips
@@ -42,13 +45,13 @@ const KATHREIN_GO := 19 * 60 + 30
 ## "reported" / "let_go" = the outcome when he sits) · "mortsafe": a mortsafe on the freshest grave · "kathrein" ·
 ## "lights": candles at the Lichtgang · "save_p8": reloads once during a visit and once on the Lichtgang.
 const P8_FLAGS := {"p8": true, "apprentice": true, "wishes": true, "tips": true,
-		"stories": {&"grocer": 3, &"innkeeper": 1, &"smith": 1, &"priest": 3, &"mayor": 1}, "alms": true, "observe": [&"np_ott"],
+		"stories": {&"mayor": 3, &"innkeeper": 1, &"smith": 1, &"priest": 2, &"grocer": 2}, "alms": true, "observe": [&"np_ott"],
 		"robber": "", "mortsafe": true, "kathrein": true, "lights": true, "save_p8": false, "late": false}
 
 static var P8_STRATEGIES := {
 	&"kindly8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {}),
 	&"anatomist8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {"anatomy": true, "collection": true, "lectures": false,
-			"donations": false}, {"stories": {&"grocer": 3, &"innkeeper": 1, &"smith": 1, &"mayor": 2}, "mortsafe": false}),
+			"donations": false}, {"stories": {&"mayor": 3, &"innkeeper": 1, &"smith": 1, &"grocer": 2}, "mortsafe": false}),
 	&"lazy8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {"apprentice": false, "wishes": false, "stories": {},
 			"mortsafe": false, "lights": false, "kathrein": false, "observe": []}),
 	&"night8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {"mortsafe": false, "lights": false,
@@ -285,17 +288,89 @@ func _visits_due_before(limit: int) -> int:
 	return latest
 
 
-## Lenz is wanted for a friendship step too (Phase 7: first meeting, consecration, orders).
+## Lenz is wanted for a friendship step too (Phase 7: first meeting, consecration, orders), or his step 3 read in the
+## church after the Lichtgang.
 func _priest_wanted() -> bool:
-	return super._priest_wanted() or (p8_open() and _wants_step(&"priest") and friendship.step_block_reason(&"priest") == "" \
-			and not rel.talked_today(&"priest"))
+	if super._priest_wanted() or not p8_open():
+		return super._priest_wanted()
+	if _friend_ready(&"priest"):
+		return true
+	if orders.state(&"of_lenz_3") == &"accepted" and festivals.state(Festivals.LIGHTS) == Festivals.STATE_ENDED:
+		return true
+	return _wants_step(&"priest") and friendship.step_block_reason(&"priest") == "" and not rel.talked_today(&"priest")
+
+
+## A friend order of `npc_id` can be turned in now (Phase 7 only looks at its own orders).
+func _friend_ready(npc_id: StringName) -> bool:
+	for id: StringName in orders.active():
+		var o := orders.order_data(id)
+		if o != null and o.category == OrderData.CATEGORY_FRIEND and o.giver == npc_id \
+				and DialogueConditions.order_ready(id, {"inventory": inv()}):
+			return true
+	return false
+
+
+func _has_business(npc_id: StringName) -> bool:
+	return super._has_business(npc_id) or (p8_open() and (_friend_ready(npc_id) or (_wants_step(npc_id) \
+			and friendship.step_block_reason(npc_id) == "")))
+
+
+## Room in the pack (Phase 7) – the Phase-8 goods stay in it.
+func _free_slots(n: int) -> void:
+	var empty := inv().get_slots().filter(func(sl: Dictionary) -> bool: return sl.is_empty() or String(sl.get("id", "")) == "").size()
+	if empty >= n or buildings.level(&"shed") < 1 or player.carried_id != "" or player.region_id != &"graveyard":
+		return
+	var moves := {}
+	for sl: Dictionary in inv().get_slots():
+		if empty >= n:
+			break
+		if sl.is_empty() or String(sl.get("uid", "")) != "":
+			continue
+		var id := StringName(String(sl.get("id", "")))
+		var item := Database.item(id) as ItemData
+		if id == &"" or id in PACK_KEEP or id in P8_KEEP or item == null or item.category == ItemData.Category.TOOL or moves.has(id):
+			continue
+		moves[id] = inv().count(id)
+		empty += 1
+	if moves.is_empty() or not _to_room(&"shed"):
+		return
+	var store := ShedStore.find(tree)
+	store.interact(player)
+	for id: StringName in moves:
+		ChestTransfer.move(inv(), store.store(), id, int(moves[id]))
+		stored[id] = int(stored.get(id, 0)) + int(moves[id])
+	UIState.clear()
+	_t8("shed: %s" % str(moves))
 
 
 ## Back up the hill – first the parish archive when Lenz' step 2 (16:00–18:00) or Fenner's key opens it.
 func _travel(target: StringName) -> bool:
 	if p8_open() and target == &"graveyard" and player.region_id == &"village":
 		await _archive()
+		await _inn_meet()
 	return await super._travel(target)
+
+
+## A meeting in the Holderkrug in the evening (Fenner 3: the table, 18:05–21:00): wait, go in, talk.
+func _inn_meet() -> void:
+	for id: StringName in orders.active():
+		var o := orders.order_data(id)
+		if o == null or o.kind != &"meet" or not str(o.conditions.get("place", "")).begins_with("v_in_inn"):
+			continue
+		var window: Array = o.conditions.get("window", [0, 0])
+		if TimeManager.minute_of_day > int(window[1]) - 30:
+			continue
+		await _leave_vroom()
+		_wait_until(int(window[0]) + 2)
+		var npc := _vnpc(o.giver)
+		if npc == null:
+			continue
+		npc.refresh()
+		if not await _enter_for(npc):
+			continue
+		_talk(npc)
+		_t8("meet %s in the inn: %s" % [id, orders.state(id)])
+		await _leave_vroom()
 
 
 func _archive() -> void:
@@ -349,10 +424,22 @@ func _on_hill() -> bool:
 			and not is_instance_valid(player.carried) and not player.is_busy()
 
 
-## Serves every waiting visitor once: the tip in the hand, a wish the strategy keeps.
+## Serves every waiting visitor once: the tip in the hand, a wish the strategy keeps. A visitor on the hill (coming up,
+## laying flowers, mourning) is waited for – minute by minute, nothing skipped – until he waits at the grave (he only
+## waits ten minutes for a word, VisitorConfig.wait_minutes).
 func _serve() -> void:
 	if not p8_open() or not _on_hill():
 		return
+	if flags.wishes or flags.tips:
+		for i: int in 90:
+			var pending := false
+			for v: Dictionary in visitors.active_visits():
+				var ph := StringName(str(v.get("phase", "")))
+				if not served.has(str(v.visit_id)) and ph != &"waiting" and ph != &"gone" and ph != &"leaving":
+					pending = true
+			if not pending:
+				break
+			TimeManager.advance(1)
 	for v: Dictionary in visitors.active_visits():
 		var id := str(v.visit_id)
 		if StringName(str(v.get("phase", ""))) != &"waiting" or served.has(id):
@@ -948,14 +1035,15 @@ func _kathrein() -> void:
 		return
 	door.interact(player)
 	await _until_arrived()
-	var arrived := TimeManager.minute_of_day
 	for partner: StringName in [&"innkeeper", &"grocer"]:
 		var npc := _vnpc(partner)
 		if npc != null and festivals.dance_block_reason(partner) == "":
 			DialogueActions.run_all(["dance:" + String(partner)] as Array[String], {"inventory": inv(), "speaker": npc, "player": player})
 			UIState.clear()
 			dances += 1
-	_wait_until(arrived + 35)
+	# Presence counts per minute in the room (the festival ticks each minute).
+	for i: int in 35:
+		TimeManager.advance(1)
 	_t8("Kathrein: danced %s, presence %s" % [str(festivals.danced()), festivals.presence_done()])
 	await _leave_vroom()
 	await _travel(&"graveyard")
@@ -1114,6 +1202,12 @@ func _t8(what: String) -> void:
 
 
 func record_day(day: int) -> void:
+	if p8_open():
+		var vs := visitors.save_state()
+		for e: Variant in vs.get("plan", []):
+			if e is Dictionary and not served.has(str((e as Dictionary).get("visit_id", ""))):
+				_t8("visit missed: %s at %s (%s)" % [(e as Dictionary).get("kin_id", ""), UIKit.clock(int((e as Dictionary).get("slot", 0))),
+						str((e as Dictionary).get("graves", []))])
 	super.record_day(day)
 	var r: Dictionary = rows.back()
 	r.merge({

@@ -4,6 +4,7 @@ extends TestCase
 ## QA8-01 Lenz' and Theres' favour opens the favour panel (a grave / a ware to choose) instead of favor_use without a
 ## choice · QA8-03 a meet order on the hill sets its schedule flag (today / tomorrow / never on the Lichtgang) and the
 ## schedules of Fenner (l_12) and Rosine (Jakob's bench) bring them up · QA8-10 „Zwei Münzen auf dem Stein" ·
+## QA8-16 the coins on the stone win the [E] over the grave they lie on (TipStone priority above GravePlot's) ·
 ## QA8-A5 (E8-1) the short November days: the keyframes of the time-driven atmosphere move with the calendar.
 
 var world: Node
@@ -146,3 +147,17 @@ func test_qa8_a5_november_dusk_comes_earlier() -> void:
 		if k > 0:
 			assert_true(mid[k] > mid[k - 1], "strictly ascending")
 	atmo.free()
+
+
+# --- QA8-16 -------------------------------------------------------------------------------------------
+
+func _priority(scene_path: String) -> int:
+	var node := (load(scene_path) as PackedScene).instantiate()
+	var p := int(node.get_node("Interactable").get(&"priority"))
+	node.free()
+	return p
+
+
+func test_qa8_16_coins_on_the_stone_win_the_prompt() -> void:
+	assert_true(_priority("res://src/entities/tip_stone/tip_stone.tscn") > _priority("res://src/entities/grave/grave_plot.tscn"),
+			"QA8-16: „[E] Zwei Münzen auf dem Stein“ before the grave's own prompt")
