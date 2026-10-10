@@ -291,7 +291,7 @@ const VIEW_WORDS: Dictionary[StringName, String] = {&"disturbed": "aufgewühlt",
 # --- chapter „Wer heraufkommt" (§1.5, §7.7) ---------------------------------------------------------
 const CHAPTER_ID := &"who_comes_up"
 const CHAPTER_TITLE := "Wer heraufkommt"
-const CHAPTER_INTRO := "In Phase sieben bist du hinuntergegangen. Jetzt kommen sie herauf: mit Heidekraut, mit einem Rechen, der zu groß ist, mit Lichtern."
+const CHAPTER_INTRO := "Erst bist du die drei Meilen hinuntergegangen. Jetzt kommen sie herauf: mit Heidekraut, mit einem Rechen, der zu groß ist, mit Lichtern."
 const CHAPTER_ROWS: PackedStringArray = ["Tage seit dem ersten Besuch", "Besuche", "Wünsche", "Trinkgeld", "Jakob", "Geschichten",
 		"Gefallen", "Feste", "Lichtgang", "Der Nachtgräber", "Nachtwege", "Erkenntnisse"]
 const CHAPTER_VISITS := "%d (%s)"

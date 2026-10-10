@@ -24,7 +24,7 @@ const P8_SHOTS: Array[Dictionary] = [
 			"facing": 160.0},
 	{"name": "p8_18b_sick_light_far", "day": 57, "minute": 1301, "focus": Vector2(22.5, 2.0), "distance": 22.0, "player": Vector2(22.9, 0.4),
 			"facing": 160.0},
-	{"name": "p8_19_liesel_vigil", "day": 58, "minute": 158, "focus": Vector2(24.2, 2.0), "distance": 15.0, "player": Vector2(22.9, 0.4),
+	{"name": "p8_19_liesel_vigil", "day": 58, "minute": 159, "focus": Vector2(24.2, 2.0), "distance": 15.0, "player": Vector2(22.9, 0.4),
 			"facing": 160.0},
 	{"name": "p8_28_parish_archive", "day": 59, "minute": 990, "room": "church", "player": Vector2(-2.05, -2.2), "stage": "archive"},
 	{"name": "perf_p8_04_inn_kathrein", "day": 59, "minute": 1000, "room": "inn", "player": Vector2(-0.3, 0.6), "stage": "kathrein"},

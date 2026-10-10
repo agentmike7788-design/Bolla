@@ -5,7 +5,9 @@ extends TestCase
 ## choice · QA8-03 a meet order on the hill sets its schedule flag (today / tomorrow / never on the Lichtgang) and the
 ## schedules of Fenner (l_12) and Rosine (Jakob's bench) bring them up · QA8-10 „Zwei Münzen auf dem Stein" ·
 ## QA8-16 the coins on the stone win the [E] over the grave they lie on (TipStone priority above GravePlot's) ·
-## QA8-A5 (E8-1) the short November days: the keyframes of the time-driven atmosphere move with the calendar.
+## QA8-A5 (E8-1) the short November days: the keyframes of the time-driven atmosphere move with the calendar ·
+## QA8-17 a deferred Apprentice refresh out of the tree (the world a load replaces) touches nothing ·
+## QA8-19 the chapter intro without words of the game's making („Phase“).
 
 var world: Node
 var orders: Orders
@@ -175,3 +177,12 @@ func test_qa8_17_apprentice_refresh_out_of_tree_is_a_no_op() -> void:
 	assert_eq(npc.runtime_schedule() if npc.has_method(&"runtime_schedule") else null, null, "no runtime schedule set outside the tree")
 	npc.free()
 	app.free()
+
+
+# --- QA8-19 -------------------------------------------------------------------------------------------
+
+## The chapter panel speaks of the game's world, not of its making („In Phase sieben …“ named a dev phase).
+func test_qa8_19_chapter_intro_without_meta_words() -> void:
+	for word: String in ["Phase", "Kapitel", "Spieler", "Level"]:
+		assert_false(Phase8Texts.CHAPTER_INTRO.contains(word), "QA8-19: no „%s“ in the chapter intro" % word)
+	assert_true(Phase8Texts.CHAPTER_INTRO.contains("herauf"), "the line keeps its turn: they come up")
