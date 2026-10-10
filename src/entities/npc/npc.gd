@@ -20,6 +20,8 @@ extends Node3D
 const GROUP := &"npc"
 const PROMPT_TALK := "[E] Mit %s reden"
 const ANIM_WALK := &"walk"
+## Gaits a walk entry may ask for besides the *_walk cycles (_moving_anim).
+const MOVE_ANIMS: Array[StringName] = [&"run", &"climb"]
 const ANIM_PUSH := &"push_cart"
 const ANIM_IDLE := &"idle"
 ## Phase 8 (§2.1.1, §2.1.2): a „bedrückt" figure stands with its head down; chatter partners talk.
@@ -468,8 +470,8 @@ func _update_animation() -> void:
 	var wanted := entry.animation if _held_entry == null or entry.travel_minutes == 0 else ANIM_IDLE
 	var designed := 0.0
 	if is_walking():
-		wanted = ANIM_PUSH if entry.with_cart else ANIM_WALK
-		designed = push_anim_speed if entry.with_cart else walk_anim_speed
+		wanted = ANIM_PUSH if entry.with_cart else _moving_anim()
+		designed = push_anim_speed if entry.with_cart else (walk_anim_speed if String(wanted).ends_with("walk") else 0.0)
 	elif chatter_target() != null:
 		wanted = ANIM_TALK
 	elif wanted == ANIM_IDLE and _is_low():
@@ -489,6 +491,15 @@ func _update_animation() -> void:
 	if _anim.current_animation != wanted or not _anim.is_playing():
 		_anim.play(wanted, anim_blend)
 	_anim.speed_scale = ground_speed() / designed if designed > 0.0 else 1.0
+
+
+## W-Welt (W2): a walk entry may name its gait – a *_walk cycle (lantern_walk, carry_can_walk), run (Lambert's
+## flight) or climb (over the Lindenacker fence); the model must have it, else the plain walk.
+func _moving_anim() -> StringName:
+	var gait := entry.animation if entry != null else &""
+	if gait != &"" and (String(gait).ends_with("_walk") or gait in MOVE_ANIMS) and _anim != null and _anim.has_animation(gait):
+		return gait
+	return ANIM_WALK
 
 
 ## NpcLife says „bedrückt" (only while the mood effects apply; asked once per game hour).
@@ -546,9 +557,12 @@ func _collect_props() -> void:
 		var node3d := n as Node3D
 		if node3d == null or node3d == _model:
 			continue
-		if node3d.has_meta(&"show_with") or node3d.has_meta(&"hide_with"):
-			_props.append([node3d, _names(node3d.get_meta(&"show_with", "")), _names(node3d.get_meta(&"hide_with", "")),
-					StringName(str(node3d.get_meta(&"hide_after", "")))])
+		# W-Welt (W2): the exported figures carry the clip lists as glTF extras (node meta "extras").
+		var extras: Dictionary = node3d.get_meta(&"extras", {}) if node3d.get_meta(&"extras", {}) is Dictionary else {}
+		if node3d.has_meta(&"show_with") or node3d.has_meta(&"hide_with") or extras.has("show_with") or extras.has("hide_with"):
+			_props.append([node3d, _names(node3d.get_meta(&"show_with", extras.get("show_with", ""))),
+					_names(node3d.get_meta(&"hide_with", extras.get("hide_with", ""))),
+					StringName(str(node3d.get_meta(&"hide_after", extras.get("hide_after", ""))))])
 
 
 ## Visibility of the show_with meshes for the current animation (and the schedule position).

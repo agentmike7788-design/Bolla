@@ -97,6 +97,9 @@ func apply_minute(day: int, minute: int) -> void:
 			var vday := floori(float(v.enter) / NightPathRules.MINUTES_PER_DAY) + 1
 			if vday == day and now <= int(v.leave):
 				GameState.set_flag(flag, day)
+				# W-Welt (W2, test_phase8_loop): P6's village schedules key the walk per path (Quast and Lenz go to
+				# the Otts and the Kehrs) – night_<path>_<npc>_day, e.g. night_np_ott_surgeon_day.
+				GameState.set_flag(StringName("night_%s_%s_day" % [path.id, v.npc_id]), day)
 		var death := NightPathRules.death_total(path, _open_day())
 		if death > from and death <= now:
 			events.append([death, 0, path, {}, &"death"])

@@ -63,7 +63,7 @@ start_minute = 1250
 travel_minutes = 10
 activity = &"walk"
 animation = &"lantern_walk"
-path = PackedStringArray("v_church_door", "v_well", "v_ott_door")
+path = PackedStringArray("v_church_door", "v_well", "v_ott_lane_w", "v_ott_lane", "v_ott_door")
 region = &"village"
 today_flag = &"night_np_ott_priest_day"
 
@@ -98,7 +98,7 @@ start_minute = 1302
 travel_minutes = 10
 activity = &"walk"
 animation = &"lantern_walk"
-path = PackedStringArray("v_ott_door", "v_well", "v_church_door")
+path = PackedStringArray("v_ott_door", "v_ott_lane", "v_ott_lane_w", "v_well", "v_church_door")
 region = &"village"
 today_flag = &"night_np_ott_priest_day"
 
@@ -117,7 +117,7 @@ start_minute = 1250
 travel_minutes = 10
 activity = &"walk"
 animation = &"lantern_walk"
-path = PackedStringArray("v_church_door", "v_well", "v_kehr_door")
+path = PackedStringArray("v_church_door", "v_well", "v_kehr_lane", "v_kehr_door")
 region = &"village"
 today_flag = &"night_np_kehr_priest_day"
 
@@ -152,7 +152,7 @@ start_minute = 1292
 travel_minutes = 10
 activity = &"walk"
 animation = &"lantern_walk"
-path = PackedStringArray("v_kehr_door", "v_well", "v_church_door")
+path = PackedStringArray("v_kehr_door", "v_kehr_lane", "v_well", "v_church_door")
 region = &"village"
 today_flag = &"night_np_kehr_priest_day"
 

@@ -837,7 +837,8 @@ func _graves_tended(graves: PackedStringArray) -> bool:
 	var occupied := {}
 	for gid: String in graves:
 		var g := graveyard.call(&"get_grave", gid) as GraveRecord
-		if g != null and (g.state == GraveRecord.State.FILLED or g.state == GraveRecord.State.MARKED):
+		# W-Welt (W2, test_phase8_loop): an old grave counts too – Esch 1 tends Meister Gratz' old_01 (State.OLD).
+		if g != null and (g.state == GraveRecord.State.FILLED or g.state == GraveRecord.State.MARKED or g.state == GraveRecord.State.OLD):
 			occupied[gid] = true
 	if occupied.is_empty():
 		return false

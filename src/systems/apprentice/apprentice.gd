@@ -324,7 +324,10 @@ func on_graveyard() -> bool:
 
 ## From the board + the state at start_minute, saved with the progress.
 func today_plan() -> Array[Dictionary]:
-	return _plan.duplicate(true) if _plan_day == TimeManager.day else [] as Array[Dictionary]
+	var out: Array[Dictionary] = []
+	if _plan_day == TimeManager.day:
+		out.assign(_plan.duplicate(true))
+	return out
 
 
 ## Index of the next place whose effect is still to come.
@@ -389,6 +392,11 @@ func graveyard_schedule(day: int) -> NpcSchedule:
 	var route := _known(ROUTE_IN, world)
 	if board != "":
 		route.append(board)
+	# W-Welt (W2): the baked way up to the board around the old graves (WorldRoot.visitor_route).
+	if board != "" and world != null and world.has_method(&"visitor_route"):
+		var baked: PackedStringArray = world.call(&"visitor_route", board)
+		if not baked.is_empty():
+			route = baked
 	if route.is_empty():
 		return ScheduleBuilder.build(entries)
 	entries.append(ScheduleBuilder.walk(StringName(route[0]), route.slice(1), cfg.arrive_minute, &"graveyard", world))
@@ -409,23 +417,32 @@ func graveyard_schedule(day: int) -> NpcSchedule:
 			entries.append(ScheduleBuilder.stay(StringName(here), int(e.work_start), anim, DIALOGUE))
 	if teaching:
 		var from := position_point_at(cut, here)
-		var watch := ScheduleBuilder.walk(StringName(from), PackedStringArray([_watch_point]), cut, &"graveyard", world)
+		var watch := ScheduleBuilder.walk(StringName(from), _way(world, from, _watch_point), cut, &"graveyard", world)
 		entries.append(watch)
 		entries.append(ScheduleBuilder.stay(StringName(_watch_point), cut + watch.travel_minutes, &"watch", DIALOGUE))
 		here = _watch_point
 	var box_wp := _place(WP_BOX)
 	if box_wp == "":
 		box_wp = here
-	var to_box := ScheduleBuilder.walk(StringName(here), PackedStringArray([box_wp]), cfg.end_minute, &"graveyard", world)
+	var to_box := ScheduleBuilder.walk(StringName(here), _way(world, here, box_wp), cfg.end_minute, &"graveyard", world)
 	entries.append(to_box)
 	entries.append(ScheduleBuilder.stay(StringName(box_wp), cfg.end_minute + to_box.travel_minutes, &"idle", DIALOGUE))
 	var out := PackedStringArray()
 	for i: int in range(route.size() - 1, -1, -1):
 		if route[i] != board:
 			out.append(route[i])
+	if box_wp != board and not out.is_empty():
+		out = _way(world, box_wp, out[0]) + out.slice(1)
 	if not out.is_empty():
 		entries.append(ScheduleBuilder.walk(StringName(box_wp), out, cfg.end_minute + 10, &"graveyard", world))
 	return ScheduleBuilder.build(entries)
+
+
+## W-Welt (W2): the way from `a` to `b` on the graveyard (WorldRoot.route_between, without `a`), else [b].
+static func _way(world: Node, a: String, b: String) -> PackedStringArray:
+	if world != null and world.has_method(&"route_between") and a != "" and b != "" and a != b:
+		return (world.call(&"route_between", a, b) as PackedStringArray).slice(1)
+	return PackedStringArray([b])
 
 
 ## The village day: a working day breakfast in the inn (07:30), over the bridge (07:45), helping Rosine
@@ -598,6 +615,9 @@ func _new_day(day: int) -> void:
 	if _plan_day != day:
 		_plan.clear()
 		_progress = 0
+		# W-Welt (W2, test_phase8_loop): like load_state – a plan of an earlier day is gone, so a day without work
+		# (a festival) saves plan_day 0 before and after a load.
+		_plan_day = 0
 	_teach = &""
 	_watch_point = ""
 	_watch_minute = -1

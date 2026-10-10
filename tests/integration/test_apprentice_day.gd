@@ -11,8 +11,11 @@ const TIMEOUT := 300.0
 const SLOT := 5
 ## The working day of the test (fixed seed: on day 57 the rake place dirt_y10 goes wrong).
 const WORK_DAY := 57
+const ROUND_DAY := 55
 const NPC_SCENE := "res://src/entities/npc/npc.tscn"
 const BOX_SCENE := "res://src/entities/apprentice_box/apprentice_box.tscn"
+## Jakob's rake (the child mesh of ph_chr_apprentice).
+const RAKE := "rake"
 const ITEMS: Array[StringName] = [&"apprentice_rake", &"watering_can", &"grave_candle"]
 ## The hut corner (hut at (-5.6 | -7.2), door towards the camera) – W-Welt §4.3 places the real ones.
 const CORNER := {"apprentice_board": Vector3(-3.4, 0, -4.6), "apprentice_box": Vector3(-2.6, 0, -4.4),
@@ -57,33 +60,43 @@ func _setup() -> void:
 	assert_eq(err, OK, "v6 fixture loads")
 	world = tree.current_scene as WorldRoot
 	TimeManager.running = false
+	# W-Welt (W2) builds the hut corner, npc_apprentice (Jakob's model, the tools as show_with extras), his box and
+	# Systems/Apprentice into the world – the test uses them; the stand-ins only for a world without them.
 	var wps := world.get_node("Waypoints")
 	for id: String in CORNER:
+		if wps.get_node_or_null(id) != null:
+			continue
 		var m := Marker3D.new()
 		m.name = id
 		m.position = CORNER[id]
 		wps.add_child(m)
-	# A stand-in figure with the tool meshes on show_with (P5 delivers Jakob's model with the same metas).
-	var model := Node3D.new()
-	model.name = "Model"
-	for spec: Array in [["tool_rake", ["rake"]], ["tool_can", ["water", "carry_can_walk"]], ["tool_broom", ["sweep"]]]:
-		var mesh := MeshInstance3D.new()
-		mesh.name = spec[0]
-		mesh.set_meta(&"show_with", PackedStringArray(spec[1]))
-		model.add_child(mesh)
-	npc = (load(NPC_SCENE) as PackedScene).instantiate() as Npc
-	npc.name = "npc_apprentice"
-	npc.npc_id = &"apprentice"
-	npc.region_id = &"graveyard"
-	npc.add_child(model)
-	world.get_node("Entities").add_child(npc)
-	box = (load(BOX_SCENE) as PackedScene).instantiate() as ApprenticeBox
-	box.name = "apprentice_box"
-	box.position = CORNER.apprentice_box
-	world.get_node("Entities").add_child(box)
-	app = Apprentice.new()
-	app.name = "Apprentice"
-	world.get_node("Systems").add_child(app)
+	npc = world.get_node_or_null("Entities/npc_apprentice") as Npc
+	if npc == null:
+		# A stand-in figure with the tool meshes on show_with (P5 delivers Jakob's model with the same metas).
+		var model := Node3D.new()
+		model.name = "Model"
+		for spec: Array in [[RAKE, ["rake"]], ["watering_can", ["water", "carry_can_walk"]], ["broom", ["sweep"]]]:
+			var mesh := MeshInstance3D.new()
+			mesh.name = spec[0]
+			mesh.set_meta(&"show_with", PackedStringArray(spec[1]))
+			model.add_child(mesh)
+		npc = (load(NPC_SCENE) as PackedScene).instantiate() as Npc
+		npc.name = "npc_apprentice"
+		npc.npc_id = &"apprentice"
+		npc.region_id = &"graveyard"
+		npc.add_child(model)
+		world.get_node("Entities").add_child(npc)
+	box = world.get_node_or_null("Entities/apprentice_box") as ApprenticeBox
+	if box == null:
+		box = (load(BOX_SCENE) as PackedScene).instantiate() as ApprenticeBox
+		box.name = "apprentice_box"
+		box.position = CORNER.apprentice_box
+		world.get_node("Entities").add_child(box)
+	app = world.get_node_or_null("Systems/Apprentice") as Apprentice
+	if app == null:
+		app = Apprentice.new()
+		app.name = "Apprentice"
+		world.get_node("Systems").add_child(app)
 	await wait_frames(1)
 	box.storage.add_item(&"apprentice_rake", 1)
 	box.coins = 9
@@ -100,7 +113,7 @@ func _run(day: int, from: int, to: int, trace: Array) -> void:
 		if TimeManager.minute_of_day != minute:
 			TimeManager.advance(1)
 		npc.refresh()
-		trace.append([minute, npc.is_present(), npc.global_position, npc.current_animation(), npc.prop_shown("tool_rake"),
+		trace.append([minute, npc.is_present(), npc.global_position, npc.current_animation(), npc.prop_shown(RAKE),
 				npc.is_walking()])
 
 
@@ -166,7 +179,8 @@ func test_roundtrip_in_the_middle_of_a_place() -> void:
 	await _setup()
 	await wait_frames(1)
 	var trace: Array = []
-	_run(54, 470, 617, trace)
+	# Day 55: with Systems/Festivals in the world, day 54 is the Kathreintanz – Jakob's free day (§2.5.1).
+	_run(ROUND_DAY, 470, 617, trace)
 	var plan := app.today_plan()
 	var running: Array = plan.filter(func(e: Dictionary) -> bool: return int(e.start) <= 617 and int(e.end) > 617 and StringName(str(e.task)) in Apprentice.TASKS)
 	assert_eq(running.size(), 1, "10:17 is in the middle of a place")
@@ -174,7 +188,7 @@ func test_roundtrip_in_the_middle_of_a_place() -> void:
 	var json := JSON.to_native(JSON.parse_string(JSON.stringify(JSON.from_native(saved)))) as Dictionary
 	var pos := npc.global_position
 	var first: Array = []
-	_run(54, 618, 960, first)
+	_run(ROUND_DAY, 618, 960, first)
 	var end_a := SaveManager.collect_state()
 	var jobs_a := jobs.duplicate()
 	# Back to 10:17 through the save state: the rest of the day again, bit-identical.
@@ -184,7 +198,7 @@ func test_roundtrip_in_the_middle_of_a_place() -> void:
 	assert_eq(npc.global_position, pos, "the same spot from plan + clock")
 	jobs.clear()
 	var second: Array = []
-	_run(54, 618, 960, second)
+	_run(ROUND_DAY, 618, 960, second)
 	assert_eq(second, first, "every minute after the load as before")
 	assert_eq(SaveManager.collect_state(), end_a, "the evening state bit-identical")
 	assert_eq(jobs, jobs_a.slice(jobs_a.size() - jobs.size()), "the same places afterwards")

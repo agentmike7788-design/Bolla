@@ -194,6 +194,8 @@ func dance(npc_id: StringName) -> bool:
 	_danced.append(npc_id)
 	_rel_add(npc_id, int(f.effects.get("dance_rel", 3)), REASON_DANCE)
 	GameState.add_stat(STAT_DANCES, 1)
+	# W1-Anschluss 6 (W-Welt): the village talks about it (NpcLife reactions, the partner and the hostess).
+	_life_event(&"kathrein_danced", [npc_id, &"innkeeper"] as Array[StringName])
 	var minutes := int(f.effects.get("dance_minutes", 15))
 	if minutes > 0:
 		TimeManager.advance(minutes)
@@ -236,6 +238,7 @@ func evaluate_lights() -> StringName:
 		if piety != null and piety.has_method(&"event"):
 			piety.call(&"event", StringName(str(all.get("piety_event", "lights_all"))), REASON_LIGHTS)
 		GameState.set_flag(LIGHTS_ALL_FLAG, true)
+		_life_event(&"lights_all", [] as Array[StringName])
 	elif _lights_result == FestivalRules.RESULT_SOME:
 		var some := FestivalRules.effect(f, "lights_some")
 		_rep_event(StringName(str(some.get("rep_event", "lights_some"))), REASON_LIGHTS_SOME)
@@ -300,6 +303,12 @@ func apply_procession() -> void:
 		else:
 			spot = StringName("gv_" + graves[0])
 		var route := _route(world, graves[0] if not graves.is_empty() else "")
+		# W-Welt (W2): Lenz, Jakob and the crowd walk the baked route up to their place (else they stood at the
+		# gate and appeared at the Kirchhof).
+		if graves.is_empty() and world != null and world.has_method(&"visitor_route"):
+			var to_spot: PackedStringArray = world.call(&"visitor_route", String(spot))
+			if not to_spot.is_empty():
+				route = to_spot
 		var back := route.duplicate()
 		back.reverse()
 		var entries: Array[ScheduleEntry] = [
@@ -314,6 +323,18 @@ func apply_procession() -> void:
 func post_load() -> void:
 	if today() == LIGHTS and state(LIGHTS) != STATE_ENDED:
 		apply_procession()
+		# W1-Anschluss 6 (W-Welt): the early ghosts' window is display only – set it again after a load.
+		var f := festival(LIGHTS)
+		var early := FestivalRules.effect(f, "early_ghosts") if f != null else {}
+		var ghosts := _first(GHOSTS_GROUP)
+		if _early_done and not early.is_empty() and ghosts != null and ghosts.has_method(&"set_early_window"):
+			ghosts.call(&"set_early_window", int(early.get("from", 1020)), int(early.get("minutes", 30)), _lit_graves())
+
+
+func _life_event(event: StringName, npcs: Array[StringName]) -> void:
+	var life := _first(&"npc_life")
+	if life != null and life.has_method(&"note_event"):
+		life.call(&"note_event", event, npcs)
 
 
 func lights_result() -> StringName:

@@ -352,7 +352,14 @@ func _npc() -> Node:
 
 
 func _route() -> PackedStringArray:
-	return PackedStringArray(["robber_far", "robber_fence_out", "robber_fence_in", "gv_" + _target])
+	var out := PackedStringArray(["robber_far", "robber_fence_out"])
+	# W-Welt (W2): from the fence over the south strip around the graves (WorldRoot.route_between), not straight.
+	var world := _first(&"world")
+	if world != null and world.has_method(&"route_between"):
+		out.append_array(world.call(&"route_between", "robber_fence_in", "gv_" + _target))
+	else:
+		out.append_array(PackedStringArray(["robber_fence_in", "gv_" + _target]))
+	return out
 
 
 func _apply_schedule() -> void:
@@ -360,11 +367,24 @@ func _apply_schedule() -> void:
 	if npc == null or not npc.has_method(&"set_runtime_schedule"):
 		return
 	var cfg := _cfg()
-	var entries: Array[ScheduleEntry] = [
-		ScheduleBuilder.walk(&"robber_far", _route(), cfg.arrive_minute, &"", self),
+	var world := _first(&"world")
+	# W-Welt (W2, §4.7 Räuberweg): out of the forest to the fence, over it (climb, one minute), then the route.
+	var route := _route()
+	var to_fence := ScheduleBuilder.walk(&"robber_far", PackedStringArray(["robber_fence_out"]), cfg.arrive_minute, &"", world)
+	var over := _climb(&"robber_fence_out", &"robber_fence_in", cfg.arrive_minute + to_fence.travel_minutes)
+	var to_grave := ScheduleBuilder.walk(&"robber_fence_in", route.slice(route.find("robber_fence_in") + 1), over.start_minute + 1, &"", world)
+	var entries: Array[ScheduleEntry] = [to_fence, over, to_grave,
 		ScheduleBuilder.stay(StringName("gv_" + _target), cfg.dig_from, &"dig_night", &"robber"),
 	]
 	npc.call(&"set_runtime_schedule", ScheduleBuilder.build(entries))
+
+
+## One minute over the south fence of the Lindenacker (the walk entry's gait climb, Npc._moving_anim).
+func _climb(from_wp: StringName, to_wp: StringName, start: int) -> ScheduleEntry:
+	var e := ScheduleBuilder.walk(from_wp, PackedStringArray([String(to_wp)]), start, &"", null)
+	e.travel_minutes = 1
+	e.animation = &"climb"
+	return e
 
 
 func _flee_schedule() -> void:
@@ -373,7 +393,18 @@ func _flee_schedule() -> void:
 		return
 	var back := _route()
 	back.reverse()
-	var entries: Array[ScheduleEntry] = [ScheduleBuilder.walk(StringName("gv_" + _target), back, TimeManager.minute_of_day, &"", self)]
+	# W-Welt (W2): at a run to the fence, over it, into the forest (§2.6.3 „läuft zum Südzaun").
+	var world := _first(&"world")
+	var cut := back.find("robber_fence_in")
+	var now := TimeManager.minute_of_day
+	var to_fence := ScheduleBuilder.walk(StringName("gv_" + _target), back.slice(0, cut + 1), now, &"", world)
+	to_fence.animation = &"run"
+	to_fence.travel_minutes = maxi(1, ceili(to_fence.travel_minutes * 0.5))
+	var over := _climb(&"robber_fence_in", &"robber_fence_out", now + to_fence.travel_minutes)
+	var away := ScheduleBuilder.walk(&"robber_fence_out", back.slice(cut + 2), over.start_minute + 1, &"", world)
+	away.animation = &"run"
+	away.travel_minutes = maxi(1, ceili(away.travel_minutes * 0.5))
+	var entries: Array[ScheduleEntry] = [to_fence, over, away]
 	npc.call(&"set_runtime_schedule", ScheduleBuilder.build(entries))
 
 

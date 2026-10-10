@@ -61,6 +61,51 @@ class E:
         return "\n".join(lines)
 
 
+# W-Welt (W2): the graveyard walks follow the baked visitor routes of data/world/graveyard_layout.json (road_end ->
+# ... -> gate_inside -> vw_* -> the place) and take the polyline time (3.2 m per game minute, NpcConfig): the figure
+# arrives at the stay's minute and leaves the hill at its minute - no straight line through fence and graves.
+LAYOUT = os.path.join(ROOT, "data", "world", "graveyard_layout.json")
+WALK_M_PER_MINUTE = 3.2
+
+
+def _layout():
+    with open(LAYOUT, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _points():
+    lay = _layout()
+    pts = {k: v for k, v in lay["waypoints"].items() if isinstance(v, list)}
+    pts.update({k: v[:2] for k, v in lay.get("visitor_spots", {}).items()})
+    pts.update(lay.get("visitor_waypoints", {}))
+    return pts
+
+
+def route_up(target):
+    """The baked route road_end -> ... -> target (gv_<grave> or a waypoint id) and its walking minutes."""
+    routes = _layout().get("visitor_routes", {})
+    key = target[3:] if target.startswith("gv_") else target
+    path = list(routes.get(key, ["road_end", "road_mid", "gate_outside", "gate_inside", target]))
+    pts = _points()
+    length = 0.0
+    for a, b in zip(path, path[1:]):
+        pa, pb = pts[a], pts[b]
+        length += ((pa[0] - pb[0]) ** 2 + (pa[1] - pb[1]) ** 2) ** 0.5
+    return path, max(1, -(-int(round(length * 1000)) // int(WALK_M_PER_MINUTE * 1000)))
+
+
+def visit(target, arrive, leave, flag, dialogue, animation, activity="mourn", walk_anim="walk"):
+    """Up the baked route (arriving at `arrive`), stay, back down from `leave`, gone at the road end."""
+    path, minutes = route_up(target)
+    at = path[-1]
+    return [
+        walk(arrive - minutes, path, minutes, flag, region="", animation=walk_anim),
+        stay(arrive, at, dialogue, flag, region="", animation=animation, activity=activity),
+        walk(leave, list(reversed(path)), minutes, flag, region="", animation=walk_anim),
+        hide(leave + minutes, "road_end", flag, region=""),
+    ]
+
+
 def walk(start, path, minutes, flag="", region="village", animation="walk"):
     return E(start, path, "walk", animation, minutes, "", True, region, flag)
 
@@ -189,10 +234,7 @@ def smith():
         # §2.1.4: Esch at old_01 (Wendel Gratz) 13:40–14:30; the smithy is shut 13:00–15:00.
         walk(780, ["v_inn_door", "v_anger_w", "v_bridge", "v_road_in"], 6, v),
         hide(786, "v_road_in", v),
-        walk(810, ["road_end", "road_mid", "gate_outside", "gv_old_01"], 10, v, region=""),
-        stay(820, "gv_old_01", "v_smith", v, region="", animation="mourn_stand", activity="mourn"),
-        walk(870, ["gv_old_01", "gate_outside", "road_mid", "road_end"], 12, v, region=""),
-        hide(882, "road_end", v, region=""),
+    ] + visit("gv_old_01", 820, 870, v, "v_smith", "mourn_stand") + [
         walk(895, ["v_road_in", "v_bridge", "v_anger_w", "v_anvil"], 8, v),
         stay(903, "v_anvil", "v_smith", v, animation="work", activity="shop"),
         # §2.7.1 Kathreintanz.
@@ -208,10 +250,7 @@ def grocer():
         # §2.1.4: Theres at old_08 (Dorothee Mahn) 14:40–15:10, kneeling; the shop is shut 14:05–16:00.
         walk(845, ["v_shop_window", "v_well", "v_bridge", "v_road_in"], 8, v),
         hide(853, "v_road_in", v),
-        walk(870, ["road_end", "road_mid", "gate_outside", "gv_old_08"], 10, v, region=""),
-        stay(880, "gv_old_08", "v_grocer", v, region="", animation="kneel", activity="mourn"),
-        walk(910, ["gv_old_08", "gate_outside", "road_mid", "road_end"], 12, v, region=""),
-        hide(922, "road_end", v, region=""),
+    ] + visit("gv_old_08", 880, 910, v, "v_grocer", "kneel") + [
         walk(945, ["v_road_in", "v_bridge", "v_well", "v_shop_window"], 10, v),
         stay(955, "v_shop_window", "v_grocer", v, animation="work", activity="shop"),
         walk(1135, ["v_shop_window", "v_inn_door"], 5, KATHREIN),
@@ -230,17 +269,17 @@ def mayor():
 def priest():
     patch("priest", lights("v_in_church_altar", "v_in_inn_corner", "v_priest") + [
         # §1.6 night visits (the Versehgang with the lantern).
-        walk(1250, ["v_church_door", "v_well", "v_ott_door"], 10, "night_np_ott_priest_day", animation="lantern_walk"),
+        walk(1250, ["v_church_door", "v_well", "v_ott_lane_w", "v_ott_lane", "v_ott_door"], 10, "night_np_ott_priest_day", animation="lantern_walk"),
         stay(1260, "v_ott_door", "", "night_np_ott_priest_day", animation="knock"),
         hide(1261, "v_ott_door", "night_np_ott_priest_day"),
         stay(1300, "v_ott_door", "v_priest", "night_np_ott_priest_day"),
-        walk(1302, ["v_ott_door", "v_well", "v_church_door"], 10, "night_np_ott_priest_day", animation="lantern_walk"),
+        walk(1302, ["v_ott_door", "v_ott_lane", "v_ott_lane_w", "v_well", "v_church_door"], 10, "night_np_ott_priest_day", animation="lantern_walk"),
         hide(1312, "v_church_door", "night_np_ott_priest_day"),
-        walk(1250, ["v_church_door", "v_well", "v_kehr_door"], 10, "night_np_kehr_priest_day", animation="lantern_walk"),
+        walk(1250, ["v_church_door", "v_well", "v_kehr_lane", "v_kehr_door"], 10, "night_np_kehr_priest_day", animation="lantern_walk"),
         stay(1260, "v_kehr_door", "", "night_np_kehr_priest_day", animation="knock"),
         hide(1261, "v_kehr_door", "night_np_kehr_priest_day"),
         stay(1290, "v_kehr_door", "v_priest", "night_np_kehr_priest_day"),
-        walk(1292, ["v_kehr_door", "v_well", "v_church_door"], 10, "night_np_kehr_priest_day", animation="lantern_walk"),
+        walk(1292, ["v_kehr_door", "v_kehr_lane", "v_well", "v_church_door"], 10, "night_np_kehr_priest_day", animation="lantern_walk"),
         hide(1302, "v_church_door", "night_np_kehr_priest_day"),
     ])
 
@@ -251,14 +290,15 @@ def surgeon():
         walk(960, ["v_surgery_door", "v_well", "v_bridge"], 6, LIGHTS),
         stay(966, "v_bridge", "v_surgeon", LIGHTS),
     ]
-    for path_id, door in (("np_ott", "v_ott_door"), ("np_kehr", "v_kehr_door")):
+    # W-Welt (W2): to the Otts between the surgery and the remise, to the Kehrs over the Anger.
+    for path_id, door, way in (("np_ott", "v_ott_door", ["v_ott_lane_w", "v_ott_lane"]), ("np_kehr", "v_kehr_door", ["v_anger_w", "v_kehr_lane"])):
         f = "night_%s_surgeon_day" % path_id
         entries += [
-            walk(1340, ["v_surgery_door", "v_anger_w", door], 10, f),
+            walk(1340, ["v_surgery_door"] + way + [door], 10, f),
             stay(1350, door, "", f, animation="knock"),
             hide(1351, door, f),
             stay(1390, door, "v_surgeon", f),
-            walk(1392, [door, "v_anger_w", "v_surgery_door"], 10, f),
+            walk(1392, [door] + list(reversed(way)) + ["v_surgery_door"], 10, f),
             hide(1402, "v_surgery_door", f),
         ]
     patch("surgeon", entries)
@@ -272,10 +312,7 @@ def washer():
         # grave at runtime; linden_spot is the data fallback).
         walk(540, ["v_dorn_door", "v_well", "v_bridge", "v_road_in"], 8, v),
         hide(548, "v_road_in", v),
-        walk(570, ["road_end", "road_mid", "gate_outside", "dropoff", "w_east_pass", "w_linden_n", "linden_spot"], 10, v, region=""),
-        stay(580, "linden_spot", "v_washer", v, region="", animation="kneel", activity="mourn"),
-        walk(640, ["linden_spot", "w_linden_n", "w_east_pass", "dropoff", "gate_outside", "road_mid", "road_end"], 15, v, region=""),
-        hide(655, "road_end", v, region=""),
+    ] + visit("linden_spot", 580, 640, v, "v_washer", "kneel") + [
         walk(690, ["v_road_in", "v_bridge", "v_well", "v_dorn_door"], 8, v),
         hide(698, "v_dorn_door", v),
         # §2.7.1: 20:00–21:00 at the dance.
@@ -284,11 +321,11 @@ def washer():
         walk(1260, ["v_inn_door", "v_dorn_door"], 5, KATHREIN),
         hide(1265, "v_dorn_door", KATHREIN),
         # §1.6: the wake at the Otts' after the death (02:40–05:30).
-        walk(150, ["v_dorn_door", "v_well", "v_ott_door"], 10, f),
+        walk(150, ["v_dorn_door", "v_well", "v_ott_lane_w", "v_ott_lane", "v_ott_door"], 10, f),
         stay(160, "v_ott_door", "", f, animation="knock"),
         hide(161, "v_ott_door", f),
         stay(330, "v_ott_door", "v_washer", f),
-        walk(332, ["v_ott_door", "v_well", "v_dorn_door"], 10, f),
+        walk(332, ["v_ott_door", "v_ott_lane", "v_ott_lane_w", "v_well", "v_dorn_door"], 10, f),
         hide(342, "v_dorn_door", f),
     ] + lights("v_dorn_door", "v_dorn_door", "v_washer", "shop", "work"))
 
@@ -350,7 +387,8 @@ def peddler():
         hide(850, "v_road_in", d),
         walk(920, ["road_end", "road_mid", "gate_outside", "peddler_gate"], 20, d, region=""),
         stay(940, "peddler_gate", "peddler", d, region="", animation="offer", activity="shop"),
-        walk(980, ["peddler_gate", "trader_spot", "trader_mid", "trader_far"], 20, d, region=""),
+        # W-Welt (W2): outside along the south fence to the west corner, then Ilse's way (not across the graves).
+        walk(980, ["peddler_gate", "gate_outside", "peddler_west", "trader_spot", "trader_mid", "trader_far"], 20, d, region=""),
         hide(1000, "trader_far", d, region=""),
     ])
 

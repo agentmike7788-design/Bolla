@@ -1,5 +1,6 @@
 {
   "_comment": "Die Gaststube im Holderkrug (docs/PHASE7_DESIGN.md §4.3, §4.7), gebaut von src/world/interiors/interior_build.gd; Koordinaten wie crypt_layout.json (Boden-Mitte = (0, 0), x rechts, z zur Kamera). Stube innen x −4…4, z −3…3, Tür in der Südwand bei x 1,6. Schanktisch an der Nordwand links (Rosine dahinter, Marker bar), Fässer daneben, Kachelofen an der Ostwand (Feuerlicht ohne Schatten), Treppe nach oben an der Westwand (Kulisse), vier Tische, Osrics Ecktisch im Südosten, drei sitzende Gäste ohne Rig. Hängelaterne (Rolle lantern, Schatten nachts) und Fenster aus dem Raummodell. Steh-Orte der Dorfbewohner: waypoints [x, z, Blick°].",
+  "_phase8": "Phase 8 §4.6 D6 Kathreintanz (fest_kathrein_day): die Tische der Stubenmitte rücken an die Wand (fest hide/show – InteriorRoom.apply_fest), Tanzfläche 3 × 2,5 m frei (x −1,15…1,85, z −0,9…1,6), Tannengrün mit Bändern an der Nordwand (FestDecor), der Spielmann am Ofen (Fiddler).",
   "room_id": "inn",
   "building": "",
   "region": "village",
@@ -25,17 +26,29 @@
     {"asset": "ph_int_inn_barrels", "pos": [-3.55, -2.35], "rot_y": 90.0, "mount": "floor"},
     {"asset": "ph_int_inn_stove", "pos": [3.4, -1.9], "rot_y": -90.0, "mount": "floor"},
     {"asset": "ph_int_inn_stairs", "pos": [-3.45, 1.45], "rot_y": 0.0, "mount": "floor"},
-    {"asset": "ph_int_inn_table", "pos": [-0.5, -0.1], "rot_y": 0.0, "mount": "floor"},
-    {"asset": "ph_int_inn_table", "pos": [1.9, -1.2], "rot_y": 0.0, "mount": "floor"},
+    {"asset": "ph_int_inn_table", "pos": [-0.5, -0.1], "rot_y": 0.0, "mount": "floor", "fest": "hide"},
+    {"asset": "ph_int_inn_table", "pos": [1.9, -1.2], "rot_y": 0.0, "mount": "floor", "fest": "hide"},
     {"asset": "ph_int_inn_table", "pos": [-1.9, 1.75], "rot_y": 0.0, "mount": "floor"},
     {"asset": "ph_int_inn_table", "id": "CornerTable", "pos": [3.15, 1.55], "rot_y": 0.0, "mount": "floor"},
-    {"asset": "ph_chr_guest_a", "id": "Guest1", "pos": [-0.5, 0.58], "rot_y": 180.0, "mount": "flat"},
-    {"asset": "ph_chr_guest_b", "id": "Guest2", "pos": [-0.5, -0.78], "rot_y": 0.0, "mount": "flat"},
-    {"asset": "ph_chr_guest_b", "id": "Guest3", "pos": [-1.9, 2.43], "rot_y": 180.0, "mount": "flat"}
+    {"asset": "ph_chr_guest_a", "id": "Guest1", "pos": [-0.5, 0.58], "rot_y": 180.0, "mount": "flat", "fest": "hide"},
+    {"asset": "ph_chr_guest_b", "id": "Guest2", "pos": [-0.5, -0.78], "rot_y": 0.0, "mount": "flat", "fest": "hide"},
+    {"asset": "ph_chr_guest_b", "id": "Guest3", "pos": [-1.9, 2.43], "rot_y": 180.0, "mount": "flat"},
+    {"asset": "ph_int_inn_table", "id": "FestTable1", "pos": [0.2, -2.25], "rot_y": 90.0, "mount": "floor", "fest": "show"},
+    {"asset": "ph_int_inn_table", "id": "FestTable2", "pos": [3.25, -0.2], "rot_y": 0.0, "mount": "floor", "fest": "show"},
+    {"asset": "ph_chr_guest_a", "id": "FestGuest1", "pos": [0.88, -2.25], "rot_y": -90.0, "mount": "flat", "fest": "show"},
+    {"asset": "ph_chr_guest_b", "id": "FestGuest2", "pos": [3.25, 0.48], "rot_y": 180.0, "mount": "flat", "fest": "show"},
+    {"asset": "ph_int_inn_fest_decor", "id": "FestDecor1", "interact": "fest_decor", "pos": [-1.75, -2.93], "y": 2.75, "rot_y": 0.0, "mount": "hang"},
+    {"asset": "ph_int_inn_fest_decor", "id": "FestDecor2", "interact": "fest_decor", "pos": [1.85, -2.93], "y": 2.75, "rot_y": 0.0, "mount": "hang"},
+    {"asset": "ph_chr_fiddler", "id": "Fiddler", "interact": "fiddler", "pos": [2.75, -2.2], "rot_y": -90.0, "mount": "flat", "_comment": "W-Welt (Bild p8_20): auf der Ofenbank, zur Stube gewandt."}
   ],
   "waypoints": {
     "v_in_inn_bar": [-2.0, -2.5, 0.0],
     "v_in_inn_table": [2.95, -1.2, -90.0],
-    "v_in_inn_corner": [3.15, 0.62, 0.0]
+    "v_in_inn_corner": [3.15, 0.62, 0.0],
+    "v_in_inn_jakob": [-2.2, 1.08, 0.0],
+    "v_in_inn_fest_1": [-0.45, 0.95, 90.0],
+    "v_in_inn_fest_2": [0.95, -0.15, -90.0],
+    "v_in_inn_fest_3": [0.35, 0.95, -90.0],
+    "v_in_inn_fest_4": [0.15, -0.15, 90.0]
   }
 }

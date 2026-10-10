@@ -160,7 +160,7 @@ func test_houses_doors_shops_and_waypoints_at_the_plan() -> void:
 
 func test_villagers() -> void:
 	var npcs := village.get_node("Entities").get_children().filter(func(n: Node) -> bool: return n is Npc)
-	assert_eq(npcs.size(), 9, "§3.1: the eight villagers + npc_carter_v")
+	assert_eq(npcs.size(), 12, "§3.1: the eight villagers + npc_carter_v; Phase 8: + Jakob, Veit, Hanne")
 	var ids: Array[StringName] = []
 	for npc: Npc in npcs:
 		ids.append(npc.npc_id)
@@ -709,3 +709,130 @@ func _frame_share(house: Node3D, cam: Camera3D) -> Vector2:
 		var s := cam.unproject_position(box.get_endpoint(i))
 		r = Rect2(s, Vector2.ZERO) if i == 0 else r.expand(s)
 	return Vector2(float(inside) / maxi(total, 1), r.intersection(frame).get_area() / frame.get_area())
+
+
+# --- Phase 8 (docs/PHASE8_DESIGN.md §3.1, §4.6, §4.8 point 4, §10 – W-Welt) --------------------------
+
+const P8_WAYPOINTS := ["v_ott_door", "v_kehr_door", "v_ott_lane_w", "v_ott_lane", "v_kehr_lane", "v_church_step", "v_bridge_sit", "v_well_peddler",
+		"v_remise_sleep", "v_peddler_in", "v_peddler_out", "v_lights_gather"]
+const P8_FACING := ["v_ott_door", "v_kehr_door", "v_church_step", "v_bridge_sit", "v_well_peddler", "v_peddler_in", "v_lights_gather"]
+const P8_NPCS := {"npc_apprentice_v": ["apprentice", "ph_chr_apprentice"], "npc_beggar": ["beggar", "ph_chr_beggar"],
+		"npc_peddler": ["peddler", "ph_chr_peddler"]}
+const P8_VILLAGERS: Array[StringName] = [&"beggar", &"peddler", &"apprentice"]
+
+
+## §4.7: only D1–D5 (new markers and waypoints) and the new Npc against the approved Phase-7 village.
+func test_phase8_layout_diff_against_phase7() -> void:
+	var old := Phase8Fixtures.village_layout_p7()
+	assert_false(old.is_empty(), "village_layout_p7.json")
+	var allowed := ["+_waypoints_phase8", "+_phase8", "+phase8"]
+	for id: String in P8_WAYPOINTS:
+		allowed.append("+waypoints." + id)
+	for id: String in P8_FACING:
+		allowed.append("+waypoint_facing." + id)
+	var changes := PackedStringArray()
+	for key: String in layout:
+		if not old.has(key):
+			changes.append("+" + key)
+		elif key == "waypoints" or key == "waypoint_facing":
+			for id: String in layout[key]:
+				if not (old[key] as Dictionary).has(id):
+					changes.append("+%s.%s" % [key, id])
+				else:
+					assert_eq(layout[key][id], old[key][id], "%s.%s unchanged" % [key, id])
+		elif key == "npcs":
+			assert_eq((layout.npcs as Array).slice(0, old.npcs.size()), old.npcs, "the Phase-7 Npc unchanged")
+			for n: Dictionary in (layout.npcs as Array).slice(old.npcs.size()):
+				assert_true(P8_NPCS.has(String(n.id)), "new Npc " + String(n.id))
+		else:
+			assert_eq(layout[key], old[key], key + " unchanged (§4.7)")
+	for key: String in old:
+		assert_true(layout.has(key), key + " kept")
+	var got := Array(changes)
+	got.sort()
+	allowed.sort()
+	assert_eq(got, allowed, "§4.7 D1–D5 only")
+
+
+## §3.1, §4.6: Jakob, Veit and Hanne in the village (hidden before p8_open), the watch places (≤ 12 m from the
+## door places, D2) and the sick lights at the window markers of the Otts and the Kehrs (D3, no new light).
+func test_phase8_npcs_watch_spots_and_sick_lights() -> void:
+	for id: String in P8_NPCS:
+		var npc := village.get_node_or_null("Entities/" + id) as Npc
+		assert_not_null(npc, id)
+		if npc == null:
+			continue
+		assert_eq([npc.npc_id, npc.region_id, npc.requires_flag, npc.save_id], [StringName(P8_NPCS[id][0]), &"village", &"p8_open", ""], id)
+		assert_true(npc.get_node("Model").scene_file_path.ends_with(String(P8_NPCS[id][1]) + ".glb"), id + " model")
+	GameState.set_flag(&"p8_open", false)
+	var veit := village.get_node("Entities/npc_beggar") as Npc
+	veit.refresh()
+	assert_false(veit.is_present(), "Veit only from p8_open on")
+	for pair: Array in [["watch_ott", "v_ott_door"], ["watch_kehr", "v_kehr_door"]]:
+		var spot := village.get_node_or_null("Entities/" + String(pair[0])) as WatchSpot
+		assert_not_null(spot, String(pair[0]))
+		if spot == null:
+			continue
+		assert_eq(spot.spot_id, StringName(pair[0]))
+		var door := village.get_waypoint(StringName(pair[1]))
+		assert_true(Vector2(spot.global_position.x, spot.global_position.z).distance_to(Vector2(door.x, door.z)) <= 12.0, "D2: ≤ 12 m")
+		assert_true(_capsule_free(spot.global_position, 0.3), String(pair[0]) + " free")
+	for pair: Array in [["sick_light_ott", "house_ott"], ["sick_light_kehr", "house_kehr"]]:
+		var light := village.get_node_or_null("Entities/" + String(pair[0])) as SickLight
+		assert_not_null(light, String(pair[0]))
+		if light == null:
+			continue
+		assert_eq(light.house, StringName(pair[1]))
+		var house := village.get_node("Buildings/" + String(pair[1])) as Node3D
+		var marker := house.find_child("light_window", true, false) as Node3D
+		assert_true(light.global_position.distance_to(marker.global_position) < 0.3, "D3 at the window marker")
+		assert_true(light.find_children("*", "Light3D", true, false).is_empty(), "D3: no new light")
+		var window := house.find_child("Light_window", true, false) as Light3D
+		assert_eq(String(window.get_meta(&"house", "")), String(pair[1]), "the window light knows its house")
+
+
+## §4.8 (4): the door places seen from the watch places (a ray at head height), the door places in the frame
+## of the gameplay camera at the watch place; Veit, Hanne and Jakob at all their village places free.
+func test_phase8_village_sight() -> void:
+	player.set_region(&"village")
+	await tree.process_frame
+	_probe_meshes()
+	for i: int in 3:
+		await tree.physics_frame
+	var space := world.get_world_3d().direct_space_state
+	var cam := (world.get_node("CameraRig") as CameraRig).camera
+	var frame := Rect2(Vector2.ZERO, cam.get_viewport().get_visible_rect().size)
+	for pair: Array in [["watch_ott", "v_ott_door", "house_ott"], ["watch_kehr", "v_kehr_door", "house_kehr"]]:
+		var spot := village.get_node("Entities/" + String(pair[0])) as Node3D
+		var door := village.get_waypoint(StringName(pair[1]))
+		var eye := spot.global_position + Vector3(0, 1.6, 0)
+		assert_eq(_first_hit(space, eye, door + Vector3(0, 1.6, 0), [village.get_node("Buildings/" + String(pair[2]))]), "",
+				"§4.8 (4): %s sees %s" % [pair[0], pair[1]])
+		player.global_position = spot.global_position
+		_eye(Vector2(spot.global_position.x, spot.global_position.z), 22.0)
+		assert_true(frame.has_point(cam.unproject_position(door + Vector3(0, 1.0, 0))), "%s in the frame from %s" % [String(pair[1]), String(pair[0])])
+		# W-Welt (image p8_18): the gravekeeper himself is not under a roof for the camera (the Remise hid him).
+		assert_eq(_first_hit(space, cam.global_position, spot.global_position + Vector3(0, 1.2, 0), [player, spot]), "",
+				"§4.8 (4): the gravekeeper at %s seen by the camera" % pair[0])
+	var failures := PackedStringArray()
+	var seen := {}
+	for npc_id: StringName in P8_VILLAGERS:
+		var sched := Database.schedule(npc_id) as NpcSchedule
+		for e: ScheduleEntry in sched.entries:
+			if e.region != &"village" or not e.visible or e.travel_minutes > 0 or e.path.is_empty():
+				continue
+			var id := String(e.path[e.path.size() - 1])
+			if id.begins_with(INDOOR_PREFIX) or seen.has(id):
+				continue
+			seen[id] = true
+			var spot := village.get_waypoint(StringName(id))
+			var toward := Vector3(ORIGIN.x - spot.x, 0.0, ORIGIN.z - spot.z)
+			var stand := _free_near(spot + (toward.normalized() if toward.length() > 0.5 else Vector3.BACK))
+			player.global_position = stand
+			var head := 1.1 if e.animation == &"sit_beg" else 1.6
+			for zoom: float in ZOOMS:
+				var why := _blocked(_eye(Vector2(stand.x, stand.z), zoom), spot + Vector3(0, head, 0), stand + Vector3(0.0, player.occlusion_height, 0.0), [])
+				if why != "":
+					failures.append("%s@%s zoom %d: %s" % [npc_id, id, int(zoom), why])
+	assert_true(seen.size() >= 4, "%d places of Jakob, Veit and Hanne" % seen.size())
+	assert_eq(failures, PackedStringArray(), "§4.8 (4): Veit, Hanne and Jakob free at their places")

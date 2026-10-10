@@ -45,6 +45,11 @@ const ENTITY_SCENES := {
 	"pult_store": "res://src/entities/pult_store/pult_store.tscn",
 	"collection_shelf": "res://src/entities/collection_shelf/collection_shelf.tscn",
 	"build_site": "res://src/entities/build_site/build_site.tscn",
+	# Phase 8 (docs/PHASE8_DESIGN.md §4.6 D6/D7)
+	"fest_decor": "res://src/entities/fest_decor/fest_decor.tscn",
+	"fiddler": "res://src/entities/fiddler/fiddler.tscn",
+	"archive_cabinet": "res://src/entities/archive_cabinet/archive_cabinet.tscn",
+	"memorial_plate": "res://src/entities/memorial_plate/memorial_plate.tscn",
 }
 const WORKBENCH_SCRIPT := "res://src/entities/workbench/workbench.gd"
 const LECTURE_SCRIPT := "res://src/entities/lecture_set/lecture_set.gd"
@@ -56,6 +61,10 @@ const FLOOR_T := 0.4
 const META_ROLE := &"interior_role"
 const META_MIN := &"min_level"
 const META_MAX := &"max_level"
+## Phase 8 (§4.6 D6): festival furniture – shown only on the day of `fest_flag` (fest "show") or hidden then
+## (fest "hide", the everyday tables); InteriorRoom.apply_fest.
+const META_FEST_FLAG := &"fest_flag"
+const META_FEST_SHOW := &"fest_show"
 const COLLIDING_MOUNTS: Array[String] = ["floor", "wall"]
 ## Priority of the room's interactables (like the stations).
 const PRIORITY := 5
@@ -298,6 +307,17 @@ static func _entity_extras(root: Node3D, entity: Node3D, model: Node3D, kind: St
 			var grille := _instance(String(params.grille_asset), "Grille")
 			grille.visible = false
 			_add(entity, grille, root)
+		"fiddler":
+			# Phase 8: Fiddler sways its direct child "bow" – a copy of the model's bow mesh; the original hides.
+			var bow := model.find_child("bow", true, false) as MeshInstance3D
+			if bow != null:
+				var copy := MeshInstance3D.new()
+				copy.name = "bow"
+				copy.mesh = bow.mesh
+				copy.transform = model.transform * _rel(bow, model)
+				_add(entity, copy, root)
+				root.set_editable_instance(model, true)
+				bow.visible = false
 		"ossuary_shelf":
 			if params.has("name_board"):
 				var nb: Dictionary = params.name_board
@@ -472,6 +492,9 @@ static func _level_metas(node: Node, item: Dictionary) -> void:
 		node.set_meta(META_MIN, int(item.min_level))
 	if item.has("max_level"):
 		node.set_meta(META_MAX, int(item.max_level))
+	if item.has("fest"):
+		node.set_meta(META_FEST_FLAG, StringName(item.get("fest_flag", "fest_kathrein_day")))
+		node.set_meta(META_FEST_SHOW, String(item.fest) == "show")
 
 
 # --- lights ---------------------------------------------------------------------------------

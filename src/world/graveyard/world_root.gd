@@ -23,12 +23,25 @@ const FOLIAGE_LAYER := 1 << 1
 const FOLIAGE_SHADER := "res://assets/shaders/painted_foliage.gdshader"
 const WARM_LIGHTS := &"warm_lights"
 
+## Phase 8 (docs/PHASE8_DESIGN.md §4.2, graveyard_build_phase8.gd): the baked visitor routes – plot id (or a
+## Lichtgang / hut-corner / night waypoint id) → waypoint ids road_end → … → gate_inside → … → the place – and the
+## walking net (GraveyardNav) behind route_between.
+@export var visitor_routes: Dictionary = {}
+@export var nav: Resource
+
 var corpse_manager: CorpseManager
 var graveyard: Graveyard
 var is_world_ready: bool = false
+## route_between answers by (from|to) – the waypoints never move.
+var _route_cache: Dictionary = {}
 
 var _heightmap: HeightMapShape3D
 var _heightmap_xform: Transform3D
+
+
+func _init() -> void:
+	# Phase 8: the systems find the world (visitor routes, waypoints) by group.
+	add_to_group(&"world", true)
 
 
 func _ready() -> void:
@@ -58,6 +71,56 @@ func get_waypoint_facing(id: StringName) -> float:
 	if marker == null or not marker.has_meta(&"facing"):
 		return NAN
 	return marker.rotation.y
+
+
+## Phase 8 (§4.2): the baked route up to `target` – a grave id (→ gv_<id>) or a waypoint id with a baked route
+## (lights_crowd_3, apprentice_board, robber_fence_in …): road_end, road_mid, gate_outside, gate_inside, the
+## intermediate points vw_* and the place. Empty for an unknown target.
+func visitor_route(target: String) -> PackedStringArray:
+	var r: Variant = visitor_routes.get(target, visitor_routes.get(target.trim_prefix("gv_"), null))
+	if r is PackedStringArray:
+		return (r as PackedStringArray).duplicate()
+	if r is Array:
+		return PackedStringArray(r)
+	return PackedStringArray()
+
+
+## Phase 8 (§4.2, §4.8 point 6): a walk on the graveyard from one place to another around graves, fences and
+## buildings – waypoint ids (or "@x,y,z" literals as ScheduleBuilder.point reads them), both ends included. A
+## free straight leg stays [from, to]; otherwise the shortest way over the baked net (GraveyardNav). Without a
+## net (or no connection) [from, to].
+func route_between(from_id: String, to_id: String) -> PackedStringArray:
+	var key := from_id + "|" + to_id
+	if _route_cache.has(key):
+		return (_route_cache[key] as PackedStringArray).duplicate()
+	var out := PackedStringArray([from_id, to_id])
+	var net := nav as GraveyardNav
+	if net != null and from_id != to_id:
+		var a := _flat_point(from_id)
+		var b := _flat_point(to_id)
+		if not net.line_free(a, b):
+			var ia := net.index_of(from_id)
+			var ib := net.index_of(to_id)
+			var from_nodes: Array = [[ia, 0.0]] if ia >= 0 else net.visible_nodes(a)
+			var to_nodes: Array = [[ib, 0.0]] if ib >= 0 else net.visible_nodes(b)
+			var n := net.ids.size()
+			var best := INF
+			var pick := Vector2i(-1, -1)
+			for fa: Array in from_nodes:
+				for tb: Array in to_nodes:
+					var total := float(fa[1]) + net.dist[int(fa[0]) * n + int(tb[0])] + float(tb[1])
+					if total < best:
+						best = total
+						pick = Vector2i(int(fa[0]), int(tb[0]))
+			if pick.x >= 0 and best < GraveyardNav.INF * 0.5:
+				var mid := net.node_path(pick.x, pick.y)
+				out = PackedStringArray([from_id])
+				for id: String in mid:
+					if id != from_id and id != to_id and out[out.size() - 1] != id:
+						out.append(id)
+				out.append(to_id)
+	_route_cache[key] = out
+	return out.duplicate()
 
 
 func get_player() -> Player:
@@ -167,6 +230,15 @@ func _announce() -> void:
 	is_world_ready = true
 	refresh_overgrowth()
 	EventBus.world_ready.emit(self)
+
+
+func _flat_point(id: String) -> Vector2:
+	var p: Vector3
+	if id.begins_with("@"):
+		p = ScheduleBuilder.point(self, id)
+	else:
+		p = get_waypoint(StringName(id))
+	return Vector2(p.x, p.z)
 
 
 ## Transform of `node` relative to this root (works before the node is in the tree).
