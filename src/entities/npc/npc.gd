@@ -121,6 +121,8 @@ var _region_active: bool = true
 var _runtime: NpcSchedule
 var _current_anim: StringName = &""
 var _props: Array = []
+## QA8-07: hash(entry, schedule, carry list) → the next clip outside the carry list (_next_animation_outside).
+var _carry_cache: Dictionary[int, StringName] = {}
 var lod_interval_override: float = 0.0
 var _culled: bool = false
 ## ChatterRunner: the figure turns to its partner and talks (null = none).
@@ -562,7 +564,9 @@ func _collect_props() -> void:
 		if node3d.has_meta(&"show_with") or node3d.has_meta(&"hide_with") or extras.has("show_with") or extras.has("hide_with"):
 			_props.append([node3d, _names(node3d.get_meta(&"show_with", extras.get("show_with", ""))),
 					_names(node3d.get_meta(&"hide_with", extras.get("hide_with", ""))),
-					StringName(str(node3d.get_meta(&"hide_after", extras.get("hide_after", ""))))])
+					StringName(str(node3d.get_meta(&"hide_after", extras.get("hide_after", "")))),
+					_names(node3d.get_meta(&"carry_with", extras.get("carry_with", "")))])
+	_carry_cache.clear()
 
 
 ## Visibility of the show_with meshes for the current animation (and the schedule position).
@@ -579,7 +583,37 @@ func _apply_props() -> void:
 		var after: StringName = p[3]
 		if shown and after != &"" and _passed_animation(after):
 			shown = false
+		# W3 (QA8-07, P5 carry_with, §1 „Werkzeug in der Hand"): between the places of a job the tool of that job
+		# stays in the hand – in its carry_with clips while the next entry of the schedule that does something else
+		# (a clip outside carry_with) plays one of its show_with clips: the rake on the way from leaf heap to leaf
+		# heap, not on the way to the weeds or to the bench.
+		var carry_list: Array[StringName] = p[4] if p.size() > 4 else ([] as Array[StringName])
+		if not shown and not carry_list.is_empty() and _current_anim in carry_list and not show_list.is_empty() \
+				and _next_animation_outside(carry_list) in show_list:
+			shown = true
 		node.visible = shown
+
+
+## QA8-07: the animation of the first schedule entry after the current one (by start) whose clip is not in
+## `carry` (&"" = none today). Cached per current entry and list.
+func _next_animation_outside(carry: Array[StringName]) -> StringName:
+	var sched := _schedule()
+	if sched == null or entry == null:
+		return &""
+	var key := hash([entry.get_instance_id(), sched.get_instance_id(), carry])
+	if _carry_cache.has(key):
+		return _carry_cache[key]
+	if _carry_cache.size() > 16:
+		_carry_cache.clear()
+	var best: ScheduleEntry = null
+	for e: ScheduleEntry in sched.entries:
+		if e == null or e == entry or e.animation in carry or e.start_minute <= entry.start_minute:
+			continue
+		if best == null or e.start_minute < best.start_minute:
+			best = e
+	var anim := best.animation if best != null else &""
+	_carry_cache[key] = anim
+	return anim
 
 
 ## The schedule has an entry with `anim` that started before the current entry (sorted by start).

@@ -13,7 +13,7 @@ script = ExtResource("1")
 collision_layer = 8
 collision_mask = 0
 monitoring = false
-priority = 5
+priority = 12
 script = ExtResource("2")
 
 [node name="Shape" type="CollisionShape3D" parent="Interactable"]

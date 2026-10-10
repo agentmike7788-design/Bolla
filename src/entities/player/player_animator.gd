@@ -17,6 +17,8 @@ extends RefCounted
 
 enum ToolPhase { BACK, DRAW, HOLD, STOW }
 
+## QA8-13: the watering clip position of the last frame (-1 = not watering).
+var _water_last: float = -1.0
 ## The rig's AnimationPlayer anywhere under the Model (null = procedural waddle).
 var anim: AnimationPlayer
 var tools: ToolAnimConfig
@@ -92,6 +94,19 @@ func update(delta: float, action: Player.TimedAction, carrying: bool) -> void:
 		_hold_events(action)
 	_update_props()
 	_update_can(anim.current_animation == WATER_CLIP)
+	_water_events()
+
+
+## QA8-13: the pour of the watering clip (ToolAnimConfig.bite_at water) → AudioEvents.work_beat().
+func _water_events() -> void:
+	if anim.current_animation != WATER_CLIP or anim.current_animation_length <= 0.0 or not tools.bite_at.has(WATER_CLIP):
+		_water_last = -1.0
+		return
+	var pos := anim.current_animation_position / anim.current_animation_length
+	var last := _water_last
+	_water_last = pos
+	if last >= 0.0 and _passed(last, pos, float(tools.bite_at[WATER_CLIP])):
+		_work_beat()
 
 
 ## The watering can at can_grip only while watering (W1-Anschluss 5).
@@ -147,6 +162,10 @@ func held_tool() -> StringName:
 
 ## True if the running action clip `clip` sounds its work cue in step with the tool (work_beat).
 func syncs_work_cue(clip: StringName) -> bool:
+	# W2-Nachtrag 11 / W3 (QA8-13): watering pours in step with the can (no tool from the bag – the can hangs at
+	# can_grip while the clip plays).
+	if anim != null and clip == WATER_CLIP:
+		return tools.bite_at.has(clip) and tools.beat_cues.has(clip) and anim.has_animation(clip)
 	if anim != null and clip == tools.burial_action_clip:
 		return _needs_tool(tools.burial_fill_clip) != &""
 	return anim != null and tools.bite_at.has(clip) and _needs_tool(clip) != &""

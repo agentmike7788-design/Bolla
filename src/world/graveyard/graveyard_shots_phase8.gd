@@ -3,6 +3,11 @@ extends "res://src/world/graveyard/graveyard_shots_phase7.gd"
 ## p8_21…p8_27, p8_vis_visitors / _apprentice / _night). Needs a real renderer:
 ##   tools/godot_run.sh --resolution 1280x720 -s res://src/world/graveyard/graveyard_shots_phase8.gd \
 ##       -- --out=/abs/dir [--shots=p8_03,p8_vis] [--jpg]
+## CPU (§9, headless, W3): godot --headless --path . -s res://src/world/graveyard/graveyard_shots_phase8.gd -- --out=/abs/dir --cpu
+##   the script time per frame with the clock running, Phase 8 off (p8_open cleared = the Phase-7 end state) against
+##   on (Jakob working, two visitors at their graves; the Lichtgang with its procession and the candles; the village)
+##   in the same measurement (CPU_PAIRS interleaved off/on pairs, median of the differences) → cpu_stats_p8.txt; plus
+##   the save size and the load time.
 ## From the Phase-7 end state (saves_v6/slot_p7_day53_neighbor, Lindenacker full, eight villagers „Vertraut")
 ## loaded through the real SaveManager, p8_open on day 53. The states go through the real systems in story order:
 ## the third row granted (overgrown) · cleared and buried (ExpansionManager.unlock, Graveyard dig / bury /
@@ -58,7 +63,7 @@ const G8_SHOTS: Array[Dictionary] = [
 			"figures": [["npc_smith_g", "gv_old_01", "wp", &"mourn_stand", 0.6], ["npc_grocer_g", "gv_old_08", "wp", &"kneel", 1.4]]},
 	{"name": "p8_16_veit_hanne_gate", "day": 55, "minute": 950, "focus": Vector2(1.2, 10.8), "distance": 10.0,
 			"player": Vector2(1.2, 8.0), "facing": 0.0,
-			"figures": [["npc_beggar_g", "veit_gate", "wp", &"sit_beg", 0.5], ["npc_peddler_g", "peddler_gate", "wp", &"offer", 0.5]]},
+			"figures": [["npc_beggar_g", "veit_gate", "wp", &"sit_ground", 0.5], ["npc_peddler_g", "peddler_gate", "wp", &"offer", 0.5]]},
 	{"name": "p8_24_lambert_digs", "day": 57, "minute": 150, "focus": Vector2(14.8, 21.4), "distance": 11.0,
 			"player": Vector2(9.0, 16.0), "facing": 90.0,
 			"figures": [["npc_robber", "gv_l_10", "wp", &"dig_night", 0.4]]},
@@ -85,6 +90,20 @@ const G8_SHOTS: Array[Dictionary] = [
 				["npc_smith_g", "gv_old_01", "wp", &"mourn_stand", 0.6], ["npc_grocer_g", "gv_old_08", "wp", &"mourn_stand", 0.6]]},
 	{"name": "p8_23_lights_ghosts", "day": 58, "minute": 1078, "focus": Vector2(3.0, 1.0), "distance": 14.0,
 			"player": Vector2(0.6, 6.6), "facing": 200.0, "stage": "ghosts"},
+	# W3 (§9 budget pictures, game zoom 22): the Lichtgang overview with every figure of the procession on the hill.
+	{"name": "perf_p8_03_lights_overview", "day": 58, "minute": 1075, "player": Vector2(3.5, -9.5), "facing": 180.0, "game": 22.0,
+			"figures": [["npc_priest", "lights_lenz", "wp", &"idle", 0.2], ["npc_apprentice", "lights_crowd_4", "wp", &"idle", 0.3],
+				["npc_smith_g", "gv_old_01", "wp", &"mourn_stand", 0.6], ["npc_grocer_g", "gv_old_08", "wp", &"mourn_stand", 0.6],
+				["npc_innkeeper_g", "lights_crowd_1", "wp", &"idle", 0.1], ["npc_mayor_g", "lights_crowd_2", "wp", &"idle", 0.5],
+				["npc_washer_g", "lights_crowd_3", "wp", &"idle", 0.7], ["npc_kin_kehr", "gv_l_04", "wp", &"mourn_stand", 0.4],
+				["npc_kin_ott", "gv_l_03", "wp", &"mourn_stand", 0.3], ["npc_kin_brandt", "gv_l_10", "wp", &"mourn_stand", 0.2],
+				["npc_kin_sieber", "gv_l_02", "wp", &"mourn_stand", 0.5], ["npc_beggar_g", "lights_gate", "wp", &"idle", 0.4],
+				["npc_peddler_g", "lights_crowd_5", "wp", &"idle", 0.6]]},
+	{"name": "perf_p8_01_day_jakob_visitors", "day": 59, "minute": 600, "player": Vector2(14.0, 15.0), "facing": 200.0, "game": 22.0,
+			"figures": [["npc_apprentice", Vector2(10.4, 13.6), 295.0, &"rake", 0.4], ["npc_kin_kehr", "gv_l_04", "wp", &"kneel", 1.2],
+				["npc_kin_brandt", "gv_l_10", "wp", &"mourn_stand", 0.8]]},
+	{"name": "perf_p8_02_night_robber_candles", "day": 59, "minute": 150, "player": Vector2(12.0, 17.0), "facing": 120.0, "game": 22.0,
+			"figures": [["npc_robber", "gv_l_10", "wp", &"dig_night", 0.4]]},
 	{"name": "p8_vis_visitors_z12", "day": 56, "minute": 640, "focus": Vector2(4.0, 0.0), "distance": 62.0, "pitch": 85.0,
 			"player": Vector2(-20.0, 0.0), "stage": "vis", "vis": "visitors", "zoom": 12.0},
 	{"name": "p8_vis_visitors_z22", "day": 56, "minute": 640, "focus": Vector2(4.0, 0.0), "distance": 62.0, "pitch": 85.0,
@@ -97,7 +116,30 @@ const G8_SHOTS: Array[Dictionary] = [
 			"player": Vector2(-20.0, 0.0), "stage": "vis", "vis": "night", "zoom": 22.0},
 ]
 
+## CPU probe (W3): interleaved off/on pairs per scene, frames per sample.
+const CPU_PAIRS := 12
+## [name, day, minute, region, staging of the "on" sample]
+const CPU_SCENES: Array = [
+	["graveyard day (Jakob, 2 visitors)", 56, 630, &"graveyard", "visits"],
+	["Lichtgang (procession, candles)", 58, 1010, &"graveyard", "lights"],
+	["village day", 57, 660, &"village", ""],
+]
+const CPU_PAIR_WARMUP := 60
+const CPU_PAIR_FRAMES := 240
+
 var _staged8: Array[Node3D] = []
+## One sample per process (--cpu-scene=<i> --cpu-on=0|1): a fresh world each time; the host drift is averaged by
+## alternating the processes (tools: a shell loop, see docs/reviews/phase8_round1/qa_playthrough.md).
+var _cpu_scene: int = -1
+var _cpu_on: bool = false
+var _cpu_micro: bool = false
+## The Phase-8 systems driven by the clock (EventBus.time_tick → _on_time_tick).
+const P8_TICK_SYSTEMS: Array[String] = ["NpcLife", "Visitors", "GraveCare", "Apprentice", "Friendship", "Festivals", "Wanderers",
+		"NightRobber", "NightPaths"]
+## The Phase-8 systems with a _process (the candle light pool, the chatter bubbles; both 2 Hz).
+const P8_PROCESS_SYSTEMS: Array[String] = ["GraveCare", "ChatterRunner"]
+## Game minutes per frame at 60 fps (0.5 s real time per game minute).
+const FRAMES_PER_MINUTE := 30.0
 
 
 func _run() -> void:
@@ -109,8 +151,18 @@ func _run() -> void:
 			_only = arg.trim_prefix("--shots=").split(",", false)
 		elif arg == "--jpg":
 			_jpg = true
+		elif arg == "--cpu":
+			_cpu = true
+		elif arg.begins_with("--cpu-scene="):
+			_cpu = true
+			_cpu_scene = int(arg.trim_prefix("--cpu-scene="))
+		elif arg == "--cpu-micro":
+			_cpu = true
+			_cpu_micro = true
+		elif arg.begins_with("--cpu-on="):
+			_cpu_on = arg.trim_prefix("--cpu-on=") == "1"
 	if _out == "":
-		printerr("usage: -- --out=/abs/dir [--shots=p8_03,p8_vis] [--jpg]")
+		printerr("usage: -- --out=/abs/dir [--shots=p8_03,p8_vis] [--jpg] [--cpu]")
 		quit(2)
 		return
 	DirAccess.make_dir_recursive_absolute(_out)
@@ -118,6 +170,10 @@ func _run() -> void:
 	var world := await _load_v6(FIXTURE_P8)
 	_gs().call(&"set_flag", &"p8_open", true)
 	_gs().call(&"set_flag", &"p8_open_day", OPEN_DAY)
+	if _cpu:
+		await _cpu_probe_p8(world)
+		quit()
+		return
 	_bag = load(INVENTORY).new()
 	_bag.name = "ShotBag"
 	_bag.set(&"slot_count", 80)
@@ -378,3 +434,214 @@ func _stage_vis8(world: Node3D, shot: Dictionary) -> void:
 	var focus: Vector2 = shot.focus
 	_free_camera(world, Vector3(focus.x, _ground(world, focus), focus.y), float(shot.distance))
 	(world.get_node(^"Player") as Node3D).visible = false
+
+
+# --- CPU probe (§9, W3) --------------------------------------------------------------------------------
+
+func _dbg(line: String) -> void:
+	var dbg: Node = root.get_node_or_null(^"Debug")
+	if dbg == null or not dbg.has_method(&"execute"):
+		printerr("[CPU8] no debug console for: ", line)
+		return
+	var r: Dictionary = dbg.call(&"execute", line)
+	if not bool(r.get("ok", false)):
+		printerr("[CPU8] %s → %s" % [line, str(r.get("text", ""))])
+
+
+## One sample: the clock runs from (day, minute); after `warmup` frames the process time of `frames` frames.
+func _cpu_sample(day: int, minute: int, region: StringName, warmup: int, frames: int) -> Dictionary:
+	var clock := root.get_node(^"TimeManager")
+	root.get_node(^"UIState").call(&"clear")
+	clock.call(&"clear_pauses")
+	clock.call(&"load_state", {"day": day, "minute_of_day": minute})
+	_dbg("region %s" % region)
+	for i: int in 3:
+		await process_frame
+	clock.set("running", true)
+	for i: int in warmup:
+		await process_frame
+	var samples: Array[float] = []
+	for i: int in frames:
+		await process_frame
+		samples.append(Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0)
+	clock.set("running", false)
+	var sum := 0.0
+	for v: float in samples:
+		sum += v
+	samples.sort()
+	return {"mean": sum / frames, "median": samples[frames / 2], "worst": samples.back(),
+			"nodes": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))}
+
+
+func _p8(on: bool) -> void:
+	_gs().call(&"set_flag", &"p8_open", on)
+	if on:
+		_gs().call(&"set_flag", &"p8_open_day", OPEN_DAY)
+
+
+func _stage_probe(probe: Array, on: bool) -> void:
+	_p8(on)
+	root.get_node(^"TimeManager").call(&"load_state", {"day": int(probe[1]), "minute_of_day": int(probe[2]) - 2})
+	if not on:
+		return
+	match String(probe[4]):
+		"visits":
+			_dbg("visit kehr")
+			_dbg("visit sieber")
+		"lights":
+			_dbg("fest lights")
+			_dbg("lights all")
+
+
+static func _median(values: Array[float]) -> float:
+	var v := values.duplicate()
+	v.sort()
+	return v[v.size() / 2] if not v.is_empty() else 0.0
+
+
+## The host of the cloud container drifts by several ms between minutes: the probe interleaves off / on of one
+## scene CPU_PAIRS times (short samples) and reports the median of the pairwise differences (on − off), with the
+## spread (quartiles) of those differences.
+func _cpu_probe_p8(world: Node3D) -> void:
+	# Jakob hired on the open day, two lines on the board – he works from day 55 on.
+	_p8(true)
+	_dbg("apprentice hire")
+	_dbg("apprentice level rake 2")
+	_dbg("apprentice level weed 2")
+	var app := _system(world, "Apprentice")
+	if app != null:
+		app.call(&"set_board_lines", [{"task": &"rake", "section": &"yard"}, {"task": &"weed", "section": &"linden"}] as Array[Dictionary])
+	var probes: Array = CPU_SCENES
+	if _cpu_micro:
+		await _cpu_micro_p8(world)
+		return
+	if _cpu_scene >= 0:
+		var one: Array = probes[_cpu_scene]
+		_stage_probe(one, _cpu_on)
+		var r := await _cpu_sample(int(one[1]), int(one[2]), one[3], CPU_WARMUP, CPU_FRAMES)
+		print("[CPU8S] scene %d on %d median %.3f mean %.3f worst %.3f nodes %d" % [_cpu_scene, int(_cpu_on), r.median, r.mean,
+				r.worst, r.nodes])
+		return
+	var lines: PackedStringArray = []
+	for probe: Array in probes:
+		var diffs: Array[float] = []
+		var offs: Array[float] = []
+		var ons: Array[float] = []
+		var worst := 0.0
+		for pair: int in CPU_PAIRS:
+			var r := {}
+			for on: bool in ([false, true] if pair % 2 == 0 else [true, false]):
+				_stage_probe(probe, on)
+				r[on] = await _cpu_sample(int(probe[1]), int(probe[2]), probe[3], CPU_PAIR_WARMUP, CPU_PAIR_FRAMES)
+				worst = maxf(worst, float((r[on] as Dictionary).worst)) if on else worst
+			offs.append(float(r[false].median))
+			ons.append(float(r[true].median))
+			diffs.append(float(r[true].median) - float(r[false].median))
+		var sorted := diffs.duplicate()
+		sorted.sort()
+		var line := "%s: off %.3f ms · on %.3f ms (medians) · Phase-8 share %+.3f ms (median of %d interleaved pairs, quartiles %+.3f … %+.3f) · worst frame on %.1f ms" % [
+				probe[0], _median(offs), _median(ons), _median(diffs), CPU_PAIRS, sorted[sorted.size() / 4], sorted[sorted.size() * 3 / 4], worst]
+		print("[CPU8] ", line)
+		lines.append(line)
+	_p8(true)
+	var saves := root.get_node(^"SaveManager")
+	saves.call(&"save_game", SHOT_SLOT)
+	var path := String(saves.get("save_dir")).path_join("slot_%d.json" % SHOT_SLOT)
+	var size := FileAccess.get_file_as_bytes(path).size() if FileAccess.file_exists(path) else -1
+	var t0 := Time.get_ticks_usec()
+	await saves.call(&"load_game", SHOT_SLOT)
+	lines.append("save slot %d: %d bytes · load %.0f ms (incl. world change)" % [SHOT_SLOT, size, (Time.get_ticks_usec() - t0) / 1000.0])
+	print("[CPU8] ", lines[lines.size() - 1])
+	var f := FileAccess.open(_out.path_join("cpu_stats_p8.txt"), FileAccess.WRITE)
+	f.store_string("\n".join(lines) + "\n")
+	f.close()
+
+
+static func _shown(n: Node) -> bool:
+	return bool(n.call(&"is_present")) if n.has_method(&"is_present") else (n as Node3D).is_visible_in_tree()
+
+
+## The figures of Phase 8: Jakob, the kin, Veit, Hanne, Lambert and the graveyard copies (*_g) of the villagers.
+static func _p8_npc(n: Node) -> bool:
+	var nm := String(n.name)
+	return nm.begins_with("npc_kin_") or nm in ["npc_apprentice", "npc_beggar", "npc_peddler", "npc_robber"] or nm.ends_with("_g")
+
+
+## W3 (§9): the Phase-8 script time measured directly (the host of the cloud container drifts by several ms between
+## runs – a frame-time difference cannot resolve 0.2 ms). The Phase-8 tick handlers are taken off EventBus.time_tick
+## and called by hand after every game minute (the rest of the world ticks as in the game); the Phase-8 _process
+## (systems and figures) is called by hand each frame. Share per frame = tick time / FRAMES_PER_MINUTE + process time.
+func _cpu_micro_p8(world: Node3D) -> void:
+	_p8(true)
+	_dbg("apprentice hire")
+	_dbg("apprentice level rake 2")
+	_dbg("apprentice level weed 2")
+	var app := _system(world, "Apprentice")
+	if app != null:
+		app.call(&"set_board_lines", [{"task": &"rake", "section": &"yard"}, {"task": &"weed", "section": &"linden"}] as Array[Dictionary])
+	var bus := root.get_node(^"EventBus")
+	var clock := root.get_node(^"TimeManager")
+	var ticks: Array[Node] = []
+	for nm: String in P8_TICK_SYSTEMS:
+		var sys := _system(world, nm)
+		if sys != null and sys.has_method(&"_on_time_tick"):
+			ticks.append(sys)
+			var cb := Callable(sys, &"_on_time_tick")
+			if bus.is_connected(&"time_tick", cb):
+				bus.disconnect(&"time_tick", cb)
+	var lines: PackedStringArray = []
+	for probe: Array in CPU_SCENES:
+		_stage_probe(probe, true)
+		clock.call(&"load_state", {"day": int(probe[1]), "minute_of_day": int(probe[2])})
+		_dbg("region %s" % probe[3])
+		for i: int in 5:
+			await process_frame
+		var procs: Array[Node] = []
+		for nm: String in P8_PROCESS_SYSTEMS:
+			var sys := _system(world, nm)
+			if sys != null:
+				procs.append(sys)
+		var npcs: Array[Node] = []
+		for n: Node in world.find_children("npc_*", "", true, false):
+			if n.has_method(&"_process") and _p8_npc(n):
+				npcs.append(n)
+		var figures := 0
+		var tick_us := 0
+		var proc_us := 0
+		var frames := 0
+		for minute: int in 60:
+			clock.call(&"advance", 1)
+			var t0 := Time.get_ticks_usec()
+			for sys: Node in ticks:
+				sys.call(&"_on_time_tick", int(clock.get("day")), int(clock.get("minute_of_day")))
+			tick_us += Time.get_ticks_usec() - t0
+			for f: int in 5:
+				await process_frame
+				var t1 := Time.get_ticks_usec()
+				var shown := 0
+				for n: Node in procs:
+					n.call(&"_process", 1.0 / 60.0)
+				for n: Node in npcs:
+					if _shown(n):
+						n.call(&"_process", 1.0 / 60.0)
+						shown += 1
+				proc_us += Time.get_ticks_usec() - t1
+				figures = maxi(figures, shown)
+				frames += 1
+		var vis := _system(world, "Visitors")
+		var shown_names: PackedStringArray = []
+		for n: Node in npcs:
+			if _shown(n):
+				shown_names.append(String(n.name))
+		print("[CPU8M] %s: visits %s · figures shown %s" % [probe[0], str(vis.call(&"active_visits").map(func(v: Dictionary) -> String:
+				return "%s %s" % [v.get("kin_id", ""), v.get("phase", "")])) if vis != null else "-", str(shown_names)])
+		var per_minute := tick_us / 60.0 / 1000.0
+		var per_frame_proc := proc_us / float(frames) / 1000.0
+		var share := per_minute / FRAMES_PER_MINUTE + per_frame_proc
+		var line := "%s: Phase-8 ticks %.3f ms per game minute (→ %.3f ms per frame) · Phase-8 _process %.3f ms per frame (up to %d figures + %d systems) · share ≈ %.3f ms per frame" % [
+				probe[0], per_minute, per_minute / FRAMES_PER_MINUTE, per_frame_proc, figures, procs.size(), share]
+		print("[CPU8M] ", line)
+		lines.append(line)
+	var f := FileAccess.open(_out.path_join("cpu_micro_p8.txt"), FileAccess.WRITE)
+	f.store_string("\n".join(lines) + "\n")
+	f.close()

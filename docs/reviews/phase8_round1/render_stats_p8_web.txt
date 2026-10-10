@@ -1,0 +1,3 @@
+p8_08_jakob_rakes  camera_tris=203039 (primitives 149957 + grass 53082)  draw_calls=211 (camera 49)  objects=211  omni_visible=10  shadowed=0  particles=13
+p8_12_jakob_lunch  camera_tris=198162 (primitives 164682 + grass 33480)  draw_calls=159 (camera 35)  objects=159  omni_visible=9  shadowed=0  particles=13
+p8_22_lights_overview  camera_tris=609442 (primitives 261250 + grass 348192)  draw_calls=856 (camera 331)  objects=735  omni_visible=15  shadowed=2  particles=13

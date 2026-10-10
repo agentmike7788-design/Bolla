@@ -450,7 +450,7 @@ func test_grave_plot_line_wish_and_coins_on_the_stone() -> void:
 	state.wishes[0]["template"] = "w_line_1"
 	state.tips_on_stone = {"l_09": [2, "kin_kehr"]}
 	visitors.load_state(state)
-	assert_eq(plot.get_interaction_prompt(player), "[E] 2 Münzen auf dem Stein (Martha Kehr)", "coins first (no TipStone child)")
+	assert_eq(plot.get_interaction_prompt(player), "[E] Zwei Münzen auf dem Stein (Martha Kehr)", "coins first (no TipStone child)")
 	plot.interact(player)
 	assert_eq(pinv.count(&"coin"), 2)
 	assert_eq(plot.get_interaction_prompt(player), "Für die Zeile fehlt Tinte.")
@@ -485,7 +485,7 @@ func test_tip_stone_and_rain_barrel() -> void:
 	visitors.load_state(state)
 	stone.refresh()
 	assert_true(stone.can_interact(player))
-	assert_eq(stone.get_interaction_prompt(player), "[E] 3 Münzen auf dem Stein (Hinrich Brandt)")
+	assert_eq(stone.get_interaction_prompt(player), "[E] Drei Münzen auf dem Stein (Hinrich Brandt)")
 	assert_true(plot.get_interaction_prompt(player).begins_with("Grab von"), "the plot leaves the coins to the TipStone")
 	stone.interact(player)
 	assert_eq(pinv.count(&"coin"), 3)

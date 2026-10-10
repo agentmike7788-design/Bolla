@@ -98,7 +98,7 @@ def beggar():
     face = pts["face"]
     _hair(parts, face, VE_HAIR, L.hexc("#6E6A62"), [(0.0, 0.42), (0.6, 0.3), (1.1, 0.04), (1.4, -0.22), (math.pi, -0.42)],
           out=0.005, crown=0.002, tuft=0.008, seed=31)
-    M.stubble(parts[i0], c, s, L.hexc("#8E8A84"), 0.6)
+    M.stubble(parts[i0], c, s, L.hexc("#4C4843"), 1.0)   # W3 (G8): a grey beard that reads at play zoom
     # the knitted fisherman's cap: a close shell with a rolled brim
     cap, edge = _cloth_cover(parts, face, VE_CAP, VE_CAP_DARK, [(0.0, 0.5), (0.8, 0.42), (1.4, 0.18), (math.pi, 0.02)],
                              out=lambda ph, w: 0.018 + 0.012 * _s01((w - 0.5) / 0.5), crown=0.03, folds=16.0, rim=0.016 * face.k,
@@ -110,7 +110,7 @@ def beggar():
     joints = _joints(hip, waist, Vector((0, -0.01, 1.45)), Vector((0, -0.04, 1.78)), sh, wr, 0.1)
     cup = PR.tin_cup("tin_cup")
     M.place(cup, hands[-1] + Vector((0.0, -0.035, -0.01)))
-    kids = [M.child("tin_cup", "arm_r", cup, ("sit_beg", "idle", "talk", "stand_up", "idle_low"))]
+    kids = [M.child("tin_cup", "arm_r", cup, ("sit_beg", "sit_ground", "idle", "talk", "stand_up", "idle_low"))]
 
     def stiff(t: float) -> dict:
         """24 frames: the left leg swings, the stiff right leg is brought round from the hip (the hip hikes),
@@ -132,6 +132,17 @@ def beggar():
         s = math.sin(rig.TAU * t)
         return rig.add(rig.breathe(t, 0.7), sit, {"head": (0.0, 0.0, 10.0 * s), "arm_r": (2.0 * math.sin(rig.TAU * t * 2.0), 0, 0)})
 
+    # W3 (G8 p8_16): at the cemetery gate there is no step - he sits on the ground at the gate pillar, the stiff right
+    # leg straight out, the left a little splayed, the cup held out over the knee (seat = the ground).
+    ground = {"hips": (-10.0, 0.0, 0.0, 0.0, 0.08, -0.72), "spine": (12.0, 0.0, 0.0), "head": (8.0, 0.0, 0.0),
+              "leg_r": (-80.0, 0.0, 8.0), "leg_l": (-76.0, 0.0, -12.0), "arm_r": (-46.0, -8.0, 6.0), "arm_l": (-18.0, 10.0, 0.0),
+              "feet": {"leg_l": 0.0, "leg_r": 0.0}}   # the seat of Lambert's sit_ground (asset test: legs on the ground)
+
+    def sit_ground(t: float) -> dict:
+        """90 frames: on the ground at the gate, breathing, the head turning after the passers-by."""
+        s = math.sin(rig.TAU * t)
+        return rig.add(rig.breathe(t, 0.7), ground, {"head": (0.0, 0.0, 10.0 * s), "arm_r": (2.0 * math.sin(rig.TAU * t * 2.0), 0, 0)})
+
     def stand_up(t: float) -> dict:
         """30 frames one-shot: from sitting up onto the good leg and the stick (ends at rest)."""
         mid = rig.blend(sit, PLANT, 0.55)
@@ -143,7 +154,7 @@ def beggar():
                  (0.4, {"arm_r": (-30.0, -8.0, 14.0), "head": (2.0, -3.0, -2.0), "leg_r": (-8.0, 0, 0)}),
                  (0.7, {"arm_r": (-22.0, -6.0, 10.0), "head": (5.0, 2.0, 3.0), "leg_r": (-8.0, 0, 0)})]
     actions = [("idle-loop", 84, idle), ("walk-loop", 24, stiff), ("walk_stiff-loop", 24, stiff),
-               ("talk-loop", 72, _talk(talk_keys, 0.8)), ("sit_beg-loop", 90, sit_beg), ("stand_up", 30, stand_up)]
+               ("talk-loop", 72, _talk(talk_keys, 0.8)), ("sit_beg-loop", 90, sit_beg), ("sit_ground-loop", 90, sit_ground), ("stand_up", 30, stand_up)]
     actions += M.p8_actions({"low"}, stiff)
     M.export_figure("ph_chr_beggar", mesh, joints, actions, children=kids, markers=[M.face_marker(pts)])
 
@@ -260,7 +271,16 @@ def peddler():
     _global_light(mesh, 1.62)
     L.smooth(mesh, 55)
     joints = _joints(0.84, waist, Vector((0, -0.01, 1.33)), Vector((0, -0.03, 1.64)), sh, wr, 0.094)
+    # W3 (G8 p8_16): while she offers, the basket stands on the ground beside her (it was simply gone).
+    down = kiepe("kiepe_down")
+    down.data.transform(Matrix.Translation(Vector((0.5, 0.12, -0.62))) @ Matrix.Rotation(math.radians(-25.0), 4, "Z"))
+    # the figure budget (body + child meshes <= 9 000): the basket on the ground a little coarser
+    dec = down.modifiers.new("dec", "DECIMATE")
+    dec.ratio = 0.8
+    bpy.context.view_layer.objects.active = down
+    bpy.ops.object.modifier_apply(modifier=dec.name)
     kids = [M.child("kiepe", "spine", kiepe("kiepe"), ("idle", "walk", "talk", "kiepe_off", "kiepe_on", "idle_low")),
+            M.child("kiepe_down", "root", down, ("offer",)),
             M.child("lantern_prop", "arm_r", M.lantern_child(hands[-1]), ("lantern_walk",)),
             M.child("staff", "arm_l", staff, ("idle", "walk", "talk", "offer", "kiepe_off", "kiepe_on", "idle_low",
                                               "lantern_walk"))]

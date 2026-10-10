@@ -21,6 +21,11 @@ const META_HOUSE := &"house"
 const NIGHT_PATHS_GROUP := &"night_paths"
 const FOLIAGE_LAYER := 1 << 1
 const FOLIAGE_SHADER := "res://assets/shaders/painted_foliage.gdshader"
+## W3 (G8 p8_18 / p8_19, E8-1): the sick house's window is the light of the night in Hollerbrück – brighter and wider
+## while it burns all night (the same light, no new one): energy × SICK_ENERGY, range at least SICK_RANGE.
+const SICK_ENERGY := 2.2
+const SICK_RANGE := 6.0
+const META_RANGE := &"range_on"
 
 var _windows: Array[Light3D] = []
 
@@ -55,8 +60,14 @@ func apply_minute(minute: int) -> void:
 	for light: Light3D in _windows:
 		if not is_instance_valid(light):
 			continue
-		var on := window_lit(light, minute) or _sick(light, minute)
-		var energy := float(light.get_meta(META_ON, 1.0))
+		var sick := _sick(light, minute)
+		var on := window_lit(light, minute) or sick
+		var energy := float(light.get_meta(META_ON, 1.0)) * (SICK_ENERGY if sick else 1.0)
+		if light is OmniLight3D:
+			var omni := light as OmniLight3D
+			if not omni.has_meta(META_RANGE):
+				omni.set_meta(META_RANGE, omni.omni_range)
+			omni.omni_range = maxf(float(omni.get_meta(META_RANGE)), SICK_RANGE) if sick else float(omni.get_meta(META_RANGE))
 		light.set_meta(META_BASE, energy if on else 0.0)
 		light.light_energy = energy * float(light.get_meta(META_SCALE, 1.0)) if on else 0.0
 		light.visible = light.light_energy > 0.01

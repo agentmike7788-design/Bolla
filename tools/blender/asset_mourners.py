@@ -510,7 +510,7 @@ MEN = {
         hair=L.hexc("#CFC9BE"), hair_dark=L.hexc("#9A948A"),
         coat=L.hexc("#4A443E"), coat_dark=L.hexc("#332F2B"), trouser=L.hexc("#3A3632"), neck=L.hexc("#6A6458"),
         hat=L.hexc("#3A342E"), hat_dark=L.hexc("#26221E"), brim=0.085, crown_h=0.085, slouch=0.05, bouquet=None,
-        stick=True, beard=L.hexc("#BDB7AC"),
+        stick=True, beard=L.hexc("#6A665F"),   # W3 (G8): grey on the pale skin, else unseen
         face=dict(nose="hook", nose_s=1.1, brow_w=1.2, brow_tilt=0.45, brow_arch=0.8, mouth="kind", smile=0.25,
                   cheeks=0.35, jaw=0.88, chin=0.04, age=0.75, lids=0.3, iris=IRIS_GREY, muzzle=0.9)),
 }
@@ -591,7 +591,7 @@ def _man(name: str, cfg: dict):
     _hair(parts, face, cfg["hair"], cfg["hair_dark"], [(0.0, 0.5), (0.5, 0.44), (1.0, 0.18), (1.3, -0.08), (1.7, -0.22),
                                                        (math.pi, -0.42)], out=0.006, crown=0.004, tuft=0.005, seed=31)
     if cfg["beard"] is not None:   # white stubble round the jaw
-        stubble(parts[i0], c, s, cfg["beard"], 0.55)
+        stubble(parts[i0], c, s, cfg["beard"], 1.0)
     mesh = L.join(parts, rig.MESH)
     _global_light(mesh, top + 0.36)
     L.smooth(mesh, 55)
@@ -608,6 +608,11 @@ def _man(name: str, cfg: dict):
     m = (Matrix.Translation(hands[-1] + Vector((0.03, -0.04, -0.06))) @ Matrix.Rotation(math.radians(-80.0), 4, "X")
          @ Matrix.Translation(Vector(((s.x + cfg["brim"]) * 0.45, 0.0, 0.0)) - Vector((0.0, c.y, hz))))
     hat2.data.transform(m)
+    # W3 (G8 p8_04): the hat in the hands read as a shield in front of the coat – smaller about the grip, tilted
+    # so the crown faces down and the brim is seen at a slant.
+    grip = hands[-1] + Vector((0.03, -0.04, -0.06))
+    hat2.data.transform(Matrix.Translation(grip) @ Matrix.Rotation(math.radians(35.0), 4, "X") @ Matrix.Scale(0.78, 4)
+                        @ Matrix.Translation(-grip))
     kids.append(child("hat_hand", "arm_r", hat2, ("mourn_stand",)))
     if cfg["bouquet"]:
         bq = PR.BOUQUETS[cfg["bouquet"]](seed=cfg["seed"] % 7)

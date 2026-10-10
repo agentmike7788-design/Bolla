@@ -30,6 +30,10 @@ extends Resource
 @export var close_minutes: int = 30
 @export var line_minutes: int = 30
 @export var line_item: StringName = &"ink"
+## W3 (QA8-04, §2.11): the copy from the grave register at the hut's desk („Namen abschreiben", 20 minutes,
+## 1 line_item) for the deliver orders that ask for it (Lenz 1, Theres 2).
+@export var extract_item: StringName = &"register_extract"
+@export var extract_minutes: int = 20
 ## Ghost mood: care ≤ +2, disturbed −3, a candle on the night of the lights +2.
 @export var care_cap: int = 2
 @export var disturbed_mood: int = -3

@@ -18,6 +18,7 @@ conditions = {
 "gives_flag": &"archive_key",
 "npc": &"mayor",
 "place": &"gv_l_12",
+"schedule_flag": &"meet_mayor_day",
 "times": 1,
 "window": [960, 1000]
 }

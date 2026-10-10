@@ -45,6 +45,21 @@ const TEXT_LOAN_BACK := "Esch hat sein Grabgitter wieder abgeholt."
 const TEXT_RETURN := "%s bittet um einen Gegengefallen: %s"
 const MINUTES_PER_DAY := 1440
 const MORNING_MINUTE := 360
+## W1-Anschluss 6 / W3 (QA8-06): Liesel's corpse wash is seen – her graveyard figure walks up to the crypt stair,
+## stands behind the crypt table (washing, „work") for the wash and walks back down. A runtime schedule (not
+## saved: rebuilt from the wash + clock on a load), not on the Lichtgang (the procession has that figure).
+const WASHER_NPC := &"npc_washer_g"
+const WASHER_DIALOGUE := &"v_washer"
+const WASH_ANIM := &"work"
+const WASH_ROOM := &"crypt"
+const WASH_DOOR := "tp_crypt"
+const WASH_ROUTE: PackedStringArray = ["road_end", "road_mid", "gate_outside", "gate_inside"]
+## Behind the table (table space, -z = away from the camera and the UsePos), and the step she arrives from.
+const WASH_SPOT := Vector3(0.0, 0.0, -0.95)
+const WASH_FROM := Vector3(0.0, 0.0, -1.6)
+const FESTIVALS_GROUP := &"festivals"
+const LIGHTS_FEST := &"fest_lights"
+const NPC_GROUP := &"npc"
 
 @export var save_id: String = "friendship"
 @export var save_order: int = 74
@@ -79,6 +94,8 @@ var _ware: Dictionary = {}
 ## Liesel's corpse wash {day, minute, minutes, corpse}.
 var _wash: Dictionary = {}
 var _morning_day: int = 0
+## QA8-06: the day the washer's runtime schedule was set for (0 = none) - not saved.
+var _wash_shown_day: int = 0
 
 
 func _init() -> void:
@@ -279,6 +296,7 @@ func apply_morning(day: int) -> void:
 	if day <= _morning_day:
 		return
 	_morning_day = day
+	_show_wash()
 	var orders := _first(ORDERS_GROUP)
 	# Lapsed return favours: −6 and the favour rests.
 	for npc: StringName in _owed.keys():
@@ -376,6 +394,91 @@ func load_state(data: Dictionary) -> void:
 	_prayer = _shape(data.get("prayer"), {"grave": "", "from": 0, "until": 0})
 	_ware = _shape(data.get("ware"), {"item": "", "day": 0, "price": 0})
 	_wash = _shape(data.get("wash"), {"day": 0, "minute": 0, "minutes": 0, "corpse": ""})
+
+
+## Runtime schedules are not saved: Liesel's wash figure again from the wash + clock.
+func post_load() -> void:
+	_wash_shown_day = 0
+	_show_wash()
+
+
+## QA8-06: the washer's figure for today's wash (walk up, behind the crypt table, walk down) - or back to her data
+## schedule when no wash is due today. Returns whether a wash figure is set.
+func _show_wash() -> bool:
+	var npc := _washer_npc()
+	if npc == null:
+		return false
+	var day := TimeManager.day
+	var due := not _wash.is_empty() and int(_wash.get("day", 0)) == day and not _lights_today()
+	var entries: Array[ScheduleEntry] = []
+	if due:
+		entries = _wash_entries()
+	if entries.is_empty():
+		if _wash_shown_day != 0 and _wash_shown_day != day:
+			npc.clear_runtime_schedule()
+			_wash_shown_day = 0
+		return false
+	npc.set_runtime_schedule(ScheduleBuilder.build(entries))
+	_wash_shown_day = day
+	return true
+
+
+## The entries of the wash figure ([] without the crypt table or the waypoints).
+func _wash_entries() -> Array[ScheduleEntry]:
+	var out: Array[ScheduleEntry] = []
+	var table := _crypt_table()
+	var world := get_tree().current_scene if is_inside_tree() else null
+	if table == null or world == null or not ScheduleBuilder.has_point(world, WASH_DOOR):
+		return out
+	var route := WASH_ROUTE.duplicate()
+	for id: String in route:
+		if not ScheduleBuilder.has_point(world, id):
+			return out
+	if world.has_method(&"route_between"):
+		var between: PackedStringArray = world.call(&"route_between", route[route.size() - 1], WASH_DOOR)
+		route.append_array(between.slice(1))
+	if route[route.size() - 1] != WASH_DOOR:
+		route.append(WASH_DOOR)
+	var start := int(_wash.get("minute", 0))
+	var end := start + int(_wash.get("minutes", 0))
+	var spot := ScheduleBuilder.point_id(table.global_transform * WASH_SPOT)
+	var up := ScheduleBuilder.walk(&"", route, 0, &"graveyard", world)
+	up.start_minute = maxi(0, start - 2 - up.travel_minutes)
+	out.append(up)
+	out.append(ScheduleBuilder.stay(StringName(WASH_DOOR), start - 2, &"idle", &"", false))
+	# Arrival heading towards the camera: a hidden step from behind onto the spot.
+	var step := ScheduleBuilder.stay(StringName(spot), start - 1, &"idle", &"", false)
+	step.path = PackedStringArray([ScheduleBuilder.point_id(table.global_transform * WASH_FROM), spot])
+	out.append(step)
+	out.append(ScheduleBuilder.stay(StringName(spot), start, WASH_ANIM, WASHER_DIALOGUE))
+	out.append(ScheduleBuilder.stay(StringName(WASH_DOOR), end, &"idle", &"", false))
+	var back := route.duplicate()
+	back.reverse()
+	out.append(ScheduleBuilder.walk(&"", back, end + 1, &"graveyard", world))
+	return out
+
+
+func _crypt_table() -> Node3D:
+	if not is_inside_tree():
+		return null
+	for node: Node in get_tree().get_nodes_in_group(MORGUE_TABLE_GROUP):
+		if node is Node3D and &"room" in node and StringName(str(node.get(&"room"))) == WASH_ROOM:
+			return node as Node3D
+	return null
+
+
+func _washer_npc() -> Npc:
+	if not is_inside_tree():
+		return null
+	for node: Node in get_tree().get_nodes_in_group(NPC_GROUP):
+		if node.name == WASHER_NPC and node is Npc:
+			return node as Npc
+	return null
+
+
+func _lights_today() -> bool:
+	var fest := _first(FESTIVALS_GROUP)
+	return fest != null and fest.has_method(&"fest_day") and int(fest.call(&"fest_day", LIGHTS_FEST)) == TimeManager.day
 
 
 # --- internals -------------------------------------------------------------------------------------
@@ -496,6 +599,7 @@ func _apply_favor(f: FavorData, choice: StringName) -> bool:
 			var at := int(f.params.get("minute", 580))
 			_wash = {"day": day if TimeManager.minute_of_day < at else day + 1, "minute": at,
 					"minutes": int(f.params.get("minutes", 60)), "corpse": corpse}
+			_show_wash()
 			return true
 	return false
 

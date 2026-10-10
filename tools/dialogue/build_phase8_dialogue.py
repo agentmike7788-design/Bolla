@@ -56,7 +56,9 @@ def story_blocks(npc, stories, listen_text, cross_text, favor=None, returns=(), 
         label, ask, choices = favor
         menu.append(C("[Gefallen] %s" % label, "favor", ["step_gte:%s:3" % npc, "favor_ready:%s" % npc]))
         nodes.append(N("favor", ask, choices + [C("Ein andermal.", "menu")]))
-        nodes.append(N("favor_done", favor_thanks(npc), back()))
+        # QA8-01: a favour chosen in the favour panel (Lenz, Theres) thanks there – no unreachable node.
+        if any(getattr(c, "next", None) == "favor_done" or (isinstance(c, dict) and c.get("next") == "favor_done") for c in choices):
+            nodes.append(N("favor_done", favor_thanks(npc), back()))
     for oid, title, offer, yes, thanks in returns:
         menu.append(C("[Gegengefallen] %s" % title, "o_%s" % oid, ["order_offerable:%s" % oid]))
         menu.append(C("[Gegengefallen] Hier ist es: %s" % title, "t_%s" % oid, ["order_ready:%s" % oid],
@@ -278,7 +280,7 @@ def grocer():
         "Heute nicht, Totengräber. Morgen. Heute rechne ich nur.",
         ("Aus der Stadt bestellt",
          "Etwas aus Hannes Kiepe? Außerhalb ihres Tages? Ich bestelle es Ihnen. Morgen früh liegt es bei mir. Zu ihrem Preis.",
-         [C("Ja, bestell es.", "favor_done", act=["favor_use:grocer"])]),
+         [C("Zeig mir, was sie trägt.", "", act=["open_panel:favor"])]),
         [("of_mangold_return_1", "Kräuter für den Laden", "Acht Bund Kräuter. Die Stadt will sie, und ich will die Stadt.",
           "Drei Tage. Ich zähle.", "Acht Bund. Ich hab nachgezählt. Acht."),
          ("of_mangold_return_2", "Garn für den Laden", "Vier Strang Garn. Meins ist alle, und die Dorn spinnt nur für Tote.",
@@ -320,7 +322,7 @@ def priest():
         "Heute nicht, Totengräber. Morgen. Heute bete ich für mich selbst, das ist anstrengend genug.",
         ("Fürbitte",
          "Eine Fürbitte? Für einen Ihrer Toten? Gern. Drei Nächte. Sagen Sie mir nur, für wen. Gott kennt den Namen, aber ich nicht.",
-         [C("Für den, der es am nötigsten hat.", "favor_done", act=["favor_use:priest"])]),
+         [C("Ich sage Ihnen, für wen.", "", act=["open_panel:favor"])]),
         [("of_lenz_return_1", "Kerzen für den Altar", "Vier Altarkerzen. Der Advent kommt, und Gott sieht auch so, aber die "
           "Gemeinde nicht.", "Danke. Sie sind ein Segen. Sagen Sie es nicht dem Schultheiß.", "Vier. Schön gezogen. Vergelt's Gott."),
          ("of_lenz_return_2", "Blumen für einen Vergessenen", "Ein Grab, zu dem keiner kommt, mit frischen Blumen. Welches, "

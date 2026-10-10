@@ -166,6 +166,15 @@ static func task_matches(order: OrderData, action_id: StringName, minute: int) -
 
 
 ## [from, to] (Array / Vector2i) contains `minute`; anything else = no window.
+## QA8-03: the first minute of a window (none = 0).
+static func window_start(window: Variant) -> int:
+	if window is Vector2i:
+		return (window as Vector2i).x
+	if (window is Array or window is PackedInt32Array) and window.size() >= 2:
+		return int(window[0])
+	return 0
+
+
 static func in_window(window: Variant, minute: int) -> bool:
 	if window is Vector2i:
 		return minute >= (window as Vector2i).x and minute <= (window as Vector2i).y

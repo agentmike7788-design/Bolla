@@ -445,6 +445,21 @@ func load_state(data: Dictionary) -> void:
 		var grave := _grave(id)
 		if grave != null and grave.state in [GraveRecord.State.FILLED, GraveRecord.State.MARKED]:
 			grave.disturbed = true
+	# W1-Anschluss 8 / W3 (QA8-12, §10 fuzzer): disturbed only on an occupied grave, no mortsafe on an EMPTY one – a
+	# half-applied or edited save loses them (the Graveyard is loaded before, save_order 10 < 72).
+	var graveyard := _first(GRAVEYARD_GROUP) as Graveyard
+	if graveyard != null:
+		for grave: GraveRecord in graveyard.graves():
+			if grave.disturbed and not _occupied(grave.id):
+				grave.disturbed = false
+		var kept := PackedStringArray()
+		for id: String in _disturbed:
+			if _occupied(id):
+				kept.append(id)
+		_disturbed = kept
+		for id: String in _mortsafes.keys():
+			if not _occupied(id):
+				_mortsafes.erase(id)
 	_plots.clear()
 	_next_change = -1
 	_schedule_next()

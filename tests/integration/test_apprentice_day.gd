@@ -7,6 +7,8 @@ extends TestCase
 ## clean afterwards, the planned mistakes happen, the wage comes out of the tin at 15:30. Roundtrip at 10:17 in
 ## the middle of a place (collect_state → JSON → apply_state): the rest of the day is bit-identical.
 
+## QA8-07: the carry_with clips of the rake mesh (asset_apprentice.py TOOLS).
+const RAKE_CARRY: Array[StringName] = [&"idle", &"walk", &"talk", &"watch", &"read_board", &"oops"]
 const TIMEOUT := 300.0
 const SLOT := 5
 ## The working day of the test (fixed seed: on day 57 the rake place dirt_y10 goes wrong).
@@ -152,9 +154,35 @@ func test_a_whole_working_day() -> void:
 	# The rake in his hands only while raking.
 	var raking := trace.filter(func(t: Array) -> bool: return t[3] == &"rake")
 	assert_false(raking.is_empty(), "he rakes")
+	# W3 (QA8-07, P5 carry_with): between two leaf heaps the rake stays in his hand (idle / walk / talk …), never
+	# while he weeds and never on the way to the weeds.
+	# He learns the day's work at the board (the plan from the chalk lines): on the way up he carries nothing.
+	var board_at := 100000
 	for t: Array in trace:
-		if t[1]:
-			assert_eq(t[4], t[3] == &"rake", "minute %d: rake shown = raking (%s)" % [t[0], t[3]])
+		if t[1] and t[3] == &"read_board":
+			board_at = t[0]
+			break
+	var carried := 0
+	for i: int in trace.size():
+		var t: Array = trace[i]
+		if not t[1]:
+			continue
+		if t[0] < board_at:
+			assert_false(t[4], "minute %d: no rake on the way up (before the board)" % t[0])
+			continue
+		if t[3] == &"rake":
+			assert_true(t[4], "minute %d: the rake in his hands while raking" % t[0])
+			continue
+		var next_work := &""
+		for k: int in range(i + 1, trace.size()):
+			if trace[k][1] and not trace[k][3] in RAKE_CARRY:
+				next_work = trace[k][3]
+				break
+		var expect: bool = t[3] in RAKE_CARRY and next_work == &"rake"
+		assert_eq(t[4], expect, "minute %d: rake shown (%s, next work %s)" % [t[0], t[3], next_work])
+		if t[4]:
+			carried += 1
+	assert_true(carried > 0, "QA8-07: he carries the rake from heap to heap (%d minutes)" % carried)
 	# Effects at the care spots, the planned mistakes, the job counts.
 	var mistakes := 0
 	for e: Dictionary in work:

@@ -2072,6 +2072,9 @@ sun = NodePath("../Sun")
 time_driven = true
 blend_presets = Array[ExtResource("4_uaggu")]([ExtResource("7_brx2b"), ExtResource("7_brx2b"), ExtResource("6_fcnex"), ExtResource("8_lq3xe"), ExtResource("5_66e2u"), ExtResource("5_66e2u"), ExtResource("9_6n03g"), ExtResource("6_fcnex"), ExtResource("7_brx2b")])
 blend_minutes = PackedInt32Array(0, 180, 270, 330, 480, 1020, 1140, 1260, 1350)
+season_from_day = 50
+season_full_day = 56
+season_shift = PackedInt32Array(0, 0, 0, 60, 45, -120, -140, -170, -60)
 
 [node name="WarmShadows" type="Node" parent="." unique_id=980611275]
 script = ExtResource("10_til8j")

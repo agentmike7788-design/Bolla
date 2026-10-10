@@ -107,7 +107,9 @@ func interact(player: Player) -> void:
 func request_craft(recipe_id: StringName) -> void:
 	var recipe := Database.recipe(recipe_id) as RecipeData
 	var player := _player if is_instance_valid(_player) else _first_player()
-	if recipe == null or recipe.station != station:
+	# W3 (QA8-09, §2.11): a recipe with requires_flag (the memorial plate) only while that flag is set – not just
+	# hidden in the panel (CraftingPanel.offered).
+	if recipe == null or recipe.station != station or not recipe_offered(recipe):
 		_warn(TEXT_UNKNOWN)
 		return
 	if player == null or player.is_busy() or _is_carrying(player) or not is_available():
@@ -129,6 +131,11 @@ func request_craft(recipe_id: StringName) -> void:
 	# G7 Runde 2 (Werkzeuge): the station's tool clip (workbench: saw, forge: hammer, mason: chisel)
 	player.start_timed_action(LABEL_CRAFT % _recipe_name(recipe), recipe.craft_minutes, _finish_craft.bind(recipe, inv), false,
 			ToolAnimConfig.clip_for(StringName("station_" + String(station)), ANIM))
+
+
+## QA8-09: RecipeData.requires_flag is empty or set in GameState (the rule of CraftingPanel.offered).
+static func recipe_offered(recipe: RecipeData) -> bool:
+	return recipe != null and (recipe.requires_flag == &"" or GameState.flag_on(recipe.requires_flag))
 
 
 func _finish_craft(recipe: RecipeData, inv: Inventory) -> void:

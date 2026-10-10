@@ -17,6 +17,7 @@ target = ""
 conditions = {
 "npc": &"innkeeper",
 "place": &"apprentice_lunch",
+"schedule_flag": &"meet_innkeeper_day",
 "times": 1,
 "window": [900, 940]
 }

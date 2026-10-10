@@ -177,8 +177,13 @@ func test_phase8_loop_to_who_comes_up_with_round_trips() -> void:
 	await _buy(world.get_node("Systems/VillageShops") as VillageShops, &"grocer", &"grave_candle", 4)
 	await _travel_to_graveyard()
 	await _pass(56, 965)
-	# W2 finding (P6): no schedule brings Fenner up to l_12 for of_fenner_2 yet – the meeting runs with his
-	# graveyard figure (npc_mayor_g) as the speaker of „[Geschichte] Hier, die zwölfte Stelle."
+	# W3 (QA8-03): Orders sets meet_mayor_day for the accepted of_fenner_2 – his schedule brings him up to l_12
+	# (16:00–16:40); the meeting runs with his graveyard figure as the speaker.
+	assert_eq(int(GameState.get_flag(&"meet_mayor_day", 0)), 56, "QA8-03: Fenner's day on the hill")
+	var fenner := world.get_node("Entities/npc_mayor_g") as Npc
+	fenner.refresh()
+	assert_true(fenner.is_present(), "QA8-03: Fenner is on the graveyard at 16:05")
+	assert_true(_flat(fenner.global_position, _waypoint(&"gv_l_12")) < 0.5, "QA8-03: Fenner stands at l_12 (%.2f m)" % _flat(fenner.global_position, _waypoint(&"gv_l_12")))
 	await _meet_at(&"npc_mayor_g", &"gv_l_12")
 	assert_eq(orders.state(&"of_fenner_2"), &"completed", "Fenner 2 „Ein Platz mit Blick\"")
 	assert_true(GameState.flag_on(&"archive_key"), "Fenner's parish key")

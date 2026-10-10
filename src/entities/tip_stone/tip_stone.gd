@@ -2,10 +2,10 @@ class_name TipStone
 extends Node3D
 ## The coins a visitor left on the stone (docs/PHASE8_DESIGN.md §2.2.3, §3.1, §3.4): child of a GravePlot, not
 ## saved itself (the state is in Visitors.tips_on_stone); child mesh coins (ph_prop_tip_coins, else a small
-## placeholder) at the marker height of the stone; „[E] %d Münzen auf dem Stein (%s)" → Visitors.take_tip(grave_id,
+## placeholder) at the marker height of the stone; „[E] Zwei Münzen auf dem Stein (%s)" → Visitors.take_tip(grave_id,
 ## inv). Ghosts and the robber take nothing. Shows / hides itself on grave_care_changed(…, &"tip", …).
 
-const PROMPT_FORMAT := "[E] %d Münzen auf dem Stein (%s)"
+const PROMPT_FORMAT := "[E] %s"
 const VISITORS_GROUP := &"visitors"
 const KIND_TIP := &"tip"
 const COINS_NAME := "Coins"
@@ -39,7 +39,7 @@ func get_interaction_prompt(_player: Player) -> String:
 	if n <= 0:
 		return ""
 	var visitors := _visitors()
-	return PROMPT_FORMAT % [n, visitors.tip_giver(grave_id) if visitors != null else ""]
+	return PROMPT_FORMAT % Phase8Texts.coins_on_stone(n, visitors.tip_giver(grave_id) if visitors != null else "")
 
 
 func interact(player: Player) -> void:

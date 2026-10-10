@@ -76,6 +76,12 @@ const V_NIGHT := 1260
 const DIALOGUE := &"v_apprentice"
 const TASK_FIRST_DAY := &"apprentice_first_day"
 const TASK_DAY_OFF := &"jakob_day_off"
+## W3 (QA8-05): the today_flag of Jakob's free day in his data schedule (data/npc/apprentice_schedule.tres,
+## „Jakob hilft heute im Krug") – set on a free day of the hired apprentice; then the village Npc follows the
+## data schedule (free day, Kathreintanz, Lichtgang overlays) instead of the runtime one. Not on the
+## Lichtgang: there the lights overlay of the data schedule carries him (with his mother's lantern).
+const OFF_DAY_FLAG := &"apprentice_off_day"
+const LIGHTS_FEST := &"fest_lights"
 const STAT_DAYS := &"apprentice_days"
 const STAT_JOBS := &"apprentice_jobs"
 const STAT_MISTAKES := &"apprentice_mistakes"
@@ -372,12 +378,24 @@ func apply_minute(day: int, minute: int) -> void:
 
 ## Rebuilds the runtime schedules of the graveyard and the village Npc from plan + clock.
 func refresh_npcs() -> void:
+	# QA8-17: a deferred refresh of the world being replaced by a load (out of the tree) touches nothing.
+	if not is_inside_tree():
+		return
 	var g := _npc()
 	if g != null:
 		g.set_runtime_schedule(graveyard_schedule(TimeManager.day))
 	var v := _village_npc()
 	if v != null:
-		v.set_runtime_schedule(village_schedule(TimeManager.day))
+		if free_day(TimeManager.day):
+			v.clear_runtime_schedule()
+		else:
+			v.set_runtime_schedule(village_schedule(TimeManager.day))
+
+
+## QA8-05: a day after the hiring on which the hired apprentice does not come up (his day off, a festival,
+## at home after unpaid days) – the village Npc then follows its data schedule.
+func free_day(day: int) -> bool:
+	return _hired and day > _hire_day and not works_today(day)
 
 
 ## The graveyard day of `day`: up the road, the board, the plan (walk + work per place), teaching, the box,
@@ -631,7 +649,14 @@ func _new_day(day: int) -> void:
 			_unpaid = 0
 	if works_today(day):
 		GameState.add_stat(STAT_DAYS, 1)
+	elif free_day(day) and not _lights_day(day):
+		GameState.set_flag(OFF_DAY_FLAG, day)
 	refresh_npcs()
+
+
+func _lights_day(day: int) -> bool:
+	var fest := _first(&"festivals")
+	return fest != null and fest.has_method(&"fest_day") and int(fest.call(&"fest_day", LIGHTS_FEST)) == day
 
 
 func _make_plan(day: int) -> void:

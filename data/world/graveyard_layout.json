@@ -542,7 +542,9 @@
     "blend_presets": ["deep_night", "deep_night", "night", "dawn", "day", "day", "dusk", "night", "deep_night"],
     "blend_minutes": [0, 180, 270, 330, 480, 1020, 1140, 1260, 1350],
     "_shadow": "Warme Lichter werfen Schatten erst ab diesem warm_light_scale (Tag 0,25 = aus; Budget).",
-    "shadow_min_warm_scale": 0.4
+    "shadow_min_warm_scale": 0.4,
+    "_season": "W3 (G8, Entscheidung E8-1): kurze Novembertage – von Tag 50 bis 56 rücken die Stützstellen um bis zu shift Minuten (Tag endet 15:00, Dämmerung 16:40, Nacht 18:10, tiefe Nacht 21:30; Morgen 06:30 / 08:45). Presets unverändert.",
+    "season": {"from_day": 50, "full_day": 56, "shift": [0, 0, 0, 60, 45, -120, -140, -170, -60]}
   },
   "lights": {
     "_comment": "Warme Lichter an Blender-Markern: '<asset>/<marker>' (Werte wie im Prototyp). energy = Basiswert, vom Atmosphären-Preset skaliert.",

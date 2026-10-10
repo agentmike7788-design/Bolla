@@ -103,12 +103,13 @@ func test_lights_corner_and_night_routes_are_free() -> void:
 	# Arbitrary points (Jakob's care spots as "@x,y,z" literals) are joined to the net as well.
 	for d: Dictionary in layout.dirt_spots:
 		var at := Vector2(float(d.pos[0]), float(d.pos[1]))
-		var stand := Vector3(at.x, world.ground_height(Vector2(at.x, at.y + 0.7)), at.y + 0.7)
-		if String(d.id) in ["dirt_y01", "dirt_h03"]:
-			# A stand right at a fence (dirt_y01; dirt_h03 even lies 0.15 m beyond the Holunderwinkel fence –
-			# ApprenticePlanner.SPOT_STAND, P3): not a walking question.
-			continue
-		var lit := ScheduleBuilder.point_id(stand)  # ApprenticePlanner.SPOT_STAND
+		# W3 (QA8-11): ApprenticePlanner.spot_stand – also dirt_y01 (south fence) and dirt_h03 (0.15 m beyond the
+		# Holunderwinkel fence) get a free side now.
+		var stand := ApprenticePlanner.spot_stand(Vector3(at.x, 0.0, at.y), tree)
+		stand.y = world.ground_height(Vector2(stand.x, stand.z))
+		assert_true(world.nav.clearance_at(Vector2(stand.x, stand.z)) >= ApprenticePlanner.STAND_CLEARANCE,
+				"QA8-11: %s – Jakob stands free (%s)" % [d.id, stand])
+		var lit := ScheduleBuilder.point_id(stand)
 		_check_route(world.route_between("apprentice_board", lit), "board → " + String(d.id), failures, true)
 	assert_eq(failures, PackedStringArray(), "§4.8 (6): Lichtgang, hut corner, robber and care-spot ways free")
 

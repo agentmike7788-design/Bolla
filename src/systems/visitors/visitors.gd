@@ -530,6 +530,13 @@ func load_state(data: Dictionary) -> void:
 				for key: String in ["slot", "start", "travel", "viewed", "laid", "tip", "day"]:
 					if e.has(key):
 						e[key] = _int(e[key], 0)
+				# W3 (QA8-20, §10 fuzzer): the flags of a visit are booleans (a damaged save stopped _advance
+				# every minute with „Nonexistent 'bool' constructor“).
+				for key: String in ["ended", "flowers", "waits", "noise"]:
+					if e.has(key) and not e[key] is bool:
+						e[key] = e[key] is int and int(e[key]) != 0
+				if e.has("phase") and not (e["phase"] is String or e["phase"] is StringName):
+					e.erase("phase")
 				_plan.append(e)
 	_goodwill.clear()
 	var gw: Variant = data.get("goodwill", {})
@@ -538,9 +545,18 @@ func load_state(data: Dictionary) -> void:
 			_goodwill[StringName(str(key))] = clampi(_int((gw as Dictionary)[key], _cfg().goodwill_start), 0, 10)
 	_last_visit = _int_map(data.get("last_visit", {}))
 	_last_kin = _int_map(data.get("last_kin", {}))
+	# W3 (QA8-12, §10 fuzzer): the plan belongs to its plan day (entries of another day or a plan day in the future
+	# are dropped – the morning plans again).
+	if _plan_day > TimeManager.day:
+		_plan_day = -1
+	var day_plan: Array[Dictionary] = []
+	day_plan.assign(_plan.filter(func(e: Dictionary) -> bool: return int(e.get("day", _plan_day)) == _plan_day))
+	_plan = day_plan
 	_wishes.clear()
 	var wishes: Variant = data.get("wishes", [])
 	var per_grave := {}
+	var open_count := 0
+	var graveyard := _graveyard()
 	if wishes is Array:
 		for w: Variant in wishes:
 			if not w is Dictionary or not (w as Dictionary).has("wish_id"):
@@ -549,10 +565,12 @@ func load_state(data: Dictionary) -> void:
 			e["day"] = _int(e.get("day"), 0)
 			var open := str(e.get("state", "")) in ["offered", "accepted"]
 			var g := str(e.get("grave_id", ""))
-			if open and per_grave.has(g):
+			# QA8-12: one open wish per grave, at most max_open, only on a grave of this world.
+			if open and (per_grave.has(g) or open_count >= _cfg().max_open or (graveyard != null and graveyard.get_grave(g) == null)):
 				continue
 			if open:
 				per_grave[g] = true
+				open_count += 1
 			_wishes.append(e)
 	var tips: Variant = data.get("tips_today", {})
 	_tips_day = _int((tips as Dictionary).get("day"), -1) if tips is Dictionary else -1
@@ -580,6 +598,26 @@ func load_state(data: Dictionary) -> void:
 	_announced.clear()
 	for v: Dictionary in _plan:
 		_announced[str(v.get("visit_id", ""))] = phase_of(v)
+	# W3 (QA8-18): the kin figure gets its walk on the „arriving" announce – a state loaded mid-visit (a save, the
+	# debug visit) counts as announced, so the walk is set again here (deferred: the figures may not be in yet).
+	if is_inside_tree():
+		_reapply_schedules.call_deferred()
+
+
+func post_load() -> void:
+	_reapply_schedules()
+
+
+## QA8-18: the walk of every visit on the hill now (arriving … leaving) onto its kin figure again.
+func _reapply_schedules() -> void:
+	if not is_inside_tree():
+		return
+	for v: Dictionary in _plan:
+		if bool(v.get("ended", false)):
+			continue
+		var phase := phase_of(v)
+		if phase != &"" and phase != &"gone":
+			_apply_schedule(v)
 
 
 # --- internals: the visit ------------------------------------------------------------------------
