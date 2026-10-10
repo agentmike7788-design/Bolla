@@ -25,7 +25,8 @@ extends Phase7Bot
 
 const KIN_NPC := {&"kin_kehr": "npc_kin_kehr", &"kin_ott": "npc_kin_ott", &"kin_brandt": "npc_kin_brandt",
 		&"kin_sieber": "npc_kin_sieber", &"kin_washer": "npc_washer_g", &"kin_smith": "npc_smith_g", &"kin_grocer": "npc_grocer_g"}
-const WISH_KINDS: Array[StringName] = [&"flowers", &"tend", &"candle", &"line"]
+const WISH_KINDS: Array[StringName] = [&"flowers", &"tend", &"candle", &"line", &"vase"]
+const VASE := &"decor_grave_vase"
 const TIN_KEEP := 9
 const TIN_FILL := 12
 ## Coins the purse keeps back from Phase-8 purchases (the next morning never below 5).
@@ -36,7 +37,7 @@ const LIGHTS_UP := 15 * 60
 const KATHREIN_GO := 19 * 60 + 30
 ## The Phase-8 goods stay in the pack (never into the shed for room).
 const P8_KEEP: Array[StringName] = [&"grave_candle", &"flower_seedlings", &"watering_can", &"mortsafe", &"register_extract",
-		&"apprentice_rake", &"wax_wreath", &"lorenz_ledger_2", &"ink"]
+		&"apprentice_rake", &"wax_wreath", &"lorenz_ledger_2", &"ink", &"seeds", &"decor_grave_vase"]
 
 ## Phase-8 flags on top of the Phase-7 ones:
 ## "p8": plays Phase 8 · "apprentice": takes Jakob · "wishes": accepts and keeps wishes · "tips": takes the tips
@@ -51,7 +52,8 @@ const P8_FLAGS := {"p8": true, "apprentice": true, "wishes": true, "tips": true,
 static var P8_STRATEGIES := {
 	&"kindly8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {}),
 	&"anatomist8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {"anatomy": true, "collection": true, "lectures": false,
-			"donations": false}, {"stories": {&"mayor": 3, &"innkeeper": 1, &"smith": 1, &"grocer": 2}, "mortsafe": false}),
+			"donations": false}, {"stories": {&"mayor": 3, &"innkeeper": 1, &"smith": 1, &"grocer": 2}, "mortsafe": false,
+			"alms": true}),
 	&"lazy8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {"apprentice": false, "wishes": false, "stories": {},
 			"mortsafe": false, "lights": false, "kathrein": false, "observe": []}),
 	&"night8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {"mortsafe": false, "lights": false,
@@ -86,6 +88,9 @@ var jakob_days: Array[int] = []
 var alms_days: Array[int] = []
 var observed: Array[StringName] = []
 var robber_log: PackedStringArray = []
+## Planned visits of the day nobody talked to (counted in the evening, before the next plan).
+var missed_visits: int = 0
+var _missed_ids: Dictionary = {}
 var dances: int = 0
 var saved_moments: PackedStringArray = []
 var trace8: PackedStringArray = []
@@ -184,6 +189,8 @@ func _walk(minutes: int = WALK_MINUTES) -> void:
 ## Phase 7's passes (with the village trip), then the Phase-8 evening (the dance, the night visits, the robber).
 func _phase5() -> void:
 	await super._phase5()
+	if p8_open():
+		await _p8_afternoon()
 	if p8_open() and _evening_day != TimeManager.day:
 		_evening_day = TimeManager.day
 		await _p8_evening()
@@ -215,6 +222,34 @@ func _p8_tasks() -> void:
 	_link()
 
 
+## The work of the passes is done, but the afternoon still has Phase-8 business on the hill: visitors due later,
+## a meeting on the hill (Fenner 2 at l_12, 15:55) – wait for it (serving on the way), then the tasks once more.
+func _p8_afternoon() -> void:
+	for i: int in 6:
+		if not _time_left() or player.region_id != &"graveyard":
+			return
+		var until := maxi(_visits_due_before(_evening_cap()), _hill_meet_start())
+		if until <= TimeManager.minute_of_day:
+			return
+		while TimeManager.minute_of_day < until and _time_left():
+			TimeManager.advance(5)
+			_serve()
+		await _p8_tasks()
+
+
+## The start (+2) of today's meeting on the hill that is still to come; 0 = none.
+func _hill_meet_start() -> int:
+	for id: StringName in orders.active():
+		var o := orders.order_data(id)
+		if o == null or o.kind != &"meet" or not o.conditions.has("schedule_flag") \
+				or int(GameState.get_flag(StringName(str(o.conditions.schedule_flag)), 0)) != TimeManager.day:
+			continue
+		var window: Array = o.conditions.get("window", [0, 0])
+		if TimeManager.minute_of_day < int(window[1]):
+			return int(window[0]) + 2
+	return 0
+
+
 ## The day's work ends early for the evening's Phase-8 business: the Kathreintanz (19:20), a night visit to watch
 ## (50 minutes before it), the Lichtgang (14:00, the hill).
 func _evening_cap() -> int:
@@ -234,7 +269,7 @@ func _evening_cap() -> int:
 
 
 func _observable(visit: Dictionary) -> bool:
-	var clue := StringName(str(visit.get("clue", "")))
+	var clue := StringName(str(visit.get("clue_id", "")))
 	if clue != &"" and paths.observed(clue):
 		return false
 	var m := posmod(int(visit.enter), 1440)
@@ -346,9 +381,28 @@ func _free_slots(n: int) -> void:
 ## Back up the hill – first the parish archive when Lenz' step 2 (16:00–18:00) or Fenner's key opens it.
 func _travel(target: StringName) -> bool:
 	if p8_open() and target == &"graveyard" and player.region_id == &"village":
+		await _alms_in_village()
 		await _archive()
 		await _inn_meet()
 	return await super._travel(target)
+
+
+## Veit in the village (the church steps, the bridge, the well bench): the day's alms before going up.
+func _alms_in_village() -> void:
+	if not flags.alms or alms_days.has(TimeManager.day):
+		return
+	var place := wanderers.place(&"beggar", TimeManager.day, TimeManager.minute_of_day)
+	if place == &"" or place == Wanderers.PLACE_GATE:
+		return
+	var veit := _vnpc(&"beggar")
+	if veit == null:
+		return
+	await _leave_vroom()
+	veit.refresh()
+	if not veit.is_present():
+		return
+	player.global_position = veit.global_position + Vector3(1.0, 0, 0)
+	_give_alms(veit)
 
 
 ## A meeting in the Holderkrug in the evening (Fenner 3: the table, 18:05–21:00): wait, go in, talk.
@@ -476,6 +530,8 @@ func _serve_visit(v: Dictionary) -> void:
 			DialogueActions.run_all(["wish_accept"] as Array[String], context)
 			row.wish = "%s@%s" % [offer.kind, offer.grave_id]
 			wishes_taken.append({"day": TimeManager.day, "kin": kin, "kind": offer.kind, "grave": offer.grave_id})
+		elif not offer.is_empty():
+			_t8("wish declined: %s@%s" % [offer.get("kind", "?"), offer.get("grave_id", "?")])
 	UIState.clear()
 	visits_served.append(row)
 	_t8("visit %s: tip %d, wish %s" % [kin, int(row.tip), row.wish])
@@ -490,6 +546,9 @@ func _can_keep(offer: Dictionary) -> bool:
 			return inv().has(&"flower_seedlings") or inv().count(&"coin") >= RESERVE8 + 2
 		&"candle":
 			return inv().has(&"grave_candle") or inv().count(&"coin") >= RESERVE8 + 1
+		&"vase":
+			# A grave vase from the workbench (1 stone, 1 seeds – Mangold sells the seeds).
+			return inv().has(VASE) or (inv().count(&"stone") >= 1 and (inv().has(&"seeds") or inv().count(&"coin") >= RESERVE8 + 2))
 	return true
 
 
@@ -526,6 +585,15 @@ func _keep_wish(kind: StringName, grave_id: String) -> void:
 			if not inv().has(&"ink"):
 				_craft5(&"workbench", &"ink")
 			_care(plot, GravePlot.CARE_LINE)
+		&"vase":
+			if GraveView.has_vase(grave_id, tree):
+				return
+			if not inv().has(VASE):
+				_craft(world.get_node_by_layout_id("workbench") as Workbench, VASE)
+			if inv().has(VASE):
+				var at := Vector2(plot.global_position.x, plot.global_position.z)
+				var placed := _place_near(VASE, at, graveyard.section_of(grave_id))
+				_t8("vase at %s: %s (%s)" % [grave_id, placed, GraveView.has_vase(grave_id, tree)])
 
 
 ## The grave's gcare action (the [E] choice of its gcare menu; instant timed action).
@@ -745,6 +813,7 @@ func _hill_meet(o: OrderData) -> void:
 		return
 	var window: Array = o.conditions.get("window", [0, 0])
 	if TimeManager.minute_of_day > int(window[1]):
+		_t8("meet %s on the hill missed (window %s)" % [o.id, str(window)])
 		return
 	_wait_until(int(window[0]) + 2)
 	var npc_name := "npc_%s_g" % String(o.giver)
@@ -932,6 +1001,10 @@ func _buy_need(item: StringName) -> int:
 		&"flower_seedlings":
 			if flags.wishes or (flags.stories as Dictionary).has(&"grocer"):
 				need = maxi(need, 4 - inv().count(item))
+		&"seeds":
+			var vases := visitors.open_wishes().filter(func(w: Dictionary) -> bool: return str(w.kind) == "vase").size()
+			if flags.wishes and vases > 0:
+				need = maxi(need, vases - inv().count(item) - inv().count(VASE))
 		&"grave_candle":
 			var want := 2 if flags.wishes else 0
 			if flags.lights and festivals.fest_day(Festivals.LIGHTS) >= TimeManager.day:
@@ -978,6 +1051,7 @@ func _sleep() -> void:
 
 func _p8_evening() -> void:
 	_t8("evening: fest %s, coins %d" % [festivals.today(), coins_total()])
+	record_missed(TimeManager.day)
 	if flags.lights and festivals.today() == Festivals.LIGHTS and not _lights_done:
 		_lights_done = true
 		await _lights()
@@ -989,6 +1063,9 @@ func _p8_evening() -> void:
 		await _observe(path_id)
 	if String(flags.robber) != "":
 		await _robber_watch()
+	# The later visits of the night (Liesel's Totenwache 02:40 – after the robber).
+	for path_id: StringName in flags.observe:
+		await _observe(path_id)
 
 
 func _lights() -> void:
@@ -1054,12 +1131,14 @@ func _observe(path_id: StringName) -> void:
 	var visit := paths.next_visit(path_id, TimeManager.day, TimeManager.minute_of_day)
 	if visit.is_empty():
 		return
-	var clue := StringName(str(visit.get("clue", "")))
+	var clue := StringName(str(visit.get("clue_id", "")))
 	if clue != &"" and paths.observed(clue):
 		return
 	var enter := int(visit.enter)
 	# Only tonight (before 06:00 of the next day) and what the strategy stays up for.
-	if enter > TimeManager.day * 1440 + 360 or enter < TimeManager.total_minutes() or not _observable(visit):
+	# After midnight "tonight" ends at 06:00 of this day (not of the next one).
+	var night_end := TimeManager.day * 1440 + 360 if TimeManager.minute_of_day >= 360 else (TimeManager.day - 1) * 1440 + 360
+	if enter > night_end or enter < TimeManager.total_minutes() or not _observable(visit):
 		return
 	var spot_id := &"watch_ott" if path_id == &"np_ott" else &"watch_kehr"
 	var spot: WatchSpot = null
@@ -1201,13 +1280,35 @@ func _t8(what: String) -> void:
 	trace8.append("d%d %s %s" % [TimeManager.day, TimeManager.format_clock(), what])
 
 
+## The visits of `day` still planned and never talked to (evening; later visits of the day may still come).
+func record_missed(day: int) -> void:
+	var vs := visitors.save_state()
+	if int(vs.get("plan_day", -1)) != day:
+		return
+	for e: Variant in vs.get("plan", []):
+		if not e is Dictionary:
+			continue
+		var id := str((e as Dictionary).get("visit_id", ""))
+		if served.has(id) or _missed_ids.has(id) or int((e as Dictionary).get("slot", 0)) + 60 > TimeManager.minute_of_day:
+			continue
+		_missed_ids[id] = true
+		missed_visits += 1
+		_t8("visit missed: %s at %s (%s)" % [(e as Dictionary).get("kin_id", ""), UIKit.clock(int((e as Dictionary).get("slot", 0))),
+				str((e as Dictionary).get("graves", []))])
+
+
 func record_day(day: int) -> void:
 	if p8_open():
 		var vs := visitors.save_state()
-		for e: Variant in vs.get("plan", []):
-			if e is Dictionary and not served.has(str((e as Dictionary).get("visit_id", ""))):
-				_t8("visit missed: %s at %s (%s)" % [(e as Dictionary).get("kin_id", ""), UIKit.clock(int((e as Dictionary).get("slot", 0))),
-						str((e as Dictionary).get("graves", []))])
+		# Only the plan of the recorded day (at 06:00 the new day's plan may already stand).
+		if int(vs.get("plan_day", -1)) == day:
+			for e: Variant in vs.get("plan", []):
+				var vid := str((e as Dictionary).get("visit_id", "")) if e is Dictionary else ""
+				if e is Dictionary and not served.has(vid) and not _missed_ids.has(vid):
+					_missed_ids[vid] = true
+					missed_visits += 1
+					_t8("visit missed: %s at %s (%s)" % [(e as Dictionary).get("kin_id", ""), UIKit.clock(int((e as Dictionary).get("slot", 0))),
+							str((e as Dictionary).get("graves", []))])
 	super.record_day(day)
 	var r: Dictionary = rows.back()
 	r.merge({

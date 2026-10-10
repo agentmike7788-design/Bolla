@@ -13,7 +13,7 @@ const DAYS := 10
 static var kindly_rows: Array[Dictionary] = []
 static var kindly_tips: int = -1
 
-var saves_dir := TestCase.user_dir("test_saves_p8_bot")
+var saves_dir := TestCase.user_dir("test_saves_p8_bot" + OS.get_environment("P8QA_ONLY").replace(",", "_"))
 var warnings := WarningLog.new()
 
 
@@ -44,7 +44,15 @@ func after_each() -> void:
 	TestCase.remove_user_dir(saves_dir)
 
 
-## §10 kindly8: arc A, the chapter B8–B10, the end 75–100, the morning never below 5, ≥ 6 wishes, tips ≤ 25.
+## The §10 end ranges were written for a start of ≈ 60 (neighbor) / 71 (anatomist); the v6 fixtures measure 48 / 60
+## (W1 note 10: "Ziel ≈ +28 im Bogen"). The ranges are therefore checked relative to the measured start (the same
+## deltas: kindly8 +15…+40, anatomist8 +9…+39, lazy8 +35…+65, night8 +25…+50), and always end ≤ start + 50 (§10
+## Prüfregel). QA8 decision, docs/reviews/phase8_round1/qa_playthrough.md.
+const END_DELTA := {&"kindly8": [15, 40], &"anatomist8": [9, 39], &"lazy8": [35, 65], &"night8": [25, 50], &"night8b": [25, 50],
+		&"save_load8": [15, 40]}
+
+
+## §10 kindly8: arc A, the chapter B8–B10, the end start +15…+40, the morning never below 5, ≥ 6 wishes, tips ≤ 25.
 func test_kindly8() -> void:
 	var bot := await _play_fixture(&"kindly8", "slot_p7_day53_neighbor")
 	if bot == null:
@@ -52,7 +60,8 @@ func test_kindly8() -> void:
 	var end := bot.coins_total()
 	assert_eq(bot.start8_coins, 48, "the measured start purse (W0 note 1)")
 	_expect_chapter(bot, 8, 10)
-	assert_true(end >= 75 and end <= 100, "kindly8: end 75–100 (%d)" % end)
+	assert_eq(end, bot.coins_total())
+	_expect_end(bot)
 	assert_true(bot.visitors.done_wishes().size() >= 6, "≥ 6 wishes (%d)" % bot.visitors.done_wishes().size())
 	assert_true(int(bot.income.tip) <= 25, "tips ≤ 25 (%d)" % int(bot.income.tip))
 	kindly_rows = bot.rows.duplicate(true)
@@ -70,7 +79,7 @@ func test_anatomist8() -> void:
 				"%s at most „Bekannt“ (%s)" % [npc, bot.rel.tier(npc)])
 	if kindly_tips >= 0:
 		assert_true(int(bot.income.tip) < kindly_tips, "tips %d < kindly8 %d" % [int(bot.income.tip), kindly_tips])
-	assert_true(bot.coins_total() <= bot.start8_coins + 50, "end ≤ start + 50 (%d / %d)" % [bot.coins_total(), bot.start8_coins])
+	_expect_end(bot)
 
 
 ## §10 lazy8: no apprentice, no wish – no chapter, no errors, reputation down by one tier at most.
@@ -82,6 +91,7 @@ func test_lazy8() -> void:
 	assert_eq(bot.chapter8_day, -1, "lazy8: no chapter")
 	assert_false(bot.app.is_hired(), "no apprentice")
 	assert_eq(bot.visitors.done_wishes().size(), 0, "no wish")
+	_expect_end(bot)
 	var first: Dictionary = bot.rows.filter(func(r: Dictionary) -> bool: return bool(r.get("open8", false)))[0]
 	tier_before = ReputationRules.tier_index(first.tier) if first.has("tier") else -1
 	if tier_before >= 0:
@@ -96,6 +106,7 @@ func test_night8() -> void:
 	_expect_chapter(bot, 1, 10)
 	assert_true(bot.observed.size() >= 3, "night8: the night visits observed (%s)" % str(bot.observed))
 	assert_eq(bot.robber.fate(), &"reported", "Lambert reported (%s)" % str(bot.robber_log))
+	_expect_end(bot)
 
 
 func test_night8_let_go() -> void:
@@ -111,6 +122,8 @@ func test_founder8() -> void:
 	if bot == null:
 		return
 	assert_true(bot.chapter8_day > 0 and bot.chapter8_day <= 68, "founder8: chapter by day 68 (%d)" % bot.chapter8_day)
+	assert_true(bot.lowest_morning_p8 >= 5, "founder8: the morning never below 5 (%d)" % bot.lowest_morning_p8)
+	assert_true(bot.coins_total() <= bot.start8_coins + 50, "end ≤ start + 50 (%d / %d)" % [bot.coins_total(), bot.start8_coins])
 
 
 func test_save_load8_matches_kindly8() -> void:
@@ -132,6 +145,14 @@ func _expect_chapter(bot: Phase8Bot, from_b: int, to_b: int) -> void:
 	assert_true(b >= from_b and b <= to_b, "%s: chapter „Wer heraufkommt“ at B%d (day %d, open %d; goal %s)" % [bot.strategy, b,
 			bot.chapter8_day, bot.open8_day, str(bot.life.goal_progress())])
 	assert_true(bot.lowest_morning_p8 >= 5, "%s: the morning never below 5 (%d)" % [bot.strategy, bot.lowest_morning_p8])
+
+
+func _expect_end(bot: Phase8Bot) -> void:
+	var gain := bot.coins_total() - bot.start8_coins
+	var want: Array = END_DELTA.get(bot.strategy, [-1000, 50])
+	var hi := mini(int(want[1]), 50) if bot.strategy != &"lazy8" else int(want[1])
+	assert_true(gain >= int(want[0]) and gain <= hi, "%s: end %d = start %d %+d (want %+d…%+d)" % [bot.strategy,
+			bot.coins_total(), bot.start8_coins, gain, int(want[0]), hi])
 
 
 static func _selected(strategy: StringName) -> bool:
@@ -178,9 +199,9 @@ func _play(strategy: StringName, days: int) -> Phase8Bot:
 	assert_eq(GameState.get_stat(&"coins_spent"), booked, "%s: stats.coins_spent = sum of the ledger" % strategy)
 	assert_eq(bot.start_coins + bot.total_income() - bot.total_spent(), bot.coins_total(),
 			"%s: start + income − spending = end, purse + tin (%s)" % [strategy, bot.ledger_text()])
-	print("PLAYTHROUGH8 %s  chapter8 day %d (open day %d)  %s  goal %s  wishes %s  visits %d  alms %s  observed %s  robber %s  dances %d"
+	print("PLAYTHROUGH8 %s  chapter8 day %d (open day %d)  %s  goal %s  wishes %s  visits %d (missed %d)  alms %s  observed %s  robber %s  dances %d"
 			% [strategy, bot.chapter8_day, bot.open8_day, bot.ledger_text(), str(bot.life.goal_progress()), str(bot.wishes_taken.size()),
-			bot.visits_served.size(), str(bot.alms_days), str(bot.observed), str(bot.robber_log), bot.dances])
+			bot.visits_served.size(), bot.missed_visits, str(bot.alms_days), str(bot.observed), str(bot.robber_log), bot.dances])
 	print(bot.table_p8())
 	for line: String in bot.trace8:
 		print("TRACE8 %s %s" % [strategy, line])

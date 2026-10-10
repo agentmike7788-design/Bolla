@@ -92,6 +92,11 @@ const P7_SHARE := 0.25
 const ORDER_STATES: Array[StringName] = [&"", &"offered", &"accepted", &"completed", &"failed"]
 ## Share of the mutations per v6 fixture (six files of the Phase-7 end states – each load is a full world).
 const V6_FIXTURE_SHARE := 0.1
+## W3 (Phase 8): the node states of the real mid-Phase-8 save that get the path mutations.
+const P8_KEYS: PackedStringArray = ["visitors", "grave_care", "apprentice", "apprentice_box", "friendship", "festivals",
+		"npc_life", "wanderers", "night_robber", "night_paths", "kin_house", "disturbed", "extra_lines"]
+const P8_CASES := 60
+const P8_SHARE := 0.25
 const OK_TEXTS: PackedStringArray = [SaveManager.TEXT_CORRUPT, SaveManager.TEXT_NEWER_VERSION]
 
 var saves_dir := TestCase.user_dir("test_saves_fuzz")
@@ -855,6 +860,32 @@ func _make_real_v5_save() -> String:
 ## Phase7Bot (anatomist7) plays 3 days from the Phase-6 end state; then (see the header): the v6 file
 ## text of a game in the Holderkrug with specimens in the pack and the cold drawer, an open cold window,
 ## three active orders and the consecration day.
+## W3: kindly8 three days into the arc, then 10:30 on day 56 – the save of a real Phase-8 game.
+func _make_real_v7_save() -> String:
+	assert_eq(Phase8Fixtures.install_save_v6("slot_p7_day53_neighbor", saves_dir, SLOT), OK)
+	assert_eq(await SaveManager.load_game(SLOT), OK)
+	var bot := Phase8Bot.new(&"kindly8", tree)
+	bot.bind()
+	for i: int in 3:
+		await bot.run_day()
+	bot.bind()
+	TimeManager.set_time(TimeManager.day, 630)
+	UIState.clear()
+	assert_true(bot.app.is_hired(), "Jakob hired")
+	assert_true(bot.p8_open(), "Phase 8 open")
+	# The robber's target for tonight: the last fresh grave.
+	var target := ""
+	for g: GraveRecord in bot.graveyard.graves():
+		if g.state in [GraveRecord.State.FILLED, GraveRecord.State.MARKED]:
+			target = g.id
+	var rob := bot.robber.save_state()
+	rob["target_day"] = TimeManager.day
+	rob["target"] = target
+	bot.robber.load_state(rob)
+	assert_eq(SaveManager.save_game(SLOT), OK)
+	return FileAccess.get_file_as_string(SaveFileIO.slot_path(saves_dir, SLOT))
+
+
 func _make_real_v6_save() -> String:
 	assert_eq(Phase7Fixtures.install_save_v5("slot_p6_day40_reverent", saves_dir, SLOT), OK)
 	assert_eq(await SaveManager.load_game(SLOT), OK)
@@ -1169,3 +1200,98 @@ func test_fuzz_v7_phase8_parts() -> void:
 		d.data = JSON.from_native(st)
 		await _load_doc(d, "p8 targeted: " + what)
 	print("FUZZ v7 (Phase 8 parts): %d loaded, %d rejected" % [stats.ok, stats.rejected])
+
+
+## W3 (Phase 8, §10 Save-Fuzzer): a real v7 save in the middle of the arc – kindly8 three days from the Phase-7
+## end state (Jakob hired and working, wishes open, friendship steps, a mortsafe, coins on a stone), then 10:30
+## on day 56 with the visitors on their way and a robber target for tonight – through the JSON / native layers,
+## the Phase-8 paths mutated (erased / bad values), and targeted inconsistencies (a wish twice on a grave, more
+## wishes than max_open, the plan of a later day, disturbed / mortsafe on EMPTY graves, Jakob's levels as
+## strings, an unknown villager's friendship, tips on an unknown grave). Every load: _check_consistent.
+func test_fuzz_v7_real_mid_phase8_save() -> void:
+	var text := await _make_real_v7_save()
+	var doc: Dictionary = JSON.parse_string(text)
+	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, "current format (v7)")
+	await _fuzz_text(text, "p8 real", P8_SHARE)
+	var state := SaveFileIO.decode_state(doc.get("data"))
+	var paths: Array = []
+	_collect_paths(state, [], paths)
+	paths = paths.filter(func(path: Array) -> bool:
+		for part: Variant in path:
+			if str(part) in P8_KEYS:
+				return true
+		return false)
+	assert_true(paths.size() > 40, "Phase-8 paths in the real state (%d)" % paths.size())
+	for i: int in P8_CASES:
+		var path: Array = paths[rng.randi() % paths.size()]
+		var st := state.duplicate(true)
+		var bad: Variant = _bad_value()
+		if rng.randi() % 4 == 0:
+			_erase_path(st, path)
+			bad = "<erased>"
+		else:
+			_set_path(st, path, bad)
+		var d: Dictionary = doc.duplicate(true)
+		d.data = JSON.from_native(st)
+		await _load_doc(d, "p8 real native %s = %s" % [_path_text(path), str(bad)])
+	for case: int in 6:
+		var st := state.duplicate(true)
+		var what := ""
+		var vs: Dictionary = st.nodes.get("visitors", {}) if st.nodes.get("visitors") is Dictionary else {}
+		var graves: Array = st.nodes.graveyard.graves
+		match case:
+			0:
+				var wishes: Array = vs.get("wishes", [])
+				if not wishes.is_empty() and wishes[0] is Dictionary:
+					var twin: Dictionary = (wishes[0] as Dictionary).duplicate(true)
+					twin["wish_id"] = "w_9001"
+					wishes.append(twin)
+				what = "a second wish on the same grave"
+			1:
+				var wishes: Array = vs.get("wishes", [])
+				var k := 0
+				for g: Variant in graves:
+					if g is Dictionary and k < 6:
+						wishes.append({"wish_id": "w_95%02d" % k, "grave_id": str((g as Dictionary).get("id", "")), "kind": "tend",
+								"kin_id": "kin_kehr", "state": "open", "day": 55})
+						k += 1
+				vs["wishes"] = wishes
+				what = "more wishes open than max_open"
+			2:
+				vs["plan_day"] = int(vs.get("plan_day", 56)) + 3
+				what = "the visit plan of a later day"
+			3:
+				for g: Variant in graves:
+					if g is Dictionary:
+						(g as Dictionary)["disturbed"] = true
+				var care: Dictionary = st.nodes.get("grave_care", {})
+				var safes: Dictionary = care.get("mortsafes", {}) if care.get("mortsafes") is Dictionary else {}
+				for g: Variant in graves:
+					if g is Dictionary:
+						safes[str((g as Dictionary).get("id", ""))] = 70000
+				care["mortsafes"] = safes
+				care["disturbed"] = graves.map(func(g: Variant) -> String: return str((g as Dictionary).get("id", "")) if g is Dictionary else "")
+				st.nodes["grave_care"] = care
+				what = "disturbed / mortsafe on every grave (EMPTY ones too)"
+			4:
+				var app: Dictionary = st.nodes.get("apprentice", {})
+				app["levels"] = {"rake": "geübt", "weed": 1.5, "water": [2]}
+				app["board"] = [{"task": "nonsense", "section": 7}, "x", {"task": "rake", "section": "atlantis"}]
+				st.nodes["apprentice"] = app
+				what = "Jakob's levels as strings, an unknown board line"
+			5:
+				var fr: Dictionary = st.nodes.get("friendship", {})
+				fr["steps"] = {"innkeeper": 3, "atlantis": 2, "smith": "zwei"}
+				fr["owed"] = {"innkeeper": "x"}
+				st.nodes["friendship"] = fr
+				var tips: Dictionary = vs.get("tips_on_stone", {}) if vs.get("tips_on_stone") is Dictionary else {}
+				tips["nowhere"] = [3, "kin_kehr"]
+				tips["l_01"] = [99, 7]
+				vs["tips_on_stone"] = tips
+				what = "friendship of an unknown villager, tips on an unknown grave"
+		if not vs.is_empty():
+			st.nodes["visitors"] = vs
+		var d: Dictionary = doc.duplicate(true)
+		d.data = JSON.from_native(st)
+		await _load_doc(d, "p8 real targeted: " + what)
+	print("FUZZ v7 (real Phase-8 save): %d loaded, %d rejected" % [stats.ok, stats.rejected])

@@ -3,6 +3,10 @@ extends "res://src/world/graveyard/graveyard_shots_phase7.gd"
 ## p8_21…p8_27, p8_vis_visitors / _apprentice / _night). Needs a real renderer:
 ##   tools/godot_run.sh --resolution 1280x720 -s res://src/world/graveyard/graveyard_shots_phase8.gd \
 ##       -- --out=/abs/dir [--shots=p8_03,p8_vis] [--jpg]
+## CPU (§9, headless, W3): godot --headless --path . -s res://src/world/graveyard/graveyard_shots_phase8.gd -- --out=/abs/dir --cpu
+##   the script time per frame with the clock running, Phase 8 off (p8_open cleared = the Phase-7 end state) against
+##   on (Jakob working, two visitors at their graves; the Lichtgang with its procession and the candles; the village)
+##   in the same measurement, CPU_RUNS rounds, medians → cpu_stats_p8.txt; plus the save size and the load time.
 ## From the Phase-7 end state (saves_v6/slot_p7_day53_neighbor, Lindenacker full, eight villagers „Vertraut")
 ## loaded through the real SaveManager, p8_open on day 53. The states go through the real systems in story order:
 ## the third row granted (overgrown) · cleared and buried (ExpansionManager.unlock, Graveyard dig / bury /
@@ -111,6 +115,9 @@ const G8_SHOTS: Array[Dictionary] = [
 			"player": Vector2(-20.0, 0.0), "stage": "vis", "vis": "night", "zoom": 22.0},
 ]
 
+## CPU probe (W3): rounds of every probe; the median of the round medians is reported.
+const CPU_RUNS := 3
+
 var _staged8: Array[Node3D] = []
 
 
@@ -123,8 +130,10 @@ func _run() -> void:
 			_only = arg.trim_prefix("--shots=").split(",", false)
 		elif arg == "--jpg":
 			_jpg = true
+		elif arg == "--cpu":
+			_cpu = true
 	if _out == "":
-		printerr("usage: -- --out=/abs/dir [--shots=p8_03,p8_vis] [--jpg]")
+		printerr("usage: -- --out=/abs/dir [--shots=p8_03,p8_vis] [--jpg] [--cpu]")
 		quit(2)
 		return
 	DirAccess.make_dir_recursive_absolute(_out)
@@ -132,6 +141,10 @@ func _run() -> void:
 	var world := await _load_v6(FIXTURE_P8)
 	_gs().call(&"set_flag", &"p8_open", true)
 	_gs().call(&"set_flag", &"p8_open_day", OPEN_DAY)
+	if _cpu:
+		await _cpu_probe_p8(world)
+		quit()
+		return
 	_bag = load(INVENTORY).new()
 	_bag.name = "ShotBag"
 	_bag.set(&"slot_count", 80)
@@ -392,3 +405,118 @@ func _stage_vis8(world: Node3D, shot: Dictionary) -> void:
 	var focus: Vector2 = shot.focus
 	_free_camera(world, Vector3(focus.x, _ground(world, focus), focus.y), float(shot.distance))
 	(world.get_node(^"Player") as Node3D).visible = false
+
+
+# --- CPU probe (§9, W3) --------------------------------------------------------------------------------
+
+func _dbg(line: String) -> void:
+	var dbg: Node = root.get_node_or_null(^"Debug")
+	if dbg == null or not dbg.has_method(&"execute"):
+		printerr("[CPU8] no debug console for: ", line)
+		return
+	var r: Dictionary = dbg.call(&"execute", line)
+	if not bool(r.get("ok", false)):
+		printerr("[CPU8] %s → %s" % [line, str(r.get("text", ""))])
+
+
+## One probe: the clock runs from (day, minute); after CPU_WARMUP frames the process time of CPU_FRAMES frames.
+func _cpu_sample(world: Node3D, day: int, minute: int, region: StringName) -> Dictionary:
+	var clock := root.get_node(^"TimeManager")
+	root.get_node(^"UIState").call(&"clear")
+	clock.call(&"clear_pauses")
+	clock.call(&"load_state", {"day": day, "minute_of_day": minute})
+	_dbg("region %s" % region)
+	for i: int in 3:
+		await process_frame
+	clock.set("running", true)
+	for i: int in CPU_WARMUP:
+		await process_frame
+	var samples: Array[float] = []
+	for i: int in CPU_FRAMES:
+		await process_frame
+		samples.append(Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0)
+	clock.set("running", false)
+	var sum := 0.0
+	for v: float in samples:
+		sum += v
+	samples.sort()
+	return {"mean": sum / CPU_FRAMES, "median": samples[CPU_FRAMES / 2], "worst": samples.back(),
+			"nodes": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))}
+
+
+func _p8(on: bool) -> void:
+	_gs().call(&"set_flag", &"p8_open", on)
+	if on:
+		_gs().call(&"set_flag", &"p8_open_day", OPEN_DAY)
+
+
+func _cpu_probe_p8(world: Node3D) -> void:
+	# Jakob hired on the open day, two lines on the board – he works from day 55 on.
+	_p8(true)
+	_dbg("apprentice hire")
+	_dbg("apprentice level rake 2")
+	_dbg("apprentice level weed 2")
+	var app := _system(world, "Apprentice")
+	if app != null:
+		app.call(&"set_board_lines", [{"task": &"rake", "section": &"yard"}, {"task": &"weed", "section": &"linden"}] as Array[Dictionary])
+	var probes: Array = [
+		# [name, day, minute, region, p8 on, staging]
+		["graveyard_day_p8_off", 56, 630, &"graveyard", false, ""],
+		["graveyard_day_p8_on", 56, 630, &"graveyard", true, "visits"],
+		["lights_p8_off", 58, 1010, &"graveyard", false, ""],
+		["lights_p8_on", 58, 1010, &"graveyard", true, "lights"],
+		["village_day_p8_off", 57, 660, &"village", false, ""],
+		["village_day_p8_on", 57, 660, &"village", true, ""],
+	]
+	var results := {}
+	for run: int in CPU_RUNS:
+		for probe: Array in probes:
+			_p8(bool(probe[4]))
+			var clock := root.get_node(^"TimeManager")
+			clock.call(&"load_state", {"day": int(probe[1]), "minute_of_day": int(probe[2]) - 2})
+			match String(probe[5]):
+				"visits":
+					_dbg("visit kehr")
+					_dbg("visit brandt")
+				"lights":
+					_dbg("fest lights")
+					_dbg("lights all")
+			var r := await _cpu_sample(world, int(probe[1]), int(probe[2]), probe[3])
+			var name := String(probe[0])
+			if not results.has(name):
+				results[name] = []
+			(results[name] as Array).append(r)
+			print("[CPU8] run %d %s: median %.3f mean %.3f worst %.3f ms · nodes %d" % [run + 1, name, r.median, r.mean, r.worst, r.nodes])
+	var lines: PackedStringArray = []
+	var med := {}
+	for probe: Array in probes:
+		var name := String(probe[0])
+		var meds: Array[float] = []
+		var means: Array[float] = []
+		var worst := 0.0
+		for r: Dictionary in results[name]:
+			meds.append(float(r.median))
+			means.append(float(r.mean))
+			worst = maxf(worst, float(r.worst))
+		meds.sort()
+		means.sort()
+		med[name] = meds[meds.size() / 2]
+		lines.append("%s: process median %.3f / mean %.3f / worst %.3f ms per frame (median of %d runs)" % [name,
+				meds[meds.size() / 2], means[means.size() / 2], worst, meds.size()])
+	for pair: Array in [["graveyard day (Jakob, 2 visitors)", "graveyard_day"], ["Lichtgang (procession, candles)", "lights"],
+			["village day", "village_day"]]:
+		var d: float = float(med[pair[1] + "_p8_on"]) - float(med[pair[1] + "_p8_off"])
+		lines.append("Phase-8 share %s: %+.3f ms" % [pair[0], d])
+	_p8(true)
+	var saves := root.get_node(^"SaveManager")
+	saves.call(&"save_game", SHOT_SLOT)
+	var path := String(saves.get("save_dir")).path_join("slot_%d.json" % SHOT_SLOT)
+	var size := FileAccess.get_file_as_bytes(path).size() if FileAccess.file_exists(path) else -1
+	var t0 := Time.get_ticks_usec()
+	await saves.call(&"load_game", SHOT_SLOT)
+	lines.append("save slot %d: %d bytes · load %.0f ms (incl. world change)" % [SHOT_SLOT, size, (Time.get_ticks_usec() - t0) / 1000.0])
+	for line: String in lines:
+		print("[CPU8] ", line)
+	var f := FileAccess.open(_out.path_join("cpu_stats_p8.txt"), FileAccess.WRITE)
+	f.store_string("\n".join(lines) + "\n")
+	f.close()
