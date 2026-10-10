@@ -10,6 +10,9 @@ Vertrag: `docs/PHASE8_DESIGN.md` §8.3 (Ton), §3.2 (Besitz W-Ton), §10 (`test_
 - 77–97 s Nacht mit dem Grabräuber: gedämpfter Spaten, der Totengräber kommt näher, Flucht über den Kies, über die Mauer, Horn des Nachtwächters fern.
 - 97–104 s Kapitel „Wer heraufkommt".
 
+## Tests
+`test_audio_phase8.gd` (23 Tests) plus die bestehenden Tests `test_audio.gd` und `test_audio_quality.gd` (29) sind grün. Die volle Suite: **2809 bestanden, 0 fehlgeschlagen** (Stand W1 2786 + 23).
+
 ## Neue Cues (28 Cues, 62 Dateien)
 
 | Cue | Var. | Bus / Art | Auslöser (Daten) | Quelle · Reichweite | Ziel LUFS | Klang |
