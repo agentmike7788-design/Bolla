@@ -1,0 +1,127 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="kin_brandt_first_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="kin_brandt_node_first"]
+script = ExtResource("1")
+id = &"first"
+text = "Guten … Tag. Brandt. Hinrich. Ich – danke. Dass ich hier stehen darf. Danke."
+choices = Array[ExtResource("2")]([SubResource("kin_brandt_first_c01")])
+conditions = Array[String](["!flag:p8_met_kin_brandt"])
+fallback_next = &"greet"
+actions = Array[String](["set_flag:p8_met_kin_brandt"])
+
+[sub_resource type="Resource" id="kin_brandt_greet_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="kin_brandt_node_greet"]
+script = ExtResource("1")
+id = &"greet"
+text = "Ich … danke. Ich bleib nur kurz. Danke."
+choices = Array[ExtResource("2")]([SubResource("kin_brandt_greet_c01")])
+
+[sub_resource type="Resource" id="kin_brandt_menu_c01"]
+script = ExtResource("2")
+text = "[Trinkgeld] …"
+next = &"tip"
+conditions = Array[String](["tip_due"])
+actions = Array[String](["tip_hand"])
+
+[sub_resource type="Resource" id="kin_brandt_menu_c02"]
+script = ExtResource("2")
+text = "[Wunsch] Kann ich etwas für das Grab tun?"
+next = &"wish"
+conditions = Array[String](["wish_offerable"])
+actions = Array[String](["wish_offer"])
+
+[sub_resource type="Resource" id="kin_brandt_menu_c03"]
+script = ExtResource("2")
+text = "Wer liegt hier?"
+next = &"who"
+
+[sub_resource type="Resource" id="kin_brandt_menu_c04"]
+script = ExtResource("2")
+text = "Ich lass Sie allein."
+
+[sub_resource type="Resource" id="kin_brandt_node_menu"]
+script = ExtResource("1")
+id = &"menu"
+text = "(Hinrich wartet.)"
+choices = Array[ExtResource("2")]([SubResource("kin_brandt_menu_c01"), SubResource("kin_brandt_menu_c02"), SubResource("kin_brandt_menu_c03"), SubResource("kin_brandt_menu_c04")])
+
+[sub_resource type="Resource" id="kin_brandt_wish_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"wish_yes"
+actions = Array[String](["wish_accept"])
+
+[sub_resource type="Resource" id="kin_brandt_wish_c02"]
+script = ExtResource("2")
+text = "Ich kann es nicht versprechen."
+next = &"wish_no"
+
+[sub_resource type="Resource" id="kin_brandt_node_wish"]
+script = ExtResource("1")
+id = &"wish"
+text = "Könnten Sie … wenn es keine Mühe macht … eine Kerze? Eine Nacht. Hier oben ist es so dunkel. Danke. Verzeihung. Danke."
+choices = Array[ExtResource("2")]([SubResource("kin_brandt_wish_c01"), SubResource("kin_brandt_wish_c02")])
+
+[sub_resource type="Resource" id="kin_brandt_wish_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="kin_brandt_node_wish_yes"]
+script = ExtResource("1")
+id = &"wish_yes"
+text = "Danke. Wirklich. Danke."
+choices = Array[ExtResource("2")]([SubResource("kin_brandt_wish_yes_c01")])
+
+[sub_resource type="Resource" id="kin_brandt_wish_no_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="kin_brandt_node_wish_no"]
+script = ExtResource("1")
+id = &"wish_no"
+text = "Natürlich. Natürlich. Danke trotzdem."
+choices = Array[ExtResource("2")]([SubResource("kin_brandt_wish_no_c01")])
+
+[sub_resource type="Resource" id="kin_brandt_tip_c01"]
+script = ExtResource("2")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="kin_brandt_node_tip"]
+script = ExtResource("1")
+id = &"tip"
+text = "Für Sie. Nein, nehmen Sie. Danke. Ich weiß nicht, wie man das richtig macht. Danke."
+choices = Array[ExtResource("2")]([SubResource("kin_brandt_tip_c01")])
+
+[sub_resource type="Resource" id="kin_brandt_who_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="kin_brandt_node_who"]
+script = ExtResource("1")
+id = &"who"
+text = "Mein … ja. Unserer. Ich hab ihn gefahren, früher, mit dem Fuhrwerk. Jetzt fährt ihn keiner mehr. Danke, dass er liegt."
+choices = Array[ExtResource("2")]([SubResource("kin_brandt_who_c01")])
+
+[resource]
+script = ExtResource("3")
+id = &"kin_brandt"
+speaker_name = "Hinrich Brandt"
+start_node = &"first"
+nodes = Array[ExtResource("1")]([SubResource("kin_brandt_node_first"), SubResource("kin_brandt_node_greet"), SubResource("kin_brandt_node_menu"), SubResource("kin_brandt_node_wish"), SubResource("kin_brandt_node_wish_yes"), SubResource("kin_brandt_node_wish_no"), SubResource("kin_brandt_node_tip"), SubResource("kin_brandt_node_who")])

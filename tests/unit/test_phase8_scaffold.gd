@@ -9,6 +9,8 @@ extends TestCase
 const IMPLEMENTED: PackedStringArray = [
 	# P4
 	"Friendship", "FriendRules", "FavorRules", "Festivals", "FestivalRules", "FestDecor", "MemorialPlate", "ArchiveCabinet", "Fiddler",
+	# P6
+	"SaveMigration", "Village",
 ]
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
@@ -271,7 +273,11 @@ func test_stub_members_on_existing_classes() -> void:
 	# GhostMood.score: the new care argument changes nothing until P2.
 	var cfg := GhostConfig.new()
 	assert_eq(GhostMood.score(8, 1, 1, null, cfg, 1, 1, 2), GhostMood.score(8, 1, 1, null, cfg, 1, 1), "care ignored in W0")
-	assert_eq(Village.mourning_house_for(55, 7, PackedStringArray(["house_kehr"])), &"", "W0 stub (P6)")
+	if IMPLEMENTED.has("Village"):
+		assert_eq(Village.mourning_house_for(55, 7, PackedStringArray(["house_kehr"])), &"house_kehr", "P6: one house")
+		assert_eq(Village.mourning_house_for(55, 7, PackedStringArray()), &"", "P6: no houses")
+	else:
+		assert_eq(Village.mourning_house_for(55, 7, PackedStringArray(["house_kehr"])), &"", "W0 stub (P6)")
 	var npc := Npc.new()
 	npc.set_runtime_schedule(NpcSchedule.new())
 	npc.clear_runtime_schedule()

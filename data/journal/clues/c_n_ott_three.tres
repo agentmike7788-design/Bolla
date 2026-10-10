@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_n_ott_three"
+title = "Drei Spuren"
+text = "Quasts Fläschchen in der Tasche, ein Wachstropfen von Lenz' Kerze am Kragen, ein frisch gewaschenes Hemd unter dem Kittel. Drei waren bei Gerhard Ott, bevor er starb."
+kind = &"mark"
+order = 304

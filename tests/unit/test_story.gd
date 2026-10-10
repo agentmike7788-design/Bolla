@@ -122,7 +122,7 @@ func test_daily_checks_key_fallback_from_day_12() -> void:
 
 func test_real_story_data_matches_the_contract() -> void:
 	var real: Array = Database.story_corpses()
-	assert_eq(real.size(), 6, "S1–S5 + D1 (Phase 7)")
+	assert_eq(real.size(), 7, "S1–S5 + D1 (Phase 7) + D2 (Phase 8)")
 	var ids: Array = []
 	var days: Array = []
 	for s: StoryCorpseData in real:
@@ -132,8 +132,8 @@ func test_real_story_data_matches_the_contract() -> void:
 		assert_ne(s.arrival_note, "", "%s: Osric's line" % s.id)
 		var cause: Dictionary = (Database.corpse_tables() as CorpseTables).get_cause(s.cause_id)
 		assert_false(cause.is_empty(), "%s: cause %s in the corpse tables" % [s.id, s.cause_id])
-	assert_eq(ids, [&"s1_quendel", &"s2_hemmerling", &"s3_wernstein", &"s4_uhlig", &"s5_moor", &"d1_hagedorn"])
-	assert_eq(days, [6, 9, 13, 16, 19, 1], "D1 waits for village_open_day + 8 instead")
+	assert_eq(ids, [&"s1_quendel", &"s2_hemmerling", &"s3_wernstein", &"s4_uhlig", &"s5_moor", &"d1_hagedorn", &"d2_ott"])
+	assert_eq(days, [6, 9, 13, 16, 19, 1, 1], "D1 waits for village_open_day + 8, D2 for ott_dead instead")
 	var cfg_real := Database.config(&"story_config") as StoryConfig
 	assert_eq((Database.story_corpse(cfg_real.finale_story) as StoryCorpseData).is_finale, true)
 
@@ -219,4 +219,101 @@ func test_daily_checks_set_the_due_flag_at_midnight() -> void:
 	assert_eq(GameState.get_flag(&"hagedorn_dead"), 48, "her Npc disappears (hide_flag)")
 	assert_false(StoryDirector.daily_checks(48, true, cfg).has(StoryDirector.CHECK_DUE_FLAG), "once")
 	manager.free()
+	_clear_d1_flags()
+
+
+# --- Phase 8 (P6, docs/PHASE8_DESIGN.md §2.9, §3.4): D2 Gerhard Ott --------------------------------
+
+const ALL_P7 := ["s1_quendel", "s2_hemmerling", "s3_wernstein", "s4_uhlig", "s5_moor", "d1_hagedorn"]
+
+
+func _with_d2() -> Array[StoryCorpseData]:
+	var out := _with_d1()
+	out.append(Database.story_corpse(&"d2_ott") as StoryCorpseData)
+	return out
+
+
+func _clear_d2_flags() -> void:
+	for f: StringName in [&"p8_open", &"ott_dead"]:
+		GameState.clear_flag(f)
+
+
+func test_d2_data() -> void:
+	var d := Database.story_corpse(&"d2_ott") as StoryCorpseData
+	assert_not_null(d)
+	assert_eq([d.display_name, d.age, d.cause_id, d.traits, d.look, d.order, d.section, d.requires_flag, d.due_flag, d.after_flag],
+			["Gerhard Ott", 74, &"old_age", [&"strange_wound"] as Array[StringName], 2, 7, &"linden", &"p8_open", &"ott_dead", &""],
+			"§2.9 / W0-Notizen 10")
+	assert_eq(d.finds, [&"f_d2_bottle", &"f_d2_wax", &"f_d2_shirt", &"f_d2_mark"] as Array[StringName])
+	assert_true(d.arrival_note.begins_with("Der alte Ott.") and d.arrival_note.ends_with("Sie ist immer schon da."), "Osric (§2.9)")
+	var mark := Database.find(&"f_d2_mark") as FindData
+	assert_eq([mark.trait_id, mark.step, mark.story_only], [&"strange_wound", &"wounds", true], "replaces f_mark")
+	assert_almost(mark.min_freshness, 0.3)
+	for id: StringName in d.finds:
+		var f := Database.find(id) as FindData
+		assert_not_null(f, String(id))
+		assert_true(f.story_only and f.text.length() > 20, String(id))
+	assert_eq([(Database.find(&"f_d2_bottle") as FindData).step, (Database.find(&"f_d2_wax") as FindData).step,
+			(Database.find(&"f_d2_shirt") as FindData).step], [&"pockets", &"clothing", &"clothing"])
+	var r := StoryDirector.make_record(d, 5)
+	assert_true(r.has_trait(&"strange_wound"), "gezeichnet")
+	assert_eq([r.story_id, r.valuables_coins], [&"d2_ott", 0], "no valuables")
+	assert_true(StoryDirector.waits_for_event(d))
+	assert_false(StoryDirector.waits_for_event(Database.story_corpse(&"d1_hagedorn") as StoryCorpseData), "D1 keeps its rule")
+
+
+func test_d2_comes_the_day_after_ott_dies() -> void:
+	_clear_d1_flags()
+	_clear_d2_flags()
+	GameState.set_flag(&"village_open_day", 40)
+	GameState.set_flag(&"linden_consecrated", true)
+	var all := _with_d2()
+	var delivered := PackedStringArray(ALL_P7)
+	assert_null(StoryDirector.due_story(58, delivered, 48, all, cfg), "before p8_open nothing")
+	GameState.set_flag(&"p8_open", true)
+	for day: int in range(53, 70):
+		assert_null(StoryDirector.due_story(day, delivered, 48, all, cfg), "day %d: waits for ott_dead" % day)
+	assert_eq(StoryDirector.due_flags(58, delivered, 48, all, cfg), [] as Array[StringName], "the director never sets ott_dead")
+	GameState.set_flag(&"ott_dead", 58)  # NightPaths, 02:10 of the death night (B6)
+	assert_null(StoryDirector.due_story(58, delivered, 48, all, cfg), "not the same morning")
+	assert_eq(StoryDirector.due_story(59, delivered, 48, all, cfg).id, &"d2_ott", "§1.4 B7 / §1.6 +6: the morning after")
+	assert_eq(StoryDirector.due_story(61, delivered, 48, all, cfg).id, &"d2_ott", "a later delivery day catches up")
+	assert_null(StoryDirector.due_story(59, delivered, 58, all, cfg), "the gap of 2 days still holds")
+	assert_eq(StoryDirector.due_story(59, PackedStringArray(ALL_OLD), 20, all, cfg).id, &"d1_hagedorn", "D1 first")
+	assert_eq(StoryDirector.due_flags(59, delivered, 48, all, cfg), [] as Array[StringName], "already set by NightPaths")
+	GameState.set_flag(&"ott_dead", true)
+	assert_eq(StoryDirector.due_story(59, delivered, 48, all, cfg).id, &"d2_ott", "a bare true counts as well")
+	_clear_d2_flags()
+	_clear_d1_flags()
+
+
+func test_d2_reserves_a_place_from_p8_open() -> void:
+	_clear_d2_flags()
+	GameState.set_flag(&"linden_consecrated", true)
+	var all := _with_d2()
+	var delivered := PackedStringArray(ALL_P7)
+	assert_eq(StoryDirector.pending_count(delivered, all), 0, "Phase-7 games unchanged")
+	GameState.set_flag(&"p8_open", true)
+	assert_eq(StoryDirector.pending_count(delivered, all), 1, "one place in the third row stays free for D2")
+	delivered.append("d2_ott")
+	assert_eq(StoryDirector.pending_count(delivered, all), 0)
+	_clear_d2_flags()
+	_clear_d1_flags()
+
+
+func test_daily_checks_leave_ott_dead_to_the_night() -> void:
+	_clear_d1_flags()
+	_clear_d2_flags()
+	var manager := CorpseManager.new()
+	manager.stories = _with_d2()
+	tree.root.add_child(manager)
+	manager.load_state({"story_delivered": ALL_P7, "story_last_day": 48})
+	GameState.set_flag(&"village_open_day", 40)
+	GameState.set_flag(&"linden_consecrated", true)
+	GameState.set_flag(&"p8_open", true)
+	for day: int in range(53, 62):
+		assert_false(StoryDirector.daily_checks(day, true, cfg).has(StoryDirector.CHECK_DUE_FLAG), "day %d" % day)
+	assert_false(GameState.has_flag(&"ott_dead"), "only NightPaths sets it")
+	manager.free()
+	_clear_d2_flags()
 	_clear_d1_flags()

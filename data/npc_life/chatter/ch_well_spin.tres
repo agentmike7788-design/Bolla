@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChatterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/chatter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ch_well_spin"
+region = &"village"
+npcs = Array[StringName]([&"grocer", &"washer"])
+place = &"v_well"
+window = Vector2i(960, 990)
+conditions = PackedStringArray()
+lines = PackedStringArray("Du spinnst zu dünn, Dorn. Das reißt.", "Für die Toten reicht's. Die ziehen nicht dran.", "Und wenn doch einer zieht?", "Dann hat er's eilig. Dann soll es reißen.")
+sets_flag = &""

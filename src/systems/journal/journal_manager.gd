@@ -16,6 +16,11 @@ extends Node
 ## Data: clue_data / insight_data / find_data default to Database (data/journal/**, data/finds);
 ## tests assign fixtures. Save (§5.1): {"clues": {id: {"day", "corpse", "count"}},
 ## "insights": {id: day}, "unread": [ids]}.
+## Phase 8 (docs/PHASE8_DESIGN.md §1.6, §3.4, P6): an insight with any_count > 0 (i_underlined) is linkable when
+## all its `requires` and at least any_count of its any_clues are selected (nothing else, order irrelevant);
+## open questions / ready insights / the cards count both groups. The text variant of i_underlined comes
+## from StoryConfig.underlined (data/journal/insights/variants/i_underlined_<priest|surgeon|washer>.tres,
+## same id – the file in data/journal/insights is the default washer text).
 
 const GROUP := &"journal"
 const PANEL := &"journal"
@@ -34,6 +39,13 @@ const INSIGHT_NOTE := "Erkenntnis: %s"
 ## Shown by the panel after a link that matches no insight (§2.12) – not counted.
 const LINK_FAIL_TEXT := "Diese Hinweise erzählen noch keine gemeinsame Geschichte."
 const MINUTES_PER_DAY := 1440
+## Phase 8: the insight with three text variants (§14.1) and where they live.
+const UNDERLINED_INSIGHT := &"i_underlined"
+const VARIANT_PATH := "res://data/journal/insights/variants/%s_%s.tres"
+const UNDERLINED_CHOICES: Array[StringName] = [&"priest", &"surgeon", &"washer"]
+## Phase 8 (§1.6 item 5, §2.9): a clue that comes only when all these finds of one corpse are revealed
+## (the finds carry the clue id; add_clue with a corpse holds it back until the last one is there).
+const COMPOUND_CLUES := {&"c_n_ott_three": [&"f_d2_bottle", &"f_d2_wax", &"f_d2_shirt"]}
 
 @export var save_id: String = "journal"
 @export var save_order: int = 40
@@ -89,6 +101,8 @@ func add_clue(id: StringName, corpse_id: String = "", silent: bool = false) -> b
 	if _clues.has(id):
 		_count(id, corpse_id)
 		return false
+	if not compound_complete(id, corpse_id):
+		return false
 	_clues[id] = {"day": TimeManager.day, "corpse": corpse_id, "count": 0}
 	_count(id, corpse_id)
 	GameState.set_flag(StringName(CLUE_FLAG_PREFIX + String(id)), true)
@@ -96,6 +110,20 @@ func add_clue(id: StringName, corpse_id: String = "", silent: bool = false) -> b
 		_mark_unread(id)
 		EventBus.clue_found.emit(id, corpse_id)
 		EventBus.notification_requested.emit(CLUE_NOTE % clue.title, NOTIFY_INFO)
+	return true
+
+
+## Phase 8: true unless `id` is a compound clue (COMPOUND_CLUES) whose finds are not all revealed on the
+## record `corpse_id` (a compound clue without a corpse – debug, dialogue – always comes).
+func compound_complete(id: StringName, corpse_id: String) -> bool:
+	if not COMPOUND_CLUES.has(id) or corpse_id == "":
+		return true
+	for r: CorpseRecord in _records():
+		if r.id == corpse_id:
+			for fid: StringName in COMPOUND_CLUES[id]:
+				if not fid in r.finds_revealed:
+					return false
+			return true
 	return true
 
 
@@ -130,7 +158,7 @@ func try_link(ids: Array[StringName]) -> StringName:
 	for id: StringName in ids:
 		if not _clues.has(id):
 			return &""
-	var match_id := JournalRules.match_insight(ids, _insight_list(), _insights)
+	var match_id := match_selection(ids, _insight_list(), _insights)
 	if match_id == &"":
 		return &""
 	var insight := insight_by_id(match_id)
@@ -171,14 +199,96 @@ func main_insight_count() -> int:
 	return n
 
 
-## Insights with a found clue that are not linked yet (column "Offene Fragen").
+## Insights with a found clue that are not linked yet (column "Offene Fragen"). Phase 8: a clue of the
+## any group counts as well.
 func open_questions() -> Array[InsightData]:
-	return JournalRules.open_questions(_clues, _insight_list(), _insights)
+	var out: Array[InsightData] = []
+	for insight: InsightData in _insight_list():
+		if insight == null:
+			continue
+		if insight.any_count > 0:
+			if not JournalRules._has(_insights, insight.id) and (_found_count(insight.requires) > 0 or _found_count(insight.any_clues) > 0):
+				out.append(insight)
+		elif not JournalRules.open_questions(_clues, [insight] as Array[InsightData], _insights).is_empty():
+			out.append(insight)
+	return out
 
 
-## All clues there, not linked yet (objective line, once per insight until linked).
+## All clues there, not linked yet (objective line, once per insight until linked). Phase 8: all requires
+## and at least any_count of the any group.
 func ready_insights() -> Array[InsightData]:
-	return JournalRules.ready_insights(_clues, _insight_list(), _insights)
+	var out: Array[InsightData] = []
+	for insight: InsightData in _insight_list():
+		if insight == null:
+			continue
+		if insight.any_count > 0:
+			if not JournalRules._has(_insights, insight.id) and _found_count(insight.requires) == insight.requires.size() \
+					and _found_count(insight.any_clues) >= insight.any_count:
+				out.append(insight)
+		elif not JournalRules.ready_insights(_clues, [insight] as Array[InsightData], _insights).is_empty():
+			out.append(insight)
+	return out
+
+
+## Phase 8: the insight `selected` unlocks (&"" = none). An any-group insight (any_count > 0) takes all its
+## requires plus at least any_count of its any_clues and nothing else; the others need exactly their
+## requires (JournalRules.match_insight – an any-group insight never matches its requires alone).
+static func match_selection(selected: Array[StringName], insights: Array[InsightData], unlocked: Dictionary) -> StringName:
+	var chosen := {}
+	for id: StringName in selected:
+		chosen[id] = true
+	if chosen.size() != selected.size() or chosen.is_empty():
+		return &""
+	var plain: Array[InsightData] = []
+	for insight: InsightData in insights:
+		if insight == null or JournalRules._has(unlocked, insight.id):
+			continue
+		if insight.any_count <= 0:
+			plain.append(insight)
+			continue
+		var extra := 0
+		var ok := true
+		for id: StringName in insight.requires:
+			if not chosen.has(id):
+				ok = false
+		for id: StringName in chosen:
+			if insight.requires.has(id):
+				continue
+			if insight.any_clues.has(id):
+				extra += 1
+			else:
+				ok = false
+		if ok and extra >= insight.any_count:
+			return insight.id
+	return JournalRules.match_insight(selected, plain, unlocked)
+
+
+## Phase 8 (§14.1): the text variant of `insight` for StoryConfig.underlined (priest | surgeon | washer) –
+## the variant file with the same id, else `insight` itself (other insights, unknown choice, missing file).
+static func insight_variant(insight: InsightData, underlined: StringName) -> InsightData:
+	if insight == null or insight.id != UNDERLINED_INSIGHT or not underlined in UNDERLINED_CHOICES:
+		return insight
+	var path := VARIANT_PATH % [String(insight.id), String(underlined)]
+	if not ResourceLoader.exists(path):
+		return insight
+	var variant := load(path) as InsightData
+	return variant if variant != null and variant.id == insight.id else insight
+
+
+## StoryConfig.underlined of data/config/story_config.tres (default washer, §14.1).
+static func underlined_choice() -> StringName:
+	var cfg: StoryConfig = null
+	if Database.has_method(&"config"):
+		cfg = Database.config(&"story_config") as StoryConfig
+	return cfg.underlined if cfg != null else StoryConfig.new().underlined
+
+
+func _found_count(ids: Array[StringName]) -> int:
+	var n := 0
+	for id: StringName in ids:
+		if _clues.has(id):
+			n += 1
+	return n
 
 
 # --- the dead (derived) -----------------------------------------------------------------------
@@ -257,11 +367,19 @@ func clue_cards() -> Array[Dictionary]:
 func open_question_cards() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for i: InsightData in open_questions():
-		var found := 0
-		for id: StringName in i.requires:
-			if _clues.has(id):
-				found += 1
-		out.append({"id": i.id, "question": i.question, "found": found, "needed": i.requires.size(), "optional": i.optional})
+		var found := _found_count(i.requires)
+		var card := {"id": i.id, "question": i.question, "found": found, "needed": i.requires.size(), "optional": i.optional}
+		if i.any_count > 0:
+			# Phase 8: both groups – "found" / "needed" count the any group up to any_count.
+			var any_found := _found_count(i.any_clues)
+			card["found"] = found + mini(any_found, i.any_count)
+			card["needed"] = i.requires.size() + i.any_count
+			card["requires_found"] = found
+			card["requires_needed"] = i.requires.size()
+			card["any_found"] = any_found
+			card["any_count"] = i.any_count
+			card["any_total"] = i.any_clues.size()
+		out.append(card)
 	return out
 
 
@@ -400,9 +518,10 @@ func _clue_list() -> Array[ClueData]:
 
 func _insight_list() -> Array[InsightData]:
 	if insight_data.is_empty():
+		var choice := underlined_choice()
 		for res: Resource in Database.insights():
 			if res is InsightData:
-				insight_data.append(res)
+				insight_data.append(insight_variant(res, choice))
 	return insight_data
 
 

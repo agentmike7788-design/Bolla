@@ -10,6 +10,8 @@ extends Node
 ## Phase 7 (docs/PHASE7_DESIGN.md §2.11, §5.1): + village_trips, orders_done/_failed, gifts_given, rounds_bought,
 ## donations, specimens_taken/_sold/_researched/_returned/_collected, medicines_made, lectures_attended,
 ## deductions, university_standing and the ledger stats coins_spent_village/_donation/_round/_consecration.
+## Phase 8 (docs/PHASE8_DESIGN.md §2.11, §5.1): + the 26 stats of visitors, wishes, grave care, the apprentice,
+## friendship, alms, chatter, festivals, the night and the ledger stats coins_spent_apprentice/_alms/_peddler.
 const DEFAULT_STATS: Array[StringName] = [&"burials", &"valuables_taken", &"reputation", &"missed_deliveries", &"days_played",
 		&"piety", &"utilized", &"prepared", &"trader_sales",
 		&"crafted", &"stones_set", &"coins_spent", &"trees_felled",
@@ -19,13 +21,19 @@ const DEFAULT_STATS: Array[StringName] = [&"burials", &"valuables_taken", &"repu
 		&"village_trips", &"orders_done", &"orders_failed", &"gifts_given", &"rounds_bought", &"donations",
 		&"specimens_taken", &"specimens_sold", &"specimens_researched", &"specimens_returned", &"specimens_collected",
 		&"medicines_made", &"lectures_attended", &"deductions", &"university_standing",
-		&"coins_spent_village", &"coins_spent_donation", &"coins_spent_round", &"coins_spent_consecration"]
+		&"coins_spent_village", &"coins_spent_donation", &"coins_spent_round", &"coins_spent_consecration",
+		&"visits_seen", &"visits_total", &"wishes_done", &"wishes_failed", &"tips_coins", &"flowers_planted", &"candles_lit",
+		&"mortsafes_set", &"graves_disturbed", &"graves_closed", &"apprentice_days", &"apprentice_jobs", &"apprentice_mistakes",
+		&"apprentice_wage", &"friend_steps", &"favors_used", &"favors_returned", &"alms_given", &"chatters_seen", &"listens",
+		&"dances", &"night_visits_observed", &"robber_encounters",
+		&"coins_spent_apprentice", &"coins_spent_alms", &"coins_spent_peddler"]
 ## Phase 5 §3.3: the reasons of EventBus.coins_spent (license, stations, Osric's goods, Ilse's shop);
 ## Phase 6 §2.7: + building (the building levels; altar candles run under osric).
 ## Phase 7 §2.11: + village (the village shops), donation (poor box, donation orders), round (the inn),
 ## consecration (the Lindenacker); the pult runs under build.
+## Phase 8 §2.11: + apprentice (Jakob's wage), alms (Veit), peddler (Hanne's basket).
 const COIN_REASONS: Array[StringName] = [&"license", &"build", &"osric", &"ilse", &"building", &"village", &"donation",
-		&"round", &"consecration"]
+		&"round", &"consecration", &"apprentice", &"alms", &"peddler"]
 const STAT_COINS_SPENT := &"coins_spent"
 const COINS_SPENT_PREFIX := "coins_spent_"
 

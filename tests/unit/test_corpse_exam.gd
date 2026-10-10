@@ -305,7 +305,7 @@ func test_care_next_loss_uses_pending_finds_only() -> void:
 ## find that can be lost has its own lost text.
 func test_data_finds_match_the_contract() -> void:
 	var real := Database.finds()
-	assert_eq(real.size(), 31, "Phase 7 (P6): + f_d1_poppy, f_d1_mark, f_d1_note")
+	assert_eq(real.size(), 35, "Phase 7 (P6): + f_d1_poppy, f_d1_mark, f_d1_note; Phase 8 (P6): + f_d2_bottle, f_d2_wax, f_d2_shirt, f_d2_mark")
 	for f: FindData in Phase4Fixtures.finds():
 		var d := Database.find(f.id) as FindData
 		assert_not_null(d, String(f.id))

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="FindData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/corpse/find_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"f_d2_mark"
+step = &"wounds"
+label = "Das Zeichen, verheilt"
+text = "Das Zeichen über dem Herzen, verheilt seit gut drei Wochen. Wie bei der Hagedorn."
+lost_text = ""
+min_freshness = 0.3
+trait_id = &"strange_wound"
+cause_id = &""
+story_only = true
+clue_id = &""
+sets_flag = &""

@@ -325,19 +325,17 @@ func mourning_house(day: int) -> StringName:
 			newest = r
 	if newest == null:
 		return &""
-	var houses := _ribbon_houses()
+	var arrived := floori(float(newest.arrival_total_minutes) / MINUTES_PER_DAY) + 1
+	return mourning_house_for(arrived, newest.seed, _ribbon_houses())
+
+
+## Phase 8 (docs/PHASE8_DESIGN.md §2.2.1, §5.2 step 1): the pure part of mourning_house – the house of a
+## corpse that arrived on `arrival_day` with `seed` among `houses` (bit-identical to the Phase-7 mourning
+## ribbon); &"" without houses. SaveMigration uses it for kin_house.
+static func mourning_house_for(arrival_day: int, seed: int, houses: PackedStringArray) -> StringName:
 	if houses.is_empty():
 		return &""
-	var arrived := floori(float(newest.arrival_total_minutes) / MINUTES_PER_DAY) + 1
-	return StringName(houses[posmod(hash([arrived, newest.seed]), houses.size())])
-
-
-## STUB (P6) – Phase 8 (docs/PHASE8_DESIGN.md §2.2.1, §5.2 step 1): the pure part of mourning_house – the
-## house of a corpse that arrived on `arrival_day` with `seed` among `houses` (bit-identical to the Phase-7
-## mourning ribbon: houses[posmod(hash([arrival_day, seed]), houses.size())]); SaveMigration uses it for
-## kin_house. W0: &"" (P6 extracts it from mourning_house).
-static func mourning_house_for(_arrival_day: int, _seed: int, _houses: PackedStringArray) -> StringName:
-	return &""
+	return StringName(houses[posmod(hash([arrival_day, seed]), houses.size())])
 
 
 # --- chapter --------------------------------------------------------------------------------------

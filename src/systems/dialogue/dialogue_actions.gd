@@ -12,6 +12,13 @@ extends RefCounted
 ## · order_turn_in:<id> · buy_round · donate · consecrate_pay · anatomy_case (Quast: the case, his recipe
 ## book, the basic teachings, flag anatomy_known) · open_anatomist · open_lecture (only on a lecture night)
 ## · lecture_invite · rel_add:<npc>:<n> · set_flag_day:<name> (flag = TimeManager.day, for flag_days_gte). take_item:coin:<n> without a reason: a villager speaking → &"village".
+## Phase 8 (docs/PHASE8_DESIGN.md §3.4, P6): listen:<npc> (NpcLife.listen) · step_accept:<npc> · favor_use:<npc>[:<choice>]
+## · apprentice_hire · apprentice_teach:<task> · apprentice_praise · apprentice_scold · wish_offer (Visitors.offer_wish
+## for the speaker's visit + the wish card, the offer is kept in context.wish_offer) · wish_accept (the offered
+## wish) · tip_hand (Visitors.hand_tip) · alms (Wanderers.give_alms) · dance:<npc> (Festivals.dance) ·
+## robber_resolve:<choice> (NightRobber.resolve) · meet:<place> (Orders.note_meet with the speaker; meet:<npc> of a
+## villager id stays Relationships.meet) · note_event:<event> (NpcLife.note_event) · task:<action_id> (Orders.note_task – Lenz' names
+## at the Lichtgang, Liesel's vigil, P6 addition) · take_ware (Theres' order, Friendship.take_ware – P4).
 
 const NOTIFY_INFO := &"info"
 const NOTIFY_REWARD := &"reward"
@@ -42,6 +49,9 @@ const RECIPES_FLAG := &"quast_recipes"
 const INVITE_FLAG := &"lecture_invited"
 const CASE_ITEM := &"anatomy_case"
 const REASON_TALK := "Gespräch"
+# Phase 8
+const WISH_CARD_PANEL := &"wish_card"
+const CONTEXT_WISH := "wish_offer"
 
 
 ## Applies every action in order.
@@ -112,8 +122,13 @@ static func apply(action: String, context: Dictionary) -> void:
 		# Phase 7 (docs/PHASE7_DESIGN.md §3.4).
 		"meet", "talked":
 			var p := DialogueSyntax.parts(text, 1)
-			if DialogueSyntax.has_name(p, text):
-				_call(&"relationships", &"meet" if DialogueSyntax.key(text) == "meet" else &"note_talk", [StringName(p[0])], text)
+			if not DialogueSyntax.has_name(p, text):
+				return
+			if DialogueSyntax.key(text) == "meet" and not StringName(p[0]) in VILLAGERS:
+				# Phase 8: meet:<place> – a friendship meeting with the speaker at <place> (Orders.note_meet).
+				_call(&"orders", &"note_meet", [speaker_id(context), StringName(p[0])], text)
+				return
+			_call(&"relationships", &"meet" if DialogueSyntax.key(text) == "meet" else &"note_talk", [StringName(p[0])], text)
 		"rel_add":
 			var p := DialogueSyntax.parts(text, 2)
 			var n: Variant = DialogueSyntax.int_arg(p, 1, null)
@@ -164,8 +179,110 @@ static func apply(action: String, context: Dictionary) -> void:
 			var lectures := DialogueSyntax.system(&"lectures")
 			if lectures != null and lectures.has_method(&"invite"):
 				lectures.call(&"invite")
+		# Phase 8 (docs/PHASE8_DESIGN.md §3.4).
+		"listen":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				_call(&"npc_life", &"listen", [StringName(p[0])], text)
+		"step_accept":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				_call(&"friendship", &"accept_step", [StringName(p[0])], text)
+		"favor_use":
+			var p := DialogueSyntax.parts(text, 2)
+			if DialogueSyntax.has_name(p, text):
+				_call(&"friendship", &"use_favor", [StringName(p[0]), StringName(p[1]) if p.size() > 1 else &""], text)
+		"apprentice_hire":
+			_call(&"apprentice", &"hire", [], text)
+		"apprentice_teach":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				_call(&"apprentice", &"start_teach", [StringName(p[0])], text)
+		"apprentice_praise":
+			_call(&"apprentice", &"praise", [], text)
+		"apprentice_scold":
+			_call(&"apprentice", &"scold", [], text)
+		"wish_offer":
+			_wish_offer(context, text)
+		"wish_accept":
+			_wish_accept(context, text)
+		"tip_hand":
+			var visit := DialogueConditions.visit_of_speaker(context)
+			var inv := DialogueSyntax.inventory(context, &"add_item")
+			if visit.is_empty() or not inv is Inventory:
+				push_warning("[DialogueRunner] '%s': no visit or inventory" % text)
+				return
+			_call(&"visitors", &"hand_tip", [str(visit.get("visit_id", "")), inv], text)
+		"alms":
+			var inv := DialogueSyntax.inventory(context, &"remove_item")
+			if inv is Inventory:
+				_call(&"wanderers", &"give_alms", [inv], text)
+		"dance":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				_call(&"festivals", &"dance", [StringName(p[0])], text)
+		"robber_resolve":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				_call(&"night_robber", &"resolve", [StringName(p[0])], text)
+		"task":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				_call(&"orders", &"note_task", [StringName(p[0])], text)
+		"take_ware":
+			var inv := DialogueSyntax.inventory(context, &"add_item")
+			if inv is Inventory:
+				_call(&"friendship", &"take_ware", [inv], text)
+		"note_event":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				_call(&"npc_life", &"note_event", [StringName(p[0]), [] as Array[StringName]], text)
 		_:
 			push_warning("[DialogueRunner] unknown action '%s' ignored" % action)
+
+
+# --- Phase-8 actions ---
+
+## The npc_id of the speaking Npc (&"" without one).
+static func speaker_id(context: Dictionary) -> StringName:
+	var speaker: Variant = context.get("speaker")
+	if is_instance_valid(speaker):
+		return StringName(str((speaker as Object).get(&"npc_id")))
+	return &""
+
+
+## wish_offer: Visitors.offer_wish for the speaker's visit; a non-empty offer is kept in context.wish_offer
+## and shown on the wish card (W-UI panel &"wish_card", context + {offer, kin_id}).
+static func _wish_offer(context: Dictionary, text: String) -> void:
+	var visit := DialogueConditions.visit_of_speaker(context)
+	if visit.is_empty():
+		push_warning("[DialogueRunner] '%s': the speaker has no visit today" % text)
+		return
+	var offer: Variant = _call(&"visitors", &"offer_wish", [str(visit.get("visit_id", ""))], text)
+	if not offer is Dictionary or (offer as Dictionary).is_empty():
+		return
+	context[CONTEXT_WISH] = offer
+	_open_panel_with(WISH_CARD_PANEL, context, {"offer": offer, "kin_id": DialogueConditions.kin_of(context)})
+
+
+## wish_accept: the wish of context.wish_offer, else the speaker's newest offered wish (Visitors.open_wishes).
+static func _wish_accept(context: Dictionary, text: String) -> void:
+	var wish_id := ""
+	var offer: Variant = context.get(CONTEXT_WISH)
+	if offer is Dictionary:
+		wish_id = str((offer as Dictionary).get("wish_id", ""))
+	if wish_id == "":
+		var kin := DialogueConditions.kin_of(context)
+		var visitors := DialogueSyntax.system(&"visitors")
+		if visitors != null and visitors.has_method(&"open_wishes"):
+			for w: Variant in visitors.call(&"open_wishes"):
+				if w is Dictionary and StringName(str((w as Dictionary).get("kin_id", ""))) == kin \
+						and str((w as Dictionary).get("state", "")) == "offered":
+					wish_id = str((w as Dictionary).get("wish_id", ""))
+	if wish_id == "":
+		push_warning("[DialogueRunner] '%s': no offered wish" % text)
+		return
+	_call(&"visitors", &"accept_wish", [wish_id], text)
 
 
 # --- Phase-7 actions ---

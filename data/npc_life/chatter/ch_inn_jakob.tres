@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChatterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/chatter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ch_inn_jakob"
+region = &"village"
+npcs = Array[StringName]([&"innkeeper", &"apprentice"])
+place = &"v_in_inn_bar"
+window = Vector2i(1020, 1260)
+conditions = PackedStringArray("apprentice_hired")
+lines = PackedStringArray("Hast du dir die Hände gewaschen?", "Zweimal. Die Erde geht nicht ab.", "Dann ein drittes Mal.", "Mutter. Die geht nicht ab. Das ist so bei uns oben.")
+sets_flag = &""

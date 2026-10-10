@@ -1,0 +1,74 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="robber_start_c01"]
+script = ExtResource("2")
+text = "Wer zahlt dich?"
+next = &"who"
+
+[sub_resource type="Resource" id="robber_start_c02"]
+script = ExtResource("2")
+text = "Steh auf. Wir gehen zum Schultheiß."
+next = &"reported"
+actions = Array[String](["robber_resolve:reported"])
+
+[sub_resource type="Resource" id="robber_start_c03"]
+script = ExtResource("2")
+text = "Lauf. Und komm nicht wieder."
+next = &"let_go"
+actions = Array[String](["robber_resolve:let_go"])
+
+[sub_resource type="Resource" id="robber_node_start"]
+script = ExtResource("1")
+id = &"start"
+text = "(Er sitzt im Aushub und hält den Spaten fest, als könnte er ihm helfen.) Ich nehm nichts. Ich hab noch nie was genommen. Ich komm nicht tief genug, bevor es hell wird. Das weiß er, und er zahlt trotzdem."
+choices = Array[ExtResource("2")]([SubResource("robber_start_c01"), SubResource("robber_start_c02"), SubResource("robber_start_c03")])
+
+[sub_resource type="Resource" id="robber_who_c01"]
+script = ExtResource("2")
+text = "Steh auf. Wir gehen zum Schultheiß."
+next = &"reported"
+actions = Array[String](["robber_resolve:reported"])
+
+[sub_resource type="Resource" id="robber_who_c02"]
+script = ExtResource("2")
+text = "Lauf. Und komm nicht wieder."
+next = &"let_go"
+actions = Array[String](["robber_resolve:let_go"])
+
+[sub_resource type="Resource" id="robber_node_who"]
+script = ExtResource("1")
+id = &"who"
+text = "Ein Herr mit einem Koffer. Er riecht nach Branntwein und zahlt für Frische. Er sagt, für die Wissenschaft. Mehr weiß ich nicht. Ich frag nicht. Wer fragt, kriegt weniger."
+choices = Array[ExtResource("2")]([SubResource("robber_who_c01"), SubResource("robber_who_c02")])
+actions = Array[String](["add_clue:c_n_robber"])
+
+[sub_resource type="Resource" id="robber_reported_c01"]
+script = ExtResource("2")
+text = "(Ihn hinunterbringen)"
+
+[sub_resource type="Resource" id="robber_node_reported"]
+script = ExtResource("1")
+id = &"reported"
+text = "Ja. Ist recht. Ich hab's mir gedacht, dass einer wie Sie nicht schläft. Darf ich den Spaten dalassen? Er gehört mir nicht."
+choices = Array[ExtResource("2")]([SubResource("robber_reported_c01")])
+
+[sub_resource type="Resource" id="robber_let_go_c01"]
+script = ExtResource("2")
+text = "(Ihm nachsehen)"
+
+[sub_resource type="Resource" id="robber_node_let_go"]
+script = ExtResource("1")
+id = &"let_go"
+text = "Danke. Ich … danke. Ich komm nicht wieder. Ich weiß nicht, wohin ich soll, aber hierher nicht."
+choices = Array[ExtResource("2")]([SubResource("robber_let_go_c01")])
+
+[resource]
+script = ExtResource("3")
+id = &"robber"
+speaker_name = "Lambert Grell"
+start_node = &"start"
+nodes = Array[ExtResource("1")]([SubResource("robber_node_start"), SubResource("robber_node_who"), SubResource("robber_node_reported"), SubResource("robber_node_let_go")])

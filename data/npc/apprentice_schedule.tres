@@ -1,0 +1,165 @@
+[gd_resource type="Resource" script_class="NpcSchedule" format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2"]
+
+[sub_resource type="Resource" id="p8_apprentice_01"]
+script = ExtResource("1")
+activity = &"home"
+path = PackedStringArray("v_inn_door")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="p8_apprentice_02"]
+script = ExtResource("1")
+start_minute = 450
+path = PackedStringArray("v_in_inn_jakob")
+dialogue_id = &"v_apprentice"
+region = &"village"
+
+[sub_resource type="Resource" id="p8_apprentice_03"]
+script = ExtResource("1")
+start_minute = 465
+travel_minutes = 10
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_inn_door", "v_anger_w", "v_bridge", "v_road_in")
+region = &"village"
+
+[sub_resource type="Resource" id="p8_apprentice_04"]
+script = ExtResource("1")
+start_minute = 475
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="p8_apprentice_05"]
+script = ExtResource("1")
+start_minute = 1020
+animation = &"talk"
+path = PackedStringArray("v_in_inn_jakob")
+dialogue_id = &"v_apprentice"
+region = &"village"
+
+[sub_resource type="Resource" id="p8_apprentice_06"]
+script = ExtResource("1")
+start_minute = 1260
+activity = &"home"
+path = PackedStringArray("v_inn_door")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="p8_apprentice_07"]
+script = ExtResource("1")
+start_minute = 465
+animation = &"talk"
+path = PackedStringArray("v_in_inn_jakob")
+dialogue_id = &"v_apprentice"
+region = &"village"
+today_flag = &"apprentice_off_day"
+
+[sub_resource type="Resource" id="p8_apprentice_08"]
+script = ExtResource("1")
+start_minute = 1020
+animation = &"talk"
+path = PackedStringArray("v_in_inn_jakob")
+dialogue_id = &"v_apprentice"
+region = &"village"
+today_flag = &"apprentice_off_day"
+
+[sub_resource type="Resource" id="p8_apprentice_09"]
+script = ExtResource("1")
+start_minute = 1260
+path = PackedStringArray("v_in_inn_jakob")
+dialogue_id = &"v_apprentice"
+region = &"village"
+today_flag = &"fest_kathrein_day"
+
+[sub_resource type="Resource" id="p8_apprentice_10"]
+script = ExtResource("1")
+start_minute = 1380
+activity = &"home"
+path = PackedStringArray("v_inn_door")
+visible = false
+region = &"village"
+today_flag = &"fest_kathrein_day"
+
+[sub_resource type="Resource" id="p8_apprentice_11"]
+script = ExtResource("1")
+start_minute = 950
+travel_minutes = 10
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_inn_door", "v_anger_w", "v_bridge")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_apprentice_12"]
+script = ExtResource("1")
+start_minute = 960
+path = PackedStringArray("v_bridge")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_apprentice_13"]
+script = ExtResource("1")
+start_minute = 990
+travel_minutes = 5
+activity = &"walk"
+animation = &"lantern_walk"
+path = PackedStringArray("v_bridge", "v_road_in")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_apprentice_14"]
+script = ExtResource("1")
+start_minute = 995
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_apprentice_15"]
+script = ExtResource("1")
+start_minute = 1125
+travel_minutes = 12
+activity = &"walk"
+animation = &"lantern_walk"
+path = PackedStringArray("v_road_in", "v_bridge", "v_anger_w", "v_inn_door")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_apprentice_16"]
+script = ExtResource("1")
+start_minute = 1137
+animation = &"talk"
+path = PackedStringArray("v_in_inn_jakob")
+dialogue_id = &"v_apprentice"
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_apprentice_17"]
+script = ExtResource("1")
+start_minute = 475
+animation = &"talk"
+path = PackedStringArray("v_in_inn_jakob")
+dialogue_id = &"v_apprentice"
+region = &"village"
+today_flag = &"apprentice_off_day"
+
+[sub_resource type="Resource" id="p8_apprentice_18"]
+script = ExtResource("1")
+start_minute = 1020
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[resource]
+script = ExtResource("2")
+npc_id = &"apprentice"
+display_name = "Jakob Wackernagel"
+entries = Array[ExtResource("1")]([SubResource("p8_apprentice_01"), SubResource("p8_apprentice_02"), SubResource("p8_apprentice_03"), SubResource("p8_apprentice_04"), SubResource("p8_apprentice_05"), SubResource("p8_apprentice_06"), SubResource("p8_apprentice_07"), SubResource("p8_apprentice_08"), SubResource("p8_apprentice_09"), SubResource("p8_apprentice_10"), SubResource("p8_apprentice_11"), SubResource("p8_apprentice_12"), SubResource("p8_apprentice_13"), SubResource("p8_apprentice_14"), SubResource("p8_apprentice_15"), SubResource("p8_apprentice_16"), SubResource("p8_apprentice_17"), SubResource("p8_apprentice_18")])

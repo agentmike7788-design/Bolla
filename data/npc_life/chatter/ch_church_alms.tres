@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChatterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/chatter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ch_church_alms"
+region = &"village"
+npcs = Array[StringName]([&"priest", &"beggar"])
+place = &"v_church_door"
+window = Vector2i(480, 690)
+conditions = PackedStringArray("p8_open")
+lines = PackedStringArray("Hast du gegessen, Veit?", "Gestern, Hochwürden. Ich spar mir den Rest.", "Dann iss heute. Der Rest wird nicht mehr.")
+sets_flag = &""

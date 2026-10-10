@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_n_quast_visit"
+title = "Der Krankenbesuch"
+text = "Quast bleibt vierzig Minuten. Er lässt ein Fläschchen da und schreibt beim Hinausgehen nichts auf. Er schreibt sonst alles auf."
+kind = &"note"
+order = 301

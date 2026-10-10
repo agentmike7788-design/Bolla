@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_n_liesel_watch"
+title = "Die Totenwache"
+text = "Liesel kommt eine halbe Stunde nach dem Tod. Niemand hat nach ihr geschickt. Das Krankenlicht brennt noch."
+kind = &"note"
+order = 303

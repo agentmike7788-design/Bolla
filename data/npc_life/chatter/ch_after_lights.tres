@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChatterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/chatter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ch_after_lights"
+region = &"village"
+npcs = Array[StringName]([&"grocer", &"innkeeper"])
+place = &"v_well"
+window = Vector2i(960, 990)
+conditions = PackedStringArray("fest_after:fest_lights", "flag:lights_all")
+lines = PackedStringArray("Oben brannte jedes Grab. Hat er alle selbst angezündet?", "Er und mein Junge.", "Dein Junge? Der kann doch keine Kerze gerade halten.", "Oben schon.")
+sets_flag = &""

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChatterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/chatter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ch_inn_carter"
+region = &"village"
+npcs = Array[StringName]([&"innkeeper", &"carter"])
+place = &"v_in_inn_bar"
+window = Vector2i(845, 1050)
+conditions = PackedStringArray()
+lines = PackedStringArray("Faulhaber, du riechst nach Hügel.", "Der Hügel riecht nach mir. Das ist was anderes.", "Setz dich ans Fenster. Da zieht's wenigstens.")
+sets_flag = &""

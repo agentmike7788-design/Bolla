@@ -1,0 +1,314 @@
+[gd_resource type="Resource" script_class="NpcSchedule" format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2"]
+
+[sub_resource type="Resource" id="p8_beggar_01"]
+script = ExtResource("1")
+activity = &"home"
+path = PackedStringArray("v_remise_sleep")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="p8_beggar_02"]
+script = ExtResource("1")
+start_minute = 470
+travel_minutes = 10
+activity = &"walk"
+animation = &"walk_stiff"
+path = PackedStringArray("v_remise_sleep", "v_anger_w", "v_church_step")
+region = &"village"
+
+[sub_resource type="Resource" id="p8_beggar_03"]
+script = ExtResource("1")
+start_minute = 480
+activity = &"beg"
+animation = &"sit_beg"
+path = PackedStringArray("v_church_step")
+dialogue_id = &"beggar"
+region = &"village"
+
+[sub_resource type="Resource" id="p8_beggar_04"]
+script = ExtResource("1")
+start_minute = 690
+travel_minutes = 10
+activity = &"walk"
+animation = &"walk_stiff"
+path = PackedStringArray("v_church_step", "v_well", "v_bridge_sit")
+region = &"village"
+
+[sub_resource type="Resource" id="p8_beggar_05"]
+script = ExtResource("1")
+start_minute = 700
+activity = &"beg"
+animation = &"sit_beg"
+path = PackedStringArray("v_bridge_sit")
+dialogue_id = &"beggar"
+region = &"village"
+
+[sub_resource type="Resource" id="p8_beggar_06"]
+script = ExtResource("1")
+start_minute = 1020
+travel_minutes = 8
+activity = &"walk"
+animation = &"walk_stiff"
+path = PackedStringArray("v_bridge_sit", "v_anger_w", "v_remise_sleep")
+region = &"village"
+
+[sub_resource type="Resource" id="p8_beggar_07"]
+script = ExtResource("1")
+start_minute = 1028
+activity = &"home"
+path = PackedStringArray("v_remise_sleep")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="p8_beggar_08"]
+script = ExtResource("1")
+start_minute = 1078
+travel_minutes = 8
+activity = &"walk"
+animation = &"walk_stiff"
+path = PackedStringArray("v_remise_sleep", "v_anger_w", "v_bridge_sit")
+region = &"village"
+
+[sub_resource type="Resource" id="p8_beggar_09"]
+script = ExtResource("1")
+start_minute = 1086
+activity = &"beg"
+animation = &"sit_beg"
+path = PackedStringArray("v_bridge_sit")
+dialogue_id = &"beggar"
+region = &"village"
+
+[sub_resource type="Resource" id="p8_beggar_10"]
+script = ExtResource("1")
+start_minute = 1170
+travel_minutes = 8
+activity = &"walk"
+animation = &"walk_stiff"
+path = PackedStringArray("v_bridge_sit", "v_anger_w", "v_remise_sleep")
+region = &"village"
+
+[sub_resource type="Resource" id="p8_beggar_11"]
+script = ExtResource("1")
+start_minute = 1178
+activity = &"home"
+path = PackedStringArray("v_remise_sleep")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="p8_beggar_12"]
+script = ExtResource("1")
+start_minute = 1250
+travel_minutes = 10
+activity = &"walk"
+animation = &"walk_stiff"
+path = PackedStringArray("v_remise_sleep", "v_well", "v_well_bench")
+region = &"village"
+
+[sub_resource type="Resource" id="p8_beggar_13"]
+script = ExtResource("1")
+start_minute = 1260
+activity = &"beg"
+animation = &"sit_beg"
+path = PackedStringArray("v_well_bench")
+dialogue_id = &"beggar"
+region = &"village"
+
+[sub_resource type="Resource" id="p8_beggar_14"]
+script = ExtResource("1")
+start_minute = 1410
+travel_minutes = 8
+activity = &"walk"
+animation = &"walk_stiff"
+path = PackedStringArray("v_well_bench", "v_well", "v_remise_sleep")
+region = &"village"
+
+[sub_resource type="Resource" id="p8_beggar_15"]
+script = ExtResource("1")
+start_minute = 1418
+activity = &"home"
+path = PackedStringArray("v_remise_sleep")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="p8_beggar_16"]
+script = ExtResource("1")
+start_minute = 780
+travel_minutes = 6
+activity = &"walk"
+animation = &"walk_stiff"
+path = PackedStringArray("v_bridge_sit", "v_road_in")
+region = &"village"
+today_flag = &"beggar_gate_day"
+
+[sub_resource type="Resource" id="p8_beggar_17"]
+script = ExtResource("1")
+start_minute = 786
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"beggar_gate_day"
+
+[sub_resource type="Resource" id="p8_beggar_18"]
+script = ExtResource("1")
+start_minute = 800
+travel_minutes = 20
+activity = &"walk"
+animation = &"walk_stiff"
+path = PackedStringArray("road_end", "road_mid", "gate_outside", "veit_gate")
+today_flag = &"beggar_gate_day"
+
+[sub_resource type="Resource" id="p8_beggar_19"]
+script = ExtResource("1")
+start_minute = 820
+activity = &"beg"
+animation = &"sit_beg"
+path = PackedStringArray("veit_gate")
+dialogue_id = &"beggar"
+today_flag = &"beggar_gate_day"
+
+[sub_resource type="Resource" id="p8_beggar_20"]
+script = ExtResource("1")
+start_minute = 960
+travel_minutes = 20
+activity = &"walk"
+animation = &"walk_stiff"
+path = PackedStringArray("veit_gate", "gate_outside", "road_mid", "road_end")
+today_flag = &"beggar_gate_day"
+
+[sub_resource type="Resource" id="p8_beggar_21"]
+script = ExtResource("1")
+start_minute = 980
+activity = &"home"
+path = PackedStringArray("road_end")
+visible = false
+today_flag = &"beggar_gate_day"
+
+[sub_resource type="Resource" id="p8_beggar_22"]
+script = ExtResource("1")
+start_minute = 1000
+travel_minutes = 6
+activity = &"walk"
+animation = &"walk_stiff"
+path = PackedStringArray("v_road_in", "v_bridge_sit")
+region = &"village"
+today_flag = &"beggar_gate_day"
+
+[sub_resource type="Resource" id="p8_beggar_23"]
+script = ExtResource("1")
+start_minute = 1006
+activity = &"beg"
+animation = &"sit_beg"
+path = PackedStringArray("v_bridge_sit")
+dialogue_id = &"beggar"
+region = &"village"
+today_flag = &"beggar_gate_day"
+
+[sub_resource type="Resource" id="p8_beggar_24"]
+script = ExtResource("1")
+start_minute = 960
+travel_minutes = 6
+activity = &"walk"
+animation = &"walk_stiff"
+path = PackedStringArray("v_bridge_sit", "v_road_in")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_beggar_25"]
+script = ExtResource("1")
+start_minute = 966
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_beggar_26"]
+script = ExtResource("1")
+start_minute = 985
+travel_minutes = 20
+activity = &"walk"
+animation = &"walk_stiff"
+path = PackedStringArray("road_end", "road_mid", "gate_outside", "lights_gate")
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_beggar_27"]
+script = ExtResource("1")
+start_minute = 1005
+path = PackedStringArray("lights_gate")
+dialogue_id = &"beggar"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_beggar_28"]
+script = ExtResource("1")
+start_minute = 1110
+travel_minutes = 20
+activity = &"walk"
+animation = &"walk_stiff"
+path = PackedStringArray("lights_gate", "gate_outside", "road_mid", "road_end")
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_beggar_29"]
+script = ExtResource("1")
+start_minute = 1130
+activity = &"home"
+path = PackedStringArray("road_end")
+visible = false
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_beggar_30"]
+script = ExtResource("1")
+start_minute = 1150
+travel_minutes = 6
+activity = &"walk"
+animation = &"walk_stiff"
+path = PackedStringArray("v_road_in", "v_bridge_sit")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_beggar_31"]
+script = ExtResource("1")
+start_minute = 1156
+activity = &"beg"
+animation = &"sit_beg"
+path = PackedStringArray("v_bridge_sit")
+dialogue_id = &"beggar"
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_beggar_32"]
+script = ExtResource("1")
+start_minute = 1020
+path = PackedStringArray("lights_gate")
+dialogue_id = &"beggar"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_beggar_33"]
+script = ExtResource("1")
+start_minute = 1028
+path = PackedStringArray("lights_gate")
+dialogue_id = &"beggar"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_beggar_34"]
+script = ExtResource("1")
+start_minute = 1078
+path = PackedStringArray("lights_gate")
+dialogue_id = &"beggar"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_beggar_35"]
+script = ExtResource("1")
+start_minute = 1086
+path = PackedStringArray("lights_gate")
+dialogue_id = &"beggar"
+today_flag = &"fest_lights_day"
+
+[resource]
+script = ExtResource("2")
+npc_id = &"beggar"
+display_name = "Veit Ammer"
+entries = Array[ExtResource("1")]([SubResource("p8_beggar_01"), SubResource("p8_beggar_02"), SubResource("p8_beggar_03"), SubResource("p8_beggar_04"), SubResource("p8_beggar_05"), SubResource("p8_beggar_06"), SubResource("p8_beggar_07"), SubResource("p8_beggar_08"), SubResource("p8_beggar_09"), SubResource("p8_beggar_10"), SubResource("p8_beggar_11"), SubResource("p8_beggar_12"), SubResource("p8_beggar_13"), SubResource("p8_beggar_14"), SubResource("p8_beggar_15"), SubResource("p8_beggar_16"), SubResource("p8_beggar_17"), SubResource("p8_beggar_18"), SubResource("p8_beggar_19"), SubResource("p8_beggar_20"), SubResource("p8_beggar_21"), SubResource("p8_beggar_22"), SubResource("p8_beggar_23"), SubResource("p8_beggar_24"), SubResource("p8_beggar_25"), SubResource("p8_beggar_26"), SubResource("p8_beggar_27"), SubResource("p8_beggar_28"), SubResource("p8_beggar_29"), SubResource("p8_beggar_30"), SubResource("p8_beggar_31"), SubResource("p8_beggar_32"), SubResource("p8_beggar_33"), SubResource("p8_beggar_34"), SubResource("p8_beggar_35")])

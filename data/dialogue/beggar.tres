@@ -1,0 +1,225 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="beggar_first_c01"]
+script = ExtResource("2")
+text = "(Nicken)"
+next = &"menu"
+
+[sub_resource type="Resource" id="beggar_node_first"]
+script = ExtResource("1")
+id = &"first"
+text = "Hm. Ammer. Veit. Früher an der Holderfähre. Das Wasser hat siebzehn genommen und mich wieder ausgespuckt. Du bist der vom Hügel. Ich weiß. Ich seh dich jeden Morgen."
+choices = Array[ExtResource("2")]([SubResource("beggar_first_c01")])
+conditions = Array[String](["!flag:p8_veit_met"])
+fallback_next = &"grell"
+actions = Array[String](["set_flag:p8_veit_met"])
+
+[sub_resource type="Resource" id="beggar_grell_c01"]
+script = ExtResource("2")
+text = "(Nicken)"
+next = &"menu"
+
+[sub_resource type="Resource" id="beggar_node_grell"]
+script = ExtResource("1")
+id = &"grell"
+text = "Der Grell hat Arbeit in der Ziegelei. Er lässt grüßen. Nicht dich, aber er meint dich."
+choices = Array[ExtResource("2")]([SubResource("beggar_grell_c01")])
+conditions = Array[String](["robber_fate:let_go", "!flag:p8_veit_grell"])
+fallback_next = &"lights"
+actions = Array[String](["set_flag:p8_veit_grell"])
+
+[sub_resource type="Resource" id="beggar_lights_c01"]
+script = ExtResource("2")
+text = "(Nicken)"
+next = &"menu"
+
+[sub_resource type="Resource" id="beggar_node_lights"]
+script = ExtResource("1")
+id = &"lights"
+text = "Ich trag keine. Meine liegen im Wasser. Ich steh am Tor und zähl, wer hinaufgeht. Das ist auch was."
+choices = Array[ExtResource("2")]([SubResource("beggar_lights_c01")])
+conditions = Array[String](["fest_today:lights"])
+fallback_next = &"night_ott"
+
+[sub_resource type="Resource" id="beggar_night_ott_c01"]
+script = ExtResource("2")
+text = "(Setzen)"
+next = &"menu"
+
+[sub_resource type="Resource" id="beggar_node_night_ott"]
+script = ExtResource("1")
+id = &"night_ott"
+text = "Bei den Otts brennt Licht. Seit gestern. Heute kommt einer, vielleicht zwei. Setz dich, wenn du willst. Die Bank ist kalt, aber sie ist eine Bank."
+choices = Array[ExtResource("2")]([SubResource("beggar_night_ott_c01")])
+conditions = Array[String](["time_between:1260:1410", "sick_light:house_ott", "clue_known:c_n_veit"])
+fallback_next = &"night_kehr"
+
+[sub_resource type="Resource" id="beggar_night_kehr_c01"]
+script = ExtResource("2")
+text = "(Setzen)"
+next = &"menu"
+
+[sub_resource type="Resource" id="beggar_node_night_kehr"]
+script = ExtResource("1")
+id = &"night_kehr"
+text = "Bei den Kehrs brennt Licht. Der Kleine. Fieber. Der Doktor war schon da, glaub ich. Der Pfarrer kommt noch. Die Dorn kommt nicht. Die kommt nur, wenn es so weit ist."
+choices = Array[ExtResource("2")]([SubResource("beggar_night_kehr_c01")])
+conditions = Array[String](["time_between:1260:1410", "sick_light:house_kehr", "clue_known:c_n_veit"])
+fallback_next = &"night"
+
+[sub_resource type="Resource" id="beggar_night_c01"]
+script = ExtResource("2")
+text = "(Nicken)"
+next = &"menu"
+
+[sub_resource type="Resource" id="beggar_node_night"]
+script = ExtResource("1")
+id = &"night"
+text = "Heute brennt nirgends Licht. Dann schlaf ich vielleicht. Vielleicht auch nicht."
+choices = Array[ExtResource("2")]([SubResource("beggar_night_c01")])
+conditions = Array[String](["time_between:1260:1410"])
+fallback_next = &"greet"
+
+[sub_resource type="Resource" id="beggar_greet_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="beggar_node_greet"]
+script = ExtResource("1")
+id = &"greet"
+text = "Hm."
+choices = Array[ExtResource("2")]([SubResource("beggar_greet_c01")])
+
+[sub_resource type="Resource" id="beggar_menu_c01"]
+script = ExtResource("2")
+text = "[Almosen] Eine Münze für Veit."
+next = &"alms"
+conditions = Array[String](["has_item:coin:1", "!flag_today:p8_veit_alms"])
+actions = Array[String](["alms", "set_flag_day:p8_veit_alms"])
+
+[sub_resource type="Resource" id="beggar_menu_c02"]
+script = ExtResource("2")
+text = "[Zuhören]"
+next = &"listen"
+conditions = Array[String](["mood:beggar:low", "!flag_today:p8_listen_beggar"])
+actions = Array[String](["listen:beggar", "set_flag_day:p8_listen_beggar"])
+
+[sub_resource type="Resource" id="beggar_menu_c03"]
+script = ExtResource("2")
+text = "Was siehst du nachts?"
+next = &"three_again"
+conditions = Array[String](["clue_known:c_n_veit"])
+
+[sub_resource type="Resource" id="beggar_menu_c04"]
+script = ExtResource("2")
+text = "Erzähl von der Fähre."
+next = &"ferry"
+
+[sub_resource type="Resource" id="beggar_menu_c05"]
+script = ExtResource("2")
+text = "Wer gräbt da nachts?"
+next = &"robber"
+conditions = Array[String](["robber_known"])
+
+[sub_resource type="Resource" id="beggar_menu_c06"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="beggar_node_menu"]
+script = ExtResource("1")
+id = &"menu"
+text = "(Veit sieht dich an und wartet.)"
+choices = Array[ExtResource("2")]([SubResource("beggar_menu_c01"), SubResource("beggar_menu_c02"), SubResource("beggar_menu_c03"), SubResource("beggar_menu_c04"), SubResource("beggar_menu_c05"), SubResource("beggar_menu_c06")])
+
+[sub_resource type="Resource" id="beggar_alms_c01"]
+script = ExtResource("2")
+text = "(Sich setzen)"
+next = &"three"
+
+[sub_resource type="Resource" id="beggar_node_alms"]
+script = ExtResource("1")
+id = &"alms"
+text = "Du gibst, ohne zu fragen, was ich damit mache. Lorenz hat auch nie gefragt. Setz dich, wenn du willst."
+choices = Array[ExtResource("2")]([SubResource("beggar_alms_c01")])
+conditions = Array[String](["clue_known:c_n_veit", "!flag:p8_veit_told"])
+fallback_next = &"alms_plain"
+actions = Array[String](["set_flag:p8_veit_told"])
+
+[sub_resource type="Resource" id="beggar_alms_plain_c01"]
+script = ExtResource("2")
+text = "(Nicken)"
+next = &"menu"
+
+[sub_resource type="Resource" id="beggar_node_alms_plain"]
+script = ExtResource("1")
+id = &"alms_plain"
+text = "Hm. (Er nickt.)"
+choices = Array[ExtResource("2")]([SubResource("beggar_alms_plain_c01")])
+
+[sub_resource type="Resource" id="beggar_three_c01"]
+script = ExtResource("2")
+text = "(Nicken)"
+next = &"menu"
+
+[sub_resource type="Resource" id="beggar_node_three"]
+script = ExtResource("1")
+id = &"three"
+text = "Nachts gehen drei durchs Dorf. Der Pfarrer mit der Laterne, der Doktor mit dem Koffer, die Dorn mit dem Tuch. Wohin, sieht man am Fenster: wo das Krankenlicht brennt. Lorenz hat mich das auch gefragt. Ich hab's ihm gesagt. Danach hat er mir nie wieder was gegeben, nur noch genickt."
+choices = Array[ExtResource("2")]([SubResource("beggar_three_c01")])
+actions = Array[String](["add_clue:c_n_veit"])
+
+[sub_resource type="Resource" id="beggar_three_again_c01"]
+script = ExtResource("2")
+text = "(Nicken)"
+next = &"menu"
+
+[sub_resource type="Resource" id="beggar_node_three_again"]
+script = ExtResource("1")
+id = &"three_again"
+text = "Drei. Immer dieselben. Der mit der Laterne bleibt am kürzesten. Die mit dem Tuch am längsten. Und der mit dem Koffer kommt, auch wenn keiner ruft. Das Wasser hat mich gelehrt, wer zu spät kommt. Die drei kommen nie zu spät."
+choices = Array[ExtResource("2")]([SubResource("beggar_three_again_c01")])
+
+[sub_resource type="Resource" id="beggar_listen_c01"]
+script = ExtResource("2")
+text = "(Schweigen)"
+next = &"menu"
+
+[sub_resource type="Resource" id="beggar_node_listen"]
+script = ExtResource("1")
+id = &"listen"
+text = "Heute ist der Tag, an dem mein Bruder unten geblieben ist. Matthias. Er konnte schwimmen. Ich nicht. Das Wasser hat nicht danach gefragt. … Man sieht viel, wenn man schlecht schläft. Ich seh seitdem alles."
+choices = Array[ExtResource("2")]([SubResource("beggar_listen_c01")])
+
+[sub_resource type="Resource" id="beggar_ferry_c01"]
+script = ExtResource("2")
+text = "(Nicken)"
+next = &"menu"
+
+[sub_resource type="Resource" id="beggar_node_ferry"]
+script = ExtResource("1")
+id = &"ferry"
+text = "Das Wasser hat siebzehn genommen und mich wieder ausgespuckt. Seitdem schlaf ich schlecht. Man sieht viel, wenn man schlecht schläft. Die Fähre liegt noch unten, bei der Biegung. Bei Niedrigwasser sieht man den Mast."
+choices = Array[ExtResource("2")]([SubResource("beggar_ferry_c01")])
+
+[sub_resource type="Resource" id="beggar_robber_c01"]
+script = ExtResource("2")
+text = "(Nicken)"
+next = &"menu"
+
+[sub_resource type="Resource" id="beggar_node_robber"]
+script = ExtResource("1")
+id = &"robber"
+text = "Der Grell. Kommt von unten, durch den Wald hinter dem Lindenacker. Er kommt, wenn die Erde frisch ist und kein Licht brennt. Ein Licht hält ihn ab. Nicht weil er fromm ist. Weil er gesehen wird."
+choices = Array[ExtResource("2")]([SubResource("beggar_robber_c01")])
+
+[resource]
+script = ExtResource("3")
+id = &"beggar"
+speaker_name = "Veit Ammer"
+start_node = &"first"
+nodes = Array[ExtResource("1")]([SubResource("beggar_node_first"), SubResource("beggar_node_grell"), SubResource("beggar_node_lights"), SubResource("beggar_node_night_ott"), SubResource("beggar_node_night_kehr"), SubResource("beggar_node_night"), SubResource("beggar_node_greet"), SubResource("beggar_node_menu"), SubResource("beggar_node_alms"), SubResource("beggar_node_alms_plain"), SubResource("beggar_node_three"), SubResource("beggar_node_three_again"), SubResource("beggar_node_listen"), SubResource("beggar_node_ferry"), SubResource("beggar_node_robber")])

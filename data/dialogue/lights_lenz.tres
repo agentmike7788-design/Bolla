@@ -1,0 +1,62 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="lights_lenz_speech_c01"]
+script = ExtResource("2")
+text = "[Geschichte] Die Namen lesen."
+next = &"names"
+conditions = Array[String](["order:of_lenz_3:accepted"])
+actions = Array[String](["task:lights_names"])
+
+[sub_resource type="Resource" id="lights_lenz_speech_c02"]
+script = ExtResource("2")
+text = "(Schweigen)"
+
+[sub_resource type="Resource" id="lights_lenz_node_speech"]
+script = ExtResource("1")
+id = &"speech"
+text = "Wir zünden kein Licht für Gott an. Der sieht auch so. Wir zünden es für die an, die den Weg vergessen haben. Und für die, die noch hier unten sind und ihn suchen."
+choices = Array[ExtResource("2")]([SubResource("lights_lenz_speech_c01"), SubResource("lights_lenz_speech_c02")])
+conditions = Array[String](["fest_running:lights"])
+fallback_next = &"after"
+
+[sub_resource type="Resource" id="lights_lenz_names_c01"]
+script = ExtResource("2")
+text = "(Die Namen lesen)"
+next = &"names_done"
+
+[sub_resource type="Resource" id="lights_lenz_node_names"]
+script = ExtResource("1")
+id = &"names"
+text = "Dann lesen Sie. Langsam. Jeder Name braucht einen Atemzug, und wir haben genug davon heute Abend. Ich lese den Tag, Sie lesen den Namen."
+choices = Array[ExtResource("2")]([SubResource("lights_lenz_names_c01")])
+
+[sub_resource type="Resource" id="lights_lenz_names_done_c01"]
+script = ExtResource("2")
+text = "(Schweigen)"
+
+[sub_resource type="Resource" id="lights_lenz_node_names_done"]
+script = ExtResource("1")
+id = &"names_done"
+text = "… Amen. Das war gut. Hören Sie die Glocke? Die läutet nicht für uns."
+choices = Array[ExtResource("2")]([SubResource("lights_lenz_names_done_c01")])
+
+[sub_resource type="Resource" id="lights_lenz_after_c01"]
+script = ExtResource("2")
+text = "Gute Nacht, Herr Pfarrer."
+
+[sub_resource type="Resource" id="lights_lenz_node_after"]
+script = ExtResource("1")
+id = &"after"
+text = "Gehen Sie nach Hause, Totengräber. Ach, Sie sind ja zu Hause. Dann gehe ich. Die Lichter brennen auch ohne uns."
+choices = Array[ExtResource("2")]([SubResource("lights_lenz_after_c01")])
+
+[resource]
+script = ExtResource("3")
+id = &"lights_lenz"
+speaker_name = "Pfarrer Ambrosius Lenz"
+start_node = &"speech"
+nodes = Array[ExtResource("1")]([SubResource("lights_lenz_node_speech"), SubResource("lights_lenz_node_names"), SubResource("lights_lenz_node_names_done"), SubResource("lights_lenz_node_after")])

@@ -3,6 +3,61 @@
 [ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1_v66aq"]
 [ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2_rm641"]
 
+[sub_resource type="Resource" id="p8_innkeeper_01"]
+script = ExtResource("1_v66aq")
+start_minute = 950
+travel_minutes = 10
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_inn_door", "v_anger_w", "v_bridge")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_innkeeper_02"]
+script = ExtResource("1_v66aq")
+start_minute = 960
+path = PackedStringArray("v_bridge")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_innkeeper_03"]
+script = ExtResource("1_v66aq")
+start_minute = 990
+travel_minutes = 5
+activity = &"walk"
+animation = &"lantern_walk"
+path = PackedStringArray("v_bridge", "v_road_in")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_innkeeper_04"]
+script = ExtResource("1_v66aq")
+start_minute = 995
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_innkeeper_05"]
+script = ExtResource("1_v66aq")
+start_minute = 1125
+travel_minutes = 12
+activity = &"walk"
+animation = &"lantern_walk"
+path = PackedStringArray("v_road_in", "v_bridge", "v_anger_w", "v_inn_door")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_innkeeper_06"]
+script = ExtResource("1_v66aq")
+start_minute = 1137
+activity = &"shop"
+path = PackedStringArray("v_in_inn_bar")
+dialogue_id = &"v_innkeeper"
+region = &"village"
+today_flag = &"fest_lights_day"
+
 [sub_resource type="Resource" id="Resource_xo3po"]
 script = ExtResource("1_v66aq")
 activity = &"home"
@@ -56,4 +111,4 @@ region = &"village"
 script = ExtResource("2_rm641")
 npc_id = &"innkeeper"
 display_name = "Rosine Wackernagel"
-entries = Array[ExtResource("1_v66aq")]([SubResource("Resource_xo3po"), SubResource("Resource_gwt02"), SubResource("Resource_1sjgb"), SubResource("Resource_2fim3"), SubResource("Resource_f2xtg"), SubResource("Resource_wfxrd")])
+entries = Array[ExtResource("1_v66aq")]([SubResource("Resource_xo3po"), SubResource("Resource_gwt02"), SubResource("Resource_1sjgb"), SubResource("Resource_2fim3"), SubResource("Resource_f2xtg"), SubResource("Resource_wfxrd"), SubResource("p8_innkeeper_01"), SubResource("p8_innkeeper_02"), SubResource("p8_innkeeper_03"), SubResource("p8_innkeeper_04"), SubResource("p8_innkeeper_05"), SubResource("p8_innkeeper_06")])

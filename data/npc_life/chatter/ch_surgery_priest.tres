@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChatterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/chatter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ch_surgery_priest"
+region = &"village"
+npcs = Array[StringName]([&"priest", &"surgeon"])
+place = &"v_church_door"
+window = Vector2i(690, 700)
+conditions = PackedStringArray("sick_light:house_ott")
+lines = PackedStringArray("Bei den Otts brennt Licht.", "Ich weiß. Ich war schon da.", "Dann gehe ich heute Abend.", "Gehen Sie früh, Hochwürden. Spät ist bei denen schnell zu spät.")
+sets_flag = &""

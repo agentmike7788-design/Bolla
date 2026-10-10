@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ChatterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc_life/chatter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ch_gate_jakob"
+region = &"graveyard"
+npcs = Array[StringName]([&"apprentice", &"carter"])
+place = &"gate_outside"
+window = Vector2i(475, 500)
+conditions = PackedStringArray("apprentice_hired")
+lines = PackedStringArray("Was bringst du heute, Herr Faulhaber?", "Heute nichts, Junge. Freu dich nicht zu früh.", "Ich freu mich nicht. Ich frag nur.", "Das ist bei dir dasselbe.")
+sets_flag = &""

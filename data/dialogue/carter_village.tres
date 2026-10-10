@@ -4,6 +4,20 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
 
+[sub_resource type="Resource" id="p8_p8_jakob_c01"]
+script = ExtResource("2")
+text = "Die Wahrheit, meistens."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_p8_jakob"]
+script = ExtResource("1")
+id = &"p8_jakob"
+text = "Der Wackernagel-Junge fragt mir Löcher in den Bauch. Wie tief, wie lang, wie schwer. Ich sag ihm: Frag den da oben. Er sagt, das tut er schon. Dann frag ich mich, was du ihm antwortest."
+choices = Array[ExtResource("2")]([SubResource("p8_p8_jakob_c01")])
+conditions = Array[String](["apprentice_hired", "!flag:p8_carter_jakob"])
+fallback_next = &"menu"
+actions = Array[String](["set_flag:p8_carter_jakob"])
+
 [sub_resource type="Resource" id="carter_village_c001"]
 script = ExtResource("2")
 text = "Danke, Osric."
@@ -106,7 +120,7 @@ id = &"chapter"
 text = "Hast du's gehört? Unten sagen sie jetzt deinen Namen, nicht nur „der vom Hügel“. Das hat bei Lorenz Jahre gedauert. Bei mir hat es nie geklappt, mich nennen sie immer noch „der mit dem Karren“."
 choices = Array[ExtResource("2")]([SubResource("carter_village_c010")])
 conditions = Array[String](["flag:name_in_village_complete", "!flag:carter_chapter7"])
-fallback_next = &"menu"
+fallback_next = &"p8_jakob"
 actions = Array[String](["set_flag:carter_chapter7"])
 
 [sub_resource type="Resource" id="carter_village_c011"]
@@ -178,4 +192,4 @@ script = ExtResource("3")
 id = &"carter_village"
 speaker_name = "Osric Faulhaber"
 start_node = &"first"
-nodes = Array[ExtResource("1")]([SubResource("carter_village_node_first"), SubResource("carter_village_node_beer"), SubResource("carter_village_node_quast"), SubResource("carter_village_node_ribbon"), SubResource("carter_village_node_specimens_1"), SubResource("carter_village_node_specimens_2"), SubResource("carter_village_node_chapter"), SubResource("carter_village_node_menu"), SubResource("carter_village_node_who"), SubResource("carter_village_node_where"), SubResource("carter_village_node_wiebke_dead")])
+nodes = Array[ExtResource("1")]([SubResource("carter_village_node_first"), SubResource("carter_village_node_beer"), SubResource("carter_village_node_quast"), SubResource("carter_village_node_ribbon"), SubResource("carter_village_node_specimens_1"), SubResource("carter_village_node_specimens_2"), SubResource("carter_village_node_chapter"), SubResource("carter_village_node_menu"), SubResource("carter_village_node_who"), SubResource("carter_village_node_where"), SubResource("carter_village_node_wiebke_dead"), SubResource("p8_node_p8_jakob")])

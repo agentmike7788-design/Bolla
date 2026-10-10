@@ -266,7 +266,8 @@ static func main_insight_total(insights: Array = []) -> int:
 	for raw: Variant in list:
 		var i := raw as InsightData
 		# Phase 7: the later insights (i_deathbook, …) are not part of the Phase-4 chapter.
-		if i != null and not i.optional and not i.id in Phase7Texts.PHASE7_INSIGHTS:
+		# Phase 8 (P6): neither is i_underlined („Der unterstrichene Name“, chapter „Wer heraufkommt“).
+		if i != null and not i.optional and not i.id in Phase7Texts.PHASE7_INSIGHTS and i.id != JournalManager.UNDERLINED_INSIGHT:
 			n += 1
 	return n if n > 0 else 5
 

@@ -4,6 +4,425 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
 
+[sub_resource type="Resource" id="p8_menu_menu_01"]
+script = ExtResource("2")
+text = "[Geschichte] Die Namen im Buch"
+next = &"story_1"
+conditions = Array[String](["step_offerable:priest", "!step_gte:priest:1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_02"]
+script = ExtResource("2")
+text = "Über das Sterbebuch"
+next = &"story_1_done"
+conditions = Array[String](["flag:friend_priest_1", "!flag:p8_told_priest_1"])
+actions = Array[String](["set_flag:p8_told_priest_1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_03"]
+script = ExtResource("2")
+text = "[Geschichte] Das Archiv"
+next = &"story_2"
+conditions = Array[String](["step_offerable:priest", "step_gte:priest:1", "!step_gte:priest:2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_04"]
+script = ExtResource("2")
+text = "Über das Archiv"
+next = &"story_2_done"
+conditions = Array[String](["flag:friend_priest_2", "!flag:p8_told_priest_2"])
+actions = Array[String](["set_flag:p8_told_priest_2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_05"]
+script = ExtResource("2")
+text = "[Geschichte] Das Wort am Lichtgang"
+next = &"story_3"
+conditions = Array[String](["step_offerable:priest", "step_gte:priest:2", "!step_gte:priest:3"])
+
+[sub_resource type="Resource" id="p8_menu_menu_06"]
+script = ExtResource("2")
+text = "Über die Namen am Lichtgang"
+next = &"story_3_done"
+conditions = Array[String](["flag:friend_priest_3", "!flag:p8_told_priest_3"])
+actions = Array[String](["set_flag:p8_told_priest_3"])
+
+[sub_resource type="Resource" id="p8_menu_menu_07"]
+script = ExtResource("2")
+text = "[Geschichte] …"
+next = &"story_cross"
+conditions = Array[String](["p8_open", "mood:priest:cross", "!step_gte:priest:3"])
+
+[sub_resource type="Resource" id="p8_menu_menu_08"]
+script = ExtResource("2")
+text = "[Zuhören]"
+next = &"listen"
+conditions = Array[String](["p8_open", "mood:priest:low", "!flag_today:p8_listen_priest"])
+actions = Array[String](["listen:priest", "set_flag_day:p8_listen_priest"])
+
+[sub_resource type="Resource" id="p8_menu_menu_09"]
+script = ExtResource("2")
+text = "[Gefallen] Fürbitte"
+next = &"favor"
+conditions = Array[String](["step_gte:priest:3", "favor_ready:priest"])
+
+[sub_resource type="Resource" id="p8_menu_menu_10"]
+script = ExtResource("2")
+text = "[Gegengefallen] Kerzen für den Altar"
+next = &"o_of_lenz_return_1"
+conditions = Array[String](["order_offerable:of_lenz_return_1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_11"]
+script = ExtResource("2")
+text = "[Gegengefallen] Hier ist es: Kerzen für den Altar"
+next = &"t_of_lenz_return_1"
+conditions = Array[String](["order_ready:of_lenz_return_1"])
+actions = Array[String](["order_turn_in:of_lenz_return_1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_12"]
+script = ExtResource("2")
+text = "[Gegengefallen] Blumen für einen Vergessenen"
+next = &"o_of_lenz_return_2"
+conditions = Array[String](["order_offerable:of_lenz_return_2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_13"]
+script = ExtResource("2")
+text = "[Gegengefallen] Hier ist es: Blumen für einen Vergessenen"
+next = &"t_of_lenz_return_2"
+conditions = Array[String](["order_ready:of_lenz_return_2"])
+actions = Array[String](["order_turn_in:of_lenz_return_2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_14"]
+script = ExtResource("2")
+text = "[Tanzen] Einen Tanz? (15 Min)"
+next = &"dance"
+conditions = Array[String](["fest_running:kathrein"])
+actions = Array[String](["dance:priest"])
+
+[sub_resource type="Resource" id="p8_menu_menu_15"]
+script = ExtResource("2")
+text = "[Auftrag] Die Tafel für Konrad Wackernagel."
+next = &"p8_plate"
+conditions = Array[String](["order_ready:of_rosine_2"])
+actions = Array[String](["order_turn_in:of_rosine_2"])
+
+[sub_resource type="Resource" id="p8_menu_menu_16"]
+script = ExtResource("2")
+text = "[Auftrag] Hier sind die Namen."
+next = &"story_1_turn_in"
+conditions = Array[String](["order_ready:of_lenz_1"])
+actions = Array[String](["order_turn_in:of_lenz_1"])
+
+[sub_resource type="Resource" id="p8_menu_menu_17"]
+script = ExtResource("2")
+text = "[Geschichte] Die Namen lesen."
+next = &"p8_names_inside"
+conditions = Array[String](["order:of_lenz_3:accepted", "fest_after:lights"])
+actions = Array[String](["task:lights_names"])
+
+[sub_resource type="Resource" id="p8_menu_menu_18"]
+script = ExtResource("2")
+text = "Die dritte Reihe – muss sie geweiht werden?"
+next = &"p8_row3"
+conditions = Array[String](["flag:linden_row3_granted", "!flag:p8_lenz_row3"])
+actions = Array[String](["set_flag:p8_lenz_row3"])
+
+[sub_resource type="Resource" id="p8_story_1_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"story_1_yes"
+actions = Array[String](["step_accept:priest"])
+
+[sub_resource type="Resource" id="p8_story_1_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1"]
+script = ExtResource("1")
+id = &"story_1"
+text = "Totengräber, eine Bitte. Ich brauche Namen und Tage der Toten im Lindenacker, fürs Sterbebuch. Schreiben Sie sie mir aus Ihrem Register ab. Meine Augen, wissen Sie. Und meine Beine. Und der Hügel."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_c01"), SubResource("p8_story_1_c02")])
+
+[sub_resource type="Resource" id="p8_story_1_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1_yes"]
+script = ExtResource("1")
+id = &"story_1_yes"
+text = "Schön. Schön. Mit Tinte, wenn es geht. Bleistift verwischt im Buch."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_yes_c01")])
+
+[sub_resource type="Resource" id="p8_story_1_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1_done"]
+script = ExtResource("1")
+id = &"story_1_done"
+text = "Die Namen stehen jetzt drin. Ordentlich. Ich habe sie zweimal gelesen, das tue ich immer, damit keiner verloren geht."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_done_c01")])
+
+[sub_resource type="Resource" id="p8_story_2_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"story_2_yes"
+actions = Array[String](["step_accept:priest"])
+
+[sub_resource type="Resource" id="p8_story_2_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2"]
+script = ExtResource("1")
+id = &"story_2"
+text = "Das Pfarrarchiv ist in Unordnung, Totengräber. Rechnungen, Taufen, Briefe von Leuten, die nicht mehr schreiben. Helfen Sie mir am Abend, es zu ordnen? Zwischen vier und sechs. Ich halte das Licht, Sie halten den Staub aus."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_c01"), SubResource("p8_story_2_c02")])
+
+[sub_resource type="Resource" id="p8_story_2_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2_yes"]
+script = ExtResource("1")
+id = &"story_2_yes"
+text = "Ich freue mich. Wirklich. Ein Archiv ist wie ein Friedhof, nur trockener."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_yes_c01")])
+
+[sub_resource type="Resource" id="p8_story_2_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_2_done"]
+script = ExtResource("1")
+id = &"story_2_done"
+text = "Das Archiv ist geordnet, so weit es sich ordnen lässt. Sie haben etwas eingesteckt? Nein. Ich habe nichts gesehen. Ich sehe ohnehin schlecht, wissen Sie."
+choices = Array[ExtResource("2")]([SubResource("p8_story_2_done_c01")])
+
+[sub_resource type="Resource" id="p8_story_3_c01"]
+script = ExtResource("2")
+text = "Das mache ich."
+next = &"story_3_yes"
+actions = Array[String](["step_accept:priest"])
+
+[sub_resource type="Resource" id="p8_story_3_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3"]
+script = ExtResource("1")
+id = &"story_3"
+text = "Am Lichtgang lese ich die Namen derer, zu denen keiner hinaufgeht. Lesen Sie sie mit mir. Sie kennen sie besser als ich. Sie haben sie hingelegt."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_c01"), SubResource("p8_story_3_c02")])
+
+[sub_resource type="Resource" id="p8_story_3_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3_yes"]
+script = ExtResource("1")
+id = &"story_3_yes"
+text = "Um zwanzig vor sechs, am Kirchhof vor Ihrer Kapelle. Wenn es regnet, auch."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_yes_c01")])
+
+[sub_resource type="Resource" id="p8_story_3_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_3_done"]
+script = ExtResource("1")
+id = &"story_3_done"
+text = "Wir haben jeden Namen gelesen. Ihre Stimme ist besser als meine. Das ist kein Lob, das ist eine Beobachtung."
+choices = Array[ExtResource("2")]([SubResource("p8_story_3_done_c01")])
+
+[sub_resource type="Resource" id="p8_story_cross_c01"]
+script = ExtResource("2")
+text = "Morgen also."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_cross"]
+script = ExtResource("1")
+id = &"story_cross"
+text = "Heute nicht, Totengräber. Morgen. Heute bete ich für mich selbst, das ist anstrengend genug."
+choices = Array[ExtResource("2")]([SubResource("p8_story_cross_c01")])
+
+[sub_resource type="Resource" id="p8_listen_c01"]
+script = ExtResource("2")
+text = "(Schweigen)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_listen"]
+script = ExtResource("1")
+id = &"listen"
+text = "Heute war ich bei einem, der nicht sterben wollte. Er ist trotzdem gestorben. Ich habe gebetet, und er hat geflucht. Wir hatten beide recht. … Verzeihen Sie. Ein Pfarrer soll das nicht sagen. Ein Mensch schon."
+choices = Array[ExtResource("2")]([SubResource("p8_listen_c01")])
+
+[sub_resource type="Resource" id="p8_favor_c01"]
+script = ExtResource("2")
+text = "Für den, der es am nötigsten hat."
+next = &"favor_done"
+actions = Array[String](["favor_use:priest"])
+
+[sub_resource type="Resource" id="p8_favor_c02"]
+script = ExtResource("2")
+text = "Ein andermal."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_favor"]
+script = ExtResource("1")
+id = &"favor"
+text = "Eine Fürbitte? Für einen Ihrer Toten? Gern. Drei Nächte. Sagen Sie mir nur, für wen. Gott kennt den Namen, aber ich nicht."
+choices = Array[ExtResource("2")]([SubResource("p8_favor_c01"), SubResource("p8_favor_c02")])
+
+[sub_resource type="Resource" id="p8_favor_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_favor_done"]
+script = ExtResource("1")
+id = &"favor_done"
+text = "Ich bete für ihn. Drei Nächte. Gott hört zu, auch wenn er nicht antwortet. Die Toten vielleicht auch."
+choices = Array[ExtResource("2")]([SubResource("p8_favor_done_c01")])
+
+[sub_resource type="Resource" id="p8_o_of_lenz_return_1_c01"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_of_lenz_return_1_yes"
+actions = Array[String](["order_accept:of_lenz_return_1"])
+
+[sub_resource type="Resource" id="p8_o_of_lenz_return_1_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_lenz_return_1"]
+script = ExtResource("1")
+id = &"o_of_lenz_return_1"
+text = "Vier Altarkerzen. Der Advent kommt, und Gott sieht auch so, aber die Gemeinde nicht."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_lenz_return_1_c01"), SubResource("p8_o_of_lenz_return_1_c02")])
+
+[sub_resource type="Resource" id="p8_o_of_lenz_return_1_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_lenz_return_1_yes"]
+script = ExtResource("1")
+id = &"o_of_lenz_return_1_yes"
+text = "Danke. Sie sind ein Segen. Sagen Sie es nicht dem Schultheiß."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_lenz_return_1_yes_c01")])
+
+[sub_resource type="Resource" id="p8_t_of_lenz_return_1_c01"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_t_of_lenz_return_1"]
+script = ExtResource("1")
+id = &"t_of_lenz_return_1"
+text = "Vier. Schön gezogen. Vergelt's Gott."
+choices = Array[ExtResource("2")]([SubResource("p8_t_of_lenz_return_1_c01")])
+
+[sub_resource type="Resource" id="p8_o_of_lenz_return_2_c01"]
+script = ExtResource("2")
+text = "Ich kümmere mich darum."
+next = &"o_of_lenz_return_2_yes"
+actions = Array[String](["order_accept:of_lenz_return_2"])
+
+[sub_resource type="Resource" id="p8_o_of_lenz_return_2_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_lenz_return_2"]
+script = ExtResource("1")
+id = &"o_of_lenz_return_2"
+text = "Ein Grab, zu dem keiner kommt, mit frischen Blumen. Welches, überlasse ich Ihnen. Sie wissen, wer vergessen ist."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_lenz_return_2_c01"), SubResource("p8_o_of_lenz_return_2_c02")])
+
+[sub_resource type="Resource" id="p8_o_of_lenz_return_2_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_o_of_lenz_return_2_yes"]
+script = ExtResource("1")
+id = &"o_of_lenz_return_2_yes"
+text = "Schön."
+choices = Array[ExtResource("2")]([SubResource("p8_o_of_lenz_return_2_yes_c01")])
+
+[sub_resource type="Resource" id="p8_t_of_lenz_return_2_c01"]
+script = ExtResource("2")
+text = "Gern."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_t_of_lenz_return_2"]
+script = ExtResource("1")
+id = &"t_of_lenz_return_2"
+text = "Ich habe die Blumen gesehen. Ich habe nicht gefragt, für wen. Gott weiß es."
+choices = Array[ExtResource("2")]([SubResource("p8_t_of_lenz_return_2_c01")])
+
+[sub_resource type="Resource" id="p8_dance_c01"]
+script = ExtResource("2")
+text = "(Zurück an den Tisch)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_dance"]
+script = ExtResource("1")
+id = &"dance"
+text = "Bis die Musik zu schnell wird, Totengräber. Dann setze ich mich. Ein Pfarrer darf tanzen, er darf nur nicht dabei gesehen werden. Ach, sieht ja doch jeder."
+choices = Array[ExtResource("2")]([SubResource("p8_dance_c01")])
+
+[sub_resource type="Resource" id="p8_p8_plate_c01"]
+script = ExtResource("2")
+text = "Danke, Herr Pfarrer."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_p8_plate"]
+script = ExtResource("1")
+id = &"p8_plate"
+text = "Konrad Wackernagel. Ich hänge sie gleich auf, unter die Fähre. Da gehört er hin, so sehr man zu Wasser gehören kann. Rosine wird kommen und so tun, als käme sie wegen der Messe."
+choices = Array[ExtResource("2")]([SubResource("p8_p8_plate_c01")])
+
+[sub_resource type="Resource" id="p8_story_1_turn_in_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_story_1_turn_in"]
+script = ExtResource("1")
+id = &"story_1_turn_in"
+text = "Ah. Sie haben auch die Striche gesehen, nicht wahr? Am Rand. Tinte ist Tinte, Totengräber. Manchmal ist sie eben früher da."
+choices = Array[ExtResource("2")]([SubResource("p8_story_1_turn_in_c01")])
+
+[sub_resource type="Resource" id="p8_p8_names_inside_c01"]
+script = ExtResource("2")
+text = "(Lesen)"
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_p8_names_inside"]
+script = ExtResource("1")
+id = &"p8_names_inside"
+text = "Dann lesen wir sie eben drinnen. Gott hört auch durch Mauern. Die Toten auch, hoffe ich."
+choices = Array[ExtResource("2")]([SubResource("p8_p8_names_inside_c01")])
+
+[sub_resource type="Resource" id="p8_p8_row3_c01"]
+script = ExtResource("2")
+text = "Verstehe."
+next = &"menu"
+
+[sub_resource type="Resource" id="p8_node_p8_row3"]
+script = ExtResource("1")
+id = &"p8_row3"
+text = "Geweiht ist der ganze Acker, nicht die Reihe. Ich komme nicht noch einmal hinauf, Totengräber. Meine Knie sind auch nur ein Acker."
+choices = Array[ExtResource("2")]([SubResource("p8_p8_row3_c01")])
+
 [sub_resource type="Resource" id="v_priest_c001"]
 script = ExtResource("2")
 text = "…"
@@ -187,7 +606,7 @@ next = &"bye"
 script = ExtResource("1")
 id = &"menu"
 text = "Nun, was kann ein alter Pfarrer für Sie tun?"
-choices = Array[ExtResource("2")]([SubResource("v_priest_c009"), SubResource("v_priest_c010"), SubResource("v_priest_c011"), SubResource("v_priest_c012"), SubResource("v_priest_c013"), SubResource("v_priest_c014"), SubResource("v_priest_c015"), SubResource("v_priest_c016"), SubResource("v_priest_c017"), SubResource("v_priest_c018"), SubResource("v_priest_c019"), SubResource("v_priest_c020")])
+choices = Array[ExtResource("2")]([SubResource("v_priest_c009"), SubResource("v_priest_c010"), SubResource("v_priest_c011"), SubResource("v_priest_c012"), SubResource("v_priest_c013"), SubResource("v_priest_c014"), SubResource("v_priest_c015"), SubResource("v_priest_c016"), SubResource("v_priest_c017"), SubResource("v_priest_c018"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("p8_menu_menu_04"), SubResource("p8_menu_menu_05"), SubResource("p8_menu_menu_06"), SubResource("p8_menu_menu_07"), SubResource("p8_menu_menu_08"), SubResource("p8_menu_menu_09"), SubResource("p8_menu_menu_10"), SubResource("p8_menu_menu_11"), SubResource("p8_menu_menu_12"), SubResource("p8_menu_menu_13"), SubResource("p8_menu_menu_14"), SubResource("p8_menu_menu_15"), SubResource("p8_menu_menu_16"), SubResource("p8_menu_menu_17"), SubResource("p8_menu_menu_18"), SubResource("v_priest_c019"), SubResource("v_priest_c020")])
 
 [sub_resource type="Resource" id="v_priest_c021"]
 script = ExtResource("2")
@@ -387,4 +806,4 @@ script = ExtResource("3")
 id = &"v_priest"
 speaker_name = "Pfarrer Ambrosius Lenz"
 start_node = &"start"
-nodes = Array[ExtResource("1")]([SubResource("v_priest_node_start"), SubResource("v_priest_node_greet_p_devout"), SubResource("v_priest_node_greet_p_hardhearted"), SubResource("v_priest_node_greet_disreputable"), SubResource("v_priest_node_greet_unremarkable"), SubResource("v_priest_node_greet_respected"), SubResource("v_priest_node_greet_esteemed"), SubResource("v_priest_node_greet_renowned"), SubResource("v_priest_node_menu"), SubResource("v_priest_node_consecrate"), SubResource("v_priest_node_consecrate_paid"), SubResource("v_priest_node_deathbook"), SubResource("v_priest_node_deathbook_read"), SubResource("v_priest_node_lorenz"), SubResource("v_priest_node_lorenz_south"), SubResource("v_priest_node_visits"), SubResource("v_priest_node_o_o_lenz_service"), SubResource("v_priest_node_o_o_lenz_service_yes"), SubResource("v_priest_node_o_o_lenz_poor"), SubResource("v_priest_node_o_o_lenz_poor_yes"), SubResource("v_priest_node_t_o_lenz_poor"), SubResource("v_priest_node_bye"), SubResource("v_priest_node_bye_plain")])
+nodes = Array[ExtResource("1")]([SubResource("v_priest_node_start"), SubResource("v_priest_node_greet_p_devout"), SubResource("v_priest_node_greet_p_hardhearted"), SubResource("v_priest_node_greet_disreputable"), SubResource("v_priest_node_greet_unremarkable"), SubResource("v_priest_node_greet_respected"), SubResource("v_priest_node_greet_esteemed"), SubResource("v_priest_node_greet_renowned"), SubResource("v_priest_node_menu"), SubResource("v_priest_node_consecrate"), SubResource("v_priest_node_consecrate_paid"), SubResource("v_priest_node_deathbook"), SubResource("v_priest_node_deathbook_read"), SubResource("v_priest_node_lorenz"), SubResource("v_priest_node_lorenz_south"), SubResource("v_priest_node_visits"), SubResource("v_priest_node_o_o_lenz_service"), SubResource("v_priest_node_o_o_lenz_service_yes"), SubResource("v_priest_node_o_o_lenz_poor"), SubResource("v_priest_node_o_o_lenz_poor_yes"), SubResource("v_priest_node_t_o_lenz_poor"), SubResource("v_priest_node_bye"), SubResource("v_priest_node_bye_plain"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_favor_done"), SubResource("p8_node_o_of_lenz_return_1"), SubResource("p8_node_o_of_lenz_return_1_yes"), SubResource("p8_node_t_of_lenz_return_1"), SubResource("p8_node_o_of_lenz_return_2"), SubResource("p8_node_o_of_lenz_return_2_yes"), SubResource("p8_node_t_of_lenz_return_2"), SubResource("p8_node_dance"), SubResource("p8_node_p8_plate"), SubResource("p8_node_story_1_turn_in"), SubResource("p8_node_p8_names_inside"), SubResource("p8_node_p8_row3")])
