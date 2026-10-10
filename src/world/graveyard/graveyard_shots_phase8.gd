@@ -58,7 +58,7 @@ const G8_SHOTS: Array[Dictionary] = [
 			"figures": [["npc_smith_g", "gv_old_01", "wp", &"mourn_stand", 0.6], ["npc_grocer_g", "gv_old_08", "wp", &"kneel", 1.4]]},
 	{"name": "p8_16_veit_hanne_gate", "day": 55, "minute": 950, "focus": Vector2(1.2, 10.8), "distance": 10.0,
 			"player": Vector2(1.2, 8.0), "facing": 0.0,
-			"figures": [["npc_beggar_g", "veit_gate", "wp", &"sit_beg", 0.5], ["npc_peddler_g", "peddler_gate", "wp", &"offer", 0.5]]},
+			"figures": [["npc_beggar_g", "veit_gate", "wp", &"sit_ground", 0.5], ["npc_peddler_g", "peddler_gate", "wp", &"offer", 0.5]]},
 	{"name": "p8_24_lambert_digs", "day": 57, "minute": 150, "focus": Vector2(14.8, 21.4), "distance": 11.0,
 			"player": Vector2(9.0, 16.0), "facing": 90.0,
 			"figures": [["npc_robber", "gv_l_10", "wp", &"dig_night", 0.4]]},

@@ -408,7 +408,7 @@ def beggar():
         walk(780, ["v_bridge_sit", "v_road_in"], 6, g, animation="walk_stiff"),
         hide(786, "v_road_in", g),
         walk(800, ["road_end", "road_mid", "gate_outside", "veit_gate"], 20, g, region="", animation="walk_stiff"),
-        stay(820, "veit_gate", "beggar", g, region="", animation="sit_beg", activity="beg"),
+        stay(820, "veit_gate", "beggar", g, region="", animation="sit_ground", activity="beg"),   # W3: on the ground
         walk(960, ["veit_gate", "gate_outside", "road_mid", "road_end"], 20, g, region="", animation="walk_stiff"),
         hide(980, "road_end", g, region=""),
         walk(1000, ["v_road_in", "v_bridge_sit"], 6, g, animation="walk_stiff"),

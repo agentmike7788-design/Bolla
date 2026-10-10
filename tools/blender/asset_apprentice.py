@@ -43,7 +43,7 @@ SMOCK = L.hexc("#7C705C")
 SMOCK_DARK = L.hexc("#5C5444")
 TROUSER = L.hexc("#3E3A34")
 SHIRT = L.hexc("#C9C0AA")
-HAIR = L.hexc("#8E6C44")
+HAIR = L.hexc("#86643E")
 HAIR_DARK = L.hexc("#6A4E30")
 CORD = L.hexc("#6A5A40")
 FRECKLE = L.hexc("#A8705A")
@@ -119,14 +119,23 @@ def build_mesh():
                                 (0.3, -0.09), (0.21, -0.15), (0.35, -0.2), (0.26, -0.25), (0.12, -0.04))):
         parts.append(W("head", _oell(FRECKLE, face.pt(u, w, 0.0015), face.nrm(u, w), (0.0034, 0.001, 0.003), seg=5,
                                      rings=3, ao=0.0, var=0.1, top=0.0, seed=40 + k)))
-    _hair(parts, face, HAIR, HAIR_DARK, [(0.0, 0.33), (0.3, 0.36), (0.7, 0.22), (1.05, 0.02), (1.4, -0.2), (1.9, -0.36),
-                                         (math.pi, -0.5)], out=0.008, crown=0.006, tuft=0.03, seed=31)
-    for k, (u, w) in enumerate(((0.1, 0.92), (-0.12, 0.85), (0.22, 0.8), (-0.3, 0.7), (0.4, 0.62), (0.0, 0.75),
-                                 (-0.45, 0.5), (0.5, 0.45), (0.15, 0.6), (-0.2, 0.55), (0.3, 0.3), (-0.33, 0.33))):   # the cowlick and a few unruly tufts
-        d = Vector((u, -0.5 + 0.12 * (k % 6) if k >= 6 else 0.25 + 0.1 * k, w)).normalized()
-        p0 = face.world(d, 0.008)
-        parts.append(W("head", _painted(sweep([p0, p0 + face.normal(d) * 0.028 + Vector((0.012 * (k % 3 - 1), 0.012, 0.012 - 0.004 * k))],
-                                              [0.016, 0.003], n=4, name="tuft"), HAIR, var=0.15, ao=0.0, top=0.3,
+    # W3 (G8): the hair read as a helmet - a thinner shell cut above the ears, a ragged fringe, locks that hang over
+    # the forehead and a few flat tufts on the crown instead of spikes.
+    _hair(parts, face, HAIR, HAIR_DARK, [(0.0, 0.3), (0.12, 0.37), (0.24, 0.3), (0.36, 0.39), (0.5, 0.29), (0.66, 0.27),
+                                         (0.85, 0.16), (1.05, 0.08), (1.25, -0.02), (1.4, -0.12), (1.65, -0.26), (1.9, -0.36),
+                                         (2.4, -0.46), (math.pi, -0.52)], out=0.005, crown=0.005, tuft=0.012, seed=31)
+    for k, u in enumerate((-0.44, -0.27, -0.1, 0.07, 0.24, 0.41)):   # fringe locks
+        d = Vector((u, -0.78, 0.4 + 0.05 * (k % 2))).normalized()
+        p0 = face.world(d, 0.004)
+        tip = p0 + Vector((0.006 * (1 if u > 0 else -1), -0.014, -0.034 - 0.006 * (k % 3)))
+        parts.append(W("head", _painted(sweep([p0, p0 + (tip - p0) * 0.5 + Vector((0, -0.004, 0)), tip], [0.013, 0.008, 0.002],
+                                              n=4, name="lock"), HAIR, var=0.18, ao=0.0, top=0.2, seed=50 + k,
+                                        hue_shift=HAIR_DARK)))
+    for k, (u, v, w) in enumerate(((0.05, 0.1, 0.99), (-0.15, 0.3, 0.9), (0.2, 0.45, 0.85), (-0.3, -0.1, 0.92))):   # flat tufts, the cowlick
+        d = Vector((u, v, w)).normalized()
+        p0 = face.world(d, 0.005)
+        parts.append(W("head", _painted(sweep([p0, p0 + face.normal(d) * 0.006 + Vector((0.012 * (k % 3 - 1), 0.02, -0.004))],
+                                              [0.014, 0.003], n=4, name="tuft"), HAIR, var=0.15, ao=0.0, top=0.3,
                                         seed=32 + k, hue_shift=HAIR_DARK)))
     mesh = L.join(parts, rig.MESH)
     _global_light(mesh, 1.42)

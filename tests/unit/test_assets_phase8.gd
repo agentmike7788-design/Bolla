@@ -34,7 +34,7 @@ const FIGURES := {
 		"clips": ["idle", "walk", "talk", "idle_low", "mourn_stand", "lantern_walk"],
 		"children": {"hat_head": "head", "hat_hand": "arm_r", "lantern_prop": "arm_r"}},
 	"ph_chr_beggar": {"bones": 8, "tris": 8500, "height": [1.7, 1.84],
-		"clips": ["idle", "walk", "walk_stiff", "talk", "sit_beg", "stand_up", "idle_low"],
+		"clips": ["idle", "walk", "walk_stiff", "talk", "sit_beg", "sit_ground", "stand_up", "idle_low"],
 		"children": {"tin_cup": "arm_r"}},
 	"ph_chr_peddler": {"bones": 8, "tris": 9000, "height": [1.56, 1.7],
 		"clips": ["idle", "walk", "talk", "offer", "kiepe_off", "kiepe_on", "idle_low", "lantern_walk", "dance", "clap"],
@@ -344,14 +344,15 @@ func test_lantern_walk_holds_the_lantern_forward() -> void:
 
 
 func test_sitting_clips_put_the_hips_on_a_seat() -> void:
-	for spec: Array in [["ph_chr_apprentice", &"sit_eat", 0.2, 0.36], ["ph_chr_beggar", &"sit_beg", 0.25, 0.45],
+	for spec: Array in [["ph_chr_apprentice", &"sit_eat", 0.2, 0.36], ["ph_chr_beggar", &"sit_beg", 0.25, 0.45], ["ph_chr_beggar", &"sit_ground", 0.55, 0.85],
 			["ph_chr_gravekeeper", &"sit_bench", 0.2, 0.36], ["ph_chr_robber", &"sit_ground", 0.55, 0.85]]:
 		var r := _rig(spec[0])
 		var a := r.animation(spec[1])
 		var drop := r.centroid(r.posed(null, "hips", 0.0)).y - r.centroid(r.posed(a, "hips", a.length * 0.3)).y
 		assert_true(drop > float(spec[2]) and drop < float(spec[3]), "%s/%s: the hips %.2f m lower" % [spec[0], spec[1], drop])
 		for leg: String in ["leg_l", "leg_r"]:
-			assert_true(r.lowest_y(r.posed(a, leg, a.length * 0.3)) > -0.03, "%s/%s: %s above the ground" % [spec[0], spec[1], leg])
+			var low := r.lowest_y(r.posed(a, leg, a.length * 0.3))
+			assert_true(low > -0.03, "%s/%s: %s above the ground (%.3f)" % [spec[0], spec[1], leg, low])
 
 
 func test_veit_walks_with_a_stiff_right_leg() -> void:

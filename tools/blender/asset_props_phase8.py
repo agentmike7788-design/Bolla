@@ -508,19 +508,23 @@ def prop_grave_disturbed():
     finish_stable(_join(parts, "ph_prop_grave_disturbed"), "ph_prop_grave_disturbed", "props", 50)
 
 
-def _coin(at, seed: int = 0):
-    return L.part("cyl", COIN, loc=at, radius=0.016, depth=0.004, vertices=8, seed=seed,
+def _coin(at, seed: int = 0, radius: float = 0.016, color=None):
+    return L.part("cyl", color or COIN, loc=at, radius=radius, depth=0.004 if radius < 0.02 else 0.007, vertices=8, seed=seed,
                   paint_kw={"ao": 0.0, "top": 0.5, "var": 0.12})
 
 
 def prop_tip_coins():
-    """Two coins and a third under a folded note, lying on the stone. <= 150 tris."""
+    """Two coins and a third under a folded note, lying on the stone. <= 150 tris.
+    W3 (G8 p8_06): read at the play zoom - coins of 6 cm and a paler brass, the note 13 cm (the diorama scale of
+    the small props, like the grave candle)."""
     L.reset(8607)
-    parts = [_coin((-0.03, 0.0, 0.002)), _coin((0.012, 0.018, 0.002), 1), _coin((0.035, -0.012, 0.006), 2)]
-    note = L.prim("grid", x_subdivisions=2, y_subdivisions=1, size=1.0, scale=(0.07, 0.045, 1.0))
+    brass = L.hexc("#B39557")
+    parts = [_coin((-0.045, 0.0, 0.004), 0, 0.03, brass), _coin((0.01, 0.034, 0.004), 1, 0.03, brass),
+             _coin((0.05, -0.02, 0.011), 2, 0.03, brass)]
+    note = L.prim("grid", x_subdivisions=2, y_subdivisions=1, size=1.0, scale=(0.12, 0.08, 1.0))
     for v in note.data.vertices:
-        v.co.z = 0.006 * (1.0 - abs(v.co.x) / 0.035)   # folded once, the crease up
-    note.data.transform(Matrix.Translation((0.03, -0.005, 0.009)) @ Matrix.Rotation(math.radians(18), 4, "Z"))
+        v.co.z = 0.01 * (1.0 - abs(v.co.x) / 0.06)   # folded once, the crease up
+    note.data.transform(Matrix.Translation((0.045, -0.01, 0.016)) @ Matrix.Rotation(math.radians(18), 4, "Z"))
     parts.append(_p(note, PAPER, var=0.05, ao=0.0, top=0.3))
     finish_stable(_join(parts, "ph_prop_tip_coins"), "ph_prop_tip_coins", "props", 40)
 
