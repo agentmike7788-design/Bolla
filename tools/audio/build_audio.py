@@ -264,7 +264,7 @@ CATALOG: list[Spec] = [
     MUS("mus_village", music.mus_village, volume_db=-6),
     # --- Phase 8 „Wer heraufkommt" (docs/PHASE8_DESIGN.md §8.3; tools/audio/sfx_phase8.py) -----------
     # Positional one-shots: played at their source (grave, Npc) through Audio.play(id, pos); max_distance is
-    # the reach of the 3D voice. The visitors' sounds sit 6 dB and more under the footsteps (-42).
+    # the reach of the 3D voice. The visitors' sounds sit 6 dB and more under the quietest footsteps (grass -43).
     S("rake_leaves", p8.rake_leaves, 3, positional=True, max_distance=18, unit_size=3, loud=-33),
     S("weed_pull", p8.weed_pull, 3, positional=True, max_distance=16, unit_size=3, loud=-34),
     S("water_pour", p8.water_pour, 3, positional=True, max_distance=16, unit_size=3, loud=-33),
@@ -273,8 +273,8 @@ CATALOG: list[Spec] = [
     S("candle_glass", p8.candle_glass, 2, positional=True, max_distance=12, unit_size=2, loud=-36, cooldown=0.5),
     S("broom_sweep", p8.broom_sweep, 3, positional=True, max_distance=16, unit_size=3, loud=-37),
     S("mortsafe_set", p8.mortsafe_set, 2, positional=True, max_distance=24, unit_size=4, loud=-29, cooldown=0.6),
-    S("cloth_kneel", p8.cloth_kneel, 3, positional=True, max_distance=12, unit_size=2, loud=-48, max_voices=2),
-    S("flowers_lay", p8.flowers_lay, 2, positional=True, max_distance=12, unit_size=2, loud=-48, max_voices=2),
+    S("cloth_kneel", p8.cloth_kneel, 3, positional=True, max_distance=12, unit_size=2, loud=-49, max_voices=2),
+    S("flowers_lay", p8.flowers_lay, 2, positional=True, max_distance=12, unit_size=2, loud=-49, max_voices=2),
     S("mourn_breath", p8.mourn_breath, 2, positional=True, max_distance=8, unit_size=1.5, loud=-52, max_voices=1,
       cooldown=6.0, pitch_jitter=0.03),
     S("coins_stone", p8.coins_stone, 3, positional=True, max_distance=14, unit_size=2, loud=-33, cooldown=0.3),
