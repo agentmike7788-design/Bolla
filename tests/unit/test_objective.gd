@@ -1,6 +1,7 @@
 extends TestCase
 ## W2: ObjectiveResolver.current() – every branch of the objective chain (docs §1, §7),
 ## priorities between several corpses / graves, clock-based idle lines and purity.
+## Phase 8 (docs/PHASE8_DESIGN.md §7.5, W-UI): the chain after the village chapter (world.p8).
 
 const FakeInventory := preload("res://tests/fixtures/fake_inventory.gd")
 const WAIT := "Der Leichenkutscher kommt gegen 07:40"
@@ -207,6 +208,70 @@ func test_phase7_village_line_after_the_corpse_chain() -> void:
 	assert_eq(_objective_world([], [], world), "Kapelle 2 · Gruft 2 · Schuppen 2", "Phase 6 first while open")
 	world["goal_done"] = true
 	assert_eq(_objective_world([], [], world), "Lindenacker: 3/10")
+
+
+## Phase 8 (docs/PHASE8_DESIGN.md §7.5): the chain after „Ein Name im Dorf" – each line in turn, the time-bound ones
+## first; an urgent Phase-7 order still goes before the plain chapter count.
+func test_phase8_chain_after_the_village_chapter() -> void:
+	var p8 := {"intro": false, "minute": NOON}
+	var world := {"p7": true, "p7_intro": true, "visited": true, "linden_granted": true, "linden_cleared": true, "consecrated": true,
+			"goal_done": true, "goal_parts": 4, "goal_total": 4, "p8": p8}
+	assert_eq(_objective_world([], [], world), "Sprich mit Osric")
+	p8["intro"] = true
+	p8["rosine_ready"] = true
+	assert_eq(_objective_world([], [], world), "Rosine will dich sprechen")
+	p8["hired"] = true
+	p8["board_empty"] = true
+	assert_eq(_objective_world([], [], world), "Kreidetafel: Arbeitsliste für Jakob")
+	p8["board_empty"] = false
+	p8["teach"] = &"rake"
+	assert_eq(_objective_world([], [], world), "Zeig Jakob, wie man harkt")
+	p8["waiting"] = "Martha Kehr"
+	assert_eq(_objective_world([], [], world), "Martha Kehr wartet am Grab", "a waiting visitor first")
+	p8.erase("waiting")
+	p8.erase("teach")
+	p8["wish"] = {"kind": &"flowers", "name": "Hedwig Lamprecht", "days": 2}
+	assert_eq(_objective_world([], [], world), "Wunsch: Blumen für Hedwig Lamprecht (≈ 2 Tage)")
+	p8["wish"] = {}
+	p8["tin_empty"] = true
+	assert_eq(_objective_world([], [], world), "Lohndose leer – Jakob arbeitet morgen umsonst")
+	p8["tin_empty"] = false
+	p8["peddler"] = {"place": &"peddler_gate", "until": 980}
+	assert_eq(_objective_world([], [], world), "Hanne Vogelsang ist am Tor (bis 16:20)")
+	p8.erase("peddler")
+	p8["night_question"] = true
+	assert_eq(_objective_world([], [], world), "Merkbuch: Wer geht nachts zu den Kranken?")
+	p8["sick_light"] = &"house_ott"
+	assert_eq(_objective_world([], [], world), "Bei den Otts brennt Licht")
+	p8.erase("sick_light")
+	p8["night_question"] = false
+	p8["disturbed"] = true
+	assert_eq(_objective_world([], [], world), "Ein Grab ist aufgewühlt")
+	p8["disturbed"] = false
+	p8["goal_parts"] = 3
+	p8["goal_total"] = 4
+	assert_eq(_objective_world([], [], world), "Wer heraufkommt: 3/4")
+	world["urgent_order"] = {"id": &"of_lenz_1", "title": "Die Namen", "days_left": 1}
+	assert_eq(_objective_world([], [], world), "Auftrag: Die Namen (bis morgen früh)", "an urgent order before the count")
+	world.erase("urgent_order")
+	p8["goal_done"] = true
+	world["board_open"] = 2
+	assert_eq(_objective_world([], [], world), "Die Gemeindetafel hat neue Bitten", "then the board")
+	p8["fest_today"] = &"fest_lights"
+	assert_eq(_objective_world([], [], world), "Heute Abend ist Lichtgang")
+	p8["minute"] = 1000
+	p8["lights"] = Vector2i(31, 34)
+	assert_eq(_objective_world([], [], world), "Kein Grab ohne Licht: 31/34")
+	var carried := _corpse(&"carried")
+	assert_eq(_objective_world([carried], [_grave(GraveRecord.State.DUG)], world), TO_TABLE, "the corpse still first")
+
+
+func test_phase8_waits_for_the_village_chapter() -> void:
+	var world := {"p7": true, "p7_intro": false, "goal_done": false, "p8": {"intro": false}}
+	assert_eq(_objective_world([], [], world), "Sprich mit Osric", "the Phase-7 line (Osric) – not Phase 8's")
+	world["p7_intro"] = true
+	assert_eq(_objective_world([], [], world), "Geh nach Hollerbrück")
+	assert_eq(Phase8Texts.objective({}), "", "nothing before p8_open")
 
 
 func _objective_world(corpses: Array, graves: Array, world: Dictionary) -> String:

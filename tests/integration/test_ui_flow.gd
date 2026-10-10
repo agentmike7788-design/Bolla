@@ -201,6 +201,43 @@ func test_phase7_veil_does_not_survive_a_load() -> void:
 	assert_eq(ui.region_label.shown_text, "Hollerbrück · Anger")
 
 
+## Phase 8 (docs/PHASE8_DESIGN.md §7.7): the chapter panel „Wer heraufkommt" keeps playing on the first accept.
+func test_phase8_chapter_panel_keeps_playing() -> void:
+	await _new_game()
+	var ui := await add_scene(UI_SCENE) as UIRoot
+	EventBus.ui_panel_requested.emit(&"slice_summary", {"variant": &"who_comes_up", "days_open": 9, "final_line": "Früher kam nur Osric."})
+	await wait_frames(1)
+	var panel := ui.get_panel(&"slice_summary") as SliceSummaryPanel
+	assert_eq(panel.header_label.text, "Wer heraufkommt")
+	var focused := ui.get_viewport().gui_get_focus_owner() as Button
+	assert_eq(focused, panel.continue_button, "Weiterspielen focused")
+	focused.pressed.emit()
+	await wait_frames(2)
+	assert_eq(tree.current_scene.scene_file_path, SAVE_WORLD, "still in the world")
+	assert_false(ui.is_open(&"slice_summary"))
+
+
+## Phase 8 (§7.2, §7.6): the wish card closes with Esc like every panel; the day log starts anew after a load.
+func test_phase8_wish_card_and_day_log_across_a_load() -> void:
+	await _new_game()
+	assert_eq(SaveManager.save_game(1), OK)
+	var ui := await add_scene(UI_SCENE) as UIRoot
+	ui.open_panel(&"wish_card", {"offer": {"wish_id": "w_0001", "kind": &"candle", "grave_id": "plot_01", "text": "Ein Licht."},
+			"kin_id": &"kin_kehr"})
+	assert_eq(ui.top(), &"wish_card")
+	ui.close_top_panel()
+	assert_false(ui.is_open(&"wish_card"))
+	assert_false(UIState.is_modal())
+	EventBus.grave_viewed.emit("plot_01", &"kin_kehr", &"kept")
+	assert_eq(ui.day_log8.visits.size(), 1)
+	ui.open_panel(&"pause", {})
+	var menu := ui.get_panel(&"pause") as PauseMenu
+	menu.load_button.pressed.emit()
+	menu.slot_buttons[1].pressed.emit()
+	assert_true(await wait_for_signal(EventBus.game_loaded, WORLD_TIMEOUT + 1.0), "game_loaded")
+	assert_eq(ui.day_log8.visits.size(), 0, "a load starts the day log anew")
+
+
 # --- helpers --------------------------------------------------------------------------------
 
 ## The title screen as the current scene (like src/boot/main.gd will do).
