@@ -38,7 +38,7 @@ const FIGURES := {
 		"children": {"tin_cup": "arm_r"}},
 	"ph_chr_peddler": {"bones": 8, "tris": 9000, "height": [1.56, 1.7],
 		"clips": ["idle", "walk", "talk", "offer", "kiepe_off", "kiepe_on", "idle_low", "lantern_walk", "dance", "clap"],
-		"children": {"kiepe": "spine", "staff": "arm_l", "lantern_prop": "arm_r"}},
+		"children": {"kiepe": "spine", "kiepe_down": "root", "staff": "arm_l", "lantern_prop": "arm_r"}},
 	"ph_chr_robber": {"bones": 9, "tris": 8500, "height": [1.72, 1.86],
 		"clips": ["idle", "walk", "talk", "dig_night", "startle", "run", "climb", "sit_ground"],
 		"children": {"scarf_up": "head", "scarf_down": "spine", "spade": "tool", "lantern_blind": "arm_l"}},
@@ -238,6 +238,7 @@ func test_hats_and_bouquets_follow_the_visit() -> void:
 		assert_false("kneel" in b or "mourn_stand" in b, c + ": no bunch in the hand while mourning")
 	var kiepe := _show_with(_child(_rig("ph_chr_peddler"), "kiepe"))
 	assert_false("offer" in kiepe, "Hanne sells with the kiepe set down beside her")
+	assert_eq(Array(_show_with(_child(_rig("ph_chr_peddler"), "kiepe_down"))), ["offer"], "W3: the set-down kiepe beside her while she offers")
 	assert_has(kiepe, "walk", "Hanne walks with the kiepe on her back")
 	var r2 := _rig("ph_chr_robber")
 	assert_false("sit_ground" in _show_with(_child(r2, "scarf_up")), "Lambert caught: the neckerchief is down")

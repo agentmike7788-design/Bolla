@@ -271,7 +271,16 @@ def peddler():
     _global_light(mesh, 1.62)
     L.smooth(mesh, 55)
     joints = _joints(0.84, waist, Vector((0, -0.01, 1.33)), Vector((0, -0.03, 1.64)), sh, wr, 0.094)
+    # W3 (G8 p8_16): while she offers, the basket stands on the ground beside her (it was simply gone).
+    down = kiepe("kiepe_down")
+    down.data.transform(Matrix.Translation(Vector((0.5, 0.12, -0.62))) @ Matrix.Rotation(math.radians(-25.0), 4, "Z"))
+    # the figure budget (body + child meshes <= 9 000): the basket on the ground a little coarser
+    dec = down.modifiers.new("dec", "DECIMATE")
+    dec.ratio = 0.8
+    bpy.context.view_layer.objects.active = down
+    bpy.ops.object.modifier_apply(modifier=dec.name)
     kids = [M.child("kiepe", "spine", kiepe("kiepe"), ("idle", "walk", "talk", "kiepe_off", "kiepe_on", "idle_low")),
+            M.child("kiepe_down", "root", down, ("offer",)),
             M.child("lantern_prop", "arm_r", M.lantern_child(hands[-1]), ("lantern_walk",)),
             M.child("staff", "arm_l", staff, ("idle", "walk", "talk", "offer", "kiepe_off", "kiepe_on", "idle_low",
                                               "lantern_walk"))]
