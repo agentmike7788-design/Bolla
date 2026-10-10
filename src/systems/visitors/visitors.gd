@@ -530,6 +530,13 @@ func load_state(data: Dictionary) -> void:
 				for key: String in ["slot", "start", "travel", "viewed", "laid", "tip", "day"]:
 					if e.has(key):
 						e[key] = _int(e[key], 0)
+				# W3 (QA8-20, §10 fuzzer): the flags of a visit are booleans (a damaged save stopped _advance
+				# every minute with „Nonexistent 'bool' constructor“).
+				for key: String in ["ended", "flowers", "waits", "noise"]:
+					if e.has(key) and not e[key] is bool:
+						e[key] = e[key] is int and int(e[key]) != 0
+				if e.has("phase") and not (e["phase"] is String or e["phase"] is StringName):
+					e.erase("phase")
 				_plan.append(e)
 	_goodwill.clear()
 	var gw: Variant = data.get("goodwill", {})
@@ -606,7 +613,7 @@ func _reapply_schedules() -> void:
 	if not is_inside_tree():
 		return
 	for v: Dictionary in _plan:
-		if v.get("ended", false) is bool and bool(v.get("ended", false)):
+		if bool(v.get("ended", false)):
 			continue
 		var phase := phase_of(v)
 		if phase != &"" and phase != &"gone":

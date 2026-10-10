@@ -11,7 +11,8 @@ extends TestCase
 ## graves of this world, no visit plan for a later day ·
 ## QA8-13 watering pours in step with the clip (ToolAnimConfig.bite_at / beat_cues water) ·
 ## QA8-15 the Lichtgang procession takes the graveyard figures (the village npc_priest keeps his schedule) ·
-## QA8-18 a household visitor (Martha Kehr) is still on the hill after a load mid-visit (and after the debug visit).
+## QA8-18 a household visitor (Martha Kehr) is still on the hill after a load mid-visit (and after the debug visit) ·
+## QA8-20 the flags of a visit in a damaged save are made booleans (no script error every minute).
 
 const TIMEOUT := 600.0
 const SLOT := 93
@@ -320,3 +321,31 @@ func test_qa8_18_visitor_figure_after_a_load_mid_visit() -> void:
 	TimeManager.advance(1)
 	assert_false(visitors.active_visits().is_empty(), "the visit goes on after the load")
 	assert_true(kehr.is_present(), "QA8-18: Martha still on the hill after the load")
+
+
+# --- QA8-20 -------------------------------------------------------------------------------------------
+
+## A damaged save (the real-v7 fuzzer): the flags of a visit plan entry are no booleans – the load makes them
+## booleans, the visit runs on without „Nonexistent 'bool' constructor“ every minute.
+func test_qa8_20_visit_flags_of_a_damaged_save() -> void:
+	await _load()
+	var visitors := _sys("Visitors") as Visitors
+	TimeManager.set_time(TimeManager.day, 600)
+	var vs := visitors.save_state()
+	var grave := ""
+	for g: GraveRecord in world.graveyard.graves():
+		if g.state == GraveRecord.State.MARKED:
+			grave = g.id
+			break
+	vs["plan_day"] = TimeManager.day
+	vs["plan"] = [{"visit_id": "v_q20", "kin_id": "kin_kehr", "graves": [grave], "slot": 600, "start": 600, "travel": 13,
+			"day": TimeManager.day, "flowers": [1], "waits": "ja", "ended": "nein", "noise": 1.5, "laid": 0, "viewed": 0, "tip": 0,
+			"phase": 7}]
+	visitors.load_state(vs)
+	var e: Dictionary = visitors.save_state().plan[0]
+	for key: String in ["flowers", "waits", "ended", "noise"]:
+		assert_true(e[key] is bool, "QA8-20: %s is a bool (%s)" % [key, str(e[key])])
+	assert_false(e.has("phase"), "QA8-20: a phase that is no name is dropped")
+	for i: int in 30:
+		TimeManager.advance(1)
+	assert_eq(visitors.save_state().plan.size(), 1, "the visit is still planned")
