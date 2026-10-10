@@ -16,6 +16,7 @@ const TASK_ID := &"archive_help"
 const KEY_FLAG := &"archive_key"
 const FOUND_FLAG := &"archive_ledger_found"
 const LEDGER_ITEM := &"lorenz_ledger_2"
+const CLUE_KLADDE := &"c_n_kladde"
 const MINUTES := 60
 ## With Lenz (his order's window, else 16:00–18:00) / alone with the key (08:00–18:00).
 const LENZ_WINDOW := Vector2i(960, 1080)
@@ -78,6 +79,10 @@ func _finish(player: Player) -> void:
 	if player != null and player.inventory != null:
 		player.inventory.add_item(LEDGER_ITEM, 1)
 	EventBus.notification_requested.emit(TEXT_FOUND, &"reward")
+	# W-Welt (W2): the second notebook is the clue „Lorenz' zweite Kladde" (§1.6 point 6) – nothing gave it before.
+	var journal := get_tree().get_first_node_in_group(&"journal") if is_inside_tree() else null
+	if journal != null and journal.has_method(&"add_clue"):
+		journal.call(&"add_clue", CLUE_KLADDE, "", false)
 
 
 func _task_order() -> StringName:

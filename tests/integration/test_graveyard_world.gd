@@ -760,8 +760,9 @@ func test_phase3_obstacles() -> void:
 			# Phase 7 N1 (§4.6): w_east_pass (11,5 | −2,2, contract) is the yard → east meadow passage the
 			# priest walks on the consecration day – the Lindenacker gate lies in the east meadow, so its
 			# obstacles are long cleared by then.
-			# Phase 8 (§2.7.2): the Lichtgang places on the Birkenhang are used once the north section is long open.
-			if not id.begins_with("_") and not (id == "w_east_pass" and o.section == "east") and not (id.begins_with("lights_") and o.section == "north"):
+			# Phase 8 (§2.7.2): the Lichtgang places on the Birkenhang are used once the north section is long open;
+			# Lenz waits in the open Kirchpforte (unlocked since buildings_open, Phase 6).
+			if not id.begins_with("_") and not (id == "w_east_pass" and o.section == "east") and not (id.begins_with("lights_") and o.section in ["north", "churchyard"]):
 				assert_false(rect.grow(0.5).has_point(_v2(layout.waypoints[id])), "%s clear of waypoint %s" % [o.id, id])
 		for k: int in 60:
 			assert_false(rect.has_point(_on_polyline(layout.path.points, k / 59.0)), o.id + " off the earth path")
@@ -769,7 +770,8 @@ func test_phase3_obstacles() -> void:
 			"north/rubble": 2, "north/stump": 2, "north/fence_gap": 3,
 			"elder/gate_small": 1, "elder/elder_thicket": 2, "elder/sunken_pit": 6, "elder/fence_gap": 1,
 			"bruch/gate_east": 1, "quarry/boulder": 3, "churchyard/gate_church": 1,
-			"linden/gate_small": 1, "linden/stump": 4, "linden/bramble": 3, "linden/rubble": 2})  # Phase 7 §4.6 L2/L4
+			"linden/gate_small": 1, "linden/stump": 4, "linden/bramble": 3, "linden/rubble": 2,  # Phase 7 §4.6 L2/L4
+			"linden_row3/stump": 1, "linden_row3/bramble": 1})  # Phase 8 §2.8: row 3
 	assert_eq(expansion.progress(&"east"), Vector2i(0, 10))
 	assert_eq(expansion.progress(&"north"), Vector2i(0, 11))
 	assert_eq(expansion.progress(&"elder"), Vector2i(0, 10))
@@ -859,7 +861,7 @@ func test_phase3_build_mask_matches_layout() -> void:
 		# Phase 7 (§4.6 L1, contract positions): l_04 / l_08 stand at the east fence of the Lindenacker
 		# (x 20,5, section edge x 21,5) – their side strip lies beyond it, l_08 (back row) keeps 5 cells.
 		# Phase 8: row 3 (l_09 at the west strip like l_05, but its foot strip ends at the south fence).
-		var ring_min := 5 if String(p.id) in ["l_04", "l_08", "l_09", "l_10", "l_11", "l_12"] else 6
+		var ring_min := 4 if String(p.id) == "l_12" else (5 if String(p.id) in ["l_04", "l_08", "l_09", "l_10", "l_11"] else 6)  # l_12: east + south fence
 		assert_true(ring_cells >= ring_min, "%s grave ring (%d cells)" % [p.id, ring_cells])
 		var foot := plot.global_transform * Vector3(0, 0, plot.footprint.end.y + 0.55)
 		# Phase 8 (§4.4): row 3 ends at the south fence – its walk is the aisle at the head end.

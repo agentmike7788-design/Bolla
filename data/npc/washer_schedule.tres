@@ -28,7 +28,7 @@ start_minute = 560
 travel_minutes = 20
 activity = &"walk"
 animation = &"walk"
-path = PackedStringArray("road_end", "road_mid", "gate_outside", "gate_inside", "vw_36", "vw_51", "vw_03", "vw_26", "linden_spot")
+path = PackedStringArray("road_end", "road_mid", "gate_outside", "gate_inside", "vw_36", "vw_50", "vw_03", "vw_26", "linden_spot")
 today_flag = &"visit_washer_day"
 
 [sub_resource type="Resource" id="p8_washer_04"]
@@ -46,7 +46,7 @@ start_minute = 640
 travel_minutes = 20
 activity = &"walk"
 animation = &"walk"
-path = PackedStringArray("linden_spot", "vw_26", "vw_03", "vw_51", "vw_36", "gate_inside", "gate_outside", "road_mid", "road_end")
+path = PackedStringArray("linden_spot", "vw_26", "vw_03", "vw_50", "vw_36", "gate_inside", "gate_outside", "road_mid", "road_end")
 today_flag = &"visit_washer_day"
 
 [sub_resource type="Resource" id="p8_washer_06"]
