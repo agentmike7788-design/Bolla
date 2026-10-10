@@ -5,7 +5,7 @@ extends RefCounted
 ## 7; at the opening the graves in mourning spread over the first three days, older ones by seed mod 7), the
 ## villagers' visit days (every n days from p8_open_day + first_offset, past the night of the lights), the
 ## flowers, the slot assignment (≤ 3 a day, ≤ 2 at once) and the visible timeline of one visit (arriving →
-## at each grave: lay flowers 2 · mourn 30 (a further grave of the round 15 in all) · look 2 → waiting 10 →
+## at each grave: lay flowers 2 · mourn 30 (a further grave of the round 15 in all) · look 2 → waiting (G8 Runde 1: a household up to 100, till 16:30, gone 3 after the talk; villagers 10) →
 ## leaving 12 → gone). Deterministic, no tree.
 
 const PHASE_ARRIVING := &"arriving"
@@ -87,15 +87,32 @@ static func graves_minutes(graves: int, flowers: bool, cfg: VisitorConfig) -> in
 	return first + (graves - 1) * ROUND_GRAVE_MINUTES
 
 
-## Total length of a visit (with `waits` the 10 minutes of waiting).
-static func duration(travel: int, graves: int, flowers: bool, waits: bool, cfg: VisitorConfig) -> int:
-	return travel + graves_minutes(graves, flowers, cfg) + (cfg.wait_minutes if waits else 0) + LEAVE_MINUTES
+## G8 Runde 1 (B8-1): the minutes a visitor waits after the last look, the wait beginning at day minute `wait_from`:
+## a household up to wait_minutes, but not past wait_until_minute and never less than wait_min_minutes; a villager
+## wait_minutes_villager.
+static func wait_length(wait_from: int, villager: bool, cfg: VisitorConfig) -> int:
+	if villager:
+		return maxi(cfg.wait_minutes_villager, 0)
+	var room := cfg.wait_until_minute - wait_from if cfg.wait_until_minute > 0 else cfg.wait_minutes
+	return maxi(mini(cfg.wait_minutes, room), mini(cfg.wait_min_minutes, cfg.wait_minutes))
+
+
+## The wait after the talk at minute `talked` (same unit as `wait_from`): the visitor goes leave_after_talk_minutes
+## later (never longer than `wait`).
+static func wait_after_talk(wait: int, wait_from: int, talked: int, cfg: VisitorConfig) -> int:
+	return clampi(talked - wait_from + cfg.leave_after_talk_minutes, 0, wait)
+
+
+## Total length of a visit (with `waits` the minutes of waiting: `wait`, −1 = the households' wait_minutes).
+static func duration(travel: int, graves: int, flowers: bool, waits: bool, cfg: VisitorConfig, wait: int = -1) -> int:
+	return travel + graves_minutes(graves, flowers, cfg) + ((cfg.wait_minutes if wait < 0 else wait) if waits else 0) + LEAVE_MINUTES
 
 
 ## The segments of a visit starting at `start` (total or day minutes – the unit of `start`):
 ## [{phase, step, grave_index, from, to}] in order; the last one is gone (to = from).
-static func timeline(start: int, travel: int, graves: int, flowers: bool, waits: bool, cfg: VisitorConfig) -> Array[Dictionary]:
+static func timeline(start: int, travel: int, graves: int, flowers: bool, waits: bool, cfg: VisitorConfig, wait: int = -1) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
+	var wait_len := cfg.wait_minutes if wait < 0 else wait
 	var t := start
 	out.append({"phase": PHASE_ARRIVING, "step": STEP_WALK, "grave_index": 0, "from": t, "to": t + travel})
 	t += travel
@@ -119,8 +136,8 @@ static func timeline(start: int, travel: int, graves: int, flowers: bool, waits:
 		out.append({"phase": PHASE_MOURNING, "step": STEP_LOOK, "grave_index": i, "from": t, "to": t + LOOK_MINUTES})
 		t += LOOK_MINUTES
 	if waits:
-		out.append({"phase": PHASE_WAITING, "step": &"wait", "grave_index": maxi(graves - 1, 0), "from": t, "to": t + cfg.wait_minutes})
-		t += cfg.wait_minutes
+		out.append({"phase": PHASE_WAITING, "step": &"wait", "grave_index": maxi(graves - 1, 0), "from": t, "to": t + wait_len})
+		t += wait_len
 	out.append({"phase": PHASE_LEAVING, "step": STEP_WALK, "grave_index": maxi(graves - 1, 0), "from": t, "to": t + LEAVE_MINUTES})
 	t += LEAVE_MINUTES
 	out.append({"phase": PHASE_GONE, "step": &"", "grave_index": maxi(graves - 1, 0), "from": t, "to": t})

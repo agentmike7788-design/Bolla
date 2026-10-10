@@ -217,6 +217,6 @@ func _play(strategy: StringName, days: int, until_chapter: bool = false) -> Phas
 	for line: String in bot.trace8:
 		print("TRACE8 %s %s" % [strategy, line])
 	for line: String in bot.trace7:
-		if line.contains("talk") or line.contains("order") or line.contains("village"):
+		if line.contains("talk") or line.contains("order") or line.contains("village") or line.contains("bought"):
 			print("TRACE7 %s %s" % [strategy, line])
 	return bot

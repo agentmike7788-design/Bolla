@@ -6,7 +6,8 @@
 script = ExtResource("1")
 id = &"w_vase"
 kind = &"vase"
-ask_text = "Eine Vase, damit die Blumen nicht umfallen."
+ask_text = "Eine Vase aus Stein, damit die Blumen nicht umfallen. So eine, wie du sie an deiner Werkbank machst."
 done_text = "Jetzt stehen sie. Er hätte gesagt, das ist zu fein für ihn. Hier, nimm."
 failed_text = "Die Blumen liegen wieder um. Na ja. Du hast viele."
 line_text = ""
+source_text = "Grabvase: an der Werkbank (15 Min) aus 1 Stein und 1 Samen – Samen gibt es bei Theres im Krämerladen. Dann im Baumodus [B] dicht ans Grab stellen."

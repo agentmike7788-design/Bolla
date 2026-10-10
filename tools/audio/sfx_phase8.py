@@ -709,3 +709,23 @@ def amb_inn_fest(rng, sr):
     feet = s.loop_filter_band(feet, sr, 40, 5000, 1.5)
     x = x / (np.std(x) + 1e-12) + feet / (np.std(feet) + 1e-12) * 0.55
     return amb._finish(x, sr, rng, 0.5, 0.2, 0.8, 0.25)
+
+
+def gate_bell(rng, sr):
+    """G8 Runde 1 (B8-1): the little bronze bell at the graveyard gate, pulled on its cord when a visitor comes up:
+    a dry creak of the cord, then three strokes of a swinging bell (the second a little weaker, the clapper
+    catching), each a slightly inharmonic small-bell spectrum, the tail in the open air. ≈ 3.4 s."""
+    n = s.secs(sr, 3.4)
+    out = np.zeros(n)
+    creak = s.grains(rng, sr, 0.18, 700, 250, 1400, 0.006, lambda p: float(np.sin(np.pi * p)))
+    s.mix_at(out, creak, 0, 0.25)
+    f0 = 1180.0
+    for k, (at, gain) in enumerate(((0.12, 1.0), (0.62, 0.7), (1.1, 0.85))):
+        ring = s.partials(sr, s.secs(sr, 2.2), f0 * rng.uniform(0.997, 1.003), [1, 2.03, 2.47, 3.11, 4.3, 5.6],
+                          [0.6, 0.32, 0.22, 0.12, 0.07, 0.04], [1.1, 0.7, 0.55, 0.4, 0.25, 0.15], rng, attack=0.0015,
+                          detune=0.0012)
+        tick = s.bandpass(rng.standard_normal(s.secs(sr, 0.02)), sr, 2500, 7000) * 0.15
+        s.mix_at(out, ring, s.secs(sr, at), gain)
+        s.mix_at(out, tick, s.secs(sr, at), gain)
+    out = s.reverb(out, sr, rng, 0.25, 1.6, 0.5)[:n]
+    return s.fade(s.normalize(out, 0.6), sr, 0.0005, 0.5)

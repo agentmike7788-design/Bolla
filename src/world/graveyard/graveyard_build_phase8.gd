@@ -35,6 +35,7 @@ const CORNER_SCENES := {
 	"rain_barrel": "res://src/entities/rain_barrel/rain_barrel.tscn",
 }
 const TIP_SCENE := "res://src/entities/tip_stone/tip_stone.tscn"
+const GATE_BELL_SCENE := "res://src/entities/gate_bell/gate_bell.tscn"
 ## The coins lie on the mound right in front of the stone (plot-local; the stone stands at z −1,02).
 const TIP_LOCAL := Vector3(-0.2, 0.17, -0.74)
 const ROLE_PIT := "pit"
@@ -67,6 +68,22 @@ static func build_corner(ctx: Ctx, entities: Node3D) -> void:
 		model.name = "Model"
 		ctx.add(node, model)
 		Colliders.collider(ctx, String(c.model), node.transform, String(c.id))
+
+
+## G8 Runde 1 (B8-1): Entities/gate_bell – GateBell with its model (child "Model", the swinging mesh `bell`) on the
+## road face of the east gate post (layout phase8.gate_bell). No collider: it hangs above head height and the walking
+## net stays as baked.
+static func build_gate_bell(ctx: Ctx, entities: Node3D) -> void:
+	var c: Dictionary = ctx.layout.get("phase8", {}).get("gate_bell", {})
+	if c.is_empty():
+		return
+	var node := (load(GATE_BELL_SCENE) as PackedScene).instantiate() as Node3D
+	node.name = String(c.id)
+	node.transform = ctx.ground_xform(Ctx.v2(c.pos), float(c.get("rot_y", 0.0)))
+	ctx.add(entities, node)
+	var model := (load(Ctx.model_path(String(c.model))) as PackedScene).instantiate() as Node3D
+	model.name = "Model"
+	ctx.add(node, model)
 
 
 ## A TipStone (coins on the stone) under every grave plot and old grave.

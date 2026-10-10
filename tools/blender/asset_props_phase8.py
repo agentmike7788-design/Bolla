@@ -703,11 +703,60 @@ def int_inn_fest_decor():
     finish_stable(_join(parts, "ph_int_inn_fest_decor"), "ph_int_inn_fest_decor", "interior", 50, shift=False)
 
 
+BRONZE = L.hexc("#7C6844")
+BRONZE_DARK = L.hexc("#5A4A34")
+ROPE = L.hexc("#8A7656")
+
+
+def prop_gate_bell():
+    """G8 Runde 1 (B8-1): the little bell at the graveyard gate - a wrought-iron arm with a curl, screwed to the
+    front face of the east gate post (the post face at y = 0, the post behind at +Y, the arm reaching out to -Y), a
+    small bronze bell on a yoke and a pull cord with a wooden toggle. The bell, its clapper and the cord are the
+    child mesh `bell` (pivot at the yoke) - GateBell swings it when a visitor comes up. The origin is on the ground
+    below the mount, the top at 1.78 m (the post is 1.85 m). <= 500 tris."""
+    L.reset(8616)
+    parts = []
+    plate = L.prim("cube", loc=(0, -0.008, 1.66), scale=(0.035, 0.008, 0.12))
+    L.bevel(plate, 0.004, 1)
+    parts.append(_p(plate, IRON, var=0.15, ao=0.2, top=0.3))
+    for z in (1.58, 1.74):
+        parts.append(_p(L.prim("cyl", loc=(0, -0.018, z), rot=(90, 0, 0), radius=0.009, depth=0.006, vertices=6), IRON_LIGHT,
+                        ao=0.0))
+    top = [Vector((0, -0.012, 1.765)), Vector((0, -0.2, 1.768)), Vector((0, -0.37, 1.76))]
+    parts.append(_p(sweep(top, 0.008, n=5, name="arm"), IRON, var=0.12, ao=0.0, top=0.4))
+    brace = [Vector((0, -0.012, 1.6)), Vector((0, -0.09, 1.64)), Vector((0, -0.18, 1.7)), Vector((0, -0.28, 1.75)),
+             Vector((0, -0.33, 1.762))]
+    parts.append(_p(sweep(brace, 0.006, n=5, name="brace"), IRON, var=0.12, ao=0.0, top=0.4))
+    curl = [Vector((0, -0.37, 1.76)) + Vector((0, -0.035 * math.sin(a), -0.035 * (1.0 - math.cos(a)))) * (1.0 - a / 9.0)
+            for a in [k * 0.75 for k in range(8)]]
+    parts.append(_p(sweep(curl, 0.005, n=4, name="curl"), IRON, var=0.12, ao=0.0, top=0.4))
+    obj = _join(parts, "ph_prop_gate_bell")
+    pivot = Vector((0.0, -0.3, 1.752))
+    bell_parts = []
+    body = loft([(-0.006, 0.014, 0.014, 0, 0), (-0.03, 0.036, 0.036, 0, 0), (-0.075, 0.046, 0.046, 0, 0),
+                 (-0.112, 0.068, 0.068, 0, 0), (-0.122, 0.074, 0.074, 0, 0), (-0.118, 0.064, 0.064, 0, 0),
+                 (-0.04, 0.026, 0.026, 0, 0)], n=12, caps=(True, False), name="bell_body")
+    L.jitter(body, 0.0015, 25.0, 3)
+    bell_parts.append(_p(body, BRONZE, var=0.18, ao=0.35, top=0.35, hue_shift=BRONZE_DARK))
+    bell_parts.append(_p(L.prim("torus", loc=(0, 0, 0.0), rot=(0, 90, 0), major_radius=0.014, minor_radius=0.004,
+                                major_segments=8, minor_segments=3), IRON, ao=0.0, top=0.3))
+    bell_parts.append(_p(sweep([Vector((0, 0, -0.03)), Vector((0, 0, -0.1))], 0.003, n=4, name="clapper_rod"), IRON, ao=0.0))
+    bell_parts.append(_ell(IRON, (0, 0, -0.106), (0.012, 0.012, 0.014), seg=6, rings=4))
+    cord = [Vector((0, 0, -0.11)), Vector((0.004, 0.006, -0.3)), Vector((0.0, 0.01, -0.5)), Vector((-0.003, 0.012, -0.62))]
+    bell_parts.append(_p(sweep(cord, 0.005, n=4, name="cord"), ROPE, var=0.2, ao=0.0))
+    toggle = L.prim("cyl", loc=(0, 0.012, -0.64), rot=(0, 90, 0), radius=0.013, depth=0.08, vertices=6)
+    bell_parts.append(_p(toggle, WOOD, var=0.2, ao=0.1, top=0.3, hue_shift=WOOD_DARK))
+    bell = _join(bell_parts, "bell")
+    bell.location = pivot
+    bell.parent = obj
+    finish_stable(obj, "ph_prop_gate_bell", "props", 40, shift=False)
+
+
 PROPS = (prop_grave_flowers, prop_grave_flowers_wilted, prop_wax_wreath, prop_grave_candle, prop_mortsafe,
          prop_grave_disturbed, prop_tip_coins, prop_chalkboard, prop_apprentice_box, prop_apprentice_bench,
          prop_rain_barrel, prop_peddler_kiepe, int_church_archive, int_memorial_plate, int_inn_fest_decor,
          tool_rake_small, tool_watering_can, tool_broom, tool_lantern_hand, tool_spade_robber, tool_lantern_blind,
-         prop_tin_cup, prop_bouquet_heath, prop_bouquet_fir, prop_bouquet_straw, prop_bouquet_rose)
+         prop_tin_cup, prop_bouquet_heath, prop_bouquet_fir, prop_bouquet_straw, prop_bouquet_rose, prop_gate_bell)
 
 
 def build(names=None):

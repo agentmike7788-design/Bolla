@@ -3,7 +3,7 @@ extends UIPanel
 ## &"wish_card" – a visitor's wish in the talk at the grave (docs/PHASE8_DESIGN.md §2.2.5, §7.2): context
 ## {offer {wish_id, kind, grave_id, text}, kin_id, speaker, inventory, player} (dialogue action wish_offer).
 ## Shows the visitor (portrait, name), the grave („Hedwig Lamprecht, Lindenacker"), the wish as a quote, its
-## kind as a symbol (flower, candle, rake, chisel, vase), the deadline „bis zum nächsten Besuch (≈ in 3
+## kind as a symbol (flower, candle, rake, chisel, vase), where it comes from (G8 Runde 1: offer.source), the deadline „bis zum nächsten Besuch (≈ in 3
 ## Tagen)" and the thanks without a number („Die Kehrs werden es dir danken."). „Das mache ich." →
 ## Visitors.accept_wish; „Ich kann es nicht versprechen." closes. With three wishes open already both are
 ## dimmed: „Drei Wünsche sind schon offen."
@@ -26,6 +26,7 @@ var quote_label: Label
 var kind_label: Label
 var kind_icon: TextureRect
 var line_label: Label
+var origin_label: Label
 var deadline_label: Label
 var reward_label: Label
 var full_label: Label
@@ -73,6 +74,10 @@ func _build() -> void:
 	text_col.add_child(quote_label)
 	line_label = UIKit.label("", &"InkHeaderLabel", true)
 	text_col.add_child(line_label)
+	# G8 Runde 1 (B8-2): where the thing comes from (WishData.source_text – the vase: the workbench, Theres' seeds).
+	origin_label = UIKit.label("", &"InkDimLabel", true)
+	origin_label.custom_minimum_size.x = panel_width - 220.0
+	text_col.add_child(origin_label)
 	card_box.add_child(text_col)
 	card.add_child(card_box)
 	box.add_child(card)
@@ -120,6 +125,9 @@ func _refresh() -> void:
 	var line := line_text()
 	line_label.text = Phase8Texts.WISH_LINE % line if line != "" else ""
 	line_label.visible = line != ""
+	var origin := str(offer.get("source", ""))
+	origin_label.text = Phase8Texts.WISH_SOURCE % origin if origin != "" else ""
+	origin_label.visible = origin != ""
 	deadline_label.text = Phase8Texts.wish_deadline(days_to_next_visit())
 	reward_label.text = Phase8Texts.wish_reward(kin_id)
 	var full := is_full()

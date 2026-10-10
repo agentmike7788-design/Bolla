@@ -485,7 +485,7 @@ func _on_hill() -> bool:
 
 ## Serves every waiting visitor once: the tip in the hand, a wish the strategy keeps. A visitor on the hill (coming up,
 ## laying flowers, mourning) is waited for – minute by minute, nothing skipped – until he waits at the grave (he only
-## waits ten minutes for a word, VisitorConfig.wait_minutes).
+## waits up to VisitorConfig.wait_minutes for a word – G8 Runde 1: 100, till 16:30, then the gate bell rang long ago).
 ## The slot (+1) of today's next planned visit not yet on its way and starting within `minutes`; 0 = none.
 func _visit_starting_within(minutes: int) -> int:
 	var vs := visitors.save_state()
@@ -525,7 +525,7 @@ func _serve() -> void:
 	if not p8_open() or not _on_hill():
 		return
 	if flags.wishes or flags.tips:
-		# A visitor due within half an hour is waited for (the talk window at the grave is ~40 minutes, §2.2).
+		# A visitor due within half an hour is waited for (G8 Runde 1: he waits up to 100 minutes for a word, §2.2.3).
 		var due := _visit_starting_within(30)
 		while due > 0 and TimeManager.minute_of_day < due and TimeManager.minute_of_day < EVENING:
 			TimeManager.advance(1)
@@ -573,6 +573,8 @@ func _serve_visit(v: Dictionary) -> void:
 		elif not offer.is_empty():
 			_t8("wish declined: %s@%s" % [offer.get("kind", "?"), offer.get("grave_id", "?")])
 	UIState.clear()
+	# G8 Runde 1 (B8-1): the talk is over – the visitor goes a few minutes later (as after the real dialogue's end).
+	visitors.note_talked(str(v.visit_id))
 	visits_served.append(row)
 	_t8("visit %s: tip %d, wish %s" % [kin, int(row.tip), row.wish])
 

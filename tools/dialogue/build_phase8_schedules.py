@@ -292,10 +292,11 @@ def smith():
 def grocer():
     v = "visit_grocer_day"
     patch("grocer", [
-        # §2.1.4: Theres at old_08 (Dorothee Mahn) 14:40–15:10, kneeling; the shop is shut 14:05–16:00.
+        # §2.1.4: Theres at old_08 (Dorothee Mahn) 14:40–15:30, kneeling, then waiting for a word (G8 Runde 1: 30 + look 2
+        # + VisitorConfig.wait_minutes_villager 18); the shop is shut 14:05–16:00.
         walk(845, ["v_shop_window", "v_well", "v_bridge", "v_road_in"], 8, v),
         hide(853, "v_road_in", v),
-    ] + visit("gv_old_08", 880, 910, v, "v_grocer", "kneel") + [
+    ] + visit("gv_old_08", 880, 930, v, "v_grocer", "kneel") + [
         walk(945, ["v_road_in", "v_bridge", "v_well", "v_shop_window"], 10, v),
         stay(955, "v_shop_window", "v_grocer", v, animation="work", activity="shop"),
         walk(1135, ["v_shop_window", "v_inn_door"], 5, KATHREIN),
@@ -359,12 +360,13 @@ def washer():
     f = "night_np_ott_washer_day"
     patch("washer", [
         # §2.1.4: Liesel at the Lindenacker 09:40–10:40 instead of the wake (the graves of both cottages – P2 picks the
-        # grave at runtime; linden_spot is the data fallback).
+        # grave at runtime; linden_spot is the data fallback). G8 Runde 1: until 12:00 – her round of up to six graves
+        # (30 + 5 × 15 + look 2) and the wait for a word (VisitorConfig.wait_minutes_villager 18).
         walk(540, ["v_dorn_door", "v_well", "v_bridge", "v_road_in"], 8, v),
         hide(548, "v_road_in", v),
-    ] + visit("linden_spot", 580, 640, v, "v_washer", "kneel") + [
-        walk(690, ["v_road_in", "v_bridge", "v_well", "v_dorn_door"], 8, v),
-        hide(698, "v_dorn_door", v),
+    ] + visit("linden_spot", 580, 720, v, "v_washer", "kneel") + [
+        walk(770, ["v_road_in", "v_bridge", "v_well", "v_dorn_door"], 8, v),
+        hide(778, "v_dorn_door", v),
         # §2.7.1: 20:00–21:00 at the dance.
         walk(1195, ["v_dorn_door", "v_inn_door"], 5, KATHREIN),
         stay(1200, "v_in_inn_fest_3", "v_washer", KATHREIN),
