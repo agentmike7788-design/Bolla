@@ -12,7 +12,7 @@ Regel: **BAUE → TESTE → ZEIGE → WARTE AUF FREIGABE.** Keine Phase startet 
 | 5 | Crafting und Ressourcen | ✅ freigegeben (28.09.2026) |
 | 6 | Gebäude | ✅ freigegeben (03.10.2026) |
 | 7 | Dorf | ✅ freigegeben (04.10.2026) |
-| 8 | NPCs | 🔵 Planung – Vertrag `docs/PHASE8_DESIGN.md` (Entwurf v1, Vertragsfragen §14 offen) |
+| 8 | NPCs | 🟡 Gate G8 PENDING – gebaut (W0–W3), wartet auf Benutzerprüfung |
 | 9 | Quests | – |
 | 10 | Wirtschaft | – |
 | 11 | Welt erweitern | – |
