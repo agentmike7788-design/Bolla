@@ -3402,7 +3402,9 @@ func test_phase8_chatter_texts() -> void:
 const P8_SCHEDULES: PackedStringArray = ["innkeeper", "smith", "grocer", "mayor", "priest", "surgeon", "washer", "carter"]
 const P8_FLAGS: PackedStringArray = ["visit_smith_day", "visit_grocer_day", "visit_washer_day", "fest_kathrein_day", "fest_lights_day",
 		"night_np_ott_priest_day", "night_np_kehr_priest_day", "night_np_ott_surgeon_day", "night_np_kehr_surgeon_day",
-		"night_np_ott_washer_day", "beggar_gate_day", "peddler_day", "apprentice_off_day"]
+		"night_np_ott_washer_day", "beggar_gate_day", "peddler_day", "apprentice_off_day",
+		# W3 (QA8-03): the meet orders of Fenner 2 and Rosine 3 bring them to their place.
+		"meet_mayor_day", "meet_innkeeper_day"]
 
 
 func _sched(npc: String) -> NpcSchedule:

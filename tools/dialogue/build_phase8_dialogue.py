@@ -56,7 +56,9 @@ def story_blocks(npc, stories, listen_text, cross_text, favor=None, returns=(), 
         label, ask, choices = favor
         menu.append(C("[Gefallen] %s" % label, "favor", ["step_gte:%s:3" % npc, "favor_ready:%s" % npc]))
         nodes.append(N("favor", ask, choices + [C("Ein andermal.", "menu")]))
-        nodes.append(N("favor_done", favor_thanks(npc), back()))
+        # QA8-01: a favour chosen in the favour panel (Lenz, Theres) thanks there – no unreachable node.
+        if any(getattr(c, "next", None) == "favor_done" or (isinstance(c, dict) and c.get("next") == "favor_done") for c in choices):
+            nodes.append(N("favor_done", favor_thanks(npc), back()))
     for oid, title, offer, yes, thanks in returns:
         menu.append(C("[Gegengefallen] %s" % title, "o_%s" % oid, ["order_offerable:%s" % oid]))
         menu.append(C("[Gegengefallen] Hier ist es: %s" % title, "t_%s" % oid, ["order_ready:%s" % oid],

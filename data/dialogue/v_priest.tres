@@ -278,17 +278,6 @@ id = &"favor"
 text = "Eine Fürbitte? Für einen Ihrer Toten? Gern. Drei Nächte. Sagen Sie mir nur, für wen. Gott kennt den Namen, aber ich nicht."
 choices = Array[ExtResource("2")]([SubResource("p8_favor_c01"), SubResource("p8_favor_c02")])
 
-[sub_resource type="Resource" id="p8_favor_done_c01"]
-script = ExtResource("2")
-text = "…"
-next = &"menu"
-
-[sub_resource type="Resource" id="p8_node_favor_done"]
-script = ExtResource("1")
-id = &"favor_done"
-text = "Ich bete für ihn. Drei Nächte. Gott hört zu, auch wenn er nicht antwortet. Die Toten vielleicht auch."
-choices = Array[ExtResource("2")]([SubResource("p8_favor_done_c01")])
-
 [sub_resource type="Resource" id="p8_o_of_lenz_return_1_c01"]
 script = ExtResource("2")
 text = "Ich kümmere mich darum."
@@ -805,4 +794,4 @@ script = ExtResource("3")
 id = &"v_priest"
 speaker_name = "Pfarrer Ambrosius Lenz"
 start_node = &"start"
-nodes = Array[ExtResource("1")]([SubResource("v_priest_node_start"), SubResource("v_priest_node_greet_p_devout"), SubResource("v_priest_node_greet_p_hardhearted"), SubResource("v_priest_node_greet_disreputable"), SubResource("v_priest_node_greet_unremarkable"), SubResource("v_priest_node_greet_respected"), SubResource("v_priest_node_greet_esteemed"), SubResource("v_priest_node_greet_renowned"), SubResource("v_priest_node_menu"), SubResource("v_priest_node_consecrate"), SubResource("v_priest_node_consecrate_paid"), SubResource("v_priest_node_deathbook"), SubResource("v_priest_node_deathbook_read"), SubResource("v_priest_node_lorenz"), SubResource("v_priest_node_lorenz_south"), SubResource("v_priest_node_visits"), SubResource("v_priest_node_o_o_lenz_service"), SubResource("v_priest_node_o_o_lenz_service_yes"), SubResource("v_priest_node_o_o_lenz_poor"), SubResource("v_priest_node_o_o_lenz_poor_yes"), SubResource("v_priest_node_t_o_lenz_poor"), SubResource("v_priest_node_bye"), SubResource("v_priest_node_bye_plain"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_favor_done"), SubResource("p8_node_o_of_lenz_return_1"), SubResource("p8_node_o_of_lenz_return_1_yes"), SubResource("p8_node_t_of_lenz_return_1"), SubResource("p8_node_o_of_lenz_return_2"), SubResource("p8_node_o_of_lenz_return_2_yes"), SubResource("p8_node_t_of_lenz_return_2"), SubResource("p8_node_dance"), SubResource("p8_node_p8_plate"), SubResource("p8_node_story_1_turn_in"), SubResource("p8_node_p8_names_inside"), SubResource("p8_node_p8_row3")])
+nodes = Array[ExtResource("1")]([SubResource("v_priest_node_start"), SubResource("v_priest_node_greet_p_devout"), SubResource("v_priest_node_greet_p_hardhearted"), SubResource("v_priest_node_greet_disreputable"), SubResource("v_priest_node_greet_unremarkable"), SubResource("v_priest_node_greet_respected"), SubResource("v_priest_node_greet_esteemed"), SubResource("v_priest_node_greet_renowned"), SubResource("v_priest_node_menu"), SubResource("v_priest_node_consecrate"), SubResource("v_priest_node_consecrate_paid"), SubResource("v_priest_node_deathbook"), SubResource("v_priest_node_deathbook_read"), SubResource("v_priest_node_lorenz"), SubResource("v_priest_node_lorenz_south"), SubResource("v_priest_node_visits"), SubResource("v_priest_node_o_o_lenz_service"), SubResource("v_priest_node_o_o_lenz_service_yes"), SubResource("v_priest_node_o_o_lenz_poor"), SubResource("v_priest_node_o_o_lenz_poor_yes"), SubResource("v_priest_node_t_o_lenz_poor"), SubResource("v_priest_node_bye"), SubResource("v_priest_node_bye_plain"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_o_of_lenz_return_1"), SubResource("p8_node_o_of_lenz_return_1_yes"), SubResource("p8_node_t_of_lenz_return_1"), SubResource("p8_node_o_of_lenz_return_2"), SubResource("p8_node_o_of_lenz_return_2_yes"), SubResource("p8_node_t_of_lenz_return_2"), SubResource("p8_node_dance"), SubResource("p8_node_p8_plate"), SubResource("p8_node_story_1_turn_in"), SubResource("p8_node_p8_names_inside"), SubResource("p8_node_p8_row3")])

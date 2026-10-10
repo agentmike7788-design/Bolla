@@ -606,7 +606,7 @@ func _reapply_schedules() -> void:
 	if not is_inside_tree():
 		return
 	for v: Dictionary in _plan:
-		if bool(v.get("ended", false)):
+		if v.get("ended", false) is bool and bool(v.get("ended", false)):
 			continue
 		var phase := phase_of(v)
 		if phase != &"" and phase != &"gone":
