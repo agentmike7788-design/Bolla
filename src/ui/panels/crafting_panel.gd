@@ -16,6 +16,8 @@ extends UIPanel
 ## Phase 6 (docs/PHASE6_DESIGN.md §2.5, §7): from shed 2 every input chip says „im Schuppen: n" and
 ## a recipe with something missing gets „Fehlendes holen (10 Min)" (workbench.request_fetch(inputs),
 ## dimmed with ShedSupply's reason); from shed 3 „Überschuss einlagern" (workbench.request_store()).
+## Phase 8 (docs/PHASE8_DESIGN.md §2.11, W1-Anschlüsse 4): a recipe with RecipeData.requires_flag is offered only while
+## that flag is set (offered(); the memorial plate after Rosine's second step).
 
 const TEXT_TITLE := "Werkbank"
 const TEXT_OWNED := "im Besitz: %d"
@@ -57,6 +59,11 @@ var shed_bar: ShedFetchBar
 ## Phase 7 (docs/PHASE7_DESIGN.md §3.4): at the station pult the second card „Präparate und Arzneien"
 ## (opens &"pult" with the same context).
 var pult_button: Button
+
+
+## Phase 8: RecipeData.requires_flag is empty or set in GameState.
+static func offered(recipe: RecipeData) -> bool:
+	return recipe != null and (recipe.requires_flag == &"" or GameState.flag_on(recipe.requires_flag))
 
 
 func _build() -> void:
@@ -122,7 +129,7 @@ func _refresh() -> void:
 	var store_state := Phase6Texts.shed_state_in(get_tree() if is_inside_tree() else null, {}, _inventory)
 	store_state["reason"] = ShedSupply.TEXT_NOTHING_MISSING
 	shed_bar.show_state(store_state, action_running)
-	var recipes := Database.recipes(_station())
+	var recipes := Database.recipes(_station()).filter(func(r: Resource) -> bool: return offered(r as RecipeData))
 	# Quick to slow (shroud, cross, gravestone), then by id.
 	recipes.sort_custom(func(a: Resource, b: Resource) -> bool:
 		var ra := a as RecipeData

@@ -12,6 +12,9 @@ extends CanvasLayer
 ## Phase 7 (docs/PHASE7_DESIGN.md §7): the village panels (shop, gift, orders, anatomist, lecture, pult,
 ## collection, deduction), the screen veil (above the panels, below the portal fade), the region name and
 ## the remark bubbles.
+## Phase 8 (docs/PHASE8_DESIGN.md §7): the chalk board, the wish card, the favour and festival panels, the
+## encounters' bubbles, the festival banner (below the veil) and the Phase-8 rows of the day summary and of the
+## chapter panel „Wer heraufkommt".
 ## Phase 4 (docs/PHASE4_DESIGN.md §3.6, §7): J toggles the Merkbuch (not while building, not in a
 ## dialogue; context JournalManager.panel_context()), the trade panel &"trader" opens over
 ## Ilse's dialogue (dialogue action open_panel:trader).
@@ -23,6 +26,7 @@ const PANEL_PAUSE := &"pause"
 const PANEL_INVENTORY := &"inventory"
 const PANEL_OVERVIEW := &"cemetery_overview"
 const PANEL_DAY_SUMMARY := &"day_summary"
+const PANEL_SLICE_SUMMARY := &"slice_summary"
 const PANEL_JOURNAL := &"journal"
 const PANEL_MAP := &"map"
 const ACTION_MAP_TOGGLE := &"map_toggle"
@@ -63,6 +67,11 @@ const PANEL_SCRIPTS: Dictionary[StringName, Script] = {
 	&"deduction": preload("res://src/ui/panels/deduction_panel.gd"),
 	# G7 Änderungsrunde 1: the map
 	&"map": preload("res://src/ui/panels/map_panel.gd"),
+	# Phase 8 (docs/PHASE8_DESIGN.md §7)
+	&"apprentice_board": preload("res://src/ui/panels/apprentice_board_panel.gd"),
+	&"wish_card": preload("res://src/ui/panels/wish_card.gd"),
+	&"favor": preload("res://src/ui/panels/favor_panel.gd"),
+	&"fest": preload("res://src/ui/panels/fest_panel.gd"),
 }
 
 ## Called for "Beenden" (tests replace it).
@@ -87,6 +96,10 @@ var day_log: Phase5DayLog
 var veil: ScreenVeil
 var region_label: RegionLabel
 var remark_bubbles: RemarkBubbles
+## Phase 8 (§7.5, §7.6): the encounters' bubbles, the festival banner, the day log of the Phase-8 rows.
+var chatter_bubbles: ChatterBubbles
+var fest_banner: FestBanner
+var day_log8: Phase8DayLog
 
 ## Open UI, bottom → top: panel ids and &"dialogue".
 var _stack: Array[StringName] = []
@@ -123,6 +136,13 @@ func _ready() -> void:
 	root_control.add_child(screen_fade)
 	remark_bubbles = RemarkBubbles.new()
 	add_child(remark_bubbles)
+	chatter_bubbles = ChatterBubbles.new()
+	add_child(chatter_bubbles)
+	fest_banner = FestBanner.new()
+	root_control.add_child(fest_banner)
+	root_control.move_child(fest_banner, veil.get_index())
+	day_log8 = Phase8DayLog.new()
+	add_child(day_log8)
 	notices = Phase3Notices.new()
 	notices.name = "Phase3Notices"
 	add_child(notices)
@@ -197,6 +217,10 @@ func open_panel(panel: StringName, context: Dictionary) -> void:
 		context = DaySummaryPanel.complete_context(context, get_tree() if is_inside_tree() else null, notices.take_unlocked() if notices != null else [] as Array[StringName])
 		if day_log != null:
 			context = DaySummaryPanel.complete_phase5(context, day_log.take())
+		if day_log8 != null:
+			context = DaySummaryPanel.complete_phase8(context, day_log8.take(get_tree() if is_inside_tree() else null))
+	if panel == PANEL_SLICE_SUMMARY and StringName(str(context.get("variant", ""))) == Phase8Texts.CHAPTER_ID:
+		context = SliceSummaryPanel.complete_who_comes_up(context, get_tree() if is_inside_tree() else null)
 	node.open(context)
 	_update_visibility()
 
@@ -257,7 +281,10 @@ func open_journal(page: StringName = &"people") -> void:
 	var journal := get_tree().get_first_node_in_group(JOURNAL_GROUP) if is_inside_tree() else null
 	if journal == null or not journal.has_method(&"panel_context"):
 		return
-	open_panel(PANEL_JOURNAL, journal.call(&"panel_context", page))
+	var ctx: Dictionary = journal.call(&"panel_context", page)
+	# The Phase-7/8 tabs (Aufträge, Hollerbrück, Angehörige) are the panel's own: JournalManager knows only its four.
+	ctx["page"] = page
+	open_panel(PANEL_JOURNAL, ctx)
 
 
 ## M: opens the map when nothing is open (not in build mode), closes it when on top.

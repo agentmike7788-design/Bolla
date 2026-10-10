@@ -108,9 +108,32 @@ const MODELS: Dictionary[StringName, String] = {
 	&"villager_surgeon": "res://assets/models/characters/ph_chr_v_surgeon.glb",
 	&"villager_washer": "res://assets/models/characters/ph_chr_v_washer.glb",
 	&"villager_oldwoman": "res://assets/models/characters/ph_chr_v_oldwoman.glb",
+	# Phase 8 (docs/PHASE8_DESIGN.md §8.4): the ten new items (models of P5) …
+	&"flower_seedlings": "res://assets/models/items/ph_item_flower_seedlings.glb",
+	&"grave_candle": "res://assets/models/items/ph_item_grave_candle.glb",
+	&"watering_can": "res://assets/models/items/ph_item_watering_can.glb",
+	&"apprentice_rake": "res://assets/models/items/ph_item_apprentice_rake.glb",
+	&"mortsafe": "res://assets/models/items/ph_item_mortsafe.glb",
+	&"wax_wreath": "res://assets/models/items/ph_item_wax_wreath.glb",
+	&"register_extract": "res://assets/models/items/ph_item_register_extract.glb",
+	&"memorial_plate": "res://assets/models/items/ph_item_memorial_plate.glb",
+	&"quast_crate": "res://assets/models/items/ph_item_quast_crate.glb",
+	&"lorenz_ledger_2": "res://assets/models/items/ph_item_lorenz_ledger_2.glb",
+	# … and the portraits of the new people (Merkbuch „Hollerbrück" / „Angehörige", wish card, favour panel).
+	&"villager_apprentice": "res://assets/models/characters/ph_chr_apprentice.glb",
+	&"villager_beggar": "res://assets/models/characters/ph_chr_beggar.glb",
+	&"villager_peddler": "res://assets/models/characters/ph_chr_peddler.glb",
+	&"kin_kehr": "res://assets/models/characters/ph_chr_mourner_w_a.glb",
+	&"kin_brandt": "res://assets/models/characters/ph_chr_mourner_m_a.glb",
+	&"kin_ott": "res://assets/models/characters/ph_chr_mourner_w_b.glb",
+	&"kin_sieber": "res://assets/models/characters/ph_chr_mourner_m_b.glb",
 }
-## Ids framed as a portrait: only the top PORTRAIT_SHARE of the model, seen from the front.
+## Ids framed as a portrait: only the top PORTRAIT_SHARE of the model, seen from the front
+## (villager_<id>; Phase 8: also the households kin_<house>).
 const PORTRAIT_PREFIX := "villager_"
+const PORTRAIT_PREFIX_KIN := "kin_"
+## The one prop mesh a portrait keeps: the hat on the head (hat_head; not hat_hand).
+const PORTRAIT_KEEP := "hat_head"
 const PORTRAIT_SHARE := 0.26
 ## Width (m) the portrait frame may span at most (head and shoulders).
 const PORTRAIT_WIDTH := 0.46
@@ -150,8 +173,14 @@ func _run() -> void:
 			continue
 		var model := scene.instantiate() as Node3D
 		viewport.add_child(model)
+		var portrait := String(id).begins_with(PORTRAIT_PREFIX) or String(id).begins_with(PORTRAIT_PREFIX_KIN)
+		if portrait:
+			# Phase 8: props carried as child meshes (glTF extras: rake, can, lantern, kiepe, hat in hand)
+			# stay out of a head-and-shoulders portrait and out of its frame.
+			for child: Node in model.find_children("*", "MeshInstance3D", true, false):
+				if child.has_meta(&"extras") and not String(child.name).begins_with(PORTRAIT_KEEP):
+					(child as Node3D).visible = false
 		var box := _aabb(model)
-		var portrait := String(id).begins_with(PORTRAIT_PREFIX)
 		if portrait:
 			box.position.y += box.size.y * (1.0 - PORTRAIT_SHARE)
 			box.size.y *= PORTRAIT_SHARE
@@ -229,6 +258,8 @@ func _aabb(node: Node3D) -> AABB:
 	var first := true
 	for child: Node in node.find_children("*", "MeshInstance3D", true, false):
 		var mesh := child as MeshInstance3D
+		if not mesh.visible:
+			continue
 		var b := mesh.global_transform * mesh.get_aabb()
 		box = b if first else box.merge(b)
 		first = false

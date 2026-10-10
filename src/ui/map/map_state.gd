@@ -8,6 +8,8 @@ extends RefCounted
 ## sections {id: {name, unlocked, known}}, graves {grave_id: &"free" | &"taken" | &"tended" | &"locked"},
 ## people [{id, name, kind, region, world: Vector3}], orders [{id, title, region, place, giver}],
 ## shops {shop_id: {open: bool, hours: Array[Vector2i], keeper: String}}, minute, building_levels {id: level}.
+## Phase 8 (docs/PHASE8_DESIGN.md §7.8): p8 {marks, grave_info} (MapStatePhase8) – visitors, Jakob, wishes, coins on
+## the stone, Hanne, Veit, the sick light, the festival, disturbed graves; never the night digger.
 
 const PLAYER_GROUP := &"player"
 const EXPANSION_GROUP := &"expansion"
@@ -48,6 +50,7 @@ static func context(tree: SceneTree, cfg: MapConfig) -> Dictionary:
 	ctx.people = people(tree, cfg)
 	ctx.orders = orders(tree, cfg)
 	ctx.shops = shops(tree)
+	ctx["p8"] = MapStatePhase8.context(tree)
 	var buildings := tree.get_first_node_in_group(BUILDINGS_GROUP) as Buildings
 	if buildings != null:
 		var levels := {}
@@ -117,7 +120,7 @@ static func people(tree: SceneTree, cfg: MapConfig) -> Array[Dictionary]:
 	var rel := tree.get_first_node_in_group(RELATIONSHIPS_GROUP) as Relationships
 	for node: Node in tree.get_nodes_in_group(NPC_GROUP):
 		var npc := node as Npc
-		if npc == null or not npc.is_inside_tree() or not npc.is_present():
+		if npc == null or not npc.is_inside_tree() or not npc.is_present() or npc.npc_id in MapStatePhase8.ROBBER_IDS:
 			continue
 		var kind := &""
 		var name := ""

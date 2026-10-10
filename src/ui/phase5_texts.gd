@@ -70,7 +70,8 @@ const DAY_SPENT := "Ausgaben"
 ## "27 Münzen (Bau 15 · Osric 12)"
 const DAY_SPENT_VALUE := "%d %s (%s)"
 const SPENT_LABELS: Dictionary[StringName, String] = {&"license": "Brief", &"build": "Bau", &"building": "Gebäude", &"osric": "Osric", &"ilse": "Ilse",
-		&"village": "Dorf", &"donation": "Spenden", &"round": "Runden", &"consecration": "Weihe"}
+		&"village": "Dorf", &"donation": "Spenden", &"round": "Runden", &"consecration": "Weihe",
+		&"apprentice": "Jakob", &"alms": "Almosen", &"peddler": "Hanne"}
 
 # --- chapter „Namen in Stein" -------------------------------------------------------------------
 const CHAPTER_ID := &"names_in_stone"

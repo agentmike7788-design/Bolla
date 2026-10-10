@@ -25,6 +25,8 @@
 ; NoteStory (Osric's arrival lines), TradeRowPanel, WhisperLabel (Ilse Kranich's lines).
 ; Phase 6: LevelCardDone / LevelCardNext / LevelCardLater (level cards of the building panel:
 ; built = moss frame, next = amber frame, later = dimmed).
+; Phase 8: the chalk board of Jakob's work list – SlatePanel / SlateRowPanel (slate in a wooden frame),
+; ChalkLabel / ChalkDimLabel / ChalkHeaderLabel / ChalkMarkLabel (chalk grey), ChalkButton / ChalkSelected.
 [gd_resource type="Theme" format=3]
 
 [sub_resource type="StyleBoxFlat" id="sb_window"]
@@ -1008,6 +1010,101 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
+[sub_resource type="StyleBoxFlat" id="sb_slate"]
+content_margin_left = 34.0
+content_margin_top = 24.0
+content_margin_right = 34.0
+content_margin_bottom = 22.0
+bg_color = Color(0.157, 0.18, 0.18, 1)
+border_width_left = 10
+border_width_top = 10
+border_width_right = 10
+border_width_bottom = 10
+border_color = Color(0.42, 0.29, 0.17, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+shadow_color = Color(0.06, 0.04, 0.03, 0.5)
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="sb_slate_row"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.2, 0.227, 0.224, 1)
+border_width_bottom = 1
+border_color = Color(0.58, 0.6, 0.57, 0.35)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="sb_chalk_button"]
+content_margin_left = 14.0
+content_margin_top = 6.0
+content_margin_right = 14.0
+content_margin_bottom = 6.0
+bg_color = Color(0.19, 0.216, 0.212, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.78, 0.79, 0.74, 0.55)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="sb_chalk_button_hover"]
+content_margin_left = 14.0
+content_margin_top = 6.0
+content_margin_right = 14.0
+content_margin_bottom = 6.0
+bg_color = Color(0.24, 0.27, 0.26, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.949, 0.663, 0.231, 0.85)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="sb_chalk_button_disabled"]
+content_margin_left = 14.0
+content_margin_top = 6.0
+content_margin_right = 14.0
+content_margin_bottom = 6.0
+bg_color = Color(0.17, 0.19, 0.19, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.58, 0.6, 0.57, 0.25)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="sb_chalk_button_selected"]
+content_margin_left = 14.0
+content_margin_top = 6.0
+content_margin_right = 14.0
+content_margin_bottom = 6.0
+bg_color = Color(0.25, 0.28, 0.27, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 3
+border_color = Color(0.92, 0.92, 0.86, 0.95)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
 [resource]
 default_font_size = 22
 AccentButton/base_type = &"Button"
@@ -1362,3 +1459,42 @@ RegionLabel/colors/font_color = Color(0.93, 0.88, 0.77, 1)
 RegionLabel/colors/font_outline_color = Color(0.063, 0.086, 0.122, 0.85)
 RegionLabel/constants/outline_size = 8
 RegionLabel/font_sizes/font_size = 34
+ChalkButton/base_type = &"Button"
+ChalkButton/colors/font_color = Color(0.9, 0.9, 0.85, 1)
+ChalkButton/colors/font_disabled_color = Color(0.58, 0.6, 0.57, 0.6)
+ChalkButton/colors/font_focus_color = Color(0.95, 0.95, 0.9, 1)
+ChalkButton/colors/font_hover_color = Color(0.98, 0.93, 0.82, 1)
+ChalkButton/colors/font_pressed_color = Color(0.949, 0.663, 0.231, 1)
+ChalkButton/font_sizes/font_size = 21
+ChalkButton/styles/disabled = SubResource("sb_chalk_button_disabled")
+ChalkButton/styles/focus = SubResource("sb_empty")
+ChalkButton/styles/hover = SubResource("sb_chalk_button_hover")
+ChalkButton/styles/normal = SubResource("sb_chalk_button")
+ChalkButton/styles/pressed = SubResource("sb_chalk_button_hover")
+ChalkSelected/base_type = &"Button"
+ChalkSelected/colors/font_color = Color(0.98, 0.97, 0.92, 1)
+ChalkSelected/colors/font_disabled_color = Color(0.58, 0.6, 0.57, 0.6)
+ChalkSelected/colors/font_focus_color = Color(0.98, 0.97, 0.92, 1)
+ChalkSelected/colors/font_hover_color = Color(0.98, 0.93, 0.82, 1)
+ChalkSelected/font_sizes/font_size = 21
+ChalkSelected/styles/disabled = SubResource("sb_chalk_button_disabled")
+ChalkSelected/styles/focus = SubResource("sb_empty")
+ChalkSelected/styles/hover = SubResource("sb_chalk_button_hover")
+ChalkSelected/styles/normal = SubResource("sb_chalk_button_selected")
+ChalkSelected/styles/pressed = SubResource("sb_chalk_button_selected")
+ChalkLabel/base_type = &"Label"
+ChalkLabel/colors/font_color = Color(0.9, 0.9, 0.85, 1)
+ChalkLabel/font_sizes/font_size = 22
+ChalkDimLabel/base_type = &"Label"
+ChalkDimLabel/colors/font_color = Color(0.64, 0.66, 0.62, 1)
+ChalkDimLabel/font_sizes/font_size = 19
+ChalkHeaderLabel/base_type = &"Label"
+ChalkHeaderLabel/colors/font_color = Color(0.95, 0.95, 0.9, 1)
+ChalkHeaderLabel/font_sizes/font_size = 30
+ChalkMarkLabel/base_type = &"Label"
+ChalkMarkLabel/colors/font_color = Color(0.95, 0.95, 0.9, 1)
+ChalkMarkLabel/font_sizes/font_size = 30
+SlatePanel/base_type = &"PanelContainer"
+SlatePanel/styles/panel = SubResource("sb_slate")
+SlateRowPanel/base_type = &"PanelContainer"
+SlateRowPanel/styles/panel = SubResource("sb_slate_row")

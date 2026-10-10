@@ -41,6 +41,12 @@ extends RefCounted
 ## um die Weihe" / „Der Pfarrer kommt am Vormittag" · „Der Wundarzt will dich sprechen" · „Wiebke Hagedorns
 ## letzter Wunsch" · „Auftrag: <Titel> (noch n Tage)" · „Ein Name im Dorf: 3/4" · „Die Gemeindetafel hat neue
 ## Bitten". The Lindenacker is no Phase-3 section step while the village line names it.
+## Phase 8 (docs/PHASE8_DESIGN.md §7.5), `world.p8` from Phase8Status.objective_state(): after the Phase-7 chapter
+## Phase8Texts.objective – „Sprich mit Osric" · „Martha Kehr wartet am Grab" · „Heute Abend ist Lichtgang" /
+## „Kein Grab ohne Licht: 31/34" · „Rosine will dich sprechen" · „Kreidetafel: Arbeitsliste für Jakob" · „Zeig
+## Jakob, wie man harkt" · „Wunsch: Blumen für … (≈ 2 Tage)" · „Lohndose leer – …" · „Hanne Vogelsang ist am Tor
+## (bis 16:20)" · Kathreintanz · „Bei den Otts brennt Licht" · „Merkbuch: Wer geht nachts zu den Kranken?" · „Ein
+## Grab ist aufgewühlt" · „Wer heraufkommt: 3/4", then the Phase-7 board line.
 
 const TEXT_WAIT_CARTER := "Der Leichenkutscher kommt gegen %s"
 const TEXT_TO_TABLE := "Leiche zum Leichentisch bringen"
@@ -121,6 +127,13 @@ static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], in
 		return workshop
 	var buildings := Phase6Texts.objective(world)
 	var village := Phase7Texts.objective(world)
+	# Phase 8 follows the Phase-7 chain: once „Ein Name im Dorf" is done its line comes first – only an urgent
+	# order of Phase 7 still goes before the plain chapter count „Wer heraufkommt: n/4".
+	var people := Phase8Texts.objective(world)
+	if people != "" and bool(world.get("goal_done", false)):
+		if village != "" and village != Phase7Texts.OBJ_BOARD and people.begins_with(Phase8Texts.OBJ_GOAL.get_slice("%", 0)):
+			return village
+		return people
 	if village != "" and (buildings == "" or bool(world.get("goal_done", false))):
 		return village
 	if buildings != "":

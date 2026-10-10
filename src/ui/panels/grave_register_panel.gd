@@ -9,6 +9,9 @@ extends UIPanel
 ## „Präparate" – the number taken, the returned ones as „(1 ✓)"; a deduced dead carries a small seal ◆ after
 ## the name. The live systems fill the entries in on opening (complete_entries). Lindenacker graves read
 ## „Linde 3"; the new stones on the old graves are named in the subtitle.
+## Phase 8 (docs/PHASE8_DESIGN.md §7.6): from p8_open a column „Angehörige" – the house of the dead's kin and the
+## symbols ✿ flowers, ¡ candle, # mortsafe, ! disturbed (Phase8Status.grave_info); the subtitle names a plot held
+## for someone („vorgemerkt: Linde 12 – Fenner").
 
 const TEXT_TITLE := "Grabregister des Friedhofs"
 const TEXT_SUBTITLE_NONE := "Verzeichnis der Bestatteten · noch keine Einträge"
@@ -37,6 +40,8 @@ const LOW_QUALITY_RATIO := 0.35
 @export var page_width: float = 1300.0
 ## Phase 7: the page grows by the Präparate column.
 @export var page_width_p7: float = 1440.0
+## Phase 8: + the Angehörige column.
+@export var kin_column_width: float = 230.0
 ## Ruled lines per page (blank lines fill up; more entries scroll).
 @export var page_rows: int = 8
 @export var row_height: float = 50.0
@@ -55,6 +60,8 @@ var _empty_row: PanelContainer
 var _shown: Array[Dictionary] = []
 ## Phase 7: the Präparate column is shown.
 var with_specimens: bool = false
+## Phase 8: the Angehörige column is shown.
+var with_kin: bool = false
 var _head_panel: PanelContainer
 var _page: PanelContainer
 
@@ -134,11 +141,14 @@ func _build() -> void:
 func _refresh() -> void:
 	var raw: Array = complete_entries(context.get("entries", []), get_tree() if is_inside_tree() else null)
 	with_specimens = GameState.flag_on(&"anatomy_known") or raw.any(func(e: Variant) -> bool: return e is Dictionary and (e as Dictionary).has("specimens"))
-	_page.custom_minimum_size.x = page_width_p7 if with_specimens else page_width
+	with_kin = GameState.flag_on(&"p8_open")
+	_page.custom_minimum_size.x = (page_width_p7 if with_specimens else page_width) + (kin_column_width + COLUMN_GAP if with_kin else 0.0)
 	UIKit.clear_children(_head_panel)
 	var heads := PackedStringArray(COLUMNS)
 	if with_specimens:
 		heads.append(Phase7Texts.REGISTER_COLUMN)
+	if with_kin:
+		heads.append(Phase8Texts.REGISTER_KIN)
 	_head_panel.add_child(_make_line(heads, true))
 	_shown = sorted_entries(raw)
 	UIKit.clear_children(_rows)
@@ -159,6 +169,11 @@ func _refresh() -> void:
 	var stones := replaced_stones(get_tree() if is_inside_tree() else null)
 	if not stones.is_empty():
 		subtitle_label.text += " · Neuer Stein: " + ", ".join(stones)
+	if with_kin:
+		for gid: String in Phase8Status.RESERVED:
+			var who := Phase8Status.reserved_by(get_tree() if is_inside_tree() else null, gid)
+			if who != "":
+				subtitle_label.text += " · " + Phase8Texts.TIP_RESERVED % ("%s – %s" % [grave_label(gid), who])
 	footer_label.text = TEXT_FOOTER % [int(context.get("total", 0)), DaySummaryPanel.rating_label(context.get("rating", &""))]
 	scroll.scroll_vertical = 0
 
@@ -204,10 +219,12 @@ static func sorted_entries(raw: Variant) -> Array[Dictionary]:
 
 ## Phase 7: adds "specimens" {taken, returned} and "deduced" to each entry from the live systems (the
 ## grave's dead → CorpseRecord.harvested organs / returned, revealed_cause). Without them unchanged.
+## Phase 8: + "kin" (the house label) and "care" (the symbols) from Phase8Status.grave_info.
 static func complete_entries(raw: Variant, tree: SceneTree) -> Array:
 	var out: Array = []
 	if not raw is Array:
 		return out
+	var info := Phase8Status.grave_info(tree)
 	var graveyard := tree.get_first_node_in_group(&"graveyard") as Graveyard if tree != null else null
 	var manager := tree.get_first_node_in_group(&"corpse_manager") as CorpseManager if tree != null else null
 	for e: Variant in raw:
@@ -226,6 +243,13 @@ static func complete_entries(raw: Variant, tree: SceneTree) -> Array:
 				entry["specimens"] = {"taken": organs, "returned": record.returned.size()}
 			if record.revealed_cause != &"":
 				entry["deduced"] = true
+		var gi: Dictionary = info.get(str(entry.get("grave_id", "")), {})
+		if not gi.is_empty():
+			var kin := Database.kin(StringName(str(gi.get("kin", "")))) as KinData if str(gi.get("kin", "")) != "" else null
+			if kin != null and not entry.has("kin"):
+				entry["kin"] = Phase8Texts.house_label(kin.house) if kin.house != &"" else Phase8Texts.household(kin.kin_id)
+			if not entry.has("care"):
+				entry["care"] = Phase8Texts.register_marks(gi)
 		out.append(entry)
 	return out
 
@@ -244,7 +268,7 @@ static func replaced_stones(tree: SceneTree) -> PackedStringArray:
 
 
 ## Cell texts of one entry, in COLUMNS order (+ „Präparate" when `with_specimens`).
-static func cells(entry: Dictionary, with_specimens: bool = false) -> PackedStringArray:
+static func cells(entry: Dictionary, with_specimens: bool = false, with_kin: bool = false) -> PackedStringArray:
 	var name_text := str(entry.get("name", "")).strip_edges()
 	if name_text == "":
 		name_text = TEXT_UNKNOWN
@@ -270,6 +294,14 @@ static func cells(entry: Dictionary, with_specimens: bool = false) -> PackedStri
 		var taken := int(sp.get("taken", 0))
 		var returned := int(sp.get("returned", 0))
 		out.append(TEXT_NONE if taken <= 0 else (Phase7Texts.REGISTER_RETURNED % [taken, returned] if returned > 0 else str(taken)))
+	if with_kin:
+		var kin := str(entry.get("kin", ""))
+		var care := str(entry.get("care", ""))
+		var parts := PackedStringArray()
+		for part: String in [kin, care]:
+			if part != "":
+				parts.append(part)
+		out.append(" ".join(parts) if not parts.is_empty() else TEXT_NONE)
 	return out
 
 
@@ -311,10 +343,10 @@ func _make_row(entry: Dictionary) -> PanelContainer:
 	row.mouse_filter = Control.MOUSE_FILTER_PASS
 	if entry.is_empty():
 		var blank := PackedStringArray()
-		blank.resize(COLUMNS.size() + (1 if with_specimens else 0))
+		blank.resize(COLUMNS.size() + (1 if with_specimens else 0) + (1 if with_kin else 0))
 		row.add_child(_make_line(blank, false))
 		return row
-	var texts := cells(entry, with_specimens)
+	var texts := cells(entry, with_specimens, with_kin)
 	var line := _make_line(texts, false)
 	var quality := int(entry.get("quality", 0))
 	if float(quality) < LOW_QUALITY_RATIO * float(_quality_max()):
@@ -330,7 +362,7 @@ func _make_line(texts: PackedStringArray, heading: bool) -> HBoxContainer:
 	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for i: int in texts.size():
 		var cell := UIKit.label(texts[i], &"LedgerHeadLabel" if heading else &"InkLabel")
-		cell.custom_minimum_size.x = COLUMN_WIDTHS[i] if i < COLUMN_WIDTHS.size() else Phase7Texts.REGISTER_COLUMN_WIDTH
+		cell.custom_minimum_size.x = COLUMN_WIDTHS[i] if i < COLUMN_WIDTHS.size() else _extra_width(i)
 		cell.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		cell.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		cell.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -345,6 +377,13 @@ func _make_line(texts: PackedStringArray, heading: bool) -> HBoxContainer:
 
 
 ## Dried-red margin rule between the day and the name column (old ledger look).
+## Width of a column after COLUMNS: „Präparate" (Phase 7), „Angehörige" (Phase 8).
+func _extra_width(i: int) -> float:
+	if with_kin and i == COLUMNS.size() + (1 if with_specimens else 0):
+		return kin_column_width
+	return Phase7Texts.REGISTER_COLUMN_WIDTH
+
+
 func _draw_margin_rule(on: Control) -> void:
 	var row_box := get_theme_stylebox(&"panel", &"LedgerRowPanel")
 	var x := (row_box.get_margin(SIDE_LEFT) if row_box != null else 0.0) + COLUMN_WIDTHS[0] + COLUMN_GAP * 0.5

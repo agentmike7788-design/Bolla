@@ -55,6 +55,8 @@ var _phase5: DebugCommandsPhase5
 var _phase6: DebugCommandsPhase6
 ## Phase-7 commands (§6 of docs/PHASE7_DESIGN.md).
 var _phase7: DebugCommandsPhase7
+## Phase-8 commands (§6 of docs/PHASE8_DESIGN.md).
+var _phase8: DebugCommandsPhase8
 
 
 func _init(console: DebugConsole) -> void:
@@ -65,6 +67,7 @@ func _init(console: DebugConsole) -> void:
 	_phase5 = DebugCommandsPhase5.new(_lookup)
 	_phase6 = DebugCommandsPhase6.new(_lookup)
 	_phase7 = DebugCommandsPhase7.new(_lookup)
+	_phase8 = DebugCommandsPhase8.new(_lookup)
 
 
 ## Runs one command (lower-case name + arguments; "clear" is handled by the console).
@@ -119,6 +122,8 @@ func run(command: String, args: PackedStringArray) -> Dictionary:
 		return _phase6.run(command, args)
 	if _phase7.handles(command):
 		return _phase7.run(command, args)
+	if _phase8.handles(command):
+		return _phase8.run(command, args)
 	return _error(TEXT_UNKNOWN % command)
 
 
@@ -138,6 +143,7 @@ func help_lines() -> PackedStringArray:
 	out.append_array(DebugCommandsPhase5.HELP)
 	out.append_array(DebugCommandsPhase6.HELP)
 	out.append_array(DebugCommandsPhase7.HELP)
+	out.append_array(DebugCommandsPhase8.HELP)
 	return out
 
 

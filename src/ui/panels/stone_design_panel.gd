@@ -19,8 +19,14 @@ extends UIPanel
 ## Phase 6 (docs/PHASE6_DESIGN.md §2.5, §7): from shed 2 the material rows add „Schuppen: n" and
 ## „Fehlendes aus dem Schuppen holen (10 Min)" calls bench.request_fetch(design inputs); from shed 3
 ## „Überschuss einlagern" (bench.request_store()).
+## Phase 8 (docs/PHASE8_DESIGN.md §2.11, W1-Anschlüsse 4): below the pages the bench's other work – the recipes of the
+## station mason that CraftingPanel.offered() lets through (the memorial plate „Namenstafel" once Rosine's second
+## step set friend_innkeeper_2): name, inputs have / need, minutes and „Herstellen" (bench.request_craft), dimmed with
+## what is missing.
 
 const STONEMASONRY_GROUP := &"stonemasonry"
+const MASON_STATION := &"mason"
+const TEXT_EXTRA := "Weitere Arbeit:"
 const GRAVEYARD_GROUP := &"graveyard"
 const CORPSE_MANAGER_GROUP := &"corpse_manager"
 const ANIM := &"interact"
@@ -78,6 +84,9 @@ const TEXT_HINT := "Klick wählt · [ / ] blättern · [Esc] schließen"
 @export var right_width: float = 540.0
 @export var preview_size: Vector2i = Vector2i(500, 300)
 
+## Phase 8: the row of the bench's other recipes and their buttons (recipe id → Button).
+var extra_box: HBoxContainer
+var extra_buttons: Dictionary[StringName, Button] = {}
 var masonry: Node
 var grave_id: String = ""
 var shape: StringName = &""
@@ -147,6 +156,9 @@ func _build() -> void:
 	_build_middle(_page(spread, middle_width))
 	_build_right(_page(spread, right_width))
 	_make_action_row(box)
+	extra_box = UIKit.hbox(12)
+	extra_box.visible = false
+	box.add_child(extra_box)
 	var hint := UIKit.label(TEXT_HINT, &"DimLabel")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
@@ -289,6 +301,47 @@ func _refresh() -> void:
 	_refresh_rack(stones)
 	_refresh_design()
 	_refresh_preview()
+	_refresh_extra()
+
+
+## Phase 8: the mason's recipes that are offered now (the memorial plate).
+func extra_recipes() -> Array[RecipeData]:
+	var out: Array[RecipeData] = []
+	for r: Resource in Database.recipes(MASON_STATION):
+		var recipe := r as RecipeData
+		if recipe != null and recipe.requires_flag != &"" and CraftingPanel.offered(recipe):
+			out.append(recipe)
+	return out
+
+
+## „Herstellen" of an extra recipe (Workbench.request_craft – the bench runs the timed action).
+func craft_extra(recipe_id: StringName) -> void:
+	var bench: Variant = context.get("bench", context.get("workbench"))
+	if is_instance_valid(bench) and (bench as Object).has_method(&"request_craft"):
+		(bench as Object).call(&"request_craft", recipe_id)
+
+
+func _refresh_extra() -> void:
+	UIKit.clear_children(extra_box)
+	extra_buttons.clear()
+	var list := extra_recipes()
+	extra_box.visible = not list.is_empty()
+	if list.is_empty():
+		return
+	extra_box.add_child(UIKit.label(TEXT_EXTRA, &"SubheaderLabel"))
+	for recipe: RecipeData in list:
+		extra_box.add_child(UIKit.icon(Database.icon(recipe.output_id), 36.0))
+		var name := recipe.display_name if recipe.display_name != "" else UIKit.item_name(recipe.output_id)
+		var missing := CraftingSystem.missing(recipe, _inventory) if _inventory != null else recipe.inputs
+		var l := UIKit.label("%s · %s · %s" % [name, _inputs_text(recipe.inputs), UIKit.minutes(recipe.craft_minutes)], &"")
+		l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		extra_box.add_child(l)
+		var b := UIKit.button(CraftingPanel.TEXT_CRAFT, &"AccentButton")
+		b.disabled = action_running or _inventory == null or not CraftingSystem.can_craft(recipe, _inventory)
+		b.tooltip_text = CraftingPanel.TEXT_MISSING % _inputs_text(missing) if not missing.is_empty() else ""
+		b.pressed.connect(craft_extra.bind(recipe.id))
+		extra_box.add_child(b)
+		extra_buttons[recipe.id] = b
 
 
 # --- state (public for tests and the screenshot director) ----------------------------------
