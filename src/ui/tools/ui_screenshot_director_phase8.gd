@@ -112,9 +112,9 @@ func _run() -> void:
 	await _shot("shop_peddler", _shop_peddler_shot)
 	await _shot("fest_lights", _fest_shot)
 	await _shot("hud_p8", _hud_shot)
-	await _shot("bubbles", _bubbles_shot)
 	await _shot("chapter", _chapter_shot)
 	await _shot("map_dorf", _map_village_shot)
+	await _shot("bubbles", _bubbles_shot)
 	for slot: int in [0, 1]:
 		SaveManager.delete_save(slot)
 	SaveManager.save_dir = SaveManager.DEFAULT_SAVE_DIR
@@ -511,9 +511,9 @@ func _jakob_working() -> void:
 		_apprentice.load_state(state)
 
 
-## p8_14: Theres and Liesel at the well (16:15), two bubbles.
+## p8_14: Theres and Liesel at the well (16:15 on DAY + 2, when both stand there), two bubbles – run last.
 func _bubbles_shot() -> void:
-	_at_time(975)
+	TimeManager.set_time(DAY + 2, 975)
 	await _in_village(Vector2(1.6, 0.4), deg_to_rad(200.0))
 	var theres := _ui.chatter_bubbles.find_npc(&"grocer")
 	var liesel := _ui.chatter_bubbles.find_npc(&"washer")
