@@ -92,8 +92,19 @@ static func _apprentice(tree: SceneTree, marks: Array[Dictionary]) -> void:
 	if app.npc != null and app.npc.is_inside_tree() and app.npc.is_present():
 		mark["world"] = app.npc.global_position
 	else:
-		mark["place"] = app.position_point()
+		# Without his Npc: the grave of the place he works at now, else his plan's point.
+		var running := running_entry(app)
+		mark["place"] = str(running.get("grave_id", "")) if str(running.get("grave_id", "")) != "" else app.position_point()
 	marks.append(mark)
+
+
+## The plan entry of `app` running now ({} = none).
+static func running_entry(app: Apprentice) -> Dictionary:
+	var m := TimeManager.minute_of_day
+	for e: Dictionary in app.today_plan():
+		if int(e.get("start", 0)) <= m and m < int(e.get("end", 0)):
+			return e
+	return {}
 
 
 ## „Jakob harkt im Alten Hof" from the plan entry running now.

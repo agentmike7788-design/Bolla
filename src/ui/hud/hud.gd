@@ -179,7 +179,20 @@ func refresh_all() -> void:
 	else:
 		_hide_notice()
 	_apply_modal_visibility()
+	refresh_calendar()
 	refresh_objective()
+
+
+## Phase 8 (docs/PHASE8_DESIGN.md §7.8): the day's tooltip names Hanne's next visit and the festivals.
+func refresh_calendar() -> void:
+	if day_label == null:
+		return
+	day_label.mouse_filter = Control.MOUSE_FILTER_PASS
+	day_label.tooltip_text = Phase8Status.calendar_text(get_tree() if is_inside_tree() else null)
+
+
+func calendar_tooltip() -> String:
+	return day_label.tooltip_text if day_label != null else ""
 	refresh_journal_badge()
 
 
@@ -387,6 +400,7 @@ func _on_day_started(day: int) -> void:
 		_hide_notice()
 	_mark_reputation_dirty()
 	_on_workshop_changed()
+	refresh_calendar()
 
 
 func _on_inventory_changed() -> void:

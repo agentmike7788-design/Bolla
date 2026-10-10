@@ -140,6 +140,11 @@ const FAVOR_IN := "Gefallen in %d %s"
 const FAVOR_TOMORROW := "Gefallen ab morgen"
 const FAVOR_OWED := "wartet auf einen Gegengefallen"
 const FAVOR_LINE := "[Gefallen] %s"
+const FAVOR_AGAIN_DAYS := "in %d Tagen wieder"
+const FAVOR_AGAIN_TOMORROW := "morgen wieder"
+const FAVOR_AGAIN_OWED := "erst der Gegengefallen"
+const FAVOR_AGAIN_MOOD := "heute nicht"
+const FAVOR_AGAIN_LATER := "nicht so bald"
 const FAVOR_PRICE := "%d %s"
 const FAVOR_ITEM_COUNT := "%d× %s"
 const FAVOR_GRAVE_META := "%s · %s"
@@ -533,6 +538,30 @@ static func favor_state(done: int, reason: String, owed: bool) -> String:
 	if reason == FavorRules.TEXT_COOLDOWN_ONE:
 		return FAVOR_TOMORROW
 	return ""
+
+
+## „[Gefallen] Fürbitte – in 3 Tagen wieder" while the told story's favour may not be asked now ("" otherwise:
+## no story yet, or the dialogue offers it itself).
+static func favor_hint(friendship: Friendship, npc_id: StringName) -> String:
+	if friendship == null or friendship.story(npc_id) == null or friendship.step_done(npc_id) < Friendship.STEPS:
+		return ""
+	var f := friendship.favor(npc_id)
+	var reason := friendship.favor_block_reason(npc_id)
+	if f == null or reason == "":
+		return ""
+	var when := ""
+	var m := RegEx.create_from_string("in (\\d+) Tagen").search(reason)
+	if m != null:
+		when = FAVOR_AGAIN_DAYS % int(m.get_string(1))
+	elif reason == FavorRules.TEXT_COOLDOWN_ONE:
+		when = FAVOR_AGAIN_TOMORROW
+	elif reason == FavorRules.TEXT_OWED:
+		when = FAVOR_AGAIN_OWED
+	elif reason == FavorRules.TEXT_MOOD:
+		when = FAVOR_AGAIN_MOOD
+	else:
+		when = FAVOR_AGAIN_LATER
+	return FAVOR_LINE % ("%s – %s" % [f.label, when])
 
 
 static func fest_name(fest_id: StringName) -> String:

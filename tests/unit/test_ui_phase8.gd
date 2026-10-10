@@ -228,6 +228,39 @@ func test_favor_panel_choices_and_cooldown() -> void:
 	assert_true(panel.buttons[""].disabled)
 
 
+func test_favor_line_in_the_dialogue_and_the_map_legend() -> void:
+	var f := Phase8Fixtures.story_at(&"priest", 3, tree)
+	f.load_state(f.save_state().merged({"favor_day": {"priest": DAY - 2}, "return_for": {"priest": DAY - 2}}, true))
+	assert_eq(Phase8Texts.favor_hint(f, &"priest"), "[Gefallen] Fürbitte – in 3 Tagen wieder")
+	f.load_state(f.save_state().merged({"favor_day": {"priest": DAY - 4}}, true))
+	assert_eq(Phase8Texts.favor_hint(f, &"priest"), "[Gefallen] Fürbitte – erst der Gegengefallen", "a return favour is open")
+	f.load_state({"steps": {"priest": 3}})
+	assert_eq(Phase8Texts.favor_hint(f, &"priest"), "", "ready: the dialogue offers it itself")
+	assert_eq(Phase8Texts.favor_hint(f, &"smith"), "", "no story told yet")
+	f.queue_free()
+	assert_eq(MapLegend.entries().size(), MapLegend.ENTRIES.size())
+	GameState.set_flag(&"p8_open", true)
+	assert_eq(MapLegend.entries().size(), MapLegend.ENTRIES.size() + MapLegend.ENTRIES_P8.size())
+
+
+func test_calendar_tooltip_names_hanne_and_the_festivals() -> void:
+	await _setup()
+	assert_eq(Phase8Status.calendar_text(tree), "", "nothing before p8_open")
+	GameState.set_flag(&"p8_open", true)
+	GameState.set_flag(&"p8_open_day", 53)
+	var w := Wanderers.new()
+	_world().add_child(w)
+	var fest := Phase8Fixtures.fest_today(&"fest_lights", null, DAY + 3)
+	_world().add_child(fest)
+	ui.hud.refresh_calendar()
+	var tip := ui.hud.calendar_tooltip()
+	assert_true(tip.contains("Hanne Vogelsang: heute da"), tip)
+	assert_true(tip.contains("Lichtgang: Tag %d" % (DAY + 3)), tip)
+	TimeManager.set_time(DAY + 1, NOON)
+	ui.hud.refresh_calendar()
+	assert_true(ui.hud.calendar_tooltip().contains("nächster Besuch in 5 Tagen"), ui.hud.calendar_tooltip())
+
+
 # --- the festival card (§2.7) -----------------------------------------------------------------------------
 
 func test_fest_panel_lights_and_dance() -> void:

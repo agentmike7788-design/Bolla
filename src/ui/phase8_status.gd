@@ -34,6 +34,10 @@ const SICK_UNTIL := 300
 const PEDDLER_UNTIL: Dictionary[StringName, int] = {&"v_well_peddler": 840, &"peddler_gate": 980}
 ## Fenner's place with a view (story step 2, of_fenner_2 → l_12).
 const RESERVED: Dictionary[String, Array] = {"l_12": [&"of_fenner_2", &"mayor", 2]}
+const CAL_PEDDLER_TODAY := "Hanne Vogelsang: heute da"
+const CAL_PEDDLER := "Hanne Vogelsang: nächster Besuch in %d %s"
+const CAL_PEDDLER_TOMORROW := "Hanne Vogelsang: nächster Besuch morgen"
+const CAL_FEST := "%s: %s"
 
 
 static func is_open() -> bool:
@@ -277,6 +281,28 @@ static func reserved_by(tree: SceneTree, grave_id: String) -> String:
 	if not held or (g != null and g.state != GraveRecord.State.EMPTY):
 		return ""
 	return Phase7Texts.short_name(r[1])
+
+
+## The calendar tooltip of the HUD's day ("" before p8_open): „Hanne Vogelsang: heute da" / „… nächster Besuch in 4
+## Tagen", the festivals still to come with their day.
+static func calendar_text(tree: SceneTree) -> String:
+	if tree == null or not is_open():
+		return ""
+	var lines := PackedStringArray()
+	var wanderers := tree.get_first_node_in_group(WANDERERS_GROUP) as Wanderers
+	if wanderers != null:
+		if wanderers.peddler_day(TimeManager.day):
+			lines.append(CAL_PEDDLER_TODAY)
+		else:
+			var d := wanderers.next_peddler_day(TimeManager.day) - TimeManager.day
+			lines.append(CAL_PEDDLER_TOMORROW if d == 1 else CAL_PEDDLER % [d, "Tag" if d == 1 else "Tagen"])
+	var fest := tree.get_first_node_in_group(FESTIVALS_GROUP) as Festivals
+	if fest != null:
+		for f: FestivalData in fest.all_festivals():
+			var day := fest.fest_day(f.id)
+			if day >= TimeManager.day:
+				lines.append(CAL_FEST % [Phase8Texts.fest_name(f.id), "heute" if day == TimeManager.day else "Tag %d" % day])
+	return "\n".join(lines)
 
 
 static func _life_config(tree: SceneTree) -> NpcLifeConfig:

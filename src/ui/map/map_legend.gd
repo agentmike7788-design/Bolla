@@ -10,8 +10,14 @@ const ENTRIES: Array[Array] = [
 	[&"tended", "Grab gepflegt"], [&"locked", "Noch gesperrt"], [&"house", "Haus"], [&"road", "Weg"],
 	[&"fence", "Zaun"], [&"water", "Wasser"], [&"tree", "Baum"],
 ]
+## Phase 8 (docs/PHASE8_DESIGN.md §7.8): the live marks, from p8_open (the rows get closer then).
+const ENTRIES_P8: Array[Array] = [
+	[&"visitor", "Besucher am Grab"], [&"apprentice", "Jakob bei der Arbeit"], [&"wish", "Wunsch (Frist im Tooltip)"],
+	[&"coins", "Münzen auf dem Stein"], [&"disturbed", "Aufgewühltes Grab"], [&"sick_light", "Krankenlicht"],
+]
 const NOTE := "Fahre mit der Maus über einen Ort: Wer dort wohnt, wann offen ist, was zu tun ist."
 const ROW := 36.0
+const ROW_P8 := 30.0
 
 var cfg: MapConfig
 
@@ -31,18 +37,41 @@ func _draw() -> void:
 	var title_w := font.get_string_size(TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, cfg.font_building + 5).x
 	draw_string(font, Vector2((size.x - title_w) * 0.5, 58.0), TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, cfg.font_building + 5, cfg.sepia.darkened(0.25))
 	MapPaint.ornament(self, Vector2(size.x * 0.5, 76.0), size.x * 0.36, cfg.ink, cfg.sepia)
-	for i: int in ENTRIES.size():
-		var c := Vector2(52.0, 112.0 + i * ROW)
-		glyph(self, cfg, ENTRIES[i][0], c)
-		draw_string(font, c + Vector2(30.0, 7.0), str(ENTRIES[i][1]), HORIZONTAL_ALIGNMENT_LEFT, -1, cfg.font_building, cfg.ink)
-	var y := 112.0 + ENTRIES.size() * ROW + 6.0
+	var list := entries()
+	var row := ROW if list.size() == ENTRIES.size() else ROW_P8
+	for i: int in list.size():
+		var c := Vector2(52.0, 112.0 + i * row)
+		glyph(self, cfg, list[i][0], c)
+		draw_string(font, c + Vector2(30.0, 7.0), str(list[i][1]), HORIZONTAL_ALIGNMENT_LEFT, -1, cfg.font_building, cfg.ink)
+	var y := 112.0 + list.size() * row + 6.0
 	MapPaint.ornament(self, Vector2(size.x * 0.5, y), size.x * 0.36, cfg.ink, cfg.sepia)
 	draw_multiline_string(font, Vector2(30.0, y + 34.0), NOTE, HORIZONTAL_ALIGNMENT_LEFT, size.x - 60.0, cfg.font_small + 1, -1, Color(cfg.ink, 0.8))
+
+
+## The rows shown: the sheet's signs, from p8_open also the Phase-8 marks.
+static func entries() -> Array[Array]:
+	var out: Array[Array] = ENTRIES.duplicate()
+	if GameState.flag_on(&"p8_open"):
+		out.append_array(ENTRIES_P8)
+	return out
 
 
 static func glyph(ci: CanvasItem, cfg: MapConfig, key: StringName, c: Vector2) -> void:
 	var r := cfg.grave_radius + 1.0
 	match key:
+		&"visitor":
+			MapPaint.figure(ci, c, cfg.person_radius * 0.85, cfg.ink.lightened(0.18), cfg.ink)
+		&"apprentice":
+			MapPaint.figure(ci, c, cfg.person_radius * 0.9, cfg.person.lightened(0.35), cfg.ink)
+			MapPaint.rake(ci, c + Vector2(cfg.person_radius * 0.9, 0.0), 1.0, cfg.ink)
+		&"wish":
+			MapPaint.blossom(ci, c, 1.2, cfg.objective.lightened(0.25), cfg.ink)
+		&"coins":
+			MapPaint.coins(ci, c, 1.2, cfg.player_ring, cfg.ink)
+		&"disturbed":
+			MapPaint.earth(ci, c, 1.4, cfg.sepia, cfg.ink)
+		&"sick_light":
+			MapPaint.window(ci, c, 1.0, cfg.player_ring, cfg.ink)
 		&"player":
 			MapPaint.hat_marker(ci, c, 11.0, Vector2(1.0, -0.6), cfg.player_mark, cfg.player_ring, cfg.paper)
 		&"carter":

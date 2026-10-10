@@ -18,6 +18,8 @@ const TEXT_END := "(Ende)"
 const TEXT_HINT := "[1–4] wählen · [Esc] beenden"
 
 ## Letters per second of the typewriter (0 = instant).
+## Phase 8: the dialogue node under which the favour line is shown.
+const FAVOR_HINT_NODE := &"menu"
 @export var chars_per_second: float = 110.0
 @export var box_width: float = 1180.0
 @export var bottom_margin: float = 44.0
@@ -29,6 +31,8 @@ var text_label: Label
 var choices_box: VBoxContainer
 
 var _speaker: Node
+## Phase 8: the dim favour line under the menu's choices ("" = none).
+var favor_hint: String = ""
 var _choice_buttons: Array[Button] = []
 var _typing: float = 0.0
 
@@ -174,7 +178,25 @@ func _show_node() -> void:
 			line = UIKit.hbox(16)
 			choices_box.add_child(line)
 		_add_choice(i, choices[i].text, line if columns > 1 else null)
+	# Phase 8 (docs/PHASE8_DESIGN.md §7.3): on the speaker's menu a favour not to be asked now reads as a dim line
+	# „[Gefallen] Fürbitte – in 3 Tagen wieder" (the dialogue's own [Gefallen] choice shows only when it can be asked).
+	favor_hint = _favor_hint()
+	if favor_hint != "":
+		var hint := UIKit.label(favor_hint, &"DimLabel")
+		hint.name = "FavorHint"
+		choices_box.add_child(hint)
 	_focus_first_choice.call_deferred()
+
+
+func _favor_hint() -> String:
+	var node := runner.current_node() if runner != null else null
+	if node == null or node.id != FAVOR_HINT_NODE or not is_instance_valid(_speaker) or not is_inside_tree():
+		return ""
+	var friendship := get_tree().get_first_node_in_group(&"friendship") as Friendship
+	if friendship == null:
+		return ""
+	var npc := StringName(str(_speaker.get(&"npc_id")))
+	return Phase8Texts.favor_hint(friendship, npc)
 
 
 func _focus_first_choice() -> void:
