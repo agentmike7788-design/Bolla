@@ -140,6 +140,13 @@ func _ready() -> void:
 	EventBus.ground_consecrated.connect(_mark_objective_dirty.unbind(1))
 	EventBus.interior_room_changed.connect(_mark_objective_dirty.unbind(1))
 	EventBus.specimen_changed.connect(_mark_objective_dirty.unbind(2))
+	# Phase 8 (docs/PHASE8_DESIGN.md §7.5): visitors, wishes, Jakob, the stories, the festivals, the graves' care.
+	EventBus.visitor_changed.connect(_mark_objective_dirty.unbind(4))
+	EventBus.wish_changed.connect(_mark_objective_dirty.unbind(2))
+	EventBus.apprentice_level_changed.connect(_mark_objective_dirty.unbind(2))
+	EventBus.friend_step_completed.connect(_mark_objective_dirty.unbind(2))
+	EventBus.festival_changed.connect(_mark_objective_dirty.unbind(2))
+	EventBus.grave_care_changed.connect(_mark_objective_dirty.unbind(3))
 	refresh_all()
 
 
