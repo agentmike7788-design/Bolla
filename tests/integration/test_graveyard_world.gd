@@ -100,7 +100,7 @@ func test_every_layout_id_exists() -> void:
 		var want := GraveRecord.State.EMPTY if p.section == "yard" else GraveRecord.State.LOCKED
 		assert_eq(world.graveyard.get_grave(p.id).state, want, p.id + " state at the start")
 		assert_true(_section_rect(p.section).has_point(_v2(p.pos)), p.id + " inside its section")
-	assert_eq(layout.plots.size(), 26, "plot_01..plot_12 + h_01..h_06 (Phase 4) + l_01..l_08 (Phase 7)")
+	assert_eq(layout.plots.size(), 30, "plot_01..plot_12 + h_01..h_06 (Phase 4) + l_01..l_08 (Phase 7) + l_09..l_12 (Phase 8)")
 	for i: int in range(1, 7):
 		assert_has(world.graveyard.plots_in_section(&"yard"), "plot_%02d" % i)
 	assert_eq(world.graveyard.plots_in_section(&"east"), PackedStringArray(["plot_07", "plot_08", "plot_09"]))
@@ -702,8 +702,9 @@ func test_phase3_system_nodes() -> void:
 			ids.append(String(n.get("save_id")))
 	assert_eq(ids, ["corpse_manager", "expansion", "graveyard", "cleanliness", "decorations", "gathering", "ghosts", "workshop",
 			"buildings", "stonemasonry", "ossuary", "chapel", "journal", "night_trade", "village", "relationships", "village_shops",
-			"orders", "specimens", "lectures", "deductions"],
-			"load order (Phase 4: + journal 40, night_trade 45; Phase 5: + gathering 25, workshop 30, stonemasonry 35; Phase 6: + buildings 32, ossuary 36, chapel 37; Phase 7: + village 50 … deductions 56)")
+			"orders", "specimens", "lectures", "deductions", "npc_life", "visitors", "grave_care", "apprentice", "friendship", "festivals",
+			"wanderers", "night_robber", "night_paths"],
+			"load order (Phase 4: + journal 40, night_trade 45; Phase 5: + gathering 25, workshop 30, stonemasonry 35; Phase 6: + buildings 32, ossuary 36, chapel 37; Phase 7: + village 50 … deductions 56; Phase 8: + npc_life 70 … night_paths 78)")
 	var decorations := world.get_node("Systems/Decorations") as DecorationManager
 	assert_eq(decorations.mask.resource_path, BUILD_MASK)
 	assert_eq(decorations.get_node(decorations.container_path), world.get_node("Decor/Placed"))
@@ -726,7 +727,7 @@ func test_phase3_system_nodes() -> void:
 func test_phase3_obstacles() -> void:
 	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
 	var all := Phase3.obstacles(layout)
-	assert_eq(all.size(), 46, "Phase 6: + the Kirchpforte; Phase 7: + the Lindenacker (10)")
+	assert_eq(all.size(), 48, "Phase 6: + the Kirchpforte; Phase 7: + the Lindenacker (10); Phase 8: + row 3 (2)")
 	var kinds := {}
 	for o: Dictionary in all:
 		var node := world.get_node_or_null("Entities/" + String(o.id)) as ClearableObstacle
@@ -759,7 +760,8 @@ func test_phase3_obstacles() -> void:
 			# Phase 7 N1 (§4.6): w_east_pass (11,5 | −2,2, contract) is the yard → east meadow passage the
 			# priest walks on the consecration day – the Lindenacker gate lies in the east meadow, so its
 			# obstacles are long cleared by then.
-			if not id.begins_with("_") and not (id == "w_east_pass" and o.section == "east"):
+			# Phase 8 (§2.7.2): the Lichtgang places on the Birkenhang are used once the north section is long open.
+			if not id.begins_with("_") and not (id == "w_east_pass" and o.section == "east") and not (id.begins_with("lights_") and o.section == "north"):
 				assert_false(rect.grow(0.5).has_point(_v2(layout.waypoints[id])), "%s clear of waypoint %s" % [o.id, id])
 		for k: int in 60:
 			assert_false(rect.has_point(_on_polyline(layout.path.points, k / 59.0)), o.id + " off the earth path")
@@ -780,7 +782,7 @@ func test_phase3_obstacles() -> void:
 ## under the elders) + 6 graves = 43; a new game's start values only in the yard.
 func test_phase3_tending_spots() -> void:
 	var clean := world.get_node("Systems/Cleanliness") as CleanlinessManager
-	assert_eq(clean.spot_ids().size(), 51, "Phase 7: + the eight Lindenacker graves")
+	assert_eq(clean.spot_ids().size(), 55, "Phase 7: + the eight Lindenacker graves; Phase 8: + row 3 (4)")
 	var counts := {}
 	var started := 0
 	for d: Dictionary in layout.dirt_spots:
@@ -820,8 +822,8 @@ func test_phase3_tending_spots() -> void:
 ## checks for sections, blocked plots / stations / trees / fence, grave ring and routes.
 func test_phase3_build_mask_matches_layout() -> void:
 	var mask := load(BUILD_MASK) as BuildMask
-	assert_eq([mask.origin, mask.size, mask.cell], [Vector2(-11.5, -20.0), Vector2i(66, 80), 0.5])
-	assert_eq(mask.cells.size(), 66 * 80)
+	assert_eq([mask.origin, mask.size, mask.cell], [Vector2(-11.5, -20.0), Vector2i(66, 86), 0.5], "Phase 8 §4.4 L14: rows to z 23")
+	assert_eq(mask.cells.size(), 66 * 86)
 	var ctx := Ctx.new(tree)
 	ctx.layout = layout
 	var shapes := Phase3.mask_shapes(ctx)
@@ -836,7 +838,7 @@ func test_phase3_build_mask_matches_layout() -> void:
 			var s := mask.section_at(c)
 			per_section[s] = int(per_section.get(s, 0)) + 1
 			if s != 0:
-				assert_true(_section_rect({1: "yard", 2: "east", 3: "north", 4: "elder", 8: "linden"}[s]).has_point(p), "cell %s in section %d" % [c, s])
+				assert_true(_section_rect({1: "yard", 2: "east", 3: "north", 4: "elder", 8: "linden", 9: "linden_row3"}[s]).has_point(p), "cell %s in section %d" % [c, s])
 	assert_eq(diff, 0, "build_mask.res is up to date with the layout (rebuild graveyard.tscn)")
 	for s: int in [1, 2, 3]:
 		assert_true(int(per_section.get(s, 0)) > 200, "section %d buildable cells: %d" % [s, per_section.get(s, 0)])
@@ -856,10 +858,13 @@ func test_phase3_build_mask_matches_layout() -> void:
 					assert_false(plot.footprint.has_point(Vector2(local.x, local.z)), "%s: ring cell %s not on the plot" % [p.id, c])
 		# Phase 7 (§4.6 L1, contract positions): l_04 / l_08 stand at the east fence of the Lindenacker
 		# (x 20,5, section edge x 21,5) – their side strip lies beyond it, l_08 (back row) keeps 5 cells.
-		var ring_min := 5 if String(p.id) in ["l_04", "l_08"] else 6
+		# Phase 8: row 3 (l_09 at the west strip like l_05, but its foot strip ends at the south fence).
+		var ring_min := 5 if String(p.id) in ["l_04", "l_08", "l_09", "l_10", "l_11", "l_12"] else 6
 		assert_true(ring_cells >= ring_min, "%s grave ring (%d cells)" % [p.id, ring_cells])
 		var foot := plot.global_transform * Vector3(0, 0, plot.footprint.end.y + 0.55)
-		assert_true(mask.flags_at(mask.world_to_cell(Vector2(foot.x, foot.z))) & BuildMask.ROUTE, p.id + " foot-end strip")
+		# Phase 8 (§4.4): row 3 ends at the south fence – its walk is the aisle at the head end.
+		if String(p.section) != "linden_row3":
+			assert_true(mask.flags_at(mask.world_to_cell(Vector2(foot.x, foot.z))) & BuildMask.ROUTE, p.id + " foot-end strip")
 	for p: Vector2 in [Vector2(0.0, 4.0), Vector2(-0.8, 0.5), Vector2(10.8, -2.2), Vector2(12.3, -2.2), Vector2(4.5, -12.2)]:
 		assert_true(mask.flags_at(mask.world_to_cell(p)) & BuildMask.ROUTE, "route at %s" % p)
 	for p: Vector2 in [_v2(layout.hut.pos), _v2(layout.tree.pos), Vector2(16.0, 9.5), Vector2(21.3, 2.0), Vector2(1.0, -11.9),
@@ -2332,8 +2337,10 @@ const P7_PROBE_LAYER := 1 << 18
 func test_phase7_layout_diff_against_phase6() -> void:
 	var old := Phase7Fixtures.layout_p6()
 	assert_false(old.is_empty(), "layout_p6.json")
+	# Phase 8: the Phase-7 layout as approved (layout_p7.json); Phase 8 has its own diff test.
+	var p7 := Phase8Fixtures.layout_p7()
 	var changes: PackedStringArray = []
-	_layout_diff(old, layout, "", changes)
+	_layout_diff(old, p7, "", changes)
 	var allowed := [
 		"+sections[linden]",                                                                  # L1
 		"+fence._phase7", "-fence.segments[[11.5, 9.6], [21.5, 9.6]]",                       # L2
@@ -2365,22 +2372,22 @@ func test_phase7_layout_diff_against_phase6() -> void:
 	for c: String in allowed:
 		assert_true(c in changes, "listed change present: " + c)
 	var p6_plots: Array = old.plots
-	assert_eq(layout.plots.slice(0, p6_plots.size()), p6_plots, "the approved plots unchanged")
-	assert_eq(layout.old_graves, old.old_graves, "old graves")
-	assert_eq(layout.road, old.road, "the coach road")
-	assert_eq(layout.walkable_bounds, old.walkable_bounds, "§4.6: walkable_bounds stay")
-	assert_eq(layout.camera_bounds, old.camera_bounds, "§4.6: camera_bounds stay")
+	assert_eq(p7.plots.slice(0, p6_plots.size()), p6_plots, "the approved plots unchanged")
+	assert_eq(p7.old_graves, old.old_graves, "old graves")
+	assert_eq(p7.road, old.road, "the coach road")
+	assert_eq(p7.walkable_bounds, old.walkable_bounds, "§4.6: walkable_bounds stay")
+	assert_eq(p7.camera_bounds, old.camera_bounds, "§4.6: camera_bounds stay")
 	# G7 round 1: the crypt site gets its stair – the rest stays.
-	var buildings_now: Dictionary = layout.buildings.duplicate(true)
+	var buildings_now: Dictionary = p7.buildings.duplicate(true)
 	(buildings_now.sites[0] as Dictionary).erase("stair")
 	assert_eq(buildings_now, old.buildings, "Phase-6 buildings")
 	for e: Dictionary in old.entities:
-		assert_eq(_by_id(layout.entities, String(e.id)), e, String(e.id))
-	var linden := _v2(layout.sections[layout.sections.size() - 1].rect)
+		assert_eq(_by_id(p7.entities, String(e.id)), e, String(e.id))
+	var linden := _v2(p7.sections[p7.sections.size() - 1].rect)
 	assert_eq(linden, Vector2(11.5, 9.6), "Lindenacker x 11,5… z 9,6…")
 	var fixture := Phase7Fixtures.linden_layout()
 	for id: String in fixture.plots:
-		var g := _by_id(layout.plots, id)
+		var g := _by_id(p7.plots, id)
 		assert_true(_v2(g.pos).distance_to(_v2(fixture.plots[id])) <= 0.4, "%s at the §4.6 grid (±0,4)" % id)
 		assert_eq(String(g.section), "linden")
 
@@ -2573,3 +2580,253 @@ func _p7_blocker(space: PhysicsDirectSpaceState3D, eye: Vector3, p: Vector3, che
 			return String(world.get_path_to(body.get_parent()))
 		from = (hit.position as Vector3) + dir * 0.01
 	return ""
+
+
+# --- Phase 8 (docs/PHASE8_DESIGN.md §3.1, §4, §10 – W-Welt) ---------------------------------------
+
+const P8_ROW3 := ["l_09", "l_10", "l_11", "l_12"]
+const P8_SYSTEMS := {
+	"NpcLife": ["NpcLife", "npc_life", "npc_life", 70], "ChatterRunner": ["ChatterRunner", "chatter", "", 0],
+	"Visitors": ["Visitors", "visitors", "visitors", 71], "GraveCare": ["GraveCare", "grave_care", "grave_care", 72],
+	"Apprentice": ["Apprentice", "apprentice", "apprentice", 73], "Friendship": ["Friendship", "friendship", "friendship", 74],
+	"Festivals": ["Festivals", "festivals", "festivals", 75], "Wanderers": ["Wanderers", "wanderers", "wanderers", 76],
+	"NightRobber": ["NightRobber", "night_robber", "night_robber", 77], "NightPaths": ["NightPaths", "night_paths", "night_paths", 78],
+}
+const P8_WAYPOINTS := ["gate_inside", "apprentice_board", "apprentice_box", "apprentice_lunch", "apprentice_sweep", "rain_barrel",
+		"veit_gate", "peddler_gate", "lights_gate", "robber_far", "robber_fence_out", "robber_fence_in", "lights_lenz", "peddler_west",
+		"lights_crowd_1", "lights_crowd_2", "lights_crowd_3", "lights_crowd_4", "lights_crowd_5", "lights_crowd_6", "lights_crowd_7",
+		"lights_crowd_8"]
+const P8_FACING := ["apprentice_board", "apprentice_box", "apprentice_lunch", "apprentice_sweep", "rain_barrel", "veit_gate",
+		"peddler_gate", "lights_gate", "lights_lenz", "robber_fence_in", "lights_crowd_1", "lights_crowd_2", "lights_crowd_3",
+		"lights_crowd_4", "lights_crowd_5", "lights_crowd_6", "lights_crowd_7", "lights_crowd_8"]
+## §3.1: the graveyard Npc of Phase 8 → [npc_id, model, requires_flag].
+const P8_NPCS := {
+	"npc_apprentice": ["apprentice", "ph_chr_apprentice", "p8_open"], "npc_kin_kehr": ["kin_kehr", "ph_chr_mourner_w_a", ""],
+	"npc_kin_ott": ["kin_ott", "ph_chr_mourner_w_b", ""], "npc_kin_brandt": ["kin_brandt", "ph_chr_mourner_m_a", ""],
+	"npc_kin_sieber": ["kin_sieber", "ph_chr_mourner_m_b", ""], "npc_innkeeper_g": ["innkeeper", "ph_chr_v_innkeeper", ""],
+	"npc_smith_g": ["smith", "ph_chr_v_smith", ""], "npc_grocer_g": ["grocer", "ph_chr_v_grocer", ""],
+	"npc_mayor_g": ["mayor", "ph_chr_v_mayor", ""], "npc_washer_g": ["washer", "ph_chr_v_washer", ""],
+	"npc_beggar_g": ["beggar", "ph_chr_beggar", "p8_open"], "npc_peddler_g": ["peddler", "ph_chr_peddler", "p8_open"],
+	"npc_robber": ["robber", "ph_chr_robber", ""],
+}
+const P8_CORNER := {"apprentice_board": "ApprenticeBoard", "apprentice_box": "ApprenticeBox", "rain_barrel": "RainBarrel"}
+
+
+## §4.7 / §10: only L10–L15, A1–A4, G1–G2, the visitor spots / points / routes, the night and Lichtgang
+## places and new entries against the approved Phase-7 layout (layout_p7.json).
+func test_phase8_layout_diff_against_phase7() -> void:
+	var old := Phase8Fixtures.layout_p7()
+	assert_false(old.is_empty(), "layout_p7.json")
+	var changes: PackedStringArray = []
+	_layout_diff(old, layout, "", changes)
+	var allowed := [
+		"+sections[linden_row3]", "+build._phase8", "~build.size",                                  # L10, L14
+		"-fence.segments[[11.5, 9.6], [11.5, 19.6]]", "-fence.segments[[11.5, 19.6], [21.5, 19.6]]",  # L11
+		"-fence.segments[[21.5, 9.6], [21.5, 19.6]]", "+fence.segments[[11.5, 9.6], [11.5, 22.8]]",
+		"+fence.segments[[11.5, 22.8], [21.5, 22.8]]", "+fence.segments[[21.5, 9.6], [21.5, 22.8]]", "+fence._phase8",
+		"~extra_walls", "+_extra_walls_phase8",
+		"+clearables[obs_l_stump_9]", "+clearables[obs_l_bramble_9]", "+overgrowth.sections[linden_row3]",   # L13
+		"+_phase8", "+phase8", "+colliders._phase8", "+colliders.ph_prop_chalkboard", "+colliders.ph_prop_apprentice_box",  # A1–A4
+		"+colliders.ph_prop_apprentice_bench", "+colliders.ph_prop_rain_barrel",
+		"+_waypoints_phase8", "+_baked_phase8", "+visitor_spots", "+visitor_waypoints", "+visitor_routes",  # §4.2
+	]
+	for id: String in P8_ROW3:
+		allowed.append("+plots[%s]" % id)
+	for id: String in P8_WAYPOINTS:
+		allowed.append("+waypoints." + id)
+	for id: String in P8_FACING:
+		allowed.append("+waypoint_facing." + id)
+	for id: String in P8_NPCS:
+		allowed.append("+entities[%s]" % id)
+	var unexpected: PackedStringArray = []
+	for c: String in changes:
+		if not c in allowed:
+			unexpected.append(c)
+	assert_eq(unexpected, PackedStringArray(), "only the §4.7 changes to the approved Phase-7 layout")
+	for c: String in allowed:
+		assert_true(c in changes, "listed change present: " + c)
+	assert_eq(layout.plots.slice(0, old.plots.size()), old.plots, "the approved plots unchanged")
+	for key: String in ["old_graves", "road", "hut", "tree", "buildings", "building_doors", "walkable_bounds", "camera_bounds", "forest",
+			"dirt_spots", "stations", "workyard", "props", "region_portals"]:
+		assert_eq(layout[key], old[key], key + " unchanged (§4.7; L12 not needed: forest.trees[7] stands at (17,5 | 29,5) since Phase 7)")
+	for e: Dictionary in old.entities:
+		assert_eq(_by_id(layout.entities, String(e.id)), e, String(e.id))
+	# L10: row 3 at z 21,0 in the grid of rows 1–2 (4,1 m), the same x as the rows above.
+	for k: int in 4:
+		var g := _by_id(layout.plots, P8_ROW3[k])
+		var above := _by_id(layout.plots, "l_0%d" % (k + 5))
+		assert_true(absf(_v2(g.pos).x - _v2(above.pos).x) <= 0.4 and absf(_v2(g.pos).y - 21.0) <= 0.4, P8_ROW3[k] + " in the grid")
+		assert_eq(String(g.section), "linden_row3")
+	assert_eq(_section_rect("linden_row3"), Rect2(11.5, 19.6, 10.0, 3.2), "row 3 up to the south fence at z 22,8")
+
+
+func test_phase8_system_nodes() -> void:
+	for node_name: String in P8_SYSTEMS:
+		var want: Array = P8_SYSTEMS[node_name]
+		var node := world.get_node_or_null("Systems/" + node_name)
+		assert_not_null(node, "Systems/" + node_name)
+		if node == null:
+			continue
+		assert_eq(node.get_script().get_global_name(), want[0], node_name)
+		assert_true(node.is_in_group(StringName(want[1])), "%s in group %s" % [node_name, want[1]])
+		if want[2] != "":
+			assert_eq([node.get("save_id"), node.get("save_order")], [want[2], want[3]], node_name + " save id / order")
+		else:
+			assert_false(node.is_in_group(&"saveable"), node_name + " not saved")
+	assert_true(world.is_in_group(&"world"), "the systems find the world by group")
+	assert_true(world.nav is GraveyardNav, "the baked walking net")
+	var box := world.get_node("Entities/apprentice_box") as ApprenticeBox
+	assert_eq([box.save_id, box.save_order], ["apprentice_box", 79])
+
+
+## §3.1, §4.3, §4.4, §4.5: the hut corner, row 3 with its fence and obstacles, a TipStone under every grave,
+## the new Npc (region graveyard, no save_id, Jakob / Veit / Hanne behind p8_open).
+func test_phase8_corner_row3_npcs() -> void:
+	var door := world.get_node("Entities/hut_door") as Node3D
+	for id: String in ["apprentice_board", "apprentice_box", "apprentice_bench", "rain_barrel"]:
+		var node := world.get_node_or_null("Entities/" + id) as Node3D
+		assert_not_null(node, id)
+		if node == null:
+			continue
+		if P8_CORNER.has(id):
+			assert_eq(node.get_script().get_global_name(), P8_CORNER[id], id)
+			assert_not_null(node.get_node_or_null("Interactable"), id + " can be used")
+		var aabb := _p6_model_aabb(node)
+		assert_true(aabb.size.y <= 1.4 + 0.01, "%s ≤ 1.4 m (%.2f)" % [id, aabb.size.y])
+		assert_not_null(world.get_node_or_null("Colliders/" + id), id + " collides")
+		assert_true(_flat(node.global_position).distance_to(_flat(door.global_position)) <= 4.0, id + " at the hut")
+	assert_true(_flat((world.get_node("Entities/apprentice_board") as Node3D).global_position).distance_to(_flat(door.global_position)) <= 2.0,
+			"A1: the board ≤ 2 m from the door")
+	var board_local := door.to_local((world.get_node("Entities/apprentice_board") as Node3D).global_position)
+	assert_true(board_local.x > 0.5, "A1: right of the door (seen from the camera)")
+	for p: Dictionary in layout.plots + layout.old_graves:
+		var plot := world.get_node_by_layout_id(String(p.id))
+		assert_not_null(plot.get_node_or_null("TipStone") as TipStone, "TipStone under " + String(p.id))
+	for id: String in P8_ROW3:
+		var plot := world.get_node_by_layout_id(id) as GravePlot
+		assert_eq(plot.section_id, &"linden_row3", id)
+		assert_eq(world.graveyard.get_grave(id).state, GraveRecord.State.LOCKED, id + " locked until the row is cleared")
+	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
+	assert_eq(expansion.obstacle_ids(&"linden_row3"), PackedStringArray(["obs_l_stump_9", "obs_l_bramble_9"]))
+	assert_eq(expansion.block_reason(&"linden_row3"), "Das ist noch Gemeindeland.", "§2.8: only after Fenner's grant")
+	assert_true([[11.5, 22.8], [21.5, 22.8]] in layout.fence.segments, "L11: the south fence at z 22,8")
+	for id: String in P8_NPCS:
+		var npc := world.get_node_or_null("Entities/" + id) as Npc
+		assert_not_null(npc, id)
+		if npc == null:
+			continue
+		var want: Array = P8_NPCS[id]
+		assert_eq([npc.npc_id, npc.region_id, npc.requires_flag, npc.save_id], [StringName(want[0]), &"graveyard", StringName(want[2]), ""], id)
+		assert_true(npc.get_node("Model").scene_file_path.ends_with(String(want[1]) + ".glb"), id + " model")
+		assert_false(npc.is_in_group(&"saveable"), id + ": the clock and the plans are the state")
+	GameState.set_flag(&"p8_open", false)
+	var jakob := world.get_node("Entities/npc_apprentice") as Npc
+	jakob.refresh()
+	assert_false(jakob.is_present(), "Jakob hidden before p8_open")
+
+
+## §4.8 (1): the head of a kneeling (0.95 m) and a standing (1.6 m) visitor at every visitor spot free at zoom
+## 12 / 22 / 24 (the gameplay camera with the focus on the spot – the player's cutout opens foliage there).
+## §4.8 (2): Jakob's head (1.4 m) at every care stand and hut-corner place at zoom 22; board, box, bench and barrel
+## in the frame at zoom 22. §4.8 (3): the robber's places (rows 2–3) free at zoom 22, the south fence at
+## robber_fence_* in the frame. §4.8 (5): Lenz at lights_lenz free; ≥ 70 % of the grave candles of the Alter
+## Hof + Kirchhof overview (zoom 24) free.
+func test_phase8_sight() -> void:
+	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
+	for s: StringName in [&"east", &"north", &"elder", &"churchyard"]:
+		expansion.unlock(s)
+	for i: int in 2:
+		await tree.process_frame
+	var cut_radius := float((ProjectSettings.get_setting("shader_globals/occlusion_radius") as Dictionary).value)
+	_p8_probe()
+	for i: int in 3:
+		await tree.physics_frame
+	var space := world.get_world_3d().direct_space_state
+	var failures: PackedStringArray = []
+	for p: Dictionary in layout.plots + layout.old_graves:
+		var at := _flat2(world.get_waypoint(StringName("gv_" + String(p.id))))
+		for h: float in [0.95, 1.6]:
+			for zoom: float in P6_ZOOMS:
+				var why := _p8_hidden(space, at, h, zoom, cut_radius)
+				if why != "":
+					failures.append("gv_%s h %.2f zoom %d: %s" % [p.id, h, int(zoom), why])
+	assert_eq(failures, PackedStringArray(), "§4.8 (1): every visitor kneeling and standing free")
+	failures.clear()
+	var care: Array[Vector2] = []
+	for d: Dictionary in layout.dirt_spots:
+		care.append(_v2(d.pos) + Vector2(0.0, 0.7))
+	for id: String in ["apprentice_board", "apprentice_box", "apprentice_sweep", "rain_barrel"]:
+		care.append(_flat2(world.get_waypoint(StringName(id))))
+	for at: Vector2 in care:
+		var why := _p8_hidden(space, at, 1.4, 22.0, cut_radius)
+		if why != "":
+			failures.append("Jakob at %s: %s" % [at, why])
+	assert_eq(failures, PackedStringArray(), "§4.8 (2): Jakob's head free at his places")
+	var cam := (world.get_node("CameraRig") as CameraRig).camera
+	var frame := Rect2(Vector2.ZERO, cam.get_viewport().get_visible_rect().size)
+	_p6_eye(_flat2(world.get_waypoint(&"apprentice_board")), 22.0)
+	for id: String in ["apprentice_board", "apprentice_box", "apprentice_bench", "rain_barrel"]:
+		var node := world.get_node("Entities/" + id) as Node3D
+		assert_true(frame.has_point(cam.unproject_position(node.global_position + Vector3(0, 0.5, 0))), id + " in the frame at zoom 22")
+	failures.clear()
+	for id: String in ["l_05", "l_06", "l_07", "l_08"] + P8_ROW3:
+		var at := _flat2(world.get_waypoint(StringName("gv_" + id)))
+		var why := _p8_hidden(space, at, 1.2, 22.0, cut_radius)
+		if why != "":
+			failures.append("robber at %s: %s" % [id, why])
+	assert_eq(failures, PackedStringArray(), "§4.8 (3): the robber digging (1.2 m) free at zoom 22")
+	_p6_eye(_flat2(world.get_waypoint(&"robber_fence_in")), 22.0)
+	for id: StringName in [&"robber_fence_in", &"robber_fence_out"]:
+		assert_true(frame.has_point(cam.unproject_position(world.get_waypoint(id) + Vector3(0, 0.6, 0))), String(id) + " in the frame")
+	assert_eq(_p8_hidden(space, _flat2(world.get_waypoint(&"lights_lenz")), 1.6, 24.0, cut_radius), "", "§4.8 (5): Lenz free")
+	# The Lichtgang overview (camera on the Alter Hof / Kirchhof at zoom 24).
+	var eye := _p6_eye(Vector2(3.5, -6.0), 24.0)
+	var candles := 0
+	var seen := 0
+	for p: Dictionary in layout.plots + layout.old_graves:
+		var plot := world.get_node_by_layout_id(String(p.id)) as Node3D
+		if not String(p.get("section", "yard")) in ["yard", "north", "elder", "churchyard"]:
+			continue
+		candles += 1
+		var flame := plot.to_global(GraveCare.CANDLE_OFFSET + Vector3(0, 0.16, 0))
+		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(eye, flame, P7_PROBE_LAYER))
+		if hit.is_empty() or (hit.collider as Node).has_meta(&"foliage") or (hit.position as Vector3).distance_to(flame) < 0.3:
+			seen += 1
+	assert_true(candles > 0 and float(seen) / candles >= 0.7, "§4.8 (5): %d of %d grave candles free in the overview" % [seen, candles])
+
+
+func _p8_hidden(space: PhysicsDirectSpaceState3D, at: Vector2, h: float, zoom: float, cut_radius: float) -> String:
+	var g := world.ground_height(at)
+	var head := Vector3(at.x, g + h, at.y)
+	var chest := Vector3(at.x, g + minf(h, float(world.get_player().get(&"occlusion_height"))), at.y)
+	return _p7_blocker(space, _p6_eye(at, zoom), head, chest, cut_radius)
+
+
+func _flat2(v: Vector3) -> Vector2:
+	return Vector2(v.x, v.z)
+
+
+## Mesh copies of every visible mesh (probe layer, foliage flagged) – like test_phase7_lindenacker_sight; the
+## Npc figures (at the road end) are no occluders.
+func _p8_probe() -> void:
+	for n: Node in world.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		var path := String(world.get_path_to(mi))
+		if not mi.is_visible_in_tree() or mi.mesh == null or path.begins_with("Ground") or path.begins_with("Player") \
+				or path.begins_with("Interiors") or path.begins_with("HutInterior") or path.begins_with("Regions") \
+				or path.begins_with("Entities/npc_"):
+			continue
+		var shape := ConcavePolygonShape3D.new()
+		shape.backface_collision = true
+		shape.set_faces(mi.mesh.get_faces())
+		var body := StaticBody3D.new()
+		body.collision_layer = P7_PROBE_LAYER
+		body.collision_mask = 0
+		for s: int in mi.mesh.get_surface_count():
+			var mat := mi.get_active_material(s) as ShaderMaterial
+			if mat != null and mat.shader != null and mat.shader.resource_path == FOLIAGE_SHADER:
+				body.set_meta(&"foliage", true)
+		var cs := CollisionShape3D.new()
+		cs.shape = shape
+		body.add_child(cs)
+		mi.add_child(body)

@@ -229,7 +229,10 @@
     "tp_village": [-20.0, 1.5],
     "tp_anger": [0.0, 2.0],
     "v_ott_door": [23.4, 3.0],
-    "v_kehr_door": [-24.6, -10.2],
+    "v_kehr_door": [-23.35, -9.0],
+    "v_ott_lane_w": [14.0, 3.0],
+    "v_ott_lane": [16.2, 3.6],
+    "v_kehr_lane": [-13.4, -7.4],
     "v_church_step": [1.6, -10.8],
     "v_bridge_sit": [-23.8, 2.6],
     "v_well_peddler": [-1.8, -1.2],
@@ -238,7 +241,7 @@
     "v_peddler_out": [-29.0, 2.2],
     "v_lights_gather": [-24.4, 3.4]
   },
-  "_waypoints_phase8": "Phase 8 §4.6 D1/D4/D5: Türplätze der Krankenlicht-Häuser am Rand der Laufgrenze (v_ott_door, v_kehr_door – dort wird geklopft, dann geht es hinter die Laufgrenze), Veits Plätze (Kirchtür-Stufe, Brückenplatz; Brunnenbank bestehend), Hannes Stand am Brunnen (Kiepe abgestellt), v_remise_sleep (Veit nachts, unsichtbar hinter der Remise), Hannes Weg über die Brücke (v_peddler_in → v_peddler_out am Wegstein), die Lichtgang-Sammlung an der Holderbrücke. Beobachtungsplätze und Krankenlicht: phase8.",
+  "_waypoints_phase8": "Phase 8 §4.6 D1/D4/D5: Türplätze der Krankenlicht-Häuser (v_ott_door; v_kehr_door am Ostufer des Hollerbachs vor der Brücke zum Haus, (−23,35 | −9,0) statt §4.6 (−24,6 | −10,2) – das läge im Bach und im Haus; dort wird geklopft, dann geht es hinein), der Weg zu den Otts zwischen Wundarztstube und Remise (v_ott_lane_w, v_ott_lane), zu den Kehrs südlich am Schmiedekarren vorbei (v_kehr_lane), Veits Plätze (Kirchtür-Stufe, Brückenplatz; Brunnenbank bestehend), Hannes Stand am Brunnen (Kiepe abgestellt), v_remise_sleep (Veit nachts, unsichtbar hinter der Remise), Hannes Weg über die Brücke (v_peddler_in → v_peddler_out am Wegstein), die Lichtgang-Sammlung an der Holderbrücke. Beobachtungsplätze und Krankenlicht: phase8.",
   "waypoint_facing": {
     "_comment": "Blickrichtung (rot_y in Grad, 0 = +Z/Kamera) an Steh-Orten: zum Anger bzw. zur Kamera.",
     "v_well": 0.0, "v_well_w": 25.0, "v_well_bench": 0.0, "v_linden": 0.0, "v_board": 0.0, "v_church_door": 0.0, "v_office_door": 0.0,
@@ -247,10 +250,10 @@
     "v_ott_door": 90.0, "v_kehr_door": 201.0, "v_church_step": 0.0, "v_bridge_sit": 90.0, "v_well_peddler": 30.0,
     "v_peddler_in": 90.0, "v_lights_gather": 60.0
   },
-  "_phase8": "Phase 8 §4.6 D2/D3 (village_build_phase8.gd): WatchSpot im Schatten unter der Remisen-Traufe bzw. an der Westecke des Amtshauses (≤ 12 m bis zum Türplatz, frei sichtbar), SickLight am Fenstermarker light_window der Häuser Ott und Kehr (eine Kerze auf dem inneren Sims, inset m nach innen; das Fensterlicht brennt in der Krankenlicht-Nacht durch – village_dressing.gd).",
+  "_phase8": "Phase 8 §4.6 D2/D3 (village_build_phase8.gd): WatchSpot im Schatten unter der Remisen-Traufe (z 4,7 statt §4.6 5,4 – dort steht die Südwand der Remise) bzw. an der Westecke des Amtshauses (≤ 12 m bis zum Türplatz, frei sichtbar), SickLight am Fenstermarker light_window der Häuser Ott und Kehr (eine Kerze auf dem inneren Sims, inset m nach innen; das Fensterlicht brennt in der Krankenlicht-Nacht durch – village_dressing.gd).",
   "phase8": {
     "watch_spots": [
-      {"id": "watch_ott", "pos": [19.5, 5.4], "rot_y": 120.0},
+      {"id": "watch_ott", "pos": [19.5, 4.7], "rot_y": 120.0},
       {"id": "watch_kehr", "pos": [-20.0, -9.6], "rot_y": 260.0}
     ],
     "sick_lights": [

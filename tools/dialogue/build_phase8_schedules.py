@@ -269,17 +269,17 @@ def mayor():
 def priest():
     patch("priest", lights("v_in_church_altar", "v_in_inn_corner", "v_priest") + [
         # §1.6 night visits (the Versehgang with the lantern).
-        walk(1250, ["v_church_door", "v_well", "v_ott_door"], 10, "night_np_ott_priest_day", animation="lantern_walk"),
+        walk(1250, ["v_church_door", "v_well", "v_ott_lane_w", "v_ott_lane", "v_ott_door"], 10, "night_np_ott_priest_day", animation="lantern_walk"),
         stay(1260, "v_ott_door", "", "night_np_ott_priest_day", animation="knock"),
         hide(1261, "v_ott_door", "night_np_ott_priest_day"),
         stay(1300, "v_ott_door", "v_priest", "night_np_ott_priest_day"),
-        walk(1302, ["v_ott_door", "v_well", "v_church_door"], 10, "night_np_ott_priest_day", animation="lantern_walk"),
+        walk(1302, ["v_ott_door", "v_ott_lane", "v_ott_lane_w", "v_well", "v_church_door"], 10, "night_np_ott_priest_day", animation="lantern_walk"),
         hide(1312, "v_church_door", "night_np_ott_priest_day"),
-        walk(1250, ["v_church_door", "v_well", "v_kehr_door"], 10, "night_np_kehr_priest_day", animation="lantern_walk"),
+        walk(1250, ["v_church_door", "v_well", "v_kehr_lane", "v_kehr_door"], 10, "night_np_kehr_priest_day", animation="lantern_walk"),
         stay(1260, "v_kehr_door", "", "night_np_kehr_priest_day", animation="knock"),
         hide(1261, "v_kehr_door", "night_np_kehr_priest_day"),
         stay(1290, "v_kehr_door", "v_priest", "night_np_kehr_priest_day"),
-        walk(1292, ["v_kehr_door", "v_well", "v_church_door"], 10, "night_np_kehr_priest_day", animation="lantern_walk"),
+        walk(1292, ["v_kehr_door", "v_kehr_lane", "v_well", "v_church_door"], 10, "night_np_kehr_priest_day", animation="lantern_walk"),
         hide(1302, "v_church_door", "night_np_kehr_priest_day"),
     ])
 
@@ -290,14 +290,15 @@ def surgeon():
         walk(960, ["v_surgery_door", "v_well", "v_bridge"], 6, LIGHTS),
         stay(966, "v_bridge", "v_surgeon", LIGHTS),
     ]
-    for path_id, door in (("np_ott", "v_ott_door"), ("np_kehr", "v_kehr_door")):
+    # W-Welt (W2): to the Otts between the surgery and the remise, to the Kehrs over the Anger.
+    for path_id, door, way in (("np_ott", "v_ott_door", ["v_ott_lane_w", "v_ott_lane"]), ("np_kehr", "v_kehr_door", ["v_anger_w", "v_kehr_lane"])):
         f = "night_%s_surgeon_day" % path_id
         entries += [
-            walk(1340, ["v_surgery_door", "v_anger_w", door], 10, f),
+            walk(1340, ["v_surgery_door"] + way + [door], 10, f),
             stay(1350, door, "", f, animation="knock"),
             hide(1351, door, f),
             stay(1390, door, "v_surgeon", f),
-            walk(1392, [door, "v_anger_w", "v_surgery_door"], 10, f),
+            walk(1392, [door] + list(reversed(way)) + ["v_surgery_door"], 10, f),
             hide(1402, "v_surgery_door", f),
         ]
     patch("surgeon", entries)
@@ -320,11 +321,11 @@ def washer():
         walk(1260, ["v_inn_door", "v_dorn_door"], 5, KATHREIN),
         hide(1265, "v_dorn_door", KATHREIN),
         # §1.6: the wake at the Otts' after the death (02:40–05:30).
-        walk(150, ["v_dorn_door", "v_well", "v_ott_door"], 10, f),
+        walk(150, ["v_dorn_door", "v_well", "v_ott_lane_w", "v_ott_lane", "v_ott_door"], 10, f),
         stay(160, "v_ott_door", "", f, animation="knock"),
         hide(161, "v_ott_door", f),
         stay(330, "v_ott_door", "v_washer", f),
-        walk(332, ["v_ott_door", "v_well", "v_dorn_door"], 10, f),
+        walk(332, ["v_ott_door", "v_ott_lane", "v_ott_lane_w", "v_well", "v_dorn_door"], 10, f),
         hide(342, "v_dorn_door", f),
     ] + lights("v_dorn_door", "v_dorn_door", "v_washer", "shop", "work"))
 

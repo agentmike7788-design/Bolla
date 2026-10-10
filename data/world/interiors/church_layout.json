@@ -36,7 +36,7 @@
     {"asset": "ph_int_church_font", "id": "Font", "pos": [-2.3, 3.5], "rot_y": 0.0, "mount": "floor"},
     {"asset": "ph_int_church_poor_box", "id": "PoorBox", "pos": [1.25, 3.75], "rot_y": 0.0, "mount": "floor"},
     {"asset": "ph_int_church_memorial", "id": "Memorial", "pos": [-3.12, -0.9], "y": 1.0, "rot_y": 90.0, "mount": "hang"},
-    {"asset": "ph_int_church_archive", "id": "ArchiveCabinet", "interact": "archive_cabinet", "pos": [-2.95, -2.125], "rot_y": 90.0, "scale": 0.92, "mount": "floor",
+    {"asset": "ph_int_church_archive", "id": "ArchiveCabinet", "interact": "archive_cabinet", "pos": [-2.95, -2.2], "rot_y": 90.0, "scale": 0.92, "mount": "floor",
       "reach": [1.4, 1.6, 1.3], "reach_offset": [0.0, 0.8, 0.75]},
     {"asset": "ph_int_memorial_plate", "id": "MemorialPlate", "interact": "memorial_plate", "pos": [-2.92, -0.62], "y": 1.13, "rot_y": 90.0, "mount": "hang"}
   ],

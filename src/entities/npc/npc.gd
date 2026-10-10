@@ -546,9 +546,12 @@ func _collect_props() -> void:
 		var node3d := n as Node3D
 		if node3d == null or node3d == _model:
 			continue
-		if node3d.has_meta(&"show_with") or node3d.has_meta(&"hide_with"):
-			_props.append([node3d, _names(node3d.get_meta(&"show_with", "")), _names(node3d.get_meta(&"hide_with", "")),
-					StringName(str(node3d.get_meta(&"hide_after", "")))])
+		# W-Welt (W2): the exported figures carry the clip lists as glTF extras (node meta "extras").
+		var extras: Dictionary = node3d.get_meta(&"extras", {}) if node3d.get_meta(&"extras", {}) is Dictionary else {}
+		if node3d.has_meta(&"show_with") or node3d.has_meta(&"hide_with") or extras.has("show_with") or extras.has("hide_with"):
+			_props.append([node3d, _names(node3d.get_meta(&"show_with", extras.get("show_with", ""))),
+					_names(node3d.get_meta(&"hide_with", extras.get("hide_with", ""))),
+					StringName(str(node3d.get_meta(&"hide_after", extras.get("hide_after", ""))))])
 
 
 ## Visibility of the show_with meshes for the current animation (and the schedule position).

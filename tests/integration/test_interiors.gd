@@ -354,3 +354,87 @@ func _capsule_free(p: Vector3) -> bool:
 	query.exclude = [world.get_player().get_rid()]
 	query.transform = Transform3D(Basis.IDENTITY, p + Vector3(0, 0.1, 0)) * capsule.transform
 	return world.get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+
+# --- Phase 8 (docs/PHASE8_DESIGN.md §4.6 D6/D7, §10 – W-Welt) ------------------------------------
+
+## D6: the Kathrein decoration (two FestDecor garlands), the fiddler at the stove (his bow a direct child), the
+## everyday tables of the middle hidden and the festival tables shown on the festival day only (with their
+## collision), a free dance floor of 3 × 2.5 m with the dance places, Jakob's place.
+func test_phase8_inn_kathrein() -> void:
+	var inn := InteriorRoom.find(tree, &"inn")
+	var decor := inn.find_children("*", "", true, false).filter(func(n: Node) -> bool: return n is FestDecor)
+	assert_eq(decor.size(), 2, "D6: fir green with ribbons on two beams")
+	var fiddler := inn.get_node_or_null("Entities/Fiddler") as Fiddler
+	assert_not_null(fiddler, "D6: the fiddler")
+	if fiddler == null:
+		return
+	assert_not_null(fiddler.get_node_or_null("bow"), "the bow sways (Fiddler child bow)")
+	var stove := inn.get_node("Furniture/inn_stove_1") as Node3D
+	assert_true(Vector2(fiddler.position.x, fiddler.position.z).distance_to(Vector2(stove.position.x, stove.position.z)) < 2.0, "at the stove")
+	for id: String in ["v_in_inn_jakob", "v_in_inn_fest_1", "v_in_inn_fest_2", "v_in_inn_fest_3", "v_in_inn_fest_4"]:
+		assert_not_null(inn.get_node_or_null("Waypoints/" + id), id)
+	var shows := inn.find_children("*", "Node3D", true, false).filter(func(n: Node) -> bool: return n.has_meta(&"fest_flag") and bool(n.get_meta(&"fest_show")))
+	var hides := inn.find_children("*", "Node3D", true, false).filter(func(n: Node) -> bool: return n.has_meta(&"fest_flag") and not bool(n.get_meta(&"fest_show")))
+	assert_true(shows.size() >= 4 and hides.size() >= 4, "two tables to the wall (+ collision), their guests (%d / %d)" % [shows.size(), hides.size()])
+	GameState.set_flag(&"fest_kathrein_day", 0)
+	inn.apply_fest()
+	assert_true(shows.all(func(n: Node3D) -> bool: return not n.visible) and hides.all(func(n: Node3D) -> bool: return n.visible), "an ordinary day")
+	GameState.set_flag(&"fest_kathrein_day", TimeManager.day)
+	inn.apply_fest()
+	for d: Node in decor:
+		(d as FestDecor).refresh()
+		assert_true((d as Node3D).visible, "decoration on the festival day")
+	fiddler.refresh()
+	assert_true(fiddler.visible, "the fiddler on the festival day")
+	assert_true(shows.all(func(n: Node3D) -> bool: return n.visible) and hides.all(func(n: Node3D) -> bool: return not n.visible), "the festival day")
+	var player := world.get_player()
+	player.set_region(&"village")
+	player.global_transform = inn.spawn_transform()
+	player.set_in_interior(true, &"inn")
+	for i: int in 3:
+		await tree.physics_frame
+	# The dance floor (x −1,15…1,85, z −0,9…1,6) is free of furniture collision.
+	for x: float in [-0.75, 0.35, 1.45]:
+		for z: float in [-0.5, 0.35, 1.2]:
+			assert_true(_capsule_free(inn.to_global(Vector3(x, 0, z))), "dance floor free at (%.2f, %.2f)" % [x, z])
+	player.set_in_interior(false)
+	player.set_region(&"graveyard")
+	GameState.set_flag(&"fest_kathrein_day", 0)
+	inn.apply_fest()
+
+
+## D7: the parish archive (ArchiveCabinet with its prompt area) in the church near Lenz' place before the choir,
+## the name plate on the memorial board (MemorialPlate, shown from friend_innkeeper_2 on); the room keeps its
+## G7 light.
+func test_phase8_church_archive_and_plate() -> void:
+	var church := InteriorRoom.find(tree, &"church")
+	var cabinet := church.get_node_or_null("Entities/ArchiveCabinet") as ArchiveCabinet
+	assert_not_null(cabinet, "D7: the archive cabinet")
+	var plate := church.get_node_or_null("Entities/MemorialPlate") as MemorialPlate
+	assert_not_null(plate, "D7: the name plate")
+	if cabinet == null or plate == null:
+		return
+	assert_not_null(cabinet.get_node_or_null("Interactable"), "the archive can be used")
+	assert_not_null(cabinet.get_node_or_null("Model"), "ph_int_church_archive")
+	var altar := church.get_node("Waypoints/v_in_church_altar") as Node3D
+	assert_true(cabinet.position.distance_to(altar.position) < 4.0, "Lenz beside it")
+	var memorial := church.get_node("Furniture/Memorial") as Node3D
+	assert_true(plate.position.distance_to(memorial.position) < 0.7, "on the memorial board")
+	GameState.set_flag(&"friend_innkeeper_2", false)
+	plate.refresh()
+	assert_false(plate.visible, "before Rosine 2")
+	GameState.set_flag(&"friend_innkeeper_2", true)
+	plate.refresh()
+	assert_true(plate.visible, "from Rosine 2 on")
+	GameState.set_flag(&"friend_innkeeper_2", false)
+	var player := world.get_player()
+	player.set_region(&"village")
+	player.global_transform = church.spawn_transform()
+	player.set_in_interior(true, &"church")
+	for i: int in 3:
+		await tree.physics_frame
+	var use := church.to_global(Vector3(-2.13, 0, -2.28))  # between the choir step and the first pew
+	assert_true(_capsule_free(use), "the gravekeeper fits in front of the archive")
+	player.set_in_interior(false)
+	player.set_region(&"graveyard")

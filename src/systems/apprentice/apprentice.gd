@@ -324,7 +324,10 @@ func on_graveyard() -> bool:
 
 ## From the board + the state at start_minute, saved with the progress.
 func today_plan() -> Array[Dictionary]:
-	return _plan.duplicate(true) if _plan_day == TimeManager.day else [] as Array[Dictionary]
+	var out: Array[Dictionary] = []
+	if _plan_day == TimeManager.day:
+		out.assign(_plan.duplicate(true))
+	return out
 
 
 ## Index of the next place whose effect is still to come.
