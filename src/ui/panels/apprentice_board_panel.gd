@@ -297,9 +297,12 @@ func estimate_text() -> String:
 	var lines := current_lines()
 	if lines.is_empty():
 		return Phase8Texts.BOARD_ESTIMATE_NONE
-	var plan := apprentice.today_plan()
+	var plan: Array[Dictionary] = []
+	plan.assign(_today_plan())
 	if not plan.is_empty():
-		plan = plan.slice(apprentice.progress())
+		var rest: Array[Dictionary] = []
+		rest.assign(plan.slice(apprentice.progress()))
+		plan = rest
 	else:
 		if not apprentice.works_today(TimeManager.day) and not apprentice.works_today(TimeManager.day + 1):
 			return Phase8Texts.BOARD_ESTIMATE_OFF
@@ -313,7 +316,7 @@ func done_entries() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if apprentice == null:
 		return out
-	var plan := apprentice.today_plan()
+	var plan := _today_plan()
 	for i: int in mini(apprentice.progress(), plan.size()):
 		var e: Dictionary = plan[i]
 		if StringName(str(e.get("task", ""))) in Apprentice.TASKS:
@@ -337,6 +340,12 @@ func _refresh_done() -> void:
 		done_box.add_child(UIKit.label(Phase8Texts.done_row(e, _section_of(str(e.get("grave_id", "")), str(e.get("spot_id", ""))),
 				bool(d.mistake)), &"WarningLabel" if bool(d.mistake) else &"ChalkLabel"))
 		shown += 1
+
+
+## Apprentice.today_plan() untyped (its empty branch is an untyped [] – avoids a typed-array conversion error).
+func _today_plan() -> Array:
+	var raw: Variant = apprentice.call(&"today_plan") if apprentice != null else []
+	return raw as Array if raw is Array else []
 
 
 func _write(lines: Array[Dictionary]) -> void:

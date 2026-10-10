@@ -79,7 +79,7 @@ static func wish_lines(visitors: Visitors, care: GraveCare, tree: SceneTree, kin
 			detail = Phase8Texts.PAGE_KIN_FRESH_UNTIL % fresh_until(care.fresh_minutes_left(str(w.get("grave_id", ""))))
 		elif done:
 			detail = Phase8Texts.PAGE_KIN_WISH_DONE
-		var text := Phase8Texts.PAGE_KIN_WISH % [Phase8Texts.wish_kind_label(kind), Phase8Texts.CHECK if done else Phase8Texts.NONE, detail]
+		var text := Phase8Texts.PAGE_KIN_WISH % [Phase8Texts.wish_kind_label(kind) + (" " + Phase8Texts.CHECK if done else ""), detail]
 		out.append({"kind": kind, "done": done, "detail": detail, "text": text, "grave": Phase8Status.dead_name(tree, str(w.get("grave_id", "")))})
 	return out
 

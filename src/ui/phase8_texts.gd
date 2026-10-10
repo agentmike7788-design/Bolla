@@ -199,6 +199,8 @@ const SICK_HOUSE_NAMES: Dictionary[StringName, String] = {&"house_ott": "Otts", 
 
 # --- grave tooltip (§7.2) -----------------------------------------------------------------------------
 const TIP_FLOWERS_FRESH := "Blumen frisch (gießen in ≈ %s)"
+## „in ≈ 2 Tagen" – the dative plural of Tag.
+const DAYS_DATIVE := "Tagen"
 const TIP_FLOWERS_DRY := "Blumen frisch – heute gießen"
 const TIP_FLOWERS_WILTED := "Blumen welk"
 const TIP_WREATH := "Wachskranz"
@@ -230,7 +232,7 @@ const PAGE_KIN_TODAY := "kommt heute"
 const PAGE_KIN_HERE := "ist jetzt hier"
 const PAGE_KIN_TOMORROW := "kommt morgen"
 const PAGE_KIN_UNKNOWN := "wann, weiß keiner"
-const PAGE_KIN_WISH := "%s %s · %s"
+const PAGE_KIN_WISH := "%s · %s"
 const PAGE_KIN_WISH_DONE := "erfüllt"
 const PAGE_KIN_WISH_OPEN := "offen"
 const PAGE_KIN_FRESH_UNTIL := "frisch bis %s"
@@ -266,7 +268,7 @@ const DAY_NIGHT := "Die Nacht"
 const DAY_VISIT := "%s (%s, %s)"
 const DAY_WISH_PARTS: Dictionary[StringName, String] = {&"done": "erfüllt", &"offered": "neu", &"accepted": "angenommen",
 		&"failed": "verfallen"}
-const DAY_JAKOB_JOBS := "%d %s"
+const DAY_JAKOB_JOBS := "%s %d"
 const DAY_JAKOB_MISTAKE := "Fehler: %s"
 const DAY_JAKOB_WAGE := "Lohn %d"
 const DAY_JAKOB_UNPAID := "ohne Lohn heim"
@@ -371,11 +373,11 @@ static func coins(n: int) -> String:
 	return Phase7Texts.coins(n)
 
 
-## „≈ 1 Tag" / „≈ 5 Std." from game minutes.
-static func duration_text(minutes: int) -> String:
+## „1 Tag" / „5 Std." from game minutes (`dative`: „2 Tagen", after „in").
+static func duration_text(minutes: int, dative: bool = false) -> String:
 	if minutes >= 1440:
 		var d := roundi(float(minutes) / 1440.0)
-		return "%d %s" % [d, days_word(d)]
+		return "%d %s" % [d, (DAYS_DATIVE if dative else days_word(d)) if d != 1 else "Tag"]
 	return "%d Std." % maxi(1, roundi(float(minutes) / 60.0))
 
 
@@ -611,7 +613,7 @@ static func grave_lines(info: Dictionary) -> PackedStringArray:
 	match StringName(str(info.get("flowers", ""))):
 		&"fresh":
 			var left := int(info.get("fresh_left", -1))
-			out.append(TIP_FLOWERS_FRESH % duration_text(left) if left > 60 else TIP_FLOWERS_DRY)
+			out.append(TIP_FLOWERS_FRESH % duration_text(left, true) if left > 60 else TIP_FLOWERS_DRY)
 		&"wilted":
 			out.append(TIP_FLOWERS_WILTED)
 		&"wreath":
@@ -624,7 +626,7 @@ static func grave_lines(info: Dictionary) -> PackedStringArray:
 	if ms == 0:
 		out.append(TIP_MORTSAFE_NEW)
 	elif ms > 0:
-		out.append(TIP_MORTSAFE % [ms, days_word(ms)])
+		out.append(TIP_MORTSAFE % [ms, "Tag" if ms == 1 else DAYS_DATIVE])
 	if bool(info.get("disturbed", false)):
 		out.append(TIP_DISTURBED)
 	var kin := StringName(str(info.get("kin", "")))
