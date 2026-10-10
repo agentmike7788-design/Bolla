@@ -1,0 +1,10 @@
+p8_20_kathreintanz_inn  camera_tris=67962 (primitives 67962 + grass 0)  draw_calls=86 (camera 22)  objects=91  omni_visible=7  shadowed=1  particles=9
+p8_17_hanne_well  camera_tris=75519 (primitives 75519 + grass 0)  draw_calls=177 (camera 94)  objects=645  omni_visible=6  shadowed=0  particles=13
+p8_14_theres_liesel_well  camera_tris=78849 (primitives 78849 + grass 0)  draw_calls=114 (camera 37)  objects=135  omni_visible=7  shadowed=0  particles=13
+p8_15_lenz_low_church  camera_tris=98238 (primitives 98238 + grass 0)  draw_calls=106 (camera 39)  objects=117  omni_visible=4  shadowed=0  particles=13
+p8_18_sick_light_night  camera_tris=101051 (primitives 101051 + grass 0)  draw_calls=89 (camera 54)  objects=101  omni_visible=6  shadowed=2  particles=3
+p8_18b_sick_light_far  camera_tris=107239 (primitives 107239 + grass 0)  draw_calls=99 (camera 61)  objects=113  omni_visible=6  shadowed=2  particles=3
+p8_19_liesel_vigil  camera_tris=100323 (primitives 100323 + grass 0)  draw_calls=80 (camera 49)  objects=94  omni_visible=5  shadowed=1  particles=3
+p8_28_parish_archive  camera_tris=27500 (primitives 27500 + grass 0)  draw_calls=17 (camera 17)  objects=22  omni_visible=7  shadowed=0  particles=3
+perf_p8_04_inn_kathrein  camera_tris=70520 (primitives 70520 + grass 0)  draw_calls=22 (camera 22)  objects=27  omni_visible=7  shadowed=0  particles=9
+perf_p8_05_village_sick_night  camera_tris=119512 (primitives 119512 + grass 0)  draw_calls=138 (camera 62)  objects=150  omni_visible=9  shadowed=2  particles=13
