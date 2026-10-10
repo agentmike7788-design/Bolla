@@ -604,7 +604,17 @@ func _check_consistent(what: String) -> void:
 	if orders != null:
 		for o: OrderData in orders.all_orders():
 			assert_true(orders.state(o.id) in ORDER_STATES, "%s: order %s state %s" % [what, o.id, orders.state(o.id)])
-		assert_true(orders.active().size() <= 4, "%s: at most 4 active orders" % what)
+		# Phase 8 (P4): friend orders have their own limit (OrdersConfig.max_active_friend).
+		var friend := 0
+		var other := 0
+		for id: StringName in orders.active():
+			var data := orders.order_data(id)
+			if data != null and data.category == &"friend":
+				friend += 1
+			else:
+				other += 1
+		assert_true(other <= 4, "%s: at most 4 active orders (%d)" % [what, other])
+		assert_true(friend <= 2, "%s: at most 2 active friend orders (%d)" % [what, friend])
 	for r: CorpseRecord in world.corpse_manager.records():
 		for organ: StringName in r.returned:
 			assert_true(organ in r.harvested, "%s: %s returned %s was harvested" % [what, r.id, organ])
