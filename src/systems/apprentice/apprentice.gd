@@ -74,6 +74,8 @@ const V_LEAVE := 465
 const V_EVENING := 1020
 const V_NIGHT := 1260
 const DIALOGUE := &"v_apprentice"
+const TASK_FIRST_DAY := &"apprentice_first_day"
+const TASK_DAY_OFF := &"jakob_day_off"
 const STAT_DAYS := &"apprentice_days"
 const STAT_JOBS := &"apprentice_jobs"
 const STAT_MISTAKES := &"apprentice_mistakes"
@@ -117,6 +119,9 @@ var _missing: Array[StringName] = []
 ## Teaching: where he stands watching (point id) and since when (minute of day).
 var _watch_point: String = ""
 var _watch_minute: int = -1
+## Orders.note_task bookkeeping (P4): the first working day reported, the last day off reported.
+var _first_day_done: bool = false
+var _day_off_noted: int = 0
 
 
 func _init() -> void:
@@ -336,6 +341,10 @@ func apply_minute(day: int, minute: int) -> void:
 	if day != _day:
 		_new_day(day)
 	if not works_today(day):
+		# P4 (of_rosine_return_2 „Ein Tag für Jakob"): a day off of a hired apprentice, reported at 15:30.
+		if day > _hire_day and _unpaid < cfg.unpaid_limit and minute >= cfg.end_minute and _day_off_noted != day:
+			_day_off_noted = day
+			_note_task(TASK_DAY_OFF)
 		return
 	if _plan_day != day and minute >= board_minute():
 		_make_plan(day)
@@ -343,6 +352,10 @@ func apply_minute(day: int, minute: int) -> void:
 		_apply_effects(day, minute)
 	if minute >= cfg.end_minute and _wage_day != day:
 		pay_wage()
+		# P4 (of_rosine_1 „Der Junge"): his first working day is done.
+		if not _first_day_done:
+			_first_day_done = true
+			_note_task(TASK_FIRST_DAY)
 	if _teach != &"":
 		if minute >= cfg.end_minute:
 			_teach = &""
@@ -502,7 +515,8 @@ func save_state() -> Dictionary:
 			"teach": String(_teach), "watch_point": _watch_point, "watch_minute": _watch_minute, "board": _board.duplicate(true),
 			"plan_day": _plan_day, "plan": plan, "progress": _progress, "morale": _morale, "unpaid": _unpaid, "debt": _debt,
 			"praised_day": _praised_day, "scolded_day": _scolded_day, "judged_day": _judged_day, "mistakes_today": _mistakes_today,
-			"last_mistake_day": _last_mistake_day, "wage_day": _wage_day, "day": _day,
+			"last_mistake_day": _last_mistake_day, "wage_day": _wage_day, "day": _day, "first_day_done": _first_day_done,
+			"day_off_noted": _day_off_noted,
 			"missing": _missing.map(func(i: StringName) -> String: return String(i))}
 
 
@@ -552,6 +566,8 @@ func load_state(data: Dictionary) -> void:
 	_mistakes_today = maxi(_int(data.get("mistakes_today"), 0), 0)
 	_last_mistake_day = _int(data.get("last_mistake_day"), 0)
 	_wage_day = _int(data.get("wage_day"), 0)
+	_first_day_done = data.get("first_day_done") is bool and bool(data.get("first_day_done"))
+	_day_off_noted = _int(data.get("day_off_noted"), 0)
 	_day = _int(data.get("day"), TimeManager.day if not data.is_empty() else 0)
 	_missing.clear()
 	var missing: Variant = data.get("missing", [])
@@ -850,6 +866,12 @@ static func _known(ids: PackedStringArray, world: Node) -> PackedStringArray:
 		if ScheduleBuilder.has_point(world, id):
 			out.append(id)
 	return out
+
+
+func _note_task(action_id: StringName) -> void:
+	var orders := _first(&"orders")
+	if orders != null and orders.has_method(&"note_task"):
+		orders.call(&"note_task", action_id)
 
 
 func _bubble(text: String) -> void:

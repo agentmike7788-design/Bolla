@@ -73,6 +73,16 @@ class FakeFestivals extends Node:
 		return &""
 
 
+class FakeOrders extends Node:
+	var tasks: Array = []
+
+	func _init() -> void:
+		add_to_group(&"orders")
+
+	func note_task(action_id: StringName) -> void:
+		tasks.append(action_id)
+
+
 class FakeVisitors extends Node:
 	var active: Array[Dictionary] = []
 
@@ -463,3 +473,22 @@ func test_limits() -> void:
 	for e: ScheduleEntry in sched.entries:
 		if e.visible:
 			assert_true(e.start_minute >= 495 and e.start_minute <= 950, "only by day (%d)" % e.start_minute)
+
+
+func test_orders_first_day_and_day_off() -> void:
+	var orders := FakeOrders.new()
+	world.add_child(orders)
+	_hired({"rake": 1}, [], 9)
+	_at(54, 900)
+	assert_eq(orders.tasks, [], "not before 15:30")
+	_at(54, 935)
+	assert_eq(orders.tasks, [&"apprentice_first_day"], "P4 of_rosine_1: the first working day")
+	_at(55, 935)
+	assert_eq(orders.tasks, [&"apprentice_first_day"], "only once")
+	_at(58, 600)
+	assert_eq(orders.tasks.size(), 1)
+	_at(58, 935)
+	assert_eq(orders.tasks, [&"apprentice_first_day", &"jakob_day_off"], "P4 of_rosine_return_2: a day off")
+	app.apply_minute(58, 940)
+	assert_eq(orders.tasks.size(), 2, "once per day off")
+	assert_true(app.save_state().first_day_done)
