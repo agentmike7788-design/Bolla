@@ -156,10 +156,19 @@ func test_a_whole_working_day() -> void:
 	assert_false(raking.is_empty(), "he rakes")
 	# W3 (QA8-07, P5 carry_with): between two leaf heaps the rake stays in his hand (idle / walk / talk …), never
 	# while he weeds and never on the way to the weeds.
+	# He learns the day's work at the board (the plan from the chalk lines): on the way up he carries nothing.
+	var board_at := 100000
+	for t: Array in trace:
+		if t[1] and t[3] == &"read_board":
+			board_at = t[0]
+			break
 	var carried := 0
 	for i: int in trace.size():
 		var t: Array = trace[i]
 		if not t[1]:
+			continue
+		if t[0] < board_at:
+			assert_false(t[4], "minute %d: no rake on the way up (before the board)" % t[0])
 			continue
 		if t[3] == &"rake":
 			assert_true(t[4], "minute %d: the rake in his hands while raking" % t[0])
