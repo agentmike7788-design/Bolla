@@ -62,16 +62,16 @@ func _build() -> void:
 	var kind_col := UIKit.vbox(4)
 	kind_icon = UIKit.icon(null, kind_icon_edge)
 	kind_col.add_child(kind_icon)
-	kind_label = UIKit.label("", &"DimLabel")
+	kind_label = UIKit.label("", &"InkDimLabel")
 	kind_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	kind_col.add_child(kind_label)
 	card_box.add_child(kind_col)
 	var text_col := UIKit.vbox(8)
 	text_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	quote_label = UIKit.label("", &"WhisperLabel", true)
+	quote_label = UIKit.label("", &"InkLabel", true)
 	quote_label.custom_minimum_size.x = panel_width - 220.0
 	text_col.add_child(quote_label)
-	line_label = UIKit.label("", &"SubheaderLabel", true)
+	line_label = UIKit.label("", &"InkHeaderLabel", true)
 	text_col.add_child(line_label)
 	card_box.add_child(text_col)
 	card.add_child(card_box)

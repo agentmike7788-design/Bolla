@@ -55,11 +55,14 @@ func show_line(id: StringName, npc_id: StringName, text: String) -> void:
 	bubble.text = text
 	bubble.position = Vector3(0.0, HEIGHT, 0.0)
 	_style(bubble, 30, 520.0)
+	# The text grows upwards from the bubble's anchor, the name sits just below it.
+	bubble.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	var tag := Label3D.new()
 	tag.name = &"Name"
 	tag.text = Phase8Texts.person_name(npc_id)
-	tag.position = Vector3(0.0, -0.17, 0.0)
+	tag.position = Vector3(0.0, -0.03, 0.0)
 	_style(tag, 18, 400.0)
+	tag.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	tag.modulate = Color(0.8, 0.76, 0.66, 1.0)
 	bubble.add_child(tag)
 	npc.add_child(bubble)

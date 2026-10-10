@@ -281,7 +281,10 @@ func open_journal(page: StringName = &"people") -> void:
 	var journal := get_tree().get_first_node_in_group(JOURNAL_GROUP) if is_inside_tree() else null
 	if journal == null or not journal.has_method(&"panel_context"):
 		return
-	open_panel(PANEL_JOURNAL, journal.call(&"panel_context", page))
+	var ctx: Dictionary = journal.call(&"panel_context", page)
+	# The Phase-7/8 tabs (Aufträge, Hollerbrück, Angehörige) are the panel's own: JournalManager knows only its four.
+	ctx["page"] = page
+	open_panel(PANEL_JOURNAL, ctx)
 
 
 ## M: opens the map when nothing is open (not in build mode), closes it when on top.

@@ -15,7 +15,7 @@ const JPG_QUALITY := 0.9
 ## A peddler day (day % 6 == 1) after the opening (53, B1) – Jakob works (55 % 7 != 2).
 const DAY := 55
 const OPEN_DAY := 53
-const MORNING := 600
+const MORNING := 470
 const SYSTEMS: Dictionary[String, Script] = {
 	"NpcLife": preload("res://src/systems/npc_life/npc_life.gd"),
 	"ChatterRunner": preload("res://src/systems/npc_life/chatter_runner.gd"),
@@ -37,7 +37,7 @@ const HIDDEN_AT := Vector3(60.0, -30.0, -200.0)
 const GRAVES: Array = [
 	["plot_01", "Hedwig Lamprecht", 64, &"old_age", &"gravestone_simple", &"house_kehr"],
 	["plot_02", "Paul Kehr", 44, &"fever", &"wooden_cross", &"house_kehr"],
-	["plot_03", "Anna Brandt", 31, &"childbed", &"wooden_cross", &"house_brandt"],
+	["plot_03", "Anna Brandt", 31, &"fever", &"wooden_cross", &"house_brandt"],
 	["plot_04", "Grete Sieber", 69, &"old_age", &"gravestone_simple", &"house_sieber"],
 	["plot_05", "Jost Ott", 58, &"coach_accident", &"wooden_cross", &"house_ott"],
 ]
@@ -95,23 +95,24 @@ func _run() -> void:
 	await get_tree().process_frame
 	_stage()
 	await get_tree().process_frame
+	# In clock order: setting an earlier minute would start the next day (DAY stays a peddler day).
 	await _shot("board", _board_shot)
 	await _shot("wish_card", _wish_shot)
 	await _shot("favor", _favor_shot)
 	await _shot("box_tin", _box_shot)
 	await _shot("stone_plate", _stone_shot)
-	await _shot("journal_kin", _journal_kin_shot)
 	await _shot("journal_village", _journal_village_shot)
 	await _shot("journal_faces", _journal_faces_shot)
 	await _shot("journal_underlined", _journal_underlined_shot)
 	await _shot("register", _register_shot)
 	await _shot("day_summary", _day_summary_shot)
 	await _shot("map_friedhof", _map_graveyard_shot)
-	await _shot("bubbles", _bubbles_shot)
 	await _shot("listen", _listen_shot)
+	await _shot("journal_kin", _journal_kin_shot)
 	await _shot("shop_peddler", _shop_peddler_shot)
 	await _shot("fest_lights", _fest_shot)
 	await _shot("hud_p8", _hud_shot)
+	await _shot("bubbles", _bubbles_shot)
 	await _shot("chapter", _chapter_shot)
 	await _shot("map_dorf", _map_village_shot)
 	for slot: int in [0, 1]:
@@ -352,7 +353,7 @@ func _in_village(local: Vector2, facing: float = PI) -> void:
 
 ## p8_11: the chalk board with three lines, the chalk strokes and the tin.
 func _board_shot() -> void:
-	TimeManager.set_time(DAY, 480)
+	_at_time(480)
 	_at_gate()
 	_pack({&"coin": 14})
 	var board := _find(func(n: Node) -> bool: return n is ApprenticeBoard) as ApprenticeBoard
@@ -365,7 +366,7 @@ func _board_shot() -> void:
 
 ## p8_05: Martha Kehr's wish at her husband's grave.
 func _wish_shot() -> void:
-	TimeManager.set_time(DAY, 600)
+	_at_time(600)
 	_at_plot("plot_02")
 	var visit := _visit(&"kin_kehr", ["plot_02", "plot_01"], &"waiting")
 	var offer := _visitors.offer_wish(visit)
@@ -405,7 +406,7 @@ func _stone_shot() -> void:
 
 
 func _journal_kin_shot() -> void:
-	TimeManager.set_time(DAY, 640)
+	_at_time(645)
 	_at_gate()
 	_wish("flowers", "plot_02", "kin_kehr", "accepted", "w_flowers")
 	_wish("candle", "plot_03", "kin_brandt", "accepted", "w_candle")
@@ -483,7 +484,7 @@ func _day_summary_shot() -> void:
 
 ## p8_32 (graveyard): a visitor, Jakob at work, a wish, coins on the stone, a disturbed grave.
 func _map_graveyard_shot() -> void:
-	TimeManager.set_time(DAY, 610)
+	_at_time(610)
 	_at_gate()
 	_visit(&"kin_kehr", ["plot_02"], &"mourning")
 	_visit(&"kin_sieber", ["plot_04"], &"mourning")
@@ -512,7 +513,7 @@ func _jakob_working() -> void:
 
 ## p8_14: Theres and Liesel at the well (16:15), two bubbles.
 func _bubbles_shot() -> void:
-	TimeManager.set_time(DAY, 975)
+	_at_time(975)
 	await _in_village(Vector2(1.6, 0.4), deg_to_rad(200.0))
 	var theres := _ui.chatter_bubbles.find_npc(&"grocer")
 	var liesel := _ui.chatter_bubbles.find_npc(&"washer")
@@ -529,19 +530,23 @@ func _bubbles_shot() -> void:
 
 ## p8_15: Lenz low at the church door, the dialogue with „[Zuhören]".
 func _listen_shot() -> void:
-	TimeManager.set_time(DAY, 640)
+	_at_time(640)
 	await _in_village(Vector2(-6.0, -10.0), PI)
 	_life.set_mood(&"priest", &"low")
 	var lenz := _ui.chatter_bubbles.find_npc(&"priest")
 	if lenz != null:
 		_frame(lenz.global_position, 9.0)
 		_ui.open_dialogue(&"v_priest", lenz)
+		# The greeting first, then the menu with „[Zuhören]".
+		for i: int in 2:
+			if _ui.dialogue_box.is_active() and not _ui.dialogue_box.choice_texts().any(func(t: String) -> bool: return t.begins_with("[Zuhören]")):
+				_ui.dialogue_box.choose(0)
 	await get_tree().process_frame
 
 
 ## p8_17: Hanne at the well, her shop panel.
 func _shop_peddler_shot() -> void:
-	TimeManager.set_time(DAY, 660)
+	_at_time(660)
 	await _in_village(Vector2(1.6, 0.4), deg_to_rad(200.0))
 	_pack({&"coin": 17, &"herbs": 4, &"elderberries": 6})
 	_ui.open_panel(&"shop", {"shop_id": &"peddler", "inventory": _player.inventory, "player": _player})
@@ -550,6 +555,7 @@ func _shop_peddler_shot() -> void:
 
 ## The festival card of the Lichtgang, the candles counted.
 func _fest_shot() -> void:
+	_at_time(880)
 	_lights_today()
 	_care.light_free("plot_01")
 	_care.light_free("plot_02")
@@ -561,11 +567,11 @@ func _fest_shot() -> void:
 ## The HUD on the Lichtgang afternoon: the banner and „Kein Grab ohne Licht: 3/5".
 func _hud_shot() -> void:
 	_lights_today()
-	TimeManager.set_time(DAY, 899)
+	_at_time(899)
 	_care.light_free("plot_03")
 	_at_gate()
 	_place_player(Vector3(-2.6, 0.0, -2.4), deg_to_rad(120.0))
-	TimeManager.set_time(DAY, 900)
+	_at_time(900)
 	_ui.fest_banner._on_time_tick(DAY, 900)
 	_ui.fest_banner.call(&"_hold_for_shot")
 	await get_tree().process_frame
@@ -614,11 +620,17 @@ func _map_village_shot() -> void:
 	var path := Database.night_path(&"np_ott") as NightPathData
 	if path != null:
 		GameState.set_flag(&"p8_open_day", DAY - path.start_offset)
-	TimeManager.set_time(DAY, 1330)
+	_at_time(1330)
 	await _in_village(Vector2(1.6, 0.4), deg_to_rad(200.0))
 	_ui.notifications.clear()
 	_ui.open_map()
 	await get_tree().process_frame
+
+
+## The clock forward to `minute` of DAY (never back – that would be the next day).
+func _at_time(minute: int) -> void:
+	if TimeManager.day == DAY and TimeManager.minute_of_day < minute:
+		TimeManager.set_time(DAY, minute)
 
 
 func _find(pred: Callable) -> Node:
