@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://src/systems/audio/audio_cue.gd" id="1_cue"]
 [ext_resource type="Script" path="res://src/systems/audio/audio_cue_library.gd" id="2_lib"]
@@ -6,6 +6,8 @@
 [ext_resource type="AudioStream" path="res://assets/audio/music/ph_mus_day.ogg" id="s_mus_day_1"]
 [ext_resource type="AudioStream" path="res://assets/audio/music/ph_mus_night.ogg" id="s_mus_night_1"]
 [ext_resource type="AudioStream" path="res://assets/audio/music/ph_mus_village.ogg" id="s_mus_village_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ph_mus_dance.ogg" id="s_mus_dance_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/ph_mus_lights.ogg" id="s_mus_lights_1"]
 
 [sub_resource type="Resource" id="cue_mus_title"]
 script = ExtResource("1_cue")
@@ -71,7 +73,39 @@ unit_size = 4
 cooldown = 0
 max_voices = 1
 
+[sub_resource type="Resource" id="cue_mus_dance"]
+script = ExtResource("1_cue")
+id = &"mus_dance"
+streams = Array[AudioStream]([ExtResource("s_mus_dance_1")])
+bus = &"Music"
+volume_db = -8.5
+target_lufs = -28
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 1
+
+[sub_resource type="Resource" id="cue_mus_lights"]
+script = ExtResource("1_cue")
+id = &"mus_lights"
+streams = Array[AudioStream]([ExtResource("s_mus_lights_1")])
+bus = &"Music"
+volume_db = -10.2
+target_lufs = -30
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 1
+
 [resource]
 script = ExtResource("2_lib")
 library_id = &"music"
-cues = Array[ExtResource("1_cue")]([SubResource("cue_mus_title"), SubResource("cue_mus_day"), SubResource("cue_mus_night"), SubResource("cue_mus_village")])
+cues = Array[ExtResource("1_cue")]([SubResource("cue_mus_title"), SubResource("cue_mus_day"), SubResource("cue_mus_night"), SubResource("cue_mus_village"), SubResource("cue_mus_dance"), SubResource("cue_mus_lights")])

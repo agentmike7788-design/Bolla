@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Builds every sound of THE LAST GRAVEKEEPER procedurally (no samples, no downloads).
 
-    python tools/audio/build_audio.py [--only <substring>] [--no-write-data]
+    python tools/audio/build_audio.py [--only <substring>] [--ids a,b,c] [--no-write-data]
 
 Needs numpy, scipy, soundfile (libsndfile with Vorbis). Deterministic: every file has its
 own seed derived from its id, so a rebuild produces the same audio.
@@ -38,6 +38,7 @@ import ambience as amb  # noqa: E402
 import loudness  # noqa: E402
 import music  # noqa: E402
 import sfx  # noqa: E402
+import sfx_phase8 as p8  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 ASSET_DIR = os.path.join(ROOT, "assets", "audio")
@@ -261,6 +262,42 @@ CATALOG: list[Spec] = [
     MUS("mus_day", music.mus_day, volume_db=-6),
     MUS("mus_night", music.mus_night, volume_db=-6),
     MUS("mus_village", music.mus_village, volume_db=-6),
+    # --- Phase 8 „Wer heraufkommt" (docs/PHASE8_DESIGN.md §8.3; tools/audio/sfx_phase8.py) -----------
+    # Positional one-shots: played at their source (grave, Npc) through Audio.play(id, pos); max_distance is
+    # the reach of the 3D voice. The visitors' sounds sit 6 dB and more under the footsteps (-42).
+    S("rake_leaves", p8.rake_leaves, 3, positional=True, max_distance=18, unit_size=3, loud=-33),
+    S("weed_pull", p8.weed_pull, 3, positional=True, max_distance=16, unit_size=3, loud=-34),
+    S("water_pour", p8.water_pour, 3, positional=True, max_distance=16, unit_size=3, loud=-33),
+    S("barrel_fill", p8.barrel_fill, 2, positional=True, max_distance=16, unit_size=3, loud=-32, cooldown=0.5),
+    S("match_strike", p8.match_strike, 2, positional=True, max_distance=12, unit_size=2, loud=-36, cooldown=0.5),
+    S("candle_glass", p8.candle_glass, 2, positional=True, max_distance=12, unit_size=2, loud=-36, cooldown=0.5),
+    S("broom_sweep", p8.broom_sweep, 3, positional=True, max_distance=16, unit_size=3, loud=-37),
+    S("mortsafe_set", p8.mortsafe_set, 2, positional=True, max_distance=24, unit_size=4, loud=-29, cooldown=0.6),
+    S("cloth_kneel", p8.cloth_kneel, 3, positional=True, max_distance=12, unit_size=2, loud=-48, max_voices=2),
+    S("flowers_lay", p8.flowers_lay, 2, positional=True, max_distance=12, unit_size=2, loud=-48, max_voices=2),
+    S("mourn_breath", p8.mourn_breath, 2, positional=True, max_distance=8, unit_size=1.5, loud=-52, max_voices=1,
+      cooldown=6.0, pitch_jitter=0.03),
+    S("coins_stone", p8.coins_stone, 3, positional=True, max_distance=14, unit_size=2, loud=-33, cooldown=0.3),
+    S("chatter_murmur", p8.chatter_murmur, 3, positional=True, max_distance=12, unit_size=2.5, loud=-41, max_voices=2,
+      cooldown=0.8),
+    S("whistle_tune", [p8.whistle_tune_a, p8.whistle_tune_b, p8.whistle_tune_c], 3, positional=True, max_distance=22,
+      unit_size=3, loud=-35, max_voices=1, cooldown=30.0, pitch_jitter=0.02),
+    S("tin_cup", p8.tin_cup, 2, positional=True, max_distance=14, unit_size=2, loud=-31, cooldown=0.4),
+    S("wage_tin", p8.wage_tin, 2, positional=True, max_distance=14, unit_size=2, loud=-31, cooldown=1.0),
+    S("kiepe_bells", p8.kiepe_bells, 1, loop=True, positional=True, max_distance=12, unit_size=2.5, pitch_jitter=0.0,
+      volume_jitter_db=0.0, max_voices=1, loud=-34),
+    S("kiepe_set", p8.kiepe_set, 2, positional=True, max_distance=16, unit_size=3, loud=-31, cooldown=1.0),
+    S("spade_night", p8.spade_night, 3, positional=True, max_distance=25, unit_size=3, loud=-32, pitch_jitter=0.06),
+    S("run_gravel", p8.run_gravel, 4, positional=True, max_distance=20, unit_size=3, loud=-40, pitch_jitter=0.1,
+      volume_jitter_db=2.5, max_voices=3),
+    S("climb_wall", p8.climb_wall, 2, positional=True, max_distance=22, unit_size=3, loud=-31, cooldown=1.5),
+    S("knock_door", p8.knock_door, 2, positional=True, max_distance=30, unit_size=4, loud=-29, cooldown=1.0),
+    S("watchman_call", p8.watchman_call, 1, pitch_jitter=0.0, volume_jitter_db=0.0, loud=-34, max_voices=1, cooldown=10.0),
+    S("chapter_who", p8.chapter_who, 1, pitch_jitter=0.0, volume_jitter_db=0.0, cooldown=5.0, max_voices=1),
+    UI("chalk_write", p8.chalk_write, 3, cooldown=0.2, loud=-38),
+    AMB("amb_inn_fest", p8.amb_inn_fest, loop=True, loud=-33),
+    MUS("mus_dance", p8.mus_dance, loud=-28),
+    MUS("mus_lights", p8.mus_lights, loud=-30),
 ]
 
 
@@ -279,7 +316,9 @@ def res_path(spec: Spec, i: int) -> str:
 
 def render(spec: Spec, i: int) -> np.ndarray:
     rng = np.random.default_rng(seed_for(f"{spec.id}#{i}"))
-    x = spec.gen(rng, spec.sr)
+    # Phase 8: a list of generators gives each variant its own (whistle_tune: three different tunes).
+    gen = spec.gen[i % len(spec.gen)] if isinstance(spec.gen, (list, tuple)) else spec.gen
+    x = gen(rng, spec.sr)
     x = np.nan_to_num(np.asarray(x, dtype=np.float64))
     x = finish(spec, x)
     peak = np.max(np.abs(x)) + 1e-12
@@ -442,11 +481,14 @@ def library_tres(lib: str, specs: list[Spec]) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default="", help="only render ids containing this text")
+    ap.add_argument("--ids", default="", help="only render these ids (comma-separated, exact)")
     ap.add_argument("--no-write-data", action="store_true")
     args = ap.parse_args()
     total = 0
     for sp in CATALOG:
         if args.only and args.only not in sp.id:
+            continue
+        if args.ids and sp.id not in args.ids.split(","):
             continue
         rendered = even_variants(sp, [render(sp, i) for i in range(sp.variants)])
         for i in range(sp.variants):

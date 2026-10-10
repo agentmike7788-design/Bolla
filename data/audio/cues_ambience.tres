@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=78 format=3]
+[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=80 format=3]
 
 [ext_resource type="Script" path="res://src/systems/audio/audio_cue.gd" id="1_cue"]
 [ext_resource type="Script" path="res://src/systems/audio/audio_cue_library.gd" id="2_lib"]
@@ -47,6 +47,7 @@
 [ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_fire_pop_2.wav" id="s_fire_pop_2"]
 [ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_wind_gust_1.wav" id="s_wind_gust_1"]
 [ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_wind_gust_2.wav" id="s_wind_gust_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/ph_amb_inn_fest.ogg" id="s_amb_inn_fest_1"]
 
 [sub_resource type="Resource" id="cue_amb_graveyard_day"]
 script = ExtResource("1_cue")
@@ -528,7 +529,23 @@ unit_size = 4
 cooldown = 0
 max_voices = 3
 
+[sub_resource type="Resource" id="cue_amb_inn_fest"]
+script = ExtResource("1_cue")
+id = &"amb_inn_fest"
+streams = Array[AudioStream]([ExtResource("s_amb_inn_fest_1")])
+bus = &"Ambience"
+volume_db = -5.5
+target_lufs = -33
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 3
+
 [resource]
 script = ExtResource("2_lib")
 library_id = &"ambience"
-cues = Array[ExtResource("1_cue")]([SubResource("cue_amb_graveyard_day"), SubResource("cue_amb_graveyard_dusk"), SubResource("cue_amb_graveyard_night"), SubResource("cue_amb_forest_edge"), SubResource("cue_amb_village_day"), SubResource("cue_amb_village_night"), SubResource("cue_amb_hut"), SubResource("cue_amb_inn"), SubResource("cue_amb_surgery"), SubResource("cue_amb_office"), SubResource("cue_amb_chapel"), SubResource("cue_amb_crypt"), SubResource("cue_amb_shed"), SubResource("cue_amb_title"), SubResource("cue_loop_brook"), SubResource("cue_loop_forge"), SubResource("cue_bird_a"), SubResource("cue_bird_b"), SubResource("cue_bird_c"), SubResource("cue_crow"), SubResource("cue_owl"), SubResource("cue_owl_short"), SubResource("cue_chicken"), SubResource("cue_hammer_far"), SubResource("cue_cup_clink"), SubResource("cue_drip_spot"), SubResource("cue_wood_creak"), SubResource("cue_page_turn_far"), SubResource("cue_fire_pop"), SubResource("cue_wind_gust")])
+cues = Array[ExtResource("1_cue")]([SubResource("cue_amb_graveyard_day"), SubResource("cue_amb_graveyard_dusk"), SubResource("cue_amb_graveyard_night"), SubResource("cue_amb_forest_edge"), SubResource("cue_amb_village_day"), SubResource("cue_amb_village_night"), SubResource("cue_amb_hut"), SubResource("cue_amb_inn"), SubResource("cue_amb_surgery"), SubResource("cue_amb_office"), SubResource("cue_amb_chapel"), SubResource("cue_amb_crypt"), SubResource("cue_amb_shed"), SubResource("cue_amb_title"), SubResource("cue_loop_brook"), SubResource("cue_loop_forge"), SubResource("cue_bird_a"), SubResource("cue_bird_b"), SubResource("cue_bird_c"), SubResource("cue_crow"), SubResource("cue_owl"), SubResource("cue_owl_short"), SubResource("cue_chicken"), SubResource("cue_hammer_far"), SubResource("cue_cup_clink"), SubResource("cue_drip_spot"), SubResource("cue_wood_creak"), SubResource("cue_page_turn_far"), SubResource("cue_fire_pop"), SubResource("cue_wind_gust"), SubResource("cue_amb_inn_fest")])
