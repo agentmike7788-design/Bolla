@@ -19,6 +19,9 @@ const CANDLE_PATH := "res://assets/models/props/ph_prop_grave_candle.glb"
 const MORTSAFE_PATH := "res://assets/models/props/ph_prop_mortsafe.glb"
 const DISTURBED_PATH := "res://assets/models/props/ph_prop_grave_disturbed.glb"
 const FLOWERS_OFFSET := Vector3(0.0, 0.22, 0.15)
+## Height of the flowers / the wreath on a fresh mound (0.39 m) and on an old grassy or sunken one (≤ 0.21 m).
+const FLOWERS_ON_MOUND := 0.33
+const FLOWERS_ON_OLD_MOUND := 0.17
 const BOUQUET_OFFSET := Vector3(0.18, 0.2, 0.75)
 const MORTSAFE_OFFSET := Vector3(0.0, 0.0, 0.1)
 const DISTURBED_OFFSET := Vector3(0.0, 0.0, 1.15)
@@ -128,14 +131,18 @@ func apply_care() -> void:
 	_care = Node3D.new()
 	_care.name = CARE_NAME
 	plot.add_child(_care)
+	# W-Welt (W2, image p8_07a): on the mound, not in it – the fresh mound is 0.39 m high (FLOWERS_OFFSET 0.22 hid the
+	# flowers in it), an old grassy mound 0.21 m.
+	var low := plot.state == GraveRecord.State.OLD and String(plot.old_mound) in ["grassy", "sunken"]
+	var on_mound := Vector3(FLOWERS_OFFSET.x, FLOWERS_ON_OLD_MOUND if low else FLOWERS_ON_MOUND, FLOWERS_OFFSET.z)
 	for part: String in parts:
 		match part:
 			"flowers:fresh":
-				_care_model(FLOWERS_PATH, FLOWERS_OFFSET, "Flowers", _box(Vector3(0.6, 0.12, 1.1), COLOR_FLOWERS))
+				_care_model(FLOWERS_PATH, on_mound, "Flowers", _box(Vector3(0.6, 0.12, 1.1), COLOR_FLOWERS))
 			"flowers:wilted":
-				_care_model(FLOWERS_WILTED_PATH, FLOWERS_OFFSET, "FlowersWilted", _box(Vector3(0.6, 0.08, 1.1), COLOR_WILTED))
+				_care_model(FLOWERS_WILTED_PATH, on_mound, "FlowersWilted", _box(Vector3(0.6, 0.08, 1.1), COLOR_WILTED))
 			"flowers:wreath":
-				_care_model(WREATH_PATH, FLOWERS_OFFSET, "Wreath", _ring(0.22, COLOR_WREATH))
+				_care_model(WREATH_PATH, on_mound, "Wreath", _ring(0.22, COLOR_WREATH))
 			"bouquet":
 				_care_model(BOUQUET_PATH, BOUQUET_OFFSET, "Bouquet", _box(Vector3(0.12, 0.08, 0.35), COLOR_BOUQUET))
 			"candle":

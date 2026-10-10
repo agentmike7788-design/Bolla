@@ -141,7 +141,7 @@ func test_sections_and_initial_state() -> void:
 func test_real_data_is_used_without_injection() -> void:
 	var plain := ExpansionManager.new()
 	world.add_child(plain)
-	assert_eq(plain.sections().size(), 8, "Phase 4: + elder; Phase 5: + bruch, quarry; Phase 6: + churchyard; Phase 7: + linden")
+	assert_eq(plain.sections().size(), 9, "Phase 4: + elder; Phase 5: + bruch, quarry; Phase 6: + churchyard; Phase 7: + linden; Phase 8: + linden_row3")
 	assert_eq(plain.data_of("obs_e_01"), Database.clearable(&"bramble"))
 	plain.free()
 

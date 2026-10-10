@@ -13,7 +13,7 @@ extends "res://src/world/village/village_shots.gd"
 const FIXTURES_V6 := "res://tests/fixtures/saves_v6/%s.json"
 const FIXTURE_V6 := "slot_p7_day53_neighbor"
 const P8_SHOTS: Array[Dictionary] = [
-	{"name": "p8_20_kathreintanz_inn", "day": 54, "minute": 1200, "room": "inn", "player": Vector2(-0.3, 0.6), "stage": "kathrein", "zoom": 12.5},
+	{"name": "p8_20_kathreintanz_inn", "day": 54, "minute": 1200, "room": "inn", "player": Vector2(-0.3, 0.6), "stage": "kathrein", "zoom": 13.0},
 	{"name": "p8_17_hanne_well", "day": 55, "minute": 660, "player": Vector2(-0.4, 0.4), "facing": 210.0, "game": 16.0, "ui": true},
 	{"name": "p8_14_theres_liesel_well", "day": 56, "minute": 615, "player": Vector2(3.6, 1.6), "facing": 240.0, "game": 18.0,
 			"stage": "well_chat"},
@@ -122,11 +122,11 @@ func _stage_kathrein(world: Node3D, day: int) -> void:
 				and String((node.get_script() as Script).resource_path).get_file() in ["fest_decor.gd", "fiddler.gd"]:
 			node.call(&"refresh")
 	var t := room.global_transform
-	_stage_npc(world, "npc_grocer", t * Vector3(0.65, 0.0, 0.45), 270.0, &"dance", 0.2)
-	_stage_npc(world, "npc_washer", t * Vector3(1.2, 0.0, -0.5), 260.0, &"dance", 0.7)
-	_stage_npc(world, "npc_smith", t * Vector3(0.1, 0.0, -0.6), 80.0, &"dance", 0.9)
+	_stage_npc(world, "npc_grocer", t * Vector3(0.65, 0.0, -0.3), 270.0, &"dance", 0.2)
+	_stage_npc(world, "npc_washer", t * Vector3(1.3, 0.0, 1.0), 260.0, &"dance", 0.7)
+	_stage_npc(world, "npc_smith", t * Vector3(0.2, 0.0, 0.95), 80.0, &"dance", 0.9)
 	var player := world.get_node(^"Player") as Node3D
-	player.global_transform = Transform3D(Basis(Vector3.UP, deg_to_rad(90.0)), t * Vector3(-0.15, 0.0, 0.5))
+	player.global_transform = Transform3D(Basis(Vector3.UP, deg_to_rad(90.0)), t * Vector3(-0.15, 0.0, -0.25))
 	var anim := player.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if anim != null and anim.has_animation(&"dance"):
 		anim.play(&"dance")

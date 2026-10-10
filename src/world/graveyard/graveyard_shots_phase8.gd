@@ -32,9 +32,9 @@ const G8_SHOTS: Array[Dictionary] = [
 	{"name": "p8_04_hinrich_hat", "day": 56, "minute": 930, "focus": Vector2(15.9, 19.4), "distance": 11.0,
 			"player": Vector2(13.0, 18.6), "facing": 90.0,
 			"figures": [["npc_kin_brandt", "gv_l_10", "wp", &"mourn_stand", 0.8]]},
-	{"name": "p8_06_coins_on_stone", "day": 56, "minute": 980, "player": Vector2(12.35, 20.75), "facing": 90.0, "game": 12.0, "ui": true,
+	{"name": "p8_06_coins_on_stone", "day": 56, "minute": 980, "player": Vector2(12.8, 20.4), "facing": 90.0, "game": 9.0, "ui": true,
 			"stage": "tip"},
-	{"name": "p8_07a_flowers_fresh_wilted_wreath", "day": 56, "minute": 600, "focus": Vector2(15.9, 13.8), "distance": 10.0,
+	{"name": "p8_07a_flowers_fresh_wilted_wreath", "day": 56, "minute": 485, "focus": Vector2(15.9, 13.8), "distance": 10.0,
 			"player": Vector2(21.2, 15.0), "facing": 270.0, "stage": "flowers"},
 	{"name": "p8_07b_rain_barrel", "day": 56, "minute": 610, "focus": Vector2(-6.6, -4.3), "distance": 7.5, "pitch": 64.0,
 			"player": Vector2(-8.05, -3.55), "facing": 60.0, "player_clip": &"water"},
@@ -47,13 +47,13 @@ const G8_SHOTS: Array[Dictionary] = [
 	{"name": "p8_10a_jakob_waters", "day": 56, "minute": 700, "focus": Vector2(4.8, 2.4), "distance": 9.0,
 			"player": Vector2(9.0, 3.4), "facing": 270.0, "stage": "flowers_old_05",
 			"figures": [["npc_apprentice", Vector2(5.8, 1.55), Vector2(4.8, 1.0), &"water", 0.5]]},
-	{"name": "p8_10b_jakob_candle_dusk", "day": 56, "minute": 1018, "focus": Vector2(6.9, 2.4), "distance": 8.0,
+	{"name": "p8_10b_jakob_candle_dusk", "day": 56, "minute": 1068, "focus": Vector2(6.9, 2.4), "distance": 8.0,
 			"player": Vector2(10.0, 3.8), "facing": 270.0, "stage": "candle_old_06",
 			"figures": [["npc_apprentice", Vector2(7.65, 1.0), Vector2(6.7, 0.75), &"candle", 0.7]]},
 	{"name": "p8_12_jakob_lunch", "day": 56, "minute": 735, "focus": Vector2(-3.4, -4.8), "distance": 8.0,
 			"player": Vector2(-1.0, -2.6), "facing": 300.0,
 			"figures": [["npc_apprentice", "apprentice_lunch", "wp", &"sit_eat", 0.5]]},
-	{"name": "p8_13_esch_theres_old_graves", "day": 56, "minute": 880, "focus": Vector2(-1.3, 2.6), "distance": 16.5,
+	{"name": "p8_13_esch_theres_old_graves", "day": 56, "minute": 880, "focus": Vector2(-1.6, 3.6), "distance": 17.0,
 			"player": Vector2(1.6, 7.0), "facing": 200.0, "stage": "flowers_old_08",
 			"figures": [["npc_smith_g", "gv_old_01", "wp", &"mourn_stand", 0.6], ["npc_grocer_g", "gv_old_08", "wp", &"kneel", 1.4]]},
 	{"name": "p8_16_veit_hanne_gate", "day": 55, "minute": 950, "focus": Vector2(1.2, 10.8), "distance": 10.0,
@@ -290,6 +290,9 @@ func _shoot8(world: Node3D, shot: Dictionary, report: PackedStringArray) -> void
 	await _save_frame(world, String(shot.name), report)
 	for npc: Node3D in _staged8:
 		npc.process_mode = Node.PROCESS_MODE_INHERIT
+		if npc.has_meta(&"shot_ungrouped"):
+			npc.remove_meta(&"shot_ungrouped")
+			npc.add_to_group(&"npc")
 	_staged8.clear()
 	_unstage(world)
 	rig.set(&"pitch_deg", 45.0)
@@ -319,6 +322,11 @@ func _figure8(world: Node3D, fig: Array) -> void:
 	_stage_npc(world, String(fig[0]), at, heading, StringName(fig[3]), float(fig[4]))
 	npc.set(&"_current_anim", StringName(fig[3]))
 	npc.call(&"_apply_props")
+	# NpcLod would re-evaluate the staged figure (no schedule entry → no animation → the tools hidden): out of its
+	# group for the shot.
+	if npc.is_in_group(&"npc"):
+		npc.remove_from_group(&"npc")
+		npc.set_meta(&"shot_ungrouped", true)
 	_staged8.append(npc)
 
 
