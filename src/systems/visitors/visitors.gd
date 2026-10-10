@@ -591,6 +591,26 @@ func load_state(data: Dictionary) -> void:
 	_announced.clear()
 	for v: Dictionary in _plan:
 		_announced[str(v.get("visit_id", ""))] = phase_of(v)
+	# W3 (QA8-18): the kin figure gets its walk on the „arriving" announce – a state loaded mid-visit (a save, the
+	# debug visit) counts as announced, so the walk is set again here (deferred: the figures may not be in yet).
+	if is_inside_tree():
+		_reapply_schedules.call_deferred()
+
+
+func post_load() -> void:
+	_reapply_schedules()
+
+
+## QA8-18: the walk of every visit on the hill now (arriving … leaving) onto its kin figure again.
+func _reapply_schedules() -> void:
+	if not is_inside_tree():
+		return
+	for v: Dictionary in _plan:
+		if bool(v.get("ended", false)):
+			continue
+		var phase := phase_of(v)
+		if phase != &"" and phase != &"gone":
+			_apply_schedule(v)
 
 
 # --- internals: the visit ------------------------------------------------------------------------

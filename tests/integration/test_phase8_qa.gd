@@ -10,7 +10,8 @@ extends TestCase
 ## QA8-12 a loaded state has no disturbed / mortsafe on an EMPTY grave, ≤ max_open wishes, one per grave, on
 ## graves of this world, no visit plan for a later day ·
 ## QA8-13 watering pours in step with the clip (ToolAnimConfig.bite_at / beat_cues water) ·
-## QA8-15 the Lichtgang procession takes the graveyard figures (the village npc_priest keeps his schedule).
+## QA8-15 the Lichtgang procession takes the graveyard figures (the village npc_priest keeps his schedule) ·
+## QA8-18 a household visitor (Martha Kehr) is still on the hill after a load mid-visit (and after the debug visit).
 
 const TIMEOUT := 600.0
 const SLOT := 93
@@ -289,3 +290,33 @@ func test_qa8_15_the_procession_walks_on_the_graveyard_only() -> void:
 	var lenz_v := world.get_node("Regions/Village/Entities/npc_priest") as Npc
 	assert_not_null(lenz_g.runtime_schedule(), "QA8-15: Lenz walks the procession on the graveyard")
 	assert_null(lenz_v.runtime_schedule(), "QA8-15: the village Lenz keeps his schedule")
+
+
+# --- QA8-18 -------------------------------------------------------------------------------------------
+
+## A visit of a household (Martha Kehr, own figure npc_kin_kehr) on its way, then saved and loaded mid-visit:
+## after the load the figure must still be on the hill (the kin schedule was only set on the „arriving“ announce,
+## which a load marks as already announced).
+func test_qa8_18_visitor_figure_after_a_load_mid_visit() -> void:
+	await _load()
+	var visitors := _sys("Visitors") as Visitors
+	TimeManager.set_time(TimeManager.day, 600)
+	var r: Dictionary = (tree.root.get_node(^"Debug")).call(&"execute", "visit kehr")
+	assert_true(bool(r.get("ok", false)), "debug visit (%s)" % str(r.get("text", "")))
+	await tree.process_frame  # the debug visit is a load_state: its walk is set deferred (QA8-18)
+	for i: int in 25:
+		TimeManager.advance(1)
+	var kehr := world.find_child("npc_kin_kehr", true, false) as Npc
+	assert_not_null(kehr)
+	var phase := StringName(str(visitors.active_visits()[0].get("phase", ""))) if not visitors.active_visits().is_empty() else &""
+	assert_true(phase in [&"arriving", &"mourning", &"waiting"], "a visit on the hill (%s)" % phase)
+	assert_true(kehr.is_present(), "QA8-18: Martha on the hill before the save (%s)" % phase)
+	assert_eq(SaveManager.save_game(SLOT), OK)
+	assert_eq(await SaveManager.load_game(SLOT), OK)
+	world = tree.current_scene as WorldRoot
+	TimeManager.running = false
+	visitors = _sys("Visitors") as Visitors
+	kehr = world.find_child("npc_kin_kehr", true, false) as Npc
+	TimeManager.advance(1)
+	assert_false(visitors.active_visits().is_empty(), "the visit goes on after the load")
+	assert_true(kehr.is_present(), "QA8-18: Martha still on the hill after the load")
