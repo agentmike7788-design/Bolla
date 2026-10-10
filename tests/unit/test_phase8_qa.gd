@@ -161,3 +161,17 @@ func _priority(scene_path: String) -> int:
 func test_qa8_16_coins_on_the_stone_win_the_prompt() -> void:
 	assert_true(_priority("res://src/entities/tip_stone/tip_stone.tscn") > _priority("res://src/entities/grave/grave_plot.tscn"),
 			"QA8-16: „[E] Zwei Münzen auf dem Stein“ before the grave's own prompt")
+
+
+# --- QA8-17 -------------------------------------------------------------------------------------------
+
+## A deferred refresh of an Apprentice whose world a load just replaced (out of the tree, its cached Npc too):
+## nothing is touched – before the fix Npc._update read global_transform / look_yaw outside the tree (errors).
+func test_qa8_17_apprentice_refresh_out_of_tree_is_a_no_op() -> void:
+	var app := Apprentice.new()
+	var npc := (load("res://src/entities/npc/npc.tscn") as PackedScene).instantiate() as Npc
+	app.npc = npc
+	app.refresh_npcs()
+	assert_eq(npc.runtime_schedule() if npc.has_method(&"runtime_schedule") else null, null, "no runtime schedule set outside the tree")
+	npc.free()
+	app.free()

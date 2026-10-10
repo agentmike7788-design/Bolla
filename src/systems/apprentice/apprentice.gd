@@ -378,6 +378,9 @@ func apply_minute(day: int, minute: int) -> void:
 
 ## Rebuilds the runtime schedules of the graveyard and the village Npc from plan + clock.
 func refresh_npcs() -> void:
+	# QA8-17: a deferred refresh of the world being replaced by a load (out of the tree) touches nothing.
+	if not is_inside_tree():
+		return
 	var g := _npc()
 	if g != null:
 		g.set_runtime_schedule(graveyard_schedule(TimeManager.day))

@@ -57,7 +57,8 @@ static var P8_STRATEGIES := {
 	&"lazy8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {"apprentice": false, "wishes": false, "stories": {},
 			"mortsafe": false, "lights": false, "kathrein": false, "observe": []}),
 	&"night8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {"mortsafe": false, "lights": false,
-			"observe": [&"np_ott", &"np_kehr"], "robber": "reported", "late": true}),
+			"observe": [&"np_ott", &"np_kehr"], "robber": "reported", "late": true,
+			"save_robber": true}),
 	&"night8b": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {"mortsafe": false, "lights": false,
 			"observe": [&"np_ott", &"np_kehr"], "robber": "let_go", "late": true}),
 	&"founder8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {}),
@@ -191,7 +192,9 @@ func _phase5() -> void:
 	await super._phase5()
 	if p8_open():
 		await _p8_afternoon()
-	if p8_open() and _evening_day != TimeManager.day:
+	# A night strategy (awake past midnight) has its evening at bedtime (_sleep) – here the rest of the day's
+	# passes would run on into the next day.
+	if p8_open() and _evening_day != TimeManager.day and not flags.late and String(flags.robber) == "":
 		_evening_day = TimeManager.day
 		await _p8_evening()
 
@@ -207,6 +210,7 @@ func _p8_tasks() -> void:
 	if flags.lights and festivals.today() == Festivals.LIGHTS and not _lights_done and TimeManager.minute_of_day >= 14 * 60:
 		_lights_done = true
 		await _lights()
+	await _visit_reload()
 	_serve()
 	_clear_row3()
 	_jakob()
@@ -481,10 +485,49 @@ func _on_hill() -> bool:
 ## Serves every waiting visitor once: the tip in the hand, a wish the strategy keeps. A visitor on the hill (coming up,
 ## laying flowers, mourning) is waited for – minute by minute, nothing skipped – until he waits at the grave (he only
 ## waits ten minutes for a word, VisitorConfig.wait_minutes).
+## The slot (+1) of today's next planned visit not yet on its way and starting within `minutes`; 0 = none.
+func _visit_starting_within(minutes: int) -> int:
+	var vs := visitors.save_state()
+	if int(vs.get("plan_day", -1)) != TimeManager.day:
+		return 0
+	var active := {}
+	for v: Dictionary in visitors.active_visits():
+		active[str(v.visit_id)] = true
+	var best := 0
+	for e: Variant in vs.get("plan", []):
+		if not e is Dictionary:
+			continue
+		var d := e as Dictionary
+		var id := str(d.get("visit_id", ""))
+		var slot := int(d.get("slot", 0))
+		if served.has(id) or active.has(id) or bool(d.get("ended", false)) or slot <= TimeManager.minute_of_day \
+				or slot > TimeManager.minute_of_day + minutes:
+			continue
+		best = slot + 1 if best == 0 else mini(best, slot + 1)
+	return best
+
+
+## save_load8: once while a visitor is on the hill (on the way, mourning or waiting, not talked to yet) – saved,
+## loaded, and the round trip must be identical (the visit then goes on as in kindly8).
+func _visit_reload() -> void:
+	if not flags.save_p8 or saved_moments.has("visit") or not _on_hill():
+		return
+	for v: Dictionary in visitors.active_visits():
+		var ph := StringName(str(v.get("phase", "")))
+		if not served.has(str(v.visit_id)) and ph != &"gone" and ph != &"leaving" and ph != &"":
+			saved_moments.append("visit")
+			await _reload_now("a visit (%s, %s)" % [v.kin_id, ph])
+			return
+
+
 func _serve() -> void:
 	if not p8_open() or not _on_hill():
 		return
 	if flags.wishes or flags.tips:
+		# A visitor due within half an hour is waited for (the talk window at the grave is ~40 minutes, §2.2).
+		var due := _visit_starting_within(30)
+		while due > 0 and TimeManager.minute_of_day < due and TimeManager.minute_of_day < EVENING:
+			TimeManager.advance(1)
 		for i: int in 90:
 			var pending := false
 			for v: Dictionary in visitors.active_visits():
@@ -519,10 +562,6 @@ func _serve_visit(v: Dictionary) -> void:
 		var before := inv().count(&"coin")
 		DialogueActions.run_all(["tip_hand"] as Array[String], context)
 		row.tip = inv().count(&"coin") - before
-	if flags.save_p8 and not saved_moments.has("visit"):
-		saved_moments.append("visit")
-		_reload_now("a visit")
-		return
 	if flags.wishes:
 		DialogueActions.run_all(["wish_offer"] as Array[String], context)
 		var offer: Dictionary = context.get(DialogueActions.CONTEXT_WISH, {})
@@ -1175,8 +1214,10 @@ func _observe(path_id: StringName) -> void:
 func _robber_watch() -> void:
 	if robber.fate() != &"":
 		return
-	_wait_until(23 * 60 + 50)
-	TimeManager.advance(20)
+	# After midnight already (a night visit watched): no waiting – _wait_until would run into the next night.
+	if TimeManager.minute_of_day >= 360:
+		_wait_until(23 * 60 + 50)
+		TimeManager.advance(20)
 	var night := TimeManager.day - 1
 	var target := robber.tonight_target(night)
 	if target == "":
@@ -1188,6 +1229,12 @@ func _robber_watch() -> void:
 		var phase := robber.phase()
 		if phase == &"fled" or phase == &"sitting" or (phase == &"" and i > 200):
 			break
+		# night8: saved and loaded once while Lambert is at the grave.
+		if phase != &"" and flags.get("save_robber", false) and not saved_moments.has("robber"):
+			saved_moments.append("robber")
+			await _reload_now("the robber at %s (%s)" % [target, phase])
+			plot = world.get_node_by_layout_id(target) as Node3D
+			player.global_position = plot.global_position + Vector3(3.0, 0, 2.0)
 		TimeManager.advance(1)
 	robber_log.append("night %d: %s at %s (encounter %d)" % [night, robber.phase(), target, robber.encounters()])
 	if robber.phase() == &"sitting":
@@ -1233,9 +1280,36 @@ func _reload_now(moment: String) -> void:
 	bind()
 	TimeManager.running = false
 	UIState.clear()
-	if SaveManager.collect_state() != before:
-		problems.append("day %d: round trip at %s not identical" % [TimeManager.day, moment])
+	var after := SaveManager.collect_state()
+	var diffs: PackedStringArray = []
+	_diff(before, after, "", diffs)
+	if not diffs.is_empty():
+		problems.append("day %d: round trip at %s not identical: %s" % [TimeManager.day, moment, ", ".join(diffs.slice(0, 6))])
 	_t8("saved and loaded at %s" % moment)
+
+
+static func _diff(a: Variant, b: Variant, path: String, out: PackedStringArray) -> void:
+	if out.size() >= 6:
+		return
+	if a is Dictionary and b is Dictionary:
+		for k: Variant in a:
+			if not (b as Dictionary).has(k):
+				out.append("%s/%s missing" % [path, str(k)])
+			else:
+				_diff(a[k], b[k], "%s/%s" % [path, str(k)], out)
+		for k: Variant in b:
+			if not (a as Dictionary).has(k):
+				out.append("%s/%s new" % [path, str(k)])
+		return
+	if a is Array and b is Array and (a as Array).size() == (b as Array).size():
+		for i: int in (a as Array).size():
+			_diff(a[i], b[i], "%s[%d]" % [path, i], out)
+		return
+	# Floats through the JSON save: equal up to the last bits.
+	if a is float and b is float and absf(a - b) <= 1e-9 * maxf(1.0, absf(a)):
+		return
+	if typeof(a) != typeof(b) or a != b:
+		out.append("%s: %s → %s" % [path, str(a).left(60), str(b).left(60)])
 
 
 # --- the journal --------------------------------------------------------------------------------------

@@ -5,6 +5,9 @@ extends Node
 ##   godot --headless --path . -s res://src/debug/perf_probe_run.gd -- [--out=/abs/result.json] [--only=map]
 ## In an exported build (browser): start it with the user argument --perf-probe (src/boot/main.gd).
 ## With a renderer (tools/godot_run.sh) the spikes include shader compiles and texture uploads.
+## Phase 8 (W3, docs/PHASE8_DESIGN.md §9 "Web ohne Frame > 50 ms beim Beginn eines Besuchs, des Lichtgangs und
+## des Kathreintanzes"): --only=p8 runs only these scenarios (Phase 8 opened by debug command, Jakob hired, two
+## visits started, the Lichtgang with all candles, the Kathreintanz in the Holderkrug).
 
 const SPIKE_MS := 50.0
 
@@ -160,9 +163,48 @@ func _run() -> void:
 			await _secs(1.5)
 			ui.call(&"close_top_panel")
 			await _secs(0.5)
+	if _want("p8"):
+		await _phase8()
 	_mark("end")
 	_report()
 	get_tree().quit(0)
+
+
+func _phase8() -> void:
+	_cmd("village open")
+	_cmd("region graveyard")
+	_cmd("p8 open")
+	_cmd("apprentice hire")
+	_cmd("day +1")
+	_cmd("time 10:00")
+	_mark("p8_day")
+	await _secs(4.0)
+	_mark("p8_visit_start")
+	_cmd("visit kehr old_01")
+	_cmd("visit brandt old_02")
+	await _secs(6.0)
+	_mark("p8_lights_start")
+	_cmd("fest lights now")
+	await _secs(6.0)
+	_mark("p8_lights_candles")
+	_cmd("lights all")
+	_cmd("time 17:00")
+	await _secs(4.0)
+	# The clock jumps (a day, then 19:00) cost what a sleep costs – not part of the dance's start.
+	_mark("p8_next_day")
+	_cmd("day +1")
+	await _secs(1.0)
+	_cmd("fest kathrein now")
+	await _secs(2.0)
+	_mark("p8_kathrein_village")
+	_cmd("region village")
+	await _secs(3.0)
+	_mark("p8_kathrein_inn")
+	_cmd("room inn")
+	await _secs(6.0)
+	_mark("p8_back")
+	_cmd("region graveyard")
+	await _secs(4.0)
 
 
 func _walk(actions: Array[StringName], each: float) -> void:
