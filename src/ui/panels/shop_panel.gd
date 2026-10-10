@@ -181,7 +181,7 @@ func _refresh() -> void:
 	var speaker: Variant = context.get("speaker")
 	var npc_id := data.npc_id if data != null else &""
 	title_label.text = data.title if data != null and data.title != "" else Phase7Texts.SHOP_TITLE_FALLBACK
-	person_label.text = Phase7Texts.person_name(npc_id) if npc_id != &"" else (str((speaker as Node).get(&"display_name")) if is_instance_valid(speaker) else "")
+	person_label.text = Phase8Texts.person_name(npc_id) if npc_id != &"" else (str((speaker as Node).get(&"display_name")) if is_instance_valid(speaker) else "")
 	var rel := _relationships()
 	rel_label.text = Phase7Texts.rel_line(rel.value(npc_id), rel.tier(npc_id)) if rel != null and npc_id != &"" and rel.met(npc_id) else ""
 	var inv := _inventory

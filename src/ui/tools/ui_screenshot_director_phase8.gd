@@ -539,7 +539,7 @@ func _listen_shot() -> void:
 		_ui.open_dialogue(&"v_priest", lenz)
 		# The greeting first, then the menu with „[Zuhören]".
 		for i: int in 2:
-			if _ui.dialogue_box.is_active() and not _ui.dialogue_box.choice_texts().any(func(t: String) -> bool: return t.begins_with("[Zuhören]")):
+			if _ui.dialogue_box.is_active() and not Array(_ui.dialogue_box.choice_texts()).any(func(t: String) -> bool: return t.begins_with("[Zuhören]")):
 				_ui.dialogue_box.choose(0)
 	await get_tree().process_frame
 
