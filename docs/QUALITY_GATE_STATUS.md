@@ -13,6 +13,15 @@
 
 **ART STYLE LOCK:** ✅ **ACTIVE** seit 27.09.2026 (Referenz: `src/world/art_prototype/`, Screenshots `docs/reviews/phase1_round1/`). Keine grundlegende Stiländerung ohne Benutzerfreigabe.
 
+## G8 – QA-Protokoll W3 (vorläufig – Benutzerprüfung offen)
+
+- Befunde, Playthrough-Tabellen mit Münzbuch, Fuzzer, Art-Prüfung, Performance: `docs/reviews/phase8_round1/qa_playthrough.md` (Rohdaten `qa_cpu_p8.txt`).
+- Screenshot-Satz Gate G8 (§11, echter Renderer, 1280×720, nach allen Fixes): `docs/reviews/phase8_round1/` (Friedhof `p8_02…p8_27`, Dorf `p8_14…p8_20`, `p8_28`, Sicht `p8_vis_*`, Budget `perf_p8_01…05` + `render_stats_p8_*.txt`, UI `ui_p8_*`, Compatibility `p8_08/12/22_web`, Asset-Tafeln als `p8_00`/`p8_01`), Kontaktblatt `p8_contact_sheet_final.jpg`.
+- Befunde behoben: QA8-03 (Fenner 2 / Rosine 3 nicht erfüllbar – hoch), QA8-18 (Besucherin nach dem Laden mitten im Besuch unsichtbar – hoch), QA8-17 (Engine-Fehler bei jedem Laden eines Phase-8-Stands – mittel), QA8-01/04/05/06 (Gefallen-Panel, Registerauszug, Jakobs freier Tag, Liesels Wäsche – mittel), QA8-07…16, 19 (klein: Rechen tragen, Kerze vor Blumen, Werkbank-Flag, „Zwei Münzen“, Pflegestellen am Zaun, Ladestände bereinigen, Gießtakt, Lichtgang-Zug, Münz-Prompt, Kapiteltext ohne „Phase“), Art QA8-A1…A8 (Veit sitzt, Münzen, Krankenlicht, Hut, Novemberdämmerung, Stoppeln, Jakobs Haar, Hannes Kiepe); jeder mit Regressionstest (`tests/unit/test_phase8_qa.gd`, `tests/integration/test_phase8_qa.gd`, Fuzzer, `test_apprentice_day`, `test_visit_routes`, `test_phase8_loop`).
+- Playthrough-Bot (`phase8_bot.gd`): `kindly8` Kapitel B10 (Tag 62), 48 → 70; `anatomist8` B8, `night8`/`night8b` B9 (Lambert gemeldet / laufen gelassen), `founder8` Tag 63, `lazy8` ohne Kapitel (gewollt), `save_load8` zeilengleich; morgens nie < 24; keine Fehler/Warnungen.
+- Save-Fuzzer: echter v7-Stand mitten im Bogen + Phase-8-Konsistenzprüfungen.
+- Entscheidungen offen: **E8-1** (kürzere Novembertage, helleres Krankenlicht – Licht unter ART LOCK), **E8-2** (Münzen der Nicht-`kindly8`-Wege über Start + 50), B8-1 (Besuche verpasst, Gesprächsfenster 40 Min), B8-2 (Vasen-Wünsche), P8-1 (Phase-8-CPU knapp über Budget auf Cloud-CPU), P8-2 (609 k Dreiecke bei Maximal-Zoom am Lichtgang).
+
 ## G7 – QA-Protokoll W3 (Agent 19, vorläufig – Benutzerprüfung offen)
 
 - Befunde, Playthrough-Tabellen mit Münzbuch, Fuzzer, Art-Prüfung, Performance: `docs/reviews/phase7_wip/qa_playthrough.md` (CPU-Rohdaten `qa_cpu_p7.txt`).
