@@ -103,6 +103,7 @@ var _board_set: bool = false
 var _kathrein_done: bool = false
 var _lights_done: bool = false
 var _evening_day: int = 0
+var _night_day: int = 0
 
 
 static func _with8(p4: Dictionary, p5: Dictionary, p6: Dictionary, p7: Dictionary, p8: Dictionary) -> Dictionary:
@@ -192,11 +193,11 @@ func _phase5() -> void:
 	await super._phase5()
 	if p8_open():
 		await _p8_afternoon()
-	# A night strategy (awake past midnight) has its evening at bedtime (_sleep) – here the rest of the day's
-	# passes would run on into the next day.
-	if p8_open() and _evening_day != TimeManager.day and not flags.late and String(flags.robber) == "":
+	# A night strategy (awake past midnight) has only the evening part here – the night (the robber, the visits
+	# after midnight) comes at bedtime (_sleep); otherwise the rest of the day's passes would run into the next day.
+	if p8_open() and _evening_day != TimeManager.day:
 		_evening_day = TimeManager.day
-		await _p8_evening()
+		await _p8_evening(not _night_strategy())
 
 
 func _p7_tasks() -> void:
@@ -1070,10 +1071,14 @@ func _lights_candles_needed() -> int:
 
 # --- evening and night --------------------------------------------------------------------------------
 
+func _night_strategy() -> bool:
+	return bool(flags.late) or String(flags.robber) != ""
+
+
 func _night_at_the_wall() -> void:
 	if p8_open() and _evening_day != TimeManager.day:
 		_evening_day = TimeManager.day
-		await _p8_evening()
+		await _p8_evening(not _night_strategy())
 	if TimeManager.minute_of_day >= 360 and TimeManager.minute_of_day < 23 * 60 + 20:
 		await super._night_at_the_wall()
 
@@ -1081,14 +1086,22 @@ func _night_at_the_wall() -> void:
 func _sleep() -> void:
 	if p8_open() and _evening_day != TimeManager.day and TimeManager.minute_of_day >= 360:
 		_evening_day = TimeManager.day
-		await _p8_evening()
+		await _p8_evening(not _night_strategy())
+	if p8_open() and _night_strategy() and _night_day != TimeManager.day and TimeManager.minute_of_day >= 360:
+		_night_day = TimeManager.day
+		await _p8_night()
+		# Back on the hill after 06:00 (Liesel's watch ends 05:30): the new day begins without a sleep.
+		if TimeManager.minute_of_day >= 360 and TimeManager.day == _night_day + 1:
+			record_day(_night_day)
+			return
 	if TimeManager.minute_of_day < 360:
 		await _bed_after_midnight()
 		return
 	await super._sleep()
 
 
-func _p8_evening() -> void:
+## The evening (`with_night` = also the night: the robber and the visits after midnight).
+func _p8_evening(with_night: bool = true) -> void:
 	_t8("evening: fest %s, coins %d" % [festivals.today(), coins_total()])
 	record_missed(TimeManager.day)
 	if flags.lights and festivals.today() == Festivals.LIGHTS and not _lights_done:
@@ -1099,7 +1112,14 @@ func _p8_evening() -> void:
 		_kathrein_done = true
 		await _kathrein()
 	for path_id: StringName in flags.observe:
-		await _observe(path_id)
+		await _observe(path_id, -1 if with_night else TimeManager.day * 1440)
+	if with_night:
+		await _p8_night()
+
+
+func _p8_night() -> void:
+	for path_id: StringName in flags.observe:
+		await _observe(path_id, TimeManager.day * 1440)
 	if String(flags.robber) != "":
 		await _robber_watch()
 	# The later visits of the night (Liesel's Totenwache 02:40 – after the robber).
@@ -1166,7 +1186,8 @@ func _kathrein() -> void:
 
 
 ## A night visit at the sick light: at the watch spot until the visitor comes out (real waiting, nothing skipped).
-func _observe(path_id: StringName) -> void:
+## `before` ≥ 0: only a visit entering before that total minute (the evening part before midnight).
+func _observe(path_id: StringName, before: int = -1) -> void:
 	var visit := paths.next_visit(path_id, TimeManager.day, TimeManager.minute_of_day)
 	if visit.is_empty():
 		return
@@ -1177,7 +1198,7 @@ func _observe(path_id: StringName) -> void:
 	# Only tonight (before 06:00 of the next day) and what the strategy stays up for.
 	# After midnight "tonight" ends at 06:00 of this day (not of the next one).
 	var night_end := TimeManager.day * 1440 + 360 if TimeManager.minute_of_day >= 360 else (TimeManager.day - 1) * 1440 + 360
-	if enter > night_end or enter < TimeManager.total_minutes() or not _observable(visit):
+	if enter > night_end or enter < TimeManager.total_minutes() or not _observable(visit) or (before >= 0 and enter >= before):
 		return
 	var spot_id := &"watch_ott" if path_id == &"np_ott" else &"watch_kehr"
 	var spot: WatchSpot = null
