@@ -7,10 +7,9 @@ extends TestCase
 
 ## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
 const IMPLEMENTED: PackedStringArray = [
-	# P4
-	"Friendship", "FriendRules", "FavorRules", "Festivals", "FestivalRules", "FestDecor", "MemorialPlate", "ArchiveCabinet", "Fiddler",
-	# P6
-	"SaveMigration", "Village",
+	"Friendship", "FriendRules", "FavorRules", "Festivals", "FestivalRules", "FestDecor", "MemorialPlate", "ArchiveCabinet",
+	"Fiddler", "SaveMigration", "Village", "ScheduleBuilder", "NpcLife", "MoodRules", "ReactionRules", "ChatterRunner",
+	"Apprentice", "ApprenticeRules", "ApprenticePlanner", "ApprenticeBoard", "ApprenticeBox",
 ]
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {

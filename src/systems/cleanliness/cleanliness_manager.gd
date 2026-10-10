@@ -115,24 +115,35 @@ func tend_minutes(spot_id: String, inv: Inventory) -> int:
 
 
 ## Progress 0; dirt_changed, cleanliness_changed. The caller runs the timed action first.
+## Phase 8 (§2.5.4, P3): the gravekeeper's tending is reported to the apprentice (teaching by showing).
 func tend(spot_id: String, inv: Inventory) -> bool:
 	if tend_minutes(spot_id, inv) <= 0:
+		return false
+	_set_progress(spot_id, 0.0)
+	_flush()
+	_note_player_job(spot_id)
+	return true
+
+
+## Phase 8 (docs/PHASE8_DESIGN.md §2.5.2, §3.4, P3): the apprentice's tending – the same effect as tend()
+## without the inventory check (his tools lie in his box; actor &"apprentice"). false = unknown spot or
+## nothing to tend.
+func tend_by(spot_id: String, _actor: StringName) -> bool:
+	if not _spots.has(spot_id) or level(spot_id) <= 0:
 		return false
 	_set_progress(spot_id, 0.0)
 	_flush()
 	return true
 
 
-## STUB (P3) – Phase 8 (docs/PHASE8_DESIGN.md §2.5.2, §3.4): the apprentice's tending – the same effect
-## as tend() without the inventory check (actor &"apprentice"). W0: false.
-func tend_by(_spot_id: String, _actor: StringName) -> bool:
-	return false
-
-
-## STUB (P3) – Phase 8 (§2.3, §2.6.3, §3.3): NightRobber sets the care spot of a dug-at / disturbed grave
-## to `level` (+1 / 3). §3.4 names no signature – W0 fixes this one. W0: inert.
-func set_level(_spot_id: String, _level: int) -> void:
-	pass
+## Phase 8 (§2.3, §2.6.3, §3.3, P3 for P7 / the apprentice's mistake): sets the care spot to `level`
+## (clamped 0…max_level; the progress sits at the start of that level); dirt_changed, cleanliness_changed.
+func set_level(spot_id: String, level_value: int) -> void:
+	if not _spots.has(spot_id):
+		push_warning("[CleanlinessManager] set_level(): unknown spot '%s'" % spot_id)
+		return
+	_set_progress(spot_id, float(clampi(level_value, 0, _cfg().max_level)))
+	_flush()
 
 
 func penalty() -> int:
@@ -262,6 +273,13 @@ func _suppressed(spot: DirtSpot) -> bool:
 
 func _system(group: StringName) -> Node:
 	return get_tree().get_first_node_in_group(group) if is_inside_tree() else null
+
+
+func _note_player_job(spot_id: String) -> void:
+	var apprentice := _system(&"apprentice")
+	var spot: DirtSpot = _spots.get(spot_id)
+	if apprentice != null and spot != null and apprentice.has_method(&"note_player_job"):
+		apprentice.call(&"note_player_job", spot.kind, spot.global_position if spot.is_inside_tree() else spot.position)
 
 
 func _on_hour_changed(_day: int, _hour: int) -> void:

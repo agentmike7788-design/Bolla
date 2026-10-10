@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ApprenticeTaskData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/apprentice/apprentice_task_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"water"
+label = "Blumen gießen"
+minutes = PackedInt32Array(0, 7, 5)
+tool_item = &"watering_can"
+consumes = &""
+spot_kind = &"flowers"
+from_minute = 0
+animation = &"water"
+mistake_kind = &"flowers_trodden"
+mistake_text = "Oh. Da bin ich reingetreten."
+order = 3

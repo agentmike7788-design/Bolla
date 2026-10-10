@@ -16,11 +16,30 @@ specimen_delta = 0
 returned_delta = 0
 piety_sensitive = false
 remarks = Dictionary[StringName, PackedStringArray]({
+&"event_apprentice_hired": PackedStringArray("Der Wackernagel-Junge harkt jetzt bei dir? Gib ihm einen Stiel, der zu ihm passt."),
+&"event_grave_disturbed": PackedStringArray("Wer gräbt da nachts? Ich schmiede dir was, das hält."),
+&"event_kathrein_danced": PackedStringArray("Hast mir fast den Fuß zertreten. Gut, dass ich Eisen gewohnt bin."),
+&"event_lights_all": PackedStringArray("Von der Schmiede aus sah der Hügel aus wie eine Esse. Eine gute."),
+&"event_noise_at_grave": PackedStringArray("Am Grab gehackt, während einer betet? Selbst ich hör da auf zu hämmern."),
+&"event_robber_reported": PackedStringArray("Grell sitzt in der Stadt. Die Schaufel hab ich wiedererkannt. Die war aus meiner Esse."),
+&"event_wish_done": PackedStringArray("Bei den Brandts reden sie gut von dir. Das kommt bei denen selten vor."),
+&"friend": PackedStringArray("Hab dir einen Nagel geschmiedet. Einen guten. Für den Sarg von jemandem, der ihn verdient."),
 &"rep_disreputable": PackedStringArray("Hm."),
-&"rep_unremarkable": PackedStringArray("Totengräber."),
-&"rep_respected": PackedStringArray("Gute Arbeit, oben. Hab's gesehen."),
 &"rep_esteemed": PackedStringArray("Die Beschläge halten? Gut."),
 &"rep_renowned": PackedStringArray("Totengräber. Komm. Die Esse ist warm."),
-&"friend": PackedStringArray("Hab dir einen Nagel geschmiedet. Einen guten. Für den Sarg von jemandem, der ihn verdient."),
+&"rep_respected": PackedStringArray("Gute Arbeit, oben. Hab\'s gesehen."),
+&"rep_unremarkable": PackedStringArray("Totengräber."),
 &"specimens": PackedStringArray("Quast will kleinere Messer. Ich mach sie. Ich mag es nicht.")
 })
+circle = Array[StringName]([&"house_brandt"])
+mood_lines = Dictionary[StringName, PackedStringArray]({
+&"cheerful": PackedStringArray("Heute klingt der Amboss richtig.", "Gutes Wetter zum Schmieden. Also jedes."),
+&"cross": PackedStringArray("Heute nicht, Totengräber. Morgen.", "Nicht jetzt. Das Eisen wird kalt."),
+&"low": PackedStringArray("Ich hab heute an den Meister gedacht. Lass gut sein.", "Das Feuer will nicht recht."),
+&"plain": PackedStringArray("Der Hammer wartet. Was gibt\'s?", "Eisen ist geduldig. Ich nicht.")
+})
+story_id = &"smith"
+favor_id = &"fav_smith"
+visit_grave = "old_01"
+visit_every_days = 6
+graveyard_npc = &"npc_smith_g"

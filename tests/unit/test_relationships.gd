@@ -239,6 +239,10 @@ func test_real_villager_data_has_six_to_eight_remarks() -> void:
 			continue
 		var n := 0
 		for key: StringName in v.remarks:
+			# Phase 8 (§2.1.3, P1): the reaction remarks event_<event> come on top of the 6–8 Phase-7 lines.
+			if String(key).begins_with("event_"):
+				assert_true(StringName(String(key).trim_prefix("event_")) in NpcLifeConfig.new().reactions, "%s key %s" % [id, key])
+				continue
 			n += v.remarks[key].size()
 			assert_true(key in [&"friend", &"specimens"] or String(key).begins_with("rep_") or String(key).begins_with("piety_"),
 					"%s key %s" % [id, key])

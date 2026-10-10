@@ -17,6 +17,11 @@ func _init(npc: Npc) -> void:
 	_npc = npc
 
 
+## Forget the cached polylines (a runtime schedule came or went).
+func clear_cache() -> void:
+	_paths.clear()
+
+
 func path(e: ScheduleEntry) -> Dictionary:
 	var key := e.get_instance_id()
 	if _paths.has(key):
@@ -111,6 +116,8 @@ static func flat(v: Vector3) -> Vector3:
 
 
 func _waypoint(id: StringName) -> Vector3:
+	if String(id).begins_with("@"):
+		return ScheduleBuilder.point(null, String(id))
 	var w := _npc._world()
 	if w == null:
 		push_warning("[Npc] %s: no world with waypoints" % _npc.name)

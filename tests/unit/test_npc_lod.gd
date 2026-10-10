@@ -239,3 +239,80 @@ func test_governor_and_not_saved() -> void:
 		t += 0.016
 	assert_eq(lod.lod_of(npc), 2, "the governor ranks within 1 / governor_hz s")
 	assert_eq(lod.lod_of(null), 0)
+
+
+# --- Phase 8 (docs/PHASE8_DESIGN.md §3.4, §9, §10 P1) ---------------------------------------------
+
+func _p8_config() -> NpcConfig:
+	return Phase8Fixtures.npc_config().duplicate() as NpcConfig
+
+
+func test_p8_graveyard_visible_cap_by_distance() -> void:
+	lod.config = _p8_config()
+	player.set_region(&"graveyard")
+	var npcs: Array[Npc] = []
+	for i: int in 12:
+		npcs.append(_npc("g_%d" % i, Vector3(1.0 + i * 1.5, 0, 0), graveyard))
+	var village_npcs: Array[Npc] = []
+	await wait_frames(1)
+	lod.update_now()
+	assert_eq(lod.visible_cap(&"graveyard"), 9, "§3.4: max_visible_graveyard 9")
+	assert_eq(lod.visible_cap(&"village"), -1, "village: Phase-7 budget")
+	assert_eq(lod.visible_count(), 9)
+	for i: int in 12:
+		assert_eq(npcs[i].is_culled(), i >= 9, "rank %d" % i)
+		if i >= 9:
+			assert_eq(lod.lod_of(npcs[i]), 2, "culled figures rest")
+			assert_false((npcs[i].get_node(^"Model") as Node3D).visible if npcs[i].has_node(^"Model") else false)
+	assert_eq(lod.full_count(), 6, "max_full 6 stays")
+	# The night of the lights: 16.
+	lod.fest_override = &"fest_lights"
+	lod.update_now()
+	assert_eq(lod.visible_cap(&"graveyard"), 16)
+	assert_eq(lod.visible_count(), 12)
+	for n: Npc in npcs:
+		assert_false(n.is_culled(), "%s drawn at the lights" % n.name)
+	# The focus moves: the ranking follows.
+	lod.fest_override = null
+	lod.focus_override = Vector3(30, 0, 0)
+	lod.update_now()
+	assert_true(npcs[0].is_culled(), "the farthest now")
+	assert_false(npcs[11].is_culled())
+	assert_eq(village_npcs.size(), 0)
+
+
+func test_p8_standing_figures_rest_from_26_m_on_the_graveyard() -> void:
+	lod.config = _p8_config()
+	player.set_region(&"graveyard")
+	var standing := _npc("stand", Vector3(30, 0, 0), graveyard)
+	var kneel := _npc("kneel", Vector3(0, 0, 30), graveyard)
+	(kneel.schedule.entries[0] as ScheduleEntry).animation = &"kneel-loop"
+	var raking := _npc("rake", Vector3(-30, 0, 0), graveyard)
+	(raking.schedule.entries[0] as ScheduleEntry).animation = &"rake"
+	await wait_frames(1)
+	for n: Npc in [standing, kneel, raking]:
+		n.refresh()
+	lod.update_now()
+	assert_true(NpcLod.is_standing(standing))
+	assert_eq(lod.lod_of(standing), 2, "idle at 30 m: resting (26 m)")
+	assert_eq(lod.lod_of(kneel), 2, "kneel at 30 m: resting")
+	assert_eq(lod.lod_of(raking), 1, "working figure at 30 m: reduced (40 m)")
+	# The village keeps the Phase-7 distances.
+	player.set_region(&"village")
+	var v := _npc("vstand", Vector3(30, 0, 0), village)
+	await wait_frames(1)
+	lod.update_now()
+	assert_eq(lod.lod_of(v), 1, "village: standing at 30 m still reduced")
+
+
+func test_p8_lights_rate_three_hz() -> void:
+	lod.config = _p8_config()
+	player.set_region(&"graveyard")
+	var n := _npc("lz", Vector3(30, 0, 0), graveyard)
+	await wait_frames(1)
+	lod.fest_override = &"fest_lights"
+	lod.update_now()
+	assert_almost(n.lod_interval_override, 0.33, 0.001, "§3.4: level-1 rate 3 Hz at the lights")
+	lod.fest_override = &""
+	lod.update_now()
+	assert_almost(n.lod_interval_override, 0.0, 0.001, "otherwise NpcConfig.reduced_interval")

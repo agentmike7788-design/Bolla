@@ -16,11 +16,30 @@ specimen_delta = 0
 returned_delta = 0
 piety_sensitive = false
 remarks = Dictionary[StringName, PackedStringArray]({
+&"event_apprentice_hired": PackedStringArray("Der Wackernagel-Junge hat bei mir nach Handschuhen gefragt. Ich hab gesagt, die wachsen ihm noch."),
+&"event_grave_disturbed": PackedStringArray("Die Leute kaufen heute Kerzen. Für oben, sagen sie. Für alle Fälle."),
+&"event_kathrein_danced": PackedStringArray("Du trittst wie einer, der Erde gewohnt ist."),
+&"event_lights_all": PackedStringArray("Ich hab alle Kerzen verkauft, und es hat gereicht. Das hatte ich noch nie."),
+&"event_noise_at_grave": PackedStringArray("Man hört bis ins Dorf, wenn du hackst. Die Mutter hat\'s auch gehört, glaub ich."),
+&"event_robber_reported": PackedStringArray("Den Grell haben sie geholt. Er hat bei mir nie was gekauft, nur geschaut."),
+&"event_wish_done": PackedStringArray("Die Kehr sagt, das Grab sieht aus wie ein Garten. Sie hat geweint. Das ist gut."),
+&"friend": PackedStringArray("Ich hab etwas Buntes für Sie! Ich weiß nicht, was es ist. Darum ist es bunt."),
 &"rep_disreputable": PackedStringArray("Drei, vier, fünf – und der Totengräber, sechs. Ich zähle alles, was vorbeigeht."),
-&"rep_unremarkable": PackedStringArray("Leinen ist frisch, Herr Totengräber! Sechs Ellen, und dann ist es weg."),
-&"rep_respected": PackedStringArray("Grüß Gott, Herr Totengräber! Ich hab Wachs, ich hab Kerzen, ich hab Buntes."),
 &"rep_esteemed": PackedStringArray("Für Sie lege ich das gute Leinen zurück. Rechnen Sie nicht nach, ich hab es schon."),
 &"rep_renowned": PackedStringArray("Der Herr Totengräber! Meine Mutter hätte Ihnen einen Stuhl hingestellt. Ich stelle Ihnen zwei hin."),
-&"friend": PackedStringArray("Ich hab etwas Buntes für Sie! Ich weiß nicht, was es ist. Darum ist es bunt."),
+&"rep_respected": PackedStringArray("Grüß Gott, Herr Totengräber! Ich hab Wachs, ich hab Kerzen, ich hab Buntes."),
+&"rep_unremarkable": PackedStringArray("Leinen ist frisch, Herr Totengräber! Sechs Ellen, und dann ist es weg."),
 &"specimens": PackedStringArray("Gläser, Gläser. Seit Sie im Dorf sind, verkaufe ich mehr Gläser als Gurken. Das rechne ich mir nicht aus.")
 })
+circle = Array[StringName]([&"house_sieber", &"house_kehr"])
+mood_lines = Dictionary[StringName, PackedStringArray]({
+&"cheerful": PackedStringArray("Heute hatte ich drei Kunden. Drei!", "Na, Totengräber, heute sogar mit Lächeln?"),
+&"cross": PackedStringArray("Heute nicht, Totengräber. Morgen.", "Fass nichts an, was du nicht kaufst."),
+&"low": PackedStringArray("Heute ist das Buch der Mutter schwer.", "Ich zähl heute nicht gern."),
+&"plain": PackedStringArray("Was darf\'s sein? Bezahlt wird gleich.", "Garn, Kerzen, Leinen. Das Übliche.")
+})
+story_id = &"grocer"
+favor_id = &"fav_grocer"
+visit_grave = "old_08"
+visit_every_days = 5
+graveyard_npc = &"npc_grocer_g"
