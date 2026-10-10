@@ -73,7 +73,7 @@ start_minute = 980
 travel_minutes = 20
 activity = &"walk"
 animation = &"walk"
-path = PackedStringArray("peddler_gate", "trader_spot", "trader_mid", "trader_far")
+path = PackedStringArray("peddler_gate", "gate_outside", "peddler_west", "trader_spot", "trader_mid", "trader_far")
 today_flag = &"peddler_day"
 
 [sub_resource type="Resource" id="p8_peddler_09"]

@@ -98,8 +98,7 @@ func route_between(from_id: String, to_id: String) -> PackedStringArray:
 	if net != null and from_id != to_id:
 		var a := _flat_point(from_id)
 		var b := _flat_point(to_id)
-		var direct := minf(net.clearance, minf(net.clearance_at(a), net.clearance_at(b)) - 0.01)
-		if not net.line_free(a, b, direct):
+		if not net.line_free(a, b):
 			var ia := net.index_of(from_id)
 			var ib := net.index_of(to_id)
 			var from_nodes: Array = [[ia, 0.0]] if ia >= 0 else net.visible_nodes(a)

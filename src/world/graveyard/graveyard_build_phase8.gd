@@ -118,8 +118,17 @@ static func bake_nav(ctx: Ctx, waypoints: Node3D) -> void:
 		targets.append(id)
 	for id: String in cfg.extra_targets:
 		targets.append(String(id))
+	# Jakob's stands at the care spots (ApprenticePlanner.SPOT_STAND, 0.7 m towards the camera) join the net as
+	# "@x,y,z" literals – ScheduleBuilder.point reads them like waypoints.
+	var stand := Ctx.v2(cfg.get("care_stand", [0.0, 0.7]))
+	for dspot: Dictionary in ctx.layout.dirt_spots:
+		var p := Ctx.v2(dspot.pos) + stand
+		var lit := "@%.2f,%.2f,%.2f" % [p.x, ctx.ground_height(p), p.y]
+		pos[lit] = p
+		targets.append(lit)
 	var vw: Dictionary = {}   # id -> Vector2
 	var vw_order: Array[String] = []
+	var seqs: Array = []   # per target: the node ids of its smoothed way (start, vw…, target)
 	for t: String in targets:
 		var cells := _cell_path(field, size, origin, cell, pos[t], grid, need)
 		if cells.is_empty():
@@ -131,6 +140,7 @@ static func bake_nav(ctx: Ctx, waypoints: Node3D) -> void:
 		pts.append(pos[t])
 		var corners := _smooth(pts, grid, origin, cell, size, need)
 		var prev: Vector2 = pos[start]
+		var seq: Array[String] = [start]
 		for k: int in range(1, corners.size() - 1):
 			var p: Vector2 = corners[k]
 			var hit := ""
@@ -144,9 +154,13 @@ static func bake_nav(ctx: Ctx, waypoints: Node3D) -> void:
 				vw[hit] = Vector2(snappedf(p.x, 0.05), snappedf(p.y, 0.05))
 				vw_order.append(hit)
 			prev = vw[hit]
+			if seq[seq.size() - 1] != hit:
+				seq.append(hit)
+		seq.append(t)
+		seqs.append(seq)
 	for id: String in vw_order:
 		pos[id] = vw[id]
-	print("  nav paths in %d ms" % (Time.get_ticks_msec() - t0))
+	print("  nav paths in %d ms (%d vw)" % [Time.get_ticks_msec() - t0, vw_order.size()])
 	# The graph: start, named targets, spots and vw points; straight legs with clearance (endpoints at their own).
 	var ids := PackedStringArray([start])
 	for t: String in targets:
@@ -177,8 +191,21 @@ static func bake_nav(ctx: Ctx, waypoints: Node3D) -> void:
 			if len > float(cfg.edge_max):
 				continue
 			var lo := minf(need, minf(own[i], own[j]) - 0.01)
-			if not _leg_free(grid, origin, cell, size, points[i], points[j], need, lo):
+			if not Nav.leg_free(grid, origin, cell, size, points[i], points[j], need, lo):
 				continue
+			d[i * n + j] = len
+			d[j * n + i] = len
+			nx[i * n + j] = j
+			nx[j * n + i] = i
+			edges += 1
+	# The smoothed ways themselves are legs (a snapped corner may miss the strict check by a hair).
+	for seq: Array in seqs:
+		for k: int in range(1, seq.size()):
+			var i := ids.find(String(seq[k - 1]))
+			var j := ids.find(String(seq[k]))
+			if i < 0 or j < 0 or i == j or d[i * n + j] < Nav.INF * 0.5:
+				continue
+			var len := points[i].distance_to(points[j])
 			d[i * n + j] = len
 			d[j * n + i] = len
 			nx[i * n + j] = j
@@ -212,6 +239,8 @@ static func bake_nav(ctx: Ctx, waypoints: Node3D) -> void:
 	var route_in: PackedStringArray = PackedStringArray(cfg.route_in)
 	var routes := {}
 	for t: String in targets:
+		if t.begins_with("@"):
+			continue
 		var path: PackedStringArray = nav.call(&"node_path", 0, ids.find(t))
 		if path.is_empty():
 			push_error("[nav] target %s not connected" % t)
@@ -285,6 +314,9 @@ static func _occupancy(ctx: Ctx, origin: Vector2, cell: float, size: Vector2i, b
 
 
 static func _in_obstacle(node: Node, root: Node) -> bool:
+	# A cleared fence gap is a repaired fence: its RepairedCollision stays an obstacle.
+	if node.get_parent() != null and String(node.get_parent().name) == "RepairedCollision":
+		return false
 	var n := node.get_parent()
 	while n != null and n != root:
 		if n.get("obstacle_id") != null:
@@ -305,11 +337,13 @@ static func _fill(occ: PackedByteArray, origin: Vector2, cell: float, size: Vect
 	for z: int in range(z0, z1 + 1):
 		for x: int in range(x0, x1 + 1):
 			var q := origin + (Vector2(x, z) + Vector2(0.5, 0.5)) * cell - at
+			# A cell counts when the shape touches it (0.35 cell of slack): a 14 cm fence between two cell
+			# centres must not vanish from the grid.
 			var inside := false
 			if circle:
-				inside = q.length() <= float(shape.r)
+				inside = q.length() <= float(shape.r) + cell * 0.35
 			else:
-				inside = absf(q.dot(shape.ax)) <= float(shape.ex) and absf(q.dot(shape.az)) <= float(shape.ez)
+				inside = absf(q.dot(shape.ax)) <= float(shape.ex) + cell * 0.35 and absf(q.dot(shape.az)) <= float(shape.ez) + cell * 0.35
 			if inside:
 				occ[z * size.x + x] = 1
 	return occ
@@ -355,7 +389,7 @@ static func _distance(occ: PackedByteArray, size: Vector2i, cell: float) -> Pack
 					v = minf(v, d[i + w - 1] + diag)
 			d[i] = v
 	for i: int in w * h:
-		d[i] = maxf(0.0, d[i] - cell * 0.5)
+		d[i] = maxf(0.0, d[i] - cell * 0.25)
 	return d
 
 
@@ -395,20 +429,41 @@ static func _dijkstra(grid: PackedByteArray, origin: Vector2, cell: float, size:
 	var prev := PackedInt32Array()
 	prev.resize(total)
 	prev.fill(-2)
-	var cost := PackedFloat32Array()
+	var cost := PackedFloat64Array()
 	cost.resize(total)
 	cost.fill(1.0e9)
 	var s := floori((from.y - origin.y) / cell) * w + floori((from.x - origin.x) / cell)
 	cost[s] = 0.0
 	prev[s] = -1
-	var heap := Heap.new()
-	heap.push(0.0, s)
+	# A binary min-heap in two local arrays (inline: element writes on members / parameters copy the array).
+	var hc := PackedFloat64Array([0.0])
+	var hi := PackedInt32Array([s])
+	var count := 1
 	var offs := [[1, 0, 1.0], [-1, 0, 1.0], [0, 1, 1.0], [0, -1, 1.0], [1, 1, SQRT2], [1, -1, SQRT2], [-1, 1, SQRT2], [-1, -1, SQRT2]]
 	var need_u := need / Nav.UNIT
-	while not heap.idx.is_empty():
-		var c := heap.cost[0]
-		var i := heap.idx[0]
-		heap.pop()
+	while count > 0:
+		var c := hc[0]
+		var i := hi[0]
+		count -= 1
+		hc[0] = hc[count]
+		hi[0] = hi[count]
+		var k := 0
+		while true:
+			var l := k * 2 + 1
+			var m := k
+			if l < count and hc[l] < hc[m]:
+				m = l
+			if l + 1 < count and hc[l + 1] < hc[m]:
+				m = l + 1
+			if m == k:
+				break
+			var tc := hc[m]
+			hc[m] = hc[k]
+			hc[k] = tc
+			var ti := hi[m]
+			hi[m] = hi[k]
+			hi[k] = ti
+			k = m
 		if c > cost[i]:
 			continue
 		var x := i % w
@@ -427,59 +482,29 @@ static func _dijkstra(grid: PackedByteArray, origin: Vector2, cell: float, size:
 			if nc < cost[j]:
 				cost[j] = nc
 				prev[j] = i
-				heap.push(nc, j)
+				if count == hc.size():
+					hc.append(nc)
+					hi.append(j)
+				else:
+					hc[count] = nc
+					hi[count] = j
+				var q := count
+				count += 1
+				while q > 0:
+					var p := (q - 1) / 2
+					if hc[p] <= hc[q]:
+						break
+					var tc2 := hc[p]
+					hc[p] = hc[q]
+					hc[q] = tc2
+					var ti2 := hi[p]
+					hi[p] = hi[q]
+					hi[q] = ti2
+					q = p
 	return prev
 
 
 ## A binary min-heap of (cost, cell) – a class, so the packed arrays are changed in place.
-class Heap:
-	extends RefCounted
-	var cost := PackedFloat32Array()
-	var idx := PackedInt32Array()
-
-	@warning_ignore("integer_division")
-	func push(c: float, i: int) -> void:
-		cost.append(c)
-		idx.append(i)
-		var k := cost.size() - 1
-		while k > 0:
-			var p := (k - 1) / 2
-			if cost[p] <= cost[k]:
-				break
-			var tc := cost[p]
-			cost[p] = cost[k]
-			cost[k] = tc
-			var ti := idx[p]
-			idx[p] = idx[k]
-			idx[k] = ti
-			k = p
-
-	func pop() -> void:
-		var last := cost.size() - 1
-		cost[0] = cost[last]
-		idx[0] = idx[last]
-		cost.resize(last)
-		idx.resize(last)
-		var k := 0
-		while true:
-			var l := k * 2 + 1
-			var r := l + 1
-			var m := k
-			if l < last and cost[l] < cost[m]:
-				m = l
-			if r < last and cost[r] < cost[m]:
-				m = r
-			if m == k:
-				break
-			var tc := cost[m]
-			cost[m] = cost[k]
-			cost[k] = tc
-			var ti := idx[m]
-			idx[m] = idx[k]
-			idx[k] = ti
-			k = m
-
-
 ## Cells from the start to the reached cell nearest to `to` (within 1 m), start excluded.
 static func _cell_path(prev: PackedInt32Array, size: Vector2i, origin: Vector2, cell: float, to: Vector2, grid: PackedByteArray,
 		need: float) -> PackedInt32Array:
@@ -524,28 +549,14 @@ static func _smooth(pts: Array[Vector2], grid: PackedByteArray, origin: Vector2,
 	while i < last:
 		# The whole rest visible at once (the common case near the end), else scan forward to the first block.
 		var j := i + 1
-		if _leg_free(grid, origin, cell, size, pts[i], pts[last], need, end_need):
+		if Nav.leg_free(grid, origin, cell, size, pts[i], pts[last], need, end_need):
 			j = last
 		else:
-			while j + 1 < last and _leg_free(grid, origin, cell, size, pts[i], pts[j + 1], need, need):
+			while j + 1 < last and Nav.leg_free(grid, origin, cell, size, pts[i], pts[j + 1], need, need):
 				j += 1
 		out.append(pts[j])
 		i = j
 	return out
-
-
-## A straight leg keeps `need` everywhere except near its endpoints, where `lo` (their own clearance) suffices.
-static func _leg_free(grid: PackedByteArray, origin: Vector2, cell: float, size: Vector2i, a: Vector2, b: Vector2, need: float, lo: float) -> bool:
-	var d := a.distance_to(b)
-	var steps := maxi(1, ceili(d / (cell * 0.5)))
-	for k: int in steps + 1:
-		var t := float(k) / steps
-		var p := a.lerp(b, t)
-		var edge := minf(t, 1.0 - t) * d
-		var req := need if edge > 0.6 else lerpf(lo, need, edge / 0.6)
-		if Nav.clearance_in(grid, origin, cell, size, p) < req:
-			return false
-	return true
 
 
 ## Replaces (or appends) the three baked keys at the end of graveyard_layout.json – one entry per line.

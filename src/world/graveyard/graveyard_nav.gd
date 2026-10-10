@@ -32,9 +32,11 @@ func clearance_at(p: Vector2) -> float:
 	return clearance_in(grid, origin, cell, size, p)
 
 
-## The straight leg a → b keeps `need` (default: clearance) from every collision.
-func line_free(a: Vector2, b: Vector2, need: float = -1.0) -> bool:
-	return los(grid, origin, cell, size, a, b, clearance if need < 0.0 else need)
+## The straight leg a → b keeps the clearance from every collision; within 0.6 m of an end it may come as close
+## as that end itself is (a spot beside a mound, a care spot under a hedge).
+func line_free(a: Vector2, b: Vector2) -> bool:
+	var lo := minf(clearance, minf(clearance_at(a), clearance_at(b)) - 0.01)
+	return leg_free(grid, origin, cell, size, a, b, clearance, lo)
 
 
 func index_of(id: String) -> int:
@@ -69,7 +71,7 @@ func visible_nodes(p: Vector2, count: int = 6) -> Array:
 	order.sort_custom(func(a: Array, b: Array) -> bool: return a[1] < b[1])
 	var out: Array = []
 	for e: Array in order:
-		if line_free(p, points[e[0]], minf(clearance, clearance_at(p) - 0.01)) or float(e[1]) < 0.25:
+		if line_free(p, points[e[0]]) or float(e[1]) < 0.25:
 			out.append(e)
 			if out.size() >= count:
 				break
@@ -82,6 +84,19 @@ static func clearance_in(g: PackedByteArray, o: Vector2, c: float, s: Vector2i, 
 	if x < 0 or z < 0 or x >= s.x or z >= s.y:
 		return 0.0
 	return float(g[z * s.x + x]) * UNIT
+
+
+## `need` everywhere except near the ends, where it ramps down to `lo` over the last 0.6 m.
+static func leg_free(g: PackedByteArray, o: Vector2, c: float, s: Vector2i, a: Vector2, b: Vector2, need: float, lo: float) -> bool:
+	var d := a.distance_to(b)
+	var steps := maxi(1, ceili(d / (c * 0.5)))
+	for k: int in steps + 1:
+		var t := float(k) / steps
+		var edge := minf(t, 1.0 - t) * d
+		var req := need if edge > 0.6 else lerpf(lo, need, edge / 0.6)
+		if clearance_in(g, o, c, s, a.lerp(b, t)) < req:
+			return false
+	return true
 
 
 static func los(g: PackedByteArray, o: Vector2, c: float, s: Vector2i, a: Vector2, b: Vector2, need: float) -> bool:
