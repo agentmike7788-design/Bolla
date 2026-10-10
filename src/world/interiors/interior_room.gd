@@ -17,6 +17,9 @@ const META_MIN_LEVEL := &"min_level"
 const META_MAX_LEVEL := &"max_level"
 ## The room of the hut (HutInterior); "" = outside.
 const HUT := &"hut"
+## Phase 8 (docs/PHASE8_DESIGN.md §4.6 D6, interior_build.gd): festival furniture.
+const META_FEST_FLAG := &"fest_flag"
+const META_FEST_SHOW := &"fest_show"
 
 @export var room_id: StringName = &"hut"
 @export var config: InteriorConfig
@@ -40,6 +43,8 @@ const HUT := &"hut"
 var active: bool = false
 ## The level last applied by apply_level (-1 = never).
 var level: int = -1
+## Phase 8: the room has festival furniture (apply_fest).
+var _has_fest: bool = false
 
 @onready var sun: DirectionalLight3D = get_node_or_null(^"Sun") as DirectionalLight3D
 @onready var spawn: Marker3D = get_node_or_null(^"Spawn") as Marker3D
@@ -59,6 +64,12 @@ func _ready() -> void:
 	EventBus.interior_room_changed.connect(apply_room)
 	if building_id != &"":
 		apply_level(_building_level())
+	_has_fest = not find_children("*", "Node3D", true, false).filter(func(n: Node) -> bool: return n.has_meta(META_FEST_FLAG)).is_empty()
+	if _has_fest:
+		EventBus.day_started.connect(_on_fest_change.unbind(1))
+		EventBus.festival_changed.connect(_on_fest_change.unbind(2))
+		EventBus.game_loaded.connect(_on_fest_change.unbind(1))
+		apply_fest()
 
 
 ## The InteriorConfig of this room: `config`, else Database.interior_config(room_id), else the
@@ -106,6 +117,8 @@ func apply_room(current: StringName) -> void:
 	if hide_when_inactive:
 		visible = now
 		_set_lighting_running(now)
+	if now and _has_fest:
+		apply_fest()
 	if not now and current != &"":
 		return  # another room took over: its apply_room sets the outdoor sun and the rig
 	var outdoor := get_node_or_null(outdoor_sun_path) as Light3D if not outdoor_sun_path.is_empty() else null
@@ -132,6 +145,24 @@ func apply_level(value: int) -> void:
 		var on := is_shown_at(node, value)
 		(node as Node3D).visible = on
 		node.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED
+
+
+## Phase 8 (§4.6 D6): children with meta "fest_flag" show (fest_show true) or hide (false) on the day the
+## GameState flag holds (the Kathrein furniture: the tables against the wall, the dance floor free); hidden
+## ones are PROCESS_MODE_DISABLED like the level furniture. Display only.
+func apply_fest() -> void:
+	for node: Node in find_children("*", "Node3D", true, false):
+		if not node.has_meta(META_FEST_FLAG):
+			continue
+		var v: Variant = GameState.get_flag(StringName(node.get_meta(META_FEST_FLAG)))
+		var today := (v is int or v is float) and int(v) == TimeManager.day
+		var on := today == bool(node.get_meta(META_FEST_SHOW, true))
+		(node as Node3D).visible = on
+		node.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED
+
+
+func _on_fest_change() -> void:
+	apply_fest()
 
 
 ## Whether `node` (meta min_level / max_level) belongs to the room at `value`.

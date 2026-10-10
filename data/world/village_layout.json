@@ -197,7 +197,11 @@
     {"id": "npc_surgeon", "npc_id": "surgeon", "model": "ph_chr_v_surgeon"},
     {"id": "npc_washer", "npc_id": "washer", "model": "ph_chr_v_washer"},
     {"id": "npc_oldwoman", "npc_id": "oldwoman", "model": "ph_chr_v_oldwoman", "hide_flag": "hagedorn_dead"},
-    {"id": "npc_carter_v", "npc_id": "carter", "model": "ph_chr_carter"}
+    {"id": "npc_carter_v", "npc_id": "carter", "model": "ph_chr_carter"},
+    {"id": "npc_apprentice_v", "npc_id": "apprentice", "model": "ph_chr_apprentice", "requires_flag": "p8_open",
+      "_comment": "Phase 8 §3.1: Jakob im Dorf (Laufzeit-Zeitplan von Apprentice + Daten-Einträge apprentice_off_day), Veit, Hanne – vor p8_open verborgen."},
+    {"id": "npc_beggar", "npc_id": "beggar", "model": "ph_chr_beggar", "requires_flag": "p8_open"},
+    {"id": "npc_peddler", "npc_id": "peddler", "model": "ph_chr_peddler", "requires_flag": "p8_open"}
   ],
   "spawns": {
     "from_graveyard": {"pos": [-24.6, 1.5], "rot_y": 90.0}
@@ -223,13 +227,36 @@
     "v_wash": [-23.6, 9.3],
     "v_house_n": [-20.0, -9.8],
     "tp_village": [-20.0, 1.5],
-    "tp_anger": [0.0, 2.0]
+    "tp_anger": [0.0, 2.0],
+    "v_ott_door": [23.4, 3.0],
+    "v_kehr_door": [-24.6, -10.2],
+    "v_church_step": [1.6, -10.8],
+    "v_bridge_sit": [-23.8, 2.6],
+    "v_well_peddler": [-1.8, -1.2],
+    "v_remise_sleep": [21.0, 9.6],
+    "v_peddler_in": [-23.4, 1.2],
+    "v_peddler_out": [-29.0, 2.2],
+    "v_lights_gather": [-24.4, 3.4]
   },
+  "_waypoints_phase8": "Phase 8 §4.6 D1/D4/D5: Türplätze der Krankenlicht-Häuser am Rand der Laufgrenze (v_ott_door, v_kehr_door – dort wird geklopft, dann geht es hinter die Laufgrenze), Veits Plätze (Kirchtür-Stufe, Brückenplatz; Brunnenbank bestehend), Hannes Stand am Brunnen (Kiepe abgestellt), v_remise_sleep (Veit nachts, unsichtbar hinter der Remise), Hannes Weg über die Brücke (v_peddler_in → v_peddler_out am Wegstein), die Lichtgang-Sammlung an der Holderbrücke. Beobachtungsplätze und Krankenlicht: phase8.",
   "waypoint_facing": {
     "_comment": "Blickrichtung (rot_y in Grad, 0 = +Z/Kamera) an Steh-Orten: zum Anger bzw. zur Kamera.",
     "v_well": 0.0, "v_well_w": 25.0, "v_well_bench": 0.0, "v_linden": 0.0, "v_board": 0.0, "v_church_door": 0.0, "v_office_door": 0.0,
     "v_inn_door": 0.0, "v_anvil": -90.0, "v_shop_window": 90.0, "v_surgery_door": -60.0, "v_remise": -60.0,
-    "v_hagedorn_gate": 0.0, "v_dorn_door": 0.0, "v_wash": 120.0, "v_bridge": 90.0
+    "v_hagedorn_gate": 0.0, "v_dorn_door": 0.0, "v_wash": 120.0, "v_bridge": 90.0,
+    "v_ott_door": 90.0, "v_kehr_door": 201.0, "v_church_step": 0.0, "v_bridge_sit": 90.0, "v_well_peddler": 30.0,
+    "v_peddler_in": 90.0, "v_lights_gather": 60.0
+  },
+  "_phase8": "Phase 8 §4.6 D2/D3 (village_build_phase8.gd): WatchSpot im Schatten unter der Remisen-Traufe bzw. an der Westecke des Amtshauses (≤ 12 m bis zum Türplatz, frei sichtbar), SickLight am Fenstermarker light_window der Häuser Ott und Kehr (eine Kerze auf dem inneren Sims, inset m nach innen; das Fensterlicht brennt in der Krankenlicht-Nacht durch – village_dressing.gd).",
+  "phase8": {
+    "watch_spots": [
+      {"id": "watch_ott", "pos": [19.5, 5.4], "rot_y": 120.0},
+      {"id": "watch_kehr", "pos": [-20.0, -9.6], "rot_y": 260.0}
+    ],
+    "sick_lights": [
+      {"id": "sick_light_ott", "house": "house_ott", "marker": "light_window", "inset": 0.12},
+      {"id": "sick_light_kehr", "house": "house_kehr", "marker": "light_window", "inset": 0.12}
+    ]
   },
   "lights": {
     "_comment": "§4.7: Laternen am Holderkrug und an der Kirchentür mit Schatten (2 im Dorf), Brücke und Linde ohne; warme Fenster ohne Schatten (Holderkrug 2, Amtshaus 1, Katen je 1 bis 22:00, Wohnhäuser je 1 bis 21:00); Esse-Glut wie im Werkhof. until = Minute, ab der das Fenster dunkel bleibt (bis 06:00).",

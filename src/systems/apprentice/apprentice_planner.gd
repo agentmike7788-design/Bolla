@@ -108,7 +108,7 @@ static func plan(day: int, from_minute: int, lines: Array[Dictionary], state: Di
 			var barrel := _named(world, WP_BARREL, here)
 			var walk := _walk_minutes(here, barrel, world)
 			out.append({"task": TASK_REFILL, "spot_id": "", "grave_id": "", "start": t, "walk_minutes": walk, "work_start": t + walk,
-					"work_minutes": gc_cfg.refill_minutes, "end": t + walk + gc_cfg.refill_minutes, "path": _path(here, barrel),
+					"work_minutes": gc_cfg.refill_minutes, "end": t + walk + gc_cfg.refill_minutes, "path": _path(here, barrel, world),
 					"mistake": false, "kind": TASK_REFILL, "consumes": ""})
 			t += walk + gc_cfg.refill_minutes
 			here = barrel
@@ -228,7 +228,7 @@ static func _next(pending: Array, t: int, here: String, used: Dictionary, mourne
 				# The refill comes first – the place itself is chosen again from the barrel.
 				return {"task": task, "entry": {}}
 			return {"task": task, "entry": {"task": task.id, "spot_id": str(c.spot_id), "grave_id": str(c.grave_id), "start": t,
-					"walk_minutes": walk, "work_start": t + walk, "work_minutes": work, "end": t + walk + work, "path": _path(here, target),
+					"walk_minutes": walk, "work_start": t + walk, "work_minutes": work, "end": t + walk + work, "path": _path(here, target, world),
 					"mistake": ApprenticeRules.mistake(task.id, str(c.spot_id), day, level, bool(state.get("scolded", false)), cfg),
 					"kind": task.spot_kind, "consumes": String(task.consumes), "target": target}}
 	return {}
@@ -265,11 +265,15 @@ static func _stay_entry(task: StringName, t: int, not_before: int, until: int, h
 	if work_start >= until:
 		return {}
 	return {"task": task, "spot_id": "", "grave_id": "", "start": t, "walk_minutes": walk, "work_start": work_start,
-			"work_minutes": until - work_start, "end": until, "path": _path(here, target), "mistake": false, "kind": task, "consumes": ""}
+			"work_minutes": until - work_start, "end": until, "path": _path(here, target, world), "mistake": false, "kind": task, "consumes": ""}
 
 
-static func _path(here: String, target: String) -> PackedStringArray:
+## W-Welt (W2): on the real graveyard the way around graves, fences and buildings (WorldRoot.route_between), else
+## the straight leg.
+static func _path(here: String, target: String, world: Node = null) -> PackedStringArray:
 	var out := PackedStringArray()
+	if here != "" and target != "" and target != here and world != null and world.has_method(&"route_between"):
+		return world.call(&"route_between", here, target)
 	if here != "":
 		out.append(here)
 	if target != "" and target != here:
@@ -280,9 +284,11 @@ static func _path(here: String, target: String) -> PackedStringArray:
 static func _walk_minutes(here: String, target: String, world: Node) -> int:
 	if here == "" or target == "" or here == target:
 		return 0
-	var a := ScheduleBuilder.point(world, here)
-	var b := ScheduleBuilder.point(world, target)
-	var d := Vector2(a.x - b.x, a.z - b.z).length()
+	var d := ScheduleBuilder.path_length(_path(here, target, world), world)
+	if d <= 0.0001 and not (world != null and world.has_method(&"get_waypoint")):
+		var a := ScheduleBuilder.point(world, here)
+		var b := ScheduleBuilder.point(world, target)
+		d = Vector2(a.x - b.x, a.z - b.z).length()
 	return 0 if d <= 0.0001 else maxi(1, ceili(d / _speed() - 0.0001))
 
 

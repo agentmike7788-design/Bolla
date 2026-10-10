@@ -352,7 +352,14 @@ func _npc() -> Node:
 
 
 func _route() -> PackedStringArray:
-	return PackedStringArray(["robber_far", "robber_fence_out", "robber_fence_in", "gv_" + _target])
+	var out := PackedStringArray(["robber_far", "robber_fence_out"])
+	# W-Welt (W2): from the fence over the south strip around the graves (WorldRoot.route_between), not straight.
+	var world := _first(&"world")
+	if world != null and world.has_method(&"route_between"):
+		out.append_array(world.call(&"route_between", "robber_fence_in", "gv_" + _target))
+	else:
+		out.append_array(PackedStringArray(["robber_fence_in", "gv_" + _target]))
+	return out
 
 
 func _apply_schedule() -> void:
@@ -361,7 +368,7 @@ func _apply_schedule() -> void:
 		return
 	var cfg := _cfg()
 	var entries: Array[ScheduleEntry] = [
-		ScheduleBuilder.walk(&"robber_far", _route(), cfg.arrive_minute, &"", self),
+		ScheduleBuilder.walk(&"robber_far", _route(), cfg.arrive_minute, &"", _first(&"world")),
 		ScheduleBuilder.stay(StringName("gv_" + _target), cfg.dig_from, &"dig_night", &"robber"),
 	]
 	npc.call(&"set_runtime_schedule", ScheduleBuilder.build(entries))
@@ -373,7 +380,7 @@ func _flee_schedule() -> void:
 		return
 	var back := _route()
 	back.reverse()
-	var entries: Array[ScheduleEntry] = [ScheduleBuilder.walk(StringName("gv_" + _target), back, TimeManager.minute_of_day, &"", self)]
+	var entries: Array[ScheduleEntry] = [ScheduleBuilder.walk(StringName("gv_" + _target), back, TimeManager.minute_of_day, &"", _first(&"world"))]
 	npc.call(&"set_runtime_schedule", ScheduleBuilder.build(entries))
 
 

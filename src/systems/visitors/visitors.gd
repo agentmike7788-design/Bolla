@@ -913,14 +913,18 @@ func _apply_schedule(v: Dictionary) -> void:
 		if s.phase == VisitRules.PHASE_GONE:
 			continue
 		if StringName(s.step) == VisitRules.STEP_WALK and s.phase == VisitRules.PHASE_ARRIVING:
-			entries.append(ScheduleBuilder.walk(&"road_end", _route(g), int(s.from), &"", self))
+			entries.append(ScheduleBuilder.walk(&"road_end", _route(g), int(s.from), &"", _first(&"world")))
 		elif StringName(s.step) == VisitRules.STEP_WALK and s.phase == VisitRules.PHASE_LEAVING:
 			var back := _route(g)
 			back.reverse()
-			entries.append(ScheduleBuilder.walk(wp, back, int(s.from), &"", self))
+			entries.append(ScheduleBuilder.walk(wp, back, int(s.from), &"", _first(&"world")))
 		else:
 			entries.append(ScheduleBuilder.stay(wp, int(s.from), anim, kin.dialogue_id))
-	npc.call(&"set_runtime_schedule", ScheduleBuilder.build(entries))
+	# W-Welt (W2): the walks are timed on the world's waypoints (with `self` they took 0 minutes – a jump), and the
+	# figure carries the name for its talk prompt.
+	var sched := ScheduleBuilder.build(entries)
+	sched.display_name = kin.display_name
+	npc.call(&"set_runtime_schedule", sched)
 
 
 func _clear_schedule(v: Dictionary) -> void:
@@ -946,7 +950,7 @@ func _travel(kin: KinData, graves: PackedStringArray) -> int:
 	var fallback := VisitRules.ROAD_MINUTES + VisitRules.DEFAULT_ROUTE_MINUTES
 	if graves.is_empty() or not is_inside_tree() or _npc_node(kin) == null:
 		return fallback
-	var entry := ScheduleBuilder.walk(&"road_end", _route(graves[0]), 0, &"", self)
+	var entry := ScheduleBuilder.walk(&"road_end", _route(graves[0]), 0, &"", _first(&"world"))
 	return entry.travel_minutes if entry != null and entry.travel_minutes > 0 else fallback
 
 

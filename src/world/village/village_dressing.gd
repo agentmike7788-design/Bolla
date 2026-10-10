@@ -7,7 +7,9 @@ extends Node
 ##   runtime because an override inside an imported .glb instance would embed the mesh;
 ## - the warm window lights with a meta "until" (cottages till 22:00, houses and the Amtshaus till
 ##   21:00) are dark from that minute until 06:00: their base_energy goes to 0 (the
-##   AtmosphereController derives energy and visibility from it whenever it applies a preset).
+##   AtmosphereController derives energy and visibility from it whenever it applies a preset);
+## - Phase 8 (docs/PHASE8_DESIGN.md §4.6 D3, §4.9): the window light of a sick house (meta "house" in
+##   NightPaths.sick_houses) stays on all night – no new light, the candle is SickLight's.
 
 const META_BASE := &"base_energy"
 const META_ON := &"energy_on"
@@ -15,6 +17,8 @@ const META_UNTIL := &"until"
 const META_SCALE := &"scale"
 ## Windows light up again at dawn.
 const DAWN := 360
+const META_HOUSE := &"house"
+const NIGHT_PATHS_GROUP := &"night_paths"
 const FOLIAGE_LAYER := 1 << 1
 const FOLIAGE_SHADER := "res://assets/shaders/painted_foliage.gdshader"
 
@@ -51,7 +55,7 @@ func apply_minute(minute: int) -> void:
 	for light: Light3D in _windows:
 		if not is_instance_valid(light):
 			continue
-		var on := window_lit(light, minute)
+		var on := window_lit(light, minute) or _sick(light, minute)
 		var energy := float(light.get_meta(META_ON, 1.0))
 		light.set_meta(META_BASE, energy if on else 0.0)
 		light.light_energy = energy * float(light.get_meta(META_SCALE, 1.0)) if on else 0.0
@@ -63,6 +67,17 @@ static func window_lit(light: Light3D, minute: int) -> bool:
 	if not light.has_meta(META_UNTIL):
 		return true
 	return not (minute >= int(light.get_meta(META_UNTIL)) or minute < DAWN)
+
+
+## The light's house has the sick light tonight (NightPaths.sick_houses).
+func _sick(light: Light3D, minute: int) -> bool:
+	if not light.has_meta(META_HOUSE) or not is_inside_tree():
+		return false
+	var paths := get_tree().get_first_node_in_group(NIGHT_PATHS_GROUP)
+	if paths == null or not paths.has_method(&"sick_houses"):
+		return false
+	var houses: PackedStringArray = paths.call(&"sick_houses", TimeManager.day, minute)
+	return houses.has(String(light.get_meta(META_HOUSE)))
 
 
 func _on_time_tick(_day: int, minute: int) -> void:

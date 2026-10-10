@@ -37,6 +37,13 @@ var burial: PlayerBurial
 ## Chip bursts per action clip (wood chips, stone splinters) and the last shown tool state.
 var _chips: Dictionary[StringName, CPUParticles3D] = {}
 var _shown: Array = []
+## Phase 8 (docs/PHASE8_DESIGN.md §2.3, W1-Anschluss 5): the watering can has no mesh in the model (tri budget) –
+## ph_tool_watering_can hangs at the marker can_grip while the clip `water` plays (created on first use).
+const WATER_CLIP := &"water"
+const CAN_MARKER := "can_grip"
+const CAN_NAME := "WateringCan"
+const CAN_PATH := "res://assets/models/props/ph_tool_watering_can.glb"
+var _can: Node3D
 
 
 func _init(player: Player) -> void:
@@ -84,6 +91,26 @@ func update(delta: float, action: Player.TimedAction, carrying: bool) -> void:
 	if phase == ToolPhase.HOLD:
 		_hold_events(action)
 	_update_props()
+	_update_can(anim.current_animation == WATER_CLIP)
+
+
+## The watering can at can_grip only while watering (W1-Anschluss 5).
+func _update_can(on: bool) -> void:
+	if _can == null:
+		if not on:
+			return
+		var marker := _player.model.find_child(CAN_MARKER, true, false) as Node3D
+		if marker == null or not ResourceLoader.exists(CAN_PATH):
+			return
+		_can = (load(CAN_PATH) as PackedScene).instantiate() as Node3D
+		_can.name = CAN_NAME
+		marker.add_child(_can)
+	_can.visible = on
+
+
+## True while the watering can shows (tests, screenshots).
+func can_shown() -> bool:
+	return _can != null and _can.visible
 
 
 ## The burial's one-shot clips (lowering, silence) hold their last frame instead of starting over.

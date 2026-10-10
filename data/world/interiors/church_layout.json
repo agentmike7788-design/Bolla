@@ -1,5 +1,6 @@
 {
   "_comment": "Die Dorfkirche St. Gallus innen (G7 Änderungsrunde 1, Muster der drei Dorf-Innenräume, docs/PHASE7_DESIGN.md §4.3), gebaut von src/world/interiors/interior_build.gd; Koordinaten wie crypt_layout.json (Boden-Mitte = (0, 0), x rechts, z zur Kamera). Schiff innen x −3,2…3,2, z −4,5…4,5, Chor (Stufe 0,18 m) z −4,5…−2,7, Tür in der Südwand bei x 0. Altar mit Kerzen im Chor vor dem bunten Nordfenster, Leuchter daneben (ohne eigenes Licht), Kanzel an der Ostwand, vier Bankreihen beiderseits des Mittelgangs zum Altar gewandt, Taufstein und Opferstock an der Tür, Gedenkbrett an der Westwand. Lichter: zwei hohe Seitenfenster und das Chorfenster (Rolle window), der Kerzenring über dem Schiff (lantern, nachts mit Schatten), die Altarkerzen (candle), ein weiches Füll-Licht. Pfarrer Lenz nachmittags vor dem Chor (v_in_church_altar).",
+  "_phase8": "Phase 8 §4.6 D7: der Pfarrarchivschrank an der Westwand gleich vor der Chorstufe (der Raum hat keine Sakristeitür; die Nordwand liegt hinter dem Chor, der nicht begehbar ist), Lenz steht am Altar daneben; die Namenstafel „Konrad Wackernagel“ unten auf dem Gedenkbrett (sichtbar ab friend_innkeeper_2).",
   "room_id": "church",
   "building": "",
   "region": "village",
@@ -34,7 +35,10 @@
     {"asset": "ph_int_pew", "pos": [1.6, 2.4], "rot_y": 180.0, "mount": "floor", "collision_inset": 0.1},
     {"asset": "ph_int_church_font", "id": "Font", "pos": [-2.3, 3.5], "rot_y": 0.0, "mount": "floor"},
     {"asset": "ph_int_church_poor_box", "id": "PoorBox", "pos": [1.25, 3.75], "rot_y": 0.0, "mount": "floor"},
-    {"asset": "ph_int_church_memorial", "id": "Memorial", "pos": [-3.12, -0.9], "y": 1.0, "rot_y": 90.0, "mount": "hang"}
+    {"asset": "ph_int_church_memorial", "id": "Memorial", "pos": [-3.12, -0.9], "y": 1.0, "rot_y": 90.0, "mount": "hang"},
+    {"asset": "ph_int_church_archive", "id": "ArchiveCabinet", "interact": "archive_cabinet", "pos": [-2.95, -2.125], "rot_y": 90.0, "scale": 0.92, "mount": "floor",
+      "reach": [1.4, 1.6, 1.3], "reach_offset": [0.0, 0.8, 0.75]},
+    {"asset": "ph_int_memorial_plate", "id": "MemorialPlate", "interact": "memorial_plate", "pos": [-2.92, -0.62], "y": 1.13, "rot_y": 90.0, "mount": "hang"}
   ],
   "waypoints": {
     "v_in_church_altar": [0.0, -2.3, 0.0]

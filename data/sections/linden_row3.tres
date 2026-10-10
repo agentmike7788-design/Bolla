@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SectionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/expansion/section_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"linden_row3"
+display_name = "Dritte Reihe am Lindenacker"
+order = 9
+starts_unlocked = false
+requires_section = &"linden"
+requires_rating = &""
+decor_cap = 2
+unlock_text = "Die dritte Reihe am Lindenacker ist frei. Geweiht ist der ganze Acker, nicht die Reihe."
+requires_flag = &"linden_row3_granted"
+requires_flag_text = "Das ist noch Gemeindeland."
+counts_for_cemetery = false
+chapter = &""
+is_burial = true
+unlock_flag = &""

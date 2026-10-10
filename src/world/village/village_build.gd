@@ -10,13 +10,15 @@ extends RefCounted
 ##   ├─ Ground (ph_env_ground_village)   ├─ GroundCollision/Shape (HeightMapShape3D)
 ##   ├─ Buildings/<id> (models + window / lantern / ember lights)   ├─ Decor/ (props, trees, bushes,
 ##   │   garden fences, brook, Grass)   ├─ Entities/ (9 Npc, HouseDoor × 3, ShopCounter × 2,
-##   │   VillageBoard, RegionPortal road_out, MourningRibbon × 6)   ├─ Waypoints/   ├─ Spawns/
+##   │   VillageBoard, RegionPortal road_out, MourningRibbon × 6; Phase 8: 3 Npc more, WatchSpot × 2,
+##   │   SickLight × 2 – village_build_phase8.gd)   ├─ Waypoints/   ├─ Spawns/
 ##   ├─ Colliders/ (footprints, props, bank walls, Bounds)   └─ Dressing (village_dressing.gd)
 
 const Ctx := preload("res://src/world/graveyard/graveyard_build_context.gd")
 const Colliders := preload("res://src/world/graveyard/graveyard_build_colliders.gd")
 const Entities := preload("res://src/world/graveyard/graveyard_build_entities.gd")
 const Decor := preload("res://src/world/graveyard/graveyard_build_decor.gd")
+const Phase8 := preload("res://src/world/village/village_build_phase8.gd")
 const LAYOUT_PATH := "res://data/world/village_layout.json"
 const OUT_SCENE := "res://src/world/village/village.tscn"
 const OUT_GRASS := "res://src/world/village/village_grass.scn"
@@ -95,6 +97,7 @@ static func build(ctx: Ctx) -> Node3D:
 	_build_props(ctx, decor)
 	_build_decor(ctx, decor)
 	_build_entities(ctx, entities, buildings)
+	Phase8.build(ctx, entities, buildings)
 	Entities.build_waypoints(ctx, ctx.group(root, "Waypoints"))
 	var spawns := ctx.group(root, "Spawns")
 	for id: String in layout.spawns:
@@ -322,6 +325,9 @@ static func _build_entities(ctx: Ctx, entities: Node3D, buildings: Node3D) -> vo
 		npc.set("region_id", &"village")
 		if n.has("hide_flag"):
 			npc.set("hide_flag", StringName(n.hide_flag))
+		# Phase 8 (§3.1): Jakob, Veit and Hanne only from p8_open on.
+		if n.has("requires_flag"):
+			npc.set("requires_flag", StringName(n.requires_flag))
 		ctx.add(entities, npc)
 
 

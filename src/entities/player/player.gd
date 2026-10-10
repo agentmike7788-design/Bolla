@@ -233,11 +233,22 @@ func start_timed_action(label: String, game_minutes: int, on_done: Callable, can
 	var seconds := real_seconds if real_seconds > 0.0 else actions.real_seconds_for(action.minutes)
 	action.duration = 0.0 if instant_actions else maxf(seconds, 0.0)
 	_runner.start(action)
+	_note_noise(animation)
 	if instant_actions:
 		_tick_action(0.0)
 	else:
 		_update_animation(0.0)
 	return true
+
+
+## Phase 8 (docs/PHASE8_DESIGN.md §2.2.3, W1-Anschluss 3): a loud clip (ActionConfig.noisy_actions: chop, pick,
+## hammer, saw, chisel, quarry, dig) near a mourning visitor – Visitors.note_noise decides (≤ 8 m, once per visit).
+func _note_noise(clip: StringName) -> void:
+	if actions == null or not clip in actions.noisy_actions or not is_inside_tree():
+		return
+	var visitors := get_tree().get_first_node_in_group(&"visitors")
+	if visitors != null and visitors.has_method(&"note_noise"):
+		visitors.call(&"note_noise", global_position, clip)
 
 
 ## G7 Runde 2 (Bestatten): the burial at the open grave `plot` as a timed action (cancellable) with
