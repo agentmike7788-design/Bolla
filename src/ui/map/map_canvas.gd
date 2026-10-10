@@ -8,6 +8,10 @@ extends Control
 ## baked again when what it shows changes (static_key); the live layer (people, orders, the hat) is a
 ## light overlay redrawn on every show. Re-opening the map therefore paints no sheet at all. Tooltips: _get_tooltip() over buildings (keeper, opening hours), people,
 ## orders, landmarks, sections and graves.
+## Phase 8 (docs/PHASE8_DESIGN.md §7.8): the marks of ctx.p8 (visitors, Jakob, wishes, coins, Hanne, Veit, the sick
+## light, the festival, disturbed graves) belong to the live layer – they never change static_key(), so the sheet is
+## baked again only for what it shows itself (the third row, the new props of the layout). The grave tooltip adds
+## the grave's care, kin, wish and coins (Phase8Texts.grave_lines).
 
 const TEXT_OPEN_NOW := "Jetzt geöffnet"
 const TEXT_CLOSED_NOW := "Jetzt geschlossen"
@@ -320,6 +324,8 @@ func _rebuild() -> void:
 	for a: Dictionary in layout.area_labels:
 		labels[a.key] = a.text
 	var graves: Dictionary = ctx.get("graves", {})
+	var p8: Dictionary = ctx.get("p8", {})
+	var grave_info: Dictionary = p8.get("grave_info", {})
 	for g: Dictionary in layout.graves:
 		if section_view.get(g.section, &"open") != &"open":
 			continue
@@ -327,10 +333,13 @@ func _rebuild() -> void:
 		if kind == &"locked":
 			continue
 		shown_graves[g.id] = kind
-		_spot(world_to_map(g.pos), cfg.grave_radius + 3.0, GRAVE_TEXTS.get(kind, ""))
+		var tip := PackedStringArray([GRAVE_TEXTS.get(kind, "")])
+		tip.append_array(Phase8Texts.grave_lines(grave_info.get(g.id, {})))
+		_spot(world_to_map(g.pos), cfg.grave_radius + 3.0, "\n".join(tip))
 	_rebuild_player()
 	_rebuild_people()
 	_rebuild_orders()
+	_rebuild_phase8()
 
 
 func _rebuild_buildings(flags: Dictionary) -> void:
@@ -439,6 +448,45 @@ func _rebuild_orders() -> void:
 		var text := TEXT_ORDER % str(o.get("title", ""))
 		markers.append({"kind": &"order", "point": point, "name": "", "text": text, "id": o.get("id", &"")})
 		_spot(point, 10.0, text)
+
+
+## Phase 8 (§7.8): the marks of ctx.p8 on this region's sheet (a place id of the layout or a world position).
+func _rebuild_phase8() -> void:
+	var p8: Dictionary = ctx.get("p8", {})
+	var stacked: Dictionary[Vector2i, int] = {}
+	for m: Dictionary in p8.get("marks", []):
+		if StringName(str(m.get("region", "graveyard"))) != region or MapStatePhase8.ROBBER_IDS.has(StringName(str(m.get("id", "")))):
+			continue
+		var local := Vector2.INF
+		if m.has("world"):
+			local = layout.local_of(m.world, cfg)
+			if layout.in_room(m.world, cfg):
+				local = _door_of(local)
+		elif layout.places.has(str(m.get("place", ""))):
+			local = layout.places[str(m.place)]
+		if local == Vector2.INF or not layout.view.grow(2.0).has_point(local):
+			continue
+		var kind := StringName(str(m.kind))
+		var point := world_to_map(local)
+		if kind in [&"wish", &"coins", &"disturbed"]:
+			# on the grave, side by side
+			var key := Vector2i(roundi(point.x), roundi(point.y))
+			var n: int = stacked.get(key, 0)
+			stacked[key] = n + 1
+			point += Vector2(-7.0 + n * 9.0, -11.0)
+		elif kind in [&"visitor", &"apprentice", &"peddler", &"beggar"]:
+			var key := Vector2i(roundi(point.x / 12.0), roundi(point.y / 12.0))
+			var n: int = stacked.get(key, 0)
+			stacked[key] = n + 1
+			point += Vector2(n * 14.0, -n * 4.0)
+		markers.append({"kind": kind, "point": point, "name": "", "text": str(m.get("text", "")), "id": m.get("id", ""),
+				"glyph": m.get("glyph", &""), "p8": true})
+		_spot(point, cfg.person_radius + 5.0, str(m.get("text", "")))
+
+
+## The Phase-8 marks of the live layer (tests).
+func phase8_markers(kind: StringName = &"") -> Array[Dictionary]:
+	return markers.filter(func(m: Dictionary) -> bool: return bool(m.get("p8", false)) and (kind == &"" or m.kind == kind))
 
 
 ## The door in front of the building at `place` (a person inside is drawn there), else the place itself.
@@ -830,6 +878,28 @@ func _draw_markers() -> void:
 			&"carter":
 				MapPaint.cart(_ci, p, 1.0, cfg.ink, cfg.carter.lightened(0.35))
 				MapPaint.label(_ci, _font, p + Vector2(0.0, -16.0), str(m.name), cfg.font_small, cfg.carter.darkened(0.3), halo)
+			# Phase 8 (§7.8)
+			&"visitor":
+				MapPaint.figure(_ci, p, cfg.person_radius * 0.85, cfg.ink.lightened(0.18), cfg.ink)
+			&"apprentice":
+				MapPaint.figure(_ci, p, cfg.person_radius * 0.9, cfg.person.lightened(0.35), cfg.ink)
+				MapPaint.rake(_ci, p + Vector2(cfg.person_radius * 0.9, 0.0), 1.0, cfg.ink)
+			&"peddler":
+				MapPaint.figure(_ci, p, cfg.person_radius, cfg.person.lightened(0.35), cfg.ink)
+				MapPaint.kiepe(_ci, p + Vector2(-cfg.person_radius, -2.0), 1.0, cfg.ink, cfg.road.darkened(0.2), cfg.objective)
+			&"beggar":
+				MapPaint.figure(_ci, p, cfg.person_radius * 0.9, cfg.ink_faded, cfg.ink)
+				MapPaint.cup(_ci, p + Vector2(cfg.person_radius + 2.0, 4.0), 1.0, cfg.ink, cfg.paper)
+			&"wish":
+				MapPaint.blossom(_ci, p, 1.0, cfg.objective.lightened(0.25), cfg.ink)
+			&"coins":
+				MapPaint.coins(_ci, p, 1.0, cfg.player_ring, cfg.ink)
+			&"disturbed":
+				MapPaint.earth(_ci, p, 1.0, cfg.sepia, cfg.ink)
+			&"sick_light":
+				MapPaint.window(_ci, p, 1.0, cfg.player_ring, cfg.ink)
+			&"fest":
+				MapPaint.fest(_ci, StringName(str(m.get("glyph", "lantern"))), p, 1.0, cfg.ink, cfg.player_ring)
 			_:
 				MapPaint.figure(_ci, p, cfg.person_radius, cfg.person.lightened(0.35), cfg.ink)
 				MapPaint.label(_ci, _font, p + Vector2(cfg.person_radius + 4.0, 0.0), str(m.name), cfg.font_small, cfg.person.darkened(0.3), halo, false)

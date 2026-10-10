@@ -439,3 +439,91 @@ static func _spaced(ci: CanvasItem, font: Font, at: Vector2, text: String, size:
 		ci.draw_string_outline(font, Vector2(x, y), ch, HORIZONTAL_ALIGNMENT_LEFT, -1, size, 4, halo)
 		ci.draw_string(font, Vector2(x, y), ch, HORIZONTAL_ALIGNMENT_LEFT, -1, size, color)
 		x += font.get_string_size(ch, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x + spacing
+
+
+# --- Phase 8 marks (docs/PHASE8_DESIGN.md §7.8) ---------------------------------------------------------
+
+## Jakob's rake beside his figure: a handle and a short comb.
+static func rake(ci: CanvasItem, c: Vector2, s: float, ink: Color) -> void:
+	ci.draw_line(c + Vector2(0.0, 7.0) * s, c + Vector2(2.0, -9.0) * s, ink, 1.4, true)
+	ci.draw_line(c + Vector2(-1.5, -9.5) * s, c + Vector2(5.5, -8.5) * s, ink, 1.6, true)
+	for i: int in 4:
+		var x := -1.0 + i * 2.0
+		ci.draw_line(c + Vector2(x, -9.2) * s, c + Vector2(x - 0.3, -6.8) * s, ink, 1.0, true)
+
+
+## Hanne's basket on the back, with the small red ribbon.
+static func kiepe(ci: CanvasItem, c: Vector2, s: float, ink: Color, fill: Color, ribbon: Color) -> void:
+	var body := PackedVector2Array([c + Vector2(-4.0, -6.0) * s, c + Vector2(4.0, -6.0) * s, c + Vector2(3.0, 5.0) * s, c + Vector2(-3.0, 5.0) * s])
+	ci.draw_colored_polygon(body, fill)
+	ci.draw_polyline(PackedVector2Array([body[0], body[1], body[2], body[3], body[0]]), ink, 1.1, true)
+	for y: float in [-2.5, 1.0]:
+		ci.draw_line(c + Vector2(-3.6, y) * s, c + Vector2(3.6, y) * s, Color(ink, 0.6), 0.8, true)
+	ci.draw_line(c + Vector2(2.0, -6.0) * s, c + Vector2(4.5, -8.5) * s, ribbon, 1.6, true)
+
+
+## Veit's tin cup.
+static func cup(ci: CanvasItem, c: Vector2, s: float, ink: Color, fill: Color) -> void:
+	var r := Rect2(c + Vector2(-2.6, -3.0) * s, Vector2(5.2, 5.0) * s)
+	ci.draw_rect(r, fill, true)
+	ci.draw_rect(r, ink, false, 1.1)
+	ci.draw_arc(c + Vector2(3.4, -0.5) * s, 1.6 * s, -PI * 0.5, PI * 0.5, 8, ink, 1.0, true)
+
+
+## A wish: a small five-petal blossom on a stem.
+static func blossom(ci: CanvasItem, c: Vector2, s: float, fill: Color, ink: Color) -> void:
+	ci.draw_line(c + Vector2(0.0, 1.0) * s, c + Vector2(0.0, 7.0) * s, Color(0.36, 0.48, 0.28), 1.3, true)
+	for i: int in 5:
+		var a := TAU * i / 5.0 - PI * 0.5
+		ci.draw_circle(c + Vector2(cos(a), sin(a)) * 2.6 * s, 2.0 * s, fill, true, -1.0, true)
+	ci.draw_circle(c, 1.5 * s, ink.lightened(0.5), true, -1.0, true)
+	ci.draw_arc(c, 4.4 * s, 0.0, TAU, 16, Color(ink, 0.5), 0.8, true)
+
+
+## Coins on the stone: two small stacked discs.
+static func coins(ci: CanvasItem, c: Vector2, s: float, gold: Color, ink: Color) -> void:
+	for i: int in 2:
+		var p := c + Vector2(i * 3.0 - 1.5, -i * 2.2) * s
+		ci.draw_circle(p, 3.0 * s, gold, true, -1.0, true)
+		ci.draw_arc(p, 3.0 * s, 0.0, TAU, 14, ink, 1.0, true)
+
+
+## A disturbed grave: thrown-up earth with spade marks.
+static func earth(ci: CanvasItem, c: Vector2, s: float, fill: Color, ink: Color) -> void:
+	var pts := PackedVector2Array()
+	for i: int in 9:
+		var a := TAU * i / 9.0
+		pts.append(c + Vector2(cos(a) * 5.5, sin(a) * 3.4) * s * (1.0 if i % 2 == 0 else 0.78))
+	ci.draw_colored_polygon(pts, Color(fill, 0.85))
+	pts.append(pts[0])
+	ci.draw_polyline(pts, ink, 1.0, true)
+	ci.draw_line(c + Vector2(-2.0, -1.0) * s, c + Vector2(1.0, 1.5) * s, ink, 1.2, true)
+	ci.draw_line(c + Vector2(1.0, -1.5) * s, c + Vector2(3.5, 0.5) * s, ink, 1.2, true)
+
+
+## The sick light: a lit window (four panes).
+static func window(ci: CanvasItem, c: Vector2, s: float, light: Color, ink: Color) -> void:
+	var r := Rect2(c + Vector2(-4.5, -5.0) * s, Vector2(9.0, 10.0) * s)
+	ci.draw_circle(c, 9.0 * s, Color(light, 0.25), true, -1.0, true)
+	ci.draw_rect(r, light, true)
+	ci.draw_rect(r, ink, false, 1.3)
+	ci.draw_line(c + Vector2(0.0, -5.0) * s, c + Vector2(0.0, 5.0) * s, ink, 1.0, true)
+	ci.draw_line(c + Vector2(-4.5, 0.0) * s, c + Vector2(4.5, 0.0) * s, ink, 1.0, true)
+
+
+## The festival: a lantern (Lichtgang) or a fiddle (Kathreintanz).
+static func fest(ci: CanvasItem, kind: StringName, c: Vector2, s: float, ink: Color, light: Color) -> void:
+	if kind == &"fiddle":
+		ci.draw_circle(c + Vector2(0.0, 3.0) * s, 4.0 * s, light.darkened(0.35), true, -1.0, true)
+		ci.draw_circle(c + Vector2(0.0, -2.0) * s, 3.0 * s, light.darkened(0.35), true, -1.0, true)
+		ci.draw_arc(c + Vector2(0.0, 3.0) * s, 4.0 * s, 0.0, TAU, 14, ink, 1.0, true)
+		ci.draw_arc(c + Vector2(0.0, -2.0) * s, 3.0 * s, 0.0, TAU, 12, ink, 1.0, true)
+		ci.draw_line(c + Vector2(0.0, -5.0) * s, c + Vector2(0.0, -11.0) * s, ink, 1.4, true)
+		ci.draw_line(c + Vector2(-6.0, 6.0) * s, c + Vector2(6.0, -8.0) * s, ink, 0.9, true)
+		return
+	ci.draw_circle(c, 8.0 * s, Color(light, 0.28), true, -1.0, true)
+	var body := Rect2(c + Vector2(-3.0, -4.0) * s, Vector2(6.0, 8.0) * s)
+	ci.draw_rect(body, light, true)
+	ci.draw_rect(body, ink, false, 1.2)
+	ci.draw_line(c + Vector2(-3.5, -4.5) * s, c + Vector2(3.5, -4.5) * s, ink, 1.6, true)
+	ci.draw_arc(c + Vector2(0.0, -6.0) * s, 2.0 * s, PI, TAU, 8, ink, 1.0, true)

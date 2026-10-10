@@ -10,10 +10,15 @@ extends UIPanel
 ## same panel titled „Lagerschuppen" with the side „Regal", a wider grid (8 columns, smaller slots)
 ## for its 24 / 32 / 40 places, „Schuppen Stufe 3 · 40 Plätze" and, from level 3, the note
 ## „Rohstoffe und Werkstoffe stapeln hier doppelt (× 2)." with a × 2 badge on stacks above the normal limit.
+## Phase 8 (docs/PHASE8_DESIGN.md §2.5.5, §3.4): Jakob's box (context coins_box = ApprenticeBox) is titled „Jakobs
+## Kiste" and has the coin tin („Lohndose: 9 Münzen (3 Tage)") with „+3 einlegen" / „−3 nehmen"
+## (ApprenticeBox.deposit / withdraw – coins never go through the slots).
 
 const SIDE_CHEST := &"chest"
 const SIDE_BAG := &"bag"
 const TEXT_TITLE := "Truhe"
+const TEXT_BOX_TITLE := "Jakobs Kiste"
+const TEXT_BOX_SIDE := "Kiste"
 const TEXT_CHEST := "Truhe"
 const TEXT_BAG := "Tasche"
 const TEXT_USED := "%d / %d belegt"
@@ -35,6 +40,12 @@ const SHED_ICON_EDGE := 56.0
 @export var icon_edge: float = 72.0
 
 var take_all_button: Button
+## Phase 8: Jakob's box with its coin tin (null = an ordinary chest).
+var coins_box: ApprenticeBox
+var tin_row: HBoxContainer
+var tin_label: Label
+var tin_in_button: Button
+var tin_out_button: Button
 var store_all_button: Button
 var title_label: Label
 var chest_label: Label
@@ -79,6 +90,19 @@ func _build() -> void:
 	take_all_button = UIKit.button(TEXT_TAKE_ALL)
 	take_all_button.pressed.connect(take_all)
 	chest_box.add_child(take_all_button)
+	tin_row = UIKit.hbox(10)
+	tin_row.add_child(UIKit.icon(Database.icon(COIN_ITEM), 30.0))
+	tin_label = UIKit.label("", &"SubheaderLabel")
+	tin_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tin_row.add_child(tin_label)
+	tin_in_button = UIKit.button("")
+	tin_in_button.pressed.connect(tin_deposit)
+	tin_row.add_child(tin_in_button)
+	tin_out_button = UIKit.button("")
+	tin_out_button.pressed.connect(tin_withdraw)
+	tin_row.add_child(tin_out_button)
+	tin_row.visible = false
+	chest_box.add_child(tin_row)
 	# Bag side.
 	var bag_box := _make_side(columns)
 	var bag_head := UIKit.hbox(10)
@@ -105,6 +129,8 @@ func _build() -> void:
 
 func _on_opened() -> void:
 	is_shed = context.get("chest") is ShedStore
+	var tin: Variant = context.get("coins_box")
+	coins_box = tin as ApprenticeBox if is_instance_valid(tin) and tin is ApprenticeBox else null
 	_storage = _inventory_from(&"storage")
 	_bag = _player_inventory()
 	for inv: Inventory in [_storage, _bag]:
@@ -122,8 +148,16 @@ func _on_closed() -> void:
 
 
 func _refresh() -> void:
-	title_label.text = Phase6Texts.SHED_TITLE if is_shed else TEXT_TITLE
-	chest_label.text = Phase6Texts.SHED_SIDE if is_shed else TEXT_CHEST
+	title_label.text = Phase6Texts.SHED_TITLE if is_shed else (TEXT_BOX_TITLE if coins_box != null else TEXT_TITLE)
+	chest_label.text = Phase6Texts.SHED_SIDE if is_shed else (TEXT_BOX_SIDE if coins_box != null else TEXT_CHEST)
+	tin_row.visible = coins_box != null
+	if coins_box != null:
+		var wage := _wage()
+		tin_label.text = "%s: %s" % [Phase8Texts.BOARD_TIN, Phase8Texts.tin_text(coins_box.coins, wage)]
+		tin_in_button.text = "+%d" % wage
+		tin_out_button.text = "%s%d" % [UIKit.MINUS, wage]
+		tin_in_button.disabled = not is_instance_valid(_bag) or _bag.count(COIN_ITEM) < wage
+		tin_out_button.disabled = coins_box.coins < wage
 	_chest_grid.columns = SHED_COLUMNS if is_shed else GRID_COLUMNS
 	var mult := stack_multiplier()
 	shed_label.visible = is_shed
@@ -141,6 +175,28 @@ func _refresh() -> void:
 	_coins.text = str(_bag.count(COIN_ITEM) if is_instance_valid(_bag) else 0)
 	take_all_button.disabled = not ChestTransfer.can_move_any(_storage, _bag)
 	store_all_button.disabled = not ChestTransfer.can_move_any(_bag, _storage)
+
+
+## Phase 8: one day's wage into Jakob's tin / back out of it.
+func tin_deposit() -> bool:
+	if coins_box == null or not is_instance_valid(_bag):
+		return false
+	var ok := coins_box.deposit(_bag, _wage())
+	refresh()
+	return ok
+
+
+func tin_withdraw() -> bool:
+	if coins_box == null or not is_instance_valid(_bag):
+		return false
+	var ok := coins_box.withdraw(_bag, mini(_wage(), coins_box.coins))
+	refresh()
+	return ok
+
+
+func _wage() -> int:
+	var cfg := Database.config(&"apprentice_config") as ApprenticeConfig
+	return cfg.wage if cfg != null else ApprenticeConfig.new().wage
 
 
 ## Keyboard focus: first filled bag slot, else first filled chest slot, else the first slot.

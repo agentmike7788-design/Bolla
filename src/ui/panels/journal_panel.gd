@@ -14,14 +14,24 @@ extends UIPanel
 ## Phase 7 (docs/PHASE7_DESIGN.md §7): from village_open two more tabs – „Aufträge" (running, completed,
 ## missed) and „Hollerbrück" (eight people, JournalPagesPhase7); the death note lists the dead's specimens
 ## with where they are, the finding and the deduced cause, and offers „Ursache deuten" (&"deduction").
+## Phase 8 (docs/PHASE8_DESIGN.md §7.4): from p8_open the tab „Angehörige" (JournalPagesPhase8), the villager cards
+## of „Hollerbrück" add mood, the three story points and the favour, a second sheet shows Jakob, Veit and Hanne;
+## „Aufträge" keeps the friendship orders and „Was du schuldest" apart; up to four clues may be chosen (the
+## any-group insight „Der unterstrichene Name") and its question card shows both groups with their counters.
 
 const PAGES: Array[StringName] = [&"people", &"clues", &"insights", &"self"]
 ## Phase 7: shown from village_open.
 const PHASE7_PAGES: Array[StringName] = [&"orders", &"village"]
+## Phase 8: shown from p8_open.
+const PHASE8_PAGES: Array[StringName] = [&"kin"]
+const P8_FLAG := &"p8_open"
+## Phase 8: four clues for „Der unterstrichene Name" (two required + two of four).
+const MAX_SELECTED_P8 := 4
+const TEXT_SELECT_HINT_P8 := "Wähle zwei bis vier Hinweise, die zusammengehören."
 const VILLAGE_FLAG := &"village_open"
 const PAGE_LABELS: Dictionary[StringName, String] = {
 	&"people": "Die Toten", &"clues": "Hinweise", &"insights": "Erkenntnisse", &"self": "Ich",
-	&"orders": "Aufträge", &"village": "Hollerbrück",
+	&"orders": "Aufträge", &"village": "Hollerbrück", &"kin": "Angehörige",
 }
 const JOURNAL_GROUP := &"journal"
 const MAX_SELECTED := 3
@@ -96,6 +106,10 @@ var clue_buttons: Dictionary[StringName, Button] = {}
 var insight_text_label: Label
 ## Phase 7: „Ursache deuten" on the death note (null = not offered).
 var deduce_button: Button
+## Phase 8: the sheet of „Hollerbrück" (0 = the villagers, 1 = the new faces) and its switch.
+var village_sheet: int = 0
+var sheet_button: Button
+var fest_button: Button
 
 
 func _build() -> void:
@@ -106,7 +120,7 @@ func _build() -> void:
 	var title := UIKit.label(TEXT_TITLE, &"HeaderLabel")
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
-	for page: StringName in PAGES + PHASE7_PAGES:
+	for page: StringName in PAGES + PHASE7_PAGES + PHASE8_PAGES:
 		var tab := UIKit.hbox(2)
 		var b := UIKit.button(PAGE_LABELS[page], &"JournalTabButton")
 		b.focus_mode = Control.FOCUS_NONE
@@ -150,6 +164,7 @@ func _on_opened() -> void:
 	selected.clear()
 	link_feedback = ""
 	focused_clue = &""
+	village_sheet = 0
 
 
 func _on_closed() -> void:
@@ -165,6 +180,8 @@ func _refresh() -> void:
 	link_button = null
 	insight_text_label = null
 	deduce_button = null
+	sheet_button = null
+	fest_button = null
 	match current_page:
 		&"people":
 			_build_people()
@@ -179,7 +196,21 @@ func _refresh() -> void:
 			JournalPagesPhase7.build_orders(left_page, right_page, get_tree() if is_inside_tree() else null, _inventory(), page_width)
 		&"village":
 			_page_title(left_page, PAGE_LABELS[&"village"])
-			JournalPagesPhase7.build_village(left_page, right_page, get_tree() if is_inside_tree() else null, page_width)
+			var tree_v := get_tree() if is_inside_tree() else null
+			if village_sheet == 1:
+				JournalPagesPhase8.build_new_faces(left_page, right_page, tree_v, page_width)
+				right_page.add_child(UIKit.spacer(false))
+			else:
+				JournalPagesPhase7.build_village(left_page, right_page, tree_v, page_width)
+			if GameState.flag_on(P8_FLAG):
+				fest_button = JournalPagesPhase8.fest_button(right_page, tree_v)
+				sheet_button = UIKit.button(Phase8Texts.PAGE_VILLAGE_BACK if village_sheet == 1 else Phase8Texts.PAGE_VILLAGE_MORE, &"InkButton")
+				sheet_button.size_flags_horizontal = Control.SIZE_SHRINK_END
+				sheet_button.pressed.connect(toggle_village_sheet)
+				right_page.add_child(sheet_button)
+		&"kin":
+			_page_title(left_page, PAGE_LABELS[&"kin"])
+			JournalPagesPhase8.build_kin(left_page, right_page, get_tree() if is_inside_tree() else null, page_width)
 
 
 ## The tabs shown now: the four Phase-4 pages, from village_open also „Aufträge" and „Hollerbrück".
@@ -187,7 +218,20 @@ func pages() -> Array[StringName]:
 	var out: Array[StringName] = PAGES.duplicate()
 	if GameState.flag_on(VILLAGE_FLAG):
 		out.append_array(PHASE7_PAGES)
+	if GameState.flag_on(P8_FLAG):
+		out.append_array(PHASE8_PAGES)
 	return out
+
+
+## Phase 8: „Hollerbrück" between the villagers and the new faces.
+func toggle_village_sheet() -> void:
+	village_sheet = 1 - village_sheet
+	refresh()
+
+
+## How many clues may be chosen: four from p8_open (Der unterstrichene Name), else three.
+func max_selected() -> int:
+	return MAX_SELECTED_P8 if GameState.flag_on(P8_FLAG) else MAX_SELECTED
 
 
 func _inventory() -> Inventory:
@@ -231,7 +275,7 @@ func toggle_clue(id: StringName) -> void:
 	link_feedback = ""
 	if id in selected:
 		selected.erase(id)
-	elif selected.size() < MAX_SELECTED:
+	elif selected.size() < max_selected():
 		selected.append(id)
 	refresh()
 
@@ -394,7 +438,8 @@ func _build_clues() -> void:
 	board.add_child(thread)
 	_update_thread()
 	var bottom := UIKit.hbox(12)
-	selection_label = UIKit.label(TEXT_SELECTED % [selected.size(), MAX_SELECTED] if not selected.is_empty() else TEXT_SELECT_HINT, &"InkDimLabel", true)
+	var hint := TEXT_SELECT_HINT_P8 if max_selected() > MAX_SELECTED else TEXT_SELECT_HINT
+	selection_label = UIKit.label(TEXT_SELECTED % [selected.size(), max_selected()] if not selected.is_empty() else hint, &"InkDimLabel", true)
 	selection_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bottom.add_child(selection_label)
 	link_button = UIKit.button(TEXT_LINK, &"InkButton")
@@ -473,6 +518,8 @@ func _build_questions(parent: VBoxContainer) -> void:
 		var col := UIKit.vbox(2)
 		col.add_child(UIKit.label("„%s“" % str(q.get("question", "")), &"InkLabel", true))
 		col.add_child(UIKit.label(TEXT_QUESTION_COUNT % [int(q.get("found", 0)), int(q.get("needed", 0))], &"InkDimLabel"))
+		for group: String in Phase8Texts.question_groups(q):
+			col.add_child(UIKit.label(group, &"InkStampLabel"))
 		row.add_child(col)
 		parent.add_child(row)
 
@@ -549,7 +596,7 @@ func _build_self() -> void:
 
 func _refresh_tabs() -> void:
 	var shown := pages()
-	for page: StringName in PAGES + PHASE7_PAGES:
+	for page: StringName in PAGES + PHASE7_PAGES + PHASE8_PAGES:
 		tab_buttons[page].get_parent().visible = page in shown
 		tab_buttons[page].theme_type_variation = &"JournalTabSelected" if page == current_page else &"JournalTabButton"
 		tab_dots[page].modulate.a = 1.0 if page_has_unread(page) else 0.0
