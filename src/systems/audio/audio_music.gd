@@ -1,7 +1,7 @@
 class_name AudioMusic
 extends Node
 ## Quiet music with rests: a piece of the current context plays through once, then silence
-## (config.music_pause_min … max), then the next piece (never the same twice in a row when the
+## (config.music_pause_min … max; Phase 8: config.music_pauses per context), then the next piece (never the same twice in a row when the
 ## context has more). A context change fades the running piece out (music_fade_out) and waits
 ## music_first_delay before the new context starts. Context &"" = no music.
 
@@ -100,7 +100,7 @@ func _schedule_first() -> void:
 		state = State.IDLE
 		return
 	state = State.WAIT
-	_wait = 1.0 if context == TITLE else audio.config.music_first_delay
+	_wait = 1.0 if context == TITLE else _pauses().x
 
 
 func _on_finished() -> void:
@@ -110,8 +110,17 @@ func _on_finished() -> void:
 	state = State.WAIT
 	if context == TITLE:
 		_wait = randf_range(TITLE_PAUSE.x, TITLE_PAUSE.y)
+	elif audio.config.music_pauses.has(context):
+		var p := _pauses()
+		_wait = randf_range(p.x, maxf(p.x, p.y))
 	else:
 		_wait = randf_range(audio.config.music_pause_min, maxf(audio.config.music_pause_min, audio.config.music_pause_max))
+
+
+## Phase 8 (§8.3): a context with its own rests (the dance plays on with a breath between the pieces):
+## x = first wait and shortest rest, y = longest rest; else the general first delay.
+func _pauses() -> Vector2:
+	return audio.config.music_pauses.get(context, Vector2(audio.config.music_first_delay, audio.config.music_first_delay))
 
 
 func _tracks() -> PackedStringArray:

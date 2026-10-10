@@ -78,6 +78,39 @@ const BUSES: Array[StringName] = [&"Master", &"Music", &"Ambience", &"SFX", &"UI
 ## Listener height above the gravekeeper's feet.
 @export var listener_height: float = 1.6
 
+@export_group("Phase 8")
+## docs/PHASE8_DESIGN.md §8.3 (W-Ton) – the sounds of the living who come up. All of it is presentation.
+## Npc animation → sound (Animations-Takt): {"cue": played on the beats, "beats": PackedFloat32Array (fractions of
+## the clip; empty = no beat), "enter" / "leave": cue when the animation starts / ends, "npcs": PackedStringArray
+## (npc_id; empty = everyone), "every": seconds at least between two plays at one Npc, "chance": 0…1 per beat,
+## "volume_db", "height": metres above the Npc's feet}. Only within npc_sound_range of the listener.
+@export var npc_anim_cues: Dictionary[StringName, Dictionary] = {}
+@export var npc_sound_range: float = 25.0
+## npc_id → loop that follows the Npc while it walks (Hanne's basket bells); at most npc_loop_voices players, all
+## made once in setup (no node is created while playing).
+@export var npc_walk_loops: Dictionary[StringName, StringName] = {}
+@export var npc_loop_voices: int = 2
+## Event → sound at its source. Key as AudioEventMap.signal_cues ("signal@<arg index>=<value>", most conditions win);
+## value {"cue", "at": &"grave" (argument "arg" is a grave id) | &"npc" (the fixed "id" or argument "arg" is an
+## npc_id) | &"group" (first node of group "id"), "volume_db", "height", "fallback_db" (not found → 2D at this
+## level; missing = silent), "flee": true (that Npc starts the flight below)}.
+@export var positional_cues: Dictionary[String, Dictionary] = {}
+## The flight (after a "flee" event): {"npc", "step_cue" (instead of the ground's step), "climb_cue" (once, near one of
+## the waypoints "climb_points" ≤ "climb_radius" m), "seconds" (longest)}.
+@export var flight: Dictionary = {}
+## Whistling: {"npc", "cue", "anims": PackedStringArray, "check": seconds between two tries, "chance", "group"
+## (the system asked for "method", e.g. apprentice.morale), "min" (lowest value that whistles)}.
+@export var whistle: Dictionary = {}
+## Festival (Festivals.running()) → {"music": context, "profile": soundscape (missing = unchanged), "rooms":
+## PackedStringArray (interior ids) or "regions": PackedStringArray (outdoors)}.
+@export var fest_contexts: Dictionary[StringName, Dictionary] = {}
+## Music context → Vector2(first wait and shortest rest, longest rest) in seconds; missing = music_first_delay and
+## music_pause_min … music_pause_max.
+@export var music_pauses: Dictionary[StringName, Vector2] = {}
+## Bells at a festival: [{"fest", "minute", "cue", "strikes", "interval", "npc" (struck at that Npc when it is in the
+## gravekeeper's region, else 2D at "far_db")}].
+@export var fest_bells: Array[Dictionary] = []
+
 @export_group("Voices")
 @export var pool_2d: int = 12
 @export var pool_3d: int = 10
