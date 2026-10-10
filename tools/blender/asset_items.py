@@ -9,6 +9,8 @@ Phase 6 (docs/PHASE6_DESIGN.md section 8): altar candle, bone box, bone box (ful
 Phase 7 (docs/PHASE7_DESIGN.md section 8): preparation jars, spirits, beeswax, the closed dissecting case, the
 specimens (cloudy sealed jar, the dark eye glass variant, linen bundle, display bell, bone box), the medicines
 (labelled bottles, tins, a crock, powder papers), honey cake, elder wine (PHASE7_ITEMS).
+Phase 8 (docs/PHASE8_DESIGN.md section 8.4): flower seedlings, grave candles, watering can, the apprentice's rake,
+a grave cage section, wax wreath, register extract, name plate, Quast's crate, Lorenz's second ledger (PHASE8_ITEMS).
 Only the new ones (build_all rebuilds every item):
     python -c "import sys; sys.path.insert(0, 'tools/blender'); import asset_items as a; a.build(a.PHASE5_ITEMS)"
 
@@ -1304,6 +1306,166 @@ def item_elder_wine():
     _p7(parts, "ph_item_elder_wine")
 
 
+# --- Phase 8 (docs/PHASE8_DESIGN.md §8.4): grave care, the apprentice, the archive -------------------------
+
+def _p8(obj, name: str, yaw: float = -22.0, scale: float = 1.0) -> None:
+    """A Phase-8 item from one joined object (built by asset_props_phase8 helpers or here)."""
+    if scale != 1.0:
+        obj.data.transform(Matrix.Scale(scale, 4))
+    obj.name = name
+    _p7([obj], name, yaw)
+
+
+def item_flower_seedlings():
+    """Grave flower seedlings: a shallow wooden tray with four little clay pots of winter heath."""
+    import asset_props_phase8 as PR
+    L.reset(1801)
+    parts = [P._rbox((0, 0, 0.025), (0.13, 0.09, 0.025), PR.WOOD, bev=0.004, seg=1, jit=0.002, seed=1, ao=0.2, zrange=(0, 0.06))]
+    for k, (x, y) in enumerate(((-0.065, -0.045), (0.065, -0.045), (-0.065, 0.045), (0.065, 0.045))):
+        pot = L.prim("cone", loc=(x, y, 0.08), radius1=0.03, radius2=0.04, depth=0.06, vertices=8)
+        parts.append(P._finish_obj(pot, L.hexc("#8A5E44"), var=0.15, ao=0.2, top=0.3))
+        tuft = L.prim("sphere", loc=(x, y, 0.12), radius=1.0, scale=(0.04, 0.04, 0.035), segments=6, ring_count=4)
+        L.jitter(tuft, 0.008, 30.0, k)
+        P._finish_obj(tuft, PR.FIR, var=0.2, ao=0.2, top=0.0)
+        _tint_c(tuft, PR.HEATH)
+        parts.append(tuft)
+    _p7(parts, "ph_item_flower_seedlings")
+
+
+def _tint_c(obj, col) -> None:
+    from asset_carter import _tint
+    _tint(obj, lambda co, nr: (1.0, col, 0.8 * max(0.0, nr.z) if noise.noise(co * 60.0) > -0.2 else 0.0))
+
+
+def item_grave_candle():
+    """Grave candles: two candles in their glasses (as on the graves), one with its tin lid on."""
+    import asset_props_phase8 as PR
+    L.reset(1802)
+    a = PR.grave_candle("c1")
+    b = PR.grave_candle("c2")
+    b.data.transform(Matrix.Translation((0.075, 0.03, 0.0)))
+    a.data.transform(Matrix.Scale(1.3, 4))
+    b.data.transform(Matrix.Scale(1.3, 4))
+    _p7([a, b], "ph_item_grave_candle")
+
+
+def item_watering_can():
+    """The tin watering can (icon): standing on its base, the long spout with the rose."""
+    import asset_props_phase8 as PR
+    L.reset(1803)
+    _p8(PR.watering_can("can"), "ph_item_watering_can", -30.0)
+
+
+def item_apprentice_rake():
+    """The children's rake (icon scale): the same rake, small, lying diagonally."""
+    import asset_props_phase8 as PR
+    L.reset(1804)
+    r = PR.rake_small("rake")
+    r.data.transform(Matrix.Rotation(math.radians(-90), 4, "X") @ Matrix.Rotation(math.radians(180), 4, "X"))
+    r.data.transform(Matrix.Rotation(math.radians(180), 4, "Y"))
+    _p8(r, "ph_item_apprentice_rake", -35.0, 0.32)
+
+
+def item_mortsafe():
+    """A grave cage section (icon): a bundle of flat iron bars tied with wire, two spear tips."""
+    import asset_props_phase8 as PR
+    L.reset(1805)
+    parts = []
+    for k in range(5):
+        PR._strap(parts, (-0.18, -0.06 + k * 0.03, 0.012 + 0.006 * (k % 2)), (0.18, -0.06 + k * 0.03, 0.012 + 0.006 * (k % 2)),
+                  0.022, 0.008)
+    for sx in (-1, 1):
+        PR._strap(parts, (sx * 0.12, -0.08, 0.03), (sx * 0.12, 0.08, 0.03), 0.018, 0.008)
+    for k in range(2):
+        parts.append(P._finish_obj(L.prim("cone", loc=(0.2, -0.06 + k * 0.12, 0.015), rot=(0, 90, 0), radius1=0.018, radius2=0.0,
+                                          depth=0.05, vertices=4), PR.IRON, var=0.1, ao=0.0, top=0.4))
+    _p7(parts, "ph_item_mortsafe")
+
+
+def item_wax_wreath():
+    """The wax wreath (icon): pale, too smooth blossoms on a ring."""
+    import asset_props_phase8 as PR
+    L.reset(1806)
+    parts = [L.part("torus", L.hexc("#BDB59E"), loc=(0, 0, 0.025), major_radius=0.12, minor_radius=0.025, major_segments=12,
+                    minor_segments=4, paint_kw={"ao": 0.15, "var": 0.04, "top": 0.4})]
+    for k in range(10):
+        a = math.tau * k / 10
+        parts.append(PR._ell(L.hexc("#DCD6C6") if k % 3 else L.hexc("#C9C2CC"), (math.cos(a) * 0.12, math.sin(a) * 0.12, 0.045),
+                             (0.022, 0.022, 0.012), seg=5, rings=3, seed=k, var=0.03, ao=0.0, top=0.4))
+    _p7(parts, "ph_item_wax_wreath")
+
+
+def item_register_extract():
+    """The register extract (Registerauszug): a folded paper with a red-brown wax seal and a thread - no
+    legible text, a few pale ruled lines."""
+    L.reset(1807)
+    parts = []
+    sheet = L.prim("grid", x_subdivisions=3, y_subdivisions=2, size=1.0, scale=(0.2, 0.15, 1.0))
+    for v in sheet.data.vertices:
+        v.co.z = 0.012 * (1.0 - abs(v.co.x) / 0.1) + 0.004
+    parts.append(P._finish_obj(sheet, L.hexc("#D3C9B0"), var=0.05, ao=0.0, top=0.3))
+    for k in range(3):
+        parts.append(P._finish_obj(L.prim("cube", loc=(-0.05, -0.04 + k * 0.03, 0.006), scale=(0.035, 0.002, 0.0008)),
+                                   L.hexc("#A89E86"), var=0.05, ao=0.0))
+    parts.append(P._finish_obj(L.prim("cyl", loc=(0.0, 0.0, 0.019), radius=0.016, depth=0.006, vertices=8), L.hexc("#6A3E30"),
+                               var=0.1, ao=0.0, top=0.4))
+    parts.append(P._finish_obj(L.tube((0.0, -0.075, 0.017), (0.0, 0.075, 0.017), 0.002, 3), L.hexc("#8A7A5C"), ao=0.0))
+    _p7(parts, "ph_item_register_extract")
+
+
+def item_memorial_plate():
+    """The name plate (icon): the small dark plate lying, two carved lines, two nails beside it."""
+    L.reset(1808)
+    parts = []
+    pl = L.prim("cube", loc=(0, 0, 0.012), scale=(0.15, 0.09, 0.012))
+    L.bevel(pl, 0.008, 1)
+    parts.append(P._finish_obj(pl, L.hexc("#4A3A2C"), var=0.15, ao=0.0, top=0.3, hue_shift=L.hexc("#6E5640")))
+    for w, y in ((0.1, 0.025), (0.07, -0.02)):
+        parts.append(P._finish_obj(L.prim("cube", loc=(0, y, 0.025), scale=(w, 0.006, 0.002)), L.hexc("#C8B88A"), var=0.1, ao=0.0))
+    for k in range(2):
+        parts.append(P._finish_obj(L.tube((0.17, -0.03 + k * 0.05, 0.004), (0.23, -0.02 + k * 0.05, 0.004), 0.003, 4),
+                                   L.hexc("#3A3C40"), ao=0.0))
+    _p7(parts, "ph_item_memorial_plate")
+
+
+def item_quast_crate():
+    """Quast's crate: a small nailed wooden box, straw sticking out under the lid, a paper tag - closed."""
+    L.reset(1809)
+    parts = []
+    parts.append(P._rbox((0, 0, 0.07), (0.14, 0.1, 0.07), L.hexc("#7A6448"), bev=0.006, seg=1, jit=0.003, seed=1, ao=0.25,
+                         zrange=(0, 0.14)))
+    parts.append(P._rbox((0, 0, 0.145), (0.145, 0.105, 0.008), L.hexc("#8A7258"), bev=0.004, seg=1, jit=0.002, seed=2, ao=0.0,
+                         zrange=(0, 0.16)))
+    for k in range(6):
+        a = k * 1.1
+        parts.append(P._finish_obj(L.tube((math.cos(a) * 0.12, math.sin(a) * 0.08, 0.135), (math.cos(a) * 0.15, math.sin(a) * 0.11, 0.15),
+                                          0.004, 3), L.hexc("#B8A06A"), ao=0.0))
+    parts.append(P._finish_obj(L.prim("cube", loc=(0.06, -0.105, 0.08), scale=(0.03, 0.002, 0.02)), L.hexc("#D3C9B0"), ao=0.0))
+    _p7(parts, "ph_item_quast_crate")
+
+
+def item_lorenz_ledger_2():
+    """Lorenz's second ledger (Kladde): a slim, worn notebook in a soft dark cover, the corners rubbed light,
+    tied with a thread - no legible text."""
+    L.reset(1810)
+    parts = []
+    cover = L.prim("cube", loc=(0, 0, 0.008), scale=(0.1, 0.14, 0.008))
+    L.bevel(cover, 0.006, 1)
+    from asset_carter import _tint
+    P._finish_obj(cover, L.hexc("#4A3E34"), var=0.15, ao=0.0, top=0.3)
+    _tint(cover, lambda co, nr: (1.0, L.hexc("#8A7A64"), 0.6 if abs(co.x) > 0.085 and abs(co.y) > 0.12 else 0.0))
+    parts.append(cover)
+    parts.append(P._finish_obj(L.prim("cube", loc=(0.004, 0, 0.007), scale=(0.094, 0.134, 0.0045)), L.hexc("#CFC3A3"), var=0.05,
+                               ao=0.0))
+    parts.append(P._finish_obj(L.tube((-0.105, 0.02, 0.008), (0.105, 0.02, 0.008), 0.0025, 3), L.hexc("#8A7A5C"), ao=0.0))
+    parts.append(P._finish_obj(L.tube((0.105, 0.02, 0.008), (0.14, 0.05, 0.002), 0.0025, 3), L.hexc("#8A7A5C"), ao=0.0))
+    _p7(parts, "ph_item_lorenz_ledger_2")
+
+
+PHASE8_ITEMS = ("item_flower_seedlings", "item_grave_candle", "item_watering_can", "item_apprentice_rake", "item_mortsafe",
+                "item_wax_wreath", "item_register_extract", "item_memorial_plate", "item_quast_crate", "item_lorenz_ledger_2")
+
+
 PHASE7_ITEMS = ("item_prep_jar", "item_prep_jar_small", "item_spirits", "item_beeswax", "item_anatomy_case", "item_specimen_jar",
                 "item_specimen_jar_eyes", "item_specimen_bundle", "item_display_specimen", "item_bone_specimen",
                 "item_fever_tincture", "item_wound_salve", "item_corpse_balm", "item_antidote", "item_bitter_drops",
@@ -1320,7 +1482,9 @@ ITEMS = (item_log, item_stone, item_linen, item_coin, item_shroud, item_rake, it
          item_prep_jar, item_prep_jar_small, item_spirits, item_beeswax, item_anatomy_case, item_specimen_jar,
          item_specimen_jar_eyes, item_specimen_bundle, item_display_specimen, item_bone_specimen, item_fever_tincture,
          item_wound_salve, item_corpse_balm, item_antidote, item_bitter_drops, item_dropsy_powder, item_honey_cake,
-         item_elder_wine)
+         item_elder_wine,
+         item_flower_seedlings, item_grave_candle, item_watering_can, item_apprentice_rake, item_mortsafe,
+         item_wax_wreath, item_register_extract, item_memorial_plate, item_quast_crate, item_lorenz_ledger_2)
 PHASE6_ITEMS = ("item_altar_candle", "item_bone_box", "item_bone_box_full")
 PHASE5_ITEMS = ("item_shovel_iron", "item_shovel_master", "item_axe_iron", "item_axe_master", "item_pickaxe_iron",
                 "item_pickaxe_master", "item_flax", "item_yarn", "item_clay", "item_iron_ore", "item_iron_bar",

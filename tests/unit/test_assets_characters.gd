@@ -24,10 +24,12 @@ const CHARACTERS := {
 				"hammer_draw": [0.3, 0.5], "hammer_stow": [0.3, 0.45], "hammer_stow_walk": [0.45, 0.6],
 				"saw_draw": [0.3, 0.5], "saw_stow": [0.3, 0.45], "saw_stow_walk": [0.45, 0.6],
 				# G7 Runde 2 (Bestatten): the dead laid into the pit, a moment of silence
-				"corpse_lower": [1.7, 1.9], "mourn": [0.9, 1.1]},
+				"corpse_lower": [1.7, 1.9], "mourn": [0.9, 1.1],
+				# Phase 8 (P5): at the graves, the vigil on the bench, the Kathreintanz
+				"kneel_place": [1.4, 1.6], "water": [1.25, 1.4], "sit_bench": [2.9, 3.1], "dance": [1.5, 1.7]},
 		"one_shot": ["interact", "shovel_draw", "shovel_stow", "shovel_stow_walk", "axe_draw", "axe_stow", "axe_stow_walk",
 				"pick_draw", "pick_stow", "pick_stow_walk", "hammer_draw", "hammer_stow", "hammer_stow_walk",
-				"saw_draw", "saw_stow", "saw_stow_walk", "corpse_lower", "mourn"],
+				"saw_draw", "saw_stow", "saw_stow_walk", "corpse_lower", "mourn", "kneel_place"],
 	},
 	"ph_chr_carter": {
 		"height": [1.6, 1.7],

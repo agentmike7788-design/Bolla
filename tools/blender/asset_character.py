@@ -995,6 +995,64 @@ ACTIONS = (  # (name, frames at 30 fps, pose function[, post hook])
 )
 
 
+# --- Phase 8 (docs/PHASE8_DESIGN.md §8.2, additive): at the graves, the bench, the dance ------------------
+# The tool bone stays at rest in all four (the shovel on the back). The watering can is not a mesh of this
+# model (the figure is at its 12 000-tris budget): water-loop holds the right fist out and tilted, and the
+# marker `can_grip` on arm_r carries the frame of ph_tool_watering_can (its handle at the marker, Godot +Y
+# up along the bow handle, +Z the spout) - the owner hangs the can there while watering.
+
+CAN_TILT = 35.0          # the can tilted forward while watering
+WATER_ARM = -40.0        # the right arm held out forward
+
+
+def kneel_place(t: float) -> dict:
+    """45 frames one-shot: he goes down at the grave (the hips sink, the coat hides the legs), the right
+    hand sets a candle / the flowers on the mound in front, a moment, and up again."""
+    down = {"hips": (6.0, 0.0, 0.0, 0.0, 0.04, -0.3), "spine": (30.0, 0.0, 0.0), "head": (-8.0, 0.0, 0.0),
+            "arm_r": (-62.0, -4.0, 4.0), "arm_l": (-34.0, 10.0, 0.0), "leg_l": (14.0, 0.0, -2.0), "leg_r": (6.0, 0.0, 2.0),
+            "feet": {"leg_l": 0.0, "leg_r": 0.0}}
+    set_ = rig.add(down, {"arm_r": (-12.0, 0.0, 0.0), "spine": (4.0, 0.0, 0.0)})
+    rest = {"feet": {"leg_l": 0.0, "leg_r": 0.0}}
+    return rig.keyed(t, [(0.0, rest), (0.35, down), (0.55, set_), (0.72, set_), (1.0, rest)], wrap=False)
+
+
+def water(t: float) -> dict:
+    """40 frames: the can held out in the right hand, tilted, the water running; the can moves slowly
+    along the bed and back."""
+    s = math.sin(rig.TAU * t)
+    return rig.add(rig.breathe(t, 0.8), {"arm_r": (WATER_ARM + 3.0 * s, -4.0, 6.0 * s), "arm_l": (-6.0, 4.0, 0.0),
+                                         "spine": (10.0, 0.0, 4.0 * s), "head": (6.0, 0.0, 5.0 * s)}, _stance())
+
+
+def sit_bench(t: float) -> dict:
+    """90 frames: on the bench under the linden (seat 0.45 m), the vigil: the hands in the lap, the head
+    low, slow breathing, now and then he looks up."""
+    look = max(0.0, math.sin(rig.TAU * t)) ** 2
+    return rig.add(rig.breathe(t, 0.9), {
+        "hips": (-6.0, 0.0, 0.0, 0.0, 0.04, -0.27), "spine": (4.0, 0.0, 0.0), "head": (14.0 - 12.0 * look, 0.0, 0.0),
+        "leg_l": (-52.0, 0.0, -4.0), "leg_r": (-52.0, 0.0, 4.0), "arm_l": (-28.0, 14.0, 0.0), "arm_r": (-28.0, -14.0, 0.0),
+        "feet": {"leg_l": 0.0, "leg_r": 0.0}})
+
+
+def _p8_actions() -> tuple:
+    import asset_mourners as M   # the shared Phase-8 clips (dance)
+    return (("kneel_place", 45, kneel_place), ("water-loop", 40, water), ("sit_bench-loop", 90, sit_bench),
+            ("dance-loop", 48, M.dance(0.035, 3.5, 70.0)))
+
+
+def _can_grip(arm) -> None:
+    """Empty on arm_r at the fist: the can's frame, turned so that it hangs tilted CAN_TILT deg forward
+    (spout down) when the arm is out at WATER_ARM (it rides on the rigid arm)."""
+    e = bpy.data.objects.new("can_grip", None)
+    bpy.context.collection.objects.link(e)
+    e.parent = arm
+    e.parent_type = "BONE"
+    e.parent_bone = "arm_r"
+    bpy.context.view_layer.update()
+    e.matrix_world = Matrix.Translation(FIST[-1] + Vector((0.0, -0.005, -0.02))) @ Matrix.Rotation(
+        math.radians(CAN_TILT - WATER_ARM), 4, "X")
+
+
 def _attach_shovel(arm, shovel) -> None:
     """The shovel mesh follows the tool bone (glTF: a node below the joint -> BoneAttachment3D)."""
     shovel.parent = arm
@@ -1018,7 +1076,8 @@ def build(debug: bool = False):
     import asset_character_tools as T  # G7 Runde 2 Werkzeuge (imports this module)
     tools = T.build_tools()
     T.attach(arm, tools)
-    for entry in ACTIONS + tuple(T.actions()):
+    _can_grip(arm)
+    for entry in ACTIONS + tuple(T.actions()) + _p8_actions():
         name, frames, fn = entry[:3]
         rig.add_action(arm, mesh, name, frames, fn, entry[3] if len(entry) > 3 else None)
     if debug:
