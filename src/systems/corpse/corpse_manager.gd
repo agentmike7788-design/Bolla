@@ -54,6 +54,12 @@ const CRYPT_ID := &"crypt"
 const STAT_NICHE_WAITS := &"niche_waits"
 const NOTE_RELOCATED := "Die Leiche vom alten Tisch liegt jetzt unten in der Gruft."
 const NOTE_SKIPPED := CorpseDeliveryRules.NOTE_SKIPPED
+# Phase 8 (docs/PHASE8_DESIGN.md §2.2.1, §2.9, §3.4; P2): the mourning household of a corpse delivered once
+# the village is open – CorpseRecord.kin_house = the Phase-7 mourning ribbon of its arrival day
+# (Village.mourning_house_for), story corpses by STORY_KIN.
+const FLAG_VILLAGE_OPEN := &"village_open"
+const HAGEDORN_HOUSE := &"cottage_hagedorn"
+const STORY_KIN: Dictionary[StringName, StringName] = {&"d1_hagedorn": &"cottage_hagedorn", &"d2_ott": &"house_ott"}
 
 @export var save_id: String = "corpse_manager"
 @export var save_order: int = 0
@@ -227,7 +233,31 @@ func _deliver(day: int, now_total: int) -> void:
 		else:
 			record = _spawn(CorpseGenerator.generate(seed, t, day), at, CorpseRecord.LOCATION_DROPOFF, arrival, now_total)
 		if record != null:
+			assign_kin_house(record, day)
 			_last_delivery_ids.append(record.id)
+
+
+## Phase 8 §2.2.1: sets record.kin_house from `day` once the village is open (village_open) – story corpses
+## by STORY_KIN, every other corpse the mourning ribbon of its arrival day among VillageConfig.mourning_houses
+## without Hagedorn's cottage (bit-identical to Village.mourning_house). Before village_open nothing.
+func assign_kin_house(record: CorpseRecord, day: int) -> void:
+	if record == null or not GameState.flag_on(FLAG_VILLAGE_OPEN):
+		return
+	if record.story_id != &"":
+		record.kin_house = STORY_KIN.get(record.story_id, &"")
+		return
+	var houses := PackedStringArray()
+	var vcfg := Database.config(&"village_config") as VillageConfig
+	if vcfg != null:
+		for h: String in vcfg.mourning_houses:
+			if StringName(h) != HAGEDORN_HOUSE:
+				houses.append(h)
+	if houses.is_empty():
+		return
+	var house := Village.mourning_house_for(day, record.seed, houses)
+	if house == &"":
+		house = StringName(houses[posmod(hash([day, record.seed]), houses.size())])
+	record.kin_house = house
 
 
 ## Spawns the record of `story` at `at` (dropoff), books it as delivered on `day`, then

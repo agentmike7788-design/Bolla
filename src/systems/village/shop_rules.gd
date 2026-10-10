@@ -41,7 +41,7 @@ static func buy_price(base: int, rel_tier: StringName, cfg: RelationshipConfig) 
 ## requires_tier against `rel_tier`, coins, room).
 static func buy_block_reason(shop: ShopData, item: StringName, n: int, stock_left: int, inv: Inventory, price: int,
 		rel_tier: StringName) -> String:
-	if shop == null or not shop.sells.has(item):
+	if shop == null or not shop.sells.has(item) or not row_available(shop.sells[item]):
 		return TEXT_NOT_SOLD
 	var need := StringName(str((shop.sells[item] as Dictionary).get("requires_tier", "")))
 	if need != &"" and not RelationshipRules.at_least(rel_tier, need):
@@ -78,6 +78,23 @@ static func sell_block_reason(shop: ShopData, item: StringName, n: int, bought_l
 static func row_price(row: Dictionary) -> int:
 	var v: Variant = row.get("price", 0)
 	return int(v) if v is int or v is float else 0
+
+
+## Phase 8 (W0 note 10; P7): a row with requires_flag is sold only while that GameState flag is on.
+static func row_available(row: Dictionary) -> bool:
+	var flag := StringName(str(row.get("requires_flag", "")))
+	return flag == &"" or GameState.flag_on(flag)
+
+
+## Phase 8: the base price now – price_after_flag {flag, price} replaces it while that flag is on (Esch's
+## mortsafe 8 instead of 12 after his second story step).
+static func row_price_now(row: Dictionary) -> int:
+	var after: Variant = row.get("price_after_flag", {})
+	if after is Dictionary and GameState.flag_on(StringName(str((after as Dictionary).get("flag", "")))):
+		var p: Variant = (after as Dictionary).get("price", 0)
+		if p is int or p is float:
+			return int(p)
+	return row_price(row)
 
 
 ## per_day of a row (+ friend_extra for a friend).

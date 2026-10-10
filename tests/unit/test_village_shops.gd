@@ -299,14 +299,16 @@ func test_shop_counter_prompt_only_while_open() -> void:
 
 
 func test_real_shop_data_matches_the_contract() -> void:
-	assert_eq(Database.shops().size(), 6)
+	assert_eq(Database.shops().size(), 7, "Phase 8 (P7): + Hanne's Kiepe (peddler)")
 	for f: ShopData in Phase7Fixtures.shops():
 		var s := Database.shop(f.id) as ShopData
 		assert_not_null(s, String(f.id))
 		if s == null:
 			continue
 		assert_eq([s.npc_id, s.coin_reason, s.buys], [f.npc_id, f.coin_reason, f.buys], String(f.id))
-		assert_eq(s.sells.keys(), f.sells.keys(), String(f.id))
+		# Phase 8 (P7, §2.11): Theres / Esch sell more – the keys follow the Phase-8 fixture where it has the shop.
+		var p8 := Phase8Fixtures.shop(f.id) if f.id in Phase8Fixtures.SHOP_IDS else null
+		assert_eq(s.sells.keys(), (p8 if p8 != null else f).sells.keys(), String(f.id))
 		for item: StringName in f.sells:
 			assert_eq([s.sells[item].price, s.sells[item].per_day, s.sells[item].get("requires_tier", &"")],
 					[f.sells[item].price, f.sells[item].per_day, f.sells[item].get("requires_tier", &"")], "%s %s" % [f.id, item])

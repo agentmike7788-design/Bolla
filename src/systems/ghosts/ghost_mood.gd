@@ -34,6 +34,14 @@ const MASTER_SHAPE := &"stone_master"
 const ROBBED_KINDS: Array[StringName] = CorpseRecord.HARVEST_KINDS
 ## Phase 7 (§2.11, §3.4): an organ is missing (taken, not returned) – before &"robbed".
 const REASON_ROBBED_ORGAN := &"robbed_organ"
+## Phase 8 (§2.11): the care pools of GhostLines in precedence – disturbed > (robbed_organ > robbed: the
+## complaint of pick_line) > lights > visited > candle > flowers > the earlier ones.
+const CARE_DISTURBED := &"disturbed"
+const CARE_ROBBED := &"robbed"
+const CARE_LIGHTS := &"lights"
+const CARE_VISITED := &"visited"
+const CARE_CANDLE := &"candle"
+const CARE_FLOWERS := &"flowers"
 ## Piety tiers with their own lines (GhostLines.by_piety): one heard line in PIETY_EVERY.
 const PIETY_EVERY := 4
 ## Dirt level of the grave's own spot from which weeds are the main complaint.
@@ -43,17 +51,18 @@ const WEEDS_LEVEL := 2
 ## `robbed` = number of harvested kinds (robbed_count).
 ## Phase 6 (§2.4, §3.4): `devotion` = ChapelRules.devotion_bonus (already capped for robbed souls) is
 ## added as it is (negative values count as 0).
-## Phase 8 (§2.3, §2.11, §3.4): `care` = GraveCare.care_bonus (≤ care_cap) – STUB (P2): W0 ignores it
-## (the Phase-7 score stays bit-identical until P2 adds care, disturbed and prayer).
+## Phase 8 (§2.3, §2.11, §3.4): `care` = GraveCare.care_bonus (flowers / bouquet / candle ≤ care_cap, a
+## disturbed grave −3) is added as it is – the robbed cap of the positive part is GhostManager's (like the
+## devotion: robbed souls stay at most calm). care 0 = the Phase-7 score bit-identical.
 static func score(quality: int, dirt_level: int, decor_bonus: int, clean: CleanlinessConfig, cfg: GhostConfig, robbed: int = 0,
-		devotion: int = 0, _care: int = 0) -> int:
+		devotion: int = 0, care: int = 0) -> int:
 	var dirt := 0
 	if clean != null and not clean.grave_mood_by_level.is_empty():
 		var lvl := clampi(dirt_level, 0, clean.grave_mood_by_level.size() - 1)
 		dirt = clean.grave_mood_by_level[lvl]
 	var cap := cfg.decor_bonus_max if cfg != null else 2
 	var robbed_mood := cfg.robbed_mood if cfg != null else -5
-	return quality + dirt + clampi(decor_bonus, 0, cap) + maxi(robbed, 0) * robbed_mood + maxi(devotion, 0)
+	return quality + dirt + clampi(decor_bonus, 0, cap) + maxi(robbed, 0) * robbed_mood + maxi(devotion, 0) + care
 
 
 ## Harvested kinds of a record not given back (Phase 7 §3.4: harvested − returned; specimens in the
@@ -251,3 +260,41 @@ static func _marker_upgradeable(marker_id: StringName, cfg: EconomyConfig) -> bo
 ## do not change.
 static func _nameless(grave: GraveRecord) -> bool:
 	return not grave.design.is_empty() and StoneDesign.from_dict(grave.design).inscription == &""
+
+
+## Phase 8 (§2.11): which care pool speaks – &"disturbed", &"robbed" (= the robbed complaint of pick_line
+## wins over the care pools), &"lights", &"visited", &"candle", &"flowers" or &"" (the earlier lines).
+static func care_key(disturbed: bool, robbed: bool, lights: bool, visited: bool, candle: bool, flowers: bool) -> StringName:
+	if disturbed:
+		return CARE_DISTURBED
+	if robbed:
+		return CARE_ROBBED
+	if lights:
+		return CARE_LIGHTS
+	if visited:
+		return CARE_VISITED
+	if candle:
+		return CARE_CANDLE
+	if flowers:
+		return CARE_FLOWERS
+	return &""
+
+
+## One line of the care pool `key` (by_disturbed, by_lights, by_visited, by_candle, by_flowers), deterministic
+## from `seed`; "" = no such pool or empty (the caller falls back to the earlier lines).
+static func pick_care_line(lines: GhostLines, key: StringName, seed: int) -> String:
+	if lines == null:
+		return ""
+	var pool := PackedStringArray()
+	match key:
+		CARE_DISTURBED:
+			pool = lines.by_disturbed
+		CARE_LIGHTS:
+			pool = lines.by_lights
+		CARE_VISITED:
+			pool = lines.by_visited
+		CARE_CANDLE:
+			pool = lines.by_candle
+		CARE_FLOWERS:
+			pool = lines.by_flowers
+	return pool[posmod(seed, pool.size())] if not pool.is_empty() else ""

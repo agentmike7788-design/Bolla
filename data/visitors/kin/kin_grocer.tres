@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="KinData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/visitors/kin_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+kin_id = &"kin_grocer"
+display_name = "Theres Mangold"
+house = &""
+npc_path_id = &"npc_grocer_g"
+villager_id = &"grocer"
+kneels = true
+bouquet_model = &"ph_prop_bouquet_rose"
+dialogue_id = &"v_grocer"
+fixed_graves = PackedStringArray("old_08")
+visit_every_days = 5
+visit_minute = 880
+first_offset = 2

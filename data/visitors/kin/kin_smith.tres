@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="KinData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/visitors/kin_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+kin_id = &"kin_smith"
+display_name = "Ulrich Esch"
+house = &""
+npc_path_id = &"npc_smith_g"
+villager_id = &"smith"
+kneels = false
+bouquet_model = &""
+dialogue_id = &"v_smith"
+fixed_graves = PackedStringArray("old_01")
+visit_every_days = 6
+visit_minute = 820
+first_offset = 2

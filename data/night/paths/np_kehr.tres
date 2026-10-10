@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="NightPathData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/night/night_path_data.gd" id="1_oo7mj"]
+[ext_resource type="Script" path="res://src/systems/night/night_visit_data.gd" id="2_gk03s"]
+
+[sub_resource type="Resource" id="Resource_chup2"]
+script = ExtResource("2_gk03s")
+npc_id = &"surgeon"
+night_offset = 7
+enter_minute = 1350
+leave_minute = 1390
+clue_id = &"c_n_quast_visit"
+
+[sub_resource type="Resource" id="Resource_kv8x6"]
+script = ExtResource("2_gk03s")
+npc_id = &"priest"
+night_offset = 8
+enter_minute = 1260
+leave_minute = 1290
+clue_id = &"c_n_lenz_visit"
+animation = &"lantern_walk"
+
+[resource]
+script = ExtResource("1_oo7mj")
+id = &"np_kehr"
+house = &"house_kehr"
+patient = "Paul Kehr"
+start_offset = 7
+end_offset = 8
+visits = Array[ExtResource("2_gk03s")]([SubResource("Resource_chup2"), SubResource("Resource_kv8x6")])
+watch_spot = &"watch_kehr"

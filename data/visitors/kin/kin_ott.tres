@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="KinData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/visitors/kin_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+kin_id = &"kin_ott"
+display_name = "Gesa Ott"
+house = &"house_ott"
+npc_path_id = &"npc_kin_ott"
+villager_id = &""
+kneels = true
+bouquet_model = &"ph_prop_bouquet_straw"
+dialogue_id = &"kin_ott"
+fixed_graves = PackedStringArray()
+visit_every_days = 0
+visit_minute = 0
+first_offset = 0

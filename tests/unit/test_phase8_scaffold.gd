@@ -9,7 +9,9 @@ extends TestCase
 const IMPLEMENTED: PackedStringArray = [
 	"Friendship", "FriendRules", "FavorRules", "Festivals", "FestivalRules", "FestDecor", "MemorialPlate", "ArchiveCabinet",
 	"Fiddler", "SaveMigration", "Village", "ScheduleBuilder", "NpcLife", "MoodRules", "ReactionRules", "ChatterRunner",
-	"Apprentice", "ApprenticeRules", "ApprenticePlanner", "ApprenticeBoard", "ApprenticeBox",
+	"Apprentice", "ApprenticeRules", "ApprenticePlanner", "ApprenticeBoard", "ApprenticeBox", "GraveCare", "GraveCareRules", "Visitors",
+	"VisitRules", "WishRules", "GraveView", "TipStone", "RainBarrel", "Wanderers", "NightRobber", "RobberRules",
+	"NightPaths", "NightPathRules", "WatchSpot", "SickLight",
 ]
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
@@ -269,9 +271,9 @@ func test_stub_members_on_existing_classes() -> void:
 		var names := _methods(load(path) as GDScript)
 		for method: String in EXISTING_STUBS[path]:
 			assert_true(names.has(method), "%s.%s" % [path.get_file(), method])
-	# GhostMood.score: the new care argument changes nothing until P2.
+	# GhostMood.score: the care argument is added as it is (P2).
 	var cfg := GhostConfig.new()
-	assert_eq(GhostMood.score(8, 1, 1, null, cfg, 1, 1, 2), GhostMood.score(8, 1, 1, null, cfg, 1, 1), "care ignored in W0")
+	assert_eq(GhostMood.score(8, 1, 1, null, cfg, 1, 1, 2), GhostMood.score(8, 1, 1, null, cfg, 1, 1) + 2, "care added (P2)")
 	if IMPLEMENTED.has("Village"):
 		assert_eq(Village.mourning_house_for(55, 7, PackedStringArray(["house_kehr"])), &"house_kehr", "P6: one house")
 		assert_eq(Village.mourning_house_for(55, 7, PackedStringArray()), &"", "P6: no houses")

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"apprentice_rake"
+display_name = "Kinderrechen"
+description = "Ein kleiner Rechen mit kurzem Stiel. Für Jakobs Kiste."
+category = 4
+max_stack = 1
+tool_kind = &""
+tool_tier = 0
+unique = false
