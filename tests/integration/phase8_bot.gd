@@ -42,25 +42,25 @@ const KATHREIN_GO := 19 * 60 + 30
 ## "reported" / "let_go" = the outcome when he sits) · "mortsafe": a mortsafe on the freshest grave · "kathrein" ·
 ## "lights": candles at the Lichtgang · "save_p8": reloads once during a visit and once on the Lichtgang.
 const P8_FLAGS := {"p8": true, "apprentice": true, "wishes": true, "tips": true,
-		"stories": [&"grocer", &"innkeeper", &"smith", &"priest", &"mayor"], "alms": true, "observe": [&"np_ott"],
-		"robber": "", "mortsafe": true, "kathrein": true, "lights": true, "save_p8": false}
+		"stories": {&"grocer": 3, &"innkeeper": 1, &"smith": 1, &"priest": 3, &"mayor": 1}, "alms": true, "observe": [&"np_ott"],
+		"robber": "", "mortsafe": true, "kathrein": true, "lights": true, "save_p8": false, "late": false}
 
 static var P8_STRATEGIES := {
 	&"kindly8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {}),
 	&"anatomist8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {"anatomy": true, "collection": true, "lectures": false,
-			"donations": false}, {"stories": [&"grocer", &"innkeeper", &"smith", &"mayor"], "mortsafe": false}),
-	&"lazy8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {"apprentice": false, "wishes": false, "stories": [],
+			"donations": false}, {"stories": {&"grocer": 3, &"innkeeper": 1, &"smith": 1, &"mayor": 2}, "mortsafe": false}),
+	&"lazy8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {"apprentice": false, "wishes": false, "stories": {},
 			"mortsafe": false, "lights": false, "kathrein": false, "observe": []}),
 	&"night8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {"mortsafe": false, "lights": false,
-			"observe": [&"np_ott", &"np_kehr"], "robber": "reported"}),
+			"observe": [&"np_ott", &"np_kehr"], "robber": "reported", "late": true}),
 	&"night8b": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {"mortsafe": false, "lights": false,
-			"observe": [&"np_ott", &"np_kehr"], "robber": "let_go"}),
+			"observe": [&"np_ott", &"np_kehr"], "robber": "let_go", "late": true}),
 	&"founder8": _with8({}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {}),
 	&"save_load8": _with8({"save_load": true}, {}, {"optional": [&"crypt", &"chapel"]}, {}, {"save_p8": true}),
 }
 
 var visitors: Visitors
-var care: GraveCare
+var gcare: GraveCare
 var app: Apprentice
 var friendship: Friendship
 var life: NpcLife
@@ -93,10 +93,13 @@ var _taught_day: int = 0
 var _board_set: bool = false
 var _kathrein_done: bool = false
 var _lights_done: bool = false
+var _evening_day: int = 0
 
 
 static func _with8(p4: Dictionary, p5: Dictionary, p6: Dictionary, p7: Dictionary, p8: Dictionary) -> Dictionary:
 	var out := _with7(p4, p5, p6, p7)
+	# Phase 8 keeps the purse for the hill: no more rounds in the Holderkrug (Phase 7 bought its two).
+	out["rounds"] = 0
 	out.merge(P8_FLAGS.duplicate(true), true)
 	out.merge(p8, true)
 	return out
@@ -115,7 +118,7 @@ func strategies() -> Dictionary:
 func bind() -> void:
 	super.bind()
 	visitors = world.get_node("Systems/Visitors") as Visitors
-	care = world.get_node("Systems/GraveCare") as GraveCare
+	gcare = world.get_node("Systems/GraveCare") as GraveCare
 	app = world.get_node("Systems/Apprentice") as Apprentice
 	friendship = world.get_node("Systems/Friendship") as Friendship
 	life = world.get_node("Systems/NpcLife") as NpcLife
@@ -175,6 +178,14 @@ func _walk(minutes: int = WALK_MINUTES) -> void:
 	_serve()
 
 
+## Phase 7's passes (with the village trip), then the Phase-8 evening (the dance, the night visits, the robber).
+func _phase5() -> void:
+	await super._phase5()
+	if p8_open() and _evening_day != TimeManager.day:
+		_evening_day = TimeManager.day
+		await _p8_evening()
+
+
 func _p7_tasks() -> void:
 	await super._p7_tasks()
 	if p8_open() and _time_left():
@@ -183,6 +194,9 @@ func _p7_tasks() -> void:
 
 ## The Phase-8 work on the hill (morning and afternoon passes).
 func _p8_tasks() -> void:
+	if flags.lights and festivals.today() == Festivals.LIGHTS and not _lights_done and TimeManager.minute_of_day >= 14 * 60:
+		_lights_done = true
+		await _lights()
 	_serve()
 	_clear_row3()
 	_jakob()
@@ -198,6 +212,40 @@ func _p8_tasks() -> void:
 	_link()
 
 
+## The day's work ends early for the evening's Phase-8 business: the Kathreintanz (19:20), a night visit to watch
+## (50 minutes before it), the Lichtgang (14:00, the hill).
+func _evening_cap() -> int:
+	if not p8_open():
+		return EVENING
+	var cap := EVENING
+	if flags.kathrein and festivals.today() == Festivals.KATHREIN and not _kathrein_done:
+		cap = mini(cap, KATHREIN_GO - 10)
+	for path_id: StringName in flags.observe:
+		var visit := paths.next_visit(path_id, TimeManager.day, 0)
+		if visit.is_empty():
+			continue
+		var enter := int(visit.enter) - (TimeManager.day - 1) * 1440
+		if enter >= 600 and enter < 1440 and _observable(visit):
+			cap = mini(cap, enter - 50)
+	return cap
+
+
+func _observable(visit: Dictionary) -> bool:
+	var clue := StringName(str(visit.get("clue", "")))
+	if clue != &"" and paths.observed(clue):
+		return false
+	var m := posmod(int(visit.enter), 1440)
+	return bool(flags.late) or (m >= 20 * 60 and m < 23 * 60 + 30)
+
+
+func _time_left() -> bool:
+	return super._time_left() and TimeManager.minute_of_day < _evening_cap()
+
+
+func _fits(minutes: int) -> bool:
+	return super._fits(minutes) and TimeManager.minute_of_day + minutes <= _evening_cap()
+
+
 ## The village trip of Phase 7 – not on the Lichtgang (the hill from 15:00) nor on a day with a meeting on the hill.
 func _village_today() -> bool:
 	if p8_open():
@@ -209,9 +257,79 @@ func _village_today() -> bool:
 
 
 func _village_trip() -> void:
-	if p8_open() and flags.alms:
-		_alms_at_gate(true)
+	if p8_open():
+		# A visitor due before 16:00 is waited for on the hill (the wishes come from the talk at the grave).
+		var until := _visits_due_before(16 * 60)
+		while TimeManager.minute_of_day < until and _time_left():
+			TimeManager.advance(5)
+			_serve()
+		if flags.alms:
+			_alms_at_gate(true)
+		if TimeManager.minute_of_day > LEAVE_VILLAGE - 90:
+			return
 	await super._village_trip()
+
+
+## The latest minute (≤ `limit`) a planned visit of today is waiting at its grave; 0 = none due.
+func _visits_due_before(limit: int) -> int:
+	var latest := 0
+	var vs := visitors.save_state()
+	if int(vs.get("plan_day", -1)) != TimeManager.day:
+		return 0
+	for e: Variant in vs.get("plan", []):
+		if not e is Dictionary or bool((e as Dictionary).get("ended", false)):
+			continue
+		var at := int((e as Dictionary).get("slot", 0)) + 8
+		if at <= limit and at > TimeManager.minute_of_day:
+			latest = maxi(latest, at)
+	return latest
+
+
+## Lenz is wanted for a friendship step too (Phase 7: first meeting, consecration, orders).
+func _priest_wanted() -> bool:
+	return super._priest_wanted() or (p8_open() and _wants_step(&"priest") and friendship.step_block_reason(&"priest") == "" \
+			and not rel.talked_today(&"priest"))
+
+
+## Back up the hill – first the parish archive when Lenz' step 2 (16:00–18:00) or Fenner's key opens it.
+func _travel(target: StringName) -> bool:
+	if p8_open() and target == &"graveyard" and player.region_id == &"village":
+		await _archive()
+	return await super._travel(target)
+
+
+func _archive() -> void:
+	if GameState.flag_on(&"archive_ledger_found") and orders.state(&"of_lenz_2") != &"accepted":
+		return
+	var with_lenz := orders.state(&"of_lenz_2") == &"accepted"
+	if not with_lenz and not GameState.flag_on(&"archive_key"):
+		return
+	var m := TimeManager.minute_of_day
+	if with_lenz and m < 960:
+		if m < 900:
+			return
+		_wait_until(962)
+	if TimeManager.minute_of_day > 1080 - 60:
+		return
+	await _leave_vroom()
+	var door := HouseDoor.find(tree, &"door_church")
+	player.global_transform = door.exit_transform()
+	if not door.can_interact(player):
+		problems.append("day %d: church shut for the archive (%s)" % [TimeManager.day, door.get_interaction_prompt(player)])
+		return
+	door.interact(player)
+	await _until_arrived()
+	var room := InteriorRoom.find(tree, &"church")
+	var cabinet := room.get_node_or_null("Entities/ArchiveCabinet") as ArchiveCabinet if room != null else null
+	if cabinet == null:
+		problems.append("day %d: no archive cabinet" % TimeManager.day)
+		return
+	player.global_transform = Transform3D(Basis.IDENTITY, cabinet.to_global(Vector3(0, 0, 0.82)))
+	if cabinet.can_interact(player):
+		cabinet.interact(player)
+		UIState.clear()
+		_t8("archive (%s): ledger %s, clue %s" % [cabinet.access(), inv().has(&"lorenz_ledger_2"), journal.has_clue(&"c_n_kladde")])
+	await _leave_vroom()
 
 
 ## An accepted meet order on the hill today (its giver comes up: Orders' schedule flag).
@@ -243,6 +361,7 @@ func _serve() -> void:
 		_serve_visit(v)
 	if flags.tips:
 		_take_stones()
+	_jakob()
 
 
 func _serve_visit(v: Dictionary) -> void:
@@ -296,25 +415,25 @@ func _keep_wishes() -> void:
 		if str(w.state) == "accepted":
 			targets.append([StringName(str(w.kind)), str(w.grave_id)])
 	for t: Array in targets:
-		_keep(t[0], t[1])
+		_keep_wish(t[0], t[1])
 
 
-func _keep(kind: StringName, grave_id: String) -> void:
+func _keep_wish(kind: StringName, grave_id: String) -> void:
 	var plot := world.get_node_by_layout_id(grave_id) as GravePlot
 	if plot == null or not _time_left():
 		return
 	match kind:
 		&"flowers":
-			var state := care.flowers_state(grave_id)
+			var state := gcare.flowers_state(grave_id)
 			if state == &"":
 				_care(plot, GravePlot.CARE_PLANT)
-			elif state == GraveCare.FLOWERS_WILTED or (state == GraveCare.FLOWERS_FRESH and care.fresh_minutes_left(grave_id) <= 720):
+			elif state == GraveCare.FLOWERS_WILTED or (state == GraveCare.FLOWERS_FRESH and gcare.fresh_minutes_left(grave_id) <= 720):
 				_care(plot, GravePlot.CARE_WATER)
 		&"tend":
 			for spot: DirtSpot in _spots_of(grave_id):
 				_tend_spot(spot)
 		&"candle":
-			if TimeManager.minute_of_day >= care.get_config().candle_from_minute and not care.candle_lit(grave_id):
+			if TimeManager.minute_of_day >= gcare.get_config().candle_from_minute and not gcare.candle_lit(grave_id):
 				_care(plot, GravePlot.CARE_CANDLE)
 		&"line":
 			if not inv().has(&"ink"):
@@ -322,12 +441,12 @@ func _keep(kind: StringName, grave_id: String) -> void:
 			_care(plot, GravePlot.CARE_LINE)
 
 
-## The grave's care action (the [E] choice of its care menu; instant timed action).
+## The grave's gcare action (the [E] choice of its gcare menu; instant timed action).
 func _care(plot: GravePlot, action: StringName) -> bool:
-	if action == GravePlot.CARE_WATER and not inv().has(care.get_config().can_item):
+	if action == GravePlot.CARE_WATER and not inv().has(gcare.get_config().can_item):
 		return false
 	_stand_at(plot)
-	if action == GravePlot.CARE_WATER and care.can_fill() <= 0:
+	if action == GravePlot.CARE_WATER and gcare.can_fill() <= 0:
 		_refill()
 		_stand_at(plot)
 	var state := plot._care_state(action, player)
@@ -397,7 +516,7 @@ func _close_disturbed() -> void:
 	if not _on_hill():
 		return
 	for g: GraveRecord in graveyard.graves():
-		if care.is_disturbed(g.id):
+		if gcare.is_disturbed(g.id):
 			if _care(world.get_node_by_layout_id(g.id) as GravePlot, GravePlot.CARE_CLOSE):
 				_t8("closed the disturbed grave %s" % g.id)
 
@@ -476,13 +595,18 @@ func _teach(task: StringName) -> void:
 		_t8("teach %s: no place" % task)
 		return
 	player.global_position = spot.global_position + Vector3(0.6, 0, 0)
-	var jakob := world.get_node("Entities/npc_apprentice")
+	var jakob := world.get_node("Entities/npc_apprentice") as Npc
 	DialogueActions.run_all(["apprentice_teach:" + String(task)] as Array[String], {"inventory": inv(), "speaker": jakob, "player": player})
 	UIState.clear()
-	for i: int in 30:
-		if Vector2(app.position_now().x - player.global_position.x, app.position_now().z - player.global_position.z).length() <= 2.5:
+	if app.teaching() != task:
+		_t8("teach %s refused (%s)" % [task, app.teach_block_reason(task, player)])
+		return
+	for i: int in 40:
+		jakob.refresh()
+		if Vector2(app.position_now().x - spot.global_position.x, app.position_now().z - spot.global_position.z).length() <= 2.5:
 			break
 		TimeManager.advance(1)
+	jakob.refresh()
 	if spot.can_interact(player):
 		spot.interact(player)
 		UIState.clear()
@@ -502,11 +626,11 @@ func _friend_tasks() -> void:
 		match o.kind:
 			&"tend":
 				for g: String in _order_graves(o):
-					_keep(&"tend", g)
+					_keep_wish(&"tend", g)
 			&"task":
 				if OrderRules.task_action(o) == &"flowers_fresh":
 					for g: String in _order_graves(o):
-						_keep(&"flowers", g)
+						_keep_wish(&"flowers", g)
 			&"meet":
 				_hill_meet(o)
 
@@ -599,11 +723,11 @@ func _give_alms(veit: Node) -> void:
 
 ## A mortsafe from Esch on the freshest grave without one (once the robber is known).
 func _mortsafe() -> void:
-	if not inv().has(care.get_config().mortsafe_item) or not _on_hill():
+	if not inv().has(gcare.get_config().mortsafe_item) or not _on_hill():
 		return
 	var best: GraveRecord = null
 	for g: GraveRecord in graveyard.graves():
-		if g.state in [GraveRecord.State.FILLED, GraveRecord.State.MARKED] and not care.has_mortsafe(g.id):
+		if g.state in [GraveRecord.State.FILLED, GraveRecord.State.MARKED] and not gcare.has_mortsafe(g.id):
 			var r := manager.get_record(g.corpse_id) if g.corpse_id != "" else null
 			if r != null and (best == null or r.buried_day > manager.get_record(best.corpse_id).buried_day):
 				best = g
@@ -624,12 +748,12 @@ func _score(npc_id: StringName, c: DialogueChoice, visited: Dictionary) -> int:
 		var arg := StringName(a.get_slice(":", 1))
 		match key:
 			"step_accept":
-				if arg in flags.stories and friendship.step_block_reason(arg) == "":
+				if _wants_step(arg) and friendship.step_block_reason(arg) == "":
 					best = maxi(best, 88)
 			"apprentice_hire":
 				if flags.apprentice and not app.is_hired():
 					best = maxi(best, 96)
-			"meet":
+			"meet", "task":
 				best = maxi(best, 100)
 			"set_flag":
 				if arg == &"linden_row3_granted" and not GameState.flag_on(arg):
@@ -642,6 +766,53 @@ func _score(npc_id: StringName, c: DialogueChoice, visited: Dictionary) -> int:
 			"take_ware":
 				best = maxi(best, 60)
 	return best
+
+
+## The strategy takes `npc`'s next friendship step (flags.stories: villager → how many steps).
+func _wants_step(npc: StringName) -> bool:
+	return (flags.stories as Dictionary).has(npc) and friendship.step_done(npc) < int(flags.stories[npc])
+
+
+## Choices the strategy does not take (a friendship step of someone else, the apprentice for lazy8, a favour).
+func _vetoed(c: DialogueChoice) -> bool:
+	if not p8_open():
+		return false
+	for a: String in c.actions:
+		var key := a.get_slice(":", 0)
+		var arg := StringName(a.get_slice(":", 1))
+		match key:
+			"step_accept":
+				if not _wants_step(arg):
+					return true
+			"buy_round":
+				if _rounds >= int(flags.rounds):
+					return true
+			"order_accept":
+				var o := orders.order_data(arg)
+				if o != null and o.category == OrderData.CATEGORY_FRIEND:
+					return true
+			"apprentice_hire":
+				if not flags.apprentice:
+					return true
+			"open_panel":
+				if arg == &"favor":
+					return true
+			"favor_use", "robber_resolve":
+				return true
+	return false
+
+
+func _pick7(dlg: DialogueData, npc_id: StringName, choices: Array[DialogueChoice], visited: Dictionary) -> int:
+	var keep: Array[DialogueChoice] = []
+	var index: Array[int] = []
+	for i: int in choices.size():
+		if not _vetoed(choices[i]):
+			keep.append(choices[i])
+			index.append(i)
+	if keep.is_empty():
+		return -1
+	var k := super._pick7(dlg, npc_id, keep, visited)
+	return index[k] if k >= 0 else -1
 
 
 func _after_choice(npc_id: StringName, choice: DialogueChoice) -> void:
@@ -665,14 +836,14 @@ func _buy_need(item: StringName) -> int:
 		return need
 	match item:
 		&"apprentice_rake":
-			if flags.apprentice and (app.is_hired() or &"innkeeper" in flags.stories) and not inv().has(item) \
+			if flags.apprentice and (app.is_hired() or (flags.stories as Dictionary).has(&"innkeeper")) and not inv().has(item) \
 					and (_box() == null or not _box().storage.has(item)):
 				need = maxi(need, 1)
 		&"watering_can":
-			if (flags.wishes or not flags.stories.is_empty()) and not inv().has(item):
+			if (flags.wishes or not (flags.stories as Dictionary).is_empty()) and not inv().has(item):
 				need = maxi(need, 1)
 		&"flower_seedlings":
-			if flags.wishes or &"grocer" in flags.stories:
+			if flags.wishes or (flags.stories as Dictionary).has(&"grocer"):
 				need = maxi(need, 4 - inv().count(item))
 		&"grave_candle":
 			var want := 2 if flags.wishes else 0
@@ -700,8 +871,17 @@ func _lights_candles_needed() -> int:
 
 # --- evening and night --------------------------------------------------------------------------------
 
+func _night_at_the_wall() -> void:
+	if p8_open() and _evening_day != TimeManager.day:
+		_evening_day = TimeManager.day
+		await _p8_evening()
+	if TimeManager.minute_of_day >= 360 and TimeManager.minute_of_day < 23 * 60 + 20:
+		await super._night_at_the_wall()
+
+
 func _sleep() -> void:
-	if p8_open():
+	if p8_open() and _evening_day != TimeManager.day and TimeManager.minute_of_day >= 360:
+		_evening_day = TimeManager.day
 		await _p8_evening()
 	if TimeManager.minute_of_day < 360:
 		await _bed_after_midnight()
@@ -710,7 +890,7 @@ func _sleep() -> void:
 
 
 func _p8_evening() -> void:
-	# The Lichtgang: candles on the graves no family lights, the hill until the descent.
+	_t8("evening: fest %s, coins %d" % [festivals.today(), coins_total()])
 	if flags.lights and festivals.today() == Festivals.LIGHTS and not _lights_done:
 		_lights_done = true
 		await _lights()
@@ -734,10 +914,19 @@ func _lights() -> void:
 	for g: GraveRecord in graveyard.graves():
 		if not inv().has(&"grave_candle"):
 			break
-		if g.state in [GraveRecord.State.FILLED, GraveRecord.State.MARKED] and not family.has(g.id) and not care.candle_lit(g.id):
+		if g.state in [GraveRecord.State.FILLED, GraveRecord.State.MARKED] and not family.has(g.id) and not gcare.candle_lit(g.id):
 			_care(world.get_node_by_layout_id(g.id) as GravePlot, GravePlot.CARE_CANDLE)
 	_t8("Lichtgang: lights %s" % festivals.lights_count())
 	_wait_until(17 * 60 + 20)
+	# Lenz 3: the names read beside him at the Kirchhof (17:40).
+	if orders.state(&"of_lenz_3") == &"accepted":
+		_wait_until(1061)
+		var lenz := world.get_node_or_null("Entities/npc_priest") as Npc
+		if lenz != null:
+			lenz.refresh()
+			player.global_position = lenz.global_position + Vector3(1.0, 0, 0)
+			_talk(lenz)
+			_t8("Lenz 3 at the Lichtgang: %s" % orders.state(&"of_lenz_3"))
 	if flags.save_p8 and not saved_moments.has("lights"):
 		saved_moments.append("lights")
 		await _reload_now("the Lichtgang 17:20")
@@ -759,13 +948,14 @@ func _kathrein() -> void:
 		return
 	door.interact(player)
 	await _until_arrived()
+	var arrived := TimeManager.minute_of_day
 	for partner: StringName in [&"innkeeper", &"grocer"]:
 		var npc := _vnpc(partner)
 		if npc != null and festivals.dance_block_reason(partner) == "":
 			DialogueActions.run_all(["dance:" + String(partner)] as Array[String], {"inventory": inv(), "speaker": npc, "player": player})
 			UIState.clear()
 			dances += 1
-	_wait_until(KATHREIN_GO + 35)
+	_wait_until(arrived + 35)
 	_t8("Kathrein: danced %s, presence %s" % [str(festivals.danced()), festivals.presence_done()])
 	await _leave_vroom()
 	await _travel(&"graveyard")
@@ -780,8 +970,8 @@ func _observe(path_id: StringName) -> void:
 	if clue != &"" and paths.observed(clue):
 		return
 	var enter := int(visit.enter)
-	# Only tonight (before 06:00 of the next day).
-	if enter > TimeManager.day * 1440 + 360 or enter < TimeManager.total_minutes():
+	# Only tonight (before 06:00 of the next day) and what the strategy stays up for.
+	if enter > TimeManager.day * 1440 + 360 or enter < TimeManager.total_minutes() or not _observable(visit):
 		return
 	var spot_id := &"watch_ott" if path_id == &"np_ott" else &"watch_kehr"
 	var spot: WatchSpot = null
@@ -885,7 +1075,17 @@ func _reload_now(moment: String) -> void:
 
 ## Phase 4's links, and i_underlined with its two of four (InsightData.any_clues).
 func _link() -> void:
-	super._link()
+	for page: StringName in JournalManager.PAGES:
+		EventBus.ui_panel_requested.emit(JournalManager.PANEL, journal.panel_context(page))
+		UIState.clear()
+	for insight: InsightData in journal.ready_insights():
+		if insight.any_count > 0:
+			continue
+		var plain: Array[StringName] = []
+		plain.assign(insight.requires)
+		plain.reverse()  # order must not matter
+		if journal.try_link(plain) != insight.id:
+			problems.append("day %d: link %s refused" % [TimeManager.day, insight.id])
 	var ins := journal.insight_by_id(&"i_underlined") as InsightData
 	if ins == null or journal.has_insight(ins.id):
 		return
@@ -921,7 +1121,7 @@ func record_day(day: int) -> void:
 		"visits": visits_served.filter(func(v: Dictionary) -> bool: return int(v.day) == day).size(),
 		"wishes_done": visitors.done_wishes().size(), "wish_kin": visitors.done_kin_count(),
 		"tips": int(income.get("tip", 0)), "steps": friendship.steps_total(), "full": friendship.full_stories(),
-		"hired": app.is_hired(), "levels": {"rake": app.level(&"rake"), "weed": app.level(&"weed"), "water": app.level(&"water")},
+		"hired": app.is_hired(), "jlevels": {"rake": app.level(&"rake"), "weed": app.level(&"weed"), "water": app.level(&"water")},
 		"jakob": app.works_today(day), "underlined": journal.has_insight(&"i_underlined"), "rep": rep.value(),
 		"alms": wanderers.alms_count(),
 	})
@@ -942,7 +1142,7 @@ func table_p8() -> String:
 		var income_day: Dictionary = r.get("income_day", {})
 		for source: Variant in income_day:
 			inc.append("%s %d" % [source, int(income_day[source])])
-		var lv: Dictionary = r.get("levels", {})
+		var lv: Dictionary = r.get("jlevels", {})
 		lines.append("| %d | %d | %s | %s | %d (%d) | %d | %d (%d) | %d | %d (%d) | %s %d/%d | %d | %s | %d | %s |" % [r.day, morning,
 				", ".join(parts) if not parts.is_empty() else "–", ", ".join(inc) if not inc.is_empty() else "–", int(r.coins8), int(r.tin),
 				int(r.visits), int(r.wishes_done), int(r.wish_kin), int(r.tips), int(r.steps), int(r.full),
