@@ -76,6 +76,7 @@ const BOARD_TITLE := "Jakob – Arbeitsliste"
 const BOARD_LINE := "Zeile %d"
 const BOARD_TASK_NONE := "– nichts –"
 const BOARD_NOT_SHOWN := "noch nicht gezeigt"
+const BOARD_GREY_HINT := "Grau: noch nicht gezeigt – erst vormachen, dann aufschreiben."
 const BOARD_LEVELS := "Was Jakob kann"
 const BOARD_LEVEL_NONE := "–"
 const BOARD_LEVEL_MARKS: PackedStringArray = ["", "|", "||"]

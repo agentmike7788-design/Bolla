@@ -11,6 +11,9 @@ extends UIPanel
 ## „Ausgaben" has the purpose „Gebäude", + „Ausgesegnet" and „Umgebettet" (Phase5DayLog).
 ## Phase 7 (docs/PHASE7_DESIGN.md §7): + „Im Dorf" (earned · spent in the village by purpose), „Aufträge
 ## erledigt", „Beziehungen" (arrows per person) and „Präparate" (taken, sold, returned …).
+## Phase 8 (docs/PHASE8_DESIGN.md §7.6): + „Besuche" (who, at which grave, how it looked), „Wünsche" (done, new,
+## lapsed), „Trinkgeld", „Jakob" (places per task, mistakes with their place, wage, „Morgen: …") and „Die Nacht"
+## (the robber seen / chased off, a grave disturbed, the sick light) – complete_phase8() with Phase8DayLog.take().
 
 const TEXT_TITLE := "Tag %d ist vorüber"
 const TEXT_BURIALS := "Bestattungen heute"
@@ -27,6 +30,8 @@ const TEXT_SAVED := "Der Tag wurde gespeichert (Autosave)."
 const TEXT_CONTINUE := "Neuer Tag"
 
 @export var panel_width: float = 620.0
+## Value column of the long Phase-8 rows (visits, Jakob, the night): they wrap at this width.
+@export var wrap_width: float = 560.0
 
 var title_label: Label
 var burials_label: Label
@@ -48,6 +53,12 @@ var village_label: Label
 var orders_label: Label
 var relations_label: Label
 var specimens_label: Label
+## Phase 8 rows.
+var visits_label: Label
+var wishes_label: Label
+var tips_label: Label
+var jakob_label: Label
+var night_label: Label
 ## value label -> its caption (hidden together).
 var _captions: Dictionary[Label, Label] = {}
 
@@ -83,6 +94,16 @@ static func complete_context(ctx: Dictionary, tree: SceneTree, unlocked: Array[S
 			var s := Database.section(id) as SectionData
 			names.append(s.display_name if s != null else String(id))
 		out["sections_unlocked"] = names
+	return out
+
+
+## Adds the Phase-8 rows (Phase8DayLog.take(): visits, wishes, tips, jakob, night) – keys already in the context
+## win.
+static func complete_phase8(ctx: Dictionary, log_data: Dictionary) -> Dictionary:
+	var out := ctx.duplicate()
+	for key: String in ["visits", "wishes", "tips", "jakob", "night"]:
+		if not out.has(key) and log_data.has(key):
+			out[key] = log_data[key]
 	return out
 
 
@@ -122,6 +143,11 @@ func _build() -> void:
 	orders_label = _add_row(grid, Phase7Texts.DAY_ORDERS)
 	relations_label = _add_row(grid, Phase7Texts.DAY_RELATIONS)
 	specimens_label = _add_row(grid, Phase7Texts.DAY_SPECIMENS)
+	visits_label = _add_row(grid, Phase8Texts.DAY_VISITS, true)
+	wishes_label = _add_row(grid, Phase8Texts.DAY_WISHES)
+	tips_label = _add_row(grid, Phase8Texts.DAY_TIPS)
+	jakob_label = _add_row(grid, Phase8Texts.DAY_JAKOB, true)
+	night_label = _add_row(grid, Phase8Texts.DAY_NIGHT, true)
 	box.add_child(grid)
 	box.add_child(UIKit.label(TEXT_SAVED, &"DimLabel"))
 	var bottom := UIKit.hbox()
@@ -175,6 +201,17 @@ func _refresh() -> void:
 	_show(relations_label, rel_text != "", rel_text)
 	var spec_text := Phase7Texts.specimens_text(context.get("specimens", {}))
 	_show(specimens_label, spec_text != "", spec_text)
+	var visits_text := Phase8Texts.visits_text(context.get("visits", []))
+	_show(visits_label, visits_text != "", visits_text)
+	var wishes_text := Phase8Texts.wishes_text(context.get("wishes", {}))
+	_show(wishes_label, wishes_text != "", wishes_text)
+	var tips := int(context.get("tips", 0))
+	_show(tips_label, tips > 0, "+%d %s" % [tips, Phase8Texts.coins(tips)])
+	tips_label.theme_type_variation = &"GoodLabel"
+	var jakob_text := Phase8Texts.jakob_text(context.get("jakob", {}))
+	_show(jakob_label, jakob_text != "", jakob_text)
+	var night_text := Phase8Texts.night_text(context.get("night", {}))
+	_show(night_label, night_text != "", night_text)
 
 
 ## German label of a rating id (&"orderly" → "Ordentlich"); other strings pass through.
@@ -196,10 +233,12 @@ func _show(value_label: Label, shown: bool, text: String) -> void:
 	_captions[value_label].visible = shown
 
 
-func _add_row(grid: GridContainer, caption: String) -> Label:
+func _add_row(grid: GridContainer, caption: String, wrap: bool = false) -> Label:
 	var cap := UIKit.label(caption, &"DimLabel")
 	grid.add_child(cap)
-	var value := UIKit.label("", &"SubheaderLabel")
+	var value := UIKit.label("", &"SubheaderLabel", wrap)
+	if wrap:
+		value.custom_minimum_size.x = wrap_width
 	grid.add_child(value)
 	_captions[value] = cap
 	return value
