@@ -14,6 +14,8 @@ prefix "p8_"); on a day without the flag nothing changes (ScheduleResolver skips
   beggar_gate_day          – Veit at the cemetery gate on odd days (§2.6; Wanderers, P7)
   peddler_day              – Hanne's day (day % 6 == 1, §2.6; Wanderers, P7)
   apprentice_off_day       – Jakob's free day in the inn (§2.5.1; Apprentice, P3)
+  meet_<npc>_day           – a friendship meeting on the hill (W3 QA8-03; Orders, conditions.schedule_flag):
+                             Fenner at l_12 (of_fenner_2), Rosine at Jakob's bench (of_rosine_3)
 Waypoints of W-Welt (§4.2–§4.6): veit_gate, peddler_gate, lights_gate, gv_<plot>, v_church_step, v_bridge_sit,
 v_well_peddler, v_remise_sleep, v_peddler_in, v_peddler_out, v_in_inn_jakob, v_ott_door,
 v_kehr_door; the dance places v_in_inn_fest_1…4 are a P6 request to W-Welt (D6 Tanzfläche).
@@ -103,6 +105,44 @@ def visit(target, arrive, leave, flag, dialogue, animation, activity="mourn", wa
         stay(arrive, at, dialogue, flag, region="", animation=animation, activity=activity),
         walk(leave, list(reversed(path)), minutes, flag, region="", animation=walk_anim),
         hide(leave + minutes, "road_end", flag, region=""),
+    ]
+
+
+def village_minutes(path):
+    """Walking minutes of a village polyline (data/world/village_layout.json, 3.2 m per game minute)."""
+    with open(os.path.join(ROOT, "data", "world", "village_layout.json"), encoding="utf-8") as f:
+        pts = json.load(f)["waypoints"]
+    length = sum(((pts[a][0] - pts[b][0]) ** 2 + (pts[a][1] - pts[b][1]) ** 2) ** 0.5 for a, b in zip(path, path[1:]))
+    return max(1, -(-int(round(length * 1000)) // int(WALK_M_PER_MINUTE * 1000)))
+
+
+def meet_up(flag, target, arrive, leave, dialogue, out_path, back_path, back):
+    """W3 (QA8-03): a meet order on the hill (Orders sets `flag` = the day while it is accepted): from the village
+    over the bridge, up the baked route to `target` (arriving at `arrive`), stay, back down from `leave`, then over
+    `back_path` to `back` (an E for the rest of the afternoon). `target` "<route>:<stop>" ends the route at <stop>
+    (a free spot next to a bench instead of the seat)."""
+    route, stop = (target.split(":") + [""])[:2]
+    path, minutes = route_up(route)
+    if stop:
+        path = path[:path.index(stop) + 1]
+        pts = _points()
+        length = sum(((pts[a][0] - pts[b][0]) ** 2 + (pts[a][1] - pts[b][1]) ** 2) ** 0.5 for a, b in zip(path, path[1:]))
+        minutes = max(1, -(-int(round(length * 1000)) // int(WALK_M_PER_MINUTE * 1000)))
+    out_m = village_minutes(out_path)
+    back_m = village_minutes(back_path)
+    up = arrive - minutes
+    down = leave + minutes
+    back.start = down + back_m
+    back.flag = flag
+    return [
+        walk(up - out_m, out_path, out_m, flag),
+        hide(up, out_path[-1], flag),
+        walk(up, path, minutes, flag, region=""),
+        stay(arrive, path[-1], dialogue, flag, region=""),
+        walk(leave, list(reversed(path)), minutes, flag, region=""),
+        hide(down, "road_end", flag, region=""),
+        walk(down, back_path, back_m, flag),
+        back,
     ]
 
 
@@ -225,7 +265,12 @@ def lights(home, back_to, back_dialogue="", back_activity="idle", back_anim="idl
 
 
 def innkeeper():
-    patch("innkeeper", lights("v_in_inn_bar", "v_in_inn_bar", "v_innkeeper", "shop"))
+    # W3 (QA8-03): of_rosine_3 „Oben bei Jakob" – Rosine at Jakob's bench 15:00–15:40 (meet window 900–940),
+    # standing beside it (vw_39), back behind the bar by 16:30.
+    patch("innkeeper", lights("v_in_inn_bar", "v_in_inn_bar", "v_innkeeper", "shop") + meet_up(
+        "meet_innkeeper_day", "apprentice_lunch:vw_39", 895, 940, "v_innkeeper",
+        ["v_inn_door", "v_anger_w", "v_bridge", "v_road_in"], ["v_road_in", "v_bridge", "v_anger_w", "v_inn_door"],
+        E(0, ["v_in_inn_bar"], "shop", "idle", 0, "v_innkeeper")))
 
 
 def smith():
@@ -260,7 +305,12 @@ def grocer():
 
 
 def mayor():
-    patch("mayor", [
+    # W3 (QA8-03): of_fenner_2 „Ein Platz mit Blick" – Fenner at l_12 16:00–16:40 (meet window 960–1000), then
+    # at the board until the inn at 18:00 as every day.
+    patch("mayor", meet_up(
+        "meet_mayor_day", "gv_l_12", 955, 1000, "v_mayor",
+        ["v_office_door", "v_well", "v_bridge", "v_road_in"], ["v_road_in", "v_bridge", "v_anger_w", "v_board"],
+        E(0, ["v_board"], "idle", "idle", 0, "v_mayor")) + [
         stay(1260, "v_in_inn_table", "v_mayor", KATHREIN),
         hide(1380, "v_office_door", KATHREIN),
     ] + lights("v_board", "v_board", "v_mayor"))

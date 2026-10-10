@@ -264,9 +264,8 @@ choices = Array[ExtResource("2")]([SubResource("p8_listen_c01")])
 
 [sub_resource type="Resource" id="p8_favor_c01"]
 script = ExtResource("2")
-text = "Ja, bestell es."
-next = &"favor_done"
-actions = Array[String](["favor_use:grocer"])
+text = "Zeig mir, was sie trägt."
+actions = Array[String](["open_panel:favor"])
 
 [sub_resource type="Resource" id="p8_favor_c02"]
 script = ExtResource("2")

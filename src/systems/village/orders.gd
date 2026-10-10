@@ -67,6 +67,15 @@ const TASK_FIRST_DAY := &"apprentice_first_day"
 const UNTIL_NEXT_VISIT := &"next_visit"
 const FRESH := &"fresh"
 const VISIT_AT_GRAVE: Array[StringName] = [&"mourning", &"waiting"]
+## W3 (QA8-03): a meet order away from the giver's day (Fenner at l_12, Rosine at Jakob's bench) names the
+## schedule overlay that brings the giver there – conditions.schedule_flag = the today_flag of those entries
+## (data/npc/<giver>_schedule.tres). Set to the day of the meeting while the order is accepted: on the
+## acceptance (today if the walk can still start, else tomorrow) and every morning; never on the Lichtgang.
+const MEET_SCHEDULE_FLAG := "schedule_flag"
+## Minutes the giver needs from the village to the place before the window opens.
+const MEET_LEAD_MINUTES := 60
+const FESTIVALS_GROUP := &"festivals"
+const LIGHTS_FEST := &"fest_lights"
 ## W0-Notizen 12: a specimen handed over in an order stays in Quast's cabinet – the record state
 ## Specimens.consume knows for that („lectured = stays in his cabinet", SpecimenRecord). &"sold" was
 ## refused by consume: the slot was emptied, the record stayed „held" (warning on every load).
@@ -579,6 +588,8 @@ func apply_morning(day: int) -> void:
 		return
 	_board_day = day
 	_adopt_arrived_stories()
+	for id: StringName in active():
+		_set_meet_flag(order_data(id), day)
 	# Deadlines (06:00 of accepted_day + days_limit).
 	for id: StringName in active():
 		var o := order_data(id)
@@ -718,6 +729,9 @@ func _accept(o: OrderData, day: int) -> void:
 	_progress.erase(PROGRESS_CANDLES + String(o.id))
 	if o.accept_flag != &"":
 		GameState.set_flag(o.accept_flag, true)
+	if o.kind == KIND_MEET:
+		var start := OrderRules.window_start(o.conditions.get("window"))
+		_set_meet_flag(o, day if TimeManager.minute_of_day + MEET_LEAD_MINUTES <= start else day + 1)
 	# Phase 8: what the giver hands over with the task (Theres' three pots, Quast's crate).
 	var gives := OrderRules.gives(o)
 	if not gives.is_empty():
@@ -959,6 +973,20 @@ func _check_friend_live(day: int, minute: int) -> void:
 
 func _visitors() -> Node:
 	return _first(VISITORS_GROUP)
+
+
+## QA8-03: the giver's schedule overlay of a meet order runs on `day` (not on the Lichtgang, whose own
+## overlays fill the same hours).
+func _set_meet_flag(o: OrderData, day: int) -> void:
+	if o == null or o.kind != KIND_MEET or not o.conditions.has(MEET_SCHEDULE_FLAG):
+		return
+	var flag := StringName(str(o.conditions[MEET_SCHEDULE_FLAG]))
+	if flag == &"":
+		return
+	var fest := _first(FESTIVALS_GROUP)
+	if fest != null and fest.has_method(&"fest_day") and int(fest.call(&"fest_day", LIGHTS_FEST)) == day:
+		day += 1
+	GameState.set_flag(flag, day)
 
 
 func _chapel_level() -> int:

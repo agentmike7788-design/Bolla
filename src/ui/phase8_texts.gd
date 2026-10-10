@@ -216,7 +216,10 @@ const TIP_MORTSAFE_NEW := "Grabgitter seit heute"
 const TIP_DISTURBED := "aufgewühlt"
 const TIP_KIN := "%s: %s"
 const TIP_WISH := "Wunsch: %s"
-const TIP_COINS := "%d %s auf dem Stein (%s)"
+## W3 (QA8-10): „Zwei Münzen auf dem Stein (Martha Kehr)" – the number as a word (coins_on_stone).
+const TIP_COINS := "%s auf dem Stein (%s)"
+const COIN_WORDS: PackedStringArray = ["Keine Münzen", "Eine Münze", "Zwei Münzen", "Drei Münzen", "Vier Münzen", "Fünf Münzen",
+		"Sechs Münzen"]
 const TIP_RESERVED := "vorgemerkt: %s"
 
 # --- register (§7.6) ----------------------------------------------------------------------------------
@@ -376,6 +379,16 @@ static func days_word(n: int) -> String:
 
 static func coins(n: int) -> String:
 	return Phase7Texts.coins(n)
+
+
+## QA8-10: „Zwei Münzen" (a word up to six, then „7 Münzen").
+static func coin_count(n: int) -> String:
+	return COIN_WORDS[n] if n >= 0 and n < COIN_WORDS.size() else "%d %s" % [n, coins(n)]
+
+
+## QA8-10: „Zwei Münzen auf dem Stein (Martha Kehr)" – tooltip, map marker and (with „[E] ") the prompts.
+static func coins_on_stone(n: int, giver: String) -> String:
+	return TIP_COINS % [coin_count(n), giver]
 
 
 ## „1 Tag" / „5 Std." from game minutes (`dative`: „2 Tagen", after „in").
@@ -666,7 +679,7 @@ static func grave_lines(info: Dictionary) -> PackedStringArray:
 		out.append(TIP_WISH % wish_kind_label(wish))
 	var n := int(info.get("coins", 0))
 	if n > 0:
-		out.append(TIP_COINS % [n, coins(n), str(info.get("giver", ""))])
+		out.append(coins_on_stone(n, str(info.get("giver", ""))))
 	var reserved := str(info.get("reserved", ""))
 	if reserved != "":
 		out.append(TIP_RESERVED % reserved)

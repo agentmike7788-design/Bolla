@@ -538,9 +538,18 @@ func load_state(data: Dictionary) -> void:
 			_goodwill[StringName(str(key))] = clampi(_int((gw as Dictionary)[key], _cfg().goodwill_start), 0, 10)
 	_last_visit = _int_map(data.get("last_visit", {}))
 	_last_kin = _int_map(data.get("last_kin", {}))
+	# W3 (QA8-12, §10 fuzzer): the plan belongs to its plan day (entries of another day or a plan day in the future
+	# are dropped – the morning plans again).
+	if _plan_day > TimeManager.day:
+		_plan_day = -1
+	var day_plan: Array[Dictionary] = []
+	day_plan.assign(_plan.filter(func(e: Dictionary) -> bool: return int(e.get("day", _plan_day)) == _plan_day))
+	_plan = day_plan
 	_wishes.clear()
 	var wishes: Variant = data.get("wishes", [])
 	var per_grave := {}
+	var open_count := 0
+	var graveyard := _graveyard()
 	if wishes is Array:
 		for w: Variant in wishes:
 			if not w is Dictionary or not (w as Dictionary).has("wish_id"):
@@ -549,10 +558,12 @@ func load_state(data: Dictionary) -> void:
 			e["day"] = _int(e.get("day"), 0)
 			var open := str(e.get("state", "")) in ["offered", "accepted"]
 			var g := str(e.get("grave_id", ""))
-			if open and per_grave.has(g):
+			# QA8-12: one open wish per grave, at most max_open, only on a grave of this world.
+			if open and (per_grave.has(g) or open_count >= _cfg().max_open or (graveyard != null and graveyard.get_grave(g) == null)):
 				continue
 			if open:
 				per_grave[g] = true
+				open_count += 1
 			_wishes.append(e)
 	var tips: Variant = data.get("tips_today", {})
 	_tips_day = _int((tips as Dictionary).get("day"), -1) if tips is Dictionary else -1

@@ -60,7 +60,7 @@ static func context(tree: SceneTree) -> Dictionary:
 			marks.append({"kind": &"wish", "region": &"graveyard", "place": String(g), "id": String(g), "text": _wish_text(tree, String(g))})
 		if int(i.get("coins", 0)) > 0:
 			marks.append({"kind": &"coins", "region": &"graveyard", "place": String(g), "id": String(g),
-					"text": Phase8Texts.TIP_COINS % [int(i.coins), Phase8Texts.coins(int(i.coins)), str(i.get("giver", ""))]})
+					"text": Phase8Texts.coins_on_stone(int(i.coins), str(i.get("giver", "")))})
 		if bool(i.get("disturbed", false)):
 			marks.append({"kind": &"disturbed", "region": &"graveyard", "place": String(g), "id": String(g), "text": TEXT_DISTURBED})
 	return {"marks": marks, "grave_info": info}

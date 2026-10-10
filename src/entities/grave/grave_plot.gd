@@ -91,7 +91,7 @@ const PROMPT_NAME := "[E] Namen nachmeißeln (%d Min, 1 Tinte)"
 const LABEL_NAME := "Namen nachmeißeln"
 const NAME_MINUTES := 40
 const NAME_FALLBACK := "Kaspar Dorn"
-const PROMPT_COINS := "[E] %d Münzen auf dem Stein (%s)"
+const PROMPT_COINS := "[E] %s"
 const PROMPT_CLOSE := "[E] Grab wieder schließen (%d Min)"
 const PROMPT_WATER := "[E] Blumen gießen (%d Min)"
 const PROMPT_PLANT := "[E] Grabblumen setzen (%d Min)"
@@ -541,13 +541,24 @@ func _care_action(player: Player, enabled_only: bool) -> StringName:
 	if not grave.state in [GraveRecord.State.FILLED, GraveRecord.State.MARKED, GraveRecord.State.OLD]:
 		return &""
 	var dimmed := &""
-	for action: StringName in CARE_ORDER:
+	for action: StringName in care_order(player):
 		var state := _care_state(action, player)
 		if state == 1:
 			return action
 		if state == 0 and dimmed == &"":
 			dimmed = action
 	return &"" if enabled_only else dimmed
+
+
+## W3 (QA8-08): CARE_ORDER, but a candle that can be lit now comes before planting flowers and laying a wreath –
+## the candle has its hours (15:00–07:00), flowers can be set any time, and [E] at dusk with seedlings and a
+## candle in the bag lit the candle only after the seedlings were used up. Two presses still do both.
+func care_order(player: Player) -> Array[StringName]:
+	var order: Array[StringName] = CARE_ORDER.duplicate()
+	if player != null and _care_state(CARE_CANDLE, player) == 1:
+		order.erase(CARE_CANDLE)
+		order.insert(order.find(CARE_PLANT), CARE_CANDLE)
+	return order
 
 
 ## 1 = possible now, 0 = shown dimmed (block reason), −1 = not offered here.
@@ -609,7 +620,7 @@ func care_prompt(action: StringName, player: Player) -> String:
 	var inv := player.inventory if player != null else null
 	match action:
 		CARE_COINS:
-			return PROMPT_COINS % [_coins_on_stone(), _tip_giver()]
+			return PROMPT_COINS % Phase8Texts.coins_on_stone(_coins_on_stone(), _tip_giver())
 		CARE_CLOSE:
 			return PROMPT_CLOSE % _close_minutes(player)
 		CARE_WATER:

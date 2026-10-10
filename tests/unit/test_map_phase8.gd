@@ -96,7 +96,7 @@ func test_marks_from_the_systems() -> void:
 	assert_eq(str(visitor.text), "Martha Kehr", "the name in the tooltip")
 	assert_eq(str(visitor.place), "l_02", "no Npc here: at the grave")
 	assert_true(str(_mark(ctx.marks, &"wish").text).begins_with("Wunsch: Blumen (Die Kehrs"), str(_mark(ctx.marks, &"wish").text))
-	assert_eq(str(_mark(ctx.marks, &"coins").text), "2 Münzen auf dem Stein (Gesa Ott)")
+	assert_eq(str(_mark(ctx.marks, &"coins").text), "Zwei Münzen auf dem Stein (Gesa Ott)")
 	assert_true(ctx.grave_info.has("l_02"))
 
 

@@ -7,6 +7,13 @@ extends Node3D
 
 const PANEL := &"grave_register"
 const PROMPT_READ := "[E] Grabregister lesen"
+## W3 (QA8-04, docs/PHASE8_DESIGN.md §2.4, §2.11): while an accepted order asks for a register extract the
+## gravekeeper has not copied yet, [E] copies one (GraveCareConfig.extract_minutes, 1 ink) – reading again after.
+const PROMPT_COPY := "[E] Namen für %s abschreiben (%d Min, 1 Tinte)"
+const PROMPT_COPY_NO_INK := "Namen für %s abschreiben: keine Tinte"
+const LABEL_COPY := "Namen abschreiben"
+const ANIM_COPY := &"interact"
+const ORDERS_GROUP := &"orders"
 const GRAVEYARD_GROUP := &"graveyard"
 const CORPSE_MANAGER_GROUP := &"corpse_manager"
 const SCORE_GROUP := &"cemetery_score"
@@ -20,13 +27,62 @@ func can_interact(player: Player) -> bool:
 	return player != null and not player.is_busy()
 
 
-func get_interaction_prompt(_player: Player) -> String:
+func get_interaction_prompt(player: Player) -> String:
+	var giver := extract_wanted_by(player)
+	if giver != "":
+		var cfg := _care_config()
+		if player.inventory == null or not player.inventory.has(cfg.line_item):
+			return PROMPT_COPY_NO_INK % giver
+		return PROMPT_COPY % [giver, cfg.extract_minutes]
 	return PROMPT_READ
 
 
 func interact(player: Player) -> void:
-	if can_interact(player):
-		EventBus.ui_panel_requested.emit(PANEL, register_context())
+	if not can_interact(player):
+		return
+	if extract_wanted_by(player) != "":
+		var cfg := _care_config()
+		if player.inventory != null and player.inventory.has(cfg.line_item):
+			player.start_timed_action(LABEL_COPY, cfg.extract_minutes, _finish_copy.bind(player), true, ANIM_COPY)
+		return
+	EventBus.ui_panel_requested.emit(PANEL, register_context())
+
+
+## The short name of the giver of an accepted order that still needs a register extract from `player`
+## ("" = none: every such order is covered by the extracts in the bag).
+func extract_wanted_by(player: Player) -> String:
+	var orders := _first(ORDERS_GROUP) as Orders
+	if orders == null or player == null or player.inventory == null:
+		return ""
+	var item := _care_config().extract_item
+	var needed := 0
+	var giver := ""
+	for id: StringName in orders.active():
+		var o := orders.order_data(id)
+		if o == null or o.kind != &"deliver" or not o.items.has(item):
+			continue
+		needed += int(o.items[item])
+		if giver == "":
+			giver = _short_name(o.giver)
+	return giver if needed > player.inventory.count(item) else ""
+
+
+func _finish_copy(player: Player) -> void:
+	var cfg := _care_config()
+	var inv := player.inventory
+	if inv == null or not inv.remove_item(cfg.line_item, 1):
+		return
+	if not inv.add_item(cfg.extract_item, 1):
+		inv.add_item(cfg.line_item, 1)
+
+
+static func _short_name(villager_id: StringName) -> String:
+	return Phase7Texts.short_name(villager_id)
+
+
+func _care_config() -> GraveCareConfig:
+	var cfg := Database.config(&"grave_care_config") as GraveCareConfig
+	return cfg if cfg != null else GraveCareConfig.new()
 
 
 ## {entries, total, rating} of the current world (empty register without the systems).

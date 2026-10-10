@@ -5,13 +5,83 @@
 
 [sub_resource type="Resource" id="p8_mayor_01"]
 script = ExtResource("1_ttn2y")
+start_minute = 915
+travel_minutes = 16
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_office_door", "v_well", "v_bridge", "v_road_in")
+region = &"village"
+today_flag = &"meet_mayor_day"
+
+[sub_resource type="Resource" id="p8_mayor_02"]
+script = ExtResource("1_ttn2y")
+start_minute = 931
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"meet_mayor_day"
+
+[sub_resource type="Resource" id="p8_mayor_03"]
+script = ExtResource("1_ttn2y")
+start_minute = 931
+travel_minutes = 24
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("road_end", "road_mid", "gate_outside", "gate_inside", "vw_36", "vw_50", "vw_03", "vw_26", "vw_27", "vw_28", "vw_31", "vw_35", "gv_l_12")
+today_flag = &"meet_mayor_day"
+
+[sub_resource type="Resource" id="p8_mayor_04"]
+script = ExtResource("1_ttn2y")
+start_minute = 955
+path = PackedStringArray("gv_l_12")
+dialogue_id = &"v_mayor"
+today_flag = &"meet_mayor_day"
+
+[sub_resource type="Resource" id="p8_mayor_05"]
+script = ExtResource("1_ttn2y")
+start_minute = 1000
+travel_minutes = 24
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("gv_l_12", "vw_35", "vw_31", "vw_28", "vw_27", "vw_26", "vw_03", "vw_50", "vw_36", "gate_inside", "gate_outside", "road_mid", "road_end")
+today_flag = &"meet_mayor_day"
+
+[sub_resource type="Resource" id="p8_mayor_06"]
+script = ExtResource("1_ttn2y")
+start_minute = 1024
+activity = &"home"
+path = PackedStringArray("road_end")
+visible = false
+today_flag = &"meet_mayor_day"
+
+[sub_resource type="Resource" id="p8_mayor_07"]
+script = ExtResource("1_ttn2y")
+start_minute = 1024
+travel_minutes = 8
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_road_in", "v_bridge", "v_anger_w", "v_board")
+region = &"village"
+today_flag = &"meet_mayor_day"
+
+[sub_resource type="Resource" id="p8_mayor_08"]
+script = ExtResource("1_ttn2y")
+start_minute = 1032
+path = PackedStringArray("v_board")
+dialogue_id = &"v_mayor"
+region = &"village"
+today_flag = &"meet_mayor_day"
+
+[sub_resource type="Resource" id="p8_mayor_09"]
+script = ExtResource("1_ttn2y")
 start_minute = 1260
 path = PackedStringArray("v_in_inn_table")
 dialogue_id = &"v_mayor"
 region = &"village"
 today_flag = &"fest_kathrein_day"
 
-[sub_resource type="Resource" id="p8_mayor_02"]
+[sub_resource type="Resource" id="p8_mayor_10"]
 script = ExtResource("1_ttn2y")
 start_minute = 1380
 activity = &"home"
@@ -20,7 +90,7 @@ visible = false
 region = &"village"
 today_flag = &"fest_kathrein_day"
 
-[sub_resource type="Resource" id="p8_mayor_03"]
+[sub_resource type="Resource" id="p8_mayor_11"]
 script = ExtResource("1_ttn2y")
 start_minute = 950
 travel_minutes = 10
@@ -30,14 +100,14 @@ path = PackedStringArray("v_board", "v_anger_w", "v_bridge")
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_mayor_04"]
+[sub_resource type="Resource" id="p8_mayor_12"]
 script = ExtResource("1_ttn2y")
 start_minute = 960
 path = PackedStringArray("v_bridge")
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_mayor_05"]
+[sub_resource type="Resource" id="p8_mayor_13"]
 script = ExtResource("1_ttn2y")
 start_minute = 990
 travel_minutes = 5
@@ -47,7 +117,7 @@ path = PackedStringArray("v_bridge", "v_road_in")
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_mayor_06"]
+[sub_resource type="Resource" id="p8_mayor_14"]
 script = ExtResource("1_ttn2y")
 start_minute = 995
 activity = &"home"
@@ -56,7 +126,7 @@ visible = false
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_mayor_07"]
+[sub_resource type="Resource" id="p8_mayor_15"]
 script = ExtResource("1_ttn2y")
 start_minute = 1125
 travel_minutes = 12
@@ -66,7 +136,7 @@ path = PackedStringArray("v_road_in", "v_bridge", "v_anger_w", "v_board")
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_mayor_08"]
+[sub_resource type="Resource" id="p8_mayor_16"]
 script = ExtResource("1_ttn2y")
 start_minute = 1137
 path = PackedStringArray("v_board")
@@ -74,14 +144,28 @@ dialogue_id = &"v_mayor"
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_mayor_09"]
+[sub_resource type="Resource" id="p8_mayor_17"]
+script = ExtResource("1_ttn2y")
+start_minute = 960
+path = PackedStringArray("gv_l_12")
+dialogue_id = &"v_mayor"
+today_flag = &"meet_mayor_day"
+
+[sub_resource type="Resource" id="p8_mayor_18"]
+script = ExtResource("1_ttn2y")
+start_minute = 965
+path = PackedStringArray("gv_l_12")
+dialogue_id = &"v_mayor"
+today_flag = &"meet_mayor_day"
+
+[sub_resource type="Resource" id="p8_mayor_19"]
 script = ExtResource("1_ttn2y")
 start_minute = 965
 path = PackedStringArray("v_bridge")
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_mayor_10"]
+[sub_resource type="Resource" id="p8_mayor_20"]
 script = ExtResource("1_ttn2y")
 start_minute = 1080
 activity = &"home"
@@ -90,7 +174,7 @@ visible = false
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_mayor_11"]
+[sub_resource type="Resource" id="p8_mayor_21"]
 script = ExtResource("1_ttn2y")
 start_minute = 1085
 activity = &"home"
@@ -189,4 +273,4 @@ region = &"village"
 script = ExtResource("2_hf8u0")
 npc_id = &"mayor"
 display_name = "Gottlieb Fenner"
-entries = Array[ExtResource("1_ttn2y")]([SubResource("Resource_5l2sa"), SubResource("Resource_3o3ey"), SubResource("Resource_0oylv"), SubResource("Resource_2kkg6"), SubResource("Resource_f1tkc"), SubResource("Resource_aojaw"), SubResource("Resource_tdu31"), SubResource("Resource_sfipx"), SubResource("Resource_irxlc"), SubResource("Resource_ofwtp"), SubResource("Resource_jjb4c"), SubResource("p8_mayor_01"), SubResource("p8_mayor_02"), SubResource("p8_mayor_03"), SubResource("p8_mayor_04"), SubResource("p8_mayor_05"), SubResource("p8_mayor_06"), SubResource("p8_mayor_07"), SubResource("p8_mayor_08"), SubResource("p8_mayor_09"), SubResource("p8_mayor_10"), SubResource("p8_mayor_11")])
+entries = Array[ExtResource("1_ttn2y")]([SubResource("Resource_5l2sa"), SubResource("Resource_3o3ey"), SubResource("Resource_0oylv"), SubResource("Resource_2kkg6"), SubResource("Resource_f1tkc"), SubResource("Resource_aojaw"), SubResource("Resource_tdu31"), SubResource("Resource_sfipx"), SubResource("Resource_irxlc"), SubResource("Resource_ofwtp"), SubResource("Resource_jjb4c"), SubResource("p8_mayor_01"), SubResource("p8_mayor_02"), SubResource("p8_mayor_03"), SubResource("p8_mayor_04"), SubResource("p8_mayor_05"), SubResource("p8_mayor_06"), SubResource("p8_mayor_07"), SubResource("p8_mayor_08"), SubResource("p8_mayor_09"), SubResource("p8_mayor_10"), SubResource("p8_mayor_11"), SubResource("p8_mayor_12"), SubResource("p8_mayor_13"), SubResource("p8_mayor_14"), SubResource("p8_mayor_15"), SubResource("p8_mayor_16"), SubResource("p8_mayor_17"), SubResource("p8_mayor_18"), SubResource("p8_mayor_19"), SubResource("p8_mayor_20"), SubResource("p8_mayor_21")])

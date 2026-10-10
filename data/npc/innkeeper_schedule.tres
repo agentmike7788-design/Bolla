@@ -58,6 +58,77 @@ dialogue_id = &"v_innkeeper"
 region = &"village"
 today_flag = &"fest_lights_day"
 
+[sub_resource type="Resource" id="p8_innkeeper_07"]
+script = ExtResource("1_v66aq")
+start_minute = 865
+travel_minutes = 15
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_inn_door", "v_anger_w", "v_bridge", "v_road_in")
+region = &"village"
+today_flag = &"meet_innkeeper_day"
+
+[sub_resource type="Resource" id="p8_innkeeper_08"]
+script = ExtResource("1_v66aq")
+start_minute = 880
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"meet_innkeeper_day"
+
+[sub_resource type="Resource" id="p8_innkeeper_09"]
+script = ExtResource("1_v66aq")
+start_minute = 880
+travel_minutes = 15
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("road_end", "road_mid", "gate_outside", "gate_inside", "vw_38", "vw_39")
+today_flag = &"meet_innkeeper_day"
+
+[sub_resource type="Resource" id="p8_innkeeper_10"]
+script = ExtResource("1_v66aq")
+start_minute = 895
+path = PackedStringArray("vw_39")
+dialogue_id = &"v_innkeeper"
+today_flag = &"meet_innkeeper_day"
+
+[sub_resource type="Resource" id="p8_innkeeper_11"]
+script = ExtResource("1_v66aq")
+start_minute = 940
+travel_minutes = 15
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("vw_39", "vw_38", "gate_inside", "gate_outside", "road_mid", "road_end")
+today_flag = &"meet_innkeeper_day"
+
+[sub_resource type="Resource" id="p8_innkeeper_12"]
+script = ExtResource("1_v66aq")
+start_minute = 955
+activity = &"home"
+path = PackedStringArray("road_end")
+visible = false
+today_flag = &"meet_innkeeper_day"
+
+[sub_resource type="Resource" id="p8_innkeeper_13"]
+script = ExtResource("1_v66aq")
+start_minute = 955
+travel_minutes = 15
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_road_in", "v_bridge", "v_anger_w", "v_inn_door")
+region = &"village"
+today_flag = &"meet_innkeeper_day"
+
+[sub_resource type="Resource" id="p8_innkeeper_14"]
+script = ExtResource("1_v66aq")
+start_minute = 970
+activity = &"shop"
+path = PackedStringArray("v_in_inn_bar")
+dialogue_id = &"v_innkeeper"
+region = &"village"
+today_flag = &"meet_innkeeper_day"
+
 [sub_resource type="Resource" id="Resource_xo3po"]
 script = ExtResource("1_v66aq")
 activity = &"home"
@@ -111,4 +182,4 @@ region = &"village"
 script = ExtResource("2_rm641")
 npc_id = &"innkeeper"
 display_name = "Rosine Wackernagel"
-entries = Array[ExtResource("1_v66aq")]([SubResource("Resource_xo3po"), SubResource("Resource_gwt02"), SubResource("Resource_1sjgb"), SubResource("Resource_2fim3"), SubResource("Resource_f2xtg"), SubResource("Resource_wfxrd"), SubResource("p8_innkeeper_01"), SubResource("p8_innkeeper_02"), SubResource("p8_innkeeper_03"), SubResource("p8_innkeeper_04"), SubResource("p8_innkeeper_05"), SubResource("p8_innkeeper_06")])
+entries = Array[ExtResource("1_v66aq")]([SubResource("Resource_xo3po"), SubResource("Resource_gwt02"), SubResource("Resource_1sjgb"), SubResource("Resource_2fim3"), SubResource("Resource_f2xtg"), SubResource("Resource_wfxrd"), SubResource("p8_innkeeper_01"), SubResource("p8_innkeeper_02"), SubResource("p8_innkeeper_03"), SubResource("p8_innkeeper_04"), SubResource("p8_innkeeper_05"), SubResource("p8_innkeeper_06"), SubResource("p8_innkeeper_07"), SubResource("p8_innkeeper_08"), SubResource("p8_innkeeper_09"), SubResource("p8_innkeeper_10"), SubResource("p8_innkeeper_11"), SubResource("p8_innkeeper_12"), SubResource("p8_innkeeper_13"), SubResource("p8_innkeeper_14")])

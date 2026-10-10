@@ -278,7 +278,7 @@ def grocer():
         "Heute nicht, Totengräber. Morgen. Heute rechne ich nur.",
         ("Aus der Stadt bestellt",
          "Etwas aus Hannes Kiepe? Außerhalb ihres Tages? Ich bestelle es Ihnen. Morgen früh liegt es bei mir. Zu ihrem Preis.",
-         [C("Ja, bestell es.", "favor_done", act=["favor_use:grocer"])]),
+         [C("Zeig mir, was sie trägt.", "", act=["open_panel:favor"])]),
         [("of_mangold_return_1", "Kräuter für den Laden", "Acht Bund Kräuter. Die Stadt will sie, und ich will die Stadt.",
           "Drei Tage. Ich zähle.", "Acht Bund. Ich hab nachgezählt. Acht."),
          ("of_mangold_return_2", "Garn für den Laden", "Vier Strang Garn. Meins ist alle, und die Dorn spinnt nur für Tote.",
@@ -320,7 +320,7 @@ def priest():
         "Heute nicht, Totengräber. Morgen. Heute bete ich für mich selbst, das ist anstrengend genug.",
         ("Fürbitte",
          "Eine Fürbitte? Für einen Ihrer Toten? Gern. Drei Nächte. Sagen Sie mir nur, für wen. Gott kennt den Namen, aber ich nicht.",
-         [C("Für den, der es am nötigsten hat.", "favor_done", act=["favor_use:priest"])]),
+         [C("Ich sage Ihnen, für wen.", "", act=["open_panel:favor"])]),
         [("of_lenz_return_1", "Kerzen für den Altar", "Vier Altarkerzen. Der Advent kommt, und Gott sieht auch so, aber die "
           "Gemeinde nicht.", "Danke. Sie sind ein Segen. Sagen Sie es nicht dem Schultheiß.", "Vier. Schön gezogen. Vergelt's Gott."),
          ("of_lenz_return_2", "Blumen für einen Vergessenen", "Ein Grab, zu dem keiner kommt, mit frischen Blumen. Welches, "

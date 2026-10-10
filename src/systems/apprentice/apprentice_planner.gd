@@ -36,6 +36,11 @@ const WP_LUNCH := "apprentice_lunch"
 const WP_SWEEP := "apprentice_sweep"
 ## Where he stands beside a care spot / at the foot end of a grave without a visitor spot (m, towards the camera).
 const SPOT_STAND := Vector3(0.0, 0.0, 0.7)
+## W3 (QA8-11): a care spot by a fence (dirt_y01 at the south fence, dirt_h03 in the corner of the Holunderwinkel)
+## – the side towards the camera would put him on or behind the fence. The first side (S, W, E, N) with this free
+## distance in the walking net (GraveyardNav clearance) wins; none → the freest.
+const SPOT_STANDS: Array[Vector3] = [Vector3(0.0, 0.0, 0.7), Vector3(-0.7, 0.0, 0.0), Vector3(0.7, 0.0, 0.0), Vector3(0.0, 0.0, -0.7)]
+const STAND_CLEARANCE := 0.4
 const GRAVE_FOOT := Vector3(0.0, 0.0, 1.9)
 const MINUTES_PER_DAY := 1440
 
@@ -127,6 +132,26 @@ static func plan(day: int, from_minute: int, lines: Array[Dictionary], state: Di
 	return out
 
 
+## QA8-11: where he stands at the care spot at `pos` – SPOT_STAND unless that is by a fence or a wall (no walking net:
+## SPOT_STAND).
+static func spot_stand(pos: Vector3, tree: SceneTree) -> Vector3:
+	var world := tree.get_first_node_in_group(&"world") if tree != null else null
+	var nav: Variant = world.get(&"nav") if world != null and &"nav" in world else null
+	if not nav is GraveyardNav or (nav as GraveyardNav).grid.is_empty():
+		return pos + SPOT_STAND
+	var best := pos + SPOT_STAND
+	var best_free := -1.0
+	for offset: Vector3 in SPOT_STANDS:
+		var p := pos + offset
+		var free := (nav as GraveyardNav).clearance_at(Vector2(p.x, p.z))
+		if free >= STAND_CLEARANCE:
+			return p
+		if free > best_free:
+			best_free = free
+			best = p
+	return best
+
+
 ## Tool / consumable of a board line missing in his box ("Keine Kerzen mehr.") – [item ids].
 static func missing_items(lines: Array[Dictionary], items: Dictionary, state: Dictionary = {}) -> Array[StringName]:
 	var out: Array[StringName] = []
@@ -160,7 +185,7 @@ static func places(task: ApprenticeTaskData, area: StringName, tree: SceneTree, 
 					continue
 				if clean == null or not clean.has_method(&"level") or int(clean.call(&"level", spot.spot_id)) < 1:
 					continue
-				out.append({"spot_id": spot.spot_id, "grave_id": spot.grave_id, "pos": spot.global_position + SPOT_STAND})
+				out.append({"spot_id": spot.spot_id, "grave_id": spot.grave_id, "pos": spot_stand(spot.global_position, tree)})
 		KIND_FLOWERS, KIND_CANDLE:
 			var care := tree.get_first_node_in_group(&"grave_care")
 			if care == null:

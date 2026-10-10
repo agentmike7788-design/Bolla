@@ -626,6 +626,30 @@ func _check_consistent(what: String) -> void:
 			assert_true(line is String and line != "", "%s: %s extra line" % [what, g.id])
 	for key: StringName in SaveMigration.V7_NEW_STATS:
 		assert_true(GameState.stats.get(key) is int, "%s: stat %s is an int" % [what, key])
+	# Phase 8 (W3, §10, W1-Anschluss 8 / QA8-12): disturbed only on occupied graves, no mortsafe on an EMPTY grave,
+	# one open wish per grave and at most max_open, the visit plan only for its plan day (not in the future).
+	var care := world.get_node_or_null("Systems/GraveCare") as GraveCare
+	for g: GraveRecord in world.graveyard.graves():
+		var occupied := g.state in [GraveRecord.State.FILLED, GraveRecord.State.MARKED]
+		if g.disturbed or (care != null and care.is_disturbed(g.id)):
+			assert_true(occupied, "%s: %s disturbed only when occupied (%s)" % [what, g.id, g.state])
+		if care != null and care.has_mortsafe(g.id):
+			assert_ne(g.state, GraveRecord.State.EMPTY, "%s: no mortsafe on the EMPTY grave %s" % [what, g.id])
+	var visitors := world.get_node_or_null("Systems/Visitors") as Visitors
+	if visitors != null:
+		var open := visitors.open_wishes()
+		var cap := (Database.config(&"visitor_config") as VisitorConfig).max_open
+		assert_true(open.size() <= cap, "%s: ≤ %d open wishes (%d)" % [what, cap, open.size()])
+		var wished := {}
+		for w: Dictionary in open:
+			var g := str(w.get("grave_id", ""))
+			assert_false(wished.has(g), "%s: one open wish on %s" % [what, g])
+			wished[g] = true
+			assert_not_null(world.graveyard.get_grave(g), "%s: wish on a grave of this world (%s)" % [what, g])
+		var vs := visitors.save_state()
+		assert_true(int(vs.plan_day) <= TimeManager.day, "%s: no plan for a later day (%d)" % [what, int(vs.plan_day)])
+		for e: Dictionary in vs.plan:
+			assert_eq(int(e.get("day", vs.plan_day)), int(vs.plan_day), "%s: plan entry of the plan day" % what)
 	assert_true(TimeManager.running, what + ": the clock runs")
 	TimeManager.running = false
 	# The loaded state is stable: save → load gives the same state.

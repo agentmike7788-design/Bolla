@@ -420,7 +420,7 @@ func test_prompts_of_the_contract() -> void:
 	assert_eq(GraveCare.TEXT_TOO_EARLY, "Erst am Nachmittag.")
 	assert_true(RainBarrel.PROMPT.begins_with("[E] Gießkanne füllen"))
 	assert_true(WatchSpot.PROMPT_FORMAT.begins_with("[E] Im Schatten warten (bis ≈ "))
-	assert_true(TipStone.PROMPT_FORMAT.ends_with("Münzen auf dem Stein (%s)"))
+	assert_eq(TipStone.PROMPT_FORMAT % Phase8Texts.coins_on_stone(2, "Martha Kehr"), "[E] Zwei Münzen auf dem Stein (Martha Kehr)", "QA8-10")
 
 
 # --- objective line from the systems (§7.5) ------------------------------------------------------------------
@@ -469,7 +469,7 @@ func test_grave_tooltip_and_register_column() -> void:
 	assert_true(_contains(lines, "Grabgitter seit 3 Tagen"), str(lines))
 	assert_true(_contains(lines, "Die Kehrs: ruhig"), str(lines))
 	assert_true(_contains(lines, "Wunsch: Kerze"), str(lines))
-	assert_true(_contains(lines, "2 Münzen auf dem Stein (Martha Kehr)"), str(lines))
+	assert_true(_contains(lines, "Zwei Münzen auf dem Stein (Martha Kehr)"), str(lines))
 	h.care.set_disturbed("l_02")
 	lines = Phase8Texts.grave_lines(Phase8Status.grave_info(ui.get_tree())["l_02"])
 	assert_true(_contains(lines, "aufgewühlt"), str(lines))
