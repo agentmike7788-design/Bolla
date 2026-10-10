@@ -39,6 +39,9 @@ const TEXT_NOT_OPEN := ""
 const TEXT_ABSENT := "Veit ist gerade nicht da."
 const TEXT_TODAY := "Heute hast du Veit schon etwas gegeben."
 const TEXT_NO_COIN := "Du hast keine Münze."
+## today_flag of the schedules (data/npc/{peddler,beggar}_schedule.tres).
+const FLAG_PEDDLER_DAY := &"peddler_day"
+const FLAG_BEGGAR_GATE_DAY := &"beggar_gate_day"
 
 @export var save_id: String = "wanderers"
 @export var save_order: int = 76
@@ -55,6 +58,21 @@ var _talks: Dictionary = {}
 func _init() -> void:
 	add_to_group(GROUP, true)
 	add_to_group(&"saveable", true)
+
+
+func _ready() -> void:
+	EventBus.time_tick.connect(_on_time_tick)
+
+
+## W-Welt (W2, image p8_17): the day flags P6's schedules of Veit and Hanne wait for (today_flag) – Hanne's day
+## (peddler_day) and Veit's afternoon at the cemetery gate on odd days (beggar_gate_day), set to the calendar day.
+func _on_time_tick(day: int, _minute: int) -> void:
+	if not GameState.flag_on(OPEN_FLAG):
+		return
+	if peddler_day(day) and GameState.get_flag(FLAG_PEDDLER_DAY) != day:
+		GameState.set_flag(FLAG_PEDDLER_DAY, day)
+	if posmod(day, 2) == 1 and GameState.get_flag(FLAG_BEGGAR_GATE_DAY) != day:
+		GameState.set_flag(FLAG_BEGGAR_GATE_DAY, day)
 
 
 ## The wanderer is in the world now (by his / her day and the clock; from p8_open).

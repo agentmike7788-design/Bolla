@@ -39,7 +39,7 @@
     {"asset": "ph_chr_guest_b", "id": "FestGuest2", "pos": [3.25, 0.48], "rot_y": 180.0, "mount": "flat", "fest": "show"},
     {"asset": "ph_int_inn_fest_decor", "id": "FestDecor1", "interact": "fest_decor", "pos": [-1.75, -2.93], "y": 2.75, "rot_y": 0.0, "mount": "hang"},
     {"asset": "ph_int_inn_fest_decor", "id": "FestDecor2", "interact": "fest_decor", "pos": [1.85, -2.93], "y": 2.75, "rot_y": 0.0, "mount": "hang"},
-    {"asset": "ph_chr_fiddler", "id": "Fiddler", "interact": "fiddler", "pos": [2.0, -2.45], "rot_y": -37.0, "mount": "flat"}
+    {"asset": "ph_chr_fiddler", "id": "Fiddler", "interact": "fiddler", "pos": [2.75, -2.2], "rot_y": -90.0, "mount": "flat", "_comment": "W-Welt (Bild p8_20): auf der Ofenbank, zur Stube gewandt."}
   ],
   "waypoints": {
     "v_in_inn_bar": [-2.0, -2.5, 0.0],

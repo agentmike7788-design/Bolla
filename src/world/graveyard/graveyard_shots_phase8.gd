@@ -27,34 +27,34 @@ const G8_SHOTS: Array[Dictionary] = [
 	{"name": "p8_02_martha_coach_road", "day": 56, "minute": 500, "focus": Vector2(4.0, 18.0), "distance": 13.0,
 			"player": Vector2(-3.0, 12.0), "facing": 120.0, "stage": "visits",
 			"figures": [["npc_kin_kehr", Vector2(3.6, 18.4), Vector2(1.2, 12.2), &"walk", 0.3]]},
-	{"name": "p8_03_martha_kneels", "day": 56, "minute": 520, "player": Vector2(17.4, 19.2), "facing": 200.0, "game": 22.0,
-			"figures": [["npc_kin_kehr", "gv_l_09", "wp", &"kneel", 1.2]]},
+	{"name": "p8_03_martha_kneels", "day": 56, "minute": 520, "player": Vector2(17.8, 15.4), "facing": 60.0, "game": 22.0,
+			"figures": [["npc_kin_kehr", "gv_l_04", "wp", &"kneel", 1.2]]},
 	{"name": "p8_04_hinrich_hat", "day": 56, "minute": 930, "focus": Vector2(15.9, 19.4), "distance": 11.0,
 			"player": Vector2(13.0, 18.6), "facing": 90.0,
 			"figures": [["npc_kin_brandt", "gv_l_10", "wp", &"mourn_stand", 0.8]]},
-	{"name": "p8_06_coins_on_stone", "day": 56, "minute": 980, "player": Vector2(13.25, 20.3), "facing": 160.0, "game": 12.0, "ui": true,
+	{"name": "p8_06_coins_on_stone", "day": 56, "minute": 980, "player": Vector2(12.35, 20.75), "facing": 90.0, "game": 12.0, "ui": true,
 			"stage": "tip"},
 	{"name": "p8_07a_flowers_fresh_wilted_wreath", "day": 56, "minute": 600, "focus": Vector2(15.9, 13.8), "distance": 10.0,
 			"player": Vector2(21.2, 15.0), "facing": 270.0, "stage": "flowers"},
-	{"name": "p8_07b_rain_barrel", "day": 56, "minute": 610, "focus": Vector2(-6.4, -4.4), "distance": 9.0,
-			"player": Vector2(-6.88, -3.39), "facing": 198.0},
-	{"name": "p8_08_jakob_rakes", "day": 56, "minute": 560, "focus": Vector2(-5.6, 1.6), "distance": 13.0,
+	{"name": "p8_07b_rain_barrel", "day": 56, "minute": 610, "focus": Vector2(-6.6, -4.3), "distance": 7.5, "pitch": 64.0,
+			"player": Vector2(-8.05, -3.55), "facing": 60.0, "player_clip": &"water"},
+	{"name": "p8_08_jakob_rakes", "day": 56, "minute": 560, "focus": Vector2(-5.0, 3.2), "distance": 10.5,
 			"player": Vector2(-1.5, 3.5), "facing": 250.0,
-			"figures": [["npc_apprentice", Vector2(-6.1, 2.9), 200.0, &"rake", 0.4]]},
+			"figures": [["npc_apprentice", Vector2(-6.1, 3.4), 295.0, &"rake", 0.4]]},
 	{"name": "p8_09_jakob_watches", "day": 56, "minute": 600, "focus": Vector2(-8.6, 2.6), "distance": 9.0,
 			"player": Vector2(-8.9, 2.6), "facing": 180.0, "player_clip": &"interact",
-			"figures": [["npc_apprentice", Vector2(-7.6, 3.6), Vector2(-8.9, 2.4), &"watch", 0.6]]},
+			"figures": [["npc_apprentice", Vector2(-9.45, 3.95), Vector2(-8.9, 2.4), &"watch", 0.6]]},
 	{"name": "p8_10a_jakob_waters", "day": 56, "minute": 700, "focus": Vector2(4.8, 2.4), "distance": 9.0,
-			"player": Vector2(9.0, 3.4), "facing": 270.0,
-			"figures": [["npc_apprentice", "gv_old_05", "wp", &"water", 0.5]]},
-	{"name": "p8_10b_jakob_candle_dusk", "day": 56, "minute": 990, "focus": Vector2(6.7, 3.0), "distance": 9.0,
+			"player": Vector2(9.0, 3.4), "facing": 270.0, "stage": "flowers_old_05",
+			"figures": [["npc_apprentice", Vector2(5.8, 1.55), Vector2(4.8, 1.0), &"water", 0.5]]},
+	{"name": "p8_10b_jakob_candle_dusk", "day": 56, "minute": 1018, "focus": Vector2(6.9, 2.4), "distance": 8.0,
 			"player": Vector2(10.0, 3.8), "facing": 270.0, "stage": "candle_old_06",
-			"figures": [["npc_apprentice", "gv_old_06", "wp", &"candle", 0.7]]},
+			"figures": [["npc_apprentice", Vector2(7.65, 1.0), Vector2(6.7, 0.75), &"candle", 0.7]]},
 	{"name": "p8_12_jakob_lunch", "day": 56, "minute": 735, "focus": Vector2(-3.4, -4.8), "distance": 8.0,
 			"player": Vector2(-1.0, -2.6), "facing": 300.0,
 			"figures": [["npc_apprentice", "apprentice_lunch", "wp", &"sit_eat", 0.5]]},
-	{"name": "p8_13_esch_theres_old_graves", "day": 56, "minute": 880, "focus": Vector2(-1.4, 1.6), "distance": 15.0,
-			"player": Vector2(1.6, 7.0), "facing": 200.0,
+	{"name": "p8_13_esch_theres_old_graves", "day": 56, "minute": 880, "focus": Vector2(-1.3, 2.6), "distance": 16.5,
+			"player": Vector2(1.6, 7.0), "facing": 200.0, "stage": "flowers_old_08",
 			"figures": [["npc_smith_g", "gv_old_01", "wp", &"mourn_stand", 0.6], ["npc_grocer_g", "gv_old_08", "wp", &"kneel", 1.4]]},
 	{"name": "p8_16_veit_hanne_gate", "day": 55, "minute": 950, "focus": Vector2(1.2, 10.8), "distance": 10.0,
 			"player": Vector2(1.2, 8.0), "facing": 0.0,
@@ -64,25 +64,26 @@ const G8_SHOTS: Array[Dictionary] = [
 			"figures": [["npc_robber", "gv_l_10", "wp", &"dig_night", 0.4]]},
 	{"name": "p8_25a_lambert_flees", "day": 57, "minute": 160, "focus": Vector2(16.0, 21.4), "distance": 11.0,
 			"player": Vector2(14.8, 19.2), "facing": 120.0,
-			"figures": [["npc_robber", Vector2(16.6, 22.2), Vector2(17.0, 23.6), &"run", 0.3]]},
+			"figures": [["npc_robber", Vector2(17.0, 22.6), Vector2(17.0, 23.6), &"climb", 0.9]]},
 	{"name": "p8_25b_lambert_caught", "day": 58, "minute": 170, "focus": Vector2(14.8, 21.4), "distance": 8.0,
 			"player": Vector2(15.4, 19.4), "facing": 200.0,
 			"figures": [["npc_robber", "gv_l_10", "wp", &"sit_ground", 0.5]]},
 	{"name": "p8_26_disturbed_and_mortsafe", "day": 58, "minute": 450, "focus": Vector2(17.0, 20.6), "distance": 11.0,
 			"player": Vector2(16.9, 22.2), "facing": 180.0, "stage": "disturbed"},
-	{"name": "p8_21_lights_procession", "day": 58, "minute": 1012, "focus": Vector2(5.5, 18.0), "distance": 18.0,
+	{"name": "p8_21_lights_procession", "day": 58, "minute": 1092, "focus": Vector2(5.5, 18.0), "distance": 18.0,
 			"player": Vector2(0.2, 8.4), "facing": 160.0, "stage": "lights",
-			"figures": [["npc_priest", Vector2(1.6, 13.4), Vector2(1.2, 12.2), &"lantern_walk", 0.1],
-				["npc_kin_kehr", Vector2(2.6, 16.6), Vector2(1.2, 12.2), &"lantern_walk", 0.4],
-				["npc_kin_ott", Vector2(4.0, 19.8), Vector2(1.2, 12.2), &"lantern_walk", 0.7],
-				["npc_smith_g", Vector2(5.8, 22.2), Vector2(1.2, 12.2), &"lantern_walk", 0.2],
-				["npc_grocer_g", Vector2(7.6, 24.4), Vector2(1.2, 12.2), &"lantern_walk", 0.5],
-				["npc_apprentice", Vector2(9.4, 26.6), Vector2(1.2, 12.2), &"lantern_walk", 0.8]]},
-	{"name": "p8_22_lights_overview", "day": 58, "minute": 1045, "focus": Vector2(4.0, -6.0), "distance": 24.0,
+			# 18:12 the procession goes down the coach road in the dusk, Lenz in front, Jakob with the lantern last.
+			"figures": [["npc_priest", Vector2(7.6, 24.4), Vector2(12.0, 28.6), &"lantern_walk", 0.1],
+				["npc_kin_kehr", Vector2(5.8, 22.2), Vector2(12.0, 28.6), &"lantern_walk", 0.4],
+				["npc_kin_ott", Vector2(4.0, 19.8), Vector2(12.0, 28.6), &"lantern_walk", 0.7],
+				["npc_smith_g", Vector2(2.7, 16.9), Vector2(12.0, 28.6), &"lantern_walk", 0.2],
+				["npc_grocer_g", Vector2(1.8, 14.0), Vector2(12.0, 28.6), &"lantern_walk", 0.5],
+				["npc_apprentice", Vector2(1.3, 11.4), Vector2(12.0, 28.6), &"lantern_walk", 0.8]]},
+	{"name": "p8_22_lights_overview", "day": 58, "minute": 1075, "focus": Vector2(3.5, -9.5), "distance": 31.0,
 			"player": Vector2(4.5, -18.0), "facing": 180.0,
 			"figures": [["npc_priest", "lights_lenz", "wp", &"idle", 0.2], ["npc_apprentice", "lights_crowd_4", "wp", &"idle", 0.3],
 				["npc_smith_g", "gv_old_01", "wp", &"mourn_stand", 0.6], ["npc_grocer_g", "gv_old_08", "wp", &"mourn_stand", 0.6]]},
-	{"name": "p8_23_lights_ghosts", "day": 58, "minute": 1050, "focus": Vector2(3.0, 1.0), "distance": 14.0,
+	{"name": "p8_23_lights_ghosts", "day": 58, "minute": 1078, "focus": Vector2(3.0, 1.0), "distance": 14.0,
 			"player": Vector2(0.6, 6.6), "facing": 200.0, "stage": "ghosts"},
 	{"name": "p8_vis_visitors_z12", "day": 56, "minute": 640, "focus": Vector2(4.0, 0.0), "distance": 62.0, "pitch": 85.0,
 			"player": Vector2(-20.0, 0.0), "stage": "vis", "vis": "visitors", "zoom": 12.0},
@@ -162,6 +163,7 @@ func _stage8(world: Node3D, shot: Dictionary) -> void:
 			_bury_row3(world)
 		"visits":
 			care.call(&"place_bouquet", "l_09")
+			care.call(&"place_bouquet", "l_04")
 		"tip":
 			var visitors := _system(world, "Visitors")
 			var st: Dictionary = visitors.call(&"save_state")
@@ -173,7 +175,8 @@ func _stage8(world: Node3D, shot: Dictionary) -> void:
 		"flowers":
 			var st: Dictionary = care.call(&"save_state")
 			var cfg: Resource = care.call(&"get_config")
-			var now := int(root.get_node(^"TimeManager").call(&"total_minutes"))
+			# The shot's own clock (the shots are not in time order – the previous one may be later that day).
+			var now := (int(shot.day) - 1) * 1440 + int(shot.minute)
 			var fresh := int(cfg.get(&"flower_fresh_minutes"))
 			var fl: Dictionary = st.get("flowers", {})
 			fl["l_01"] = {"planted": now, "watered": now, "wreath": false}
@@ -183,6 +186,16 @@ func _stage8(world: Node3D, shot: Dictionary) -> void:
 			care.call(&"load_state", st)
 			for g: String in ["l_01", "l_02", "l_03"]:
 				root.get_node(^"EventBus").emit_signal(&"grave_care_changed", g, &"flowers", true)
+		"flowers_old_05", "flowers_old_08":
+			# Fresh grave flowers (old_05 for Jakob's watering, Theres' Christrosen on old_08).
+			var grave := String(shot.stage).trim_prefix("flowers_")
+			var st5: Dictionary = care.call(&"save_state")
+			var now5 := (int(shot.day) - 1) * 1440 + int(shot.minute)
+			var fl5: Dictionary = st5.get("flowers", {})
+			fl5[grave] = {"planted": now5 - 600, "watered": now5 - 600, "wreath": false}
+			st5["flowers"] = fl5
+			care.call(&"load_state", st5)
+			root.get_node(^"EventBus").emit_signal(&"grave_care_changed", grave, &"flowers", true)
 		"candle_old_06":
 			_bag.call(&"add_item", &"grave_candle", 1)
 			care.call(&"light", "old_06", _bag)

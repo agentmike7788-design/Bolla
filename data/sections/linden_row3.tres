@@ -17,4 +17,4 @@ requires_flag_text = "Das ist noch Gemeindeland."
 counts_for_cemetery = false
 chapter = &""
 is_burial = true
-unlock_flag = &""
+unlock_flag = &"linden_row3_granted"

@@ -2436,7 +2436,7 @@ func test_phase7_lindenacker_and_wegstein_in_the_world() -> void:
 		await _at_day(priest, 41, 540)
 		assert_true(priest.is_present() and priest.is_walking(), "09:00 on the way up")
 		GameState.set_flag(&"linden_consecration_day", 0)
-	for t: Dictionary in [{"i": 6, "to": Vector2(25.0, 23.5)}, {"i": 7, "to": Vector2(17.5, 29.5)},
+	for t: Dictionary in [{"i": 6, "to": Vector2(25.0, 23.5)}, {"i": 7, "to": Vector2(21.0, 32.5)},  # Phase 8 L12: further south-east
 			{"i": 8, "to": Vector2(27.5, 15.5)}]:
 		assert_eq(_v2(layout.forest.trees[t.i].pos), t.to, "moved forest tree %d" % t.i)
 	# L8: the build mask covers the Lindenacker with its section order.
@@ -2627,6 +2627,7 @@ func test_phase8_layout_diff_against_phase7() -> void:
 		"-fence.segments[[21.5, 9.6], [21.5, 19.6]]", "+fence.segments[[11.5, 9.6], [11.5, 22.8]]",
 		"+fence.segments[[11.5, 22.8], [21.5, 22.8]]", "+fence.segments[[21.5, 9.6], [21.5, 22.8]]", "+fence._phase8",
 		"~extra_walls", "+_extra_walls_phase8",
+		"~forest.trees[7].pos", "~forest.trees[7]._comment", "~forest.bushes[6].pos", "+forest.bushes[6]._comment",  # L12
 		"+clearables[obs_l_stump_9]", "+clearables[obs_l_bramble_9]", "+overgrowth.sections[linden_row3]",   # L13
 		"+_phase8", "+phase8", "+colliders._phase8", "+colliders.ph_prop_chalkboard", "+colliders.ph_prop_apprentice_box",  # A1–A4
 		"+colliders.ph_prop_apprentice_bench", "+colliders.ph_prop_rain_barrel",
@@ -2648,9 +2649,19 @@ func test_phase8_layout_diff_against_phase7() -> void:
 	for c: String in allowed:
 		assert_true(c in changes, "listed change present: " + c)
 	assert_eq(layout.plots.slice(0, old.plots.size()), old.plots, "the approved plots unchanged")
-	for key: String in ["old_graves", "road", "hut", "tree", "buildings", "building_doors", "walkable_bounds", "camera_bounds", "forest",
+	for key: String in ["old_graves", "road", "hut", "tree", "buildings", "building_doors", "walkable_bounds", "camera_bounds",
 			"dirt_spots", "stations", "workyard", "props", "region_portals"]:
-		assert_eq(layout[key], old[key], key + " unchanged (§4.7; L12 not needed: forest.trees[7] stands at (17,5 | 29,5) since Phase 7)")
+		assert_eq(layout[key], old[key], key + " unchanged (§4.7)")
+	# L12 (W-Welt, round 1 images p8_24 / p8_03): forest.trees[7] east of the coach road, its crown south of the south
+	# fence; the bush at the south-west corner of row 3 a little west. Every other forest entry unchanged.
+	for i: int in old.forest.trees.size():
+		if i != 7:
+			assert_eq(layout.forest.trees[i], old.forest.trees[i], "forest.trees[%d] unchanged" % i)
+	assert_true(_v2(layout.forest.trees[7].pos).y >= 31.0, "L12: the crown no longer over row 3 (%s)" % [layout.forest.trees[7].pos])
+	assert_eq(layout.forest.bushes.size(), old.forest.bushes.size(), "the same bushes")
+	for i: int in old.forest.bushes.size():
+		if _v2(old.forest.bushes[i].pos) != Vector2(12.4, 23.2):
+			assert_eq(layout.forest.bushes[i], old.forest.bushes[i], "forest.bushes[%d] unchanged" % i)
 	for e: Dictionary in old.entities:
 		assert_eq(_by_id(layout.entities, String(e.id)), e, String(e.id))
 	# L10: row 3 at z 21,0 in the grid of rows 1–2 (4,1 m), the same x as the rows above.

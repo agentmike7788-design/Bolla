@@ -811,6 +811,9 @@ func test_phase8_village_sight() -> void:
 		player.global_position = spot.global_position
 		_eye(Vector2(spot.global_position.x, spot.global_position.z), 22.0)
 		assert_true(frame.has_point(cam.unproject_position(door + Vector3(0, 1.0, 0))), "%s in the frame from %s" % [String(pair[1]), String(pair[0])])
+		# W-Welt (image p8_18): the gravekeeper himself is not under a roof for the camera (the Remise hid him).
+		assert_eq(_first_hit(space, cam.global_position, spot.global_position + Vector3(0, 1.2, 0), [player, spot]), "",
+				"§4.8 (4): the gravekeeper at %s seen by the camera" % pair[0])
 	var failures := PackedStringArray()
 	var seen := {}
 	for npc_id: StringName in P8_VILLAGERS:

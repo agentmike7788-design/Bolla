@@ -253,7 +253,7 @@
   "_phase8": "Phase 8 §4.6 D2/D3 (village_build_phase8.gd): WatchSpot im Schatten unter der Remisen-Traufe (z 4,7 statt §4.6 5,4 – dort steht die Südwand der Remise) bzw. an der Westecke des Amtshauses (≤ 12 m bis zum Türplatz, frei sichtbar), SickLight am Fenstermarker light_window der Häuser Ott und Kehr (eine Kerze auf dem inneren Sims, inset m nach innen; das Fensterlicht brennt in der Krankenlicht-Nacht durch – village_dressing.gd).",
   "phase8": {
     "watch_spots": [
-      {"id": "watch_ott", "pos": [19.5, 4.7], "rot_y": 120.0},
+      {"id": "watch_ott", "pos": [22.9, 0.4], "rot_y": 160.0},
       {"id": "watch_kehr", "pos": [-20.0, -9.6], "rot_y": 260.0}
     ],
     "sick_lights": [

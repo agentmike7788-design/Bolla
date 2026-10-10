@@ -158,7 +158,7 @@ size = Vector3(1.4022217, 0.79460144, 1.6411438)
 [sub_resource type="BoxShape3D" id="BoxShape3D_rd8tt"]
 size = Vector3(1.4022217, 0.79460144, 1.6411438)
 
-[node name="InnInterior" type="Node3D" unique_id=1531047117]
+[node name="InnInterior" type="Node3D" unique_id=2082388494]
 script = ExtResource("1_6ok3l")
 room_id = &"inn"
 config = ExtResource("2_b416s")
@@ -170,7 +170,7 @@ region_id = &"village"
 
 [node name="Room" type="Node3D" parent="." unique_id=1614118206 instance=ExtResource("3_tx35g")]
 
-[node name="Light_lantern" type="OmniLight3D" parent="Room" unique_id=371601243]
+[node name="Light_lantern" type="OmniLight3D" parent="Room" unique_id=448743425]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1000001, -0.6)
 light_color = Color(1, 0.68235296, 0.33333334, 1)
 light_energy = 2.2
@@ -183,7 +183,7 @@ amount = 0.06
 metadata/interior_role = &"lantern"
 metadata/base_energy = 2.2
 
-[node name="Light_window_1" type="OmniLight3D" parent="Room" unique_id=1882994482]
+[node name="Light_window_1" type="OmniLight3D" parent="Room" unique_id=76695588]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.6, -2.7)
 light_color = Color(1, 0.8862745, 0.6901961, 1)
 light_energy = 2.0
@@ -192,7 +192,7 @@ omni_attenuation = 1.4
 metadata/interior_role = &"window"
 metadata/base_energy = 2.0
 
-[node name="Light_window_2" type="OmniLight3D" parent="Room" unique_id=562982621]
+[node name="Light_window_2" type="OmniLight3D" parent="Room" unique_id=1533926842]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 1.6, -2.7)
 light_color = Color(1, 0.8862745, 0.6901961, 1)
 light_energy = 2.0
@@ -201,7 +201,7 @@ omni_attenuation = 1.4
 metadata/interior_role = &"window"
 metadata/base_energy = 2.0
 
-[node name="Light_window_3" type="OmniLight3D" parent="Room" unique_id=1228859738]
+[node name="Light_window_3" type="OmniLight3D" parent="Room" unique_id=373364188]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.7, 1.6, 0.4)
 light_color = Color(1, 0.8862745, 0.6901961, 1)
 light_energy = 2.0
@@ -210,7 +210,7 @@ omni_attenuation = 1.4
 metadata/interior_role = &"window"
 metadata/base_energy = 2.0
 
-[node name="Sun" type="DirectionalLight3D" parent="." unique_id=183723450]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=536750817]
 transform = Transform3D(0.8660254, -0.40957603, 0.28678823, 0, 0.57357645, 0.81915206, -0.5, -0.7094065, 0.49673176, 0, 0, 0)
 visible = false
 light_angular_distance = 2.0
@@ -218,10 +218,10 @@ shadow_blur = 2.0
 directional_shadow_mode = 0
 directional_shadow_max_distance = 18.0
 
-[node name="Spawn" type="Marker3D" parent="." unique_id=1891637890]
+[node name="Spawn" type="Marker3D" parent="." unique_id=1689059000]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 1.6, 0, 2.15)
 
-[node name="Furniture" type="Node3D" parent="." unique_id=127841200]
+[node name="Furniture" type="Node3D" parent="." unique_id=873127475]
 
 [node name="Bar" type="Node3D" parent="Furniture" unique_id=1559639459 instance=ExtResource("5_8hyv3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -2)
@@ -232,7 +232,7 @@ transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.5
 [node name="inn_stove_1" type="Node3D" parent="Furniture" unique_id=1965585751 instance=ExtResource("7_pvpul")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 3.4, 0, -1.9)
 
-[node name="Light_stove" type="OmniLight3D" parent="Furniture/inn_stove_1" unique_id=361399305]
+[node name="Light_stove" type="OmniLight3D" parent="Furniture/inn_stove_1" unique_id=1542880411]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0.67)
 light_color = Color(1, 0.5411765, 0.23529412, 1)
 light_energy = 2.2
@@ -252,15 +252,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, -0.1)
 metadata/fest_flag = &"fest_kathrein_day"
 metadata/fest_show = false
 
-[node name="inn_table_2" type="Node3D" parent="Furniture" unique_id=108010320 instance=ExtResource("9_vlrqw")]
+[node name="inn_table_2" type="Node3D" parent="Furniture" unique_id=1648305427 instance=ExtResource("9_vlrqw")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9, 0, -1.2)
 metadata/fest_flag = &"fest_kathrein_day"
 metadata/fest_show = false
 
-[node name="inn_table_3" type="Node3D" parent="Furniture" unique_id=1467133532 instance=ExtResource("9_vlrqw")]
+[node name="inn_table_3" type="Node3D" parent="Furniture" unique_id=1965886443 instance=ExtResource("9_vlrqw")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9, 0, 1.75)
 
-[node name="CornerTable" type="Node3D" parent="Furniture" unique_id=179695378 instance=ExtResource("9_vlrqw")]
+[node name="CornerTable" type="Node3D" parent="Furniture" unique_id=1343034656 instance=ExtResource("9_vlrqw")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.15, 0, 1.55)
 
 [node name="Guest1" type="Node3D" parent="Furniture" unique_id=1553846830 instance=ExtResource("10_mt7ea")]
@@ -273,50 +273,50 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, -0.78)
 metadata/fest_flag = &"fest_kathrein_day"
 metadata/fest_show = false
 
-[node name="Guest3" type="Node3D" parent="Furniture" unique_id=1785200756 instance=ExtResource("11_wum87")]
+[node name="Guest3" type="Node3D" parent="Furniture" unique_id=1485927704 instance=ExtResource("11_wum87")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -1.9, 0, 2.43)
 
-[node name="FestTable1" type="Node3D" parent="Furniture" unique_id=424957167 instance=ExtResource("9_vlrqw")]
+[node name="FestTable1" type="Node3D" parent="Furniture" unique_id=1993342220 instance=ExtResource("9_vlrqw")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.2, 0, -2.25)
 metadata/fest_flag = &"fest_kathrein_day"
 metadata/fest_show = true
 
-[node name="FestTable2" type="Node3D" parent="Furniture" unique_id=1283074005 instance=ExtResource("9_vlrqw")]
+[node name="FestTable2" type="Node3D" parent="Furniture" unique_id=1677926128 instance=ExtResource("9_vlrqw")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.25, 0, -0.2)
 metadata/fest_flag = &"fest_kathrein_day"
 metadata/fest_show = true
 
-[node name="FestGuest1" type="Node3D" parent="Furniture" unique_id=1321699112 instance=ExtResource("10_mt7ea")]
+[node name="FestGuest1" type="Node3D" parent="Furniture" unique_id=975243389 instance=ExtResource("10_mt7ea")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0.88, 0, -2.25)
 metadata/fest_flag = &"fest_kathrein_day"
 metadata/fest_show = true
 
-[node name="FestGuest2" type="Node3D" parent="Furniture" unique_id=1855843527 instance=ExtResource("11_wum87")]
+[node name="FestGuest2" type="Node3D" parent="Furniture" unique_id=1665873482 instance=ExtResource("11_wum87")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 3.25, 0, 0.48)
 metadata/fest_flag = &"fest_kathrein_day"
 metadata/fest_show = true
 
-[node name="Entities" type="Node3D" parent="." unique_id=1428130634]
+[node name="Entities" type="Node3D" parent="." unique_id=1156454783]
 
-[node name="room_exit" type="Node3D" parent="Entities" unique_id=1466691855 instance=ExtResource("12_inxgf")]
+[node name="room_exit" type="Node3D" parent="Entities" unique_id=518595071 instance=ExtResource("12_inxgf")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 0, 2.75)
 script = ExtResource("13_wudqe")
 door_id = &"door_inn"
 
-[node name="FestDecor1" type="Node3D" parent="Entities" unique_id=1682750700 instance=ExtResource("14_6rs3k")]
+[node name="FestDecor1" type="Node3D" parent="Entities" unique_id=706387745 instance=ExtResource("14_6rs3k")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.75, 2.75, -2.93)
 script = ExtResource("15_6lxrp")
 
 [node name="Model" type="Node3D" parent="Entities/FestDecor1" unique_id=875554980 instance=ExtResource("16_3axrf")]
 
-[node name="FestDecor2" type="Node3D" parent="Entities" unique_id=1382336868 instance=ExtResource("14_6rs3k")]
+[node name="FestDecor2" type="Node3D" parent="Entities" unique_id=1867611865 instance=ExtResource("14_6rs3k")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.85, 2.75, -2.93)
 script = ExtResource("15_6lxrp")
 
-[node name="Model" type="Node3D" parent="Entities/FestDecor2" unique_id=804391038 instance=ExtResource("16_3axrf")]
+[node name="Model" type="Node3D" parent="Entities/FestDecor2" unique_id=489073217 instance=ExtResource("16_3axrf")]
 
-[node name="Fiddler" type="Node3D" parent="Entities" unique_id=223271152 instance=ExtResource("17_k1iiw")]
-transform = Transform3D(0.79863554, 0, -0.601815, 0, 1, 0, 0.601815, 0, 0.79863554, 2, 0, -2.45)
+[node name="Fiddler" type="Node3D" parent="Entities" unique_id=159706661 instance=ExtResource("17_k1iiw")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2.75, 0, -2.2)
 script = ExtResource("18_lxcdb")
 
 [node name="Model" parent="Entities/Fiddler" unique_id=1585974918 instance=ExtResource("19_0ach7")]
@@ -329,172 +329,172 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.19, 0.99, -0.02)
 visible = false
 mesh = SubResource("ArrayMesh_s1gwc")
 
-[node name="bow" type="MeshInstance3D" parent="Entities/Fiddler" unique_id=1800692114]
+[node name="bow" type="MeshInstance3D" parent="Entities/Fiddler" unique_id=546218556]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.19, 0.99, -0.02)
 mesh = SubResource("ArrayMesh_s1gwc")
 
-[node name="Colliders" type="Node3D" parent="." unique_id=1051652337]
+[node name="Colliders" type="Node3D" parent="." unique_id=1567575962]
 
-[node name="Room" type="StaticBody3D" parent="Colliders" unique_id=941949338]
+[node name="Room" type="StaticBody3D" parent="Colliders" unique_id=1803727661]
 collision_mask = 0
 
-[node name="Floor" type="CollisionShape3D" parent="Colliders/Room" unique_id=1539654881]
+[node name="Floor" type="CollisionShape3D" parent="Colliders/Room" unique_id=2008069754]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0.05000019)
 shape = SubResource("BoxShape3D_4vvea")
 
-[node name="Wall_1" type="CollisionShape3D" parent="Colliders/Room" unique_id=141225163]
+[node name="Wall_1" type="CollisionShape3D" parent="Colliders/Room" unique_id=199033866]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.225, 1.5, 0.05000019)
 shape = SubResource("BoxShape3D_3hfrr")
 
-[node name="Wall_2" type="CollisionShape3D" parent="Colliders/Room" unique_id=1404144670]
+[node name="Wall_2" type="CollisionShape3D" parent="Colliders/Room" unique_id=1870106536]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.225, 1.5, 0.05000019)
 shape = SubResource("BoxShape3D_v4xxh")
 
-[node name="Wall_3" type="CollisionShape3D" parent="Colliders/Room" unique_id=2137346775]
+[node name="Wall_3" type="CollisionShape3D" parent="Colliders/Room" unique_id=348164068]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -3.175)
 shape = SubResource("BoxShape3D_lmrni")
 
-[node name="Wall_4" type="CollisionShape3D" parent="Colliders/Room" unique_id=172777837]
+[node name="Wall_4" type="CollisionShape3D" parent="Colliders/Room" unique_id=836438999]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.7249999, 1.5, 3.225)
 shape = SubResource("BoxShape3D_3vmb1")
 
-[node name="Wall_5" type="CollisionShape3D" parent="Colliders/Room" unique_id=2018629151]
+[node name="Wall_5" type="CollisionShape3D" parent="Colliders/Room" unique_id=639464541]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.325, 1.5, 3.225)
 shape = SubResource("BoxShape3D_1kygx")
 
-[node name="Wall_6" type="CollisionShape3D" parent="Colliders/Room" unique_id=170223574]
+[node name="Wall_6" type="CollisionShape3D" parent="Colliders/Room" unique_id=557942755]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1.5, 3.625)
 shape = SubResource("BoxShape3D_vlf77")
 
-[node name="Bar" type="StaticBody3D" parent="Colliders" unique_id=2006677941]
+[node name="Bar" type="StaticBody3D" parent="Colliders" unique_id=198355576]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -2)
 collision_mask = 0
 
-[node name="Shape1" type="CollisionShape3D" parent="Colliders/Bar" unique_id=488870068]
+[node name="Shape1" type="CollisionShape3D" parent="Colliders/Bar" unique_id=113419765]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8451843, 0.08)
 shape = SubResource("BoxShape3D_u107f")
 
-[node name="Shape2" type="CollisionShape3D" parent="Colliders/Bar" unique_id=135793331]
+[node name="Shape2" type="CollisionShape3D" parent="Colliders/Bar" unique_id=1002793880]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8451843, -0.89500004)
 shape = SubResource("BoxShape3D_xqe56")
 
-[node name="inn_barrels_1" type="StaticBody3D" parent="Colliders" unique_id=1519675647]
+[node name="inn_barrels_1" type="StaticBody3D" parent="Colliders" unique_id=560010262]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -3.55, 0, -2.35)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/inn_barrels_1" unique_id=1026149737]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/inn_barrels_1" unique_id=2051184737]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.02243042, 0.4260025, -0.12000275)
 shape = SubResource("BoxShape3D_kwrjo")
 
-[node name="inn_stove_1" type="StaticBody3D" parent="Colliders" unique_id=802783485]
+[node name="inn_stove_1" type="StaticBody3D" parent="Colliders" unique_id=670602200]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 3.4, 0, -1.9)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/inn_stove_1" unique_id=2114169174]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/inn_stove_1" unique_id=1827688001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.978035, 0.22316742)
 shape = SubResource("BoxShape3D_q3jfi")
 
-[node name="inn_stairs_1" type="StaticBody3D" parent="Colliders" unique_id=1432311503]
+[node name="inn_stairs_1" type="StaticBody3D" parent="Colliders" unique_id=1282366008]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.45, 0, 1.45)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/inn_stairs_1" unique_id=316327518]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/inn_stairs_1" unique_id=1105449967]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.009132385, 1.6120605, 0.09915161)
 shape = SubResource("BoxShape3D_2umt6")
 
-[node name="inn_table_1" type="StaticBody3D" parent="Colliders" unique_id=1698506599]
+[node name="inn_table_1" type="StaticBody3D" parent="Colliders" unique_id=98490938]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, -0.1)
 collision_mask = 0
 metadata/fest_flag = &"fest_kathrein_day"
 metadata/fest_show = false
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/inn_table_1" unique_id=1611382773]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/inn_table_1" unique_id=953419934]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00018310547, 0.39730072, 0.0005187988)
 shape = SubResource("BoxShape3D_wrisr")
 
-[node name="inn_table_2" type="StaticBody3D" parent="Colliders" unique_id=223758961]
+[node name="inn_table_2" type="StaticBody3D" parent="Colliders" unique_id=1168979702]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9, 0, -1.2)
 collision_mask = 0
 metadata/fest_flag = &"fest_kathrein_day"
 metadata/fest_show = false
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/inn_table_2" unique_id=1516206276]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/inn_table_2" unique_id=1601127736]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00018310547, 0.39730072, 0.0005187988)
 shape = SubResource("BoxShape3D_cyayu")
 
-[node name="inn_table_3" type="StaticBody3D" parent="Colliders" unique_id=220399177]
+[node name="inn_table_3" type="StaticBody3D" parent="Colliders" unique_id=1706643975]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9, 0, 1.75)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/inn_table_3" unique_id=158381054]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/inn_table_3" unique_id=210424082]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00018310547, 0.39730072, 0.0005187988)
 shape = SubResource("BoxShape3D_7km8j")
 
-[node name="CornerTable" type="StaticBody3D" parent="Colliders" unique_id=1235178521]
+[node name="CornerTable" type="StaticBody3D" parent="Colliders" unique_id=839630362]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.15, 0, 1.55)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/CornerTable" unique_id=899485005]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/CornerTable" unique_id=1450410020]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00018310547, 0.39730072, 0.0005187988)
 shape = SubResource("BoxShape3D_i1utd")
 
-[node name="FestTable1" type="StaticBody3D" parent="Colliders" unique_id=1235586326]
+[node name="FestTable1" type="StaticBody3D" parent="Colliders" unique_id=1774163156]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.2, 0, -2.25)
 collision_mask = 0
 metadata/fest_flag = &"fest_kathrein_day"
 metadata/fest_show = true
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/FestTable1" unique_id=1046980018]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/FestTable1" unique_id=1627233338]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00018310547, 0.39730072, 0.0005187988)
 shape = SubResource("BoxShape3D_fpe5o")
 
-[node name="FestTable2" type="StaticBody3D" parent="Colliders" unique_id=1443870964]
+[node name="FestTable2" type="StaticBody3D" parent="Colliders" unique_id=520172235]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.25, 0, -0.2)
 collision_mask = 0
 metadata/fest_flag = &"fest_kathrein_day"
 metadata/fest_show = true
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/FestTable2" unique_id=1176261061]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/FestTable2" unique_id=1857930911]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00018310547, 0.39730072, 0.0005187988)
 shape = SubResource("BoxShape3D_rd8tt")
 
-[node name="Waypoints" type="Node3D" parent="." unique_id=1401157543]
+[node name="Waypoints" type="Node3D" parent="." unique_id=1889643839]
 
-[node name="v_in_inn_bar" type="Marker3D" parent="Waypoints" unique_id=1261858961]
+[node name="v_in_inn_bar" type="Marker3D" parent="Waypoints" unique_id=1396655440]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -2.5)
 metadata/facing = true
 
-[node name="v_in_inn_table" type="Marker3D" parent="Waypoints" unique_id=1499796531]
+[node name="v_in_inn_table" type="Marker3D" parent="Waypoints" unique_id=141404597]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2.95, 0, -1.2)
 metadata/facing = true
 
-[node name="v_in_inn_corner" type="Marker3D" parent="Waypoints" unique_id=239197288]
+[node name="v_in_inn_corner" type="Marker3D" parent="Waypoints" unique_id=10599661]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.15, 0, 0.62)
 metadata/facing = true
 
-[node name="v_in_inn_jakob" type="Marker3D" parent="Waypoints" unique_id=1479534978]
+[node name="v_in_inn_jakob" type="Marker3D" parent="Waypoints" unique_id=1836848644]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.2, 0, 1.08)
 metadata/facing = true
 
-[node name="v_in_inn_fest_1" type="Marker3D" parent="Waypoints" unique_id=1302567268]
+[node name="v_in_inn_fest_1" type="Marker3D" parent="Waypoints" unique_id=1993180253]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.45, 0, 0.95)
 metadata/facing = true
 
-[node name="v_in_inn_fest_2" type="Marker3D" parent="Waypoints" unique_id=36836529]
+[node name="v_in_inn_fest_2" type="Marker3D" parent="Waypoints" unique_id=907930451]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0.95, 0, -0.15)
 metadata/facing = true
 
-[node name="v_in_inn_fest_3" type="Marker3D" parent="Waypoints" unique_id=2091594228]
+[node name="v_in_inn_fest_3" type="Marker3D" parent="Waypoints" unique_id=1567193460]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0.35, 0, 0.95)
 metadata/facing = true
 
-[node name="v_in_inn_fest_4" type="Marker3D" parent="Waypoints" unique_id=1455460363]
+[node name="v_in_inn_fest_4" type="Marker3D" parent="Waypoints" unique_id=418700403]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.15, 0, -0.15)
 metadata/facing = true
 
-[node name="FillLights" type="Node3D" parent="." unique_id=407242964]
+[node name="FillLights" type="Node3D" parent="." unique_id=1080656893]
 
-[node name="Fill_1" type="OmniLight3D" parent="FillLights" unique_id=673421965]
+[node name="Fill_1" type="OmniLight3D" parent="FillLights" unique_id=705903599]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0.8)
 light_color = Color(1, 0.9411765, 0.84705883, 1)
 light_energy = 0.45
@@ -504,7 +504,7 @@ omni_attenuation = 0.8
 metadata/interior_role = &"fill"
 metadata/base_energy = 0.45
 
-[node name="Lighting" type="Node" parent="." unique_id=1828995308]
+[node name="Lighting" type="Node" parent="." unique_id=49322795]
 script = ExtResource("21_sb3ja")
 
 [editable path="Entities/Fiddler/Model"]
