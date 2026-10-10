@@ -3,7 +3,8 @@ extends TestCase
 ## the review findings that need no world (the world ones are in tests/integration/test_phase8_qa.gd):
 ## QA8-01 Lenz' and Theres' favour opens the favour panel (a grave / a ware to choose) instead of favor_use without a
 ## choice · QA8-03 a meet order on the hill sets its schedule flag (today / tomorrow / never on the Lichtgang) and the
-## schedules of Fenner (l_12) and Rosine (Jakob's bench) bring them up · QA8-10 „Zwei Münzen auf dem Stein".
+## schedules of Fenner (l_12) and Rosine (Jakob's bench) bring them up · QA8-10 „Zwei Münzen auf dem Stein" ·
+## QA8-A5 (E8-1) the short November days: the keyframes of the time-driven atmosphere move with the calendar.
 
 var world: Node
 var orders: Orders
@@ -120,3 +121,28 @@ func test_qa8_10_coins_on_the_stone_in_words() -> void:
 	assert_eq(Phase8Texts.coin_count(9), "9 Münzen", "beyond the words: digits")
 	assert_eq(TipStone.PROMPT_FORMAT % Phase8Texts.coins_on_stone(2, "X"), "[E] Zwei Münzen auf dem Stein (X)")
 	assert_eq(GravePlot.PROMPT_COINS % Phase8Texts.coins_on_stone(3, "Y"), "[E] Drei Münzen auf dem Stein (Y)")
+
+
+# --- QA8-A5 (E8-1) ------------------------------------------------------------------------------------
+
+func test_qa8_a5_november_dusk_comes_earlier() -> void:
+	var scene := load("res://src/world/graveyard/graveyard.tscn") as PackedScene
+	var state := scene.get_state()
+	var atmo := AtmosphereController.new()
+	for i: int in state.get_node_count():
+		if state.get_node_name(i) == &"Atmosphere":
+			for k: int in state.get_node_property_count(i):
+				var key := state.get_node_property_name(i, k)
+				if String(key).begins_with("season") or key == &"blend_minutes":
+					atmo.set(key, state.get_node_property_value(i, k))
+	assert_eq(atmo.keyframe_minutes(45), atmo.blend_minutes, "before the season: the approved Phase-7 keyframes")
+	assert_eq(atmo.keyframe_minutes(50), atmo.blend_minutes, "day 50: unchanged")
+	var late := atmo.keyframe_minutes(56)
+	assert_eq(Array(late), [0, 180, 270, 390, 525, 900, 1000, 1090, 1290], "late November: day until 15:00, dusk 16:40, night 18:10")
+	assert_eq(atmo.keyframe_minutes(70), late, "held after the full day")
+	var mid := atmo.keyframe_minutes(53)
+	for k: int in mid.size():
+		assert_true(mid[k] >= mini(late[k], atmo.blend_minutes[k]) and mid[k] <= maxi(late[k], atmo.blend_minutes[k]), "day 53 between")
+		if k > 0:
+			assert_true(mid[k] > mid[k - 1], "strictly ascending")
+	atmo.free()

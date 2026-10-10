@@ -21,6 +21,13 @@ const MINUTES_PER_DAY := 1440.0
 @export var blend_minutes: PackedInt32Array = [0, 330, 540, 1110, 1260]
 ## Re-apply only after the clock moved at least this many game minutes.
 @export var reapply_step_minutes: float = 0.25
+@export_group("Season")
+## W3 (G8, decision E8-1 for the user): the November days get short – from game day season_from_day to
+## season_full_day the keyframe minutes move by up to season_shift (one value per keyframe, minutes; dusk earlier,
+## dawn later). The presets themselves are untouched (ART STYLE LOCK). 0 / empty = no season (bit-identical).
+@export var season_from_day: int = 0
+@export var season_full_day: int = 0
+@export var season_shift: PackedInt32Array = []
 
 var current_index: int = 0
 
@@ -83,19 +90,41 @@ func blend_at(minute_f: float, into: AtmospherePreset = null) -> AtmospherePrese
 	if not _blend_valid():
 		return out
 	var m := fposmod(minute_f, MINUTES_PER_DAY)
-	var count := blend_minutes.size()
+	var keys := keyframe_minutes(_clock_day())
+	var count := keys.size()
 	var i := count - 1
 	for k: int in count:
-		if float(blend_minutes[k]) <= m:
+		if float(keys[k]) <= m:
 			i = k
 	var j := (i + 1) % count
-	var start := float(blend_minutes[i])
-	var span := fposmod(float(blend_minutes[j]) - start, MINUTES_PER_DAY)
+	var start := float(keys[i])
+	var span := fposmod(float(keys[j]) - start, MINUTES_PER_DAY)
 	if span <= 0.0:
 		span = MINUTES_PER_DAY
 	var t := clampf(fposmod(m - start, MINUTES_PER_DAY) / span, 0.0, 1.0)
 	_lerp_preset(blend_presets[i], blend_presets[j], t, out)
 	return out
+
+
+## The keyframe minutes on game day `day`: blend_minutes moved by the season (blend_minutes unchanged without a
+## season, before season_from_day or when the shift would break the strict order).
+func keyframe_minutes(day: int) -> PackedInt32Array:
+	if season_from_day <= 0 or season_full_day <= season_from_day or season_shift.size() != blend_minutes.size() \
+			or day <= season_from_day:
+		return blend_minutes
+	var f := clampf(float(day - season_from_day) / float(season_full_day - season_from_day), 0.0, 1.0)
+	var out := PackedInt32Array()
+	for k: int in blend_minutes.size():
+		var v := blend_minutes[k] + roundi(season_shift[k] * f)
+		if v < 0 or v >= int(MINUTES_PER_DAY) or (k > 0 and v <= out[k - 1]):
+			return blend_minutes
+		out.append(v)
+	return out
+
+
+func _clock_day() -> int:
+	var clock := get_node_or_null(^"/root/TimeManager") if is_inside_tree() else null
+	return int(clock.get(&"day")) if clock != null else 0
 
 
 ## TimeManager.get_minute_f(), looked up at runtime so tool scripts (-s) that load this

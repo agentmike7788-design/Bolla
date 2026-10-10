@@ -2632,6 +2632,7 @@ func test_phase8_layout_diff_against_phase7() -> void:
 		"+_phase8", "+phase8", "+colliders._phase8", "+colliders.ph_prop_chalkboard", "+colliders.ph_prop_apprentice_box",  # A1–A4
 		"+colliders.ph_prop_apprentice_bench", "+colliders.ph_prop_rain_barrel",
 		"+_waypoints_phase8", "+_baked_phase8", "+visitor_spots", "+visitor_waypoints", "+visitor_routes",  # §4.2
+		"+atmosphere._season", "+atmosphere.season",  # W3 (G8, E8-1): the short November days
 	]
 	for id: String in P8_ROW3:
 		allowed.append("+plots[%s]" % id)

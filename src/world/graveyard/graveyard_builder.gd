@@ -208,6 +208,12 @@ func _build_atmosphere(env_node: WorldEnvironment, sun: DirectionalLight3D) -> N
 	atmo.set("presets", presets)
 	atmo.set("blend_presets", blend)
 	atmo.set("blend_minutes", PackedInt32Array(cfg.blend_minutes))
+	# W3 (G8): the short November days (atmosphere.season).
+	var season: Dictionary = cfg.get("season", {})
+	if not season.is_empty():
+		atmo.set("season_from_day", int(season.from_day))
+		atmo.set("season_full_day", int(season.full_day))
+		atmo.set("season_shift", PackedInt32Array(season.shift))
 	atmo.set("time_driven", true)
 	atmo.set("world_environment", env_node)
 	atmo.set("sun", sun)
