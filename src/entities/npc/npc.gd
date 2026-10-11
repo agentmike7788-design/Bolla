@@ -189,6 +189,9 @@ func _ready() -> void:
 	EventBus.region_changed.connect(_on_region_changed)
 	EventBus.corpse_arrived.connect(_on_cart_load_changed.unbind(1))
 	EventBus.delivery_skipped.connect(_on_cart_load_changed.unbind(2))
+	# G8 Runde 3 (QA Lieferung): a time skip (debug „time", sleeping, waiting) places him for the new clock at once –
+	# else the root (and the cart with it) swung from the old heading for a second (cart 3 m off at 07:35).
+	EventBus.time_skipped.connect(_on_time_skipped.unbind(2))
 	refresh()
 
 
@@ -807,6 +810,14 @@ func _cart_load() -> Dictionary:
 
 func _on_cart_load_changed() -> void:
 	_load_key = -1
+
+
+## EventBus.time_skipped: placed from the clock without smoothing (the next _update would turn him from the old
+## heading). Hidden or outside the region the next per-minute evaluation does it anyway.
+func _on_time_skipped() -> void:
+	_hidden_minute = -1
+	if is_node_ready() and is_inside_tree():
+		refresh()
 
 
 ## Where corpse `i` of `total` lies on the cart (slot-local): side by side, a third one on top; head to the handles.
