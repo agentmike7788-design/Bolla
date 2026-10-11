@@ -316,6 +316,6 @@ func test_carter_hidden_phases_have_no_dialogue_or_cart() -> void:
 
 func test_carter_progress_along_morning_walk() -> void:
 	var s := _carter()
-	var e := ScheduleResolver.entry_at(s, 432)
-	assert_almost(ScheduleResolver.progress(e, 432.0), 0.5)
+	var e := ScheduleResolver.entry_at(s, 424)
+	assert_almost(ScheduleResolver.progress(e, 424.0), 0.5)
 	assert_almost(ScheduleResolver.progress(ScheduleResolver.entry_at(s, 500), 500.0), 1.0, 0.0001, "standing")

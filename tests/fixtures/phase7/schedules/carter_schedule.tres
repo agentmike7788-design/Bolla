@@ -11,7 +11,7 @@ visible = false
 
 [sub_resource type="Resource" id="morning_arrive"]
 script = ExtResource("1_s38po")
-start_minute = 412
+start_minute = 404
 travel_minutes = 40
 activity = &"walk"
 animation = &"push_cart"
@@ -20,7 +20,7 @@ with_cart = true
 
 [sub_resource type="Resource" id="morning_unload"]
 script = ExtResource("1_s38po")
-start_minute = 452
+start_minute = 444
 activity = &"unload"
 path = PackedStringArray("dropoff")
 with_cart = true
