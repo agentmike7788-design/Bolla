@@ -28,14 +28,14 @@ extends Resource
 ## atmosphere's warm light scale). Under a lantern with a pool light the spot fades to spot_under_light of it.
 @export var spot_radius: float = 1.6
 ## The browser: the spot stands in for the pool light on the ground too (the ground takes ≤ 8 lights) – a little wider.
-@export var spot_radius_compat: float = 1.6
+@export var spot_radius_compat: float = 1.9
 @export var spot_energy: float = 0.1
 @export var spot_energy_compat: float = 0.1
 @export var spot_color: Color = Color(1.0, 0.62, 0.3)
 @export_range(0.0, 1.0) var spot_under_light: float = 0.25
 ## The browser: a big mesh (the ground) takes only the 8 nearest lights per object there, so the pool light may not
 ## reach the ground – the spot stays (nearly) full under a lit lantern.
-@export_range(0.0, 1.0) var spot_under_light_compat: float = 0.5
+@export_range(0.0, 1.0) var spot_under_light_compat: float = 0.75
 ## Height of the spot over the feet of the carrier (just above the short grass).
 @export var spot_lift: float = 0.05
 

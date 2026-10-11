@@ -15,6 +15,6 @@ presets = {
 },
 "night": {
 "compat_fog_color": Color(0.08, 0.1, 0.16, 1),
-"compat_fog_density": 0.022
+"compat_fog_density": 0.026
 }
 }
