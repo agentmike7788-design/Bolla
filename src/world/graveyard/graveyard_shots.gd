@@ -20,6 +20,7 @@ const Tools := preload("res://src/world/graveyard/graveyard_shots_tools.gd")
 const Gruft := preload("res://src/world/graveyard/graveyard_shots_gruft.gd")
 const Gruft2 := preload("res://src/world/graveyard/graveyard_shots_gruft2.gd")
 const Delivery := preload("res://src/world/graveyard/graveyard_shots_delivery.gd")
+const Table := preload("res://src/world/graveyard/graveyard_shots_table.gd")
 const SETTLE_FRAMES := 40
 ## Frames after a measurement switch (shadows off / freeze) before the counters are read.
 const MEASURE_FRAMES := 4
@@ -72,6 +73,9 @@ var _skip: bool = false
 var _before_set: bool = false
 var _from_minute: int = -1
 var _distance: float = 0.0
+## --table: G8 Runde 3 – the work at the crypt table, one contact sheet per action (graveyard_shots_table.gd;
+## docs/reviews/phase8_round3); --shots / --suffix as for --gruft2.
+var _table: bool = false
 
 
 func _initialize() -> void:
@@ -108,6 +112,8 @@ func _run() -> void:
 		elif arg.begins_with("--from="):
 			var hhmm := arg.trim_prefix("--from=")
 			_from_minute = int(hhmm.left(2)) * 60 + int(hhmm.substr(2, 2))
+		elif arg == "--table":
+			_table = true
 		elif arg.begins_with("--suffix="):
 			_suffix = arg.trim_prefix("--suffix=")
 		elif arg.begins_with("--distance="):
@@ -140,6 +146,10 @@ func _run() -> void:
 		return
 	if _delivery:
 		await Delivery.run(self, world, _out, _only, _suffix, _skip, _before_set, _from_minute)
+		quit()
+		return
+	if _table:
+		await Table.run(self, world, _out, _only, _suffix)
 		quit()
 		return
 	_stage(world)

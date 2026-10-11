@@ -1077,7 +1077,9 @@ def build(debug: bool = False):
     tools = T.build_tools()
     T.attach(arm, tools)
     _can_grip(arm)
-    for entry in ACTIONS + tuple(T.actions()) + _p8_actions():
+    import asset_character_work as Wk  # G8 Runde 3: the work at the morgue table and the other hand work
+    Wk.marker(arm)
+    for entry in ACTIONS + tuple(T.actions()) + _p8_actions() + tuple(Wk.actions()):
         name, frames, fn = entry[:3]
         rig.add_action(arm, mesh, name, frames, fn, entry[3] if len(entry) > 3 else None)
     if debug:

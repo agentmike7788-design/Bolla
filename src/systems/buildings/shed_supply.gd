@@ -199,7 +199,7 @@ static func run_fetch(tree: SceneTree, player: Player, needs: Dictionary) -> boo
 	if minutes <= 0:
 		finish.call()
 		return true
-	return player.start_timed_action(LABEL_FETCH, minutes, finish, false, ANIM)
+	return player.start_timed_action(LABEL_FETCH, minutes, finish, false, ToolAnimConfig.clip_for(&"shed_fetch", ANIM))
 
 
 ## Store the player's surplus at once (shed ≥ store_min_level); shed_supply_moved(&"store").

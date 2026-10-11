@@ -67,6 +67,30 @@ extends Resource
 @export var action_clips: Dictionary[StringName, StringName] = {}
 
 
+# --- G8 Runde 3 (Hand- und Tischarbeit: „annimationen fehlen", „die leichen preperation annimation fehlen") -----
+## Tool kind → its own scene: the small hand tools of the morgue table (scalpel, cloth, comb, juniper, shears, pliers,
+## linen) and the rake are not meshes of the model (its triangle budget) but ph_tool_*.glb modelled in the tool bone's
+## frame; ToolProps hangs them at tool_marker (a node on the tool bone) and shows them like the belt tools.
+@export var tool_scenes: Dictionary[StringName, String] = {}
+@export var tool_marker: StringName = &"tool_hand"
+## Clips that show the watering can at can_grip (water: watering a grave; fill_can: at the rain barrel).
+@export var can_clips: Array[StringName] = [&"water"]
+## The morgue table (MorgueTable.work_stand, presentation only): at the start of a table action he steps within
+## table_step_seconds to the table's long side, table_stand_distance from its centre line, facing it – on the side
+## away from the camera (table_face_camera: he works towards the viewer; a blocked side: the other one, else where he
+## stands), along the table at table_stand_along[clip] (slot +X = towards the head; missing: where he is, within
+## ± table_stand_span). The clips in table_head_clips are worked from the head end: on the table's axis,
+## table_head_distance beyond the dead's head centre (table_head_offset along the slot), facing down the body.
+@export var table_stand_distance: float = 0.76
+@export var table_stand_span: float = 0.5
+@export var table_stand_along: Dictionary[StringName, float] = {}
+@export var table_head_clips: Array[StringName] = []
+@export var table_head_offset: float = 0.725
+@export var table_head_distance: float = 0.68
+@export var table_face_camera: bool = true
+@export var table_step_seconds: float = 0.3
+
+
 ## The clip for the code-driven action `key` (tool_anim_config.tres action_clips), else `fallback`.
 static func clip_for(key: StringName, fallback: StringName = &"interact") -> StringName:
 	var cfg := Database.config(&"tool_anim_config") as ToolAnimConfig

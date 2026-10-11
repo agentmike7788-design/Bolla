@@ -26,10 +26,18 @@ const CHARACTERS := {
 				# G7 Runde 2 (Bestatten): the dead laid into the pit, a moment of silence
 				"corpse_lower": [1.7, 1.9], "mourn": [0.9, 1.1],
 				# Phase 8 (P5): at the graves, the vigil on the bench, the Kathreintanz
-				"kneel_place": [1.4, 1.6], "water": [1.25, 1.4], "sit_bench": [2.9, 3.1], "dance": [1.5, 1.7]},
+				"kneel_place": [1.4, 1.6], "water": [1.25, 1.4], "sit_bench": [2.9, 3.1], "dance": [1.5, 1.7],
+				# G8 Runde 3: the work at the morgue table, the small tools from the bag, the other hand work, the rake
+				"table_examine": [1.5, 1.7], "table_search": [1.1, 1.3], "table_wash": [1.3, 1.5], "table_cut": [1.4, 1.6],
+				"table_comb": [1.1, 1.3], "table_smoke": [1.5, 1.7], "table_shroud": [1.7, 1.9], "table_snip": [0.85, 0.95],
+				"table_pull": [1.4, 1.6], "hand_draw": [0.3, 0.4], "hand_stow": [0.3, 0.4], "hand_stow_walk": [0.45, 0.6],
+				"pray": [2.9, 3.1], "write": [1.4, 1.6], "bench_work": [1.4, 1.6], "place_low": [1.5, 1.7],
+				"weed_pull": [1.4, 1.6], "fill_can": [1.25, 1.4], "rake": [1.1, 1.3], "rake_take": [0.2, 0.3],
+				"rake_put": [0.2, 0.3], "rake_put_walk": [0.45, 0.6]},
 		"one_shot": ["interact", "shovel_draw", "shovel_stow", "shovel_stow_walk", "axe_draw", "axe_stow", "axe_stow_walk",
 				"pick_draw", "pick_stow", "pick_stow_walk", "hammer_draw", "hammer_stow", "hammer_stow_walk",
-				"saw_draw", "saw_stow", "saw_stow_walk", "corpse_lower", "mourn", "kneel_place"],
+				"saw_draw", "saw_stow", "saw_stow_walk", "corpse_lower", "mourn", "kneel_place",
+				"hand_draw", "hand_stow", "hand_stow_walk", "weed_pull", "rake_take", "rake_put", "rake_put_walk"],
 	},
 	"ph_chr_carter": {
 		"height": [1.6, 1.7],

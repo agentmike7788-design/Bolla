@@ -190,7 +190,8 @@ func confirm_place() -> bool:
 	var rot := rotation_step
 	var data := d.decor(id)
 	var label := TEXT_PLACE % (data.display_name if data != null else String(id))
-	return p.start_timed_action(label, _cfg().place_minutes, func() -> void: _finish_place(id, cell, rot), true, &"interact")
+	return p.start_timed_action(label, _cfg().place_minutes, func() -> void: _finish_place(id, cell, rot), true,
+			ToolAnimConfig.clip_for(&"decor_place"))
 
 
 func confirm_remove() -> bool:
@@ -207,7 +208,8 @@ func confirm_remove() -> bool:
 	var uid := placement.uid
 	var data := d.decor(placement.decor_id)
 	var label := TEXT_REMOVE % (data.display_name if data != null else String(placement.decor_id))
-	return p.start_timed_action(label, _cfg().remove_minutes, func() -> void: _finish_remove(uid), true, &"interact")
+	return p.start_timed_action(label, _cfg().remove_minutes, func() -> void: _finish_remove(uid), true,
+			ToolAnimConfig.clip_for(&"decor_remove"))
 
 
 # --- input ----------------------------------------------------------------------------------

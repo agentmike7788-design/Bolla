@@ -50,7 +50,7 @@ func interact(player: Player) -> void:
 	if not open_now(how, TimeManager.minute_of_day):
 		EventBus.notification_requested.emit(TEXT_CLOSED_NOW, &"warning")
 		return
-	if not player.start_timed_action(LABEL, MINUTES, _finish.bind(player), false, ANIM):
+	if not player.start_timed_action(LABEL, MINUTES, _finish.bind(player), false, ToolAnimConfig.clip_for(&"archive_help", ANIM)):
 		EventBus.notification_requested.emit(TEXT_BUSY, &"warning")
 
 

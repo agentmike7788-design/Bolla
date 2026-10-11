@@ -93,7 +93,7 @@ func update(delta: float, action: Player.TimedAction, carrying: bool) -> void:
 	if phase == ToolPhase.HOLD:
 		_hold_events(action)
 	_update_props()
-	_update_can(anim.current_animation == WATER_CLIP)
+	_update_can(anim.current_animation in tools.can_clips)
 	_water_events()
 
 
@@ -109,7 +109,8 @@ func _water_events() -> void:
 		_work_beat()
 
 
-## The watering can at can_grip only while watering (W1-Anschluss 5).
+## The watering can at can_grip only while watering (W1-Anschluss 5) or filling it at the barrel (G8 Runde 3:
+## ToolAnimConfig.can_clips).
 func _update_can(on: bool) -> void:
 	if _can == null:
 		if not on:

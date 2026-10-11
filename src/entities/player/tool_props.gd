@@ -7,6 +7,8 @@ extends RefCounted
 ## (its place on the back), so it does not follow the bone into his hands.
 
 const PARK_NAME := "ShovelBack"
+## G8 Runde 3: node name of a tool with its own scene at the tool marker ("Tool_scalpel" …).
+const SCENE_PREFIX := "Tool_"
 
 var _tools: ToolAnimConfig
 ## Tool kind → its mesh nodes.
@@ -25,11 +27,31 @@ func _init(model: Node3D, tools: ToolAnimConfig) -> void:
 			if n != null:
 				nodes.append(n)
 		_meshes[kind] = nodes
+	_add_scenes(model, tools)
 	var shovel_nodes: Array = _meshes.get(&"shovel", [])
 	_shovel = shovel_nodes[0] as Node3D if not shovel_nodes.is_empty() else null
 	_shovel_home = _shovel.get_parent() if _shovel != null else null
 	_park = _make_park(model)
 	rest()
+
+
+## G8 Runde 3: the tools with their own scene (ToolAnimConfig.tool_scenes) hang at the marker tool_marker on the tool
+## bone (the bone's rest frame = the tool space they are modelled in); a model without the marker gets none.
+func _add_scenes(model: Node3D, tools: ToolAnimConfig) -> void:
+	if tools.tool_scenes.is_empty():
+		return
+	var marker := model.find_child(String(tools.tool_marker), true, false) as Node3D
+	if marker == null:
+		return
+	for kind: StringName in tools.tool_scenes:
+		var path := tools.tool_scenes[kind]
+		if (_meshes.has(kind) and not (_meshes[kind] as Array).is_empty()) or not ResourceLoader.exists(path):
+			continue
+		var node := (load(path) as PackedScene).instantiate() as Node3D
+		node.name = SCENE_PREFIX + String(kind)
+		node.visible = false
+		marker.add_child(node)
+		_meshes[kind] = [node]
 
 
 ## True if the model carries the meshes of `kind` (a model without them plays no tool clips).

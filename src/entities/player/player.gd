@@ -104,6 +104,8 @@ var _modal: bool = false
 var _has_carried: bool = false
 ## Switches the carried node's Interactables off and back on (player_carry.gd).
 var _carry := PlayerCarry.new()
+## G8 Runde 3: the step to the work spot at the start of a table action (player_work_step.gd).
+var _work_step := PlayerWorkStep.new(self)
 ## Last reported interaction focus (EventBus.interaction_focus_changed).
 var _shown_id: int = 0
 var _shown_prompt: String = ""
@@ -161,7 +163,10 @@ func _physics_process(delta: float) -> void:
 	if dir.length_squared() > INPUT_DEADZONE_SQ:
 		rotation.y = lerp_angle(rotation.y, atan2(dir.x, dir.z), clampf(config.turn_speed * delta, 0.0, 1.0))
 	if is_busy():
+		_work_step.update(delta)
 		_tick_action(delta)
+	else:
+		_work_step.stop()
 	_update_animation(delta)
 	_update_focus_prompt()
 
@@ -269,7 +274,20 @@ func start_burial(label: String, game_minutes: int, on_done: Callable, plot: Gra
 
 ## Stops the running action: minutes already advanced stay, on_done is NOT called.
 func cancel_timed_action() -> void:
+	_work_step.stop()
 	_runner.cancel()
+
+
+## G8 Runde 3: while a timed action runs, step within `seconds` to `target` (his work spot, facing the work –
+## MorgueTable.work_stand); presentation only, ends with the action. Ignored when no action runs.
+func step_to(target: Transform3D, seconds: float) -> void:
+	if is_busy():
+		_work_step.begin(target, seconds)
+
+
+## True while the step to the work spot runs (tests, screenshots).
+func is_stepping() -> bool:
+	return _work_step.is_active()
 
 
 ## Replaces the inventory with config.start_items (connected to EventBus.new_game_started).
