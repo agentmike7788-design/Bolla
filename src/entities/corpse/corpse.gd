@@ -207,13 +207,30 @@ func _on_time_skipped(_from_total: int, _to_total: int) -> void:
 
 ## Look index: StoryCorpseData.look (≥ 0) of a story corpse, else variant_for_record.
 func _look_for(record: CorpseRecord) -> int:
+	return look_of(record, _corpse_tables(), plain_variants.size())
+
+
+## The look a record wears (G8 Runde 3: also the corpse on Osric's cart): StoryCorpseData.look (≥ 0) of a story
+## corpse, else variant_for_record with `count` plain looks.
+static func look_of(record: CorpseRecord, tables: CorpseTables, count: int) -> int:
 	if record == null:
 		return 0
 	if record.story_id != &"":
 		var story := Database.story_corpse(record.story_id) as StoryCorpseData
 		if story != null and story.look >= 0:
 			return story.look
-	return variant_for_record(record, _corpse_tables(), plain_variants.size())
+	return variant_for_record(record, tables, count)
+
+
+## Model path of a look among `plain` (the plain looks) and the story looks (a missing story model → its fallback).
+static func look_path(look: int, plain: PackedStringArray) -> String:
+	if look >= 0 and look < plain.size():
+		return plain[look]
+	if STORY_LOOK_PATHS.has(look):
+		if ResourceLoader.exists(STORY_LOOK_PATHS[look]):
+			return STORY_LOOK_PATHS[look]
+		return look_path(STORY_LOOK_FALLBACK[look], plain)
+	return plain[0] if not plain.is_empty() else ""
 
 
 func _set_model(dress: StringName, variant: int) -> void:

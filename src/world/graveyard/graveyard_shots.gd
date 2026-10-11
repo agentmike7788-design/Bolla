@@ -69,6 +69,7 @@ var _suffix: String = ""
 ## --delivery: G8 round 3 – Osric brings the corpse on his cart (graveyard_shots_delivery.gd; --skip = „time 07:25" first).
 var _delivery: bool = false
 var _skip: bool = false
+var _before_set: bool = false
 var _distance: float = 0.0
 
 
@@ -101,6 +102,8 @@ func _run() -> void:
 			_delivery = true
 		elif arg == "--skip":
 			_skip = true
+		elif arg == "--before-set":
+			_before_set = true
 		elif arg.begins_with("--suffix="):
 			_suffix = arg.trim_prefix("--suffix=")
 		elif arg.begins_with("--distance="):
@@ -132,7 +135,7 @@ func _run() -> void:
 		quit()
 		return
 	if _delivery:
-		await Delivery.run(self, world, _out, _only, _suffix, _skip)
+		await Delivery.run(self, world, _out, _only, _suffix, _skip, _before_set)
 		quit()
 		return
 	_stage(world)

@@ -3,7 +3,8 @@ the gravekeeper, but the opposite silhouette: short (~1.65 m), stout and broad,
 upright. Flat cap, leather apron over a muted linen shirt with rolled sleeves,
 dark trousers, big boots, bushy grey-brown beard, a pipe.
 Front faces -Y (Blender) = +Z (Godot). Shared rig (rig.py); actions
-idle-loop, walk-loop, push_cart-loop, talk-loop.
+idle-loop, walk-loop, push_cart-loop, talk-loop; G8 Runde 3 (unloading at the bier, CartUnload):
+carry_walk-loop, load_lift, load_lower (the old clips and the body are unchanged).
 Change round 1 (G2): same identity, bones, poses and proportions, refined forms:
 smooth lofted body, face with brows/cheeks/ears, lobed beard with strands and a
 drooping moustache, a real pipe bowl with a tiny ember, flat cap with a stiff
@@ -745,11 +746,68 @@ def talk(t: float) -> dict:
     return rig.add(rig.breathe(t, 1.0, 2), rest_l, rig.keyed(t, keys))
 
 
+# --- G8 Runde 3: unloading the dead from the cart onto the bier -------------------------------
+# The corpse itself is moved by code (CartUnload): off the cart into his arms, across them while he
+# walks over, down onto the bier. Rigid arms, no knees: he bows from the hips (the hips sink and
+# slide back, the planted legs read as bent knees) with the arms reaching down in front of him.
+
+def _stance() -> dict:
+    return {"leg_l": (-7.0, 0.0, 0.0), "leg_r": (7.0, 0.0, 0.0), "feet": {"leg_l": 0.0, "leg_r": 0.0}}
+
+
+def _carry_arms(bounce: float = 0.0) -> dict:
+    """Both arms forward-down, drawn in, as if the dead lie across the forearms in front of the belly."""
+    return {"arm_l": (-54.0 + bounce, 12.0, 0.0), "arm_r": (-54.0 + bounce, -12.0, 0.0)}
+
+
+def _carry_pose() -> dict:
+    """Holding the dead: leaning back a little against the weight, the head up."""
+    return rig.add({"feet": {"leg_l": 0.0, "leg_r": 0.0}, "spine": (-6.0, 0.0, 0.0), "head": (4.0, 0.0, 0.0)},
+                   _carry_arms())
+
+
+def _bow(spine: float, arms: float) -> dict:
+    """Bent deep over the cart / the bier, the hands at bed height."""
+    return rig.add(_stance(), {"spine": (spine, 0.0, 0.0), "head": (-spine * 0.4, 0.0, 0.0),
+                               "hips": (7.0, 0.0, 0.0, 0.0, 0.035, -0.08),
+                               "arm_l": (arms, 10.0, 0.0), "arm_r": (arms, -10.0, 0.0)})
+
+
+def carry_walk(t: float) -> dict:
+    """20 frames = 0.67 s per cycle: short heavy steps (~1.2 m/s), waddling under the load."""
+    c2 = math.cos(2.0 * rig.TAU * t)
+    g = rig.gait(t, leg=20.0, lift=0.03, arm=0.0, bob=0.02, roll=5.5, yaw=2.5, lean=-5.0)
+    return rig.add(g, _carry_arms(2.5 * c2), {"head": (5.0, 0.0, 0.0)})
+
+
+def load_lift(t: float) -> dict:
+    """30 frames = 1.0 s one-shot: from rest he bows over the cart, grips the dead (they rise from
+    about 0.35 on, CartDeliveryConfig.lift_move_from) and straightens up with them in his arms.
+    Ends in the carry pose (carry_walk starts there)."""
+    keys = [(0.0, {}), (0.3, _bow(46.0, -84.0)), (0.42, _bow(48.0, -86.0)),
+            (0.75, rig.add(_stance(), {"spine": (14.0, 0.0, 0.0), "head": (-4.0, 0.0, 0.0),
+                                       "hips": (2.0, 0.0, 0.0, 0.0, 0.01, -0.02)}, _carry_arms(-8.0))),
+            (1.0, _carry_pose())]
+    return rig.keyed(t, keys, wrap=False)
+
+
+def load_lower(t: float) -> dict:
+    """36 frames = 1.2 s one-shot: from the carry pose he bows over the bier and lays the dead down
+    (they sink until ~0.78, lower_move_to), lets go and straightens up to rest."""
+    keys = [(0.0, _carry_pose()), (0.25, rig.add(_stance(), {"spine": (16.0, 0.0, 0.0), "head": (-6.0, 0.0, 0.0)},
+                                                 _carry_arms(-10.0))),
+            (0.6, _bow(48.0, -86.0)), (0.78, _bow(50.0, -80.0)), (1.0, {})]
+    return rig.keyed(t, keys, wrap=False)
+
+
 ACTIONS = (  # (name, frames at 30 fps, pose function)
     ("idle-loop", 72, idle),
     ("walk-loop", 18, walk),
     ("push_cart-loop", 22, push_cart),
     ("talk-loop", 72, talk),
+    ("carry_walk-loop", 20, carry_walk),
+    ("load_lift", 30, load_lift),
+    ("load_lower", 36, load_lower),
 )
 
 

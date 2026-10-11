@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="CartDeliveryConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/corpse/cart_delivery_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+unload_minutes = 8
+step_share = 0.2
+lift_share = 0.22
+carry_share = 0.28
+lower_share = 0.3
+return_minutes = 3
+cart_side_distance = 0.8
+bier_side_distance = 0.72
+carry_height = 0.9
+carry_forward = 0.42
+arc_height = 0.1
+lift_move_from = 0.35
+lift_move_to = 0.9
+lower_move_from = 0.1
+lower_move_to = 0.78
+head_to_handles = true
+cargo_spacing = 0.42
+max_cargo = 3
