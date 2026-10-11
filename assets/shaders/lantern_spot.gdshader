@@ -5,9 +5,9 @@ shader_type spatial;
 render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabled, fog_disabled;
 
 // Fall-off: 1 in the middle, soft to 0 at the rim (power of the smooth bump).
-uniform float falloff = 1.6;
+uniform float falloff = 2.2;
 // The spot is a little stronger towards the lantern (in front of the carrier): the centre shifts by this share.
-uniform float core = 0.35;
+uniform float core = 0.25;
 
 void fragment() {
 	vec2 d = UV * 2.0 - 1.0;

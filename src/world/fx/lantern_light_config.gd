@@ -27,8 +27,8 @@ extends Resource
 ## Radius (m) of the warm spot on the ground under a lantern, its strength and colour (additive, × flicker × the
 ## atmosphere's warm light scale). Under a lantern with a pool light the spot fades to spot_under_light of it.
 @export var spot_radius: float = 1.6
-@export var spot_energy: float = 0.32
-@export var spot_energy_compat: float = 0.32
+@export var spot_energy: float = 0.1
+@export var spot_energy_compat: float = 0.1
 @export var spot_color: Color = Color(1.0, 0.62, 0.3)
 @export_range(0.0, 1.0) var spot_under_light: float = 0.25
 ## Height of the spot over the feet of the carrier (just above the short grass).

@@ -375,6 +375,8 @@ func _make_spots() -> MultiMeshInstance3D:
 	var mat := ShaderMaterial.new()
 	mat.shader = load(SPOT_SHADER) as Shader
 	mat.resource_name = "mat_lantern_spot"
+	# drawn before the other transparent surfaces (the grass blades are alpha-blended and lie over the spot)
+	mat.render_priority = -10
 	quad.material = mat
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D

@@ -45,12 +45,19 @@ func _save_frame(world: Node3D, shot_name: String, report: PackedStringArray) ->
 	var pool := world.get_node_or_null(^"CarriedLanterns")
 	if pool != null:
 		pool.call(&"settle")
+		var care0 := world.get_node_or_null(^"Systems/GraveCare")
+		if care0 != null:
+			care0.call(&"update_light_pool")
 		await process_frame
+	# measure the very frame that is saved (the render stats below re-draw the scene with other settings)
+	var shot_image := root.get_texture().get_image()
 	await super._save_frame(world, shot_name + _lm_suffix, report)
-	_measure_line(world, shot_name + _lm_suffix, "base")
+	_measure_line(world, shot_name + _lm_suffix, "base", shot_image)
+	var snapshot := _snapshot(world)
 	for v: Variant in _variants:
 		if not (v is Dictionary):
 			continue
+		_restore(snapshot)
 		_apply_variant(world, v as Dictionary)
 		if atmo != null:
 			atmo.call(&"apply_time", float(root.get_node(^"TimeManager").call(&"get_minute_f")))
@@ -60,10 +67,39 @@ func _save_frame(world: Node3D, shot_name: String, report: PackedStringArray) ->
 			await process_frame
 		var image := root.get_texture().get_image()
 		image.save_jpg(_out.path_join("%s%s__%s.jpg" % [shot_name, _lm_suffix, (v as Dictionary).get("name", "v")]), 0.88)
-		_measure_line(world, shot_name + _lm_suffix, str((v as Dictionary).get("name", "v")))
+		_measure_line(world, shot_name + _lm_suffix, str((v as Dictionary).get("name", "v")), image)
+	_restore(snapshot)
+	if atmo != null and not _variants.is_empty():
+		atmo.call(&"apply_time", float(root.get_node(^"TimeManager").call(&"get_minute_f")))
 	var f := FileAccess.open(_out.path_join("light_match%s.txt" % _lm_suffix), FileAccess.WRITE)
 	f.store_string("\n".join(_match) + "\n")
 	f.close()
+
+
+## [resource, property, value] of every preset / lantern config property a variant may touch.
+func _snapshot(world: Node3D) -> Array:
+	var out: Array = []
+	var res: Array = []
+	var atmo := world.get_node_or_null(^"Atmosphere")
+	if atmo != null:
+		res.append_array(atmo.get(&"blend_presets"))
+		res.append_array(atmo.get(&"presets"))
+	var pool := world.get_node_or_null(^"CarriedLanterns")
+	if pool != null:
+		res.append(pool.get(&"config"))
+	for r: Variant in res:
+		var rr := r as Resource
+		if rr == null:
+			continue
+		for prop: Dictionary in rr.get_property_list():
+			if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE != 0:
+				out.append([rr, StringName(prop.name), rr.get(StringName(prop.name))])
+	return out
+
+
+static func _restore(snapshot: Array) -> void:
+	for e: Array in snapshot:
+		(e[0] as Resource).set(e[1], e[2])
 
 
 func _apply_variant(world: Node3D, v: Dictionary) -> void:
@@ -93,8 +129,7 @@ func _apply_variant(world: Node3D, v: Dictionary) -> void:
 			cfg.set(StringName(key), lan[key])
 
 
-func _measure_line(world: Node3D, shot_name: String, variant: String) -> void:
-	var image := root.get_texture().get_image()
+func _measure_line(world: Node3D, shot_name: String, variant: String, image: Image) -> void:
 	var cam := world.get_viewport().get_camera_3d()
 	var w := image.get_width()
 	var h := image.get_height()
@@ -124,8 +159,11 @@ func _measure_line(world: Node3D, shot_name: String, variant: String) -> void:
 				continue
 			spots.append(_disc(image, sp, r, false))
 			glass.append(_disc(image, cam.unproject_position(c), 4.0, true))
-	var line := "%s  %s  renderer=%s  mean_luma=%.4f  spots=%d  spot_luma=%.4f  glass_max=%.4f" % [shot_name, variant,
-			RenderingServer.get_current_rendering_method(), mean, spots.size(), _avg(spots), _avg(glass)]
+	var care := world.get_node_or_null(^"Systems/GraveCare")
+	var line := ("%s  %s  renderer=%s  mean_luma=%.4f  spots=%d  spot_luma=%.4f  glass_max=%.4f  candle_lights=%d"
+			+ "  lantern_lights=%d") % [shot_name, variant, RenderingServer.get_current_rendering_method(), mean, spots.size(),
+			_avg(spots), _avg(glass), int(care.call(&"active_lights")) if care != null else -1,
+			int(pool.call(&"lights_in_use")) if pool != null else -1]
 	print("[LightMatch] ", line)
 	_match.append(line)
 
