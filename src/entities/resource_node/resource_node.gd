@@ -61,7 +61,8 @@ func get_interaction_prompt(player: Player) -> String:
 func interact(player: Player) -> void:
 	if not can_interact(player):
 		return
-	player.start_timed_action(label(), _minutes(player), _finish_gather.bind(player.inventory), true, ANIM)
+	player.start_timed_action(label(), _minutes(player), _finish_gather.bind(player.inventory), true,
+			ToolAnimConfig.clip_for(&"resource_gather", ANIM))
 
 
 ## "Holz sammeln"

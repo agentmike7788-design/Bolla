@@ -13,6 +13,9 @@ extends Node3D
 ## hut retires at crypt 1, the crypt table starts there, so exactly one table is active. An inactive
 ## table is hidden, without collision and prompt, sees no corpse; props with meta "follows_table"
 ## (its own children, or nodes of the world whose meta names this table) follow it.
+## G8 Runde 3 („die leichen preperation annimation fehlen"): every table action plays its own clip (ToolAnimConfig
+## action_clips "morgue_<key>": examining, searching, washing, the scalpel, combing, smoking, spreading the linen,
+## the shears, the pliers – the small tools from the tool bag) and he steps to his work spot first (work_stand).
 ## Changed 04.10.2026 (user's wish „Gruft von Beginn an“): the crypt has level 1 from the start of a game
 ## (BuildingData.start_level), so in play the crypt table is always the active one and the old table never
 ## works; it stays in the layout for worlds without a Buildings node. MorgueTable.active(tree) finds it.
@@ -24,6 +27,10 @@ const SLOT_NAME := "slot_corpse"
 const EXAM_PANEL := &"corpse_exam"
 const SHROUD_ITEM := &"shroud"
 const ANIM := &"interact"
+## G8 Runde 3: action_clips key prefix of the table actions (ToolAnimConfig "morgue_<key>").
+const ACTION_PREFIX := &"morgue_"
+## The stand-spot check lifts the capsule this much off the floor (the floor is no obstacle).
+const STAND_CLEARANCE := 0.05
 
 const PROMPT_PUT_DOWN := "[E] Leiche ablegen"
 const PROMPT_EXAMINE := "[E] Leiche untersuchen"
@@ -142,7 +149,7 @@ func request_examine() -> void:
 	elif not _can_act(player):
 		_warn(TEXT_BUSY)
 	else:
-		player.start_timed_action(LABEL_EXAMINE, _actions(player).examine_minutes, _finish_examine.bind(record.id), false, ANIM)
+		_start_work(player, LABEL_EXAMINE, _actions(player).examine_minutes, _finish_examine.bind(record.id), &"examine")
 
 
 ## Panel (Phase 2, compatibility) = request_dress(&"shroud").
@@ -193,7 +200,7 @@ func request_exam_step(step: StringName) -> void:
 		return
 	var cfg := care.get_exam_config()
 	var label := String(cfg.step(step).get("verb", LABEL_EXAMINE))
-	player.start_timed_action(label, cfg.step_minutes(step), _finish_exam_step.bind(record.id, step), false, ANIM)
+	_start_work(player, label, cfg.step_minutes(step), _finish_exam_step.bind(record.id, step), StringName("exam_" + String(step)))
 
 
 ## "Gründlich untersuchen": all open steps as one timed action, then CorpseCare.exam_all.
@@ -206,7 +213,7 @@ func request_exam_all() -> void:
 	if care.open_steps(record.id).is_empty():
 		_warn(TEXT_EXAMINED)
 		return
-	player.start_timed_action(LABEL_EXAM_ALL, care.exam_all_minutes(record.id), _finish_exam_all.bind(record.id), false, ANIM)
+	_start_work(player, LABEL_EXAM_ALL, care.exam_all_minutes(record.id), _finish_exam_all.bind(record.id), &"exam_all")
 
 
 func request_wash() -> void:
@@ -244,8 +251,8 @@ func request_harvest(kind: StringName) -> void:
 		_warn(reason)
 		return
 	var entry := care.get_utilization_config().kind(kind)
-	player.start_timed_action(String(entry.get("verb", String(kind))), int(entry.get("minutes", 0)),
-			_finish_harvest.bind(record.id, kind, player.inventory), false, ANIM)
+	_start_work(player, String(entry.get("verb", String(kind))), int(entry.get("minutes", 0)),
+			_finish_harvest.bind(record.id, kind, player.inventory), StringName("harvest_" + String(kind)))
 
 
 ## Phase 7 (docs/PHASE7_DESIGN.md §2.6, §3.4): a specimen of the table corpse – TimedAction of the
@@ -269,8 +276,8 @@ func request_organ(organ: StringName, container: StringName) -> void:
 	var cfg := care.get_anatomy_config()
 	var minutes := int(cfg.organ(organ).get("minutes", 20))
 	_begin_cover(record.id, cfg)
-	if not player.start_timed_action(organ_line(organ), minutes, _finish_organ.bind(record.id, organ, container, player.inventory),
-			false, ANIM):
+	if not _start_work(player, organ_line(organ), minutes, _finish_organ.bind(record.id, organ, container, player.inventory),
+			&"organ"):
 		_end_cover(true)
 		_warn(TEXT_BUSY)
 
@@ -417,8 +424,9 @@ func _request_prep(action: StringName, kind: StringName, label: String) -> void:
 	if reason != "":
 		_warn(reason)
 		return
-	player.start_timed_action(label, CorpsePrep.minutes(action, care.get_prep_config(), kind),
-			_finish_prep.bind(record.id, action, kind, player.inventory), false, ANIM)
+	var key := String(action) + ("_" + String(kind) if kind != &"" else "")
+	_start_work(player, label, CorpsePrep.minutes(action, care.get_prep_config(), kind),
+			_finish_prep.bind(record.id, action, kind, player.inventory), StringName(key))
 
 
 ## Phase-2 shroud (no CorpseCare in the world): needs 1 shroud, locked while the valuables
@@ -437,7 +445,92 @@ func _request_shroud_phase2() -> void:
 	elif not player.inventory.has(SHROUD_ITEM):
 		_warn(TEXT_NO_SHROUD)
 	else:
-		player.start_timed_action(LABEL_SHROUD, _actions(player).shroud_minutes, _finish_shroud.bind(record.id, player.inventory), false, ANIM)
+		_start_work(player, LABEL_SHROUD, _actions(player).shroud_minutes, _finish_shroud.bind(record.id, player.inventory),
+				StringName("dress_" + String(CorpseRecord.DRESS_SHROUD)))
+
+
+## G8 Runde 3 („die leichen preperation annimation fehlen"): every table action as a timed action that cannot be
+## cancelled, with its own clip – ToolAnimConfig action_clips "morgue_<key>" (examine, exam_<step>, exam_all, wash,
+## dress_shroud, dress_gown, lay_out, balm, harvest_<kind>, organ), else the generic reach – and the step to the work
+## spot (work_stand). Returns whether the action started.
+func _start_work(player: Player, label: String, minutes: int, done: Callable, key: StringName) -> bool:
+	var clip := clip_for(key)
+	var stand := work_stand(player, clip)
+	if not player.start_timed_action(label, minutes, done, false, clip):
+		return false
+	player.step_to(stand, _tool_anim().table_step_seconds)
+	return true
+
+
+## The clip of the table action `key` (action_clips "morgue_<key>", else ANIM).
+static func clip_for(key: StringName) -> StringName:
+	return ToolAnimConfig.clip_for(StringName(String(ACTION_PREFIX) + String(key)), ANIM)
+
+
+## Where the gravekeeper works the clip `clip` (global, facing the work; ToolAnimConfig table_*): at the long side,
+## table_stand_distance from the table's centre line, on the side away from the camera (else the side he is on;
+## a side blocked by world bodies: the other one, both: where he is, turned to the table), along the table at
+## table_stand_along[clip] or where he is (± table_stand_span); a head clip from the head end, on the table's axis.
+func work_stand(player: Node3D, clip: StringName) -> Transform3D:
+	var cfg := _tool_anim()
+	var slot := slot_transform()
+	var axis := Vector3(slot.basis.x.x, 0.0, slot.basis.x.z)
+	axis = axis.normalized() if axis.length_squared() > 0.0001 else Vector3.RIGHT
+	var normal := Vector3(-axis.z, 0.0, axis.x)
+	var here := player.global_position
+	var centre := Vector3(slot.origin.x, here.y, slot.origin.z)
+	var rel := here - centre
+	if clip in cfg.table_head_clips:
+		var head := centre + axis * cfg.table_head_offset
+		var spot := head + axis * cfg.table_head_distance
+		if _spot_free(player, spot):
+			return _facing(spot, -axis)
+	else:
+		var along := float(cfg.table_stand_along.get(clip, clampf(rel.dot(axis), -cfg.table_stand_span, cfg.table_stand_span)))
+		var first := _first_side(rel.dot(normal), centre, normal, cfg.table_face_camera)
+		for side: float in [first, -first]:
+			var spot := centre + axis * along + normal * (side * cfg.table_stand_distance)
+			if _spot_free(player, spot):
+				return _facing(spot, -normal * side)
+	var to := Vector3(centre.x - here.x, 0.0, centre.z - here.z)
+	return _facing(here, to if to.length_squared() > 0.0001 else player.global_basis.z)
+
+
+## +1 / -1 along the table's normal: away from the active camera (face_camera), else the side the player is on.
+func _first_side(player_side: float, centre: Vector3, normal: Vector3, face_camera: bool) -> float:
+	var cam := get_viewport().get_camera_3d() if face_camera and is_inside_tree() else null
+	if cam != null:
+		var c := (cam.global_position - centre).dot(normal)
+		if absf(c) > 0.01:
+			return -signf(c)
+	return 1.0 if player_side >= 0.0 else -1.0
+
+
+static func _facing(spot: Vector3, dir: Vector3) -> Transform3D:
+	return Transform3D(Basis(Vector3.UP, atan2(dir.x, dir.z)), spot)
+
+
+## The player's capsule standing at `spot` touches no world body (layer 1) – the table itself is no obstacle.
+func _spot_free(player: Node3D, spot: Vector3) -> bool:
+	var capsule := player.get_node_or_null(^"Collision") as CollisionShape3D
+	if capsule == null or capsule.shape == null or not is_inside_tree():
+		return true
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = capsule.shape
+	query.collision_mask = Player.WORLD_MASK
+	query.transform = Transform3D(Basis.IDENTITY, spot + Vector3(0.0, STAND_CLEARANCE, 0.0)) * capsule.transform
+	var own: Array[RID] = []
+	for body: Node in find_children("*", "CollisionObject3D", true, false):
+		own.append((body as CollisionObject3D).get_rid())
+	if player is CollisionObject3D:
+		own.append((player as CollisionObject3D).get_rid())
+	query.exclude = own
+	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+
+static func _tool_anim() -> ToolAnimConfig:
+	var cfg := Database.config(&"tool_anim_config") as ToolAnimConfig
+	return cfg if cfg != null else ToolAnimConfig.new()
 
 
 ## Table corpse, CorpseCare node and a free player – warns otherwise.

@@ -670,25 +670,25 @@ func _start_care(action: StringName, player: Player) -> void:
 					ToolAnimConfig.clip_for(&"grave_flowers", ANIM_MARKER))
 		CARE_WREATH:
 			player.start_timed_action(LABEL_WREATH, cfg.plant_minutes, _finish_care.bind(action, inv, player), true,
-					ToolAnimConfig.clip_for(&"grave_flowers", ANIM_MARKER))
+					ToolAnimConfig.clip_for(&"grave_wreath", ToolAnimConfig.clip_for(&"grave_flowers", ANIM_MARKER)))
 		CARE_CANDLE:
 			player.start_timed_action(LABEL_CANDLE, cfg.candle_minutes, _finish_care.bind(action, inv, player), false,
 					ToolAnimConfig.clip_for(&"grave_candle", ANIM_MARKER))
 		CARE_MORTSAFE_ON:
 			player.start_timed_action(LABEL_MORTSAFE_ON, cfg.mortsafe_set_minutes, _finish_care.bind(action, inv, player), true,
-					ToolAnimConfig.clip_for(&"grave_marker", ANIM_MARKER))
+					ToolAnimConfig.clip_for(&"grave_mortsafe", ToolAnimConfig.clip_for(&"grave_marker", ANIM_MARKER)))
 		CARE_MORTSAFE_OFF:
 			player.start_timed_action(LABEL_MORTSAFE_OFF, cfg.mortsafe_remove_minutes, _finish_care.bind(action, inv, player), true,
-					ToolAnimConfig.clip_for(&"grave_marker", ANIM_MARKER))
+					ToolAnimConfig.clip_for(&"grave_mortsafe", ToolAnimConfig.clip_for(&"grave_marker", ANIM_MARKER)))
 		CARE_LINE:
 			if player.start_timed_action(LABEL_LINE, cfg.line_minutes, _finish_care.bind(action, inv, player), true,
-					ToolAnimConfig.clip_for(&"grave_marker", ANIM_MARKER)):
+					ToolAnimConfig.clip_for(&"grave_line", ToolAnimConfig.clip_for(&"grave_marker", ANIM_MARKER))):
 				_note_noise(&"chisel")
 		CARE_NAME:
 			var order := _name_order()
 			var minutes := int(order.conditions.get("minutes", NAME_MINUTES)) if order != null else NAME_MINUTES
 			if player.start_timed_action(LABEL_NAME, minutes, _finish_care.bind(action, inv, player), true,
-					ToolAnimConfig.clip_for(&"grave_marker", ANIM_MARKER)):
+					ToolAnimConfig.clip_for(&"grave_line", ToolAnimConfig.clip_for(&"grave_marker", ANIM_MARKER))):
 				_note_noise(&"chisel")
 
 

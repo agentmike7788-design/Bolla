@@ -331,7 +331,8 @@ func request_action(action: StringName) -> bool:
 	var cfg := _cfg()
 	var label := {ACTION_SEAL: Phase7Texts.LABEL_SEAL, ACTION_DISPLAY: Phase7Texts.LABEL_DISPLAY, ACTION_BONE: Phase7Texts.LABEL_BONE,
 			ACTION_INSPECT: Phase7Texts.LABEL_INSPECT}[action] as String
-	return _start(label, action_minutes(action, cfg), finish_action.bind(action, selected, _inventory), action == ACTION_INSPECT)
+	return _start(label, action_minutes(action, cfg), finish_action.bind(action, selected, _inventory), action == ACTION_INSPECT,
+			StringName("pult_" + String(action)))
 
 
 func finish_action(action: StringName, uid: String, inv: Inventory) -> void:
@@ -357,7 +358,8 @@ func request_medicine(med_id: StringName) -> bool:
 	var med := Database.medicine(med_id) as MedicineData
 	if med == null or action_running or medicine_reason(med) != "":
 		return false
-	return _start(Phase7Texts.LABEL_MEDICINE % UIKit.item_name(med.output), med.minutes, finish_medicine.bind(med, selected, _inventory), false)
+	return _start(Phase7Texts.LABEL_MEDICINE % UIKit.item_name(med.output), med.minutes, finish_medicine.bind(med, selected, _inventory), false,
+			&"pult_medicine")
 
 
 func finish_medicine(med: MedicineData, uid: String, inv: Inventory) -> void:
@@ -387,12 +389,14 @@ func take_from_cold(uid: String) -> bool:
 	return true
 
 
-func _start(label: String, minutes: int, done: Callable, cancellable: bool) -> bool:
+## G8 Runde 3: `key` names the handgrip's clip in ToolAnimConfig action_clips (pult_seal, pult_display, pult_bone,
+## pult_inspect, pult_medicine), else the generic reach.
+func _start(label: String, minutes: int, done: Callable, cancellable: bool, key: StringName = &"") -> bool:
 	var p := _player()
 	if p == null and is_inside_tree():
 		p = get_tree().get_first_node_in_group(&"player")
 	if p != null and p.has_method(&"start_timed_action"):
-		return bool(p.call(&"start_timed_action", label, minutes, done, cancellable, ANIM))
+		return bool(p.call(&"start_timed_action", label, minutes, done, cancellable, ToolAnimConfig.clip_for(key, ANIM)))
 	done.call()
 	return true
 

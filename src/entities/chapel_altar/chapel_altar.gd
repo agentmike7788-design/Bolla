@@ -4,7 +4,7 @@ extends Node3D
 ## Aussegnung halten (45 Min)" while the catafalque is occupied → panel &"chapel" {corpse_id, altar,
 ## inventory, player}; otherwise „[E] Andacht halten" → panel &"devotion" {altar, inventory, player}.
 ## The panels call request_service / request_devotion: a TimedAction that cannot be cancelled
-## (animation interact) → ChapelRites.hold_service / hold_devotion at its end. During a service the
+## (G8 Runde 3: clip pray, ToolAnimConfig chapel_service / chapel_devotion) → ChapelRites.hold_service / hold_devotion at its end. During a service the
 ## mourners of the chapel level sit in the pews (MournerSet). rite_active is true while a service or
 ## a devotion runs (the room's lighting lights the altar candles from it).
 
@@ -78,7 +78,8 @@ func request_service() -> void:
 	rite_active = true
 	if mourners != null:
 		mourners.show_mourners(ChapelRules.mourners(rites.level(), cfg))
-	if not player.start_timed_action(LABEL_SERVICE, cfg.service_minutes, _finish_service.bind(id, player.inventory), false, ANIM):
+	if not player.start_timed_action(LABEL_SERVICE, cfg.service_minutes, _finish_service.bind(id, player.inventory), false,
+			ToolAnimConfig.clip_for(&"chapel_service", ANIM)):
 		_end_rite()
 		_warn(TEXT_BUSY)
 
@@ -96,7 +97,7 @@ func request_devotion(grave_id: String) -> void:
 		return
 	rite_active = true
 	if not player.start_timed_action(LABEL_DEVOTION, rites.get_config().devotion_minutes, _finish_devotion.bind(grave_id, player.inventory),
-			false, ANIM):
+			false, ToolAnimConfig.clip_for(&"chapel_devotion", ANIM)):
 		_end_rite()
 		_warn(TEXT_BUSY)
 

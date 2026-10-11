@@ -94,7 +94,9 @@ func interact(player: Player) -> void:
 	if not can_interact(player):
 		return
 	var minutes := _manager().tend_minutes(spot_id, player.inventory)
-	player.start_timed_action(action_label(), minutes, _finish.bind(player.inventory), true, ANIM)
+	# G8 Runde 3: weeds pulled kneeling, leaves raked (ToolAnimConfig action_clips dirt_weeds / dirt_leaves)
+	player.start_timed_action(action_label(), minutes, _finish.bind(player.inventory), true,
+			ToolAnimConfig.clip_for(StringName("dirt_" + String(kind)), ANIM))
 
 
 ## "Unkraut jäten" / "Laub harken"

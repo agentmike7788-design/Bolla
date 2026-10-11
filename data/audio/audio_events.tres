@@ -151,6 +151,13 @@ action_animation_cues = Dictionary[StringName, StringName]({
 &"pick": &"pick_stone",
 &"saw": &"saw",
 &"interact": &"cloth",
+&"bench_work": &"cloth",
+&"fill_can": &"barrel_fill",
+&"place_low": &"crate",
+&"table_examine": &"cloth",
+&"table_search": &"cloth",
+&"weed_pull": &"weed_pull",
+&"write": &"quill",
 &"push_cart": &"crate",
 &"work": &"hammer"
 })

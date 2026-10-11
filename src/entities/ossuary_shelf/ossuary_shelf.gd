@@ -144,7 +144,8 @@ func get_interaction_prompt(player: Player) -> String:
 func interact(player: Player) -> void:
 	if not can_interact(player):
 		return
-	player.start_timed_action(LABEL_REINTER, _ossuary().rules().reinter_minutes, _finish.bind(player.inventory), false, ANIM)
+	player.start_timed_action(LABEL_REINTER, _ossuary().rules().reinter_minutes, _finish.bind(player.inventory), false,
+			ToolAnimConfig.clip_for(&"ossuary_reinter", ANIM))
 
 
 func _finish(inv: Inventory) -> void:

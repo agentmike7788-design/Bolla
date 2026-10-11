@@ -198,7 +198,8 @@ func request_hold() -> bool:
 	if p != null and p.has_method(&"start_timed_action"):
 		if not EventBus.timed_action_finished.is_connected(_on_lecture_finished):
 			EventBus.timed_action_finished.connect(_on_lecture_finished, CONNECT_ONE_SHOT)
-		if bool(p.call(&"start_timed_action", Phase7Texts.LECTURE_ACTION, minutes, finish_hold.bind(uid, inv), false, ANIM)):
+		if bool(p.call(&"start_timed_action", Phase7Texts.LECTURE_ACTION, minutes, finish_hold.bind(uid, inv), false,
+				ToolAnimConfig.clip_for(&"lecture_hold", ANIM))):
 			return true
 		if EventBus.timed_action_finished.is_connected(_on_lecture_finished):
 			EventBus.timed_action_finished.disconnect(_on_lecture_finished)

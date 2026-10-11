@@ -252,7 +252,8 @@ func request_expertise(uid: String) -> bool:
 	var p := _player_node()
 	var minutes := specimens.get_config().expertise_minutes
 	if p != null and p.has_method(&"start_timed_action"):
-		return bool(p.call(&"start_timed_action", Phase7Texts.ANATOMIST_EXPERTISE_LABEL, minutes, finish_expertise.bind(uid, _inventory), false, ANIM))
+		return bool(p.call(&"start_timed_action", Phase7Texts.ANATOMIST_EXPERTISE_LABEL, minutes, finish_expertise.bind(uid, _inventory), false,
+				ToolAnimConfig.clip_for(&"anatomist_expertise", ANIM)))
 	finish_expertise(uid, _inventory)
 	return true
 

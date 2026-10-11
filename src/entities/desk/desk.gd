@@ -43,7 +43,8 @@ func interact(player: Player) -> void:
 	if extract_wanted_by(player) != "":
 		var cfg := _care_config()
 		if player.inventory != null and player.inventory.has(cfg.line_item):
-			player.start_timed_action(LABEL_COPY, cfg.extract_minutes, _finish_copy.bind(player), true, ANIM_COPY)
+			player.start_timed_action(LABEL_COPY, cfg.extract_minutes, _finish_copy.bind(player), true,
+					ToolAnimConfig.clip_for(&"desk_copy", ANIM_COPY))
 		return
 	EventBus.ui_panel_requested.emit(PANEL, register_context())
 
