@@ -95,3 +95,39 @@ Neues Spiel, `tp gate`, `time 07:15`, Konsole zu. Danach läuft die Uhr frei mit
 - `_web`: Compatibility-Renderer mit dem neu exportierten Web-pck (Stand `2f2b160` + Export-Einstellung).
 - `_before_web`: das pck der Browser-Testversion, die der Benutzer gespielt hat.
 
+| Bild | Uhr | Was passiert |
+|---|---|---|
+| `0717`, `0721` | 07:17–07:21 | Osric schiebt den Karren mit der Leiche den Kutschweg herauf |
+| `0728`, `0730` | 07:28–07:30 | durchs Tor, Karren voran |
+| `0732` | 07:32 | hält an der Bahre, die Bahre ist leer |
+| `0734`, `0735` | 07:34–07:35 | hebt die Leiche vom Karren |
+| `0736` | 07:36 | trägt sie hinüber |
+| `0737`, `0739` | 07:37–07:39 | legt sie auf die Bahre |
+| `0740` | 07:40 | sie liegt auf der Bahre, der Karren ist leer |
+| `0741_6` | 07:41 | geht um das Bahrenende zur Torglocke |
+| `0743_5` | 07:43 | greift zur Glocke (`ring_bell`) |
+| `0744` | 07:44 | läutet, HUD „Am Tor läutet es – Osric hat eine neue Leiche gebracht." |
+| `0746_4` | 07:46 | wieder an den Griffen, Dialog bis 10:00 |
+| `0736/0738/0740_before_web` | 07:36–07:40 | Browser-Testversion vor dem Fix: kein Osric am Tor, dann trägt er die Leiche ohne Karren heran und ist um 07:40 schon wieder auf dem Rückweg zum `road_end` |
+
+- Die Bilder `0741_6` bis `0746_4` stammen aus einem eigenen Lauf mit dem fertigen Stand (Glocke, Export-pck neu gebaut). Er beginnt mit `time 07:39` und läuft mit 15 Bildern pro Sekunde.
+- Alle Bilder davor zeigen Ankunft und Abladen. Diese Teile hat der Glocken-Commit nicht verändert.
+
+## Torglocke nach der Lieferung (Benutzerwunsch)
+
+Benutzer: „und er soll an der glock klingeln das ich höre wen eine neue leiche da ist".
+
+**Ablauf:** Um 07:40 liegt die Leiche auf der Bahre.
+- Danach geht Osric um das Ende der Bahre herum zur Glocke am östlichen Torpfosten (`GateBell`, 3 Spielminuten).
+- Er stellt sich darunter, sieht hoch und zieht zweimal kurz daran. Dafür hat er einen neuen Clip `ring_bell` (1 s). Körper und alte Clips sind hash-gleich.
+- Beim ersten Zug (07:43,8) schwingt die Glocke, und der Ton `gate_bell` erklingt mit +8 dB über dem Besucher-Läuten. Er kommt vom Tor und ist auf dem ganzen Friedhof zu hören.
+- Danach geht er in 1 Minute zu den Griffen zurück, also bis 07:46. Dialog und Leinen gibt es wie bisher bis 10:00, um 10:00 fährt er mit dem leeren Karren ab. Der übrige Zeitplan ist unverändert.
+- **Im Haus, in der Gruft oder im Dorf** ist die Glocke nicht zu hören. Dort kommt nur der HUD-Hinweis „Am Tor läutet es – Osric hat eine neue Leiche gebracht." Draußen kommt der Hinweis zusätzlich zum Ton.
+- **Zeitsprung oder Schlafen über die Lieferung:** Es läutet nicht. Danach kommt nur „Osric hat am Tor eine neue Leiche gebracht."
+- **Laden:** Ein Spielstand meldet nichts nach, wie bei den Besuchern. Läuft die Uhr nach dem Laden über den Moment des Läutens, läutet er wie beim Zuschauen.
+- **Werte** in `data/config/cart_delivery_config.tres`: `ring_bell`, `bell_walk_minutes`, `bell_ring_minutes`, `bell_ring_at`, `bell_stand_distance`, `bell_corner_offset`, `bell_volume_db`, `bell_note`, `skipped_note`. `return_minutes` gilt jetzt für den Weg von der Glocke zu den Griffen und ist 1.
+- **Geprüft im exportierten Web-pck:** Läuten um 07:43,8, hörbar. Abfahrt um 10:00 mit dem Karren, um 10:40 weg. Abends 18:00–18:30 Anmarsch ohne Karren, Pfeife bis 21:00, um 21:30 weg.
+- **Tests:**
+  - `tests/unit/test_gate_bell_delivery.gd`: Werte, Weg um die Bahre ohne sie zu schneiden, Läuten am Platz unter der Glocke, Rückweg, „gehört" draußen und nur der Hinweis drinnen bzw. im Dorf.
+  - `test_cart_delivery_live.gd`: Läuten einmal und zur richtigen Zeit bei laufender Uhr; kein Läuten bei Zeitsprung, dann nur der Hinweis; im Raum nur der Hinweis; kein Läuten nach dem Laden.
+- **Offen:** Die Glocke ist von oben klein, ihr Schwingen sieht man kaum. Sichtbar sind Osrics Griff nach oben und der Hinweis.
