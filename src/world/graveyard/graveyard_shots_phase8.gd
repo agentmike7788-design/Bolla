@@ -88,6 +88,12 @@ const G8_SHOTS: Array[Dictionary] = [
 				["npc_smith_g", Vector2(2.7, 16.9), Vector2(12.0, 28.6), &"lantern_walk", 0.2],
 				["npc_grocer_g", Vector2(1.8, 14.0), Vector2(12.0, 28.6), &"lantern_walk", 0.5],
 				["npc_apprentice", Vector2(1.3, 11.4), Vector2(12.0, 28.6), &"lantern_walk", 0.8]]},
+	# G8 Runde 2 (Lichtgang): close to the procession – Martha Kehr's lantern (frame, glass, bail, flame), its light
+	# on her and on the road, Lenz ahead.
+	{"name": "g8_laterne_nah", "day": 58, "minute": 1088, "focus": Vector2(5.6, 21.9), "distance": 4.2, "pitch": 32.0,
+			"player": Vector2(0.2, 8.4), "facing": 160.0, "stage": "lights",
+			"figures": [["npc_kin_kehr", Vector2(5.8, 22.2), Vector2(12.0, 28.6), &"lantern_walk", 0.35],
+				["npc_priest", Vector2(7.4, 24.2), Vector2(12.0, 28.6), &"lantern_walk", 0.1]]},
 	# G8 Runde 2: the figures hold their lanterns (lantern_idle) as in the game; Lenz' lantern in front.
 	{"name": "p8_22_lights_overview", "day": 58, "minute": 1075, "focus": Vector2(3.5, -9.5), "distance": 31.0,
 			"player": Vector2(4.5, -18.0), "facing": 180.0,

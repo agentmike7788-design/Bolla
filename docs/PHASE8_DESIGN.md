@@ -409,7 +409,7 @@ Die Dorfbewohner, die einen Toten auf dem Hügel haben, kommen selbst herauf. Si
   | Zeit | Ort | Geschehen |
   |---|---|---|
   | 07:40 | Bahre | Osric bringt 12 `grave_candle` vom Pfarrer: „Für die, zu denen keiner hinaufgeht." |
-  | 16:00 | Dorf, Holderbrücke | alle sammeln sich mit Laternen (leuchtendes Material, kein Licht an Figuren) |
+  | 16:00 | Dorf, Holderbrücke | alle sammeln sich mit Laternen (G8 Runde 2: echte Laternen mit Licht, s. §9 „Laternen im Lichtgang-Zug") |
   | 16:45–17:00 | Friedhof, Kutschweg → Tor | der Zug kommt herauf: Lenz vorn, dann Haushalte und Bewohner, Jakob trägt die Laterne für seine Mutter (Region-Übergang an `road_end` wie bei Besuchen) |
   | 17:00–17:40 | an den Gräbern | jede Familie stellt ihre Lichter auf ihre Gräber und steht oder kniet 10 Min (Besuchsablauf §2.2.3 ohne Wunsch); Theres verbrennt am Kirchhof die Seiten (wenn Schritt 2) |
   | 17:40 | Kirchhof vor der Kapelle | Lenz spricht drei Sätze (kein Predigt-Minispiel): „Wir zünden kein Licht für Gott an. Der sieht auch so. Wir zünden es für die an, die den Weg vergessen haben." Glocke der Kapelle (ab Stufe 2, sonst Handglocke). Lenz Schritt 3: du liest die Namen. |
@@ -996,7 +996,7 @@ Friedhof: **L10–L15** (§4.4), **A1–A4**, **G1–G2** (§4.3), Besucherplät
 
 ### 4.9 Licht
 - **Grabkerzen:** Glas mit Flamme als leuchtendes Material (`mat_emissive_warm`, Flackern über `flame_glow.gdshader` aus G7, kein `TIME`-Overhead pro Kerze: ein gemeinsamer Parameter). Dazu ein **Pool von 6 Omni-Lichtern** (`#F2A93B`, Energie 0,5, Reichweite 2,2 m, **ohne Schatten**), die `GraveCare` den 6 brennenden Kerzen nächst dem Kamerafokus zuteilt (2 Hz). Alle übrigen Kerzen leuchten nur über das Material. Gilt auch am Lichtgang.
-- **Laternen im Lichtgang-Zug:** nur leuchtendes Material (Regel Phase 7: keine Lichter an Figuren). Jakobs Laterne ebenso. Lambert: ein leuchtender Spalt in der Blendlaterne.
+- **Laternen im Lichtgang-Zug (G8 Runde 2 angepasst, Benutzerkritik „nur Leuchtpunkte"):** jede getragene Laterne (`lantern_prop`, Jakobs `lantern`) ist eine echte Handlaterne (Eisenrahmen mit vier Eckstäben, Glas `mat_lantern_glass` – durchscheinend, additiv –, Pyramidendach mit Kamin, Bügel, Kerzenstumpf mit Flamme auf `mat_emissive_warm`; 146 Dreiecke) und wird im Zug (`lantern_walk`) **und** an Grab/Kirchhof (`lantern_idle`, neuer Clip aller Laternenträger; Fest-Daten `walk_anim`/`stand_anim`) getragen. `CarriedLanterns` (Laufzeit-Helfer der Welt, ohne Zustand): **Pool von 4 Omni-Lichtern ohne Schatten** für die dem Kamerafokus nächsten Laternen (Rang 2 Hz, die Lichter folgen jedes Bild, Überblendung 0,45 s); die Grabkerzen geben dafür ebenso viele Pool-Lichter ab (mindestens 2 bleiben) – das Lichtbudget der Szene bleibt (≤ 13 Lichter im Bild, 2 mit Schatten). Alle übrigen Laternen: **Fake-Licht** – weicher additiver Bodenfleck (ein MultiMesh, `lantern_spot.gdshader`) + Glühen am Glas. Flamme, Glas, Licht und Fleck flackern **im Gleichtakt** (ein `FlickerProfile`-Wert je Laterne, `carried_lantern.tres`); im Gehen pendelt die Laterne am Bügel. Werte: `data/config/fx/carried_lanterns.tres` (`*_compat` = Browser). Lambert: weiter nur ein leuchtender Spalt (kein Licht).
 - **Krankenlicht:** vorhandenes Fensterlicht bleibt an (kein neues Licht).
 - **Gaststube am Kathreintanz:** Licht wie Phase 7 Abend; der Ofen flackert wie gehabt. Räume bleiben auf den hellen G7-Werten (Forward+ und Web-Gamma).
 

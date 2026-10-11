@@ -16,7 +16,7 @@ const LANTERN_DISC := 0.9
 const STEP := 2
 
 var _variants: Array = []
-var _suffix: String = ""
+var _lm_suffix: String = ""
 var _match: PackedStringArray = []
 
 
@@ -26,7 +26,7 @@ func _run() -> void:
 			var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string(arg.trim_prefix("--variants=")))
 			_variants = raw if raw is Array else []
 		elif arg.begins_with("--suffix="):
-			_suffix = arg.trim_prefix("--suffix=")
+			_lm_suffix = arg.trim_prefix("--suffix=")
 		elif arg.begins_with("--compat="):
 			_force_compat = int(arg.trim_prefix("--compat="))
 	await super._run()
@@ -46,8 +46,8 @@ func _save_frame(world: Node3D, shot_name: String, report: PackedStringArray) ->
 	if pool != null:
 		pool.call(&"settle")
 		await process_frame
-	await super._save_frame(world, shot_name + _suffix, report)
-	_measure_line(world, shot_name + _suffix, "base")
+	await super._save_frame(world, shot_name + _lm_suffix, report)
+	_measure_line(world, shot_name + _lm_suffix, "base")
 	for v: Variant in _variants:
 		if not (v is Dictionary):
 			continue
@@ -59,9 +59,9 @@ func _save_frame(world: Node3D, shot_name: String, report: PackedStringArray) ->
 		for i: int in 12:
 			await process_frame
 		var image := root.get_texture().get_image()
-		image.save_jpg(_out.path_join("%s%s__%s.jpg" % [shot_name, _suffix, (v as Dictionary).get("name", "v")]), 0.88)
-		_measure_line(world, shot_name + _suffix, str((v as Dictionary).get("name", "v")))
-	var f := FileAccess.open(_out.path_join("light_match%s.txt" % _suffix), FileAccess.WRITE)
+		image.save_jpg(_out.path_join("%s%s__%s.jpg" % [shot_name, _lm_suffix, (v as Dictionary).get("name", "v")]), 0.88)
+		_measure_line(world, shot_name + _lm_suffix, str((v as Dictionary).get("name", "v")))
+	var f := FileAccess.open(_out.path_join("light_match%s.txt" % _lm_suffix), FileAccess.WRITE)
 	f.store_string("\n".join(_match) + "\n")
 	f.close()
 
