@@ -77,7 +77,7 @@ var _distance: float = 0.0
 ## --table: G8 Runde 3 – the work at the crypt table, one contact sheet per action (graveyard_shots_table.gd;
 ## docs/reviews/phase8_round3); --shots / --suffix as for --gruft2.
 var _table: bool = false
-## --round4=ui|delivery: G8 Runde 4 – the table panel during the work, Osric's unloading (graveyard_shots_round4.gd;
+## --round4=ui|work|delivery: G8 Runde 4 – the table panel during the work, one work in its course, Osric's unloading (graveyard_shots_round4.gd;
 ## docs/reviews/phase8_round4); --tag=vorher|nachher names the ui set, --suffix as above.
 var _round4: String = ""
 var _tag: String = "nachher"
@@ -163,6 +163,10 @@ func _run() -> void:
 		return
 	if _round4 == "ui":
 		await Round4.run_ui(self, world, _out, _suffix, _tag)
+		quit()
+		return
+	if _round4 == "work":
+		await Round4.run_work(self, world, _out, _suffix)
 		quit()
 		return
 	if _round4 == "delivery":

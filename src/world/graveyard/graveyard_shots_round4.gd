@@ -12,6 +12,7 @@ extends RefCounted
 ## to the handles; frames at real-second marks: <out>/frames/osric_<n>.png + osric.json.
 ## tools/contact_sheet.py puts the frames into sheets with their time marks.
 
+const Table := preload("res://src/world/graveyard/graveyard_shots_table.gd")
 const PORTAL := "res://src/world/hut_interior/hut_portal.gd"
 const STEP := 1.0 / 60.0
 const SETTLE_FRAMES := 10
@@ -23,6 +24,8 @@ const START := Vector3(0.95, 0.0, 0.6)
 ## Real-second marks of the work (after the press); "end" marks are added: just after the bar, the panel back.
 const UI_MARKS: Array[float] = [0.0, 0.25, 0.6, 1.2, 1.9, 2.6, 3.3]
 const UI_AFTER := [0.35, 1.0]
+## Work sheet: a frame every WORK_STEP real seconds.
+const WORK_STEP := 0.4
 ## Delivery: real seconds relative to the start of the unloading.
 const DELIVERY_BEFORE := -1.5
 const DELIVERY_STEP := 0.75
@@ -122,6 +125,90 @@ static func run_ui(tree: SceneTree, world: Node3D, out: String, suffix: String, 
 	var f := FileAccess.open(frames.path_join("ui_%s%s.json" % [tag, suffix]), FileAccess.WRITE)
 	f.store_string(JSON.stringify({"duration": duration, "action": what, "frames": labels}, "  "))
 	f.close()
+	player.set_physics_process(true)
+
+
+## --round4=work: one table work in its course (user: „ja soll etwas länger dauern") – „Waschen" started the way the
+## panel starts it (MorgueTable._start_work with its real game minutes: the bar's real seconds from
+## ToolAnimConfig.table_seconds), the player and the clip stepped at 60 Hz; per real-second mark the close camera
+## above the room camera (graveyard_shots_table.gd's _shoot): <out>/frames/work<suffix>_<n>.png + work<suffix>.json.
+static func run_work(tree: SceneTree, world: Node3D, out: String, suffix: String) -> void:
+	var clock := tree.root.get_node(^"TimeManager")
+	var player := world.get_node(^"Player") as CharacterBody3D
+	var rig := world.get_node(^"CameraRig") as Node3D
+	var manager := world.get_node(^"Systems/CorpseManager")
+	var portal: GDScript = load(PORTAL)
+	var frames := out.path_join("frames")
+	DirAccess.make_dir_recursive_absolute(frames)
+	clock.call(&"load_state", {"day": DAY, "minute_of_day": 470})
+	var record: Object = manager.call(&"try_daily_delivery", DAY)
+	if record == null:
+		var bier := world.get_node(^"Entities/dropoff")
+		record = manager.call(&"spawn_corpse", null, bier.call(&"slot_transform"), &"dropoff")
+	var id := String(record.get(&"id"))
+	var room: Node3D = null
+	for node: Node in tree.get_nodes_in_group(&"building_door"):
+		if node.get(&"building_id") == &"crypt":
+			room = node.call(&"room") as Node3D
+	var table: Node3D = room.get_node(^"Entities/MorgueTable") as Node3D
+	manager.call(&"pick_up", id, player)
+	portal.call(&"arrive", player, room.call(&"spawn_transform"), true, &"crypt")
+	player.global_transform = Transform3D(Basis(Vector3.UP, PI * 0.75), room.global_transform * START)
+	table.call(&"interact", player)
+	clock.call(&"load_state", {"day": DAY, "minute_of_day": MINUTE})
+	clock.call(&"emit_refresh")
+	var cfg: Object = room.call(&"room_config")
+	rig.set(&"target", player)
+	rig.call(&"set_distance", float(cfg.get(&"camera_distance")))
+	player.set_physics_process(false)
+	var anim := player.get(&"_anim") as AnimationPlayer
+	anim.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
+	var game_cam := tree.root.get_camera_3d()
+	var close := Camera3D.new()
+	close.fov = Table.CLOSE_FOV
+	world.add_child(close)
+	await Table._settle(tree, rig, game_cam)
+	var prep := load("res://data/config/prep_config.tres") as Resource
+	var minutes := int(prep.get(&"wash_minutes"))
+	table.call(&"_start_work", player, "Waschen", minutes, func() -> void: pass, &"wash")
+	var action: Object = player.get(&"_action")
+	var duration := float(action.get(&"duration")) if action != null else 0.0
+	print("[ShotsR4] Waschen: %d game minutes, real %.2f s" % [minutes, duration])
+	var marks: Array[float] = []
+	var m := 0.0
+	while m < duration + 0.5:
+		marks.append(m)
+		m += WORK_STEP
+	marks.append(duration + 0.25)
+	var labels: Array = []
+	var t := 0.0
+	var shot := 0
+	for mark: float in marks:
+		while t + STEP * 0.5 < mark:
+			_advance(player, anim)
+			t += STEP
+		var clip := String(anim.current_animation)
+		var pos := anim.current_animation_position
+		var tiles: Array = await Table._shoot(tree, world, player, rig, game_cam, close, clock)
+		var img := Image.create(Table.TILE.x, Table.TILE.y * 2 + 4, false, Image.FORMAT_RGB8)
+		img.fill(Color(0.1, 0.1, 0.1))
+		for row: int in 2:
+			var tile: Image = tiles[row]
+			tile.convert(Image.FORMAT_RGB8)
+			img.blit_rect(tile, Rect2i(Vector2i.ZERO, Table.TILE), Vector2i(0, row * (Table.TILE.y + 4)))
+		var name := "work%s_%d.png" % [suffix, shot]
+		img.save_png(frames.path_join(name))
+		var text := "%.1f s · %s %.2f" % [t, clip, pos]
+		if not bool(player.call(&"is_busy")):
+			text = "%.1f s · fertig · %s" % [t, clip]
+		labels.append({"file": name, "label": text})
+		print("[ShotsR4] ", name, " ", text, " tool=", player.call(&"held_tool"))
+		shot += 1
+	var f := FileAccess.open(frames.path_join("work%s.json" % suffix), FileAccess.WRITE)
+	f.store_string(JSON.stringify({"duration": duration, "minutes": minutes, "frames": labels}, "  "))
+	f.close()
+	game_cam.make_current()
+	close.queue_free()
 	player.set_physics_process(true)
 
 

@@ -12,8 +12,9 @@ const TIME_SCALE := 6.0
 const MAX_FRAMES := 20000
 ## 07:48: past the gate bell (07:44.8) and his return to the handles (07:46).
 const END_MINUTE := 468
-## Step to the cart, lift, carry, lower – then to the gate bell, ring it, back to the handles.
-const UNLOAD_ORDER: Array[StringName] = [&"walk", &"load_lift", &"carry_walk", &"load_lower", &"walk", &"ring_bell", &"walk"]
+## Step to the cart, lift, carry, lower, a moment at the bier (G8 Runde 4: idle) – then to the gate bell, ring it, back to
+## the handles.
+const UNLOAD_ORDER: Array[StringName] = [&"walk", &"load_lift", &"carry_walk", &"load_lower", &"idle", &"walk", &"ring_bell", &"walk"]
 const BELL_NOTE := "Am Tor läutet es – Osric hat eine neue Leiche gebracht."
 
 var world: WorldRoot
