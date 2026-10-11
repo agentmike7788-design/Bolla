@@ -36,8 +36,9 @@ void fragment() {
 	float mid = mix(1.0 - edge_fade, 1.0, facing);
 	vec3 c = glow_color.rgb * glow_energy * k * mid;
 #if CURRENT_RENDERER == RENDERER_COMPATIBILITY
-	// added to the sRGB frame as it is in the browser renderer: encode it like Forward+ would (lantern_spot.gdshader)
-	c = pow(max(c, vec3(0.0)), vec3(1.0 / 2.2));
+	// added to the sRGB frame as it is in the browser renderer: encode the strength, keep the hue (lantern_spot.gdshader)
+	float m = max(c.r, max(c.g, c.b));
+	c = c / max(m, 0.0001) * pow(max(m, 0.0), 1.0 / 2.2);
 #endif
 	ALBEDO = c;
 }
