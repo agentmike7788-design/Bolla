@@ -242,7 +242,7 @@ region = &"village"
 [sub_resource type="Resource" id="Resource_f4woc"]
 script = ExtResource("1_rnbvr")
 start_minute = 398
-animation = &"work"
+animation = &"wash_brook"
 path = PackedStringArray("v_wash")
 dialogue_id = &"v_washer"
 region = &"village"

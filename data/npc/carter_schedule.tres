@@ -60,7 +60,7 @@ path = PackedStringArray("road_end", "road_mid", "evening_spot")
 script = ExtResource("1_s38po")
 start_minute = 1110
 activity = &"smoke"
-animation = &"talk"
+animation = &"smoke"
 path = PackedStringArray("evening_spot")
 dialogue_id = &"carter"
 

@@ -413,15 +413,23 @@ def _rigged(name: str, mesh, joints: dict, actions) -> None:
     j = {b: (tuple(Vector(h) - Vector((0, 0, dz))), tuple(Vector(t) - Vector((0, 0, dz)))) for b, (h, t) in joints.items()}
     arm = rig.build_armature(j)
     rig.bind(mesh, arm)
-    for an, frames, fn in tuple(actions) + tuple(extra):
+    # G8 Runde 4: the work clips and their props (asset_villager_work) come after every older clip; the props are
+    # modelled on the grounded mesh (no shift below).
+    import asset_villager_work as VW
+    if L.os.environ.get("VW_PROBE"):
+        VW.probe(name, arm, mesh)
+    work, work_kids = VW.build_for(name, arm, mesh)
+    for an, frames, fn in tuple(actions) + tuple(extra) + tuple(work):
         rig.add_action(arm, mesh, an, frames, fn)
+    kids = [k + (True,) for k in kids] + [k + (False,) for k in work_kids]
     if not kids:
         _export(arm, name)
         return
     import asset_mourners as M
     extras = {}
-    for cname, bone, obj, show in kids:
-        obj.data.transform(Matrix.Translation(Vector((0, 0, -dz))))
+    for cname, bone, obj, show, shift in kids:
+        if shift:
+            obj.data.transform(Matrix.Translation(Vector((0, 0, -dz))))
         obj.name = cname
         obj.data.name = cname
         obj.parent = arm

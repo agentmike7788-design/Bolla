@@ -4,7 +4,8 @@ upright. Flat cap, leather apron over a muted linen shirt with rolled sleeves,
 dark trousers, big boots, bushy grey-brown beard, a pipe.
 Front faces -Y (Blender) = +Z (Godot). Shared rig (rig.py); actions
 idle-loop, walk-loop, push_cart-loop, talk-loop; G8 Runde 3 (unloading at the bier, CartUnload):
-carry_walk-loop, load_lift, load_lower (the old clips and the body are unchanged).
+carry_walk-loop, load_lift, load_lower (the old clips and the body are unchanged); G8 Runde 4: smoke-loop (the
+evening pipe) and the marker pipe_smoke (head bone, top of the bowl) the smoke puffs leave from.
 Change round 1 (G2): same identity, bones, poses and proportions, refined forms:
 smooth lofted body, face with brows/cheeks/ears, lobed beard with strands and a
 drooping moustache, a real pipe bowl with a tiny ember, flat cap with a stiff
@@ -60,6 +61,7 @@ GLEAM = L.hexc("#E9E2D2")
 
 WAIST_Z = 0.86   # shirt and apron below -> hips, above -> spine (under the belt)
 HEAD_C = Vector((0.0, -0.035, 1.435))
+PIPE_TOP = []   # G8 Runde 4: [top of the pipe bowl] (model space, set by _pipe) - the smoke marker
 W = rig.weight
 
 # torso profile: (height, x radius, y radius, forward belly offset) – smooth (Catmull-Rom) in between
@@ -568,6 +570,7 @@ def _pipe(parts, m0: Vector) -> None:
     parts.append(W("head", _painted(sweep(stem, [0.008, 0.0085, 0.0095, 0.011], n=8, name="stem"), PIPE_DARK,
                                     var=0.1, ao=0.0, top=0.3, seed=43)))
     b = m0 + Vector((-0.073, -0.087, -0.03))
+    PIPE_TOP[:] = [b + Vector((0.0, 0.0, 0.05))]   # G8 Runde 4: the smoke marker (build)
     bowl = loft([(b.z - 0.018, 0.012, 0.012, b.x, b.y), (b.z - 0.012, 0.021, 0.021, b.x, b.y),
                  (b.z + 0.012, 0.026, 0.026, b.x, b.y), (b.z + 0.04, 0.027, 0.027, b.x, b.y),
                  (b.z + 0.045, 0.024, 0.024, b.x, b.y), (b.z + 0.043, 0.019, 0.019, b.x, b.y),
@@ -813,6 +816,26 @@ def ring_bell(t: float) -> dict:
     return rig.keyed(t, keys, wrap=False)
 
 
+# --- G8 Runde 4 (user: „ja die sollen eigene arbeitsbewegungen bekommen"): the evening pipe ----------------
+# The pipe stays in his mouth (part of the head); rigid arms cannot reach the bowl. He stands at ease, the left
+# thumb in the apron, the right hand on the belly; he draws on the pipe (the chest swells, the head goes up a
+# little), lets the smoke out (the puffs leave the marker pipe_smoke in code: NpcWorkConfig.puff_clips) and
+# looks round contentedly.
+
+def smoke(t: float) -> dict:
+    """90 frames = 3 s loop."""
+    base = {"arm_l": (-12.0, 12.0, 0.0), "arm_r": (-22.0, -14.0, 14.0), "hips": (0.0, 2.0, 0.0, -0.006, 0.0, 0.0),
+            "spine": (0.0, -2.0, 0.0), "leg_l": (-3.0, 0.0, -2.0), "leg_r": (3.0, 0.0, 2.0)}
+    rest = {"head": (2.0, 0.0, 0.0)}
+    draw = {"head": (-7.0, 0.0, 2.0), "spine": (-4.0, 0.0, 0.0), "arm_r": (-4.0, 0.0, 0.0)}
+    out = {"head": (5.0, 0.0, 6.0), "spine": (2.0, 0.0, 0.0)}
+    look = {"head": (0.0, 0.0, -12.0), "spine": (0.0, 0.0, -3.0)}
+    keys = [(0.0, rest), (0.16, rest), (0.34, draw), (0.44, draw), (0.56, out), (0.68, out), (0.82, look), (0.94, rest)]
+    p = rig.add(rig.breathe(t, 1.3), base, rig.keyed(t, keys))
+    p["feet"] = {"leg_l": 0.0, "leg_r": 0.0}
+    return p
+
+
 ACTIONS = (  # (name, frames at 30 fps, pose function)
     ("idle-loop", 72, idle),
     ("walk-loop", 18, walk),
@@ -822,6 +845,7 @@ ACTIONS = (  # (name, frames at 30 fps, pose function)
     ("load_lift", 30, load_lift),
     ("load_lower", 36, load_lower),
     ("ring_bell", 30, ring_bell),
+    ("smoke-loop", 90, smoke),   # G8 Runde 4
 )
 
 
@@ -830,6 +854,8 @@ def build():
     dz = rig.ground(mesh)
     arm = rig.build_armature(joints(dz))
     rig.bind(mesh, arm)
+    # G8 Runde 4: the pipe-smoke marker on the head, at the top of the bowl
+    rig.bone_marker(arm, "head", "pipe_smoke", PIPE_TOP[0] - Vector((0.0, 0.0, dz)))
     for name, frames, fn in ACTIONS:
         rig.add_action(arm, mesh, name, frames, fn)
     L.export_rigged(arm, NAME, "characters")

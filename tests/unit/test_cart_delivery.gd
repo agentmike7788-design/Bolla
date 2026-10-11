@@ -208,7 +208,8 @@ func test_carter_keeps_body_and_old_clips() -> void:
 	for n: StringName in (rig.player as AnimationPlayer).get_animation_list():
 		names.append(String(n))
 	names.sort()
-	assert_eq(names, ["carry_walk", "idle", "load_lift", "load_lower", "push_cart", "ring_bell", "talk", "walk"])
+	# G8 Runde 4: + smoke (the evening pipe, test_npc_work.gd)
+	assert_eq(names, ["carry_walk", "idle", "load_lift", "load_lower", "push_cart", "ring_bell", "smoke", "talk", "walk"])
 	rig.call(&"free_scene")
 
 

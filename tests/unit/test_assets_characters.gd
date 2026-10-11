@@ -43,7 +43,8 @@ const CHARACTERS := {
 		"height": [1.6, 1.7],
 		# G8 Runde 3: unloading the dead at the bier (CartUnload)
 		"animations": {"idle": [1.6, 3.0], "walk": [0.4, 0.9], "push_cart": [0.5, 1.0], "talk": [1.6, 3.0],
-				"carry_walk": [0.5, 0.8], "load_lift": [0.9, 1.1], "load_lower": [1.1, 1.3], "ring_bell": [0.9, 1.1]},
+				"carry_walk": [0.5, 0.8], "load_lift": [0.9, 1.1], "load_lower": [1.1, 1.3], "ring_bell": [0.9, 1.1],
+				"smoke": [2.9, 3.1]},   # G8 Runde 4: the evening pipe
 		# G8 Runde 3: ringing the gate bell after the delivery
 		"one_shot": ["load_lift", "load_lower", "ring_bell"],
 	},
