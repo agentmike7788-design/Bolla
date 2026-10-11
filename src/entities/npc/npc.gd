@@ -196,8 +196,7 @@ func _ready() -> void:
 	EventBus.region_changed.connect(_on_region_changed)
 	EventBus.corpse_arrived.connect(_on_cart_load_changed.unbind(1))
 	EventBus.delivery_skipped.connect(_on_cart_load_changed.unbind(2))
-	# G8 Runde 3 (QA Lieferung): a time skip (debug „time", sleeping, waiting) places him for the new clock at once –
-	# else the root (and the cart with it) swung from the old heading for a second (cart 3 m off at 07:35).
+	# G8 Runde 3 (QA Lieferung): a time skip (debug „time", sleeping, waiting) places the carter for the new clock at once.
 	EventBus.time_skipped.connect(_on_time_skipped)
 	refresh()
 
@@ -821,15 +820,16 @@ func _on_cart_load_changed() -> void:
 	_load_key = -1
 
 
-## EventBus.time_skipped: placed from the clock without smoothing (the next _update would turn him from the old
-## heading). Hidden or outside the region the next per-minute evaluation does it anyway. A skip past the gate bell
-## rings nothing – the HUD only notes the delivery (after the CorpseManager has made it, deferred).
+## EventBus.time_skipped – only the carter (a figure with a cart): placed from the clock without smoothing (else the
+## root – and the cart with it – swung from the old heading for a second after a skip, 3 m off at 07:35). Other
+## figures keep their per-frame update (the playthrough bots read their entry right after a skip). A skip past the
+## gate bell rings nothing – the HUD only notes the delivery (after the CorpseManager has made it, deferred).
 func _on_time_skipped(from_total: int, to_total: int) -> void:
+	if not _uses_cart or not is_node_ready() or not is_inside_tree():
+		return
 	_hidden_minute = -1
-	if is_node_ready() and is_inside_tree():
-		refresh()
-		if _uses_cart:
-			_note_skipped_delivery.call_deferred(from_total, to_total)
+	refresh()
+	_note_skipped_delivery.call_deferred(from_total, to_total)
 
 
 # --- G8 Runde 3: the gate bell after the delivery (user: „und er soll an der glock klingeln das ich höre wen eine
