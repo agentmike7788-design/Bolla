@@ -11,6 +11,10 @@ extends Resource
 @export var pause_range: float = 2.8
 @export var pause_clip: StringName = &"idle"
 @export var talk_clip: StringName = &"talk"
+## Work places whose work faces another way than the standing spot's own facing (layout waypoint_facing, which
+## is for standing and talking): waypoint -> heading in degrees (0 = +Z) while the figure works there. Liesel at
+## the washing stones faces the brook (the Phase-7 spot v_wash faces the green).
+@export var work_facing: Dictionary[StringName, float] = {}
 ## Work clips of schedules built in code (key -> clip): &"apprentice_inn" (Jakob helping Rosine in the inn of an
 ## evening), &"washer_table" (Liesel's corpse wash at the crypt table).
 @export var runtime_clips: Dictionary[StringName, StringName] = {}
@@ -42,6 +46,11 @@ static func runtime_clip(key: StringName, fallback: StringName) -> StringName:
 
 func is_work(clip: StringName) -> bool:
 	return clip != &"" and clip in work_clips
+
+
+## The working heading (rad) at waypoint `id`, NAN = the waypoint's own facing.
+func facing_at(id: StringName) -> float:
+	return deg_to_rad(float(work_facing[id])) if work_facing.has(id) else NAN
 
 
 ## The puff moments of `clip` (empty = it does not smoke).

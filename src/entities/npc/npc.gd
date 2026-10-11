@@ -487,6 +487,10 @@ func _update(delta: float) -> void:
 	# comes close (NpcWorkConfig.pause_range) or talks to it; then it stops and turns to him.
 	var work_cfg := _work_config()
 	_working = not is_walking() and _held_entry == null and work_cfg.is_work(entry.animation)
+	if _working and not entry.path.is_empty():
+		var work_yaw := work_cfg.facing_at(StringName(entry.path[entry.path.size() - 1]))
+		if not is_nan(work_yaw):
+			heading = work_yaw
 	var look := _pose.look_yaw(heading, not is_walking() and _talkable, work_cfg.pause_range if _working else -1.0)
 	_attending = _working and _talkable and (_in_dialogue or not is_zero_approx(look) or _pose.player_within(work_cfg.pause_range))
 	var partner := chatter_target()

@@ -131,17 +131,17 @@ def read_breviary():
     keys = [(0.0, PR_READ), (0.5, PR_READ), (0.62, PR_PAGE_A), (0.72, PR_PAGE_B), (0.84, PR_READ)]
 
     def lines(t: float) -> dict:
-        w = _window(t, 0.04, 0.46)
+        w = _window(t, 0.08, 0.46)
         return {"head": (1.5 * w * math.sin(rig.TAU * t * 4.0), 0.0, 4.0 * w * math.sin(rig.TAU * t * 2.0))}
     return _loop(keys, lines, 0.8)
 
 
 # --- Fenner: files and the stamp at the desk (90 frames = 3 s; desk top 0.8 m; the right hand keeps the staff)
-MY_KEEP = (-12.0, 0.0, 0.0)   # the arm undoes the spine's lean: the staff stays upright beside him
-MY_LEAF_A = {"arm_l": (-38.0, 26.0, -20.0), "arm_r": MY_KEEP, "spine": (12.0, 0.0, 0.0), "head": (14.0, 0.0, -6.0)}
-MY_LEAF_B = {"arm_l": (-36.0, 8.0, 10.0), "arm_r": MY_KEEP, "spine": (12.0, 0.0, 2.0), "head": (14.0, 0.0, 6.0)}
-MY_STAMP_UP = {"arm_l": (-74.0, 16.0, -8.0), "arm_r": MY_KEEP, "spine": (8.0, 0.0, 0.0), "head": (12.0, 0.0, 0.0)}
-MY_STAMP_DOWN = {"arm_l": (-34.0, 18.0, -10.0), "arm_r": MY_KEEP, "spine": (16.0, 0.0, 0.0), "head": (18.0, 0.0, 0.0)}
+MY_KEEP = (-20.0, 0.0, 0.0)   # the right arm undoes the spine's lean (-spine): the staff stays upright beside him
+MY_LEAF_A = {"arm_l": (-34.0, 26.0, -20.0), "arm_r": MY_KEEP, "spine": (20.0, 0.0, 0.0), "head": (14.0, 0.0, -6.0)}
+MY_LEAF_B = {"arm_l": (-32.0, 8.0, 10.0), "arm_r": MY_KEEP, "spine": (20.0, 0.0, 2.0), "head": (14.0, 0.0, 6.0)}
+MY_STAMP_UP = {"arm_l": (-74.0, 16.0, -8.0), "arm_r": (-8.0, 0.0, 0.0), "spine": (8.0, 0.0, 0.0), "head": (12.0, 0.0, 0.0)}
+MY_STAMP_DOWN = {"arm_l": (-30.0, 18.0, -10.0), "arm_r": (-22.0, 0.0, 0.0), "spine": (22.0, 0.0, 0.0), "head": (18.0, 0.0, 0.0)}
 
 
 def desk_files():
@@ -161,7 +161,7 @@ def proclaim():
     keys = [(0.0, MY_READ), (0.4, MY_READ), (0.52, MY_LOOK), (0.66, MY_LOOK), (0.78, MY_LOOK_B), (0.9, MY_READ)]
 
     def speak(t: float) -> dict:
-        w = _window(t, 0.04, 0.38)
+        w = _window(t, 0.08, 0.38)
         return {"head": (2.0 * w * math.sin(rig.TAU * t * 6.0), 0.0, 3.0 * w * math.sin(rig.TAU * t * 2.0)),
                 "arm_l": (2.0 * w * math.sin(rig.TAU * t * 3.0), 0.0, 0.0)}
     return _loop(keys, speak, 0.9)
@@ -180,7 +180,7 @@ def desk_write():
     keys = [(0.0, SU_WRITE), (0.6, SU_WRITE), (0.7, SU_DIP), (0.78, SU_DIP), (0.88, SU_WRITE)]
 
     def scribble(t: float) -> dict:
-        w = _window(t, 0.04, 0.56)
+        w = _window(t, 0.08, 0.56)
         line = (t / 0.6) % (1.0 / 3.0) * 3.0     # three lines, each drawn from left to right
         sweep_z = -10.0 * (line - 0.5) * w
         return {"arm_r": (2.0 * w * math.sin(rig.TAU * t * 14.0), 0.0, sweep_z + 1.5 * w * math.sin(rig.TAU * t * 21.0)),

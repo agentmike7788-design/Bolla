@@ -8,6 +8,11 @@ work_clips = Array[StringName]([&"polish_mug", &"pray_altar", &"read_breviary", 
 pause_range = 2.8
 pause_clip = &"idle"
 talk_clip = &"talk"
+work_facing = Dictionary[StringName, float]({
+&"v_wash": -90.0,
+&"v_in_church_altar": 180.0,
+&"v_in_inn_jakob": 90.0
+})
 runtime_clips = Dictionary[StringName, StringName]({
 &"apprentice_inn": &"sweep",
 &"washer_table": &"wash_body"
@@ -17,10 +22,10 @@ puff_clips = Dictionary[StringName, PackedFloat32Array]({
 })
 puff_marker = "pipe_smoke"
 puff_fallback = Vector3(-0.1, 1.45, 0.25)
-puff_amount = 7
+puff_amount = 9
 puff_lifetime = 2.6
-puff_size = 0.055
+puff_size = 0.08
 puff_rise = 0.18
 puff_speed = 0.22
 puff_spread_deg = 25.0
-puff_color = Color(0.8, 0.78, 0.74, 0.6)
+puff_color = Color(0.86, 0.85, 0.82, 0.7)
