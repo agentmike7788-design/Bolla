@@ -19,6 +19,8 @@ const MINUTE := 520
 const TILE := Vector2i(480, 270)
 const CLOSE_FOV := 30.0
 const CLOSE_OFFSET := Vector3(1.5, 1.45, 2.6)
+## The extras (benches against walls, barrels at the hut): from his left side instead of from the front.
+const SIDE_OFFSET := Vector3(2.8, 1.5, 0.5)
 const CLOSE_LOOK := 0.9
 ## Where he waits before an action (room-local, the camera side of the table, as he comes from the stair).
 const START := Vector3(0.95, 0.0, 0.6)
@@ -34,6 +36,19 @@ const SERIES := {
 	"zopf": [&"harvest_hair", false],
 	"zaehne": [&"harvest_teeth", false],
 }
+## The other hand work: sheet name -> [where ("crypt" = node of the crypt room, else of the world), node path,
+## clip, stand (place-local offset Vector3 or distance in front along the place's +Z)].
+const EXTRA := {
+	"beinhaus": ["crypt", "Entities/OssuaryShelf", &"place_low", 0.9],
+	"pult": ["world", "Entities/workbench", &"bench_work", 0.95],
+	"schreiben": ["world", "Entities/workbench", &"write", 0.95],
+	"blumen": ["world", "Entities/plot_02", &"kneel_place", Vector3(-1.05, 0.0, 0.45)],
+	"unkraut": ["world", "Entities/plot_02", &"weed_pull", Vector3(-1.05, 0.0, 0.45)],
+	"laub": ["world", "Entities/plot_02", &"rake", Vector3(-1.6, 0.0, 0.45)],
+	"andacht": ["world", "Entities/plot_02", &"pray", Vector3(-1.05, 0.0, 0.45)],
+	"regentonne": ["world", "Entities/rain_barrel", &"fill_can", 0.7],
+}
+const OUTSIDE_DISTANCE := 14.0
 ## The five moments of the clip (fractions of its first full cycle after the draw).
 const MOMENTS: Array[float] = [0.05, 0.25, 0.45, 0.65, 0.85]
 
@@ -85,36 +100,73 @@ static func run(tree: SceneTree, world: Node3D, out: String, only: PackedStringA
 		player.global_transform = Transform3D(Basis(Vector3.UP, PI * 0.75), room.global_transform * START)
 		await _settle(tree, rig, game_cam)
 		table.call(&"_start_work", player, "Arbeiten", 600, func() -> void: pass, key)
-		var tiles: Array = []
-		# 1: the step to the work spot (and the tool out of the bag)
-		var draw: StringName = _draw_clip(player, clip)
-		if draw != &"":
-			_step_until(player, anim, draw, 0.55)
-		else:
-			_step_seconds(player, anim, 0.15)
-		tiles.append(await _shoot(tree, world, player, rig, game_cam, close, clock))
-		# 2-6: the clip's first full cycle
-		_step_until(player, anim, clip, 0.0)
-		for f: float in MOMENTS:
-			_step_until(player, anim, clip, f)
-			tiles.append(await _shoot(tree, world, player, rig, game_cam, close, clock))
-		# 7: the end – the tool back into the bag (or at rest)
-		player.call(&"cancel_timed_action")
-		var stow := _stow_clip(player, clip)
-		if stow != &"":
-			_step_until(player, anim, stow, 0.5)
-		else:
-			_step_seconds(player, anim, 0.3)
-		tiles.append(await _shoot(tree, world, player, rig, game_cam, close, clock))
+		var tiles: Array = await _frames(tree, world, player, anim, rig, game_cam, close, clock, clip)
 		var path := out.path_join("tisch_%s%s.jpg" % [series, suffix])
 		_sheet(tiles).save_jpg(path, JPG_QUALITY)
 		print("[ShotsTable] ", path, "  clip=", clip, " stand=", room.to_local(player.global_position))
 	corpse.call(&"set_covered", false)
+	# the other hand work of the audit, at its place (crypt first, then the graveyard)
+	for series: String in EXTRA:
+		if not only.is_empty() and not series in only:
+			continue
+		var spec: Array = EXTRA[series]
+		var clip: StringName = spec[2]
+		var place: Node3D = (room if spec[0] == "crypt" else world).get_node(NodePath(String(spec[1]))) as Node3D
+		player.call(&"cancel_timed_action")
+		player.call(&"reset_tool")
+		if spec[0] != "crypt" and bool(player.get(&"in_interior")):
+			portal.call(&"arrive", player, place.global_transform, false, &"")
+			rig.call(&"set_distance", OUTSIDE_DISTANCE)
+		player.global_transform = _stand(place, spec[3])
+		await _settle(tree, rig, game_cam)
+		player.call(&"start_timed_action", "Arbeiten", 600, func() -> void: pass, false, clip)
+		var tiles: Array = await _frames(tree, world, player, anim, rig, game_cam, close, clock, clip, SIDE_OFFSET)
+		var path := out.path_join("arbeit_%s%s.jpg" % [series, suffix])
+		_sheet(tiles).save_jpg(path, JPG_QUALITY)
+		print("[ShotsTable] ", path, "  clip=", clip)
 	player.call(&"cancel_timed_action")
 	player.call(&"reset_tool")
 	game_cam.make_current()
 	close.queue_free()
 	player.set_physics_process(true)
+
+
+## The step / the draw, five moments of the clip's first cycle, the stow / the end.
+static func _frames(tree: SceneTree, world: Node3D, player: Node3D, anim: AnimationPlayer, rig: Node3D, game_cam: Camera3D,
+		close: Camera3D, clock: Node, clip: StringName, offset: Vector3 = CLOSE_OFFSET) -> Array:
+	var tiles: Array = []
+	var draw: StringName = _draw_clip(player, clip)
+	if draw != &"":
+		_step_until(player, anim, draw, 0.55)
+	else:
+		_step_seconds(player, anim, 0.15)
+	tiles.append(await _shoot(tree, world, player, rig, game_cam, close, clock, offset))
+	_step_until(player, anim, clip, 0.0)
+	for f: float in MOMENTS:
+		_step_until(player, anim, clip, f)
+		tiles.append(await _shoot(tree, world, player, rig, game_cam, close, clock, offset))
+	player.call(&"cancel_timed_action")
+	var stow := _stow_clip(player, clip)
+	if stow != &"":
+		_step_until(player, anim, stow, 0.5)
+	else:
+		_step_seconds(player, anim, 0.3)
+	tiles.append(await _shoot(tree, world, player, rig, game_cam, close, clock, offset))
+	return tiles
+
+
+## Where he stands for an extra series: `at` = Vector3 (place-local offset; he faces the place's origin) or a
+## float (that far in front of the place along its +Z, facing it).
+static func _stand(place: Node3D, at: Variant) -> Transform3D:
+	var spot: Vector3
+	if at is Vector3:
+		spot = place.global_transform * (at as Vector3)
+	else:
+		spot = place.global_position + place.global_basis.z.normalized() * float(at)
+	var d := place.global_position - spot
+	d.y = 0.0
+	spot.y = place.global_position.y
+	return Transform3D(Basis(Vector3.UP, atan2(d.x, d.z)), spot)
 
 
 static func _draw_clip(player: Node, clip: StringName) -> StringName:
@@ -143,12 +195,12 @@ static func _settle(tree: SceneTree, rig: Node3D, game_cam: Camera3D) -> void:
 
 ## Both cameras: the close one (scaled to a tile) and the room camera (a tile at 1:1 around him).
 static func _shoot(tree: SceneTree, world: Node3D, player: Node3D, rig: Node3D, game_cam: Camera3D, close: Camera3D,
-		clock: Node) -> Array:
+		clock: Node, offset: Vector3 = CLOSE_OFFSET) -> Array:
 	clock.call(&"load_state", {"day": DAY, "minute_of_day": MINUTE})  # the long action ran the clock on
 	clock.call(&"emit_refresh")
 	var out: Array = []
 	var focus := player.global_position + Vector3(0.0, CLOSE_LOOK, 0.0) + player.global_basis.z * 0.35
-	close.global_position = focus + CLOSE_OFFSET
+	close.global_position = focus + player.global_basis * offset  # in front of him, a little to his left
 	close.look_at(focus)
 	close.make_current()
 	for i: int in SETTLE_FRAMES:
