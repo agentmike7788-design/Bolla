@@ -54,6 +54,12 @@ const CRYPT_ID := &"crypt"
 const STAT_NICHE_WAITS := &"niche_waits"
 const NOTE_RELOCATED := "Die Leiche vom alten Tisch liegt jetzt unten in der Gruft."
 const NOTE_SKIPPED := CorpseDeliveryRules.NOTE_SKIPPED
+## G8 Runde 3: how a delivery plan ends (_plan_delivery) – every slot delivered, the cemetery full for good, a plot
+## kept for a story corpse, a missed delivery.
+const PLAN_ALL := &""
+const PLAN_FULL := &"full"
+const PLAN_RESERVE := &"reserve"
+const PLAN_BLOCKED := &"blocked"
 # Phase 8 (docs/PHASE8_DESIGN.md §2.2.1, §2.9, §3.4; P2): the mourning household of a corpse delivered once
 # the village is open – CorpseRecord.kin_house = the Phase-7 mourning ribbon of its arrival day
 # (Village.mourning_house_for), story corpses by STORY_KIN.
@@ -197,44 +203,123 @@ func _deliver(day: int, now_total: int) -> void:
 		push_warning("[CorpseManager] delivery on day %d without corpse tables" % day)
 		return
 	var arrival := CorpseDeliveryRules.arrival_total(day, now_total, t)
-	var due := deliveries_due(day)
-	var graveyard := _first_in_group(GRAVEYARD_GROUP)
-	var dropoffs: Array[Node] = []
-	if is_inside_tree():
-		dropoffs = get_tree().get_nodes_in_group(DROPOFF_GROUP)
-	var story_list := _stories()
-	for i: int in due:
-		var story: StoryCorpseData = null
-		if i == 0:
-			story = StoryDirector.due_story(day, _story_delivered, _story_last_day, story_list, _story_config())
-		if CorpseDeliveryRules.is_cemetery_full(graveyard, unburied_count()):
-			return
-		if i == 0:
-			_check_stench(day, arrival)
-		if story == null:
-			var pending := StoryDirector.pending_count(_story_delivered, story_list)
-			if CorpseDeliveryRules.is_cemetery_full(graveyard, unburied_count(), CorpseDeliveryRules.reserved_plots(graveyard, pending, _story_config().chapter_section)):
-				EventBus.notification_requested.emit(_story_config().reserve_note, &"info")
-				return
-		var free := CorpseDeliveryRules.free_dropoffs(dropoffs)
-		var dropoff: Node = free[0] if not free.is_empty() else (dropoffs[0] if not dropoffs.is_empty() else null)
-		var reason := CorpseDeliveryRules.blocked_reason(dropoff, graveyard, unburied_count(), DROPOFF_GROUP)
-		if reason != "":
-			CorpseDeliveryRules.report_skip(day, reason, due - i)
-			var rep := _reputation()
-			if reason == REASON_OCCUPIED and rep != null:
-				rep.event(EVENT_MISSED_DELIVERY, REASON_MISSED)
-			return
-		var at := CorpseDeliveryRules.slot_transform(dropoff)
+	var plan := _plan_delivery(day, false)
+	if plan.stench:
+		_check_stench(day, arrival)
+	for slot: Dictionary in plan.slots:
+		var at := CorpseDeliveryRules.slot_transform(slot.dropoff)
 		var seed := CorpseGenerator.seed_for(day, _take_spawn_index(day))
 		var record: CorpseRecord
-		if story != null:
-			record = _spawn_story(story, seed, at, arrival, now_total, day)
+		if slot.story != null:
+			record = _spawn_story(slot.story, seed, at, arrival, now_total, day)
 		else:
 			record = _spawn(CorpseGenerator.generate(seed, t, day), at, CorpseRecord.LOCATION_DROPOFF, arrival, now_total)
 		if record != null:
 			assign_kin_house(record, day)
 			_last_delivery_ids.append(record.id)
+	match plan.end:
+		PLAN_RESERVE:
+			EventBus.notification_requested.emit(_story_config().reserve_note, &"info")
+		PLAN_BLOCKED:
+			CorpseDeliveryRules.report_skip(day, plan.reason, plan.left)
+			var rep := _reputation()
+			if plan.reason == REASON_OCCUPIED and rep != null:
+				rep.event(EVENT_MISSED_DELIVERY, REASON_MISSED)
+
+
+## The day's delivery as a plan, without side effects (G8 Runde 3 – _deliver carries it out, cart_load shows it on
+## Osric's cart before): per delivery slot a due story corpse (only the first slot) or a random one, each on the
+## next free bier; the walk stops – quietly – when the cemetery is full for good (end &"full") or a random corpse
+## would take a plot a pending story corpse needs (&"reserve"); a missing free bier or plot ends it as a missed
+## delivery (&"blocked", reason, `left` corpses not delivered). `stench`: the first slot was reached (the stench
+## check at the gate runs). Counts as the real loop did: every planned corpse is one more unburied, its bier taken.
+## Returns {slots: Array[{story, dropoff}], stench, end, reason, left}.
+func _plan_delivery(day: int, quiet: bool) -> Dictionary:
+	var slots: Array[Dictionary] = []
+	var plan := {"slots": slots, "stench": false, "end": PLAN_ALL, "reason": "", "left": 0}
+	var due := deliveries_due(day)
+	var graveyard := _first_in_group(GRAVEYARD_GROUP)
+	var dropoffs: Array[Node] = []
+	if is_inside_tree():
+		dropoffs = get_tree().get_nodes_in_group(DROPOFF_GROUP)
+	var free := CorpseDeliveryRules.free_dropoffs(dropoffs)
+	var story_list := _stories()
+	var delivered := _story_delivered.duplicate()
+	var unburied := unburied_count()
+	for i: int in due:
+		var story: StoryCorpseData = null
+		if i == 0:
+			story = StoryDirector.due_story(day, delivered, _story_last_day, story_list, _story_config())
+		if CorpseDeliveryRules.is_cemetery_full(graveyard, unburied):
+			plan.end = PLAN_FULL
+			return plan
+		if i == 0:
+			plan.stench = true
+		if story == null:
+			var pending := StoryDirector.pending_count(delivered, story_list)
+			if CorpseDeliveryRules.is_cemetery_full(graveyard, unburied, CorpseDeliveryRules.reserved_plots(graveyard, pending, _story_config().chapter_section)):
+				plan.end = PLAN_RESERVE
+				return plan
+		var dropoff: Node = null
+		var reason := ""
+		if not free.is_empty():
+			dropoff = free.pop_front()
+			reason = CorpseDeliveryRules.blocked_reason(dropoff, graveyard, unburied, DROPOFF_GROUP)
+		elif dropoffs.is_empty():
+			reason = REASON_NO_DROPOFF
+			if not quiet:
+				push_warning("[CorpseManager] no dropoff node in group '%s'" % DROPOFF_GROUP)
+		else:
+			reason = REASON_OCCUPIED
+		if reason != "":
+			plan.end = PLAN_BLOCKED
+			plan.reason = reason
+			plan.left = due - i
+			return plan
+		slots.append({"story": story, "dropoff": dropoff})
+		unburied += 1
+		if story != null:
+			delivered.append(String(story.id))
+	return plan
+
+
+## G8 Runde 3: what Osric's cart carries on `day` at `minute_of_day` – {unload: the corpses he lays onto the biers
+## by the delivery minute (preview records with the seed / story they will get, not stored), biers: their bier slot
+## transforms (world), keep: corpses he brings but cannot unload (no free bier – a missed delivery) or took back
+## after one, delivered: corpses already delivered today}. Before the delivery minute the plan of the day
+## (_plan_delivery); from it on only the corpses left over by a skipped delivery (flag delivery_skipped = day).
+func cart_load(day: int, minute_of_day: int) -> Dictionary:
+	var unload: Array[CorpseRecord] = []
+	var biers: Array[Transform3D] = []
+	var keep: Array[CorpseRecord] = []
+	var out := {"unload": unload, "biers": biers, "keep": keep, "delivered": 0}
+	var t := _tables()
+	if t == null or day <= 0:
+		return out
+	var next := int(_spawn_counts.get(day, 0))
+	if day == _last_delivery_day:
+		out.delivered = _last_delivery_ids.size()
+	if minute_of_day < t.delivery_minute and day > _last_delivery_day:
+		var plan := _plan_delivery(day, true)
+		for slot: Dictionary in plan.slots:
+			var seed := CorpseGenerator.seed_for(day, next)
+			next += 1
+			var story: StoryCorpseData = slot.story
+			unload.append(StoryDirector.make_record(story, seed) if story != null else CorpseGenerator.generate(seed, t, day))
+			biers.append(CorpseDeliveryRules.slot_transform(slot.dropoff))
+		for j: int in int(plan.left):
+			keep.append(CorpseGenerator.generate(CorpseGenerator.seed_for(day, next + j), t, day))
+		return out
+	if day >= _last_delivery_day and int(GameState.get_flag(FLAG_DELIVERY_SKIPPED, 0)) == day:
+		var left := maxi(0, deliveries_due(day) - int(out.delivered))
+		for j: int in left:
+			keep.append(CorpseGenerator.generate(CorpseGenerator.seed_for(day, next + j), t, day))
+	return out
+
+
+## Last day a delivery was attempted (0 = never).
+func last_delivery_day() -> int:
+	return _last_delivery_day
 
 
 ## Phase 8 §2.2.1: sets record.kin_house from `day` once the village is open (village_open) – story corpses

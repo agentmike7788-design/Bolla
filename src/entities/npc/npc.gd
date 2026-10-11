@@ -6,7 +6,10 @@ extends Node3D
 ## is empty. Walking: walk / push_cart with AnimationPlayer.speed_scale = ground speed / the
 ## speed the cycle was made for; afterwards entry.animation. Hidden entries hide the NPC and
 ## switch its Interactable and collision off. The handcart (Cart) shows while with_cart;
-## Cargo (a corpse on the cart) until the day's delivery – or all day when it was skipped.
+## Cargo (the dead on the cart, CorpseManager.cart_load) until he has laid them onto the bier – or all day when
+## the delivery was skipped. G8 Runde 3 (CartUnload, CartDeliveryConfig): in the minutes before the delivery he
+## steps to the cart, lifts each corpse off, carries it to its bier and lays it down; afterwards he walks back to
+## the handles – the figure (Model) and the cargo move, the root and the cart stay. All from the clock as well.
 ## Standing heading: the waypoint's facing, else the direction of the walk that ended there –
 ## both follow from the clock, so a load shows him exactly as walking in did (SL-1).
 ## debug_teleport() (debug console) holds him at a spot until the next schedule phase.
@@ -30,6 +33,8 @@ const ANIM_TALK := &"talk"
 const ANIM_LOW_MOOD := &"low"
 const FLAG_DELIVERY_SKIPPED := &"delivery_skipped"
 const CART_SLOT := "slot_corpse"
+## G8 Runde 3: a third corpse on the cart lies this much (m) higher, on the two side by side.
+const CARGO_STACK := 0.2
 ## Below this (m) a path segment has no direction.
 const EPSILON := 0.0001
 ## Lantern light (§8): warm, no shadow. QA art (W3, G4): 0.4 / 3 m read as a weak spark at the
@@ -66,6 +71,8 @@ const CARRIED_LANTERN_GROUP := &"carried_lantern"
 ## Ground speed (m/s) at which the walk / push_cart cycles do not slide (rig notes, M6a).
 @export var walk_anim_speed: float = 1.65
 @export var push_anim_speed: float = 1.14
+## G8 Runde 3: ground speed (m/s) of the carry_walk cycle (the dead in his arms).
+@export var carry_anim_speed: float = 1.2
 @export var anim_blend: float = 0.2
 ## Turning speed (1/s) towards the walking direction or a nearby player.
 @export var turn_speed: float = 8.0
@@ -88,8 +95,14 @@ var progress: float = 1.0
 
 var _anim: AnimationPlayer
 var _tables: CorpseTables
-## Day whose corpse the cart cargo currently shows (-1 = the scene's default model).
-var _cargo_day: int = -1
+## G8 Runde 3: the cargo nodes on the cart's slot ([0] = cargo, more for several corpses), the cart load of the
+## current game minute (CorpseManager.cart_load; key = total minute, -1 = stale), the unload pose (CartUnload.pose,
+## {} = none) and its values.
+var _cargo_nodes: Array[Node3D] = []
+var _load_key: int = -1
+var _load: Dictionary = {}
+var _unload: Dictionary = {}
+var cart_config: CartDeliveryConfig
 ## Plain corpse looks, same order as Corpse.plain_variants (cargo = the corpse he will deliver).
 const CARGO_LOOKS: PackedStringArray = [
 	"res://assets/models/props/ph_prop_corpse.glb", "res://assets/models/props/ph_prop_corpse_02.glb",
@@ -162,6 +175,7 @@ func _ready() -> void:
 	if slot != null and cargo.get_parent() != slot:
 		cargo.reparent(slot, false)
 		cargo.transform = Transform3D.IDENTITY
+	_cargo_nodes = [cargo]
 	_tables = Database.corpse_tables() as CorpseTables
 	_heading = rotation.y
 	_uses_cart = _schedule_uses_cart()
@@ -173,6 +187,8 @@ func _ready() -> void:
 	_make_lantern()
 	_region_active = RegionRoot.current(get_tree()) == region_id
 	EventBus.region_changed.connect(_on_region_changed)
+	EventBus.corpse_arrived.connect(_on_cart_load_changed.unbind(1))
+	EventBus.delivery_skipped.connect(_on_cart_load_changed.unbind(2))
 	refresh()
 
 
@@ -196,6 +212,7 @@ func _process(delta: float) -> void:
 
 ## Places the NPC for the current clock immediately (no smoothing).
 func refresh() -> void:
+	_load_key = -1
 	_update(-1.0)
 
 
@@ -421,11 +438,9 @@ func _update(delta: float) -> void:
 	global_position = sample[0] if _held_entry == null else _held_position
 	var dir: Vector3 = sample[1]
 	var shown := entry.visible and flag_allows() and shows_region(entry) and not hidden_by_flag()
-	_set_state(shown, shown and entry.dialogue_id != &"", shown and entry.with_cart and _uses_cart)
-	if _uses_cart:
-		cargo.visible = _with_cart and _has_cargo()
-		if cargo.visible and _cargo_day != TimeManager.day:
-			_show_cargo_for(TimeManager.day)
+	var cart_on := shown and entry.with_cart and _uses_cart
+	# G8 Runde 3: no prompt while he unloads and walks back to the handles.
+	_set_state(shown, shown and entry.dialogue_id != &"" and not (cart_on and _cart_busy(minute_f)), cart_on)
 	# The root (and with it the cart) turns with the path; only the figure turns to a player.
 	var heading := _heading
 	if _held_entry != null:
@@ -450,6 +465,8 @@ func _update(delta: float) -> void:
 	rotation = Vector3(0.0, _heading, 0.0)
 	if _model != null:
 		_model.rotation = Vector3(0.0, _look, 0.0)
+	if _uses_cart:
+		_update_cargo(minute_f)
 	_update_animation()
 
 
@@ -476,6 +493,9 @@ func _update_animation() -> void:
 		if _current_anim != &"":
 			_current_anim = &""
 			_apply_props()
+		return
+	if bool(_unload.get("active", false)):
+		_play_unload()
 		return
 	# Held by debug_teleport in the middle of a walk: he waits (idle) instead of walking on the spot.
 	var wanted := entry.animation if _held_entry == null or entry.travel_minutes == 0 else ANIM_IDLE
@@ -660,53 +680,222 @@ static func _names(raw: Variant) -> Array[StringName]:
 	return out
 
 
-## Corpse on the cart: on the way in before the delivery minute, or all day after a skipped one
-## – not on a day without delivery (cemetery full, disreputable on an even day).
-## Swaps the cargo model to the look of the corpse that is delivered on `day` (deterministic seed).
+## Test helper (round 1): the first cargo node wears the look of the corpse generated for `day` (spawn index 0).
 func _show_cargo_for(day: int) -> void:
-	_cargo_day = day
-	if _tables == null:
+	if _tables != null:
+		_set_cargo_look(0, CorpseGenerator.generate(CorpseGenerator.seed_for(day, 0), _tables, day))
+
+
+# --- G8 Runde 3: the dead on the cart and the unloading -----------------------------------
+
+## The cargo for the clock: every corpse of the cart load on the cart's slot (side by side, head to the handles),
+## in the look it will have on the bier (story looks too); during the unloading (CartUnload.pose) the one in his
+## hands follows the pose, those laid down lie on their biers and the figure walks / lifts / lowers.
+func _update_cargo(minute_f: float) -> void:
+	var was_active := bool(_unload.get("active", false))
+	_unload = {}
+	var cfg := _cart_config()
+	var now_load := _cart_load()
+	var unload: Array[CorpseRecord] = now_load.get("unload", [] as Array[CorpseRecord])
+	var keep: Array[CorpseRecord] = now_load.get("keep", [] as Array[CorpseRecord])
+	var biers: Array[Transform3D] = now_load.get("biers", [] as Array[Transform3D])
+	var total := mini(unload.size() + keep.size(), maxi(cfg.max_cargo, 1))
+	var shown := _with_cart and _present
+	if shown:
+		_ensure_cargo(total)
+	for i: int in _cargo_nodes.size():
+		var node := _cargo_nodes[i]
+		node.visible = shown and i < total
+		if node.visible:
+			_set_cargo_look(i, unload[i] if i < unload.size() else keep[i - unload.size()])
+			_cargo_nodes[i].transform = _cargo_rest(i, total)
+	var slot := _cart_slot()
+	if shown and slot != null and _tables != null and _held_entry == null and _in_unload_window(minute_f):
+		var on_cart: Array[Transform3D] = []
+		for i: int in mini(unload.size(), total):
+			on_cart.append(slot.global_transform * _cargo_rest(i, total))
+		_unload = CartUnload.pose(cfg, minute_f, _tables.delivery_minute, on_cart, biers, global_position, rotation.y,
+				slot.global_position, slot.global_basis.x, int(now_load.get("delivered", 0)), _return_bier(),
+				slot.global_transform * _cargo_rest(0, maxi(total, 1)))
+	if bool(_unload.get("active", false)):
+		var laid: int = _unload.laid
+		var moving: int = _unload.index
+		for i: int in mini(mini(unload.size(), total), biers.size()):
+			if i < laid:
+				_cargo_nodes[i].global_transform = biers[i]
+			elif i == moving:
+				_cargo_nodes[i].global_transform = _unload.corpse
+		if _model != null:
+			_model.position = to_local(_unload.figure)
+			_look = wrapf(float(_unload.yaw) - rotation.y, -PI, PI)
+			_model.rotation = Vector3(0.0, _look, 0.0)
+	elif _model != null and (was_active or _model.position != Vector3.ZERO):
+		_model.position = Vector3.ZERO
+
+
+## The unload clips: one-shots (load_lift / load_lower) follow the pose's progress, the walks run at the ground
+## speed (stopped with the clock).
+func _play_unload() -> void:
+	var wanted: StringName = _unload.anim
+	if wanted != _current_anim or not _props.is_empty():
+		_current_anim = wanted
+		_apply_props()
+	if _anim == null:
 		return
-	var record := CorpseGenerator.generate(CorpseGenerator.seed_for(day, 0), _tables, day)
-	var look := Corpse.variant_for_record(record, _tables, CARGO_LOOKS.size())
-	var scene := load(CARGO_LOOKS[look]) as PackedScene
-	if scene == null or cargo.scene_file_path == scene.resource_path:
+	if _lod >= 2 or not _region_active:
+		_pause_animation()
+		return
+	var designed := carry_anim_speed if wanted == CartUnload.ANIM_CARRY else walk_anim_speed
+	if not _anim.has_animation(wanted):
+		wanted = ANIM_WALK if wanted == CartUnload.ANIM_CARRY else ANIM_IDLE
+		designed = walk_anim_speed
+	if not _anim.has_animation(wanted):
+		return
+	var t: float = _unload.anim_t
+	if t >= 0.0:
+		if _anim.current_animation != wanted:
+			_anim.play(wanted, anim_blend)
+		_anim.speed_scale = 1.0
+		_anim.seek(clampf(t, 0.0, 1.0) * _anim.current_animation_length, true)
+		return
+	if _anim.current_animation != wanted or not _anim.is_playing():
+		_anim.play(wanted, anim_blend)
+	var real := 0.0
+	if TimeManager.running and not TimeManager.paused:
+		real = float(_unload.speed) / maxf(TimeManager.config.seconds_per_game_minute, EPSILON)
+	_anim.speed_scale = real / designed if designed > 0.0 else 1.0
+
+
+## The clock is between the start of the unloading and the end of the walk back.
+func _in_unload_window(minute_f: float) -> bool:
+	if _tables == null:
+		return false
+	var cfg := _cart_config()
+	return minute_f >= float(cfg.unload_start(_tables.delivery_minute)) \
+			and minute_f < float(_tables.delivery_minute + maxi(cfg.return_minutes, 0))
+
+
+## He is unloading or walking back to the handles right now (no prompt meanwhile).
+func _cart_busy(minute_f: float) -> bool:
+	if _held_entry != null or not _in_unload_window(minute_f):
+		return false
+	var now_load := _cart_load()
+	if minute_f < float(_tables.delivery_minute):
+		return not (now_load.get("unload", []) as Array).is_empty() and not (now_load.get("biers", []) as Array).is_empty()
+	return int(now_load.get("delivered", 0)) > 0
+
+
+## CorpseManager.cart_load for the current game minute (cached per minute). Without a manager (tests, previews):
+## the corpse generated for the day on the cart until the delivery minute, after it only after a skipped delivery.
+func _cart_load() -> Dictionary:
+	var key := TimeManager.total_minutes()
+	if key == _load_key:
+		return _load
+	_load_key = key
+	var manager := get_tree().get_first_node_in_group(&"corpse_manager") if is_inside_tree() else null
+	if manager != null and manager.has_method(&"cart_load"):
+		_load = manager.call(&"cart_load", TimeManager.day, TimeManager.minute_of_day)
+		return _load
+	var keep: Array[CorpseRecord] = []
+	var day := TimeManager.day
+	if _tables != null and (TimeManager.minute_of_day < _tables.delivery_minute
+			or int(GameState.get_flag(FLAG_DELIVERY_SKIPPED, 0)) == day):
+		keep.append(CorpseGenerator.generate(CorpseGenerator.seed_for(day, 0), _tables, day))
+	_load = {"unload": [] as Array[CorpseRecord], "biers": [] as Array[Transform3D], "keep": keep, "delivered": 0}
+	return _load
+
+
+func _on_cart_load_changed() -> void:
+	_load_key = -1
+
+
+## Where corpse `i` of `total` lies on the cart (slot-local): side by side, a third one on top; head to the handles.
+func _cargo_rest(i: int, total: int) -> Transform3D:
+	var cfg := _cart_config()
+	var basis := Basis(Vector3.UP, PI) if cfg.head_to_handles else Basis.IDENTITY
+	var offset := Vector3.ZERO
+	if total >= 2:
+		if i < 2:
+			offset.z = (-0.5 if i == 0 else 0.5) * cfg.cargo_spacing
+		else:
+			offset.y = CARGO_STACK * (i - 1)
+	return Transform3D(basis, offset)
+
+
+## At least `n` cargo nodes on the cart's slot (more for several corpses).
+func _ensure_cargo(n: int) -> void:
+	var parent := cargo.get_parent() if is_instance_valid(cargo) else null
+	while _cargo_nodes.size() < n and parent != null:
+		var scene := load(CARGO_LOOKS[0]) as PackedScene
+		if scene == null:
+			return
+		var node := scene.instantiate() as Node3D
+		node.name = "Cargo%d" % _cargo_nodes.size()
+		node.visible = false
+		parent.add_child(node)
+		_cargo_nodes.append(node)
+
+
+## Cargo node `i` wears the look of `record` (Corpse.look_of – the same model the corpse will have on the bier).
+func _set_cargo_look(i: int, record: CorpseRecord) -> void:
+	if i < 0 or i >= _cargo_nodes.size() or record == null:
+		return
+	var path := Corpse.look_path(Corpse.look_of(record, _tables, CARGO_LOOKS.size()), CARGO_LOOKS)
+	var node := _cargo_nodes[i]
+	if path == "" or node.scene_file_path == path:
+		return
+	var scene := load(path) as PackedScene
+	if scene == null:
 		return
 	var fresh := scene.instantiate() as Node3D
-	var parent := cargo.get_parent()
-	fresh.name = cargo.name
-	fresh.transform = cargo.transform
-	fresh.visible = cargo.visible
+	var parent := node.get_parent()
+	fresh.name = node.name
+	fresh.transform = node.transform
+	fresh.visible = node.visible
 	parent.add_child(fresh)
-	parent.move_child(fresh, cargo.get_index())
-	cargo.free()
-	cargo = fresh
+	parent.move_child(fresh, node.get_index())
+	node.free()
+	_cargo_nodes[i] = fresh
+	if i == 0:
+		cargo = fresh
 
 
-func _has_cargo() -> bool:
-	if _tables == null or _cemetery_full() or _deliveries_due(TimeManager.day) <= 0:
-		return false
-	if TimeManager.minute_of_day < _tables.delivery_minute:
-		return true
-	return GameState.get_flag(FLAG_DELIVERY_SKIPPED, 0) == TimeManager.day
+## The cart's slot_corpse marker (null without one).
+func _cart_slot() -> Node3D:
+	return cargo.get_parent() as Node3D if is_instance_valid(cargo) and cargo.get_parent() != cart else cart.find_child(CART_SLOT, true, false) as Node3D
 
 
-## CorpseManager.deliveries_due (1 without a manager that knows it).
-func _deliveries_due(day: int) -> int:
-	var manager := get_tree().get_first_node_in_group(&"corpse_manager")
-	if manager == null or not manager.has_method(&"deliveries_due"):
-		return 1
-	return int(manager.call(&"deliveries_due", day))
+## The bier he walks back from after the delivery (the first one of the world).
+func _return_bier() -> Transform3D:
+	var bier := get_tree().get_first_node_in_group(&"dropoff") if is_inside_tree() else null
+	return bier.call(&"slot_transform") as Transform3D if bier != null and bier.has_method(&"slot_transform") else global_transform
 
 
-## Same rule as CorpseManager: no plot left for a new corpse means no more deliveries.
-func _cemetery_full() -> bool:
-	var graveyard := get_tree().get_first_node_in_group(&"graveyard")
-	var manager := get_tree().get_first_node_in_group(&"corpse_manager")
-	if graveyard == null or manager == null or not graveyard.has_method(&"free_plot_count") \
-			or not manager.has_method(&"unburied_count"):
-		return false
-	return int(graveyard.call(&"free_plot_count")) <= int(manager.call(&"unburied_count"))
+func _cart_config() -> CartDeliveryConfig:
+	if cart_config == null:
+		cart_config = Database.config(&"cart_delivery_config") as CartDeliveryConfig
+		if cart_config == null:
+			cart_config = CartDeliveryConfig.new()
+	return cart_config
+
+
+## How many corpses the cart shows right now (on the cart, in his arms or laid down until the delivery) – tests, screenshots.
+func cargo_count() -> int:
+	var n := 0
+	for node: Node3D in _cargo_nodes:
+		if is_instance_valid(node) and node.visible:
+			n += 1
+	return n
+
+
+## The current unload pose (CartUnload.pose; {} when he is not unloading) – tests, screenshots.
+func unload_pose() -> Dictionary:
+	return _unload
+
+
+## The cargo nodes (tests, screenshots).
+func cargo_nodes() -> Array[Node3D]:
+	return _cargo_nodes
 
 
 func _schedule_uses_cart() -> bool:
@@ -773,7 +962,12 @@ func _after_schedule_change() -> void:
 	if not _uses_cart and is_node_ready():
 		cart.visible = false
 		cart_shape.set_deferred(&"disabled", true)
-		cargo.visible = false
+		for node: Node3D in _cargo_nodes:
+			if is_instance_valid(node):
+				node.visible = false
+		_unload = {}
+		if _model != null:
+			_model.position = Vector3.ZERO
 		_with_cart = false
 	if is_node_ready():
 		refresh()

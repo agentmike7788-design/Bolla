@@ -176,21 +176,28 @@ func test_carter_schedule_loads_with_identity() -> void:
 	assert_not_null(s, CARTER_PATH)
 	assert_eq(s.npc_id, &"carter")
 	assert_eq(s.display_name, "Osric Faulhaber")
-	assert_eq(_graveyard_entries().size(), 9, "the graveyard routine")
-	assert_eq(s.entries.size(), 17, "+ 8 village entries (Phase 7; QA7: the night walk to the inn)")
+	assert_eq(_graveyard_entries().size(), 10, "the graveyard routine (G8 Runde 3: + unloading at the bier)")
+	assert_eq(s.entries.size(), 18, "+ 8 village entries (Phase 7; QA7: the night walk to the inn)")
 	assert_eq(Database.schedule(&"carter"), s, "registered in Database by npc_id")
 
 
+## G8 Runde 3: he is at the bier unload_minutes before the delivery minute, unloads (no prompt) and talks from 07:40.
 func test_carter_morning_arrival_matches_delivery_minute() -> void:
+	var cfg := Database.config(&"cart_delivery_config") as CartDeliveryConfig
 	var walk_in := ScheduleResolver.entry_at(_carter(), 420)
-	assert_eq(walk_in.start_minute, 420, "07:00 entry")
+	assert_eq(walk_in.start_minute, 412, "06:52 entry (G8 Runde 3)")
 	var arrival := ScheduleResolver.arrival_minute(walk_in)
-	assert_eq(arrival, 460)
-	assert_eq(arrival, CorpseTables.new().delivery_minute, "CorpseTables default")
-	assert_eq(arrival, (load(CORPSE_TABLES_FIXTURE) as CorpseTables).delivery_minute, "fixture")
+	assert_eq(arrival, 452)
+	var delivery := CorpseTables.new().delivery_minute
+	assert_eq(delivery, 460, "CorpseTables default")
+	assert_eq(delivery, (load(CORPSE_TABLES_FIXTURE) as CorpseTables).delivery_minute, "fixture")
 	if ResourceLoader.exists(CORPSE_TABLES_DATA):
-		assert_eq(arrival, (load(CORPSE_TABLES_DATA) as CorpseTables).delivery_minute, "game data")
-	assert_eq(ScheduleResolver.entry_at(_carter(), arrival).dialogue_id, &"carter", "talkable on arrival")
+		assert_eq(delivery, (load(CORPSE_TABLES_DATA) as CorpseTables).delivery_minute, "game data")
+	assert_eq(arrival, cfg.unload_start(delivery), "at the bier when the unloading starts")
+	var unload := ScheduleResolver.entry_at(_carter(), arrival)
+	assert_eq(unload.activity, &"unload")
+	assert_eq(unload.dialogue_id, &"", "no prompt while unloading")
+	assert_eq(ScheduleResolver.entry_at(_carter(), delivery).dialogue_id, &"carter", "talkable once the corpse is on the bier")
 
 
 func test_carter_entries_sorted_unique_and_in_range() -> void:
@@ -228,9 +235,11 @@ func test_carter_phases_over_the_day() -> void:
 	var s := _carter()
 	var expect := {
 		0: [&"home", false, false, &""],
-		419: [&"home", false, false, &""],
-		420: [&"walk", true, true, &""],
-		459: [&"walk", true, true, &""],
+		411: [&"home", false, false, &""],
+		412: [&"walk", true, true, &""],
+		451: [&"walk", true, true, &""],
+		452: [&"unload", true, true, &""],
+		459: [&"unload", true, true, &""],
 		460: [&"idle", true, true, &"carter"],
 		599: [&"idle", true, true, &"carter"],
 		600: [&"walk", true, true, &""],
@@ -253,10 +262,13 @@ func test_carter_phases_over_the_day() -> void:
 
 
 func test_carter_specific_entries() -> void:
-	var walk_in := _carter_entry(420)
+	var walk_in := _carter_entry(412)
 	assert_eq(walk_in.path, PackedStringArray(["road_end", "road_mid", "gate_outside", "dropoff"]))
 	assert_eq(walk_in.travel_minutes, 40)
 	assert_eq(walk_in.animation, &"push_cart")
+	var unload := _carter_entry(452)
+	assert_eq(unload.path, PackedStringArray(["dropoff"]))
+	assert_true(unload.with_cart)
 	var at_dropoff := _carter_entry(460)
 	assert_eq(at_dropoff.path, PackedStringArray(["dropoff"]))
 	assert_eq(at_dropoff.animation, &"idle")
@@ -303,6 +315,6 @@ func test_carter_hidden_phases_have_no_dialogue_or_cart() -> void:
 
 func test_carter_progress_along_morning_walk() -> void:
 	var s := _carter()
-	var e := ScheduleResolver.entry_at(s, 440)
-	assert_almost(ScheduleResolver.progress(e, 440.0), 0.5)
+	var e := ScheduleResolver.entry_at(s, 432)
+	assert_almost(ScheduleResolver.progress(e, 432.0), 0.5)
 	assert_almost(ScheduleResolver.progress(ScheduleResolver.entry_at(s, 500), 500.0), 1.0, 0.0001, "standing")

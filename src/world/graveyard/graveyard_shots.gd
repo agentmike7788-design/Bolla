@@ -19,6 +19,7 @@ const Burial := preload("res://src/world/graveyard/graveyard_shots_burial.gd")
 const Tools := preload("res://src/world/graveyard/graveyard_shots_tools.gd")
 const Gruft := preload("res://src/world/graveyard/graveyard_shots_gruft.gd")
 const Gruft2 := preload("res://src/world/graveyard/graveyard_shots_gruft2.gd")
+const Delivery := preload("res://src/world/graveyard/graveyard_shots_delivery.gd")
 const SETTLE_FRAMES := 40
 ## Frames after a measurement switch (shadows off / freeze) before the counters are read.
 const MEASURE_FRAMES := 4
@@ -65,6 +66,11 @@ var _gruft: bool = false
 ## --suffix=<s> is appended to its file names (_web, _before).
 var _gruft2: bool = false
 var _suffix: String = ""
+## --delivery: G8 round 3 – Osric brings the corpse on his cart (graveyard_shots_delivery.gd; --skip = „time 07:25" first).
+var _delivery: bool = false
+var _skip: bool = false
+var _before_set: bool = false
+var _from_minute: int = -1
 var _distance: float = 0.0
 
 
@@ -93,6 +99,15 @@ func _run() -> void:
 			_gruft = true
 		elif arg == "--gruft2":
 			_gruft2 = true
+		elif arg == "--delivery":
+			_delivery = true
+		elif arg == "--skip":
+			_skip = true
+		elif arg == "--before-set":
+			_before_set = true
+		elif arg.begins_with("--from="):
+			var hhmm := arg.trim_prefix("--from=")
+			_from_minute = int(hhmm.left(2)) * 60 + int(hhmm.substr(2, 2))
 		elif arg.begins_with("--suffix="):
 			_suffix = arg.trim_prefix("--suffix=")
 		elif arg.begins_with("--distance="):
@@ -121,6 +136,10 @@ func _run() -> void:
 		return
 	if _gruft2:
 		await Gruft2.run(self, world, _out, _only, _suffix)
+		quit()
+		return
+	if _delivery:
+		await Delivery.run(self, world, _out, _only, _suffix, _skip, _before_set, _from_minute)
 		quit()
 		return
 	_stage(world)

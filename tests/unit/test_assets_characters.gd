@@ -33,8 +33,10 @@ const CHARACTERS := {
 	},
 	"ph_chr_carter": {
 		"height": [1.6, 1.7],
-		"animations": {"idle": [1.6, 3.0], "walk": [0.4, 0.9], "push_cart": [0.5, 1.0], "talk": [1.6, 3.0]},
-		"one_shot": [],
+		# G8 Runde 3: unloading the dead at the bier (CartUnload)
+		"animations": {"idle": [1.6, 3.0], "walk": [0.4, 0.9], "push_cart": [0.5, 1.0], "talk": [1.6, 3.0],
+				"carry_walk": [0.5, 0.8], "load_lift": [0.9, 1.1], "load_lower": [1.1, 1.3]},
+		"one_shot": ["load_lift", "load_lower"],
 	},
 	# Phase 4 (docs/PHASE4_DESIGN.md §8): Ilse Kranich, the night trader
 	"ph_chr_kranich": {
