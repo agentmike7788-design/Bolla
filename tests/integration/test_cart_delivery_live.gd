@@ -10,16 +10,35 @@ extends TestCase
 const TIME_SCALE := 6.0
 ## Frames after which a run gives up (the clock should be far past 07:44 by then).
 const MAX_FRAMES := 20000
-const END_MINUTE := 464
-const UNLOAD_ORDER: Array[StringName] = [&"walk", &"load_lift", &"carry_walk", &"load_lower"]
+## 07:48: past the gate bell (07:44.8) and his return to the handles (07:46).
+const END_MINUTE := 468
+## Step to the cart, lift, carry, lower – then to the gate bell, ring it, back to the handles.
+const UNLOAD_ORDER: Array[StringName] = [&"walk", &"load_lift", &"carry_walk", &"load_lower", &"walk", &"ring_bell", &"walk"]
+const BELL_NOTE := "Am Tor läutet es – Osric hat eine neue Leiche gebracht."
 
 var world: WorldRoot
 var npc: Npc
 var manager: CorpseManager
 var console: Node
+var TEST_SAVES := TestCase.user_dir("test_cart_delivery_live")
+const SLOT := 7
+var bell: GateBell
+var notes: Array[String] = []
+
+
+func before_each() -> void:
+	notes.clear()
+	EventBus.notification_requested.connect(_on_note)
+
+
+func _on_note(text: String, _kind: StringName) -> void:
+	notes.append(text)
 
 
 func after_each() -> void:
+	TestCase.remove_user_dir(TEST_SAVES)
+	if EventBus.notification_requested.is_connected(_on_note):
+		EventBus.notification_requested.disconnect(_on_note)
 	Engine.time_scale = 1.0
 	TimeManager.running = false
 	if console != null and console.has_method(&"reset"):
@@ -33,6 +52,8 @@ func _start(lines: PackedStringArray) -> void:
 	npc = world.get_node_by_layout_id("npc_carter") as Npc
 	manager = world.corpse_manager
 	console = tree.root.get_node(^"Debug")
+	bell = world.get_node_or_null(^"Entities/gate_bell") as GateBell
+	assert_not_null(bell, "the gate bell")
 	assert_true(TimeManager.running, "the clock runs after a new game")
 	assert_true(bool(console.call(&"open")), "F1 opens the console")
 	for line: String in lines:
@@ -54,10 +75,13 @@ func _bier_count() -> int:
 func _watch() -> Dictionary:
 	Engine.time_scale = TIME_SCALE
 	var seen := {"push_with_cargo": 0, "unload": [] as Array[StringName], "cart_hidden": 0, "cart_off": 0.0,
-			"early_bier": 0, "carry_off": 0.0, "road_min_z": INF, "frames": 0, "delivered_at": -1}
+			"early_bier": 0, "carry_off": 0.0, "road_min_z": INF, "frames": 0, "delivered_at": -1, "rang_at": -1.0,
+			"bell_off": INF}
 	var dropoff := world.get_waypoint(&"dropoff")
 	var tables := Database.corpse_tables() as CorpseTables
 	var frames := 0
+	var rings := bell.delivery_rings
+	var hang := bell.bell_node().global_position
 	while TimeManager.minute_of_day < END_MINUTE and frames < MAX_FRAMES:
 		await tree.process_frame
 		frames += 1
@@ -72,8 +96,11 @@ func _watch() -> Dictionary:
 			seen.cart_off = maxf(seen.cart_off, Vector2(npc.global_position.x - dropoff.x, npc.global_position.z - dropoff.z).length())
 			var anim: StringName = pose.anim
 			var order: Array[StringName] = seen.unload
-			if minute < tables.delivery_minute and (order.is_empty() or order[order.size() - 1] != anim):
+			if order.is_empty() or order[order.size() - 1] != anim:
 				order.append(anim)
+			if anim == CartUnload.ANIM_RING:
+				var model := npc.get_node(^"Model") as Node3D
+				seen.bell_off = minf(seen.bell_off, Vector2(model.global_position.x - hang.x, model.global_position.z - hang.z).length())
 			if anim == CartUnload.ANIM_CARRY:
 				var node: Node3D = npc.cargo_nodes()[int(pose.index)]
 				var model := npc.get_node(^"Model") as Node3D
@@ -87,6 +114,8 @@ func _watch() -> Dictionary:
 			seen.early_bier += 1
 		if seen.delivered_at < 0 and _bier_count() > 0:
 			seen.delivered_at = minute
+		if seen.rang_at < 0.0 and bell.delivery_rings > rings:
+			seen.rang_at = TimeManager.get_minute_f()
 	seen.frames = frames
 	return seen
 
@@ -97,13 +126,21 @@ func test_time_0715_then_the_running_clock() -> void:
 	var seen := await _watch()
 	assert_true(int(seen.push_with_cargo) > 10, "he pushes the cart with the corpse on it (%d frames)" % seen.push_with_cargo)
 	assert_true(float(seen.road_min_z) < 9.0, "along the road through the gate up to the bier (z %.2f)" % seen.road_min_z)
-	assert_eq(seen.unload, UNLOAD_ORDER, "step to the cart, lift, carry over, lower")
+	assert_eq(seen.unload, UNLOAD_ORDER, "step to the cart, lift, carry over, lower, to the bell, ring, back")
 	assert_eq(int(seen.cart_hidden), 0, "the cart never disappears")
 	assert_true(float(seen.cart_off) < 0.05, "the cart stays at the bier while he unloads (%.2f m)" % seen.cart_off)
 	assert_true(float(seen.carry_off) < 0.8, "the corpse is in his arms while he carries it (%.2f m)" % seen.carry_off)
 	assert_eq(int(seen.early_bier), 0, "nothing on the bier before 07:40")
 	assert_eq(int(seen.delivered_at), 460, "on the bier at 07:40")
 	assert_eq(npc.cargo_count(), 0, "the cart is empty afterwards")
+	# User: „und er soll an der glock klingeln das ich höre wen eine neue leiche da ist".
+	assert_eq(bell.delivery_rings, 1, "he rings the gate bell once")
+	var cfg := Database.config(&"cart_delivery_config") as CartDeliveryConfig
+	assert_almost(float(seen.rang_at), 460.0 + cfg.ring_offset(), 0.5, "after laying it down (%.2f)" % seen.rang_at)
+	assert_true(bell.last_heard, "heard – the gravekeeper is outside at the gate")
+	assert_has(notes, BELL_NOTE)
+	assert_true(float(seen.bell_off) < 0.6, "he stands under the bell (%.2f m)" % seen.bell_off)
+	assert_true(npc.is_talkable(), "back at the handles, talkable")
 
 
 func test_from_the_start_without_time_command() -> void:
@@ -114,6 +151,7 @@ func test_from_the_start_without_time_command() -> void:
 	assert_eq(seen.unload, UNLOAD_ORDER)
 	assert_eq(int(seen.cart_hidden), 0)
 	assert_eq(int(seen.delivered_at), 460)
+	assert_eq(bell.delivery_rings, 1, "the bell rings")
 
 
 ## A skip into the unloading (the user's „time 07:35"): he is at the bier at once – the cart where it belongs from the
@@ -132,12 +170,17 @@ func test_time_into_the_unloading() -> void:
 	assert_eq(int(seen.cart_hidden), 0)
 	assert_eq(int(seen.early_bier), 0)
 	assert_eq(int(seen.delivered_at), 460)
+	assert_eq(bell.delivery_rings, 1, "the bell rings while the clock runs")
 
 
-## Skips past 07:40 („time 07:45") end in the delivered state: corpse on the bier, cart empty, Osric at the handles.
+## Skips past 07:40 („time 07:50") end in the delivered state: corpse on the bier, cart empty, Osric at the handles;
+## the skip rings nothing – the HUD notes the new corpse.
 func test_time_past_the_delivery() -> void:
-	await _start(PackedStringArray(["tp gate", "time 07:45"]))
+	await _start(PackedStringArray(["tp gate", "time 07:50"]))
 	await wait_frames(3)
+	assert_eq(bell.delivery_rings, 0, "a skip rings nothing")
+	assert_eq(bell.delivery_notes, 1, "only the note")
+	assert_has(notes, "Osric hat am Tor eine neue Leiche gebracht.")
 	assert_eq(_bier_count(), 1, "delivered")
 	assert_eq(npc.cargo_count(), 0, "cart empty")
 	assert_false(bool(npc.unload_pose().get("active", false)), "no unloading any more")
@@ -162,7 +205,7 @@ func _run_until(minute: int, scale: float) -> int:
 ## the gate (talk, linen) until 10:00, then pushes the empty cart back up the road and is gone at 10:40; in the evening
 ## he comes back on foot (18:00–18:30) and smokes at his spot until 21:00.
 func test_leaves_at_ten_and_comes_back_in_the_evening() -> void:
-	await _start(PackedStringArray(["tp gate", "time 07:45"]))
+	await _start(PackedStringArray(["tp gate", "time 07:50"]))
 	await wait_frames(3)
 	assert_true(npc.is_present() and npc.is_talkable(), "after the delivery he waits at the gate, talkable")
 	var at_gate := npc.global_position
@@ -184,3 +227,31 @@ func test_leaves_at_ten_and_comes_back_in_the_evening() -> void:
 	assert_true(npc.is_present(), "back in the evening")
 	assert_true(Vector2(npc.global_position.x - spot.x, npc.global_position.z - spot.z).length() < 0.1, "at his evening spot")
 	assert_false(npc.cart.is_visible_in_tree(), "in the evening without the cart")
+
+
+## In a room (hut, crypt …) or the village the bell is not heard – only the HUD note.
+func test_bell_in_a_room_only_notes() -> void:
+	await _start(PackedStringArray(["tp gate", "time 07:43"]))
+	world.get_player().set_in_interior(true, &"")
+	var rings := bell.delivery_rings
+	await _run_until(467, 6.0)
+	assert_eq(bell.delivery_rings, rings + 1, "he rings")
+	assert_false(bell.last_heard, "not heard inside")
+	assert_has(notes, BELL_NOTE)
+
+
+## A save during the walk back loads without ringing again (a load announces nothing).
+func test_a_load_rings_nothing() -> void:
+	SaveManager.save_dir = TEST_SAVES
+	await _start(PackedStringArray(["tp gate", "time 07:45"]))
+	assert_true(bool(npc.unload_pose().get("active", false)), "between the bell and the handles")
+	TimeManager.running = false
+	assert_eq(SaveManager.save_game(SLOT), OK)
+	var err: Error = await SaveManager.load_game(SLOT)
+	assert_eq(err, OK)
+	world = tree.current_scene as WorldRoot
+	npc = world.get_node_by_layout_id("npc_carter") as Npc
+	bell = world.get_node_or_null(^"Entities/gate_bell") as GateBell
+	await _run_until(468, 6.0)
+	assert_eq(bell.delivery_rings, 0, "no ring after the load")
+	assert_eq(bell.delivery_notes, 0, "no note either")

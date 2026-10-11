@@ -800,6 +800,19 @@ def load_lower(t: float) -> dict:
     return rig.keyed(t, keys, wrap=False)
 
 
+# --- G8 Runde 3 (user: „er soll an der glock klingeln"): the gate bell after the delivery ---------------
+# He stands under the bell on the east gate post (1.78 m), looks up, reaches up with the right hand to the
+# bell's rope and gives it two short pulls (the bell swings in code: GateBell; the cue sounds at ~0.4,
+# CartDeliveryConfig.bell_ring_at), then lowers the arm to rest.
+
+def ring_bell(t: float) -> dict:
+    """30 frames = 1.0 s one-shot: from rest the right arm up to the bell, two pulls, back to rest."""
+    up = {"arm_r": (-160.0, -6.0, 10.0), "arm_l": (-6.0, 6.0, 0.0), "head": (-18.0, 0.0, 4.0), "spine": (-4.0, 0.0, 0.0)}
+    pull = {"arm_r": (-138.0, -6.0, 10.0), "arm_l": (-6.0, 6.0, 0.0), "head": (-15.0, 0.0, 4.0), "spine": (2.0, 0.0, 0.0)}
+    keys = [(0.0, {}), (0.26, up), (0.4, pull), (0.54, up), (0.68, pull), (1.0, {})]
+    return rig.keyed(t, keys, wrap=False)
+
+
 ACTIONS = (  # (name, frames at 30 fps, pose function)
     ("idle-loop", 72, idle),
     ("walk-loop", 18, walk),
@@ -808,6 +821,7 @@ ACTIONS = (  # (name, frames at 30 fps, pose function)
     ("carry_walk-loop", 20, carry_walk),
     ("load_lift", 30, load_lift),
     ("load_lower", 36, load_lower),
+    ("ring_bell", 30, ring_bell),
 )
 
 

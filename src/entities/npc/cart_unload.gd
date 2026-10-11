@@ -11,6 +11,7 @@ const ANIM_WALK := &"walk"
 const ANIM_LIFT := &"load_lift"
 const ANIM_CARRY := &"carry_walk"
 const ANIM_LOWER := &"load_lower"
+const ANIM_RING := &"ring_bell"
 const EPSILON := 0.0001
 
 
@@ -18,13 +19,17 @@ const EPSILON := 0.0001
 ## are unloaded today (in order), `biers`: the bier slot of each (world), `handles`: where he stands at the cart (the
 ## Npc root), `root_yaw` its heading, `cart_center` / `cart_axis`: the cart's slot and long axis (world). After the
 ## delivery (`delivered` corpses > 0) the walk back starts at the bier `return_bier`, the corpse lay as `cargo_rest`.
+## `bell`: the gate bell's hanging point (world, Vector3; null = no bell) – after the delivery he walks round the
+## bier's end to it and rings it (CartDeliveryConfig.ring_bell) before he goes back to the handles.
 ## Returns {active, figure (world), yaw (world), anim, anim_t (one-shot 0..1, -1 = loop), speed (m per game minute),
-## index (corpse in his hands / moving, -1 = none), corpse (its world transform), laid (corpses already on biers)}.
+## index (corpse in his hands / moving, -1 = none), corpse (its world transform), laid (corpses already on biers),
+## ringing (at the bell)}.
 static func pose(cfg: CartDeliveryConfig, minute_f: float, delivery_minute: int, cargo: Array[Transform3D],
 		biers: Array[Transform3D], handles: Vector3, root_yaw: float, cart_center: Vector3, cart_axis: Vector3,
-		delivered: int = 0, return_bier: Transform3D = Transform3D.IDENTITY, cargo_rest: Transform3D = Transform3D.IDENTITY) -> Dictionary:
+		delivered: int = 0, return_bier: Transform3D = Transform3D.IDENTITY, cargo_rest: Transform3D = Transform3D.IDENTITY,
+		bell: Variant = null) -> Dictionary:
 	var out := {"active": false, "figure": handles, "yaw": root_yaw, "anim": &"", "anim_t": -1.0, "speed": 0.0,
-			"index": -1, "corpse": Transform3D.IDENTITY, "laid": 0}
+			"index": -1, "corpse": Transform3D.IDENTITY, "laid": 0, "ringing": false}
 	if cfg == null:
 		return out
 	var minutes := float(maxi(cfg.unload_minutes, 1))
@@ -32,19 +37,81 @@ static func pose(cfg: CartDeliveryConfig, minute_f: float, delivery_minute: int,
 	var count := mini(cargo.size(), biers.size())
 	if minute_f >= start and minute_f < float(delivery_minute) and count > 0:
 		return _unloading(cfg, (minute_f - start) / minutes, minutes, count, cargo, biers, handles, root_yaw, cart_center, cart_axis, out)
-	var back := float(maxi(cfg.return_minutes, 0))
-	if delivered > 0 and back > 0.0 and minute_f >= float(delivery_minute) and minute_f < float(delivery_minute) + back:
+	var with_bell := bell is Vector3 and cfg.ring_bell
+	var after := cfg.after_minutes(with_bell)
+	var since := minute_f - float(delivery_minute)
+	if delivered > 0 and after > 0.0 and since >= 0.0 and since < after:
 		var spot := _spots(cfg, cargo_rest, return_bier, handles, cart_center, cart_axis)
-		var t := (minute_f - float(delivery_minute)) / back
 		var from: Vector3 = spot.stand
-		var motion := _yaw_to(from, handles, root_yaw)
+		var from_yaw: float = spot.bier_yaw
 		out.active = true
-		out.figure = from.lerp(handles, t)
-		out.yaw = lerp_angle(lerp_angle(float(spot.bier_yaw), motion, smoothstep(0.0, 0.25, t)), root_yaw, smoothstep(0.7, 1.0, t))
-		out.anim = ANIM_WALK
-		out.speed = _flat(handles - from).length() / back
 		out.laid = delivered
+		if with_bell:
+			var at_bell := bell_spot(cfg, bell as Vector3, handles)
+			var walk := maxf(cfg.bell_walk_minutes, 0.0)
+			var ring := maxf(cfg.bell_ring_minutes, 0.0)
+			if since < walk:
+				var route := PackedVector3Array([from, _corner(cfg, return_bier, from, at_bell.spot), at_bell.spot])
+				_walk_route(out, route, since / walk, walk, from_yaw, float(at_bell.yaw))
+				return out
+			if since < walk + ring:
+				out.figure = at_bell.spot
+				out.yaw = at_bell.yaw
+				out.anim = ANIM_RING
+				out.anim_t = (since - walk) / maxf(ring, EPSILON)
+				out.ringing = true
+				return out
+			since -= walk + ring
+			from = at_bell.spot
+			from_yaw = at_bell.yaw
+		var back := float(maxi(cfg.return_minutes, 0))
+		var t := since / maxf(back, EPSILON)
+		var motion := _yaw_to(from, handles, root_yaw)
+		out.figure = from.lerp(handles, t)
+		out.yaw = lerp_angle(lerp_angle(from_yaw, motion, smoothstep(0.0, 0.25, t)), root_yaw, smoothstep(0.7, 1.0, t))
+		out.anim = ANIM_WALK
+		out.speed = _flat(handles - from).length() / maxf(back, EPSILON)
 	return out
+
+
+## Under the gate bell: `bell` (its hanging point, world) moved bell_stand_distance towards the handles, on the
+## ground; he faces the bell. {spot, yaw}.
+static func bell_spot(cfg: CartDeliveryConfig, bell: Vector3, handles: Vector3) -> Dictionary:
+	var to := _flat(handles - bell)
+	var dir := to.normalized() if to.length_squared() > EPSILON else Vector3.BACK
+	var spot := _ground(bell, handles) + dir * cfg.bell_stand_distance
+	return {"spot": spot, "yaw": _yaw_of(-dir, 0.0)}
+
+
+## The corner round the bier's end on the way from his place at the bier (`stand`) to `target`: along the bier's
+## long axis by bell_corner_offset, to the side of the target.
+static func _corner(cfg: CartDeliveryConfig, bier: Transform3D, stand: Vector3, target: Vector3) -> Vector3:
+	var axis := _flat(bier.basis.x)
+	axis = axis.normalized() if axis.length_squared() > EPSILON else Vector3.RIGHT
+	var side := 1.0 if _flat(target - stand).dot(axis) >= 0.0 else -1.0
+	return stand + axis * side * cfg.bell_corner_offset
+
+
+## Walks the polyline `route` (by arc length, `t` 0..1, `minutes` long): turns from `from_yaw` into the walk and at
+## the end to `to_yaw`.
+static func _walk_route(out: Dictionary, route: PackedVector3Array, t: float, minutes: float, from_yaw: float, to_yaw: float) -> void:
+	var lengths := PackedFloat32Array([0.0])
+	for k: int in range(1, route.size()):
+		lengths.append(lengths[k - 1] + _flat(route[k] - route[k - 1]).length())
+	var total := lengths[lengths.size() - 1]
+	var s := clampf(t, 0.0, 1.0) * total
+	var pos := route[route.size() - 1]
+	var motion := to_yaw
+	for k: int in range(1, route.size()):
+		if s <= lengths[k] or k == route.size() - 1:
+			var seg := lengths[k] - lengths[k - 1]
+			pos = route[k - 1].lerp(route[k], clampf((s - lengths[k - 1]) / seg, 0.0, 1.0) if seg > EPSILON else 1.0)
+			motion = _yaw_to(route[k - 1], route[k], to_yaw)
+			break
+	out.figure = pos
+	out.yaw = lerp_angle(lerp_angle(from_yaw, motion, smoothstep(0.0, 0.12, t)), to_yaw, smoothstep(0.85, 1.0, t))
+	out.anim = ANIM_WALK
+	out.speed = total / maxf(minutes, EPSILON)
 
 
 ## Spots for one corpse: the side of the cart facing the bier, the yaw there (towards the cart), the carry sign
