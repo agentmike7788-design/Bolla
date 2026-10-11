@@ -179,7 +179,8 @@ static func run_work(tree: SceneTree, world: Node3D, out: String, suffix: String
 	while m < duration + 0.5:
 		marks.append(m)
 		m += WORK_STEP
-	marks.append(duration + 0.25)
+	marks.append(duration + 0.1)
+	marks.sort()
 	var labels: Array = []
 	var t := 0.0
 	var shot := 0
