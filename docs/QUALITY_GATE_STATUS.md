@@ -10,7 +10,7 @@
 | G5 | Crafting und Ressourcen | ✅ **PASSED** (Runde 1; 1748 Tests; Bilder `docs/reviews/phase5_round1/`; Werkhof-Lage, Erlen-Verschiebung und Tempo wie gebaut freigegeben, Münzausgleich Verwerten → Phase 10) | 28.09.2026 | ✅ „Phase 5 freigegeben" (28.09.2026) |
 | G6 | Gebäude | ✅ **PASSED** (Runde 1; 2017 Tests; Bilder `docs/reviews/phase6_round1/`; Tempo, Schuppen-Ausnahmen, Taschengröße und Gruft-Kamera wie gebaut freigegeben) | 03.10.2026 | ✅ „Phase 6 freigegeben" (03.10.2026) |
 | G7 | Dorf | ✅ **PASSED** (Runde 2; 2472 Tests; Bilder `docs/reviews/phase7_round1/` + `phase7_round2/`; Ton, Licht, Gruft-Treppe, Flackern, Dorfkirche, Karte, neue Gesichter, Werkzeuge/Schaufel in der Hand, sichtbare Grablegung, Balance Kapitel B11 / Münzen 60–71; Lenz 16–18 Uhr in der Kirche, 9. Rig-Knochen `tool` und Kleinigkeiten wie gebaut freigegeben) | 04.10.2026 | ✅ „Phase 7 freigegeben" (04.10.2026) |
-| G8 | NPCs | 🔴 **Runde 1: Änderungswunsch** (Gruft-Eingang zu klein/kistenartig, Treppe kaum sichtbar, am Zaun eingeengt, passt nicht zum Friedhof, soll zum Weg zeigen) · 2883 Tests; Bilder `docs/reviews/phase8_round1/`; Browser-Testversion v9) | 10.10.2026 | ⏳ wartet auf „Phase 8 freigegeben" |
+| G8 | NPCs | 🟡 **PENDING Runde 2** (Gruft-Eingang neu, Besuche länger + Torglocke, Münzausgleich, Vasen-Herkunft; Licht E8-1 bestätigt) · 2903 Tests; Bilder `docs/reviews/phase8_round1/`; Browser-Testversion v9) | 10.10.2026 | ⏳ wartet auf „Phase 8 freigegeben" |
 
 **ART STYLE LOCK:** ✅ **ACTIVE** seit 27.09.2026 (Referenz: `src/world/art_prototype/`, Screenshots `docs/reviews/phase1_round1/`). Keine grundlegende Stiländerung ohne Benutzerfreigabe.
 
