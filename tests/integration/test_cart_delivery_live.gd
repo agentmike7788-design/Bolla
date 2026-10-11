@@ -142,3 +142,45 @@ func test_time_past_the_delivery() -> void:
 	assert_eq(npc.cargo_count(), 0, "cart empty")
 	assert_false(bool(npc.unload_pose().get("active", false)), "no unloading any more")
 	assert_true(npc.cart.is_visible_in_tree(), "the cart stands at the gate")
+
+
+## Runs the clock (Engine.time_scale `scale`) until `minute`; returns the frames he pushed his (visible) cart.
+func _run_until(minute: int, scale: float) -> int:
+	Engine.time_scale = scale
+	var pushing := 0
+	var frames := 0
+	while TimeManager.minute_of_day < minute and frames < MAX_FRAMES:
+		await tree.process_frame
+		frames += 1
+		if npc.is_present() and npc.current_animation() == &"push_cart" and npc.cart.is_visible_in_tree():
+			pushing += 1
+	Engine.time_scale = 1.0
+	return pushing
+
+
+## Browser version 13 („bringt er die leiche ladet sie ab aber fährt nicht mehr weg"): as in the contract he stays at
+## the gate (talk, linen) until 10:00, then pushes the empty cart back up the road and is gone at 10:40; in the evening
+## he comes back on foot (18:00–18:30) and smokes at his spot until 21:00.
+func test_leaves_at_ten_and_comes_back_in_the_evening() -> void:
+	await _start(PackedStringArray(["tp gate", "time 07:45"]))
+	await wait_frames(3)
+	assert_true(npc.is_present() and npc.is_talkable(), "after the delivery he waits at the gate, talkable")
+	var at_gate := npc.global_position
+	assert_true(console.call(&"open"))
+	console.call(&"execute", "time 09:58")
+	console.call(&"close")
+	assert_true(npc.global_position.distance_to(at_gate) < 0.05, "still at the gate at 09:58")
+	var pushing := await _run_until(625, 30.0)
+	assert_true(pushing > 5, "at 10:00 he pushes the cart away (%d frames)" % pushing)
+	assert_true(npc.global_position.distance_to(at_gate) > 10.0, "on the road back by 10:25")
+	assert_eq(npc.cargo_count(), 0, "the cart is empty on the way back")
+	await _run_until(641, 30.0)
+	assert_false(npc.is_present(), "gone at 10:40")
+	assert_true(console.call(&"open"))
+	console.call(&"execute", "time 18:25")
+	console.call(&"close")
+	await _run_until(1111, 30.0)
+	var spot := world.get_waypoint(&"evening_spot")
+	assert_true(npc.is_present(), "back in the evening")
+	assert_true(Vector2(npc.global_position.x - spot.x, npc.global_position.z - spot.z).length() < 0.1, "at his evening spot")
+	assert_false(npc.cart.is_visible_in_tree(), "in the evening without the cart")
