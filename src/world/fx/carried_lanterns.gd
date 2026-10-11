@@ -229,7 +229,7 @@ func _update(delta: float) -> void:
 			var r := config.spot_radius
 			var basis := (st.tilt as Basis).scaled(Vector3(r, 1.0, r))
 			mm.set_instance_transform(n, Transform3D(basis, Vector3(center.x, feet + config.spot_lift, center.z)))
-			var w := spot_e * k * lerpf(1.0, config.spot_under_light, real)
+			var w := spot_e * k * lerpf(1.0, config.spot_under_light_compat if _compat else config.spot_under_light, real)
 			var c := config.spot_color
 			mm.set_instance_color(n, Color(c.r * w, c.g * w, c.b * w, 1.0))
 			n += 1

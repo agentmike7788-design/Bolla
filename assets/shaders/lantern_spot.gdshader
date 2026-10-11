@@ -14,5 +14,11 @@ void fragment() {
 	float r = clamp(length(d), 0.0, 1.0);
 	float bump = pow(1.0 - r * r, falloff);
 	float hot = 1.0 - smoothstep(0.0, 0.55, r);
-	ALBEDO = COLOR.rgb * (bump + hot * core);
+	vec3 c = COLOR.rgb * (bump + hot * core);
+#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+	// The browser renderer adds this value to the sRGB frame as it is (no linear blend): encode it, so the spot has
+	// the same size and strength as in Forward+ (measured, docs/reviews/phase8_round2/lichtgang_messung.md).
+	c = pow(max(c, vec3(0.0)), vec3(1.0 / 2.2));
+#endif
+	ALBEDO = c;
 }

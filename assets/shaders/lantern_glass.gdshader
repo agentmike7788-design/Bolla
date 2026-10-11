@@ -34,5 +34,10 @@ void fragment() {
 	// facing the camera = looking through the middle of a pane; grazing = the pane's edge and the frame
 	float facing = clamp(dot(NORMAL, VIEW), 0.0, 1.0);
 	float mid = mix(1.0 - edge_fade, 1.0, facing);
-	ALBEDO = glow_color.rgb * glow_energy * k * mid;
+	vec3 c = glow_color.rgb * glow_energy * k * mid;
+#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+	// added to the sRGB frame as it is in the browser renderer: encode it like Forward+ would (lantern_spot.gdshader)
+	c = pow(max(c, vec3(0.0)), vec3(1.0 / 2.2));
+#endif
+	ALBEDO = c;
 }
