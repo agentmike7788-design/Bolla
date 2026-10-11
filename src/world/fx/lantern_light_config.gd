@@ -27,6 +27,8 @@ extends Resource
 ## Radius (m) of the warm spot on the ground under a lantern, its strength and colour (additive, × flicker × the
 ## atmosphere's warm light scale). Under a lantern with a pool light the spot fades to spot_under_light of it.
 @export var spot_radius: float = 1.6
+## The browser: the spot stands in for the pool light on the ground too (the ground takes ≤ 8 lights) – a little wider.
+@export var spot_radius_compat: float = 1.6
 @export var spot_energy: float = 0.1
 @export var spot_energy_compat: float = 0.1
 @export var spot_color: Color = Color(1.0, 0.62, 0.3)
@@ -60,6 +62,10 @@ func pool_for(compat: bool) -> int:
 
 func light_energy_for(compat: bool) -> float:
 	return light_energy_compat if compat else light_energy
+
+
+func spot_radius_for(compat: bool) -> float:
+	return spot_radius_compat if compat else spot_radius
 
 
 func spot_energy_for(compat: bool) -> float:

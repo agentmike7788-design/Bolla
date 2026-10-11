@@ -226,7 +226,7 @@ func _update(delta: float) -> void:
 		# the fake spot on the ground under the lantern
 		if n < MAX_SPOTS and spot_e > 0.001:
 			var feet := float(st.ground)
-			var r := config.spot_radius
+			var r := config.spot_radius_for(_compat)
 			var basis := (st.tilt as Basis).scaled(Vector3(r, 1.0, r))
 			mm.set_instance_transform(n, Transform3D(basis, Vector3(center.x, feet + config.spot_lift, center.z)))
 			var w := spot_e * k * lerpf(1.0, config.spot_under_light_compat if _compat else config.spot_under_light, real)

@@ -165,7 +165,28 @@ func _measure_line(world: Node3D, shot_name: String, variant: String, image: Ima
 			_avg(spots), _avg(glass), int(care.call(&"active_lights")) if care != null else -1,
 			int(pool.call(&"lights_in_use")) if pool != null else -1]
 	print("[LightMatch] ", line)
+	if variant == "base" and cam != null:
+		print("[LightMatch] lights in view: ", ", ".join(_lights_in_view(world, cam)))
 	_match.append(line)
+
+
+## Names (parent/name) of the visible omni / spot lights whose range reaches into the view (as the render stats count).
+static func _lights_in_view(world: Node3D, cam: Camera3D) -> PackedStringArray:
+	var out := PackedStringArray()
+	var planes := cam.get_frustum()
+	for node: Node in world.find_children("*", "Light3D", true, false):
+		var l := node as Light3D
+		if l is DirectionalLight3D or not l.is_visible_in_tree() or l.light_energy <= 0.01:
+			continue
+		var r := float(l.get(&"omni_range")) if l is OmniLight3D else float(l.get(&"spot_range"))
+		var inside := true
+		for plane: Plane in planes:
+			if plane.distance_to(l.global_position) > r:
+				inside = false
+				break
+		if inside:
+			out.append("%s/%s" % [l.get_parent().name, l.name])
+	return out
 
 
 static func _disc(image: Image, at: Vector2, r: float, peak: bool) -> float:
