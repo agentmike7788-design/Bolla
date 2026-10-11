@@ -42,7 +42,7 @@ today_flag = &"visit_grocer_day"
 
 [sub_resource type="Resource" id="p8_grocer_05"]
 script = ExtResource("1_dfj8i")
-start_minute = 910
+start_minute = 930
 travel_minutes = 12
 activity = &"walk"
 animation = &"walk"
@@ -51,7 +51,7 @@ today_flag = &"visit_grocer_day"
 
 [sub_resource type="Resource" id="p8_grocer_06"]
 script = ExtResource("1_dfj8i")
-start_minute = 922
+start_minute = 942
 activity = &"home"
 path = PackedStringArray("road_end")
 visible = false

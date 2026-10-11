@@ -325,7 +325,7 @@ func test_new_config_contract_values() -> void:
 			[1, 21, 3, 7, 3, 2])
 	assert_eq(Array(v.slots), [570, 750, 900], "09:30 · 12:30 · 15:00")
 	assert_eq([v.mourn_minutes, v.wait_minutes, v.goodwill_start, v.goodwill_wish_min, v.pleased_cap_day, v.max_open],
-			[30, 10, 5, 2, 2, 3])
+			[30, 100, 5, 2, 2, 3], "G8 Runde 1 (B8-1): wait_minutes 10 → 100")
 	assert_eq([v.tip_base, v.tip_goodwill_min, v.tip_quality_min, v.tip_cap_day, v.wish_goodwill, v.wish_fail_goodwill,
 			v.villager_wish_rel], [1, 6, 15, 4, 2, -2, 4])
 	assert_almost(v.noise_distance, 8.0)
@@ -369,7 +369,8 @@ func test_new_config_contract_values() -> void:
 
 ## Properties changed in the data (and the class default together) after the W0 hand-over; the fixtures keep the
 ## W0 values. Empty at W0.
-const DATA_CHANGED_AFTER_W0 := {}
+## G8 Runde 1 (B8-1, user decision): visitors wait up to 100 minutes (was 10) – class default and .tres together.
+const DATA_CHANGED_AFTER_W0 := {&"visitor_config": [&"wait_minutes"]}
 
 
 func test_config_files_in_data_match_the_fixtures() -> void:

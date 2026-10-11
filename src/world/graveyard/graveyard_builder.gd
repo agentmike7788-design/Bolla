@@ -150,6 +150,7 @@ func _build_world() -> Node:
 	Phase6.build_doors(_ctx, entities)
 	Phase7.build_portals(_ctx, entities)
 	Phase8.build_corner(_ctx, entities)
+	Phase8.build_gate_bell(_ctx, entities)
 
 	var decor := _ctx.group(scene_root, "Decor")
 	var old := _ctx.group(decor, "OldGraves")

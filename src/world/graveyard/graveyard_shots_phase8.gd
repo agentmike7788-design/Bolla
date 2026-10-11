@@ -32,6 +32,10 @@ const G8_SHOTS: Array[Dictionary] = [
 	{"name": "p8_02_martha_coach_road", "day": 56, "minute": 500, "focus": Vector2(4.0, 18.0), "distance": 13.0,
 			"player": Vector2(-3.0, 12.0), "facing": 120.0, "stage": "visits",
 			"figures": [["npc_kin_kehr", Vector2(3.6, 18.4), Vector2(1.2, 12.2), &"walk", 0.3]]},
+	# G8 Runde 1 (B8-1): the gate bell rings as Martha comes up – the HUD note, the bell mid-swing on the east post.
+	{"name": "g8_torglocke", "day": 56, "minute": 505, "focus": Vector2(1.8, 9.6), "distance": 6.0, "pitch": 14.0,
+			"player": Vector2(4.6, 6.6), "facing": 200.0, "ui": true, "stage": "bell",
+			"figures": [["npc_kin_kehr", Vector2(1.5, 11.6), Vector2(1.2, 8.3), &"walk", 0.4]]},
 	{"name": "p8_03_martha_kneels", "day": 56, "minute": 520, "player": Vector2(17.8, 15.4), "facing": 60.0, "game": 22.0,
 			"figures": [["npc_kin_kehr", "gv_l_04", "wp", &"kneel", 1.2]]},
 	{"name": "p8_04_hinrich_hat", "day": 56, "minute": 930, "focus": Vector2(15.9, 19.4), "distance": 11.0,
@@ -252,6 +256,22 @@ func _stage8(world: Node3D, shot: Dictionary) -> void:
 			st5["flowers"] = fl5
 			care.call(&"load_state", st5)
 			root.get_node(^"EventBus").emit_signal(&"grave_care_changed", grave, &"flowers", true)
+		"bell":
+			var bell := world.get_node_or_null(^"Entities/gate_bell")
+			if bell != null:
+				# The note must outlive the settle frames of the software renderer (4 s of real time otherwise).
+				for n: Node in world.get_node(^"UI").find_children("*", "", true, false):
+					var sc: Script = n.get_script()
+					if sc != null and sc.resource_path.ends_with("notification_stack.gd"):
+						n.set(&"lifetime", 600.0)
+						n.call(&"clear")
+				bell.call(&"ring", "Martha Kehr")
+				var tween: Variant = bell.get(&"_tween")
+				if tween is Tween and (tween as Tween).is_valid():
+					(tween as Tween).kill()
+				var swing := bell.call(&"bell_node") as Node3D
+				if swing != null:
+					swing.rotation.x = 0.42
 		"candle_old_06":
 			_bag.call(&"add_item", &"grave_candle", 1)
 			care.call(&"light", "old_06", _bag)

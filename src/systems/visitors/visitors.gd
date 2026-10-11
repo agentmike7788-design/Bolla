@@ -11,7 +11,10 @@ extends Node
 ##   graveyard Npc). ≤ 3 visits a day in the slots, ≤ 2 at once; nothing before p8_open, on the night of the
 ##   lights or at a DUG grave; the overflow comes tomorrow.
 ## - Clock: every minute the visits move through arriving → mourning (lay the bouquet → GraveCare.place_bouquet,
-##   mourn, look → GraveView) → waiting (only with a tip or a wish to offer) → leaving → gone. A load stands
+##   mourn, look → GraveView) → waiting (G8 Runde 1: always – a household up to 100 minutes, till 16:30, cut 3 minutes
+##   after the talk: dialogue_ended of its dialogue / note_talked; villagers 18; the walk is set again when the wait
+##   begins) → leaving → gone. The gate bell (GateBell) rings on arriving. Tips: −1 village-wide once a specimen was
+##   sold (B8-3). A load stands
 ##   everyone where plan + clock put them; nothing is replayed (viewed / ended are saved).
 ## - Wishes (WishRules): offered in the talk with a visitor (goodwill ≥ 2, one per grave, 3 open), checked at
 ##   the next look: done → tip 1–3 (≤ 4 a day; villagers +4 relationship instead), reputation wish_done,
@@ -103,6 +106,7 @@ func _init() -> void:
 
 func _ready() -> void:
 	EventBus.time_tick.connect(_on_time_tick)
+	EventBus.dialogue_ended.connect(_on_dialogue_ended)
 
 
 # --- plan ----------------------------------------------------------------------------------------
@@ -136,7 +140,7 @@ func plan_day(day: int) -> Array[Dictionary]:
 			var start := kin.visit_minute - travel
 			var e := _entry(kin, graves, start, travel, day)
 			villagers.append(e)
-			windows.append([start, start + VisitRules.duration(travel, graves.size(), bool(e.flowers), true, cfg)])
+			windows.append([start, start + VisitRules.duration(travel, graves.size(), bool(e.flowers), true, cfg, cfg.wait_minutes_villager)])
 		else:
 			var dues: Array = []
 			for g: String in graves:
@@ -401,6 +405,13 @@ func hand_tip(visit_id: String, inv: Inventory) -> int:
 	return coins
 
 
+## G8 Runde 1 (B8-3): the village talks about the gravekeeper's jars (a specimen was ever sold – stat
+## VisitorConfig.rumor_stat): every tip is VisitorConfig.rumor_tip_malus smaller (not only at the graves of those dead).
+func village_rumor() -> bool:
+	var cfg := _cfg()
+	return cfg.rumor_tip_malus > 0 and cfg.rumor_stat != &"" and GameState.get_stat(cfg.rumor_stat) > 0
+
+
 ## The coins a visitor will hand over (0 = none) – the dialogue's tip_hand line.
 func tip_of(visit_id: String) -> int:
 	return int(_find(visit_id).get("tip", 0))
@@ -527,7 +538,7 @@ func load_state(data: Dictionary) -> void:
 		for v: Variant in plan:
 			if v is Dictionary and (v as Dictionary).has("kin_id") and (v as Dictionary).get("graves") is Array:
 				var e: Dictionary = (v as Dictionary).duplicate(true)
-				for key: String in ["slot", "start", "travel", "viewed", "laid", "tip", "day"]:
+				for key: String in ["slot", "start", "travel", "viewed", "laid", "tip", "day", "talked"]:
 					if e.has(key):
 						e[key] = _int(e[key], 0)
 				# W3 (QA8-20, §10 fuzzer): the flags of a visit are booleans (a damaged save stopped _advance
@@ -646,8 +657,43 @@ static func _by_start(a: Dictionary, b: Dictionary) -> bool:
 func _segments(v: Dictionary) -> Array[Dictionary]:
 	var travel := int(v.get("travel", VisitRules.ROAD_MINUTES + VisitRules.DEFAULT_ROUTE_MINUTES))
 	var start := int(v.get("start", int(v.get("slot", 570))))
-	return VisitRules.timeline(start, travel, (v.get("graves", []) as Array).size(), bool(v.get("flowers", false)),
-			bool(v.get("waits", false)), _cfg())
+	var graves := (v.get("graves", []) as Array).size()
+	var flowers := bool(v.get("flowers", false))
+	return VisitRules.timeline(start, travel, graves, flowers, bool(v.get("waits", false)), _cfg(), _wait_of(v, start + travel
+			+ VisitRules.graves_minutes(graves, flowers, _cfg())))
+
+
+## G8 Runde 1 (B8-1): the wait of a visit beginning at `wait_from` – a household up to wait_minutes (till 16:30), cut
+## leave_after_talk_minutes after the talk (saved minute "talked"); a villager wait_minutes_villager.
+func _wait_of(v: Dictionary, wait_from: int) -> int:
+	var cfg := _cfg()
+	var kin := _kin_data(StringName(str(v.get("kin_id", ""))))
+	var wait := VisitRules.wait_length(wait_from, kin != null and kin.villager_id != &"", cfg)
+	if v.has("talked"):
+		wait = VisitRules.wait_after_talk(wait, wait_from, int(v.talked), cfg)
+	return wait
+
+
+## G8 Runde 1 (B8-1): the talk with a waiting household is over (EventBus.dialogue_ended of its dialogue, or the
+## caller): with no tip left in its hand it goes leave_after_talk_minutes later (its walk is set again). Returns
+## whether the wait was cut.
+func note_talked(visit_id: String) -> bool:
+	var v := _find(visit_id)
+	if v.is_empty() or v.has("phase") or v.has("talked") or phase_of(v) != &"waiting" or int(v.get("tip", 0)) > 0:
+		return false
+	var kin := _kin_data(StringName(str(v.get("kin_id", ""))))
+	if kin == null or kin.villager_id != &"":
+		return false
+	v["talked"] = _now_rel(v)
+	_apply_schedule(v)
+	return true
+
+
+func _on_dialogue_ended(dialogue_id: StringName) -> void:
+	for v: Dictionary in _plan:
+		var kin := _kin_data(StringName(str(v.get("kin_id", ""))))
+		if kin != null and kin.dialogue_id == dialogue_id and phase_of(v) == &"waiting":
+			note_talked(str(v.get("visit_id", "")))
 
 
 ## Minutes of the day relative to the plan day (a visit of yesterday reads as long over).
@@ -742,7 +788,11 @@ func _look(v: Dictionary, index: int) -> void:
 	_say(v, line)
 	EventBus.grave_viewed.emit(grave_id, kin_id, view)
 	if index == graves.size() - 1:
-		v["waits"] = int(v.get("tip", 0)) > 0 or not _wish_choice(v).is_empty()
+		# G8 Runde 1 (B8-1): with VisitorConfig.wait_always every visitor waits for a word (not only with a tip / wish).
+		v["waits"] = cfg.wait_always or int(v.get("tip", 0)) > 0 or not _wish_choice(v).is_empty()
+		# G8 Runde 1: the walk was set on arriving without the wait – the figure now really stays at the grave.
+		if bool(v.waits) and _announced.has(str(v.get("visit_id", ""))):
+			_apply_schedule(v)
 		var kin := _kin_data(kin_id)
 		if kin != null and kin.villager_id != &"":
 			_last_kin[String(kin_id)] = TimeManager.day
@@ -785,6 +835,9 @@ func _wish_done(v: Dictionary, w: Dictionary) -> void:
 			_tips_day = TimeManager.day
 			_tips_coins = 0
 		var coins := WishRules.tip(goodwill(kin_id), _quality(str(w.grave_id)), _tips_coins, cfg)
+		# G8 Runde 1 (B8-3): the talk about the jars goes round the whole village – every family tips less.
+		if village_rumor():
+			coins = maxi(coins - cfg.rumor_tip_malus, 0)
 		if coins > 0:
 			_tips_coins += coins
 			v["tip"] = int(v.get("tip", 0)) + coins
@@ -879,7 +932,7 @@ func _wish(wish_id: String) -> Dictionary:
 func _wish_card(w: Dictionary) -> Dictionary:
 	var data := Database.wish(StringName(str(w.get("template", "")))) as WishData
 	return {"wish_id": str(w.wish_id), "kind": StringName(str(w.kind)), "grave_id": str(w.grave_id),
-			"text": data.ask_text if data != null else ""}
+			"text": data.ask_text if data != null else "", "source": data.source_text if data != null else ""}
 
 
 func _find(visit_id: String) -> Dictionary:

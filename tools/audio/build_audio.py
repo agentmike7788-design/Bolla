@@ -286,6 +286,8 @@ CATALOG: list[Spec] = [
     S("wage_tin", p8.wage_tin, 2, positional=True, max_distance=14, unit_size=2, loud=-31, cooldown=1.0),
     S("kiepe_bells", p8.kiepe_bells, 1, loop=True, positional=True, max_distance=12, unit_size=2.5, pitch_jitter=0.0,
       volume_jitter_db=0.0, max_voices=1, loud=-34),
+    S("gate_bell", p8.gate_bell, 1, positional=True, max_distance=70, unit_size=10, loud=-27, pitch_jitter=0.0,
+      volume_jitter_db=0.0, max_voices=1, cooldown=2.0),
     S("kiepe_set", p8.kiepe_set, 2, positional=True, max_distance=16, unit_size=3, loud=-31, cooldown=1.0),
     S("spade_night", p8.spade_night, 3, positional=True, max_distance=25, unit_size=3, loud=-32, pitch_jitter=0.06),
     S("run_gravel", p8.run_gravel, 4, positional=True, max_distance=20, unit_size=3, loud=-40, pitch_jitter=0.1,
