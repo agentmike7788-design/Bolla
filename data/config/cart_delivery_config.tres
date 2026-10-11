@@ -4,11 +4,13 @@
 
 [resource]
 script = ExtResource("1")
-unload_minutes = 8
-step_share = 0.2
-lift_share = 0.22
-carry_share = 0.28
-lower_share = 0.3
+unload_minutes = 16
+step_share = 0.22
+lift_share = 0.15
+carry_share = 0.26
+lower_share = 0.18
+rest_share = 0.19
+rest_idle_span = 0.6
 return_minutes = 1
 cart_side_distance = 0.8
 bier_side_distance = 0.72

@@ -9,6 +9,9 @@ extends PanelContainer
 signal close_requested
 ## A request UIRoot carries out: &"title" (back to the title screen), &"quit".
 signal action_requested(action: StringName)
+## G8 Runde 4: the panel hid for a running work (true) or came back (false) – UIRoot drops / restores the dim, the HUD
+## shows its action bar meanwhile.
+signal work_view_changed(hidden: bool)
 
 const TEXT_CLOSE := "Schließen"
 const TEXT_CLOSE_X := "✕"
@@ -21,6 +24,14 @@ var context: Dictionary = {}
 var is_open: bool = false
 ## True while a timed action runs (started from this panel or elsewhere).
 var action_running: bool = false
+## G8 Runde 4 (user: „das auswahl bild muss weg der verdekt den leichentisch"): a timed action started while the panel
+## is open hides it until the action ends (the work stays visible, the HUD's action bar shows it), then it comes back
+## with the focus on its first button. Set by the panel (CorpseExamPanel).
+var hide_while_working: bool = false
+## G8 Runde 4: UIRoot docks the panel at the right edge (UIKit.docked_right) and leaves the world undimmed.
+var dock_right: bool = false
+## True while the panel is hidden for the running work (hide_while_working).
+var work_hidden: bool = false
 
 var _built: bool = false
 var _action_box: VBoxContainer
@@ -45,6 +56,7 @@ func open(ctx: Dictionary) -> void:
 	if is_open:
 		_on_closed()
 	context = ctx
+	_set_work_hidden(false)
 	if not _built:
 		_built = true
 		_build()
@@ -64,6 +76,7 @@ func close() -> void:
 	if not is_open:
 		return
 	is_open = false
+	_set_work_hidden(false)
 	visible = false
 	_on_closed()
 	context = {}
@@ -188,6 +201,8 @@ func _on_action_started(label: String, _duration_sec: float) -> void:
 		_action_bar.value = 0.0
 		_action_box.visible = true
 	refresh()
+	if is_open and hide_while_working:
+		_set_work_hidden(true)
 
 
 func _on_action_progress(ratio: float) -> void:
@@ -199,8 +214,19 @@ func _on_action_finished(_completed: bool) -> void:
 	action_running = false
 	if _action_box != null:
 		_action_box.visible = false
+	_set_work_hidden(false)
 	refresh()
 	focus_default()
+
+
+## Hides the open panel for the running work / shows it again (hide_while_working; work_view_changed for UIRoot).
+func _set_work_hidden(on: bool) -> void:
+	if on == work_hidden:
+		return
+	work_hidden = on
+	if is_open:
+		visible = not on
+	work_view_changed.emit(on)
 
 
 static func _economy() -> EconomyConfig:

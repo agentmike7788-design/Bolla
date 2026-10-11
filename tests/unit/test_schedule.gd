@@ -182,12 +182,13 @@ func test_carter_schedule_loads_with_identity() -> void:
 
 
 ## G8 Runde 3: he is at the bier unload_minutes before the delivery minute, unloads (no prompt) and talks from 07:40.
+## G8 Runde 4 (user: „kannst du 8 sec machen"): 16 minutes of unloading – off at 06:44, at the bier at 07:24.
 func test_carter_morning_arrival_matches_delivery_minute() -> void:
 	var cfg := Database.config(&"cart_delivery_config") as CartDeliveryConfig
 	var walk_in := ScheduleResolver.entry_at(_carter(), 420)
-	assert_eq(walk_in.start_minute, 412, "06:52 entry (G8 Runde 3)")
+	assert_eq(walk_in.start_minute, 404, "06:44 entry (G8 Runde 4)")
 	var arrival := ScheduleResolver.arrival_minute(walk_in)
-	assert_eq(arrival, 452)
+	assert_eq(arrival, 444)
 	var delivery := CorpseTables.new().delivery_minute
 	assert_eq(delivery, 460, "CorpseTables default")
 	assert_eq(delivery, (load(CORPSE_TABLES_FIXTURE) as CorpseTables).delivery_minute, "fixture")
@@ -235,10 +236,10 @@ func test_carter_phases_over_the_day() -> void:
 	var s := _carter()
 	var expect := {
 		0: [&"home", false, false, &""],
-		411: [&"home", false, false, &""],
-		412: [&"walk", true, true, &""],
-		451: [&"walk", true, true, &""],
-		452: [&"unload", true, true, &""],
+		403: [&"home", false, false, &""],
+		404: [&"walk", true, true, &""],
+		443: [&"walk", true, true, &""],
+		444: [&"unload", true, true, &""],
 		459: [&"unload", true, true, &""],
 		460: [&"idle", true, true, &"carter"],
 		599: [&"idle", true, true, &"carter"],
@@ -262,11 +263,11 @@ func test_carter_phases_over_the_day() -> void:
 
 
 func test_carter_specific_entries() -> void:
-	var walk_in := _carter_entry(412)
+	var walk_in := _carter_entry(404)
 	assert_eq(walk_in.path, PackedStringArray(["road_end", "road_mid", "gate_outside", "dropoff"]))
 	assert_eq(walk_in.travel_minutes, 40)
 	assert_eq(walk_in.animation, &"push_cart")
-	var unload := _carter_entry(452)
+	var unload := _carter_entry(444)
 	assert_eq(unload.path, PackedStringArray(["dropoff"]))
 	assert_true(unload.with_cart)
 	var at_dropoff := _carter_entry(460)
