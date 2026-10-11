@@ -237,9 +237,10 @@ Die Dorfbewohner, die einen Toten auf dem Hügel haben, kommen selbst herauf. Si
 | Blumen ablegen | 2 | beugt sich vor und legt den Strauß auf den Hügel (Kindmesh `bouquet` wandert aus der Hand auf das Grab) | `lay_flowers` |
 | Trauern | 30 | Frauen knien, Männer stehen mit gesenktem Kopf und dem Hut vor dem Bauch; keine Tränen, keine Laute außer Kleiderrascheln und Atem | `kneel_in` → `kneel` → `kneel_out` bzw. `mourn_stand` |
 | Ansehen | 2 | richtet sich auf, sieht über das Grab; Sprechblase mit der Zeile nach dem Zustand (§2.2.4) | `idle_low` |
-| Warten | 10 (nur mit Wunsch oder Trinkgeld) | bleibt am Grab stehen; kommt der Totengräber auf 4 m, dreht sie sich zu ihm („[E] Mit Martha Kehr reden") | `idle` / `talk` |
+| Warten | **(G8 Runde 1 angepasst)** immer (`wait_always`): Haushalte bis 100 (`wait_minutes`), nie über 16:30 (`wait_until_minute`, Novemberdämmerung), mindestens 10; 3 Min nach dem Gespräch gehen sie (`leave_after_talk_minutes`); Bewohner 18 (`wait_minutes_villager`) | bleibt am Grab stehen; kommt der Totengräber auf 4 m, dreht sie sich zu ihm („[E] Mit Martha Kehr reden") | `idle` / `talk` |
 | Gehen | ≈ 12 | denselben Weg zurück | `walk` |
-- Ein Besuch dauert 60–90 Spielminuten (30–45 s Echtzeit). Ein Gespräch ist in jeder Phase möglich; eine Kniende steht dafür erst auf.
+- Ein Besuch dauert 60–90 Spielminuten (30–45 s Echtzeit) **(G8 Runde 1 angepasst: mit dem Warten bis ≈ 160 Min, wenn niemand kommt; der Plan rechnet mit der vollen Länge, höchstens 2 zugleich)**. Ein Gespräch ist in jeder Phase möglich; eine Kniende steht dafür erst auf.
+- **Torglocke (G8 Runde 1 angepasst, B8-1):** Am östlichen Torpfeiler hängt ein Glöckchen (`ph_prop_gate_bell`, Layout `phase8.gate_bell`, Entität `GateBell`). Kommt ein Besuch herauf (Phase `arriving`, Haushalte und Bewohner), läutet es (Cue `gate_bell`, hörbar ≈ 70 m), das Glöckchen schwingt, und ist der Totengräber auf dem Friedhof (auch in einem Raum dort), steht im HUD „Am Tor läutet es – Martha Kehr kommt herauf." Ein Laden läutet nicht nach. Der Karten-Marker des Besuchs bleibt.
 - **Ruhe am Grab:** Läuft eine laute Handlung (Graben, Fällen, Hauen, Hämmern, Sägen, Steinbruch; ✦ Stichwort `noisy` der TimedAction) **≤ 8 m** von einer trauernden Person, gibt es einmal je Besuch eine Blase und **Ruf −1** (`visit_noise`, höchstens einmal je Tag). Jakob arbeitet nie an einem Grab, an dem gerade jemand trauert („Jakob lässt die Kehr in Ruhe.").
 - **Trinkgeld ohne Gespräch:** Ist der Totengräber nicht da, legt der Besucher die Münzen auf den Stein (Kindmesh `coins` am Marker `inscription`) mit einem Zettel: „[E] Zwei Münzen auf dem Stein (Martha Kehr)". Sie bleiben liegen, bis man sie nimmt (Geister und Grabräuber nehmen nichts).
 
@@ -252,6 +253,7 @@ Die Dorfbewohner, die einen Toten auf dem Hügel haben, kommen selbst herauf. Si
 | gepflegt | Pflegestelle ≤ 1 und Zeichen | +1 (`visit_pleased`, höchstens 2 je Tag) | +1 | „Sauber. Das hätte ihm gefallen." |
 | zusätzlich: frische Blumen, Kerze letzte Nacht oder Vase | §2.3 | – | +1 (einmal) | „Jemand hat ihr ein Licht hingestellt." |
 | zusätzlich: ein Präparat dieses Toten wurde verkauft (einmal je Toter) | `Specimens` Zustand `sold` | −1 (`visit_specimen_rumor`) | −3 | „Beim Quast, sagen sie, steht ein Glas. Mit seinem Namen." |
+| **(G8 Runde 1 angepasst, B8-3)** Gerede dorfweit: je ein Präparat verkauft (Stat `specimens_sold` > 0) | `VisitorConfig.rumor_stat` | – | – | jedes Trinkgeld −1 (`rumor_tip_malus`; aus 1 wird nur Dank) |
 - Präparate, die ins Grab zurückgelegt sind (Phase 7 „beisetzen"), zählen nicht. Wer seine Toten würdig hält, gewinnt am Tag 1–2 Ruf; wer sie verwahrlosen lässt, verliert so viel wie bei einem schlechten Grabzeichen.
 
 #### 2.2.5 Wünsche & Trinkgeld
@@ -261,7 +263,7 @@ Die Dorfbewohner, die einen Toten auf dem Hügel haben, kommen selbst herauf. Si
 | `flowers` | „Ein paar Blumen. Heide, wenn's geht, die hält den Winter." | frische Grabblumen auf dem Grab (§2.3) | Setzen + Gießen oder Jakob |
 | `candle` | „Stell ihm einmal ein Licht hin. Er hatte Angst im Dunkeln." | seit dem Wunsch mindestens eine Nacht mit brennender Grabkerze | selbst oder Jakob |
 | `line` | „Kannst du ‚Ruhe sanft' darunter setzen?" (Zeile aus `WishData.line_text`, 6 Vorlagen) | die Zeile steht auf dem Stein | „[E] Zeile nachmeißeln (30 Min, 1 Tinte)" am Grab; nur bei gestaltetem Stein mit < 4 Zeilen, sonst wird `line` nicht gewählt |
-| `vase` | „Eine Vase, damit die Blumen nicht umfallen." | eine Grabvase (`deco_grave_vase`) ≤ 1,5 m vom Grab | Baumodus (Phase 3) |
+| `vase` | **(G8 Runde 1 angepasst, B8-2)** „Eine Vase aus Stein, damit die Blumen nicht umfallen. So eine, wie du sie an deiner Werkbank machst." | eine Grabvase (`decor_grave_vase`) ≤ 1,5 m vom Grab | Werkbank (Rezept `decor_grave_vase`, 15 Min, 1 Stein + 1 Samen; Samen bei Theres), dann Baumodus (Phase 3). Die Wunschkarte nennt es: „Woher: …" (`WishData.source_text`) |
 - **Angebot:** im Gespräch mit einem wartenden Besucher (Wohlwollen ≥ 2). Gewählt wird die erste noch nicht erfüllte Art in der Reihenfolge [`tend` (nur wenn verwahrlost), `flowers`, `candle`, `line`, `vase`], mit dem Seed des Grabs gedreht. Höchstens **ein offener Wunsch je Grab**, **3 offene insgesamt** (`max_open 3`). Karte im Dialog mit „Das mache ich." / „Ich kann es nicht versprechen." (ohne Folgen). **Frist:** der nächste Besuch (3–7 Tage).
 - **Lohn beim erfüllten Besuch:** Trinkgeld **1** (`tip_base`) **+1** bei Wohlwollen ≥ 6 **+1** bei Grabqualität ≥ 15 → **1–3 Münzen**, höchstens **4 Münzen am Tag** (`tip_cap_day 4`, darüber nur Dank); Ruf **+1** (`wish_done`); Wohlwollen +2; `stats.wishes_done`, `stats.tips_coins`. Bewohner zahlen kein Geld: **Beziehung +4** (`wish_done_villager`); Esch legt einmal 2 `iron_fittings` hin. **Nicht erfüllt:** Wohlwollen −2, der Wunsch verfällt (`stats.wishes_failed`), kein Ruf-Abzug.
 - *Begründung Trinkgeld:* Im Bogen A kommen ≈ 9 erfüllte Wünsche zusammen, davon ≈ 8 mit Geld, zusammen **≈ 18 Münzen**: etwa ein Sechstel der neuen Einnahmen (9 % des Verfügbaren, §2.10) und die Hälfte des Pflegegelds (36). Die Tageskappe verhindert, dass ein Abend mit vielen Besuchern zur Kasse wird. Die eigentliche Belohnung ist der Ruf, der über Bezahlung und Pflegegeld weiterwirkt (Phase 3). Eine echte Preisdynamik bleibt Phase 10.
@@ -468,7 +470,11 @@ Die Dorfbewohner, die einen Toten auf dem Hügel haben, kommen selbst herauf. Si
   | `lazy8` (v6 neighbor, kein Lehrling, keine Wünsche angenommen) | 60 | 95–125 | Kapitel **nicht** erreicht (gewollt: Bedingungen 1 und 2) – bis zum Abbruch keine Fehler |
   | `night8` (v6 neighbor, jede Nacht wach, nie ein Gitter) | 60 | 85–110 | alle Beobachtungen, Lambert gestellt (beide Ausgänge über zwei Läufe), Kapitel erreicht |
   | `founder8` (v6 founder, neues Spiel) | ≈ 40–90 | wie A | Kapitel ≤ Tag 68, Lichtgang ggf. verschoben |
-- *Prüfregel:* Ende ≤ Start + 50 bei allen Wegen, Morgen nie < 5, Trinkgeld ≤ 25 je Bogen. Liegt `kindly8` über Start + 50, senkt P2 zuerst `tip_cap_day` auf 3, danach P3 den Lohn nicht (er ist die Senke), sondern P2 die Hanne-Ankaufspreise um 1.
+- **(G8 Runde 1 angepasst, E8-2 – Benutzer: „jetzt ausgleichen")** Gemessen lagen nur `kindly8` unter Start + 50 (anatomist8 +66, night8 +65, lazy8 +122): Einnahmen aus Phase 5–7 ohne Phase-8-Ausgaben. Zwei Phase-8-Regeln in den Daten (Phase-2–7-Werte unverändert):
+  - **Pflegegeld nach Bedarf:** Ab `p8_open` zahlt die Gemeinde das Pflegegeld (Phase-3-Staffel 0…4) nur, wenn der Totengräber zu Tagesbeginn **weniger als 80 Münzen** hat – Beutel, Truhen und Jakobs Lohndose zusammen (`ReputationConfig.stipend_purse_cap 80`, `stipend_cap_flag p8_open`); sonst Notiz „Das Pflegegeld bleibt heute in der Gemeindekasse. Fenner: „Wer 80 Münzen im Kasten hat, braucht keins.“" *Begründung:* trifft nur, wer spart; wer pflegt und kauft, bleibt darunter (`kindly8` morgens höchstens 75).
+  - **Gerede dorfweit (B8-3):** jedes Trinkgeld −1, sobald je ein Präparat verkauft wurde (§2.2.4).
+  - Gemessen (Bot, 10 Tage): `kindly8` +20, `anatomist8` +43 (Trinkgeld 5 statt 12; `kindly8` 10), `night8` +53 (kein Gitter, keine Kerzen – die Nachtwache ersetzt sie), `lazy8` +92 (absichtlich untätig: kein Lohn, keine Pflegeware; vorher +122), `founder8` +5 (baut und kauft); morgens nie < 24, alle aktiven Wege erreichen das Kapitel.
+- *Prüfregel:* Ende ≤ Start + 50 bei allen Wegen, Morgen nie < 5, Trinkgeld ≤ 25 je Bogen. **(G8 Runde 1 angepasst)** Band der aktiven Wege Start +15…+50 (grob; `night8` bis +55), `lazy8` ≤ +100; `anatomist8` Trinkgeld < `kindly8`; `kindly8` verpasst ≤ 20 % der Besuche. Liegt `kindly8` über Start + 50, senkt P2 zuerst `tip_cap_day` auf 3, danach P3 den Lohn nicht (er ist die Senke), sondern P2 die Hanne-Ankaufspreise um 1.
 
 ### 2.11 Items, Ruf, Pietät, Geister, Statistik
 **Neue Items** (`data/items/*`, Phase 8)
@@ -1155,7 +1161,10 @@ Variante `&"who_comes_up"` (§1.5).
 | Glocke | bestehend | Lichtgang 17:40 | Kapellenglocke bzw. Handglocke |
 - Einzelklänge als WAV (Import QOA), Schleifen und Musik Vorbis; Lautheit nach `target_lufs` (G7 Runde 2); Klangliste `docs/reviews/phase8_round1/audio_list.md`, Hörprobe `audio_preview_p8.ogg`. **Budget:** keine neuen Stimmen-Pools, höchstens 3 neue Emitter gleichzeitig, eine Musik zugleich (der Kontext `fest` ersetzt die Dorf- bzw. Friedhofsmusik), keine Knoten-Neuerzeugung beim Abspielen.
 
+- **(G8 Runde 1 angepasst)** `gate_bell` – das Glöckchen am Tor: Schnurknarzen, drei Schläge einer kleinen Bronzeglocke, im Freien (positional, ≈ 70 m, `assets/audio/sfx/ph_gate_bell.wav`).
+
 ### 8.4 Requisiten und Icons
+- **(G8 Runde 1 angepasst)** `ph_prop_gate_bell`: schmiedeeiserner Arm mit Schnecke an der Innenseite des östlichen Torpfeilers, Bronzeglöckchen (Ø 20 cm) mit Zugschnur und Holzknebel; Kindmesh `bell` (Drehpunkt am Joch) schwingt; 1,78 m hoch (Pfeiler 1,85 m), ≤ 600 Dreiecke, keine Kollision.
 | Asset | Zweck | Dreiecke | Hinweise |
 |---|---|---|---|
 | `ph_prop_grave_flowers`, `_grave_flowers_wilted` | Winterheide und Christrosen auf dem Hügel | je ≤ 500 | welk = dieselbe Form, braun-grau gemalt, Blüten hängend |
@@ -1225,6 +1234,7 @@ Regeln wie Phase 3–7 (Fixtures statt fremder Moduldaten, Fehler-Logger, Watchd
   | `night8` | v6 `day53_neighbor` | 10 | jede Nacht wach am frischen Grab bzw. im Dorf am Krankenlicht, kein Gitter, keine Kerzen | alle 4 Beobachtungsklassen, Lambert gestellt (Ausgang `reported`; zweiter Lauf `let_go`), Kapitel erreicht |
   | `founder8` | v6 `founder` | 14 | neues Spiel, Phase 8 nach Phase 7 | Kapitel ≤ Tag 68; Lichtgang ggf. verschoben; alte Kapitel unverändert |
   | `save_load8` | wie `kindly8` | 10 | lädt jeden Morgen, einmal während eines Besuchs, einmal am Lichtgang, einmal nachts beim Räuber | bitgleich zu `kindly8` |
+  - **(G8 Runde 1 angepasst)** Grenzen relativ zum gemessenen Start: `kindly8` +15…+40, `anatomist8` +15…+50 und Trinkgeld < `kindly8`, `night8`/`night8b` +25…+55, `lazy8` +35…+100, `founder8` ≤ +50; `kindly8` verpasst ≤ 20 % der Besuche (der Bot beendet das Gespräch über `Visitors.note_talked`).
   - Phase-3/4/5/6/7-Bots unverändert grün: Sie sehen nach ihrem Kapitel `p8_open` (bzw. Begegnungen ab `village_open`), nehmen aber keinen Lehrling und keinen Wunsch an. **Wichtig:** Besuche, Ansicht und Räuber laufen bei ihnen nicht, weil sie vor `name_in_village` enden (Phase 3–6) bzw. am Kapiteltag stoppen (Phase 7).
 - **Save-Fuzzer (W3):** + echter v7-Stand mitten in Phase 8 (Besucher kniet, Jakob arbeitet, Wunsch offen, Münzen auf dem Stein, Kerzen brennen, Gitter, aufgewühltes Grab, Räubernacht, Lichtgang) mit gezielten Mutationen (`plan` kaputt, Wunsch auf unbekanntem Grab, `kin_house` unbekannt, Level außerhalb 0…2, Münzen in der Dose negativ, `steps` > 3, Fest-Tag in der Vergangenheit) + alle v6…v1-Fixtures. Neu in der Konsistenzprüfung: ein Wunsch je Grab, höchstens 3 offen, Plan nur für den aktuellen Tag (sonst neu planen), kein Gitter auf einem `EMPTY`-Grab, `disturbed` nur auf belegten Gräbern.
 - Art-Prototyp-Regression: `test_art_prototype.gd` unverändert grün.
@@ -1349,6 +1359,12 @@ P6 besitzt alle Dialoge, Begegnungen und Zeitpläne; P2 die Wunsch-, Ansichts- u
 6. **Freundschafts-Geschichten:** (a) **alle sieben lebenden Bewohner × 3 Schritte**; Esch, Theres, Fenner Priorität B.
 
 ---
+
+### G8 Runde 1 – Benutzerentscheidungen (bindend, 11.10.2026: „die 4 offenen Punkte kannst du alle machen")
+1. **E8-1 Licht – vom Benutzer bestätigt:** die kürzeren Novembertage (Zeit-Schlüssel ab Tag 50 → 56: Tag bis 15:00, Dämmerung 16:40, Nacht 18:10) und das hellere Krankenlicht (2,2 / 6 m) bleiben wie gebaut.
+2. **B8-1 Besuche:** Besucher warten länger und immer auf ein Wort (§2.2.3), Torglocke am Tor mit HUD-Notiz (§2.2.3, §8.3, §8.4). Ziel `kindly8` ≤ 20 % verpasst – gemessen 5 % (1 von 19, vorher 10 von 19).
+3. **E8-2 / B8-3 Münzen:** jetzt ausgeglichen – Pflegegeld nach Bedarf (ab 80 Münzen) und Gerede dorfweit (§2.2.4, §2.10).
+4. **B8-2 Vase:** Wunschtext und Wunschkarte nennen die Werkbank und Theres' Samen (§2.2.5).
 
 ## W0-Notizen (Lead, Welle 0 – verbindlich für W1)
 1. **v6-Fixtures** `tests/fixtures/saves_v6/*.json` wurden **vor** jeder Phase-8-Code-Änderung auf Stand **a499aa8** erzeugt (= G7 9353b74 + Gruft-Umbau 6da74c7/8be6c31 + `stench_exempt_min_level = 2`) – über `Phase7Bot` + echte Systeme (`make_v6_saves.gd` + `_driver.gd`, historisches Werkzeug; `-- --out=/abs/dir [--only=neighbor,anatomist,eve,founder,inn,crypt]`; auf einem Phase-8-Stand schriebe es v7). Eigener Commit **6866450**, zusammen mit `tests/fixtures/phase8/{layout_p7,village_layout_p7}.json` (= `data/world/{graveyard,village}_layout.json` von a499aa8, bytegleich). Die Endstände setzen `slot_p6_day40_reverent` mit denselben 13 Bot-Tagen fort wie `test_phase7_playthrough.gd`. Gemessen (sha256-Präfix):

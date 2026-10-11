@@ -12,3 +12,5 @@ const KINDS: Array[StringName] = [&"tend", &"flowers", &"candle", &"line", &"vas
 @export_multiline var failed_text: String
 ## Only kind line: the line for the stone (6 templates).
 @export var line_text: String = ""
+## G8 Runde 1 (B8-2): where the thing for the wish comes from (the wish card's „Woher" line; "" = none shown).
+@export_multiline var source_text: String = ""

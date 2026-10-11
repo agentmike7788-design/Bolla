@@ -15,9 +15,21 @@ extends Resource
 @export var slots: PackedInt32Array = [570, 750, 900]
 ## Late visits (after the mourning time) bring flowers with this chance (the first always).
 @export var flowers_chance_late: float = 0.4
-## §2.2.3: mourning 30 minutes, waiting (wish / tip) 10 minutes.
+## §2.2.3: mourning 30 minutes, then waiting (wish / tip). G8 Runde 1 (B8-1, user decision): a household waits up
+## to wait_minutes (was 10) for the gravekeeper, but not past wait_until_minute (16:30, before the November dusk,
+## E8-1) and never less than wait_min_minutes; after the talk it goes after leave_after_talk_minutes. Villagers keep
+## wait_minutes_villager (18 – their day goes on in the village: the data schedules of Esch, Theres, Liesel).
 @export var mourn_minutes: int = 30
-@export var wait_minutes: int = 10
+@export var wait_minutes: int = 100
+@export var wait_min_minutes: int = 10
+@export var wait_until_minute: int = 990
+@export var wait_minutes_villager: int = 18
+@export var leave_after_talk_minutes: int = 3
+## G8 Runde 1 (B8-1): every visitor waits for a word after the look (the contract had: only with a tip or a wish).
+@export var wait_always: bool = true
+## G8 Runde 1 (B8-1): the gate bell (GateBell) rings when a visitor comes up; HUD note only while the gravekeeper is on
+## the graveyard (region graveyard).
+@export var bell_cue: StringName = &"gate_bell"
 ## A noisy action ≤ noise_distance m from a mourner (§2.2.3); a waiting visitor turns at talk_distance.
 @export var noise_distance: float = 8.0
 @export var talk_distance: float = 4.0
@@ -42,6 +54,10 @@ extends Resource
 @export var tip_goodwill_min: int = 6
 @export var tip_quality_min: int = 15
 @export var tip_cap_day: int = 4
+## G8 Runde 1 (B8-3, user decision): once a specimen was sold (GameState stat rumor_stat) the talk goes round the
+## whole village – every tip is rumor_tip_malus smaller (a tip of 1 becomes thanks only).
+@export var rumor_tip_malus: int = 1
+@export var rumor_stat: StringName = &"specimens_sold"
 ## Goodwill +2 for a wish done, −2 for one failed; villagers +4 relationship instead of coins.
 @export var wish_goodwill: int = 2
 @export var wish_fail_goodwill: int = -2

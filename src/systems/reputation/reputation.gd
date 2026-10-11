@@ -13,6 +13,7 @@ const FLAG_LAST_DAY := &"rep_last_day"
 const COIN_ITEM := &"coin"
 const REASON_DRIFT := "Ruf im Dorf"
 const REASON_STIPEND := "Pflegegeld der Gemeinde"
+const TEXT_WITHHELD := "Das Pflegegeld bleibt heute in der Gemeindekasse. Fenner: „Wer %d Münzen im Kasten hat, braucht keins.“"
 
 ## Reputation rules; null = data/config/reputation_config.tres (ReputationRules resolves it).
 var config: ReputationConfig
@@ -75,6 +76,10 @@ func apply_daily(day: int) -> Dictionary:
 	var drift := value() - before
 	var coins := ReputationRules.stipend(tier(), cfg)
 	var inv := _inventory()
+	var withheld := coins > 0 and stipend_withheld(inv)
+	if withheld:
+		coins = 0
+		EventBus.notification_requested.emit(TEXT_WITHHELD % cfg.stipend_purse_cap, &"info")
 	if coins > 0:
 		if inv != null:
 			inv.add_item(COIN_ITEM, coins)
@@ -83,7 +88,35 @@ func apply_daily(day: int) -> Dictionary:
 			push_warning("[Reputation] no inventory for the stipend of day %d" % day)
 			coins = 0
 	_last_daily = {"day": day, "drift": drift, "stipend": coins, "value": value(), "tier": tier()}
+	if withheld:
+		_last_daily["stipend_withheld"] = true
 	return {"drift": drift, "stipend": coins}
+
+
+## G8 Runde 1 (E8-2): Phase 8 open (ReputationConfig.stipend_cap_flag) and the gravekeeper holds stipend_purse_cap
+## coins or more – the purse `inv` plus the coins in every Chest of the world (the hut chest, Jakob's box) and the wage
+## tin – so the Gemeinde keeps the day's stipend.
+func stipend_withheld(inv: Inventory = null) -> bool:
+	var cfg := _cfg()
+	if cfg.stipend_purse_cap <= 0 or (cfg.stipend_cap_flag != &"" and not GameState.flag_on(cfg.stipend_cap_flag)):
+		return false
+	return holdings(inv if inv != null else _inventory()) >= cfg.stipend_purse_cap
+
+
+## The gravekeeper's coins: `inv` + every Chest's storage + the wage tin of Jakob's box.
+func holdings(inv: Inventory) -> int:
+	var total := inv.count(COIN_ITEM) if inv != null else 0
+	if not is_inside_tree():
+		return total
+	for node: Node in get_tree().get_nodes_in_group(&"saveable"):
+		if node is Chest:
+			var storage := (node as Chest).get_node_or_null(^"Storage") as Inventory
+			if storage != null and storage != inv:
+				total += storage.count(COIN_ITEM)
+			var tin: Variant = node.get(&"coins")
+			if tin is int:
+				total += int(tin)
+	return total
 
 
 ## Drift the next day change would bring (HUD arrow).

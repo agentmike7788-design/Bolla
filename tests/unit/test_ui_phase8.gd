@@ -178,6 +178,23 @@ func test_wish_card_shows_and_accepts() -> void:
 	assert_false(ui.is_open(&"wish_card"), "the card closes")
 
 
+## G8 Runde 1 (B8-2): the card says where the vase comes from (WishData.source_text via Visitors' offer "source").
+func test_wish_card_origin_line_for_the_vase() -> void:
+	await _setup()
+	_harness()
+	h.bury("l_02", &"house_kehr", DAY - 2)
+	var data := Database.wish(&"w_vase") as WishData
+	var card := _open(&"wish_card", {"offer": {"wish_id": "w_0001", "kind": &"vase", "grave_id": "l_02", "text": data.ask_text,
+			"source": data.source_text}, "kin_id": &"kin_kehr"}) as WishCard
+	assert_true(card.origin_label.visible)
+	assert_true(card.origin_label.text.begins_with("Woher: Grabvase: an der Werkbank"), card.origin_label.text)
+	card.decline()
+	card = _open(&"wish_card", {"offer": {"wish_id": "w_0002", "kind": &"candle", "grave_id": "l_02", "text": "…"},
+			"kin_id": &"kin_kehr"}) as WishCard
+	assert_false(card.origin_label.visible, "no origin line for a candle")
+	card.decline()
+
+
 func test_wish_card_dimmed_with_three_open() -> void:
 	await _setup()
 	_harness()

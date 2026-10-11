@@ -65,6 +65,8 @@ const WISH_DECLINE := "Ich kann es nicht versprechen."
 const WISH_FULL := "Drei Wünsche sind schon offen."
 const WISH_ACCEPTED := "Angenommen."
 const WISH_LINE := "Zeile: „%s“"
+## G8 Runde 1 (B8-2): the „Woher" line of the wish card (WishData.source_text).
+const WISH_SOURCE := "Woher: %s"
 const WISH_SHORT := "Wunsch: %s für %s"
 const WISH_SHORT_DAYS := "Wunsch: %s für %s (≈ %d %s)"
 const WISH_KIND_SHORT: Dictionary[StringName, String] = {

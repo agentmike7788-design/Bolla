@@ -18,6 +18,12 @@ extends Resource
 @export var pay_bonus: PackedInt32Array = [-2, 0, 1, 2, 3]
 ## Daily stipend (coins at day_started), per tier.
 @export var stipend: PackedInt32Array = [0, 1, 2, 3, 4]
+## G8 Runde 1 (E8-2, user decision „jetzt ausgleichen"): from stipend_cap_flag on (Phase 8 open) the Gemeinde pays the
+## stipend only to a gravekeeper in need – with stipend_purse_cap coins or more (purse + the chests of the hut and
+## Jakob's box with its wage tin) at the start of the day it stays in the parish chest. 0 = off. The tier values
+## above (Phase 3) are unchanged.
+@export var stipend_purse_cap: int = 80
+@export var stipend_cap_flag: StringName = &"p8_open"
 ## Corpses per day, per tier: one in every tier (user decision 27.09.2026, §14.2 – overrides
 ## the [1, 1, 1, 2, 2] of §3.4).
 @export var deliveries_per_day: PackedInt32Array = [1, 1, 1, 1, 1]
