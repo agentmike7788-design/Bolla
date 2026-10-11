@@ -402,6 +402,13 @@ func hand_tip(visit_id: String, inv: Inventory) -> int:
 	return coins
 
 
+## G8 Runde 1 (B8-3): the village talks about the gravekeeper's jars (a specimen was ever sold – stat
+## VisitorConfig.rumor_stat): every tip is VisitorConfig.rumor_tip_malus smaller (not only at the graves of those dead).
+func village_rumor() -> bool:
+	var cfg := _cfg()
+	return cfg.rumor_tip_malus > 0 and cfg.rumor_stat != &"" and GameState.get_stat(cfg.rumor_stat) > 0
+
+
 ## The coins a visitor will hand over (0 = none) – the dialogue's tip_hand line.
 func tip_of(visit_id: String) -> int:
 	return int(_find(visit_id).get("tip", 0))
@@ -825,6 +832,9 @@ func _wish_done(v: Dictionary, w: Dictionary) -> void:
 			_tips_day = TimeManager.day
 			_tips_coins = 0
 		var coins := WishRules.tip(goodwill(kin_id), _quality(str(w.grave_id)), _tips_coins, cfg)
+		# G8 Runde 1 (B8-3): the talk about the jars goes round the whole village – every family tips less.
+		if village_rumor():
+			coins = maxi(coins - cfg.rumor_tip_malus, 0)
 		if coins > 0:
 			_tips_coins += coins
 			v["tip"] = int(v.get("tip", 0)) + coins

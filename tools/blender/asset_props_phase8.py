@@ -713,7 +713,7 @@ def prop_gate_bell():
     front face of the east gate post (the post face at y = 0, the post behind at +Y, the arm reaching out to -Y), a
     small bronze bell on a yoke and a pull cord with a wooden toggle. The bell, its clapper and the cord are the
     child mesh `bell` (pivot at the yoke) - GateBell swings it when a visitor comes up. The origin is on the ground
-    below the mount, the top at 1.78 m (the post is 1.85 m). <= 500 tris."""
+    below the mount, the top at 1.78 m (the post is 1.85 m). <= 600 tris (Godot count)."""
     L.reset(8616)
     parts = []
     plate = L.prim("cube", loc=(0, -0.008, 1.66), scale=(0.035, 0.008, 0.12))

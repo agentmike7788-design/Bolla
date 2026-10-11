@@ -54,6 +54,10 @@ extends Resource
 @export var tip_goodwill_min: int = 6
 @export var tip_quality_min: int = 15
 @export var tip_cap_day: int = 4
+## G8 Runde 1 (B8-3, user decision): once a specimen was sold (GameState stat rumor_stat) the talk goes round the
+## whole village – every tip is rumor_tip_malus smaller (a tip of 1 becomes thanks only).
+@export var rumor_tip_malus: int = 1
+@export var rumor_stat: StringName = &"specimens_sold"
 ## Goodwill +2 for a wish done, −2 for one failed; villagers +4 relationship instead of coins.
 @export var wish_goodwill: int = 2
 @export var wish_fail_goodwill: int = -2
