@@ -18,12 +18,14 @@ const ITEM_MAX := Vector3(0.45, 0.3, 0.45)
 
 ## name -> [category, min size, max size, triangle budget (§8)]
 const MODELS := {
-	"ph_bld_crypt_site": ["buildings", Vector3(2.4, 0.4, 2.2), Vector3(2.95, 1.2, 2.75), 1500],
-	# G7 round 1: the stair goes 1 m down into the earth and starts 0.8 m in front of the footprint
-	# (cheeks, treads, the deep portal) - taller, deeper and a little more geometry than in Phase 6.
-	"ph_bld_crypt_l1": ["buildings", Vector3(2.4, 2.2, 2.2), Vector3(2.95, 3.9, 3.5), 4600],
-	"ph_bld_crypt_l2": ["buildings", Vector3(2.4, 2.2, 2.2), Vector3(2.95, 3.9, 3.5), 4800],
-	"ph_bld_crypt_l3": ["buildings", Vector3(2.4, 2.2, 2.2), Vector3(2.95, 3.9, 3.5), 5300],
+	# G8 round 2 (user: bigger, the stair open and wide, old and mossy): the sunken portal 3 m wide and
+	# 2.8 m high (cross 3.3 m) with a stair shaft 1.6 m wide and 1.3 m deep in front – the footprint
+	# covers portal and shaft (3.0 × 3.6 m); the budgets of G7 round 1 hold (bigger, plainer blocks).
+	# The site (level 0) grows with the footprint: 1500 → 1700 triangles.
+	"ph_bld_crypt_site": ["buildings", Vector3(2.6, 0.4, 3.0), Vector3(3.2, 1.2, 3.8), 1700],
+	"ph_bld_crypt_l1": ["buildings", Vector3(2.9, 4.3, 3.4), Vector3(3.4, 5.2, 3.95), 4600],
+	"ph_bld_crypt_l2": ["buildings", Vector3(2.9, 4.3, 3.4), Vector3(3.4, 5.5, 3.95), 4800],
+	"ph_bld_crypt_l3": ["buildings", Vector3(2.9, 4.3, 3.4), Vector3(3.4, 5.5, 3.95), 5300],
 	"ph_bld_chapel_ruin": ["buildings", Vector3(4.4, 2.5, 6.6), Vector3(5.35, 4.5, 7.8), 4000],
 	"ph_bld_chapel_l1": ["buildings", Vector3(4.8, 6.0, 6.6), Vector3(5.35, 6.8, 7.4), 6000],
 	"ph_bld_chapel_l2": ["buildings", Vector3(4.8, 7.5, 6.6), Vector3(5.35, 8.6, 7.4), 7000],
@@ -72,9 +74,9 @@ const LEVEL_WINDOWS: Array[String] = ["light_window_1", "light_window_2", "light
 ## Markers each model must carry (glTF empties -> Node3D leaves); every other model carries none.
 const MARKERS := {
 	"ph_bld_crypt_site": ["build"],
-	"ph_bld_crypt_l1": ["door_outside", "build"],
-	"ph_bld_crypt_l2": ["door_outside", "build"],
-	"ph_bld_crypt_l3": ["door_outside", "build", "light_lantern", "inscription"],
+	"ph_bld_crypt_l1": ["door_outside", "build", "light_lantern_1", "light_lantern_2"],
+	"ph_bld_crypt_l2": ["door_outside", "build", "light_lantern_1", "light_lantern_2"],
+	"ph_bld_crypt_l3": ["door_outside", "build", "light_lantern_1", "light_lantern_2", "light_lantern", "inscription"],
 	"ph_bld_chapel_ruin": ["build"],
 	"ph_bld_chapel_l1": ["door_outside", "build", "light_window_1", "light_window_2", "light_window_3", "light_window_4"],
 	"ph_bld_chapel_l2": ["door_outside", "build", "light_window_1", "light_window_2", "light_window_3", "light_window_4"],
@@ -105,14 +107,16 @@ const MARKERS := {
 	"ph_int_shed_rack": ["book"],
 }
 ## Models with a glowing lantern glass / candle flame (mat_emissive_warm, like the hut's lantern).
-const MAY_GLOW: Array[String] = ["ph_bld_crypt_l3", "ph_prop_soul_lantern", "ph_int_crypt_lantern", "ph_int_candle_niche",
+const MAY_GLOW: Array[String] = ["ph_bld_crypt_l1", "ph_bld_crypt_l2", "ph_bld_crypt_l3", "ph_prop_soul_lantern", "ph_int_crypt_lantern", "ph_int_candle_niche",
 		"ph_int_altar", "ph_int_candelabrum", "ph_int_shed_room"]
 ## §4 footprints (x × z) of the building sites and the building families.
-const FOOTPRINTS := {"crypt": Vector2(2.8, 2.6), "chapel": Vector2(5.2, 7.0), "shed": Vector2(3.2, 3.6)}
+const FOOTPRINTS := {"crypt": Vector2(3.0, 3.6), "chapel": Vector2(5.2, 7.0), "shed": Vector2(3.2, 3.6)}
+## G8 round 2: centre (x, z) of each footprint relative to the pivot – the crypt's pivot is the front of
+## its portal wall, the stair shaft lies in front (z −0.85…2.75).
+const FOOTPRINT_CENTRES := {"crypt": Vector2(0.0, 0.95), "chapel": Vector2.ZERO, "shed": Vector2.ZERO}
 const FOOTPRINT_SLACK := 0.2
-## G7 round 1: the crypt stair (levels 1–3) reaches this far below the ground and in front of the footprint.
-const CRYPT_STAIR_DEPTH := 1.4
-const CRYPT_STAIR_FRONT := 0.4
+## G8 round 2: the crypt stair (levels 1–3) reaches this far below the ground (1.3 m + the treads' bodies).
+const CRYPT_STAIR_DEPTH := 1.7
 const CRYPT_STAIR_LEVELS: Array[String] = ["ph_bld_crypt_l1", "ph_bld_crypt_l2", "ph_bld_crypt_l3"]
 const LEVELS := {
 	"crypt": ["ph_bld_crypt_site", "ph_bld_crypt_l1", "ph_bld_crypt_l2", "ph_bld_crypt_l3"],
@@ -252,11 +256,11 @@ func test_levels_share_footprint_and_markers() -> void:
 		for name: String in LEVELS[b]:
 			var inst := _load_free(name)
 			var box := _aabb(inst)
-			var front := CRYPT_STAIR_FRONT if name in CRYPT_STAIR_LEVELS else 0.0
-			assert_true(box.size.x <= fp.x + FOOTPRINT_SLACK and box.size.z <= fp.y + FOOTPRINT_SLACK + front,
+			var centre: Vector2 = FOOTPRINT_CENTRES[b]
+			assert_true(box.size.x <= fp.x + FOOTPRINT_SLACK and box.size.z <= fp.y + FOOTPRINT_SLACK,
 					"%s fits the %s footprint (%s)" % [name, fp, box.size])
 			var c := box.get_center()
-			assert_true(absf(c.x) < 0.25 and absf(c.z - front / 2.0) < 0.4, "%s centred on the site (%s)" % [name, c])
+			assert_true(absf(c.x - centre.x) < 0.25 and absf(c.z - centre.y) < 0.4, "%s centred on the site (%s)" % [name, c])
 			var bm := _marker(inst, "build").origin
 			assert_true(bm.is_equal_approx(build0), "%s: build marker as on the site (%s)" % [name, bm])
 			assert_almost(bm.y, 0.0, 0.01, name + " build on the ground")
@@ -267,37 +271,50 @@ func test_levels_share_footprint_and_markers() -> void:
 			if door == Vector3.INF:
 				door = d
 			assert_true(d.is_equal_approx(door), "%s: same door spot on every level" % name)
-			# G7 round 1: the crypt door stands at the foot of its stair, in front of the portal (z 0.42).
-			var door_min := 0.42 if b == "crypt" else fp.y / 2 - 0.05
+			# G8 round 2: the crypt door stands at the foot of its stair, at the portal wall (z 0.05).
+			var door_min := 0.0 if b == "crypt" else fp.y / 2 - 0.05
 			assert_true(d.z > door_min, "%s: door faces south, the camera (z %.2f)" % [name, d.z])
 			assert_true(d.distance_to(bm) > 0.9, "%s: the upgrade prompt is not at the door" % name)
 
 
-func test_crypt_is_low_with_a_door_and_stairs_to_the_south() -> void:
-	for name: String in LEVELS.crypt:
-		assert_true(_aabb(_load_free(name)).end.y <= 2.6, "%s ≤ 2.6 m" % name)
-	var inst := _load_free("ph_bld_crypt_l1")
-	# the hill: mat_ground grass behind the portal, not higher than 1 m
-	var hill := 0.0
-	for p: Vector3 in _vertices_with(inst, GROUND_MAT):
-		if p.z < -0.3:
-			hill = maxf(hill, p.y)
-	assert_true(hill > 0.6 and hill <= 1.0, "a sod hill over the vault (%.2f m)" % hill)
-	# G7 round 1: treads of the stair going down into the earth in front of the door
-	var treads := 0
-	for p: Vector3 in _vertices(inst):
-		if absf(p.x) < 0.45 and p.z > 0.45 and p.z < 1.65 and p.y > -1.0 and p.y < 0.02:
-			treads += 1
-	assert_true(treads > 30, "the stair between the cheeks (%d vertices)" % treads)
-	var door := _marker(inst, "door_outside").origin
-	assert_true(door.y < -0.6 and door.z > 0.42 and door.z < 1.0, "the door at the foot of the stair %s" % door)
+## G8 round 2 (user: „zu klein / wirkt wie eine Kiste", „Treppe kaum zu sehen", „passt nicht zum
+## Friedhof"): a portal 2.6–3.6 m high with pilasters and a pediment, no green sod hill any more, an
+## open stair 1.6 m wide between the shaft walls going 1.3 m down to the door, lanterns on the two
+## pillars at the stair head (every level), the level-3 lantern over the door and the name tablet;
+## every level adds something (level 2: the cross, level 3: the tablet, gate and lantern).
+func test_crypt_portal_with_an_open_stair_to_the_front() -> void:
+	var tops: Array[float] = []
+	for name: String in LEVELS.crypt.slice(1):
+		var inst := _load_free(name)
+		var box := _aabb(inst)
+		tops.append(box.end.y)
+		assert_true(box.end.y >= 2.9 and box.end.y <= 3.8, "%s: portal %.2f m high" % [name, box.end.y])
+		var hill := 0
+		for p: Vector3 in _vertices_with(inst, GROUND_MAT):
+			if p.y > 0.3:
+				hill += 1
+		assert_eq(hill, 0, name + ": no sod hill over the vault")
+		var treads := 0
+		var wide := 0.0
+		for p: Vector3 in _vertices(inst):
+			if absf(p.x) < 0.78 and p.z > 0.4 and p.z < 2.1 and p.y > -1.25 and p.y < -0.05:
+				treads += 1
+				wide = maxf(wide, absf(p.x))
+		assert_true(treads > 30 and wide > 0.7, "%s: the stair between the shaft walls (%d vertices, %.2f m half width)" % [name, treads, wide])
+		var door := _marker(inst, "door_outside").origin
+		assert_true(door.y < -1.2 and door.z > -0.05 and door.z < 0.35, "%s: the door at the foot of the stair %s" % [name, door])
+		for k: int in [1, 2]:
+			var lamp := _marker(inst, "light_lantern_%d" % k).origin
+			assert_true(lamp.y > 1.1 and lamp.y < 1.6 and lamp.z > 2.1 and lamp.z < 2.8 and absf(lamp.x) > 0.8 and absf(lamp.x) < 1.4,
+					"%s: lantern %d on the pillar at the stair head %s" % [name, k, lamp])
 	var l3 := _load_free("ph_bld_crypt_l3")
 	var lamp := _marker(l3, "light_lantern").origin
-	assert_true(lamp.y > 1.5 and lamp.y < 2.4 and lamp.z > 0.4, "lantern on the portal front %s" % lamp)
+	assert_true(lamp.y > 0.8 and lamp.y < 1.5 and lamp.z > 0.3 and lamp.z < 0.9, "the caged lantern over the door %s" % lamp)
 	var ins := _marker(l3, "inscription")
-	assert_true(ins.basis.is_equal_approx(Basis.IDENTITY) and ins.origin.z > 0.4, "lintel inscription faces south %s" % ins.origin)
-	assert_true(_triangles("ph_bld_crypt_l2") > _triangles("ph_bld_crypt_l1") and _triangles("ph_bld_crypt_l3") > _triangles("ph_bld_crypt_l2"),
-			"every level adds something")
+	assert_true(ins.basis.is_equal_approx(Basis.IDENTITY) and ins.origin.z > 0.05 and ins.origin.y > 1.85 and ins.origin.y < 2.25,
+			"the name tablet in the frieze faces the front %s" % ins.origin)
+	assert_true(tops[1] > tops[0] + 0.2, "level 2: the cross on the apex (%.2f > %.2f)" % [tops[1], tops[0]])
+	assert_true(_triangles("ph_bld_crypt_l3") > _triangles("ph_bld_crypt_l2"), "level 3 adds tablet, gate and lantern")
 
 
 func test_chapel_heights_bell_and_windows() -> void:

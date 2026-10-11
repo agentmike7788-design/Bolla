@@ -156,6 +156,7 @@ func _build_world() -> Node:
 	for g: Dictionary in layout.old_graves:
 		Entities.build_plot(_ctx, old, g, true)
 	Decor.build_decor(_ctx, decor)
+	Phase6.build_paving(_ctx, decor)
 	Phase3.build_birches(_ctx, decor)
 	Phase3.build_overgrowth(_ctx, decor)
 	Phase3.build_passages(_ctx, decor.get_node("Fence"))

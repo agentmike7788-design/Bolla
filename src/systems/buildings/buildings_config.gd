@@ -14,3 +14,6 @@ extends Resource
 @export var goal_flag: StringName = &"roof_and_earth_complete"
 ## Set once the decor on the site rects was cleared (§5.2 step 5).
 @export var cleared_flag: StringName = &"building_sites_cleared"
+## G8 round 2: the crypt moved (rotated portal, new site rect) – a save from before (cleared_flag set,
+## this one not) has the new rect cleared once more on its first load. "" = no second clearing.
+@export var moved_flag: StringName = &"crypt_site_moved_g8"

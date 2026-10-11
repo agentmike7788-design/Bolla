@@ -9,14 +9,24 @@ extends TestCase
 ## out at the foot of the stair outside, walks up onto the graveyard. Save → load on the stair
 ## outside and on the stair inside are round-trip equal; a corpse from the bier goes down the stair
 ## onto the crypt table.
+## G8 round 2: the portal is rotated (site rot_y 56°, the stair runs to the site's +Z towards the path):
+## every spot is site-local, the gravekeeper walks along the stair axis (analog input). A save from
+## before the move with the gravekeeper and a corpse on the OLD stair (now flat ground / the new walls)
+## loads with both at the stair head (BuildingSite.free_area).
 
 const TIMEOUT := 400.0
 const SLOT := 97
 const FIXTURE := "slot_p6_day40_reverent"
-const STAIR_TOP := Vector2(-9.0, 8.85)
+## Site-local (x, z) spots: the stair head on the top landing, half way down, the old (G7) stair foot.
+const STAIR_TOP_LOCAL := Vector2(0.0, 2.95)
+const STAIR_MID_LOCAL := Vector2(0.0, 1.2)
+const PIT_LOCAL := Vector2(0.0, 0.9)
+## G7 round 1 stair (before G8 round 2): the old door at the stair foot and a spot half way down (world).
+const OLD_STAIR_FOOT := Vector3(-9.0, -0.75, 7.65)
+const OLD_STAIR_MID := Vector2(-9.0, 8.1)
 const BIER_STAND := Vector2(1.75, 9.2)
-## The crypt site's flat height minus this = the stair foot at least (layout stair depth 1.0).
-const MIN_DEPTH := 0.7
+## The crypt site's flat height minus this = the stair foot at least (layout stair depth 1.3).
+const MIN_DEPTH := 1.0
 
 var saves_dir := TestCase.user_dir("test_saves_crypt_stairs")
 var world: WorldRoot
@@ -52,8 +62,10 @@ func test_the_stair_outside_by_level() -> void:
 	assert_true(door.global_position.distance_to(marker.global_position) < 0.05, "the door at the model's door_outside")
 	assert_true(site.global_position.y - door.global_position.y > MIN_DEPTH, "the door lies down at the stair foot (%.2f)" %
 			(site.global_position.y - door.global_position.y))
-	assert_true(site.global_position.y - world.ground_height(Vector2(-9.0, 7.6)) > MIN_DEPTH, "the ground has the pit")
-	assert_almost(world.ground_height(STAIR_TOP), site.global_position.y, 0.06, "the stair starts at the ground")
+	assert_true(site.global_position.y - world.ground_height(_at(PIT_LOCAL)) > MIN_DEPTH, "the ground has the pit")
+	assert_almost(world.ground_height(_at(STAIR_TOP_LOCAL)), site.global_position.y, 0.06, "the stair starts at the ground")
+	assert_true(absf(site.rotation_degrees.y - 56.0) < 0.5 and absf(door.rotation_degrees.y - 56.0) < 0.5,
+			"G8 round 2: portal and door turned towards the path")
 	var plug := site.get_node("Collision/PassagePlug") as CollisionShape3D
 	var cheek := site.get_node("Collision/Cheek1") as CollisionShape3D
 	assert_false(cover.visible, "level 3: the pit is open")
@@ -80,11 +92,11 @@ func test_the_stair_outside_by_level() -> void:
 func test_walk_down_and_up_the_stair() -> void:
 	if world == null:
 		return
-	_place(STAIR_TOP, PI)
-	var site_y := (world.get_node("Entities/site_crypt") as Node3D).global_position.y
+	_place(_at(STAIR_TOP_LOCAL), _site().rotation.y + PI)
+	var site_y := _site().global_position.y
 	var lowest := INF
 	var budget := 400
-	_press(&"move_up", 1.0)
+	_press_along(-1.0)
 	while player.interior_id == &"" and budget > 0:
 		await tree.physics_frame
 		lowest = minf(lowest, player.global_position.y)
@@ -111,19 +123,20 @@ func test_walk_down_and_up_the_stair() -> void:
 	var door := BuildingDoor.find(tree, &"crypt")
 	assert_true(player.global_position.distance_to(door.exit_transform().origin) < 0.6, "at the foot of the stair outside")
 	assert_eq(player.region_id, &"graveyard")
-	_press(&"move_down", 1.0)
+	_press_along(1.0)
 	for i: int in 90:
 		await tree.physics_frame
 	_release()
-	assert_true(player.global_position.z > 8.6 and player.global_position.y > site_y - 0.15, "walked up onto the graveyard %s" %
-			player.global_position)
+	var local := _site().to_local(player.global_position)
+	assert_true(local.z > 2.3 and player.global_position.y > site_y - 0.15, "walked up onto the graveyard %s (site-local %s)" %
+			[player.global_position, local])
 	assert_eq(player.interior_id, &"", "the stair does not pull back in going up")
 
 
 func test_save_load_on_the_stairs() -> void:
 	if world == null:
 		return
-	_place(Vector2(-9.0, 8.1), PI)
+	_place(_at(STAIR_MID_LOCAL), _site().rotation.y + PI)
 	await _settle()
 	var y_out := player.global_position.y
 	await _round_trip("on the stair outside")
@@ -152,8 +165,8 @@ func test_a_corpse_goes_down_the_stair_to_the_table() -> void:
 	_place(BIER_STAND, 0.0)
 	manager.get_corpse_node(record.id).interact(player)
 	assert_eq(player.carried_id, record.id, "carried from the bier")
-	_place(STAIR_TOP, PI)
-	_press(&"move_up", 1.0)
+	_place(_at(STAIR_TOP_LOCAL), _site().rotation.y + PI)
+	_press_along(-1.0)
 	var budget := 500
 	while player.interior_id == &"" and budget > 0:
 		await tree.physics_frame
@@ -167,7 +180,89 @@ func test_a_corpse_goes_down_the_stair_to_the_table() -> void:
 	assert_eq(manager.get_record(record.id).location, CorpseRecord.LOCATION_TABLE, "on the crypt table")
 
 
+## G8 round 2: a save from before the crypt moved – the gravekeeper half way down the old stair (now
+## under the flat ground) and a corpse dropped at the old stair foot (now inside the new shaft wall /
+## under the ground): after the load both stand at the new stair head, the rest of the save as it was;
+## a second save → load is identical (nothing moves twice).
+func test_old_save_on_the_old_stair_lands_at_the_new_stair_head() -> void:
+	if world == null:
+		return
+	var manager := world.corpse_manager
+	var bier := tree.get_first_node_in_group(&"dropoff") as Node3D
+	var record := manager.spawn_corpse(null, bier.global_transform, &"dropoff")
+	manager.pick_up(record.id, player)
+	manager.put_down(record.id, &"ground", Transform3D(Basis.IDENTITY, OLD_STAIR_FOOT))
+	assert_eq(SaveManager.save_game(SLOT), OK)
+	var path := SaveFileIO.slot_path(SaveManager.save_dir, SLOT)
+	var doc := _read_save(path)
+	assert_false(doc.is_empty(), "the save file " + path)
+	if doc.is_empty():
+		return
+	# Write the old positions into the file as a pre-G8 save has them (y as on the old stair).
+	var state: Dictionary = JSON.to_native(doc.data)
+	var nodes: Dictionary = state.nodes
+	nodes.player["position"] = Vector3(OLD_STAIR_MID.x, -0.55, OLD_STAIR_MID.y)
+	nodes.player["in_interior"] = false
+	nodes.player["interior_id"] = ""
+	for c: Dictionary in nodes.corpse_manager.corpses:
+		if String(c.get("id", "")) == record.id:
+			c["position"] = OLD_STAIR_FOOT
+	(state.autoloads.GameState.flags as Dictionary).erase(&"crypt_site_moved_g8")
+	doc.data = JSON.from_native(state)
+	_write_save(path, doc)
+	assert_eq(await SaveManager.load_game(SLOT), OK, "the old save loads")
+	_bind()
+	await _settle()
+	var head := _site().to_global(Vector3(0.0, 0.0, 3.15))
+	var feet := player.global_position
+	assert_true(Vector2(feet.x, feet.z).distance_to(Vector2(head.x, head.z)) < 0.8, "the gravekeeper at the stair head %s" % feet)
+	assert_true(feet.y > world.ground_height(Vector2(feet.x, feet.z)) - 0.2, "on the ground, not under it (%.2f)" % feet.y)
+	var again := world.corpse_manager.get_record(record.id)
+	assert_eq(again.location, CorpseRecord.LOCATION_GROUND, "the corpse still on the ground")
+	assert_true(Vector2(again.position.x, again.position.z).distance_to(Vector2(head.x, head.z)) < 2.0,
+			"the corpse beside the stair head %s" % again.position)
+	assert_false(_site().stuck_at(again.position), "the corpse is not in a wall or under the ground")
+	assert_true(GameState.get_flag(&"crypt_site_moved_g8"), "the new site rect cleared once")
+	await _round_trip("after the move")
+
+
 # --- helpers ---------------------------------------------------------------------------------------
+
+func _site() -> BuildingSite:
+	return world.get_node("Entities/site_crypt") as BuildingSite
+
+
+## World (x, z) of a site-local (x, z) spot.
+func _at(local: Vector2) -> Vector2:
+	var p := _site().to_global(Vector3(local.x, 0.0, local.y))
+	return Vector2(p.x, p.z)
+
+
+## Walks along the stair axis: +1 = up and out (site +Z), −1 = down to the door (analog input).
+func _press_along(sign_dir: float) -> void:
+	var f := _site().global_basis.z * sign_dir
+	if f.x < 0.0:
+		Input.action_press(&"move_left", -f.x)
+	elif f.x > 0.0:
+		Input.action_press(&"move_right", f.x)
+	if f.z < 0.0:
+		Input.action_press(&"move_up", -f.z)
+	elif f.z > 0.0:
+		Input.action_press(&"move_down", f.z)
+
+
+func _read_save(path: String) -> Dictionary:
+	if path == "" or not FileAccess.file_exists(path):
+		return {}
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	return parsed if parsed is Dictionary else {}
+
+
+func _write_save(path: String, doc: Dictionary) -> void:
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_string(JSON.stringify(doc, "\t", true, true))
+	f.close()
+
 
 func _bind() -> void:
 	world = tree.current_scene as WorldRoot

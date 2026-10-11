@@ -176,6 +176,20 @@ static func _keep_out(ctx: Ctx) -> Dictionary:
 		var fp: Array = site.footprint
 		rects.append({"pos": Ctx.v2(site.pos), "rot": float(site.rot_y), "rect": Rect2(fp[0], fp[1], fp[2], fp[3]).grow(margin)})
 		circles.append({"c": Ctx.v2(site.access), "r": access_out})
+	# G8 round 2: none on the crypt's flagstone walk (crypt_route from paving.start_x) and its forecourt.
+	var polys: Array[PackedVector2Array] = []
+	var paving: Dictionary = layout.get("buildings", {}).get("paving", {})
+	if not paving.is_empty():
+		var walk: Array[Vector2] = []
+		for p: Vector2 in _points(layout.buildings.crypt_route):
+			if p.x <= float(paving.start_x) + 1.0:
+				walk.append(p)
+		if walk.size() >= 2:
+			lines.append({"pts": walk, "r": float(paving.width) * 0.5 + 0.1})
+		var poly := PackedVector2Array()
+		for p: Array in paving.forecourt:
+			poly.append(Ctx.v2(p))
+		polys.append(poly)
 	var soul: Dictionary = layout.get("buildings", {}).get("soul_lantern", {})
 	if not soul.is_empty():
 		circles.append({"c": Ctx.v2(soul.pos), "r": 0.5})
@@ -192,7 +206,7 @@ static func _keep_out(ctx: Ctx) -> Dictionary:
 				"r": float(cfg.hidden_crown_radius) * s})
 	var hut := Ctx.v2(layout.hut.pos)
 	var hut_rect := Rect2(-2.9, -2.4 - float(cfg.hidden_hut_depth), 5.8, float(cfg.hidden_hut_depth))
-	return {"lines": lines, "circles": circles, "rects": rects, "hidden": hidden, "no_grass": no_grass, "thin": thin,
+	return {"lines": lines, "circles": circles, "rects": rects, "polys": polys, "hidden": hidden, "no_grass": no_grass, "thin": thin,
 			"thin_churchyard": thin_churchyard,
 			"hidden_rects": [{"pos": hut, "rot": float(layout.hut.rot_y), "rect": hut_rect}]}
 
@@ -218,6 +232,9 @@ static func _kept_out(p: Vector2, keep: Dictionary) -> bool:
 	for r: Dictionary in keep.rects:
 		var local := (p - (r.pos as Vector2)).rotated(deg_to_rad(float(r.rot)))
 		if (r.rect as Rect2).has_point(local):
+			return true
+	for poly: PackedVector2Array in keep.get("polys", []):
+		if Geometry2D.is_point_in_polygon(p, poly):
 			return true
 	return false
 

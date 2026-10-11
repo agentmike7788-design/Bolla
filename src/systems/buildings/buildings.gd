@@ -346,6 +346,8 @@ func _on_time_tick(day: int, _minute: int) -> void:
 func _on_new_game() -> void:
 	if not site_rects.is_empty():
 		GameState.set_flag(_cfg().cleared_flag, true)
+		if _cfg().moved_flag != &"":
+			GameState.set_flag(_cfg().moved_flag, true)
 
 
 ## Records the unlock time (own bookkeeping only; opening follows in apply_morning).
@@ -441,16 +443,20 @@ func _open() -> void:
 
 
 ## Once (cleared_flag): DecorationManager.evict_rects(site_rects) → pending returns → chest /
-## player; one notification when anything was cleared.
+## player; one notification when anything was cleared. G8 round 2: once more for a save from before
+## the crypt moved (moved_flag missing) – the new site rect.
 func _evict_sites() -> void:
 	var cfg := _cfg()
-	if site_rects.is_empty() or _flag_on(cfg.cleared_flag):
+	var moved_done := cfg.moved_flag == &"" or _flag_on(cfg.moved_flag)
+	if site_rects.is_empty() or (_flag_on(cfg.cleared_flag) and moved_done):
 		return
 	var decor := _first(DECOR_GROUP)
 	if decor == null or not decor.has_method(&"evict_rects"):
 		return
 	var removed: Dictionary = decor.call(&"evict_rects", site_rects)
 	GameState.set_flag(cfg.cleared_flag, true)
+	if cfg.moved_flag != &"":
+		GameState.set_flag(cfg.moved_flag, true)
 	if removed.is_empty():
 		return
 	for id: Variant in removed:

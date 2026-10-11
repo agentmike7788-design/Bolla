@@ -21,8 +21,15 @@ const LABEL_BUILD := "%s: Stufe %d bauen"
 const TEXT_BUILT := "%s: Stufe %d steht."
 const TEXT_FAILED := "Bauen fehlgeschlagen."
 const TEXT_BUSY := "Gerade nicht möglich."
+## free_area(): this far under the ground counts as buried in it (the stair shaft has its own pit).
+const BURIED_DEPTH := 0.35
 
 @export var building_id: StringName
+## G8 round 2: where someone stands in front of the building (site-local, layout access). After a
+## load the gravekeeper / a corpse lying outside that would be inside the building's walls or under
+## the ground (a save from before the crypt moved: on its old stair) is put here instead.
+@export var access_point: Vector3 = Vector3.ZERO
+@export var has_access_point: bool = false
 
 @onready var interactable: Interactable = get_node_or_null(^"Interactable") as Interactable
 
@@ -225,6 +232,69 @@ func _on_building_upgraded(id: StringName, _level: int) -> void:
 
 func _on_game_loaded(_slot: int) -> void:
 	refresh()
+	free_area()
+
+
+## G8 round 2: after a load, the gravekeeper (outside, on the graveyard) and every corpse lying on the
+## ground outside that stand inside a solid shape of this site or more than BURIED_DEPTH under the
+## ground (outside the stair shaft) go to the access point – a save from before the crypt moved
+## (rotated portal in the south-west corner) may have them on the old stair. Returns how many moved.
+func free_area() -> int:
+	if not has_access_point or not is_active() or not is_inside_tree():
+		return 0
+	var moved := 0
+	var spot := _access_transform()
+	var player := get_tree().get_first_node_in_group(&"player") as Node3D
+	if player != null and not bool(player.get(&"in_interior")) and StringName(str(player.get(&"region_id"))) in [&"", &"graveyard"] \
+			and stuck_at(player.global_position):
+		push_warning("[BuildingSite] %s: the gravekeeper stood in the building / under the ground – moved to its access" % building_id)
+		player.global_position = spot.origin
+		if player is CharacterBody3D:
+			(player as CharacterBody3D).velocity = Vector3.ZERO
+		moved += 1
+	var manager := get_tree().get_first_node_in_group(&"corpse_manager")
+	if manager != null and manager.has_method(&"records") and manager.has_method(&"relocate_ground_corpse"):
+		var k := 0
+		for record: Variant in manager.call(&"records"):
+			if StringName(str(record.get(&"location"))) != &"ground" or StringName(str(record.get(&"room"))) != &"":
+				continue
+			var pos: Vector3 = record.get(&"position")
+			if stuck_at(pos):
+				k += 1
+				var xf := Transform3D(spot.basis, spot.origin + spot.basis.x * (0.9 * k))
+				manager.call(&"relocate_ground_corpse", String(record.get(&"id")), xf)
+				moved += 1
+	return moved
+
+
+## Inside one of the site's solid collision boxes (not the walkable stair parts) or more than
+## BURIED_DEPTH under the ground outside the stair shaft.
+func stuck_at(p: Vector3) -> bool:
+	var body := get_node_or_null(^"Collision")
+	if body != null:
+		for node: Node in body.get_children():
+			var shape := node as CollisionShape3D
+			if shape == null or shape.disabled or not shape.shape is BoxShape3D or String(shape.name).begins_with("Stair"):
+				continue
+			var local := shape.global_transform.affine_inverse() * (p + Vector3(0.0, 0.5, 0.0))
+			var half := (shape.shape as BoxShape3D).size * 0.5 + Vector3(0.25, 0.4, 0.25)
+			if absf(local.x) < half.x and absf(local.y) < half.y and absf(local.z) < half.z:
+				return true
+	var world := get_tree().get_first_node_in_group(&"world")
+	if world != null and world.has_method(&"ground_height"):
+		var g := float(world.call(&"ground_height", Vector2(p.x, p.z)))
+		if p.y < g - BURIED_DEPTH:
+			return true
+	return false
+
+
+## The access point on the ground, facing away from the building.
+func _access_transform() -> Transform3D:
+	var at := to_global(access_point)
+	var world := get_tree().get_first_node_in_group(&"world")
+	if world != null and world.has_method(&"ground_height"):
+		at.y = float(world.call(&"ground_height", Vector2(at.x, at.z)))
+	return Transform3D(global_basis.orthonormalized(), at)
 
 
 func _on_time_tick(_day: int, _minute: int) -> void:

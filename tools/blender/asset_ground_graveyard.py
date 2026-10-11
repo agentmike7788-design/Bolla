@@ -18,6 +18,11 @@ ground edge behind the chapel); flat under the building footprints of layout.bui
 (+ station_flat_margin), trodden earth at their doors. The noise is a function of (x, z) only, so
 every approved vertex keeps its height outside the new zones.
 
+G8 round 2: the crypt (rotated portal in the south-west corner) gets a flagstone walk from the main
+path along buildings.crypt_route to a paved forecourt at the head of its stair (buildings.paving):
+darker trodden earth in the ground colours there, the slabs themselves as ph_env_crypt_paving
+(world coordinates, following the ground height, no collision).
+
 Grid vertices lie exactly on multiples of ground.cell (Godot coords), so the world builder can
 look heights up by grid index.  Layout coords are Godot (x, z); Blender y = -z.
 
@@ -130,6 +135,14 @@ class Ground:
         for zone in self.zones:  # the flat height = the unflattened ground at the zone centre
             zone[3] = self.raw_height(*zone[0])
         self._merge_touching_zones()
+        self.old_graves = [(gr["pos"], gr["rot_y"]) for gr in lay["old_graves"]]
+        b = lay.get("buildings", {})
+        pv = b.get("paving")
+        self.paving = None
+        if pv:
+            route = [p for p in b.get("crypt_route", [])]
+            self.paving = {"route": route, "half": pv["width"] * 0.5, "start_x": pv["start_x"],
+                           "fore": [tuple(p) for p in pv["forecourt"]], "clear": pv.get("grave_clear", 0.2)}
         self._add_phase5_zones(lay, margin)
         tint = g.get("quarry_tint")
         self.quarry = tuple(tint) if tint else None
@@ -250,6 +263,25 @@ class Ground:
                 h = h0 - st["depth"] * t - st.get("under", 0.0)
         return h
 
+    # --- G8 round 2: the paved walk and forecourt of the crypt ---
+    def paving_mask(self, x, z, inset=0.0):
+        """1 inside the paved walk / forecourt (shrunk by inset), 0 outside."""
+        pv = self.paving
+        if pv is None:
+            return 0.0
+        if _in_poly((x, z), pv["fore"]) and (inset <= 0.0 or _poly_edge_dist((x, z), pv["fore"]) >= inset):
+            return 1.0
+        if x <= pv["start_x"] and _dist_to_polyline((x, z), pv["route"]) <= pv["half"] - inset:
+            return 1.0
+        return 0.0
+
+    def near_old_grave(self, x, z, clear):
+        for pos, rot in self.old_graves:
+            lx, lz = _to_local(x, z, pos, rot)
+            if _rect_outside(lx, lz, (-0.72, -1.35, 0.72, 2.13)) < clear:
+                return True
+        return False
+
     def pit_cover(self):
         """G7 round 1: the flat sod patch that closes the stair pit until the crypt is built (same
         grid, colours and flat height as the ground around it; lies 4 mm above)."""
@@ -288,6 +320,9 @@ class Ground:
             q = _smoothstep((inside + 1.0) / 2.0)
             n3 = noise.noise(Vector((x * 0.9, z * 0.9, 11.0)))
             c = L.mix(c, L.mix(STONE_FLOOR, STONE_FLOOR_DARK, 0.5 + 0.5 * n3), q * 0.85)
+        if self.paving is not None and self.paving_mask(x, z) > 0.0:
+            # G8 round 2: trodden, mossy earth between the flagstones of the crypt walk
+            c = L.mix(c, L.mix(DIRT_DARK, GRASS_A, 0.35 + 0.25 * n1), 0.75)
         for pos, rot, st, h0 in self.pits:   # dark earth under the stair treads
             lx, lz = _to_local(x, z, pos, rot)
             r = st["rect"]
@@ -295,6 +330,22 @@ class Ground:
                 c = L.scale_c(DIRT_DARK, 0.6)
         f = 1.0 + n2 * 0.06
         return [L._to_lin(min(1.0, ch * f)) for ch in c]
+
+
+def _in_poly(p, poly):
+    x, z = p
+    inside = False
+    n = len(poly)
+    for i in range(n):
+        x0, z0 = poly[i]
+        x1, z1 = poly[(i + 1) % n]
+        if (z0 > z) != (z1 > z) and x < x0 + (z - z0) * (x1 - x0) / (z1 - z0):
+            inside = not inside
+    return inside
+
+
+def _poly_edge_dist(p, poly):
+    return min(_seg_dist(p, poly[i], poly[(i + 1) % len(poly)]) for i in range(len(poly)))
 
 
 def build():
@@ -332,6 +383,8 @@ def build():
     L.export(obj, NAME, "environment")
     for pos, rot, rect, h0 in gr.pit_cover():
         _pit_cover(gr, pos, rot, rect, h0)
+    if gr.paving is not None:
+        _crypt_paving(gr, lay)
 
 
 COVER_NAME = "ph_env_crypt_pit_cover"
@@ -370,6 +423,106 @@ def _pit_cover(gr, pos, rot, rect, h0):
     L.set_mat(obj, L.MAT_GROUND)
     L.smooth(obj, 80)
     L.export(obj, COVER_NAME, "environment")
+
+
+
+PAVING_NAME = "ph_env_crypt_paving"
+PAVE_STONE = (L.hexc("#5C5B54"), L.hexc("#54564F"), L.hexc("#625D54"), L.hexc("#4F524C"), L.hexc("#67645D"))
+PAVE_MOSS = L.hexc("#55663F")
+
+
+def _crypt_paving(gr, lay):
+    """G8 round 2: old, sunken flagstones of the crypt walk and forecourt (world coordinates, pivot =
+    world origin like the ground; tops 2-3 cm above the ground, skirts 3 cm into it). No slab near an
+    old grave (paving.grave_clear) or inside the crypt site's footprint (the stair head has its own
+    landing slab)."""
+    import random
+    L.reset(32)
+    rng = random.Random(32)
+    site = next(s for s in lay["buildings"]["sites"] if s["building"] == "crypt")
+    fp = site["footprint"]
+    fp_rect = (fp[0] - 0.05, fp[1] - 0.05, fp[0] + fp[2] + 0.05, fp[1] + fp[3] + 0.05)
+    pv = gr.paving
+    pts = pv["fore"] + [tuple(p) for p in pv["route"] if p[0] <= pv["start_x"] + 1.0]
+    x0 = min(p[0] for p in pts) - 1.0
+    x1 = max(p[0] for p in pts) + 1.0
+    z0 = min(p[1] for p in pts) - 1.0
+    z1 = max(p[1] for p in pts) + 1.0
+    step = 0.47
+    verts, faces, cols = [], [], []
+    row = 0
+    z = z0
+    while z < z1:
+        x = x0 + (step * 0.5 if row % 2 else 0.0)
+        while x < x1:
+            cx = x + rng.uniform(-0.07, 0.07)
+            cz = z + rng.uniform(-0.06, 0.06)
+            big = rng.random() < 0.22
+            r = rng.uniform(0.27, 0.31) if big else rng.uniform(0.17, 0.24)
+            inset = 0.1
+            missing = rng.random() < 0.1          # a stone gone, the earth and moss show
+            if not missing and gr.paving_mask(cx, cz, inset) > 0.0 and not gr.near_old_grave(cx, cz, pv["clear"]):
+                lx, lz = _to_local(cx, cz, site["pos"], site["rot_y"])
+                if _rect_outside(lx, lz, fp_rect) > 0.0:
+                    _slab(gr, rng, cx + (step * 0.25 if big else 0.0), cz, r, verts, faces, cols)
+            x += step * (1.5 if big else 1.0)
+        z += step * 0.86
+        row += 1
+    me = bpy.data.meshes.new(PAVING_NAME)
+    me.from_pydata(verts, [], faces)
+    me.update()
+    attr = me.color_attributes.new("Col", "FLOAT_COLOR", "CORNER")
+    me.color_attributes.active_color = attr
+    for poly in me.polygons:
+        for li in poly.loop_indices:
+            attr.data[li].color = (*cols[me.loops[li].vertex_index], 1.0)
+    obj = bpy.data.objects.new(PAVING_NAME, me)
+    bpy.context.collection.objects.link(obj)
+    L.set_mat(obj, L.MAT_PAINTED)
+    L.smooth(obj, 30)
+    L.export(obj, PAVING_NAME, "environment")
+
+
+def _slab(gr, rng, cx, cz, r, verts, faces, cols):
+    """One irregular 6-sided flagstone: top face (ground + 2-3 cm, a little tilted), skirt into the ground."""
+    n = rng.choice((5, 6, 6, 7))
+    rot = rng.uniform(0.0, math.tau)
+    lift = rng.uniform(0.008, 0.03)
+    tilt = (rng.uniform(-0.05, 0.05), rng.uniform(-0.05, 0.05))
+    base = rng.choice(PAVE_STONE)
+    shade = rng.uniform(0.82, 1.04)
+    moss = rng.uniform(0.05, 0.7)
+    top, bot = [], []
+    for k in range(n):
+        a = rot + math.tau * k / n + rng.uniform(-0.25, 0.25)
+        rr = r * rng.uniform(0.75, 1.1)
+        x, z = cx + math.cos(a) * rr, cz + math.sin(a) * rr
+        h = gr.height(x, z)
+        top.append((x, -z, h + lift + (x - cx) * tilt[0] + (z - cz) * tilt[1]))
+        bot.append((x * 1.0, -z, h - 0.03))
+    i0 = len(verts)
+    centre_h = sum(t[2] for t in top) / n
+    verts.append((cx, -cz, centre_h + 0.004))
+    for t in top:
+        verts.append(t)
+    for b in bot:
+        verts.append(b)
+    # the ring runs clockwise seen from Blender +Z (Godot z = -y): the fan goes backwards, the skirt
+    # quads walk each edge the other way round (consistent, outward normals)
+    for k in range(n):
+        faces.append((i0, i0 + 1 + (k + 1) % n, i0 + 1 + k))
+    for k in range(n):
+        a, b = i0 + 1 + k, i0 + 1 + (k + 1) % n
+        faces.append((a, b, b + n, a + n))
+    def col(f, mossy):
+        c = L.scale_c(base, shade * f)
+        c = L.mix(c, PAVE_MOSS, mossy)
+        return [L._to_lin(ch) for ch in c]
+    cols.append(col(1.06, moss * 0.3))
+    for k in range(n):
+        cols.append(col(0.97, min(1.0, moss * 0.8 + 0.15)))
+    for k in range(n):
+        cols.append(col(0.6, 0.5))
 
 
 if __name__ == "__main__":

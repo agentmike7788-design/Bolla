@@ -4,13 +4,15 @@ Every building has four level models (0 = site, 1-3 = built); a BuildingSite swa
 All share one footprint per building, the door faces south (Blender -Y = Godot +Z = the camera),
 pivot = footprint centre on the ground, 1 unit = 1 m, shared materials only.
 
-  ph_bld_crypt_site          Gruft level 0: the uncovered, filled-in crypt neck under the oak - the top
-                             of an old stone gable in an earth mound, boards over the hole, pegs + string
-  ph_bld_crypt_l1 / _l2 / _l3  the crypt portal (<= 2.6 m): a masonry portal with a stone gable and an
-                             iron door, a sunken stair throat between two wing walls, a flat sod hill
-                             over the vault (grass colours of the ground, mat_ground) / + slate roof on
-                             the portal and a vent in the hill / + an open iron grille, a lantern on the
-                             portal and a dressed lintel for the inscription
+  ph_bld_crypt_site          Gruft level 0: the uncovered, filled-in crypt neck - the top of the old
+                             pediment in an earth mound, boards over the stair neck, pegs + string
+  ph_bld_crypt_l1 / _l2 / _l3  G8 round 2: a sunken crypt portal (pivot = front of the portal wall; the
+                             stair runs to the front): pilasters, entablature, pediment (2.8 m, cross
+                             3.3 m), an open stair 1.6 m wide and 1.3 m deep between retaining walls
+                             with pillars and lanterns at the stair head; old and mossy, ivy, streaks and
+                             lichen / + repaired: cross, corner balls, wreath, handrail, less ivy / + the
+                             name tablet in the frieze, an open wrought-iron gate at the stair foot and a
+                             caged lantern over the door
   ph_bld_chapel_ruin         Kapelle level 0: roofless lime-washed walls, a broken gable, brambles
   ph_bld_chapel_l1 / _l2 / _l3 the chapel (footprint 5.2 x 7.0 m): nave + lower choir, slate roof, arched
                              door and windows / + ridge turret with the bell (child mesh `bell`, its origin
@@ -24,12 +26,13 @@ pivot = footprint centre on the ground, 1 unit = 1 m, shared materials only.
 Markers (glTF empties, Godot attaches lights / prompts):
   door_outside   ground point in front of the door (the portal's outside end)
   build          ground point beside the building where the upgrade prompt sits (not at the door)
-  light_lantern  crypt l3: below the lantern glass (no shadow)
+  light_lantern  crypt l3: the caged lantern over the door (no shadow)
+  light_lantern_1/_2  crypt l1+: the lanterns on the pillars at the stair head (no shadow)
   light_window_1..4  chapel l1+: 0.3 m outside the side windows (the pane is painted dark glass; the omni
                  lights pane and wall when the chapel is lit)
   bell           chapel l2+: child MESH (not an empty) - its origin is the yoke axis (swing about Godot X)
   light_choir    chapel l3: outside the stained choir window (north), lights the birches behind
-  inscription    crypt l3: centre of the dressed lintel face, local +Z = face normal (Label3D
+  inscription    crypt l3: centre of the name tablet in the frieze, local +Z = face normal (Label3D
                  "Wir waren, was ihr seid." like the grave stone inscriptions)
 
 Run:  python tools/blender/build_all.py asset_buildings_phase6
@@ -287,271 +290,539 @@ def _done(parts, name: str, markers=(), smooth_angle: float = 35.0, children=())
 
 
 # ==================================================================================================
-# GRUFT (crypt) – footprint 2.8 x 2.6 m (x -1.4..1.4, y -1.3..1.3), door south, height <= 2.6 m
+# GRUFT (crypt) – G8 round 2: a sunken portal facing the path. Pivot = the portal's front wall on the
+# ground (x 0), the stair runs towards the front (Blender -Y = Godot +Z). Footprint (Godot local)
+# x -1.5..1.5, z -0.6..2.75: the portal wall (z -0.6..0) with the pilasters, entablature and pediment
+# (2.8 m, cross 3.3 m), the open stair shaft (1.6 m wide, 1.3 m deep, six steps) between two
+# retaining walls ending in pillars with lanterns at the stair head. Old, mossy, ivy on the flank
+# the camera sees (-X), dark streaks under every ledge, lichen spots.
 # ==================================================================================================
 
-CR_FACE = -0.42          # front face of the portal (y)
-CR_HW = 0.82             # half width of the portal block
-CR_DOOR_W = 0.84
-CR_DOOR_SPRING = 1.28    # the door's round head springs here -> top 1.70
-CR_EAVE = 1.9            # the gable starts here
-CR_APEX = 2.2            # apex of the stone gable (under the coping)
-CR_THROAT = -1.65        # G7 round 1: the stair starts 0.35 m in front of the footprint edge (ground level)
-CR_WING = 0.5            # inner face of the wing walls (x)
-CR_WING_OUT = 0.95       # outer face of the stair cheeks (they hide the sloped ground of the pit)
-CR_DEPTH = 1.0           # G7 round 1: the stair goes this far down into the earth (the ground has the pit,
-                         # graveyard_layout.json buildings.sites[crypt].stair, asset_ground_graveyard.py)
-CR_STEPS = 5
+CR_D = 1.3               # the stair foot (door sill) this far below the ground
+CR_WALL_Y = 0.0          # front plane of the portal wall (Blender y)
+CR_BACK_Y = 0.6          # back plane of the portal wall
+CR_HW = 1.5              # half width of the portal wall (the wings)
+CR_CW = 1.2              # half width of the centre part (entablature, pediment)
+CR_DOOR_HW = 0.52        # half width of the door opening
+CR_SPRING = 0.45         # the door's round head springs here (crown 0.97)
+CR_PIL = (0.58, 0.9)     # pilasters (|x|), front 0.13 before the wall
+CR_PIL_OUT = 0.17
+CR_CAP = 1.58            # capitals 1.58..1.75
+CR_ARCH = 1.75           # architrave 1.75..1.91, frieze ..2.17, cornice ..2.31
+CR_FRIEZE = (1.91, 2.17)
+CR_CORNICE = 2.31
+CR_APEX = 3.02           # apex of the pediment (under the coping)
+CR_SHAFT = 0.8           # inner face of the shaft walls (|x|)
+CR_SHAFT_OUT = 1.38      # outer face of the shaft walls
+CR_PARAPET = 0.42        # top of the far shaft wall (+X, coping above)
+CR_CURB = 0.12           # the near shaft wall (-X, the camera's side) ends in a low curb with a railing
+CR_STEPS = 6             # treads between the foot landing and the top landing (ground)
+CR_FOOT = 0.35           # depth of the foot landing in front of the door (Blender -y)
+CR_RUN = 0.3             # tread depth
+CR_TOP = CR_FOOT + CR_STEPS * CR_RUN          # 2.15: the top landing starts here (ground level)
+CR_END = 2.75            # end of the shaft walls / the pillars
+CR_BUILD = (-1.95, -1.5, 0.0)                  # the upgrade prompt: beside the south shaft wall
+CR_DOOR = (0.0, -0.05, -CR_D)                  # BuildingDoor: at the stair foot (Godot z 0.05)
+
+CR_ST = L.hexc("#5B5D55")       # weathered grey-green ashlar (darker than the grave stones)
+CR_ST_D = L.hexc("#4B4F48")
+CR_ST_W = L.hexc("#645E55")
+CR_ST_P = L.hexc("#7C7A70")     # dressed stone: columns, cornice, voussoirs, copings – lighter, they draw the portal
+CR_ST_NEW = L.hexc("#7F7C71")   # level 2: the repaired stones
+CR_STAIR = L.hexc("#6A6A61")
+CR_LICHEN = L.hexc("#A29F7C")
+CR_STREAK = L.hexc("#3D413A")
+CR_DAMP = L.hexc("#4B5742")
+IVY = (L.hexc("#3E5131"), L.hexc("#4B5F37"), L.hexc("#35442B"), L.hexc("#5B6B3D"), L.hexc("#46593A"))
+IVY_STEM = L.hexc("#4A4031")
+CR_COURSE = dict(course_h=(0.24, 0.32), ln=(0.42, 0.64), depth=(0.05, 0.07))
 
 
-def _crypt_hill_h(x: float, y: float) -> float:
-    """Flat sod hill over the vault: highest just behind the portal (<= 1.0 m), rolling off to the
-    north and the sides."""
-    dx = x / 1.45
-    dy = (y - 0.12) / 1.22
-    d = abs(dx) ** 3.0 + abs(dy) ** 2.4
-    h = 0.98 * max(0.0, 1.0 - d) ** 0.45
-    h += 0.03 * noise.noise(Vector((x * 2.2, y * 2.2, 0.4)))
-    if abs(x) > CR_HW - 0.06:     # meet the retaining walls at the front
-        tr = 0.78 - 0.42 * min(1.0, (abs(x) - CR_HW + 0.02) / (1.38 - CR_HW + 0.02))
-        h = min(h, tr + 1.3 * (y - CR_FACE - 0.1) + 0.02)
-    return max(-0.03, h)
+def _weather(objs, seed: int = 0, streak: float = 1.0, lichen: float = 1.0, damp_z: float = -0.2, moss: float = 0.0) -> None:
+    """Patina on already painted stone: dark streaks running down under the ledges (noise stretched
+    in z), pale lichen spots, a damp green foot below damp_z (the shaft)."""
+    off = Vector((seed * 1.7, seed * 2.9, seed * 0.7))
+    s_lin = [L._to_lin(c) for c in CR_STREAK]
+    l_lin = [L._to_lin(c) for c in CR_LICHEN]
+    d_lin = [L._to_lin(c) for c in CR_DAMP]
+    m_lin = [L._to_lin(c) for c in L.mix(MOSS, MOSS_DARK, 0.35)]
+    for obj in objs:
+        me = obj.data
+        attr = me.color_attributes.get("Col")
+        if attr is None:
+            continue
+        for poly in me.polygons:
+            for li in poly.loop_indices:
+                co = me.vertices[me.loops[li].vertex_index].co
+                c = list(attr.data[li].color)
+                st = noise.noise(Vector((co.x * 7.0, co.y * 7.0, co.z * 0.6)) + off)
+                t = max(0.0, st - 0.15) * 0.75 * streak
+                ln = noise.noise(co * 9.0 + off + Vector((3.1, 1.7, 5.3)))
+                u = max(0.0, ln - 0.42) * 2.2 * lichen
+                d = max(0.0, min(1.0, (damp_z - co.z) / 0.9)) * 0.55
+                mo = 0.0
+                if moss > 0.0 and poly.normal.z > 0.55:
+                    mo = max(0.0, noise.noise(co * 4.0 + off + Vector((7.7, 2.2, 0.4))) + 0.25) * moss
+                for k in range(3):
+                    v = c[k] + (s_lin[k] - c[k]) * min(0.7, t)
+                    v = v + (l_lin[k] - v) * min(0.6, u)
+                    v = v + (d_lin[k] - v) * d
+                    c[k] = v + (m_lin[k] - v) * min(0.75, mo)
+                attr.data[li].color = (c[0], c[1], c[2], 1.0)
 
 
-def _crypt_hill(parts, vent: bool) -> None:
-    hill = _grid_mound(-1.4, 1.4, CR_FACE + 0.1, 1.28, 18, 13, _crypt_hill_h, "hill")
-    P._paint_fn(hill, lambda co, vi: _sod_colour(co, 1.0))
-    L.set_mat(hill, L.MAT_GROUND)
-    parts.append(hill)
-    # a few old stones of the vault showing through the sod, moss cushions
-    for i, (x, y) in enumerate(((-0.95, 0.55), (0.78, 0.95), (-0.35, 1.05), (1.05, 0.1))):
-        z = _crypt_hill_h(x, y)
-        parts.append(_stone((x, y, z - 0.02), (random.uniform(0.09, 0.14), random.uniform(0.07, 0.1), 0.06),
-                            STONE_OLD, rot=(0, 0, random.uniform(0, 90)), seed=700 + i, moss=0.8))
-    for i, (x, y) in enumerate(((-0.6, 0.2), (0.45, 0.55), (0.1, 1.0))):
-        z = _crypt_hill_h(x, y)
-        m = L.prim("ico", loc=(x, y, z), radius=random.uniform(0.1, 0.15), subdivisions=1, scale=(1.4, 1.1, 0.45))
-        L.jitter(m, 0.03, 6.0, 720 + i)
-        parts.append(_paint(m, L.mix(MOSS, GRASS_DRY, random.uniform(0.1, 0.5)), mat=L.MAT_GROUND, var=0.25, ao=0.3,
-                            seed=720 + i))
-    if vent:
-        # Lüftungsschlitz: a little stone vent box on the hill, a dark slot facing south
-        vx, vy = 0.55, 0.62
-        z = _crypt_hill_h(vx, vy) - 0.08
-        parts.append(_box((vx, vy, z + 0.14), (0.2, 0.15, 0.16), STONE_DARK, jit=0.01, seed=740, var=0.2, ao=0.3))
-        parts.append(_box((vx, vy, z + 0.33), (0.25, 0.2, 0.035), SLATE, jit=0.008, seed=741, var=0.15, ao=0.0, top=0.25))
-        parts.append(_box((vx, vy - 0.151, z + 0.2), (0.13, 0.004, 0.03), GAP, var=0.05, ao=0.0, top=0.0))
+def _moss(parts, loc, r: float, seed: int = 0, flat: float = 0.4) -> None:
+    """A moss cushion (20 triangles)."""
+    m = L.prim("ico", loc=loc, radius=r, subdivisions=1, scale=(1.4, 1.1, flat))
+    L.jitter(m, r * 0.25, 6.0, seed)
+    parts.append(_paint(m, L.mix(MOSS, MOSS_DARK, random.uniform(0.1, 0.7)), var=0.25, ao=0.3, top=0.2, seed=seed))
 
 
-def _crypt_front(parts, level: int) -> dict:
-    """Portal block with ashlar courses, the round-headed door opening, stone gable, wing walls,
-    stair throat, retaining walls left and right.  Returns key points."""
-    y = CR_FACE
-    back = 0.2
-    door_top = CR_DOOR_SPRING + CR_DOOR_W / 2
-    # mortar core of the portal block (hidden mostly behind the courses)
-    core = _prism([(-CR_HW + 0.03, 0.0), (CR_HW - 0.03, 0.0), (CR_HW - 0.03, CR_EAVE), (0.0, CR_APEX - 0.02),
-                   (-CR_HW + 0.03, CR_EAVE)], "y", y + 0.1, back + 0.1, "core")
-    parts.append(_paint(core, MORTAR, var=0.2, ao=0.3, seed=1, hue_shift=MOSS))
-    # ashlar courses on the front face, around the door, under the gable line
-    def top(a):
-        return CR_EAVE + (CR_APEX - CR_EAVE) * max(0.0, 1.0 - abs(a) / CR_HW) - 0.02
-    hole = (-CR_DOOR_W / 2 - 0.13, CR_DOOR_W / 2 + 0.13, -CR_DEPTH - 0.4, door_top + 0.16)
-    _courses(parts, -CR_HW, CR_HW, -CR_DEPTH - 0.05, CR_APEX, y + 0.045, -1, 100, top=top, holes=[hole],
-             course_h=(0.17, 0.23), ln=(0.24, 0.42), depth=(0.05, 0.07),
-             colours=(STONE, STONE_PALE, STONE_DARK, STONE_WARM), moss_rows=1)
-    # side faces of the portal block (seen a little in perspective)
+def _ivy(parts, pts, nrm, seed: int = 0, every: float = 0.06, leaf: float = 0.09, spread: float = 0.07) -> None:
+    """Ivy along a polyline on a wall (points already just in front of it, outward normal nrm):
+    a thin stem, diamond leaves (2 triangles each) facing out and a little up."""
+    random.seed(seed)
+    pts = [Vector(p) for p in pts]
+    n = Vector(nrm).normalized()
+    stem = P._path_tube(pts, 0.011, 3, hint=n)
+    parts.append(_paint(stem, IVY_STEM, var=0.2, ao=0.0, seed=seed))
+    bm = bmesh.new()
+    cols = []
+    up = Vector((0, 0, 1))
+    for a, b in zip(pts, pts[1:]):
+        seg = b - a
+        ln = seg.length
+        if ln < 1e-4:
+            continue
+        t = seg / ln
+        side = t.cross(n).normalized()
+        k = 0.0
+        while k < ln:
+            for _ in range(random.choice((1, 1, 2))):
+                c = a + t * k + side * random.uniform(-spread, spread) + n * random.uniform(0.01, 0.035)
+                nl = (n + up * random.uniform(0.2, 0.8) + Vector((random.uniform(-0.4, 0.4), random.uniform(-0.4, 0.4),
+                                                                  random.uniform(-0.2, 0.2)))).normalized()
+                u = nl.cross(Vector((random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(-1, 1)))).normalized()
+                v = nl.cross(u)
+                s = leaf * random.uniform(0.75, 1.25)
+                quad = [c + u * s, c + v * s * 0.62, c - u * s * 0.7, c - v * s * 0.62]
+                bm.faces.new([bm.verts.new(q) for q in quad])
+                col = L.scale_c(random.choice(IVY), random.uniform(0.85, 1.12))
+                cols.extend([col, L.scale_c(col, 1.08), col, L.scale_c(col, 0.9)])
+            k += every * random.uniform(0.7, 1.3)
+    me = bpy.data.meshes.new("ivy")
+    bm.to_mesh(me)
+    bm.free()
+    obj = bpy.data.objects.new("ivy", me)
+    bpy.context.collection.objects.link(obj)
+    P._paint_fn(obj, lambda co, vi: cols[vi])
+    L.set_mat(obj, L.MAT_PAINTED)
+    parts.append(obj)
+
+
+def _post_lantern(parts, base: Vector, seed: int = 0) -> Vector:
+    """An iron lantern standing on a pillar cap: base plate, four corner bars round warm glass, a
+    pyramid roof with a ring. Returns the light point (centre of the glass)."""
+    parts.append(_box(base + Vector((0, 0, 0.02)), (0.1, 0.1, 0.02), IRON, seed=seed, var=0.2, hue_shift=RUST, ao=0.0))
+    parts.append(P._stick(base + Vector((0, 0, 0.04)), base + Vector((0, 0, 0.1)), 0.03, IRON, verts=5, hue_shift=RUST, ao=0.0))
+    g = base + Vector((0, 0, 0.21))
+    parts.append(L.part("cube", (1, 1, 1), mat=L.MAT_EMISSIVE, loc=g, scale=(0.065, 0.065, 0.1)))
     for sx in (-1, 1):
-        _courses(parts, y + 0.02, back, 0.0, CR_EAVE, sx * (CR_HW - 0.02), sx, 130 + sx * 10, along="y",
-                 course_h=(0.2, 0.26), ln=(0.2, 0.3), depth=(0.04, 0.06), moss_rows=2)
-    # door opening: dark recess, jamb stones, arch of voussoirs, threshold (from the stair foot)
+        for sy in (-1, 1):
+            parts.append(L.part("cube", IRON, loc=g + Vector((sx * 0.072, sy * 0.072, 0.0)), scale=(0.011, 0.011, 0.115),
+                                paint_kw={"hue_shift": RUST}))
+    parts.append(L.part("cube", IRON, loc=g - Vector((0, 0, 0.115)), scale=(0.085, 0.085, 0.012)))
+    parts.append(L.part("cone", IRON, loc=g + Vector((0, 0, 0.17)), vertices=4, radius1=0.12, radius2=0.015, depth=0.11,
+                        rot=(0, 0, 45), paint_kw={"hue_shift": RUST}))
+    parts.append(L.part("torus", IRON, loc=g + Vector((0, 0, 0.25)), rot=(90, 0, 0), major_radius=0.025, minor_radius=0.006,
+                        major_segments=6, minor_segments=3))
+    return g
+
+
+def _cage_lantern(parts, wall_y: float, top: Vector, seed: int = 0) -> Vector:
+    """Level 3: a lantern in a wrought-iron cage hanging from a bracket over the stair foot.
+    Returns the light point."""
+    arm0 = Vector((top.x, wall_y - 0.02, top.z))
+    arm1 = Vector((top.x, top.y, top.z))
+    parts.append(_box(arm0 + Vector((0, -0.01, 0.0)), (0.06, 0.02, 0.12), IRON, seed=seed, var=0.2, hue_shift=RUST))
+    parts.append(P._stick(arm0, arm1, 0.016, IRON, verts=4, hue_shift=RUST, ao=0.0))
+    parts.append(P._stick(arm0 - Vector((0, 0, 0.18)), arm1 - Vector((0, 0.12, -0.01)), 0.011, IRON, verts=4, ao=0.0))
+    for k in range(3):     # a small scroll under the arm
+        a = math.pi * k / 3
+        p = arm0 + (arm1 - arm0) * 0.45 + Vector((0, 0.06 * math.cos(a), -0.06 - 0.06 * math.sin(a)))
+        parts.append(L.part("cube", IRON, loc=p, scale=(0.008, 0.02, 0.008)))
+    hook = arm1 - Vector((0, 0, 0.06))
+    parts.append(P._stick(arm1, hook, 0.007, IRON, verts=4, ao=0.0))
+    g = hook - Vector((0, 0, 0.24))
+    parts.append(L.part("cube", (1, 1, 1), mat=L.MAT_EMISSIVE, loc=g, scale=(0.075, 0.075, 0.12)))
     for sx in (-1, 1):
-        z = -CR_DEPTH
+        for sy in (-1, 1):
+            parts.append(L.part("cube", IRON, loc=g + Vector((sx * 0.085, sy * 0.085, 0.0)), scale=(0.011, 0.011, 0.14),
+                                paint_kw={"hue_shift": RUST}))
+    for dz in (-0.05, 0.05):    # the cage: two rings of bars round the glass
+        for sx in (-1, 1):
+            parts.append(L.part("cube", IRON, loc=g + Vector((sx * 0.087, 0, dz)), scale=(0.006, 0.085, 0.006)))
+            parts.append(L.part("cube", IRON, loc=g + Vector((0, sx * 0.087, dz)), scale=(0.085, 0.006, 0.006)))
+    parts.append(L.part("cube", IRON, loc=g - Vector((0, 0, 0.14)), scale=(0.1, 0.1, 0.014)))
+    parts.append(L.part("cone", IRON, loc=g + Vector((0, 0, 0.19)), vertices=4, radius1=0.14, radius2=0.02, depth=0.12,
+                        rot=(0, 0, 45), paint_kw={"hue_shift": RUST}))
+    return g
+
+
+def _crypt_wall(parts, stones, level: int) -> dict:
+    """The portal wall: ashlar courses on the front (centre part up to the architrave, the wings with
+    a curved top), the door opening with jambs, voussoirs and keystone, pilasters with plinths and
+    capitals, entablature, pediment with raking cornices, the side ends and the plain back with two
+    buttresses."""
+    y = CR_WALL_Y
+    door_top = CR_SPRING + CR_DOOR_HW
+
+    def wing_top(a):      # the wings: a quarter curve from the capitals down to 0.95 at the ends
+        t = (abs(a) - CR_CW) / (CR_HW - CR_CW)
+        if t <= 0.0:
+            return CR_ARCH
+        return 0.95 + (CR_ARCH - 0.95) * math.cos(min(1.0, t) * math.pi / 2) ** 0.7
+
+    # mortar core (dark, mostly hidden): two halves, each with its half of the door opening cut out
+    ro = CR_DOOR_HW + 0.14
+    left = [(-CR_SHAFT, -CR_D - 0.15), (-ro, -CR_D - 0.15), (-ro, CR_SPRING)]
+    for k in range(1, 6):
+        a = math.pi - math.pi / 2 * k / 5
+        left.append((ro * math.cos(a), CR_SPRING + ro * math.sin(a)))
+    left += [(0.0, CR_APEX - 0.04), (-CR_CW + 0.02, CR_CORNICE), (-CR_CW + 0.02, CR_ARCH - 0.03)]
+    for k in range(1, 7):
+        a = -CR_CW - (CR_HW - CR_CW - 0.02) * k / 6
+        left.append((a, wing_top(a) - 0.03))
+    left += [(-CR_HW + 0.02, -0.15), (-CR_SHAFT, -0.15)]
+    for sx in (-1, 1):
+        poly = left if sx < 0 else [(-a, b) for a, b in reversed(left)]
+        core = _prism(poly, "y", y + 0.05, CR_BACK_Y, "core")
+        stones.append(_paint(core, MORTAR, var=0.25, ao=0.25, seed=1 + sx, hue_shift=MOSS_DARK))
+    # front courses: below ground only inside the shaft, above ground the full width
+    hole = (-CR_DOOR_HW - 0.14, CR_DOOR_HW + 0.14, -CR_D - 0.5, door_top + 0.18)
+    pil = [(s * CR_PIL[0] - 0.02 if s > 0 else -CR_PIL[1] - 0.02, s * CR_PIL[1] + 0.02 if s > 0 else -CR_PIL[0] + 0.02,
+            -CR_D - 0.5, CR_CAP + 0.2) for s in (-1, 1)]
+    cols = (CR_ST, CR_ST, CR_ST_D, CR_ST_W)
+    _courses(stones, -CR_SHAFT, CR_SHAFT, -CR_D - 0.05, 0.0, y + 0.04, -1, 100, holes=[hole] + pil,
+             colours=cols, moss_rows=1, **CR_COURSE)
+    _courses(stones, -CR_HW, CR_HW, -0.08, CR_ARCH, y + 0.04, -1, 140, top=lambda a: wing_top(a) - 0.01,
+             holes=[hole] + pil, colours=cols, moss_rows=1, **CR_COURSE)
+    # side ends (the -X end faces the camera's side)
+    for sx in (-1, 1):
+        _courses(stones, y + 0.02, CR_BACK_Y, -0.08, 0.95, sx * (CR_HW - 0.02), sx, 180 + sx * 10, along="y",
+                 colours=(CR_ST_D, CR_ST, CR_ST_W), moss_rows=2, course_h=(0.22, 0.3), ln=(0.22, 0.32), depth=(0.04, 0.06))
+    # door: jambs (alternating long and short blocks), voussoirs, keystone, threshold
+    for sx in (-1, 1):
+        z = -CR_D
         k = 0
-        while z < CR_DOOR_SPRING - 0.05:
-            h = min(0.3 if k % 2 == 0 else 0.22, CR_DOOR_SPRING - z)
-            w = 0.14 if k % 2 == 0 else 0.1
-            x = sx * (CR_DOOR_W / 2 + w / 2 + 0.01)
-            parts.append(_stone((x, y - 0.01, z + h / 2), (w / 2 + 0.01, 0.07, h / 2 * 0.95), STONE_PALE, seed=150 + k + sx,
-                                jit=0.008, var=0.15, top=0.2))
+        while z < CR_SPRING - 0.05:
+            h = min(0.32 if k % 2 == 0 else 0.24, CR_SPRING - z)
+            w = 0.16 if k % 2 == 0 else 0.11
+            x = sx * (CR_DOOR_HW + w / 2 + 0.01)
+            stones.append(_stone((x, y - 0.02, z + h / 2), (w / 2 + 0.01, 0.08, h / 2 * 0.95), CR_ST_P, seed=200 + k + sx * 20,
+                                 jit=0.008, var=0.15, top=0.2))
             z += h
             k += 1
-    _voussoirs(parts, 0.0, y + 0.06, -1, CR_DOOR_SPRING, CR_DOOR_W / 2 + 0.01, 7, 0.13, 0.15, seed=160)
-    parts.append(_stone((0.0, y - 0.1, -CR_DEPTH + 0.02), (CR_DOOR_W / 2 + 0.16, 0.14, 0.03), STONE_DARK, seed=170, jit=0.006))
-    # G7 round 1: the dark inside behind the open door - two more steps going down into the vault
-    parts.append(_box((0.0, y + 0.42, -CR_DEPTH + 1.2), (CR_DOOR_W / 2 + 0.02, 0.02, 1.25), VOID_DARK, var=0.04, ao=0.0, top=0.0))
+    vs = []
+    _voussoirs(vs, 0.0, y + 0.07, -1, CR_SPRING, CR_DOOR_HW + 0.01, 9, 0.15, 0.17, color=CR_ST_P, seed=220)
+    stones.extend(vs)
+    stones.append(_stone((0.0, y - 0.11, door_top + 0.12), (0.09, 0.1, 0.15), CR_ST_P, seed=230, jit=0.006, top=0.15,
+                         rot=(0, 0, 0)))     # keystone
+    stones.append(_stone((0.0, y - 0.12, -CR_D + 0.03), (CR_DOOR_HW + 0.18, 0.14, 0.035), CR_ST_D, seed=232, jit=0.006))
+    # the dark inside: back wall, reveals, two more steps going down into the vault
+    parts.append(_box((0.0, y + 0.55, -CR_D + 1.1), (CR_DOOR_HW + 0.02, 0.02, 1.15), VOID_DARK, var=0.04, ao=0.0, top=0.0))
     for sx in (-1, 1):
-        parts.append(_box((sx * (CR_DOOR_W / 2 + 0.02), y + 0.21, -CR_DEPTH + 1.2), (0.02, 0.21, 1.25), L.scale_c(STONE_DARK, 0.35),
+        parts.append(_box((sx * (CR_DOOR_HW + 0.02), y + 0.28, -CR_D + 1.1), (0.02, 0.28, 1.15), L.scale_c(CR_ST_D, 0.33),
                           var=0.1, ao=0.0, top=0.0))
+    parts.append(_box((0.0, y + 0.28, CR_SPRING + CR_DOOR_HW + 0.03), (CR_DOOR_HW + 0.02, 0.28, 0.02), L.scale_c(CR_ST_D, 0.3),
+                      var=0.05, ao=0.0, top=0.0))
     for k in range(2):
-        parts.append(_box((0.0, y + 0.12 + k * 0.16, -CR_DEPTH - 0.08 - k * 0.16), (CR_DOOR_W / 2, 0.09, 0.08),
-                          L.scale_c(STONE_DARK, 0.42 - k * 0.12), var=0.1, ao=0.0, top=0.25))
-    # gable coping: two raking slabs and an apex stone with a small cross
-    rake = math.atan2(CR_APEX - CR_EAVE, CR_HW)
-    ln = math.hypot(CR_HW + 0.08, CR_APEX - CR_EAVE)
+        parts.append(_box((0.0, y + 0.14 + k * 0.17, -CR_D - 0.09 - k * 0.17), (CR_DOOR_HW, 0.09, 0.09),
+                          L.scale_c(CR_ST_D, 0.42 - k * 0.12), var=0.1, ao=0.0, top=0.25))
+    # engaged columns in front of pilaster strips: square plinth, round shaft (three drums, a little
+    # entasis), capital blocks – the round shafts catch the light from the side the camera sees
     for sx in (-1, 1):
-        c = Vector((sx * (CR_HW + 0.08) / 2, y + 0.07, (CR_EAVE + CR_APEX) / 2 + 0.05))
-        parts.append(_stone(c, (ln / 2, 0.16, 0.05), STONE_PALE, rot=(0, sx * math.degrees(rake), 0), seed=180 + sx,
-                            jit=0.006, var=0.14, top=0.3, moss=0.4))
-    parts.append(_stone((0.0, y + 0.07, CR_APEX + 0.1), (0.1, 0.14, 0.08), STONE_PALE, seed=183, jit=0.006, top=0.3))
-    if level < 2:   # a small stone cross on the apex (the slate roof of level 2 carries its own)
-        _cross(parts, Vector((0.0, y + 0.07, CR_APEX + 0.17)), 0.2)
-    # wing walls: rising from the throat to the portal, capped with slabs
+        x0, x1 = CR_PIL
+        cx = sx * (x0 + x1) / 2
+        hw = (x1 - x0) / 2
+        stones.append(_stone((cx, y - 0.15, -CR_D + 0.14), (hw + 0.04, 0.2, 0.14), CR_ST_D,
+                             seed=240 + sx, jit=0.006, var=0.15, moss=0.5))
+        stones.append(_stone((cx, y + 0.01, (CR_CAP - CR_D + 0.28) / 2), (hw, 0.04, (CR_CAP + CR_D - 0.28) / 2), CR_ST_D,
+                             seed=243 + sx, jit=0.005, var=0.12, top=0.1))
+        z = -CR_D + 0.28
+        k = 0
+        for z1 in (-0.35, 0.6, CR_CAP):
+            drum = L.prim("cyl", loc=(cx, y - CR_PIL_OUT + 0.02, (z + z1) / 2), radius=hw - 0.005, depth=z1 - z - 0.012, vertices=8)
+            L.taper(drum, z, z1, 0.95 if k == 2 else 0.985)
+            L.jitter(drum, 0.006, 4.0, 244 + k + sx * 5)
+            stones.append(_paint(drum, L.scale_c(CR_ST_P, random.uniform(0.95, 1.05)), var=0.14, ao=0.15, top=0.1, seed=244 + k + sx * 5))
+            z = z1
+            k += 1
+        stones.append(_stone((cx, y - 0.15, CR_CAP + 0.05), (hw + 0.035, 0.2, 0.05), CR_ST_P,
+                             seed=250 + sx, jit=0.005, top=0.15, moss=0.5))
+        stones.append(_stone((cx, y - 0.16, CR_CAP + 0.135), (hw + 0.06, 0.22, 0.035), CR_ST_P,
+                             seed=252 + sx, jit=0.005, top=0.15))
+    # entablature: architrave, frieze, cornice (three long blocks each, a little uneven)
+    for k, (z0, z1, out, hw, col) in enumerate(((CR_ARCH, CR_FRIEZE[0], 0.1, CR_CW, CR_ST_P),
+                                                 (CR_FRIEZE[0], CR_FRIEZE[1], 0.06, CR_CW - 0.03, CR_ST),
+                                                 (CR_FRIEZE[1], CR_CORNICE, 0.22, CR_CW + 0.12, CR_ST_P))):
+        for j in range(3):
+            a0 = -hw + 2 * hw * j / 3
+            a1 = a0 + 2 * hw / 3
+            stones.append(_stone(((a0 + a1) / 2, y - out / 2 + 0.06, (z0 + z1) / 2), ((a1 - a0) / 2 - 0.006, out / 2 + 0.06,
+                                  (z1 - z0) / 2), col, seed=260 + k * 5 + j, jit=0.006, var=0.14, top=0.15,
+                                 moss=0.7 if k == 2 else 0.0))
+    # pediment: tympanum (set back), raking cornices, the coping slabs
+    tymp = _prism([(-CR_CW + 0.05, CR_CORNICE), (CR_CW - 0.05, CR_CORNICE), (0.0, CR_APEX - 0.05)], "y", y + 0.03, y + 0.3, "tymp")
+    L.subdivide(tymp, 1)
+    L.jitter(tymp, 0.008, 4.0, 270)
+    stones.append(_paint(tymp, CR_ST, var=0.2, ao=0.2, top=0.1, seed=270, zrange=(CR_CORNICE, CR_APEX)))
+    rake = math.atan2(CR_APEX - CR_CORNICE, CR_CW + 0.12)
+    ln = math.hypot(CR_CW + 0.12, CR_APEX - CR_CORNICE)
     for sx in (-1, 1):
-        x = sx * (CR_WING + CR_WING_OUT) / 2
-        hw = (CR_WING_OUT - CR_WING) / 2
-        y0, y1 = CR_THROAT, y
-        z0, z1 = 0.22, 0.98
-        body = _prism([(y0, -CR_DEPTH - 0.2), (y1, -CR_DEPTH - 0.2), (y1, z1), (y0, z0)], "x", x - hw, x + hw, "wing")
-        L.jitter(body, 0.01, 3.0, 190 + sx)
-        parts.append(_paint(body, STONE_OLD, var=0.25, ao=0.35, seed=190 + sx, hue_shift=MORTAR))
-        # stones on the inner face (towards the throat) and the front end
-        _courses(parts, y0, y1, -CR_DEPTH - 0.1, z1, sx * CR_WING, -sx, 200 + sx * 20, along="y",
-                 top=lambda a, y0=y0, y1=y1, z0=z0, z1=z1: z0 + (z1 - z0) * (a - y0) / (y1 - y0) - 0.02,
-                 course_h=(0.15, 0.2), ln=(0.22, 0.34), depth=(0.03, 0.05), moss_rows=1)
-        parts.append(_stone((x, y0 - 0.02, z0 / 2), (hw + 0.01, 0.04, z0 / 2 + 0.02), STONE, seed=230 + sx))
-        cl = math.hypot(y1 - y0, z1 - z0)
-        tilt = math.degrees(math.atan2(z1 - z0, y1 - y0))
-        for k in range(3):
-            t0, t1 = k / 3, (k + 1) / 3
-            c = Vector((x, y0 + (y1 - y0) * (t0 + t1) / 2, z0 + (z1 - z0) * (t0 + t1) / 2 + 0.035))
-            parts.append(_stone(c, (hw + 0.03, cl / 6 * 0.97, 0.035), STONE_PALE, rot=(tilt, 0, 0), seed=240 + k + sx * 5,
-                                jit=0.006, top=0.3, moss=0.6))
-    # G7 round 1: the stair - CR_STEPS real treads from the ground (CR_THROAT) down to the door
-    # (CR_DEPTH below ground); the ground has the matching ramp pit, the gravekeeper walks it.
-    n = CR_STEPS
-    ln_t = (y - CR_THROAT) / n
-    for k in range(n):
-        yc = CR_THROAT + ln_t * (k + 0.5)
-        top_z = -CR_DEPTH * ((k + 0.5) / n)
-        dark = 1.0 - 0.08 * k
-        t = _stone((0.0, yc, (top_z - CR_DEPTH - 0.25) / 2), (CR_WING - 0.01, ln_t / 2 + 0.005, (top_z + CR_DEPTH + 0.25) / 2),
-                   STONE_PALE, seed=250 + k, jit=0.004, var=0.18, ao=0.0, top=0.35)
-        # the back of each tread lies in the shadow of the next step down (reads as steps from above,
-        # also through the ground mist that gathers in the stair: pale stone)
-        P._modulate(t, lambda co, dark=dark, yc=yc: dark * (0.5 if co.y > yc + ln_t * 0.1 else 1.0))
-        parts.append(t)
-        # the nosing: a lit, worn stone edge on each tread
-        parts.append(_box((0.0, yc - ln_t / 2 + 0.035, top_z + 0.014), (CR_WING - 0.03, 0.035, 0.014),
-                          L.scale_c(STONE_PALE, 1.2 * dark), seed=260 + k, var=0.1, ao=0.0, top=0.3))
-    floor = _box((0.0, y - 0.1, -CR_DEPTH + 0.012), (CR_WING, 0.1, 0.012), L.scale_c(STONE_DARK, 0.45), seed=265, var=0.1, ao=0.0)
-    parts.append(floor)
-    # the landing at ground level in front of the first tread (the ground dips under the stair)
-    parts.append(_stone((0.0, CR_THROAT - 0.1, -0.12), (CR_WING + 0.12, 0.1, 0.12), STONE_PALE, seed=268, jit=0.004, var=0.15,
-                        top=0.35))
-    # retaining walls of the hill left and right of the portal (rubble, falling outwards)
+        for j in range(2):
+            t = (j + 0.5) / 2
+            c = Vector((sx * (CR_CW + 0.12) * (1 - t), y - 0.1, CR_CORNICE + (CR_APEX - CR_CORNICE) * t + 0.06))
+            stones.append(_stone(c, (ln / 4 - 0.01, 0.11, 0.055), CR_ST_P, rot=(0, sx * math.degrees(rake), 0), seed=272 + j + sx * 3,
+                                 jit=0.006, var=0.14, top=0.15, moss=0.85))
+    # back: plain rubble face with two buttresses
     for sx in (-1, 1):
-        a0, a1 = CR_HW - 0.02, 1.38
-        def top_r(a, a0=a0, a1=a1):
-            t = (abs(a) - a0) / (a1 - a0)
-            return 0.78 - 0.42 * t
-        core2 = _prism([(a0, 0.0), (a1, 0.0), (a1, 0.36), (a0, 0.78)], "y", y - 0.02, y + 0.35, "ret")
+        b = _prism([(CR_BACK_Y - 0.02, 0.0), (CR_BACK_Y + 0.24, 0.0), (CR_BACK_Y + 0.24, 0.2), (CR_BACK_Y - 0.02, 1.3)], "x",
+                   sx * 0.95 - 0.17, sx * 0.95 + 0.17, "buttress")
+        L.jitter(b, 0.012, 3.0, 280 + sx)
+        stones.append(_paint(b, CR_ST_D, var=0.25, ao=0.35, top=0.25, seed=280 + sx, hue_shift=MOSS_DARK))
+    return {"door_top": door_top, "wing_top": wing_top}
+
+
+def _crypt_shaft(parts, stones, level: int) -> list:
+    """The stair: foot landing, six treads, the top landing at ground level; the two shaft walls with
+    stone courses inside, copings, and the pillars at the stair head. Returns the pillar cap points."""
+    caps = []
+    for sx in (-1, 1):
+        x = sx * (CR_SHAFT + CR_SHAFT_OUT) / 2
+        hw = (CR_SHAFT_OUT - CR_SHAFT) / 2
+        top = CR_PARAPET if sx > 0 else CR_CURB
+        body = _box((x, -CR_END / 2, (top - CR_D - 0.3) / 2), (hw, CR_END / 2, (top + CR_D + 0.3) / 2), CR_ST_D,
+                    seed=300 + sx, var=0.25, ao=0.35, hue_shift=MORTAR)
+        stones.append(body)
+        # inner face (the camera looks at the +X wall's inside – the near wall's inside faces away and
+        # stays the plain rubble body), outer face above ground
+        if sx > 0:
+            _courses(stones, -CR_END + 0.58, -0.02, -CR_D - 0.1, top, sx * CR_SHAFT, -sx, 310 + sx * 30, along="y",
+                     colours=(CR_ST, CR_ST_D, CR_ST_W), moss_rows=1, course_h=(0.22, 0.3), ln=(0.4, 0.6), depth=(0.035, 0.05))
+            _courses(stones, -CR_END + 0.58, -0.02, -0.06, top, sx * CR_SHAFT_OUT, sx, 360 + sx * 30, along="y",
+                     colours=(CR_ST, CR_ST_D, CR_ST_W), moss_rows=1, course_h=(0.2, 0.24), ln=(0.4, 0.6), depth=(0.035, 0.05))
+        # coping slabs
+        for j in range(4):
+            y0 = -0.02 - j * (CR_END - 0.6) / 4
+            y1 = y0 - (CR_END - 0.6) / 4
+            col = CR_ST_NEW if level >= 2 and j % 2 == 0 else CR_ST_P
+            stones.append(_stone((x, (y0 + y1) / 2, top + 0.045), (hw + 0.05, (y0 - y1) / 2 - 0.006, 0.045), col,
+                                 seed=400 + j + sx * 7, jit=0.006, var=0.15, top=0.12, moss=1.0 if level < 2 else 0.6))
         if sx < 0:
-            for v in core2.data.vertices:
-                v.co.x = -v.co.x
-            core2.data.flip_normals()
-        parts.append(_paint(core2, MORTAR, var=0.2, ao=0.35, seed=270 + sx, hue_shift=MOSS))
-        lo, hi = (a0, a1) if sx > 0 else (-a1, -a0)
-        _courses(parts, lo, hi, 0.0, 0.78, y - 0.02, -1, 280 + sx * 30,
-                 top=lambda a, top_r=top_r: top_r(a), course_h=(0.16, 0.22), ln=(0.2, 0.36), depth=(0.05, 0.08),
-                 colours=(STONE_OLD, STONE, STONE_DARK), moss_rows=2)
-    return {"door_top": door_top}
+            _crypt_railing(parts, x, -0.12, -CR_END + 0.62, top + 0.09, level)
+        # the pillar at the stair head: base, shaft, cap
+        py = -CR_END + 0.3
+        stones.append(_stone((x, py, 0.06), (0.33, 0.33, 0.07), CR_ST_D, seed=420 + sx, jit=0.008, moss=0.6))
+        stones.append(_stone((x, py, 0.55), (0.29, 0.29, 0.43), CR_ST, seed=422 + sx, jit=0.01, var=0.18, top=0.2))
+        stones.append(_stone((x, py, 1.02), (0.34, 0.34, 0.05), CR_ST_P, seed=424 + sx, jit=0.006, top=0.15, moss=0.8))
+        stones.append(_stone((x, py, 1.09), (0.27, 0.27, 0.025), CR_ST_P, seed=426 + sx, jit=0.005, top=0.15))
+        caps.append(Vector((x, py, 1.115)))
+    # foot landing, treads (full blocks down below the pit), top landing at ground level
+    hw = CR_SHAFT - 0.01
+    stones.append(_stone((0.0, -CR_FOOT / 2, -CR_D - 0.15), (hw, CR_FOOT / 2, 0.15), CR_ST_D, seed=450, jit=0.004, var=0.15, top=0.25))
+    for k in range(1, CR_STEPS + 1):
+        y0 = -CR_FOOT - (k - 1) * CR_RUN
+        y1 = y0 - CR_RUN
+        top_z = -CR_D + k * CR_D / (CR_STEPS + 1)
+        dark = 0.82 + 0.03 * k
+        for j, (a0, a1) in enumerate(((-hw, -0.1 + random.uniform(-0.15, 0.15)), (None, hw))):
+            if a0 is None:
+                a0 = prev_a1
+            prev_a1 = a1
+            t = _stone(((a0 + a1) / 2, (y0 + y1) / 2, (top_z - CR_D - 0.3) / 2), ((a1 - a0) / 2 - 0.005, CR_RUN / 2 + 0.004,
+                       (top_z + CR_D + 0.3) / 2), L.scale_c(CR_STAIR, dark * random.uniform(0.92, 1.04)), seed=460 + k * 3 + j,
+                       jit=0.004, var=0.16, ao=0.0, top=0.15)
+            P._modulate(t, lambda co, yb=y0: 0.55 if co.y > yb - 0.06 and co.z < top_z - 0.02 else 1.0)
+            stones.append(t)
+        # the worn nosing (lit edge)
+        stones.append(_box((0.0, y1 + 0.03, top_z + 0.012), (hw - 0.02, 0.03, 0.012), L.scale_c(CR_ST_P, 1.12 * dark),
+                           seed=480 + k, var=0.1, ao=0.0, top=0.15))
+    stones.append(_stone((0.0, -(CR_TOP + CR_END) / 2, -0.38), (hw, (CR_END - CR_TOP) / 2, 0.4), CR_STAIR, seed=490,
+                         jit=0.004, var=0.16, top=0.15, moss=0.3))
+    return caps
 
 
-def _iron_door(parts, y: float) -> None:
-    """Iron-clad door in the arched opening: dark plate, three riveted bands, ring handle, keyhole.
-    G7 round 1: it stands open (swung in against the east reveal) - the stair leads on inside."""
+def _crypt_railing(parts, x: float, y0: float, y1: float, z: float, level: int) -> None:
+    """The wrought-iron railing on the near curb: square bars with spear tips between two rails, a
+    heavier post every metre (it keeps the stair open to the camera)."""
+    h = 0.85
+    n = 13
+    for k in range(n + 1):
+        y = y0 + (y1 - y0) * k / n
+        post = k % 4 == 0
+        parts.append(P._stick((x, y, z), (x, y, z + h + (0.06 if post else 0.0)), 0.016 if post else 0.009, IRON, verts=4,
+                              hue_shift=RUST, var=0.3, ao=0.05))
+        parts.append(L.part("cone", IRON, loc=(x, y, z + h + (0.1 if post else 0.03)), radius1=0.024 if post else 0.016,
+                            depth=0.07, vertices=4))
+    for zz in (0.08, h - 0.07):
+        parts.append(P._stick((x, y0, z + zz), (x, y1, z + zz), 0.013, IRON, verts=4, hue_shift=RUST, var=0.3, ao=0.05))
+    if level >= 2:   # repaired: a scroll in every other bay under the top rail
+        for k in range(0, n, 2):
+            y = y0 + (y1 - y0) * (k + 0.5) / n
+            parts.append(L.part("torus", IRON, loc=(x, y, z + h - 0.16), rot=(0, 90, 0), major_radius=0.05, minor_radius=0.006,
+                                major_segments=5, minor_segments=3))
+
+
+def _crypt_overgrowth(parts, level: int, wing_top) -> None:
+    """Moss cushions on the ledges, ivy on the camera's flank (-X): up the wing and its end, over the
+    south shaft wall; at level 1 also up the +X pilaster. Less with every level (trimmed)."""
+    rnd = random.Random(900 + level)
+    spots = [(-1.05, -0.05, CR_CORNICE + 0.02), (0.6, -0.05, CR_CORNICE + 0.02), (-1.42, 0.2, 0.97), (1.42, 0.35, 0.97),
+             (-1.09, -2.45, 1.08), (1.09, -2.45, 1.08), (-1.1, -1.2, CR_CURB + 0.09), (1.1, -0.6, CR_PARAPET + 0.09),
+             (0.4, -0.2, CR_APEX - 0.25), (-0.6, -0.15, CR_APEX - 0.3), (1.12, -1.9, CR_PARAPET + 0.09), (-0.74, 0.6, 0.02),
+             (0.9, 0.62, 0.02), (-1.5, -0.3, 0.02), (1.45, -2.8, 0.02)]
+    for i, p in enumerate(spots[: 15 - 3 * (level - 1)]):
+        _moss(parts, p, rnd.uniform(0.07, 0.12), seed=910 + i)
+    k = 3 if level == 1 else (2 if level == 2 else 1)
+    # up the -X wing from the ground, over its curved top onto the cornice and the raking cornice
+    path = [(-1.38, -0.03, 0.0), (-1.3, -0.05, 0.3), (-1.4, -0.05, 0.6), (-1.28, -0.05, 0.9), (-1.2, -0.08, 1.2),
+            (-1.12, -0.12, 1.55)]
+    if level <= 2:
+        path += [(-1.18, -0.24, CR_CORNICE + 0.04), (-1.0, -0.26, CR_CORNICE + 0.16)]
+    if level == 1:
+        path += [(-0.75, -0.25, CR_CORNICE + 0.32), (-0.55, -0.25, CR_CORNICE + 0.42)]
+    _ivy(parts, path, (0, -1, 0.15), seed=930)
+    _ivy(parts, [(-1.42, -0.04, 0.2), (-1.47, -0.05, 0.55), (-1.47, -0.05, 0.85)], (0, -1, 0.1), seed=935)
+    # round the -X end of the wall and down its back
+    _ivy(parts, [(-1.535, 0.05, 0.0), (-1.535, 0.25, 0.35), (-1.535, 0.12, 0.65), (-1.535, 0.4, 0.92), (-1.4, 0.55, 1.0)],
+         (-1, 0, 0.1), seed=931)
+    if k >= 2:
+        _ivy(parts, [(-1.535, 0.5, 0.0), (-1.535, 0.45, 0.45)], (-1, 0, 0.1), seed=936)
+        # up the -X pilaster
+        _ivy(parts, [(-0.62, -CR_PIL_OUT - 0.17, -0.05), (-0.66, -CR_PIL_OUT - 0.17, 0.4), (-0.6, -CR_PIL_OUT - 0.17, 0.85),
+                     (-0.66, -CR_PIL_OUT - 0.17, 1.25)], (0, -1, 0.1), seed=937, every=0.07)
+    if k >= 3:
+        _ivy(parts, [(0.74, -CR_PIL_OUT - 0.17, -0.1), (0.7, -CR_PIL_OUT - 0.17, 0.4), (0.78, -CR_PIL_OUT - 0.17, 0.9),
+                     (0.72, -CR_PIL_OUT - 0.17, 1.3)], (0, -1, 0.1), seed=933, every=0.08)
+        _ivy(parts, [(1.53, 0.1, 0.0), (1.535, 0.3, 0.5), (1.535, 0.2, 0.85)], (1, 0, 0.1), seed=934, every=0.08)
+        # trailing over the far shaft wall's coping into the shaft
+        _ivy(parts, [(1.1, -0.4, CR_PARAPET + 0.1), (1.0, -0.8, CR_PARAPET + 0.1), (0.79, -1.0, CR_PARAPET - 0.1),
+                     (0.79, -1.15, 0.0), (0.79, -1.1, -0.4)], (-1, 0, 0.4), seed=938, every=0.07)
+    # grass and a fern on the cornice / at the wall feet (cheap cones)
+    for i, p in enumerate(((-0.9, -0.08, CR_CORNICE + 0.02), (0.95, -0.1, CR_CORNICE + 0.02), (-1.45, -2.0, 0.0), (1.45, -1.2, 0.0))):
+        if i >= 4 - (level - 1):
+            continue
+        for j in range(3):
+            a = rnd.uniform(0, math.tau)
+            parts.append(L.part("cone", L.mix(GRASS_B, GRASS_DRY, rnd.uniform(0, 0.6)), loc=(p[0] + 0.03 * math.cos(a),
+                                p[1] + 0.03 * math.sin(a), p[2] + 0.07), vertices=3, radius1=0.02, depth=0.15,
+                                rot=(rnd.uniform(-25, 25), rnd.uniform(-25, 25), 0)))
+
+
+def _crypt_door_leaf(parts) -> None:
+    """The iron-clad door standing open, swung in against the east reveal."""
     leaf = []
-    _iron_door_leaf(leaf, y)
-    hinge = Vector((CR_DOOR_W / 2 - 0.02, y + 0.08, 0.0))
+    plate = _prism(_arch_poly(0.0, 2 * CR_DOOR_HW - 0.04, -CR_D + 0.02, CR_SPRING, 8), "y", CR_WALL_Y + 0.08, CR_WALL_Y + 0.12, "door")
+    L.subdivide(plate, 1)
+    leaf.append(_paint(plate, L.hexc("#38393B"), var=0.2, ao=0.55, top=0.1, seed=500, hue_shift=L.mix(IRON, RUST, 0.55)))
+    for z in (-0.95, -0.25, 0.35):
+        leaf.append(_box((0.0, CR_WALL_Y + 0.07, z), (CR_DOOR_HW - 0.04, 0.012, 0.035), IRON, seed=501, var=0.3, hue_shift=RUST,
+                         ao=0.0, top=0.15))
+    leaf.append(L.part("torus", IRON, loc=(0.28, CR_WALL_Y + 0.05, -0.35), rot=(90, 0, 0), major_radius=0.055,
+                       minor_radius=0.011, major_segments=8, minor_segments=3, paint_kw={"hue_shift": RUST}))
+    hinge = Vector((CR_DOOR_HW - 0.02, CR_WALL_Y + 0.1, 0.0))
     m = Matrix.Translation(hinge) @ Matrix.Rotation(math.radians(-96), 4, "Z") @ Matrix.Translation(-hinge)
     for o in leaf:
         o.data.transform(m)
     parts += leaf
 
 
-def _iron_door_leaf(parts, y: float) -> None:
-    plate = _prism(_arch_poly(0.0, CR_DOOR_W - 0.04, -CR_DEPTH + 0.02, CR_DOOR_SPRING, 8), "y", y + 0.06, y + 0.1, "door")
-    L.subdivide(plate, 1)
-    parts.append(_paint(plate, L.hexc("#3A3B3E"), var=0.2, ao=0.55, top=0.1, seed=300, hue_shift=L.mix(IRON, RUST, 0.45)))
-    for z in (0.32, 0.86, CR_DOOR_SPRING + 0.08):
-        w = CR_DOOR_W / 2 - 0.03 if z < CR_DOOR_SPRING else 0.3
-        parts.append(_box((0.0, y + 0.05, z), (w, 0.012, 0.035), IRON, seed=301, var=0.3, hue_shift=RUST, ao=0.0, top=0.3))
-        for k in (-1, 1):
-            parts.append(_box((k * (w - 0.05), y + 0.036, z), (0.015, 0.008, 0.015), L.hexc("#4A4C50"), var=0.1, ao=0.0))
-    parts.append(L.part("torus", IRON, loc=(0.22, y + 0.03, 0.98), rot=(90, 0, 0), major_radius=0.055, minor_radius=0.011,
-                        major_segments=8, minor_segments=3, paint_kw={"hue_shift": RUST}))
-    parts.append(_box((0.22, y + 0.052, 1.05), (0.03, 0.006, 0.04), IRON, var=0.2, ao=0.0))
-    parts.append(_box((-0.22, y + 0.056, 0.95), (0.012, 0.004, 0.025), GAP, var=0.0, ao=0.0))
+def _crypt_gate(parts) -> None:
+    """Level 3: a wrought-iron gate of two leaves at the stair foot, both standing open against the
+    shaft walls."""
+    hgt = 1.25
+    for sx in (-1, 1):
+        x = sx * (CR_SHAFT - 0.035)
+        y0, y1 = -0.08, -0.08 - 0.78
+        base = -CR_D + 0.02
+        for k in range(6):
+            yy = y0 + (y1 - y0) * (k + 0.5) / 6
+            top = hgt + 0.1 * math.sin(math.pi * (k + 0.5) / 6)
+            parts.append(P._stick((x, yy, base), (x, yy, base + top), 0.011, IRON, verts=4, hue_shift=RUST, var=0.3, ao=0.1))
+            parts.append(L.part("cone", IRON, loc=(x, yy, base + top + 0.035), radius1=0.02, depth=0.07, vertices=4))
+        for z in (0.12, 0.62, hgt - 0.05):
+            parts.append(P._stick((x, y0, base + z), (x, y1, base + z), 0.014, IRON, verts=4, hue_shift=RUST, var=0.3, ao=0.1))
+        parts.append(P._stick((x, y0, base), (x, y0, base + hgt + 0.12), 0.02, IRON, verts=5, hue_shift=RUST, ao=0.1))
 
 
-def _crypt_grille(parts, y: float) -> None:
-    """Level 3: an iron grille in front of the door, standing open against the west wing wall."""
-    x0 = -CR_WING + 0.04                 # hinge at the west jamb, swung out (south) by ~80 deg
-    ang = math.radians(78)
-    d = Vector((math.cos(ang), -math.sin(ang), 0))   # along the grille leaf from the hinge
-    w = CR_DOOR_W - 0.06
-    base = Vector((x0, y - 0.04, -CR_DEPTH + 0.03))
-    hgt = CR_DOOR_SPRING + CR_DEPTH + 0.2
-    for k in range(6):
-        t = (k + 0.5) / 6
-        p0 = base + d * (w * t)
-        top = hgt + 0.18 * math.sin(math.pi * t)
-        parts.append(P._stick(p0, p0 + Vector((0, 0, top)), 0.011, IRON, verts=4, hue_shift=RUST, var=0.3, ao=0.1))
-        parts.append(L.part("cone", IRON, loc=p0 + Vector((0, 0, top + 0.035)), radius1=0.02, depth=0.07, vertices=4))
-    for z in (0.15, 0.75, hgt - 0.05):
-        parts.append(P._stick(base + Vector((0, 0, z)), base + d * w + Vector((0, 0, z)), 0.014, IRON, verts=4,
-                              hue_shift=RUST, var=0.3, ao=0.1))
-    parts.append(P._stick(base, base + Vector((0, 0, hgt + 0.1)), 0.02, IRON, verts=5, hue_shift=RUST, ao=0.1))
-
-
-def _lintel(parts, y: float, door_top: float) -> Vector:
-    """Level 3: a dressed lintel band above the arch for the inscription; returns its face centre."""
-    z = door_top + 0.26
-    parts.append(_box((0.0, y - 0.035, z), (0.56, 0.05, 0.085), STONE_PALE, jit=0.003, seed=320, var=0.1, ao=0.0, top=0.2))
-    for sx in (-1, 1):   # a carved border line
-        parts.append(_box((sx * 0.52, y - 0.086, z), (0.006, 0.003, 0.06), L.scale_c(STONE_DARK, 0.8), var=0.0, ao=0.0))
-    return Vector((0.0, y - 0.086, z))
+def _crypt_tablet(parts, stones) -> Vector:
+    """Level 3: the name tablet in the frieze (pale dressed stone with a dark carved border); returns
+    the face centre for the inscription label."""
+    z = (CR_FRIEZE[0] + CR_FRIEZE[1]) / 2
+    y = CR_WALL_Y - 0.083            # the frieze's front lies at -0.06
+    stones.append(_box((0.0, y, z), (0.86, 0.025, 0.1), L.hexc("#9A978B"), jit=0.003, seed=520, var=0.08, ao=0.0, top=0.2))
+    for sx in (-1, 1):
+        parts.append(_box((sx * 0.82, y - 0.027, z), (0.006, 0.003, 0.075), L.scale_c(CR_ST_D, 0.7), var=0.0, ao=0.0))
+    return Vector((0.0, y - 0.03, z))
 
 
 def _crypt(level: int) -> None:
     L.reset(600 + level)
     parts = []
-    pts = _crypt_front(parts, level)
-    _crypt_hill(parts, vent=level >= 2)
-    _iron_door(parts, CR_FACE)
-    # G7 round 1: the door at the foot of the stair (0.75 m in front of the portal, on the ramp)
-    door_y = CR_FACE - 0.33
-    markers = [("door_outside", (0.0, door_y, -CR_DEPTH * (door_y - CR_THROAT) / (CR_FACE - CR_THROAT))), ("build", (1.75, -0.95, 0.0))]
-    if level >= 2:
-        # slate roof on the portal: two slabs over the gable, a ridge stone
-        rise = CR_APEX + 0.16 - (CR_EAVE + 0.02)
-        run = CR_HW + 0.14
-        pitch = math.atan2(rise, run)
-        sl = math.hypot(run, rise)
+    stones = []
+    pts = _crypt_wall(parts, stones, level)
+    caps = _crypt_shaft(parts, stones, level)
+    _crypt_door_leaf(parts)
+    markers = [("door_outside", CR_DOOR), ("build", CR_BUILD)]
+    for i, c in enumerate(caps):
+        markers.append(("light_lantern_%d" % (i + 1), tuple(_post_lantern(parts, c, seed=530 + i))))
+    if level == 1:
+        # the acroterion broken off: a stump on the apex, the piece lying in the grass by the wing
+        stones.append(_stone((0.0, -0.02, CR_APEX + 0.1), (0.11, 0.13, 0.08), CR_ST_P, seed=540, jit=0.01, moss=0.8))
+        stones.append(_stone((-1.62, -1.1, 0.06), (0.16, 0.11, 0.07), CR_ST_P, rot=(8, -14, 37), seed=541, jit=0.012,
+                             moss=0.9))
+        stones.append(_stone((-1.56, 0.3, 0.04), (0.08, 0.1, 0.05), CR_ST, rot=(0, 10, 70), seed=542, jit=0.012, moss=0.9))
+        # a crack running down the tympanum
+        for k in range(4):
+            parts.append(_box((0.18 - 0.07 * k, -0.026, CR_APEX - 0.18 - 0.11 * k), (0.008, 0.003, 0.06), GAP, rot=(0, 25 - 18 * k, 0),
+                              var=0.0, ao=0.0))
+        # an eroded boss in the tympanum
+        boss = L.prim("ico", loc=(0.0, -0.03, CR_CORNICE + 0.22), radius=0.13, subdivisions=1, scale=(1.0, 0.35, 1.0))
+        L.jitter(boss, 0.02, 5.0, 543)
+        stones.append(_paint(boss, CR_ST, var=0.2, ao=0.2, seed=543))
+    else:
+        # repaired: the cross on the apex, balls on the pediment ends, a wreath in the tympanum
+        cross_col = CR_ST_NEW if level == 2 else IRON
+        _cross(parts, Vector((0.0, -0.02, CR_APEX + 0.06)), 0.5 if level == 2 else 0.55, color=cross_col, seed=550)
+        stones.append(_stone((0.0, -0.02, CR_APEX + 0.06), (0.12, 0.14, 0.06), CR_ST_NEW, seed=551, jit=0.006, top=0.15))
         for sx in (-1, 1):
-            c = Vector((sx * run / 2, CR_FACE + 0.2, CR_EAVE + 0.02 + rise / 2 + 0.06))
-            for k in range(3):   # three courses of big slates, each course its own slab
-                t = (k + 0.5) / 3
-                cc = Vector((sx * run * (1 - t), CR_FACE + 0.2, CR_EAVE + 0.1 + rise * t))
-                s = L.prim("cube", loc=cc, scale=(sl / 6 + 0.03, 0.42, 0.028), rot=(0, sx * math.degrees(pitch), 0))
-                L.subdivide(s, 1)
-                L.jitter(s, 0.008, 4.0, 330 + k + sx * 3)
-                parts.append(_paint(s, L.scale_c(SLATE, random.uniform(0.9, 1.08)), var=0.2, ao=0.0, top=0.25,
-                                    seed=330 + k, hue_shift=SLATE_LIGHT))
-        parts.append(_box((0.0, CR_FACE + 0.2, CR_APEX + 0.2), (0.07, 0.44, 0.045), SLATE_DARK, jit=0.006, seed=340,
-                          var=0.15, ao=0.0, top=0.3))
-        _cross(parts, Vector((0.0, CR_FACE - 0.14, CR_APEX + 0.23)), 0.14, color=IRON, seed=342)
+            stones.append(_stone((sx * (CR_CW + 0.02), -0.04, CR_CORNICE + 0.07), (0.1, 0.1, 0.05), CR_ST_NEW, seed=552 + sx, jit=0.005))
+            ball = L.prim("ico", loc=(sx * (CR_CW + 0.02), -0.04, CR_CORNICE + 0.22), radius=0.1, subdivisions=1)
+            L.jitter(ball, 0.008, 5.0, 556 + sx)
+            stones.append(_paint(ball, CR_ST_NEW, var=0.15, ao=0.2, top=0.15, seed=556 + sx))
+        wreath = L.prim("torus", loc=(0.0, -0.035, CR_CORNICE + 0.24), rot=(90, 0, 0), major_radius=0.15, minor_radius=0.035,
+                        major_segments=10, minor_segments=4)
+        L.jitter(wreath, 0.008, 6.0, 558)
+        stones.append(_paint(wreath, CR_ST_P, var=0.2, ao=0.3, top=0.15, seed=558))
+        # a handrail along the north shaft wall
+        rail = [Vector((CR_SHAFT - 0.07, -CR_END + 0.6, 0.85)), Vector((CR_SHAFT - 0.07, -CR_FOOT - 0.15, -CR_D + 0.85))]
+        parts.append(P._stick(rail[0], rail[1], 0.016, IRON, verts=5, hue_shift=RUST, ao=0.0))
+        for t in (0.08, 0.5, 0.92):
+            p = rail[0].lerp(rail[1], t)
+            parts.append(P._stick(p, Vector((CR_SHAFT - 0.005, p.y, p.z)), 0.01, IRON, verts=4, ao=0.0))
+    _crypt_overgrowth(parts, level, pts["wing_top"])
     if level >= 3:
-        _crypt_grille(parts, CR_FACE)
-        face = _lintel(parts, CR_FACE, pts["door_top"])
-        light = _wall_lantern(parts, Vector((-CR_HW + 0.05, CR_FACE - 0.34, 1.95)), CR_FACE, seed=350)
+        _crypt_gate(parts)
+        face = _crypt_tablet(parts, stones)
+        light = _cage_lantern(parts, CR_WALL_Y - 0.1, Vector((0.0, -0.62, CR_CAP - 0.05)), seed=560)
         markers.append(("light_lantern", tuple(light)))
-        obj = _done(parts, "ph_bld_crypt_l3", markers + [("inscription", tuple(face))])
+        markers.append(("inscription", tuple(face)))
+    _weather(stones, seed=level, moss=0.9 if level == 1 else (0.65 if level == 2 else 0.5))
+    obj = _done(parts + stones, "ph_bld_crypt_l%d" % level, markers)
+    if level >= 3:
         e = next(c for c in obj.children if c.name == "inscription")
         e.rotation_euler = (0.0, 0.0, 0.0)
-        return
-    _done(parts, "ph_bld_crypt_l%d" % level, markers)
 
 
 def crypt_l1():
@@ -567,43 +838,39 @@ def crypt_l3():
 
 
 def crypt_site():
-    """Level 0: the crypt neck uncovered and filled in again - an earth mound with the top of an old
-    stone gable showing, boards laid over the hole, pegs and string around the plot."""
+    """Level 0: the crypt neck uncovered and filled in again - an earth mound with the top of the old
+    pediment showing, boards laid over the stair neck, pegs and string round the site."""
     L.reset(640)
     parts = []
-    mound = _grid_mound(-1.35, 1.35, -0.8, 1.25, 12, 10,
-                        lambda x, y: max(-0.03, 0.62 * max(0.0, 1.0 - (abs(x / 1.35) ** 2.2 + abs((y - 0.25) / 1.05) ** 2.2))
+    mound = _grid_mound(-1.4, 1.4, -0.9, 0.55, 12, 8,
+                        lambda x, y: max(-0.03, 0.55 * max(0.0, 1.0 - (abs(x / 1.4) ** 2.2 + abs((y + 0.15) / 0.75) ** 2.2))
                                          ** 0.6 + 0.04 * noise.noise(Vector((x * 2.6, y * 2.6, 0.2)))), "mound")
-    P._paint_fn(mound, lambda co, vi: L.mix(_sod_colour(co, 4.0), EARTH, max(0.0, min(1.0, 0.5 - co.y * 0.8 +
+    P._paint_fn(mound, lambda co, vi: L.mix(_sod_colour(co, 4.0), EARTH, max(0.0, min(1.0, 0.5 + co.y * 0.6 +
                                                                                      noise.noise(co * 3.0) * 0.4))))
     L.set_mat(mound, L.MAT_GROUND)
     parts.append(mound)
-    # the old gable top: a few mossy courses in a triangle, sunk in the earth
-    y = -0.45
-    for row, (z, w) in enumerate(((0.3, 0.7), (0.5, 0.5), (0.68, 0.3))):
+    y = -0.05
+    for row, (z, w) in enumerate(((0.25, 0.9), (0.45, 0.62), (0.62, 0.34))):
         a = -w
         k = 0
         while a < w - 0.05:
-            ln = min(random.uniform(0.22, 0.34), w - a)
-            parts.append(_stone((a + ln / 2, y, z), (ln / 2 * 0.95, 0.08, 0.09), random.choice((STONE_OLD, STONE_DARK)),
+            ln = min(random.uniform(0.24, 0.36), w - a)
+            parts.append(_stone((a + ln / 2, y, z), (ln / 2 * 0.95, 0.08, 0.09), random.choice((CR_ST, CR_ST_D)),
                                 seed=650 + row * 10 + k, moss=1.0, rot=(random.uniform(-6, 6), 0, 0)))
             a += ln
             k += 1
-    parts.append(_stone((0.0, y, 0.84), (0.1, 0.1, 0.08), STONE_OLD, seed=670, moss=1.0))
-    # the dug-out neck in front of it: dark hole, boards laid across
-    hole = _grid_mound(-0.5, 0.5, -1.2, -0.52, 4, 3, lambda x, yy: 0.015, "hole")
-    P._paint_fn(hole, lambda co, vi: L.scale_c(EARTH_DARK, 0.55 + 0.4 * min(1.0, (-0.52 - co.y) / 0.7)))
+    hole = _grid_mound(-0.75, 0.75, -2.4, -0.6, 4, 6, lambda x, yy: 0.015, "hole")
+    P._paint_fn(hole, lambda co, vi: L.scale_c(EARTH_DARK, 0.55 + 0.4 * min(1.0, (-0.6 - co.y) / 1.6)))
     L.set_mat(hole, L.MAT_PAINTED)
     parts.append(hole)
-    for i, x in enumerate((-0.36, -0.08, 0.2, 0.44)):
-        parts.append(P._plank((x + random.uniform(-0.03, 0.03), -0.86, 0.05), (0.1, 0.46, 0.022), WOOD_OLD, seed=680 + i,
-                              rot=(random.uniform(-3, 3), 0, random.uniform(-7, 7)), cuts=1))
-    # earth heaps and clods beside it
-    parts.append(P._heap(-0.95, -0.95, 0.38, 0.3, 0.3, 5))
-    parts.append(P._heap(1.0, -0.75, 0.3, 0.28, 0.22, 6))
-    parts += P._clods(6, (-1.2, 1.2), (-1.25, -0.75), EARTH_FRESH, z=0.03, seed=690)
-    _pegs(parts, ((-1.35, -1.25), (1.35, -1.25), (1.35, 1.25), (-1.35, 1.25)), seed=695)
-    _done(parts, "ph_bld_crypt_site", [("build", (1.75, -0.95, 0.0))])
+    for i in range(7):
+        parts.append(P._plank((random.uniform(-0.05, 0.05), -0.85 - i * 0.24, 0.05), (0.62, 0.1, 0.022), WOOD_OLD, seed=680 + i,
+                              rot=(random.uniform(-3, 3), 0, random.uniform(-5, 5)), cuts=1))
+    parts.append(P._heap(-1.05, -1.6, 0.38, 0.5, 0.3, 5))
+    parts.append(P._heap(1.05, -2.1, 0.3, 0.42, 0.22, 6))
+    parts += P._clods(6, (-1.3, 1.3), (-2.6, -1.0), EARTH_FRESH, z=0.03, seed=690)
+    _pegs(parts, ((-1.45, -2.7), (1.45, -2.7), (1.45, 0.55), (-1.45, 0.55)), seed=695)
+    _done(parts, "ph_bld_crypt_site", [("build", CR_BUILD)])
 
 
 # ==================================================================================================

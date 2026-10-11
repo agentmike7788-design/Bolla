@@ -19,6 +19,7 @@ const EXTERIOR_SCRIPT := "res://src/world/graveyard/building_exterior.gd"
 ## G7 round 1: the crypt stair (walk-through portal, the sod cover over the pit until level 1).
 const STAIR_PORTAL_SCRIPT := "res://src/world/interiors/stair_portal.gd"
 const SITE_COVER_SCRIPT := "res://src/entities/building_site/site_cover.gd"
+const PAVING_ASSET := "ph_env_crypt_paving"
 ## §3.1: node name → script (groups / save_id / save_order are set by the scripts themselves:
 ## buildings 32, ossuary 36, chapel 37).
 const SYSTEMS := [
@@ -56,6 +57,18 @@ static func site_rects(layout: Dictionary) -> Array[Rect2]:
 	return out
 
 
+## The site on the ground. G8 round 2: the crypt's pivot (the front of its portal wall) lies over its
+## own stair pit – a site with a stair takes the ground height at the back of its footprint (the flat
+## zone of asset_ground_graveyard.py, outside the pit).
+static func site_xform(ctx: Ctx, site: Dictionary) -> Transform3D:
+	var xf := ctx.ground_xform(Ctx.v2(site.pos), float(site.rot_y))
+	if site.has("stair"):
+		var fp := footprint(site)
+		var back := Ctx.v2(site.pos) + Vector2(fp.get_center().x, fp.position.y + 0.05).rotated(-deg_to_rad(float(site.rot_y)))
+		xf.origin.y = ctx.ground_height(back)
+	return xf
+
+
 static func footprint(site: Dictionary) -> Rect2:
 	var fp: Array = site.footprint
 	return Rect2(float(fp[0]), float(fp[1]), float(fp[2]), float(fp[3]))
@@ -71,7 +84,12 @@ static func build_sites(ctx: Ctx, entities: Node3D) -> void:
 		var node := (load(SITE_SCENE) as PackedScene).instantiate() as Node3D
 		node.name = site.id
 		node.set("building_id", StringName(site.building))
-		node.transform = ctx.ground_xform(Ctx.v2(site.pos), float(site.rot_y))
+		node.transform = site_xform(ctx, site)
+		if site.has("access"):
+			# G8 round 2: BuildingSite.free_area() puts whoever a load leaves in its walls here.
+			var a := Ctx.v2(site.access)
+			node.set("access_point", node.transform.affine_inverse() * Vector3(a.x, ctx.ground_height(a), a.y))
+			node.set("has_access_point", true)
 		ctx.add(entities, node)
 		var fp := footprint(site)
 		var h := float(site.get("height", 2.5))
@@ -120,11 +138,20 @@ static func _stair_collision(ctx: Ctx, body: StaticBody3D, fp: Rect2, h: float, 
 	ramp.transform = Transform3D(basis, Vector3(pass_rect.get_center().x, -depth * 0.5, (top + bottom) * 0.5) - basis.y * 0.15)
 	ramp.set_meta(&"min_level", 1)
 	ctx.add(body, ramp)
+	if st.has("foot"):
+		# G8 round 2: the landing at the foot of the stair in front of the door (between the door
+		# recess and the bottom of the ramp, which lies on the step edges).
+		var f: Array = st.foot
+		var foot := _box_shape(ctx, body, "StairFoot", Rect2(pass_rect.position.x, float(f[0]), w, float(f[1]) - float(f[0])),
+				-depth - 0.3, -depth)
+		foot.set_meta(&"min_level", 1)
 	var k := 0
 	for c: Array in st.get("cheeks", []):
 		k += 1
 		var r := Rect2(float(c[0]), float(c[1]), float(c[2]) - float(c[0]), float(c[3]) - float(c[1]))
-		var cheek := _box_shape(ctx, body, "Cheek%d" % k, r, -depth - 0.2, float(st.get("cheek_height", 1.2)))
+		# G8 round 2: an optional 5th value = this cheek's own top (the near one carries a railing).
+		var top_y := float(c[4]) if c.size() > 4 else float(st.get("cheek_height", 1.2))
+		var cheek := _box_shape(ctx, body, "Cheek%d" % k, r, -depth - 0.2, top_y)
 		cheek.set_meta(&"min_level", 1)
 
 
@@ -149,7 +176,7 @@ static func _stair_height(ctx: Ctx, building: String, p: Vector2) -> float:
 		var origin := Ctx.v2(site.pos)
 		var local := (p - origin).rotated(deg_to_rad(float(site.rot_y)))
 		var t := clampf((float(st.top_z) - local.y) / (float(st.top_z) - float(st.bottom_z)), 0.0, 1.0)
-		return ctx.ground_xform(origin, 0.0).origin.y - float(st.depth) * t
+		return site_xform(ctx, site).origin.y - float(st.depth) * t
 	return NAN
 
 
@@ -163,7 +190,7 @@ static func _stair_cover(ctx: Ctx, entities: Node3D, site: Dictionary) -> void:
 	cover.name = String(site.id) + "_cover"
 	cover.set_script(load(SITE_COVER_SCRIPT))
 	cover.set("building_id", StringName(site.building))
-	cover.transform = ctx.ground_xform(Ctx.v2(site.pos), float(site.rot_y))
+	cover.transform = site_xform(ctx, site)
 	ctx.add(entities, cover)
 	var model := (load(Ctx.model_path(String(st.cover_asset))) as PackedScene).instantiate() as Node3D
 	model.name = "Model"
@@ -258,6 +285,15 @@ static func build_doors(ctx: Ctx, entities: Node3D) -> void:
 			var r: Array = st.rect
 			_box_shape(ctx, area, "Shape", Rect2(float(r[0]), float(r[1]), float(r[2]) - float(r[0]), float(r[3]) - float(r[1])),
 					-0.2, float(st.get("height", 2.0)))
+
+
+## G8 round 2: Decor/CryptPaving – the flagstone walk from the main path to the paved forecourt of
+## the crypt stair (ph_env_crypt_paving from asset_ground_graveyard.py, world coordinates like the
+## ground, no collision: the ground carries the gravekeeper).
+static func build_paving(ctx: Ctx, decor: Node3D) -> void:
+	if not ctx.layout.get("buildings", {}).has("paving"):
+		return
+	ctx.place(PAVING_ASSET, decor, Vector2.ZERO, 0.0, "CryptPaving").transform = Transform3D.IDENTITY
 
 
 # --- interiors (§4.7) -----------------------------------------------------------------------

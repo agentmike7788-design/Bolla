@@ -30,7 +30,7 @@ const SHED_SCENE := "res://src/entities/shed_store/shed_store.tscn"
 const TABLE_SCENE := "res://src/entities/morgue_table/morgue_table.tscn"
 const CATAFALQUE_SCENE := "res://src/entities/catafalque/catafalque.tscn"
 ## Contract positions of the sites (§4.1–§4.3), used when the world has no site yet.
-const SITES: Dictionary[StringName, Vector3] = {&"crypt": Vector3(-9.0, 0.0, 6.9), &"chapel": Vector3(4.5, 0.0, -25.5),
+const SITES: Dictionary[StringName, Vector3] = {&"crypt": Vector3(-9.5, 0.0, 5.6), &"chapel": Vector3(4.5, 0.0, -25.5),
 		&"shed": Vector3(-12.9, 0.0, -9.0)}
 ## Far away (like the interiors, §4.7): the stand-in crypt table and catafalque.
 const HIDDEN_AT := Vector3(60.0, -30.0, -200.0)

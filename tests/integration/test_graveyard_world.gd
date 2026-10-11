@@ -1866,7 +1866,8 @@ func _capsule_free(p: Vector2) -> bool:
 
 # --- Phase 6 (docs/PHASE6_DESIGN.md §3.1, §4, §10 – W-Welt) ---------------------------------
 
-const P6_SITES := {"site_crypt": ["crypt", Vector2(-9.0, 6.9)], "site_chapel": ["chapel", Vector2(4.5, -25.5)],
+## G8 round 2: the crypt portal rotated in the south-west corner (rot_y 56°, facing the path).
+const P6_SITES := {"site_crypt": ["crypt", Vector2(-9.5, 5.6)], "site_chapel": ["chapel", Vector2(4.5, -25.5)],
 		"site_shed": ["shed", Vector2(-12.9, -9.0)]}
 const P6_DOORS := {"door_crypt": "crypt", "door_chapel": "chapel", "door_shed": "shed"}
 ## §4.5: gameplay zoom levels of the near-view check.
@@ -1896,7 +1897,8 @@ func test_phase6_system_nodes() -> void:
 		rects.append(Rect2(r[0], r[1], r[2], r[3]))
 	assert_eq(buildings.site_rects, rects, "Buildings.site_rects = layout.buildings.site_rects")
 	var crypt_rect := rects[0]
-	for p: Vector2 in [Vector2(-10.4, 5.6), Vector2(-7.6, 8.2), Vector2(-9.0, 8.7)]:
+	var crypt_site: Dictionary = layout.buildings.sites[0]
+	for p: Vector2 in [Vector2(-10.6, 6.6), Vector2(-7.5, 8.2), Vector2(-9.0, 4.4), _v2(crypt_site.access)]:
 		assert_true(crypt_rect.has_point(p), "crypt site rect covers footprint and access %s" % p)
 	var state := SaveManager.collect_state()
 	for id: String in SaveMigration.V5_EMPTY_NODES:
@@ -2076,7 +2078,7 @@ func test_phase6_routes_flood_fill() -> void:
 	var step := 0.125
 	var reached := _flood(Vector2(-5.67, -3.7), step, Rect2(-15.0, -31.0, 38.0, 42.0))
 	var targets := {
-		"bier": [_v2(layout.waypoints.dropoff), 0.5], "crypt access": [Vector2(-9.0, 8.9), 2.3],
+		"bier": [_v2(layout.waypoints.dropoff), 0.5], "crypt access": [_v2(layout.buildings.sites[0].access), 1.0],
 		"chapel door": [Vector2(4.5, -21.2), 1.0], "Kirchpforte (north side)": [Vector2(4.5, -20.9), 0.5],
 		"shed door": [Vector2(-12.8, -6.4), 1.0], "Pförtchen": [Vector2(-10.0, -11.6), 0.5],
 		"gate (Tor)": [Vector2(1.1, 10.4), 0.5], "Ostpforte": [Vector2(22.4, 0.0), 0.5],
@@ -2094,7 +2096,8 @@ func test_phase6_routes_flood_fill() -> void:
 				ok = true
 				break
 		assert_true(ok, "route hut door → %s (1.5 m capsule)" % name)
-	# The corridor between old_08 and the south fence (§4.1: ≥ 2.0 m): a 1.9 m cylinder passes.
+	# The corridor between old_08 and the south fence (§4.1: ≥ 2.0 m): a 1.9 m cylinder passes (G8 round 2: the
+	# flagstone walk to the crypt's stair head).
 	var wide := CylinderShape3D.new()
 	wide.radius = 0.95
 	wide.height = 1.0
@@ -2107,7 +2110,7 @@ func test_phase6_routes_flood_fill() -> void:
 		q.transform = Transform3D(Basis.IDENTITY, Vector3(p.x, world.ground_height(p) + 0.9, p.y))
 		assert_true(world.get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty(), "2 m past old_08 at x %.1f" % x)
 	# The gravekeeper's own capsule stands at each door (the last metre from the 1.5 m corridor).
-	for p: Vector2 in [Vector2(-9.0, 8.9), Vector2(4.5, -21.3), Vector2(-12.8, -6.5)]:
+	for p: Vector2 in [_v2(layout.buildings.sites[0].access), Vector2(4.5, -21.3), Vector2(-12.8, -6.5)]:
 		assert_true(_capsule_free(p), "the gravekeeper fits at the door %s" % p)
 
 
@@ -2204,13 +2207,13 @@ func test_phase6_overview_and_no_new_occlusion() -> void:
 		accesses.append(_v2(p.pos) + Vector2(0.0, 1.6))
 	for d: Dictionary in layout.dirt_spots:
 		accesses.append(_v2(d.pos))
+	# G8 round 2: against the meshes (probe) – the AABB of the rotated crypt covers its whole forecourt.
 	for a: Vector2 in accesses:
 		var head := Vector3(a.x, world.ground_height(a) + 1.7, a.y)
 		for zoom: float in [12.0, 22.0]:
 			var eye := _p6_eye(a, zoom)
 			for node: Node3D in sites:
-				var box := _p6_model_aabb(node)
-				assert_true(box.intersects_segment(eye, head) == null, "%s hides the player at %s (zoom %d)" % [node.name, a, int(zoom)])
+				assert_false(_p6_ray_hits(space, eye, head, probe, node), "%s hides the player at %s (zoom %d)" % [node.name, a, int(zoom)])
 
 
 # --- Phase 6 helpers ---------------------------------------------------------------------------
@@ -2236,6 +2239,20 @@ func _p6_mesh_probe() -> int:
 		body.add_child(cs)
 		mi.add_child(body)
 	return FOLIAGE_PROBE_LAYER
+
+## Whether the segment eye → p meets a probe mesh of `node` (every hit along the segment, not just the first).
+func _p6_ray_hits(space: PhysicsDirectSpaceState3D, eye: Vector3, p: Vector3, mask: int, node: Node) -> bool:
+	var exclude: Array[RID] = []
+	for guard: int in 48:
+		var q := PhysicsRayQueryParameters3D.create(eye, p, mask, exclude)
+		var hit := space.intersect_ray(q)
+		if hit.is_empty():
+			return false
+		if node.is_ancestor_of(hit.collider as Node):
+			return true
+		exclude.append(hit.rid)
+	return false
+
 
 ## Camera position of the gameplay rig following a player at `at` (look_offset, bounds clamp).
 func _p6_eye(at: Vector2, zoom: float) -> Vector3:
@@ -2612,6 +2629,22 @@ const P8_NPCS := {
 	"npc_robber": ["robber", "ph_chr_robber", ""],
 }
 const P8_CORNER := {"apprentice_board": "ApprenticeBoard", "apprentice_box": "ApprenticeBox", "rain_barrel": "RainBarrel"}
+## G8 round 2 (user: Gruft-Eingang zu klein, Treppe kaum sichtbar, am Zaun, passt nicht, „soll zum Weg zeigen"): the
+## crypt site turned towards the path with a wider, deeper stair, its door, site rect, flagstone walk (crypt_route,
+## paving), tp waypoint, two leaf spots beside the new portal, the pillar lanterns.
+const G8R2_CHANGES: Array[String] = [
+	"~buildings.sites[site_crypt].pos", "~buildings.sites[site_crypt].rot_y", "~buildings.sites[site_crypt].footprint",
+	"~buildings.sites[site_crypt].access", "~buildings.sites[site_crypt].height", "+buildings.sites[site_crypt]._g8",
+	"~buildings.sites[site_crypt].stair._comment", "~buildings.sites[site_crypt].stair.rect", "~buildings.sites[site_crypt].stair.top_z",
+	"~buildings.sites[site_crypt].stair.bottom_z", "~buildings.sites[site_crypt].stair.depth", "~buildings.sites[site_crypt].stair.landing",
+	"+buildings.sites[site_crypt].stair.foot", "~buildings.sites[site_crypt].stair.passage", "~buildings.sites[site_crypt].stair.cheeks",
+	"~buildings.sites[site_crypt].stair.cheek_height", "~buildings.sites[site_crypt].stair.cover_rect",
+	"~buildings.site_rects", "~buildings.crypt_route", "+buildings._paving", "+buildings.paving",
+	"~building_doors[door_crypt].pos", "~building_doors[door_crypt].rot_y", "~building_doors[door_crypt].stair_trigger.rect",
+	"~waypoints.tp_crypt", "~dirt_spots[dirt_y11].pos", "~dirt_spots[dirt_y11]._comment", "~dirt_spots[dirt_y12].pos",
+	"+dirt_spots[dirt_y12]._comment", "+lights._crypt_g8", "+lights.ph_bld_crypt_l3/light_lantern_1",
+	"+lights.ph_bld_crypt_l3/light_lantern_2",
+]
 
 
 ## §4.7 / §10: only L10–L15, A1–A4, G1–G2, the visitor spots / points / routes, the night and Lichtgang
@@ -2634,6 +2667,7 @@ func test_phase8_layout_diff_against_phase7() -> void:
 		"+_waypoints_phase8", "+_baked_phase8", "+visitor_spots", "+visitor_waypoints", "+visitor_routes",  # §4.2
 		"+atmosphere._season", "+atmosphere.season",  # W3 (G8, E8-1): the short November days
 	]
+	allowed.append_array(G8R2_CHANGES)
 	for id: String in P8_ROW3:
 		allowed.append("+plots[%s]" % id)
 	for id: String in P8_WAYPOINTS:
@@ -2650,9 +2684,20 @@ func test_phase8_layout_diff_against_phase7() -> void:
 	for c: String in allowed:
 		assert_true(c in changes, "listed change present: " + c)
 	assert_eq(layout.plots.slice(0, old.plots.size()), old.plots, "the approved plots unchanged")
-	for key: String in ["old_graves", "road", "hut", "tree", "buildings", "building_doors", "walkable_bounds", "camera_bounds",
-			"dirt_spots", "stations", "workyard", "props", "region_portals"]:
+	for key: String in ["old_graves", "road", "hut", "tree", "walkable_bounds", "camera_bounds", "stations", "workyard", "props",
+			"region_portals"]:
 		assert_eq(layout[key], old[key], key + " unchanged (§4.7)")
+	# G8 round 2: only the crypt (site, door, site rect, walk) and the two leaf spots beside it moved; the oak stays.
+	for d: Dictionary in old.dirt_spots:
+		if not d.id in ["dirt_y11", "dirt_y12"]:
+			assert_eq(_by_id(layout.dirt_spots, String(d.id)), d, String(d.id) + " unchanged")
+	for site: Dictionary in old.buildings.sites:
+		if site.id != "site_crypt":
+			assert_eq(_by_id(layout.buildings.sites, String(site.id)), site, String(site.id) + " unchanged")
+	for door: Dictionary in old.building_doors:
+		if door.id != "door_crypt":
+			assert_eq(_by_id(layout.building_doors, String(door.id)), door, String(door.id) + " unchanged")
+	assert_eq(layout.buildings.soul_lantern, old.buildings.soul_lantern, "soul lantern unchanged")
 	# L12 (W-Welt, round 1 images p8_24 / p8_03): forest.trees[7] east of the coach road, its crown south of the south
 	# fence; the bush at the south-west corner of row 3 a little west. Every other forest entry unchanged.
 	for i: int in old.forest.trees.size():
