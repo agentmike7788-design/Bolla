@@ -929,7 +929,13 @@ func test_carter_price_texts_match_actions() -> void:
 
 func test_carter_intro_mentions_schedule_times() -> void:
 	var schedule := load(CARTER_SCHEDULE_PATH) as NpcSchedule
-	var arrival := ScheduleResolver.arrival_minute(ScheduleResolver.entry_at(schedule, 420))
+	# G8 Runde 3: he is at the bier at 07:32 and unloads – the time he names is when the corpse lies on the bier
+	# and he talks (the first talkable entry with the cart = the delivery minute).
+	var arrival := -1
+	for e: ScheduleEntry in schedule.entries:
+		if e.region == &"" and e.with_cart and e.dialogue_id == &"carter" and (arrival < 0 or e.start_minute < arrival):
+			arrival = e.start_minute
+	assert_eq(arrival, (Database.corpse_tables() as CorpseTables).delivery_minute)
 	var clock := "%02d:%02d" % [floori(arrival / 60.0), arrival % 60]
 	var text := _carter().get_node_by_id(&"intro_linen").text
 	assert_true(text.contains(clock), "intro names the arrival %s" % clock)

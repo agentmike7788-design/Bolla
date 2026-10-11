@@ -710,7 +710,7 @@ func _update_cargo(minute_f: float) -> void:
 			_set_cargo_look(i, unload[i] if i < unload.size() else keep[i - unload.size()])
 			_cargo_nodes[i].transform = _cargo_rest(i, total)
 	var slot := _cart_slot()
-	if shown and slot != null and _tables != null and _held_entry == null:
+	if shown and slot != null and _tables != null and _held_entry == null and _in_unload_window(minute_f):
 		var on_cart: Array[Transform3D] = []
 		for i: int in mini(unload.size(), total):
 			on_cart.append(slot.global_transform * _cargo_rest(i, total))
@@ -766,13 +766,18 @@ func _play_unload() -> void:
 	_anim.speed_scale = real / designed if designed > 0.0 else 1.0
 
 
-## He is unloading or walking back to the handles right now (no prompt meanwhile).
-func _cart_busy(minute_f: float) -> bool:
-	if _tables == null or _held_entry != null:
+## The clock is between the start of the unloading and the end of the walk back.
+func _in_unload_window(minute_f: float) -> bool:
+	if _tables == null:
 		return false
 	var cfg := _cart_config()
-	var start := float(cfg.unload_start(_tables.delivery_minute))
-	if minute_f < start or minute_f >= float(_tables.delivery_minute + maxi(cfg.return_minutes, 0)):
+	return minute_f >= float(cfg.unload_start(_tables.delivery_minute)) \
+			and minute_f < float(_tables.delivery_minute + maxi(cfg.return_minutes, 0))
+
+
+## He is unloading or walking back to the handles right now (no prompt meanwhile).
+func _cart_busy(minute_f: float) -> bool:
+	if _held_entry != null or not _in_unload_window(minute_f):
 		return false
 	var now_load := _cart_load()
 	if minute_f < float(_tables.delivery_minute):

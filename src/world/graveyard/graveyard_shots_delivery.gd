@@ -5,7 +5,8 @@ extends RefCounted
 ## clock's accumulator) the frame settles and <out>/delivery_<hhmm>[_<tenth>]<suffix>.jpg is written. Every minute logs
 ## Osric's place, cart / cargo and the bier. --shots=0700,0754_2 picks shots; --suffix=_web (Compatibility renderer) /
 ## _before is appended; --before-set: the shot minutes of the old timing. --skip: the debug console's „time 07:25" right
-## after the start (timed, with the frame times before and after it) and then the same series. The HUD stays on (clock).
+## after the start (timed, with the frame times before and after it) and then the same series; --from=HHMM: a time skip
+## to that minute first (quicker partial sets). The HUD stays on (clock).
 
 const SETTLE_FRAMES := 30
 const STEP_FRAMES := 2
@@ -44,7 +45,7 @@ const TIMED_FRAMES := 5
 
 
 static func run(tree: SceneTree, world: Node3D, out: String, only: PackedStringArray, suffix: String, skip: bool,
-		before: bool = false) -> void:
+		before: bool = false, from_minute: int = -1) -> void:
 	var clock := tree.root.get_node(^"TimeManager")
 	var player := world.get_node(^"Player") as CharacterBody3D
 	var rig := world.get_node(^"CameraRig") as Node3D
@@ -79,6 +80,8 @@ static func run(tree: SceneTree, world: Node3D, out: String, only: PackedStringA
 		print("[ShotsDelivery] time 07:25 → %s · command %.1f ms · then %.1f ms per frame" % [
 				res, (t1 - t0) / 1000.0, (t2 - t1) / 1000.0 / TIMED_FRAMES])
 		_log(tree, world, manager, npc, "after skip")
+	if from_minute > int(clock.get(&"minute_of_day")):
+		clock.call(&"set_time", int(clock.get(&"day")), from_minute)
 	var shots := SHOTS_BEFORE if before else SHOTS
 	var spm := float((clock.get(&"config") as Resource).get(&"seconds_per_game_minute"))
 	var minute: int = int(clock.get(&"minute_of_day"))

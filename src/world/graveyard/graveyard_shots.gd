@@ -70,6 +70,7 @@ var _suffix: String = ""
 var _delivery: bool = false
 var _skip: bool = false
 var _before_set: bool = false
+var _from_minute: int = -1
 var _distance: float = 0.0
 
 
@@ -104,6 +105,9 @@ func _run() -> void:
 			_skip = true
 		elif arg == "--before-set":
 			_before_set = true
+		elif arg.begins_with("--from="):
+			var hhmm := arg.trim_prefix("--from=")
+			_from_minute = int(hhmm.left(2)) * 60 + int(hhmm.substr(2, 2))
 		elif arg.begins_with("--suffix="):
 			_suffix = arg.trim_prefix("--suffix=")
 		elif arg.begins_with("--distance="):
@@ -135,7 +139,7 @@ func _run() -> void:
 		quit()
 		return
 	if _delivery:
-		await Delivery.run(self, world, _out, _only, _suffix, _skip, _before_set)
+		await Delivery.run(self, world, _out, _only, _suffix, _skip, _before_set, _from_minute)
 		quit()
 		return
 	_stage(world)
