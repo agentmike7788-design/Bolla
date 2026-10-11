@@ -219,3 +219,27 @@ func test_browser_values_come_from_the_config() -> void:
 	world.add_child(pool)
 	await wait_frames(1)
 	assert_eq(pool.pool_size(), cfg.pool_for(true), "Compatibility: pool_size_compat")
+
+
+## §9 (Lichtgang ≤ +0,5 ms script time per frame): the whole pool with 16 carried lanterns walking.
+func test_sixteen_lanterns_stay_cheap() -> void:
+	var cam := Camera3D.new()
+	world.add_child(cam)
+	cam.global_position = Vector3(12.0, 14.0, 14.0)
+	cam.current = true
+	for i: int in 16:
+		_npc("b%d" % i, MODELS[i % MODELS.size()], Vector3((i % 8) * 2.5, 0, (i / 8) * 3.0), &"lantern_walk")
+	await wait_frames(2)
+	pool.settle()
+	assert_eq(pool.visible_lanterns().size(), 16)
+	for i: int in 20:
+		pool._process(0.016)
+	var t0 := Time.get_ticks_usec()
+	var frames := 200
+	for i: int in frames:
+		pool._process(0.016)
+	var per_frame := float(Time.get_ticks_usec() - t0) / frames / 1000.0
+	print("[CarriedLanterns] 16 lanterns: %.3f ms per frame (incl. a re-rank every %.1f s)" % [per_frame, pool.config.rank_interval])
+	assert_true(per_frame < 0.5, "16 lanterns ≤ 0.5 ms per frame (%.3f ms)" % per_frame)
+	assert_eq(pool.lights_in_use(), pool.pool_size())
+	assert_eq(pool.spot_count(), 16)
