@@ -63,7 +63,7 @@ Geprüft in drei Umgebungen:
 **Fix:** In `project.godot` steht jetzt `[editor] export/convert_text_resources_to_binary=false`. Ein neu exportiertes Web-pck zeigt danach denselben Ablauf wie das Projekt: Wege, Karren, Ladung, Abladen, 07:40 auf der Bahre (Bilder `delivery_game_*_web.jpg`).
 
 **Nebenbefund `time`-Sprung:** Nach einem Zeitsprung drehte sich Osrics Wurzel noch etwa 1 s lang von der alten Richtung herum. Der Karren schwang dabei bis zu 3 m um ihn, bei `time 07:35` zum Beispiel neben den Spieler. Im ersten Bild direkt nach dem Befehl stand er sogar noch am alten Ort.
-- Jetzt platziert sich jede Figur bei `time_skipped` sofort nach der Uhr (`Npc._on_time_skipped` → `refresh`).
+- Jetzt platziert sich Osric (die Figur mit Karren) bei `time_skipped` sofort nach der Uhr (`Npc._on_time_skipped` → `refresh`). Die übrigen Figuren bleiben bei ihrer Aktualisierung pro Bild, weil die Playthrough-Bots ihren Eintrag direkt nach einem Sprung lesen.
 - Sonst springt beim Befehl nichts:
   - Der Zeitplan wird nicht neu aufgesetzt.
   - Ein Sprung mitten ins Abladen zeigt ihn beim Abladen.
