@@ -327,7 +327,7 @@ TOOLS = {   # child name -> (tool-space builder, show_with, carry_with)
     "rake": (PR.rake_small, ("rake",), ("idle", "walk", "talk", "watch", "read_board", "oops")),
     "watering_can": (PR.watering_can, ("water", "carry_can_walk"), ("idle", "walk", "talk", "watch", "oops")),
     "broom": (PR.broom, ("sweep",), ("idle", "walk", "talk", "watch", "oops")),
-    "lantern": (lambda name: PR.lantern_hand(0.95, name), ("lantern_walk",), ("idle", "idle_low", "talk")),
+    "lantern": (lambda name: PR.lantern_hand(0.95, name), M.LANTERN_CLIPS, ("idle", "idle_low", "talk")),
 }
 
 

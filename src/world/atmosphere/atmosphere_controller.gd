@@ -8,6 +8,8 @@ extends Node
 signal preset_changed(preset: AtmospherePreset)
 
 const MINUTES_PER_DAY := 1440.0
+## G8 Runde 2: the browser renderer's values for the approved presets.
+const COMPAT_OVERRIDES := "res://data/atmosphere/compat_overrides.tres"
 
 @export var presets: Array[AtmospherePreset] = []
 @export var world_environment: WorldEnvironment
@@ -30,6 +32,8 @@ const MINUTES_PER_DAY := 1440.0
 @export var season_shift: PackedInt32Array = []
 
 var current_index: int = 0
+## G8 Runde 2: −1 = the running renderer (RendererInfo), 0 = Forward+, 1 = Compatibility (tests, measurements).
+var compat_override: int = -1
 
 var _blend: AtmospherePreset
 var _applied_minute: float = NAN
@@ -37,6 +41,8 @@ var _blend_warned: bool = false
 
 
 func _ready() -> void:
+	if _compat():
+		use_compat_overrides()
 	if time_driven and _blend_valid():
 		apply_time(_clock_minute())
 	elif not presets.is_empty():
@@ -49,6 +55,29 @@ func _process(_delta: float) -> void:
 	var minute := _clock_minute()
 	if is_nan(_applied_minute) or absf(minute - _applied_minute) >= reapply_step_minutes:
 		apply_time(minute)
+
+
+## G8 Runde 2: in the browser renderer the presets are replaced by copies with the values of
+## data/atmosphere/compat_overrides.tres (CompatOverrides; the approved files stay untouched).
+func use_compat_overrides(overrides: CompatOverrides = null) -> void:
+	if overrides == null:
+		overrides = load(COMPAT_OVERRIDES) as CompatOverrides if ResourceLoader.exists(COMPAT_OVERRIDES) else null
+	if overrides == null:
+		return
+	var copies := {}
+	for list: Array[AtmospherePreset] in [presets, blend_presets]:
+		for i: int in list.size():
+			var p := list[i]
+			if p == null or p.has_meta(&"preset_id"):
+				continue
+			var id := p.resource_path.get_file().get_basename()
+			if not copies.has(id):
+				copies[id] = overrides.apply_to(p, id)
+			list[i] = copies[id]
+
+
+func _compat() -> bool:
+	return RendererInfo.is_compat() if compat_override < 0 else compat_override == 1
 
 
 func cycle() -> void:
@@ -135,26 +164,29 @@ func _clock_minute() -> float:
 
 
 func _apply_values(p: AtmospherePreset) -> void:
+	# G8 Runde 2: the browser renderer gets its own correction (AtmospherePreset.compat_*; Forward+ untouched).
+	var compat := _compat()
 	sun.light_color = p.sun_color
-	sun.light_energy = p.sun_energy
+	sun.light_energy = p.sun_energy * (p.compat_sun_scale if compat else 1.0)
 	sun.rotation_degrees = p.sun_rotation_deg
 	sun.shadow_opacity = p.sun_shadow_opacity
 	var env := world_environment.environment
 	env.background_color = p.background_color
 	env.ambient_light_color = p.ambient_color
-	env.ambient_light_energy = p.ambient_energy
-	env.fog_light_color = p.fog_color
-	env.fog_density = p.fog_density
+	env.ambient_light_energy = p.ambient_energy * (p.compat_ambient_scale if compat else 1.0)
+	env.fog_light_color = p.fog_color.lerp(Color(p.compat_fog_color, 1.0), p.compat_fog_color.a) if compat else p.fog_color
+	env.fog_density = p.fog_density + (p.compat_fog_density if compat else 0.0)
 	env.volumetric_fog_density = p.volumetric_fog_density
 	env.volumetric_fog_albedo = p.volumetric_fog_albedo
 	env.volumetric_fog_emission = p.volumetric_fog_emission
-	env.tonemap_exposure = p.exposure
-	env.glow_intensity = p.glow_intensity
+	env.tonemap_exposure = p.exposure * (p.compat_exposure if compat else 1.0)
+	env.glow_intensity = p.glow_intensity * (p.compat_glow_scale if compat else 1.0)
 	env.adjustment_saturation = p.saturation
+	var warm := p.warm_light_scale * (p.compat_warm_light_scale if compat else 1.0)
 	for node: Node in get_tree().get_nodes_in_group("warm_lights"):
 		var light := node as Light3D
-		light.set_meta("scale", p.warm_light_scale)
-		light.light_energy = float(light.get_meta("base_energy", 1.0)) * p.warm_light_scale
+		light.set_meta("scale", warm)
+		light.light_energy = float(light.get_meta("base_energy", 1.0)) * warm
 		light.visible = light.light_energy > 0.01
 
 

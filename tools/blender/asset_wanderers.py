@@ -200,7 +200,7 @@ def kiepe(name: str = "kiepe"):
         elif kind == "cup":
             parts.append(L.part("cyl", PR.TIN_DARK, loc=at, radius=0.032, depth=0.05, vertices=7, paint_kw={"ao": 0.1, "top": 0.4}))
         else:
-            kl = _xform(PR.lantern_hand(0.7, "kl"), at + Vector((0, 0, 0.06)))
+            kl = _xform(PR.lantern_small(0.7, "kl"), at + Vector((0, 0, 0.06)))
             L.set_mat(kl, L.MAT_PAINTED)   # an unlit spare lantern (no glow by day)
             parts.append(kl)
     for k in range(5):   # little bells on a cord round the rim
@@ -281,9 +281,9 @@ def peddler():
     bpy.ops.object.modifier_apply(modifier=dec.name)
     kids = [M.child("kiepe", "spine", kiepe("kiepe"), ("idle", "walk", "talk", "kiepe_off", "kiepe_on", "idle_low")),
             M.child("kiepe_down", "root", down, ("offer",)),
-            M.child("lantern_prop", "arm_r", M.lantern_child(hands[-1]), ("lantern_walk",)),
+            M.child("lantern_prop", "arm_r", M.lantern_child(hands[-1]), M.LANTERN_CLIPS),
             M.child("staff", "arm_l", staff, ("idle", "walk", "talk", "offer", "kiepe_off", "kiepe_on", "idle_low",
-                                              "lantern_walk"))]
+                                              "lantern_walk", "lantern_idle"))]
     walk = _walk(24.0, 0.04, 14.0, 0.016, 3.0, 4.0, 4.0, lambda t: {"arm_l": (8.0 * math.sin(rig.TAU * t), 0, 0)})
     talk_keys = [(0.0, {"arm_r": (-40.0, -10.0, 18.0), "head": (2.0, 3.0, 4.0)}),
                  (0.2, {"arm_r": (-56.0, -16.0, 30.0), "head": (-2.0, -3.0, -3.0)}),

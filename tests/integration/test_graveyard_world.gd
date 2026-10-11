@@ -487,8 +487,9 @@ func test_only_foliage_and_grass_materials_are_animated() -> void:
 		if mat == null:
 			continue
 		var src := _shader_source(mat.shader.resource_path)
-		if file == "mat_emissive_warm.tres":
-			# G7 round 1: the flame glow flickers with TIME in fragment() only and without discard –
+		if file in ["mat_emissive_warm.tres", "mat_lantern_glass.tres"]:
+			# G7 round 1: the flame glow flickers with TIME in fragment() only and without discard (G8 Runde 2: the lantern
+			# glass alike) –
 			# Godot counts a material as animated (static shadow maps redrawn) only for vertex TIME or
 			# fragment TIME with discard.
 			var vertex_body := src.get_slice("void vertex()", 1).get_slice("\nvoid ", 0) if src.contains("void vertex()") else ""

@@ -177,9 +177,59 @@ BOUQUETS = {"heath": bouquet_heath, "fir": bouquet_fir, "straw": bouquet_straw, 
 
 # --- tools (tool space) -------------------------------------------------------------------------------
 
+MAT_LANTERN_GLASS = "mat_lantern_glass"   # G8 Runde 2: the panes glow translucent (additive), the flame shows through
+CANDLE_WAX = L.hexc("#E2D8C0")
+
+
 def lantern_hand(scale: float = 1.0, name: str = "lantern"):
-    """A small hand lantern hanging from its ring: iron cage, four warm glass panes (mat_emissive_warm),
-    a cap. The ring at the origin, the lantern below. <= 160 tris."""
+    """G8 Runde 2 (Lichtgang, user critique „die Laternen sind nur Leuchtpunkte"): a real hand lantern that
+    reads at game zoom – a square iron frame (four corner posts, top band, base plate), four warm glass panes
+    (mat_lantern_glass: translucent glow, the flame shows through), a pyramid roof with a little chimney, the
+    bow handle (bail) across the top, and inside a candle stub with its flame (mat_emissive_warm, the flame
+    shader). The bail's top at the origin (the grip), the lantern below; 0.27 m × 0.11 m at scale 1.
+    <= 190 tris (the figures' budgets: Hanne and Jakob have < 200 to spare)."""
+    s = scale
+    parts = []
+    # the bail: an arc from one side of the roof over the top (the grip at the origin) to the other
+    bail = [Vector((math.sin(a) * 0.05 * s, 0.0, (math.cos(a) - 1.0) * 0.05 * s - 0.004 * s))
+            for a in (math.radians(d) for d in (-100, -55, 0, 55, 100))]
+    parts.append(_p(sweep(bail, 0.0035 * s, n=3, name="bail"), IRON, var=0.1, ao=0.0, top=0.4))
+    # the roof: a four-sided pyramid (turned 45 deg to sit on the square frame) and the chimney with its cap
+    roof = L.prim("cone", loc=(0, 0, -0.082 * s), rot=(0, 0, 45), radius1=0.066 * s, radius2=0.016 * s, depth=0.04 * s,
+                  vertices=4)
+    parts.append(_p(roof, IRON, var=0.15, ao=0.0, top=0.45, hue_shift=IRON_LIGHT))
+    chim = L.prim("cyl", loc=(0, 0, -0.056 * s), rot=(0, 0, 45), radius=0.014 * s, depth=0.016 * s, vertices=4)
+    parts.append(_p(chim, IRON, var=0.1, ao=0.0, top=0.5))
+    # top band and base plate of the frame
+    band = L.prim("cube", loc=(0, 0, -0.106 * s), scale=(0.05 * s, 0.05 * s, 0.007 * s))
+    parts.append(_p(band, IRON, var=0.12, ao=0.0, top=0.35))
+    base = L.prim("cube", loc=(0, 0, -0.247 * s), scale=(0.054 * s, 0.054 * s, 0.011 * s))
+    parts.append(_p(base, IRON, var=0.15, ao=0.15, top=0.3, hue_shift=IRON_LIGHT))
+    # the glass: a square box of warm panes between band and base
+    glass = L.prim("cube", loc=(0, 0, -0.175 * s), scale=(0.043 * s, 0.043 * s, 0.062 * s))
+    L.paint(glass, GLASS, var=0.05, ao=0.0, top=0.0)
+    L.set_mat(glass, MAT_LANTERN_GLASS)
+    parts.append(glass)
+    # four corner posts (they stand just outside the panes: the dark frame reads against the glow)
+    for sx, sy in ((1, 1), (-1, 1), (-1, -1), (1, -1)):
+        x, y = sx * 0.046 * s, sy * 0.046 * s
+        parts.append(_p(L.tube((x, y, -0.1 * s), (x, y, -0.238 * s), 0.0042 * s, 3), IRON, var=0.1, ao=0.0))
+    # inside: a candle stub and its flame (a little bipyramid on the flame shader)
+    stub = L.prim("cyl", loc=(0, 0, -0.222 * s), radius=0.012 * s, depth=0.03 * s, vertices=4)
+    parts.append(_p(stub, CANDLE_WAX, var=0.06, ao=0.1, top=0.2))
+    up = L.prim("cone", loc=(0, 0, -0.179 * s), radius1=0.011 * s, radius2=0.0, depth=0.036 * s, vertices=4)
+    low = L.prim("cone", loc=(0, 0, -0.2025 * s), rot=(180, 0, 0), radius1=0.011 * s, radius2=0.0, depth=0.011 * s,
+                 vertices=4)
+    for f in (up, low):
+        L.paint(f, GLASS, var=0.0, ao=0.0, top=0.0)
+        L.set_mat(f, L.MAT_EMISSIVE)
+        parts.append(f)
+    return _join(parts, name)
+
+
+def lantern_small(scale: float = 1.0, name: str = "lantern"):
+    """The Phase-8 round-1 hand lantern (ring, six-sided cage) – kept for the spare lantern on Hanne's kiepe
+    (its mesh stays as approved). The ring at the origin, the lantern below. <= 160 tris."""
     s = scale
     parts = []
     parts.append(L.part("torus", IRON, loc=(0, 0, -0.012 * s), rot=(90, 0, 0), major_radius=0.016 * s, minor_radius=0.003 * s,

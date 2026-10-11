@@ -366,3 +366,44 @@ func _assert_applied(atmo: AtmosphereController, p: AtmospherePreset, label: Str
 			and is_equal_approx(env.adjustment_saturation, p.saturation) \
 			and is_equal_approx(lamp.light_energy, 2.0 * p.warm_light_scale)
 	assert_true(ok, "%s: scene does not match '%s'" % [label, p.display_name])
+
+
+# --- G8 Runde 2: the browser renderer's own values (AtmospherePreset.compat_*) ---
+
+func test_compat_values_apply_only_in_the_browser_renderer() -> void:
+	var atmo := _make([night])
+	await wait_frames(1)
+	atmo.compat_override = 0
+	atmo.apply(0)
+	_assert_applied(atmo, night, "Forward+: the preset as approved (ART STYLE LOCK)")
+	atmo.compat_override = 1
+	atmo.apply(0)
+	var env := atmo.world_environment.environment
+	assert_almost(env.fog_density, night.fog_density + night.compat_fog_density, 0.0001, "browser: depth fog for the missing volumetric fog")
+	assert_true(env.fog_light_color.is_equal_approx(night.fog_color.lerp(Color(night.compat_fog_color, 1.0), night.compat_fog_color.a)),
+			"browser: the fog colour of the in-scatter")
+	assert_almost(env.tonemap_exposure, night.exposure * night.compat_exposure, 0.0001)
+	assert_almost(atmo.sun.light_energy, night.sun_energy * night.compat_sun_scale, 0.0001)
+	assert_almost(env.ambient_light_energy, night.ambient_energy * night.compat_ambient_scale, 0.0001)
+	assert_almost(lamp.light_energy, 2.0 * night.warm_light_scale * night.compat_warm_light_scale, 0.0001)
+
+
+func test_browser_overrides_leave_the_approved_presets_alone() -> void:
+	var overrides := load(AtmosphereController.COMPAT_OVERRIDES) as CompatOverrides
+	assert_not_null(overrides, "data/atmosphere/compat_overrides.tres")
+	for id: String in ["dusk", "night", "deep_night"]:
+		var values: Dictionary = overrides.presets.get(id, {})
+		assert_true(float(values.get("compat_fog_density", 0.0)) > 0.0, "%s: browser fog (G8 Runde 2)" % id)
+	for id: String in ["day", "dawn"]:
+		assert_false(overrides.presets.has(id), "%s: no browser change by day" % id)
+	# the controller works on copies in the browser; the loaded presets keep their (default) compat fields
+	var atmo := _make_blend([night, dawn, day, dusk, night])
+	atmo.compat_override = 1
+	atmo.use_compat_overrides(overrides)
+	await wait_frames(1)
+	assert_false(atmo.blend_presets[0] == night, "a copy, not the approved resource")
+	assert_true(atmo.blend_presets[0] == atmo.blend_presets[4], "one copy per preset")
+	assert_true(atmo.blend_presets[1] == dawn, "no override: the preset itself")
+	assert_almost(night.compat_fog_density, 0.0, 0.00001, "the approved night untouched")
+	assert_almost(atmo.blend_presets[0].compat_fog_density, float(overrides.presets.night.compat_fog_density), 0.00001)
+	assert_eq(atmo.blend_presets[0].fog_density, night.fog_density, "every approved value kept")

@@ -232,6 +232,24 @@ def lantern_walk(walk_fn, side: int = 1, swing: float = 30.0):
     return fn
 
 
+def lantern_idle(side: int = 1, swing: float = 30.0, head: float = 9.0, lean: float = 3.0):
+    """G8 Runde 2 (Lichtgang): 90 frames standing with the light - the lantern arm held `swing` deg forward as in
+    lantern_walk (the lantern hangs plumb: the arm makes up for the small forward lean), the head a little
+    lowered, slow breathing, the weight shifting once; the free arm hangs."""
+    arm = "arm_l" if side > 0 else "arm_r"
+
+    def fn(t: float) -> dict:
+        s = math.sin(rig.TAU * t)
+        p = rig.add(rig.breathe(t, 0.6), rig.weight_shift(t, 0.5), PLANT,
+                    {"spine": (lean, 0.0, 0.0), "head": (head + 1.0 * s, 0.0, 0.0)})
+        p[arm] = (-swing - lean + 0.8 * s, 0.0, 0.0)
+        return p
+    return fn
+
+
+LANTERN_CLIPS = ("lantern_walk", "lantern_idle")
+
+
 def dance(lift: float = 0.035, sway: float = 4.0, arms: float = 72.0):
     """48 frames: swaying and stepping on the spot, the arms on the partner's shoulders (the turn round the
     couple's middle is done slowly by the Npc code)."""
@@ -271,6 +289,7 @@ def p8_actions(sets, walk_fn, *, kneel_pose=None, lantern_side: int = 1, lay=Non
         out.append(("knock", 20, knock(knock_side)))
     if "lantern" in sets:
         out.append(("lantern_walk-loop", 22, lantern_walk(walk_fn, lantern_side)))
+        out.append(("lantern_idle-loop", 90, lantern_idle(lantern_side)))
     if "dance" in sets:
         out.append(("dance-loop", 48, dance(**(dance_kw or {}))))
     if "clap" in sets:
@@ -430,7 +449,7 @@ def _woman(name: str, cfg: dict):
     if cfg["basket"]:
         kids.append(child("basket", "arm_l", _basket(hands[1], cfg["seed"]),
                           ("idle", "walk", "talk", "idle_low", "lay_flowers")))
-    kids.append(child("lantern_prop", "arm_l", lantern_child(hands[1]), ("lantern_walk",)))
+    kids.append(child("lantern_prop", "arm_l", lantern_child(hands[1]), LANTERN_CLIPS))
     sc = cfg["scale"]
     walk = _walk(21.0, 0.035, 12.0, 0.012, 2.5, 3.5, 3.0)
     talk_keys = [
@@ -602,7 +621,7 @@ def _man(name: str, cfg: dict):
     hat2 = hat.copy()
     hat2.data = hat.data.copy()
     bpy.context.collection.objects.link(hat2)
-    kids.append(child("hat_head", "head", hat, ("idle", "walk", "talk", "idle_low", "lay_flowers", "lantern_walk")))
+    kids.append(child("hat_head", "head", hat, ("idle", "walk", "talk", "idle_low", "lay_flowers", "lantern_walk", "lantern_idle")))
     # the hat in the hands: held by the brim in the right fist, the crown towards him, in front of the belly
     hz = c.z + s.z * 0.4
     m = (Matrix.Translation(hands[-1] + Vector((0.03, -0.04, -0.06))) @ Matrix.Rotation(math.radians(-80.0), 4, "X")
@@ -619,7 +638,7 @@ def _man(name: str, cfg: dict):
         place(bq, hands[-1] + Vector((0.0, -0.01, 0.0)), Matrix.Rotation(math.radians(30.0), 4, "X"))
         kids.append(child("bouquet", "arm_r", bq, ("idle", "walk", "talk", "idle_low", "lay_flowers")))
     lan_side = -1 if cfg["stick"] else 1
-    kids.append(child("lantern_prop", "arm_r" if lan_side < 0 else "arm_l", lantern_child(hands[lan_side]), ("lantern_walk",)))
+    kids.append(child("lantern_prop", "arm_r" if lan_side < 0 else "arm_l", lantern_child(hands[lan_side]), LANTERN_CLIPS))
     if bent:
         walk = _walk(15.0, 0.025, 7.0, 0.008, 2.5, 2.0, 2.0, lambda t: {"arm_l": (-6.0, 0.0, 0.0)})
         idle = _idle(1.0, 0.5, 1.0, lambda t: {"head": (6.0, 0, 0)})

@@ -119,6 +119,28 @@ func test_lights_evening_in_the_real_world() -> void:
 	fest.load_state(JSON.parse_string(JSON.stringify(saved)))
 	fest.post_load()
 	assert_eq(fest.save_state(), saved, "17:20 round trip")
+	# G8 Runde 2: everyone holds the light at the graves (lantern_idle, the lantern mesh shows); the carried lanterns
+	# get at most pool_size real lights, the candles give up as many, every lantern lays its spot.
+	var holding := 0
+	for node: Node in tree.get_nodes_in_group(&"npc"):
+		var npc := node as Npc
+		if npc == null or npc.region_id != &"graveyard" or not npc.is_present() or npc.current_animation() != &"lantern_idle":
+			continue
+		holding += 1
+		var name := "lantern" if npc.name == "npc_apprentice" else "lantern_prop"
+		assert_true(npc.prop_shown(name), "%s holds the lantern at 17:20" % npc.name)
+	assert_true(holding >= 3, "the procession holds its lanterns on the hill (%d)" % holding)
+	var lanterns := world.get_node_or_null("CarriedLanterns") as CarriedLanterns
+	assert_not_null(lanterns, "WorldRoot adds CarriedLanterns")
+	if lanterns != null:
+		lanterns.settle()
+		assert_true(lanterns.lights_in_use() <= lanterns.pool_size(), "≤ N real lantern lights")
+		assert_true(lanterns.visible_lanterns().size() >= 1, "lanterns in view")
+		assert_eq(lanterns.spot_count(), mini(lanterns.visible_lanterns().size(), CarriedLanterns.MAX_SPOTS), "a spot under every lantern")
+		if care is GraveCare:
+			(care as GraveCare).update_light_pool()
+			assert_true((care as GraveCare).active_lights() + lanterns.lights_in_use() <= GraveCare.LIGHT_POOL_SIZE,
+					"candles + lanterns within the candles' old budget")
 
 	# 18:00 the evaluation.
 	var rel := tree.get_first_node_in_group(&"relationships") as Relationships
