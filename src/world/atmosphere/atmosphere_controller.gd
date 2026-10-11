@@ -8,6 +8,8 @@ extends Node
 signal preset_changed(preset: AtmospherePreset)
 
 const MINUTES_PER_DAY := 1440.0
+## G8 Runde 2: the browser renderer's values for the approved presets.
+const COMPAT_OVERRIDES := "res://data/atmosphere/compat_overrides.tres"
 
 @export var presets: Array[AtmospherePreset] = []
 @export var world_environment: WorldEnvironment
@@ -39,6 +41,8 @@ var _blend_warned: bool = false
 
 
 func _ready() -> void:
+	if _compat():
+		use_compat_overrides()
 	if time_driven and _blend_valid():
 		apply_time(_clock_minute())
 	elif not presets.is_empty():
@@ -51,6 +55,29 @@ func _process(_delta: float) -> void:
 	var minute := _clock_minute()
 	if is_nan(_applied_minute) or absf(minute - _applied_minute) >= reapply_step_minutes:
 		apply_time(minute)
+
+
+## G8 Runde 2: in the browser renderer the presets are replaced by copies with the values of
+## data/atmosphere/compat_overrides.tres (CompatOverrides; the approved files stay untouched).
+func use_compat_overrides(overrides: CompatOverrides = null) -> void:
+	if overrides == null:
+		overrides = load(COMPAT_OVERRIDES) as CompatOverrides if ResourceLoader.exists(COMPAT_OVERRIDES) else null
+	if overrides == null:
+		return
+	var copies := {}
+	for list: Array[AtmospherePreset] in [presets, blend_presets]:
+		for i: int in list.size():
+			var p := list[i]
+			if p == null or p.has_meta(&"preset_id"):
+				continue
+			var id := p.resource_path.get_file().get_basename()
+			if not copies.has(id):
+				copies[id] = overrides.apply_to(p, id)
+			list[i] = copies[id]
+
+
+func _compat() -> bool:
+	return RendererInfo.is_compat() if compat_override < 0 else compat_override == 1
 
 
 func cycle() -> void:
@@ -138,7 +165,7 @@ func _clock_minute() -> float:
 
 func _apply_values(p: AtmospherePreset) -> void:
 	# G8 Runde 2: the browser renderer gets its own correction (AtmospherePreset.compat_*; Forward+ untouched).
-	var compat := RendererInfo.is_compat() if compat_override < 0 else compat_override == 1
+	var compat := _compat()
 	sun.light_color = p.sun_color
 	sun.light_energy = p.sun_energy * (p.compat_sun_scale if compat else 1.0)
 	sun.rotation_degrees = p.sun_rotation_deg

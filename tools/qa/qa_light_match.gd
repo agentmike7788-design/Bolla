@@ -113,7 +113,7 @@ func _apply_variant(world: Node3D, v: Dictionary) -> void:
 			var res := p as Resource
 			if res == null:
 				continue
-			var id := res.resource_path.get_file().get_basename()
+			var id := str(res.get_meta(&"preset_id", res.resource_path.get_file().get_basename()))
 			if presets.has(id):
 				var values: Dictionary = presets[id]
 				for key: String in values:
