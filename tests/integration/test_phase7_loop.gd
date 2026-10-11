@@ -20,7 +20,8 @@ const TIMEOUT := 600.0
 const SLOT := 95
 const FIXTURE := "slot_p6_day40_reverent"
 const BIER_STAND := Vector2(1.75, 9.2)
-const CRYPT_ACCESS := Vector2(-9.0, 9.1)
+## G8 round 2: the stair head of the turned crypt (layout buildings.sites[crypt].access).
+const CRYPT_ACCESS := Vector2(-6.89, 7.36)
 const MILESTONE_STAND := Vector2(9.0, 23.0)
 
 var saves_dir := TestCase.user_dir("test_saves_p7_loop")

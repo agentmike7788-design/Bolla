@@ -396,7 +396,7 @@ func load_state(data: Dictionary) -> void:
 	if presence is Dictionary:
 		var since: Variant = (presence as Dictionary).get("since", -1)
 		_presence_since = maxi(-1, int(since)) if (since is int or since is float) else -1
-		_presence_done = (presence as Dictionary).get("done", false) == true
+		_presence_done = _flag_value((presence as Dictionary).get("done", false))
 	var partners: Variant = data.get("danced", [])
 	if partners is Array:
 		for v: Variant in partners:
@@ -404,8 +404,8 @@ func load_state(data: Dictionary) -> void:
 				_danced.append(StringName(str(v)))
 	var result := StringName(str(data.get("lights_result", "")))
 	_lights_result = result if result in [FestivalRules.RESULT_ALL, FestivalRules.RESULT_SOME, FestivalRules.RESULT_NONE] else &""
-	_candles_given = data.get("candles", false) == true
-	_early_done = data.get("early", false) == true
+	_candles_given = _flag_value(data.get("candles", false))
+	_early_done = _flag_value(data.get("early", false))
 	_kin_lit.clear()
 	var lit: Variant = data.get("kin_lit", [])
 	if lit is Array:
@@ -626,3 +626,9 @@ func _rel_cfg() -> RelationshipConfig:
 		if relationship_config == null:
 			relationship_config = RelationshipConfig.new()
 	return relationship_config
+
+
+## A saved yes/no: true only for a real bool true (a damaged save may hold a string or a number there –
+## `== true` on a String is an engine error in GDScript 4).
+static func _flag_value(v: Variant) -> bool:
+	return v is bool and bool(v)

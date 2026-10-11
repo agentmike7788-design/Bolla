@@ -670,6 +670,20 @@ func _sanitize_places() -> void:
 		taken[key] = record.id
 
 
+## G8 round 2 (BuildingSite.free_area): a corpse lying on the ground outside that a moved building
+## would bury goes to `xform` (it stays on the ground; node and saved transform follow).
+func relocate_ground_corpse(id: String, xform: Transform3D) -> void:
+	var record := get_record(id)
+	if record == null or record.location != CorpseRecord.LOCATION_GROUND or record.room != &"":
+		return
+	push_warning("[CorpseManager] corpse '%s' lay inside a building / under the ground – moved to %s" % [id, xform.origin])
+	var node := _node(id)
+	if node != null:
+		CorpseNodePlacement.place(node, _container(), xform)
+	CorpseNodePlacement.store_transform(record, xform)
+	EventBus.corpse_updated.emit(id)
+
+
 func _misplaced(record: CorpseRecord, room: StringName, xform: Transform3D, why: String) -> void:
 	push_warning("[CorpseManager] saved corpse '%s' at %s/%s %s – put on the ground" % [record.id, record.location, record.slot_id, why])
 	var now := TimeManager.total_minutes()

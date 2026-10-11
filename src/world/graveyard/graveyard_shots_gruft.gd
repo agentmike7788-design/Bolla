@@ -14,13 +14,13 @@ const SHOTS: Array[Dictionary] = [
 	# The stair under the oak in the south-west corner of the Alter Hof, the dead on the bier at the gate.
 	{"name": "gruft_start_01_treppe", "minute": 480, "where": "bier", "focus": Vector2(-3.2, 6.6), "distance": 20.0},
 	# The gravekeeper carries the dead down the stair.
-	{"name": "gruft_start_02_hinab", "minute": 490, "where": "stair", "focus": Vector2(-9.0, 8.2), "distance": 11.0},
+	{"name": "gruft_start_02_hinab", "minute": 490, "where": "stair", "focus": Vector2(-8.2, 6.5), "distance": 11.0},
 	# Below: the dead on the crypt table, the gravekeeper beside it (room camera profile).
 	{"name": "gruft_start_03_gruft_tisch", "minute": 500, "where": "crypt"},
 ]
 ## Where the gravekeeper stands: at the bier, on the stair (x, z), in the crypt next to the table (room-local).
 const AT_BIER := Vector2(3.6, 7.4)
-const ON_STAIR := Vector2(-9.0, 8.7)
+const ON_STAIR := Vector2(-7.7, 6.8)
 const AT_TABLE := Vector2(0.95, 0.55)
 
 

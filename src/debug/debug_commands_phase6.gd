@@ -36,7 +36,7 @@ const MAX_CANDLES := 99
 const ROOMS: Array[StringName] = [&"hut", &"crypt", &"chapel", &"shed"]
 ## tp target -> [waypoint id, fallback position (§4.6)].
 const TP_TARGETS: Dictionary[String, Array] = {
-	"crypt": [&"tp_crypt", Vector3(-9.0, 0.0, 8.9)],
+	"crypt": [&"tp_crypt", Vector3(-6.68, 0.0, 7.5)],
 	"chapel": [&"tp_chapel", Vector3(4.5, 0.0, -21.0)],
 	"shed": [&"tp_shed", Vector3(-12.9, 0.0, -6.4)],
 }

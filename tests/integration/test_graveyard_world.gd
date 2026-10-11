@@ -1866,7 +1866,8 @@ func _capsule_free(p: Vector2) -> bool:
 
 # --- Phase 6 (docs/PHASE6_DESIGN.md §3.1, §4, §10 – W-Welt) ---------------------------------
 
-const P6_SITES := {"site_crypt": ["crypt", Vector2(-9.0, 6.9)], "site_chapel": ["chapel", Vector2(4.5, -25.5)],
+## G8 round 2: the crypt portal rotated in the south-west corner (rot_y 56°, facing the path).
+const P6_SITES := {"site_crypt": ["crypt", Vector2(-9.5, 5.6)], "site_chapel": ["chapel", Vector2(4.5, -25.5)],
 		"site_shed": ["shed", Vector2(-12.9, -9.0)]}
 const P6_DOORS := {"door_crypt": "crypt", "door_chapel": "chapel", "door_shed": "shed"}
 ## §4.5: gameplay zoom levels of the near-view check.
@@ -1896,7 +1897,8 @@ func test_phase6_system_nodes() -> void:
 		rects.append(Rect2(r[0], r[1], r[2], r[3]))
 	assert_eq(buildings.site_rects, rects, "Buildings.site_rects = layout.buildings.site_rects")
 	var crypt_rect := rects[0]
-	for p: Vector2 in [Vector2(-10.4, 5.6), Vector2(-7.6, 8.2), Vector2(-9.0, 8.7)]:
+	var crypt_site: Dictionary = layout.buildings.sites[0]
+	for p: Vector2 in [Vector2(-10.6, 6.6), Vector2(-7.5, 8.2), Vector2(-9.0, 4.4), _v2(crypt_site.access)]:
 		assert_true(crypt_rect.has_point(p), "crypt site rect covers footprint and access %s" % p)
 	var state := SaveManager.collect_state()
 	for id: String in SaveMigration.V5_EMPTY_NODES:
@@ -2076,7 +2078,7 @@ func test_phase6_routes_flood_fill() -> void:
 	var step := 0.125
 	var reached := _flood(Vector2(-5.67, -3.7), step, Rect2(-15.0, -31.0, 38.0, 42.0))
 	var targets := {
-		"bier": [_v2(layout.waypoints.dropoff), 0.5], "crypt access": [Vector2(-9.0, 8.9), 2.3],
+		"bier": [_v2(layout.waypoints.dropoff), 0.5], "crypt access": [_v2(layout.buildings.sites[0].access), 1.0],
 		"chapel door": [Vector2(4.5, -21.2), 1.0], "Kirchpforte (north side)": [Vector2(4.5, -20.9), 0.5],
 		"shed door": [Vector2(-12.8, -6.4), 1.0], "Pförtchen": [Vector2(-10.0, -11.6), 0.5],
 		"gate (Tor)": [Vector2(1.1, 10.4), 0.5], "Ostpforte": [Vector2(22.4, 0.0), 0.5],
@@ -2094,7 +2096,8 @@ func test_phase6_routes_flood_fill() -> void:
 				ok = true
 				break
 		assert_true(ok, "route hut door → %s (1.5 m capsule)" % name)
-	# The corridor between old_08 and the south fence (§4.1: ≥ 2.0 m): a 1.9 m cylinder passes.
+	# The corridor between old_08 and the south fence (§4.1: ≥ 2.0 m): a 1.9 m cylinder passes (G8 round 2: the
+	# flagstone walk to the crypt's stair head).
 	var wide := CylinderShape3D.new()
 	wide.radius = 0.95
 	wide.height = 1.0
@@ -2107,7 +2110,7 @@ func test_phase6_routes_flood_fill() -> void:
 		q.transform = Transform3D(Basis.IDENTITY, Vector3(p.x, world.ground_height(p) + 0.9, p.y))
 		assert_true(world.get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty(), "2 m past old_08 at x %.1f" % x)
 	# The gravekeeper's own capsule stands at each door (the last metre from the 1.5 m corridor).
-	for p: Vector2 in [Vector2(-9.0, 8.9), Vector2(4.5, -21.3), Vector2(-12.8, -6.5)]:
+	for p: Vector2 in [_v2(layout.buildings.sites[0].access), Vector2(4.5, -21.3), Vector2(-12.8, -6.5)]:
 		assert_true(_capsule_free(p), "the gravekeeper fits at the door %s" % p)
 
 
@@ -2116,8 +2119,13 @@ func test_phase6_routes_flood_fill() -> void:
 ## (1.2 m), the left / right eave, the ridge and the player's head (1.7 m) against the AABBs of every
 ## VisualInstance3D except ground, grass, particles, the building itself and the player. Door and
 ## head free, ≥ 3 of the 4 building points free; the model AABB ≥ 80 % in the frame, ≥ 3 % of it.
+## G8 round 2: an AABB hit counts only when the ray meets that object's mesh too (probe) – the turned
+## crypt's portal stands under the rim of the oak, whose crown AABB reaches down to the ground.
 func test_phase6_buildings_visible_from_the_gameplay_camera() -> void:
 	GameState.set_flag(&"buildings_open", true)
+	var probe := _p6_mesh_probe()
+	for i: int in 3:
+		await tree.physics_frame
 	var buildings := world.get_node("Systems/Buildings") as Buildings
 	var report: PackedStringArray = []
 	for level: int in [0, 1, 2, 3]:
@@ -2134,7 +2142,7 @@ func test_phase6_buildings_visible_from_the_gameplay_camera() -> void:
 				var pts := _p6_points(node, access)
 				var blocked := {}
 				for key: String in pts:
-					blocked[key] = _p6_blockers(eye, pts[key], [node])
+					blocked[key] = _p6_blockers(eye, pts[key], [node], probe)
 				var free_building := 0
 				for key: String in ["door", "eave_l", "eave_r", "ridge"]:
 					if (blocked[key] as PackedStringArray).is_empty():
@@ -2204,13 +2212,13 @@ func test_phase6_overview_and_no_new_occlusion() -> void:
 		accesses.append(_v2(p.pos) + Vector2(0.0, 1.6))
 	for d: Dictionary in layout.dirt_spots:
 		accesses.append(_v2(d.pos))
+	# G8 round 2: against the meshes (probe) – the AABB of the rotated crypt covers its whole forecourt.
 	for a: Vector2 in accesses:
 		var head := Vector3(a.x, world.ground_height(a) + 1.7, a.y)
 		for zoom: float in [12.0, 22.0]:
 			var eye := _p6_eye(a, zoom)
 			for node: Node3D in sites:
-				var box := _p6_model_aabb(node)
-				assert_true(box.intersects_segment(eye, head) == null, "%s hides the player at %s (zoom %d)" % [node.name, a, int(zoom)])
+				assert_false(_p6_ray_hits(space, eye, head, probe, node), "%s hides the player at %s (zoom %d)" % [node.name, a, int(zoom)])
 
 
 # --- Phase 6 helpers ---------------------------------------------------------------------------
@@ -2236,6 +2244,20 @@ func _p6_mesh_probe() -> int:
 		body.add_child(cs)
 		mi.add_child(body)
 	return FOLIAGE_PROBE_LAYER
+
+## Whether the segment eye → p meets a probe mesh of `node` (every hit along the segment, not just the first).
+func _p6_ray_hits(space: PhysicsDirectSpaceState3D, eye: Vector3, p: Vector3, mask: int, node: Node) -> bool:
+	var exclude: Array[RID] = []
+	for guard: int in 48:
+		var q := PhysicsRayQueryParameters3D.create(eye, p, mask, exclude)
+		var hit := space.intersect_ray(q)
+		if hit.is_empty():
+			return false
+		if node.is_ancestor_of(hit.collider as Node):
+			return true
+		exclude.append(hit.rid)
+	return false
+
 
 ## Camera position of the gameplay rig following a player at `at` (look_offset, bounds clamp).
 func _p6_eye(at: Vector2, zoom: float) -> Vector3:
@@ -2267,22 +2289,71 @@ func _p6_model_aabb(site: Node3D) -> AABB:
 
 
 ## Door (1.2 m at the front face), left / right eave (70 % up, rear quarter), ridge, player's head.
+## G8 round 2: in the building's own frame (its model AABB in site space) – the crypt is turned 56°, the
+## corners of its world AABB lie in the air beside it; eaves and ridge over the extent (x, z) of what
+## stands higher than UPPER_Y (for the crypt the portal, not the low stair shaft in front of it).
+## Unturned buildings with upright walls: the same points as before.
+const UPPER_Y := 1.6
+
+
 func _p6_points(site: Node3D, access: Vector2) -> Dictionary:
-	var box := _p6_model_aabb(site)
+	var box := _p6_local_aabb(site)
+	var upper := _p6_local_aabb(site, UPPER_Y)
+	box = AABB(Vector3(upper.position.x, box.position.y, upper.position.z), Vector3(upper.size.x, box.size.y, upper.size.z)) \
+			if upper.size.x > 0.0 else box
+	var front := _p6_local_aabb(site).end.z
 	var zf := box.position.z + box.size.z * 0.75
 	var eave_y := box.position.y + box.size.y * 0.7
-	var base := site.global_position.y
-	return {"door": Vector3(site.global_position.x, base + minf(1.2, box.size.y * 0.8), box.end.z - 0.1),
-			"eave_l": Vector3(box.position.x + 0.15, eave_y, zf), "eave_r": Vector3(box.end.x - 0.15, eave_y, zf),
-			"ridge": Vector3(box.get_center().x, box.end.y - 0.1, box.get_center().z),
+	var xf := site.global_transform
+	return {"door": xf * Vector3(0.0, minf(1.2, box.end.y * 0.8), front - 0.1),
+			"eave_l": xf * Vector3(box.position.x + 0.15, eave_y, zf), "eave_r": xf * Vector3(box.end.x - 0.15, eave_y, zf),
+			"ridge": xf * Vector3(box.get_center().x, box.end.y - 0.1, box.get_center().z),
 			"head": Vector3(access.x, world.ground_height(access) + 1.7, access.y)}
+
+
+## The model's AABB in the site's own frame (above_y: only of the mesh vertices higher than that).
+func _p6_local_aabb(site: Node3D, above_y: float = -INF) -> AABB:
+	var out := AABB()
+	var first := true
+	var model := site.get_node_or_null("Model")
+	if model == null:
+		return out
+	var inv := site.global_transform.affine_inverse()
+	for n: Node in model.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		var xf := inv * mi.global_transform
+		if above_y == -INF:
+			var b := xf * mi.get_aabb()
+			out = b if first else out.merge(b)
+			first = false
+			continue
+		for v: Vector3 in mi.mesh.get_faces():
+			var q := xf * v
+			if q.y <= above_y:
+				continue
+			if first:
+				out = AABB(q, Vector3.ZERO)
+				first = false
+			else:
+				out = out.expand(q)
+	return out
 
 
 ## VisualInstance3D AABBs on the segment eye → p (excluding ground, grass, particles, lights, the
 ## rooms, the player and `exclude`'s subtrees); their paths.
-func _p6_blockers(eye: Vector3, p: Vector3, exclude: Array) -> PackedStringArray:
+func _p6_blockers(eye: Vector3, p: Vector3, exclude: Array, probe_mask: int = 0) -> PackedStringArray:
 	var out := PackedStringArray()
 	var target := p + (eye - p).normalized() * 0.05
+	var meshed := {}
+	if probe_mask != 0:
+		var space := world.get_world_3d().direct_space_state
+		var skip_rids: Array[RID] = []
+		for guard: int in 64:
+			var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(eye, target, probe_mask, skip_rids))
+			if hit.is_empty():
+				break
+			meshed[(hit.collider as Node).get_parent()] = true
+			skip_rids.append(hit.rid)
 	for n: Node in world.find_children("*", "VisualInstance3D", true, false):
 		var v := n as VisualInstance3D
 		if v is Light3D or v is GPUParticles3D or v is CPUParticles3D or v is MultiMeshInstance3D or v is Label3D:
@@ -2298,6 +2369,8 @@ func _p6_blockers(eye: Vector3, p: Vector3, exclude: Array) -> PackedStringArray
 				or path.begins_with("HutInterior") or path.begins_with("Decor/Grass"):
 			continue
 		if (v.global_transform * v.get_aabb()).intersects_segment(eye, target):
+			if probe_mask != 0 and v is MeshInstance3D and not meshed.has(v):
+				continue
 			out.append(path)
 	return out
 
@@ -2612,6 +2685,23 @@ const P8_NPCS := {
 	"npc_robber": ["robber", "ph_chr_robber", ""],
 }
 const P8_CORNER := {"apprentice_board": "ApprenticeBoard", "apprentice_box": "ApprenticeBox", "rain_barrel": "RainBarrel"}
+## G8 round 2 (user: Gruft-Eingang zu klein, Treppe kaum sichtbar, am Zaun, passt nicht, „soll zum Weg zeigen"): the
+## crypt site turned towards the path with a wider, deeper stair, its door, site rect, flagstone walk (crypt_route,
+## paving), tp waypoint, two leaf spots beside the new portal, the pillar lanterns.
+const G8R2_CHANGES: Array[String] = [
+	"~buildings.sites[site_crypt].pos", "~buildings.sites[site_crypt].rot_y", "~buildings.sites[site_crypt].footprint",
+	"~buildings.sites[site_crypt].access", "~buildings.sites[site_crypt].height", "+buildings.sites[site_crypt]._g8",
+	"+buildings.sites[site_crypt].inscription",
+	"~buildings.sites[site_crypt].stair._comment", "~buildings.sites[site_crypt].stair.rect", "~buildings.sites[site_crypt].stair.top_z",
+	"~buildings.sites[site_crypt].stair.bottom_z", "~buildings.sites[site_crypt].stair.depth", "~buildings.sites[site_crypt].stair.landing",
+	"+buildings.sites[site_crypt].stair.foot", "~buildings.sites[site_crypt].stair.passage", "~buildings.sites[site_crypt].stair.cheeks",
+	"~buildings.sites[site_crypt].stair.cheek_height", "~buildings.sites[site_crypt].stair.cover_rect",
+	"~buildings.site_rects", "~buildings.crypt_route", "+buildings._paving", "+buildings.paving",
+	"~building_doors[door_crypt].pos", "~building_doors[door_crypt].rot_y", "~building_doors[door_crypt].stair_trigger.rect",
+	"~waypoints.tp_crypt", "~dirt_spots[dirt_y11].pos", "~dirt_spots[dirt_y11]._comment", "~dirt_spots[dirt_y12].pos",
+	"+dirt_spots[dirt_y12]._comment", "+lights._crypt_g8", "+lights.ph_bld_crypt_l3/light_lantern_1",
+	"+lights.ph_bld_crypt_l3/light_lantern_2",
+]
 
 
 ## §4.7 / §10: only L10–L15, A1–A4, G1–G2, the visitor spots / points / routes, the night and Lichtgang
@@ -2634,6 +2724,7 @@ func test_phase8_layout_diff_against_phase7() -> void:
 		"+_waypoints_phase8", "+_baked_phase8", "+visitor_spots", "+visitor_waypoints", "+visitor_routes",  # §4.2
 		"+atmosphere._season", "+atmosphere.season",  # W3 (G8, E8-1): the short November days
 	]
+	allowed.append_array(G8R2_CHANGES)
 	for id: String in P8_ROW3:
 		allowed.append("+plots[%s]" % id)
 	for id: String in P8_WAYPOINTS:
@@ -2650,9 +2741,20 @@ func test_phase8_layout_diff_against_phase7() -> void:
 	for c: String in allowed:
 		assert_true(c in changes, "listed change present: " + c)
 	assert_eq(layout.plots.slice(0, old.plots.size()), old.plots, "the approved plots unchanged")
-	for key: String in ["old_graves", "road", "hut", "tree", "buildings", "building_doors", "walkable_bounds", "camera_bounds",
-			"dirt_spots", "stations", "workyard", "props", "region_portals"]:
+	for key: String in ["old_graves", "road", "hut", "tree", "walkable_bounds", "camera_bounds", "stations", "workyard", "props",
+			"region_portals"]:
 		assert_eq(layout[key], old[key], key + " unchanged (§4.7)")
+	# G8 round 2: only the crypt (site, door, site rect, walk) and the two leaf spots beside it moved; the oak stays.
+	for d: Dictionary in old.dirt_spots:
+		if not d.id in ["dirt_y11", "dirt_y12"]:
+			assert_eq(_by_id(layout.dirt_spots, String(d.id)), d, String(d.id) + " unchanged")
+	for site: Dictionary in old.buildings.sites:
+		if site.id != "site_crypt":
+			assert_eq(_by_id(layout.buildings.sites, String(site.id)), site, String(site.id) + " unchanged")
+	for door: Dictionary in old.building_doors:
+		if door.id != "door_crypt":
+			assert_eq(_by_id(layout.building_doors, String(door.id)), door, String(door.id) + " unchanged")
+	assert_eq(layout.buildings.soul_lantern, old.buildings.soul_lantern, "soul lantern unchanged")
 	# L12 (W-Welt, round 1 images p8_24 / p8_03): forest.trees[7] east of the coach road, its crown south of the south
 	# fence; the bush at the south-west corner of row 3 a little west. Every other forest entry unchanged.
 	for i: int in old.forest.trees.size():
@@ -2844,3 +2946,102 @@ func _p8_probe() -> void:
 		cs.shape = shape
 		body.add_child(cs)
 		mi.add_child(body)
+
+
+# --- G8 round 2: the new crypt entrance (user: bigger, stair visible, free of the fence, old and
+# mossy, „der Eingang soll zum Weg zeigen") ------------------------------------------------------
+
+## The portal turned towards the path: its front (site +Z) points along the flagstone walk to the main
+## path at the gate (≤ 35°), the stair head is the access; the solid parts keep ≥ 1.0 m to the south
+## fence (the stair head ≈ 1.3 m), ≥ 0.4 m to the west fence (the portal's back in the corner) and ≥ 0.5 m
+## to every old grave; the oak did not move.
+func test_g8r2_crypt_faces_the_path_and_stands_free() -> void:
+	var site := world.get_node("Entities/site_crypt") as BuildingSite
+	var cfg: Dictionary = layout.buildings.sites[0]
+	var front := Vector2(site.global_basis.z.x, site.global_basis.z.z).normalized()
+	var to_path := (_v2(layout.waypoints.gate_inside) - _v2(cfg.access)).normalized()
+	var angle := absf(rad_to_deg(front.angle_to(to_path)))
+	assert_true(angle < 35.0, "the portal looks along the walk to the path (%.0f°)" % angle)
+	var route: Array = layout.buildings.crypt_route
+	assert_eq(_v2(route[0]), _v2(layout.waypoints.dropoff), "the walk starts at the bier")
+	assert_eq(_v2(route[route.size() - 1]), _v2(cfg.access), "the walk ends at the stair head")
+	var head := site.to_global(Vector3(0.0, 0.0, 3.15))
+	assert_true(Vector2(head.x, head.z).distance_to(_v2(cfg.access)) < 0.1, "the access is the stair head")
+	assert_eq(layout.tree, Phase8Fixtures.layout_p7().tree, "the old oak stays")
+	var corners: Array[Vector2] = []
+	for node: Node in site.get_node("Collision").get_children():
+		var shape := node as CollisionShape3D
+		if shape == null or shape.disabled or String(shape.name).begins_with("Stair"):
+			continue
+		var half := (shape.shape as BoxShape3D).size * 0.5
+		for sx: float in [-1.0, 1.0]:
+			for sz: float in [-1.0, 1.0]:
+				var p := shape.global_transform * Vector3(half.x * sx, 0.0, half.z * sz)
+				corners.append(Vector2(p.x, p.z))
+	assert_true(corners.size() >= 16, "the site's solid boxes")
+	for c: Vector2 in corners:
+		assert_true(9.6 - c.y >= 1.0, "≥ 1.0 m to the south fence: %s" % c)
+		assert_true(c.x - (-11.5) >= 0.4, "≥ 0.4 m to the west fence: %s" % c)
+		for g: Dictionary in layout.old_graves:
+			var local := (c - _v2(g.pos)).rotated(deg_to_rad(float(g.rot_y)))
+			var d := Vector2(maxf(absf(local.x) - 0.6, 0.0), maxf(maxf(-1.3 - local.y, local.y - 1.8), 0.0)).length()
+			assert_true(d >= 0.5, "%s: %s ≥ 0.5 m from the crypt (%.2f)" % [g.id, c, d])
+
+
+## The paved forecourt and flagstone walk: a mesh in Decor without collision reaching from the stair
+## head to the main path; no grass on the forecourt; two pillar lanterns at the stair head on every
+## level (no shadow, burning).
+func test_g8r2_paving_and_pillar_lanterns() -> void:
+	var paving := world.get_node_or_null("Decor/CryptPaving") as Node3D
+	assert_not_null(paving, "Decor/CryptPaving")
+	if paving == null:
+		return
+	assert_true(paving.find_children("*", "CollisionObject3D", true, false).is_empty(), "the slabs have no collision")
+	var box := _g8r2_aabb(paving)
+	assert_true(box.position.x < -7.0 and box.end.x > -1.0, "from the forecourt to the main path (%s)" % box)
+	var paving_cfg: Dictionary = layout.buildings.paving
+	var poly := PackedVector2Array()
+	for p: Array in paving_cfg.forecourt:
+		poly.append(_v2(p))
+	var on_paving := 0
+	for chunk: Node in world.get_node("Decor/Grass").get_children():
+		var mmi := chunk as MultiMeshInstance3D
+		if mmi == null:
+			continue
+		for i: int in mmi.multimesh.instance_count:
+			var o := mmi.global_transform * mmi.multimesh.get_instance_transform(i).origin
+			if Geometry2D.is_point_in_polygon(Vector2(o.x, o.z), poly):
+				on_paving += 1
+	assert_eq(on_paving, 0, "no grass tufts on the forecourt")
+	var buildings := world.get_node("Systems/Buildings") as Buildings
+	var ext := world.get_node("Entities/site_crypt/Exterior") as BuildingExterior
+	GameState.set_flag(&"buildings_open", true)
+	var alphas: Array[float] = []
+	for level: int in [1, 2, 3]:
+		buildings.load_state({"levels": {"crypt": level}})
+		buildings.apply_levels()
+		await tree.process_frame
+		ext.refresh()
+		var label := world.get_node("Entities/site_crypt/Model").find_child("Inscription", true, false) as Label3D
+		assert_not_null(label, "level %d: the carved inscription" % level)
+		if label != null:
+			assert_true(label.text.length() > 10, "level %d: inscription text" % level)
+			alphas.append(label.modulate.a)
+		var pillars :=ext.attached_lights().filter(func(l: OmniLight3D) -> bool: return String(l.get_meta(&"marker", "")).begins_with("light_lantern_"))
+		assert_eq(pillars.size(), 2, "level %d: two pillar lanterns" % level)
+		for light: OmniLight3D in pillars:
+			assert_false(light.shadow_enabled, "no shadow")
+			assert_true(float(light.get_meta(&"base_energy")) > 0.0, "level %d: the lantern burns" % level)
+	assert_true(alphas.size() == 3 and alphas[0] < alphas[1] and alphas[1] < alphas[2], "weathered → clear inscription %s" % [alphas])
+	GameState.clear_flag(&"buildings_open")
+
+
+func _g8r2_aabb(node: Node3D) -> AABB:
+	var out := AABB()
+	var first := true
+	for n: Node in node.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		var b := mi.global_transform * mi.get_aabb()
+		out = b if first else out.merge(b)
+		first = false
+	return out

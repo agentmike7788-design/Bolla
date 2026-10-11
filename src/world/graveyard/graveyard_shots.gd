@@ -18,6 +18,7 @@ const Shovel := preload("res://src/world/graveyard/graveyard_shots_shovel.gd")
 const Burial := preload("res://src/world/graveyard/graveyard_shots_burial.gd")
 const Tools := preload("res://src/world/graveyard/graveyard_shots_tools.gd")
 const Gruft := preload("res://src/world/graveyard/graveyard_shots_gruft.gd")
+const Gruft2 := preload("res://src/world/graveyard/graveyard_shots_gruft2.gd")
 const SETTLE_FRAMES := 40
 ## Frames after a measurement switch (shadows off / freeze) before the counters are read.
 const MEASURE_FRAMES := 4
@@ -60,6 +61,10 @@ var _tools: bool = false
 var _burial: bool = false
 ## --gruft: P8-pre – the crypt from the start of a game (graveyard_shots_gruft.gd; docs/reviews/phase8_pre).
 var _gruft: bool = false
+## --gruft2: G8 round 2 – the new crypt entrance (graveyard_shots_gruft2.gd; docs/reviews/phase8_round2);
+## --suffix=<s> is appended to its file names (_web, _before).
+var _gruft2: bool = false
+var _suffix: String = ""
 var _distance: float = 0.0
 
 
@@ -86,6 +91,10 @@ func _run() -> void:
 			_burial = true
 		elif arg == "--gruft":
 			_gruft = true
+		elif arg == "--gruft2":
+			_gruft2 = true
+		elif arg.begins_with("--suffix="):
+			_suffix = arg.trim_prefix("--suffix=")
 		elif arg.begins_with("--distance="):
 			_distance = arg.trim_prefix("--distance=").to_float()
 	if _out == "":
@@ -108,6 +117,10 @@ func _run() -> void:
 	var start := player.global_transform
 	if _gruft:
 		await Gruft.run(self, world, _out, _only)
+		quit()
+		return
+	if _gruft2:
+		await Gruft2.run(self, world, _out, _only, _suffix)
 		quit()
 		return
 	_stage(world)

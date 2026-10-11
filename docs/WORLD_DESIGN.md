@@ -166,3 +166,21 @@ Nicht bewegt: Hütte, Tisch (nur zur Laufzeit verborgen), Werkbank, Stationen, P
 
 **Sichtprüfung §4.5 (Test `test_graveyard_world.gd`, AABB-Strahlen, Stufen 0–3, Zoom 12/22/24):** Tür und Kopf überall frei. Freie Gebäudepunkte von 4: Gruft 3 (der First liegt in der AABB der Eichenkrone dahinter), Kapelle 4, Schuppen 4 (Stufe 0: 3). Im Bild bei Zoom 22 (Modellecken-Stichprobe der Mesh-Vertices): Gruft 100 %, Kapelle 82–100 %, Schuppen 100 %; Bildanteil Gruft 4,6–7,4 %, Kapelle 24–31 %, Schuppen 5–12 %. Übersicht (Mesh-Strahlen): Gruft von der Bahre und `tp_workyard` 5/5, Kapelle von `tp_north` 5/5, Schuppen von `tp_workyard` 5/5. Keine neue Verdeckung an Hüttentür, Stationen, Bahre, Grab- und Pflegestellen, Altgräbern, Ilses Platz.
 **Routen (Flood-Fill 1,5 m):** Hüttentür ↔ Bahre, Gruft-Zugang (die letzten ≈ 2 m zwischen Gruftfront und Südzaun sind 1,4 m breit – der Zugangsstreifen, mit der Spielerkapsel frei), Kirchpforte, Kapellentür, jedes Altgrab, Schuppentür, Pförtchen, Tor, Ostpforte, Stationszugänge; Gang an `old_08` vorbei ≥ 1,9 m. **Boden/Gras:** Boden flach unter den drei Footprints (+ 0,35 m), Trittspuren vor den Türen; Gras fehlt unter Footprints und Vorplätzen (1 m), Kirchhof × 0,6. Bau-Maske: Gruft-Rechtecke gesperrt, Weg Bahre → Gruft ROUTE, Kirchpforte ROUTE.
+
+## G8 Runde 2 – Gruft-Eingang neu (Benutzerkritik am Gruft-Eingang, Gate G8)
+
+Kritik: zu klein / wirkt wie eine Kiste · Treppe kaum zu sehen · steht direkt am Zaun · passt nicht zum Friedhof (hellgraues Mauerwerk, grüner Hügel) · „der Eingang soll zum Weg zeigen". Umsetzung (ersetzt die Gruft-Zeilen der Phase-6-Skizze oben):
+
+```
+ z  3,2       Eiche (−7,6|3,2) bleibt stehen – die Gruft liegt unter dem Rand ihrer Krone
+ z  5,6 GRUFT-PORTAL (−9,5|5,6), rot_y 56° → blickt nach Südosten, Treppe 1,6 m breit · 1,3 m tief nach vorn
+        Tür am Treppenfuß (−9,46|5,63) · Treppenkopf/Zugang (−6,89|7,36) · old_08 (−5,2|5,6) ≥ 0,65 m frei
+ z  7,4 ░ gepflasterter Vorplatz ░ → Plattenweg (crypt_route) südlich an old_08 vorbei, nördlich der Tafel → Hauptweg am Tor
+ z  9,6 ═══ Südzaun ═══ (Treppenkopf-Pfeiler ≥ 1,3 m davor) … Tor · Bahre (4,4|8,3)
+```
+
+- **Portal** (`ph_bld_crypt_l1…l3`, `tools/blender/asset_buildings_phase6.py`): versenktes Gruftportal 3 m breit, Giebel 3,0 m (Kreuz bis 3,6 m), Pilaster mit Basis und Kapitell, Gebälk mit Fries, Dreiecksgiebel; der Treppenschacht davor (Footprint lokal x −1,5…1,5 · z −0,85…2,75) mit sechs Stufen bis zum Absatz vor der Tür, hintere (+X) Stützmauer mit Brüstung, vordere (Kameraseite) niedrige Wange mit Eisengeländer, zwei Pfeiler mit Laternen am Treppenkopf (Marker `light_lantern_1/_2`, jede Stufe, ohne Schatten, Flackern). Dunkles, grünstichiges Mauerwerk mit Moos auf allen Simsen, Wasserläufen unter den Gesimsen, Flechten, Efeu an der Kameraseite; kein Grashügel mehr. Stufe 1 alt und verfallen (abgebrochenes Giebelkreuz, Riss, Bruchstück im Gras, viel Efeu), Stufe 2 ausgebessert (Kreuz, Kugeln, Kranz im Giebelfeld, Handlauf, Ranken am Geländer, weniger Efeu), Stufe 3 Namenstafel im Fries (Inschrift), Gittertor am Treppenfuß, Gitter-Laterne über der Tür.
+- **Lage**: Südwestecke Alter Hof wie bisher, aber gedreht und frei gestellt – Abstand Treppenkopf ↔ Südzaun ≥ 1,3 m, Portalrücken ↔ Westzaun ≥ 0,45 m (Rücken in der Ecke), kein Baum und kein Grab verschoben; nur die Laubstellen `dirt_y11` (−8,5|3,0) und `dirt_y12` (−6,6|3,7) rückten neben das Portal bzw. unter die Eiche.
+- **Vorplatz und Weg**: `buildings.paving` (Welt-Polygon `forecourt`, Breite 1,15 m entlang `crypt_route` ab x −0,1) – alte, eingesunkene Steinplatten `ph_env_crypt_paving` (aus `asset_ground_graveyard.py`, Weltkoordinaten, ohne Kollision), darunter dunkle, moosige Erde, kein Gras; nie näher als 0,2 m an einem Altgrab.
+- **Boden und Kollision**: Grube der Treppe im Boden (`stair.rect`, Tiefe 1,3 m + 0,3 m unter den Stufen), Rampe auf den Stufenkanten, Absatz `foot` vor der Tür, Wangen als Kollision (vorne bis 1,0 m – Geländer), der Bauplatz steht auf der Bodenhöhe hinter dem Portal (`site_xform`).
+- **Alte Spielstände**: Gruft-Position steht nicht im Stand. Wer beim Laden im Mauerwerk oder unter dem Boden steht (alte Treppe), landet am Treppenkopf (`BuildingSite.free_area`, Gravekeeper und liegende Leichen); Zier im neuen Bauplatz-Rechteck räumt `Buildings` einmal (Flag `crypt_site_moved_g8`).

@@ -21,8 +21,11 @@ const ARRIVE := 0.35
 ## (the lane west of the old graves, the earth path, the Birkenhang passage, west of plot_10,
 ## north of the row, the Kirchpforte); chapel → old_04.
 const TO_OLD_04: Array[Vector2] = [Vector2(-5.2, -3.4), Vector2(-2.2, -2.6), Vector2(0.6, -0.4), Vector2(2.9, 2.7)]
-const TO_CRYPT: Array[Vector2] = [Vector2(1.0, 3.2), Vector2(0.8, 7.9), Vector2(-3.0, 8.35), Vector2(-7.0, 8.4), Vector2(-9.0, 8.9)]
-const TO_CHAPEL: Array[Vector2] = [Vector2(-7.0, 8.4), Vector2(-3.0, 8.35), Vector2(0.8, 7.9), Vector2(-0.2, 2.5),
+## G8 round 2: to the crypt along its flagstone walk (crypt_route) up to the stair head.
+const TO_CRYPT: Array[Vector2] = [Vector2(1.0, 3.2), Vector2(0.8, 7.9), Vector2(-1.7, 7.8), Vector2(-3.6, 7.95), Vector2(-5.0, 8.2),
+		Vector2(-6.1, 7.95), Vector2(-6.89, 7.36)]
+const CRYPT_HEAD := Vector2(-6.89, 7.36)
+const TO_CHAPEL: Array[Vector2] = [Vector2(-6.1, 7.95), Vector2(-5.0, 8.2), Vector2(-3.6, 7.95), Vector2(-1.7, 7.8), Vector2(0.8, 7.9), Vector2(-0.2, 2.5),
 		Vector2(-1.2, -1.0), Vector2(1.2, -6.0), Vector2(4.5, -10.6), Vector2(4.5, -12.8), Vector2(1.2, -12.8), Vector2(0.6, -14.2),
 		Vector2(0.6, -18.9), Vector2(4.5, -19.0), Vector2(4.5, -20.9)]
 const CHAPEL_TO_OLD_04: Array[Vector2] = [Vector2(4.5, -19.0), Vector2(0.6, -18.9), Vector2(0.6, -14.2), Vector2(1.2, -12.8), Vector2(4.5, -12.8),
@@ -113,7 +116,7 @@ func test_phase6_loop_to_roof_and_earth_with_round_trips() -> void:
 	player.global_position = world.get_waypoint(&"dropoff") + Vector3(0.6, 0, 0.4)
 	manager.get_corpse_node(corpse_id).interact(player)
 	assert_eq(player.carried_id, corpse_id, "carried from the bier")
-	await _walk([Vector2(0.8, 7.9), Vector2(-3.0, 8.35), Vector2(-7.0, 8.4), Vector2(-9.0, 8.9)])
+	await _walk(TO_CRYPT.slice(1))
 	await _enter(&"crypt")
 	assert_true(is_instance_valid(player.carried), "the corpse came along into the crypt")
 	await _round_trip("in the crypt, carrying the corpse")
@@ -274,8 +277,8 @@ func _exit(id: StringName) -> void:
 	await _until_arrived()
 	assert_eq(player.interior_id, &"", "outside again")
 	if id == &"crypt":
-		# G7 round 1: out at the foot of the crypt stair – up it onto the graveyard.
-		await _walk([Vector2(-9.0, 9.2)])
+		# G7 round 1: out at the foot of the crypt stair – up it onto the graveyard (G8 round 2: to its head).
+		await _walk([CRYPT_HEAD])
 
 
 func _until_arrived() -> void:

@@ -52,7 +52,7 @@ const G8_SHOTS: Array[Dictionary] = [
 			"figures": [["npc_apprentice", Vector2(-6.1, 3.4), 295.0, &"rake", 0.4]]},
 	{"name": "p8_09_jakob_watches", "day": 56, "minute": 600, "focus": Vector2(-8.6, 2.6), "distance": 9.0,
 			"player": Vector2(-8.9, 2.6), "facing": 180.0, "player_clip": &"interact",
-			"figures": [["npc_apprentice", Vector2(-9.45, 3.95), Vector2(-8.9, 2.4), &"watch", 0.6]]},
+			"figures": [["npc_apprentice", Vector2(-9.7, 2.9), Vector2(-8.9, 2.4), &"watch", 0.6]]},
 	{"name": "p8_10a_jakob_waters", "day": 56, "minute": 700, "focus": Vector2(4.8, 2.4), "distance": 9.0,
 			"player": Vector2(9.0, 3.4), "facing": 270.0, "stage": "flowers_old_05",
 			"figures": [["npc_apprentice", Vector2(5.8, 1.55), Vector2(4.8, 1.0), &"water", 0.5]]},
