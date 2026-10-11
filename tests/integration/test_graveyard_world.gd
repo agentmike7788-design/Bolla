@@ -2119,8 +2119,13 @@ func test_phase6_routes_flood_fill() -> void:
 ## (1.2 m), the left / right eave, the ridge and the player's head (1.7 m) against the AABBs of every
 ## VisualInstance3D except ground, grass, particles, the building itself and the player. Door and
 ## head free, ≥ 3 of the 4 building points free; the model AABB ≥ 80 % in the frame, ≥ 3 % of it.
+## G8 round 2: an AABB hit counts only when the ray meets that object's mesh too (probe) – the turned
+## crypt's portal stands under the rim of the oak, whose crown AABB reaches down to the ground.
 func test_phase6_buildings_visible_from_the_gameplay_camera() -> void:
 	GameState.set_flag(&"buildings_open", true)
+	var probe := _p6_mesh_probe()
+	for i: int in 3:
+		await tree.physics_frame
 	var buildings := world.get_node("Systems/Buildings") as Buildings
 	var report: PackedStringArray = []
 	for level: int in [0, 1, 2, 3]:
@@ -2137,7 +2142,7 @@ func test_phase6_buildings_visible_from_the_gameplay_camera() -> void:
 				var pts := _p6_points(node, access)
 				var blocked := {}
 				for key: String in pts:
-					blocked[key] = _p6_blockers(eye, pts[key], [node])
+					blocked[key] = _p6_blockers(eye, pts[key], [node], probe)
 				var free_building := 0
 				for key: String in ["door", "eave_l", "eave_r", "ridge"]:
 					if (blocked[key] as PackedStringArray).is_empty():
@@ -2285,20 +2290,29 @@ func _p6_model_aabb(site: Node3D) -> AABB:
 
 ## Door (1.2 m at the front face), left / right eave (70 % up, rear quarter), ridge, player's head.
 ## G8 round 2: in the building's own frame (its model AABB in site space) – the crypt is turned 56°, the
-## corners of its world AABB lie in the air beside it. Unturned buildings: the same points as before.
+## corners of its world AABB lie in the air beside it; eaves and ridge over the extent (x, z) of what
+## stands higher than UPPER_Y (for the crypt the portal, not the low stair shaft in front of it).
+## Unturned buildings with upright walls: the same points as before.
+const UPPER_Y := 1.6
+
+
 func _p6_points(site: Node3D, access: Vector2) -> Dictionary:
 	var box := _p6_local_aabb(site)
+	var upper := _p6_local_aabb(site, UPPER_Y)
+	box = AABB(Vector3(upper.position.x, box.position.y, upper.position.z), Vector3(upper.size.x, box.size.y, upper.size.z)) \
+			if upper.size.x > 0.0 else box
+	var front := _p6_local_aabb(site).end.z
 	var zf := box.position.z + box.size.z * 0.75
 	var eave_y := box.position.y + box.size.y * 0.7
 	var xf := site.global_transform
-	return {"door": xf * Vector3(0.0, minf(1.2, box.end.y * 0.8), box.end.z - 0.1),
+	return {"door": xf * Vector3(0.0, minf(1.2, box.end.y * 0.8), front - 0.1),
 			"eave_l": xf * Vector3(box.position.x + 0.15, eave_y, zf), "eave_r": xf * Vector3(box.end.x - 0.15, eave_y, zf),
 			"ridge": xf * Vector3(box.get_center().x, box.end.y - 0.1, box.get_center().z),
 			"head": Vector3(access.x, world.ground_height(access) + 1.7, access.y)}
 
 
-## The model's AABB in the site's own frame.
-func _p6_local_aabb(site: Node3D) -> AABB:
+## The model's AABB in the site's own frame (above_y: only of the mesh vertices higher than that).
+func _p6_local_aabb(site: Node3D, above_y: float = -INF) -> AABB:
 	var out := AABB()
 	var first := true
 	var model := site.get_node_or_null("Model")
@@ -2307,17 +2321,39 @@ func _p6_local_aabb(site: Node3D) -> AABB:
 	var inv := site.global_transform.affine_inverse()
 	for n: Node in model.find_children("*", "MeshInstance3D", true, false):
 		var mi := n as MeshInstance3D
-		var b := (inv * mi.global_transform) * mi.get_aabb()
-		out = b if first else out.merge(b)
-		first = false
+		var xf := inv * mi.global_transform
+		if above_y == -INF:
+			var b := xf * mi.get_aabb()
+			out = b if first else out.merge(b)
+			first = false
+			continue
+		for v: Vector3 in mi.mesh.get_faces():
+			var q := xf * v
+			if q.y <= above_y:
+				continue
+			if first:
+				out = AABB(q, Vector3.ZERO)
+				first = false
+			else:
+				out = out.expand(q)
 	return out
 
 
 ## VisualInstance3D AABBs on the segment eye → p (excluding ground, grass, particles, lights, the
 ## rooms, the player and `exclude`'s subtrees); their paths.
-func _p6_blockers(eye: Vector3, p: Vector3, exclude: Array) -> PackedStringArray:
+func _p6_blockers(eye: Vector3, p: Vector3, exclude: Array, probe_mask: int = 0) -> PackedStringArray:
 	var out := PackedStringArray()
 	var target := p + (eye - p).normalized() * 0.05
+	var meshed := {}
+	if probe_mask != 0:
+		var space := world.get_world_3d().direct_space_state
+		var skip_rids: Array[RID] = []
+		for guard: int in 64:
+			var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(eye, target, probe_mask, skip_rids))
+			if hit.is_empty():
+				break
+			meshed[(hit.collider as Node).get_parent()] = true
+			skip_rids.append(hit.rid)
 	for n: Node in world.find_children("*", "VisualInstance3D", true, false):
 		var v := n as VisualInstance3D
 		if v is Light3D or v is GPUParticles3D or v is CPUParticles3D or v is MultiMeshInstance3D or v is Label3D:
@@ -2333,6 +2369,8 @@ func _p6_blockers(eye: Vector3, p: Vector3, exclude: Array) -> PackedStringArray
 				or path.begins_with("HutInterior") or path.begins_with("Decor/Grass"):
 			continue
 		if (v.global_transform * v.get_aabb()).intersects_segment(eye, target):
+			if probe_mask != 0 and v is MeshInstance3D and not meshed.has(v):
+				continue
 			out.append(path)
 	return out
 
