@@ -111,3 +111,31 @@ Der Frame-Zeit-Vergleich an/aus (`--cpu`, gepaarte Proben) war in der Cloud nich
 ## 6. Bilder
 
 Siehe `README` im Gate-Bericht / Kontaktblatt `p8_contact_sheet_final.jpg`. Neu gerendert nach allen Fixes (1280 × 720, echter Renderer): Friedhof `p8_02…p8_27`, `p8_vis_*`, `perf_p8_01…03`; Dorf `p8_14…p8_20`, `p8_28`, `perf_p8_04/05`; UI `ui_p8_*`; Compatibility-Renderer `p8_08_web`, `p8_12_web`, `p8_22_web`.
+
+## 7. G8 Runde 1 – Benutzerentscheidungen umgesetzt (Branch `vs/g8-balance`)
+
+Der Benutzer hat die vier offenen Punkte freigegeben („die 4 offenen Punkte kannst du alle machen"). Vertrag: `docs/PHASE8_DESIGN.md` „(G8 Runde 1 angepasst)", Regressionstests `tests/unit/test_g8_round1.gd`, `tests/integration/test_g8_round1.gd`, `test_ui_phase8.gd` (Woher-Zeile), Bot-Grenzen `test_phase8_playthrough.gd`.
+
+| Punkt | Umsetzung | Werte alt → neu |
+|---|---|---|
+| E8-1 Licht | bestätigt, nichts geändert | – |
+| B8-1 Besuche | Haushalte warten nach dem Ansehen **immer** auf ein Wort, bis 100 Min, nie über 16:30, 3 Min nach dem Gespräch gehen sie; Bewohner 18 Min (Theres bleibt bis 15:30, Liesel bis 12:00); die Figur bleibt jetzt auch wirklich am Grab stehen (vorher lief sie nach dem Ansehen weg, während Visitors „wartet" meldete); **Torglocke** am östlichen Torpfeiler (`ph_prop_gate_bell`, `GateBell`, Cue `gate_bell`), HUD „Am Tor läutet es – {Name} kommt herauf." nur auf dem Friedhof | `wait_minutes` 10 → 100 · neu `wait_min_minutes` 10, `wait_until_minute` 990, `wait_minutes_villager` 18, `leave_after_talk_minutes` 3, `wait_always` true, `bell_cue` gate_bell · Theres-/Liesel-Besuch 910 → 930 / 640 → 720 (`build_phase8_schedules.py`) |
+| E8-2 Münzen | Pflegegeld nach Bedarf: ab `p8_open` bleibt es an Tagen mit ≥ 80 Münzen (Beutel + Truhen + Lohndose) in der Gemeindekasse (Notiz von Fenner); Phase-3-Staffel unverändert | neu `ReputationConfig.stipend_purse_cap` 80, `stipend_cap_flag` p8_open |
+| B8-3 Trinkgeld Anatom | Gerede dorfweit: jedes Trinkgeld −1, sobald je ein Präparat verkauft wurde | neu `VisitorConfig.rumor_tip_malus` 1, `rumor_stat` specimens_sold |
+| B8-2 Vase | Wunschtext nennt die Werkbank, die Wunschkarte zeigt „Woher: Grabvase: an der Werkbank (15 Min) aus 1 Stein und 1 Samen – Samen gibt es bei Theres im Krämerladen. Dann im Baumodus [B] dicht ans Grab stellen." | neu `WishData.source_text`; `w_vase.ask_text` |
+
+Bot vorher (G8 Runde 1-Abgabe) → nachher (10 Tage; `founder8` bis zum Kapitel):
+
+| Strategie | Kapitel (Tag / B) | Münzen Start → Ende (Δ) | morgens min. | Besuche verpasst | Trinkgeld | Pflegegeld |
+|---|---|---|---|---|---|---|
+| kindly8 | 62 / B10 → 62 / B10 | 48 → 70 (+22) → 48 → 68 (+20) | 24 → 24 | 10 von 19 (53 %) → **1 von 19 (5 %)** | 10 → 10 | 40 → 40 |
+| anatomist8 | 61 / B8 → 61 / B8 | 60 → 126 (+66) → 60 → 103 (**+43**) | 49 → 47 | 10 von 20 → 1 von 20 | 12 → **5** | 40 → 24 |
+| night8 / night8b | 61 / B9 → 61 / B9 | 48 → 113 (+65) → 48 → 101 (**+53**) | 28 → 28 | 10 von 19 → 1 von 19 | 10 → 10 | 40 → 28 |
+| lazy8 | – → – (gewollt) | 48 → 170 (+122) → 48 → 140 (**+92**) | 48 → 48 | 3 von 17 → 1 von 17 | 0 → 0 | 40 → 8 |
+| founder8 | 63 / B16 → **60 / B13** | 52 → 41 (−11) → 52 → 57 (+5) | 47 → 52 | 17 von 30 → 3 von 24 | 5 → 11 | 64 → 36 |
+| save_load8 | = kindly8 | = kindly8 (zeilengleich) | | | | |
+
+- `night8` liegt mit +53 knapp über +50: Er kauft kein Gitter und keine Kerzen (die Nachtwache ersetzt sie – `kindly8` kauft dafür drei Gitter, ≈ 28 Münzen) und hat nur an drei Morgen ≥ 80. Eine Grenze von 76 träfe auch `kindly8` (morgens bis 75) – deshalb 80 und „grob im Band".
+- `lazy8` bleibt absichtlich höher: kein Lohn, keine Kerzen, Setzlinge oder Gitter; die Gemeinde zahlt ihm ab 80 Münzen nichts mehr (−32), er verdient aber weiter an Begräbnissen und Aufträgen aus Phase 5–7.
+- `founder8` endet unter +15, weil er baut und kauft (Dorf 117) – morgens nie unter 52, Kapitel früher als vorher (die wartenden Besucher bringen die Wünsche schneller).
+- Bild Torglocke: `docs/reviews/phase8_round2/torglocke.jpg` (`graveyard_shots_phase8.gd --shots=g8`).
