@@ -316,12 +316,29 @@ func apply_procession() -> void:
 				route = to_spot
 		var back := route.duplicate()
 		back.reverse()
-		var entries: Array[ScheduleEntry] = [
-			ScheduleBuilder.walk(ROAD_END, route, int(entry.arrive), GRAVEYARD_REGION, world),
-			ScheduleBuilder.stay(spot, int(entry.at_grave), &"mourn_stand" if not graves.is_empty() else &"idle"),
-			ScheduleBuilder.walk(spot, back, int(entry.leave), GRAVEYARD_REGION, world),
-		]
+		# G8 Runde 2 (Lichtgang): everyone carries the light up, holds it at the grave / on the Kirchhof and carries it
+		# down again (effects walk_anim / stand_anim[_grave]; the lantern mesh shows with these clips, CarriedLanterns
+		# gives it light). A model without the clip falls back to walk / mourn_stand / idle.
+		var stand_anim := _anim_or(npc, StringName(str(f.effects.get("stand_anim_grave" if not graves.is_empty() else "stand_anim", ""))),
+				&"mourn_stand" if not graves.is_empty() else &"idle")
+		var up := ScheduleBuilder.walk(ROAD_END, route, int(entry.arrive), GRAVEYARD_REGION, world)
+		var down := ScheduleBuilder.walk(spot, back, int(entry.leave), GRAVEYARD_REGION, world)
+		var gait := StringName(str(f.effects.get("walk_anim", "")))
+		if gait != &"":
+			up.animation = gait
+			down.animation = gait
+		var entries: Array[ScheduleEntry] = [up, ScheduleBuilder.stay(spot, int(entry.at_grave), stand_anim), down]
 		npc.call(&"set_runtime_schedule", ScheduleBuilder.build(entries))
+
+
+## `anim` if the figure's model has that clip (and anim is set), else `fallback`.
+static func _anim_or(npc: Node, anim: StringName, fallback: StringName) -> StringName:
+	if anim == &"":
+		return fallback
+	var player: Variant = npc.call(&"animation_player") if npc.has_method(&"animation_player") else null
+	if player is AnimationPlayer and not (player as AnimationPlayer).has_animation(anim):
+		return fallback
+	return anim
 
 
 ## Runtime schedules are not saved: rebuilt from plan + clock.

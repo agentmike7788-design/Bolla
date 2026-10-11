@@ -51,6 +51,10 @@ func _ready() -> void:
 		push_warning("[WorldRoot] Systems/CorpseManager or Systems/Graveyard missing")
 	_ground_receives_shadows_only()
 	_foliage_out_of_warm_shadows()
+	# G8 Runde 2 (Lichtgang): the light of the lanterns the figures carry (pool lights, spots, flicker, swing) –
+	# a runtime helper without state, for every region of the world.
+	if get_node_or_null(^"CarriedLanterns") == null:
+		add_child(CarriedLanterns.new())
 	EventBus.section_unlocked.connect(_on_section_unlocked)
 	EventBus.game_loaded.connect(_on_game_loaded)
 	_announce.call_deferred()

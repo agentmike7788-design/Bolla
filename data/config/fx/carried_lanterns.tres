@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="LanternLightConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/world/fx/lantern_light_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+pool_size = 4
+pool_size_compat = 4
+candle_pool_min = 2
+light_color = Color(0.949, 0.659, 0.353, 1)
+light_energy = 1.15
+light_energy_compat = 1.15
+light_range = 3.6
+light_attenuation = 1.3
+fade_seconds = 0.45
+rank_interval = 0.5
+spot_radius = 1.6
+spot_energy = 0.32
+spot_energy_compat = 0.32
+spot_color = Color(1, 0.62, 0.3, 1)
+spot_under_light = 0.25
+spot_lift = 0.05
+glass_energy = 0.75
+glass_energy_compat = 0.75
+flame_energy = 1.3
+flame_energy_compat = 1.3
+flicker_profile = &"carried_lantern"
+swing_degrees = 7.0
+swings_per_cycle = 2.0
+sway_degrees = 1.2
+sway_frequency = 0.35
+swing_distance = 30.0

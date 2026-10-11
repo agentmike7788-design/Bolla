@@ -44,5 +44,8 @@ effects = {
 "candles_line": "Osric: „Für die, zu denen keiner hinaufgeht.“ – 12 Grabkerzen vom Pfarrer.",
 "candle_item": &"grave_candle",
 "speech": "Wir zünden kein Licht für Gott an. Der sieht auch so. Wir zünden es für die an, die den Weg vergessen haben. Und für die, die noch hier unten sind und ihn suchen.",
-"speech_minute": 1060
+"speech_minute": 1060,
+"walk_anim": &"lantern_walk",
+"stand_anim": &"lantern_idle",
+"stand_anim_grave": &"lantern_idle"
 }

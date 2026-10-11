@@ -403,7 +403,7 @@ def _p8(name: str, mesh, actions):
     kids = []
     if "lantern" in cfg["sets"]:
         bone = "arm_l" if side > 0 else "arm_r"
-        kids.append(M.child("lantern_prop", bone, M.lantern_child(_fist(mesh, bone)), ("lantern_walk",)))
+        kids.append(M.child("lantern_prop", bone, M.lantern_child(_fist(mesh, bone)), M.LANTERN_CLIPS))
     return extra, kids
 
 

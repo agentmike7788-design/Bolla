@@ -567,13 +567,27 @@ func update_light_pool() -> void:
 			light.visible = false
 			add_child(light)
 			_lights.append(light)
+	# G8 Runde 2 (Lichtgang): the carried lanterns' pool lights come out of the candles' share (the scene keeps its
+	# light budget, §9) – down to LanternLightConfig.candle_pool_min.
+	var share := _lights.size() - _lantern_lights_in_use()
 	for i: int in _lights.size():
 		var light := _lights[i]
-		if i < ranked.size():
+		if i < ranked.size() and i < share:
 			light.global_position = (ranked[i][2] as Vector3) + Vector3(0.0, LIGHT_HEIGHT, 0.0)
 			light.visible = true
 		else:
 			light.visible = false
+
+
+## Pool lights the carried lanterns use now, so many candle lights stay dark (CarriedLanterns, ≥ candle_pool_min left).
+func _lantern_lights_in_use() -> int:
+	var pool := _first(&"carried_lanterns")
+	if pool == null or not pool.has_method(&"lights_in_use"):
+		return 0
+	var used := int(pool.call(&"lights_in_use"))
+	var cfg: Variant = pool.get(&"config")
+	var keep := int((cfg as Resource).get(&"candle_pool_min")) if cfg is Resource else 2
+	return clampi(used, 0, maxi(LIGHT_POOL_SIZE - keep, 0))
 
 
 ## Visible pool lights (tests, perf probe).

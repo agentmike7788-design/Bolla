@@ -26,3 +26,18 @@ extends Resource
 @export_group("Warm lights")
 ## Multiplier for every light in group "warm_lights" (lanterns, candles, windows).
 @export var warm_light_scale: float = 1.0
+@export_group("Browser (Compatibility renderer)")
+## G8 Runde 2 (Licht, user critique „im Browser wirkt der Lichtgang heller"): the Compatibility renderer (web build)
+## has no volumetric fog and no SSAO – the same preset there reads much brighter at dusk and night. These values
+## apply only there (AtmosphereController, RendererInfo.is_compat()); Forward+ ignores them (ART STYLE LOCK).
+## Defaults = no change. Exposure × compat_exposure, sun × compat_sun_scale, ambient × compat_ambient_scale.
+@export var compat_exposure: float = 1.0
+@export var compat_sun_scale: float = 1.0
+@export var compat_ambient_scale: float = 1.0
+## Added to fog_density (the depth fog stands in for the missing volumetric fog) and the fog colour there
+## (alpha = how far fog_color moves towards it).
+@export var compat_fog_density: float = 0.0
+@export var compat_fog_color: Color = Color(0, 0, 0, 0)
+## Glow × compat_glow_scale; warm lights (lanterns, windows) × compat_warm_light_scale.
+@export var compat_glow_scale: float = 1.0
+@export var compat_warm_light_scale: float = 1.0

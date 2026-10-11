@@ -30,6 +30,8 @@ const MINUTES_PER_DAY := 1440.0
 @export var season_shift: PackedInt32Array = []
 
 var current_index: int = 0
+## G8 Runde 2: −1 = the running renderer (RendererInfo), 0 = Forward+, 1 = Compatibility (tests, measurements).
+var compat_override: int = -1
 
 var _blend: AtmospherePreset
 var _applied_minute: float = NAN
@@ -135,26 +137,29 @@ func _clock_minute() -> float:
 
 
 func _apply_values(p: AtmospherePreset) -> void:
+	# G8 Runde 2: the browser renderer gets its own correction (AtmospherePreset.compat_*; Forward+ untouched).
+	var compat := RendererInfo.is_compat() if compat_override < 0 else compat_override == 1
 	sun.light_color = p.sun_color
-	sun.light_energy = p.sun_energy
+	sun.light_energy = p.sun_energy * (p.compat_sun_scale if compat else 1.0)
 	sun.rotation_degrees = p.sun_rotation_deg
 	sun.shadow_opacity = p.sun_shadow_opacity
 	var env := world_environment.environment
 	env.background_color = p.background_color
 	env.ambient_light_color = p.ambient_color
-	env.ambient_light_energy = p.ambient_energy
-	env.fog_light_color = p.fog_color
-	env.fog_density = p.fog_density
+	env.ambient_light_energy = p.ambient_energy * (p.compat_ambient_scale if compat else 1.0)
+	env.fog_light_color = p.fog_color.lerp(Color(p.compat_fog_color, 1.0), p.compat_fog_color.a) if compat else p.fog_color
+	env.fog_density = p.fog_density + (p.compat_fog_density if compat else 0.0)
 	env.volumetric_fog_density = p.volumetric_fog_density
 	env.volumetric_fog_albedo = p.volumetric_fog_albedo
 	env.volumetric_fog_emission = p.volumetric_fog_emission
-	env.tonemap_exposure = p.exposure
-	env.glow_intensity = p.glow_intensity
+	env.tonemap_exposure = p.exposure * (p.compat_exposure if compat else 1.0)
+	env.glow_intensity = p.glow_intensity * (p.compat_glow_scale if compat else 1.0)
 	env.adjustment_saturation = p.saturation
+	var warm := p.warm_light_scale * (p.compat_warm_light_scale if compat else 1.0)
 	for node: Node in get_tree().get_nodes_in_group("warm_lights"):
 		var light := node as Light3D
-		light.set_meta("scale", p.warm_light_scale)
-		light.light_energy = float(light.get_meta("base_energy", 1.0)) * p.warm_light_scale
+		light.set_meta("scale", warm)
+		light.light_energy = float(light.get_meta("base_energy", 1.0)) * warm
 		light.visible = light.light_energy > 0.01
 
 

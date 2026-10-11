@@ -41,6 +41,10 @@ const LANTERN_ENERGY := 2.2
 const LANTERN_RANGE := 4.5
 const LANTERN_ATTENUATION := 1.8
 const LANTERN_FALLBACK := Vector3(-0.25, 0.9, 0.2)
+## G8 Runde 2: child meshes named lantern* (lantern_prop, Jakob's lantern) are carried lanterns (CarriedLanterns.GROUP).
+const LANTERN_PROP_PREFIX := "lantern"
+const LANTERN_BLIND := "lantern_blind"
+const CARRIED_LANTERN_GROUP := &"carried_lantern"
 
 @export var save_id: String = ""
 @export var save_order: int = 20
@@ -235,6 +239,11 @@ func flag_allows() -> bool:
 		return requires_flag == &""
 	var v: Variant = GameState.get_flag(requires_flag)
 	return not (typeof(v) == TYPE_BOOL and not v)
+
+
+## The model's AnimationPlayer (CarriedLanterns: the gait phase for the lantern's swing).
+func animation_player() -> AnimationPlayer:
+	return _anim
 
 
 func lantern() -> OmniLight3D:
@@ -566,6 +575,10 @@ func _collect_props() -> void:
 					_names(node3d.get_meta(&"hide_with", extras.get("hide_with", ""))),
 					StringName(str(node3d.get_meta(&"hide_after", extras.get("hide_after", "")))),
 					_names(node3d.get_meta(&"carry_with", extras.get("carry_with", "")))])
+			# G8 Runde 2 (Lichtgang): a carried lantern (not Lambert's hooded one) gets its light, spot, flicker and
+			# swing from CarriedLanterns.
+			if String(node3d.name).begins_with(LANTERN_PROP_PREFIX) and not String(node3d.name).begins_with(LANTERN_BLIND):
+				node3d.add_to_group(CARRIED_LANTERN_GROUP)
 	_carry_cache.clear()
 
 
