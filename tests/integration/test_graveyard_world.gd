@@ -2284,15 +2284,33 @@ func _p6_model_aabb(site: Node3D) -> AABB:
 
 
 ## Door (1.2 m at the front face), left / right eave (70 % up, rear quarter), ridge, player's head.
+## G8 round 2: in the building's own frame (its model AABB in site space) – the crypt is turned 56°, the
+## corners of its world AABB lie in the air beside it. Unturned buildings: the same points as before.
 func _p6_points(site: Node3D, access: Vector2) -> Dictionary:
-	var box := _p6_model_aabb(site)
+	var box := _p6_local_aabb(site)
 	var zf := box.position.z + box.size.z * 0.75
 	var eave_y := box.position.y + box.size.y * 0.7
-	var base := site.global_position.y
-	return {"door": Vector3(site.global_position.x, base + minf(1.2, box.size.y * 0.8), box.end.z - 0.1),
-			"eave_l": Vector3(box.position.x + 0.15, eave_y, zf), "eave_r": Vector3(box.end.x - 0.15, eave_y, zf),
-			"ridge": Vector3(box.get_center().x, box.end.y - 0.1, box.get_center().z),
+	var xf := site.global_transform
+	return {"door": xf * Vector3(0.0, minf(1.2, box.end.y * 0.8), box.end.z - 0.1),
+			"eave_l": xf * Vector3(box.position.x + 0.15, eave_y, zf), "eave_r": xf * Vector3(box.end.x - 0.15, eave_y, zf),
+			"ridge": xf * Vector3(box.get_center().x, box.end.y - 0.1, box.get_center().z),
 			"head": Vector3(access.x, world.ground_height(access) + 1.7, access.y)}
+
+
+## The model's AABB in the site's own frame.
+func _p6_local_aabb(site: Node3D) -> AABB:
+	var out := AABB()
+	var first := true
+	var model := site.get_node_or_null("Model")
+	if model == null:
+		return out
+	var inv := site.global_transform.affine_inverse()
+	for n: Node in model.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		var b := (inv * mi.global_transform) * mi.get_aabb()
+		out = b if first else out.merge(b)
+		first = false
+	return out
 
 
 ## VisualInstance3D AABBs on the segment eye → p (excluding ground, grass, particles, lights, the
@@ -2635,6 +2653,7 @@ const P8_CORNER := {"apprentice_board": "ApprenticeBoard", "apprentice_box": "Ap
 const G8R2_CHANGES: Array[String] = [
 	"~buildings.sites[site_crypt].pos", "~buildings.sites[site_crypt].rot_y", "~buildings.sites[site_crypt].footprint",
 	"~buildings.sites[site_crypt].access", "~buildings.sites[site_crypt].height", "+buildings.sites[site_crypt]._g8",
+	"+buildings.sites[site_crypt].inscription",
 	"~buildings.sites[site_crypt].stair._comment", "~buildings.sites[site_crypt].stair.rect", "~buildings.sites[site_crypt].stair.top_z",
 	"~buildings.sites[site_crypt].stair.bottom_z", "~buildings.sites[site_crypt].stair.depth", "~buildings.sites[site_crypt].stair.landing",
 	"+buildings.sites[site_crypt].stair.foot", "~buildings.sites[site_crypt].stair.passage", "~buildings.sites[site_crypt].stair.cheeks",
@@ -2889,3 +2908,102 @@ func _p8_probe() -> void:
 		cs.shape = shape
 		body.add_child(cs)
 		mi.add_child(body)
+
+
+# --- G8 round 2: the new crypt entrance (user: bigger, stair visible, free of the fence, old and
+# mossy, „der Eingang soll zum Weg zeigen") ------------------------------------------------------
+
+## The portal turned towards the path: its front (site +Z) points along the flagstone walk to the main
+## path at the gate (≤ 35°), the stair head is the access; the solid parts keep ≥ 1.0 m to the south
+## fence (the stair head ≈ 1.3 m), ≥ 0.4 m to the west fence (the portal's back in the corner) and ≥ 0.5 m
+## to every old grave; the oak did not move.
+func test_g8r2_crypt_faces_the_path_and_stands_free() -> void:
+	var site := world.get_node("Entities/site_crypt") as BuildingSite
+	var cfg: Dictionary = layout.buildings.sites[0]
+	var front := Vector2(site.global_basis.z.x, site.global_basis.z.z).normalized()
+	var to_path := (_v2(layout.waypoints.gate_inside) - _v2(cfg.access)).normalized()
+	var angle := absf(rad_to_deg(front.angle_to(to_path)))
+	assert_true(angle < 35.0, "the portal looks along the walk to the path (%.0f°)" % angle)
+	var route: Array = layout.buildings.crypt_route
+	assert_eq(_v2(route[0]), _v2(layout.waypoints.dropoff), "the walk starts at the bier")
+	assert_eq(_v2(route[route.size() - 1]), _v2(cfg.access), "the walk ends at the stair head")
+	var head := site.to_global(Vector3(0.0, 0.0, 3.15))
+	assert_true(Vector2(head.x, head.z).distance_to(_v2(cfg.access)) < 0.1, "the access is the stair head")
+	assert_eq(layout.tree, Phase8Fixtures.layout_p7().tree, "the old oak stays")
+	var corners: Array[Vector2] = []
+	for node: Node in site.get_node("Collision").get_children():
+		var shape := node as CollisionShape3D
+		if shape == null or shape.disabled or String(shape.name).begins_with("Stair"):
+			continue
+		var half := (shape.shape as BoxShape3D).size * 0.5
+		for sx: float in [-1.0, 1.0]:
+			for sz: float in [-1.0, 1.0]:
+				var p := shape.global_transform * Vector3(half.x * sx, 0.0, half.z * sz)
+				corners.append(Vector2(p.x, p.z))
+	assert_true(corners.size() >= 16, "the site's solid boxes")
+	for c: Vector2 in corners:
+		assert_true(9.6 - c.y >= 1.0, "≥ 1.0 m to the south fence: %s" % c)
+		assert_true(c.x - (-11.5) >= 0.4, "≥ 0.4 m to the west fence: %s" % c)
+		for g: Dictionary in layout.old_graves:
+			var local := (c - _v2(g.pos)).rotated(deg_to_rad(float(g.rot_y)))
+			var d := Vector2(maxf(absf(local.x) - 0.6, 0.0), maxf(maxf(-1.3 - local.y, local.y - 1.8), 0.0)).length()
+			assert_true(d >= 0.5, "%s: %s ≥ 0.5 m from the crypt (%.2f)" % [g.id, c, d])
+
+
+## The paved forecourt and flagstone walk: a mesh in Decor without collision reaching from the stair
+## head to the main path; no grass on the forecourt; two pillar lanterns at the stair head on every
+## level (no shadow, burning).
+func test_g8r2_paving_and_pillar_lanterns() -> void:
+	var paving := world.get_node_or_null("Decor/CryptPaving") as Node3D
+	assert_not_null(paving, "Decor/CryptPaving")
+	if paving == null:
+		return
+	assert_true(paving.find_children("*", "CollisionObject3D", true, false).is_empty(), "the slabs have no collision")
+	var box := _g8r2_aabb(paving)
+	assert_true(box.position.x < -7.0 and box.end.x > -1.0, "from the forecourt to the main path (%s)" % box)
+	var paving_cfg: Dictionary = layout.buildings.paving
+	var poly := PackedVector2Array()
+	for p: Array in paving_cfg.forecourt:
+		poly.append(_v2(p))
+	var on_paving := 0
+	for chunk: Node in world.get_node("Decor/Grass").get_children():
+		var mmi := chunk as MultiMeshInstance3D
+		if mmi == null:
+			continue
+		for i: int in mmi.multimesh.instance_count:
+			var o := mmi.global_transform * mmi.multimesh.get_instance_transform(i).origin
+			if Geometry2D.is_point_in_polygon(Vector2(o.x, o.z), poly):
+				on_paving += 1
+	assert_eq(on_paving, 0, "no grass tufts on the forecourt")
+	var buildings := world.get_node("Systems/Buildings") as Buildings
+	var ext := world.get_node("Entities/site_crypt/Exterior") as BuildingExterior
+	GameState.set_flag(&"buildings_open", true)
+	var alphas: Array[float] = []
+	for level: int in [1, 2, 3]:
+		buildings.load_state({"levels": {"crypt": level}})
+		buildings.apply_levels()
+		await tree.process_frame
+		ext.refresh()
+		var label := world.get_node("Entities/site_crypt/Model").find_child("Inscription", true, false) as Label3D
+		assert_not_null(label, "level %d: the carved inscription" % level)
+		if label != null:
+			assert_true(label.text.length() > 10, "level %d: inscription text" % level)
+			alphas.append(label.modulate.a)
+		var pillars :=ext.attached_lights().filter(func(l: OmniLight3D) -> bool: return String(l.get_meta(&"marker", "")).begins_with("light_lantern_"))
+		assert_eq(pillars.size(), 2, "level %d: two pillar lanterns" % level)
+		for light: OmniLight3D in pillars:
+			assert_false(light.shadow_enabled, "no shadow")
+			assert_true(float(light.get_meta(&"base_energy")) > 0.0, "level %d: the lantern burns" % level)
+	assert_true(alphas.size() == 3 and alphas[0] < alphas[1] and alphas[1] < alphas[2], "weathered → clear inscription %s" % [alphas])
+	GameState.clear_flag(&"buildings_open")
+
+
+func _g8r2_aabb(node: Node3D) -> AABB:
+	var out := AABB()
+	var first := true
+	for n: Node in node.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		var b := mi.global_transform * mi.get_aabb()
+		out = b if first else out.merge(b)
+		first = false
+	return out

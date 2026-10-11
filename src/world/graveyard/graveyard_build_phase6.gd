@@ -221,6 +221,7 @@ static func _build_exterior(ctx: Ctx, site_node: Node3D, site: Dictionary, cfg: 
 				rules[marker] = LIGHT_RULES[marker]
 	ext.set("lights", lights)
 	ext.set("light_rule", rules)
+	ext.set("inscription", site.get("inscription", {}))
 	ctx.add(site_node, ext)
 	var soul: Dictionary = cfg.get("soul_lantern", {})
 	if building == "chapel" and not soul.is_empty():

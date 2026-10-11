@@ -74,8 +74,8 @@ const LEVEL_WINDOWS: Array[String] = ["light_window_1", "light_window_2", "light
 ## Markers each model must carry (glTF empties -> Node3D leaves); every other model carries none.
 const MARKERS := {
 	"ph_bld_crypt_site": ["build"],
-	"ph_bld_crypt_l1": ["door_outside", "build", "light_lantern_1", "light_lantern_2"],
-	"ph_bld_crypt_l2": ["door_outside", "build", "light_lantern_1", "light_lantern_2"],
+	"ph_bld_crypt_l1": ["door_outside", "build", "light_lantern_1", "light_lantern_2", "inscription"],
+	"ph_bld_crypt_l2": ["door_outside", "build", "light_lantern_1", "light_lantern_2", "inscription"],
 	"ph_bld_crypt_l3": ["door_outside", "build", "light_lantern_1", "light_lantern_2", "light_lantern", "inscription"],
 	"ph_bld_chapel_ruin": ["build"],
 	"ph_bld_chapel_l1": ["door_outside", "build", "light_window_1", "light_window_2", "light_window_3", "light_window_4"],
@@ -115,6 +115,8 @@ const FOOTPRINTS := {"crypt": Vector2(3.0, 3.6), "chapel": Vector2(5.2, 7.0), "s
 ## its portal wall, the stair shaft lies in front (z −0.85…2.75).
 const FOOTPRINT_CENTRES := {"crypt": Vector2(0.0, 0.95), "chapel": Vector2.ZERO, "shed": Vector2.ZERO}
 const FOOTPRINT_SLACK := 0.2
+## G8 round 2: the crypt's ivy and moss hang a little over the ends of the portal wall.
+const OVERGROWTH_SLACK := {"crypt": 0.2, "chapel": 0.0, "shed": 0.0}
 ## G8 round 2: the crypt stair (levels 1–3) reaches this far below the ground (1.3 m + the treads' bodies).
 const CRYPT_STAIR_DEPTH := 1.7
 const CRYPT_STAIR_LEVELS: Array[String] = ["ph_bld_crypt_l1", "ph_bld_crypt_l2", "ph_bld_crypt_l3"]
@@ -257,7 +259,8 @@ func test_levels_share_footprint_and_markers() -> void:
 			var inst := _load_free(name)
 			var box := _aabb(inst)
 			var centre: Vector2 = FOOTPRINT_CENTRES[b]
-			assert_true(box.size.x <= fp.x + FOOTPRINT_SLACK and box.size.z <= fp.y + FOOTPRINT_SLACK,
+			var slack := FOOTPRINT_SLACK + float(OVERGROWTH_SLACK[b])
+			assert_true(box.size.x <= fp.x + slack and box.size.z <= fp.y + slack,
 					"%s fits the %s footprint (%s)" % [name, fp, box.size])
 			var c := box.get_center()
 			assert_true(absf(c.x - centre.x) < 0.25 and absf(c.z - centre.y) < 0.4, "%s centred on the site (%s)" % [name, c])
@@ -303,6 +306,9 @@ func test_crypt_portal_with_an_open_stair_to_the_front() -> void:
 		assert_true(treads > 30 and wide > 0.7, "%s: the stair between the shaft walls (%d vertices, %.2f m half width)" % [name, treads, wide])
 		var door := _marker(inst, "door_outside").origin
 		assert_true(door.y < -1.2 and door.z > -0.05 and door.z < 0.35, "%s: the door at the foot of the stair %s" % [name, door])
+		var carved := _marker(inst, "inscription")
+		assert_true(carved.basis.is_equal_approx(Basis.IDENTITY) and carved.origin.z > 0.05 and carved.origin.y > 1.85 and carved.origin.y < 2.25,
+				"%s: the inscription in the frieze faces the front %s" % [name, carved.origin])
 		for k: int in [1, 2]:
 			var lamp := _marker(inst, "light_lantern_%d" % k).origin
 			assert_true(lamp.y > 1.1 and lamp.y < 1.6 and lamp.z > 2.1 and lamp.z < 2.8 and absf(lamp.x) > 0.8 and absf(lamp.x) < 1.4,

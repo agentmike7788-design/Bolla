@@ -37,6 +37,10 @@ const WINDOW_OUT := 0.7
 @export var light_rule: Dictionary = {}
 ## Level from which the soul lantern stands (0 = none).
 @export var soul_level: int = 0
+## G8 round 2: the carved inscription at the model's marker "inscription" (Label3D "Inscription"):
+## {text, font_size, pixel_size, color, alpha: [level 1, 2, 3]} – weathered on the old frieze, clear on
+## the level-3 name tablet. {} = none.
+@export var inscription: Dictionary = {}
 
 var _model_id: int = 0
 var _was_rite: bool = false
@@ -123,6 +127,9 @@ func _process(delta: float) -> void:
 
 
 func _attach(model: Node3D) -> void:
+	var carved := model.find_child("inscription", true, false) as Node3D
+	if carved != null and not inscription.is_empty():
+		model.add_child(_make_inscription(_rel(carved, model)))
 	for marker: Node in model.find_children("light_*", "", true, false):
 		var cfg: Dictionary = lights.get(String(marker.name), {})
 		if cfg.is_empty():
@@ -132,6 +139,24 @@ func _attach(model: Node3D) -> void:
 			# The window markers sit in the wall plane: the glow goes outside onto the ground.
 			xf.origin.x += signf(xf.origin.x) * WINDOW_OUT
 		model.add_child(_make_light(String(marker.name), cfg, xf))
+
+
+func _make_inscription(xform: Transform3D) -> Label3D:
+	var label := Label3D.new()
+	label.name = "Inscription"
+	label.text = str(inscription.get("text", ""))
+	label.font_size = int(inscription.get("font_size", 48))
+	label.pixel_size = float(inscription.get("pixel_size", 0.002))
+	label.outline_size = 0
+	label.shaded = true
+	label.double_sided = false
+	var alphas: Array = inscription.get("alpha", [1.0])
+	var lvl := clampi(level(), 1, alphas.size()) - 1
+	var colour := Color(str(inscription.get("color", "#2a241d")))
+	colour.a = float(alphas[lvl]) if not alphas.is_empty() else 1.0
+	label.modulate = colour
+	label.transform = xform.translated_local(Vector3(0.0, 0.0, 0.004))
+	return label
 
 
 func _make_light(marker_name: String, cfg: Dictionary, xform: Transform3D) -> OmniLight3D:

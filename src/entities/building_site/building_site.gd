@@ -261,7 +261,11 @@ func free_area() -> int:
 			var pos: Vector3 = record.get(&"position")
 			if stuck_at(pos):
 				k += 1
-				var xf := Transform3D(spot.basis, spot.origin + spot.basis.x * (0.9 * k))
+				# out on the forecourt in front of the stair head, one behind the other
+				var xf := Transform3D(spot.basis, spot.origin + spot.basis.z * (0.5 + 0.8 * k))
+				var world := get_tree().get_first_node_in_group(&"world")
+				if world != null and world.has_method(&"ground_height"):
+					xf.origin.y = float(world.call(&"ground_height", Vector2(xf.origin.x, xf.origin.z)))
 				manager.call(&"relocate_ground_corpse", String(record.get(&"id")), xf)
 				moved += 1
 	return moved

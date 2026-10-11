@@ -721,21 +721,30 @@ def _crypt_overgrowth(parts, level: int, wing_top) -> None:
 
 
 def _crypt_door_leaf(parts) -> None:
-    """The iron-clad door standing open, swung in against the east reveal."""
-    leaf = []
-    plate = _prism(_arch_poly(0.0, 2 * CR_DOOR_HW - 0.04, -CR_D + 0.02, CR_SPRING, 8), "y", CR_WALL_Y + 0.08, CR_WALL_Y + 0.12, "door")
-    L.subdivide(plate, 1)
-    leaf.append(_paint(plate, L.hexc("#38393B"), var=0.2, ao=0.55, top=0.1, seed=500, hue_shift=L.mix(IRON, RUST, 0.55)))
-    for z in (-0.95, -0.25, 0.35):
-        leaf.append(_box((0.0, CR_WALL_Y + 0.07, z), (CR_DOOR_HW - 0.04, 0.012, 0.035), IRON, seed=501, var=0.3, hue_shift=RUST,
-                         ao=0.0, top=0.15))
-    leaf.append(L.part("torus", IRON, loc=(0.28, CR_WALL_Y + 0.05, -0.35), rot=(90, 0, 0), major_radius=0.055,
-                       minor_radius=0.011, major_segments=8, minor_segments=3, paint_kw={"hue_shift": RUST}))
-    hinge = Vector((CR_DOOR_HW - 0.02, CR_WALL_Y + 0.1, 0.0))
-    m = Matrix.Translation(hinge) @ Matrix.Rotation(math.radians(-96), 4, "Z") @ Matrix.Translation(-hinge)
-    for o in leaf:
-        o.data.transform(m)
-    parts += leaf
+    """The iron-clad double door standing open: two leaves swung in against the reveals (each half as
+    wide as the opening, so they stay inside the wall)."""
+    hw = CR_DOOR_HW - 0.02
+    for sx in (-1, 1):
+        leaf = []
+        poly = [(0.0, -CR_D + 0.02), (hw, -CR_D + 0.02), (hw, CR_SPRING)]
+        for k in range(1, 5):
+            a = math.pi / 2 * k / 4
+            poly.append((hw * math.cos(a), CR_SPRING + hw * math.sin(a)))
+        if sx < 0:
+            poly = [(-x, z) for x, z in reversed(poly)]
+        plate = _prism(poly, "y", CR_WALL_Y + 0.08, CR_WALL_Y + 0.12, "door")
+        L.subdivide(plate, 1)
+        leaf.append(_paint(plate, L.hexc("#38393B"), var=0.2, ao=0.55, top=0.1, seed=500 + sx, hue_shift=L.mix(IRON, RUST, 0.55)))
+        for z in (-0.95, -0.25, 0.35):
+            leaf.append(_box((sx * hw / 2, CR_WALL_Y + 0.07, z), (hw / 2 - 0.03, 0.012, 0.035), IRON, seed=501, var=0.3, hue_shift=RUST,
+                             ao=0.0, top=0.15))
+        leaf.append(L.part("torus", IRON, loc=(sx * 0.1, CR_WALL_Y + 0.05, -0.35), rot=(90, 0, 0), major_radius=0.045,
+                           minor_radius=0.01, major_segments=8, minor_segments=3, paint_kw={"hue_shift": RUST}))
+        hinge = Vector((sx * hw, CR_WALL_Y + 0.1, 0.0))
+        m = Matrix.Translation(hinge) @ Matrix.Rotation(math.radians(-82 * sx), 4, "Z") @ Matrix.Translation(-hinge)
+        for o in leaf:
+            o.data.transform(m)
+        parts += leaf
 
 
 def _crypt_gate(parts) -> None:
@@ -780,9 +789,9 @@ def _crypt(level: int) -> None:
     if level == 1:
         # the acroterion broken off: a stump on the apex, the piece lying in the grass by the wing
         stones.append(_stone((0.0, -0.02, CR_APEX + 0.1), (0.11, 0.13, 0.08), CR_ST_P, seed=540, jit=0.01, moss=0.8))
-        stones.append(_stone((-1.62, -1.1, 0.06), (0.16, 0.11, 0.07), CR_ST_P, rot=(8, -14, 37), seed=541, jit=0.012,
+        stones.append(_stone((-1.22, 0.7, 0.06), (0.16, 0.11, 0.07), CR_ST_P, rot=(8, -14, 37), seed=541, jit=0.012,
                              moss=0.9))
-        stones.append(_stone((-1.56, 0.3, 0.04), (0.08, 0.1, 0.05), CR_ST, rot=(0, 10, 70), seed=542, jit=0.012, moss=0.9))
+        stones.append(_stone((-1.42, 0.45, 0.04), (0.08, 0.1, 0.05), CR_ST, rot=(0, 10, 70), seed=542, jit=0.012, moss=0.9))
         # a crack running down the tympanum
         for k in range(4):
             parts.append(_box((0.18 - 0.07 * k, -0.026, CR_APEX - 0.18 - 0.11 * k), (0.008, 0.003, 0.06), GAP, rot=(0, 25 - 18 * k, 0),
@@ -817,12 +826,13 @@ def _crypt(level: int) -> None:
         face = _crypt_tablet(parts, stones)
         light = _cage_lantern(parts, CR_WALL_Y - 0.1, Vector((0.0, -0.62, CR_CAP - 0.05)), seed=560)
         markers.append(("light_lantern", tuple(light)))
-        markers.append(("inscription", tuple(face)))
+    else:
+        face = Vector((0.0, CR_WALL_Y - 0.061, (CR_FRIEZE[0] + CR_FRIEZE[1]) / 2))   # the old frieze face
+    markers.append(("inscription", tuple(face)))
     _weather(stones, seed=level, moss=0.9 if level == 1 else (0.65 if level == 2 else 0.5))
     obj = _done(parts + stones, "ph_bld_crypt_l%d" % level, markers)
-    if level >= 3:
-        e = next(c for c in obj.children if c.name == "inscription")
-        e.rotation_euler = (0.0, 0.0, 0.0)
+    e = next(c for c in obj.children if c.name == "inscription")
+    e.rotation_euler = (0.0, 0.0, 0.0)
 
 
 def crypt_l1():
