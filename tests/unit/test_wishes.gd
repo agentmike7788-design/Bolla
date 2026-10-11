@@ -177,7 +177,7 @@ func _offer_at_first_visit() -> Dictionary:
 	assert_true(h.visitors.wish_offerable(visit))
 	var card := h.visitors.offer_wish(visit)
 	assert_false(card.is_empty())
-	assert_eq(card.keys(), ["wish_id", "kind", "grave_id", "text"])
+	assert_eq(card.keys(), ["wish_id", "kind", "grave_id", "text", "source"], "G8 Runde 1 (B8-2): + source (WishData.source_text)")
 	assert_eq(card.grave_id, "l_01")
 	assert_eq(h.visitors.offer_wish(visit), card, "the same wish again")
 	return card
