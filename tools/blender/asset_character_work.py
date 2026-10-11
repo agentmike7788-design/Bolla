@@ -44,9 +44,11 @@ import asset_character as C
 import asset_character_tools as T
 import rig
 
-TABLE_D = 0.64         # the table's centre line in front of him (ToolAnimConfig.table_stand_distance)
+TABLE_D = 0.76         # the table's centre line in front of him (ToolAnimConfig.table_stand_distance: his capsule
+                       # just clear of the table's collider)
+LEAN = -0.055          # ... and the figure leans in that much (hips forward; the capsule stays where it is)
 TOP = 1.05             # the body's surface on the table (chest)
-HEAD_D = 0.62          # the head end: he stands on the table's axis, the dead's head centre this far ahead
+HEAD_D = 0.68          # the head end: he stands on the table's axis, the dead's head centre this far ahead
 FACE = 1.08            # the face / the hair on the table
 MARKER = "tool_hand"   # tool-bone marker in the tool bone's rest frame (the hand tools hang there)
 
@@ -82,6 +84,11 @@ def _pose(*parts) -> dict:
     return rig.add(C._stance(), *parts)
 
 
+def _tpose(*parts) -> dict:
+    """A table pose: the stance, leaning in towards the table (LEAN)."""
+    return rig.add(C._stance(), {"hips": (0.0, 0.0, 0.0, 0.0, LEAN, 0.0)}, *parts)
+
+
 def _work(pose_fn, name: str = ""):
     """rig.add_action post hook: the fists onto their targets, then the tool onto the right fist."""
     wield = T._wield(pose_fn, name)
@@ -104,13 +111,13 @@ def _y(d: float) -> float:
 # --- the table: examining by hand -----------------------------------------------------------------
 
 def _examine_keys() -> list:
-    a = _pose(C._body(17.0, 0.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.03, -0.015)),
+    a = _tpose(C._body(17.0, 0.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.0, -0.015)),
               _hands((-0.16, _y(-0.1), TOP + 0.03), (0.15, _y(-0.06), TOP)))
-    b = _pose(C._body(19.0, -4.0, head=-2.0, hips=(4.0, 0, 0, 0, 0.03, -0.02)),
+    b = _tpose(C._body(19.0, -4.0, head=-2.0, hips=(4.0, 0, 0, 0, 0.0, -0.02)),
               {"head": (0.0, 0.0, -8.0)}, _hands((-0.08, _y(0.02), TOP - 0.01), (0.15, _y(-0.06), TOP - 0.01)))
-    c = _pose(C._body(19.0, -8.0, head=-2.0, hips=(4.0, 0, 0, 0, 0.03, -0.02)),
+    c = _tpose(C._body(19.0, -8.0, head=-2.0, hips=(4.0, 0, 0, 0, 0.0, -0.02)),
               {"head": (0.0, 0.0, -14.0)}, _hands((-0.27, _y(-0.02), TOP), (0.15, _y(-0.06), TOP - 0.01)))
-    d = _pose(C._body(18.0, -2.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.03, -0.015)),
+    d = _tpose(C._body(18.0, -2.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.0, -0.015)),
               {"head": (0.0, 0.0, 4.0)}, _hands((-0.2, _y(-0.1), TOP + 0.07), (0.16, _y(-0.05), TOP)))
     return [(0.0, a), (0.28, b), (0.52, c), (0.78, d)]
 
@@ -124,11 +131,11 @@ def table_examine(t: float) -> dict:
 def table_search(t: float) -> dict:
     """36 frames = 1.2 s loop: both hands at the clothes - the right lifts a hem and turns it while the
     left pats a pocket, then the other way round."""
-    body = C._body(18.0, 0.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.02, -0.015))
+    body = C._body(18.0, 0.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.0, -0.015))
     r_up, r_dn = (-0.2, _y(-0.2), TOP + 0.1), (-0.18, _y(-0.14), TOP + 0.01)
     l_up, l_dn = (0.18, _y(-0.2), TOP + 0.09), (0.16, _y(-0.14), TOP + 0.01)
-    a = _pose(body, {"spine": (0.0, 0.0, -5.0)}, _hands(r_up, l_dn))
-    b = _pose(body, {"spine": (0.0, 0.0, 5.0)}, _hands(r_dn, l_up))
+    a = _tpose(body, {"spine": (0.0, 0.0, -5.0)}, _hands(r_up, l_dn))
+    b = _tpose(body, {"spine": (0.0, 0.0, 5.0)}, _hands(r_dn, l_up))
     return rig.keyed(t, [(0.0, a), (0.5, b)])
 
 
@@ -141,15 +148,15 @@ def _wash_keys() -> list:
     down, face = -38.0, (0.0, 0.0, -1.0)
     left = {"l_at": (0.3, _y(-0.1), TOP), "l_w": (1.0,), "r_at": tuple(C.FIST[-1]), "r_w": (0.0,)}
     grip = (0.03, 0.0, 1.0, 0.0)
-    start = _pose(C._body(22.0, 8.0, head=-3.0, hips=(4.0, 0, 0, 0, 0.03, -0.02)), left,
+    start = _tpose(C._body(22.0, 8.0, head=-3.0, hips=(4.0, 0, 0, 0, 0.0, -0.02)), left,
                   _tool((0.1, _y(-0.02), TOP + 0.08), down, 180.0, face, grip))
-    press = _pose(C._body(23.0, 6.0, head=-3.0, hips=(4.0, 0, 0, 0, 0.03, -0.025)), left,
+    press = _tpose(C._body(23.0, 6.0, head=-3.0, hips=(4.0, 0, 0, 0, 0.0, -0.025)), left,
                   _tool((0.06, _y(0.0), TOP + 0.06), down, 185.0, face, grip))
-    mid = _pose(C._body(23.0, -4.0, head=-3.0, hips=(4.0, 0, 0, 0, 0.03, -0.025)), left,
+    mid = _tpose(C._body(23.0, -4.0, head=-3.0, hips=(4.0, 0, 0, 0, 0.0, -0.025)), left,
                 _tool((-0.14, _y(-0.02), TOP + 0.06), down, 175.0, face, grip))
-    end = _pose(C._body(22.0, -12.0, head=-3.0, hips=(4.0, 0, 0, 0, 0.03, -0.02)), left,
+    end = _tpose(C._body(22.0, -12.0, head=-3.0, hips=(4.0, 0, 0, 0, 0.0, -0.02)), left,
                 _tool((-0.32, _y(-0.06), TOP + 0.07), down, 165.0, face, grip))
-    lift = _pose(C._body(20.0, -2.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.03, -0.015)), left,
+    lift = _tpose(C._body(20.0, -2.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.0, -0.015)), left,
                  _tool((-0.1, _y(-0.12), TOP + 0.14), -25.0, 180.0, face, grip))
     return [(0.0, start), (WASH_BITE, press), (0.45, mid), (0.62, end), (0.82, lift)]
 
@@ -166,13 +173,13 @@ CUT_BITE = 0.3
 def _cut_keys() -> list:
     face = (-1.0, 0.0, 0.0)   # the edge leads the stroke towards his right
     grip = (0.04, 0.0, 1.0, 0.0)
-    body = C._body(25.0, 0.0, head=-6.0, hips=(5.0, 0, 0, 0, 0.035, -0.03))
+    body = C._body(25.0, 0.0, head=-6.0, hips=(5.0, 0, 0, 0, 0.0, -0.03))
     away = {"head": (0.0, 0.0, 26.0)}   # "ohne hinzusehen": the face turned aside
     left = {"l_at": (0.1, _y(0.02), TOP), "l_w": (1.0,), "r_at": tuple(C.FIST[-1]), "r_w": (0.0,)}
-    ready = _pose(body, away, left, _tool((-0.04, _y(0.0), TOP + 0.16), -62.0, 180.0, face, grip))
-    on = _pose(body, away, left, _tool((-0.05, _y(0.0), TOP + 0.12), -68.0, 182.0, face, grip))
-    drawn = _pose(body, away, left, _tool((-0.17, _y(0.0), TOP + 0.12), -68.0, 186.0, face, grip))
-    off = _pose(body, away, left, _tool((-0.15, _y(-0.03), TOP + 0.19), -55.0, 182.0, face, grip))
+    ready = _tpose(body, away, left, _tool((-0.04, _y(0.0), TOP + 0.16), -62.0, 180.0, face, grip))
+    on = _tpose(body, away, left, _tool((-0.05, _y(0.0), TOP + 0.12), -68.0, 182.0, face, grip))
+    drawn = _tpose(body, away, left, _tool((-0.17, _y(0.0), TOP + 0.12), -68.0, 186.0, face, grip))
+    off = _tpose(body, away, left, _tool((-0.15, _y(-0.03), TOP + 0.19), -55.0, 182.0, face, grip))
     return [(0.0, ready), (CUT_BITE, on), (0.62, drawn), (0.82, off)]
 
 
@@ -189,13 +196,13 @@ COMB_BITE = 0.25
 def _comb_keys() -> list:
     face = (0.0, 0.0, -1.0)    # the teeth into the hair
     grip = (0.04, 0.0, 1.0, 0.0)
-    body = C._body(20.0, 0.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.03, -0.015))
+    body = C._body(20.0, 0.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.0, -0.015))
     left = {"l_at": (0.11, -HEAD_D, FACE - 0.02), "l_w": (1.0,), "r_at": tuple(C.FIST[-1]), "r_w": (0.0,)}
-    far = _pose(body, left, _tool((-0.03, -HEAD_D + 0.02, FACE + 0.08), -12.0, 90.0, face, grip))
-    on = _pose(body, left, _tool((-0.03, -HEAD_D + 0.04, FACE + 0.04), -18.0, 90.0, face, grip))
-    near = _pose(C._body(16.0, 0.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.03, -0.01)), left,
+    far = _tpose(body, left, _tool((-0.03, -HEAD_D + 0.02, FACE + 0.08), -12.0, 90.0, face, grip))
+    on = _tpose(body, left, _tool((-0.03, -HEAD_D + 0.04, FACE + 0.04), -18.0, 90.0, face, grip))
+    near = _tpose(C._body(16.0, 0.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.0, -0.01)), left,
                  _tool((-0.04, -HEAD_D + 0.26, FACE + 0.02), -12.0, 92.0, face, grip))
-    up = _pose(C._body(17.0, 0.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.03, -0.01)), left,
+    up = _tpose(C._body(17.0, 0.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.0, -0.01)), left,
                _tool((-0.03, -HEAD_D + 0.16, FACE + 0.13), 5.0, 90.0, face, grip))
     return [(0.0, far), (COMB_BITE, on), (0.55, near), (0.78, up)]
 
@@ -210,10 +217,10 @@ def _smoke_keys() -> list:
     face = (0.0, 1.0, 0.0)
     grip = (0.04, 0.0, 1.0, 0.0)
     left = {"l_at": (0.12, -0.32, 0.86), "l_w": (0.8,), "r_at": tuple(C.FIST[-1]), "r_w": (0.0,)}
-    a = _pose(C._body(16.0, 14.0, head=-3.0), left, _tool((0.14, _y(-0.12), TOP + 0.26), 45.0, 185.0, face, grip))
-    b = _pose(C._body(20.0, 0.0, head=-2.0), left, _tool((-0.08, _y(-0.02), TOP + 0.2), 38.0, 180.0, face, grip))
-    c = _pose(C._body(16.0, -14.0, head=-3.0), left, _tool((-0.32, _y(-0.12), TOP + 0.26), 45.0, 175.0, face, grip))
-    d = _pose(C._body(14.0, 0.0, head=-2.0), left, _tool((-0.1, _y(-0.22), TOP + 0.34), 55.0, 180.0, face, grip))
+    a = _tpose(C._body(16.0, 14.0, head=-3.0), left, _tool((0.14, _y(-0.12), TOP + 0.26), 45.0, 185.0, face, grip))
+    b = _tpose(C._body(20.0, 0.0, head=-2.0), left, _tool((-0.08, _y(-0.02), TOP + 0.2), 38.0, 180.0, face, grip))
+    c = _tpose(C._body(16.0, -14.0, head=-3.0), left, _tool((-0.32, _y(-0.12), TOP + 0.26), 45.0, 175.0, face, grip))
+    d = _tpose(C._body(14.0, 0.0, head=-2.0), left, _tool((-0.1, _y(-0.22), TOP + 0.34), 55.0, 180.0, face, grip))
     return [(0.0, a), (0.3, b), (0.5, c), (0.78, d)]
 
 
@@ -229,15 +236,15 @@ def _shroud_keys() -> list:
     cast = (0.0, 0.55, -0.85)               # face back-down = it flies out forward and up
     laid = (0.0, 0.92, 0.38)                # face back = it lies forward over the body
     drag = (0.0, 0.85, 0.52)
-    gather = _pose(C._body(12.0, 0.0, head=2.0),
+    gather = _tpose(C._body(12.0, 0.0, head=2.0),
                    _tool((-0.3, -0.38, 1.16), 0.0, -90.0, hang, grip))
-    lift = _pose(C._body(4.0, 0.0, head=0.0, hips=(0, 0, 0, 0, 0.02, 0.0)),
+    lift = _tpose(C._body(4.0, 0.0, head=0.0, hips=(0, 0, 0, 0, 0.0, 0.0)),
                  _tool((-0.3, -0.36, 1.42), 6.0, -90.0, cast, grip))
-    throw = _pose(C._body(22.0, 0.0, head=4.0, hips=(3.0, 0, 0, 0, 0.0, -0.01)),
+    throw = _tpose(C._body(22.0, 0.0, head=4.0, hips=(3.0, 0, 0, 0, 0.0, -0.01)),
                   _tool((-0.3, _y(0.0), TOP + 0.24), 0.0, -90.0, laid, grip))
-    lay = _pose(C._body(20.0, 0.0, head=-2.0, hips=(4.0, 0, 0, 0, 0.03, -0.02)),
+    lay = _tpose(C._body(20.0, 0.0, head=-2.0, hips=(4.0, 0, 0, 0, 0.0, -0.02)),
                 _tool((-0.3, _y(0.04), TOP + 0.08), 0.0, -90.0, laid, grip))
-    smooth = _pose(C._body(17.0, 0.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.03, -0.015)),
+    smooth = _tpose(C._body(17.0, 0.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.0, -0.015)),
                    _tool((-0.3, _y(-0.16), TOP + 0.08), 0.0, -90.0, drag, grip))
     return [(0.0, gather), (0.24, lift), (0.42, throw), (0.56, lay), (0.8, smooth)]
 
@@ -254,10 +261,10 @@ SNIP_BITE = 0.5
 def _snip_keys() -> list:
     face = (0.0, 0.0, 1.0)
     grip = (0.03, 0.0, 1.0, 0.0)
-    body = C._body(16.0, 0.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.02, -0.01))
+    body = C._body(16.0, 0.0, head=-2.0, hips=(3.0, 0, 0, 0, 0.0, -0.01))
     left = {"l_at": (0.08, -HEAD_D + 0.2, FACE + 0.1), "l_w": (1.0,), "r_at": tuple(C.FIST[-1]), "r_w": (0.0,)}
-    open_ = _pose(body, left, _tool((-0.08, -HEAD_D + 0.16, FACE + 0.08), -6.0, 150.0, face, grip))
-    cut = _pose(body, left, _tool((-0.05, -HEAD_D + 0.18, FACE + 0.07), -10.0, 140.0, face, grip))
+    open_ = _tpose(body, left, _tool((-0.08, -HEAD_D + 0.16, FACE + 0.08), -6.0, 150.0, face, grip))
+    cut = _tpose(body, left, _tool((-0.05, -HEAD_D + 0.18, FACE + 0.07), -10.0, 140.0, face, grip))
     return [(0.0, open_), (SNIP_BITE, cut), (0.7, open_)]
 
 
@@ -273,12 +280,12 @@ PULL_BITE = 0.55
 def _pull_keys() -> list:
     face = (0.0, -1.0, 0.0)
     grip = (0.04, 0.0, 1.0, 0.0)
-    body = C._body(24.0, 0.0, head=-4.0, hips=(4.0, 0, 0, 0, 0.03, -0.02))
+    body = C._body(24.0, 0.0, head=-4.0, hips=(4.0, 0, 0, 0, 0.0, -0.02))
     away = {"head": (0.0, 0.0, -24.0)}     # "du siehst dabei nicht hin"
     left = {"l_at": (0.08, -HEAD_D + 0.06, FACE), "l_w": (1.0,), "r_at": tuple(C.FIST[-1]), "r_w": (0.0,)}
-    set_ = _pose(body, away, left, _tool((-0.03, -HEAD_D - 0.08, FACE + 0.15), -76.0, 180.0, face, grip))
-    grip_ = _pose(body, away, left, _tool((-0.03, -HEAD_D - 0.08, FACE + 0.12), -78.0, 176.0, face, grip))
-    pulled = _pose(C._body(20.0, 0.0, head=-6.0, hips=(3.0, 0, 0, 0, 0.035, -0.015)), away, left,
+    set_ = _tpose(body, away, left, _tool((-0.03, -HEAD_D - 0.08, FACE + 0.15), -76.0, 180.0, face, grip))
+    grip_ = _tpose(body, away, left, _tool((-0.03, -HEAD_D - 0.08, FACE + 0.12), -78.0, 176.0, face, grip))
+    pulled = _tpose(C._body(20.0, 0.0, head=-6.0, hips=(3.0, 0, 0, 0, 0.0, -0.015)), away, left,
                    _tool((-0.05, -HEAD_D - 0.02, FACE + 0.23), -60.0, 192.0, face, grip))
     return [(0.0, set_), (0.3, grip_), (PULL_BITE, grip_), (0.72, pulled), (0.9, set_)]
 
@@ -356,7 +363,7 @@ def pray(t: float) -> dict:
     """90 frames = 3 s loop: standing still, the hands folded in front, the head bowed, slow breathing; once
     the head sinks a little lower."""
     sink = 4.0 * math.sin(rig.TAU * t) ** 2
-    return rig.add(rig.breathe(t, 0.7), rig.bowed(20.0 + sink, 5.0), rig.folded(28.0, 26.0),
+    return rig.add(rig.breathe(t, 0.7), rig.bowed(20.0 + sink, 5.0), rig.folded(28.0, 33.0),
                    {"feet": {"leg_l": 0.0, "leg_r": 0.0}})
 
 

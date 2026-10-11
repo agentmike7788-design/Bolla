@@ -81,12 +81,12 @@ extends Resource
 ## stands), along the table at table_stand_along[clip] (slot +X = towards the head; missing: where he is, within
 ## ± table_stand_span). The clips in table_head_clips are worked from the head end: on the table's axis,
 ## table_head_distance beyond the dead's head centre (table_head_offset along the slot), facing down the body.
-@export var table_stand_distance: float = 0.64
+@export var table_stand_distance: float = 0.76
 @export var table_stand_span: float = 0.5
 @export var table_stand_along: Dictionary[StringName, float] = {}
 @export var table_head_clips: Array[StringName] = []
 @export var table_head_offset: float = 0.725
-@export var table_head_distance: float = 0.62
+@export var table_head_distance: float = 0.68
 @export var table_face_camera: bool = true
 @export var table_step_seconds: float = 0.3
 
