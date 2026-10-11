@@ -12,7 +12,7 @@ const NOTE_KIND := &"info"
 const PHASE_ARRIVING := &"arriving"
 const REGION := &"graveyard"
 const DEFAULT_CUE := &"gate_bell"
-## The swing of the bell (radians about the arm, seconds of real time per half swing).
+## The swing of the bell (radians across the arm – towards and away from the post –, seconds of real time per half swing).
 const SWING: PackedFloat32Array = [0.55, -0.42, 0.3, -0.18, 0.08, 0.0]
 const SWING_SECONDS := 0.22
 
@@ -64,10 +64,10 @@ func _swing() -> void:
 		return
 	if _tween != null and _tween.is_valid():
 		_tween.kill()
-	bell.rotation.z = 0.0
+	bell.rotation.x = 0.0
 	_tween = create_tween()
 	for a: float in SWING:
-		_tween.tween_property(bell, "rotation:z", a, SWING_SECONDS).set_trans(Tween.TRANS_SINE)
+		_tween.tween_property(bell, "rotation:x", a, SWING_SECONDS).set_trans(Tween.TRANS_SINE)
 
 
 func _player_on_graveyard() -> bool:

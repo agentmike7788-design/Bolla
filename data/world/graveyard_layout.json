@@ -230,8 +230,8 @@
   ],
   "_phase8": "Phase 8 §4.3 A1–A4 (graveyard_build_phase8.gd): Lehrlingsecke an der Hüttenwand rechts neben der Tür (Wandlinie durch (−5,82 | −4,99), Richtung 18°): Kreidetafel 1,15 m, Kiste 1,95 m, Bank 2,85 m von der Türmitte, je ≈ 0,3–0,4 m vor der Wand; Regenfass an der linken Hüttenecke unter der Traufe (−1,5 m). type = Entität (Szene + Modell + Kollision nach colliders), sonst nur Modell (prop). Kein Teil höher als 1,4 m.",
   "phase8": {
-    "gate_bell": {"id": "gate_bell", "type": "gate_bell", "model": "ph_prop_gate_bell", "pos": [2.6, 9.85], "rot_y": 0.0,
-      "_comment": "G8 Runde 1 (B8-1): Glöckchen an der Straßenseite des östlichen Torpfeilers (gate_posts[1], Pfeilerfläche z 9,85, Arm 0,37 m zur Straße, 1,78 m hoch) – GateBell läutet, wenn ein Besuch heraufkommt. Ohne Kollision (über Kopfhöhe), das Wegnetz bleibt gleich."},
+    "gate_bell": {"id": "gate_bell", "type": "gate_bell", "model": "ph_prop_gate_bell", "pos": [2.35, 9.6], "rot_y": 270.0,
+      "_comment": "G8 Runde 1 (B8-1): Glöckchen an der Innenseite des östlichen Torpfeilers (gate_posts[1], Pfeilerfläche x 2,35, Arm 0,37 m nach Westen über den Torweg, 1,78 m hoch) – GateBell läutet, wenn ein Besuch heraufkommt. Ohne Kollision (über Kopfhöhe), das Wegnetz bleibt gleich."},
     "corner": [
       {"id": "apprentice_board", "type": "apprentice_board", "model": "ph_prop_chalkboard", "pos": [-4.61, -4.98], "rot_y": 18.0},
       {"id": "apprentice_box", "type": "apprentice_box", "model": "ph_prop_apprentice_box", "pos": [-3.87, -5.29], "rot_y": 18.0},

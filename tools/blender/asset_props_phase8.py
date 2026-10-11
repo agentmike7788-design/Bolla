@@ -747,6 +747,7 @@ def prop_gate_bell():
     toggle = L.prim("cyl", loc=(0, 0.012, -0.64), rot=(0, 90, 0), radius=0.013, depth=0.08, vertices=6)
     bell_parts.append(_p(toggle, WOOD, var=0.2, ao=0.1, top=0.3, hue_shift=WOOD_DARK))
     bell = _join(bell_parts, "bell")
+    bell.data.transform(Matrix.Scale(1.35, 4))   # readable at play zoom: a 20 cm bell, the toggle at 0.9 m
     bell.location = pivot
     bell.parent = obj
     finish_stable(obj, "ph_prop_gate_bell", "props", 40, shift=False)
