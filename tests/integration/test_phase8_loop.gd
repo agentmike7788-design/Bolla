@@ -358,6 +358,11 @@ func _keep_wishes() -> void:
 	for g: String in visitors.stones():
 		if not stone_round_trip:
 			stone_round_trip = true
+			# G8 Runde 2: he goes to the stone first (after the talk he stood beside the visitor by the east fence, and the
+			# load pushed him off the fence – a round-trip diff that is no game bug)
+			_stand_at(world.get_node_by_layout_id(g) as Node3D)
+			for i: int in 4:
+				await tree.physics_frame
 			await _round_trip("coins on the stone")
 		var tip := world.get_node_by_layout_id(g).get_node_or_null("TipStone") as TipStone
 		assert_not_null(tip, "§4.3: the TipStone at " + g)
@@ -400,8 +405,26 @@ func _refill() -> void:
 
 
 func _stand_at(plot: Node3D) -> void:
-	var p := plot.global_position + Vector3(0, 0, 1.6)
-	player.global_position = Vector3(p.x, world.ground_height(Vector2(p.x, p.z)), p.z)
+	# G8 Runde 2: the first of the spots round the plot where the gravekeeper's body is free (in front 1.6 m, else
+	# beside or behind) – never inside the fence.
+	for off: Vector3 in [Vector3(0, 0, 1.6), Vector3(-1.0, 0, 0.6), Vector3(1.0, 0, 0.6), Vector3(0, 0, -1.9)]:
+		var p := plot.global_position + plot.global_basis * off
+		var at := Vector3(p.x, world.ground_height(Vector2(p.x, p.z)), p.z)
+		if _body_free(at):
+			player.global_position = at
+			return
+	var q := plot.global_position + Vector3(0, 0, 1.6)
+	player.global_position = Vector3(q.x, world.ground_height(Vector2(q.x, q.z)), q.z)
+
+
+func _body_free(at: Vector3) -> bool:
+	var shape := player.get_node("Collision") as CollisionShape3D
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = shape.shape
+	query.transform = Transform3D(Basis.IDENTITY, at) * shape.transform
+	query.collision_mask = player.collision_mask
+	query.exclude = [player.get_rid()]
+	return player.get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
 
 
 func _spots_of(grave_id: String) -> Array[DirtSpot]:
