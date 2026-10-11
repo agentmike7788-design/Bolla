@@ -95,7 +95,7 @@ const G8_SHOTS: Array[Dictionary] = [
 			"figures": [["npc_kin_kehr", Vector2(5.8, 22.2), Vector2(12.0, 28.6), &"lantern_walk", 0.35],
 				["npc_priest", Vector2(7.4, 24.2), Vector2(12.0, 28.6), &"lantern_walk", 0.1]]},
 	# G8 Runde 2: the figures hold their lanterns (lantern_idle) as in the game; Lenz' lantern in front.
-	{"name": "p8_22_lights_overview", "day": 58, "minute": 1075, "focus": Vector2(3.5, -9.5), "distance": 31.0,
+	{"name": "p8_22_lights_overview", "day": 58, "minute": 1075, "focus": Vector2(3.5, -9.5), "distance": 31.0, "stage": "lights",
 			"player": Vector2(4.5, -18.0), "facing": 180.0,
 			"figures": [["npc_priest", "lights_lenz", "wp", &"lantern_idle", 0.2], ["npc_apprentice", "lights_crowd_4", "wp", &"lantern_idle", 0.3],
 				["npc_smith_g", "gv_old_01", "wp", &"lantern_idle", 0.6], ["npc_grocer_g", "gv_old_08", "wp", &"lantern_idle", 0.6]]},
@@ -103,7 +103,7 @@ const G8_SHOTS: Array[Dictionary] = [
 			"player": Vector2(0.6, 6.6), "facing": 200.0, "stage": "ghosts"},
 	# W3 (§9 budget pictures, game zoom 22): the Lichtgang overview with every figure of the procession on the hill
 	# (G8 Runde 2: everyone holds the light – lantern_idle, CarriedLanterns).
-	{"name": "perf_p8_03_lights_overview", "day": 58, "minute": 1075, "player": Vector2(3.5, -9.5), "facing": 180.0, "game": 22.0,
+	{"name": "perf_p8_03_lights_overview", "day": 58, "minute": 1075, "player": Vector2(3.5, -9.5), "facing": 180.0, "game": 22.0, "stage": "lights",
 			"figures": [["npc_priest", "lights_lenz", "wp", &"lantern_idle", 0.2], ["npc_apprentice", "lights_crowd_4", "wp", &"lantern_idle", 0.3],
 				["npc_smith_g", "gv_old_01", "wp", &"lantern_idle", 0.6], ["npc_grocer_g", "gv_old_08", "wp", &"lantern_idle", 0.6],
 				["npc_innkeeper_g", "lights_crowd_1", "wp", &"lantern_idle", 0.1], ["npc_mayor_g", "lights_crowd_2", "wp", &"lantern_idle", 0.5],
