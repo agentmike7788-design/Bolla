@@ -295,6 +295,8 @@ func apply_procession() -> void:
 			npcs[StringName(str(id))] = node
 	var world := get_tree().current_scene
 	var crowd := 0
+	var fest := festival(LIGHTS)
+	var fx: Dictionary = fest.effects if fest != null else {}
 	for entry: Dictionary in procession_plan():
 		var npc: Node = npcs.get(entry.npc)
 		if npc == null or not npc.has_method(&"set_runtime_schedule"):
@@ -319,11 +321,11 @@ func apply_procession() -> void:
 		# G8 Runde 2 (Lichtgang): everyone carries the light up, holds it at the grave / on the Kirchhof and carries it
 		# down again (effects walk_anim / stand_anim[_grave]; the lantern mesh shows with these clips, CarriedLanterns
 		# gives it light). A model without the clip falls back to walk / mourn_stand / idle.
-		var stand_anim := _anim_or(npc, StringName(str(f.effects.get("stand_anim_grave" if not graves.is_empty() else "stand_anim", ""))),
+		var stand_anim := _anim_or(npc, StringName(str(fx.get("stand_anim_grave" if not graves.is_empty() else "stand_anim", ""))),
 				&"mourn_stand" if not graves.is_empty() else &"idle")
 		var up := ScheduleBuilder.walk(ROAD_END, route, int(entry.arrive), GRAVEYARD_REGION, world)
 		var down := ScheduleBuilder.walk(spot, back, int(entry.leave), GRAVEYARD_REGION, world)
-		var gait := StringName(str(f.effects.get("walk_anim", "")))
+		var gait := StringName(str(fx.get("walk_anim", "")))
 		if gait != &"":
 			up.animation = gait
 			down.animation = gait

@@ -177,8 +177,15 @@ func _update(delta: float) -> void:
 	var holder := {}
 	for light: OmniLight3D in _lights:
 		var id := int(light.get_meta(&"lantern", 0))
-		if id != 0:
-			holder[id] = light
+		if id == 0:
+			continue
+		# a light whose lantern no longer wants it and has faded out is free for the next one
+		var held: Variant = _lanterns.get(id)
+		if held != null and not bool((held as Dictionary).wanted) and float((held as Dictionary).real) <= 0.0:
+			light.visible = false
+			light.set_meta(&"lantern", 0)
+			continue
+		holder[id] = light
 	var mm := _spots.multimesh
 	var n := 0
 	for st: Dictionary in _ranked:

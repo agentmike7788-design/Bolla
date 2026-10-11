@@ -16,28 +16,28 @@ const BONES: PackedStringArray = ["root", "hips", "spine", "head", "arm_l", "arm
 const GENERATORS: Array[String] = ["asset_mourners", "asset_apprentice", "asset_wanderers", "asset_props_phase8"]
 
 const TRAUER_W: Array[String] = ["idle", "walk", "talk", "idle_low", "kneel_in", "kneel", "kneel_out", "lay_flowers",
-		"lantern_walk"]
+		"lantern_walk", "lantern_idle"]
 ## name -> bones (8 / 9), triangle budget (body + child meshes, §8.1), height range (m), clips, child meshes (name -> bone)
 const FIGURES := {
 	"ph_chr_apprentice": {"bones": 9, "tris": 8000, "height": [1.4, 1.5],
 		"clips": ["idle", "walk", "talk", "rake", "weed", "water", "candle", "watch", "read_board", "sit_eat", "sweep",
-				"carry_can_walk", "oops", "whistle", "idle_low", "lantern_walk", "dance", "clap"],
+				"carry_can_walk", "oops", "whistle", "idle_low", "lantern_walk", "lantern_idle", "dance", "clap"],
 		"children": {"rake": "tool", "watering_can": "tool", "broom": "tool", "lantern": "tool"}},
 	"ph_chr_mourner_w_a": {"bones": 8, "tris": 7500, "height": [1.55, 1.68], "clips": TRAUER_W,
 		"children": {"bouquet": "arm_r", "basket": "arm_l", "lantern_prop": "arm_l"}},
 	"ph_chr_mourner_w_b": {"bones": 8, "tris": 7500, "height": [1.52, 1.66], "clips": TRAUER_W,
 		"children": {"bouquet": "arm_r", "lantern_prop": "arm_l"}},
 	"ph_chr_mourner_m_a": {"bones": 8, "tris": 7500, "height": [1.72, 1.86],
-		"clips": ["idle", "walk", "talk", "idle_low", "lay_flowers", "mourn_stand", "lantern_walk"],
+		"clips": ["idle", "walk", "talk", "idle_low", "lay_flowers", "mourn_stand", "lantern_walk", "lantern_idle"],
 		"children": {"hat_head": "head", "hat_hand": "arm_r", "bouquet": "arm_r", "lantern_prop": "arm_l"}},
 	"ph_chr_mourner_m_b": {"bones": 8, "tris": 7500, "height": [1.6, 1.74],
-		"clips": ["idle", "walk", "talk", "idle_low", "mourn_stand", "lantern_walk"],
+		"clips": ["idle", "walk", "talk", "idle_low", "mourn_stand", "lantern_walk", "lantern_idle"],
 		"children": {"hat_head": "head", "hat_hand": "arm_r", "lantern_prop": "arm_r"}},
 	"ph_chr_beggar": {"bones": 8, "tris": 8500, "height": [1.7, 1.84],
 		"clips": ["idle", "walk", "walk_stiff", "talk", "sit_beg", "sit_ground", "stand_up", "idle_low"],
 		"children": {"tin_cup": "arm_r"}},
 	"ph_chr_peddler": {"bones": 8, "tris": 9000, "height": [1.56, 1.7],
-		"clips": ["idle", "walk", "talk", "offer", "kiepe_off", "kiepe_on", "idle_low", "lantern_walk", "dance", "clap"],
+		"clips": ["idle", "walk", "talk", "offer", "kiepe_off", "kiepe_on", "idle_low", "lantern_walk", "lantern_idle", "dance", "clap"],
 		"children": {"kiepe": "spine", "kiepe_down": "root", "staff": "arm_l", "lantern_prop": "arm_r"}},
 	"ph_chr_robber": {"bones": 9, "tris": 8500, "height": [1.72, 1.86],
 		"clips": ["idle", "walk", "talk", "dig_night", "startle", "run", "climb", "sit_ground"],
@@ -54,22 +54,22 @@ const STARTS_POSED: Array[String] = ["kneel_out", "stand_up"]
 ## (computed with _mesh_hash / _anim_hash on bb21a75).
 const REEXPORT := {
 	"ph_chr_v_innkeeper": ["345dcf07833268ae", {"idle": "c3ccc18a775fbef1", "talk": "55e2fc2fd43cfe2b", "walk": "8d1d5c09d7baa3b2"},
-		["idle_low", "lantern_walk", "kneel_in", "kneel", "kneel_out", "lay_flowers", "dance", "clap"]],
+		["idle_low", "lantern_walk", "lantern_idle", "kneel_in", "kneel", "kneel_out", "lay_flowers", "dance", "clap"]],
 	"ph_chr_v_smith": ["b4af662ec7bb1648", {"idle": "5cc18f8b90e389da", "talk": "184733d754a8eace", "walk": "a4ab56839db3087c",
-		"work": "159ad01d436e5972"}, ["idle_low", "lantern_walk", "mourn_stand", "dance"]],
+		"work": "159ad01d436e5972"}, ["idle_low", "lantern_walk", "lantern_idle", "mourn_stand", "dance"]],
 	"ph_chr_v_grocer": ["256617124feb3feb", {"idle": "7f965bb4a908613d", "talk": "b3e2290ceb122dc9", "walk": "117d2e1b2916fffd",
-		"work": "2c3a9f5d8d9f2c14"}, ["idle_low", "lantern_walk", "kneel_in", "kneel", "kneel_out", "lay_flowers", "dance", "clap"]],
+		"work": "2c3a9f5d8d9f2c14"}, ["idle_low", "lantern_walk", "lantern_idle", "kneel_in", "kneel", "kneel_out", "lay_flowers", "dance", "clap"]],
 	"ph_chr_v_priest": ["26348b345348fac2", {"idle": "873992174879bc58", "talk": "5a0b6a0514dfd618", "walk": "376b87024b0cc8e2"},
-		["idle_low", "lantern_walk", "mourn_stand", "knock", "clap"]],
+		["idle_low", "lantern_walk", "lantern_idle", "mourn_stand", "knock", "clap"]],
 	"ph_chr_v_mayor": ["f9a47d391292ea95", {"idle": "96c632eda6270322", "talk": "b1d12af31c97d52f", "walk": "187d5eea6c85a0e8"},
-		["idle_low", "lantern_walk", "mourn_stand", "dance"]],
+		["idle_low", "lantern_walk", "lantern_idle", "mourn_stand", "dance"]],
 	"ph_chr_v_surgeon": ["1c247121022d9db1", {"idle": "43e40c61f18b4839", "talk": "240391f41f748cf7", "walk": "2c98c3e7554af50f"},
-		["idle_low", "lantern_walk", "knock"]],
+		["idle_low", "lantern_walk", "lantern_idle", "knock"]],
 	"ph_chr_v_washer": ["aae89767caa710be", {"idle": "0f7cd103de0d069c", "talk": "97f8726c1f33c801", "walk": "7ba126621da75a21",
-		"work": "15f0d8cb00f5b1c0"}, ["idle_low", "lantern_walk", "kneel_in", "kneel", "kneel_out", "lay_flowers", "knock", "dance",
+		"work": "15f0d8cb00f5b1c0"}, ["idle_low", "lantern_walk", "lantern_idle", "kneel_in", "kneel", "kneel_out", "lay_flowers", "knock", "dance",
 		"clap"]],
 	"ph_chr_v_oldwoman": ["a7bdf845e58d049c", {"idle": "aa85d2473a1201a9", "sit": "3c81f8e034b2f7d1", "talk": "87a93367967b8d29",
-		"walk": "dc57382cafc8a07c"}, ["idle_low", "lantern_walk"]],
+		"walk": "dc57382cafc8a07c"}, ["idle_low", "lantern_walk", "lantern_idle"]],
 }
 const GRAVEKEEPER_MESH := "2b30f35eb0a71d85"
 const GRAVEKEEPER_NEW: Array[String] = ["kneel_place", "water", "sit_bench", "dance"]
@@ -94,7 +94,7 @@ const PROPS := {
 	"ph_tool_rake_small": ["props", Vector3(0.25, 1.1, 0.03), Vector3(0.45, 1.4, 0.15), 300],
 	"ph_tool_watering_can": ["props", Vector3(0.1, 0.25, 0.25), Vector3(0.25, 0.4, 0.45), 300],
 	"ph_tool_broom": ["props", Vector3(0.1, 1.2, 0.08), Vector3(0.25, 1.4, 0.2), 300],
-	"ph_tool_lantern_hand": ["props", Vector3(0.06, 0.15, 0.06), Vector3(0.12, 0.25, 0.12), 300],
+	"ph_tool_lantern_hand": ["props", Vector3(0.09, 0.22, 0.09), Vector3(0.15, 0.32, 0.15), 200],
 	"ph_tool_spade_robber": ["props", Vector3(0.14, 1.1, 0.02), Vector3(0.3, 1.35, 0.1), 300],
 	"ph_tool_lantern_blind": ["props", Vector3(0.06, 0.12, 0.06), Vector3(0.12, 0.25, 0.12), 300],
 	"ph_prop_peddler_kiepe": ["props", Vector3(0.4, 0.8, 0.25), Vector3(0.7, 1.1, 0.75), 1500],
@@ -338,6 +338,7 @@ func test_lantern_walk_holds_the_lantern_forward() -> void:
 		var a := r.animation(&"lantern_walk")
 		var lantern := "lantern" if c == "ph_chr_apprentice" else "lantern_prop"
 		assert_has(_show_with(_child(r, lantern)), "lantern_walk", c + ": the lantern shows in lantern_walk")
+		assert_has(_show_with(_child(r, lantern)), "lantern_idle", c + ": and in lantern_idle (G8 Runde 2)")
 		var lb := _child(r, lantern).get_parent() as BoneAttachment3D
 		var arm := "arm_r" if lb.bone_name in ["arm_r", "tool"] else "arm_l"
 		var h := r.hand(a, arm, a.length * 0.5)
@@ -386,7 +387,7 @@ func test_villagers_reexport_keeps_mesh_and_old_clips() -> void:
 		assert_eq(_clips(c), _sorted(want), c + ": Phase-7 clips + the Phase-8 clips")
 		_check_clips(c, _sorted(REEXPORT[c][2]))
 		var lan := _child(r, "lantern_prop")
-		assert_true(lan != null and _show_with(lan) == PackedStringArray(["lantern_walk"]), c + ": lantern_prop only in lantern_walk")
+		assert_true(lan != null and _show_with(lan) == PackedStringArray(["lantern_walk", "lantern_idle"]), c + ": lantern_prop only in lantern_walk / lantern_idle")
 	assert_false(_clips("ph_chr_v_surgeon").has("kneel"), "Quast does not kneel")
 	assert_false(_clips("ph_chr_carter").has("dance"), "Osric does not dance")
 
