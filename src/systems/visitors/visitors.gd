@@ -11,7 +11,10 @@ extends Node
 ##   graveyard Npc). ≤ 3 visits a day in the slots, ≤ 2 at once; nothing before p8_open, on the night of the
 ##   lights or at a DUG grave; the overflow comes tomorrow.
 ## - Clock: every minute the visits move through arriving → mourning (lay the bouquet → GraveCare.place_bouquet,
-##   mourn, look → GraveView) → waiting (only with a tip or a wish to offer) → leaving → gone. A load stands
+##   mourn, look → GraveView) → waiting (G8 Runde 1: always – a household up to 100 minutes, till 16:30, cut 3 minutes
+##   after the talk: dialogue_ended of its dialogue / note_talked; villagers 18; the walk is set again when the wait
+##   begins) → leaving → gone. The gate bell (GateBell) rings on arriving. Tips: −1 village-wide once a specimen was
+##   sold (B8-3). A load stands
 ##   everyone where plan + clock put them; nothing is replayed (viewed / ended are saved).
 ## - Wishes (WishRules): offered in the talk with a visitor (goodwill ≥ 2, one per grave, 3 open), checked at
 ##   the next look: done → tip 1–3 (≤ 4 a day; villagers +4 relationship instead), reputation wish_done,
