@@ -5,6 +5,9 @@ extends Node3D
 ## who visit their dead) it rings: the cue VisitorConfig.bell_cue at the gate, the child mesh `bell` swings, and – only
 ## while the gravekeeper is on the graveyard (region graveyard, rooms included) – the HUD note „Am Tor läutet es –
 ## Martha Kehr kommt herauf." A load announces nothing, so a loaded visit does not ring again. No game state.
+## G8 Runde 3 (user: „und er soll an der glock klingeln das ich höre wen eine neue leiche da ist"): Osric rings it
+## after laying the day's dead onto the bier (Npc / CartUnload) – louder (CartDeliveryConfig.bell_volume_db), heard
+## all over the graveyard; in the crypt, a room or the village only the HUD note (CartDeliveryConfig.bell_note).
 
 const GROUP := &"gate_bell"
 const NOTE := "Am Tor läutet es – %s kommt herauf."
@@ -19,6 +22,11 @@ const SWING_SECONDS := 0.22
 ## Rings so far (tests, the screenshot director).
 var rings: int = 0
 var last_note: String = ""
+## Deliveries rung / noted without a sound so far (tests, the screenshot director).
+var delivery_rings: int = 0
+var delivery_notes: int = 0
+## The last delivery ring was heard (the gravekeeper outside on the graveyard; tests).
+var last_heard: bool = false
 var _tween: Tween
 
 
@@ -49,6 +57,50 @@ func ring(display_name: String) -> bool:
 	last_note = NOTE % display_name
 	EventBus.notification_requested.emit(last_note, NOTE_KIND)
 	return true
+
+
+## Osric rang it for a new corpse (`who` = his first name): the louder cue while the gravekeeper is outside on the
+## graveyard, the swing, and the note everywhere. Returns whether the bell was heard.
+func ring_delivery(who: String) -> bool:
+	delivery_rings += 1
+	var cfg := _delivery_config()
+	var heard := _player_outdoors()
+	last_heard = heard
+	var audio := get_node_or_null(^"/root/Audio")
+	if heard and audio != null and audio.has_method(&"play") and is_inside_tree():
+		audio.call(&"play", _cue(), _hang_point(), cfg.bell_volume_db)
+	_swing()
+	_note(cfg.bell_note, who)
+	return heard
+
+
+## A skip or sleep went past the ringing: only the note that a new corpse came (no sound, no swing).
+func note_delivery(who: String) -> void:
+	delivery_notes += 1
+	_note(_delivery_config().skipped_note, who)
+
+
+func _note(text: String, who: String) -> void:
+	if text == "":
+		return
+	last_note = text % who if text.contains("%s") else text
+	EventBus.notification_requested.emit(last_note, NOTE_KIND)
+
+
+func _hang_point() -> Vector3:
+	var bell := bell_node()
+	return bell.global_position if bell != null else global_position + Vector3(0, 1.6, 0)
+
+
+## The gravekeeper is on the graveyard and not in a room (hut, crypt, chapel …) – there the bell is heard.
+func _player_outdoors() -> bool:
+	var player := get_tree().get_first_node_in_group(&"player") if is_inside_tree() else null
+	return player != null and StringName(str(player.get(&"region_id"))) == REGION and not bool(player.get(&"in_interior"))
+
+
+func _delivery_config() -> CartDeliveryConfig:
+	var cfg := Database.config(&"cart_delivery_config") as CartDeliveryConfig
+	return cfg if cfg != null else CartDeliveryConfig.new()
 
 
 func _on_visitor_changed(_visit_id: String, kin_id: StringName, _grave_id: String, phase: StringName) -> void:

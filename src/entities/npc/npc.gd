@@ -33,6 +33,10 @@ const ANIM_TALK := &"talk"
 const ANIM_LOW_MOOD := &"low"
 const FLAG_DELIVERY_SKIPPED := &"delivery_skipped"
 const CART_SLOT := "slot_corpse"
+## G8 Runde 3 (gate bell): the bell rings only while the clock runs past its moment – a step longer than this
+## (game minutes; a skip, sleep or load) rings nothing.
+const BELL_MAX_GAP := 2.0
+const BELL_GROUP := &"gate_bell"
 ## G8 Runde 3: a third corpse on the cart lies this much (m) higher, on the two side by side.
 const CARGO_STACK := 0.2
 ## Below this (m) a path segment has no direction.
@@ -103,6 +107,9 @@ var _load_key: int = -1
 var _load: Dictionary = {}
 var _unload: Dictionary = {}
 var cart_config: CartDeliveryConfig
+## Total game minute (with fraction) of the last update that may ring the gate bell (-1 = none yet / placed anew).
+var _bell_clock: float = -1.0
+var _bell: Node3D
 ## Plain corpse looks, same order as Corpse.plain_variants (cargo = the corpse he will deliver).
 const CARGO_LOOKS: PackedStringArray = [
 	"res://assets/models/props/ph_prop_corpse.glb", "res://assets/models/props/ph_prop_corpse_02.glb",
@@ -189,6 +196,8 @@ func _ready() -> void:
 	EventBus.region_changed.connect(_on_region_changed)
 	EventBus.corpse_arrived.connect(_on_cart_load_changed.unbind(1))
 	EventBus.delivery_skipped.connect(_on_cart_load_changed.unbind(2))
+	# G8 Runde 3 (QA Lieferung): a time skip (debug „time", sleeping, waiting) places the carter for the new clock at once.
+	EventBus.time_skipped.connect(_on_time_skipped)
 	refresh()
 
 
@@ -213,6 +222,7 @@ func _process(delta: float) -> void:
 ## Places the NPC for the current clock immediately (no smoothing).
 func refresh() -> void:
 	_load_key = -1
+	_bell_clock = -1.0
 	_update(-1.0)
 
 
@@ -467,6 +477,7 @@ func _update(delta: float) -> void:
 		_model.rotation = Vector3(0.0, _look, 0.0)
 	if _uses_cart:
 		_update_cargo(minute_f)
+		_check_bell(minute_f, delta)
 	_update_animation()
 
 
@@ -716,7 +727,7 @@ func _update_cargo(minute_f: float) -> void:
 			on_cart.append(slot.global_transform * _cargo_rest(i, total))
 		_unload = CartUnload.pose(cfg, minute_f, _tables.delivery_minute, on_cart, biers, global_position, rotation.y,
 				slot.global_position, slot.global_basis.x, int(now_load.get("delivered", 0)), _return_bier(),
-				slot.global_transform * _cargo_rest(0, maxi(total, 1)))
+				slot.global_transform * _cargo_rest(0, maxi(total, 1)), _bell_point())
 	if bool(_unload.get("active", false)):
 		var laid: int = _unload.laid
 		var moving: int = _unload.index
@@ -772,7 +783,7 @@ func _in_unload_window(minute_f: float) -> bool:
 		return false
 	var cfg := _cart_config()
 	return minute_f >= float(cfg.unload_start(_tables.delivery_minute)) \
-			and minute_f < float(_tables.delivery_minute + maxi(cfg.return_minutes, 0))
+			and minute_f < float(_tables.delivery_minute) + cfg.after_minutes(_bell_point() != null)
 
 
 ## He is unloading or walking back to the handles right now (no prompt meanwhile).
@@ -807,6 +818,75 @@ func _cart_load() -> Dictionary:
 
 func _on_cart_load_changed() -> void:
 	_load_key = -1
+
+
+## EventBus.time_skipped – only the carter (a figure with a cart): placed from the clock without smoothing (else the
+## root – and the cart with it – swung from the old heading for a second after a skip, 3 m off at 07:35). Other
+## figures keep their per-frame update (the playthrough bots read their entry right after a skip). A skip past the
+## gate bell rings nothing – the HUD only notes the delivery (after the CorpseManager has made it, deferred).
+func _on_time_skipped(from_total: int, to_total: int) -> void:
+	if not _uses_cart or not is_node_ready() or not is_inside_tree():
+		return
+	_hidden_minute = -1
+	refresh()
+	_note_skipped_delivery.call_deferred(from_total, to_total)
+
+
+# --- G8 Runde 3: the gate bell after the delivery (user: „und er soll an der glock klingeln das ich höre wen eine
+# neue leiche da ist") -----------------------------------------------------------------------------------------------
+
+## The gate bell's hanging point (world; null = no bell in this world) – CartUnload walks him there after the delivery.
+func _bell_point() -> Variant:
+	if _bell == null or not is_instance_valid(_bell):
+		_bell = null
+		if not is_inside_tree():
+			return null
+		for node: Node in get_tree().get_nodes_in_group(BELL_GROUP):
+			if node is Node3D and (node as Node3D).is_inside_tree():
+				_bell = node as Node3D
+				break
+		if _bell == null:
+			return null
+	var hang: Variant = _bell.call(&"bell_node") if _bell.has_method(&"bell_node") else null
+	return (hang as Node3D).global_position if hang is Node3D else _bell.global_position
+
+
+## Rings the bell when the running clock passes its moment (CartDeliveryConfig.ring_offset after the delivery) on a
+## day something was delivered; placing him anew (delta < 0: refresh, load, skip) only notes the clock.
+func _check_bell(minute_f: float, delta: float) -> void:
+	var now := float(TimeManager.total_minutes() - TimeManager.minute_of_day) + minute_f
+	var prev := _bell_clock
+	_bell_clock = now
+	if delta < 0.0 or prev < 0.0 or now <= prev or now - prev > BELL_MAX_GAP or _tables == null:
+		return
+	var at := _ring_total(TimeManager.day)
+	if at < 0.0 or not (prev < at and now >= at) or not bool(_unload.get("ringing", false)):
+		return
+	if int(_cart_load().get("delivered", 0)) <= 0 or _bell == null:
+		return
+	if _bell.has_method(&"ring_delivery"):
+		_bell.call(&"ring_delivery", first_name())
+
+
+## Total game minute the bell sounds on `day` (-1 = no ringing).
+func _ring_total(day: int) -> float:
+	var off := _cart_config().ring_offset()
+	if off < 0.0 or _tables == null or _bell_point() == null:
+		return -1.0
+	return float((day - 1) * TimeManager.MINUTES_PER_DAY + _tables.delivery_minute) + off
+
+
+## A skip (sleep, waiting, debug „time") went past the ringing on a day he delivered: no sound, only the HUD note.
+func _note_skipped_delivery(from_total: int, to_total: int) -> void:
+	if not is_inside_tree() or _bell == null or not is_instance_valid(_bell):
+		return
+	var day := TimeManager.day
+	var at := _ring_total(day)
+	if at < 0.0 or not (float(from_total) < at and float(to_total) >= at):
+		return
+	_load_key = -1
+	if int(_cart_load().get("delivered", 0)) > 0 and _bell.has_method(&"note_delivery"):
+		_bell.call(&"note_delivery", first_name())
 
 
 ## Where corpse `i` of `total` lies on the cart (slot-local): side by side, a third one on top; head to the handles.
