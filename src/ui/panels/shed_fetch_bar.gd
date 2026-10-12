@@ -19,7 +19,8 @@ var _short: bool = false
 var _warn_variation: StringName = &"WarningLabel"
 
 
-## `short_label`: „Fehlendes holen (…)"; `ink`: the parchment look of the stone panel.
+## `short_label`: „Fehlendes holen (…)"; `ink`: the parchment look of the stone panel (G8 Runde 5: LedgerInkButton – its
+## keyboard focus shows on the parchment).
 func _init(short_label: bool = false, ink: bool = false) -> void:
 	_short = short_label
 	add_theme_constant_override(&"separation", 12)
@@ -29,11 +30,11 @@ func _init(short_label: bool = false, ink: bool = false) -> void:
 	reason_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	reason_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(reason_label)
-	store_button = UIKit.button(Phase6Texts.STORE_BUTTON, &"InkButton" if ink else &"")
+	store_button = UIKit.button(Phase6Texts.STORE_BUTTON, &"LedgerInkButton" if ink else &"")
 	store_button.tooltip_text = Phase6Texts.STORE_HINT
 	store_button.pressed.connect(func() -> void: store_pressed.emit())
 	add_child(store_button)
-	fetch_button = UIKit.button(Phase6Texts.fetch_button(10, _short), &"InkButton" if ink else &"")
+	fetch_button = UIKit.button(Phase6Texts.fetch_button(10, _short), &"LedgerInkButton" if ink else &"")
 	fetch_button.pressed.connect(_on_fetch)
 	add_child(fetch_button)
 	visible = false

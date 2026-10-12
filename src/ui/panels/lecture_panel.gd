@@ -8,6 +8,10 @@ extends UIPanel
 ## three calm lines of his talk (nothing about the inside), LectureSet.show_lecture(organ) when the room
 ## has one, a TimedAction of lecture.minutes, then Lectures.hold – the result card shows the fee and the
 ## new teaching. One lecture a night; the examination table stays under its cloth.
+## G8 Runde 5 (user: „bitte die bekannten probleme mal fixen" – like Quast's expertise): docked at the right edge in one
+## column (UIPanel.dock_right, no dim; the pieces and the result card scroll), each piece in two lines; while the
+## lecture runs the panel is hidden (UIPanel.hide_while_working) – the veil with his talk and the HUD's action bar are
+## the view – and it comes back with the result card.
 
 const SPECIMENS_GROUP := &"specimens"
 const LECTURES_GROUP := &"lectures"
@@ -17,7 +21,9 @@ const ANIM := &"interact"
 const DEFAULT_MINUTES := 60
 const DEFAULT_VEIL := 0.6
 
-@export var panel_width: float = 1180.0
+## G8 Runde 5: one narrow column at the right edge (was 1180 in the middle).
+@export var panel_width: float = 650.0
+@export var row_height: float = 74.0
 
 var specimens: Specimens
 var lectures: Lectures
@@ -31,6 +37,9 @@ var hold_button: Button
 var result_card: PanelContainer
 var result_fee: Label
 var result_teaching: Label
+## G8 Runde 5: the scrolling body (header, intro, action row and buttons stay outside).
+var body_scroll: ScrollContainer
+var _body: VBoxContainer
 ## uid -> {row, fee}
 var rows: Dictionary[String, Dictionary] = {}
 var selected: String = ""
@@ -39,21 +48,35 @@ var result: Dictionary = {}
 var _inventory: Inventory
 
 
+func _init() -> void:
+	super._init()
+	dock_right = true
+	hide_while_working = true
+
+
+func _ready() -> void:
+	super._ready()
+	get_viewport().size_changed.connect(_fit_body)
+
+
 func _build() -> void:
 	custom_minimum_size.x = panel_width
 	var box := UIKit.vbox(12)
 	add_child(box)
 	_make_header(box, Phase7Texts.LECTURE_TITLE)
 	intro_label = UIKit.label(Phase7Texts.LECTURE_INTRO, &"WhisperLabel", true)
-	intro_label.custom_minimum_size.x = panel_width - 80.0
 	box.add_child(intro_label)
 	night_label = UIKit.label("", &"AccentLabel", true)
 	box.add_child(night_label)
 	box.add_child(UIKit.separator())
+	var dock := make_dock_scroll(box, 10)
+	body_scroll = dock[0] as ScrollContainer
+	_body = dock[1] as VBoxContainer
+	_body.minimum_size_changed.connect(_fit_body)
 	list_box = UIKit.vbox(6)
-	box.add_child(list_box)
+	_body.add_child(list_box)
 	empty_label = UIKit.label(Phase7Texts.LECTURE_EMPTY, &"DimLabel", true)
-	box.add_child(empty_label)
+	_body.add_child(empty_label)
 	result_card = UIKit.panel(&"CardPanel")
 	var rbox := UIKit.vbox(4)
 	rbox.add_child(UIKit.label(Phase7Texts.LECTURE_RESULT, &"InkHeaderLabel"))
@@ -63,18 +86,22 @@ func _build() -> void:
 	rbox.add_child(result_teaching)
 	rbox.add_child(UIKit.label(Phase7Texts.LECTURE_RESULT_STAYS, &"InkDimLabel"))
 	result_card.add_child(rbox)
-	box.add_child(result_card)
+	_body.add_child(result_card)
 	_make_action_row(box)
 	box.add_child(UIKit.separator())
-	var bottom := UIKit.hbox(16)
+	# G8 Runde 5: the chosen piece and the reason above the buttons (the narrow column has no room beside them)
+	var state := UIKit.hbox(12)
 	chosen_label = UIKit.label("", &"SubheaderLabel")
-	chosen_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	bottom.add_child(chosen_label)
+	chosen_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	state.add_child(chosen_label)
 	reason_label = UIKit.label("", &"WarningLabel", true)
 	reason_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	reason_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	reason_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	bottom.add_child(reason_label)
+	reason_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	state.add_child(reason_label)
+	box.add_child(state)
+	var bottom := UIKit.hbox(16)
+	bottom.add_child(UIKit.spacer())
 	var back := UIKit.button(TEXT_CLOSE)
 	back.pressed.connect(request_close)
 	bottom.add_child(back)
@@ -84,7 +111,17 @@ func _build() -> void:
 	box.add_child(bottom)
 
 
+## G8 Runde 5: the body as tall as its content, at most what the screen leaves beside the other rows.
+func _fit_body() -> void:
+	fit_dock_scroll(body_scroll, _body)
+
+
+func _fit_dock() -> void:
+	_fit_body()
+
+
 func _on_opened() -> void:
+	body_scroll.scroll_vertical = 0
 	specimens = get_tree().get_first_node_in_group(SPECIMENS_GROUP) as Specimens if is_inside_tree() else null
 	lectures = get_tree().get_first_node_in_group(LECTURES_GROUP) as Lectures if is_inside_tree() else null
 	result = {}
@@ -130,22 +167,33 @@ func _refresh() -> void:
 		var r := Phase7Texts.specimen_row(spec, _record(spec.corpse_id), now, cfg)
 		var chosen := uid == selected
 		var b := UIKit.button("", &"BuildSlotSelected" if chosen else &"SlotButton")
-		b.custom_minimum_size = Vector2(panel_width - 80.0, 54.0)
+		# G8 Runde 5: two lines in the narrow column – the piece, then its jar / bone and the fee
+		b.custom_minimum_size.y = row_height
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.pressed.connect(select.bind(uid))
+		var lines := UIKit.vbox(2)
+		lines.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		lines.offset_left = 18.0
+		lines.offset_right = -18.0
+		lines.offset_top = 8.0
+		lines.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var name := UIKit.label("%s – %s" % [str(r.organ_label), str(r.name)], &"SubheaderLabel")
+		name.clip_text = true
+		name.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		name.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		lines.add_child(name)
 		var line := UIKit.hbox(18)
-		line.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		line.offset_left = 18.0
-		line.offset_right = -18.0
 		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var name := UIKit.label("%s – %s – %s" % [str(r.organ_label), str(r.name), str(r.container_word)], &"SubheaderLabel")
-		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		name.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		line.add_child(name)
+		var word := UIKit.label(str(r.container_word), &"DimLabel")
+		word.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		word.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		line.add_child(word)
 		var fee := lectures.fee_for(uid) if lectures != null else 0
 		var fee_label := UIKit.label(Phase7Texts.LECTURE_FEE % [fee, Phase7Texts.coins(fee)], &"AccentLabel")
-		fee_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		fee_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		line.add_child(fee_label)
-		b.add_child(line)
+		lines.add_child(line)
+		b.add_child(lines)
 		var reason := lectures.hold_block_reason(uid, _inventory) if lectures != null else Phase7Texts.LECTURE_NOT_TONIGHT
 		b.tooltip_text = reason
 		b.set_meta(&"uid", uid)

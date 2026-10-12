@@ -296,6 +296,151 @@ func test_stone_panel_pages_with_journal_keys() -> void:
 	assert_eq(panel.page, 0, "wraps")
 
 
+## G8 Runde 5 (user: „bitte die bekannten probleme mal fixen" – the three pages covered the world while designing): the
+## stone bench is docked at the right edge in one column below the HUD (no dim), the preview on top, four tabs
+## Grab · Form · Inschrift · Zierde; Q / E switch the tab (the E never reaches the world), the arrow keys and Enter
+## choose a card and the focus stays on it, [ / ] bring back the grave tab, a click works on tabs and cards, the panel
+## keeps its height through the tabs, „Stein hauen" hides it while the work runs, Esc closes it.
+func test_stone_panel_docked_with_tabs_and_keyboard() -> void:
+	var size_before := tree.root.size
+	tree.root.size = Vector2i(1920, 1080)
+	await _setup()
+	_world_with_masonry(10)
+	_marked("plot_01", "Marthe Quendel", &"gravestone_simple", 63, &"s1_quendel", 37)
+	for i: int in 9:
+		_filled("plot_%02d" % (i + 2), "Tote %d" % (i + 2), 40 + i)
+	for id: Variant in MASTER_ITEMS:
+		inv.add_item(id, MASTER_ITEMS[id])
+	var panel := await _open_stone()
+	await wait_frames(3)
+	var view := ui.get_viewport().get_visible_rect()
+	var rect := panel.get_global_rect()
+	assert_true(panel.dock_right and panel.get_parent() is MarginContainer, "docked")
+	assert_almost(rect.end.x, view.end.x - UIRoot.DOCK_MARGIN, 1.0, "at the right edge")
+	assert_false(rect.has_point(view.get_center()), "the middle of the screen stays free")
+	assert_true(rect.size.x < 700.0, "one column of about 660 px, was about 1700 (%d)" % int(rect.size.x))
+	var hud := ui.hud.resource_panel.get_global_rect()
+	assert_true(rect.position.y >= hud.end.y + UIRoot.DOCK_GAP - 0.5, "below the HUD's resource panel (%s / %s)" % [rect, hud])
+	assert_true(rect.end.y <= view.end.y - UIRoot.DOCK_MARGIN + 1.0, "on screen (%s)" % rect)
+	assert_false(ui.dim.visible, "the world beside it is not dimmed")
+	# the preview on top of the column, inside it, above the tabs
+	var shown := panel.preview.get_global_rect()
+	assert_true(panel.preview.is_visible_in_tree() and rect.encloses(shown), "the preview inside the column (%s)" % shown)
+	assert_true(shown.end.y <= panel.tab_buttons[StoneDesignPanel.TAB_GRAVE].get_global_rect().position.y, "the preview above the tabs")
+	assert_true(shown.size.x >= 200.0 and shown.size.y >= 180.0, "still well visible (%s)" % shown.size)
+	# the grave tab first, the focus on the chosen grave
+	assert_eq(panel.current_tab, StoneDesignPanel.TAB_GRAVE)
+	assert_eq(_focus(), panel.grave_buttons[panel.grave_id], "the focus on the chosen grave")
+	var height := rect.size.y
+	# E: the shape tab, the focus on the chosen shape (E does not reach UIRoot / the world)
+	_press(&"interact")
+	await wait_frames(1)
+	assert_eq(panel.current_tab, StoneDesignPanel.TAB_SHAPE, "E: next tab")
+	assert_true(panel.pages[StoneDesignPanel.TAB_SHAPE].is_visible_in_tree())
+	assert_false(panel.pages[StoneDesignPanel.TAB_GRAVE].is_visible_in_tree(), "one page shown")
+	assert_eq(_focus(), panel.shape_buttons[panel.shape], "the focus on the chosen shape")
+	# arrow right: the next card; Enter chooses it and the focus stays on it through the rebuild
+	var before := panel.shape
+	_press(&"ui_right")
+	await wait_frames(1)
+	var next_id := &""
+	for id: StringName in panel.shape_buttons:
+		if panel.shape_buttons[id] == _focus():
+			next_id = id
+	assert_true(next_id != &"" and next_id != before, "the arrow key moved to another card (%s)" % next_id)
+	_press(&"ui_accept")
+	await wait_frames(1)
+	assert_eq(panel.shape, next_id, "Enter chose the focused card")
+	assert_eq(_focus(), panel.shape_buttons[next_id], "the focus stays on the chosen card")
+	# E, E: the ornament tab; E wraps to the grave tab; Q back to the ornaments and the inscriptions
+	_press(&"interact")
+	_press(&"interact")
+	await wait_frames(1)
+	assert_eq(panel.current_tab, StoneDesignPanel.TAB_ORNAMENT)
+	assert_eq(_focus(), panel.ornament_buttons[panel.ornament])
+	_press(&"interact")
+	await wait_frames(1)
+	assert_eq(panel.current_tab, StoneDesignPanel.TAB_GRAVE, "E wraps")
+	_press(&"drop")
+	_press(&"drop")
+	await wait_frames(2)
+	assert_eq(panel.current_tab, StoneDesignPanel.TAB_INSCRIPTION, "Q: previous tab")
+	assert_almost(panel.get_global_rect().size.y, height, 1.0, "the panel keeps its height through the tabs")
+	# the gilding and the inscription cards by keyboard: Enter on a card two rows down
+	_press(&"ui_down")
+	_press(&"ui_down")
+	await wait_frames(1)
+	var ins_id := &"-"
+	for id: StringName in panel.inscription_buttons:
+		if panel.inscription_buttons[id] == _focus():
+			ins_id = id
+	assert_ne(ins_id, &"-", "the arrow keys move between the inscription cards")
+	_press(&"ui_accept")
+	await wait_frames(4)
+	assert_eq(panel.inscription, ins_id)
+	var card := panel.inscription_buttons[ins_id]
+	assert_eq(_focus(), card, "the focus stays on it")
+	assert_true(panel.body_scroll.get_global_rect().grow(1.0).encloses(card.get_global_rect()), "the focused card is in view")
+	# mouse: a click on the form tab, then on a shape card
+	_click(panel.tab_buttons[StoneDesignPanel.TAB_SHAPE].get_global_rect().get_center())
+	await wait_frames(1)
+	assert_eq(panel.current_tab, StoneDesignPanel.TAB_SHAPE, "a click on a tab")
+	_click(panel.shape_buttons[&"stone_master"].get_global_rect().get_center())
+	await wait_frames(1)
+	assert_eq(panel.shape, &"stone_master", "a click on a card")
+	assert_eq(panel.current_preview, masonry.preview(panel.grave_id, panel.design()), "the preview follows")
+	# every button inside the column
+	var column := panel.get_global_rect()
+	for tab: StringName in StoneDesignPanel.TABS:
+		panel.select_tab(tab)
+		await wait_frames(1)
+		for node: Node in panel.find_children("*", "BaseButton", true, false):
+			var b := node as BaseButton
+			if b.is_visible_in_tree():
+				var r := b.get_global_rect()
+				assert_true(r.position.x >= column.position.x - 0.5 and r.end.x <= column.end.x + 0.5, "%s: %s inside the column" % [tab, b.name])
+	# [ / ] page the graves and bring back the grave tab
+	panel.select_tab(StoneDesignPanel.TAB_ORNAMENT)
+	_press(&"journal_page_next")
+	await wait_frames(2)
+	assert_eq(panel.current_tab, StoneDesignPanel.TAB_GRAVE, "[ / ] show the graves")
+	assert_eq(panel.page, 1)
+	# „Stein hauen": the panel steps aside while the work runs, then comes back with the focus
+	EventBus.timed_action_started.emit("Stein hauen", 2.0)
+	await wait_frames(1)
+	assert_true(panel.work_hidden and not panel.is_visible_in_tree(), "hidden while he carves")
+	assert_false(ui.dim.visible)
+	assert_true(ui.hud.is_work_view() and ui.hud.action_panel.visible, "the HUD's bar shows the work")
+	assert_true(UIState.is_modal(), "still modal")
+	_press(&"interact")
+	await wait_frames(1)
+	assert_eq(panel.current_tab, StoneDesignPanel.TAB_GRAVE, "no tab switch while hidden")
+	EventBus.timed_action_finished.emit(true)
+	await wait_frames(2)
+	assert_true(panel.is_visible_in_tree(), "back after the work")
+	var focused := _focus()
+	assert_true(focused != null and panel.is_ancestor_of(focused), "the focus back in the panel")
+	# Esc closes it
+	_press(&"pause")
+	await wait_frames(1)
+	assert_false(ui.is_open(&"stone_design"), "Esc closes it")
+	tree.root.size = size_before
+
+
+func _focus() -> Control:
+	return ui.get_viewport().gui_get_focus_owner()
+
+
+func _click(at: Vector2) -> void:
+	for pressed: bool in [true, false]:
+		var ev := InputEventMouseButton.new()
+		ev.button_index = MOUSE_BUTTON_LEFT
+		ev.pressed = pressed
+		ev.position = at
+		ev.global_position = at
+		ui.get_viewport().push_input(ev, true)
+
+
 func test_stone_preview_renders_on_change_only() -> void:
 	var preview := StonePreview.new()
 	tree.root.add_child(preview)

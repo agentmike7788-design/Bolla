@@ -10,9 +10,13 @@ const FakeInventory := preload("res://tests/fixtures/fake_inventory.gd")
 const TEST_SAVE_DIR := "user://test_saves_ui_unit"
 const WAIT_TEXT := "Der Leichenkutscher kommt gegen 07:40"
 ## G8 Runde 4: the work panels docked at the right edge without the dim (table, Werkbank / stations, Präparierpult).
-const DOCKED_PANELS: Array[StringName] = [&"corpse_exam", &"crafting", &"pult"]
-## G8 Runde 4: panels hidden while a work started from them runs.
-const WORK_PANELS: Array[StringName] = [&"corpse_exam", &"crafting", &"pult", &"stone_design", &"build_site", &"building"]
+## G8 Runde 5: the stone bench, Quast's surgery and the lecture as well.
+const DOCKED_PANELS: Array[StringName] = [&"corpse_exam", &"crafting", &"pult", &"stone_design", &"anatomist", &"lecture"]
+## G8 Runde 4: panels hidden while a work started from them runs (G8 Runde 5: + Quast's expertise, the lecture).
+const WORK_PANELS: Array[StringName] = [&"corpse_exam", &"crafting", &"pult", &"stone_design", &"build_site", &"building",
+		&"anatomist", &"lecture"]
+## G8 Runde 5: window sizes the docked panels are checked at (16:9 small / full HD, a browser window, 4:3).
+const WINDOW_SIZES: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(1920, 1080), Vector2i(1366, 768), Vector2i(1024, 768)]
 
 
 class FakePlayer extends Node3D:
@@ -1462,12 +1466,12 @@ func test_crafting_docked_and_hidden_while_working() -> void:
 		assert_true(panel._scroll.get_global_rect().grow(1.0).encloses(again.get_global_rect()), "the focused button is in view")
 
 
-## G8 Runde 4: the stone bench, the build site and the building site are hidden while their work runs (Stein hauen /
-## Fehlendes holen) and come back with the focus; they stay in the middle with the dim.
+## G8 Runde 4: the build site and the building site are hidden while their work runs (Fehlendes holen) and come back
+## with the focus; they stay in the middle with the dim (G8 Runde 5: the stone bench is docked now –
+## test_ui_phase5.gd::test_stone_panel_docked_with_tabs_and_keyboard).
 func test_other_work_panels_hidden_while_working() -> void:
 	await _setup()
 	var contexts: Dictionary[StringName, Dictionary] = {
-		&"stone_design": {"inventory": inv, "player": player, "bench": station},
 		&"build_site": {"station": &"forge", "station_data": Database.station(&"forge"), "inventory": inv, "player": player},
 		&"building": {"building": &"crypt", "data": Database.building(&"crypt"), "level": 1, "inventory": inv, "player": player},
 	}
@@ -1504,6 +1508,63 @@ func _check_docked(panel: UIPanel) -> void:
 	assert_true(rect.size.x < view.size.x * 0.4, "%s one narrow column (%d px)" % [id, int(rect.size.x)])
 	assert_true(rect.position.y >= view.position.y - 0.5 and rect.end.y <= view.end.y + 0.5, "%s on screen (%s)" % [id, rect])
 	assert_false(ui.dim.visible, id + " the world beside it is not dimmed")
+	_check_below_hud(panel, "")
+
+
+## G8 Runde 5: a shown docked panel starts DOCK_GAP below the HUD's resource panel (coins, stock, quality, reputation
+## stay visible), keeps DOCK_MARGIN to the bottom edge, and the notification column stands beside it.
+func _check_below_hud(panel: UIPanel, where: String) -> void:
+	var view := ui.get_viewport().get_visible_rect()
+	var rect := panel.get_global_rect()
+	var hud := ui.hud.resource_panel.get_global_rect()
+	var id := String(panel.panel_id) + where
+	assert_true(hud.size.y > 0.0, id + " the resource panel is laid out")
+	assert_false(rect.intersects(hud), "%s does not cover the HUD's resource panel (%s / %s)" % [id, rect, hud])
+	assert_almost(rect.position.y, hud.end.y + UIRoot.DOCK_GAP, 1.0, id + " starts below the resource panel")
+	assert_true(rect.end.y <= view.end.y - UIRoot.DOCK_MARGIN + 1.0, "%s ends above the bottom margin (%s in %s)" % [id, rect, view])
+	assert_almost(rect.end.x, view.end.x - UIRoot.DOCK_MARGIN, 1.0, id + " at the right edge")
+	assert_false(rect.has_point(view.get_center()), id + " the middle of the screen stays free")
+	var notes := ui.notifications.get_global_rect()
+	notes.size.y = maxf(notes.size.y, 200.0)
+	assert_false(notes.intersects(rect), "%s the notification column beside it (%s / %s)" % [id, notes, rect])
+
+
+## G8 Runde 5 (user: „bitte die bekannten probleme mal fixen" – the docked panels covered the right part of the HUD bar):
+## at 1280 × 720, 1920 × 1080 and the narrower browser windows 1366 × 768 and 1024 × 768 every docked panel (table,
+## Werkbank, Präparierpult, Steinmetzbank, Quast, Vorlesung) starts below the resource panel and fits on the screen; its
+## body scrolls in the height left. When the resource panel grows (a crafted item with its caption), the panel follows.
+func test_docked_panels_below_the_hud_at_every_size() -> void:
+	var size_before := tree.root.size
+	await _setup()
+	var contexts := _contexts()
+	contexts[&"stone_design"] = {"inventory": inv, "player": player, "bench": station}
+	for window: Vector2i in WINDOW_SIZES:
+		tree.root.size = window
+		await wait_frames(2)
+		for id: StringName in DOCKED_PANELS:
+			ui.open_panel(id, contexts[id])
+			await wait_frames(3)
+			var panel := ui.get_panel(id)
+			assert_true(panel.is_visible_in_tree(), "%s at %s" % [id, window])
+			_check_below_hud(panel, " at %s" % window)
+			ui.close_all()
+			await wait_frames(1)
+		assert_eq(ui.notifications.offset_right, -28.0, "the notification column back at the edge without a docked panel")
+	# the resource panel grows (a crafted item shows with its caption): the docked panel moves down with it
+	tree.root.size = Vector2i(1920, 1080)
+	await wait_frames(2)
+	ui.open_panel(&"crafting", contexts[&"crafting"])
+	await wait_frames(3)
+	var panel := ui.get_panel(&"crafting")
+	var top := panel.get_global_rect().position.y
+	var hud_before := ui.hud.resource_panel.get_global_rect().size.y
+	inv.add_item(&"shroud", 1)
+	await wait_frames(3)
+	assert_true(ui.hud.resource_panel.get_global_rect().size.y > hud_before, "the resource panel grew")
+	assert_true(panel.get_global_rect().position.y > top, "the panel moved down with it")
+	_check_below_hud(panel, " (grown HUD)")
+	ui.close_all()
+	tree.root.size = size_before
 
 
 func _press_action(action: StringName) -> void:

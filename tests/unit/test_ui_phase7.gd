@@ -392,6 +392,8 @@ func test_pult_docked_and_hidden_while_working() -> void:
 	assert_false(rect.has_point(view.get_center()), "the middle of the screen stays free")
 	assert_true(rect.size.x < 700.0, "one column of about 650 px, was 1500 (%d)" % int(rect.size.x))
 	assert_true(rect.position.y >= view.position.y - 0.5 and rect.end.y <= view.end.y + 0.5, "on screen (%s)" % rect)
+	# G8 Runde 5: below the HUD's resource panel
+	assert_true(rect.position.y >= ui.hud.resource_panel.get_global_rect().end.y + UIRoot.DOCK_GAP - 0.5, "below the HUD (%s)" % rect)
 	assert_true(panel.body_scroll != null and panel.is_ancestor_of(panel.body_scroll), "the body scrolls")
 	assert_false(ui.dim.visible, "the world beside it is not dimmed")
 	assert_false(crafting.is_visible_in_tree(), "the crafting card under it is not drawn")
@@ -432,6 +434,102 @@ func test_pult_docked_and_hidden_while_working() -> void:
 	assert_eq(ui.top(), &"crafting", "Esc closes the pult's card")
 	assert_true(crafting.is_visible_in_tree() and crafting.dock_right)
 	assert_false(ui.dim.visible)
+
+
+## G8 Runde 5 (user: „bitte die bekannten probleme mal fixen" – Quast's expertise kept the panel open for its 30 minutes):
+## Quast's panel and the lecture are docked at the right edge in one column below the HUD's resource panel, without the
+## dim; while the expertise / the lecture runs the panel is hidden (the HUD's bar shows the work, still modal), then it
+## comes back with its result card and the keyboard focus; Enter, a click and Esc keep working.
+func test_anatomist_and_lecture_docked_and_hidden_while_working() -> void:
+	await _setup()
+	_anatomy_world()
+	GameState.set_flag(&"anatomy_known", true)
+	var lectures := Phase7Fixtures.lecture_night(3, null)
+	_world().add_child(lectures)
+	var heart := _take(&"heart", SpecimenRecord.CONTAINER_JAR)
+	var stomach := _take(&"stomach", SpecimenRecord.CONTAINER_JAR)
+	var speaker := Node3D.new()
+	_world().add_child(speaker)
+	player.hold = true
+	var panel := _open(&"anatomist", {"speaker": speaker, "inventory": inv, "player": player}) as AnatomistPanel
+	await wait_frames(3)
+	_check_docked(panel, 700.0)
+	for uid: String in panel.rows:
+		for key: String in ["sell", "expertise"]:
+			var b := (panel.rows[uid][key] as Button).get_global_rect()
+			assert_true(panel.get_global_rect().encloses(b), "%s %s inside the column (%s)" % [uid, key, b])
+	# keyboard: the focus on the first „Gutachten" (never on „Verkaufen"), Enter starts it
+	var exp_b := panel.rows[heart].expertise as Button
+	assert_eq(ui.get_viewport().gui_get_focus_owner(), exp_b, "the default focus on „Gutachten“")
+	_press_action(&"ui_accept")
+	assert_eq(player.actions.size(), 1, "Enter starts the expertise")
+	if player.actions.size() > 0:
+		assert_eq(player.actions[0][1], 30)
+	await wait_frames(1)
+	assert_true(panel.work_hidden and not panel.is_visible_in_tree(), "hidden while Quast looks at it")
+	assert_false(ui.dim.visible)
+	assert_true(ui.hud.is_work_view() and ui.hud.action_panel.visible, "the HUD's bar shows the work")
+	assert_eq(ui.top(), &"anatomist")
+	assert_true(UIState.is_modal(), "still modal")
+	player.finish()
+	await wait_frames(2)
+	assert_false(panel.work_hidden)
+	assert_true(panel.is_visible_in_tree(), "back after the expertise")
+	assert_true(panel.result_card.is_visible_in_tree(), "with the result card")
+	assert_false(panel.rows.has(heart), "the piece stays with Quast")
+	assert_false(ui.hud.is_work_view())
+	var focused := ui.get_viewport().gui_get_focus_owner() as Button
+	assert_true(focused != null and panel.is_ancestor_of(focused) and not focused.disabled, "keyboard focus back in the panel")
+	_check_docked(panel, 700.0)
+	# Esc during a second expertise closes it and resets the hiding
+	(panel.rows[stomach].expertise as Button).pressed.emit()
+	assert_true(panel.work_hidden)
+	_press_action(&"pause")
+	await wait_frames(1)
+	assert_false(ui.is_open(&"anatomist"), "Esc closes it during the work")
+	assert_false(panel.work_hidden)
+	assert_false(ui.hud.is_work_view())
+	player.finish()
+	# the lecture on a lecture night: docked as well, hidden while it is held (the veil and the bar are the view)
+	var jar := _take(&"heart", SpecimenRecord.CONTAINER_JAR)
+	TimeManager.load_state({"day": 3, "minute_of_day": 1390})
+	var lecture := _open(&"lecture", {"speaker": speaker, "inventory": inv, "player": player}) as LecturePanel
+	await wait_frames(3)
+	assert_eq(lecture.selected, jar)
+	_check_docked(lecture, 700.0)
+	# mouse: a click on the chosen piece's row keeps it, then a click on „Vorlesung halten"
+	_click((lecture.rows[jar].row as Button).get_global_rect().get_center())
+	await wait_frames(1)
+	assert_eq(lecture.selected, jar, "a click works")
+	assert_false(lecture.hold_button.disabled, lecture.hold_button.tooltip_text)
+	_click(lecture.hold_button.get_global_rect().get_center())
+	await wait_frames(1)
+	assert_eq(player.actions.back()[1], 60, "a click holds the lecture")
+	assert_true(lecture.work_hidden and not lecture.is_visible_in_tree(), "hidden during the lecture")
+	assert_true(ui.veil.active, "the veil with his talk is the view")
+	assert_false(ui.dim.visible)
+	assert_true(ui.hud.is_work_view())
+	player.finish()
+	await wait_frames(2)
+	assert_true(lecture.is_visible_in_tree() and lecture.result_card.is_visible_in_tree(), "back with the result card")
+	assert_false(ui.veil.active)
+	assert_false(ui.hud.is_work_view())
+
+
+## The docked rules: right edge, the middle free, narrower than `max_width`, below the HUD's resource panel, on screen,
+## no dim.
+func _check_docked(panel: UIPanel, max_width: float) -> void:
+	var view := ui.get_viewport().get_visible_rect()
+	var rect := panel.get_global_rect()
+	var id := String(panel.panel_id)
+	assert_true(panel.dock_right and panel.get_parent() is MarginContainer, id + " docked")
+	assert_almost(rect.end.x, view.end.x - UIRoot.DOCK_MARGIN, 1.0, id + " at the right edge")
+	assert_false(rect.has_point(view.get_center()), id + " the middle of the screen stays free")
+	assert_true(rect.size.x < max_width, "%s one narrow column (%d px)" % [id, int(rect.size.x)])
+	var hud := ui.hud.resource_panel.get_global_rect()
+	assert_true(rect.position.y >= hud.end.y + UIRoot.DOCK_GAP - 0.5, "%s below the HUD (%s / %s)" % [id, rect, hud])
+	assert_true(rect.end.y <= view.end.y + 0.5, "%s on screen (%s)" % [id, rect])
+	assert_false(ui.dim.visible, id + " the world beside it is not dimmed")
 
 
 func _press_action(action: StringName) -> void:

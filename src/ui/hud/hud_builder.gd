@@ -68,6 +68,7 @@ static func build_resource_panel(hud: GameHud) -> Dictionary[StringName, Diction
 	panel.offset_top = hud.margin
 	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	hud.add_child(panel)
+	hud.resource_panel = panel
 	var box := UIKit.vbox(8)
 	panel.add_child(box)
 	var chips := UIKit.hbox(20)
