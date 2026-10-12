@@ -407,7 +407,9 @@ def _p8(name: str, mesh, actions):
     return extra, kids
 
 
-def _rigged(name: str, mesh, joints: dict, actions) -> None:
+def _rigged(name: str, mesh, joints: dict, actions, held=()) -> None:
+    """held: G8 Runde 5 – tools of the figure as child meshes [(name, bone, obj, glTF extras)], modelled with the body
+    (before grounding) in the rest pose (Fenner's staff: shown in every clip but the one it lies aside in)."""
     extra, kids = _p8(name, mesh, actions)
     dz = rig.ground(mesh)
     j = {b: (tuple(Vector(h) - Vector((0, 0, dz))), tuple(Vector(t) - Vector((0, 0, dz)))) for b, (h, t) in joints.items()}
@@ -421,7 +423,8 @@ def _rigged(name: str, mesh, joints: dict, actions) -> None:
     work, work_kids = VW.build_for(name, arm, mesh)
     for an, frames, fn in tuple(actions) + tuple(extra) + tuple(work):
         rig.add_action(arm, mesh, an, frames, fn)
-    kids = [k + (True,) for k in kids] + [k + (False,) for k in work_kids]
+    kids = ([k + (True,) for k in kids] + [(n, b, o, {"show_with": ",".join(s)}, False) for n, b, o, s in work_kids]
+            + [tuple(k) + (True,) for k in held])
     if not kids:
         _export(arm, name)
         return
@@ -437,7 +440,7 @@ def _rigged(name: str, mesh, joints: dict, actions) -> None:
         obj.parent_bone = bone
         bpy.context.view_layer.update()
         obj.matrix_world = Matrix.Identity(4)
-        extras[cname] = {"show_with": ",".join(show)}
+        extras[cname] = dict(show) if isinstance(show, dict) else {"show_with": ",".join(show)}
     L.export_rigged(arm, name, CAT)
     path = L.os.path.join(L.ROOT, "assets", "models", CAT, name + ".glb")
     M.set_extras(path, extras)
@@ -1056,16 +1059,18 @@ def mayor():
     # signet ring on the left hand
     parts.append(W("arm_l", _ell(L.hexc("#A08240"), hands[1] + Vector((-0.02, -0.03, -0.012)), (0.008, 0.008, 0.008), seg=6,
                                  rings=4, ao=0.0, top=0.5)))
-    # the staff of office: dark wood, brass knob, iron ferrule on the ground
+    # the staff of office: dark wood, brass knob, iron ferrule on the ground. G8 Runde 5 (user: „bitte die bekannten
+    # probleme mal fixen"): no longer part of the body but the child mesh prop_staff on arm_r (same geometry, same
+    # paint, the same whole-figure light below), hidden while he works at the desk – there it leans against the desk
+    # (prop_staff_rest, asset_villager_work) and both hands are free for the files and the stamp.
     h = hands[-1]
     st_top = Vector((h.x - 0.005, h.y - 0.01, 1.32))
     st_bot = Vector((h.x - 0.02, h.y - 0.03, 0.0))
-    parts.append(W("arm_r", _painted(L.tube(st_bot + Vector((0, 0, 0.05)), st_top, 0.016, 7, r_end=0.019), MY_STAFF,
-                                     var=0.2, ao=0.0, top=0.3, seed=6)))
-    parts.append(W("arm_r", L.part("sphere", BRASS, loc=st_top + Vector((0, 0, 0.03)), radius=0.035, segments=10, ring_count=6,
-                                   paint_kw={"ao": 0.0, "top": 0.5})))
-    parts.append(W("arm_r", L.part("cyl", IRON, loc=st_bot + Vector((0, 0, 0.03)), radius=0.016, depth=0.06, vertices=7,
-                                   paint_kw={"ao": 0.0})))
+    staff = [_painted(L.tube(st_bot + Vector((0, 0, 0.05)), st_top, 0.016, 7, r_end=0.019), MY_STAFF, var=0.2, ao=0.0, top=0.3,
+                      seed=6),
+             L.part("sphere", BRASS, loc=st_top + Vector((0, 0, 0.03)), radius=0.035, segments=10, ring_count=6,
+                    paint_kw={"ao": 0.0, "top": 0.5}),
+             L.part("cyl", IRON, loc=st_bot + Vector((0, 0, 0.03)), radius=0.016, depth=0.06, vertices=7, paint_kw={"ao": 0.0})]
     # head: long, gaunt, dignified and a little severe; grey hair combed back into a queue with a black bow
     c = Vector((0.0, -0.03, 1.63))
     s = Vector((0.118, 0.13, 0.155))
@@ -1091,6 +1096,9 @@ def mayor():
     mesh = L.join(parts, rig.MESH)
     _global_light(mesh, 1.8)
     L.smooth(mesh, 55)
+    staff = L.join(staff, "prop_staff")
+    _global_light(staff, 1.8)
+    L.smooth(staff, 55)
     joints = _joints(hip, 0.98, Vector((0, -0.01, 1.45)), Vector((0, -0.03, 1.82)), sh, wr, 0.095)
     talk_keys = [
         (0.0, {"arm_l": (-30.0, 8.0, -14.0), "head": (3.0, 0.0, -2.0), "spine": (-2.0, 0.0, 0.0)}),
@@ -1103,7 +1111,7 @@ def mayor():
         ("walk-loop", 22, _walk(22.0, 0.04, 6.0, 0.012, 1.5, 2.0, -1.5, lambda t: {"arm_r": (-4.0, 0.0, 0.0)})),
         ("talk-loop", 72, _talk(talk_keys, 0.9)),
     )
-    _rigged("ph_chr_v_mayor", mesh, joints, actions)
+    _rigged("ph_chr_v_mayor", mesh, joints, actions, held=[("prop_staff", "arm_r", staff, {"hide_with": "desk_files"})])
 
 
 # ======================================================================================================

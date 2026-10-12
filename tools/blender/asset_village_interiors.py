@@ -519,9 +519,18 @@ def office_desk():
         parts.append(box((0.6, sy * 0.27, 0.37), (0.04, 0.04, 0.37), WOOD_DARK, seed=2, ao=0.3))
     parts.append(box((0.0, 0.0, 0.76), (0.7, 0.36, 0.03), WOOD, seed=3, top=0.35))
     parts.append(box((0.0, -0.05, 0.795), (0.4, 0.22, 0.004), L.hexc("#3E4A3A"), ao=0.0))   # a green desk cloth
+    # G8 Runde 5 (user: „bitte die bekannten probleme mal fixen"): Fenner's work on his side of the desk (+y, he stands
+    # 0.6 m behind the centre), where his hands reach (asset_villager_work.desk_files): the loose sheets he stamps
+    # (one already stamped), the file stack he leafs through, the stamp pad
     for k in range(4):
-        parts.append(box((-0.15 + k * 0.03, -0.05 + k * 0.01, 0.8 + k * 0.003), (0.1, 0.14, 0.002), PAPER, rot=(0, 0, k * 6 - 6),
+        parts.append(box((-0.1 + k * 0.012, 0.13 + k * 0.008, 0.8 + k * 0.003), (0.1, 0.14, 0.002), PAPER, rot=(0, 0, k * 5 - 8),
                          ao=0.0, var=0.05))
+    parts.append(box((-0.07, 0.2, 0.8135), (0.05, 0.036, 0.0008), L.hexc("#3A1E22"), rot=(0, 0, 7), ao=0.0, var=0.05))
+    parts.append(box((0.15, 0.05, 0.797), (0.115, 0.155, 0.004), L.hexc("#7A6248"), rot=(0, 0, 4), ao=0.0, top=0.3))
+    parts.append(box((0.15, 0.05, 0.821), (0.1, 0.14, 0.02), PAPER, rot=(0, 0, 3), ao=0.15, var=0.08, top=0.2))
+    parts.append(box((0.15, 0.05, 0.822), (0.012, 0.145, 0.0215), L.hexc("#6E3A2E"), rot=(0, 0, 3), ao=0.0))   # the file tape
+    parts.append(box((-0.3, 0.15, 0.802), (0.08, 0.056, 0.009), L.hexc("#6A5A48"), ao=0.1, top=0.4))         # the stamp pad
+    parts.append(box((-0.3, 0.15, 0.8115), (0.068, 0.045, 0.0015), L.hexc("#3A1E22"), ao=0.0, var=0.05))
     seal = A._lathe([(0.0, 0.0), (0.03, 0.002), (0.03, 0.02), (0.012, 0.03), (0.016, 0.08), (0.0, 0.085)], n=8, name="seal")
     seal.data.transform(Matrix.Translation((0.35, -0.12, 0.79)))
     parts.append(_paint(seal, BRASS, ao=0.1, top=0.5))

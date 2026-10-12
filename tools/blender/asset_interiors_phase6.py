@@ -875,9 +875,12 @@ def chapel_room():
     _done(parts, "ph_int_chapel_room", markers, 30)
 
 
-def altar():
+def altar(name: str = "ph_int_altar", facing_nave: bool = False):
     """Stone altar (1.5 x 0.7 x 1.0 m) on a step: white linen cloth with a narrow red border hanging
-    at the front, two brass candlesticks, a plain wooden cross, an open book."""
+    at the front, two brass candlesticks, a plain wooden cross, an open book.
+    facing_nave (G8 Runde 5, the village church: ph_int_altar_church): the priest stands behind it facing the
+    nave, as at mass - the cross stands at the front edge (towards the people; from the game camera it no longer
+    covers his face) and the book lies on his side, open towards him."""
     L.reset(1700)
     parts = []
     parts.append(_slab((0.0, 0.05, 0.08), (0.95, 0.55, 0.08), STONE_PALE, cuts=1, seed=1, var=0.14, ao=0.2, top=0.3))
@@ -909,21 +912,29 @@ def altar():
         f.data.name = f.name
         flames.append((f, fl))
     # the cross: plain dark wood on a small stepped foot
-    parts.append(_slab((0.0, 0.3, top + 0.03), (0.08, 0.06, 0.03), WOOD_DARK, seed=20, var=0.12, ao=0.0))
-    parts.append(_slab((0.0, 0.3, top + 0.33), (0.018, 0.018, 0.3), WOOD_DARK, seed=21, var=0.12, ao=0.1))
-    parts.append(_slab((0.0, 0.3, top + 0.48), (0.13, 0.018, 0.018), WOOD_DARK, seed=22, var=0.12, ao=0.1))
+    cy = -0.19 if facing_nave else 0.3
+    parts.append(_slab((0.0, cy, top + 0.03), (0.08, 0.06, 0.03), WOOD_DARK, seed=20, var=0.12, ao=0.0))
+    parts.append(_slab((0.0, cy, top + 0.33), (0.018, 0.018, 0.3), WOOD_DARK, seed=21, var=0.12, ao=0.1))
+    parts.append(_slab((0.0, cy, top + 0.48), (0.13, 0.018, 0.018), WOOD_DARK, seed=22, var=0.12, ao=0.1))
     # an open book on a small wooden rest
-    parts.append(_slab((0.28, -0.08, top + 0.025), (0.15, 0.11, 0.02), WOOD, rot=(8, 0, -8), seed=25, var=0.12, ao=0.0))
+    by, bz = (0.14, 172.0) if facing_nave else (-0.08, -8.0)
+    parts.append(_slab((0.28, by, top + 0.025), (0.15, 0.11, 0.02), WOOD, rot=(8, 0, bz), seed=25, var=0.12, ao=0.0))
     for sx in (-1, 1):
-        parts.append(_slab((0.28 + sx * 0.075, -0.08, top + 0.055), (0.07, 0.1, 0.006), L.hexc("#DCCFAE"),
-                           rot=(8, sx * -6, -8), seed=26, var=0.05, ao=0.0))
-    obj = L.join(parts, "ph_int_altar")
+        dx = 0.075 * (-sx if facing_nave else sx)
+        parts.append(_slab((0.28 + dx, by, top + 0.055), (0.07, 0.1, 0.006), L.hexc("#DCCFAE"),
+                           rot=(8, sx * -6, bz), seed=26, var=0.05, ao=0.0))
+    obj = L.join(parts, name)
     for f, fl in flames:
         f.data.transform(Matrix.Translation(-f.location))
         f.parent = obj
     L.marker(obj, "light_candle_1", (-0.52, 0.18, top + 0.72))
     L.marker(obj, "light_candle_2", (0.52, 0.18, top + 0.72))
-    L.finish(obj, "ph_int_altar", CAT, 35, shift=False)
+    L.finish(obj, name, CAT, 35, shift=False)
+
+
+def altar_church():
+    """ph_int_altar_church: the altar of the village church, the priest behind it facing the nave."""
+    altar("ph_int_altar_church", facing_nave=True)
 
 
 def catafalque():
@@ -1248,7 +1259,7 @@ def stone_bin():
 
 ASSETS = [crypt_room, crypt_stair, crypt_table, crypt_niche, crypt_niche_sealed, crypt_lantern, candle_niche,
           ossuary_shelf, bone_box, bone_rack, name_board, sealed_passage, sealed_passage_grille,
-          chapel_room, altar, catafalque, pew_rough, pew, bell_rope, candelabrum, stained_window, holy_water,
+          chapel_room, altar, altar_church, catafalque, pew_rough, pew, bell_rope, candelabrum, stained_window, holy_water,
           shed_room, shed_rack, wood_rack, stone_bin]
 
 

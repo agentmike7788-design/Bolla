@@ -9,13 +9,14 @@ pause_range = 2.8
 pause_clip = &"idle"
 talk_clip = &"talk"
 work_facing = Dictionary[StringName, float]({
-&"v_wash": -90.0,
-&"v_in_church_altar": 180.0,
-&"v_in_inn_jakob": -120.0
+&"v_wash": -90.0
 })
 runtime_clips = Dictionary[StringName, StringName]({
 &"apprentice_inn": &"sweep",
 &"washer_table": &"wash_body"
+})
+runtime_spots = Dictionary[StringName, StringName]({
+&"apprentice_inn": &"v_in_inn_sweep"
 })
 puff_clips = Dictionary[StringName, PackedFloat32Array]({
 &"smoke": PackedFloat32Array(0.5, 0.58)

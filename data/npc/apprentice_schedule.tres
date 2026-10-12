@@ -38,7 +38,7 @@ region = &"village"
 script = ExtResource("1")
 start_minute = 1020
 animation = &"sweep"
-path = PackedStringArray("v_in_inn_jakob")
+path = PackedStringArray("v_in_inn_sweep")
 dialogue_id = &"v_apprentice"
 region = &"village"
 

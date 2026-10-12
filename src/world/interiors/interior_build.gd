@@ -150,14 +150,15 @@ static func build(layout: Dictionary) -> Node3D:
 	for item: Dictionary in layout.items:
 		_build_item(root, furniture, entities, colliders, item, counts, cfg)
 	# Phase 7 (§4.4): the room's NPC spots Waypoints/<id> [x, z, facing°] (RegionRoot finds them by
-	# the room's region_id).
+	# the room's region_id). G8 Runde 5: an optional fourth value is the height of the floor there
+	# (Lenz behind the altar stands on the chancel, 0.18 m up); a figure standing at the spot stands at it.
 	if layout.has("waypoints"):
 		var wps := _group(root, "Waypoints")
 		for id: String in layout.waypoints:
 			var w: Array = layout.waypoints[id]
 			var marker := Marker3D.new()
 			marker.name = id
-			marker.position = Vector3(float(w[0]), 0.0, float(w[1]))
+			marker.position = Vector3(float(w[0]), float(w[3]) if w.size() > 3 else 0.0, float(w[1]))
 			if w.size() > 2:
 				marker.rotation_degrees.y = float(w[2])
 				marker.set_meta(&"facing", true)

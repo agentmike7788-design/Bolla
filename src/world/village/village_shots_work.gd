@@ -233,11 +233,13 @@ func _w_stage_jakob(world: Node3D, npc: Node3D, minute: int) -> void:
 	var builder: GDScript = load("res://src/systems/npc/schedule_builder.gd")
 	var cfg: Resource = root.get_node(^"Database").call(&"config", &"npc_work_config")
 	var clip: StringName = cfg.call(&"clip_for", &"apprentice_inn", &"idle") if cfg != null else &"idle"
-	var e: Resource = builder.call(&"stay", &"v_in_inn_jakob", 0, clip, &"v_apprentice")
+	# G8 Runde 5: his sweeping spot (NpcWorkConfig.runtime_spots), as Apprentice.village_schedule
+	var spot: StringName = cfg.call(&"spot_for", &"apprentice_inn", &"v_in_inn_jakob") if cfg != null else &"v_in_inn_jakob"
+	var e: Resource = builder.call(&"stay", spot, 0, clip, &"v_apprentice")
 	e.set(&"region", VILLAGE)
 	var entries: Array[ScheduleEntry] = [e]
 	npc.call(&"set_runtime_schedule", builder.call(&"build", entries))
-	print("[ShotsWork] Jakob staged at v_in_inn_jakob (%s) from minute %d" % [clip, minute])
+	print("[ShotsWork] Jakob staged at %s (%s) from minute %d" % [spot, clip, minute])
 
 
 ## Liesel's corpse wash at the crypt table (Friendship: favour corpse_wash) due now.

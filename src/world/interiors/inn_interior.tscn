@@ -476,6 +476,10 @@ metadata/facing = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.2, 0, 1.08)
 metadata/facing = true
 
+[node name="v_in_inn_sweep" type="Marker3D" parent="Waypoints" unique_id=1734209571]
+transform = Transform3D(0.17364818, 0, 0.98480775, 0, 1, 0, -0.98480775, 0, 0.17364818, -2.4, 0, -0.35)
+metadata/facing = true
+
 [node name="v_in_inn_fest_1" type="Marker3D" parent="Waypoints" unique_id=1993180253]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.45, 0, 0.95)
 metadata/facing = true
