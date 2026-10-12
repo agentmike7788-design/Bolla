@@ -21,7 +21,7 @@ Geprüft: alle Daten-Zeitpläne `data/npc/*_schedule.tres` (Phase 7/8, auch die 
 | Ulrich Esch (Schmied) | Amboss `v_anvil` | `work` (Hämmern) | unverändert | Hammer (Körper) |
 | Theres Mangold (Krämerin) | Ladenfenster `v_shop_window` | `work` (Wiegen, Zählen) | unverändert | – |
 | Osric | Abendpfeife `evening_spot`, 18:30 | `talk` | **`smoke`** – steht behaglich, zieht an der Pfeife (Brust hebt sich), lässt Rauchwölkchen aus, schaut zufrieden umher | Rauch aus dem Marker `pipe_smoke` |
-| Jakob (Lehrling) | Krug `v_in_inn_jakob`, 17:00–21:00 an Arbeitstagen („hilft Rosine") | `idle` (Laufzeit) / `talk` (Daten) | **`sweep`** (vorhandener Clip mit Besen), seitlich zum Raum gedreht | Besen (vorhanden) |
+| Jakob (Lehrling) | Krug `v_in_inn_jakob`, 17:00–21:00 an Arbeitstagen („hilft Rosine") | `idle` (Laufzeit) / `talk` (Daten) | **`sweep`** (vorhandener Clip mit Besen), beim Fegen um −120° gedreht, damit der Besen nicht hinter dem Tisch verschwindet | Besen (vorhanden) |
 | Jakob | Friedhof (Rechen, Gießen, Jäten, Kerzen, Fegen …) | eigene Clips | unverändert | – |
 | Hanne (Hausiererin), Veit (Bettler), Wiebke, Besucher / Angehörige, Feste | Brunnen/Tor, Kirchstufe, Bank, Gräber | `offer`, `sit_beg`, `sit`, `kneel`/`mourn_stand`/`lay_flowers`, `dance`/`clap`/`lantern_*` | unverändert (keine Lücke) | – |
 | Ilse Kranich | `trader_spot` nachts | `idle` | unverändert: sie wartet mit der Laterne, gehandelt wird im Gespräch (`offer`) – kein Werkplatz | – |
@@ -34,7 +34,7 @@ Nicht als Arbeit gezählt (bleiben `idle`/`talk`): Frühstück/Abend im Krug, Pl
 - **Clips** (alle Schleifen, 3 s, 30 fps, Wurzel ruht, nahtlos, Füße am Boden): `tools/blender/asset_villager_work.py` (`WORK`, Posen, Requisiten), eingehängt in `asset_villagers._rigged` **nach** allen älteren Clips; Osric `smoke-loop` + Marker `pipe_smoke` in `asset_carter.py`. Starre Arme ohne Ellbogen: alles liest sich aus ganzen Arm-, Rumpf- und Kopfbewegungen; Fenners Stab und Quasts Tasche bleiben lotrecht (der Arm gleicht die Rumpfneigung aus).
 - **Requisiten** = Kindmeshes am Armknochen mit glTF-Extras `show_with` (Muster `lantern_prop`): `hold()` setzt sie in der Referenzpose des Clips in die Faust und rechnet sie in die Ruhepose zurück. Je Figur ≤ 9000 Dreiecke inkl. Requisiten (Fenner 8988).
 - **Hash-gleich:** Körper-Mesh und alle alten Clips (test_assets_phase8 `REEXPORT`, test_cart_delivery für Osric). Bewusst angepasste Listen-Tests: `test_assets_phase8` (neue Konstante `WORK_R4` für die Clip-Liste), `test_cart_delivery.test_carter_keeps_body_and_old_clips` und `test_assets_characters` (Osric + `smoke`). Der Glb-Export ist bytegleich bei Wiederholung (zweimal gebaut, md5 gleich).
-- **Daten:** `ScheduleEntry.animation` der Arbeitseinträge in `data/npc/*_schedule.tres` (bei Osric nur der Abendeintrag `evening_smoke`: `talk` → `smoke`); `data/config/npc_work_config.tres` (`NpcWorkConfig`): welche Clips Arbeit sind, Pausen-Abstand 2,8 m, `idle`/`talk`, Arbeitsrichtung je Ort (`work_facing`: Altar 180°, Waschplatz −90° zum Bach, Jakob 90°), Laufzeit-Clips (`apprentice_inn` → `sweep`, `washer_table` → `wash_body`), Rauchwölkchen (Momente 0,5/0,58 des Zyklus, Größe, Farbe, Steigen).
+- **Daten:** `ScheduleEntry.animation` der Arbeitseinträge in `data/npc/*_schedule.tres` (bei Osric nur der Abendeintrag `evening_smoke`: `talk` → `smoke`); `data/config/npc_work_config.tres` (`NpcWorkConfig`): welche Clips Arbeit sind, Pausen-Abstand 2,8 m, `idle`/`talk`, Arbeitsrichtung je Ort (`work_facing`: Altar 180°, Waschplatz −90° zum Bach, Jakob −120°), Laufzeit-Clips (`apprentice_inn` → `sweep`, `washer_table` → `wash_body`), Rauchwölkchen (Momente 0,5/0,58 des Zyklus, Größe, Farbe, Steigen).
 - **Ansprechen:** `Npc` – kommt der Totengräber näher als 2,8 m (oder spricht er sie an), legt die Figur die Arbeit hin (`idle`, Requisiten weg) und dreht sich zu ihm; im Gespräch `talk` bis `dialogue_ended`; geht er weg, arbeitet sie weiter und schaut wieder zur Arbeit.
 - **Quasts Pult:** der Stehplatz `v_in_surgery_desk` 0,27 m näher ans Pult (1,75 → 2,02; Layout + Szene), vorher reichte die Hand nicht bis zur Platte.
 
@@ -50,3 +50,12 @@ Skript: `tools/godot_run.sh --resolution 1280x720 -s res://src/world/village/vil
 
 - `tests/unit/test_npc_work.gd`: Werte in den Daten; jeder Arbeitseintrag hat einen eigenen Arbeits-Clip (nicht `idle`/`talk`) und das Modell hat ihn; jeder „shop"-Eintrag arbeitet; Laufzeit-Clips; Arbeitsorte schauen zu Tresen, Tisch, Pult, Altar, Amboss, Waschsteinen; Clips vorhanden, Schleife, 3 s, Wurzel ruht, nahtlos, Füße am Boden, Hände bewegen sich; Lesbarkeit (Krug über dem Tresen, Feder über dem Pult, Stempel herunter, Liesel kniet, Arme zum Gebet); Requisiten am Knochen, nur mit ihrem Clip, in der Faust, ≤ 150 Dreiecke; Budget ≤ 9000; Generatoren deterministisch.
 - `tests/integration/test_npc_work.gd`: echte `Npc`-Szene mit echtem Zeitplan und Modell – Arbeits-Clip, Requisit, Arbeitsrichtung; herantreten → Pause, Zuwendung, Requisit weg; ansprechen → `talk`, Dialogende → `idle`, weggehen → Arbeit; Osrics Rauchwölkchen am Marker.
+
+## 5. Befund aus den Bildern / offen
+
+- Gut lesbar: Rosine mit Krug über dem Tresen, Quast schreibt am Pult und hebt das Fläschchen vors Auge, Fenner liest die Bekanntmachung vor, Liesel kniet und wringt am Bach, Osrics Rauchwölkchen, Lenz' erhobene Arme und die Verneigung vor dem Altar (von hinten: er schaut zum Altar).
+- Fenner am Amtstisch blättert an der vorderen Tischkante; der Stempel ist aus der Spielkamera klein. Starre Arme reichen nicht weiter, ohne dass der Stab kippt.
+- Jakobs Besen ist aus der Spielkamera nur am Stiel zu sehen (der Tisch vor ihm verdeckt den Boden).
+- Am Gruft-Tisch zeigt das Bild Liesel ohne Leiche (die Wäsche wurde für das Bild ohne Leiche gestellt); im Spiel liegt die Leiche dort.
+- Im Bildskript läuft die Uhr nicht; Lenz' Plauderei mit Veit an der Kirchtür (08:00–11:30) wird dort vorher zu Ende gespielt – im Spiel spricht er erst mit Veit und liest dann.
+- Ilse (Nachthändlerin) und Osrics Pausen in Remise und Krug bleiben bewusst `idle` (kein Arbeitsort).
