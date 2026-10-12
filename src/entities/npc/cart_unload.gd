@@ -3,7 +3,8 @@ extends RefCounted
 ## G8 Runde 3: Osric's unloading at the bier as a pure function of the clock (like every Npc pose – a load or a
 ## skip shows the same as watching it happen). In the unload_minutes before CorpseTables.delivery_minute he steps
 ## from the handles to the side of the cart that faces the bier, lifts the dead off the cart, carries them over and
-## lays them onto the bier's slot; with several corpses one after the other (one share each, a bier each). After the
+## lays them onto the bier's slot, then (G8 Runde 4) stands a moment at the bier (idle); with several corpses one
+## after the other (one share each, a bier each). After the
 ## delivery he walks back to the handles in return_minutes. Values: CartDeliveryConfig. Only positions and
 ## orientations – the Npc moves its figure (Model) and the cargo nodes, the CorpseManager delivers at the end.
 
@@ -12,6 +13,8 @@ const ANIM_LIFT := &"load_lift"
 const ANIM_CARRY := &"carry_walk"
 const ANIM_LOWER := &"load_lower"
 const ANIM_RING := &"ring_bell"
+## G8 Runde 4: he stands a moment at the bier after laying the dead down (CartDeliveryConfig.rest_share).
+const ANIM_IDLE := &"idle"
 const EPSILON := 0.0001
 
 
@@ -157,6 +160,7 @@ static func _unloading(cfg: CartDeliveryConfig, u: float, minutes: float, count:
 	var a := sh[0]
 	var b := sh[0] + sh[1]
 	var c := b + sh[2]
+	var d := c + sh[3]
 	if v < a:
 		var t := v / maxf(a, EPSILON)
 		var motion := _yaw_to(prev, cart, prev_yaw)
@@ -184,8 +188,8 @@ static func _unloading(cfg: CartDeliveryConfig, u: float, minutes: float, count:
 		out.speed = _flat(stand - cart).length() / maxf(sh[2] * per, EPSILON)
 		out.index = k
 		out.corpse = carry_transform(cfg, at, yaw, sign)
-	else:
-		var t := (v - c) / maxf(sh[3], EPSILON)
+	elif v < d or sh[4] <= EPSILON:
+		var t := clampf((v - c) / maxf(sh[3], EPSILON), 0.0, 1.0)
 		out.figure = stand
 		out.yaw = bier_yaw
 		out.anim = ANIM_LOWER
@@ -193,6 +197,14 @@ static func _unloading(cfg: CartDeliveryConfig, u: float, minutes: float, count:
 		out.index = k
 		var w := smoothstep(cfg.lower_move_from, cfg.lower_move_to, t)
 		out.corpse = _between(carry_transform(cfg, stand, bier_yaw, sign), biers[k], w, cfg.arc_height)
+	else:
+		# G8 Runde 4: a moment at the bier – the dead lie on it (laid), he stands and looks at them.
+		var t := (v - d) / maxf(sh[4], EPSILON)
+		out.figure = stand
+		out.yaw = bier_yaw
+		out.anim = ANIM_IDLE
+		out.anim_t = clampf(t, 0.0, 1.0) * clampf(cfg.rest_idle_span, 0.0, 1.0)
+		out.laid = k + 1
 	return out
 
 

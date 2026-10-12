@@ -67,3 +67,5 @@ table_head_offset = 0.725
 table_head_distance = 0.68
 table_face_camera = true
 table_step_seconds = 0.3
+table_real_seconds_min = 3.0
+table_work_cycles = 2.0

@@ -929,7 +929,7 @@ func test_carter_price_texts_match_actions() -> void:
 
 func test_carter_intro_mentions_schedule_times() -> void:
 	var schedule := load(CARTER_SCHEDULE_PATH) as NpcSchedule
-	# G8 Runde 3: he is at the bier at 07:32 and unloads – the time he names is when the corpse lies on the bier
+	# G8 Runde 3/4: he is at the bier at 07:24 and unloads – the time he names is when the corpse lies on the bier
 	# and he talks (the first talkable entry with the cart = the delivery minute).
 	var arrival := -1
 	for e: ScheduleEntry in schedule.entries:

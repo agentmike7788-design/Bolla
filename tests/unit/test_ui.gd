@@ -192,7 +192,9 @@ func test_every_panel_opens_and_closes() -> void:
 		assert_true(TimeManager.paused, "modal pauses the clock: " + String(id))
 		var panel := ui.get_panel(id)
 		assert_true(panel.is_open and panel.is_visible_in_tree(), String(id) + " visible")
-		assert_true(ui.dim.visible, String(id) + " dims the world")
+		# G8 Runde 4: the table's panel is docked at the right edge and leaves the world undimmed
+		assert_eq(ui.dim.visible, not panel.dock_right, String(id) + " dims the world (not a docked panel)")
+		assert_eq(panel.dock_right, id == &"corpse_exam", String(id) + " docked")
 		assert_eq(tree.paused, id == &"pause", String(id) + " tree pause only for the pause menu")
 		ui.close_top_panel()
 		await wait_frames(1)
@@ -1311,6 +1313,86 @@ func test_corpse_exam_focus_after_examine() -> void:
 	assert_false(focused.disabled, "focus on an enabled button, not '%s'" % focused.text)
 	assert_ne(focused, panel.take_button, "never on the irreversible valuables buttons")
 	assert_ne(focused, panel.leave_button)
+
+
+## G8 Runde 4 (user: „das auswahl bild muss weg der verdekt den leichentisch"): the table's panel sits at the right
+## edge without the dim (the middle of the screen – table and gravekeeper – stays free); a work started from it hides it
+## (the HUD's action bar shows the work, still modal), afterwards it comes back and works with keyboard and mouse.
+func test_corpse_exam_docked_and_hidden_while_working() -> void:
+	await _setup()
+	var record := _record(&"table")
+	var panel := await _open_exam(record)
+	await wait_frames(2)
+	var view := ui.get_viewport().get_visible_rect()
+	var rect := panel.get_global_rect()
+	assert_true(panel.dock_right and panel.get_parent() is MarginContainer, "docked")
+	assert_almost(rect.end.x, view.end.x - UIRoot.DOCK_MARGIN, 1.0, "at the right edge")
+	assert_false(rect.has_point(view.get_center()), "the middle of the screen stays free")
+	assert_true(rect.size.x < view.size.x * 0.4, "one narrow column (%d px)" % int(rect.size.x))
+	assert_true(rect.position.y >= view.position.y - 0.5 and rect.end.y <= view.end.y + 0.5, "on screen (%s)" % rect)
+	assert_false(ui.dim.visible, "the world beside it is not dimmed")
+	assert_true(panel.is_visible_in_tree())
+	# keyboard: the default focus, ui_accept presses it
+	assert_eq(ui.get_viewport().gui_get_focus_owner(), panel.examine_button)
+	_press_action(&"ui_accept")
+	assert_eq(station.calls, ["examine"], "Enter on the focused button")
+	# the work starts (Player.start_timed_action → EventBus): the panel steps aside
+	EventBus.timed_action_started.emit("Untersuchen", 3.0)
+	await wait_frames(1)
+	assert_true(panel.work_hidden, "hidden while the work runs")
+	assert_false(panel.is_visible_in_tree(), "not drawn over the table")
+	assert_false(ui.dim.visible)
+	assert_true(ui.hud.is_work_view())
+	assert_true(ui.hud.action_panel.visible, "the HUD's bar shows the work")
+	assert_eq(ui.top(), &"corpse_exam", "still the open panel")
+	assert_true(UIState.is_modal(), "still modal (no other interaction meanwhile)")
+	EventBus.timed_action_progress.emit(0.5)
+	EventBus.timed_action_finished.emit(true)
+	record.examined = true
+	EventBus.corpse_updated.emit(record.id)
+	await wait_frames(2)
+	assert_false(panel.work_hidden, "back after the work")
+	assert_true(panel.is_visible_in_tree())
+	assert_false(ui.hud.is_work_view())
+	assert_false(ui.hud.action_panel.visible)
+	var focused := ui.get_viewport().gui_get_focus_owner() as Button
+	assert_not_null(focused, "keyboard focus back in the panel")
+	if focused != null:
+		assert_true(panel.is_ancestor_of(focused) and not focused.disabled)
+	# mouse: a click on „Aufnehmen"
+	var b := panel.pick_up_button
+	assert_false(b.disabled)
+	_click(b.get_global_rect().get_center())
+	await wait_frames(1)
+	assert_eq(station.calls.back(), "pick_up", "a click works")
+	# closing during a work resets it
+	ui.open_panel(&"corpse_exam", {"corpse_id": record.id, "table": station, "player": player})
+	EventBus.timed_action_started.emit("Waschen", 3.0)
+	assert_true(panel.work_hidden)
+	ui.close_top_panel()
+	await wait_frames(1)
+	assert_false(panel.work_hidden, "closed: not hidden any more")
+	assert_false(ui.hud.is_work_view())
+	EventBus.timed_action_finished.emit(true)
+	assert_false(panel.visible)
+
+
+func _press_action(action: StringName) -> void:
+	for pressed: bool in [true, false]:
+		var ev := InputEventAction.new()
+		ev.action = action
+		ev.pressed = pressed
+		ui.get_viewport().push_input(ev)
+
+
+func _click(at: Vector2) -> void:
+	for pressed: bool in [true, false]:
+		var ev := InputEventMouseButton.new()
+		ev.button_index = MOUSE_BUTTON_LEFT
+		ev.pressed = pressed
+		ev.position = at
+		ev.global_position = at
+		ui.get_viewport().push_input(ev, true)
 
 
 ## UI-05: crafting rebuilds its rows – focus returns to the same recipe (or a sensible control).

@@ -86,6 +86,40 @@ func test_table_work_in_the_crypt() -> void:
 			assert_false(_shown(kind), "%s: the %s back in the bag" % [key, kind])
 
 
+## G8 Runde 4 (user: „ja soll etwas länger dauern"): with its real game minutes every table action's bar runs long
+## enough for the draw and at least two cycles of its clip (≥ table_real_seconds_min); the game minutes are unchanged,
+## and an action elsewhere keeps the short bar.
+func test_table_work_lasts_a_few_cycles() -> void:
+	await _setup()
+	var anim := _anim()
+	var cfg := _cfg()
+	for key: StringName in [&"exam_hands", &"wash", &"lay_out", &"harvest_hair", &"dress_shroud"]:
+		var clip: StringName = WORK[key][0]
+		_reset_player()
+		assert_true(table.call(&"_start_work", player, "Arbeiten", 10, func() -> void: pass, key), "%s starts" % key)
+		var action: Player.TimedAction = player._action
+		assert_eq(action.minutes, 10, "%s: the game minutes stay" % key)
+		assert_true(action.duration >= cfg.table_real_seconds_min - 0.001, "%s: %.2f s ≥ the minimum" % [key, action.duration])
+		var in_clip := 0.0
+		var t := 0.0
+		while player.is_busy() and t < 10.0:
+			_advance()
+			t += STEP
+			if anim.current_animation == clip:
+				in_clip += STEP
+		assert_false(player.is_busy(), "%s: done" % key)
+		assert_almost(t, action.duration, 0.05, "%s: the bar's real seconds" % key)
+		var cycles := in_clip / anim.get_animation(clip).length
+		assert_true(cycles >= 1.9, "%s: %.2f cycles of %s seen" % [key, cycles, clip])
+		for i: int in 60:
+			_advance()
+	# elsewhere (not at the table) the bar stays short
+	_reset_player()
+	assert_true(player.start_timed_action("Woanders", 10, func() -> void: pass, false, &"place_low"))
+	assert_almost(player._action.duration, Database.config(&"action_config").real_seconds_for(10), 0.001, "other actions unchanged")
+	player.cancel_timed_action()
+
+
 func test_the_far_side_from_the_camera() -> void:
 	await _setup()
 	var cam := tree.root.get_camera_3d()

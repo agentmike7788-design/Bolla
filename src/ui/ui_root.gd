@@ -35,6 +35,8 @@ const BUILD_MODE_GROUP := &"build_mode"
 const DEBUG_MODAL := &"debug"
 const ACTION_TITLE := &"title"
 const ACTION_QUIT := &"quit"
+## G8 Runde 4: free margin (px, 1920 × 1080 canvas) around a docked panel.
+const DOCK_MARGIN := 24
 ## Panel id -> script (docs §7 contexts; chest and grave_register: docs §11).
 const PANEL_SCRIPTS: Dictionary[StringName, Script] = {
 	&"inventory": preload("res://src/ui/panels/inventory_panel.gd"),
@@ -367,7 +369,9 @@ func _panel(id: StringName) -> UIPanel:
 	node.panel_id = id
 	node.close_requested.connect(close_panel.bind(id))
 	node.action_requested.connect(_on_panel_action)
-	panel_layer.add_child(UIKit.centered(node))
+	node.work_view_changed.connect(_on_work_view_changed.bind(id))
+	# G8 Runde 4: a docked panel (the table's) at the right edge, the rest in the middle.
+	panel_layer.add_child(UIKit.docked_right(node, DOCK_MARGIN) if node.dock_right else UIKit.centered(node))
 	_panels[id] = node
 	return node
 
@@ -382,15 +386,25 @@ func _update_visibility() -> void:
 	for id: StringName in _panels:
 		var show_it := id == top_panel and top() == top_panel
 		_panels[id].get_parent().visible = show_it
-		_panels[id].visible = show_it and _panels[id].is_open
+		_panels[id].visible = show_it and _panels[id].is_open and not _panels[id].work_hidden
 	dialogue_box.visible = dialogue_box.is_active() and top() == DialogueBox.MODAL_ID
 	_update_dim()
 	if top_panel != &"" and top() == top_panel:
 		_panels[top_panel].focus_default()
 
 
+## G8 Runde 4: no dim behind a docked panel (the world beside it stays clear) or while the top panel is hidden for
+## the running work.
 func _update_dim() -> void:
-	dim.visible = not _stack.is_empty() and top() != DialogueBox.MODAL_ID
+	var panel: UIPanel = _panels.get(top(), null) if not _stack.is_empty() else null
+	var clear := panel != null and (panel.dock_right or panel.work_hidden)
+	dim.visible = not _stack.is_empty() and top() != DialogueBox.MODAL_ID and not clear
+	hud.set_work_view(panel != null and panel.work_hidden)
+
+
+## G8 Runde 4: a panel hid for its work or came back – the dim and the HUD's action bar follow.
+func _on_work_view_changed(_hidden: bool, _id: StringName) -> void:
+	_update_dim()
 
 
 func _hold_tree_pause() -> void:

@@ -456,7 +456,8 @@ func _request_shroud_phase2() -> void:
 func _start_work(player: Player, label: String, minutes: int, done: Callable, key: StringName) -> bool:
 	var clip := clip_for(key)
 	var stand := work_stand(player, clip)
-	if not player.start_timed_action(label, minutes, done, false, clip):
+	# G8 Runde 4: the bar runs long enough for a few cycles of the clip (ToolAnimConfig.table_seconds).
+	if not player.start_timed_action(label, minutes, done, false, clip, player.table_action_seconds(clip, minutes)):
 		return false
 	player.step_to(stand, _tool_anim().table_step_seconds)
 	return true

@@ -27,9 +27,10 @@ static func build_header(panel: CorpseExamPanel, parent: Container) -> Button:
 	return close_x
 
 
-## Returns [left, right] columns (both VBoxContainer, column_width wide).
-static func build_columns(panel: CorpseExamPanel, parent: Container) -> Array[VBoxContainer]:
-	var columns := UIKit.hbox(24)
+## Returns [left, right] columns (both VBoxContainer, column_width wide). G8 Runde 4: `stacked` puts the right one (the
+## findings) under the left one – the panel docked at the screen's edge in one column.
+static func build_columns(panel: CorpseExamPanel, parent: Container, stacked: bool = false) -> Array[VBoxContainer]:
+	var columns: BoxContainer = UIKit.vbox(14) if stacked else UIKit.hbox(24)
 	parent.add_child(columns)
 	var left := UIKit.vbox(14)
 	left.custom_minimum_size.x = panel.column_width
@@ -106,8 +107,25 @@ static func build_decision(panel: CorpseExamPanel, parent: Container) -> void:
 	parent.add_child(panel.decided_label)
 
 
-## Examine / shroud / pick up, the block reason and close.
-static func build_buttons(panel: CorpseExamPanel, parent: Container) -> void:
+## Examine / shroud / pick up, the block reason and close. G8 Runde 4: `stacked` (the narrow docked panel) – the reason
+## on its own line above, the buttons wrap (HFlowContainer).
+static func build_buttons(panel: CorpseExamPanel, parent: Container, stacked: bool = false) -> void:
+	if stacked:
+		panel.reason_label = UIKit.label("", &"DimLabel", true)
+		panel.reason_label.custom_minimum_size.x = panel.column_width
+		panel.reason_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		parent.add_child(panel.reason_label)
+		var flow := HFlowContainer.new()
+		flow.add_theme_constant_override(&"h_separation", 12)
+		flow.add_theme_constant_override(&"v_separation", 8)
+		for b: Button in [UIKit.button(""), UIKit.button(""), UIKit.button(CorpseExamPanel.TEXT_PICK_UP), UIKit.button(UIPanel.TEXT_CLOSE)]:
+			flow.add_child(b)
+		panel.examine_button = flow.get_child(0) as Button
+		panel.shroud_button = flow.get_child(1) as Button
+		panel.pick_up_button = flow.get_child(2) as Button
+		panel.close_button = flow.get_child(3) as Button
+		parent.add_child(flow)
+		return
 	var buttons := UIKit.hbox(12)
 	panel.examine_button = UIKit.button("")
 	buttons.add_child(panel.examine_button)
