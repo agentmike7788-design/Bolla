@@ -256,6 +256,7 @@ Alle Phase-1-Assets sind Prototypen (`ph_`-Präfix) und **nicht final**, bis der
 | ph_int_church_archive (Marker `use`), ph_int_memorial_plate, ph_int_inn_fest_decor | Pfarrarchiv, Namenstafel, Kathrein-Schmuck (Phase 8, P5) | Prototyp – Benutzerprüfung offen |
 | ph_item_flower_seedlings, _grave_candle, _watering_can, _apprentice_rake, _mortsafe, _wax_wreath, _register_extract, _memorial_plate, _quast_crate, _lorenz_ledger_2 | Item-Modelle (Icons, Phase 8, P5) | Prototyp – Benutzerprüfung offen |
 | ph_prop_gate_bell (Kindmesh `bell` schwingt) · Klang `assets/audio/sfx/ph_gate_bell.wav` (Cue `gate_bell`, prozedural `tools/audio/sfx_phase8.py`) | Torglocke am östlichen Torpfeiler (G8 Runde 1, B8-1; Bild `docs/reviews/phase8_round2/torglocke.jpg`) | Prototyp – Benutzerprüfung offen |
+| ph_notice_slip · ph_notice_pin (Code-Meshes mit `mat_painted`, wie ph_door_note; Label3D „Bitte“ in der Tinte der Tafel, `notice_board.gd`) | Zettel der „Bitten vom Hügel“ an der Torafel, je Bitte einer an der Unterkante (G8 Runde 6; Bild `docs/reviews/phase8_round6/tafel.jpg`) | Prototyp – Benutzerprüfung offen |
 | Godot-Standardschrift | UI-Schrift | **Platzhalter** – Schriftwahl offen |
 
 ## Bekannte Probleme
