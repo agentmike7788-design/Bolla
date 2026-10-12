@@ -107,16 +107,20 @@ static func centered(child: Control) -> CenterContainer:
 	return center
 
 
-## G8 Runde 4: `child` at the right edge of the screen (`margin` px free on every side), vertically centred – the
-## middle of the screen (the gravekeeper at his work) stays free.
-static func docked_right(child: Control, margin: int = 24) -> MarginContainer:
+## G8 Runde 4: `child` at the right edge of the screen (`margin` px free on every side) – the middle of the screen (the
+## gravekeeper at his work) stays free.
+## G8 Runde 5: it starts at `top` px (≥ 0; UIRoot: below the HUD's resource panel, set_dock_top) and hangs from there;
+## without `top` it is vertically centred as before.
+static func docked_right(child: Control, margin: int = 24, top: int = -1) -> MarginContainer:
 	var dock := MarginContainer.new()
 	dock.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	dock.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for side: String in ["left", "top", "right", "bottom"]:
 		dock.add_theme_constant_override("margin_" + side, margin)
+	if top >= 0:
+		dock.add_theme_constant_override(&"margin_top", top)
 	child.size_flags_horizontal = Control.SIZE_SHRINK_END
-	child.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	child.size_flags_vertical = Control.SIZE_SHRINK_BEGIN if top >= 0 else Control.SIZE_SHRINK_CENTER
 	dock.add_child(child)
 	return dock
 

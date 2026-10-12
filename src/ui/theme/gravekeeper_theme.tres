@@ -27,6 +27,9 @@
 ; built = moss frame, next = amber frame, later = dimmed).
 ; Phase 8: the chalk board of Jakob's work list – SlatePanel / SlateRowPanel (slate in a wooden frame),
 ; ChalkLabel / ChalkDimLabel / ChalkHeaderLabel / ChalkMarkLabel (chalk grey), ChalkButton / ChalkSelected.
+; G8 Runde 5: the stone bench as a docked column – LedgerColumnPanel (parchment sheet with narrow margins) and the
+; keyboard focus on parchment (amber ink frame): LedgerCardButton / LedgerCardSelected, LedgerTabButton /
+; LedgerTabSelected, LedgerInkButton (variations of the journal's cards, tabs and InkButton).
 [gd_resource type="Theme" format=3]
 
 [sub_resource type="StyleBoxFlat" id="sb_window"]
@@ -1105,6 +1108,40 @@ corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
+[sub_resource type="StyleBoxFlat" id="sb_ledger_column"]
+content_margin_left = 20.0
+content_margin_top = 16.0
+content_margin_right = 20.0
+content_margin_bottom = 16.0
+bg_color = Color(0.871, 0.8, 0.651, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.608, 0.486, 0.325, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0.106, 0.071, 0.047, 0.35)
+shadow_size = 4
+
+[sub_resource type="StyleBoxFlat" id="sb_ink_focus"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.82, 0.48, 0.12, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+expand_margin_left = 2.0
+expand_margin_top = 2.0
+expand_margin_right = 2.0
+expand_margin_bottom = 2.0
+
 [resource]
 default_font_size = 22
 AccentButton/base_type = &"Button"
@@ -1346,6 +1383,12 @@ LedgerCloseButton/styles/focus = SubResource("sb_empty")
 LedgerCloseButton/styles/hover = SubResource("sb_ledger_close_hover")
 LedgerCloseButton/styles/normal = SubResource("sb_ledger_close")
 LedgerCloseButton/styles/pressed = SubResource("sb_ledger_close_hover")
+LedgerCardButton/base_type = &"JournalCardButton"
+LedgerCardButton/styles/focus = SubResource("sb_ink_focus")
+LedgerCardSelected/base_type = &"JournalCardSelected"
+LedgerCardSelected/styles/focus = SubResource("sb_ink_focus")
+LedgerColumnPanel/base_type = &"PanelContainer"
+LedgerColumnPanel/styles/panel = SubResource("sb_ledger_column")
 LedgerHeadLabel/base_type = &"Label"
 LedgerHeadLabel/colors/font_color = Color(0.36, 0.2, 0.08, 1)
 LedgerHeadLabel/font_sizes/font_size = 19
@@ -1358,6 +1401,12 @@ LedgerPagePanel/base_type = &"PanelContainer"
 LedgerPagePanel/styles/panel = SubResource("sb_ledger_page")
 LedgerPanel/base_type = &"PanelContainer"
 LedgerPanel/styles/panel = SubResource("sb_ledger_cover")
+LedgerInkButton/base_type = &"InkButton"
+LedgerInkButton/styles/focus = SubResource("sb_ink_focus")
+LedgerTabButton/base_type = &"JournalTabButton"
+LedgerTabButton/styles/focus = SubResource("sb_ink_focus")
+LedgerTabSelected/base_type = &"JournalTabSelected"
+LedgerTabSelected/styles/focus = SubResource("sb_ink_focus")
 LedgerRowPanel/base_type = &"PanelContainer"
 LedgerRowPanel/styles/panel = SubResource("sb_ledger_row")
 LedgerScrollBar/base_type = &"VScrollBar"

@@ -23,6 +23,7 @@ const Delivery := preload("res://src/world/graveyard/graveyard_shots_delivery.gd
 const Table := preload("res://src/world/graveyard/graveyard_shots_table.gd")
 const Round4 := preload("res://src/world/graveyard/graveyard_shots_round4.gd")
 const Panels := preload("res://src/world/graveyard/graveyard_shots_panels.gd")
+const Round5 := preload("res://src/world/graveyard/graveyard_shots_round5.gd")
 const SETTLE_FRAMES := 40
 ## Frames after a measurement switch (shadows off / freeze) before the counters are read.
 const MEASURE_FRAMES := 4
@@ -83,6 +84,9 @@ var _table: bool = false
 ## --round4=panels: G8 Runde 4 – the work panels (Werkbank, Esse, Steinmetz, Präparierpult) open and during a work
 ## (graveyard_shots_panels.gd; --shots picks panels, --tag / --suffix as above).
 var _round4: String = ""
+## --round5=ui: G8 Runde 5 – the stone bench as a docked column with tabs, the docked panels below the HUD's resource
+## panel (graveyard_shots_round5.gd; docs/reviews/phase8_round5; --shots=steinmetz,hud, --tag / --suffix as above).
+var _round5: String = ""
 var _tag: String = "nachher"
 
 
@@ -124,6 +128,8 @@ func _run() -> void:
 			_table = true
 		elif arg.begins_with("--round4="):
 			_round4 = arg.trim_prefix("--round4=")
+		elif arg.begins_with("--round5="):
+			_round5 = arg.trim_prefix("--round5=")
 		elif arg.begins_with("--tag="):
 			_tag = arg.trim_prefix("--tag=")
 		elif arg.begins_with("--suffix="):
@@ -174,6 +180,10 @@ func _run() -> void:
 		return
 	if _round4 == "panels":
 		await Panels.run(self, world, _out, _only, _suffix, _tag)
+		quit()
+		return
+	if _round5 == "ui":
+		await Round5.run(self, world, _out, _only, _suffix, _tag)
 		quit()
 		return
 	if _round4 == "delivery":

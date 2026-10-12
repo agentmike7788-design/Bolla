@@ -73,6 +73,9 @@ var journal_badge: HBoxContainer
 var journal_label: Label
 ## G7 Änderungsrunde 1: the map button (compass + [M]) beside the Merkbuch; UIRoot opens the map.
 var map_badge: MapBadge
+## G8 Runde 5: the panel at the top right (coins, stock, cemetery quality, reputation) – the docked panels start below
+## it (UIRoot, dock_bottom()).
+var resource_panel: PanelContainer
 
 ## item id -> {chip: Control, count: Label, caption: Label (crafted items only)}
 var _chips: Dictionary[StringName, Dictionary] = {}
@@ -358,6 +361,15 @@ func set_work_view(on: bool) -> void:
 ## True while the action bar stands in for a panel hidden during its work (tests).
 func is_work_view() -> bool:
 	return _work_view
+
+
+## G8 Runde 5: the lower edge (canvas px) of the resource panel at the top right – a docked panel starts below it.
+func dock_bottom() -> float:
+	if resource_panel == null or not resource_panel.visible:
+		return 0.0
+	var rect := resource_panel.get_global_rect()
+	# before the first layout the panel has no size yet: its minimum stands in
+	return rect.position.y + maxf(rect.size.y, resource_panel.get_combined_minimum_size().y)
 
 
 ## Prompt and action bar belong to the world: hidden while a panel/dialogue is open (the action bar not while that

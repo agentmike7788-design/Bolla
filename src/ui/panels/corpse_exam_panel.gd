@@ -163,6 +163,11 @@ func _fit_body() -> void:
 	fit_dock_scroll(body_scroll, _body)
 
 
+## G8 Runde 5: the panel's top edge moved (below the HUD's resource panel) – the body takes the room left.
+func _fit_dock() -> void:
+	_fit_body()
+
+
 func _on_opened() -> void:
 	_corpse_id = str(context.get("corpse_id", ""))
 	if _corpse_id != _last_corpse:

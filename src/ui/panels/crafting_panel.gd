@@ -184,6 +184,11 @@ func _fit_scroll() -> void:
 	fit_dock_scroll(_scroll, _list, max_list_height)
 
 
+## G8 Runde 5: the panel's top edge moved (below the HUD's resource panel) – the body takes the room left.
+func _fit_dock() -> void:
+	_fit_scroll()
+
+
 static func _category_rank(category: StringName) -> int:
 	var i := CATEGORY_ORDER.find(category)
 	return i if i >= 0 else CATEGORY_ORDER.size()

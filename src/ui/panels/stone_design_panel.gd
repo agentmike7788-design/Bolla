@@ -25,7 +25,16 @@ extends UIPanel
 ## what is missing.
 ## G8 Runde 4 (Prüfung der Arbeits-Panels): while a work started from it runs („Stein hauen", „Fehlendes holen", an
 ## extra recipe) the panel is hidden (UIPanel.hide_while_working – the HUD's action bar shows the work, the
-## gravekeeper chisels visibly) and comes back afterwards; the three-page spread itself stays in the middle.
+## gravekeeper chisels visibly) and comes back afterwards.
+## G8 Runde 5 (user: „bitte die bekannten probleme mal fixen" – the three pages covered the world while designing):
+## docked at the right edge like the other work panels (UIPanel.dock_right, no dim) in one parchment column of
+## panel_width: on top the preview (the 3D stone, smaller, beside it „Grab 13 → 19", the points and the breakdown),
+## then four tabs Grab · Form · Inschrift · Zierde (the former left and middle pages, the text of the inscription on its
+## tab; one page shown, it scrolls in the height the screen leaves, as tall as the tallest page), below them material,
+## minutes, the block reason, the
+## shed row and „Stein hauen", then the bench's other work. Keyboard: Q / E (the actions drop / interact) switch the
+## tab, the arrow keys move between the cards, Enter chooses, [ / ] page the graves (on the grave tab), Esc closes;
+## every card, tab and button takes the focus (amber ink frame), the focus stays on a card when it is chosen.
 
 const STONEMASONRY_GROUP := &"stonemasonry"
 const MASON_STATION := &"mason"
@@ -79,16 +88,35 @@ const TEXT_READY := "bereit"
 const TEXT_STALE := "passt nicht mehr"
 const TEXT_DISCARD := "Verwerfen"
 const TEXT_DISCARD_CONFIRM := "Wirklich verwerfen?"
-const TEXT_HINT := "Klick wählt · [ / ] blättern · [Esc] schließen"
+const TEXT_HINT := "Pfeile + Enter wählen · [ / ] Gräber blättern · [Esc] schließen"
+## G8 Runde 5: the tabs of the docked column (the former left and middle pages).
+const TAB_GRAVE := &"grave"
+const TAB_SHAPE := &"shape"
+const TAB_INSCRIPTION := &"inscription"
+const TAB_ORNAMENT := &"ornament"
+const TABS: Array[StringName] = [TAB_GRAVE, TAB_SHAPE, TAB_INSCRIPTION, TAB_ORNAMENT]
+const TAB_LABELS: Dictionary[StringName, String] = {
+	TAB_GRAVE: "Grab", TAB_SHAPE: "Form", TAB_INSCRIPTION: "Inschrift", TAB_ORNAMENT: "Zierde",
+}
+## The keys of the tab switch: the actions drop (Q) and interact (E) – no new input action (PHASE5_DESIGN §3.6).
+const ACTION_TAB_PREV := &"drop"
+const ACTION_TAB_NEXT := &"interact"
+const KEY_TAB_PREV := "Q"
+const KEY_TAB_NEXT := "E"
+const TEXT_MATERIAL_ROW := "Material:"
+## Meta of every rebuilt card: "<tab>:<id>" – the focus stays on the same card through a rebuild.
+const META_KEY := &"focus_key"
 
-@export var page_height: float = 792.0
-@export var left_width: float = 470.0
-@export var middle_width: float = 660.0
-@export var right_width: float = 540.0
-@export var preview_size: Vector2i = Vector2i(500, 300)
+## G8 Runde 5: one docked column (was three pages of 470 + 660 + 540 px in the middle).
+@export var panel_width: float = 660.0
+@export var preview_size: Vector2i = Vector2i(230, 210)
+@export var grave_card_height: float = 62.0
+@export var shape_card_height: float = 118.0
+@export var inscription_card_height: float = 94.0
+@export var ornament_card_height: float = 66.0
 
-## Phase 8: the row of the bench's other recipes and their buttons (recipe id → Button).
-var extra_box: HBoxContainer
+## Phase 8: the rows of the bench's other recipes and their buttons (recipe id → Button).
+var extra_box: VBoxContainer
 var extra_buttons: Dictionary[StringName, Button] = {}
 var masonry: Node
 var grave_id: String = ""
@@ -119,6 +147,14 @@ var inscription_buttons: Dictionary[StringName, Button] = {}
 var ornament_buttons: Dictionary[StringName, Button] = {}
 ## order id -> its discard button
 var discard_buttons: Dictionary[String, Button] = {}
+## G8 Runde 5: the tab shown, its buttons and pages, the scrolling body of the pages.
+var current_tab: StringName = TAB_GRAVE
+var tab_buttons: Dictionary[StringName, Button] = {}
+var pages: Dictionary[StringName, VBoxContainer] = {}
+var body_scroll: ScrollContainer
+var _pages_box: VBoxContainer
+## focus key ("<tab>:<id>") -> the card button of the last rebuild
+var _keyed: Dictionary[String, Button] = {}
 
 var _graves_box: VBoxContainer
 var _page_label: Label
@@ -131,18 +167,27 @@ var _text_label: Label
 var _orn_row: GridContainer
 var _lines_box: GridContainer
 var _minutes_label: Label
-var _material_grid: GridContainer
+var _material_grid: HFlowContainer
 var _sum_label: Label
 var _inventory: Inventory
 
 
 func _init() -> void:
 	super._init()
+	dock_right = true
 	hide_while_working = true
 
 
+func _ready() -> void:
+	super._ready()
+	get_viewport().size_changed.connect(_fit_body)
+
+
+## G8 Runde 5: header · one parchment sheet (preview, tabs, the scrolling page, material and „Stein hauen", the bench's
+## other work) · action row · hint.
 func _build() -> void:
 	theme_type_variation = &"LedgerPanel"
+	custom_minimum_size.x = panel_width
 	var box := UIKit.vbox(10)
 	add_child(box)
 	var head := UIKit.hbox(16)
@@ -158,36 +203,86 @@ func _build() -> void:
 	close_x.pressed.connect(request_close)
 	head.add_child(close_x)
 	box.add_child(head)
-	var spread := UIKit.hbox(6)
-	box.add_child(spread)
-	_build_left(_page(spread, left_width))
-	_build_middle(_page(spread, middle_width))
-	_build_right(_page(spread, right_width))
-	_make_action_row(box)
-	extra_box = UIKit.hbox(12)
+	var sheet := UIKit.panel(&"LedgerColumnPanel")
+	box.add_child(sheet)
+	var col := UIKit.vbox(10)
+	sheet.add_child(col)
+	_build_preview(col)
+	_build_tab_bar(col)
+	var dock := make_dock_scroll(col, 0)
+	body_scroll = dock[0] as ScrollContainer
+	_pages_box = dock[1] as VBoxContainer
+	_pages_box.minimum_size_changed.connect(_fit_body)
+	_build_grave_page(_add_page(TAB_GRAVE))
+	_build_shape_page(_add_page(TAB_SHAPE))
+	_build_inscription_page(_add_page(TAB_INSCRIPTION))
+	_build_ornament_page(_add_page(TAB_ORNAMENT))
+	col.add_child(UIKit.separator())
+	_build_footer(col)
+	extra_box = UIKit.vbox(6)
 	extra_box.visible = false
-	box.add_child(extra_box)
-	var hint := UIKit.label(TEXT_HINT, &"DimLabel")
+	col.add_child(extra_box)
+	_make_action_row(box)
+	var hint := UIKit.label(TEXT_HINT, &"DimLabel", true)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
+	_show_tab()
 
 
-func _page(parent: Container, width: float) -> VBoxContainer:
-	var sheet := UIKit.panel(&"LedgerPagePanel")
-	sheet.custom_minimum_size = Vector2(width, page_height)
-	parent.add_child(sheet)
-	var inner := UIKit.vbox(8)
-	sheet.add_child(inner)
-	return inner
+## The preview strip: the 3D stone (preview_size), beside it the quality, the points and the breakdown lines; the text
+## of the inscription under both (one line, it wraps).
+func _build_preview(parent: Container) -> void:
+	var strip := UIKit.hbox(16)
+	parent.add_child(strip)
+	preview = StonePreview.new()
+	preview.name = "StonePreview"
+	preview.view_size = preview_size
+	preview.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	strip.add_child(preview)
+	var info := UIKit.vbox(2)
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	strip.add_child(info)
+	quality_label = UIKit.label("", &"InkHeaderLabel", true)
+	info.add_child(quality_label)
+	_sum_label = UIKit.label("", &"InkDimLabel", true)
+	info.add_child(_sum_label)
+	_lines_box = _grid(1, 0, 0)
+	info.add_child(_lines_box)
 
 
-func _build_left(page_box: VBoxContainer) -> void:
+## Q · Grab · Form · Inschrift · Zierde · E
+func _build_tab_bar(parent: Container) -> void:
+	var bar := UIKit.hbox(4)
+	parent.add_child(bar)
+	var prev := UIKit.keycap(KEY_TAB_PREV)
+	prev.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bar.add_child(prev)
+	for tab: StringName in TABS:
+		var b := UIKit.button(TAB_LABELS[tab], &"LedgerTabButton")
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.pressed.connect(select_tab.bind(tab))
+		bar.add_child(b)
+		tab_buttons[tab] = b
+	var next := UIKit.keycap(KEY_TAB_NEXT)
+	next.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bar.add_child(next)
+
+
+func _add_page(tab: StringName) -> VBoxContainer:
+	var page_box := UIKit.vbox(8)
+	page_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_pages_box.add_child(page_box)
+	pages[tab] = page_box
+	return page_box
+
+
+func _build_grave_page(page_box: VBoxContainer) -> void:
 	var head := UIKit.hbox(8)
-	var t := UIKit.label(TEXT_GRAVES, &"InkHeaderLabel")
+	var t := UIKit.label(TEXT_GRAVES, &"LedgerHeadLabel")
 	t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	t.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(t)
-	_filter_button = UIKit.button("", &"JournalTabButton")
-	_filter_button.focus_mode = Control.FOCUS_NONE
+	_filter_button = UIKit.button("", &"LedgerTabButton")
 	_filter_button.pressed.connect(toggle_filter)
 	head.add_child(_filter_button)
 	page_box.add_child(head)
@@ -196,74 +291,63 @@ func _build_left(page_box: VBoxContainer) -> void:
 	_page_label = UIKit.label("", &"InkDimLabel")
 	_page_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	page_box.add_child(_page_label)
-	page_box.add_child(UIKit.spacer(false))
 	page_box.add_child(UIKit.label(TEXT_READY_STONES, &"LedgerHeadLabel"))
 	_rack_box = UIKit.vbox(6)
 	page_box.add_child(_rack_box)
 
 
-func _build_middle(page_box: VBoxContainer) -> void:
-	page_box.add_child(UIKit.label(TEXT_DESIGN, &"InkHeaderLabel"))
+func _build_shape_page(page_box: VBoxContainer) -> void:
 	page_box.add_child(UIKit.label(TEXT_SHAPE, &"LedgerHeadLabel"))
 	_shape_row = UIKit.hbox(8)
 	page_box.add_child(_shape_row)
-	var ins_head := UIKit.hbox(8)
-	_ins_title = UIKit.label(TEXT_INSCRIPTION, &"LedgerHeadLabel")
-	_ins_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	ins_head.add_child(_ins_title)
+
+
+func _build_inscription_page(page_box: VBoxContainer) -> void:
+	_ins_title = UIKit.label(TEXT_INSCRIPTION, &"LedgerHeadLabel", true)
+	page_box.add_child(_ins_title)
+	# the text of the chosen inscription (one line, it wraps; the 3D preview shows it on the stone)
+	_text_label = UIKit.label("", &"InkDimLabel", true)
+	page_box.add_child(_text_label)
 	gilded_toggle = CheckBox.new()
-	gilded_toggle.theme_type_variation = &"InkButton"
-	gilded_toggle.focus_mode = Control.FOCUS_NONE
+	gilded_toggle.theme_type_variation = &"LedgerInkButton"
+	gilded_toggle.focus_mode = Control.FOCUS_ALL
+	gilded_toggle.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	gilded_toggle.toggled.connect(set_gilded)
-	ins_head.add_child(gilded_toggle)
-	page_box.add_child(ins_head)
+	page_box.add_child(gilded_toggle)
 	_ins_box = _grid(2, 6, 6)
 	page_box.add_child(_ins_box)
+
+
+func _build_ornament_page(page_box: VBoxContainer) -> void:
 	page_box.add_child(UIKit.label(TEXT_ORNAMENT, &"LedgerHeadLabel"))
 	_orn_row = _grid(3, 6, 6)
 	page_box.add_child(_orn_row)
 
 
-func _build_right(page_box: VBoxContainer) -> void:
-	page_box.add_child(UIKit.label(TEXT_PREVIEW, &"InkHeaderLabel"))
-	var frame := CenterContainer.new()
-	preview = StonePreview.new()
-	preview.name = "StonePreview"
-	preview.view_size = preview_size
-	frame.add_child(preview)
-	page_box.add_child(frame)
-	_text_label = UIKit.label("", &"InkLabel", true)
-	_text_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_text_label.custom_minimum_size.x = right_width - 60.0
-	page_box.add_child(_text_label)
-	quality_label = UIKit.label("", &"InkHeaderLabel")
-	quality_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	page_box.add_child(quality_label)
-	_sum_label = UIKit.label("", &"InkDimLabel")
-	_sum_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	page_box.add_child(_sum_label)
-	_lines_box = _grid(2, 18, 0)
-	page_box.add_child(_lines_box)
-	page_box.add_child(UIKit.label(TEXT_MATERIAL, &"LedgerHeadLabel"))
-	var mat := GridContainer.new()
-	mat.columns = 2
-	mat.add_theme_constant_override(&"h_separation", 18)
+## Material (one flowing row), minutes and „Stein hauen", the block reason, the shed row.
+func _build_footer(parent: Container) -> void:
+	var mat := HFlowContainer.new()
+	mat.add_theme_constant_override(&"h_separation", 16)
 	mat.add_theme_constant_override(&"v_separation", 2)
-	page_box.add_child(mat)
+	parent.add_child(mat)
 	_material_grid = mat
-	page_box.add_child(UIKit.spacer(false))
+	var carve_row := UIKit.hbox(12)
+	parent.add_child(carve_row)
 	_minutes_label = UIKit.label("", &"InkDimLabel")
-	page_box.add_child(_minutes_label)
+	_minutes_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_minutes_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	carve_row.add_child(_minutes_label)
+	carve_button = UIKit.button("", &"LedgerInkButton")
+	carve_button.pressed.connect(carve)
+	carve_row.add_child(carve_button)
 	reason_label = UIKit.label("", &"LedgerWarnLabel", true)
-	reason_label.custom_minimum_size.x = right_width - 60.0
-	page_box.add_child(reason_label)
+	parent.add_child(reason_label)
 	shed_bar = ShedFetchBar.new(true, true)
+	# the narrow column: the shed's reason wraps instead of widening the panel
+	shed_bar.reason_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	shed_bar.fetch_pressed.connect(_on_fetch_pressed)
 	shed_bar.store_pressed.connect(_on_store_pressed)
-	page_box.add_child(shed_bar)
-	carve_button = UIKit.button("", &"InkButton")
-	carve_button.pressed.connect(carve)
-	page_box.add_child(carve_button)
+	parent.add_child(shed_bar)
 
 
 func _on_opened() -> void:
@@ -274,6 +358,10 @@ func _on_opened() -> void:
 		_inventory.changed.connect(refresh)
 	confirm_discard = ""
 	page = 0
+	# G8 Runde 5: every opening starts on the grave tab, at the top
+	current_tab = TAB_GRAVE
+	_show_tab()
+	body_scroll.scroll_vertical = 0
 	if grave_id != "" and _entry(grave_id).is_empty():
 		grave_id = ""
 	if grave_id == "":
@@ -299,9 +387,18 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed(&"journal_page_next"):
 		turn_page(1)
 		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(ACTION_TAB_PREV):
+		step_tab(-1)
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(ACTION_TAB_NEXT):
+		step_tab(1)
+		get_viewport().set_input_as_handled()
 
 
 func _refresh() -> void:
+	# the cards are rebuilt: the focused one keeps the focus (by its key)
+	var focus_key := _focused_key()
+	_keyed.clear()
 	var slots := _ready_slots()
 	var stones := ready_stones()
 	rack_label.text = TEXT_RACK % [stones.size(), slots]
@@ -310,6 +407,103 @@ func _refresh() -> void:
 	_refresh_design()
 	_refresh_preview()
 	_refresh_extra()
+	_fit_body.call_deferred()
+	if focus_key != "" and _keyed.has(focus_key) and _keyed[focus_key].is_visible_in_tree():
+		_keyed[focus_key].grab_focus()
+		# the new card is laid out at the end of the frame: scroll it into view then
+		_reveal_card.call_deferred(_keyed[focus_key])
+
+
+# --- tabs (G8 Runde 5) --------------------------------------------------------------------------
+
+## Shows `tab` (one of TABS) with the focus on its chosen card.
+func select_tab(tab: StringName) -> void:
+	if not tab in TABS:
+		return
+	current_tab = tab
+	_show_tab()
+	body_scroll.scroll_vertical = 0
+	focus_default()
+
+
+## ±1 tab, wrapping (Q / E).
+func step_tab(step: int) -> void:
+	select_tab(TABS[posmod(TABS.find(current_tab) + step, TABS.size())])
+
+
+func _show_tab() -> void:
+	for tab: StringName in TABS:
+		pages[tab].visible = tab == current_tab
+		tab_buttons[tab].theme_type_variation = &"LedgerTabSelected" if tab == current_tab else &"LedgerTabButton"
+
+
+## The default focus: the chosen card of the tab shown (else its first free button), else „Stein hauen", else the
+## first free button of the panel.
+func focus_default() -> void:
+	if not is_visible_in_tree():
+		return
+	var target: Control = chosen_card(current_tab)
+	if target == null or not target.is_visible_in_tree():
+		target = UIKit.first_focusable(pages[current_tab])
+	if target == null and not carve_button.disabled:
+		target = carve_button
+	if target != null and target.is_visible_in_tree():
+		target.grab_focus()
+		_reveal_card.call_deferred(target)
+		return
+	super.focus_default()
+
+
+## The chosen card of `tab` (null: none chosen / none shown).
+func chosen_card(tab: StringName) -> Button:
+	match tab:
+		TAB_GRAVE:
+			return grave_buttons.get(grave_id) as Button
+		TAB_SHAPE:
+			return shape_buttons.get(shape) as Button
+		TAB_INSCRIPTION:
+			return inscription_buttons.get(inscription) as Button
+		TAB_ORNAMENT:
+			return ornament_buttons.get(ornament) as Button
+	return null
+
+
+## The body as tall as the tallest tab page (the panel keeps its height when the tab changes), at most what the
+## screen leaves beside preview, tabs and footer.
+func _fit_body() -> void:
+	if body_scroll == null:
+		return
+	var tallest := 0.0
+	for tab: StringName in TABS:
+		tallest = maxf(tallest, pages[tab].get_combined_minimum_size().y)
+	fit_dock_scroll(body_scroll, null, 0.0, tallest)
+
+
+func _fit_dock() -> void:
+	_fit_body()
+
+
+func _focused_key() -> String:
+	var owner := get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+	if owner != null and is_ancestor_of(owner) and owner.has_meta(META_KEY):
+		return str(owner.get_meta(META_KEY))
+	return ""
+
+
+func _key(b: Button, tab: StringName, id: String) -> void:
+	var key := "%s:%s" % [tab, id]
+	b.set_meta(META_KEY, key)
+	_keyed[key] = b
+
+
+## The focused card in view after the layout of the frame (the pages are the direct rows of the body, so
+## UIPanel.reveal would bring the whole page into view instead of the card).
+func _reveal_card(card: Control) -> void:
+	if not is_inside_tree():
+		return
+	await get_tree().process_frame
+	if is_instance_valid(card) and is_instance_valid(body_scroll) and body_scroll.is_ancestor_of(card) and card.is_visible_in_tree():
+		body_scroll.ensure_control_visible(card)
 
 
 ## Phase 8: the mason's recipes that are offered now (the memorial plate).
@@ -336,20 +530,26 @@ func _refresh_extra() -> void:
 	extra_box.visible = not list.is_empty()
 	if list.is_empty():
 		return
-	extra_box.add_child(UIKit.label(TEXT_EXTRA, &"SubheaderLabel"))
+	extra_box.add_child(UIKit.separator())
+	extra_box.add_child(UIKit.label(TEXT_EXTRA, &"LedgerHeadLabel"))
 	for recipe: RecipeData in list:
-		extra_box.add_child(UIKit.icon(Database.icon(recipe.output_id), 36.0))
+		var row := UIKit.hbox(12)
+		extra_box.add_child(row)
+		row.add_child(UIKit.icon(Database.icon(recipe.output_id), 36.0))
 		var name := recipe.display_name if recipe.display_name != "" else UIKit.item_name(recipe.output_id)
 		var missing := CraftingSystem.missing(recipe, _inventory) if _inventory != null else recipe.inputs
-		var l := UIKit.label("%s · %s · %s" % [name, _inputs_text(recipe.inputs), UIKit.minutes(recipe.craft_minutes)], &"")
+		var l := UIKit.label("%s · %s · %s" % [name, _inputs_text(recipe.inputs), UIKit.minutes(recipe.craft_minutes)], &"InkLabel", true)
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		extra_box.add_child(l)
-		var b := UIKit.button(CraftingPanel.TEXT_CRAFT, &"AccentButton")
+		row.add_child(l)
+		var b := UIKit.button(CraftingPanel.TEXT_CRAFT, &"LedgerInkButton")
 		b.disabled = action_running or _inventory == null or not CraftingSystem.can_craft(recipe, _inventory)
 		b.tooltip_text = CraftingPanel.TEXT_MISSING % _inputs_text(missing) if not missing.is_empty() else ""
+		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		b.pressed.connect(craft_extra.bind(recipe.id))
-		extra_box.add_child(b)
+		row.add_child(b)
 		extra_buttons[recipe.id] = b
+		_key(b, &"extra", String(recipe.id))
 
 
 # --- state (public for tests and the screenshot director) ----------------------------------
@@ -394,11 +594,15 @@ func toggle_filter() -> void:
 	refresh()
 
 
-## ±1 page of the grave list, wrapping ([ / ]).
+## ±1 page of the grave list, wrapping ([ / ]); G8 Runde 5: on the grave tab.
 func turn_page(step: int) -> void:
-	var pages := page_count()
-	page = posmod(page + step, pages)
+	var count := page_count()
+	page = posmod(page + step, count)
+	if current_tab != TAB_GRAVE and body_scroll != null:
+		current_tab = TAB_GRAVE
+		_show_tab()
 	refresh()
+	focus_default.call_deferred()
 
 
 func page_count() -> int:
@@ -579,11 +783,12 @@ func _refresh_graves() -> void:
 		var reason := str(e.reason)
 		var meta := TEXT_GRAVE_META % [_section_name(StringName(str(e.section))), _marker_name(StringName(str(e.marker)), bool(e.named)),
 				int(e.quality)]
-		var b := _card(str(e.name), reason if reason != "" else meta, id == grave_id, Vector2(left_width - 40.0, 62.0), reason != "")
+		var b := _card(str(e.name), reason if reason != "" else meta, id == grave_id, Vector2(0.0, grave_card_height), reason != "")
 		b.tooltip_text = meta + ("\n" + reason if reason != "" else "")
 		b.pressed.connect(select_grave.bind(id, true))
 		_graves_box.add_child(b)
 		grave_buttons[id] = b
+		_key(b, TAB_GRAVE, id)
 	_page_label.text = TEXT_PAGE % [page + 1, page_count()]
 	_page_label.visible = page_count() > 1
 
@@ -598,7 +803,6 @@ func _refresh_rack(stones: Array[Dictionary]) -> void:
 		var row := UIKit.hbox(8)
 		var names := UIKit.vbox(0)
 		names.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		names.custom_minimum_size.x = left_width - 250.0
 		var who := UIKit.label(str(s.name), &"InkLabel")
 		who.clip_text = true
 		who.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -613,11 +817,11 @@ func _refresh_rack(stones: Array[Dictionary]) -> void:
 		row.add_child(names)
 		if not ok:
 			var id := String(s.id)
-			var b := UIKit.button(TEXT_DISCARD_CONFIRM if confirm_discard == id else TEXT_DISCARD, &"InkButton")
-			b.focus_mode = Control.FOCUS_NONE
+			var b := UIKit.button(TEXT_DISCARD_CONFIRM if confirm_discard == id else TEXT_DISCARD, &"LedgerInkButton")
 			b.pressed.connect(press_discard.bind(id))
 			row.add_child(b)
 			discard_buttons[id] = b
+			_key(b, &"rack", id)
 		_rack_box.add_child(row)
 
 
@@ -631,20 +835,22 @@ func _refresh_design() -> void:
 			continue
 		var points := int(eco.marker_quality.get(s.id, 0))
 		var meta := TEXT_SHAPE_POINTS % [points, UIKit.minutes(s.minutes)]
-		var b := _card(s.display_name, meta, s.id == shape, Vector2((middle_width - 60.0) / 3.0, 118.0), false, "", _inputs_text(s.inputs))
+		var b := _card(s.display_name, meta, s.id == shape, Vector2(0.0, shape_card_height), false, "", _inputs_text(s.inputs))
 		b.tooltip_text = TEXT_SHAPE_META % [points, _inputs_text(s.inputs), UIKit.minutes(s.minutes)]
 		b.pressed.connect(select_shape.bind(s.id))
 		_shape_row.add_child(b)
 		shape_buttons[s.id] = b
+		_key(b, TAB_SHAPE, String(s.id))
 	UIKit.clear_children(_ins_box)
 	inscription_buttons.clear()
 	var corpse := _corpse_of(grave_id)
 	_ins_title.text = TEXT_INSCRIPTION_FOR % StoneDesignRules.carved_name(corpse) if corpse != null else TEXT_INSCRIPTION
-	var ins_edge := Vector2((middle_width - 46.0) * 0.5, 94.0)
+	var ins_edge := Vector2(0.0, inscription_card_height)
 	var none := _card(TEXT_NO_INSCRIPTION, TEXT_NO_INSCRIPTION_META, inscription == &"", ins_edge)
 	none.pressed.connect(select_inscription.bind(&""))
 	_ins_box.add_child(none)
 	inscription_buttons[&""] = none
+	_key(none, TAB_INSCRIPTION, "")
 	for res: Resource in Database.inscriptions():
 		var ins := res as InscriptionData
 		if ins == null:
@@ -660,17 +866,19 @@ func _refresh_design() -> void:
 		b.pressed.connect(select_inscription.bind(ins.id))
 		_ins_box.add_child(b)
 		inscription_buttons[ins.id] = b
+		_key(b, TAB_INSCRIPTION, String(ins.id))
 	var gold := _inventory.count(_stone_config().gold_item) if is_instance_valid(_inventory) else 0
 	gilded_toggle.set_pressed_no_signal(gilded and inscription != &"")
 	gilded_toggle.disabled = inscription == &""
 	gilded_toggle.text = TEXT_GILDED % gold if inscription != &"" else TEXT_GILDED_NEEDS
 	UIKit.clear_children(_orn_row)
 	ornament_buttons.clear()
-	var edge := Vector2((middle_width - 52.0) / 3.0, 66.0)
+	var edge := Vector2(0.0, ornament_card_height)
 	var no_orn := _card(TEXT_NO_ORNAMENT, "", ornament == &"", edge)
 	no_orn.pressed.connect(select_ornament.bind(&""))
 	_orn_row.add_child(no_orn)
 	ornament_buttons[&""] = no_orn
+	_key(no_orn, TAB_ORNAMENT, "")
 	for res: Resource in Database.ornaments():
 		var o := res as OrnamentData
 		if o == null:
@@ -680,11 +888,13 @@ func _refresh_design() -> void:
 		b.pressed.connect(select_ornament.bind(o.id))
 		_orn_row.add_child(b)
 		ornament_buttons[o.id] = b
+		_key(b, TAB_ORNAMENT, String(o.id))
 
 
 func _refresh_preview() -> void:
 	UIKit.clear_children(_lines_box)
 	UIKit.clear_children(_material_grid)
+	_material_grid.add_child(UIKit.label(TEXT_MATERIAL_ROW, &"LedgerHeadLabel"))
 	current_preview = {}
 	if masonry != null and masonry.has_method(&"preview") and grave_id != "":
 		current_preview = masonry.call(&"preview", grave_id, design())
@@ -702,7 +912,7 @@ func _refresh_preview() -> void:
 	var shown := design()
 	shown.text = current_preview.get("text", PackedStringArray())
 	preview.show_design(shown)
-	_text_label.text = "\n".join(shown.text) if not shown.text.is_empty() else TEXT_NO_INSCRIPTION_META
+	_text_label.text = " · ".join(shown.text) if not shown.text.is_empty() else TEXT_NO_INSCRIPTION_META
 	quality_label.text = TEXT_QUALITY % [int(current_preview.quality_before), int(current_preview.quality_after)]
 	var stone_sum := 0
 	for line: Dictionary in stone_lines():
@@ -723,7 +933,6 @@ func _refresh_preview() -> void:
 		if bool(shed.get("shown", false)):
 			text += TEXT_SHED % int(in_shed.get(item_id, 0))
 		var l := UIKit.label(text, &"InkLabel" if not missing.has(id) else &"LedgerWarnLabel")
-		l.custom_minimum_size.x = (right_width - 110.0) * 0.5
 		row.add_child(l)
 		_material_grid.add_child(row)
 	var minutes := int(current_preview.get("minutes", 0))
@@ -743,9 +952,11 @@ func _refresh_preview() -> void:
 func _card(title: String, meta: String, chosen: bool, size: Vector2, dimmed: bool = false, badge: String = "", extra: String = "",
 		extra_variation: StringName = &"InkDimLabel") -> Button:
 	var b := Button.new()
-	b.theme_type_variation = &"JournalCardSelected" if chosen else &"JournalCardButton"
-	b.focus_mode = Control.FOCUS_NONE
+	# G8 Runde 5: the cards take the keyboard focus (amber ink frame) and share the column's width
+	b.theme_type_variation = &"LedgerCardSelected" if chosen else &"LedgerCardButton"
+	b.focus_mode = Control.FOCUS_ALL
 	b.custom_minimum_size = size
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b.clip_contents = true
 	var box := UIKit.vbox(0)
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -775,7 +986,6 @@ func _card(title: String, meta: String, chosen: bool, size: Vector2, dimmed: boo
 	if extra != "":
 		var x := UIKit.label(extra, extra_variation, true)
 		x.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		x.custom_minimum_size.x = size.x - 24.0
 		box.add_child(x)
 	b.add_child(box)
 	b.set_meta(&"title", title)

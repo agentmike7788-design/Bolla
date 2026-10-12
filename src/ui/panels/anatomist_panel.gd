@@ -10,6 +10,10 @@ extends UIPanel
 ## Without pieces: Quast's line „Bringen Sie mir, was die Erde nicht vermisst." Pieces sold or researched
 ## leave the list. Presence: the dialogue opens the panel; without a speaker the shop rule decides
 ## (VillageShops.is_open(&"surgeon")).
+## G8 Runde 5 (user: „bitte die bekannten probleme mal fixen" – the panel stayed open over the 30 minutes of the
+## expertise): docked at the right edge in one column (UIPanel.dock_right, no dim; the pieces, the result card and
+## Quast's reply scroll), each row in two lines (piece · price, then the buttons); while the expertise runs it is hidden
+## (UIPanel.hide_while_working – the HUD's action bar shows the work) and comes back with its result card.
 
 const SPECIMENS_GROUP := &"specimens"
 const LECTURES_GROUP := &"lectures"
@@ -20,7 +24,8 @@ const LECTURE_PANEL := &"lecture"
 const COIN_ITEM := &"coin"
 const ANIM := &"interact"
 
-@export var panel_width: float = 1300.0
+## G8 Runde 5: one narrow column at the right edge (was 1300 in the middle).
+@export var panel_width: float = 650.0
 @export var icon_edge: float = 46.0
 
 var specimens: Specimens
@@ -35,6 +40,9 @@ var result_title: Label
 var result_text: Label
 var result_teaching: Label
 var back_button: Button
+## G8 Runde 5: the scrolling body (header, presence line, action row and buttons stay outside).
+var body_scroll: ScrollContainer
+var _body: VBoxContainer
 ## uid -> {row, sell, expertise, lecture, price, eta, bar}
 var rows: Dictionary[String, Dictionary] = {}
 var reply: String = ""
@@ -42,6 +50,17 @@ var reply: String = ""
 var result: Dictionary = {}
 
 var _inventory: Inventory
+
+
+func _init() -> void:
+	super._init()
+	dock_right = true
+	hide_while_working = true
+
+
+func _ready() -> void:
+	super._ready()
+	get_viewport().size_changed.connect(_fit_body)
 
 
 func _build() -> void:
@@ -62,28 +81,30 @@ func _build() -> void:
 	head.add_child(close_x)
 	box.add_child(head)
 	box.add_child(UIKit.separator())
+	var dock := make_dock_scroll(box, 10)
+	body_scroll = dock[0] as ScrollContainer
+	_body = dock[1] as VBoxContainer
+	_body.minimum_size_changed.connect(_fit_body)
 	list_box = UIKit.vbox(6)
-	box.add_child(list_box)
+	_body.add_child(list_box)
 	empty_label = UIKit.label(Phase7Texts.ANATOMIST_EMPTY, &"WhisperLabel", true)
-	box.add_child(empty_label)
+	_body.add_child(empty_label)
 	hint_label = UIKit.label(Phase7Texts.ANATOMIST_SELL_HINT, &"DimLabel")
-	box.add_child(hint_label)
+	_body.add_child(hint_label)
 	result_card = UIKit.panel(&"CardPanel")
 	var rbox := UIKit.vbox(4)
 	result_title = UIKit.label(Phase7Texts.ANATOMIST_RESULT_TITLE, &"InkHeaderLabel")
 	rbox.add_child(result_title)
 	result_text = UIKit.label("", &"InkLabel", true)
-	result_text.custom_minimum_size.x = panel_width - 140.0
 	rbox.add_child(result_text)
 	result_teaching = UIKit.label("", &"InkStampLabel", true)
 	rbox.add_child(result_teaching)
-	rbox.add_child(UIKit.label(Phase7Texts.ANATOMIST_RESULT_STAYS, &"InkDimLabel"))
+	rbox.add_child(UIKit.label(Phase7Texts.ANATOMIST_RESULT_STAYS, &"InkDimLabel", true))
 	result_card.add_child(rbox)
-	box.add_child(result_card)
+	_body.add_child(result_card)
 	reply_label = UIKit.label("", &"WhisperLabel", true)
-	reply_label.custom_minimum_size.x = panel_width - 80.0
-	box.add_child(reply_label)
-	away_label = UIKit.label(Phase7Texts.ANATOMIST_AWAY, &"WarningLabel")
+	_body.add_child(reply_label)
+	away_label = UIKit.label(Phase7Texts.ANATOMIST_AWAY, &"WarningLabel", true)
 	box.add_child(away_label)
 	_make_action_row(box)
 	box.add_child(UIKit.separator())
@@ -106,12 +127,23 @@ func focus_default() -> void:
 		var b := rows[uid].expertise as Button
 		if b.is_visible_in_tree() and not b.disabled:
 			b.grab_focus()
+			reveal.call_deferred(b)
 			return
 	if back_button != null and back_button.is_visible_in_tree():
 		back_button.grab_focus()
 
 
+## G8 Runde 5: the body as tall as its content, at most what the screen leaves beside the other rows.
+func _fit_body() -> void:
+	fit_dock_scroll(body_scroll, _body)
+
+
+func _fit_dock() -> void:
+	_fit_body()
+
+
 func _on_opened() -> void:
+	body_scroll.scroll_vertical = 0
 	specimens = get_tree().get_first_node_in_group(SPECIMENS_GROUP) as Specimens if is_inside_tree() else null
 	reply = ""
 	result = {}
@@ -166,16 +198,19 @@ func _refresh() -> void:
 	coins_label.text = Phase7Texts.ANATOMIST_COINS % (_inventory.count(COIN_ITEM) if _inventory != null else 0)
 
 
+## G8 Runde 5: two lines for the narrow column – icon, piece (label, clarity) and price, below them the buttons.
 func _row(r: Dictionary, present: bool, night: bool, cfg: AnatomyConfig) -> Control:
 	var uid := str(r.uid)
 	var row := UIKit.panel(&"TradeRowPanel")
 	row.set_meta(&"uid", uid)
+	var lines := UIKit.vbox(8)
 	var line := UIKit.hbox(12)
 	line.add_child(UIKit.icon(Database.icon(SpecimenRules.item_for(StringName(str(r.container)))), icon_edge))
 	var col := UIKit.vbox(2)
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.add_child(UIKit.label("%s – %s" % [str(r.organ_label), str(r.name)], &"SubheaderLabel"))
-	var info := UIKit.hbox(12)
+	col.add_child(UIKit.label("%s – %s" % [str(r.organ_label), str(r.name)], &"SubheaderLabel", true))
+	var info := HFlowContainer.new()
+	info.add_theme_constant_override(&"h_separation", 12)
 	info.add_child(UIKit.label(str(r.container_word), &"DimLabel"))
 	var bar := UIKit.bar(&"FreshBar")
 	bar.custom_minimum_size = Vector2(140.0, 14.0)
@@ -198,26 +233,32 @@ func _row(r: Dictionary, present: bool, night: bool, cfg: AnatomyConfig) -> Cont
 	bonus_label.visible = bonus > 0 and price > 0
 	price_col.add_child(bonus_label)
 	line.add_child(price_col)
+	lines.add_child(line)
+	var buttons := HFlowContainer.new()
+	buttons.alignment = FlowContainer.ALIGNMENT_END
+	buttons.add_theme_constant_override(&"h_separation", 10)
+	buttons.add_theme_constant_override(&"v_separation", 6)
+	lines.add_child(buttons)
 	var sell_reason := sell_block_reason(uid)
 	var sell_b := UIKit.button(Phase7Texts.ANATOMIST_SELL % price, &"DangerButton")
 	sell_b.disabled = action_running or not present or sell_reason != ""
 	sell_b.tooltip_text = sell_reason
 	sell_b.pressed.connect(sell.bind(uid))
-	line.add_child(sell_b)
+	buttons.add_child(sell_b)
 	var exp_b := UIKit.button(Phase7Texts.ANATOMIST_EXPERTISE % UIKit.minutes(cfg.expertise_minutes))
 	var exp_reason := specimens.expertise_block_reason(uid, _inventory) if specimens != null else PultRules.TEXT_NO_PIECE
 	exp_b.disabled = action_running or not present or exp_reason != ""
 	exp_b.tooltip_text = exp_reason
 	exp_b.pressed.connect(request_expertise.bind(uid))
-	line.add_child(exp_b)
+	buttons.add_child(exp_b)
 	var lec_b := UIKit.button(Phase7Texts.ANATOMIST_LECTURE, &"AccentButton")
 	lec_b.visible = night
 	var lec_reason := lecture_reason(uid)
 	lec_b.disabled = action_running or lec_reason != ""
 	lec_b.tooltip_text = lec_reason
 	lec_b.pressed.connect(open_lecture.bind(uid))
-	line.add_child(lec_b)
-	row.add_child(line)
+	buttons.add_child(lec_b)
+	row.add_child(lines)
 	rows[uid] = {"row": row, "sell": sell_b, "expertise": exp_b, "lecture": lec_b, "price": price_label, "eta": eta, "bar": bar,
 			"bonus": bonus_label}
 	return row

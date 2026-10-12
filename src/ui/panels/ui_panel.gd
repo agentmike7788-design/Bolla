@@ -37,6 +37,10 @@ var hide_while_working: bool = false
 var dock_right: bool = false
 ## True while the panel is hidden for the running work (hide_while_working).
 var work_hidden: bool = false
+## G8 Runde 5 (user: „bitte die bekannten probleme mal fixen" – the docked panels covered the HUD's resource panel):
+## the top edge (canvas px) of a docked panel – UIRoot sets it below the HUD's resource panel (set_dock_top), the
+## scrolling body gets the height that is left down to DOCK_MARGIN above the bottom edge (fit_dock_scroll).
+var dock_top: float = DOCK_MARGIN
 
 var _built: bool = false
 var _action_box: VBoxContainer
@@ -170,20 +174,44 @@ func _on_closed() -> void:
 	pass
 
 
+## G8 Runde 5: a docked panel fits its scrolling body to the room it has (dock_top changed).
+func _fit_dock() -> void:
+	pass
+
+
 # --- helpers for subclasses -----------------------------------------------------------------
 
 ## G8 Runde 4: a docked panel's scrolling body as tall as its `content`, at most what the screen leaves beside the
 ## panel's other rows (header, action row, buttons) and at most `cap` (> 0). Call it after the content changed.
-func fit_dock_scroll(scroll: ScrollContainer, content: Control, cap: float = 0.0) -> void:
-	if scroll == null or content == null or not is_inside_tree():
+## G8 Runde 5: `want` (≥ 0) instead of the content's height (StoneDesignPanel: the tallest of its tab pages).
+func fit_dock_scroll(scroll: ScrollContainer, content: Control, cap: float = 0.0, want: float = -1.0) -> void:
+	if scroll == null or (content == null and want < 0.0) or not is_inside_tree():
 		return
-	var chrome := get_combined_minimum_size().y - scroll.get_combined_minimum_size().y
-	var avail := maxf(get_viewport_rect().size.y - 2.0 * DOCK_MARGIN - chrome, DOCK_BODY_MIN)
+	var avail := dock_scroll_room(scroll)
 	if cap > 0.0:
 		avail = minf(avail, cap)
-	var want := minf(content.get_combined_minimum_size().y, avail)
-	if not is_equal_approx(scroll.custom_minimum_size.y, want):
-		scroll.custom_minimum_size.y = want
+	var height := minf(want if want >= 0.0 else content.get_combined_minimum_size().y, avail)
+	if not is_equal_approx(scroll.custom_minimum_size.y, height):
+		scroll.custom_minimum_size.y = height
+
+
+## G8 Runde 5: the height a docked panel's scrolling body may take – the screen from dock_top down to DOCK_MARGIN above
+## the bottom edge, less the panel's other rows (header, action row, buttons); at least DOCK_BODY_MIN.
+func dock_scroll_room(scroll: ScrollContainer) -> float:
+	if scroll == null or not is_inside_tree():
+		return DOCK_BODY_MIN
+	var chrome := get_combined_minimum_size().y - scroll.get_combined_minimum_size().y
+	return maxf(get_viewport_rect().size.y - dock_top - DOCK_MARGIN - chrome, DOCK_BODY_MIN)
+
+
+## G8 Runde 5: UIRoot – the docked panel starts at `top` (below the HUD's resource panel); an open panel fits its
+## scrolling body again (_fit_dock).
+func set_dock_top(top: float) -> void:
+	if is_equal_approx(top, dock_top):
+		return
+	dock_top = top
+	if is_open:
+		_fit_dock()
 
 
 ## G8 Runde 4: the scrolling body of a docked panel (no horizontal scroll, it follows the keyboard focus) with its

@@ -37,6 +37,9 @@ const ACTION_TITLE := &"title"
 const ACTION_QUIT := &"quit"
 ## G8 Runde 4: free margin (px, 1920 × 1080 canvas) around a docked panel.
 const DOCK_MARGIN := 24
+## G8 Runde 5 (user: „bitte die bekannten probleme mal fixen"): free space (px) between the HUD's resource panel at the
+## top right and a docked panel below it.
+const DOCK_GAP := 16
 ## Panel id -> script (docs §7 contexts; chest and grave_register: docs §11).
 const PANEL_SCRIPTS: Dictionary[StringName, Script] = {
 	&"inventory": preload("res://src/ui/panels/inventory_panel.gd"),
@@ -110,6 +113,8 @@ var _panels: Dictionary[StringName, UIPanel] = {}
 var _paused_tree: bool = false
 ## Set while UIState.clear() tears everything down, so no pop_modal is sent back.
 var _syncing: bool = false
+## G8 Runde 5: the notification column's own offsets (left, right) – it moves beside a shown docked panel.
+var _notes_offsets: Vector2 = Vector2.ZERO
 
 
 func _init() -> void:
@@ -152,6 +157,11 @@ func _ready() -> void:
 	day_log.name = "Phase5DayLog"
 	add_child(day_log)
 	_bind_player(get_tree().get_first_node_in_group(PLAYER_GROUP))
+	# G8 Runde 5: the docked panels follow the HUD's resource panel (it grows with crafted items) and the window size
+	if hud.resource_panel != null:
+		hud.resource_panel.resized.connect(_update_docks)
+	get_viewport().size_changed.connect(_update_docks)
+	_notes_offsets = Vector2(notifications.offset_left, notifications.offset_right)
 	_update_dim()
 
 
@@ -371,9 +381,33 @@ func _panel(id: StringName) -> UIPanel:
 	node.action_requested.connect(_on_panel_action)
 	node.work_view_changed.connect(_on_work_view_changed.bind(id))
 	# G8 Runde 4: a docked panel (the table's) at the right edge, the rest in the middle.
-	panel_layer.add_child(UIKit.docked_right(node, DOCK_MARGIN) if node.dock_right else UIKit.centered(node))
+	# G8 Runde 5: docked below the HUD's resource panel (dock_top).
+	panel_layer.add_child(UIKit.docked_right(node, DOCK_MARGIN, roundi(dock_top())) if node.dock_right else UIKit.centered(node))
 	_panels[id] = node
+	if node.dock_right:
+		node.set_dock_top(float(roundi(dock_top())))
 	return node
+
+
+## G8 Runde 5 (user: „bitte die bekannten probleme mal fixen" – the docked panels covered coins, stock, quality and
+## reputation): the top edge (canvas px) of a docked panel – DOCK_GAP below the HUD's resource panel at the top right
+## (at least DOCK_MARGIN). The panel keeps DOCK_MARGIN to the bottom edge, its body scrolls in the height left.
+func dock_top() -> float:
+	return maxf(float(DOCK_MARGIN), hud.dock_bottom() + DOCK_GAP if hud != null else 0.0)
+
+
+## G8 Runde 5: every docked panel starts at dock_top() (the resource panel resized, the window changed).
+func _update_docks() -> void:
+	var top := roundi(dock_top())
+	for id: StringName in _panels:
+		var node := _panels[id]
+		if not node.dock_right:
+			continue
+		var dock := node.get_parent() as MarginContainer
+		if dock != null and dock.get_theme_constant(&"margin_top") != top:
+			dock.add_theme_constant_override(&"margin_top", top)
+		node.set_dock_top(float(top))
+	_update_notes()
 
 
 ## Only the topmost panel is visible; the dim covers the world behind panels.
@@ -400,6 +434,20 @@ func _update_dim() -> void:
 	var clear := panel != null and (panel.dock_right or panel.work_hidden)
 	dim.visible = not _stack.is_empty() and top() != DialogueBox.MODAL_ID and not clear
 	hud.set_work_view(panel != null and panel.work_hidden)
+	_update_notes()
+
+
+## G8 Runde 5: the notification column (top right, below the resource panel) stands left of a shown docked panel, so
+## a message never covers the panel's head; back at the edge otherwise.
+func _update_notes() -> void:
+	if notifications == null:
+		return
+	var panel: UIPanel = _panels.get(top(), null) if not _stack.is_empty() else null
+	var shift := 0.0
+	if panel != null and panel.dock_right and panel.is_open and not panel.work_hidden:
+		shift = panel.get_combined_minimum_size().x + DOCK_MARGIN + DOCK_GAP - absf(_notes_offsets.y)
+	notifications.offset_left = _notes_offsets.x - maxf(shift, 0.0)
+	notifications.offset_right = _notes_offsets.y - maxf(shift, 0.0)
 
 
 ## G8 Runde 4: a panel hid for its work or came back – the dim and the HUD's action bar follow.
