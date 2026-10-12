@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hr_rosine_leaves"
+giver = &"innkeeper"
+recipient = &""
+kind = &"tend"
+title = "Laub unter der Eiche"
+request_text = "Rosine Wackernagel vom Holderkrug schreibt: „Unter der alten Eiche liegt das Laub knöcheltief, da rutschen mir die Alten aus, wenn sie zu ihren Leuten wollen. Rechst du es zusammen?“"
+thanks_text = "Rosine schickt mit Osric einen Honigkuchen herauf: „Für den, der das Laub gerecht hat. Iss ihn, solange er noch nach Ofen riecht.“"
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"spots": ["dirt_y09", "dirt_y10", "dirt_y11", "dirt_y12"],
+"requires_item": "rake",
+"reward_items": {
+"honey_cake": 1
+}
+}
+days_limit = 2
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 1
+reward_rel = 0
+reward_rep = 1
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 6
+order = 90
+accept_flag = &""
+category = &"hill"

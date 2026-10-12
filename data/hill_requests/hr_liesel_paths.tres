@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hr_liesel_paths"
+giver = &"washer"
+recipient = &""
+kind = &"tend"
+title = "Freie Wege zwischen den Gräbern"
+request_text = "Liesel Dorn geht oft mit den Trauernden hinauf. „Zwischen den Gräbern wächst es zu. Die Leute sollen nicht über Kraut zu ihren Toten stolpern.“"
+thanks_text = "„Jetzt geht man wieder gerade“, sagt Liesel durch Osric. „Das ist gut. Trauer geht krumm genug.“"
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"spots": ["dirt_y05", "dirt_y06"]
+}
+days_limit = 2
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 1
+reward_rel = 0
+reward_rep = 1
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 6
+order = 170
+accept_flag = &""
+category = &"hill"

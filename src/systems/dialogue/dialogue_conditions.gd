@@ -180,6 +180,12 @@ static func _evaluate(text: String, context: Dictionary) -> _Result:
 			if p.is_empty() or p[0] == "":
 				return _Result.INVALID
 			return _bool(order_ready(StringName(p[0]), context))
+		"hill_ready":
+			# G8 Runde 6: an accepted request of the gate's notice board for <giver> whose items are in the inventory.
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			return _bool(hill_ready(StringName(p[0]), context))
 		"shop_open":
 			var p := DialogueSyntax.parts(text, 1)
 			if p.is_empty() or p[0] == "":
@@ -580,6 +586,15 @@ static func order_ready(order_id: StringName, context: Dictionary) -> bool:
 	var data: OrderData = orders.call(&"order_data", order_id) if orders.has_method(&"order_data") else null
 	var inv: Variant = context.get("inventory")
 	return data != null and inv is Inventory and OrderRules.deliver_ready(data, inv as Inventory)
+
+
+## G8 Runde 6 „Bitten vom Hügel": an accepted delivery request for `giver` is ready in the context inventory.
+static func hill_ready(giver: StringName, context: Dictionary) -> bool:
+	var hill := DialogueSyntax.system(&"hill_requests")
+	var inv: Variant = context.get("inventory")
+	if hill == null or not hill.has_method(&"ready_for") or not inv is Inventory:
+		return false
+	return not (hill.call(&"ready_for", giver, inv as Inventory) as Array).is_empty()
 
 
 ## Phase 7: no Npc of `npc_id` hides behind its hide_flag (Wiebke Hagedorn: hagedorn_dead).

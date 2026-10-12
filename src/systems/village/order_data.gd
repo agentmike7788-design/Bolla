@@ -6,6 +6,9 @@ extends Resource
 ## (conditions {action_id, place}).
 const KINDS: Array[StringName] = [&"deliver", &"bury", &"stone", &"tend", &"donate", &"section", &"meet", &"task"]
 const CATEGORY_FRIEND := &"friend"
+## G8 Runde 6 (docs/PHASE8_DESIGN.md, G8 Runde 6 §2): a request of the cemetery gate's notice board
+## (data/hill_requests, HillRequests) – never an order of Orders.
+const CATEGORY_HILL := &"hill"
 
 @export var id: StringName
 ## npc_id of the giver; &"council" = the parish board („die Gemeinde").

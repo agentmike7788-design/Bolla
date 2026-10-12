@@ -69,7 +69,8 @@ const SCENES := {
 	"res://src/entities/dirt_spot/dirt_spot.tscn": ["DirtSpot", 6],
 	"res://src/entities/ghost/ghost.tscn": ["Ghost", 15],
 	"res://src/entities/decor/placed_decor.tscn": ["PlacedDecor", -1],
-	"res://src/entities/notice_board/notice_board.tscn": ["NoticeBoard", -1],
+	# G8 Runde 6 „Bitten vom Hügel": the notice board opens the request panel (station priority 5).
+	"res://src/entities/notice_board/notice_board.tscn": ["NoticeBoard", 5],
 }
 ## Saveable stubs: [class, save_id, save_order, identity group] (§3.1).
 const SAVEABLES := [

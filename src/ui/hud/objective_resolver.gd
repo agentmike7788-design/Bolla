@@ -47,6 +47,11 @@ extends RefCounted
 ## Jakob, wie man harkt" · „Wunsch: Blumen für … (≈ 2 Tage)" · „Lohndose leer – …" · „Hanne Vogelsang ist am Tor
 ## (bis 16:20)" · Kathreintanz · „Bei den Otts brennt Licht" · „Merkbuch: Wer geht nachts zu den Kranken?" · „Ein
 ## Grab ist aufgewühlt" · „Wer heraufkommt: 3/4", then the Phase-7 board line.
+## G8 Runde 6 „Bitten vom Hügel" (docs/PHASE8_DESIGN.md G8 Runde 6 §5), `world.hill` from HillRequests.objective_state():
+## an accepted request „Bitte: <Titel> (noch 2 Tage)" / „Bitte: <Titel> – bei Osric abgeben" – before the village opens
+## right after the corpse chain (the player chose it; the Phase-4 hints, sections and tending follow), afterwards after
+## the Phase-7/8 lines; „Eine Bitte am Tor wartet" (by day, while one can still be accepted) in the idle slot and in
+## place of the plain note „Eine Grube wartet noch" – never before a section, the tending or a workshop line.
 
 const TEXT_WAIT_CARTER := "Der Leichenkutscher kommt gegen %s"
 const TEXT_TO_TABLE := "Leiche zum Leichentisch bringen"
@@ -59,8 +64,9 @@ const TEXT_BURY := "Leiche bestatten"
 const TEXT_NO_PLOT := "Keine freie Grabstelle mehr"
 const TEXT_MARKER := "Grabzeichen setzen"
 const TEXT_MARKER_CRAFT := "Grabzeichen setzen (Werkbank: %s = %s)"
-const TEXT_REST := "Feierabend – Ausruhen an der Hüttentür"
-const TEXT_SLEEP := "Feierabend – Schlafen an der Hüttentür"
+## G8 Runde 6: resting and sleeping are at the bed inside the hut (the door only leads in).
+const TEXT_REST := "Feierabend – Ausruhen am Bett in der Hütte"
+const TEXT_SLEEP := "Feierabend – Schlafen am Bett in der Hütte"
 const TEXT_SECTION := "%s freilegen: %d/%d"
 const TEXT_SECTION_BLOCKED := "%s: %s"
 const TEXT_WEEDS := "Unkraut jäten (%d %s)"
@@ -111,10 +117,17 @@ static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], in
 		if active.location == LOCATION_TABLE and _loss_soon(world):
 			return TEXT_LOSS
 		return _no_plot_fallback(_corpse_step(active, graves, inv, table_taken, world, minute_of_day), world)
+	# G8 Runde 6: before the village an accepted request follows the day's corpse work at once.
+	var hill := _hill_step(world)
+	var early := not bool((world.get("hill", {}) as Dictionary).get("village", false))
+	if hill != "" and early:
+		return hill
 	if _count_ready(world) > 0:
 		return TEXT_JOURNAL_READY
 	if _reserved(graves, world):
-		return TEXT_RESERVED
+		# G8 Runde 6: the plain note „a pit waits" gives way to a request waiting at the gate.
+		var waiting := _hill_waiting(world, minute_of_day)
+		return waiting if waiting != "" else TEXT_RESERVED
 	if _free_plots(graves) <= SECTION_FREE_MAX:
 		var section := _section_step(world)
 		if section != "":
@@ -138,9 +151,31 @@ static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], in
 		return village
 	if buildings != "":
 		return buildings
+	if hill != "":
+		return hill
 	if _ghost_night(graves, minute_of_day, flags):
 		return TEXT_GHOST_NIGHT
 	return _idle_step(minute_of_day, flags, world)
+
+
+## G8 Runde 6: the first accepted request of the gate's notice board ("" = none).
+static func _hill_step(world: Dictionary) -> String:
+	var hill: Dictionary = world.get("hill", {})
+	var list: Array = hill.get("active", [])
+	return HillTexts.objective(list[0] as Dictionary) if not list.is_empty() and list[0] is Dictionary else ""
+
+
+## G8 Runde 6: „Eine Bitte am Tor wartet" while one hangs, another may be accepted and it is day ("" otherwise).
+static func _hill_waiting(world: Dictionary, minute_of_day: int) -> String:
+	var hill: Dictionary = world.get("hill", {})
+	var n := int(hill.get("waiting", 0))
+	if n <= 0 or not bool(hill.get("can_accept", false)) or minute_of_day < 0:
+		return ""
+	var time_cfg := _time_config()
+	var m := posmod(minute_of_day, TimeManager.MINUTES_PER_DAY)
+	if m < time_cfg.wake_minute or m >= time_cfg.sleep_from_minute:
+		return ""
+	return HillTexts.waiting(n)
 
 
 ## Phase-5 line of the workyard (§7) or "" (no Phase-5 state / nothing to do but naming graves).
@@ -344,6 +379,9 @@ static func _idle_step(minute_of_day: int, flags: Dictionary = {}, world: Dictio
 	var minute := posmod(minute_of_day, TimeManager.MINUTES_PER_DAY)
 	if minute < time_cfg.wake_minute or minute >= time_cfg.sleep_from_minute:
 		return TEXT_SLEEP
+	var waiting := _hill_waiting(world, minute)
+	if waiting != "":
+		return waiting
 	var delivery := _delivery_minute()
 	if minute < delivery and not _flag(flags, FLAG_CEMETERY_COMPLETE):
 		return TEXT_WAIT_CARTER % UIKit.clock(delivery)

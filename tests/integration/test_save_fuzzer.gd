@@ -94,7 +94,9 @@ const ORDER_STATES: Array[StringName] = [&"", &"offered", &"accepted", &"complet
 const V6_FIXTURE_SHARE := 0.1
 ## W3 (Phase 8): the node states of the real mid-Phase-8 save that get the path mutations.
 const P8_KEYS: PackedStringArray = ["visitors", "grave_care", "apprentice", "apprentice_box", "friendship", "festivals",
-		"npc_life", "wanderers", "night_robber", "night_paths", "kin_house", "disturbed", "extra_lines"]
+		"npc_life", "wanderers", "night_robber", "night_paths", "kin_house", "disturbed", "extra_lines",
+		# G8 Runde 6 „Bitten vom Hügel"
+		"hill_requests"]
 const P8_CASES := 60
 const P8_SHARE := 0.25
 const OK_TEXTS: PackedStringArray = [SaveManager.TEXT_CORRUPT, SaveManager.TEXT_NEWER_VERSION]
@@ -655,6 +657,23 @@ func _check_consistent(what: String) -> void:
 		assert_true(int(vs.plan_day) <= TimeManager.day, "%s: no plan for a later day (%d)" % [what, int(vs.plan_day)])
 		for e: Dictionary in vs.plan:
 			assert_eq(int(e.get("day", vs.plan_day)), int(vs.plan_day), "%s: plan entry of the plan day" % what)
+	# G8 Runde 6 „Bitten vom Hügel": the board holds known requests in offered / accepted, never more than the places
+	# of the early rules (2) and never more accepted than allowed then; no request is an order of Orders.
+	var hill := world.get_node_or_null("Systems/HillRequests") as HillRequests
+	if hill != null:
+		var cfg := Database.config(&"hill_requests_config") as HillRequestsConfig
+		assert_true(hill.board().size() <= maxi(cfg.slots_early, cfg.slots_village), "%s: ≤ %d requests on the board (%d)"
+				% [what, maxi(cfg.slots_early, cfg.slots_village), hill.board().size()])
+		assert_true(hill.active().size() <= maxi(cfg.max_active_early, cfg.max_active_village), "%s: ≤ 2 accepted requests" % what)
+		for id: StringName in hill.board():
+			assert_not_null(hill.request_data(id), "%s: known request %s" % [what, id])
+			assert_true(hill.state(id) in HillRequests.BOARD_STATES, "%s: request %s state %s" % [what, id, hill.state(id)])
+			if orders != null:
+				assert_null(orders.order_data(id), "%s: request %s is no order" % [what, id])
+			if hill.state(id) == HillRequests.STATE_ACCEPTED:
+				assert_true(hill.accepted_day(id) >= 1, "%s: %s accepted on a real day" % [what, id])
+		for e: Dictionary in hill.history():
+			assert_true(StringName(str(e.state)) in HillRequests.LOG_STATES, "%s: log entry %s" % [what, e])
 	assert_true(TimeManager.running, what + ": the clock runs")
 	TimeManager.running = false
 	# The loaded state is stable: save → load gives the same state.
@@ -1200,6 +1219,55 @@ func test_fuzz_v7_phase8_parts() -> void:
 		d.data = JSON.from_native(st)
 		await _load_doc(d, "p8 targeted: " + what)
 	print("FUZZ v7 (Phase 8 parts): %d loaded, %d rejected" % [stats.ok, stats.rejected])
+
+
+## G8 Runde 6 „Bitten vom Hügel": a real v7 save of the early game (the board with requests) with the request node's
+## state erased (a save before this round – the default, no warning), of wrong types, with unknown ids, too many
+## requests / accepted ones, nonsense days and a broken log. Every load: _check_consistent.
+func test_fuzz_v7_hill_requests() -> void:
+	var text := await _make_v5_save()
+	var doc: Dictionary = JSON.parse_string(text)
+	var state := SaveFileIO.decode_state(doc.get("data"))
+	assert_true(state.nodes.get("hill_requests") is Dictionary, "the save has the request node")
+	var known: Array[String] = []
+	for r: Variant in Database.hill_requests():
+		known.append(String((r as OrderData).id))
+	for case: int in 7:
+		var st := state.duplicate(true)
+		var what := ""
+		match case:
+			0:
+				st.nodes.erase("hill_requests")
+				what = "no request node (a save before G8 Runde 6)"
+			1:
+				st.nodes["hill_requests"] = {"board": "x", "states": 5, "accepted_day": [], "posted_day": "y", "ended": 3,
+						"targets": 7, "touched": {}, "refill": "z", "check_day": "a", "post_day": -4, "log": "b"}
+				what = "every field of the wrong type"
+			2:
+				st.nodes["hill_requests"] = {"board": ["hr_atlantis", known[0], 7, known[0]],
+						"states": {"hr_atlantis": "accepted", known[0]: "eaten"}}
+				what = "unknown ids, a nonsense state, a duplicate"
+			3:
+				var states := {}
+				for id: String in known:
+					states[id] = "accepted"
+				st.nodes["hill_requests"] = {"board": known.duplicate(), "states": states}
+				what = "every request on the board and accepted"
+			4:
+				st.nodes["hill_requests"] = {"board": [known[1]], "states": {known[1]: "accepted"},
+						"accepted_day": {known[1]: -9.5}, "posted_day": {known[1]: "x"}, "ended": {"hr_atlantis": 3, known[2]: "y"},
+						"refill": [-1, "x", 4.5, null], "check_day": 1e9, "post_day": -1}
+				what = "nonsense days and refills"
+			5:
+				st.nodes["hill_requests"] = {"log": [1, {"id": known[0], "state": "eaten"}, {"id": known[1], "day": "x", "state": "completed"}]}
+				what = "a broken log"
+			6:
+				st.nodes["hill_requests"] = {"board": [known[3]], "states": {known[3]: "offered"}, "targets": {known[3]: "plot_99"}}
+				what = "a target grave that does not exist"
+		var d: Dictionary = doc.duplicate(true)
+		d.data = JSON.from_native(st)
+		await _load_doc(d, "hill targeted: " + what)
+	print("FUZZ v7 (hill requests): %d loaded, %d rejected" % [stats.ok, stats.rejected])
 
 
 ## W3 (Phase 8, §10 Save-Fuzzer): a real v7 save in the middle of the arc – kindly8 three days from the Phase-7

@@ -45,7 +45,10 @@ static func apply_nodes(tree: SceneTree, nodes: Dictionary) -> void:
 		var id := save_id(node)
 		seen[id] = true
 		var data: Variant = nodes.get(id)
-		if not data is Dictionary:
+		if not data is Dictionary and node.get("save_optional") == true and node.has_method("load_state"):
+			# G8 Runde 6: a node newer than the save (HillRequests) – its default state, no warning, no new format.
+			node.call("load_state", {})
+		elif not data is Dictionary:
 			push_warning("[SaveManager] no saved state for '%s' – keeps its default state" % id)
 		elif not node.has_method("load_state"):
 			push_warning("[SaveManager] saveable '%s' has no load_state()" % id)

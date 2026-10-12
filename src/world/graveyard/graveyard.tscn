@@ -202,6 +202,7 @@
 [ext_resource type="Resource" path="res://data/config/regions/village.tres" id="200_iye02"]
 [ext_resource type="PackedScene" path="res://src/ui/ui_root.tscn" id="201_o6337"]
 [ext_resource type="Script" path="res://src/ui/ui_root.gd" id="202_2iqfl"]
+[ext_resource type="Script" path="res://src/systems/hill_requests/hill_requests.gd" id="203_hill6"]
 
 [sub_resource type="Environment" id="Environment_n35o8"]
 background_mode = 1
@@ -3738,6 +3739,9 @@ script = ExtResource("52_p2a88")
 
 [node name="NightPaths" type="Node" parent="Systems" unique_id=2058700580 groups=["night_paths", "saveable"]]
 script = ExtResource("53_lk2ha")
+
+[node name="HillRequests" type="Node" parent="Systems" unique_id=1606201026 groups=["hill_requests", "saveable"]]
+script = ExtResource("203_hill6")
 
 [node name="Entities" type="Node3D" parent="." unique_id=995910908]
 

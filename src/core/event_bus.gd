@@ -164,6 +164,9 @@ signal festival_changed(fest_id: StringName, state: StringName)
 ## sick light (NightPaths; phase: &"enter" | &"leave" | &"observed")
 signal robber_event(kind: StringName, grave_id: String)
 signal night_visit(path_id: StringName, npc_id: StringName, phase: StringName)
+## G8 Runde 6 „Bitten vom Hügel" (docs/PHASE8_DESIGN.md, G8 Runde 6 §3): a request of the gate's notice board
+## changed – offered | accepted | completed | failed | withdrawn (HillRequests).
+signal hill_request_changed(request_id: StringName, state: StringName)
 
 # UI
 signal ui_panel_requested(panel: StringName, context: Dictionary)

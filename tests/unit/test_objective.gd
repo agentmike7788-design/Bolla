@@ -14,8 +14,8 @@ const BURY := "Leiche bestatten"
 const NO_PLOT := "Keine freie Grabstelle mehr"
 const MARKER := "Grabzeichen setzen"
 const MARKER_CRAFT := "Grabzeichen setzen (Werkbank: Holzkreuz = 3 Holz)"
-const REST := "Feierabend – Ausruhen an der Hüttentür"
-const SLEEP := "Feierabend – Schlafen an der Hüttentür"
+const REST := "Feierabend – Ausruhen am Bett in der Hütte"
+const SLEEP := "Feierabend – Schlafen am Bett in der Hütte"
 const TABLE_BUSY := "Tisch belegt – Leiche mit [Q] ablegen"
 ## Daytime minute (12:00) where the idle line would be REST.
 const NOON := 720
@@ -306,3 +306,40 @@ func _grave(state: GraveRecord.State) -> GraveRecord:
 	g.id = "plot_%d" % state
 	g.state = state
 	return g
+
+
+## G8 Runde 6 „Bitten vom Hügel": the idle line names the bed inside the hut (not the door), an accepted request
+## follows the day's corpse work (before the village; after it behind the Phase-7/8 lines), a waiting one fills
+## the idle slot while one can still be accepted.
+func test_hill_request_lines() -> void:
+	assert_eq(REST, "Feierabend – Ausruhen am Bett in der Hütte")
+	assert_eq(SLEEP, "Feierabend – Schlafen am Bett in der Hütte")
+	var free := [_grave(GraveRecord.State.EMPTY)]
+	var entry := {"id": &"hr_osric_wood", "title": "Drei Scheite für Osric", "left": 2, "kind": &"deliver", "ready": false}
+	var world := {"hill": {"active": [entry], "waiting": 0, "can_accept": true, "village": false}}
+	assert_eq(_objective_world([], free, world), "Bitte: Drei Scheite für Osric (noch 2 Tage)")
+	entry["left"] = 1
+	assert_eq(_objective_world([], free, world), "Bitte: Drei Scheite für Osric (heute der letzte Tag)")
+	entry["ready"] = true
+	assert_eq(_objective_world([], free, world), "Bitte: Drei Scheite für Osric – bei Osric abgeben")
+	assert_eq(_objective_world([_corpse(&"dropoff")], free, world), TO_TABLE, "the corpse work comes first")
+	assert_eq(_objective_world([], [_grave(GraveRecord.State.FILLED)], world), MARKER_CRAFT, "the open marker first")
+	var waiting := {"hill": {"active": [], "waiting": 2, "can_accept": true, "village": false}}
+	assert_eq(_objective_world([], free, waiting), "Zwei Bitten am Tor warten")
+	waiting.hill.waiting = 1
+	assert_eq(_objective_world([], free, waiting), "Eine Bitte am Tor wartet")
+	waiting.hill.can_accept = false
+	assert_eq(_objective_world([], free, waiting), REST, "nothing to accept: rest")
+	waiting.hill.can_accept = true
+	var reserved := waiting.duplicate(true)
+	reserved["story_pending"] = 3
+	assert_eq(_objective_world([], free, reserved), "Eine Bitte am Tor wartet", "in place of „Eine Grube wartet noch“")
+	reserved.hill.waiting = 0
+	assert_eq(_objective_world([], free, reserved), "Eine Grube wartet noch")
+	var weedy := waiting.duplicate(true)
+	weedy["weeds"] = 3
+	assert_eq(_objective_world([], free, weedy), "Unkraut jäten (3 Stellen)", "the tending stays before a waiting request")
+	var typed: Array[GraveRecord] = []
+	typed.assign(free)
+	waiting.hill.can_accept = true
+	assert_eq(ObjectiveResolver.current([], typed, _inv, 1200, {}, waiting), SLEEP, "evening: sleep first")

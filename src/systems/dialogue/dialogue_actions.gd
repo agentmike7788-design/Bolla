@@ -19,6 +19,7 @@ extends RefCounted
 ## robber_resolve:<choice> (NightRobber.resolve) · meet:<place> (Orders.note_meet with the speaker; meet:<npc> of a
 ## villager id stays Relationships.meet) · note_event:<event> (NpcLife.note_event) · task:<action_id> (Orders.note_task – Lenz' names
 ## at the Lichtgang, Liesel's vigil, P6 addition) · take_ware (Theres' order, Friendship.take_ware – P4).
+## G8 Runde 6: hill_turn_in:<giver> (HillRequests.turn_in – the ready delivery requests of the gate's notice board).
 
 const NOTIFY_INFO := &"info"
 const NOTIFY_REWARD := &"reward"
@@ -157,6 +158,14 @@ static func apply(action: String, context: Dictionary) -> void:
 			var inv := DialogueSyntax.inventory(context, &"remove_item")
 			if DialogueSyntax.has_name(p, text) and inv != null:
 				_call(&"orders", &"turn_in", [StringName(p[0]), inv], text)
+		"hill_turn_in":
+			# G8 Runde 6: every ready delivery request of the gate's notice board for <giver> (Osric) is handed over.
+			var p := DialogueSyntax.parts(text, 1)
+			var inv := DialogueSyntax.inventory(context, &"remove_item")
+			if DialogueSyntax.has_name(p, text) and inv is Inventory:
+				var n: Variant = _call(&"hill_requests", &"turn_in", [StringName(p[0]), inv], text)
+				if n is int and int(n) > 0:
+					EventBus.notification_requested.emit(HillTexts.CARTER_HANDED, NOTIFY_INFO)
 		"buy_round", "donate", "consecrate_pay":
 			var inv := DialogueSyntax.inventory(context, &"remove_item")
 			if inv != null:

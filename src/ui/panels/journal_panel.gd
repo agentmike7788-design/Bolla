@@ -24,6 +24,8 @@ const PAGES: Array[StringName] = [&"people", &"clues", &"insights", &"self"]
 const PHASE7_PAGES: Array[StringName] = [&"orders", &"village"]
 ## Phase 8: shown from p8_open.
 const PHASE8_PAGES: Array[StringName] = [&"kin"]
+## G8 Runde 6 „Bitten vom Hügel": shown once Osric pinned the first request (JournalPagesHill.shown).
+const HILL_PAGES: Array[StringName] = [&"requests"]
 const P8_FLAG := &"p8_open"
 ## Phase 8: four clues for „Der unterstrichene Name" (two required + two of four).
 const MAX_SELECTED_P8 := 4
@@ -31,7 +33,7 @@ const TEXT_SELECT_HINT_P8 := "Wähle zwei bis vier Hinweise, die zusammengehöre
 const VILLAGE_FLAG := &"village_open"
 const PAGE_LABELS: Dictionary[StringName, String] = {
 	&"people": "Die Toten", &"clues": "Hinweise", &"insights": "Erkenntnisse", &"self": "Ich",
-	&"orders": "Aufträge", &"village": "Hollerbrück", &"kin": "Angehörige",
+	&"orders": "Aufträge", &"village": "Hollerbrück", &"kin": "Angehörige", &"requests": "Bitten",
 }
 const JOURNAL_GROUP := &"journal"
 const MAX_SELECTED := 3
@@ -120,7 +122,7 @@ func _build() -> void:
 	var title := UIKit.label(TEXT_TITLE, &"HeaderLabel")
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
-	for page: StringName in PAGES + PHASE7_PAGES + PHASE8_PAGES:
+	for page: StringName in PAGES + HILL_PAGES + PHASE7_PAGES + PHASE8_PAGES:
 		var tab := UIKit.hbox(2)
 		var b := UIKit.button(PAGE_LABELS[page], &"JournalTabButton")
 		b.focus_mode = Control.FOCUS_NONE
@@ -211,11 +213,16 @@ func _refresh() -> void:
 		&"kin":
 			_page_title(left_page, PAGE_LABELS[&"kin"])
 			JournalPagesPhase8.build_kin(left_page, right_page, get_tree() if is_inside_tree() else null, page_width)
+		&"requests":
+			_page_title(left_page, PAGE_LABELS[&"requests"])
+			JournalPagesHill.build(left_page, right_page, get_tree() if is_inside_tree() else null, page_width)
 
 
 ## The tabs shown now: the four Phase-4 pages, from village_open also „Aufträge" and „Hollerbrück".
 func pages() -> Array[StringName]:
 	var out: Array[StringName] = PAGES.duplicate()
+	if JournalPagesHill.shown(get_tree() if is_inside_tree() else null):
+		out.append_array(HILL_PAGES)
 	if GameState.flag_on(VILLAGE_FLAG):
 		out.append_array(PHASE7_PAGES)
 	if GameState.flag_on(P8_FLAG):
@@ -596,7 +603,7 @@ func _build_self() -> void:
 
 func _refresh_tabs() -> void:
 	var shown := pages()
-	for page: StringName in PAGES + PHASE7_PAGES + PHASE8_PAGES:
+	for page: StringName in PAGES + HILL_PAGES + PHASE7_PAGES + PHASE8_PAGES:
 		tab_buttons[page].get_parent().visible = page in shown
 		tab_buttons[page].theme_type_variation = &"JournalTabSelected" if page == current_page else &"JournalTabButton"
 		tab_dots[page].modulate.a = 1.0 if page_has_unread(page) else 0.0

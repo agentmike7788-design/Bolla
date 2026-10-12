@@ -11,7 +11,9 @@ const TEST_SAVE_DIR := "user://test_saves_ui_unit"
 const WAIT_TEXT := "Der Leichenkutscher kommt gegen 07:40"
 ## G8 Runde 4: the work panels docked at the right edge without the dim (table, Werkbank / stations, Präparierpult).
 ## G8 Runde 5: the stone bench, Quast's surgery and the lecture as well.
-const DOCKED_PANELS: Array[StringName] = [&"corpse_exam", &"crafting", &"pult", &"stone_design", &"anatomist", &"lecture"]
+## G8 Runde 6: the requests of the gate's notice board.
+const DOCKED_PANELS: Array[StringName] = [&"corpse_exam", &"crafting", &"pult", &"stone_design", &"anatomist", &"lecture",
+		&"hill_requests"]
 ## G8 Runde 4: panels hidden while a work started from them runs (G8 Runde 5: + Quast's expertise, the lecture).
 const WORK_PANELS: Array[StringName] = [&"corpse_exam", &"crafting", &"pult", &"stone_design", &"build_site", &"building",
 		&"anatomist", &"lecture"]
@@ -1657,6 +1659,8 @@ func _contexts() -> Dictionary[StringName, Dictionary]:
 		&"deduction": {"corpse_id": "corpse_0001"},
 		# G7 Änderungsrunde 1: the map opens without any system, too.
 		&"map": {},
+		# G8 Runde 6: the request panel opens without HillRequests, too (an empty board).
+		&"hill_requests": {"inventory": inv, "player": player},
 	}
 
 

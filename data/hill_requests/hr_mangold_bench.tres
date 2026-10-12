@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hr_mangold_bench"
+giver = &"grocer"
+recipient = &""
+kind = &"decor"
+title = "Eine Bank zum Ausruhen"
+request_text = "Theres Mangold, die Krämerin, steigt jede Woche zu ihrem Mann hinauf. „Mit meinen Knien bräucht ich oben eine Bank. Nicht schön, nur fest.“"
+thanks_text = "Theres Mangold hat sich gleich gesetzt, sagt Osric, und eine ganze Weile nichts gesagt. Dann hat sie ihm einen Beutel Samen für dich mitgegeben."
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"decor": ["decor_bench_wood", "decor_bench_stone"],
+"min_day": 3,
+"reward_items": {
+"seeds": 1
+}
+}
+days_limit = 3
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 2
+reward_rel = 0
+reward_rep = 1
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 8
+order = 130
+accept_flag = &""
+category = &"hill"

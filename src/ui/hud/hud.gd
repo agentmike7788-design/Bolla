@@ -152,6 +152,8 @@ func _ready() -> void:
 	EventBus.friend_step_completed.connect(_mark_objective_dirty.unbind(2))
 	EventBus.festival_changed.connect(_mark_objective_dirty.unbind(2))
 	EventBus.grave_care_changed.connect(_mark_objective_dirty.unbind(3))
+	# G8 Runde 6: the requests of the gate's notice board.
+	EventBus.hill_request_changed.connect(_mark_objective_dirty.unbind(2))
 	refresh_all()
 
 

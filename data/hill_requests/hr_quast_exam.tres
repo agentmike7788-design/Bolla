@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hr_quast_exam"
+giver = &"surgeon"
+recipient = &""
+kind = &"exam"
+title = "Ein Befund für den Wundarzt"
+request_text = "Severin Quast schreibt in sauberer Hand: Er führt Buch darüber, woran man im Tal stirbt. Untersuch den nächsten Toten gründlich – Kleidung, Hände, Wunden, Taschen – und heft deinen Befund ans Tor."
+thanks_text = "Dein Befund hängt am Tor, Osric nimmt ihn mit: „%s.“ Quast wird es in sein Buch schreiben."
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {}
+days_limit = 2
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 1
+reward_rel = 0
+reward_rep = 1
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 6
+order = 40
+accept_flag = &""
+category = &"hill"

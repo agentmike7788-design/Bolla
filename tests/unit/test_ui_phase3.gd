@@ -478,8 +478,8 @@ func test_objective_phase3_priorities() -> void:
 	assert_eq(ObjectiveResolver.current(none, roomy, i, NOON, {}, world_state), "Laub harken (2 Stellen)")
 	world_state.leaves = 0
 	assert_eq(ObjectiveResolver.current(none, roomy, i, 1270, {}, world_state), "Etwas regt sich zwischen den Gräbern …", "first ghost night")
-	assert_eq(ObjectiveResolver.current(none, roomy, i, 1270, {&"ghosts_seen": true}, world_state), "Feierabend – Schlafen an der Hüttentür")
-	assert_eq(ObjectiveResolver.current(none, roomy, i, NOON, {}, world_state), "Feierabend – Ausruhen an der Hüttentür", "below Würdevoll: rest")
+	assert_eq(ObjectiveResolver.current(none, roomy, i, 1270, {&"ghosts_seen": true}, world_state), "Feierabend – Schlafen am Bett in der Hütte")
+	assert_eq(ObjectiveResolver.current(none, roomy, i, NOON, {}, world_state), "Feierabend – Ausruhen am Bett in der Hütte", "below Würdevoll: rest")
 	world_state.total = 57
 	world_state.rating = &"dignified"
 	assert_eq(ObjectiveResolver.current(none, roomy, i, NOON, {}, world_state), "Friedhof: Ehrwürdig ab 100 (jetzt 57)")

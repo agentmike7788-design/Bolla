@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hr_sieber_cross"
+giver = &"kin_sieber"
+recipient = &""
+kind = &"deliver"
+title = "Ein Kreuz für den Hohlweg"
+request_text = "Johann Siebers Bruder ist im Hohlweg vom Fuhrwerk gestürzt, vor vielen Jahren. Ein Grab hat er, aber an der Stelle selbst steht nichts. Ein schlichtes Holzkreuz von deiner Werkbank – Osric stellt es auf."
+thanks_text = "Osric sagt, Johann Sieber habe lange vor dem Kreuz gestanden und dann den Hut abgenommen. Mehr nicht. Bei ihm ist das viel."
+items = Dictionary[StringName, int]({
+&"wooden_cross": 1
+})
+coins = 0
+target = ""
+conditions = {}
+days_limit = 3
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 3
+reward_rel = 0
+reward_rep = 1
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 8
+order = 30
+accept_flag = &""
+category = &"hill"
