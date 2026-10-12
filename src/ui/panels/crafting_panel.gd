@@ -18,6 +18,11 @@ extends UIPanel
 ## dimmed with ShedSupply's reason); from shed 3 „Überschuss einlagern" (workbench.request_store()).
 ## Phase 8 (docs/PHASE8_DESIGN.md §2.11, W1-Anschlüsse 4): a recipe with RecipeData.requires_flag is offered only while
 ## that flag is set (offered(); the memorial plate after Rosine's second step).
+## G8 Runde 4 (user: „Ja" – Präparierpult und Werkbank wie der Leichentisch): docked at the right edge in one narrow
+## column (panel_width; the inputs flow into rows, the reason and the buttons sit under the details) without the dim,
+## the list scrolls once it is taller than the screen leaves; while a work started from it runs (crafting, „Fehlendes
+## holen") the panel is hidden (UIPanel.hide_while_working – the HUD's action bar shows the work) and comes back with
+## the focus on the recipe used last. The same for every station that uses it (Werkbank, Esse, Webstuhl, Pult).
 
 const TEXT_TITLE := "Werkbank"
 const TEXT_OWNED := "im Besitz: %d"
@@ -38,7 +43,8 @@ const CATEGORY_ORDER: Array[StringName] = [&"material", &"tool", &"grave", &"dec
 const WORKSHOP_GROUP := &"workshop"
 const CATEGORY_LABELS: Dictionary[StringName, String] = {&"grave": "Grab", &"decor": "Zier", &"tool": "Werkzeug", &"material": "Werkstoffe"}
 
-@export var panel_width: float = 900.0
+## G8 Runde 4: one narrow column at the right edge (was 900 in the middle).
+@export var panel_width: float = 650.0
 @export var output_icon_edge: float = 60.0
 @export var input_icon_edge: float = 30.0
 @export var max_list_height: float = 780.0
@@ -61,6 +67,17 @@ var shed_bar: ShedFetchBar
 var pult_button: Button
 
 
+func _init() -> void:
+	super._init()
+	dock_right = true
+	hide_while_working = true
+
+
+func _ready() -> void:
+	super._ready()
+	get_viewport().size_changed.connect(_fit_scroll)
+
+
 ## Phase 8: RecipeData.requires_flag is empty or set in GameState.
 static func offered(recipe: RecipeData) -> bool:
 	return recipe != null and (recipe.requires_flag == &"" or GameState.flag_on(recipe.requires_flag))
@@ -71,18 +88,16 @@ func _build() -> void:
 	var box := UIKit.vbox(14)
 	add_child(box)
 	title_label = _make_header(box, TEXT_TITLE)
-	_scroll = ScrollContainer.new()
-	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	box.add_child(_scroll)
-	_list = UIKit.vbox(8)
-	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_scroll.add_child(_list)
+	var dock := make_dock_scroll(box, 8)
+	_scroll = dock[0] as ScrollContainer
+	_list = dock[1] as VBoxContainer
 	_make_action_row(box)
-	var bottom := UIKit.hbox(16)
+	# G8 Runde 4: „Überschuss einlagern" in its own row (the narrow column has no room beside the buttons).
 	shed_bar = ShedFetchBar.new()
 	shed_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	shed_bar.store_pressed.connect(_on_store_pressed)
-	bottom.add_child(shed_bar)
+	box.add_child(shed_bar)
+	var bottom := UIKit.hbox(16)
 	bottom.add_child(UIKit.spacer())
 	pult_button = UIKit.button(Phase7Texts.PULT_CRAFTING_BUTTON, &"AccentButton")
 	pult_button.pressed.connect(open_pult)
@@ -101,6 +116,8 @@ func open_pult() -> void:
 
 func _on_opened() -> void:
 	_focus_recipe = &""
+	# G8 Runde 4: one panel for every station – a new opening starts at the top of its list (the focus scrolls on).
+	_scroll.scroll_vertical = 0
 	_inventory = _player_inventory()
 	if _inventory != null:
 		_inventory.changed.connect(refresh)
@@ -162,11 +179,9 @@ func _refresh() -> void:
 	_fit_scroll.call_deferred()
 
 
-## Scroll height = list height, at most max_list_height.
+## Scroll height = list height, at most max_list_height and what the screen leaves beside the other rows.
 func _fit_scroll() -> void:
-	if _scroll == null or _list == null:
-		return
-	_scroll.custom_minimum_size.y = minf(_list.get_combined_minimum_size().y, max_list_height)
+	fit_dock_scroll(_scroll, _list, max_list_height)
 
 
 static func _category_rank(category: StringName) -> int:
@@ -180,6 +195,7 @@ func focus_default() -> void:
 	var again := craft_button(_focus_recipe)
 	if again != null and not again.disabled and again.is_visible_in_tree():
 		again.grab_focus()
+		reveal.call_deferred(again)
 		return
 	super.focus_default()
 
@@ -248,7 +264,9 @@ func _make_row(recipe: RecipeData) -> Control:
 	var owned := _inventory.count(recipe.output_id) if is_instance_valid(_inventory) else 0
 	title_row.add_child(UIKit.label(TEXT_OWNED % owned, &"DimLabel"))
 	info.add_child(title_row)
-	var inputs := UIKit.hbox(16)
+	var inputs := HFlowContainer.new()
+	inputs.add_theme_constant_override(&"h_separation", 16)
+	inputs.add_theme_constant_override(&"v_separation", 4)
 	var shed := shed_state(recipe)
 	var shed_shown := bool(shed.get("shown", false))
 	var in_shed: Dictionary = shed.get("available", {})
@@ -273,35 +291,37 @@ func _make_row(recipe: RecipeData) -> Control:
 	if decor_hint != "":
 		details.append(decor_hint)
 		section.tooltip_text = "%s\n%s" % [decor_hint, Phase3Texts.decor_tooltip(Database.decor(recipe.output_id) as DecorData)]
-	info.add_child(UIKit.label(" · ".join(details), &"DimLabel"))
+	info.add_child(UIKit.label(" · ".join(details), &"DimLabel", true))
 	if recipe.background:
 		_add_job_row(info, recipe)
 	row.add_child(info)
-	var action := UIKit.vbox(4)
-	action.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var button := UIKit.button(TEXT_CRAFT, &"AccentButton")
+	# G8 Runde 4: the reasons and the buttons under the details (one narrow column).
 	var reason := block_reason(recipe)
-	button.disabled = reason != ""
-	button.tooltip_text = reason
-	button.pressed.connect(_on_craft_pressed.bind(recipe.id))
-	action.add_child(button)
-	var reason_label := UIKit.label(reason, &"WarningLabel" if reason != TEXT_BUSY else &"DimLabel")
+	var reason_label := UIKit.label(reason, &"WarningLabel" if reason != TEXT_BUSY else &"DimLabel", true)
 	reason_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	reason_label.visible = reason != ""
-	action.add_child(reason_label)
+	info.add_child(reason_label)
 	var fetch: Button = null
 	var fetch_reason := str(shed.get("reason", ""))
-	if shed_shown and fetch_reason != ShedSupply.TEXT_NOTHING_MISSING:
+	var show_fetch := shed_shown and fetch_reason != ShedSupply.TEXT_NOTHING_MISSING
+	if show_fetch and fetch_reason != "":
+		var why := UIKit.label(fetch_reason, &"DimLabel", true)
+		why.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		info.add_child(why)
+	var action := UIKit.hbox(12)
+	action.alignment = BoxContainer.ALIGNMENT_END
+	if show_fetch:
 		fetch = UIKit.button(Phase6Texts.fetch_button(int(shed.get("minutes", 0)), true))
 		fetch.disabled = action_running or fetch_reason != ""
 		fetch.tooltip_text = fetch_reason
 		fetch.pressed.connect(_on_fetch_pressed.bind(recipe.id))
 		action.add_child(fetch)
-		if fetch_reason != "":
-			var why := UIKit.label(fetch_reason, &"DimLabel")
-			why.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-			action.add_child(why)
-	row.add_child(action)
+	var button := UIKit.button(TEXT_CRAFT, &"AccentButton")
+	button.disabled = reason != ""
+	button.tooltip_text = reason
+	button.pressed.connect(_on_craft_pressed.bind(recipe.id))
+	action.add_child(button)
+	info.add_child(action)
 	_rows[recipe.id] = {"button": button, "reason": reason_label, "fetch": fetch}
 	return section
 

@@ -22,6 +22,7 @@ const Gruft2 := preload("res://src/world/graveyard/graveyard_shots_gruft2.gd")
 const Delivery := preload("res://src/world/graveyard/graveyard_shots_delivery.gd")
 const Table := preload("res://src/world/graveyard/graveyard_shots_table.gd")
 const Round4 := preload("res://src/world/graveyard/graveyard_shots_round4.gd")
+const Panels := preload("res://src/world/graveyard/graveyard_shots_panels.gd")
 const SETTLE_FRAMES := 40
 ## Frames after a measurement switch (shadows off / freeze) before the counters are read.
 const MEASURE_FRAMES := 4
@@ -79,6 +80,8 @@ var _distance: float = 0.0
 var _table: bool = false
 ## --round4=ui|work|delivery: G8 Runde 4 – the table panel during the work, one work in its course, Osric's unloading (graveyard_shots_round4.gd;
 ## docs/reviews/phase8_round4); --tag=vorher|nachher names the ui set, --suffix as above.
+## --round4=panels: G8 Runde 4 – the work panels (Werkbank, Esse, Steinmetz, Präparierpult) open and during a work
+## (graveyard_shots_panels.gd; --shots picks panels, --tag / --suffix as above).
 var _round4: String = ""
 var _tag: String = "nachher"
 
@@ -167,6 +170,10 @@ func _run() -> void:
 		return
 	if _round4 == "work":
 		await Round4.run_work(self, world, _out, _suffix)
+		quit()
+		return
+	if _round4 == "panels":
+		await Panels.run(self, world, _out, _only, _suffix, _tag)
 		quit()
 		return
 	if _round4 == "delivery":

@@ -9,6 +9,10 @@ const THEME_PATH := "res://src/ui/theme/gravekeeper_theme.tres"
 const FakeInventory := preload("res://tests/fixtures/fake_inventory.gd")
 const TEST_SAVE_DIR := "user://test_saves_ui_unit"
 const WAIT_TEXT := "Der Leichenkutscher kommt gegen 07:40"
+## G8 Runde 4: the work panels docked at the right edge without the dim (table, Werkbank / stations, Präparierpult).
+const DOCKED_PANELS: Array[StringName] = [&"corpse_exam", &"crafting", &"pult"]
+## G8 Runde 4: panels hidden while a work started from them runs.
+const WORK_PANELS: Array[StringName] = [&"corpse_exam", &"crafting", &"pult", &"stone_design", &"build_site", &"building"]
 
 
 class FakePlayer extends Node3D:
@@ -192,9 +196,10 @@ func test_every_panel_opens_and_closes() -> void:
 		assert_true(TimeManager.paused, "modal pauses the clock: " + String(id))
 		var panel := ui.get_panel(id)
 		assert_true(panel.is_open and panel.is_visible_in_tree(), String(id) + " visible")
-		# G8 Runde 4: the table's panel is docked at the right edge and leaves the world undimmed
+		# G8 Runde 4: the work panels are docked at the right edge and leave the world undimmed
 		assert_eq(ui.dim.visible, not panel.dock_right, String(id) + " dims the world (not a docked panel)")
-		assert_eq(panel.dock_right, id == &"corpse_exam", String(id) + " docked")
+		assert_eq(panel.dock_right, id in DOCKED_PANELS, String(id) + " docked")
+		assert_eq(panel.hide_while_working, id in WORK_PANELS, String(id) + " hidden while working")
 		assert_eq(tree.paused, id == &"pause", String(id) + " tree pause only for the pause menu")
 		ui.close_top_panel()
 		await wait_frames(1)
@@ -1375,6 +1380,130 @@ func test_corpse_exam_docked_and_hidden_while_working() -> void:
 	assert_false(ui.hud.is_work_view())
 	EventBus.timed_action_finished.emit(true)
 	assert_false(panel.visible)
+
+
+## G8 Runde 4 (user: „Ja" – Präparierpult und Werkbank wie der Leichentisch): the crafting panel (Werkbank and the
+## other stations) is docked in one narrow column without the dim; a craft hides it (the HUD's bar shows the work, still
+## modal), afterwards it comes back with the focus on the same recipe; keyboard, mouse and Esc keep working.
+func test_crafting_docked_and_hidden_while_working() -> void:
+	await _setup()
+	inv.add_item(&"wood", 5)
+	ui.open_panel(&"crafting", _contexts()[&"crafting"])
+	var panel := ui.get_panel(&"crafting") as CraftingPanel
+	await wait_frames(3)
+	_check_docked(panel)
+	assert_true(panel.get_global_rect().size.x < 700.0, "about 650 px, was 900 (%d)" % int(panel.get_global_rect().size.x))
+	for id: StringName in panel.recipe_ids():
+		var b := panel.craft_button(id).get_global_rect()
+		var column := panel.get_global_rect()
+		assert_true(b.position.x >= column.position.x and b.end.x <= column.end.x, "%s: the button inside the column" % id)
+	# keyboard: Enter on the focused recipe
+	var focused := ui.get_viewport().gui_get_focus_owner() as Button
+	assert_not_null(focused, "a button has the focus")
+	if focused == null:
+		return
+	var recipe := &""
+	for id: StringName in panel.recipe_ids():
+		if panel.craft_button(id) == focused:
+			recipe = id
+	assert_ne(recipe, &"", "the focus on a recipe's button")
+	_press_action(&"ui_accept")
+	assert_eq(station.calls, [recipe], "Enter crafts the focused recipe")
+	# the work (Workbench.request_craft → Player.start_timed_action → EventBus): the panel steps aside
+	EventBus.timed_action_started.emit("Herstellen", 1.5)
+	await wait_frames(1)
+	assert_true(panel.work_hidden and not panel.is_visible_in_tree(), "hidden while the work runs")
+	assert_false(ui.dim.visible)
+	assert_true(ui.hud.is_work_view() and ui.hud.action_panel.visible, "the HUD's bar shows the work")
+	assert_eq(ui.top(), &"crafting")
+	assert_true(UIState.is_modal(), "still modal")
+	EventBus.timed_action_finished.emit(true)
+	await wait_frames(2)
+	assert_false(panel.work_hidden)
+	assert_true(panel.is_visible_in_tree(), "back after the work")
+	assert_false(ui.hud.is_work_view())
+	assert_eq(ui.get_viewport().gui_get_focus_owner(), panel.craft_button(recipe), "focus back on the same recipe")
+	# mouse: a click on another recipe's button
+	var other := &""
+	for id: StringName in panel.recipe_ids():
+		if other == &"" and id != recipe and not panel.craft_button(id).disabled:
+			other = id
+	assert_ne(other, &"", "a second recipe can be made")
+	if other != &"":
+		await wait_frames(2)
+		# the list scrolls: bring the row into view first (as the wheel would)
+		var b := panel.craft_button(other)
+		var scroll := b.get_parent()
+		while scroll != null and not scroll is ScrollContainer:
+			scroll = scroll.get_parent()
+		assert_true(scroll is ScrollContainer and panel.is_ancestor_of(scroll), "the rows scroll inside the panel")
+		(scroll as ScrollContainer).ensure_control_visible(b)
+		await wait_frames(2)
+		_click(panel.craft_button(other).get_global_rect().get_center())
+		await wait_frames(1)
+		assert_eq(station.calls.back(), other, "a click works")
+	# Esc during a work closes the panel and resets the hiding
+	EventBus.timed_action_started.emit("Herstellen", 1.5)
+	assert_true(panel.work_hidden)
+	_press_action(&"pause")
+	await wait_frames(1)
+	assert_false(ui.is_open(&"crafting"), "Esc closes it during the work")
+	assert_false(panel.work_hidden)
+	assert_false(ui.hud.is_work_view())
+	EventBus.timed_action_finished.emit(true)
+	assert_false(panel.visible)
+	# every station uses this panel: a new opening starts at the top, the focused button is in view
+	panel._scroll.scroll_vertical = 100000
+	ui.open_panel(&"crafting", _contexts()[&"crafting"])
+	await wait_frames(3)
+	var again := ui.get_viewport().gui_get_focus_owner() as Control
+	assert_not_null(again, "focus after reopening")
+	if again != null and panel._scroll.is_ancestor_of(again):
+		assert_true(panel._scroll.get_global_rect().grow(1.0).encloses(again.get_global_rect()), "the focused button is in view")
+
+
+## G8 Runde 4: the stone bench, the build site and the building site are hidden while their work runs (Stein hauen /
+## Fehlendes holen) and come back with the focus; they stay in the middle with the dim.
+func test_other_work_panels_hidden_while_working() -> void:
+	await _setup()
+	var contexts: Dictionary[StringName, Dictionary] = {
+		&"stone_design": {"inventory": inv, "player": player, "bench": station},
+		&"build_site": {"station": &"forge", "station_data": Database.station(&"forge"), "inventory": inv, "player": player},
+		&"building": {"building": &"crypt", "data": Database.building(&"crypt"), "level": 1, "inventory": inv, "player": player},
+	}
+	for id: StringName in contexts:
+		ui.open_panel(id, contexts[id])
+		await wait_frames(1)
+		var panel := ui.get_panel(id)
+		assert_false(panel.dock_right, String(id) + " stays in the middle")
+		assert_true(ui.dim.visible, String(id) + " dims the world")
+		EventBus.timed_action_started.emit("Fehlendes holen", 1.5)
+		await wait_frames(1)
+		assert_true(panel.work_hidden and not panel.is_visible_in_tree(), String(id) + " hidden during the work")
+		assert_false(ui.dim.visible, String(id) + " no dim during the work")
+		assert_true(ui.hud.is_work_view(), String(id))
+		EventBus.timed_action_finished.emit(true)
+		await wait_frames(2)
+		assert_true(panel.is_visible_in_tree(), String(id) + " back")
+		assert_true(ui.dim.visible, String(id) + " dim back")
+		var focused := ui.get_viewport().gui_get_focus_owner()
+		if UIKit.first_focusable(panel) != null:
+			assert_true(focused != null and panel.is_ancestor_of(focused), String(id) + " focus back in the panel")
+		ui.close_top_panel()
+		await wait_frames(1)
+
+
+## The docked rules of corpse_exam, crafting and pult: right edge, the middle free, narrow, on screen, no dim.
+func _check_docked(panel: UIPanel) -> void:
+	var view := ui.get_viewport().get_visible_rect()
+	var rect := panel.get_global_rect()
+	var id := String(panel.panel_id)
+	assert_true(panel.dock_right and panel.get_parent() is MarginContainer, id + " docked")
+	assert_almost(rect.end.x, view.end.x - UIRoot.DOCK_MARGIN, 1.0, id + " at the right edge")
+	assert_false(rect.has_point(view.get_center()), id + " the middle of the screen stays free")
+	assert_true(rect.size.x < view.size.x * 0.4, "%s one narrow column (%d px)" % [id, int(rect.size.x)])
+	assert_true(rect.position.y >= view.position.y - 0.5 and rect.end.y <= view.end.y + 0.5, "%s on screen (%s)" % [id, rect])
+	assert_false(ui.dim.visible, id + " the world beside it is not dimmed")
 
 
 func _press_action(action: StringName) -> void:

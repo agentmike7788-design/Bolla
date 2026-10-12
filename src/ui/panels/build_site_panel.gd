@@ -10,6 +10,8 @@ extends UIPanel
 ## Phase 6 (docs/PHASE6_DESIGN.md §2.5, §7): from shed 2 the cost rows say „im Schuppen: n" and
 ## „Fehlendes aus dem Schuppen holen (10 Min)" calls site.request_fetch(build_inputs); from shed 3
 ## „Überschuss einlagern" calls site.request_store().
+## G8 Runde 4 (Prüfung der Arbeits-Panels): „Fehlendes holen" runs while the panel is open – meanwhile it is hidden
+## (UIPanel.hide_while_working, the HUD's action bar shows the work) and comes back afterwards. „Bauen" closes it.
 
 const ICON_PREFIX := "station_"
 
@@ -30,6 +32,11 @@ var shed_bar: ShedFetchBar
 var rows: Array[Dictionary] = []
 
 var _inventory: Inventory
+
+
+func _init() -> void:
+	super._init()
+	hide_while_working = true
 
 
 func _build() -> void:
