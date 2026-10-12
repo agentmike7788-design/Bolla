@@ -73,11 +73,11 @@ Spalte „Arbeit bei offenem Panel": Läuft eine zeitgesteuerte Arbeit des Toten
 | Bild | Inhalt |
 |---|---|
 | `panel_werkbank_vorher(_web).jpg` / `panel_werkbank_vorher_arbeit(_web).jpg` | vorher: Werkbank-Panel mittig (900 px) über der Figur. Während „Räucherkräuter binden" bleibt es mit Balken offen. |
-| `panel_werkbank_nachher(_web).jpg` / `panel_werkbank_nachher_arbeit(_web).jpg` | nachher: rechts, die Figur an der Bank frei. Während der Arbeit nur der HUD-Balken, der Totengräber sägt. |
+| `panel_werkbank_nachher(_web).jpg` / `panel_werkbank_nachher_arbeit(_web).jpg` | nachher: rechts, die Figur an der Bank frei. Während der Arbeit nur der HUD-Balken, der Totengräber arbeitet frei sichtbar an der Bank (Clip `saw`). |
 | `panel_schmiede_vorher(_web).jpg` / `…_arbeit` | vorher: Esse-Panel mittig, auch während „Beschläge schmieden" |
-| `panel_schmiede_nachher(_web).jpg` / `…_arbeit` | nachher: rechts. Während des Schmiedens hämmert er sichtbar an der Esse. |
+| `panel_schmiede_nachher(_web).jpg` / `…_arbeit` | nachher: rechts, Liste oben, Fokus auf „Herstellen". Während des Schmiedens steht er frei sichtbar an der Esse (Clip `hammer`). |
 | `panel_steinmetz_vorher(_web).jpg` / `…_arbeit` | vorher: drei Seiten über der ganzen Bildbreite, auch während „Stein hauen" |
-| `panel_steinmetz_nachher(_web).jpg` / `…_arbeit` | nachher: Entwurf unverändert mittig. Während „Stein hauen" ist das Panel weg, er meißelt an der Bank. |
+| `panel_steinmetz_nachher(_web).jpg` / `…_arbeit` | nachher: Entwurf unverändert mittig. Während „Stein hauen" ist das Panel weg, er arbeitet frei sichtbar an der Bank (Clip `chisel`). |
 | `panel_pult_vorher(_web).jpg` / `…_arbeit` | vorher: Pult-Karte zweispaltig über 1500 px, verdeckt Pult und Figur, auch während „Einlegen" |
 | `panel_pult_nachher(_web).jpg` / `…_arbeit` | nachher: rechts, einspaltig, Pult und Figur frei. Während „Einlegen" nur der HUD-Balken. |
 | `panels_uebersicht(_web).jpg` | Kontaktbogen aller 16 Bilder: je Zeile ein Panel, Spalten vorher offen · vorher Arbeit · nachher offen · nachher Arbeit |
