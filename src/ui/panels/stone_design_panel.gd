@@ -29,8 +29,9 @@ extends UIPanel
 ## G8 Runde 5 (user: „bitte die bekannten probleme mal fixen" – the three pages covered the world while designing):
 ## docked at the right edge like the other work panels (UIPanel.dock_right, no dim) in one parchment column of
 ## panel_width: on top the preview (the 3D stone, smaller, beside it „Grab 13 → 19", the points and the breakdown),
-## then four tabs Grab · Form · Inschrift · Zierde (the former left and middle pages; one page shown, it scrolls in
-## the height the screen leaves, as tall as the tallest page), below them material, minutes, the block reason, the
+## then four tabs Grab · Form · Inschrift · Zierde (the former left and middle pages, the text of the inscription on its
+## tab; one page shown, it scrolls in the height the screen leaves, as tall as the tallest page), below them material,
+## minutes, the block reason, the
 ## shed row and „Stein hauen", then the bench's other work. Keyboard: Q / E (the actions drop / interact) switch the
 ## tab, the arrow keys move between the cards, Enter chooses, [ / ] page the graves (on the grave tab), Esc closes;
 ## every card, tab and button takes the focus (amber ink frame), the focus stays on a card when it is chosen.
@@ -241,16 +242,12 @@ func _build_preview(parent: Container) -> void:
 	var info := UIKit.vbox(2)
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	strip.add_child(info)
-	info.add_child(UIKit.label(TEXT_PREVIEW, &"LedgerHeadLabel"))
 	quality_label = UIKit.label("", &"InkHeaderLabel", true)
 	info.add_child(quality_label)
 	_sum_label = UIKit.label("", &"InkDimLabel", true)
 	info.add_child(_sum_label)
 	_lines_box = _grid(1, 0, 0)
 	info.add_child(_lines_box)
-	_text_label = UIKit.label("", &"InkDimLabel", true)
-	_text_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	parent.add_child(_text_label)
 
 
 ## Q · Grab · Form · Inschrift · Zierde · E
@@ -308,6 +305,9 @@ func _build_shape_page(page_box: VBoxContainer) -> void:
 func _build_inscription_page(page_box: VBoxContainer) -> void:
 	_ins_title = UIKit.label(TEXT_INSCRIPTION, &"LedgerHeadLabel", true)
 	page_box.add_child(_ins_title)
+	# the text of the chosen inscription (one line, it wraps; the 3D preview shows it on the stone)
+	_text_label = UIKit.label("", &"InkDimLabel", true)
+	page_box.add_child(_text_label)
 	gilded_toggle = CheckBox.new()
 	gilded_toggle.theme_type_variation = &"LedgerInkButton"
 	gilded_toggle.focus_mode = Control.FOCUS_ALL
@@ -411,7 +411,7 @@ func _refresh() -> void:
 	if focus_key != "" and _keyed.has(focus_key) and _keyed[focus_key].is_visible_in_tree():
 		_keyed[focus_key].grab_focus()
 		# the new card is laid out at the end of the frame: scroll it into view then
-		reveal.call_deferred(_keyed[focus_key])
+		_reveal_card.call_deferred(_keyed[focus_key])
 
 
 # --- tabs (G8 Runde 5) --------------------------------------------------------------------------
@@ -449,7 +449,7 @@ func focus_default() -> void:
 		target = carve_button
 	if target != null and target.is_visible_in_tree():
 		target.grab_focus()
-		reveal.call_deferred(target)
+		_reveal_card.call_deferred(target)
 		return
 	super.focus_default()
 
@@ -494,6 +494,16 @@ func _key(b: Button, tab: StringName, id: String) -> void:
 	var key := "%s:%s" % [tab, id]
 	b.set_meta(META_KEY, key)
 	_keyed[key] = b
+
+
+## The focused card in view after the layout of the frame (the pages are the direct rows of the body, so
+## UIPanel.reveal would bring the whole page into view instead of the card).
+func _reveal_card(card: Control) -> void:
+	if not is_inside_tree():
+		return
+	await get_tree().process_frame
+	if is_instance_valid(card) and is_instance_valid(body_scroll) and body_scroll.is_ancestor_of(card) and card.is_visible_in_tree():
+		body_scroll.ensure_control_visible(card)
 
 
 ## Phase 8: the mason's recipes that are offered now (the memorial plate).

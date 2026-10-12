@@ -331,6 +331,10 @@ func test_stone_panel_docked_with_tabs_and_keyboard() -> void:
 	# the grave tab first, the focus on the chosen grave
 	assert_eq(panel.current_tab, StoneDesignPanel.TAB_GRAVE)
 	assert_eq(_focus(), panel.grave_buttons[panel.grave_id], "the focus on the chosen grave")
+	# the keyboard focus shows on the parchment (amber ink frame, not the journal's empty focus)
+	for b: Control in [panel.grave_buttons[panel.grave_id], panel.tab_buttons[StoneDesignPanel.TAB_SHAPE], panel.carve_button]:
+		var focus_box := b.get_theme_stylebox(&"focus") as StyleBoxFlat
+		assert_true(focus_box != null and not focus_box.draw_center and focus_box.border_width_top >= 2, "%s: a visible focus frame" % b.name)
 	var height := rect.size.y
 	# E: the shape tab, the focus on the chosen shape (E does not reach UIRoot / the world)
 	_press(&"interact")
