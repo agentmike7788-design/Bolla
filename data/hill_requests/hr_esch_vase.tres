@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hr_esch_vase"
+giver = &"smith"
+recipient = &""
+kind = &"decor"
+title = "Eine Vase für die Gräber"
+request_text = "Ulrich Esch: „Unten im Dorf stellt man den Toten Blumen hin, bei euch oben liegt nur Erde. Stell eine Grabvase auf, an irgendein Grab – ich zahl dir die Mühe.“"
+thanks_text = "„Eine Vase“, sagt Osric. „Esch hat genickt, als säße ein Hufeisen gut.“"
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"decor": ["decor_grave_vase"],
+"min_day": 3
+}
+days_limit = 3
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 3
+reward_rel = 0
+reward_rep = 2
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 8
+order = 120
+accept_flag = &""
+category = &"hill"

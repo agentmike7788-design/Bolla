@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hr_fenner_stone"
+giver = &"mayor"
+recipient = &""
+kind = &"deliver"
+title = "Steine für den Grenzweg"
+request_text = "Fenner braucht Steine für den Grenzweg zum Ellbacher Land: „Vier Stück, nicht zu klein. Die alten hat der Bach geholt.“"
+thanks_text = "Fenner lässt sagen, die Steine lägen jetzt am Grenzweg. „Wenigstens die bleiben, wo man sie hinlegt.“"
+items = Dictionary[StringName, int]({
+&"stone": 4
+})
+coins = 0
+target = ""
+conditions = {}
+days_limit = 3
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 4
+reward_rel = 0
+reward_rep = 1
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 7
+order = 160
+accept_flag = &""
+category = &"hill"

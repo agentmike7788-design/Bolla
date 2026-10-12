@@ -47,6 +47,10 @@ extends RefCounted
 ## Jakob, wie man harkt" · „Wunsch: Blumen für … (≈ 2 Tage)" · „Lohndose leer – …" · „Hanne Vogelsang ist am Tor
 ## (bis 16:20)" · Kathreintanz · „Bei den Otts brennt Licht" · „Merkbuch: Wer geht nachts zu den Kranken?" · „Ein
 ## Grab ist aufgewühlt" · „Wer heraufkommt: 3/4", then the Phase-7 board line.
+## G8 Runde 6 „Bitten vom Hügel" (docs/PHASE8_DESIGN.md G8 Runde 6 §5), `world.hill` from HillRequests.objective_state():
+## an accepted request „Bitte: <Titel> (noch 2 Tage)" / „Bitte: <Titel> – bei Osric abgeben" – before the village opens
+## right after the tending (the workyard, the buildings and the village lines come later in the game), afterwards
+## after the Phase-7/8 lines; in the idle slot „Eine Bitte am Tor wartet" while one can still be accepted.
 
 const TEXT_WAIT_CARTER := "Der Leichenkutscher kommt gegen %s"
 const TEXT_TO_TABLE := "Leiche zum Leichentisch bringen"
@@ -59,8 +63,9 @@ const TEXT_BURY := "Leiche bestatten"
 const TEXT_NO_PLOT := "Keine freie Grabstelle mehr"
 const TEXT_MARKER := "Grabzeichen setzen"
 const TEXT_MARKER_CRAFT := "Grabzeichen setzen (Werkbank: %s = %s)"
-const TEXT_REST := "Feierabend – Ausruhen an der Hüttentür"
-const TEXT_SLEEP := "Feierabend – Schlafen an der Hüttentür"
+## G8 Runde 6: resting and sleeping are at the bed inside the hut (the door only leads in).
+const TEXT_REST := "Feierabend – Ausruhen am Bett in der Hütte"
+const TEXT_SLEEP := "Feierabend – Schlafen am Bett in der Hütte"
 const TEXT_SECTION := "%s freilegen: %d/%d"
 const TEXT_SECTION_BLOCKED := "%s: %s"
 const TEXT_WEEDS := "Unkraut jäten (%d %s)"
@@ -122,6 +127,9 @@ static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], in
 	var care := _care_step(world, inv)
 	if care != "":
 		return care
+	var hill := _hill_step(world)
+	if hill != "" and not bool((world.get("hill", {}) as Dictionary).get("village", false)):
+		return hill
 	var workshop := _phase5_step(world)
 	if workshop != "":
 		return workshop
@@ -138,9 +146,18 @@ static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], in
 		return village
 	if buildings != "":
 		return buildings
+	if hill != "":
+		return hill
 	if _ghost_night(graves, minute_of_day, flags):
 		return TEXT_GHOST_NIGHT
 	return _idle_step(minute_of_day, flags, world)
+
+
+## G8 Runde 6: the first accepted request of the gate's notice board ("" = none).
+static func _hill_step(world: Dictionary) -> String:
+	var hill: Dictionary = world.get("hill", {})
+	var list: Array = hill.get("active", [])
+	return HillTexts.objective(list[0] as Dictionary) if not list.is_empty() and list[0] is Dictionary else ""
 
 
 ## Phase-5 line of the workyard (§7) or "" (no Phase-5 state / nothing to do but naming graves).
@@ -344,6 +361,9 @@ static func _idle_step(minute_of_day: int, flags: Dictionary = {}, world: Dictio
 	var minute := posmod(minute_of_day, TimeManager.MINUTES_PER_DAY)
 	if minute < time_cfg.wake_minute or minute >= time_cfg.sleep_from_minute:
 		return TEXT_SLEEP
+	var hill: Dictionary = world.get("hill", {})
+	if int(hill.get("waiting", 0)) > 0 and bool(hill.get("can_accept", false)):
+		return HillTexts.waiting(int(hill.get("waiting", 0)))
 	var delivery := _delivery_minute()
 	if minute < delivery and not _flag(flags, FLAG_CEMETERY_COMPLETE):
 		return TEXT_WAIT_CARTER % UIKit.clock(delivery)

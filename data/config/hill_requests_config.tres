@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="HillRequestsConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/hill_requests/hill_requests_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+start_day = 2
+post_minute = 464
+refresh_minute = 360
+slots_early = 2
+max_active_early = 2
+refill_days_early = 1
+slots_village = 1
+max_active_village = 1
+refill_days_village = 3
+offer_days = 2
+fail_rep = -1
+village_flag = &"village_open"
+log_size = 12

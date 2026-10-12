@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hr_fenner_clear"
+giver = &"mayor"
+recipient = &""
+kind = &"clear"
+title = "Platz für die Nächsten"
+request_text = "Gottlieb Fenner, der Schultheiß, lässt schreiben: Die Gemeinde zählt ihre Toten und den Platz dafür. Ein Hindernis weniger auf der Ostwiese, am Birkenhang oder im Holunderwinkel – er trägt es ins Gemeindebuch ein."
+thanks_text = "Fenner hat es eingetragen, sagt Osric: „Ein Stück Hügel mehr für Hollerbrück.“ Er sagt es, als wäre es eine gute Nachricht."
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"sections": ["east", "north", "elder"]
+}
+days_limit = 3
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 3
+reward_rel = 0
+reward_rep = 2
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 6
+order = 110
+accept_flag = &""
+category = &"hill"

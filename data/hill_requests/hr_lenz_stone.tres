@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hr_lenz_stone"
+giver = &"priest"
+recipient = &""
+kind = &"marker"
+title = "Ein Stein, der bleibt"
+request_text = "Pfarrer Lenz lässt bitten: „Holz vergeht in ein paar Wintern. Gib dem nächsten Toten einen Grabstein, damit man seinen Namen noch liest, wenn wir alle fort sind.“"
+thanks_text = "Der Pfarrer schickt ein Wort: „Für %s steht nun ein Stein. Gott sieht auch die kleinen Gräber.“"
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"marker": "gravestone_simple"
+}
+days_limit = 3
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 3
+reward_rel = 0
+reward_rep = 2
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 7
+order = 60
+accept_flag = &""
+category = &"hill"

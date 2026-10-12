@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hr_brandt_grave"
+giver = &"kin_brandt"
+recipient = &""
+kind = &"tend"
+title = "Das Grab von %s"
+request_text = "Hinrich Brandt hat %s gekannt, vom Markt, sagt er, und von früher. Den Hügel schafft er nicht mehr. Ob du das Grab sauber hältst – Unkraut und Laub, was eben liegt."
+thanks_text = "Brandt dankt dir über Osric. Für %s sei es gut so, sagt er. Im Frühjahr will er selbst heraufkommen."
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"grave": "marked_dirty"
+}
+days_limit = 2
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 2
+reward_rel = 0
+reward_rep = 2
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 6
+order = 80
+accept_flag = &""
+category = &"hill"

@@ -55,6 +55,8 @@ const FAVOR_DIR := "res://data/friendship/favors"
 const FESTIVAL_DIR := "res://data/festivals"
 const WANDERER_DIR := "res://data/village/wanderers"
 const NIGHT_PATH_DIR := "res://data/night/paths"
+# G8 Runde 6 „Bitten vom Hügel" (docs/PHASE8_DESIGN.md, G8 Runde 6 §2): OrderData with category hill.
+const HILL_REQUEST_DIR := "res://data/hill_requests"
 
 var _items: Dictionary = {}       # StringName -> ItemData
 var _recipes: Dictionary = {}     # StringName -> RecipeData
@@ -95,6 +97,7 @@ var _favors: Dictionary = {}      # StringName -> FavorData
 var _festivals: Dictionary = {}   # StringName -> FestivalData
 var _wanderers: Dictionary = {}   # StringName -> WandererData
 var _night_paths: Dictionary = {} # StringName -> NightPathData
+var _hill_requests: Dictionary = {}  # StringName -> OrderData (category hill)
 var _icons: Dictionary = {}       # StringName -> Texture2D
 var _placeholder: Texture2D
 
@@ -149,6 +152,7 @@ func reload() -> void:
 	_festivals = _load_dir(FESTIVAL_DIR, "id")
 	_wanderers = _load_dir(WANDERER_DIR, "id")
 	_night_paths = _load_dir(NIGHT_PATH_DIR, "id")
+	_hill_requests = _load_dir(HILL_REQUEST_DIR, "id")
 
 
 func item(id: StringName) -> Resource:
@@ -512,6 +516,16 @@ func festival(id: StringName) -> Resource:
 ## All festivals, sorted by calendar_day (ties by id).
 func festivals() -> Array:
 	return _sorted(_festivals.values(), "calendar_day")
+
+
+## G8 Runde 6: data/hill_requests/<id>.tres (OrderData, category hill), null if unknown.
+func hill_request(id: StringName) -> Resource:
+	return _hill_requests.get(id)
+
+
+## All requests of the gate's notice board, sorted by `order` (ties by id).
+func hill_requests() -> Array:
+	return _sorted(_hill_requests.values(), "order")
 
 
 ## data/village/wanderers/<id>.tres (WandererData), null if unknown.

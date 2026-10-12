@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hr_lenz_ghost"
+giver = &"priest"
+recipient = &""
+kind = &"ghost"
+title = "Ein Wort für die Unruhigen"
+request_text = "Pfarrer Lenz schreibt, als wisse er nicht recht, wie: „Man sagt, nachts rede oben einer. Wenn du ihn hörst – sag mir, ob er Frieden hat. Ich bete dann entsprechend.“"
+thanks_text = "Lenz liest deinen Zettel: „%s“ Er werde für ihn eine Kerze anzünden, lässt er sagen."
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {}
+days_limit = 2
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 2
+reward_rel = 0
+reward_rep = 2
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 8
+order = 140
+accept_flag = &""
+category = &"hill"

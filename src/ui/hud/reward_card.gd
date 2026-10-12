@@ -209,12 +209,17 @@ func _on_grave_completed(_grave_id: String, corpse_id: String, quality: int, bre
 	show_grave(_corpse_name(corpse_id), quality, breakdown)
 
 
-func _on_payment_received(amount: int, _reason: String) -> void:
+func _on_payment_received(amount: int, reason: String) -> void:
+	# G8 Runde 6: a request's reward („Bitte: …") is no payment of the grave shown.
+	if reason.begins_with(HillRules.REASON_PREFIX):
+		return
 	if is_awaiting_payment():
 		set_payment(amount)
 
 
-func _on_reputation_changed(_value: int, _tier: StringName, delta: int, _reason: String) -> void:
+func _on_reputation_changed(_value: int, _tier: StringName, delta: int, reason: String) -> void:
+	if reason.begins_with(HillRules.REASON_PREFIX):
+		return
 	if _awaiting_reputation and (visible or _held):
 		set_reputation_change(delta)
 

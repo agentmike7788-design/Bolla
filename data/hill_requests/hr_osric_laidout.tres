@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hr_osric_laidout"
+giver = &"carter"
+recipient = &""
+kind = &"prep"
+title = "Ordentlich aufgebahrt"
+request_text = "Osric: „Den letzten hab ich dir abgeladen, und er sah aus wie ich nach dem dritten Schnaps. Mach den nächsten ordentlich – gewaschen, gekleidet, aufgebahrt. So will ich sie in Erinnerung.“"
+thanks_text = "Osric hat es gehört: %s ging gewaschen, gekleidet und aufgebahrt. „So ist es recht“, sagt er. Mehr sagt er nicht."
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"washed": true,
+"dressed": true,
+"laid_out": true
+}
+days_limit = 2
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 3
+reward_rel = 0
+reward_rep = 1
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 7
+order = 180
+accept_flag = &""
+category = &"hill"

@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hr_liesel_wash"
+giver = &"washer"
+recipient = &""
+kind = &"prep"
+title = "Gewaschen und gekleidet"
+request_text = "Liesel Dorn, die Seelfrau, bittet: „Keiner soll ungewaschen in die Erde. Wasch den nächsten und kleid ihn ins Leichentuch, dann kann ich ruhig schlafen.“"
+thanks_text = "„%s ging sauber und bedeckt“, sagt Osric für Liesel. „Sie hat gelächelt. Das tut sie selten.“"
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"washed": true,
+"dressed": true,
+"reward_items": {
+"linen": 1
+}
+}
+days_limit = 2
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 2
+reward_rel = 0
+reward_rep = 2
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 6
+order = 50
+accept_flag = &""
+category = &"hill"

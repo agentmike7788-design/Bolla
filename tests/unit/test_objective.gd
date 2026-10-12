@@ -14,8 +14,8 @@ const BURY := "Leiche bestatten"
 const NO_PLOT := "Keine freie Grabstelle mehr"
 const MARKER := "Grabzeichen setzen"
 const MARKER_CRAFT := "Grabzeichen setzen (Werkbank: Holzkreuz = 3 Holz)"
-const REST := "Feierabend – Ausruhen an der Hüttentür"
-const SLEEP := "Feierabend – Schlafen an der Hüttentür"
+const REST := "Feierabend – Ausruhen am Bett in der Hütte"
+const SLEEP := "Feierabend – Schlafen am Bett in der Hütte"
 const TABLE_BUSY := "Tisch belegt – Leiche mit [Q] ablegen"
 ## Daytime minute (12:00) where the idle line would be REST.
 const NOON := 720

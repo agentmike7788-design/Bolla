@@ -28,6 +28,8 @@ const SYSTEMS := [
 	["Wanderers", "res://src/systems/village/wanderers.gd"],
 	["NightRobber", "res://src/systems/night/night_robber.gd"],
 	["NightPaths", "res://src/systems/night/night_paths.gd"],
+	# G8 Runde 6 „Bitten vom Hügel" (docs/PHASE8_DESIGN.md, G8 Runde 6 §3).
+	["HillRequests", "res://src/systems/hill_requests/hill_requests.gd"],
 ]
 const CORNER_SCENES := {
 	"apprentice_board": "res://src/entities/apprentice_board/apprentice_board.tscn",

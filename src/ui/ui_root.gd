@@ -77,6 +77,8 @@ const PANEL_SCRIPTS: Dictionary[StringName, Script] = {
 	&"wish_card": preload("res://src/ui/panels/wish_card.gd"),
 	&"favor": preload("res://src/ui/panels/favor_panel.gd"),
 	&"fest": preload("res://src/ui/panels/fest_panel.gd"),
+	# G8 Runde 6 „Bitten vom Hügel" (docs/PHASE8_DESIGN.md, G8 Runde 6 §5)
+	&"hill_requests": preload("res://src/ui/panels/hill_requests_panel.gd"),
 }
 
 ## Called for "Beenden" (tests replace it).

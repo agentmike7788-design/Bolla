@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hr_kehr_gate"
+giver = &"kin_kehr"
+recipient = &""
+kind = &"tend"
+title = "Unkraut am Tor"
+request_text = "Martha Kehr kommt jeden Sonntag den Hügel herauf. „Am Tor steht das Kraut so hoch, dass man meint, hier oben sei keiner mehr. Jät es, bitte – damit man sieht, dass einer da ist.“"
+thanks_text = "„Jetzt sieht es wieder bewohnt aus“, lässt Martha Kehr ausrichten. „Wenn man das von einem Friedhof sagen darf.“"
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"spots": ["dirt_y01", "dirt_y02"]
+}
+days_limit = 2
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 2
+reward_rel = 0
+reward_rep = 1
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 6
+order = 70
+accept_flag = &""
+category = &"hill"
