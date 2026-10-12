@@ -345,6 +345,32 @@ func post(day: int) -> int:
 	return pinned
 
 
+## Debug console / tests / shots: pins `id` now without its offer conditions (a free place is used when there is
+## one, else the place of the oldest offered request). false = unknown or already on the board.
+func pin(id: StringName, grave_id: String = "") -> bool:
+	var r := request_data(id)
+	if r == null or _board.has(id):
+		return false
+	if _board.size() >= HillRules.slots(_cfg(), village()):
+		var old := offered()
+		if old.is_empty():
+			return false
+		withdraw(old[0])
+	if not _refill.is_empty():
+		_refill.pop_front()
+	_board.append(id)
+	_states[id] = STATE_OFFERED
+	_posted_day[id] = TimeManager.day
+	_ended.erase(id)
+	_touched.erase(id)
+	_targets.erase(id)
+	if r.kind == HillRules.KIND_TEND and str(r.conditions.get("grave", "")) == HillRules.GRAVE_MARKED_DIRTY:
+		_targets[id] = grave_id if grave_id != "" else HillRules.pick_grave(_dirty_graves(), TimeManager.day)
+	_post_day = maxi(_post_day, TimeManager.day)
+	EventBus.hill_request_changed.emit(id, STATE_OFFERED)
+	return true
+
+
 ## The context HillRules.offer_block / pick read (see hill_rules.gd).
 func offer_context(day: int) -> Dictionary:
 	var givers: Array = []

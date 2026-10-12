@@ -49,8 +49,8 @@ extends RefCounted
 ## Grab ist aufgewühlt" · „Wer heraufkommt: 3/4", then the Phase-7 board line.
 ## G8 Runde 6 „Bitten vom Hügel" (docs/PHASE8_DESIGN.md G8 Runde 6 §5), `world.hill` from HillRequests.objective_state():
 ## an accepted request „Bitte: <Titel> (noch 2 Tage)" / „Bitte: <Titel> – bei Osric abgeben" – before the village opens
-## right after the tending (the workyard, the buildings and the village lines come later in the game), afterwards
-## after the Phase-7/8 lines; in the idle slot „Eine Bitte am Tor wartet" while one can still be accepted.
+## right after the corpse chain (the player chose it; the Phase-4 hints, sections and tending follow), afterwards after
+## the Phase-7/8 lines; in the idle slot „Eine Bitte am Tor wartet" while one can still be accepted.
 
 const TEXT_WAIT_CARTER := "Der Leichenkutscher kommt gegen %s"
 const TEXT_TO_TABLE := "Leiche zum Leichentisch bringen"
@@ -116,6 +116,10 @@ static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], in
 		if active.location == LOCATION_TABLE and _loss_soon(world):
 			return TEXT_LOSS
 		return _no_plot_fallback(_corpse_step(active, graves, inv, table_taken, world, minute_of_day), world)
+	# G8 Runde 6: before the village an accepted request follows the day's corpse work at once.
+	var hill := _hill_step(world)
+	if hill != "" and not bool((world.get("hill", {}) as Dictionary).get("village", false)):
+		return hill
 	if _count_ready(world) > 0:
 		return TEXT_JOURNAL_READY
 	if _reserved(graves, world):
@@ -127,9 +131,6 @@ static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], in
 	var care := _care_step(world, inv)
 	if care != "":
 		return care
-	var hill := _hill_step(world)
-	if hill != "" and not bool((world.get("hill", {}) as Dictionary).get("village", false)):
-		return hill
 	var workshop := _phase5_step(world)
 	if workshop != "":
 		return workshop
