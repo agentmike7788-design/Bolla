@@ -25,12 +25,16 @@ const SURFACE_OFFSET := 0.012
 const PANEL := &"hill_requests"
 const HILL_GROUP := &"hill_requests"
 const PAINTED_MATERIAL := "res://assets/materials/mat_painted.tres"
-const SLIP_SIZE := Vector3(0.15, 0.2, 0.008)
-const SLIP_COLOR := Color("#d8c8a0")
+const SLIP_SIZE := Vector3(0.19, 0.24, 0.008)
+## Lighter than the paper printed on the board's texture, so a pinned request stands out.
+const SLIP_COLOR := Color("#efe3c2")
+## The word on a slip (ink like the label).
+const SLIP_WORD := "Bitte"
+const SLIP_FONT_SIZE := 30
 const PIN_COLOR := Color("#5a2a1c")
 const PIN_SIZE := Vector3(0.018, 0.018, 0.01)
-## Slip places on the board (relative to the label marker: x, y, tilt in degrees) – left and right of the text.
-const SLIP_SPOTS: Array[Vector3] = [Vector3(-0.56, -0.12, -7.0), Vector3(0.56, -0.1, 6.0)]
+## Slip places (relative to the label marker: x, y, tilt in degrees) – pinned to the lower edge of the board, below the text.
+const SLIP_SPOTS: Array[Vector3] = [Vector3(-0.24, -0.37, -5.0), Vector3(0.26, -0.36, 4.0)]
 
 var label: Label3D
 ## The slip meshes (shown: one per request on the board).
@@ -139,6 +143,18 @@ func _make_slips() -> void:
 		slip.transform = at * Transform3D(Basis(Vector3.BACK, deg_to_rad(spot.z)), Vector3(spot.x, spot.y, SURFACE_OFFSET))
 		slip.add_child(_box("Sheet", "ph_notice_slip", SLIP_SIZE, SLIP_COLOR, base, Vector3.ZERO))
 		slip.add_child(_box("Pin", "ph_notice_pin", PIN_SIZE, PIN_COLOR, base, Vector3(0, SLIP_SIZE.y * 0.5 - 0.025, SLIP_SIZE.z)))
+		var word := Label3D.new()
+		word.name = "Word"
+		word.text = SLIP_WORD
+		word.font_size = SLIP_FONT_SIZE
+		word.pixel_size = PIXEL_SIZE
+		word.modulate = INK
+		word.outline_size = 0
+		word.shaded = true
+		word.double_sided = false
+		word.alpha_cut = Label3D.ALPHA_CUT_DISCARD
+		word.position = Vector3(0, 0.01, SLIP_SIZE.z * 0.5 + 0.002)
+		slip.add_child(word)
 		slip.visible = false
 		add_child(slip)
 		slips.append(slip)

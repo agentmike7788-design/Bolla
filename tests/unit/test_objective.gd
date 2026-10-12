@@ -330,6 +330,15 @@ func test_hill_request_lines() -> void:
 	assert_eq(_objective_world([], free, waiting), "Eine Bitte am Tor wartet")
 	waiting.hill.can_accept = false
 	assert_eq(_objective_world([], free, waiting), REST, "nothing to accept: rest")
+	waiting.hill.can_accept = true
+	var reserved := waiting.duplicate(true)
+	reserved["story_pending"] = 3
+	assert_eq(_objective_world([], free, reserved), "Eine Bitte am Tor wartet", "in place of „Eine Grube wartet noch“")
+	reserved.hill.waiting = 0
+	assert_eq(_objective_world([], free, reserved), "Eine Grube wartet noch")
+	var weedy := waiting.duplicate(true)
+	weedy["weeds"] = 3
+	assert_eq(_objective_world([], free, weedy), "Unkraut jäten (3 Stellen)", "the tending stays before a waiting request")
 	var typed: Array[GraveRecord] = []
 	typed.assign(free)
 	waiting.hill.can_accept = true

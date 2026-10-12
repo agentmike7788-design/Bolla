@@ -50,7 +50,8 @@ extends RefCounted
 ## G8 Runde 6 „Bitten vom Hügel" (docs/PHASE8_DESIGN.md G8 Runde 6 §5), `world.hill` from HillRequests.objective_state():
 ## an accepted request „Bitte: <Titel> (noch 2 Tage)" / „Bitte: <Titel> – bei Osric abgeben" – before the village opens
 ## right after the corpse chain (the player chose it; the Phase-4 hints, sections and tending follow), afterwards after
-## the Phase-7/8 lines; in the idle slot „Eine Bitte am Tor wartet" while one can still be accepted.
+## the Phase-7/8 lines; „Eine Bitte am Tor wartet" (by day, while one can still be accepted) in the idle slot and in
+## place of the plain note „Eine Grube wartet noch" – never before a section, the tending or a workshop line.
 
 const TEXT_WAIT_CARTER := "Der Leichenkutscher kommt gegen %s"
 const TEXT_TO_TABLE := "Leiche zum Leichentisch bringen"
@@ -118,12 +119,15 @@ static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], in
 		return _no_plot_fallback(_corpse_step(active, graves, inv, table_taken, world, minute_of_day), world)
 	# G8 Runde 6: before the village an accepted request follows the day's corpse work at once.
 	var hill := _hill_step(world)
-	if hill != "" and not bool((world.get("hill", {}) as Dictionary).get("village", false)):
+	var early := not bool((world.get("hill", {}) as Dictionary).get("village", false))
+	if hill != "" and early:
 		return hill
 	if _count_ready(world) > 0:
 		return TEXT_JOURNAL_READY
 	if _reserved(graves, world):
-		return TEXT_RESERVED
+		# G8 Runde 6: the plain note „a pit waits" gives way to a request waiting at the gate.
+		var waiting := _hill_waiting(world, minute_of_day)
+		return waiting if waiting != "" else TEXT_RESERVED
 	if _free_plots(graves) <= SECTION_FREE_MAX:
 		var section := _section_step(world)
 		if section != "":
@@ -159,6 +163,19 @@ static func _hill_step(world: Dictionary) -> String:
 	var hill: Dictionary = world.get("hill", {})
 	var list: Array = hill.get("active", [])
 	return HillTexts.objective(list[0] as Dictionary) if not list.is_empty() and list[0] is Dictionary else ""
+
+
+## G8 Runde 6: „Eine Bitte am Tor wartet" while one hangs, another may be accepted and it is day ("" otherwise).
+static func _hill_waiting(world: Dictionary, minute_of_day: int) -> String:
+	var hill: Dictionary = world.get("hill", {})
+	var n := int(hill.get("waiting", 0))
+	if n <= 0 or not bool(hill.get("can_accept", false)) or minute_of_day < 0:
+		return ""
+	var time_cfg := _time_config()
+	var m := posmod(minute_of_day, TimeManager.MINUTES_PER_DAY)
+	if m < time_cfg.wake_minute or m >= time_cfg.sleep_from_minute:
+		return ""
+	return HillTexts.waiting(n)
 
 
 ## Phase-5 line of the workyard (§7) or "" (no Phase-5 state / nothing to do but naming graves).
@@ -362,9 +379,9 @@ static func _idle_step(minute_of_day: int, flags: Dictionary = {}, world: Dictio
 	var minute := posmod(minute_of_day, TimeManager.MINUTES_PER_DAY)
 	if minute < time_cfg.wake_minute or minute >= time_cfg.sleep_from_minute:
 		return TEXT_SLEEP
-	var hill: Dictionary = world.get("hill", {})
-	if int(hill.get("waiting", 0)) > 0 and bool(hill.get("can_accept", false)):
-		return HillTexts.waiting(int(hill.get("waiting", 0)))
+	var waiting := _hill_waiting(world, minute)
+	if waiting != "":
+		return waiting
 	var delivery := _delivery_minute()
 	if minute < delivery and not _flag(flags, FLAG_CEMETERY_COMPLETE):
 		return TEXT_WAIT_CARTER % UIKit.clock(delivery)
