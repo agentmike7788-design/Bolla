@@ -118,8 +118,16 @@ func reveal(control: Control) -> void:
 		return
 	# freshly built rows are laid out at the end of the frame – measure after that
 	await get_tree().process_frame
-	if is_instance_valid(control) and is_instance_valid(scroll) and scroll.is_ancestor_of(control) and control.is_visible_in_tree():
-		scroll.ensure_control_visible(control)
+	if not (is_instance_valid(control) and is_instance_valid(scroll) and scroll.is_ancestor_of(control) and control.is_visible_in_tree()):
+		return
+	# the whole row the control sits in (a child of the scrolled column), then the control itself if the row is taller
+	var row: Control = control
+	while row.get_parent() != null and row.get_parent().get_parent() != scroll:
+		row = row.get_parent() as Control
+		if row == null:
+			return
+	scroll.ensure_control_visible(row)
+	scroll.ensure_control_visible(control)
 
 
 ## Keeps keyboard focus usable: when nothing has focus or this panel's focused control is
