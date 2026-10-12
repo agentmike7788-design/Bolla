@@ -4,7 +4,7 @@
 [ext_resource type="Resource" path="res://data/config/interiors/church.tres" id="2_088e4"]
 [ext_resource type="PackedScene" path="res://assets/models/interior/ph_int_church_room.glb" id="3_3biky"]
 [ext_resource type="Script" path="res://src/world/atmosphere/flicker_light.gd" id="4_juadx"]
-[ext_resource type="PackedScene" path="res://assets/models/interior/ph_int_altar.glb" id="5_qqdkx"]
+[ext_resource type="PackedScene" path="res://assets/models/interior/ph_int_altar_church.glb" id="5_qqdkx"]
 [ext_resource type="PackedScene" path="res://assets/models/interior/ph_int_candelabrum.glb" id="6_0c6b6"]
 [ext_resource type="PackedScene" path="res://assets/models/interior/ph_int_church_pulpit.glb" id="7_n0503"]
 [ext_resource type="PackedScene" path="res://assets/models/interior/ph_int_pew.glb" id="8_10q01"]
@@ -168,7 +168,7 @@ transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0
 [node name="Furniture" type="Node3D" parent="." unique_id=524549284]
 
 [node name="Altar" type="Node3D" parent="Furniture" unique_id=196978058 instance=ExtResource("5_qqdkx")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.18, -3.85)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.18, -3.4)
 
 [node name="Light_candle_1" type="OmniLight3D" parent="Furniture/Altar" unique_id=1901651043]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.52, 1.776, -0.18)
@@ -398,7 +398,7 @@ shape = SubResource("BoxShape3D_a15mo")
 [node name="Waypoints" type="Node3D" parent="." unique_id=1485061569]
 
 [node name="v_in_church_altar" type="Marker3D" parent="Waypoints" unique_id=1534975344]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.3)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.18, -4.18)
 metadata/facing = true
 
 [node name="FillLights" type="Node3D" parent="." unique_id=1613611985]

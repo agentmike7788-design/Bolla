@@ -236,7 +236,7 @@ shape = SubResource("BoxShape3D_vbc6y")
 [node name="Waypoints" type="Node3D" parent="." unique_id=1203800686]
 
 [node name="v_in_office_desk" type="Marker3D" parent="Waypoints" unique_id=528780091]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 0, -2.12)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 0, -2.05)
 metadata/facing = true
 
 [node name="FillLights" type="Node3D" parent="." unique_id=2082908042]

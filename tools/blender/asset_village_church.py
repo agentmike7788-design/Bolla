@@ -4,7 +4,8 @@ Like the chapel (asset_interiors_phase6.chapel_room) the room is a diorama for t
 camera: the south wall (Blender -Y = Godot +Z, towards the camera) is only a low stub with the door
 gap, no ceiling (rafter stubs on the wall plates), the cut edges sit on a band of rough stones.
 Quiet and warm: lime-washed walls, worn flag floor, a raised chancel, tall windows. Pews, altar and
-the candle stand are the chapel's models (ph_int_pew, ph_int_altar, ph_int_candelabrum); the layout
+the candle stand are the chapel's models (ph_int_pew, ph_int_altar, ph_int_candelabrum; G8 Runde 5: the altar is
+ph_int_altar_church of asset_interiors_phase6 - the priest behind it facing the nave); the layout
 data/world/interiors/church_layout.json places everything.
 
   ph_int_church_room     nave 6.4 x 9 m, chancel step (0.18 m) at the north end, a tall coloured

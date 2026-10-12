@@ -51,6 +51,8 @@ const MODELS := {
 	"ph_int_sealed_passage_grille": ["interior", Vector3(1.0, 1.8, 0.4), Vector3(1.4, 2.2, 1.2), 1400],
 	"ph_int_chapel_room": ["interior", Vector3(5.0, 3.8, 9.5), Vector3(6.0, 5.0, 10.4), 9000],
 	"ph_int_altar": ["interior", Vector3(1.4, 1.4, 0.8), Vector3(2.0, 1.9, 1.2), 1800],
+	## G8 Runde 5: the village church's altar, the priest behind it facing the nave (cross at the front edge)
+	"ph_int_altar_church": ["interior", Vector3(1.4, 1.4, 0.8), Vector3(2.0, 1.9, 1.2), 1800],
 	"ph_int_catafalque": ["interior", Vector3(1.8, 0.5, 0.7), Vector3(2.2, 0.8, 1.0), 900],
 	"ph_int_pew_rough": ["interior", Vector3(1.5, 0.4, 0.2), Vector3(2.1, 0.6, 0.45), 500],
 	"ph_int_pew": ["interior", Vector3(1.8, 0.85, 0.5), Vector3(2.2, 1.15, 0.9), 900],
@@ -99,6 +101,7 @@ const MARKERS := {
 	"ph_int_sealed_passage_grille": ["light_below"],
 	"ph_int_chapel_room": ["door_inside", "spawn_inside", "light_window_1", "light_window_2", "light_window_3", "light_window_4"],
 	"ph_int_altar": ["light_candle_1", "light_candle_2"],
+	"ph_int_altar_church": ["light_candle_1", "light_candle_2"],
 	"ph_int_catafalque": ["slot_corpse"],
 	"ph_int_pew": ["pew_seat_1", "pew_seat_2", "pew_seat_3", "pew_seat_4"],
 	"ph_int_candelabrum": ["light_candle"],
@@ -108,7 +111,7 @@ const MARKERS := {
 }
 ## Models with a glowing lantern glass / candle flame (mat_emissive_warm, like the hut's lantern).
 const MAY_GLOW: Array[String] = ["ph_bld_crypt_l1", "ph_bld_crypt_l2", "ph_bld_crypt_l3", "ph_prop_soul_lantern", "ph_int_crypt_lantern", "ph_int_candle_niche",
-		"ph_int_altar", "ph_int_candelabrum", "ph_int_shed_room"]
+		"ph_int_altar", "ph_int_altar_church", "ph_int_candelabrum", "ph_int_shed_room"]
 ## §4 footprints (x × z) of the building sites and the building families.
 const FOOTPRINTS := {"crypt": Vector2(3.0, 3.6), "chapel": Vector2(5.2, 7.0), "shed": Vector2(3.2, 3.6)}
 ## G8 round 2: centre (x, z) of each footprint relative to the pivot – the crypt's pivot is the front of

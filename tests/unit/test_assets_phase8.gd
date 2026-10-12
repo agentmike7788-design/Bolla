@@ -61,7 +61,9 @@ const REEXPORT := {
 		"work": "2c3a9f5d8d9f2c14"}, ["idle_low", "lantern_walk", "lantern_idle", "kneel_in", "kneel", "kneel_out", "lay_flowers", "dance", "clap"]],
 	"ph_chr_v_priest": ["26348b345348fac2", {"idle": "873992174879bc58", "talk": "5a0b6a0514dfd618", "walk": "376b87024b0cc8e2"},
 		["idle_low", "lantern_walk", "lantern_idle", "mourn_stand", "knock", "clap"]],
-	"ph_chr_v_mayor": ["f9a47d391292ea95", {"idle": "96c632eda6270322", "talk": "b1d12af31c97d52f", "walk": "187d5eea6c85a0e8"},
+	# G8 Runde 5 (user: „bitte die bekannten probleme mal fixen"): the staff of office left the body for the child
+	# mesh prop_staff (same geometry and paint, laid aside at the desk) – the body without it (was f9a47d391292ea95)
+	"ph_chr_v_mayor": ["99b917c9dc5d700c", {"idle": "96c632eda6270322", "talk": "b1d12af31c97d52f", "walk": "187d5eea6c85a0e8"},
 		["idle_low", "lantern_walk", "lantern_idle", "mourn_stand", "dance"]],
 	"ph_chr_v_surgeon": ["1c247121022d9db1", {"idle": "43e40c61f18b4839", "talk": "240391f41f748cf7", "walk": "2c98c3e7554af50f"},
 		["idle_low", "lantern_walk", "lantern_idle", "knock"]],

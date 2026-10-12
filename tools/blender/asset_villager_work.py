@@ -4,12 +4,14 @@ the child meshes below are added after them; test_assets_phase8 compares the bod
 
   ph_chr_v_innkeeper  polish_mug     behind the bar: a mug in the left hand, the rag in the right polishes it
                                      in circles, she holds it up to the light, sets it down again
-  ph_chr_v_priest     pray_altar     before the altar (facing it): the hands on the breviary, the arms rise into
-                                     the old praying gesture, he bows deeply
+  ph_chr_v_priest     pray_altar     behind the altar, facing the nave (G8 Runde 5; before: in front of it, his
+                                     back to the camera): the hands on the breviary, the arms rise wide into the
+                                     old praying gesture, he bows deeply over the altar
                       read_breviary  at the church door: the breviary raised in the left hand, he reads, the
                                      right hand turns a page
-  ph_chr_v_mayor      desk_files     at the office desk: the left hand leafs through the files, then the stamp
-                                     comes down; the right keeps the staff of office
+  ph_chr_v_mayor      desk_files     at the office desk (G8 Runde 5: the staff leans against the desk): bent
+                                     over it, the left hand leafs through the file stack, the right inks the big
+                                     stamp on the pad and brings it down onto the sheet
                       proclaim       at the notice board: a notice held up in the left hand, he reads it out,
                                      looks up over it to the people
   ph_chr_v_surgeon    desk_write     at his desk: bent over, the quill writes in short lines, dips into the ink
@@ -26,7 +28,9 @@ bow is the spine (and the hips sliding back), the feet stay planted (feet rule).
 Child meshes (Muster lantern_prop / ToolProps): small props on the arm bones, shown only with their clip
 (glTF extras "show_with"): prop_mug, prop_rag (innkeeper), prop_stamp, prop_notice (mayor), prop_quill,
 prop_vial (surgeon), prop_washcloth (washer). Each is modelled where the hand is in a reference pose of its clip
-and carried back into the rest pose of the bone (hold), so it sits in the fist while the clip plays.
+and carried back into the rest pose of the bone (hold), so it sits in the fist while the clip plays. G8 Runde 5:
+prop_staff_rest (mayor) stands on the root where it is modelled (Fenner's staff against the desk; his staff in the
+hand is the child mesh prop_staff of asset_villagers with hide_with desk_files).
 """
 import math
 
@@ -107,10 +111,12 @@ def polish_mug():
     return _loop(keys, circles, 0.9)
 
 
-# --- Lenz: praying before the altar (90 frames = 3 s; he faces the altar) -------------------------------
+# --- Lenz: praying at the altar (90 frames = 3 s; G8 Runde 5: behind it, facing the nave) ---------------------
 # His left forearm is modelled bent, the breviary pressed to the belly; the rest pose already holds it.
 PR_FOLD = {"arm_r": (-30.0, -24.0, 18.0), "spine": (4.0, 0.0, 0.0), "head": (14.0, 0.0, 0.0)}
-PR_ORANS = {"arm_r": (-72.0, 34.0, -8.0), "arm_l": (-62.0, -46.0, 10.0), "spine": (-4.0, 0.0, 0.0), "head": (-10.0, 0.0, 0.0)}
+# G8 Runde 5: he prays behind the altar facing the nave (the game camera) - the arms spread wider and higher, a V
+# that reads from the front (before: forward at the shoulders, read from behind)
+PR_ORANS = {"arm_r": (-116.5, 11.0, -24.0), "arm_l": (-94.0, -6.0, 45.0), "spine": (-4.0, 0.0, 0.0), "head": (-10.0, 0.0, 0.0)}
 PR_BOW = {"arm_r": (-24.0, -22.0, 16.0), "arm_l": (8.0, 0.0, 0.0), "spine": (26.0, 0.0, 0.0), "head": (26.0, 0.0, 0.0),
           "hips": (4.0, 0.0, 0.0, 0.0, 0.02, -0.01)}
 
@@ -136,17 +142,28 @@ def read_breviary():
     return _loop(keys, lines, 0.8)
 
 
-# --- Fenner: files and the stamp at the desk (90 frames = 3 s; desk top 0.8 m; the right hand keeps the staff)
-MY_KEEP = (-20.0, 0.0, 0.0)   # the right arm undoes the spine's lean (-spine): the staff stays upright beside him
-MY_LEAF_A = {"arm_l": (-34.0, 26.0, -20.0), "arm_r": MY_KEEP, "spine": (20.0, 0.0, 0.0), "head": (14.0, 0.0, -6.0)}
-MY_LEAF_B = {"arm_l": (-32.0, 8.0, 10.0), "arm_r": MY_KEEP, "spine": (20.0, 0.0, 2.0), "head": (14.0, 0.0, 6.0)}
-MY_STAMP_UP = {"arm_l": (-74.0, 16.0, -8.0), "arm_r": (-8.0, 0.0, 0.0), "spine": (8.0, 0.0, 0.0), "head": (12.0, 0.0, 0.0)}
-MY_STAMP_DOWN = {"arm_l": (-30.0, 18.0, -10.0), "arm_r": (-22.0, 0.0, 0.0), "spine": (22.0, 0.0, 0.0), "head": (18.0, 0.0, 0.0)}
+# --- Fenner: files and the stamp at the desk (90 frames = 3 s; desk top 0.79 m, its centre 0.6 m in front) ---------
+# G8 Runde 5 (user: „bitte die bekannten probleme mal fixen"): the staff leans against the desk while he works
+# (prop_staff hidden, prop_staff_rest shown), so both hands reach well over the desk (0.45-0.58 m in front, the desk
+# edge is at 0.24 m): the left leafs through the file stack, the right inks the big stamp on the pad and brings it
+# down onto the sheet. The places of stack, pad and sheet are on the desk (asset_village_interiors.office_desk):
+# stack (0.15, -0.55), pad (-0.30, -0.45), sheet (-0.08, -0.45) in his model space (desk local (x, y + 0.6)).
+MY_HIPS = (3.0, 0.0, 0.0, 0.0, 0.03, -0.01)   # the hips back a little: the coat stays clear of the desk edge
+MY_LEAF_A = {"arm_l": (-57.5, 8.5, 0.0), "arm_r": (-46.0, 9.0, 1.0), "spine": (20.0, 0.0, 0.0), "head": (18.0, 0.0, -6.0),
+             "hips": MY_HIPS}
+MY_LEAF_B = {"arm_l": (-58.0, 29.5, -8.0), "arm_r": (-45.0, 12.5, -0.5), "spine": (20.0, 0.0, 3.0), "head": (18.0, 0.0, 4.0),
+             "hips": MY_HIPS}
+MY_INK = {"arm_l": (-60.0, 2.0, 0.0), "arm_r": (-39.0, 0.0, 0.0), "spine": (22.0, 0.0, -3.0), "head": (22.0, 0.0, -8.0),
+          "hips": MY_HIPS}
+MY_STAMP_UP = {"arm_l": (-47.0, 9.5, 0.0), "arm_r": (-60.0, 14.5, 16.0), "spine": (12.0, 0.0, 0.0), "head": (14.0, 0.0, 0.0),
+               "hips": (2.0, 0.0, 0.0, 0.0, 0.02, 0.0)}
+MY_STAMP_DOWN = {"arm_l": (-63.0, 5.5, -8.0), "arm_r": (-39.5, -11.0, 16.0), "spine": (24.0, 0.0, 0.0), "head": (24.0, 0.0, 0.0),
+                 "hips": MY_HIPS}
 
 
 def desk_files():
-    keys = [(0.0, MY_LEAF_A), (0.12, MY_LEAF_B), (0.24, MY_LEAF_A), (0.36, MY_LEAF_B), (0.48, MY_LEAF_A),
-            (0.6, MY_STAMP_UP), (0.66, MY_STAMP_DOWN), (0.74, MY_STAMP_DOWN), (0.82, MY_STAMP_UP), (0.88, MY_STAMP_DOWN)]
+    keys = [(0.0, MY_LEAF_A), (0.1, MY_LEAF_B), (0.2, MY_LEAF_A), (0.3, MY_LEAF_B), (0.38, MY_LEAF_A), (0.46, MY_INK),
+            (0.52, MY_LEAF_A), (0.6, MY_STAMP_UP), (0.67, MY_STAMP_DOWN), (0.75, MY_STAMP_DOWN), (0.84, MY_STAMP_UP)]
     return _loop(keys, None, 0.7)
 
 
@@ -163,7 +180,7 @@ def proclaim():
     def speak(t: float) -> dict:
         w = _window(t, 0.08, 0.38)
         return {"head": (2.0 * w * math.sin(rig.TAU * t * 6.0), 0.0, 3.0 * w * math.sin(rig.TAU * t * 2.0)),
-                "arm_l": (2.0 * w * math.sin(rig.TAU * t * 3.0), 0.0, 0.0)}
+                "arm_l": (3.5 * w * math.sin(rig.TAU * t * 3.0), 0.0, 0.0)}   # G8 R5: a little livelier
     return _loop(keys, speak, 0.9)
 
 
@@ -274,12 +291,53 @@ def rag():
     return L.join([_p(ball, LINEN, var=0.12, ao=0.1, top=0.2, seed=4), _p(tail, LINEN_SHADE, var=0.1, ao=0.1, seed=5)], "prop_rag")
 
 
+def _open_tube(start, end, radius: float, verts: int, r_end=None):
+    """L.tube without its end caps (the ends sit in a knob, a block or on the floor): 2 x verts tris."""
+    start, end = Vector(start), Vector(end)
+    d = end - start
+    obj = L.prim("cyl", radius=radius, depth=d.length, vertices=verts, end_fill_type="NOTHING")
+    if r_end is not None:
+        L.taper(obj, -d.length / 2, d.length / 2, r_end / radius)
+    rot = Vector((0, 0, 1)).rotation_difference(d.normalized()).to_matrix().to_4x4()
+    obj.data.transform(Matrix.Translation((start + end) / 2) @ rot)
+    return obj
+
+
 def stamp():
-    """The office stamp: a turned wooden knob and handle, a brass foot (the grip round the handle). ~60 tris."""
-    parts = [_p(L.prim("sphere", loc=(0, 0, 0.045), radius=0.022, segments=6, ring_count=4), WOOD, var=0.12, ao=0.0, top=0.3),
-             _p(L.tube(Vector((0, 0, 0.03)), Vector((0, 0, -0.03)), 0.012, 5), WOOD_DARK, var=0.1, ao=0.0),
-             _p(L.prim("cyl", loc=(0, 0, -0.042), radius=0.026, depth=0.024, vertices=6), BRASS, var=0.1, ao=0.0, top=0.5)]
-    return L.join(parts, "prop_stamp")
+    """The office stamp, G8 Runde 5 bigger (it reads from the game camera): a turned wooden knob on a short handle
+    (the fist round the handle), a broad brass-shod block, its face black with ink. 44 tris."""
+    knob = L.prim("sphere", loc=(0, 0, 0.055), radius=1.0, scale=(0.036, 0.036, 0.03), segments=6, ring_count=3)
+    handle = _open_tube((0, 0, -0.05), (0, 0, 0.04), 0.017, 4)
+    block = L.prim("cube", loc=(0, 0, -0.056), scale=(0.056, 0.04, 0.019))
+    _p(block, BRASS, var=0.1, ao=0.0, top=0.5)
+    attr = block.data.color_attributes["Col"]
+    for poly in block.data.polygons:
+        if poly.normal.z < -0.5:     # the inked face
+            for li in poly.loop_indices:
+                attr.data[li].color = (0.045, 0.012, 0.015, 1.0)
+    return L.join([_p(knob, WOOD_DARK, var=0.12, ao=0.0, top=0.4), _p(handle, WOOD_DARK, var=0.1, ao=0.0), block], "prop_stamp")
+
+
+# Fenner's staff leaning against the desk end (his right) while he works: in his model space (Blender: -Y front),
+# the desk centre 0.6 m in front, its top 0.79 m, its end 0.7 m to his right. The ferrule stands on the floor
+# beyond the end, the shaft touches the edge of the top.
+STAFF_FOOT = Vector((-0.98, -0.66, 0.0))
+STAFF_TOUCH = Vector((-0.715, -0.68, 0.775))
+STAFF_LEN = 1.33
+
+
+def staff_rest():
+    """prop_staff_rest (on the root, shown with desk_files): the staff of office put aside - the dark shaft and the
+    brass knob of prop_staff (asset_villagers.mayor), a little coarser (the figure budget). 34 tris."""
+    d = (STAFF_TOUCH - STAFF_FOOT).normalized()
+    top = STAFF_FOOT + d * STAFF_LEN
+    shaft = _open_tube(STAFF_FOOT + d * 0.01, top, 0.016, 5, r_end=0.019)
+    knob = L.prim("sphere", loc=tuple(top + d * 0.03), radius=0.035, segments=6, ring_count=3)
+    obj = L.join([_p(shaft, L.hexc("#4A3A2C"), var=0.2, ao=0.0, top=0.3, seed=6), _p(knob, BRASS, var=0.1, ao=0.0, top=0.5)],
+                 "prop_staff_rest")
+    import asset_villagers as AV    # the same whole-figure light as the staff in his hand
+    AV._global_light(obj, 1.8)
+    return obj
 
 
 def notice():
@@ -343,8 +401,9 @@ WORK = {
     },
     "ph_chr_v_mayor": {
         "clips": [("desk_files-loop", 90, desk_files), ("proclaim-loop", 90, proclaim)],
-        "props": [("prop_stamp", "arm_l", stamp, "desk_files", MY_STAMP_DOWN, (0.0, 0.0, 0.0), 0.0),
-                  ("prop_notice", "arm_l", notice, "proclaim", MY_READ, (0.0, 0.0, 0.0), 0.0)],
+        "props": [("prop_stamp", "arm_r", stamp, "desk_files", MY_STAMP_DOWN, (0.0, 0.0, 0.0), 0.0),
+                  ("prop_notice", "arm_l", notice, "proclaim", MY_READ, (0.0, 0.0, 0.0), 0.0),
+                  ("prop_staff_rest", "root", staff_rest, "desk_files", None, None, 0.0)],
     },
     "ph_chr_v_surgeon": {
         "clips": [("desk_write-loop", 90, desk_write), ("mix_vial-loop", 90, mix_vial)],
@@ -403,7 +462,8 @@ def build_for(name: str, arm, mesh):
     kids = []
     for cname, bone, maker, show, pose, off, turn in cfg["props"]:
         obj = maker()
-        hold(arm, mesh, obj, bone, pose, off, turn)
+        if pose is not None:    # a prop on the root (pose None) is modelled where it stands, in the model space
+            hold(arm, mesh, obj, bone, pose, off, turn)
         L.smooth(obj, 55)
         kids.append((cname, bone, obj, tuple(show.split(","))))
     return actions, kids

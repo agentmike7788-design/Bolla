@@ -480,11 +480,17 @@ func village_schedule(day: int) -> NpcSchedule:
 			entries.append(leave)
 			entries.append(ScheduleBuilder.stay(StringName(out[out.size() - 1]), V_LEAVE + maxi(leave.travel_minutes, 1), &"idle", &"",
 					false))
-		var back := _known(V_ROUTE_IN, world)
+		# G8 Runde 4: helping Rosine of an evening = his work clip in the inn (NpcWorkConfig: apprentice_inn → sweep);
+		# G8 Runde 5: at his sweeping spot on the open floor (NpcWorkConfig.runtime_spots), where the camera sees the broom.
+		var spot := String(NpcWorkConfig.runtime_spot(V_WORK_KEY, StringName(V_INN)))
+		if not ScheduleBuilder.has_point(world, spot):
+			spot = V_INN
+		var route_in := V_ROUTE_IN.duplicate()
+		route_in[route_in.size() - 1] = spot
+		var back := _known(route_in, world)
 		if back.size() >= 2:
 			entries.append(ScheduleBuilder.walk(StringName(back[0]), back.slice(1), V_EVENING - 15, &"village", world))
-		# G8 Runde 4: helping Rosine of an evening = his work clip in the inn (NpcWorkConfig: apprentice_inn → sweep).
-		entries.append(ScheduleBuilder.stay(StringName(V_INN), V_EVENING, NpcWorkConfig.runtime_clip(V_WORK_KEY, &"idle"), DIALOGUE))
+		entries.append(ScheduleBuilder.stay(StringName(spot), V_EVENING, NpcWorkConfig.runtime_clip(V_WORK_KEY, &"idle"), DIALOGUE))
 	else:
 		entries.append(ScheduleBuilder.stay(StringName(V_INN), V_BREAKFAST, &"idle", DIALOGUE))
 	entries.append(ScheduleBuilder.stay(StringName(V_INN), V_NIGHT, &"idle", &"", false))

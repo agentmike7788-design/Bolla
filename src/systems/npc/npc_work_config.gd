@@ -13,11 +13,16 @@ extends Resource
 @export var talk_clip: StringName = &"talk"
 ## Work places whose work faces another way than the standing spot's own facing (layout waypoint_facing, which
 ## is for standing and talking): waypoint -> heading in degrees (0 = +Z) while the figure works there. Liesel at
-## the washing stones faces the brook (the Phase-7 spot v_wash faces the green).
+## the washing stones faces the brook (the Phase-7 spot v_wash faces the green). G8 Runde 5: Lenz behind the
+## altar and Jakob at his sweeping spot work with the spot's own facing (no entry here).
 @export var work_facing: Dictionary[StringName, float] = {}
 ## Work clips of schedules built in code (key -> clip): &"apprentice_inn" (Jakob helping Rosine in the inn of an
 ## evening), &"washer_table" (Liesel's corpse wash at the crypt table).
 @export var runtime_clips: Dictionary[StringName, StringName] = {}
+## G8 Runde 5 (user: „bitte die bekannten probleme mal fixen"): where a schedule built in code works (key ->
+## waypoint), if not at its usual spot: &"apprentice_inn" → v_in_inn_sweep (Jakob sweeps the open floor in front of
+## the bar, where the game camera sees the broom; at v_in_inn_jakob the table hid it).
+@export var runtime_spots: Dictionary[StringName, StringName] = {}
 ## Pipe smoke (Osric's evening pipe): clip -> the moments of its cycle (fractions) at which a puff leaves the marker.
 @export var puff_clips: Dictionary[StringName, PackedFloat32Array] = {}
 ## Node of the model the puffs leave from (a bone marker at the pipe bowl); without it puff_fallback above the root.
@@ -36,6 +41,17 @@ extends Resource
 ## The work clip for a schedule built in code (key of runtime_clips), else `fallback`.
 func clip_for(key: StringName, fallback: StringName) -> StringName:
 	return runtime_clips.get(key, fallback)
+
+
+## The work waypoint for a schedule built in code (key of runtime_spots), else `fallback`.
+func spot_for(key: StringName, fallback: StringName) -> StringName:
+	return runtime_spots.get(key, fallback)
+
+
+## spot_for of data/config/npc_work_config.tres (`fallback` without it).
+static func runtime_spot(key: StringName, fallback: StringName) -> StringName:
+	var cfg := Database.config(&"npc_work_config") as NpcWorkConfig
+	return cfg.spot_for(key, fallback) if cfg != null else fallback
 
 
 ## clip_for of data/config/npc_work_config.tres (`fallback` without it).

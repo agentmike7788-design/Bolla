@@ -438,3 +438,51 @@ func test_phase8_church_archive_and_plate() -> void:
 	assert_true(_capsule_free(use), "the gravekeeper fits in front of the archive")
 	player.set_in_interior(false)
 	player.set_region(&"graveyard")
+
+
+# --- G8 Runde 5 (user: „bitte die bekannten probleme mal fixen") ---------------------------------
+
+## The three work places of round 5 as the game camera sees them: Jakob sweeps on the open floor in front of the
+## bar (v_in_inn_sweep) – nothing between the broom head and the camera, he fits there and the way past him and
+## to Rosine at the bar stays free; Lenz stands behind the altar on the chancel (0.18 m up) facing the nave;
+## Fenner stands 0.6 m behind the middle of his desk (the leaning staff of his model is modelled for that).
+func test_g8r5_work_places_seen_from_the_game_camera() -> void:
+	var rig := world.get_node("CameraRig") as CameraRig
+	var to_camera := Vector3(0.0, sin(deg_to_rad(rig.pitch_deg)), cos(deg_to_rad(rig.pitch_deg)))
+	var inn := InteriorRoom.find(tree, &"inn")
+	var player := world.get_player()
+	player.set_region(&"village")
+	player.global_transform = inn.spawn_transform()
+	player.set_in_interior(true, &"inn")
+	for i: int in 3:
+		await tree.physics_frame
+	var spot := inn.get_node("Waypoints/v_in_inn_sweep") as Node3D
+	var facing := spot.global_basis.z
+	var head := spot.global_position + facing * 0.9 + Vector3(0.0, 0.05, 0.0)
+	var ray := PhysicsRayQueryParameters3D.create(head, head + to_camera * 8.0, 1)
+	var hit := world.get_world_3d().direct_space_state.intersect_ray(ray)
+	assert_true(hit.is_empty(), "nothing between the broom head and the game camera (%s)" % [hit.get("collider")])
+	# Jakob himself does not stand in the camera's way either: under the ray from his feet lies open floor
+	ray = PhysicsRayQueryParameters3D.create(spot.global_position + Vector3(0.0, 0.05, 0.0),
+			spot.global_position + Vector3(0.0, 0.05, 0.0) + to_camera * 8.0, 1)
+	assert_true(world.get_world_3d().direct_space_state.intersect_ray(ray).is_empty(), "his feet seen from the camera")
+	assert_true(_capsule_free(spot.global_position), "Jakob fits at his sweeping spot")
+	for local: Vector3 in [Vector3(-1.6, 0.0, -0.35), Vector3(-2.0, 0.0, -1.25), Vector3(-2.4, 0.0, 0.45)]:
+		assert_true(_capsule_free(inn.to_global(local)), "the way past him stays free at %s" % local)
+		assert_true(inn.to_global(local).distance_to(spot.global_position) > 0.65, "… clear of Jakob (%s)" % local)
+	player.set_in_interior(false)
+	# Lenz behind the altar facing the nave
+	var church := InteriorRoom.find(tree, &"church")
+	var lenz := church.get_node("Waypoints/v_in_church_altar") as Node3D
+	var altar := church.get_node("Furniture/Altar") as Node3D
+	assert_almost(lenz.position.y, altar.position.y, 0.01, "Lenz stands on the chancel, as high as the altar")
+	assert_true(altar.position.z > lenz.position.z + 0.6 and altar.position.z < lenz.position.z + 1.0, "the altar right in front of him")
+	assert_true(lenz.basis.z.dot(Vector3.BACK) > 0.99, "he faces the nave (the camera)")
+	assert_true(lenz.position.z > -4.5 + 0.25, "room behind him to the north wall")
+	# Fenner 0.6 m behind his desk
+	var office := InteriorRoom.find(tree, &"office")
+	var desk := office.get_node("Furniture/Desk") as Node3D
+	var fenner := office.get_node("Waypoints/v_in_office_desk") as Node3D
+	assert_almost(desk.position.z - fenner.position.z, 0.6, 0.02, "Fenner 0.6 m behind the desk centre")
+	assert_almost(desk.position.x, fenner.position.x, 0.02, "… in the middle")
+	player.set_region(&"graveyard")
