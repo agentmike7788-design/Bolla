@@ -76,7 +76,8 @@ Bildreihe `osric_abladen(_web).jpg` im 0,75-s-Takt von −1,5 s bis +11,25 s: An
 
 - **`test_cart_delivery.gd`:** 16 Min ≈ 8 s, fünf Anteile, Clips 0,9–1,3 × ihrer Länge, Gehtempo 0,8–1,5 m/s, Tragen 0,6–1,2 m/s, Ruhephase an der Bahre. Bei zwei Leichen liegen am Ende beide auf ihren Bahren.
 - **`test_cart_delivery_live.gd`:** Reihenfolge mit `idle`.
-- **`test_schedule.gd`, `test_graveyard_world.gd`:** 06:44 / 07:24.
+- **`test_schedule.gd`, `test_schedule_resolver.gd`, `test_phase7_scaffold.gd` (Fixture `tests/fixtures/phase7/schedules/carter_schedule.tres` mitgezogen), `test_graveyard_world.gd`:** 06:44 / 07:24.
+- **Volle Suite:** 2965/2965 grün.
 - **`test_table_duration.gd` (neu):** Datenwerte, `table_seconds` mit Ersatz-Rig und mit den echten Clips (2–3,5 Zyklen, ≤ 5 s).
 - **`test_table_work.gd::test_table_work_lasts_a_few_cycles`:** in der echten Gruft ≥ 1,9 Zyklen gesehen, Spielminuten unverändert, andere Aktion 1,5 s.
 - **`test_ui.gd`:** Andocken, Ausblenden während der Arbeit, Tastatur und Maus. Die Abdunkelungs-Prüfung gilt jetzt für alle Panels außer dem angedockten.
