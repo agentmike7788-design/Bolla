@@ -27,7 +27,7 @@ const ACTIONS: Array[StringName] = [ACTION_SEAL, ACTION_DISPLAY, ACTION_BONE, AC
 
 ## G8 Runde 4: one column at the right edge (was 1500 in the middle, two columns).
 @export var panel_width: float = 650.0
-@export var action_button_width: float = 300.0
+@export var action_button_width: float = 260.0
 
 var specimens: Specimens
 var pieces_box: VBoxContainer
@@ -127,6 +127,7 @@ func _fit_body() -> void:
 
 
 func _on_opened() -> void:
+	body_scroll.scroll_vertical = 0
 	specimens = get_tree().get_first_node_in_group(SPECIMENS_GROUP) as Specimens if is_inside_tree() else null
 	var store := find_store(get_tree() if is_inside_tree() else null)
 	_cold = store.store() if store != null else null

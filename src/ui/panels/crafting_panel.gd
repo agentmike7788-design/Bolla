@@ -116,6 +116,8 @@ func open_pult() -> void:
 
 func _on_opened() -> void:
 	_focus_recipe = &""
+	# G8 Runde 4: one panel for every station – a new opening starts at the top of its list (the focus scrolls on).
+	_scroll.scroll_vertical = 0
 	_inventory = _player_inventory()
 	if _inventory != null:
 		_inventory.changed.connect(refresh)
@@ -193,6 +195,7 @@ func focus_default() -> void:
 	var again := craft_button(_focus_recipe)
 	if again != null and not again.disabled and again.is_visible_in_tree():
 		again.grab_focus()
+		reveal.call_deferred(again)
 		return
 	super.focus_default()
 

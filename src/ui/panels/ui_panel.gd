@@ -102,6 +102,24 @@ func focus_default() -> void:
 	var target := UIKit.first_focusable(self)
 	if target != null and target.is_visible_in_tree():
 		target.grab_focus()
+		reveal.call_deferred(target)
+
+
+## G8 Runde 4: scrolls the panel's scrolling body so that `control` is in view – after a rebuild of the rows the focus
+## can sit on a button outside it (ScrollContainer.follow_focus only follows a focus change).
+func reveal(control: Control) -> void:
+	if not is_instance_valid(control) or not is_ancestor_of(control):
+		return
+	var node := control.get_parent()
+	while node != null and node != self and not node is ScrollContainer:
+		node = node.get_parent()
+	var scroll := node as ScrollContainer
+	if scroll == null or not is_inside_tree():
+		return
+	# freshly built rows are laid out at the end of the frame – measure after that
+	await get_tree().process_frame
+	if is_instance_valid(control) and is_instance_valid(scroll) and scroll.is_ancestor_of(control) and control.is_visible_in_tree():
+		scroll.ensure_control_visible(control)
 
 
 ## Keeps keyboard focus usable: when nothing has focus or this panel's focused control is

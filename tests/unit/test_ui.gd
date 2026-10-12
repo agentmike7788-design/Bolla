@@ -1452,6 +1452,14 @@ func test_crafting_docked_and_hidden_while_working() -> void:
 	assert_false(ui.hud.is_work_view())
 	EventBus.timed_action_finished.emit(true)
 	assert_false(panel.visible)
+	# every station uses this panel: a new opening starts at the top, the focused button is in view
+	panel._scroll.scroll_vertical = 100000
+	ui.open_panel(&"crafting", _contexts()[&"crafting"])
+	await wait_frames(3)
+	var again := ui.get_viewport().gui_get_focus_owner() as Control
+	assert_not_null(again, "focus after reopening")
+	if again != null and panel._scroll.is_ancestor_of(again):
+		assert_true(panel._scroll.get_global_rect().grow(1.0).encloses(again.get_global_rect()), "the focused button is in view")
 
 
 ## G8 Runde 4: the stone bench, the build site and the building site are hidden while their work runs (Stein hauen /
