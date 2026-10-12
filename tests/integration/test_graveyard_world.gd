@@ -705,8 +705,8 @@ func test_phase3_system_nodes() -> void:
 	assert_eq(ids, ["corpse_manager", "expansion", "graveyard", "cleanliness", "decorations", "gathering", "ghosts", "workshop",
 			"buildings", "stonemasonry", "ossuary", "chapel", "journal", "night_trade", "village", "relationships", "village_shops",
 			"orders", "specimens", "lectures", "deductions", "npc_life", "visitors", "grave_care", "apprentice", "friendship", "festivals",
-			"wanderers", "night_robber", "night_paths"],
-			"load order (Phase 4: + journal 40, night_trade 45; Phase 5: + gathering 25, workshop 30, stonemasonry 35; Phase 6: + buildings 32, ossuary 36, chapel 37; Phase 7: + village 50 … deductions 56; Phase 8: + npc_life 70 … night_paths 78)")
+			"wanderers", "night_robber", "night_paths", "hill_requests"],
+			"load order (Phase 4: + journal 40, night_trade 45; Phase 5: + gathering 25, workshop 30, stonemasonry 35; Phase 6: + buildings 32, ossuary 36, chapel 37; Phase 7: + village 50 … deductions 56; Phase 8: + npc_life 70 … night_paths 78; G8 Runde 6: + hill_requests 80)")
 	var decorations := world.get_node("Systems/Decorations") as DecorationManager
 	assert_eq(decorations.mask.resource_path, BUILD_MASK)
 	assert_eq(decorations.get_node(decorations.container_path), world.get_node("Decor/Placed"))
@@ -2668,6 +2668,8 @@ const P8_SYSTEMS := {
 	"Apprentice": ["Apprentice", "apprentice", "apprentice", 73], "Friendship": ["Friendship", "friendship", "friendship", 74],
 	"Festivals": ["Festivals", "festivals", "festivals", 75], "Wanderers": ["Wanderers", "wanderers", "wanderers", 76],
 	"NightRobber": ["NightRobber", "night_robber", "night_robber", 77], "NightPaths": ["NightPaths", "night_paths", "night_paths", 78],
+	# G8 Runde 6 „Bitten vom Hügel"
+	"HillRequests": ["HillRequests", "hill_requests", "hill_requests", 80],
 }
 const P8_WAYPOINTS := ["gate_inside", "apprentice_board", "apprentice_box", "apprentice_lunch", "apprentice_sweep", "rain_barrel",
 		"veit_gate", "peddler_gate", "lights_gate", "robber_far", "robber_fence_out", "robber_fence_in", "lights_lenz", "peddler_west",

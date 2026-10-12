@@ -446,10 +446,10 @@ func load_state(data: Dictionary) -> void:
 	if refill is Array:
 		for v: Variant in refill:
 			if v is int or v is float:
-				_refill.append(int(v))
+				_refill.append(clampi(int(v), 0, TimeManager.day + 30))
 	_refill.sort()
-	_check_day = maxi(0, _num(data.get("check_day"), 0))
-	_post_day = maxi(0, _num(data.get("post_day"), 0))
+	_check_day = clampi(_num(data.get("check_day"), 0), 0, TimeManager.day)
+	_post_day = clampi(_num(data.get("post_day"), 0), 0, TimeManager.day)
 	var log_raw: Variant = data.get("log")
 	if log_raw is Array:
 		for e: Variant in log_raw:
