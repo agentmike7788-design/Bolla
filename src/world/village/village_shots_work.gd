@@ -107,11 +107,13 @@ func _sheet_for(world: Node3D, sheet: Dictionary, close: Camera3D) -> String:
 		await process_frame
 	if String(sheet.get("stage", "")) == "no_chatter":
 		# a chat at the work place (Lenz and Veit at the church door) runs in real time: played to its end first
-		var runner := world.find_child("ChatterRunner", true, false)
-		if runner != null:
+		for runner: Node in world.find_children("ChatterRunner", "", true, false):
 			for i: int in 8:
 				runner.call(&"advance", 60.0)
 				await process_frame
+			runner.call(&"stop", VILLAGE)
+			runner.process_mode = Node.PROCESS_MODE_DISABLED   # no new chat for this sheet
+		npc.call(&"set_chatter_target", null)
 	npc.call(&"refresh")
 	# the gravekeeper away from the work (camera side), the game camera on the figure
 	player.global_position = _w_stand(npc, AWAY, room)
