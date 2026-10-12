@@ -233,7 +233,7 @@ func test_pool_values_are_small_and_bounded() -> void:
 	for raw: Variant in Database.hill_requests():
 		var r := raw as OrderData
 		assert_true(r.days_limit >= 1 and r.days_limit <= 3, "%s: deadline 1–3 days (%d)" % [r.id, r.days_limit])
-		assert_true(r.reward_coins >= 1 and r.reward_coins <= 4, "%s: a few coins (%d)" % [r.id, r.reward_coins])
+		assert_true(r.reward_coins >= 1 and r.reward_coins <= 3, "%s: a few coins (%d)" % [r.id, r.reward_coins])
 		assert_true(r.reward_rep >= 1 and r.reward_rep <= 2, "%s: a little reputation (%d)" % [r.id, r.reward_rep])
 		assert_eq(r.reward_rel, 0, "%s: no relationship points (Phase-7 tiers untouched)" % r.id)
 		assert_true(r.cooldown_days >= 5, "%s: cooldown ≥ 5 days (%d)" % [r.id, r.cooldown_days])

@@ -22,7 +22,7 @@ Benutzerentscheidung (12.10.2026): **nur Paket A „Bitten vom Hügel“**. Nich
 - **HUD-Notizen:**
   - um 07:44 „Osric hat eine Bitte ans Tor geheftet.“ / „… zwei Bitten …“
   - beim Annehmen „Angenommen: …“
-  - bei Erfüllung die Dankesnotiz des Gebers und „Bitte erfüllt: <Titel> – 3 Münzen · Ruf +1“
+  - bei Erfüllung die Dankesnotiz des Gebers und „Bitte erfüllt: <Titel> – 2 Münzen · Ruf +1“
   - beim Verfall „Zu spät: …“
 
 ## Regeln (alle Werte in `data/config/hill_requests_config.tres`)
@@ -38,7 +38,7 @@ Benutzerentscheidung (12.10.2026): **nur Paket A „Bitten vom Hügel“**. Nich
   - Eine offene Bitte hängt 2 Tage und wird dann folgenlos abgenommen.
   - Eine angenommene hat 1–3 Tage Frist. Die Prüfung läuft um 06:00 wie bei den Aufträgen: angenommen an Tag D mit 2 Tagen → fällig am Morgen von D + 2.
   - Verfall kostet **−1 Ruf**, keine Münzen.
-- **Lohn:** Ruf +1…+2 und 2–4 Münzen, bei 3 der 18 Bitten ein kleines Ding (1 Leinen, 1 Honigkuchen, 1 Samen). Keine Beziehungspunkte, die Phase-7-Stufen bleiben unberührt.
+- **Lohn:** Ruf +1 und 1–3 Münzen (im Schnitt 1,8; Abgaben, die Holz oder Stein kosten, zahlen 2–3, was man ohnehin am Toten oder am Grab tut 1–2), bei 3 der 18 Bitten ein kleines Ding (1 Leinen, 1 Honigkuchen, 1 Samen). Keine Beziehungspunkte, die Phase-7-Stufen bleiben unberührt.
 - **Wiederholung:**
   - Abklingzeit je Bitte 6–8 Tage ab ihrem Ende.
   - Nie zwei Bitten desselben Gebers zugleich am Tor.
@@ -55,24 +55,24 @@ Alle Bitten sind mit den Mitteln von Tag 2–13 lösbar: Holz, Stein, Werkbank, 
 
 | id | Auftraggeber | Bitte – Aufgabe | Frist | Lohn | Abklingzeit |
 |---|---|---|---|---|---|
-| `hr_osric_wood` | Osric Faulhaber | Drei Scheite für Osric – 3 Holz bei Osric abgeben | 2 Tage | 3 Münzen · Ruf +1 | 6 Tage |
-| `hr_esch_stone` | Ulrich Esch | Zwei Steine für die Esse – 2 Steine bei Osric abgeben | 2 Tage | 3 Münzen · Ruf +1 | 6 Tage |
-| `hr_sieber_cross` | Johann Sieber (Trauernder) | Ein Kreuz für den Hohlweg – 1 Holzkreuz (Werkbank) bei Osric abgeben | 3 Tage | 4 Münzen · Ruf +2 | 8 Tage |
-| `hr_quast_exam` | Severin Quast | Ein Befund für den Wundarzt – einen Toten gründlich untersuchen (alle 4 Schritte); Name und Todesursache stehen in der Dankesnotiz | 2 Tage | 3 Münzen · Ruf +1 | 6 Tage |
-| `hr_liesel_wash` | Liesel Dorn | Gewaschen und gekleidet – einen Toten gewaschen und im Leichentuch/Totenhemd bestatten | 2 Tage | 2 Münzen · Ruf +2 · 1× Leinen | 6 Tage |
-| `hr_lenz_stone` | Pfarrer Ambrosius Lenz | Ein Stein, der bleibt – einem Bestatteten einen Grabstein setzen (kein Holzkreuz) | 3 Tage | 3 Münzen · Ruf +2 | 7 Tage |
+| `hr_osric_wood` | Osric Faulhaber | Drei Scheite für Osric – 3 Holz bei Osric abgeben | 2 Tage | 2 Münzen · Ruf +1 | 6 Tage |
+| `hr_esch_stone` | Ulrich Esch | Zwei Steine für die Esse – 2 Steine bei Osric abgeben | 2 Tage | 2 Münzen · Ruf +1 | 6 Tage |
+| `hr_sieber_cross` | Johann Sieber (Trauernder) | Ein Kreuz für den Hohlweg – 1 Holzkreuz (Werkbank) bei Osric abgeben | 3 Tage | 3 Münzen · Ruf +1 | 8 Tage |
+| `hr_quast_exam` | Severin Quast | Ein Befund für den Wundarzt – einen Toten gründlich untersuchen (alle 4 Schritte); Name und Todesursache stehen in der Dankesnotiz | 2 Tage | 1 Münze · Ruf +1 | 6 Tage |
+| `hr_liesel_wash` | Liesel Dorn | Gewaschen und gekleidet – einen Toten gewaschen und im Leichentuch/Totenhemd bestatten | 2 Tage | 1 Münze · Ruf +1 · 1× Leinen | 6 Tage |
+| `hr_lenz_stone` | Pfarrer Ambrosius Lenz | Ein Stein, der bleibt – einem Bestatteten einen Grabstein setzen (kein Holzkreuz) | 3 Tage | 2 Münzen · Ruf +1 | 7 Tage |
 | `hr_kehr_gate` | Martha Kehr (Trauernde) | Unkraut am Tor – die beiden Unkrautstellen am Tor jäten | 2 Tage | 2 Münzen · Ruf +1 | 6 Tage |
-| `hr_brandt_grave` | Hinrich Brandt (Trauernder) | Das Grab von ‹Name› – ein belegtes, verschmutztes Grab säubern (beim Aushängen gewählt) | 2 Tage | 2 Münzen · Ruf +2 | 6 Tage |
-| `hr_rosine_leaves` | Rosine Wackernagel | Laub unter der Eiche – vier Laubstellen rechen (nur mit Rechen) | 2 Tage | 2 Münzen · Ruf +1 · 1× Honigkuchen | 6 Tage |
-| `hr_ott_ghost` | Gesa Ott (Trauernde) | Was die Toten sagen – nachts einem Geist zuhören; seine Worte stehen in der Notiz | 2 Tage | 2 Münzen · Ruf +1 | 7 Tage |
-| `hr_fenner_clear` | Gottlieb Fenner | Platz für die Nächsten – ein Hindernis auf Ostwiese, Birkenhang oder im Holunderwinkel roden | 3 Tage | 3 Münzen · Ruf +2 | 6 Tage |
-| `hr_esch_vase` | Ulrich Esch | Eine Vase für die Gräber – eine Grabvase aufstellen (ab Tag 3) | 3 Tage | 3 Münzen · Ruf +2 | 8 Tage |
-| `hr_mangold_bench` | Theres Mangold | Eine Bank zum Ausruhen – eine Holz- oder Steinbank aufstellen (ab Tag 3) | 3 Tage | 3 Münzen · Ruf +2 · 1× Samen | 8 Tage |
-| `hr_lenz_ghost` | Pfarrer Ambrosius Lenz | Ein Wort für die Unruhigen – nachts einem Geist zuhören | 2 Tage | 2 Münzen · Ruf +2 | 8 Tage |
-| `hr_rosine_wood` | Rosine Wackernagel | Holz für den Holderkrug – 4 Holz bei Osric abgeben | 2 Tage | 4 Münzen · Ruf +1 | 6 Tage |
-| `hr_fenner_stone` | Gottlieb Fenner | Steine für den Grenzweg – 4 Steine bei Osric abgeben | 3 Tage | 4 Münzen · Ruf +1 | 7 Tage |
-| `hr_liesel_paths` | Liesel Dorn | Freie Wege zwischen den Gräbern – zwei Unkrautstellen am Mittelweg jäten | 2 Tage | 2 Münzen · Ruf +1 | 6 Tage |
-| `hr_osric_laidout` | Osric Faulhaber | Ordentlich aufgebahrt – einen Toten gewaschen, gekleidet und aufgebahrt bestatten | 2 Tage | 3 Münzen · Ruf +1 | 7 Tage |
+| `hr_brandt_grave` | Hinrich Brandt (Trauernder) | Das Grab von ‹Name› – ein belegtes, verschmutztes Grab säubern (beim Aushängen gewählt) | 2 Tage | 1 Münze · Ruf +1 | 6 Tage |
+| `hr_rosine_leaves` | Rosine Wackernagel | Laub unter der Eiche – vier Laubstellen rechen (nur mit Rechen) | 2 Tage | 1 Münze · Ruf +1 · 1× Honigkuchen | 6 Tage |
+| `hr_ott_ghost` | Gesa Ott (Trauernde) | Was die Toten sagen – nachts einem Geist zuhören; seine Worte stehen in der Notiz | 2 Tage | 1 Münze · Ruf +1 | 7 Tage |
+| `hr_fenner_clear` | Gottlieb Fenner | Platz für die Nächsten – ein Hindernis auf Ostwiese, Birkenhang oder im Holunderwinkel roden | 3 Tage | 2 Münzen · Ruf +1 | 6 Tage |
+| `hr_esch_vase` | Ulrich Esch | Eine Vase für die Gräber – eine Grabvase aufstellen (ab Tag 3) | 3 Tage | 2 Münzen · Ruf +1 | 8 Tage |
+| `hr_mangold_bench` | Theres Mangold | Eine Bank zum Ausruhen – eine Holz- oder Steinbank aufstellen (ab Tag 3) | 3 Tage | 2 Münzen · Ruf +1 · 1× Samen | 8 Tage |
+| `hr_lenz_ghost` | Pfarrer Ambrosius Lenz | Ein Wort für die Unruhigen – nachts einem Geist zuhören | 2 Tage | 1 Münze · Ruf +1 | 8 Tage |
+| `hr_rosine_wood` | Rosine Wackernagel | Holz für den Holderkrug – 4 Holz bei Osric abgeben | 2 Tage | 3 Münzen · Ruf +1 | 6 Tage |
+| `hr_fenner_stone` | Gottlieb Fenner | Steine für den Grenzweg – 4 Steine bei Osric abgeben | 3 Tage | 3 Münzen · Ruf +1 | 7 Tage |
+| `hr_liesel_paths` | Liesel Dorn | Freie Wege zwischen den Gräbern – zwei Unkrautstellen am Mittelweg jäten | 2 Tage | 1 Münze · Ruf +1 | 6 Tage |
+| `hr_osric_laidout` | Osric Faulhaber | Ordentlich aufgebahrt – einen Toten gewaschen, gekleidet und aufgebahrt bestatten | 2 Tage | 2 Münzen · Ruf +1 | 7 Tage |
 
 Geber: alle sieben Dorfbewohner (Rosine, Esch, Theres, Lenz, Fenner, Quast, Liesel), Osric und vier Trauernde (Martha Kehr, Hinrich Brandt, Gesa Ott, Johann Sieber). Die Texte sind eigene, warm und leicht melancholisch, z. B. Liesel: „Jetzt geht man wieder gerade. Das ist gut. Trauer geht krumm genug.“
 

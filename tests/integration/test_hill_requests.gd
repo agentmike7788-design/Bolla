@@ -305,10 +305,10 @@ func test_deliver_at_osrics_cart() -> void:
 	var rep := _rep()
 	DialogueActions.apply("hill_turn_in:carter", ctx)
 	assert_eq(inv.count(&"wood"), 2, "three pieces of wood handed over")
-	assert_eq(_coins(), coins + 3, "three coins")
+	assert_eq(_coins(), coins + 2, "two coins")
 	assert_eq(_rep(), rep + 1, "reputation +1")
 	assert_eq(hill.state(&"hr_osric_wood"), &"", "done")
-	assert_has(notes, HillTexts.reward_note(hill.request_data(&"hr_osric_wood").title, PackedStringArray(["3 Münzen", "Ruf +1"])))
+	assert_has(notes, HillTexts.reward_note(hill.request_data(&"hr_osric_wood").title, PackedStringArray(["2 Münzen", "Ruf +1"])))
 	assert_has(notes, HillTexts.CARTER_HANDED)
 
 

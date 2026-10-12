@@ -5,8 +5,9 @@ extends Phase4Bot
 ## bed) and – with "requests" – the requests of the gate's notice board: the bot reads the board after the corpse
 ## work, accepts what it may, does what they ask (the named care spots, one obstacle, the decor, an extra cross or
 ## the wood / stone for a delivery when there is some to spare, a ghost at night) and hands deliveries to Osric at
-## 18:30 through carter.tres' hill_turn_in. Strategies: see HILL_STRATEGIES ("duty" = only the corpses and their
-## graves – the player of the user's criticism; "reverent" = Phase4Bot's diligent day).
+## 18:30 through carter.tres' hill_turn_in. Strategies: see HILL_STRATEGIES ("duty" = the player of the user's
+## criticism: the corpses, their graves and what the HUD asks for when no plot is left – clearing –, no tending, decor,
+## upgrades, ghosts or night trade; "reverent" = Phase4Bot's diligent day).
 
 ## The HUD says „Feierabend – Schlafen …" from TimeConfig.sleep_from_minute (18:00): idle = that minus work_end.
 const IDLE_UNTIL := 1080
@@ -17,9 +18,9 @@ const KEEP_WOOD := 3
 const KEEP_STONE := 4
 
 static var HILL_STRATEGIES := {
-	&"duty": _with({"tend": false, "clear": false, "decor": false, "listen": false, "upgrade": false, "trade": false,
+	&"duty": _with({"tend": false, "clear": true, "decor": false, "listen": false, "upgrade": false, "trade": false,
 			"link": true, "requests": false}),
-	&"duty_requests": _with({"tend": false, "clear": false, "decor": false, "listen": false, "upgrade": false,
+	&"duty_requests": _with({"tend": false, "clear": true, "decor": false, "listen": false, "upgrade": false,
 			"trade": false, "link": true, "requests": true}),
 	&"reverent": _with({"requests": false}),
 	&"reverent_requests": _with({"requests": true}),

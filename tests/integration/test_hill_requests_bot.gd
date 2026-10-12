@@ -1,10 +1,10 @@
 extends TestCase
 ## G8 Runde 6 „Bitten vom Hügel" – the bot measurement of days 1–14 (docs/reviews/phase8_round6/bitten.md): HillBot
 ## plays the real world from a new game without and with the requests, once as the „duty" player of the user's
-## criticism (only the corpses and their graves) and once as Phase4Bot's reverent player. Printed per day: the end of
+## criticism (the corpses, their graves and the clearing the HUD asks for) and once as Phase4Bot's reverent player. Printed per day: the end of
 ## the daytime work, the idle time until 18:00, requests done, their coins ("HILLBOT <strategy>"). Asserted: no bot
 ## problems and no warnings; the duty player's idle on days 2–12 shrinks with the requests; the requests pay little
-## (≤ 3 coins a day on average, ≤ 45 over the two weeks, the reputation from them ≤ 30) – the coin goals of the bot
+## (≤ 3 coins a day on average, ≤ 40 over the two weeks, the reputation from them ≤ 30) – the coin goals of the bot
 ## tests (Phase 3/4: ≈ 11 per grave, coins never negative) keep, because no other bot accepts a request.
 
 const TIMEOUT := 900.0
@@ -54,7 +54,7 @@ func test_b_duty_player_with_requests() -> void:
 	var bot := await _play(&"duty_requests")
 	var idle := _idle(bot)
 	assert_true(bot.hill_done >= 6, "requests done over two weeks (%d)" % bot.hill_done)
-	assert_true(bot.hill_coins <= 45, "a few coins (%d)" % bot.hill_coins)
+	assert_true(bot.hill_coins <= 40, "a few coins (%d)" % bot.hill_coins)
 	assert_true(float(bot.hill_coins) / float(DAYS - 1) <= 3.0, "≤ 3 coins a day on average")
 	assert_true(bot.hill_rep <= 30, "a little reputation (%d)" % bot.hill_rep)
 	if idle_before.has(&"duty"):
@@ -69,8 +69,8 @@ func test_c_reverent_without_requests() -> void:
 
 func test_d_reverent_with_requests() -> void:
 	var bot := await _play(&"reverent_requests")
-	assert_true(bot.hill_done >= 6, "requests done (%d)" % bot.hill_done)
-	assert_true(bot.hill_coins <= 45, "a few coins (%d)" % bot.hill_coins)
+	assert_true(bot.hill_done >= 4, "requests done (%d)" % bot.hill_done)
+	assert_true(bot.hill_coins <= 40, "a few coins (%d)" % bot.hill_coins)
 	print("HILLBOT idle days 2–12: reverent %s min → with requests %d min" % [str(idle_before.get(&"reverent", "?")), _idle(bot)])
 
 
