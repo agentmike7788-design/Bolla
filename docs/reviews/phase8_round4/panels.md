@@ -99,7 +99,7 @@ Spalte „Arbeit bei offenem Panel": Läuft eine zeitgesteuerte Arbeit des Toten
   - nach dem Ende versiegelt, Fokus im Panel, Mausklick auf das Stück
   - Esc zurück zur ebenfalls angedockten ersten Karte
 - **`test_ui_phase3.gd::test_workbench_groups_and_decor_hint`:** Die Zeile des Rezepts wird jetzt über den nächsten `PanelContainer` gesucht, weil der Knopf in der neuen Zeile tiefer liegt.
-- **Volle Suite:** siehe QA-Protokoll in `docs/QUALITY_GATE_STATUS.md`.
+- **Volle Suite:** 2979/2979 grün.
 
 ## Offen
 
