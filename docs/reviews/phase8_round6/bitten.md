@@ -153,7 +153,7 @@ Aufnahme: `GODOT=… tools/godot_run.sh --resolution 1280x720 -s res://src/world
 | `merkbuch.jpg` / `merkbuch_web.jpg` | der Merkbuch-Reiter „Bitten“ |
 | `erfuellt.jpg` / `erfuellt_web.jpg` | Unkraut am Tor gejätet: Dankesnotiz von Martha Kehr und „Bitte erfüllt: Unkraut am Tor – 2 Münzen · Ruf +1“, Münzen 11 → 13 |
 
-## Tests
+## Tests (volle Suite 3016/3016 grün)
 
 - `tests/unit/test_hill_rules.gd`: Config, Plätze/Grenzen vor und nach dem Dorf, Angebotsbedingungen je Art, deterministische Auswahl, Frist, Erfüllungsprüfungen, Lohnwörter. Für den Pool: Größe, Arten, Geber, kleine Werte, Lösbarkeit mit den frühen Mitteln, Texte.
 - `tests/integration/test_hill_requests.gd` (echte Welt):
