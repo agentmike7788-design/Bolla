@@ -170,7 +170,7 @@ Hinweis zum Wundarzt-Bild: Die Raumkamera folgt dem Totengräber. Am Tresen steh
     - Esc während eines zweiten Gutachtens schließt
     - Vorlesung per Mausklick gehalten, ausgeblendet unter dem Schleier, zurück mit Ergebnis
   - `test_pult_docked_and_hidden_while_working` prüft zusätzlich den Abstand zum HUD.
-- **Volle Suite:** siehe QA-Protokoll in `docs/QUALITY_GATE_STATUS.md`.
+- **Volle Suite:** 2982/2982 grün.
 
 ## Vertrag
 
