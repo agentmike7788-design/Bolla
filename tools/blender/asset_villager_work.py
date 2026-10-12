@@ -116,7 +116,7 @@ def polish_mug():
 PR_FOLD = {"arm_r": (-30.0, -24.0, 18.0), "spine": (4.0, 0.0, 0.0), "head": (14.0, 0.0, 0.0)}
 # G8 Runde 5: he prays behind the altar facing the nave (the game camera) - the arms spread wider and higher, a V
 # that reads from the front (before: forward at the shoulders, read from behind)
-PR_ORANS = {"arm_r": (-96.0, 27.0, -32.0), "arm_l": (-78.0, -20.5, 49.0), "spine": (-4.0, 0.0, 0.0), "head": (-10.0, 0.0, 0.0)}
+PR_ORANS = {"arm_r": (-116.5, 11.0, -24.0), "arm_l": (-94.0, -6.0, 45.0), "spine": (-4.0, 0.0, 0.0), "head": (-10.0, 0.0, 0.0)}
 PR_BOW = {"arm_r": (-24.0, -22.0, 16.0), "arm_l": (8.0, 0.0, 0.0), "spine": (26.0, 0.0, 0.0), "head": (26.0, 0.0, 0.0),
           "hips": (4.0, 0.0, 0.0, 0.0, 0.02, -0.01)}
 

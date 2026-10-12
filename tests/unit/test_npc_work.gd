@@ -260,9 +260,9 @@ func test_work_clips_read_as_work() -> void:
 	assert_true(wa.hand(brook, "arm_r", 0.3).y < 0.5, "the cloth down on the stone")
 	var pr := _rig("ph_chr_v_priest")
 	var pray := pr.animation(&"pray_altar")
-	assert_true(pr.hand(pray, "arm_r", pray.length * 0.4).y > 1.4 and pr.hand(pray, "arm_l", pray.length * 0.4).y > 1.4,
-			"the arms rise above the altar (he faces the nave behind it)")
-	assert_true(pr.hand(pray, "arm_l", pray.length * 0.4).x - pr.hand(pray, "arm_r", pray.length * 0.4).x > 0.8,
+	assert_true(pr.hand(pray, "arm_r", pray.length * 0.4).y > 1.55 and pr.hand(pray, "arm_l", pray.length * 0.4).y > 1.55,
+			"the arms raised above the shoulders (he faces the nave behind the altar)")
+	assert_true(pr.hand(pray, "arm_l", pray.length * 0.4).x - pr.hand(pray, "arm_r", pray.length * 0.4).x > 0.7,
 			"… spread wide: a gesture that reads from the front")
 	assert_true(pr.global_pose(pray, pr.skeleton.find_bone("head"), pray.length * 0.8).basis.y.z > 0.25, "he bows deeply")
 
