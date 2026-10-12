@@ -110,8 +110,8 @@ def polish_mug():
 # --- Lenz: praying before the altar (90 frames = 3 s; he faces the altar) -------------------------------
 # His left forearm is modelled bent, the breviary pressed to the belly; the rest pose already holds it.
 PR_FOLD = {"arm_r": (-30.0, -24.0, 18.0), "spine": (4.0, 0.0, 0.0), "head": (14.0, 0.0, 0.0)}
-PR_ORANS = {"arm_r": (-62.0, 30.0, -8.0), "arm_l": (-48.0, -40.0, 10.0), "spine": (-4.0, 0.0, 0.0), "head": (-10.0, 0.0, 0.0)}
-PR_BOW = {"arm_r": (-24.0, -22.0, 16.0), "arm_l": (8.0, 0.0, 0.0), "spine": (20.0, 0.0, 0.0), "head": (24.0, 0.0, 0.0),
+PR_ORANS = {"arm_r": (-72.0, 34.0, -8.0), "arm_l": (-62.0, -46.0, 10.0), "spine": (-4.0, 0.0, 0.0), "head": (-10.0, 0.0, 0.0)}
+PR_BOW = {"arm_r": (-24.0, -22.0, 16.0), "arm_l": (8.0, 0.0, 0.0), "spine": (26.0, 0.0, 0.0), "head": (26.0, 0.0, 0.0),
           "hips": (4.0, 0.0, 0.0, 0.0, 0.02, -0.01)}
 
 

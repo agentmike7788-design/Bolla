@@ -26,7 +26,6 @@ const VILLAGE_ZOOM := 18.0
 ## sheet -> {npc (node name), day, minute, where: "village" | room id | "graveyard" | "crypt", stage}
 const SHEETS: Array[Dictionary] = [
 	{"name": "waescherin", "npc": "npc_washer", "day": 54, "minute": 480, "where": "village"},
-	{"name": "pfarrer_tuer", "npc": "npc_priest", "day": 54, "minute": 520, "where": "village"},
 	{"name": "buergermeister", "npc": "npc_mayor", "day": 54, "minute": 540, "where": "office"},
 	{"name": "wundarzt", "npc": "npc_surgeon", "day": 54, "minute": 570, "where": "surgery"},
 	{"name": "wirtin", "npc": "npc_innkeeper", "day": 54, "minute": 630, "where": "inn"},
@@ -35,6 +34,7 @@ const SHEETS: Array[Dictionary] = [
 	{"name": "pfarrer_altar", "npc": "npc_priest", "day": 54, "minute": 990, "where": "church"},
 	{"name": "jakob", "npc": "npc_apprentice_v", "day": 54, "minute": 1050, "where": "inn", "stage": "jakob"},
 	{"name": "osric", "npc": "npc_carter", "day": 54, "minute": 1120, "where": "graveyard"},
+	{"name": "pfarrer_tuer", "npc": "npc_priest", "day": 55, "minute": 500, "where": "village", "stage": "no_chatter"},
 	{"name": "waescherin_tisch", "npc": "npc_washer_g", "day": 55, "minute": 600, "where": "crypt", "stage": "wash"},
 ]
 
@@ -105,6 +105,13 @@ func _sheet_for(world: Node3D, sheet: Dictionary, close: Camera3D) -> String:
 	npc.call(&"refresh")
 	for i: int in 3:
 		await process_frame
+	if String(sheet.get("stage", "")) == "no_chatter":
+		# a chat at the work place (Lenz and Veit at the church door) runs in real time: played to its end first
+		var runner := world.find_child("ChatterRunner", true, false)
+		if runner != null:
+			for i: int in 8:
+				runner.call(&"advance", 60.0)
+				await process_frame
 	npc.call(&"refresh")
 	# the gravekeeper away from the work (camera side), the game camera on the figure
 	player.global_position = _w_stand(npc, AWAY, room)
@@ -126,13 +133,19 @@ func _sheet_for(world: Node3D, sheet: Dictionary, close: Camera3D) -> String:
 		var puffed := false
 		for f: float in MOMENTS:
 			anim.seek(anim.current_animation_length * f, true)
-			if smoke and f >= 0.5 and not puffed:
-				puffed = true
-				npc.call(&"_puff")
-				# the figure is held (process off) – its puffs still drift
-				var puffs := npc.get_node_or_null(^"PipeSmoke")
+			if smoke and f >= 0.5:
+				# the software renderer is far slower than the particles' clock: the puff is pre-run to its age at
+				# this moment of the cycle (from the first puff moment on) and held there for the frame
+				var puffs := npc.get_node_or_null(^"PipeSmoke") as CPUParticles3D
+				if puffs == null:
+					npc.call(&"_puff")
+					puffs = npc.get_node_or_null(^"PipeSmoke") as CPUParticles3D
 				if puffs != null:
 					puffs.process_mode = Node.PROCESS_MODE_ALWAYS
+					puffs.preprocess = maxf(0.05, (f - 0.48) * anim.current_animation_length)
+					puffs.speed_scale = 0.02
+					npc.call(&"_puff")
+				puffed = true
 			tiles.append(await _w_shoot(world, npc, rig, game_cam, close, smoke and f >= 0.5))
 		anim.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_IDLE
 		npc.process_mode = Node.PROCESS_MODE_INHERIT

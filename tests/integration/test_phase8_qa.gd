@@ -142,7 +142,9 @@ func test_qa8_06_liesel_washes_behind_the_crypt_table() -> void:
 	var spot := table.global_transform * Friendship.WASH_SPOT
 	assert_true(Vector2(npc.global_position.x - spot.x, npc.global_position.z - spot.z).length() < 0.05,
 			"behind the crypt table (%s, table %s)" % [npc.global_position, table.global_position])
-	assert_eq(npc.current_animation(), Friendship.WASH_ANIM, "washing")
+	# G8 Runde 4: her own work clip at the table (NpcWorkConfig washer_table → wash_body)
+	assert_eq(npc.current_animation(), NpcWorkConfig.runtime_clip(Friendship.WASH_WORK_KEY, Friendship.WASH_ANIM), "washing")
+	assert_eq(npc.current_animation(), &"wash_body", "washing the dead, not spinning")
 	TimeManager.set_time(55, 800)
 	npc.refresh()
 	assert_false(npc.is_present(), "gone again at 13:20")
