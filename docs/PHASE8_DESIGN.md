@@ -1367,6 +1367,12 @@ P6 besitzt alle Dialoge, Begegnungen und Zeitpläne; P2 die Wunsch-, Ansichts- u
 3. **E8-2 / B8-3 Münzen:** jetzt ausgeglichen – Pflegegeld nach Bedarf (ab 80 Münzen) und Gerede dorfweit (§2.2.4, §2.10).
 4. **B8-2 Vase:** Wunschtext und Wunschkarte nennen die Werkbank und Theres' Samen (§2.2.5).
 
+### G8 Runden 3–5 – Benutzerentscheidungen (bindend, 11.–12.10.2026)
+1. **Anlieferung:** Osric bringt jede neue Leiche sichtbar auf dem Holzkarren, lädt sie selbst auf die Bahre (real ca. 8 s; Aufbruch 06:44, an der Bahre 07:24, Lieferung weiterhin 07:40) und läutet danach die Torglocke („dass ich höre, wenn eine neue Leiche da ist“). Er bleibt bis 10:00 am Tor (Dialog, Leinen) – Entscheidung „1“.
+2. **Arbeiten am Leichentisch:** eigene Bewegungen je Handgriff, real mindestens ca. 3 s; das Auswahlfenster darf den Tisch nicht verdecken (rechts angedockt, während der Arbeit ausgeblendet).
+3. **Arbeitsfenster allgemein:** Präparierpult, Werkbank/Esse/Webstuhl, Steinmetzbank, Wundarzt/Vorlesung ebenso angedockt (unter der HUD-Leiste) und während der Arbeit ausgeblendet. Steinmetzbank mit Reitern; **Q/E wechseln im offenen Panel die Reiter** (bestätigt 12.10.2026: „Ja das ist in Ordnung“).
+4. **Dorfbewohner:** eigene Arbeitsbewegungen an ihren Arbeitsplätzen; beim Ansprechen unterbrechen sie und wenden sich zu.
+
 ## W0-Notizen (Lead, Welle 0 – verbindlich für W1)
 1. **v6-Fixtures** `tests/fixtures/saves_v6/*.json` wurden **vor** jeder Phase-8-Code-Änderung auf Stand **a499aa8** erzeugt (= G7 9353b74 + Gruft-Umbau 6da74c7/8be6c31 + `stench_exempt_min_level = 2`) – über `Phase7Bot` + echte Systeme (`make_v6_saves.gd` + `_driver.gd`, historisches Werkzeug; `-- --out=/abs/dir [--only=neighbor,anatomist,eve,founder,inn,crypt]`; auf einem Phase-8-Stand schriebe es v7). Eigener Commit **6866450**, zusammen mit `tests/fixtures/phase8/{layout_p7,village_layout_p7}.json` (= `data/world/{graveyard,village}_layout.json` von a499aa8, bytegleich). Die Endstände setzen `slot_p6_day40_reverent` mit denselben 13 Bot-Tagen fort wie `test_phase7_playthrough.gd`. Gemessen (sha256-Präfix):
    - *day53_neighbor* (`neighbor7`, 07:00 Tag 53, `170faf0a41ce`): Kapitel `name_in_village` an Tag 50, Gruft 3 · Kapelle 3 · Schuppen 2, 32 Gräber `MARKED`, Lindenacker voll (0 frei), **alle acht „Vertraut“** (Hagedorns Wert zählt mit), Ruf 100, Pietät 100, 11 Aufträge, **48 Münzen** (§1.4/§2.10 rechnen mit ≈ 60 – die Münzrechnung von W3 startet bei 48).
