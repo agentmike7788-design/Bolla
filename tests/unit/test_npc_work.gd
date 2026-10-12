@@ -20,7 +20,7 @@ const WORK := {
 	"ph_chr_v_innkeeper": {"clips": ["polish_mug"], "props": {"prop_mug": ["arm_l", ["polish_mug"], 0.2],
 			"prop_rag": ["arm_r", ["polish_mug"], 0.2]}},
 	"ph_chr_v_priest": {"clips": ["pray_altar", "read_breviary"], "props": {}},
-	"ph_chr_v_mayor": {"clips": ["desk_files", "proclaim"], "props": {"prop_stamp": ["arm_l", ["desk_files"], 0.7],
+	"ph_chr_v_mayor": {"clips": ["desk_files", "proclaim"], "props": {"prop_stamp": ["arm_r", ["desk_files"], 0.7],
 			"prop_notice": ["arm_l", ["proclaim"], 0.2]}},
 	"ph_chr_v_surgeon": {"clips": ["desk_write", "mix_vial"], "props": {"prop_quill": ["arm_r", ["desk_write"], 0.3],
 			"prop_vial": ["arm_r", ["mix_vial"], 0.5]}},
@@ -83,6 +83,11 @@ func test_work_config_in_data() -> void:
 	assert_eq(cfg.clip_for(&"apprentice_inn", &"idle"), &"sweep", "Jakob sweeps the inn of an evening")
 	assert_eq(cfg.clip_for(&"washer_table", &"work"), &"wash_body", "Liesel washes the dead at the table")
 	assert_eq(cfg.clip_for(&"nothing", &"idle"), &"idle", "unknown key → fallback")
+	assert_eq(cfg.spot_for(&"apprentice_inn", &"v_in_inn_jakob"), &"v_in_inn_sweep", "G8 Runde 5: Jakob sweeps where the camera sees it")
+	assert_eq(cfg.spot_for(&"washer_table", &"x"), &"x", "no spot → fallback")
+	assert_eq(NpcWorkConfig.runtime_spot(&"apprentice_inn", &""), &"v_in_inn_sweep", "static lookup through the Database")
+	assert_false(cfg.work_facing.has(&"v_in_church_altar") or cfg.work_facing.has(&"v_in_inn_jakob"),
+			"G8 Runde 5: Lenz and Jakob work with their spot's own facing (no back to the camera)")
 	assert_eq(NpcWorkConfig.runtime_clip(&"apprentice_inn", &"idle"), &"sweep", "static lookup through the Database")
 	var puffs := cfg.puffs(&"smoke")
 	assert_false(puffs.is_empty(), "Osric's pipe puffs")
@@ -119,10 +124,14 @@ func test_every_work_entry_has_its_own_clip() -> void:
 	# Quast: writing in the morning, the vials in the afternoon
 	var quast := _entries_at(&"surgeon", "v_in_surgery_desk")
 	assert_eq(quast.map(func(e: ScheduleEntry) -> StringName: return e.animation), [&"desk_write", &"mix_vial"], "Quast at his desk")
-	# Jakob: helping in the inn of an evening (data fallback schedule), talking on his day off
+	# Jakob: helping in the inn of an evening (data fallback schedule) – G8 Runde 5 at his sweeping spot – talking on
+	# his day off at his usual place
+	var sweeps := _entries_at(&"apprentice", String(cfg.spot_for(&"apprentice_inn", &"")))
+	assert_eq(sweeps.map(func(e: ScheduleEntry) -> Array: return [e.start_minute, e.animation, e.today_flag]),
+			[[JAKOB_WORK_MINUTE, &"sweep", &""]], "Jakob sweeps at v_in_inn_sweep from 17:00")
 	for e: ScheduleEntry in _entries_at(&"apprentice", "v_in_inn_jakob"):
 		if e.start_minute == JAKOB_WORK_MINUTE:
-			assert_eq(e.animation, &"sweep" if e.today_flag == &"" else &"talk", "Jakob 17:00 (%s)" % e.today_flag)
+			assert_eq([e.animation, e.today_flag], [&"talk", &"apprentice_off_day"], "Jakob 17:00 on his day off")
 	# every shop entry of a villager works (the peddler offers, a shop entry never just stands)
 	for npc_id: StringName in VILLAGER_MODEL:
 		var sched := Database.schedule(npc_id) as NpcSchedule
@@ -140,6 +149,7 @@ func test_runtime_work_clips_are_on_the_models() -> void:
 	assert_true(src.contains("NpcWorkConfig.runtime_clip(WASH_WORK_KEY"), "Friendship takes the wash clip from the data")
 	var app := FileAccess.get_file_as_string("res://src/systems/apprentice/apprentice.gd")
 	assert_true(app.contains("NpcWorkConfig.runtime_clip(V_WORK_KEY"), "Apprentice takes the inn clip from the data")
+	assert_true(app.contains("NpcWorkConfig.runtime_spot(V_WORK_KEY"), "… and the sweeping spot")
 
 
 func test_work_places_face_the_work() -> void:
@@ -225,15 +235,22 @@ func test_work_clips_read_as_work() -> void:
 	assert_true(vial.y > 1.3, "the vial up at the eye (%s)" % vial)
 	var bag := su.hand(su.animation(&"desk_write"), "arm_l", 0.9)
 	assert_true(absf(bag.z) < 0.25, "the case hangs plumb while he leans (%s)" % bag)
+	# G8 Runde 5: Fenner reaches well over his desk (its edge 0.24 m in front, the middle 0.6 m): the left hand on the
+	# file stack, the right brings the stamp down onto the sheet and up again
 	var my := _rig("ph_chr_v_mayor")
 	var files := my.animation(&"desk_files")
 	var low := INF
 	var high := -INF
+	var reach := {"arm_l": INF, "arm_r": INF}
 	for k: int in 30:
-		var h := my.hand(files, "arm_l", files.length * k / 30.0)
+		var h := my.hand(files, "arm_r", files.length * k / 30.0)
 		low = minf(low, h.y)
 		high = maxf(high, h.y)
-	assert_true(low < 0.92 and high > 1.15, "the stamp comes down onto the desk and up again (%.2f … %.2f)" % [low, high])
+		for arm: String in reach:
+			reach[arm] = minf(reach[arm], my.hand(files, arm, files.length * k / 30.0).z)
+	assert_true(low < 0.9 and low > 0.84 and high > 1.12, "the stamp comes down onto the desk and up again (%.2f … %.2f)" % [low, high])
+	for arm: String in reach:
+		assert_true(reach[arm] > 0.4, "%s always over the desk, not at its edge (%.2f m in front)" % [arm, reach[arm]])
 	var notice := my.hand(my.animation(&"proclaim"), "arm_l", 0.3)
 	assert_true(notice.y > 1.05 and notice.y < 1.3 and notice.z > 0.4, "the notice held at the chest (%s)" % notice)
 	var wa := _rig("ph_chr_v_washer")
@@ -243,7 +260,10 @@ func test_work_clips_read_as_work() -> void:
 	assert_true(wa.hand(brook, "arm_r", 0.3).y < 0.5, "the cloth down on the stone")
 	var pr := _rig("ph_chr_v_priest")
 	var pray := pr.animation(&"pray_altar")
-	assert_true(pr.hand(pray, "arm_r", pray.length * 0.4).y > 1.1, "the arms rise before the altar")
+	assert_true(pr.hand(pray, "arm_r", pray.length * 0.4).y > 1.4 and pr.hand(pray, "arm_l", pray.length * 0.4).y > 1.4,
+			"the arms rise above the altar (he faces the nave behind it)")
+	assert_true(pr.hand(pray, "arm_l", pray.length * 0.4).x - pr.hand(pray, "arm_r", pray.length * 0.4).x > 0.8,
+			"… spread wide: a gesture that reads from the front")
 	assert_true(pr.global_pose(pray, pr.skeleton.find_bone("head"), pray.length * 0.8).basis.y.z > 0.25, "he bows deeply")
 
 
@@ -281,6 +301,81 @@ func test_props_on_their_bones_show_with_their_clip_and_sit_in_the_fist() -> voi
 		assert_true(att != null and att.bone_name == "head", "pipe_smoke follows the head")
 		var p := osric.skeleton.get_bone_global_rest(osric.skeleton.find_bone("head")) * pipe.transform.origin
 		assert_true(p.y > 1.2 and p.y < 1.5 and p.z > 0.15, "at the pipe bowl in front of his beard (%s)" % p)
+
+
+## G8 Runde 5: Fenner's staff is the child mesh prop_staff in his right fist (every clip but desk_files: hide_with),
+## while he works it leans against the end of his desk (prop_staff_rest on the root, show_with desk_files): the
+## ferrule on the floor beyond the desk end (0.7 m to his right), the shaft over the edge of the top (0.79 m).
+func test_fenner_leans_his_staff_against_the_desk() -> void:
+	var r := _rig("ph_chr_v_mayor")
+	var staff := r.scene.find_child("prop_staff", true, false) as MeshInstance3D
+	var rest := r.scene.find_child("prop_staff_rest", true, false) as MeshInstance3D
+	assert_not_null(staff, "prop_staff")
+	assert_not_null(rest, "prop_staff_rest")
+	if staff == null or rest == null:
+		return
+	assert_eq((staff.get_parent() as BoneAttachment3D).bone_name, "arm_r", "the staff in the right fist")
+	assert_eq(String((staff.get_meta("extras") as Dictionary).get("hide_with", "")), "desk_files", "laid aside at the desk only")
+	assert_false((staff.get_meta("extras") as Dictionary).has("show_with"), "shown in every other clip")
+	assert_eq((rest.get_parent() as BoneAttachment3D).bone_name, "root", "the leaning staff stays where it is")
+	assert_eq(Array(_show_with(rest)), ["desk_files"], "… shown while he works at the desk")
+	var hand := r.hand(r.animation(&"idle"), "arm_r", 0.0)
+	var xf := r.global_rest(r.skeleton.find_bone("arm_r")) * staff.transform
+	var verts: PackedVector3Array = staff.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var lo := Vector3.INF
+	var hi := -Vector3.INF
+	for v: Vector3 in verts:
+		lo = lo.min(xf * v)
+		hi = hi.max(xf * v)
+	assert_true(lo.y < 0.03 and hi.y > 1.3, "the staff from the floor up to the knob (%.2f … %.2f)" % [lo.y, hi.y])
+	assert_true(Vector2(hand.x, hand.z).distance_to(Vector2((lo.x + hi.x) * 0.5, (lo.z + hi.z) * 0.5)) < 0.08, "in the right hand")
+	xf = r.global_rest(r.skeleton.find_bone("root")) * rest.transform
+	verts = rest.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	lo = Vector3.INF
+	hi = -Vector3.INF
+	for v: Vector3 in verts:
+		lo = lo.min(xf * v)
+		hi = hi.max(xf * v)
+	assert_true(absf(lo.y) < 0.03 and hi.y > 1.2, "it stands on the floor (%.2f … %.2f)" % [lo.y, hi.y])
+	assert_true(lo.x < -0.9 and hi.x > -0.6 and hi.x < -0.45, "beside the desk end, leaning over its top (x %.2f … %.2f)" % [lo.x, hi.x])
+	assert_true(lo.z > 0.55 and hi.z < 0.8, "at the desk, beside it (z %.2f … %.2f)" % [lo.z, hi.z])
+
+
+## G8 Runde 5: the village church's altar (ph_int_altar_church) – Lenz stands behind it facing the nave: its cross
+## stands at the front edge (towards the people; before, at the back, it covered his face from the game camera),
+## the book lies open towards him; the chapel keeps ph_int_altar unchanged (cross at the back).
+func test_church_altar_faces_the_nave() -> void:
+	var tops := {}
+	for name: String in ["ph_int_altar", "ph_int_altar_church"]:
+		var scene := (load("res://assets/models/interior/%s.glb" % name) as PackedScene).instantiate() as Node3D
+		var z := 0.0
+		var n := 0
+		for m: Node in scene.find_children("*", "MeshInstance3D", true, false):
+			if String(m.name).begins_with("flame"):
+				continue
+			var xf := Transform3D.IDENTITY
+			var up: Node = m
+			while up != scene and up is Node3D:
+				xf = (up as Node3D).transform * xf
+				up = up.get_parent()
+			var verts: PackedVector3Array = (m as MeshInstance3D).mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+			for v: Vector3 in verts:
+				var w := xf * v
+				if w.y > 1.65:     # only the top of the cross reaches this high (the candles end at 1.61 m)
+					z += w.z
+					n += 1
+		tops[name] = z / maxf(1.0, n)
+		assert_true(n > 0, name + ": the cross")
+		scene.free()
+	assert_true(tops["ph_int_altar"] < -0.2, "the chapel altar: cross at the back (z %.2f)" % tops["ph_int_altar"])
+	assert_true(tops["ph_int_altar_church"] > 0.1, "the church altar: cross at the front edge (z %.2f)" % tops["ph_int_altar_church"])
+	var church: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/world/interiors/church_layout.json"))
+	for it: Dictionary in church.items:
+		if it.get("id", "") == "Altar":
+			assert_eq(it.asset, "ph_int_altar_church", "the church uses it")
+	var wp: Array = church.waypoints.v_in_church_altar
+	assert_eq(wp.size(), 4, "Lenz's spot carries the floor height of the chancel")
+	assert_almost(float(wp[3]), 0.18, 0.001, "on the chancel")
 
 
 func test_budgets() -> void:

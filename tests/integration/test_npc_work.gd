@@ -15,13 +15,16 @@ const NEAR := Vector3(0.4, 0.0, 1.5)
 ## npc_id, model, region, minute, waypoint, its layout facing (deg), clip, working heading (deg), a prop shown with it
 const CASES := [
 	[&"innkeeper", "ph_chr_v_innkeeper", &"village", 630, &"v_in_inn_bar", 0.0, &"polish_mug", 0.0, "prop_mug"],
-	[&"priest", "ph_chr_v_priest", &"village", 990, &"v_in_church_altar", 0.0, &"pray_altar", 180.0, ""],
+	# G8 Runde 5: Lenz behind the altar facing the nave (before: 180°, his back to the camera)
+	[&"priest", "ph_chr_v_priest", &"village", 990, &"v_in_church_altar", 0.0, &"pray_altar", 0.0, ""],
 	[&"priest", "ph_chr_v_priest", &"village", 520, &"v_church_door", 0.0, &"read_breviary", 0.0, ""],
 	[&"mayor", "ph_chr_v_mayor", &"village", 600, &"v_in_office_desk", 0.0, &"desk_files", 0.0, "prop_stamp"],
 	[&"mayor", "ph_chr_v_mayor", &"village", 760, &"v_board", 0.0, &"proclaim", 0.0, "prop_notice"],
 	[&"surgeon", "ph_chr_v_surgeon", &"village", 570, &"v_in_surgery_desk", 90.0, &"desk_write", 90.0, "prop_quill"],
 	[&"surgeon", "ph_chr_v_surgeon", &"village", 900, &"v_in_surgery_desk", 90.0, &"mix_vial", 90.0, "prop_vial"],
 	[&"washer", "ph_chr_v_washer", &"village", 480, &"v_wash", 120.0, &"wash_brook", -90.0, "prop_washcloth"],
+	# G8 Runde 5: Jakob sweeps at v_in_inn_sweep (data fallback schedule), with the spot's own facing
+	[&"apprentice", "ph_chr_apprentice", &"village", 1050, &"v_in_inn_sweep", 80.0, &"sweep", 80.0, "broom"],
 	[&"carter", "ph_chr_carter", &"graveyard", 1115, &"evening_spot", 15.0, &"smoke", 15.0, ""],
 ]
 
@@ -56,6 +59,25 @@ func after_each() -> void:
 func test_villagers_work_face_their_work_and_pause_for_the_gravekeeper() -> void:
 	for c: Array in CASES:
 		await _case(c)
+
+
+## G8 Runde 5: Fenner lays his staff aside while he works at the desk (prop_staff_rest shown, prop_staff in the hand
+## hidden) and takes it up again when the gravekeeper steps up.
+func test_fenner_takes_up_his_staff_for_the_gravekeeper() -> void:
+	var npc := await _setup(CASES[3])
+	assert_eq(npc.current_animation(), &"desk_files")
+	assert_true(npc.prop_shown("prop_staff_rest") and not npc.prop_shown("prop_staff"), "at work: the staff leans at the desk")
+	player.global_position = npc.global_position + NEAR
+	npc.refresh()
+	assert_true(npc.prop_shown("prop_staff") and not npc.prop_shown("prop_staff_rest"), "attending: the staff in his hand")
+	player.global_position = npc.global_position + FAR
+	npc.refresh()
+	assert_true(npc.prop_shown("prop_staff_rest") and not npc.prop_shown("prop_staff"), "back at work")
+	world.free()
+	npc = await _setup(CASES[4])
+	assert_eq(npc.current_animation(), &"proclaim")
+	assert_true(npc.prop_shown("prop_staff") and not npc.prop_shown("prop_staff_rest"), "at the notice board the staff stays in his hand")
+	world.free()
 
 
 func test_osric_puffs_smoke_from_the_pipe() -> void:

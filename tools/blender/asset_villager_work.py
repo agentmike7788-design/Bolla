@@ -180,7 +180,7 @@ def proclaim():
     def speak(t: float) -> dict:
         w = _window(t, 0.08, 0.38)
         return {"head": (2.0 * w * math.sin(rig.TAU * t * 6.0), 0.0, 3.0 * w * math.sin(rig.TAU * t * 2.0)),
-                "arm_l": (2.0 * w * math.sin(rig.TAU * t * 3.0), 0.0, 0.0)}
+                "arm_l": (3.5 * w * math.sin(rig.TAU * t * 3.0), 0.0, 0.0)}   # G8 R5: a little livelier
     return _loop(keys, speak, 0.9)
 
 
