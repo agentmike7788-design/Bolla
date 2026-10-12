@@ -6,7 +6,7 @@ const CORPSE_TABLES_FIXTURE := "res://tests/fixtures/corpse_tables_fixture.tres"
 const CORPSE_TABLES_DATA := "res://data/corpses/corpse_tables.tres"
 const WAYPOINTS: PackedStringArray = ["road_end", "road_mid", "gate_outside", "dropoff", "evening_spot"]
 ## Carter model animations (§8, ph_chr_carter).
-const CARTER_ANIMATIONS: Array[StringName] = [&"idle", &"walk", &"push_cart", &"talk"]
+const CARTER_ANIMATIONS: Array[StringName] = [&"idle", &"walk", &"push_cart", &"talk", &"smoke"]   # G8 Runde 4: + smoke (evening pipe)
 
 
 func _entry(start: int, travel: int = 0, activity: StringName = &"idle") -> ScheduleEntry:
@@ -284,7 +284,7 @@ func test_carter_specific_entries() -> void:
 	assert_eq(ScheduleResolver.arrival_minute(evening_in), 1110)
 	var smoke := _carter_entry(1110)
 	assert_eq(smoke.path, PackedStringArray(["evening_spot"]))
-	assert_eq(smoke.animation, &"talk")
+	assert_eq(smoke.animation, &"smoke", "G8 Runde 4: the evening pipe has its own clip")
 	var evening_out := _carter_entry(1260)
 	assert_eq(evening_out.path, PackedStringArray(["evening_spot", "road_mid", "road_end"]))
 	assert_eq(evening_out.travel_minutes, 30)

@@ -72,6 +72,7 @@ const V_ROUTE_IN: PackedStringArray = ["v_road_in", "v_bridge", "v_inn_door", "v
 const V_BREAKFAST := 450
 const V_LEAVE := 465
 const V_EVENING := 1020
+const V_WORK_KEY := &"apprentice_inn"
 const V_NIGHT := 1260
 const DIALOGUE := &"v_apprentice"
 const TASK_FIRST_DAY := &"apprentice_first_day"
@@ -482,7 +483,8 @@ func village_schedule(day: int) -> NpcSchedule:
 		var back := _known(V_ROUTE_IN, world)
 		if back.size() >= 2:
 			entries.append(ScheduleBuilder.walk(StringName(back[0]), back.slice(1), V_EVENING - 15, &"village", world))
-		entries.append(ScheduleBuilder.stay(StringName(V_INN), V_EVENING, &"idle", DIALOGUE))
+		# G8 Runde 4: helping Rosine of an evening = his work clip in the inn (NpcWorkConfig: apprentice_inn → sweep).
+		entries.append(ScheduleBuilder.stay(StringName(V_INN), V_EVENING, NpcWorkConfig.runtime_clip(V_WORK_KEY, &"idle"), DIALOGUE))
 	else:
 		entries.append(ScheduleBuilder.stay(StringName(V_INN), V_BREAKFAST, &"idle", DIALOGUE))
 	entries.append(ScheduleBuilder.stay(StringName(V_INN), V_NIGHT, &"idle", &"", false))

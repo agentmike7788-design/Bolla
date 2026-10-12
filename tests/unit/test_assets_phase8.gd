@@ -72,6 +72,10 @@ const REEXPORT := {
 		"walk": "dc57382cafc8a07c"}, ["idle_low", "lantern_walk", "lantern_idle"]],
 }
 const GRAVEKEEPER_MESH := "2b30f35eb0a71d85"
+## G8 Runde 4 (asset_villager_work.py): the work clips added to the re-export.
+const WORK_R4 := {"ph_chr_v_innkeeper": ["polish_mug"], "ph_chr_v_priest": ["pray_altar", "read_breviary"],
+		"ph_chr_v_mayor": ["desk_files", "proclaim"], "ph_chr_v_surgeon": ["desk_write", "mix_vial"],
+		"ph_chr_v_washer": ["wash_brook", "wash_body"]}
 const GRAVEKEEPER_NEW: Array[String] = ["kneel_place", "water", "sit_bench", "dance"]
 
 ## props: name -> [category, min size, max size, triangle budget (§8.4)]
@@ -384,6 +388,8 @@ func test_villagers_reexport_keeps_mesh_and_old_clips() -> void:
 			assert_eq(_anim_hash(r.animation(clip)), String(old[clip]), "%s/%s unchanged" % [c, clip])
 		var want: Array = old.keys()
 		want.append_array(REEXPORT[c][2])
+		# G8 Runde 4: the work clips come on top (test_npc_work.gd checks them; body and old clips stay hash-equal)
+		want.append_array(WORK_R4.get(c, []))
 		assert_eq(_clips(c), _sorted(want), c + ": Phase-7 clips + the Phase-8 clips")
 		_check_clips(c, _sorted(REEXPORT[c][2]))
 		var lan := _child(r, "lantern_prop")

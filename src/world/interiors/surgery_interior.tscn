@@ -254,7 +254,7 @@ shape = SubResource("BoxShape3D_t4smr")
 [node name="Waypoints" type="Node3D" parent="." unique_id=1477287530]
 
 [node name="v_in_surgery_desk" type="Marker3D" parent="Waypoints" unique_id=147619951]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 1.75, 0, -1.2)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 2.02, 0, -1.2)
 metadata/facing = true
 
 [node name="v_in_surgery_lectern" type="Marker3D" parent="Waypoints" unique_id=1231279786]

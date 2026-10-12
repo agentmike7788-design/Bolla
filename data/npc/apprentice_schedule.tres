@@ -37,7 +37,7 @@ region = &"village"
 [sub_resource type="Resource" id="p8_apprentice_05"]
 script = ExtResource("1")
 start_minute = 1020
-animation = &"talk"
+animation = &"sweep"
 path = PackedStringArray("v_in_inn_jakob")
 dialogue_id = &"v_apprentice"
 region = &"village"

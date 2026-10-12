@@ -50,7 +50,10 @@ const MORNING_MINUTE := 360
 ## saved: rebuilt from the wash + clock on a load), not on the Lichtgang (the procession has that figure).
 const WASHER_NPC := &"npc_washer_g"
 const WASHER_DIALOGUE := &"v_washer"
+## G8 Runde 4: her work clip at the table comes from NpcWorkConfig.runtime_clips (&"washer_table" → wash_body);
+## this is the fallback for a model without it (the old hand-spinning „work").
 const WASH_ANIM := &"work"
+const WASH_WORK_KEY := &"washer_table"
 const WASH_ROOM := &"crypt"
 const WASH_DOOR := "tp_crypt"
 const WASH_ROUTE: PackedStringArray = ["road_end", "road_mid", "gate_outside", "gate_inside"]
@@ -450,7 +453,7 @@ func _wash_entries() -> Array[ScheduleEntry]:
 	var step := ScheduleBuilder.stay(StringName(spot), start - 1, &"idle", &"", false)
 	step.path = PackedStringArray([ScheduleBuilder.point_id(table.global_transform * WASH_FROM), spot])
 	out.append(step)
-	out.append(ScheduleBuilder.stay(StringName(spot), start, WASH_ANIM, WASHER_DIALOGUE))
+	out.append(ScheduleBuilder.stay(StringName(spot), start, NpcWorkConfig.runtime_clip(WASH_WORK_KEY, WASH_ANIM), WASHER_DIALOGUE))
 	out.append(ScheduleBuilder.stay(StringName(WASH_DOOR), end, &"idle", &"", false))
 	var back := route.duplicate()
 	back.reverse()

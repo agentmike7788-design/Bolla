@@ -64,9 +64,10 @@ func on_ground(pos: Vector3) -> Vector3:
 	return pos
 
 
-## Figure yaw relative to the root: towards a player closer than face_player_range while
-## standing at a dialogue spot (`standing_talkable`), else 0.
-func look_yaw(heading: float, standing_talkable: bool) -> float:
+## Figure yaw relative to the root: towards a player closer than face_player_range (or `within` m when >= 0,
+## G8 Runde 4: the shorter range of a figure at work) while standing at a dialogue spot (`standing_talkable`),
+## else 0.
+func look_yaw(heading: float, standing_talkable: bool, within: float = -1.0) -> float:
 	if not standing_talkable:
 		return 0.0
 	var player := _npc.get_tree().get_first_node_in_group(&"player") as Node3D
@@ -74,9 +75,21 @@ func look_yaw(heading: float, standing_talkable: bool) -> float:
 		return 0.0
 	var to := player.global_position - _npc.global_position
 	to.y = 0.0
-	if to.length_squared() <= EPSILON or to.length() >= _npc.face_player_range:
+	if to.length_squared() <= EPSILON or to.length() >= (within if within >= 0.0 else _npc.face_player_range):
 		return 0.0
 	return wrapf(atan2(to.x, to.z) - heading, -PI, PI)
+
+
+## G8 Runde 4: a player stands closer than `distance` (m, on the ground plane).
+func player_within(distance: float) -> bool:
+	if not _npc.is_inside_tree():
+		return false
+	var player := _npc.get_tree().get_first_node_in_group(&"player") as Node3D
+	if player == null:
+		return false
+	var to := player.global_position - _npc.global_position
+	to.y = 0.0
+	return to.length() < distance
 
 
 ## Standing at `e`: the waypoint's facing (layout waypoint_facing), else the arrival heading,

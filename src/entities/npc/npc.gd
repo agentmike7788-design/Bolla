@@ -154,6 +154,15 @@ var _chatter_target: Node3D
 ## Mood cache (NpcLife.mood is derived; asked once per game hour): [hour key, low].
 var _mood_key: int = -1
 var _mood_low: bool = false
+## G8 Runde 4 (NpcWorkConfig, null = data/config/npc_work_config.tres): the figure works (its entry's clip is a work
+## clip) and is attending the gravekeeper (he stands close or talks to it: the work pauses); the dialogue it was
+## asked for is open; the pipe-smoke puffs and the cycle position they were last checked at.
+var work_config: NpcWorkConfig
+var _working: bool = false
+var _attending: bool = false
+var _in_dialogue: bool = false
+var _puffs: CPUParticles3D
+var _puff_pos: float = -1.0
 
 
 func _init() -> void:
@@ -198,6 +207,7 @@ func _ready() -> void:
 	EventBus.delivery_skipped.connect(_on_cart_load_changed.unbind(2))
 	# G8 Runde 3 (QA Lieferung): a time skip (debug „time", sleeping, waiting) places the carter for the new clock at once.
 	EventBus.time_skipped.connect(_on_time_skipped)
+	EventBus.dialogue_ended.connect(_on_dialogue_ended.unbind(1))
 	refresh()
 
 
@@ -237,7 +247,21 @@ func get_interaction_prompt(_player: Player) -> String:
 ## Talking is allowed while carrying a corpse (§3.4).
 func interact(player: Player) -> void:
 	if can_interact(player):
+		# G8 Runde 4: a working figure puts the work down and talks (until EventBus.dialogue_ended).
+		_in_dialogue = true
 		EventBus.dialogue_requested.emit(entry.dialogue_id, self)
+		if is_inside_tree():
+			refresh()
+
+
+## G8 Runde 4: the figure stands at a work place and plays a work clip (NpcWorkConfig.work_clips).
+func is_working() -> bool:
+	return _working
+
+
+## G8 Runde 4: the work pauses for the gravekeeper (he is close or talks to the figure).
+func is_attending() -> bool:
+	return _attending
 
 
 func first_name() -> String:
@@ -459,7 +483,16 @@ func _update(delta: float) -> void:
 		heading = atan2(dir.x, dir.z)
 	elif not is_walking():
 		heading = _pose.waypoint_yaw(entry, heading)
-	var look := _pose.look_yaw(heading, not is_walking() and _talkable)
+	# G8 Runde 4: at a work place the figure keeps to its work (facing the counter, altar, desk) until the gravekeeper
+	# comes close (NpcWorkConfig.pause_range) or talks to it; then it stops and turns to him.
+	var work_cfg := _work_config()
+	_working = not is_walking() and _held_entry == null and work_cfg.is_work(entry.animation)
+	if _working and not entry.path.is_empty():
+		var work_yaw := work_cfg.facing_at(StringName(entry.path[entry.path.size() - 1]))
+		if not is_nan(work_yaw):
+			heading = work_yaw
+	var look := _pose.look_yaw(heading, not is_walking() and _talkable, work_cfg.pause_range if _working else -1.0)
+	_attending = _working and _talkable and (_in_dialogue or not is_zero_approx(look) or _pose.player_within(work_cfg.pause_range))
 	var partner := chatter_target()
 	if partner != null and not is_walking():
 		var to := _flat(partner.global_position - global_position)
@@ -516,6 +549,8 @@ func _update_animation() -> void:
 		designed = push_anim_speed if entry.with_cart else (walk_anim_speed if String(wanted).ends_with("walk") else 0.0)
 	elif chatter_target() != null:
 		wanted = ANIM_TALK
+	elif _attending:
+		wanted = _work_config().talk_clip if _in_dialogue else _work_config().pause_clip
 	elif wanted == ANIM_IDLE and _is_low():
 		wanted = ANIM_IDLE_LOW
 	if wanted != _current_anim or not _props.is_empty():
@@ -532,7 +567,9 @@ func _update_animation() -> void:
 		return
 	if _anim.current_animation != wanted or not _anim.is_playing():
 		_anim.play(wanted, anim_blend)
+		_puff_pos = -1.0
 	_anim.speed_scale = ground_speed() / designed if designed > 0.0 else 1.0
+	_check_puffs(wanted)
 
 
 ## W-Welt (W2): a walk entry may name its gait – a *_walk cycle (lantern_walk, carry_can_walk), run (Lambert's
@@ -1011,6 +1048,100 @@ func _make_lantern() -> void:
 	_lantern.set_meta(&"base_energy", LANTERN_ENERGY)
 	_lantern.add_to_group(&"warm_lights", true)
 	parent.add_child(_lantern)
+
+
+# --- G8 Runde 4: work at the work place ------------------------------------------------------
+
+func _work_config() -> NpcWorkConfig:
+	if work_config == null:
+		work_config = Database.config(&"npc_work_config") as NpcWorkConfig
+		if work_config == null:
+			work_config = NpcWorkConfig.new()
+	return work_config
+
+
+## EventBus.dialogue_ended: back to the work (the gravekeeper may still stand close – then the figure waits).
+func _on_dialogue_ended() -> void:
+	if not _in_dialogue:
+		return
+	_in_dialogue = false
+	if is_node_ready() and is_inside_tree():
+		refresh()
+
+
+## Pipe smoke (NpcWorkConfig.puff_clips): when the clip's cycle passes one of its puff moments a few soft puffs leave
+## the marker at the pipe bowl and drift up (one-shot burst in world space; no nodes while nobody smokes).
+func _check_puffs(clip: StringName) -> void:
+	var marks := _work_config().puffs(clip)
+	if marks.is_empty() or _anim == null or not _anim.is_playing() or _anim.current_animation != clip or _culled:
+		_puff_pos = -1.0
+		return
+	var length := _anim.current_animation_length
+	if length <= 0.0:
+		return
+	var pos := _anim.current_animation_position / length
+	var before := _puff_pos
+	_puff_pos = pos
+	if before < 0.0:
+		return
+	for m: float in marks:
+		if (pos >= before and before < m and m <= pos) or (pos < before and (m > before or m <= pos)):
+			_puff()
+			return
+
+
+func _puff() -> void:
+	if not is_inside_tree():
+		return
+	var cfg := _work_config()
+	if _puffs == null:
+		_puffs = _make_puffs(cfg)
+		add_child(_puffs)
+	var marker := _model.find_child(cfg.puff_marker, true, false) as Node3D if _model != null else null
+	_puffs.global_position = marker.global_position if marker != null else global_transform * cfg.puff_fallback
+	_puffs.restart()
+
+
+static func _make_puffs(cfg: NpcWorkConfig) -> CPUParticles3D:
+	var p := CPUParticles3D.new()
+	p.name = "PipeSmoke"
+	p.top_level = true
+	p.one_shot = true
+	p.emitting = false
+	p.amount = maxi(1, cfg.puff_amount)
+	p.lifetime = cfg.puff_lifetime
+	p.explosiveness = 0.55
+	p.direction = Vector3.UP
+	p.spread = cfg.puff_spread_deg
+	p.initial_velocity_min = cfg.puff_speed * 0.5
+	p.initial_velocity_max = cfg.puff_speed
+	p.gravity = Vector3(0.0, cfg.puff_rise, 0.0)
+	p.damping_min = 0.1
+	p.damping_max = 0.2
+	p.scale_amount_min = 0.7
+	p.scale_amount_max = 1.3
+	var grow := Curve.new()
+	grow.add_point(Vector2(0.0, 0.5))
+	grow.add_point(Vector2(1.0, 2.2))
+	p.scale_amount_curve = grow
+	var fade := Gradient.new()
+	fade.set_color(0, cfg.puff_color)
+	fade.set_color(1, Color(cfg.puff_color, 0.0))
+	p.color_ramp = fade
+	var mesh := SphereMesh.new()
+	mesh.radius = cfg.puff_size
+	mesh.height = cfg.puff_size * 2.0
+	mesh.radial_segments = 8
+	mesh.rings = 4
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color.WHITE
+	mat.vertex_color_use_as_albedo = true
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.roughness = 1.0
+	mesh.material = mat
+	p.mesh = mesh
+	p.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return p
 
 
 # --- lookups -------------------------------------------------------------------------------
