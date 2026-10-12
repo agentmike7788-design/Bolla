@@ -10,6 +10,8 @@ extends UIPanel
 ## missing → dimmed with „Es fehlt: …" (Buildings.upgrade_block_reason via the site). From shed 2
 ## „Fehlendes aus dem Schuppen holen (10 Min)" (site.request_fetch), from shed 3 „Überschuss
 ## einlagern". Building closes the panel and calls site.request_upgrade().
+## G8 Runde 4 (Prüfung der Arbeits-Panels): „Fehlendes holen" runs while the panel is open – meanwhile it is hidden
+## (UIPanel.hide_while_working, the HUD's action bar shows the work) and comes back afterwards.
 
 const COST_COLUMNS := 2
 const STATE_STYLES: Dictionary[StringName, StringName] = {&"done": &"LevelCardDone", &"next": &"LevelCardNext", &"later": &"LevelCardLater"}
@@ -39,6 +41,11 @@ var cards: Array[Dictionary] = []
 
 var _inventory: Inventory
 var _shed: Inventory
+
+
+func _init() -> void:
+	super._init()
+	hide_while_working = true
 
 
 func _build() -> void:

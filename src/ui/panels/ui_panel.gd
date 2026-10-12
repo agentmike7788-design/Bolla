@@ -18,6 +18,10 @@ const TEXT_CLOSE_X := "✕"
 const TEXT_ACTION_RUNNING := "%s …"
 ## Label when the panel opens while an action (started elsewhere) is still running.
 const TEXT_BUSY := "Arbeit läuft …"
+## G8 Runde 4: free margin (px) above and below a docked panel (UIRoot.DOCK_MARGIN) and the least height of its
+## scrolling body (fit_dock_scroll).
+const DOCK_MARGIN := 24.0
+const DOCK_BODY_MIN := 160.0
 
 var panel_id: StringName = &""
 var context: Dictionary = {}
@@ -29,6 +33,7 @@ var action_running: bool = false
 ## with the focus on its first button. Set by the panel (CorpseExamPanel).
 var hide_while_working: bool = false
 ## G8 Runde 4: UIRoot docks the panel at the right edge (UIKit.docked_right) and leaves the world undimmed.
+## Set by the panel (CorpseExamPanel, CraftingPanel, PultPanel).
 var dock_right: bool = false
 ## True while the panel is hidden for the running work (hide_while_working).
 var work_hidden: bool = false
@@ -140,6 +145,32 @@ func _on_closed() -> void:
 
 
 # --- helpers for subclasses -----------------------------------------------------------------
+
+## G8 Runde 4: a docked panel's scrolling body as tall as its `content`, at most what the screen leaves beside the
+## panel's other rows (header, action row, buttons) and at most `cap` (> 0). Call it after the content changed.
+func fit_dock_scroll(scroll: ScrollContainer, content: Control, cap: float = 0.0) -> void:
+	if scroll == null or content == null or not is_inside_tree():
+		return
+	var chrome := get_combined_minimum_size().y - scroll.get_combined_minimum_size().y
+	var avail := maxf(get_viewport_rect().size.y - 2.0 * DOCK_MARGIN - chrome, DOCK_BODY_MIN)
+	if cap > 0.0:
+		avail = minf(avail, cap)
+	var want := minf(content.get_combined_minimum_size().y, avail)
+	if not is_equal_approx(scroll.custom_minimum_size.y, want):
+		scroll.custom_minimum_size.y = want
+
+
+## G8 Runde 4: the scrolling body of a docked panel (no horizontal scroll, it follows the keyboard focus) with its
+## content column; the panel calls fit_dock_scroll(scroll, content) when the content changes.
+static func make_dock_scroll(parent: Container, separation: int) -> Array[Control]:
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true
+	var content := UIKit.vbox(separation)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(content)
+	parent.add_child(scroll)
+	return [scroll, content]
 
 ## Header row: title (HeaderLabel) + optional close button. Returns the title label.
 func _make_header(parent: Container, title: String, with_close: bool = true) -> Label:

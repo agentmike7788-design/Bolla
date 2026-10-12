@@ -68,8 +68,6 @@ const CORPSE_MANAGER_GROUP := &"corpse_manager"
 ## G8 Runde 4: one column at the right edge (see the header); the findings column is shorter there (the body scrolls).
 @export var stacked: bool = true
 @export var findings_height_side: float = 260.0
-## G8 Runde 4: free margin (px) above and below the docked panel (UIRoot.DOCK_MARGIN).
-const DOCK_MARGIN := 24.0
 
 var title_label: Label
 ## Phase 6: the table's name („Gruft-Tisch") and the cold line.
@@ -121,13 +119,9 @@ func _build() -> void:
 	CorpseExamSections.build_header(self, box).pressed.connect(request_close)
 	var body_parent: Container = box
 	if stacked:
-		body_scroll = ScrollContainer.new()
-		body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-		body_scroll.follow_focus = true
-		_body = UIKit.vbox(14)
-		_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		body_scroll.add_child(_body)
-		box.add_child(body_scroll)
+		var dock := make_dock_scroll(box, 14)
+		body_scroll = dock[0] as ScrollContainer
+		_body = dock[1] as VBoxContainer
 		body_parent = _body
 		_body.minimum_size_changed.connect(_fit_body)
 	var columns := CorpseExamSections.build_columns(self, body_parent, stacked)
@@ -166,13 +160,7 @@ func _ready() -> void:
 
 ## G8 Runde 4: the stacked body as tall as its content, at most what the screen leaves beside header and buttons.
 func _fit_body() -> void:
-	if body_scroll == null or _body == null or not is_inside_tree():
-		return
-	var chrome := get_combined_minimum_size().y - body_scroll.get_combined_minimum_size().y
-	var avail := maxf(get_viewport_rect().size.y - 2.0 * DOCK_MARGIN - chrome, 160.0)
-	var want := minf(_body.get_combined_minimum_size().y, avail)
-	if not is_equal_approx(body_scroll.custom_minimum_size.y, want):
-		body_scroll.custom_minimum_size.y = want
+	fit_dock_scroll(body_scroll, _body)
 
 
 func _on_opened() -> void:

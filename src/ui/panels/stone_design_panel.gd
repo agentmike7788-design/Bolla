@@ -23,6 +23,9 @@ extends UIPanel
 ## station mason that CraftingPanel.offered() lets through (the memorial plate „Namenstafel" once Rosine's second
 ## step set friend_innkeeper_2): name, inputs have / need, minutes and „Herstellen" (bench.request_craft), dimmed with
 ## what is missing.
+## G8 Runde 4 (Prüfung der Arbeits-Panels): while a work started from it runs („Stein hauen", „Fehlendes holen", an
+## extra recipe) the panel is hidden (UIPanel.hide_while_working – the HUD's action bar shows the work, the
+## gravekeeper chisels visibly) and comes back afterwards; the three-page spread itself stays in the middle.
 
 const STONEMASONRY_GROUP := &"stonemasonry"
 const MASON_STATION := &"mason"
@@ -131,6 +134,11 @@ var _minutes_label: Label
 var _material_grid: GridContainer
 var _sum_label: Label
 var _inventory: Inventory
+
+
+func _init() -> void:
+	super._init()
+	hide_while_working = true
 
 
 func _build() -> void:

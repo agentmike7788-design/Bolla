@@ -9,6 +9,11 @@ extends UIPanel
 ## from shed 2 through the workbench), the result and Quast's price. Every handgrip is a TimedAction of the
 ## player; at its end only Specimens.seal / make_display / make_bone / inspect or PultRules.make_medicine
 ## run – they take their ingredients themselves. The making of a medicine is never described.
+## G8 Runde 4 (user: „Ja" – Präparierpult und Werkbank wie der Leichentisch): docked at the right edge in one column
+## (pieces, then the handgrips of the chosen piece, then the medicines; the body scrolls when it is taller than the
+## screen) without the dim, so the pult and the gravekeeper stay visible in the room camera; while a handgrip or a
+## medicine runs the panel is hidden (UIPanel.hide_while_working – the HUD's action bar shows the work) and comes
+## back with the keyboard focus on its first free button.
 
 const SPECIMENS_GROUP := &"specimens"
 const MANAGER_GROUP := &"corpse_manager"
@@ -20,8 +25,9 @@ const ACTION_BONE := &"bone"
 const ACTION_INSPECT := &"inspect"
 const ACTIONS: Array[StringName] = [ACTION_SEAL, ACTION_DISPLAY, ACTION_BONE, ACTION_INSPECT]
 
-@export var panel_width: float = 1500.0
-@export var column_width: float = 560.0
+## G8 Runde 4: one column at the right edge (was 1500 in the middle, two columns).
+@export var panel_width: float = 650.0
+@export var action_button_width: float = 300.0
 
 var specimens: Specimens
 var pieces_box: VBoxContainer
@@ -42,6 +48,20 @@ var reply: String = ""
 
 var _inventory: Inventory
 var _cold: Inventory
+## G8 Runde 4: the scrolling body (header, intro, reply, action row and buttons stay outside).
+var body_scroll: ScrollContainer
+var _body: VBoxContainer
+
+
+func _init() -> void:
+	super._init()
+	dock_right = true
+	hide_while_working = true
+
+
+func _ready() -> void:
+	super._ready()
+	get_viewport().size_changed.connect(_fit_body)
 
 
 func _build() -> void:
@@ -50,21 +70,22 @@ func _build() -> void:
 	add_child(box)
 	_make_header(box, Phase7Texts.PULT_TITLE)
 	box.add_child(UIKit.label(Phase7Texts.PULT_INTRO, &"WhisperLabel", true))
-	var columns := UIKit.hbox(24)
-	box.add_child(columns)
+	var dock := make_dock_scroll(box, 10)
+	body_scroll = dock[0] as ScrollContainer
+	_body = dock[1] as VBoxContainer
+	_body.minimum_size_changed.connect(_fit_body)
 	var left := UIKit.vbox(8)
-	left.custom_minimum_size.x = column_width
-	columns.add_child(left)
+	_body.add_child(left)
 	left.add_child(UIKit.label(Phase7Texts.PULT_PIECES, &"AccentLabel"))
 	pieces_box = UIKit.vbox(6)
 	left.add_child(pieces_box)
 	none_label = UIKit.label(Phase7Texts.PULT_NONE, &"DimLabel", true)
-	none_label.custom_minimum_size.x = column_width
 	left.add_child(none_label)
+	_body.add_child(UIKit.separator())
 	var right := UIKit.vbox(10)
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	columns.add_child(right)
-	chosen_label = UIKit.label("", &"SubheaderLabel")
+	_body.add_child(right)
+	chosen_label = UIKit.label("", &"SubheaderLabel", true)
 	right.add_child(chosen_label)
 	right.add_child(UIKit.label(Phase7Texts.PULT_ACTIONS, &"AccentLabel"))
 	actions_box = UIKit.vbox(6)
@@ -72,7 +93,7 @@ func _build() -> void:
 	for action: StringName in ACTIONS:
 		var row := UIKit.hbox(12)
 		var b := UIKit.button("")
-		b.custom_minimum_size.x = 340.0
+		b.custom_minimum_size.x = action_button_width
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.pressed.connect(request_action.bind(action))
 		row.add_child(b)
@@ -98,6 +119,11 @@ func _build() -> void:
 	back.pressed.connect(request_close)
 	bottom.add_child(back)
 	box.add_child(bottom)
+
+
+## G8 Runde 4: the body as tall as its content, at most what the screen leaves beside the other rows.
+func _fit_body() -> void:
+	fit_dock_scroll(body_scroll, _body)
 
 
 func _on_opened() -> void:
@@ -212,17 +238,19 @@ func _refresh_medicines(spec: SpecimenRecord, now: int, cfg: AnatomyConfig) -> v
 		var organs := PackedStringArray()
 		for o: StringName in med.organs:
 			organs.append(Phase7Texts.organ_label(o, cfg))
-		col.add_child(UIKit.label(Phase7Texts.PULT_MED_NEEDS % [" oder ".join(organs), _percent(med.min_clarity)], &"DimLabel"))
+		col.add_child(UIKit.label(Phase7Texts.PULT_MED_NEEDS % [" oder ".join(organs), _percent(med.min_clarity)], &"DimLabel", true))
 		var parts := PackedStringArray()
 		for id: StringName in med.inputs:
 			parts.append(Phase7Texts.INPUT_ROW % [int(med.inputs[id]), UIKit.item_name(id), _inventory.count(id) if _inventory != null else 0, int(med.inputs[id])])
-		col.add_child(UIKit.label(Phase7Texts.SEP.join(parts), &""))
+		col.add_child(UIKit.label(Phase7Texts.SEP.join(parts), &"", true))
 		col.add_child(UIKit.label(Phase7Texts.PULT_MED_RESULT % [maxi(med.amount, 1), UIKit.item_name(med.output)], &"GoodLabel"))
-		var row := UIKit.hbox(12)
+		# G8 Runde 4: the reason in its own line above the buttons (one narrow column).
 		var reason := medicine_reason(med)
 		var reason_label := UIKit.label(reason if spec != null else "", &"DimLabel", true)
-		reason_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(reason_label)
+		reason_label.visible = reason_label.text != ""
+		col.add_child(reason_label)
+		var row := UIKit.hbox(12)
+		row.alignment = BoxContainer.ALIGNMENT_END
 		var fetch := _fetch_button(med)
 		if fetch != null:
 			row.add_child(fetch)

@@ -17,6 +17,9 @@ class FakePlayer extends Node3D:
 	var busy: bool = false
 	var region_id: StringName = &"graveyard"
 	var actions: Array = []
+	## G8 Runde 4: true = the action keeps running until finish() (the panel's hiding meanwhile).
+	var hold: bool = false
+	var _pending: Callable
 
 	func _init() -> void:
 		add_to_group(&"player")
@@ -24,13 +27,25 @@ class FakePlayer extends Node3D:
 	func is_busy() -> bool:
 		return busy
 
-	## Runs the action at once and reports it like the TimedAction runner.
+	## Runs the action at once and reports it like the TimedAction runner (hold: started only, finish() ends it).
 	func start_timed_action(label: String, minutes: int, on_done: Callable, cancellable: bool = true, _anim: StringName = &"") -> bool:
 		actions.append([label, minutes, cancellable])
 		EventBus.timed_action_started.emit(label, 0.0)
+		if hold:
+			busy = true
+			_pending = on_done
+			return true
 		on_done.call()
 		EventBus.timed_action_finished.emit(true)
 		return true
+
+	## The held action ends as Player._complete_action does: timed_action_finished, then on_done.
+	func finish() -> void:
+		busy = false
+		EventBus.timed_action_finished.emit(true)
+		if _pending.is_valid():
+			_pending.call()
+		_pending = Callable()
 
 
 class ManagerDouble extends CorpseManager:
@@ -351,6 +366,90 @@ func test_pult_panel_seal_medicine_and_cold_box() -> void:
 	assert_true(inv.has_uid(kidneys))
 	assert_false(store.store().has_uid(kidneys))
 	assert_eq(panel.selected, kidneys)
+
+
+## G8 Runde 4 (user: „Ja" – Präparierpult und Werkbank wie der Leichentisch): the pult's card is docked at the right
+## edge in one column without the dim; a handgrip hides it (and the crafting card under it) while it runs – the HUD's bar
+## shows the work – then it comes back with the keyboard focus; Enter, a click and Esc keep working.
+func test_pult_docked_and_hidden_while_working() -> void:
+	await _setup()
+	_anatomy_world()
+	GameState.set_flag(&"anatomy_known", true)
+	var liver := _take(&"liver", SpecimenRecord.CONTAINER_BUNDLE)
+	inv.add_item(&"prep_jar", 1)
+	inv.add_item(&"spirits", 2)
+	player.hold = true
+	ui.open_panel(&"crafting", {"station": &"pult", "inventory": inv, "player": player})
+	var crafting := ui.get_panel(&"crafting") as CraftingPanel
+	crafting.pult_button.pressed.emit()
+	await wait_frames(3)
+	var panel := ui.get_panel(&"pult") as PultPanel
+	assert_eq(ui.top(), &"pult")
+	var view := ui.get_viewport().get_visible_rect()
+	var rect := panel.get_global_rect()
+	assert_true(panel.dock_right and panel.get_parent() is MarginContainer, "docked")
+	assert_almost(rect.end.x, view.end.x - UIRoot.DOCK_MARGIN, 1.0, "at the right edge")
+	assert_false(rect.has_point(view.get_center()), "the middle of the screen stays free")
+	assert_true(rect.size.x < 700.0, "one column of about 650 px, was 1500 (%d)" % int(rect.size.x))
+	assert_true(rect.position.y >= view.position.y - 0.5 and rect.end.y <= view.end.y + 0.5, "on screen (%s)" % rect)
+	assert_true(panel.body_scroll != null and panel.is_ancestor_of(panel.body_scroll), "the body scrolls")
+	assert_false(ui.dim.visible, "the world beside it is not dimmed")
+	assert_false(crafting.is_visible_in_tree(), "the crafting card under it is not drawn")
+	# keyboard: Enter on „Einlegen"
+	var seal := panel.action_rows[PultPanel.ACTION_SEAL].button as Button
+	assert_false(seal.disabled, seal.tooltip_text)
+	seal.grab_focus()
+	_press_action(&"ui_accept")
+	assert_eq(player.actions.size(), 1, "Enter starts the handgrip")
+	await wait_frames(1)
+	assert_true(panel.work_hidden and not panel.is_visible_in_tree(), "hidden while the handgrip runs")
+	assert_false(crafting.is_visible_in_tree())
+	assert_false(ui.dim.visible)
+	assert_true(ui.hud.is_work_view() and ui.hud.action_panel.visible, "the HUD's bar shows the work")
+	assert_eq(ui.top(), &"pult")
+	assert_true(UIState.is_modal(), "still modal")
+	player.finish()
+	await wait_frames(2)
+	assert_eq(specimens.get_record(liver).container, SpecimenRecord.CONTAINER_JAR, "sealed")
+	assert_false(panel.work_hidden)
+	assert_true(panel.is_visible_in_tree(), "back after the handgrip")
+	assert_false(crafting.is_visible_in_tree(), "the crafting card stays under it")
+	assert_false(ui.hud.is_work_view())
+	var focused := ui.get_viewport().gui_get_focus_owner() as Button
+	assert_not_null(focused, "keyboard focus back in the panel")
+	if focused != null:
+		assert_true(panel.is_ancestor_of(focused) and not focused.disabled)
+	# mouse: a click on the piece's button selects it (the row stays usable)
+	var piece := panel.piece_buttons.get(liver) as Button
+	assert_not_null(piece)
+	if piece != null:
+		_click(piece.get_global_rect().get_center())
+		await wait_frames(1)
+		assert_eq(panel.selected, liver, "a click works")
+	# Esc: back to the crafting card (docked as well)
+	_press_action(&"pause")
+	await wait_frames(2)
+	assert_eq(ui.top(), &"crafting", "Esc closes the pult's card")
+	assert_true(crafting.is_visible_in_tree() and crafting.dock_right)
+	assert_false(ui.dim.visible)
+
+
+func _press_action(action: StringName) -> void:
+	for pressed: bool in [true, false]:
+		var ev := InputEventAction.new()
+		ev.action = action
+		ev.pressed = pressed
+		ui.get_viewport().push_input(ev)
+
+
+func _click(at: Vector2) -> void:
+	for pressed: bool in [true, false]:
+		var ev := InputEventMouseButton.new()
+		ev.button_index = MOUSE_BUTTON_LEFT
+		ev.pressed = pressed
+		ev.position = at
+		ev.global_position = at
+		ui.get_viewport().push_input(ev, true)
 
 
 func test_collection_panel_place_sets_standing() -> void:

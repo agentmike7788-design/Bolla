@@ -584,7 +584,10 @@ func test_workbench_groups_and_decor_hint() -> void:
 		if cat == &"grave":
 			last_grave = n
 	assert_true(last_grave < first_decor, "grave recipes first")
-	var row := panel.craft_button(&"decor_bench_wood").get_parent().get_parent().get_parent() as Control
+	# the row's section panel (G8 Runde 4: the button sits in the info column's button row)
+	var row: Control = panel.craft_button(&"decor_bench_wood").get_parent()
+	while row != null and not row is PanelContainer:
+		row = row.get_parent()
 	assert_true(row.tooltip_text.begins_with("Zier +3 – zählt je Abschnitt bis zur Obergrenze"), row.tooltip_text)
 
 
