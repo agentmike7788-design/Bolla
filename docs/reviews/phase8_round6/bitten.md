@@ -98,7 +98,43 @@ Angebotsbedingungen, damit nichts Unlösbares aushängt:
 
 ## Bot-Messung (Tag 1–14, vorher/nachher)
 
-BOT_MESSUNG
+Gemessen mit `tests/integration/test_hill_requests_bot.gd` (`HillBot`, abgeleitet von `Phase4Bot`): echte Welt, neues Spiel, Tag 1–14, `Player.instant_actions`. Die Bot-Arbeit kostet die echten Spielminuten der Handlungen, dazu 3 Minuten je Gang. „Arbeit bis“ ist die Uhrzeit nach der letzten Tagesarbeit, also vor Osrics Abendabgabe, den Geistern und dem Bett. „Leerlauf“ zählt die Minuten bis 18:00, ab dann steht im HUD „Feierabend – Schlafen …“. 1 Spielminute = 0,5 s.
+
+**Spieler „Pflicht“** (die Kritik des Benutzers): Leichen, Gräber und das Roden, das das HUD verlangt, wenn kein Platz mehr frei ist. Kein Pflegen, keine Zier, keine Geister, kein Nachthandel.
+
+| Tag | vorher: Arbeit bis | vorher: Leerlauf | nachher: Arbeit bis | nachher: Leerlauf | Bitten erledigt (Σ) | Münzen aus Bitten (Σ) |
+|---|---|---|---|---|---|---|
+| 2 | 13:01 | 299 min | 13:04 | 296 min | 1 | 2 |
+| 3 | 13:01 | 299 min | 13:37 | 263 min | 2 | 4 |
+| 4 | 13:01 | 299 min | 12:31 | 329 min | 4 | 6 |
+| 5 | 12:28 | 332 min | 15:25 | 155 min | 4 | 6 |
+| 6 | 13:06 | 294 min | 21:19 | 0 min | 6 | 11 |
+| 7 | 19:48 | 0 min | 14:36 | 204 min | 7 | 13 |
+| 8 | 13:01 | 299 min | 13:04 | 296 min | 9 | 16 |
+| 9 | 17:58 | 2 min | 19:10 | 0 min | 11 | 21 |
+| 10 | 12:28 | 332 min | 13:21 | 279 min | 13 | 25 |
+| 11 | 12:28 | 332 min | 12:31 | 329 min | 13 | 25 |
+| 12 | 12:28 | 332 min | 12:28 | 332 min | 15 | 29 |
+| **Σ Tag 2–12** | | **2820 min** | | **2483 min (−337, −12 %)** | 15 | 29 |
+| Tag 14 | Münzen 51, Ruf 72 | | Münzen 105, Ruf 91 | | 18 erledigt, 0 versäumt | 32 |
+
+**Spieler „Andächtig“** (`Phase4Bot` reverent: zusätzlich Pflege, Zier, Gräber aufwerten, Geister, Ilse): Leerlauf Tag 2–12 **1569 → 1581 min**, also unverändert. Erledigt sind 7 Bitten, 3 verfallen. Aus den Bitten kommen 11 Münzen und Ruf +6. Tag 14: Münzen 80 → 91, Ruf 100 → 99.
+
+**Was das heißt:**
+
+- **Pflicht-Spieler:**
+  - Die Bitten bringen im Schnitt ≈ 40 Spielminuten Arbeit je Tag (512 min in 13 Tagen). Das sind ≈ 20 s Echtzeit beim Bot. Ein echter Spieler braucht für die Gänge zur Tafel, zu den Stellen und abends zu Osric deutlich mehr.
+  - Wichtiger ist die Wirkung auf den Ablauf: Er rodet früher, stellt Vase und Bank auf und pflegt Stellen. Dadurch arbeitet er an den Tagen 5, 6 und 9 bis in den Abend, weil Plätze früher frei werden und Arbeit nachrückt.
+  - Der Leerlauf sinkt um 12 %, an Tagen mit offener Pflichtarbeit bleibt er. Gegen Mittag bleibt an vielen Tagen weiter Zeit übrig. Die Bitten füllen einen Teil davon, nicht den ganzen Nachmittag. Das ist gewollt klein („kleine Bitten“, Paket A).
+- **Andächtiger Spieler:** Er tut ohnehin fast alles, was die Bitten verlangen. Für ihn sind sie vor allem Anerkennung (Lohn, Dankesnotiz) und ein Ziel für den Tag.
+- **Münzen:**
+  - In der ersten Messung (2–4 Münzen, Ruf +1…+2) brachte der Pflicht-Spieler 43 Münzen und Ruf +26 aus den Bitten. Danach wurde der Lohn auf **1–3 Münzen (Schnitt 1,8) und Ruf +1** gesenkt.
+  - Jetzt sind es 32 Münzen in 13 Tagen (≈ 2,5 je Tag) und Ruf +18.
+  - Tag 14 hat er 105 statt 51 Münzen. Der Rest über die 32 hinaus kommt aus höherem Ruf (Lohnzuschlag) und besserer Friedhofsqualität, also aus den bestehenden Systemen, die die Bitten anstoßen.
+  - Damit liegt er etwa beim andächtigen Spieler (80–91).
+- **Bot-Ziele der bisherigen Tests:**
+  - Kein bestehender Bot (Phase 3–8) nimmt Bitten an, die Auswahl braucht keine Zufallszahl. Deshalb laufen alle alten Bot-Tests bitgleich. Die Münzziele (≈ 11 je Grab, Münzen nie negativ, Phase-7/8-Bilanz 48/60 → Bogen) kippen nicht.
+  - Nach `village_open` hängt höchstens eine Bitte mit drei Tagen Neubelegung. Das sind ≈ 1 Bitte je 4–5 Tage ≈ 0,4 Münzen je Tag, gegenüber Trinkgeld und Aufträgen der Phasen 7/8 vernachlässigbar.
 
 ## Bilder (echter Renderer, 1280 × 720; ohne Endung Forward+, `_web` = Compatibility/OpenGL wie im Browser)
 
