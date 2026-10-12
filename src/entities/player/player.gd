@@ -272,6 +272,15 @@ func start_burial(label: String, game_minutes: int, on_done: Callable, plot: Gra
 	return false
 
 
+## G8 Runde 4: the real seconds of a table action's bar with the clip `clip` (ToolAnimConfig.table_seconds – the
+## tool's draw plus a few cycles of the clip, at least table_real_seconds_min; never shorter than the usual bar).
+func table_action_seconds(clip: StringName, game_minutes: int) -> float:
+	var base := actions.real_seconds_for(maxi(game_minutes, 0))
+	if _animator == null:
+		return base
+	return _animator.tools.table_seconds(_animator.anim, clip, base)
+
+
 ## Stops the running action: minutes already advanced stay, on_done is NOT called.
 func cancel_timed_action() -> void:
 	_work_step.stop()

@@ -19,6 +19,10 @@ extends UIPanel
 ## (CorpseDecay.minutes_until with both window lists).
 ## Phase 7 (docs/PHASE7_DESIGN.md §2.6, §7): the tab „Präparate" (CorpseExamOrgans → CorpseExamTabs) and
 ## the cause „laut Osric: Fieber · gedeutet: Arsenik" once deduced (CorpseRecord.revealed_cause).
+## G8 Runde 4 (user: „das auswahl bild muss weg der verdekt den leichentisch"): docked at the right edge in one column
+## (`stacked`: cause, condition, tabs, then the findings; the body scrolls when it is taller than the screen) without
+## the dim, so the table and the gravekeeper stay visible in the room camera; while a work started from it runs the
+## panel is hidden (UIPanel.hide_while_working – the HUD's action bar shows the work) and comes back afterwards.
 
 const TEXT_AGE := "%d Jahre"
 const TEXT_CAUSE := "Todesursache"
@@ -61,6 +65,11 @@ const CORPSE_MANAGER_GROUP := &"corpse_manager"
 @export var findings_height_p4: float = 500.0
 ## Phase 4: seconds a harvest button stays armed after the first press.
 @export var harvest_confirm_seconds: float = 3.0
+## G8 Runde 4: one column at the right edge (see the header); the findings column is shorter there (the body scrolls).
+@export var stacked: bool = true
+@export var findings_height_side: float = 260.0
+## G8 Runde 4: free margin (px) above and below the docked panel (UIRoot.DOCK_MARGIN).
+const DOCK_MARGIN := 24.0
 
 var title_label: Label
 ## Phase 6: the table's name („Gruft-Tisch") and the cold line.
@@ -95,13 +104,33 @@ var _traits_scroll: ScrollContainer
 var _left: VBoxContainer
 var _decision_home: int = 0
 var _last_corpse: String = ""
+## G8 Runde 4: the scrolling body of the stacked layout (header, action row and buttons stay outside).
+var body_scroll: ScrollContainer
+var _body: VBoxContainer
+
+
+func _init() -> void:
+	super._init()
+	dock_right = stacked
+	hide_while_working = true
 
 
 func _build() -> void:
 	var box := UIKit.vbox(14)
 	add_child(box)
 	CorpseExamSections.build_header(self, box).pressed.connect(request_close)
-	var columns := CorpseExamSections.build_columns(self, box)
+	var body_parent: Container = box
+	if stacked:
+		body_scroll = ScrollContainer.new()
+		body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		body_scroll.follow_focus = true
+		_body = UIKit.vbox(14)
+		_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		body_scroll.add_child(_body)
+		box.add_child(body_scroll)
+		body_parent = _body
+		_body.minimum_size_changed.connect(_fit_body)
+	var columns := CorpseExamSections.build_columns(self, body_parent, stacked)
 	_left = columns[0]
 	var right := columns[1]
 	CorpseExamSections.build_cause(self, _left)
@@ -121,7 +150,7 @@ func _build() -> void:
 
 	_make_action_row(box)
 	box.add_child(UIKit.separator())
-	CorpseExamSections.build_buttons(self, box)
+	CorpseExamSections.build_buttons(self, box, stacked)
 	examine_button.pressed.connect(_call_table.bind(&"request_examine"))
 	shroud_button.pressed.connect(_call_table.bind(&"request_shroud"))
 	pick_up_button.pressed.connect(_on_pick_up_pressed)
@@ -132,6 +161,18 @@ func _ready() -> void:
 	super._ready()
 	EventBus.corpse_updated.connect(_on_corpse_updated)
 	EventBus.time_tick.connect(_on_time_tick)
+	get_viewport().size_changed.connect(_fit_body)
+
+
+## G8 Runde 4: the stacked body as tall as its content, at most what the screen leaves beside header and buttons.
+func _fit_body() -> void:
+	if body_scroll == null or _body == null or not is_inside_tree():
+		return
+	var chrome := get_combined_minimum_size().y - body_scroll.get_combined_minimum_size().y
+	var avail := maxf(get_viewport_rect().size.y - 2.0 * DOCK_MARGIN - chrome, 160.0)
+	var want := minf(_body.get_combined_minimum_size().y, avail)
+	if not is_equal_approx(body_scroll.custom_minimum_size.y, want):
+		body_scroll.custom_minimum_size.y = want
 
 
 func _on_opened() -> void:
@@ -176,6 +217,7 @@ func _refresh() -> void:
 	else:
 		_refresh_traits(record, tables)
 		_refresh_buttons(record)
+	_fit_body.call_deferred()
 
 
 ## Default focus never lands on the (irreversible) valuables or harvest buttons.
@@ -274,7 +316,7 @@ func _set_mode(p4: bool) -> void:
 		for c: Control in tabs.exam_only:
 			c.visible = true
 	shroud_button.visible = not p4
-	_traits_scroll.custom_minimum_size.y = findings_height_p4 if p4 else findings_height
+	_traits_scroll.custom_minimum_size.y = findings_height_side if stacked else (findings_height_p4 if p4 else findings_height)
 	# The valuables decision sits in the Untersuchen page (Phase 4) or under the condition.
 	var target: Container = tabs.exam_page_decision_slot if p4 else _left
 	for node: Control in [decision_box, decided_label]:

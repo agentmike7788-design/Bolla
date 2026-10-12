@@ -80,6 +80,8 @@ var _inventory: Inventory
 var _prompt_text: String = ""
 var _prompt_enabled: bool = false
 var _action_running: bool = false
+## G8 Runde 4: the open panel stepped aside for the running work (UIPanel.hide_while_working) – the action bar shows.
+var _work_view: bool = false
 var _objective_dirty: bool = false
 var _skipped_day: int = 0
 var _build_active: bool = false
@@ -346,11 +348,24 @@ func _hide_notice() -> void:
 	notice_label.visible = false
 
 
-## Prompt and action bar belong to the world: hidden while a panel/dialogue is open.
+## G8 Runde 4 (user: „das auswahl bild muss weg der verdekt den leichentisch"): UIRoot – the top panel is hidden while
+## the work started from it runs; the action bar shows the work meanwhile.
+func set_work_view(on: bool) -> void:
+	_work_view = on
+	_apply_modal_visibility()
+
+
+## True while the action bar stands in for a panel hidden during its work (tests).
+func is_work_view() -> bool:
+	return _work_view
+
+
+## Prompt and action bar belong to the world: hidden while a panel/dialogue is open (the action bar not while that
+## panel stepped aside for the work, set_work_view).
 func _apply_modal_visibility() -> void:
 	var modal := UIState.is_modal()
 	prompt_panel.visible = _prompt_text != "" and not modal and not _build_active
-	action_panel.visible = _action_running and not modal
+	action_panel.visible = _action_running and (not modal or _work_view)
 	var show_bar := _build_active and not modal
 	if show_bar and not build_bar.visible:
 		_build_sync_left = 0.0

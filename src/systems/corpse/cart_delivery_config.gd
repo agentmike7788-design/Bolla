@@ -6,14 +6,21 @@ extends Resource
 ## the bier and counts as delivered (contract §2.5). Osric's schedule (data/npc/carter_schedule.tres) stops at the
 ## bier unload_minutes before that (morning_unload) – tests/unit/test_cart_delivery.gd keeps both in step.
 
-## Game minutes the unloading of all the day's corpses takes; it ends at the delivery minute.
-@export var unload_minutes: int = 8
-## Shares of one corpse's unloading (they add up to 1): step from the handles to the cart's side, lift the dead
-## off the cart, carry them over to the bier, lay them down.
-@export var step_share: float = 0.2
-@export var lift_share: float = 0.22
-@export var carry_share: float = 0.28
-@export var lower_share: float = 0.3
+## Game minutes the unloading of all the day's corpses takes; it ends at the delivery minute. G8 Runde 4 (user: „kannst
+## du 8 sec machen"): 16 game minutes = 8 real seconds at TimeConfig.seconds_per_game_minute 0.5 (before: 8 = 4 s).
+@export var unload_minutes: int = 16
+## Shares of one corpse's unloading (normalised to 1): step from the handles to the cart's side, lift the dead off the
+## cart, carry them over to the bier, lay them down, stand a moment at the bier (rest_share, G8 Runde 4: the clip idle,
+## the dead already on the bier). G8 Runde 4: chosen so that the one-shots load_lift / load_lower play at about their
+## own length (≤ 1,3 ×, tests/unit/test_cart_delivery.gd) and the walks at a slow, heavy pace (the legs follow the
+## ground speed) – not one stretched movement.
+@export var step_share: float = 0.22
+@export var lift_share: float = 0.15
+@export var carry_share: float = 0.26
+@export var lower_share: float = 0.18
+@export var rest_share: float = 0.19
+## Part of the idle clip played over the rest (anim_t 0..rest_idle_span – about its own speed).
+@export var rest_idle_span: float = 0.6
 ## After the delivery he walks back to the handles in this many game minutes (no prompt meanwhile) – from the gate
 ## bell when he rings it (ring_bell), else from the bier.
 @export var return_minutes: int = 3
@@ -57,13 +64,17 @@ extends Resource
 @export var skipped_note: String = "%s hat am Tor eine neue Leiche gebracht."
 
 
-## Shares normalised to a sum of 1 (a broken config falls back to equal parts).
+## Shares normalised to a sum of 1: step, lift, carry, lower, rest (a broken config falls back to equal parts of the
+## first four, no rest).
 func shares() -> PackedFloat32Array:
-	var raw := PackedFloat32Array([maxf(step_share, 0.0), maxf(lift_share, 0.0), maxf(carry_share, 0.0), maxf(lower_share, 0.0)])
-	var total := raw[0] + raw[1] + raw[2] + raw[3]
+	var raw := PackedFloat32Array([maxf(step_share, 0.0), maxf(lift_share, 0.0), maxf(carry_share, 0.0), maxf(lower_share, 0.0),
+			maxf(rest_share, 0.0)])
+	var total := 0.0
+	for v: float in raw:
+		total += v
 	if total <= 0.0001:
-		return PackedFloat32Array([0.25, 0.25, 0.25, 0.25])
-	for i: int in 4:
+		return PackedFloat32Array([0.25, 0.25, 0.25, 0.25, 0.0])
+	for i: int in raw.size():
 		raw[i] /= total
 	return raw
 

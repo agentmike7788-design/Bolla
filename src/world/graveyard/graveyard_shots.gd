@@ -21,6 +21,7 @@ const Gruft := preload("res://src/world/graveyard/graveyard_shots_gruft.gd")
 const Gruft2 := preload("res://src/world/graveyard/graveyard_shots_gruft2.gd")
 const Delivery := preload("res://src/world/graveyard/graveyard_shots_delivery.gd")
 const Table := preload("res://src/world/graveyard/graveyard_shots_table.gd")
+const Round4 := preload("res://src/world/graveyard/graveyard_shots_round4.gd")
 const SETTLE_FRAMES := 40
 ## Frames after a measurement switch (shadows off / freeze) before the counters are read.
 const MEASURE_FRAMES := 4
@@ -76,6 +77,10 @@ var _distance: float = 0.0
 ## --table: G8 Runde 3 – the work at the crypt table, one contact sheet per action (graveyard_shots_table.gd;
 ## docs/reviews/phase8_round3); --shots / --suffix as for --gruft2.
 var _table: bool = false
+## --round4=ui|work|delivery: G8 Runde 4 – the table panel during the work, one work in its course, Osric's unloading (graveyard_shots_round4.gd;
+## docs/reviews/phase8_round4); --tag=vorher|nachher names the ui set, --suffix as above.
+var _round4: String = ""
+var _tag: String = "nachher"
 
 
 func _initialize() -> void:
@@ -114,6 +119,10 @@ func _run() -> void:
 			_from_minute = int(hhmm.left(2)) * 60 + int(hhmm.substr(2, 2))
 		elif arg == "--table":
 			_table = true
+		elif arg.begins_with("--round4="):
+			_round4 = arg.trim_prefix("--round4=")
+		elif arg.begins_with("--tag="):
+			_tag = arg.trim_prefix("--tag=")
 		elif arg.begins_with("--suffix="):
 			_suffix = arg.trim_prefix("--suffix=")
 		elif arg.begins_with("--distance="):
@@ -150,6 +159,18 @@ func _run() -> void:
 		return
 	if _table:
 		await Table.run(self, world, _out, _only, _suffix)
+		quit()
+		return
+	if _round4 == "ui":
+		await Round4.run_ui(self, world, _out, _suffix, _tag)
+		quit()
+		return
+	if _round4 == "work":
+		await Round4.run_work(self, world, _out, _suffix)
+		quit()
+		return
+	if _round4 == "delivery":
+		await Round4.run_delivery(self, world, _out, _suffix)
 		quit()
 		return
 	_stage(world)

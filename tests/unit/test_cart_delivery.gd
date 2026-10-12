@@ -2,7 +2,9 @@ extends TestCase
 ## G8 Runde 3 (user: „ich dachte die neuen leichen werden mit dem holz wagen hergebracht"): Osric's unloading at the bier.
 ## The values live in data/config/cart_delivery_config.tres and fit his schedule and the delivery minute; CartUnload is
 ## a pure function of the clock (step to the cart, lift, carry, lay down – one corpse after the other, then back to the
-## handles); his new clips sit on the unchanged body and old clips.
+## handles); his new clips sit on the unchanged body and old clips. G8 Runde 4 (user: „kannst du 8 sec machen"): the
+## unloading takes about 8 real seconds, the lift / lower clips play at about their own length, the walks at a slow
+## pace, and he stands a moment at the bier (idle) before he walks to the bell.
 
 const CHARACTERS := preload("res://tests/unit/test_assets_characters.gd")
 const ASSETS8 := preload("res://tests/unit/test_assets_phase8.gd")
@@ -50,9 +52,12 @@ func _one() -> Array:
 
 func test_values_in_data() -> void:
 	var cfg := _cfg()
-	assert_true(cfg.unload_minutes >= 4 and cfg.unload_minutes <= 15, "a few game minutes (%d)" % cfg.unload_minutes)
+	var spm := _spm()
+	assert_eq(cfg.unload_minutes, 16, "G8 Runde 4: 16 game minutes")
+	assert_almost(cfg.unload_minutes * spm, 8.0, 0.5, "about 8 real seconds (user: 8 s)")
 	var sh := cfg.shares()
-	assert_almost(sh[0] + sh[1] + sh[2] + sh[3], 1.0, 0.0001, "shares add up")
+	assert_eq(sh.size(), 5, "step, lift, carry, lower, rest")
+	assert_almost(sh[0] + sh[1] + sh[2] + sh[3] + sh[4], 1.0, 0.0001, "shares add up")
 	for v: float in sh:
 		assert_true(v > 0.05, "every part is visible")
 	assert_true(cfg.return_minutes >= 1)
@@ -114,7 +119,7 @@ func test_phases_in_order() -> void:
 		assert_true(bool(p.active))
 		if seen.is_empty() or seen[seen.size() - 1] != p.anim:
 			seen.append(p.anim)
-	assert_eq(seen, [CartUnload.ANIM_WALK, CartUnload.ANIM_LIFT, CartUnload.ANIM_CARRY, CartUnload.ANIM_LOWER] as Array[StringName])
+	assert_eq(seen, [CartUnload.ANIM_WALK, CartUnload.ANIM_LIFT, CartUnload.ANIM_CARRY, CartUnload.ANIM_LOWER, CartUnload.ANIM_IDLE] as Array[StringName])
 
 
 func test_corpse_goes_from_the_cart_to_the_bier() -> void:
@@ -132,7 +137,7 @@ func test_corpse_goes_from_the_cart_to_the_bier() -> void:
 	var c := carry.corpse as Transform3D
 	assert_almost(c.origin.y, HANDLES.y + cfg.carry_height, 0.001, "in his arms")
 	assert_almost(CartUnload._flat(c.origin - (carry.figure as Vector3)).length(), cfg.carry_forward, 0.001, "in front of him")
-	var end: Dictionary = at.call(0.9999)
+	var end: Dictionary = at.call(1.0 - sh[4] - 0.0001)
 	assert_eq(end.anim, CartUnload.ANIM_LOWER)
 	assert_true((end.corpse as Transform3D).origin.distance_to(BIER) < 0.01, "laid onto the bier slot")
 	assert_true((end.corpse as Transform3D).basis.get_rotation_quaternion().angle_to(Quaternion.IDENTITY) < 0.02, "lies as the bier wants it")
@@ -143,6 +148,13 @@ func test_corpse_goes_from_the_cart_to_the_bier() -> void:
 	var f_low: Vector3 = end.figure
 	assert_almost(CartUnload._flat(f_low - BIER).length(), cfg.bier_side_distance, 0.001, "at the bier")
 	assert_true(CartUnload.forward(float(end.yaw)).dot(CartUnload._flat(BIER - f_low).normalized()) > 0.99, "faces the bier")
+	# G8 Runde 4: then he stands a moment at the bier – the dead lie on it, he faces them
+	var rest: Dictionary = at.call(0.9999)
+	assert_eq(rest.anim, CartUnload.ANIM_IDLE, "a moment at the bier")
+	assert_eq([int(rest.laid), int(rest.index)], [1, -1], "the dead on the bier, nothing in his hands")
+	assert_true((rest.figure as Vector3).distance_to(f_low) < 0.001, "where he laid them down")
+	assert_almost(float(rest.yaw), float(end.yaw), 0.001)
+	assert_true(float(rest.anim_t) >= 0.0 and float(rest.anim_t) <= cfg.rest_idle_span + 0.0001, "idle played on")
 
 
 ## No spin: in his arms the dead keep the orientation they had on the cart, and they reach the bier with it.
@@ -155,7 +167,7 @@ func test_no_turn_in_the_hands() -> void:
 	var q_cart := _on_cart().basis.get_rotation_quaternion()
 	assert_true((lift_end.corpse as Transform3D).basis.get_rotation_quaternion().angle_to(q_cart) < deg_to_rad(25.0),
 			"lifted without turning round")
-	var lower_start: Dictionary = _pose(start + cfg.unload_minutes * (1.0 - sh[3] + 0.0001), one[0], one[1])
+	var lower_start: Dictionary = _pose(start + cfg.unload_minutes * (1.0 - sh[3] - sh[4] + 0.0001), one[0], one[1])
 	assert_true((lower_start.corpse as Transform3D).basis.get_rotation_quaternion().angle_to(Quaternion.IDENTITY) < deg_to_rad(25.0),
 			"head first onto the bier, no half turn while lowering")
 
@@ -172,8 +184,48 @@ func test_two_corpses_one_after_the_other() -> void:
 	assert_eq(int(second.index), 1, "then the second")
 	var walk := _pose(start + cfg.unload_minutes * 0.51, cargo, biers)
 	assert_eq(walk.anim, CartUnload.ANIM_WALK, "walks back to the cart between them")
+	var sh := cfg.shares()
+	var lowered := _pose(start + cfg.unload_minutes * (1.0 - sh[4] * 0.5 - 0.0001), cargo, biers)
+	assert_eq(lowered.anim, CartUnload.ANIM_LOWER)
+	assert_true((lowered.corpse as Transform3D).origin.distance_to(biers[1].origin) < 0.01, "the second onto the second bier")
 	var last := _pose(start + cfg.unload_minutes * 0.9999, cargo, biers)
-	assert_true((last.corpse as Transform3D).origin.distance_to(biers[1].origin) < 0.01, "the second onto the second bier")
+	assert_eq(int(last.laid), 2, "both on their biers")
+
+
+## G8 Runde 4 (user: „heben, tragen und ablegen gut lesbar, nicht nur gestreckt"): with one corpse (the usual day)
+## load_lift / load_lower play at about their own length (0,9–1,3 ×), the walks at a slow, heavy pace (the clip speed
+## follows the ground speed, so the legs do not slide), the rest about at the idle's own speed.
+func test_motions_at_a_readable_pace() -> void:
+	var cfg := _cfg()
+	var spm := _spm()
+	var sh := cfg.shares()
+	var secs := cfg.unload_minutes * spm
+	var rig: Object = CHARACTERS.Rig.new(CARTER)
+	var lift_len: float = (rig.animation(&"load_lift") as Animation).length
+	var lower_len: float = (rig.animation(&"load_lower") as Animation).length
+	var idle_len: float = (rig.animation(&"idle") as Animation).length
+	rig.call(&"free_scene")
+	var lift := sh[1] * secs / lift_len
+	var lower := sh[3] * secs / lower_len
+	assert_true(lift >= 0.9 and lift <= 1.3, "load_lift at %.2f × its length" % lift)
+	assert_true(lower >= 0.9 and lower <= 1.3, "load_lower at %.2f × its length" % lower)
+	var idle := sh[4] * secs / (idle_len * cfg.rest_idle_span)
+	assert_true(idle >= 0.8 and idle <= 1.25, "the rest at %.2f × the idle's speed" % idle)
+	assert_true(sh[4] * secs >= 1.0, "a real moment at the bier (%.1f s)" % (sh[4] * secs))
+	# walking speeds in m per real second (the gate's geometry)
+	var one := _one()
+	var start := float(cfg.unload_start(DELIVERY))
+	var step: Dictionary = _pose(start + cfg.unload_minutes * sh[0] * 0.5, one[0], one[1])
+	var carry: Dictionary = _pose(start + cfg.unload_minutes * (sh[0] + sh[1] + sh[2] * 0.5), one[0], one[1])
+	var walk_mps := float(step.speed) / spm
+	var carry_mps := float(carry.speed) / spm
+	assert_true(walk_mps >= 0.8 and walk_mps <= 1.5, "steps over at %.2f m/s" % walk_mps)
+	assert_true(carry_mps >= 0.6 and carry_mps <= 1.2, "carries at %.2f m/s (heavy)" % carry_mps)
+
+
+func _spm() -> float:
+	var time := load("res://data/config/time_config.tres") as TimeConfig
+	return time.seconds_per_game_minute if time != null else 0.5
 
 
 func test_walks_back_after_the_delivery() -> void:

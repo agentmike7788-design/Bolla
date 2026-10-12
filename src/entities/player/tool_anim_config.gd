@@ -89,6 +89,12 @@ extends Resource
 @export var table_head_distance: float = 0.68
 @export var table_face_camera: bool = true
 @export var table_step_seconds: float = 0.3
+## G8 Runde 4 (user: „ja soll etwas länger dauern"): the bar of a table action runs at least table_real_seconds_min
+## real seconds and long enough for the tool's draw plus table_work_cycles cycles of the work clip (table_seconds) –
+## only the table actions (MorgueTable._start_work); ActionConfig.real_seconds_min stays for every other action and
+## the game minutes stay those of the action.
+@export var table_real_seconds_min: float = 3.0
+@export var table_work_cycles: float = 2.0
 
 
 ## The clip for the code-driven action `key` (tool_anim_config.tres action_clips), else `fallback`.
@@ -154,3 +160,15 @@ func burial_seconds(anim: AnimationPlayer) -> float:
 	var toss := float(toss_at.get(fill, 1.0))
 	var fixed := burial_step_seconds + burial_lower_seconds + burial_silence_seconds + anim.get_animation(draw).length
 	return fixed + (maxi(burial_throws, 1) - 1 + toss) * cycle + burial_tail_seconds
+
+
+## G8 Runde 4: real seconds of a table action's bar with the clip `clip` (`base` = ActionConfig.real_seconds_for of its
+## game minutes): the longest of `base`, table_real_seconds_min and the draw of its tool (none for bare hands) plus
+## table_work_cycles cycles of the clip (with `anim`'s lengths; without a rig only the first two).
+func table_seconds(anim: AnimationPlayer, clip: StringName, base: float) -> float:
+	var seconds := maxf(base, table_real_seconds_min)
+	if anim == null or not anim.has_animation(clip):
+		return seconds
+	var draw: StringName = draw_clips.get(held_tools.get(clip, &""), &"")
+	var draw_len := anim.get_animation(draw).length if draw != &"" and anim.has_animation(draw) else 0.0
+	return maxf(seconds, draw_len + maxf(table_work_cycles, 0.0) * anim.get_animation(clip).length)
