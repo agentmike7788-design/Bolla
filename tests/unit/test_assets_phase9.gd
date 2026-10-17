@@ -473,6 +473,7 @@ func test_placeholders_listed() -> void:
 	var doc := FileAccess.get_file_as_string("res://docs/QUALITY_GATE_STATUS.md")
 	var names: Array[String] = [STRANGER]
 	names.append_array(PROPS.keys())
+	names.append_array(HAND_PROPS.keys())
 	for it: String in ITEMS:
 		names.append("ph_item_" + it)
 	for n: String in names:
