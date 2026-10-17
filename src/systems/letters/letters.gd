@@ -1100,7 +1100,7 @@ func _all_letters() -> Array[LetterData]:
 	var out: Array[LetterData] = []
 	if not letter_table.is_empty():
 		var ids := letter_table.keys()
-		ids.sort()
+		ids.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
 		for id: StringName in ids:
 			out.append(letter_table[id])
 		return out

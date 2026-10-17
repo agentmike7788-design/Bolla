@@ -668,7 +668,7 @@ func _all_offers() -> Array[StrangerOfferData]:
 	var out: Array[StrangerOfferData] = []
 	if not offer_table.is_empty():
 		var ids := offer_table.keys()
-		ids.sort()
+		ids.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
 		for id: StringName in ids:
 			out.append(offer_table[id])
 		return out
