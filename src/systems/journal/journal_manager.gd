@@ -453,7 +453,10 @@ func list_name(e: LightEntryData, matched: bool) -> String:
 		return LIST_MOOR_NAME
 	for r: CorpseRecord in _records():
 		if r.story_id == e.story_id and r.story_id != &"":
-			return _display_name(r)
+			var shown := _display_name(r)
+			if shown == "" and Database.story_corpse(e.story_id) != null:
+				shown = (Database.story_corpse(e.story_id) as StoryCorpseData).display_name
+			return shown
 	return LIST_MISSING
 
 

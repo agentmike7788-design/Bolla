@@ -122,7 +122,7 @@ func test_daily_checks_key_fallback_from_day_12() -> void:
 
 func test_real_story_data_matches_the_contract() -> void:
 	var real: Array = Database.story_corpses()
-	assert_eq(real.size(), 7, "S1–S5 + D1 (Phase 7) + D2 (Phase 8)")
+	assert_eq(real.size(), 8, "S1–S5 + D1 (Phase 7) + D2 (Phase 8) + D3 (Phase 9)")
 	var ids: Array = []
 	var days: Array = []
 	for s: StoryCorpseData in real:
@@ -132,8 +132,8 @@ func test_real_story_data_matches_the_contract() -> void:
 		assert_ne(s.arrival_note, "", "%s: Osric's line" % s.id)
 		var cause: Dictionary = (Database.corpse_tables() as CorpseTables).get_cause(s.cause_id)
 		assert_false(cause.is_empty(), "%s: cause %s in the corpse tables" % [s.id, s.cause_id])
-	assert_eq(ids, [&"s1_quendel", &"s2_hemmerling", &"s3_wernstein", &"s4_uhlig", &"s5_moor", &"d1_hagedorn", &"d2_ott"])
-	assert_eq(days, [6, 9, 13, 16, 19, 1, 1], "D1 waits for village_open_day + 8, D2 for ott_dead instead")
+	assert_eq(ids, [&"s1_quendel", &"s2_hemmerling", &"s3_wernstein", &"s4_uhlig", &"s5_moor", &"d1_hagedorn", &"d2_ott", &"d3_sieber"])
+	assert_eq(days, [6, 9, 13, 16, 19, 1, 1, 1], "D1 waits for village_open_day + 8, D2 for ott_dead, D3 for sieber_dead instead")
 	var cfg_real := Database.config(&"story_config") as StoryConfig
 	assert_eq((Database.story_corpse(cfg_real.finale_story) as StoryCorpseData).is_finale, true)
 
@@ -317,3 +317,151 @@ func test_daily_checks_leave_ott_dead_to_the_night() -> void:
 	manager.free()
 	_clear_d2_flags()
 	_clear_d1_flags()
+
+
+# --- Phase 9 (P6, docs/PHASE9_DESIGN.md §2.2.7, §2.7, W0-Notizen 10): D3 Johann Sieber -----------------------
+
+const ALL_P8 := ["s1_quendel", "s2_hemmerling", "s3_wernstein", "s4_uhlig", "s5_moor", "d1_hagedorn", "d2_ott"]
+
+
+class P9Records extends Node:
+	var list: Array = []
+
+	func _init() -> void:
+		add_to_group(&"corpse_manager")
+
+	func records() -> Array:
+		return list
+
+
+class P9Graves extends Node:
+	var list: Array = []
+
+	func _init() -> void:
+		add_to_group(&"graveyard")
+
+	func graves() -> Array:
+		return list
+
+
+func _with_d3() -> Array[StoryCorpseData]:
+	var out := _with_d2()
+	out.append(Database.story_corpse(&"d3_sieber") as StoryCorpseData)
+	return out
+
+
+func _p9_story_flags() -> void:
+	GameState.set_flag(&"village_open_day", 40)
+	GameState.set_flag(&"linden_consecrated", true)
+	GameState.set_flag(&"p8_open", true)
+
+
+func test_d3_data() -> void:
+	var d := Database.story_corpse(&"d3_sieber") as StoryCorpseData
+	var f := Phase9Fixtures.d3_story()
+	assert_not_null(d)
+	assert_eq([d.display_name, d.age, d.cause_id, d.traits, d.look, d.order, d.section, d.requires_flag, d.due_flag, d.after_flag],
+			["Johann Sieber", 71, &"old_age", [&"strange_wound"] as Array[StringName], 2, 8, &"linden_row4", &"q_sieber_dies",
+			&"sieber_dead", &""], "§2.7 / W0-Notizen 10")
+	assert_eq([d.finds, d.order, d.section], [f.finds, f.order, f.section], "the fixture's structure")
+	assert_eq(d.arrival_note, "Der alte Sieber. Heute Nacht. Liesel war schon da. Er hat gesagt, ich soll dir sagen: nicht beeilen. "
+			+ "Ich hab's ausgerichtet.", "§2.7 Osric")
+	var mark := Database.find(&"f_d3_mark") as FindData
+	assert_eq([mark.trait_id, mark.step, mark.story_only], [&"strange_wound", &"wounds", true])
+	assert_almost(mark.min_freshness, 0.3)
+	assert_true(mark.text.begins_with("Das Zeichen über dem Herzen, verheilt seit drei Wochen. Auf den Tag."), "§2.7")
+	assert_true(mark.lost_text.length() >= 30, "a lost text")
+	var ribbon := Database.find(&"f_d3_ribbon") as FindData
+	assert_eq([ribbon.step, ribbon.story_only, ribbon.clue_id], [&"pockets", true, &""])
+	assert_true(ribbon.text.begins_with("Ein Band aus Gretes Haube"), "§2.7")
+	assert_true(StoryDirector.waits_for_event(d), "like D2: NightPaths sets sieber_dead")
+	var r := StoryDirector.make_record(d, 7)
+	assert_true(r.has_trait(&"strange_wound"))
+	assert_eq([r.story_id, r.valuables_coins, r.display_name], [&"d3_sieber", 0, "Johann Sieber"])
+
+
+func test_d3_comes_the_morning_after_his_death_in_endings_b_c_silent() -> void:
+	_p9_story_flags()
+	var all := _with_d3()
+	var delivered := PackedStringArray(ALL_P8)
+	for day: int in range(63, 75):
+		assert_null(StoryDirector.due_story(day, delivered, 59, all, cfg), "day %d: no ending yet" % day)
+	assert_eq(StoryDirector.pending_count(delivered, all), 0, "reserves nothing before q_sieber_dies")
+	GameState.set_flag(&"q_sieber_dies", true)  # ending B, C or silent (the H6 choice actions)
+	assert_eq(StoryDirector.pending_count(delivered, all), 1, "the held-back plot of the fourth row (§2.6)")
+	assert_null(StoryDirector.due_story(71, delivered, 59, all, cfg), "waits for the death night")
+	GameState.set_flag(&"sieber_dead", 72)  # np_sieber, 02:10 (light + 21)
+	assert_null(StoryDirector.due_story(72, delivered, 59, all, cfg), "not the same morning")
+	assert_eq(StoryDirector.due_story(73, delivered, 59, all, cfg).id, &"d3_sieber", "§1.4 B11: the morning after")
+	assert_eq(StoryDirector.due_flags(73, delivered, 59, all, cfg), [] as Array[StringName], "the director never sets sieber_dead")
+
+
+func test_d3_never_comes_with_ending_a() -> void:
+	_p9_story_flags()
+	var all := _with_d3()
+	var delivered := PackedStringArray(ALL_P8)
+	GameState.set_flag(&"q_sieber_dies", true)
+	GameState.set_flag(&"sieber_dead", 72)
+	GameState.set_flag(&"sieber_gone", true)  # a damaged / fuzzed state: gone wins
+	assert_true(StoryDirector.cancelled(Database.story_corpse(&"d3_sieber") as StoryCorpseData))
+	assert_null(StoryDirector.due_story(73, delivered, 59, all, cfg), "Johann is gone – no D3 (§2.2.7 A)")
+	assert_eq(StoryDirector.pending_count(delivered, all), 0, "the plot is free again")
+	assert_false(StoryDirector.cancelled(Database.story_corpse(&"d2_ott") as StoryCorpseData), "only D3 has a cancel flag")
+
+
+func test_d3_settles_when_his_grave_is_marked() -> void:
+	var records := P9Records.new()
+	var graves := P9Graves.new()
+	tree.root.add_child(records)
+	tree.root.add_child(graves)
+	var r := CorpseRecord.new()
+	r.id = "corpse_0044"
+	r.story_id = &"d3_sieber"
+	r.grave_id = "l_16"
+	r.location = CorpseRecord.LOCATION_DROPOFF
+	records.list = [r]
+	var g := GraveRecord.new()
+	g.id = "l_16"
+	g.state = GraveRecord.State.FILLED
+	graves.list = [g]
+	TimeManager.day = 73
+	assert_eq(StoryDirector.apply_settled(tree), [] as Array[StringName], "not buried yet")
+	r.location = CorpseRecord.LOCATION_BURIED
+	assert_eq(StoryDirector.apply_settled(tree), [] as Array[StringName], "buried, but no marker")
+	g.state = GraveRecord.State.MARKED
+	assert_eq(StoryDirector.apply_settled(tree), [&"sieber_buried"] as Array[StringName], "the marker stands → settle_on")
+	assert_eq(GameState.get_flag(&"sieber_buried"), 73)
+	assert_eq(StoryDirector.apply_settled(tree), [] as Array[StringName], "idempotent")
+	# Pure part.
+	GameState.clear_flag(&"sieber_buried")
+	var other := CorpseRecord.new()
+	other.story_id = &"d2_ott"
+	other.grave_id = "l_12"
+	other.location = CorpseRecord.LOCATION_BURIED
+	assert_eq(StoryDirector.settled_flags([other, r] as Array[CorpseRecord], {"l_12": GraveRecord.State.MARKED,
+			"l_16": GraveRecord.State.MARKED}), [&"sieber_buried"] as Array[StringName], "only stories with a settle flag")
+
+
+func test_journal_settles_d3_on_the_marker() -> void:
+	var records := P9Records.new()
+	var graves := P9Graves.new()
+	tree.root.add_child(records)
+	tree.root.add_child(graves)
+	var j := JournalManager.new()
+	tree.root.add_child(j)
+	var r := CorpseRecord.new()
+	r.story_id = &"d3_sieber"
+	r.grave_id = "l_16"
+	r.location = CorpseRecord.LOCATION_BURIED
+	records.list = [r]
+	var g := GraveRecord.new()
+	g.id = "l_16"
+	g.state = GraveRecord.State.MARKED
+	graves.list = [g]
+	EventBus.grave_state_changed.emit("l_16", GraveRecord.State.FILLED)
+	assert_false(GameState.flag_on(&"sieber_buried"), "only a marker settles")
+	EventBus.grave_state_changed.emit("l_16", GraveRecord.State.MARKED)
+	assert_true(GameState.flag_on(&"sieber_buried"), "endings B / C / silent are settled (QuestEndingData.settle_on)")
+	GameState.clear_flag(&"sieber_buried")
+	j.post_load()
+	assert_true(GameState.flag_on(&"sieber_buried"), "after loading as well")

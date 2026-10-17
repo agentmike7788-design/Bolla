@@ -298,3 +298,36 @@ func test_v6_stats_load_without_phase8_keys() -> void:
 		assert_eq(GameState.get_stat(key), 0, "%s defaults to 0" % key)
 		assert_true(GameState.stats.has(key), "%s present after load" % key)
 	assert_eq(GameState.get_stat(&"rounds_bought"), 2)
+
+
+# --- Phase 9 (P6): stats §2.9, coin purpose post ------------------------------------------------------
+
+func test_phase9_stats_and_coin_reason() -> void:
+	assert_eq(SaveMigration.V8_NEW_STATS.size(), 18, "§2.9: 18 new stats (+ coins_spent_post is one of them)")
+	for key: StringName in SaveMigration.V8_NEW_STATS:
+		assert_true(key in GameState.DEFAULT_STATS, String(key))
+		assert_eq(GameState.get_stat(key), 0, "%s starts at 0" % key)
+	assert_true(&"post" in GameState.COIN_REASONS, "§2.9 Münz-Zwecke + post")
+	assert_eq(GameState.coin_ledger_stat(&"post"), &"coins_spent_post")
+	GameState.note_coins_spent(1, &"post")
+	GameState.note_coins_spent(1, &"post")
+	assert_eq([GameState.get_stat(&"coins_spent_post"), GameState.get_stat(&"coins_spent"), GameState.coin_ledger()[&"post"]], [2, 2, 2],
+			"postage in the ledger")
+	# The Phase-2…8 stats stay first and in order; Phase 9 is appended.
+	var first := GameState.DEFAULT_STATS.find(SaveMigration.V8_NEW_STATS[0])
+	for i: int in SaveMigration.V8_NEW_STATS.size():
+		assert_eq(GameState.DEFAULT_STATS[first + i], SaveMigration.V8_NEW_STATS[i], "appended in order")
+	for key: StringName in SaveMigration.V7_NEW_STATS:
+		assert_true(GameState.DEFAULT_STATS.find(key) < first, "%s before the Phase-9 stats" % key)
+
+
+func test_v7_stats_load_without_phase9_keys() -> void:
+	GameState.load_state({"stats": {"burials": 3, "coins_spent": 5, "visits_seen": 4}})
+	for key: StringName in SaveMigration.V8_NEW_STATS:
+		assert_eq(GameState.get_stat(key), 0, "%s defaults to 0" % key)
+		assert_true(GameState.stats.has(key), "%s present after load" % key)
+	assert_eq(GameState.get_stat(&"visits_seen"), 4)
+	var saved := GameState.save_state()
+	GameState.reset()
+	GameState.load_state(saved)
+	assert_eq(GameState.save_state(), saved, "round trip")
