@@ -16,3 +16,8 @@ extends Resource
 @export var death_flag: StringName = &""
 ## WatchSpot id (watch_ott / watch_kehr).
 @export var watch_spot: StringName
+# Phase 9 (docs/PHASE9_DESIGN.md §2.2.2, §3.4; np_sieber).
+## Offsets relative to the day in this GameState flag ("" = p8_open_day; np_sieber: q_light_day).
+@export var anchor_flag: StringName = &""
+## Set → the sequence does not run (ending A: sieber_gone).
+@export var cancel_flag: StringName = &""

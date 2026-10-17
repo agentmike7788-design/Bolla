@@ -91,7 +91,7 @@ func test_reputation_table() -> void:
 
 func test_current_version_is_three() -> void:
 	# Phase 5 W0: v4, Phase 6 W0: v5 (docs/PHASE6_DESIGN.md §5) – the name stays for the history of this test.
-	assert_eq(SaveMigration.CURRENT, 7)  # Phase 7 W0: v6, Phase 8 W0: v7
+	assert_eq(SaveMigration.CURRENT, 8)  # Phase 7 W0: v6, Phase 8 W0: v7, Phase 9 W0: v8
 	assert_eq(SaveFileIO.FORMAT_VERSION, SaveMigration.CURRENT)
 
 
@@ -186,8 +186,11 @@ func test_new_nodes_get_empty_states() -> void:
 			assert_eq(s.nodes.get(id), {}, "%s: %s (chain → v6)" % [name, id])
 		for id: String in SaveMigration.V7_EMPTY_NODES:
 			assert_eq(s.nodes.get(id), {}, "%s: %s (chain → v7)" % [name, id])
+		for id: String in SaveMigration.V8_EMPTY_NODES:
+			assert_eq(s.nodes.get(id), {}, "%s: %s (chain → v8)" % [name, id])
 		assert_eq(s.nodes.size(), V1_NODES.size() + NEW_NODES.size() + V3_NODES.size() + SaveMigration.V4_EMPTY_NODES.size()
-				+ SaveMigration.V5_EMPTY_NODES.size() + SaveMigration.V6_EMPTY_NODES.size() + SaveMigration.V7_EMPTY_NODES.size(), name)
+				+ SaveMigration.V5_EMPTY_NODES.size() + SaveMigration.V6_EMPTY_NODES.size() + SaveMigration.V7_EMPTY_NODES.size()
+				+ SaveMigration.V8_EMPTY_NODES.size(), name)
 
 
 func test_new_plots_stay_absent() -> void:
@@ -711,8 +714,8 @@ func test_v4_round_trip_is_identical() -> void:
 
 
 func test_version_five_is_rejected() -> void:
-	# Phase 6 W0: CURRENT 5, Phase 7 W0: 6, Phase 8 W0: 7 – the name stays; a version above CURRENT is rejected.
-	assert_eq(SaveMigration.CURRENT, 7)
+	# Phase 6 W0: CURRENT 5, Phase 7 W0: 6, Phase 8 W0: 7, Phase 9 W0: 8 – the name stays; a version above CURRENT is rejected.
+	assert_eq(SaveMigration.CURRENT, 8)
 	assert_eq(Phase5Fixtures.install_save_v3("slot_p4_day7_table", TEST_DIR, SLOT), OK)
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
 	doc.format_version = SaveMigration.CURRENT + 1
@@ -932,8 +935,8 @@ func test_v5_round_trip_is_identical() -> void:
 
 
 func test_version_six_is_rejected() -> void:
-	# Phase 7 W0: CURRENT 6, Phase 8 W0: 7 – the name stays; a version above CURRENT is rejected.
-	assert_eq(SaveMigration.CURRENT, 7)
+	# Phase 7 W0: CURRENT 6, Phase 8 W0: 7, Phase 9 W0: 8 – the name stays; a version above CURRENT is rejected.
+	assert_eq(SaveMigration.CURRENT, 8)
 	assert_eq(Phase6Fixtures.install_save_v4("slot_p5_day30_reverent", TEST_DIR, SLOT), OK)
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
 	doc.format_version = SaveMigration.CURRENT + 1
@@ -1187,7 +1190,8 @@ func test_read_doc_migrates_every_v6_fixture() -> void:
 		var read := _read_slot()
 		assert_eq(read.err, OK, name)
 		var f := _fixture_v6(name)
-		assert_eq(read.state, SaveMigration.migrate_6_to_7(f.state, f.meta), "%s: read_doc applies 6 → 7" % name)
+		assert_eq(read.state, SaveMigration.migrate_7_to_8(SaveMigration.migrate_6_to_7(f.state, f.meta), f.meta),
+				"%s: read_doc applies 6 → 7 → 8" % name)
 
 
 func test_older_fixtures_chain_to_v7() -> void:
@@ -1207,8 +1211,8 @@ func test_older_fixtures_chain_to_v7() -> void:
 	for c: Array in cases:
 		var doc: Dictionary = c[2]
 		var state := SaveMigration.migrate(SaveFileIO.decode_state(doc.data), int(c[1]), doc.meta)
-		assert_false(state.is_empty(), "%s: v%d → v7" % [c[0], c[1]])
-		for id: String in SaveMigration.V7_EMPTY_NODES:
+		assert_false(state.is_empty(), "%s: v%d → v8" % [c[0], c[1]])
+		for id: String in SaveMigration.V7_EMPTY_NODES + SaveMigration.V8_EMPTY_NODES:
 			assert_eq(state.nodes.get(id), {}, "%s: %s" % [c[0], id])
 		for key: StringName in SaveMigration.V7_NEW_STATS:
 			assert_eq(_game_state(state).stats.get(key), 0, "%s: %s" % [c[0], key])
@@ -1216,6 +1220,7 @@ func test_older_fixtures_chain_to_v7() -> void:
 			assert_eq([g.disturbed, g.extra_lines], [false, []], "%s: grave %s" % [c[0], g.id])
 		for r: Variant in _corpses(state):
 			assert_eq(r.kin_house, "", "%s: before the village no kin" % c[0])
+			assert_eq(r.letter_id, "", "%s: no Phase-9 letter" % c[0])
 
 
 func test_v7_round_trip_is_identical() -> void:
@@ -1224,7 +1229,7 @@ func test_v7_round_trip_is_identical() -> void:
 		var migrated := SaveMigration.migrate_6_to_7(f.state, f.meta)
 		_write_doc(SaveFileIO.make_doc(f.meta, migrated))
 		var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
-		assert_eq(int(doc.format_version), 7, name)
+		assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, name)  # Phase 9: v8
 		var read := _read_slot()
 		assert_eq(read.err, OK, name)
 		assert_eq(read.state, migrated, "%s: v7 file round trip" % name)
@@ -1233,14 +1238,15 @@ func test_v7_round_trip_is_identical() -> void:
 
 
 func test_version_eight_is_rejected() -> void:
-	assert_eq(SaveMigration.CURRENT, 7)
+	# Phase 8 W0: CURRENT 7, Phase 9 W0: 8 – the name stays; a version above CURRENT is rejected.
+	assert_eq(SaveMigration.CURRENT, 8)
 	assert_eq(Phase8Fixtures.install_save_v6("slot_p7_mid_inn", TEST_DIR, SLOT), OK)
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
-	doc.format_version = 8
+	doc.format_version = SaveMigration.CURRENT + 1
 	_write_doc(doc)
 	assert_eq(_read_slot().err, ERR_FILE_UNRECOGNIZED)
 	assert_true(SaveFileIO.is_newer_version(TEST_DIR, SLOT))
-	assert_eq(SaveMigration.migrate(_fixture_v6("slot_p7_mid_inn").state, 8), {})
+	assert_eq(SaveMigration.migrate(_fixture_v6("slot_p7_mid_inn").state, SaveMigration.CURRENT + 1), {})
 
 
 func test_absent_phase8_nodes_are_dropped_only_when_empty() -> void:
@@ -1248,4 +1254,128 @@ func test_absent_phase8_nodes_are_dropped_only_when_empty() -> void:
 	var out := SaveManager.without_absent_defaults(tree, nodes)
 	assert_false(out.has("npc_life") or out.has("apprentice_box"), "empty, no such node → dropped")
 	assert_eq(out.get("visitors"), {"plan_day": 3}, "non-empty states stay")
+	assert_eq(out.get("graveyard"), {})
+
+
+# --- Phase 9: v7 → v8 (docs/PHASE9_DESIGN.md §5.2; W0 Lead – P6 extends) ----------------------------
+
+func _fixture_v7(name: String) -> Dictionary:
+	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(Phase9Fixtures.save_v7_path(name)))
+	return {"meta": doc.meta, "state": SaveFileIO.decode_state(doc.data)}
+
+
+## §5.2 steps 1–6 on every v7 fixture: letter_id "" on every record, the four empty Phase-9 nodes, the 18 stats at 0;
+## no flag, the graves (l_13…l_16 stay absent), hill_requests and every other node unchanged.
+func test_v7_fixtures_migrate_to_v8() -> void:
+	assert_eq(Phase9Fixtures.SAVES_V7.size(), 7, "§5.3: seven v7 fixtures")
+	for name: String in Phase9Fixtures.SAVES_V7:
+		var f := _fixture_v7(name)
+		var before: Dictionary = (f.state as Dictionary).duplicate(true)
+		var s := SaveMigration.migrate(f.state, 7, f.meta)
+		assert_eq(f.state, before, name + ": input unchanged")
+		assert_eq(s, SaveMigration.migrate_7_to_8(f.state, f.meta), name + ": the chain from 7 is migrate_7_to_8")
+		# 1. letter_id on every record, nothing else.
+		var old_records: Array = _corpses(before)
+		var new_records: Array = _corpses(s)
+		assert_eq(new_records.size(), old_records.size(), name + ": records")
+		for i: int in new_records.size():
+			var r: Dictionary = (new_records[i] as Dictionary).duplicate()
+			assert_eq(r.letter_id, "", "%s: %s letter_id" % [name, r.id])
+			r.erase("letter_id")
+			assert_eq(r, old_records[i], "%s: record %s otherwise unchanged" % [name, r.id])
+		# 2. graves unchanged – row 4 absent (LOCKED from the layout when the Graveyard loads).
+		assert_eq(s.nodes.graveyard, before.nodes.graveyard, name + ": graves unchanged")
+		for g: Variant in s.nodes.graveyard.graves:
+			assert_false(str(g.id) in Phase9Fixtures.ROW4_PLOTS, name + ": row 4 stays absent")
+		# 3. empty Phase-9 nodes; 4. hill_requests kept; 5. stats 0, no flags.
+		for id: String in SaveMigration.V8_EMPTY_NODES:
+			assert_eq(s.nodes.get(id), {}, "%s: empty %s" % [name, id])
+		assert_eq(s.nodes.get("hill_requests"), before.nodes.get("hill_requests"), name + ": hill_requests kept (save_optional)")
+		var stats: Dictionary = _game_state(s).stats
+		for key: StringName in SaveMigration.V8_NEW_STATS:
+			assert_eq(stats.get(key), 0, "%s: stat %s" % [name, key])
+		for key: Variant in _game_state(before).stats:
+			assert_eq(stats[key], _game_state(before).stats[key], "%s: stat %s kept" % [name, key])
+		assert_eq(_game_state(s).flags, _game_state(before).flags, name + ": no new flags (p9_open comes from Quests.post_load)")
+		assert_eq(s.autoloads.TimeManager, before.autoloads.TimeManager, name + ": time")
+		# 6. player, inventories, orders, friendship, visitors, apprentice … unchanged.
+		for id: Variant in before.nodes:
+			if str(id) != "corpse_manager":
+				assert_eq(s.nodes[id], before.nodes[id], "%s: %s unchanged" % [name, id])
+		assert_false((s.nodes.get("visitors", {}) as Dictionary).has("kin_interval"), name + ": kin_interval absent = empty")
+		assert_eq(s.nodes.size(), before.nodes.size() + SaveMigration.V8_EMPTY_NODES.size(), name + ": only the new nodes added")
+		assert_eq(SaveMigration.migrate_7_to_8(s, f.meta), s, name + ": idempotent on its own output")
+
+
+func test_v7_to_v8_is_tolerant() -> void:
+	var state := {"autoloads": {"GameState": {"stats": {&"burials": 3, &"letters_found": 2}}},
+			"nodes": {"corpse_manager": {"corpses": [7, {"id": "c_1", "letter_id": "lp_l1_carter"}, {"id": "c_2"}]},
+			"quests": {"open_day": 63}}}
+	var out := SaveMigration.migrate_7_to_8(state, {})
+	var corpses: Array = out.nodes.corpse_manager.corpses
+	assert_eq(corpses[0], 7, "garbage kept")
+	assert_eq(corpses[1].letter_id, "lp_l1_carter", "an existing letter_id is kept")
+	assert_eq(corpses[2].letter_id, "", "added")
+	assert_eq(out.nodes.quests, {"open_day": 63}, "an existing Phase-9 state is kept")
+	assert_eq([out.autoloads.GameState.stats[&"burials"], out.autoloads.GameState.stats[&"letters_found"]], [3, 2])
+	assert_eq(out.autoloads.GameState.stats[&"quest_steps"], 0)
+	var bare := SaveMigration.migrate_7_to_8({"autoloads": {}, "nodes": {}}, {})
+	for id: String in SaveMigration.V8_EMPTY_NODES:
+		assert_eq(bare.nodes.get(id), {}, id)
+
+
+func test_read_doc_migrates_every_v7_fixture() -> void:
+	for name: String in Phase9Fixtures.SAVES_V7:
+		assert_eq(Phase9Fixtures.install_save_v7(name, TEST_DIR, SLOT), OK)
+		var read := _read_slot()
+		assert_eq(read.err, OK, name)
+		var f := _fixture_v7(name)
+		assert_eq(read.state, SaveMigration.migrate_7_to_8(f.state, f.meta), "%s: read_doc applies 7 → 8" % name)
+
+
+## The six v6 fixtures go the whole way 6 → 7 → 8 (§10: v6 fixtures load).
+func test_v6_fixtures_chain_to_v8() -> void:
+	for name: String in Phase8Fixtures.SAVES_V6:
+		var f := _fixture_v6(name)
+		var s := SaveMigration.migrate(f.state, 6, f.meta)
+		assert_false(s.is_empty(), name)
+		for id: String in SaveMigration.V7_EMPTY_NODES + SaveMigration.V8_EMPTY_NODES:
+			assert_eq(s.nodes.get(id), {}, "%s: %s" % [name, id])
+		for key: StringName in SaveMigration.V7_NEW_STATS + SaveMigration.V8_NEW_STATS:
+			assert_eq(_game_state(s).stats.get(key), 0, "%s: %s" % [name, key])
+		for r: Variant in _corpses(s):
+			assert_eq(r.letter_id, "", "%s: %s" % [name, r.id])
+		assert_eq(s, SaveMigration.migrate_7_to_8(SaveMigration.migrate_6_to_7(f.state, f.meta), f.meta), name + ": = 6 → 7 → 8")
+
+
+func test_v8_round_trip_is_identical() -> void:
+	for name: String in Phase9Fixtures.SAVES_V7:
+		var f := _fixture_v7(name)
+		var migrated := SaveMigration.migrate_7_to_8(f.state, f.meta)
+		_write_doc(SaveFileIO.make_doc(f.meta, migrated))
+		var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
+		assert_eq(int(doc.format_version), 8, name)
+		var read := _read_slot()
+		assert_eq(read.err, OK, name)
+		assert_eq(read.state, migrated, "%s: v8 file round trip" % name)
+		_write_doc(SaveFileIO.make_doc(read.meta, read.state))
+		assert_eq(_read_slot().state, migrated, "%s: stable" % name)
+
+
+func test_version_nine_is_rejected() -> void:
+	assert_eq(SaveMigration.CURRENT, 8)
+	assert_eq(Phase9Fixtures.install_save_v7("slot_p8_mid", TEST_DIR, SLOT), OK)
+	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_DIR, SLOT)))
+	doc.format_version = 9
+	_write_doc(doc)
+	assert_eq(_read_slot().err, ERR_FILE_UNRECOGNIZED)
+	assert_true(SaveFileIO.is_newer_version(TEST_DIR, SLOT))
+	assert_eq(SaveMigration.migrate(_fixture_v7("slot_p8_mid").state, 9), {})
+
+
+func test_absent_phase9_nodes_are_dropped_only_when_empty() -> void:
+	var nodes := {"quests": {}, "who_knows": {}, "letters": {"next_uid": 2}, "stranger": {}, "graveyard": {}}
+	var out := SaveManager.without_absent_defaults(tree, nodes)
+	assert_false(out.has("quests") or out.has("who_knows") or out.has("stranger"), "empty, no such node → dropped")
+	assert_eq(out.get("letters"), {"next_uid": 2}, "non-empty states stay")
 	assert_eq(out.get("graveyard"), {})

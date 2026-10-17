@@ -110,6 +110,10 @@ var revealed_cause: StringName = &""
 ## The mourning household (Village.mourning_house of the arrival day; set at the delivery from
 ## village_open on – CorpseManager, P2; &"" = no kin, no visits).
 var kin_house: StringName = &""
+# Phase 9 (docs/PHASE9_DESIGN.md §2.4.2, §3.4, §5.1) – in to_dict / from_dict (missing = "").
+## The pocket letter of the corpse (LetterData id; set at the delivery from p9_open on by Letters.assign – P3;
+## &"" = none, the Phase-4 find f_letter stays a clue).
+var letter_id: StringName = &""
 
 
 func has_trait(t: StringName) -> bool:
@@ -226,6 +230,7 @@ func to_dict() -> Dictionary:
 		"returned": returned.duplicate(),
 		"revealed_cause": revealed_cause,
 		"kin_house": kin_house,
+		"letter_id": letter_id,
 	}
 
 
@@ -283,6 +288,8 @@ static func from_dict(d: Dictionary) -> CorpseRecord:
 	r.revealed_cause = StringName(_to_str(d.get("revealed_cause"), ""))
 	# Phase 8 (§3.4, §5.1) – missing = "".
 	r.kin_house = StringName(_to_str(d.get("kin_house"), ""))
+	# Phase 9 (§3.4, §5.1) – missing = "".
+	r.letter_id = StringName(_to_str(d.get("letter_id"), ""))
 	return r
 
 

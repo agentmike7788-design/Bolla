@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StoryCorpseData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/story/story_corpse_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"d3_sieber"
+order = 8
+earliest_day = 1
+display_name = "Johann Sieber"
+age = 71
+cause_id = &"old_age"
+traits = Array[StringName]([&"strange_wound"])
+valuables_coins = 0
+look = 2
+finds = Array[StringName]([&"f_d3_mark", &"f_d3_ribbon"])
+arrival_note = "Der alte Sieber. Heute Nacht. Liesel war schon da. Er hat gesagt, ich soll dir sagen: nicht beeilen. Ich hab's ausgerichtet."
+is_finale = false
+after_flag = &""
+after_days = 0
+section = &"linden_row4"
+requires_flag = &"q_sieber_dies"
+due_flag = &"sieber_dead"

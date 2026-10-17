@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="LetterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/letters/letter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lpo_wernstein"
+kind = &"post"
+outside = "An Jungfer Ida Wernstein, Hollerbrück"
+text = "Die Stelle als Köchin ist Ihre, wenn Sie bis Martini kommen. Wir erwarten Sie. Frau Amtmann Seidel."
+sealed = true
+sender = "eine Herrschaft in der Stadt"
+recipient = &"grave"
+asks = &""
+conditions = PackedStringArray()
+choice_actions = Dictionary[StringName, PackedStringArray]({})
+choice_texts = Dictionary[StringName, String]({})
+reply_text = ""
+story_id = &"s3_wernstein"

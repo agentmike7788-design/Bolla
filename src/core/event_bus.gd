@@ -168,6 +168,21 @@ signal night_visit(path_id: StringName, npc_id: StringName, phase: StringName)
 ## changed – offered | accepted | completed | failed | withdrawn (HillRequests).
 signal hill_request_changed(request_id: StringName, state: StringName)
 
+# --- Phase 9 (docs/PHASE9_DESIGN.md §3.3) ---------------------------------------------------------
+## Chains (Quests); state: &"opened" | &"step" | &"chosen" | &"ended"
+signal quest_changed(quest_id: StringName, step_id: StringName, state: StringName)
+## Main chain (WhoKnows); kind: &"matched" | &"witnessed" | &"marked" | &"departed"
+signal light_entry_changed(entry_id: StringName, kind: StringName)
+## Letters (Letters); state: &"found" | &"posted" | &"delivered" | &"read" | &"read_grave" | &"answered" | &"burned" |
+## &"buried" | &"received"
+signal letter_changed(letter_uid: String, letter_id: StringName, state: StringName)
+## The gentleman with the case (Stranger); kind: &"arrived" | &"asked" | &"sold" | &"bribed" | &"case" | &"left" |
+## &"expelled"
+signal stranger_event(kind: StringName, detail: String)
+## Larger requests (HillRequests): one part done; workbench & co. (Crafting)
+signal hill_request_part(request_id: StringName, part: int, done: bool)
+signal craft_finished(station_id: StringName, recipe_id: StringName, amount: int)
+
 # UI
 signal ui_panel_requested(panel: StringName, context: Dictionary)
 signal ui_modal_changed(open: bool)

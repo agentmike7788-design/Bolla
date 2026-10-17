@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/inventory/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"nameless_letter"
+display_name = "Brief ohne Namen"
+description = "Ein Brief ohne Absender, in einer Hand, die nicht deine sein soll. Wie Lorenz sie schrieb."
+category = 5
+max_stack = 1
+tool_kind = &""
+tool_tier = 0
+unique = false

@@ -1,0 +1,59 @@
+[gd_resource type="Resource" script_class="OrderData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1_5x5xm"]
+
+[sub_resource type="Resource" id="Resource_jhh2l"]
+script = ExtResource("1_5x5xm")
+kind = &"gather"
+title = "Sechs Holunderbeeren"
+conditions = {
+"amount": 6,
+"item": "elderberries"
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_xuiri"]
+script = ExtResource("1_5x5xm")
+kind = &"gather"
+title = "Vier Holz"
+conditions = {
+"amount": 4,
+"item": "wood"
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_de4rx"]
+script = ExtResource("1_5x5xm")
+kind = &"visit"
+title = "Im Keller helfen"
+conditions = {
+"label": "[E] Rosine im Keller helfen (40 Min)",
+"minutes": 40,
+"place": "v_inn_cellar_help",
+"window": [840, 1020]
+}
+category = &"hill"
+
+[resource]
+script = ExtResource("1_5x5xm")
+id = &"hrv_inn_cellar"
+giver = &"innkeeper"
+kind = &"large"
+title = "Der Keller im Holderkrug"
+request_text = "Rosine Wackernagel: „Im Keller steht das Wasser, und der Holunder muss rein, bevor er gärt. Bring Beeren und Holz, und pack einmal mit an. Ich zahl in Wein.“"
+thanks_text = "„Trocken und voll“, sagt Rosine. „So mag ich meinen Keller. Und dich auch, heute.“"
+conditions = {
+"reward_items": {
+"elder_wine": 1
+}
+}
+days_limit = 2
+requires_flag = &"village_open"
+reward_coins = 4
+reward_rep = 1
+cooldown_days = 9
+order = 130
+category = &"hill"
+parts = Array[Resource]([SubResource("Resource_jhh2l"), SubResource("Resource_xuiri"), SubResource("Resource_de4rx")])
+size = &"large"
+place = &"village"

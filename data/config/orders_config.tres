@@ -9,3 +9,4 @@ board_offers = 2
 board_giver = &"council"
 refresh_minute = 360
 max_active_friend = 2
+max_active_quest = 3

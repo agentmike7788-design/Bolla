@@ -23,7 +23,18 @@ gains = Dictionary[StringName, int]({
 &"favor_unreturned": -6,
 &"lights_all": 2,
 &"jakob_scolded": -1,
-&"jakob_unpaid": -2
+&"jakob_unpaid": -2,
+&"witness": 2,
+&"confided": 4,
+&"letter_delivered": 3,
+&"errand_done": 2,
+&"named_publicly": -4,
+&"large_request_village": 3,
+&"case_reported_fenner": 4,
+&"case_reported_quast": -6,
+&"register_sold_lenz": -4,
+&"register_sold_fenner": -2,
+&"seal_broken": -3
 })
 rep_start_bonus = PackedInt32Array(0, 2, 4, 6, 8)
 piety_start_bonus = PackedInt32Array(-5, 0, 0, 3, 5)

@@ -9,6 +9,17 @@ const CATEGORY_FRIEND := &"friend"
 ## G8 Runde 6 (docs/PHASE8_DESIGN.md, G8 Runde 6 §2): a request of the cemetery gate's notice board
 ## (data/hill_requests, HillRequests) – never an order of Orders.
 const CATEGORY_HILL := &"hill"
+## Phase 9 (docs/PHASE9_DESIGN.md §2.1, §2.4.4): errands and chain tasks – their own limit
+## OrdersConfig.max_active_quest; never for the village chapter or stats.orders_done.
+const CATEGORY_QUEST := &"quest"
+## Phase 9 (§2.3.2): a larger request (size large) of the gate / the parish board with 2–4 parts.
+const SIZE_LARGE := &"large"
+const PLACE_GATE := &"gate"
+const PLACE_VILLAGE := &"village"
+## §2.3.2: part kinds of the larger requests in addition to those of G8 Runde 6 (HillRules.KINDS: deliver, tend,
+## exam, prep, marker, ghost, clear, decor). conditions: craft {recipe, amount} · gather {item, amount} · ghosts
+## {times, section} · visit {place, minutes, window, label} · meet {npc, place, window} · devotion {} · flowers {graves}.
+const PART_KINDS: Array[StringName] = [&"craft", &"gather", &"ghosts", &"visit", &"meet", &"devotion", &"flowers"]
 
 @export var id: StringName
 ## npc_id of the giver; &"council" = the parish board („die Gemeinde").
@@ -50,3 +61,11 @@ const CATEGORY_HILL := &"hill"
 # Phase 8 (docs/PHASE8_DESIGN.md §2.4, §3.4): &"" = a Phase-7 order | &"friend" (friendship steps and
 # return favours: their own limit OrdersConfig.max_active_friend).
 @export var category: StringName = &""
+# Phase 9 (docs/PHASE9_DESIGN.md §2.3, §3.4): larger requests. parts holds OrderData (the parts; typed as Resource
+# because of the self-reference – contract §3.4); they count in any order unless parts_in_order is set.
+@export var parts: Array[Resource] = []
+## &"" small | &"large"
+@export var size: StringName = &""
+## &"gate" | &"village"
+@export var place: StringName = &"gate"
+@export var parts_in_order: bool = false

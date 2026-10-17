@@ -70,7 +70,12 @@ reactions = Dictionary[StringName, int]({
 &"noise_at_grave": 2,
 &"robber_let_go": 2,
 &"robber_reported": 2,
-&"wish_done": 2
+&"wish_done": 2,
+&"q_sent_away": 3,
+&"q_stayed": 3,
+&"q_public": 3,
+&"letter_delivered": 2,
+&"register_sold": 2
 })
 goal_levels = 2
 goal_wishes = 5

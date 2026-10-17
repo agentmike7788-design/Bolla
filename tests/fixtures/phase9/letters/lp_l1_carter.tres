@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="LetterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/letters/letter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lp_l1_carter"
+kind = &"pocket"
+outside = "An Rosine Wackernagel, Holderkrug"
+text = "Rosine. Ich zahl die zwei Bier, wenn ich wiederkomme. Heb sie mir auf. Und sag dem Osric nicht, dass ich dir schulde, der lacht sonst."
+sealed = false
+sender = "ein Fuhrknecht aus Ellbach"
+recipient = &"innkeeper"
+asks = &""
+conditions = PackedStringArray()
+choice_actions = Dictionary[StringName, PackedStringArray]({
+&"deliver": PackedStringArray("rel_add:innkeeper:3")
+})
+choice_texts = Dictionary[StringName, String]({})
+reply_text = ""
+story_id = &""

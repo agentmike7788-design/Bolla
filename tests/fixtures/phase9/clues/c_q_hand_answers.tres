@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_q_hand_answers"
+title = "Die schräge Hand antwortet"
+text = "An der Hüttentür steckt ein Zettel in der schrägen Hand der Warnbriefe: ‚Du schreibst wie er. Gut.‘"
+kind = &"letter"
+order = 408

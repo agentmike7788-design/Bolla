@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="RelationshipConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/relationship_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tier_thresholds = PackedInt32Array(15, 40, 70)
+gains = Dictionary[StringName, int]({
+&"case_reported_fenner": 4,
+&"case_reported_quast": -6,
+&"confided": 4,
+&"danced": 3,
+&"donation": 1,
+&"errand_done": 2,
+&"favor_returned": 4,
+&"favor_unreturned": -6,
+&"friend_step_1": 6,
+&"friend_step_2": 8,
+&"friend_step_3": 10,
+&"gift": 4,
+&"jakob_scolded": -1,
+&"jakob_unpaid": -2,
+&"kathrein": 2,
+&"large_request_village": 3,
+&"letter_delivered": 3,
+&"lights_all": 2,
+&"listen": 3,
+&"named_publicly": -4,
+&"order_failed": -4,
+&"register_sold_fenner": -2,
+&"register_sold_lenz": -4,
+&"round": 2,
+&"seal_broken": -3,
+&"talk": 1,
+&"talk_cheerful": 2,
+&"wish_done_villager": 4,
+&"witness": 2
+})
+rep_start_bonus = PackedInt32Array(0, 2, 4, 6, 8)
+piety_start_bonus = PackedInt32Array(-5, 0, 0, 3, 5)
+discount_tier = &"trusted"
+discount = 1
+discount_min_price = 4
+surcharge_rep_tier = &"disreputable"
+surcharge = 1
+friend_buy_bonus = 1
+friend_buy_min_price = 3

@@ -57,6 +57,12 @@ const WANDERER_DIR := "res://data/village/wanderers"
 const NIGHT_PATH_DIR := "res://data/night/paths"
 # G8 Runde 6 „Bitten vom Hügel" (docs/PHASE8_DESIGN.md, G8 Runde 6 §2): OrderData with category hill.
 const HILL_REQUEST_DIR := "res://data/hill_requests"
+# Phase 9 (docs/PHASE9_DESIGN.md §3.5).
+const QUEST_DIR := "res://data/quests"
+const LETTER_DIR := "res://data/letters"
+const STRANGER_OFFER_DIR := "res://data/stranger/offers"
+## Larger requests (OrderData size large) – separate from hill_requests(), the small ones stay as they are.
+const LARGE_REQUEST_DIR := "res://data/hill_requests/large"
 
 var _items: Dictionary = {}       # StringName -> ItemData
 var _recipes: Dictionary = {}     # StringName -> RecipeData
@@ -98,6 +104,10 @@ var _festivals: Dictionary = {}   # StringName -> FestivalData
 var _wanderers: Dictionary = {}   # StringName -> WandererData
 var _night_paths: Dictionary = {} # StringName -> NightPathData
 var _hill_requests: Dictionary = {}  # StringName -> OrderData (category hill)
+var _quests: Dictionary = {}      # StringName -> QuestData
+var _letters: Dictionary = {}     # StringName -> LetterData
+var _stranger_offers: Dictionary = {}  # StringName -> StrangerOfferData
+var _large_requests: Dictionary = {}   # StringName -> OrderData (category hill, size large)
 var _icons: Dictionary = {}       # StringName -> Texture2D
 var _placeholder: Texture2D
 
@@ -153,6 +163,10 @@ func reload() -> void:
 	_wanderers = _load_dir(WANDERER_DIR, "id")
 	_night_paths = _load_dir(NIGHT_PATH_DIR, "id")
 	_hill_requests = _load_dir(HILL_REQUEST_DIR, "id")
+	_quests = _load_dir(QUEST_DIR, "id")
+	_letters = _load_dir(LETTER_DIR, "id")
+	_stranger_offers = _load_dir(STRANGER_OFFER_DIR, "id")
+	_large_requests = _load_dir(LARGE_REQUEST_DIR, "id")
 
 
 func item(id: StringName) -> Resource:
@@ -526,6 +540,56 @@ func hill_request(id: StringName) -> Resource:
 ## All requests of the gate's notice board, sorted by `order` (ties by id).
 func hill_requests() -> Array:
 	return _sorted(_hill_requests.values(), "order")
+
+
+## Phase 9: data/quests/<id>.tres (QuestData), null if unknown.
+func quest(id: StringName) -> Resource:
+	return _quests.get(id)
+
+
+## All chains, sorted by `order` (ties by id).
+func quests() -> Array:
+	return _sorted(_quests.values(), "order")
+
+
+## Phase 9: data/letters/<id>.tres (LetterData), null if unknown.
+func letter(id: StringName) -> Resource:
+	return _letters.get(id)
+
+
+## All letters, sorted by id.
+func letters() -> Array:
+	return _sorted(_letters.values(), "id")
+
+
+## The pocket letters (kind pocket), sorted by id.
+func pocket_letters() -> Array:
+	return letters().filter(func(l: Resource) -> bool: return l.get(&"kind") == &"pocket")
+
+
+## The post for the dead (kind post), sorted by id.
+func post_letters() -> Array:
+	return letters().filter(func(l: Resource) -> bool: return l.get(&"kind") == &"post")
+
+
+## Phase 9: data/stranger/offers/<id>.tres (StrangerOfferData), null if unknown.
+func stranger_offer(id: StringName) -> Resource:
+	return _stranger_offers.get(id)
+
+
+## All of Brenneisen's offers, sorted by id.
+func stranger_offers() -> Array:
+	return _sorted(_stranger_offers.values(), "id")
+
+
+## Phase 9: data/hill_requests/large/<id>.tres (OrderData, size large), null if unknown.
+func large_request(id: StringName) -> Resource:
+	return _large_requests.get(id)
+
+
+## All larger requests, sorted by `order` (ties by id) – never part of hill_requests().
+func large_requests() -> Array:
+	return _sorted(_large_requests.values(), "order")
 
 
 ## data/village/wanderers/<id>.tres (WandererData), null if unknown.

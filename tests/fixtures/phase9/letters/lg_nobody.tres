@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="LetterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/letters/letter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lg_nobody"
+kind = &"pocket"
+outside = "An den, der das findet"
+text = "Ich hatte keine Angst. Sag es keinem, sonst glaubt es keiner."
+sealed = false
+sender = "ein Unbekannter"
+recipient = &"none"
+asks = &"grave"
+conditions = PackedStringArray()
+choice_actions = Dictionary[StringName, PackedStringArray]({})
+choice_texts = Dictionary[StringName, String]({})
+reply_text = ""
+story_id = &""

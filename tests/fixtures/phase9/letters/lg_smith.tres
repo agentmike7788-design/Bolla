@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="LetterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/letters/letter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lg_smith"
+kind = &"pocket"
+outside = "An Meister Esch, Schmiede"
+text = "Meister. Ich hab die Zange mitgenommen. Sie ist im Graben bei der Mühle. Es tut mir leid."
+sealed = false
+sender = "ein Lehrling"
+recipient = &"smith"
+asks = &""
+conditions = PackedStringArray()
+choice_actions = Dictionary[StringName, PackedStringArray]({
+&"deliver": PackedStringArray("rel_add:smith:3", "give_item:iron_fittings:1")
+})
+choice_texts = Dictionary[StringName, String]({})
+reply_text = ""
+story_id = &""

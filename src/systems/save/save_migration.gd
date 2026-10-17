@@ -3,13 +3,27 @@ extends RefCounted
 ## Upgrades a decoded save state ({autoloads, nodes}) to the CURRENT format
 ## (docs/PHASE3_DESIGN.md §5.2, §3.4 "Speichern"; docs/PHASE4_DESIGN.md §5.2: chain 1→2→3;
 ## docs/PHASE5_DESIGN.md §5.2: chain 1→2→3→4; docs/PHASE6_DESIGN.md §5.2: chain 1→…→5;
-## docs/PHASE7_DESIGN.md §5.2: chain 1→…→6; docs/PHASE8_DESIGN.md §5.2: chain 1→…→7). Applied by
+## docs/PHASE7_DESIGN.md §5.2: chain 1→…→6; docs/PHASE8_DESIGN.md §5.2: chain 1→…→7;
+## docs/PHASE9_DESIGN.md §5.2: chain 1→…→8). Applied by
 ## SaveFileIO.read_doc after
 ## decode_state; the normal load path follows and the next save writes CURRENT.
 ## Pure: never touches the scene tree, never changes its input or an autoload (migrate_3_to_4 only
 ## reads item categories from Database).
 
-const CURRENT := 7
+const CURRENT := 8
+## Save ids of the Phase-9 system nodes that get an empty state in migrate_7_to_8 (docs/PHASE9_DESIGN.md §3.1, §3.4,
+## §5.2 step 3); SaveManager.without_absent_defaults drops them again while the world has no such node (W-Welt adds
+## them, like V4–V7).
+const V8_EMPTY_NODES: PackedStringArray = ["quests", "who_knows", "letters", "stranger"]
+## Phase-9 statistics that start at 0 (§5.2 step 5; = the Phase-9 part of GameState.DEFAULT_STATS, §2.9, incl. the
+## ledger stat of the coin purpose post).
+const V8_NEW_STATS: Array[StringName] = [&"quest_steps", &"quest_choices", &"letters_found", &"letters_decided",
+		&"letters_delivered", &"letters_read", &"letters_burned", &"letters_buried", &"letters_answered", &"post_received",
+		&"errands_done", &"large_requests_done", &"large_requests_half", &"large_requests_failed", &"large_request_parts",
+		&"stranger_talks", &"stranger_coins", &"coins_spent_post"]
+## §5.2 step 1: the new CorpseRecord field and its default (= CorpseRecord.to_dict of a new record; the Phase-4
+## letters stay clues).
+const V8_RECORD_DEFAULTS := {"letter_id": ""}
 ## Save ids of the Phase-8 system nodes / stores that get an empty state in migrate_6_to_7
 ## (docs/PHASE8_DESIGN.md §3.1, §3.4, §5.2 step 3). migrate_6_to_7 inserts them (like V4–V6);
 ## SaveManager.without_absent_defaults drops them again while the world has no such node (W-Welt adds them).
@@ -110,6 +124,8 @@ static func migrate(state: Dictionary, from_version: int, meta: Dictionary = {})
 		out = migrate_5_to_6(out, meta)
 	if from_version <= 6:
 		out = migrate_6_to_7(out, meta)
+	if from_version <= 7:
+		out = migrate_7_to_8(out, meta)
 	return out
 
 
@@ -370,6 +386,35 @@ static func migrate_6_to_7(state: Dictionary, _meta: Dictionary) -> Dictionary:
 			nodes[id] = {}
 	# 4. The Phase-8 statistics start at 0.
 	for key: StringName in V7_NEW_STATS:
+		if not _has_key(stats, String(key)):
+			_set_key(stats, String(key), 0)
+	return out
+
+
+## docs/PHASE9_DESIGN.md §5.2 steps 1–6 on a deep copy of a v7 state (pure, idempotent): letter_id "" on every record,
+## empty states for the four Phase-9 nodes, the Phase-9 statistics at 0. Nothing else changes – the plots l_13…l_16
+## come LOCKED from the layout when the Graveyard loads (tolerant rule), hill_requests keeps its state (save_optional;
+## missing large_* keys = the default state), no flags (Quests.post_load sets p9_open), visitors.kin_interval absent =
+## empty.
+static func migrate_7_to_8(state: Dictionary, _meta: Dictionary) -> Dictionary:
+	var out := state.duplicate(true)
+	var autoloads := _sub(out, "autoloads")
+	var nodes := _sub(out, "nodes")
+	var stats := _sub(_sub(autoloads, "GameState"), "stats")
+	# 1. The pocket letter of every record (none – the Phase-4 letters stay clues).
+	var corpse_state: Variant = nodes.get("corpse_manager")
+	if corpse_state is Dictionary and (corpse_state as Dictionary).get("corpses") is Array:
+		for r: Variant in (corpse_state as Dictionary).corpses:
+			if r is Dictionary:
+				for key: String in V8_RECORD_DEFAULTS:
+					if not (r as Dictionary).has(key):
+						(r as Dictionary)[key] = V8_RECORD_DEFAULTS[key]
+	# 3. Empty states for the new system nodes.
+	for id: String in V8_EMPTY_NODES:
+		if not nodes.get(id) is Dictionary:
+			nodes[id] = {}
+	# 5. The Phase-9 statistics start at 0.
+	for key: StringName in V8_NEW_STATS:
 		if not _has_key(stats, String(key)):
 			_set_key(stats, String(key), 0)
 	return out

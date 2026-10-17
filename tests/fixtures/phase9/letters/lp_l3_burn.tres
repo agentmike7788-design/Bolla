@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="LetterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/letters/letter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lp_l3_burn"
+kind = &"pocket"
+outside = "Ungelesen verbrennen"
+text = "Komm nicht zurück nach Hollerbrück. Was du suchst, sucht dich auch."
+sealed = true
+sender = "ein Tagelöhner"
+recipient = &"none"
+asks = &"burn"
+conditions = PackedStringArray()
+choice_actions = Dictionary[StringName, PackedStringArray]({
+&"read": PackedStringArray("add_clue:c_warning_letter")
+})
+choice_texts = Dictionary[StringName, String]({})
+reply_text = ""
+story_id = &""
