@@ -46,6 +46,8 @@ const LINK_FAIL_TEXT := "Diese Hinweise erzählen noch keine gemeinsame Geschich
 const MINUTES_PER_DAY := 1440
 ## Phase 8: the insight with three text variants (§14.1) and where they live.
 const UNDERLINED_INSIGHT := &"i_underlined"
+## Phase 9: the insight of the main chain („Das Licht vorher“, H3) – not part of the earlier chapters.
+const LIGHT_INSIGHT := &"i_light_before"
 const VARIANT_PATH := "res://data/journal/insights/variants/%s_%s.tres"
 const UNDERLINED_CHOICES: Array[StringName] = [&"priest", &"surgeon", &"washer"]
 ## Phase 8 (§1.6 item 5, §2.9): a clue that comes only when all these finds of one corpse are revealed
