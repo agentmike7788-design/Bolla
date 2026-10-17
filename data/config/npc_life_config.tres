@@ -35,6 +35,18 @@ mood_rules = Array[Dictionary]([{
 "trigger": &"own_step"
 }, {
 "days": 1,
+"events": [&"q_public"],
+"mood": &"cross",
+"npcs": [&"priest", &"surgeon", &"washer"],
+"trigger": &"rumor"
+}, {
+"days": 2,
+"events": [&"q_public"],
+"mood": &"low",
+"npcs": [&"grocer", &"mayor"],
+"trigger": &"rumor"
+}, {
+"days": 1,
 "events": [&"lecture_rumor", &"specimen_sold_villager"],
 "mood": &"cross",
 "npcs": [&"priest", &"washer"],

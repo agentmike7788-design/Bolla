@@ -308,9 +308,10 @@ func test_new_config_contract_values() -> void:
 			&"name_in_village_complete", 360])
 	assert_eq(life.moods, [&"plain", &"cheerful", &"low", &"cross"] as Array[StringName])
 	assert_eq(life.mood_weights, {&"plain": 70, &"cheerful": 15, &"low": 10, &"cross": 5} as Dictionary[StringName, int])
-	assert_eq(life.mood_rules.size(), 6, "§2.1.1: precedence 1–5 (rumor in two rows)")
+	# Phase 9 W2 (§2.2.8, W1-Anschlüsse 13): + the two rumor rules of ending C (q_public) after own_step.
+	assert_eq(life.mood_rules.size(), 8, "§2.1.1: precedence 1–5 (rumor in two rows) + Phase 9 ending C (two rows)")
 	assert_eq(life.mood_rules.map(func(r: Dictionary) -> StringName: return r.trigger),
-			[&"festival", &"mourning_circle", &"own_step", &"rumor", &"rumor", &"sick_light"])
+			[&"festival", &"mourning_circle", &"own_step", &"rumor", &"rumor", &"rumor", &"rumor", &"sick_light"])
 	assert_eq(life.talk_gain_by_mood, {&"plain": 1, &"cheerful": 2, &"low": 1, &"cross": 0} as Dictionary[StringName, int])
 	assert_eq([life.listen_minutes, life.goal_levels, life.goal_wishes, life.goal_kin, life.goal_steps, life.goal_full_stories],
 			[10, 2, 5, 3, 6, 1])
@@ -375,7 +376,7 @@ func test_new_config_contract_values() -> void:
 ## G8 Runde 1 (B8-1, user decision): visitors wait up to 100 minutes (was 10) – class default and .tres together.
 ## Phase 9 W0 (docs/PHASE9_DESIGN.md §2.9, §2.2.8): + gains, event_points, events, reactions (class default and .tres together).
 const DATA_CHANGED_AFTER_W0 := {&"visitor_config": [&"wait_minutes"], &"relationship_config": [&"gains"],
-		&"reputation_config": [&"event_points"], &"piety_config": [&"events"], &"npc_life_config": [&"reactions"]}
+		&"reputation_config": [&"event_points"], &"piety_config": [&"events"], &"npc_life_config": [&"reactions", &"mood_rules"]}
 
 
 func test_config_files_in_data_match_the_fixtures() -> void:
