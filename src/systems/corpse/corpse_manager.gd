@@ -216,6 +216,7 @@ func _deliver(day: int, now_total: int) -> void:
 			record = _spawn(CorpseGenerator.generate(seed, t, day), at, CorpseRecord.LOCATION_DROPOFF, arrival, now_total)
 		if record != null:
 			assign_kin_house(record, day)
+			_assign_letter(record)
 			_last_delivery_ids.append(record.id)
 	match plan.end:
 		PLAN_RESERVE:
@@ -323,6 +324,14 @@ func last_delivery_day() -> int:
 
 
 ## Phase 8 §2.2.1: sets record.kin_house from `day` once the village is open (village_open) – story corpses
+## Phase 9 (docs/PHASE9_DESIGN.md §2.4.2, §3.3; P3): the pocket letter of a delivered corpse (Letters.assign sets
+## record.letter_id from p9_open on; without a Letters node nothing changes).
+func _assign_letter(record: CorpseRecord) -> void:
+	var letters := _first_in_group(&"letters")
+	if letters != null and letters.has_method(&"assign"):
+		letters.call(&"assign", record)
+
+
 ## by STORY_KIN, every other corpse the mourning ribbon of its arrival day among VillageConfig.mourning_houses
 ## without Hagedorn's cottage (bit-identical to Village.mourning_house). Before village_open nothing.
 func assign_kin_house(record: CorpseRecord, day: int) -> void:

@@ -42,6 +42,11 @@ const CARE_LIGHTS := &"lights"
 const CARE_VISITED := &"visited"
 const CARE_CANDLE := &"candle"
 const CARE_FLOWERS := &"flowers"
+## Phase 9 (docs/PHASE9_DESIGN.md §2.4.2, §2.9; P3): a letter read aloud at the grave tonight (by_letter, after lights);
+## a letter laid into the grave is a grave gift (≤ LETTER_GIFT_MAX, like the decor bonus of Phase 3).
+const CARE_LETTER := &"letter"
+const LETTER_TONIGHT_BONUS := 1
+const LETTER_GIFT_MAX := 1
 ## Piety tiers with their own lines (GhostLines.by_piety): one heard line in PIETY_EVERY.
 const PIETY_EVERY := 4
 ## Dirt level of the grave's own spot from which weeds are the main complaint.
@@ -297,4 +302,20 @@ static func pick_care_line(lines: GhostLines, key: StringName, seed: int) -> Str
 			pool = lines.by_candle
 		CARE_FLOWERS:
 			pool = lines.by_flowers
+		CARE_LETTER:
+			pool = lines.by_letter
 	return pool[posmod(seed, pool.size())] if not pool.is_empty() else ""
+
+
+## Phase 9 (§2.4.2): the score part of letters – +1 the night a letter was read aloud at the grave, + the gift of a
+## letter laid into it (capped at LETTER_GIFT_MAX). Added to `care` of score() by the caller (Letters.ghost_bonus).
+static func letter_bonus(read_tonight: bool, laid_in: bool) -> int:
+	return (LETTER_TONIGHT_BONUS if read_tonight else 0) + clampi(1 if laid_in else 0, 0, LETTER_GIFT_MAX)
+
+
+## Phase 9 (§2.9): the care pool with a letter read tonight – by_letter after disturbed > robbed > lights, before
+## visited / candle / flowers. `key` = care_key(...) of Phase 8 (unchanged without a letter).
+static func letter_care_key(key: StringName, letter_tonight: bool) -> StringName:
+	if not letter_tonight or key in [CARE_DISTURBED, CARE_ROBBED, CARE_LIGHTS]:
+		return key
+	return CARE_LETTER

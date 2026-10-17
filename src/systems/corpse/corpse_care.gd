@@ -32,6 +32,8 @@ const EVENT_ORGAN_TAKEN := &"organ_taken"
 const STAT_SPECIMENS_TAKEN := &"specimens_taken"
 const TEXT_ORGAN_JAR := "Ein Glas mehr. Auf dem Etikett steht ihr Name."
 const TEXT_ORGAN_BUNDLE := "Ein Bündel in Leinen. Es hält nicht lange."
+# Phase 9 (P3): the examination step with the pocket letter.
+const STEP_POCKETS := &"pockets"
 
 ## Injected configs / data (tests); null or empty = data/ via Database on first use.
 var exam_config: ExamConfig
@@ -356,7 +358,21 @@ func _resolve_step(record: CorpseRecord, step: StringName) -> Dictionary:
 		record.exam_done.append(step)
 	record.examined = true
 	_reveal_traits(record, step, cands, result.revealed)
+	if step == STEP_POCKETS:
+		_letter_found(record)
 	return result
+
+
+## Phase 9 (docs/PHASE9_DESIGN.md §2.4.2, §3.3; P3): the pockets step hands the corpse's letter (Letters.on_found into
+## the player's inventory); without a Letters node or letter nothing happens.
+func _letter_found(record: CorpseRecord) -> void:
+	if record.letter_id == &"":
+		return
+	var letters := _first(&"letters")
+	if letters == null or not letters.has_method(&"on_found"):
+		return
+	var player := _first(&"player")
+	letters.call(&"on_found", record.id, player.get(&"inventory") as Inventory if player != null else null)
 
 
 ## Traits of this step: revealed when their find was revealed; traits without any find at all
