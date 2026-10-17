@@ -12,6 +12,8 @@ extends Node
 ## deductions, university_standing and the ledger stats coins_spent_village/_donation/_round/_consecration.
 ## Phase 8 (docs/PHASE8_DESIGN.md §2.11, §5.1): + the 26 stats of visitors, wishes, grave care, the apprentice,
 ## friendship, alms, chatter, festivals, the night and the ledger stats coins_spent_apprentice/_alms/_peddler.
+## Phase 9 (docs/PHASE9_DESIGN.md §2.9, §5.1): + the 18 stats of the chains, letters, errands, the larger requests,
+## Brenneisen and the ledger stat coins_spent_post (coin purpose &"post", the postage).
 const DEFAULT_STATS: Array[StringName] = [&"burials", &"valuables_taken", &"reputation", &"missed_deliveries", &"days_played",
 		&"piety", &"utilized", &"prepared", &"trader_sales",
 		&"crafted", &"stones_set", &"coins_spent", &"trees_felled",
@@ -26,14 +28,18 @@ const DEFAULT_STATS: Array[StringName] = [&"burials", &"valuables_taken", &"repu
 		&"mortsafes_set", &"graves_disturbed", &"graves_closed", &"apprentice_days", &"apprentice_jobs", &"apprentice_mistakes",
 		&"apprentice_wage", &"friend_steps", &"favors_used", &"favors_returned", &"alms_given", &"chatters_seen", &"listens",
 		&"dances", &"night_visits_observed", &"robber_encounters",
-		&"coins_spent_apprentice", &"coins_spent_alms", &"coins_spent_peddler"]
+		&"coins_spent_apprentice", &"coins_spent_alms", &"coins_spent_peddler",
+		&"quest_steps", &"quest_choices", &"letters_found", &"letters_decided", &"letters_delivered", &"letters_read",
+		&"letters_burned", &"letters_buried", &"letters_answered", &"post_received", &"errands_done", &"large_requests_done",
+		&"large_requests_half", &"large_requests_failed", &"large_request_parts", &"stranger_talks", &"stranger_coins",
+		&"coins_spent_post"]
 ## Phase 5 §3.3: the reasons of EventBus.coins_spent (license, stations, Osric's goods, Ilse's shop);
 ## Phase 6 §2.7: + building (the building levels; altar candles run under osric).
 ## Phase 7 §2.11: + village (the village shops), donation (poor box, donation orders), round (the inn),
 ## consecration (the Lindenacker); the pult runs under build.
 ## Phase 8 §2.11: + apprentice (Jakob's wage), alms (Veit), peddler (Hanne's basket).
 const COIN_REASONS: Array[StringName] = [&"license", &"build", &"osric", &"ilse", &"building", &"village", &"donation",
-		&"round", &"consecration", &"apprentice", &"alms", &"peddler"]
+		&"round", &"consecration", &"apprentice", &"alms", &"peddler", &"post"]
 const STAT_COINS_SPENT := &"coins_spent"
 const COINS_SPENT_PREFIX := "coins_spent_"
 

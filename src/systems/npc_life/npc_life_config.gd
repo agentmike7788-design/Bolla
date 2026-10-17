@@ -33,10 +33,11 @@ extends Resource
 ## §2.1.2: a chatter starts when the gravekeeper is ≤ chatter_distance m away; 3.5 s per line.
 @export var chatter_distance: float = 10.0
 @export var chatter_line_seconds: float = 3.5
-## §2.1.3: event → days the remark stays valid (2).
+## §2.1.3: event → days the remark stays valid (2). Phase 9 (docs/PHASE9_DESIGN.md §2.2.8, §2.4.2, §2.5.2): the endings'
+## talk q_sent_away / q_stayed / q_public 3 days, letter_delivered and register_sold 2 days.
 @export var reactions: Dictionary[StringName, int] = {&"apprentice_hired": 2, &"jakob_scolded": 2, &"wish_done": 2,
 		&"grave_disturbed": 2, &"robber_reported": 2, &"robber_let_go": 2, &"lights_all": 2, &"kathrein_danced": 2,
-		&"noise_at_grave": 2}
+		&"noise_at_grave": 2, &"q_sent_away": 3, &"q_stayed": 3, &"q_public": 3, &"letter_delivered": 2, &"register_sold": 2}
 ## §1.5: the chapter „Wer heraufkommt".
 @export var goal_levels: int = 2
 @export var goal_wishes: int = 5

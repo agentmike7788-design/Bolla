@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_q_light_ott"
+title = "Licht bei den Otts"
+text = "Drei Wochen vorher brannte schon mal eins, in Vaters Kammer. Da war er noch gesund. Er hat gesagt, er war's nicht. Gesa lacht da nicht mehr."
+kind = &"talk"
+order = 406

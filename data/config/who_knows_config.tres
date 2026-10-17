@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="WhoKnowsConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/quests/who_knows/who_knows_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+open_light_offset = -12
+death_offset = 21
+decide_offset = 17
+light_flag = &"q_light_day"
+marked_flag = &"q_sieber_marked"
+kin_id = &"kin_sieber"
+house = &"house_sieber"
+daily_visit_from_step = &"h4"
+bench_window = Vector2i(840, 960)
+kladde_minutes = 20
+register_minutes = 30
+grave_minutes = 5
+letter_minutes = 20
+letter_item = &"ink"
+depart_with_peddler_minute = 980
+depart_with_carter_minute = 600
+witness_count = 3
+reserve_section = &"linden_row4"

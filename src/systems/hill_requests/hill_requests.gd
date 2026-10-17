@@ -56,6 +56,10 @@ var _post_day: int = 0
 var _log: Array[Dictionary] = []
 ## Inventory the reward of the request being turned in goes to (turn_in → complete).
 var _pay_into: Inventory
+## Phase 9 W0 stub stores (P2 replaces them): {place: [ids]} and {id: [bool]} of §5.1 large_board / parts – read by
+## load_state only (not saved yet), so that Phase9Fixtures.large_pinned can set a large request with parts done.
+var _large_board: Dictionary[StringName, Array] = {}
+var _parts: Dictionary[StringName, Array] = {}
 
 
 func _init() -> void:
@@ -396,6 +400,55 @@ func offer_context(day: int) -> Dictionary:
 			"items": items, "open_obstacles": _open_obstacles()}
 
 
+# --- Phase 9: larger requests (STUB (P2) – docs/PHASE9_DESIGN.md §2.3, §3.4; W1 (P2) fills the bodies) --------
+
+## Done flags of the parts of the large request `id` (in the order of OrderData.parts); [] = not a running one.
+## W0: from load_state's "parts".
+func parts_done(id: StringName) -> Array[bool]:
+	var out: Array[bool] = []
+	for v: Variant in _parts.get(id, []):
+		out.append(v == true)
+	return out
+
+
+## Large requests pinned at &"gate" | &"village". W0: from load_state's "large_board".
+func large_board(place: StringName) -> Array[StringName]:
+	var out: Array[StringName] = []
+	for v: Variant in _large_board.get(place, []):
+		out.append(StringName(str(v)))
+	return out
+
+
+## Part kind visit: why the player cannot start it here and now ("" = can).
+func visit_block_reason(_id: StringName, _player: Player) -> String:
+	return ""
+
+
+## Part kind visit: starts the TimedAction of the open visit part.
+func start_visit(_id: StringName) -> void:
+	pass
+
+
+## At the deadline at least HillRequestsConfig.half_ratio of the parts were done.
+func half_done(_id: StringName) -> bool:
+	return false
+
+
+func _load_large_w0(data: Dictionary) -> void:
+	_large_board.clear()
+	_parts.clear()
+	var board_raw: Variant = data.get("large_board")
+	if board_raw is Dictionary:
+		for place: Variant in board_raw:
+			if board_raw[place] is Array:
+				_large_board[StringName(str(place))] = (board_raw[place] as Array).duplicate()
+	var parts_raw: Variant = data.get("parts")
+	if parts_raw is Dictionary:
+		for id: Variant in parts_raw:
+			if parts_raw[id] is Array:
+				_parts[StringName(str(id))] = (parts_raw[id] as Array).duplicate()
+
+
 # --- save -----------------------------------------------------------------------------------------
 
 func save_state() -> Dictionary:
@@ -458,6 +511,7 @@ func load_state(data: Dictionary) -> void:
 						"state": StringName(str(e.get("state"))), "title": str(e.get("title", ""))})
 	while _log.size() > maxi(1, _cfg().log_size):
 		_log.pop_front()
+	_load_large_w0(data)
 
 
 # --- internals ------------------------------------------------------------------------------------
@@ -474,6 +528,8 @@ func _reset() -> void:
 	_check_day = 0
 	_post_day = 0
 	_log.clear()
+	_large_board.clear()
+	_parts.clear()
 
 
 func _end(id: StringName, end_state: StringName, day: int) -> void:

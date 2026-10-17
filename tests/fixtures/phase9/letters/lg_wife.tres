@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="LetterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/letters/letter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lg_wife"
+kind = &"pocket"
+outside = "An meine Frau"
+text = "Der Rock hängt im Schrank. Verkauf ihn nicht unter zwei Gulden. Und zünd mir keine Kerze an, das ist zu teuer."
+sealed = true
+sender = "ein Ehemann"
+recipient = &""
+asks = &""
+conditions = PackedStringArray("kin_house")
+choice_actions = Dictionary[StringName, PackedStringArray]({
+&"deliver": PackedStringArray("goodwill:kin:2")
+})
+choice_texts = Dictionary[StringName, String]({})
+reply_text = ""
+story_id = &""

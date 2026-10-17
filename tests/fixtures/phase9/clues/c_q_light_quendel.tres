@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_q_light_quendel"
+title = "Licht bei der Quendel"
+text = "Bei der Quendel brannte Licht, oben, um eins. Osric fährt da nachts vorbei. Er hält nie an. Diesmal hätte er vielleicht sollen, sagt er."
+kind = &"talk"
+order = 403

@@ -45,3 +45,5 @@ extends Resource
 @export var by_visited: PackedStringArray = PackedStringArray()
 @export var by_disturbed: PackedStringArray = PackedStringArray()
 @export var by_lights: PackedStringArray = PackedStringArray()
+# Phase 9 (docs/PHASE9_DESIGN.md §2.9): a letter read aloud at the grave this night. Precedence after lights.
+@export var by_letter: PackedStringArray = PackedStringArray()

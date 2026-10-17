@@ -339,7 +339,7 @@ func test_corpse_record_phase7_fields() -> void:
 	assert_eq([native.harvested, native.returned, native.hidden_cause, native.revealed_cause],
 			[r.harvested, r.returned, &"arsenic", &"arsenic"], "round trip")
 	assert_eq(back.to_dict().keys(), r.to_dict().keys(), "JSON round trip keeps the keys")
-	assert_eq(r.to_dict().size(), 39, "35 Phase-6 record fields + 3 (+ kin_house, Phase 8)")
+	assert_eq(r.to_dict().size(), 40, "35 Phase-6 record fields + 3 (+ kin_house, Phase 8; + letter_id, Phase 9)")
 	var old := CorpseRecord.from_dict({"id": "c_2", "harvested": ["hair"]})
 	assert_eq([old.hidden_cause, old.returned, old.revealed_cause], [&"", [] as Array[StringName], &""], "tolerant")
 	var odd := CorpseRecord.from_dict({"harvested": ["teeth", "liver"], "returned": ["liver", "heart", "liver", 3]})
@@ -718,9 +718,9 @@ func test_database_phase7_folders() -> void:
 
 
 func test_save_format_v6_and_migration_chain() -> void:
-	assert_eq(SaveMigration.CURRENT, 7)  # Phase 8 W0: v7
-	assert_eq(SaveFileIO.FORMAT_VERSION, 7)
-	assert_eq(SaveManager.FORMAT_VERSION, 7)
+	assert_eq(SaveMigration.CURRENT, 8)  # Phase 8 W0: v7, Phase 9 W0: v8
+	assert_eq(SaveFileIO.FORMAT_VERSION, 8)
+	assert_eq(SaveManager.FORMAT_VERSION, 8)
 	assert_eq(SaveMigration.V6_EMPTY_NODES, PackedStringArray(["village", "relationships", "village_shops", "orders", "specimens",
 			"pult_store", "collection_shelf", "lectures", "deductions"]))
 	var state := {"autoloads": {"TimeManager": {"day": 5}, "GameState": {"stats": {}, "flags": {}}}, "nodes": {"corpse_manager": {}}}

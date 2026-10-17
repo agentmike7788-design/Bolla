@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="LetterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/letters/letter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lg_town"
+kind = &"pocket"
+outside = "An das Kontor Bremer & Sohn, in der Stadt"
+text = "Die Ware ist bis Ellbach gekommen. Weiter nicht. Ich auch nicht."
+sealed = true
+sender = "ein Händler"
+recipient = &"town"
+asks = &""
+conditions = PackedStringArray()
+choice_actions = Dictionary[StringName, PackedStringArray]({})
+choice_texts = Dictionary[StringName, String]({})
+reply_text = ""
+story_id = &""

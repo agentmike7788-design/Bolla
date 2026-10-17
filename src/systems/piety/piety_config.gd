@@ -13,7 +13,10 @@ extends Resource
 ## AnatomyConfig.organs[*].piety through Piety.event(&"organ_taken", …, amount)), lecture_attended −3,
 ## specimen_returned +3, specimen_returned_grave +5 (class default; the .tres is P4's).
 ## Phase 8 §2.11: + alms +1, listen +1, robber_let_go +2, lights_all +2 (W0: class default and .tres; P2 owns them).
-@export var events: Dictionary[StringName, int] = {&"valuables_left": 3, &"valuables_taken": -6, &"hair_taken": -4, &"teeth_taken": -6, &"full_prep": 3, &"bare_burial": -2, &"rotten_burial": -2, &"service": 1, &"devotion": 1, &"reinterred": 1, &"organ_taken": -6, &"lecture_attended": -3, &"specimen_returned": 3, &"specimen_returned_grave": 5, &"alms": 1, &"listen": 1, &"robber_let_go": 2, &"lights_all": 2}
+## Phase 9 §2.9 (+ 16): letters (read_sealed −1, read_grave +1, burned_asked +1, burned_unasked −1, buried +1, answered +1),
+## the endings (sent_away +3, kept_promise +3, made_public −1), Brenneisen (soil_sold −1, register_sold −3, case_bribe −3,
+## kladde_sold −8, case_to_ilse +2, stranger_refused +1), postage_paid +1 (W0: class default and .tres; P3 owns them).
+@export var events: Dictionary[StringName, int] = {&"valuables_left": 3, &"valuables_taken": -6, &"hair_taken": -4, &"teeth_taken": -6, &"full_prep": 3, &"bare_burial": -2, &"rotten_burial": -2, &"service": 1, &"devotion": 1, &"reinterred": 1, &"organ_taken": -6, &"lecture_attended": -3, &"specimen_returned": 3, &"specimen_returned_grave": 5, &"alms": 1, &"listen": 1, &"robber_let_go": 2, &"lights_all": 2, &"letter_read_sealed": -1, &"letter_read_grave": 1, &"letter_burned_asked": 1, &"letter_burned_unasked": -1, &"letter_buried": 1, &"letter_answered": 1, &"sent_away": 3, &"kept_promise": 3, &"made_public": -1, &"soil_sold": -1, &"register_sold": -3, &"case_bribe": -3, &"kladde_sold": -8, &"case_to_ilse": 2, &"stranger_refused": 1, &"postage_paid": 1}
 ## Daily +1 towards 0 (only below 0, only without harvesting the day before).
 @export var daily_recovery: int = 1
 ## Ghost gift coins per tier.

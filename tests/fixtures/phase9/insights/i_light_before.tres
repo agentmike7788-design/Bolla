@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="InsightData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/insight_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"i_light_before"
+order = 40
+title = "Das Licht vorher"
+question = "Was haben die Lichter mit den Toten zu tun?"
+text = "In der Nacht, in der einer gezeichnet wird, brennt in seinem Haus ein Licht, das keiner aus dem Haus angezündet hat. Drei Wochen später stirbt er. Wer das Licht sieht, weiß, wann. Lorenz hat die Lichter gezählt."
+requires = Array[StringName]([&"c_q_dates", &"c_q_three_weeks"])
+sets_flag = &"insight_light_before"
+optional = false
+rename_story = &""
+rename_to = ""
+any_clues = Array[StringName]([&"c_q_light_dorn", &"c_q_light_quendel", &"c_q_light_wernstein", &"c_q_light_hagedorn", &"c_q_light_ott"])
+any_count = 3

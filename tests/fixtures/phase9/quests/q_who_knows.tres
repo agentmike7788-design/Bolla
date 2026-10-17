@@ -1,0 +1,167 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/quests/quest_ending_data.gd" id="1_ntiby"]
+[ext_resource type="Script" path="res://src/systems/quests/quest_data.gd" id="2_uw034"]
+[ext_resource type="Script" path="res://src/systems/quests/quest_step_data.gd" id="3_8qe07"]
+[ext_resource type="Script" path="res://src/systems/quests/quest_choice_data.gd" id="4_ifgen"]
+
+[sub_resource type="Resource" id="Resource_6l6uo"]
+script = ExtResource("1_ntiby")
+id = &"away"
+title = "Über den Hügel"
+summary = "Johann ist fortgegangen, wie Lorenz."
+flag = &"q_end_away"
+settle_on = &"sieber_gone"
+closing_line = "Johann ist über den Hügel gegangen. Ob er angekommen ist, steht in keinem Brief, den du bekommen hast. Noch nicht."
+
+[sub_resource type="Resource" id="Resource_2hu07"]
+script = ExtResource("1_ntiby")
+id = &"stay"
+title = "Bei Grete"
+summary = "Johann ist geblieben. Du hast ihm das Grab neben Grete gemacht."
+flag = &"q_end_stay"
+settle_on = &"sieber_buried"
+closing_line = "Johann hat sich nicht beeilt. Du hast ihm die Erde so tief gemacht, wie man es kann. Wann der Nächste kommt, steht in keinem Heft, das du hast."
+
+[sub_resource type="Resource" id="Resource_7b5ma"]
+script = ExtResource("1_ntiby")
+id = &"public"
+title = "Vor der Gemeinde"
+summary = "Fenner hat einen Wächter vor die Siebers gestellt. Johann ist trotzdem gestorben."
+flag = &"q_end_public"
+settle_on = &"sieber_buried"
+closing_line = "Fenner hat jetzt ein Buch für Lichter. Es hat sechs Einträge. Lorenz hatte auch sechs."
+
+[sub_resource type="Resource" id="Resource_4rxuc"]
+script = ExtResource("1_ntiby")
+id = &"silent"
+title = "Geschwiegen"
+summary = "Du hast nichts gesagt. Das Dorf hat seinen eigenen Lauf."
+flag = &"q_end_silent"
+settle_on = &"sieber_buried"
+closing_line = "Du hast die Liste gelesen und zugeklappt. Das Dorf hat sie nie gesehen. Das Licht schon."
+
+[sub_resource type="Resource" id="Resource_43s6v"]
+script = ExtResource("3_8qe07")
+id = &"h1"
+title = "Die Rückseite"
+hint = "Lies Lorenz' Kladde am Schreibpult in der Hütte."
+complete_on = &"note"
+complete_ids = Array[StringName]([&"kladde_read"])
+
+[sub_resource type="Resource" id="Resource_d32uw"]
+script = ExtResource("3_8qe07")
+id = &"h2"
+title = "Wer liegt unter dem Datum?"
+hint = "Vergleich das Grabregister mit der Liste – und die Daten an den Gräbern."
+complete_on = &"note"
+complete_ids = Array[StringName]([&"date_grave"])
+complete_count = 5
+
+[sub_resource type="Resource" id="Resource_kj665"]
+script = ExtResource("3_8qe07")
+id = &"h3"
+title = "Wer hat das Licht gesehen?"
+hint = "Frag die, die nachts die Fenster sehen."
+complete_on = &"insight"
+complete_ids = Array[StringName]([&"i_light_before"])
+
+[sub_resource type="Resource" id="Resource_26gbm"]
+script = ExtResource("3_8qe07")
+id = &"h4"
+title = "„S.“"
+hint = "Drei Häuser im Dorf fangen mit S an."
+complete_on = &"flag"
+complete_ids = Array[StringName]([&"q_sieber_marked"])
+
+[sub_resource type="Resource" id="Resource_llcg0"]
+script = ExtResource("4_ifgen")
+id = &"confide_priest"
+label = "Pfarrer Lenz"
+conditions = PackedStringArray()
+actions = PackedStringArray("rel_add:priest:4", "set_flag:q_confide_priest")
+
+[sub_resource type="Resource" id="Resource_hnmiv"]
+script = ExtResource("4_ifgen")
+id = &"confide_surgeon"
+label = "Severin Quast"
+conditions = PackedStringArray()
+actions = PackedStringArray("rel_add:surgeon:4", "set_flag:q_confide_surgeon")
+
+[sub_resource type="Resource" id="Resource_06pwt"]
+script = ExtResource("4_ifgen")
+id = &"confide_washer"
+label = "Liesel Dorn"
+conditions = PackedStringArray()
+actions = PackedStringArray("rel_add:washer:4", "set_flag:q_confide_washer")
+
+[sub_resource type="Resource" id="Resource_m6q4r"]
+script = ExtResource("4_ifgen")
+id = &"confide_none"
+label = "Niemandem"
+conditions = PackedStringArray()
+actions = PackedStringArray("set_flag:q_confide_none")
+
+[sub_resource type="Resource" id="Resource_62tgs"]
+script = ExtResource("3_8qe07")
+id = &"h5"
+title = "Wem sagst du es?"
+hint = "Lenz, Quast, Liesel – oder niemandem."
+complete_on = &"choice"
+choices = Array[ExtResource("4_ifgen")]([SubResource("Resource_llcg0"), SubResource("Resource_hnmiv"), SubResource("Resource_06pwt"), SubResource("Resource_m6q4r")])
+
+[sub_resource type="Resource" id="Resource_6xqsj"]
+script = ExtResource("4_ifgen")
+id = &"away"
+label = "„Geh fort, Johann. Über den Hügel.“"
+conditions = PackedStringArray("letter_posted")
+block_text = "Er glaubt dir nicht. Er würde einem Brief glauben."
+actions = PackedStringArray("set_flag:q_end_away", "piety_event:sent_away", "rep_event:sent_away_rumor", "goodwill:kin_sieber:2", "note_event:q_sent_away")
+ending = &"away"
+
+[sub_resource type="Resource" id="Resource_5dobi"]
+script = ExtResource("4_ifgen")
+id = &"stay"
+label = "„Bleib. Ich mach dir das Grab neben Grete.“"
+conditions = PackedStringArray()
+actions = PackedStringArray("set_flag:q_end_stay", "set_flag:q_sieber_dies", "goodwill:kin_sieber:4", "note_event:q_stayed")
+ending = &"stay"
+
+[sub_resource type="Resource" id="Resource_uxddt"]
+script = ExtResource("4_ifgen")
+id = &"public"
+label = "„Wir gehen zum Fenner.“"
+conditions = PackedStringArray()
+actions = PackedStringArray("set_flag:q_end_public", "set_flag:q_sieber_dies", "rep_event:public_duty", "piety_event:made_public", "rel_add:mayor:4", "goodwill:kin_sieber:-1", "set_flag:fenner_lightbook", "note_event:q_public")
+ending = &"public"
+
+[sub_resource type="Resource" id="Resource_dq6dx"]
+script = ExtResource("4_ifgen")
+id = &"silent"
+label = "(Nichts sagen)"
+conditions = PackedStringArray()
+actions = PackedStringArray("set_flag:q_end_silent", "set_flag:q_sieber_dies")
+ending = &"silent"
+
+[sub_resource type="Resource" id="Resource_x1478"]
+script = ExtResource("3_8qe07")
+id = &"h6"
+title = "Was wird aus Johann?"
+hint = "Johann sitzt an Gretes Grab oder auf der Bank vor dem Haus."
+complete_on = &"choice"
+choices = Array[ExtResource("4_ifgen")]([SubResource("Resource_6xqsj"), SubResource("Resource_5dobi"), SubResource("Resource_uxddt"), SubResource("Resource_dq6dx")])
+deadline_flag = &"q_light_day"
+deadline_offset = 17
+fallback_choice = &"silent"
+
+[resource]
+script = ExtResource("2_uw034")
+id = &"q_who_knows"
+kind = &"main"
+title = "Wer weiß, wann?"
+summary = "Auf der Rückseite von Lorenz' Kladde stehen sechs Daten und je ein Buchstabe. Unter fünf Daten liegt einer auf dem Hügel. Unter dem letzten noch keiner."
+giver = &"priest"
+open_conditions = PackedStringArray("flag:p9_open")
+steps = Array[ExtResource("3_8qe07")]([SubResource("Resource_43s6v"), SubResource("Resource_d32uw"), SubResource("Resource_kj665"), SubResource("Resource_26gbm"), SubResource("Resource_62tgs"), SubResource("Resource_x1478")])
+endings = Array[ExtResource("1_ntiby")]([SubResource("Resource_6l6uo"), SubResource("Resource_2hu07"), SubResource("Resource_7b5ma"), SubResource("Resource_4rxuc")])
+order = 10

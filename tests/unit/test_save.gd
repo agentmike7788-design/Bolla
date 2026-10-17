@@ -627,7 +627,7 @@ func test_phase8_v7_document_round_trip() -> void:
 	assert_eq(SaveFileIO.ensure_dir(TEST_DIR), OK)
 	assert_eq(SaveFileIO.write_doc(TEST_DIR, 2, SaveFileIO.make_doc(SaveFileIO.make_meta(WORLD), state)), OK)
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(TEST_DIR.path_join("slot_2.json")))
-	assert_eq(int(doc.format_version), 7, "§5.1: format_version 7")
+	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, "§5.1: the current format (Phase 8: 7, Phase 9: 8)")
 	var read := {}
 	assert_eq(SaveFileIO.read_doc(TEST_DIR, 2, read), OK)
 	assert_eq(read.state, state, "v7 file round trip (no migration of a current file)")

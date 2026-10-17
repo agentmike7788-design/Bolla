@@ -1,0 +1,65 @@
+[gd_resource type="Resource" script_class="OrderData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1_t5gwr"]
+
+[sub_resource type="Resource" id="Resource_oueuf"]
+script = ExtResource("1_t5gwr")
+kind = &"clear"
+title = "Ein Hindernis im Birkenhang oder Holunderwinkel roden"
+conditions = {
+"sections": ["north", "elder"]
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_7h5xb"]
+script = ExtResource("1_t5gwr")
+kind = &"craft"
+title = "Eine Holzbank an der Werkbank"
+conditions = {
+"amount": 1,
+"recipe": "decor_bench_wood"
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_t814y"]
+script = ExtResource("1_t5gwr")
+kind = &"decor"
+title = "Die Bank am Weg aufstellen"
+conditions = {
+"amount": 1,
+"decor": ["decor_bench_wood"]
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_opckb"]
+script = ExtResource("1_t5gwr")
+kind = &"tend"
+title = "Das Laub ringsum harken"
+conditions = {
+"requires_item": "rake",
+"spots": ["dirt_n01", "dirt_n02"]
+}
+category = &"hill"
+
+[resource]
+script = ExtResource("1_t5gwr")
+id = &"hrl_bench_path"
+giver = &"grocer"
+kind = &"large"
+title = "Ein Platz zum Ausruhen"
+request_text = "Theres Mangold: „Der Weg hinauf ist lang für alte Knie. Mach einen Platz zum Ausruhen frei, stell eine Bank hin und harke das Laub weg. Dann setz ich mich auch.“"
+thanks_text = "Theres hat sich gesetzt, sagt Osric. Ziemlich lange. Dann hat sie ihm Samen für dich mitgegeben."
+conditions = {
+"min_day": 3,
+"reward_items": {
+"seeds": 1
+}
+}
+days_limit = 3
+reward_coins = 4
+reward_rep = 2
+cooldown_days = 9
+order = 40
+category = &"hill"
+parts = Array[Resource]([SubResource("Resource_oueuf"), SubResource("Resource_7h5xb"), SubResource("Resource_t814y"), SubResource("Resource_opckb")])
+size = &"large"

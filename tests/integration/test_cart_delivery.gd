@@ -184,7 +184,7 @@ func test_load_mid_unloading() -> void:
 	assert_false(keys.has("cart") or keys.has("unload"), "no new save keys (format v7)")
 	assert_eq(SaveManager.save_game(SLOT), OK)
 	var doc: Variant = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_SAVES, SLOT)))
-	assert_eq(int((doc as Dictionary).format_version), 7, "format v7")
+	assert_eq(int((doc as Dictionary).format_version), SaveFileIO.FORMAT_VERSION, "the current format (G8 Runde 3: v7, Phase 9 W0: v8)")
 	var err: Error = await SaveManager.load_game(SLOT)
 	assert_eq(err, OK)
 	TimeManager.running = false

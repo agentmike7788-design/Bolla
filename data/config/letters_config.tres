@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="LettersConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/letters/letters_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+open_flag = &"p9_open"
+forced_after_open = 3
+forced_ids = Array[StringName]([&"lp_l1_carter", &"lp_l2_sister", &"lp_l3_burn"])
+post_offsets = PackedInt32Array(3, 6, 9)
+aschau_letter = &"lpo_aschau"
+postage = 1
+read_grave_minutes = 10
+answer_minutes = 20
+burn_minutes = 2
+bury_minutes = 2
+answer_item = &"ink"
+rep_cap_day = 1
+reply_after_days = 1

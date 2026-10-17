@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"oq_gesa_brother"
+giver = &"kin_ott"
+recipient = &""
+kind = &"deliver"
+title = "Für den Bruder"
+request_text = "Gesa Ott: „Mein Bruder steht beim Militär. Er weiß nicht, dass Vater tot ist. Ich hab's aufgeschrieben. Gib es der Post, wenn sie kommt.“"
+thanks_text = ""
+items = Dictionary[StringName, int]({})
+coins = 0
+target = "post"
+conditions = {
+"carriers": ["peddler", "carter"],
+"letter": "gesa_brother",
+"or_pay": "straw_bouquet"
+}
+days_limit = 3
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 0
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 900
+accept_flag = &""
+category = &"quest"
+parts = Array[Resource]([])
+size = &""
+place = &"gate"
+parts_in_order = false

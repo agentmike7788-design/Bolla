@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="StrangerConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/stranger/stranger_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+npc_id = &"stranger"
+arrive_offset = 2
+return_every = 5
+stay_days = 3
+gate_window = Vector2i(850, 930)
+inn_window = Vector2i(1080, 1260)
+question_coin = 1
+bribe_coins = 15
+case_tip = 2
+kladde_price = 40
+specimen_factor = 1.5
+rumor_delay_days = 2
+questions = PackedStringArray("Wie tief graben Sie im Frost?", "Wer kommt zuerst, wenn einer stirbt?", "Haben Sie je einen gesehen, der drei Wochen vorher wusste, dass er geht?", "Wie schwer ist ein Mann nach drei Tagen im November?", "Schreiben Sie auf, wer wann kommt, Herr Totengräber? Ich schon.", "Brennt bei Ihnen nachts ein Licht? Bei mir brennt immer eins. Ich lese.")

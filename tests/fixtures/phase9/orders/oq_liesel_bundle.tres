@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"oq_liesel_bundle"
+giver = &"washer"
+recipient = &"kin_sieber"
+kind = &"deliver"
+title = "Ein Bündel für die Siebers"
+request_text = "Liesel Dorn: „Bring das zu Anna Sieber. Leinen. Für später. Sie weiß schon.“"
+thanks_text = ""
+items = Dictionary[StringName, int]({})
+coins = 0
+target = "door_sieber"
+conditions = {
+"gives": {
+"linen": 2
+},
+"requires_flag_not": "sieber_gone"
+}
+days_limit = 2
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 0
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 902
+accept_flag = &""
+category = &"quest"
+parts = Array[Resource]([])
+size = &""
+place = &"gate"
+parts_in_order = false

@@ -302,3 +302,15 @@ static func giver_name(giver: StringName) -> String:
 ## `text` with its %s filled by `fill` (a text without %s stays as it is).
 static func fill(text: String, value: String) -> String:
 	return text % value if text.contains("%s") else text
+
+
+# --- Phase 9: larger requests (STUB (P2) – docs/PHASE9_DESIGN.md §2.3.2, §3.4; W1 (P2) fills the bodies) --------
+
+## Is `part` (a part of a large request, kinds HillRules.KINDS + OrderData.PART_KINDS) done by `event` with `args`?
+static func part_done(_part: OrderData, _event: StringName, _args: Dictionary, _state: Dictionary) -> bool:
+	return false
+
+
+## Every part of `o` can be solved now (the offer conditions per part, §2.3.2).
+static func large_offerable(_o: OrderData, _context: Dictionary) -> bool:
+	return false

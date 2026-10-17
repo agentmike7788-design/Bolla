@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_q_dates"
+title = "Die Liste"
+text = "Auf der Rückseite der Seite mit den drei Namen: sechs Einträge, ein Datum und ein Buchstabe. Die ersten in brauner, alter Tinte, die späteren in schwarzer, frischer. Darunter: ‚Licht. Drei Wochen.‘ Und durchgestrichen: ‚Wer weiß, wann?‘"
+kind = &"page"
+order = 400

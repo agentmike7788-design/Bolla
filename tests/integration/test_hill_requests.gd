@@ -443,7 +443,7 @@ func test_save_and_load_keep_the_board() -> void:
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(saves_dir.path_join("slot_%d.json" % SLOT)))
 	if not doc.is_empty():
 		assert_eq(int(doc.format_version), SaveMigration.CURRENT, "no new format")
-	assert_eq(SaveMigration.CURRENT, 7, "format v7 stays")
+	assert_eq(SaveMigration.CURRENT, 8, "format v7 stayed in G8 Runde 6 (Phase 9 W0: v8)")
 	assert_eq(_board_node().slip_count(), 2, "the slips after loading")
 	assert_eq(warnings.lines, PackedStringArray(), "no warnings")
 

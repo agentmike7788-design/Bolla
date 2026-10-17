@@ -1,0 +1,57 @@
+[gd_resource type="Resource" script_class="OrderData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1_3xfgd"]
+
+[sub_resource type="Resource" id="Resource_r35yu"]
+script = ExtResource("1_3xfgd")
+recipient = &"surgeon"
+kind = &"deliver"
+title = "Zwei Kräuterbündel an Quast"
+items = Dictionary[StringName, int]({
+&"herb_bundle": 2
+})
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_q6ilh"]
+script = ExtResource("1_3xfgd")
+kind = &"flowers"
+title = "Grabblumen auf die Gräber der Kehrs"
+conditions = {
+"graves": "kin_kehr"
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_0agyc"]
+script = ExtResource("1_3xfgd")
+kind = &"meet"
+title = "Martha am Grab treffen"
+conditions = {
+"npc": "kin_kehr",
+"place": "kin_grave",
+"window": [570, 720]
+}
+category = &"hill"
+
+[resource]
+script = ExtResource("1_3xfgd")
+id = &"hrv_paul_day"
+giver = &"kin_kehr"
+kind = &"large"
+title = "Ein Tag für Paul"
+request_text = "Martha Kehr an der Gemeindetafel: „Paul hat bald Namenstag. Ich möcht ihm Blumen aufs Grab, und Quast braucht Kräuter für mein Herz. Und dann möcht ich oben mit dir stehen. Einmal.“"
+thanks_text = "Martha Kehr hat lange am Grab gestanden, sagt Rosine. „Danach hat sie gelacht. Zum ersten Mal seit dem Sommer.“"
+conditions = {
+"reward_goodwill": {
+"kin_kehr": 2
+}
+}
+days_limit = 3
+requires_flag = &"p8_open"
+reward_coins = 3
+reward_rep = 2
+cooldown_days = 10
+order = 120
+category = &"hill"
+parts = Array[Resource]([SubResource("Resource_r35yu"), SubResource("Resource_q6ilh"), SubResource("Resource_0agyc")])
+size = &"large"
+place = &"village"

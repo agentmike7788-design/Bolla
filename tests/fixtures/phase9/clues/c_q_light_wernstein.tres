@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_q_light_wernstein"
+title = "Licht bei der Wernstein"
+text = "Ida Wernstein hat Rosine erzählt, in ihrer Kammer hätte die ganze Nacht ein Licht gebrannt, und sie hätte keins angezündet. Am nächsten Tag lag ein Brief unter ihrer Tür."
+kind = &"talk"
+order = 404

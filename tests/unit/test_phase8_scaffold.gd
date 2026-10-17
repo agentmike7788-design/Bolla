@@ -317,8 +317,11 @@ func test_new_config_contract_values() -> void:
 	assert_eq([life.goal_insight, life.chapter_id, life.goal_flag], [&"i_underlined", &"who_comes_up", &"who_comes_up_complete"])
 	assert_almost(life.chatter_distance, 10.0)
 	assert_almost(life.chatter_line_seconds, 3.5)
-	assert_eq(life.reactions.size(), 9)
-	for days: int in life.reactions.values():
+	# Phase 9 W0 (§2.2.8): + q_sent_away, q_stayed, q_public (3 days), letter_delivered, register_sold – the nine of Phase 8 stay.
+	var p8_reactions := [&"apprentice_hired", &"jakob_scolded", &"wish_done", &"grave_disturbed", &"robber_reported",
+			&"robber_let_go", &"lights_all", &"kathrein_danced", &"noise_at_grave"]
+	assert_eq(p8_reactions.size(), 9)
+	for days: int in p8_reactions.map(func(k: StringName) -> int: return int(life.reactions.get(k, -1))):
 		assert_eq(days, 2, "§2.1.3: 2 days")
 	var v := VisitorConfig.new()
 	assert_eq([v.first_delay_days, v.mourning_days, v.interval_mourning, v.interval_late, v.max_visits_day, v.max_concurrent],
@@ -370,7 +373,9 @@ func test_new_config_contract_values() -> void:
 ## Properties changed in the data (and the class default together) after the W0 hand-over; the fixtures keep the
 ## W0 values. Empty at W0.
 ## G8 Runde 1 (B8-1, user decision): visitors wait up to 100 minutes (was 10) – class default and .tres together.
-const DATA_CHANGED_AFTER_W0 := {&"visitor_config": [&"wait_minutes"]}
+## Phase 9 W0 (docs/PHASE9_DESIGN.md §2.9, §2.2.8): + gains, event_points, events, reactions (class default and .tres together).
+const DATA_CHANGED_AFTER_W0 := {&"visitor_config": [&"wait_minutes"], &"relationship_config": [&"gains"],
+		&"reputation_config": [&"event_points"], &"piety_config": [&"events"], &"npc_life_config": [&"reactions"]}
 
 
 func test_config_files_in_data_match_the_fixtures() -> void:
@@ -441,7 +446,7 @@ func test_corpse_and_grave_record_phase8_fields() -> void:
 	r.kin_house = &"house_kehr"
 	var back := CorpseRecord.from_dict(JSON.to_native(JSON.parse_string(JSON.stringify(JSON.from_native(r.to_dict())))) as Dictionary)
 	assert_eq(back.kin_house, &"house_kehr", "JSON round trip")
-	assert_eq(r.to_dict().size(), 39, "38 Phase-7 record fields + kin_house")
+	assert_eq(r.to_dict().size(), 40, "38 Phase-7 record fields + kin_house (+ letter_id, Phase 9)")
 	assert_eq(CorpseRecord.from_dict({"id": "c_2"}).kin_house, &"", "tolerant")
 	var g := GraveRecord.new()
 	assert_eq([g.disturbed, g.extra_lines], [false, PackedStringArray()])
@@ -700,14 +705,14 @@ func test_database_phase8_folders() -> void:
 
 
 func test_save_format_v7_and_migration_chain() -> void:
-	assert_eq(SaveMigration.CURRENT, 7)
-	assert_eq(SaveFileIO.FORMAT_VERSION, 7)
-	assert_eq(SaveManager.FORMAT_VERSION, 7)
+	assert_eq(SaveMigration.CURRENT, 8)  # Phase 9 W0: v8
+	assert_eq(SaveFileIO.FORMAT_VERSION, 8)
+	assert_eq(SaveManager.FORMAT_VERSION, 8)
 	assert_eq(SaveMigration.V7_EMPTY_NODES, PackedStringArray(["npc_life", "visitors", "grave_care", "apprentice", "friendship",
 			"festivals", "wanderers", "night_robber", "night_paths", "apprentice_box"]), "§3.4 / §5.2 step 3")
 	var state := {"autoloads": {"TimeManager": {"day": 5}, "GameState": {"stats": {}, "flags": {}}}, "nodes": {"corpse_manager": {}}}
-	assert_eq(SaveMigration.migrate(state, 7), state, "current version unchanged")
-	assert_eq(SaveMigration.migrate(state, 8), {}, "newer → corrupt")
+	assert_eq(SaveMigration.migrate(state, SaveMigration.CURRENT), state, "current version unchanged")
+	assert_eq(SaveMigration.migrate(state, SaveMigration.CURRENT + 1), {}, "newer → corrupt")
 	var v7 := SaveMigration.migrate_6_to_7(state, {"day": 5})
 	assert_false(is_same(v7, state), "deep copy")
 	assert_eq(state.nodes, {"corpse_manager": {}}, "input unchanged")

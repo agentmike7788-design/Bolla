@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="LetterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/letters/letter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lg_grocer"
+kind = &"pocket"
+outside = "An Theres Mangold, Krämerin"
+text = "Theres. Holunderwein wie bei Mutter: Beeren nach dem ersten Frost, Honig statt Zucker, und nie vor Lichtmess aufmachen."
+sealed = false
+sender = "eine Base"
+recipient = &"grocer"
+asks = &""
+conditions = PackedStringArray()
+choice_actions = Dictionary[StringName, PackedStringArray]({
+&"deliver": PackedStringArray("rel_add:grocer:3")
+})
+choice_texts = Dictionary[StringName, String]({})
+reply_text = ""
+story_id = &""

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="QuestConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/quests/quest_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+open_flag = &"p9_open"
+open_day_flag = &"p9_open_day"
+unlock_flag = &"who_comes_up_complete"
+intro_minute = 360
+chapter_id = &"who_knows_when"
+goal_flag = &"who_knows_when_complete"
+goal_main = &"q_who_knows"
+goal_letters = &"q_letters"
+goal_letters_step = &"l4"
+goal_letters_decided = 5
+goal_large_requests = 2
+max_pinned = 1

@@ -27,3 +27,23 @@ extends Resource
 @export var village_flag: StringName = &"village_open"
 ## Entries kept in the journal's log (done / missed).
 @export var log_size: int = 12
+
+# Phase 9 – larger requests (docs/PHASE9_DESIGN.md §2.3.2, §3.4): OrderData with size large and 2–4 parts in
+# data/hill_requests/large/. From day 2 one place at the gate, from village_open one more at the parish board.
+## First day a large request is pinned (07:44 with the small ones).
+@export var large_start_day: int = 2
+## Places: one at the gate, one at the parish board (from village_open).
+@export var large_slots_gate: int = 1
+@export var large_slots_village: int = 1
+## At most one accepted at once (in addition to the small ones).
+@export var large_max_active: int = 1
+## A freed place is filled on the next morning (before village_open) / on the second morning (from village_open).
+@export var large_refill_days_early: int = 1
+@export var large_refill_days_village: int = 2
+## An offered large request is taken down after this many days.
+@export var large_offer_days: int = 2
+## Reputation of a missed large request; relationship to the giver from village_open (gains large_request_village).
+@export var large_fail_rep: int = -2
+@export var large_reward_rel: int = 3
+## Half done at the deadline: at least this share of the parts → half the coins (rounded down), reputation 0.
+@export var half_ratio: float = 0.5

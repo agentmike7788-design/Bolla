@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="LetterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/letters/letter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lg_priest"
+kind = &"pocket"
+outside = "An Herrn Pfarrer Lenz"
+text = "Herr Pfarrer. 1829 hab ich drei Gulden aus dem Opferstock genommen. Ich hab sie zurückgelegt, mit Zins. Ich wollt's nur gesagt haben."
+sealed = true
+sender = "ein Altbauer"
+recipient = &"priest"
+asks = &""
+conditions = PackedStringArray()
+choice_actions = Dictionary[StringName, PackedStringArray]({
+&"deliver": PackedStringArray("rel_add:priest:3")
+})
+choice_texts = Dictionary[StringName, String]({})
+reply_text = ""
+story_id = &""
