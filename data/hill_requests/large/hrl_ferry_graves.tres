@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="OrderData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1_jms4h"]
+
+[sub_resource type="Resource" id="Resource_vss4e"]
+script = ExtResource("1_jms4h")
+kind = &"tend"
+title = "Die vier Pflegestellen im Alten Hof säubern"
+conditions = {
+"spots": ["dirt_y03", "dirt_y04", "dirt_y07", "dirt_y08"]
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_p0l85"]
+script = ExtResource("1_jms4h")
+kind = &"decor"
+title = "Zwei Zierstücke im Alten Hof"
+conditions = {
+"amount": 2,
+"decor": ["decor_flowerbed", "decor_grave_vase", "decor_lantern"],
+"section": "yard"
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_hxs8j"]
+script = ExtResource("1_jms4h")
+kind = &"ghost"
+title = "Nachts einem Geist im Alten Hof zuhören"
+conditions = {
+"section": "yard"
+}
+category = &"hill"
+
+[resource]
+script = ExtResource("1_jms4h")
+id = &"hrl_ferry_graves"
+giver = &"priest"
+kind = &"large"
+title = "Die Gräber der Fähre"
+request_text = "Pfarrer Lenz lässt durch Osric ausrichten: „Im Alten Hof liegen die von der Fähre. Keiner kommt mehr zu ihnen. Mach es dort ordentlich, und hör hin, ob einer redet.“"
+thanks_text = "Lenz liest Osrics Zettel zweimal. „Dann haben sie wieder einen, der hinsieht“, lässt er sagen."
+conditions = {
+"min_day": 2,
+"reward_items": {
+"altar_candle": 2
+}
+}
+days_limit = 3
+reward_coins = 4
+reward_rep = 2
+cooldown_days = 9
+order = 10
+category = &"hill"
+parts = Array[Resource]([SubResource("Resource_vss4e"), SubResource("Resource_p0l85"), SubResource("Resource_hxs8j")])
+size = &"large"

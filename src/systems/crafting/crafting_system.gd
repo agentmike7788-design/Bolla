@@ -25,6 +25,9 @@ static func can_craft(recipe: RecipeData, inv: Inventory) -> bool:
 
 
 ## Atomic: either all inputs are removed and the output is added, or nothing changes.
+## Phase 9 (docs/PHASE9_DESIGN.md §2.3.2, §3.3): a finished craft sends EventBus.craft_finished(station, recipe,
+## amount) – the craft parts of the larger requests (HillRequests) count it. Workbench, mason, loom, forge and the
+## pult all craft through here (RecipeData.station names the station).
 static func craft(recipe: RecipeData, inv: Inventory) -> bool:
 	if not can_craft(recipe, inv):
 		return false
@@ -34,6 +37,7 @@ static func craft(recipe: RecipeData, inv: Inventory) -> bool:
 			return _roll_back(recipe, inv, snapshot)
 	if inv.add_item(recipe.output_id, recipe.output_amount) > 0:
 		return _roll_back(recipe, inv, snapshot)
+	EventBus.craft_finished.emit(recipe.station, recipe.id, recipe.output_amount)
 	return true
 
 

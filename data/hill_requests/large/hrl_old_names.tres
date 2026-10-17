@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="OrderData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1_skbs1"]
+
+[sub_resource type="Resource" id="Resource_y8oeb"]
+script = ExtResource("1_skbs1")
+kind = &"craft"
+title = "Zwei Grabsteine an der Werkbank"
+conditions = {
+"amount": 2,
+"recipe": "gravestone_simple"
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_tkkew"]
+script = ExtResource("1_skbs1")
+kind = &"tend"
+title = "Zwischen den Altgräbern jäten"
+conditions = {
+"spots": ["dirt_y05", "dirt_y06"]
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_27hh4"]
+script = ExtResource("1_skbs1")
+kind = &"ghost"
+title = "Nachts einem Geist im Alten Hof zuhören"
+conditions = {
+"section": "yard"
+}
+category = &"hill"
+
+[resource]
+script = ExtResource("1_skbs1")
+id = &"hrl_old_names"
+giver = &"priest"
+kind = &"large"
+title = "Namen, die man noch lesen kann"
+request_text = "Pfarrer Lenz: „Auf den alten Steinen im Alten Hof kann man die Namen nicht mehr lesen. Hau zwei neue, schlicht, ich schreib die Namen dazu. Mach den Boden dazwischen frei. Und hör nachts hin, ob einer von ihnen etwas sagt.“"
+thanks_text = "Lenz hat die beiden Namen ins Sterbebuch nachgetragen, sagt Osric. „Spät, aber ordentlich.“"
+conditions = {
+"min_day": 6
+}
+days_limit = 3
+reward_coins = 5
+reward_rep = 2
+cooldown_days = 10
+order = 80
+category = &"hill"
+parts = Array[Resource]([SubResource("Resource_y8oeb"), SubResource("Resource_tkkew"), SubResource("Resource_27hh4")])
+size = &"large"

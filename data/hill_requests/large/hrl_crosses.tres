@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="OrderData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1_1jm7g"]
+
+[sub_resource type="Resource" id="Resource_ekkw6"]
+script = ExtResource("1_1jm7g")
+kind = &"craft"
+title = "Drei Holzkreuze an der Werkbank"
+conditions = {
+"amount": 3,
+"recipe": "wooden_cross"
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_avisn"]
+script = ExtResource("1_1jm7g")
+recipient = &"carter"
+kind = &"deliver"
+title = "Bei Osric abgeben"
+items = Dictionary[StringName, int]({
+&"wooden_cross": 3
+})
+category = &"hill"
+
+[resource]
+script = ExtResource("1_1jm7g")
+id = &"hrl_crosses"
+giver = &"mayor"
+kind = &"large"
+title = "Drei Kreuze für den Hohlweg"
+request_text = "Gottlieb Fenner, der Schultheiß: „Am Hohlweg sind drei verunglückt, über die Jahre. Die Gemeinde will drei Kreuze. Schlicht. Osric stellt sie auf.“"
+thanks_text = "Fenner hat die Kreuze ins Gemeindebuch eingetragen, sagt Osric. „Drei Stück, ordentlich.“"
+conditions = {
+"min_day": 2
+}
+days_limit = 3
+reward_coins = 4
+reward_rep = 2
+cooldown_days = 8
+order = 20
+category = &"hill"
+parts = Array[Resource]([SubResource("Resource_ekkw6"), SubResource("Resource_avisn")])
+size = &"large"
+parts_in_order = true
