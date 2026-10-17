@@ -1073,3 +1073,32 @@ P6 besitzt alle Dialoge, Merkbuch- und Kettentexte; P3 die Brief-, Post- und Bot
     - **P7:** keine W0-Vorgaben über §8 hinaus; die neue Figur `ph_chr_stranger` zuerst (§12.2).
 12. **Lead-Anpassungen an fremden Tests (mechanisch, nur Version / Feldzahl / Fixture-Stand):** `test_phase3…8_scaffold.gd` (v8; „aktuell“ = `CURRENT`, „neuer“ = `CURRENT + 1`; Phase 5: + V8-Knoten in der Kette; Phase 7/8: 40 Record-Felder; Phase 8: `DATA_CHANGED_AFTER_W0` + `gains`/`event_points`/`events`/`reactions`), `test_save_migration.gd` (v8; `read_doc` 6 → 7 → 8; Ketten-Prüfungen + V8-Knoten/`letter_id`; neu: v7-Fixtures → v8, Toleranz, v6 → v8, v8-Roundtrip, Version 9 abgelehnt, leere Phase-9-Knoten verworfen), `test_saves_v4/v5/v6_load.gd`, `test_save_fuzzer.gd` (Format 8; **neu** `test_fuzz_v7_fixtures`, `test_fuzz_v8_phase9_parts`, Konsistenz: `letter_id` ein Name, Phase-9-Stats ganzzahlig), `test_hill_requests.gd`, `test_cart_delivery.gd` („aktuelles Format“), `test_corpse.gd` (40 Felder), `test_piety.gd`/`test_reputation.gd` (Daten = Phase-9-Fixture).
 13. **Testzahl:** vor W0 3 016, nach W0 **3 059** (+ `test_phase9_scaffold.gd` 24, `test_saves_v7_load.gd` 10, `test_save_migration.gd` + 7, `test_save_fuzzer.gd` + 2), alle grün. Die alten Bots (Phase 3–8, `HillBot`) laufen unverändert grün.
+
+## W1-Anschlüsse (Lead, 18.10.2026 – verbindlich für W2)
+Alle W1-Pakete sind gemergt (P1+P4, P7, P3+P5, P2, P6; volle Suite auf dem gemergten Stand 3258/3258). Offene Anschlüsse aus den Berichten, je Besitzer in W2:
+
+**W-Welt**
+1. Systemknoten unter `Systems`: `Quests` (81), `WhoKnows` (82), `Letters` (83), `Stranger` (84).
+2. `KnockDoor` an `door_sieber`; Reihe 4 (`l_13…l_16`) mit den Hindernissen `stump_row4` und `bramble_row4` (nicht dem alten Stumpf).
+3. Wegpunkte `v_sieber_door`, `v_sieber_bench`, `v_in_inn_stranger` (inn_layout), `stranger_gate`, `sieber_gate`; Friedhofs-Variante für Johanns Abgangsweg.
+4. Npc `npc_kin_sieber_v` (npc_id `kin_sieber_v`) und `stranger` (Brenneisen, nur auf `stranger_gate`, Regionen laut `StrangerRules.present`), Nachtwächter mit `ph_prop_watch_lantern`.
+5. Prompt-Entitäten für Besuchsteile der großen Bitten an `gate_outside`, `v_bridge_unload`, `v_inn_cellar_help` (`HillRequests.visit_here/visit_prompt/start_visit`); Bögen an beiden Tafeln im Bild prüfen.
+6. Esse: Brief-verbrennen-Prompt mit `place: &"forge"`.
+7. P7-Hinweise: Brenneisens Kindmesh `case` bei K4 per Code ausblenden; `sit_inn` Wurzel auf Sitzmarker; `sit_cart` Sitz 0,45 m über der Wurzel.
+
+**W-UI**
+8. Icons der sieben `ph_item_*` (`icon_renderer.MODELS`, danach `--import`).
+9. Merkbuch „Vorhaben“ (QuestLog) mit Verfolgen → HUD, „Die Liste“ (`JournalManager.list_page`), „Briefe“ (`letter_pages`); Brief-Panel (`Letters.choices/decide`), Brenneisen-Panel (`Stranger.offers`), große Bitten in `hill_requests_panel`/Orders-Panel (`large_card`, `ctx.large_cards`, `hill_place`), HUD `objective_state().large/large_waiting/large_line`; Stempel „halb“.
+10. Player/ToolAnimConfig: `action_clips` `desk_read_book`, `desk_write_letter`, `stove_burn_letter`, `grave_kneel_read`, `grave_read_aloud`, `grave_lay_letter`, `grave_take_soil` auf P7-Clips; `ph_tool_*` nach `asset_character.HOLD_PROPS` an `hold_r`/`hold_l` (Schaufel bleibt auf dem Rücken).
+11. Debug-Befehle laut §6 (u. a. `pin_large`, `set_part`, `large_board`, Ketten springen).
+
+**Lead-Rest (eigenes W2-Paket „Anschlüsse“)**
+12. GhostManager: `Letters.ghost_bonus(grave)` zu `care`, `GhostMood.letter_care_key(key, letters.letter_tonight(grave))`.
+13. Launen bei Ende C (§2.2.8): `NpcLifeConfig` + zwei Regeln nach `own_step` (`{rumor, cross, [priest, surgeon, washer], days 1, events [q_public]}`, `{rumor, low, [grocer, mayor], days 2, events [q_public]}`), `test_phase8_scaffold`/`DATA_CHANGED_AFTER_W0` nachziehen; Ausnahme für den Vertrauten im Code.
+14. Zeitplan-Flags: `sieber_depart_peddler_day`/`sieber_depart_carter_day` (aus `depart_plan()`), `sieber_watch_day`, `sieber_evening_day` (solange `oq_johann_evening` läuft), `stranger_day`/`stranger_arrive_day`.
+15. `CorpseManager.STORY_KIN`: `d3_sieber → house_sieber`; D3-Geisterzeilen je Ende in `ghost_lines.tres`.
+16. Werte aus dem Code nach `data/` (`WhoKnowsConfig`): `GONE_AFTER_MINUTES 40`, `B_CONFIDANT_REL 3`, `DEATH_PATHS`, `q_who_knows`.
+17. `LetterData.KINDS` um `errand`/`reply`; Phase-4-Fund `f_letter` nicht zusätzlich bei Pool-Briefen; Strohblumen wirken zwei Tage wie Grabblumen (GraveCare); Koffer nicht in den Schuppen; Quasts Tropfen in Ende B (`fever_tincture`) im Laden.
+18. Johanns Besuchsfenster 10:00–11:00 erzwingen; Liesels sichtbare Totenwache (Ende B).
+
+**Entscheidung offen (Benutzer):** Messziel große Bitten – gemessen 1887 min statt ≤ 1700 (Tag 14: 129 Münzen); Alternative 2 Plätze/Abklingzeit 6 ≈ 1795 min bei ≈ 140 Münzen.
