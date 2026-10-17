@@ -49,6 +49,9 @@ const MAIN_QUEST := &"q_who_knows"
 const ORDER_CASE := &"oq_case_return"
 const CLUE_LORENZ := &"c_q_case_lorenz"
 const CLUE_LIST := &"c_q_case_list"
+const CLUE_ROBBER := &"c_n_robber"
+const FLAG_CONFIDE_QUAST := &"q_confide_surgeon"
+const FLAG_VEIT_TOLD := &"stranger_veit_told"
 const FLAG_OPENED := &"case_opened"
 const FLAG_BRIBE := &"case_bribe"
 const FLAG_KLADDE := &"kladde_sold"
@@ -297,6 +300,24 @@ func take_soil(grave_id: String, inv: Inventory) -> bool:
 
 
 # --- K3 ------------------------------------------------------------------------------------------
+
+## The gravekeeper knows who he is (§2.5.2 K3): with c_n_robber (Phase 8, Lambert's „Wer zahlt dich?"), with Quast as
+## the one he confided in (H5), or after Veit told him (flag stranger_veit_told – the dialogue sets it).
+func recognized() -> bool:
+	var journal := _first(&"journal")
+	if journal != null and journal.has_method(&"has_clue") and bool(journal.call(&"has_clue", CLUE_ROBBER)):
+		return true
+	return GameState.flag_on(StringName("clue_" + String(CLUE_ROBBER))) or GameState.flag_on(FLAG_CONFIDE_QUAST) \
+			or GameState.flag_on(FLAG_VEIT_TOLD)
+
+
+## How Lambert's fate colours K3 (§2.5.2 Verbindungen): &"let_go" (Lambert greets through Veit: „der war's") ·
+## &"reported" (Fenner knows the name from the record) · &"" (neither).
+func k3_variant() -> StringName:
+	var robber := _first(&"night_robber")
+	var fate := StringName(str(robber.call(&"fate"))) if robber != null and robber.has_method(&"fate") else &""
+	return fate if fate in [&"let_go", &"reported"] else &""
+
 
 ## The bribe for his silence: accept → bribe_coins, piety case_bribe, flag case_bribe; refuse → nothing. Once.
 func bribe(accept: bool, inv: Inventory) -> void:
