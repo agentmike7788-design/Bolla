@@ -55,6 +55,10 @@ const EARLY_ALPHA := 0.35
 # +1 the night a letter was read aloud at the grave, +1 for good when laid into it) and the by_letter pool
 # (GhostMood.letter_care_key). Without Letters (Phase 3–8 worlds) both are as before.
 const LETTERS_GROUP := &"letters"
+## Phase 9 (§2.7, W1-Anschlüsse 15): story ghosts whose lines depend on how a chain ended – by_story
+## "<story>_<ending>" (D3: d3_sieber_stay / d3_sieber_public), else "<story>" (D3: the silent line).
+const STORY_ENDING_QUEST: Dictionary[StringName, StringName] = {&"d3_sieber": &"q_who_knows"}
+const QUESTS_GROUP := &"quests"
 
 @export var ghost_scene: PackedScene
 ## Decor/Ghosts
@@ -236,7 +240,7 @@ func listen(grave_id: String, player: Player) -> String:
 		var turn := int(last.turn) + 1 if not last.is_empty() and int(last.day) == day else 0
 		var corpse := _corpse(_graveyard().get_grave(grave_id).corpse_id)
 		var traits: Array[StringName] = corpse.traits.duplicate() if corpse != null else []
-		var story: StringName = corpse.story_id if corpse != null else &""
+		var story := _story_key(corpse)
 		var harvested: Array[StringName] = corpse.harvested.duplicate() if corpse != null else []
 		var seed := line_seed(grave_id, day) + turn
 		var key := _care_key(grave_id, corpse)
@@ -651,6 +655,20 @@ func _care_key(grave_id: String, corpse: CorpseRecord) -> StringName:
 	var visited := visitors != null and visitors.has_method(&"visited_on") and bool(visitors.call(&"visited_on", grave_id, night))
 	var key := GhostMood.care_key(disturbed, GhostMood.robbed_count(corpse) > 0, lights, visited, candle, flowers)
 	return GhostMood.letter_care_key(key, _letter_tonight(grave_id))
+
+
+## The by_story key of a corpse: the story id, or "<story>_<ending>" when that pool exists (STORY_ENDING_QUEST).
+func _story_key(corpse: CorpseRecord) -> StringName:
+	if corpse == null or corpse.story_id == &"":
+		return &""
+	var quest: StringName = STORY_ENDING_QUEST.get(corpse.story_id, &"")
+	var quests := _first(QUESTS_GROUP) if quest != &"" else null
+	if quests == null or not quests.has_method(&"ending"):
+		return corpse.story_id
+	var end := StringName(str(quests.call(&"ending", quest)))
+	var key := StringName(String(corpse.story_id) + "_" + String(end))
+	var l := _lines()
+	return key if end != &"" and l != null and l.by_story.has(key) else corpse.story_id
 
 
 ## Phase 9: Letters.ghost_bonus (0 without Letters).

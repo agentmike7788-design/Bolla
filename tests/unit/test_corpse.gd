@@ -559,3 +559,17 @@ func test_reserved_plots_only_what_no_locked_plot_can_take() -> void:
 	assert_eq(CorpseDeliveryRules.reserved_plots(g, 5), 5, "no section given")
 	assert_eq(CorpseDeliveryRules.reserved_plots(null, 5, &"elder"), 0)
 	g.free()
+
+
+## Phase 9 (docs/PHASE9_DESIGN.md §2.7, W1-Anschlüsse 15): D3 Johann Sieber's household is the Siebers'.
+func test_phase9_story_kin_of_d3() -> void:
+	assert_eq(CorpseManager.STORY_KIN, {&"d1_hagedorn": &"cottage_hagedorn", &"d2_ott": &"house_ott",
+			&"d3_sieber": &"house_sieber"} as Dictionary[StringName, StringName])
+	var cm := CorpseManager.new()
+	var r := CorpseRecord.new()
+	r.story_id = &"d3_sieber"
+	GameState.set_flag(&"village_open", true)
+	cm.assign_kin_house(r, 73)
+	assert_eq(r.kin_house, &"house_sieber")
+	GameState.clear_flag(&"village_open")
+	cm.free()

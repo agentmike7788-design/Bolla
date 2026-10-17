@@ -1325,3 +1325,43 @@ func test_phase9_listen_speaks_the_letter_pool() -> void:
 	assert_eq(ghosts.listen("plot_01", null), l.by_candle[0], "no letter: the Phase-8 pools")
 	care.free()
 	letters.free()
+
+
+## Quests API used by the ghosts (group quests): ending(quest_id).
+class QuestsEndingDouble extends Node:
+	var endings: Dictionary = {}
+
+	func _init() -> void:
+		add_to_group(&"quests")
+
+	func ending(quest_id: StringName) -> StringName:
+		return endings.get(quest_id, &"")
+
+
+func test_phase9_d3_ghost_speaks_the_line_of_the_ending() -> void:
+	await _make_world(1)
+	ghosts.lines = Database.ghost_lines() as GhostLines
+	var real := ghosts.lines
+	# §2.7: B / C / silent (C shortened to ≤ 90 characters).
+	assert_eq(real.by_story.get(&"d3_sieber_stay"),
+			PackedStringArray(["Grete hat gesagt, ich soll mich nicht beeilen. Ich hab mich nicht beeilt."]))
+	assert_eq(real.by_story.get(&"d3_sieber_public"),
+			PackedStringArray(["Vor meiner Tür stand einer mit Laterne. Für mich hat noch nie einer Wache gestanden."]))
+	assert_eq(real.by_story.get(&"d3_sieber"),
+			PackedStringArray(["Keiner hat was gesagt. Ich auch nicht. Das hatten wir so in der Familie."]))
+	var d3 := CorpseRecord.new()
+	d3.story_id = &"d3_sieber"
+	assert_eq(ghosts._story_key(d3), &"d3_sieber", "without Quests: the plain pool")
+	var quests := QuestsEndingDouble.new()
+	world.add_child(quests)
+	for spec: Array in [[&"stay", &"d3_sieber_stay"], [&"public", &"d3_sieber_public"], [&"silent", &"d3_sieber"], [&"", &"d3_sieber"]]:
+		quests.endings = {&"q_who_knows": spec[0]}
+		assert_eq(ghosts._story_key(d3), spec[1], "ending %s" % spec[0])
+	quests.endings = {&"q_who_knows": &"stay"}
+	var line := GhostMood.pick_line(real, GhostMood.CONTENT, &"", [] as Array[StringName], 3, ghosts._story_key(d3))
+	assert_eq(line, real.by_story[&"d3_sieber_stay"][0], "content: Johann's own line")
+	var other := CorpseRecord.new()
+	other.story_id = &"d2_ott"
+	assert_eq(ghosts._story_key(other), &"d2_ott", "other stories unchanged")
+	assert_eq(ghosts._story_key(CorpseRecord.new()), &"")
+	quests.free()
