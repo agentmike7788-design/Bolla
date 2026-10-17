@@ -8,6 +8,9 @@ extends Node
 ## The visits walk in the village by P6's schedule entries with today_flag night_visit_<npc>_day (set here to
 ## the calendar day of the visit). Clock-driven: every event between the last processed minute and now is
 ## handled once in time order (saved as last_total – a load replays nothing).
+## Phase 9 (docs/PHASE9_DESIGN.md §2.2.2, §3.4, P4): a path's offsets count from the day in its anchor_flag (np_sieber:
+## q_light_day; "" = p8_open_day as before – np_ott / np_kehr unchanged) and it runs only while that day is set;
+## its cancel_flag set (sieber_gone, ending A) → the sequence does not run (no light, no visits, no death).
 
 const GROUP := &"night_paths"
 const PHASES: Array[StringName] = [&"enter", &"leave", &"observed"]
@@ -47,7 +50,9 @@ func sick_houses(day: int, minute: int) -> PackedStringArray:
 		return out
 	var now := (day - 1) * NightPathRules.MINUTES_PER_DAY + minute
 	for path: NightPathData in _paths():
-		if NightPathRules.burning(path, _open_day(), now) and not out.has(String(path.house)):
+		if not path_runs(path):
+			continue
+		if NightPathRules.burning(path, anchor_day(path), now) and not out.has(String(path.house)):
 			out.append(String(path.house))
 	return out
 
@@ -56,10 +61,10 @@ func sick_houses(day: int, minute: int) -> PackedStringArray:
 ## over at (day, minute).
 func next_visit(path_id: StringName, day: int, minute: int) -> Dictionary:
 	var path := _path(path_id)
-	if path == null or not _open():
+	if path == null or not _open() or not path_runs(path):
 		return {}
 	var now := (day - 1) * NightPathRules.MINUTES_PER_DAY + minute
-	for v: Dictionary in NightPathRules.visits(path, _open_day()):
+	for v: Dictionary in NightPathRules.visits(path, anchor_day(path)):
 		if int(v.leave) > now:
 			return {"npc_id": v.npc_id, "enter_minute": v.enter_minute, "leave_minute": v.leave_minute, "night": v.night,
 					"clue_id": v.clue_id, "enter": v.enter, "leave": v.leave}
@@ -72,7 +77,9 @@ func wait_minutes(spot_id: StringName) -> int:
 		return 0
 	for path: NightPathData in _paths():
 		if path.watch_spot == spot_id:
-			return NightPathRules.wait_minutes(path, _open_day(), TimeManager.total_minutes())
+			if not path_runs(path):
+				return 0
+			return NightPathRules.wait_minutes(path, anchor_day(path), TimeManager.total_minutes())
 	return 0
 
 
@@ -88,7 +95,10 @@ func apply_minute(day: int, minute: int) -> void:
 	_last_total = now
 	var events: Array = []
 	for path: NightPathData in _paths():
-		for v: Dictionary in NightPathRules.visits(path, _open_day()):
+		if not path_runs(path):
+			continue
+		var anchor := anchor_day(path)
+		for v: Dictionary in NightPathRules.visits(path, anchor):
 			if int(v.enter) > from and int(v.enter) <= now:
 				events.append([int(v.enter), 1, path, v, &"enter"])
 			if int(v.leave) > from and int(v.leave) <= now:
@@ -100,7 +110,7 @@ func apply_minute(day: int, minute: int) -> void:
 				# W-Welt (W2, test_phase8_loop): P6's village schedules key the walk per path (Quast and Lenz go to
 				# the Otts and the Kehrs) – night_<path>_<npc>_day, e.g. night_np_ott_surgeon_day.
 				GameState.set_flag(StringName("night_%s_%s_day" % [path.id, v.npc_id]), day)
-		var death := NightPathRules.death_total(path, _open_day())
+		var death := NightPathRules.death_total(path, anchor)
 		if death > from and death <= now:
 			events.append([death, 0, path, {}, &"death"])
 	events.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0] or (a[0] == b[0] and a[1] < b[1]))
@@ -215,6 +225,26 @@ func _path(path_id: StringName) -> NightPathData:
 
 func _open() -> bool:
 	return GameState.flag_on(OPEN_FLAG)
+
+
+## Phase 9: the day the offsets of `path` count from – its anchor_flag's day (np_sieber: q_light_day), "" = p8_open_day.
+func anchor_day(path: NightPathData) -> int:
+	if path == null or path.anchor_flag == &"":
+		return _open_day()
+	var d: Variant = GameState.get_flag(path.anchor_flag, 0)
+	return int(d) if d is int or d is float else 0
+
+
+## Phase 9: the sequence runs – its anchor day is set (anchor_flag) and its cancel_flag is not (ending A: sieber_gone).
+func path_runs(path: NightPathData) -> bool:
+	if path == null:
+		return false
+	if path.cancel_flag != &"" and GameState.flag_on(path.cancel_flag):
+		return false
+	if path.anchor_flag == &"":
+		return true
+	var d: Variant = GameState.get_flag(path.anchor_flag)
+	return (d is int or d is float) and not d is bool
 
 
 func _open_day() -> int:

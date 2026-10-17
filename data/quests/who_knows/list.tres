@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="LightListData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/quests/who_knows/light_entry_data.gd" id="1_yxfa0"]
+[ext_resource type="Script" path="res://src/systems/quests/who_knows/light_list_data.gd" id="2_co3p7"]
+
+[sub_resource type="Resource" id="Resource_urtou"]
+script = ExtResource("1_yxfa0")
+id = &"e_dorn"
+initial = "D."
+ink = &"old"
+story_id = &"s5_moor"
+fixed_text = "2. Julmond 1833"
+witness_npc = &"washer"
+witness_clue = &"c_q_light_dorn"
+
+[sub_resource type="Resource" id="Resource_uoobu"]
+script = ExtResource("1_yxfa0")
+id = &"e_quendel"
+initial = "Q."
+story_id = &"s1_quendel"
+witness_npc = &"carter"
+witness_clue = &"c_q_light_quendel"
+
+[sub_resource type="Resource" id="Resource_4rox4"]
+script = ExtResource("1_yxfa0")
+id = &"e_wernstein"
+initial = "W."
+story_id = &"s3_wernstein"
+witness_npc = &"innkeeper"
+witness_clue = &"c_q_light_wernstein"
+
+[sub_resource type="Resource" id="Resource_5r602"]
+script = ExtResource("1_yxfa0")
+id = &"e_hagedorn"
+initial = "H."
+story_id = &"d1_hagedorn"
+witness_npc = &"grocer"
+witness_clue = &"c_q_light_hagedorn"
+
+[sub_resource type="Resource" id="Resource_3v7k0"]
+script = ExtResource("1_yxfa0")
+id = &"e_ott"
+initial = "O."
+story_id = &"d2_ott"
+witness_npc = &"kin_ott"
+witness_clue = &"c_q_light_ott"
+
+[sub_resource type="Resource" id="Resource_mbkbl"]
+script = ExtResource("1_yxfa0")
+id = &"e_open"
+initial = "S."
+open = true
+witness_npc = &"beggar"
+witness_clue = &"c_q_sieber"
+
+[resource]
+script = ExtResource("2_co3p7")
+entries = Array[ExtResource("1_yxfa0")]([SubResource("Resource_urtou"), SubResource("Resource_uoobu"), SubResource("Resource_4rox4"), SubResource("Resource_5r602"), SubResource("Resource_3v7k0"), SubResource("Resource_mbkbl")])
+footer = "Licht. Drei Wochen."
+struck = "Wer weiß, wann?"
