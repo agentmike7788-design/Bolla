@@ -1560,7 +1560,8 @@ func _save_large() -> Dictionary:
 		targets[String(id)] = (_large_targets[id] as Dictionary).duplicate(true)
 	var refill := {}
 	for place: StringName in _large_refill:
-		refill[String(place)] = (_large_refill[place] as Array).duplicate()
+		if not (_large_refill[place] as Array).is_empty():
+			refill[String(place)] = (_large_refill[place] as Array).duplicate()
 	return {"large_board": board, "parts": parts, "large_refill": refill, "large_ended": _str_keys(_large_ended),
 			"ghost_night": _ghost_night.duplicate(true), "large_progress": progress, "large_targets": targets}
 

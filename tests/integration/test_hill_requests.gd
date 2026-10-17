@@ -462,3 +462,112 @@ func test_old_save_without_requests_loads_silently_and_gets_one() -> void:
 	assert_eq(await SaveManager.load_game(SLOT + 1), OK)
 	_bind()
 	assert_eq(hill.board().size(), 1, "kept after the next save")
+
+
+# --- Phase 9: larger requests (docs/PHASE9_DESIGN.md §2.3, P2) -------------------------------------------------
+
+## Pins the large request `id` (day 2, 08:00, no other large one) and accepts it.
+func _large_accepted(id: StringName) -> void:
+	if TimeManager.day < 2:
+		TimeManager.set_time(2, 480)
+	for other: StringName in hill.large_offered():
+		hill.withdraw(other)
+	assert_true(hill.pin_large(id), "pin %s" % id)
+	assert_true(hill.accept(id), "accept %s (%s)" % [id, hill.accept_reason(id)])
+
+
+func test_large_sheet_at_the_gate_from_day_two() -> void:
+	var board := _board_node()
+	assert_eq(hill.large_board(&"gate"), [] as Array[StringName], "nothing on day 1")
+	assert_false(board.sheet_visible())
+	TimeManager.set_time(2, 464)
+	assert_eq(hill.large_board(&"gate").size(), 1, "Osric pins one large sheet with the small ones")
+	var id := hill.large_board(&"gate")[0]
+	assert_true(board.sheet_visible(), "the folded sheet hangs at the board")
+	assert_true(notes.any(func(t: String) -> bool: return t.begins_with("… und einen großen Bogen")), "HUD note")
+	var ctx := board.panel_context(player)
+	assert_eq([ctx.place, ctx.large], [&"gate", [id] as Array[StringName]], "the panel gets the sheet")
+	var card: Dictionary = (ctx.large_cards as Array)[0]
+	assert_eq(card.id, id)
+	assert_true((card.parts as Array).size() >= 2 and card.reward.begins_with("Die Gemeinde wird es dir danken."), "card with parts")
+	assert_eq(card.accept_reason, "")
+	assert_eq(hill.large_waiting(), [&"gate"] as Array[StringName], "HUD: a large request waits")
+	assert_true(hill.accept(id))
+	assert_eq(hill.objective_state(player.inventory).large.size(), 1, "the HUD line of the running one")
+	assert_eq(hill.board().size(), 2, "the small ones hang beside it")
+	assert_eq(warnings.lines, PackedStringArray(), "no warnings")
+
+
+func test_large_craft_at_the_workbench_and_osric_takes_it() -> void:
+	_large_accepted(&"hrl_crosses")
+	var bench := world.get_node_by_layout_id("workbench") as Workbench
+	player.instant_actions = true
+	player.inventory.add_item(&"wood", 9)
+	for i: int in 3:
+		bench.interact(player)
+		UIState.clear()
+		bench.request_craft(&"wooden_cross")
+	assert_eq(hill.parts_done(&"hrl_crosses"), [true, false] as Array[bool], "craft_finished from the workbench")
+	assert_has(notes, "Drei Kreuze für den Hohlweg: 1 von 2")
+	var ctx := {"inventory": player.inventory, "speaker": null}
+	assert_true(DialogueConditions.hill_ready(&"carter", ctx), "carter.tres: hill_ready:carter sees the large delivery")
+	var coins := _coins()
+	var rep := _rep()
+	DialogueActions.apply("hill_turn_in:carter", ctx)
+	var r := hill.large_data(&"hrl_crosses")
+	assert_eq(_coins(), coins + r.reward_coins)
+	assert_eq(_rep(), rep + r.reward_rep)
+	assert_eq(hill.history().back().state, HillRequests.STATE_COMPLETED)
+	assert_eq(player.inventory.count(&"wooden_cross"), 0, "the crosses went with Osric")
+	assert_eq(GameState.get_stat(&"large_requests_done"), 1)
+	assert_eq(GameState.get_stat(&"large_request_parts"), 2)
+
+
+func test_large_gather_from_the_pile_and_the_evening_visit() -> void:
+	_large_accepted(&"hrl_lantern_path")
+	player.instant_actions = true
+	TimeManager.set_time(2, 600)
+	player.global_position = world.get_waypoint(&"gate_outside")
+	assert_eq(hill.visit_block_reason(&"hrl_lantern_path", player), HillRules.TEXT_VISIT_WINDOW % ["21:30", "23:00"])
+	TimeManager.set_time(2, 1295)
+	player.global_position = world.get_waypoint(&"gate_outside") + Vector3(6, 0, 0)
+	assert_eq(hill.visit_block_reason(&"hrl_lantern_path", player), HillRules.TEXT_VISIT_HERE, "≤ 3 m from the waypoint")
+	player.global_position = world.get_waypoint(&"gate_outside")
+	assert_eq(hill.visit_here(player), &"hrl_lantern_path")
+	var before := TimeManager.total_minutes()
+	hill.start_visit(&"hrl_lantern_path")
+	assert_eq(TimeManager.total_minutes() - before, 20, "a TimedAction of 20 minutes")
+	assert_eq(hill.parts_done(&"hrl_lantern_path")[2], true, "the evening at the gate")
+	# gather: the wood pile counts (it sends no resource_gathered).
+	var w := _hill_widow()
+	assert_true(w != null)
+
+
+func _hill_widow() -> HillRequests:
+	hill.fail(&"hrl_lantern_path")
+	hill._large_ended.clear()
+	TimeManager.set_time(TimeManager.day + 1, 480)
+	_large_accepted(&"hrl_widow_wood")
+	var pile := world.get_node_by_layout_id("res_wood") as ResourceNode
+	player.instant_actions = true
+	var n := 0
+	while pile.can_interact(player) and n < 10:
+		pile.interact(player)
+		n += 1
+	assert_eq(hill.part_progress(&"hrl_widow_wood", 0), pile.daily_amount, "the pile's wood counts for the gather part")
+	return hill
+
+
+func test_large_save_and_load_in_the_middle() -> void:
+	_large_accepted(&"hrl_crosses")
+	EventBus.craft_finished.emit(&"workbench", &"wooden_cross", 2)
+	var before := hill.save_state()
+	assert_eq(SaveManager.save_game(SLOT), OK)
+	assert_eq(await SaveManager.load_game(SLOT), OK)
+	_bind()
+	assert_eq(hill.save_state(), before, "save → load keeps the large request with its counts")
+	assert_eq([hill.state(&"hrl_crosses"), hill.part_progress(&"hrl_crosses", 0)], [HillRequests.STATE_ACCEPTED, 2])
+	assert_true(_board_node().sheet_visible(), "the sheet after loading")
+	EventBus.craft_finished.emit(&"workbench", &"wooden_cross", 1)
+	assert_eq(hill.parts_done(&"hrl_crosses"), [true, false] as Array[bool], "goes on after the load")
+	assert_eq(warnings.lines, PackedStringArray(), "no warnings")
