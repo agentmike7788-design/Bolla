@@ -780,6 +780,7 @@ func large_offer_context(day: int) -> Dictionary:
 	ctx["node_items"] = _gather_items(false)
 	ctx["pile_daily"] = _pile_daily()
 	ctx["clear_yields"] = _clear_yields()
+	ctx["decor_room"] = _decor_room()
 	ctx["places"] = _known_places()
 	ctx["chapel"] = _chapel_ready()
 	ctx["kin_graves"] = _kin_graves()
@@ -1501,6 +1502,25 @@ func _clear_yields() -> Dictionary:
 				continue
 			for item: StringName in data.yield_items:
 				out[item] = int(out.get(item, 0)) + int(data.yield_items[item])
+	return out
+
+
+## Decor id → pieces that may still be placed under DecorData.place_max and DecorConfig.max_placed (&"" = any).
+func _decor_room() -> Dictionary:
+	var out := {}
+	var decorations := _first(DECORATIONS_GROUP) as DecorationManager
+	if decorations == null:
+		return out
+	var cfg: DecorConfig = decorations.config if decorations.config != null else Database.config(&"decor_config") as DecorConfig
+	var cap := cfg.max_placed if cfg != null else DecorConfig.new().max_placed
+	var total := maxi(0, cap - decorations.placements().size())
+	out[&""] = total
+	for id: StringName in decorations.decor_ids():
+		var d := decorations.decor(id)
+		var left := total
+		if d != null and d.place_max > 0:
+			left = mini(left, maxi(0, d.place_max - decorations.count_of(id)))
+		out[id] = left
 	return out
 
 

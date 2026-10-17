@@ -56,6 +56,7 @@ var large_failed: int = 0
 var large_coins: int = 0
 var large_minutes: int = 0
 var large_log: PackedStringArray = []
+var large_ends: Array[Dictionary] = []
 
 
 func strategies() -> Dictionary:
@@ -90,6 +91,9 @@ func run_day() -> void:
 		_large_board()
 	_handle_corpses()
 	_craft_essentials()
+	if flags.get("large", false) and flags.decor:
+		# A decorating player sets the request's decor first – the routine decor would use up its places.
+		_large_decor_first()
 	if flags.upgrade:
 		_upgrade_markers()
 	if flags.clear:
@@ -302,6 +306,16 @@ func _on_large(id: StringName, state: StringName) -> void:
 			large_failed += 1
 	if state != HillRequests.STATE_OFFERED:
 		large_log.append("Tag %d %s %s" % [TimeManager.day, id, state])
+		large_ends.append({"day": TimeManager.day, "id": id, "state": state})
+
+
+## Large requests that ended in `state` up to `last_day` (a deadline on the morning after the run is not counted).
+func large_count(state: StringName, last_day: int) -> int:
+	var n := 0
+	for e: Dictionary in large_ends:
+		if e.state == state and int(e.day) <= last_day:
+			n += 1
+	return n
 
 
 ## A payment reason of a large request („Bitte: <Titel>“, „Bitte zur Hälfte: …“).
@@ -349,6 +363,16 @@ func _large_board() -> void:
 			return
 
 
+func _large_decor_first() -> void:
+	for id: StringName in hill.large_active():
+		var parts := HillRules.parts_of(hill.large_data(id))
+		for i: int in hill.open_parts(id):
+			if parts[i].kind == HillRules.KIND_DECOR and _time_left():
+				var before := TimeManager.total_minutes()
+				_large_decor(id, i, parts[i])
+				large_minutes += TimeManager.total_minutes() - before
+
+
 ## One round over the open parts; true = some work was done.
 func _large_work() -> bool:
 	var did := false
@@ -370,8 +394,6 @@ func _large_work() -> bool:
 					_hill_clear(part)
 				HillRules.KIND_GATHER:
 					_large_gather(id, i, part)
-				HillRules.KIND_GHOST, HillRules.KIND_GHOSTS:
-					_listen_tonight = true
 				HillRules.KIND_VISIT:
 					if HillRules.visit_window(part).x < 0:
 						_large_visit(id, part)
@@ -463,7 +485,10 @@ func _large_decor(id: StringName, index: int, part: OrderData) -> void:
 		if decor_id == &"" or inv().count(decor_id) == 0:
 			return
 		if _large_place(decor_id, part) == "":
-			problems.append("day %d: could not place %s for %s" % [TimeManager.day, decor_id, id])
+			var gate := world.get_waypoint(&"gate_inside")
+			var cell := decorations.mask.world_to_cell(Vector2(gate.x, gate.z))
+			problems.append("day %d: could not place %s for %s (at the gate: %s, %d placed)" % [TimeManager.day, decor_id, id,
+					decorations.can_place(decor_id, cell, 0, inv(), player), decorations.placements().size()])
 			return
 
 
@@ -472,9 +497,15 @@ func _large_place(decor_id: StringName, part: OrderData) -> String:
 	var targets: Array[Vector2] = []
 	if str(part.conditions.get("near", "")) == "gate":
 		var at := world.get_waypoint(&"gate_inside")
-		targets.append(Vector2(at.x, at.z))
-		targets.append(Vector2(at.x - 2.0, at.z - 1.5))
-		targets.append(Vector2(at.x + 2.0, at.z - 1.5))
+		for dz: float in [0.0, -1.5, -3.0, -4.5, -6.0]:
+			for dx: float in [0.0, -2.0, 2.0, -4.0, 4.0, -6.0, 6.0]:
+				if Vector2(dx, dz).length() <= HillRequests.NEAR_RADIUS - 2.0:
+					targets.append(Vector2(at.x + dx, at.z + dz))
+		for t: Vector2 in targets:
+			var uid := _place_near(decor_id, t, section)
+			if uid != "":
+				return uid
+		return ""
 	for g: String in graveyard.plots_in_section(section):
 		targets.append(_centre_of(g) + Vector2(0.0, 1.6))
 	for t: Vector2 in targets:
@@ -512,8 +543,31 @@ func _large_evening() -> void:
 		if not hill.large_active().has(id):
 			continue
 		for i: int in hill.open_parts(id):
-			if parts[i].kind in [HillRules.KIND_GHOST, HillRules.KIND_GHOSTS]:
-				_listen_tonight = true
+			if parts[i].kind in [HillRules.KIND_GHOST, HillRules.KIND_GHOSTS] and not _listen_tonight:
+				_large_listen(parts[i])
+
+
+## Only the ghosts a ghost / ghosts part needs (in its section) – the duty player does not walk every grave.
+func _large_listen(part: OrderData) -> void:
+	_wait_until(LISTEN_MINUTE)
+	var want := str(part.conditions.get("section", ""))
+	var left := HillRules.need(part)
+	for id: String in ghosts.eligible_graves():
+		if left <= 0:
+			break
+		if want != "" and String(graveyard.section_of(id)) != want:
+			continue
+		var plot := world.get_node_by_layout_id(id) as Node3D
+		player.global_position = plot.global_position + Vector3(0.0, 0.0, 1.5)
+		ghosts.reselect()
+		ghosts.update_visuals(TimeManager.get_minute_f())
+		for g: Ghost in ghosts.active_ghosts():
+			if g.grave_id == id and g.can_interact(player):
+				var coins := inv().count(&"coin")
+				g.interact(player)
+				gifts += inv().count(&"coin") - coins
+				left -= 1
+				break
 
 
 func _large_walk() -> void:

@@ -341,6 +341,7 @@ static func fill(text: String, value: String) -> String:
 #   node_items     Array       items of the open gather nodes (they regrow: any amount)
 #   pile_daily     Dictionary  item → what the piles give each morning (res_wood / res_stone)
 #   clear_yields   Dictionary  item → what clearing the open obstacles of the workable sections still yields
+#   decor_room     Dictionary  decor id → pieces that may still be placed (&"" = any decor)
 #   places         Array       known waypoint ids (visit)
 #   chapel         bool        a devotion can be held (chapel built)
 #   kin_graves     Dictionary  kin id → graves it mourns at (flowers / meet at kin_grave)
@@ -555,6 +556,19 @@ static func part_offer_block(part: OrderData, request: OrderData, ctx: Dictionar
 		KIND_VISIT:
 			if ctx.has("places") and not (ctx.get("places", []) as Array).has(StringName(str(c.get("place", "")))):
 				return "no place"
+		KIND_DECOR:
+			# Room left under the place limits (DecorData.place_max, DecorConfig.max_placed).
+			if ctx.has("decor_room"):
+				var room := 0
+				var rooms: Dictionary = ctx.get("decor_room", {})
+				var allowed: Variant = c.get("decor", [])
+				if allowed is Array and not (allowed as Array).is_empty():
+					for d: Variant in allowed:
+						room += int(rooms.get(StringName(str(d)), 0))
+				else:
+					room = int(rooms.get(&"", 0))
+				if room < need(part):
+					return "no room for decor"
 		KIND_DEVOTION:
 			if not bool(ctx.get("chapel", false)):
 				return "no chapel"
