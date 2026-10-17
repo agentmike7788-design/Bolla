@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="LetterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/letters/letter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lp_d3_grete"
+kind = &"pocket"
+outside = "An Grete"
+text = "(Ein Zettel mit einem gemalten Kreuz. Darin eine graue Haarlocke.)"
+sealed = false
+sender = "Johann Sieber"
+recipient = &"grave"
+asks = &"grave"
+conditions = PackedStringArray("story:d3_sieber")
+choice_actions = Dictionary[StringName, PackedStringArray]({
+&"bury": PackedStringArray("piety_add:1")
+})
+choice_texts = Dictionary[StringName, String]({})
+reply_text = ""
+story_id = &""

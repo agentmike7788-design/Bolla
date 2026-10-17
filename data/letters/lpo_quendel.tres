@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="LetterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/letters/letter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lpo_quendel"
+kind = &"post"
+outside = "An Marthe Quendel, Hollerbrück"
+text = "Marthe. Du schreibst nicht mehr. Bist du mir böse? Ich hab dir doch das Tuch geschickt. Deine Schwester Dora, Ellbach."
+sealed = true
+sender = "ihre Schwester aus Ellbach"
+recipient = &"grave"
+asks = &""
+conditions = PackedStringArray()
+choice_actions = Dictionary[StringName, PackedStringArray]({})
+choice_texts = Dictionary[StringName, String]({})
+reply_text = "Dora Quendel schreibt aus Ellbach: „Ich hab es mir gedacht. Sie hat nie gern geschrieben, aber nie so lange nicht. Danke, dass Sie es mir gesagt haben.“"
+story_id = &"s1_quendel"

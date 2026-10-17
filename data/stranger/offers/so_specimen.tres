@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="StrangerOfferData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/stranger/stranger_offer_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"so_specimen"
+label = "Ein Präparat"
+item = &""
+price = 0
+conditions = PackedStringArray("flag:anatomy_known")
+actions = PackedStringArray("rep_event:visit_specimen_rumor")
+note = "Er zahlt mehr als Quast. Im Dorf wird man davon reden."

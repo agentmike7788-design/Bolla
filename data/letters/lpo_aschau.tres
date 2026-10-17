@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="LetterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/letters/letter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lpo_aschau"
+kind = &"post"
+outside = "An L. Aschau, Totengräber zu Hollerbrück"
+text = "Die Fähre geht wieder. Sag, wann."
+sealed = true
+sender = "(gesiegelt mit Anker und Schlange)"
+recipient = &"none"
+asks = &""
+conditions = PackedStringArray()
+choice_actions = Dictionary[StringName, PackedStringArray]({})
+choice_texts = Dictionary[StringName, String]({})
+reply_text = ""
+story_id = &""
