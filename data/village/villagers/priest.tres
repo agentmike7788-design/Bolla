@@ -18,8 +18,13 @@ piety_sensitive = true
 remarks = Dictionary[StringName, PackedStringArray]({
 &"event_apprentice_hired": PackedStringArray("Ein Junge auf dem Hügel. Gut. Die Toten sollen nicht nur Alte um sich haben."),
 &"event_grave_disturbed": PackedStringArray("Ein aufgewühltes Grab ist eine Wunde, Totengräber. Schließ sie."),
+&"event_letter_delivered": PackedStringArray("Der Opferstock hat einen Gulden mehr, als im Buch steht. Ich lasse es so. Gott rechnet anders."),
 &"event_lights_all": PackedStringArray("Kein Grab ohne Licht. Das hatten wir noch nie."),
 &"event_noise_at_grave": PackedStringArray("Man sagt, du hast gehackt, während der Brandt gebetet hat. Hack ein andermal."),
+&"event_q_public": PackedStringArray("Sie haben mich vor Fenner gestellt. Ich war trotzdem da. Ich bin immer da. Das hätten Sie auch so erfahren."),
+&"event_q_sent_away": PackedStringArray("Johann ist fortgegangen, ohne Segen. Ich hätte ihm einen mitgegeben. Er hätte gesagt, der ist zu schwer. Vielleicht hat er recht."),
+&"event_q_stayed": PackedStringArray("Ich war bei Johann. Er hat mir Grete beschrieben, eine Stunde lang. Ich kenne sie jetzt besser als manche, die ich getraut habe."),
+&"event_register_sold": PackedStringArray("Man hat mir erzählt, das Register ist jetzt in der Stadt. Abgeschrieben. Die Toten haben nicht unterschrieben, Totengräber. Ich auch nicht."),
 &"event_robber_reported": PackedStringArray("Ich bete für den Grell. Das muss einer tun."),
 &"friend": PackedStringArray("Kommen Sie doch einmal am Abend in den Holderkrug. Ich lade Sie ein. Rosine wird es mir nicht glauben."),
 &"piety_devout": PackedStringArray("Sie gehen leise, Totengräber. Wie einer, der nichts wecken will."),

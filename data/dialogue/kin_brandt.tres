@@ -4,6 +4,24 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
 
+[sub_resource type="Resource" id="p9_menu_menu_01"]
+script = ExtResource("2")
+text = "[Brief] Das hatte er bei sich. Es ist für Sie."
+next = &"p9_letter"
+conditions = Array[String](["letter_for:speaker"])
+actions = Array[String](["letter_deliver"])
+
+[sub_resource type="Resource" id="p9_p9_letter_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_letter"]
+script = ExtResource("1")
+id = &"p9_letter"
+text = "Von ihm? Er hat nie geschrieben. Nicht einmal, als er in Ellbach war. (Liest es zweimal, dann ein drittes Mal, ganz langsam.) Danke. Das behalt ich. Das ist mehr, als im Schrank hängt."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_letter_c01")])
+
 [sub_resource type="Resource" id="kin_brandt_first_c01"]
 script = ExtResource("2")
 text = "…"
@@ -56,7 +74,7 @@ text = "Ich lass Sie allein."
 script = ExtResource("1")
 id = &"menu"
 text = "(Hinrich wartet.)"
-choices = Array[ExtResource("2")]([SubResource("kin_brandt_menu_c01"), SubResource("kin_brandt_menu_c02"), SubResource("kin_brandt_menu_c03"), SubResource("kin_brandt_menu_c04")])
+choices = Array[ExtResource("2")]([SubResource("kin_brandt_menu_c01"), SubResource("kin_brandt_menu_c02"), SubResource("kin_brandt_menu_c03"), SubResource("p9_menu_menu_01"), SubResource("kin_brandt_menu_c04")])
 
 [sub_resource type="Resource" id="kin_brandt_wish_c01"]
 script = ExtResource("2")
@@ -124,4 +142,4 @@ script = ExtResource("3")
 id = &"kin_brandt"
 speaker_name = "Hinrich Brandt"
 start_node = &"first"
-nodes = Array[ExtResource("1")]([SubResource("kin_brandt_node_first"), SubResource("kin_brandt_node_greet"), SubResource("kin_brandt_node_menu"), SubResource("kin_brandt_node_wish"), SubResource("kin_brandt_node_wish_yes"), SubResource("kin_brandt_node_wish_no"), SubResource("kin_brandt_node_tip"), SubResource("kin_brandt_node_who")])
+nodes = Array[ExtResource("1")]([SubResource("kin_brandt_node_first"), SubResource("kin_brandt_node_greet"), SubResource("kin_brandt_node_menu"), SubResource("kin_brandt_node_wish"), SubResource("kin_brandt_node_wish_yes"), SubResource("kin_brandt_node_wish_no"), SubResource("kin_brandt_node_tip"), SubResource("kin_brandt_node_who"), SubResource("p9_node_p9_letter")])

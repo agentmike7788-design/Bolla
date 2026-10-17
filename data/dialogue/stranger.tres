@@ -1,0 +1,467 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="stranger_start_c01"]
+script = ExtResource("2")
+text = "Was wollen Sie wissen?"
+next = &"menu"
+
+[sub_resource type="Resource" id="stranger_node_start"]
+script = ExtResource("1")
+id = &"start"
+text = "(Ein Herr in einem Stadtrock lüftet den Zylinder.) Brenneisen. Aus der Stadt. Ich störe nicht lange. Ich frage nur. Fragen kostet nichts, Antworten zahle ich. … Ich warte hier. Ich bin nicht eingeladen."
+choices = Array[ExtResource("2")]([SubResource("stranger_start_c01")])
+conditions = Array[String](["!flag:p9_stranger_met"])
+fallback_next = &"leaving"
+actions = Array[String](["set_flag:p9_stranger_met"])
+
+[sub_resource type="Resource" id="stranger_leaving_c01"]
+script = ExtResource("2")
+text = "Nichts. Ich zeige Sie bei Fenner an."
+next = &"k5_fenner"
+conditions = Array[String](["stranger_resolvable:fenner"])
+actions = Array[String](["stranger_resolve:fenner"])
+
+[sub_resource type="Resource" id="stranger_leaving_c02"]
+script = ExtResource("2")
+text = "Reden wir über ein Geschäft."
+next = &"k5_deal_kladde"
+conditions = Array[String](["stranger_resolvable:deal"])
+actions = Array[String](["stranger_resolve:deal"])
+
+[sub_resource type="Resource" id="stranger_leaving_c03"]
+script = ExtResource("2")
+text = "An der Westmauer kauft nachts eine Frau alles, was über der Erde liegt."
+next = &"k5_ilse"
+conditions = Array[String](["stranger_resolvable:ilse"])
+actions = Array[String](["stranger_resolve:ilse"])
+
+[sub_resource type="Resource" id="stranger_leaving_c04"]
+script = ExtResource("2")
+text = "Darüber reden wir noch."
+next = &"menu"
+
+[sub_resource type="Resource" id="stranger_node_leaving"]
+script = ExtResource("1")
+id = &"leaving"
+text = "Morgen fahre ich zurück, Herr Totengräber. Die Stadt erwartet mich. Sie erwartet immer jemanden. Bevor ich gehe: Was nehme ich mit?"
+choices = Array[ExtResource("2")]([SubResource("stranger_leaving_c01"), SubResource("stranger_leaving_c02"), SubResource("stranger_leaving_c03"), SubResource("stranger_leaving_c04")])
+conditions = Array[String](["quest_step:q_case:k5"])
+fallback_next = &"greet"
+
+[sub_resource type="Resource" id="stranger_greet_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="stranger_node_greet"]
+script = ExtResource("1")
+id = &"greet"
+text = "Herr Totengräber. (Er tippt an den Zylinder.) Ich warte hier. Ich bin nicht eingeladen, und ich habe die richtigen Schuhe nicht."
+choices = Array[ExtResource("2")]([SubResource("stranger_greet_c01")])
+
+[sub_resource type="Resource" id="stranger_menu_c01"]
+script = ExtResource("2")
+text = "[Frage] Was wollen Sie heute wissen?"
+next = &"q1"
+conditions = Array[String](["stranger_question:1"])
+
+[sub_resource type="Resource" id="stranger_menu_c02"]
+script = ExtResource("2")
+text = "[Frage] Was wollen Sie heute wissen?"
+next = &"q2"
+conditions = Array[String](["stranger_question:2"])
+
+[sub_resource type="Resource" id="stranger_menu_c03"]
+script = ExtResource("2")
+text = "[Frage] Was wollen Sie heute wissen?"
+next = &"q3"
+conditions = Array[String](["stranger_question:3"])
+
+[sub_resource type="Resource" id="stranger_menu_c04"]
+script = ExtResource("2")
+text = "[Frage] Was wollen Sie heute wissen?"
+next = &"q4"
+conditions = Array[String](["stranger_question:4"])
+
+[sub_resource type="Resource" id="stranger_menu_c05"]
+script = ExtResource("2")
+text = "[Frage] Was wollen Sie heute wissen?"
+next = &"q5"
+conditions = Array[String](["stranger_question:5"])
+
+[sub_resource type="Resource" id="stranger_menu_c06"]
+script = ExtResource("2")
+text = "[Frage] Was wollen Sie heute wissen?"
+next = &"q6"
+conditions = Array[String](["stranger_question:6"])
+
+[sub_resource type="Resource" id="stranger_menu_c07"]
+script = ExtResource("2")
+text = "[Handel] Was wollen Sie eigentlich kaufen?"
+next = &"offers"
+conditions = Array[String](["quest_done:q_case:k1"])
+
+[sub_resource type="Resource" id="stranger_menu_c08"]
+script = ExtResource("2")
+text = "Sie haben Lambert Grell bezahlt."
+next = &"k3_reported"
+conditions = Array[String](["quest_step:q_case:k3", "stranger_recognized"])
+
+[sub_resource type="Resource" id="stranger_menu_c09"]
+script = ExtResource("2")
+text = "[Auftrag] Ihr Koffer. Rosine wollte ihn nicht anfassen."
+next = &"case_back"
+conditions = Array[String](["stranger_case:player", "has_item:stranger_case:1"])
+actions = Array[String](["stranger_give_case:stranger"])
+
+[sub_resource type="Resource" id="stranger_menu_c10"]
+script = ExtResource("2")
+text = "Und die Toten selbst? Kaufen Sie die auch?"
+next = &"no_corpses"
+conditions = Array[String](["quest_done:q_case:k1", "!flag:p9_stranger_corpses"])
+actions = Array[String](["set_flag:p9_stranger_corpses"])
+
+[sub_resource type="Resource" id="stranger_menu_c11"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="stranger_node_menu"]
+script = ExtResource("1")
+id = &"menu"
+text = "(Brenneisen schreibt etwas in ein kleines Buch und wartet höflich, bis du fertig bist.)"
+choices = Array[ExtResource("2")]([SubResource("stranger_menu_c01"), SubResource("stranger_menu_c02"), SubResource("stranger_menu_c03"), SubResource("stranger_menu_c04"), SubResource("stranger_menu_c05"), SubResource("stranger_menu_c06"), SubResource("stranger_menu_c07"), SubResource("stranger_menu_c08"), SubResource("stranger_menu_c09"), SubResource("stranger_menu_c10"), SubResource("stranger_menu_c11")])
+
+[sub_resource type="Resource" id="stranger_offers_c01"]
+script = ExtResource("2")
+text = "Zeigen Sie mir, was Sie zahlen."
+actions = Array[String](["stranger_offers"])
+
+[sub_resource type="Resource" id="stranger_offers_c02"]
+script = ExtResource("2")
+text = "Nein."
+next = &"menu"
+
+[sub_resource type="Resource" id="stranger_node_offers"]
+script = ExtResource("1")
+id = &"offers"
+text = "Eine Handvoll. Von einem, der noch keine Woche liegt. Für die Wissenschaft. Sie würden staunen, was die Erde weiß. Und eine Abschrift Ihres Registers, wenn Sie eine hätten. Namen und Tage. Mehr nicht."
+choices = Array[ExtResource("2")]([SubResource("stranger_offers_c01"), SubResource("stranger_offers_c02")])
+
+[sub_resource type="Resource" id="stranger_no_corpses_c01"]
+script = ExtResource("2")
+text = "Dann ist ja gut."
+next = &"menu"
+
+[sub_resource type="Resource" id="stranger_node_no_corpses"]
+script = ExtResource("1")
+id = &"no_corpses"
+text = "Einen ganzen? Gott bewahre, Herr Totengräber. Ich bin Kommissionär, kein Fuhrmann. Was in der Erde liegt, bleibt in der Erde. Ich nehme nur, was man mir gibt. Und ich frage nicht danach. Das ist meine ganze Moral. Sie ist klein, aber sie passt in den Koffer."
+choices = Array[ExtResource("2")]([SubResource("stranger_no_corpses_c01")])
+
+[sub_resource type="Resource" id="stranger_k3_reported_c01"]
+script = ExtResource("2")
+text = "Ich will es von Ihnen hören."
+next = &"k3"
+
+[sub_resource type="Resource" id="stranger_node_k3_reported"]
+script = ExtResource("1")
+id = &"k3_reported"
+text = "(Er klappt das Buch zu.) Ihr Schultheiß hat meinen Namen schon in einem Protokoll, höre ich. Mit Siegel. Dann wissen Sie es ja."
+choices = Array[ExtResource("2")]([SubResource("stranger_k3_reported_c01")])
+conditions = Array[String](["robber_fate:reported"])
+fallback_next = &"k3"
+
+[sub_resource type="Resource" id="stranger_k3_c01"]
+script = ExtResource("2")
+text = "Und jetzt?"
+next = &"bribe"
+
+[sub_resource type="Resource" id="stranger_node_k3"]
+script = ExtResource("1")
+id = &"k3"
+text = "(Er klappt das Buch zu.) Ich habe den Mann für Nachrichten bezahlt, nicht für Leiber. Er hat es falsch verstanden. Leute vom Land verstehen Geld immer wörtlich. Ihr Vorgänger übrigens auch. Er hatte eine Schaufel und wenig Geduld."
+choices = Array[ExtResource("2")]([SubResource("stranger_k3_c01")])
+actions = Array[String](["add_clue:c_q_case_lorenz"])
+
+[sub_resource type="Resource" id="stranger_bribe_c01"]
+script = ExtResource("2")
+text = "(Die Münzen nehmen.)"
+next = &"bribe_yes"
+actions = Array[String](["stranger_bribe:yes"])
+
+[sub_resource type="Resource" id="stranger_bribe_c02"]
+script = ExtResource("2")
+text = "Behalten Sie Ihr Geld."
+next = &"bribe_no"
+actions = Array[String](["stranger_bribe:no"])
+
+[sub_resource type="Resource" id="stranger_node_bribe"]
+script = ExtResource("1")
+id = &"bribe"
+text = "Jetzt? Fünfzehn Münzen. Passend. Für Ihr Schweigen – nicht meinetwegen, verstehen Sie. Die Wissenschaft steht nicht gern in der Zeitung."
+choices = Array[ExtResource("2")]([SubResource("stranger_bribe_c01"), SubResource("stranger_bribe_c02")])
+
+[sub_resource type="Resource" id="stranger_bribe_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="stranger_node_bribe_yes"]
+script = ExtResource("1")
+id = &"bribe_yes"
+text = "Passend. Ich zahle immer passend. (Er legt die Münzen einzeln auf den Torpfosten, wie Spielsteine.)"
+choices = Array[ExtResource("2")]([SubResource("stranger_bribe_yes_c01")])
+
+[sub_resource type="Resource" id="stranger_bribe_no_c01"]
+script = ExtResource("2")
+text = "Soll sie."
+next = &"menu"
+
+[sub_resource type="Resource" id="stranger_node_bribe_no"]
+script = ExtResource("1")
+id = &"bribe_no"
+text = "Wie Sie wollen. Die Stadt vergisst nicht, wer ihr Geld nicht nimmt. Sie wundert sich nur. Lange."
+choices = Array[ExtResource("2")]([SubResource("stranger_bribe_no_c01")])
+
+[sub_resource type="Resource" id="stranger_case_back_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="stranger_node_case_back"]
+script = ExtResource("1")
+id = &"case_back"
+text = "Mein Koffer. Ich hätte ihn nie vergessen dürfen. Ich vergesse sonst nichts, das ist mein Beruf. (Er prüft das Schloss mit dem Daumen, ohne hinzusehen.) Für den Weg, Herr Totengräber. Passend."
+choices = Array[ExtResource("2")]([SubResource("stranger_case_back_c01")])
+
+[sub_resource type="Resource" id="stranger_k5_fenner_c01"]
+script = ExtResource("2")
+text = "…"
+
+[sub_resource type="Resource" id="stranger_node_k5_fenner"]
+script = ExtResource("1")
+id = &"k5_fenner"
+text = "Ich gehe. Aber die Stadt bleibt, Herr Totengräber. Die Stadt bleibt immer. (Er tippt an den Zylinder.) Grüßen Sie den Schultheiß. Er schreibt so schön."
+choices = Array[ExtResource("2")]([SubResource("stranger_k5_fenner_c01")])
+
+[sub_resource type="Resource" id="stranger_k5_deal_kladde_c01"]
+script = ExtResource("2")
+text = "Zeigen Sie mir Ihr Angebot."
+actions = Array[String](["stranger_offers"])
+
+[sub_resource type="Resource" id="stranger_node_k5_deal_kladde"]
+script = ExtResource("1")
+id = &"k5_deal_kladde"
+text = "Vernünftig. Die Liste brauchen Sie nicht mehr. Sie wissen ja jetzt, was sie bedeutet. Ich nicht. Vierzig."
+choices = Array[ExtResource("2")]([SubResource("stranger_k5_deal_kladde_c01")])
+conditions = Array[String](["quest_ended:q_who_knows"])
+fallback_next = &"k5_deal"
+
+[sub_resource type="Resource" id="stranger_k5_deal_c01"]
+script = ExtResource("2")
+text = "Zeigen Sie mir Ihr Angebot."
+actions = Array[String](["stranger_offers"])
+
+[sub_resource type="Resource" id="stranger_node_k5_deal"]
+script = ExtResource("1")
+id = &"k5_deal"
+text = "Vernünftig. Sie sind ein Mann vom Handwerk. Zeigen Sie mir, was Sie haben, und ich zeige Ihnen, was es wert ist. In der Stadt."
+choices = Array[ExtResource("2")]([SubResource("stranger_k5_deal_c01")])
+
+[sub_resource type="Resource" id="stranger_k5_ilse_c01"]
+script = ExtResource("2")
+text = "…"
+
+[sub_resource type="Resource" id="stranger_node_k5_ilse"]
+script = ExtResource("1")
+id = &"k5_ilse"
+text = "Über der Erde? Wie bescheiden. Ich sehe sie mir an. Heute Nacht. Man lernt nie aus, Herr Totengräber, auch nicht in meinem Alter."
+choices = Array[ExtResource("2")]([SubResource("stranger_k5_ilse_c01")])
+
+[sub_resource type="Resource" id="stranger_q1_c01"]
+script = ExtResource("2")
+text = "(Offen antworten.)"
+next = &"a_frank"
+actions = Array[String](["stranger_answer:frank"])
+
+[sub_resource type="Resource" id="stranger_q1_c02"]
+script = ExtResource("2")
+text = "(Ausweichen.) Das kommt darauf an."
+next = &"a_evade"
+actions = Array[String](["stranger_answer:evade"])
+
+[sub_resource type="Resource" id="stranger_q1_c03"]
+script = ExtResource("2")
+text = "Die Toten haben ein Recht auf Ruhe. Die Fragen auch."
+next = &"a_refuse"
+actions = Array[String](["stranger_answer:refuse"])
+
+[sub_resource type="Resource" id="stranger_node_q1"]
+script = ExtResource("1")
+id = &"q1"
+text = "(Er schlägt sein kleines Buch auf und nimmt den Stift.) Wie tief graben Sie im Frost?"
+choices = Array[ExtResource("2")]([SubResource("stranger_q1_c01"), SubResource("stranger_q1_c02"), SubResource("stranger_q1_c03")])
+
+[sub_resource type="Resource" id="stranger_q2_c01"]
+script = ExtResource("2")
+text = "(Offen antworten.)"
+next = &"a_frank"
+actions = Array[String](["stranger_answer:frank"])
+
+[sub_resource type="Resource" id="stranger_q2_c02"]
+script = ExtResource("2")
+text = "(Ausweichen.) Das kommt darauf an."
+next = &"a_evade"
+actions = Array[String](["stranger_answer:evade"])
+
+[sub_resource type="Resource" id="stranger_q2_c03"]
+script = ExtResource("2")
+text = "Die Toten haben ein Recht auf Ruhe. Die Fragen auch."
+next = &"a_refuse"
+actions = Array[String](["stranger_answer:refuse"])
+
+[sub_resource type="Resource" id="stranger_node_q2"]
+script = ExtResource("1")
+id = &"q2"
+text = "(Er schlägt sein kleines Buch auf und nimmt den Stift.) Wer kommt zuerst, wenn einer stirbt?"
+choices = Array[ExtResource("2")]([SubResource("stranger_q2_c01"), SubResource("stranger_q2_c02"), SubResource("stranger_q2_c03")])
+
+[sub_resource type="Resource" id="stranger_q3_c01"]
+script = ExtResource("2")
+text = "(Offen antworten.)"
+next = &"a_frank"
+actions = Array[String](["stranger_answer:frank"])
+
+[sub_resource type="Resource" id="stranger_q3_c02"]
+script = ExtResource("2")
+text = "(Ausweichen.) Das kommt darauf an."
+next = &"a_evade"
+actions = Array[String](["stranger_answer:evade"])
+
+[sub_resource type="Resource" id="stranger_q3_c03"]
+script = ExtResource("2")
+text = "Die Toten haben ein Recht auf Ruhe. Die Fragen auch."
+next = &"a_refuse"
+actions = Array[String](["stranger_answer:refuse"])
+
+[sub_resource type="Resource" id="stranger_node_q3"]
+script = ExtResource("1")
+id = &"q3"
+text = "(Er schlägt sein kleines Buch auf und nimmt den Stift.) Haben Sie je einen gesehen, der drei Wochen vorher wusste, dass er geht?"
+choices = Array[ExtResource("2")]([SubResource("stranger_q3_c01"), SubResource("stranger_q3_c02"), SubResource("stranger_q3_c03")])
+
+[sub_resource type="Resource" id="stranger_q4_c01"]
+script = ExtResource("2")
+text = "(Offen antworten.)"
+next = &"a_frank"
+actions = Array[String](["stranger_answer:frank"])
+
+[sub_resource type="Resource" id="stranger_q4_c02"]
+script = ExtResource("2")
+text = "(Ausweichen.) Das kommt darauf an."
+next = &"a_evade"
+actions = Array[String](["stranger_answer:evade"])
+
+[sub_resource type="Resource" id="stranger_q4_c03"]
+script = ExtResource("2")
+text = "Die Toten haben ein Recht auf Ruhe. Die Fragen auch."
+next = &"a_refuse"
+actions = Array[String](["stranger_answer:refuse"])
+
+[sub_resource type="Resource" id="stranger_node_q4"]
+script = ExtResource("1")
+id = &"q4"
+text = "(Er schlägt sein kleines Buch auf und nimmt den Stift.) Wie schwer ist ein Mann nach drei Tagen im November?"
+choices = Array[ExtResource("2")]([SubResource("stranger_q4_c01"), SubResource("stranger_q4_c02"), SubResource("stranger_q4_c03")])
+
+[sub_resource type="Resource" id="stranger_q5_c01"]
+script = ExtResource("2")
+text = "(Offen antworten.)"
+next = &"a_frank"
+actions = Array[String](["stranger_answer:frank"])
+
+[sub_resource type="Resource" id="stranger_q5_c02"]
+script = ExtResource("2")
+text = "(Ausweichen.) Das kommt darauf an."
+next = &"a_evade"
+actions = Array[String](["stranger_answer:evade"])
+
+[sub_resource type="Resource" id="stranger_q5_c03"]
+script = ExtResource("2")
+text = "Die Toten haben ein Recht auf Ruhe. Die Fragen auch."
+next = &"a_refuse"
+actions = Array[String](["stranger_answer:refuse"])
+
+[sub_resource type="Resource" id="stranger_node_q5"]
+script = ExtResource("1")
+id = &"q5"
+text = "(Er schlägt sein kleines Buch auf und nimmt den Stift.) Schreiben Sie auf, wer wann kommt, Herr Totengräber? Ich schon."
+choices = Array[ExtResource("2")]([SubResource("stranger_q5_c01"), SubResource("stranger_q5_c02"), SubResource("stranger_q5_c03")])
+
+[sub_resource type="Resource" id="stranger_q6_c01"]
+script = ExtResource("2")
+text = "(Offen antworten.)"
+next = &"a_frank"
+actions = Array[String](["stranger_answer:frank"])
+
+[sub_resource type="Resource" id="stranger_q6_c02"]
+script = ExtResource("2")
+text = "(Ausweichen.) Das kommt darauf an."
+next = &"a_evade"
+actions = Array[String](["stranger_answer:evade"])
+
+[sub_resource type="Resource" id="stranger_q6_c03"]
+script = ExtResource("2")
+text = "Die Toten haben ein Recht auf Ruhe. Die Fragen auch."
+next = &"a_refuse"
+actions = Array[String](["stranger_answer:refuse"])
+
+[sub_resource type="Resource" id="stranger_node_q6"]
+script = ExtResource("1")
+id = &"q6"
+text = "(Er schlägt sein kleines Buch auf und nimmt den Stift.) Brennt bei Ihnen nachts ein Licht? Bei mir brennt immer eins. Ich lese."
+choices = Array[ExtResource("2")]([SubResource("stranger_q6_c01"), SubResource("stranger_q6_c02"), SubResource("stranger_q6_c03")])
+
+[sub_resource type="Resource" id="stranger_a_frank_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="stranger_node_a_frank"]
+script = ExtResource("1")
+id = &"a_frank"
+text = "Danke. Genau so. (Er schreibt, dann legt er eine Münze auf den Torpfosten.) Für die Auskunft. Passend."
+choices = Array[ExtResource("2")]([SubResource("stranger_a_frank_c01")])
+
+[sub_resource type="Resource" id="stranger_a_evade_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="stranger_node_a_evade"]
+script = ExtResource("1")
+id = &"a_evade"
+text = "Natürlich. Verzeihen Sie. In der Stadt fragt man zu viel, und hier oben zu wenig. Irgendwo dazwischen liegt die Wahrheit. Vermutlich unter einem Stein."
+choices = Array[ExtResource("2")]([SubResource("stranger_a_evade_c01")])
+
+[sub_resource type="Resource" id="stranger_a_refuse_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="stranger_node_a_refuse"]
+script = ExtResource("1")
+id = &"a_refuse"
+text = "(Er lächelt, als hätte er genau das hören wollen.) Ein schöner Satz. Darf ich ihn aufschreiben? Ich zahle nicht dafür. Sätze bezahle ich nie."
+choices = Array[ExtResource("2")]([SubResource("stranger_a_refuse_c01")])
+
+[resource]
+script = ExtResource("3")
+id = &"stranger"
+speaker_name = "Cornelius Brenneisen"
+start_node = &"start"
+nodes = Array[ExtResource("1")]([SubResource("stranger_node_start"), SubResource("stranger_node_leaving"), SubResource("stranger_node_greet"), SubResource("stranger_node_menu"), SubResource("stranger_node_offers"), SubResource("stranger_node_no_corpses"), SubResource("stranger_node_k3_reported"), SubResource("stranger_node_k3"), SubResource("stranger_node_bribe"), SubResource("stranger_node_bribe_yes"), SubResource("stranger_node_bribe_no"), SubResource("stranger_node_case_back"), SubResource("stranger_node_k5_fenner"), SubResource("stranger_node_k5_deal_kladde"), SubResource("stranger_node_k5_deal"), SubResource("stranger_node_k5_ilse"), SubResource("stranger_node_q1"), SubResource("stranger_node_q2"), SubResource("stranger_node_q3"), SubResource("stranger_node_q4"), SubResource("stranger_node_q5"), SubResource("stranger_node_q6"), SubResource("stranger_node_a_frank"), SubResource("stranger_node_a_evade"), SubResource("stranger_node_a_refuse")])

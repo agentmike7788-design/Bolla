@@ -421,13 +421,13 @@ func test_self_page_has_no_number() -> void:
 
 # --- real data (data/journal/**) --------------------------------------------------------------
 
-const PHASE7_INSIGHTS: Array[StringName] = [&"i_deathbook", &"i_burn_it", &"i_underlined"]  # + Phase 8
+const PHASE7_INSIGHTS: Array[StringName] = [&"i_deathbook", &"i_burn_it", &"i_underlined", &"i_light_before"]  # + Phase 8, Phase 9
 
 
 func test_real_clues_match_the_contract() -> void:
 	# Phase 6 (P3): c_crypt_draft is checked in test_ossuary.gd.
 	# Phase 7 (P6): the c_v_* clues are checked in test_phase7_clues_and_insights.
-	var clues: Array = Database.clues().filter(func(c: ClueData) -> bool: return c.id != &"c_crypt_draft" and not String(c.id).begins_with("c_v_") and not String(c.id).begins_with("c_n_"))
+	var clues: Array = Database.clues().filter(func(c: ClueData) -> bool: return c.id != &"c_crypt_draft" and not String(c.id).begins_with("c_v_") and not String(c.id).begins_with("c_n_") and not String(c.id).begins_with("c_q_"))
 	assert_eq(clues.size(), 18, "18 clues (§2.12)")
 	var ids: Array[StringName] = []
 	for c: ClueData in clues:
@@ -502,8 +502,8 @@ func test_real_data_links_every_insight() -> void:
 		ids.append_array(i.any_clues.slice(0, i.any_count))  # Phase 8: + any_count of the any group
 		linked.append(j.try_link(ids))
 	assert_eq(linked, [&"i_warnings", &"i_marked", &"i_ferry", &"i_still_writing", &"i_not_lorenz", &"i_kranich", &"i_deathbook",
-			&"i_burn_it", &"i_underlined"] as Array[StringName], "Phase 7: + i_deathbook, i_burn_it; Phase 8: + i_underlined")
-	assert_eq(j.self_page().insights_total, 7, "Phase 7: + i_deathbook (i_burn_it is optional); Phase 8: + i_underlined")
+			&"i_burn_it", &"i_underlined", &"i_light_before"] as Array[StringName], "Phase 7: + i_deathbook, i_burn_it; Phase 8: + i_underlined; Phase 9: + i_light_before")
+	assert_eq(j.self_page().insights_total, 8, "Phase 7: + i_deathbook (i_burn_it is optional); Phase 8: + i_underlined; Phase 9: + i_light_before")
 
 
 # --- Phase 7 (P6, docs/PHASE7_DESIGN.md §1.6, §2.6.5) -------------------------------------------
@@ -732,3 +732,144 @@ class FakeRecords extends Node:
 
 	func records() -> Array[CorpseRecord]:
 		return list
+
+
+# --- Phase 9 (P6, docs/PHASE9_DESIGN.md §2.2, §2.4.2, §3.4, §7.2) -------------------------------------------
+
+class P9WhoKnows extends Node:
+	var matched_ids: Array = []
+	var seen: Array = []
+
+	func _init() -> void:
+		add_to_group(&"who_knows")
+
+	func matched(entry_id: StringName) -> bool:
+		return matched_ids.has(entry_id)
+
+	func witnessed() -> Array[StringName]:
+		var out: Array[StringName] = []
+		out.assign(seen)
+		return out
+
+
+class P9LetterStore extends Node:
+	var records: Dictionary = {}
+	var table: Dictionary = {}
+
+	func _init() -> void:
+		add_to_group(&"letters")
+
+	func save_state() -> Dictionary:
+		return {"records": records}
+
+	func letter(uid: String) -> LetterData:
+		return table.get(StringName(str((records.get(uid, {}) as Dictionary).get("id", ""))))
+
+
+func _p9_journal() -> JournalManager:
+	var j := JournalManager.new()
+	var clues: Array[ClueData] = []
+	for id: StringName in Phase9Fixtures.CLUE_IDS:
+		clues.append(Phase9Fixtures.clue(id))
+	j.clue_data = clues
+	j.insight_data = [Phase9Fixtures.insight()] as Array[InsightData]
+	j.light_list = Phase9Fixtures.light_list()
+	j.who_knows_config = Phase9Fixtures.who_knows_config()
+	tree.root.add_child(j)
+	return j
+
+
+func test_phase9_clues_and_insight_match_the_fixtures() -> void:
+	for id: StringName in Phase9Fixtures.CLUE_IDS:
+		var c := Database.clue(id) as ClueData
+		var f := Phase9Fixtures.clue(id)
+		assert_not_null(c, String(id))
+		if c == null:
+			continue
+		assert_eq([c.kind, c.order, c.title], [f.kind, f.order, f.title], String(id))
+		assert_true(c.kind in ClueData.KINDS and c.text.length() >= 40, "%s has a real text" % id)
+		assert_false(c.text.contains("TODO"), String(id))
+	var i := Database.insight(&"i_light_before") as InsightData
+	var fi := Phase9Fixtures.insight()
+	assert_eq([i.requires, i.any_clues, i.any_count, i.sets_flag, i.optional], [fi.requires, fi.any_clues, 3, &"insight_light_before", false],
+			"§2.2.3 H3: c_q_dates + c_q_three_weeks + 3 of the 5 witnesses")
+	assert_true(i.text.contains("Drei Wochen später stirbt er.") and i.text.contains("Wer das Licht sieht, weiß, wann."), "§1.6 the rule")
+
+
+func test_phase9_the_light_before_needs_three_of_five_witnesses() -> void:
+	var j := _p9_journal()
+	for id: StringName in [&"c_q_dates", &"c_q_three_weeks", &"c_q_light_dorn", &"c_q_light_quendel", &"c_q_light_wernstein",
+			&"c_q_light_hagedorn"]:
+		j.add_clue(id)
+	assert_eq(j.try_link([&"c_q_dates", &"c_q_three_weeks", &"c_q_light_dorn", &"c_q_light_quendel"] as Array[StringName]), &"",
+			"two witnesses are not enough")
+	assert_eq(j.try_link([&"c_q_dates", &"c_q_light_dorn", &"c_q_light_quendel", &"c_q_light_wernstein"] as Array[StringName]), &"",
+			"the three weeks belong to it")
+	assert_eq(j.ready_insights().map(func(x: InsightData) -> StringName: return x.id), [&"i_light_before"])
+	assert_eq(j.try_link([&"c_q_light_hagedorn", &"c_q_three_weeks", &"c_q_dates", &"c_q_light_quendel", &"c_q_light_wernstein"] as Array[StringName]),
+			&"i_light_before", "any three witnesses, any order")
+	assert_true(GameState.flag_on(&"insight_light_before"))
+	assert_eq(unlocked, [&"i_light_before"])
+
+
+func test_phase9_list_page() -> void:
+	var j := _p9_journal()
+	var page := j.list_page()
+	assert_false(page.known, "before H1 the list is unknown")
+	assert_eq(page.entries.size(), 6, "the rows are there for the page layout")
+	j.add_clue(&"c_q_dates")
+	var who := P9WhoKnows.new()
+	tree.root.add_child(who)
+	var corpses := FakeCorpses.new()
+	tree.root.add_child(corpses)
+	for r: CorpseRecord in Phase9Fixtures.list_records():
+		corpses.list.append(r)
+	page = j.list_page()
+	assert_true(page.known)
+	assert_eq([page.footer, page.struck], ["Licht. Drei Wochen.", "Wer weiß, wann?"], "§2.2.1")
+	var rows: Array = page.entries
+	assert_eq(rows.map(func(e: Dictionary) -> String: return e.initial), ["D.", "Q.", "W.", "H.", "O.", "S."])
+	assert_eq([rows[0].ink, rows[1].ink], [&"old", &"fresh"], "two inks")
+	assert_eq(rows[0].date, "2. Julmond 1833", "e_dorn fixed")
+	assert_true(rows.all(func(e: Dictionary) -> bool: return e.name == "" or e.open), "nothing matched yet")
+	assert_eq(rows[5].name, "Unter diesem Datum liegt noch keiner.", "§2.2.1 the open entry")
+	assert_eq(rows.map(func(e: Dictionary) -> String: return e.witness), ["Liesel Dorn", "Osric", "Rosine Wackernagel", "Theres Mangold",
+			"Gesa Ott", "Veit Ammer"], "§2.2.4")
+	who.matched_ids = [&"e_quendel", &"e_ott", &"e_dorn"]
+	who.seen = [&"e_quendel"]
+	rows = j.list_page().entries
+	assert_eq([rows[1].name, rows[4].name, rows[1].witnessed, rows[4].witnessed], ["Marthe Quendel", "Gerhard Ott", true, false])
+	assert_eq(rows[0].name, LightRules.MOOR_NAME, "Kaspar only with i_not_lorenz (§2.2.3 H2)")
+	GameState.set_flag(&"q_sieber_marked", true)
+	page = j.list_page()
+	assert_eq(page.entries[5].name, "Johann Sieber. Er lebt noch.")
+	assert_true(page.confide_none, "„Niemandem sagen“ after H4 (§7.2)")
+	GameState.set_flag(&"sieber_gone", true)
+	assert_eq(j.list_page().entries[5].name, "Johann Sieber. Über den Hügel.")
+	corpses.list.clear()
+	who.matched_ids = [&"e_wernstein"]
+	assert_eq(j.list_page().entries[2].name, "Im Sterbebuch steht er. Bei dir liegt er nicht.", "a dead not on the hill")
+	assert_eq(j.panel_context(JournalManager.PAGE_LIST).page, &"list", "W-UI opens the page")
+	assert_eq(j.panel_context(JournalManager.PAGE_LETTERS).page, &"letters")
+
+
+func test_phase9_letter_pages() -> void:
+	var j := _p9_journal()
+	assert_eq(j.letter_pages(), [] as Array[Dictionary], "no Letters, no page")
+	var store := P9LetterStore.new()
+	tree.root.add_child(store)
+	store.table = Phase9Fixtures.letter_table()
+	store.records = {"lt_0002": {"id": "lp_l2_sister", "corpse": "corpse_0042", "state": "read", "day": 66},
+			"lt_0001": {"id": "lp_l1_carter", "corpse": "corpse_0041", "state": "delivered", "day": 65},
+			"lt_0003": {"id": "lp_l3_burn", "corpse": "corpse_0043", "state": "burned", "day": 67},
+			"lt_0004": {"id": "lpo_quendel", "corpse": "", "state": "received", "day": 66}}
+	var pages := j.letter_pages()
+	assert_eq(pages.map(func(p: Dictionary) -> String: return p.uid), ["lt_0001", "lt_0002", "lt_0004", "lt_0003"], "by day")
+	assert_eq(pages[0].text, "", "a delivered letter left no copy")
+	assert_eq(pages[0].line, "Zugestellt.")
+	assert_true(pages[1].text.begins_with("Liebe Schwester. Sag Mutter nichts."), "the copy of a read letter (§7.2)")
+	assert_eq(pages[3].line, "Verbrannt.")
+	assert_eq(pages[2].line, "Die Post hat ihn gebracht. Die Post weiß nicht, dass er tot ist.")
+	var own := LetterData.new()
+	own.choice_texts = {&"deliver": "Rosine hat ihn hinter den Schanktisch gehängt."}
+	assert_eq(JournalManager.letter_line(own, &"delivered"), "Rosine hat ihn hinter den Schanktisch gehängt.", "the letter's own line")

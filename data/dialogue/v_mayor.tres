@@ -4,6 +4,146 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
 
+[sub_resource type="Resource" id="p9_menu_menu_01"]
+script = ExtResource("2")
+text = "[Die Liste] Ein Licht im Nebelung, ein „S.“ – bei Ihnen?"
+next = &"p9_s"
+conditions = Array[String](["quest_step:q_who_knows:h4", "!flag:p9_fenner_s"])
+
+[sub_resource type="Resource" id="p9_menu_menu_02"]
+script = ExtResource("2")
+text = "[Auftrag] Was soll ich dem Pfarrer bringen?"
+next = &"p9_seal"
+conditions = Array[String](["order_offerable:oq_fenner_seal"])
+
+[sub_resource type="Resource" id="p9_menu_menu_03"]
+script = ExtResource("2")
+text = "Dieser Koffer gehört dem Herrn aus der Stadt. Sehen Sie hinein."
+next = &"p9_case"
+conditions = Array[String](["stranger_case:player", "has_item:stranger_case:1"])
+
+[sub_resource type="Resource" id="p9_p9_row4_c01"]
+script = ExtResource("2")
+text = "Danke, Herr Schultheiß."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_row4"]
+script = ExtResource("1")
+id = &"p9_row4"
+text = "Totengräber, die Gemeinde hat wieder getagt. Eine vierte Reihe am Lindenacker, die letzte, am Südrand. Vier Stellen. Eine halte ich zurück. Für den Fall. Ein Stumpf ist da und eine Brombeere, die kennen Sie schon."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_row4_c01")])
+conditions = Array[String](["p9_open", "!flag:linden_row4_granted"])
+fallback_next = &"p9_public_book"
+actions = Array[String](["set_flag:linden_row4_granted", "notify:Die Gemeinde gibt dir die vierte Reihe. Die letzte, sagt Fenner.", "talked:mayor"])
+
+[sub_resource type="Resource" id="p9_p9_public_book_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_public_book"]
+script = ExtResource("1")
+id = &"p9_public_book"
+text = "Ein Licht, das keiner anzündet. Das schreibe ich auf. Was man aufschreibt, ist kein Gespenst mehr, sondern eine Akte. Der Nachtwächter steht ab heute Nacht vor den Siebers. Jede Nacht, bis … bis es vorbei ist."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_public_book_c01")])
+conditions = Array[String](["quest_ending:q_who_knows:public", "!flag:p9_fenner_public"])
+fallback_next = &"p9_public_watch"
+actions = Array[String](["set_flag:p9_fenner_public"])
+
+[sub_resource type="Resource" id="p9_p9_public_watch_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_public_watch"]
+script = ExtResource("1")
+id = &"p9_public_watch"
+text = "Der Wächter hat niemanden gesehen, der nicht hingehört. Quast, der Pfarrer, die Dorn. Er hat auch nicht geschlafen, sagt er. Ich habe es eingetragen. Das Buch hat jetzt einen Eintrag mehr, und Hollerbrück einen Mann weniger."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_public_watch_c01")])
+conditions = Array[String](["quest_ending:q_who_knows:public", "flag:sieber_dead", "!flag:p9_fenner_watch"])
+fallback_next = &"p9_sent_away"
+actions = Array[String](["set_flag:p9_fenner_watch"])
+
+[sub_resource type="Resource" id="p9_p9_sent_away_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_sent_away"]
+script = ExtResource("1")
+id = &"p9_sent_away"
+text = "Leute fortschicken ist nicht Ihr Amt, Totengräber. Es ist auch nicht meins. Ich trage es trotzdem nicht ein. Der Sieber ist verzogen. Unbekannt wohin. So steht es im Buch."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_sent_away_c01")])
+conditions = Array[String](["quest_ending:q_who_knows:away", "sieber_gone", "!flag:p9_fenner_away"])
+fallback_next = &"p9_case_gone"
+actions = Array[String](["set_flag:p9_fenner_away"])
+
+[sub_resource type="Resource" id="p9_p9_case_gone_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_case_gone"]
+script = ExtResource("1")
+id = &"p9_case_gone"
+text = "Der Herr aus der Stadt ist über die Brücke. Er hat sich nicht umgedreht. Ich habe es protokolliert, mit Uhrzeit. Der Nachtwächter sagt, er hat dabei gepfiffen. Das habe ich nicht protokolliert."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_case_gone_c01")])
+conditions = Array[String](["stranger_ending:fenner", "!flag:p9_fenner_case"])
+fallback_next = &"p8_row3"
+actions = Array[String](["set_flag:p9_fenner_case"])
+
+[sub_resource type="Resource" id="p9_p9_s_c01"]
+script = ExtResource("2")
+text = "Verzeihung."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_s"]
+script = ExtResource("1")
+id = &"p9_s"
+text = "Bei mir? Bei mir brennt nachts kein Licht, Totengräber. Die Gemeinde spart. Ich schlafe im Dunkeln, das ist billiger und amtlich nicht verboten. Mit S – Schultheiß, meinen Sie? Das ist ein Amt, kein Name."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_s_c01")])
+actions = Array[String](["set_flag:p9_fenner_s"])
+
+[sub_resource type="Resource" id="p9_p9_seal_c01"]
+script = ExtResource("2")
+text = "Ich bring sie hin."
+next = &"p9_seal_yes"
+actions = Array[String](["order_accept:oq_fenner_seal", "letter_errand:oq_fenner_seal"])
+
+[sub_resource type="Resource" id="p9_p9_seal_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_seal"]
+script = ExtResource("1")
+id = &"p9_seal"
+text = "Eine Bekanntmachung der Gemeinde für den Pfarrer. Versiegelt. Sie bleibt versiegelt. Ich sehe es, wenn einer am Siegel war. Ich sehe es immer."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_seal_c01"), SubResource("p9_p9_seal_c02")])
+
+[sub_resource type="Resource" id="p9_p9_seal_yes_c01"]
+script = ExtResource("2")
+text = "Verstanden."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_seal_yes"]
+script = ExtResource("1")
+id = &"p9_seal_yes"
+text = "Danke. Amtlich. Und Totengräber – das Siegel ist ein Siegel, kein Vorschlag."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_seal_yes_c01")])
+
+[sub_resource type="Resource" id="p9_p9_case_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_case"]
+script = ExtResource("1")
+id = &"p9_case"
+text = "(Er öffnet den Koffer mit zwei Fingern.) Instrumente. Gläser. Ein Brief vom Quast. Und eine Liste mit Namen aus meiner Gemeinde. Das ist kein Gespenst, das ist eine Akte. Der Nachtwächter bringt ihn über die Brücke. Heute noch."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_case_c01")])
+actions = Array[String](["stranger_give_case:fenner", "stranger_resolve:fenner"])
+
 [sub_resource type="Resource" id="p8_menu_menu_01"]
 script = ExtResource("2")
 text = "[Geschichte] Die Beine"
@@ -641,7 +781,7 @@ next = &"bye"
 script = ExtResource("1")
 id = &"menu"
 text = "Womit kann die Gemeinde dienen?"
-choices = Array[ExtResource("2")]([SubResource("v_mayor_c007"), SubResource("v_mayor_c008"), SubResource("v_mayor_c009"), SubResource("v_mayor_c010"), SubResource("v_mayor_c011"), SubResource("v_mayor_c012"), SubResource("v_mayor_c013"), SubResource("v_mayor_c014"), SubResource("v_mayor_c015"), SubResource("v_mayor_c016"), SubResource("v_mayor_c017"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("p8_menu_menu_04"), SubResource("p8_menu_menu_05"), SubResource("p8_menu_menu_06"), SubResource("p8_menu_menu_07"), SubResource("p8_menu_menu_08"), SubResource("p8_menu_menu_09"), SubResource("p8_menu_menu_10"), SubResource("p8_menu_menu_11"), SubResource("p8_menu_menu_12"), SubResource("p8_menu_menu_13"), SubResource("p8_menu_menu_14"), SubResource("p8_menu_menu_15"), SubResource("p8_menu_menu_16"), SubResource("p8_menu_menu_17"), SubResource("v_mayor_c018"), SubResource("v_mayor_c019")])
+choices = Array[ExtResource("2")]([SubResource("v_mayor_c007"), SubResource("v_mayor_c008"), SubResource("v_mayor_c009"), SubResource("v_mayor_c010"), SubResource("v_mayor_c011"), SubResource("v_mayor_c012"), SubResource("v_mayor_c013"), SubResource("v_mayor_c014"), SubResource("v_mayor_c015"), SubResource("v_mayor_c016"), SubResource("v_mayor_c017"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("p8_menu_menu_04"), SubResource("p8_menu_menu_05"), SubResource("p8_menu_menu_06"), SubResource("p8_menu_menu_07"), SubResource("p8_menu_menu_08"), SubResource("p8_menu_menu_09"), SubResource("p8_menu_menu_10"), SubResource("p8_menu_menu_11"), SubResource("p8_menu_menu_12"), SubResource("p8_menu_menu_13"), SubResource("p8_menu_menu_14"), SubResource("p8_menu_menu_15"), SubResource("p8_menu_menu_16"), SubResource("p8_menu_menu_17"), SubResource("p9_menu_menu_01"), SubResource("p9_menu_menu_02"), SubResource("p9_menu_menu_03"), SubResource("v_mayor_c018"), SubResource("v_mayor_c019")])
 
 [sub_resource type="Resource" id="v_mayor_c020"]
 script = ExtResource("2")
@@ -870,5 +1010,5 @@ choices = Array[ExtResource("2")]([SubResource("v_mayor_c041")])
 script = ExtResource("3")
 id = &"v_mayor"
 speaker_name = "Schultheiß Gottlieb Fenner"
-start_node = &"p8_row3"
-nodes = Array[ExtResource("1")]([SubResource("v_mayor_node_start"), SubResource("v_mayor_node_greet_disreputable"), SubResource("v_mayor_node_greet_unremarkable"), SubResource("v_mayor_node_greet_respected"), SubResource("v_mayor_node_greet_esteemed"), SubResource("v_mayor_node_greet_renowned"), SubResource("v_mayor_node_menu"), SubResource("v_mayor_node_o_o_fenner_linden"), SubResource("v_mayor_node_o_o_fenner_linden_yes"), SubResource("v_mayor_node_o_o_fenner_well"), SubResource("v_mayor_node_o_o_fenner_well_yes"), SubResource("v_mayor_node_o_o_fenner_bridge"), SubResource("v_mayor_node_o_o_fenner_bridge_yes"), SubResource("v_mayor_node_o_o_fenner_dropsy"), SubResource("v_mayor_node_o_o_fenner_dropsy_yes"), SubResource("v_mayor_node_t_o_fenner_bridge"), SubResource("v_mayor_node_t_o_fenner_dropsy"), SubResource("v_mayor_node_t_ob_wood"), SubResource("v_mayor_node_t_ob_stone"), SubResource("v_mayor_node_donated"), SubResource("v_mayor_node_register"), SubResource("v_mayor_node_register_read"), SubResource("v_mayor_node_lorenz"), SubResource("v_mayor_node_bye"), SubResource("v_mayor_node_bye_plain"), SubResource("p8_node_p8_row3"), SubResource("p8_node_p8_robber"), SubResource("p8_node_p8_robber_watch"), SubResource("p8_node_p8_robber_let_go"), SubResource("p8_node_p8_hill"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_favor_done"), SubResource("p8_node_o_of_fenner_return_1"), SubResource("p8_node_o_of_fenner_return_1_yes"), SubResource("p8_node_t_of_fenner_return_1"), SubResource("p8_node_o_of_fenner_return_2"), SubResource("p8_node_o_of_fenner_return_2_yes"), SubResource("p8_node_t_of_fenner_return_2"), SubResource("p8_node_dance"), SubResource("p8_node_story_2_meet"), SubResource("p8_node_story_3_meet"), SubResource("p8_node_story_1_turn_in")])
+start_node = &"p9_row4"
+nodes = Array[ExtResource("1")]([SubResource("v_mayor_node_start"), SubResource("v_mayor_node_greet_disreputable"), SubResource("v_mayor_node_greet_unremarkable"), SubResource("v_mayor_node_greet_respected"), SubResource("v_mayor_node_greet_esteemed"), SubResource("v_mayor_node_greet_renowned"), SubResource("v_mayor_node_menu"), SubResource("v_mayor_node_o_o_fenner_linden"), SubResource("v_mayor_node_o_o_fenner_linden_yes"), SubResource("v_mayor_node_o_o_fenner_well"), SubResource("v_mayor_node_o_o_fenner_well_yes"), SubResource("v_mayor_node_o_o_fenner_bridge"), SubResource("v_mayor_node_o_o_fenner_bridge_yes"), SubResource("v_mayor_node_o_o_fenner_dropsy"), SubResource("v_mayor_node_o_o_fenner_dropsy_yes"), SubResource("v_mayor_node_t_o_fenner_bridge"), SubResource("v_mayor_node_t_o_fenner_dropsy"), SubResource("v_mayor_node_t_ob_wood"), SubResource("v_mayor_node_t_ob_stone"), SubResource("v_mayor_node_donated"), SubResource("v_mayor_node_register"), SubResource("v_mayor_node_register_read"), SubResource("v_mayor_node_lorenz"), SubResource("v_mayor_node_bye"), SubResource("v_mayor_node_bye_plain"), SubResource("p8_node_p8_row3"), SubResource("p8_node_p8_robber"), SubResource("p8_node_p8_robber_watch"), SubResource("p8_node_p8_robber_let_go"), SubResource("p8_node_p8_hill"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_favor_done"), SubResource("p8_node_o_of_fenner_return_1"), SubResource("p8_node_o_of_fenner_return_1_yes"), SubResource("p8_node_t_of_fenner_return_1"), SubResource("p8_node_o_of_fenner_return_2"), SubResource("p8_node_o_of_fenner_return_2_yes"), SubResource("p8_node_t_of_fenner_return_2"), SubResource("p8_node_dance"), SubResource("p8_node_story_2_meet"), SubResource("p8_node_story_3_meet"), SubResource("p8_node_story_1_turn_in"), SubResource("p9_node_p9_row4"), SubResource("p9_node_p9_public_book"), SubResource("p9_node_p9_public_watch"), SubResource("p9_node_p9_sent_away"), SubResource("p9_node_p9_case_gone"), SubResource("p9_node_p9_s"), SubResource("p9_node_p9_seal"), SubResource("p9_node_p9_seal_yes"), SubResource("p9_node_p9_case")])

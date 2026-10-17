@@ -1,0 +1,80 @@
+{
+  "_comment": "Phase 9 (docs/PHASE9_DESIGN.md §2.1, §2.2, §2.4.5, §2.5.2, §2.11, §3.2): the texts of the chains – P6 owns the fields title, summary, hint, choice labels / block texts and the endings' title, summary, closing_line of data/quests/*.tres (structure P1). Applied by tools/dialogue/build_phase9_quest_texts.py; checked by tests/unit/test_dialogue.gd::test_phase9_quest_texts_are_complete.",
+  "q_who_knows": {
+    "title": "Wer weiß, wann?",
+    "summary": "Auf der Rückseite von Lorenz' Kladde stehen sechs Daten und je ein Buchstabe. Unter fünf Daten liegt einer auf dem Hügel. Unter dem letzten noch keiner.",
+    "steps": {
+      "h1": {"title": "Die Rückseite", "hint": "Lies Lorenz' Kladde am Schreibpult in der Hütte. Fehlt sie, frag den Pfarrer."},
+      "h2": {"title": "Wer liegt unter dem Datum?", "hint": "Vergleich das Grabregister mit der Liste – und an den Gräbern die Daten auf den Steinen."},
+      "h3": {"title": "Wer hat das Licht gesehen?", "hint": "Frag die, die nachts die Fenster sehen. Drei genügen, um es zu wissen."},
+      "h4": {"title": "„S.“", "hint": "Unter dem letzten Datum liegt noch keiner. Drei Häuser im Dorf fangen mit S an."},
+      "h5": {"title": "Wem sagst du es?", "hint": "Dem Pfarrer, dem Wundarzt, der Seelfrau – oder niemandem."},
+      "h6": {"title": "Was wird aus Johann?", "hint": "Johann sitzt vormittags an Gretes Grab und nachmittags auf der Bank vor dem Haus. Er hat es nicht eilig. Die Liste schon."}
+    },
+    "choices": {
+      "h5": {
+        "confide_priest": {"label": "Pfarrer Lenz"},
+        "confide_surgeon": {"label": "Severin Quast"},
+        "confide_washer": {"label": "Liesel Dorn"},
+        "confide_none": {"label": "Niemandem"}
+      },
+      "h6": {
+        "away": {"label": "„Geh fort, Johann. Über den Hügel.“", "block_text": "Er glaubt dir nicht. Er würde einem Brief glauben."},
+        "stay": {"label": "„Bleib. Ich mach dir das Grab neben Grete.“"},
+        "public": {"label": "„Wir gehen zum Fenner.“"},
+        "silent": {"label": "(Nichts sagen)"}
+      }
+    },
+    "endings": {
+      "away": {"title": "Über den Hügel", "summary": "Johann ist fortgegangen, wie Lorenz, mit einem Brief ohne Namen und einem Bündel über der Schulter.", "closing_line": "Johann ist über den Hügel gegangen. Ob er angekommen ist, steht in keinem Brief, den du bekommen hast. Noch nicht."},
+      "stay": {"title": "Bei Grete", "summary": "Johann ist geblieben. Du hast an zwei Abenden mit ihm gesessen und ihm das Grab neben Grete gemacht.", "closing_line": "Johann hat sich nicht beeilt. Du hast ihm die Erde so tief gemacht, wie man es kann. Wann der Nächste kommt, steht in keinem Heft, das du hast."},
+      "public": {"title": "Vor der Gemeinde", "summary": "Fenner hat einen Wächter vor die Siebers gestellt und aufgeschrieben, wer kam. Es kamen dieselben wie immer. Johann ist trotzdem gestorben.", "closing_line": "Fenner hat jetzt ein Buch für Lichter. Es hat sechs Einträge. Lorenz hatte auch sechs."},
+      "silent": {"title": "Geschwiegen", "summary": "Du hast nichts gesagt. Das Dorf hat seinen eigenen Lauf, und Johann den seinen.", "closing_line": "Du hast die Liste gelesen und zugeklappt. Das Dorf hat sie nie gesehen. Das Licht schon."}
+    }
+  },
+  "q_letters": {
+    "title": "Briefe ohne Antwort",
+    "summary": "In den Taschen der Toten stecken Briefe an die Lebenden, und die Post bringt Briefe an die Toten. Du bist der Einzige, der beides in der Hand hat.",
+    "steps": {
+      "l1": {"title": "Ein Brief in der Tasche", "hint": "Ein Toter hatte einen Brief bei sich. Zustellen, vorlesen oder verbrennen – er wartet."},
+      "l2": {"title": "Post für den Hügel", "hint": "Osric hat Post für einen, der oben liegt. Die Post weiß das nicht."},
+      "l3": {"title": "Für den Bruder", "hint": "Gesa Ott hat einen Brief für ihren Bruder beim Militär. Hanne oder Osric nehmen ihn mit."},
+      "l4": {"title": "Eine Antwort", "hint": "Schreib einem, der auf Antwort wartet – an der Hütte, mit Tinte, und dann zur Post."},
+      "l5": {"title": "An L. Aschau", "hint": "Ein Brief mit Anker und Schlange, an einen, der nicht mehr hier gräbt."}
+    },
+    "choices": {
+      "l5": {
+        "open": {"label": "Öffnen"},
+        "keep": {"label": "Versiegelt aufheben"},
+        "liesel": {"label": "Liesel geben"},
+        "burn": {"label": "Verbrennen"}
+      }
+    },
+    "endings": {
+      "done": {"title": "Briefe ohne Antwort", "summary": "Die Briefe sind dort, wo sie hingehören – bei den Lebenden, bei den Toten oder in der Asche.", "closing_line": ""}
+    }
+  },
+  "q_case": {
+    "title": "Der Herr mit dem Koffer",
+    "summary": "Ein Herr aus der Stadt wartet am Tor und stellt Fragen, die man in Hollerbrück nicht stellt. Er zahlt immer passend.",
+    "steps": {
+      "k1": {"title": "Fragen am Tor", "hint": "Ein Herr in einem Stadtrock wartet am Tor. Er betritt den Friedhof nicht."},
+      "k2": {"title": "Was er kaufen will", "hint": "Er will etwas kaufen. Er sagt nicht, wofür, nur, wie viel."},
+      "k3": {"title": "Wer zahlt für Frische?", "hint": "Wer hat ihn schon einmal gesehen? Einer, der nachts am Brunnen sitzt, vielleicht."},
+      "k4": {"title": "Der Koffer", "hint": "Rosine hat einen Koffer, den sie nicht anfassen will."},
+      "k5": {"title": "Was er mitnimmt", "hint": "An seinem letzten Tag fragt er, was er mitnehmen darf."}
+    },
+    "choices": {
+      "k5": {
+        "fenner": {"label": "Ihn bei Fenner anzeigen"},
+        "deal": {"label": "Mit ihm handeln"},
+        "ilse": {"label": "Ihn zu Ilse schicken"}
+      }
+    },
+    "endings": {
+      "fenner": {"title": "Über die Brücke", "summary": "Fenner und der Nachtwächter haben ihn über die Holderbrücke gebracht. Er hat sich nicht umgedreht.", "closing_line": "Brenneisen ist über die Brücke gegangen. Die Stadt bleibt, hat er gesagt. Die Brücke auch."},
+      "deal": {"title": "Ein Handel", "summary": "Er hat bekommen, was er wollte. Fast. Er zahlt immer passend.", "closing_line": "In der Stadt steht jetzt etwas von Hollerbrück in einem Schrank. Du weißt, was. Er weiß nicht, was es bedeutet."},
+      "ilse": {"title": "An der Westmauer", "summary": "Er ist in der Nacht zu Ilse gegangen und am Morgen fort. Was sie ihm verkauft hat, sagt sie nicht.", "closing_line": "Ilse hat ihm etwas verkauft, das über der Erde lag. Er kommt nicht wieder. Frag nicht."}
+    }
+  }
+}

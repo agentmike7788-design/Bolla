@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_q_light_dorn"
+title = "Licht bei den Dorns"
+text = "Bei uns brannte ein Licht in der Kammer. Kaspar hat gesagt, das war ich. Ich hab gesagt, das war er. Drei Wochen später ist er ins Moor gegangen und nicht wiedergekommen."
+kind = &"talk"
+order = 402

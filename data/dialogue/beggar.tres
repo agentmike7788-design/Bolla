@@ -4,6 +4,104 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
 
+[sub_resource type="Resource" id="p9_menu_menu_01"]
+script = ExtResource("2")
+text = "[Die Liste] Du siehst nachts die Fenster. Hat im Nebelung irgendwo ein Licht gebrannt?"
+next = &"p9_witness"
+conditions = Array[String](["clue_known:c_q_dates", "!light:e_open:witnessed"])
+
+[sub_resource type="Resource" id="p9_menu_menu_02"]
+script = ExtResource("2")
+text = "Der Herr mit dem Koffer am Tor – kennst du ihn?"
+next = &"p9_case"
+conditions = Array[String](["quest_step:q_case:k3", "!flag:stranger_veit_told"])
+
+[sub_resource type="Resource" id="p9_menu_menu_03"]
+script = ExtResource("2")
+text = "[Brief] Der ist für Lambert Grell."
+next = &"p9_lambert"
+conditions = Array[String](["letter_for:speaker"])
+actions = Array[String](["letter_deliver"])
+
+[sub_resource type="Resource" id="p9_p9_gone_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_gone"]
+script = ExtResource("1")
+id = &"p9_gone"
+text = "Der alte Sieber ist fort. Ich hab ihm nachgewinkt. Er hat nicht zurückgewinkt. Das macht man so, wenn man nicht wiederkommt. Oder wenn man schlecht sieht. Bei ihm weiß ich's nicht."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_gone_c01")])
+conditions = Array[String](["sieber_gone", "!flag:p9_veit_gone"])
+fallback_next = &"grell"
+actions = Array[String](["set_flag:p9_veit_gone"])
+
+[sub_resource type="Resource" id="p9_p9_witness_c01"]
+script = ExtResource("2")
+text = "Bei Johann Sieber?"
+next = &"p9_witness_who"
+
+[sub_resource type="Resource" id="p9_p9_witness_c02"]
+script = ExtResource("2")
+text = "Danke, Veit."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_witness"]
+script = ExtResource("1")
+id = &"p9_witness"
+text = "Bei den Siebers. Oben beim Alten. Ich sitz nachts am Brunnen, ich seh die Fenster. Keiner hat es angezündet. Es war einfach da, und um fünf war es weg. In der Nacht nach dem ersten Frost. Da war's kalt."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_witness_c01"), SubResource("p9_p9_witness_c02")])
+actions = Array[String](["witness:e_open"])
+
+[sub_resource type="Resource" id="p9_p9_witness_who_c01"]
+script = ExtResource("2")
+text = "Ich geh hin."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_witness_who"]
+script = ExtResource("1")
+id = &"p9_witness_who"
+text = "Beim Alten. Die Jungen schlafen unten, die haben ein Kind, das schreit. Oben schläft nur er. Er hat es nicht angezündet. Der zündet nichts an, der hat nicht mal eine Pfeife."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_witness_who_c01")])
+
+[sub_resource type="Resource" id="p9_p9_case_c01"]
+script = ExtResource("2")
+text = "Danke, Veit."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_case"]
+script = ExtResource("1")
+id = &"p9_case"
+text = "Der mit dem Koffer war schon mal da. Vor einem Jahr. Bei Lorenz. Lorenz hat ihn vom Hügel gejagt, mit der Schaufel. Ich hab gelacht. Ich lach selten. Darum weiß ich es noch."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_case_c01")])
+conditions = Array[String](["!robber_fate:let_go"])
+fallback_next = &"p9_case_lambert"
+actions = Array[String](["set_flag:stranger_veit_told"])
+
+[sub_resource type="Resource" id="p9_p9_case_lambert_c01"]
+script = ExtResource("2")
+text = "Danke, Veit."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_case_lambert"]
+script = ExtResource("1")
+id = &"p9_case_lambert"
+text = "Der mit dem Koffer? Lambert lässt grüßen. Er sagt, der war's. Der hat ihn bezahlt, für jedes frische Grab einen Taler. Und vor einem Jahr war er schon bei Lorenz. Lorenz hat ihn mit der Schaufel vom Hügel gejagt."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_case_lambert_c01")])
+actions = Array[String](["set_flag:stranger_veit_told"])
+
+[sub_resource type="Resource" id="p9_p9_lambert_c01"]
+script = ExtResource("2")
+text = "Danke, Veit."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_lambert"]
+script = ExtResource("1")
+id = &"p9_lambert"
+text = "Für Lambert? Ich geh da sowieso vorbei. Er wohnt jetzt hinter der Ziegelei, bei den Hunden. Die Hunde mögen ihn. Das ist mehr, als man von den Leuten sagen kann."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_lambert_c01")])
+
 [sub_resource type="Resource" id="beggar_first_c01"]
 script = ExtResource("2")
 text = "(Nicken)"
@@ -15,7 +113,7 @@ id = &"first"
 text = "Hm. Ammer. Veit. Früher an der Holderfähre. Das Wasser hat siebzehn genommen und mich wieder ausgespuckt. Du bist der vom Hügel. Ich weiß. Ich seh dich jeden Morgen."
 choices = Array[ExtResource("2")]([SubResource("beggar_first_c01")])
 conditions = Array[String](["!flag:p8_veit_met"])
-fallback_next = &"grell"
+fallback_next = &"p9_gone"
 actions = Array[String](["set_flag:p8_veit_met"])
 
 [sub_resource type="Resource" id="beggar_grell_c01"]
@@ -134,7 +232,7 @@ text = "(Gehen)"
 script = ExtResource("1")
 id = &"menu"
 text = "(Veit sieht dich an und wartet.)"
-choices = Array[ExtResource("2")]([SubResource("beggar_menu_c01"), SubResource("beggar_menu_c02"), SubResource("beggar_menu_c03"), SubResource("beggar_menu_c04"), SubResource("beggar_menu_c05"), SubResource("beggar_menu_c06")])
+choices = Array[ExtResource("2")]([SubResource("beggar_menu_c01"), SubResource("beggar_menu_c02"), SubResource("beggar_menu_c03"), SubResource("beggar_menu_c04"), SubResource("beggar_menu_c05"), SubResource("p9_menu_menu_01"), SubResource("p9_menu_menu_02"), SubResource("p9_menu_menu_03"), SubResource("beggar_menu_c06")])
 
 [sub_resource type="Resource" id="beggar_alms_c01"]
 script = ExtResource("2")
@@ -222,4 +320,4 @@ script = ExtResource("3")
 id = &"beggar"
 speaker_name = "Veit Ammer"
 start_node = &"first"
-nodes = Array[ExtResource("1")]([SubResource("beggar_node_first"), SubResource("beggar_node_grell"), SubResource("beggar_node_lights"), SubResource("beggar_node_night_ott"), SubResource("beggar_node_night_kehr"), SubResource("beggar_node_night"), SubResource("beggar_node_greet"), SubResource("beggar_node_menu"), SubResource("beggar_node_alms"), SubResource("beggar_node_alms_plain"), SubResource("beggar_node_three"), SubResource("beggar_node_three_again"), SubResource("beggar_node_listen"), SubResource("beggar_node_ferry"), SubResource("beggar_node_robber")])
+nodes = Array[ExtResource("1")]([SubResource("beggar_node_first"), SubResource("beggar_node_grell"), SubResource("beggar_node_lights"), SubResource("beggar_node_night_ott"), SubResource("beggar_node_night_kehr"), SubResource("beggar_node_night"), SubResource("beggar_node_greet"), SubResource("beggar_node_menu"), SubResource("beggar_node_alms"), SubResource("beggar_node_alms_plain"), SubResource("beggar_node_three"), SubResource("beggar_node_three_again"), SubResource("beggar_node_listen"), SubResource("beggar_node_ferry"), SubResource("beggar_node_robber"), SubResource("p9_node_p9_gone"), SubResource("p9_node_p9_witness"), SubResource("p9_node_p9_witness_who"), SubResource("p9_node_p9_case"), SubResource("p9_node_p9_case_lambert"), SubResource("p9_node_p9_lambert")])

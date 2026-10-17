@@ -9,28 +9,31 @@
 script = ExtResource("1_csq7i")
 id = &"fenner"
 title = "Über die Brücke"
-summary = "Fenner und der Nachtwächter haben ihn über die Brücke gebracht."
+summary = "Fenner und der Nachtwächter haben ihn über die Holderbrücke gebracht. Er hat sich nicht umgedreht."
 flag = &"case_end_fenner"
+closing_line = "Brenneisen ist über die Brücke gegangen. Die Stadt bleibt, hat er gesagt. Die Brücke auch."
 
 [sub_resource type="Resource" id="Resource_4sxv4"]
 script = ExtResource("1_csq7i")
 id = &"deal"
 title = "Ein Handel"
-summary = "Er hat bekommen, was er wollte. Fast."
+summary = "Er hat bekommen, was er wollte. Fast. Er zahlt immer passend."
 flag = &"case_end_deal"
+closing_line = "In der Stadt steht jetzt etwas von Hollerbrück in einem Schrank. Du weißt, was. Er weiß nicht, was es bedeutet."
 
 [sub_resource type="Resource" id="Resource_bx6ri"]
 script = ExtResource("1_csq7i")
 id = &"ilse"
 title = "An der Westmauer"
-summary = "Er ist in der Nacht zu Ilse gegangen und am Morgen fort."
+summary = "Er ist in der Nacht zu Ilse gegangen und am Morgen fort. Was sie ihm verkauft hat, sagt sie nicht."
 flag = &"case_end_ilse"
+closing_line = "Ilse hat ihm etwas verkauft, das über der Erde lag. Er kommt nicht wieder. Frag nicht."
 
 [sub_resource type="Resource" id="Resource_sgpfg"]
 script = ExtResource("3_4ex4l")
 id = &"k1"
 title = "Fragen am Tor"
-hint = "Ein Herr in einem Stadtrock wartet am Tor."
+hint = "Ein Herr in einem Stadtrock wartet am Tor. Er betritt den Friedhof nicht."
 complete_on = &"note"
 complete_ids = Array[StringName]([&"stranger_answered"])
 complete_count = 1
@@ -39,7 +42,7 @@ complete_count = 1
 script = ExtResource("3_4ex4l")
 id = &"k2"
 title = "Was er kaufen will"
-hint = "Er will etwas kaufen. Er sagt nicht, wofür."
+hint = "Er will etwas kaufen. Er sagt nicht, wofür, nur, wie viel."
 complete_on = &"note"
 complete_ids = Array[StringName]([&"stranger_offers_seen"])
 complete_count = 1
@@ -48,7 +51,7 @@ complete_count = 1
 script = ExtResource("3_4ex4l")
 id = &"k3"
 title = "Wer zahlt für Frische?"
-hint = "Wer hat ihn schon einmal gesehen?"
+hint = "Wer hat ihn schon einmal gesehen? Einer, der nachts am Brunnen sitzt, vielleicht."
 complete_on = &"clue"
 complete_ids = Array[StringName]([&"c_q_case_lorenz"])
 
@@ -89,7 +92,7 @@ ending = &"ilse"
 script = ExtResource("3_4ex4l")
 id = &"k5"
 title = "Was er mitnimmt"
-hint = "Am letzten Tag seines zweiten Besuchs."
+hint = "An seinem letzten Tag fragt er, was er mitnehmen darf."
 complete_on = &"choice"
 choices = Array[ExtResource("4_sj1v0")]([SubResource("Resource_mb8ki"), SubResource("Resource_n56dt"), SubResource("Resource_3gj75")])
 

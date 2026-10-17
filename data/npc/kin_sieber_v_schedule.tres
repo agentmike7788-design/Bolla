@@ -1,0 +1,201 @@
+[gd_resource type="Resource" script_class="NpcSchedule" format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2"]
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_01"]
+script = ExtResource("1")
+activity = &"home"
+path = PackedStringArray("v_sieber_door")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_02"]
+script = ExtResource("1")
+start_minute = 836
+travel_minutes = 4
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_sieber_door", "v_sieber_bench")
+region = &"village"
+today_flag = &"sieber_bench_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_03"]
+script = ExtResource("1")
+start_minute = 840
+activity = &"sit"
+animation = &"sit_bench"
+path = PackedStringArray("v_sieber_bench")
+dialogue_id = &"kin_sieber_v"
+region = &"village"
+today_flag = &"sieber_bench_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_04"]
+script = ExtResource("1")
+start_minute = 960
+travel_minutes = 4
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_sieber_bench", "v_sieber_door")
+region = &"village"
+today_flag = &"sieber_bench_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_05"]
+script = ExtResource("1")
+start_minute = 964
+activity = &"home"
+path = PackedStringArray("v_sieber_door")
+visible = false
+region = &"village"
+today_flag = &"sieber_bench_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_06"]
+script = ExtResource("1")
+start_minute = 1076
+travel_minutes = 4
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_sieber_door", "v_sieber_bench")
+region = &"village"
+today_flag = &"sieber_evening_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_07"]
+script = ExtResource("1")
+start_minute = 1080
+activity = &"sit"
+animation = &"sit_bench"
+path = PackedStringArray("v_sieber_bench")
+dialogue_id = &"kin_sieber_v"
+region = &"village"
+today_flag = &"sieber_evening_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_08"]
+script = ExtResource("1")
+start_minute = 1200
+travel_minutes = 4
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_sieber_bench", "v_sieber_door")
+region = &"village"
+today_flag = &"sieber_evening_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_09"]
+script = ExtResource("1")
+start_minute = 1204
+activity = &"home"
+path = PackedStringArray("v_sieber_door")
+visible = false
+region = &"village"
+today_flag = &"sieber_evening_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_10"]
+script = ExtResource("1")
+start_minute = 841
+travel_minutes = 9
+activity = &"walk"
+animation = &"walk_bundle"
+path = PackedStringArray("v_sieber_door", "v_road_in")
+region = &"village"
+today_flag = &"sieber_depart_peddler_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_11"]
+script = ExtResource("1")
+start_minute = 850
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"sieber_depart_peddler_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_12"]
+script = ExtResource("1")
+start_minute = 921
+travel_minutes = 20
+activity = &"walk"
+animation = &"walk_bundle"
+path = PackedStringArray("road_end", "road_mid", "gate_outside", "sieber_gate")
+today_flag = &"sieber_depart_peddler_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_13"]
+script = ExtResource("1")
+start_minute = 941
+path = PackedStringArray("sieber_gate")
+dialogue_id = &"kin_sieber_v"
+today_flag = &"sieber_depart_peddler_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_14"]
+script = ExtResource("1")
+start_minute = 981
+travel_minutes = 20
+activity = &"walk"
+animation = &"walk_bundle"
+path = PackedStringArray("sieber_gate", "gate_outside", "peddler_west", "trader_spot", "trader_mid", "trader_far")
+today_flag = &"sieber_depart_peddler_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_15"]
+script = ExtResource("1")
+start_minute = 1001
+activity = &"home"
+path = PackedStringArray("trader_far")
+visible = false
+today_flag = &"sieber_depart_peddler_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_16"]
+script = ExtResource("1")
+start_minute = 545
+travel_minutes = 9
+activity = &"walk"
+animation = &"walk_bundle"
+path = PackedStringArray("v_sieber_door", "v_road_in")
+region = &"village"
+today_flag = &"sieber_depart_carter_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_17"]
+script = ExtResource("1")
+start_minute = 554
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"sieber_depart_carter_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_18"]
+script = ExtResource("1")
+start_minute = 560
+travel_minutes = 20
+activity = &"walk"
+animation = &"walk_bundle"
+path = PackedStringArray("road_end", "road_mid", "gate_outside", "dropoff")
+today_flag = &"sieber_depart_carter_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_19"]
+script = ExtResource("1")
+start_minute = 580
+activity = &"sit"
+animation = &"sit_cart"
+path = PackedStringArray("dropoff")
+dialogue_id = &"kin_sieber_v"
+today_flag = &"sieber_depart_carter_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_20"]
+script = ExtResource("1")
+start_minute = 600
+travel_minutes = 40
+activity = &"walk"
+animation = &"sit_cart"
+path = PackedStringArray("dropoff", "gate_outside", "road_mid", "road_end")
+today_flag = &"sieber_depart_carter_day"
+
+[sub_resource type="Resource" id="p9_kin_sieber_v_21"]
+script = ExtResource("1")
+start_minute = 640
+activity = &"home"
+path = PackedStringArray("road_end")
+visible = false
+today_flag = &"sieber_depart_carter_day"
+
+[resource]
+script = ExtResource("2")
+npc_id = &"kin_sieber_v"
+display_name = "Johann Sieber"
+entries = Array[ExtResource("1")]([SubResource("p9_kin_sieber_v_01"), SubResource("p9_kin_sieber_v_02"), SubResource("p9_kin_sieber_v_03"), SubResource("p9_kin_sieber_v_04"), SubResource("p9_kin_sieber_v_05"), SubResource("p9_kin_sieber_v_06"), SubResource("p9_kin_sieber_v_07"), SubResource("p9_kin_sieber_v_08"), SubResource("p9_kin_sieber_v_09"), SubResource("p9_kin_sieber_v_10"), SubResource("p9_kin_sieber_v_11"), SubResource("p9_kin_sieber_v_12"), SubResource("p9_kin_sieber_v_13"), SubResource("p9_kin_sieber_v_14"), SubResource("p9_kin_sieber_v_15"), SubResource("p9_kin_sieber_v_16"), SubResource("p9_kin_sieber_v_17"), SubResource("p9_kin_sieber_v_18"), SubResource("p9_kin_sieber_v_19"), SubResource("p9_kin_sieber_v_20"), SubResource("p9_kin_sieber_v_21")])

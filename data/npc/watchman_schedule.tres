@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="NpcSchedule" format=3]
+
+[ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2"]
+
+[sub_resource type="Resource" id="p9_watchman_01"]
+script = ExtResource("1")
+activity = &"home"
+path = PackedStringArray("v_sieber_door")
+visible = false
+region = &"village"
+
+[sub_resource type="Resource" id="p9_watchman_02"]
+script = ExtResource("1")
+activity = &"watch"
+animation = &"lantern"
+path = PackedStringArray("v_sieber_door")
+region = &"village"
+today_flag = &"sieber_watch_day"
+
+[sub_resource type="Resource" id="p9_watchman_03"]
+script = ExtResource("1")
+start_minute = 360
+activity = &"home"
+path = PackedStringArray("v_sieber_door")
+visible = false
+region = &"village"
+today_flag = &"sieber_watch_day"
+
+[sub_resource type="Resource" id="p9_watchman_04"]
+script = ExtResource("1")
+start_minute = 1260
+activity = &"watch"
+animation = &"lantern"
+path = PackedStringArray("v_sieber_door")
+region = &"village"
+today_flag = &"sieber_watch_day"
+
+[resource]
+script = ExtResource("2")
+npc_id = &"watchman"
+display_name = "Der Nachtwächter"
+entries = Array[ExtResource("1")]([SubResource("p9_watchman_01"), SubResource("p9_watchman_02"), SubResource("p9_watchman_03"), SubResource("p9_watchman_04")])
