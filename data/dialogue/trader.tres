@@ -4,6 +4,54 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2_cdonk"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3_0t3rl"]
 
+[sub_resource type="Resource" id="p9_menu_menu_01"]
+script = ExtResource("2_cdonk")
+text = "Kennst du einen Brenneisen?"
+next = &"p9_brenneisen"
+conditions = Array[String](["p9_open", "flag:p9_stranger_met"])
+
+[sub_resource type="Resource" id="p9_menu_menu_02"]
+script = ExtResource("2_cdonk")
+text = "[Die Liste] Lichter, Ilse. Lorenz hat Lichter gezählt."
+next = &"p9_lights"
+conditions = Array[String](["clue_known:c_q_dates"])
+
+[sub_resource type="Resource" id="p9_p9_case_ilse_c01"]
+script = ExtResource("2_cdonk")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_case_ilse"]
+script = ExtResource("1_0vtyj")
+id = &"p9_case_ilse"
+text = "Er ist in die Stadt zurück. Er kommt nicht wieder. Frag nicht, was ich ihm verkauft habe. Ich sag nur so viel: Es lag über der Erde. Und jetzt liegt es in seinem Koffer und denkt nach."
+choices = Array[ExtResource("2_cdonk")]([SubResource("p9_p9_case_ilse_c01")])
+conditions = Array[String](["stranger_ending:ilse", "!flag:p9_ilse_case"])
+fallback_next = &"gift_retry"
+actions = Array[String](["set_flag:p9_ilse_case"])
+
+[sub_resource type="Resource" id="p9_p9_brenneisen_c01"]
+script = ExtResource("2_cdonk")
+text = "Ich denk drüber nach."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_brenneisen"]
+script = ExtResource("1_0vtyj")
+id = &"p9_brenneisen"
+text = "Einer, der unter der Erde kauft und über der Erde zahlt. Brille an der Kette, Schuhe für Teppiche. Schick ihn zu mir, wenn du ihn loswerden willst. Ich weiß, was er sucht. Er nicht."
+choices = Array[ExtResource("2_cdonk")]([SubResource("p9_p9_brenneisen_c01")])
+
+[sub_resource type="Resource" id="p9_p9_lights_c01"]
+script = ExtResource("2_cdonk")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_lights"]
+script = ExtResource("1_0vtyj")
+id = &"p9_lights"
+text = "Lichter. Ja. Lorenz hat sie gezählt. Ich hab ihm gesagt, er soll aufhören zu zählen und anfangen zu gehen. Er hat beides gemacht. In der falschen Reihenfolge."
+choices = Array[ExtResource("2_cdonk")]([SubResource("p9_p9_lights_c01")])
+
 [sub_resource type="Resource" id="p8_menu_menu_01"]
 script = ExtResource("2_cdonk")
 text = "Kennst du einen Grell?"
@@ -188,7 +236,7 @@ id = &"first_meet"
 text = "Da bist du ja. Ich dachte mir, dass du kommst. Die Neuen kommen immer in der ersten Nacht, aus Neugier – und in der zweiten aus einem anderen Grund. Ilse Kranich. Unten im Dorf sagen sie Kranichfrau, wegen der Feder. Ich habe nichts dagegen. Kraniche ziehen auch nachts."
 choices = Array[ExtResource("2_cdonk")]([SubResource("choice_001"), SubResource("choice_002")])
 conditions = Array[String](["!flag:trader_met"])
-fallback_next = &"gift_retry"
+fallback_next = &"p9_case_ilse"
 actions = Array[String](["set_flag:trader_met", "set_flag_night:trader_greeted", "trader_talked"])
 
 [sub_resource type="Resource" id="choice_003"]
@@ -546,7 +594,7 @@ next = &"goodbye"
 script = ExtResource("1_0vtyj")
 id = &"menu"
 text = "Noch etwas? Ich habe Zeit. Die Stillen auch."
-choices = Array[ExtResource("2_cdonk")]([SubResource("choice_046"), SubResource("choice_047"), SubResource("choice_048"), SubResource("choice_049"), SubResource("choice_050"), SubResource("choice_051"), SubResource("p7_c007"), SubResource("p7_c008"), SubResource("p7_c009"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("choice_052")])
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_046"), SubResource("choice_047"), SubResource("choice_048"), SubResource("choice_049"), SubResource("choice_050"), SubResource("choice_051"), SubResource("p7_c007"), SubResource("p7_c008"), SubResource("p7_c009"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("p9_menu_menu_01"), SubResource("p9_menu_menu_02"), SubResource("choice_052")])
 
 [sub_resource type="Resource" id="choice_053"]
 script = ExtResource("2_cdonk")
@@ -706,4 +754,4 @@ script = ExtResource("3_0t3rl")
 id = &"trader"
 speaker_name = "Ilse Kranich"
 start_node = &"first_meet"
-nodes = Array[ExtResource("1_0vtyj")]([SubResource("node_first_meet"), SubResource("node_first_note"), SubResource("node_first_gift"), SubResource("node_first_gift_full"), SubResource("node_gift_retry"), SubResource("node_greet_devout"), SubResource("node_greet_considerate"), SubResource("node_greet_matter_of_fact"), SubResource("node_greet_callous"), SubResource("node_greet_hardhearted"), SubResource("node_menu"), SubResource("node_who"), SubResource("node_who_goods"), SubResource("node_who_night"), SubResource("node_ask_lorenz"), SubResource("node_ask_lorenz_more"), SubResource("node_lorenz_alive"), SubResource("node_ask_marked"), SubResource("node_ask_marked_more"), SubResource("node_ask_blossom"), SubResource("node_ask_blossom_more"), SubResource("node_goodbye"), SubResource("node_p5_gold"), SubResource("node_p5_gold_price"), SubResource("p7_node_p7_specimen_greet"), SubResource("p7_node_p7_no_jars"), SubResource("p7_node_p7_visitors"), SubResource("p7_node_p7_quast"), SubResource("p7_node_p7_village_ilse"), SubResource("p8_node_p8_grell"), SubResource("p8_node_p8_veit"), SubResource("p8_node_p8_lights")])
+nodes = Array[ExtResource("1_0vtyj")]([SubResource("node_first_meet"), SubResource("node_first_note"), SubResource("node_first_gift"), SubResource("node_first_gift_full"), SubResource("node_gift_retry"), SubResource("node_greet_devout"), SubResource("node_greet_considerate"), SubResource("node_greet_matter_of_fact"), SubResource("node_greet_callous"), SubResource("node_greet_hardhearted"), SubResource("node_menu"), SubResource("node_who"), SubResource("node_who_goods"), SubResource("node_who_night"), SubResource("node_ask_lorenz"), SubResource("node_ask_lorenz_more"), SubResource("node_lorenz_alive"), SubResource("node_ask_marked"), SubResource("node_ask_marked_more"), SubResource("node_ask_blossom"), SubResource("node_ask_blossom_more"), SubResource("node_goodbye"), SubResource("node_p5_gold"), SubResource("node_p5_gold_price"), SubResource("p7_node_p7_specimen_greet"), SubResource("p7_node_p7_no_jars"), SubResource("p7_node_p7_visitors"), SubResource("p7_node_p7_quast"), SubResource("p7_node_p7_village_ilse"), SubResource("p8_node_p8_grell"), SubResource("p8_node_p8_veit"), SubResource("p8_node_p8_lights"), SubResource("p9_node_p9_case_ilse"), SubResource("p9_node_p9_brenneisen"), SubResource("p9_node_p9_lights")])

@@ -21,6 +21,11 @@ extends Node
 ## open questions / ready insights / the cards count both groups. The text variant of i_underlined comes
 ## from StoryConfig.underlined (data/journal/insights/variants/i_underlined_<priest|surgeon|washer>.tres,
 ## same id – the file in data/journal/insights is the default washer text).
+## Phase 9 (docs/PHASE9_DESIGN.md §2.2, §2.4.2, §3.4, §7.2, P6): two more pages for W-UI – „Die Liste" (list_page: the six
+## entries of Lorenz' list with date over LightRules.entry_text, initial, ink, the name once matched, the witness and whether
+## he was asked; footer and the struck line) and „Briefe" (letter_pages: copies of the letters read, the state of every letter
+## as a sentence). i_light_before is an any-group insight (c_q_dates + c_q_three_weeks + 3 of the 5 witnesses' clues). The
+## journal also settles D3 (StoryDirector.apply_settled on grave_state_changed MARKED and in post_load → sieber_buried).
 
 const GROUP := &"journal"
 const PANEL := &"journal"
@@ -46,6 +51,36 @@ const UNDERLINED_CHOICES: Array[StringName] = [&"priest", &"surgeon", &"washer"]
 ## Phase 8 (§1.6 item 5, §2.9): a clue that comes only when all these finds of one corpse are revealed
 ## (the finds carry the clue id; add_clue with a corpse holds it back until the last one is there).
 const COMPOUND_CLUES := {&"c_n_ott_three": [&"f_d2_bottle", &"f_d2_wax", &"f_d2_shirt"]}
+# Phase 9 (§7.2): the pages of the main chain and the letters (W-UI asks for them by panel_context(page)).
+const PAGE_LIST := &"list"
+const PAGE_LETTERS := &"letters"
+const PHASE9_PAGES: Array[StringName] = [PAGE_LIST, PAGE_LETTERS]
+const LIST_PATH := "res://data/quests/who_knows/list.tres"
+## The list is known once the ledger is read (H1: clue c_q_dates).
+const LIST_CLUE := &"c_q_dates"
+const NOT_LORENZ_INSIGHT := &"i_not_lorenz"
+const MOOR_STORY := &"s5_moor"
+const MAIN_QUEST := &"q_who_knows"
+## The witnesses of the list by witness_npc (§2.2.4).
+const WITNESS_NAMES: Dictionary[StringName, String] = {&"washer": "Liesel Dorn", &"carter": "Osric", &"innkeeper": "Rosine Wackernagel",
+		&"grocer": "Theres Mangold", &"kin_ott": "Gesa Ott", &"beggar": "Veit Ammer"}
+const LIST_MOOR_NAME := "der Tote aus dem Moor"
+const LIST_MISSING := "Im Sterbebuch steht er. Bei dir liegt er nicht."
+const LIST_OPEN_EMPTY := "Unter diesem Datum liegt noch keiner."
+const LIST_OPEN_MARKED := "Johann Sieber. Er lebt noch."
+const LIST_OPEN_GONE := "Johann Sieber. Über den Hügel."
+const LIST_OPEN_BURIED := "Johann Sieber"
+const LIST_NO_DATE := "…"
+## Letter states that show the copy of the text (§7.2 „Abschriften gelesener Briefe").
+const LETTER_TEXT_STATES: Array[StringName] = [&"read", &"read_grave", &"answered"]
+## letter_changed state → the LetterData.choice_texts key whose sentence describes it.
+const LETTER_STATE_CHOICE := {&"posted": &"deliver", &"delivered": &"deliver", &"read": &"read", &"read_grave": &"read_grave",
+		&"answered": &"answer", &"burned": &"burn", &"buried": &"bury"}
+const LETTER_STATE_LINES := {&"found": "Noch in deiner Tasche. Er wartet auf eine Entscheidung.",
+		&"received": "Die Post hat ihn gebracht. Die Post weiß nicht, dass er tot ist.",
+		&"posted": "Mit der Post fort. Von Ellbach läuft er allein.", &"delivered": "Zugestellt.",
+		&"read": "Gelesen. Die Abschrift steht hier.", &"read_grave": "Am Grab vorgelesen.", &"answered": "Beantwortet.",
+		&"burned": "Verbrannt.", &"buried": "Mit ins Grab gelegt.", &"": "Ein Brief."}
 
 @export var save_id: String = "journal"
 @export var save_order: int = 40
@@ -56,6 +91,10 @@ var insight_data: Array[InsightData] = []
 var find_data: Array[FindData] = []
 ## Piety tiers; null = data/config/piety_config.tres.
 var piety_config: PietyConfig
+## Phase 9: the list of the main chain; null = data/quests/who_knows/list.tres (tests assign the fixture).
+var light_list: LightListData
+## Phase 9: the rules of the list; null = data/config/who_knows_config.tres.
+var who_knows_config: WhoKnowsConfig
 
 ## clue id -> {day: int, corpse: String, count: int}
 var _clues: Dictionary[StringName, Dictionary] = {}
@@ -77,11 +116,15 @@ func _init() -> void:
 func _ready() -> void:
 	if not EventBus.ghost_spoke.is_connected(_on_ghost_spoke):
 		EventBus.ghost_spoke.connect(_on_ghost_spoke)
+	if not EventBus.grave_state_changed.is_connected(_on_grave_state_changed):
+		EventBus.grave_state_changed.connect(_on_grave_state_changed)
 
 
 func _exit_tree() -> void:
 	if EventBus.ghost_spoke.is_connected(_on_ghost_spoke):
 		EventBus.ghost_spoke.disconnect(_on_ghost_spoke)
+	if EventBus.grave_state_changed.is_connected(_on_grave_state_changed):
+		EventBus.grave_state_changed.disconnect(_on_grave_state_changed)
 
 
 # --- clues ------------------------------------------------------------------------------------
@@ -350,7 +393,124 @@ func mark_read(ids: Array[StringName]) -> void:
 
 ## Context for ui_panel_requested(&"journal", …) – §7: {page: StringName} (+ the journal node).
 func panel_context(page: StringName = PAGE_PEOPLE) -> Dictionary:
-	return {"page": page if page in PAGES else PAGE_PEOPLE, "journal": self}
+	return {"page": page if page in PAGES or page in PHASE9_PAGES else PAGE_PEOPLE, "journal": self}
+
+
+# --- Phase 9: „Die Liste" (§2.2.1, §7.2) ------------------------------------------------------
+
+## The ledger's back page is known (H1 – the clue c_q_dates).
+func list_known() -> bool:
+	return has_clue(LIST_CLUE)
+
+
+## „Die Liste": {known, entries: [{id, initial, ink, date, name, witness, witness_npc, witnessed, matched, open}], footer,
+## struck, confide_none (the button „Niemandem sagen": after H4, before the choice of H5)}. Entries stay in list order; the
+## name shows once the entry is matched (H2) – Kaspar Dorn only with i_not_lorenz, a dead not on the hill as the death-book
+## line –, the open entry („S.") by the state of Johann. Unknown list → known false, no entries.
+func list_page() -> Dictionary:
+	var list := _light_list()
+	var out := {"known": list_known() and list != null, "entries": [] as Array[Dictionary], "footer": "", "struck": "",
+			"confide_none": false}
+	if list == null:
+		return out
+	out["footer"] = list.footer
+	out["struck"] = list.struck
+	var who := get_tree().get_first_node_in_group(&"who_knows") if is_inside_tree() else null
+	var witnessed: Array = who.call(&"witnessed") if who != null and who.has_method(&"witnessed") else []
+	var cfg := _who_knows_config()
+	var entries: Array[Dictionary] = []
+	for e: LightEntryData in list.entries:
+		if e == null:
+			continue
+		var matched := who != null and who.has_method(&"matched") and bool(who.call(&"matched", e.id))
+		var date := e.fixed_text
+		if is_inside_tree():
+			var text := LightRules.entry_text(e, get_tree(), cfg)
+			if text != "":
+				date = text
+		entries.append({"id": e.id, "initial": e.initial, "ink": e.ink, "date": date if date != "" else LIST_NO_DATE,
+				"name": list_name(e, matched), "witness": WITNESS_NAMES.get(e.witness_npc, String(e.witness_npc)),
+				"witness_npc": e.witness_npc, "witnessed": witnessed.has(e.id), "matched": matched, "open": e.open})
+	out["entries"] = entries
+	var quests := get_tree().get_first_node_in_group(&"quests") if is_inside_tree() else null
+	var h5_chosen := quests != null and quests.has_method(&"choice_of") and str(quests.call(&"choice_of", MAIN_QUEST, &"h5")) != ""
+	out["confide_none"] = GameState.flag_on(&"q_sieber_marked") and not h5_chosen
+	return out
+
+
+## The name column of `e`: the open entry by Johann's state; a matched entry the name of its dead (S5 without i_not_lorenz:
+## „der Tote aus dem Moor", a dead not on the hill: the death-book line); "" while not matched.
+func list_name(e: LightEntryData, matched: bool) -> String:
+	if e.open:
+		if GameState.flag_on(&"sieber_gone"):
+			return LIST_OPEN_GONE
+		if GameState.flag_on(&"sieber_buried") or GameState.flag_on(&"sieber_dead"):
+			return LIST_OPEN_BURIED
+		return LIST_OPEN_MARKED if GameState.flag_on(&"q_sieber_marked") else LIST_OPEN_EMPTY
+	if not matched:
+		return ""
+	if e.story_id == MOOR_STORY and not has_insight(NOT_LORENZ_INSIGHT):
+		return LIST_MOOR_NAME
+	for r: CorpseRecord in _records():
+		if r.story_id == e.story_id and r.story_id != &"":
+			return _display_name(r)
+	return LIST_MISSING
+
+
+# --- Phase 9: „Briefe" (§2.4.2, §7.2) ---------------------------------------------------------
+
+## „Briefe": every letter Letters knows (save_state records), oldest first: {uid, id, outside, sender, state, line, text,
+## day, kind}. `text` is the copy of a read letter (read, read at the grave, answered), else ""; `line` the state as a sentence
+## (the letter's own choice_texts first: „Rosine hat ihn hinter den Schanktisch gehängt.").
+func letter_pages() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var letters := get_tree().get_first_node_in_group(&"letters") if is_inside_tree() else null
+	if letters == null or not letters.has_method(&"save_state"):
+		return out
+	var state: Variant = letters.call(&"save_state")
+	var records: Variant = (state as Dictionary).get("records", {}) if state is Dictionary else {}
+	if not records is Dictionary:
+		return out
+	var uids: Array = (records as Dictionary).keys()
+	uids.sort_custom(func(a: Variant, b: Variant) -> bool:
+		var da := _to_int(((records as Dictionary)[a] as Dictionary).get("day") if (records as Dictionary)[a] is Dictionary else 0, 0)
+		var db := _to_int(((records as Dictionary)[b] as Dictionary).get("day") if (records as Dictionary)[b] is Dictionary else 0, 0)
+		return da < db or (da == db and str(a) < str(b)))
+	for uid: Variant in uids:
+		var rec: Variant = (records as Dictionary)[uid]
+		if not rec is Dictionary:
+			continue
+		var data: Variant = letters.call(&"letter", str(uid)) if letters.has_method(&"letter") else null
+		if not data is LetterData:
+			continue
+		var letter := data as LetterData
+		var st := StringName(str((rec as Dictionary).get("state", "")))
+		out.append({"uid": str(uid), "id": letter.id, "outside": letter.outside, "sender": letter.sender, "state": st,
+				"line": letter_line(letter, st), "text": letter.text if st in LETTER_TEXT_STATES else "",
+				"day": _to_int((rec as Dictionary).get("day"), 0), "kind": letter.kind})
+	return out
+
+
+## The state of `letter` as a sentence – its choice_texts for the choice behind `state`, else the default line.
+static func letter_line(letter: LetterData, state: StringName) -> String:
+	var choice: StringName = LETTER_STATE_CHOICE.get(state, &"")
+	if letter != null and choice != &"" and letter.choice_texts.has(choice) and letter.choice_texts[choice] != "":
+		return letter.choice_texts[choice]
+	return str(LETTER_STATE_LINES.get(state, LETTER_STATE_LINES[&""]))
+
+
+func _light_list() -> LightListData:
+	if light_list == null and ResourceLoader.exists(LIST_PATH):
+		light_list = load(LIST_PATH) as LightListData
+	return light_list
+
+
+func _who_knows_config() -> WhoKnowsConfig:
+	if who_knows_config == null:
+		who_knows_config = Database.config(&"who_knows_config") as WhoKnowsConfig
+	if who_knows_config == null:
+		who_knows_config = WhoKnowsConfig.new()
+	return who_knows_config
 
 
 ## Clue cards in data order: {id, title, text, kind, count, day, unread}.
@@ -480,9 +640,12 @@ func load_state(data: Dictionary) -> void:
 					_unread.append(id)
 
 
-## → sync_from_records (§5.2 step 4: a migrated Phase-3 save gets its clues quietly).
+## → sync_from_records (§5.2 step 4: a migrated Phase-3 save gets its clues quietly). Phase 9: a D3 buried under a marker
+## settles its ending (sieber_buried).
 func post_load() -> void:
 	sync_from_records()
+	if is_inside_tree():
+		StoryDirector.apply_settled(get_tree())
 
 
 # --- data -------------------------------------------------------------------------------------
@@ -619,6 +782,12 @@ func _was_heard(grave_id: String) -> bool:
 
 func _on_ghost_spoke(grave_id: String, _mood: StringName, text: String) -> void:
 	_heard_text[grave_id] = text
+
+
+## Phase 9: a grave got its marker – a story dead under it may settle its ending (StoryDirector.SETTLE_FLAGS).
+func _on_grave_state_changed(_grave_id: String, state: int) -> void:
+	if state == GraveRecord.State.MARKED and is_inside_tree():
+		StoryDirector.apply_settled(get_tree())
 
 
 static func _day_of(total_minutes: int) -> int:

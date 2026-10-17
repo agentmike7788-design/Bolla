@@ -4,6 +4,231 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
 
+[sub_resource type="Resource" id="p9_menu_menu_01"]
+script = ExtResource("2")
+text = "[Die Liste] Das Licht bei euch oben, im Nebelung …"
+next = &"p9_mark"
+conditions = Array[String](["clue_known:c_q_sieber", "!sieber_marked"])
+
+[sub_resource type="Resource" id="p9_menu_menu_02"]
+script = ExtResource("2")
+text = "[Die Liste] Es geht um das Licht, Johann."
+next = &"p9_h6"
+conditions = Array[String](["quest_step:q_who_knows:h6"])
+
+[sub_resource type="Resource" id="p9_menu_menu_03"]
+script = ExtResource("2")
+text = "[Brief] Soll ich ihn Ihnen vorlesen?"
+next = &"p9_letter"
+conditions = Array[String](["letter_for:speaker"])
+actions = Array[String](["letter_read_aloud"])
+
+[sub_resource type="Resource" id="p9_menu_menu_04"]
+script = ExtResource("2")
+text = "Der Herr mit dem Koffer – was wollte er?"
+next = &"p9_stranger"
+conditions = Array[String](["stranger_here", "quest_step:q_who_knows:h6"])
+
+[sub_resource type="Resource" id="p9_p9_away_wait_c01"]
+script = ExtResource("2")
+text = "Ich pass auf."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_away_wait"]
+script = ExtResource("1")
+id = &"p9_away_wait"
+text = "(Zum Grab.) Morgen geh ich. Grete wartet, die wartet gern. Pass auf, dass keiner auf ihr Grab tritt. Und wenn einer fragt: Ich bin nicht fort. Ich bin nur nicht da."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_away_wait_c01")])
+conditions = Array[String](["quest_ending:q_who_knows:away", "!sieber_gone"])
+fallback_next = &"p9_silent"
+
+[sub_resource type="Resource" id="p9_p9_silent_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_silent"]
+script = ExtResource("1")
+id = &"p9_silent"
+text = "Du hast nichts gesagt. Das ist auch eine Antwort. Grete hat auch oft nichts gesagt, und ich hab's immer verstanden. Fast immer."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_silent_c01")])
+conditions = Array[String](["quest_ending:q_who_knows:silent", "!flag:p9_johann_silent"])
+fallback_next = &"p9_public"
+actions = Array[String](["set_flag:p9_johann_silent"])
+
+[sub_resource type="Resource" id="p9_p9_public_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_public"]
+script = ExtResource("1")
+id = &"p9_public"
+text = "Da steht einer mit einer Laterne vor meiner Tür. Jede Nacht. Er hustet. Ich hab ihm eine Decke gegeben. Für mich hat noch nie einer Wache gestanden. Jetzt weiß ich nicht, ob ich mich freuen soll."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_public_c01")])
+conditions = Array[String](["quest_ending:q_who_knows:public", "!flag:p9_johann_public"])
+fallback_next = &"p9_marked"
+actions = Array[String](["set_flag:p9_johann_public"])
+
+[sub_resource type="Resource" id="p9_p9_marked_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_marked"]
+script = ExtResource("1")
+id = &"p9_marked"
+text = "(Zum Grab.) So, Grete. Er ist wieder da. Er will was. Ich seh's ihm an."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_marked_c01")])
+conditions = Array[String](["sieber_marked"])
+fallback_next = &"greet"
+
+[sub_resource type="Resource" id="p9_p9_mark_c01"]
+script = ExtResource("2")
+text = "Die Hagedorn hatte das auch."
+next = &"p9_mark_count"
+
+[sub_resource type="Resource" id="p9_p9_mark_c02"]
+script = ExtResource("2")
+text = "Danke, Johann."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_mark"]
+script = ExtResource("1")
+id = &"p9_mark"
+text = "Das Licht? Ich hab's gesehen. Ich hab gedacht, Grete. Dann hab ich gedacht: Nein, die hat nie Licht gemacht, die hat im Dunkeln gestrickt. … (Er öffnet das Hemd ein Stück.) Da. Juckt nicht. Grete hatte so was nicht. Grete hatte nur Rücken."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_mark_c01"), SubResource("p9_p9_mark_c02")])
+actions = Array[String](["mark_seen"])
+
+[sub_resource type="Resource" id="p9_p9_mark_count_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_mark_count"]
+script = ExtResource("1")
+id = &"p9_mark_count"
+text = "Die Hagedorn hatte es auch. Und der Ott. Man redet nicht darüber, man zählt. Ich bin einundsiebzig. Ich kann zählen."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_mark_count_c01")])
+
+[sub_resource type="Resource" id="p9_p9_h6_c01"]
+script = ExtResource("2")
+text = "Geh fort, Johann. Über den Hügel. Wie Lorenz."
+next = &"p9_away"
+conditions = Array[String](["letter_posted"])
+
+[sub_resource type="Resource" id="p9_p9_h6_c02"]
+script = ExtResource("2")
+text = "Geh fort, Johann. Über den Hügel. Wie Lorenz."
+next = &"p9_away_no"
+conditions = Array[String](["!letter_posted"])
+
+[sub_resource type="Resource" id="p9_p9_h6_c03"]
+script = ExtResource("2")
+text = "Bleib. Ich mach dir das Grab neben Grete."
+next = &"p9_stay"
+actions = Array[String](["quest_choose:q_who_knows:h6:stay"])
+
+[sub_resource type="Resource" id="p9_p9_h6_c04"]
+script = ExtResource("2")
+text = "Wir gehen zum Fenner. Das Dorf soll es wissen."
+next = &"p9_public_yes"
+actions = Array[String](["quest_choose:q_who_knows:h6:public"])
+
+[sub_resource type="Resource" id="p9_p9_h6_c05"]
+script = ExtResource("2")
+text = "Ich weiß es noch nicht."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_h6"]
+script = ExtResource("1")
+id = &"p9_h6"
+text = "Ich weiß. Ich zähl auch. Ich bin nur langsamer als du. Also. Was soll ich machen, Totengräber? Du kennst dich aus mit dem, was danach kommt."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_h6_c01"), SubResource("p9_p9_h6_c02"), SubResource("p9_p9_h6_c03"), SubResource("p9_p9_h6_c04"), SubResource("p9_p9_h6_c05")])
+
+[sub_resource type="Resource" id="p9_p9_away_c01"]
+script = ExtResource("2")
+text = "(Nicken.) Er ist für dich, Johann. Geh."
+next = &"p9_away_yes"
+actions = Array[String](["quest_choose:q_who_knows:h6:away"])
+
+[sub_resource type="Resource" id="p9_p9_away_c02"]
+script = ExtResource("2")
+text = "Ich weiß es auch nicht."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_away"]
+script = ExtResource("1")
+id = &"p9_away"
+text = "Fort? Ich war nie fort. Ich war einmal in Ellbach, da hat es geregnet. … Was ist das? Den hat einer an unsere Tür gesteckt, sagt Anna. Ohne Namen."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_away_c01"), SubResource("p9_p9_away_c02")])
+
+[sub_resource type="Resource" id="p9_p9_away_yes_c01"]
+script = ExtResource("2")
+text = "Ich pass auf ihr Grab auf."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_away_yes"]
+script = ExtResource("1")
+id = &"p9_away_yes"
+text = "Ich kann nicht lesen. Aber ich kenn die Form. So einen hatte die Ida auch. Die ist gegangen. Na gut. Dann geh ich ein Stück. Grete wird schimpfen. Die schimpft gern, wenn ich weg bin. Dann hat sie was zu tun."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_away_yes_c01")])
+
+[sub_resource type="Resource" id="p9_p9_away_no_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_away_no"]
+script = ExtResource("1")
+id = &"p9_away_no"
+text = "Fort? Ich war nie fort. Ich war einmal in Ellbach, da hat es geregnet. Nein, Totengräber. Du sagst das so. Einem Menschen glaub ich das nicht. Einem Brief vielleicht. Die Ida hatte einen."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_away_no_c01")])
+
+[sub_resource type="Resource" id="p9_p9_stay_c01"]
+script = ExtResource("2")
+text = "Ich komme."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_stay"]
+script = ExtResource("1")
+id = &"p9_stay"
+text = "Neben Grete. Oder so nah, wie du kannst. Sie mag es nicht, wenn man drängelt. Und setz dich mal abends zu mir auf die Bank. Ich red nicht viel. Du auch nicht. Das passt."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_stay_c01")])
+
+[sub_resource type="Resource" id="p9_p9_public_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_public_yes"]
+script = ExtResource("1")
+id = &"p9_public_yes"
+text = "Zum Fenner? Der schreibt alles auf. Dann steht wenigstens was über mich in einem Buch. Grete stand nur im Kirchenbuch. Zweimal. Einmal mit mir, einmal ohne."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_public_yes_c01")])
+
+[sub_resource type="Resource" id="p9_p9_letter_c01"]
+script = ExtResource("2")
+text = "Mach ich."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_letter"]
+script = ExtResource("1")
+id = &"p9_letter"
+text = "Lies. Langsam. Ich hör nicht mehr so schnell, wie die Leute schreiben. … So. Jetzt weiß ich es. Leg ihn zu Grete, wenn du gehst. Sie hat Briefe immer aufgehoben, auch die vom Amt."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_letter_c01")])
+
+[sub_resource type="Resource" id="p9_p9_stranger_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_stranger"]
+script = ExtResource("1")
+id = &"p9_stranger"
+text = "Der Herr aus der Stadt war da. Er sagt, er nimmt mich mit zu einem Arzt in der Stadt. Kostet nichts, sagt er. Mit dem? Der riecht nach Keller."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_stranger_c01")])
+
 [sub_resource type="Resource" id="kin_sieber_first_c01"]
 script = ExtResource("2")
 text = "…"
@@ -15,7 +240,7 @@ id = &"first"
 text = "(Er redet mit dem Grab, nicht mit dir.) So, Grete. Da ist der Neue. Der gräbt ordentlich, sagen sie. Ich sag nichts. Ich schau es mir an."
 choices = Array[ExtResource("2")]([SubResource("kin_sieber_first_c01")])
 conditions = Array[String](["!flag:p8_met_kin_sieber"])
-fallback_next = &"greet"
+fallback_next = &"p9_away_wait"
 actions = Array[String](["set_flag:p8_met_kin_sieber"])
 
 [sub_resource type="Resource" id="kin_sieber_greet_c01"]
@@ -56,7 +281,7 @@ text = "Ich lass Sie allein."
 script = ExtResource("1")
 id = &"menu"
 text = "(Johann wartet.)"
-choices = Array[ExtResource("2")]([SubResource("kin_sieber_menu_c01"), SubResource("kin_sieber_menu_c02"), SubResource("kin_sieber_menu_c03"), SubResource("kin_sieber_menu_c04")])
+choices = Array[ExtResource("2")]([SubResource("kin_sieber_menu_c01"), SubResource("kin_sieber_menu_c02"), SubResource("kin_sieber_menu_c03"), SubResource("p9_menu_menu_01"), SubResource("p9_menu_menu_02"), SubResource("p9_menu_menu_03"), SubResource("p9_menu_menu_04"), SubResource("kin_sieber_menu_c04")])
 
 [sub_resource type="Resource" id="kin_sieber_wish_c01"]
 script = ExtResource("2")
@@ -124,4 +349,4 @@ script = ExtResource("3")
 id = &"kin_sieber"
 speaker_name = "Johann Sieber"
 start_node = &"first"
-nodes = Array[ExtResource("1")]([SubResource("kin_sieber_node_first"), SubResource("kin_sieber_node_greet"), SubResource("kin_sieber_node_menu"), SubResource("kin_sieber_node_wish"), SubResource("kin_sieber_node_wish_yes"), SubResource("kin_sieber_node_wish_no"), SubResource("kin_sieber_node_tip"), SubResource("kin_sieber_node_who")])
+nodes = Array[ExtResource("1")]([SubResource("kin_sieber_node_first"), SubResource("kin_sieber_node_greet"), SubResource("kin_sieber_node_menu"), SubResource("kin_sieber_node_wish"), SubResource("kin_sieber_node_wish_yes"), SubResource("kin_sieber_node_wish_no"), SubResource("kin_sieber_node_tip"), SubResource("kin_sieber_node_who"), SubResource("p9_node_p9_away_wait"), SubResource("p9_node_p9_silent"), SubResource("p9_node_p9_public"), SubResource("p9_node_p9_marked"), SubResource("p9_node_p9_mark"), SubResource("p9_node_p9_mark_count"), SubResource("p9_node_p9_h6"), SubResource("p9_node_p9_away"), SubResource("p9_node_p9_away_yes"), SubResource("p9_node_p9_away_no"), SubResource("p9_node_p9_stay"), SubResource("p9_node_p9_public_yes"), SubResource("p9_node_p9_letter"), SubResource("p9_node_p9_stranger")])

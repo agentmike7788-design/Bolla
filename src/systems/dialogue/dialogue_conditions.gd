@@ -27,6 +27,15 @@ extends RefCounted
 ## sick_light[:<house>] (NightPaths.sick_houses now) · observed:<clue> · underlined:<priest|surgeon|washer>
 ## (StoryConfig.underlined) · insight:<id> (the journal has it) · ware_ready (Theres' order from Hanne's basket is in
 ## her shop, Friendship.ware_ready – P4).
+## Phase 9 (docs/PHASE9_DESIGN.md §3.4 + W0-Notizen 10/11, P6): p9_open (Quests.is_open / flag) · quest:<id>:<none|open|ended|
+## settled> · quest_step:<id>:<step> (the visible step) · quest_done:<id>:<step> · quest_choice:<id>:<step>:<choice> ·
+## quest_ending:<id>:<end> · quest_ended:<id> (ended or settled) · light:<entry>:<matched|witnessed> (WhoKnows) · sieber_marked ·
+## sieber_gone · letter_posted (the nameless letter is at the Siebers' door) · letter_for:<npc|kin|town> (the player holds an
+## undecided letter to <npc>; „speaker" = the speaking Npc / its kin) · post_for:<kin> (post for the dead whose household is <kin>
+## in the inventory) · stranger_here (Brenneisen is in the current region) · stranger_step:<k1…k5> (the visible step of q_case) ·
+## stranger_ending:<fenner|deal|ilse> · large_ready:<giver> (a larger request's delivery part for <giver> is ready) ·
+## confided:<priest|surgeon|washer|none> (the choice of H5) · kin_house (context.record has a household) · story:<id>
+## (context.record / context.story_id) · fresh_grave_days:<n> (context.grave_id – else any grave – buried at most n days ago).
 
 enum _Result { FALSE, TRUE, INVALID }
 
@@ -40,6 +49,20 @@ const APPRENTICE_FLAG := &"apprentice_hired"
 const MOODS: Array[StringName] = [&"plain", &"cheerful", &"low", &"cross"]
 const ROBBER_FATES: PackedStringArray = ["none", "reported", "let_go", "caught_watch"]
 const APPRENTICE_TASKS: Array[StringName] = [&"rake", &"weed", &"water", &"candle"]
+# Phase 9
+const P9_OPEN_FLAG := &"p9_open"
+const MAIN_QUEST := &"q_who_knows"
+const CASE_QUEST := &"q_case"
+const CONFIDE_STEP := &"h5"
+const QUEST_STATES: PackedStringArray = ["none", "open", "ended", "settled"]
+const LIGHT_KINDS: PackedStringArray = ["matched", "witnessed"]
+const CONFIDANTS: PackedStringArray = ["priest", "surgeon", "washer", "none"]
+const STRANGER_ENDINGS: PackedStringArray = ["fenner", "deal", "ilse"]
+const SIEBER_MARKED_FLAG := &"q_sieber_marked"
+const SIEBER_GONE_FLAG := &"sieber_gone"
+const LETTER_ITEMS: Array[StringName] = [&"letter", &"letter_reply"]
+## Letter states that are already a decision (Letters.DECIDED_STATES, W0 reading) – such a letter is not handed over any more.
+const LETTER_DECIDED: Array[StringName] = [&"posted", &"delivered", &"read", &"read_grave", &"answered", &"burned", &"buried"]
 
 
 ## True when every condition holds (an empty list holds).
@@ -379,7 +402,287 @@ static func _evaluate(text: String, context: Dictionary) -> _Result:
 				return _Result.INVALID
 			var journal := DialogueSyntax.system(&"journal")
 			return _bool(journal != null and journal.has_method(&"has_insight") and bool(journal.call(&"has_insight", StringName(p[0]))))
+	return _evaluate_p9(text, context)
+
+
+## Phase 9 (docs/PHASE9_DESIGN.md §3.4, W0-Notizen 10).
+static func _evaluate_p9(text: String, context: Dictionary) -> _Result:
+	match DialogueSyntax.key(text):
+		"p9_open":
+			if text.contains(":"):
+				return _Result.INVALID
+			return _bool(p9_open())
+		"quest":
+			var p := DialogueSyntax.parts(text, 2)
+			if p.size() < 2 or p[0] == "" or not p[1] in QUEST_STATES:
+				return _Result.INVALID
+			return _bool(String(quest_state(StringName(p[0]))) == ("" if p[1] == "none" else p[1]))
+		"quest_step":
+			var p := DialogueSyntax.parts(text, 2)
+			if p.size() < 2 or p[0] == "" or p[1] == "":
+				return _Result.INVALID
+			return _bool(quest_call(&"current_step", [StringName(p[0])]) == StringName(p[1]))
+		"quest_done":
+			var p := DialogueSyntax.parts(text, 2)
+			if p.size() < 2 or p[0] == "" or p[1] == "":
+				return _Result.INVALID
+			var done: Variant = quest_call(&"steps_done", [StringName(p[0])])
+			return _bool(done is Array and (done as Array).has(StringName(p[1])))
+		"quest_choice":
+			var p := DialogueSyntax.parts(text, 3)
+			if p.size() < 3 or p[0] == "" or p[1] == "" or p[2] == "":
+				return _Result.INVALID
+			return _bool(quest_call(&"choice_of", [StringName(p[0]), StringName(p[1])]) == StringName(p[2]))
+		"quest_ending":
+			var p := DialogueSyntax.parts(text, 2)
+			if p.size() < 2 or p[0] == "" or p[1] == "":
+				return _Result.INVALID
+			return _bool(quest_call(&"ending", [StringName(p[0])]) == StringName(p[1]))
+		"quest_ended":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			return _bool(quest_state(StringName(p[0])) in [&"ended", &"settled"])
+		"light":
+			var p := DialogueSyntax.parts(text, 2)
+			if p.size() < 2 or p[0] == "" or not p[1] in LIGHT_KINDS:
+				return _Result.INVALID
+			return _bool(light_state(StringName(p[0]), StringName(p[1])))
+		"sieber_marked", "sieber_gone", "letter_posted", "stranger_here", "kin_house":
+			if text.contains(":"):
+				return _Result.INVALID
+			match text:
+				"sieber_marked":
+					return _bool(GameState.flag_on(SIEBER_MARKED_FLAG))
+				"sieber_gone":
+					return _bool(GameState.flag_on(SIEBER_GONE_FLAG))
+				"letter_posted":
+					var who := DialogueSyntax.system(&"who_knows")
+					return _bool(who != null and who.has_method(&"letter_posted") and bool(who.call(&"letter_posted")))
+				"stranger_here":
+					return _bool(stranger_here())
+			return _bool(context_record(context) != null and context_record(context).kin_house != &"")
+		"letter_for":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			return _bool(not letters_for(StringName(p[0]), context).is_empty())
+		"post_for":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			return _bool(not letters_for(StringName(p[0]), context, LetterData.KIND_POST).is_empty())
+		"stranger_step":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			return _bool(quest_call(&"current_step", [CASE_QUEST]) == StringName(p[0]))
+		"stranger_ending":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or not p[0] in STRANGER_ENDINGS:
+				return _Result.INVALID
+			return _bool(quest_call(&"ending", [CASE_QUEST]) == StringName(p[0]) or GameState.flag_on(StringName("case_end_" + p[0])))
+		"large_ready":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			return _bool(not large_ready(StringName(p[0]), context).is_empty())
+		"confided":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or not p[0] in CONFIDANTS:
+				return _Result.INVALID
+			return _bool(confidant() == StringName(p[0]))
+		"story":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or p[0] == "":
+				return _Result.INVALID
+			var record := context_record(context)
+			var story: Variant = context.get("story_id", record.story_id if record != null else &"")
+			return _bool(str(story) == p[0])
+		"fresh_grave_days":
+			var p := DialogueSyntax.parts(text, 1)
+			var n: Variant = DialogueSyntax.int_arg(p, 0, null)
+			if n == null or int(n) < 0:
+				return _Result.INVALID
+			return _bool(fresh_grave(int(n), str(context.get("grave_id", ""))))
 	return _Result.INVALID
+
+
+# --- Phase 9 -----------------------------------------------------------------------------------
+
+## Phase 9 (§1.2): Quests.is_open() in the running world, else the flag p9_open.
+static func p9_open() -> bool:
+	var quests := DialogueSyntax.system(&"quests")
+	if quests != null and quests.has_method(&"is_open"):
+		return bool(quests.call(&"is_open"))
+	return GameState.flag_on(P9_OPEN_FLAG)
+
+
+## Calls `method` on Quests (null without the system).
+static func quest_call(method: StringName, args: Array) -> Variant:
+	var quests := DialogueSyntax.system(&"quests")
+	if quests == null or not quests.has_method(method):
+		return null
+	return quests.callv(method, args)
+
+
+## Quests.state(quest_id) – &"" | &"open" | &"ended" | &"settled" (&"" without the system).
+static func quest_state(quest_id: StringName) -> StringName:
+	var s: Variant = quest_call(&"state", [quest_id])
+	return StringName(str(s)) if s != null else &""
+
+
+## The choice of H5 without the „confide_" prefix (&"" = not chosen): Quests, else the flags q_confide_<who>.
+static func confidant() -> StringName:
+	var raw: Variant = quest_call(&"choice_of", [MAIN_QUEST, CONFIDE_STEP])
+	var choice := str(raw) if raw != null else ""
+	if choice.begins_with("confide_"):
+		return StringName(choice.trim_prefix("confide_"))
+	for who: String in CONFIDANTS:
+		if GameState.flag_on(StringName("q_confide_" + who)):
+			return StringName(who)
+	return &""
+
+
+## WhoKnows: `entry` is matched (H2) / witnessed (H3, H4).
+static func light_state(entry: StringName, kind: StringName) -> bool:
+	var who := DialogueSyntax.system(&"who_knows")
+	if who == null:
+		return false
+	if kind == &"matched":
+		return who.has_method(&"matched") and bool(who.call(&"matched", entry))
+	var seen: Variant = who.call(&"witnessed") if who.has_method(&"witnessed") else []
+	return seen is Array and (seen as Array).has(entry)
+
+
+## Brenneisen stands in the current region (Stranger.present).
+static func stranger_here() -> bool:
+	var stranger := DialogueSyntax.system(&"stranger")
+	if stranger == null or not stranger.has_method(&"present"):
+		return false
+	var region := RegionRoot.current(Engine.get_main_loop() as SceneTree)
+	return bool(stranger.call(&"present", region))
+
+
+## The uids of the undecided letters in the context inventory addressed to `who` (&"speaker" = the speaking Npc or
+## its household kin) – optional `kind` (&"post"): Letters.recipient_of(uid) when P3 offers it, else LetterData.recipient;
+## a letter whose LetterData has no recipient (lg_wife, kin_house) goes to the household of its dead (record kin_house →
+## the kin of that house).
+static func letters_for(who: StringName, context: Dictionary, kind: StringName = &"") -> PackedStringArray:
+	var out := PackedStringArray()
+	var letters := DialogueSyntax.system(&"letters")
+	var inv: Variant = context.get("inventory")
+	if letters == null or not is_instance_valid(inv) or not (inv as Object).has_method(&"uids"):
+		return out
+	var targets: Array[StringName] = []
+	if who == &"speaker":
+		var sid := DialogueActions.speaker_id(context)
+		if sid != &"":
+			targets.append(sid)
+		var kin := kin_of(context)
+		if kin != &"" and not targets.has(kin):
+			targets.append(kin)
+	else:
+		targets.append(who)
+	for item: StringName in LETTER_ITEMS:
+		for uid: String in (inv as Object).call(&"uids", item):
+			var data: Variant = letters.call(&"letter", uid) if letters.has_method(&"letter") else null
+			if not data is LetterData:
+				continue
+			var letter := data as LetterData
+			if kind != &"" and letter.kind != kind:
+				continue
+			var state := StringName(str(letters.call(&"state", uid))) if letters.has_method(&"state") else &""
+			if state in LETTER_DECIDED:
+				continue
+			if targets.has(letter_recipient(uid, letter, letters)):
+				out.append(uid)
+	return out
+
+
+## Who a held letter goes to: Letters.recipient_of(uid) (P3) when there, else the data; an empty recipient (kin_house letters)
+## → the kin of the household of the dead who carried it (Letters.corpse_of → record.kin_house → KinData.house).
+static func letter_recipient(uid: String, letter: LetterData, letters: Node) -> StringName:
+	if letters.has_method(&"recipient_of"):
+		var r := StringName(str(letters.call(&"recipient_of", uid)))
+		if r != &"":
+			return r
+	if letter.recipient != &"":
+		return letter.recipient
+	var corpse := str(letters.call(&"corpse_of", uid)) if letters.has_method(&"corpse_of") else ""
+	var house := &""
+	for r: CorpseRecord in records():
+		if r.id == corpse:
+			house = r.kin_house
+	return kin_of_house(house)
+
+
+## The KinData id living in `house` (&"" = none).
+static func kin_of_house(house: StringName) -> StringName:
+	if house == &"" or not Database.has_method(&"kin_list"):
+		return &""
+	for k: Resource in Database.kin_list():
+		if k is KinData and (k as KinData).house == house:
+			return (k as KinData).kin_id
+	return &""
+
+
+## The records of the running CorpseManager ([] without one).
+static func records() -> Array[CorpseRecord]:
+	var out: Array[CorpseRecord] = []
+	var manager := DialogueSyntax.system(&"corpse_manager")
+	if manager == null or not manager.has_method(&"records"):
+		return out
+	for r: Variant in manager.call(&"records"):
+		if r is CorpseRecord:
+			out.append(r)
+	return out
+
+
+## context.record (a CorpseRecord), else the record of context.corpse_id; null = none.
+static func context_record(context: Dictionary) -> CorpseRecord:
+	var r: Variant = context.get("record")
+	if r is CorpseRecord:
+		return r
+	var id := str(context.get("corpse_id", ""))
+	if id != "":
+		for rec: CorpseRecord in records():
+			if rec.id == id:
+				return rec
+	return null
+
+
+## A grave (context grave_id, else any) whose dead was buried at most `days` days ago (Brenneisen's soil, K2).
+static func fresh_grave(days: int, grave_id: String) -> bool:
+	for r: CorpseRecord in records():
+		if r.location != CorpseRecord.LOCATION_BURIED or r.buried_day <= 0:
+			continue
+		if grave_id != "" and r.grave_id != grave_id:
+			continue
+		if TimeManager.day - r.buried_day <= days:
+			return true
+	return false
+
+
+## The ready larger requests for `giver` in the context inventory: HillRequests.large_ready_for (P2) when there, else the
+## delivery requests of ready_for whose data is large.
+static func large_ready(giver: StringName, context: Dictionary) -> Array[StringName]:
+	var out: Array[StringName] = []
+	var hill := DialogueSyntax.system(&"hill_requests")
+	var inv: Variant = context.get("inventory")
+	if hill == null or not inv is Inventory:
+		return out
+	if hill.has_method(&"large_ready_for"):
+		for id: Variant in hill.call(&"large_ready_for", giver, inv as Inventory):
+			out.append(StringName(str(id)))
+		return out
+	if not hill.has_method(&"ready_for"):
+		return out
+	for id: Variant in hill.call(&"ready_for", giver, inv as Inventory):
+		var data: Variant = hill.call(&"request_data", StringName(str(id))) if hill.has_method(&"request_data") else null
+		if data is OrderData and (data as OrderData).size == OrderData.SIZE_LARGE:
+			out.append(StringName(str(id)))
+	return out
 
 
 # --- Phase 8 -----------------------------------------------------------------------------------

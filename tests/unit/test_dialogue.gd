@@ -14,7 +14,7 @@ const EVENING := 1140  # 19:00
 ## A new game starts "Unauffällig" (docs/PHASE3_DESIGN.md §2.6); reset() leaves the stat at 0.
 const NEW_GAME_REPUTATION := 25
 
-const CONDITION_GRAMMAR := ("^!?(has_item:[a-z_]+(:\\d+)?|flag:[a-z_0-9]+|stat_gte:[a-z_]+:-?\\d+|stat_lt:[a-z_]+:-?\\d+|time_between:\\d+:\\d+|flag_eq:[a-z_]+:.*|flag_today:[a-z_0-9]+|day_gte:\\d+|day_odd|day_even|piety_tier:(hardhearted|callous|matter_of_fact|considerate|devout)|trader_talks_gte:\\d+|clue_known:c_[a-z_0-9]+|flag_night:[a-z_]+"
+const CONDITION_GRAMMAR := ("^!?(has_item:[a-z_0-9]+(:\\d+)?|flag:[a-z_0-9]+|stat_gte:[a-z_]+:-?\\d+|stat_lt:[a-z_]+:-?\\d+|time_between:\\d+:\\d+|flag_eq:[a-z_]+:.*|flag_today:[a-z_0-9]+|day_gte:\\d+|day_odd|day_even|piety_tier:(hardhearted|callous|matter_of_fact|considerate|devout)|trader_talks_gte:\\d+|clue_known:c_[a-z_0-9]+|flag_night:[a-z_]+"
 		# Phase 7 (P6, docs/PHASE7_DESIGN.md §3.4)
 		+ "|rel_gte:[a-z_]+:\\d+|rel_tier:[a-z_]+:(stranger|acquainted|trusted|friend)|met:[a-z_]+|rep_tier:(disreputable|unremarkable|respected|esteemed|renowned)"
 		+ "|order:[a-z_0-9]+:(none|offered|accepted|completed|failed)|order_offerable:[a-z_0-9]+|order_ready:[a-z_0-9]+|shop_open:[a-z_]+|region:[a-z_]+"
@@ -27,8 +27,14 @@ const CONDITION_GRAMMAR := ("^!?(has_item:[a-z_]+(:\\d+)?|flag:[a-z_0-9]+|stat_g
 		+ "|robber_fate:(none|reported|let_go|caught_watch)|sick_light(:[a-z_]+)?|observed:c_[a-z_0-9]+|underlined:(priest|surgeon|washer)"
 		+ "|insight:i_[a-z_]+|ware_ready"
 		# G8 Runde 6 „Bitten vom Hügel"
-		+ "|hill_ready:[a-z_]+)$")
-const ACTION_GRAMMAR := ("^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_0-9]+|take_item:[a-z_]+:\\d+(:[a-z_]+)?|give_item:[a-z_]+:\\d+|stat_add:[a-z_]+:-?\\d+|notify:.+|open_panel:[a-z_]+|open_trade|add_clue:c_[a-z_0-9]+|trader_tools|trader_talked|set_flag_night:[a-z_]+"
+		+ "|hill_ready:[a-z_]+"
+		# Phase 9 (P6, docs/PHASE9_DESIGN.md §3.4 + W0-Notizen 10)
+		+ "|p9_open|quest:q_[a-z_]+:(none|open|ended|settled)|quest_step:q_[a-z_]+:[a-z0-9]+|quest_done:q_[a-z_]+:[a-z0-9]+"
+		+ "|quest_choice:q_[a-z_]+:[a-z0-9]+:[a-z_]+|quest_ending:q_[a-z_]+:[a-z_]+|quest_ended:q_[a-z_]+"
+		+ "|light:e_[a-z]+:(matched|witnessed)|sieber_marked|sieber_gone|letter_posted|letter_for:[a-z_]+|post_for:[a-z_]+"
+		+ "|stranger_here|stranger_step:k[1-5]|stranger_ending:(fenner|deal|ilse)|large_ready:[a-z_]+"
+		+ "|confided:(priest|surgeon|washer|none)|kin_house|story:[a-z0-9_]+|fresh_grave_days:\\d+)$")
+const ACTION_GRAMMAR := ("^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_0-9]+|take_item:[a-z_0-9]+:\\d+(:[a-z_]+)?|give_item:[a-z_0-9]+:\\d+|stat_add:[a-z_]+:-?\\d+|notify:.+|open_panel:[a-z_]+|open_trade|add_clue:c_[a-z_0-9]+|trader_tools|trader_talked|set_flag_night:[a-z_]+"
 		# Phase 7 (P6)
 		+ "|meet:[a-z_0-9]+|talked:[a-z_]+|open_shop:[a-z_]+|open_gifts:[a-z_]+|order_offer:[a-z_0-9]+|order_accept:[a-z_0-9]+|order_turn_in:[a-z_0-9]+"
 		+ "|buy_round|donate|consecrate_pay|anatomy_case|open_anatomist|open_lecture|lecture_invite|rel_add:[a-z_]+:-?\\d+|set_flag_day:[a-z_0-9]+"
@@ -37,10 +43,17 @@ const ACTION_GRAMMAR := ("^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_0-9]+|take
 		+ "|apprentice_scold|wish_offer|wish_accept|tip_hand|alms|dance:[a-z_]+|robber_resolve:(reported|let_go)|task:[a-z_]+"
 		+ "|note_event:[a-z_]+|take_ware"
 		# G8 Runde 6 „Bitten vom Hügel"
-		+ "|hill_turn_in:[a-z_]+)$")
+		+ "|hill_turn_in:[a-z_]+"
+		# Phase 9 (P6)
+		+ "|quest_note:[a-z_]+:.*|quest_choose:q_[a-z_]+:[a-z0-9]+:[a-z_]+|witness:e_[a-z]+|mark_seen|letter_deliver(:[a-z_]+)?"
+		+ "|letter_read_aloud(:[a-z_]+)?|letter_post:(peddler|carter)|stranger_answer:(frank|evade|refuse)|stranger_offers"
+		+ "|stranger_bribe:(yes|no)|stranger_resolve:(fenner|deal|ilse)|large_turn_in:[a-z_]+|rep_event:[a-z_]+|piety_event:[a-z_]+"
+		+ "|goodwill:[a-z_]+:-?\\d+)$")
 ## Negations the data may use (flag-like conditions, docs/PHASE4_DESIGN.md §3.4).
 const NEGATABLE: PackedStringArray = ["!flag:", "!piety_tier:", "!flag_night:", "!trader_talks_gte:", "!clue_known:", "!met:",
-		"!rel_tier:", "!alive:", "!flag_today:", "!flag_days_gte:", "!step_gte:", "!apprentice_level_gte:"]
+		"!rel_tier:", "!alive:", "!flag_today:", "!flag_days_gte:", "!step_gte:", "!apprentice_level_gte:",
+		# Phase 9 (P6)
+		"!light:", "!sieber_marked", "!sieber_gone", "!letter_posted", "!letter_for:", "!hill_ready:", "!quest:", "!has_item:"]
 
 
 ## Inventory double with limited room: add_item keeps at most `room` items.
@@ -2255,13 +2268,15 @@ func test_carter_p6_intro_comes_after_p5_intro() -> void:
 	_go(r, &"remark_skipped")
 	assert_eq(_id(r), &"p6_intro", "the next conversation")
 	assert_eq(_carter().get_node_by_id(&"p6_intro").fallback_next, &"p7_intro", "Phase 7: p7_intro next")
-	# Phase 8 (P6): p7_intro → p8_intro → p8_robber_seen → p8_robber_seen_b → p8_lights → p4_rumor.
+	# Phase 8 (P6): p7_intro → p8_intro → p8_robber_seen → p8_robber_seen_b → p8_lights → p4_rumor; Phase 9 (P6): the
+	# p9_ lines after p8_intro (p9_intro, Johann leaving, Brenneisen at the gate).
 	var next := _carter().get_node_by_id(&"p7_intro").fallback_next
 	var chain: Array[StringName] = []
-	while String(next).begins_with("p8_"):
+	while String(next).begins_with("p8_") or String(next).begins_with("p9_"):
 		chain.append(next)
 		next = _carter().get_node_by_id(next).fallback_next
-	assert_eq(chain, [&"p8_intro", &"p8_robber_seen", &"p8_robber_seen_b", &"p8_lights"] as Array[StringName], "Phase 8 in between")
+	assert_eq(chain, [&"p8_intro", &"p9_intro", &"p9_away_soon", &"p9_away_done", &"p9_stranger_seen", &"p8_robber_seen", &"p8_robber_seen_b",
+			&"p8_lights"] as Array[StringName], "Phase 8 + 9 in between")
 	assert_eq(next, &"p4_rumor", "the chain continues as before")
 
 

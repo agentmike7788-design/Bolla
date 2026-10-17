@@ -1,0 +1,121 @@
+[gd_resource type="Resource" script_class="DialogueData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_node.gd" id="1"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
+[ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
+
+[sub_resource type="Resource" id="sieber_door_start_c01"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="sieber_door_node_start"]
+script = ExtResource("1")
+id = &"start"
+text = "(Hinter der Tür, ohne aufzumachen.) Vater ist fort. Er hat sein Bündel selber gepackt, zweimal, weil er beim ersten Mal Gretes Bild vergessen hat. Danke. Glaub ich. Ich weiß nicht, ob man dafür danke sagt."
+choices = Array[ExtResource("2")]([SubResource("sieber_door_start_c01")])
+conditions = Array[String](["sieber_gone"])
+fallback_next = &"dead"
+
+[sub_resource type="Resource" id="sieber_door_dead_c01"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="sieber_door_node_dead"]
+script = ExtResource("1")
+id = &"dead"
+text = "(Hinter der Tür.) Er ist heute Nacht gegangen. Liesel ist bei ihm. Sie singt nicht, sie wäscht nur. Komm später, Totengräber. Osric bringt ihn dir. Er hat gesagt, du sollst dich nicht beeilen."
+choices = Array[ExtResource("2")]([SubResource("sieber_door_dead_c01")])
+conditions = Array[String](["flag:sieber_dead"])
+fallback_next = &"public"
+
+[sub_resource type="Resource" id="sieber_door_public_c01"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="sieber_door_public_c02"]
+script = ExtResource("2")
+text = "[Auftrag] Ein Bündel von Liesel."
+next = &"bundle"
+conditions = Array[String](["order_ready:oq_liesel_bundle"])
+actions = Array[String](["order_turn_in:oq_liesel_bundle"])
+
+[sub_resource type="Resource" id="sieber_door_node_public"]
+script = ExtResource("1")
+id = &"public"
+text = "(Hinter der Tür.) Der Wächter steht schon vor der Tür. Jetzt weiß es das ganze Dorf. Die Leute gehen auf der anderen Seite vorbei. Klopf nicht so laut, Vater schläft. Er schläft jetzt viel."
+choices = Array[ExtResource("2")]([SubResource("sieber_door_public_c01"), SubResource("sieber_door_public_c02")])
+conditions = Array[String](["quest_ending:q_who_knows:public"])
+fallback_next = &"stay"
+
+[sub_resource type="Resource" id="sieber_door_stay_c01"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="sieber_door_stay_c02"]
+script = ExtResource("2")
+text = "[Auftrag] Ein Bündel von Liesel."
+next = &"bundle"
+conditions = Array[String](["order_ready:oq_liesel_bundle"])
+actions = Array[String](["order_turn_in:oq_liesel_bundle"])
+
+[sub_resource type="Resource" id="sieber_door_node_stay"]
+script = ExtResource("1")
+id = &"stay"
+text = "(Hinter der Tür.) Du hast Vater was versprochen, sagt er. Er sagt nicht, was. Er pfeift wieder. Das hat er seit Grete nicht getan. Falsch, aber er pfeift."
+choices = Array[ExtResource("2")]([SubResource("sieber_door_stay_c01"), SubResource("sieber_door_stay_c02")])
+conditions = Array[String](["quest_ending:q_who_knows:stay"])
+fallback_next = &"light"
+
+[sub_resource type="Resource" id="sieber_door_light_c01"]
+script = ExtResource("2")
+text = "Danke, Anna."
+
+[sub_resource type="Resource" id="sieber_door_light_c02"]
+script = ExtResource("2")
+text = "[Auftrag] Ein Bündel von Liesel."
+next = &"bundle"
+conditions = Array[String](["order_ready:oq_liesel_bundle"])
+actions = Array[String](["order_turn_in:oq_liesel_bundle"])
+
+[sub_resource type="Resource" id="sieber_door_node_light"]
+script = ExtResource("1")
+id = &"light"
+text = "(Hinter der Tür.) Wer ist da? … Der vom Hügel. Ein Licht? Bei Vater oben brannte es, im Nebelung. Er sagt, er war's nicht. Er lügt nie, der Alte. Er ist zu langsam zum Lügen. Er sitzt nachmittags auf der Bank. Oder bei Grete."
+choices = Array[ExtResource("2")]([SubResource("sieber_door_light_c01"), SubResource("sieber_door_light_c02")])
+conditions = Array[String](["clue_known:c_q_dates"])
+fallback_next = &"plain"
+actions = Array[String](["add_clue:c_q_sieber"])
+
+[sub_resource type="Resource" id="sieber_door_plain_c01"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="sieber_door_plain_c02"]
+script = ExtResource("2")
+text = "[Auftrag] Ein Bündel von Liesel."
+next = &"bundle"
+conditions = Array[String](["order_ready:oq_liesel_bundle"])
+actions = Array[String](["order_turn_in:oq_liesel_bundle"])
+
+[sub_resource type="Resource" id="sieber_door_node_plain"]
+script = ExtResource("1")
+id = &"plain"
+text = "(Hinter der Tür.) Wer ist da? … Ach, der vom Hügel. Bei uns ist keiner tot. Geh weiter, Totengräber, das bringt Unglück. Nichts für ungut."
+choices = Array[ExtResource("2")]([SubResource("sieber_door_plain_c01"), SubResource("sieber_door_plain_c02")])
+
+[sub_resource type="Resource" id="sieber_door_bundle_c01"]
+script = ExtResource("2")
+text = "(Gehen)"
+
+[sub_resource type="Resource" id="sieber_door_node_bundle"]
+script = ExtResource("1")
+id = &"bundle"
+text = "(Die Tür geht einen Spalt auf. Eine Hand nimmt das Bündel.) Leinen. Für später. Ich weiß. Ich näh es nicht. Liesel näht es, wenn es so weit ist. Sie sagt, sie hat die besseren Stiche."
+choices = Array[ExtResource("2")]([SubResource("sieber_door_bundle_c01")])
+
+[resource]
+script = ExtResource("3")
+id = &"sieber_door"
+speaker_name = "Anna Sieber"
+start_node = &"start"
+nodes = Array[ExtResource("1")]([SubResource("sieber_door_node_start"), SubResource("sieber_door_node_dead"), SubResource("sieber_door_node_public"), SubResource("sieber_door_node_stay"), SubResource("sieber_door_node_light"), SubResource("sieber_door_node_plain"), SubResource("sieber_door_node_bundle")])

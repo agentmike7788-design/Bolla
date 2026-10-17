@@ -4,6 +4,101 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
 
+[sub_resource type="Resource" id="p9_menu_menu_01"]
+script = ExtResource("2")
+text = "[Die Liste] Ich muss Ihnen etwas zeigen."
+next = &"p9_confide"
+conditions = Array[String](["quest_step:q_who_knows:h5"])
+
+[sub_resource type="Resource" id="p9_menu_menu_02"]
+script = ExtResource("2")
+text = "Johann Sieber hat Schmerzen. Haben Sie etwas für ihn?"
+next = &"p9_drops"
+conditions = Array[String](["quest_ending:q_who_knows:stay", "confided:surgeon", "!flag:p9_quast_drops", "!flag:sieber_dead"])
+
+[sub_resource type="Resource" id="p9_p9_confide_c01"]
+script = ExtResource("2")
+text = "Ich wollte, dass es einer weiß."
+next = &"p9_confide_yes"
+actions = Array[String](["quest_choose:q_who_knows:h5:confide_surgeon"])
+
+[sub_resource type="Resource" id="p9_p9_confide_c02"]
+script = ExtResource("2")
+text = "Vergessen Sie es. Es ist nichts."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_confide"]
+script = ExtResource("1")
+id = &"p9_confide"
+text = "(Du zeigst die Rückseite der Kladde, die sechs Daten, das „S.“, und erzählst von den Lichtern.)"
+choices = Array[ExtResource("2")]([SubResource("p9_p9_confide_c01"), SubResource("p9_p9_confide_c02")])
+
+[sub_resource type="Resource" id="p9_p9_confide_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_confide_yes"]
+script = ExtResource("1")
+id = &"p9_confide_yes"
+text = "Drei Wochen. Ich habe es gezählt, bei den stillen Herzen. Ich hätte es aufschreiben sollen. Es gibt einen Mann aus der Stadt, der dafür zahlen würde. Brenneisen heißt er. Geben Sie ihm nichts. Ich habe ihm zu viel gegeben."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_confide_yes_c01")])
+actions = Array[String](["set_flag:q_case_known"])
+
+[sub_resource type="Resource" id="p9_p9_public_confidant_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_public_confidant"]
+script = ExtResource("1")
+id = &"p9_public_confidant"
+text = "Sie haben es mir vorher gesagt. Das rechne ich Ihnen an. Der Wächter hat mich trotzdem notiert. Quast, Wundarzt, zehn nach elf. Als wäre ich das Licht."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_public_confidant_c01")])
+conditions = Array[String](["quest_ending:q_who_knows:public", "confided:surgeon", "!flag:p9_public_surgeon"])
+fallback_next = &"p9_public_named"
+actions = Array[String](["set_flag:p9_public_surgeon"])
+
+[sub_resource type="Resource" id="p9_p9_public_named_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_public_named"]
+script = ExtResource("1")
+id = &"p9_public_named"
+text = "Fenner hat mich notieren lassen. Quast, Wundarzt, zehn nach elf. Ich komme seit dreißig Jahren um zehn nach elf, Totengräber. Jetzt bin ich verdächtig, weil ich pünktlich bin."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_public_named_c01")])
+conditions = Array[String](["quest_ending:q_who_knows:public", "!flag:p9_public_surgeon"])
+fallback_next = &"p9_case_gone"
+actions = Array[String](["set_flag:p9_public_surgeon"])
+
+[sub_resource type="Resource" id="p9_p9_case_gone_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_case_gone"]
+script = ExtResource("1")
+id = &"p9_case_gone"
+text = "Sie haben mir meinen einzigen Käufer genommen. Vielleicht war das gut. Ich weiß es nicht. Ich weiß es wirklich nicht, und das ist für einen Wundarzt ein seltener Zustand."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_case_gone_c01")])
+conditions = Array[String](["stranger_ending:fenner", "!flag:p9_quast_case"])
+fallback_next = &"start"
+actions = Array[String](["set_flag:p9_quast_case"])
+
+[sub_resource type="Resource" id="p9_p9_drops_c01"]
+script = ExtResource("2")
+text = "Danke, Quast."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_drops"]
+script = ExtResource("1")
+id = &"p9_drops"
+text = "Für die Schmerzen. Zehn Tropfen, nicht mehr, auch wenn er mehr will. Er wird nicht mehr wollen. Er ist keiner, der mehr will."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_drops_c01")])
+actions = Array[String](["set_flag:p9_quast_drops"])
+
 [sub_resource type="Resource" id="p8_menu_menu_01"]
 script = ExtResource("2")
 text = "[Geschichte] Unter Kollegen"
@@ -685,7 +780,7 @@ next = &"bye"
 script = ExtResource("1")
 id = &"menu"
 text = "Was führt Sie zu mir?"
-choices = Array[ExtResource("2")]([SubResource("v_surgeon_c013"), SubResource("v_surgeon_c014"), SubResource("v_surgeon_c015"), SubResource("v_surgeon_c016"), SubResource("v_surgeon_c017"), SubResource("v_surgeon_c018"), SubResource("v_surgeon_c019"), SubResource("v_surgeon_c020"), SubResource("v_surgeon_c021"), SubResource("v_surgeon_c022"), SubResource("v_surgeon_c023"), SubResource("v_surgeon_c024"), SubResource("v_surgeon_c025"), SubResource("v_surgeon_c026"), SubResource("v_surgeon_c027"), SubResource("v_surgeon_c028"), SubResource("v_surgeon_c029"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("p8_menu_menu_04"), SubResource("p8_menu_menu_05"), SubResource("p8_menu_menu_06"), SubResource("p8_menu_menu_07"), SubResource("p8_menu_menu_08"), SubResource("p8_menu_menu_09"), SubResource("p8_menu_menu_10"), SubResource("p8_menu_menu_11"), SubResource("p8_menu_menu_12"), SubResource("p8_menu_menu_13"), SubResource("p8_menu_menu_14"), SubResource("p8_menu_menu_15"), SubResource("p8_menu_menu_16"), SubResource("v_surgeon_c030"), SubResource("v_surgeon_c031")])
+choices = Array[ExtResource("2")]([SubResource("v_surgeon_c013"), SubResource("v_surgeon_c014"), SubResource("v_surgeon_c015"), SubResource("v_surgeon_c016"), SubResource("v_surgeon_c017"), SubResource("v_surgeon_c018"), SubResource("v_surgeon_c019"), SubResource("v_surgeon_c020"), SubResource("v_surgeon_c021"), SubResource("v_surgeon_c022"), SubResource("v_surgeon_c023"), SubResource("v_surgeon_c024"), SubResource("v_surgeon_c025"), SubResource("v_surgeon_c026"), SubResource("v_surgeon_c027"), SubResource("v_surgeon_c028"), SubResource("v_surgeon_c029"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("p8_menu_menu_04"), SubResource("p8_menu_menu_05"), SubResource("p8_menu_menu_06"), SubResource("p8_menu_menu_07"), SubResource("p8_menu_menu_08"), SubResource("p8_menu_menu_09"), SubResource("p8_menu_menu_10"), SubResource("p8_menu_menu_11"), SubResource("p8_menu_menu_12"), SubResource("p8_menu_menu_13"), SubResource("p8_menu_menu_14"), SubResource("p8_menu_menu_15"), SubResource("p8_menu_menu_16"), SubResource("p9_menu_menu_01"), SubResource("p9_menu_menu_02"), SubResource("v_surgeon_c030"), SubResource("v_surgeon_c031")])
 
 [sub_resource type="Resource" id="v_surgeon_c032"]
 script = ExtResource("2")
@@ -940,5 +1035,5 @@ choices = Array[ExtResource("2")]([SubResource("v_surgeon_c056")])
 script = ExtResource("3")
 id = &"v_surgeon"
 speaker_name = "Severin Quast"
-start_node = &"start"
-nodes = Array[ExtResource("1")]([SubResource("v_surgeon_node_start"), SubResource("v_surgeon_node_ask_again"), SubResource("v_surgeon_node_invite"), SubResource("v_surgeon_node_invite_r"), SubResource("v_surgeon_node_greet_p_devout"), SubResource("v_surgeon_node_greet_p_hardhearted"), SubResource("v_surgeon_node_greet_disreputable"), SubResource("v_surgeon_node_greet_unremarkable"), SubResource("v_surgeon_node_greet_respected"), SubResource("v_surgeon_node_greet_esteemed"), SubResource("v_surgeon_node_greet_renowned"), SubResource("v_surgeon_node_menu"), SubResource("v_surgeon_node_case_yes"), SubResource("v_surgeon_node_case_no"), SubResource("v_surgeon_node_still_heart"), SubResource("v_surgeon_node_still_heart_more"), SubResource("v_surgeon_node_visits"), SubResource("v_surgeon_node_o_o_quast_tincture"), SubResource("v_surgeon_node_o_o_quast_tincture_yes"), SubResource("v_surgeon_node_o_o_quast_specimen"), SubResource("v_surgeon_node_o_o_quast_specimen_yes"), SubResource("v_surgeon_node_o_o_quast_antidote"), SubResource("v_surgeon_node_o_o_quast_antidote_yes"), SubResource("v_surgeon_node_o_o_quast_cabinet"), SubResource("v_surgeon_node_o_o_quast_cabinet_yes"), SubResource("v_surgeon_node_t_o_quast_tincture"), SubResource("v_surgeon_node_t_o_quast_specimen"), SubResource("v_surgeon_node_t_o_quast_antidote"), SubResource("v_surgeon_node_t_o_quast_cabinet"), SubResource("v_surgeon_node_t_ob_herbs"), SubResource("v_surgeon_node_bye"), SubResource("v_surgeon_node_bye_plain"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_favor_done"), SubResource("p8_node_o_of_quast_return_1"), SubResource("p8_node_o_of_quast_return_1_yes"), SubResource("p8_node_t_of_quast_return_1"), SubResource("p8_node_o_of_quast_return_2"), SubResource("p8_node_o_of_quast_return_2_yes"), SubResource("p8_node_t_of_quast_return_2"), SubResource("p8_node_p8_graves"), SubResource("p8_node_story_3_meet"), SubResource("p8_node_story_3_heart"), SubResource("p8_node_story_1_turn_in")])
+start_node = &"p9_public_confidant"
+nodes = Array[ExtResource("1")]([SubResource("v_surgeon_node_start"), SubResource("v_surgeon_node_ask_again"), SubResource("v_surgeon_node_invite"), SubResource("v_surgeon_node_invite_r"), SubResource("v_surgeon_node_greet_p_devout"), SubResource("v_surgeon_node_greet_p_hardhearted"), SubResource("v_surgeon_node_greet_disreputable"), SubResource("v_surgeon_node_greet_unremarkable"), SubResource("v_surgeon_node_greet_respected"), SubResource("v_surgeon_node_greet_esteemed"), SubResource("v_surgeon_node_greet_renowned"), SubResource("v_surgeon_node_menu"), SubResource("v_surgeon_node_case_yes"), SubResource("v_surgeon_node_case_no"), SubResource("v_surgeon_node_still_heart"), SubResource("v_surgeon_node_still_heart_more"), SubResource("v_surgeon_node_visits"), SubResource("v_surgeon_node_o_o_quast_tincture"), SubResource("v_surgeon_node_o_o_quast_tincture_yes"), SubResource("v_surgeon_node_o_o_quast_specimen"), SubResource("v_surgeon_node_o_o_quast_specimen_yes"), SubResource("v_surgeon_node_o_o_quast_antidote"), SubResource("v_surgeon_node_o_o_quast_antidote_yes"), SubResource("v_surgeon_node_o_o_quast_cabinet"), SubResource("v_surgeon_node_o_o_quast_cabinet_yes"), SubResource("v_surgeon_node_t_o_quast_tincture"), SubResource("v_surgeon_node_t_o_quast_specimen"), SubResource("v_surgeon_node_t_o_quast_antidote"), SubResource("v_surgeon_node_t_o_quast_cabinet"), SubResource("v_surgeon_node_t_ob_herbs"), SubResource("v_surgeon_node_bye"), SubResource("v_surgeon_node_bye_plain"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_favor_done"), SubResource("p8_node_o_of_quast_return_1"), SubResource("p8_node_o_of_quast_return_1_yes"), SubResource("p8_node_t_of_quast_return_1"), SubResource("p8_node_o_of_quast_return_2"), SubResource("p8_node_o_of_quast_return_2_yes"), SubResource("p8_node_t_of_quast_return_2"), SubResource("p8_node_p8_graves"), SubResource("p8_node_story_3_meet"), SubResource("p8_node_story_3_heart"), SubResource("p8_node_story_1_turn_in"), SubResource("p9_node_p9_confide"), SubResource("p9_node_p9_confide_yes"), SubResource("p9_node_p9_public_confidant"), SubResource("p9_node_p9_public_named"), SubResource("p9_node_p9_case_gone"), SubResource("p9_node_p9_drops")])

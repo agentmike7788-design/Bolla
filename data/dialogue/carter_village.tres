@@ -4,6 +4,42 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
 
+[sub_resource type="Resource" id="p9_menu_menu_01"]
+script = ExtResource("2")
+text = "[Die Liste] Bei der Quendel, im Herbst – hast du nachts ein Licht gesehen?"
+next = &"p9_witness"
+conditions = Array[String](["clue_known:c_q_dates", "!light:e_quendel:witnessed"])
+
+[sub_resource type="Resource" id="p9_menu_menu_02"]
+script = ExtResource("2")
+text = "[Brief] Nimmst du den mit in die Stadt? (1 Münze)"
+next = &"p9_post"
+conditions = Array[String](["letter_for:town", "has_item:coin:1"])
+actions = Array[String](["letter_post:carter"])
+
+[sub_resource type="Resource" id="p9_p9_witness_c01"]
+script = ExtResource("2")
+text = "Du hättest nichts ändern können."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_witness"]
+script = ExtResource("1")
+id = &"p9_witness"
+text = "Bei der Quendel brannte Licht, oben, um eins. Ich komm da nachts vorbei, aus Ellbach. Ich hab gedacht, die kann nicht schlafen. Ich halte nie an. Diesmal hätte ich vielleicht sollen."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_witness_c01")])
+actions = Array[String](["witness:e_quendel"])
+
+[sub_resource type="Resource" id="p9_p9_post_c01"]
+script = ExtResource("2")
+text = "Danke, Osric."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_post"]
+script = ExtResource("1")
+id = &"p9_post"
+text = "Bis Ellbach. Von da läuft's allein."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_post_c01")])
+
 [sub_resource type="Resource" id="p8_p8_jakob_c01"]
 script = ExtResource("2")
 text = "Die Wahrheit, meistens."
@@ -147,7 +183,7 @@ text = "Mach's gut, Osric."
 script = ExtResource("1")
 id = &"menu"
 text = "Noch eins? Ich zahl nicht zweimal, aber ich hör zweimal zu."
-choices = Array[ExtResource("2")]([SubResource("carter_village_c011"), SubResource("carter_village_c012"), SubResource("carter_village_c013"), SubResource("carter_village_c014")])
+choices = Array[ExtResource("2")]([SubResource("carter_village_c011"), SubResource("carter_village_c012"), SubResource("carter_village_c013"), SubResource("p9_menu_menu_01"), SubResource("p9_menu_menu_02"), SubResource("carter_village_c014")])
 
 [sub_resource type="Resource" id="carter_village_c015"]
 script = ExtResource("2")
@@ -192,4 +228,4 @@ script = ExtResource("3")
 id = &"carter_village"
 speaker_name = "Osric Faulhaber"
 start_node = &"first"
-nodes = Array[ExtResource("1")]([SubResource("carter_village_node_first"), SubResource("carter_village_node_beer"), SubResource("carter_village_node_quast"), SubResource("carter_village_node_ribbon"), SubResource("carter_village_node_specimens_1"), SubResource("carter_village_node_specimens_2"), SubResource("carter_village_node_chapter"), SubResource("carter_village_node_menu"), SubResource("carter_village_node_who"), SubResource("carter_village_node_where"), SubResource("carter_village_node_wiebke_dead"), SubResource("p8_node_p8_jakob")])
+nodes = Array[ExtResource("1")]([SubResource("carter_village_node_first"), SubResource("carter_village_node_beer"), SubResource("carter_village_node_quast"), SubResource("carter_village_node_ribbon"), SubResource("carter_village_node_specimens_1"), SubResource("carter_village_node_specimens_2"), SubResource("carter_village_node_chapter"), SubResource("carter_village_node_menu"), SubResource("carter_village_node_who"), SubResource("carter_village_node_where"), SubResource("carter_village_node_wiebke_dead"), SubResource("p8_node_p8_jakob"), SubResource("p9_node_p9_witness"), SubResource("p9_node_p9_post")])

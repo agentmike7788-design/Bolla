@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ClueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/journal/clue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"c_q_sieber"
+title = "Bei den Siebers"
+text = "Bei den Siebers, oben beim Alten. Keiner hat es angezündet. Es war einfach da, und um fünf war es weg. Johann sagt, er war's nicht. Er lügt nie, der Alte. Er ist zu langsam zum Lügen."
+kind = &"talk"
+order = 407

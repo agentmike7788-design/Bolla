@@ -4,6 +4,59 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
 
+[sub_resource type="Resource" id="p9_menu_menu_01"]
+script = ExtResource("2")
+text = "[Brief] Nimmst du den mit in die Stadt? (1 Münze)"
+next = &"p9_post"
+conditions = Array[String](["letter_for:town", "has_item:coin:1"])
+actions = Array[String](["letter_post:peddler"])
+
+[sub_resource type="Resource" id="p9_menu_menu_02"]
+script = ExtResource("2")
+text = "[Brief] Nimmst du meine Antwort mit? (1 Münze)"
+next = &"p9_post"
+conditions = Array[String](["!letter_for:town", "has_item:letter_reply:1", "has_item:coin:1"])
+actions = Array[String](["letter_post:peddler"])
+
+[sub_resource type="Resource" id="p9_p9_post_c01"]
+script = ExtResource("2")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_post"]
+script = ExtResource("1")
+id = &"p9_post"
+text = "Ein Brief? Kommt in die Kiepe, zwischen die Kerzen. Die Stadt ist drei Tage weit, für Briefe zwei. Briefe sind schneller als ich, sie halten nicht an."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_post_c01")])
+
+[sub_resource type="Resource" id="p9_p9_away_c01"]
+script = ExtResource("2")
+text = "Danke, Hanne."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_away"]
+script = ExtResource("1")
+id = &"p9_away"
+text = "Den alten Sieber? Ich nehm ihn bis zur Straße. Weiter tragen ihn seine Beine, sagt er. Ich glaub's ihm. Die haben ihn einundsiebzig Jahre getragen, die schaffen noch ein Stück."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_away_c01")])
+conditions = Array[String](["quest_ending:q_who_knows:away", "!sieber_gone", "!flag:p9_hanne_away"])
+fallback_next = &"first"
+actions = Array[String](["set_flag:p9_hanne_away"])
+
+[sub_resource type="Resource" id="p9_p9_aschau_c01"]
+script = ExtResource("2")
+text = "Ich nehm ihn."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_aschau"]
+script = ExtResource("1")
+id = &"p9_aschau"
+text = "Ein Brief für einen Aschau. Totengräber zu Hollerbrück. Das bist du nicht, aber du bist der Einzige hier oben. Das Siegel mag ich nicht. Anker und Schlange. Nimm ihn schnell, er macht die Kerzen kalt."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_aschau_c01")])
+conditions = Array[String](["quest_step:q_letters:l5", "!flag:p9_hanne_aschau"])
+fallback_next = &"p9_away"
+actions = Array[String](["set_flag:p9_hanne_aschau"])
+
 [sub_resource type="Resource" id="peddler_first_c01"]
 script = ExtResource("2")
 text = "Zeig her."
@@ -71,7 +124,7 @@ text = "Bis in sechs Tagen."
 script = ExtResource("1")
 id = &"menu"
 text = "Na? Ich hab nicht ewig. Ich hab bis vier."
-choices = Array[ExtResource("2")]([SubResource("peddler_menu_c01"), SubResource("peddler_menu_c02"), SubResource("peddler_menu_c03"), SubResource("peddler_menu_c04"), SubResource("peddler_menu_c05")])
+choices = Array[ExtResource("2")]([SubResource("peddler_menu_c01"), SubResource("peddler_menu_c02"), SubResource("peddler_menu_c03"), SubResource("peddler_menu_c04"), SubResource("p9_menu_menu_01"), SubResource("p9_menu_menu_02"), SubResource("peddler_menu_c05")])
 
 [sub_resource type="Resource" id="peddler_wreath_c01"]
 script = ExtResource("2")
@@ -209,5 +262,5 @@ actions = Array[String](["clear_flag:p8_hanne_news_1", "clear_flag:p8_hanne_news
 script = ExtResource("3")
 id = &"peddler"
 speaker_name = "Hanne Vogelsang"
-start_node = &"first"
-nodes = Array[ExtResource("1")]([SubResource("peddler_node_first"), SubResource("peddler_node_gate"), SubResource("peddler_node_greet"), SubResource("peddler_node_menu"), SubResource("peddler_node_wreath"), SubResource("peddler_node_where"), SubResource("peddler_node_news_1"), SubResource("peddler_node_news_2"), SubResource("peddler_node_news_3"), SubResource("peddler_node_news_4"), SubResource("peddler_node_news_5"), SubResource("peddler_node_news_6"), SubResource("peddler_node_news_7"), SubResource("peddler_node_news_8")])
+start_node = &"p9_aschau"
+nodes = Array[ExtResource("1")]([SubResource("peddler_node_first"), SubResource("peddler_node_gate"), SubResource("peddler_node_greet"), SubResource("peddler_node_menu"), SubResource("peddler_node_wreath"), SubResource("peddler_node_where"), SubResource("peddler_node_news_1"), SubResource("peddler_node_news_2"), SubResource("peddler_node_news_3"), SubResource("peddler_node_news_4"), SubResource("peddler_node_news_5"), SubResource("peddler_node_news_6"), SubResource("peddler_node_news_7"), SubResource("peddler_node_news_8"), SubResource("p9_node_p9_post"), SubResource("p9_node_p9_away"), SubResource("p9_node_p9_aschau")])

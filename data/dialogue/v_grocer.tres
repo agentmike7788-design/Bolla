@@ -4,6 +4,74 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
 
+[sub_resource type="Resource" id="p9_menu_menu_01"]
+script = ExtResource("2")
+text = "[Die Liste] Bei der Hagedorn, im Herbst – hast du ein Licht gesehen?"
+next = &"p9_witness_friend"
+conditions = Array[String](["clue_known:c_q_dates", "!light:e_hagedorn:witnessed"])
+
+[sub_resource type="Resource" id="p9_menu_menu_02"]
+script = ExtResource("2")
+text = "[Brief] Das lag in der Tasche einer Toten. Es ist an Sie."
+next = &"p9_letter"
+conditions = Array[String](["letter_for:speaker"])
+actions = Array[String](["letter_deliver"])
+
+[sub_resource type="Resource" id="p9_menu_menu_03"]
+script = ExtResource("2")
+text = "[Die Liste] Ein „S.“ – wer im Dorf könnte das sein?"
+next = &"p9_s"
+conditions = Array[String](["quest_step:q_who_knows:h4", "!flag:p9_theres_s"])
+
+[sub_resource type="Resource" id="p9_p9_witness_friend_c01"]
+script = ExtResource("2")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_witness_friend"]
+script = ExtResource("1")
+id = &"p9_witness_friend"
+text = "Ich seh vom Laden aus zur Hagedorn hinüber. Da brannte es, und die Alte war gesund wie ein Pferd. Ich hab mir nichts gedacht. Man denkt sich bei Licht nichts. Das ist ja das Schlimme. Ich hab am nächsten Morgen nachgerechnet, wie viel Öl so eine Nacht kostet. Sie hatte keins gekauft. Nicht bei mir. Und woanders kauft hier keiner."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_witness_friend_c01")])
+conditions = Array[String](["rel_tier:grocer:friend"])
+fallback_next = &"p9_witness"
+actions = Array[String](["witness:e_hagedorn"])
+
+[sub_resource type="Resource" id="p9_p9_witness_c01"]
+script = ExtResource("2")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_witness"]
+script = ExtResource("1")
+id = &"p9_witness"
+text = "Ich seh vom Laden aus zur Hagedorn hinüber. Da brannte es, und die Alte war gesund wie ein Pferd. Ich hab mir nichts gedacht. Man denkt sich bei Licht nichts. Das ist ja das Schlimme."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_witness_c01")])
+actions = Array[String](["witness:e_hagedorn"])
+
+[sub_resource type="Resource" id="p9_p9_letter_c01"]
+script = ExtResource("2")
+text = "Gern, Theres."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_letter"]
+script = ExtResource("1")
+id = &"p9_letter"
+text = "Holunderwein wie bei Mutter. Beeren nach dem ersten Frost, Honig statt Zucker. (Sie liest es zweimal.) Sie hat es nie aufgeschrieben, solange sie lebte. Den nächsten Krug gebe ich Ihnen zum halben Preis. Einmal. Ich schreibe es auf, damit ich es nicht vergesse und Sie nicht zweimal kommen."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_letter_c01")])
+
+[sub_resource type="Resource" id="p9_p9_s_c01"]
+script = ExtResource("2")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_s"]
+script = ExtResource("1")
+id = &"p9_s"
+text = "Bei mir? Im Laden brennt nachts kein Licht. Licht kostet. Und wenn doch, dann zünde ich es an, und dann schreibe ich es auf. Mit S fängt hier im Dorf mehr an, als man denkt, Totengräber. Fragen Sie den Bettler. Der sieht die Fenster."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_s_c01")])
+actions = Array[String](["set_flag:p9_theres_s"])
+
 [sub_resource type="Resource" id="p8_menu_menu_01"]
 script = ExtResource("2")
 text = "[Geschichte] Mutters Grab"
@@ -507,7 +575,7 @@ next = &"bye"
 script = ExtResource("1")
 id = &"menu"
 text = "Eins, zwei – ja? Ich höre."
-choices = Array[ExtResource("2")]([SubResource("v_grocer_c007"), SubResource("v_grocer_c008"), SubResource("v_grocer_c009"), SubResource("v_grocer_c010"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("p8_menu_menu_04"), SubResource("p8_menu_menu_05"), SubResource("p8_menu_menu_06"), SubResource("p8_menu_menu_07"), SubResource("p8_menu_menu_08"), SubResource("p8_menu_menu_09"), SubResource("p8_menu_menu_10"), SubResource("p8_menu_menu_11"), SubResource("p8_menu_menu_12"), SubResource("p8_menu_menu_13"), SubResource("p8_menu_menu_14"), SubResource("p8_menu_menu_15"), SubResource("p8_menu_menu_16"), SubResource("v_grocer_c011"), SubResource("v_grocer_c012")])
+choices = Array[ExtResource("2")]([SubResource("v_grocer_c007"), SubResource("v_grocer_c008"), SubResource("v_grocer_c009"), SubResource("v_grocer_c010"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("p8_menu_menu_04"), SubResource("p8_menu_menu_05"), SubResource("p8_menu_menu_06"), SubResource("p8_menu_menu_07"), SubResource("p8_menu_menu_08"), SubResource("p8_menu_menu_09"), SubResource("p8_menu_menu_10"), SubResource("p8_menu_menu_11"), SubResource("p8_menu_menu_12"), SubResource("p8_menu_menu_13"), SubResource("p8_menu_menu_14"), SubResource("p8_menu_menu_15"), SubResource("p8_menu_menu_16"), SubResource("p9_menu_menu_01"), SubResource("p9_menu_menu_02"), SubResource("p9_menu_menu_03"), SubResource("v_grocer_c011"), SubResource("v_grocer_c012")])
 
 [sub_resource type="Resource" id="v_grocer_c013"]
 script = ExtResource("2")
@@ -586,4 +654,4 @@ script = ExtResource("3")
 id = &"v_grocer"
 speaker_name = "Theres Mangold"
 start_node = &"p8_hill"
-nodes = Array[ExtResource("1")]([SubResource("v_grocer_node_start"), SubResource("v_grocer_node_greet_disreputable"), SubResource("v_grocer_node_greet_unremarkable"), SubResource("v_grocer_node_greet_respected"), SubResource("v_grocer_node_greet_esteemed"), SubResource("v_grocer_node_greet_renowned"), SubResource("v_grocer_node_menu"), SubResource("v_grocer_node_o_o_mangold_stone"), SubResource("v_grocer_node_o_o_mangold_stone_yes"), SubResource("v_grocer_node_buntes"), SubResource("v_grocer_node_mahn"), SubResource("v_grocer_node_bye"), SubResource("v_grocer_node_bye_plain"), SubResource("p8_node_p8_hill"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_o_of_mangold_return_1"), SubResource("p8_node_o_of_mangold_return_1_yes"), SubResource("p8_node_t_of_mangold_return_1"), SubResource("p8_node_o_of_mangold_return_2"), SubResource("p8_node_o_of_mangold_return_2_yes"), SubResource("p8_node_t_of_mangold_return_2"), SubResource("p8_node_dance"), SubResource("p8_node_p8_ware"), SubResource("p8_node_story_2_turn_in")])
+nodes = Array[ExtResource("1")]([SubResource("v_grocer_node_start"), SubResource("v_grocer_node_greet_disreputable"), SubResource("v_grocer_node_greet_unremarkable"), SubResource("v_grocer_node_greet_respected"), SubResource("v_grocer_node_greet_esteemed"), SubResource("v_grocer_node_greet_renowned"), SubResource("v_grocer_node_menu"), SubResource("v_grocer_node_o_o_mangold_stone"), SubResource("v_grocer_node_o_o_mangold_stone_yes"), SubResource("v_grocer_node_buntes"), SubResource("v_grocer_node_mahn"), SubResource("v_grocer_node_bye"), SubResource("v_grocer_node_bye_plain"), SubResource("p8_node_p8_hill"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_o_of_mangold_return_1"), SubResource("p8_node_o_of_mangold_return_1_yes"), SubResource("p8_node_t_of_mangold_return_1"), SubResource("p8_node_o_of_mangold_return_2"), SubResource("p8_node_o_of_mangold_return_2_yes"), SubResource("p8_node_t_of_mangold_return_2"), SubResource("p8_node_dance"), SubResource("p8_node_p8_ware"), SubResource("p8_node_story_2_turn_in"), SubResource("p9_node_p9_witness_friend"), SubResource("p9_node_p9_witness"), SubResource("p9_node_p9_letter"), SubResource("p9_node_p9_s")])

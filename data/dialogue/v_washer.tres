@@ -4,6 +4,207 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
 
+[sub_resource type="Resource" id="p9_menu_menu_01"]
+script = ExtResource("2")
+text = "[Die Liste] Bei Ihnen, Liesel, im Julmond vor einem Jahr – brannte da ein Licht?"
+next = &"p9_witness_friend"
+conditions = Array[String](["clue_known:c_q_dates", "!light:e_dorn:witnessed"])
+
+[sub_resource type="Resource" id="p9_menu_menu_02"]
+script = ExtResource("2")
+text = "[Die Liste] Ich muss Ihnen etwas zeigen."
+next = &"p9_confide"
+conditions = Array[String](["quest_step:q_who_knows:h5"])
+
+[sub_resource type="Resource" id="p9_menu_menu_03"]
+script = ExtResource("2")
+text = "[Auftrag] Was soll ich zu den Siebers bringen?"
+next = &"p9_bundle"
+conditions = Array[String](["order_offerable:oq_liesel_bundle", "sieber_marked", "!sieber_gone"])
+
+[sub_resource type="Resource" id="p9_menu_menu_04"]
+script = ExtResource("2")
+text = "[Brief] Der hier ist an Lorenz. Gehört er Ihnen?"
+next = &"p9_aschau"
+conditions = Array[String](["quest_step:q_letters:l5"])
+
+[sub_resource type="Resource" id="p9_p9_witness_underlined_c01"]
+script = ExtResource("2")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_witness_underlined"]
+script = ExtResource("1")
+id = &"p9_witness_underlined"
+text = "Bei uns brannte ein Licht in der Kammer. Kaspar hat gesagt, das war ich. Ich hab gesagt, das war er. Drei Wochen später ist er ins Moor gegangen und nicht wiedergekommen. Wir haben uns nie geeinigt, wer es war. (Sie sieht dich an, als wüsste sie, was auf der anderen Seite der Seite steht.)"
+choices = Array[ExtResource("2")]([SubResource("p9_p9_witness_underlined_c01")])
+conditions = Array[String](["underlined:washer", "!rel_tier:washer:friend"])
+fallback_next = &"p9_witness"
+actions = Array[String](["witness:e_dorn"])
+
+[sub_resource type="Resource" id="p9_p9_witness_friend_c01"]
+script = ExtResource("2")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_witness_friend"]
+script = ExtResource("1")
+id = &"p9_witness_friend"
+text = "Bei uns brannte ein Licht in der Kammer. Kaspar hat gesagt, das war ich. Ich hab gesagt, das war er. Drei Wochen später ist er ins Moor gegangen und nicht wiedergekommen. Wir haben uns nie geeinigt, wer es war. Und dann, leiser: Ich hab es ausgemacht, am Morgen. Es war nicht heiß. Ein Licht, das nicht heiß ist, Totengräber. Das hab ich keinem gesagt. Dir jetzt."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_witness_friend_c01")])
+conditions = Array[String](["rel_tier:washer:friend"])
+fallback_next = &"p9_witness_underlined"
+actions = Array[String](["witness:e_dorn"])
+
+[sub_resource type="Resource" id="p9_p9_witness_c01"]
+script = ExtResource("2")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_witness"]
+script = ExtResource("1")
+id = &"p9_witness"
+text = "Bei uns brannte ein Licht in der Kammer. Kaspar hat gesagt, das war ich. Ich hab gesagt, das war er. Drei Wochen später ist er ins Moor gegangen und nicht wiedergekommen. Wir haben uns nie geeinigt, wer es war."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_witness_c01")])
+actions = Array[String](["witness:e_dorn"])
+
+[sub_resource type="Resource" id="p9_p9_confide_c01"]
+script = ExtResource("2")
+text = "Ich wollte, dass es einer weiß."
+next = &"p9_confide_yes"
+actions = Array[String](["quest_choose:q_who_knows:h5:confide_washer"])
+
+[sub_resource type="Resource" id="p9_p9_confide_c02"]
+script = ExtResource("2")
+text = "Vergessen Sie es. Es ist nichts."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_confide"]
+script = ExtResource("1")
+id = &"p9_confide"
+text = "(Du zeigst die Rückseite der Kladde, die sechs Daten, das „S.“, und erzählst von den Lichtern.)"
+choices = Array[ExtResource("2")]([SubResource("p9_p9_confide_c01"), SubResource("p9_p9_confide_c02")])
+
+[sub_resource type="Resource" id="p9_p9_confide_yes_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_confide_yes"]
+script = ExtResource("1")
+id = &"p9_confide_yes"
+text = "Ich wasche ihn, wenn es so weit ist. Vorher nicht. Vorher ist er noch Johann. (Sie fragt nicht, woher du es weißt.)"
+choices = Array[ExtResource("2")]([SubResource("p9_p9_confide_yes_c01")])
+conditions = Array[String](["underlined:washer"])
+fallback_next = &"p9_confide_plain"
+
+[sub_resource type="Resource" id="p9_p9_confide_plain_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_confide_plain"]
+script = ExtResource("1")
+id = &"p9_confide_plain"
+text = "Ich wasche ihn, wenn es so weit ist. Vorher nicht. Vorher ist er noch Johann."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_confide_plain_c01")])
+
+[sub_resource type="Resource" id="p9_p9_public_confidant_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_public_confidant"]
+script = ExtResource("1")
+id = &"p9_public_confidant"
+text = "Sie haben es mir vorher gesagt. Das rechne ich Ihnen an. Fenner hat meinen Namen trotzdem aufgeschrieben. Neben die Nacht. Ich wasche trotzdem."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_public_confidant_c01")])
+conditions = Array[String](["quest_ending:q_who_knows:public", "confided:washer", "!flag:p9_public_washer"])
+fallback_next = &"p9_public_named"
+actions = Array[String](["set_flag:p9_public_washer"])
+
+[sub_resource type="Resource" id="p9_p9_public_named_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_public_named"]
+script = ExtResource("1")
+id = &"p9_public_named"
+text = "Fenner hat meinen Namen aufgeschrieben, Totengräber. Neben die Nacht, in der der Alte gestorben ist. Als hätte ich das Licht gebracht. Ich bring nur das Wasser."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_public_named_c01")])
+conditions = Array[String](["quest_ending:q_who_knows:public", "!flag:p9_public_washer"])
+fallback_next = &"p9_sent_away"
+actions = Array[String](["set_flag:p9_public_washer"])
+
+[sub_resource type="Resource" id="p9_p9_sent_away_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_sent_away"]
+script = ExtResource("1")
+id = &"p9_sent_away"
+text = "Lorenz hat sie auch fortgeschickt. Mit Briefen ohne Namen. Nicht alle sind angekommen. Ich hoffe, deiner kommt an. Ich hoffe es wirklich."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_sent_away_c01")])
+conditions = Array[String](["quest_ending:q_who_knows:away", "sieber_gone", "!flag:p9_liesel_away"])
+fallback_next = &"p9_bundle_done"
+actions = Array[String](["set_flag:p9_liesel_away"])
+
+[sub_resource type="Resource" id="p9_p9_bundle_done_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_bundle_done"]
+script = ExtResource("1")
+id = &"p9_bundle_done"
+text = "Das Leinen ist bei Anna. Gut. Wenn es so weit ist, muss sie nicht nähen. Das soll sie nicht müssen, nicht für den eigenen Vater."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_bundle_done_c01")])
+conditions = Array[String](["order:oq_liesel_bundle:completed", "!flag:p9_liesel_bundle"])
+fallback_next = &"p8_hill"
+actions = Array[String](["set_flag:p9_liesel_bundle"])
+
+[sub_resource type="Resource" id="p9_p9_bundle_c01"]
+script = ExtResource("2")
+text = "Ich bring es hin."
+next = &"p9_bundle_yes"
+actions = Array[String](["order_accept:oq_liesel_bundle"])
+
+[sub_resource type="Resource" id="p9_p9_bundle_c02"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_bundle"]
+script = ExtResource("1")
+id = &"p9_bundle"
+text = "Bring das zu Anna Sieber. Leinen. Für später. Sie weiß schon. Sag Johann nicht, was drin ist. Oder sag es ihm. Er wird lachen. Er lacht über so was."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_bundle_c01"), SubResource("p9_p9_bundle_c02")])
+
+[sub_resource type="Resource" id="p9_p9_bundle_yes_c01"]
+script = ExtResource("2")
+text = "Zweimal."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_bundle_yes"]
+script = ExtResource("1")
+id = &"p9_bundle_yes"
+text = "Klopf zweimal. Anna macht nicht auf, wenn einer nur einmal klopft. Das ist der Tod, sagt sie."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_bundle_yes_c01")])
+
+[sub_resource type="Resource" id="p9_p9_aschau_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_aschau"]
+script = ExtResource("1")
+id = &"p9_aschau"
+text = "An L. Aschau. (Sie hält den Brief eine Weile, ohne ihn zu öffnen.) Ich steck ihn ins Gesangbuch. Da schlägt keiner nach außer mir. Und Gott, aber der liest nicht mit. Danke, Totengräber."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_aschau_c01")])
+actions = Array[String](["quest_choose:q_letters:l5:liesel"])
+
 [sub_resource type="Resource" id="p8_menu_menu_01"]
 script = ExtResource("2")
 text = "[Geschichte] Die Totenwache"
@@ -638,7 +839,7 @@ next = &"bye"
 script = ExtResource("1")
 id = &"menu"
 text = "Na?"
-choices = Array[ExtResource("2")]([SubResource("v_washer_c010"), SubResource("v_washer_c011"), SubResource("v_washer_c012"), SubResource("v_washer_c013"), SubResource("v_washer_c014"), SubResource("v_washer_c015"), SubResource("v_washer_c016"), SubResource("v_washer_c017"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("p8_menu_menu_04"), SubResource("p8_menu_menu_05"), SubResource("p8_menu_menu_06"), SubResource("p8_menu_menu_07"), SubResource("p8_menu_menu_08"), SubResource("p8_menu_menu_09"), SubResource("p8_menu_menu_10"), SubResource("p8_menu_menu_11"), SubResource("p8_menu_menu_12"), SubResource("p8_menu_menu_13"), SubResource("p8_menu_menu_14"), SubResource("p8_menu_menu_15"), SubResource("p8_menu_menu_16"), SubResource("p8_menu_menu_17"), SubResource("v_washer_c018"), SubResource("v_washer_c019")])
+choices = Array[ExtResource("2")]([SubResource("v_washer_c010"), SubResource("v_washer_c011"), SubResource("v_washer_c012"), SubResource("v_washer_c013"), SubResource("v_washer_c014"), SubResource("v_washer_c015"), SubResource("v_washer_c016"), SubResource("v_washer_c017"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("p8_menu_menu_03"), SubResource("p8_menu_menu_04"), SubResource("p8_menu_menu_05"), SubResource("p8_menu_menu_06"), SubResource("p8_menu_menu_07"), SubResource("p8_menu_menu_08"), SubResource("p8_menu_menu_09"), SubResource("p8_menu_menu_10"), SubResource("p8_menu_menu_11"), SubResource("p8_menu_menu_12"), SubResource("p8_menu_menu_13"), SubResource("p8_menu_menu_14"), SubResource("p8_menu_menu_15"), SubResource("p8_menu_menu_16"), SubResource("p8_menu_menu_17"), SubResource("p9_menu_menu_01"), SubResource("p9_menu_menu_02"), SubResource("p9_menu_menu_03"), SubResource("p9_menu_menu_04"), SubResource("v_washer_c018"), SubResource("v_washer_c019")])
 
 [sub_resource type="Resource" id="v_washer_c020"]
 script = ExtResource("2")
@@ -778,5 +979,5 @@ choices = Array[ExtResource("2")]([SubResource("v_washer_c032")])
 script = ExtResource("3")
 id = &"v_washer"
 speaker_name = "Liesel Dorn"
-start_node = &"p8_hill"
-nodes = Array[ExtResource("1")]([SubResource("v_washer_node_start"), SubResource("v_washer_node_hagedorn_gate"), SubResource("v_washer_node_greet_p_devout"), SubResource("v_washer_node_greet_p_hardhearted"), SubResource("v_washer_node_greet_disreputable"), SubResource("v_washer_node_greet_unremarkable"), SubResource("v_washer_node_greet_respected"), SubResource("v_washer_node_greet_esteemed"), SubResource("v_washer_node_greet_renowned"), SubResource("v_washer_node_menu"), SubResource("v_washer_node_washing"), SubResource("v_washer_node_kaspar"), SubResource("v_washer_node_about_wiebke"), SubResource("v_washer_node_wake"), SubResource("v_washer_node_wake_more"), SubResource("v_washer_node_o_o_liesel_gowns"), SubResource("v_washer_node_o_o_liesel_gowns_yes"), SubResource("v_washer_node_t_o_liesel_gowns"), SubResource("v_washer_node_t_ob_yarn"), SubResource("v_washer_node_bye"), SubResource("v_washer_node_bye_plain"), SubResource("p8_node_p8_hill"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_favor_done"), SubResource("p8_node_o_of_liesel_return_1"), SubResource("p8_node_o_of_liesel_return_1_yes"), SubResource("p8_node_t_of_liesel_return_1"), SubResource("p8_node_o_of_liesel_return_2"), SubResource("p8_node_o_of_liesel_return_2_yes"), SubResource("p8_node_t_of_liesel_return_2"), SubResource("p8_node_dance"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_alt"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2_vigil"), SubResource("p8_node_story_3_meet"), SubResource("p8_node_story_3_promise"), SubResource("p8_node_story_3_promise_plain")])
+start_node = &"p9_public_confidant"
+nodes = Array[ExtResource("1")]([SubResource("v_washer_node_start"), SubResource("v_washer_node_hagedorn_gate"), SubResource("v_washer_node_greet_p_devout"), SubResource("v_washer_node_greet_p_hardhearted"), SubResource("v_washer_node_greet_disreputable"), SubResource("v_washer_node_greet_unremarkable"), SubResource("v_washer_node_greet_respected"), SubResource("v_washer_node_greet_esteemed"), SubResource("v_washer_node_greet_renowned"), SubResource("v_washer_node_menu"), SubResource("v_washer_node_washing"), SubResource("v_washer_node_kaspar"), SubResource("v_washer_node_about_wiebke"), SubResource("v_washer_node_wake"), SubResource("v_washer_node_wake_more"), SubResource("v_washer_node_o_o_liesel_gowns"), SubResource("v_washer_node_o_o_liesel_gowns_yes"), SubResource("v_washer_node_t_o_liesel_gowns"), SubResource("v_washer_node_t_ob_yarn"), SubResource("v_washer_node_bye"), SubResource("v_washer_node_bye_plain"), SubResource("p8_node_p8_hill"), SubResource("p8_node_story_2"), SubResource("p8_node_story_2_yes"), SubResource("p8_node_story_2_done"), SubResource("p8_node_story_3"), SubResource("p8_node_story_3_yes"), SubResource("p8_node_story_3_done"), SubResource("p8_node_story_cross"), SubResource("p8_node_listen"), SubResource("p8_node_favor"), SubResource("p8_node_favor_done"), SubResource("p8_node_o_of_liesel_return_1"), SubResource("p8_node_o_of_liesel_return_1_yes"), SubResource("p8_node_t_of_liesel_return_1"), SubResource("p8_node_o_of_liesel_return_2"), SubResource("p8_node_o_of_liesel_return_2_yes"), SubResource("p8_node_t_of_liesel_return_2"), SubResource("p8_node_dance"), SubResource("p8_node_story_1"), SubResource("p8_node_story_1_alt"), SubResource("p8_node_story_1_yes"), SubResource("p8_node_story_1_done"), SubResource("p8_node_story_2_vigil"), SubResource("p8_node_story_3_meet"), SubResource("p8_node_story_3_promise"), SubResource("p8_node_story_3_promise_plain"), SubResource("p9_node_p9_witness_underlined"), SubResource("p9_node_p9_witness_friend"), SubResource("p9_node_p9_witness"), SubResource("p9_node_p9_confide"), SubResource("p9_node_p9_confide_yes"), SubResource("p9_node_p9_confide_plain"), SubResource("p9_node_p9_public_confidant"), SubResource("p9_node_p9_public_named"), SubResource("p9_node_p9_sent_away"), SubResource("p9_node_p9_bundle_done"), SubResource("p9_node_p9_bundle"), SubResource("p9_node_p9_bundle_yes"), SubResource("p9_node_p9_aschau")])

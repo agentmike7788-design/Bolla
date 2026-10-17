@@ -4,6 +4,111 @@
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_choice.gd" id="2"]
 [ext_resource type="Script" path="res://src/systems/dialogue/dialogue_data.gd" id="3"]
 
+[sub_resource type="Resource" id="p9_menu_menu_01"]
+script = ExtResource("2")
+text = "[Die Liste] Drei Wochen bevor Ihr Vater starb – brannte da ein Licht?"
+next = &"p9_witness"
+conditions = Array[String](["clue_known:c_q_dates", "!light:e_ott:witnessed"])
+
+[sub_resource type="Resource" id="p9_menu_menu_02"]
+script = ExtResource("2")
+text = "[Brief] Das hatte er bei sich. Es ist für Sie."
+next = &"p9_letter"
+conditions = Array[String](["letter_for:speaker"])
+actions = Array[String](["letter_deliver"])
+
+[sub_resource type="Resource" id="p9_menu_menu_03"]
+script = ExtResource("2")
+text = "[Auftrag] Du hast einen Brief für deinen Bruder?"
+next = &"p9_brother"
+conditions = Array[String](["order:oq_gesa_brother:offered"])
+
+[sub_resource type="Resource" id="p9_menu_menu_04"]
+script = ExtResource("2")
+text = "[Post] Ein Brief für Ihren Vater. Von Peter."
+next = &"p9_post"
+conditions = Array[String](["post_for:kin_ott"])
+actions = Array[String](["letter_deliver:kin_ott"])
+
+[sub_resource type="Resource" id="p9_p9_witness_c01"]
+script = ExtResource("2")
+text = "Danke."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_witness"]
+script = ExtResource("1")
+id = &"p9_witness"
+text = "Drei Wochen vorher brannte schon mal eins. In Vaters Kammer. Da war er noch gesund. Er hat gesagt, er war's nicht. Wir haben gelacht. Ich lach da nicht mehr."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_witness_c01")])
+actions = Array[String](["witness:e_ott"])
+
+[sub_resource type="Resource" id="p9_p9_letter_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_letter"]
+script = ExtResource("1")
+id = &"p9_letter"
+text = "Von ihm? Er hat nie geschrieben. Nicht einmal, als er in Ellbach war. (Liest es zweimal, dann ein drittes Mal, ganz langsam.) Danke. Das behalt ich. Das ist mehr, als im Schrank hängt."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_letter_c01")])
+
+[sub_resource type="Resource" id="p9_p9_brother_c01"]
+script = ExtResource("2")
+text = "Ich bring ihn zur Post. Das Postgeld zahl ich."
+next = &"p9_brother_paid"
+actions = Array[String](["order_accept:oq_gesa_brother"])
+
+[sub_resource type="Resource" id="p9_p9_brother_c02"]
+script = ExtResource("2")
+text = "Hast du eine Münze fürs Postgeld?"
+next = &"p9_brother_straw"
+actions = Array[String](["order_accept:oq_gesa_brother", "give_item:straw_bouquet:1", "set_flag:q_gesa_straw"])
+
+[sub_resource type="Resource" id="p9_p9_brother_c03"]
+script = ExtResource("2")
+text = "Später."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_brother"]
+script = ExtResource("1")
+id = &"p9_brother"
+text = "Mein Bruder steht beim Militär. Er weiß nicht, dass Vater tot ist. Ich hab's aufgeschrieben. Gib es der Post, wenn sie kommt. Hanne oder Osric, egal. Peter liest nicht gern, aber das liest er."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_brother_c01"), SubResource("p9_p9_brother_c02"), SubResource("p9_p9_brother_c03")])
+
+[sub_resource type="Resource" id="p9_p9_brother_paid_c01"]
+script = ExtResource("2")
+text = "…"
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_brother_paid"]
+script = ExtResource("1")
+id = &"p9_brother_paid"
+text = "Danke. Ich kann's dir nicht zurückgeben. Ich kann dir nur sagen, dass ich's weiß."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_brother_paid_c01")])
+
+[sub_resource type="Resource" id="p9_p9_brother_straw_c01"]
+script = ExtResource("2")
+text = "Danke, Gesa."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_brother_straw"]
+script = ExtResource("1")
+id = &"p9_brother_straw"
+text = "Ich hab keine Münze. Ich hab Strohblumen. Die halten länger als frische. Leg sie wem aufs Grab, zu dem keiner kommt."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_brother_straw_c01")])
+
+[sub_resource type="Resource" id="p9_p9_post_c01"]
+script = ExtResource("2")
+text = "Ich komme mit."
+next = &"menu"
+
+[sub_resource type="Resource" id="p9_node_p9_post"]
+script = ExtResource("1")
+id = &"p9_post"
+text = "Von Peter. An Vater. Er weiß es nicht. (Sie liest, und ihr Mund liest mit.) Die Kuh hat gekalbt, Peter. Im Nebelung. Vater hat es nicht mehr gesehen. … Komm mit ans Grab, Totengräber. Ich les es ihm vor. Er soll's hören."
+choices = Array[ExtResource("2")]([SubResource("p9_p9_post_c01")])
+
 [sub_resource type="Resource" id="kin_ott_first_c01"]
 script = ExtResource("2")
 text = "…"
@@ -56,7 +161,7 @@ text = "Ich lass Sie allein."
 script = ExtResource("1")
 id = &"menu"
 text = "(Gesa wartet.)"
-choices = Array[ExtResource("2")]([SubResource("kin_ott_menu_c01"), SubResource("kin_ott_menu_c02"), SubResource("kin_ott_menu_c03"), SubResource("kin_ott_menu_c04")])
+choices = Array[ExtResource("2")]([SubResource("kin_ott_menu_c01"), SubResource("kin_ott_menu_c02"), SubResource("kin_ott_menu_c03"), SubResource("p9_menu_menu_01"), SubResource("p9_menu_menu_02"), SubResource("p9_menu_menu_03"), SubResource("p9_menu_menu_04"), SubResource("kin_ott_menu_c04")])
 
 [sub_resource type="Resource" id="kin_ott_wish_c01"]
 script = ExtResource("2")
@@ -124,4 +229,4 @@ script = ExtResource("3")
 id = &"kin_ott"
 speaker_name = "Gesa Ott"
 start_node = &"first"
-nodes = Array[ExtResource("1")]([SubResource("kin_ott_node_first"), SubResource("kin_ott_node_greet"), SubResource("kin_ott_node_menu"), SubResource("kin_ott_node_wish"), SubResource("kin_ott_node_wish_yes"), SubResource("kin_ott_node_wish_no"), SubResource("kin_ott_node_tip"), SubResource("kin_ott_node_who")])
+nodes = Array[ExtResource("1")]([SubResource("kin_ott_node_first"), SubResource("kin_ott_node_greet"), SubResource("kin_ott_node_menu"), SubResource("kin_ott_node_wish"), SubResource("kin_ott_node_wish_yes"), SubResource("kin_ott_node_wish_no"), SubResource("kin_ott_node_tip"), SubResource("kin_ott_node_who"), SubResource("p9_node_p9_witness"), SubResource("p9_node_p9_letter"), SubResource("p9_node_p9_brother"), SubResource("p9_node_p9_brother_paid"), SubResource("p9_node_p9_brother_straw"), SubResource("p9_node_p9_post")])

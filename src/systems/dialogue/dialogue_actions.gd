@@ -20,6 +20,14 @@ extends RefCounted
 ## villager id stays Relationships.meet) · note_event:<event> (NpcLife.note_event) · task:<action_id> (Orders.note_task – Lenz' names
 ## at the Lichtgang, Liesel's vigil, P6 addition) · take_ware (Theres' order, Friendship.take_ware – P4).
 ## G8 Runde 6: hill_turn_in:<giver> (HillRequests.turn_in – the ready delivery requests of the gate's notice board).
+## Phase 9 (docs/PHASE9_DESIGN.md §3.3, §3.4, P6): quest_note:<key>:<arg> (Quests.note) · quest_choose:<quest>:<step>:<choice>
+## (Quests.choose – the choice's own actions run there) · witness:<entry> (WhoKnows.witness) · mark_seen (WhoKnows.mark_seen) ·
+## letter_deliver[:<recipient>] (the first held letter to the speaker → Letters.decide deliver) · letter_read_aloud (the same, read to a
+## recipient who cannot read – context aloud true, counts as delivered) · letter_post:<peddler|carter> (the first held letter for
+## the town or an answer → Letters.give_to_carrier, 1 coin) · stranger_answer:<frank|evade|refuse> · stranger_offers (the panel
+## &"stranger" + Quests.note stranger_offers_seen) · stranger_bribe:<yes|no> · stranger_resolve:<fenner|deal|ilse> ·
+## large_turn_in:<giver> (HillRequests.large_turn_in, else turn_in) · rep_event:<id> (Reputation.event) · piety_event:<id>
+## (Piety.event) · goodwill:<kin|speaker>:<n> (Visitors.add_goodwill; „kin"/„speaker" = the speaker's household).
 
 const NOTIFY_INFO := &"info"
 const NOTIFY_REWARD := &"reward"
@@ -53,6 +61,14 @@ const REASON_TALK := "Gespräch"
 # Phase 8
 const WISH_CARD_PANEL := &"wish_card"
 const CONTEXT_WISH := "wish_offer"
+# Phase 9
+const STRANGER_PANEL := &"stranger"
+const NOTE_OFFERS_SEEN := &"stranger_offers_seen"
+const CARRIERS: PackedStringArray = ["peddler", "carter"]
+const REASON_QUEST := "Wer weiß, wann?"
+const CHOICE_DELIVER := &"deliver"
+## Who a letter for the post goes to (LetterData.recipient).
+const POST_RECIPIENTS: Array[StringName] = [&"town"]
 
 
 ## Applies every action in order.
@@ -247,7 +263,127 @@ static func apply(action: String, context: Dictionary) -> void:
 			if DialogueSyntax.has_name(p, text):
 				_call(&"npc_life", &"note_event", [StringName(p[0]), [] as Array[StringName]], text)
 		_:
-			push_warning("[DialogueRunner] unknown action '%s' ignored" % action)
+			if not _apply_p9(text, context):
+				push_warning("[DialogueRunner] unknown action '%s' ignored" % action)
+
+
+# --- Phase-9 actions ---
+
+## The Phase-9 actions (docs/PHASE9_DESIGN.md §3.4); false = not a Phase-9 key.
+static func _apply_p9(text: String, context: Dictionary) -> bool:
+	match DialogueSyntax.key(text):
+		"quest_note":
+			var p := DialogueSyntax.parts(text, 2)
+			if DialogueSyntax.has_name(p, text):
+				_call(&"quests", &"note", [StringName(p[0]), p[1] if p.size() > 1 else ""], text)
+		"quest_choose":
+			var p := DialogueSyntax.parts(text, 3)
+			if p.size() < 3 or p[0] == "" or p[1] == "" or p[2] == "":
+				push_warning("[DialogueRunner] '%s': expected quest_choose:<quest>:<step>:<choice>" % text)
+				return true
+			_call(&"quests", &"choose", [StringName(p[0]), StringName(p[1]), StringName(p[2])], text)
+		"witness":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				_call(&"who_knows", &"witness", [StringName(p[0])], text)
+		"mark_seen":
+			_call(&"who_knows", &"mark_seen", [], text)
+		"letter_deliver", "letter_read_aloud":
+			# Optional :<recipient> – a letter carried for someone else (Veit takes Lambert's, Gesa reads her father's post).
+			var p := DialogueSyntax.parts(text, 1)
+			var who := StringName(p[0]) if not p.is_empty() and p[0] != "" else &"speaker"
+			var uids := DialogueConditions.letters_for(who, context)
+			if uids.is_empty():
+				push_warning("[DialogueRunner] '%s': no letter for %s" % [text, who])
+				return true
+			var ctx := context.duplicate()
+			ctx["recipient"] = speaker_id(context) if who == &"speaker" else who
+			if DialogueSyntax.key(text) == "letter_read_aloud":
+				ctx["aloud"] = true
+			_call(&"letters", &"decide", [uids[0], CHOICE_DELIVER, ctx], text)
+		"letter_post":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or not p[0] in CARRIERS:
+				push_warning("[DialogueRunner] '%s': expected letter_post:<peddler|carter>" % text)
+				return true
+			var inv := DialogueSyntax.inventory(context, &"remove_item")
+			var uid := postable_letter(context)
+			if inv is Inventory and uid != "":
+				_call(&"letters", &"give_to_carrier", [uid, StringName(p[0]), inv], text)
+		"stranger_answer":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or not StringName(p[0]) in [&"frank", &"evade", &"refuse"]:
+				push_warning("[DialogueRunner] '%s': expected stranger_answer:<frank|evade|refuse>" % text)
+				return true
+			_call(&"stranger", &"answer", [StringName(p[0])], text)
+		"stranger_offers":
+			var quests := DialogueSyntax.system(&"quests")
+			if quests != null and quests.has_method(&"note"):
+				quests.call(&"note", NOTE_OFFERS_SEEN, str(TimeManager.day))
+			_open_panel_with(STRANGER_PANEL, context, {})
+		"stranger_bribe":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or not p[0] in ["yes", "no"]:
+				push_warning("[DialogueRunner] '%s': expected stranger_bribe:<yes|no>" % text)
+				return true
+			var inv: Variant = context.get("inventory")
+			_call(&"stranger", &"bribe", [p[0] == "yes", inv if inv is Inventory else null], text)
+		"stranger_resolve":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or not p[0] in DialogueConditions.STRANGER_ENDINGS:
+				push_warning("[DialogueRunner] '%s': expected stranger_resolve:<fenner|deal|ilse>" % text)
+				return true
+			_call(&"stranger", &"resolve", [StringName(p[0])], text)
+		"large_turn_in":
+			var p := DialogueSyntax.parts(text, 1)
+			var inv := DialogueSyntax.inventory(context, &"remove_item")
+			if DialogueSyntax.has_name(p, text) and inv is Inventory:
+				var hill := DialogueSyntax.system(&"hill_requests")
+				var method := &"large_turn_in" if hill != null and hill.has_method(&"large_turn_in") else &"turn_in"
+				var n: Variant = _call(&"hill_requests", method, [StringName(p[0]), inv], text)
+				if n is int and int(n) > 0:
+					EventBus.notification_requested.emit(HillTexts.CARTER_HANDED, NOTIFY_INFO)
+		"rep_event", "piety_event":
+			var p := DialogueSyntax.parts(text, 1)
+			if DialogueSyntax.has_name(p, text):
+				var group := &"reputation" if DialogueSyntax.key(text) == "rep_event" else &"piety"
+				_call(group, &"event", [StringName(p[0]), event_reason(context)], text)
+		"goodwill":
+			var p := DialogueSyntax.parts(text, 2)
+			var n: Variant = DialogueSyntax.int_arg(p, 1, null)
+			if not DialogueSyntax.has_name(p, text) or n == null:
+				return true
+			var kin := StringName(p[0])
+			if kin in [&"kin", &"speaker"]:
+				kin = DialogueConditions.kin_of(context)
+			if kin == &"":
+				push_warning("[DialogueRunner] '%s': no household" % text)
+				return true
+			_call(&"visitors", &"add_goodwill", [kin, int(n)], text)
+		_:
+			return false
+	return true
+
+
+## The first held letter for the post (an undecided letter to the town, else an answer – the item letter_reply).
+static func postable_letter(context: Dictionary) -> String:
+	for who: StringName in POST_RECIPIENTS:
+		var uids := DialogueConditions.letters_for(who, context)
+		if not uids.is_empty():
+			return uids[0]
+	var inv: Variant = context.get("inventory")
+	if is_instance_valid(inv) and (inv as Object).has_method(&"uids"):
+		for uid: String in (inv as Object).call(&"uids", &"letter_reply"):
+			return uid
+	return ""
+
+
+## The reason text of a reputation / piety event from a dialogue: the speaker's name, else the chain.
+static func event_reason(context: Dictionary) -> String:
+	var speaker: Variant = context.get("speaker")
+	if is_instance_valid(speaker) and (speaker as Object).get(&"display_name") is String and str((speaker as Object).get(&"display_name")) != "":
+		return str((speaker as Object).get(&"display_name"))
+	return REASON_QUEST
 
 
 # --- Phase-8 actions ---
