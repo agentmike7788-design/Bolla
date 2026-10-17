@@ -4378,3 +4378,30 @@ func test_phase9_remarks_react_to_the_endings() -> void:
 			continue
 		for ev: StringName in [&"event_q_sent_away", &"event_q_stayed", &"event_q_public"]:
 			assert_true(v.remarks.has(ev), "%s reacts to %s" % [v.npc_id, ev])
+
+
+func test_phase9_johann_on_the_bench_is_his_household() -> void:
+	# §3.1: the village Npc npc_kin_sieber_v (npc_id kin_sieber_v) speaks for kin_sieber – letters, goodwill and the evening
+	# meet of oq_johann_evening (npc kin_sieber) reach the household.
+	assert_eq(DialogueConditions.village_kin(&"kin_sieber_v"), &"kin_sieber")
+	assert_eq([DialogueConditions.village_kin(&"kin_nobody_v"), DialogueConditions.village_kin(&"kin_sieber")], [&"", &""])
+	var johann := _p9_speaker(&"kin_sieber_v")
+	var ctx := _ctx(_inv())
+	ctx["speaker"] = johann
+	assert_eq(DialogueConditions.kin_of(ctx), &"kin_sieber")
+	var orders := P9Orders.new()
+	tree.root.add_child(orders)
+	_apply("meet:v_sieber_bench", ctx)
+	assert_eq(orders.calls, [["meet", &"kin_sieber", &"v_sieber_bench"]], "the meet counts for kin_sieber")
+	var sys := P9Systems.new()
+	tree.root.add_child(sys)
+	_apply("goodwill:speaker:1", ctx)
+	assert_eq(sys.calls[-1], ["goodwill", &"kin_sieber", 1])
+	var letters := P9Letters.new()
+	tree.root.add_child(letters)
+	letters.table = {"lt_0001": _p9_letter(&"lp_x", &"kin_sieber")}
+	var inv := _p9_inv({&"letter": ["lt_0001"]})
+	ctx["inventory"] = inv
+	assert_true(_check("letter_for:speaker", ctx), "a letter to the Siebers on the bench")
+	_apply("letter_read_aloud", ctx)
+	assert_eq(letters.calls[-1], ["decide", "lt_0001", &"deliver", &"kin_sieber", true], "read aloud – he cannot read")

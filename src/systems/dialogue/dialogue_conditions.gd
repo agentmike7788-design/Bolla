@@ -510,6 +510,15 @@ static func _evaluate_p9(text: String, context: Dictionary) -> _Result:
 
 # --- Phase 9 -----------------------------------------------------------------------------------
 
+## Phase 9 (§3.1): the kin id behind a household's village Npc id „<kin>_v" (kin_sieber_v → kin_sieber); &"" otherwise.
+static func village_kin(npc_id: StringName) -> StringName:
+	var text := String(npc_id)
+	if not text.ends_with("_v") or not Database.has_method(&"kin"):
+		return &""
+	var kin := StringName(text.trim_suffix("_v"))
+	return kin if Database.kin(kin) != null else &""
+
+
 ## Phase 9 (§1.2): Quests.is_open() in the running world, else the flag p9_open.
 static func p9_open() -> bool:
 	var quests := DialogueSyntax.system(&"quests")
@@ -766,6 +775,10 @@ static func kin_of(context: Dictionary) -> StringName:
 	var node_name := StringName(str((speaker as Node).name)) if speaker is Node else &""
 	if npc_id != &"" and Database.has_method(&"kin") and Database.kin(npc_id) != null:
 		return npc_id
+	# Phase 9 (§3.1): a household's village Npc (Johann on his bench, npc_kin_sieber_v / npc_id kin_sieber_v) is that kin.
+	var alias := village_kin(npc_id)
+	if alias != &"":
+		return alias
 	if Database.has_method(&"kin_list"):
 		for k: Resource in Database.kin_list():
 			if not k is KinData:

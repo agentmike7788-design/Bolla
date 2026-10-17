@@ -142,8 +142,11 @@ static func apply(action: String, context: Dictionary) -> void:
 			if not DialogueSyntax.has_name(p, text):
 				return
 			if DialogueSyntax.key(text) == "meet" and not StringName(p[0]) in VILLAGERS:
-				# Phase 8: meet:<place> – a friendship meeting with the speaker at <place> (Orders.note_meet).
-				_call(&"orders", &"note_meet", [speaker_id(context), StringName(p[0])], text)
+				# Phase 8: meet:<place> – a friendship meeting with the speaker at <place> (Orders.note_meet). Phase 9: a
+				# household's village Npc (kin_sieber_v) meets as its kin (oq_johann_evening, npc kin_sieber).
+				var who := speaker_id(context)
+				var alias := DialogueConditions.village_kin(who)
+				_call(&"orders", &"note_meet", [alias if alias != &"" else who, StringName(p[0])], text)
 				return
 			_call(&"relationships", &"meet" if DialogueSyntax.key(text) == "meet" else &"note_talk", [StringName(p[0])], text)
 		"rel_add":
@@ -297,7 +300,9 @@ static func _apply_p9(text: String, context: Dictionary) -> bool:
 				push_warning("[DialogueRunner] '%s': no letter for %s" % [text, who])
 				return true
 			var ctx := context.duplicate()
-			ctx["recipient"] = speaker_id(context) if who == &"speaker" else who
+			var sid := speaker_id(context)
+			var alias := DialogueConditions.village_kin(sid)
+			ctx["recipient"] = (alias if alias != &"" else sid) if who == &"speaker" else who
 			if DialogueSyntax.key(text) == "letter_read_aloud":
 				ctx["aloud"] = true
 			_call(&"letters", &"decide", [uids[0], CHOICE_DELIVER, ctx], text)
