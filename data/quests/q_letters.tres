@@ -1,0 +1,100 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/quests/quest_ending_data.gd" id="1_j6o0g"]
+[ext_resource type="Script" path="res://src/systems/quests/quest_data.gd" id="2_l1j22"]
+[ext_resource type="Script" path="res://src/systems/quests/quest_step_data.gd" id="3_qd0lk"]
+[ext_resource type="Script" path="res://src/systems/quests/quest_choice_data.gd" id="4_7vs5w"]
+
+[sub_resource type="Resource" id="Resource_j20xl"]
+script = ExtResource("1_j6o0g")
+id = &"done"
+title = "Briefe ohne Antwort"
+summary = "Die Briefe sind dort, wo sie hingehören – oder in der Asche."
+flag = &"q_letters_done"
+
+[sub_resource type="Resource" id="Resource_v8iid"]
+script = ExtResource("3_qd0lk")
+id = &"l1"
+title = "Ein Brief in der Tasche"
+hint = "Ein Toter hatte einen Brief bei sich. Wohin damit?"
+complete_on = &"note"
+complete_ids = Array[StringName]([&"pocket_decided"])
+complete_count = 1
+
+[sub_resource type="Resource" id="Resource_alt38"]
+script = ExtResource("3_qd0lk")
+id = &"l2"
+title = "Post für den Hügel"
+hint = "Osric hat Post für einen, der oben liegt."
+complete_on = &"note"
+complete_ids = Array[StringName]([&"post_decided"])
+complete_count = 1
+
+[sub_resource type="Resource" id="Resource_pts54"]
+script = ExtResource("3_qd0lk")
+id = &"l3"
+title = "Für den Bruder"
+hint = "Gesa Ott hat einen Brief für ihren Bruder beim Militär."
+complete_on = &"order"
+complete_ids = Array[StringName]([&"oq_gesa_brother"])
+order_ids = Array[StringName]([&"oq_gesa_brother"])
+
+[sub_resource type="Resource" id="Resource_q6n5e"]
+script = ExtResource("3_qd0lk")
+id = &"l4"
+title = "Eine Antwort"
+hint = "Schreib einem, der auf Antwort wartet."
+complete_on = &"note"
+complete_ids = Array[StringName]([&"answer_posted"])
+complete_count = 1
+
+[sub_resource type="Resource" id="Resource_dqccf"]
+script = ExtResource("4_7vs5w")
+id = &"open"
+label = "Öffnen"
+conditions = PackedStringArray()
+actions = PackedStringArray("add_clue:c_q_ferry_letter", "piety_event:letter_read_sealed", "set_flag:lorenz_letter_opened")
+ending = &"done"
+
+[sub_resource type="Resource" id="Resource_7cleh"]
+script = ExtResource("4_7vs5w")
+id = &"keep"
+label = "Versiegelt aufheben"
+conditions = PackedStringArray()
+actions = PackedStringArray("set_flag:lorenz_letter_kept")
+ending = &"done"
+
+[sub_resource type="Resource" id="Resource_fr4pc"]
+script = ExtResource("4_7vs5w")
+id = &"liesel"
+label = "Liesel geben"
+conditions = PackedStringArray()
+actions = PackedStringArray("rel_add:washer:4", "set_flag:lorenz_letter_liesel")
+ending = &"done"
+
+[sub_resource type="Resource" id="Resource_eu0ch"]
+script = ExtResource("4_7vs5w")
+id = &"burn"
+label = "Verbrennen"
+conditions = PackedStringArray()
+actions = PackedStringArray("set_flag:lorenz_letter_burned")
+ending = &"done"
+
+[sub_resource type="Resource" id="Resource_dvco2"]
+script = ExtResource("3_qd0lk")
+id = &"l5"
+title = "An L. Aschau"
+hint = "Ein Brief mit Anker und Schlange."
+complete_on = &"choice"
+choices = Array[ExtResource("4_7vs5w")]([SubResource("Resource_dqccf"), SubResource("Resource_7cleh"), SubResource("Resource_fr4pc"), SubResource("Resource_eu0ch")])
+
+[resource]
+script = ExtResource("2_l1j22")
+id = &"q_letters"
+title = "Briefe ohne Antwort"
+summary = "In den Taschen der Toten stecken Briefe an die Lebenden, und die Post bringt Briefe an die Toten. Du bist der Einzige, der beides in der Hand hat."
+giver = &"carter"
+open_conditions = PackedStringArray("flag:p9_open")
+steps = Array[ExtResource("3_qd0lk")]([SubResource("Resource_v8iid"), SubResource("Resource_alt38"), SubResource("Resource_pts54"), SubResource("Resource_q6n5e"), SubResource("Resource_dvco2")])
+endings = Array[ExtResource("1_j6o0g")]([SubResource("Resource_j20xl")])
+order = 20

@@ -97,6 +97,9 @@ var _rumor_seen: PackedStringArray = []
 var _next_wish: int = 1
 ## visit_id → the phase last announced (not saved; a load announces nothing).
 var _announced: Dictionary = {}
+## Phase 9 (P4): kin_id → every n days instead of the household plan; −1 = comes no more (saved as kin_interval, only
+## when set – a Phase-8 state saves as before).
+var _kin_interval: Dictionary = {}
 
 
 func _init() -> void:
@@ -142,9 +145,12 @@ func plan_day(day: int) -> Array[Dictionary]:
 			villagers.append(e)
 			windows.append([start, start + VisitRules.duration(travel, graves.size(), bool(e.flowers), true, cfg, cfg.wait_minutes_villager)])
 		else:
+			var every := kin_interval(kin.kin_id)
+			if every < 0:
+				continue
 			var dues: Array = []
 			for g: String in graves:
-				dues.append(_grave_due(g))
+				dues.append(_grave_due(g) if every == 0 else _interval_due(g, every, day))
 			var due := VisitRules.household_due(dues)
 			if due >= 0 and due <= day:
 				households.append([due, String(kin.kin_id), kin, graves])
@@ -251,10 +257,21 @@ func add_goodwill(kin_id: StringName, delta: int) -> void:
 	_goodwill[kin_id] = clampi(goodwill(kin_id) + delta, 0, 10)
 
 
-## Phase 9 W0 stub for P4 (docs/PHASE9_DESIGN.md §2.2.5, §3.4, §5.1): from H4 Johann Sieber comes daily (kin_sieber, 1);
-## saved in visitors.kin_interval. W0: inert – W1 (P4) fills the body; the signature is the contract.
-func set_kin_interval(_kin_id: StringName, _days: int) -> void:
-	pass
+## Phase 9 (P4, docs/PHASE9_DESIGN.md §2.2.5, §3.4, §5.1): from H4 Johann Sieber comes daily (kin_sieber, 1) instead of
+## the household plan; 0 = the plan again; < 0 = he comes no more (ending A gone, Johann dead). Saved in
+## visitors.kin_interval; the next plan (06:00) uses it.
+func set_kin_interval(kin_id: StringName, days: int) -> void:
+	if kin_id == &"":
+		return
+	if days == 0:
+		_kin_interval.erase(String(kin_id))
+	else:
+		_kin_interval[String(kin_id)] = days if days > 0 else -1
+
+
+## Phase 9: the interval of `kin_id` (0 = the household plan, −1 = no more visits).
+func kin_interval(kin_id: StringName) -> int:
+	return int(_kin_interval.get(String(kin_id), 0))
 
 
 ## The kin of the dead in `grave_id` (CorpseRecord.kin_house → KinData; fixed graves) or &"".
@@ -528,10 +545,14 @@ func save_state() -> Dictionary:
 	var rumor: Array = []
 	for id: String in _rumor_seen:
 		rumor.append(id)
-	return {"plan_day": _plan_day, "plan": _plan.duplicate(true), "goodwill": gw, "last_visit": _last_visit.duplicate(),
+	var out := {"plan_day": _plan_day, "plan": _plan.duplicate(true), "goodwill": gw, "last_visit": _last_visit.duplicate(),
 			"last_kin": _last_kin.duplicate(), "wishes": _wishes.duplicate(true), "tips_today": {"day": _tips_day, "coins": _tips_coins},
 			"tips_on_stone": _stones.duplicate(true), "pleased_today": _pleased, "pleased_day": _pleased_day,
 			"noise_day": _noise_day, "rumor_seen": rumor, "next_wish": _next_wish, "plan_open": _planned_open}
+	# Phase 9 (§5.1): only when set – a Phase-8 state saves byte-identical.
+	if not _kin_interval.is_empty():
+		out["kin_interval"] = _kin_interval.duplicate()
+	return out
 
 
 ## Tolerant: damaged entries are dropped; a plan of another day stays until the next 06:00 replans.
@@ -608,6 +629,14 @@ func load_state(data: Dictionary) -> void:
 		for id: Variant in rumor:
 			_rumor_seen.append(str(id))
 	_next_wish = maxi(_int(data.get("next_wish"), 1), 1)
+	# Phase 9 (P4): {kin_id: days} – whole days ≥ 1 or −1; anything else (garbage, 0) is dropped.
+	_kin_interval = {}
+	var every: Variant = data.get("kin_interval", {})
+	if every is Dictionary:
+		for kin: Variant in every:
+			var v: Variant = (every as Dictionary)[kin]
+			if v is int and (int(v) >= 1 or int(v) == -1):
+				_kin_interval[str(kin)] = int(v)
 	for w: Dictionary in _wishes:
 		var n := str(w.wish_id).trim_prefix("w_")
 		if n.is_valid_int():
@@ -1073,6 +1102,13 @@ func _grave_due(grave_id: String) -> int:
 		var grave := _graveyard().get_grave(grave_id)
 		buried = grave.completed_day if grave != null else 0
 	return VisitRules.next_due(grave_id, buried, int(_last_visit.get(grave_id, -1)), _open_day(), _cfg())
+
+
+## Phase 9: the due day of `grave_id` for a kin with a fixed interval (set_kin_interval) – the last look + `every`
+## days, today when never looked at.
+func _interval_due(grave_id: String, every: int, day: int) -> int:
+	var last := int(_last_visit.get(grave_id, -1))
+	return day if last < 0 else last + every
 
 
 func _house_of(corpse: CorpseRecord) -> StringName:

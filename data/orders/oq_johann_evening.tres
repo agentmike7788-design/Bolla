@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"oq_johann_evening"
+giver = &"kin_sieber"
+recipient = &""
+kind = &"meet"
+title = "Ein Abend bei Johann"
+request_text = "Johann sitzt auf der Bank vor dem Haus. „Setz dich. Wenn du willst. Ich hab Zeit.“"
+thanks_text = ""
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"minutes": 30,
+"npc": "kin_sieber",
+"place": "v_sieber_bench",
+"times": 2,
+"window": [1080, 1200]
+}
+days_limit = 0
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 0
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 904
+accept_flag = &""
+category = &"quest"
+parts = Array[Resource]([])
+size = &""
+place = &"gate"
+parts_in_order = false

@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"oq_case_return"
+giver = &"innkeeper"
+recipient = &"stranger"
+kind = &"deliver"
+title = "Der Koffer"
+request_text = "Rosine: „Bring ihn rauf, er wartet am Tor. Ich fass das Ding nicht an.“"
+thanks_text = ""
+items = Dictionary[StringName, int]({
+&"stranger_case": 1
+})
+coins = 0
+target = "stranger_gate"
+conditions = {}
+days_limit = 1
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 0
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 905
+accept_flag = &""
+category = &"quest"
+parts = Array[Resource]([])
+size = &""
+place = &"gate"
+parts_in_order = false

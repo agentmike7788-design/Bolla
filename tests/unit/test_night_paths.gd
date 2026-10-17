@@ -219,3 +219,49 @@ func test_watch_spot_and_sick_light() -> void:
 func test_stub_free() -> void:
 	for p: String in ["res://src/systems/night/night_paths.gd", "res://src/systems/night/night_path_rules.gd"]:
 		assert_false(FileAccess.get_file_as_string(p).contains("## STUB ("), p)
+
+
+# --- Phase 9 (P4, docs/PHASE9_DESIGN.md §2.2.2, §3.4): np_sieber relative to q_light_day, cancelled by sieber_gone -----
+
+func _with_sieber(light: Variant) -> NightPathData:
+	var sieber := Phase9Fixtures.night_path()
+	var list: Array[NightPathData] = Phase8Fixtures.night_paths()
+	list.append(sieber)
+	paths.path_data = list
+	if light != null:
+		GameState.set_flag(&"q_light_day", light)
+	return sieber
+
+
+func test_np_sieber_counts_from_q_light_day() -> void:
+	var sieber := _with_sieber(51)
+	assert_eq(paths.anchor_day(sieber), 51)
+	assert_eq(paths.anchor_day(Phase8Fixtures.night_path(&"np_ott")), OPEN, "np_ott stays on p8_open_day")
+	assert_eq(NightPathRules.light_window(sieber, 51), Vector2i(69 * 1440 + 960, 71 * 1440 + 360), "light + 19 16:00 … light + 21 06:00")
+	assert_eq(paths.sick_houses(70, 1350), PackedStringArray(["house_sieber"]), "Quast's night (light + 19)")
+	assert_eq(paths.sick_houses(69, 1350), PackedStringArray())
+	var v := paths.next_visit(&"np_sieber", 70, 1300)
+	assert_eq([v.npc_id, v.enter_minute], [&"surgeon", 1350], "Quast 22:30")
+	TimeManager.load_state({"day": 72, "minute_of_day": 100})
+	paths.load_state({"last_total": TimeManager.total_minutes()})
+	TimeManager.advance(40)
+	assert_eq(GameState.get_flag(&"sieber_dead"), 72, "§2.2.2: light + 21, 02:10")
+	assert_eq(paths.death_day(&"np_sieber"), 72)
+
+
+func test_np_sieber_needs_its_anchor_and_stops_when_he_is_gone() -> void:
+	var sieber := _with_sieber(null)
+	assert_false(paths.path_runs(sieber), "no q_light_day (before Phase 9)")
+	assert_eq(paths.sick_houses(70, 1350), PackedStringArray())
+	assert_eq(paths.next_visit(&"np_sieber", 70, 1300), {})
+	GameState.set_flag(&"q_light_day", 51)
+	assert_true(paths.path_runs(sieber))
+	GameState.set_flag(&"sieber_gone", true)
+	assert_false(paths.path_runs(sieber), "ending A: cancel_flag")
+	assert_eq(paths.sick_houses(70, 1350), PackedStringArray())
+	assert_eq(paths.wait_minutes(&"watch_sieber"), 0)
+	TimeManager.load_state({"day": 72, "minute_of_day": 100})
+	paths.load_state({"last_total": TimeManager.total_minutes()})
+	TimeManager.advance(40)
+	assert_false(GameState.has_flag(&"sieber_dead"), "no death when he left")
+	assert_true(paths.path_runs(Phase8Fixtures.night_path(&"np_ott")), "np_ott unaffected")
