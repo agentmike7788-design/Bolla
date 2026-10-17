@@ -1,6 +1,6 @@
 # Phase 9 – Quests – Vertrag v1
 
-Status: **v1 – Entwurf zur Benutzerfreigabe (Vertragsfragen §14 offen), danach verbindlich für die Umsetzung** · Verantwortlich: Agent 01 (Lead), Agent 02 (Game Design), Agent 03 (World Design), Agent 06 (Character Art), Agent 07 (Animation), Agent 08 (Godot Core), Agent 12 (NPC/AI), Agent 13 (Quest/Story), Agent 14 (Crafting/Economy), Agent 17 (Audio), Agent 18 (UI/UX), Agent 19 (QA)
+Status: **v1 – verbindlich für die Umsetzung (§14 vom Benutzer am 17.10.2026 entschieden)** · Verantwortlich: Agent 01 (Lead), Agent 02 (Game Design), Agent 03 (World Design), Agent 06 (Character Art), Agent 07 (Animation), Agent 08 (Godot Core), Agent 12 (NPC/AI), Agent 13 (Quest/Story), Agent 14 (Crafting/Economy), Agent 17 (Audio), Agent 18 (UI/UX), Agent 19 (QA)
 Baut auf `docs/PHASE8_DESIGN.md` (Vertrag v1, freigegeben 17.10.2026 nach Runde 6, inkl. „G8 Runde 6 – Bitten vom Hügel“), `docs/PHASE7_DESIGN.md`, `docs/PHASE6_DESIGN.md`, `docs/PHASE5_DESIGN.md`, `docs/PHASE4_DESIGN.md`, `docs/PHASE3_DESIGN.md` und `docs/VERTICAL_SLICE_DESIGN.md` auf. Was dieses Dokument nicht ändert, gilt dort unverändert weiter. Referenz-Build: **10e310e** (Gate G8 freigegeben, 3 016 Tests, Browser-Testversion v18). Der Lead trägt in den W0-Notizen den Hash ein, auf dem die v7-Fixtures entstehen (§5.3).
 Gameplay-Werte sind **Vorschläge**; der Benutzer prüft sie beim Gate G9. ART STYLE LOCK „Gemaltes Diorama“ ist aktiv: Phase 9 ändert den Stil nicht. Maler-Shader (`painted.gdshader`, `painted_common.gdshaderinc`, `painted_foliage.gdshader`), Atmosphären-Presets, Flackerlicht, der gemeinsame Gesichtsaufbau (`tools/blender/lib_faces.py`) und das Rig (9 Knochen mit `tool`) bleiben unverändert und werden für die neue Figur **wiederverwendet**. Friedhof, Dorf, alle Gebäude und Innenräume bleiben bitgleich, **außer** den in §4.6 vollständig aufgezählten Eingriffen (vierte Reihe im Lindenacker, Krankenlicht-Fenster und Klopftür bei den Siebers, Stehplätze des Herrn mit dem Koffer, großer Bitt-Bogen an der Torafel und an der Gemeindetafel).
 
@@ -1013,3 +1013,12 @@ P6 besitzt alle Dialoge, Merkbuch- und Kettentexte; P3 die Brief-, Post- und Bot
    - **Vorschlag: (a)**, das Karten-Lesezeichen aus (c) als Priorität B.
 
 ---
+
+### §14 Benutzerentscheidungen (bindend, 17.10.2026)
+1. **„S.“ = Johann Sieber** (a) – drei Enden: über den Hügel, bei Grete, vor der Gemeinde (+ still).
+2. **Größere Bitten ab Tag 2** (a) – am Tor in jedem Spiel, ab `village_open` auch an der Gemeindetafel; Messziel HillBot Pflicht Leerlauf Tag 2–12 ≤ 1700 min.
+3. **Vierte Reihe im Lindenacker** (b) – 4 Stellen `l_13…l_16`, Südzaun 3,2 m nach Süden, ein Waldbaum versetzt.
+4. **Brenneisen: moralische Angebote** (a) – Fragen, Grabeserde, Registerabschrift, Präparate, Bestechung, Kladde für 40 Münzen; **nie Leichen**; drei Enden (Fenner, Handel, Ilse).
+5. **Ende A bleibt offen** (a) – ob Johann ankommt, frühestens in einer späteren Phase.
+6. **Fremde versiegelte Briefe öffnen: Pietät −1** (a), außer der Brief bittet darum; Text bleibt im Merkbuch.
+7. **Merkbuch-Reiter „Vorhaben“ für alles** (a) mit „Verfolgen“ für die HUD-Zeile; Karten-Lesezeichen Priorität B.
