@@ -258,7 +258,8 @@ func _plan_delivery(day: int, quiet: bool) -> Dictionary:
 			plan.stench = true
 		if story == null:
 			var pending := StoryDirector.pending_count(delivered, story_list)
-			if CorpseDeliveryRules.is_cemetery_full(graveyard, unburied, CorpseDeliveryRules.reserved_plots(graveyard, pending, _story_config().chapter_section)):
+			var reserved := CorpseDeliveryRules.reserved_plots(graveyard, pending, _story_config().chapter_section) + _held_back_plots()
+			if CorpseDeliveryRules.is_cemetery_full(graveyard, unburied, reserved):
 				plan.end = PLAN_RESERVE
 				return plan
 		var dropoff: Node = null
@@ -324,6 +325,15 @@ func last_delivery_day() -> int:
 
 
 ## Phase 8 §2.2.1: sets record.kin_house from `day` once the village is open (village_open) – story corpses
+## Phase 9 (docs/PHASE9_DESIGN.md §2.6; P3 for P4): the plot of the fourth row Fenner holds back for D3 until the main
+## chain has an ending (WhoKnows.reserved_plot_count; 0 without WhoKnows – Phase 3–8 bit-identical).
+func _held_back_plots() -> int:
+	var who := _first_in_group(&"who_knows")
+	if who != null and who.has_method(&"reserved_plot_count"):
+		return maxi(int(who.call(&"reserved_plot_count")), 0)
+	return 0
+
+
 ## Phase 9 (docs/PHASE9_DESIGN.md §2.4.2, §3.3; P3): the pocket letter of a delivered corpse (Letters.assign sets
 ## record.letter_id from p9_open on; without a Letters node nothing changes).
 func _assign_letter(record: CorpseRecord) -> void:

@@ -645,6 +645,7 @@ func test_errands_e1_and_e2() -> void:
 	assert_has(notes, Letters.TEXT_SEAL)
 	assert_true(letters.decide(e2, &"deliver", {"inventory": inv, "npc": &"priest"}))
 	assert_true(orders.completed.has(&"oq_fenner_seal"))
+	assert_eq(GameState.get_stat(&"errands_done"), 2, "E1 and E2 done (the second E1 letter found it done)")
 	assert_eq(letters.decided_count(), 0, "errands are no letters of the chain count")
 	GameState.set_flag(&"q_end_public", true)
 	var notice := letters.errand_letter(&"oq_fenner_seal", inv)

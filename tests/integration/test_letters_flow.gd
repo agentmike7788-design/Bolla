@@ -26,11 +26,32 @@ class WhoKnowsDouble extends Node:
 	func read_block_reason(_inv: Inventory) -> String:
 		return ""
 
+	var registered: bool = false
+
 	func read_kladde() -> void:
 		kladde_read += 1
+		GameState.set_flag(&"kladde_read", true)
+
+	func register_block_reason() -> String:
+		return "" if GameState.flag_on(&"kladde_read") and not registered and step_h2 else "nein"
+
+	var step_h2: bool = false
 
 	func compare_register() -> PackedStringArray:
-		return PackedStringArray(["Q. → Marthe Quendel"])
+		registered = true
+		return PackedStringArray(["e_quendel"])
+
+	var deciding: bool = false
+
+	func write_block_reason(inv: Inventory) -> String:
+		if not deciding or inv.has(&"nameless_letter"):
+			return "nein"
+		return "" if inv.has(&"ink") else "keine Tinte"
+
+	func write_letter(inv: Inventory) -> bool:
+		inv.remove_item(&"ink", 1)
+		inv.add_item(&"nameless_letter", 1)
+		return true
 
 	func can_compare(grave_id: String) -> bool:
 		return comparable.has(grave_id) and not compared.has(grave_id)
@@ -41,6 +62,11 @@ class WhoKnowsDouble extends Node:
 
 	func letter_posted() -> bool:
 		return false
+
+	var held: int = 0
+
+	func reserved_plot_count() -> int:
+		return held
 
 
 class QuestsDouble extends Node:
@@ -314,16 +340,16 @@ func test_errands_both_decisions() -> void:
 func test_chain_prompts_of_p4_at_the_desk_and_the_grave() -> void:
 	var who := WhoKnowsDouble.new()
 	world.add_child(who)
-	quests.step = &"h1"
 	assert_eq(desk.get_interaction_prompt(player), Desk.PROMPT_KLADDE % 20)
 	desk.interact(player)
 	assert_eq(who.kladde_read, 1, "H1: WhoKnows.read_kladde after the timed action")
-	quests.step = &"h2"
+	assert_eq(desk.get_interaction_prompt(player), Desk.PROMPT_READ, "read once (kladde_read)")
+	who.step_h2 = true
 	assert_eq(desk.get_interaction_prompt(player), Desk.PROMPT_REGISTER_LIST % 30)
 	desk.interact(player)
-	assert_has(notes, Desk.TEXT_REGISTER % "Q. → Marthe Quendel")
+	assert_has(notes, Desk.TEXT_REGISTER)
 	assert_eq(desk.get_interaction_prompt(player), Desk.PROMPT_READ, "compared once")
-	quests.step = &"h6"
+	who.deciding = true
 	assert_eq(desk.get_interaction_prompt(player), Desk.PROMPT_READ, "no ink: no nameless letter")
 	player.inventory.add_item(&"ink", 1)
 	assert_eq(desk.get_interaction_prompt(player), Desk.PROMPT_NAMELESS % 20)
@@ -338,6 +364,18 @@ func test_chain_prompts_of_p4_at_the_desk_and_the_grave() -> void:
 	plot.interact(player)
 	assert_eq(who.compared, [grave] as Array[String])
 	assert_ne(plot.get_interaction_prompt(player), GravePlot.PROMPT_DATE % 5)
+
+
+func test_the_held_back_plot_of_the_fourth_row() -> void:
+	var who := WhoKnowsDouble.new()
+	world.add_child(who)
+	who.held = graveyard.free_plot_count()
+	TimeManager.set_time(OPEN_DAY, 470)
+	assert_null(corpses.try_daily_delivery(OPEN_DAY), "every free plot held back: no delivery („halt eine Grube frei“)")
+	assert_eq(corpses.records().size(), 0)
+	who.held = 1
+	TimeManager.set_time(OPEN_DAY + 1, 470)
+	assert_not_null(corpses.try_daily_delivery(OPEN_DAY + 1), "one held back, the others take the day's dead")
 
 
 func test_without_the_phase9_nodes_the_prompts_stay() -> void:

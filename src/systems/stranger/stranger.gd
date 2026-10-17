@@ -677,6 +677,7 @@ func _complete_order(id: StringName) -> void:
 	if orders.has_method(&"state") and StringName(str(orders.call(&"state", id))) != &"accepted":
 		return
 	orders.call(&"complete", id)
+	GameState.add_stat(&"errands_done", 1)
 
 
 func _offer(id: StringName) -> StrangerOfferData:
