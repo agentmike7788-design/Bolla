@@ -839,7 +839,7 @@ func test_phase9_list_page() -> void:
 	who.seen = [&"e_quendel"]
 	rows = j.list_page().entries
 	assert_eq([rows[1].name, rows[4].name, rows[1].witnessed, rows[4].witnessed], ["Marthe Quendel", "Gerhard Ott", true, false])
-	assert_eq(rows[0].name, "der Tote aus dem Moor", "Kaspar only with i_not_lorenz (§2.2.3 H2)")
+	assert_eq(rows[0].name, LightRules.MOOR_NAME, "Kaspar only with i_not_lorenz (§2.2.3 H2)")
 	GameState.set_flag(&"q_sieber_marked", true)
 	page = j.list_page()
 	assert_eq(page.entries[5].name, "Johann Sieber. Er lebt noch.")

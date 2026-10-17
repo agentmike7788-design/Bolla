@@ -237,6 +237,9 @@ def johann_nodes(where):
     menu = [
         C("[Die Liste] Das Licht bei euch oben, im Nebelung …", "p9_mark", ["clue_known:c_q_sieber", "!sieber_marked"]),
         C("[Die Liste] Es geht um das Licht, Johann.", "p9_h6", ["quest_step:%s:h6" % MAIN]),
+        # §2.2.3 H5 „oder H6 direkt anfangen": telling nobody is the choice confide_none, then H6.
+        C("[Die Liste] Es geht um das Licht, Johann. (Keinem sonst davon erzählen)", "p9_h6", ["quest_step:%s:h5" % MAIN],
+          ["quest_choose:%s:h5:confide_none" % MAIN]),
         C("[Brief] Soll ich ihn Ihnen vorlesen?", "p9_letter", ["letter_for:speaker"], ["letter_read_aloud"]),
         C("Der Herr mit dem Koffer – was wollte er?", "p9_stranger", ["stranger_here", "quest_step:%s:h6" % MAIN]),
     ]

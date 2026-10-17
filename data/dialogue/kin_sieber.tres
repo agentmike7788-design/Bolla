@@ -18,12 +18,19 @@ conditions = Array[String](["quest_step:q_who_knows:h6"])
 
 [sub_resource type="Resource" id="p9_menu_menu_03"]
 script = ExtResource("2")
+text = "[Die Liste] Es geht um das Licht, Johann. (Keinem sonst davon erzählen)"
+next = &"p9_h6"
+conditions = Array[String](["quest_step:q_who_knows:h5"])
+actions = Array[String](["quest_choose:q_who_knows:h5:confide_none"])
+
+[sub_resource type="Resource" id="p9_menu_menu_04"]
+script = ExtResource("2")
 text = "[Brief] Soll ich ihn Ihnen vorlesen?"
 next = &"p9_letter"
 conditions = Array[String](["letter_for:speaker"])
 actions = Array[String](["letter_read_aloud"])
 
-[sub_resource type="Resource" id="p9_menu_menu_04"]
+[sub_resource type="Resource" id="p9_menu_menu_05"]
 script = ExtResource("2")
 text = "Der Herr mit dem Koffer – was wollte er?"
 next = &"p9_stranger"
@@ -281,7 +288,7 @@ text = "Ich lass Sie allein."
 script = ExtResource("1")
 id = &"menu"
 text = "(Johann wartet.)"
-choices = Array[ExtResource("2")]([SubResource("kin_sieber_menu_c01"), SubResource("kin_sieber_menu_c02"), SubResource("kin_sieber_menu_c03"), SubResource("p9_menu_menu_01"), SubResource("p9_menu_menu_02"), SubResource("p9_menu_menu_03"), SubResource("p9_menu_menu_04"), SubResource("kin_sieber_menu_c04")])
+choices = Array[ExtResource("2")]([SubResource("kin_sieber_menu_c01"), SubResource("kin_sieber_menu_c02"), SubResource("kin_sieber_menu_c03"), SubResource("p9_menu_menu_01"), SubResource("p9_menu_menu_02"), SubResource("p9_menu_menu_03"), SubResource("p9_menu_menu_04"), SubResource("p9_menu_menu_05"), SubResource("kin_sieber_menu_c04")])
 
 [sub_resource type="Resource" id="kin_sieber_wish_c01"]
 script = ExtResource("2")

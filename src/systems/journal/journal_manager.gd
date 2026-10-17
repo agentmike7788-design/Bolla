@@ -66,9 +66,9 @@ const MAIN_QUEST := &"q_who_knows"
 ## The witnesses of the list by witness_npc (§2.2.4).
 const WITNESS_NAMES: Dictionary[StringName, String] = {&"washer": "Liesel Dorn", &"carter": "Osric", &"innkeeper": "Rosine Wackernagel",
 		&"grocer": "Theres Mangold", &"kin_ott": "Gesa Ott", &"beggar": "Veit Ammer"}
-const LIST_MOOR_NAME := "der Tote aus dem Moor"
-const LIST_MISSING := "Im Sterbebuch steht er. Bei dir liegt er nicht."
-const LIST_OPEN_EMPTY := "Unter diesem Datum liegt noch keiner."
+const LIST_MOOR_NAME := LightRules.MOOR_NAME
+const LIST_MISSING := LightRules.TEXT_NOT_HERE
+const LIST_OPEN_EMPTY := LightRules.TEXT_OPEN
 const LIST_OPEN_MARKED := "Johann Sieber. Er lebt noch."
 const LIST_OPEN_GONE := "Johann Sieber. Über den Hügel."
 const LIST_OPEN_BURIED := "Johann Sieber"
@@ -451,15 +451,12 @@ func list_name(e: LightEntryData, matched: bool) -> String:
 		return LIST_OPEN_MARKED if GameState.flag_on(&"q_sieber_marked") else LIST_OPEN_EMPTY
 	if not matched:
 		return ""
-	if e.story_id == MOOR_STORY and not has_insight(NOT_LORENZ_INSIGHT):
-		return LIST_MOOR_NAME
-	for r: CorpseRecord in _records():
-		if r.story_id == e.story_id and r.story_id != &"":
-			var shown := _display_name(r)
-			if shown == "" and Database.story_corpse(e.story_id) != null:
-				shown = (Database.story_corpse(e.story_id) as StoryCorpseData).display_name
-			return shown
-	return LIST_MISSING
+	if not is_inside_tree():
+		return ""
+	# P4's LightRules: the record of the entry's story (none → the death-book line), its name (S5 by i_not_lorenz).
+	if LightRules.record_of(e.story_id, get_tree()) == null:
+		return LIST_MISSING
+	return LightRules.entry_name(e, get_tree())
 
 
 # --- Phase 9: „Briefe" (§2.4.2, §7.2) ---------------------------------------------------------
