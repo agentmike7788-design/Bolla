@@ -591,6 +591,12 @@ func part_progress(id: StringName, index: int) -> int:
 	return int(p[index]) if index >= 0 and index < p.size() else 0
 
 
+## What part `index` was given: the care spots of a tend part (fixed, the dead's neighbours, the night's ghosts), the
+## graves still without flowers of a flowers part ([] = none yet).
+func part_targets(id: StringName, index: int) -> PackedStringArray:
+	return _targets_of(id, index)
+
+
 ## The open parts of an accepted large request (any order, or the next one with parts_in_order).
 func open_parts(id: StringName) -> Array[int]:
 	if not _parts.has(id):
@@ -771,6 +777,9 @@ func large_offer_context(day: int) -> Dictionary:
 	ctx["marked_by_section"] = _marked_by_section()
 	ctx["stations"] = _stations()
 	ctx["gather_items"] = _gather_items()
+	ctx["node_items"] = _gather_items(false)
+	ctx["pile_daily"] = _pile_daily()
+	ctx["clear_yields"] = _clear_yields()
 	ctx["places"] = _known_places()
 	ctx["chapel"] = _chapel_ready()
 	ctx["kin_graves"] = _kin_graves()
@@ -1464,9 +1473,40 @@ func _stations() -> Array:
 	return out
 
 
-## Items that can be gathered now: the piles' wood and stone, and every open gather node's item.
-func _gather_items() -> Array:
-	var out: Array = HillRules.PILE_ITEMS.duplicate()
+## What the piles (ResourceNode res_wood / res_stone) give each morning: {item: daily_amount}.
+func _pile_daily() -> Dictionary:
+	var out := {}
+	var world := _first(WORLD_GROUP)
+	if world == null or not world.has_method(&"get_node_by_layout_id"):
+		return out
+	for id: String in ["res_wood", "res_stone"]:
+		var pile := world.call(&"get_node_by_layout_id", id) as ResourceNode
+		if pile != null and pile.item_id != &"":
+			out[pile.item_id] = int(out.get(pile.item_id, 0)) + maxi(0, pile.daily_amount)
+	return out
+
+
+## What clearing the open obstacles of the workable sections still yields: {item: n} (obstacles without a cost).
+func _clear_yields() -> Dictionary:
+	var out := {}
+	var expansion := _first(EXPANSION_GROUP) as ExpansionManager
+	if expansion == null:
+		return out
+	for s: SectionData in expansion.sections():
+		if expansion.is_unlocked(s.id) or expansion.block_reason(s.id) != "":
+			continue
+		for o: String in expansion.obstacle_ids(s.id):
+			var data := expansion.data_of(o)
+			if expansion.is_cleared(o) or data == null or not data.cost.is_empty():
+				continue
+			for item: StringName in data.yield_items:
+				out[item] = int(out.get(item, 0)) + int(data.yield_items[item])
+	return out
+
+
+## Items that can be gathered now: the piles' wood and stone (`with_piles`), and every open gather node's item.
+func _gather_items(with_piles: bool = true) -> Array:
+	var out: Array = HillRules.PILE_ITEMS.duplicate() if with_piles else []
 	if not is_inside_tree():
 		return out
 	var manager := get_tree().get_first_node_in_group(GatherNode.MANAGER_GROUP) as GatherManager

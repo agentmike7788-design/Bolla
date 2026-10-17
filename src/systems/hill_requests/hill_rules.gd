@@ -338,6 +338,9 @@ static func fill(text: String, value: String) -> String:
 #   marked_by_section Dictionary section id → MARKED graves
 #   stations       Array       stations that can craft now (workbench + the built workyard stations)
 #   gather_items   Array       items that can be gathered now (wood / stone piles, open gather nodes)
+#   node_items     Array       items of the open gather nodes (they regrow: any amount)
+#   pile_daily     Dictionary  item → what the piles give each morning (res_wood / res_stone)
+#   clear_yields   Dictionary  item → what clearing the open obstacles of the workable sections still yields
 #   places         Array       known waypoint ids (visit)
 #   chapel         bool        a devotion can be held (chapel built)
 #   kin_graves     Dictionary  kin id → graves it mourns at (flowers / meet at kin_grave)
@@ -537,8 +540,18 @@ static func part_offer_block(part: OrderData, request: OrderData, ctx: Dictionar
 			if recipe.station != STATION_WORKBENCH and not (ctx.get("stations", []) as Array).has(recipe.station):
 				return "station"
 		KIND_GATHER:
-			if not (ctx.get("gather_items", PILE_ITEMS) as Array).has(StringName(str(c.get("item", "")))):
+			var item := StringName(str(c.get("item", "")))
+			var from_clearing := int((ctx.get("clear_yields", {}) as Dictionary).get(item, 0))
+			if (ctx.get("node_items", []) as Array).has(item):
+				return ""
+			if not (ctx.get("gather_items", PILE_ITEMS) as Array).has(item) and from_clearing <= 0:
 				return "cannot gather"
+			# The piles refill every morning before the deadline; the rest has to come from clearing („roden").
+			if ctx.has("pile_daily"):
+				var mornings := maxi(0, (request.days_limit if request != null else 1) - 1)
+				var from_piles := int((ctx.get("pile_daily", {}) as Dictionary).get(item, 0)) * mornings
+				if from_piles + from_clearing < need(part):
+					return "not enough to gather"
 		KIND_VISIT:
 			if ctx.has("places") and not (ctx.get("places", []) as Array).has(StringName(str(c.get("place", "")))):
 				return "no place"

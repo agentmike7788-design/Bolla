@@ -42,9 +42,9 @@ conditions = {
 "min_day": 6
 }
 days_limit = 3
-reward_coins = 5
+reward_coins = 3
 reward_rep = 2
-cooldown_days = 10
+cooldown_days = 6
 order = 80
 category = &"hill"
 parts = Array[Resource]([SubResource("Resource_y8oeb"), SubResource("Resource_tkkew"), SubResource("Resource_27hh4")])

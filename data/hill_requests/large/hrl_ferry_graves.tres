@@ -5,9 +5,9 @@
 [sub_resource type="Resource" id="Resource_vss4e"]
 script = ExtResource("1_jms4h")
 kind = &"tend"
-title = "Die vier Pflegestellen im Alten Hof säubern"
+title = "Die Pflegestellen im Alten Hof säubern"
 conditions = {
-"spots": ["dirt_y03", "dirt_y04", "dirt_y07", "dirt_y08"]
+"spots": ["dirt_y01", "dirt_y02", "dirt_y03", "dirt_y04", "dirt_y05", "dirt_y06", "dirt_y07", "dirt_y08"]
 }
 category = &"hill"
 
@@ -46,9 +46,9 @@ conditions = {
 }
 }
 days_limit = 3
-reward_coins = 4
+reward_coins = 3
 reward_rep = 2
-cooldown_days = 9
+cooldown_days = 6
 order = 10
 category = &"hill"
 parts = Array[Resource]([SubResource("Resource_vss4e"), SubResource("Resource_p0l85"), SubResource("Resource_hxs8j")])
