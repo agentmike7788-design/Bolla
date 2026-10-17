@@ -352,3 +352,39 @@ def once(keys: list):
     def fn(t: float) -> dict:
         return keyed(t, keys, wrap=False)
     return fn
+
+
+# --- Phase 9 pose helpers (additive; docs/PHASE9_DESIGN.md §8.2) -------------------------------------
+# Held props that are modelled where they sit in one pose (the stranger's notebook on the inn table, his
+# pencil): deform() gives a bone's deformation in a static pose with the same maths as add_action (the
+# rotation about the bone head in armature axes plus the offset, compounded down the parent chain; the
+# "feet" rule is not applied - it only moves the legs). A prop modelled in that pose is brought into the
+# rest pose with deform(...).inverted().
+
+def deform(joints: dict, pose: dict, bone: str) -> Matrix:
+    """Armature-space deformation (posed @ rest^-1) of `bone` in `pose` (joints as for build_armature)."""
+    chain = []
+    b = bone
+    while b:
+        chain.append(b)
+        b = PARENTS.get(b)
+    m = Matrix.Identity(4)
+    for b in reversed(chain):
+        v = tuple(pose.get(b, ZERO)) + ZERO[len(pose.get(b, ZERO)):]
+        head = Vector(joints[b][0])
+        rot = Euler([math.radians(a) for a in v[:3]], "XYZ").to_matrix().to_4x4()
+        m = m @ Matrix.Translation(head + Vector(v[3:])) @ rot @ Matrix.Translation(-head)
+    return m
+
+
+def seated(drop: float = 0.27, legs: float = 52.0, lean: float = 4.0, back: float = 0.04, tilt: float = -6.0) -> dict:
+    """Sitting on a bench or a cart bed (seat ~0.45 m above the feet): the hips sink by `drop` and slide `back`,
+    the pelvis tilts back, both legs swing forward by `legs` degrees (the feet rule pushes them up into the coat
+    until the feet touch the ground), the upper body leans `lean` forward. Arms and head are left to the clip."""
+    return {"hips": (tilt, 0.0, 0.0, 0.0, back, -drop), "spine": (lean, 0.0, 0.0),
+            "leg_l": (-legs, 0.0, -4.0), "leg_r": (-legs, 0.0, 4.0), "feet": {"leg_l": 0.0, "leg_r": 0.0}}
+
+
+def behind_back(back: float = 18.0, inward: float = 16.0) -> dict:
+    """Both arms swung back and inward: the hands meet behind the back (a gentleman waiting)."""
+    return {"arm_l": (back, inward, 0.0), "arm_r": (back, -inward, 0.0)}

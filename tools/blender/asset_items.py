@@ -11,6 +11,8 @@ specimens (cloudy sealed jar, the dark eye glass variant, linen bundle, display 
 (labelled bottles, tins, a crock, powder papers), honey cake, elder wine (PHASE7_ITEMS).
 Phase 8 (docs/PHASE8_DESIGN.md section 8.4): flower seedlings, grave candles, watering can, the apprentice's rake,
 a grave cage section, wax wreath, register extract, name plate, Quast's crate, Lorenz's second ledger (PHASE8_ITEMS).
+Phase 9 (docs/PHASE9_DESIGN.md section 8.4): letter, reply, the nameless letter, the stranger's case and card, the soil
+pouch, Gesa's straw flowers (PHASE9_ITEMS; built from asset_props_phase9).
 Only the new ones (build_all rebuilds every item):
     python -c "import sys; sys.path.insert(0, 'tools/blender'); import asset_items as a; a.build(a.PHASE5_ITEMS)"
 
@@ -1466,6 +1468,90 @@ PHASE8_ITEMS = ("item_flower_seedlings", "item_grave_candle", "item_watering_can
                 "item_wax_wreath", "item_register_extract", "item_memorial_plate", "item_quast_crate", "item_lorenz_ledger_2")
 
 
+# --- Phase 9 (docs/PHASE9_DESIGN.md §8.4): the letters, the stranger's things, the soil, Gesa's straw flowers ------
+# Built from the Phase-9 props (asset_props_phase9) so the icon shows what lies in the world.
+
+def item_letter():
+    """A letter from a dead man's pocket: folded in three, the address in an unpractised hand, a dark seal."""
+    import asset_props_phase9 as P9
+    L.reset(1901)
+    _p7([P9.letter(seed=11)], "ph_item_letter")
+
+
+def item_letter_reply():
+    """Your answer: fresher, whiter paper, the address in your hand, a new seal - a quill laid across it."""
+    import asset_props_phase9 as P9
+    L.reset(1902)
+    parts = [P9.letter(seed=12, paper=P9.PAPER)]
+    quill = [L.tube((-0.11, -0.05, 0.016), (0.1, 0.045, 0.02), 0.0025, 4)]
+    vane = L.prim("cube", loc=(0.0, 0.0, 0.0), scale=(0.07, 0.009, 0.0012))
+    vane.data.transform(Matrix.Translation((0.05, 0.022, 0.019)) @ Matrix.Rotation(math.atan2(0.095, 0.21), 4, "Z"))
+    quill.append(vane)
+    for q in quill:
+        P._finish_obj(q, L.hexc("#CFC6B0"), var=0.08, ao=0.0, top=0.3)
+    parts += quill
+    _p7(parts, "ph_item_letter_reply")
+
+
+def item_nameless_letter():
+    """The letter without a name (Lorenz's way): plain paper folded small, nothing written outside, no seal."""
+    import asset_props_phase9 as P9
+    L.reset(1903)
+    obj = P9.letter(seed=13, paper=P9.PAPER, address=False, sealed=False)
+    obj.data.transform(Matrix.Scale(0.8, 4))
+    _p7([obj], "ph_item_nameless_letter")
+
+
+def item_stranger_case():
+    """Brenneisen's case, laid on its side (the icon shows its lock and handle)."""
+    import asset_props_phase9 as P9
+    L.reset(1904)
+    obj = P9.case_standing(seed=50)
+    obj.data.transform(Matrix.Scale(0.78, 4) @ Matrix.Rotation(math.radians(90.0), 4, "Y"))   # (item size <= 0.45 m)
+    _p7([obj], "ph_item_stranger_case", yaw=-30.0)
+
+
+def item_case_card():
+    """His visiting card: stiff cream card with a gilt edge, two lines of fine print (nothing legible), lying on
+    a second card turned askew."""
+    L.reset(1905)
+    parts = []
+    for k, (dx, dy, rot) in enumerate(((0.0, 0.0, 0.0), (0.012, 0.014, 14.0))):
+        z = 0.0015 + k * 0.0032
+        card = L.prim("cube", loc=(0.0, 0.0, 0.0), scale=(0.05, 0.03, 0.0012))
+        card.data.transform(Matrix.Translation((dx, dy, z)) @ Matrix.Rotation(math.radians(rot), 4, "Z"))
+        parts.append(P._finish_obj(card, L.hexc("#DCD2BA"), var=0.04, ao=0.0, top=0.3))
+        edge = L.prim("cube", loc=(0.0, 0.0, 0.0), scale=(0.052, 0.032, 0.0009))
+        edge.data.transform(Matrix.Translation((dx, dy, z - 0.0006)) @ Matrix.Rotation(math.radians(rot), 4, "Z"))
+        parts.append(P._finish_obj(edge, GOLD, var=0.08, ao=0.0, top=0.4))
+    for w, y in ((0.036, 0.022), (0.026, 0.008)):
+        ln = L.prim("cube", loc=(0.0, 0.0, 0.0), scale=(w, 0.0016, 0.0005))
+        ln.data.transform(Matrix.Translation((0.012, 0.014, 0.0062)) @ Matrix.Rotation(math.radians(14.0), 4, "Z")
+                          @ Matrix.Translation((0.0, y - 0.014, 0.0)))
+        parts.append(P._finish_obj(ln, L.hexc("#3A322C"), var=0.05, ao=0.0))
+    _p7(parts, "ph_item_case_card")
+
+
+def item_soil_pouch():
+    """A handful of grave earth knotted in a linen cloth."""
+    import asset_props_phase9 as P9
+    L.reset(1906)
+    _p7([P9.soil_pouch(seed=14)], "ph_item_soil_pouch")
+
+
+def item_straw_bouquet():
+    """Gesa's everlastings bound with yarn (the Phase-8 bunch), lying."""
+    import asset_props_phase8 as PR8
+    L.reset(1907)
+    obj = PR8.bouquet_straw(seed=3)
+    obj.data.transform(Matrix.Rotation(math.radians(-80.0), 4, "X"))
+    _p7([obj], "ph_item_straw_bouquet")
+
+
+PHASE9_ITEMS = ("item_letter", "item_letter_reply", "item_nameless_letter", "item_stranger_case", "item_case_card",
+                "item_soil_pouch", "item_straw_bouquet")
+
+
 PHASE7_ITEMS = ("item_prep_jar", "item_prep_jar_small", "item_spirits", "item_beeswax", "item_anatomy_case", "item_specimen_jar",
                 "item_specimen_jar_eyes", "item_specimen_bundle", "item_display_specimen", "item_bone_specimen",
                 "item_fever_tincture", "item_wound_salve", "item_corpse_balm", "item_antidote", "item_bitter_drops",
@@ -1484,7 +1570,9 @@ ITEMS = (item_log, item_stone, item_linen, item_coin, item_shroud, item_rake, it
          item_wound_salve, item_corpse_balm, item_antidote, item_bitter_drops, item_dropsy_powder, item_honey_cake,
          item_elder_wine,
          item_flower_seedlings, item_grave_candle, item_watering_can, item_apprentice_rake, item_mortsafe,
-         item_wax_wreath, item_register_extract, item_memorial_plate, item_quast_crate, item_lorenz_ledger_2)
+         item_wax_wreath, item_register_extract, item_memorial_plate, item_quast_crate, item_lorenz_ledger_2,
+         item_letter, item_letter_reply, item_nameless_letter, item_stranger_case, item_case_card, item_soil_pouch,
+         item_straw_bouquet)
 PHASE6_ITEMS = ("item_altar_candle", "item_bone_box", "item_bone_box_full")
 PHASE5_ITEMS = ("item_shovel_iron", "item_shovel_master", "item_axe_iron", "item_axe_master", "item_pickaxe_iron",
                 "item_pickaxe_master", "item_flax", "item_yarn", "item_clay", "item_iron_ore", "item_iron_bar",
