@@ -1253,3 +1253,75 @@ func _on_payment(amount: int, reason: String) -> void:
 
 func _on_note(text: String, _kind: StringName) -> void:
 	notes.append(text)
+
+
+# --- Phase 9 (docs/PHASE9_DESIGN.md §2.4.2, §2.9, W1-Anschlüsse 12) ---------------------------------------
+
+## Letters API used by the ghosts (group letters): ghost_bonus(grave_id), letter_tonight(grave_id).
+class LettersDouble extends Node:
+	var tonight: Dictionary = {}
+	var laid: Dictionary = {}
+
+	func _init() -> void:
+		add_to_group(&"letters")
+
+	func letter_tonight(grave_id: String) -> bool:
+		return tonight.has(grave_id)
+
+	func ghost_bonus(grave_id: String) -> int:
+		return GhostMood.letter_bonus(tonight.has(grave_id), laid.has(grave_id))
+
+
+func test_phase9_letter_bonus_adds_to_care() -> void:
+	await _make_world(3)
+	var letters := LettersDouble.new()
+	world.add_child(letters)
+	_mark("plot_01", 7, 0)
+	_mark("plot_02", 16, 0)
+	_mark("plot_03", 7, 0)
+	(corpses.recs["c_plot_02"] as CorpseRecord).harvested = [&"hair"] as Array[StringName]
+	assert_eq([ghosts.mood_info("plot_01").care, ghosts.mood_info("plot_01").score], [0, 8], "no letter: Phase 8")
+	letters.tonight = {"plot_01": true}
+	assert_eq([ghosts.mood_info("plot_01").care, ghosts.mood_info("plot_01").score], [1, 9], "read aloud tonight: +1")
+	assert_eq(ghosts.mood_of("plot_01"), &"content")
+	letters.laid = {"plot_01": true}
+	assert_eq(ghosts.mood_info("plot_01").score, 10, "+1 laid into the grave")
+	letters.tonight = {}
+	assert_eq(ghosts.mood_info("plot_01").score, 9, "the gift stays for good")
+	# A robbed soul stays at most calm (the positive care part is capped like in Phase 8).
+	graveyard.get_grave("plot_02").quality = 11
+	letters.tonight = {"plot_02": true}
+	letters.laid = {"plot_02": true}
+	assert_eq(ghosts.mood_info("plot_02").score, 8, "7 + 2 → capped at 8")
+	assert_eq(ghosts.mood_info("plot_03").care, 0, "another grave: nothing")
+	letters.free()
+	assert_eq(ghosts.mood_info("plot_02").score, 7, "without Letters no letter bonus")
+
+
+func test_phase9_listen_speaks_the_letter_pool() -> void:
+	await _make_world(3)
+	ghosts.lines = Phase9Fixtures.ghost_lines()
+	var care := _care()
+	var letters := LettersDouble.new()
+	world.add_child(letters)
+	_mark("plot_01", 9, 0)
+	_mark("plot_02", 9, 0)
+	_mark("plot_03", 9, 0)
+	var l := ghosts.lines
+	assert_eq(l.by_letter.size(), 2, "fixture has the by_letter lines")
+	TimeManager.load_state({"day": 3, "minute_of_day": 1320})
+	care.light_free("plot_01")
+	letters.tonight = {"plot_01": true, "plot_02": true, "plot_03": true}
+	assert_true(Array(l.by_letter).has(ghosts.listen("plot_01", null)), "letter before candle")
+	assert_true(Array(l.by_letter).has(ghosts.listen("plot_02", null)), "letter alone")
+	care.set_disturbed("plot_03")
+	assert_eq(ghosts.listen("plot_03", null), l.by_disturbed[0], "disturbed before letter")
+	GameState.set_flag(&"fest_lights_day", 3)
+	TimeManager.advance(61)
+	assert_eq(ghosts.listen("plot_01", null), l.by_lights[0], "lights before letter")
+	letters.tonight = {}
+	GameState.set_flag(&"fest_lights_day", -1)
+	TimeManager.advance(61)
+	assert_eq(ghosts.listen("plot_01", null), l.by_candle[0], "no letter: the Phase-8 pools")
+	care.free()
+	letters.free()
