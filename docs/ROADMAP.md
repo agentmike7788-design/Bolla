@@ -13,7 +13,7 @@ Regel: **BAUE → TESTE → ZEIGE → WARTE AUF FREIGABE.** Keine Phase startet 
 | 6 | Gebäude | ✅ freigegeben (03.10.2026) |
 | 7 | Dorf | ✅ freigegeben (04.10.2026) |
 | 8 | NPCs | ✅ freigegeben (17.10.2026) |
-| 9 | Quests | ⏳ Planung (Fragen an den Benutzer) |
+| 9 | Quests | ⏳ Planung – Vertrag `docs/PHASE9_DESIGN.md` (Vertragsfragen §14 offen) |
 | 10 | Wirtschaft | – |
 | 11 | Welt erweitern | – |
 | 12 | Krypten | – |
@@ -111,6 +111,16 @@ Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe, Vertragsfragen §14 offen):
 - **Neue Figuren:** Bettler Veit Ammer (Zeuge der Nacht), Wanderhändlerin Hanne Vogelsang, Nachtgräber Lambert Grell (ohne Kampf, die Leiche bleibt im Grab)
 - **Freundschaft:** drei Schritte je Bewohner, Gefallen und Gegengefallen; **Feste:** Kathreintanz (25. Nebelung) und der Hollerbrücker **Lichtgang** (Vorabend des Advents)
 - Geheimnis-Ausschnitt „Der unterstrichene Name" (Krankenlicht, Nachtbesuche, D2 Gerhard Ott, Lorenz' zweite Kladde), dritte Reihe im Lindenacker (4 Stellen), Save-Format v7 mit Migration der Phase-7-Stände, Wellenplan W0–W3 (W1 mit 7 Paketen), Vertragsfragen §14
+
+## PHASE 9 – QUESTS (Planung)
+
+**Benutzerentscheidungen (17.10.2026, bindend):**
+- **Inhalt – alle vier Teile:** (1) Hauptkette **„Wer weiß, wann?“** (Lorenz' zweite Kladde endet mit einer Liste von Daten; zu jedem Datum ein Toter auf dem Hügel und ein Fenster mit einem Licht, das jemand gesehen hat; Anschluss an `i_underlined`, Liesel, Quast, Lenz, D2 Gerhard Ott, Krankenlicht) · (2) **Briefe und Botengänge** (Briefe in den Taschen der Toten zustellen, vorlesen oder verbrennen; Botengänge zwischen Friedhof und Dorf mit kleinen Entscheidungen) · (3) **Der Herr mit dem Koffer** (neue Figur aus der Stadt, seltsame Fragen, will Dinge kaufen; eigene Kette mit moralischen Entscheidungen) · (4) **Größere Bitten** (mehrteilige Bitten am Tor und im Dorf, die einen halben Nachmittag füllen; Aufbau auf „Bitten vom Hügel“ aus G8 Runde 6 – die dort gemessenen −12 % Leerlauf an Tag 2–12 sollen deutlich besser werden).
+- **Umfang: mittel** (etwa wie Phase 8): eine Hauptkette mit 5–6 Schritten, zwei Nebenketten, ein Quest-Überblick im Merkbuch; sauber nach A/B/C priorisiert, mit offengelegter Streichreihenfolge.
+- **Entscheidungen mit spürbaren Folgen:** Beziehungen, Ruf, Pietät, Texte der Dorfbewohner, spätere Quests; 2–3 verschiedene Enden der Hauptkette.
+- **Ton** wie im GDD (melancholisch, warm, trockener Humor, übernatürliche Geheimnisse; „Tod ist Handwerk, nicht Horror“), nur eigene Inhalte. **Angeln bleibt Phase 11.** ART STYLE LOCK „Gemaltes Diorama“ gilt.
+
+Vertrag (Entwurf zur Benutzerfreigabe, Vertragsfragen §14 offen): **`docs/PHASE9_DESIGN.md`** – Hauptkette in 6 Schritten (Kladde-Rückseite, Gräber, Zeugen, „S.“ = Johann Sieber, Vertraute, Entscheidung) mit drei Enden (Über den Hügel · Bei Grete · Vor der Gemeinde) und stillem Rückfall; Nebenketten „Briefe ohne Antwort“ und „Der Herr mit dem Koffer“ (Cornelius Brenneisen); 12 Größere Bitten ab Tag 2 (Messziel Leerlauf Tag 2–12 ≤ 1700 min); Merkbuch „Vorhaben“; vierte Reihe im Lindenacker, D3 Johann Sieber; Kapitel „Wer weiß, wann?“; Save-Format v8 mit Migration der Phase-8-Stände; Wellenplan W0–W3 (W1 mit 7 Paketen).
 
 ## Benutzerwunsch 03.10.2026 – Organe & Anatomie (eigene spätere Phase/Erweiterung)
 - **Wann:** als eigene Erweiterung **nach Phase 6** (nicht in Phase 6). Einordnung wird vor dem Start mit dem Benutzer abgestimmt (Vorschlag: zusammen mit Phase 7 „Dorf", wo der Wundarzt/Anatom der Stadt eingeführt wird).
