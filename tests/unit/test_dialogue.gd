@@ -3527,3 +3527,854 @@ func test_phase8_new_schedules() -> void:
 	assert_false(ScheduleResolver.entry_at(jakob, 600, 56).visible, "on the hill (P3's runtime schedule)")
 	e = _at("apprentice", &"apprentice_off_day", 600, 58)
 	assert_eq([e.path[-1], e.visible], ["v_in_inn_jakob", true], "the free day in the inn")
+
+
+# --- Phase 9 (P6, docs/PHASE9_DESIGN.md §1.2, §2.2–§2.5, §2.10, §2.11, §3.4) --------------------------------
+
+const P9_NEW: PackedStringArray = ["stranger", "kin_sieber_v", "sieber_door"]
+
+
+class P9Quests extends Node:
+	var open := true
+	var states: Dictionary = {}
+	var steps: Dictionary = {}
+	var done: Dictionary = {}
+	var choices: Dictionary = {}
+	var endings: Dictionary = {}
+	var calls: Array = []
+
+	func _init() -> void:
+		add_to_group(&"quests")
+
+	func is_open() -> bool:
+		return open
+
+	func state(quest_id: StringName) -> StringName:
+		return states.get(quest_id, &"")
+
+	func current_step(quest_id: StringName) -> StringName:
+		return steps.get(quest_id, &"")
+
+	func steps_done(quest_id: StringName) -> Array[StringName]:
+		var out: Array[StringName] = []
+		out.assign(done.get(quest_id, []))
+		return out
+
+	func choice_of(quest_id: StringName, step_id: StringName) -> StringName:
+		return (choices.get(quest_id, {}) as Dictionary).get(step_id, &"")
+
+	func ending(quest_id: StringName) -> StringName:
+		return endings.get(quest_id, &"")
+
+	func choose(quest_id: StringName, step_id: StringName, choice_id: StringName) -> bool:
+		calls.append(["choose", quest_id, step_id, choice_id])
+		return true
+
+	func note(key: StringName, arg: String) -> void:
+		calls.append(["note", key, arg])
+
+
+class P9Who extends Node:
+	var matched_ids: Array = []
+	var seen: Array = []
+	var posted := false
+	var calls: Array = []
+
+	func _init() -> void:
+		add_to_group(&"who_knows")
+
+	func matched(entry_id: StringName) -> bool:
+		return matched_ids.has(entry_id)
+
+	func witnessed() -> Array[StringName]:
+		var out: Array[StringName] = []
+		out.assign(seen)
+		return out
+
+	func witness(entry_id: StringName) -> bool:
+		calls.append(["witness", entry_id])
+		if not seen.has(entry_id):
+			seen.append(entry_id)
+		return true
+
+	func mark_seen() -> void:
+		calls.append(["mark_seen"])
+		GameState.set_flag(&"q_sieber_marked", true)
+
+	func letter_posted() -> bool:
+		return posted
+
+
+class P9Letters extends Node:
+	var table: Dictionary = {}   # uid → LetterData
+	var states: Dictionary = {}  # uid → state
+	var corpses: Dictionary = {}
+	var calls: Array = []
+
+	func _init() -> void:
+		add_to_group(&"letters")
+
+	func letter(uid: String) -> LetterData:
+		return table.get(uid)
+
+	func state(uid: String) -> StringName:
+		return states.get(uid, &"")
+
+	func corpse_of(uid: String) -> String:
+		return corpses.get(uid, "")
+
+	func decide(uid: String, choice: StringName, context: Dictionary) -> bool:
+		calls.append(["decide", uid, choice, context.get("recipient", &""), context.get("aloud", false)])
+		states[uid] = &"delivered"
+		return true
+
+	func give_to_carrier(uid: String, carrier: StringName, inv: Inventory) -> bool:
+		calls.append(["post", uid, carrier, inv != null])
+		states[uid] = &"posted"
+		return true
+
+
+class P9Stranger extends Node:
+	var here := false
+	var calls: Array = []
+
+	func _init() -> void:
+		add_to_group(&"stranger")
+
+	func present(region: StringName) -> bool:
+		calls.append(["present", region])
+		return here
+
+	func answer(kind: StringName) -> void:
+		calls.append(["answer", kind])
+
+	func bribe(accept: bool, inv: Inventory) -> void:
+		calls.append(["bribe", accept, inv != null])
+
+	func resolve(choice: StringName) -> void:
+		calls.append(["resolve", choice])
+
+
+class P9Systems extends Node:
+	var calls: Array = []
+	var ready_ids: Array = []
+	var data: Dictionary = {}
+
+	func _init() -> void:
+		add_to_group(&"reputation")
+		add_to_group(&"piety")
+		add_to_group(&"visitors")
+		add_to_group(&"hill_requests")
+
+	func event(kind: StringName, reason: String) -> void:
+		calls.append(["event", kind, reason])
+
+	func add_goodwill(kin_id: StringName, delta: int) -> void:
+		calls.append(["goodwill", kin_id, delta])
+
+	func ready_for(giver: StringName, _inv: Inventory) -> Array[StringName]:
+		var out: Array[StringName] = []
+		out.assign(ready_ids if giver == &"carter" else [])
+		return out
+
+	func request_data(id: StringName) -> OrderData:
+		return data.get(id)
+
+	func turn_in(giver: StringName, inv: Inventory) -> int:
+		calls.append(["turn_in", giver, inv != null])
+		return 1
+
+
+class P9Corpses extends Node:
+	var list: Array = []
+
+	func _init() -> void:
+		add_to_group(&"corpse_manager")
+
+	func records() -> Array:
+		return list
+
+
+class P9Orders extends Node:
+	var calls: Array = []
+
+	func _init() -> void:
+		add_to_group(&"orders")
+
+	func state(order_id: StringName) -> StringName:
+		return &"accepted" if order_id == &"oq_johann_evening" else &""
+
+	func note_meet(npc_id: StringName, place_id: StringName) -> void:
+		calls.append(["meet", npc_id, place_id])
+
+
+## Inventory double with unique pieces (uids per item).
+class P9Inv extends "res://tests/fixtures/fake_inventory.gd":
+	var pieces: Dictionary = {}   # item → PackedStringArray
+
+	func uids(id: StringName = &"") -> PackedStringArray:
+		return pieces.get(id, PackedStringArray())
+
+
+class P9Speaker extends Node:
+	var npc_id: StringName
+	var display_name := ""
+
+
+func _p9_inv(letters: Dictionary = {}, items: Dictionary = {}) -> P9Inv:
+	var inv := P9Inv.new()
+	tree.root.add_child(inv)
+	for item: StringName in letters:
+		inv.pieces[item] = PackedStringArray(letters[item])
+	for id: StringName in items:
+		inv.add_item(id, int(items[id]))
+	return inv
+
+
+func _p9_speaker(npc_id: StringName) -> P9Speaker:
+	var s := P9Speaker.new()
+	s.npc_id = npc_id
+	tree.root.add_child(s)
+	return s
+
+
+func _p9_letter(id: StringName, recipient: StringName, kind: StringName = &"pocket") -> LetterData:
+	var l := LetterData.new()
+	l.id = id
+	l.recipient = recipient
+	l.kind = kind
+	return l
+
+
+func _p9_all() -> PackedStringArray:
+	var out := PackedStringArray(P8_ALL)
+	out.append_array(P9_NEW)
+	return out
+
+
+func _node_text_contains(d: DialogueData, text: String) -> bool:
+	for n: DialogueNode in d.nodes:
+		if n.text.contains(text):
+			return true
+	return false
+
+
+func test_phase9_dialogues_are_well_formed() -> void:
+	var cond_re := RegEx.create_from_string(CONDITION_GRAMMAR)
+	var action_re := RegEx.create_from_string(ACTION_GRAMMAR)
+	for id: String in _p9_all():
+		var d := _v(id)
+		assert_not_null(d, id)
+		if d == null:
+			continue
+		assert_eq(String(d.id), id)
+		assert_ne(d.speaker_name, "", id + " speaker")
+		var ids := {}
+		for n: DialogueNode in d.nodes:
+			assert_false(ids.has(n.id), "%s: unique %s" % [id, n.id])
+			ids[n.id] = true
+		assert_true(ids.has(d.start_node), id + " start")
+		var reach := _p8_reachable(d)
+		for n: DialogueNode in d.nodes:
+			assert_true(n.text.strip_edges().length() > 0, "%s.%s text" % [id, n.id])
+			assert_false(n.text.contains("TODO") or n.text.contains("<") or n.text.contains("STUB"), "%s.%s placeholder" % [id, n.id])
+			assert_true(n.fallback_next == &"" or ids.has(n.fallback_next), "%s.%s fallback" % [id, n.id])
+			assert_true(reach.has(n.id), "%s.%s reachable" % [id, n.id])
+			var conds: Array[String] = n.conditions.duplicate()
+			var acts: Array[String] = n.actions.duplicate()
+			for c: DialogueChoice in n.choices:
+				assert_true(c.next == &"" or ids.has(c.next), "%s.%s → %s" % [id, n.id, c.next])
+				assert_true(c.text.strip_edges().length() > 0, "%s.%s choice text" % [id, n.id])
+				conds.append_array(c.conditions)
+				acts.append_array(c.actions)
+			for c: String in conds:
+				assert_not_null(cond_re.search(c), "%s: condition '%s'" % [id, c])
+			for a: String in acts:
+				assert_not_null(action_re.search(a), "%s: action '%s'" % [id, a])
+	# G8 Runde 6 stays: Osric still takes the requests of the gate's notice board.
+	assert_true(_dialogue_has(_carter(), "hill_ready:carter") and _dialogue_has(_carter(), "hill_turn_in:carter"),
+			"carter.tres keeps hill_turn_in / hill_ready")
+
+
+func test_phase9_every_witness_has_its_line() -> void:
+	# §2.2.4: each of the six list entries is asked at its witness – Liesel, Osric (hill and village), Rosine, Theres, Gesa, Veit.
+	var by_npc := {&"washer": ["v_washer"], &"carter": ["carter", "carter_village"], &"innkeeper": ["v_innkeeper"],
+			&"grocer": ["v_grocer"], &"kin_ott": ["kin_ott"], &"beggar": ["beggar"]}
+	var list := Phase9Fixtures.light_list()
+	assert_eq(list.entries.size(), 6)
+	for e: LightEntryData in list.entries:
+		for dlg: String in by_npc[e.witness_npc]:
+			var d := _v(dlg)
+			assert_true(_dialogue_has_node_action(d, "witness:" + String(e.id)), "%s asks %s" % [dlg, e.id])
+			assert_true(_dialogue_has(d, "!light:%s:witnessed" % e.id), "%s: once per entry" % dlg)
+	# §2.2.4 leading texts.
+	for spec: Array in [["v_washer", "Wir haben uns nie geeinigt, wer es war."], ["carter", "Diesmal hätte ich vielleicht sollen."],
+			["v_innkeeper", "Da hat sie gepackt."], ["v_grocer", "Das ist ja das Schlimme."], ["kin_ott", "Ich lach da nicht mehr."],
+			["beggar", "und um fünf war es weg."]]:
+		assert_true(_node_text_contains(_v(spec[0]), spec[1]), "%s: %s" % spec)
+	# The friend tier adds a line (Liesel, Rosine, Theres), the underlined washer looks at you (§2.2.4).
+	for dlg: String in ["v_washer", "v_innkeeper", "v_grocer"]:
+		assert_not_null(_v(dlg).get_node_by_id(&"p9_witness_friend"), dlg + " friend line")
+	var liesel := _v("v_washer").get_node_by_id(&"p9_witness_underlined")
+	assert_true(liesel.text.contains("auf der anderen Seite der Seite steht"), "underlined washer")
+
+
+func test_phase9_conditions() -> void:
+	var q := P9Quests.new()
+	var w := P9Who.new()
+	var s := P9Stranger.new()
+	for n: Node in [q, w, s]:
+		tree.root.add_child(n)
+	assert_true(_check("p9_open"))
+	q.open = false
+	assert_false(_check("p9_open"), "Quests.is_open first")
+	q.states = {&"q_who_knows": &"open", &"q_case": &"settled"}
+	q.steps = {&"q_who_knows": &"h3", &"q_case": &"k3"}
+	q.done = {&"q_who_knows": [&"h1", &"h2"]}
+	q.choices = {&"q_who_knows": {&"h5": &"confide_washer"}}
+	q.endings = {&"q_case": &"ilse"}
+	assert_eq([_check("quest:q_who_knows:open"), _check("quest:q_letters:none"), _check("quest:q_case:settled"),
+			_check("quest:q_case:open")], [true, true, true, false])
+	assert_eq([_check("quest_step:q_who_knows:h3"), _check("quest_step:q_who_knows:h4"), _check("quest_done:q_who_knows:h2"),
+			_check("quest_done:q_who_knows:h3")], [true, false, true, false])
+	assert_eq([_check("quest_choice:q_who_knows:h5:confide_washer"), _check("quest_choice:q_who_knows:h5:confide_none")], [true, false])
+	assert_eq([_check("quest_ending:q_case:ilse"), _check("quest_ended:q_case"), _check("quest_ended:q_who_knows")], [true, true, false])
+	assert_eq([_check("confided:washer"), _check("confided:priest"), _check("stranger_step:k3"), _check("stranger_ending:ilse"),
+			_check("stranger_ending:deal")], [true, false, true, true, false])
+	w.matched_ids = [&"e_ott"]
+	w.seen = [&"e_quendel"]
+	assert_eq([_check("light:e_ott:matched"), _check("light:e_ott:witnessed"), _check("light:e_quendel:witnessed"),
+			_check("!light:e_dorn:witnessed")], [true, false, true, true])
+	assert_false(_check("letter_posted"))
+	w.posted = true
+	assert_true(_check("letter_posted"))
+	assert_false(_check("sieber_marked"))
+	GameState.set_flag(&"q_sieber_marked", true)
+	GameState.set_flag(&"sieber_gone", true)
+	assert_true(_check("sieber_marked") and _check("sieber_gone"))
+	assert_false(_check("stranger_here"))
+	s.here = true
+	assert_true(_check("stranger_here"))
+	# Context conditions of the letter pool and Brenneisen's soil (W0-Notizen 10).
+	var r := CorpseRecord.new()
+	r.story_id = &"d3_sieber"
+	r.kin_house = &"house_sieber"
+	assert_eq([_check("kin_house", {"record": r}), _check("story:d3_sieber", {"record": r}), _check("story:d2_ott", {"record": r}),
+			_check("kin_house", {})], [true, true, false, false])
+	assert_true(_check("story:d2_ott", {"story_id": &"d2_ott"}))
+	assert_false(_check("fresh_grave_days:5"), "no corpse manager, no fresh grave")
+	# Malformed → invalid (false, with a warning).
+	for bad: String in ["quest:q_who_knows:maybe", "light:e_ott:seen", "confided:fenner", "stranger_ending:lost", "p9_open:1",
+			"quest_choice:q_who_knows:h5", "fresh_grave_days:x"]:
+		assert_false(_check(bad), bad)
+		assert_eq(DialogueConditions._evaluate(bad, {}), DialogueConditions._Result.INVALID, bad)
+
+
+func test_phase9_conditions_without_systems() -> void:
+	# Before W-Welt hangs the systems into the world: the flags carry p9_open and the H5 choice, everything else is false.
+	assert_false(_check("p9_open"))
+	GameState.set_flag(&"p9_open", true)
+	GameState.set_flag(&"q_confide_washer", true)
+	GameState.set_flag(&"case_end_ilse", true)
+	assert_eq([_check("p9_open"), _check("confided:washer"), _check("stranger_ending:ilse")], [true, true, true])
+	for c: String in ["quest:q_who_knows:open", "quest_step:q_who_knows:h1", "quest_done:q_who_knows:h1", "quest_ended:q_who_knows",
+			"light:e_ott:matched", "letter_posted", "stranger_here", "letter_for:innkeeper", "post_for:kin_ott", "large_ready:carter",
+			"stranger_step:k1"]:
+		assert_false(_check(c, _ctx(_p9_inv())), c)
+	assert_true(_check("quest:q_who_knows:none"), "no Quests = no state")
+
+
+func test_phase9_letter_conditions_and_actions() -> void:
+	var letters := P9Letters.new()
+	tree.root.add_child(letters)
+	letters.table = {"lt_0001": _p9_letter(&"lp_l1_carter", &"innkeeper"), "lt_0002": _p9_letter(&"lg_town", &"town"),
+			"lt_0003": _p9_letter(&"lpo_ott", &"kin_ott", &"post"), "lt_0004": _p9_letter(&"lg_lambert", &"robber"),
+			"lt_0005": _p9_letter(&"lg_priest", &"priest")}
+	letters.states = {"lt_0001": &"found", "lt_0002": &"found", "lt_0003": &"received", "lt_0004": &"found", "lt_0005": &"burned"}
+	var inv := _p9_inv({&"letter": ["lt_0001", "lt_0002", "lt_0003", "lt_0004", "lt_0005"]}, {&"coin": 3})
+	var rosine := _ctx(inv)
+	rosine["speaker"] = _p9_speaker(&"innkeeper")
+	assert_true(_check("letter_for:speaker", rosine), "Rosine's letter")
+	assert_true(_check("letter_for:innkeeper", rosine))
+	assert_false(_check("letter_for:priest", rosine), "a burned letter is decided")
+	assert_true(_check("letter_for:town", rosine) and _check("letter_for:robber", rosine))
+	assert_true(_check("post_for:kin_ott", rosine), "post for the Otts")
+	assert_false(_check("post_for:innkeeper", rosine), "a pocket letter is no post")
+	_apply("letter_deliver", rosine)
+	assert_eq(letters.calls[-1], ["decide", "lt_0001", &"deliver", &"innkeeper", false])
+	assert_false(_check("letter_for:speaker", rosine), "delivered = decided")
+	var veit := _ctx(inv)
+	veit["speaker"] = _p9_speaker(&"beggar")
+	_apply("letter_deliver:robber", veit)
+	assert_eq(letters.calls[-1], ["decide", "lt_0004", &"deliver", &"robber", false], "Veit carries Lambert's letter")
+	var gesa := {"inventory": inv, "speaker": null, "kin_id": &"kin_ott"}
+	_apply("letter_read_aloud:kin_ott", gesa)
+	assert_eq(letters.calls[-1], ["decide", "lt_0003", &"deliver", &"kin_ott", true], "read aloud counts as delivered")
+	_apply("letter_post:carter", rosine)
+	assert_eq(letters.calls[-1], ["post", "lt_0002", &"carter", true], "the town letter goes with Osric")
+	inv.pieces[&"letter_reply"] = PackedStringArray(["lt_0009"])
+	_apply("letter_post:peddler", rosine)
+	assert_eq(letters.calls[-1], ["post", "lt_0009", &"peddler", true], "then the answer")
+	var n := letters.calls.size()
+	_apply("letter_post:hanne", rosine)
+	assert_eq(letters.calls.size(), n, "unknown carrier: nothing")
+
+
+func test_phase9_kin_house_letter_goes_to_the_household() -> void:
+	# lg_wife has no recipient (W0-Notizen 10): it goes to the household of the dead who carried it.
+	var letters := P9Letters.new()
+	tree.root.add_child(letters)
+	letters.table = {"lt_0001": _p9_letter(&"lg_wife", &"")}
+	letters.corpses = {"lt_0001": "corpse_0040"}
+	var manager := P9Corpses.new()
+	var r := CorpseRecord.new()
+	r.id = "corpse_0040"
+	r.kin_house = &"house_kehr"
+	manager.list = [r]
+	tree.root.add_child(manager)
+	var inv := _p9_inv({&"letter": ["lt_0001"]})
+	assert_true(_check("letter_for:kin_kehr", _ctx(inv)), "house_kehr → kin_kehr")
+	assert_false(_check("letter_for:kin_ott", _ctx(inv)))
+
+
+func test_phase9_fresh_grave_days() -> void:
+	var manager := P9Corpses.new()
+	tree.root.add_child(manager)
+	var r := CorpseRecord.new()
+	r.grave_id = "l_13"
+	r.location = CorpseRecord.LOCATION_BURIED
+	r.buried_day = 60
+	manager.list = [r]
+	TimeManager.day = 64
+	assert_true(_check("fresh_grave_days:5"))
+	assert_true(_check("fresh_grave_days:5", {"grave_id": "l_13"}))
+	assert_false(_check("fresh_grave_days:5", {"grave_id": "l_14"}))
+	TimeManager.day = 66
+	assert_false(_check("fresh_grave_days:5"), "six days: no longer fresh")
+
+
+func test_phase9_actions() -> void:
+	var q := P9Quests.new()
+	var w := P9Who.new()
+	var s := P9Stranger.new()
+	var sys := P9Systems.new()
+	for n: Node in [q, w, s, sys]:
+		tree.root.add_child(n)
+	_apply("quest_note:kladde_read:desk")
+	_apply("quest_choose:q_who_knows:h5:confide_priest")
+	assert_eq(q.calls, [["note", &"kladde_read", "desk"], ["choose", &"q_who_knows", &"h5", &"confide_priest"]])
+	_apply("witness:e_quendel")
+	_apply("mark_seen")
+	assert_eq(w.calls, [["witness", &"e_quendel"], ["mark_seen"]])
+	var inv := _p9_inv({}, {&"coin": 20})
+	_apply("stranger_answer:frank", _ctx(inv))
+	_apply("stranger_bribe:yes", _ctx(inv))
+	_apply("stranger_bribe:no", _ctx(inv))
+	_apply("stranger_resolve:ilse", _ctx(inv))
+	assert_eq(s.calls, [["answer", &"frank"], ["bribe", true, true], ["bribe", false, true], ["resolve", &"ilse"]])
+	var panels: Array = []
+	var on_panel := func(panel: StringName, _ctx_p: Dictionary) -> void: panels.append(panel)
+	EventBus.ui_panel_requested.connect(on_panel)
+	_apply("stranger_offers", _ctx(inv))
+	EventBus.ui_panel_requested.disconnect(on_panel)
+	assert_eq(panels, [&"stranger"], "Brenneisen's panel")
+	assert_eq(q.calls[-1][1], &"stranger_offers_seen", "K2 noted")
+	_apply("rep_event:public_duty")
+	_apply("piety_event:made_public")
+	_apply("goodwill:kin_sieber:-1")
+	_apply("goodwill:kin:2", {"kin_id": &"kin_kehr"})
+	assert_eq(sys.calls, [["event", &"public_duty", "Wer weiß, wann?"], ["event", &"made_public", "Wer weiß, wann?"],
+			["goodwill", &"kin_sieber", -1], ["goodwill", &"kin_kehr", 2]])
+	# large_turn_in: HillRequests.turn_in (P2's large_turn_in when it has one); large_ready only for large requests.
+	var big := OrderData.new()
+	big.size = OrderData.SIZE_LARGE
+	sys.data = {&"hrl_crosses": big, &"hr_small": OrderData.new()}
+	sys.ready_ids = [&"hr_small"]
+	assert_false(_check("large_ready:carter", _ctx(inv)), "a small request is no large one")
+	sys.ready_ids = [&"hrl_crosses"]
+	assert_true(_check("large_ready:carter", _ctx(inv)))
+	_apply("large_turn_in:carter", _ctx(inv))
+	assert_eq(sys.calls[-1], ["turn_in", &"carter", true])
+	# Malformed actions do nothing.
+	var before := [q.calls.size(), s.calls.size()]
+	for bad: String in ["quest_choose:q_who_knows:h5", "stranger_answer:maybe", "stranger_bribe:perhaps", "stranger_resolve:lost"]:
+		_apply(bad, _ctx(inv))
+	assert_eq([q.calls.size(), s.calls.size()], before)
+
+
+func _p9_carter_ready() -> void:
+	_p8_carter_ready()
+	for f: StringName in [&"p8_open", &"p8_intro"]:
+		GameState.set_flag(f, true)
+
+
+func test_phase9_osric_intro_once_after_p9_open() -> void:
+	_p9_carter_ready()
+	var r := _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_ne(_id(r), &"p9_intro", "Phase 9 not open yet")
+	GameState.set_flag(&"p9_open", true)
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_eq(_id(r), &"p9_intro")
+	assert_true(r.current_text().begins_with("Der Pfarrer hat gefragt, ob du das Heft vom Aschau noch hast.")
+			and r.current_text().ends_with("Das hat er bei der dritten auch gesagt."), "§1.2 leading text")
+	_go(r, &"p9_post_who")
+	assert_true(r.current_text().contains("Die Post weiß nicht, wer tot ist. Ich schon."), "§2.4.1")
+	r = _start_carter(MORNING, _inv())
+	_go(r, &"remark_skipped")
+	assert_ne(_id(r), &"p9_intro", "once")
+
+
+func test_phase9_johann_three_ways() -> void:
+	var q := P9Quests.new()
+	var w := P9Who.new()
+	tree.root.add_child(q)
+	tree.root.add_child(w)
+	GameState.set_flag(&"p9_open", true)
+	GameState.set_flag(&"clue_c_q_dates", true)
+	GameState.set_flag(&"clue_c_q_sieber", true)
+	# H4: Johann shows the mark once asked.
+	var r := DialogueRunner.new()
+	r.start(_v("kin_sieber"), _ctx(_inv()))
+	r._enter(&"menu")
+	_go(r, &"p9_mark")
+	assert_true(r.current_text().contains("Juckt nicht. Grete hatte so was nicht.") and r.current_text().contains("Grete hatte nur Rücken."))
+	assert_eq(w.calls, [["mark_seen"]])
+	# H6 without the nameless letter: ending A cannot be chosen – he believes a letter, not you.
+	q.steps = {&"q_who_knows": &"h6"}
+	GameState.set_flag(&"p8_met_kin_sieber", true)
+	r.start(_v("kin_sieber"), _ctx(_inv()))
+	assert_true(r.current_text().contains("So, Grete. Er ist wieder da. Er will was. Ich seh's ihm an."), "§2.11 greeting")
+	_go(r, &"menu")
+	_go(r, &"p9_h6")
+	_go(r, &"p9_away_no")
+	assert_true(r.current_text().contains("Einem Brief vielleicht."))
+	assert_eq(q.calls, [], "nothing chosen")
+	w.posted = true
+	r.start(_v("kin_sieber"), _ctx(_inv()))
+	_go(r, &"menu")
+	_go(r, &"p9_h6")
+	_go(r, &"p9_away")
+	assert_true(r.current_text().contains("Ich war einmal in Ellbach, da hat es geregnet."))
+	_go(r, &"p9_away_yes")
+	assert_true(r.current_text().contains("So einen hatte die Ida auch. Die ist gegangen. Na gut. Dann geh ich ein Stück."))
+	assert_eq(q.calls[-1], ["choose", &"q_who_knows", &"h6", &"away"])
+	for spec: Array in [[&"p9_stay", &"stay", "Sie mag es nicht, wenn man drängelt."],
+			[&"p9_public_yes", &"public", "Dann steht wenigstens was über mich in einem Buch."]]:
+		r.start(_v("kin_sieber_v"), _ctx(_inv()))
+		r._enter(&"menu")
+		_go(r, &"p9_h6")
+		_go(r, spec[0])
+		assert_true(r.current_text().contains(spec[2]), String(spec[0]))
+		assert_eq(q.calls[-1], ["choose", &"q_who_knows", &"h6", spec[1]])
+
+
+func test_phase9_johann_after_the_endings() -> void:
+	var q := P9Quests.new()
+	tree.root.add_child(q)
+	GameState.set_flag(&"p8_met_kin_sieber", true)
+	GameState.set_flag(&"q_sieber_marked", true)
+	q.endings = {&"q_who_knows": &"silent"}
+	var r := DialogueRunner.new()
+	r.start(_v("kin_sieber"), _ctx(_inv()))
+	assert_eq(_id(r), &"p9_silent")
+	assert_true(r.current_text().begins_with("Du hast nichts gesagt. Das ist auch eine Antwort."), "§2.2.7 still")
+	r.start(_v("kin_sieber"), _ctx(_inv()))
+	assert_eq(_id(r), &"p9_marked", "once")
+	q.endings = {&"q_who_knows": &"public"}
+	r.start(_v("kin_sieber"), _ctx(_inv()))
+	assert_true(r.current_text().contains("Für mich hat noch nie einer Wache gestanden."), "§2.7 C")
+	# Ending B on the bench: two evenings, the last with „Weißt du, was das Schlimme ist?".
+	var orders := P9Orders.new()
+	tree.root.add_child(orders)
+	TimeManager.minute_of_day = 1100
+	q.endings = {&"q_who_knows": &"stay"}
+	r.start(_v("kin_sieber_v"), _ctx(_inv()))
+	r._enter(&"menu")
+	_go(r, &"p9_evening")
+	assert_eq(_id(r), &"p9_evening", "first evening")
+	assert_eq(orders.calls, [["meet", &"", &"v_sieber_bench"]])
+	r.start(_v("kin_sieber_v"), _ctx(_inv()))
+	r._enter(&"menu")
+	_go(r, &"p9_evening")
+	assert_eq(_id(r), &"p9_evening_last")
+	assert_true(r.current_text().begins_with("Weißt du, was das Schlimme ist? Ich hab es nicht eilig."), "§2.11 last evening")
+
+
+func test_phase9_confidants_choose_h5() -> void:
+	var q := P9Quests.new()
+	tree.root.add_child(q)
+	q.steps = {&"q_who_knows": &"h5"}
+	var answers := {"v_priest": ["priest", "Ein Licht, das keiner anzündet. Das steht in keinem Buch, das ich habe."],
+			"v_surgeon": ["surgeon", "Drei Wochen. Ich habe es gezählt, bei den stillen Herzen."],
+			"v_washer": ["washer", "Ich wasche ihn, wenn es so weit ist. Vorher nicht. Vorher ist er noch Johann."]}
+	for dlg: String in answers:
+		var r := DialogueRunner.new()
+		r.start(_v(dlg), _ctx(_inv()))
+		r._enter(&"menu")
+		_go(r, &"p9_confide")
+		_go(r, &"p9_confide_yes")
+		assert_true(r.current_text().contains(answers[dlg][1]), dlg + " §2.2.6")
+		assert_eq(q.calls[-1], ["choose", &"q_who_knows", &"h5", StringName("confide_" + answers[dlg][0])])
+	# Quast names Brenneisen (K3 hook).
+	assert_true(GameState.flag_on(&"q_case_known"))
+	assert_true(_node_text_contains(_v("v_surgeon"), "Brenneisen heißt er. Geben Sie ihm nichts."))
+
+
+func test_phase9_named_publicly_spares_the_confidant() -> void:
+	var q := P9Quests.new()
+	tree.root.add_child(q)
+	q.endings = {&"q_who_knows": &"public"}
+	q.choices = {&"q_who_knows": {&"h5": &"confide_priest"}}
+	var r := DialogueRunner.new()
+	r.start(_v("v_priest"), _ctx(_inv()))
+	assert_eq(_id(r), &"p9_public_confidant", "Lenz was told before")
+	assert_true(r.current_text().contains("Das rechne ich Ihnen an."))
+	r.start(_v("v_surgeon"), _ctx(_inv()))
+	assert_eq(_id(r), &"p9_public_named", "Quast was not")
+	r.start(_v("v_surgeon"), _ctx(_inv()))
+	assert_ne(_id(r), &"p9_public_named", "once")
+
+
+func test_phase9_brenneisen() -> void:
+	var r := DialogueRunner.new()
+	r.start(_v("stranger"), _ctx(_inv()))
+	assert_true(r.current_text().contains("Brenneisen. Aus der Stadt. Ich störe nicht lange. Ich frage nur. Fragen kostet nichts, "
+			+ "Antworten zahle ich."), "§2.11 first appearance")
+	assert_true(r.current_text().contains("Ich bin nicht eingeladen."), "§2.5.1 never inside")
+	# Six questions, one per day, in turn (§2.5.2 K1).
+	var s := P9Stranger.new()
+	tree.root.add_child(s)
+	var asked: Array = []
+	for day: int in range(65, 71):
+		TimeManager.day = day
+		r.start(_v("stranger"), _ctx(_inv()))
+		r._enter(&"menu")
+		var qs := r.available_choices().filter(func(c: DialogueChoice) -> bool: return String(c.next).begins_with("q"))
+		assert_eq(qs.size(), 1, "one question on day %d" % day)
+		if qs.is_empty():
+			continue
+		asked.append(qs[0].next)
+		_go(r, qs[0].next)
+		_go(r, &"a_frank" if day % 3 == 0 else (&"a_evade" if day % 3 == 1 else &"a_refuse"))
+		r.start(_v("stranger"), _ctx(_inv()))
+		r._enter(&"menu")
+		assert_false(r.available_choices().any(func(c: DialogueChoice) -> bool: return String(c.next).begins_with("q")), "once a day")
+	assert_eq(asked, [&"q1", &"q2", &"q3", &"q4", &"q5", &"q6"])
+	assert_eq(s.calls.filter(func(c: Array) -> bool: return c[0] == "answer").size(), 6)
+	assert_true(_node_text_contains(_v("stranger"), "Wie schwer ist ein Mann nach drei Tagen im November?"), "§2.5.1")
+	# He never buys a corpse (§14.4).
+	var nc := _v("stranger").get_node_by_id(&"no_corpses")
+	assert_true(nc.text.contains("Was in der Erde liegt, bleibt in der Erde."), "Brenneisen kauft nie Leichen")
+	# K3 over Veit / Quast (q_case_known) or c_n_robber; the clue c_q_case_lorenz; the bribe.
+	var q := P9Quests.new()
+	tree.root.add_child(q)
+	var j := P8Journal.new()
+	tree.root.add_child(j)
+	q.steps = {&"q_case": &"k3"}
+	r.start(_v("stranger"), _ctx(_inv()))
+	r._enter(&"menu")
+	assert_false(r.available_choices().any(func(c: DialogueChoice) -> bool: return c.next == &"k3"), "unknown yet")
+	GameState.set_flag(&"clue_c_n_robber", true)
+	r._enter(&"menu")
+	_go(r, &"k3")
+	assert_true(r.current_text().contains("Ich habe den Mann für Nachrichten bezahlt, nicht für Leiber."), "§2.11")
+	assert_eq(j.clues, [&"c_q_case_lorenz"])
+	_go(r, &"bribe")
+	_go(r, &"bribe_no")
+	assert_eq(s.calls[-1], ["bribe", false, true])
+	# K5: the three endings.
+	q.steps = {&"q_case": &"k5"}
+	for spec: Array in [[&"k5_fenner", &"fenner", "Die Stadt bleibt immer."], [&"k5_ilse", &"ilse", "Ich sehe sie mir an."]]:
+		r.start(_v("stranger"), _ctx(_inv()))
+		assert_eq(_id(r), &"leaving")
+		_go(r, spec[0])
+		assert_eq(s.calls[-1], ["resolve", spec[1]])
+		assert_true(r.current_text().contains(spec[2]), String(spec[0]))
+	q.states = {&"q_who_knows": &"settled"}
+	r.start(_v("stranger"), _ctx(_inv()))
+	_go(r, &"k5_deal_kladde")
+	assert_true(r.current_text().contains("Die Liste brauchen Sie nicht mehr. Sie wissen ja jetzt, was sie bedeutet. Ich nicht. Vierzig."))
+
+
+func test_phase9_fenner_row4_and_ending_c() -> void:
+	var rel := _p7_world({&"mayor": 45}, [&"mayor"])
+	GameState.set_flag(&"p8_open", true)
+	GameState.set_flag(&"linden_row3_granted", true)
+	var r := DialogueRunner.new()
+	r.start(_v("v_mayor"), _ctx(_inv()))
+	assert_ne(_id(r), &"p9_row4", "before p9_open")
+	GameState.set_flag(&"p9_open", true)
+	r.start(_v("v_mayor"), _ctx(_inv()))
+	assert_eq(_id(r), &"p9_row4")
+	assert_true(GameState.flag_on(&"linden_row4_granted"), "§2.6 the fourth row")
+	assert_true(r.current_text().contains("Eine halte ich zurück. Für den Fall."))
+	r.start(_v("v_mayor"), _ctx(_inv()))
+	assert_ne(_id(r), &"p9_row4", "once")
+	var q := P9Quests.new()
+	tree.root.add_child(q)
+	q.endings = {&"q_who_knows": &"public"}
+	r.start(_v("v_mayor"), _ctx(_inv()))
+	assert_eq(_id(r), &"p9_public_book")
+	assert_true(r.current_text().contains("Was man aufschreibt, ist kein Gespenst mehr, sondern eine Akte."), "§2.11 Fenner (C)")
+	GameState.set_flag(&"sieber_dead", 72)
+	r.start(_v("v_mayor"), _ctx(_inv()))
+	assert_eq(_id(r), &"p9_public_watch")
+	assert_true(r.current_text().contains("Der Wächter hat niemanden gesehen, der nicht hingehört."), "§2.2.7 C")
+	rel.free()
+
+
+func test_phase9_sieber_door() -> void:
+	var r := DialogueRunner.new()
+	r.start(_v("sieber_door"), _ctx(_inv()))
+	assert_eq(_id(r), &"plain", "before the list: go away")
+	var j := P8Journal.new()
+	tree.root.add_child(j)
+	GameState.set_flag(&"clue_c_q_dates", true)
+	r.start(_v("sieber_door"), _ctx(_inv()))
+	assert_eq(_id(r), &"light")
+	assert_true(r.current_text().contains("Bei Vater oben brannte es, im Nebelung. Er sagt, er war's nicht. Er lügt nie, der Alte. "
+			+ "Er ist zu langsam zum Lügen."), "§2.2.3 H4 Anna")
+	assert_eq(j.clues, [&"c_q_sieber"])
+	GameState.set_flag(&"sieber_gone", true)
+	r.start(_v("sieber_door"), _ctx(_inv()))
+	assert_eq(_id(r), &"start", "ending A: Vater ist fort")
+
+
+func test_phase9_quest_texts_are_complete() -> void:
+	# P6 owns the texts of data/quests (§3.2): tools/dialogue/phase9_quest_texts.json covers every step, choice and ending
+	# of the chains (fixtures = the W0 structure); once P1's data files exist they carry exactly these texts
+	# (python3 tools/dialogue/build_phase9_quest_texts.py after the merge).
+	var doc: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tools/dialogue/phase9_quest_texts.json"))
+	assert_true(doc is Dictionary, "the text table parses")
+	if not doc is Dictionary:
+		return
+	for quest: QuestData in Phase9Fixtures.quests():
+		var t: Dictionary = (doc as Dictionary).get(String(quest.id), {})
+		assert_false(t.is_empty(), String(quest.id))
+		assert_true(str(t.get("title", "")).length() > 3 and str(t.get("summary", "")).length() > 40, "%s title / summary" % quest.id)
+		var real := Database.quest(quest.id) as QuestData
+		if real != null:
+			assert_eq([real.title, real.summary], [t.title, t.summary], "%s: data/quests carries the P6 texts" % quest.id)
+		for step: QuestStepData in quest.steps:
+			var st: Dictionary = (t.get("steps", {}) as Dictionary).get(String(step.id), {})
+			assert_true(str(st.get("title", "")).length() > 2 and str(st.get("hint", "")).length() > 10, "%s.%s" % [quest.id, step.id])
+			assert_false(str(st.get("hint", "")).contains("TODO"))
+			for c: QuestChoiceData in step.choices:
+				var ct: Dictionary = ((t.get("choices", {}) as Dictionary).get(String(step.id), {}) as Dictionary).get(String(c.id), {})
+				assert_true(str(ct.get("label", "")).length() > 2, "%s.%s.%s label" % [quest.id, step.id, c.id])
+				if c.block_text != "":
+					assert_true(str(ct.get("block_text", "")).length() > 10, "%s.%s block text" % [step.id, c.id])
+		for e: QuestEndingData in quest.endings:
+			var et: Dictionary = (t.get("endings", {}) as Dictionary).get(String(e.id), {})
+			assert_true(str(et.get("title", "")).length() > 3 and str(et.get("summary", "")).length() > 20, "%s ending %s" % [quest.id, e.id])
+			if quest.id != &"q_letters":
+				assert_true(str(et.get("closing_line", "")).length() > 30, "%s ending %s closing line" % [quest.id, e.id])
+		if real != null:
+			for step: QuestStepData in real.steps:
+				var st: Dictionary = (t.get("steps", {}) as Dictionary).get(String(step.id), {})
+				assert_eq([step.title, step.hint], [st.get("title", ""), st.get("hint", "")], "%s.%s texts" % [quest.id, step.id])
+			for e: QuestEndingData in real.endings:
+				var et: Dictionary = (t.get("endings", {}) as Dictionary).get(String(e.id), {})
+				assert_eq(e.closing_line, et.get("closing_line", ""), "%s ending %s" % [quest.id, e.id])
+	# §1.5 / §2.11: the four closing lines of the chapter.
+	var main: Dictionary = (doc as Dictionary).q_who_knows.endings
+	assert_eq(main.stay.closing_line, "Johann hat sich nicht beeilt. Du hast ihm die Erde so tief gemacht, wie man es kann. Wann der "
+			+ "Nächste kommt, steht in keinem Heft, das du hast.", "the default line (ending B)")
+	assert_true(str(main.away.closing_line).contains("Ob er angekommen ist, steht in keinem Brief"), "§14.5: open")
+
+
+const P9_SCHEDULE_FLAGS: PackedStringArray = ["stranger_day", "stranger_arrive_day", "sieber_bench_day", "sieber_evening_day",
+		"sieber_depart_peddler_day", "sieber_depart_carter_day", "sieber_watch_day"]
+
+
+func test_phase9_schedules() -> void:
+	var st := _sched("stranger")
+	var jo := _sched("kin_sieber_v")
+	var wa := _sched("watchman")
+	for s: NpcSchedule in [st, jo, wa]:
+		assert_not_null(s)
+	assert_eq([st.npc_id, st.display_name, jo.npc_id, wa.npc_id], [&"stranger", "Cornelius Brenneisen", &"kin_sieber_v", &"watchman"])
+	for s: NpcSchedule in [st, jo, wa]:
+		for e: ScheduleEntry in s.entries:
+			assert_true(e.today_flag == &"" or String(e.today_flag) in P9_SCHEDULE_FLAGS, "%s: flag %s" % [s.npc_id, e.today_flag])
+		for t: int in range(0, 1440, 10):
+			assert_false(ScheduleResolver.entry_at(s, t, 66).visible, "%s %d: without a flag nobody is out" % [s.npc_id, t])
+	# Brenneisen: outside the gate 14:10–15:30, never inside the cemetery (§2.5.1), the inn 18:00–21:00.
+	var cfg := Phase9Fixtures.stranger_config()
+	var e := _at("stranger", &"stranger_day", cfg.gate_window.x + 5, 65)
+	assert_eq([e.region, e.path[-1], e.dialogue_id, e.animation], [&"", "stranger_gate", &"stranger", &"wait_gate"])
+	assert_ne(_at("stranger", &"stranger_day", cfg.gate_window.y + 1, 65).path[-1], "stranger_gate", "gone at 15:30")
+	e = _at("stranger", &"stranger_day", cfg.inn_window.x + 30, 65)
+	assert_eq([e.region, e.path[-1], e.dialogue_id], [&"village", "v_in_inn_stranger", &"stranger"], "his table in the inn")
+	for entry: ScheduleEntry in st.entries:
+		for id: String in entry.path:
+			assert_false(id in ["gate_inside", "dropoff"] or id.begins_with("gv_") or id.begins_with("vw_"), "never inside: %s" % id)
+	e = _at("stranger", &"stranger_arrive_day", 575, 65)
+	assert_eq([e.path[0], e.path[-1], e.activity], ["v_peddler_in", "v_inn_door", &"walk"], "over the Holderbrücke at 09:30")
+	# Johann: the bench 14:00–16:00 (WhoKnowsConfig.bench_window), the evenings 18:00–20:00.
+	var wk := Phase9Fixtures.who_knows_config()
+	e = _at("kin_sieber_v", &"sieber_bench_day", wk.bench_window.x + 30, 66)
+	assert_eq([e.path[-1], e.dialogue_id, e.animation, e.visible], ["v_sieber_bench", &"kin_sieber_v", &"sit_bench", true])
+	assert_false(_at("kin_sieber_v", &"sieber_bench_day", wk.bench_window.y + 10, 66).visible, "home after 16:00")
+	e = _at("kin_sieber_v", &"sieber_evening_day", 1140, 69)
+	assert_eq([e.path[-1], e.visible], ["v_sieber_bench", true], "ending B: the evening")
+	# Ending A (§4.5): with Hanne – a minute behind her, 16:20 up her forest path; with Osric on the cart.
+	var hanne := _sched("peddler")
+	GameState.set_flag(&"peddler_day", 67)
+	GameState.set_flag(&"sieber_depart_peddler_day", 67)
+	for t: int in [925, 990]:
+		var h := ScheduleResolver.entry_at(hanne, t, 67)
+		var j := ScheduleResolver.entry_at(jo, t, 67)
+		assert_eq([j.region, j.start_minute, j.path[-1]], [h.region, h.start_minute + 1, h.path[-1] if t == 990 else "sieber_gate"],
+				"%d: one minute behind Hanne, on her way" % t)
+	var hw := ScheduleResolver.entry_at(hanne, 990, 67)
+	var jw := ScheduleResolver.entry_at(jo, 990, 67)
+	assert_eq(jw.path.slice(1), hw.path.slice(1), "the same waypoints west")
+	assert_eq(jw.animation, &"walk_bundle", "with his bundle")
+	GameState.clear_flag(&"peddler_day")
+	GameState.clear_flag(&"sieber_depart_peddler_day")
+	e = _at("kin_sieber_v", &"sieber_depart_carter_day", 610, 69)
+	assert_eq([e.region, e.animation, e.start_minute, e.travel_minutes, e.path[-1]], [&"", &"sit_cart", 600, 40, "road_end"],
+			"10:00 on Osric's cart down the Kutschweg")
+	var osric := ScheduleResolver.entry_at(_sched("carter"), 610, 69)
+	assert_eq([osric.start_minute, osric.travel_minutes, Array(osric.path)], [600, 40, Array(e.path)], "with Osric's cart")
+	assert_false(_at("kin_sieber_v", &"sieber_depart_carter_day", 700, 69).visible, "gone")
+	# The watchman's lantern (ending C): 21:00–06:00 at the Siebers' door.
+	for t: int in [1300, 120]:
+		e = _at("watchman", &"sieber_watch_day", t, 70)
+		assert_eq([e.path[-1], e.activity, e.visible], ["v_sieber_door", &"watch", true], "lantern at %d" % t)
+	assert_false(_at("watchman", &"sieber_watch_day", 700, 70).visible, "not by day")
+
+
+func test_phase9_villager_schedules_unchanged() -> void:
+	# Phase 8 bitgleich: the Phase-9 schedules are new files; no villager entry carries a Phase-9 flag.
+	for npc: String in Array(P8_SCHEDULES) + ["beggar", "peddler", "apprentice"]:
+		for e: ScheduleEntry in _sched(npc).entries:
+			assert_false(String(e.today_flag) in P9_SCHEDULE_FLAGS, "%s: %s" % [npc, e.today_flag])
+
+
+func test_phase9_remarks_react_to_the_endings() -> void:
+	# §2.2.8 Gerede: Fenner and Liesel on A, Rosine on B, Rosine and Lenz on C (+ the others); the reaction days are config.
+	var cfg := NpcLifeConfig.new()
+	for ev: StringName in [&"q_sent_away", &"q_stayed", &"q_public", &"letter_delivered", &"register_sold"]:
+		assert_true(cfg.reactions.has(ev), String(ev))
+	var leads := {&"mayor": [&"event_q_sent_away", "Leute fortschicken ist nicht Ihr Amt, Totengräber. Es ist auch nicht meins."],
+			&"washer": [&"event_q_sent_away", "Lorenz hat sie auch fortgeschickt. Nicht alle sind angekommen."],
+			&"innkeeper": [&"event_q_stayed", "Du hast beim Sieber gesessen, sagt Anna. Zwei Abende. Das macht keiner."],
+			&"priest": [&"event_q_public", "Sie haben mich vor Fenner gestellt. Ich war trotzdem da. Ich bin immer da."]}
+	for npc: StringName in leads:
+		var v := Database.villager(npc) as VillagerData
+		var pool: PackedStringArray = v.remarks.get(leads[npc][0], PackedStringArray())
+		assert_eq(pool.size(), 1, "%s %s" % [npc, leads[npc][0]])
+		if not pool.is_empty():
+			assert_true(pool[0].begins_with(leads[npc][1]), "%s leading text" % npc)
+	var rosine := Database.villager(&"innkeeper") as VillagerData
+	assert_true((rosine.remarks[&"event_q_public"] as PackedStringArray)[0].begins_with("Fenner hat einen Wächter vor die Siebers gestellt."))
+	for res: Resource in Database.villagers():
+		var v := res as VillagerData
+		if v.npc_id == &"oldwoman":
+			continue
+		for ev: StringName in [&"event_q_sent_away", &"event_q_stayed", &"event_q_public"]:
+			assert_true(v.remarks.has(ev), "%s reacts to %s" % [v.npc_id, ev])
