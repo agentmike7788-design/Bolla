@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="OrderData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1_uf57n"]
+
+[sub_resource type="Resource" id="Resource_m01fx"]
+script = ExtResource("1_uf57n")
+kind = &"gather"
+title = "Zehn Holz schlagen oder roden"
+conditions = {
+"amount": 10,
+"item": "wood"
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_xk01n"]
+script = ExtResource("1_uf57n")
+recipient = &"carter"
+kind = &"deliver"
+title = "Bei Osric abgeben"
+items = Dictionary[StringName, int]({
+&"wood": 10
+})
+category = &"hill"
+
+[resource]
+script = ExtResource("1_uf57n")
+id = &"hrl_widow_wood"
+giver = &"kin_kehr"
+kind = &"large"
+title = "Holz für die Witwen"
+request_text = "Martha Kehr: „Bei den Witwen am Bach ist kein Holz mehr im Schuppen. Zehn Scheite, mehr braucht's nicht für den Anfang. Was du oben rodest, brennt unten genauso. Osric fährt es hinunter.“"
+thanks_text = "Martha Kehr lässt danken. „Jetzt rauchen bei ihnen wieder die Schornsteine. Das sieht man vom Hügel aus.“"
+conditions = {
+"min_day": 2
+}
+days_limit = 2
+reward_coins = 3
+reward_rep = 2
+cooldown_days = 8
+order = 60
+category = &"hill"
+parts = Array[Resource]([SubResource("Resource_m01fx"), SubResource("Resource_xk01n")])
+size = &"large"
+parts_in_order = true

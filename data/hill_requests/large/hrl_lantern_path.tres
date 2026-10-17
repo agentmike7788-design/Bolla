@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="OrderData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1_rxb02"]
+
+[sub_resource type="Resource" id="Resource_60jqh"]
+script = ExtResource("1_rxb02")
+kind = &"craft"
+title = "Zwei Grablaternen an der Werkbank"
+conditions = {
+"amount": 2,
+"recipe": "decor_lantern"
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_t1u7e"]
+script = ExtResource("1_rxb02")
+kind = &"decor"
+title = "Am Tor aufstellen"
+conditions = {
+"amount": 2,
+"decor": ["decor_lantern"],
+"near": "gate"
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_1s73d"]
+script = ExtResource("1_rxb02")
+kind = &"visit"
+title = "Nachts am Tor stehen, bis Osric vorbeifährt"
+conditions = {
+"label": "[E] Am Tor warten, bis Osric vorbeifährt (20 Min)",
+"minutes": 20,
+"place": "gate_outside",
+"window": [1290, 1380]
+}
+category = &"hill"
+
+[resource]
+script = ExtResource("1_rxb02")
+id = &"hrl_lantern_path"
+giver = &"carter"
+kind = &"large"
+title = "Licht am Kutschweg"
+request_text = "Osric: „Nachts seh ich das Tor erst, wenn der Gaul davorsteht. Zwei Laternen, und einmal stehst du da, wenn ich vorbeikomm. Damit ich weiß, dass einer wach ist.“"
+thanks_text = "„Zwei Lichter und einer, der winkt“, sagt Osric. „Jetzt fahr ich gern vorbei.“"
+conditions = {
+"min_day": 5
+}
+days_limit = 3
+reward_coins = 3
+reward_rep = 2
+cooldown_days = 9
+order = 70
+category = &"hill"
+parts = Array[Resource]([SubResource("Resource_60jqh"), SubResource("Resource_t1u7e"), SubResource("Resource_1s73d")])
+size = &"large"

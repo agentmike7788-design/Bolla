@@ -1,0 +1,63 @@
+[gd_resource type="Resource" script_class="OrderData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1_ut45f"]
+
+[sub_resource type="Resource" id="Resource_ttnqt"]
+script = ExtResource("1_ut45f")
+kind = &"exam"
+title = "Die nächste Lieferung gründlich untersuchen"
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_lgr8l"]
+script = ExtResource("1_ut45f")
+kind = &"prep"
+title = "Gewaschen, gekleidet, aufgebahrt bestatten"
+conditions = {
+"dressed": true,
+"laid_out": true,
+"washed": true
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_3k4gj"]
+script = ExtResource("1_ut45f")
+kind = &"marker"
+title = "Ein Grabstein"
+conditions = {
+"marker": "gravestone_simple"
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_ly3pw"]
+script = ExtResource("1_ut45f")
+kind = &"tend"
+title = "Die Gräber ringsum säubern"
+conditions = {
+"count": 4,
+"grave": "neighbors"
+}
+category = &"hill"
+
+[resource]
+script = ExtResource("1_ut45f")
+id = &"hrl_proper_grave"
+giver = &"carter"
+kind = &"large"
+title = "Ein Grab, wie es sich gehört"
+request_text = "Osric: „Den Nächsten bring ich dir morgen. Mach ihn, wie es sich gehört. Ganz. Von vorn bis hinten. Einmal will ich das sehen.“"
+thanks_text = "„So“, sagt Osric und nimmt die Mütze ab. „So hab ich's mir gedacht.“"
+conditions = {
+"min_day": 3,
+"reward_items": {
+"linen": 1
+}
+}
+days_limit = 3
+reward_coins = 3
+reward_rep = 2
+cooldown_days = 10
+order = 30
+category = &"hill"
+parts = Array[Resource]([SubResource("Resource_ttnqt"), SubResource("Resource_lgr8l"), SubResource("Resource_3k4gj"), SubResource("Resource_ly3pw")])
+size = &"large"
+parts_in_order = true

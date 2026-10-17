@@ -8,7 +8,8 @@ extends TestCase
 const IMPLEMENTED: PackedStringArray = ["Quests", "QuestRules", "QuestLog",  # P1
 		"WhoKnows", "LightRules", "KnockDoor",  # P4
 		"Letters", "LetterRules",  # P3
-		"Stranger", "StrangerRules"]  # P5
+		"Stranger", "StrangerRules",  # P5
+		"HillRequests", "HillRules"]  # P2
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
 	# P1
@@ -562,7 +563,7 @@ func test_fixture_helpers() -> void:
 	var h := Phase9Fixtures.large_pinned(&"hrl_ferry_graves", [true, false, false] as Array[bool])
 	assert_eq([h.large_board(&"gate"), h.parts_done(&"hrl_ferry_graves")], [[&"hrl_ferry_graves"] as Array[StringName],
 			[true, false, false] as Array[bool]])
-	assert_eq(h.save_state().has("parts"), false, "W0: not saved yet (P2)")
+	assert_eq(h.save_state().get("parts"), {"hrl_ferry_graves": [true, false, false]}, "P2: parts saved (§5.1)")
 	h.free()
 	GameState.flags = flags
 	assert_false(Phase9Fixtures.layout_p8().is_empty(), "layout_p8.json readable")
