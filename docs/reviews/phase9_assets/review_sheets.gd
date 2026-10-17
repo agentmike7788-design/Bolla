@@ -86,7 +86,48 @@ func _run() -> void:
 			await _props()
 		"scenes":
 			await _scenes()
+		"hold":
+			await _hold()
 	quit()
+
+
+## The gravekeeper's Phase-9 clips, each at three moments, with its hand prop hung at its marker
+## (asset_character.HOLD_PROPS: the owner shows the ph_tool_* scene at hold_r / hold_l while the clip plays).
+const GK_CLIPS: Array[String] = ["read_book", "write_letter", "read_letter", "kneel_read", "read_aloud_grave", "burn_letter",
+		"slip_letter", "knock", "take_soil", "carry_case"]
+const HOLD := {"kneel_read": [["hold_l", "ph_tool_kladde"]], "write_letter": [["hold_r", "ph_tool_quill"]],
+		"read_letter": [["hold_r", "ph_tool_letter_open"]], "read_aloud_grave": [["hold_r", "ph_tool_letter_open"]],
+		"burn_letter": [["hold_r", "ph_tool_letter"]], "slip_letter": [["hold_r", "ph_tool_letter"]],
+		"take_soil": [["hold_l", "ph_tool_soil_cloth"]], "carry_case": [["hold_r", "ph_tool_case"]]}
+
+
+func _hold() -> void:
+	var tiles: Array = []
+	for c: String in GK_CLIPS:
+		if not _match(c):
+			continue
+		var inst := _load("ph_chr_gravekeeper")
+		_stage.add_child(inst)
+		for spec: Array in HOLD.get(c, []):
+			var m := inst.find_child(spec[0], true, false) as Node3D
+			if m != null:
+				m.add_child((load("res://assets/models/props/%s.glb" % spec[1]) as PackedScene).instantiate())
+		var ap := inst.get_node("AnimationPlayer") as AnimationPlayer
+		var anim := ap.get_animation(c)
+		for k: int in 3:
+			var t := anim.length * (0.1 + 0.4 * k)
+			_pose(inst, c, t)
+			_cam.fov = 28
+			_cam.position = Vector3(2.4, 1.9, 3.4)
+			_cam.look_at(Vector3(0, 0.85, 0.2))
+			var lab := _label("%s  %.1f s" % [c, t], Vector3(0.0, 1.9, -0.3), 30)
+			lab.pixel_size = 0.0035
+			lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+			tiles.append(await _shot())
+			lab.queue_free()
+		inst.queue_free()
+		await process_frame
+	_sheet(tiles, 6, Vector2i(300, 340)).save_jpg(_out.path_join("anim_gravekeeper_phase9.jpg"), 0.9)
 
 
 ## The clips in their places: Brenneisen at the inn table (seat_1 of ph_int_inn_table), waiting outside the gate,

@@ -12,6 +12,12 @@ materials; the builders are shared with the figures (asset_stranger, asset_mourn
   ph_prop_bundle          Johann's bundle: his things knotted in a blue-grey kerchief
   ph_prop_soil_pouch      a handful of grave earth knotted in a linen cloth (what the stranger buys)
 
+The gravekeeper's hand props (asset_character.HOLD_PROPS; not grounded, the origin = the fist's marker hold_r /
+hold_l, modelled where they sit in their reference clip): ph_tool_letter (the folded letter on edge, pointing
+forward: slip_letter, burn_letter), ph_tool_letter_open (between both hands: read_letter, read_aloud_grave),
+ph_tool_kladde (the ledger open in the left hand: kneel_read), ph_tool_quill (write_letter), ph_tool_soil_cloth (the
+open cloth in the left hand: take_soil), ph_tool_case (hanging from the right fist: carry_case).
+
 Markers: "grip" where a hand takes the letter / the case / the bundle (the figures' child meshes are built from
 the same functions). Lying props have their pivot at the bottom centre (z = 0); nothing is higher than 1.4 m.
 Run:  python tools/blender/build_all.py asset_props_phase9
@@ -210,6 +216,133 @@ def watch_lantern(name: str = "watch_lantern"):
     return L.join(parts, name), glass_c
 
 
+# --- the gravekeeper's hand props (asset_character HOLD_PROPS) ---------------------------------------------
+# Each is modelled where it sits in its reference clip (the fists from asset_character.p9_hold_frame) and then
+# brought into the frame of the marker it hangs at (hold_r / hold_l: the fist at rest, the armature's axes), so the
+# scene's origin goes on the marker. Not grounded.
+
+def _basis(origin, x, y, z) -> Matrix:
+    m = Matrix((tuple(Vector(x).normalized()), tuple(Vector(y).normalized()), tuple(Vector(z).normalized()))).transposed().to_4x4()
+    m.translation = Vector(origin)
+    return m
+
+
+def _held(name: str, clip, t: float, bone: str, make) -> None:
+    """make(fist_r, fist_l) -> object modelled in the posed armature space of clip at t; exported in the rest
+    frame of the marker on `bone`."""
+    import asset_character as C
+    pose = clip(t)
+    mr = C.p9_hold_frame(pose, "arm_r")
+    ml = C.p9_hold_frame(pose, "arm_l")
+    fr, fl = mr @ C.FIST[-1], ml @ C.FIST[1]
+    obj = make(fr, fl)
+    m = mr if bone == "arm_r" else ml
+    obj.data.transform(Matrix.Translation(-C.FIST[-1 if bone == "arm_r" else 1]) @ m.inverted())
+    finish_stable(obj, name, "props", 45, shift=False)
+
+
+def tool_letter_open():
+    """The open letter held by its top corners between both fists (read_letter, read_aloud_grave), the written
+    side towards his eyes, the bottom edge a little nearer to him."""
+    import asset_character as C
+    L.reset(9211)
+
+    def make(fr, fl):
+        obj = letter_open(seed=21)                        # lies in XY: width along X, its top (the seal) at +Y
+        w = (fl - fr).length - 0.03
+        obj.data.transform(Matrix.Scale(w / LETTER_W, 4, Vector((1, 0, 0))))
+        e = (fl - fr).normalized()
+        n = Vector((0.0, 0.67, 0.74))
+        n = (n - e * n.dot(e)).normalized()
+        down = n.cross(e).normalized()                    # along the sheet, from the top edge towards him and down
+        top = (fr + fl) * 0.5 + Vector((0.0, 0.0, 0.03))
+        # sheet space: +X = e, +Y = -down (towards the top edge), +Z = n; its top edge (y = +0.12) at `top`
+        obj.data.transform(_basis(top + down * 0.12, e, -down, n))
+        return obj
+    _held("ph_tool_letter_open", C.read_letter, 0.0, "arm_r", make)
+
+
+def tool_letter():
+    """The folded letter held at one end in the right fist, pointing forward (slip_letter, burn_letter), on edge."""
+    import asset_character as C
+    L.reset(9212)
+
+    def make(fr, fl):
+        obj = letter(seed=22)                             # lies in XY, 0.16 along X
+        fwd = Vector((0.0, -1.0, 0.0))
+        up = Vector((0.0, 0.0, 1.0))
+        side = fwd.cross(up)
+        # letter space: +X = forward, +Y = up, +Z = his right: the packet stands on edge, held at its end
+        obj.data.transform(_basis(fr + fwd * (LETTER_W * 0.5 - 0.02), fwd, up, -side))
+        return obj
+    _held("ph_tool_letter", C.slip_letter, 0.6, "arm_r", make)
+
+
+def tool_kladde():
+    """Lorenz's ledger lying open in the left hand (kneel_read), the pages towards him and up."""
+    import asset_character as C
+    L.reset(9213)
+
+    def make(fr, fl):
+        parts = []
+        for sx in (-1, 1):
+            pg = L.prim("cube", loc=(sx * 0.07, 0.0, 0.006), scale=(0.07, 0.1, 0.006))
+            for v in pg.data.vertices:
+                v.co.z += 0.008 * max(0.0, 1.0 - abs(v.co.x) / 0.14)
+            parts.append(_p(pg, L.hexc("#CFC3A3"), var=0.06, ao=0.0, top=0.25))
+            _lines(parts, sx * 0.07 - 0.05, sx * 0.07 + 0.05, [0.07 - 0.02 * k for k in range(6)], 0.016, color=L.hexc("#4A3E34"),
+                   seed=sx + 2)
+        parts.append(_p(L.prim("cube", loc=(0, 0, -0.002), scale=(0.15, 0.105, 0.004)), L.hexc("#4A3E34"), var=0.12, ao=0.0, top=0.2))
+        obj = L.join(parts, "kladde")
+        n = Vector((0.0, 0.5, 0.87)).normalized()
+        e = Vector((1.0, 0.0, 0.0))
+        obj.data.transform(_basis(fl + Vector((-0.07, 0.0, 0.04)), e, n.cross(e), n))
+        return obj
+    _held("ph_tool_kladde", C.kneel_read, 0.0, "arm_l", make)
+
+
+def tool_quill():
+    """The quill in the right fist, the nib down on the page in front, the feather up and back (write_letter)."""
+    import asset_character as C
+    L.reset(9214)
+
+    def make(fr, fl):
+        nib = Vector((fr.x + 0.02, fr.y - 0.06, C.DESK_Z + 0.004))
+        top = fr + Vector((-0.01, 0.06, 0.14))
+        d = (top - nib).normalized()
+        shaft = _p(L.tube(nib, top, 0.0025, 4), L.hexc("#CFC6B0"), var=0.08, ao=0.0)
+        vane = L.prim("cube", loc=(0, 0, 0), scale=(0.012, 0.0012, 0.07))
+        vane.data.transform(Matrix.Translation(nib + d * 0.12) @ Vector((0, 0, 1)).rotation_difference(d).to_matrix().to_4x4())
+        return L.join([shaft, _p(vane, L.hexc("#BDB39C"), var=0.1, ao=0.0, top=0.3)], "quill")
+    _held("ph_tool_quill", C.write_letter, 0.0, "arm_r", make)
+
+
+def tool_soil_cloth():
+    """The linen cloth held open by a corner in the left fist, sagging into a bowl below it (take_soil)."""
+    import asset_character as C
+    L.reset(9215)
+
+    def make(fr, fl):
+        c = fl + Vector((-0.04, 0.0, -0.07))
+        bowl = L.prim("sphere", loc=c, radius=1.0, segments=10, ring_count=5, scale=(0.085, 0.075, 0.06))
+        for v in bowl.data.vertices:
+            if v.co.z > c.z + 0.01:          # open at the top: the rim pulled up to the fist at one corner
+                v.co.z = c.z + 0.01 + 0.04 * max(0.0, (v.co.x - c.x) / 0.085)
+        L.jitter(bowl, 0.004, 14.0, 5)
+        _p(bowl, LINEN, var=0.14, ao=0.2, top=0.3, hue_shift=LINEN_SHADE)
+        earth = L.prim("sphere", loc=c + Vector((0, 0, -0.005)), radius=1.0, segments=8, ring_count=4, scale=(0.06, 0.05, 0.02))
+        return L.join([bowl, _p(earth, EARTH, var=0.2, ao=0.0, top=0.2, hue_shift=EARTH_DARK)], "soil_cloth")
+    _held("ph_tool_soil_cloth", C.take_soil, 0.0, "arm_l", make)
+
+
+def tool_case():
+    """Brenneisen's case hanging plumb from the right fist (carry_case)."""
+    import asset_character as C
+    import asset_stranger as S
+    L.reset(9216)
+    _held("ph_tool_case", C.carry_case, 0.0, "arm_r", lambda fr, fl: S.case(fr + Vector((0.0, 0.0, 0.004)), seed=50, name="case"))
+
+
 # --- exports -----------------------------------------------------------------------------------------------
 
 def _export(obj, name: str, markers=(), cat: str = "props", smooth: float = 45.0) -> None:
@@ -255,7 +388,8 @@ def prop_soil_pouch():
     _export(soil_pouch(seed=4), "ph_prop_soil_pouch", [("grip", (0.0, 0.0, 0.12))])
 
 
-PROPS = (prop_letter, prop_letter_open, prop_case, prop_notebook, prop_watch_lantern, prop_bundle, prop_soil_pouch)
+PROPS = (prop_letter, prop_letter_open, prop_case, prop_notebook, prop_watch_lantern, prop_bundle, prop_soil_pouch,
+         tool_letter, tool_letter_open, tool_kladde, tool_quill, tool_soil_cloth, tool_case)
 
 
 def build(names=None):

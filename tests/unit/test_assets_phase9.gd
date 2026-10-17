@@ -24,7 +24,7 @@ const STRANGER_HEIGHT := [1.72, 1.86]   # the body (the top hat is a child mesh)
 const CASE_DOWN: Array[String] = ["write_notebook", "wait_gate", "sit_inn"]
 const CASE_TOP := 0.35                  # the handle's top above the ground when the case stands (0.3 + 0.05)
 const WRITING: Array[String] = ["write_notebook", "sit_inn"]
-const ONE_SHOTS: Array[String] = ["tip_hat", "show_mark"]
+const ONE_SHOTS: Array[String] = ["tip_hat", "show_mark", "slip_letter", "knock"]
 ## The inn bench and table (ph_int_inn_table): seat 0.46 m, the table top 0.795 m, its near edge 0.28 m in front
 ## of the seat marker, its far edge 1.08 m.
 const TABLE_TOP := 0.795
@@ -38,6 +38,31 @@ const JOHANN_OLD := {"idle": "0bfcac4d56aed46b", "idle_low": "2815b000d94d2371",
 const JOHANN_NEW: Array[String] = ["sit_bench", "show_mark", "walk_bundle", "sit_cart"]
 const JOHANN_CHILDREN := {"hat_head": "head", "hat_hand": "arm_r", "lantern_prop": "arm_r", "bundle": "arm_r", "bundle_down": "root"}
 const JOHANN_TRIS := 7500
+
+const GRAVEKEEPER := "ph_chr_gravekeeper"
+## Every clip of the Phase-8 export (b30c5b3, _anim_hash); the body is P8.GRAVEKEEPER_MESH.
+const GRAVEKEEPER_OLD := {"axe_draw": "7fc9a4578374ae03", "axe_stow": "725d1359418de125", "axe_stow_walk": "6d330b026169323a",
+		"bench_work": "9df6667585633b37", "carry_idle": "3c2f250bc2155117", "carry_walk": "90a8dec736b457c4", "chisel": "895f5a28b255c5a3",
+		"chop": "8823123bb5be0ae9", "corpse_lower": "907c1027ca7e7507", "dance": "e71b7d627fd68ff7", "dig": "3a6a9a17dd20d3bf",
+		"dig_bare": "8ab9b2603cc158dd", "fill_can": "72ae1725613c785f", "hammer": "46e54dc47273c22f", "hammer_draw": "4d78248886390355",
+		"hammer_stow": "7225cea5d9cae01c", "hammer_stow_walk": "8810cdb1f04bb880", "hand_draw": "c18ac82c807fad03",
+		"hand_stow": "31728f5db2ecfced", "hand_stow_walk": "1c5615a466e6922a", "idle": "100c42b5645bb344", "interact": "fc90811cc405350a",
+		"kneel_place": "dba2e412712c21d6", "mourn": "b4802a30aed0b5b5", "pick": "66b6ad53b649d468", "pick_draw": "49f7deaab8aa3a93",
+		"pick_stow": "1e0b9dfa51c11ee5", "pick_stow_walk": "54c51909259347c9", "place_low": "c0b122da4c36c06e", "pray": "ec29b44ed3df16ed",
+		"rake": "e436da95de30f6ef", "rake_put": "386d1d545e79e684", "rake_put_walk": "df61147ad46be323", "rake_take": "4e575f375501be51",
+		"saw": "3082ece3caa49ae6", "saw_draw": "8348fca8a0c96f59", "saw_stow": "d0bec5711adc02b9", "saw_stow_walk": "b50ce6b1c4e68afc",
+		"shovel_draw": "a26932b8e2b431f1", "shovel_stow": "1cf7741a42bdac7e", "shovel_stow_walk": "29ecc1d83ed0cd00",
+		"sit_bench": "9563c4446cff6c99", "table_comb": "d7b61e0a29356492", "table_cut": "4429f076a9030098",
+		"table_examine": "f1922543294ea127", "table_pull": "d0d96b7abd9cc920", "table_search": "a1b17f315721c61e",
+		"table_shroud": "2d37052d2f407aa0", "table_smoke": "7041f64d0a6a46dd", "table_snip": "60664c1c2f3107fa",
+		"table_wash": "dd84ba0e2c5a002f", "walk": "b49b9de1d36dcb95", "water": "6a415f062fa87d1d", "weed_pull": "5d2b1ce9a930619b",
+		"write": "642ae7a550935952"}
+const GRAVEKEEPER_NEW: Array[String] = ["read_book", "kneel_read", "write_letter", "read_letter", "read_aloud_grave",
+		"burn_letter", "slip_letter", "knock", "take_soil", "carry_case"]
+const HOLD_MARKERS := {"hold_r": "arm_r", "hold_l": "arm_l"}
+## the gravekeeper's hand props (asset_character.HOLD_PROPS) -> triangle budget
+const HAND_PROPS := {"ph_tool_letter": 200, "ph_tool_letter_open": 320, "ph_tool_kladde": 220, "ph_tool_quill": 60,
+		"ph_tool_soil_cloth": 200, "ph_tool_case": 320}
 
 ## props: name -> [min size, max size, triangle budget (§8.4), markers]
 const PROPS := {
@@ -247,6 +272,93 @@ func test_johann_sits_with_the_stick_planted() -> void:
 	assert_true(hd.distance_to(rest_head) > 0.03, "show_mark: he looks down and away")
 	var hand := r.hand(s, "arm_r", s.length * 0.5)
 	assert_true(hand.x < r.hand(null, "arm_r", 0.0).x - 0.08, "show_mark: the hand draws the coat open to the side")
+
+
+# --- the gravekeeper ---------------------------------------------------------------------------------------
+
+func test_gravekeeper_keeps_body_and_every_older_clip() -> void:
+	var r := _rig(GRAVEKEEPER)
+	assert_eq(P8._mesh_hash(r.mesh_instance), P8.GRAVEKEEPER_MESH, "gravekeeper body unchanged")
+	for clip: String in GRAVEKEEPER_OLD:
+		assert_eq(P8._anim_hash(r.animation(clip)), String(GRAVEKEEPER_OLD[clip]), "gravekeeper/%s unchanged" % clip)
+	var want: Array = GRAVEKEEPER_OLD.keys()
+	want.append_array(GRAVEKEEPER_NEW)
+	assert_eq(_clips(GRAVEKEEPER), _sorted(want), "the older clips + the Phase-9 clips")
+	_check_clips(GRAVEKEEPER, GRAVEKEEPER_NEW)
+
+
+func test_gravekeeper_new_clips_leave_the_shovel_on_the_back() -> void:
+	var r := _rig(GRAVEKEEPER)
+	var tool := r.skeleton.find_bone("tool")
+	var rest := r.skeleton.get_bone_rest(tool)
+	for c: String in GRAVEKEEPER_NEW:
+		var a := r.animation(c)
+		for k: int in 4:
+			assert_true(_close(r.local_pose(a, tool, a.length * k / 3.0), rest), "%s: the shovel stays on the back" % c)
+	for m: String in HOLD_MARKERS:
+		var n := r.scene.find_child(m, true, false) as Node3D
+		assert_not_null(n, "marker " + m)
+		if n != null:
+			var att := n.get_parent() as BoneAttachment3D
+			assert_true(att != null and att.bone_name == HOLD_MARKERS[m], "%s on %s" % [m, HOLD_MARKERS[m]])
+			var fist := r.hand(null, HOLD_MARKERS[m], 0.0)
+			assert_true(_xf(n, r.scene).origin.distance_to(fist) < 0.06, "%s at the fist (%s / %s)" % [m, _xf(n, r.scene).origin, fist])
+
+
+func test_gravekeeper_phase9_poses() -> void:
+	var r := _rig(GRAVEKEEPER)
+	var rest_hips := r.centroid(r.posed(null, "hips", 0.0)).y
+	for c: String in ["kneel_read", "read_aloud_grave", "take_soil"]:
+		var a := r.animation(c)
+		var drop := rest_hips - r.centroid(r.posed(a, "hips", a.length * 0.5)).y
+		assert_true(drop > 0.2 and drop < 0.4, "%s: kneeling (the hips %.2f m lower)" % [c, drop])
+		for leg: String in ["leg_l", "leg_r"]:
+			assert_true(r.lowest_y(r.posed(a, leg, a.length * 0.5)) > -0.03, "%s/%s above the ground" % [c, leg])
+	var rl := r.animation(&"read_letter")
+	var lr := r.hand(rl, "arm_r", 0.0)
+	var ll := r.hand(rl, "arm_l", 0.0)
+	assert_true(lr.y > 0.95 and ll.y > 0.95 and lr.z > 0.3 and ll.z > 0.3, "read_letter: the letter in front of the chest (%s, %s)" % [lr, ll])
+	assert_true(lr.distance_to(ll) > 0.12 and lr.distance_to(ll) < 0.3, "read_letter: held between both hands (%.2f)" % lr.distance_to(ll))
+	for c: String in ["read_book", "write_letter"]:
+		var a := r.animation(c)
+		var h := r.hand(a, "arm_l", 0.0)
+		assert_true(h.y > 0.74 and h.y < 0.92 and h.z > 0.3, "%s: the left hand on the desk (%s)" % [c, h])
+	var sl := r.animation(&"slip_letter")
+	var at := r.hand(sl, "arm_r", sl.length * 0.6)
+	assert_true(at.y > 0.85 and at.y < 1.15 and at.z > 0.35, "slip_letter: the hand at the door's gap (%s)" % at)
+	var kn := r.animation(&"knock")
+	assert_true(r.hand(kn, "arm_r", kn.length * 0.42).y > 1.0, "knock: the hand up at the door")
+	var ts := r.animation(&"take_soil")
+	assert_true(r.hand(ts, "arm_r", ts.length * 0.3).y < 0.45, "take_soil: the right hand down at the mound")
+	var bl := r.animation(&"burn_letter")
+	var b := r.hand(bl, "arm_r", 0.0)
+	assert_true(b.z > 0.35 and b.y < 0.9, "burn_letter: the hand forward into the stove (%s)" % b)
+
+
+func test_gravekeeper_hand_props() -> void:
+	for p: String in HAND_PROPS:
+		var path := MODEL_DIR + "props/" + p + ".glb"
+		assert_true(ResourceLoader.exists(path), "missing " + path)
+		if not ResourceLoader.exists(path):
+			continue
+		var inst := _load_free(path)
+		var tris := _triangles(inst)
+		assert_true(tris <= int(HAND_PROPS[p]) and tris >= 20, "%s: %d tris (<= %d)" % [p, tris, HAND_PROPS[p]])
+		var box := _aabb(inst)
+		assert_true(box.grow(0.03).has_point(Vector3.ZERO), "%s: held at its origin (the fist) %s" % [p, box])
+		for m: String in _materials(inst):
+			assert_true(m.begins_with(MATERIAL_DIR), "%s: shared material %s" % [p, m])
+	# the case hangs below the fist and stays clear of the ground while he walks
+	var r := _rig(GRAVEKEEPER)
+	var cc := r.animation(&"carry_case")
+	var case_box := _aabb(_load_free(MODEL_DIR + "props/ph_tool_case.glb"))
+	for k: int in 4:
+		var t := cc.length * k / 4.0
+		var fist := r.hand(cc, "arm_r", t)
+		assert_true(fist.y + case_box.position.y > 0.15, "carry_case: the case off the ground (%.2f)" % (fist.y + case_box.position.y))
+	var src := FileAccess.get_file_as_string("res://tools/blender/asset_character.py")
+	for p: String in HAND_PROPS:
+		assert_true(src.contains("\"%s\"" % p), "%s is named in asset_character.HOLD_PROPS" % p)
 
 
 # --- props and items -------------------------------------------------------------------------------------
