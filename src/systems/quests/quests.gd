@@ -97,7 +97,8 @@ func is_open() -> bool:
 
 
 func open_day() -> int:
-	return int(GameState.get_flag(_cfg().open_day_flag, -1))
+	var v: Variant = GameState.get_flag(_cfg().open_day_flag, -1)
+	return int(v) if (v is int or v is float) else -1
 
 
 ## &"" | &"open" | &"ended" | &"settled"
