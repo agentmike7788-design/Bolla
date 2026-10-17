@@ -33,6 +33,7 @@ const CONDITION_GRAMMAR := ("^!?(has_item:[a-z_0-9]+(:\\d+)?|flag:[a-z_0-9]+|sta
 		+ "|quest_choice:q_[a-z_]+:[a-z0-9]+:[a-z_]+|quest_ending:q_[a-z_]+:[a-z_]+|quest_ended:q_[a-z_]+"
 		+ "|light:e_[a-z]+:(matched|witnessed)|sieber_marked|sieber_gone|letter_posted|letter_for:[a-z_]+|post_for:[a-z_]+"
 		+ "|stranger_here|stranger_step:k[1-5]|stranger_ending:(fenner|deal|ilse)|large_ready:[a-z_]+"
+		+ "|stranger_question:\\d+|stranger_recognized|stranger_resolvable:(fenner|deal|ilse)|stranger_case:(inn|player|fenner|stranger|none)"
 		+ "|confided:(priest|surgeon|washer|none)|kin_house|story:[a-z0-9_]+|fresh_grave_days:\\d+)$")
 const ACTION_GRAMMAR := ("^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_0-9]+|take_item:[a-z_0-9]+:\\d+(:[a-z_]+)?|give_item:[a-z_0-9]+:\\d+|stat_add:[a-z_]+:-?\\d+|notify:.+|open_panel:[a-z_]+|open_trade|add_clue:c_[a-z_0-9]+|trader_tools|trader_talked|set_flag_night:[a-z_]+"
 		# Phase 7 (P6)
@@ -48,7 +49,8 @@ const ACTION_GRAMMAR := ("^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_0-9]+|take
 		+ "|quest_note:[a-z_]+:.*|quest_choose:q_[a-z_]+:[a-z0-9]+:[a-z_]+|witness:e_[a-z]+|mark_seen|letter_deliver(:[a-z_]+)?"
 		+ "|letter_read_aloud(:[a-z_]+)?|letter_post:(peddler|carter)|stranger_answer:(frank|evade|refuse)|stranger_offers"
 		+ "|stranger_bribe:(yes|no)|stranger_resolve:(fenner|deal|ilse)|large_turn_in:[a-z_]+|rep_event:[a-z_]+|piety_event:[a-z_]+"
-		+ "|goodwill:[a-z_]+:-?\\d+)$")
+		+ "|goodwill:[a-z_]+:-?\\d+|letter_errand:[a-z_0-9]+|letter_ask_postage:[a-z_0-9]+|stranger_take_case|stranger_open_case"
+		+ "|stranger_give_case:(stranger|fenner))$")
 ## Negations the data may use (flag-like conditions, docs/PHASE4_DESIGN.md §3.4).
 const NEGATABLE: PackedStringArray = ["!flag:", "!piety_tier:", "!flag_night:", "!trader_talks_gte:", "!clue_known:", "!met:",
 		"!rel_tier:", "!alive:", "!flag_today:", "!flag_days_gte:", "!step_gte:", "!apprentice_level_gte:",
@@ -3647,12 +3649,42 @@ class P9Stranger extends Node:
 
 	func answer(kind: StringName) -> void:
 		calls.append(["answer", kind])
+		asked = true
 
 	func bribe(accept: bool, inv: Inventory) -> void:
 		calls.append(["bribe", accept, inv != null])
 
 	func resolve(choice: StringName) -> void:
 		calls.append(["resolve", choice])
+
+	var visit := 0
+	var asked := false
+	var known := false
+	var holder := &""
+	var blocked: Dictionary = {}
+
+	func visit_now() -> int:
+		return visit
+
+	func question() -> String:
+		return "" if asked or visit == 0 else "?"
+
+	func recognized() -> bool:
+		return known
+
+	func resolve_block_reason(choice: StringName) -> String:
+		return str(blocked.get(choice, ""))
+
+	func case_holder() -> StringName:
+		return holder
+
+	func take_case(inv: Inventory) -> bool:
+		calls.append(["take_case", inv != null])
+		return true
+
+	func give_case(to: StringName, inv: Inventory) -> bool:
+		calls.append(["give_case", to, inv != null])
+		return true
 
 
 class P9Systems extends Node:
@@ -4117,8 +4149,7 @@ func test_phase9_confidants_choose_h5() -> void:
 		_go(r, &"p9_confide_yes")
 		assert_true(r.current_text().contains(answers[dlg][1]), dlg + " §2.2.6")
 		assert_eq(q.calls[-1], ["choose", &"q_who_knows", &"h5", StringName("confide_" + answers[dlg][0])])
-	# Quast names Brenneisen (K3 hook).
-	assert_true(GameState.flag_on(&"q_case_known"))
+	# Quast names Brenneisen (K3 hook – Stranger.recognized reads q_confide_surgeon).
 	assert_true(_node_text_contains(_v("v_surgeon"), "Brenneisen heißt er. Geben Sie ihm nichts."))
 
 
@@ -4143,31 +4174,32 @@ func test_phase9_brenneisen() -> void:
 	assert_true(r.current_text().contains("Brenneisen. Aus der Stadt. Ich störe nicht lange. Ich frage nur. Fragen kostet nichts, "
 			+ "Antworten zahle ich."), "§2.11 first appearance")
 	assert_true(r.current_text().contains("Ich bin nicht eingeladen."), "§2.5.1 never inside")
-	# Six questions, one per day, in turn (§2.5.2 K1).
+	# K1: the question of each visit (P5's Stranger.question – StrangerConfig.questions), answered once per visit.
 	var s := P9Stranger.new()
 	tree.root.add_child(s)
-	var asked: Array = []
-	for day: int in range(65, 71):
-		TimeManager.day = day
+	var cfg := Database.config(&"stranger_config") as StrangerConfig
+	for visit: int in [1, 2, 3]:
+		s.visit = visit
+		s.asked = false
 		r.start(_v("stranger"), _ctx(_inv()))
 		r._enter(&"menu")
 		var qs := r.available_choices().filter(func(c: DialogueChoice) -> bool: return String(c.next).begins_with("q"))
-		assert_eq(qs.size(), 1, "one question on day %d" % day)
+		assert_eq(qs.map(func(c: DialogueChoice) -> StringName: return c.next), [StringName("q%d" % visit)], "visit %d" % visit)
 		if qs.is_empty():
 			continue
-		asked.append(qs[0].next)
 		_go(r, qs[0].next)
-		_go(r, &"a_frank" if day % 3 == 0 else (&"a_evade" if day % 3 == 1 else &"a_refuse"))
+		assert_true(r.current_text().ends_with(cfg.questions[visit - 1]), "the config's question %d" % visit)
+		_go(r, &"a_frank" if visit == 1 else (&"a_evade" if visit == 2 else &"a_refuse"))
 		r.start(_v("stranger"), _ctx(_inv()))
 		r._enter(&"menu")
-		assert_false(r.available_choices().any(func(c: DialogueChoice) -> bool: return String(c.next).begins_with("q")), "once a day")
-	assert_eq(asked, [&"q1", &"q2", &"q3", &"q4", &"q5", &"q6"])
-	assert_eq(s.calls.filter(func(c: Array) -> bool: return c[0] == "answer").size(), 6)
+		assert_false(r.available_choices().any(func(c: DialogueChoice) -> bool: return String(c.next).begins_with("q")), "once a visit")
+	assert_eq(s.calls.filter(func(c: Array) -> bool: return c[0] == "answer").map(func(c: Array) -> StringName: return c[1]),
+			[&"frank", &"evade", &"refuse"])
 	assert_true(_node_text_contains(_v("stranger"), "Wie schwer ist ein Mann nach drei Tagen im November?"), "§2.5.1")
 	# He never buys a corpse (§14.4).
 	var nc := _v("stranger").get_node_by_id(&"no_corpses")
 	assert_true(nc.text.contains("Was in der Erde liegt, bleibt in der Erde."), "Brenneisen kauft nie Leichen")
-	# K3 over Veit / Quast (q_case_known) or c_n_robber; the clue c_q_case_lorenz; the bribe.
+	# K3 once he is recognized (Stranger.recognized: c_n_robber, Quast as confidant or Veit's stranger_veit_told).
 	var q := P9Quests.new()
 	tree.root.add_child(q)
 	var j := P8Journal.new()
@@ -4175,23 +4207,36 @@ func test_phase9_brenneisen() -> void:
 	q.steps = {&"q_case": &"k3"}
 	r.start(_v("stranger"), _ctx(_inv()))
 	r._enter(&"menu")
-	assert_false(r.available_choices().any(func(c: DialogueChoice) -> bool: return c.next == &"k3"), "unknown yet")
-	GameState.set_flag(&"clue_c_n_robber", true)
+	assert_false(r.available_choices().any(func(c: DialogueChoice) -> bool: return c.next == &"k3_reported"), "unknown yet")
+	s.known = true
 	r._enter(&"menu")
-	_go(r, &"k3")
+	_go(r, &"k3_reported")
+	assert_eq(_id(r), &"k3", "Lambert not reported: straight to K3")
 	assert_true(r.current_text().contains("Ich habe den Mann für Nachrichten bezahlt, nicht für Leiber."), "§2.11")
 	assert_eq(j.clues, [&"c_q_case_lorenz"])
 	_go(r, &"bribe")
 	_go(r, &"bribe_no")
 	assert_eq(s.calls[-1], ["bribe", false, true])
-	# K5: the three endings.
+	# K4: the case back to him.
+	s.holder = &"player"
+	var inv := _inv({&"stranger_case": 1})
+	r.start(_v("stranger"), _ctx(inv))
+	r._enter(&"menu")
+	_go(r, &"case_back")
+	assert_eq(s.calls[-1], ["give_case", &"stranger", true])
+	# K5: only what Stranger.resolve_block_reason allows.
 	q.steps = {&"q_case": &"k5"}
-	for spec: Array in [[&"k5_fenner", &"fenner", "Die Stadt bleibt immer."], [&"k5_ilse", &"ilse", "Ich sehe sie mir an."]]:
-		r.start(_v("stranger"), _ctx(_inv()))
-		assert_eq(_id(r), &"leaving")
-		_go(r, spec[0])
-		assert_eq(s.calls[-1], ["resolve", spec[1]])
-		assert_true(r.current_text().contains(spec[2]), String(spec[0]))
+	s.blocked = {&"ilse": "Du kennst niemanden, zu dem du ihn schicken könntest."}
+	r.start(_v("stranger"), _ctx(_inv()))
+	assert_eq(_id(r), &"leaving")
+	assert_false(r.available_choices().any(func(c: DialogueChoice) -> bool: return c.next == &"k5_ilse"), "Ilse not known")
+	_go(r, &"k5_fenner")
+	assert_eq(s.calls[-1], ["resolve", &"fenner"])
+	assert_true(r.current_text().contains("Die Stadt bleibt immer."))
+	s.blocked = {}
+	r.start(_v("stranger"), _ctx(_inv()))
+	_go(r, &"k5_ilse")
+	assert_eq(s.calls[-1], ["resolve", &"ilse"])
 	q.states = {&"q_who_knows": &"settled"}
 	r.start(_v("stranger"), _ctx(_inv()))
 	_go(r, &"k5_deal_kladde")
@@ -4405,3 +4450,60 @@ func test_phase9_johann_on_the_bench_is_his_household() -> void:
 	assert_true(_check("letter_for:speaker", ctx), "a letter to the Siebers on the bench")
 	_apply("letter_read_aloud", ctx)
 	assert_eq(letters.calls[-1], ["decide", "lt_0001", &"deliver", &"kin_sieber", true], "read aloud – he cannot read")
+
+
+class P9LettersApi extends P9Letters:
+	var for_npc: Dictionary = {}   # npc → uid
+	var post_list: Dictionary = {}  # carrier → PackedStringArray
+	var kinds: Dictionary = {}
+	var errands: Array = []
+
+	func letter_for(npc_id: StringName, _inv: Inventory) -> String:
+		return str(for_npc.get(npc_id, ""))
+
+	func postable(carrier: StringName, _inv: Inventory) -> PackedStringArray:
+		return post_list.get(carrier, PackedStringArray())
+
+	func kind_of(uid: String) -> StringName:
+		return kinds.get(uid, &"pocket")
+
+	func errand_letter(order_id: StringName, inv: Inventory) -> String:
+		errands.append(["errand", order_id, inv != null])
+		return "lt_0100"
+
+	func errand_uid(_order_id: StringName) -> String:
+		return "lt_0100"
+
+	func ask_postage(uid: String, inv: Inventory) -> bool:
+		errands.append(["ask", uid, inv != null])
+		return true
+
+
+func test_phase9_letters_over_p3s_api() -> void:
+	# P3's Letters decides whom a letter reaches (letter_for – Veit carries Lambert's) and what the post takes (postable).
+	var letters := P9LettersApi.new()
+	tree.root.add_child(letters)
+	letters.for_npc = {&"beggar": "lt_0004", &"kin_ott": "lt_0003"}
+	letters.kinds = {"lt_0003": &"post"}
+	letters.post_list = {&"peddler": PackedStringArray(["lt_0002"])}
+	var inv := _p9_inv()
+	var veit := _ctx(inv)
+	veit["speaker"] = _p9_speaker(&"beggar")
+	assert_true(_check("letter_for:speaker", veit))
+	_apply("letter_deliver", veit)
+	assert_eq(letters.calls[-1], ["decide", "lt_0004", &"deliver", &"beggar", false])
+	assert_true(_check("post_for:kin_ott", _ctx(inv)) and not _check("letter_for:innkeeper", _ctx(inv)))
+	var hanne := _ctx(inv)
+	hanne["speaker"] = _p9_speaker(&"peddler")
+	assert_true(_check("letter_for:town", hanne), "Hanne takes it")
+	assert_false(_check("letter_for:town", _ctx(inv)), "Osric has nothing to take")
+	_apply("letter_post:peddler", hanne)
+	assert_eq(letters.calls[-1], ["post", "lt_0002", &"peddler", true])
+	_apply("letter_errand:oq_gesa_brother", _ctx(inv))
+	_apply("letter_ask_postage:oq_gesa_brother", _ctx(inv))
+	assert_eq(letters.errands, [["errand", &"oq_gesa_brother", true], ["ask", "lt_0100", true]], "E1 (§2.4.4)")
+	# Gesa's dialogue hands the errand letter over and asks for the postage.
+	var d := _v("kin_ott")
+	var asked := d.get_node_by_id(&"p9_brother")
+	assert_true(asked.choices.any(func(c: DialogueChoice) -> bool: return "letter_ask_postage:oq_gesa_brother" in c.actions))
+	assert_true(asked.choices.all(func(c: DialogueChoice) -> bool: return c.next == &"menu" or "letter_errand:oq_gesa_brother" in c.actions))
