@@ -251,7 +251,7 @@ func add_goodwill(kin_id: StringName, delta: int) -> void:
 	_goodwill[kin_id] = clampi(goodwill(kin_id) + delta, 0, 10)
 
 
-## STUB (P4) – Phase 9 (docs/PHASE9_DESIGN.md §2.2.5, §3.4, §5.1): from H4 Johann Sieber comes daily (kin_sieber, 1);
+## Phase 9 W0 stub for P4 (docs/PHASE9_DESIGN.md §2.2.5, §3.4, §5.1): from H4 Johann Sieber comes daily (kin_sieber, 1);
 ## saved in visitors.kin_interval. W0: inert – W1 (P4) fills the body; the signature is the contract.
 func set_kin_interval(_kin_id: StringName, _days: int) -> void:
 	pass

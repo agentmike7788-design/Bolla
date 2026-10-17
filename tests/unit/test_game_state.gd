@@ -23,7 +23,12 @@ const STAT_KEYS: Array[StringName] = [&"burials", &"valuables_taken", &"reputati
 		&"mortsafes_set", &"graves_disturbed", &"graves_closed", &"apprentice_days", &"apprentice_jobs", &"apprentice_mistakes",
 		&"apprentice_wage", &"friend_steps", &"favors_used", &"favors_returned", &"alms_given", &"chatters_seen", &"listens",
 		&"dances", &"night_visits_observed", &"robber_encounters",
-		&"coins_spent_apprentice", &"coins_spent_alms", &"coins_spent_peddler"]
+		&"coins_spent_apprentice", &"coins_spent_alms", &"coins_spent_peddler",
+		# Phase 9 (W0 Lead, §2.9)
+		&"quest_steps", &"quest_choices", &"letters_found", &"letters_decided", &"letters_delivered", &"letters_read",
+		&"letters_burned", &"letters_buried", &"letters_answered", &"post_received", &"errands_done", &"large_requests_done",
+		&"large_requests_half", &"large_requests_failed", &"large_request_parts", &"stranger_talks", &"stranger_coins",
+		&"coins_spent_post"]
 
 
 func test_defaults_after_reset() -> void:
@@ -208,7 +213,7 @@ func test_note_coins_spent_counts_and_signals() -> void:
 	EventBus.coins_spent.disconnect(on_spent)
 	assert_eq(spent, [[20, &"license"], [15, &"build"], [14, &"osric"], [6, &"ilse"], [6, &"osric"]], "nothing for <= 0")
 	assert_eq(GameState.get_stat(&"coins_spent"), 61)
-	assert_eq(GameState.coin_ledger(), {&"license": 20, &"build": 15, &"osric": 20, &"ilse": 6, &"building": 0, &"village": 0, &"donation": 0, &"round": 0, &"consecration": 0, &"apprentice": 0, &"alms": 0, &"peddler": 0} as Dictionary[StringName, int])
+	assert_eq(GameState.coin_ledger(), {&"license": 20, &"build": 15, &"osric": 20, &"ilse": 6, &"building": 0, &"village": 0, &"donation": 0, &"round": 0, &"consecration": 0, &"apprentice": 0, &"alms": 0, &"peddler": 0, &"post": 0} as Dictionary[StringName, int])
 	assert_eq(GameState.get_stat(GameState.coin_ledger_stat(&"osric")), 20)
 
 
@@ -220,7 +225,7 @@ func test_coin_ledger_survives_save_load() -> void:
 	GameState.load_state(saved)
 	assert_eq([GameState.get_stat(&"coins_spent"), GameState.coin_ledger()[&"osric"]], [12, 12])
 	GameState.load_state({"stats": {"burials": 1}})
-	assert_eq(GameState.coin_ledger(), {&"license": 0, &"build": 0, &"osric": 0, &"ilse": 0, &"building": 0, &"village": 0, &"donation": 0, &"round": 0, &"consecration": 0, &"apprentice": 0, &"alms": 0, &"peddler": 0} as Dictionary[StringName, int], "old saves: 0")
+	assert_eq(GameState.coin_ledger(), {&"license": 0, &"build": 0, &"osric": 0, &"ilse": 0, &"building": 0, &"village": 0, &"donation": 0, &"round": 0, &"consecration": 0, &"apprentice": 0, &"alms": 0, &"peddler": 0, &"post": 0} as Dictionary[StringName, int], "old saves: 0")
 	for key: StringName in SaveMigration.V4_NEW_STATS + SaveMigration.V5_NEW_STATS:
 		assert_true(GameState.DEFAULT_STATS.has(key), "migration stat %s is a default stat" % key)
 

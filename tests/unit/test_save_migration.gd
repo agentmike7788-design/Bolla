@@ -1017,8 +1017,9 @@ func test_read_doc_migrates_every_v5_fixture() -> void:
 		var read := _read_slot()
 		assert_eq(read.err, OK, name)
 		var f := _fixture_v5(name)
-		assert_eq(read.state, SaveMigration.migrate(f.state, 5, f.meta), "%s: read_doc applies 5 → 6 → 7" % name)
-		assert_eq(read.state, SaveMigration.migrate_6_to_7(SaveMigration.migrate_5_to_6(f.state, f.meta), f.meta), name + ": chain")
+		assert_eq(read.state, SaveMigration.migrate(f.state, 5, f.meta), "%s: read_doc applies 5 → 6 → 7 → 8" % name)
+		assert_eq(read.state, SaveMigration.migrate_7_to_8(SaveMigration.migrate_6_to_7(SaveMigration.migrate_5_to_6(f.state, f.meta), f.meta),
+				f.meta), name + ": chain")
 
 
 func test_v6_doc_round_trip() -> void:
@@ -1032,7 +1033,7 @@ func test_v6_doc_round_trip() -> void:
 	var read := _read_slot()
 	assert_eq(read.err, OK)
 	assert_eq(read.state, v6, "v6 → file → v6 identical (no migration)")
-	assert_eq(SaveMigration.migrate(v6, 6), SaveMigration.migrate_6_to_7(v6, f.meta), "Phase 8: 6 → 7")
+	assert_eq(SaveMigration.migrate(v6, 6), SaveMigration.migrate_7_to_8(SaveMigration.migrate_6_to_7(v6, f.meta), f.meta), "Phase 8: 6 → 7, Phase 9: → 8")
 	assert_eq(SaveMigration.migrate(v6, SaveMigration.CURRENT + 1), {}, "a newer version → refused")
 	var nodes := {"village": {}, "orders": {}, "lectures": {}, "player": {}}
 	var out := SaveManager.without_absent_defaults(tree, nodes)

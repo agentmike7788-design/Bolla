@@ -317,8 +317,11 @@ func test_new_config_contract_values() -> void:
 	assert_eq([life.goal_insight, life.chapter_id, life.goal_flag], [&"i_underlined", &"who_comes_up", &"who_comes_up_complete"])
 	assert_almost(life.chatter_distance, 10.0)
 	assert_almost(life.chatter_line_seconds, 3.5)
-	assert_eq(life.reactions.size(), 9)
-	for days: int in life.reactions.values():
+	# Phase 9 W0 (§2.2.8): + q_sent_away, q_stayed, q_public (3 days), letter_delivered, register_sold – the nine of Phase 8 stay.
+	var p8_reactions := [&"apprentice_hired", &"jakob_scolded", &"wish_done", &"grave_disturbed", &"robber_reported",
+			&"robber_let_go", &"lights_all", &"kathrein_danced", &"noise_at_grave"]
+	assert_eq(p8_reactions.size(), 9)
+	for days: int in p8_reactions.map(func(k: StringName) -> int: return int(life.reactions.get(k, -1))):
 		assert_eq(days, 2, "§2.1.3: 2 days")
 	var v := VisitorConfig.new()
 	assert_eq([v.first_delay_days, v.mourning_days, v.interval_mourning, v.interval_late, v.max_visits_day, v.max_concurrent],
