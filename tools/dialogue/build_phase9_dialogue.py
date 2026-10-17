@@ -95,10 +95,8 @@ def letter_menu(text_choice, node_text, cond=None, action="letter_deliver", repl
 
 def post_menu(carrier, node_text):
     """§2.4.2 / §2.10: a letter for the town (or an answer) with the post – 1 coin postage."""
-    return ([C("[Brief] Nimmst du den mit in die Stadt? (1 Münze)", "p9_post", ["letter_for:town", "has_item:coin:1"],
-               ["letter_post:%s" % carrier]),
-             C("[Brief] Nimmst du meine Antwort mit? (1 Münze)", "p9_post", ["!letter_for:town", "has_item:letter_reply:1",
-                                                                             "has_item:coin:1"], ["letter_post:%s" % carrier])],
+    return ([C("[Brief] Nimmst du den mit in die Stadt? (1 Münze)", "p9_post", ["letter_for:town"],
+               ["letter_post:%s" % carrier])],
             [N("p9_post", node_text, back("Danke."))])
 
 
@@ -135,10 +133,7 @@ def carter():
               [LIST, "!light:e_quendel:witnessed"]),
             C("Nimmst du den alten Sieber mit, wenn er will?", "p9_cart", [ending("away"), "!sieber_gone"]),
             C("Wer liest eigentlich die Post für die Toten?", "p9_post_who", ["flag:p9_intro"]),
-            C("[Brief] Nimmst du den mit in die Stadt? (1 Münze)", "p9_post", ["letter_for:town", "has_item:coin:1"],
-              ["letter_post:carter"]),
-            C("[Brief] Nimmst du meine Antwort mit? (1 Münze)", "p9_post", ["!letter_for:town", "has_item:letter_reply:1",
-                                                                           "has_item:coin:1"], ["letter_post:carter"]),
+            C("[Brief] Nimmst du den mit in die Stadt? (1 Münze)", "p9_post", ["letter_for:town"], ["letter_post:carter"]),
             C("[Bitte] Das hier ist für die große Bitte.", "hill_handed", ["large_ready:carter", "!hill_ready:carter"],
               ["large_turn_in:carter"])]
     patch(path("carter"), P, nodes, {"menu": menu}, {"p8_intro": "p9_intro"}, insert_before='next = &"goodbye')
@@ -153,8 +148,7 @@ def carter_village():
     ]
     menu = [C("[Die Liste] Bei der Quendel, im Herbst – hast du nachts ein Licht gesehen?", "p9_witness",
               [LIST, "!light:e_quendel:witnessed"]),
-            C("[Brief] Nimmst du den mit in die Stadt? (1 Münze)", "p9_post", ["letter_for:town", "has_item:coin:1"],
-              ["letter_post:carter"])]
+            C("[Brief] Nimmst du den mit in die Stadt? (1 Münze)", "p9_post", ["letter_for:town"], ["letter_post:carter"])]
     patch(path("carter_village"), P, nodes, {"menu": menu}, {}, insert_before='text = "Mach\'s gut, Osric."')
 
 
@@ -172,17 +166,17 @@ def beggar():
           "es nicht angezündet. Der zündet nichts an, der hat nicht mal eine Pfeife.", back("Ich geh hin.")),
         N("p9_case", "Der mit dem Koffer war schon mal da. Vor einem Jahr. Bei Lorenz. Lorenz hat ihn vom Hügel gejagt, mit der "
           "Schaufel. Ich hab gelacht. Ich lach selten. Darum weiß ich es noch.",
-          back("Danke, Veit."), ["!robber_fate:let_go"], "p9_case_lambert", ["set_flag:q_case_known"]),
+          back("Danke, Veit."), ["!robber_fate:let_go"], "p9_case_lambert", ["set_flag:stranger_veit_told"]),
         N("p9_case_lambert", "Der mit dem Koffer? Lambert lässt grüßen. Er sagt, der war's. Der hat ihn bezahlt, für jedes frische "
           "Grab einen Taler. Und vor einem Jahr war er schon bei Lorenz. Lorenz hat ihn mit der Schaufel vom Hügel gejagt.",
-          back("Danke, Veit."), [], "", ["set_flag:q_case_known"]),
+          back("Danke, Veit."), [], "", ["set_flag:stranger_veit_told"]),
         N("p9_lambert", "Für Lambert? Ich geh da sowieso vorbei. Er wohnt jetzt hinter der Ziegelei, bei den Hunden. Die Hunde "
           "mögen ihn. Das ist mehr, als man von den Leuten sagen kann.", back("Danke, Veit.")),
     ]
     menu = [C("[Die Liste] Du siehst nachts die Fenster. Hat im Nebelung irgendwo ein Licht gebrannt?", "p9_witness",
               [LIST, "!light:e_open:witnessed"]),
-            C("Der Herr mit dem Koffer am Tor – kennst du ihn?", "p9_case", ["quest_step:q_case:k3", "!flag:q_case_known"]),
-            C("[Brief] Der ist für Lambert Grell.", "p9_lambert", ["letter_for:robber"], ["letter_deliver:robber"])]
+            C("Der Herr mit dem Koffer am Tor – kennst du ihn?", "p9_case", ["quest_step:q_case:k3", "!flag:stranger_veit_told"]),
+            C("[Brief] Der ist für Lambert Grell.", "p9_lambert", ["letter_for:speaker"], ["letter_deliver"])]
     patch(path("beggar"), P, nodes, {"menu": menu}, {"first": "p9_gone"}, insert_before='text = "(Gehen)"')
 
 
@@ -303,14 +297,14 @@ def sieber_door():
 
 # --- Cornelius Brenneisen (stranger.tres) ----------------------------------------------------------------------
 
+## StrangerConfig.questions (data/config/stranger_config.tres) – the question of his n-th visit (Stranger.question).
 QUESTIONS = [
-    "Wie tief graben Sie im Frost, Herr Totengräber? Ich frage für ein Buch. Ein sehr trockenes Buch.",
-    "Wer kommt zuerst, wenn einer stirbt? Der Pfarrer, der Wundarzt oder die Frau, die wäscht? In der Stadt ist es der Wirt. "
-    "Er will wissen, wer die Rechnung zahlt.",
+    "Wie tief graben Sie im Frost?",
+    "Wer kommt zuerst, wenn einer stirbt?",
     "Haben Sie je einen gesehen, der drei Wochen vorher wusste, dass er geht?",
-    "Wie schwer ist ein Mann nach drei Tagen im November? Ungefähr genügt. Ich runde selbst.",
-    "Schreiben Sie auf, wann einer kommt, oder nur, wann er geht?",
-    "Brennt bei Ihnen im Dorf nachts manchmal ein Licht, wo keiner wach ist?",
+    "Wie schwer ist ein Mann nach drei Tagen im November?",
+    "Schreiben Sie auf, wer wann kommt, Herr Totengräber? Ich schon.",
+    "Brennt bei Ihnen nachts ein Licht? Bei mir brennt immer eins. Ich lese.",
 ]
 
 
@@ -321,25 +315,25 @@ def stranger():
           back("Was wollen Sie wissen?"), ["!flag:p9_stranger_met"], "leaving", ["set_flag:p9_stranger_met"]),
         N("leaving", "Morgen fahre ich zurück, Herr Totengräber. Die Stadt erwartet mich. Sie erwartet immer jemanden. Bevor ich "
           "gehe: Was nehme ich mit?",
-          [C("Nichts. Ich zeige Sie bei Fenner an.", "k5_fenner", act=["stranger_resolve:fenner"]),
-           C("Reden wir über ein Geschäft.", "k5_deal_kladde", act=["stranger_resolve:deal"]),
-           C("An der Westmauer kauft nachts eine Frau alles, was über der Erde liegt.", "k5_ilse", act=["stranger_resolve:ilse"]),
+          [C("Nichts. Ich zeige Sie bei Fenner an.", "k5_fenner", ["stranger_resolvable:fenner"], ["stranger_resolve:fenner"]),
+           C("Reden wir über ein Geschäft.", "k5_deal_kladde", ["stranger_resolvable:deal"], ["stranger_resolve:deal"]),
+           C("An der Westmauer kauft nachts eine Frau alles, was über der Erde liegt.", "k5_ilse", ["stranger_resolvable:ilse"],
+             ["stranger_resolve:ilse"]),
            C("Darüber reden wir noch.", "menu")],
           ["quest_step:q_case:k5"], "greet"),
         N("greet", "Herr Totengräber. (Er tippt an den Zylinder.) Ich warte hier. Ich bin nicht eingeladen, und ich habe "
           "die richtigen Schuhe nicht.", back("…")),
         N("menu", "(Brenneisen schreibt etwas in ein kleines Buch und wartet höflich, bis du fertig bist.)", [
-            C("[Frage] Was wollen Sie heute wissen?", "q1", ["!flag_today:p9_stranger_asked", "!flag:p9_sq_1"]),
-            C("[Frage] Was wollen Sie heute wissen?", "q2", ["!flag_today:p9_stranger_asked", "flag:p9_sq_1", "!flag:p9_sq_2"]),
-            C("[Frage] Was wollen Sie heute wissen?", "q3", ["!flag_today:p9_stranger_asked", "flag:p9_sq_2", "!flag:p9_sq_3"]),
-            C("[Frage] Was wollen Sie heute wissen?", "q4", ["!flag_today:p9_stranger_asked", "flag:p9_sq_3", "!flag:p9_sq_4"]),
-            C("[Frage] Was wollen Sie heute wissen?", "q5", ["!flag_today:p9_stranger_asked", "flag:p9_sq_4", "!flag:p9_sq_5"]),
-            C("[Frage] Was wollen Sie heute wissen?", "q6", ["!flag_today:p9_stranger_asked", "flag:p9_sq_5", "!flag:p9_sq_6"]),
+            C("[Frage] Was wollen Sie heute wissen?", "q1", ["stranger_question:1"]),
+            C("[Frage] Was wollen Sie heute wissen?", "q2", ["stranger_question:2"]),
+            C("[Frage] Was wollen Sie heute wissen?", "q3", ["stranger_question:3"]),
+            C("[Frage] Was wollen Sie heute wissen?", "q4", ["stranger_question:4"]),
+            C("[Frage] Was wollen Sie heute wissen?", "q5", ["stranger_question:5"]),
+            C("[Frage] Was wollen Sie heute wissen?", "q6", ["stranger_question:6"]),
             C("[Handel] Was wollen Sie eigentlich kaufen?", "offers", ["quest_done:q_case:k1"]),
-            C("Sie haben Lambert Grell bezahlt.", "k3", ["quest_step:q_case:k3", "flag:q_case_known"]),
-            C("Sie haben Lambert Grell bezahlt.", "k3", ["quest_step:q_case:k3", "clue_known:c_n_robber", "!flag:q_case_known"]),
-            C("[Auftrag] Ihr Koffer. Rosine wollte ihn nicht anfassen.", "case_back", ["order_ready:oq_case_return"],
-              ["order_turn_in:oq_case_return"]),
+            C("Sie haben Lambert Grell bezahlt.", "k3_reported", ["quest_step:q_case:k3", "stranger_recognized"]),
+            C("[Auftrag] Ihr Koffer. Rosine wollte ihn nicht anfassen.", "case_back", ["stranger_case:player", "has_item:stranger_case:1"],
+              ["stranger_give_case:stranger"]),
             C("Und die Toten selbst? Kaufen Sie die auch?", "no_corpses", ["quest_done:q_case:k1", "!flag:p9_stranger_corpses"],
               ["set_flag:p9_stranger_corpses"]),
             C("(Gehen)", ""),
@@ -350,6 +344,8 @@ def stranger():
         N("no_corpses", "Einen ganzen? Gott bewahre, Herr Totengräber. Ich bin Kommissionär, kein Fuhrmann. Was in der Erde liegt, "
           "bleibt in der Erde. Ich nehme nur, was man mir gibt. Und ich frage nicht danach. Das ist meine ganze Moral. Sie ist "
           "klein, aber sie passt in den Koffer.", back("Dann ist ja gut.")),
+        N("k3_reported", "(Er klappt das Buch zu.) Ihr Schultheiß hat meinen Namen schon in einem Protokoll, höre ich. Mit "
+          "Siegel. Dann wissen Sie es ja.", [C("Ich will es von Ihnen hören.", "k3")], ["robber_fate:reported"], "k3"),
         N("k3", "(Er klappt das Buch zu.) Ich habe den Mann für Nachrichten bezahlt, nicht für Leiber. Er hat es falsch verstanden. "
           "Leute vom Land verstehen Geld immer wörtlich. Ihr Vorgänger übrigens auch. Er hatte eine Schaufel und wenig Geduld.",
           [C("Und jetzt?", "bribe")], [], "", ["add_clue:c_q_case_lorenz"]),
@@ -373,9 +369,8 @@ def stranger():
           "auch nicht in meinem Alter.", back("…", "")),
     ]
     for i, q in enumerate(QUESTIONS, start=1):
-        flag = "p9_sq_%d" % i
-        acts = ["set_flag:%s" % flag, "set_flag_day:p9_stranger_asked"]
-        nodes.append(N("q%d" % i, q, [
+        acts = []
+        nodes.append(N("q%d" % i, "(Er schlägt sein kleines Buch auf und nimmt den Stift.) " + q, [
             C("(Offen antworten.)", "a_frank", act=["stranger_answer:frank"] + acts),
             C("(Ausweichen.) Das kommt darauf an.", "a_evade", act=["stranger_answer:evade"] + acts),
             C("Die Toten haben ein Recht auf Ruhe. Die Fragen auch.", "a_refuse", act=["stranger_answer:refuse"] + acts),
@@ -443,7 +438,7 @@ def priest():
     lm, ln = letter_menu("[Brief] Das lag in der Tasche eines Toten. Es ist an Sie.",
                          "Drei Gulden aus dem Opferstock, 1829. Zurückgelegt, mit Zins. (Er liest es zweimal.) Der Zins war zu "
                          "hoch. Ich verbuche ihn als Spende. Und den Mann als ehrlich. Später als die meisten, aber ehrlich.",
-                         reply="Er wollte es nur gesagt haben.")
+                         cond=["letter_for:speaker", "!order:oq_fenner_seal:accepted"], reply="Er wollte es nur gesagt haben.")
     nodes = cn + ln + named_publicly(
         "priest", "Sie haben es mir vorher gesagt. Das rechne ich Ihnen an. Vor Fenner haben Sie mich trotzdem gestellt. "
         "Ich war trotzdem da. Ich bin immer da.",
@@ -465,8 +460,8 @@ def priest():
     menu = cm + lm + [
         C("[Die Liste] Ich finde Lorenz' Kladde nicht.", "p9_kladde", ["quest_step:%s:h1" % MAIN, "!has_item:lorenz_ledger_2:1",
                                                                        "!flag:p9_lenz_kladde"]),
-        C("[Auftrag] Eine Bekanntmachung vom Schultheiß.", "p9_seal_public", ["order_ready:oq_fenner_seal"],
-          ["order_turn_in:oq_fenner_seal"]),
+        C("[Auftrag] Eine Bekanntmachung vom Schultheiß.", "p9_seal_public", ["order:oq_fenner_seal:accepted",
+                                                                                  "letter_for:speaker"], ["letter_deliver"]),
         C("[Bitte] Die Altarkerzen für St. Gallus.", "p9_candles", ["large_ready:priest"], ["large_turn_in:priest"]),
     ]
     patch(path("v_priest"), P, nodes, {"menu": menu}, {}, start="p9_public_confidant")
@@ -476,9 +471,6 @@ def surgeon():
     cm, cn = confide("surgeon", "Drei Wochen. Ich habe es gezählt, bei den stillen Herzen. Ich hätte es aufschreiben sollen. "
                      "Es gibt einen Mann aus der Stadt, der dafür zahlen würde. Brenneisen heißt er. Geben Sie ihm nichts. "
                      "Ich habe ihm zu viel gegeben.")
-    for n in cn:
-        if n.id == "p9_confide_yes":
-            n.act = ["set_flag:q_case_known"]
     nodes = cn + named_publicly(
         "surgeon", "Sie haben es mir vorher gesagt. Das rechne ich Ihnen an. Der Wächter hat mich trotzdem notiert. "
         "Quast, Wundarzt, zehn nach elf. Als wäre ich das Licht.",
@@ -512,12 +504,12 @@ def innkeeper():
     nodes = wn + ln + [
         N("p9_case", "Der Herr aus der Stadt hat seinen Koffer stehen lassen. Unterm Tisch, wo er schreibt. Bring ihn rauf, "
           "er wartet am Tor. Ich fass das Ding nicht an. Es riecht nach Branntwein, und nicht nach dem guten.",
-          [C("Gib her.", "p9_case_yes", act=["order_accept:oq_case_return", "give_item:stranger_case:1"]),
+          [C("Gib her.", "p9_case_yes", act=["order_accept:oq_case_return", "stranger_take_case"]),
            C("Nicht jetzt.", "menu")]),
         N("p9_case_yes", "Da. Schwerer, als er aussieht. Wie die meisten Herren aus der Stadt. Und schau nicht hinein. Oder schau "
           "hinein und erzähl's mir nicht.", back("…")),
     ]
-    menu = wm + lm + [C("[Auftrag] Was ist mit dem Koffer?", "p9_case", ["order:oq_case_return:offered"])]
+    menu = wm + lm + [C("[Auftrag] Was ist mit dem Koffer?", "p9_case", ["stranger_case:inn", "order:oq_case_return:offered"])]
     patch(path("v_innkeeper"), P, nodes, {"menu": menu}, {})
 
 
@@ -567,17 +559,17 @@ def mayor():
           back("Verzeihung."), [], "", ["set_flag:p9_fenner_s"]),
         N("p9_seal", "Eine Bekanntmachung der Gemeinde für den Pfarrer. Versiegelt. Sie bleibt versiegelt. Ich sehe es, wenn "
           "einer am Siegel war. Ich sehe es immer.",
-          [C("Ich bring sie hin.", "p9_seal_yes", act=["order_accept:oq_fenner_seal"]), C("Später.", "menu")]),
+          [C("Ich bring sie hin.", "p9_seal_yes", act=["order_accept:oq_fenner_seal", "letter_errand:oq_fenner_seal"]), C("Später.", "menu")]),
         N("p9_seal_yes", "Danke. Amtlich. Und Totengräber – das Siegel ist ein Siegel, kein Vorschlag.", back("Verstanden.")),
         N("p9_case", "(Er öffnet den Koffer mit zwei Fingern.) Instrumente. Gläser. Ein Brief vom Quast. Und eine Liste mit "
           "Namen aus meiner Gemeinde. Das ist kein Gespenst, das ist eine Akte. Der Nachtwächter bringt ihn über die Brücke. "
-          "Heute noch.", back("…"), [], "", ["stranger_resolve:fenner"]),
+          "Heute noch.", back("…"), [], "", ["stranger_give_case:fenner", "stranger_resolve:fenner"]),
     ]
     menu = [
         C("[Die Liste] Ein Licht im Nebelung, ein „S.“ – bei Ihnen?", "p9_s", ["quest_step:%s:h4" % MAIN, "!flag:p9_fenner_s"]),
         C("[Auftrag] Was soll ich dem Pfarrer bringen?", "p9_seal", ["order_offerable:oq_fenner_seal"]),
-        C("Dieser Koffer gehört dem Herrn aus der Stadt. Sehen Sie hinein.", "p9_case", ["has_item:stranger_case:1",
-                                                                                        "!quest:q_case:ended"]),
+        C("Dieser Koffer gehört dem Herrn aus der Stadt. Sehen Sie hinein.", "p9_case", ["stranger_case:player",
+                                                                                        "has_item:stranger_case:1"]),
     ]
     patch(path("v_mayor"), P, nodes, {"menu": menu}, {}, start="p9_row4")
 
@@ -613,9 +605,10 @@ def kin_ott():
     nodes = wn + ln + [
         N("p9_brother", "Mein Bruder steht beim Militär. Er weiß nicht, dass Vater tot ist. Ich hab's aufgeschrieben. Gib es der "
           "Post, wenn sie kommt. Hanne oder Osric, egal. Peter liest nicht gern, aber das liest er.",
-          [C("Ich bring ihn zur Post. Das Postgeld zahl ich.", "p9_brother_paid", act=["order_accept:oq_gesa_brother"]),
+          [C("Ich bring ihn zur Post. Das Postgeld zahl ich.", "p9_brother_paid", act=["order_accept:oq_gesa_brother", "letter_errand:oq_gesa_brother"]),
            C("Hast du eine Münze fürs Postgeld?", "p9_brother_straw", act=["order_accept:oq_gesa_brother",
-                                                                          "give_item:straw_bouquet:1", "set_flag:q_gesa_straw"]),
+                                                                          "letter_errand:oq_gesa_brother",
+                                                                          "letter_ask_postage:oq_gesa_brother"]),
            C("Später.", "menu")]),
         N("p9_brother_paid", "Danke. Ich kann's dir nicht zurückgeben. Ich kann dir nur sagen, dass ich's weiß.", back("…")),
         N("p9_brother_straw", "Ich hab keine Münze. Ich hab Strohblumen. Die halten länger als frische. Leg sie wem aufs Grab, "

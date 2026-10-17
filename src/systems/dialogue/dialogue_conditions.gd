@@ -482,6 +482,34 @@ static func _evaluate_p9(text: String, context: Dictionary) -> _Result:
 			if p.is_empty() or not p[0] in STRANGER_ENDINGS:
 				return _Result.INVALID
 			return _bool(quest_call(&"ending", [CASE_QUEST]) == StringName(p[0]) or GameState.flag_on(StringName("case_end_" + p[0])))
+		"stranger_question":
+			# P5: the question of his n-th visit is open (Stranger.visit_now / question – once per visit).
+			var p := DialogueSyntax.parts(text, 1)
+			var n: Variant = DialogueSyntax.int_arg(p, 0, null)
+			if n == null or int(n) < 1:
+				return _Result.INVALID
+			var s := DialogueSyntax.system(&"stranger")
+			if s == null or not s.has_method(&"visit_now") or not s.has_method(&"question"):
+				return _Result.FALSE
+			return _bool(int(s.call(&"visit_now")) == int(n) and str(s.call(&"question")) != "")
+		"stranger_recognized":
+			if text.contains(":"):
+				return _Result.INVALID
+			var s := DialogueSyntax.system(&"stranger")
+			return _bool(s != null and s.has_method(&"recognized") and bool(s.call(&"recognized")))
+		"stranger_resolvable":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or not p[0] in STRANGER_ENDINGS:
+				return _Result.INVALID
+			var s := DialogueSyntax.system(&"stranger")
+			return _bool(s != null and s.has_method(&"resolve_block_reason") and str(s.call(&"resolve_block_reason", StringName(p[0]))) == "")
+		"stranger_case":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or not p[0] in ["inn", "player", "fenner", "stranger", "none"]:
+				return _Result.INVALID
+			var s := DialogueSyntax.system(&"stranger")
+			var holder := str(s.call(&"case_holder")) if s != null and s.has_method(&"case_holder") else ""
+			return _bool(holder == ("" if p[0] == "none" else p[0]))
 		"large_ready":
 			var p := DialogueSyntax.parts(text, 1)
 			if p.is_empty() or p[0] == "":
@@ -593,6 +621,20 @@ static func letters_for(who: StringName, context: Dictionary, kind: StringName =
 			targets.append(kin)
 	else:
 		targets.append(who)
+	# P3's Letters: letter_for(npc, inv) (whom a letter reaches in person – Veit carries Lambert's) and postable(carrier,
+	# inv) for the town (the postage in the bag); the fallback below reads the letter data (tests, W0 stubs).
+	if inv is Inventory and letters.has_method(&"letter_for") and letters.has_method(&"postable"):
+		if who == &"town":
+			var carrier := DialogueActions.speaker_id(context)
+			return letters.call(&"postable", carrier if carrier in [&"peddler", &"carter"] else &"carter", inv)
+		for t: StringName in targets:
+			var uid := str(letters.call(&"letter_for", t, inv))
+			if uid == "" or out.has(uid):
+				continue
+			if kind != &"" and letters.has_method(&"kind_of") and StringName(str(letters.call(&"kind_of", uid))) != kind:
+				continue
+			out.append(uid)
+		return out
 	for item: StringName in LETTER_ITEMS:
 		for uid: String in (inv as Object).call(&"uids", item):
 			var data: Variant = letters.call(&"letter", uid) if letters.has_method(&"letter") else null
@@ -688,9 +730,14 @@ static func large_ready(giver: StringName, context: Dictionary) -> Array[StringN
 	if not hill.has_method(&"ready_for"):
 		return out
 	for id: Variant in hill.call(&"ready_for", giver, inv as Inventory):
-		var data: Variant = hill.call(&"request_data", StringName(str(id))) if hill.has_method(&"request_data") else null
+		var rid := StringName(str(id))
+		var data: Variant = null
+		if hill.has_method(&"large_data"):
+			data = hill.call(&"large_data", rid)
+		if data == null and hill.has_method(&"request_data"):
+			data = hill.call(&"request_data", rid)
 		if data is OrderData and (data as OrderData).size == OrderData.SIZE_LARGE:
-			out.append(StringName(str(id)))
+			out.append(rid)
 	return out
 
 

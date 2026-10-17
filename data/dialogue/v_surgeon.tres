@@ -43,7 +43,6 @@ script = ExtResource("1")
 id = &"p9_confide_yes"
 text = "Drei Wochen. Ich habe es gezählt, bei den stillen Herzen. Ich hätte es aufschreiben sollen. Es gibt einen Mann aus der Stadt, der dafür zahlen würde. Brenneisen heißt er. Geben Sie ihm nichts. Ich habe ihm zu viel gegeben."
 choices = Array[ExtResource("2")]([SubResource("p9_p9_confide_yes_c01")])
-actions = Array[String](["set_flag:q_case_known"])
 
 [sub_resource type="Resource" id="p9_p9_public_confidant_c01"]
 script = ExtResource("2")

@@ -14,7 +14,7 @@ conditions = Array[String](["clue_known:c_q_dates", "!light:e_quendel:witnessed"
 script = ExtResource("2")
 text = "[Brief] Nimmst du den mit in die Stadt? (1 Münze)"
 next = &"p9_post"
-conditions = Array[String](["letter_for:town", "has_item:coin:1"])
+conditions = Array[String](["letter_for:town"])
 actions = Array[String](["letter_post:carter"])
 
 [sub_resource type="Resource" id="p9_p9_witness_c01"]

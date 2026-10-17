@@ -22,18 +22,21 @@ actions = Array[String](["set_flag:p9_stranger_met"])
 script = ExtResource("2")
 text = "Nichts. Ich zeige Sie bei Fenner an."
 next = &"k5_fenner"
+conditions = Array[String](["stranger_resolvable:fenner"])
 actions = Array[String](["stranger_resolve:fenner"])
 
 [sub_resource type="Resource" id="stranger_leaving_c02"]
 script = ExtResource("2")
 text = "Reden wir über ein Geschäft."
 next = &"k5_deal_kladde"
+conditions = Array[String](["stranger_resolvable:deal"])
 actions = Array[String](["stranger_resolve:deal"])
 
 [sub_resource type="Resource" id="stranger_leaving_c03"]
 script = ExtResource("2")
 text = "An der Westmauer kauft nachts eine Frau alles, was über der Erde liegt."
 next = &"k5_ilse"
+conditions = Array[String](["stranger_resolvable:ilse"])
 actions = Array[String](["stranger_resolve:ilse"])
 
 [sub_resource type="Resource" id="stranger_leaving_c04"]
@@ -64,37 +67,37 @@ choices = Array[ExtResource("2")]([SubResource("stranger_greet_c01")])
 script = ExtResource("2")
 text = "[Frage] Was wollen Sie heute wissen?"
 next = &"q1"
-conditions = Array[String](["!flag_today:p9_stranger_asked", "!flag:p9_sq_1"])
+conditions = Array[String](["stranger_question:1"])
 
 [sub_resource type="Resource" id="stranger_menu_c02"]
 script = ExtResource("2")
 text = "[Frage] Was wollen Sie heute wissen?"
 next = &"q2"
-conditions = Array[String](["!flag_today:p9_stranger_asked", "flag:p9_sq_1", "!flag:p9_sq_2"])
+conditions = Array[String](["stranger_question:2"])
 
 [sub_resource type="Resource" id="stranger_menu_c03"]
 script = ExtResource("2")
 text = "[Frage] Was wollen Sie heute wissen?"
 next = &"q3"
-conditions = Array[String](["!flag_today:p9_stranger_asked", "flag:p9_sq_2", "!flag:p9_sq_3"])
+conditions = Array[String](["stranger_question:3"])
 
 [sub_resource type="Resource" id="stranger_menu_c04"]
 script = ExtResource("2")
 text = "[Frage] Was wollen Sie heute wissen?"
 next = &"q4"
-conditions = Array[String](["!flag_today:p9_stranger_asked", "flag:p9_sq_3", "!flag:p9_sq_4"])
+conditions = Array[String](["stranger_question:4"])
 
 [sub_resource type="Resource" id="stranger_menu_c05"]
 script = ExtResource("2")
 text = "[Frage] Was wollen Sie heute wissen?"
 next = &"q5"
-conditions = Array[String](["!flag_today:p9_stranger_asked", "flag:p9_sq_4", "!flag:p9_sq_5"])
+conditions = Array[String](["stranger_question:5"])
 
 [sub_resource type="Resource" id="stranger_menu_c06"]
 script = ExtResource("2")
 text = "[Frage] Was wollen Sie heute wissen?"
 next = &"q6"
-conditions = Array[String](["!flag_today:p9_stranger_asked", "flag:p9_sq_5", "!flag:p9_sq_6"])
+conditions = Array[String](["stranger_question:6"])
 
 [sub_resource type="Resource" id="stranger_menu_c07"]
 script = ExtResource("2")
@@ -105,30 +108,24 @@ conditions = Array[String](["quest_done:q_case:k1"])
 [sub_resource type="Resource" id="stranger_menu_c08"]
 script = ExtResource("2")
 text = "Sie haben Lambert Grell bezahlt."
-next = &"k3"
-conditions = Array[String](["quest_step:q_case:k3", "flag:q_case_known"])
+next = &"k3_reported"
+conditions = Array[String](["quest_step:q_case:k3", "stranger_recognized"])
 
 [sub_resource type="Resource" id="stranger_menu_c09"]
 script = ExtResource("2")
-text = "Sie haben Lambert Grell bezahlt."
-next = &"k3"
-conditions = Array[String](["quest_step:q_case:k3", "clue_known:c_n_robber", "!flag:q_case_known"])
-
-[sub_resource type="Resource" id="stranger_menu_c10"]
-script = ExtResource("2")
 text = "[Auftrag] Ihr Koffer. Rosine wollte ihn nicht anfassen."
 next = &"case_back"
-conditions = Array[String](["order_ready:oq_case_return"])
-actions = Array[String](["order_turn_in:oq_case_return"])
+conditions = Array[String](["stranger_case:player", "has_item:stranger_case:1"])
+actions = Array[String](["stranger_give_case:stranger"])
 
-[sub_resource type="Resource" id="stranger_menu_c11"]
+[sub_resource type="Resource" id="stranger_menu_c10"]
 script = ExtResource("2")
 text = "Und die Toten selbst? Kaufen Sie die auch?"
 next = &"no_corpses"
 conditions = Array[String](["quest_done:q_case:k1", "!flag:p9_stranger_corpses"])
 actions = Array[String](["set_flag:p9_stranger_corpses"])
 
-[sub_resource type="Resource" id="stranger_menu_c12"]
+[sub_resource type="Resource" id="stranger_menu_c11"]
 script = ExtResource("2")
 text = "(Gehen)"
 
@@ -136,7 +133,7 @@ text = "(Gehen)"
 script = ExtResource("1")
 id = &"menu"
 text = "(Brenneisen schreibt etwas in ein kleines Buch und wartet höflich, bis du fertig bist.)"
-choices = Array[ExtResource("2")]([SubResource("stranger_menu_c01"), SubResource("stranger_menu_c02"), SubResource("stranger_menu_c03"), SubResource("stranger_menu_c04"), SubResource("stranger_menu_c05"), SubResource("stranger_menu_c06"), SubResource("stranger_menu_c07"), SubResource("stranger_menu_c08"), SubResource("stranger_menu_c09"), SubResource("stranger_menu_c10"), SubResource("stranger_menu_c11"), SubResource("stranger_menu_c12")])
+choices = Array[ExtResource("2")]([SubResource("stranger_menu_c01"), SubResource("stranger_menu_c02"), SubResource("stranger_menu_c03"), SubResource("stranger_menu_c04"), SubResource("stranger_menu_c05"), SubResource("stranger_menu_c06"), SubResource("stranger_menu_c07"), SubResource("stranger_menu_c08"), SubResource("stranger_menu_c09"), SubResource("stranger_menu_c10"), SubResource("stranger_menu_c11")])
 
 [sub_resource type="Resource" id="stranger_offers_c01"]
 script = ExtResource("2")
@@ -164,6 +161,19 @@ script = ExtResource("1")
 id = &"no_corpses"
 text = "Einen ganzen? Gott bewahre, Herr Totengräber. Ich bin Kommissionär, kein Fuhrmann. Was in der Erde liegt, bleibt in der Erde. Ich nehme nur, was man mir gibt. Und ich frage nicht danach. Das ist meine ganze Moral. Sie ist klein, aber sie passt in den Koffer."
 choices = Array[ExtResource("2")]([SubResource("stranger_no_corpses_c01")])
+
+[sub_resource type="Resource" id="stranger_k3_reported_c01"]
+script = ExtResource("2")
+text = "Ich will es von Ihnen hören."
+next = &"k3"
+
+[sub_resource type="Resource" id="stranger_node_k3_reported"]
+script = ExtResource("1")
+id = &"k3_reported"
+text = "(Er klappt das Buch zu.) Ihr Schultheiß hat meinen Namen schon in einem Protokoll, höre ich. Mit Siegel. Dann wissen Sie es ja."
+choices = Array[ExtResource("2")]([SubResource("stranger_k3_reported_c01")])
+conditions = Array[String](["robber_fate:reported"])
+fallback_next = &"k3"
 
 [sub_resource type="Resource" id="stranger_k3_c01"]
 script = ExtResource("2")
@@ -276,144 +286,144 @@ choices = Array[ExtResource("2")]([SubResource("stranger_k5_ilse_c01")])
 script = ExtResource("2")
 text = "(Offen antworten.)"
 next = &"a_frank"
-actions = Array[String](["stranger_answer:frank", "set_flag:p9_sq_1", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:frank"])
 
 [sub_resource type="Resource" id="stranger_q1_c02"]
 script = ExtResource("2")
 text = "(Ausweichen.) Das kommt darauf an."
 next = &"a_evade"
-actions = Array[String](["stranger_answer:evade", "set_flag:p9_sq_1", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:evade"])
 
 [sub_resource type="Resource" id="stranger_q1_c03"]
 script = ExtResource("2")
 text = "Die Toten haben ein Recht auf Ruhe. Die Fragen auch."
 next = &"a_refuse"
-actions = Array[String](["stranger_answer:refuse", "set_flag:p9_sq_1", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:refuse"])
 
 [sub_resource type="Resource" id="stranger_node_q1"]
 script = ExtResource("1")
 id = &"q1"
-text = "Wie tief graben Sie im Frost, Herr Totengräber? Ich frage für ein Buch. Ein sehr trockenes Buch."
+text = "(Er schlägt sein kleines Buch auf und nimmt den Stift.) Wie tief graben Sie im Frost?"
 choices = Array[ExtResource("2")]([SubResource("stranger_q1_c01"), SubResource("stranger_q1_c02"), SubResource("stranger_q1_c03")])
 
 [sub_resource type="Resource" id="stranger_q2_c01"]
 script = ExtResource("2")
 text = "(Offen antworten.)"
 next = &"a_frank"
-actions = Array[String](["stranger_answer:frank", "set_flag:p9_sq_2", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:frank"])
 
 [sub_resource type="Resource" id="stranger_q2_c02"]
 script = ExtResource("2")
 text = "(Ausweichen.) Das kommt darauf an."
 next = &"a_evade"
-actions = Array[String](["stranger_answer:evade", "set_flag:p9_sq_2", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:evade"])
 
 [sub_resource type="Resource" id="stranger_q2_c03"]
 script = ExtResource("2")
 text = "Die Toten haben ein Recht auf Ruhe. Die Fragen auch."
 next = &"a_refuse"
-actions = Array[String](["stranger_answer:refuse", "set_flag:p9_sq_2", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:refuse"])
 
 [sub_resource type="Resource" id="stranger_node_q2"]
 script = ExtResource("1")
 id = &"q2"
-text = "Wer kommt zuerst, wenn einer stirbt? Der Pfarrer, der Wundarzt oder die Frau, die wäscht? In der Stadt ist es der Wirt. Er will wissen, wer die Rechnung zahlt."
+text = "(Er schlägt sein kleines Buch auf und nimmt den Stift.) Wer kommt zuerst, wenn einer stirbt?"
 choices = Array[ExtResource("2")]([SubResource("stranger_q2_c01"), SubResource("stranger_q2_c02"), SubResource("stranger_q2_c03")])
 
 [sub_resource type="Resource" id="stranger_q3_c01"]
 script = ExtResource("2")
 text = "(Offen antworten.)"
 next = &"a_frank"
-actions = Array[String](["stranger_answer:frank", "set_flag:p9_sq_3", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:frank"])
 
 [sub_resource type="Resource" id="stranger_q3_c02"]
 script = ExtResource("2")
 text = "(Ausweichen.) Das kommt darauf an."
 next = &"a_evade"
-actions = Array[String](["stranger_answer:evade", "set_flag:p9_sq_3", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:evade"])
 
 [sub_resource type="Resource" id="stranger_q3_c03"]
 script = ExtResource("2")
 text = "Die Toten haben ein Recht auf Ruhe. Die Fragen auch."
 next = &"a_refuse"
-actions = Array[String](["stranger_answer:refuse", "set_flag:p9_sq_3", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:refuse"])
 
 [sub_resource type="Resource" id="stranger_node_q3"]
 script = ExtResource("1")
 id = &"q3"
-text = "Haben Sie je einen gesehen, der drei Wochen vorher wusste, dass er geht?"
+text = "(Er schlägt sein kleines Buch auf und nimmt den Stift.) Haben Sie je einen gesehen, der drei Wochen vorher wusste, dass er geht?"
 choices = Array[ExtResource("2")]([SubResource("stranger_q3_c01"), SubResource("stranger_q3_c02"), SubResource("stranger_q3_c03")])
 
 [sub_resource type="Resource" id="stranger_q4_c01"]
 script = ExtResource("2")
 text = "(Offen antworten.)"
 next = &"a_frank"
-actions = Array[String](["stranger_answer:frank", "set_flag:p9_sq_4", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:frank"])
 
 [sub_resource type="Resource" id="stranger_q4_c02"]
 script = ExtResource("2")
 text = "(Ausweichen.) Das kommt darauf an."
 next = &"a_evade"
-actions = Array[String](["stranger_answer:evade", "set_flag:p9_sq_4", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:evade"])
 
 [sub_resource type="Resource" id="stranger_q4_c03"]
 script = ExtResource("2")
 text = "Die Toten haben ein Recht auf Ruhe. Die Fragen auch."
 next = &"a_refuse"
-actions = Array[String](["stranger_answer:refuse", "set_flag:p9_sq_4", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:refuse"])
 
 [sub_resource type="Resource" id="stranger_node_q4"]
 script = ExtResource("1")
 id = &"q4"
-text = "Wie schwer ist ein Mann nach drei Tagen im November? Ungefähr genügt. Ich runde selbst."
+text = "(Er schlägt sein kleines Buch auf und nimmt den Stift.) Wie schwer ist ein Mann nach drei Tagen im November?"
 choices = Array[ExtResource("2")]([SubResource("stranger_q4_c01"), SubResource("stranger_q4_c02"), SubResource("stranger_q4_c03")])
 
 [sub_resource type="Resource" id="stranger_q5_c01"]
 script = ExtResource("2")
 text = "(Offen antworten.)"
 next = &"a_frank"
-actions = Array[String](["stranger_answer:frank", "set_flag:p9_sq_5", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:frank"])
 
 [sub_resource type="Resource" id="stranger_q5_c02"]
 script = ExtResource("2")
 text = "(Ausweichen.) Das kommt darauf an."
 next = &"a_evade"
-actions = Array[String](["stranger_answer:evade", "set_flag:p9_sq_5", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:evade"])
 
 [sub_resource type="Resource" id="stranger_q5_c03"]
 script = ExtResource("2")
 text = "Die Toten haben ein Recht auf Ruhe. Die Fragen auch."
 next = &"a_refuse"
-actions = Array[String](["stranger_answer:refuse", "set_flag:p9_sq_5", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:refuse"])
 
 [sub_resource type="Resource" id="stranger_node_q5"]
 script = ExtResource("1")
 id = &"q5"
-text = "Schreiben Sie auf, wann einer kommt, oder nur, wann er geht?"
+text = "(Er schlägt sein kleines Buch auf und nimmt den Stift.) Schreiben Sie auf, wer wann kommt, Herr Totengräber? Ich schon."
 choices = Array[ExtResource("2")]([SubResource("stranger_q5_c01"), SubResource("stranger_q5_c02"), SubResource("stranger_q5_c03")])
 
 [sub_resource type="Resource" id="stranger_q6_c01"]
 script = ExtResource("2")
 text = "(Offen antworten.)"
 next = &"a_frank"
-actions = Array[String](["stranger_answer:frank", "set_flag:p9_sq_6", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:frank"])
 
 [sub_resource type="Resource" id="stranger_q6_c02"]
 script = ExtResource("2")
 text = "(Ausweichen.) Das kommt darauf an."
 next = &"a_evade"
-actions = Array[String](["stranger_answer:evade", "set_flag:p9_sq_6", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:evade"])
 
 [sub_resource type="Resource" id="stranger_q6_c03"]
 script = ExtResource("2")
 text = "Die Toten haben ein Recht auf Ruhe. Die Fragen auch."
 next = &"a_refuse"
-actions = Array[String](["stranger_answer:refuse", "set_flag:p9_sq_6", "set_flag_day:p9_stranger_asked"])
+actions = Array[String](["stranger_answer:refuse"])
 
 [sub_resource type="Resource" id="stranger_node_q6"]
 script = ExtResource("1")
 id = &"q6"
-text = "Brennt bei Ihnen im Dorf nachts manchmal ein Licht, wo keiner wach ist?"
+text = "(Er schlägt sein kleines Buch auf und nimmt den Stift.) Brennt bei Ihnen nachts ein Licht? Bei mir brennt immer eins. Ich lese."
 choices = Array[ExtResource("2")]([SubResource("stranger_q6_c01"), SubResource("stranger_q6_c02"), SubResource("stranger_q6_c03")])
 
 [sub_resource type="Resource" id="stranger_a_frank_c01"]
@@ -454,4 +464,4 @@ script = ExtResource("3")
 id = &"stranger"
 speaker_name = "Cornelius Brenneisen"
 start_node = &"start"
-nodes = Array[ExtResource("1")]([SubResource("stranger_node_start"), SubResource("stranger_node_leaving"), SubResource("stranger_node_greet"), SubResource("stranger_node_menu"), SubResource("stranger_node_offers"), SubResource("stranger_node_no_corpses"), SubResource("stranger_node_k3"), SubResource("stranger_node_bribe"), SubResource("stranger_node_bribe_yes"), SubResource("stranger_node_bribe_no"), SubResource("stranger_node_case_back"), SubResource("stranger_node_k5_fenner"), SubResource("stranger_node_k5_deal_kladde"), SubResource("stranger_node_k5_deal"), SubResource("stranger_node_k5_ilse"), SubResource("stranger_node_q1"), SubResource("stranger_node_q2"), SubResource("stranger_node_q3"), SubResource("stranger_node_q4"), SubResource("stranger_node_q5"), SubResource("stranger_node_q6"), SubResource("stranger_node_a_frank"), SubResource("stranger_node_a_evade"), SubResource("stranger_node_a_refuse")])
+nodes = Array[ExtResource("1")]([SubResource("stranger_node_start"), SubResource("stranger_node_leaving"), SubResource("stranger_node_greet"), SubResource("stranger_node_menu"), SubResource("stranger_node_offers"), SubResource("stranger_node_no_corpses"), SubResource("stranger_node_k3_reported"), SubResource("stranger_node_k3"), SubResource("stranger_node_bribe"), SubResource("stranger_node_bribe_yes"), SubResource("stranger_node_bribe_no"), SubResource("stranger_node_case_back"), SubResource("stranger_node_k5_fenner"), SubResource("stranger_node_k5_deal_kladde"), SubResource("stranger_node_k5_deal"), SubResource("stranger_node_k5_ilse"), SubResource("stranger_node_q1"), SubResource("stranger_node_q2"), SubResource("stranger_node_q3"), SubResource("stranger_node_q4"), SubResource("stranger_node_q5"), SubResource("stranger_node_q6"), SubResource("stranger_node_a_frank"), SubResource("stranger_node_a_evade"), SubResource("stranger_node_a_refuse")])

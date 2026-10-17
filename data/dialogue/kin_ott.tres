@@ -57,13 +57,13 @@ choices = Array[ExtResource("2")]([SubResource("p9_p9_letter_c01")])
 script = ExtResource("2")
 text = "Ich bring ihn zur Post. Das Postgeld zahl ich."
 next = &"p9_brother_paid"
-actions = Array[String](["order_accept:oq_gesa_brother"])
+actions = Array[String](["order_accept:oq_gesa_brother", "letter_errand:oq_gesa_brother"])
 
 [sub_resource type="Resource" id="p9_p9_brother_c02"]
 script = ExtResource("2")
 text = "Hast du eine Münze fürs Postgeld?"
 next = &"p9_brother_straw"
-actions = Array[String](["order_accept:oq_gesa_brother", "give_item:straw_bouquet:1", "set_flag:q_gesa_straw"])
+actions = Array[String](["order_accept:oq_gesa_brother", "letter_errand:oq_gesa_brother", "letter_ask_postage:oq_gesa_brother"])
 
 [sub_resource type="Resource" id="p9_p9_brother_c03"]
 script = ExtResource("2")

@@ -20,7 +20,7 @@ conditions = Array[String](["order_offerable:oq_fenner_seal"])
 script = ExtResource("2")
 text = "Dieser Koffer gehört dem Herrn aus der Stadt. Sehen Sie hinein."
 next = &"p9_case"
-conditions = Array[String](["has_item:stranger_case:1", "!quest:q_case:ended"])
+conditions = Array[String](["stranger_case:player", "has_item:stranger_case:1"])
 
 [sub_resource type="Resource" id="p9_p9_row4_c01"]
 script = ExtResource("2")
@@ -108,7 +108,7 @@ actions = Array[String](["set_flag:p9_fenner_s"])
 script = ExtResource("2")
 text = "Ich bring sie hin."
 next = &"p9_seal_yes"
-actions = Array[String](["order_accept:oq_fenner_seal"])
+actions = Array[String](["order_accept:oq_fenner_seal", "letter_errand:oq_fenner_seal"])
 
 [sub_resource type="Resource" id="p9_p9_seal_c02"]
 script = ExtResource("2")
@@ -142,7 +142,7 @@ script = ExtResource("1")
 id = &"p9_case"
 text = "(Er öffnet den Koffer mit zwei Fingern.) Instrumente. Gläser. Ein Brief vom Quast. Und eine Liste mit Namen aus meiner Gemeinde. Das ist kein Gespenst, das ist eine Akte. Der Nachtwächter bringt ihn über die Brücke. Heute noch."
 choices = Array[ExtResource("2")]([SubResource("p9_p9_case_c01")])
-actions = Array[String](["stranger_resolve:fenner"])
+actions = Array[String](["stranger_give_case:fenner", "stranger_resolve:fenner"])
 
 [sub_resource type="Resource" id="p8_menu_menu_01"]
 script = ExtResource("2")

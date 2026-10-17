@@ -26,17 +26,10 @@ conditions = Array[String](["flag:p9_intro"])
 script = ExtResource("2_cdonk")
 text = "[Brief] Nimmst du den mit in die Stadt? (1 Münze)"
 next = &"p9_post"
-conditions = Array[String](["letter_for:town", "has_item:coin:1"])
+conditions = Array[String](["letter_for:town"])
 actions = Array[String](["letter_post:carter"])
 
 [sub_resource type="Resource" id="p9_menu_menu_05"]
-script = ExtResource("2_cdonk")
-text = "[Brief] Nimmst du meine Antwort mit? (1 Münze)"
-next = &"p9_post"
-conditions = Array[String](["!letter_for:town", "has_item:letter_reply:1", "has_item:coin:1"])
-actions = Array[String](["letter_post:carter"])
-
-[sub_resource type="Resource" id="p9_menu_menu_06"]
 script = ExtResource("2_cdonk")
 text = "[Bitte] Das hier ist für die große Bitte."
 next = &"hill_handed"
@@ -825,7 +818,7 @@ choices = Array[ExtResource("2_cdonk")]([SubResource("g8r6_hill_handed_c01")])
 script = ExtResource("1_0vtyj")
 id = &"menu"
 text = "Also – was brauchst du?"
-choices = Array[ExtResource("2_cdonk")]([SubResource("choice_012"), SubResource("choice_013"), SubResource("choice_014"), SubResource("p5_choice_18"), SubResource("p5_choice_19"), SubResource("p6_choice_menu_candles"), SubResource("p6_choice_menu_buildings"), SubResource("p7_c006"), SubResource("choice_015"), SubResource("choice_016"), SubResource("choice_017"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("g8r6_choice_hill"), SubResource("p9_menu_menu_01"), SubResource("p9_menu_menu_02"), SubResource("p9_menu_menu_03"), SubResource("p9_menu_menu_04"), SubResource("p9_menu_menu_05"), SubResource("p9_menu_menu_06"), SubResource("choice_018")])
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_012"), SubResource("choice_013"), SubResource("choice_014"), SubResource("p5_choice_18"), SubResource("p5_choice_19"), SubResource("p6_choice_menu_candles"), SubResource("p6_choice_menu_buildings"), SubResource("p7_c006"), SubResource("choice_015"), SubResource("choice_016"), SubResource("choice_017"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("g8r6_choice_hill"), SubResource("p9_menu_menu_01"), SubResource("p9_menu_menu_02"), SubResource("p9_menu_menu_03"), SubResource("p9_menu_menu_04"), SubResource("p9_menu_menu_05"), SubResource("choice_018")])
 conditions = Array[String](["!piety_tier:hardhearted"])
 fallback_next = &"menu_cold"
 

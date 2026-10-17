@@ -14,7 +14,7 @@ conditions = Array[String](["quest_step:q_who_knows:h5"])
 script = ExtResource("2")
 text = "[Brief] Das lag in der Tasche eines Toten. Es ist an Sie."
 next = &"p9_letter"
-conditions = Array[String](["letter_for:speaker"])
+conditions = Array[String](["letter_for:speaker", "!order:oq_fenner_seal:accepted"])
 actions = Array[String](["letter_deliver"])
 
 [sub_resource type="Resource" id="p9_menu_menu_03"]
@@ -27,8 +27,8 @@ conditions = Array[String](["quest_step:q_who_knows:h1", "!has_item:lorenz_ledge
 script = ExtResource("2")
 text = "[Auftrag] Eine Bekanntmachung vom Schultheiß."
 next = &"p9_seal_public"
-conditions = Array[String](["order_ready:oq_fenner_seal"])
-actions = Array[String](["order_turn_in:oq_fenner_seal"])
+conditions = Array[String](["order:oq_fenner_seal:accepted", "letter_for:speaker"])
+actions = Array[String](["letter_deliver"])
 
 [sub_resource type="Resource" id="p9_menu_menu_05"]
 script = ExtResource("2")

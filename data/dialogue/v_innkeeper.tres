@@ -21,7 +21,7 @@ actions = Array[String](["letter_deliver"])
 script = ExtResource("2")
 text = "[Auftrag] Was ist mit dem Koffer?"
 next = &"p9_case"
-conditions = Array[String](["order:oq_case_return:offered"])
+conditions = Array[String](["stranger_case:inn", "order:oq_case_return:offered"])
 
 [sub_resource type="Resource" id="p9_p9_witness_friend_c01"]
 script = ExtResource("2")
@@ -64,7 +64,7 @@ choices = Array[ExtResource("2")]([SubResource("p9_p9_letter_c01")])
 script = ExtResource("2")
 text = "Gib her."
 next = &"p9_case_yes"
-actions = Array[String](["order_accept:oq_case_return", "give_item:stranger_case:1"])
+actions = Array[String](["order_accept:oq_case_return", "stranger_take_case"])
 
 [sub_resource type="Resource" id="p9_p9_case_c02"]
 script = ExtResource("2")

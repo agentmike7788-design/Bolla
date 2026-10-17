@@ -14,14 +14,14 @@ conditions = Array[String](["clue_known:c_q_dates", "!light:e_open:witnessed"])
 script = ExtResource("2")
 text = "Der Herr mit dem Koffer am Tor – kennst du ihn?"
 next = &"p9_case"
-conditions = Array[String](["quest_step:q_case:k3", "!flag:q_case_known"])
+conditions = Array[String](["quest_step:q_case:k3", "!flag:stranger_veit_told"])
 
 [sub_resource type="Resource" id="p9_menu_menu_03"]
 script = ExtResource("2")
 text = "[Brief] Der ist für Lambert Grell."
 next = &"p9_lambert"
-conditions = Array[String](["letter_for:robber"])
-actions = Array[String](["letter_deliver:robber"])
+conditions = Array[String](["letter_for:speaker"])
+actions = Array[String](["letter_deliver"])
 
 [sub_resource type="Resource" id="p9_p9_gone_c01"]
 script = ExtResource("2")
@@ -77,7 +77,7 @@ text = "Der mit dem Koffer war schon mal da. Vor einem Jahr. Bei Lorenz. Lorenz 
 choices = Array[ExtResource("2")]([SubResource("p9_p9_case_c01")])
 conditions = Array[String](["!robber_fate:let_go"])
 fallback_next = &"p9_case_lambert"
-actions = Array[String](["set_flag:q_case_known"])
+actions = Array[String](["set_flag:stranger_veit_told"])
 
 [sub_resource type="Resource" id="p9_p9_case_lambert_c01"]
 script = ExtResource("2")
@@ -89,7 +89,7 @@ script = ExtResource("1")
 id = &"p9_case_lambert"
 text = "Der mit dem Koffer? Lambert lässt grüßen. Er sagt, der war's. Der hat ihn bezahlt, für jedes frische Grab einen Taler. Und vor einem Jahr war er schon bei Lorenz. Lorenz hat ihn mit der Schaufel vom Hügel gejagt."
 choices = Array[ExtResource("2")]([SubResource("p9_p9_case_lambert_c01")])
-actions = Array[String](["set_flag:q_case_known"])
+actions = Array[String](["set_flag:stranger_veit_told"])
 
 [sub_resource type="Resource" id="p9_p9_lambert_c01"]
 script = ExtResource("2")

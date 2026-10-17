@@ -8,14 +8,7 @@
 script = ExtResource("2")
 text = "[Brief] Nimmst du den mit in die Stadt? (1 Münze)"
 next = &"p9_post"
-conditions = Array[String](["letter_for:town", "has_item:coin:1"])
-actions = Array[String](["letter_post:peddler"])
-
-[sub_resource type="Resource" id="p9_menu_menu_02"]
-script = ExtResource("2")
-text = "[Brief] Nimmst du meine Antwort mit? (1 Münze)"
-next = &"p9_post"
-conditions = Array[String](["!letter_for:town", "has_item:letter_reply:1", "has_item:coin:1"])
+conditions = Array[String](["letter_for:town"])
 actions = Array[String](["letter_post:peddler"])
 
 [sub_resource type="Resource" id="p9_p9_post_c01"]
@@ -124,7 +117,7 @@ text = "Bis in sechs Tagen."
 script = ExtResource("1")
 id = &"menu"
 text = "Na? Ich hab nicht ewig. Ich hab bis vier."
-choices = Array[ExtResource("2")]([SubResource("peddler_menu_c01"), SubResource("peddler_menu_c02"), SubResource("peddler_menu_c03"), SubResource("peddler_menu_c04"), SubResource("p9_menu_menu_01"), SubResource("p9_menu_menu_02"), SubResource("peddler_menu_c05")])
+choices = Array[ExtResource("2")]([SubResource("peddler_menu_c01"), SubResource("peddler_menu_c02"), SubResource("peddler_menu_c03"), SubResource("peddler_menu_c04"), SubResource("p9_menu_menu_01"), SubResource("peddler_menu_c05")])
 
 [sub_resource type="Resource" id="peddler_wreath_c01"]
 script = ExtResource("2")

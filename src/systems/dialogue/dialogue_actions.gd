@@ -147,6 +147,10 @@ static func apply(action: String, context: Dictionary) -> void:
 				var who := speaker_id(context)
 				var alias := DialogueConditions.village_kin(who)
 				_call(&"orders", &"note_meet", [alias if alias != &"" else who, StringName(p[0])], text)
+				# Phase 9 (P2): a part „meet" of a larger request (Martha at the grave, Lenz in the church).
+				var hill := DialogueSyntax.system(&"hill_requests")
+				if hill != null and hill.has_method(&"note_meet"):
+					hill.call(&"note_meet", alias if alias != &"" else who, StringName(p[0]))
 				return
 			_call(&"relationships", &"meet" if DialogueSyntax.key(text) == "meet" else &"note_talk", [StringName(p[0])], text)
 		"rel_add":
@@ -303,6 +307,7 @@ static func _apply_p9(text: String, context: Dictionary) -> bool:
 			var sid := speaker_id(context)
 			var alias := DialogueConditions.village_kin(sid)
 			ctx["recipient"] = (alias if alias != &"" else sid) if who == &"speaker" else who
+			ctx["npc"] = ctx["recipient"]  # P3: Letters._facts reads the person from context.npc
 			if DialogueSyntax.key(text) == "letter_read_aloud":
 				ctx["aloud"] = true
 			_call(&"letters", &"decide", [uids[0], CHOICE_DELIVER, ctx], text)
@@ -312,9 +317,38 @@ static func _apply_p9(text: String, context: Dictionary) -> bool:
 				push_warning("[DialogueRunner] '%s': expected letter_post:<peddler|carter>" % text)
 				return true
 			var inv := DialogueSyntax.inventory(context, &"remove_item")
-			var uid := postable_letter(context)
+			var uid := postable_letter(context, StringName(p[0]))
 			if inv is Inventory and uid != "":
 				_call(&"letters", &"give_to_carrier", [uid, StringName(p[0]), inv], text)
+		"letter_errand":
+			# P3: the letter of an accepted quest order (E1 Gesa → post, E2 Fenner's sealed notice → Lenz) into the bag.
+			var p := DialogueSyntax.parts(text, 1)
+			var inv := DialogueSyntax.inventory(context, &"add_item")
+			if DialogueSyntax.has_name(p, text) and inv is Inventory:
+				_call(&"letters", &"errand_letter", [StringName(p[0]), inv], text)
+		"letter_ask_postage":
+			# P3: E1 – Gesa has no coin for the postage, she gives straw flowers.
+			var p := DialogueSyntax.parts(text, 1)
+			var inv := DialogueSyntax.inventory(context, &"add_item")
+			var letters := DialogueSyntax.system(&"letters")
+			if DialogueSyntax.has_name(p, text) and inv is Inventory and letters != null and letters.has_method(&"errand_uid"):
+				var uid := str(letters.call(&"errand_uid", StringName(p[0])))
+				if uid != "":
+					_call(&"letters", &"ask_postage", [uid, inv], text)
+		"stranger_take_case", "stranger_open_case":
+			# P5 K4: Rosine hands the forgotten case over / „Hineinsehen".
+			var inv := DialogueSyntax.inventory(context, &"add_item")
+			if inv is Inventory:
+				var method := &"take_case" if DialogueSyntax.key(text) == "stranger_take_case" else &"open_case"
+				_call(&"stranger", method, [inv], text)
+		"stranger_give_case":
+			var p := DialogueSyntax.parts(text, 1)
+			if p.is_empty() or not p[0] in ["stranger", "fenner"]:
+				push_warning("[DialogueRunner] '%s': expected stranger_give_case:<stranger|fenner>" % text)
+				return true
+			var inv := DialogueSyntax.inventory(context, &"remove_item")
+			if inv is Inventory:
+				_call(&"stranger", &"give_case", [StringName(p[0]), inv], text)
 		"stranger_answer":
 			var p := DialogueSyntax.parts(text, 1)
 			if p.is_empty() or not StringName(p[0]) in [&"frank", &"evade", &"refuse"]:
@@ -371,7 +405,12 @@ static func _apply_p9(text: String, context: Dictionary) -> bool:
 
 
 ## The first held letter for the post (an undecided letter to the town, else an answer – the item letter_reply).
-static func postable_letter(context: Dictionary) -> String:
+static func postable_letter(context: Dictionary, carrier: StringName = &"carter") -> String:
+	var letters := DialogueSyntax.system(&"letters")
+	var inv_p: Variant = context.get("inventory")
+	if letters != null and letters.has_method(&"postable") and inv_p is Inventory:
+		var list: PackedStringArray = letters.call(&"postable", carrier, inv_p)
+		return list[0] if not list.is_empty() else ""
 	for who: StringName in POST_RECIPIENTS:
 		var uids := DialogueConditions.letters_for(who, context)
 		if not uids.is_empty():
