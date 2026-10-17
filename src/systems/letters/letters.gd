@@ -117,6 +117,7 @@ const LABEL_POST := "Mit der Post in die Stadt – Hanne oder Osric"
 const LABEL_KIN := "Den Angehörigen geben – %s"
 const LABEL_READ := "Öffnen und lesen"
 const LABEL_READ_OPEN := "Lesen"
+const LABEL_LOOK_INSIDE := "Hineinsehen"
 const LABEL_READ_GRAVE := "Am Grab vorlesen – %s"
 const LABEL_ANSWER := "Antwort schreiben – Pult in der Hütte"
 const LABEL_BURN := "Verbrennen – Ofen in der Hütte"
@@ -526,6 +527,23 @@ func first_for(choice: StringName, inv: Inventory, context: Dictionary) -> Strin
 	return ""
 
 
+## Dialogue helper (P6 letter_for:<npc> / post_for:<kin>, letter_deliver, letter_read_aloud): the first letter in
+## `inv` that `npc_id` takes in person ("" = none).
+func letter_for(npc_id: StringName, inv: Inventory) -> String:
+	return first_for(LetterRules.CHOICE_DELIVER, inv, {"npc": npc_id})
+
+
+## Dialogue helper (P6 letter_post:<carrier>): the letters in `inv` Hanne / Osric can take now (postage in the bag).
+func postable(carrier: StringName, inv: Inventory) -> PackedStringArray:
+	var out := PackedStringArray()
+	if inv == null:
+		return out
+	for uid: String in open_uids():
+		if inv.has_uid(uid) and post_block_reason(uid, carrier, inv) == "":
+			out.append(uid)
+	return out
+
+
 ## The letters in `inv` that could be answered at the desk ("" = none) – prompt helper (ink not checked).
 func answerable(inv: Inventory) -> String:
 	if inv == null:
@@ -716,6 +734,8 @@ func _label(uid: String, l: LetterData, choice: StringName, ctx: Dictionary) -> 
 			var place := PLACES.get(who, "am Grab") as String
 			return (LABEL_READ_TO if who in ILLITERATE else LABEL_DELIVER) % [name, place]
 		LetterRules.CHOICE_READ:
+			if _kind(uid) == KIND_ERRAND:
+				return LABEL_LOOK_INSIDE if l.sealed else LABEL_READ_OPEN
 			return LABEL_READ if l.sealed else LABEL_READ_OPEN
 		LetterRules.CHOICE_READ_GRAVE:
 			return LABEL_READ_GRAVE % _grave_label(str(ctx.target_grave))
@@ -1044,14 +1064,8 @@ func _actions(l: LetterData, choice: StringName, ctx: Dictionary) -> void:
 	LetterRules.apply_actions(l.choice_actions[choice], ctx, _tree(), REASON)
 
 
-## reply_coins:<n> of the deliver actions (lg_town: the counting house thanks on Hanne's next day).
 static func _reply_coins(l: LetterData) -> int:
-	if l == null:
-		return 0
-	for a: String in l.choice_actions.get(LetterRules.CHOICE_DELIVER, PackedStringArray()):
-		if a.begins_with("reply_coins:"):
-			return maxi(int(a.get_slice(":", 1)), 0)
-	return 0
+	return LetterRules.reply_coins(l)
 
 
 func _quest_note(key: StringName, arg: String) -> void:

@@ -180,8 +180,21 @@ static func choice_block_reason(letter: LetterData, choice: StringName, context:
 
 
 ## Post for the dead can always be answered (to the sender); a pocket letter only when it carries a reply (L2).
+## (A reply_text with reply_coins is the thanks of a counting house – nothing to answer.)
 static func can_answer(letter: LetterData) -> bool:
-	return letter != null and (letter.kind == LetterData.KIND_POST or letter.reply_text != "") and letter.recipient != &"none"
+	if letter == null or letter.recipient == &"none":
+		return false
+	return letter.kind == LetterData.KIND_POST or (letter.reply_text != "" and reply_coins(letter) == 0)
+
+
+## reply_coins:<n> of the deliver actions (lg_town: the counting house thanks with coins on Hanne's next day).
+static func reply_coins(letter: LetterData) -> int:
+	if letter == null:
+		return 0
+	for a: String in letter.choice_actions.get(CHOICE_DELIVER, PackedStringArray()):
+		if a.begins_with("reply_coins:"):
+			return maxi(int(a.get_slice(":", 1)), 0)
+	return 0
 
 
 ## The piety event of a choice (§2.4.2, §2.9; Benutzerentscheidung §14.6): opening a sealed letter that is not to you

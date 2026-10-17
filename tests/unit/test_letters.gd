@@ -355,6 +355,7 @@ func test_deliver_in_person() -> void:
 	assert_eq(c.label, "Zustellen – Rosine im Holderkrug")
 	assert_eq(c.reason, LetterRules.TEXT_TO_PERSON % Phase8Texts.person_name(&"innkeeper"), "dimmed with a reason, not a lock")
 	assert_false(letters.decide(uid, &"deliver", {"inventory": inv, "npc": &"grocer"}))
+	assert_eq([letters.letter_for(&"innkeeper", inv), letters.letter_for(&"grocer", inv)], [uid, ""], "letter_for:<npc>")
 	rel.meet(&"innkeeper")
 	var before := rel.value(&"innkeeper")
 	assert_true(letters.decide(uid, &"deliver", {"inventory": inv, "npc": &"innkeeper"}))
@@ -510,7 +511,9 @@ func test_post_to_town_with_postage_and_the_counting_house() -> void:
 	assert_eq(_choice(uid, &"deliver", {}).label, Letters.LABEL_POST)
 	assert_eq(letters.post_block_reason(uid, &"peddler", inv), Letters.TEXT_NO_COIN)
 	assert_false(letters.give_to_carrier(uid, &"peddler", inv))
+	assert_eq(letters.postable(&"peddler", inv), PackedStringArray(), "no coin")
 	inv.add_item(&"coin", 3)
+	assert_eq(letters.postable(&"peddler", inv), PackedStringArray([uid]))
 	assert_eq(letters.post_block_reason(uid, &"moon", inv), LetterRules.TEXT_NOBODY)
 	assert_true(letters.decide(uid, &"deliver", {"inventory": inv, "carrier": &"peddler"}))
 	assert_eq([inv.count(&"coin"), GameState.get_stat(&"coins_spent_post"), GameState.get_stat(&"coins_spent")], [2, 1, 1])
@@ -703,6 +706,12 @@ func test_real_letter_data() -> void:
 	var g := _found(&"lg_grocer", "corpse_0141")
 	assert_true(letters.decide(g, &"deliver", {"inventory": inv, "npc": &"grocer"}))
 	assert_true(GameState.flag_on(&"letter_grocer_wine"))
+	var town := Database.letter(&"lg_town") as LetterData
+	assert_eq(LetterRules.reply_coins(town), 2)
+	assert_false(LetterRules.can_answer(town), "the counting house's thanks is nothing to answer")
+	assert_true(LetterRules.can_answer(Database.letter(&"lp_l2_sister") as LetterData))
+	var e2 := letters.errand_letter(&"oq_fenner_seal", inv)
+	assert_eq(_choice(e2, &"read", {}).label, Letters.LABEL_LOOK_INSIDE)
 
 
 func _on_letter(uid: String, id: StringName, state: StringName) -> void:
