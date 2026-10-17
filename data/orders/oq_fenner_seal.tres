@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="OrderData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"oq_fenner_seal"
+giver = &"mayor"
+recipient = &"priest"
+kind = &"deliver"
+title = "Fenners Siegel"
+request_text = "Fenner: „Eine Bekanntmachung der Gemeinde für den Pfarrer. Versiegelt. Sie bleibt versiegelt.“"
+thanks_text = ""
+items = Dictionary[StringName, int]({})
+coins = 0
+target = ""
+conditions = {
+"seal_broken_rel": {
+"mayor": -3
+},
+"sealed": true
+}
+days_limit = 2
+requires_flag = &""
+requires_orders = Array[StringName]([])
+requires_tier = &""
+reward_coins = 0
+reward_rel = 0
+reward_rep = 0
+extra_rel = Dictionary[StringName, int]({})
+fail_rel = Dictionary[StringName, int]({})
+board = false
+cooldown_days = 3
+order = 901
+accept_flag = &""
+category = &"quest"
+parts = Array[Resource]([])
+size = &""
+place = &"gate"
+parts_in_order = false

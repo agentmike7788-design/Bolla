@@ -1,0 +1,105 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/quests/quest_ending_data.gd" id="1_csq7i"]
+[ext_resource type="Script" path="res://src/systems/quests/quest_data.gd" id="2_4w7r5"]
+[ext_resource type="Script" path="res://src/systems/quests/quest_step_data.gd" id="3_4ex4l"]
+[ext_resource type="Script" path="res://src/systems/quests/quest_choice_data.gd" id="4_sj1v0"]
+
+[sub_resource type="Resource" id="Resource_ipi14"]
+script = ExtResource("1_csq7i")
+id = &"fenner"
+title = "Über die Brücke"
+summary = "Fenner und der Nachtwächter haben ihn über die Brücke gebracht."
+flag = &"case_end_fenner"
+
+[sub_resource type="Resource" id="Resource_4sxv4"]
+script = ExtResource("1_csq7i")
+id = &"deal"
+title = "Ein Handel"
+summary = "Er hat bekommen, was er wollte. Fast."
+flag = &"case_end_deal"
+
+[sub_resource type="Resource" id="Resource_bx6ri"]
+script = ExtResource("1_csq7i")
+id = &"ilse"
+title = "An der Westmauer"
+summary = "Er ist in der Nacht zu Ilse gegangen und am Morgen fort."
+flag = &"case_end_ilse"
+
+[sub_resource type="Resource" id="Resource_sgpfg"]
+script = ExtResource("3_4ex4l")
+id = &"k1"
+title = "Fragen am Tor"
+hint = "Ein Herr in einem Stadtrock wartet am Tor."
+complete_on = &"note"
+complete_ids = Array[StringName]([&"stranger_answered"])
+complete_count = 1
+
+[sub_resource type="Resource" id="Resource_kenoq"]
+script = ExtResource("3_4ex4l")
+id = &"k2"
+title = "Was er kaufen will"
+hint = "Er will etwas kaufen. Er sagt nicht, wofür."
+complete_on = &"note"
+complete_ids = Array[StringName]([&"stranger_offers_seen"])
+complete_count = 1
+
+[sub_resource type="Resource" id="Resource_wiemd"]
+script = ExtResource("3_4ex4l")
+id = &"k3"
+title = "Wer zahlt für Frische?"
+hint = "Wer hat ihn schon einmal gesehen?"
+complete_on = &"clue"
+complete_ids = Array[StringName]([&"c_q_case_lorenz"])
+
+[sub_resource type="Resource" id="Resource_vvkf0"]
+script = ExtResource("3_4ex4l")
+id = &"k4"
+title = "Der Koffer"
+hint = "Rosine hat einen Koffer, den sie nicht anfassen will."
+complete_on = &"order"
+complete_ids = Array[StringName]([&"oq_case_return"])
+order_ids = Array[StringName]([&"oq_case_return"])
+
+[sub_resource type="Resource" id="Resource_mb8ki"]
+script = ExtResource("4_sj1v0")
+id = &"fenner"
+label = "Ihn bei Fenner anzeigen"
+conditions = PackedStringArray()
+actions = PackedStringArray("rep_event:case_reported", "rel_add:mayor:4", "rel_add:surgeon:-6", "set_flag:case_end_fenner")
+ending = &"fenner"
+
+[sub_resource type="Resource" id="Resource_n56dt"]
+script = ExtResource("4_sj1v0")
+id = &"deal"
+label = "Mit ihm handeln"
+conditions = PackedStringArray()
+actions = PackedStringArray("set_flag:case_end_deal")
+ending = &"deal"
+
+[sub_resource type="Resource" id="Resource_3gj75"]
+script = ExtResource("4_sj1v0")
+id = &"ilse"
+label = "Ihn zu Ilse schicken"
+conditions = PackedStringArray()
+actions = PackedStringArray("piety_event:case_to_ilse", "set_flag:case_end_ilse")
+ending = &"ilse"
+
+[sub_resource type="Resource" id="Resource_1h16s"]
+script = ExtResource("3_4ex4l")
+id = &"k5"
+title = "Was er mitnimmt"
+hint = "Am letzten Tag seines zweiten Besuchs."
+complete_on = &"choice"
+choices = Array[ExtResource("4_sj1v0")]([SubResource("Resource_mb8ki"), SubResource("Resource_n56dt"), SubResource("Resource_3gj75")])
+
+[resource]
+script = ExtResource("2_4w7r5")
+id = &"q_case"
+title = "Der Herr mit dem Koffer"
+summary = "Ein Herr aus der Stadt wartet am Tor und stellt Fragen, die man in Hollerbrück nicht stellt. Er zahlt immer passend."
+giver = &"stranger"
+open_conditions = PackedStringArray("flag:p9_open")
+steps = Array[ExtResource("3_4ex4l")]([SubResource("Resource_sgpfg"), SubResource("Resource_kenoq"), SubResource("Resource_wiemd"), SubResource("Resource_vvkf0"), SubResource("Resource_1h16s")])
+endings = Array[ExtResource("1_csq7i")]([SubResource("Resource_ipi14"), SubResource("Resource_4sxv4"), SubResource("Resource_bx6ri")])
+order = 30

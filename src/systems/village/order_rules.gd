@@ -24,6 +24,10 @@ const RESULT_WAIT := &"wait"
 const RESULT_BROKEN := &"broken"
 const TEXT_MAX_ACTIVE := "Vier Aufträge laufen schon."
 const TEXT_MAX_FRIEND := "Zwei Bitten von Freunden laufen schon."
+## Phase 9 (docs/PHASE9_DESIGN.md §2.1): errands and chain tasks (category quest) – their own limit.
+const TEXT_MAX_QUEST := "Drei Botengänge laufen schon."
+## Phase 9: quest orders exist only once the chains are open (Quests: p9_open).
+const QUEST_OPEN_FLAG := &"p9_open"
 const TEXT_ACCEPTED := "Schon angenommen."
 const TEXT_COMPLETED := "Schon erledigt."
 const TEXT_FAILED := "Dafür ist es zu spät."
@@ -48,6 +52,8 @@ static func offer_block_reason(order: OrderData, state: Dictionary, rel_tier: St
 		return TEXT_NOT_YET
 	if order.category == OrderData.CATEGORY_FRIEND:
 		return friend_block_reason(order, state, active, cfg)
+	if order.category == OrderData.CATEGORY_QUEST:
+		return quest_block_reason(order, state, active, cfg)
 	match StringName(str(state.get("state", ""))):
 		&"accepted":
 			return TEXT_ACCEPTED
@@ -79,6 +85,35 @@ static func offer_block_reason(order: OrderData, state: Dictionary, rel_tier: St
 	var limit := cfg.max_active if cfg != null else OrdersConfig.new().max_active
 	if active >= limit:
 		return TEXT_MAX_ACTIVE
+	return ""
+
+
+## Phase 9 (docs/PHASE9_DESIGN.md §2.1, §2.4.4): a quest order (errand, chain task – Botengänge, Johann's evenings,
+## the case) – the chains offer it (Quests, Letters, WhoKnows, Stranger), never the board or a tier: only from p9_open
+## on, once (completed / failed stay so), not while it runs, its requires_flag, conditions.requires_flag_not, at most
+## max_active_quest quest orders at once (`active` counts the quest orders only).
+static func quest_block_reason(order: OrderData, state: Dictionary, active: int, cfg: OrdersConfig) -> String:
+	match StringName(str(state.get("state", ""))):
+		&"accepted":
+			return TEXT_ACCEPTED
+		&"completed":
+			return TEXT_COMPLETED
+		&"failed":
+			return TEXT_FAILED
+	if not _flag(QUEST_OPEN_FLAG, state):
+		return TEXT_NOT_YET
+	if order.requires_flag != &"" and not _flag(order.requires_flag, state):
+		return TEXT_NOT_YET
+	var not_flag := StringName(str(order.conditions.get("requires_flag_not", "")))
+	if not_flag != &"" and _flag(not_flag, state):
+		return TEXT_NOT_YET
+	var completed := _list(state, "completed")
+	for dep: StringName in order.requires_orders:
+		if not completed.has(dep):
+			return TEXT_NOT_YET
+	var limit := cfg.max_active_quest if cfg != null else OrdersConfig.new().max_active_quest
+	if active >= limit:
+		return TEXT_MAX_QUEST
 	return ""
 
 
