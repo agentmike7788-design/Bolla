@@ -16,6 +16,10 @@ extends Node
 ## the hut door the morning after, B's kept promise when D3 lies in the fourth row (sieber_buried).
 ## Saved (§5.1): {light_day, matched, witnessed, marked_seen, letter_posted, depart, fallback_day} + applied,
 ## registered, hand_note, kept.
+## Schedule (W1-Anschlüsse 14): the today_flags of P6's schedules (= the calendar day) – sieber_bench_day (from H4, not
+## on the day he leaves), sieber_depart_peddler_day / sieber_depart_carter_day (depart_plan()), sieber_watch_day (ending
+## C: every night until the morning after his death, 21:00–06:00). sieber_evening_day is Orders' meet flag of
+## oq_johann_evening (conditions.schedule_flag).
 
 const GROUP := &"who_knows"
 const WITH_PEDDLER := &"peddler"
@@ -36,6 +40,11 @@ const FLAG_BURIED := &"sieber_buried"
 const FLAG_KEPT := &"kept_promise_sieber"
 ## P6's village schedule of Johann on the bench (today_flag = the calendar day, from H4 while he lives here).
 const FLAG_BENCH_DAY := &"sieber_bench_day"
+## P6's schedules of Johann leaving (ending A) and of the watchman's lantern (ending C) – today_flags (the calendar day).
+const FLAG_DEPART_DAY := "sieber_depart_%s_day"
+const FLAG_WATCH_DAY := &"sieber_watch_day"
+## The watch ends with the morning after his death (the lantern 21:00–06:00, data/npc/watchman_schedule.tres).
+const WATCH_END_MINUTE := 360
 const CLUE_DATES := &"c_q_dates"
 const CLUE_WEEKS := &"c_q_three_weeks"
 const CLUE_HAND := &"c_q_hand_answers"
@@ -343,6 +352,7 @@ func apply_minute(day: int, minute: int) -> void:
 		if now >= at + GONE_AFTER_MINUTES:
 			_leave()
 	_check_kept()
+	_schedule_flags(day, minute)
 
 
 ## {day, minute, with: &"peddler" | &"carter"} | {}
@@ -479,7 +489,35 @@ func _daily_visits(day: int) -> void:
 		return
 	if visitors != null and visitors.has_method(&"set_kin_interval"):
 		visitors.call(&"set_kin_interval", cfg.kin_id, 1)
-	GameState.set_flag(FLAG_BENCH_DAY, day)
+	if not _departs_on(day):
+		GameState.set_flag(FLAG_BENCH_DAY, day)
+
+
+## Ending A: Johann leaves on `day` (his bench schedule would cross the walk).
+func _departs_on(day: int) -> bool:
+	return not _depart.is_empty() and int(_depart.get("day", -1)) == day
+
+
+## The today_flags of the schedules (idempotent): the departure day of the plan, no bench on that day, the
+## watchman's nights of ending C (until WATCH_END_MINUTE of the morning after the death).
+func _schedule_flags(day: int, minute: int) -> void:
+	if not _depart.is_empty():
+		var flag := StringName(FLAG_DEPART_DAY % String(_depart.get("with", "")))
+		var d := int(_depart.get("day", -1))
+		var value: Variant = GameState.get_flag(flag, null)
+		if not ((value is int or value is float) and int(value) == d):
+			GameState.set_flag(flag, d)
+		if _departs_on(day) and ScheduleResolver.is_today(FLAG_BENCH_DAY, day):
+			GameState.clear_flag(FLAG_BENCH_DAY)
+	var quests := _quests()
+	if quests == null or quests.ending(MAIN_QUEST) != ENDING_PUBLIC:
+		return
+	var watching := ScheduleResolver.is_today(FLAG_WATCH_DAY, day)
+	if not GameState.flag_on(FLAG_DEAD):
+		if not watching:
+			GameState.set_flag(FLAG_WATCH_DAY, day)
+	elif watching and minute >= WATCH_END_MINUTE:
+		GameState.clear_flag(FLAG_WATCH_DAY)
 
 
 ## The ending's consequences beyond the choice's own actions (§2.2.6–§2.2.8), once.

@@ -18,6 +18,7 @@ conditions = {
 "minutes": 30,
 "npc": "kin_sieber",
 "place": "v_sieber_bench",
+"schedule_flag": "sieber_evening_day",
 "times": 2,
 "window": [1080, 1200]
 }

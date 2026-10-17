@@ -479,3 +479,78 @@ func test_visitors_kin_interval() -> void:
 	v.load_state({"kin_interval": {"kin_sieber": "daily", "kin_atlantis": -3, "kin_kehr": 1.5, "kin_ott": 2, "kin_x": -1}})
 	assert_eq(v.save_state().kin_interval, {"kin_ott": 2, "kin_x": -1}, "garbage dropped (fuzzer)")
 	v.free()
+
+
+# --- W2 Anschlüsse 14: the schedules' day flags --------------------------------------------------------
+
+func test_w2_departure_flags_from_the_plan() -> void:
+	TimeManager.load_state({"day": 66, "minute_of_day": 700})
+	_at(&"h6", {"h6": "away"}, &"away")
+	who.apply_minute(66, 700)
+	assert_eq(GameState.get_flag(&"sieber_depart_peddler_day"), 67, "with Hanne on her day")
+	assert_false(GameState.has_flag(&"sieber_depart_carter_day"))
+	# No bench on the day he leaves (the bench walk would cross his walk with Hanne).
+	TimeManager.load_state({"day": 67, "minute_of_day": 360})
+	who.apply_morning(67)
+	assert_false(ScheduleResolver.is_today(&"sieber_bench_day", 67), "not set on the departure day")
+	GameState.set_flag(&"sieber_bench_day", 67)
+	who.apply_minute(67, 400)
+	assert_false(ScheduleResolver.is_today(&"sieber_bench_day", 67), "cleared when the plan falls on today")
+	var jo := load("res://data/npc/kin_sieber_v_schedule.tres") as NpcSchedule
+	assert_eq(ScheduleResolver.entry_at(jo, 960, 67).path[-1], "sieber_gate", "16:00 at the gate with Hanne, not the bench")
+
+
+func test_w2_departure_flag_with_osric() -> void:
+	TimeManager.load_state({"day": 68, "minute_of_day": 600})
+	_at(&"h6", {"h6": "away"}, &"away")
+	who.apply_minute(68, 600)
+	assert_eq(GameState.get_flag(&"sieber_depart_carter_day"), 69)
+	assert_false(GameState.has_flag(&"sieber_depart_peddler_day"))
+	var jo := load("res://data/npc/kin_sieber_v_schedule.tres") as NpcSchedule
+	assert_eq(ScheduleResolver.entry_at(jo, 610, 69).animation, &"sit_cart", "10:00 on the cart")
+
+
+func test_w2_watch_flag_every_night_until_the_morning_after_the_death() -> void:
+	var wa := load("res://data/npc/watchman_schedule.tres") as NpcSchedule
+	_at(&"h6", {"h5": "confide_none", "h6": "public"}, &"public")
+	who.apply_minute(68, 1300)
+	assert_eq(GameState.get_flag(&"sieber_watch_day"), 68, "C: the watch begins the same night")
+	assert_true(ScheduleResolver.entry_at(wa, 1300, 68).visible, "21:40 the lantern at the door")
+	who.apply_minute(69, 0)
+	assert_eq(GameState.get_flag(&"sieber_watch_day"), 69, "from midnight on")
+	assert_true(ScheduleResolver.entry_at(wa, 120, 69).visible, "02:00")
+	assert_false(ScheduleResolver.entry_at(wa, 700, 69).visible, "not by day")
+	who.apply_minute(72, 0)
+	GameState.set_flag(&"sieber_dead", true)
+	who.apply_minute(72, 140)
+	assert_true(ScheduleResolver.entry_at(wa, 140, 72).visible, "he dies at 02:10 – the watchman stays until morning")
+	who.apply_minute(72, 360)
+	assert_false(GameState.has_flag(&"sieber_watch_day"), "06:00: the watch is over")
+	assert_false(ScheduleResolver.entry_at(wa, 1300, 72).visible, "no lantern the next night")
+	who.apply_minute(73, 0)
+	assert_false(GameState.has_flag(&"sieber_watch_day"))
+
+
+func test_w2_watch_flag_only_for_ending_c() -> void:
+	for e: StringName in [&"stay", &"silent"]:
+		_at(&"h6", {"h6": String(e)}, e)
+		who.apply_minute(68, 1300)
+		assert_false(GameState.has_flag(&"sieber_watch_day"), String(e))
+
+
+func test_w2_evening_flag_while_the_evening_order_runs() -> void:
+	var real := load("res://data/orders/oq_johann_evening.tres") as OrderData
+	assert_eq(real.conditions.get("schedule_flag"), "sieber_evening_day", "Orders' meet flag (QA8-03)")
+	orders.order_table[&"oq_johann_evening"] = real
+	_at(&"h6", {"h5": "confide_priest", "h6": "stay"}, &"stay")
+	TimeManager.load_state({"day": 68, "minute_of_day": 700})
+	who.apply_minute(68, 700)
+	assert_eq(orders.state(&"oq_johann_evening"), &"offered")
+	assert_false(GameState.has_flag(&"sieber_evening_day"), "offered only: no evening yet")
+	assert_true(orders.accept(&"oq_johann_evening"))
+	assert_eq(GameState.get_flag(&"sieber_evening_day"), 68, "accepted at 11:40: this evening")
+	var jo := load("res://data/npc/kin_sieber_v_schedule.tres") as NpcSchedule
+	assert_eq([ScheduleResolver.entry_at(jo, 1140, 68).path[-1], ScheduleResolver.entry_at(jo, 1140, 68).visible],
+			["v_sieber_bench", true], "19:00 on the bench")
+	orders.apply_morning(69)
+	assert_eq(GameState.get_flag(&"sieber_evening_day"), 69, "every morning while it runs")
