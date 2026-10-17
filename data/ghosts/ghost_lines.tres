@@ -63,3 +63,4 @@ by_candle = PackedStringArray("Ein Licht. Für mich?", "Das Glas beschlägt. Ich
 by_visited = PackedStringArray("Sie war da. Sie hat nicht geweint. Das ist ihre Art.", "Einer stand am Fußende und hat den Hut gedreht. Ich kenne die Hände.", "Sie hat mir erzählt, was im Dorf los ist. Ich hab nicht widersprochen.")
 by_disturbed = PackedStringArray("Jemand war an mir. Nicht du. Du gräbst anders.", "Die Erde liegt falsch. Mir ist kalt am Fußende.", "Er hat sich entschuldigt, beim Graben. Leise. Das macht es nicht besser.")
 by_lights = PackedStringArray("So viele Lichter. Ich dachte, ich bin allein hier oben.", "Heute brennt der ganze Hügel. Von unten sieht man uns.", "Ich sehe die anderen. Wir haben uns lange nicht gesehen.")
+by_letter = PackedStringArray("Du hast es mir vorgelesen. Sie schreibt immer noch so schief.", "Das war für Martha. Bring es ihr. Nein – lies es mir noch einmal.", "Ich hab den Brief gehört. Bei mir oben kommt sonst keine Post an.")

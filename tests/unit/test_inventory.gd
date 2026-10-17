@@ -84,6 +84,14 @@ const ITEMS := {
 	&"memorial_plate": ["Namenstafel „Konrad Wackernagel“", ItemData.Category.CRAFTED, 1],
 	&"quast_crate": ["Versiegelte Kiste", ItemData.Category.GOODS, 1],
 	&"lorenz_ledger_2": ["Lorenz' zweite Kladde", ItemData.Category.GOODS, 1],
+	# Phase 9 (docs/PHASE9_DESIGN.md §2.9, P3): letters, the errands and Brenneisen.
+	&"letter": ["Brief", ItemData.Category.GOODS, 1],
+	&"letter_reply": ["Antwort", ItemData.Category.GOODS, 1],
+	&"nameless_letter": ["Brief ohne Namen", ItemData.Category.GOODS, 1],
+	&"stranger_case": ["Ein Lederkoffer", ItemData.Category.GOODS, 1],
+	&"case_card": ["Visitenkarte „C. Brenneisen, Commissionär“", ItemData.Category.GOODS, 1],
+	&"soil_pouch": ["Eine Handvoll Grabeserde", ItemData.Category.GOODS, 3],
+	&"straw_bouquet": ["Strohblumen-Strauß", ItemData.Category.MATERIAL, 3],
 }
 
 

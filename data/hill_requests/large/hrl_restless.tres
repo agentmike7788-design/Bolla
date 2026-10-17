@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="OrderData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1_gbx8y"]
+
+[sub_resource type="Resource" id="Resource_r1r43"]
+script = ExtResource("1_gbx8y")
+kind = &"ghosts"
+title = "Drei Geistern in einer Nacht zuhören"
+conditions = {
+"times": 3
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_0ps2u"]
+script = ExtResource("1_gbx8y")
+kind = &"tend"
+title = "Am Morgen ihre Gräber säubern"
+conditions = {
+"grave": "ghosts_tonight"
+}
+category = &"hill"
+
+[resource]
+script = ExtResource("1_gbx8y")
+id = &"hrl_restless"
+giver = &"washer"
+kind = &"large"
+title = "Eine Nacht für die Unruhigen"
+request_text = "Liesel Dorn: „Manche reden nachts. Hör dreien zu, in einer Nacht. Und am Morgen mach ihnen die Gräber sauber. Dann schlafen sie besser. Ich auch.“"
+thanks_text = "„Drei“, sagt Liesel durch Osric. „Das ist eine gute Nacht gewesen. Für sie.“"
+conditions = {
+"min_day": 4,
+"reward_items": {
+"linen": 1
+}
+}
+days_limit = 2
+reward_coins = 2
+reward_rep = 2
+cooldown_days = 9
+order = 50
+category = &"hill"
+parts = Array[Resource]([SubResource("Resource_r1r43"), SubResource("Resource_0ps2u")])
+size = &"large"
+parts_in_order = true

@@ -111,6 +111,33 @@ const LABEL_LINE := "Zeile nachmeißeln"
 const TEXT_CARE_FAILED := "Das geht hier gerade nicht."
 ## The flowers ask for water when they are wilted or would wilt within a day (§2.5.2 "heute oder morgen").
 const WATER_SOON_MINUTES := 1440
+# Phase 9 (docs/PHASE9_DESIGN.md §1.3, §2.2.3, §2.4.2, §2.5.2, §7.5; P3): after the grave care – compare the date of
+# the list (H2 → WhoKnows) · read a letter aloud (Letters) · lay a letter onto the grave (D3 „An Grete") · a handful of
+# soil for Brenneisen (Stranger). Before the burial (DUG, carrying the sender): „[E] Brief mit ins Grab legen".
+# Each only with its system in the tree – without them the plot is bit-identical to Phase 8.
+const WHO_KNOWS_GROUP := &"who_knows"
+const LETTERS_GROUP := &"letters"
+const STRANGER_GROUP := &"stranger"
+const P9_DATE := &"date"
+const P9_READ := &"letter_read"
+const P9_LAY := &"letter_lay"
+const P9_SOIL := &"soil"
+const P9_BURY_LETTER := &"letter_bury"
+const P9_ORDER: Array[StringName] = [P9_DATE, P9_READ, P9_LAY, P9_SOIL]
+const PROMPT_DATE := "[E] Datum vergleichen (%d Min)"
+const PROMPT_READ_LETTER := "[E] Brief am Grab vorlesen (%d Min)"
+const PROMPT_LAY_LETTER := "[E] Brief aufs Grab legen (%d Min)"
+const PROMPT_BURY_LETTER := "[E] Brief mit ins Grab legen (%d Min)"
+const PROMPT_SOIL := "[E] Eine Handvoll Erde nehmen (%d Min)"
+const LABEL_DATE := "Datum vergleichen"
+const LABEL_READ_LETTER := "Brief vorlesen"
+const LABEL_LAY_LETTER := "Brief aufs Grab legen"
+const LABEL_BURY_LETTER := "Brief mit ins Grab legen"
+const LABEL_SOIL := "Erde nehmen"
+const SOIL_MINUTES := 2
+const ANIM_KNEEL_READ := &"kneel_read"
+const ANIM_READ_ALOUD := &"read_aloud_grave"
+const ANIM_TAKE_SOIL := &"take_soil"
 const ANIM_KNEEL := &"kneel_place"
 const ANIM_WATER := &"water"
 
@@ -187,21 +214,33 @@ func _ready() -> void:
 
 
 func can_interact(player: Player) -> bool:
-	if _base_can_interact(player):
+	if _bury_letter_uid(player) != "" or _base_can_interact(player):
 		return true
-	return player != null and not player.is_busy() and _care_action(player, true) != &""
+	return player != null and not player.is_busy() and (_care_action(player, true) != &"" or phase9_action(player) != &"")
 
 
 func get_interaction_prompt(player: Player) -> String:
+	if _bury_letter_uid(player) != "":
+		return phase9_prompt(P9_BURY_LETTER)
 	if _base_can_interact(player):
 		return _base_prompt(player)
-	var care := _care_action(player, false)
+	var care := _care_action(player, true)
+	if care != &"":
+		return care_prompt(care, player)
+	var p9 := phase9_action(player)
+	if p9 != &"":
+		return phase9_prompt(p9)
+	care = _care_action(player, false)
 	if care != &"":
 		return care_prompt(care, player)
 	return _base_prompt(player)
 
 
 func interact(player: Player) -> void:
+	var letter_uid := _bury_letter_uid(player)
+	if letter_uid != "":
+		_start_phase9(P9_BURY_LETTER, player, letter_uid)
+		return
 	if _base_can_interact(player):
 		_base_interact(player)
 		return
@@ -210,6 +249,127 @@ func interact(player: Player) -> void:
 	var care := _care_action(player, true)
 	if care != &"":
 		_start_care(care, player)
+		return
+	var p9 := phase9_action(player)
+	if p9 != &"":
+		_start_phase9(p9, player, _phase9_uid(p9, player))
+
+
+# --- Phase 9 ------------------------------------------------------------------------------------------
+
+## The Phase-9 work at this grave for `player` (&"" = none): P9_ORDER, only on a filled / marked / old grave.
+func phase9_action(player: Player) -> StringName:
+	var grave := _grave()
+	if grave == null or player == null or _is_carrying(player):
+		return &""
+	if not grave.state in [GraveRecord.State.FILLED, GraveRecord.State.MARKED, GraveRecord.State.OLD]:
+		return &""
+	for action: StringName in P9_ORDER:
+		if action == P9_DATE:
+			var who := _first_in(WHO_KNOWS_GROUP)
+			if who != null and who.has_method(&"can_compare") and bool(who.call(&"can_compare", grave_id)):
+				return action
+		elif action == P9_SOIL:
+			var stranger := _first_in(STRANGER_GROUP) as Stranger
+			if stranger != null and stranger.soil_offered(grave_id) and stranger.soil_block_reason(grave_id, player.inventory) == "":
+				return action
+		elif _phase9_uid(action, player) != "":
+			return action
+	return &""
+
+
+func phase9_prompt(action: StringName) -> String:
+	var letters := _first_in(LETTERS_GROUP) as Letters
+	var lcfg := letters.get_config() if letters != null else LettersConfig.new()
+	match action:
+		P9_DATE:
+			return PROMPT_DATE % _who_minutes()
+		P9_READ:
+			return PROMPT_READ_LETTER % lcfg.read_grave_minutes
+		P9_LAY:
+			return PROMPT_LAY_LETTER % lcfg.bury_minutes
+		P9_BURY_LETTER:
+			return PROMPT_BURY_LETTER % lcfg.bury_minutes
+		P9_SOIL:
+			return PROMPT_SOIL % SOIL_MINUTES
+	return ""
+
+
+## The letter of a letter action at this grave ("" = none).
+func _phase9_uid(action: StringName, player: Player) -> String:
+	var letters := _first_in(LETTERS_GROUP) as Letters
+	if letters == null or player == null or player.inventory == null:
+		return ""
+	match action:
+		P9_READ:
+			return letters.first_for(&"read_grave", player.inventory, {"grave_id": grave_id})
+		P9_LAY:
+			return letters.first_for(&"bury", player.inventory, {"grave_id": grave_id})
+	return ""
+
+
+## Carrying the sender of a letter in the bag to this open grave → that letter ("" = none).
+func _bury_letter_uid(player: Player) -> String:
+	var grave := _grave()
+	if grave == null or player == null or player.is_busy() or grave.state != GraveRecord.State.DUG or not _is_carrying(player):
+		return ""
+	var letters := _first_in(LETTERS_GROUP) as Letters
+	if letters == null or player.inventory == null:
+		return ""
+	return letters.first_for(&"bury", player.inventory, {"burying": str(player.carried_id)})
+
+
+func _start_phase9(action: StringName, player: Player, uid: String) -> void:
+	var letters := _first_in(LETTERS_GROUP) as Letters
+	var lcfg := letters.get_config() if letters != null else LettersConfig.new()
+	match action:
+		P9_DATE:
+			player.start_timed_action(LABEL_DATE, _who_minutes(), _finish_phase9.bind(action, player, uid), true,
+					ToolAnimConfig.clip_for(&"grave_kneel_read", ANIM_KNEEL_READ))
+		P9_READ:
+			player.start_timed_action(LABEL_READ_LETTER, lcfg.read_grave_minutes, _finish_phase9.bind(action, player, uid), true,
+					ToolAnimConfig.clip_for(&"grave_read_aloud", ANIM_READ_ALOUD))
+		P9_LAY:
+			player.start_timed_action(LABEL_LAY_LETTER, lcfg.bury_minutes, _finish_phase9.bind(action, player, uid), false,
+					ToolAnimConfig.clip_for(&"grave_lay_letter", ANIM_KNEEL))
+		P9_BURY_LETTER:
+			player.start_timed_action(LABEL_BURY_LETTER, lcfg.bury_minutes, _finish_phase9.bind(action, player, uid), false,
+					ToolAnimConfig.clip_for(&"grave_lay_letter", ANIM_KNEEL))
+		P9_SOIL:
+			player.start_timed_action(LABEL_SOIL, SOIL_MINUTES, _finish_phase9.bind(action, player, uid), false,
+					ToolAnimConfig.clip_for(&"grave_take_soil", ANIM_TAKE_SOIL))
+
+
+func _finish_phase9(action: StringName, player: Player, uid: String) -> void:
+	var inv := player.inventory if is_instance_valid(player) else null
+	var ok := false
+	match action:
+		P9_DATE:
+			var who := _first_in(WHO_KNOWS_GROUP)
+			ok = who != null and bool(who.call(&"compare_grave", grave_id))
+		P9_READ:
+			var letters := _first_in(LETTERS_GROUP) as Letters
+			ok = letters != null and letters.decide(uid, &"read_grave", {"inventory": inv, "grave_id": grave_id})
+		P9_LAY:
+			var letters := _first_in(LETTERS_GROUP) as Letters
+			ok = letters != null and letters.decide(uid, &"bury", {"inventory": inv, "grave_id": grave_id})
+		P9_BURY_LETTER:
+			var letters := _first_in(LETTERS_GROUP) as Letters
+			var carried := str(player.carried_id) if is_instance_valid(player) else ""
+			ok = letters != null and letters.decide(uid, &"bury", {"inventory": inv, "grave_id": grave_id, "burying": carried})
+		P9_SOIL:
+			var stranger := _first_in(STRANGER_GROUP) as Stranger
+			ok = stranger != null and stranger.take_soil(grave_id, inv)
+	if not ok:
+		EventBus.notification_requested.emit(TEXT_CARE_FAILED, &"warning")
+
+
+func _who_minutes() -> int:
+	var who := _first_in(WHO_KNOWS_GROUP)
+	var cfg := who.get(&"config") as WhoKnowsConfig if who != null else null
+	if cfg == null:
+		cfg = Database.config(&"who_knows_config") as WhoKnowsConfig
+	return cfg.grave_minutes if cfg != null else 5
 
 
 func _base_can_interact(player: Player) -> bool:

@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="OrderData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1_gv56g"]
+
+[sub_resource type="Resource" id="Resource_jgx77"]
+script = ExtResource("1_gv56g")
+kind = &"gather"
+title = "Acht Steine sammeln"
+conditions = {
+"amount": 8,
+"item": "stone"
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_m8s7w"]
+script = ExtResource("1_gv56g")
+kind = &"gather"
+title = "Zwei Werksteine im Steinbruch"
+conditions = {
+"amount": 2,
+"item": "workstone"
+}
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_4nmsn"]
+script = ExtResource("1_gv56g")
+kind = &"visit"
+title = "An der Brücke abladen"
+conditions = {
+"label": "[E] Steine abladen (20 Min)",
+"minutes": 20,
+"place": "v_bridge_unload"
+}
+category = &"hill"
+
+[resource]
+script = ExtResource("1_gv56g")
+id = &"hrv_bridge_stones"
+giver = &"mayor"
+kind = &"large"
+title = "Steine für die Holderbrücke"
+request_text = "An der Gemeindetafel: Die Holderbrücke braucht neue Steine am Pfeiler. Die Gemeinde bittet den Totengräber, der weiß, wo Stein liegt. – G. Fenner, Schultheiß"
+thanks_text = "Fenner nickt an der Brücke. „Das hält wieder. Länger als ich, hoffentlich.“"
+days_limit = 3
+requires_flag = &"village_open"
+reward_coins = 5
+reward_rep = 2
+cooldown_days = 9
+order = 110
+category = &"hill"
+parts = Array[Resource]([SubResource("Resource_jgx77"), SubResource("Resource_m8s7w"), SubResource("Resource_4nmsn")])
+size = &"large"
+place = &"village"

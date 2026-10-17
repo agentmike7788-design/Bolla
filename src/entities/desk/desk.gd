@@ -19,6 +19,31 @@ const CORPSE_MANAGER_GROUP := &"corpse_manager"
 const SCORE_GROUP := &"cemetery_score"
 const GHOSTS_GROUP := &"ghosts"
 const MINUTES_PER_DAY := 1440
+# Phase 9 (docs/PHASE9_DESIGN.md §1.3, §2.2.3, §2.2.7, §2.4.3, §7.5; P3 – the prompts of P4's chain too): after the
+# extract copy, in this order – read Lorenz' ledger (H1) · compare the register with the list (H2) · write the nameless
+# letter (ending A, from H5 on) · write an answer (a letter that can be answered, 1 ink). Each only with its system in
+# the tree; none of them → the register as before.
+const WHO_KNOWS_GROUP := &"who_knows"
+const LETTERS_GROUP := &"letters"
+## H1 done (WhoKnows sets it after the ledger was read).
+const FLAG_KLADDE_READ := &"kladde_read"
+const P9_KLADDE := &"kladde"
+const P9_REGISTER := &"register"
+const P9_NAMELESS := &"nameless"
+const P9_ANSWER := &"answer"
+const PROMPT_KLADDE := "[E] Lorenz' Kladde lesen (%d Min)"
+const PROMPT_REGISTER_LIST := "[E] Grabregister mit der Liste vergleichen (%d Min)"
+const PROMPT_NAMELESS := "[E] Brief ohne Namen schreiben (%d Min)"
+const PROMPT_ANSWER := "[E] Antwort schreiben (%d Min)"
+const LABEL_KLADDE := "Lorenz' Kladde lesen"
+const LABEL_REGISTER_LIST := "Grabregister vergleichen"
+const LABEL_NAMELESS := "Brief ohne Namen schreiben"
+const LABEL_ANSWER := "Antwort schreiben"
+const TEXT_REGISTER_NONE := "Im Register steht keiner, der zu einem Datum passt."
+const TEXT_REGISTER := "Neben den Daten stehen jetzt Namen. Die Liste im Merkbuch zeigt sie."
+const TEXT_NAMELESS := "Ein Brief ohne Namen. Die Hand ist nicht deine. Sie soll es nicht sein."
+const ANIM_READ_BOOK := &"read_book"
+const ANIM_WRITE := &"write_letter"
 
 @onready var interactable: Interactable = get_node_or_null(^"Interactable") as Interactable
 
@@ -34,6 +59,9 @@ func get_interaction_prompt(player: Player) -> String:
 		if player.inventory == null or not player.inventory.has(cfg.line_item):
 			return PROMPT_COPY_NO_INK % giver
 		return PROMPT_COPY % [giver, cfg.extract_minutes]
+	var p9 := phase9_action(player)
+	if p9 != &"":
+		return phase9_prompt(p9)
 	return PROMPT_READ
 
 
@@ -46,7 +74,95 @@ func interact(player: Player) -> void:
 			player.start_timed_action(LABEL_COPY, cfg.extract_minutes, _finish_copy.bind(player), true,
 					ToolAnimConfig.clip_for(&"desk_copy", ANIM_COPY))
 		return
+	var p9 := phase9_action(player)
+	if p9 != &"":
+		_start_phase9(p9, player)
+		return
 	EventBus.ui_panel_requested.emit(PANEL, register_context())
+
+
+## Phase 9: the desk work of now for `player` (&"" = none – the register opens).
+func phase9_action(player: Player) -> StringName:
+	if player == null:
+		return &""
+	var inv := player.inventory
+	# P4's rules (WhoKnows): read_block_reason / register_block_reason / write_block_reason – "" = the work is open.
+	var who := _first(WHO_KNOWS_GROUP)
+	if who != null:
+		if not GameState.flag_on(FLAG_KLADDE_READ) and str(who.call(&"read_block_reason", inv)) == "":
+			return P9_KLADDE
+		if who.has_method(&"register_block_reason") and str(who.call(&"register_block_reason")) == "":
+			return P9_REGISTER
+		if who.has_method(&"write_block_reason") and str(who.call(&"write_block_reason", inv)) == "":
+			return P9_NAMELESS
+	var letters := _first(LETTERS_GROUP) as Letters
+	if letters != null and inv != null and inv.has(letters.get_config().answer_item) and letters.answerable(inv) != "":
+		return P9_ANSWER
+	return &""
+
+
+func phase9_prompt(action: StringName) -> String:
+	match action:
+		P9_KLADDE:
+			return PROMPT_KLADDE % _who_cfg(_first(WHO_KNOWS_GROUP)).kladde_minutes
+		P9_REGISTER:
+			return PROMPT_REGISTER_LIST % _who_cfg(_first(WHO_KNOWS_GROUP)).register_minutes
+		P9_NAMELESS:
+			return PROMPT_NAMELESS % _who_cfg(_first(WHO_KNOWS_GROUP)).letter_minutes
+		P9_ANSWER:
+			var letters := _first(LETTERS_GROUP) as Letters
+			return PROMPT_ANSWER % (letters.get_config().answer_minutes if letters != null else 20)
+	return ""
+
+
+func _start_phase9(action: StringName, player: Player) -> void:
+	var cfg := _who_cfg(_first(WHO_KNOWS_GROUP))
+	match action:
+		P9_KLADDE:
+			player.start_timed_action(LABEL_KLADDE, cfg.kladde_minutes, _finish_phase9.bind(action, player), true,
+					ToolAnimConfig.clip_for(&"desk_read_book", ANIM_READ_BOOK))
+		P9_REGISTER:
+			player.start_timed_action(LABEL_REGISTER_LIST, cfg.register_minutes, _finish_phase9.bind(action, player), true,
+					ToolAnimConfig.clip_for(&"desk_read_book", ANIM_READ_BOOK))
+		P9_NAMELESS:
+			player.start_timed_action(LABEL_NAMELESS, cfg.letter_minutes, _finish_phase9.bind(action, player), true,
+					ToolAnimConfig.clip_for(&"desk_write_letter", ANIM_WRITE))
+		P9_ANSWER:
+			var letters := _first(LETTERS_GROUP) as Letters
+			var minutes := letters.get_config().answer_minutes if letters != null else 20
+			player.start_timed_action(LABEL_ANSWER, minutes, _finish_phase9.bind(action, player), true,
+					ToolAnimConfig.clip_for(&"desk_write_letter", ANIM_WRITE))
+
+
+func _finish_phase9(action: StringName, player: Player) -> void:
+	var inv := player.inventory if is_instance_valid(player) else null
+	var who := _first(WHO_KNOWS_GROUP)
+	match action:
+		P9_KLADDE:
+			if who != null:
+				who.call(&"read_kladde")
+		P9_REGISTER:
+			if who == null:
+				return
+			var matched := who.call(&"compare_register") as PackedStringArray
+			EventBus.notification_requested.emit(TEXT_REGISTER if not matched.is_empty() else TEXT_REGISTER_NONE, &"info")
+		P9_NAMELESS:
+			if who != null and inv != null and bool(who.call(&"write_letter", inv)):
+				EventBus.notification_requested.emit(TEXT_NAMELESS, &"info")
+		P9_ANSWER:
+			var letters := _first(LETTERS_GROUP) as Letters
+			if letters == null or inv == null:
+				return
+			var uid := letters.answerable(inv)
+			if uid != "":
+				letters.decide(uid, &"answer", {"inventory": inv, "place": &"desk"})
+
+
+static func _who_cfg(who: Node) -> WhoKnowsConfig:
+	var cfg := who.get(&"config") as WhoKnowsConfig if who != null else null
+	if cfg == null:
+		cfg = Database.config(&"who_knows_config") as WhoKnowsConfig
+	return cfg if cfg != null else WhoKnowsConfig.new()
 
 
 ## The short name of the giver of an accepted order that still needs a register extract from `player`

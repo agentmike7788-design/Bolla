@@ -10,6 +10,10 @@ extends Node3D
 ## is interactive – „[E] Bitten am Tor lesen" opens the docked panel &"hill_requests" (HillRequestsPanel) – and the
 ## requests Osric pinned show as paper slips (ph_notice_slip, a painted box like ph_door_note) beside the label.
 ## STUB (W-Welt) → implemented in W2; this marker line stays for test_phase3_scaffold.
+## Phase 9 „Größere Bitten" (docs/PHASE9_DESIGN.md §2.3.4, P2): below the slips hangs a large folded sheet with a seal
+## thread (ph_notice_sheet + ph_notice_seal, code meshes like the slips) while a large request is pinned at the gate;
+## the panel context carries the large ids and their cards ({large, large_cards, place gate}) – the panel shows the sheet
+## as its first card (W-UI).
 
 const MARKER := "label_board"
 const TITLE := "Friedhof Hollerbrück"
@@ -35,10 +39,21 @@ const PIN_COLOR := Color("#5a2a1c")
 const PIN_SIZE := Vector3(0.018, 0.018, 0.01)
 ## Slip places (relative to the label marker: x, y, tilt in degrees) – pinned to the lower edge of the board, below the text.
 const SLIP_SPOTS: Array[Vector3] = [Vector3(-0.24, -0.37, -5.0), Vector3(0.26, -0.36, 4.0)]
+## Phase 9: the large sheet between the slips, a little lower (x, y, tilt in degrees relative to the label marker).
+const SHEET_SPOT := Vector3(0.01, -0.42, 2.0)
+const SHEET_SIZE := Vector3(0.24, 0.32, 0.01)
+const SHEET_COLOR := Color("#e6d6ae")
+## The fold across the sheet and the red seal thread with its wax dot.
+const FOLD_COLOR := Color("#c9b88e")
+const SEAL_COLOR := Color("#7a2a1e")
+const SHEET_WORD := "Große Bitte"
+const PLACE := &"gate"
 
 var label: Label3D
 ## The slip meshes (shown: one per request on the board).
 var slips: Array[Node3D] = []
+## Phase 9: the large sheet (shown while a large request hangs at the gate).
+var sheet: Node3D
 
 
 func _ready() -> void:
@@ -55,6 +70,7 @@ func _ready() -> void:
 	EventBus.hill_request_changed.connect(_on_changed.unbind(2))
 	EventBus.day_started.connect(_on_changed.unbind(1))
 	_make_slips()
+	_make_sheet()
 	refresh()
 
 
@@ -74,9 +90,10 @@ func interact(player: Player) -> void:
 	EventBus.ui_panel_requested.emit(PANEL, panel_context(player))
 
 
-## {player, inventory} for HillRequestsPanel (it reads HillRequests itself).
+## {player, inventory} for HillRequestsPanel (it reads HillRequests itself); Phase 9: + {place gate, large (ids at the
+## gate), large_cards (HillRequests.large_card of each)}.
 func panel_context(player: Player) -> Dictionary:
-	var ctx := {"player": player}
+	var ctx := {"player": player, "place": PLACE, "large": large_ids(), "large_cards": large_cards()}
 	if player != null and is_instance_valid(player):
 		ctx["inventory"] = player.inventory
 	return ctx
@@ -91,6 +108,28 @@ func slip_count() -> int:
 	return n
 
 
+## Phase 9: the large requests pinned at the gate.
+func large_ids() -> Array[StringName]:
+	var hill := _hill()
+	if hill == null or not hill.has_method(&"large_board"):
+		return [] as Array[StringName]
+	return hill.call(&"large_board", PLACE)
+
+
+## Phase 9: the cards of the large requests at the gate (title, giver, text, parts with ticks, deadline, reward, reason).
+func large_cards() -> Array:
+	var out: Array = []
+	var hill := _hill()
+	if hill != null and hill.has_method(&"large_card"):
+		for id: StringName in large_ids():
+			out.append(hill.call(&"large_card", id))
+	return out
+
+
+func sheet_visible() -> bool:
+	return sheet != null and sheet.visible
+
+
 ## Rewrites the label from the current rating and reputation.
 func refresh() -> void:
 	if label != null:
@@ -99,6 +138,8 @@ func refresh() -> void:
 	var shown: int = hill.call(&"board").size() if hill != null and hill.has_method(&"board") else 0
 	for i: int in slips.size():
 		slips[i].visible = i < shown
+	if sheet != null:
+		sheet.visible = not large_ids().is_empty()
 
 
 ## "Friedhof Hollerbrück\n„Gepflegt“\nRuf: Geachtet"
@@ -158,6 +199,39 @@ func _make_slips() -> void:
 		slip.visible = false
 		add_child(slip)
 		slips.append(slip)
+
+
+func _make_sheet() -> void:
+	if sheet != null:
+		return
+	var marker := find_child(MARKER, true, false) as Node3D
+	var at := _relative(marker) if marker != null else Transform3D(Basis.IDENTITY, Vector3(0, 1.25, 0.05))
+	var base := load(PAINTED_MATERIAL) as ShaderMaterial
+	sheet = Node3D.new()
+	sheet.name = "LargeSheet"
+	sheet.transform = at * Transform3D(Basis(Vector3.BACK, deg_to_rad(SHEET_SPOT.z)), Vector3(SHEET_SPOT.x, SHEET_SPOT.y, SURFACE_OFFSET * 1.5))
+	sheet.add_child(_box("Sheet", "ph_notice_sheet", SHEET_SIZE, SHEET_COLOR, base, Vector3.ZERO))
+	sheet.add_child(_box("Fold", "ph_notice_sheet_fold", Vector3(SHEET_SIZE.x, 0.006, 0.002), FOLD_COLOR, base,
+			Vector3(0, 0.02, SHEET_SIZE.z * 0.5 + 0.001)))
+	sheet.add_child(_box("Thread", "ph_notice_seal_thread", Vector3(0.006, SHEET_SIZE.y * 0.55, 0.003), SEAL_COLOR, base,
+			Vector3(SHEET_SIZE.x * 0.3, -SHEET_SIZE.y * 0.2, SHEET_SIZE.z * 0.5 + 0.002)))
+	sheet.add_child(_box("Seal", "ph_notice_seal", Vector3(0.03, 0.03, 0.008), SEAL_COLOR, base,
+			Vector3(SHEET_SIZE.x * 0.3, -SHEET_SIZE.y * 0.42, SHEET_SIZE.z * 0.5 + 0.004)))
+	sheet.add_child(_box("Pin", "ph_notice_pin", PIN_SIZE, PIN_COLOR, base, Vector3(0, SHEET_SIZE.y * 0.5 - 0.025, SHEET_SIZE.z)))
+	var word := Label3D.new()
+	word.name = "Word"
+	word.text = SHEET_WORD
+	word.font_size = SLIP_FONT_SIZE
+	word.pixel_size = PIXEL_SIZE
+	word.modulate = INK
+	word.outline_size = 0
+	word.shaded = true
+	word.double_sided = false
+	word.alpha_cut = Label3D.ALPHA_CUT_DISCARD
+	word.position = Vector3(0, 0.08, SHEET_SIZE.z * 0.5 + 0.002)
+	sheet.add_child(word)
+	sheet.visible = false
+	add_child(sheet)
 
 
 func _box(node_name: String, mesh_name: String, size: Vector3, color: Color, base: ShaderMaterial, offset: Vector3) -> MeshInstance3D:

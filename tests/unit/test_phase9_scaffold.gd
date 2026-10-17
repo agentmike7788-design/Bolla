@@ -6,7 +6,10 @@ extends TestCase
 
 ## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
 const IMPLEMENTED: PackedStringArray = ["Quests", "QuestRules", "QuestLog",  # P1
-		"WhoKnows", "LightRules", "KnockDoor"]  # P4
+		"WhoKnows", "LightRules", "KnockDoor",  # P4
+		"Letters", "LetterRules",  # P3
+		"Stranger", "StrangerRules",  # P5
+		"HillRequests", "HillRules"]  # P2
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
 	# P1
@@ -201,7 +204,10 @@ func test_stubs_answer_neutral_defaults() -> void:
 	var s := Stranger.new()
 	assert_eq([s.present(&"graveyard"), s.gone(), s.case_holder(), s.offers(null)], [false, false, &"", [] as Array[Dictionary]])
 	s.free()
-	assert_eq(StrangerRules.visit_days(63, StrangerConfig.new()), PackedInt32Array())
+	if not IMPLEMENTED.has("StrangerRules"):
+		assert_eq(StrangerRules.visit_days(63, StrangerConfig.new()), PackedInt32Array())
+	else:
+		assert_eq(StrangerRules.visit_days(-1, StrangerConfig.new()), PackedInt32Array(), "P5: no visits before p9_open")
 	assert_eq(LetterRules.pick(1, 63, [] as Array[StringName], [] as Array[LetterData], tree), &"")
 	var h := HillRequests.new()
 	assert_eq([h.parts_done(&"hrl_crosses"), h.large_board(&"gate"), h.half_done(&"hrl_crosses")],
@@ -547,7 +553,9 @@ func test_fixture_helpers() -> void:
 	letters.free()
 	inv.free()
 	Phase9Fixtures.remove_injected_items()
-	assert_false(Database.has_item(&"letter"), "injected fixture items removed again")
+	# P3 (W1): the 7 Phase-9 items are real data now – letter_in injects nothing, the real items stay.
+	assert_eq(Phase9Fixtures._injected.size(), 0, "injected fixture items removed again")
+	assert_true(Database.has_item(&"letter"), "data/items/letter.tres (P3)")
 	var post := Phase9Fixtures.post_waiting(&"lpo_quendel")
 	assert_eq((post.letters as Letters).state(post.uid), &"received")
 	(post.letters as Letters).free()
@@ -555,7 +563,7 @@ func test_fixture_helpers() -> void:
 	var h := Phase9Fixtures.large_pinned(&"hrl_ferry_graves", [true, false, false] as Array[bool])
 	assert_eq([h.large_board(&"gate"), h.parts_done(&"hrl_ferry_graves")], [[&"hrl_ferry_graves"] as Array[StringName],
 			[true, false, false] as Array[bool]])
-	assert_eq(h.save_state().has("parts"), false, "W0: not saved yet (P2)")
+	assert_eq(h.save_state().get("parts"), {"hrl_ferry_graves": [true, false, false]}, "P2: parts saved (§5.1)")
 	h.free()
 	GameState.flags = flags
 	assert_false(Phase9Fixtures.layout_p8().is_empty(), "layout_p8.json readable")

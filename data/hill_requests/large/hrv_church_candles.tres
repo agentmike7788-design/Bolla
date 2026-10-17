@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="OrderData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/village/order_data.gd" id="1_n1ky0"]
+
+[sub_resource type="Resource" id="Resource_poovh"]
+script = ExtResource("1_n1ky0")
+recipient = &"priest"
+kind = &"deliver"
+title = "Vier Altarkerzen besorgen"
+items = Dictionary[StringName, int]({
+&"altar_candle": 4
+})
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_uaiho"]
+script = ExtResource("1_n1ky0")
+kind = &"devotion"
+title = "Eine Andacht in der Kapelle"
+category = &"hill"
+
+[sub_resource type="Resource" id="Resource_cel88"]
+script = ExtResource("1_n1ky0")
+kind = &"meet"
+title = "Lenz in der Kirche treffen"
+conditions = {
+"npc": "priest",
+"place": "church",
+"window": [960, 1080]
+}
+category = &"hill"
+
+[resource]
+script = ExtResource("1_n1ky0")
+id = &"hrv_church_candles"
+giver = &"priest"
+kind = &"large"
+title = "Kerzen für St. Gallus"
+request_text = "Pfarrer Lenz an der Gemeindetafel: „Der Advent kommt, und der Altar hat nur Stummel. Vier Kerzen, eine Andacht oben in der Kapelle, und dann kommen Sie zu mir in die Kirche.“"
+thanks_text = "Lenz zündet die erste Kerze an, als Sie hereinkommen. „Die anderen drei warten. Wie wir alle.“"
+days_limit = 3
+requires_flag = &"buildings_open"
+reward_coins = 4
+reward_rep = 2
+cooldown_days = 10
+order = 140
+category = &"hill"
+parts = Array[Resource]([SubResource("Resource_poovh"), SubResource("Resource_uaiho"), SubResource("Resource_cel88")])
+size = &"large"
+place = &"village"

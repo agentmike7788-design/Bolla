@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="LetterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/letters/letter_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lp_l2_sister"
+kind = &"pocket"
+outside = "An Grete Hollmann, bei Kaufmann Seidel, in der Stadt"
+text = "Liebe Schwester. Sag Mutter nichts. Ich komm zu Lichtmess. Der Dienst ist schwer, aber das Brot ist gut. Deine Anne."
+sealed = true
+sender = "eine Magd"
+recipient = &"town"
+asks = &""
+conditions = PackedStringArray()
+choice_actions = Dictionary[StringName, PackedStringArray]({})
+choice_texts = Dictionary[StringName, String]({})
+reply_text = "Danke, dass Sie es mir geschrieben haben. Jetzt weiß ich es wenigstens."
+story_id = &""

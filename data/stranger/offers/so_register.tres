@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="StrangerOfferData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/stranger/stranger_offer_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"so_register"
+label = "Eine Abschrift des Grabregisters"
+item = &"register_extract"
+price = 10
+conditions = PackedStringArray("has_item:register_extract")
+actions = PackedStringArray("piety_event:register_sold", "rumor:register_sold")
+note = "Lenz wird es erfahren."
