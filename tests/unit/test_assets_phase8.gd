@@ -30,9 +30,12 @@ const FIGURES := {
 	"ph_chr_mourner_m_a": {"bones": 8, "tris": 7500, "height": [1.72, 1.86],
 		"clips": ["idle", "walk", "talk", "idle_low", "lay_flowers", "mourn_stand", "lantern_walk", "lantern_idle"],
 		"children": {"hat_head": "head", "hat_hand": "arm_r", "bouquet": "arm_r", "lantern_prop": "arm_l"}},
+	# Phase 9 (P7) re-exported Johann with sit_bench, show_mark, walk_bundle, sit_cart and the bundles (test_assets_phase9:
+	# body and the clips here stay hash-equal)
 	"ph_chr_mourner_m_b": {"bones": 8, "tris": 7500, "height": [1.6, 1.74],
-		"clips": ["idle", "walk", "talk", "idle_low", "mourn_stand", "lantern_walk", "lantern_idle"],
-		"children": {"hat_head": "head", "hat_hand": "arm_r", "lantern_prop": "arm_r"}},
+		"clips": ["idle", "walk", "talk", "idle_low", "mourn_stand", "lantern_walk", "lantern_idle",
+				"sit_bench", "show_mark", "walk_bundle", "sit_cart"],
+		"children": {"hat_head": "head", "hat_hand": "arm_r", "lantern_prop": "arm_r", "bundle": "arm_r", "bundle_down": "root"}},
 	"ph_chr_beggar": {"bones": 8, "tris": 8500, "height": [1.7, 1.84],
 		"clips": ["idle", "walk", "walk_stiff", "talk", "sit_beg", "sit_ground", "stand_up", "idle_low"],
 		"children": {"tin_cup": "arm_r"}},
@@ -45,7 +48,7 @@ const FIGURES := {
 }
 const KIEPE_MAX := 1800
 const ONE_SHOTS: Array[String] = ["kneel_in", "kneel_out", "lay_flowers", "knock", "candle", "read_board", "oops",
-		"stand_up", "kiepe_off", "kiepe_on", "startle", "climb", "kneel_place"]
+		"stand_up", "kiepe_off", "kiepe_on", "startle", "climb", "kneel_place", "show_mark"]   # show_mark: Phase 9 (Johann)
 ## one-shots that end in a held pose (the next clip starts there) / start in one
 const ENDS_POSED: Array[String] = ["kneel_in"]
 const STARTS_POSED: Array[String] = ["kneel_out", "stand_up"]

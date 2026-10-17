@@ -259,6 +259,10 @@ Alle Phase-1-Assets sind Prototypen (`ph_`-Präfix) und **nicht final**, bis der
 | ph_item_flower_seedlings, _grave_candle, _watering_can, _apprentice_rake, _mortsafe, _wax_wreath, _register_extract, _memorial_plate, _quast_crate, _lorenz_ledger_2 | Item-Modelle (Icons, Phase 8, P5) | Prototyp – Benutzerprüfung offen |
 | ph_prop_gate_bell (Kindmesh `bell` schwingt) · Klang `assets/audio/sfx/ph_gate_bell.wav` (Cue `gate_bell`, prozedural `tools/audio/sfx_phase8.py`) | Torglocke am östlichen Torpfeiler (G8 Runde 1, B8-1; Bild `docs/reviews/phase8_round2/torglocke.jpg`) | Prototyp – Benutzerprüfung offen |
 | ph_notice_slip · ph_notice_pin (Code-Meshes mit `mat_painted`, wie ph_door_note; Label3D „Bitte“ in der Tinte der Tafel, `notice_board.gd`) | Zettel der „Bitten vom Hügel“ an der Torafel, je Bitte einer an der Unterkante (G8 Runde 6; Bild `docs/reviews/phase8_round6/tafel.jpg`) | Prototyp – Benutzerprüfung offen |
+| ph_chr_stranger (9 Knochen, Koffer `case` am `tool`; Kindmeshes `hat_head`, `hat_hand`, `notebook`, `pencil`; Clips idle, walk, talk, write_notebook, tip_hat, wait_gate, sit_inn) | Cornelius Brenneisen, der Herr mit dem Koffer (Phase 9, P7; `tools/blender/asset_stranger.py`) | Prototyp – Benutzerprüfung offen |
+| ph_chr_mourner_m_b – Neu-Export Phase 9 (Clips sit_bench, show_mark, walk_bundle, sit_cart; Kindmeshes `bundle`, `bundle_down`; Körper und Phase-8-Clips hash-gleich) | Johann Sieber (Phase 9, P7) | Prototyp – Benutzerprüfung offen |
+| ph_prop_letter, ph_prop_letter_open, ph_prop_case, ph_prop_notebook, ph_prop_watch_lantern (Marker `light_lantern`), ph_prop_bundle, ph_prop_soil_pouch | Briefe, Brenneisens Koffer und Notizbuch, Laterne des Nachtwächters, Johanns Bündel, Grabeserde (Phase 9, P7; `tools/blender/asset_props_phase9.py`) | Prototyp – Benutzerprüfung offen |
+| ph_item_letter, ph_item_letter_reply, ph_item_nameless_letter, ph_item_stranger_case, ph_item_case_card, ph_item_soil_pouch, ph_item_straw_bouquet | Item-Modelle (Icons, Phase 9, P7) | Prototyp – Benutzerprüfung offen |
 | Godot-Standardschrift | UI-Schrift | **Platzhalter** – Schriftwahl offen |
 
 ## Bekannte Probleme

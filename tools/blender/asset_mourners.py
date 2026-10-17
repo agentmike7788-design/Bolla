@@ -621,7 +621,8 @@ def _man(name: str, cfg: dict):
     hat2 = hat.copy()
     hat2.data = hat.data.copy()
     bpy.context.collection.objects.link(hat2)
-    kids.append(child("hat_head", "head", hat, ("idle", "walk", "talk", "idle_low", "lay_flowers", "lantern_walk", "lantern_idle")))
+    kids.append(child("hat_head", "head", hat, ("idle", "walk", "talk", "idle_low", "lay_flowers", "lantern_walk", "lantern_idle")
+                      + P9_HAT))
     # the hat in the hands: held by the brim in the right fist, the crown towards him, in front of the belly
     hz = c.z + s.z * 0.4
     m = (Matrix.Translation(hands[-1] + Vector((0.03, -0.04, -0.06))) @ Matrix.Rotation(math.radians(-80.0), 4, "X")
@@ -655,6 +656,9 @@ def _man(name: str, cfg: dict):
                           mourn={"hands": (16.0, 27.0)})
     if cfg["stick"]:   # the stick stays planted: the left arm does not fold, it leans on the stick
         actions = [(n, fr, _keep_stick(fn) if n.startswith(("mourn", "idle_low", "lay")) else fn) for n, fr, fn in actions]
+    if name in P9_JOHANN:   # Phase 9 (additive): body and the older clips stay as they are
+        actions = actions + p9_johann_actions(walk)
+        kids += p9_johann_children(hands)
     export_figure(name, mesh, joints, actions, children=kids, markers=[face_marker(pts)])
 
 
@@ -664,6 +668,67 @@ def _keep_stick(fn):
         p["arm_l"] = (-2.0, 0.0, 0.0)
         return p
     return g
+
+
+# --- Phase 9 (docs/PHASE9_DESIGN.md §8.2, additive): Johann Sieber's last days ---------------------------
+# sit_bench-loop (the bench before the Sieber house, seat 0.45 m: the stick planted in front, the right hand on the
+# knee, the head low), show_mark (one-shot: he pulls his coat and shirt aside at the chest and looks away - only
+# the gesture; the mark stays text), walk_bundle-loop (leaving: his bent walk, the bundle in the right hand),
+# sit_cart-loop (on Osric's cart bed, seat 0.45 m above his feet: the bundle beside him, rocking with the cart).
+# Child meshes: bundle (arm_r, walk_bundle), bundle_down (root: beside him on the cart bed, sit_cart). The body
+# and the older clips are unchanged (test_assets_phase9 compares the hashes with the Phase-8 export).
+
+P9_JOHANN = ("ph_chr_mourner_m_b",)
+P9_HAT = ("sit_bench", "show_mark", "walk_bundle", "sit_cart")
+STICK_SIT = {"arm_l": (-33.0, 0.0, 0.0)}   # seated, the stick's tip stays on the ground in front of him
+CART_BUNDLE = Vector((-0.46, 0.04, 0.45 + 0.19))   # the knot of the bundle beside him on the cart bed (root space)
+
+
+def p9_johann_actions(walk_fn) -> list:
+    sit = rig.add(rig.seated(0.27, 50.0, 6.0), STICK_SIT)
+
+    def sit_bench(t: float) -> dict:
+        """90 frames: on the bench, the stick planted in front, the right hand on his knee; he breathes slowly,
+        the head low, and once looks up the lane."""
+        look = max(0.0, math.sin(rig.TAU * t)) ** 2
+        return rig.add(rig.breathe(t, 0.8), sit, {"head": (16.0 - 13.0 * look, 0.0, 6.0 * look), "arm_r": (-36.0, -4.0, 0.0)})
+
+    def show_mark(t: float) -> dict:
+        """60 frames one-shot: the right hand draws the coat and the shirt open to the side (the arm out and a
+        little back), the chest turned towards the one he shows it to, he leans back a little and looks down and
+        away, holds it, lets go."""
+        open_ = {"arm_r": (10.0, 30.0, 0.0), "spine": (-6.0, 0.0, -8.0), "head": (14.0, 0.0, -26.0), "feet": PLANT["feet"]}
+        hold = rig.add(open_, {"head": (2.0, 0.0, -4.0)})
+        return rig.keyed(t, [(0.0, dict(PLANT)), (0.3, open_), (0.72, hold), (1.0, dict(PLANT))], wrap=False)
+
+    def walk_bundle(t: float) -> dict:
+        """26 frames: his bent walk with the bundle in the right hand, the arm held a little out (the bundle
+        clears the coat), it hardly swings."""
+        p = dict(walk_fn(t))
+        p["arm_r"] = (3.0 * math.sin(rig.TAU * t), 9.0, 0.0)
+        return p
+
+    def sit_cart(t: float) -> dict:
+        """90 frames: sitting on the cart bed, the legs hanging, the stick in front, the right hand on his knee,
+        the bundle beside him; the body rocks a little with the wheels."""
+        s2 = math.sin(rig.TAU * t * 3.0)
+        return rig.add(rig.breathe(t, 0.6), rig.seated(0.27, 34.0, 6.0), STICK_SIT,
+                       {"hips": (0.0, 1.4 * s2, 0.0, 0.0, 0.0, 0.004 * abs(s2)), "spine": (0.0, -1.0 * s2, 0.0),
+                        "head": (12.0 + 1.5 * math.sin(rig.TAU * t * 6.0), 0.0, 4.0 * math.sin(rig.TAU * t)),
+                        "arm_r": (-30.0, -4.0, 0.0)})
+
+    return [("sit_bench-loop", 90, sit_bench), ("show_mark", 60, show_mark), ("walk_bundle-loop", 26, walk_bundle),
+            ("sit_cart-loop", 90, sit_cart)]
+
+
+def p9_johann_children(hands) -> list:
+    import asset_props_phase9 as P9
+    b = P9.bundle(Vector((0.0, 0.0, 0.0)), seg=7, seed=9, name="bundle")
+    b.data.transform(Matrix.Translation(hands[-1] + Vector((0.0, 0.0, -0.01))) @ Matrix.Rotation(math.radians(90.0), 4, "Z"))
+    d = P9.bundle(Vector((0.0, 0.0, 0.0)), seg=8, seed=10, name="bundle_down")   # (seg != bundle: see asset_stranger.tophat)
+    d.data.transform(Matrix.Translation(CART_BUNDLE) @ Matrix.Rotation(math.radians(70.0), 4, "Z"))
+    # (the body's rest pose stands with the soles a hair below z = 0: export_figure grounds every child with it)
+    return [child("bundle", "arm_r", b, ("walk_bundle",)), child("bundle_down", "root", d, ("sit_cart",))]
 
 
 def mourner_m_a():
