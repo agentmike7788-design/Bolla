@@ -5,7 +5,8 @@ extends TestCase
 ## 1 → … → 8, and the W1 fixtures (tests/fixtures/phase9, Phase9Fixtures, tests/fixtures/saves_v7).
 
 ## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
-const IMPLEMENTED: PackedStringArray = []
+const IMPLEMENTED: PackedStringArray = ["Quests", "QuestRules", "QuestLog",  # P1
+		"WhoKnows", "LightRules", "KnockDoor"]  # P4
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
 	# P1
@@ -181,7 +182,10 @@ func test_stubs_answer_neutral_defaults() -> void:
 	assert_false(q.choose(&"q_who_knows", &"h5", &"confide_none"))
 	assert_false(q.check_goal())
 	q.free()
-	assert_null(QuestRules.next_step(Phase9Fixtures.quest(&"q_who_knows"), [] as Array[StringName]))
+	if IMPLEMENTED.has("QuestRules"):
+		assert_eq(QuestRules.next_step(Phase9Fixtures.quest(&"q_who_knows"), [] as Array[StringName]).id, &"h1", "P1: the first step")
+	else:
+		assert_null(QuestRules.next_step(Phase9Fixtures.quest(&"q_who_knows"), [] as Array[StringName]))
 	assert_eq(QuestRules.deadline_day(QuestStepData.new()), -1)
 	assert_eq(QuestLog.entries(tree), [] as Array[Dictionary])
 	assert_eq(LightRules.light_day(LightEntryData.new(), tree, WhoKnowsConfig.new()), LightRules.NO_DAY)

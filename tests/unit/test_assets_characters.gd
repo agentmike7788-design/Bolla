@@ -33,11 +33,16 @@ const CHARACTERS := {
 				"table_pull": [1.4, 1.6], "hand_draw": [0.3, 0.4], "hand_stow": [0.3, 0.4], "hand_stow_walk": [0.45, 0.6],
 				"pray": [2.9, 3.1], "write": [1.4, 1.6], "bench_work": [1.4, 1.6], "place_low": [1.5, 1.7],
 				"weed_pull": [1.4, 1.6], "fill_can": [1.25, 1.4], "rake": [1.1, 1.3], "rake_take": [0.2, 0.3],
-				"rake_put": [0.2, 0.3], "rake_put_walk": [0.45, 0.6]},
+				"rake_put": [0.2, 0.3], "rake_put_walk": [0.45, 0.6],
+				# Phase 9 (P7): the ledger, the letters, the soil, the case (test_assets_phase9)
+				"read_book": [1.9, 2.1], "kneel_read": [1.9, 2.1], "write_letter": [1.4, 1.6], "read_letter": [2.3, 2.5],
+				"read_aloud_grave": [2.3, 2.5], "burn_letter": [1.25, 1.4], "slip_letter": [0.9, 1.1], "knock": [0.6, 0.7],
+				"take_soil": [1.4, 1.6], "carry_case": [0.45, 0.6]},
 		"one_shot": ["interact", "shovel_draw", "shovel_stow", "shovel_stow_walk", "axe_draw", "axe_stow", "axe_stow_walk",
 				"pick_draw", "pick_stow", "pick_stow_walk", "hammer_draw", "hammer_stow", "hammer_stow_walk",
 				"saw_draw", "saw_stow", "saw_stow_walk", "corpse_lower", "mourn", "kneel_place",
-				"hand_draw", "hand_stow", "hand_stow_walk", "weed_pull", "rake_take", "rake_put", "rake_put_walk"],
+				"hand_draw", "hand_stow", "hand_stow_walk", "weed_pull", "rake_take", "rake_put", "rake_put_walk",
+				"slip_letter", "knock"],
 	},
 	"ph_chr_carter": {
 		"height": [1.6, 1.7],

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ClearableData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/systems/expansion/clearable_data.gd" id="1"]
+
+[ext_resource type="PackedScene" path="res://assets/models/environment/ph_env_bramble.glb" id="m1"]
+
+[resource]
+script = ExtResource("1")
+id = &"bramble_row4"
+display_name = "Altes Brombeergestrüpp"
+verb = "roden"
+minutes = 40
+animation = &"chop"
+cost = Dictionary[StringName, int]({})
+yield_items = Dictionary[StringName, int]({&"wood": 1})
+model = ExtResource("m1")
+tool_kind = &"axe"
+min_tier = 0

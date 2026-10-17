@@ -608,6 +608,46 @@ func _p8(id: StringName) -> OrderData:
 	return Phase8Fixtures.order(id)
 
 
+## Phase 9 (P1, docs/PHASE9_DESIGN.md §2.1, §10): orders of category quest – offered by the chains only (from p9_open
+## on), their own limit max_active_quest 3 next to the 4 / 2, never for stats.orders_done / done_count / done_givers,
+## no Phase-7 penalty on failing, requires_flag_not.
+func test_quest_orders_count_separately() -> void:
+	for id: StringName in Phase9Fixtures.ORDER_IDS:
+		orders.order_table[id] = Phase9Fixtures.order(id)
+	orders.config = Phase9Fixtures.orders_config()
+	GameState.clear_flag(&"p9_open")
+	assert_eq(orders.block_reason(&"oq_fenner_seal"), OrderRules.TEXT_NOT_YET, "before p9_open")
+	assert_false(orders.offer(&"oq_fenner_seal"))
+	GameState.set_flag(&"p9_open", true)
+	assert_false(orders.offers().has(&"oq_fenner_seal"), "not listed before a chain offers it")
+	assert_eq(orders.block_reason(&"oq_fenner_seal"), "", "no tier, no stranger rule")
+	assert_true(orders.offer(&"oq_fenner_seal"))
+	assert_true(orders.offers(&"mayor").has(&"oq_fenner_seal"), "listed once offered")
+	var done_before := GameState.get_stat(&"orders_done")
+	var failed_before := GameState.get_stat(&"orders_failed")
+	for id: StringName in [&"oq_fenner_seal", &"oq_gesa_brother", &"oq_jakob_father"]:
+		assert_true(orders.accept(id), String(id))
+	assert_eq([orders.active_count(&"quest"), orders.active_count()], [3, 0])
+	assert_eq(orders.block_reason(&"oq_case_return"), OrderRules.TEXT_MAX_QUEST, "max_active_quest 3")
+	assert_true(orders.offer(&"oq_case_return"), "offered while three run (like the four)")
+	assert_true(orders.accept(&"o_rosine_berries"), "the Phase-7 limit is separate")
+	orders.complete(&"oq_fenner_seal")
+	assert_eq(orders.state(&"oq_fenner_seal"), &"completed")
+	assert_eq([GameState.get_stat(&"orders_done"), orders.done_count(), orders.done_givers()], [done_before, 0, PackedStringArray()],
+			"never for the village chapter")
+	assert_eq(orders.block_reason(&"oq_fenner_seal"), OrderRules.TEXT_COMPLETED, "once")
+	rel.calls.clear()
+	rep.calls.clear()
+	orders.fail(&"oq_gesa_brother")
+	assert_eq([orders.state(&"oq_gesa_brother"), rel.calls, rep.calls, GameState.get_stat(&"orders_failed")],
+			[&"failed", [], [], failed_before], "no −4, no reputation, no village counter")
+	GameState.set_flag(&"sieber_gone", true)
+	assert_eq(orders.block_reason(&"oq_liesel_bundle"), OrderRules.TEXT_NOT_YET, "requires_flag_not sieber_gone")
+	GameState.clear_flag(&"sieber_gone")
+	assert_eq(orders.block_reason(&"oq_liesel_bundle"), "")
+	GameState.clear_flag(&"p9_open")
+
+
 class CandleCareDouble extends Node:
 	var lit_nights: Array = []
 	var fresh: Array = []

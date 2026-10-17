@@ -1040,6 +1040,199 @@ def _p8_actions() -> tuple:
             ("dance-loop", 48, M.dance(0.035, 3.5, 70.0)))
 
 
+# --- Phase 9 (docs/PHASE9_DESIGN.md §8.2, additive): the letters, the ledger, the soil, the case ------------
+# The tool bone stays at rest in all ten (the shovel on the back, nothing to re-parent). The held things are not
+# meshes of this model (its 12 000-tris budget) and not on the tool bone: two markers ride on the rigid arms -
+# hold_r (arm_r) and hold_l (arm_l), each at its fist with the armature's axes at rest - and the hand props
+# ph_tool_letter / _letter_open / _kladde / _quill / _soil_cloth / _case (asset_props_phase9) are modelled in that
+# frame for the clips that use them (HOLD_PROPS): the owner hangs the scene at the marker while the clip plays.
+# The fists are aimed at armature-space targets by asset_character_work._work (r_at / l_at, as write / bench_work).
+#   read_book-loop          at the desk, bent over Lorenz's ledger lying open: the left hand flat on the page, the
+#                           right follows the lines and turns a page
+#   kneel_read-loop         kneeling at a grave, the ledger open in the left hand, the right finger goes from the
+#                           page to the stone's date and back
+#   write_letter-loop       at the desk: the left hand holds the sheet, the quill writes and is dipped
+#   read_letter-loop        standing, the open letter held between both hands at chest height, reading
+#   read_aloud_grave-loop   kneeling at the grave, the letter held in both hands, reading it aloud (the head moves)
+#   burn_letter-loop        bent at the stove / the forge, the right hand holds the letter forward into the fire
+#   slip_letter             one-shot: the letter pushed into the gap of a door at 1.0 m
+#   knock                   one-shot: the right hand knocks twice on a door (asset_mourners.knock)
+#   take_soil-loop          kneeling, the left hand holds the cloth open, the right scoops a handful from the mound
+#   carry_case-loop         walking with Brenneisen's case in the right hand (the arm a little out, short swing)
+
+HOLD_MARKERS = {"hold_r": "arm_r", "hold_l": "arm_l"}
+DESK_Z = 0.86            # the desk top (asset_character_work.WRITE_DESK)
+KNEEL = {"hips": (6.0, 0.0, 0.0, 0.0, 0.04, -0.3), "spine": (30.0, 0.0, 0.0), "head": (-8.0, 0.0, 0.0),
+         "leg_l": (14.0, 0.0, -2.0), "leg_r": (6.0, 0.0, 2.0), "feet": {"leg_l": 0.0, "leg_r": 0.0}}
+
+
+def _p9_hands(r=None, l=None) -> dict:
+    import asset_character_work as Wk
+    return Wk._hands(r, l)
+
+
+def _p9_desk(spine: float = 24.0, head: float = 12.0) -> dict:
+    return _body(spine, 2.0, head=head, hips=(3.0, 0, 0, 0, 0.02, -0.01))
+
+
+def read_book(t: float) -> dict:
+    """60 frames: bent over the open ledger on the desk; the left hand flat on the page, the right finger moves
+    down the lines; near the end of the loop it lifts and turns the page across to the left."""
+    line = rig.ease(t / 0.65) - rig.ease((t - 0.8) / 0.12)
+    turn = rig.ease((t - 0.7) / 0.15) - rig.ease((t - 0.85) / 0.15)
+    r = (-0.12 + 0.2 * turn, -0.5 + 0.06 * line, DESK_Z + 0.03 + 0.06 * turn)
+    pose = rig.add(_stance(), _p9_desk(), rig.breathe(t, 0.4), {"head": (2.0 * line, 0.0, 4.0 * math.sin(rig.TAU * t))})
+    pose.update(_p9_hands(r, (0.16, -0.46, DESK_Z + 0.01)))
+    return pose
+
+
+def write_letter(t: float) -> dict:
+    """45 frames: at the desk writing a letter: the left hand holds the sheet, the right writes in small strokes
+    and once dips the quill into the ink at the right (t ~ 0.8)."""
+    s = math.sin(rig.TAU * t * 4.0)
+    dip = rig.ease((t - 0.72) / 0.1) - rig.ease((t - 0.88) / 0.1)
+    x = -0.06 - 0.08 * (rig.ease(t / 0.7) - rig.ease((t - 0.74) / 0.16))
+    r = (x * (1.0 - dip) - 0.28 * dip, -0.5 + 0.01 * s + 0.06 * dip, DESK_Z + 0.02 + 0.012 * abs(s) + 0.05 * dip)
+    pose = rig.add(_stance(), _p9_desk(), rig.breathe(t, 0.4))
+    pose.update(_p9_hands(r, (0.16, -0.46, DESK_Z)))
+    return pose
+
+
+READ_R = (-0.17, -0.46, 1.06)        # reading: the fists hold the sheet's top corners in front of the chest
+READ_L = (0.17, -0.46, 1.06)
+
+
+def read_letter(t: float) -> dict:
+    """72 frames: standing, the open letter between both hands at chest height, the head bowed to it; the eyes
+    go along the lines (a slow sway of the head), the hands come a little closer once."""
+    s = math.sin(rig.TAU * t)
+    pose = rig.add(_stance(), _body(6.0, 0.0, head=16.0), rig.breathe(t, 0.6),
+                   {"head": (2.0 * math.sin(rig.TAU * t * 2.0), 0.0, 3.0 * s)})
+    pose.update(_p9_hands((READ_R[0] + 0.01 * s, READ_R[1], READ_R[2]), (READ_L[0] - 0.01 * s, READ_L[1], READ_L[2])))
+    return pose
+
+
+ALOUD_R = (-0.17, -0.5, 0.84)        # kneeling: the same grip, lower (the shoulders sink with the hips)
+ALOUD_L = (0.17, -0.5, 0.84)
+
+
+def read_aloud_grave(t: float) -> dict:
+    """72 frames: kneeling at the grave, the letter held in both hands, reading it aloud - the head lifts towards
+    the stone at the end of a line and sinks back to the page."""
+    up = max(0.0, math.sin(rig.TAU * t * 2.0)) ** 2
+    pose = rig.add(KNEEL, rig.breathe(t, 0.6, 2), {"spine": (-12.0, 0.0, 0.0), "head": (26.0 - 14.0 * up, 0.0, 0.0)})
+    pose.update(_p9_hands(ALOUD_R, ALOUD_L))
+    return pose
+
+
+KNEEL_BOOK = (0.13, -0.5, 0.8)       # the ledger open in the left hand
+
+
+def kneel_read(t: float) -> dict:
+    """60 frames: kneeling at the grave, the ledger open in the left hand; the right finger rests on the page,
+    goes out to the date on the stone (t 0.35-0.6) and back; the head follows."""
+    out = rig.ease((t - 0.3) / 0.15) - rig.ease((t - 0.6) / 0.15)
+    r = (-0.05 - 0.05 * out, -0.5 - 0.22 * out, 0.84 + 0.1 * out)
+    pose = rig.add(KNEEL, rig.breathe(t, 0.6), {"spine": (-10.0, 0.0, 0.0), "head": (24.0 - 22.0 * out, 0.0, -4.0 * out)})
+    pose.update(_p9_hands(r, KNEEL_BOOK))
+    return pose
+
+
+BURN_R = (-0.12, -0.62, 0.72)        # the letter held forward into the stove's mouth
+
+
+def burn_letter(t: float) -> dict:
+    """40 frames: bent at the stove, the right hand holds the letter forward into the fire, a small shake as it
+    catches; the left hand rests on the knee; the face a little aside from the heat."""
+    s = math.sin(rig.TAU * t * 2.0)
+    pose = rig.add(_stance(), _body(22.0, -4.0, head=6.0, hips=(4.0, 0, 0, 0, 0.03, -0.03)), rig.breathe(t, 0.5),
+                   {"head": (0.0, 0.0, 10.0)})
+    pose.update(_p9_hands((BURN_R[0], BURN_R[1] - 0.01 * s, BURN_R[2] + 0.008 * s), (0.2, -0.32, 0.62)))
+    return pose
+
+
+SLIP_R = (-0.05, -0.52, 1.0)         # the gap of the door at 1.0 m, half a metre in front of him
+
+
+def slip_letter(t: float) -> dict:
+    """30 frames one-shot: he steps up to the door, bends a little and pushes the letter into the gap (t 0.45-0.6),
+    and straightens up."""
+    plant = {"feet": {"leg_l": 0.0, "leg_r": 0.0}}
+    rest = rig.add(plant, _p9_hands())
+    at = rig.add(plant, _body(10.0, 0.0, head=4.0), _p9_hands(SLIP_R))
+    push = rig.add(plant, _body(12.0, 0.0, head=4.0), _p9_hands((SLIP_R[0], SLIP_R[1] - 0.05, SLIP_R[2])))
+    return rig.keyed(t, [(0.0, rest), (0.4, at), (0.55, push), (0.7, push), (1.0, rest)], wrap=False)
+
+
+SOIL_CLOTH = (0.12, -0.5, 0.5)       # the cloth held open low in the left hand
+
+
+def take_soil(t: float) -> dict:
+    """45 frames: kneeling at a fresh grave, bent low; the left hand holds the cloth open, the right scoops a
+    handful from the mound in front (t 0.3) and lets it run into the cloth (t 0.7)."""
+    scoop = rig.ease((t - 0.15) / 0.2) - rig.ease((t - 0.45) / 0.2)
+    pour = rig.ease((t - 0.55) / 0.12) - rig.ease((t - 0.82) / 0.15)
+    r = (-0.08 + 0.12 * pour, -0.56 - 0.12 * scoop + 0.04 * pour, 0.5 - 0.22 * scoop + 0.08 * pour)
+    pose = rig.add(KNEEL, rig.breathe(t, 0.5), {"spine": (10.0 * scoop, 0.0, 0.0), "head": (10.0, 0.0, 0.0)})
+    pose.update(_p9_hands(r, SOIL_CLOTH))
+    return pose
+
+
+def carry_case(t: float) -> dict:
+    """16 frames (the walk's pace): walking with the case in the right hand - that arm held a little out so the
+    case clears the coat, it swings only a little; the left arm swings as usual."""
+    g = walk(t)
+    g["arm_r"] = (4.0 * math.sin(rig.TAU * t), 8.0, 0.0)
+    return g
+
+
+def _p9_knock(t: float) -> dict:
+    import asset_mourners as M
+    return M.knock(-1)(t)
+
+
+P9_CLIPS = (("read_book-loop", 60, read_book), ("kneel_read-loop", 60, kneel_read), ("write_letter-loop", 45, write_letter),
+            ("read_letter-loop", 72, read_letter), ("read_aloud_grave-loop", 72, read_aloud_grave),
+            ("burn_letter-loop", 40, burn_letter), ("slip_letter", 30, slip_letter), ("knock", 20, _p9_knock),
+            ("take_soil-loop", 45, take_soil), ("carry_case-loop", 16, carry_case))
+## clip -> [(marker, hand prop)] - which ph_tool_* scene the owner shows at which marker while the clip plays
+HOLD_PROPS = {"kneel_read": [("hold_l", "ph_tool_kladde")], "write_letter": [("hold_r", "ph_tool_quill")],
+              "read_letter": [("hold_r", "ph_tool_letter_open")], "read_aloud_grave": [("hold_r", "ph_tool_letter_open")],
+              "burn_letter": [("hold_r", "ph_tool_letter")], "slip_letter": [("hold_r", "ph_tool_letter")],
+              "take_soil": [("hold_l", "ph_tool_soil_cloth")], "carry_case": [("hold_r", "ph_tool_case")]}
+
+
+def _p9_actions() -> tuple:
+    import asset_character_work as Wk
+    return tuple((name, frames, fn, Wk._work(fn, name)) for name, frames, fn in P9_CLIPS)
+
+
+def p9_hold_frame(pose: dict, bone: str) -> Matrix:
+    """Armature-space deformation of a rigid arm in `pose` after asset_character_work._work has aimed its fist at
+    the pose's target (the same maths as _aim_arm at full weight): a hand prop modelled where it must sit in that
+    pose is brought into the marker's rest frame with p9_hold_frame(...).inverted() and then -FIST."""
+    j = joints(0.0)
+    m = rig.deform(j, pose, bone)
+    key = "r" if bone == "arm_r" else "l"
+    if float(pose.get(key + "_w", (0.0,))[0]) > 0.001:
+        head = m @ Vector(j[bone][0])
+        fist = m @ FIST[1 if bone == "arm_l" else -1]
+        q = (fist - head).rotation_difference(Vector(pose[key + "_at"][:3]) - head)
+        m = Matrix.Translation(head) @ q.to_matrix().to_4x4() @ Matrix.Translation(-head) @ m
+    return m
+
+
+def _p9_markers(arm) -> None:
+    for name, bone in HOLD_MARKERS.items():
+        e = bpy.data.objects.new(name, None)
+        bpy.context.collection.objects.link(e)
+        e.parent = arm
+        e.parent_type = "BONE"
+        e.parent_bone = bone
+        bpy.context.view_layer.update()
+        e.matrix_world = Matrix.Translation(FIST[1 if bone == "arm_l" else -1])
+
+
 def _can_grip(arm) -> None:
     """Empty on arm_r at the fist: the can's frame, turned so that it hangs tilted CAN_TILT deg forward
     (spout down) when the arm is out at WATER_ARM (it rides on the rigid arm)."""
@@ -1079,7 +1272,8 @@ def build(debug: bool = False):
     _can_grip(arm)
     import asset_character_work as Wk  # G8 Runde 3: the work at the morgue table and the other hand work
     Wk.marker(arm)
-    for entry in ACTIONS + tuple(T.actions()) + _p8_actions() + tuple(Wk.actions()):
+    _p9_markers(arm)   # Phase 9: hold_r / hold_l
+    for entry in ACTIONS + tuple(T.actions()) + _p8_actions() + tuple(Wk.actions()) + _p9_actions():
         name, frames, fn = entry[:3]
         rig.add_action(arm, mesh, name, frames, fn, entry[3] if len(entry) > 3 else None)
     if debug:

@@ -14,6 +14,9 @@ extends Node
 ## deadline counts from her arrival, §2.5 / W0-Notizen 12) or "next_delivery" (the first corpse that
 ## arrives after the acceptance – the accept minute is kept in progress["at:<id>"]).
 ## Saved (§5.1): {states, accepted_day, board_day, board, history, progress}.
+## Phase 9 (docs/PHASE9_DESIGN.md §2.1, §2.4.4, P1): orders of category quest (errands, chain tasks) – offered by the
+## chains only (never listed before they are offered), from p9_open on, once; their own limit max_active_quest; never
+## for stats.orders_done / orders_failed, the village chapter (done_count, done_givers) or the Phase-7 penalties.
 
 const GROUP := &"orders"
 const STATE_OFFERED := &"offered"
@@ -145,8 +148,11 @@ func offers(giver: StringName = &"") -> Array[StringName]:
 		# Phase 8: friend orders come through the Friendship (story steps, return favours).
 		if is_friend(o):
 			continue
+		# Phase 9: quest orders come through the chains – listed once they are offered.
+		if is_quest(o) and state(o.id) != STATE_OFFERED:
+			continue
 		var reason := block_reason(o.id)
-		if reason == "" or reason == OrderRules.TEXT_MAX_ACTIVE:
+		if reason == "" or reason == OrderRules.TEXT_MAX_ACTIVE or reason == OrderRules.TEXT_MAX_QUEST:
 			out.append(o.id)
 	return out
 
@@ -203,6 +209,11 @@ func active_count(category: StringName = &"") -> int:
 ## Phase 8: a friend order (OrderData.category friend).
 static func is_friend(o: OrderData) -> bool:
 	return o != null and o.category == OrderData.CATEGORY_FRIEND
+
+
+## Phase 9: a quest order (OrderData.category quest – errands, chain tasks).
+static func is_quest(o: OrderData) -> bool:
+	return o != null and o.category == OrderData.CATEGORY_QUEST
 
 
 ## The context dictionary OrderRules.offer_block_reason reads (see order_rules.gd).
@@ -281,10 +292,10 @@ func _completed_ids() -> Array[StringName]:
 			var id := StringName(key.substr(PROGRESS_DONE.length()))
 			if not out.has(id) and int(_progress[key]) > 0:
 				out.append(id)
-	# Phase 8: friend orders are no Phase-7 orders (chapter „Ein Name im Dorf", panels).
+	# Phase 8: friend orders are no Phase-7 orders (chapter „Ein Name im Dorf", panels); Phase 9: nor quest orders.
 	var phase7: Array[StringName] = []
 	for id: StringName in out:
-		if not is_friend(order_data(id)):
+		if not is_friend(order_data(id)) and not is_quest(order_data(id)):
 			phase7.append(id)
 	return phase7
 
@@ -294,7 +305,7 @@ func _completed_ids() -> Array[StringName]:
 ## Offered in a dialogue / on the board (order_changed offered); false when not offerable.
 func offer(order_id: StringName) -> bool:
 	var reason := block_reason(order_id)
-	if reason != "" and reason != OrderRules.TEXT_MAX_ACTIVE:
+	if reason != "" and reason != OrderRules.TEXT_MAX_ACTIVE and reason != OrderRules.TEXT_MAX_QUEST:
 		return false
 	if state(order_id) != STATE_OFFERED:
 		_states[order_id] = STATE_OFFERED
@@ -429,6 +440,15 @@ func complete(order_id: StringName) -> void:
 		if friendship != null and friendship.has_method(&"note_order_done"):
 			friendship.call(&"note_order_done", order_id)
 		return
+	if is_quest(o):
+		# Phase 9: an errand / chain task – no village counter, no chapter check; Quests hears order_changed.
+		var flag := StringName(str(o.conditions.get("gives_flag", "")))
+		if flag != &"":
+			GameState.set_flag(flag, true)
+		EventBus.order_changed.emit(order_id, STATE_COMPLETED)
+		if o.thanks_text != "":
+			EventBus.notification_requested.emit(o.thanks_text, &"reward")
+		return
 	GameState.add_stat(STAT_DONE, 1)
 	EventBus.order_changed.emit(order_id, STATE_COMPLETED)
 	if o.thanks_text != "":
@@ -459,6 +479,13 @@ func fail(order_id: StringName) -> void:
 		EventBus.notification_requested.emit(TEXT_FAILED % o.title, &"warning")
 		return
 	var reason := REASON_FAILED % o.title
+	if is_quest(o):
+		# Phase 9: a missed errand – only its own fail_rel (no −4, no reputation, no village counter).
+		for npc: StringName in o.fail_rel:
+			_rel_add(npc, int(o.fail_rel[npc]), reason)
+		EventBus.order_changed.emit(order_id, STATE_FAILED)
+		EventBus.notification_requested.emit(TEXT_FAILED % o.title, &"warning")
+		return
 	if o.giver != COUNCIL and o.fail_rel.is_empty():
 		_rel_add(o.giver, int(_rel_cfg().gains.get(&"order_failed", -4)), reason)
 	for npc: StringName in o.fail_rel:
