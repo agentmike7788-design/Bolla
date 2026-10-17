@@ -187,14 +187,14 @@ func _assert_v7_shape() -> void:
 		assert_true((r as Dictionary).has("kin_house"), "record %s saves kin_house" % (r as Dictionary).get("id"))
 
 
-## No warning while loading (except the known findings), the next save writes v7 and round-trips.
+## No warning while loading (except the known findings), the next save writes the current format and round-trips.
 func _check_and_resave(known: PackedStringArray = []) -> void:
 	_drop_known(known)
 	assert_eq(warnings.messages, PackedStringArray(), "no warnings while loading")
 	var before := SaveManager.collect_state()
 	assert_eq(SaveManager.save_game(RESAVE_SLOT), OK)
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(saves_dir, RESAVE_SLOT)))
-	assert_eq(int(doc.format_version), 7, "next save writes v7")
+	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, "next save writes the current format (Phase 8: v7, Phase 9: v8)")
 	var err: Error = await SaveManager.load_game(RESAVE_SLOT)
 	assert_eq(err, OK)
 	TimeManager.running = false
