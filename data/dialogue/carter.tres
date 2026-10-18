@@ -1510,7 +1510,7 @@ next = &"goodbye_morning"
 script = ExtResource("1_0vtyj")
 id = &"menu_cold"
 text = "Was brauchst du."
-choices = Array[ExtResource("2_cdonk")]([SubResource("choice_086"), SubResource("choice_087"), SubResource("choice_088"), SubResource("p5_choice_20"), SubResource("p5_choice_21"), SubResource("p6_choice_cold_candles"), SubResource("p6_choice_cold_buildings"), SubResource("p7_c006"), SubResource("choice_089"), SubResource("choice_090"), SubResource("choice_091"), SubResource("g8r6_choice_hill"), SubResource("choice_092")])
+choices = Array[ExtResource("2_cdonk")]([SubResource("choice_086"), SubResource("choice_087"), SubResource("choice_088"), SubResource("p5_choice_20"), SubResource("p5_choice_21"), SubResource("p6_choice_cold_candles"), SubResource("p6_choice_cold_buildings"), SubResource("p7_c006"), SubResource("choice_089"), SubResource("choice_090"), SubResource("choice_091"), SubResource("p8_menu_menu_01"), SubResource("p8_menu_menu_02"), SubResource("g8r6_choice_hill"), SubResource("p9_menu_menu_01"), SubResource("p9_menu_menu_02"), SubResource("p9_menu_menu_03"), SubResource("p9_menu_menu_04"), SubResource("p9_menu_menu_05"), SubResource("choice_092")])
 
 [sub_resource type="Resource" id="choice_093"]
 script = ExtResource("2_cdonk")
