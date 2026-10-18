@@ -1112,3 +1112,7 @@ Alle W1-Pakete sind gemergt (P1+P4, P7, P3+P5, P2, P6; volle Suite auf dem gemer
 6. `LettersConfig.read_minutes` = 5 (Brief-Karte „Lesen“).
 7. **UI (§7.6):** Karten-Legende ab `p9_open` mit Brenneisen, großem Bogen, Lesezeichen (Krankenlicht-Zeile nennt das Licht bei den Siebers); Gräber/Leute auf der Karte größer (`grave_radius` 5, `person_radius` 8); Grabregister „Licht: …“ in eigener Zeile der Spalte „Angehörige“; Brenneisen-Panel kompakt (700 px, alle vier Angebote bei 1280 × 720 ohne Rollen sichtbar).
 8. **Johann auf dem Karren (§4.5):** mittig auf der Stirnwand gegenüber von Osric (Oberkante 0,83 m), Rücken zur Ladefläche, die Beine über der Kante, Blick den Weg hinab – vorher saß er an der rechten hinteren Ecke 0,6 m außerhalb in der Luft.
+
+### G9 – Benutzerentscheidungen (bindend, 18.10.2026: „ok“)
+1. **Gehtempo:** Alle Zeitplan-Wege der Dorfbewohner bekommen ein natürliches Gehtempo (Abfahrt früher statt Hetzen; Ankunftszeiten der Systeme bleiben).
+2. **Quasts Tropfen (Ende B):** Auslegung bestätigt – Quast verkauft `fever_tincture` nicht, er kauft an diesem Tag eine mehr an.
