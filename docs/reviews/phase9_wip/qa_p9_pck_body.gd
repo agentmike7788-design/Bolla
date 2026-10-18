@@ -167,6 +167,7 @@ func _check_world() -> void:
 	_check(expansion.is_unlocked(&"linden_row4"), "row 4 open")
 	# The first delivery after p9_open (day 63, at the drop-off in the fixture) carries the forced pocket letter L1.
 	var r: CorpseRecord = null
+	await _run_to(63, 8 * 60)
 	for rec: CorpseRecord in world.corpse_manager.records():
 		if rec.location != CorpseRecord.LOCATION_BURIED:
 			r = rec
