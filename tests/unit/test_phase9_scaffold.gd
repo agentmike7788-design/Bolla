@@ -108,8 +108,10 @@ const DATA_CLASSES := {
 	"StrangerOfferData": "res://src/systems/stranger/stranger_offer_data.gd",
 }
 ## Properties changed in the data (and the class default together) after the W0 hand-over; the fixtures keep the
-## W0 values. Empty at W0; W2 „Anschlüsse“ (W1-Anschlüsse 13): the mood rules of ending C.
-const DATA_CHANGED_AFTER_W0 := {&"npc_life_config": [&"mood_rules"]}
+## W0 values. Empty at W0; W2 „Anschlüsse“: the mood rules of ending C (W1-Anschlüsse 13), the values of WhoKnows that
+## lived in the code (16).
+const DATA_CHANGED_AFTER_W0 := {&"npc_life_config": [&"mood_rules"], &"who_knows_config": [&"quest_id", &"gone_after_minutes",
+		&"b_confidant_rel", &"death_paths", &"death_flags"]}
 
 
 func test_stub_scripts_load_with_their_class_names() -> void:

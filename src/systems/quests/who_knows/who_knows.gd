@@ -24,7 +24,6 @@ extends Node
 const GROUP := &"who_knows"
 const WITH_PEDDLER := &"peddler"
 const WITH_CARTER := &"carter"
-const MAIN_QUEST := &"q_who_knows"
 const STEP_CONFIDE := &"h5"
 const STEP_DECIDE := &"h6"
 const NOTE_KLADDE := &"kladde_read"
@@ -59,14 +58,13 @@ const KIND_DEPARTED := &"departed"
 ## The confidants of H5 (choice → npc) – C spares the confidant, B gives them +3.
 const CONFIDANTS: Dictionary[StringName, StringName] = {&"confide_priest": &"priest", &"confide_surgeon": &"surgeon",
 		&"confide_washer": &"washer"}
-const B_CONFIDANT_REL := 3
 const GAIN_WITNESS := &"witness"
 const GAIN_NAMED := &"named_publicly"
 const PIETY_KEPT := &"kept_promise"
 const REP_KEPT := &"kept_promise"
-## Johann walks with Hanne up the forest path / sits on Osric's cart this long before he is gone (sieber_gone hides
-## his figures – the walk itself is the runtime schedule of W-Welt / P6).
-const GONE_AFTER_MINUTES := 40
+## Johann walks with Hanne up the forest path / sits on Osric's cart WhoKnowsConfig.gone_after_minutes before he is
+## gone (sieber_gone hides his figures – the walk itself is P6's schedule); the confidant's +3 of ending B is
+## WhoKnowsConfig.b_confidant_rel, the chain WhoKnowsConfig.quest_id (W1-Anschlüsse 16).
 ## The deadline (light + 17) is the last day Hanne may take him on: her day ≤ light + 18 (§2.2.7).
 const PEDDLER_LAST_OFFSET := 1
 const MINUTES_PER_DAY := 1440
@@ -328,9 +326,9 @@ func apply_morning(day: int) -> void:
 	_morning_day = maxi(_morning_day, day)
 	var quests := _quests()
 	var cfg := _cfg()
-	if quests != null and quests.ending(MAIN_QUEST) == &"" and day > LightRules.decide_day(light_day(), cfg):
+	if quests != null and quests.ending(_main()) == &"" and day > LightRules.decide_day(light_day(), cfg):
 		quests.apply_morning(day)
-		if quests.ending(MAIN_QUEST) != &"":
+		if quests.ending(_main()) != &"":
 			_fallback_day = day
 	_daily_visits(day)
 	_apply_consequences()
@@ -349,7 +347,7 @@ func apply_minute(day: int, minute: int) -> void:
 	if not _depart.is_empty() and not GameState.flag_on(FLAG_GONE):
 		var now := (day - 1) * MINUTES_PER_DAY + minute
 		var at := (int(_depart.get("day", 0)) - 1) * MINUTES_PER_DAY + int(_depart.get("minute", 0))
-		if now >= at + GONE_AFTER_MINUTES:
+		if now >= at + _cfg().gone_after_minutes:
 			_leave()
 	_check_kept()
 	_schedule_flags(day, minute)
@@ -366,7 +364,7 @@ func reserved_plot_count() -> int:
 	if not _open() or GameState.flag_on(FLAG_GONE):
 		return 0
 	var quests := _quests()
-	if quests != null and quests.ending(MAIN_QUEST) != &"":
+	if quests != null and quests.ending(_main()) != &"":
 		return 0
 	return 1
 
@@ -429,8 +427,8 @@ func _chain_deciding() -> bool:
 	var quests := _quests()
 	if quests == null:
 		return false
-	var step := quests.current_step(MAIN_QUEST)
-	return quests.ending(MAIN_QUEST) == &"" and (step == STEP_CONFIDE or step == STEP_DECIDE)
+	var step := quests.current_step(_main())
+	return quests.ending(_main()) == &"" and (step == STEP_CONFIDE or step == STEP_DECIDE)
 
 
 func _ledger_here(inv: Inventory) -> bool:
@@ -476,14 +474,14 @@ func _daily_visits(day: int) -> void:
 	var quests := _quests()
 	if quests == null:
 		return
-	var q := quests.quest_data(MAIN_QUEST)
+	var q := quests.quest_data(_main())
 	var reached := false
 	for s: QuestStepData in (q.steps if q != null else []):
 		if s == null:
 			continue
 		if s.id == cfg.daily_visit_from_step:
-			reached = quests.current_step(MAIN_QUEST) == s.id or quests.steps_done(MAIN_QUEST).has(s.id) \
-					or quests.ending(MAIN_QUEST) != &""
+			reached = quests.current_step(_main()) == s.id or quests.steps_done(_main()).has(s.id) \
+					or quests.ending(_main()) != &""
 			break
 	if not reached:
 		return
@@ -510,7 +508,7 @@ func _schedule_flags(day: int, minute: int) -> void:
 		if _departs_on(day) and ScheduleResolver.is_today(FLAG_BENCH_DAY, day):
 			GameState.clear_flag(FLAG_BENCH_DAY)
 	var quests := _quests()
-	if quests == null or quests.ending(MAIN_QUEST) != ENDING_PUBLIC:
+	if quests == null or quests.ending(_main()) != ENDING_PUBLIC:
 		return
 	var watching := ScheduleResolver.is_today(FLAG_WATCH_DAY, day)
 	if not GameState.flag_on(FLAG_DEAD):
@@ -525,18 +523,18 @@ func _apply_consequences() -> void:
 	var quests := _quests()
 	if quests == null:
 		return
-	var end := quests.ending(MAIN_QUEST)
+	var end := quests.ending(_main())
 	if end == &"" or _applied != &"":
 		return
 	_applied = end
-	var confidant: StringName = CONFIDANTS.get(quests.choice_of(MAIN_QUEST, STEP_CONFIDE), &"")
+	var confidant: StringName = CONFIDANTS.get(quests.choice_of(_main(), STEP_CONFIDE), &"")
 	var reason := REASON_CONFIDED % end
 	match end:
 		ENDING_AWAY:
 			_plan_departure()
 		ENDING_STAY:
 			if confidant != &"":
-				_rel_add(confidant, B_CONFIDANT_REL, reason)
+				_rel_add(confidant, _cfg().b_confidant_rel, reason)
 			var orders := _first(&"orders")
 			if orders != null and orders.has_method(&"offer"):
 				orders.call(&"offer", EVENING_ORDER)
@@ -583,7 +581,7 @@ func _check_kept() -> void:
 	if _kept or not GameState.flag_on(FLAG_BURIED):
 		return
 	var quests := _quests()
-	if quests == null or quests.ending(MAIN_QUEST) != ENDING_STAY:
+	if quests == null or quests.ending(_main()) != ENDING_STAY:
 		return
 	_kept = true
 	var tree := get_tree() if is_inside_tree() else null
@@ -608,6 +606,11 @@ func _on_time_tick(day: int, minute: int) -> void:
 	if minute >= 360 and day > _morning_day:
 		apply_morning(day)
 	apply_minute(day, minute)
+
+
+## The chain (WhoKnowsConfig.quest_id).
+func _main() -> StringName:
+	return _cfg().quest_id
 
 
 func _quests() -> Quests:

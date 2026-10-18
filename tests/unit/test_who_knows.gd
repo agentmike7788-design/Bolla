@@ -554,3 +554,40 @@ func test_w2_evening_flag_while_the_evening_order_runs() -> void:
 			["v_sieber_bench", true], "19:00 on the bench")
 	orders.apply_morning(69)
 	assert_eq(GameState.get_flag(&"sieber_evening_day"), 69, "every morning while it runs")
+
+
+# --- W2 Anschlüsse 16: values from the code in WhoKnowsConfig ------------------------------------------
+
+func test_w2_config_values_from_the_code() -> void:
+	var defaults := WhoKnowsConfig.new()
+	assert_eq([defaults.quest_id, defaults.gone_after_minutes, defaults.b_confidant_rel], [&"q_who_knows", 40, 3])
+	var real := Database.config(&"who_knows_config") as WhoKnowsConfig
+	assert_eq([real.quest_id, real.gone_after_minutes, real.b_confidant_rel], [&"q_who_knows", 40, 3], "data = class default")
+
+
+func test_w2_gone_after_minutes_and_confidant_gain_follow_the_config() -> void:
+	var c := Phase9Fixtures.who_knows_config().duplicate() as WhoKnowsConfig
+	c.gone_after_minutes = 10
+	c.b_confidant_rel = 5
+	who.config = c
+	TimeManager.load_state({"day": 68, "minute_of_day": 600})
+	_at(&"h6", {"h6": "away"}, &"away")
+	who.apply_minute(68, 600)
+	assert_eq(who.depart_plan().with, &"carter")
+	who.apply_minute(69, 609)
+	assert_false(GameState.flag_on(&"sieber_gone"))
+	who.apply_minute(69, 610)
+	assert_true(GameState.flag_on(&"sieber_gone"), "10:00 + gone_after_minutes")
+	_at(&"h6", {"h5": "confide_washer", "h6": "stay"}, &"stay")
+	var fresh := who.save_state()
+	fresh.applied = ""
+	who.load_state(fresh)
+	rel.calls.clear()
+	who.apply_minute(69, 700)
+	assert_eq(rel.calls, [[&"washer", 5]], "b_confidant_rel")
+	# Another chain id: WhoKnows reads that quest (none here → no consequences, no deadline).
+	c.quest_id = &"q_other"
+	who.load_state(fresh)
+	rel.calls.clear()
+	who.apply_minute(69, 701)
+	assert_true(rel.calls.is_empty(), "quest_id")
