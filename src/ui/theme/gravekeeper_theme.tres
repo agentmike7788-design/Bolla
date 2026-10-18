@@ -21,6 +21,7 @@
 ; (lost and empty find cards); the journal ("Merkbuch", parchment like the grave register):
 ; JournalTabButton / JournalTabSelected, JournalCardPanel / JournalCardButton /
 ; JournalCardSelected (dried-red frame = chosen clue), InkButton, InkStampLabel ("→ Merkbuch"),
+; Phase 9: InkOldLabel / InkFreshLabel (the old brown and the fresher blue-black ink of the list), InkPencilLabel (the current step in pencil),
 ; JournalThread (red thread + pin colours); NoteQuiet (piety / night notices, no signal colour),
 ; NoteStory (Osric's arrival lines), TradeRowPanel, WhisperLabel (Ilse Kranich's lines).
 ; Phase 6: LevelCardDone / LevelCardNext / LevelCardLater (level cards of the building panel:
@@ -1307,6 +1308,15 @@ InkButton/styles/pressed = SubResource("sb_ink_button_hover")
 InkDimLabel/base_type = &"Label"
 InkDimLabel/colors/font_color = Color(0.38, 0.3, 0.21, 1)
 InkDimLabel/font_sizes/font_size = 19
+InkOldLabel/base_type = &"Label"
+InkOldLabel/colors/font_color = Color(0.4, 0.24, 0.11, 1)
+InkOldLabel/font_sizes/font_size = 22
+InkFreshLabel/base_type = &"Label"
+InkFreshLabel/colors/font_color = Color(0.12, 0.16, 0.27, 1)
+InkFreshLabel/font_sizes/font_size = 22
+InkPencilLabel/base_type = &"Label"
+InkPencilLabel/colors/font_color = Color(0.33, 0.32, 0.31, 1)
+InkPencilLabel/font_sizes/font_size = 20
 InkHeaderLabel/base_type = &"Label"
 InkHeaderLabel/colors/font_color = Color(0.36, 0.2, 0.08, 1)
 InkHeaderLabel/font_sizes/font_size = 28

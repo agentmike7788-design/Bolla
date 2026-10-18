@@ -456,7 +456,10 @@ func _rebuild_orders() -> void:
 func _rebuild_phase8() -> void:
 	var p8: Dictionary = ctx.get("p8", {})
 	var stacked: Dictionary[Vector2i, int] = {}
-	for m: Dictionary in p8.get("marks", []):
+	# Phase 9 (§7.6): the marks of ctx.p9 (Brenneisen, the large sheet, the Siebers' light, the bookmark) the same way.
+	var all_marks: Array = (p8.get("marks", []) as Array).duplicate()
+	all_marks.append_array((ctx.get("p9", {}) as Dictionary).get("marks", []))
+	for m: Dictionary in all_marks:
 		if StringName(str(m.get("region", "graveyard"))) != region or MapStatePhase8.ROBBER_IDS.has(StringName(str(m.get("id", "")))):
 			continue
 		var local := Vector2.INF
@@ -476,7 +479,9 @@ func _rebuild_phase8() -> void:
 			var n: int = stacked.get(key, 0)
 			stacked[key] = n + 1
 			point += Vector2(-10.0 + n * 15.0, -15.0)
-		elif kind in [&"visitor", &"apprentice", &"peddler", &"beggar"]:
+		elif kind == &"bookmark":
+			point += Vector2(12.0, -18.0)
+		elif kind in [&"visitor", &"apprentice", &"peddler", &"beggar", &"stranger"]:
 			var key := Vector2i(roundi(point.x / 12.0), roundi(point.y / 12.0))
 			var n: int = stacked.get(key, 0)
 			stacked[key] = n + 1
@@ -484,6 +489,18 @@ func _rebuild_phase8() -> void:
 		markers.append({"kind": kind, "point": point, "name": "", "text": str(m.get("text", "")), "id": m.get("id", ""),
 				"glyph": m.get("glyph", &""), "p8": true})
 		_spot(point, cfg.person_radius + 5.0, str(m.get("text", "")))
+
+
+## The Phase-9 marks of the live layer (tests): kind stranger | large | bookmark | sick_light (from ctx.p9).
+func phase9_markers(kind: StringName = &"") -> Array[Dictionary]:
+	var ids: Array = []
+	for m: Variant in (ctx.get("p9", {}) as Dictionary).get("marks", []):
+		ids.append([StringName(str((m as Dictionary).get("kind", ""))), str((m as Dictionary).get("id", ""))])
+	var out: Array[Dictionary] = []
+	for m: Dictionary in markers:
+		if bool(m.get("p8", false)) and [m.kind, str(m.id)] in ids and (kind == &"" or m.kind == kind):
+			out.append(m)
+	return out
 
 
 ## The Phase-8 marks of the live layer (tests).
@@ -881,7 +898,7 @@ func _draw_markers() -> void:
 				MapPaint.cart(_ci, p, 1.0, cfg.ink, cfg.carter.lightened(0.35))
 				MapPaint.label(_ci, _font, p + Vector2(0.0, -16.0), str(m.name), cfg.font_small, cfg.carter.darkened(0.3), halo)
 			# Phase 8 (§7.8): on a pale halo, a little larger than the sheet's signs (read at 720p too).
-			&"visitor", &"apprentice", &"peddler", &"beggar", &"wish", &"coins", &"disturbed", &"sick_light", &"fest":
+			&"visitor", &"apprentice", &"peddler", &"beggar", &"wish", &"coins", &"disturbed", &"sick_light", &"fest", &"stranger", &"large", &"bookmark":
 				_draw_p8_mark(m, p, halo)
 	if player_point != Vector2.INF:
 		MapPaint.hat_marker(_ci, player_point, cfg.player_radius, player_heading, cfg.player_mark, cfg.player_ring, cfg.paper)
@@ -913,6 +930,21 @@ func _draw_p8_mark(m: Dictionary, p: Vector2, halo: Color) -> void:
 			MapPaint.window(_ci, p, k, cfg.player_ring, cfg.ink)
 		&"fest":
 			MapPaint.fest(_ci, StringName(str(m.get("glyph", "lantern"))), p, k, cfg.ink, cfg.player_ring)
+		# Phase 9 (§7.6): Brenneisen with his top hat, the large sheet with its seal, the bookmark (a ribbon, no arrow).
+		&"stranger":
+			MapPaint.figure(_ci, p, r * 0.9, cfg.ink.lightened(0.35), cfg.ink)
+			_ci.draw_rect(Rect2(p + Vector2(-r * 0.32, -r * 1.25), Vector2(r * 0.64, r * 0.62)), cfg.ink, true)
+			_ci.draw_line(p + Vector2(-r * 0.55, -r * 0.62), p + Vector2(r * 0.55, -r * 0.62), cfg.ink, 2.0, true)
+		&"large":
+			_ci.draw_rect(Rect2(p + Vector2(-6.0, -8.0) * k, Vector2(12.0, 15.0) * k), cfg.paper.darkened(0.08), true)
+			_ci.draw_rect(Rect2(p + Vector2(-6.0, -8.0) * k, Vector2(12.0, 15.0) * k), cfg.ink, false, 1.2)
+			MapPaint.seal(_ci, p + Vector2(3.0, 2.0) * k, 3.2 * k, cfg.objective, cfg.ink)
+		&"bookmark":
+			var ribbon := PackedVector2Array([p + Vector2(-4.0, -9.0) * k, p + Vector2(4.0, -9.0) * k, p + Vector2(4.0, 8.0) * k,
+					p + Vector2(0.0, 4.5) * k, p + Vector2(-4.0, 8.0) * k])
+			_ci.draw_colored_polygon(ribbon, cfg.objective)
+			ribbon.append(ribbon[0])
+			_ci.draw_polyline(ribbon, cfg.ink, 1.1, true)
 
 
 func _draw_frame(sheet: Rect2) -> void:

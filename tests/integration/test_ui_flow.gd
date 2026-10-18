@@ -238,6 +238,44 @@ func test_phase8_wish_card_and_day_log_across_a_load() -> void:
 	assert_eq(ui.day_log8.visits.size(), 0, "a load starts the day log anew")
 
 
+## Phase 9 (docs/PHASE9_DESIGN.md §7, §1.5): in the real world the chapter panel „Wer weiß, wann?" keeps playing on the
+## first accept; the letter card and Brenneisen's panel open docked (no dim) and close with Esc; the day log of the
+## Phase-9 rows starts anew after a load.
+func test_phase9_panels_in_the_world() -> void:
+	await _new_game()
+	assert_eq(SaveManager.save_game(1), OK)
+	var ui := await add_scene(UI_SCENE) as UIRoot
+	EventBus.ui_panel_requested.emit(&"slice_summary", {"variant": &"who_knows_when", "days_open": 10, "main_title": "Bei Grete",
+			"closing_line": "Johann hat sich nicht beeilt."})
+	await wait_frames(1)
+	var panel := ui.get_panel(&"slice_summary") as SliceSummaryPanel
+	assert_eq(panel.header_label.text, "Wer weiß, wann?")
+	var focused := ui.get_viewport().gui_get_focus_owner() as Button
+	assert_eq(focused, panel.continue_button, "Weiterspielen focused")
+	focused.pressed.emit()
+	await wait_frames(2)
+	assert_eq(tree.current_scene.scene_file_path, SAVE_WORLD, "still in the world")
+	var bag := Inventory.new()
+	for id: StringName in [&"letter", &"stranger"]:
+		ui.open_panel(id, {"inventory": bag})
+		await wait_frames(1)
+		assert_eq(ui.top(), id)
+		assert_true(ui.get_panel(id).dock_right, String(id) + " docked")
+		assert_false(ui.dim.visible, String(id) + " no dim")
+		ui.close_top_panel()
+		assert_false(ui.is_open(id))
+	bag.free()
+	assert_false(UIState.is_modal())
+	EventBus.letter_changed.emit("lt_0001", &"lp_l1_carter", &"found")
+	assert_eq(int(ui.day_log9.letters.found), 1)
+	ui.open_panel(&"pause", {})
+	var menu := ui.get_panel(&"pause") as PauseMenu
+	menu.load_button.pressed.emit()
+	menu.slot_buttons[1].pressed.emit()
+	assert_true(await wait_for_signal(EventBus.game_loaded, WORLD_TIMEOUT + 1.0), "game_loaded")
+	assert_eq(int(ui.day_log9.letters.found), 0, "a load starts the day log anew")
+
+
 # --- helpers --------------------------------------------------------------------------------
 
 ## The title screen as the current scene (like src/boot/main.gd will do).

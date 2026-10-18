@@ -28,6 +28,11 @@ extends UIPanel
 ## missed, tips, Jakob's levels, places, mistakes and wage, the friendship steps per villager (three points),
 ## favours used / returned, dances, the Lichtgang, the night digger and his fate, night visits observed, the
 ## phase's insights and the closing line by piety tier.
+## Phase 9 (docs/PHASE9_DESIGN.md §1.5, §7.6): variant &"who_knows_when" (Quests.chapter_context(), completed by
+## complete_who_knows_when()) is the chapter panel „Wer weiß, wann?": days since p9_open, the main chain's ending in one
+## line, whom you told, the list with all six entries (date · name · witness), letters by decision, errands, the larger
+## requests (done / half / missed, parts), the gentleman with the case (what he got, how he went), the phase's insights
+## and the closing line of the ending.
 ## Default focus is "Weiterspielen"; "Zum Titel" asks once (like the pause menu).
 
 const TEXT_TITLE := "Der Friedhof ist vollendet"
@@ -46,6 +51,7 @@ const VARIANT_NAMES_IN_STONE := &"names_in_stone"
 const VARIANT_ROOF_AND_EARTH := &"roof_and_earth"
 const VARIANT_NAME_IN_VILLAGE := &"name_in_village"
 const VARIANT_WHO_COMES_UP := &"who_comes_up"
+const VARIANT_WHO_KNOWS_WHEN := &"who_knows_when"
 const TEXT_GOAL_REACHED := "Ziel „%s“ (ab %d) erreicht."
 const TEXT_GOAL_MISSED := "Ziel „%s“ (ab %d) verfehlt – es fehlen %d Punkte."
 const TEXT_CONTINUE := "Weiterspielen"
@@ -86,6 +92,9 @@ var village_grid: GridContainer
 ## Phase8Texts.CHAPTER_ROWS caption -> value label (variant who_comes_up).
 var people_grid: GridContainer
 var people_rows: Dictionary[String, Label] = {}
+## Phase9Texts.CHAPTER_ROWS caption -> value label (variant who_knows_when).
+var when_grid: GridContainer
+var when_rows: Dictionary[String, Label] = {}
 ## Phase7Texts.CHAPTER_ROWS caption -> value label (variant name_in_village).
 var village_rows: Dictionary[String, Label] = {}
 
@@ -168,6 +177,18 @@ func _build() -> void:
 		people_rows[caption] = value
 	people_grid.visible = false
 	box.add_child(people_grid)
+	when_grid = GridContainer.new()
+	when_grid.columns = 2
+	when_grid.add_theme_constant_override(&"h_separation", 40)
+	when_grid.add_theme_constant_override(&"v_separation", 2)
+	for caption: String in Phase9Texts.CHAPTER_ROWS:
+		when_grid.add_child(UIKit.label(caption, &"DimLabel"))
+		var value := UIKit.label("", &"SubheaderLabel", true)
+		value.custom_minimum_size.x = roof_value_width + 80.0
+		when_grid.add_child(value)
+		when_rows[caption] = value
+	when_grid.visible = false
+	box.add_child(when_grid)
 	goal_label = UIKit.label("", &"AccentLabel", true)
 	goal_label.custom_minimum_size.x = panel_width - 80.0
 	box.add_child(goal_label)
@@ -194,6 +215,17 @@ func focus_default() -> void:
 
 func _refresh() -> void:
 	title_button.text = TEXT_CONFIRM % TEXT_TITLE_SCREEN if _confirm_title else TEXT_TITLE_SCREEN
+	var when := StringName(str(context.get("variant", ""))) == VARIANT_WHO_KNOWS_WHEN
+	when_grid.visible = when
+	if when:
+		people_grid.visible = false
+		village_grid.visible = false
+		roof_grid.visible = false
+		_cemetery_grid.visible = false
+		chapter_grid.visible = false
+		stone_grid.visible = false
+		_refresh_who_knows_when()
+		return
 	var people := StringName(str(context.get("variant", ""))) == VARIANT_WHO_COMES_UP
 	people_grid.visible = people
 	if people:
@@ -315,6 +347,64 @@ func _refresh_who_comes_up() -> void:
 	var final_line := str(context.get("final_line", ""))
 	goal_label.text = final_line if final_line != "" else Phase8Texts.CHAPTER_FINAL_FALLBACK
 	goal_label.theme_type_variation = &"AccentLabel"
+
+
+## Chapter „Wer weiß, wann?": the rows of Phase9Texts.CHAPTER_ROWS and the closing line of the ending.
+func _refresh_who_knows_when() -> void:
+	header_label.text = Phase9Texts.CHAPTER_TITLE
+	intro_label.text = Phase9Texts.CHAPTER_INTRO
+	var values := Phase9Texts.chapter_values(context)
+	for i: int in Phase9Texts.CHAPTER_ROWS.size():
+		when_rows[Phase9Texts.CHAPTER_ROWS[i]].text = values[i]
+	var final_line := str(context.get("closing_line", ""))
+	goal_label.text = final_line if final_line != "" else Phase9Texts.CHAPTER_FINAL_FALLBACK
+	goal_label.theme_type_variation = &"AccentLabel"
+
+
+## Row value of the who_knows_when panel by caption ("" unknown) – tests.
+func when_value(caption: String) -> String:
+	return when_rows[caption].text if when_rows.has(caption) else ""
+
+
+## Adds what Quests.chapter_context() leaves to the UI (keys already present win): the list's six rows
+## (JournalManager.list_page), the letters by decision (Letters' states: delivered / read at a grave / answered / burned /
+## buried), Brenneisen (seen, ending, gone) and the Phase-9 insights.
+static func complete_who_knows_when(ctx: Dictionary, tree: SceneTree) -> Dictionary:
+	var out := ctx.duplicate()
+	if tree == null:
+		return out
+	var journal := tree.get_first_node_in_group(&"journal")
+	if journal != null and journal.has_method(&"list_page") and not out.has("list"):
+		var page: Dictionary = journal.call(&"list_page")
+		out["list"] = page.get("entries", [])
+	var letters := tree.get_first_node_in_group(&"letters") as Letters
+	if letters != null and not out.has("letters_read_grave"):
+		var counts := {"letters_delivered": 0, "letters_read_grave": 0, "letters_answered": 0, "letters_burned": 0, "letters_buried": 0}
+		for uid: String in letters.uids():
+			match letters.state(uid):
+				&"posted", &"delivered":
+					counts["letters_delivered"] += 1
+				&"read_grave":
+					counts["letters_read_grave"] += 1
+				&"answered":
+					counts["letters_answered"] += 1
+				&"burned":
+					counts["letters_burned"] += 1
+				&"buried":
+					counts["letters_buried"] += 1
+		out.merge(counts, true)
+	var stranger := tree.get_first_node_in_group(&"stranger") as Stranger
+	if stranger != null and not out.has("stranger_end"):
+		out["stranger_end"] = stranger.ending()
+		out["stranger_gone"] = stranger.gone()
+		out["stranger_seen"] = not stranger.answers().is_empty() or int(out.get("stranger_talks", 0)) > 0 or stranger.gone()
+	if journal != null and journal.has_method(&"has_insight") and not out.has("insights"):
+		var ids: Array = []
+		for id: StringName in Phase9Texts.PHASE9_INSIGHTS:
+			if bool(journal.call(&"has_insight", id)):
+				ids.append(String(id))
+		out["insights"] = ids
+	return out
 
 
 ## Row value of the who_comes_up panel by caption ("" unknown) – tests.

@@ -208,6 +208,8 @@ static func objective_state(tree: SceneTree, inv: Inventory) -> Dictionary:
 	# G8 Runde 6 „Bitten vom Hügel": nested as well ({active, waiting, can_accept} of HillRequests).
 	var hill := _first(tree, &"hill_requests")
 	out["hill"] = hill.call(&"objective_state", inv) if hill != null and hill.has_method(&"objective_state") else {}
+	# Phase 9 (docs/PHASE9_DESIGN.md §7.5): nested as well – the pinned „Vorhaben" entry and the chain lines.
+	out["p9"] = Phase9Status.objective_state(tree)
 	# 04.10.2026: in the crypt the carried corpse goes onto the crypt table (objective line).
 	var player := _first(tree, &"player")
 	out["in_crypt"] = player != null and player.get(&"interior_id") == &"crypt"

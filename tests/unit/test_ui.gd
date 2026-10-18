@@ -11,12 +11,12 @@ const TEST_SAVE_DIR := "user://test_saves_ui_unit"
 const WAIT_TEXT := "Der Leichenkutscher kommt gegen 07:40"
 ## G8 Runde 4: the work panels docked at the right edge without the dim (table, Werkbank / stations, Präparierpult).
 ## G8 Runde 5: the stone bench, Quast's surgery and the lecture as well.
-## G8 Runde 6: the requests of the gate's notice board.
+## G8 Runde 6: the requests of the gate's notice board. Phase 9: the letter card and Brenneisen's panel.
 const DOCKED_PANELS: Array[StringName] = [&"corpse_exam", &"crafting", &"pult", &"stone_design", &"anatomist", &"lecture",
-		&"hill_requests"]
+		&"hill_requests", &"letter", &"stranger"]
 ## G8 Runde 4: panels hidden while a work started from them runs (G8 Runde 5: + Quast's expertise, the lecture).
 const WORK_PANELS: Array[StringName] = [&"corpse_exam", &"crafting", &"pult", &"stone_design", &"build_site", &"building",
-		&"anatomist", &"lecture"]
+		&"anatomist", &"lecture", &"letter"]
 ## G8 Runde 5: window sizes the docked panels are checked at (16:9 small / full HD, a browser window, 4:3).
 const WINDOW_SIZES: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(1920, 1080), Vector2i(1366, 768), Vector2i(1024, 768)]
 
@@ -1661,6 +1661,9 @@ func _contexts() -> Dictionary[StringName, Dictionary]:
 		&"map": {},
 		# G8 Runde 6: the request panel opens without HillRequests, too (an empty board).
 		&"hill_requests": {"inventory": inv, "player": player},
+		# Phase 9: the letter card and Brenneisen's panel open without Letters / Stranger, too.
+		&"letter": {"inventory": inv, "player": player},
+		&"stranger": {"inventory": inv, "player": player},
 	}
 
 

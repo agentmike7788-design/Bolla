@@ -14,6 +14,9 @@ extends UIPanel
 ## Phase 8 (docs/PHASE8_DESIGN.md §7.6): + „Besuche" (who, at which grave, how it looked), „Wünsche" (done, new,
 ## lapsed), „Trinkgeld", „Jakob" (places per task, mistakes with their place, wage, „Morgen: …") and „Die Nacht"
 ## (the robber seen / chased off, a grave disturbed, the sick light) – complete_phase8() with Phase8DayLog.take().
+## Phase 9 (docs/PHASE9_DESIGN.md §7.6): + „Briefe" (found, decided, post), „Bitten" (parts, done / half / missed) and
+## „Der Herr mit dem Koffer" (what he asked, what he got, the case, his leaving) – complete_phase9() with
+## Phase9DayLog.take().
 
 const TEXT_TITLE := "Tag %d ist vorüber"
 const TEXT_BURIALS := "Bestattungen heute"
@@ -59,6 +62,10 @@ var wishes_label: Label
 var tips_label: Label
 var jakob_label: Label
 var night_label: Label
+## Phase 9 rows.
+var letters_label: Label
+var requests_label: Label
+var stranger_label: Label
 ## value label -> its caption (hidden together).
 var _captions: Dictionary[Label, Label] = {}
 
@@ -107,6 +114,15 @@ static func complete_phase8(ctx: Dictionary, log_data: Dictionary) -> Dictionary
 	return out
 
 
+## Adds the Phase-9 rows (Phase9DayLog.take(): letters, requests, stranger) – keys already in the context win.
+static func complete_phase9(ctx: Dictionary, log_data: Dictionary) -> Dictionary:
+	var out := ctx.duplicate()
+	for key: String in ["letters", "requests", "stranger"]:
+		if not out.has(key) and log_data.has(key):
+			out[key] = log_data[key]
+	return out
+
+
 ## Adds the Phase-5 rows (Phase5DayLog.take(): gathered, crafted, built, spent) – keys already
 ## in the context win.
 static func complete_phase5(ctx: Dictionary, log_data: Dictionary) -> Dictionary:
@@ -148,6 +164,9 @@ func _build() -> void:
 	tips_label = _add_row(grid, Phase8Texts.DAY_TIPS)
 	jakob_label = _add_row(grid, Phase8Texts.DAY_JAKOB, true)
 	night_label = _add_row(grid, Phase8Texts.DAY_NIGHT, true)
+	letters_label = _add_row(grid, Phase9Texts.DAY_LETTERS, true)
+	requests_label = _add_row(grid, Phase9Texts.DAY_REQUESTS, true)
+	stranger_label = _add_row(grid, Phase9Texts.DAY_STRANGER, true)
 	box.add_child(grid)
 	box.add_child(UIKit.label(TEXT_SAVED, &"DimLabel"))
 	var bottom := UIKit.hbox()
@@ -212,6 +231,12 @@ func _refresh() -> void:
 	_show(jakob_label, jakob_text != "", jakob_text)
 	var night_text := Phase8Texts.night_text(context.get("night", {}))
 	_show(night_label, night_text != "", night_text)
+	var letters_text := Phase9Texts.letters_day_text(context.get("letters", {}))
+	_show(letters_label, letters_text != "", letters_text)
+	var requests_text := Phase9Texts.requests_day_text(context.get("requests", {}))
+	_show(requests_label, requests_text != "", requests_text)
+	var stranger_text := Phase9Texts.stranger_day_text(context.get("stranger", {}))
+	_show(stranger_label, stranger_text != "", stranger_text)
 
 
 ## German label of a rating id (&"orderly" → "Ordentlich"); other strings pass through.

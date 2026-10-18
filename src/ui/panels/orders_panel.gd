@@ -8,6 +8,9 @@ extends UIPanel
 ## Orders' reason („Vier Aufträge laufen schon."). The board head names the gravekeeper's reputation.
 ## [ / ] (journal_page_prev / _next) page when more cards are there than fit. Only Orders.accept changes
 ## anything.
+## Phase 9 (docs/PHASE9_DESIGN.md §2.3.4, W1-Anschluss 9): at the parish board ({large, large_cards, hill_place village} of
+## VillageBoard) a strip „Große Bitte: <Titel> – von <Geber>" above the orders with its parts done and „Große Bitte
+## lesen" – it opens &"hill_requests" with place village (the docked card of the large sheet).
 
 const ORDERS_GROUP := &"orders"
 const CARDS_PER_PAGE := 2
@@ -25,6 +28,9 @@ var count_label: Label
 var cards: Dictionary[StringName, Dictionary] = {}
 var ids: Array[StringName] = []
 var page: int = 0
+## Phase 9: the large request strip and its „Große Bitte lesen" buttons (id → Button).
+var large_box: VBoxContainer
+var large_buttons: Dictionary[StringName, Button] = {}
 
 var _inventory: Inventory
 
@@ -49,6 +55,8 @@ func _build() -> void:
 	head.add_child(close_x)
 	box.add_child(head)
 	box.add_child(UIKit.separator())
+	large_box = UIKit.vbox(6)
+	box.add_child(large_box)
 	cards_box = UIKit.hbox(20)
 	box.add_child(cards_box)
 	empty_label = UIKit.label("", &"DimLabel", true)
@@ -109,6 +117,7 @@ func _refresh() -> void:
 	header_label.text = header
 	header_label.visible = header != ""
 	page = clampi(page, 0, page_count() - 1)
+	_refresh_large()
 	UIKit.clear_children(cards_box)
 	cards.clear()
 	for i: int in range(page * CARDS_PER_PAGE, mini(ids.size(), (page + 1) * CARDS_PER_PAGE)):
@@ -122,6 +131,62 @@ func _refresh() -> void:
 	page_label.visible = page_count() > 1
 	var cfg := orders.config if orders != null and orders.config != null else OrdersConfig.new()
 	count_label.text = Phase7Texts.ORDER_ACTIVE_COUNT % [orders.active().size() if orders != null else 0, cfg.max_active]
+
+
+## Phase 9: the large requests of the parish board (live from HillRequests, else the context's large_cards).
+func large_cards() -> Array:
+	if not is_board():
+		return []
+	var place := StringName(str(context.get("hill_place", "")))
+	if place == &"":
+		return []
+	var hill := get_tree().get_first_node_in_group(&"hill_requests") as HillRequests if is_inside_tree() else null
+	if hill == null:
+		return context.get("large_cards", [])
+	var out: Array = []
+	for id: StringName in hill.large_board(place):
+		out.append(hill.large_card(id))
+	return out
+
+
+func _refresh_large() -> void:
+	UIKit.clear_children(large_box)
+	large_buttons.clear()
+	var list := large_cards()
+	large_box.visible = not list.is_empty()
+	for c: Variant in list:
+		if not c is Dictionary or (c as Dictionary).is_empty():
+			continue
+		var d := c as Dictionary
+		var id := StringName(str(d.get("id", "")))
+		var strip := UIKit.panel(&"SectionPanel")
+		var row := UIKit.hbox(16)
+		strip.add_child(row)
+		var col := UIKit.vbox(2)
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		col.add_child(UIKit.label(Phase9Texts.LARGE_ON_BOARD % [str(d.get("title", "")), str(d.get("giver_name", ""))], &"SubheaderLabel", true))
+		var parts := PackedStringArray()
+		for p: Variant in d.get("parts", []):
+			if p is Dictionary:
+				parts.append(HillRequestsPanel.part_line(p as Dictionary))
+		col.add_child(UIKit.label("   ".join(parts), &"DimLabel", true))
+		row.add_child(col)
+		var b := UIKit.button(Phase9Texts.LARGE_READ, &"AccentButton")
+		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		b.pressed.connect(open_large)
+		row.add_child(b)
+		large_box.add_child(strip)
+		large_buttons[id] = b
+
+
+## „Große Bitte lesen": the docked card of the large sheet (&"hill_requests", place village).
+func open_large() -> void:
+	var place := StringName(str(context.get("hill_place", "village")))
+	var ctx := {"place": place, "large": context.get("large", []), "large_cards": large_cards()}
+	for key: String in ["player", "inventory"]:
+		if context.has(key):
+			ctx[key] = context[key]
+	EventBus.ui_panel_requested.emit(&"hill_requests", ctx)
 
 
 ## Phase7Texts.order_card of `id` with this world's state and deadline ({} = unknown order).

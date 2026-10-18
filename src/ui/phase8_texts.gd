@@ -655,6 +655,8 @@ static func _later(world: Dictionary) -> String:
 static func grave_lines(info: Dictionary) -> PackedStringArray:
 	var out := PackedStringArray()
 	match StringName(str(info.get("flowers", ""))):
+		&"fresh" when bool(info.get("straw", false)):
+			out.append(Phase9Texts.TIP_STRAW)
 		&"fresh":
 			var left := int(info.get("fresh_left", -1))
 			out.append(TIP_FLOWERS_FRESH % duration_text(left, true) if left > 60 else TIP_FLOWERS_DRY)

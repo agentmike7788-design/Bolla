@@ -9,6 +9,8 @@ extends UIPanel
 ## „Präparate" – the number taken, the returned ones as „(1 ✓)"; a deduced dead carries a small seal ◆ after
 ## the name. The live systems fill the entries in on opening (complete_entries). Lindenacker graves read
 ## „Linde 3"; the new stones on the old graves are named in the subtitle.
+## Phase 9 (docs/PHASE9_DESIGN.md §7.6): from p9_open a narrow column „Brief" (✉ when a letter belongs to the dead) and,
+## for the dead under Lorenz' list once their date was compared (H2), the note „Licht: 22. Nebelung" in the last column.
 ## Phase 8 (docs/PHASE8_DESIGN.md §7.6): from p8_open a column „Angehörige" – the house of the dead's kin and the
 ## symbols ✿ flowers, ¡ candle, # mortsafe, ! disturbed (Phase8Status.grave_info); the subtitle names a plot held
 ## for someone („vorgemerkt: Linde 12 – Fenner").
@@ -42,6 +44,8 @@ const LOW_QUALITY_RATIO := 0.35
 @export var page_width_p7: float = 1440.0
 ## Phase 8: + the Angehörige column.
 @export var kin_column_width: float = 230.0
+## Phase 9: + the Brief column.
+@export var letter_column_width: float = 64.0
 ## Ruled lines per page (blank lines fill up; more entries scroll).
 @export var page_rows: int = 8
 @export var row_height: float = 50.0
@@ -62,6 +66,8 @@ var _shown: Array[Dictionary] = []
 var with_specimens: bool = false
 ## Phase 8: the Angehörige column is shown.
 var with_kin: bool = false
+## Phase 9: the Brief column is shown.
+var with_letters: bool = false
 var _head_panel: PanelContainer
 var _page: PanelContainer
 
@@ -142,13 +148,17 @@ func _refresh() -> void:
 	var raw: Array = complete_entries(context.get("entries", []), get_tree() if is_inside_tree() else null)
 	with_specimens = GameState.flag_on(&"anatomy_known") or raw.any(func(e: Variant) -> bool: return e is Dictionary and (e as Dictionary).has("specimens"))
 	with_kin = GameState.flag_on(&"p8_open")
-	_page.custom_minimum_size.x = (page_width_p7 if with_specimens else page_width) + (kin_column_width + COLUMN_GAP if with_kin else 0.0)
+	with_letters = GameState.flag_on(&"p9_open")
+	_page.custom_minimum_size.x = (page_width_p7 if with_specimens else page_width) + (kin_column_width + COLUMN_GAP if with_kin else 0.0) \
+			+ (letter_column_width + COLUMN_GAP if with_letters else 0.0)
 	UIKit.clear_children(_head_panel)
 	var heads := PackedStringArray(COLUMNS)
 	if with_specimens:
 		heads.append(Phase7Texts.REGISTER_COLUMN)
 	if with_kin:
 		heads.append(Phase8Texts.REGISTER_KIN)
+	if with_letters:
+		heads.append(Phase9Texts.REGISTER_LETTER_HEAD)
 	_head_panel.add_child(_make_line(heads, true))
 	_shown = sorted_entries(raw)
 	UIKit.clear_children(_rows)
@@ -250,8 +260,29 @@ static func complete_entries(raw: Variant, tree: SceneTree) -> Array:
 				entry["kin"] = Phase8Texts.house_label(kin.house) if kin.house != &"" else Phase8Texts.household(kin.kin_id)
 			if not entry.has("care"):
 				entry["care"] = Phase8Texts.register_marks(gi)
+		_complete_phase9(entry, record, tree)
 		out.append(entry)
 	return out
+
+
+## Phase 9: "letter" (a letter belongs to the dead) and "light" (the list's date, once compared at the grave).
+static func _complete_phase9(entry: Dictionary, record: CorpseRecord, tree: SceneTree) -> void:
+	if tree == null or not GameState.flag_on(&"p9_open"):
+		return
+	var letters := tree.get_first_node_in_group(&"letters") as Letters
+	if letters != null and record != null and not entry.has("letter"):
+		for uid: String in letters.uids():
+			if letters.corpse_of(uid) == record.id:
+				entry["letter"] = true
+				break
+	var who := tree.get_first_node_in_group(&"who_knows") as WhoKnows
+	if who != null and not entry.has("light"):
+		var id := who.entry_for_grave(str(entry.get("grave_id", "")))
+		var e := who.entry(id) if id != &"" else null
+		if e != null and who.matched(id):
+			var text := LightRules.entry_text(e, tree, who.config)
+			if text != "":
+				entry["light"] = Phase9Texts.REGISTER_LIGHT % text
 
 
 ## Names of the old graves that got a new stone through an order (Phase 7, old_01 / old_08).
@@ -268,7 +299,7 @@ static func replaced_stones(tree: SceneTree) -> PackedStringArray:
 
 
 ## Cell texts of one entry, in COLUMNS order (+ „Präparate" when `with_specimens`).
-static func cells(entry: Dictionary, with_specimens: bool = false, with_kin: bool = false) -> PackedStringArray:
+static func cells(entry: Dictionary, with_specimens: bool = false, with_kin: bool = false, with_letters: bool = false) -> PackedStringArray:
 	var name_text := str(entry.get("name", "")).strip_edges()
 	if name_text == "":
 		name_text = TEXT_UNKNOWN
@@ -298,10 +329,12 @@ static func cells(entry: Dictionary, with_specimens: bool = false, with_kin: boo
 		var kin := str(entry.get("kin", ""))
 		var care := str(entry.get("care", ""))
 		var parts := PackedStringArray()
-		for part: String in [kin, care]:
+		for part: String in [kin, care, str(entry.get("light", ""))]:
 			if part != "":
 				parts.append(part)
 		out.append(" ".join(parts) if not parts.is_empty() else TEXT_NONE)
+	if with_letters:
+		out.append(Phase9Texts.REGISTER_LETTER if bool(entry.get("letter", false)) else TEXT_NONE)
 	return out
 
 
@@ -343,10 +376,10 @@ func _make_row(entry: Dictionary) -> PanelContainer:
 	row.mouse_filter = Control.MOUSE_FILTER_PASS
 	if entry.is_empty():
 		var blank := PackedStringArray()
-		blank.resize(COLUMNS.size() + (1 if with_specimens else 0) + (1 if with_kin else 0))
+		blank.resize(COLUMNS.size() + (1 if with_specimens else 0) + (1 if with_kin else 0) + (1 if with_letters else 0))
 		row.add_child(_make_line(blank, false))
 		return row
-	var texts := cells(entry, with_specimens, with_kin)
+	var texts := cells(entry, with_specimens, with_kin, with_letters)
 	var line := _make_line(texts, false)
 	var quality := int(entry.get("quality", 0))
 	if float(quality) < LOW_QUALITY_RATIO * float(_quality_max()):
@@ -381,6 +414,8 @@ func _make_line(texts: PackedStringArray, heading: bool) -> HBoxContainer:
 func _extra_width(i: int) -> float:
 	if with_kin and i == COLUMNS.size() + (1 if with_specimens else 0):
 		return kin_column_width
+	if with_letters and i == COLUMNS.size() + (1 if with_specimens else 0) + (1 if with_kin else 0):
+		return letter_column_width
 	return Phase7Texts.REGISTER_COLUMN_WIDTH
 
 

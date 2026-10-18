@@ -154,6 +154,12 @@ func _ready() -> void:
 	EventBus.grave_care_changed.connect(_mark_objective_dirty.unbind(3))
 	# G8 Runde 6: the requests of the gate's notice board.
 	EventBus.hill_request_changed.connect(_mark_objective_dirty.unbind(2))
+	# Phase 9 (docs/PHASE9_DESIGN.md §7.5): the chains, the list, the letters, Brenneisen, the parts of a large request.
+	EventBus.quest_changed.connect(_mark_objective_dirty.unbind(3))
+	EventBus.light_entry_changed.connect(_mark_objective_dirty.unbind(2))
+	EventBus.letter_changed.connect(_mark_objective_dirty.unbind(3))
+	EventBus.stranger_event.connect(_mark_objective_dirty.unbind(2))
+	EventBus.hill_request_part.connect(_mark_objective_dirty.unbind(3))
 	refresh_all()
 
 

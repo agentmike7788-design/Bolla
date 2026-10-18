@@ -274,6 +274,44 @@ func test_phase8_waits_for_the_village_chapter() -> void:
 	assert_eq(Phase8Texts.objective({}), "", "nothing before p8_open")
 
 
+## Phase 9 (docs/PHASE9_DESIGN.md §7.5): the pinned „Vorhaben" entry first (only the carried corpse before it), the chain
+## lines after the Phase-8 chapter (a waiting visitor still first), the large requests before the small ones.
+func test_phase9_pinned_chain_and_large_lines() -> void:
+	var p8 := {"intro": true, "hired": true, "goal_done": true}
+	var p9 := {"open": true, "intro": false}
+	var world := {"p7": true, "p7_intro": true, "visited": true, "linden_granted": true, "linden_cleared": true, "consecrated": true,
+			"goal_done": true, "goal_parts": 4, "goal_total": 4, "p8": p8, "p9": p9}
+	assert_eq(_objective_world([], [], world), "Sprich mit Osric", "Phase 9: Osric first")
+	p9["intro"] = true
+	p9["main_step"] = &"h2"
+	p9["main_progress"] = Vector2i(3, 5)
+	assert_eq(_objective_world([], [], world), "Die Liste: 3/5 Gräber verglichen")
+	p8["waiting"] = "Martha Kehr"
+	assert_eq(_objective_world([], [], world), "Martha Kehr wartet am Grab", "a waiting visitor first")
+	p8.erase("waiting")
+	p9["stranger_gate"] = true
+	assert_eq(_objective_world([], [], world), "Ein Herr wartet am Tor")
+	p9.erase("stranger_gate")
+	p9["main_step"] = &""
+	p9["letter"] = "Rosine Wackernagel"
+	assert_eq(_objective_world([], [], world), "Ein Brief: an Rosine Wackernagel")
+	p9["pinned"] = {"id": &"q_who_knows", "group": &"main", "title": "Wer weiß, wann?", "line": "Wer hat das Licht gesehen?",
+			"days_left": -1, "progress": Vector2i(2, 3)}
+	assert_eq(_objective_world([], [], world), "Wer hat das Licht gesehen? 2/3", "the pinned entry first")
+	assert_eq(_objective_world([], [_grave(GraveRecord.State.FILLED)], world), "Wer hat das Licht gesehen? 2/3", "before the marker")
+	assert_eq(_objective_world([_corpse(&"carried")], [_grave(GraveRecord.State.DUG)], world), TO_TABLE, "the carried corpse still first")
+	var free := [_grave(GraveRecord.State.EMPTY)]
+	var large := {"hill": {"active": [{"id": &"hr_osric_wood", "title": "Drei Scheite für Osric", "left": 2, "kind": &"deliver", "ready": false}],
+			"waiting": 0, "can_accept": true, "village": false, "large": [{"id": &"hrl_ferry_graves",
+			"line": "Bitte: Die Gräber der Fähre – Zwei Zierstücke im Alten Hof (1/2)"}], "large_waiting": []}}
+	assert_eq(_objective_world([], free, large), "Bitte: Die Gräber der Fähre – Zwei Zierstücke im Alten Hof (1/2)", "large before small")
+	var waiting := {"hill": {"active": [], "waiting": 1, "can_accept": true, "village": false, "large": [], "large_waiting": [&"gate"]}}
+	assert_eq(_objective_world([], free, waiting), "Eine große Bitte am Tor wartet")
+	waiting.hill.large_waiting = [&"village"]
+	assert_eq(_objective_world([], free, waiting), "Die Gemeindetafel hat eine große Bitte")
+	assert_eq(Phase9Status.objective({}), "", "nothing before p9_open")
+
+
 func _objective_world(corpses: Array, graves: Array, world: Dictionary) -> String:
 	var typed_corpses: Array[CorpseRecord] = []
 	typed_corpses.assign(corpses)
