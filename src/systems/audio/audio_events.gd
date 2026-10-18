@@ -5,11 +5,15 @@ extends Node
 ## the gravekeeper's hands (carried corpse) and MorgueTable.sound_hook. Listens only.
 ## Phase 8 (docs/PHASE8_DESIGN.md §8.3): AudioConfig.positional_cues – the same key syntax, the sound plays at its
 ## source (grave, Npc, node of a group) through AudioWorld.play_event.
+## Phase 9 (docs/PHASE9_DESIGN.md §8.3, W-Ton): a condition value ending in "*" matches every argument that begins
+## with the text before it ("hill_request_changed@0=hrl_*@1=offered" – the large requests); a work cue that is a loop
+## (quill_scratch) plays on its own player (WorkLoop, made in setup) for as long as the timed action runs.
 
 const ARG_SEP := "@"
 const VALUE_SEP := "="
 const CUE_SEP := ","
 const META_HOOKED := &"audio_hooked"
+const WILDCARD := "*"
 
 var audio: AudioManager
 var map: AudioEventMap
@@ -24,11 +28,17 @@ var _work_left: float = 0.0
 var _work_synced: bool = false
 var _carried: WeakRef = null
 var _carried_was_corpse: bool = false
+## Phase 9: the player of a looping work cue (2D, made once in setup) and the cue it plays (&"" = none).
+var _work_loop: AudioStreamPlayer
+var _work_loop_cue: StringName = &""
 
 
 func setup(owner_audio: AudioManager, event_map: AudioEventMap) -> void:
 	audio = owner_audio
 	map = event_map if event_map != null else AudioEventMap.new()
+	_work_loop = AudioStreamPlayer.new()
+	_work_loop.name = "WorkLoop"
+	add_child(_work_loop)
 	_build_rules()
 	for sig_name: StringName in connected_signals():
 		if not EventBus.has_signal(sig_name):
@@ -70,7 +80,7 @@ static func _match(entry: Dictionary, args: Array) -> Variant:
 		var ok := true
 		for cond: Array in rule[0]:
 			var idx: int = cond[0]
-			if idx >= args.size() or str(args[idx]) != String(cond[1]):
+			if idx >= args.size() or not value_matches(str(args[idx]), String(cond[1])):
 				ok = false
 				break
 		if ok:
@@ -78,14 +88,27 @@ static func _match(entry: Dictionary, args: Array) -> Variant:
 	return entry["any"]
 
 
+## Phase 9: `want` is the exact value, or – ending in "*" – the beginning of it.
+static func value_matches(value: String, want: String) -> bool:
+	if want.ends_with(WILDCARD):
+		return value.begins_with(want.trim_suffix(WILDCARD))
+	return value == want
+
+
 func work_cue() -> StringName:
 	return _work_cue
+
+
+## Phase 9: the looping work cue playing now (&"" = none).
+func work_loop_cue() -> StringName:
+	return _work_loop_cue if _work_loop != null and _work_loop.playing else &""
 
 
 func reset() -> void:
 	_work_cue = &""
 	_work_synced = false
 	_carried = null
+	_stop_work_loop()
 
 
 func _build_rules() -> void:
@@ -154,6 +177,8 @@ func _on_action_started(label: String, duration_sec: float) -> void:
 	_work_synced = _work_cue != &"" and duration_sec > 0.0 and player != null and player.syncs_work_cue(anim)
 	if _work_cue == &"" or _work_synced:
 		return
+	if duration_sec > 0.0 and _start_work_loop(_work_cue):
+		return
 	audio.play(_work_cue)
 	_work_left = _interval()
 	if duration_sec <= 0.0:
@@ -163,6 +188,33 @@ func _on_action_started(label: String, duration_sec: float) -> void:
 func _on_action_finished(_completed: bool) -> void:
 	_work_cue = &""
 	_work_synced = false
+	_stop_work_loop()
+
+
+## Phase 9: a looping work cue (AudioCue.loop) runs on WorkLoop until the action ends (no repeat timer then).
+func _start_work_loop(id: StringName) -> bool:
+	var c := audio.cue(id)
+	if c == null or not c.loop or _work_loop == null:
+		return false
+	_work_loop_cue = id
+	var stream := audio.stream_for(c)
+	_work_loop.stream = stream
+	_work_loop.bus = c.bus
+	_work_loop.volume_db = c.volume_db
+	_work_loop.pitch_scale = 1.0
+	if stream == null or not audio.enabled or audio.settling():
+		return true            # _process starts it once the load has settled
+	_work_loop.play(randf() * maxf(stream.get_length() - 0.1, 0.0))
+	audio.played.append(id)
+	if audio.played.size() > AudioManager.LOG_SIZE:
+		audio.played.pop_front()
+	return true
+
+
+func _stop_work_loop() -> void:
+	_work_loop_cue = &""
+	if _work_loop != null and _work_loop.playing:
+		_work_loop.stop()
 
 
 ## The running action's work cue once, now (the player's tool clip calls it when the blade bites).
@@ -177,6 +229,14 @@ func _interval() -> float:
 
 func _process(delta: float) -> void:
 	_watch_hands()
+	if _work_loop_cue != &"":
+		# Phase 9: under the pause menu the pen rests (stopped, not stream-paused – every player keeps processing).
+		if get_tree().paused:
+			if _work_loop.playing:
+				_work_loop.stop()
+		elif not _work_loop.playing and audio.enabled and not audio.settling() and _work_loop.stream != null:
+			_work_loop.play(randf() * maxf(_work_loop.stream.get_length() - 0.1, 0.0))
+		return
 	if _work_cue == &"" or _work_synced or get_tree().paused:
 		return
 	_work_left -= delta

@@ -9,6 +9,8 @@ extends Node
 ## robber's flight runs over the gravel and the wall, events sound at their source (a candle at its grave, coins on
 ## the stone, alms in Veit's cup), Jakob whistles when he is in good spirits, the festivals set their music and
 ## soundscape (fest_context) and the hand bell rings at the lights.
+## Phase 9 (docs/PHASE9_DESIGN.md §8.3, W-Ton): a spot emitter with "npc" sounds at that Npc while it is visible in the
+## gravekeeper's region and within the cue's reach (the night watchman's lantern and hand bell at the Siebers' door).
 
 ## Metres beyond a loop emitter's max_distance at which it still runs (no audible start at the edge).
 const EMITTER_MARGIN := 4.0
@@ -227,8 +229,26 @@ func _update_emitters(player: Player, delta: float) -> void:
 		if left <= 0.0:
 			left = randf_range(float(e.get("min", 5.0)), float(e.get("max", 10.0)))
 			if AudioAmbience.hour_in(hour, e.get("hours", Vector2i(-1, -1))):
-				audio.play(StringName(e.get("cue", &"")), _world_pos(e), float(e.get("volume_db", 0.0)))
+				var at: Variant = spot_position(e)
+				if at is Vector3:
+					audio.play(StringName(e.get("cue", &"")), at, float(e.get("volume_db", 0.0)))
 		_spot_timers[i] = left
+
+
+## Where spot emitter `e` sounds now: its fixed position, or – Phase 9, key "npc" – that Npc (height "height", default
+## 1.2 m) while it is visible here and the listener is within the cue's reach (+ EMITTER_MARGIN); null = silent.
+func spot_position(e: Dictionary) -> Variant:
+	if not e.has("npc"):
+		return _world_pos(e)
+	var npc := npc_node(StringName(e["npc"]))
+	if npc == null or not npc.is_present():
+		return null
+	var pos := npc.global_position + Vector3.UP * float(e.get("height", 1.2))
+	var cue := audio.cue(StringName(e.get("cue", &"")))
+	var reach := (cue.max_distance if cue != null else 0.0) + EMITTER_MARGIN
+	if listener.global_position.distance_squared_to(pos) > reach * reach:
+		return null
+	return pos
 
 
 ## The listener is within the range of emitter `i` (its cue's max_distance + EMITTER_MARGIN).
