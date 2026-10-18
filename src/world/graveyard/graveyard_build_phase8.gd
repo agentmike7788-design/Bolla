@@ -147,6 +147,15 @@ static func bake_nav(ctx: Ctx, waypoints: Node3D) -> void:
 		targets.append(lit)
 	var vw: Dictionary = {}   # id -> Vector2
 	var vw_order: Array[String] = []
+	# Phase 9 (W-Welt): the points of the previous bake keep their ids and places – data/npc schedules name vw_* of the
+	# baked net (the villagers' graveyard visits). A new corner merges into one of them where it may; otherwise it gets
+	# the next free number.
+	var seeded: Dictionary = ctx.layout.get("visitor_waypoints", {})
+	var last := 0
+	for id: String in seeded:
+		vw[id] = Vector2(float(seeded[id][0]), float(seeded[id][1]))
+		vw_order.append(id)
+		last = maxi(last, int(id.trim_prefix("vw_")))
 	var seqs: Array = []   # per target: the node ids of its smoothed way (start, vw…, target)
 	for t: String in targets:
 		var cells := _cell_path(field, size, origin, cell, pos[t], grid, need)
@@ -169,7 +178,8 @@ static func bake_nav(ctx: Ctx, waypoints: Node3D) -> void:
 					hit = id
 					break
 			if hit == "":
-				hit = "vw_%02d" % (vw_order.size() + 1)
+				last += 1
+				hit = "vw_%02d" % last
 				vw[hit] = Vector2(snappedf(p.x, 0.05), snappedf(p.y, 0.05))
 				vw_order.append(hit)
 			prev = vw[hit]

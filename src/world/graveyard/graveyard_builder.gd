@@ -16,7 +16,9 @@ extends SceneTree
 ## parts (systems, building sites and doors, the three interiors, the old table retiring at crypt
 ## level 1 – docs/PHASE6_DESIGN.md §4, graveyard_build_phase6.gd) and the Phase-8 parts (systems, the hut
 ## corner, the TipStones, the visitor spots, intermediate points and baked routes – docs/PHASE8_DESIGN.md §4,
-## graveyard_build_phase8.gd; it writes the baked keys back into the layout).
+## graveyard_build_phase8.gd; it writes the baked keys back into the layout) and the Phase-9 parts (systems, the visit
+## spot at the gate, the letter prompt at the forge, Johann on Osric's cart, Brenneisen's case – docs/PHASE9_DESIGN.md §3.1,
+## §4, graveyard_build_phase9.gd; the fourth Lindenacker row and the new Npc are layout data).
 
 ## Helper scripts are preloaded (no class_name) – see the autoload note below.
 const Ctx := preload("res://src/world/graveyard/graveyard_build_context.gd")
@@ -30,6 +32,7 @@ const Phase5 := preload("res://src/world/graveyard/graveyard_build_phase5.gd")
 const Phase6 := preload("res://src/world/graveyard/graveyard_build_phase6.gd")
 const Phase7 := preload("res://src/world/graveyard/graveyard_build_phase7.gd")
 const Phase8 := preload("res://src/world/graveyard/graveyard_build_phase8.gd")
+const Phase9 := preload("res://src/world/graveyard/graveyard_build_phase9.gd")
 const InteriorBuild := preload("res://src/world/hut_interior/hut_interior_build.gd")
 const InteriorBuilder := preload("res://src/world/hut_interior/hut_interior_builder.gd")
 const LAYOUT_PATH := "res://data/world/graveyard_layout.json"
@@ -173,6 +176,10 @@ func _build_world() -> Node:
 	Phase7.build_systems(_ctx, systems)
 	Phase8.build_systems(_ctx, systems)
 	Phase8.build_tip_stones(_ctx)
+	Phase9.build_systems(_ctx, systems)
+	Phase9.build_visit_spots(_ctx, entities)
+	Phase9.build_forge_letter(_ctx, entities)
+	Phase9.build_cart_rider(_ctx, entities)
 
 	var waypoints := _ctx.group(scene_root, "Waypoints")
 	Entities.build_waypoints(_ctx, waypoints)
@@ -191,6 +198,7 @@ func _build_world() -> Node:
 	ui.name = "UI"
 	_ctx.add(scene_root, ui)
 	Colliders.build_bounds(_ctx)
+	Phase9.build_case_view(_ctx, scene_root)
 	Phase6.retire_old_table(_ctx)
 	Phase8.bake_nav(_ctx, waypoints)
 	print("  colliders: ", _ctx.collider_count)

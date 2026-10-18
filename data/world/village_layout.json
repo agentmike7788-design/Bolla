@@ -12,11 +12,15 @@
     "building_flat_margin": 0.6,
     "brook_depth": 0.12
   },
-  "walkable_bounds": {"min": [-29.0, -10.6], "max": [24.0, 12.0], "wall_height": 3.0, "wall_thickness": 1.0},
+  "walkable_bounds": {"min": [-37.0, -10.6], "max": [24.0, 18.6], "wall_height": 3.0, "wall_thickness": 1.0,
+    "_phase9": "Phase 9 §4.3/§4.6 D8 (W-Welt): das Sieber-Haus steht westlich des Hollerbachs außerhalb der Phase-7-Laufgrenze – das Rechteck reicht bis x −37 / z 18,6, die extra_walls schließen alles außer dem Weg von der Brücke am Westufer entlang zum Vorplatz vor der Haustür (Laufgrenze wie bisher: x −29 nördlich der Straße, z 12 östlich des Bachs, die Straße westlich der Brücke nach 2,5 m)."},
+  "extra_walls": [[[-29.5, -11.6], [-29.5, -0.4]], [[-37.5, -0.4], [-29.5, -0.4]], [[-31.9, -0.4], [-31.9, 3.4]], [[-37.5, 3.4], [-31.9, 3.4]],
+    [[-23.9, 12.5], [24.5, 12.5]]],
   "camera_bounds": {
     "_comment": "W-Welt (Sichtprüfung §4.5.2/§4.5.3): Fokus x −22…20 wie §4.2, z −12…11 statt −8…8 – nach Norden bis vor die Türen der Nordreihe, nach Süden bis an die Katen (Trauerflor auf ihrer Südseite im Bild). Distanz 22, Zoom 12–26.",
-    "min": [-22.0, -12.0],
-    "max": [20.0, 11.0],
+    "min": [-27.5, -12.0],
+    "max": [20.0, 13.0],
+    "_phase9": "Phase 9 §4.3/§4.7 (W-Welt): min x −22 → −27,5, max z 11 → 13 – der Vorplatz der Siebers (Tür x −33,6 · z 15,8) bleibt bei Zoom 12 im Bild.",
     "distance": 22.0,
     "zoom_min": 12.0,
     "zoom_max": 26.0
@@ -90,8 +94,10 @@
     {"id": "house_kehr", "model": "ph_bld_v_house_a", "pos": [-25.5, -12.5], "rot_y": 0.0, "max_height": 7.0, "ribbon": true},
     {"id": "house_brandt", "model": "ph_bld_v_house_b", "pos": [25.5, -12.5], "rot_y": 0.0, "max_height": 7.0, "ribbon": true},
     {"id": "house_ott", "model": "ph_bld_v_house_c", "pos": [27.5, 3.0], "rot_y": -20.0, "max_height": 7.0, "ribbon": true},
-    {"id": "house_sieber", "model": "ph_bld_v_house_a", "pos": [-33.0, 12.5], "rot_y": 15.0, "max_height": 7.0, "ribbon": true,
-      "_comment": "§4.2 nennt (−27,5 | 13) – dort fließt der Hollerbach; westlich des Bachs (W-Welt, Kulisse)."},
+    {"id": "house_sieber", "model": "ph_bld_v_house_a", "pos": [-33.6, 12.5], "rot_y": 0.0, "max_height": 7.0, "ribbon": true,
+      "_comment": "§4.2 nennt (−27,5 | 13) – dort fließt der Hollerbach; westlich des Bachs (W-Welt, Kulisse).",
+      "_phase9": "Phase 9 §4.3/§4.6 D8 (W-Welt): war (−33,0 | 12,5) 15° – die Südostecke stand 0,4 m vor dem Bach; jetzt gerade zur Kamera und 0,6 m nach Westen: zwischen Ostwand und Ufer 1,45 m Weg zur Haustür. Das Fensterlicht sitzt im Obergeschoss am rechten Fenster des Altenteils (window_light, hauslokal; win_sieber_attic).",
+      "window_light": [2.2, 3.55, 3.0]},
     {"id": "v_inn2", "model": "ph_bld_v_inn2", "pos": [-24.0, -20.0], "rot_y": 0.0, "max_height": 7.0}
   ],
   "props": [
@@ -118,7 +124,8 @@
     {"id": "flowers_hagedorn", "asset": "ph_deco_flowerbed", "pos": [-6.0, 17.4], "rot_y": 0.0},
     {"id": "flowers_dorn", "asset": "ph_deco_flowerbed", "pos": [6.0, 17.4], "rot_y": 0.0},
     {"id": "flowers_inn", "asset": "ph_deco_flowerbed", "pos": [11.2, -9.0], "rot_y": 0.0},
-    {"id": "flowers_office", "asset": "ph_deco_flowerbed", "pos": [-11.6, -9.2], "rot_y": 0.0}
+    {"id": "flowers_office", "asset": "ph_deco_flowerbed", "pos": [-11.6, -9.2], "rot_y": 0.0},
+    {"id": "sieber_bench", "asset": "ph_prop_v_bench", "pos": [-35.6, 15.95], "rot_y": 0.0, "_comment": "Phase 9 §4.3/§4.6 D8: die Bank vor dem Sieber-Haus links der Tür unter dem Fenster (Bank-Modell aus Phase 7); v_sieber_bench liegt auf ihr.", "collider": {"shape": "box", "size": [1.5, 0.5, 0.34], "offset": [0.0, 0.25, 0.0]}}
   ],
   "decor": {
     "_comment": "Kulisse (§4.2 z −24 / z 16): Obstbäume und Hecken hinter der Nordreihe, Gärten mit Zäunen, Holunder und Kräutern südlich der Katen, Erlen und Holunder am Bach. Kronen ohne Kollision außerhalb der Laufgrenze.",
@@ -136,7 +143,7 @@
       {"asset": "ph_env_birch", "pos": [20.0, -21.5], "rot_y": 60.0, "scale": 0.95},
       {"asset": "ph_env_birch", "pos": [-17.5, -22.0], "rot_y": 200.0, "scale": 0.9},
       {"asset": "ph_env_birch", "pos": [-29.5, -7.5], "rot_y": 0.0, "scale": 0.9},
-      {"asset": "ph_env_birch", "pos": [-30.0, 6.5], "rot_y": 140.0, "scale": 0.85},
+      {"asset": "ph_env_birch", "pos": [-31.8, 6.4], "rot_y": 140.0, "scale": 0.85, "_comment": "Phase 9 D8 (W-Welt): war (−30,0 | 6,5) – stand im Weg am Bach zu den Siebers."},
       {"asset": "ph_env_birch", "pos": [28.5, 12.5], "rot_y": 70.0, "scale": 0.9},
       {"asset": "ph_env_tree_old_oak", "pos": [-14.0, -26.5], "rot_y": 70.0, "scale": 1.1},
       {"asset": "ph_env_tree_old_oak", "pos": [13.5, -27.0], "rot_y": 160.0, "scale": 1.15},
@@ -154,11 +161,11 @@
       {"asset": "ph_env_hedge_thorn", "pos": [-15.0, -18.6], "rot_y": 0.0, "scale": 1.1},
       {"asset": "ph_env_hedge_thorn", "pos": [15.0, -18.6], "rot_y": 0.0, "scale": 1.1},
       {"asset": "ph_env_elder_bush", "pos": [-30.0, -1.4], "rot_y": 30.0, "scale": 0.75},
-      {"asset": "ph_env_elder_bush", "pos": [-30.2, 4.3], "rot_y": 160.0, "scale": 0.7},
+      {"asset": "ph_env_elder_bush", "pos": [-32.6, 5.0], "rot_y": 160.0, "scale": 0.7, "_comment": "Phase 9 D8 (W-Welt): war (−30,2 | 4,3) – am Weg zu den Siebers."},
       {"asset": "ph_env_elder_bush", "pos": [-10.5, 17.5], "rot_y": 80.0, "scale": 0.85},
       {"asset": "ph_env_elder_bush", "pos": [11.0, 17.0], "rot_y": 250.0, "scale": 0.8},
       {"asset": "ph_env_elder_bush", "pos": [23.5, -7.0], "rot_y": 10.0, "scale": 0.7},
-      {"asset": "ph_env_elder_thicket", "pos": [-28.6, 16.5], "rot_y": 40.0, "scale": 1.0},
+      {"asset": "ph_env_elder_thicket", "pos": [-29.3, 18.5], "rot_y": 40.0, "scale": 1.0, "_comment": "Phase 9 D8 (W-Welt): war (−28,6 | 16,5) – vor dem Ende des Wegs am Bach; jetzt der Schatten über watch_sieber."},
       {"asset": "ph_env_bush", "pos": [-2.0, 18.5], "rot_y": 0.0, "scale": 1.2},
       {"asset": "ph_env_bush", "pos": [2.4, 19.0], "rot_y": 70.0, "scale": 1.0},
       {"asset": "ph_env_bush", "pos": [-24.0, -9.5], "rot_y": 10.0, "scale": 1.0},
@@ -201,7 +208,13 @@
     {"id": "npc_apprentice_v", "npc_id": "apprentice", "model": "ph_chr_apprentice", "requires_flag": "p8_open",
       "_comment": "Phase 8 §3.1: Jakob im Dorf (Laufzeit-Zeitplan von Apprentice + Daten-Einträge apprentice_off_day), Veit, Hanne – vor p8_open verborgen."},
     {"id": "npc_beggar", "npc_id": "beggar", "model": "ph_chr_beggar", "requires_flag": "p8_open"},
-    {"id": "npc_peddler", "npc_id": "peddler", "model": "ph_chr_peddler", "requires_flag": "p8_open"}
+    {"id": "npc_peddler", "npc_id": "peddler", "model": "ph_chr_peddler", "requires_flag": "p8_open"},
+    {"id": "npc_kin_sieber_v", "npc_id": "kin_sieber_v", "model": "ph_chr_mourner_m_b", "requires_flag": "p9_open", "hide_flag": "sieber_gone",
+      "_comment": "Phase 9 §2.2.5/§3.1: Johann Sieber auf der Bank vor dem Haus (sieber_bench_day 14:00–16:00, die Abende sieber_evening_day) und sein Abgang über die Brücke (Ende A)."},
+    {"id": "npc_stranger", "npc_id": "stranger", "model": "ph_chr_stranger", "requires_flag": "p9_open",
+      "_comment": "Phase 9 §2.5.1/§3.1/§4.4: Cornelius Brenneisen – über die Holderbrücke zum Holderkrug, abends am Ecktisch der Gaststube (v_in_inn_stranger)."},
+    {"id": "npc_watchman", "npc_id": "watchman", "model": "ph_prop_watch_lantern", "requires_flag": "p9_open", "lantern_marker": "light_lantern", "model_offset": [0.85, 0.0, -0.3],
+      "_comment": "Phase 9 §2.2.7 Ende C/§4.6 D12/§4.8: die Laterne des Nachtwächters an der Sieber-Tür (Zeitplan watchman, sieber_watch_day 21:00–06:00) – Licht-Requisit ohne Figur (Prio A; keine Wächter-Figur in P7), ein Omni ohne Schatten (Npc.lantern_marker), neben der Tür auf der Stufe."}
   ],
   "spawns": {
     "from_graveyard": {"pos": [-24.6, 1.5], "rot_y": 90.0}
@@ -239,8 +252,15 @@
     "v_remise_sleep": [21.0, 9.6],
     "v_peddler_in": [-23.4, 1.2],
     "v_peddler_out": [-29.0, 2.2],
-    "v_lights_gather": [-24.4, 3.4]
+    "v_lights_gather": [-24.4, 3.4],
+    "v_sieber_door": [-33.6, 15.8],
+    "v_sieber_bench": [-35.6, 15.95],
+    "v_sieber_lane_n": [-30.5, 3.6],
+    "v_sieber_lane_e": [-29.2, 9.0],
+    "v_sieber_lane_s": [-29.2, 16.2],
+    "v_bridge_unload": [-30.9, 1.5]
   },
+  "_waypoints_phase9": "Phase 9 §4.3/§4.6 D8/D10 (W-Welt): v_sieber_door vor der Haustür der Siebers (hier wird geklopft, die Nachtbesuche gehen hinein), v_sieber_bench auf der Bank links der Tür, der Weg von der Brücke am Westufer entlang zum Vorplatz (v_road_in → v_sieber_lane_n → v_sieber_lane_e → v_sieber_lane_s → v_sieber_door; gerade v_sieber_door → v_road_in liefe durchs Haus), v_bridge_unload am westlichen Brückenkopf (Steine abladen, Besuchsteil von hrv_bridge_stones).",
   "_waypoints_phase8": "Phase 8 §4.6 D1/D4/D5: Türplätze der Krankenlicht-Häuser (v_ott_door; v_kehr_door am Ostufer des Hollerbachs vor der Brücke zum Haus, (−23,35 | −9,0) statt §4.6 (−24,6 | −10,2) – das läge im Bach und im Haus; dort wird geklopft, dann geht es hinein), der Weg zu den Otts zwischen Wundarztstube und Remise (v_ott_lane_w, v_ott_lane), zu den Kehrs südlich am Schmiedekarren vorbei (v_kehr_lane), Veits Plätze (Kirchtür-Stufe, Brückenplatz; Brunnenbank bestehend), Hannes Stand am Brunnen (Kiepe abgestellt), v_remise_sleep (Veit nachts, unsichtbar hinter der Remise), Hannes Weg über die Brücke (v_peddler_in → v_peddler_out am Wegstein), die Lichtgang-Sammlung an der Holderbrücke. Beobachtungsplätze und Krankenlicht: phase8.",
   "waypoint_facing": {
     "_comment": "Blickrichtung (rot_y in Grad, 0 = +Z/Kamera) an Steh-Orten: zum Anger bzw. zur Kamera.",
@@ -248,7 +268,8 @@
     "v_inn_door": 0.0, "v_anvil": -90.0, "v_shop_window": 90.0, "v_surgery_door": -60.0, "v_remise": -60.0,
     "v_hagedorn_gate": 0.0, "v_dorn_door": 0.0, "v_wash": 120.0, "v_bridge": 90.0,
     "v_ott_door": 90.0, "v_kehr_door": 201.0, "v_church_step": 0.0, "v_bridge_sit": 90.0, "v_well_peddler": 30.0,
-    "v_peddler_in": 90.0, "v_lights_gather": 60.0
+    "v_peddler_in": 90.0, "v_lights_gather": 60.0,
+    "v_sieber_door": 0.0, "v_sieber_bench": 0.0, "v_bridge_unload": 90.0
   },
   "_phase8": "Phase 8 §4.6 D2/D3 (village_build_phase8.gd): WatchSpot im Schatten unter der Remisen-Traufe (z 4,7 statt §4.6 5,4 – dort steht die Südwand der Remise) bzw. an der Westecke des Amtshauses (≤ 12 m bis zum Türplatz, frei sichtbar), SickLight am Fenstermarker light_window der Häuser Ott und Kehr (eine Kerze auf dem inneren Sims, inset m nach innen; das Fensterlicht brennt in der Krankenlicht-Nacht durch – village_dressing.gd).",
   "phase8": {
@@ -259,6 +280,21 @@
     "sick_lights": [
       {"id": "sick_light_ott", "house": "house_ott", "marker": "light_window", "inset": 0.12},
       {"id": "sick_light_kehr", "house": "house_kehr", "marker": "light_window", "inset": 0.12}
+    ]
+  },
+  "_phase9": "Phase 9 §4.3/§4.6 D8/D10 (village_build_phase9.gd): KnockDoor door_sieber an der Haustür (Marker door_outside des Hauses, Blick vom Haus weg); watch_sieber im Schatten des Holunders am Ende des Wegs (5,5 m bis v_sieber_door, Tür und Fenster frei sichtbar); win_sieber_attic = hauslokaler Marker am rechten Obergeschoss-Fenster (Altenteil) mit SickLight (Kerze auf dem inneren Sims, das Fensterlicht des Hauses sitzt dort – window_light); VisitSpot am Wegpunkt v_bridge_unload.",
+  "phase9": {
+    "knock_doors": [
+      {"id": "door_sieber", "house": "house_sieber", "dialogue_id": "sieber_door", "npc_id": "kin_sieber"}
+    ],
+    "watch_spots": [
+      {"id": "watch_sieber", "pos": [-30.2, 17.7], "rot_y": 250.0}
+    ],
+    "sick_lights": [
+      {"id": "sick_light_sieber", "house": "house_sieber", "marker": "win_sieber_attic", "local": [2.2, 3.55, 2.5], "candle": [0.0, -0.5, -0.12]}
+    ],
+    "visit_spots": [
+      {"id": "visit_bridge_unload", "place": "v_bridge_unload"}
     ]
   },
   "lights": {
@@ -282,7 +318,7 @@
     "lines": [
       [[-23.9, -11.6], [-23.9, 0.1]], [[-23.9, 2.9], [-23.9, 7.0]], [[-23.9, 7.0], [-25.7, 7.0]], [[-25.7, 7.0], [-25.7, 10.0]],
       [[-25.7, 10.0], [-23.9, 10.0]], [[-23.9, 10.0], [-23.9, 13.0]],
-      [[-28.3, -11.6], [-28.3, 0.1]], [[-28.3, 2.9], [-28.3, 13.0]],
+      [[-28.3, -11.6], [-28.3, 0.1]], [[-28.3, 2.9], [-28.3, 19.1]],
       [[-29.6, 0.1], [-23.3, 0.1]], [[-29.6, 2.9], [-23.3, 2.9]]
     ]
   },

@@ -23,9 +23,10 @@
     {"id": "quarry", "rect": [21.5, -12.0, 31.5, -6.5]},
     {"id": "churchyard", "rect": [-2.0, -30.0, 11.5, -20.0], "_comment": "Phase 6 §4.2: Kirchhof am Kamm (keine Grabstellen, keine Zier, kein Ruf – außerhalb der Bau-Maske)."},
     {"id": "linden", "rect": [11.5, 9.6, 21.5, 19.6], "_comment": "Phase 7 §2.9/§4.6 L1: Lindenacker südlich der Ostwiese (8 Grabstellen l_01…l_08, 2 Reihen à 4), Pforte im Ostwiesen-Südzaun."},
-    {"id": "linden_row3", "rect": [11.5, 19.6, 21.5, 22.8], "_comment": "Phase 8 §2.8/§4.4 L10/L14: die dritte Reihe im Lindenacker (l_09…l_12) als eigener Abschnitt (data/sections/linden_row3.tres: requires_flag linden_row3_granted, 2 Hindernisse) – im Abschnitt linden öffnete ExpansionManager.post_load sie beim Laden jedes Phase-7-Stands sofort."}
+    {"id": "linden_row3", "rect": [11.5, 19.6, 21.5, 22.8], "_comment": "Phase 8 §2.8/§4.4 L10/L14: die dritte Reihe im Lindenacker (l_09…l_12) als eigener Abschnitt (data/sections/linden_row3.tres: requires_flag linden_row3_granted, 2 Hindernisse) – im Abschnitt linden öffnete ExpansionManager.post_load sie beim Laden jedes Phase-7-Stands sofort."},
+    {"id": "linden_row4", "rect": [11.5, 22.8, 21.5, 26.0], "_comment": "Phase 9 §2.6/§4.2/§4.6 L16: die vierte Reihe im Lindenacker (l_13…l_16) am Südrand als eigener Abschnitt (data/sections/linden_row4.tres: requires_flag linden_row4_granted, Hindernisse stump_row4 + bramble_row4); Zaun 3,2 m weiter südlich (z 26,0)."}
   ],
-  "build": {"_comment": "Bau-Maske (§4.3; Phase 4 §4.2: + Abschnitt elder = 4): Raster über x −11,5…21,5, z −20…9,6. trader_access = Streifen innen vor trader_spot [x, z, w, d] = ROUTE.", "trader_access": [-11.5, -3.8, 1.2, 2.4], "origin": [-11.5, -20.0], "size": [66, 86], "_phase8": "Phase 8 §4.4 L14: Raster bis z 23 (86 Zeilen; Reihe 3 bis z 22,8 = Abschnitt linden_row3).", "_phase7": "Phase 7 §4.6 L8: Raster bis z 20 (+ Lindenacker x 11,5…21,5 · z 9,6…19,6); gleiche Breite, die alten Zeilen bleiben.",
+  "build": {"_comment": "Bau-Maske (§4.3; Phase 4 §4.2: + Abschnitt elder = 4): Raster über x −11,5…21,5, z −20…9,6. trader_access = Streifen innen vor trader_spot [x, z, w, d] = ROUTE.", "trader_access": [-11.5, -3.8, 1.2, 2.4], "origin": [-11.5, -20.0], "size": [66, 92], "_phase9": "Phase 9 §4.2: Raster bis z 26 (92 Zeilen; Reihe 4 bis z 26,0 = Abschnitt linden_row4).", "_phase8": "Phase 8 §4.4 L14: Raster bis z 23 (86 Zeilen; Reihe 3 bis z 22,8 = Abschnitt linden_row3).", "_phase7": "Phase 7 §4.6 L8: Raster bis z 20 (+ Lindenacker x 11,5…21,5 · z 9,6…19,6); gleiche Breite, die alten Zeilen bleiben.",
     "cell": 0.5, "route_width": 1.5, "grave_ring": 0.5, "station_margin": 0.6, "station_access": 1.0, "grave_foot_strip": 0.8,
     "building_margin": 0.6, "tree_radius": 0.7, "fence_half_width": 0.3},
   "path": {
@@ -84,7 +85,11 @@
     {"id": "l_09", "pos": [13.6, 21.0], "rot_y": 2.0, "section": "linden_row3", "_comment": "Phase 8 §4.4 L10: dritte Reihe bei z 21,0 im Raster der Reihen 1–2 (Abstand 4,1 m)."},
     {"id": "l_10", "pos": [15.9, 21.0], "rot_y": -1.0, "section": "linden_row3"},
     {"id": "l_11", "pos": [18.2, 21.0], "rot_y": 1.0, "section": "linden_row3"},
-    {"id": "l_12", "pos": [20.5, 21.0], "rot_y": -2.0, "section": "linden_row3", "pit_variant": "foot"}
+    {"id": "l_12", "pos": [20.5, 21.0], "rot_y": -2.0, "section": "linden_row3", "pit_variant": "foot"},
+    {"id": "l_13", "pos": [13.6, 24.2], "rot_y": -1.0, "section": "linden_row4", "_comment": "Phase 9 §4.2 L16: vierte Reihe bei z 24,2 = Reihe 3 um die 3,2 m des Zauns nach Süden (Fußstreifen 0,8 m bis zum Zaun wie Reihe 3), x wie die Reihen darüber."},
+    {"id": "l_14", "pos": [15.9, 24.2], "rot_y": 2.0, "section": "linden_row4"},
+    {"id": "l_15", "pos": [18.2, 24.2], "rot_y": -2.0, "section": "linden_row4"},
+    {"id": "l_16", "pos": [20.5, 24.2], "rot_y": 1.0, "section": "linden_row4", "pit_variant": "foot"}
   ],
   "_clearables": "Hindernisse (§1.2, §2.1). footprint = lokales XZ-Rechteck [x, z, w, d] (Bau-Sperre + Gras-Maske). Zaunlücken: fence.ruins.",
   "clearables": [
@@ -133,7 +138,11 @@
     {"id": "obs_l_stump_9", "kind": "stump", "section": "linden_row3", "pos": [15.7, 21.2], "rot_y": 140.0, "footprint": [-0.5, -0.5, 1.0, 1.0],
       "_comment": "Phase 8 §2.8/§4.4 L13: Baumstumpf auf l_10 (zu räumen ab linden_row3_granted)."},
     {"id": "obs_l_bramble_9", "kind": "bramble", "section": "linden_row3", "pos": [20.3, 20.8], "rot_y": 310.0, "footprint": [-1.0, -1.0, 2.0, 2.0],
-      "_comment": "Phase 8 §2.8/§4.4 L13: Brombeere auf l_12."}
+      "_comment": "Phase 8 §2.8/§4.4 L13: Brombeere auf l_12."},
+    {"id": "obs_l_stump_13", "kind": "stump_row4", "section": "linden_row4", "pos": [15.7, 24.4], "rot_y": 70.0, "footprint": [-0.5, -0.5, 1.0, 1.0],
+      "_comment": "Phase 9 §2.6/§4.6 L19: junger Baumstumpf auf l_14 (30 Min, ab linden_row4_granted)."},
+    {"id": "obs_l_bramble_13", "kind": "bramble_row4", "section": "linden_row4", "pos": [20.3, 24.0], "rot_y": 200.0, "footprint": [-1.0, -1.0, 2.0, 2.0],
+      "_comment": "Phase 9 §2.6/§4.6 L19: altes Brombeergestrüpp auf l_16 (40 Min)."}
   ],
   "_dirt_spots": "Pflegestellen (§2.4; Phase 4 §4.1: + 3 im Holunderwinkel): 25 Flächenstellen; die Grabstellen dirt_<plot_id> erzeugt der Builder am Hügel (grave_dirt). start = start_progress (neues Spiel).",
   "dirt_spots": [
@@ -176,7 +185,8 @@
     "sections": [{"id": "east", "count": 24}, {"id": "north", "count": 18},
       {"id": "elder", "count": 12, "assets": ["ph_env_weeds_3", "ph_env_weeds_2", "ph_env_leaves_2", "ph_env_weeds_3"]},
       {"id": "linden", "count": 16, "assets": ["ph_env_weeds_3", "ph_env_weeds_2", "ph_env_leaves_2", "ph_env_weeds_3", "ph_env_weeds_1"]},
-      {"id": "linden_row3", "count": 7, "assets": ["ph_env_weeds_3", "ph_env_weeds_2", "ph_env_leaves_2", "ph_env_weeds_1"]}]},
+      {"id": "linden_row3", "count": 7, "assets": ["ph_env_weeds_3", "ph_env_weeds_2", "ph_env_leaves_2", "ph_env_weeds_1"]},
+      {"id": "linden_row4", "count": 7, "assets": ["ph_env_weeds_3", "ph_env_weeds_2", "ph_env_leaves_2", "ph_env_weeds_1"]}]},
   "entities": [
     {"id": "morgue_table", "type": "morgue_table", "pos": [-1.6, -5.4], "rot_y": 18.0, "params": {}},
     {"id": "workbench", "type": "workbench", "pos": [-2.5, -8.4], "rot_y": 108.0, "params": {"station": "workbench"}},
@@ -226,7 +236,13 @@
       "params": {"save_id": "", "npc_id": "peddler", "model": "ph_chr_peddler", "requires_flag": "p8_open"}},
     {"id": "npc_robber", "type": "npc", "pos": [15.8, 32.6], "rot_y": 0.0,
       "_comment": "Phase 8 §2.6.3/§4.5: Lambert Grell (Laufzeit-Zeitplan von NightRobber).",
-      "params": {"save_id": "", "npc_id": "robber", "model": "ph_chr_robber"}}
+      "params": {"save_id": "", "npc_id": "robber", "model": "ph_chr_robber"}},
+    {"id": "npc_stranger_g", "type": "npc", "pos": [15.8, 32.6], "rot_y": 0.0,
+      "_comment": "Phase 9 §2.5.1/§3.1/§4.4: Cornelius Brenneisen außen am Tor (stranger_gate, Tage stranger_day); betritt den Friedhof nie.",
+      "params": {"save_id": "", "npc_id": "stranger", "model": "ph_chr_stranger", "requires_flag": "p9_open"}},
+    {"id": "npc_kin_sieber_v_g", "type": "npc", "pos": [15.8, 32.6], "rot_y": 0.0,
+      "_comment": "Phase 9 §2.2.7/§4.5 (Ende A): Johann Sieber auf dem Abgang – mit Hanne vom Tor den Waldweg hinauf (sieber_gate) oder hinten auf Osrics Karren (CartRider); Laufzeit-Zeitplan kin_sieber_v, verborgen ab sieber_gone.",
+      "params": {"save_id": "", "npc_id": "kin_sieber_v", "model": "ph_chr_mourner_m_b", "requires_flag": "p9_open", "hide_flag": "sieber_gone"}}
   ],
   "_phase8": "Phase 8 §4.3 A1–A4 (graveyard_build_phase8.gd): Lehrlingsecke an der Hüttenwand rechts neben der Tür (Wandlinie durch (−5,82 | −4,99), Richtung 18°): Kreidetafel 1,15 m, Kiste 1,95 m, Bank 2,85 m von der Türmitte, je ≈ 0,3–0,4 m vor der Wand; Regenfass an der linken Hüttenecke unter der Traufe (−1,5 m). type = Entität (Szene + Modell + Kollision nach colliders), sonst nur Modell (prop). Kein Teil höher als 1,4 m.",
   "phase8": {
@@ -240,13 +256,19 @@
     ],
     "visitor_spot": {"_comment": "§4.2: gv_<plot> = plot-lokal (x, z) vor dem Fußende, Blick zum Stein; candidates der Reihe nach, der erste kollisionsfreie gilt (Abstand radius zu Hügeln, Steinen, Zäunen, Bäumen, Gebäuden). §4.8: Plätze, die am Südzaun nicht passen (Reihe 3), stehen seitlich neben dem Hügel.",
       "candidates": [[0.0, 1.9], [0.0, 1.6], [-0.7, 1.9], [0.7, 1.9], [-0.7, 1.6], [0.7, 1.6], [-1.15, 0.55], [1.15, 0.55], [-1.15, 0.0], [1.15, 0.0]],
-      "radius": 0.32, "overrides": {"h_06": [0.7, 1.9]}, "_overrides": "§4.8 (1): gv_h_06 vor dem Fußende lag für die Kamera hinter dem Hüttendach – 0,7 m nach Osten."},
+      "radius": 0.32, "overrides": {"h_06": [0.7, 1.9], "l_09": [-1.15, 0.55], "l_10": [-1.15, 0.55], "l_11": [-1.15, 0.55], "l_12": [-1.15, 0.55]}, "_overrides": "§4.8 (1): gv_h_06 vor dem Fußende lag für die Kamera hinter dem Hüttendach – 0,7 m nach Osten. Phase 9 (W-Welt): Reihe 3 behält ihre Plätze neben dem Hügel (seit Phase 8 gebacken; Zeitpläne der Bewohner nennen gv_l_12) – der Südzaun ist nach Reihe 4 gerückt."},
     "nav": {"_comment": "Weg-Netz (graveyard_build_phase8.gd): Belegungsraster cell m über rect [x0, z0, x1, z1] aus den Kollisionen in Hüfthöhe (Hügel, Steine, Zäune, Bäume, Gebäude auf Stufe 3; Hindernisse geräumt, Gruben aus), Abstand ≥ clearance zu jeder Kollision, Dijkstra ab gate_inside (Kosten steigen nahe an Gräbern), geglättet auf Wegpunkte (Sichtlinie mit Abstand clearance), Zwischenpunkte innerhalb merge m zusammengelegt (vw_*). Kanten zwischen allen Netzpunkten mit freier Sichtlinie bis edge_max m (WorldRoot.route_between).",
-      "rect": [-15.0, -31.0, 31.5, 25.5], "cell": 0.2, "clearance": 0.38, "band": [0.15, 1.5], "near_cost": 2.5, "near_range": 1.2,
+      "rect": [-15.0, -31.0, 31.5, 26.5], "cell": 0.2, "clearance": 0.38, "band": [0.15, 1.5], "near_cost": 2.5, "near_range": 1.2,
       "merge": 0.7, "edge_max": 14.0, "start": "gate_inside", "route_in": ["road_end", "road_mid", "gate_outside", "gate_inside"],
       "extra_targets": ["apprentice_board", "apprentice_box", "apprentice_lunch", "apprentice_sweep", "rain_barrel", "lights_lenz",
         "lights_crowd_1", "lights_crowd_2", "lights_crowd_3", "lights_crowd_4", "lights_crowd_5", "lights_crowd_6", "lights_crowd_7", "lights_crowd_8",
         "robber_fence_in", "linden_spot", "dropoff"]}
+  },
+  "_phase9": "Phase 9 §2.3.2/§3.1/§4.4/§4.5/§4.6 (graveyard_build_phase9.gd): Systemknoten Quests/WhoKnows/Letters/Stranger; VisitSpot am Wegpunkt des Besuchsteils (gate_outside: „Licht am Kutschweg“); ForgeLetter an der Esse; CartRider (Johann auf Osrics Karren, Ende A); StrangerCase (Brenneisens Koffer ab K4). Reihe 4, Stehplätze und Npc sind Layout-Daten.",
+  "phase9": {
+    "visit_spots": [
+      {"id": "visit_gate_outside", "place": "gate_outside"}
+    ]
   },
   "_region_portals": "Phase 7 §3.1/§4.1/§4.6 R1: RegionPortal-Entitäten (src/entities/region_portal/region_portal.tscn) mit Modell und Label3D wie die Friedhofstafel. §4.6 nennt (8,4 | 24,4) – dort liegt die Mitte des Kutschwegs mit Osrics Karrenspur; der Wegstein steht 1,8 m daneben am Ostrand des Wegs (W-Welt).",
   "region_portals": [
@@ -287,9 +309,9 @@
     "veit_gate": [-0.75, 10.4],
     "peddler_gate": [3.0, 10.6],
     "lights_gate": [-0.9, 11.3],
-    "robber_far": [27.5, 28.0],
-    "robber_fence_out": [17.0, 23.6],
-    "robber_fence_in": [17.0, 22.0],
+    "robber_far": [27.5, 31.2],
+    "robber_fence_out": [17.0, 26.8],
+    "robber_fence_in": [17.0, 25.2],
     "lights_lenz": [4.5, -20.65],
     "peddler_west": [-12.6, 10.9],
     "lights_crowd_1": [7.04, -19.28],
@@ -299,8 +321,11 @@
     "lights_crowd_5": [4.05, -18.32],
     "lights_crowd_6": [3.19, -18.5],
     "lights_crowd_7": [2.47, -18.83],
-    "lights_crowd_8": [1.96, -19.28]
+    "lights_crowd_8": [1.96, -19.28],
+    "stranger_gate": [0.1, 11.3],
+    "sieber_gate": [2.45, 11.6]
   },
+  "_waypoints_phase9": "Phase 9 §4.4/§4.5/§4.6 G4/L18 (W-Welt): stranger_gate = Brenneisens Stehplatz außen am Tor östlich neben Veits Sitzplatz (vor dem westlichen Torpfeiler, 1,1 m westlich der Torweg-Mitte; nie auf Veits oder Hannes Fleck), sieber_gate = Johann wartet neben Hanne (1,65 m vor gate_outside, damit er ihr den Waldweg hinauf ≈ 1,5 m hinterhergeht). Räuberweg um die 3,2 m des Südzauns verlängert: robber_far, robber_fence_out und robber_fence_in (sonst stiege er durch Reihe 4).",
   "_waypoints_phase8": "Phase 8 §4.2/§4.3/§4.5: gate_inside (Tor innen), Lehrlingsecke (apprentice_* vor Tafel/Kiste, Bank, Fegeplatz vor der Hüttentür, rain_barrel neben dem Fass), Veit/Hanne außen an den Torpfeilern (veit_gate sitzend, Blick nach Osten; peddler_gate), lights_gate (Veit am Lichtgang), Räuberweg robber_far → robber_fence_out → (über den Südzaun) robber_fence_in, Lichtgang lights_lenz (1,5 m vor der Kapellentür, Blick nach Süden) und lights_crowd_1…8 (halbe Ellipse 2,8 × 1,7 m südlich der Kirchpforte, Blick zu Lenz; die Gräber des Birkenhangs bleiben frei). Besucherplätze gv_<plot> und Zwischenpunkte vw_* backt graveyard_build_phase8.gd (visitor_spots, visitor_waypoints, visitor_routes).",
   "_waypoints_phase7": "Phase 7 §4.6 N1: w_east_pass, w_linden_n, linden_spot = Weg des Pfarrers am Weihetag (road_end → gate_outside → dropoff → w_east_pass → w_linden_n → linden_spot), tp_linden (Debug), from_village (Spawn am Wegstein).",
   "waypoint_facing": {
@@ -326,13 +351,16 @@
     "lights_crowd_5": 165.0,
     "lights_crowd_6": 138.87,
     "lights_crowd_7": 119.96,
-    "lights_crowd_8": 105.83
+    "lights_crowd_8": 105.83,
+    "stranger_gate": 60.0,
+    "sieber_gate": 330.0
   },
   "signpost": {"pos": [-0.9, 15.4], "rot_y": -20.0, "text": "Hollerbrück", "font_size": 64, "pixel_size": 0.0021, "color": "#2a1f18", "surface_offset": 0.012},
   "fallen_log": {"pos": [2.2, 26.5], "rot_y": 8.0},
   "fence": {
     "_comment": "Prototyp-Zaun (Süd mit Tor, Ost) – Ost- und Westseite für die größere Welt verlängert. Phase 3: Ostwiese und Birkenhang eingezäunt, Lücken = ruins (Hindernis fence_gap), Durchgang Alter Hof → Ostwiese = passages. Phase 4: Westmauer an Ilses Platz (x −11,5, z −5…−1) und der Zaun des Holunderwinkels (Süd mit Pförtchen obs_h_gate, West, Nord mit Lücke obs_h_gap_1).",
     "_phase8": "Phase 8 §4.4 L11: der Lindenacker-Südzaun liegt bei z 22,8 (war 19,6), West- und Ostzaun bis dorthin verlängert.",
+    "_phase9": "Phase 9 §4.2/§4.6 L17: der Lindenacker-Südzaun liegt bei z 26,0 (war 22,8), West- und Ostzaun bis dorthin verlängert.",
     "_phase7": "Phase 7 §4.6 L2/L3: Ostwiesen-Südzaun mit Lücke x 15,0…16,6 (Lindenacker-Pforte obs_l_gate); Zaun um den Lindenacker (West, Süd, Ost – die letzten drei Segmente).",
     "segments": [
       [[-11.5, 9.6], [-0.4, 9.6]],
@@ -363,9 +391,9 @@
       [[-11.5, -20.0], [-11.5, -12.5]],
       [[-11.5, -20.0], [-8.0, -20.0]],
       [[-6.0, -20.0], [-2.0, -20.0]],
-      [[11.5, 9.6], [11.5, 22.8]],
-      [[11.5, 22.8], [21.5, 22.8]],
-      [[21.5, 9.6], [21.5, 22.8]]
+      [[11.5, 9.6], [11.5, 26.0]],
+      [[11.5, 26.0], [21.5, 26.0]],
+      [[21.5, 9.6], [21.5, 26.0]]
     ],
     "gate_posts": [[-0.4, 9.6], [2.6, 9.6]],
     "_ruins": "Zaunlücken (Hindernis fence_gap, 2 m): pos = Mitte, rot_y = Richtung der Zaunlinie (lokal +X); Modell ph_prop_fence_iron_broken, repariert ph_prop_fence_iron.",
@@ -629,15 +657,16 @@
     "ph_prop_apprentice_bench": [{"shape": "box", "size": [1.1, 0.4, 0.3], "offset": [0.0, 0.2, 0.0]}],
     "ph_prop_rain_barrel": [{"shape": "cylinder", "radius": 0.31, "height": 0.9, "offset": [0.0, 0.45, 0.0]}]
   },
-  "walkable_bounds": {"min": [-14.8, -30.3], "max": [31.2, 25.2], "wall_height": 3.0, "wall_thickness": 1.0, "_phase5": "Phase 5 §4.5: max [21,2 → 31,2] (Am Bruch).", "_phase6": "Phase 6 §4.2 K4 / §4.3 S2: min [−11,2 | −20,3] → [−14,8 | −30,3] (Kirchhof, Schuppen-Tasche); ohne eigene Westwand (west_wall false, sie schnitte Ilses Weg) – die Westgrenze bilden extra_walls: die alte Linie x −11,2 (Wand x −12,2…−11,2 wie bisher) nördlich und südlich der Tasche, die Tasche x −14,6…−11,2 · z −7,2…−5,4 (W-Welt: Westkante 0,2 m östlich von §4.3, damit Ilses Weg ≥ 0,4 m außerhalb bleibt) (Wände außen anliegend, Wandstärke 1 m, die Linien liegen auf der Wandmitte) und ihr Nordrand unter dem Schuppen (vor buildings_open hat der Bauplatz keine Kollision).", "west_wall": false},
+  "walkable_bounds": {"min": [-14.8, -30.3], "max": [31.2, 26.0], "_phase9": "Phase 9 §4.6 L17 (W-Welt): max z 25,2 → 26,0 – der Fußstreifen hinter Reihe 4 reicht bis an den neuen Südzaun (wie bei Reihe 3).", "wall_height": 3.0, "wall_thickness": 1.0, "_phase5": "Phase 5 §4.5: max [21,2 → 31,2] (Am Bruch).", "_phase6": "Phase 6 §4.2 K4 / §4.3 S2: min [−11,2 | −20,3] → [−14,8 | −30,3] (Kirchhof, Schuppen-Tasche); ohne eigene Westwand (west_wall false, sie schnitte Ilses Weg) – die Westgrenze bilden extra_walls: die alte Linie x −11,2 (Wand x −12,2…−11,2 wie bisher) nördlich und südlich der Tasche, die Tasche x −14,6…−11,2 · z −7,2…−5,4 (W-Welt: Westkante 0,2 m östlich von §4.3, damit Ilses Weg ≥ 0,4 m außerhalb bleibt) (Wände außen anliegend, Wandstärke 1 m, die Linien liegen auf der Wandmitte) und ihr Nordrand unter dem Schuppen (vor buildings_open hat der Bauplatz keine Kollision).", "west_wall": false},
   "_extra_walls": "Unsichtbare Wände (Höhe/Dicke wie walkable_bounds, mittig auf der Linie): Wald östlich des Kutschwegs. Phase 4: die Sperre hinter der Hütte ersetzt der Zaun des Holunderwinkels mit dem Pförtchen.",
-  "extra_walls": [[[11.2, 9.9], [11.2, 25.2]], [[21.5, 9.6], [31.2, 9.6]], [[21.5, -11.4], [31.2, -11.4]],
+  "extra_walls": [[[11.2, 9.9], [11.2, 26.5]], [[21.5, 9.6], [31.2, 9.6]], [[21.5, -11.4], [31.2, -11.4]],
     [[-2.0, -20.0], [-2.0, -30.3]], [[11.5, -20.0], [11.5, -30.3]],
     [[-11.7, -20.8], [-11.7, -7.7]], [[-15.1, -7.7], [-11.7, -7.7]], [[-15.1, -7.2], [-15.1, -5.4]], [[-15.1, -4.9], [-11.7, -4.9]], [[-11.7, -4.9], [-11.7, 25.2]],
-    [[11.5, 23.3], [21.5, 23.3]], [[22.0, 9.6], [22.0, 23.3]]],
+    [[11.5, 26.5], [21.5, 26.5]], [[22.0, 9.6], [22.0, 26.5]]],
   "_extra_walls_phase7": "Phase 7 §4.6 L3: die beiden letzten Wände liegen hinter dem Lindenacker-Zaun, 0,5 m nach außen versetzt (Süd z 20,1, Ost x 22,0), damit Weststreifen, Mittelgang und Südstreifen ihre Breite behalten; die Westseite deckt die Wand x 11,2 zum Kutschweg.",
   "_extra_walls_phase8": "Phase 8 §4.4 L11: die beiden Lindenacker-Wände folgen dem Zaun (Süd z 23,3, Ost x 22,0 bis z 23,3).",
-  "camera_bounds": {"min": [-11.5, -24.0], "max": [27.0, 23.0], "distance": 22.0, "zoom_min": 12.0, "zoom_max": 24.0},
+  "_extra_walls_phase9": "Phase 9 §4.6 L17: die Lindenacker-Wände folgen dem Zaun (Süd z 26,5, West x 11,2 und Ost x 22,0 bis z 26,5).",
+  "camera_bounds": {"min": [-11.5, -24.0], "max": [27.0, 26.0], "_phase9": "Phase 9 §4.7 (W-Welt, wie Phase 8 L15): max z 23 → 26 – sonst schnitte die Kamera bei Zoom 12 den Kopf am Fußende der Reihe 4 ab.", "distance": 22.0, "zoom_min": 12.0, "zoom_max": 24.0},
   "player_start": {"pos": [-4.4, -3.6], "rot_y": 0.0},
   "hut_interior": {"_comment": "Innenraum-Szene (docs §11, src/world/hut_interior/hut_interior.tscn) fern der Außenwelt; hut_door steht am Marker door_outside der Hütte.", "origin": [0.0, 0.0, -200.0]},
   "_buildings": "Phase 6 §4.1–§4.4: feste Bauplätze (BuildingSite, sichtbar ab buildings_open). footprint = lokales XZ-Rechteck [x, z, w, d], access = Weltpunkt vor der Tür, height = Kollisionshöhe des Footprints. site_rects = Footprint + Rand 0,6 + Zugang (Welt-Rect2 [x, z, w, d]): Zier dort einmal geräumt, Bau-Maske gesperrt.",
@@ -700,6 +729,10 @@
     "gv_l_10": [14.74, 21.53, 142.8],
     "gv_l_11": [17.06, 21.57, 144.8],
     "gv_l_12": [19.33, 21.51, 141.8],
+    "gv_l_13": [12.44, 24.73, 142.8],
+    "gv_l_14": [14.77, 24.79, 145.8],
+    "gv_l_15": [17.03, 24.71, 141.8],
+    "gv_l_16": [19.36, 24.77, 144.8],
     "gv_old_01": [2.67, -1.7, -178.0],
     "gv_old_02": [4.27, -1.9, 176.0],
     "gv_old_03": [6.5, -1.51, -174.0],
@@ -771,7 +804,8 @@
     "vw_59": [7.5, -13.3],
     "vw_60": [-5.9, -13.3],
     "vw_61": [-5.3, -13.9],
-    "vw_62": [-2.7, -13.1]
+    "vw_62": [-2.7, -13.1],
+    "vw_63": [-2.7, -13.1]
   },
   "visitor_routes": {
     "plot_01": ["road_end", "road_mid", "gate_outside", "gate_inside", "vw_01", "gv_plot_01"],
@@ -804,6 +838,10 @@
     "l_10": ["road_end", "road_mid", "gate_outside", "gate_inside", "vw_36", "vw_50", "vw_03", "vw_26", "vw_23", "vw_24", "gv_l_10"],
     "l_11": ["road_end", "road_mid", "gate_outside", "gate_inside", "vw_36", "vw_50", "vw_03", "vw_26", "vw_27", "vw_28", "gv_l_11"],
     "l_12": ["road_end", "road_mid", "gate_outside", "gate_inside", "vw_36", "vw_50", "vw_03", "vw_26", "vw_27", "vw_28", "vw_31", "vw_35", "gv_l_12"],
+    "l_13": ["road_end", "road_mid", "gate_outside", "gate_inside", "vw_36", "vw_50", "vw_03", "vw_26", "vw_23", "vw_24", "vw_30", "vw_34", "gv_l_13"],
+    "l_14": ["road_end", "road_mid", "gate_outside", "gate_inside", "vw_36", "vw_50", "vw_03", "vw_26", "vw_23", "vw_24", "gv_l_14"],
+    "l_15": ["road_end", "road_mid", "gate_outside", "gate_inside", "vw_36", "vw_50", "vw_03", "vw_26", "vw_27", "vw_28", "gv_l_15"],
+    "l_16": ["road_end", "road_mid", "gate_outside", "gate_inside", "vw_36", "vw_50", "vw_03", "vw_26", "vw_27", "vw_28", "vw_31", "vw_35", "gv_l_16"],
     "old_01": ["road_end", "road_mid", "gate_outside", "gate_inside", "vw_02", "gv_old_01"],
     "old_02": ["road_end", "road_mid", "gate_outside", "gate_inside", "vw_02", "gv_old_02"],
     "old_03": ["road_end", "road_mid", "gate_outside", "gate_inside", "vw_02", "gv_old_03"],

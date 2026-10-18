@@ -100,7 +100,7 @@ func test_every_layout_id_exists() -> void:
 		var want := GraveRecord.State.EMPTY if p.section == "yard" else GraveRecord.State.LOCKED
 		assert_eq(world.graveyard.get_grave(p.id).state, want, p.id + " state at the start")
 		assert_true(_section_rect(p.section).has_point(_v2(p.pos)), p.id + " inside its section")
-	assert_eq(layout.plots.size(), 30, "plot_01..plot_12 + h_01..h_06 (Phase 4) + l_01..l_08 (Phase 7) + l_09..l_12 (Phase 8)")
+	assert_eq(layout.plots.size(), 34, "plot_01..plot_12 + h_01..h_06 (Phase 4) + l_01..l_08 (Phase 7) + l_09..l_12 (Phase 8) + l_13..l_16 (Phase 9)")
 	for i: int in range(1, 7):
 		assert_has(world.graveyard.plots_in_section(&"yard"), "plot_%02d" % i)
 	assert_eq(world.graveyard.plots_in_section(&"east"), PackedStringArray(["plot_07", "plot_08", "plot_09"]))
@@ -705,8 +705,8 @@ func test_phase3_system_nodes() -> void:
 	assert_eq(ids, ["corpse_manager", "expansion", "graveyard", "cleanliness", "decorations", "gathering", "ghosts", "workshop",
 			"buildings", "stonemasonry", "ossuary", "chapel", "journal", "night_trade", "village", "relationships", "village_shops",
 			"orders", "specimens", "lectures", "deductions", "npc_life", "visitors", "grave_care", "apprentice", "friendship", "festivals",
-			"wanderers", "night_robber", "night_paths", "hill_requests"],
-			"load order (Phase 4: + journal 40, night_trade 45; Phase 5: + gathering 25, workshop 30, stonemasonry 35; Phase 6: + buildings 32, ossuary 36, chapel 37; Phase 7: + village 50 … deductions 56; Phase 8: + npc_life 70 … night_paths 78; G8 Runde 6: + hill_requests 80)")
+			"wanderers", "night_robber", "night_paths", "hill_requests", "quests", "who_knows", "letters", "stranger"],
+			"load order (Phase 4: + journal 40, night_trade 45; Phase 5: + gathering 25, workshop 30, stonemasonry 35; Phase 6: + buildings 32, ossuary 36, chapel 37; Phase 7: + village 50 … deductions 56; Phase 8: + npc_life 70 … night_paths 78; G8 Runde 6: + hill_requests 80; Phase 9: + quests 81 … stranger 84)")
 	var decorations := world.get_node("Systems/Decorations") as DecorationManager
 	assert_eq(decorations.mask.resource_path, BUILD_MASK)
 	assert_eq(decorations.get_node(decorations.container_path), world.get_node("Decor/Placed"))
@@ -729,7 +729,7 @@ func test_phase3_system_nodes() -> void:
 func test_phase3_obstacles() -> void:
 	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
 	var all := Phase3.obstacles(layout)
-	assert_eq(all.size(), 48, "Phase 6: + the Kirchpforte; Phase 7: + the Lindenacker (10); Phase 8: + row 3 (2)")
+	assert_eq(all.size(), 50, "Phase 6: + the Kirchpforte; Phase 7: + the Lindenacker (10); Phase 8: + row 3 (2); Phase 9: + row 4 (2)")
 	var kinds := {}
 	for o: Dictionary in all:
 		var node := world.get_node_or_null("Entities/" + String(o.id)) as ClearableObstacle
@@ -773,7 +773,8 @@ func test_phase3_obstacles() -> void:
 			"elder/gate_small": 1, "elder/elder_thicket": 2, "elder/sunken_pit": 6, "elder/fence_gap": 1,
 			"bruch/gate_east": 1, "quarry/boulder": 3, "churchyard/gate_church": 1,
 			"linden/gate_small": 1, "linden/stump": 4, "linden/bramble": 3, "linden/rubble": 2,  # Phase 7 §4.6 L2/L4
-			"linden_row3/stump": 1, "linden_row3/bramble": 1})  # Phase 8 §2.8: row 3
+			"linden_row3/stump": 1, "linden_row3/bramble": 1,  # Phase 8 §2.8: row 3
+			"linden_row4/stump_row4": 1, "linden_row4/bramble_row4": 1})  # Phase 9 §2.6 / §4.6 L19: row 4
 	assert_eq(expansion.progress(&"east"), Vector2i(0, 10))
 	assert_eq(expansion.progress(&"north"), Vector2i(0, 11))
 	assert_eq(expansion.progress(&"elder"), Vector2i(0, 10))
@@ -786,7 +787,7 @@ func test_phase3_obstacles() -> void:
 ## under the elders) + 6 graves = 43; a new game's start values only in the yard.
 func test_phase3_tending_spots() -> void:
 	var clean := world.get_node("Systems/Cleanliness") as CleanlinessManager
-	assert_eq(clean.spot_ids().size(), 55, "Phase 7: + the eight Lindenacker graves; Phase 8: + row 3 (4)")
+	assert_eq(clean.spot_ids().size(), 59, "Phase 7: + the eight Lindenacker graves; Phase 8: + row 3 (4); Phase 9: + row 4 (4)")
 	var counts := {}
 	var started := 0
 	for d: Dictionary in layout.dirt_spots:
@@ -826,8 +827,8 @@ func test_phase3_tending_spots() -> void:
 ## checks for sections, blocked plots / stations / trees / fence, grave ring and routes.
 func test_phase3_build_mask_matches_layout() -> void:
 	var mask := load(BUILD_MASK) as BuildMask
-	assert_eq([mask.origin, mask.size, mask.cell], [Vector2(-11.5, -20.0), Vector2i(66, 86), 0.5], "Phase 8 §4.4 L14: rows to z 23")
-	assert_eq(mask.cells.size(), 66 * 86)
+	assert_eq([mask.origin, mask.size, mask.cell], [Vector2(-11.5, -20.0), Vector2i(66, 92), 0.5], "Phase 8 §4.4 L14: rows to z 23; Phase 9 §4.2: to z 26")
+	assert_eq(mask.cells.size(), 66 * 92)
 	var ctx := Ctx.new(tree)
 	ctx.layout = layout
 	var shapes := Phase3.mask_shapes(ctx)
@@ -842,7 +843,7 @@ func test_phase3_build_mask_matches_layout() -> void:
 			var s := mask.section_at(c)
 			per_section[s] = int(per_section.get(s, 0)) + 1
 			if s != 0:
-				assert_true(_section_rect({1: "yard", 2: "east", 3: "north", 4: "elder", 8: "linden", 9: "linden_row3"}[s]).has_point(p), "cell %s in section %d" % [c, s])
+				assert_true(_section_rect({1: "yard", 2: "east", 3: "north", 4: "elder", 8: "linden", 9: "linden_row3", 10: "linden_row4"}[s]).has_point(p), "cell %s in section %d" % [c, s])
 	assert_eq(diff, 0, "build_mask.res is up to date with the layout (rebuild graveyard.tscn)")
 	for s: int in [1, 2, 3]:
 		assert_true(int(per_section.get(s, 0)) > 200, "section %d buildable cells: %d" % [s, per_section.get(s, 0)])
@@ -863,11 +864,13 @@ func test_phase3_build_mask_matches_layout() -> void:
 		# Phase 7 (§4.6 L1, contract positions): l_04 / l_08 stand at the east fence of the Lindenacker
 		# (x 20,5, section edge x 21,5) – their side strip lies beyond it, l_08 (back row) keeps 5 cells.
 		# Phase 8: row 3 (l_09 at the west strip like l_05, but its foot strip ends at the south fence).
-		var ring_min := 4 if String(p.id) == "l_12" else (5 if String(p.id) in ["l_04", "l_08", "l_09", "l_10", "l_11"] else 6)  # l_12: east + south fence
+		# Phase 9: row 4 like row 3 (l_16 at the east and the south fence).
+		var ring_min := 4 if String(p.id) in ["l_12", "l_16"] else (5 if String(p.id) in ["l_04", "l_08", "l_09", "l_10", "l_11", "l_13", "l_14", "l_15"] else 6)  # l_12: east + south fence
 		assert_true(ring_cells >= ring_min, "%s grave ring (%d cells)" % [p.id, ring_cells])
 		var foot := plot.global_transform * Vector3(0, 0, plot.footprint.end.y + 0.55)
 		# Phase 8 (§4.4): row 3 ends at the south fence – its walk is the aisle at the head end.
-		if String(p.section) != "linden_row3":
+		# Phase 9 (§4.2): row 4 is the new south row – the same.
+		if not String(p.section) in ["linden_row3", "linden_row4"]:
 			assert_true(mask.flags_at(mask.world_to_cell(Vector2(foot.x, foot.z))) & BuildMask.ROUTE, p.id + " foot-end strip")
 	for p: Vector2 in [Vector2(0.0, 4.0), Vector2(-0.8, 0.5), Vector2(10.8, -2.2), Vector2(12.3, -2.2), Vector2(4.5, -12.2)]:
 		assert_true(mask.flags_at(mask.world_to_cell(p)) & BuildMask.ROUTE, "route at %s" % p)
@@ -911,7 +914,7 @@ func test_phase3_passages_walkable_once_cleared() -> void:
 ## ground reach Am Bruch (x 31,2 / 27 / 40), two more walls (hedge south, quarry north).
 func test_phase3_bounds_and_camera() -> void:
 	var wb: Dictionary = layout.walkable_bounds
-	assert_eq([wb.min, wb.max], [[-14.8, -30.3], [31.2, 25.2]], "Phase 6 §4.2 K4 / §4.3 S2: min → (−14,8 | −30,3)")
+	assert_eq([wb.min, wb.max], [[-14.8, -30.3], [31.2, 26.0]], "Phase 6 §4.2 K4 / §4.3 S2: min → (−14,8 | −30,3); Phase 9 L17: max z 26 (the new south fence)")
 	var bounds := world.get_node("Colliders/Bounds")
 	var t := float(wb.wall_thickness)
 	assert_almost((bounds.get_node("East") as Node3D).position.x, 31.2 + t * 0.5, 0.001)
@@ -933,8 +936,8 @@ func test_phase3_bounds_and_camera() -> void:
 		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(ray[0], ray[1], 1))
 		assert_false(hit.is_empty(), "wall / fence between %s and %s" % ray)
 	var rig := world.get_node("CameraRig") as CameraRig
-	assert_eq([rig.bounds_min, rig.bounds_max], [Vector2(-11.5, -24.0), Vector2(27.0, 23.0)],
-			"Phase 4 §4.1: min → (−10, −17.5); Phase 5 §4.5: max x → 27; Phase 6 K5 / S3: min → (−11,5 | −24)")
+	assert_eq([rig.bounds_min, rig.bounds_max], [Vector2(-11.5, -24.0), Vector2(27.0, 26.0)],
+			"Phase 4 §4.1: min → (−10, −17.5); Phase 5 §4.5: max x → 27; Phase 6 K5 / S3: min → (−11,5 | −24); Phase 9 §4.7: max z → 26 (row 4)")
 	assert_eq([rig.zoom_min, rig.zoom_max], [12.0, 24.0])
 	for tr: Dictionary in layout.background_trees + layout.forest.trees:
 		for s: Dictionary in layout.sections:
@@ -2713,8 +2716,11 @@ const G8R2_CHANGES: Array[String] = [
 func test_phase8_layout_diff_against_phase7() -> void:
 	var old := Phase8Fixtures.layout_p7()
 	assert_false(old.is_empty(), "layout_p7.json")
+	# Phase 9: the Phase-8 layout as approved (tests/fixtures/phase9/layout_p8.json); Phase 9 has its own diff test.
+	var p8 := Phase9Fixtures.layout_p8()
+	assert_false(p8.is_empty(), "layout_p8.json")
 	var changes: PackedStringArray = []
-	_layout_diff(old, layout, "", changes)
+	_layout_diff(old, p8, "", changes)
 	var allowed := [
 		"+sections[linden_row3]", "+build._phase8", "~build.size",                                  # L10, L14
 		"-fence.segments[[11.5, 9.6], [11.5, 19.6]]", "-fence.segments[[11.5, 19.6], [21.5, 19.6]]",  # L11
@@ -2741,40 +2747,40 @@ func test_phase8_layout_diff_against_phase7() -> void:
 	for c: String in changes:
 		if not c in allowed:
 			unexpected.append(c)
-	assert_eq(unexpected, PackedStringArray(), "only the §4.7 changes to the approved Phase-7 layout")
+	assert_eq(unexpected, PackedStringArray(), "only the §4.7 changes to the approved Phase-7 p8")
 	for c: String in allowed:
 		assert_true(c in changes, "listed change present: " + c)
-	assert_eq(layout.plots.slice(0, old.plots.size()), old.plots, "the approved plots unchanged")
+	assert_eq(p8.plots.slice(0, old.plots.size()), old.plots, "the approved plots unchanged")
 	for key: String in ["old_graves", "road", "hut", "tree", "walkable_bounds", "camera_bounds", "stations", "workyard", "props",
 			"region_portals"]:
-		assert_eq(layout[key], old[key], key + " unchanged (§4.7)")
+		assert_eq(p8[key], old[key], key + " unchanged (§4.7)")
 	# G8 round 2: only the crypt (site, door, site rect, walk) and the two leaf spots beside it moved; the oak stays.
 	for d: Dictionary in old.dirt_spots:
 		if not d.id in ["dirt_y11", "dirt_y12"]:
-			assert_eq(_by_id(layout.dirt_spots, String(d.id)), d, String(d.id) + " unchanged")
+			assert_eq(_by_id(p8.dirt_spots, String(d.id)), d, String(d.id) + " unchanged")
 	for site: Dictionary in old.buildings.sites:
 		if site.id != "site_crypt":
-			assert_eq(_by_id(layout.buildings.sites, String(site.id)), site, String(site.id) + " unchanged")
+			assert_eq(_by_id(p8.buildings.sites, String(site.id)), site, String(site.id) + " unchanged")
 	for door: Dictionary in old.building_doors:
 		if door.id != "door_crypt":
-			assert_eq(_by_id(layout.building_doors, String(door.id)), door, String(door.id) + " unchanged")
-	assert_eq(layout.buildings.soul_lantern, old.buildings.soul_lantern, "soul lantern unchanged")
+			assert_eq(_by_id(p8.building_doors, String(door.id)), door, String(door.id) + " unchanged")
+	assert_eq(p8.buildings.soul_lantern, old.buildings.soul_lantern, "soul lantern unchanged")
 	# L12 (W-Welt, round 1 images p8_24 / p8_03): forest.trees[7] east of the coach road, its crown south of the south
 	# fence; the bush at the south-west corner of row 3 a little west. Every other forest entry unchanged.
 	for i: int in old.forest.trees.size():
 		if i != 7:
-			assert_eq(layout.forest.trees[i], old.forest.trees[i], "forest.trees[%d] unchanged" % i)
-	assert_true(_v2(layout.forest.trees[7].pos).y >= 31.0, "L12: the crown no longer over row 3 (%s)" % [layout.forest.trees[7].pos])
-	assert_eq(layout.forest.bushes.size(), old.forest.bushes.size(), "the same bushes")
+			assert_eq(p8.forest.trees[i], old.forest.trees[i], "forest.trees[%d] unchanged" % i)
+	assert_true(_v2(p8.forest.trees[7].pos).y >= 31.0, "L12: the crown no longer over row 3 (%s)" % [p8.forest.trees[7].pos])
+	assert_eq(p8.forest.bushes.size(), old.forest.bushes.size(), "the same bushes")
 	for i: int in old.forest.bushes.size():
 		if _v2(old.forest.bushes[i].pos) != Vector2(12.4, 23.2):
-			assert_eq(layout.forest.bushes[i], old.forest.bushes[i], "forest.bushes[%d] unchanged" % i)
+			assert_eq(p8.forest.bushes[i], old.forest.bushes[i], "forest.bushes[%d] unchanged" % i)
 	for e: Dictionary in old.entities:
-		assert_eq(_by_id(layout.entities, String(e.id)), e, String(e.id))
+		assert_eq(_by_id(p8.entities, String(e.id)), e, String(e.id))
 	# L10: row 3 at z 21,0 in the grid of rows 1–2 (4,1 m), the same x as the rows above.
 	for k: int in 4:
-		var g := _by_id(layout.plots, P8_ROW3[k])
-		var above := _by_id(layout.plots, "l_0%d" % (k + 5))
+		var g := _by_id(p8.plots, P8_ROW3[k])
+		var above := _by_id(p8.plots, "l_0%d" % (k + 5))
 		assert_true(absf(_v2(g.pos).x - _v2(above.pos).x) <= 0.4 and absf(_v2(g.pos).y - 21.0) <= 0.4, P8_ROW3[k] + " in the grid")
 		assert_eq(String(g.section), "linden_row3")
 	assert_eq(_section_rect("linden_row3"), Rect2(11.5, 19.6, 10.0, 3.2), "row 3 up to the south fence at z 22,8")
@@ -2829,7 +2835,7 @@ func test_phase8_corner_row3_npcs() -> void:
 	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
 	assert_eq(expansion.obstacle_ids(&"linden_row3"), PackedStringArray(["obs_l_stump_9", "obs_l_bramble_9"]))
 	assert_eq(expansion.block_reason(&"linden_row3"), "Das ist noch Gemeindeland.", "§2.8: only after Fenner's grant")
-	assert_true([[11.5, 22.8], [21.5, 22.8]] in layout.fence.segments, "L11: the south fence at z 22,8")
+	assert_true([[11.5, 22.8], [21.5, 22.8]] in Phase9Fixtures.layout_p8().fence.segments, "L11: the south fence at z 22,8 (Phase 9 L17 moves it on to 26,0)")
 	for id: String in P8_NPCS:
 		var npc := world.get_node_or_null("Entities/" + id) as Npc
 		assert_not_null(npc, id)

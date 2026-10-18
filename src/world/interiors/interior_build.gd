@@ -28,6 +28,9 @@ const MOURNER_SCRIPT := "res://src/entities/mourner_set/mourner_set.gd"
 const INTERACTABLE_SCRIPT := "res://src/components/interactable.gd"
 const FLICKER := "res://src/world/atmosphere/flicker_light.gd"
 const STAIR_PORTAL_SCRIPT := "res://src/world/interiors/stair_portal.gd"
+## Phase 9 (§4.6 D11): Brenneisen's things on the inn's corner table; the visit spot of a large request.
+const STRANGER_TABLE_SCRIPT := "res://src/world/interiors/stranger_table.gd"
+const VISIT_SCRIPT := "res://src/world/graveyard/visit_spot.gd"
 const CONFIG_PATH := "res://data/config/interiors/%s.tres"
 const SMOKE_TEXTURE := "res://assets/vfx/ph_vfx_smoke_wisp.png"
 const SMOKE_MATERIAL := "res://assets/materials/mat_vfx_smoke.tres"
@@ -163,6 +166,8 @@ static func build(layout: Dictionary) -> Node3D:
 				marker.rotation_degrees.y = float(w[2])
 				marker.set_meta(&"facing", true)
 			_add(wps, marker, root)
+	if layout.has("phase9"):
+		_phase9(root, furniture, entities, layout)
 	if layout.has("particles"):
 		var parts := _group(root, "Particles")
 		for p: Dictionary in layout.particles:
@@ -745,6 +750,33 @@ static func model_path(asset: String) -> String:
 			return dir + asset + ".glb"
 	push_error("interior asset not found: " + asset)
 	return ""
+
+
+## Phase 9 (§4.4, §4.6 D11, W1-Anschlüsse 5): layout phase9 – stranger_table {id, items [{asset, pos, y, rot_y}]} (a
+## StrangerTable under Furniture: the pieces show while Brenneisen sits at the table) and visit_spots [{id, place}] (a
+## VisitSpot under Entities at the room waypoint `place`).
+static func _phase9(root: Node3D, furniture: Node3D, entities: Node3D, layout: Dictionary) -> void:
+	var cfg: Dictionary = layout.phase9
+	var st: Dictionary = cfg.get("stranger_table", {})
+	if not st.is_empty():
+		var holder := Node3D.new()
+		holder.name = String(st.id)
+		holder.set_script(load(STRANGER_TABLE_SCRIPT))
+		_add(furniture, holder, root)
+		var k := 0
+		for it: Dictionary in st.get("items", []):
+			k += 1
+			var piece := _instance(String(it.asset), "%s_%d" % [String(it.asset).trim_prefix("ph_prop_"), k])
+			piece.transform = _xform(_v2(it.pos), float(it.get("rot_y", 0.0)), float(it.get("y", 0.0)))
+			_add(holder, piece, root)
+	for v: Dictionary in cfg.get("visit_spots", []):
+		var w: Array = layout.waypoints[String(v.place)]
+		var spot := Node3D.new()
+		spot.name = String(v.id)
+		spot.set_script(load(VISIT_SCRIPT))
+		spot.set("place_id", StringName(v.place))
+		spot.position = Vector3(float(w[0]), float(w[3]) if w.size() > 3 else 0.0, float(w[1]))
+		_add(entities, spot, root)
 
 
 static func _instance(asset: String, node_name: String) -> Node3D:
