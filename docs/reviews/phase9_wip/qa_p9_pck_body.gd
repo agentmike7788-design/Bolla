@@ -165,6 +165,17 @@ func _check_world() -> void:
 	for id: String in ["obs_l_stump_13", "obs_l_bramble_13"]:
 		expansion.clear(id, player.inventory)
 	_check(expansion.is_unlocked(&"linden_row4"), "row 4 open")
+	# The delivery of day 63 (on the bier in the fixture): its pockets, buried in row 4 – the bier is free for day 64.
+	var care0 := tree.get_first_node_in_group(&"corpse_care") as CorpseCare
+	for rec: CorpseRecord in world.corpse_manager.records():
+		if rec.location == CorpseRecord.LOCATION_BURIED:
+			continue
+		care0.exam_step(rec.id, &"pockets")
+		for id: String in ["l_13", "l_14", "l_15", "l_16"]:
+			if world.graveyard.get_grave(id).state == GraveRecord.State.EMPTY:
+				world.graveyard.dig(id)
+				if world.graveyard.bury(id, rec.id):
+					break
 	await _run_to(64, 7 * 60)
 	var r := world.corpse_manager.try_daily_delivery(64)
 	if r == null:

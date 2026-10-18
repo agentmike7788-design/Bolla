@@ -485,7 +485,7 @@
 									"sn:large_requests_done",
 									"i:0",
 									"sn:large_requests_half",
-									"i:1",
+									"i:0",
 									"sn:large_requests_failed",
 									"i:0",
 									"sn:large_request_parts",
@@ -14283,14 +14283,21 @@
 							},
 							"s:accepted_day",
 							{
-								"args": [],
+								"args": [
+									"s:hrl_lantern_path",
+									"i:66"
+								],
 								"type": "Dictionary"
 							},
 							"s:posted_day",
 							{
 								"args": [
 									"s:hr_lenz_ghost",
-									"i:65"
+									"i:65",
+									"s:hrv_bridge_stones",
+									"i:66",
+									"s:hrl_lantern_path",
+									"i:66"
 								],
 								"type": "Dictionary"
 							},
@@ -14325,21 +14332,7 @@
 							"i:66",
 							"s:log",
 							{
-								"args": [
-									{
-										"args": [
-											"s:id",
-											"sn:hrl_lantern_path",
-											"s:day",
-											"i:66",
-											"s:state",
-											"sn:half",
-											"s:title",
-											"s:Licht am Kutschweg"
-										],
-										"type": "Dictionary"
-									}
-								],
+								"args": [],
 								"elem_type": "Dictionary",
 								"type": "Array"
 							},
@@ -14347,38 +14340,42 @@
 							{
 								"args": [
 									"s:gate",
-									[],
+									[
+										"s:hrl_lantern_path"
+									],
 									"s:village",
-									[]
+									[
+										"s:hrv_bridge_stones"
+									]
 								],
 								"type": "Dictionary"
 							},
 							"s:parts",
 							{
-								"args": [],
+								"args": [
+									"s:hrl_lantern_path",
+									[
+										true,
+										true,
+										false
+									]
+								],
 								"type": "Dictionary"
 							},
 							"s:large_refill",
 							{
-								"args": [
-									"s:gate",
-									[
-										"i:67"
-									],
-									"s:village",
-									[
-										"i:67"
-									]
-								],
+								"args": [],
 								"type": "Dictionary"
 							},
 							"s:large_ended",
 							{
 								"args": [
-									"s:hrl_lantern_path",
-									"i:65",
-									"s:hrv_paul_day",
-									"i:65"
+									"s:hrl_crosses",
+									"i:64",
+									"s:hrv_inn_cellar",
+									"i:64",
+									"s:hrl_restless",
+									"i:66"
 								],
 								"type": "Dictionary"
 							},
@@ -14389,12 +14386,25 @@
 							},
 							"s:large_progress",
 							{
-								"args": [],
+								"args": [
+									"s:hrl_lantern_path",
+									[
+										"i:0",
+										"i:0",
+										"i:0"
+									]
+								],
 								"type": "Dictionary"
 							},
 							"s:large_targets",
 							{
-								"args": [],
+								"args": [
+									"s:hrl_lantern_path",
+									{
+										"args": [],
+										"type": "Dictionary"
+									}
+								],
 								"type": "Dictionary"
 							}
 						],
@@ -14829,7 +14839,7 @@
 									{
 										"args": [
 											"sn:coin",
-											"i:72"
+											"i:71"
 										],
 										"type": "Dictionary"
 									},
@@ -14876,7 +14886,7 @@
 		"day": 66,
 		"game_version": "0.2.0-phase2",
 		"minute_of_day": 870,
-		"saved_unix": 1792306665,
+		"saved_unix": 1792309489,
 		"scene": "res://src/world/graveyard/graveyard.tscn"
 	}
 }
