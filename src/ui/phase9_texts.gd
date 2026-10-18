@@ -183,6 +183,7 @@ const DAY_STRANGER_CASE := "der Koffer"
 const DAY_STRANGER_BRIBE := "er bot Geld"
 
 # --- Grabregister (§7.6) ------------------------------------------------------------------------------------------------
+const REGISTER_LETTER_HEAD := "Brief"
 const REGISTER_LETTER := "✉"
 const REGISTER_LETTER_TIP := "Ein Brief gehört zu diesem Toten."
 const REGISTER_LIGHT := "Licht: %s"

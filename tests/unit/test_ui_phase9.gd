@@ -489,6 +489,53 @@ func test_chapter_panel_who_knows_when() -> void:
 	assert_eq(panel.goal_label.text, "Johann hat sich nicht beeilt.")
 
 
+# --- Grabregister (§7.6) --------------------------------------------------------------------------------------------------
+
+func test_register_letter_column_and_light_note() -> void:
+	var entry := {"name": "Kaspar Dorn", "age": 54, "grave_id": "h_06", "kin": "", "care": "", "letter": true,
+			"light": "Licht: 2. Julmond 1833"}
+	var cells := GraveRegisterPanel.cells(entry, false, true, true)
+	assert_eq(cells[cells.size() - 1], "✉", "the Brief column")
+	assert_eq(cells[cells.size() - 2], "Licht: 2. Julmond 1833", "the list's date in the last column")
+	entry.erase("letter")
+	cells = GraveRegisterPanel.cells(entry, false, true, true)
+	assert_eq(cells[cells.size() - 1], "–")
+	assert_eq(GraveRegisterPanel.cells(entry, false, true, false).size(), cells.size() - 1, "no column before p9_open")
+
+
+# --- Handgriffe (W1-Anschluss 10) ------------------------------------------------------------------------------------------
+
+func test_letter_clips_show_their_hand_props_and_park_the_shovel() -> void:
+	var cfg := Database.config(&"tool_anim_config") as ToolAnimConfig
+	for key: StringName in [&"desk_read_book", &"desk_write_letter", &"stove_burn_letter", &"grave_kneel_read", &"grave_read_aloud",
+			&"grave_lay_letter", &"grave_take_soil", &"letter_read"]:
+		assert_true(cfg.action_clips.has(key), "action clip " + String(key))
+	var p := (load("res://src/entities/player/player.tscn") as PackedScene).instantiate() as Player
+	tree.root.add_child(p)
+	p.set_physics_process(false)
+	await tree.physics_frame
+	for clip: StringName in cfg.hold_props:
+		for prop: PackedStringArray in cfg.hold_props_of(clip):
+			assert_not_null(p.model.find_child(prop[0], true, false), "%s: marker %s on the rig" % [clip, prop[0]])
+			assert_true(ResourceLoader.exists(prop[1]), "%s: %s" % [clip, prop[1]])
+	var anim := p._anim
+	assert_true(anim.has_animation(&"read_letter"), "the P7 clip")
+	assert_true(p.start_timed_action("Brief lesen", 5, func() -> void: pass, true, ToolAnimConfig.clip_for(&"letter_read")))
+	for i: int in 3:
+		p._physics_process(1.0 / 30.0)
+		anim.advance(1.0 / 30.0)
+	assert_eq(anim.current_animation, &"read_letter")
+	assert_eq(p._animator.hold_props_shown(), PackedStringArray(["ph_tool_letter_open"]), "the open letter in the hand")
+	assert_true(p._animator.props.shovel_parked(), "the shovel stays on the back")
+	p.cancel_timed_action()
+	for i: int in 3:
+		p._physics_process(1.0 / 30.0)
+		anim.advance(1.0 / 30.0)
+	assert_eq(p._animator.hold_props_shown(), PackedStringArray(), "put away")
+	assert_false(p._animator.props.shovel_parked(), "the shovel back on its bone")
+	p.free()
+
+
 # --- debug (§6) ---------------------------------------------------------------------------------------------------------
 
 func test_debug_commands_phase9() -> void:
