@@ -501,6 +501,8 @@ func test_register_letter_column_and_light_note() -> void:
 	cells = GraveRegisterPanel.cells(entry, false, true, true)
 	assert_eq(cells[cells.size() - 1], "–")
 	assert_eq(GraveRegisterPanel.cells(entry, false, true, false).size(), cells.size() - 1, "no column before p9_open")
+	# CARE_STRAW: the grave tooltip names Gesa's straw bouquet instead of fresh flowers
+	assert_eq(Phase8Texts.grave_lines({"flowers": &"fresh", "fresh_left": 900, "straw": true}), PackedStringArray([Phase9Texts.TIP_STRAW]))
 
 
 # --- Handgriffe (W1-Anschluss 10) ------------------------------------------------------------------------------------------

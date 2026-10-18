@@ -187,6 +187,8 @@ const DAY_STRANGER_CASE := "der Koffer"
 const DAY_STRANGER_BRIBE := "er bot Geld"
 
 # --- Grabregister (§7.6) ------------------------------------------------------------------------------------------------
+## Grave tooltip (map): Gesa's straw bouquet (GraveCare CARE_STRAW, two days like fresh flowers).
+const TIP_STRAW := "Strohblumen liegen da"
 const REGISTER_LETTER_HEAD := "Brief"
 const REGISTER_LETTER := "✉"
 const REGISTER_LETTER_TIP := "Ein Brief gehört zu diesem Toten."
