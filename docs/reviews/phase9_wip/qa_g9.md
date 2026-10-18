@@ -9,6 +9,25 @@ Neue / geänderte Dateien (nur QA-Besitz):
 - `tests/integration/test_phase9_qa.gd` – Fixture-Kandidat lädt + Roundtrip, `QuestLog.entries` ≤ 4 ms
 - `docs/reviews/phase9_wip/qa_p9_cpu.gd` (CPU-Sonde), `qa_p9_pck.gd` + `qa_p9_pck_body.gd` (pck-Prüfung), `slot_p9_mid_h4.json` (Fixture-Kandidat), `cpu_micro_p9.txt`, `render_stats_p9_qa.txt`
 
+## 0. Nachtrag: Bestätigung nach dem Merge des Restbedarf-Zweigs
+
+Der Restbedarf-Zweig `5d5235f` (`claude/last-gravekeeper-dev-aos21h`) ist in `vs/p9-qa` gemergt, danach lief `--import`.
+
+| Lauf | Ergebnis |
+|---|---|
+| Phase-9-Bots, 9 Strategien | alle grün, Zahlen wie vorher: Kapitel, Enden, Münzen, Pietät gleich. Die verdeckten Grab-Prompts gingen von 8 auf 2–3 je Lauf zurück. |
+| pck (neu exportiert, Compatibility) | 38/38 PASS (`pck/pck_check_p9_merged.txt`) |
+| CPU-Sonde | Anteil 0,13–0,17 ms pro Bild, Wächter jetzt eigene Figur 0,13 ms; `QuestLog.entries` 0,47 ms; Spielstand 300 kB, Laden 0,53 s (`cpu_micro_p9_merged.txt`) |
+
+Durch den Restbedarf erledigt oder entschärft:
+- **QA9-04 teilweise:** „Datum vergleichen“ kommt jetzt vor den Blumen. „Brief am Grab vorlesen“ und die Kerze verdecken weiter.
+- **A9-3:** Johann sitzt jetzt mittig auf der Stirnseite des Karrens.
+- **A9-4:** Hannes Weg ist frei, Erlen und Busch sind versetzt.
+- **Nachtwächter:** jetzt eigene Figur.
+- **Brenneisen-Panel:** zeigt alle vier Angebote.
+
+**Offen bleiben:** QA9-01, QA9-02 (in jedem Lauf gesehen), QA9-03 (jetzt bei stay9/silent9/letters9 beobachtet), QA9-05, QA9-07, QA9-08, QA9-F1, QA9-F2, QA9-T1, A9-1, A9-2, A9-5…A9-8 sowie die Entscheidungen QA9-B1, QA9-B2, QA9-H1 und P9-1.
+
 ## 1. Playthrough-Bot (§10)
 
 `Phase9Bot` spielt den Phase-9-Bogen auf der echten Welt aus den v7-Endständen. Echte Wege und Eingaben:
