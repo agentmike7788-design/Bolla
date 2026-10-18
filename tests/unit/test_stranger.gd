@@ -499,6 +499,56 @@ func test_save_load() -> void:
 	other.free()
 
 
+# --- W2 Anschlüsse 14: the schedule's day flags -------------------------------------------------------
+
+func _flags() -> Array:
+	return [GameState.get_flag(Stranger.FLAG_DAY, null), GameState.get_flag(Stranger.FLAG_ARRIVE_DAY, null)]
+
+
+func test_w2_schedule_flags_follow_the_visits() -> void:
+	GameState.clear_flag(Stranger.FLAG_DAY)
+	GameState.clear_flag(Stranger.FLAG_ARRIVE_DAY)
+	stranger.schedule_flags(64)
+	assert_eq(_flags(), [null, null], "not before his first visit")
+	stranger.schedule_flags(65)
+	assert_eq(_flags(), [65, 65], "B3: here, over the bridge at 09:30")
+	stranger.schedule_flags(66)
+	assert_eq(_flags(), [66, 65], "the second day: no arrival")
+	stranger.schedule_flags(68)
+	assert_false(ScheduleResolver.is_today(Stranger.FLAG_DAY, 68), "between the visits")
+	stranger.schedule_flags(70)
+	assert_eq(_flags(), [70, 70], "the second visit")
+	# The real schedule shows him by the flags: the gate 14:10–15:30, nobody on a day without a visit.
+	var sched := load("res://data/npc/stranger_schedule.tres") as NpcSchedule
+	assert_eq(ScheduleResolver.entry_at(sched, 870, 70).path[-1], "stranger_gate")
+	assert_false(ScheduleResolver.entry_at(sched, 870, 68).visible)
+	# After the day of his ending he never comes again.
+	_at(72, 870)
+	GameState.set_flag(&"trader_known", true)
+	stranger.resolve(&"ilse")
+	stranger.schedule_flags(72)
+	assert_eq(_flags()[0], 72, "the day of the ending: still here")
+	stranger.schedule_flags(75)
+	assert_false(ScheduleResolver.is_today(Stranger.FLAG_DAY, 75), "gone")
+	assert_false(ScheduleResolver.is_today(Stranger.FLAG_ARRIVE_DAY, 75))
+
+
+func test_w2_schedule_flags_from_the_time_tick() -> void:
+	_at(74, 600)
+	assert_false(ScheduleResolver.is_today(Stranger.FLAG_DAY, 74))
+	TimeManager.set_time(75, 0)
+	assert_eq(_flags(), [75, 75], "the third visit from midnight on (before the morning)")
+
+
+func test_w2_schedule_flags_never_before_p9_open() -> void:
+	GameState.set_flag(&"p9_open", false)
+	GameState.clear_flag(Stranger.FLAG_DAY)
+	GameState.clear_flag(Stranger.FLAG_ARRIVE_DAY)
+	for d: int in range(60, 90):
+		stranger.schedule_flags(d)
+	assert_eq(_flags(), [null, null])
+
+
 func _on_event(kind: StringName, detail: String) -> void:
 	events.append([kind, detail])
 

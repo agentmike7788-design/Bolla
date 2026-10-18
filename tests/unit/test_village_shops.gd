@@ -320,3 +320,29 @@ func test_real_shop_data_matches_the_contract() -> void:
 	for v: VillagerData in Phase7Fixtures.villagers():
 		if v.shop_id != &"":
 			assert_eq((Database.shop(v.shop_id) as ShopData).npc_id, v.npc_id, String(v.shop_id))
+
+
+## W2 „Anschlüsse“ 17 (docs/PHASE9_DESIGN.md §2.2.6): Quast leaves drops for Johann from his shop (ending B) – a row the
+## shop sells loses today's stock, a row it only buys (fever_tincture) takes one more today; the dialogue action shop_give.
+func test_w2_give_away_from_the_shop() -> void:
+	assert_eq(shops.bought_left(&"surgeon", &"fever_tincture"), 3)
+	assert_true(shops.give_away(&"surgeon", &"fever_tincture", 1))
+	assert_eq(shops.bought_left(&"surgeon", &"fever_tincture"), 4, "he is short of one: buys one more today")
+	assert_true(shops.give_away(&"surgeon", &"prep_jar", 1))
+	assert_eq(shops.stock_left(&"surgeon", &"prep_jar"), 3, "a sold row: one less today")
+	assert_false(shops.give_away(&"surgeon", &"linen", 1), "no such row")
+	assert_false(shops.give_away(&"nobody", &"fever_tincture", 1))
+	assert_false(shops.give_away(&"surgeon", &"fever_tincture", 0))
+	assert_eq(trades, [], "no trade, no coins")
+	_at(4, 360)
+	assert_eq(shops.bought_left(&"surgeon", &"fever_tincture"), 3, "only today")
+	DialogueActions.apply("shop_give:surgeon:fever_tincture:1", {})
+	assert_eq(shops.bought_left(&"surgeon", &"fever_tincture"), 4, "the dialogue action")
+	var node: Variant = null
+	var d: Resource = Database.dialogue(&"v_surgeon")
+	for n: Variant in (d.get(&"nodes") as Array if d != null else []):
+		if n.id == &"p9_drops":
+			node = n
+	assert_not_null(node, "P6's node p9_drops")
+	if node != null:
+		assert_has(node.actions, "shop_give:surgeon:fever_tincture:1")

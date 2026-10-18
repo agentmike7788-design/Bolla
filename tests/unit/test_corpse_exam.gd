@@ -105,6 +105,23 @@ func test_generic_candidates_follow_traits_and_cause() -> void:
 	assert_eq(_ids(CorpseExam.candidates(plain, &"pockets", all_finds, null, exam)), [])
 
 
+## W2 „Anschlüsse“ 17 (docs/PHASE9_DESIGN.md §2.4.2): a corpse with a letter of Letters carries that letter – the
+## Phase-4 find f_letter is not added; older corpses (no letter_id) keep it. The trait still shows after the pockets.
+func test_w2_pocket_letter_replaces_the_phase4_find() -> void:
+	var r := _record([&"valuables", &"letter"], &"fever", 1.0, "corpse_p9")
+	r.letter_id = &"lg_priest"
+	assert_true(CorpseExam.pocket_letter_replaces(r, &"letter"))
+	assert_false(CorpseExam.pocket_letter_replaces(r, &"valuables"))
+	assert_eq(_ids(CorpseExam.candidates(r, &"pockets", all_finds, null, exam)), [&"f_valuables"], "no f_letter beside the letter")
+	care.exam_step(r.id, &"pockets")
+	assert_false(r.finds_revealed.has(&"f_letter"))
+	assert_has(r.traits_revealed, &"letter", "the trait card still shows")
+	assert_false(journal.added.any(func(a: Array) -> bool: return a[0] == &"c_warning_letter"), "no Phase-4 clue")
+	var old := _record([&"letter"], &"fever", 1.0, "corpse_p8")
+	assert_false(CorpseExam.pocket_letter_replaces(old, &"letter"))
+	assert_eq(_ids(CorpseExam.candidates(old, &"pockets", all_finds, null, exam)), [&"f_letter"], "older corpses keep the find")
+
+
 func test_story_finds_are_added_and_replace_generic_ones() -> void:
 	var s1 := _story_record(&"s1_quendel")
 	var story := Phase4Fixtures.story(&"s1_quendel")

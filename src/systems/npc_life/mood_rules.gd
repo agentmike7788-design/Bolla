@@ -9,12 +9,15 @@ extends RefCounted
 ## (lecture_rumor, specimen_sold_villager, grave_disturbed …) for the rumor rules.
 ## Rule fields: trigger, mood, npcs (empty = everyone / the circle / the person), days (0 today, 1 yesterday,
 ## 2 today or yesterday), events (rumor only).
+## Phase 9 (docs/PHASE9_DESIGN.md §2.2.7, W1-Anschlüsse 13): &"spared:<event>" → npc ids for whom the rumor `event`
+## does not count (ending C spares the confidant of H5; NpcLife.mood_events fills it).
 
 const FALLBACK := &"plain"
 const KEY_FESTIVAL := &"festival"
 const KEY_SICK_LIGHT := &"sick_light"
 const PREFIX_MOURNING := "mourning:"
 const PREFIX_STEP := "step:"
+const PREFIX_SPARED := "spared:"
 
 
 ## Deterministic from day and npc_id: a stable hash picks a mood by the weights (unknown / zero weights:
@@ -66,11 +69,23 @@ static func matches(rule: Dictionary, npc_id: StringName, day: int, events: Dict
 			return happened(events, StringName(PREFIX_STEP + String(npc_id)), day, days)
 		&"rumor":
 			for ev: Variant in rule.get("events", []):
-				if happened(events, StringName(str(ev)), day, days):
+				if happened(events, StringName(str(ev)), day, days) and not spared(events, StringName(str(ev)), npc_id):
 					return true
 			return false
 		&"sick_light":
 			return happened(events, KEY_SICK_LIGHT, day, days)
+	return false
+
+
+## Phase 9: `npc_id` is spared from the rumor `event` (events[&"spared:<event>"] lists them).
+static func spared(events: Dictionary, event: StringName, npc_id: StringName) -> bool:
+	var key := PREFIX_SPARED + String(event)
+	var raw: Variant = events.get(StringName(key), events.get(key, null))
+	if not (raw is Array or raw is PackedStringArray):
+		return false
+	for n: Variant in raw:
+		if StringName(str(n)) == npc_id:
+			return true
 	return false
 
 

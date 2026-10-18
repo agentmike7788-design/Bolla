@@ -65,7 +65,9 @@ const PLAN_BLOCKED := &"blocked"
 # (Village.mourning_house_for), story corpses by STORY_KIN.
 const FLAG_VILLAGE_OPEN := &"village_open"
 const HAGEDORN_HOUSE := &"cottage_hagedorn"
-const STORY_KIN: Dictionary[StringName, StringName] = {&"d1_hagedorn": &"cottage_hagedorn", &"d2_ott": &"house_ott"}
+## Phase 9 (§2.7, W1-Anschlüsse 15): + D3 Johann Sieber → house_sieber.
+const STORY_KIN: Dictionary[StringName, StringName] = {&"d1_hagedorn": &"cottage_hagedorn", &"d2_ott": &"house_ott",
+		&"d3_sieber": &"house_sieber"}
 
 @export var save_id: String = "corpse_manager"
 @export var save_order: int = 0

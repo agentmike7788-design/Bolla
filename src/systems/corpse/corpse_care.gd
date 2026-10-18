@@ -389,7 +389,8 @@ func _reveal_traits(record: CorpseRecord, step: StringName, cands: Array[FindDat
 	for t: StringName in record.traits:
 		if covered.has(t) or record.traits_revealed.has(t):
 			continue
-		if StringName(cfg.trait_steps.get(t, &"")) == step and not _has_generic_find(t):
+		if StringName(cfg.trait_steps.get(t, &"")) == step \
+				and (not _has_generic_find(t) or CorpseExam.pocket_letter_replaces(record, t)):
 			record.traits_revealed.append(t)
 
 

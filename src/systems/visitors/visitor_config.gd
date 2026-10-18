@@ -25,6 +25,9 @@ extends Resource
 @export var wait_until_minute: int = 990
 @export var wait_minutes_villager: int = 18
 @export var leave_after_talk_minutes: int = 3
+## Phase 9 (docs/PHASE9_DESIGN.md §2.2.5, W1-Anschlüsse 18): a kin with a fixed interval (Visitors.set_kin_interval –
+## Johann Sieber from H4) stands at the grave in this window (10:00–11:00): there at x, gone from the grave at y.
+@export var interval_window: Vector2i = Vector2i(600, 660)
 ## G8 Runde 1 (B8-1): every visitor waits for a word after the look (the contract had: only with a tip or a wish).
 @export var wait_always: bool = true
 ## G8 Runde 1 (B8-1): the gate bell (GateBell) rings when a visitor comes up; HUD note only while the gravekeeper is on

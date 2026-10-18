@@ -23,6 +23,9 @@ extends Node
 ##   without the chain the step's choice actions are run directly. gone() = his chain has ended (or he left after his
 ##   last visit).
 ## - Effects are direct calls (Piety, Reputation, Relationships, NpcLife, JournalManager, Orders, Specimens, Quests).
+## - **Schedule (W1-Anschlüsse 14):** the today_flags of P6's schedule data/npc/stranger_schedule.tres – stranger_day =
+##   the calendar day on every day of a visit (until the day of his ending), stranger_arrive_day on the first day of a
+##   visit (over the Holderbrücke at 09:30); schedule_flags(day) at every tick from 00:00.
 
 const GROUP := &"stranger"
 const ANSWERS: Array[StringName] = [&"frank", &"evade", &"refuse"]
@@ -43,6 +46,9 @@ const SOIL_ITEM := &"soil_pouch"
 const SOIL_OFFER := &"so_soil"
 const SPECIMEN_OFFER := &"so_specimen"
 const MORNING_MINUTE := 360
+## W1-Anschlüsse 14: the today_flags of data/npc/stranger_schedule.tres (= the calendar day).
+const FLAG_DAY := &"stranger_day"
+const FLAG_ARRIVE_DAY := &"stranger_arrive_day"
 const QUEST_CASE := &"q_case"
 const STEP_END := &"k5"
 const MAIN_QUEST := &"q_who_knows"
@@ -494,6 +500,16 @@ func apply_minute(day: int, minute: int) -> void:
 		EventBus.stranger_event.emit(&"arrived", "gate")
 
 
+## The schedule's day flags (§2.5.1): stranger_day while a visit runs (also on the day of his ending – after it he never
+## comes again), stranger_arrive_day on a visit's first day. Idempotent; a flag of another day stays (it is not today).
+func schedule_flags(day: int) -> void:
+	var open_day := _open_day()
+	var v := StrangerRules.visit_of(day, open_day, _cfg()) if open_day >= 0 else 0
+	var here := v != 0 and not _left and not (_ending != &"" and day > _ending_day)
+	_day_flag(FLAG_DAY, day, here)
+	_day_flag(FLAG_ARRIVE_DAY, day, here and StrangerRules.visit_start(open_day, v, _cfg()) == day)
+
+
 # --- save --------------------------------------------------------------------------------------------
 
 ## §5.1 {visits, answers, sold, bribe, case, ending, rumors} + asked, refused_once, case_opened, ending_day, left,
@@ -564,6 +580,17 @@ func _on_time_tick(day: int, minute: int) -> void:
 	if minute >= MORNING_MINUTE and day > _morning_day:
 		apply_morning(day)
 	apply_minute(day, minute)
+	schedule_flags(day)
+
+
+## Sets `flag` to `day` when `on`; clears it when it still names today but no longer holds.
+static func _day_flag(flag: StringName, day: int, on: bool) -> void:
+	var value: Variant = GameState.get_flag(flag, null)
+	var is_today := (value is int or value is float) and int(value) == day
+	if on and not is_today:
+		GameState.set_flag(flag, day)
+	elif not on and is_today:
+		GameState.clear_flag(flag)
 
 
 func _apply_rumors(day: int) -> void:

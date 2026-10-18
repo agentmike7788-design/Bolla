@@ -50,7 +50,9 @@ const ACTION_GRAMMAR := ("^(set_flag:[a-z_0-9]+(:.+)?|clear_flag:[a-z_0-9]+|take
 		+ "|letter_read_aloud(:[a-z_]+)?|letter_post:(peddler|carter)|stranger_answer:(frank|evade|refuse)|stranger_offers"
 		+ "|stranger_bribe:(yes|no)|stranger_resolve:(fenner|deal|ilse)|large_turn_in:[a-z_]+|rep_event:[a-z_]+|piety_event:[a-z_]+"
 		+ "|goodwill:[a-z_]+:-?\\d+|letter_errand:[a-z_0-9]+|letter_ask_postage:[a-z_0-9]+|stranger_take_case|stranger_open_case"
-		+ "|stranger_give_case:(stranger|fenner))$")
+		+ "|stranger_give_case:(stranger|fenner)"
+		# W2 „Anschlüsse“ (W1-Anschlüsse 17)
+		+ "|shop_give:[a-z_]+:[a-z_0-9]+:\\d+)$")
 ## Negations the data may use (flag-like conditions, docs/PHASE4_DESIGN.md §3.4).
 const NEGATABLE: PackedStringArray = ["!flag:", "!piety_tier:", "!flag_night:", "!trader_talks_gte:", "!clue_known:", "!met:",
 		"!rel_tier:", "!alive:", "!flag_today:", "!flag_days_gte:", "!step_gte:", "!apprentice_level_gte:",
@@ -3431,7 +3433,9 @@ const P8_FLAGS: PackedStringArray = ["visit_smith_day", "visit_grocer_day", "vis
 		"night_np_ott_priest_day", "night_np_kehr_priest_day", "night_np_ott_surgeon_day", "night_np_kehr_surgeon_day",
 		"night_np_ott_washer_day", "beggar_gate_day", "peddler_day", "apprentice_off_day",
 		# W3 (QA8-03): the meet orders of Fenner 2 and Rosine 3 bring them to their place.
-		"meet_mayor_day", "meet_innkeeper_day"]
+		"meet_mayor_day", "meet_innkeeper_day",
+		# W2 „Anschlüsse“ (W1-Anschlüsse 18): Liesel's vigil at the Siebers (np_sieber), like at the Otts – Phase 9 only.
+		"night_np_sieber_washer_day"]
 
 
 func _sched(npc: String) -> NpcSchedule:

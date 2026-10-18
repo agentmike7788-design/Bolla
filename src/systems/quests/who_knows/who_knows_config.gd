@@ -31,3 +31,12 @@ extends Resource
 @export var witness_count: int = 3
 ## §2.6: the held-back plot of the fourth row.
 @export var reserve_section: StringName = &"linden_row4"
+## W2 „Anschlüsse" (W1-Anschlüsse 16) – values that lived in the code:
+## the chain in Quests; ending A: Johann is gone (sieber_gone) this long after the start of his walk; ending B: the
+## confidant of H5 gains this; the story dead whose death a night path knows (story → NightPathData id), else the flag
+## that holds the death day (D2 Gerhard Ott: night_paths.deaths.np_ott / ott_dead).
+@export var quest_id: StringName = &"q_who_knows"
+@export var gone_after_minutes: int = 40
+@export var b_confidant_rel: int = 3
+@export var death_paths: Dictionary[StringName, StringName] = {&"d2_ott": &"np_ott"}
+@export var death_flags: Dictionary[StringName, StringName] = {&"d2_ott": &"ott_dead"}

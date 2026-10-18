@@ -307,8 +307,62 @@ path = PackedStringArray("v_dorn_door")
 visible = false
 region = &"village"
 
+[sub_resource type="Resource" id="p9_washer_vigil_01"]
+script = ExtResource("1_rnbvr")
+start_minute = 145
+travel_minutes = 15
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_dorn_door", "v_linden", "v_anger_w", "v_bridge", "v_sieber_door")
+region = &"village"
+today_flag = &"night_np_sieber_washer_day"
+
+[sub_resource type="Resource" id="p9_washer_vigil_02"]
+script = ExtResource("1_rnbvr")
+start_minute = 160
+animation = &"knock"
+path = PackedStringArray("v_sieber_door")
+region = &"village"
+today_flag = &"night_np_sieber_washer_day"
+
+[sub_resource type="Resource" id="p9_washer_vigil_03"]
+script = ExtResource("1_rnbvr")
+start_minute = 161
+activity = &"home"
+path = PackedStringArray("v_sieber_door")
+visible = false
+region = &"village"
+today_flag = &"night_np_sieber_washer_day"
+
+[sub_resource type="Resource" id="p9_washer_vigil_04"]
+script = ExtResource("1_rnbvr")
+start_minute = 330
+path = PackedStringArray("v_sieber_door")
+dialogue_id = &"v_washer"
+region = &"village"
+today_flag = &"night_np_sieber_washer_day"
+
+[sub_resource type="Resource" id="p9_washer_vigil_05"]
+script = ExtResource("1_rnbvr")
+start_minute = 332
+travel_minutes = 15
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_sieber_door", "v_bridge", "v_anger_w", "v_linden", "v_dorn_door")
+region = &"village"
+today_flag = &"night_np_sieber_washer_day"
+
+[sub_resource type="Resource" id="p9_washer_vigil_06"]
+script = ExtResource("1_rnbvr")
+start_minute = 347
+activity = &"home"
+path = PackedStringArray("v_dorn_door")
+visible = false
+region = &"village"
+today_flag = &"night_np_sieber_washer_day"
+
 [resource]
 script = ExtResource("2_fh6o0")
 npc_id = &"washer"
 display_name = "Liesel Dorn"
-entries = Array[ExtResource("1_rnbvr")]([SubResource("Resource_m5ffh"), SubResource("Resource_gkglj"), SubResource("Resource_f4woc"), SubResource("Resource_7t3c7"), SubResource("Resource_gsq4f"), SubResource("Resource_ye1ld"), SubResource("Resource_j1n20"), SubResource("Resource_nb3dv"), SubResource("Resource_7ggjs"), SubResource("Resource_wymwo"), SubResource("p8_washer_01"), SubResource("p8_washer_02"), SubResource("p8_washer_03"), SubResource("p8_washer_04"), SubResource("p8_washer_05"), SubResource("p8_washer_06"), SubResource("p8_washer_07"), SubResource("p8_washer_08"), SubResource("p8_washer_09"), SubResource("p8_washer_10"), SubResource("p8_washer_11"), SubResource("p8_washer_12"), SubResource("p8_washer_13"), SubResource("p8_washer_14"), SubResource("p8_washer_15"), SubResource("p8_washer_16"), SubResource("p8_washer_17"), SubResource("p8_washer_18"), SubResource("p8_washer_19"), SubResource("p8_washer_20"), SubResource("p8_washer_21"), SubResource("p8_washer_22"), SubResource("p8_washer_23"), SubResource("p8_washer_24")])
+entries = Array[ExtResource("1_rnbvr")]([SubResource("Resource_m5ffh"), SubResource("Resource_gkglj"), SubResource("Resource_f4woc"), SubResource("Resource_7t3c7"), SubResource("Resource_gsq4f"), SubResource("Resource_ye1ld"), SubResource("Resource_j1n20"), SubResource("Resource_nb3dv"), SubResource("Resource_7ggjs"), SubResource("Resource_wymwo"), SubResource("p8_washer_01"), SubResource("p8_washer_02"), SubResource("p8_washer_03"), SubResource("p8_washer_04"), SubResource("p8_washer_05"), SubResource("p8_washer_06"), SubResource("p8_washer_07"), SubResource("p8_washer_08"), SubResource("p8_washer_09"), SubResource("p8_washer_10"), SubResource("p8_washer_11"), SubResource("p8_washer_12"), SubResource("p8_washer_13"), SubResource("p8_washer_14"), SubResource("p8_washer_15"), SubResource("p8_washer_16"), SubResource("p8_washer_17"), SubResource("p8_washer_18"), SubResource("p8_washer_19"), SubResource("p8_washer_20"), SubResource("p8_washer_21"), SubResource("p8_washer_22"), SubResource("p8_washer_23"), SubResource("p8_washer_24"), SubResource("p9_washer_vigil_01"), SubResource("p9_washer_vigil_02"), SubResource("p9_washer_vigil_03"), SubResource("p9_washer_vigil_04"), SubResource("p9_washer_vigil_05"), SubResource("p9_washer_vigil_06")])
