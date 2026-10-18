@@ -15,12 +15,16 @@ const WREATH := &"wreath"
 
 ## &"" | &"fresh" | &"wilted" | &"wreath" of a flowers entry {planted, watered, wreath} at `now` (total
 ## minutes). A wax wreath never wilts; grave flowers are fresh flower_fresh_minutes after the last watering,
-## wilted until flower_wilt_minutes, then gone.
+## wilted until flower_wilt_minutes, then gone. Phase 9: straw flowers ({…, straw: true}) are fresh straw_minutes
+## after they were laid, then gone.
 static func flowers_state(entry: Dictionary, now: int, cfg: GraveCareConfig) -> StringName:
 	if entry.is_empty():
 		return &""
 	if bool(entry.get("wreath", false)):
 		return WREATH
+	if is_straw(entry):
+		var laid := now - _int(entry.get("planted", 0))
+		return FRESH if laid < cfg.straw_minutes else &""
 	var since := now - last_watered(entry)
 	if since < 0:
 		return FRESH
@@ -29,6 +33,20 @@ static func flowers_state(entry: Dictionary, now: int, cfg: GraveCareConfig) -> 
 	if since < cfg.flower_wilt_minutes:
 		return WILTED
 	return &""
+
+
+## Phase 9: the entry is Gesa's straw bouquet.
+static func is_straw(entry: Dictionary) -> bool:
+	return bool(entry.get("straw", false))
+
+
+## Total minute the flowers of `entry` change by the clock (wilt / are gone; -1 = never – a wreath).
+static func change_total(entry: Dictionary, cfg: GraveCareConfig) -> int:
+	if bool(entry.get("wreath", false)):
+		return -1
+	if is_straw(entry):
+		return _int(entry.get("planted", 0)) + cfg.straw_minutes
+	return last_watered(entry) + cfg.flower_wilt_minutes
 
 
 ## Total minute of the last watering (planting counts as one).

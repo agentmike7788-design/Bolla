@@ -16,6 +16,10 @@ extends Resource
 ## The visitor's bouquet lasts 2 days; the wax wreath never wilts (ghost +0).
 @export var bouquet_minutes: int = 2880
 @export var wreath_item: StringName = &"wax_wreath"
+## Phase 9 (docs/PHASE9_DESIGN.md §2.4.4, §2.9, W1-Anschlüsse 17): Gesa's straw bouquet works like grave flowers for
+## two days (fresh, not watered, then gone – it never wilts).
+@export var straw_item: StringName = &"straw_bouquet"
+@export var straw_minutes: int = 2880
 ## Grave candle: 3 minutes, from 15:00, burns until 07:00.
 @export var candle_item: StringName = &"grave_candle"
 @export var candle_minutes: int = 3

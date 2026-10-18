@@ -28,6 +28,7 @@ extends RefCounted
 ## &"stranger" + Quests.note stranger_offers_seen) · stranger_bribe:<yes|no> · stranger_resolve:<fenner|deal|ilse> ·
 ## large_turn_in:<giver> (HillRequests.large_turn_in, else turn_in) · rep_event:<id> (Reputation.event) · piety_event:<id>
 ## (Piety.event) · goodwill:<kin|speaker>:<n> (Visitors.add_goodwill; „kin"/„speaker" = the speaker's household).
+## W2 „Anschlüsse" (W1-Anschlüsse 17): shop_give:<shop>:<item>:<n> (VillageShops.give_away – Quast's drops for Johann).
 
 const NOTIFY_INFO := &"info"
 const NOTIFY_REWARD := &"reward"
@@ -399,6 +400,13 @@ static func _apply_p9(text: String, context: Dictionary) -> bool:
 				push_warning("[DialogueRunner] '%s': no household" % text)
 				return true
 			_call(&"visitors", &"add_goodwill", [kin, int(n)], text)
+		"shop_give":
+			var p := DialogueSyntax.parts(text, 3)
+			var n: Variant = DialogueSyntax.int_arg(p, 2, null)
+			if p.size() < 3 or p[0] == "" or p[1] == "" or n == null:
+				push_warning("[DialogueRunner] '%s': expected shop_give:<shop>:<item>:<n>" % text)
+				return true
+			_call(&"village_shops", &"give_away", [StringName(p[0]), StringName(p[1]), int(n)], text)
 		_:
 			return false
 	return true

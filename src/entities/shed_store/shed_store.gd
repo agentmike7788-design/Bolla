@@ -35,6 +35,7 @@ func apply_level(level: int) -> void:
 		return
 	var cfg := _cfg()
 	storage.stack_categories = cfg.stack_categories.duplicate()
+	storage.refused_items = cfg.refused_items.duplicate()
 	var slots := _at(cfg.slots_by_level, level, 0)
 	if slots > storage.slot_count:
 		storage.slot_count = slots

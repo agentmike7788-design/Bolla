@@ -11,3 +11,4 @@ fetch_min_level = 2
 fetch_minutes_by_level = PackedInt32Array(0, 0, 10, 0)
 store_min_level = 3
 excluded_items = Array[StringName]([&"bone_box_full", &"bone_box", &"altar_candle", &"specimen_jar", &"specimen_bundle", &"display_specimen", &"bone_specimen"])
+refused_items = Array[StringName]([&"stranger_case"])
