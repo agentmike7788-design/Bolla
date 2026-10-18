@@ -338,8 +338,55 @@ visible = false
 region = &"village"
 today_flag = &"night_np_sieber_priest_day"
 
+[sub_resource type="Resource" id="p9_priest_evening_01"]
+script = ExtResource("1_h8iy5")
+start_minute = 1040
+travel_minutes = 40
+activity = &"walk"
+animation = &"lantern_walk"
+path = PackedStringArray("v_church_door", "v_well", "v_bridge", "v_road_in", "v_sieber_lane_n", "v_sieber_lane_e", "v_sieber_lane_s", "v_sieber_bench_2")
+region = &"village"
+today_flag = &"sieber_evening_priest_day"
+
+[sub_resource type="Resource" id="p9_priest_evening_02"]
+script = ExtResource("1_h8iy5")
+start_minute = 1080
+activity = &"sit"
+animation = &"sit_bench"
+path = PackedStringArray("v_sieber_bench_2")
+region = &"village"
+today_flag = &"sieber_evening_priest_day"
+
+[sub_resource type="Resource" id="p9_priest_evening_03"]
+script = ExtResource("1_h8iy5")
+start_minute = 1090
+activity = &"sit"
+animation = &"sit_bench"
+path = PackedStringArray("v_sieber_bench_2")
+region = &"village"
+today_flag = &"sieber_evening_priest_day"
+
+[sub_resource type="Resource" id="p9_priest_evening_04"]
+script = ExtResource("1_h8iy5")
+start_minute = 1200
+travel_minutes = 40
+activity = &"walk"
+animation = &"lantern_walk"
+path = PackedStringArray("v_sieber_bench_2", "v_sieber_lane_s", "v_sieber_lane_e", "v_sieber_lane_n", "v_road_in", "v_bridge", "v_well", "v_church_door")
+region = &"village"
+today_flag = &"sieber_evening_priest_day"
+
+[sub_resource type="Resource" id="p9_priest_evening_05"]
+script = ExtResource("1_h8iy5")
+start_minute = 1240
+activity = &"home"
+path = PackedStringArray("v_church_door")
+visible = false
+region = &"village"
+today_flag = &"sieber_evening_priest_day"
+
 [resource]
 script = ExtResource("2_dfs02")
 npc_id = &"priest"
 display_name = "Ambrosius Lenz"
-entries = Array[ExtResource("1_h8iy5")]([SubResource("Resource_dsd5p"), SubResource("Resource_jq0uq"), SubResource("Resource_pbuyb"), SubResource("Resource_ymcak"), SubResource("Resource_fgliv"), SubResource("Resource_aevy6"), SubResource("Resource_svkmg"), SubResource("Resource_tybh8"), SubResource("Resource_dcyle"), SubResource("Resource_8hub3"), SubResource("Resource_d8ent"), SubResource("Resource_frwys"), SubResource("p8_priest_01"), SubResource("p8_priest_02"), SubResource("p8_priest_03"), SubResource("p8_priest_04"), SubResource("p8_priest_05"), SubResource("p8_priest_06"), SubResource("p8_priest_07"), SubResource("p8_priest_08"), SubResource("p8_priest_09"), SubResource("p8_priest_10"), SubResource("p8_priest_11"), SubResource("p8_priest_12"), SubResource("p8_priest_13"), SubResource("p8_priest_14"), SubResource("p8_priest_15"), SubResource("p8_priest_16"), SubResource("p8_priest_17"), SubResource("p8_priest_18"), SubResource("p8_priest_19"), SubResource("p8_priest_20"), SubResource("p9_priest_sieber_01"), SubResource("p9_priest_sieber_02"), SubResource("p9_priest_sieber_03"), SubResource("p9_priest_sieber_04"), SubResource("p9_priest_sieber_05"), SubResource("p9_priest_sieber_06")])
+entries = Array[ExtResource("1_h8iy5")]([SubResource("Resource_dsd5p"), SubResource("Resource_jq0uq"), SubResource("Resource_pbuyb"), SubResource("Resource_ymcak"), SubResource("Resource_fgliv"), SubResource("Resource_aevy6"), SubResource("Resource_svkmg"), SubResource("Resource_tybh8"), SubResource("Resource_dcyle"), SubResource("Resource_8hub3"), SubResource("Resource_d8ent"), SubResource("Resource_frwys"), SubResource("p8_priest_01"), SubResource("p8_priest_02"), SubResource("p8_priest_03"), SubResource("p8_priest_04"), SubResource("p8_priest_05"), SubResource("p8_priest_06"), SubResource("p8_priest_07"), SubResource("p8_priest_08"), SubResource("p8_priest_09"), SubResource("p8_priest_10"), SubResource("p8_priest_11"), SubResource("p8_priest_12"), SubResource("p8_priest_13"), SubResource("p8_priest_14"), SubResource("p8_priest_15"), SubResource("p8_priest_16"), SubResource("p8_priest_17"), SubResource("p8_priest_18"), SubResource("p8_priest_19"), SubResource("p8_priest_20"), SubResource("p9_priest_sieber_01"), SubResource("p9_priest_sieber_02"), SubResource("p9_priest_sieber_03"), SubResource("p9_priest_sieber_04"), SubResource("p9_priest_sieber_05"), SubResource("p9_priest_sieber_06"), SubResource("p9_priest_evening_01"), SubResource("p9_priest_evening_02"), SubResource("p9_priest_evening_03"), SubResource("p9_priest_evening_04"), SubResource("p9_priest_evening_05")])

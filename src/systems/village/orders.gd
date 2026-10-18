@@ -260,6 +260,15 @@ func completions(order_id: StringName) -> int:
 	return n
 
 
+## Phase 9 W3 („Restbedarf“ 3): the meetings of the accepted meet order `order_id` before `day` (a meeting on `day`
+## itself not counted – stable through that day: Johann's first / second evening, WhoKnows' companions).
+func meetings_before(order_id: StringName, day: int) -> int:
+	var n := int(_progress.get(String(order_id), 0))
+	if int(_progress.get(PROGRESS_MEET_DAY + String(order_id), 0)) == day:
+		n -= 1
+	return maxi(n, 0)
+
+
 ## Distinct givers of completed orders (the board counts as „Gemeinde" = council).
 func done_givers() -> PackedStringArray:
 	var out := PackedStringArray()

@@ -42,6 +42,12 @@ const FLAG_BENCH_DAY := &"sieber_bench_day"
 ## P6's schedules of Johann leaving (ending A) and of the watchman's lantern (ending C) – today_flags (the calendar day).
 const FLAG_DEPART_DAY := "sieber_depart_%s_day"
 const FLAG_WATCH_DAY := &"sieber_watch_day"
+## Orders' meet flag of oq_johann_evening (Johann on the bench 18:00–20:00) and the companion's flag of ending B
+## (W3 „Restbedarf“ 3): sieber_evening_priest_day (Lenz, first evening) / sieber_evening_washer_day (Liesel, second).
+const FLAG_EVENING_DAY := &"sieber_evening_day"
+const FLAG_EVENING_WITH := "sieber_evening_%s_day"
+## confidant → the evening (0 = the first) on which they sit with him (§2.2.6); Quast does not come (his drops).
+const EVENING_COMPANIONS: Dictionary[StringName, int] = {&"priest": 0, &"washer": 1}
 ## The watch ends with the morning after his death (the lantern 21:00–06:00, data/npc/watchman_schedule.tres).
 const WATCH_END_MINUTE := 360
 const CLUE_DATES := &"c_q_dates"
@@ -513,6 +519,8 @@ func _schedule_flags(day: int, minute: int) -> void:
 		if _departs_on(day) and ScheduleResolver.is_today(FLAG_BENCH_DAY, day):
 			GameState.clear_flag(FLAG_BENCH_DAY)
 	var quests := _quests()
+	if quests != null and quests.ending(_main()) == ENDING_STAY:
+		_evening_companion(quests, day)
 	if quests == null or quests.ending(_main()) != ENDING_PUBLIC:
 		return
 	var watching := ScheduleResolver.is_today(FLAG_WATCH_DAY, day)
@@ -521,6 +529,24 @@ func _schedule_flags(day: int, minute: int) -> void:
 			GameState.set_flag(FLAG_WATCH_DAY, day)
 	elif watching and minute >= WATCH_END_MINUTE:
 		GameState.clear_flag(FLAG_WATCH_DAY)
+
+
+## W3 („Restbedarf“ 3, §2.2.6 / §2.2.7 Ende B): the confidant of H5 sits with Johann on the bench – Lenz on the first
+## evening, Liesel on the second (EVENING_COMPANIONS: the evening = Orders.meetings_before of oq_johann_evening, stable
+## through the day); P6's schedules key it with FLAG_EVENING_WITH (the calendar day, idempotent). Quast leaves his drops.
+func _evening_companion(quests: Quests, day: int) -> void:
+	var confidant: StringName = CONFIDANTS.get(quests.choice_of(_main(), STEP_CONFIDE), &"")
+	if not EVENING_COMPANIONS.has(confidant) or not ScheduleResolver.is_today(FLAG_EVENING_DAY, day):
+		return
+	var flag := StringName(FLAG_EVENING_WITH % String(confidant))
+	if ScheduleResolver.is_today(flag, day):
+		return
+	var orders := _first(&"orders")
+	if orders == null or not orders.has_method(&"meetings_before") \
+			or StringName(orders.call(&"state", EVENING_ORDER)) != &"accepted":
+		return
+	if int(orders.call(&"meetings_before", EVENING_ORDER, day)) == int(EVENING_COMPANIONS[confidant]):
+		GameState.set_flag(flag, day)
 
 
 ## The ending's consequences beyond the choice's own actions (§2.2.6–§2.2.8), once.
