@@ -25,6 +25,7 @@ extends UIPanel
 ## the focus on the recipe used last. The same for every station that uses it (Werkbank, Esse, Webstuhl, Pult).
 
 const TEXT_TITLE := "Werkbank"
+const TEXT_LETTER_BUTTON := "Brief verbrennen …"
 const TEXT_OWNED := "im Besitz: %d"
 const TEXT_INPUT := "%d× %s"
 const TEXT_INPUT_OK := " ✓"
@@ -65,6 +66,9 @@ var shed_bar: ShedFetchBar
 ## Phase 7 (docs/PHASE7_DESIGN.md §3.4): at the station pult the second card „Präparate und Arzneien"
 ## (opens &"pult" with the same context).
 var pult_button: Button
+## Phase 9 W3 QA-Fix QA9-01: at the forge with a letter that may burn there „Brief verbrennen …" (ForgeLetter.open_choice)
+## – the forge's [E] stays the forge, burning is a choice of its own.
+var letter_button: Button
 
 
 func _init() -> void:
@@ -103,6 +107,10 @@ func _build() -> void:
 	pult_button.pressed.connect(open_pult)
 	pult_button.visible = false
 	bottom.add_child(pult_button)
+	letter_button = UIKit.button(TEXT_LETTER_BUTTON, &"AccentButton")
+	letter_button.pressed.connect(open_letter_choice)
+	letter_button.visible = false
+	bottom.add_child(letter_button)
 	var close_button := UIKit.button(TEXT_CLOSE)
 	close_button.pressed.connect(request_close)
 	bottom.add_child(close_button)
@@ -112,6 +120,21 @@ func _build() -> void:
 ## Phase 7: the pult's second card over this panel (same context).
 func open_pult() -> void:
 	EventBus.ui_panel_requested.emit(&"pult", context.duplicate())
+
+
+## Phase 9 (QA9-01): the choice of the letters to burn at this station's ForgeLetter.
+func open_letter_choice() -> void:
+	var fl := forge_letter()
+	if fl != null:
+		fl.open_choice(_player() as Player)
+
+
+## The ForgeLetter under the station of this panel (null elsewhere).
+func forge_letter() -> ForgeLetter:
+	var station: Variant = context.get("workbench")
+	if not is_instance_valid(station) or not station is Node:
+		return null
+	return (station as Node).get_node_or_null(^"ForgeLetter") as ForgeLetter
 
 
 func _on_opened() -> void:
@@ -142,6 +165,9 @@ func _refresh() -> void:
 	title_label.text = station_title()
 	pult_button.visible = _station() == PultRules.STATION_ID
 	pult_button.disabled = action_running
+	var fl := forge_letter()
+	letter_button.visible = fl != null and fl.burnable_letter(_player() as Player) != ""
+	letter_button.disabled = action_running
 	# Only „Überschuss einlagern" lives in the bottom row (fetching is per recipe).
 	var store_state := Phase6Texts.shed_state_in(get_tree() if is_inside_tree() else null, {}, _inventory)
 	store_state["reason"] = ShedSupply.TEXT_NOTHING_MISSING

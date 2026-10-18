@@ -129,8 +129,10 @@ func test_phase9_loop_ending_a_to_the_chapter() -> void:
 	if r3 != null:
 		assert_eq(r3.letter_id, &"lp_l3_burn")
 		var stove := _entity(Stove) as Stove
-		assert_eq(stove.get_interaction_prompt(player), Stove.PROMPT_BURN % 2)
+		# W3 QA-Fix QA9-03: [E] opens the choice (warming first, then the letter); the chosen letter burns.
+		assert_eq(stove.get_interaction_prompt(player), Stove.PROMPT_CHOICE)
 		stove.interact(player)
+		stove.request_action(StringName(LetterBurning.PREFIX + _uid_of(r3)))
 		await _settle()
 		assert_eq(letters.state(_uid_of(r3)), &"burned", "L3 burned unread at the stove")
 	# --- H4: Johann shows the mark; on his bench in the village, the KnockDoor -----------------------------------------
@@ -265,7 +267,11 @@ func _h1_to_h3() -> void:
 		# kindly bag: „Grabblumen setzen"); then the call the prompt makes.
 		var prompt := plot.get_interaction_prompt(player)
 		if prompt.contains("Datum vergleichen"):
+			# W3 QA-Fix QA9-04: with the care of the bag beside it the grave offers a choice – „Datum vergleichen" in it.
+			var several := plot.grave_actions(player).size() > 1
 			plot.interact(player)
+			if several:
+				plot.request_action(GravePlot.P9_DATE)
 			await _settle()
 		else:
 			_log("%s shows „%s“ first – WhoKnows.compare_grave" % [plot.grave_id, prompt])
@@ -313,6 +319,11 @@ func _read_post(day: int) -> void:
 		var plot := _plot(grave)
 		if plot != null and plot.get_interaction_prompt(player) == GravePlot.PROMPT_READ_LETTER % 10:
 			plot.interact(player)
+			await _settle()
+		elif plot != null and plot.grave_actions(player).has(GravePlot.P9_READ):
+			# W3 QA-Fix QA9-04: the grave's choice offers it beside the care of the bag.
+			plot.interact(player)
+			plot.request_action(GravePlot.P9_READ)
 			await _settle()
 		else:
 			assert_true(letters.decide(uid, &"read_grave", {"inventory": player.inventory, "grave_id": grave}), "read at %s" % grave)

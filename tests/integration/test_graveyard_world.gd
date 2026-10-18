@@ -3242,7 +3242,8 @@ func test_phase9_gate_places_and_prompts() -> void:
 	if forge != null:
 		assert_false(forge.forge_ready(), "no forge on day 1")
 		assert_eq(forge.get_interaction_prompt(world.get_player()), "", "no letter, no forge: the station's own prompt")
-		assert_true((forge.get_node("Interactable") as Interactable).priority > 5, "above the station")
+		# W3 QA-Fix QA9-01: no prompt of its own – the forge's [E] stays the forge (the crafting panel offers the letter).
+		assert_null(forge.get_node_or_null("Interactable"), "never takes the focus from the forge")
 	assert_not_null(world.get_node_or_null("Entities/CartRider") as CartRider, "Johann on Osric's cart (ending A)")
 
 

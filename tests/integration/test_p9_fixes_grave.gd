@@ -105,8 +105,14 @@ func test_compare_the_date_before_the_flowers() -> void:
 	who.comparable.append(plot.grave_id)
 	for item: StringName in [&"flower_seedlings", &"wax_wreath", &"straw_bouquet"]:
 		player.inventory.add_item(item, 1)
-	assert_eq(plot.get_interaction_prompt(player), GravePlot.PROMPT_DATE % 5, "date first")
+	# W3 QA-Fix QA9-04: with the flowers in the bag the grave offers a choice – the date first (the focus), the care after.
+	var actions := plot.grave_actions(player)
+	assert_eq(actions[0], GravePlot.P9_DATE, "date first")
+	assert_true(GravePlot.CARE_PLANT in actions, "the flowers reachable")
+	assert_true(plot.get_interaction_prompt(player).begins_with("[E] Am Grab: Datum vergleichen"), "date first in the prompt")
 	plot.interact(player)
+	assert_eq(who.compared, [] as Array[String], "[E] opens the choice")
+	plot.request_action(GravePlot.P9_DATE)
 	assert_eq(who.compared, [plot.grave_id] as Array[String], "the date was compared, nothing planted")
 	assert_eq(care.flowers_state(plot.grave_id), &"")
 	assert_eq(plot.get_interaction_prompt(player), GravePlot.PROMPT_PLANT % care.get_config().plant_minutes,

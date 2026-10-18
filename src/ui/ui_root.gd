@@ -84,6 +84,8 @@ const PANEL_SCRIPTS: Dictionary[StringName, Script] = {
 	# Phase 9 (docs/PHASE9_DESIGN.md §7.3, §7.4): the letter card and Brenneisen's panel, both docked at the right edge.
 	&"letter": preload("res://src/ui/panels/letter_panel.gd"),
 	&"stranger": preload("res://src/ui/panels/stranger_panel.gd"),
+	# Phase 9 W3 QA-Fix (QA9-01 … QA9-04): a short choice where one place offers several things to do.
+	&"action_choice": preload("res://src/ui/panels/action_choice_panel.gd"),
 }
 
 ## Called for "Beenden" (tests replace it).
