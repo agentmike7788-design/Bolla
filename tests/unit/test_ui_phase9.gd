@@ -581,10 +581,16 @@ func test_register_letter_column_and_light_note() -> void:
 	entry["kin"] = "Haus Quendel"
 	cells = GraveRegisterPanel.cells(entry, false, true, true)
 	assert_eq(cells[cells.size() - 2], "Haus Quendel\nLicht: 2. Julmond 1833", "the light under the house")
-	var font := ThemeDB.fallback_font
+	var theme_font := (load("res://src/ui/theme/gravekeeper_theme.tres") as Theme).default_font
+	var font := theme_font if theme_font != null else ThemeDB.fallback_font
 	for line: String in cells[cells.size() - 2].split("\n"):
 		var w := font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, GraveRegisterPanel.TWO_LINE_FONT_SIZE).x
 		assert_true(w <= 230.0, "'%s' fits the column (%.0f px)" % [line, w])
+	# „Licht: …" alone (no house) in the small size too – the longest month fits the column.
+	assert_true(Phase9Texts.REGISTER_LIGHT.begins_with(GraveRegisterPanel.LIGHT_PREFIX))
+	for sample: String in ["Licht: 16. Scheiding 1833", "Licht: 28. Wonnemond 1833", "Licht: 22. Nebelung 1833"]:
+		var sw := font.get_string_size(sample, HORIZONTAL_ALIGNMENT_LEFT, -1, GraveRegisterPanel.TWO_LINE_FONT_SIZE).x
+		assert_true(sw <= 230.0 - 6.0, "'%s' fits (%.0f px)" % [sample, sw])
 	var two := (font.get_height(GraveRegisterPanel.TWO_LINE_FONT_SIZE) * 2.0 + GraveRegisterPanel.TWO_LINE_SPACING)
 	assert_true(two <= 50.0, "two lines in the row (%.0f px)" % two)
 	# CARE_STRAW: the grave tooltip names Gesa's straw bouquet instead of fresh flowers

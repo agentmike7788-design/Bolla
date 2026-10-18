@@ -18,10 +18,10 @@ const ENTRIES_P8: Array[Array] = [
 ## Phase 9 W3 („Restbedarf“ 7, docs/PHASE9_DESIGN.md §7.6): the marks of Phase 9, from p9_open – Brenneisen, the large
 ## sheet at a board, the bookmark of the pinned entry; the Siebers' light is the sick-light window (its row names it).
 const ENTRIES_P9: Array[Array] = [
-	[&"stranger", "Der Herr mit dem Koffer"], [&"large", "Große Bitte (Bogen an der Tafel)"],
-	[&"bookmark", "Lesezeichen: verfolgtes Vorhaben"],
+	[&"stranger", "Der Herr mit dem Koffer"], [&"large", "Große Bitte (Bogen)"],
+	[&"bookmark", "Lesezeichen (Vorhaben)"],
 ]
-const TEXT_SICK_LIGHT_P9 := "Krankenlicht · Licht bei den Siebers"
+const TEXT_SICK_LIGHT_P9 := "Krankenlicht, Siebers"
 ## The live marks of the sheet are drawn this much larger than the plain signs (MapCanvas.P8_MARK_SCALE).
 const MARK_SCALE := 1.25
 const NOTE := "Fahre mit der Maus über einen Ort: Wer dort wohnt, wann offen ist, was zu tun ist."

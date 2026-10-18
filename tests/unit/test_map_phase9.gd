@@ -135,6 +135,10 @@ func test_w3_legend_knows_the_phase9_marks() -> void:
 	var legend := (ui.get_panel(&"map") as MapPanel).legend
 	var last_row := 112.0 + (rows.size() - 1) * MapLegend.ROW_P9 + 14.0
 	assert_true(last_row + 6.0 + 34.0 + 40.0 <= legend.size.y, "every row and the note on the key's sheet (%.0f / %.0f)" % [last_row, legend.size.y])
+	var font := legend.get_theme_default_font()
+	for row: Array in rows:
+		var w := font.get_string_size(str(row[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, cfg.font_building).x
+		assert_true(52.0 + 30.0 + w <= legend.size.x - 14.0, "'%s' inside the key's frame (%.0f / %.0f)" % [row[1], 82.0 + w, legend.size.x])
 
 
 func _setup() -> void:
