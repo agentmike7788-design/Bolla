@@ -70,7 +70,7 @@ size = Vector3(0.722641, 0.5463562, 0.54400635)
 [sub_resource type="BoxShape3D" id="BoxShape3D_vbc6y"]
 size = Vector3(0.6799927, 1.2245941, 0.519989)
 
-[node name="OfficeInterior" type="Node3D" unique_id=1829962345]
+[node name="OfficeInterior" type="Node3D" unique_id=583934267]
 script = ExtResource("1_o56cr")
 room_id = &"office"
 config = ExtResource("2_6y6cu")
@@ -82,7 +82,7 @@ region_id = &"village"
 
 [node name="Room" type="Node3D" parent="." unique_id=2038011179 instance=ExtResource("3_14qfd")]
 
-[node name="Light_window_1" type="OmniLight3D" parent="Room" unique_id=1103347233]
+[node name="Light_window_1" type="OmniLight3D" parent="Room" unique_id=378709101]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 1.65, -2.2)
 light_color = Color(1, 0.8862745, 0.6901961, 1)
 light_energy = 2.2
@@ -91,7 +91,7 @@ omni_attenuation = 1.4
 metadata/interior_role = &"window"
 metadata/base_energy = 2.2
 
-[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1568177392]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1963923795]
 transform = Transform3D(0.90630776, -0.34618863, 0.24240388, 0, 0.57357645, 0.81915206, -0.42261827, -0.74240386, 0.5198368, 0, 0, 0)
 visible = false
 light_angular_distance = 2.0
@@ -99,15 +99,15 @@ shadow_blur = 2.0
 directional_shadow_mode = 0
 directional_shadow_max_distance = 18.0
 
-[node name="Spawn" type="Marker3D" parent="." unique_id=1750039639]
+[node name="Spawn" type="Marker3D" parent="." unique_id=328411431]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 1.2, 0, 1.7)
 
-[node name="Furniture" type="Node3D" parent="." unique_id=1480537132]
+[node name="Furniture" type="Node3D" parent="." unique_id=927359691]
 
 [node name="Desk" type="Node3D" parent="Furniture" unique_id=655861800 instance=ExtResource("4_twjae")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 0, -1.45)
 
-[node name="Light_candle" type="OmniLight3D" parent="Furniture/Desk" unique_id=740275898]
+[node name="Light_candle" type="OmniLight3D" parent="Furniture/Desk" unique_id=731886540]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 1.038, -0.18)
 light_color = Color(1, 0.627451, 0.2509804, 1)
 light_energy = 1.4
@@ -121,14 +121,14 @@ metadata/base_energy = 1.4
 [node name="office_shelf_1" type="Node3D" parent="Furniture" unique_id=1211820407 instance=ExtResource("6_ihif3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.3, 0, -2.25)
 
-[node name="Entities" type="Node3D" parent="." unique_id=1863324401]
+[node name="Entities" type="Node3D" parent="." unique_id=1273872490]
 
-[node name="room_exit" type="Node3D" parent="Entities" unique_id=1801375904 instance=ExtResource("7_eow1f")]
+[node name="room_exit" type="Node3D" parent="Entities" unique_id=223554616 instance=ExtResource("7_eow1f")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 0, 2.25)
 script = ExtResource("8_w8onp")
 door_id = &"door_office"
 
-[node name="PoorBox" parent="Entities" unique_id=124753346 instance=ExtResource("9_lox7v")]
+[node name="PoorBox" parent="Entities" unique_id=1374240246 instance=ExtResource("9_lox7v")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2.45, 0, -1.75)
 script = ExtResource("10_aviuy")
 
@@ -145,10 +145,10 @@ shape = SubResource("BoxShape3D_k5rn0")
 
 [node name="Model" type="Node3D" parent="Entities/PoorBox" unique_id=1241686486 instance=ExtResource("12_6g67b")]
 
-[node name="UsePos" type="Marker3D" parent="Entities/PoorBox" unique_id=1130375566]
+[node name="UsePos" type="Marker3D" parent="Entities/PoorBox" unique_id=343362399]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.7500001)
 
-[node name="RegisterCopy" parent="Entities" unique_id=484087313 instance=ExtResource("13_rvx47")]
+[node name="RegisterCopy" parent="Entities" unique_id=828339135 instance=ExtResource("13_rvx47")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2.5, 0, 0.3)
 script = ExtResource("14_yxjlj")
 
@@ -165,83 +165,83 @@ shape = SubResource("BoxShape3D_qeh6v")
 
 [node name="Model" type="Node3D" parent="Entities/RegisterCopy" unique_id=735680845 instance=ExtResource("15_hxck7")]
 
-[node name="UsePos" type="Marker3D" parent="Entities/RegisterCopy" unique_id=1715128341]
+[node name="UsePos" type="Marker3D" parent="Entities/RegisterCopy" unique_id=2128385935]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9802322e-08, 0, 0.75)
 
-[node name="Colliders" type="Node3D" parent="." unique_id=526013962]
+[node name="Colliders" type="Node3D" parent="." unique_id=2139161304]
 
-[node name="Room" type="StaticBody3D" parent="Colliders" unique_id=483271189]
+[node name="Room" type="StaticBody3D" parent="Colliders" unique_id=1774318287]
 collision_mask = 0
 
-[node name="Floor" type="CollisionShape3D" parent="Colliders/Room" unique_id=1207268984]
+[node name="Floor" type="CollisionShape3D" parent="Colliders/Room" unique_id=834744364]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0.05000019)
 shape = SubResource("BoxShape3D_72ckf")
 
-[node name="Wall_1" type="CollisionShape3D" parent="Colliders/Room" unique_id=580102938]
+[node name="Wall_1" type="CollisionShape3D" parent="Colliders/Room" unique_id=1223856145]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2250001, 1.5, 0.05000019)
 shape = SubResource("BoxShape3D_hr648")
 
-[node name="Wall_2" type="CollisionShape3D" parent="Colliders/Room" unique_id=878441657]
+[node name="Wall_2" type="CollisionShape3D" parent="Colliders/Room" unique_id=1216721038]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.225, 1.5, 0.05000019)
 shape = SubResource("BoxShape3D_h7di3")
 
-[node name="Wall_3" type="CollisionShape3D" parent="Colliders/Room" unique_id=1575985804]
+[node name="Wall_3" type="CollisionShape3D" parent="Colliders/Room" unique_id=1803218551]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -2.675)
 shape = SubResource("BoxShape3D_gh7bc")
 
-[node name="Wall_4" type="CollisionShape3D" parent="Colliders/Room" unique_id=1460839526]
+[node name="Wall_4" type="CollisionShape3D" parent="Colliders/Room" unique_id=890822379]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.425, 1.5, 2.725)
 shape = SubResource("BoxShape3D_t1hjd")
 
-[node name="Wall_5" type="CollisionShape3D" parent="Colliders/Room" unique_id=852695623]
+[node name="Wall_5" type="CollisionShape3D" parent="Colliders/Room" unique_id=679275296]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.625, 1.5, 2.725)
 shape = SubResource("BoxShape3D_ann10")
 
-[node name="Wall_6" type="CollisionShape3D" parent="Colliders/Room" unique_id=259602976]
+[node name="Wall_6" type="CollisionShape3D" parent="Colliders/Room" unique_id=485146531]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 1.5, 3.125)
 shape = SubResource("BoxShape3D_7pxxo")
 
-[node name="Desk" type="StaticBody3D" parent="Colliders" unique_id=1058621511]
+[node name="Desk" type="StaticBody3D" parent="Colliders" unique_id=1584326709]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 0, -1.45)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/Desk" unique_id=765423724]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/Desk" unique_id=1930677720]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.50362396, 0)
 shape = SubResource("BoxShape3D_a8gof")
 
-[node name="office_shelf_1" type="StaticBody3D" parent="Colliders" unique_id=1620753592]
+[node name="office_shelf_1" type="StaticBody3D" parent="Colliders" unique_id=309784361]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.3, 0, -2.25)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/office_shelf_1" unique_id=1968011756]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/office_shelf_1" unique_id=637037641]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6293945e-06, 0.96499634, 0)
 shape = SubResource("BoxShape3D_ty2tg")
 
-[node name="PoorBox" type="StaticBody3D" parent="Colliders" unique_id=1140788320]
+[node name="PoorBox" type="StaticBody3D" parent="Colliders" unique_id=1706793380]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2.45, 0, -1.75)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/PoorBox" unique_id=702860012]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/PoorBox" unique_id=886470786]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00038909912, 0.2881775, 0.01499939)
 shape = SubResource("BoxShape3D_sv6ol")
 
-[node name="RegisterCopy" type="StaticBody3D" parent="Colliders" unique_id=326731807]
+[node name="RegisterCopy" type="StaticBody3D" parent="Colliders" unique_id=438594065]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2.5, 0, 0.3)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/RegisterCopy" unique_id=912950561]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/RegisterCopy" unique_id=1042768318]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.61229706, 0)
 shape = SubResource("BoxShape3D_vbc6y")
 
-[node name="Waypoints" type="Node3D" parent="." unique_id=2132733651]
+[node name="Waypoints" type="Node3D" parent="." unique_id=1413093308]
 
-[node name="v_in_office_desk" type="Marker3D" parent="Waypoints" unique_id=2009161377]
+[node name="v_in_office_desk" type="Marker3D" parent="Waypoints" unique_id=1940922201]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 0, -2.05)
 metadata/facing = true
 
-[node name="FillLights" type="Node3D" parent="." unique_id=1395095940]
+[node name="FillLights" type="Node3D" parent="." unique_id=536369747]
 
-[node name="Fill_1" type="OmniLight3D" parent="FillLights" unique_id=972639636]
+[node name="Fill_1" type="OmniLight3D" parent="FillLights" unique_id=1612491367]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0.6)
 light_color = Color(1, 0.9411765, 0.84705883, 1)
 light_energy = 0.5
@@ -251,7 +251,7 @@ omni_attenuation = 0.8
 metadata/interior_role = &"fill"
 metadata/base_energy = 0.5
 
-[node name="Lighting" type="Node" parent="." unique_id=2020549951]
+[node name="Lighting" type="Node" parent="." unique_id=1572273790]
 script = ExtResource("16_kk384")
 
 [editable path="Entities/PoorBox"]

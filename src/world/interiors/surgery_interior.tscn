@@ -73,7 +73,7 @@ size = Vector3(1.6012878, 0.46043396, 0.32080078)
 [sub_resource type="BoxShape3D" id="BoxShape3D_t4smr"]
 size = Vector3(1.6012878, 0.46043396, 0.32080078)
 
-[node name="SurgeryInterior" type="Node3D" unique_id=347295026]
+[node name="SurgeryInterior" type="Node3D" unique_id=1856548841]
 script = ExtResource("1_y3po0")
 room_id = &"surgery"
 config = ExtResource("2_t2n31")
@@ -85,7 +85,7 @@ region_id = &"village"
 
 [node name="Room" type="Node3D" parent="." unique_id=1895404952 instance=ExtResource("3_83aj0")]
 
-[node name="Light_lamp" type="OmniLight3D" parent="Room" unique_id=351431382]
+[node name="Light_lamp" type="OmniLight3D" parent="Room" unique_id=1257770191]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.75, 1.67, 0.6)
 light_color = Color(1, 0.68235296, 0.33333334, 1)
 light_energy = 2.0
@@ -98,7 +98,7 @@ amount = 0.06
 metadata/interior_role = &"lantern"
 metadata/base_energy = 2.0
 
-[node name="Light_window_1" type="OmniLight3D" parent="Room" unique_id=1468873589]
+[node name="Light_window_1" type="OmniLight3D" parent="Room" unique_id=31611908]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 1.65, -2.2)
 light_color = Color(1, 0.8862745, 0.6901961, 1)
 light_energy = 2.0
@@ -107,7 +107,7 @@ omni_attenuation = 1.4
 metadata/interior_role = &"window"
 metadata/base_energy = 2.0
 
-[node name="Sun" type="DirectionalLight3D" parent="." unique_id=721539391]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=201344484]
 transform = Transform3D(0.90630776, -0.34618863, 0.24240388, 0, 0.57357645, 0.81915206, -0.42261827, -0.74240386, 0.5198368, 0, 0, 0)
 visible = false
 light_angular_distance = 2.0
@@ -115,10 +115,10 @@ shadow_blur = 2.0
 directional_shadow_mode = 0
 directional_shadow_max_distance = 18.0
 
-[node name="Spawn" type="Marker3D" parent="." unique_id=2056117312]
+[node name="Spawn" type="Marker3D" parent="." unique_id=903939742]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -1.5, 0, 1.7)
 
-[node name="Furniture" type="Node3D" parent="." unique_id=1299648801]
+[node name="Furniture" type="Node3D" parent="." unique_id=512471594]
 
 [node name="Cabinet" type="Node3D" parent="Furniture" unique_id=585269283 instance=ExtResource("5_edxqc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, -2.22)
@@ -138,20 +138,20 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, 0, -1.75)
 [node name="Bench1" type="Node3D" parent="Furniture" unique_id=585706926 instance=ExtResource("10_e68fq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, 0, 1.05)
 
-[node name="Bench2" type="Node3D" parent="Furniture" unique_id=1634613334 instance=ExtResource("10_e68fq")]
+[node name="Bench2" type="Node3D" parent="Furniture" unique_id=1631199720 instance=ExtResource("10_e68fq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.95, 0, 1.05)
 
 [node name="Shutters" type="Node3D" parent="Furniture" unique_id=353684709 instance=ExtResource("11_ws1ye")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 1, -2.47)
 
-[node name="Entities" type="Node3D" parent="." unique_id=957318739]
+[node name="Entities" type="Node3D" parent="." unique_id=1616367672]
 
-[node name="room_exit" type="Node3D" parent="Entities" unique_id=1788572245 instance=ExtResource("12_npt1t")]
+[node name="room_exit" type="Node3D" parent="Entities" unique_id=798056008 instance=ExtResource("12_npt1t")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, 2.25)
 script = ExtResource("13_15mtw")
 door_id = &"door_surgery"
 
-[node name="LectureSet" type="Node3D" parent="Entities" unique_id=1892093945 groups=["lecture_set"]]
+[node name="LectureSet" type="Node3D" parent="Entities" unique_id=149489816 groups=["lecture_set"]]
 script = ExtResource("14_6eofc")
 
 [node name="Student1" type="Node3D" parent="Entities/LectureSet" unique_id=1319185707 instance=ExtResource("15_m7pgc")]
@@ -170,100 +170,100 @@ visible = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, 1.12, -1.75)
 visible = false
 
-[node name="Colliders" type="Node3D" parent="." unique_id=296150737]
+[node name="Colliders" type="Node3D" parent="." unique_id=1754928196]
 
-[node name="Room" type="StaticBody3D" parent="Colliders" unique_id=667556480]
+[node name="Room" type="StaticBody3D" parent="Colliders" unique_id=784195440]
 collision_mask = 0
 
-[node name="Floor" type="CollisionShape3D" parent="Colliders/Room" unique_id=1300108313]
+[node name="Floor" type="CollisionShape3D" parent="Colliders/Room" unique_id=892447381]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0.05000019)
 shape = SubResource("BoxShape3D_tadte")
 
-[node name="Wall_1" type="CollisionShape3D" parent="Colliders/Room" unique_id=291156562]
+[node name="Wall_1" type="CollisionShape3D" parent="Colliders/Room" unique_id=20645532]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2250001, 1.5, 0.05000019)
 shape = SubResource("BoxShape3D_tliw0")
 
-[node name="Wall_2" type="CollisionShape3D" parent="Colliders/Room" unique_id=1152768063]
+[node name="Wall_2" type="CollisionShape3D" parent="Colliders/Room" unique_id=1990701880]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.225, 1.5, 0.05000019)
 shape = SubResource("BoxShape3D_8vpo6")
 
-[node name="Wall_3" type="CollisionShape3D" parent="Colliders/Room" unique_id=467550307]
+[node name="Wall_3" type="CollisionShape3D" parent="Colliders/Room" unique_id=1350961268]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -2.675)
 shape = SubResource("BoxShape3D_gr5bm")
 
-[node name="Wall_4" type="CollisionShape3D" parent="Colliders/Room" unique_id=83270661]
+[node name="Wall_4" type="CollisionShape3D" parent="Colliders/Room" unique_id=55883387]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.775, 1.5, 2.725)
 shape = SubResource("BoxShape3D_wb2lp")
 
-[node name="Wall_5" type="CollisionShape3D" parent="Colliders/Room" unique_id=381810072]
+[node name="Wall_5" type="CollisionShape3D" parent="Colliders/Room" unique_id=1415271034]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.275, 1.5, 2.725)
 shape = SubResource("BoxShape3D_rxbol")
 
-[node name="Wall_6" type="CollisionShape3D" parent="Colliders/Room" unique_id=1417681019]
+[node name="Wall_6" type="CollisionShape3D" parent="Colliders/Room" unique_id=1006861064]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4999999, 1.5, 3.125)
 shape = SubResource("BoxShape3D_qpir3")
 
-[node name="Cabinet" type="StaticBody3D" parent="Colliders" unique_id=1283923320]
+[node name="Cabinet" type="StaticBody3D" parent="Colliders" unique_id=25461768]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, -2.22)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/Cabinet" unique_id=1801495736]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/Cabinet" unique_id=1665120466]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.969223, 0.012496948)
 shape = SubResource("BoxShape3D_i68qp")
 
-[node name="ExamTable" type="StaticBody3D" parent="Colliders" unique_id=1057066212]
+[node name="ExamTable" type="StaticBody3D" parent="Colliders" unique_id=1220365849]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, 0, -0.35)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/ExamTable" unique_id=374106582]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/ExamTable" unique_id=510938496]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4620285, -0.00016021729)
 shape = SubResource("BoxShape3D_cvie0")
 
-[node name="Desk" type="StaticBody3D" parent="Colliders" unique_id=521781137]
+[node name="Desk" type="StaticBody3D" parent="Colliders" unique_id=1493295189]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2.62, 0, -1.2)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/Desk" unique_id=575409218]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/Desk" unique_id=23368028]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.67020416, -0.015007019)
 shape = SubResource("BoxShape3D_ln3uv")
 
-[node name="Lectern" type="StaticBody3D" parent="Colliders" unique_id=2135385945]
+[node name="Lectern" type="StaticBody3D" parent="Colliders" unique_id=2055020209]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, 0, -1.75)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/Lectern" unique_id=1208299241]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/Lectern" unique_id=878580818]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.553215, -0.0001449585)
 shape = SubResource("BoxShape3D_3nx87")
 
-[node name="Bench1" type="StaticBody3D" parent="Colliders" unique_id=830289727]
+[node name="Bench1" type="StaticBody3D" parent="Colliders" unique_id=877245585]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, 0, 1.05)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/Bench1" unique_id=501811975]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/Bench1" unique_id=1111071068]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0001373291, 0.23021698, 0.00036621094)
 shape = SubResource("BoxShape3D_81si0")
 
-[node name="Bench2" type="StaticBody3D" parent="Colliders" unique_id=1178625823]
+[node name="Bench2" type="StaticBody3D" parent="Colliders" unique_id=2115618417]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.95, 0, 1.05)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/Bench2" unique_id=240122560]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/Bench2" unique_id=2091675671]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0001373291, 0.23021698, 0.00036621094)
 shape = SubResource("BoxShape3D_t4smr")
 
-[node name="Waypoints" type="Node3D" parent="." unique_id=35846560]
+[node name="Waypoints" type="Node3D" parent="." unique_id=1152285491]
 
-[node name="v_in_surgery_desk" type="Marker3D" parent="Waypoints" unique_id=1404906743]
+[node name="v_in_surgery_desk" type="Marker3D" parent="Waypoints" unique_id=1416332335]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 2.02, 0, -1.2)
 metadata/facing = true
 
-[node name="v_in_surgery_lectern" type="Marker3D" parent="Waypoints" unique_id=417715446]
+[node name="v_in_surgery_lectern" type="Marker3D" parent="Waypoints" unique_id=405951383]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, 0, -1.15)
 metadata/facing = true
 
-[node name="FillLights" type="Node3D" parent="." unique_id=1098878025]
+[node name="FillLights" type="Node3D" parent="." unique_id=768850706]
 
-[node name="Fill_1" type="OmniLight3D" parent="FillLights" unique_id=2077168590]
+[node name="Fill_1" type="OmniLight3D" parent="FillLights" unique_id=1460205624]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0.6)
 light_color = Color(1, 0.9411765, 0.84705883, 1)
 light_energy = 0.4
@@ -273,5 +273,5 @@ omni_attenuation = 0.8
 metadata/interior_role = &"fill"
 metadata/base_energy = 0.4
 
-[node name="Lighting" type="Node" parent="." unique_id=191128379]
+[node name="Lighting" type="Node" parent="." unique_id=2033975641]
 script = ExtResource("19_y8syx")

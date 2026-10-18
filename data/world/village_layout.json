@@ -18,9 +18,9 @@
     [[-23.9, 12.5], [24.5, 12.5]]],
   "camera_bounds": {
     "_comment": "W-Welt (Sichtprüfung §4.5.2/§4.5.3): Fokus x −22…20 wie §4.2, z −12…11 statt −8…8 – nach Norden bis vor die Türen der Nordreihe, nach Süden bis an die Katen (Trauerflor auf ihrer Südseite im Bild). Distanz 22, Zoom 12–26.",
-    "min": [-27.5, -12.0],
-    "max": [20.0, 13.0],
-    "_phase9": "Phase 9 §4.3/§4.7 (W-Welt): min x −22 → −27,5, max z 11 → 13 – der Vorplatz der Siebers (Tür x −33,6 · z 15,8) bleibt bei Zoom 12 im Bild.",
+    "min": [-29.0, -12.0],
+    "max": [20.0, 14.5],
+    "_phase9": "Phase 9 §4.3/§4.7 (W-Welt): min x −22 → −29, max z 11 → 14,5 – der Vorplatz der Siebers (Tür x −33,6 · z 15,8) und der Totengräber darauf bleiben bei Zoom 12…26 im Bild.",
     "distance": 22.0,
     "zoom_min": 12.0,
     "zoom_max": 26.0
@@ -125,7 +125,7 @@
     {"id": "flowers_dorn", "asset": "ph_deco_flowerbed", "pos": [6.0, 17.4], "rot_y": 0.0},
     {"id": "flowers_inn", "asset": "ph_deco_flowerbed", "pos": [11.2, -9.0], "rot_y": 0.0},
     {"id": "flowers_office", "asset": "ph_deco_flowerbed", "pos": [-11.6, -9.2], "rot_y": 0.0},
-    {"id": "sieber_bench", "asset": "ph_prop_v_bench", "pos": [-35.6, 15.95], "rot_y": 0.0, "_comment": "Phase 9 §4.3/§4.6 D8: die Bank vor dem Sieber-Haus links der Tür unter dem Fenster (Bank-Modell aus Phase 7); v_sieber_bench liegt auf ihr.", "collider": {"shape": "box", "size": [1.5, 0.5, 0.34], "offset": [0.0, 0.25, 0.0]}}
+    {"id": "sieber_bench", "asset": "ph_prop_v_bench", "pos": [-31.4, 15.95], "rot_y": 0.0, "_comment": "Phase 9 §4.3/§4.6 D8: die Bank vor dem Sieber-Haus rechts der Tür unter dem Fenster des Altenteils (Bank-Modell aus Phase 7); v_sieber_bench liegt auf ihr.", "collider": {"shape": "box", "size": [1.5, 0.5, 0.34], "offset": [0.0, 0.25, 0.0]}}
   ],
   "decor": {
     "_comment": "Kulisse (§4.2 z −24 / z 16): Obstbäume und Hecken hinter der Nordreihe, Gärten mit Zäunen, Holunder und Kräutern südlich der Katen, Erlen und Holunder am Bach. Kronen ohne Kollision außerhalb der Laufgrenze.",
@@ -254,13 +254,14 @@
     "v_peddler_out": [-29.0, 2.2],
     "v_lights_gather": [-24.4, 3.4],
     "v_sieber_door": [-33.6, 15.8],
-    "v_sieber_bench": [-35.6, 15.95],
+    "v_sieber_bench": [-31.4, 15.95],
+    "v_sieber_yard": [-31.4, 16.9],
     "v_sieber_lane_n": [-30.5, 3.6],
     "v_sieber_lane_e": [-29.2, 9.0],
     "v_sieber_lane_s": [-29.2, 16.2],
     "v_bridge_unload": [-30.9, 1.5]
   },
-  "_waypoints_phase9": "Phase 9 §4.3/§4.6 D8/D10 (W-Welt): v_sieber_door vor der Haustür der Siebers (hier wird geklopft, die Nachtbesuche gehen hinein), v_sieber_bench auf der Bank links der Tür, der Weg von der Brücke am Westufer entlang zum Vorplatz (v_road_in → v_sieber_lane_n → v_sieber_lane_e → v_sieber_lane_s → v_sieber_door; gerade v_sieber_door → v_road_in liefe durchs Haus), v_bridge_unload am westlichen Brückenkopf (Steine abladen, Besuchsteil von hrv_bridge_stones).",
+  "_waypoints_phase9": "Phase 9 §4.3/§4.6 D8/D10 (W-Welt): v_sieber_door vor der Haustür der Siebers (hier wird geklopft, die Nachtbesuche gehen hinein), v_sieber_bench auf der Bank links der Tür, der Weg von der Brücke am Westufer entlang zum Vorplatz (v_road_in → v_sieber_lane_n → v_sieber_lane_e → v_sieber_lane_s → v_sieber_yard (vor der Bank vorbei) → v_sieber_door; gerade v_sieber_door → v_road_in liefe durchs Haus), v_bridge_unload am westlichen Brückenkopf (Steine abladen, Besuchsteil von hrv_bridge_stones).",
   "_waypoints_phase8": "Phase 8 §4.6 D1/D4/D5: Türplätze der Krankenlicht-Häuser (v_ott_door; v_kehr_door am Ostufer des Hollerbachs vor der Brücke zum Haus, (−23,35 | −9,0) statt §4.6 (−24,6 | −10,2) – das läge im Bach und im Haus; dort wird geklopft, dann geht es hinein), der Weg zu den Otts zwischen Wundarztstube und Remise (v_ott_lane_w, v_ott_lane), zu den Kehrs südlich am Schmiedekarren vorbei (v_kehr_lane), Veits Plätze (Kirchtür-Stufe, Brückenplatz; Brunnenbank bestehend), Hannes Stand am Brunnen (Kiepe abgestellt), v_remise_sleep (Veit nachts, unsichtbar hinter der Remise), Hannes Weg über die Brücke (v_peddler_in → v_peddler_out am Wegstein), die Lichtgang-Sammlung an der Holderbrücke. Beobachtungsplätze und Krankenlicht: phase8.",
   "waypoint_facing": {
     "_comment": "Blickrichtung (rot_y in Grad, 0 = +Z/Kamera) an Steh-Orten: zum Anger bzw. zur Kamera.",
@@ -282,13 +283,13 @@
       {"id": "sick_light_kehr", "house": "house_kehr", "marker": "light_window", "inset": 0.12}
     ]
   },
-  "_phase9": "Phase 9 §4.3/§4.6 D8/D10 (village_build_phase9.gd): KnockDoor door_sieber an der Haustür (Marker door_outside des Hauses, Blick vom Haus weg); watch_sieber im Schatten des Holunders am Ende des Wegs (5,5 m bis v_sieber_door, Tür und Fenster frei sichtbar); win_sieber_attic = hauslokaler Marker am rechten Obergeschoss-Fenster (Altenteil) mit SickLight (Kerze auf dem inneren Sims, das Fensterlicht des Hauses sitzt dort – window_light); VisitSpot am Wegpunkt v_bridge_unload.",
+  "_phase9": "Phase 9 §4.3/§4.6 D8/D10 (village_build_phase9.gd): KnockDoor door_sieber an der Haustür (Marker door_outside des Hauses, Blick vom Haus weg); watch_sieber im Schatten des Holunders am Ende des Wegs (3,9 m bis v_sieber_door, Tür und Fenster frei sichtbar); win_sieber_attic = hauslokaler Marker am rechten Obergeschoss-Fenster (Altenteil) mit SickLight (Kerze auf dem inneren Sims, das Fensterlicht des Hauses sitzt dort – window_light); VisitSpot am Wegpunkt v_bridge_unload.",
   "phase9": {
     "knock_doors": [
       {"id": "door_sieber", "house": "house_sieber", "dialogue_id": "sieber_door", "npc_id": "kin_sieber"}
     ],
     "watch_spots": [
-      {"id": "watch_sieber", "pos": [-30.2, 17.7], "rot_y": 250.0}
+      {"id": "watch_sieber", "pos": [-29.9, 16.9], "rot_y": 255.0}
     ],
     "sick_lights": [
       {"id": "sick_light_sieber", "house": "house_sieber", "marker": "win_sieber_attic", "local": [2.2, 3.55, 2.5], "candle": [0.0, -0.5, -0.12]}
