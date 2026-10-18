@@ -127,6 +127,16 @@ const MODELS: Dictionary[StringName, String] = {
 	&"kin_brandt": "res://assets/models/characters/ph_chr_mourner_m_a.glb",
 	&"kin_ott": "res://assets/models/characters/ph_chr_mourner_w_b.glb",
 	&"kin_sieber": "res://assets/models/characters/ph_chr_mourner_m_b.glb",
+	# Phase 9 (docs/PHASE9_DESIGN.md §8.4, W1-Anschluss 8): the seven new items (models of P7) …
+	&"letter": "res://assets/models/items/ph_item_letter.glb",
+	&"letter_reply": "res://assets/models/items/ph_item_letter_reply.glb",
+	&"nameless_letter": "res://assets/models/items/ph_item_nameless_letter.glb",
+	&"stranger_case": "res://assets/models/items/ph_item_stranger_case.glb",
+	&"case_card": "res://assets/models/items/ph_item_case_card.glb",
+	&"soil_pouch": "res://assets/models/items/ph_item_soil_pouch.glb",
+	&"straw_bouquet": "res://assets/models/items/ph_item_straw_bouquet.glb",
+	# … and Brenneisen's portrait (the head of the panel &"stranger").
+	&"villager_stranger": "res://assets/models/characters/ph_chr_stranger.glb",
 }
 ## Ids framed as a portrait: only the top PORTRAIT_SHARE of the model, seen from the front
 ## (villager_<id>; Phase 8: also the households kin_<house>).

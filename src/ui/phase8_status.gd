@@ -240,6 +240,9 @@ static func grave_info(tree: SceneTree) -> Dictionary:
 			if f != &"":
 				info["flowers"] = f
 				info["fresh_left"] = care.fresh_minutes_left(g.id)
+				# Phase 9 (W2-Anschluss CARE_STRAW): Gesa's straw bouquet works like fresh flowers for two days.
+				if care.has_method(&"is_straw") and bool(care.call(&"is_straw", g.id)):
+					info["straw"] = true
 			if care.bouquet_fresh(g.id):
 				info["bouquet"] = true
 			if care.candle_lit(g.id):

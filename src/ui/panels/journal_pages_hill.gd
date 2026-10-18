@@ -60,11 +60,14 @@ static func build(left: VBoxContainer, right: VBoxContainer, tree: SceneTree, wi
 	for e: Dictionary in log:
 		var row := UIKit.hbox(8)
 		var failed := StringName(str(e.get("state", ""))) == HillRequests.STATE_FAILED
+		# Phase 9 (docs/PHASE9_DESIGN.md §2.3.2): a large request half done at its deadline carries the stamp „halb".
+		var half := StringName(str(e.get("state", ""))) == HillRequests.STATE_HALF
 		var t := UIKit.label(HillTexts.PAGE_DONE_ENTRY % [str(e.get("title", "")), int(e.get("day", 0))],
 				&"InkDimLabel" if failed else &"InkLabel")
 		t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(t)
-		row.add_child(UIKit.label(HillTexts.PAGE_FAILED_STAMP if failed else HillTexts.PAGE_DONE_STAMP, &"InkStampLabel"))
+		row.add_child(UIKit.label(Phase9Texts.HALF_STAMP if half else (HillTexts.PAGE_FAILED_STAMP if failed else HillTexts.PAGE_DONE_STAMP),
+				&"InkStampLabel"))
 		right.add_child(row)
 	right.add_child(UIKit.spacer(false))
 	var quote := UIKit.label(HillTexts.PAGE_QUOTE, &"InkDimLabel", true)

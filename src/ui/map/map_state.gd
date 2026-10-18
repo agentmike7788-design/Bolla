@@ -51,6 +51,8 @@ static func context(tree: SceneTree, cfg: MapConfig) -> Dictionary:
 	ctx.orders = orders(tree, cfg)
 	ctx.shops = shops(tree)
 	ctx["p8"] = MapStatePhase8.context(tree)
+	# Phase 9 (docs/PHASE9_DESIGN.md §7.6): Brenneisen, the large sheet, the Siebers' light, the pinned entry's bookmark.
+	ctx["p9"] = MapStatePhase9.context(tree)
 	var buildings := tree.get_first_node_in_group(BUILDINGS_GROUP) as Buildings
 	if buildings != null:
 		var levels := {}

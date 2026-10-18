@@ -18,6 +18,10 @@ extends UIPanel
 ## of „Hollerbrück" add mood, the three story points and the favour, a second sheet shows Jakob, Veit and Hanne;
 ## „Aufträge" keeps the friendship orders and „Was du schuldest" apart; up to four clues may be chosen (the
 ## any-group insight „Der unterstrichene Name") and its question card shows both groups with their counters.
+## Phase 9 (docs/PHASE9_DESIGN.md §7.1, §7.2): the tabs „Vorhaben" (from the first large request; QuestLog with
+## „Verfolgen" → HUD line), „Die Liste" (once the ledger was read) and „Briefe" (from p9_open) – JournalPagesPhase9;
+## they stand before „Bitten" / „Aufträge". Benutzerentscheidung: Q / E (the actions drop / interact) turn the tabs
+## like [ / ]; on „Vorhaben" ↑/↓ choose an entry, Enter opens it, Tab goes over to „Verfolgen".
 
 const PAGES: Array[StringName] = [&"people", &"clues", &"insights", &"self"]
 ## Phase 7: shown from village_open.
@@ -26,6 +30,15 @@ const PHASE7_PAGES: Array[StringName] = [&"orders", &"village"]
 const PHASE8_PAGES: Array[StringName] = [&"kin"]
 ## G8 Runde 6 „Bitten vom Hügel": shown once Osric pinned the first request (JournalPagesHill.shown).
 const HILL_PAGES: Array[StringName] = [&"requests"]
+## Phase 9: „Vorhaben", „Die Liste", „Briefe" (each by its own rule, Phase9Status).
+const PHASE9_PAGES: Array[StringName] = [&"plans", &"list", &"letters"]
+## Phase 9: from this many tabs on they get smaller (font, margins) so the head row keeps the book's width.
+const COMPACT_TABS_FROM := 8
+const COMPACT_TAB_FONT := 18
+const COMPACT_TAB_MARGIN := 8.0
+## Phase 9 (Benutzerentscheidung): Q / E turn the tabs like [ / ].
+const ACTION_TAB_PREV := &"drop"
+const ACTION_TAB_NEXT := &"interact"
 const P8_FLAG := &"p8_open"
 ## Phase 8: four clues for „Der unterstrichene Name" (two required + two of four).
 const MAX_SELECTED_P8 := 4
@@ -34,13 +47,14 @@ const VILLAGE_FLAG := &"village_open"
 const PAGE_LABELS: Dictionary[StringName, String] = {
 	&"people": "Die Toten", &"clues": "Hinweise", &"insights": "Erkenntnisse", &"self": "Ich",
 	&"orders": "Aufträge", &"village": "Hollerbrück", &"kin": "Angehörige", &"requests": "Bitten",
+	&"plans": "Vorhaben", &"list": "Die Liste", &"letters": "Briefe",
 }
 const JOURNAL_GROUP := &"journal"
 const MAX_SELECTED := 3
 const MIN_LINK := 2
 const TEXT_TITLE := "Merkbuch"
 const TEXT_UNREAD_DOT := "●"
-const TEXT_HINT := "[ / ] blättern · Klick wählt Hinweise · [J] oder [Esc] schließen"
+const TEXT_HINT := "[Q] / [E] oder [ / ] blättern · Klick wählt Hinweise · [J] oder [Esc] schließen"
 const TEXT_NO_PEOPLE := "Noch hat dir niemand etwas mitgebracht."
 const TEXT_NO_CLUES := "Noch keine Hinweise. Sieh dir die Toten genau an."
 const TEXT_NO_INSIGHTS := "Noch keine Erkenntnis. Manche Hinweise erzählen zusammen mehr."
@@ -112,6 +126,15 @@ var deduce_button: Button
 var village_sheet: int = 0
 var sheet_button: Button
 var fest_button: Button
+## Phase 9: the chosen „Vorhaben" entry, its buttons (entry id → Button), „Verfolgen", „Niemandem sagen", the list's rows
+## and the letters' „Entscheiden …" buttons (uid → Button).
+var plan_selected: StringName = &""
+var plan_buttons: Dictionary = {}
+var pin_button: Button
+var confide_button: Button
+var list_rows: Array = []
+var letter_buttons: Dictionary = {}
+var letter_copies: Array = []
 
 
 func _build() -> void:
@@ -122,7 +145,7 @@ func _build() -> void:
 	var title := UIKit.label(TEXT_TITLE, &"HeaderLabel")
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
-	for page: StringName in PAGES + HILL_PAGES + PHASE7_PAGES + PHASE8_PAGES:
+	for page: StringName in all_pages():
 		var tab := UIKit.hbox(2)
 		var b := UIKit.button(PAGE_LABELS[page], &"JournalTabButton")
 		b.focus_mode = Control.FOCUS_NONE
@@ -184,6 +207,12 @@ func _refresh() -> void:
 	deduce_button = null
 	sheet_button = null
 	fest_button = null
+	plan_buttons = {}
+	pin_button = null
+	confide_button = null
+	list_rows = []
+	letter_buttons = {}
+	letter_copies = []
 	match current_page:
 		&"people":
 			_build_people()
@@ -216,11 +245,43 @@ func _refresh() -> void:
 		&"requests":
 			_page_title(left_page, PAGE_LABELS[&"requests"])
 			JournalPagesHill.build(left_page, right_page, get_tree() if is_inside_tree() else null, page_width)
+		&"plans":
+			_page_title(left_page, PAGE_LABELS[&"plans"])
+			var built := JournalPagesPhase9.build_plans(left_page, right_page, get_tree() if is_inside_tree() else null, page_width,
+					plan_selected, select_plan, toggle_pin)
+			plan_buttons = built.buttons
+			pin_button = built.pin
+			plan_selected = built.shown
+		&"list":
+			_page_title(left_page, PAGE_LABELS[&"list"])
+			var page_data: Dictionary = journal.call(&"list_page") if journal != null and journal.has_method(&"list_page") else {}
+			var built_list := JournalPagesPhase9.build_list(left_page, right_page, page_data, page_width, confide_none)
+			list_rows = built_list.rows
+			confide_button = built_list.confide
+		&"letters":
+			_page_title(left_page, PAGE_LABELS[&"letters"])
+			var built_letters := JournalPagesPhase9.build_letters(left_page, right_page, get_tree() if is_inside_tree() else null,
+					journal, _inventory(), page_width, decide_letter)
+			letter_buttons = built_letters.decide
+			letter_copies = built_letters.copies
 
 
-## The tabs shown now: the four Phase-4 pages, from village_open also „Aufträge" and „Hollerbrück".
+## Every tab in its order (shown or not).
+static func all_pages() -> Array[StringName]:
+	return PAGES + PHASE9_PAGES + HILL_PAGES + PHASE7_PAGES + PHASE8_PAGES
+
+
+## The tabs shown now: the four Phase-4 pages, Phase 9's by their rules, from village_open also „Aufträge" and
+## „Hollerbrück".
 func pages() -> Array[StringName]:
 	var out: Array[StringName] = PAGES.duplicate()
+	var t := get_tree() if is_inside_tree() else null
+	if Phase9Status.plans_shown(t):
+		out.append(&"plans")
+	if Phase9Status.list_shown(t):
+		out.append(&"list")
+	if Phase9Status.letters_shown(t):
+		out.append(&"letters")
 	if JournalPagesHill.shown(get_tree() if is_inside_tree() else null):
 		out.append_array(HILL_PAGES)
 	if GameState.flag_on(VILLAGE_FLAG):
@@ -271,6 +332,52 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed(&"journal_page_next"):
 		turn_page(1)
 		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(ACTION_TAB_PREV):
+		turn_page(-1)
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(ACTION_TAB_NEXT):
+		turn_page(1)
+		get_viewport().set_input_as_handled()
+
+
+# --- Phase 9: „Vorhaben", „Die Liste", „Briefe" -----------------------------------------------------------------------
+
+## „Vorhaben": shows entry `id` on the right page (the focus stays on it).
+func select_plan(id: StringName) -> void:
+	plan_selected = id
+	refresh()
+
+
+## „Verfolgen" / „Nicht mehr verfolgen" for `id` (Quests.pin) – the HUD line follows.
+func toggle_pin(id: StringName) -> bool:
+	plan_selected = id
+	var ok := JournalPagesPhase9.toggle_pin(get_tree() if is_inside_tree() else null, id)
+	refresh()
+	return ok
+
+
+## „Die Liste": „Niemandem sagen" (H5).
+func confide_none() -> bool:
+	var ok := JournalPagesPhase9.confide_none(get_tree() if is_inside_tree() else null)
+	refresh()
+	return ok
+
+
+## „Briefe": „Entscheiden …" – the letter card over the Merkbuch.
+func decide_letter(uid: String) -> void:
+	var p := get_tree().get_first_node_in_group(&"player") if is_inside_tree() else null
+	JournalPagesPhase9.open_letter(uid, _inventory(), p)
+
+
+## Keyboard focus: on „Vorhaben" the chosen entry, else the first free button.
+func focus_default() -> void:
+	if current_page == &"plans" and plan_buttons.has(plan_selected):
+		var b := plan_buttons[plan_selected] as Button
+		if is_instance_valid(b) and b.is_visible_in_tree():
+			b.grab_focus()
+			reveal.call_deferred(b)
+			return
+	super.focus_default()
 
 
 # --- clue selection -------------------------------------------------------------------------
@@ -603,10 +710,31 @@ func _build_self() -> void:
 
 func _refresh_tabs() -> void:
 	var shown := pages()
-	for page: StringName in PAGES + HILL_PAGES + PHASE7_PAGES + PHASE8_PAGES:
+	var compact := shown.size() > COMPACT_TABS_FROM
+	for page: StringName in all_pages():
 		tab_buttons[page].get_parent().visible = page in shown
 		tab_buttons[page].theme_type_variation = &"JournalTabSelected" if page == current_page else &"JournalTabButton"
 		tab_dots[page].modulate.a = 1.0 if page_has_unread(page) else 0.0
+		_compact_tab(tab_buttons[page], compact)
+
+
+## Phase 9: with more than COMPACT_TABS_FROM tabs (up to eleven) the head row keeps the book's width – a smaller
+## font and narrower margins for the tabs (layout only; the colours stay the theme's).
+func _compact_tab(b: Button, on: bool) -> void:
+	b.remove_theme_font_size_override(&"font_size")
+	for state: StringName in [&"normal", &"hover", &"pressed", &"focus"]:
+		b.remove_theme_stylebox_override(state)
+	if not on:
+		return
+	b.add_theme_font_size_override(&"font_size", COMPACT_TAB_FONT)
+	for state: StringName in [&"normal", &"hover", &"pressed", &"focus"]:
+		var box := b.get_theme_stylebox(state, b.theme_type_variation)
+		if box == null:
+			continue
+		var small := box.duplicate() as StyleBox
+		small.content_margin_left = COMPACT_TAB_MARGIN
+		small.content_margin_right = COMPACT_TAB_MARGIN
+		b.add_theme_stylebox_override(state, small)
 
 
 ## Clues page: unread clues; insights page: unread insights (self / people never).

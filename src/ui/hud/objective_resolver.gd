@@ -52,6 +52,14 @@ extends RefCounted
 ## right after the corpse chain (the player chose it; the Phase-4 hints, sections and tending follow), afterwards after
 ## the Phase-7/8 lines; „Eine Bitte am Tor wartet" (by day, while one can still be accepted) in the idle slot and in
 ## place of the plain note „Eine Grube wartet noch" – never before a section, the tending or a workshop line.
+## Phase 9 (docs/PHASE9_DESIGN.md §7.5), `world.p9` from Phase9Status.objective_state(): the entry pinned in „Vorhaben"
+## („Verfolgen") comes first – only the carried corpse's next step goes before it; the chain lines (Phase9Status.objective:
+## „Sprich mit Osric" · „Ein Herr wartet am Tor" · „Johann Sieber – bestatten" · „Lies Lorenz' Kladde (Hütte)" · „Die
+## Liste: 3/5 Gräber verglichen" · „Wer hat das Licht gesehen? 2/3" · „Wer ist ‚S.'?" · „Wem sagst du es?" · „Was wird aus
+## Johann? (bis morgen Abend)" · „Ein Brief: an …" · „Wer weiß, wann? 2/3") come where the Phase-8 line comes, before it
+## unless a visitor waits at a grave. `world.hill.large` (accepted large requests) goes before the small requests:
+## „Bitte: Die Gräber der Fähre – Zwei Zierstücke im Alten Hof (1/2)"; `world.hill.large_waiting` gives „Eine große Bitte
+## am Tor wartet" / „Die Gemeindetafel hat eine große Bitte" in the idle slot (before the small „Eine Bitte am Tor wartet").
 
 const TEXT_WAIT_CARTER := "Der Leichenkutscher kommt gegen %s"
 const TEXT_TO_TABLE := "Leiche zum Leichentisch bringen"
@@ -111,6 +119,10 @@ static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], in
 	var table_taken := _table_taken_by_other(corpses, active)
 	if active != null and active.location == LOCATION_CARRIED:
 		return _no_plot_fallback(_corpse_step(active, graves, inv, table_taken, world, minute_of_day), world)
+	# Phase 9: the entry pinned in „Vorhaben" first.
+	var pinned := Phase9Status.pinned_objective(world)
+	if pinned != "":
+		return pinned
 	if _has_state(graves, GraveRecord.State.FILLED):
 		return _marker_step(inv)
 	if active != null:
@@ -143,6 +155,10 @@ static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], in
 	# Phase 8 follows the Phase-7 chain: once „Ein Name im Dorf" is done its line comes first – only an urgent
 	# order of Phase 7 still goes before the plain chapter count „Wer heraufkommt: n/4".
 	var people := Phase8Texts.objective(world)
+	# Phase 9 follows the Phase-8 chapter: its chain lines come first, unless a visitor waits at a grave.
+	var chains := Phase9Status.objective(world)
+	if chains != "" and str((world.get("p8", {}) as Dictionary).get("waiting", "")) == "":
+		return chains
 	if people != "" and bool(world.get("goal_done", false)):
 		if village != "" and village != Phase7Texts.OBJ_BOARD and people.begins_with(Phase8Texts.OBJ_GOAL.get_slice("%", 0)):
 			return village
@@ -158,9 +174,13 @@ static func current(corpses: Array[CorpseRecord], graves: Array[GraveRecord], in
 	return _idle_step(minute_of_day, flags, world)
 
 
-## G8 Runde 6: the first accepted request of the gate's notice board ("" = none).
+## G8 Runde 6: the first accepted request of the gate's notice board ("" = none). Phase 9: an accepted large request
+## first (its next open part, HillRequests.large_line).
 static func _hill_step(world: Dictionary) -> String:
 	var hill: Dictionary = world.get("hill", {})
+	for large: Variant in hill.get("large", []):
+		if large is Dictionary and str((large as Dictionary).get("line", "")) != "":
+			return str((large as Dictionary).line)
 	var list: Array = hill.get("active", [])
 	return HillTexts.objective(list[0] as Dictionary) if not list.is_empty() and list[0] is Dictionary else ""
 
@@ -169,12 +189,18 @@ static func _hill_step(world: Dictionary) -> String:
 static func _hill_waiting(world: Dictionary, minute_of_day: int) -> String:
 	var hill: Dictionary = world.get("hill", {})
 	var n := int(hill.get("waiting", 0))
-	if n <= 0 or not bool(hill.get("can_accept", false)) or minute_of_day < 0:
+	var large: Array = hill.get("large_waiting", [])
+	if minute_of_day < 0 or ((n <= 0 or not bool(hill.get("can_accept", false))) and large.is_empty()):
 		return ""
 	var time_cfg := _time_config()
 	var m := posmod(minute_of_day, TimeManager.MINUTES_PER_DAY)
 	if m < time_cfg.wake_minute or m >= time_cfg.sleep_from_minute:
 		return ""
+	# Phase 9: a large request waiting (the gate first) before the small ones.
+	if &"gate" in large or "gate" in large:
+		return Phase9Texts.OBJ_LARGE_WAITING_GATE
+	if not large.is_empty():
+		return Phase9Texts.OBJ_LARGE_WAITING_VILLAGE
 	return HillTexts.waiting(n)
 
 
