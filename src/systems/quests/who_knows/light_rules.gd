@@ -3,7 +3,7 @@ extends RefCounted
 ## Pure rules of the list (docs/PHASE9_DESIGN.md §2.2.1, §2.2.2, §3.4): the light day of an entry from the saved records
 ## (death = arrival day − 1 – died in the night before the delivery, Phase 2; D2 from night_paths.deaths.np_ott; light =
 ## death − 21), the date text (StoneCalendar.date_text; days before game day 1 – S1 −16, S3 −9 – are counted back here
-## with the same calendar, StoneCalendar stays as it is), the open light (p9_open_day − 12), Johann's death
+## with the same calendar, StoneCalendar stays as it is), the open light (reading day of the Kladde − 12, QA9-07), Johann's death
 ## (light + 21) and the deadline (light + 17). Fixed (e_dorn) or missing dead → NO_DAY; a missing dead shows the
 ## substitute date StoryCorpseData.earliest_day − 22 and counts in H2 through Lenz' death register.
 ## Reads the CorpseManager (group corpse_manager: records()), NightPaths (group night_paths: death_day) and the journal
@@ -32,14 +32,15 @@ const JOURNAL_GROUP := &"journal"
 const OPEN_DAY_FLAG := &"p9_open_day"
 
 
-## Death − 21; fixed / missing → NO_DAY. The open entry: the light of q_light_day (else p9_open_day − 12).
+## Death − 21; fixed / missing → NO_DAY. The open entry: the light of q_light_day (else the light of a list read today,
+## reading_light_day – G9 Benutzerentscheidung QA9-07: q_light_day is set when the Kladde is read).
 static func light_day(entry: LightEntryData, tree: SceneTree, cfg: WhoKnowsConfig) -> int:
 	if entry == null:
 		return NO_DAY
 	var c := _cfg(cfg)
 	if entry.open:
 		var light := flag_day(c.light_flag)
-		return light if light != NO_DAY else open_light_day(flag_day(OPEN_DAY_FLAG), c)
+		return light if light != NO_DAY else reading_light_day(flag_day(OPEN_DAY_FLAG), TimeManager.day, c)
 	if entry.fixed_text != "" or entry.story_id == &"":
 		return NO_DAY
 	var death := death_of(entry.story_id, tree, c)
@@ -63,6 +64,16 @@ static func open_light_day(open_day: int, cfg: WhoKnowsConfig) -> int:
 	if open_day == NO_DAY or open_day <= 0:
 		return NO_DAY
 	return open_day + _cfg(cfg).open_light_offset
+
+
+## G9 Benutzerentscheidung 18.10.2026 (QA9-07): the open light counts from the day Lorenz' Kladde is read – the reading
+## day (never before p9_open_day) + open_light_offset (−12). Read on the opening day it is the light of before
+## (p9_open_day − 12); read later, the light, the deadline (light + 17) and Johann's death (light + 21) move with it, so
+## the list's dates stay consistent and the light always lies in the past. No opening day → NO_DAY.
+static func reading_light_day(open_day: int, read_day: int, cfg: WhoKnowsConfig) -> int:
+	if open_day == NO_DAY or open_day <= 0:
+		return NO_DAY
+	return open_light_day(maxi(open_day, read_day), cfg)
 
 
 ## Light + 21 (Johann dies at 02:10).

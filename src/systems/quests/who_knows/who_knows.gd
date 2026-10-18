@@ -10,8 +10,8 @@ extends Node
 ## The chain's steps and choices live in Quests (q_who_knows); WhoKnows reports its events there (Quests.note
 ## kladde_read / date_grave:<entry>), adds the clues (c_q_dates, c_q_three_weeks, the witnesses' clues, c_q_sieber,
 ## c_q_hand_answers) and keeps its own state. Clock-driven (time_tick → apply_morning at 06:00, apply_minute): the
-## light day q_light_day (p9_open_day − 12, set once), Johann daily from H4 (Visitors.set_kin_interval 1; −1 once he is
-## gone or dead), the ending's consequences once (B: the confidant +3, Johann's two evenings offered; C: Lenz, Quast,
+## light day q_light_day (set once when the Kladde is read: that day − 12, G9 QA9-07), Johann daily from H4
+## (Visitors.set_kin_interval 1; −1 once he is gone or dead), the ending's consequences once (B: the confidant +3, Johann's two evenings offered; C: Lenz, Quast,
 ## Liesel −4 each except the confidant; A: the departure plan), Johann leaving (sieber_gone after the walk), the note at
 ## the hut door the morning after, B's kept promise when D3 lies in the fourth row (sieber_buried).
 ## Saved (§5.1): {light_day, matched, witnessed, marked_seen, letter_posted, depart, fallback_day} + applied,
@@ -178,8 +178,8 @@ func read_block_reason(inv: Inventory) -> String:
 func read_kladde() -> void:
 	if not _open():
 		return
-	_ensure_light_day()
 	GameState.set_flag(FLAG_KLADDE, true)
+	_ensure_light_day()
 	_add_clue(CLUE_DATES)
 	_quests_note(NOTE_KLADDE, "")
 
@@ -332,7 +332,7 @@ func apply_morning(day: int) -> void:
 	_morning_day = maxi(_morning_day, day)
 	var quests := _quests()
 	var cfg := _cfg()
-	if quests != null and quests.ending(_main()) == &"" and day > LightRules.decide_day(light_day(), cfg):
+	if quests != null and quests.ending(_main()) == &"" and _light_set() and day > LightRules.decide_day(light_day(), cfg):
 		quests.apply_morning(day)
 		if quests.ending(_main()) != &"":
 			_fallback_day = day
@@ -408,20 +408,41 @@ func load_state(data: Dictionary) -> void:
 	_morning_day = TimeManager.day if TimeManager.minute_of_day >= 360 else TimeManager.day - 1
 
 
+## W3 QA-Fix QA9-F1: a (damaged) save with sieber_gone *and* a D3 record of Johann Sieber – he cannot have left and
+## lie dead on the hill. The corpse is the harder fact (it lies in the world, has its grave, its letter): it wins,
+## sieber_gone is cleared (with a warning). A valid save never has both – save → load stays identical.
+func post_load() -> void:
+	if not GameState.flag_on(FLAG_GONE):
+		return
+	if LightRules.record_of(D3_STORY, get_tree() if is_inside_tree() else null) == null:
+		return
+	push_warning("[WhoKnows] sieber_gone with a D3 record in the save – the record wins, sieber_gone cleared")
+	GameState.set_flag(FLAG_GONE, false)
+
+
 # --- internals ------------------------------------------------------------------------------------
+
+## QA9-07: the light day is fixed (the Kladde was read).
+func _light_set() -> bool:
+	return LightRules.flag_day(_cfg().light_flag) != LightRules.NO_DAY or _light_day > 0
+
 
 func _open() -> bool:
 	return GameState.flag_on(&"p9_open")
 
 
-## q_light_day = p9_open_day − 12, once (the list's dates and the whole chain count from it).
+## q_light_day, once (the list's dates and the whole chain count from it). G9 Benutzerentscheidung 18.10.2026 (QA9-07):
+## only once Lorenz' Kladde is read – the reading day − 12 (LightRules.reading_light_day; read on p9_open_day it is
+## p9_open_day − 12 as before). Until then the chain waits: no light day, no deadline (light + 17), no death night.
 func _ensure_light_day() -> void:
 	var cfg := _cfg()
 	var d := LightRules.flag_day(cfg.light_flag)
 	if d != LightRules.NO_DAY:
 		_light_day = d
 		return
-	var light := LightRules.open_light_day(LightRules.flag_day(&"p9_open_day"), cfg)
+	if not GameState.flag_on(FLAG_KLADDE):
+		return
+	var light := LightRules.reading_light_day(LightRules.flag_day(&"p9_open_day"), TimeManager.day, cfg)
 	if light == LightRules.NO_DAY:
 		return
 	_light_day = light

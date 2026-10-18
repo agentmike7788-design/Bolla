@@ -103,12 +103,14 @@ func _run_to(day: int, minute: int) -> void:
 ## H1–H5 as the prompts / dialogues do it; the confidant `confide`.
 func _h1_to_h5(confide: StringName) -> void:
 	assert_true(quests.is_open(), "§1.2: v7 with the chapter opens at once")
-	assert_eq([quests.open_day(), who.light_day()], [63, 51], "light 22. Nebelung")
+	# G9 Benutzerentscheidung 18.10.2026 (QA9-07): the light day is fixed when the Kladde is read (on day 63: 63 − 12).
+	assert_false(GameState.has_flag(&"q_light_day"), "no light day before the Kladde")
 	var inv := _world().get_player().inventory
 	if who.read_block_reason(inv) != "":
 		inv.add_item(&"lorenz_ledger_2", 1)  # Lenz gives it back (P6 dialogue)
 	assert_eq(who.read_block_reason(inv), "")
 	who.read_kladde()
+	assert_eq([quests.open_day(), TimeManager.day, who.light_day()], [63, 63, 51], "light 22. Nebelung")
 	assert_eq(quests.current_step(&"q_who_knows"), &"h2")
 	assert_eq(who.compare_register().size(), 5, "all five dead lie on the hill")
 	for story: StringName in Phase9Fixtures.LIST_DEAD:
