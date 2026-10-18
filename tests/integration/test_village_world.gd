@@ -892,13 +892,18 @@ func test_phase9_layout_diff_against_phase8() -> void:
 		elif key in ["walkable_bounds", "camera_bounds", "bank_walls"]:
 			if layout[key] != old[key]:
 				changes.append("~" + key)
+		elif key == "ground":
+			for k: String in layout.ground:
+				if not (old.ground as Dictionary).has(k) or layout.ground[k] != old.ground[k]:
+					changes.append("~ground." + k)
 		else:
 			assert_eq(layout[key], old[key], key + " unchanged (§4.6)")
 	for key: String in old:
 		assert_true(layout.has(key), key + " kept")
 	var allowed := ["+_phase9", "+phase9", "+_waypoints_phase9", "+extra_walls", "~walkable_bounds", "~camera_bounds", "~bank_walls",
 			"~buildings[house_sieber].pos", "~buildings[house_sieber].rot_y", "~buildings[house_sieber]._phase9",
-			"~buildings[house_sieber].window_light", "+props[sieber_bench]", "~decor.trees[13]", "~decor.bushes[5]", "~decor.bushes[9]"]
+			"~buildings[house_sieber].window_light", "+props[sieber_bench]", "~decor.trees[13]", "~decor.bushes[5]", "~decor.bushes[9]",
+			"~ground.size", "~ground.center", "~ground._phase9"]
 	for id: String in P9_WAYPOINTS:
 		allowed.append("+waypoints." + id)
 	for id: String in P9_FACING:
@@ -912,6 +917,11 @@ func test_phase9_layout_diff_against_phase8() -> void:
 	# The approved village stays where it was: only the west strip at the Siebers and the camera's west / south edge.
 	assert_eq([layout.walkable_bounds.max[0], layout.walkable_bounds.min[1]], [old.walkable_bounds.max[0], old.walkable_bounds.min[1]])
 	assert_eq([layout.camera_bounds.max[0], layout.camera_bounds.min[1]], [old.camera_bounds.max[0], old.camera_bounds.min[1]])
+	# The ground only grows (west / south of the Siebers): the old rectangle stays inside the new one, on the same grid.
+	var g_old := Rect2(_v2l(old.ground.center) - _v2l(old.ground.size) * 0.5, _v2l(old.ground.size))
+	var g_new := Rect2(_v2l(layout.ground.center) - _v2l(layout.ground.size) * 0.5, _v2l(layout.ground.size))
+	assert_true(g_new.encloses(g_old), "the ground grew around the old one (%s ⊇ %s)" % [g_new, g_old])
+	assert_eq(layout.ground.cell, old.ground.cell, "same grid")
 	assert_eq(village.region_config().bounds_min, _v2l(layout.camera_bounds.min) - Vector2(ORIGIN.x, ORIGIN.z), "region config = layout")
 
 

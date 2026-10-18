@@ -40,14 +40,11 @@ const G9_SHOTS: Array[Dictionary] = [
 			"figures": [["npc_stranger_g", "stranger_gate", "wp", &"wait_gate", 0.6], ["npc_beggar_g", "veit_gate", "wp", &"sit_ground", 0.5]]},
 	{"name": "perf_p9_01_gate_large_brenneisen", "day": "visit1", "minute": 885, "player": Vector2(1.6, 7.6), "facing": 0.0, "game": 22.0,
 			"flags": ["stranger_day"], "schedule": true},
-	{"name": "p9_09_departure_hanne", "day": 67, "minute": 985, "game": 14.0,
-			"player": Vector2(-9.2, 12.5), "facing": 95.0, "flags": ["peddler_day", "sieber_depart_peddler_day"], "schedule": true},
+	# The gravekeeper walks beside them (the camera on him, as test_phase9_sight checks the way: eye on the walker).
+	{"name": "p9_09_departure_hanne", "day": 67, "minute": 985, "game": 14.0, "follow": ["npc_kin_sieber_v_g", Vector2(0.9, 1.1)],
+			"player": Vector2(-9.2, 12.5), "facing": 270.0, "flags": ["peddler_day", "sieber_depart_peddler_day"], "schedule": true},
 	{"name": "p9_10_johann_on_the_cart", "day": 68, "minute": 612, "distance": 9.0, "pitch": 36.0, "focus_rider": true,
 			"player": Vector2(1.0, 8.0), "facing": 0.0, "flags": ["sieber_depart_carter_day"], "schedule": true},
-	{"name": "p9_vis_row4_z12", "day": 64, "minute": 640, "focus": Vector2(17.0, 22.5), "distance": 30.0, "pitch": 85.0,
-			"player": Vector2(-20.0, 0.0), "stage": "vis", "vis": "row4", "zoom": 12.0},
-	{"name": "p9_vis_row4_z22", "day": 64, "minute": 640, "focus": Vector2(17.0, 22.5), "distance": 30.0, "pitch": 85.0,
-			"player": Vector2(-20.0, 0.0), "stage": "vis", "vis": "row4", "zoom": 22.0},
 	{"name": "p9_vis_gate_z22", "day": 64, "minute": 640, "focus": Vector2(1.0, 11.0), "distance": 22.0, "pitch": 85.0,
 			"player": Vector2(-20.0, 0.0), "stage": "vis", "vis": "gate", "zoom": 22.0},
 	{"name": "p9_vis_departure_z22", "day": 64, "minute": 640, "focus": Vector2(-5.5, 5.0), "distance": 36.0, "pitch": 85.0,
@@ -55,9 +52,14 @@ const G9_SHOTS: Array[Dictionary] = [
 	# Last in the graveyard: the four graves dug, buried and marked.
 	{"name": "p9_24b_row4_stones", "day": 70, "minute": 600, "focus": Vector2(17.0, 23.4), "distance": 14.0,
 			"player": Vector2(16.9, 21.9), "facing": 0.0, "stage": "row4_open"},
+	# Row 4 cleared and occupied (as test_phase9_sight: the section open – no stump, no bramble).
+	{"name": "p9_vis_row4_z12", "day": 70, "minute": 640, "focus": Vector2(17.0, 22.5), "distance": 30.0, "pitch": 85.0,
+			"player": Vector2(-20.0, 0.0), "stage": "vis", "vis": "row4", "zoom": 12.0},
+	{"name": "p9_vis_row4_z22", "day": 70, "minute": 640, "focus": Vector2(17.0, 22.5), "distance": 30.0, "pitch": 85.0,
+			"player": Vector2(-20.0, 0.0), "stage": "vis", "vis": "row4", "zoom": 22.0},
 	# --- village (region-local) --------------------------------------------------------------------------------
-	{"name": "p9_06_veit_well_sieber_window", "region": "village", "day": 64, "minute": 600, "focus": Vector2(-6.0, 3.0),
-			"distance": 22.0, "pitch": 22.0, "yaw": 113.0, "player": Vector2(4.4, -2.2), "facing": 250.0, "stage": "veit_bench"},
+	{"name": "p9_06_veit_well_sieber_window", "region": "village", "day": 64, "minute": 600, "focus": Vector2(-10.0, 2.5),
+			"distance": 36.0, "pitch": 24.0, "yaw": 113.0, "player": Vector2(4.4, -2.2), "facing": 250.0, "stage": "veit_bench"},
 	{"name": "p9_07_knock_door_sieber", "region": "village", "day": 66, "minute": 900, "player": Vector2(-33.6, 15.6), "facing": 180.0,
 			"game": 14.0, "ui": true, "stage": "knock"},
 	{"name": "p9_08_johann_bench_evening", "region": "village", "day": 66, "minute": 1110, "player": Vector2(-30.4, 16.5), "facing": 285.0,
@@ -70,13 +72,14 @@ const G9_SHOTS: Array[Dictionary] = [
 			"game": 12.0, "stage": "large_village"},
 	{"name": "perf_p9_02_village_brenneisen_johann", "region": "village", "day": "visit1", "minute": 720, "player": Vector2(0.6, -0.4),
 			"game": 26.0, "flags": ["stranger_day"]},
-	{"name": "p9_vis_sieber_z22", "region": "village", "day": 64, "minute": 640, "focus": Vector2(-31.5, 12.5), "distance": 26.0,
+	{"name": "p9_vis_sieber_z22", "region": "village", "day": 64, "minute": 640, "focus": Vector2(-31.0, 17.5), "distance": 30.0,
 			"pitch": 85.0, "player": Vector2(-31.0, 16.9), "stage": "vis9_sieber", "zoom": 22.0},
 ]
 
 var _web := false
 var _sight_v: RefCounted
 var _hill_pinned: Array[StringName] = []
+var _row4_probed := false
 
 
 func _run() -> void:
@@ -246,6 +249,14 @@ func _shoot9(world: Node3D, shot: Dictionary, report: PackedStringArray) -> void
 			_stage_sheet9(world)
 		"vis":
 			await _stage_vis9(world, shot)
+	if shot.has("follow"):
+		var lead := world.get_node_or_null(NodePath("Entities/" + String(shot.follow[0]))) as Node3D
+		if lead != null and lead.visible:
+			var off: Vector2 = shot.follow[1]
+			var at := Vector2(lead.global_position.x + off.x, lead.global_position.z + off.y)
+			player.global_position = Vector3(at.x, _ground(world, at), at.y)
+		else:
+			push_warning("[ShotsP9] %s is not out" % shot.follow[0])
 	if bool(shot.get("focus_rider", false)):
 		var rider := world.get_node_or_null(^"Entities/CartRider")
 		var fig: Node3D = rider.call(&"figure") as Node3D if rider != null and bool(rider.call(&"is_riding")) else null
@@ -315,10 +326,16 @@ func _stage_sheet9(world: Node3D) -> void:
 func _stage_vis9(world: Node3D, shot: Dictionary) -> void:
 	if _sight == null:
 		_sight = Sight.new(world)
+	# Row 4 is drawn after it was cleared: the probe of the earlier rays still holds the stump and the bramble.
+	var reprobe := String(shot.vis) == "row4" and not _row4_probed
+	if reprobe and _sight_probed:
+		_sight.call(&"unprobe", world)
+		_sight_probed = false
 	if not _sight_probed:
 		_sight.call(&"probe", world, PackedStringArray(["Ground", "Player", "Interiors", "HutInterior", "Regions", "Corpses", "ShotStage",
 				"Entities/npc_"]))
 		_sight_probed = true
+		_row4_probed = _row4_probed or reprobe
 		for i: int in 3:
 			await physics_frame
 	var stage := _stage_root(world)
@@ -447,7 +464,7 @@ func _stage_vis9_sieber(world: Node3D, shot: Dictionary) -> void:
 			rays.append(["knock_door", knock, chest, eye, [house]])
 	var eye_h := watch.global_position + Vector3(0, 1.6, 0)
 	rays.append(["watch→door", door + Vector3(0, 1.6, 0), eye_h, eye_h, [house]])
-	rays.append(["watch→attic", attic + (attic - eye_h).normalized() * -0.25, eye_h, eye_h, []])
+	rays.append(["watch→attic", attic + (attic - eye_h).normalized() * -0.25, eye_h, eye_h, [house]])  # the pane sits in the wall
 	var hidden := 0
 	for r: Array in rays:
 		var why := String(_sight_v.call(&"blocked", r[3], r[1], r[2], r[4]))
