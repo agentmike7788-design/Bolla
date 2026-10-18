@@ -1,0 +1,1 @@
+p9_09_departure_hanne_web  camera_tris=308207 (primitives 198479 + grass 109728)  draw_calls=394 (camera 99)  objects=314  omni_visible=8  shadowed=2  particles=13

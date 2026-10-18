@@ -351,8 +351,9 @@ func _stage_vis9(world: Node3D, shot: Dictionary) -> void:
 				var chest := feet + Vector3(0.0, 1.1, 0.0)
 				rays.append([id + "_kneel", feet + Vector3(0.0, 0.95, 0.0), feet + Vector3(0.0, 0.95, 0.0), eye])
 				rays.append([id + "_stand", feet + Vector3(0.0, 1.6, 0.0), chest, eye])
-				rays.append([id + "_stone", plot.to_global(Vector3(0.0, 0.55, -1.02)), chest, eye])
-				rays.append([id + "_mound", plot.to_global(Vector3(0.0, 0.25, 0.3)), chest, eye])
+				# The stone and the mound are the grave's own meshes (not blockers of their own ray).
+				rays.append([id + "_stone", plot.to_global(Vector3(0.0, 0.55, -1.02)), chest, eye, [plot]])
+				rays.append([id + "_mound", plot.to_global(Vector3(0.0, 0.25, 0.3)), chest, eye, [plot]])
 		"gate":
 			var people := {"stranger_gate": 1.6, "veit_gate": 0.95, "peddler_gate": 1.6, "sieber_gate": 1.55}
 			for focus: String in people:
@@ -372,7 +373,7 @@ func _stage_vis9(world: Node3D, shot: Dictionary) -> void:
 				rays.append(["departure_%02d" % k, feet + Vector3(0.0, 1.55, 0.0), feet + Vector3(0.0, 1.1, 0.0), _gameplay_eye(world, feet, zoom)])
 	var hidden := 0
 	for r: Array in rays:
-		var why := String(_sight.call(&"blocked", r[3], r[1], r[2]))
+		var why := String(_sight.call(&"blocked", r[3], r[1], r[2], r[4] if r.size() > 4 else []))
 		_sight.call(&"draw_ray", stage, r[1], r[3], why == "")
 		var pt: Vector3 = r[1]
 		var ch: Vector3 = r[2]
