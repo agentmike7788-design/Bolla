@@ -94,7 +94,8 @@ def in_band(path, region, travel, animation="walk", cart=False):
         return True
     lo, hi = band(gait(animation, cart))
     pace = length(path, region) / travel
-    return lo - 0.0001 <= pace <= hi + 0.0001
+    # A step of one or two minutes may be slower (whole minutes, rounded up) – WalkTempo.SHORT_MINUTES.
+    return pace <= hi + 0.0001 and (pace >= lo - 0.0001 or travel <= 2)
 
 
 def route_up(target):

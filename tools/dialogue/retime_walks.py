@@ -8,7 +8,10 @@ Each walk below gets the minutes of its polyline (walk_tempo.py: 0.8 m per game 
 „Ankunft bleibt, Abfahrt früher“ – the stay it walks to begins as before, the stay before ends earlier – except:
   carter  – Osric leaves the dropoff at 10:00 (dialogue and loading until then, WhoKnowsConfig.depart_with_carter_minute):
             on the road end 10:54, in the village (GAP 30 as before) 11:24 → at the remise 12:22;
-  grocer  – Theres' half hour at the well: from 15:50 (before 16:05) so that it stays ~25 minutes;
+  grocer / washer – Theres and Liesel at the well 16:00–16:30 (NpcLife chatter ch_well_spin, 3.5 s a line): both leave
+            at 16:30 as before, the shop / the washing at the door open again at 16:52 / 16:47 (before 16:35);
+  mayor   – Fenner at the board until 18:00 (chatter ch_linden_bench with Esch at the linden 17:34–18:00), in the inn
+            18:34 (before 18:05);
   priest  – the consecration of the Lindenacker: at the linden at 09:20, back from 10:30 (to the road end 11:43).
 Idempotent (absolute values). --check only reports every data walk outside the band.
 """
@@ -36,7 +39,8 @@ BASE = {
     "grocer": {
         "Resource_m247r": 928,      # 15:28 → 15:50 at the well
         "Resource_6bmho": 950,
-        "Resource_cvoyc": 973,      # 16:13 → 16:35 the shop opens as before
+        "Resource_cvoyc": 990,      # 16:30 as before → 16:52 the shop opens again (ch_well_spin until 16:30)
+        "Resource_yxotm": 1012,
     },
     "innkeeper": {
         "Resource_gwt02": 350,      # 05:50 → 06:10 at the well as before
@@ -46,7 +50,8 @@ BASE = {
         "Resource_0oylv": 691,      # 11:31 → 12:20 at the board
         "Resource_f1tkc": 762,      # 12:42 → 13:05 at the desk
         "Resource_tdu31": 942,      # 15:42 → 16:05 at the board
-        "Resource_irxlc": 1051,     # 17:31 → 18:05 in the inn
+        "Resource_irxlc": 1080,     # 18:00 as before (ch_linden_bench) → 18:34 in the inn
+        "Resource_ofwtp": 1114,
     },
     "oldwoman": {
         "Resource_34akn": 527,      # 08:47 → 09:06 on the well bench
@@ -72,7 +77,8 @@ BASE = {
     "washer": {
         "Resource_gkglj": 360,      # 06:00 → 06:38 at the wash place
         "Resource_ye1ld": 888,      # 14:48 → 15:05 at the well
-        "Resource_nb3dv": 978,      # 16:18 → 16:35 at her door
+        "Resource_nb3dv": 990,      # 16:30 as before (ch_well_spin) → 16:47 at her door
+        "Resource_7ggjs": 1007,
     },
 }
 

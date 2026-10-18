@@ -13,6 +13,8 @@ const NPC_DIR := "res://data/npc/"
 const RUN_ANIMS: Array[StringName] = [&"run", &"climb"]
 const CART_ANIMS: Array[StringName] = [&"push_cart", &"sit_cart"]
 const INDOOR_PREFIX := "v_in_"
+## A step of one or two minutes may be slower than the band (whole minutes, rounded up – a 0.9 m hop takes 2).
+const SHORT_MINUTES := 2
 
 
 static func gait(e: ScheduleEntry) -> StringName:
@@ -89,7 +91,7 @@ static func measure(e: ScheduleEntry, world: Node, label: String, index: int = -
 	return {"npc": label, "index": index, "start": e.start_minute, "travel": e.travel_minutes, "length": length,
 			"pace": pace, "gait": g, "region": e.region, "flag": e.today_flag, "animation": e.animation,
 			"path": e.path, "from": e.path[0], "to": e.path[e.path.size() - 1],
-			"ok": g == GAIT_RUN or (pace >= b.x - 0.0001 and pace <= b.y + 0.0001)}
+			"ok": g == GAIT_RUN or (pace <= b.y + 0.0001 and (pace >= b.x - 0.0001 or e.travel_minutes <= SHORT_MINUTES))}
 
 
 ## Game minutes a walk of `length` m takes at the gait's target pace (at least 1 for any distance).

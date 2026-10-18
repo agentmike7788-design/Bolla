@@ -505,7 +505,8 @@ def peddler():
 ## before; of an evening he is back in the inn after the way down from the box (src/systems/apprentice/apprentice.gd
 ## computes the same from the world).
 APPRENTICE_ARRIVE = 450
-APPRENTICE_EVENING = 1062
+## ApprenticeConfig.end_minute 15:30, 10 minutes at the box, the way down from the box, the Kutschweg, the way to the inn.
+APPRENTICE_EVENING = 930 + 10 + route_up("apprentice_box")[1] + GAP + village_minutes(FROM_ROAD)
 
 
 def apprentice():

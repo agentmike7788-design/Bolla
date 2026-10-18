@@ -36,7 +36,7 @@ region = &"village"
 
 [sub_resource type="Resource" id="p8_apprentice_05"]
 script = ExtResource("1")
-start_minute = 1062
+start_minute = 1059
 animation = &"sweep"
 path = PackedStringArray("v_in_inn_sweep")
 dialogue_id = &"v_apprentice"
@@ -61,7 +61,7 @@ today_flag = &"apprentice_off_day"
 
 [sub_resource type="Resource" id="p8_apprentice_08"]
 script = ExtResource("1")
-start_minute = 1062
+start_minute = 1059
 animation = &"talk"
 path = PackedStringArray("v_in_inn_jakob")
 dialogue_id = &"v_apprentice"
@@ -160,7 +160,7 @@ today_flag = &"apprentice_off_day"
 
 [sub_resource type="Resource" id="p8_apprentice_19"]
 script = ExtResource("1")
-start_minute = 1062
+start_minute = 1059
 activity = &"home"
 path = PackedStringArray("v_road_in")
 visible = false

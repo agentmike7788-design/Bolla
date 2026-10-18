@@ -6,7 +6,7 @@ extends RefCounted
 ## same spot). The entries are the ordinary ScheduleEntry resources, so ScheduleResolver and the Npc
 ## evaluate them exactly like a data schedule.
 ## - walk: travel_minutes from the polyline (flat waypoint distances) / NpcConfig.walk_m_per_minute
-##   (3.2 m per game minute = 1.6 m/s at 0.5 s per minute), at least one minute for any distance.
+##   (G9 Gehtempo: 0.8 m per game minute = 1.6 m/s at 0.5 s per minute – before 3.2 = 6.4 m/s), at least one minute.
 ## - stay: standing at one waypoint with an animation (kneel, mourn_stand, rake …).
 ## - build: sorted by start_minute (equal starts keep their order – the later one wins, as in data);
 ##   gaps are invisible: before the first entry (from 00:00) and after a closing walk (the figure has
@@ -25,7 +25,7 @@ static var walk_speed_override: float = 0.0
 
 
 ## A walk along `path` (waypoint ids; from_wp first – prepended unless path starts with it) from
-## start_minute; travel_minutes from the polyline: length / NpcConfig.walk_m_per_minute (3.2). The figure
+## start_minute; travel_minutes from the polyline: length / NpcConfig.walk_m_per_minute (0.8). The figure
 ## stands (idle) at the last waypoint after arriving. region: &"" / &"graveyard" | &"village".
 static func walk(from_wp: StringName, path: PackedStringArray, start_minute: int, region: StringName, world: Node) -> ScheduleEntry:
 	var e := ScheduleEntry.new()

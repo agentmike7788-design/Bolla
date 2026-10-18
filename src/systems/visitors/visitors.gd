@@ -174,7 +174,12 @@ func plan_day(day: int) -> Array[Dictionary]:
 			continue
 		var kin: KinData = households[i][2]
 		var graves: PackedStringArray = households[i][3]
-		list.append(_entry(kin, graves, slots[i], _travel(kin, graves), day))
+		# G9 Gehtempo: the visit at the grave keeps its window (the slot + the ≈ 13 minutes up of §2.2.3) – a longer way
+		# at the natural pace starts that much earlier at the road end (the bell rings then).
+		var travel := _travel(kin, graves)
+		var e := _entry(kin, graves, slots[i] - maxi(0, travel - (VisitRules.ROAD_MINUTES + VisitRules.DEFAULT_ROUTE_MINUTES)), travel, day)
+		e["slot"] = slots[i]
+		list.append(e)
 	if late:
 		var keep: Array[Dictionary] = []
 		for e: Dictionary in list:

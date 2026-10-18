@@ -27,6 +27,8 @@ const KIN_NPC := {&"kin_kehr": "npc_kin_kehr", &"kin_ott": "npc_kin_ott", &"kin_
 		&"kin_sieber": "npc_kin_sieber", &"kin_washer": "npc_washer_g", &"kin_smith": "npc_smith_g", &"kin_grocer": "npc_grocer_g"}
 const WISH_KINDS: Array[StringName] = [&"flowers", &"tend", &"candle", &"line", &"vase"]
 const VASE := &"decor_grave_vase"
+## Minutes a visitor on the hill is waited for until he waits at the grave (G9 Gehtempo: 240, before 90).
+const PENDING_WAIT := 240
 const TIN_KEEP := 9
 const TIN_FILL := 12
 ## Coins the purse keeps back from Phase-8 purchases (the next morning never below 5).
@@ -529,7 +531,9 @@ func _serve() -> void:
 		var due := _visit_starting_within(30)
 		while due > 0 and TimeManager.minute_of_day < due and TimeManager.minute_of_day < EVENING:
 			TimeManager.advance(1)
-		for i: int in 90:
+		# G9 Gehtempo: up the hill at the natural pace takes up to 98 minutes (the Lindenacker), the round of a villager
+		# up to 2 hours more – waited for that long (before 90 minutes covered the 13-minute way and the mourning).
+		for i: int in PENDING_WAIT:
 			var pending := false
 			for v: Dictionary in visitors.active_visits():
 				var ph := StringName(str(v.get("phase", "")))

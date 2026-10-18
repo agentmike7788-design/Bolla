@@ -636,9 +636,9 @@ func test_w3_quast_and_ending_c_bring_no_companion() -> void:
 
 func test_w2_config_values_from_the_code() -> void:
 	var defaults := WhoKnowsConfig.new()
-	assert_eq([defaults.quest_id, defaults.gone_after_minutes, defaults.b_confidant_rel], [&"q_who_knows", 40, 3])
+	assert_eq([defaults.quest_id, defaults.gone_after_minutes, defaults.b_confidant_rel], [&"q_who_knows", 60, 3], "G9 Gehtempo: 60 (before 40)")
 	var real := Database.config(&"who_knows_config") as WhoKnowsConfig
-	assert_eq([real.quest_id, real.gone_after_minutes, real.b_confidant_rel], [&"q_who_knows", 40, 3], "data = class default")
+	assert_eq([real.quest_id, real.gone_after_minutes, real.b_confidant_rel], [&"q_who_knows", 60, 3], "data = class default")
 
 
 func test_w2_gone_after_minutes_and_confidant_gain_follow_the_config() -> void:

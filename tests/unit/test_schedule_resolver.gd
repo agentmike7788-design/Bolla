@@ -123,10 +123,50 @@ func test_carter_fixture_village_entries_fit_his_home_times() -> void:
 			data_graveyard.entries.append(e)
 	assert_eq(graveyard.size(), data_graveyard.entries.size(), "the graveyard entries stay")
 	assert_eq(fixture.entries.size(), data.entries.size(), "the data = the fixture")
+	# G9 Gehtempo: the times are the data's now (the cart 06:30–07:24 and 10:00–10:54, the village from 11:24) – the
+	# fixture keeps the Phase-7 times; the rule is checked on the data itself.
 	for minute: int in range(0, 1440, 5):
-		var e := ScheduleResolver.entry_at(fixture, minute, 40)
+		var e := ScheduleResolver.entry_at(data, minute, 40)
 		var old := ScheduleResolver.entry_at(data_graveyard, minute, 40)
 		if e.region == &"village":
 			assert_false(old.visible, "@%d: a village entry only while he is 'home' on the graveyard" % minute)
 		else:
 			assert_eq([e.start_minute, e.path, e.visible], [old.start_minute, old.path, old.visible], "@%d graveyard unchanged" % minute)
+
+
+## G9 Gehtempo: a valid today_flag walk still on its way is not cut by a plain entry that starts during it; once it has
+## arrived the plain entries count again (unless the overlay goes on).
+func test_today_walk_masks_plain_entries_until_it_arrives() -> void:
+	var home := _entry(0)
+	var lunch := _entry(720)
+	var walk := _entry(700, FLAG, &"village", 60)
+	var s := _schedule([home, lunch, walk])
+	GameState.set_flag(FLAG, 9)
+	assert_eq(ScheduleResolver.entry_at(s, 710, 9), walk, "the walk before the plain start")
+	assert_eq(ScheduleResolver.entry_at(s, 730, 9), walk, "the plain lunch at 12:00 does not cut the walk")
+	assert_eq(ScheduleResolver.entry_at(s, 759, 9), walk, "the last minute of the walk")
+	assert_eq(ScheduleResolver.entry_at(s, 760, 9), lunch, "arrived: the plain entry again")
+	assert_eq(ScheduleResolver.entry_at(s, 730, 8), lunch, "another day: plain")
+	var there := _entry(760, FLAG, &"village")
+	s = _schedule([home, lunch, walk, there])
+	assert_eq(ScheduleResolver.entry_at(s, 765, 9), there, "the overlay's stay after the walk")
+	# A flagged stay does not mask (only a walk on its way).
+	var stand := _entry(700, FLAG, &"village")
+	s = _schedule([home, lunch, stand])
+	assert_eq(ScheduleResolver.entry_at(s, 730, 9), lunch, "a stay is cut by the later plain start (shadow copies)")
+
+
+## G9: a today_flag walk of yesterday that runs past midnight goes on until it arrives (the night visit home).
+func test_today_walk_over_midnight_goes_on() -> void:
+	var home := _entry(0)
+	var walk := _entry(1392, FLAG, &"village", 57)
+	var s := _schedule([home, walk])
+	GameState.set_flag(FLAG, 4)
+	assert_eq(ScheduleResolver.entry_at(s, 1400, 4), walk, "23:20 on its day")
+	assert_eq(ScheduleResolver.entry_at(s, 5, 5), walk, "00:05 the next day – still on the way")
+	assert_almost(ScheduleResolver.progress(walk, 5.0), (48.0 + 5.0) / 57.0, 0.0001, "progress over midnight")
+	assert_eq(ScheduleResolver.entry_at(s, 9, 5), home, "00:09 arrived – the plain entry")
+	assert_eq(ScheduleResolver.entry_at(s, 5, 6), home, "two days later nothing goes on")
+	var other := _entry(2, &"night_np_other_day", &"village")
+	GameState.set_flag(&"night_np_other_day", 5)
+	assert_eq(ScheduleResolver.entry_at(_schedule([home, walk, other]), 5, 5), other, "a today entry of the new day wins")

@@ -186,7 +186,8 @@ func test_phase9_loop_ending_a_to_the_chapter() -> void:
 		hanne.refresh()
 		assert_true(_flat(walker.global_position).distance_to(_flat(hanne.global_position)) < 4.0, "close behind her")
 	await _round_trip("the departure")
-	await _run_to(int(plan.get("day", 67)), minute + 45)
+	# G9 Gehtempo: the walk / the cart at the natural pace (56 / 54 minutes) – WhoKnowsConfig.gone_after_minutes 60.
+	await _run_to(int(plan.get("day", 67)), minute + 61)
 	assert_true(GameState.flag_on(&"sieber_gone"), "gone after the walk")
 	# The second post for the dead (p9_open_day + 6) – five letters decided.
 	await _run_to(69, 8 * 60)

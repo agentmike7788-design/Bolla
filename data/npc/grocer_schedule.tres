@@ -188,7 +188,7 @@ today_flag = &"fest_lights_day"
 
 [sub_resource type="Resource" id="p8_grocer_21"]
 script = ExtResource("1_dfj8i")
-start_minute = 973
+start_minute = 990
 activity = &"home"
 path = PackedStringArray("v_road_in")
 visible = false
@@ -197,7 +197,7 @@ today_flag = &"fest_lights_day"
 
 [sub_resource type="Resource" id="p8_grocer_22"]
 script = ExtResource("1_dfj8i")
-start_minute = 995
+start_minute = 1012
 activity = &"home"
 path = PackedStringArray("v_road_in")
 visible = false
@@ -248,7 +248,7 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_cvoyc"]
 script = ExtResource("1_dfj8i")
-start_minute = 973
+start_minute = 990
 travel_minutes = 22
 activity = &"walk"
 animation = &"walk"
@@ -257,7 +257,7 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_yxotm"]
 script = ExtResource("1_dfj8i")
-start_minute = 995
+start_minute = 1012
 activity = &"shop"
 animation = &"work"
 path = PackedStringArray("v_shop_window")

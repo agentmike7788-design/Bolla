@@ -209,8 +209,10 @@ func _cmd_visit(args: PackedStringArray) -> Dictionary:
 	var state := v.save_state()
 	var plan: Array = state.get("plan", []) if int(state.get("plan_day", -1)) == TimeManager.day else []
 	var id := "v_%d_d%d" % [TimeManager.day, plan.size() + 1]
+	# G9 Gehtempo: the real way up (the polyline at the natural pace, like a planned visit) – not the 13-minute default.
+	var travel := int(v.call(&"_travel", Database.kin(kin_id), graves))
 	plan.append({"visit_id": id, "kin_id": String(kin_id), "graves": Array(graves), "slot": TimeManager.minute_of_day,
-			"start": TimeManager.minute_of_day, "travel": VisitRules.ROAD_MINUTES + VisitRules.DEFAULT_ROUTE_MINUTES, "day": TimeManager.day,
+			"start": TimeManager.minute_of_day, "travel": travel, "day": TimeManager.day,
 			"flowers": true, "laid": 0, "viewed": 0, "waits": true, "tip": 0, "ended": false, "noise": false, "offered": ""})
 	state["plan"] = plan
 	state["plan_day"] = TimeManager.day
