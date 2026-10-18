@@ -164,7 +164,7 @@ Ablauf:
 | Brenneisen am Tor (65, 14:25) auf `stranger_gate` (0,00 m), **Torglocke** läutet (0 → 1), Panel öffnet | ✓ |
 | **Johann** auf der Bank (66, 14:30) auf `v_sieber_bench`, Clip `sit_bench` | ✓ |
 | **Tag/Nacht**: Sonne 1,55 mittags / 0,45 um 23:30 | ✓ |
-| Brief-Karte mit Taschenbrief | im letzten Lauf auf die Lieferung von Tag 63 umgestellt (vorher wartete die Sonde auf eine Lieferung an Tag 64, die bei belegter Bahre nicht kommt – Sondenfehler, kein Spielfehler) – Ergebnis `pck_check_p9.txt` |
+| Lieferung von Tag 63 mit Taschenbrief L1 (`lp_l1_carter`), Brief-Karte öffnet | ✓ (anfangs Sondenfehler: Warten auf Tag 64 bei belegter Bahre) – **36/36 PASS** |
 | `test_export_packed_arrays` (volle Suite) | ✓ |
 
 ## 6. Befundliste (Datei · Schwere · Vorschlag)
