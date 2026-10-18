@@ -93,12 +93,12 @@ const G9_SHOTS: Array[Dictionary] = [
 	{"name": "fix2_lenz_sieber_night", "region": "village", "day": "light20", "minute": 1257, "player": Vector2(-28.8, 19.4),
 			"facing": 250.0, "game": 13.0, "flags": ["night_np_sieber_priest_day"], "clear": ["sieber_watch_day"]},
 	# 3: ending B – Lenz on the first, Liesel on the second evening beside Johann on the bench.
-	{"name": "fix3_lenz_bench_evening", "region": "village", "day": 66, "minute": 1110, "player": Vector2(-30.0, 17.6),
+	{"name": "fix3_lenz_bench_evening", "region": "village", "day": 66, "minute": 1110, "player": Vector2(-28.9, 18.3),
 			"facing": 285.0, "game": 13.0, "flags": ["sieber_evening_day", "sieber_evening_priest_day"]},
-	{"name": "fix3_liesel_bench_evening", "region": "village", "day": 67, "minute": 1110, "player": Vector2(-30.0, 17.6),
+	{"name": "fix3_liesel_bench_evening", "region": "village", "day": 67, "minute": 1110, "player": Vector2(-28.9, 18.3),
 			"facing": 285.0, "game": 13.0, "flags": ["sieber_evening_day", "sieber_evening_washer_day"], "clear": ["sieber_evening_priest_day"]},
 	# 4: the watchman at the door on a watch night (ending C), close up.
-	{"name": "fix4_watchman_close", "region": "village", "day": "light19", "minute": 1385, "player": Vector2(-31.2, 18.3),
+	{"name": "fix4_watchman_close", "region": "village", "day": "light19", "minute": 1385, "player": Vector2(-29.9, 18.9),
 			"facing": 200.0, "game": 12.0, "flags": ["sieber_watch_day"]},
 ]
 
