@@ -1105,7 +1105,7 @@ func test_phase9_routes() -> void:
 		assert_false(near.call(Vector3(p.x + ORIGIN.x, 0.0, p.y + ORIGIN.z), 0.5), "%s stays closed" % p)
 	var space := world.get_world_3d().direct_space_state
 	var failures := PackedStringArray()
-	for npc_id: StringName in [&"kin_sieber_v", &"stranger", &"watchman", &"washer"]:
+	for npc_id: StringName in [&"kin_sieber_v", &"stranger", &"watchman", &"washer", &"surgeon", &"priest"]:
 		var sched := Database.schedule(npc_id) as NpcSchedule
 		for e: ScheduleEntry in sched.entries:
 			if e.region != &"village":

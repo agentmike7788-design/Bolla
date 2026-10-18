@@ -3435,7 +3435,9 @@ const P8_FLAGS: PackedStringArray = ["visit_smith_day", "visit_grocer_day", "vis
 		# W3 (QA8-03): the meet orders of Fenner 2 and Rosine 3 bring them to their place.
 		"meet_mayor_day", "meet_innkeeper_day",
 		# W2 „Anschlüsse“ (W1-Anschlüsse 18): Liesel's vigil at the Siebers (np_sieber), like at the Otts – Phase 9 only.
-		"night_np_sieber_washer_day"]
+		"night_np_sieber_washer_day",
+		# W3 „Restbedarf“ 2: Quast and Lenz at the Siebers (np_sieber), like at the Otts.
+		"night_np_sieber_surgeon_day", "night_np_sieber_priest_day"]
 
 
 func _sched(npc: String) -> NpcSchedule:
