@@ -2,6 +2,7 @@
   "_comment": "Die Gaststube im Holderkrug (docs/PHASE7_DESIGN.md §4.3, §4.7), gebaut von src/world/interiors/interior_build.gd; Koordinaten wie crypt_layout.json (Boden-Mitte = (0, 0), x rechts, z zur Kamera). Stube innen x −4…4, z −3…3, Tür in der Südwand bei x 1,6. Schanktisch an der Nordwand links (Rosine dahinter, Marker bar), Fässer daneben, Kachelofen an der Ostwand (Feuerlicht ohne Schatten), Treppe nach oben an der Westwand (Kulisse), vier Tische, Osrics Ecktisch im Südosten, drei sitzende Gäste ohne Rig. Hängelaterne (Rolle lantern, Schatten nachts) und Fenster aus dem Raummodell. Steh-Orte der Dorfbewohner: waypoints [x, z, Blick°].",
   "_phase8": "Phase 8 §4.6 D6 Kathreintanz (fest_kathrein_day): die Tische der Stubenmitte rücken an die Wand (fest hide/show – InteriorRoom.apply_fest), Tanzfläche 3 × 2,5 m frei (x −1,15…1,85, z −0,9…1,6), Tannengrün mit Bändern an der Nordwand (FestDecor), der Spielmann am Ofen (Fiddler).",
   "_g8_r5": "G8 Runde 5 (user: „bitte die bekannten probleme mal fixen“): Jakob fegt abends auf dem freien Boden vor dem Schanktisch (v_in_inn_sweep, Blick 80° zur Stube) – an v_in_inn_jakob verdeckte der Tisch vor ihm den Besenkopf; der Weg zu Rosine am Schanktisch und an der Treppe vorbei bleibt frei.",
+  "_phase9": "Phase 9 §4.4/§4.6 D11 (W-Welt, interior_build.gd): Brenneisen sitzt abends am freien Ecktisch (Osrics Tisch – Osric ist 17:30–21:55 fort) auf der Nordbank, Blick zur Stube (v_in_inn_stranger = Marker seat_2 des Tischs, Boden unter der Bankmitte: sit_inn hat seine Wurzel dort); Buch und Glas auf dem Tisch nur, solange er dort sitzt (StrangerTable). v_inn_cellar_help an den Fässern bei der Kellerluke (Besuchsteil von hrv_inn_cellar, VisitSpot).",
   "room_id": "inn",
   "building": "",
   "region": "village",
@@ -51,6 +52,17 @@
     "v_in_inn_fest_1": [-0.45, 0.95, 90.0],
     "v_in_inn_fest_2": [0.95, -0.15, -90.0],
     "v_in_inn_fest_3": [0.35, 0.95, -90.0],
-    "v_in_inn_fest_4": [0.15, -0.15, 90.0]
+    "v_in_inn_fest_4": [0.15, -0.15, 90.0],
+    "v_in_inn_stranger": [3.15, 0.87, 0.0],
+    "v_inn_cellar_help": [-3.35, -0.45, -90.0]
+  },
+  "phase9": {
+    "stranger_table": {"id": "StrangerTable", "items": [
+      {"asset": "ph_prop_notebook", "pos": [3.48, 1.38], "y": 0.795, "rot_y": 20.0},
+      {"asset": "ph_prop_tin_cup", "pos": [2.82, 1.42], "y": 0.795, "rot_y": 0.0}
+    ]},
+    "visit_spots": [
+      {"id": "visit_inn_cellar", "place": "v_inn_cellar_help"}
+    ]
   }
 }

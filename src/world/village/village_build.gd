@@ -11,7 +11,9 @@ extends RefCounted
 ##   ├─ Buildings/<id> (models + window / lantern / ember lights)   ├─ Decor/ (props, trees, bushes,
 ##   │   garden fences, brook, Grass)   ├─ Entities/ (9 Npc, HouseDoor × 3, ShopCounter × 2,
 ##   │   VillageBoard, RegionPortal road_out, MourningRibbon × 6; Phase 8: 3 Npc more, WatchSpot × 2,
-##   │   SickLight × 2 – village_build_phase8.gd)   ├─ Waypoints/   ├─ Spawns/
+##   │   SickLight × 2 – village_build_phase8.gd; Phase 9: 3 Npc more (Johann, Brenneisen, the watchman's lantern),
+##   │   KnockDoor door_sieber, WatchSpot watch_sieber, SickLight sick_light_sieber, VisitSpot – village_build_phase9.gd)
+##   ├─ Waypoints/   ├─ Spawns/
 ##   ├─ Colliders/ (footprints, props, bank walls, Bounds)   └─ Dressing (village_dressing.gd)
 
 const Ctx := preload("res://src/world/graveyard/graveyard_build_context.gd")
@@ -19,6 +21,7 @@ const Colliders := preload("res://src/world/graveyard/graveyard_build_colliders.
 const Entities := preload("res://src/world/graveyard/graveyard_build_entities.gd")
 const Decor := preload("res://src/world/graveyard/graveyard_build_decor.gd")
 const Phase8 := preload("res://src/world/village/village_build_phase8.gd")
+const Phase9 := preload("res://src/world/village/village_build_phase9.gd")
 const LAYOUT_PATH := "res://data/world/village_layout.json"
 const OUT_SCENE := "res://src/world/village/village.tscn"
 const OUT_GRASS := "res://src/world/village/village_grass.scn"
@@ -98,6 +101,7 @@ static func build(ctx: Ctx) -> Node3D:
 	_build_decor(ctx, decor)
 	_build_entities(ctx, entities, buildings)
 	Phase8.build(ctx, entities, buildings)
+	Phase9.build(ctx, entities, buildings)
 	Entities.build_waypoints(ctx, ctx.group(root, "Waypoints"))
 	var spawns := ctx.group(root, "Spawns")
 	for id: String in layout.spawns:
@@ -127,6 +131,11 @@ static func _build_house(ctx: Ctx, parent: Node3D, b: Dictionary) -> void:
 	var asset := String(b.model)
 	var node := ctx.place(asset, parent, Ctx.v2(b.pos), float(b.get("rot_y", 0.0)), String(b.id))
 	_window_lights(ctx, asset, node)
+	# Phase 9 (§4.3 D8): the Siebers' window light burns upstairs in the Altenteil (house-local position).
+	if b.has("window_light"):
+		var lit := node.find_child("Light_window", false, false) as Node3D
+		if lit != null:
+			lit.position = Ctx.v3(b.window_light)
 	var rects: Array = b.get("collision", [ctx.layout.footprints[asset]])
 	var body := StaticBody3D.new()
 	body.name = String(b.id)
@@ -297,6 +306,9 @@ static func _build_entities(ctx: Ctx, entities: Node3D, buildings: Node3D) -> vo
 				node.transform = ctx.ground_xform(Ctx.v2(ent.pos), float(ent.get("rot_y", 0.0)))
 				if ent.has("shop_id"):
 					node.set("shop_id", StringName(ent.shop_id))
+				# Phase 9 (W-Ton): the parish board is found by group (the cue „Bogen anheften" sounds at it).
+				if ent.type == "VillageBoard":
+					node.add_to_group(&"village_board", true)
 				ctx.add(entities, node)
 				if ent.has("reach"):
 					_reach(ctx, node, Ctx.v3(ent.reach), Ctx.v3(ent.get("reach_offset", [0.0, float(ent.reach[1]) * 0.5, 0.0])))
@@ -328,7 +340,16 @@ static func _build_entities(ctx: Ctx, entities: Node3D, buildings: Node3D) -> vo
 		# Phase 8 (§3.1): Jakob, Veit and Hanne only from p8_open on.
 		if n.has("requires_flag"):
 			npc.set("requires_flag", StringName(n.requires_flag))
+		# Phase 9 (§2.2.7 ending C): the watchman's lantern is a light prop as the „figure" – its light at the marker,
+		# the model beside the door (model_offset, Npc-local) as the child Model the Npc keeps.
+		if n.has("lantern_marker"):
+			npc.set("lantern_marker", StringName(n.lantern_marker))
 		ctx.add(entities, npc)
+		if n.has("model_offset"):
+			var model := (load(Ctx.model_path(String(n.model))) as PackedScene).instantiate() as Node3D
+			model.name = "Model"
+			model.position = Ctx.v3(n.model_offset)
+			ctx.add(npc, model)
 
 
 ## The entity's Interactable box (editable instance child).

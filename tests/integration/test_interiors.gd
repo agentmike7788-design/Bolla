@@ -486,3 +486,49 @@ func test_g8r5_work_places_seen_from_the_game_camera() -> void:
 	assert_almost(desk.position.z - fenner.position.z, 0.6, 0.02, "Fenner 0.6 m behind the desk centre")
 	assert_almost(desk.position.x, fenner.position.x, 0.02, "… in the middle")
 	player.set_region(&"graveyard")
+
+
+# --- Phase 9 (docs/PHASE9_DESIGN.md §4.4, §4.6 D11, §10 – W-Welt) ----------------------------------------------------
+
+## D11: Brenneisen's place at the free corner table (Osric's table, he is away 17:30–21:55): v_in_inn_stranger on the
+## table's marker seat_2 (the floor under the north bench, facing the room – sit_inn has its root there), the book and
+## the glass on the table only while he sits there (StrangerTable); the visit spot at the barrels (v_inn_cellar_help,
+## hrv_inn_cellar) free to stand at.
+func test_phase9_inn_stranger_table_and_cellar() -> void:
+	var inn := InteriorRoom.find(tree, &"inn")
+	var table := inn.get_node("Furniture/CornerTable") as Node3D
+	var seat := table.find_child("seat_2", true, false) as Node3D
+	var place := inn.get_node_or_null("Waypoints/v_in_inn_stranger") as Node3D
+	assert_not_null(place, "v_in_inn_stranger")
+	if place == null or seat == null:
+		return
+	assert_true(place.global_position.distance_to(seat.global_position) < 0.05, "on the seat marker (%s / %s)" % [place.global_position, seat.global_position])
+	assert_true(place.global_basis.z.z > 0.95, "facing the room (south)")
+	assert_true(Database.schedule(&"stranger").entries.any(func(e: ScheduleEntry) -> bool: return e.path.has("v_in_inn_stranger") and e.animation == &"sit_inn"),
+			"Brenneisen sits there by his plan")
+	var things := inn.get_node_or_null("Furniture/StrangerTable") as StrangerTable
+	assert_not_null(things, "the book and the glass")
+	if things != null:
+		assert_eq(things.get_child_count(), 2)
+		assert_false(things.visible, "not without him")
+		for piece: Node in things.get_children():
+			var p := (piece as Node3D).global_position
+			assert_true(Vector2(p.x, p.z).distance_to(Vector2(table.global_position.x, table.global_position.z)) < 0.75, "%s on the table" % piece.name)
+			assert_almost(p.y - table.global_position.y, 0.795, 0.01, "%s on the table top" % piece.name)
+	var cellar := inn.get_node_or_null("Waypoints/v_inn_cellar_help") as Node3D
+	var spot := inn.get_node_or_null("Entities/visit_inn_cellar") as VisitSpot
+	assert_not_null(cellar, "v_inn_cellar_help")
+	assert_not_null(spot, "the visit spot")
+	if cellar != null and spot != null:
+		assert_eq(spot.place_id, &"v_inn_cellar_help")
+		assert_true(spot.global_position.distance_to(cellar.global_position) < 0.01)
+		var player := world.get_player()
+		player.set_region(&"village")
+		player.global_transform = inn.spawn_transform()
+		player.set_in_interior(true, &"inn")
+		for i: int in 3:
+			await tree.physics_frame
+		assert_true(_capsule_free(cellar.global_position), "the cellar place free")
+		assert_true(_capsule_free(place.global_position + Vector3(0.0, 0.0, -0.45)), "behind the bench free (he walks in)")
+		player.set_in_interior(false)
+		player.set_region(&"graveyard")

@@ -125,6 +125,7 @@ func before_each() -> void:
 	piety = tree.get_first_node_in_group(&"piety") as Piety
 	rel = tree.get_first_node_in_group(&"relationships") as Relationships
 	orders = tree.get_first_node_in_group(&"orders") as Orders
+	_without_world_phase9(world.get_node("Systems"))
 	letters = Letters.new()
 	letters.name = "Letters"
 	world.add_child(letters)
@@ -390,3 +391,13 @@ func test_without_the_phase9_nodes_the_prompts_stay() -> void:
 
 func _on_note(text: String, _kind: StringName) -> void:
 	notes.append(text)
+
+
+## W2 (W-Welt): the world carries the four Phase-9 systems now – this test brings its own (as in W1), so the world's are
+## taken out first (the world as the test was written against).
+static func _without_world_phase9(systems: Node) -> void:
+	for n: String in ["Quests", "WhoKnows", "Letters", "Stranger"]:
+		var node := systems.get_node_or_null(n)
+		if node != null:
+			systems.remove_child(node)
+			node.free()

@@ -17,6 +17,7 @@ const LIGHTS: PackedStringArray = ["lights_lenz", "lights_crowd_1", "lights_crow
 		"lights_crowd_5", "lights_crowd_6", "lights_crowd_7", "lights_crowd_8"]
 const CORNER: PackedStringArray = ["apprentice_board", "apprentice_box", "apprentice_lunch", "apprentice_sweep", "rain_barrel"]
 const ROW3: PackedStringArray = ["l_09", "l_10", "l_11", "l_12"]
+const ROW4: PackedStringArray = ["l_13", "l_14", "l_15", "l_16"]
 
 var layout: Dictionary
 var world: WorldRoot
@@ -32,7 +33,7 @@ func before_each() -> void:
 
 func after_each() -> void:
 	for f: StringName in [&"has_elder_key", &"bruch_license", &"buildings_open", &"linden_granted", &"linden_consecrated",
-			&"linden_row3_granted"]:
+			&"linden_row3_granted", &"linden_row4_granted", &"p9_open"]:
 		GameState.set_flag(f, false)
 
 
@@ -45,7 +46,7 @@ func _grave_ids() -> PackedStringArray:
 
 func test_every_grave_has_a_spot_and_a_route() -> void:
 	var ids := _grave_ids()
-	assert_eq(ids.size(), 38, "plot_01…12, h_01…06, l_01…12, old_01…08 (§4.2)")
+	assert_eq(ids.size(), 42, "plot_01…12, h_01…06, l_01…16, old_01…08 (§4.2; Phase 9: + row 4)")
 	for id: String in ids:
 		var marker := world.get_node_or_null("Waypoints/gv_" + id) as Marker3D
 		assert_not_null(marker, "gv_" + id)
@@ -71,7 +72,8 @@ func test_every_grave_has_a_spot_and_a_route() -> void:
 		var p := world.get_node_by_layout_id(id) as Node3D
 		var local := p.to_local(world.get_waypoint(StringName("gv_" + id)))
 		assert_true(absf(local.x) < 0.75 and local.z > 1.5, "%s: the spot before the foot end (%s)" % [id, local])
-	for id: String in ROW3:
+	# Phase 9: row 3 keeps those places (pinned – the villagers' plans name gv_l_12), row 4 at the new fence does the same.
+	for id: String in ROW3 + ROW4:
 		var p := world.get_node_by_layout_id(id) as Node3D
 		var local := p.to_local(world.get_waypoint(StringName("gv_" + id)))
 		assert_true(absf(local.x) > 0.9 and local.z < 1.0, "%s: beside the mound, the south fence is too close (%s)" % [id, local])
@@ -97,8 +99,8 @@ func test_lights_corner_and_night_routes_are_free() -> void:
 			["apprentice_box", "apprentice_lunch"], ["rain_barrel", "gv_old_08"], ["apprentice_board", "gv_l_06"],
 			["apprentice_board", "gv_plot_11"], ["rain_barrel", "gv_h_03"], ["gv_l_10", "linden_spot"], ["gv_l_12", "gv_plot_08"]]:
 		_check_route(world.route_between(pair[0], pair[1]), "%s → %s" % pair, failures, true)
-	# The robber: from inside the south fence to every grave of rows 2–3 and back.
-	for id: String in ["l_05", "l_06", "l_07", "l_08"] + Array(ROW3):
+	# The robber: from inside the south fence to every grave of rows 2–4 and back (Phase 9: the fence at z 26).
+	for id: String in ["l_05", "l_06", "l_07", "l_08"] + Array(ROW3) + Array(ROW4):
 		_check_route(world.route_between("robber_fence_in", "gv_" + id), "robber → " + id, failures, true)
 	# Arbitrary points (Jakob's care spots as "@x,y,z" literals) are joined to the net as well.
 	for d: Dictionary in layout.dirt_spots:
@@ -130,13 +132,36 @@ func test_spots_are_not_in_a_collision() -> void:
 		ids.append("gv_" + id)
 	# apprentice_lunch is the seat on the bench.
 	for id: String in ids + LIGHTS + PackedStringArray(["apprentice_board", "apprentice_box", "apprentice_sweep", "rain_barrel", "gate_inside", "veit_gate", "peddler_gate", "lights_gate",
-			"robber_fence_in"]):
+			"robber_fence_in", "stranger_gate", "sieber_gate"]):
 		var p := world.get_waypoint(StringName(id))
 		q.transform = Transform3D(Basis.IDENTITY, p + Vector3(0, 0.75, 0))
 		var hits := space.intersect_shape(q, 4)
 		if not hits.is_empty():
 			failures.append("%s in %s" % [id, world.get_path_to(hits[0].collider)])
 	assert_eq(failures, PackedStringArray(), "§4.8 (6): no place in a collision")
+
+
+## Phase 9 (docs/PHASE9_DESIGN.md §4.4, §4.5, §4.7 „jede neue Route frei"): Brenneisen up the coach road to his place
+## outside the gate and back; Johann to his place beside Hanne, with her along the west fence up the forest edge, and
+## up to the bier for Osric's cart (the plans of data/npc, all legs) – the gate's figures as obstacles.
+func test_phase9_gate_routes_are_free() -> void:
+	await _open_everything()
+	var failures := PackedStringArray()
+	for npc_id: StringName in [&"stranger", &"kin_sieber_v"]:
+		var sched := Database.schedule(npc_id) as NpcSchedule
+		assert_not_null(sched, String(npc_id))
+		for e: ScheduleEntry in sched.entries:
+			if e.region != &"" or e.path.size() < 2:
+				continue
+			# From the gate on (the coach road below is outside the bounds); from gate_outside on he walks Hanne's way of
+			# Phase 8 (gate_outside → peddler_west → the trader's way) behind her.
+			var path := PackedStringArray(Array(e.path).filter(func(id: String) -> bool: return not id in ["road_end", "road_mid"]))
+			var to := path.find("peddler_west")
+			if to >= 0:
+				path = path.slice(0, path.find("gate_outside") + 1)  # gate_outside → peddler_west is Hanne's own way (Phase 8)
+			_check_route(path, "%s %d" % [npc_id, e.start_minute], failures, true)
+	assert_true(Database.schedule(&"stranger").entries.any(func(e: ScheduleEntry) -> bool: return e.path.has("stranger_gate")), "Brenneisen's plan names stranger_gate")
+	assert_eq(failures, PackedStringArray(), "§4.7: the new graveyard ways free")
 
 
 func test_route_between_falls_back_and_caches() -> void:
@@ -154,9 +179,9 @@ func test_route_between_falls_back_and_caches() -> void:
 func _open_everything() -> void:
 	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
 	for f: StringName in [&"has_elder_key", &"bruch_license", &"buildings_open", &"linden_granted", &"linden_consecrated",
-			&"linden_row3_granted"]:
+			&"linden_row3_granted", &"linden_row4_granted"]:
 		GameState.set_flag(f, true)
-	for s: StringName in [&"east", &"north", &"elder", &"bruch", &"quarry", &"churchyard", &"linden", &"linden_row3"]:
+	for s: StringName in [&"east", &"north", &"elder", &"bruch", &"quarry", &"churchyard", &"linden", &"linden_row3", &"linden_row4"]:
 		expansion.unlock(s)
 	var buildings := world.get_node("Systems/Buildings") as Buildings
 	buildings.load_state({"levels": {"crypt": 3, "chapel": 3, "shed": 3}})

@@ -35,6 +35,7 @@ func _start(fixture: String, main_ending: StringName = &"") -> void:
 	GameState.set_flag(&"p9_open", true)
 	GameState.set_flag(&"p9_open_day", OPEN_DAY)
 	var systems := _world().get_node("Systems")
+	_without_world_phase9(systems)
 	if main_ending != &"":
 		var q := Phase9Fixtures.ending(main_ending)
 		systems.add_child(q)
@@ -170,3 +171,13 @@ func test_kindly_does_not_know_him_yet() -> void:
 
 func _on_event(kind: StringName, detail: String) -> void:
 	events.append([kind, detail])
+
+
+## W2 (W-Welt): the world carries the four Phase-9 systems now – this test brings its own (as in W1), so the world's are
+## taken out first (the world as the test was written against).
+static func _without_world_phase9(systems: Node) -> void:
+	for n: String in ["Quests", "WhoKnows", "Letters", "Stranger"]:
+		var node := systems.get_node_or_null(n)
+		if node != null:
+			systems.remove_child(node)
+			node.free()

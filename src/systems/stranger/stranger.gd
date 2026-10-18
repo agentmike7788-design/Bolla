@@ -555,13 +555,13 @@ func load_state(data: Dictionary) -> void:
 		for r: Variant in raw_rumors:
 			if r is Dictionary and RUMORS.has(StringName(str((r as Dictionary).get("event", "")))):
 				_rumors.append({"event": str((r as Dictionary).get("event", "")), "day": _int((r as Dictionary).get("day"), 0)})
-	_refused_once = data.get("refused_once", false) == true
-	_case_opened = data.get("case_opened", false) == true
+	_refused_once = _bool(data.get("refused_once", false))
+	_case_opened = _bool(data.get("case_opened", false))
 	_ending_day = _int(data.get("ending_day"), -1)
 	if _ending != &"" and _ending_day < 0:
 		_ending_day = TimeManager.day
-	_left = data.get("left", false) == true
-	_offers_seen = data.get("offers_seen", false) == true
+	_left = _bool(data.get("left", false))
+	_offers_seen = _bool(data.get("offers_seen", false))
 	_soil_graves = PackedStringArray()
 	var raw_soil: Variant = data.get("soil_graves", [])
 	if raw_soil is Array:
@@ -573,6 +573,11 @@ func load_state(data: Dictionary) -> void:
 
 
 # --- internals ----------------------------------------------------------------------------------------
+
+## A saved yes/no that may be damaged (save fuzzer: an int or a string compared with true is an engine error).
+static func _bool(v: Variant) -> bool:
+	return v is bool and v
+
 
 func _on_time_tick(day: int, minute: int) -> void:
 	if SaveManager.is_loading:

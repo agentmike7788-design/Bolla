@@ -94,7 +94,7 @@ start_minute = 841
 travel_minutes = 9
 activity = &"walk"
 animation = &"walk_bundle"
-path = PackedStringArray("v_sieber_door", "v_road_in")
+path = PackedStringArray("v_sieber_door", "v_sieber_yard", "v_sieber_lane_s", "v_sieber_lane_e", "v_sieber_lane_n", "v_road_in")
 region = &"village"
 today_flag = &"sieber_depart_peddler_day"
 
@@ -146,7 +146,7 @@ start_minute = 545
 travel_minutes = 9
 activity = &"walk"
 animation = &"walk_bundle"
-path = PackedStringArray("v_sieber_door", "v_road_in")
+path = PackedStringArray("v_sieber_door", "v_sieber_yard", "v_sieber_lane_s", "v_sieber_lane_e", "v_sieber_lane_n", "v_road_in")
 region = &"village"
 today_flag = &"sieber_depart_carter_day"
 

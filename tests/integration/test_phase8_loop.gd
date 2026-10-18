@@ -147,6 +147,9 @@ func test_phase8_loop_to_who_comes_up_with_round_trips() -> void:
 	await _pass(55, 7 * 60)
 	app.set_board_lines([{"task": "rake", "area": "yard"}, {"task": "weed", "area": "linden"}] as Array[Dictionary])
 	await _pass(55, 540)
+	# From the grave in row 3 back up to the yard where Jakob waits (Phase 9: the south fence moved with row 4 – the
+	# gravekeeper no longer gets set back from the fence near row 3, and l_09 lies 32 m from Jakob's place).
+	player.global_position = Vector3(-1.0, world.ground_height(Vector2(-1.0, 3.0)), 3.0)
 	await _teach(&"rake")
 	await _teach(&"water")
 	assert_eq([app.level(&"rake"), app.level(&"water")], [1, 1], "§2.5.4: rake and water taught")

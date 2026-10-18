@@ -59,6 +59,9 @@ static func build_entity(ctx: Ctx, parent: Node, ent: Dictionary) -> void:
 				node.set("requires_flag", StringName(params.requires_flag))
 			if params.has("lantern_marker"):
 				node.set("lantern_marker", StringName(params.lantern_marker))
+			# Phase 9 (§2.2.7): Johann's departure figure is hidden once he is gone (sieber_gone).
+			if params.has("hide_flag"):
+				node.set("hide_flag", StringName(params.hide_flag))
 			for key: String in ["walk_anim_speed", "face_player_range"]:
 				if params.has(key):
 					node.set(key, float(params[key]))
