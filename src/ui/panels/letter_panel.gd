@@ -17,7 +17,7 @@ const READ_CHOICE := &"read"
 const ACTION_READ := &"letter_read"
 const ANIM_READ := &"read_letter"
 const LABEL_READ := "Brief lesen"
-## Fallback minutes of reading (LettersConfig.read_minutes once it exists).
+## Fallback minutes of reading without a config (LettersConfig.read_minutes, W3 „Restbedarf“ 6).
 const READ_MINUTES := 5
 const ACTION_PREV := &"drop"
 const ACTION_NEXT := &"interact"
@@ -230,10 +230,8 @@ func choose(choice: StringName) -> bool:
 	_focus_choice = choice
 	var player := _player() as Player
 	if choice == READ_CHOICE and player != null and is_instance_valid(player) and player.has_method(&"start_timed_action"):
-		var minutes := READ_MINUTES
 		var cfg := letters.get_config()
-		if cfg != null and cfg.get(&"read_minutes") != null:
-			minutes = int(cfg.get(&"read_minutes"))
+		var minutes := cfg.read_minutes if cfg != null else READ_MINUTES
 		return player.start_timed_action(LABEL_READ, minutes, _decide.bind(uid, choice), true,
 				ToolAnimConfig.clip_for(ACTION_READ, ANIM_READ))
 	return _decide(uid, choice)

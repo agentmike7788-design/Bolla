@@ -283,6 +283,39 @@ func test_letter_card_choices_places_and_reasons() -> void:
 		assert_true(card.choice_button(&"read").disabled, "read once")
 
 
+## W3 „Restbedarf“ 6: reading at the letter card takes LettersConfig.read_minutes (5, class default = data).
+class TimedPlayer extends Player:
+	var minutes: int = -1
+
+	func start_timed_action(_label: String, game_minutes: int, on_done: Callable, _cancellable: bool = true,
+			_animation: StringName = &"interact", _real_seconds: float = -1.0) -> bool:
+		minutes = game_minutes
+		on_done.call()
+		return true
+
+
+func test_w3_letter_card_reads_with_read_minutes() -> void:
+	assert_eq(LettersConfig.new().read_minutes, 5, "class default")
+	assert_eq((Database.config(&"letters_config") as LettersConfig).read_minutes, 5, "data = class default")
+	await _setup()
+	_keep(Phase9Fixtures.p9_open(tree))
+	var made := Phase9Fixtures.letter_in(inv, &"lp_l1_carter", tree)
+	var letters := _keep(made.letters) as Letters
+	var cfg := letters.get_config().duplicate() as LettersConfig
+	cfg.read_minutes = 7
+	letters.config = cfg
+	var reader := TimedPlayer.new()
+	var card := _open(&"letter", {"uid": str(made.uid), "inventory": inv, "player": reader}) as LetterPanel
+	if not card.choice_button(&"read").disabled:
+		assert_true(card.choose(&"read"))
+		assert_eq(reader.minutes, 7, "the minutes of the config")
+		assert_true(letters.is_opened(str(made.uid)))
+	else:
+		assert_true(false, "L1 can be read at the card")
+	ui.close_all()
+	reader.free()
+
+
 func test_letter_card_steps_through_the_bag() -> void:
 	await _setup()
 	_keep(Phase9Fixtures.p9_open(tree))

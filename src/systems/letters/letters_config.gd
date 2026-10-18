@@ -11,6 +11,8 @@ extends Resource
 @export var aschau_letter: StringName = &"lpo_aschau"
 ## Coins of the postage (coin purpose &"post"); §1.3 minutes.
 @export var postage: int = 1
+## W3 („Restbedarf“ 6): reading a letter standing – the letter card's „Lesen“ (TimedAction read_letter).
+@export var read_minutes: int = 5
 @export var read_grave_minutes: int = 10
 @export var answer_minutes: int = 20
 @export var burn_minutes: int = 2

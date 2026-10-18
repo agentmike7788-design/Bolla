@@ -109,9 +109,9 @@ const DATA_CLASSES := {
 }
 ## Properties changed in the data (and the class default together) after the W0 hand-over; the fixtures keep the
 ## W0 values. Empty at W0; W2 „Anschlüsse“: the mood rules of ending C (W1-Anschlüsse 13), the values of WhoKnows that
-## lived in the code (16).
+## lived in the code (16); W3 „Restbedarf“ 6: LettersConfig.read_minutes (reading a letter at the letter card).
 const DATA_CHANGED_AFTER_W0 := {&"npc_life_config": [&"mood_rules"], &"who_knows_config": [&"quest_id", &"gone_after_minutes",
-		&"b_confidant_rel", &"death_paths", &"death_flags"]}
+		&"b_confidant_rel", &"death_paths", &"death_flags"], &"letters_config": [&"read_minutes"]}
 
 
 func test_stub_scripts_load_with_their_class_names() -> void:
