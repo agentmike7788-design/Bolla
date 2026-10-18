@@ -1,0 +1,7 @@
+p9_17_brenneisen_gate_veit  camera_tris=245973 (primitives 172749 + grass 73224)  draw_calls=208 (camera 79)  objects=358  omni_visible=12  shadowed=0  particles=13
+perf_p9_01_gate_large_brenneisen  camera_tris=366225 (primitives 149631 + grass 216594)  draw_calls=270 (camera 148)  objects=462  omni_visible=15  shadowed=0  particles=13
+p9_24b_row4_stones  camera_tris=266047 (primitives 176407 + grass 89640)  draw_calls=193 (camera 89)  objects=400  omni_visible=3  shadowed=0  particles=3
+p9_06_veit_well_sieber_window  camera_tris=203904 (primitives 203904 + grass 0)  draw_calls=208 (camera 140)  objects=259  omni_visible=11  shadowed=0  particles=3
+p9_11_watchman_sick_light  camera_tris=88330 (primitives 88330 + grass 0)  draw_calls=106 (camera 48)  objects=125  omni_visible=4  shadowed=0  particles=13
+p9_19_brenneisen_inn_corner  camera_tris=64602 (primitives 64602 + grass 0)  draw_calls=105 (camera 38)  objects=109  omni_visible=8  shadowed=1  particles=9
+perf_p9_02_village_brenneisen_johann  camera_tris=107702 (primitives 107702 + grass 0)  draw_calls=143 (camera 64)  objects=167  omni_visible=9  shadowed=0  particles=13

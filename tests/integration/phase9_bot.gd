@@ -254,6 +254,22 @@ func _travel(target: StringName) -> bool:
 	return await super._travel(target)
 
 
+## Ilse at the west wall (Phase 4, 23:05): after a trip to the village at night the hill's figures are placed again
+## before she is looked for (the bot jumps the clock; a player walks back for minutes).
+func _night_at_the_wall() -> void:
+	if p9_open() and trade.is_known() and _door_day == TimeManager.day and TimeManager.minute_of_day >= 360:
+		if TimeManager.minute_of_day < TRADE_MINUTE:
+			_wait_until(TRADE_MINUTE)
+		var npc := world.get_node_or_null("Entities/npc_trader") as Npc
+		for i: int in 12:
+			if npc != null:
+				npc.refresh()
+			await tree.process_frame
+		_t9("Ilse after the night in the village: present %s (npc present %s, talkable %s, walking %s)" % [trade.is_present(),
+				npc.is_present() if npc != null else false, npc.is_talkable() if npc != null else false, npc.is_walking() if npc != null else false])
+	await super._night_at_the_wall()
+
+
 ## Every walk between two tasks (Phase 8 serves the visitors there): Johann's morning visit is waited for when due.
 func _walk(minutes: int = WALK_MINUTES) -> void:
 	super._walk(minutes)
@@ -545,10 +561,11 @@ func _letter_want(uid: String) -> StringName:
 		return LetterRules.CHOICE_BURN
 	if l.asks == &"grave" and ids.has(LetterRules.CHOICE_BURY):
 		return LetterRules.CHOICE_BURY
-	if String(flags.letters) == "grave" and ids.has(LetterRules.CHOICE_READ_GRAVE):
-		return LetterRules.CHOICE_READ_GRAVE
+	# The chain „Briefe ohne Antwort" (L4) wants an answer – before reading at the grave.
 	if flags.answer and ids.has(LetterRules.CHOICE_ANSWER) and LetterRules.can_answer(l) and letters.answerable(inv()) == uid:
 		return LetterRules.CHOICE_ANSWER
+	if String(flags.letters) == "grave" and ids.has(LetterRules.CHOICE_READ_GRAVE):
+		return LetterRules.CHOICE_READ_GRAVE
 	if ids.has(LetterRules.CHOICE_DELIVER):
 		return LetterRules.CHOICE_DELIVER
 	if ids.has(LetterRules.CHOICE_READ_GRAVE):
@@ -658,7 +675,12 @@ func _p9_osric(evening: bool = false) -> void:
 		return
 	_osric_day = TimeManager.day * 2 + int(evening)
 	player.global_position = speaker.global_position + Vector3(1.2, 0, 0)
-	_talk_with(dlg, speaker, &"carter")
+	# A remark of the day may end the first talk (he says his piece and goes on) – [E] again, as a player would.
+	for k: int in 3:
+		var before := _dialogue_offers(dlg, speaker)
+		_talk_with(dlg, speaker, &"carter")
+		if _dialogue_offers(dlg, speaker) <= 0 or _dialogue_offers(dlg, speaker) < before:
+			break
 
 
 ## Brenneisen outside the gate (his visit days, 14:10–): his dialogue for the strategy (save_load9: a round trip).
@@ -869,9 +891,10 @@ func _resolve(n: StringName) -> DialogueNode:
 
 
 ## The best Phase-9 score behind node `n` within `depth` steps (the conditions of the choices checked).
-func _ahead9(n: StringName, visited: Dictionary, depth: int) -> int:
-	if _dlg_now == null or depth <= 0:
+func _ahead9(n: StringName, visited: Dictionary, depth: int, seen: Dictionary = {}) -> int:
+	if _dlg_now == null or depth <= 0 or seen.has(n):
 		return 0
+	seen[n] = true
 	var node := _resolve(n)
 	if node == null:
 		return 0
@@ -882,7 +905,7 @@ func _ahead9(n: StringName, visited: Dictionary, depth: int) -> int:
 			continue
 		best = maxi(best, _score9(c, visited))
 		if c.next != &"" and c.next != n:
-			best = maxi(best, _ahead9(c.next, visited, depth - 1) - 5)
+			best = maxi(best, _ahead9(c.next, visited, depth - 1, seen) - 5)
 	return best
 
 
@@ -896,12 +919,15 @@ func _pick9(choices: Array[DialogueChoice], visited: Dictionary) -> int:
 			continue
 		var s := _score9(choices[i], visited)
 		if s <= 0 and choices[i].next != &"" and int(visited.get(choices[i].next, 0)) < 3:
-			s = _ahead9(choices[i].next, visited, 3) - 5
+			s = _ahead9(choices[i].next, visited, 6) - 5
 		if s > best_score:
 			best_score = s
 			best = i
 	if best >= 0:
 		return best
+	# A remark with a single way on (Osric's greeting chain): onwards once, then towards the menu.
+	if choices.size() == 1 and choices[0].next != &"" and int(visited.get(choices[0].next, 0)) == 0 and not _vetoed(choices[0]):
+		return 0
 	for i: int in choices.size():
 		var n := choices[i].next
 		if n == &"" or String(n).begins_with("bye") or String(n).begins_with("goodbye"):
@@ -1190,9 +1216,9 @@ func _large_doable(id: StringName) -> bool:
 				return false
 			for item: StringName in recipe.inputs:
 				need[item] = int(need.get(item, 0)) + int(recipe.inputs[item]) * HillRules.need(p)
-	for item: Variant in need:
-		if inv().count(StringName(str(item))) < int(need[item]) + (LARGE_KEEP_WOOD if StringName(str(item)) == &"wood" else 0):
-			return false
+	# Wood is the scarce one in the Phase-8 end states (no wild section left); stone comes from the daily pile.
+	if need.has(&"wood") and inv().count(&"wood") < int(need[&"wood"]) + LARGE_KEEP_WOOD:
+		return false
 	return true
 
 

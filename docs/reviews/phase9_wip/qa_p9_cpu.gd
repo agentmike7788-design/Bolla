@@ -116,9 +116,11 @@ func _run() -> void:
 	var best := 1e9
 	var worst := 0.0
 	var count := 0
+	# Loaded at run time (a class name in this script would compile quest_log.gd before the autoloads exist).
+	var quest_log: Variant = load("res://src/systems/quests/quest_log.gd")
 	for i: int in 20:
 		var t0 := Time.get_ticks_usec()
-		var e := QuestLog.entries(world.get_tree())
+		var e: Array = quest_log.entries(world.get_tree())
 		var ms := (Time.get_ticks_usec() - t0) / 1000.0
 		best = minf(best, ms)
 		worst = maxf(worst, ms)

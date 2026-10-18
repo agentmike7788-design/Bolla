@@ -165,25 +165,12 @@ func _check_world() -> void:
 	for id: String in ["obs_l_stump_13", "obs_l_bramble_13"]:
 		expansion.clear(id, player.inventory)
 	_check(expansion.is_unlocked(&"linden_row4"), "row 4 open")
-	# The delivery of day 63 (on the bier in the fixture): its pockets, buried in row 4 – the bier is free for day 64.
-	var care0 := tree.get_first_node_in_group(&"corpse_care") as CorpseCare
+	# The first delivery after p9_open (day 63, at the drop-off in the fixture) carries the forced pocket letter L1.
+	var r: CorpseRecord = null
 	for rec: CorpseRecord in world.corpse_manager.records():
-		if rec.location == CorpseRecord.LOCATION_BURIED:
-			continue
-		care0.exam_step(rec.id, &"pockets")
-		for id: String in ["l_13", "l_14", "l_15", "l_16"]:
-			if world.graveyard.get_grave(id).state == GraveRecord.State.EMPTY:
-				world.graveyard.dig(id)
-				if world.graveyard.bury(id, rec.id):
-					break
-	await _run_to(64, 7 * 60)
-	var r := world.corpse_manager.try_daily_delivery(64)
-	if r == null:
-		await _run_to(64, 8 * 60)
-		for rec: CorpseRecord in world.corpse_manager.records():
-			if rec.location != CorpseRecord.LOCATION_BURIED and int(rec.arrival_total_minutes / 1440.0) + 1 == 64:
-				r = rec
-	_check(r != null, "a delivery on day 64")
+		if rec.location != CorpseRecord.LOCATION_BURIED:
+			r = rec
+	_check(r != null, "the delivery of day 63 waits (%s)" % (r.id if r != null else "-"))
 	if r != null:
 		(tree.get_first_node_in_group(&"corpse_care") as CorpseCare).exam_step(r.id, &"pockets")
 		_check(r.letter_id != &"" and not letters.open_uids().is_empty(), "its pocket letter %s in the bag" % r.letter_id)
