@@ -29,6 +29,7 @@ func before_each() -> void:
 	Phase9Fixtures._inject_items()
 	_inject_journal()
 	var systems := _world().get_node("Systems")
+	_without_world_phase9(systems)
 	quests = Quests.new()
 	quests.name = "Quests"
 	who = WhoKnows.new()
@@ -231,3 +232,13 @@ func test_still_by_the_deadline() -> void:
 	assert_eq(_rel().value(&"surgeon"), surgeon, "still: no relationship change")
 	await _run_to(72, 140)
 	assert_eq(GameState.get_flag(&"sieber_dead"), 72)
+
+
+## W2 (W-Welt): the world carries the four Phase-9 systems now – this test brings its own (as in W1), so the world's are
+## taken out first (the world as the test was written against).
+static func _without_world_phase9(systems: Node) -> void:
+	for n: String in ["Quests", "WhoKnows", "Letters", "Stranger"]:
+		var node := systems.get_node_or_null(n)
+		if node != null:
+			systems.remove_child(node)
+			node.free()
