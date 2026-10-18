@@ -1116,3 +1116,7 @@ Alle W1-Pakete sind gemergt (P1+P4, P7, P3+P5, P2, P6; volle Suite auf dem gemer
 ### G9 – Benutzerentscheidungen (bindend, 18.10.2026: „ok“)
 1. **Gehtempo:** Alle Zeitplan-Wege der Dorfbewohner bekommen ein natürliches Gehtempo (Abfahrt früher statt Hetzen; Ankunftszeiten der Systeme bleiben).
 2. **Quasts Tropfen (Ende B):** Auslegung bestätigt – Quast verkauft `fever_tincture` nicht, er kauft an diesem Tag eine mehr an.
+3. **Münzen** (+55 bis +64 im Bogen statt ≤ +50): so lassen; Abstimmung in Phase 10.
+4. **Kapitel** schon bei etwa B7 statt B9–B11: in Ordnung.
+5. **Hauptkette:** Die Frist (Ende „still“) läuft erst, nachdem Lorenz' Kladde gelesen wurde (QA9-07).
+6. **Große Bitten:** Leerlauf 1887 min (Ziel war ≤ 1700) – so lassen.
