@@ -12,8 +12,8 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_34akn"]
 script = ExtResource("1_a456f")
-start_minute = 540
-travel_minutes = 6
+start_minute = 527
+travel_minutes = 19
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_hagedorn_gate", "v_well_bench")
@@ -29,8 +29,8 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_cy44s"]
 script = ExtResource("1_a456f")
-start_minute = 660
-travel_minutes = 6
+start_minute = 647
+travel_minutes = 19
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_well_bench", "v_hagedorn_gate")

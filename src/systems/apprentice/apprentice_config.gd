@@ -5,8 +5,9 @@ extends Resource
 
 @export var npc_id: StringName = &"apprentice"
 @export var hire_flag: StringName = &"apprentice_hired"
-## 08:15 at the road end, 08:30 work, lunch 12:00–12:30, 15:30 tools back and wage.
-@export var arrive_minute: int = 495
+## 08:15 at the road end, 08:30 work, lunch 12:00–12:30, 15:30 tools back and wage. G9 Gehtempo: 07:30 at the road end
+## (the way up to the board takes 54 minutes at the natural pace – at the board at 08:25 as before).
+@export var arrive_minute: int = 450
 @export var start_minute: int = 510
 @export var lunch: Vector2i = Vector2i(720, 750)
 @export var end_minute: int = 930

@@ -8,7 +8,7 @@ extends Node
 ## „Verkauf an Hanne").
 ## Both only from p8_open. Presence and places follow the clock (the Npc schedules are P6's, the places
 ## W-Welt's): Veit sits at the church door 08:00–11:30, on odd days 13:40–16:00 outside the graveyard gate,
-## otherwise 13:00–17:00 on the Holder bridge, 18:06–19:30 on the bridge, 21:00–23:30 on the well bench.
+## otherwise 13:00–19:30 on the Holder bridge (G9: before 13:00–17:00 and 18:06–19:30), 21:00–23:30 on the well bench.
 
 const GROUP := &"wanderers"
 const BEGGAR := &"beggar"
@@ -26,8 +26,10 @@ const PLACE_BRIDGE := &"v_bridge_sit"
 const PLACE_WELL_BENCH := &"v_well_bench"
 const PLACE_PEDDLER_WELL := &"v_well_peddler"
 const PLACE_PEDDLER_GATE := &"peddler_gate"
-## Veit's day: [from, to, place]; odd days the gate replaces the bridge in the afternoon.
-const BEGGAR_DAY: Array = [[480, 690, PLACE_CHURCH], [780, 1020, PLACE_BRIDGE], [1086, 1170, PLACE_BRIDGE],
+## Veit's day: [from, to, place]; odd days the gate replaces the bridge in the afternoon. G9 Gehtempo: no supper at the
+## remise 17:00–18:06 any more (the ways there and back at the natural pace took longer than the meal) – he sits on the
+## bridge until 19:30 (data/npc/beggar_schedule.tres).
+const BEGGAR_DAY: Array = [[480, 690, PLACE_CHURCH], [780, 1020, PLACE_BRIDGE], [1020, 1170, PLACE_BRIDGE],
 		[1260, 1410, PLACE_WELL_BENCH]]
 const BEGGAR_GATE: Array = [820, 960]
 ## Hanne's day: 09:30 over the bridge, the well 10:00–14:00, the gate 15:40–16:20, then up the forest path.
