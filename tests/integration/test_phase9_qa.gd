@@ -1,13 +1,13 @@
 extends TestCase
 ## W3 QA Phase 9 (docs/PHASE9_DESIGN.md §10, §12 W3; docs/reviews/phase9_wip/qa_g9.md): guards of the QA round.
-## - The real mid-Phase-9 v8 save (fixture candidate docs/reviews/phase9_wip/slot_p9_mid_h4.json, written by
-##   test_save_fuzzer.gd with P9QA_FIXTURE_OUT): loads without warnings, keeps its Phase-9 state (chain at H4, a large
+## - The real mid-Phase-9 v8 save (tests/fixtures/saves_v8/slot_p9_mid_h4.json – taken over by the Lead in the W3 QA-Fix
+##   from the candidate docs/reviews/phase9_wip/, written by test_save_fuzzer.gd with P9QA_FIXTURE_OUT): loads without warnings, keeps its Phase-9 state (chain at H4, a large
 ##   request at 2/3, Osric's post waiting, Brenneisen at the gate, Johann on his bench) and survives save → load.
 ## - QuestLog.entries (the Merkbuch „Vorhaben") within §9's 4 ms on that state (best of 10; the cloud host drifts).
 
 const TIMEOUT := 300.0
 const SLOT := 91
-const CANDIDATE := "res://docs/reviews/phase9_wip/slot_p9_mid_h4.json"
+const CANDIDATE := "res://tests/fixtures/saves_v8/slot_p9_mid_h4.json"
 
 var saves_dir := TestCase.user_dir("test_phase9_qa")
 
@@ -23,7 +23,7 @@ func after_each() -> void:
 
 func _load_candidate() -> WorldRoot:
 	var text := FileAccess.get_file_as_string(CANDIDATE)
-	assert_ne(text, "", "the fixture candidate exists")
+	assert_ne(text, "", "the v8 fixture exists")
 	if text == "":
 		return null
 	assert_eq(int((JSON.parse_string(text) as Dictionary).format_version), 8, "v8")
@@ -32,7 +32,7 @@ func _load_candidate() -> WorldRoot:
 	f.store_string(text)
 	f.close()
 	var err: Error = await SaveManager.load_game(SLOT)
-	assert_eq(err, OK, "the candidate loads")
+	assert_eq(err, OK, "the v8 fixture loads")
 	TimeManager.running = false
 	return tree.current_scene as WorldRoot if err == OK else null
 
