@@ -121,7 +121,6 @@ static func _plan_detail(right: VBoxContainer, tree: SceneTree, e: Dictionary, w
 		var line := str(e.get("line", ""))
 		if line != "" and line != str(e.title):
 			body.add_child(_wrap(line, &"InkPencilLabel", width))
-	right.add_child(UIKit.spacer(false))
 	var quests := tree.get_first_node_in_group(&"quests") as Quests if tree != null else null
 	var row := UIKit.hbox(8)
 	row.alignment = BoxContainer.ALIGNMENT_END
@@ -282,6 +281,14 @@ static func build_list(left: VBoxContainer, right: VBoxContainer, page: Dictiona
 	right.add_child(_wrap(Phase9Texts.LIST_COUNT % [matched, dead, asked, witnesses], &"InkLabel", width))
 	right.add_child(_wrap(Phase9Texts.LIST_INK_NOTE, &"InkDimLabel", width))
 	right.add_child(LedgerOrnament.new())
+	right.add_child(UIKit.label(Phase9Texts.LIST_WITNESSES, &"LedgerHeadLabel"))
+	for raw: Variant in page.get("entries", []):
+		var e := raw as Dictionary
+		if e == null or str(e.get("witness", "")) == "":
+			continue
+		var asked_one := bool(e.get("witnessed", false))
+		right.add_child(UIKit.label(Phase9Texts.LIST_WITNESS_LINE % [str(e.get("initial", "")), str(e.get("witness", "")),
+				Phase9Texts.LIST_ASKED if asked_one else Phase9Texts.LIST_NOT_ASKED], &"InkLabel" if asked_one else &"InkPencilLabel"))
 	if bool(page.get("confide_none", false)):
 		right.add_child(_wrap(Phase9Texts.LIST_CONFIDE_HINT, &"InkPencilLabel", width))
 		var row := UIKit.hbox(8)

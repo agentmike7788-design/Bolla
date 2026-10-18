@@ -26,8 +26,12 @@ var head_label: Label
 var count_label: Label
 var hint_label: Label
 var close_button: Button
-## request id -> {card, accept, state, reason} (+ parts: [Label], half: Label for a large one)
+## request id -> {card, accept, state, reason} – the small slips
 var cards: Dictionary[StringName, Dictionary] = {}
+## Phase 9: large request id -> {card, accept, state, reason, parts: [Label], half: Label}
+var large_cards: Dictionary[StringName, Dictionary] = {}
+## Phase 9: the accept buttons in the order shown (large sheet first) – the focus moves on along it.
+var _order: Array[StringName] = []
 ## Phase 9: &"gate" | &"village" (context place).
 var place: StringName = &"gate"
 var _scroll: ScrollContainer
@@ -108,12 +112,14 @@ func large_ids() -> Array[StringName]:
 
 
 func _refresh() -> void:
-	for id: StringName in cards:
-		var old: Button = cards[id].accept
+	for id: StringName in _order:
+		var old := accept_button(id)
 		if is_instance_valid(old) and old.has_focus():
 			_focus_id = id
 	UIKit.clear_children(_list)
 	cards.clear()
+	large_cards.clear()
+	_order.clear()
 	var shown := ids()
 	var large := large_ids()
 	for id: StringName in large:
@@ -166,16 +172,21 @@ func accept(id: StringName) -> bool:
 
 
 func accept_button(id: StringName) -> Button:
+	if large_cards.has(id):
+		return large_cards[id].accept as Button
 	return cards[id].accept as Button if cards.has(id) else null
 
 
-## After a rebuild the focus stays on the card used last (its button, else the first enabled one).
+## After a rebuild the focus stays on the card used last (its button; accepted: the next card's, else the first enabled one).
 func focus_default() -> void:
-	var again := accept_button(_focus_id)
-	if again != null and again.visible and not again.disabled and again.is_visible_in_tree():
-		again.grab_focus()
-		reveal.call_deferred(again)
-		return
+	var start := _order.find(_focus_id)
+	if start >= 0:
+		for i: int in range(start, _order.size()):
+			var b := accept_button(_order[i])
+			if b != null and b.visible and not b.disabled and b.is_visible_in_tree():
+				b.grab_focus()
+				reveal.call_deferred(b)
+				return
 	super.focus_default()
 
 
@@ -238,6 +249,7 @@ func _card(c: Dictionary) -> Control:
 	row.visible = open
 	box.add_child(row)
 	cards[id] = {"card": card, "accept": button, "state": stamp, "reason": reason_label}
+	_order.append(id)
 	return card
 
 
@@ -347,5 +359,6 @@ func _large_card(c: Dictionary) -> Control:
 	row.add_child(button)
 	row.visible = open
 	box.add_child(row)
-	cards[id] = {"card": card, "accept": button, "state": stamp, "reason": reason_label, "parts": part_labels, "half": half}
+	large_cards[id] = {"card": card, "accept": button, "state": stamp, "reason": reason_label, "parts": part_labels, "half": half}
+	_order.append(id)
 	return card

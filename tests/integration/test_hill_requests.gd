@@ -172,6 +172,12 @@ func test_board_opens_the_docked_panel_mouse_and_keyboard() -> void:
 	var first: StringName = hill.board()[0]
 	var second: StringName = hill.board()[1]
 	var focused := ui.get_viewport().gui_get_focus_owner()
+	# W-UI Phase 9 (docs/PHASE9_DESIGN.md §2.3.4): from day 2 the large sheet is the first card – the keyboard starts there.
+	for large: StringName in panel.large_ids():
+		assert_eq(focused, panel.accept_button(large), "keyboard: the large sheet's „Annehmen“ first")
+		panel.accept_button(first).grab_focus()
+		focused = ui.get_viewport().gui_get_focus_owner()
+		break
 	assert_eq(focused, panel.accept_button(first), "keyboard: the first „Annehmen“ has the focus")
 	_press(&"ui_accept")
 	await wait_frames(2)

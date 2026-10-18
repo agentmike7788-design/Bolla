@@ -337,8 +337,8 @@ func test_large_card_at_the_gate_parts_and_half() -> void:
 	await _setup()
 	var hill := _keep(Phase9Fixtures.large_pinned(&"hrl_ferry_graves", [true, true, false] as Array[bool], tree)) as HillRequests
 	var panel := _open(&"hill_requests", {"inventory": inv, "player": player, "place": &"gate"}) as HillRequestsPanel
-	assert_true(panel.cards.has(&"hrl_ferry_graves"), "the large sheet first")
-	var c: Dictionary = panel.cards[&"hrl_ferry_graves"]
+	assert_true(panel.large_cards.has(&"hrl_ferry_graves"), "the large sheet first")
+	var c: Dictionary = panel.large_cards[&"hrl_ferry_graves"]
 	var parts: Array = c.parts
 	assert_eq(parts.size(), 3)
 	assert_true((parts[0] as Label).text.begins_with("✓"))
@@ -347,7 +347,7 @@ func test_large_card_at_the_gate_parts_and_half() -> void:
 	assert_eq((c.half as Label).text, "halb")
 	hill.set_part(&"hrl_ferry_graves", 1, false)
 	await wait_frames(1)
-	c = panel.cards[&"hrl_ferry_graves"]
+	c = panel.large_cards[&"hrl_ferry_graves"]
 	assert_false((c.half as Label).visible, "one of three: no stamp")
 
 
@@ -364,8 +364,8 @@ func test_parish_board_strip_opens_the_large_card() -> void:
 	var panel := ui.get_panel(&"hill_requests") as HillRequestsPanel
 	assert_eq(panel.place, &"village")
 	assert_eq(panel.ids(), [] as Array[StringName], "the small requests stay at the gate")
-	assert_true(panel.cards.has(&"hrv_bridge_stones"))
-	assert_false((panel.cards[&"hrv_bridge_stones"].accept as Button).disabled, "can be accepted")
+	assert_true(panel.large_cards.has(&"hrv_bridge_stones"))
+	assert_false((panel.large_cards[&"hrv_bridge_stones"].accept as Button).disabled, "can be accepted")
 
 
 func test_new_panels_docked_below_the_hud_at_every_size() -> void:

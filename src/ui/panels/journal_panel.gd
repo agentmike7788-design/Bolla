@@ -32,6 +32,10 @@ const PHASE8_PAGES: Array[StringName] = [&"kin"]
 const HILL_PAGES: Array[StringName] = [&"requests"]
 ## Phase 9: „Vorhaben", „Die Liste", „Briefe" (each by its own rule, Phase9Status).
 const PHASE9_PAGES: Array[StringName] = [&"plans", &"list", &"letters"]
+## Phase 9: from this many tabs on they get smaller (font, margins) so the head row keeps the book's width.
+const COMPACT_TABS_FROM := 8
+const COMPACT_TAB_FONT := 18
+const COMPACT_TAB_MARGIN := 8.0
 ## Phase 9 (Benutzerentscheidung): Q / E turn the tabs like [ / ].
 const ACTION_TAB_PREV := &"drop"
 const ACTION_TAB_NEXT := &"interact"
@@ -706,10 +710,31 @@ func _build_self() -> void:
 
 func _refresh_tabs() -> void:
 	var shown := pages()
+	var compact := shown.size() > COMPACT_TABS_FROM
 	for page: StringName in all_pages():
 		tab_buttons[page].get_parent().visible = page in shown
 		tab_buttons[page].theme_type_variation = &"JournalTabSelected" if page == current_page else &"JournalTabButton"
 		tab_dots[page].modulate.a = 1.0 if page_has_unread(page) else 0.0
+		_compact_tab(tab_buttons[page], compact)
+
+
+## Phase 9: with more than COMPACT_TABS_FROM tabs (up to eleven) the head row keeps the book's width – a smaller
+## font and narrower margins for the tabs (layout only; the colours stay the theme's).
+func _compact_tab(b: Button, on: bool) -> void:
+	b.remove_theme_font_size_override(&"font_size")
+	for state: StringName in [&"normal", &"hover", &"pressed", &"focus"]:
+		b.remove_theme_stylebox_override(state)
+	if not on:
+		return
+	b.add_theme_font_size_override(&"font_size", COMPACT_TAB_FONT)
+	for state: StringName in [&"normal", &"hover", &"pressed", &"focus"]:
+		var box := b.get_theme_stylebox(state, b.theme_type_variation)
+		if box == null:
+			continue
+		var small := box.duplicate() as StyleBox
+		small.content_margin_left = COMPACT_TAB_MARGIN
+		small.content_margin_right = COMPACT_TAB_MARGIN
+		b.add_theme_stylebox_override(state, small)
 
 
 ## Clues page: unread clues; insights page: unread insights (self / people never).
