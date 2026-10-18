@@ -368,7 +368,8 @@ func test_routes_flood_fill_and_schedule_paths() -> void:
 			var ids := Array(e.path).filter(func(id: String) -> bool: return not id.begins_with(INDOOR_PREFIX))
 			for id: String in ids:
 				# The bench at the well is where Wiebke sits (animation sit) – a seat, not an obstacle.
-				if e.visible and id != "v_well_bench":
+				# W3 „Restbedarf“ 3: v_sieber_bench_2 is where Lenz / Liesel sit beside Johann (sit_bench) – a seat too.
+				if e.visible and id != "v_well_bench" and id != "v_sieber_bench_2":
 					assert_true(_capsule_free(village.get_waypoint(StringName(id)), 0.3), "%s: spot %s free" % [npc_id, id])
 			for k: int in ids.size() - 1:
 				var a := village.get_waypoint(StringName(ids[k]))
@@ -845,11 +846,13 @@ func test_phase8_village_sight() -> void:
 
 # --- Phase 9 (docs/PHASE9_DESIGN.md §3.1, §4.3, §4.4, §4.6 D8–D12, §4.7, §10 – W-Welt) ----------------------------
 
-const P9_WAYPOINTS := ["v_sieber_door", "v_sieber_bench", "v_sieber_yard", "v_sieber_lane_n", "v_sieber_lane_e", "v_sieber_lane_s", "v_bridge_unload"]
-const P9_FACING := ["v_sieber_door", "v_sieber_bench", "v_bridge_unload"]
+const P9_WAYPOINTS := ["v_sieber_door", "v_sieber_bench", "v_sieber_yard", "v_sieber_lane_n", "v_sieber_lane_e", "v_sieber_lane_s", "v_bridge_unload",
+		# W3 „Restbedarf“ 3 / 4: the second seat on the bench (Lenz / Liesel, ending B), the watchman's place beside the door.
+		"v_sieber_bench_2", "v_sieber_watch"]
+const P9_FACING := ["v_sieber_door", "v_sieber_bench", "v_bridge_unload", "v_sieber_bench_2", "v_sieber_watch"]
 ## §3.1: the village Npc of Phase 9 → [npc_id, model, hide_flag].
 const P9_NPCS := {"npc_kin_sieber_v": ["kin_sieber_v", "ph_chr_mourner_m_b", "sieber_gone"], "npc_stranger": ["stranger", "ph_chr_stranger", ""],
-		"npc_watchman": ["watchman", "ph_prop_watch_lantern", ""]}
+		"npc_watchman": ["watchman", "ph_chr_watchman", ""]}
 const P9_DAY := 70
 
 
@@ -981,7 +984,16 @@ func test_phase9_sieber_house_and_npcs() -> void:
 	assert_not_null(lantern.lantern(), "D12: the lantern's light")
 	if lantern.lantern() != null:
 		assert_false(lantern.lantern().shadow_enabled, "§4.8: a light without shadow")
-	assert_true((lantern.get_node("Model") as Node3D).position.length() > 0.5, "beside the door, not in the door place")
+	# W3 „Restbedarf“ 4: the watchman as a figure on his own place beside the door (not the knock place), the light in
+	# his lantern (the marker light_lantern on his right arm).
+	var watch_place := village.get_waypoint(&"v_sieber_watch")
+	assert_true(Vector2(watch_place.x, watch_place.z).distance_to(Vector2(door_place.x, door_place.z)) > 0.6, "beside the door, not in the door place")
+	assert_true(_capsule_free(watch_place, 0.25), "his place free")
+	var seat2 := village.get_waypoint(&"v_sieber_bench_2")
+	assert_true(absf(seat2.z - seat.z) < 0.05 and absf(seat2.x - seat.x) > 0.5 and absf(seat2.x - bench.global_position.x) < 0.7,
+			"the second seat on the same bench, beside Johann")
+	if lantern.lantern() != null:
+		assert_eq(String(lantern.lantern().get_parent().name), "light_lantern", "the light hangs in his lantern")
 	var spot := village.get_node_or_null("Entities/visit_bridge_unload") as VisitSpot
 	assert_not_null(spot, "VisitSpot at v_bridge_unload")
 	if spot != null:
@@ -1059,12 +1071,16 @@ func test_phase9_village_sight() -> void:
 	assert_eq(failures, PackedStringArray(), "§4.7: the Siebers' yard free for the camera")
 	# Ending C at night: the lantern at the door and the sick light upstairs in one frame (from the yard, zoom 22).
 	var lantern := village.get_node("Entities/npc_watchman") as Npc
-	var lamp := (lantern.get_node("Model") as Node3D).global_position + Vector3(0, 0.9, 0)
+	# W3 „Restbedarf“ 4: the watchman on his place v_sieber_watch, the lantern in his right hand (~0.8 m), his head.
+	var lamp := village.get_waypoint(&"v_sieber_watch") + Vector3(0, 0.8, 0)
+	assert_not_null(lantern)
+	var watch_head := village.get_waypoint(&"v_sieber_watch") + Vector3(0, 1.6, 0)
 	var yard := door + Vector3(1.5, 0.0, 2.0)
 	player.global_position = yard
 	var eye22 := _eye(Vector2(yard.x, yard.z), 22.0)
 	assert_true(frame.has_point(cam.unproject_position(lamp)) and frame.has_point(cam.unproject_position(attic)), "p9_11: lantern and light in one frame")
 	assert_eq(_blocked(eye22, lamp, yard + Vector3(0.0, player.occlusion_height, 0.0), [house]), "", "the lantern free")
+	assert_eq(_blocked(eye22, watch_head, yard + Vector3(0.0, player.occlusion_height, 0.0), [house]), "", "the watchman free")
 	assert_eq(_blocked(eye22, attic, yard + Vector3(0.0, player.occlusion_height, 0.0), []), "", "the attic window free")
 	# D9: the large sheet at the parish board.
 	var hill := world.get_node("Systems/HillRequests") as HillRequests

@@ -532,7 +532,78 @@ MEN = {
         stick=True, beard=L.hexc("#6A665F"),   # W3 (G8): grey on the pale skin, else unseen
         face=dict(nose="hook", nose_s=1.1, brow_w=1.2, brow_tilt=0.45, brow_arch=0.8, mouth="kind", smile=0.25,
                   cheeks=0.35, jaw=0.88, chin=0.04, age=0.75, lids=0.3, iris=IRIS_GREY, muzzle=0.9)),
+    # Phase 9 W3 („Restbedarf“ 4, docs/PHASE9_DESIGN.md §2.2.7 Ende C, §12.4 Prio B): the night watchman Fenner sets
+    # before the Siebers' door – a man of about fifty in a long dark-blue woollen coat, a scarf, a round wool cap with
+    # a short leather peak (child `cap`), his stick in the left hand, the lantern in the right (child `watch_lantern`,
+    # in every clip; the Npc's light hangs at the marker `light_lantern` in it). Same builder as Johann, upright.
+    "ph_chr_watchman": dict(
+        seed=8501, kind="coat", hip=0.9, waist=0.97, tall=1.0, bent=0.0, skin=SKIN_ROSY,
+        hair=L.hexc("#6E655A"), hair_dark=L.hexc("#4E4740"),
+        coat=L.hexc("#3A4250"), coat_dark=L.hexc("#272D37"), trouser=L.hexc("#36332E"), neck=L.hexc("#5E564C"),
+        hat=L.hexc("#3C3A36"), hat_dark=L.hexc("#2A2926"), brim=0.0, crown_h=0.07, slouch=0.0, bouquet=None,
+        stick=True, beard=L.hexc("#7A7268"), watch=True,
+        face=dict(nose="straight", nose_s=1.05, brow_w=1.4, brow_tilt=0.5, brow_arch=0.6, mouth="thin", smile=0.1,
+                  cheeks=0.5, jaw=1.02, chin=0.03, age=0.45, lids=0.32, iris=IRIS_HAZEL, muzzle=1.0)),
 }
+
+WATCH_CLIPS = ("idle", "walk", "talk", "stand_watch")
+WATCH_SWING = 30.0   # the lantern arm held this far forward in every clip: the lantern hangs plumb (lantern_child)
+
+
+def _cap(c: Vector, s: Vector, color, dark, *, crown_h: float, seed: int = 0):
+    """A round wool cap over a head (centre c, semi-axes s) with a short stiff leather peak at the front (-Y)."""
+    hz = c.z + s.z * 0.36
+    parts = []
+    cr = loft([(hz, s.x + 0.016, s.y + 0.016, 0.0, c.y), (hz + crown_h * 0.45, s.x + 0.02, s.y + 0.02, 0.0, c.y),
+               (hz + crown_h * 0.85, s.x - 0.006, s.y - 0.004, 0.0, c.y), (hz + crown_h, s.x - 0.05, s.y - 0.05, 0.0, c.y)],
+              n=16, p=2.4, name="crown")
+    L.jitter(cr, 0.004, 8.0, seed)
+    parts.append(_painted(cr, color, var=0.14, ao=0.15, top=0.3, seed=seed, hue_shift=dark))
+    parts.append(_ring_band(Prof(((hz + 0.012, s.x + 0.017, s.y + 0.017, c.y),)), hz + 0.012, 0.014, dark, out=0.002,
+                            n=16, flat=0.6, seed=seed + 1))
+    peak = _ell(LEATHER_DARK, Vector((0.0, c.y - s.y - 0.012, hz + 0.004)), (0.085, 0.05, 0.007), seg=12, rings=4, seed=seed + 2,
+                rot=(-8.0, 0.0, 0.0))
+    parts.append(peak)
+    return L.join(parts, "cap")
+
+
+def _watch_actions(walk_fn, idle_fn) -> list:
+    """idle / walk / talk / stand_watch of the watchman: the lantern arm (right) held WATCH_SWING forward, the stick
+    (left) planted or swinging a little."""
+    def lantern_arm(p: dict, wobble: float = 0.0) -> dict:
+        p = dict(p)
+        p["arm_r"] = (-WATCH_SWING + wobble, 0.0, 0.0)
+        return p
+
+    def idle(t: float) -> dict:
+        p = lantern_arm(idle_fn(t), 0.8 * math.sin(rig.TAU * t))
+        p["arm_l"] = (-6.0, 0.0, 0.0)
+        return p
+
+    def walk(t: float) -> dict:
+        p = lantern_arm(walk_fn(t), 2.0 * math.sin(rig.TAU * t * 2.0))
+        p["arm_l"] = (-8.0 + 10.0 * math.sin(rig.TAU * t), 0.0, 0.0)
+        return p
+
+    def talk(t: float) -> dict:
+        s = math.sin(rig.TAU * t)
+        p = rig.add(rig.breathe(t, 0.8), PLANT, {"head": (-2.0 + 3.0 * s, 0.0, 6.0 * math.sin(rig.TAU * t * 2.0)),
+                                                 "spine": (-1.0, 0.0, 2.0 * s)})
+        p = lantern_arm(p, 1.0 * s)
+        p["arm_l"] = (-6.0, 0.0, 0.0)
+        return p
+
+    def stand_watch(t: float) -> dict:
+        """120 frames: on watch at the door – upright, the stick planted, the lantern held out; the head turns
+        slowly up the lane and back, the weight shifts once."""
+        s = math.sin(rig.TAU * t)
+        p = rig.add(rig.breathe(t, 0.6), rig.weight_shift(t, 0.6), {"spine": (-2.0, 0.0, 0.0),
+                                                                     "head": (3.0 + 2.0 * math.sin(rig.TAU * t * 2.0), 0.0, 28.0 * s)})
+        p = lantern_arm(p, 0.6 * s)
+        p["arm_l"] = (-6.0, 0.0, 0.0)
+        return p
+
+    return [("idle-loop", 84, idle), ("walk-loop", 22, walk), ("talk-loop", 72, talk), ("stand_watch-loop", 120, stand_watch)]
 
 
 def _man(name: str, cfg: dict):
@@ -616,6 +687,17 @@ def _man(name: str, cfg: dict):
     L.smooth(mesh, 55)
     joints = _joints(hip, waist, Vector((0, hb - 0.01, top)), Vector((0, hb - 0.04, top + 0.34)), sh, wr, 0.1)
     kids = []
+    if cfg.get("watch"):   # Phase 9 W3: the night watchman – cap, lantern in every clip, his four clips
+        kids.append(child("cap", "head", _cap(c, s, cfg["hat"], cfg["hat_dark"], crown_h=cfg["crown_h"], seed=40), WATCH_CLIPS))
+        lan = lantern_child(hands[-1], swing=WATCH_SWING)
+        lan.name = "watch_lantern"   # not lantern*: the Npc's own light at light_lantern, not a CarriedLanterns pool light
+        glass = [v.co for v in lan.data.vertices]
+        flame = sum(glass, Vector()) / len(glass)
+        kids.append(child("watch_lantern", "arm_r", lan, WATCH_CLIPS))
+        walk = _walk(20.0, 0.04, 12.0, 0.014, 2.5, 3.0, 1.0)
+        export_figure(name, mesh, joints, _watch_actions(walk, _idle(1.0, 0.7, 0.6)), children=kids,
+                      markers=[face_marker(pts), ("light_lantern", "arm_r", tuple(flame))])
+        return
     hat = _hat(c, s, cfg["hat"], cfg["hat_dark"], brim=cfg["brim"], crown_h=cfg["crown_h"], slouch=cfg["slouch"], seed=40,
                band=L.scale_c(cfg["hat"], 0.7))
     hat2 = hat.copy()
@@ -739,7 +821,11 @@ def mourner_m_b():
     _man("ph_chr_mourner_m_b", MEN["ph_chr_mourner_m_b"])
 
 
-FIGURES = (mourner_w_a, mourner_w_b, mourner_m_a, mourner_m_b)
+def watchman():
+    _man("ph_chr_watchman", MEN["ph_chr_watchman"])
+
+
+FIGURES = (mourner_w_a, mourner_w_b, mourner_m_a, mourner_m_b, watchman)
 
 
 def build(names=None):
