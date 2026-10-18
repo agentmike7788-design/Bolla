@@ -11,10 +11,18 @@ extends UIPanel
 const STRANGER_GROUP := &"stranger"
 const PORTRAIT := &"villager_stranger"
 
-@export var panel_width: float = 600.0
+@export var panel_width: float = 700.0
 @export var max_list_height: float = 720.0
-@export var portrait_edge: float = 88.0
-@export var icon_edge: float = 52.0
+## W3 („Restbedarf“ 7): smaller portrait and icons, the compact cards (all offers on screen at 1280 × 720).
+@export var portrait_edge: float = 60.0
+@export var icon_edge: float = 40.0
+@export var title_font_size: int = 30
+@export var card_title_font_size: int = 22
+## The note / reason under a card's name, his words and the keys at the bottom (DimLabel 20 → 18).
+@export var small_font_size: int = 18
+## Room of the price at the title and of „Nein" / „Verkaufen" beside the note (1920 × 1080 base).
+@export var price_width: float = 110.0
+@export var buttons_width: float = 240.0
 
 var stranger: Stranger
 var title_label: Label
@@ -49,14 +57,17 @@ func _build() -> void:
 	var box := UIKit.vbox(12)
 	add_child(box)
 	var head := UIKit.hbox(14)
-	head.add_child(UIKit.icon(Database.icon(PORTRAIT), portrait_edge))
+	var portrait := UIKit.icon(Database.icon(PORTRAIT), portrait_edge)
+	portrait.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	head.add_child(portrait)
 	var titles := UIKit.vbox(4)
 	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_label = UIKit.label(Phase9Texts.STRANGER_TITLE, &"HeaderLabel", true)
+	# W3 („Restbedarf“ 7): the name on one line, his words under the head row over the whole width (room for the cards).
+	title_label.add_theme_font_size_override(&"font_size", title_font_size)
+	title_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	titles.add_child(title_label)
-	head_label = UIKit.label(Phase9Texts.STRANGER_HEAD, &"DimLabel", true)
-	head_label.custom_minimum_size.x = panel_width - portrait_edge - 110.0
-	titles.add_child(head_label)
+	titles.alignment = BoxContainer.ALIGNMENT_CENTER
 	head.add_child(titles)
 	var close_x := UIKit.button(TEXT_CLOSE_X, &"CloseButton")
 	close_x.tooltip_text = TEXT_CLOSE
@@ -65,25 +76,33 @@ func _build() -> void:
 	close_x.pressed.connect(request_close)
 	head.add_child(close_x)
 	box.add_child(head)
+	head_label = UIKit.label(Phase9Texts.STRANGER_HEAD, &"DimLabel", true)
+	head_label.custom_minimum_size.x = panel_width - 40.0
+	box.add_child(head_label)
 	box.add_child(UIKit.separator())
-	var dock := make_dock_scroll(box, 10)
+	var dock := make_dock_scroll(box, 8)
 	_scroll = dock[0] as ScrollContainer
 	_list = dock[1] as VBoxContainer
 	empty_label = UIKit.label("", &"DimLabel", true)
 	empty_label.custom_minimum_size.x = panel_width - 60.0
 	box.add_child(empty_label)
 	box.add_child(UIKit.separator())
+	# W3: his rule and the keys in one column beside „Schließen" (one row less under the cards).
 	var bottom := UIKit.hbox(12)
+	var words := UIKit.vbox(2)
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var quote := UIKit.label(Phase9Texts.STRANGER_QUOTE, &"DimLabel", true)
-	quote.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bottom.add_child(quote)
+	quote.add_theme_font_size_override(&"font_size", small_font_size)
+	words.add_child(quote)
+	hint_label = UIKit.label(Phase9Texts.STRANGER_HINT, &"DimLabel")
+	hint_label.add_theme_font_size_override(&"font_size", small_font_size)
+	words.add_child(hint_label)
+	bottom.add_child(words)
 	var close := UIKit.button(TEXT_CLOSE)
+	close.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	close.pressed.connect(request_close)
 	bottom.add_child(close)
 	box.add_child(bottom)
-	hint_label = UIKit.label(Phase9Texts.STRANGER_HINT, &"DimLabel")
-	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(hint_label)
 
 
 func _on_opened() -> void:
@@ -135,30 +154,38 @@ func _card(o: Dictionary) -> Control:
 	var id := StringName(str(o.get("id", "")))
 	var card := UIKit.panel(&"SectionPanel")
 	card.set_meta(&"offer_id", id)
-	var row := UIKit.hbox(12)
-	card.add_child(row)
+	# W3 („Restbedarf“ 7): compact – the thing, its name and price on one row, below it what follows (and why not) beside
+	# „Nein" / „Verkaufen"; all four offers fit the dock at 1280 × 720 (before: a row of their own for the buttons, two
+	# cards and a half visible).
+	var col := UIKit.vbox(4)
+	card.add_child(col)
+	var head := UIKit.hbox(10)
 	var item := StringName(str(o.get("item", "")))
 	var icon := UIKit.icon(Database.icon(item if item != &"" else &"specimen_jar"), icon_edge)
 	icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	row.add_child(icon)
-	var col := UIKit.vbox(4)
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(col)
-	var width := panel_width - icon_edge - 120.0
-	var head := UIKit.hbox(10)
+	head.add_child(icon)
 	var title := UIKit.label(str(o.get("label", "")), &"SubheaderLabel", true)
-	title.custom_minimum_size.x = width - 120.0
+	title.add_theme_font_size_override(&"font_size", card_title_font_size)
+	title.custom_minimum_size.x = panel_width - icon_edge - price_width - 70.0
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
 	var price := int(o.get("price", 0))
 	var price_label := UIKit.label(Phase9Texts.STRANGER_PRICE % [price, Phase8Texts.coins(price)], &"AccentLabel")
 	price_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	head.add_child(price_label)
 	col.add_child(head)
+	var foot := UIKit.hbox(10)
+	col.add_child(foot)
+	var texts := UIKit.vbox(2)
+	texts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	foot.add_child(texts)
+	var width := panel_width - buttons_width - 60.0
 	var note := UIKit.label(str(o.get("note", "")), &"DimLabel", true)
 	note.custom_minimum_size.x = width
+	note.add_theme_font_size_override(&"font_size", small_font_size)
 	note.visible = note.text != ""
-	col.add_child(note)
+	texts.add_child(note)
 	var reason := str(o.get("reason", ""))
 	var said := ""
 	if id in sold_now:
@@ -167,10 +194,12 @@ func _card(o: Dictionary) -> Control:
 		said = Phase9Texts.STRANGER_DECLINED
 	var reason_label := UIKit.label(said if said != "" else reason, &"GoodLabel" if id in sold_now else (&"DimLabel" if said != "" else &"WarningLabel"), true)
 	reason_label.custom_minimum_size.x = width
+	reason_label.add_theme_font_size_override(&"font_size", small_font_size)
 	reason_label.visible = reason_label.text != ""
-	col.add_child(reason_label)
+	texts.add_child(reason_label)
 	var buttons := UIKit.hbox(10)
 	buttons.alignment = BoxContainer.ALIGNMENT_END
+	buttons.size_flags_vertical = Control.SIZE_SHRINK_END
 	var no := UIKit.button(Phase9Texts.STRANGER_NO)
 	no.disabled = id in declined
 	no.pressed.connect(decline.bind(id))
@@ -180,7 +209,7 @@ func _card(o: Dictionary) -> Control:
 	sell_b.tooltip_text = reason
 	sell_b.pressed.connect(sell.bind(id))
 	buttons.add_child(sell_b)
-	col.add_child(buttons)
+	foot.add_child(buttons)
 	cards[id] = {"card": card, "sell": sell_b, "no": no, "reason": reason_label, "note": note, "price": price_label}
 	return card
 

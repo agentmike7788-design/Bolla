@@ -113,6 +113,30 @@ func test_canvas_draws_the_marks_without_baking() -> void:
 	assert_eq(c.bake_count, bakes, "Phase-9 marks never bake the sheet")
 
 
+## W3 „Restbedarf“ 7: the key knows the Phase-9 marks (Brenneisen, the large sheet, the Siebers' light, the bookmark)
+## from p9_open, every row on the key's sheet; the sheet's signs are a little larger (graves, people).
+func test_w3_legend_knows_the_phase9_marks() -> void:
+	GameState.set_flag(&"p8_open", true)
+	var keys: Array = MapLegend.entries().map(func(e: Array) -> StringName: return e[0])
+	assert_false(keys.has(&"stranger"), "not before p9_open")
+	GameState.set_flag(&"p9_open", true)
+	var rows := MapLegend.entries()
+	keys = rows.map(func(e: Array) -> StringName: return e[0])
+	for k: StringName in [&"stranger", &"large", &"bookmark", &"sick_light"]:
+		assert_true(keys.has(k), "the key shows %s" % k)
+	var texts: Array = rows.map(func(e: Array) -> String: return str(e[1]))
+	assert_true(texts.has(MapLegend.TEXT_SICK_LIGHT_P9) and MapLegend.TEXT_SICK_LIGHT_P9.contains("Siebers"), "the Siebers' light named")
+	var cfg := MapPanel.map_config()
+	assert_eq([cfg.grave_radius, cfg.person_radius], [5.0, 8.0], "larger signs (data)")
+	assert_eq([MapConfig.new().grave_radius, MapConfig.new().person_radius], [5.0, 8.0], "class default = data")
+	await _setup()
+	ui.open_map()
+	await wait_frames(2)
+	var legend := (ui.get_panel(&"map") as MapPanel).legend
+	var last_row := 112.0 + (rows.size() - 1) * MapLegend.ROW_P9 + 14.0
+	assert_true(last_row + 6.0 + 34.0 + 40.0 <= legend.size.y, "every row and the note on the key's sheet (%.0f / %.0f)" % [last_row, legend.size.y])
+
+
 func _setup() -> void:
 	player = FakePlayer.new()
 	player.name = "FakePlayer"

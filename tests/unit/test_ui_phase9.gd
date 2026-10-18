@@ -364,6 +364,48 @@ func test_stranger_panel_offers_sell_and_no() -> void:
 	assert_eq((panel.cards[&"so_soil"].reason as Label).text, Phase9Texts.STRANGER_DECLINED)
 
 
+## W3 „Restbedarf“ 7: all four offers (with a reason under each) visible in the docked panel at every size – no card
+## below the scroll's edge, every button on screen.
+class FourOffers extends Stranger:
+	func here() -> bool:
+		return true
+
+	func gone() -> bool:
+		return false
+
+	func offers(_inv: Inventory) -> Array[Dictionary]:
+		var out: Array[Dictionary] = []
+		for id: String in ["so_register", "so_soil", "so_specimen", "so_kladde"]:
+			var o := load("res://data/stranger/offers/%s.tres" % id) as StrangerOfferData
+			out.append({"id": o.id, "label": o.label, "item": o.item, "price": maxi(o.price, 3), "note": o.note,
+					"reason": "Erst eine Handvoll Erde von einem frischen Grab." if id == "so_soil" else ""})
+		return out
+
+
+func test_w3_stranger_panel_shows_all_four_offers() -> void:
+	var size_before := tree.root.size
+	await _setup()
+	_keep(Phase9Fixtures.p9_open(tree))
+	var s := FourOffers.new()
+	_world().add_child(s)
+	for window: Vector2i in WINDOW_SIZES:
+		tree.root.size = window
+		await wait_frames(2)
+		var panel := _open(&"stranger", {"inventory": inv, "player": player}) as StrangerPanel
+		await wait_frames(3)
+		assert_eq(panel.cards.size(), 4, "four cards")
+		var scroll := panel._scroll.get_global_rect().grow(1.0)
+		for id: StringName in panel.cards:
+			var card := (panel.cards[id].card as Control).get_global_rect()
+			assert_true(scroll.encloses(card), "%s at %s: the whole card in sight (%s in %s)" % [id, window, card, scroll])
+			for key: String in ["sell", "no"]:
+				assert_true(ui.get_viewport().get_visible_rect().encloses((panel.cards[id][key] as Control).get_global_rect()),
+						"%s %s on screen at %s" % [id, key, window])
+		ui.close_all()
+		await wait_frames(1)
+	tree.root.size = size_before
+
+
 # --- large requests (§2.3.4) ----------------------------------------------------------------------------------------------
 
 func test_large_card_at_the_gate_parts_and_half() -> void:
@@ -534,6 +576,17 @@ func test_register_letter_column_and_light_note() -> void:
 	cells = GraveRegisterPanel.cells(entry, false, true, true)
 	assert_eq(cells[cells.size() - 1], "–")
 	assert_eq(GraveRegisterPanel.cells(entry, false, true, false).size(), cells.size() - 1, "no column before p9_open")
+	# W3 „Restbedarf“ 7: with the house in the cell the light note goes on a line of its own (it was cut off), in a
+	# smaller size that fits the row and the column.
+	entry["kin"] = "Haus Quendel"
+	cells = GraveRegisterPanel.cells(entry, false, true, true)
+	assert_eq(cells[cells.size() - 2], "Haus Quendel\nLicht: 2. Julmond 1833", "the light under the house")
+	var font := ThemeDB.fallback_font
+	for line: String in cells[cells.size() - 2].split("\n"):
+		var w := font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, GraveRegisterPanel.TWO_LINE_FONT_SIZE).x
+		assert_true(w <= 230.0, "'%s' fits the column (%.0f px)" % [line, w])
+	var two := (font.get_height(GraveRegisterPanel.TWO_LINE_FONT_SIZE) * 2.0 + GraveRegisterPanel.TWO_LINE_SPACING)
+	assert_true(two <= 50.0, "two lines in the row (%.0f px)" % two)
 	# CARE_STRAW: the grave tooltip names Gesa's straw bouquet instead of fresh flowers
 	assert_eq(Phase8Texts.grave_lines({"flowers": &"fresh", "fresh_left": 900, "straw": true}), PackedStringArray([Phase9Texts.TIP_STRAW]))
 
