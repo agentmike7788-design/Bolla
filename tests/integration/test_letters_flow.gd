@@ -404,6 +404,32 @@ func test_errands_both_decisions() -> void:
 	assert_true(letters.decide(e2b, &"deliver", {"inventory": inv, "npc": &"priest"}))
 
 
+## W3 QA-Fix QA9-08: an errand letter whose order was missed is not posted (nor handed over) any more – with a reason.
+func test_errand_letter_after_the_missed_order_stays() -> void:
+	var inv := player.inventory
+	var table: Dictionary[StringName, OrderData] = {}
+	for id: StringName in Phase9Fixtures.ORDER_IDS:
+		table[id] = Phase9Fixtures.order(id)
+	orders.order_table = table
+	orders.offer(&"oq_gesa_brother")
+	orders.accept(&"oq_gesa_brother")
+	inv.add_item(&"coin", 3)
+	var e1 := letters.errand_letter(&"oq_gesa_brother", inv)
+	assert_eq(letters.post_block_reason(e1, &"peddler", inv), "", "in time: it can go")
+	orders.fail(&"oq_gesa_brother")
+	assert_eq(orders.state(&"oq_gesa_brother"), &"failed")
+	assert_true(letters.errand_late(e1))
+	assert_eq(letters.post_block_reason(e1, &"peddler", inv), LetterRules.TEXT_ERRAND_LATE, "too late for the post")
+	assert_false(letters.give_to_carrier(e1, &"peddler", inv))
+	assert_false(letters.postable(&"carter", inv).has(e1), "Osric's „Nimmst du den mit?“ does not show it")
+	assert_false(letters.ask_postage(e1, inv), "no straw flowers for a missed errand")
+	assert_eq(inv.count(&"coin"), 3, "no postage paid")
+	for c: Dictionary in letters.choices(e1, {"inventory": inv, "carrier": &"peddler"}):
+		if c.id == LetterRules.CHOICE_DELIVER:
+			assert_eq(c.reason, LetterRules.TEXT_ERRAND_LATE, "the card names why")
+	assert_true(inv.has_uid(e1), "the letter stays in the bag (readable)")
+
+
 func test_chain_prompts_of_p4_at_the_desk_and_the_grave() -> void:
 	var who := WhoKnowsDouble.new()
 	world.add_child(who)

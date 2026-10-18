@@ -57,6 +57,8 @@ const TEXT_AT_FIRE := "Verbrennen – im Ofen der Hütte oder in der Esse."
 const TEXT_BURY_WHEN := "Das geht nur am offenen Grab, wenn du ihn hineinlegst."
 const TEXT_BURY_WHERE := "Der gehört auf ein bestimmtes Grab."
 const TEXT_ASCHAU := "Dieser Brief ist an Lorenz. Den entscheidest du anders."
+## W3 QA-Fix QA9-08: an errand letter whose order was missed (Orders failed) is not posted or handed over any more.
+const TEXT_ERRAND_LATE := "Dafür ist es zu spät. Der Auftrag ist verstrichen – der Brief käme nicht mehr rechtzeitig an."
 
 
 ## A pocket letter of the pool for a corpse with the trait letter: the letters of `pool` (kind pocket, not in `used`,
@@ -151,6 +153,8 @@ static func choice_block_reason(letter: LetterData, choice: StringName, context:
 		return TEXT_DECIDED
 	match choice:
 		CHOICE_DELIVER:
+			if context.get("errand_late", false) == true:
+				return TEXT_ERRAND_LATE
 			if context.get("post", false) == true:
 				return "" if StringName(str(context.get("carrier", ""))) != &"" else TEXT_POST_ONLY
 			var who := StringName(str(context.get("recipient_npc", "")))
