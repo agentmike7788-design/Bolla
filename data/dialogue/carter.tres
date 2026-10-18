@@ -33,7 +33,7 @@ actions = Array[String](["letter_post:carter"])
 script = ExtResource("2_cdonk")
 text = "[Bitte] Das hier ist für die große Bitte."
 next = &"hill_handed"
-conditions = Array[String](["large_ready:carter", "!hill_ready:carter"])
+conditions = Array[String](["large_ready:carter"])
 actions = Array[String](["large_turn_in:carter"])
 
 [sub_resource type="Resource" id="p9_p9_intro_c01"]

@@ -951,13 +951,18 @@ static func order_ready(order_id: StringName, context: Dictionary) -> bool:
 	return data != null and inv is Inventory and OrderRules.deliver_ready(data, inv as Inventory)
 
 
-## G8 Runde 6 „Bitten vom Hügel": an accepted delivery request for `giver` is ready in the context inventory.
+## G8 Runde 6 „Bitten vom Hügel": an accepted (small) delivery request for `giver` is ready in the context inventory.
+## W3 QA-Fix QA9-05: the large requests are large_ready's – HillRequests.small_ready_for when there (ready_for counted the
+## large ones too, so Osric's line „für die große Bitte" never showed).
 static func hill_ready(giver: StringName, context: Dictionary) -> bool:
 	var hill := DialogueSyntax.system(&"hill_requests")
 	var inv: Variant = context.get("inventory")
-	if hill == null or not hill.has_method(&"ready_for") or not inv is Inventory:
+	if hill == null or not inv is Inventory:
 		return false
-	return not (hill.call(&"ready_for", giver, inv as Inventory) as Array).is_empty()
+	var method := &"small_ready_for" if hill.has_method(&"small_ready_for") else &"ready_for"
+	if not hill.has_method(method):
+		return false
+	return not (hill.call(method, giver, inv as Inventory) as Array).is_empty()
 
 
 ## Phase 7: no Npc of `npc_id` hides behind its hide_flag (Wiebke Hagedorn: hagedorn_dead).

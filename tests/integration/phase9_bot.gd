@@ -1035,9 +1035,9 @@ func _score9(c: DialogueChoice, visited: Dictionary) -> int:
 			"large_turn_in":
 				best = maxi(best, 100)
 			"hill_turn_in":
-				# HillRequests.ready_for counts the large requests' deliver parts too – the dialogue's large line
-				# (!hill_ready) never shows then; the small line hands both over (finding QA9).
-				if flags.large and not hill.ready_for(arg, inv()).is_empty():
+				# W3 QA-Fix QA9-05: the small line shows for small requests only; the large one has its own line
+				# (large_turn_in above). Both hand over through HillRequests.turn_in.
+				if flags.large and not hill.small_ready_for(arg, inv()).is_empty():
 					best = maxi(best, 100)
 			"stranger_answer":
 				if String(arg) == String(flags.answer_kind):
