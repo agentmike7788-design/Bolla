@@ -864,8 +864,9 @@ func test_phase3_build_mask_matches_layout() -> void:
 		# Phase 7 (§4.6 L1, contract positions): l_04 / l_08 stand at the east fence of the Lindenacker
 		# (x 20,5, section edge x 21,5) – their side strip lies beyond it, l_08 (back row) keeps 5 cells.
 		# Phase 8: row 3 (l_09 at the west strip like l_05, but its foot strip ends at the south fence).
-		# Phase 9: row 4 like row 3 (l_16 at the east and the south fence).
-		var ring_min := 4 if String(p.id) in ["l_12", "l_16"] else (5 if String(p.id) in ["l_04", "l_08", "l_09", "l_10", "l_11", "l_13", "l_14", "l_15"] else 6)  # l_12: east + south fence
+		# Phase 9 (§4.2): row 4 lies 3.2 m behind row 3 and 0.8 m before the south fence – its ring cells are row 3's foot
+		# strip and the fence strip (none of its own; decor beside row 4 stands on row 3's ring).
+		var ring_min := 0 if String(p.section) == "linden_row4" else (4 if String(p.id) == "l_12" else (5 if String(p.id) in ["l_04", "l_08", "l_09", "l_10", "l_11"] else 6))  # l_12: east + south fence
 		assert_true(ring_cells >= ring_min, "%s grave ring (%d cells)" % [p.id, ring_cells])
 		var foot := plot.global_transform * Vector3(0, 0, plot.footprint.end.y + 0.55)
 		# Phase 8 (§4.4): row 3 ends at the south fence – its walk is the aisle at the head end.
@@ -3055,3 +3056,318 @@ func _g8r2_aabb(node: Node3D) -> AABB:
 		out = b if first else out.merge(b)
 		first = false
 	return out
+
+
+# --- Phase 9 (docs/PHASE9_DESIGN.md §3.1, §4, §10 – W-Welt) ---------------------------------------
+
+const P9_ROW4 := ["l_13", "l_14", "l_15", "l_16"]
+const P9_SYSTEMS := {
+	"Quests": ["Quests", "quests", "quests", 81], "WhoKnows": ["WhoKnows", "who_knows", "who_knows", 82],
+	"Letters": ["Letters", "letters", "letters", 83], "Stranger": ["Stranger", "stranger", "stranger", 84],
+}
+## §3.1: the graveyard Npc of Phase 9 → [npc_id, model, requires_flag, hide_flag].
+const P9_NPCS := {
+	"npc_stranger_g": ["stranger", "ph_chr_stranger", "p9_open", ""],
+	"npc_kin_sieber_v_g": ["kin_sieber_v", "ph_chr_mourner_m_b", "p9_open", "sieber_gone"],
+}
+## The day of the staged checks (any day: the plans run by today_flag).
+const P9_DAY := 65
+
+
+## §4.1 / §4.6 / §10: only L16–L19, G4 (G3 is the notice board's own sheet, no layout entry), the places of Brenneisen
+## and Johann at the gate, the two Npc, the Phase-9 parts and the baked keys of the new row (old spots, points and
+## routes keep their ids and places) against the approved Phase-8 layout (tests/fixtures/phase9/layout_p8.json).
+func test_phase9_layout_diff_against_phase8() -> void:
+	var old := Phase9Fixtures.layout_p8()
+	assert_false(old.is_empty(), "layout_p8.json")
+	var changes: PackedStringArray = []
+	_layout_diff(old, layout, "", changes)
+	var allowed := [
+		"+sections[linden_row4]", "~build.size", "+build._phase9",                                    # L16 (+ the mask)
+		"-fence.segments[[11.5, 9.6], [11.5, 22.8]]", "-fence.segments[[11.5, 22.8], [21.5, 22.8]]",   # L17
+		"-fence.segments[[21.5, 9.6], [21.5, 22.8]]", "+fence.segments[[11.5, 9.6], [11.5, 26.0]]",
+		"+fence.segments[[11.5, 26.0], [21.5, 26.0]]", "+fence.segments[[21.5, 9.6], [21.5, 26.0]]", "+fence._phase9",
+		"~extra_walls", "+_extra_walls_phase9", "~walkable_bounds.max", "+walkable_bounds._phase9",
+		"~waypoints.robber_far", "~waypoints.robber_fence_out", "~waypoints.robber_fence_in",            # L18
+		"+clearables[obs_l_stump_13]", "+clearables[obs_l_bramble_13]", "+overgrowth.sections[linden_row4]",  # L19
+		"+waypoints.stranger_gate", "+waypoint_facing.stranger_gate",                                     # G4
+		"+waypoints.sieber_gate", "+waypoint_facing.sieber_gate", "+_waypoints_phase9",                   # §4.5
+		"+entities[npc_stranger_g]", "+entities[npc_kin_sieber_v_g]",                                     # §3.1
+		"+_phase9", "+phase9",                                                                            # graveyard_build_phase9.gd
+		"~camera_bounds.max", "+camera_bounds._phase9",                                                   # §4.7 (like Phase 8 L15)
+		"~phase8.nav.rect", "~phase8.visitor_spot._overrides",                                            # the walking net over row 4
+	]
+	for id: String in ["l_09", "l_10", "l_11", "l_12"]:
+		allowed.append("+phase8.visitor_spot.overrides." + id)  # row 3 keeps its baked places beside the mounds
+	for id: String in P9_ROW4:
+		allowed.append_array(["+plots[%s]" % id, "+visitor_spots.gv_" + id, "+visitor_routes." + id])
+	var unexpected: PackedStringArray = []
+	for c: String in changes:
+		# New intermediate points of the net are additions only (the old ones keep their ids and places).
+		if not c in allowed and not c.begins_with("+visitor_waypoints.vw_"):
+			unexpected.append(c)
+	assert_eq(unexpected, PackedStringArray(), "only the §4.6 changes to the approved Phase-8 layout")
+	for c: String in allowed:
+		assert_true(c in changes, "listed change present: " + c)
+	assert_eq(layout.plots.slice(0, old.plots.size()), old.plots, "the approved plots unchanged")
+	for key: String in ["old_graves", "road", "hut", "tree", "stations", "workyard", "props", "region_portals", "buildings",
+			"building_doors", "dirt_spots", "forest", "background_trees", "lights", "colliders", "atmosphere", "notice_board"]:
+		assert_eq(layout[key], old[key], key + " unchanged (§4.6)")
+	assert_eq(layout.walkable_bounds.min, old.walkable_bounds.min, "walkable_bounds.min unchanged")
+	assert_eq(layout.camera_bounds.min, old.camera_bounds.min, "camera_bounds.min unchanged")
+	for e: Dictionary in old.entities:
+		assert_eq(_by_id(layout.entities, String(e.id)), e, String(e.id))
+	for id: String in old.visitor_spots:
+		assert_eq(layout.visitor_spots[id], old.visitor_spots[id], id + " keeps its baked place")
+	for id: String in old.visitor_waypoints:
+		assert_eq(layout.visitor_waypoints[id], old.visitor_waypoints[id], id + " keeps its id and place (the villagers' plans name it)")
+	for id: String in old.visitor_routes:
+		assert_eq(layout.visitor_routes[id], old.visitor_routes[id], "route " + id + " unchanged")
+	# L16: row 4 = row 3 moved south by the 3.2 m of the fence, the same x as the rows above.
+	for k: int in 4:
+		var g := _by_id(layout.plots, P9_ROW4[k])
+		var above := _by_id(layout.plots, "l_%02d" % (k + 9))
+		assert_almost(_v2(g.pos).x, _v2(above.pos).x, 0.01, P9_ROW4[k] + " under " + String(above.id))
+		assert_almost(_v2(g.pos).y - _v2(above.pos).y, 3.2, 0.01, P9_ROW4[k] + " 3.2 m south of row 3")
+		assert_eq(String(g.section), "linden_row4")
+	assert_eq(_section_rect("linden_row4"), Rect2(11.5, 22.8, 10.0, 3.2), "row 4 up to the south fence at z 26,0")
+	# L18: the robber's way follows the fence (3.2 m longer), fence_in just inside the new fence.
+	for id: String in ["robber_far", "robber_fence_out", "robber_fence_in"]:
+		assert_almost(_v2(layout.waypoints[id]).y - _v2(old.waypoints[id]).y, 3.2, 0.001, id + " 3.2 m further south")
+	assert_true(_v2(layout.waypoints.robber_fence_in).y < 26.0 and _v2(layout.waypoints.robber_fence_out).y > 26.0, "in / out of the new fence")
+
+
+func test_phase9_system_nodes() -> void:
+	for node_name: String in P9_SYSTEMS:
+		var want: Array = P9_SYSTEMS[node_name]
+		var node := world.get_node_or_null("Systems/" + node_name)
+		assert_not_null(node, "Systems/" + node_name)
+		if node == null:
+			continue
+		assert_eq(node.get_script().get_global_name(), want[0], node_name)
+		assert_true(node.is_in_group(StringName(want[1])) and node.is_in_group(&"saveable"), node_name + " groups")
+		assert_eq([node.get("save_id"), node.get("save_order")], [want[2], want[3]], node_name + " save id / order")
+		assert_eq(tree.get_nodes_in_group(StringName(want[1])).size(), 1, "one %s in the world" % node_name)
+	assert_not_null(world.get_node_or_null("StrangerCase") as StrangerCaseView, "Brenneisen's case follows the chain")
+	# Lead W2: his ring at 14:10 swings the gate bell (the Stranger's own HUD line, no second note).
+	var bell := world.get_node("Entities/gate_bell") as GateBell
+	var before := bell.rings
+	EventBus.stranger_event.emit(&"arrived", "village")
+	assert_eq(bell.rings, before, "not for his arrival in the village")
+	EventBus.stranger_event.emit(&"arrived", "gate")
+	assert_eq(bell.rings, before + 1, "the gate bell rings once for Brenneisen")
+	assert_eq((world.get_node("StrangerBell") as StrangerBell).rings, 1)
+
+
+## §2.6 / §4.2 / §4.6 L16–L19: the fourth row – four locked plots in linden_row4 with their TipStone, the stump and
+## the bramble of P4, the fence and the walls at z 26; Fenner's grant first (requires_flag); the Npc of §3.1.
+func test_phase9_row4_and_npcs() -> void:
+	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
+	for id: String in P9_ROW4:
+		var plot := world.get_node_by_layout_id(id) as GravePlot
+		assert_not_null(plot, id)
+		if plot == null:
+			continue
+		assert_eq(plot.section_id, &"linden_row4", id)
+		assert_eq(world.graveyard.get_grave(id).state, GraveRecord.State.LOCKED, id + " locked until the row is cleared")
+		assert_not_null(plot.get_node_or_null("TipStone"), id + " TipStone")
+		assert_not_null(world.get_node_or_null("Entities/dirt_" + id), id + " weeds spot")
+		assert_true(world.has_node("Waypoints/gv_" + id), id + " visitor spot")
+		assert_false(world.visitor_route(id).is_empty(), id + " visitor route")
+	assert_eq(expansion.obstacle_ids(&"linden_row4"), PackedStringArray(["obs_l_stump_13", "obs_l_bramble_13"]))
+	var stump := world.get_node("Entities/obs_l_stump_13") as ClearableObstacle
+	var bramble := world.get_node("Entities/obs_l_bramble_13") as ClearableObstacle
+	assert_eq([stump.kind, bramble.kind], [&"stump_row4", &"bramble_row4"], "W1-Anschlüsse 2: the row-4 obstacles, not the old stump")
+	assert_eq(expansion.block_reason(&"linden_row4"), "Das ist noch Gemeindeland.", "§2.6: only after Fenner's grant")
+	assert_true([[11.5, 26.0], [21.5, 26.0]] in layout.fence.segments, "L17: the south fence at z 26,0")
+	assert_false([[11.5, 22.8], [21.5, 22.8]] in layout.fence.segments, "the old south fence gone")
+	await tree.physics_frame
+	await tree.physics_frame
+	var space := world.get_world_3d().direct_space_state
+	# Through the new fence no way out; between row 3 and row 4 nothing in the way (the old fence and wall are gone).
+	for ray: Array in [[Vector3(16.6, 1.0, 25.4), Vector3(16.6, 1.0, 27.5)], [Vector3(21.0, 1.0, 25.0), Vector3(23.5, 1.0, 25.0)]]:
+		assert_false(space.intersect_ray(PhysicsRayQueryParameters3D.create(ray[0], ray[1], 1)).is_empty(), "fence / wall %s → %s" % ray)
+	assert_true(space.intersect_ray(PhysicsRayQueryParameters3D.create(Vector3(17.0, 1.0, 22.0), Vector3(17.0, 1.0, 25.4), 1)).is_empty(),
+			"the aisle from row 3 to row 4 is open")
+	for id: String in P9_NPCS:
+		var npc := world.get_node_or_null("Entities/" + id) as Npc
+		assert_not_null(npc, id)
+		if npc == null:
+			continue
+		var want: Array = P9_NPCS[id]
+		assert_eq([npc.npc_id, npc.region_id, npc.requires_flag, npc.hide_flag, npc.save_id],
+				[StringName(want[0]), &"graveyard", StringName(want[2]), StringName(want[3]), ""], id)
+		assert_true(npc.get_node("Model").scene_file_path.ends_with(String(want[1]) + ".glb"), id + " model")
+		assert_false(npc.is_in_group(&"saveable"), id + ": the clock and the plans are the state")
+		assert_not_null(Database.schedule(StringName(want[0])), id + " has its plan")
+
+
+## §4.4 / §4.5 / §4.6 G4: Brenneisen's place outside the gate east of Veit's (never on Veit's or Hanne's spot), the
+## gate road between them free; Johann's place beside Hanne. W1-Anschlüsse 5/6: the visit spot at gate_outside, the
+## letter prompt at the forge (only with a letter and a built forge), Johann on Osric's cart.
+func test_phase9_gate_places_and_prompts() -> void:
+	var gate := world.get_waypoint(&"stranger_gate")
+	var sieber := world.get_waypoint(&"sieber_gate")
+	var veit := world.get_waypoint(&"veit_gate")
+	var hanne := world.get_waypoint(&"peddler_gate")
+	assert_true(gate.x > veit.x, "Brenneisen east of Veit")
+	for pair: Array in [[gate, veit, "Veit"], [gate, hanne, "Hanne"], [sieber, hanne, "Hanne (Johann)"], [sieber, gate, "Brenneisen (Johann)"]]:
+		var d := _flat2(pair[0]).distance_to(_flat2(pair[1]))
+		assert_true(d >= 0.9, "never on %s's spot (%.2f m)" % [pair[2], d])
+	var road_x := world.get_waypoint(&"gate_inside").x
+	for p: Vector3 in [gate, sieber]:
+		assert_true(p.z > 9.6 + 1.0, "outside the gate, off the fence line (%s)" % p)
+		assert_true(absf(p.x - road_x) >= 0.9, "the gate road stays free (%.2f m from its middle)" % absf(p.x - road_x))
+	# Johann follows Hanne up the forest way ≈ 1.5 m behind: his place 1.65 m before gate_outside (hers 2.4 m).
+	var out := world.get_waypoint(&"gate_outside")
+	assert_almost(_flat2(sieber).distance_to(_flat2(out)), 1.65, 0.1, "sieber_gate before gate_outside")
+	assert_true(world.get_node("Waypoints/stranger_gate").has_meta(&"facing") and world.get_node("Waypoints/sieber_gate").has_meta(&"facing"))
+	var spot := world.get_node_or_null("Entities/visit_gate_outside") as VisitSpot
+	assert_not_null(spot, "VisitSpot at gate_outside")
+	if spot != null:
+		assert_eq(spot.place_id, &"gate_outside")
+		assert_true(_flat2(spot.global_position).distance_to(_flat2(out)) < 0.01, "at its waypoint")
+		assert_eq(spot.get_interaction_prompt(world.get_player()), "", "not focusable without a running visit part")
+	var forge := world.get_node_or_null("Entities/station_forge/ForgeLetter") as ForgeLetter
+	assert_not_null(forge, "the letter prompt at the forge")
+	if forge != null:
+		assert_false(forge.forge_ready(), "no forge on day 1")
+		assert_eq(forge.get_interaction_prompt(world.get_player()), "", "no letter, no forge: the station's own prompt")
+		assert_true((forge.get_node("Interactable") as Interactable).priority > 5, "above the station")
+	assert_not_null(world.get_node_or_null("Entities/CartRider") as CartRider, "Johann on Osric's cart (ending A)")
+
+
+## §4.5 / W1-Anschlüsse 7: on the day Johann leaves with Osric he sits on the cart bed at the bier from 09:40 and rides
+## down the coach road with the cart from 10:00 (sit_cart, the bundle beside him); his walking figure is hidden then.
+func test_phase9_cart_rider() -> void:
+	GameState.set_flag(&"p9_open", true)
+	GameState.set_flag(&"sieber_depart_carter_day", P9_DAY)
+	var rider := world.get_node("Entities/CartRider") as CartRider
+	var johann := world.get_node("Entities/npc_kin_sieber_v_g") as Npc
+	var osric := world.get_node("Entities/npc_carter") as Npc
+	for minute: int in [590, 620, 635]:
+		TimeManager.load_state({"day": P9_DAY, "minute_of_day": minute})
+		johann.refresh()
+		osric.refresh()
+		await tree.process_frame
+		await tree.process_frame
+		assert_true(rider.should_ride() and rider.is_riding(), "%d: Johann rides" % minute)
+		var fig := rider.figure()
+		assert_not_null(fig, "the sitting figure")
+		if fig == null:
+			continue
+		assert_true(fig.visible and not (johann.get_node("Model") as Node3D).visible, "%d: on the cart, not beside it" % minute)
+		var bed := osric.cart.global_transform * Vector3(0.0, 0.64, 0.0)
+		assert_true(_flat2(fig.global_position).distance_to(_flat2(bed)) < 1.2, "%d: on the bed (%s / %s)" % [minute, fig.global_position, bed])
+		assert_almost(fig.global_position.y - world.ground_height(_flat2(fig.global_position)), 0.19, 0.12, "%d: the root 0.45 m below the bed top" % minute)
+		var anim := fig.find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer
+		assert_eq(anim.current_animation, &"sit_cart")
+		var bundle := fig.find_child("bundle_down", true, false) as Node3D
+		assert_true(bundle != null and bundle.visible and not (fig.find_child("bundle", true, false) as Node3D).visible, "the bundle beside him")
+	TimeManager.load_state({"day": P9_DAY, "minute_of_day": 660})
+	johann.refresh()
+	osric.refresh()
+	await tree.process_frame
+	await tree.process_frame
+	assert_false(rider.is_riding(), "gone down the road at 11:00")
+	assert_true((johann.get_node("Model") as Node3D).visible, "his own figure back")
+	GameState.clear_flag(&"sieber_depart_carter_day")
+	GameState.clear_flag(&"p9_open")
+
+
+## §4.7 (Kamerastrahl-Test, Verfahren Phase 6 §4.5): row 4 – every grave's stone and mound and the visitor kneeling and
+## standing at it free at zoom 12 / 22 / 24, the robber digging there at zoom 22; Brenneisen at the gate with Veit and
+## Hanne at the same time (each head free at 12 / 22 / 24, the camera on each); Johann waiting beside Hanne; the
+## departure with Hanne up the forest way to the forest edge (zoom 12 / 22); Johann on Osric's cart at the bier and down
+## the coach road (zoom 12 / 22); the large sheet on the notice board in the frame and free (zoom 12 / 22).
+func test_phase9_sight() -> void:
+	var expansion := world.get_node("Systems/Expansion") as ExpansionManager
+	for s: StringName in [&"east", &"linden", &"linden_row3", &"linden_row4"]:
+		expansion.unlock(s)
+	for i: int in 2:
+		await tree.process_frame
+	var cut_radius := float((ProjectSettings.get_setting("shader_globals/occlusion_radius") as Dictionary).value)
+	_p8_probe()
+	for i: int in 3:
+		await tree.physics_frame
+	var space := world.get_world_3d().direct_space_state
+	var failures: PackedStringArray = []
+	for id: String in P9_ROW4:
+		var plot := world.get_node_by_layout_id(id) as GravePlot
+		var at := _flat2(world.get_waypoint(StringName("gv_" + id)))
+		for zoom: float in P6_ZOOMS:
+			for h: float in [0.95, 1.6]:
+				var why := _p8_hidden(space, at, h, zoom, cut_radius)
+				if why != "":
+					failures.append("gv_%s h %.2f zoom %d: %s" % [id, h, int(zoom), why])
+			var eye := _p6_eye(at, zoom)
+			var chest := Vector3(at.x, world.ground_height(at) + 1.1, at.y)
+			for local: Vector3 in [Vector3(0.0, 0.55, -1.02), Vector3(0.0, 0.25, 0.3)]:
+				var why := _p7_blocker(space, eye, plot.to_global(local), chest, cut_radius)
+				if why != "":
+					failures.append("%s %s zoom %d: %s" % [id, "stone" if local.z < 0.0 else "mound", int(zoom), why])
+		var robber := _p8_hidden(space, at, 1.2, 22.0, cut_radius)
+		if robber != "":
+			failures.append("robber at %s: %s" % [id, robber])
+	assert_eq(failures, PackedStringArray(), "§4.7: row 4 free at zoom 12 / 22 / 24")
+	failures.clear()
+	# Brenneisen, Veit (sitting) and Hanne – and Johann beside her – at once; the camera on each of them.
+	var gate_people := {"stranger_gate": 1.6, "veit_gate": 0.95, "peddler_gate": 1.6, "sieber_gate": 1.55}
+	for focus: String in gate_people:
+		for zoom: float in P6_ZOOMS:
+			var eye := _p6_eye(_flat2(world.get_waypoint(StringName(focus))), zoom)
+			for who: String in gate_people:
+				var at := _flat2(world.get_waypoint(StringName(who)))
+				var g := world.ground_height(at)
+				var why := _p7_blocker(space, eye, Vector3(at.x, g + float(gate_people[who]), at.y), Vector3(at.x, g + 0.9, at.y), cut_radius)
+				if why != "":
+					failures.append("%s seen from the camera on %s at zoom %d: %s" % [who, focus, int(zoom), why])
+	assert_eq(failures, PackedStringArray(), "§4.7: Brenneisen beside Veit and Hanne (and Johann) free at the gate")
+	failures.clear()
+	# The departure with Hanne: sieber_gate → gate_outside → peddler_west → up the forest edge to trader_spot.
+	var way: Array = ["sieber_gate", "gate_outside", "peddler_west", "trader_spot"]
+	for k: int in 13:
+		var p := _flat2(_along(way, k / 12.0))
+		for zoom: float in [12.0, 22.0]:
+			var why := _p8_hidden(space, p, 1.55, zoom, cut_radius)
+			if why != "":
+				failures.append("departure %d/12 at %s zoom %d: %s" % [k, p, int(zoom), why])
+	assert_eq(failures, PackedStringArray(), "§4.7: Johann's way with Hanne to the forest edge free")
+	failures.clear()
+	# Johann on Osric's cart (as test_phase9_cart_rider stages it).
+	GameState.set_flag(&"p9_open", true)
+	GameState.set_flag(&"sieber_depart_carter_day", P9_DAY)
+	var rider := world.get_node("Entities/CartRider") as CartRider
+	for minute: int in [590, 612, 625]:
+		TimeManager.load_state({"day": P9_DAY, "minute_of_day": minute})
+		for id: String in ["npc_kin_sieber_v_g", "npc_carter"]:
+			(world.get_node("Entities/" + id) as Npc).refresh()
+		await tree.process_frame
+		await tree.process_frame
+		if rider.figure() == null:
+			failures.append("%d: no rider" % minute)
+			continue
+		var at := _flat2(rider.figure().global_position)
+		var head := rider.figure().global_position + Vector3(0.0, 1.3, 0.0)
+		for zoom: float in [12.0, 22.0]:
+			var why := _p7_blocker(space, _p6_eye(at, zoom), head, head + Vector3(0.0, -0.4, 0.0), cut_radius)
+			if why != "":
+				failures.append("on the cart %d zoom %d: %s" % [minute, int(zoom), why])
+	GameState.clear_flag(&"sieber_depart_carter_day")
+	assert_eq(failures, PackedStringArray(), "§4.7: Johann on Osric's cart free")
+	# G3: the large sheet on the notice board.
+	var hill := world.get_node("Systems/HillRequests") as HillRequests
+	assert_true(hill.pin_large(&"hrl_ferry_graves"), "a large request at the gate")
+	var board := world.get_node("Entities/notice_board") as NoticeBoard
+	board.refresh()
+	assert_true(board.sheet_visible(), "G3: the sheet hangs while a large request is pinned")
+	var cam := (world.get_node("CameraRig") as CameraRig).camera
+	var frame := Rect2(Vector2.ZERO, cam.get_viewport().get_visible_rect().size)
+	var sheet_at := board.sheet.global_position
+	var stand := _flat2(board.global_position) + Vector2(0.0, 1.4)
+	for zoom: float in [12.0, 22.0]:
+		var eye := _p6_eye(stand, zoom)
+		assert_true(frame.has_point(cam.unproject_position(sheet_at)), "G3: the sheet in the frame at zoom %d" % int(zoom))
+		var why := _p7_blocker(space, eye, sheet_at, Vector3(stand.x, world.ground_height(stand) + 1.1, stand.y), cut_radius)
+		assert_eq(why, "", "G3: the sheet free at zoom %d" % int(zoom))
+	GameState.clear_flag(&"p9_open")

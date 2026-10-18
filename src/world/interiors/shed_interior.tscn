@@ -59,7 +59,7 @@ size = Vector3(1.0426273, 0.5749769, 0.70280683)
 [sub_resource type="BoxShape3D" id="BoxShape3D_eryh1"]
 size = Vector3(2.0182474, 2.0041134, 0.5727603)
 
-[node name="ShedInterior" type="Node3D" unique_id=1724268751]
+[node name="ShedInterior" type="Node3D" unique_id=47666104]
 script = ExtResource("1_gvouo")
 room_id = &"shed"
 config = ExtResource("2_bolcb")
@@ -71,7 +71,7 @@ building_id = &"shed"
 
 [node name="Room" type="Node3D" parent="." unique_id=229638125 instance=ExtResource("3_526bm")]
 
-[node name="Light_lantern" type="OmniLight3D" parent="Room" unique_id=1137854294]
+[node name="Light_lantern" type="OmniLight3D" parent="Room" unique_id=978765003]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.65, 1.4499999, 1.4)
 light_color = Color(1, 0.68235296, 0.33333334, 1)
 light_energy = 1.1
@@ -83,7 +83,7 @@ amount = 0.06
 metadata/interior_role = &"lantern"
 metadata/base_energy = 1.1
 
-[node name="Light_window_1" type="OmniLight3D" parent="Room" unique_id=138121396]
+[node name="Light_window_1" type="OmniLight3D" parent="Room" unique_id=954181991]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.05, 1.325, -0.225)
 light_color = Color(1, 0.8862745, 0.6901961, 1)
 light_energy = 0.91
@@ -93,7 +93,7 @@ omni_attenuation = 1.4
 metadata/interior_role = &"window"
 metadata/base_energy = 0.91
 
-[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1688674312]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1417584046]
 transform = Transform3D(0.8660254, -0.42402405, 0.26495963, 0, 0.52991927, 0.8480481, -0.5, -0.73443115, 0.45892355, 0, 0, 0)
 visible = false
 light_angular_distance = 2.0
@@ -102,10 +102,10 @@ shadow_blur = 2.0
 directional_shadow_mode = 0
 directional_shadow_max_distance = 18.0
 
-[node name="Spawn" type="Marker3D" parent="." unique_id=2133770613]
+[node name="Spawn" type="Marker3D" parent="." unique_id=1851474915]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0.1, 0, 0.95)
 
-[node name="Furniture" type="Node3D" parent="." unique_id=150228084]
+[node name="Furniture" type="Node3D" parent="." unique_id=1827931287]
 
 [node name="wood_rack_1" type="Node3D" parent="Furniture" unique_id=1168764528 instance=ExtResource("5_nd1uu")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -1.14, 0, 0.7)
@@ -119,14 +119,14 @@ metadata/min_level = 2
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 1.12, 0, 0.25)
 metadata/min_level = 3
 
-[node name="Entities" type="Node3D" parent="." unique_id=776103394]
+[node name="Entities" type="Node3D" parent="." unique_id=1948162740]
 
-[node name="room_exit" type="Node3D" parent="Entities" unique_id=1573323877 instance=ExtResource("8_5qfk8")]
+[node name="room_exit" type="Node3D" parent="Entities" unique_id=1653819950 instance=ExtResource("8_5qfk8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0, 1.4)
 script = ExtResource("9_sogqh")
 building_id = &"shed"
 
-[node name="ShedStore" parent="Entities" unique_id=1619081199 groups=["saveable", "shed_store"] instance=ExtResource("10_m07vm")]
+[node name="ShedStore" parent="Entities" unique_id=1438871434 groups=["saveable", "shed_store"] instance=ExtResource("10_m07vm")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15, 0, -1.2)
 script = ExtResource("11_hqjh2")
 save_id = "shed_store"
@@ -146,72 +146,72 @@ shape = SubResource("BoxShape3D_oso7j")
 [node name="Storage" parent="Entities/ShedStore" index="1"]
 script = ExtResource("13_k3dse")
 
-[node name="Model" type="Node3D" parent="Entities/ShedStore" unique_id=181959359 instance=ExtResource("7_05gtm")]
+[node name="Model" type="Node3D" parent="Entities/ShedStore" unique_id=870687738 instance=ExtResource("7_05gtm")]
 
-[node name="UsePos" type="Marker3D" parent="Entities/ShedStore" unique_id=1587468887]
+[node name="UsePos" type="Marker3D" parent="Entities/ShedStore" unique_id=1386448483]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.85)
 
-[node name="Colliders" type="Node3D" parent="." unique_id=710396081]
+[node name="Colliders" type="Node3D" parent="." unique_id=710634948]
 
-[node name="Room" type="StaticBody3D" parent="Colliders" unique_id=1969454518]
+[node name="Room" type="StaticBody3D" parent="Colliders" unique_id=487733482]
 collision_mask = 0
 
-[node name="Floor" type="CollisionShape3D" parent="Colliders/Room" unique_id=1354766288]
+[node name="Floor" type="CollisionShape3D" parent="Colliders/Room" unique_id=800311750]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0)
 shape = SubResource("BoxShape3D_8wmov")
 
-[node name="Wall_1" type="CollisionShape3D" parent="Colliders/Room" unique_id=2097787452]
+[node name="Wall_1" type="CollisionShape3D" parent="Colliders/Room" unique_id=1749997437]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5999999, 1.5, 0)
 shape = SubResource("BoxShape3D_hm27c")
 
-[node name="Wall_2" type="CollisionShape3D" parent="Colliders/Room" unique_id=641348125]
+[node name="Wall_2" type="CollisionShape3D" parent="Colliders/Room" unique_id=1594060576]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1.5, 0)
 shape = SubResource("BoxShape3D_8v6n2")
 
-[node name="Wall_3" type="CollisionShape3D" parent="Colliders/Room" unique_id=505874237]
+[node name="Wall_3" type="CollisionShape3D" parent="Colliders/Room" unique_id=1360552216]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -1.6999999)
 shape = SubResource("BoxShape3D_h4cyd")
 
-[node name="Wall_4" type="CollisionShape3D" parent="Colliders/Room" unique_id=1811192234]
+[node name="Wall_4" type="CollisionShape3D" parent="Colliders/Room" unique_id=1018531762]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 1.6750001)
 shape = SubResource("BoxShape3D_aeniu")
 
-[node name="ShedStore" type="StaticBody3D" parent="Colliders" unique_id=1536193057]
+[node name="ShedStore" type="StaticBody3D" parent="Colliders" unique_id=900054854]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15, 0, -1.2)
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/ShedStore" unique_id=1034900825]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/ShedStore" unique_id=1424128084]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1717549, 1.0020567, -0.00044578314)
 shape = SubResource("BoxShape3D_dsu3u")
 
-[node name="wood_rack_1" type="StaticBody3D" parent="Colliders" unique_id=785605900]
+[node name="wood_rack_1" type="StaticBody3D" parent="Colliders" unique_id=1402413285]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -1.14, 0, 0.7)
 collision_mask = 0
 metadata/min_level = 1
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/wood_rack_1" unique_id=1463672397]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/wood_rack_1" unique_id=529717903]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.62819767, 0)
 shape = SubResource("BoxShape3D_b0yse")
 
-[node name="stone_bin_1" type="StaticBody3D" parent="Colliders" unique_id=1267196378]
+[node name="stone_bin_1" type="StaticBody3D" parent="Colliders" unique_id=1472489688]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -1.05, 0, -0.95)
 collision_mask = 0
 metadata/min_level = 2
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/stone_bin_1" unique_id=1136367759]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/stone_bin_1" unique_id=1285481596]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.28748846, 0)
 shape = SubResource("BoxShape3D_sdod7")
 
-[node name="shed_rack_1" type="StaticBody3D" parent="Colliders" unique_id=167523245]
+[node name="shed_rack_1" type="StaticBody3D" parent="Colliders" unique_id=589316811]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 1.12, 0, 0.25)
 collision_mask = 0
 metadata/min_level = 3
 
-[node name="Shape" type="CollisionShape3D" parent="Colliders/shed_rack_1" unique_id=628430883]
+[node name="Shape" type="CollisionShape3D" parent="Colliders/shed_rack_1" unique_id=501120160]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1717549, 1.0020567, -0.00044578314)
 shape = SubResource("BoxShape3D_eryh1")
 
-[node name="Lighting" type="Node" parent="." unique_id=112893862]
+[node name="Lighting" type="Node" parent="." unique_id=1376250818]
 script = ExtResource("14_dtd27")
 
 [editable path="Entities/ShedStore"]

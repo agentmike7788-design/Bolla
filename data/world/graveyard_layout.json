@@ -323,9 +323,9 @@
     "lights_crowd_7": [2.47, -18.83],
     "lights_crowd_8": [1.96, -19.28],
     "stranger_gate": [0.1, 11.3],
-    "sieber_gate": [2.45, 11.6]
+    "sieber_gate": [2.75, 12.65]
   },
-  "_waypoints_phase9": "Phase 9 §4.4/§4.5/§4.6 G4/L18 (W-Welt): stranger_gate = Brenneisens Stehplatz außen am Tor östlich neben Veits Sitzplatz (vor dem westlichen Torpfeiler, 1,1 m westlich der Torweg-Mitte; nie auf Veits oder Hannes Fleck), sieber_gate = Johann wartet neben Hanne (1,65 m vor gate_outside, damit er ihr den Waldweg hinauf ≈ 1,5 m hinterhergeht). Räuberweg um die 3,2 m des Südzauns verlängert: robber_far, robber_fence_out und robber_fence_in (sonst stiege er durch Reihe 4).",
+  "_waypoints_phase9": "Phase 9 §4.4/§4.5/§4.6 G4/L18 (W-Welt): stranger_gate = Brenneisens Stehplatz außen am Tor östlich neben Veits Sitzplatz (vor dem westlichen Torpfeiler, 1,1 m westlich der Torweg-Mitte; nie auf Veits oder Hannes Fleck), sieber_gate = Johann wartet am Wegrand südöstlich von Hanne (1,6 m vor gate_outside, damit er ihr den Waldweg hinauf ≈ 1,5 m hinterhergeht). Räuberweg um die 3,2 m des Südzauns verlängert: robber_far, robber_fence_out und robber_fence_in (sonst stiege er durch Reihe 4).",
   "_waypoints_phase8": "Phase 8 §4.2/§4.3/§4.5: gate_inside (Tor innen), Lehrlingsecke (apprentice_* vor Tafel/Kiste, Bank, Fegeplatz vor der Hüttentür, rain_barrel neben dem Fass), Veit/Hanne außen an den Torpfeilern (veit_gate sitzend, Blick nach Osten; peddler_gate), lights_gate (Veit am Lichtgang), Räuberweg robber_far → robber_fence_out → (über den Südzaun) robber_fence_in, Lichtgang lights_lenz (1,5 m vor der Kapellentür, Blick nach Süden) und lights_crowd_1…8 (halbe Ellipse 2,8 × 1,7 m südlich der Kirchpforte, Blick zu Lenz; die Gräber des Birkenhangs bleiben frei). Besucherplätze gv_<plot> und Zwischenpunkte vw_* backt graveyard_build_phase8.gd (visitor_spots, visitor_waypoints, visitor_routes).",
   "_waypoints_phase7": "Phase 7 §4.6 N1: w_east_pass, w_linden_n, linden_spot = Weg des Pfarrers am Weihetag (road_end → gate_outside → dropoff → w_east_pass → w_linden_n → linden_spot), tp_linden (Debug), from_village (Spawn am Wegstein).",
   "waypoint_facing": {
@@ -353,7 +353,7 @@
     "lights_crowd_7": 119.96,
     "lights_crowd_8": 105.83,
     "stranger_gate": 60.0,
-    "sieber_gate": 330.0
+    "sieber_gate": 320.0
   },
   "signpost": {"pos": [-0.9, 15.4], "rot_y": -20.0, "text": "Hollerbrück", "font_size": 64, "pixel_size": 0.0021, "color": "#2a1f18", "surface_offset": 0.012},
   "fallen_log": {"pos": [2.2, 26.5], "rot_y": 8.0},
@@ -805,7 +805,8 @@
     "vw_60": [-5.9, -13.3],
     "vw_61": [-5.3, -13.9],
     "vw_62": [-2.7, -13.1],
-    "vw_63": [-2.7, -13.1]
+    "vw_63": [-2.7, -13.1],
+    "vw_64": [-2.7, -13.1]
   },
   "visitor_routes": {
     "plot_01": ["road_end", "road_mid", "gate_outside", "gate_inside", "vw_01", "gv_plot_01"],

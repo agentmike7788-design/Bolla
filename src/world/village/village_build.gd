@@ -306,6 +306,9 @@ static func _build_entities(ctx: Ctx, entities: Node3D, buildings: Node3D) -> vo
 				node.transform = ctx.ground_xform(Ctx.v2(ent.pos), float(ent.get("rot_y", 0.0)))
 				if ent.has("shop_id"):
 					node.set("shop_id", StringName(ent.shop_id))
+				# Phase 9 (W-Ton): the parish board is found by group (the cue „Bogen anheften" sounds at it).
+				if ent.type == "VillageBoard":
+					node.add_to_group(&"village_board", true)
 				ctx.add(entities, node)
 				if ent.has("reach"):
 					_reach(ctx, node, Ctx.v3(ent.reach), Ctx.v3(ent.get("reach_offset", [0.0, float(ent.reach[1]) * 0.5, 0.0])))

@@ -3,7 +3,7 @@ extends RefCounted
 ## W1-Anschlüsse 1–7): the four system nodes (Quests 81, WhoKnows 82, Letters 83, Stranger 84 – groups and save ids are
 ## set by the scripts), the visit spot of the large requests at gate_outside (VisitSpot, layout phase9.visit_spots), the
 ## letter prompt at the forge (ForgeLetter under Entities/station_forge), Johann on Osric's cart (CartRider, ending A)
-## and the case of Brenneisen's figures (StrangerCaseView). The fourth Lindenacker row (section, plots, fence, walls,
+## the case of Brenneisen's figures (StrangerCaseView) and his ring at the gate bell (StrangerBell). The fourth Lindenacker row (section, plots, fence, walls,
 ## obstacles stump_row4 / bramble_row4, overgrowth), Brenneisen's and Johann's places at the gate and the new Npc are
 ## layout data that the Phase-3…8 helpers build. Scripts are loaded by path (see graveyard_builder.gd).
 
@@ -18,6 +18,7 @@ const VISIT_SCRIPT := "res://src/world/graveyard/visit_spot.gd"
 const FORGE_LETTER_SCRIPT := "res://src/world/graveyard/forge_letter.gd"
 const CART_RIDER_SCRIPT := "res://src/world/graveyard/cart_rider.gd"
 const CASE_VIEW_SCRIPT := "res://src/world/graveyard/stranger_case_view.gd"
+const BELL_SCRIPT := "res://src/world/graveyard/stranger_bell.gd"
 const FORGE_STATION := "station_forge"
 const RIDER_MODEL := "ph_chr_mourner_m_b"
 
@@ -71,3 +72,8 @@ static func build_case_view(ctx: Ctx, scene_root: Node3D) -> void:
 	view.name = "StrangerCase"
 	view.set_script(load(CASE_VIEW_SCRIPT))
 	ctx.add(scene_root, view)
+	# Lead W2: his one short ring at 14:10 swings the gate bell.
+	var bell := Node.new()
+	bell.name = "StrangerBell"
+	bell.set_script(load(BELL_SCRIPT))
+	ctx.add(scene_root, bell)

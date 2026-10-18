@@ -30,6 +30,9 @@ func before_each() -> void:
 	_inject_journal()
 	var systems := _world().get_node("Systems")
 	_without_world_phase9(systems)
+	# The world's Quests opened Phase 9 while loading – this test's own opens it again (post_load below).
+	GameState.clear_flag(&"p9_open")
+	GameState.clear_flag(&"p9_open_day")
 	quests = Quests.new()
 	quests.name = "Quests"
 	who = WhoKnows.new()

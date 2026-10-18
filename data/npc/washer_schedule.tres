@@ -313,7 +313,7 @@ start_minute = 145
 travel_minutes = 15
 activity = &"walk"
 animation = &"walk"
-path = PackedStringArray("v_dorn_door", "v_linden", "v_anger_w", "v_bridge", "v_sieber_door")
+path = PackedStringArray("v_dorn_door", "v_linden", "v_anger_w", "v_bridge", "v_road_in", "v_sieber_lane_n", "v_sieber_lane_e", "v_sieber_lane_s", "v_sieber_door")
 region = &"village"
 today_flag = &"night_np_sieber_washer_day"
 
@@ -348,7 +348,7 @@ start_minute = 332
 travel_minutes = 15
 activity = &"walk"
 animation = &"walk"
-path = PackedStringArray("v_sieber_door", "v_bridge", "v_anger_w", "v_linden", "v_dorn_door")
+path = PackedStringArray("v_sieber_door", "v_sieber_lane_s", "v_sieber_lane_e", "v_sieber_lane_n", "v_road_in", "v_bridge", "v_anger_w", "v_linden", "v_dorn_door")
 region = &"village"
 today_flag = &"night_np_sieber_washer_day"
 
