@@ -214,6 +214,21 @@ func sell(shop_id: StringName, item: StringName, n: int, inv: Inventory) -> int:
 	return coins
 
 
+## Phase 9 (docs/PHASE9_DESIGN.md §2.2.6, W1-Anschlüsse 17): the shopkeeper hands `n` × `item` of his shop away for free
+## today (Quast's drops for Johann in ending B, dialogue action shop_give): a row he sells loses n of today's stock; a
+## row he only buys (Quast buys fever_tincture) takes n more today – he is short of them. False = no such row.
+func give_away(shop_id: StringName, item: StringName, n: int) -> bool:
+	var s := shop(shop_id)
+	if s == null or n <= 0 or not (s.sells.has(item) or s.buys.has(item)):
+		return false
+	_roll_day()
+	if s.sells.has(item):
+		_change(_stock_left, shop_id, item, ShopRules.row_per_day(s.sells[item], RelationshipRules.TIERS[0]), -n)
+	else:
+		_change(_bought_left, shop_id, item, ShopRules.row_per_day(s.buys[item], RelationshipRules.TIERS[0]), n)
+	return true
+
+
 ## Stock day of the clock: TimeManager.day, before 06:00 the day before.
 func stock_day() -> int:
 	return TimeManager.day if TimeManager.minute_of_day >= RESET_MINUTE else TimeManager.day - 1

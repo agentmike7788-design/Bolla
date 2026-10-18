@@ -84,8 +84,12 @@ const CARE_MORTSAFE_OFF := &"mortsafe_off"
 const CARE_LINE := &"line"
 ## §2.4 Liesel 1 (P4's order of_liesel_1, task name_line): Kaspar's real name on the stone of S5.
 const CARE_NAME := &"name_line"
+## Phase 9 (docs/PHASE9_DESIGN.md §2.9, W1-Anschlüsse 17): Gesa's straw bouquet (works like grave flowers for two days).
+const CARE_STRAW := &"straw"
 const CARE_ORDER: Array[StringName] = [CARE_COINS, CARE_CLOSE, CARE_WATER, CARE_PLANT, CARE_WREATH, CARE_CANDLE, CARE_MORTSAFE_ON,
-		CARE_MORTSAFE_OFF, CARE_LINE, CARE_NAME]
+		CARE_MORTSAFE_OFF, CARE_LINE, CARE_NAME, CARE_STRAW]
+const PROMPT_STRAW := "[E] Strohblumen aufs Grab legen (%d Min)"
+const LABEL_STRAW := "Strohblumen legen"
 const ORDERS_TASK_GROUP := &"orders"
 const PROMPT_NAME := "[E] Namen nachmeißeln (%d Min, 1 Tinte)"
 const LABEL_NAME := "Namen nachmeißeln"
@@ -745,6 +749,8 @@ func _care_state(action: StringName, player: Player) -> int:
 			return 1 if care != null and care.plant_block_reason(grave_id, inv) == "" else -1
 		CARE_WREATH:
 			return 1 if care != null and care.wreath_block_reason(grave_id, inv) == "" else -1
+		CARE_STRAW:
+			return 1 if care != null and care.straw_block_reason(grave_id, inv) == "" else -1
 		CARE_CANDLE:
 			if care == null or inv == null or not inv.has(care.get_config().candle_item) or care.candle_lit(grave_id):
 				return -1
@@ -789,6 +795,8 @@ func care_prompt(action: StringName, player: Player) -> String:
 			return PROMPT_PLANT % cfg.plant_minutes
 		CARE_WREATH:
 			return PROMPT_WREATH % cfg.plant_minutes
+		CARE_STRAW:
+			return PROMPT_STRAW % cfg.plant_minutes
 		CARE_CANDLE:
 			var reason := care.light_block_reason(grave_id, inv)
 			return PROMPT_CANDLE % cfg.candle_minutes if reason == "" else reason
@@ -831,6 +839,9 @@ func _start_care(action: StringName, player: Player) -> void:
 		CARE_WREATH:
 			player.start_timed_action(LABEL_WREATH, cfg.plant_minutes, _finish_care.bind(action, inv, player), true,
 					ToolAnimConfig.clip_for(&"grave_wreath", ToolAnimConfig.clip_for(&"grave_flowers", ANIM_MARKER)))
+		CARE_STRAW:
+			player.start_timed_action(LABEL_STRAW, cfg.plant_minutes, _finish_care.bind(action, inv, player), true,
+					ToolAnimConfig.clip_for(&"grave_wreath", ToolAnimConfig.clip_for(&"grave_flowers", ANIM_MARKER)))
 		CARE_CANDLE:
 			player.start_timed_action(LABEL_CANDLE, cfg.candle_minutes, _finish_care.bind(action, inv, player), false,
 					ToolAnimConfig.clip_for(&"grave_candle", ANIM_MARKER))
@@ -866,6 +877,8 @@ func _finish_care(action: StringName, inv: Inventory, player: Player) -> void:
 			ok = care != null and care.plant(grave_id, inv)
 		CARE_WREATH:
 			ok = care != null and care.lay_wreath(grave_id, inv)
+		CARE_STRAW:
+			ok = care != null and care.lay_straw(grave_id, inv)
 		CARE_CANDLE:
 			ok = care != null and care.light(grave_id, inv)
 		CARE_MORTSAFE_ON:

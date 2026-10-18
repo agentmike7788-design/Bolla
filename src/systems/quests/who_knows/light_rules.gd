@@ -15,9 +15,8 @@ const NO_DAY := -9223372036854775807 - 1
 const DEATH_BEFORE_ARRIVAL := 1
 ## §2.2.1: a missing dead → substitute date earliest_day − 22.
 const SUBSTITUTE_OFFSET := -22
-## The dead whose death a night path knows (D2 Gerhard Ott: night_paths.deaths.np_ott, else the flag ott_dead).
-const DEATH_PATHS: Dictionary[StringName, StringName] = {&"d2_ott": &"np_ott"}
-const DEATH_FLAGS: Dictionary[StringName, StringName] = {&"d2_ott": &"ott_dead"}
+## The dead whose death a night path knows: WhoKnowsConfig.death_paths / death_flags (D2 Gerhard Ott:
+## night_paths.deaths.np_ott, else the flag ott_dead).
 ## §2.2.3 H2: Kaspar's entry – „Kaspar Dorn" with i_not_lorenz, else the dead from the moor.
 const MOOR_STORY := &"s5_moor"
 const MOOR_INSIGHT := &"i_not_lorenz"
@@ -43,7 +42,7 @@ static func light_day(entry: LightEntryData, tree: SceneTree, cfg: WhoKnowsConfi
 		return light if light != NO_DAY else open_light_day(flag_day(OPEN_DAY_FLAG), c)
 	if entry.fixed_text != "" or entry.story_id == &"":
 		return NO_DAY
-	var death := death_of(entry.story_id, tree)
+	var death := death_of(entry.story_id, tree, c)
 	return death - c.death_offset if death != NO_DAY else NO_DAY
 
 
@@ -79,14 +78,16 @@ static func decide_day(light_day: int, cfg: WhoKnowsConfig) -> int:
 # --- helpers (also for the journal page „Die Liste", P6) ---------------------------------------------
 
 ## The death day of the story dead `story_id` (NO_DAY = not delivered): a night path's death, else arrival − 1.
-static func death_of(story_id: StringName, tree: SceneTree) -> int:
-	if DEATH_PATHS.has(story_id):
+## `cfg` null = data/config/who_knows_config.tres (death_paths, death_flags).
+static func death_of(story_id: StringName, tree: SceneTree, cfg: WhoKnowsConfig = null) -> int:
+	var c := _cfg(cfg)
+	if c.death_paths.has(story_id):
 		var paths := _first(tree, NIGHT_GROUP)
 		if paths != null and paths.has_method(&"death_day"):
-			var d := int(paths.call(&"death_day", DEATH_PATHS[story_id]))
+			var d := int(paths.call(&"death_day", c.death_paths[story_id]))
 			if d > 0:
 				return d
-		var flag := flag_day(DEATH_FLAGS.get(story_id, &""))
+		var flag := flag_day(c.death_flags.get(story_id, &""))
 		if flag != NO_DAY:
 			return flag
 	var r := record_of(story_id, tree)

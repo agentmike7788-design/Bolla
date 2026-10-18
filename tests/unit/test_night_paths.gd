@@ -265,3 +265,27 @@ func test_np_sieber_needs_its_anchor_and_stops_when_he_is_gone() -> void:
 	TimeManager.advance(40)
 	assert_false(GameState.has_flag(&"sieber_dead"), "no death when he left")
 	assert_true(paths.path_runs(Phase8Fixtures.night_path(&"np_ott")), "np_ott unaffected")
+
+
+## W2 „Anschlüsse“ 18 (§2.2.6, §2.2.7): Liesel's vigil at the Siebers is visible like at the Otts – NightPaths sets
+## night_np_sieber_washer_day on light + 21, P6's washer schedule walks her to v_sieber_door (02:40–05:30).
+func test_w2_liesel_vigil_at_the_siebers_is_visible() -> void:
+	_with_sieber(51)
+	TimeManager.load_state({"day": 72, "minute_of_day": 100})
+	paths.load_state({"last_total": TimeManager.total_minutes()})
+	TimeManager.advance(60)
+	assert_eq(GameState.get_flag(&"night_np_sieber_washer_day"), 72, "Liesel's night (light + 21)")
+	var washer := load("res://data/npc/washer_schedule.tres") as NpcSchedule
+	var e := ScheduleResolver.entry_at(washer, 150, 72)
+	assert_eq([e.activity, e.path[0], e.path[-1], e.visible], [&"walk", "v_dorn_door", "v_sieber_door", true], "02:30 on her way")
+	e = ScheduleResolver.entry_at(washer, 160, 72)
+	assert_eq([e.animation, e.path[-1]], [&"knock", "v_sieber_door"], "02:40 she knocks")
+	e = ScheduleResolver.entry_at(washer, 200, 72)
+	assert_eq([e.visible, e.path[-1]], [false, "v_sieber_door"], "inside with him")
+	e = ScheduleResolver.entry_at(washer, 331, 72)
+	assert_eq([e.visible, e.path[-1], e.dialogue_id], [true, "v_sieber_door", &"v_washer"], "05:30 at the door")
+	e = ScheduleResolver.entry_at(washer, 340, 72)
+	assert_eq([e.activity, e.path[-1]], [&"walk", "v_dorn_door"], "home again")
+	GameState.clear_flag(&"night_np_sieber_washer_day")
+	for t: int in [150, 200, 331]:
+		assert_false(Array(ScheduleResolver.entry_at(washer, t, 72).path).has("v_sieber_door"), "without the night: as before (%d)" % t)

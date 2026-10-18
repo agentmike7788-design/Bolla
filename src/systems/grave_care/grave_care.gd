@@ -50,6 +50,7 @@ const TEXT_HAS_FLOWERS := "Hier blühen schon Blumen."
 const TEXT_DISTURBED := "Erst das Grab wieder schließen."
 const TEXT_NO_SEEDLINGS := "Du hast keine Grabblumen."
 const TEXT_NO_FLOWERS := "Hier sind keine Blumen zu gießen."
+const TEXT_NO_STRAW := "Du hast keine Strohblumen."
 const TEXT_CAN_EMPTY := "Die Gießkanne ist leer."
 const TEXT_NO_CAN := "Du hast keine Gießkanne."
 const TEXT_TOO_EARLY := "Erst am Nachmittag."
@@ -161,10 +162,40 @@ func lay_wreath(grave_id: String, inv: Inventory) -> bool:
 	return true
 
 
+## Phase 9 (§2.4.4, §2.9): "" or why no straw bouquet can be laid here (like plant_block_reason, a straw_bouquet in
+## `inv`).
+func straw_block_reason(grave_id: String, inv: Inventory) -> String:
+	var base := _place_block_reason(grave_id)
+	if base != "":
+		return base
+	if inv == null or not inv.has(_cfg().straw_item):
+		return TEXT_NO_STRAW
+	return ""
+
+
+## 1 straw_bouquet → works like fresh grave flowers for straw_minutes (two days), never watered, then gone.
+func lay_straw(grave_id: String, inv: Inventory) -> bool:
+	if straw_block_reason(grave_id, inv) != "":
+		return false
+	if not inv.remove_item(_cfg().straw_item, 1):
+		return false
+	var now := TimeManager.total_minutes()
+	_flowers[grave_id] = {"planted": now, "watered": now, "wreath": false, "straw": true}
+	_schedule_next()
+	_changed(grave_id, KIND_FLOWERS, true)
+	return true
+
+
+## Phase 9: the flowers of `grave_id` are Gesa's straw bouquet.
+func is_straw(grave_id: String) -> bool:
+	var f: Variant = _flowers.get(grave_id)
+	return f is Dictionary and GraveCareRules.is_straw(f as Dictionary)
+
+
 ## "" or why `owner` cannot water `grave_id` (grave flowers that are still there, a filling left).
 func water_block_reason(grave_id: String, owner: StringName = OWNER_PLAYER) -> String:
 	var state := flowers_state(grave_id)
-	if state == &"" or state == FLOWERS_WREATH:
+	if state == &"" or state == FLOWERS_WREATH or is_straw(grave_id):
 		return TEXT_NO_FLOWERS
 	if can_fill(owner) <= 0:
 		return TEXT_CAN_EMPTY
@@ -190,7 +221,7 @@ func water(grave_id: String, by_apprentice := false) -> bool:
 ## §2.5.2 the apprentice treads into the bed: the flowers wilted at once (they wither on as usual).
 func wilt_now(grave_id: String) -> void:
 	var f: Variant = _flowers.get(grave_id)
-	if not f is Dictionary or bool((f as Dictionary).get("wreath", false)):
+	if not f is Dictionary or bool((f as Dictionary).get("wreath", false)) or GraveCareRules.is_straw(f as Dictionary):
 		return
 	var entry: Dictionary = f
 	entry["watered"] = mini(GraveCareRules.last_watered(entry), TimeManager.total_minutes() - _cfg().flower_fresh_minutes)
@@ -424,6 +455,8 @@ func load_state(data: Dictionary) -> void:
 				var planted := GraveCareRules._int(entry.get("planted", 0))
 				_flowers[str(key)] = {"planted": planted, "watered": GraveCareRules._int(entry.get("watered", planted)),
 						"wreath": typeof(entry.get("wreath")) == TYPE_BOOL and bool(entry.get("wreath"))}
+				if typeof(entry.get("straw")) == TYPE_BOOL and bool(entry.get("straw")):
+					_flowers[str(key)]["straw"] = true  # Phase 9: only written for straw flowers (older states unchanged)
 	_bouquets = _int_map(data.get("bouquets", {}))
 	_candles = _int_map(data.get("candles", {}))
 	_lit_nights = _int_map(data.get("lit_nights", {}))
@@ -514,9 +547,9 @@ func _schedule_next() -> void:
 	var best := -1
 	for id: Variant in _flowers:
 		var entry: Dictionary = _flowers[id]
-		if bool(entry.get("wreath", false)):
+		var t := GraveCareRules.change_total(entry, cfg)
+		if t < 0:
 			continue
-		var t := GraveCareRules.last_watered(entry) + cfg.flower_wilt_minutes
 		best = t if best < 0 else mini(best, t)
 	for id: Variant in _candles:
 		var t := GraveCareRules.candle_out_total(int(_candles[id]), cfg)

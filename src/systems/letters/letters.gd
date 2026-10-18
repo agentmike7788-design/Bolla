@@ -43,8 +43,8 @@ const MORNING_MINUTE := 360
 const DECIDED_STATES: Array[StringName] = LetterRules.DECIDED
 ## „zugestellt": handed over in person or given to the post.
 const DELIVERED_STATES: Array[StringName] = [&"posted", &"delivered"]
-const KIND_REPLY := &"reply"
-const KIND_ERRAND := &"errand"
+const KIND_REPLY := LetterData.KIND_REPLY
+const KIND_ERRAND := LetterData.KIND_ERRAND
 const STATE_FOUND := &"found"
 const STATE_RECEIVED := &"received"
 const STATE_WRITTEN := &"written"
@@ -626,6 +626,8 @@ func load_state(data: Dictionary) -> void:
 			rec["state"] = str(rec.get("state", ""))
 			rec["corpse"] = str(rec.get("corpse", ""))
 			rec["day"] = _int(rec.get("day"), 0)
+			if rec.has("kind") and not StringName(str(rec.get("kind"))) in LetterData.KINDS:
+				rec.erase("kind")  # unknown kind (fuzzer): the letter's own kind
 			_records[str(uid)] = rec
 	_next_uid = maxi(_int(data.get("next_uid"), 1), 1)
 	for uid: String in _records:

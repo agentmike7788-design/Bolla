@@ -165,6 +165,51 @@ func test_wreath_never_wilts_and_gives_no_ghost_bonus() -> void:
 	assert_false(care.water("l_09"), "nothing to water")
 
 
+## W2 „Anschlüsse“ 17 (docs/PHASE9_DESIGN.md §2.4.4, §2.9): Gesa's straw bouquet works like grave flowers for two days.
+func test_w2_straw_flowers_like_grave_flowers_two_days() -> void:
+	var defaults := GraveCareConfig.new()
+	assert_eq([defaults.straw_item, defaults.straw_minutes], [&"straw_bouquet", 2880])
+	var real := Database.config(&"grave_care_config") as GraveCareConfig
+	assert_eq([real.straw_item, real.straw_minutes], [defaults.straw_item, defaults.straw_minutes], "data = class default")
+	assert_eq(care.straw_block_reason("l_09", inv), GraveCare.TEXT_NO_STRAW)
+	inv.add_item(&"straw_bouquet", 2)
+	assert_eq(care.straw_block_reason("l_11", inv), GraveCare.TEXT_NOT_HERE, "EMPTY")
+	assert_true(care.lay_straw("l_09", inv))
+	assert_eq(inv.count(&"straw_bouquet"), 1)
+	assert_eq([care.flowers_state("l_09"), care.is_straw("l_09"), care.care_bonus("l_09")], [&"fresh", true, 1],
+			"fresh grave flowers for the ghost and the wishes")
+	assert_eq(care.straw_block_reason("l_09", inv), GraveCare.TEXT_HAS_FLOWERS)
+	assert_eq(care.plant_block_reason("l_09", inv), GraveCare.TEXT_HAS_FLOWERS)
+	care.refill()
+	assert_eq(care.water_block_reason("l_09"), GraveCare.TEXT_NO_FLOWERS, "straw is not watered")
+	care.wilt_now("l_09")
+	assert_eq(care.flowers_state("l_09"), &"fresh", "the apprentice's step does not wilt straw")
+	assert_eq(changes, [["l_09", &"flowers", true]])
+	var saved := care.save_state()
+	assert_true(saved.flowers.l_09.straw)
+	var other := GraveCare.new()
+	other.config = cfg
+	tree.root.add_child(other)
+	other.load_state(JSON.parse_string(JSON.stringify(saved)))
+	assert_eq(other.save_state(), saved, "round trip keeps the straw")
+	other.free()
+	TimeManager.advance(2879)
+	assert_eq(care.flowers_state("l_09"), &"fresh", "two days")
+	changes.clear()
+	TimeManager.advance(1)
+	assert_eq(care.flowers_state("l_09"), &"", "then gone – straw never wilts")
+	assert_eq(changes, [["l_09", &"flowers", false]])
+	assert_eq(care.care_bonus("l_09"), 0)
+	assert_eq(GameState.get_stat(&"flowers_planted"), 0, "not planted")
+	# Older states (no straw key) load and save as before.
+	other = GraveCare.new()
+	other.config = cfg
+	tree.root.add_child(other)
+	other.load_state({"flowers": {"l_10": {"planted": 79000, "watered": 79000, "wreath": false}}})
+	assert_false(other.save_state().flowers.l_10.has("straw"))
+	other.free()
+
+
 func test_bouquet_two_days_without_stacking() -> void:
 	care.place_bouquet("l_09")
 	assert_true(care.bouquet_fresh("l_09"))
@@ -387,6 +432,25 @@ func _plot_world() -> Dictionary:
 	tree.root.add_child(player)
 	await wait_frames(2)
 	return {"plot": plot, "player": player, "inv": fake, "corpses": corpses}
+
+
+func test_w2_grave_plot_lays_the_straw_flowers() -> void:
+	var w: Dictionary = await _plot_world()
+	var plot: GravePlot = w.plot
+	var player: Player = w.player
+	var pinv: Inventory = w.inv
+	pinv.add_item(&"straw_bouquet", 1)
+	assert_eq(plot.get_interaction_prompt(player), "[E] Strohblumen aufs Grab legen (15 Min)")
+	plot.interact(player)
+	await wait_frames(1)
+	assert_eq([care.flowers_state("l_09"), care.is_straw("l_09"), pinv.count(&"straw_bouquet")], [&"fresh", true, 0])
+	pinv.add_item(&"flower_seedlings", 1)
+	pinv.add_item(&"straw_bouquet", 1)
+	assert_true(plot.get_interaction_prompt(player).begins_with("Grab von"), "flowers there: nothing more to lay")
+	(w.player as Node).queue_free()
+	plot.queue_free()
+	(w.corpses as Node).queue_free()
+	await wait_frames(1)
 
 
 func test_grave_plot_care_prompts_in_order() -> void:

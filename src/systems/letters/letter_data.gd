@@ -5,7 +5,11 @@ extends Resource
 
 const KIND_POCKET := &"pocket"
 const KIND_POST := &"post"
-const KINDS: Array[StringName] = [KIND_POCKET, KIND_POST]
+## W2 „Anschlüsse" (W1-Anschlüsse 17): the kinds of Letters' own records – an errand letter of a quest order (§2.4.4)
+## and the answer the gravekeeper writes (§2.4.3) – no data/letters file carries them.
+const KIND_ERRAND := &"errand"
+const KIND_REPLY := &"reply"
+const KINDS: Array[StringName] = [KIND_POCKET, KIND_POST, KIND_ERRAND, KIND_REPLY]
 const CHOICES: Array[StringName] = [&"deliver", &"read", &"read_grave", &"answer", &"burn", &"bury"]
 const ASKS: Array[StringName] = [&"", &"burn", &"grave", &"read"]
 

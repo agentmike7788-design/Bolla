@@ -18,3 +18,6 @@ extends Resource
 ## Phase 7 (docs/PHASE7_DESIGN.md §2.8, P7): + the four specimen items (unique pieces with a label).
 @export var excluded_items: Array[StringName] = [&"bone_box_full", &"bone_box", &"altar_candle", &"specimen_jar",
 		&"specimen_bundle", &"display_specimen", &"bone_specimen"]
+## Phase 9 (docs/PHASE9_DESIGN.md §2.9, W1-Anschlüsse 17): never into the shed at all, not even by hand (Inventory.refused_items
+## of the store): Brenneisen's case („kann nicht in den Schuppen").
+@export var refused_items: Array[StringName] = [&"stranger_case"]

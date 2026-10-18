@@ -15,6 +15,8 @@ extends Node
 ## chapel_rites) adds ChapelRules.devotion_bonus to the mood (capped for robbed souls). Once per grave
 ## the ghost speaks a by_service line (corpse with a funeral service) and once per devotion level a
 ## by_devotion line (&"robbed" pool for robbed souls) – saved as service_heard / devotion_heard.
+## Phase 9 (docs/PHASE9_DESIGN.md §2.4.2, §2.9): Letters.ghost_bonus (group letters) adds to the care, and a letter
+## read aloud at the grave tonight speaks the by_letter pool (GhostMood.letter_care_key).
 
 const GROUP := &"ghosts"
 const SAVEABLE_GROUP := &"saveable"
@@ -49,6 +51,14 @@ const VISITORS_GROUP := &"visitors"
 ## GameState flag (int day) of the night of the lights (FestivalData fest_lights.day_flag, P4).
 const LIGHTS_DAY_FLAG := &"fest_lights_day"
 const EARLY_ALPHA := 0.35
+# Phase 9 (docs/PHASE9_DESIGN.md §2.4.2, §2.9, W1-Anschlüsse 12): the letter part of the care (Letters.ghost_bonus:
+# +1 the night a letter was read aloud at the grave, +1 for good when laid into it) and the by_letter pool
+# (GhostMood.letter_care_key). Without Letters (Phase 3–8 worlds) both are as before.
+const LETTERS_GROUP := &"letters"
+## Phase 9 (§2.7, W1-Anschlüsse 15): story ghosts whose lines depend on how a chain ended – by_story
+## "<story>_<ending>" (D3: d3_sieber_stay / d3_sieber_public), else "<story>" (D3: the silent line).
+const STORY_ENDING_QUEST: Dictionary[StringName, StringName] = {&"d3_sieber": &"q_who_knows"}
+const QUESTS_GROUP := &"quests"
 
 @export var ghost_scene: PackedScene
 ## Decor/Ghosts
@@ -108,6 +118,7 @@ func _ready() -> void:
 	EventBus.devotion_held.connect(_on_mood_input)
 	EventBus.world_ready.connect(_on_world_ready)
 	EventBus.grave_care_changed.connect(_on_care_changed)
+	EventBus.letter_changed.connect(_on_letter_changed)
 
 
 func _process(delta: float) -> void:
@@ -185,7 +196,7 @@ func mood_info(grave_id: String) -> Dictionary:
 	var value := base + maxi(devotion, 0)
 	# Phase 8: care (flowers / candle ≤ care_cap, disturbed −3) and Lenz' prayer; the positive part keeps a
 	# robbed soul at most calm (devotion_robbed_cap, like the devotion).
-	var care := _care_bonus(grave_id)
+	var care := _care_bonus(grave_id) + _letter_bonus(grave_id)
 	var prayer := _prayer_bonus(grave_id)
 	var plus := maxi(care, 0) + prayer
 	if robbed > 0:
@@ -229,7 +240,7 @@ func listen(grave_id: String, player: Player) -> String:
 		var turn := int(last.turn) + 1 if not last.is_empty() and int(last.day) == day else 0
 		var corpse := _corpse(_graveyard().get_grave(grave_id).corpse_id)
 		var traits: Array[StringName] = corpse.traits.duplicate() if corpse != null else []
-		var story: StringName = corpse.story_id if corpse != null else &""
+		var story := _story_key(corpse)
 		var harvested: Array[StringName] = corpse.harvested.duplicate() if corpse != null else []
 		var seed := line_seed(grave_id, day) + turn
 		var key := _care_key(grave_id, corpse)
@@ -642,7 +653,40 @@ func _care_key(grave_id: String, corpse: CorpseRecord) -> StringName:
 	var lights := burning and (lights_day is int or lights_day is float) and int(lights_day) == night
 	var visitors := _first(VISITORS_GROUP)
 	var visited := visitors != null and visitors.has_method(&"visited_on") and bool(visitors.call(&"visited_on", grave_id, night))
-	return GhostMood.care_key(disturbed, GhostMood.robbed_count(corpse) > 0, lights, visited, candle, flowers)
+	var key := GhostMood.care_key(disturbed, GhostMood.robbed_count(corpse) > 0, lights, visited, candle, flowers)
+	return GhostMood.letter_care_key(key, _letter_tonight(grave_id))
+
+
+## The by_story key of a corpse: the story id, or "<story>_<ending>" when that pool exists (STORY_ENDING_QUEST).
+func _story_key(corpse: CorpseRecord) -> StringName:
+	if corpse == null or corpse.story_id == &"":
+		return &""
+	var quest: StringName = STORY_ENDING_QUEST.get(corpse.story_id, &"")
+	var quests := _first(QUESTS_GROUP) if quest != &"" else null
+	if quests == null or not quests.has_method(&"ending"):
+		return corpse.story_id
+	var end := StringName(str(quests.call(&"ending", quest)))
+	var key := StringName(String(corpse.story_id) + "_" + String(end))
+	var l := _lines()
+	return key if end != &"" and l != null and l.by_story.has(key) else corpse.story_id
+
+
+## Phase 9: Letters.ghost_bonus (0 without Letters).
+func _letter_bonus(grave_id: String) -> int:
+	var letters := _first(LETTERS_GROUP)
+	if letters == null or not letters.has_method(&"ghost_bonus"):
+		return 0
+	return int(letters.call(&"ghost_bonus", grave_id))
+
+
+## Phase 9: a letter was read aloud at the grave tonight (Letters.letter_tonight; false without Letters).
+func _letter_tonight(grave_id: String) -> bool:
+	var letters := _first(LETTERS_GROUP)
+	return letters != null and letters.has_method(&"letter_tonight") and bool(letters.call(&"letter_tonight", grave_id))
+
+
+func _on_letter_changed(_uid: String, _letter_id: StringName, _state: StringName) -> void:
+	_moods_dirty = true
 
 
 func _on_decor_changed(_uid: String, _decor_id: StringName, _placed: bool) -> void:

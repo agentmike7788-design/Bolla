@@ -96,7 +96,7 @@ script = ExtResource("1")
 id = &"p9_drops"
 text = "Für die Schmerzen. Zehn Tropfen, nicht mehr, auch wenn er mehr will. Er wird nicht mehr wollen. Er ist keiner, der mehr will."
 choices = Array[ExtResource("2")]([SubResource("p9_p9_drops_c01")])
-actions = Array[String](["set_flag:p9_quast_drops"])
+actions = Array[String](["set_flag:p9_quast_drops", "shop_give:surgeon:fever_tincture:1"])
 
 [sub_resource type="Resource" id="p8_menu_menu_01"]
 script = ExtResource("2")

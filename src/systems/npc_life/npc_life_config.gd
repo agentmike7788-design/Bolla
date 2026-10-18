@@ -18,10 +18,15 @@ extends Resource
 ## Triggers: festival (a festival day, everyone) · mourning_circle (a mourning ribbon at a house of
 ## VillagerData.circle, the circle) · own_step (a story step of this person, the person) · rumor (bad
 ## talk about the gravekeeper) · sick_light (a sick light in the village).
+## Phase 9 (docs/PHASE9_DESIGN.md §2.2.7, §2.2.8, W1-Anschlüsse 13): after own_step the moods of ending C (q_public) –
+## Lenz, Quast, Liesel „gereizt" the day after, the Sieber circle (Theres, Fenner) „bedrückt" two days; the confidant
+## of H5 (flag q_confide_<npc>) is spared (NpcLife.SPARED_FLAG_PREFIX).
 @export var mood_rules: Array[Dictionary] = [
 	{"trigger": &"festival", "mood": &"cheerful", "npcs": [], "days": 0, "events": []},
 	{"trigger": &"mourning_circle", "mood": &"low", "npcs": [], "days": 2, "events": []},
 	{"trigger": &"own_step", "mood": &"cheerful", "npcs": [], "days": 1, "events": []},
+	{"trigger": &"rumor", "mood": &"cross", "npcs": [&"priest", &"surgeon", &"washer"], "days": 1, "events": [&"q_public"]},
+	{"trigger": &"rumor", "mood": &"low", "npcs": [&"grocer", &"mayor"], "days": 2, "events": [&"q_public"]},
 	{"trigger": &"rumor", "mood": &"cross", "npcs": [&"priest", &"washer"], "days": 1, "events": [&"lecture_rumor", &"specimen_sold_villager"]},
 	{"trigger": &"rumor", "mood": &"cross", "npcs": [&"mayor"], "days": 1, "events": [&"grave_disturbed"]},
 	{"trigger": &"sick_light", "mood": &"low", "npcs": [&"surgeon", &"priest", &"washer"], "days": 0, "events": []},
