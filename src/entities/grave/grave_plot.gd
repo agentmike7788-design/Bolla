@@ -128,6 +128,8 @@ const P9_LAY := &"letter_lay"
 const P9_SOIL := &"soil"
 const P9_BURY_LETTER := &"letter_bury"
 const P9_ORDER: Array[StringName] = [P9_DATE, P9_READ, P9_LAY, P9_SOIL]
+## The care actions that still come before „Datum vergleichen" (_date_first).
+const P9_DATE_AFTER: Array[StringName] = [CARE_COINS, CARE_CLOSE]
 const PROMPT_DATE := "[E] Datum vergleichen (%d Min)"
 const PROMPT_READ_LETTER := "[E] Brief am Grab vorlesen (%d Min)"
 const PROMPT_LAY_LETTER := "[E] Brief aufs Grab legen (%d Min)"
@@ -229,9 +231,11 @@ func get_interaction_prompt(player: Player) -> String:
 	if _base_can_interact(player):
 		return _base_prompt(player)
 	var care := _care_action(player, true)
+	var p9 := phase9_action(player)
+	if p9 == P9_DATE and _date_first(care):
+		return phase9_prompt(p9)
 	if care != &"":
 		return care_prompt(care, player)
-	var p9 := phase9_action(player)
 	if p9 != &"":
 		return phase9_prompt(p9)
 	care = _care_action(player, false)
@@ -251,15 +255,26 @@ func interact(player: Player) -> void:
 	if player == null or player.is_busy():
 		return
 	var care := _care_action(player, true)
+	var p9 := phase9_action(player)
+	if p9 == P9_DATE and _date_first(care):
+		_start_phase9(p9, player, "")
+		return
 	if care != &"":
 		_start_care(care, player)
 		return
-	var p9 := phase9_action(player)
 	if p9 != &"":
 		_start_phase9(p9, player, _phase9_uid(p9, player))
 
 
 # --- Phase 9 ------------------------------------------------------------------------------------------
+
+## W3 (Restbedarf 1): „Datum vergleichen" (H2, once per grave) comes before the flowers and the later care – with
+## seedlings, a wreath or straw flowers in the bag [E] at a grave of the list planted first and hid the date. Only
+## the coins on the stone and closing a disturbed grave still come before it.
+func _date_first(care: StringName) -> bool:
+	return not care in P9_DATE_AFTER
+
+
 
 ## The Phase-9 work at this grave for `player` (&"" = none): P9_ORDER, only on a filled / marked / old grave.
 func phase9_action(player: Player) -> StringName:
