@@ -373,6 +373,29 @@ P8_CLIPS = {
 }
 
 
+# Phase 9 W3 (docs/PHASE9_DESIGN.md §2.2.6, §2.2.7 Ende B „Bei Grete“): Lenz (first evening) and Liesel (second evening)
+# sit with Johann on the bench before the Sieber house (seat 0.45 m, like Johann's sit_bench). Added after every older
+# clip – body and the older clips stay hash-equal (test_assets_phase8 REEXPORT, test_assets_p9_fixes).
+P9_SIT = {
+    # Lenz: the breviary stays against his belly (left arm at rest), the right hand on his knee
+    "ph_chr_v_priest": {"arm_l": (-6.0, 0.0, 0.0), "arm_r": (-34.0, -6.0, 4.0), "head": 10.0},
+    # Liesel: the hands folded in her lap, the head a little lowered
+    "ph_chr_v_washer": {"arm_l": (-30.0, 14.0, 0.0), "arm_r": (-30.0, -14.0, 0.0), "head": 14.0},
+}
+
+
+def p9_sit_bench(name: str):
+    cfg = P9_SIT[name]
+    sit = rig.seated(0.27, 52.0, 4.0)
+
+    def fn(t: float) -> dict:
+        """90 frames: on the bench beside Johann, slow breathing, now and then a look up the lane."""
+        look = max(0.0, math.sin(rig.TAU * t)) ** 2
+        return rig.add(rig.breathe(t, 0.7), sit, {"arm_l": cfg["arm_l"], "arm_r": cfg["arm_r"],
+                                                  "head": (cfg["head"] - 10.0 * look, 0.0, -8.0 * look)})
+    return fn
+
+
 def _fist(mesh, bone: str) -> Vector:
     """The hand of a rigid arm: the centre of its lowest 8 cm (as test_assets_characters.Rig.hand)."""
     gi = mesh.vertex_groups[bone].index
@@ -421,7 +444,8 @@ def _rigged(name: str, mesh, joints: dict, actions, held=()) -> None:
     if L.os.environ.get("VW_PROBE"):
         VW.probe(name, arm, mesh)
     work, work_kids = VW.build_for(name, arm, mesh)
-    for an, frames, fn in tuple(actions) + tuple(extra) + tuple(work):
+    p9 = (("sit_bench-loop", 90, p9_sit_bench(name)),) if name in P9_SIT else ()
+    for an, frames, fn in tuple(actions) + tuple(extra) + tuple(work) + p9:
         rig.add_action(arm, mesh, an, frames, fn)
     kids = ([k + (True,) for k in kids] + [(n, b, o, {"show_with": ",".join(s)}, False) for n, b, o, s in work_kids]
             + [tuple(k) + (True,) for k in held])

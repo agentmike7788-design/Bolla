@@ -3096,6 +3096,12 @@ func test_phase9_layout_diff_against_phase8() -> void:
 		"+_phase9", "+phase9",                                                                            # graveyard_build_phase9.gd
 		"~camera_bounds.max", "+camera_bounds._phase9",                                                   # §4.7 (like Phase 8 L15)
 		"~phase8.nav.rect", "~phase8.visitor_spot._overrides",                                            # the walking net over row 4
+		# W3 „Restbedarf“ 5 (p9_09, test_w3_departure_free_without_the_cutout): three alders, the forest bush and the oak
+		# at Hanne's way further south.
+		"~gather_nodes[gather_alder_1].pos", "+gather_nodes[gather_alder_1]._comment", "~gather_nodes[gather_alder_2].pos",
+		"~gather_nodes[gather_alder_2]._comment", "~gather_nodes[gather_alder_3].pos", "+gather_nodes[gather_alder_3]._comment",
+		"~forest.trees[0].pos", "~forest.trees[0]._comment", "~forest.bushes[0].pos", "+forest.bushes[0]._comment",
+		"~forest.trees[2].pos", "+forest.trees[2]._comment",   # QA5-06: the alders' stumps stay in sight
 	]
 	for id: String in ["l_09", "l_10", "l_11", "l_12"]:
 		allowed.append("+phase8.visitor_spot.overrides." + id)  # row 3 keeps its baked places beside the mounds
@@ -3111,8 +3117,11 @@ func test_phase9_layout_diff_against_phase8() -> void:
 		assert_true(c in changes, "listed change present: " + c)
 	assert_eq(layout.plots.slice(0, old.plots.size()), old.plots, "the approved plots unchanged")
 	for key: String in ["old_graves", "road", "hut", "tree", "stations", "workyard", "props", "region_portals", "buildings",
-			"building_doors", "dirt_spots", "forest", "background_trees", "lights", "colliders", "atmosphere", "notice_board"]:
+			"building_doors", "dirt_spots", "background_trees", "lights", "colliders", "atmosphere", "notice_board"]:
 		assert_eq(layout[key], old[key], key + " unchanged (§4.6)")
+	assert_eq([layout.forest.trees[1]] + layout.forest.trees.slice(3), [old.forest.trees[1]] + old.forest.trees.slice(3),
+			"forest trees unchanged but the two of W3")
+	assert_eq(layout.forest.bushes.slice(1), old.forest.bushes.slice(1), "forest bushes unchanged but the bush of W3")
 	assert_eq(layout.walkable_bounds.min, old.walkable_bounds.min, "walkable_bounds.min unchanged")
 	assert_eq(layout.camera_bounds.min, old.camera_bounds.min, "camera_bounds.min unchanged")
 	for e: Dictionary in old.entities:
@@ -3259,7 +3268,11 @@ func test_phase9_cart_rider() -> void:
 		assert_true(fig.visible and not (johann.get_node("Model") as Node3D).visible, "%d: on the cart, not beside it" % minute)
 		var bed := osric.cart.global_transform * Vector3(0.0, 0.64, 0.0)
 		assert_true(_flat2(fig.global_position).distance_to(_flat2(bed)) < 1.2, "%d: on the bed (%s / %s)" % [minute, fig.global_position, bed])
-		assert_almost(fig.global_position.y - world.ground_height(_flat2(fig.global_position)), 0.19, 0.12, "%d: the root 0.45 m below the bed top" % minute)
+		# W3 „Restbedarf“ 8: on the end board away from Osric (top 0.83 m), the root 0.45 m below it.
+		var board := osric.cart.global_transform * Vector3(0.0, 0.83, -1.03)
+		assert_true(_flat2(fig.global_position).distance_to(_flat2(board)) < 0.15, "%d: in the middle of the end board" % minute)
+		assert_almost(fig.global_position.y - world.ground_height(_flat2(fig.global_position)), 0.38, 0.12, "%d: the root 0.45 m below the board top" % minute)
+		assert_true(fig.global_basis.z.dot(osric.cart.global_basis.z) < -0.95, "%d: looking away from the cart (its back to the bed)" % minute)
 		var anim := fig.find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer
 		assert_eq(anim.current_animation, &"sit_cart")
 		var bundle := fig.find_child("bundle_down", true, false) as Node3D
@@ -3371,3 +3384,32 @@ func test_phase9_sight() -> void:
 		var why := _p7_blocker(space, eye, sheet_at, Vector3(stand.x, world.ground_height(stand) + 1.1, stand.y), cut_radius)
 		assert_eq(why, "", "G3: the sheet free at zoom %d" % int(zoom))
 	GameState.clear_flag(&"p9_open")
+
+
+## W3 „Restbedarf“ 5 (docs/reviews/phase9_round1/p9_09: Hanne hidden behind the alders): gather_alder_1 and the forest
+## bush forest.bushes[0] 2 m to the south – the departure with Hanne (and Johann 1.5 m behind her, both heads and
+## chests) from the gate to the forest edge is free at zoom 12 / 22 / 24 without the player's cutout (radius 0).
+func test_w3_departure_free_without_the_cutout() -> void:
+	for i: int in 2:
+		await tree.process_frame
+	_p8_probe()
+	for i: int in 3:
+		await tree.physics_frame
+	var space := world.get_world_3d().direct_space_state
+	var failures: PackedStringArray = []
+	var way: Array = ["sieber_gate", "gate_outside", "peddler_west", "trader_spot"]
+	for k: int in 25:
+		var p := _flat2(_along(way, k / 24.0))
+		for zoom: float in P6_ZOOMS:
+			for h: float in [1.6, 1.1]:
+				var why := _p8_hidden(space, p, h, zoom, 0.0)
+				if why != "":
+					failures.append("departure %d/24 at %s h %.1f zoom %d: %s" % [k, p, h, int(zoom), why])
+	assert_eq(failures, PackedStringArray(), "§4.7: Hanne's and Johann's way free – no ray hidden, no cutout needed")
+	var layout := JSON.parse_string(FileAccess.get_file_as_string("res://data/world/graveyard_layout.json")) as Dictionary
+	var old := JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/phase9/layout_p8.json")) as Dictionary
+	var alder: Dictionary = (layout.gather_nodes as Array).filter(func(g: Dictionary) -> bool: return g.id == "gather_alder_1")[0]
+	var alder_old: Dictionary = (old.gather_nodes as Array).filter(func(g: Dictionary) -> bool: return g.id == "gather_alder_1")[0]
+	for pair: Array in [[alder.pos, alder_old.pos], [layout.forest.bushes[0].pos, old.forest.bushes[0].pos]]:
+		assert_eq(float(pair[0][0]), float(pair[1][0]), "same x")
+		assert_true(float(pair[0][1]) - float(pair[1][1]) >= 1.5 and float(pair[0][1]) - float(pair[1][1]) <= 2.6, "≈ 2 m to the south")

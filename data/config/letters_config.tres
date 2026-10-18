@@ -10,6 +10,7 @@ forced_ids = Array[StringName]([&"lp_l1_carter", &"lp_l2_sister", &"lp_l3_burn"]
 post_offsets = PackedInt32Array(3, 6, 9)
 aschau_letter = &"lpo_aschau"
 postage = 1
+read_minutes = 5
 read_grave_minutes = 10
 answer_minutes = 20
 burn_minutes = 2

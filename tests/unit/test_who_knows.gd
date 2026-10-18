@@ -561,6 +561,77 @@ func test_w2_evening_flag_while_the_evening_order_runs() -> void:
 	assert_eq(GameState.get_flag(&"sieber_evening_day"), 69, "every morning while it runs")
 
 
+## W3 „Restbedarf“ 3 (§2.2.6, §2.2.7 Ende B): the confidant sits with Johann – Lenz on the first evening, Liesel on the
+## second (the evening counted by Orders.meetings_before, stable through the day); Quast does not come.
+func _evening_day(confide: String) -> void:
+	var real := load("res://data/orders/oq_johann_evening.tres") as OrderData
+	orders.order_table[&"oq_johann_evening"] = real
+	_at(&"h6", {"h5": confide, "h6": "stay"}, &"stay")
+	TimeManager.load_state({"day": 68, "minute_of_day": 700})
+	who.apply_minute(68, 700)
+	assert_true(orders.accept(&"oq_johann_evening"))
+	who.apply_minute(68, 701)
+
+
+func _meet(day: int) -> void:
+	TimeManager.load_state({"day": day, "minute_of_day": 1110})
+	orders.note_meet(&"kin_sieber", &"v_sieber_bench")
+	who.apply_minute(day, 1111)
+
+
+func test_w3_lenz_sits_with_johann_on_the_first_evening() -> void:
+	_evening_day("confide_priest")
+	assert_eq(GameState.get_flag(&"sieber_evening_priest_day"), 68, "Lenz: the first evening")
+	assert_false(GameState.has_flag(&"sieber_evening_washer_day"))
+	var lenz := load("res://data/npc/priest_schedule.tres") as NpcSchedule
+	for t: int in [1080, 1095, 1150, 1199]:
+		var e := ScheduleResolver.entry_at(lenz, t, 68)
+		assert_eq([e.animation, e.path[-1], e.visible], [&"sit_bench", "v_sieber_bench_2", true], "%d on the bench beside Johann" % t)
+	var walk := ScheduleResolver.entry_at(lenz, 1050, 68)
+	assert_eq([walk.animation, walk.path[0], ScheduleResolver.arrival_minute(walk)], [&"lantern_walk", "v_church_door", 1080],
+			"with his lantern from the church, at the bench at 18:00 like Johann")
+	assert_eq(ScheduleResolver.entry_at(lenz, 1220, 68).path[-1], "v_church_door", "back with Johann at 20:00")
+	_meet(68)
+	assert_eq(orders.meetings_before(&"oq_johann_evening", 68), 0, "tonight's meeting does not count for tonight")
+	assert_eq(GameState.get_flag(&"sieber_evening_priest_day"), 68)
+	orders.apply_morning(69)
+	who.apply_minute(69, 400)
+	assert_eq(orders.meetings_before(&"oq_johann_evening", 69), 1)
+	assert_eq(GameState.get_flag(&"sieber_evening_priest_day"), 68, "not on the second evening")
+	for t: int in [1080, 1150]:
+		assert_ne(ScheduleResolver.entry_at(lenz, t, 69).path[-1], "v_sieber_bench_2", "the second evening: his own evening")
+
+
+func test_w3_liesel_sits_with_johann_on_the_second_evening() -> void:
+	_evening_day("confide_washer")
+	assert_false(GameState.has_flag(&"sieber_evening_washer_day"), "not on the first evening")
+	_meet(68)
+	orders.apply_morning(69)
+	who.apply_minute(69, 400)
+	assert_eq(GameState.get_flag(&"sieber_evening_washer_day"), 69, "Liesel: the second evening")
+	var liesel := load("res://data/npc/washer_schedule.tres") as NpcSchedule
+	for t: int in [1080, 1139, 1145, 1199]:
+		var e := ScheduleResolver.entry_at(liesel, t, 69)
+		assert_eq([e.animation, e.path[-1], e.visible], [&"sit_bench", "v_sieber_bench_2", true], "%d on the bench" % t)
+	_meet(69)
+	assert_eq(orders.state(&"oq_johann_evening"), &"completed", "two evenings")
+	who.apply_minute(69, 1150)
+	assert_eq(GameState.get_flag(&"sieber_evening_washer_day"), 69, "stays through the evening after the order is done")
+	assert_false(GameState.has_flag(&"sieber_evening_priest_day"))
+	GameState.clear_flag(&"sieber_evening_washer_day")
+	for t: int in [1080, 1145]:
+		assert_ne(ScheduleResolver.entry_at(liesel, t, 69).path[-1], "v_sieber_bench_2", "without the flag: as before")
+
+
+func test_w3_quast_and_ending_c_bring_no_companion() -> void:
+	_evening_day("confide_surgeon")
+	_meet(68)
+	orders.apply_morning(69)
+	who.apply_minute(69, 400)
+	for f: StringName in [&"sieber_evening_priest_day", &"sieber_evening_washer_day", &"sieber_evening_surgeon_day"]:
+		assert_false(GameState.has_flag(f), "Quast: %s" % f)
+
+
 # --- W2 Anschlüsse 16: values from the code in WhoKnowsConfig ------------------------------------------
 
 func test_w2_config_values_from_the_code() -> void:

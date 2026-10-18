@@ -289,3 +289,42 @@ func test_w2_liesel_vigil_at_the_siebers_is_visible() -> void:
 	GameState.clear_flag(&"night_np_sieber_washer_day")
 	for t: int in [150, 200, 331]:
 		assert_false(Array(ScheduleResolver.entry_at(washer, t, 72).path).has("v_sieber_door"), "without the night: as before (%d)" % t)
+
+
+## W3 „Restbedarf“ 2 (§2.2.7 „Quast und Lenz kommen wie immer“): NightPaths sets night_np_sieber_surgeon_day (light + 19)
+## and night_np_sieber_priest_day (light + 20); the schedules walk Quast and Lenz over the bridge and the Siebers' lane to
+## v_sieber_door like to the Otts – knock, inside, at the door with their dialogue at the leave minute, home again.
+func test_w3_quast_and_lenz_walk_to_the_siebers() -> void:
+	_with_sieber(51)
+	TimeManager.load_state({"day": 70, "minute_of_day": 1200})
+	paths.load_state({"last_total": TimeManager.total_minutes()})
+	TimeManager.advance(60)
+	assert_eq(GameState.get_flag(&"night_np_sieber_surgeon_day"), 70, "Quast's night (light + 19)")
+	TimeManager.advance(1440)
+	assert_eq(GameState.get_flag(&"night_np_sieber_priest_day"), 71, "Lenz's night (light + 20)")
+	var lane := ["v_bridge", "v_road_in", "v_sieber_lane_n", "v_sieber_lane_e", "v_sieber_lane_s", "v_sieber_yard", "v_sieber_door"]
+	for c: Array in [["surgeon", 70, 1350, 1390, "v_surgery_door", &"v_surgeon", &"walk"],
+			["priest", 71, 1260, 1300, "v_church_door", &"v_priest", &"lantern_walk"]]:
+		var sched := load("res://data/npc/%s_schedule.tres" % c[0]) as NpcSchedule
+		var day: int = c[1]
+		var enter: int = c[2]
+		var leave: int = c[3]
+		var e := ScheduleResolver.entry_at(sched, enter - 10, day)
+		assert_eq([e.activity, e.animation, e.path[0], e.visible], [&"walk", c[6], c[4], true], "%s on the way" % c[0])
+		assert_eq(Array(e.path).slice(-lane.size()), lane, "%s over the bridge and the Siebers' lane" % c[0])
+		assert_eq(ScheduleResolver.arrival_minute(e), enter, "%s at the door when the visit begins" % c[0])
+		assert_true(e.travel_minutes >= 30, "%s: %d min for the ~60 m (no rush through the village)" % [c[0], e.travel_minutes])
+		e = ScheduleResolver.entry_at(sched, enter, day)
+		assert_eq([e.animation, e.path[-1]], [&"knock", "v_sieber_door"], "%s knocks" % c[0])
+		e = ScheduleResolver.entry_at(sched, enter + 20, day)
+		assert_eq([e.visible, e.path[-1]], [false, "v_sieber_door"], "%s inside with him" % c[0])
+		e = ScheduleResolver.entry_at(sched, leave + 1, day)
+		assert_eq([e.visible, e.path[-1], e.dialogue_id], [true, "v_sieber_door", c[5]], "%s at the door" % c[0])
+		e = ScheduleResolver.entry_at(sched, leave + 10, day)
+		assert_eq([e.activity, e.path[-1]], [&"walk", c[4]], "%s home again" % c[0])
+		e = ScheduleResolver.entry_at(sched, leave + 2 + e.travel_minutes, day)
+		assert_eq([e.visible, e.path[-1]], [false, c[4]], "%s at home" % c[0])
+		GameState.clear_flag(StringName("night_np_sieber_%s_day" % c[0]))
+		for t: int in range(enter - 40, leave + 60, 5):
+			assert_false(Array(ScheduleResolver.entry_at(sched, t, day).path).has("v_sieber_door"),
+					"%s without the night: as before (%d)" % [c[0], t])

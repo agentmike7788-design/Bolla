@@ -19,9 +19,12 @@ const KEY_SHOW := "show_with"
 @export var carter_path: NodePath = ^"../npc_carter"
 ## Johann's figure (the same model as his Npc).
 @export var model: PackedScene
-## The root of the sitting figure in the frame of Osric's Cart node: on the rear corner of the bed, the legs hanging
-## out over the side; bed top 0.64 m – the root 0.45 m below it (P7: sit_cart seat 0.45 m above the root).
-@export var seat: Transform3D = Transform3D(Basis(Vector3.UP, deg_to_rad(-90.0)), Vector3(-0.6, 0.19, -0.75))
+## The root of the sitting figure in the frame of Osric's Cart node (P7: sit_cart seat 0.45 m above the root).
+## W3 („Restbedarf“ 8): in the middle of the end board away from Osric (top 0.83 m, Cart -Z), his back to the bed, the
+## legs hanging out over the board, looking down the road away from the cart – the root 0.45 m below the board top,
+## 4 cm outside it (the seated hips slide back onto the board). Before (W2): the root at the right rear corner 0.6 m
+## out, on the height of the floor boards – he sat beside the cart in the air (p9_10).
+@export var seat: Transform3D = Transform3D(Basis(Vector3.UP, PI), Vector3(0.0, 0.38, -1.07))
 
 var _figure: Node3D
 var _anim: AnimationPlayer

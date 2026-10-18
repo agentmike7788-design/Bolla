@@ -177,10 +177,18 @@ static func bake_nav(ctx: Ctx, waypoints: Node3D) -> void:
 						and Nav.los(grid, origin, cell, size, vw[id], corners[k + 1], minf(need, Nav.clearance_in(grid, origin, cell, size, corners[k + 1]) - 0.01)):
 					hit = id
 					break
+			# W3: a corner on the very place of a seeded point is that point (each bake added one more vw at
+			# (−2,7 | −13,1) when the line-of-sight merge failed there – vw_64 … vw_66).
+			var snapped := Vector2(snappedf(p.x, 0.05), snappedf(p.y, 0.05))
+			if hit == "":
+				for id: String in vw_order:
+					if (vw[id] as Vector2).distance_to(snapped) < 0.001:
+						hit = id
+						break
 			if hit == "":
 				last += 1
 				hit = "vw_%02d" % last
-				vw[hit] = Vector2(snappedf(p.x, 0.05), snappedf(p.y, 0.05))
+				vw[hit] = snapped
 				vw_order.append(hit)
 			prev = vw[hit]
 			if seq[seq.size() - 1] != hit:

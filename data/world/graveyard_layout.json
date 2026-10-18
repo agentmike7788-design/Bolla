@@ -479,9 +479,9 @@
     {"id": "gather_clay_1", "kind": "clay_pit", "section": "bruch", "pos": [28.6, 6.6], "rot_y": 0.0},
     {"id": "gather_herbs_1", "kind": "herb_patch", "section": "bruch", "pos": [23.0, 8.2], "rot_y": 0.0},
     {"id": "gather_herbs_2", "kind": "herb_patch", "section": "bruch", "pos": [30.6, 8.4], "rot_y": 40.0},
-    {"id": "gather_alder_1", "kind": "alder", "pos": [-6.9, 15.6], "rot_y": 0.0},
-    {"id": "gather_alder_2", "kind": "alder", "pos": [-10.4, 16.6], "rot_y": 70.0, "_comment": "Phase 6 W-Welt (Sichtprüfung §4.5, Zoom 12): 1,0 m nach Süden (war −10,4 | 15,6); weiter südlich verdeckt der Waldbaum (−9,4 | 22,4) Stumpf und Schösslinge (QA5-06)"},
-    {"id": "gather_alder_3", "kind": "alder", "pos": [-4.0, 17.4], "rot_y": 140.0},
+    {"id": "gather_alder_1", "kind": "alder", "pos": [-6.9, 17.6], "rot_y": 0.0, "_comment": "W3 („Restbedarf“ 5, Bild p9_09: Hanne hinter den Erlen verdeckt; Sichtprüfung des Abgangs ohne Aussparung, 0 Strahlen verdeckt): 2,0 m nach Süden (war −6,9 | 15,6)."},
+    {"id": "gather_alder_2", "kind": "alder", "pos": [-11.4, 17.1], "rot_y": 70.0, "_comment": "Phase 6 W-Welt (Sichtprüfung §4.5, Zoom 12): 1,0 m nach Süden (war −10,4 | 15,6); weiter südlich verdeckt der Waldbaum (−9,4 | 22,4) Stumpf und Schösslinge (QA5-06). W3 („Restbedarf“ 5, Bild p9_09: Hanne hinter den Erlen verdeckt; Sichtprüfung des Abgangs ohne Aussparung, 0 Strahlen verdeckt): 1,0 m nach Westen und 0,5 m nach Süden (war −10,4 | 16,6) – so bleibt ihr Stumpf vor dem Waldbaum sichtbar (QA5-06)."},
+    {"id": "gather_alder_3", "kind": "alder", "pos": [-4.0, 18.4], "rot_y": 140.0, "_comment": "W3 („Restbedarf“ 5, Bild p9_09: Hanne hinter den Erlen verdeckt; Sichtprüfung des Abgangs ohne Aussparung, 0 Strahlen verdeckt): 1,0 m nach Süden (war −4,0 | 17,4)."},
     {"id": "gather_alder_4", "kind": "alder", "pos": [-8.8, 24.0], "rot_y": 210.0},
     {"id": "gather_alder_5", "kind": "alder", "pos": [-5.0, 24.6], "rot_y": 300.0},
     {"id": "gather_herbs_3", "kind": "herb_patch", "pos": [-2.8, 18.0], "rot_y": 0.0},
@@ -516,9 +516,9 @@
   "forest": {
     "_comment": "Waldrand am Kutschweg.",
     "trees": [
-      {"pos": [-15.8, 14.6], "rot_y": 15.0, "scale": 1.1, "_comment": "Phase 6 §4.1 G4 (bedingt, Sichtprüfung an der Gruft gescheitert): war −8,2 | 14,2; weiter als die 2 m aus §4.1, freigegeben durch die W1-Integrationsnotiz (Kulisse)."},
+      {"pos": [-16.8, 15.6], "rot_y": 15.0, "scale": 1.1, "_comment": "Phase 6 §4.1 G4 (bedingt, Sichtprüfung an der Gruft gescheitert): war −8,2 | 14,2; weiter als die 2 m aus §4.1, freigegeben durch die W1-Integrationsnotiz (Kulisse). W3 („Restbedarf“ 5, Bild p9_09: Hanne hinter den Erlen verdeckt; Sichtprüfung des Abgangs ohne Aussparung, 0 Strahlen verdeckt): 1 m nach Westen und 1 m nach Süden (war −15,8 | 14,6) – die Krone verdeckte den Waldweg nördlich von peddler_west."},
       {"pos": [-16.2, 20.6], "rot_y": 140.0, "scale": 1.25, "_comment": "Phase 6 W-Welt (Sichtprüfung §4.5 an der Gruft): war −12,8 | 18,0."},
-      {"pos": [-9.4, 22.4], "rot_y": 260.0, "scale": 1.0},
+      {"pos": [-10.4, 23.9], "rot_y": 260.0, "scale": 1.0, "_comment": "W3 („Restbedarf“ 5): 1 m nach Westen, 1,5 m nach Süden (war −9,4 | 22,4) – die Krone verdeckte Stumpf und Schösslinge der nach Süden gerückten Erle gather_alder_1 (QA5-06)."},
       {"pos": [-16.5, 13.0], "rot_y": 75.0, "scale": 1.2},
       {"pos": [-14.0, 27.5], "rot_y": 200.0, "scale": 1.3},
       {"pos": [8.6, 13.2], "rot_y": 310.0, "scale": 1.0},
@@ -529,7 +529,7 @@
       {"pos": [6.5, 33.5], "rot_y": 100.0, "scale": 1.1}
     ],
     "bushes": [
-      {"pos": [-4.6, 13.0], "rot_y": 10.0, "scale": 1.0},
+      {"pos": [-4.6, 15.0], "rot_y": 10.0, "scale": 1.0, "_comment": "W3 („Restbedarf“ 5, Bild p9_09: Hanne hinter den Erlen verdeckt; Sichtprüfung des Abgangs ohne Aussparung, 0 Strahlen verdeckt): 2,0 m nach Süden (war −4,6 | 13,0)."},
       {"pos": [-6.4, 18.4], "rot_y": 80.0, "scale": 1.2},
       {"pos": [-4.2, 22.8], "rot_y": 160.0, "scale": 0.9},
       {"pos": [-7.6, 25.2], "rot_y": 30.0, "scale": 1.1},

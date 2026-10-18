@@ -74,6 +74,32 @@ const G9_SHOTS: Array[Dictionary] = [
 			"game": 26.0, "flags": ["stranger_day"]},
 	{"name": "p9_vis_sieber_z22", "region": "village", "day": 64, "minute": 640, "focus": Vector2(-31.0, 17.5), "distance": 30.0,
 			"pitch": 85.0, "player": Vector2(-31.0, 16.9), "stage": "vis9_sieber", "zoom": 22.0},
+	# --- W3 „Restbedarf“ (docs/reviews/phase9_round1/fixes/fixes.md; --shots=fix) ----------------------------------------
+	# 1: at Marthe Quendel's grave (S1, plot_06) after the ledger, seedlings and straw flowers in the bag – the prompt.
+	{"name": "fix1_grave_prompt_date_vorher", "day": 64, "minute": 640, "player": Vector2(9.6, 7.0), "facing": 200.0, "game": 12.0,
+			"ui": true, "stage": "prompt_date_old"},
+	{"name": "fix1_grave_prompt_date", "day": 64, "minute": 640, "player": Vector2(9.6, 7.0), "facing": 200.0, "game": 12.0,
+			"ui": true, "stage": "prompt_date"},
+	{"name": "fix1_grave_prompt_straw", "day": 64, "minute": 641, "player": Vector2(9.6, 7.0), "facing": 200.0, "game": 12.0,
+			"ui": true, "stage": "prompt_straw"},
+	# 5: the departure's sight rays without the player's cutout (radius 0).
+	{"name": "fix5_vis_departure_nocut_z12", "day": 64, "minute": 640, "focus": Vector2(-5.5, 5.0), "distance": 36.0, "pitch": 85.0,
+			"player": Vector2(-20.0, 0.0), "stage": "vis", "vis": "departure", "zoom": 12.0, "no_cut": true},
+	{"name": "fix5_vis_departure_nocut_z22", "day": 64, "minute": 640, "focus": Vector2(-5.5, 5.0), "distance": 36.0, "pitch": 85.0,
+			"player": Vector2(-20.0, 0.0), "stage": "vis", "vis": "departure", "zoom": 22.0, "no_cut": true},
+	# 2: Quast (light + 19, 22:30) and Lenz with his lantern (light + 20, 21:00) at the Siebers' door.
+	{"name": "fix2_quast_sieber_night", "region": "village", "day": "light19", "minute": 1347, "player": Vector2(-28.8, 19.4),
+			"facing": 250.0, "game": 13.0, "flags": ["night_np_sieber_surgeon_day"], "clear": ["sieber_watch_day"]},
+	{"name": "fix2_lenz_sieber_night", "region": "village", "day": "light20", "minute": 1257, "player": Vector2(-28.8, 19.4),
+			"facing": 250.0, "game": 13.0, "flags": ["night_np_sieber_priest_day"], "clear": ["sieber_watch_day"]},
+	# 3: ending B – Lenz on the first, Liesel on the second evening beside Johann on the bench.
+	{"name": "fix3_lenz_bench_evening", "region": "village", "day": 66, "minute": 1110, "player": Vector2(-28.9, 18.3),
+			"facing": 285.0, "game": 13.0, "flags": ["sieber_evening_day", "sieber_evening_priest_day"]},
+	{"name": "fix3_liesel_bench_evening", "region": "village", "day": 67, "minute": 1110, "player": Vector2(-28.9, 18.3),
+			"facing": 285.0, "game": 13.0, "flags": ["sieber_evening_day", "sieber_evening_washer_day"], "clear": ["sieber_evening_priest_day"]},
+	# 4: the watchman at the door on a watch night (ending C), close up.
+	{"name": "fix4_watchman_close", "region": "village", "day": "light19", "minute": 1385, "player": Vector2(-29.9, 18.9),
+			"facing": 200.0, "game": 12.0, "flags": ["sieber_watch_day"]},
 ]
 
 var _web := false
@@ -151,12 +177,16 @@ func _resolve_day(world: Node3D, day: Variant) -> int:
 			return days[0] if not days.is_empty() else 65
 		"light19":
 			return int(_gs().call(&"get_flag", &"q_light_day", 51)) + 19
+		"light20":
+			return int(_gs().call(&"get_flag", &"q_light_day", 51)) + 20
 	return 64
 
 
 # --- the states (applied whether the shot is wanted or not) -------------------------------------------------
 
 func _stage9(world: Node3D, shot: Dictionary) -> void:
+	for flag: String in shot.get("clear", []):
+		_gs().call(&"clear_flag", StringName(flag))
 	for flag: String in shot.get("flags", []):
 		_gs().call(&"set_flag", StringName(flag), int(shot.day))
 	root.get_node(^"TimeManager").call(&"load_state", {"day": int(shot.day), "minute_of_day": int(shot.minute)})
@@ -249,6 +279,8 @@ func _shoot9(world: Node3D, shot: Dictionary, report: PackedStringArray) -> void
 			_stage_sheet9(world)
 		"vis":
 			await _stage_vis9(world, shot)
+		"prompt_date", "prompt_straw", "prompt_date_old":
+			_stage_prompt(world, String(shot.stage))
 	if shot.has("follow"):
 		var lead := world.get_node_or_null(NodePath("Entities/" + String(shot.follow[0]))) as Node3D
 		if lead != null and lead.visible:
@@ -287,6 +319,32 @@ func _shoot9(world: Node3D, shot: Dictionary, report: PackedStringArray) -> void
 	rig.set(&"pitch_deg", 45.0)
 	rig.set(&"yaw_deg", 0.0)
 	(world.get_node(^"UI") as CanvasLayer).visible = false
+
+
+## W3 „Restbedarf“ 1: the prompt of Marthe Quendel's grave (plot_06, S1 of the list) with seedlings, a wax wreath and
+## straw flowers in the bag – after the ledger (kladde_read) the date first; without the ledger the straw flowers once the
+## seedlings and the wreath are gone. The HUD shows what the grave's [E] would do (GravePlot.get_interaction_prompt).
+func _stage_prompt(world: Node3D, stage: String) -> void:
+	var player := world.get_node(^"Player") as Node3D
+	var inv: Object = player.get(&"inventory")
+	for item: StringName in [&"flower_seedlings", &"wax_wreath", &"straw_bouquet"]:
+		var n := int(inv.call(&"count", item))
+		if n > 0:
+			inv.call(&"remove_item", item, n)
+	inv.call(&"add_item", &"straw_bouquet", 1)
+	if stage == "prompt_date" or stage == "prompt_date_old":
+		inv.call(&"add_item", &"flower_seedlings", 1)
+		inv.call(&"add_item", &"wax_wreath", 1)
+		_gs().call(&"set_flag", &"kladde_read", true)
+	else:
+		_gs().call(&"clear_flag", &"kladde_read")
+	var plot: Node = world.call(&"get_node_by_layout_id", "plot_06")
+	var prompt := String(plot.call(&"get_interaction_prompt", player))
+	if stage == "prompt_date_old":
+		# „vorher": the order before W3 – an enabled care action came before the date (W2: the seedlings first).
+		prompt = String(plot.call(&"care_prompt", plot.call(&"_care_action", player, true), player))
+	print("[ShotsP9 prompt] %s: %s" % [stage, prompt])
+	root.get_node(^"EventBus").emit_signal(&"interaction_focus_changed", prompt, true)
 
 
 ## p9_00: Brenneisen beside the gravekeeper, then Johann, Veit and Hanne – in a row, idle, facing the camera, names below.
@@ -372,6 +430,11 @@ func _stage_vis9(world: Node3D, shot: Dictionary) -> void:
 				var feet := Vector3(p.x, _ground(world, p), p.y)
 				rays.append(["departure_%02d" % k, feet + Vector3(0.0, 1.55, 0.0), feet + Vector3(0.0, 1.1, 0.0), _gameplay_eye(world, feet, zoom)])
 	var hidden := 0
+	# W3 „Restbedarf“ 5: "no_cut" – the rays without the player's cutout (radius 0: every leaf in the way hides).
+	var cut: Dictionary = _sight.get(&"_cut")
+	var cut_radius := float(cut.radius)
+	if bool(shot.get("no_cut", false)):
+		cut["radius"] = 0.0
 	for r: Array in rays:
 		var why := String(_sight.call(&"blocked", r[3], r[1], r[2], r[4] if r.size() > 4 else []))
 		_sight.call(&"draw_ray", stage, r[1], r[3], why == "")
@@ -381,7 +444,9 @@ func _stage_vis9(world: Node3D, shot: Dictionary) -> void:
 		if why != "":
 			hidden += 1
 			print("[ShotsP9 vis] %s zoom %d hidden by %s" % [r[0], int(zoom), why])
-	print("[ShotsP9 vis] %s zoom %d: %d rays, %d hidden" % [shot.vis, int(zoom), rays.size(), hidden])
+	cut["radius"] = cut_radius
+	print("[ShotsP9 vis] %s zoom %d: %d rays, %d hidden%s" % [shot.vis, int(zoom), rays.size(), hidden,
+			" (no cutout)" if bool(shot.get("no_cut", false)) else ""])
 	var focus: Vector2 = shot.focus
 	_free_camera(world, Vector3(focus.x, _ground(world, focus), focus.y), float(shot.distance))
 	(world.get_node(^"Player") as Node3D).visible = false

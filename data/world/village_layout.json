@@ -214,8 +214,8 @@
       "_comment": "Phase 9 §2.2.5/§3.1: Johann Sieber auf der Bank vor dem Haus (sieber_bench_day 14:00–16:00, die Abende sieber_evening_day) und sein Abgang über die Brücke (Ende A)."},
     {"id": "npc_stranger", "npc_id": "stranger", "model": "ph_chr_stranger", "requires_flag": "p9_open",
       "_comment": "Phase 9 §2.5.1/§3.1/§4.4: Cornelius Brenneisen – über die Holderbrücke zum Holderkrug, abends am Ecktisch der Gaststube (v_in_inn_stranger)."},
-    {"id": "npc_watchman", "npc_id": "watchman", "model": "ph_prop_watch_lantern", "requires_flag": "p9_open", "lantern_marker": "light_lantern", "model_offset": [0.85, 0.0, -0.3],
-      "_comment": "Phase 9 §2.2.7 Ende C/§4.6 D12/§4.8: die Laterne des Nachtwächters an der Sieber-Tür (Zeitplan watchman, sieber_watch_day 21:00–06:00) – Licht-Requisit ohne Figur (Prio A; keine Wächter-Figur in P7), ein Omni ohne Schatten (Npc.lantern_marker), neben der Tür auf der Stufe."}
+    {"id": "npc_watchman", "npc_id": "watchman", "model": "ph_chr_watchman", "requires_flag": "p9_open", "lantern_marker": "light_lantern",
+      "_comment": "Phase 9 §2.2.7 Ende C/§4.6 D12/§4.8: der Nachtwächter an der Sieber-Tür (Zeitplan watchman, sieber_watch_day 21:00–06:00; kommt 20:40 vom Amtshaus, geht 06:00 zurück). W3 („Restbedarf“ 4, Prio B): jetzt als Figur ph_chr_watchman (Mantel, Mütze, Stock, Laterne in der rechten Hand) auf seinem Platz v_sieber_watch neben der Tür (vorher nur das Licht-Requisit ph_prop_watch_lantern mit model_offset); ein Omni ohne Schatten am Marker light_lantern in seiner Laterne (Npc.lantern_marker)."}
   ],
   "spawns": {
     "from_graveyard": {"pos": [-24.6, 1.5], "rot_y": 90.0}
@@ -256,13 +256,15 @@
     "v_lights_gather": [-24.4, 3.4],
     "v_sieber_door": [-33.6, 15.8],
     "v_sieber_bench": [-31.4, 15.95],
+    "v_sieber_bench_2": [-30.85, 15.95],
+    "v_sieber_watch": [-32.75, 16.0],
     "v_sieber_yard": [-31.4, 16.9],
     "v_sieber_lane_n": [-30.5, 3.6],
     "v_sieber_lane_e": [-29.2, 9.0],
     "v_sieber_lane_s": [-29.2, 16.2],
     "v_bridge_unload": [-30.9, 1.5]
   },
-  "_waypoints_phase9": "Phase 9 §4.3/§4.6 D8/D10 (W-Welt): v_sieber_door vor der Haustür der Siebers (hier wird geklopft, die Nachtbesuche gehen hinein), v_sieber_bench auf der Bank links der Tür, der Weg von der Brücke am Westufer entlang zum Vorplatz (v_road_in → v_sieber_lane_n → v_sieber_lane_e → v_sieber_lane_s → v_sieber_yard (vor der Bank vorbei) → v_sieber_door; gerade v_sieber_door → v_road_in liefe durchs Haus), v_bridge_unload am westlichen Brückenkopf (Steine abladen, Besuchsteil von hrv_bridge_stones).",
+  "_waypoints_phase9": "Phase 9 §4.3/§4.6 D8/D10 (W-Welt): v_sieber_door vor der Haustür der Siebers (hier wird geklopft, die Nachtbesuche gehen hinein), v_sieber_bench auf der Bank links der Tür, der Weg von der Brücke am Westufer entlang zum Vorplatz (v_road_in → v_sieber_lane_n → v_sieber_lane_e → v_sieber_lane_s → v_sieber_yard (vor der Bank vorbei) → v_sieber_door; gerade v_sieber_door → v_road_in liefe durchs Haus), v_bridge_unload am westlichen Brückenkopf (Steine abladen, Besuchsteil von hrv_bridge_stones). W3 („Restbedarf“ 3): v_sieber_bench_2 – der zweite Sitz auf der Bank, 0,55 m östlich von Johann (Lenz am ersten, Liesel am zweiten Abend von Ende B); W3 („Restbedarf“ 4): v_sieber_watch – der Platz des Nachtwächters zwischen Tür und Bank (0,85 m östlich der Tür, nicht auf dem Klopfplatz).",
   "_waypoints_phase8": "Phase 8 §4.6 D1/D4/D5: Türplätze der Krankenlicht-Häuser (v_ott_door; v_kehr_door am Ostufer des Hollerbachs vor der Brücke zum Haus, (−23,35 | −9,0) statt §4.6 (−24,6 | −10,2) – das läge im Bach und im Haus; dort wird geklopft, dann geht es hinein), der Weg zu den Otts zwischen Wundarztstube und Remise (v_ott_lane_w, v_ott_lane), zu den Kehrs südlich am Schmiedekarren vorbei (v_kehr_lane), Veits Plätze (Kirchtür-Stufe, Brückenplatz; Brunnenbank bestehend), Hannes Stand am Brunnen (Kiepe abgestellt), v_remise_sleep (Veit nachts, unsichtbar hinter der Remise), Hannes Weg über die Brücke (v_peddler_in → v_peddler_out am Wegstein), die Lichtgang-Sammlung an der Holderbrücke. Beobachtungsplätze und Krankenlicht: phase8.",
   "waypoint_facing": {
     "_comment": "Blickrichtung (rot_y in Grad, 0 = +Z/Kamera) an Steh-Orten: zum Anger bzw. zur Kamera.",
@@ -271,7 +273,7 @@
     "v_hagedorn_gate": 0.0, "v_dorn_door": 0.0, "v_wash": 120.0, "v_bridge": 90.0,
     "v_ott_door": 90.0, "v_kehr_door": 201.0, "v_church_step": 0.0, "v_bridge_sit": 90.0, "v_well_peddler": 30.0,
     "v_peddler_in": 90.0, "v_lights_gather": 60.0,
-    "v_sieber_door": 0.0, "v_sieber_bench": 0.0, "v_bridge_unload": 90.0
+    "v_sieber_door": 0.0, "v_sieber_bench": 0.0, "v_sieber_bench_2": 0.0, "v_sieber_watch": 15.0, "v_bridge_unload": 90.0
   },
   "_phase8": "Phase 8 §4.6 D2/D3 (village_build_phase8.gd): WatchSpot im Schatten unter der Remisen-Traufe (z 4,7 statt §4.6 5,4 – dort steht die Südwand der Remise) bzw. an der Westecke des Amtshauses (≤ 12 m bis zum Türplatz, frei sichtbar), SickLight am Fenstermarker light_window der Häuser Ott und Kehr (eine Kerze auf dem inneren Sims, inset m nach innen; das Fensterlicht brennt in der Krankenlicht-Nacht durch – village_dressing.gd).",
   "phase8": {
