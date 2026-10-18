@@ -4397,7 +4397,8 @@ func test_phase9_schedules() -> void:
 	# The watchman's lantern (ending C): 21:00–06:00 at the Siebers' door.
 	for t: int in [1300, 120]:
 		e = _at("watchman", &"sieber_watch_day", t, 70)
-		assert_eq([e.path[-1], e.activity, e.visible], ["v_sieber_door", &"watch", true], "lantern at %d" % t)
+		# W3 „Restbedarf“ 4: the watchman as a figure on his own place beside the door.
+		assert_eq([e.path[-1], e.activity, e.visible], ["v_sieber_watch", &"watch", true], "lantern at %d" % t)
 	assert_false(_at("watchman", &"sieber_watch_day", 700, 70).visible, "not by day")
 
 

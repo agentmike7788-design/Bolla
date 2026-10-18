@@ -3101,6 +3101,7 @@ func test_phase9_layout_diff_against_phase8() -> void:
 		"~gather_nodes[gather_alder_1].pos", "+gather_nodes[gather_alder_1]._comment", "~gather_nodes[gather_alder_2].pos",
 		"~gather_nodes[gather_alder_2]._comment", "~gather_nodes[gather_alder_3].pos", "+gather_nodes[gather_alder_3]._comment",
 		"~forest.trees[0].pos", "~forest.trees[0]._comment", "~forest.bushes[0].pos", "+forest.bushes[0]._comment",
+		"~forest.trees[2].pos", "+forest.trees[2]._comment",   # QA5-06: the alders' stumps stay in sight
 	]
 	for id: String in ["l_09", "l_10", "l_11", "l_12"]:
 		allowed.append("+phase8.visitor_spot.overrides." + id)  # row 3 keeps its baked places beside the mounds
@@ -3118,7 +3119,8 @@ func test_phase9_layout_diff_against_phase8() -> void:
 	for key: String in ["old_graves", "road", "hut", "tree", "stations", "workyard", "props", "region_portals", "buildings",
 			"building_doors", "dirt_spots", "background_trees", "lights", "colliders", "atmosphere", "notice_board"]:
 		assert_eq(layout[key], old[key], key + " unchanged (§4.6)")
-	assert_eq(layout.forest.trees.slice(1), old.forest.trees.slice(1), "forest trees unchanged but the oak of W3")
+	assert_eq([layout.forest.trees[1]] + layout.forest.trees.slice(3), [old.forest.trees[1]] + old.forest.trees.slice(3),
+			"forest trees unchanged but the two of W3")
 	assert_eq(layout.forest.bushes.slice(1), old.forest.bushes.slice(1), "forest bushes unchanged but the bush of W3")
 	assert_eq(layout.walkable_bounds.min, old.walkable_bounds.min, "walkable_bounds.min unchanged")
 	assert_eq(layout.camera_bounds.min, old.camera_bounds.min, "camera_bounds.min unchanged")
