@@ -1,0 +1,12 @@
+p9_09_departure_hanne  camera_tris=312385 (primitives 199147 + grass 113238)  draw_calls=249 (camera 81)  objects=318  omni_visible=8  shadowed=2  particles=13
+p9_10_johann_on_the_cart  camera_tris=253578 (primitives 148548 + grass 105030)  draw_calls=168 (camera 41)  objects=294  omni_visible=7  shadowed=0  particles=13
+p9_11_watchman_sick_light  camera_tris=105484 (primitives 105484 + grass 0)  draw_calls=117 (camera 60)  objects=145  omni_visible=5  shadowed=0  particles=13
+fix1_grave_prompt_date  camera_tris=249226 (primitives 147976 + grass 101250)  draw_calls=240 (camera 119)  objects=812  omni_visible=5  shadowed=0  particles=13
+fix1_grave_prompt_straw  camera_tris=249244 (primitives 147994 + grass 101250)  draw_calls=240 (camera 119)  objects=821  omni_visible=5  shadowed=0  particles=13
+fix5_vis_departure_nocut_z12  camera_tris=429012 (primitives 176562 + grass 252450)  draw_calls=240 (camera 165)  objects=397  omni_visible=12  shadowed=0  particles=3
+fix5_vis_departure_nocut_z22  camera_tris=421522 (primitives 169072 + grass 252450)  draw_calls=236 (camera 163)  objects=393  omni_visible=12  shadowed=0  particles=3
+fix2_quast_sieber_night  camera_tris=146142 (primitives 146142 + grass 0)  draw_calls=79 (camera 28)  objects=99  omni_visible=3  shadowed=0  particles=13
+fix2_lenz_sieber_night  camera_tris=146242 (primitives 146242 + grass 0)  draw_calls=84 (camera 31)  objects=104  omni_visible=4  shadowed=0  particles=13
+fix3_lenz_bench_evening  camera_tris=152732 (primitives 152732 + grass 0)  draw_calls=82 (camera 28)  objects=102  omni_visible=3  shadowed=0  particles=13
+fix3_liesel_bench_evening  camera_tris=152350 (primitives 152350 + grass 0)  draw_calls=82 (camera 28)  objects=102  omni_visible=3  shadowed=0  particles=13
+fix4_watchman_close  camera_tris=145318 (primitives 145318 + grass 0)  draw_calls=86 (camera 32)  objects=104  omni_visible=4  shadowed=0  particles=13
