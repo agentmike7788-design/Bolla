@@ -15,6 +15,7 @@ Der Restbedarf-Zweig `5d5235f` (`claude/last-gravekeeper-dev-aos21h`) ist in `vs
 
 | Lauf | Ergebnis |
 |---|---|
+| Volle Suite | **3369/3369 grün** |
 | Phase-9-Bots, 9 Strategien | alle grün, Zahlen wie vorher: Kapitel, Enden, Münzen, Pietät gleich. Die verdeckten Grab-Prompts gingen von 8 auf 2–3 je Lauf zurück. |
 | pck (neu exportiert, Compatibility) | 38/38 PASS (`pck/pck_check_p9_merged.txt`) |
 | CPU-Sonde | Anteil 0,13–0,17 ms pro Bild, Wächter jetzt eigene Figur 0,13 ms; `QuestLog.entries` 0,47 ms; Spielstand 300 kB, Laden 0,53 s (`cpu_micro_p9_merged.txt`) |
