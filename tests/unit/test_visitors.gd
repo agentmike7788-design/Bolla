@@ -301,3 +301,38 @@ func test_stub_free() -> void:
 	for path: String in ["res://src/systems/visitors/visitors.gd", "res://src/systems/visitors/visit_rules.gd",
 			"res://src/systems/visitors/wish_rules.gd", "res://src/systems/visitors/grave_view.gd"]:
 		assert_false(FileAccess.get_file_as_string(path).contains("## STUB ("), path)
+
+
+# --- W2 „Anschlüsse“ 18 (docs/PHASE9_DESIGN.md §2.2.5): Johann at Grete's grave 10:00–11:00 ----------------------
+
+func test_w2_interval_kin_keeps_the_window_ten_to_eleven() -> void:
+	assert_eq(VisitorConfig.new().interval_window, Vector2i(600, 660))
+	var real := Database.config(&"visitor_config") as VisitorConfig
+	assert_eq(real.interval_window, Vector2i(600, 660), "data = class default")
+	h.visitors.config = real  # every visitor waits for a word (G8 Runde 1) – Johann until the window's end
+	h.bury("l_04", &"house_sieber", 40)
+	h.bury("l_01", &"house_kehr", 54)
+	h.visitors.set_kin_interval(&"kin_sieber", 1)
+	var plan := h.plan(56)
+	for v: Dictionary in plan:
+		if v.kin_id != "kin_sieber":
+			assert_true(int(v.slot) in [570, 750, 900] and not v.has("until"), "without an interval: the slots of Phase 8")
+	var jo: Array = plan.filter(func(v: Dictionary) -> bool: return v.kin_id == "kin_sieber")
+	assert_eq(jo.size(), 1)
+	assert_eq([int(jo[0].start) + int(jo[0].travel), jo[0].until], [600, 660], "at the grave at 10:00, gone from it at 11:00")
+	var id := h.visit_id(&"kin_sieber")
+	h.walk_clock(599)
+	assert_eq(h.visitors.visit_state(id).phase, &"arriving")
+	h.walk_clock(601)
+	assert_eq(h.visitors.visit_state(id).phase, &"mourning", "10:00 at Grete's grave")
+	h.walk_clock(659)
+	assert_eq(h.visitors.visit_state(id).phase, &"waiting", "still there, waiting for a word")
+	h.walk_clock(661)
+	assert_eq(h.visitors.visit_state(id).phase, &"leaving", "11:00: he goes")
+	var next := h.plan(57)
+	assert_eq(next.filter(func(v: Dictionary) -> bool: return v.kin_id == "kin_sieber").size(), 1, "daily")
+	var saved := h.visitors.save_state()
+	h.visitors.load_state(JSON.to_native(JSON.parse_string(JSON.stringify(JSON.from_native(saved)))))
+	assert_eq(h.visitors.save_state(), saved, "round trip with the window")
+	h.visitors.set_kin_interval(&"kin_sieber", -1)
+	assert_eq(h.plan(58).filter(func(v: Dictionary) -> bool: return v.kin_id == "kin_sieber").size(), 0, "comes no more")

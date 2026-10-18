@@ -22,6 +22,9 @@ signal changed
 ## (empty = all) is max_stack × stack_multiplier (the shed on level 3). save / load unchanged.
 @export var stack_multiplier: int = 1
 @export var stack_categories: Array[int] = []
+## Phase 9 (docs/PHASE9_DESIGN.md §2.9, W1-Anschlüsse 17): items this inventory never takes (the shed: Brenneisen's case –
+## ShedConfig.refused_items). add_item / add_unique refuse them, can_add is false. Empty = everything as before.
+@export var refused_items: Array[StringName] = []
 
 ## slot_count entries: {} (empty) or {"id": StringName, "amount": int} with 1 <= amount <= max_stack.
 var _slots: Array[Dictionary] = []
@@ -42,6 +45,8 @@ func add_item(id: StringName, amount: int) -> int:
 	var item := _item(id)
 	if item == null:
 		push_warning("[Inventory] unknown item '%s' – %d not added" % [id, amount])
+		return amount
+	if refused_items.has(id):
 		return amount
 	if _is_currency(item):
 		_set_currency(id, int(_currency.get(id, 0)) + amount)
@@ -108,7 +113,7 @@ func can_add(id: StringName, amount: int) -> bool:
 	if amount <= 0:
 		return true
 	var item := _item(id)
-	if item == null:
+	if item == null or refused_items.has(id):
 		return false
 	if _is_currency(item):
 		return true
@@ -193,7 +198,7 @@ func load_state(data: Dictionary) -> void:
 ## empty uid or a uid already held here (nothing changes).
 func add_unique(id: StringName, uid: String) -> bool:
 	var item := _item(id)
-	if item == null or not item.unique or uid == "" or has_uid(uid):
+	if item == null or not item.unique or uid == "" or has_uid(uid) or refused_items.has(id):
 		if item != null and not item.unique:
 			push_warning("[Inventory] add_unique: '%s' is not a unique item" % id)
 		return false

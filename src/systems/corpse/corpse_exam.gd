@@ -13,6 +13,9 @@ const CLASS_LABEL_FALLBACK := "Spuren"
 const STAGE_LABELS: Dictionary[StringName, String] = {&"fresh": "Frisch", &"wilted": "Welk", &"decaying": "Verwesend", &"rotten": "Verfallen"}
 ## Search horizon of next_loss (minutes).
 const LOSS_HORIZON := 60 * 24 * 60
+## Phase 9 (docs/PHASE9_DESIGN.md §2.4.2, W1-Anschlüsse 17): a corpse with a letter of Letters (CorpseRecord.letter_id)
+## carries that letter in its pockets – the Phase-4 find of the trait (f_letter → c_warning_letter) is not added.
+const LETTER_TRAIT := &"letter"
 
 
 ## Finds `step` can reveal, in the order of `finds` (generic trait finds, cause details), then
@@ -37,7 +40,7 @@ static func candidates(record: CorpseRecord, step: StringName, finds: Array[Find
 		if f == null or f.story_only:
 			continue
 		if f.trait_id != &"":
-			if not record.has_trait(f.trait_id) or replaced.has(f.trait_id):
+			if not record.has_trait(f.trait_id) or replaced.has(f.trait_id) or pocket_letter_replaces(record, f.trait_id):
 				continue
 			var trait_step: StringName = f.step
 			if cfg != null:
@@ -51,6 +54,11 @@ static func candidates(record: CorpseRecord, step: StringName, finds: Array[Find
 		if f.step == step:
 			out.append(f)
 	return out
+
+
+## Phase 9: the trait `trait_id` is the pocket letter of Letters (no generic find for it).
+static func pocket_letter_replaces(record: CorpseRecord, trait_id: StringName) -> bool:
+	return record != null and trait_id == LETTER_TRAIT and record.letter_id != &""
 
 
 ## {revealed: Array[StringName], lost: Array[StringName]} by record.freshness – revealed at

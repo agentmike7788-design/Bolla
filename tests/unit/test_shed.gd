@@ -77,6 +77,23 @@ func _fill(target: Inventory, items: Dictionary) -> void:
 
 # --- ShedStore / Inventory ------------------------------------------------------------------------
 
+## W2 „Anschlüsse“ 17 (docs/PHASE9_DESIGN.md §2.9): Brenneisen's case „kann nicht in den Schuppen“ – not even by hand.
+func test_w2_the_case_never_goes_into_the_shed() -> void:
+	assert_eq(ShedConfig.new().refused_items, [&"stranger_case"] as Array[StringName])
+	var real := Database.config(&"shed_config") as ShedConfig
+	assert_eq(real.refused_items, ShedConfig.new().refused_items, "data = class default")
+	_shed_at(2)
+	assert_eq(store.store().refused_items, [&"stranger_case"] as Array[StringName])
+	assert_false(store.store().can_add(&"stranger_case", 1))
+	assert_eq(store.store().add_item(&"stranger_case", 1), 1, "refused")
+	player.inventory.add_item(&"stranger_case", 1)
+	assert_eq(ChestTransfer.move(player.inventory, store.store(), &"stranger_case", 1), 0, "the chest panel moves nothing")
+	assert_eq([player.inventory.count(&"stranger_case"), store.store().count(&"stranger_case")], [1, 0], "nothing lost")
+	assert_true(store.store().can_add(&"linen", 1), "everything else as before")
+	var plain := Inventory.new()
+	assert_true(plain.can_add(&"stranger_case", 1), "other inventories (chests) take it")
+	plain.free()
+
 func test_slots_by_level_and_never_shrinking() -> void:
 	assert_true(store.is_in_group(ShedStore.GROUP))
 	assert_true(ShedStore.find(tree) == store)

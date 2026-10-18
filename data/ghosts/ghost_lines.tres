@@ -29,7 +29,10 @@ by_story = Dictionary[StringName, PackedStringArray]({
 &"s3_wernstein": PackedStringArray("Ich hatte gepackt. Ich war so nah am Fortgehen.", "Der Brief kam zu spät. Oder ich war zu langsam. Such es dir aus."),
 &"s4_uhlig": PackedStringArray("Wir haben geschworen, Lorenz und wir. Ich hab mich dran gehalten.", "Auf den Heuboden bin ich nicht gestiegen. Frag, wer mich hinaufgetragen hat."),
 &"s5_moor": PackedStringArray("Ich trage einen fremden Mantel. Er war mir immer zu weit.", "Der Sechste ist noch nicht tot."),
-&"d2_ott": PackedStringArray("Drei waren da. Einer hat gebetet, einer hat gezählt, eine hat gewartet.", "Gesa hat Strohblumen gebracht. Die halten länger als ich.")
+&"d2_ott": PackedStringArray("Drei waren da. Einer hat gebetet, einer hat gezählt, eine hat gewartet.", "Gesa hat Strohblumen gebracht. Die halten länger als ich."),
+&"d3_sieber": PackedStringArray("Keiner hat was gesagt. Ich auch nicht. Das hatten wir so in der Familie."),
+&"d3_sieber_stay": PackedStringArray("Grete hat gesagt, ich soll mich nicht beeilen. Ich hab mich nicht beeilt."),
+&"d3_sieber_public": PackedStringArray("Vor meiner Tür stand einer mit Laterne. Für mich hat noch nie einer Wache gestanden.")
 })
 by_piety = Dictionary[StringName, PackedStringArray]({
 &"devout": PackedStringArray("Du gehst so leise zwischen uns. Wir hören dich trotzdem.", "Einer, der uns die Hände faltet. Das hat lange keiner mehr getan."),

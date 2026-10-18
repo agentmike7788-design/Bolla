@@ -69,6 +69,27 @@ func test_light_days_from_the_kindly_records() -> void:
 	assert_eq(LightRules.death_of(&"d2_ott", tree), 58)
 
 
+## W2 „Anschlüsse“ 16: the night-path deaths come from WhoKnowsConfig.death_paths / death_flags.
+func test_w2_death_paths_from_the_config() -> void:
+	var real := Database.config(&"who_knows_config") as WhoKnowsConfig
+	var defaults := WhoKnowsConfig.new()
+	assert_eq([real.death_paths, real.death_flags], [defaults.death_paths, defaults.death_flags], "data = class default")
+	assert_eq(defaults.death_paths, {&"d2_ott": &"np_ott"} as Dictionary[StringName, StringName])
+	assert_eq(defaults.death_flags, {&"d2_ott": &"ott_dead"} as Dictionary[StringName, StringName])
+	var none := cfg.duplicate() as WhoKnowsConfig
+	none.death_paths = {} as Dictionary[StringName, StringName]
+	paths.load_state({"observed": [], "deaths": {"np_ott": 50}, "last_total": 0})
+	assert_eq(LightRules.death_of(&"d2_ott", tree, cfg), 50, "np_ott")
+	assert_eq(LightRules.light_day(_e(&"e_ott"), tree, cfg), 29)
+	assert_eq(LightRules.death_of(&"d2_ott", tree, none), 58, "without the path: arrival 59 − 1")
+	assert_eq(LightRules.light_day(_e(&"e_ott"), tree, none), 37)
+	paths.load_state({"deaths": {}})
+	GameState.set_flag(&"ott_dead", 57)
+	assert_eq(LightRules.death_of(&"d2_ott", tree, cfg), 57, "the flag of death_flags")
+	assert_eq(LightRules.death_of(&"d2_ott", tree, none), 58, "no path entry: the flag is not read either")
+	GameState.clear_flag(&"ott_dead")
+
+
 func test_d2_without_night_paths_uses_the_flag_then_the_arrival() -> void:
 	paths.load_state({"deaths": {}})
 	assert_eq(LightRules.light_day(_e(&"e_ott"), tree, cfg), 37, "arrival 59 − 1 = 58")

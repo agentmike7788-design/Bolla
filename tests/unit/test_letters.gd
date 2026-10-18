@@ -721,3 +721,19 @@ func _on_letter(uid: String, id: StringName, state: StringName) -> void:
 
 func _on_note(text: String, _kind: StringName) -> void:
 	notes.append(text)
+
+
+## W2 „Anschlüsse“ 17: LetterData.KINDS knows the kinds of Letters' own records (errand letters, answers).
+func test_w2_letter_kinds_include_errand_and_reply() -> void:
+	assert_eq(LetterData.KINDS, [&"pocket", &"post", &"errand", &"reply"] as Array[StringName])
+	assert_eq([Letters.KIND_ERRAND, Letters.KIND_REPLY], [LetterData.KIND_ERRAND, LetterData.KIND_REPLY])
+	var uid := _found(&"lp_l1_carter")
+	var saved := letters.save_state()
+	var records: Dictionary = (saved.records as Dictionary).duplicate(true)
+	records["lt_0090"] = {"id": "lp_l1_carter", "corpse": "", "state": "written", "day": 64, "kind": "reply"}
+	records["lt_0091"] = {"id": "lg_priest", "corpse": "", "state": "found", "day": 64, "kind": "telegram"}
+	saved["records"] = records
+	letters.load_state(saved)
+	assert_eq(letters.kind_of("lt_0090"), &"reply", "a known kind stays")
+	assert_eq(letters.kind_of("lt_0091"), &"pocket", "an unknown kind (fuzzer): the letter's own kind")
+	assert_eq(letters.kind_of(uid), &"pocket")

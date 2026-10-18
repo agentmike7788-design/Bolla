@@ -98,7 +98,8 @@ var _next_wish: int = 1
 ## visit_id → the phase last announced (not saved; a load announces nothing).
 var _announced: Dictionary = {}
 ## Phase 9 (P4): kin_id → every n days instead of the household plan; −1 = comes no more (saved as kin_interval, only
-## when set – a Phase-8 state saves as before).
+## when set – a Phase-8 state saves as before). Such a visit keeps VisitorConfig.interval_window (Johann 10:00–11:00 at
+## the grave; plan entry "until" = the window's end, W1-Anschlüsse 18).
 var _kin_interval: Dictionary = {}
 
 
@@ -152,7 +153,15 @@ func plan_day(day: int) -> Array[Dictionary]:
 			for g: String in graves:
 				dues.append(_grave_due(g) if every == 0 else _interval_due(g, every, day))
 			var due := VisitRules.household_due(dues)
-			if due >= 0 and due <= day:
+			if due >= 0 and due <= day and every > 0:
+				# Phase 9 (W1-Anschlüsse 18): a fixed interval keeps its window (Johann 10:00–11:00 at Grete's grave).
+				var travel := _travel(kin, graves)
+				var start := cfg.interval_window.x - travel
+				var e := _entry(kin, graves, start, travel, day)
+				e["until"] = cfg.interval_window.y
+				villagers.append(e)
+				windows.append([start, cfg.interval_window.y + VisitRules.LEAVE_MINUTES])
+			elif due >= 0 and due <= day:
 				households.append([due, String(kin.kin_id), kin, graves])
 	households.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0] or (a[0] == b[0] and a[1] < b[1]))
 	villagers.resize(mini(villagers.size(), cfg.max_visits_day))
@@ -565,7 +574,7 @@ func load_state(data: Dictionary) -> void:
 		for v: Variant in plan:
 			if v is Dictionary and (v as Dictionary).has("kin_id") and (v as Dictionary).get("graves") is Array:
 				var e: Dictionary = (v as Dictionary).duplicate(true)
-				for key: String in ["slot", "start", "travel", "viewed", "laid", "tip", "day", "talked"]:
+				for key: String in ["slot", "start", "travel", "viewed", "laid", "tip", "day", "talked", "until"]:
 					if e.has(key):
 						e[key] = _int(e[key], 0)
 				# W3 (QA8-20, §10 fuzzer): the flags of a visit are booleans (a damaged save stopped _advance
@@ -704,6 +713,8 @@ func _wait_of(v: Dictionary, wait_from: int) -> int:
 	var cfg := _cfg()
 	var kin := _kin_data(StringName(str(v.get("kin_id", ""))))
 	var wait := VisitRules.wait_length(wait_from, kin != null and kin.villager_id != &"", cfg)
+	if v.has("until"):
+		wait = clampi(int(v.until) - wait_from, 0, wait)  # Phase 9: gone from the grave at the window's end
 	if v.has("talked"):
 		wait = VisitRules.wait_after_talk(wait, wait_from, int(v.talked), cfg)
 	return wait

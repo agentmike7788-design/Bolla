@@ -414,3 +414,61 @@ func test_note_event_and_save_load_roundtrip() -> void:
 	# Moods are derived, not saved: the same after a load.
 	life.set_mood(&"grocer", &"")
 	assert_eq(other.mood(&"grocer"), life.mood(&"grocer"))
+
+
+# --- Phase 9 (docs/PHASE9_DESIGN.md §2.2.7, §2.2.8, W1-Anschlüsse 13) --------------------------------------
+
+func test_phase9_ending_c_moods_after_own_step() -> void:
+	var cfg := NpcLifeConfig.new()
+	assert_eq(cfg.mood_rules.map(func(r: Dictionary) -> StringName: return r.trigger),
+			[&"festival", &"mourning_circle", &"own_step", &"rumor", &"rumor", &"rumor", &"rumor", &"sick_light"])
+	assert_eq([cfg.mood_rules[3], cfg.mood_rules[4]], [
+			{"trigger": &"rumor", "mood": &"cross", "npcs": [&"priest", &"surgeon", &"washer"], "days": 1, "events": [&"q_public"]},
+			{"trigger": &"rumor", "mood": &"low", "npcs": [&"grocer", &"mayor"], "days": 2, "events": [&"q_public"]}])
+	var day := 70
+	var ev := {&"q_public": day - 1}
+	for id: StringName in [&"priest", &"surgeon", &"washer"]:
+		var v := Phase8Fixtures.villager_data(id)
+		assert_eq(MoodRules.apply_rules(&"plain", id, day, ev, cfg, v), &"cross", "%s „gereizt“ the day after" % id)
+		assert_eq(MoodRules.apply_rules(&"plain", id, day, {&"q_public": day}, cfg, v), &"plain", "%s: not on the day" % id)
+	for id: StringName in [&"grocer", &"mayor"]:
+		var v := Phase8Fixtures.villager_data(id)
+		assert_eq(MoodRules.apply_rules(&"plain", id, day, {&"q_public": day}, cfg, v), &"low", "%s „bedrückt“ today" % id)
+		assert_eq(MoodRules.apply_rules(&"plain", id, day, ev, cfg, v), &"low", "%s: and the day after" % id)
+		assert_eq(MoodRules.apply_rules(&"plain", id, day, {&"q_public": day - 2}, cfg, v), &"plain", "%s: two days" % id)
+	assert_eq(MoodRules.apply_rules(&"plain", &"smith", day, ev, cfg, Phase8Fixtures.villager_data(&"smith")), &"plain")
+	assert_eq(MoodRules.apply_rules(&"low", &"priest", day, {&"q_public": day - 1, &"step:priest": day - 1}, cfg,
+			Phase8Fixtures.villager_data(&"priest")), &"cheerful", "own_step before the ending's moods")
+	# The confidant is spared („Sie haben es mir vorher gesagt.“).
+	ev[&"spared:q_public"] = [&"surgeon"]
+	assert_eq(MoodRules.apply_rules(&"plain", &"surgeon", day, ev, cfg, Phase8Fixtures.villager_data(&"surgeon")), &"plain")
+	assert_eq(MoodRules.apply_rules(&"plain", &"priest", day, ev, cfg, Phase8Fixtures.villager_data(&"priest")), &"cross")
+	assert_true(MoodRules.spared({&"spared:q_public": ["washer"]}, &"q_public", &"washer"), "strings too")
+	assert_false(MoodRules.spared({}, &"q_public", &"washer"))
+
+
+func test_phase9_npc_life_spares_the_confidant() -> void:
+	var cfg := NpcLifeConfig.new()
+	life.config = cfg
+	_open()
+	TimeManager.day = 70
+	life.note_event(&"q_public")
+	GameState.set_flag(&"q_confide_washer", true)
+	assert_eq(life.mood_events(70).get(&"spared:q_public"), [&"washer"] as Array[StringName], "from the H5 flag")
+	TimeManager.day = 71
+	assert_eq(life.mood(&"priest"), &"cross")
+	assert_eq(life.mood(&"surgeon"), &"cross")
+	var expected := MoodRules.apply_rules(MoodRules.roll(&"washer", 71, cfg), &"washer", 71, {}, cfg, life.villager(&"washer"))
+	assert_eq(life.mood(&"washer"), expected, "the confidant: the day's own mood")
+	assert_eq(life.offer_block_reason(&"priest"), NpcLife.TEXT_CROSS)
+	assert_eq(life.mood(&"grocer"), &"low")
+	TimeManager.day = 72
+	assert_eq(life.mood_on(&"priest", 72), MoodRules.apply_rules(MoodRules.roll(&"priest", 72, cfg), &"priest", 72, {}, cfg,
+			life.villager(&"priest")), "one day only")
+	GameState.set_flag(&"q_confide_washer", false)
+	TimeManager.day = 71
+	assert_false(life.mood_events(71).has(&"spared:q_public"), "flag gone: nobody spared")
+	assert_eq(life.mood(&"washer"), &"cross")
+	# confide_none spares nobody.
+	GameState.set_flag(&"q_confide_none", true)
+	assert_false(life.mood_events(71).has(&"spared:q_public"))

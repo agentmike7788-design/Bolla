@@ -34,6 +34,9 @@ const SICK_LIGHT_MINUTE := 1320
 const EVENT_LECTURE_RUMOR := &"lecture_rumor"
 const EVENT_SPECIMEN_VILLAGER := &"specimen_sold_villager"
 const EVENT_GRAVE_DISTURBED := &"grave_disturbed"
+## Phase 9 (docs/PHASE9_DESIGN.md §2.2.6, §2.2.7, W1-Anschlüsse 13): rumor event → flag prefix of the people it spares
+## (ending C: the confidant of H5, flag q_confide_<npc>, is not „gereizt" – „Sie haben es mir vorher gesagt.").
+const SPARED_FLAG_PREFIX: Dictionary[StringName, String] = {&"q_public": "q_confide_"}
 const STAT_LISTENS := &"listens"
 const REASON_LISTEN := "Zugehört"
 const PIETY_LISTEN := &"listen"
@@ -234,6 +237,27 @@ func mood_events(day: int) -> Dictionary:
 		var houses: PackedStringArray = paths.call(&"sick_houses", day, SICK_LIGHT_MINUTE)
 		if not houses.is_empty():
 			out[MoodRules.KEY_SICK_LIGHT] = day
+	for ev: StringName in SPARED_FLAG_PREFIX:
+		if out.has(ev):
+			var spared := _spared(ev)
+			if not spared.is_empty():
+				out[StringName(MoodRules.PREFIX_SPARED + String(ev))] = spared
+	return out
+
+
+## The people of the mood rules of rumor `event` whose flag SPARED_FLAG_PREFIX[event] + npc_id is set.
+func _spared(event: StringName) -> Array[StringName]:
+	var out: Array[StringName] = []
+	var prefix := SPARED_FLAG_PREFIX[event]
+	for rule: Dictionary in _cfg().mood_rules:
+		var events: Array = rule.get("events", [])
+		if not events.has(event) and not events.has(String(event)):
+			continue
+		for n: Variant in rule.get("npcs", []):
+			var npc := StringName(str(n))
+			var flag: Variant = GameState.get_flag(StringName(prefix + String(npc)), false)
+			if not out.has(npc) and ((flag is bool and flag) or ((flag is int or flag is float) and flag != 0)):
+				out.append(npc)
 	return out
 
 
