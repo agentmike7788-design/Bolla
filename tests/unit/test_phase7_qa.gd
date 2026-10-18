@@ -202,18 +202,20 @@ func test_qa7_05_theres_and_liesel_meet_at_the_well() -> void:
 		if g.visible and w.visible and g.travel_minutes == 0 and w.travel_minutes == 0 and _end(g) == "v_well" and _end(w) == "v_well_w":
 			together.append(minute)
 	assert_false(together.is_empty(), "Theres and Liesel stand at the well together (Liesel on its west side, v_well_w)")
-	assert_eq([together.front(), together.back()], [965, 989], "16:05–16:30")
+	# G9 Gehtempo: Theres is at the well from 15:50 (the way from the shop takes 22 minutes), both leave at 16:30.
+	assert_eq([together.front(), together.back()], [950, 989], "15:50–16:30")
 	var at := 975
 	assert_eq(_end(_at(&"mayor", at, 41)), "v_board", "Fenner at the board")
 	var o := _at(&"oldwoman", at, 41)
 	assert_true(o.visible and _end(o) == "v_hagedorn_gate", "Wiebke at her gate")
-	# Theres keeps her shop hours (§2.2: 07:25 on, home at 18:00), only her break moved.
+	# Theres keeps her shop hours (§2.2: 07:25 on, home at 18:00), only her break moved (G9: 15:28–16:52, the ways to the
+	# well and back at the natural pace).
 	var shop := 0
 	for minute: int in range(0, 1440):
 		var e := _at(&"grocer", minute, 41)
 		if e.visible and e.activity == &"shop":
 			shop += 1
-	assert_eq(shop, (960 - 445) + (1080 - 995), "shop minutes unchanged (25 min break)")
+	assert_eq(shop, (928 - 445) + (1080 - 1012), "shop minutes (the break with both ways: 84 min)")
 
 
 func test_qa7_05_osric_walks_into_the_holderkrug_at_night() -> void:

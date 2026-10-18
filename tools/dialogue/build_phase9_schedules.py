@@ -72,8 +72,10 @@ def stranger():
 
 
 def kin_sieber_v():
-    # Ending A with Hanne (§4.5): at the gate beside her (15:41), one minute behind her up the forest path (16:21).
-    p_up = walk_to(941, TO_GATE + ["sieber_gate"], WITH_PEDDLER, region="", animation="walk_bundle")
+    # Ending A with Hanne (§4.5): one minute behind her up the Kutschweg to the gate (she leaves the well at 14:00 – the
+    # peddler's schedule of build_phase8_schedules.py), beside her at the gate, one minute behind her up the forest path.
+    hanne_up = 840 + s8.village_minutes(["v_well_peddler", "v_well", "v_bridge", "v_road_in"]) + GAP
+    p_up = walk(hanne_up + 1, TO_GATE + ["sieber_gate"], None, WITH_PEDDLER, region="", animation="walk_bundle")
     p_out = walk_to(p_up.start - GAP, FROM_DOOR, WITH_PEDDLER, animation="walk_bundle")
     p_west = walk(981, ["sieber_gate", "gate_outside", "peddler_west", "trader_spot", "trader_mid", "trader_far"], None, WITH_PEDDLER,
                   region="", animation="walk_bundle")
@@ -98,7 +100,7 @@ def kin_sieber_v():
         p_out,
         hide(p_out.arrive, "v_road_in", WITH_PEDDLER),
         p_up,
-        stay(941, "sieber_gate", "kin_sieber_v", WITH_PEDDLER, region=""),
+        stay(p_up.arrive, "sieber_gate", "kin_sieber_v", WITH_PEDDLER, region=""),
         p_west,
         hide(p_west.arrive, "trader_far", WITH_PEDDLER, region=""),
         c_out,

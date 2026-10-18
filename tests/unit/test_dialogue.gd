@@ -3416,7 +3416,9 @@ func test_phase8_chatter_texts() -> void:
 		assert_not_null(t, f + " template")
 		if c == null or t == null:
 			continue
-		assert_eq([c.id, c.region, c.npcs, c.place, c.window, c.sets_flag], [t.id, t.region, t.npcs, t.place, t.window, t.sets_flag],
+		# G9 Gehtempo: Esch and Fenner meet at the linden 17:00–17:31 (Fenner walks to the inn from 17:31 to be there at 18:05).
+		var window := Vector2i(1020, 1051) if c.id == &"ch_linden_bench" else t.window
+		assert_eq([c.id, c.region, c.npcs, c.place, c.window, c.sets_flag], [t.id, t.region, t.npcs, t.place, window, t.sets_flag],
 				String(c.id) + ": who / where / when as the template")
 		assert_true(c.lines.size() >= 2 and c.lines.size() <= 4, "%s: 2–4 lines" % c.id)
 		assert_eq([c.lines[0], c.lines[1]], [t.lines[0], t.lines[1]], "%s: the leading lines first (§2.1.2)" % c.id)
@@ -3470,7 +3472,8 @@ func test_phase8_schedule_overlays() -> void:
 	# §2.1.4 visits.
 	var e := _at("smith", &"visit_smith_day", 830)
 	assert_eq([e.region, e.path[-1], e.dialogue_id, e.visible], [&"", "gv_old_01", &"v_smith", true], "Esch at Gratz' grave 13:40–14:30")
-	e = _at("smith", &"visit_smith_day", 800)
+	# G9 Gehtempo: off the map on the Kutschweg 12:45–12:50, up the hill from 12:50 (50 minutes at the natural pace).
+	e = _at("smith", &"visit_smith_day", 767)
 	assert_eq([e.region, e.visible], [&"village", false], "on the way up: hidden in the village")
 	e = _at("smith", &"visit_smith_day", 1000)
 	assert_eq([e.path[-1], e.dialogue_id], ["v_anvil", &"v_smith"], "back at the anvil")
@@ -3488,8 +3491,9 @@ func test_phase8_schedule_overlays() -> void:
 	e = _at("carter", &"fest_kathrein_day", 1200)
 	assert_eq([e.region, e.path[-1]], [&"", "evening_spot"], "Osric keeps his Phase-7 evening (the W-Welt fixture)")
 	for npc: String in ["innkeeper", "smith", "grocer", "mayor", "priest", "washer"]:
-		e = _at(npc, &"fest_lights_day", 970)
-		assert_eq(e.path[-1], "v_bridge", npc + ": gathering at the Holderbrücke 16:00")
+		# G9 Gehtempo: 14:41–15:11 (before 16:00–16:30) – the longest way up takes 98 minutes, at the graves at 17:00.
+		e = _at(npc, &"fest_lights_day", 900)
+		assert_eq(e.path[-1], "v_bridge", npc + ": gathering at the Holderbrücke 14:41")
 		e = _at(npc, &"fest_lights_day", 1050)
 		assert_false(e.visible, npc + ": up the hill (P4's procession)")
 	e = _at("surgeon", &"fest_lights_day", 1050)
@@ -3532,8 +3536,8 @@ func test_phase8_new_schedules() -> void:
 	assert_eq([e.path[-1], e.dialogue_id], ["v_well_peddler", &"peddler"], "10:00–14:00 at the well")
 	e = _at("peddler", &"peddler_day", 960, 55)
 	assert_eq([e.region, e.path[-1]], [&"", "peddler_gate"], "15:40–16:20 outside the cemetery gate")
-	e = ScheduleResolver.entry_at(jakob, 460, 56)
-	assert_eq(e.path[-1], "v_in_inn_jakob", "07:30 breakfast in the inn")
+	e = ScheduleResolver.entry_at(jakob, 380, 56)
+	assert_eq(e.path[-1], "v_in_inn_jakob", "06:11 breakfast in the inn (G9: before 07:30 – up the hill at 07:30)")
 	assert_false(ScheduleResolver.entry_at(jakob, 600, 56).visible, "on the hill (P3's runtime schedule)")
 	e = _at("apprentice", &"apprentice_off_day", 600, 58)
 	assert_eq([e.path[-1], e.visible], ["v_in_inn_jakob", true], "the free day in the inn")
@@ -4389,10 +4393,11 @@ func test_phase9_schedules() -> void:
 	GameState.clear_flag(&"peddler_day")
 	GameState.clear_flag(&"sieber_depart_peddler_day")
 	e = _at("kin_sieber_v", &"sieber_depart_carter_day", 610, 69)
-	assert_eq([e.region, e.animation, e.start_minute, e.travel_minutes, e.path[-1]], [&"", &"sit_cart", 600, 40, "road_end"],
+	# G9 Gehtempo: the cart's natural pace – 54 minutes (before 40).
+	assert_eq([e.region, e.animation, e.start_minute, e.travel_minutes, e.path[-1]], [&"", &"sit_cart", 600, 54, "road_end"],
 			"10:00 on Osric's cart down the Kutschweg")
 	var osric := ScheduleResolver.entry_at(_sched("carter"), 610, 69)
-	assert_eq([osric.start_minute, osric.travel_minutes, Array(osric.path)], [600, 40, Array(e.path)], "with Osric's cart")
+	assert_eq([osric.start_minute, osric.travel_minutes, Array(osric.path)], [600, 54, Array(e.path)], "with Osric's cart")
 	assert_false(_at("kin_sieber_v", &"sieber_depart_carter_day", 700, 69).visible, "gone")
 	# The watchman's lantern (ending C): 21:00–06:00 at the Siebers' door.
 	for t: int in [1300, 120]:

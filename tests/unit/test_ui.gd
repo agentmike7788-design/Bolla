@@ -1049,12 +1049,13 @@ func test_debug_npc_carter_here() -> void:
 	npc.global_position = Vector3(3.0, 0.0, 10.0)
 	var result := Debug.execute("npc carter here")
 	assert_true(result.ok, String(result.text))
-	assert_eq(TimeManager.minute_of_day, 460, "home at 06:30 → time set to his 07:40 arrival")
+	# G9 Gehtempo: at 06:30 he is already on his way with the cart (off at 06:30) – no time skip.
+	assert_eq(TimeManager.minute_of_day, 390, "on his way at 06:30 – no time skip")
 	assert_eq(TimeManager.day, 1)
 	result = Debug.execute("npc carter here")
 	assert_true(result.ok)
 	assert_eq(player.global_position, Vector3(3.0, 0.0, 10.0 + DebugConsole.NPC_OFFSET), "present: player moved next to him")
-	assert_eq(TimeManager.minute_of_day, 460, "no further time skip")
+	assert_eq(TimeManager.minute_of_day, 390, "no further time skip")
 	assert_false(_ok("npc ghost here"))
 	assert_false(_ok("npc carter"))
 

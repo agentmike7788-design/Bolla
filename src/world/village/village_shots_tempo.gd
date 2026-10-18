@@ -14,7 +14,7 @@ extends "res://src/world/village/village_shots_phase8.gd"
 ## Osric from the remise to the inn after noon (17.6 m: before 14:00–14:05, after 13:42–14:05), Fenner from the Amtshaus to
 ## the board (38.8 m: before 12:00–12:20, after 11:31–12:20).
 const WALKS := {
-	"osric": {"npc": "npc_carter_v", "day": 54, "vorher": 840, "nachher": 822, "focus": Vector2(14.8, -0.8), "distance": 17.0, "step": 1.0},
+	"osric": {"npc": "npc_carter_v", "day": 54, "vorher": 840, "nachher": 822, "focus": Vector2(14.0, 4.2), "distance": 26.0, "step": 1.0},
 	"fenner": {"npc": "npc_mayor", "day": 54, "vorher": 720, "nachher": 691, "focus": Vector2(-6.5, -5.0), "distance": 22.0, "step": 2.0},
 }
 ## The first frame half a minute after the start (the figure has stepped out of its door).

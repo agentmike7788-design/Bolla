@@ -10,8 +10,8 @@ Each walk below gets the minutes of its polyline (walk_tempo.py: 0.8 m per game 
             on the road end 10:54, in the village (GAP 30 as before) 11:24 → at the remise 12:22;
   grocer / washer – Theres and Liesel at the well 16:00–16:30 (NpcLife chatter ch_well_spin, 3.5 s a line): both leave
             at 16:30 as before, the shop / the washing at the door open again at 16:52 / 16:47 (before 16:35);
-  mayor   – Fenner at the board until 18:00 (chatter ch_linden_bench with Esch at the linden 17:34–18:00), in the inn
-            18:34 (before 18:05);
+  smith   – Esch at the linden from 17:00 (before 17:34; the anvil until 16:44): Fenner leaves the board at 17:31 to be in
+            the inn at 18:05 (of_fenner_3 from 18:05) – the chatter ch_linden_bench (both at the linden) runs 17:00–17:31;
   priest  – the consecration of the Lindenacker: at the linden at 09:20, back from 10:30 (to the road end 11:43).
 Idempotent (absolute values). --check only reports every data walk outside the band.
 """
@@ -50,8 +50,8 @@ BASE = {
         "Resource_0oylv": 691,      # 11:31 → 12:20 at the board
         "Resource_f1tkc": 762,      # 12:42 → 13:05 at the desk
         "Resource_tdu31": 942,      # 15:42 → 16:05 at the board
-        "Resource_irxlc": 1080,     # 18:00 as before (ch_linden_bench) → 18:34 in the inn
-        "Resource_ofwtp": 1114,
+        "Resource_irxlc": 1051,     # 17:31 → 18:05 in the inn as before (of_fenner_3)
+        "Resource_ofwtp": 1085,
     },
     "oldwoman": {
         "Resource_34akn": 527,      # 08:47 → 09:06 on the well bench
@@ -67,7 +67,8 @@ BASE = {
     "smith": {
         "Resource_dneqq": 377,      # 06:17 → 06:40 at the anvil
         "Resource_386d2": 743,      # 12:23 → 13:06 at the anvil
-        "Resource_vcg37": 1038,     # 17:18 → 17:34 at the linden
+        "Resource_vcg37": 1004,     # 16:44 → 17:00 at the linden (ch_linden_bench with Fenner until 17:31)
+        "Resource_36rf6": 1020,
     },
     "surgeon": {
         "Resource_d058b": 679,      # 11:19 → 12:10 home for lunch

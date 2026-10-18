@@ -77,7 +77,9 @@ func before_each() -> void:
 	GameState.reset()
 	TimeManager.reset()
 	TimeManager.set_time(57, 505)
-	ScheduleBuilder.walk_speed_override = 0.0
+	# The planner's rules at the Phase-8 pace of the fixtures (3.2 m per game minute); the game walks NpcConfig's 0.8
+	# (G9 Gehtempo, test_walk_tempo).
+	ScheduleBuilder.walk_speed_override = 3.2
 	cfg = Phase8Fixtures.apprentice_config()
 	tasks.clear()
 	for t: ApprenticeTaskData in Phase8Fixtures.apprentice_tasks():
@@ -102,6 +104,7 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+	ScheduleBuilder.walk_speed_override = 0.0
 	if is_instance_valid(world):
 		world.free()
 	GameState.reset()

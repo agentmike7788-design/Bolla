@@ -112,6 +112,9 @@ func before_each() -> void:
 	GameState.reset()
 	TimeManager.reset()
 	TimeManager.set_time(53, 600)
+	# The apprentice's day at the Phase-8 pace of the fixtures (3.2 m per game minute, ApprenticeConfig fixture 08:15);
+	# the game walks NpcConfig's 0.8 (G9 Gehtempo, test_walk_tempo, test_apprentice_day).
+	ScheduleBuilder.walk_speed_override = 3.2
 	for id: StringName in ITEMS:
 		if not Database.has_item(id):
 			Database._items[id] = load("res://tests/fixtures/items/%s.tres" % id)
@@ -181,6 +184,7 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+	ScheduleBuilder.walk_speed_override = 0.0
 	EventBus.apprentice_job_done.disconnect(_on_job)
 	EventBus.apprentice_level_changed.disconnect(_on_level)
 	if is_instance_valid(world):

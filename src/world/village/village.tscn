@@ -1930,7 +1930,7 @@ script = ExtResource("46_8reok")
 door_id = &"door_surgery"
 room_id = &"surgery"
 display_name = "Wundarztstube"
-open_windows = PackedInt32Array(475, 720, 840, 1080)
+open_windows = PackedInt32Array(475, 679, 840, 1036)
 
 [node name="door_office" type="Node3D" parent="Entities" unique_id=1628020171 instance=ExtResource("45_r2dwk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, -0.0032184646, -10.4)
@@ -1938,7 +1938,7 @@ script = ExtResource("46_8reok")
 door_id = &"door_office"
 room_id = &"office"
 display_name = "Amtsstube"
-open_windows = PackedInt32Array(475, 720, 785, 960)
+open_windows = PackedInt32Array(475, 691, 785, 942)
 
 [node name="door_church" type="Node3D" parent="Entities" unique_id=632427098 instance=ExtResource("45_r2dwk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0039996076, -10.7)

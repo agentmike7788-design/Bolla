@@ -27,8 +27,8 @@ const KIN_NPC := {&"kin_kehr": "npc_kin_kehr", &"kin_ott": "npc_kin_ott", &"kin_
 		&"kin_sieber": "npc_kin_sieber", &"kin_washer": "npc_washer_g", &"kin_smith": "npc_smith_g", &"kin_grocer": "npc_grocer_g"}
 const WISH_KINDS: Array[StringName] = [&"flowers", &"tend", &"candle", &"line", &"vase"]
 const VASE := &"decor_grave_vase"
-## Minutes a visitor on the hill is waited for until he waits at the grave (G9 Gehtempo: 240, before 90).
-const PENDING_WAIT := 240
+## Minutes a visitor on the hill is waited for until he waits at the grave.
+const PENDING_WAIT := 90
 const TIN_KEEP := 9
 const TIN_FILL := 12
 ## Coins the purse keeps back from Phase-8 purchases (the next morning never below 5).
@@ -531,13 +531,14 @@ func _serve() -> void:
 		var due := _visit_starting_within(30)
 		while due > 0 and TimeManager.minute_of_day < due and TimeManager.minute_of_day < EVENING:
 			TimeManager.advance(1)
-		# G9 Gehtempo: up the hill at the natural pace takes up to 98 minutes (the Lindenacker), the round of a villager
-		# up to 2 hours more – waited for that long (before 90 minutes covered the 13-minute way and the mourning).
+		# G9 Gehtempo: up the hill at the natural pace takes up to 98 minutes (the Lindenacker) – only a visitor who waits at
+		# the grave within PENDING_WAIT is waited for (before every visitor on the hill: the way took 13 minutes).
 		for i: int in PENDING_WAIT:
 			var pending := false
 			for v: Dictionary in visitors.active_visits():
 				var ph := StringName(str(v.get("phase", "")))
-				if not served.has(str(v.visit_id)) and ph != &"waiting" and ph != &"gone" and ph != &"leaving":
+				if not served.has(str(v.visit_id)) and ph != &"waiting" and ph != &"gone" and ph != &"leaving" \
+						and _minutes_to_waiting(v) <= PENDING_WAIT:
 					pending = true
 			if not pending:
 				break
@@ -551,6 +552,19 @@ func _serve() -> void:
 	if flags.tips:
 		_take_stones()
 	_jakob()
+
+
+## G9: minutes until the visit `v` (a public copy) waits at its grave (its timeline; the end of the mourning if it
+## does not wait).
+func _minutes_to_waiting(v: Dictionary) -> int:
+	var raw: Dictionary = visitors.call(&"_find", str(v.get("visit_id", "")))
+	if raw.is_empty():
+		return 0
+	var now := int(visitors.call(&"_now_rel", raw))
+	for s: Dictionary in visitors.call(&"_segments", raw):
+		if StringName(s.phase) == VisitRules.PHASE_WAITING or StringName(s.phase) == VisitRules.PHASE_LEAVING:
+			return int(s.from) - now
+	return 0
 
 
 func _serve_visit(v: Dictionary) -> void:
