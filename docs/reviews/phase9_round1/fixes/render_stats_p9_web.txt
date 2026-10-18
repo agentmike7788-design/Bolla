@@ -1,0 +1,8 @@
+p9_09_departure_hanne_web  camera_tris=310729 (primitives 194629 + grass 116100)  draw_calls=396 (camera 99)  objects=316  omni_visible=8  shadowed=2  particles=13
+p9_10_johann_on_the_cart_web  camera_tris=253688 (primitives 148550 + grass 105138)  draw_calls=293 (camera 40)  objects=294  omni_visible=7  shadowed=0  particles=13
+fix1_grave_prompt_date_vorher_web  camera_tris=257737 (primitives 147739 + grass 109998)  draw_calls=430 (camera 136)  objects=813  omni_visible=5  shadowed=0  particles=13
+fix1_grave_prompt_date_web  camera_tris=257735 (primitives 147737 + grass 109998)  draw_calls=428 (camera 136)  objects=810  omni_visible=5  shadowed=0  particles=13
+fix2_lenz_sieber_night_web  camera_tris=134436 (primitives 134436 + grass 0)  draw_calls=98 (camera 28)  objects=98  omni_visible=4  shadowed=0  particles=13
+fix3_lenz_bench_evening_web  camera_tris=152732 (primitives 152732 + grass 0)  draw_calls=102 (camera 28)  objects=102  omni_visible=3  shadowed=0  particles=13
+fix3_liesel_bench_evening_web  camera_tris=152350 (primitives 152350 + grass 0)  draw_calls=102 (camera 28)  objects=102  omni_visible=3  shadowed=0  particles=13
+fix4_watchman_close_web  camera_tris=145318 (primitives 145318 + grass 0)  draw_calls=104 (camera 32)  objects=104  omni_visible=4  shadowed=0  particles=13

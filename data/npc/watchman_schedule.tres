@@ -6,24 +6,25 @@
 [sub_resource type="Resource" id="p9_watchman_01"]
 script = ExtResource("1")
 activity = &"home"
-path = PackedStringArray("v_sieber_door")
+path = PackedStringArray("v_office_door")
 visible = false
 region = &"village"
 
 [sub_resource type="Resource" id="p9_watchman_02"]
 script = ExtResource("1")
 activity = &"watch"
-animation = &"lantern"
-path = PackedStringArray("v_sieber_door")
+animation = &"stand_watch"
+path = PackedStringArray("v_sieber_watch")
 region = &"village"
 today_flag = &"sieber_watch_day"
 
 [sub_resource type="Resource" id="p9_watchman_03"]
 script = ExtResource("1")
 start_minute = 360
-activity = &"home"
-path = PackedStringArray("v_sieber_door")
-visible = false
+travel_minutes = 40
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_sieber_watch", "v_sieber_yard", "v_sieber_lane_s", "v_sieber_lane_e", "v_sieber_lane_n", "v_road_in", "v_bridge", "v_well", "v_office_door")
 region = &"village"
 today_flag = &"sieber_watch_day"
 
@@ -31,8 +32,27 @@ today_flag = &"sieber_watch_day"
 script = ExtResource("1")
 start_minute = 1260
 activity = &"watch"
-animation = &"lantern"
-path = PackedStringArray("v_sieber_door")
+animation = &"stand_watch"
+path = PackedStringArray("v_sieber_watch")
+region = &"village"
+today_flag = &"sieber_watch_day"
+
+[sub_resource type="Resource" id="p9_watchman_05"]
+script = ExtResource("1")
+start_minute = 400
+activity = &"home"
+path = PackedStringArray("v_office_door")
+visible = false
+region = &"village"
+today_flag = &"sieber_watch_day"
+
+[sub_resource type="Resource" id="p9_watchman_06"]
+script = ExtResource("1")
+start_minute = 1220
+travel_minutes = 40
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_office_door", "v_well", "v_bridge", "v_road_in", "v_sieber_lane_n", "v_sieber_lane_e", "v_sieber_lane_s", "v_sieber_yard", "v_sieber_watch")
 region = &"village"
 today_flag = &"sieber_watch_day"
 
@@ -40,4 +60,4 @@ today_flag = &"sieber_watch_day"
 script = ExtResource("2")
 npc_id = &"watchman"
 display_name = "Der Nachtwächter"
-entries = Array[ExtResource("1")]([SubResource("p9_watchman_01"), SubResource("p9_watchman_02"), SubResource("p9_watchman_03"), SubResource("p9_watchman_04")])
+entries = Array[ExtResource("1")]([SubResource("p9_watchman_01"), SubResource("p9_watchman_02"), SubResource("p9_watchman_03"), SubResource("p9_watchman_04"), SubResource("p9_watchman_05"), SubResource("p9_watchman_06")])

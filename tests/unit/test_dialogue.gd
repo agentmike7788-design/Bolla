@@ -3435,7 +3435,11 @@ const P8_FLAGS: PackedStringArray = ["visit_smith_day", "visit_grocer_day", "vis
 		# W3 (QA8-03): the meet orders of Fenner 2 and Rosine 3 bring them to their place.
 		"meet_mayor_day", "meet_innkeeper_day",
 		# W2 „Anschlüsse“ (W1-Anschlüsse 18): Liesel's vigil at the Siebers (np_sieber), like at the Otts – Phase 9 only.
-		"night_np_sieber_washer_day"]
+		"night_np_sieber_washer_day",
+		# W3 „Restbedarf“ 2: Quast and Lenz at the Siebers (np_sieber), like at the Otts.
+		"night_np_sieber_surgeon_day", "night_np_sieber_priest_day",
+		# W3 „Restbedarf“ 3: Lenz / Liesel on Johann's bench (ending B).
+		"sieber_evening_priest_day", "sieber_evening_washer_day"]
 
 
 func _sched(npc: String) -> NpcSchedule:
@@ -4393,7 +4397,8 @@ func test_phase9_schedules() -> void:
 	# The watchman's lantern (ending C): 21:00–06:00 at the Siebers' door.
 	for t: int in [1300, 120]:
 		e = _at("watchman", &"sieber_watch_day", t, 70)
-		assert_eq([e.path[-1], e.activity, e.visible], ["v_sieber_door", &"watch", true], "lantern at %d" % t)
+		# W3 „Restbedarf“ 4: the watchman as a figure on his own place beside the door.
+		assert_eq([e.path[-1], e.activity, e.visible], ["v_sieber_watch", &"watch", true], "lantern at %d" % t)
 	assert_false(_at("watchman", &"sieber_watch_day", 700, 70).visible, "not by day")
 
 

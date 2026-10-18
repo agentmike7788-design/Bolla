@@ -930,21 +930,10 @@ func _draw_p8_mark(m: Dictionary, p: Vector2, halo: Color) -> void:
 			MapPaint.window(_ci, p, k, cfg.player_ring, cfg.ink)
 		&"fest":
 			MapPaint.fest(_ci, StringName(str(m.get("glyph", "lantern"))), p, k, cfg.ink, cfg.player_ring)
-		# Phase 9 (§7.6): Brenneisen with his top hat, the large sheet with its seal, the bookmark (a ribbon, no arrow).
-		&"stranger":
-			MapPaint.figure(_ci, p, r * 0.9, cfg.ink.lightened(0.35), cfg.ink)
-			_ci.draw_rect(Rect2(p + Vector2(-r * 0.32, -r * 1.25), Vector2(r * 0.64, r * 0.62)), cfg.ink, true)
-			_ci.draw_line(p + Vector2(-r * 0.55, -r * 0.62), p + Vector2(r * 0.55, -r * 0.62), cfg.ink, 2.0, true)
-		&"large":
-			_ci.draw_rect(Rect2(p + Vector2(-6.0, -8.0) * k, Vector2(12.0, 15.0) * k), cfg.paper.darkened(0.08), true)
-			_ci.draw_rect(Rect2(p + Vector2(-6.0, -8.0) * k, Vector2(12.0, 15.0) * k), cfg.ink, false, 1.2)
-			MapPaint.seal(_ci, p + Vector2(3.0, 2.0) * k, 3.2 * k, cfg.objective, cfg.ink)
-		&"bookmark":
-			var ribbon := PackedVector2Array([p + Vector2(-4.0, -9.0) * k, p + Vector2(4.0, -9.0) * k, p + Vector2(4.0, 8.0) * k,
-					p + Vector2(0.0, 4.5) * k, p + Vector2(-4.0, 8.0) * k])
-			_ci.draw_colored_polygon(ribbon, cfg.objective)
-			ribbon.append(ribbon[0])
-			_ci.draw_polyline(ribbon, cfg.ink, 1.1, true)
+		# Phase 9 (§7.6): Brenneisen with his top hat, the large sheet with its seal, the bookmark (a ribbon, no arrow) –
+		# drawn by the key's glyph (W3: the same picture in the legend).
+		&"stranger", &"large", &"bookmark":
+			MapLegend.p9_glyph(_ci, cfg, m.kind, p, k)
 
 
 func _draw_frame(sheet: Rect2) -> void:

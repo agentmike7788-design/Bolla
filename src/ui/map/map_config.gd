@@ -149,7 +149,8 @@ extends Resource
 @export var font_building: int = 17
 @export var font_small: int = 14
 @export var font_title: int = 30
-@export var grave_radius: float = 4.0
+## W3 („Restbedarf“ 7): the graves and the people a little larger – read at 720p (was 4.0 / 6.5).
+@export var grave_radius: float = 5.0
 @export var player_radius: float = 15.0
-@export var person_radius: float = 6.5
+@export var person_radius: float = 8.0
 @export var hotspot_radius: float = 16.0

@@ -81,6 +81,8 @@ const GRAVEKEEPER_MESH := "2b30f35eb0a71d85"
 const WORK_R4 := {"ph_chr_v_innkeeper": ["polish_mug"], "ph_chr_v_priest": ["pray_altar", "read_breviary"],
 		"ph_chr_v_mayor": ["desk_files", "proclaim"], "ph_chr_v_surgeon": ["desk_write", "mix_vial"],
 		"ph_chr_v_washer": ["wash_brook", "wash_body"]}
+## Phase 9 W3 „Restbedarf“ 3 (asset_villagers.P9_SIT): Lenz and Liesel sit with Johann on the bench (Ende B).
+const SIT_P9 := {"ph_chr_v_priest": ["sit_bench"], "ph_chr_v_washer": ["sit_bench"]}
 const GRAVEKEEPER_NEW: Array[String] = ["kneel_place", "water", "sit_bench", "dance"]
 
 ## props: name -> [category, min size, max size, triangle budget (§8.4)]
@@ -395,6 +397,7 @@ func test_villagers_reexport_keeps_mesh_and_old_clips() -> void:
 		want.append_array(REEXPORT[c][2])
 		# G8 Runde 4: the work clips come on top (test_npc_work.gd checks them; body and old clips stay hash-equal)
 		want.append_array(WORK_R4.get(c, []))
+		want.append_array(SIT_P9.get(c, []))
 		assert_eq(_clips(c), _sorted(want), c + ": Phase-7 clips + the Phase-8 clips")
 		_check_clips(c, _sorted(REEXPORT[c][2]))
 		var lan := _child(r, "lantern_prop")

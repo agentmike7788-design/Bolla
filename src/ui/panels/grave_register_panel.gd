@@ -34,6 +34,10 @@ const ACTION_OVERVIEW := &"cemetery_overview"
 const COLUMNS: Array[String] = ["Tag", "Name (Alter)", "Todesursache", "Grab", "Grabzeichen", "Qualität", "Stimmung"]
 const COLUMN_WIDTHS: PackedFloat32Array = [70.0, 280.0, 250.0, 90.0, 180.0, 110.0, 140.0]
 const COLUMN_GAP := 16
+## Phase 9 W3: a cell of two lines (Angehörige + „Licht: …") fits the row (InkLabel 22 → 16, tighter lines).
+const TWO_LINE_FONT_SIZE := 16
+const TWO_LINE_SPACING := -2
+const LIGHT_PREFIX := "Licht: "
 const NAME_COLUMN := 1
 const QUALITY_COLUMN := 5
 ## Below this share of the maximum a quality is written in dried red.
@@ -329,9 +333,13 @@ static func cells(entry: Dictionary, with_specimens: bool = false, with_kin: boo
 		var kin := str(entry.get("kin", ""))
 		var care := str(entry.get("care", ""))
 		var parts := PackedStringArray()
-		for part: String in [kin, care, str(entry.get("light", ""))]:
+		for part: String in [kin, care]:
 			if part != "":
 				parts.append(part)
+		# W3 („Restbedarf“ 7): „Licht: …" on a line of its own under the house (it was cut off behind it).
+		var light := str(entry.get("light", ""))
+		if light != "":
+			parts = PackedStringArray([" ".join(parts) + "\n" + light]) if not parts.is_empty() else PackedStringArray([light])
 		out.append(" ".join(parts) if not parts.is_empty() else TEXT_NONE)
 	if with_letters:
 		out.append(Phase9Texts.REGISTER_LETTER if bool(entry.get("letter", false)) else TEXT_NONE)
@@ -401,6 +409,10 @@ func _make_line(texts: PackedStringArray, heading: bool) -> HBoxContainer:
 		cell.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		cell.clip_text = true
 		cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if texts[i].contains("\n") or texts[i].begins_with(LIGHT_PREFIX):
+			# W3: two lines (the house, „Licht: …") in the row's height; „Licht: …" alone in the same size (it fits then).
+			cell.add_theme_font_size_override(&"font_size", TWO_LINE_FONT_SIZE)
+			cell.add_theme_constant_override(&"line_spacing", TWO_LINE_SPACING)
 		if i == NAME_COLUMN:
 			cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		if i == 0 or i == QUALITY_COLUMN:
