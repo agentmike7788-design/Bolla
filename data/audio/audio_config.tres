@@ -230,6 +230,20 @@ spot_emitters = Array[Dictionary]([{
 "pos": Vector3(6, 0.3, 16),
 "region": &"village",
 "volume_db": 6.0
+}, {
+"cue": &"lantern_creak",
+"height": 1.1,
+"max": 12.0,
+"min": 5.0,
+"npc": &"watchman",
+"region": &"village"
+}, {
+"cue": &"watchman_bell",
+"height": 1.4,
+"max": 150.0,
+"min": 75.0,
+"npc": &"watchman",
+"region": &"village"
 }])
 cart_npc = &"carter"
 cart_cue = &"cart_roll"
@@ -309,6 +323,44 @@ npc_anim_cues = Dictionary[StringName, Dictionary]({
 "cue": &"weed_pull",
 "every": 2.3,
 "height": 0.2
+},
+&"wait_gate": {
+"enter": &"case_latch",
+"height": 0.4,
+"leave": &"case_latch",
+"npcs": PackedStringArray("stranger"),
+"volume_db": -4.0
+},
+&"tip_hat": {
+"enter": &"cloth",
+"height": 1.7,
+"npcs": PackedStringArray("stranger"),
+"volume_db": -6.0
+},
+&"write_notebook": {
+"beats": PackedFloat32Array(0.2, 0.7),
+"chance": 0.7,
+"cue": &"quill",
+"every": 2.5,
+"height": 1.2,
+"npcs": PackedStringArray("stranger"),
+"volume_db": -4.0
+},
+&"sit_inn": {
+"enter": &"cloth",
+"height": 0.8,
+"npcs": PackedStringArray("stranger"),
+"volume_db": -4.0
+},
+&"show_mark": {
+"enter": &"cloth",
+"height": 1.3,
+"volume_db": -6.0
+},
+&"sit_bench": {
+"enter": &"cloth",
+"height": 0.8,
+"volume_db": -6.0
 }
 })
 npc_sound_range = 25.0
@@ -362,6 +414,18 @@ positional_cues = Dictionary[String, Dictionary]({
 "at": &"grave",
 "cue": &"coins_stone",
 "height": 0.6
+},
+"stranger_event@0=arrived@1=gate": {
+"at": &"group",
+"cue": &"gate_bell_short",
+"height": 1.6,
+"id": &"gate_bell"
+},
+"hill_request_changed@0=hrl_*@1=offered": {
+"at": &"group",
+"cue": &"notice_sheet",
+"height": 1.3,
+"id": &"notice_board"
 },
 "robber_event@0=fled": {
 "at": &"npc",

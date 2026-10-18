@@ -75,9 +75,40 @@ signal_cues = Dictionary[String, String]({
 "wish_changed@1=done": "ui_reward",
 "friend_step_completed": "ui_reward",
 "favor_changed@2=returned": "ui_reward",
-"apprentice_level_changed": "ui_notify"
+"apprentice_level_changed": "ui_notify",
+"letter_changed@2=read": "letter_unfold",
+"letter_changed@1=lg_priest@2=read": "letter_seal_break",
+"letter_changed@1=lg_town@2=read": "letter_seal_break",
+"letter_changed@1=lg_wife@2=read": "letter_seal_break",
+"letter_changed@1=lp_l2_sister@2=read": "letter_seal_break",
+"letter_changed@1=lp_l3_burn@2=read": "letter_seal_break",
+"letter_changed@1=lpo_aschau@2=read": "letter_seal_break",
+"letter_changed@1=lpo_hagedorn@2=read": "letter_seal_break",
+"letter_changed@1=lpo_ott@2=read": "letter_seal_break",
+"letter_changed@1=lpo_quendel@2=read": "letter_seal_break",
+"letter_changed@1=lpo_wernstein@2=read": "letter_seal_break",
+"letter_changed@1=oq_fenner_seal@2=read": "letter_seal_break",
+"notification_requested@0=Der Brief steckt in der Tür der Siebers.@1=info": "letter_unfold",
+"dialogue_requested@0=sieber_door": "knock_door",
+"stranger_event@0=case@1=opened": "case_latch",
+"hill_request_changed@0=hrl_*@1=accepted": "notice_sheet",
+"hill_request_changed@0=hrv_*@1=accepted": "notice_sheet",
+"quest_changed@0=q_who_knows@2=opened": "motif_when",
+"quest_changed@0=q_who_knows@2=ended": "motif_when",
+"light_entry_changed@1=marked": "motif_when",
+"chapter_completed@0=who_knows_when": "chapter_when"
 })
 action_keywords = Dictionary[String, StringName]({
+"kladde": &"book_page",
+"grabregister vergleichen": &"book_page",
+"datum vergleichen": &"book_page",
+"brief ohne namen": &"quill_scratch",
+"antwort schreiben": &"quill_scratch",
+"brief verbrennen": &"paper_burn",
+"brief vorlesen": &"letter_unfold",
+"brief aufs grab": &"letter_unfold",
+"brief mit ins grab": &"letter_unfold",
+"erde nehmen": &"soil_handful",
 "grabblumen": &"weed_pull",
 "wachskranz": &"flowers_lay",
 "grabkerze": &"match_strike",
@@ -159,7 +190,16 @@ action_animation_cues = Dictionary[StringName, StringName]({
 &"weed_pull": &"weed_pull",
 &"write": &"quill",
 &"push_cart": &"crate",
-&"work": &"hammer"
+&"work": &"hammer",
+&"read_book": &"book_page",
+&"kneel_read": &"book_page",
+&"write_letter": &"quill_scratch",
+&"read_letter": &"letter_unfold",
+&"read_aloud_grave": &"letter_unfold",
+&"burn_letter": &"paper_burn",
+&"slip_letter": &"letter_unfold",
+&"take_soil": &"soil_handful",
+&"knock": &"knock_door"
 })
 work_intervals = Dictionary[StringName, float]({
 &"barrel_fill": 2.0,
@@ -186,7 +226,12 @@ work_intervals = Dictionary[StringName, float]({
 &"smoke_hiss": 1.6,
 &"snip": 0.9,
 &"stone_set": 1.6,
-&"wash": 1.4
+&"wash": 1.4,
+&"book_page": 4.5,
+&"letter_unfold": 6.0,
+&"paper_burn": 4.0,
+&"soil_handful": 2.0,
+&"letter_seal_break": 6.0
 })
 work_interval = 0.9
 panel_open_cues = Dictionary[StringName, StringName]({
@@ -195,7 +240,9 @@ panel_open_cues = Dictionary[StringName, StringName]({
 &"day_summary": &"sleep",
 &"grave_register": &"ui_page",
 &"journal": &"ui_page",
+&"letter": &"ui_page",
 &"shop": &"coins",
+&"stranger": &"case_latch",
 &"trader": &"coins"
 })
 panel_close_cues = Dictionary[StringName, StringName]({

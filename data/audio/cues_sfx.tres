@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=233 format=3]
+[gd_resource type="Resource" script_class="AudioCueLibrary" load_steps=270 format=3]
 
 [ext_resource type="Script" path="res://src/systems/audio/audio_cue.gd" id="1_cue"]
 [ext_resource type="Script" path="res://src/systems/audio/audio_cue_library.gd" id="2_lib"]
@@ -161,6 +161,30 @@
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_knock_door_2.wav" id="s_knock_door_2"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_watchman_call.wav" id="s_watchman_call_1"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_chapter_who.wav" id="s_chapter_who_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_letter_unfold_1.wav" id="s_letter_unfold_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_letter_unfold_2.wav" id="s_letter_unfold_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_letter_unfold_3.wav" id="s_letter_unfold_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_letter_seal_break_1.wav" id="s_letter_seal_break_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_letter_seal_break_2.wav" id="s_letter_seal_break_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_quill_scratch.ogg" id="s_quill_scratch_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_paper_burn_1.wav" id="s_paper_burn_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_paper_burn_2.wav" id="s_paper_burn_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_book_page_1.wav" id="s_book_page_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_book_page_2.wav" id="s_book_page_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_book_page_3.wav" id="s_book_page_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_soil_handful_1.wav" id="s_soil_handful_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_soil_handful_2.wav" id="s_soil_handful_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_soil_handful_3.wav" id="s_soil_handful_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_case_latch_1.wav" id="s_case_latch_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_case_latch_2.wav" id="s_case_latch_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_notice_sheet_1.wav" id="s_notice_sheet_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_notice_sheet_2.wav" id="s_notice_sheet_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_gate_bell_short.wav" id="s_gate_bell_short_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_lantern_creak_1.wav" id="s_lantern_creak_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_lantern_creak_2.wav" id="s_lantern_creak_2"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_watchman_bell.wav" id="s_watchman_bell_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_motif_when.wav" id="s_motif_when_1"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ph_chapter_when.wav" id="s_chapter_when_1"]
 
 [sub_resource type="Resource" id="cue_step_grass"]
 script = ExtResource("1_cue")
@@ -1298,7 +1322,215 @@ unit_size = 4
 cooldown = 5
 max_voices = 1
 
+[sub_resource type="Resource" id="cue_letter_unfold"]
+script = ExtResource("1_cue")
+id = &"letter_unfold"
+streams = Array[AudioStream]([ExtResource("s_letter_unfold_1"), ExtResource("s_letter_unfold_2"), ExtResource("s_letter_unfold_3")])
+bus = &"SFX"
+volume_db = -15.5
+target_lufs = -31
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.3
+max_voices = 2
+
+[sub_resource type="Resource" id="cue_letter_seal_break"]
+script = ExtResource("1_cue")
+id = &"letter_seal_break"
+streams = Array[AudioStream]([ExtResource("s_letter_seal_break_1"), ExtResource("s_letter_seal_break_2")])
+bus = &"SFX"
+volume_db = -9.1
+target_lufs = -30
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.5
+max_voices = 1
+
+[sub_resource type="Resource" id="cue_quill_scratch"]
+script = ExtResource("1_cue")
+id = &"quill_scratch"
+streams = Array[AudioStream]([ExtResource("s_quill_scratch_1")])
+bus = &"SFX"
+volume_db = -10
+target_lufs = -34
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = true
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0
+max_voices = 1
+
+[sub_resource type="Resource" id="cue_paper_burn"]
+script = ExtResource("1_cue")
+id = &"paper_burn"
+streams = Array[AudioStream]([ExtResource("s_paper_burn_1"), ExtResource("s_paper_burn_2")])
+bus = &"SFX"
+volume_db = -8.6
+target_lufs = -29
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 1
+max_voices = 1
+
+[sub_resource type="Resource" id="cue_book_page"]
+script = ExtResource("1_cue")
+id = &"book_page"
+streams = Array[AudioStream]([ExtResource("s_book_page_1"), ExtResource("s_book_page_2"), ExtResource("s_book_page_3")])
+bus = &"SFX"
+volume_db = -21.1
+target_lufs = -36
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.4
+max_voices = 2
+
+[sub_resource type="Resource" id="cue_soil_handful"]
+script = ExtResource("1_cue")
+id = &"soil_handful"
+streams = Array[AudioStream]([ExtResource("s_soil_handful_1"), ExtResource("s_soil_handful_2"), ExtResource("s_soil_handful_3")])
+bus = &"SFX"
+volume_db = -17.2
+target_lufs = -32
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 0.5
+max_voices = 1
+
+[sub_resource type="Resource" id="cue_case_latch"]
+script = ExtResource("1_cue")
+id = &"case_latch"
+streams = Array[AudioStream]([ExtResource("s_case_latch_1"), ExtResource("s_case_latch_2")])
+bus = &"SFX"
+volume_db = -8.1
+target_lufs = -30
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = true
+max_distance = 14
+unit_size = 2
+cooldown = 0.4
+max_voices = 1
+
+[sub_resource type="Resource" id="cue_notice_sheet"]
+script = ExtResource("1_cue")
+id = &"notice_sheet"
+streams = Array[AudioStream]([ExtResource("s_notice_sheet_1"), ExtResource("s_notice_sheet_2")])
+bus = &"SFX"
+volume_db = -10.3
+target_lufs = -31
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = true
+max_distance = 18
+unit_size = 3
+cooldown = 1
+max_voices = 1
+
+[sub_resource type="Resource" id="cue_gate_bell_short"]
+script = ExtResource("1_cue")
+id = &"gate_bell_short"
+streams = Array[AudioStream]([ExtResource("s_gate_bell_short_1")])
+bus = &"SFX"
+volume_db = -19.4
+target_lufs = -28
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = false
+positional = true
+max_distance = 70
+unit_size = 10
+cooldown = 2
+max_voices = 1
+
+[sub_resource type="Resource" id="cue_lantern_creak"]
+script = ExtResource("1_cue")
+id = &"lantern_creak"
+streams = Array[AudioStream]([ExtResource("s_lantern_creak_1"), ExtResource("s_lantern_creak_2")])
+bus = &"SFX"
+volume_db = -16.4
+target_lufs = -38
+volume_jitter_db = 1.5
+pitch_jitter = 0.05
+loop = false
+positional = true
+max_distance = 16
+unit_size = 2
+cooldown = 2
+max_voices = 1
+
+[sub_resource type="Resource" id="cue_watchman_bell"]
+script = ExtResource("1_cue")
+id = &"watchman_bell"
+streams = Array[AudioStream]([ExtResource("s_watchman_bell_1")])
+bus = &"SFX"
+volume_db = -20
+target_lufs = -31
+volume_jitter_db = 1.5
+pitch_jitter = 0.02
+loop = false
+positional = true
+max_distance = 45
+unit_size = 6
+cooldown = 20
+max_voices = 1
+
+[sub_resource type="Resource" id="cue_motif_when"]
+script = ExtResource("1_cue")
+id = &"motif_when"
+streams = Array[AudioStream]([ExtResource("s_motif_when_1")])
+bus = &"SFX"
+volume_db = -21.9
+target_lufs = -33
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 20
+max_voices = 1
+
+[sub_resource type="Resource" id="cue_chapter_when"]
+script = ExtResource("1_cue")
+id = &"chapter_when"
+streams = Array[AudioStream]([ExtResource("s_chapter_when_1")])
+bus = &"SFX"
+volume_db = -15.5
+target_lufs = -27
+volume_jitter_db = 0
+pitch_jitter = 0
+loop = false
+positional = false
+max_distance = 24
+unit_size = 4
+cooldown = 5
+max_voices = 1
+
 [resource]
 script = ExtResource("2_lib")
 library_id = &"sfx"
-cues = Array[ExtResource("1_cue")]([SubResource("cue_step_grass"), SubResource("cue_step_earth"), SubResource("cue_step_stone"), SubResource("cue_step_wood"), SubResource("cue_dig"), SubResource("cue_dirt_pour"), SubResource("cue_stone_set"), SubResource("cue_chop"), SubResource("cue_saw"), SubResource("cue_hammer"), SubResource("cue_anvil"), SubResource("cue_chisel"), SubResource("cue_pick_stone"), SubResource("cue_loom"), SubResource("cue_bellows"), SubResource("cue_rustle"), SubResource("cue_cloth"), SubResource("cue_wash"), SubResource("cue_scrub"), SubResource("cue_snip"), SubResource("cue_quill"), SubResource("cue_smoke_hiss"), SubResource("cue_door_open"), SubResource("cue_door_close"), SubResource("cue_chest_open"), SubResource("cue_chest_close"), SubResource("cue_crate"), SubResource("cue_coins"), SubResource("cue_pickup"), SubResource("cue_putdown"), SubResource("cue_corpse_down"), SubResource("cue_glass_seal"), SubResource("cue_anatomy_tool"), SubResource("cue_cart_roll"), SubResource("cue_church_bell"), SubResource("cue_small_bell"), SubResource("cue_ghost_appear"), SubResource("cue_ghost_content"), SubResource("cue_ghost_restless"), SubResource("cue_ghost_night"), SubResource("cue_chapter"), SubResource("cue_travel"), SubResource("cue_remark"), SubResource("cue_build_place"), SubResource("cue_build_remove"), SubResource("cue_sleep"), SubResource("cue_rake_leaves"), SubResource("cue_weed_pull"), SubResource("cue_water_pour"), SubResource("cue_barrel_fill"), SubResource("cue_match_strike"), SubResource("cue_candle_glass"), SubResource("cue_broom_sweep"), SubResource("cue_mortsafe_set"), SubResource("cue_cloth_kneel"), SubResource("cue_flowers_lay"), SubResource("cue_mourn_breath"), SubResource("cue_coins_stone"), SubResource("cue_chatter_murmur"), SubResource("cue_whistle_tune"), SubResource("cue_tin_cup"), SubResource("cue_wage_tin"), SubResource("cue_kiepe_bells"), SubResource("cue_gate_bell"), SubResource("cue_kiepe_set"), SubResource("cue_spade_night"), SubResource("cue_run_gravel"), SubResource("cue_climb_wall"), SubResource("cue_knock_door"), SubResource("cue_watchman_call"), SubResource("cue_chapter_who")])
+cues = Array[ExtResource("1_cue")]([SubResource("cue_step_grass"), SubResource("cue_step_earth"), SubResource("cue_step_stone"), SubResource("cue_step_wood"), SubResource("cue_dig"), SubResource("cue_dirt_pour"), SubResource("cue_stone_set"), SubResource("cue_chop"), SubResource("cue_saw"), SubResource("cue_hammer"), SubResource("cue_anvil"), SubResource("cue_chisel"), SubResource("cue_pick_stone"), SubResource("cue_loom"), SubResource("cue_bellows"), SubResource("cue_rustle"), SubResource("cue_cloth"), SubResource("cue_wash"), SubResource("cue_scrub"), SubResource("cue_snip"), SubResource("cue_quill"), SubResource("cue_smoke_hiss"), SubResource("cue_door_open"), SubResource("cue_door_close"), SubResource("cue_chest_open"), SubResource("cue_chest_close"), SubResource("cue_crate"), SubResource("cue_coins"), SubResource("cue_pickup"), SubResource("cue_putdown"), SubResource("cue_corpse_down"), SubResource("cue_glass_seal"), SubResource("cue_anatomy_tool"), SubResource("cue_cart_roll"), SubResource("cue_church_bell"), SubResource("cue_small_bell"), SubResource("cue_ghost_appear"), SubResource("cue_ghost_content"), SubResource("cue_ghost_restless"), SubResource("cue_ghost_night"), SubResource("cue_chapter"), SubResource("cue_travel"), SubResource("cue_remark"), SubResource("cue_build_place"), SubResource("cue_build_remove"), SubResource("cue_sleep"), SubResource("cue_rake_leaves"), SubResource("cue_weed_pull"), SubResource("cue_water_pour"), SubResource("cue_barrel_fill"), SubResource("cue_match_strike"), SubResource("cue_candle_glass"), SubResource("cue_broom_sweep"), SubResource("cue_mortsafe_set"), SubResource("cue_cloth_kneel"), SubResource("cue_flowers_lay"), SubResource("cue_mourn_breath"), SubResource("cue_coins_stone"), SubResource("cue_chatter_murmur"), SubResource("cue_whistle_tune"), SubResource("cue_tin_cup"), SubResource("cue_wage_tin"), SubResource("cue_kiepe_bells"), SubResource("cue_gate_bell"), SubResource("cue_kiepe_set"), SubResource("cue_spade_night"), SubResource("cue_run_gravel"), SubResource("cue_climb_wall"), SubResource("cue_knock_door"), SubResource("cue_watchman_call"), SubResource("cue_chapter_who"), SubResource("cue_letter_unfold"), SubResource("cue_letter_seal_break"), SubResource("cue_quill_scratch"), SubResource("cue_paper_burn"), SubResource("cue_book_page"), SubResource("cue_soil_handful"), SubResource("cue_case_latch"), SubResource("cue_notice_sheet"), SubResource("cue_gate_bell_short"), SubResource("cue_lantern_creak"), SubResource("cue_watchman_bell"), SubResource("cue_motif_when"), SubResource("cue_chapter_when")])

@@ -39,6 +39,7 @@ import loudness  # noqa: E402
 import music  # noqa: E402
 import sfx  # noqa: E402
 import sfx_phase8 as p8  # noqa: E402
+import sfx_phase9 as p9  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 ASSET_DIR = os.path.join(ROOT, "assets", "audio")
@@ -300,6 +301,28 @@ CATALOG: list[Spec] = [
     AMB("amb_inn_fest", p8.amb_inn_fest, loop=True, loud=-34),
     MUS("mus_dance", p8.mus_dance, loud=-29),
     MUS("mus_lights", p8.mus_lights, loud=-30),
+    # --- Phase 9 „Wer weiß, wann?" (docs/PHASE9_DESIGN.md §8.3; tools/audio/sfx_phase9.py) -----------------
+    # The gravekeeper's own hands (2D, at the desk, stove, grave): paper sits under the old work cues (cloth -27);
+    # Sieber's door uses the Phase-8 knock_door, the watchman's call stays wordless (a hand bell). No new music:
+    # the motif is a quiet SFX sting (no music context), three times in the chain, answered at the chapter.
+    S("letter_unfold", p9.letter_unfold, 3, loud=-31, cooldown=0.3, max_voices=2),
+    S("letter_seal_break", p9.letter_seal_break, 2, loud=-30, cooldown=0.5, max_voices=1),
+    S("quill_scratch", p9.quill_scratch, 1, loop=True, loud=-34, pitch_jitter=0.0, volume_jitter_db=0.0, max_voices=1),
+    S("paper_burn", p9.paper_burn, 2, loud=-29, cooldown=1.0, max_voices=1),
+    S("book_page", p9.book_page, 3, loud=-36, cooldown=0.4, max_voices=2),
+    S("soil_handful", p9.soil_handful, 3, loud=-32, cooldown=0.5, max_voices=1),
+    S("case_latch", [p9.case_latch_open, p9.case_latch_close], 2, positional=True, max_distance=14, unit_size=2,
+      loud=-30, cooldown=0.4, max_voices=1),
+    S("notice_sheet", p9.notice_sheet, 2, positional=True, max_distance=18, unit_size=3, loud=-31, cooldown=1.0,
+      max_voices=1),
+    S("gate_bell_short", p9.gate_bell_short, 1, positional=True, max_distance=70, unit_size=10, loud=-28,
+      pitch_jitter=0.0, volume_jitter_db=0.0, max_voices=1, cooldown=2.0),
+    S("lantern_creak", p9.lantern_creak, 2, positional=True, max_distance=16, unit_size=2, loud=-38, max_voices=1,
+      cooldown=2.0),
+    S("watchman_bell", p9.watchman_bell, 1, positional=True, max_distance=45, unit_size=6, loud=-31, pitch_jitter=0.02,
+      max_voices=1, cooldown=20.0),
+    S("motif_when", p9.motif_when, 1, loud=-33, pitch_jitter=0.0, volume_jitter_db=0.0, max_voices=1, cooldown=20.0),
+    S("chapter_when", p9.chapter_when, 1, pitch_jitter=0.0, volume_jitter_db=0.0, cooldown=5.0, max_voices=1),
 ]
 
 
