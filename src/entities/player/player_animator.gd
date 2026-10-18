@@ -46,6 +46,10 @@ const CAN_MARKER := "can_grip"
 const CAN_NAME := "WateringCan"
 const CAN_PATH := "res://assets/models/props/ph_tool_watering_can.glb"
 var _can: Node3D
+## Phase 9 (W1-Anschluss 10): the hand props at hold_r / hold_l ("<marker>|<path>" → node, created on first use) and
+## the clip whose props show now (&"" = none).
+var _hold_nodes: Dictionary[String, Node3D] = {}
+var _hold_shown: StringName = &""
 
 
 func _init(player: Player) -> void:
@@ -94,6 +98,7 @@ func update(delta: float, action: Player.TimedAction, carrying: bool) -> void:
 		_hold_events(action)
 	_update_props()
 	_update_can(anim.current_animation in tools.can_clips)
+	_update_hold_props(anim.current_animation)
 	_water_events()
 
 
@@ -122,6 +127,49 @@ func _update_can(on: bool) -> void:
 		_can.name = CAN_NAME
 		marker.add_child(_can)
 	_can.visible = on
+
+
+## Phase 9 (W1-Anschluss 10): the hand props of `clip` (ToolAnimConfig.hold_props) show at their markers, all others
+## hide; while any shows the shovel stays parked on the back (ToolProps.park).
+func _update_hold_props(clip: StringName) -> void:
+	var want := clip if tools.hold_props.has(clip) else &""
+	if want == _hold_shown:
+		return
+	_hold_shown = want
+	var keys: Array[String] = []
+	for prop: PackedStringArray in tools.hold_props_of(want):
+		var key := prop[0] + "|" + prop[1]
+		keys.append(key)
+		if not _hold_nodes.has(key):
+			var node := _make_hold_prop(prop[0], prop[1])
+			if node == null:
+				continue
+			_hold_nodes[key] = node
+	for key: String in _hold_nodes:
+		if is_instance_valid(_hold_nodes[key]):
+			_hold_nodes[key].visible = key in keys
+	if props != null and phase == ToolPhase.BACK:
+		props.park(want != &"" and not keys.is_empty())
+
+
+func _make_hold_prop(marker_name: String, path: String) -> Node3D:
+	var marker := _player.model.find_child(marker_name, true, false) as Node3D
+	if marker == null or not ResourceLoader.exists(path):
+		return null
+	var node := (load(path) as PackedScene).instantiate() as Node3D
+	node.name = "Hold_" + path.get_file().get_basename()
+	marker.add_child(node)
+	return node
+
+
+## Names of the hand props shown now (tests, screenshots).
+func hold_props_shown() -> PackedStringArray:
+	var out := PackedStringArray()
+	for key: String in _hold_nodes:
+		if is_instance_valid(_hold_nodes[key]) and _hold_nodes[key].visible:
+			out.append(key.get_slice("|", 1).get_file().get_basename())
+	out.sort()
+	return out
 
 
 ## True while the watering can shows (tests, screenshots).

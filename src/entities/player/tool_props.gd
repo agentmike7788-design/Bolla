@@ -85,6 +85,17 @@ func is_shown(mesh_name: String) -> bool:
 	return false
 
 
+## Phase 9 (W1-Anschluss 10): the shovel parked on the back (true) while a hand prop at hold_r / hold_l shows, so the
+## arm's clip never takes it along; false puts it back on its tool bone.
+func park(on: bool) -> void:
+	_park_shovel(on)
+
+
+## True while the shovel hangs on its back attachment (tests).
+func shovel_parked() -> bool:
+	return _shovel != null and _park != null and _shovel.get_parent() == _park
+
+
 func _set_visible(kind: StringName, value: bool) -> void:
 	for n: Node3D in _meshes.get(kind, []):
 		n.visible = value

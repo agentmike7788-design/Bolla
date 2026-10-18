@@ -97,6 +97,26 @@ extends Resource
 @export var table_work_cycles: float = 2.0
 
 
+# --- Phase 9 (docs/PHASE9_DESIGN.md §8.2, §8.4, W1-Anschluss 10): hand props of the letter and ledger clips -------------
+## Clip → its hand props "<marker>/<prop>" (asset_character.HOLD_PROPS): the small ph_tool_* scenes (ledger, quill, letter,
+## the open letter, the soil cloth, Brenneisen's case) hang at the rig's hold_r / hold_l markers (on arm_r / arm_l, modelled
+## in their frame) while the clip plays – no draw from the bag. The shovel stays on the back meanwhile (ToolProps.park).
+@export var hold_props: Dictionary[StringName, PackedStringArray] = {}
+## Folder of the hand props named in hold_props.
+@export var hold_prop_dir: String = "res://assets/models/props"
+
+
+## [marker, scene path] of each hand prop of `clip` (hold_props; [] = none).
+func hold_props_of(clip: StringName) -> Array[PackedStringArray]:
+	var out: Array[PackedStringArray] = []
+	for entry: String in hold_props.get(clip, PackedStringArray()):
+		var marker := entry.get_slice("/", 0)
+		var prop := entry.get_slice("/", 1)
+		if marker != "" and prop != "":
+			out.append(PackedStringArray([marker, hold_prop_dir.path_join(prop + ".glb")]))
+	return out
+
+
 ## The clip for the code-driven action `key` (tool_anim_config.tres action_clips), else `fallback`.
 static func clip_for(key: StringName, fallback: StringName = &"interact") -> StringName:
 	var cfg := Database.config(&"tool_anim_config") as ToolAnimConfig

@@ -15,6 +15,8 @@ extends CanvasLayer
 ## Phase 8 (docs/PHASE8_DESIGN.md §7): the chalk board, the wish card, the favour and festival panels, the
 ## encounters' bubbles, the festival banner (below the veil) and the Phase-8 rows of the day summary and of the
 ## chapter panel „Wer heraufkommt".
+## Phase 9 (docs/PHASE9_DESIGN.md §7): the letter card &"letter" and Brenneisen's panel &"stranger" (docked), the
+## Phase-9 rows of the day summary (Phase9DayLog) and the chapter panel „Wer weiß, wann?".
 ## Phase 4 (docs/PHASE4_DESIGN.md §3.6, §7): J toggles the Merkbuch (not while building, not in a
 ## dialogue; context JournalManager.panel_context()), the trade panel &"trader" opens over
 ## Ilse's dialogue (dialogue action open_panel:trader).
@@ -79,6 +81,9 @@ const PANEL_SCRIPTS: Dictionary[StringName, Script] = {
 	&"fest": preload("res://src/ui/panels/fest_panel.gd"),
 	# G8 Runde 6 „Bitten vom Hügel" (docs/PHASE8_DESIGN.md, G8 Runde 6 §5)
 	&"hill_requests": preload("res://src/ui/panels/hill_requests_panel.gd"),
+	# Phase 9 (docs/PHASE9_DESIGN.md §7.3, §7.4): the letter card and Brenneisen's panel, both docked at the right edge.
+	&"letter": preload("res://src/ui/panels/letter_panel.gd"),
+	&"stranger": preload("res://src/ui/panels/stranger_panel.gd"),
 }
 
 ## Called for "Beenden" (tests replace it).
@@ -107,6 +112,8 @@ var remark_bubbles: RemarkBubbles
 var chatter_bubbles: ChatterBubbles
 var fest_banner: FestBanner
 var day_log8: Phase8DayLog
+## Phase 9 (§7.6): the day log of the Phase-9 rows.
+var day_log9: Phase9DayLog
 
 ## Open UI, bottom → top: panel ids and &"dialogue".
 var _stack: Array[StringName] = []
@@ -152,6 +159,8 @@ func _ready() -> void:
 	root_control.move_child(fest_banner, veil.get_index())
 	day_log8 = Phase8DayLog.new()
 	add_child(day_log8)
+	day_log9 = Phase9DayLog.new()
+	add_child(day_log9)
 	notices = Phase3Notices.new()
 	notices.name = "Phase3Notices"
 	add_child(notices)
@@ -233,8 +242,12 @@ func open_panel(panel: StringName, context: Dictionary) -> void:
 			context = DaySummaryPanel.complete_phase5(context, day_log.take())
 		if day_log8 != null:
 			context = DaySummaryPanel.complete_phase8(context, day_log8.take(get_tree() if is_inside_tree() else null))
+		if day_log9 != null:
+			context = DaySummaryPanel.complete_phase9(context, day_log9.take())
 	if panel == PANEL_SLICE_SUMMARY and StringName(str(context.get("variant", ""))) == Phase8Texts.CHAPTER_ID:
 		context = SliceSummaryPanel.complete_who_comes_up(context, get_tree() if is_inside_tree() else null)
+	if panel == PANEL_SLICE_SUMMARY and StringName(str(context.get("variant", ""))) == Phase9Texts.CHAPTER_ID:
+		context = SliceSummaryPanel.complete_who_knows_when(context, get_tree() if is_inside_tree() else null)
 	node.open(context)
 	_update_visibility()
 
