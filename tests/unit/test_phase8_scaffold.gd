@@ -375,8 +375,10 @@ func test_new_config_contract_values() -> void:
 ## W0 values. Empty at W0.
 ## G8 Runde 1 (B8-1, user decision): visitors wait up to 100 minutes (was 10) – class default and .tres together.
 ## Phase 9 W0 (docs/PHASE9_DESIGN.md §2.9, §2.2.8): + gains, event_points, events, reactions (class default and .tres together).
-const DATA_CHANGED_AFTER_W0 := {&"visitor_config": [&"wait_minutes"], &"relationship_config": [&"gains"],
-		&"reputation_config": [&"event_points"], &"piety_config": [&"events"], &"npc_life_config": [&"reactions", &"mood_rules"]}
+## Phase 9 W2 „Anschlüsse“: + mood_rules (13), visitor_config.interval_window (18), grave_care_config.straw_* (17).
+const DATA_CHANGED_AFTER_W0 := {&"visitor_config": [&"wait_minutes", &"interval_window"], &"relationship_config": [&"gains"],
+		&"reputation_config": [&"event_points"], &"piety_config": [&"events"], &"npc_life_config": [&"reactions", &"mood_rules"],
+		&"grave_care_config": [&"straw_item", &"straw_minutes"]}
 
 
 func test_config_files_in_data_match_the_fixtures() -> void:

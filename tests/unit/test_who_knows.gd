@@ -508,6 +508,11 @@ func test_w2_departure_flag_with_osric() -> void:
 	assert_false(GameState.has_flag(&"sieber_depart_peddler_day"))
 	var jo := load("res://data/npc/kin_sieber_v_schedule.tres") as NpcSchedule
 	assert_eq(ScheduleResolver.entry_at(jo, 610, 69).animation, &"sit_cart", "10:00 on the cart")
+	# W2 Anschlüsse 18: on the cart at 10:00 – no visit at Grete's grave (10:00–11:00) on that day.
+	assert_eq(visitors.interval.get(&"kin_sieber"), -1, "tomorrow's plan without him")
+	TimeManager.load_state({"day": 69, "minute_of_day": 360})
+	who.apply_morning(69)
+	assert_eq(visitors.interval.get(&"kin_sieber"), -1, "the morning keeps it")
 
 
 func test_w2_watch_flag_every_night_until_the_morning_after_the_death() -> void:

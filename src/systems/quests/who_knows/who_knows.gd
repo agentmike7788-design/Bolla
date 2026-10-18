@@ -486,9 +486,14 @@ func _daily_visits(day: int) -> void:
 	if not reached:
 		return
 	if visitors != null and visitors.has_method(&"set_kin_interval"):
-		visitors.call(&"set_kin_interval", cfg.kin_id, 1)
+		visitors.call(&"set_kin_interval", cfg.kin_id, -1 if _leaves_with_carter() else 1)
 	if not _departs_on(day):
 		GameState.set_flag(FLAG_BENCH_DAY, day)
+
+
+## Ending A with Osric: he sits on the cart at 10:00 – no more visit at Grete's grave (10:00–11:00, W1-Anschlüsse 18).
+func _leaves_with_carter() -> bool:
+	return not _depart.is_empty() and StringName(str(_depart.get("with", ""))) == WITH_CARTER
 
 
 ## Ending A: Johann leaves on `day` (his bench schedule would cross the walk).
@@ -563,6 +568,9 @@ func _plan_departure() -> void:
 		_depart = {"day": hanne, "minute": cfg.depart_with_peddler_minute, "with": WITH_PEDDLER}
 	else:
 		_depart = {"day": today + 1, "minute": cfg.depart_with_carter_minute, "with": WITH_CARTER}
+		var visitors := _first(&"visitors")
+		if visitors != null and visitors.has_method(&"set_kin_interval"):
+			visitors.call(&"set_kin_interval", cfg.kin_id, -1)  # tomorrow's plan (06:00): on the cart, not at the grave
 
 
 ## He is gone: sieber_gone (his figures hidden, np_sieber cancelled, ending A settled), no more visits.
