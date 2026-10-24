@@ -218,7 +218,7 @@ func test_note_coins_spent_counts_and_signals() -> void:
 	EventBus.coins_spent.disconnect(on_spent)
 	assert_eq(spent, [[20, &"license"], [15, &"build"], [14, &"osric"], [6, &"ilse"], [6, &"osric"]], "nothing for <= 0")
 	assert_eq(GameState.get_stat(&"coins_spent"), 61)
-	assert_eq(GameState.coin_ledger(), {&"license": 20, &"build": 15, &"osric": 20, &"ilse": 6, &"building": 0, &"village": 0, &"donation": 0, &"round": 0, &"consecration": 0, &"apprentice": 0, &"alms": 0, &"peddler": 0, &"post": 0} as Dictionary[StringName, int])
+	assert_eq(GameState.coin_ledger(), {&"license": 20, &"build": 15, &"osric": 20, &"ilse": 6, &"building": 0, &"village": 0, &"donation": 0, &"round": 0, &"consecration": 0, &"apprentice": 0, &"alms": 0, &"peddler": 0, &"post": 0, &"market": 0, &"rent": 0, &"tax": 0, &"stall": 0} as Dictionary[StringName, int])
 	assert_eq(GameState.get_stat(GameState.coin_ledger_stat(&"osric")), 20)
 
 
@@ -230,7 +230,7 @@ func test_coin_ledger_survives_save_load() -> void:
 	GameState.load_state(saved)
 	assert_eq([GameState.get_stat(&"coins_spent"), GameState.coin_ledger()[&"osric"]], [12, 12])
 	GameState.load_state({"stats": {"burials": 1}})
-	assert_eq(GameState.coin_ledger(), {&"license": 0, &"build": 0, &"osric": 0, &"ilse": 0, &"building": 0, &"village": 0, &"donation": 0, &"round": 0, &"consecration": 0, &"apprentice": 0, &"alms": 0, &"peddler": 0, &"post": 0} as Dictionary[StringName, int], "old saves: 0")
+	assert_eq(GameState.coin_ledger(), {&"license": 0, &"build": 0, &"osric": 0, &"ilse": 0, &"building": 0, &"village": 0, &"donation": 0, &"round": 0, &"consecration": 0, &"apprentice": 0, &"alms": 0, &"peddler": 0, &"post": 0, &"market": 0, &"rent": 0, &"tax": 0, &"stall": 0} as Dictionary[StringName, int], "old saves: 0")
 	for key: StringName in SaveMigration.V4_NEW_STATS + SaveMigration.V5_NEW_STATS:
 		assert_true(GameState.DEFAULT_STATS.has(key), "migration stat %s is a default stat" % key)
 

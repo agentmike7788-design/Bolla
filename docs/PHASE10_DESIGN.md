@@ -1141,4 +1141,4 @@ P5 besitzt alle Dialoge, Gerede und Kapiteltexte; P2 die Texte der Abrechnung un
     - `test_saves_v4/v5/v6_load.gd`, `test_hill_requests.gd`
     - `test_save_fuzzer.gd` (aktuelles Format; **neu** `test_fuzz_v8_fixtures`, `test_fuzz_v9_phase10_parts`; Konsistenz: Phase-10-Stats ganzzahlig)
     - `test_game_state.gd`, `test_piety.gd`/`test_reputation.gd` (Daten = Phase-10-Fixture)
-15. **Testzahl:** vor W0 3 394, nach W0 **__TESTS__**, alle grün. Neu: `test_phase10_scaffold.gd` 19, `test_calendar_rules.gd` 8, `test_saves_v8_load.gd` 9, `test_save_migration.gd` + 7, `test_save_fuzzer.gd` + 2, `test_game_state.gd` + 2.
+15. **Testzahl:** vor W0 3 394, nach W0 **3 441**, alle grün. Neu: `test_phase10_scaffold.gd` 19, `test_calendar_rules.gd` 8, `test_saves_v8_load.gd` 9, `test_save_migration.gd` + 7, `test_save_fuzzer.gd` + 2, `test_game_state.gd` + 2. Die Münzbuch-Erwartungen in `test_game_state.gd`/`test_dialogue.gd` kennen die vier neuen Zwecke (= 0).
