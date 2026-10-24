@@ -14,7 +14,7 @@ Regel: **BAUE → TESTE → ZEIGE → WARTE AUF FREIGABE.** Keine Phase startet 
 | 7 | Dorf | ✅ freigegeben (04.10.2026) |
 | 8 | NPCs | ✅ freigegeben (17.10.2026) |
 | 9 | Quests | ✅ freigegeben (24.10.2026) |
-| 10 | Wirtschaft | ⏳ Planung (Fragen an den Benutzer) |
+| 10 | Wirtschaft | ⏳ Planung – Vertrag `docs/PHASE10_DESIGN.md` (Entwurf, §14 offen) |
 | 11 | Welt erweitern | – |
 | 12 | Krypten | – |
 | 13 | Auferstehung | – |
@@ -121,6 +121,17 @@ Verbindlicher Vertrag (Entwurf zur Benutzerfreigabe, Vertragsfragen §14 offen):
 - **Ton** wie im GDD (melancholisch, warm, trockener Humor, übernatürliche Geheimnisse; „Tod ist Handwerk, nicht Horror“), nur eigene Inhalte. **Angeln bleibt Phase 11.** ART STYLE LOCK „Gemaltes Diorama“ gilt.
 
 Vertrag (Entwurf zur Benutzerfreigabe, Vertragsfragen §14 offen): **`docs/PHASE9_DESIGN.md`** – Hauptkette in 6 Schritten (Kladde-Rückseite, Gräber, Zeugen, „S.“ = Johann Sieber, Vertraute, Entscheidung) mit drei Enden (Über den Hügel · Bei Grete · Vor der Gemeinde) und stillem Rückfall; Nebenketten „Briefe ohne Antwort“ und „Der Herr mit dem Koffer“ (Cornelius Brenneisen); 12 Größere Bitten ab Tag 2 (Messziel Leerlauf Tag 2–12 ≤ 1700 min); Merkbuch „Vorhaben“; vierte Reihe im Lindenacker, D3 Johann Sieber; Kapitel „Wer weiß, wann?“; Save-Format v8 mit Migration der Phase-8-Stände; Wellenplan W0–W3 (W1 mit 7 Paketen).
+
+## PHASE 10 – WIRTSCHAFT (Planung)
+
+**Benutzerentscheidungen (24.10.2026, bindend):**
+- **Inhalt:** (1) **Preise & Balance** – alle Einnahmen und Ausgaben neu abstimmen (Bestattungslohn, kleine und große Bitten, Briefe, Präparate, Läden, Verwerten …), Geld bleibt bis ins späte Spiel spannend; einbezogen: G5 „Münzausgleich Verwerten“, G8 Münzausgleich (E8-2), G9 Phase-9-Bogen +55 bis +64 statt ≤ +50, Bot-Messwerte Phase 3–9 · (2) **Markt & Handel** – Wochenmarkt im Dorf mit wechselnden Preisen und Angeboten, der Spieler verkauft eigene Waren (Holzkreuze, Kräuter, Kerzen, Grabschmuck) · (3) **Friedhofskasse & Gemeinde** – die Gemeinde zahlt nach Friedhofsqualität, dazu Steuern, Pacht und Spenden, ein kleines Kassenbuch mit Monatsabrechnung.
+- **Nicht gewählt:** „Ausgaben & Verschleiß“ (Werkzeugabnutzung, Gebäudeunterhalt, höherer Lehrlingslohn) → „Nicht in Phase 10“.
+- **Umfang: mittel** (etwa wie Phase 8/9): Balance überall neu, dazu 1–2 neue Systeme; sauber nach A/B/C priorisiert mit Begründung.
+- **Schwierigkeit „gemütlich knapp“:** man kommt immer zurecht, muss aber wählen, was man zuerst kauft oder baut; kein Scheitern durch Geldnot, keine Schuldenspirale.
+- **Ton** wie im GDD (melancholisch, warm, trockener Humor; „Tod ist Handwerk, nicht Horror“), nur eigene Inhalte, ART STYLE LOCK. **Angeln bleibt Phase 11.**
+
+Vertrag (Entwurf zur Benutzerfreigabe, Vertragsfragen §14 offen): **`docs/PHASE10_DESIGN.md`** – Ist-Ökonomie aus den Bot-Messungen Phase 3–9 und Zielkurve „gemütlich knapp“ (Bänder je Abschnitt, Messkette `curve10`); Tarifblatt (Pflegegeld → wöchentliches Friedhofsgeld nach Friedhofsstufe und Pflege mit Bedarfszulage und Notgroschen, weniger Bitt-Münzen, Verwerten gedämpft, Steinbruchbrief → Pacht); Gemeindekasse mit Monatsabrechnung (Pacht, Zehnt, Schätzung auf „ohne Beleg“, Aufschub ohne Zins und Erlass), Opferstock am Tor, Kassenbuch im Merkbuch „Kasse“; Wochenmarkt am Samstag auf dem Anger (Marktlage mit Marktzettel, Stände von Agathe Wendel aus Ellbach, Hof Kehr und Hof Brandt, eigener Stand mit Holzkreuzen, Kräutern, Grabkerzen und Wachskränzen, Rosenstock und Messinglaterne als bleibende Anschaffungen); Kapitel „Soll und Haben“; Save-Format v9 mit Migration der Phase-9-Stände; Wellenplan W0–W3 (W1 mit 6 Paketen).
 
 ## Benutzerwunsch 03.10.2026 – Organe & Anatomie (eigene spätere Phase/Erweiterung)
 - **Wann:** als eigene Erweiterung **nach Phase 6** (nicht in Phase 6). Einordnung wird vor dem Start mit dem Benutzer abgestimmt (Vorschlag: zusammen mit Phase 7 „Dorf", wo der Wundarzt/Anatom der Stadt eingeführt wird).
