@@ -47,6 +47,9 @@ const SHEET_COLOR := Color("#e6d6ae")
 const FOLD_COLOR := Color("#c9b88e")
 const SEAL_COLOR := Color("#7a2a1e")
 const SHEET_WORD := "Große Bitte"
+## A9-6: the word's size and height on the sheet (its centre; the pin sits at the top edge, the fold at y 0.02).
+const SHEET_FONT_SIZE := 22
+const SHEET_WORD_Y := 0.06
 const PLACE := &"gate"
 
 var label: Label3D
@@ -218,17 +221,20 @@ func _make_sheet() -> void:
 	sheet.add_child(_box("Seal", "ph_notice_seal", Vector3(0.03, 0.03, 0.008), SEAL_COLOR, base,
 			Vector3(SHEET_SIZE.x * 0.3, -SHEET_SIZE.y * 0.42, SHEET_SIZE.z * 0.5 + 0.004)))
 	sheet.add_child(_box("Pin", "ph_notice_pin", PIN_SIZE, PIN_COLOR, base, Vector3(0, SHEET_SIZE.y * 0.5 - 0.025, SHEET_SIZE.z)))
+	# W3 QA-Fix A9-6 (qa_g9.md: the word hung wider than the sheet over its pin): two lines in a smaller hand, on the
+	# sheet between the pin and the fold.
 	var word := Label3D.new()
 	word.name = "Word"
-	word.text = SHEET_WORD
-	word.font_size = SLIP_FONT_SIZE
+	word.text = SHEET_WORD.replace(" ", "\n")
+	word.font_size = SHEET_FONT_SIZE
 	word.pixel_size = PIXEL_SIZE
+	word.line_spacing = -4.0
 	word.modulate = INK
 	word.outline_size = 0
 	word.shaded = true
 	word.double_sided = false
 	word.alpha_cut = Label3D.ALPHA_CUT_DISCARD
-	word.position = Vector3(0, 0.08, SHEET_SIZE.z * 0.5 + 0.002)
+	word.position = Vector3(0, SHEET_WORD_Y, SHEET_SIZE.z * 0.5 + 0.002)
 	sheet.add_child(word)
 	sheet.visible = false
 	add_child(sheet)

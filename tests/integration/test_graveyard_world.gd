@@ -3220,6 +3220,9 @@ func test_phase9_gate_places_and_prompts() -> void:
 	var veit := world.get_waypoint(&"veit_gate")
 	var hanne := world.get_waypoint(&"peddler_gate")
 	assert_true(gate.x > veit.x, "Brenneisen east of Veit")
+	# W3 QA-Fix A9-1: Veit sits facing the road, his legs reach ≈ 0.8 m east – Brenneisen stands clear of them.
+	var feet := veit + Vector3(0.8, 0.0, 0.0)
+	assert_true(_flat2(gate).distance_to(_flat2(feet)) >= 1.0, "not on Veit's legs (%.2f m)" % _flat2(gate).distance_to(_flat2(feet)))
 	for pair: Array in [[gate, veit, "Veit"], [gate, hanne, "Hanne"], [sieber, hanne, "Hanne (Johann)"], [sieber, gate, "Brenneisen (Johann)"]]:
 		var d := _flat2(pair[0]).distance_to(_flat2(pair[1]))
 		assert_true(d >= 0.9, "never on %s's spot (%.2f m)" % [pair[2], d])
@@ -3242,7 +3245,8 @@ func test_phase9_gate_places_and_prompts() -> void:
 	if forge != null:
 		assert_false(forge.forge_ready(), "no forge on day 1")
 		assert_eq(forge.get_interaction_prompt(world.get_player()), "", "no letter, no forge: the station's own prompt")
-		assert_true((forge.get_node("Interactable") as Interactable).priority > 5, "above the station")
+		# W3 QA-Fix QA9-01: no prompt of its own – the forge's [E] stays the forge (the crafting panel offers the letter).
+		assert_null(forge.get_node_or_null("Interactable"), "never takes the focus from the forge")
 	assert_not_null(world.get_node_or_null("Entities/CartRider") as CartRider, "Johann on Osric's cart (ending A)")
 
 

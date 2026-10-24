@@ -175,6 +175,9 @@ func _build() -> void:
 func _page(parent: Container) -> VBoxContainer:
 	var sheet := UIKit.panel(&"LedgerPagePanel")
 	sheet.custom_minimum_size = Vector2(page_width, page_height)
+	# W3 QA-Fix A9-7 (qa_g9.md: eleven tabs make the head row wider than the two pages – ≈ 110 px stayed empty right of
+	# the right page): both pages share the book's whole width (at least page_width each, as before).
+	sheet.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(sheet)
 	var inner := UIKit.vbox(10)
 	sheet.add_child(inner)

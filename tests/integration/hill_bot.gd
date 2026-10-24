@@ -243,7 +243,9 @@ func _hill_decor() -> void:
 ## 18:30 at Osric's cart: every ready delivery (carter.tres hill_turn_in:carter).
 func _hill_evening() -> void:
 	var ctx := {"inventory": inv(), "speaker": null}
-	if not DialogueConditions.hill_ready(&"carter", ctx):
+	# W3 QA-Fix QA9-05: hill_ready is the small requests only now – the large ones' deliver parts are large_ready's (the
+	# same hand-over: hill_turn_in → HillRequests.turn_in takes both, as before).
+	if not DialogueConditions.hill_ready(&"carter", ctx) and DialogueConditions.large_ready(&"carter", ctx).is_empty():
 		return
 	_wait_until(OSRIC_EVENING)
 	_leave_room()

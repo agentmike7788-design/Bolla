@@ -17,9 +17,11 @@ extends Phase8Bot
 ## - Brenneisen at the gate: his dialogue (answers, the offers panel – Stranger.sell as the panel does –, the bribe, the
 ##   case, K5), the soil at a fresh grave for the trader;
 ## - the fourth row (Fenner's dialogue set_flag:linden_row4_granted, the stump and the bramble cleared).
-## Workaround recorded as a finding (`notes9`): a corpse carried to its open grave while its pocket letter is in the bag
-## turns the grave's [E] into „Brief mit ins Grab legen" (GravePlot._bury_letter_uid wins over „Bestatten") – a strategy
-## that wants to hand the letter over puts it into the hut chest first and takes it back after the burial.
+## W3 QA-Fix (QA9-01 … QA9-04): where a place offers a choice (&"action_choice": the stove, the forge, the open grave
+## with the sender's letter, a grave with Phase-9 work and care) the bot answers it like the panel's button –
+## target.request_action(id) on EventBus.ui_panel_requested (as request_marker for the marker choice): at the open grave
+## „Bestatten" unless the letter shall go into the grave, at a grave the action it came for (else the order of the
+## one-press grave: coins / closing, the date, the care, the letters), at the stove the letter it chose.
 ## Coin ledger: Phase 8 + income "hill_request" / "large_request" (Bitte: …), "errand" (Botenlohn), "stranger_sale",
 ## "stranger_answer"; spending reason post (Postgeld).
 
@@ -108,7 +110,10 @@ var _door_day: int = -1
 var _veit_day: int = -1
 var _johann_day: int = -1
 var _listened9: int = -1
-var _stashed: Dictionary = {}
+## The option the next &"action_choice" shall take (&"" = the default of _pick_choice).
+var _want_choice: StringName = &""
+## Choices answered (option id → count).
+var choices9: Dictionary = {}
 var _knock_day: int = -1
 ## Purse + wage tin when the bot started (the v7 end states hold Jakob's tin already).
 var start_total: int = -1
@@ -150,6 +155,7 @@ func watch() -> void:
 	EventBus.letter_changed.connect(_on_letter)
 	EventBus.hill_request_changed.connect(_on_hill9)
 	EventBus.relationship_changed.connect(_on_rel9)
+	EventBus.ui_panel_requested.connect(_on_choice_panel)
 	_watching9 = true
 
 
@@ -160,6 +166,7 @@ func unwatch() -> void:
 		EventBus.letter_changed.disconnect(_on_letter)
 		EventBus.hill_request_changed.disconnect(_on_hill9)
 		EventBus.relationship_changed.disconnect(_on_rel9)
+		EventBus.ui_panel_requested.disconnect(_on_choice_panel)
 		_watching9 = false
 
 
@@ -474,12 +481,14 @@ func _p9_graves() -> void:
 			_walk(2)
 			player.global_position = plot.global_position + Vector3(0.0, 0.0, 1.4)
 			var prompt := plot.get_interaction_prompt(player)
-			if prompt != plot.phase9_prompt(action):
-				# Another care action of the bag comes first at this grave (seedlings, a candle) – the call its prompt makes.
-				_standin("grave prompt shadowed (%s)" % prompt.get_slice(" (", 0))
+			if prompt != plot.phase9_prompt(action) and not plot.grave_actions(player).has(action):
+				# QA9-04 fixed: every Phase-9 action is in the grave's choice – this would be a new finding.
+				problems.append("day %d: %s hidden at %s (%s)" % [TimeManager.day, action, g.id, prompt])
 				_grave_call(action, g.id, uid_read, uid_lay)
 			else:
+				_want_choice = action
 				plot.interact(player)
+				_want_choice = &""
 			UIState.clear()
 			_t9("grave %s: %s" % [g.id, prompt])
 			uid_read = letters.first_for(LetterRules.CHOICE_READ_GRAVE, inv(), {"grave_id": g.id})
@@ -526,13 +535,10 @@ func _burn(uid: String) -> void:
 	_to_room(&"")
 	if door.can_interact(player):
 		HutPortal.arrive(player, interior.spawn_transform(), true)
-	if stove.burnable_letter(player) == uid:
-		stove.interact(player)
-	else:
-		# The stove's [E] burns the first burnable letter of the bag, not this one (finding QA9) – the card's choice.
-		_note("stove [E] burns %s first, not %s" % [stove.burnable_letter(player), uid])
-		_standin("stove picks the first letter")
-		letters.decide(uid, LetterRules.CHOICE_BURN, {"inventory": inv(), "place": Stove.PLACE})
+	# QA9-03 fixed: [E] opens the choice at the stove, the bot picks this letter.
+	_want_choice = StringName(LetterBurning.PREFIX + uid)
+	stove.interact(player)
+	_want_choice = &""
 	UIState.clear()
 	_t9("letter %s burned (%s)" % [letters.letter(uid).id if letters.letter(uid) != null else uid, letters.state(uid)])
 	_leave_hut()
@@ -575,37 +581,46 @@ func _letter_want(uid: String) -> StringName:
 	return &""
 
 
-## The pocket letter of the carried dead goes into the hut chest before the burial (else the grave's [E] lays it in).
-func _bury6(record: CorpseRecord, table: MorgueTable) -> void:
-	if p9_open():
-		_stash_letters_of(record)
-	await super._bury6(record, table)
-	_unstash()
-
-
-func _stash_letters_of(record: CorpseRecord) -> void:
-	var chest := _hut_chest()
-	if chest == null:
+## The panel's button for the bot: the wanted option, else _pick_choice's default (QA9-02: at the open grave
+## „Bestatten“, with the letter only when the strategy wants it in the grave).
+func _on_choice_panel(id: StringName, ctx: Dictionary) -> void:
+	if id != ActionChoicePanel.PANEL:
 		return
-	for uid: String in letters.open_uids():
-		if letters.corpse_of(uid) != record.id or not inv().has_uid(uid):
-			continue
-		if _letter_want(uid) == LetterRules.CHOICE_BURY:
-			continue
-		var item := inv().uid_item(uid)
-		if chest.add_unique(item, uid):
-			inv().remove_uid(uid)
-			_stashed[uid] = item
-			_note("burial of %s: its letter %s into the hut chest first (the grave's [E] would lay it in)" % [record.id,
-					letters.letter(uid).id if letters.letter(uid) != null else uid])
+	var target: Variant = ctx.get("target")
+	var pick := _pick_choice(ctx)
+	if pick == &"" or not is_instance_valid(target):
+		problems.append("day %d: no pick in the choice %s" % [TimeManager.day, ctx.get("title", "")])
+		return
+	choices9[String(pick).get_slice(":", 0)] = int(choices9.get(String(pick).get_slice(":", 0), 0)) + 1
+	(target as Object).call(ActionChoicePanel.DEFAULT_METHOD, pick)
 
 
-func _unstash() -> void:
-	var chest := _hut_chest()
-	for uid: String in _stashed.keys():
-		if chest != null and chest.has_uid(uid) and inv().add_unique(StringName(_stashed[uid]), uid):
-			chest.remove_uid(uid)
-		_stashed.erase(uid)
+func _pick_choice(ctx: Dictionary) -> StringName:
+	var ids: Array[StringName] = []
+	for o: Dictionary in ctx.get("options", []):
+		if str(o.get("reason", "")) == "":
+			ids.append(StringName(str(o.id)))
+	if _want_choice != &"" and ids.has(_want_choice):
+		return _want_choice
+	var target: Variant = ctx.get("target")
+	if ids.has(GravePlot.OPTION_BURY):
+		var plot := target as GravePlot
+		var uid := plot._bury_letter_uid(player) if plot != null else ""
+		if uid != "" and _letter_want(uid) == LetterRules.CHOICE_BURY and ids.has(GravePlot.P9_BURY_LETTER):
+			return GravePlot.P9_BURY_LETTER
+		return GravePlot.OPTION_BURY
+	if target is Stove:
+		return Stove.OPTION_WARM
+	# A grave: the order of the one-press grave (coins / closing, the date, the care, the letters last).
+	for c: StringName in GravePlot.P9_DATE_AFTER:
+		if ids.has(c):
+			return c
+	if ids.has(GravePlot.P9_DATE) and bool(flags.chain):
+		return GravePlot.P9_DATE
+	for c: StringName in ids:
+		if not c in GravePlot.P9_ORDER:
+			return c
+	return ids[0] if not ids.is_empty() else &""
 
 
 ## Fenner's grant: the stump and the bramble of the fourth row cleared.
@@ -1022,9 +1037,9 @@ func _score9(c: DialogueChoice, visited: Dictionary) -> int:
 			"large_turn_in":
 				best = maxi(best, 100)
 			"hill_turn_in":
-				# HillRequests.ready_for counts the large requests' deliver parts too – the dialogue's large line
-				# (!hill_ready) never shows then; the small line hands both over (finding QA9).
-				if flags.large and not hill.ready_for(arg, inv()).is_empty():
+				# W3 QA-Fix QA9-05: the small line shows for small requests only; the large one has its own line
+				# (large_turn_in above). Both hand over through HillRequests.turn_in.
+				if flags.large and not hill.small_ready_for(arg, inv()).is_empty():
 					best = maxi(best, 100)
 			"stranger_answer":
 				if String(arg) == String(flags.answer_kind):

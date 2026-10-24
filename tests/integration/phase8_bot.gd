@@ -643,7 +643,7 @@ func _keep_wish(kind: StringName, grave_id: String) -> void:
 				_care(plot, GravePlot.CARE_CANDLE)
 		&"line":
 			if not inv().has(&"ink"):
-				_craft5(&"workbench", &"ink")
+				_craft(world.get_node_by_layout_id("workbench") as Workbench, &"ink")
 			_care(plot, GravePlot.CARE_LINE)
 		&"vase":
 			if GraveView.has_vase(grave_id, tree):
@@ -895,8 +895,11 @@ func _copy_extract() -> void:
 	var desk := world.find_child("desk", true, false) as Desk
 	if desk == null or desk.extract_wanted_by(player) == "" or not _time_left():
 		return
-	if not inv().has(&"ink") and not _craft5(&"workbench", &"ink"):
-		return
+	# W3 QA-Fix QA9-09: the ink at the hill's workbench (Phase 3's _craft) – there is no station „workbench" for _craft5.
+	if not inv().has(&"ink"):
+		_to_room(&"")
+		if not _craft(world.get_node_by_layout_id("workbench") as Workbench, &"ink"):
+			return
 	var door := world.get_node_by_layout_id("hut_door") as HutDoor
 	var interior := tree.get_first_node_in_group(HutInterior.HUT_GROUP) as HutInterior
 	_to_room(&"")

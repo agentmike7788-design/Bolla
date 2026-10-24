@@ -435,6 +435,8 @@ func post_block_reason(uid: String, carrier: StringName, inv: Inventory) -> Stri
 			var o := _order(uid)
 			if state(uid) != STATE_CARRIED:
 				return LetterRules.TEXT_DECIDED
+			if errand_late(uid):
+				return LetterRules.TEXT_ERRAND_LATE
 			if o == null or not (o.conditions.get("carriers", []) as Array).has(String(carrier)):
 				return LetterRules.TEXT_NOT_POSTED
 		_:
@@ -481,13 +483,23 @@ func errand_letter(order_id: StringName, inv: Inventory) -> String:
 ## for paying yourself then.
 func ask_postage(uid: String, inv: Inventory) -> bool:
 	var o := _order(uid)
-	if o == null or _records[uid].get("asked", false) == true or state(uid) != STATE_CARRIED:
+	if o == null or _records[uid].get("asked", false) == true or state(uid) != STATE_CARRIED or errand_late(uid):
 		return false
 	var item := StringName(str(o.conditions.get("or_pay", "")))
 	if item == &"" or inv == null or inv.add_item(item, 1) > 0:
 		return false
 	_records[uid]["asked"] = true
 	return true
+
+
+## W3 QA-Fix QA9-08: the order of errand letter `uid` was missed (Orders failed) – it is not posted or handed over any
+## more (post_block_reason / the card's deliver dimmed with LetterRules.TEXT_ERRAND_LATE). The letter stays readable.
+func errand_late(uid: String) -> bool:
+	if not _records.has(uid) or _kind(uid) != KIND_ERRAND:
+		return false
+	var orders := _first(&"orders")
+	var id := StringName(str(_records[uid].get("order", "")))
+	return orders != null and id != &"" and orders.has_method(&"state") and StringName(str(orders.call(&"state", id))) == &"failed"
 
 
 ## The errand letter of `order_id` in the hand ("" = none).
@@ -688,6 +700,7 @@ func _facts(uid: String, context: Dictionary) -> Dictionary:
 	ctx["opened"] = is_opened(uid)
 	ctx["answered"] = _records[uid].get("answered", false) == true
 	ctx["kind"] = _kind(uid)
+	ctx["errand_late"] = errand_late(uid)
 	ctx["has_ink"] = inv != null and inv.has(_cfg().answer_item)
 	var record := _corpse(corpse_of(uid))
 	ctx["kin"] = _kin_of(record)

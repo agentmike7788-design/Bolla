@@ -129,9 +129,11 @@ def lantern_child(fist: Vector, swing: float = 30.0, sx: int = 1, scale: float =
     return lan
 
 
-def stubble(skull, c: Vector, s: Vector, color, amount: float = 0.5) -> None:
+def stubble(skull, c: Vector, s: Vector, color, amount: float = 0.5, speck: float = 0.25, lip: float = 0.7) -> None:
     """Painted stubble on the skull (lib_faces head): jaw, chin and upper lip greyed with a fine speckle -
-    no shell (a shell's rim reads as a chin strap from close up)."""
+    no shell (a shell's rim reads as a chin strap from close up). Phase 9 W3 QA-Fix (A9-5): `speck` (the noise share;
+    the head's vertex colours are too coarse for a speckle – from close up it reads as dirt) and `lip` (the upper lip's
+    weight) as parameters; the defaults reproduce the earlier figures byte-identically."""
     def fn(co, nr):
         d = co - c
         n = Vector((d.x / s.x, d.y / s.y, d.z / s.z))
@@ -139,9 +141,9 @@ def stubble(skull, c: Vector, s: Vector, color, amount: float = 0.5) -> None:
             return 1.0, None, 0.0
         w = _s01((-n.z - 0.12) / 0.4) * _s01((0.4 - n.y) / 0.5)
         if n.z > -0.42 and n.z < -0.2 and abs(n.x) < 0.25 and n.y < -0.5:   # the upper lip
-            w = max(w, 0.7)
-        speck = 0.75 + 0.25 * noise.noise(co * 90.0)
-        return 1.0, color, amount * w * speck
+            w = max(w, lip)
+        sp = 1.0 - speck + speck * noise.noise(co * 90.0)
+        return 1.0, color, amount * w * sp
     _tint(skull, fn)
 
 
@@ -528,10 +530,16 @@ MEN = {
         seed=8401, kind="coat", hip=0.86, waist=0.94, tall=0.95, bent=1.0, skin=SKIN_OLD,
         hair=L.hexc("#CFC9BE"), hair_dark=L.hexc("#9A948A"),
         coat=L.hexc("#4A443E"), coat_dark=L.hexc("#332F2B"), trouser=L.hexc("#3A3632"), neck=L.hexc("#6A6458"),
-        hat=L.hexc("#3A342E"), hat_dark=L.hexc("#26221E"), brim=0.085, crown_h=0.085, slouch=0.05, bouquet=None,
+        # A9-5: the slouch hat narrower and drooping less (brim 0.085 → 0.07, slouch 0.05 → 0.02) – its shadow lay
+        # over the face.
+        hat=L.hexc("#3A342E"), hat_dark=L.hexc("#26221E"), brim=0.07, crown_h=0.085, slouch=0.02, bouquet=None,
         stick=True, beard=L.hexc("#6A665F"),   # W3 (G8): grey on the pale skin, else unseen
+        # Phase 9 W3 QA-Fix (A9-5, qa_g9.md: „von nah fleckig, wirkt schmutzig"): the stubble lighter and even (no
+        # speckle on the coarse vertex colours), less of it on the lip; the cheeks less hollow (age 0.75 → 0.55 – the
+        # hollows under the slouch brim's shadow read as dark blotches). lib_faces itself unchanged.
+        beard_cfg=dict(color=L.hexc("#8E8981"), amount=0.55, speck=0.0, lip=0.45),
         face=dict(nose="hook", nose_s=1.1, brow_w=1.2, brow_tilt=0.45, brow_arch=0.8, mouth="kind", smile=0.25,
-                  cheeks=0.35, jaw=0.88, chin=0.04, age=0.75, lids=0.3, iris=IRIS_GREY, muzzle=0.9)),
+                  cheeks=0.35, jaw=0.88, chin=0.04, age=0.55, lids=0.3, iris=IRIS_GREY, muzzle=0.9)),
     # Phase 9 W3 („Restbedarf“ 4, docs/PHASE9_DESIGN.md §2.2.7 Ende C, §12.4 Prio B): the night watchman Fenner sets
     # before the Siebers' door – a man of about fifty in a long dark-blue woollen coat, a scarf, a round wool cap with
     # a short leather peak (child `cap`), his stick in the left hand, the lantern in the right (child `watch_lantern`,
@@ -680,7 +688,10 @@ def _man(name: str, cfg: dict):
     face = pts["face"]
     _hair(parts, face, cfg["hair"], cfg["hair_dark"], [(0.0, 0.5), (0.5, 0.44), (1.0, 0.18), (1.3, -0.08), (1.7, -0.22),
                                                        (math.pi, -0.42)], out=0.006, crown=0.004, tuft=0.005, seed=31)
-    if cfg["beard"] is not None:   # white stubble round the jaw
+    if cfg.get("beard_cfg") is not None:   # A9-5: Johann's lighter, even stubble
+        b = cfg["beard_cfg"]
+        stubble(parts[i0], c, s, b["color"], b["amount"], speck=b["speck"], lip=b["lip"])
+    elif cfg["beard"] is not None:   # white stubble round the jaw
         stubble(parts[i0], c, s, cfg["beard"], 1.0)
     mesh = L.join(parts, rig.MESH)
     _global_light(mesh, top + 0.36)

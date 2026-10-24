@@ -217,23 +217,47 @@ func test_three_deliveries_carry_l1_to_l3_and_every_choice() -> void:
 	assert_true(letters.decide(l2, &"deliver", {"inventory": inv, "carrier": &"peddler"}))
 	assert_eq(letters.state(l2), &"posted")
 	var p0 := piety.value()
-	assert_eq(stove.get_interaction_prompt(player), Stove.PROMPT_BURN % 2)
+	assert_eq(stove.get_interaction_prompt(player), Stove.PROMPT_CHOICE)
 	stove.interact(player)
+	stove.request_action(StringName(LetterBurning.PREFIX + l3))
 	assert_eq(letters.state(l3), &"burned")
 	assert_eq(piety.value() - p0, 1, "„Ungelesen verbrennen“: +1")
 	assert_eq([letters.decided_count(), letters.delivered_count(), GameState.get_stat(&"letters_decided")], [3, 2, 3])
 
 
-func test_stove_burns_the_first_letter_and_warms_otherwise() -> void:
+## W3 QA-Fix QA9-03: [E] at the stove never burns at once – it opens the choice (warming first, then one row per letter
+## that may burn here); only the chosen letter burns, warming stays possible.
+func test_stove_burns_only_the_chosen_letter_and_still_warms() -> void:
 	var inv := player.inventory
-	var r := _deliver_and_examine(OPEN_DAY)
-	var uid := _uid_of(r)
-	assert_true(inv.has_uid(uid))
-	var p0 := piety.value()
-	assert_eq(stove.get_interaction_prompt(player), Stove.PROMPT_BURN % 2)
+	var r1 := _deliver_and_examine(OPEN_DAY)
+	var r2 := _deliver_and_examine(OPEN_DAY + 1)
+	var first := _uid_of(r1)
+	var second := _uid_of(r2)
+	assert_true(inv.has_uid(first) and inv.has_uid(second))
+	var panels: Array = []
+	var on_panel := func(id: StringName, ctx: Dictionary) -> void: panels.append([id, ctx])
+	EventBus.ui_panel_requested.connect(on_panel)
+	assert_eq(stove.get_interaction_prompt(player), Stove.PROMPT_CHOICE, "the prompt names both")
 	stove.interact(player)
-	assert_eq(letters.state(uid), &"burned")
-	assert_eq(piety.value() - p0, -1, "L1 did not ask for it")
+	EventBus.ui_panel_requested.disconnect(on_panel)
+	assert_eq(letters.state(first), &"found", "[E] alone burns nothing")
+	assert_eq(panels.size(), 1, "the choice opens")
+	if panels.size() == 1:
+		assert_eq(panels[0][0], LetterBurning.PANEL)
+		var ids: Array = (panels[0][1].options as Array).map(func(o: Dictionary) -> StringName: return o.id)
+		assert_eq(ids, [Stove.OPTION_WARM, StringName(LetterBurning.PREFIX + first), StringName(LetterBurning.PREFIX + second)],
+				"warming first, then each letter")
+	stove.request_action(Stove.OPTION_WARM)
+	assert_has(notes, Stove.TEXT_WARM, "warming is still there")
+	assert_eq(letters.state(first), &"found")
+	var p0 := piety.value()
+	stove.interact(player)
+	stove.request_action(StringName(LetterBurning.PREFIX + second))
+	assert_eq([letters.state(first), letters.state(second)], [&"found", &"burned"], "the chosen one, not the first")
+	assert_eq(piety.value() - p0, -1, "L2 did not ask for it")
+	assert_true(inv.has_uid(first))
+	stove.interact(player)
+	stove.request_action(StringName(LetterBurning.PREFIX + first))
 	assert_eq(stove.get_interaction_prompt(player), Stove.PROMPT_WARM, "nothing left to burn")
 	assert_has(notes, Letters.TEXT_BURNED)
 
@@ -295,13 +319,55 @@ func test_lay_the_letter_into_the_open_grave_of_its_sender() -> void:
 	var plot := _plot(grave)
 	assert_eq(plot.get_interaction_prompt(player), GravePlot.PROMPT_FETCH, "empty hands: fetch the dead")
 	assert_true(corpses.pick_up(r.id, player))
-	assert_eq(plot.get_interaction_prompt(player), GravePlot.PROMPT_BURY_LETTER % 2, "first the letter")
+	# W3 QA-Fix QA9-02: „Bestatten" stays the main action; the letter goes with the dead only when chosen.
+	assert_eq(plot.get_interaction_prompt(player), GravePlot.PROMPT_BURY_CHOICE % GravePlot._bury_minutes(player),
+			"[E] Bestatten … (the choice)")
+	var ctx := plot.bury_choice_context(player)
+	assert_eq((ctx.options as Array).map(func(o: Dictionary) -> StringName: return o.id),
+			[GravePlot.OPTION_BURY, GravePlot.P9_BURY_LETTER], "„Bestatten“ first")
 	var p0 := piety.value()
 	plot.interact(player)
+	assert_eq(letters.state(uid), &"found", "[E] alone decides nothing")
+	plot.request_action(GravePlot.P9_BURY_LETTER)
 	assert_eq(letters.state(uid), &"buried")
 	assert_false(inv.has_uid(uid))
-	assert_eq([piety.value() - p0, letters.ghost_bonus(grave)], [1, 1], "Pietät +1, Geist +1 for good")
-	assert_true(plot.get_interaction_prompt(player).begins_with("[E] Bestatten"), "then the burial as before")
+	# the burial itself (no shroud …) counts as always – the letter adds its +1
+	var delta := piety.value() - p0
+	var burial := _plain_burial_piety(_deliver_and_examine(OPEN_DAY + 1, false))
+	assert_eq([delta - burial, letters.ghost_bonus(grave)], [1, 1], "Pietät +1, Geist +1 for good")
+	assert_eq(graveyard.get_grave(grave).state, GraveRecord.State.FILLED, "buried in the same work")
+	assert_eq(graveyard.get_grave(grave).corpse_id, r.id)
+
+
+## The piety a plain burial of `r` brings (its letter stays in the bag) – measured on the next free plot.
+func _plain_burial_piety(r: CorpseRecord) -> int:
+	var grave := _free_plot()
+	graveyard.dig(grave)
+	if player.carried_id != "":
+		return 0
+	var p0 := piety.value()
+	if not corpses.pick_up(r.id, player):
+		return 0
+	var plot := _plot(grave)
+	plot.interact(player)
+	plot.request_action(GravePlot.OPTION_BURY)
+	return piety.value() - p0
+
+
+## QA9-02: „Bestatten" in the choice buries the dead and keeps the letter in the bag (to be handed over later).
+func test_bury_without_the_letter_keeps_it() -> void:
+	var inv := player.inventory
+	var r := _deliver_and_examine(OPEN_DAY, false)
+	var uid := _uid_of(r)
+	var grave := _free_plot()
+	graveyard.dig(grave)
+	var plot := _plot(grave)
+	assert_true(corpses.pick_up(r.id, player))
+	plot.interact(player)
+	plot.request_action(GravePlot.OPTION_BURY)
+	assert_eq(graveyard.get_grave(grave).state, GraveRecord.State.FILLED, "buried")
+	assert_eq(letters.state(uid), &"found", "the letter stays open")
+	assert_true(inv.has_uid(uid), "and in the bag")
 
 
 func test_errands_both_decisions() -> void:
@@ -336,6 +402,32 @@ func test_errands_both_decisions() -> void:
 	assert_true(letters.decide(e2b, &"read", {"inventory": inv}))
 	assert_eq(rel.value(&"mayor") - fenner, -3)
 	assert_true(letters.decide(e2b, &"deliver", {"inventory": inv, "npc": &"priest"}))
+
+
+## W3 QA-Fix QA9-08: an errand letter whose order was missed is not posted (nor handed over) any more – with a reason.
+func test_errand_letter_after_the_missed_order_stays() -> void:
+	var inv := player.inventory
+	var table: Dictionary[StringName, OrderData] = {}
+	for id: StringName in Phase9Fixtures.ORDER_IDS:
+		table[id] = Phase9Fixtures.order(id)
+	orders.order_table = table
+	orders.offer(&"oq_gesa_brother")
+	orders.accept(&"oq_gesa_brother")
+	inv.add_item(&"coin", 3)
+	var e1 := letters.errand_letter(&"oq_gesa_brother", inv)
+	assert_eq(letters.post_block_reason(e1, &"peddler", inv), "", "in time: it can go")
+	orders.fail(&"oq_gesa_brother")
+	assert_eq(orders.state(&"oq_gesa_brother"), &"failed")
+	assert_true(letters.errand_late(e1))
+	assert_eq(letters.post_block_reason(e1, &"peddler", inv), LetterRules.TEXT_ERRAND_LATE, "too late for the post")
+	assert_false(letters.give_to_carrier(e1, &"peddler", inv))
+	assert_false(letters.postable(&"carter", inv).has(e1), "Osric's „Nimmst du den mit?“ does not show it")
+	assert_false(letters.ask_postage(e1, inv), "no straw flowers for a missed errand")
+	assert_eq(inv.count(&"coin"), 3, "no postage paid")
+	for c: Dictionary in letters.choices(e1, {"inventory": inv, "carrier": &"peddler"}):
+		if c.id == LetterRules.CHOICE_DELIVER:
+			assert_eq(c.reason, LetterRules.TEXT_ERRAND_LATE, "the card names why")
+	assert_true(inv.has_uid(e1), "the letter stays in the bag (readable)")
 
 
 func test_chain_prompts_of_p4_at_the_desk_and_the_grave() -> void:
@@ -377,6 +469,77 @@ func test_the_held_back_plot_of_the_fourth_row() -> void:
 	who.held = 1
 	TimeManager.set_time(OPEN_DAY + 1, 470)
 	assert_not_null(corpses.try_daily_delivery(OPEN_DAY + 1), "one held back, the others take the day's dead")
+
+
+## W3 QA-Fix QA9-01: the forge's [E] stays the forge with a letter in the bag – ForgeLetter takes no focus; the
+## crafting panel's „Brief verbrennen …" opens the choice and only the chosen letter burns there.
+func test_forge_stays_the_forge_and_burns_only_the_chosen_letter() -> void:
+	var inv := player.inventory
+	var r1 := _deliver_and_examine(OPEN_DAY)
+	var r2 := _deliver_and_examine(OPEN_DAY + 1)
+	var first := _uid_of(r1)
+	var second := _uid_of(r2)
+	var station := world.get_node("Entities/station_forge") as Workbench
+	var fl := station.get_node("ForgeLetter") as ForgeLetter
+	var shop := tree.get_first_node_in_group(&"workshop") as Workshop
+	shop._built.append(&"forge")
+	station.refresh_built()
+	assert_true(fl.forge_ready(), "the forge stands")
+	assert_null(fl.get_node_or_null("Interactable"), "no prompt of its own")
+	assert_eq(fl.get_interaction_prompt(player), "")
+	var station_prompt := station.get_interaction_prompt(player)
+	assert_false(station_prompt.contains("Brief"), "[E] at the forge stays the forge: %s" % station_prompt)
+	var panels: Array = []
+	var on_panel := func(id: StringName, ctx: Dictionary) -> void: panels.append([id, ctx])
+	EventBus.ui_panel_requested.connect(on_panel)
+	station.interact(player)
+	assert_eq(panels.size(), 1)
+	if panels.size() == 1:
+		assert_eq(panels[0][0], &"crafting", "the forge's own panel")
+	assert_eq([letters.state(first), letters.state(second)], [&"found", &"found"], "nothing burned by [E]")
+	assert_true(fl.can_burn(player), "the crafting panel offers „Brief verbrennen …“")
+	assert_true(fl.open_choice(player))
+	EventBus.ui_panel_requested.disconnect(on_panel)
+	assert_eq(panels.size(), 2)
+	if panels.size() == 2:
+		assert_eq(panels[1][0], LetterBurning.PANEL)
+		var ids: Array = (panels[1][1].options as Array).map(func(o: Dictionary) -> StringName: return o.id)
+		assert_eq(ids, [StringName(LetterBurning.PREFIX + first), StringName(LetterBurning.PREFIX + second)])
+	UIState.clear()
+	fl.request_action(StringName(LetterBurning.PREFIX + second))
+	assert_eq([letters.state(first), letters.state(second)], [&"found", &"burned"], "the chosen letter only")
+	assert_true(inv.has_uid(first))
+
+
+## W3 QA-Fix QA9-04: at a grave with a letter to read aloud *and* seedlings / a candle in the bag every action is
+## reachable – the choice lists the letter first, then the care; Phase-8 graves without Phase-9 work stay one press.
+func test_grave_choice_reaches_the_letter_and_the_care() -> void:
+	var inv := player.inventory
+	var marthe := corpses.spawn_corpse(StoryDirector.make_record(Database.story_corpse(&"s1_quendel") as StoryCorpseData, 11))
+	var grave := _bury(marthe)
+	letters.apply_morning(OPEN_DAY + 3)
+	var post := letters.post_today(OPEN_DAY + 3)
+	assert_eq(post.size(), 1)
+	var plot := _plot(grave)
+	TimeManager.set_time(OPEN_DAY + 3, 17 * 60)
+	inv.add_item(&"flower_seedlings", 1)
+	inv.add_item(&"grave_candle", 1)
+	var actions := plot.grave_actions(player)
+	assert_eq(actions[0], GravePlot.P9_READ, "the letter first: %s" % [actions])
+	assert_true(GravePlot.CARE_PLANT in actions, "the flowers reachable")
+	var prompt := plot.get_interaction_prompt(player)
+	assert_true(prompt.begins_with("[E] Am Grab: Brief am Grab vorlesen"), prompt)
+	plot.interact(player)
+	assert_eq(letters.state(post[0]), &"received", "[E] opens the choice")
+	plot.request_action(GravePlot.CARE_PLANT)
+	var care := tree.get_first_node_in_group(&"grave_care") as GraveCare
+	assert_ne(care.flowers_state(grave), &"", "the flowers set")
+	assert_eq(letters.state(post[0]), &"received", "the letter still there")
+	plot.request_action(GravePlot.P9_READ)
+	assert_eq(letters.state(post[0]), &"read_grave", "then read aloud")
+	# no Phase-9 work left: the grave is one press as before (care order)
+	assert_eq(plot.grave_actions(player), [] as Array[StringName])
+	assert_false(plot.get_interaction_prompt(player).begins_with("[E] Am Grab:"))
 
 
 func test_without_the_phase9_nodes_the_prompts_stay() -> void:

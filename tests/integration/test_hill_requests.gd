@@ -516,7 +516,17 @@ func test_large_craft_at_the_workbench_and_osric_takes_it() -> void:
 	assert_eq(hill.parts_done(&"hrl_crosses"), [true, false] as Array[bool], "craft_finished from the workbench")
 	assert_has(notes, "Drei Kreuze für den Hohlweg: 1 von 2")
 	var ctx := {"inventory": player.inventory, "speaker": null}
-	assert_true(DialogueConditions.hill_ready(&"carter", ctx), "carter.tres: hill_ready:carter sees the large delivery")
+	# W3 QA-Fix QA9-05: the large delivery is large_ready's („für die große Bitte"), not hill_ready's.
+	assert_false(DialogueConditions.hill_ready(&"carter", ctx), "carter.tres: hill_ready:carter only the small ones")
+	assert_eq(DialogueConditions.large_ready(&"carter", ctx), [&"hrl_crosses"] as Array[StringName], "large_ready:carter")
+	var lines := {}
+	var carter := load("res://data/dialogue/carter.tres") as DialogueData
+	for n: DialogueNode in carter.nodes:
+		for c: DialogueChoice in n.choices:
+			if c.text.begins_with("[Bitte]"):
+				lines[c.text] = DialogueConditions.all_met(c.conditions, ctx)
+	assert_eq(lines, {"[Bitte] Das hier ist für die große Bitte.": true, "[Bitte] Das hier ist für die Leute unten.": false},
+			"Osric's line for the large request shows, the small one not")
 	var coins := _coins()
 	var rep := _rep()
 	DialogueActions.apply("hill_turn_in:carter", ctx)

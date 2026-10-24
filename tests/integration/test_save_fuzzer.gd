@@ -1523,12 +1523,10 @@ func _check_phase9(world: WorldRoot, what: String) -> void:
 				assert_ne(e, &"", "%s: %s settled with an ending" % [what, q.id])
 			if step != &"":
 				assert_not_null(QuestRules.step(q, step), "%s: %s step %s known" % [what, q.id, step])
-	# W3 finding QA9-F1 (qa_g9.md, for the owner P6/P3): a damaged save with sieber_gone and a D3 record loads as it is –
-	# reported, not asserted, until the owner decides which side wins.
+	# W3 QA-Fix QA9-F1: a damaged save with sieber_gone and a D3 record – the record wins (WhoKnows.post_load).
 	if GameState.flag_on(WhoKnows.FLAG_GONE):
 		for r: CorpseRecord in world.corpse_manager.records():
-			if r.story_id == WhoKnows.D3_STORY:
-				print("FUZZ FINDING QA9-F1 %s: D3 Johann Sieber (%s) loaded while sieber_gone" % [what, r.id])
+			assert_ne(r.story_id, WhoKnows.D3_STORY, "%s: no D3 Johann Sieber (%s) while sieber_gone" % [what, r.id])
 	var letters := world.get_node_or_null("Systems/Letters") as Letters
 	if letters != null:
 		var by_letter := {}
@@ -1671,19 +1669,15 @@ func test_fuzz_v8_real_mid_phase9_save() -> void:
 			bad = "<erased>"
 		else:
 			_set_path(st, path, bad)
-		# W3 finding QA9-F2 (qa_g9.md, owner P2): a non-bool flag in hill_requests.parts.<id>[n] stops
-		# HillRequests._load_large with „Invalid operands 'int' and 'bool'" (line `flags[i] == true`) – half loaded, not
-		# stable after save → load. Reported, skipped here until the owner fixes it.
-		if path.size() == 5 and str(path[1]) == "hill_requests" and str(path[2]) == "parts" and not (bad is bool or str(bad) == "<erased>"):
-			print("FUZZ FINDING QA9-F2 p9 real native %s = %s skipped (HillRequests._load_large int == bool)" % [_path_text(path), str(bad)])
-			continue
+		# W3 QA-Fix QA9-F2 (qa_g9.md): a non-bool flag in hill_requests.parts.<id>[n] loads as „not done" now (was a
+		# script error in HillRequests._load_large) – fuzzed like every other path.
 		var d: Dictionary = doc.duplicate(true)
 		d.data = JSON.from_native(st)
 		await _load_doc(d, "p9 real native %s = %s" % [_path_text(path), str(bad)])
 	var large_ids: Array[String] = []
 	for r: Variant in Database.large_requests():
 		large_ids.append(String((r as OrderData).id))
-	for case: int in 14:
+	for case: int in 15:
 		var st := state.duplicate(true)
 		var what := ""
 		var nodes: Dictionary = st.nodes
@@ -1787,6 +1781,15 @@ func test_fuzz_v8_real_mid_phase9_save() -> void:
 				q["pinned"] = "hrl_atlantis"
 				q["notes"] = {"date_grave": "e_ott", "kladde_read": [1, 2, 3]}
 				what = "kin_interval of the wrong type, an unknown pin, notes garbage"
+			14:
+				# W3 QA-Fix QA9-F2: non-bool part flags load as „not done" (was a script error, half loaded).
+				var parts: Dictionary = hr.get("parts", {}) if hr.get("parts") is Dictionary else {}
+				for id: Variant in parts.keys():
+					parts[id] = [1, "true", null, 0.5]
+				if parts.is_empty():
+					parts[large_ids[0]] = [1, "x"]
+				hr["parts"] = parts
+				what = "part flags of the wrong type (int, string, null, float)"
 		if not recs.is_empty():
 			lt["records"] = recs
 		if not q.is_empty():

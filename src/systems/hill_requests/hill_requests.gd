@@ -258,11 +258,25 @@ func history() -> Array[Dictionary]:
 ## Accepted deliveries for `giver` (Osric) whose items are in `inv` – Phase 9: also the large requests whose open
 ## deliver part goes to `giver` (Osric, Quast, Lenz …).
 func ready_for(giver: StringName, inv: Inventory) -> Array[StringName]:
+	var out := small_ready_for(giver, inv)
+	out.append_array(large_ready_for(giver, inv))
+	return out
+
+
+## W3 QA-Fix QA9-05: only the small delivery requests of ready_for (the dialogue's hill_ready – Osric's „für die Leute
+## unten"); the large ones are large_ready_for (large_ready – „für die große Bitte").
+func small_ready_for(giver: StringName, inv: Inventory) -> Array[StringName]:
 	var out: Array[StringName] = []
 	for id: StringName in active():
 		var r := request_data(id)
 		if r != null and r.kind == HillRules.KIND_DELIVER and HillRules.recipient(r) == giver and HillRules.deliver_ready(r, inv):
 			out.append(id)
+	return out
+
+
+## The large requests whose open deliver part for `giver` is ready in `inv`.
+func large_ready_for(giver: StringName, inv: Inventory) -> Array[StringName]:
+	var out: Array[StringName] = []
 	for id: StringName in large_active():
 		if _ready_deliver_part(id, giver, inv) >= 0:
 			out.append(id)
@@ -533,7 +547,7 @@ func all_large() -> Array[OrderData]:
 func parts_done(id: StringName) -> Array[bool]:
 	var out: Array[bool] = []
 	for v: Variant in _parts.get(id, []):
-		out.append(v == true)
+		out.append(v is bool and bool(v))
 	return out
 
 
@@ -1599,7 +1613,9 @@ func _load_large(data: Dictionary) -> void:
 			var counts: Array = []
 			var raw_counts: Variant = progress_raw.get(String(id))
 			for i: int in n:
-				done.append(i < (flags as Array).size() and (flags as Array)[i] == true)
+				# W3 QA-Fix QA9-F2: a damaged flag (int, string …) counts as not done – `== true` on an int stopped the load.
+				var f: Variant = (flags as Array)[i] if i < (flags as Array).size() else false
+				done.append(f is bool and bool(f))
 				var c: Variant = (raw_counts as Array)[i] if raw_counts is Array and i < (raw_counts as Array).size() else 0
 				counts.append(maxi(0, int(c)) if (c is int or c is float) else 0)
 			_parts[id] = done

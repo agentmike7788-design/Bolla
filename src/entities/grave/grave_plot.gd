@@ -146,6 +146,19 @@ const ANIM_READ_ALOUD := &"read_aloud_grave"
 const ANIM_TAKE_SOIL := &"take_soil"
 const ANIM_KNEEL := &"kneel_place"
 const ANIM_WATER := &"water"
+## W3 QA-Fix (QA9-02, QA9-04): the choice at the grave (&"action_choice").
+const CHOICE_PANEL := &"action_choice"
+const PROMPT_KEY := "[E] "
+const PROMPT_CHOICE := "[E] Am Grab: %s"
+const CHOICE_PROMPT_MAX := 3
+const TITLE_CHOICE := "Am Grab von %s"
+const TITLE_PLAIN := "Am Grab"
+const PROMPT_BURY_CHOICE := "[E] Bestatten (%d Min) …"
+const OPTION_BURY := &"bury"
+const OPTION_BURY_LABEL := "Bestatten (%d Min)"
+const OPTION_BURY_LETTER_LABEL := "Den Brief mit ins Grab legen und bestatten (%d Min)"
+const LABEL_BURY_WITH_LETTER := "Mit dem Brief bestatten"
+const TEXT_BURY_QUESTION := "Sein Brief ist in deinem Beutel. Soll er mit ins Grab?"
 
 @export var grave_id: String = ""
 @export var is_old: bool = false
@@ -227,9 +240,12 @@ func can_interact(player: Player) -> bool:
 
 func get_interaction_prompt(player: Player) -> String:
 	if _bury_letter_uid(player) != "":
-		return phase9_prompt(P9_BURY_LETTER)
+		return PROMPT_BURY_CHOICE % _bury_minutes(player)
 	if _base_can_interact(player):
 		return _base_prompt(player)
+	var several := grave_actions(player)
+	if several.size() > 1:
+		return choice_prompt(several, player)
 	var care := _care_action(player, true)
 	var p9 := phase9_action(player)
 	if p9 == P9_DATE and _date_first(care):
@@ -245,14 +261,19 @@ func get_interaction_prompt(player: Player) -> String:
 
 
 func interact(player: Player) -> void:
-	var letter_uid := _bury_letter_uid(player)
-	if letter_uid != "":
-		_start_phase9(P9_BURY_LETTER, player, letter_uid)
+	if _bury_letter_uid(player) != "":
+		_player = player
+		EventBus.ui_panel_requested.emit(CHOICE_PANEL, bury_choice_context(player))
 		return
 	if _base_can_interact(player):
 		_base_interact(player)
 		return
 	if player == null or player.is_busy():
+		return
+	var several := grave_actions(player)
+	if several.size() > 1:
+		_player = player
+		EventBus.ui_panel_requested.emit(CHOICE_PANEL, choice_context(several, player))
 		return
 	var care := _care_action(player, true)
 	var p9 := phase9_action(player)
@@ -266,6 +287,102 @@ func interact(player: Player) -> void:
 		_start_phase9(p9, player, _phase9_uid(p9, player))
 
 
+# --- W3 QA-Fix: the choice at the grave (QA9-02, QA9-04) ---------------------------------------------------
+
+## QA9-04: every action that can run at this grave now when a Phase-9 one is among them – coins / closing first, then
+## the Phase-9 work (P9_ORDER), then the other grave care (care_order). [] while no Phase-9 work competes with another
+## action: then the grave is bit-identical to Phase 8 / the W3 „Restbedarf“ (one press, CARE_ORDER).
+func grave_actions(player: Player) -> Array[StringName]:
+	var out: Array[StringName] = []
+	if player == null or player.is_busy():
+		return out
+	var p9 := phase9_actions(player)
+	if p9.is_empty():
+		return out
+	var care: Array[StringName] = []
+	for action: StringName in care_order(player):
+		if _care_state(action, player) == 1:
+			care.append(action)
+	for action: StringName in care:
+		if action in P9_DATE_AFTER:
+			out.append(action)
+	out.append_array(p9)
+	for action: StringName in care:
+		if not action in P9_DATE_AFTER:
+			out.append(action)
+	return out
+
+
+## „[E] Am Grab: Datum vergleichen, Grabblumen setzen" – the first CHOICE_PROMPT_MAX actions, then „…".
+func choice_prompt(actions: Array[StringName], player: Player) -> String:
+	var names := PackedStringArray()
+	for action: StringName in actions.slice(0, CHOICE_PROMPT_MAX):
+		names.append(action_label(action, player).get_slice(" (", 0))
+	return PROMPT_CHOICE % (", ".join(names) + (" …" if actions.size() > CHOICE_PROMPT_MAX else ""))
+
+
+## The prompt of one action without „[E] " (the row of the choice).
+func action_label(action: StringName, player: Player) -> String:
+	var text := phase9_prompt(action) if action in P9_ORDER else care_prompt(action, player)
+	return text.trim_prefix(PROMPT_KEY)
+
+
+func choice_context(actions: Array[StringName], player: Player) -> Dictionary:
+	var options: Array[Dictionary] = []
+	for action: StringName in actions:
+		options.append({"id": action, "label": action_label(action, player)})
+	var grave := _grave()
+	return {"title": TITLE_CHOICE % _buried_name(grave) if grave != null else TITLE_PLAIN, "options": options,
+			"target": self, "player": player}
+
+
+## QA9-02: carrying the sender of a letter in the bag to this open grave – „Bestatten" first, the letter with it second.
+func bury_choice_context(player: Player) -> Dictionary:
+	var minutes := _bury_minutes(player)
+	var options: Array[Dictionary] = [
+			{"id": OPTION_BURY, "label": OPTION_BURY_LABEL % minutes},
+			{"id": P9_BURY_LETTER, "label": OPTION_BURY_LETTER_LABEL % (minutes + _letters_config().bury_minutes)}]
+	return {"title": LABEL_BURY, "question": TEXT_BURY_QUESTION, "target": self, "player": player, "options": options}
+
+
+## The choice's answer (ActionChoicePanel): a care action, a Phase-9 action, or at the open grave &"bury" /
+## &"letter_bury" (the letter goes into the grave with the dead, in the same timed burial).
+func request_action(id: StringName) -> void:
+	var player := _player if is_instance_valid(_player) else _first_player()
+	if player == null or player.is_busy():
+		EventBus.notification_requested.emit(TEXT_CARE_FAILED, &"warning")
+		return
+	if id == OPTION_BURY or id == P9_BURY_LETTER:
+		var uid := _bury_letter_uid(player)
+		if id == OPTION_BURY or uid == "":
+			_base_interact(player)
+			return
+		var corpse_id := str(player.carried_id)
+		player.start_burial(LABEL_BURY_WITH_LETTER, _bury_minutes(player) + _letters_config().bury_minutes,
+				_finish_bury_with_letter.bind(corpse_id, uid, player), self)
+		return
+	if not id in grave_actions(player):
+		EventBus.notification_requested.emit(TEXT_CARE_FAILED, &"warning")
+		return
+	if id in P9_ORDER:
+		_start_phase9(id, player, _phase9_uid(id, player))
+	else:
+		_start_care(id, player)
+
+
+func _finish_bury_with_letter(corpse_id: String, uid: String, player: Player) -> void:
+	var letters := _first_in(LETTERS_GROUP) as Letters
+	var inv := player.inventory if is_instance_valid(player) else null
+	if letters == null or not letters.decide(uid, &"bury", {"inventory": inv, "grave_id": grave_id, "burying": corpse_id}):
+		EventBus.notification_requested.emit(TEXT_CARE_FAILED, &"warning")
+	_finish_bury(corpse_id)
+
+
+func _letters_config() -> LettersConfig:
+	var letters := _first_in(LETTERS_GROUP) as Letters
+	return letters.get_config() if letters != null else LettersConfig.new()
+
+
 # --- Phase 9 ------------------------------------------------------------------------------------------
 
 ## W3 (Restbedarf 1): „Datum vergleichen" (H2, once per grave) comes before the flowers and the later care – with
@@ -276,25 +393,32 @@ func _date_first(care: StringName) -> bool:
 
 
 
-## The Phase-9 work at this grave for `player` (&"" = none): P9_ORDER, only on a filled / marked / old grave.
+## The Phase-9 work at this grave for `player` (&"" = none): the first of phase9_actions.
 func phase9_action(player: Player) -> StringName:
+	var all := phase9_actions(player)
+	return all[0] if not all.is_empty() else &""
+
+
+## Every Phase-9 work at this grave for `player` in P9_ORDER, only on a filled / marked / old grave.
+func phase9_actions(player: Player) -> Array[StringName]:
+	var out: Array[StringName] = []
 	var grave := _grave()
 	if grave == null or player == null or _is_carrying(player):
-		return &""
+		return out
 	if not grave.state in [GraveRecord.State.FILLED, GraveRecord.State.MARKED, GraveRecord.State.OLD]:
-		return &""
+		return out
 	for action: StringName in P9_ORDER:
 		if action == P9_DATE:
 			var who := _first_in(WHO_KNOWS_GROUP)
 			if who != null and who.has_method(&"can_compare") and bool(who.call(&"can_compare", grave_id)):
-				return action
+				out.append(action)
 		elif action == P9_SOIL:
 			var stranger := _first_in(STRANGER_GROUP) as Stranger
 			if stranger != null and stranger.soil_offered(grave_id) and stranger.soil_block_reason(grave_id, player.inventory) == "":
-				return action
+				out.append(action)
 		elif _phase9_uid(action, player) != "":
-			return action
-	return &""
+			out.append(action)
+	return out
 
 
 func phase9_prompt(action: StringName) -> String:

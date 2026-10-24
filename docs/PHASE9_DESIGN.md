@@ -1113,13 +1113,24 @@ Alle W1-Pakete sind gemergt (P1+P4, P7, P3+P5, P2, P6; volle Suite auf dem gemer
 7. **UI (§7.6):** Karten-Legende ab `p9_open` mit Brenneisen, großem Bogen, Lesezeichen (Krankenlicht-Zeile nennt das Licht bei den Siebers); Gräber/Leute auf der Karte größer (`grave_radius` 5, `person_radius` 8); Grabregister „Licht: …“ in eigener Zeile der Spalte „Angehörige“; Brenneisen-Panel kompakt (700 px, alle vier Angebote bei 1280 × 720 ohne Rollen sichtbar).
 8. **Johann auf dem Karren (§4.5):** mittig auf der Stirnwand gegenüber von Osric (Oberkante 0,83 m), Rücken zur Ladefläche, die Beine über der Kante, Blick den Weg hinab – vorher saß er an der rechten hinteren Ecke 0,6 m außerhalb in der Luft.
 
+## W3 QA-Fix (Lead, Befunde aus `docs/reviews/phase9_wip/qa_g9.md`; Notiz und Bilder `docs/reviews/phase9_round1/qafix/qafix.md`)
+Anpassung an W3-Restbedarf 1 („ein Tastendruck“): Wo ein Ort mehr als eine Sache anbietet und ein falscher Druck nicht zurückzunehmen wäre oder etwas verdeckt, öffnet [E] eine kurze Auswahl `&"action_choice"` (`ActionChoicePanel`: Knöpfe in Reihenfolge, die Hauptaktion hat den Fokus, „Abbrechen“; die Wahl ruft `target.request_action(id)`).
+1. **Esse (QA9-01):** [E] bleibt die Esse; `ForgeLetter` hat keinen eigenen Prompt mehr. Im Werkbank-Panel der Esse steht „Brief verbrennen …“ (nur mit einem Brief, der dort brennen darf) → Auswahl je Brief.
+2. **Ofen (QA9-03):** ohne Brief „[E] Am Ofen wärmen“ wie bisher; mit Brief „[E] Am Ofen: wärmen oder einen Brief verbrennen“ → Auswahl „Am Ofen wärmen“ zuerst, dann je Brief „Verbrennen: <Aufschrift> (2 Min)“. Es brennt nur der gewählte (`LetterBurning`).
+3. **Offenes Grab (QA9-02):** mit dem Brief des getragenen Toten „[E] Bestatten (n Min) …“ → „Bestatten“ (Fokus) oder „Den Brief mit ins Grab legen und bestatten“ (eine Arbeit, Bestatten + 2 Min).
+4. **Gräber (QA9-04):** Konkurriert eine Phase-9-Arbeit (Datum, Brief vorlesen / aufs Grab legen, Erde) mit einer anderen Aktion, zeigt der Prompt „[E] Am Grab: …“ und die Auswahl listet alle (Münzen/Schließen, Phase 9, dann die Pflege). Ohne Phase-9-Arbeit bleibt das Grab beim einen Tastendruck (Phase 8 bitgleich).
+5. **Osric (QA9-05, QA9-T1):** `hill_ready` zählt nur kleine Bitten (`HillRequests.small_ready_for`), die große hat ihre Zeile „für die große Bitte“; Osrics kühles Menü (`menu_cold`, hartherzig) hat dieselben Phase-8/9-Zeilen wie das warme (Post, Botengang, große Bitte, Liste).
+6. **Botenbrief (QA9-08):** nach versäumtem Auftrag nicht mehr aufzugeben oder zu übergeben („Dafür ist es zu spät …“).
+
 ### G9 – Benutzerentscheidungen (bindend, 18.10.2026: „ok“)
 1. **Gehtempo:** Alle Zeitplan-Wege der Dorfbewohner bekommen ein natürliches Gehtempo (Abfahrt früher statt Hetzen; Ankunftszeiten der Systeme bleiben).
 2. **Quasts Tropfen (Ende B):** Auslegung bestätigt – Quast verkauft `fever_tincture` nicht, er kauft an diesem Tag eine mehr an.
 3. **Münzen** (+55 bis +64 im Bogen statt ≤ +50): so lassen; Abstimmung in Phase 10.
 4. **Kapitel** schon bei etwa B7 statt B9–B11: in Ordnung.
 5. **Hauptkette:** Die Frist (Ende „still“) läuft erst, nachdem Lorenz' Kladde gelesen wurde (QA9-07).
+   Umsetzung (W3 QA-Fix, `docs/reviews/phase9_round1/qafix/qafix.md`): Auch Johanns Licht und sein Tod (Licht + 21, Nachtweg `np_sieber`) warten; vorher bleibt die Kette bei H1 offen. Der Lichttag `q_light_day` wird beim Lesen festgelegt: **Lesetag − 12** (`LightRules.reading_light_day`, nie vor `p9_open_day`); liest man am Eröffnungstag, ist es wie bisher `p9_open_day − 12`. So liegt das Licht immer in der Vergangenheit, die Daten der Liste bleiben stimmig, und die Frist lässt dieselben fünf Tage (Lesetag + 5). lazy9 endet nicht mehr „still“ (Test).
 6. **Große Bitten:** Leerlauf 1887 min (Ziel war ≤ 1700) – so lassen.
+   Zu 3, 4 und 6: Die Tests prüfen die gemessenen Bänder als akzeptiert (Münzen ≥ +40 … ≤ +70, kindly9 B7–B11, HillBot-Wächter 1900 min; Kommentar „Benutzerentscheidung 18.10.2026“) statt sie nur zu melden.
 
 #### G9 – Gehtempo umgesetzt (`vs/p9-tempo`, Benutzerprüfung offen; Notiz `docs/reviews/phase9_round1/tempo/tempo.md`)
 - **Zieltempo** `NpcConfig.walk_m_per_minute` **0,8 m je Spielminute** (= 1,6 m/s real bei 0,5 s je Spielminute; der Walk-Clip läuft mit `speed_scale` 0,97, er ist für 1,65 m/s gebaut). Phase 8 hatte „1,6 m/s ≙ 3,2 m je Spielminute“ gerechnet – 3,2 m/min sind 6,4 m/s. Karren (Schieben / Mitfahren) `cart_m_per_minute` 0,55 (Clip 1,14 m/s → 0,96). Band `walk_min/max_m_per_minute` 0,5–1,0 (Clip 0,6–1,2 ×), Karren 0,4–0,7; Schritte von 1–2 Minuten dürfen langsamer sein (ganze Minuten), Laufen/Klettern (Räuber) sind keine Gehwege. `WalkTempo` misst, `test_walk_tempo` prüft alle Wege.

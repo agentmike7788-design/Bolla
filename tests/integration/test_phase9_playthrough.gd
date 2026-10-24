@@ -46,11 +46,12 @@ func after_each() -> void:
 
 
 ## §2.8 Prüfregel: active ways end ≤ start + 50 (≈ +33 in 12 days), trader9 ≤ start + 100. W3 measured the active ways at
-## +55 … +64 (finding QA9-B1 in qa_g9.md: burials, Aussegnungen and tips above §2.8's estimate – a user decision, as E8-2).
-## Until then the band is the measured value plus a margin (regression guard), §2.8's rule is reported, not asserted.
+## +55 … +64 (QA9-B1 in qa_g9.md: burials, Aussegnungen and tips above §2.8's estimate). Benutzerentscheidung 18.10.2026:
+## the coins stay as they are – the accepted band is the measured value plus a margin (≤ +70), asserted.
 const END_MAX := {&"trader9": 100}
 const END_MAX_DEFAULT := 70
-const END_RULE := 50
+## The lower edge of the accepted band of the active ways (Benutzerentscheidung 18.10.2026: +55 … +64 measured).
+const END_MIN_ACTIVE := 40
 
 
 ## §10 kindly9: arc A – ending A (Johann with Osric or Hanne), Liesel the confidant, letters delivered, large requests,
@@ -59,8 +60,8 @@ func test_kindly9() -> void:
 	var bot := await _play_fixture(&"kindly9", "slot_p8_day63_kindly")
 	if bot == null:
 		return
-	# §10 B9–B11 (§1.4 plans B10); measured B7 (W3, qa_g9.md: the large requests and the letters come faster than the
-	# arc's table) – the band keeps the measured lower edge.
+	# §10 B9–B11 (§1.4 plans B10); measured B7 (W3, qa_g9.md QA9-B2: the large requests and the letters come faster than
+	# the arc's table). Benutzerentscheidung 18.10.2026: the chapter at about B7 is accepted – the band B7–B11 asserted.
 	_expect_chapter(bot, 7, 11)
 	assert_eq(bot.quests.ending(Phase9Bot.MAIN), WhoKnows.ENDING_AWAY, "kindly9: ending A")
 	assert_true(GameState.flag_on(&"sieber_gone"), "kindly9: Johann gone")
@@ -151,13 +152,17 @@ func test_trader9() -> void:
 		assert_true(bot.piety.value() <= kindly_piety - 15, "trader9: piety %d ≤ kindly9 %d − 15" % [bot.piety.value(), kindly_piety])
 
 
-## §10 lazy9: no chain, no request – no chapter, no errors, no warnings.
+## §10 lazy9: no chain, no request – no chapter, no errors, no warnings. G9 Benutzerentscheidung 18.10.2026 (QA9-07): the
+## deadline runs only once the Kladde is read – the chain he never begins stays open at H1, no „still" ending, no death.
 func test_lazy9() -> void:
 	var bot := await _play_fixture(&"lazy9", "slot_p8_day63_kindly")
 	if bot == null:
 		return
 	assert_eq(bot.chapter9_day, -1, "lazy9: no chapter")
-	assert_eq(bot.quests.current_step(Phase9Bot.MAIN) in [&"h1", &""], true, "lazy9: the chain not started (%s)" % bot.quests.current_step(Phase9Bot.MAIN))
+	assert_eq(bot.quests.current_step(Phase9Bot.MAIN), &"h1", "lazy9: the chain waits at H1 (%s)" % bot.quests.current_step(Phase9Bot.MAIN))
+	assert_eq(bot.quests.ending(Phase9Bot.MAIN), &"", "lazy9: no „still“ ending without the Kladde (QA9-07)")
+	assert_false(GameState.has_flag(&"q_light_day"), "lazy9: no light day")
+	assert_false(GameState.flag_on(&"q_sieber_dies"), "lazy9: Johann does not die")
 	assert_true(bot.hill.large_active().is_empty() and bot.large_done_ids.is_empty(), "lazy9: no large request")
 
 
@@ -212,8 +217,9 @@ func _expect_end(bot: Phase9Bot) -> void:
 	var gain := bot.coins_total() - bot.start9_coins
 	var hi := int(END_MAX.get(bot.strategy, END_MAX_DEFAULT))
 	assert_true(gain <= hi, "%s: end %d = start %d %+d (≤ %+d)" % [bot.strategy, bot.coins_total(), bot.start9_coins, gain, hi])
-	if not END_MAX.has(bot.strategy) and gain > END_RULE:
-		print("PLAYTHROUGH9 FINDING QA9-B1 %s: end start %+d > §2.8 rule +%d" % [bot.strategy, gain, END_RULE])
+	# Benutzerentscheidung 18.10.2026 (QA9-B1): the measured +55 … +64 of the active ways are accepted – checked as a band.
+	if not END_MAX.has(bot.strategy):
+		assert_true(gain >= END_MIN_ACTIVE, "%s: end %+d in the accepted band (≥ %+d)" % [bot.strategy, gain, END_MIN_ACTIVE])
 
 
 static func _selected(strategy: StringName) -> bool:

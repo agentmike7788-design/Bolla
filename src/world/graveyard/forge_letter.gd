@@ -1,59 +1,57 @@
 class_name ForgeLetter
 extends Node3D
-## Phase 9 W-Welt (docs/PHASE9_DESIGN.md §1.3, §2.4.2 „Verbrennen: Hüttenofen oder Esse", W1-Anschlüsse 6): the letter
-## prompt at the forge (child of Entities/station_forge, built by graveyard_build_phase9.gd). Once the forge stands and
-## the gravekeeper carries a letter that may be burned there: „[E] Brief in der Esse verbrennen (2 Min)" (clip
-## burn_letter like at the hut's stove) → Letters.decide(uid, burn, {place: forge}). Otherwise not focusable, the
-## forge's own prompt stays. No state of its own.
+## Phase 9 W-Welt (docs/PHASE9_DESIGN.md §1.3, §2.4.2 „Verbrennen: Hüttenofen oder Esse", W1-Anschlüsse 6): burning a
+## letter at the forge (child of Entities/station_forge, built by graveyard_build_phase9.gd). No state of its own.
+## W3 QA-Fix QA9-01: the forge's [E] stays the forge (charcoal, smithing) – this node has no prompt of its own any
+## more (before it won the focus with priority 6 and [E] burned the first letter of the bag at once). Once the forge
+## stands and a letter of the bag may be burned there, the forge's crafting panel shows „Brief verbrennen …"
+## (CraftingPanel.letter_button) → open_choice: one row per such letter (&"action_choice", LetterBurning) → the chosen
+## letter burns (2 Min, clip burn_letter, Letters.decide burn with place forge).
 
 const LETTERS_GROUP := &"letters"
 const PLACE := &"forge"
-const PROMPT := "[E] Brief in der Esse verbrennen (%d Min)"
-const LABEL := "Brief verbrennen"
-const ANIM := &"burn_letter"
-const CLIP_KEY := &"stove_burn_letter"
-## Above the station's own Interactable (5).
-const PRIORITY := 6
+const TITLE_CHOICE := "An der Esse"
+const LABEL := LetterBurning.LABEL
+const ANIM := LetterBurning.ANIM
+const CLIP_KEY := LetterBurning.CLIP_KEY
 
-## Size and centre of the reach box (station-local, the forge's footprint; set by the builder).
+## Kept for the built scene (graveyard.tscn sets them); the forge's own Interactable is the only reach now.
 @export var reach_size: Vector3 = Vector3(2.4, 1.2, 2.4)
 @export var reach_center: Vector3 = Vector3(0.0, 0.6, 0.0)
 
-var interactable: Interactable
+## The player of the last open_choice (the choice runs for them).
+var _player: Player
 
 
-func _ready() -> void:
-	interactable = get_node_or_null(^"Interactable") as Interactable
-	if interactable == null:
-		interactable = Interactable.new()
-		interactable.name = "Interactable"
-		interactable.priority = PRIORITY
-		var shape := CollisionShape3D.new()
-		shape.name = "Shape"
-		var box := BoxShape3D.new()
-		box.size = reach_size
-		shape.shape = box
-		shape.position = reach_center
-		interactable.add_child(shape)
-		add_child(interactable)
+## Never focusable by itself: the station's prompt stays.
+func get_interaction_prompt(_player_arg: Player) -> String:
+	return ""
 
 
-func can_interact(player: Player) -> bool:
+## The crafting panel's button: there is a letter to burn here.
+func can_burn(player: Player) -> bool:
 	return player != null and not player.is_busy() and burnable_letter(player) != ""
 
 
-func get_interaction_prompt(player: Player) -> String:
-	if burnable_letter(player) == "":
-		return ""
-	return PROMPT % _letters().get_config().burn_minutes
+## Opens the choice of the letters that may be burned here (false = none).
+func open_choice(player: Player) -> bool:
+	if not can_burn(player):
+		return false
+	_player = player
+	EventBus.ui_panel_requested.emit(LetterBurning.PANEL, choice_context(player))
+	return true
 
 
-func interact(player: Player) -> void:
-	if not can_interact(player):
-		return
-	var uid := burnable_letter(player)
-	player.start_timed_action(LABEL, _letters().get_config().burn_minutes, _finish.bind(uid, player), false,
-			ToolAnimConfig.clip_for(CLIP_KEY, ANIM))
+func choice_context(player: Player) -> Dictionary:
+	return {"title": TITLE_CHOICE, "question": LetterBurning.QUESTION, "target": self, "player": player,
+			"options": LetterBurning.options(_letters(), player.inventory if player != null else null, PLACE)}
+
+
+## The choice's answer burn:<uid>.
+func request_action(id: StringName) -> void:
+	var player := _player if is_instance_valid(_player) else null
+	if player == null or not forge_ready() or not LetterBurning.start(_letters(), player, LetterBurning.uid_of(id), PLACE):
+		EventBus.notification_requested.emit(GravePlot.TEXT_CARE_FAILED, &"warning")
 
 
 ## The forge stands (the parent station is built).
@@ -64,16 +62,10 @@ func forge_ready() -> bool:
 
 ## The first letter in the bag that may be burned at the forge ("" = none / no forge / no Letters).
 func burnable_letter(player: Player) -> String:
-	var letters := _letters()
-	if letters == null or player == null or player.inventory == null or not forge_ready():
+	if player == null or not forge_ready():
 		return ""
-	return letters.first_for(&"burn", player.inventory, {"place": PLACE})
-
-
-func _finish(uid: String, player: Player) -> void:
-	var letters := _letters()
-	if letters != null and is_instance_valid(player):
-		letters.decide(uid, &"burn", {"inventory": player.inventory, "place": PLACE})
+	var all := LetterBurning.burnable(_letters(), player.inventory, PLACE)
+	return all[0] if not all.is_empty() else ""
 
 
 func _letters() -> Letters:

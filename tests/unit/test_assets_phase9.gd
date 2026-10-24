@@ -31,7 +31,9 @@ const TABLE_TOP := 0.795
 
 const JOHANN := "ph_chr_mourner_m_b"
 ## The Phase-8 export (b30c5b3): body mesh hash and every Phase-8 clip (test_assets_phase8 _mesh_hash / _anim_hash).
-const JOHANN_MESH := "52abf69adc5317a0"
+## W3 QA-Fix A9-5 (docs/reviews/phase9_round1/qafix/qafix.md): the face's stubble / cheeks repainted – a new body hash
+## (was 52abf69adc5317a0); the clips stay hash-identical.
+const JOHANN_MESH := "ed432283692f74bc"
 const JOHANN_OLD := {"idle": "0bfcac4d56aed46b", "idle_low": "2815b000d94d2371", "lantern_idle": "bcc7bbb7903b167a",
 		"lantern_walk": "48d8c515f75ca0b8", "mourn_stand": "fe7a4b162285ef0d", "talk": "9b9e6e69a8b73667",
 		"walk": "538ff44ba216d02c"}

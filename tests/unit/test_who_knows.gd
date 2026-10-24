@@ -146,6 +146,9 @@ func before_each() -> void:
 	for n: Node in _nodes():
 		tree.root.add_child(n)
 	quests.open_now(OPEN)
+	# G9 Benutzerentscheidung 18.10.2026 (QA9-07): the light day comes with the Kladde – these tests start with it fixed
+	# (read on the opening day: OPEN − 12, as Phase9Fixtures.p9_open); test_qa9_07_* checks the reading itself.
+	GameState.set_flag(&"q_light_day", OPEN - 12)
 	who.apply_morning(OPEN)
 	inv = Inventory.new()
 	# The Phase-9 items (nameless_letter) come with P3's data/items – until then the fixture items (test-only).
@@ -193,11 +196,43 @@ func _five_graves() -> PackedStringArray:
 
 # --- light day, H1, H2 ----------------------------------------------------------------------------
 
-func test_light_day_is_set_once_at_the_opening() -> void:
-	assert_eq([int(GameState.get_flag(&"q_light_day")), who.light_day()], [51, 51], "p9_open_day − 12")
+func test_light_day_is_set_once() -> void:
+	assert_eq([int(GameState.get_flag(&"q_light_day")), who.light_day()], [51, 51], "read on the opening day: p9_open_day − 12")
 	GameState.set_flag(&"p9_open_day", 70)
 	who.apply_morning(OPEN + 1)
+	who.read_kladde()
 	assert_eq(who.light_day(), 51, "set once")
+
+
+## G9 Benutzerentscheidung 18.10.2026 (QA9-07): the deadline of the main chain (light + 17 → „still", Johann's light and
+## death) runs only once Lorenz' Kladde is read. Before, no light day: the chain stays open and waits.
+func test_qa9_07_no_deadline_before_the_kladde() -> void:
+	GameState.clear_flag(&"q_light_day")
+	who.load_state({})
+	for day: int in [OPEN + 1, OPEN + 6, OPEN + 12, OPEN + 20]:
+		TimeManager.load_state({"day": day, "minute_of_day": 360})
+		who.apply_morning(day)
+		quests.apply_morning(day)
+	assert_false(GameState.has_flag(&"q_light_day"), "no light day while the Kladde lies unread")
+	assert_eq(quests.ending(&"q_who_knows"), &"", "no „still“ ending without the Kladde")
+	assert_false(GameState.flag_on(&"q_sieber_dies"))
+
+
+## QA9-07: read on day OPEN + 20 the light lies 12 days back (OPEN + 8) – the list's dates stay consistent, the deadline
+## (light + 17 = reading + 5) and the death (light + 21) follow the reading day.
+func test_qa9_07_light_from_the_reading_day() -> void:
+	GameState.clear_flag(&"q_light_day")
+	who.load_state({})
+	var read := OPEN + 20
+	TimeManager.load_state({"day": read, "minute_of_day": 600})
+	who.apply_morning(read)
+	who.read_kladde()
+	assert_eq(int(GameState.get_flag(&"q_light_day")), read - 12, "reading day − 12")
+	assert_eq(who.light_day(), read - 12)
+	assert_true(who.light_day() < read, "the light lies in the past")
+	assert_eq(LightRules.decide_day(who.light_day(), who.config), read + 5, "the deadline: five days after the reading")
+	assert_eq(LightRules.death_day(who.light_day(), who.config), read + 9)
+	assert_eq(LightRules.reading_light_day(OPEN, OPEN - 3, who.config), OPEN - 12, "never before the opening day")
 
 
 func test_h1_reads_the_ledger_from_the_inventory_or_a_chest() -> void:

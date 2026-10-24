@@ -67,7 +67,7 @@ const G9_SHOTS: Array[Dictionary] = [
 	{"name": "p9_11_watchman_sick_light", "region": "village", "day": "light19", "minute": 1380, "player": Vector2(-32.1, 17.8),
 			"facing": 200.0, "game": 20.0, "flags": ["sieber_watch_day"]},
 	{"name": "p9_19_brenneisen_inn_corner", "region": "village", "day": "visit1", "minute": 1150, "room": "inn",
-			"player": Vector2(1.9, 1.5), "flags": ["stranger_day"]},
+			"player": Vector2(1.0, 1.9), "flags": ["stranger_day"]},
 	{"name": "p9_23_village_board_fenner", "region": "village", "day": 64, "minute": 700, "player": Vector2(-6.4, 7.1), "facing": 200.0,
 			"game": 12.0, "stage": "large_village"},
 	{"name": "perf_p9_02_village_brenneisen_johann", "region": "village", "day": "visit1", "minute": 720, "player": Vector2(0.6, -0.4),
@@ -100,6 +100,12 @@ const G9_SHOTS: Array[Dictionary] = [
 	# 4: the watchman at the door on a watch night (ending C), close up.
 	{"name": "fix4_watchman_close", "region": "village", "day": "light19", "minute": 1385, "player": Vector2(-29.9, 18.9),
 			"facing": 200.0, "game": 12.0, "flags": ["sieber_watch_day"]},
+	# --- W3 QA-Fix (docs/reviews/phase9_round1/qafix/qafix.md; --shots=qafix) --------------------------------------------
+	# QA9-04: the same grave as fix1 – the prompt names the choice, [E] opens it (the date first, the care after).
+	{"name": "qafix_qa9_04_grave_prompt", "day": 64, "minute": 640, "player": Vector2(9.6, 7.0), "facing": 200.0, "game": 12.0,
+			"ui": true, "stage": "prompt_date"},
+	{"name": "qafix_qa9_04_grave_choice", "day": 64, "minute": 640, "player": Vector2(9.6, 7.0), "facing": 200.0, "game": 12.0,
+			"ui": true, "stage": "prompt_choice"},
 ]
 
 var _web := false
@@ -279,7 +285,7 @@ func _shoot9(world: Node3D, shot: Dictionary, report: PackedStringArray) -> void
 			_stage_sheet9(world)
 		"vis":
 			await _stage_vis9(world, shot)
-		"prompt_date", "prompt_straw", "prompt_date_old":
+		"prompt_date", "prompt_straw", "prompt_date_old", "prompt_choice":
 			_stage_prompt(world, String(shot.stage))
 	if shot.has("follow"):
 		var lead := world.get_node_or_null(NodePath("Entities/" + String(shot.follow[0]))) as Node3D
@@ -309,6 +315,9 @@ func _shoot9(world: Node3D, shot: Dictionary, report: PackedStringArray) -> void
 	for i: int in SETTLE_FRAMES:
 		await process_frame
 	await _save_frame(world, String(shot.name), report)
+	if String(shot.get("stage", "")) == "prompt_choice":
+		world.get_node(^"UI").call(&"close_all")
+		root.get_node(^"UIState").call(&"clear")
 	for npc: Node3D in _staged8:
 		npc.process_mode = Node.PROCESS_MODE_INHERIT
 		if npc.has_meta(&"shot_ungrouped"):
@@ -332,7 +341,7 @@ func _stage_prompt(world: Node3D, stage: String) -> void:
 		if n > 0:
 			inv.call(&"remove_item", item, n)
 	inv.call(&"add_item", &"straw_bouquet", 1)
-	if stage == "prompt_date" or stage == "prompt_date_old":
+	if stage == "prompt_date" or stage == "prompt_date_old" or stage == "prompt_choice":
 		inv.call(&"add_item", &"flower_seedlings", 1)
 		inv.call(&"add_item", &"wax_wreath", 1)
 		_gs().call(&"set_flag", &"kladde_read", true)
@@ -345,6 +354,9 @@ func _stage_prompt(world: Node3D, stage: String) -> void:
 		prompt = String(plot.call(&"care_prompt", plot.call(&"_care_action", player, true), player))
 	print("[ShotsP9 prompt] %s: %s" % [stage, prompt])
 	root.get_node(^"EventBus").emit_signal(&"interaction_focus_changed", prompt, true)
+	if stage == "prompt_choice":
+		# W3 QA-Fix QA9-04: the grave's [E] – the choice of everything it offers (ActionChoicePanel).
+		plot.call(&"interact", player)
 
 
 ## p9_00: Brenneisen beside the gravekeeper, then Johann, Veit and Hanne – in a row, idle, facing the camera, names below.

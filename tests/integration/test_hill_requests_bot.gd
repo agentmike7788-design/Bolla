@@ -9,7 +9,8 @@ extends TestCase
 
 const TIMEOUT := 900.0
 const DAYS := 14
-## Phase 9: the measured level of the duty player with large requests (§2.3.6 target 1700 is open, see test_e).
+## Phase 9: the measured level of the duty player with large requests – Benutzerentscheidung 18.10.2026 (QA9-H1): the
+## measured 1887 min stay as they are (accepted instead of §2.3.6's 1700); the guard keeps that level.
 const IDLE_GUARD := 1900
 
 static var idle_before: Dictionary = {}
@@ -85,9 +86,10 @@ func test_e_duty_player_with_large_requests() -> void:
 	var long_days := _long_idle_days(bot)
 	_print_large(bot, "duty")
 	assert_true(bot.large_done + bot.large_half >= 4, "large requests worked (%d done, %d half)" % [bot.large_done, bot.large_half])
-	# §2.3.6 aims at ≤ 1700 min (band 1450–1800). With the contract values (one place, cooldown 8–10, Ruf +2) and
-	# the coin cap of day 14 the measurement is 1887 min (−24 % against R6, −33 % against no requests); the guard
-	# keeps that level until the user decides (report P2, docs/reviews/phase9_round1/bitten_gross.md).
+	# §2.3.6 aimed at ≤ 1700 min (band 1450–1800). With the contract values (one place, cooldown 8–10, Ruf +2) and
+	# the coin cap of day 14 the measurement is 1887 min (−24 % against R6, −33 % against no requests).
+	# Benutzerentscheidung 18.10.2026: accepted as it is – the guard checks that level (report P2,
+	# docs/reviews/phase9_round1/bitten_gross.md).
 	assert_true(idle <= IDLE_GUARD, "idle on days 2–12 ≤ %d min (%d; §2.3.6 aims at 1700)" % [IDLE_GUARD, idle])
 	assert_true(idle >= 1450, "§2.3.6 band: not overloaded (≥ 1450 min, %d)" % idle)
 	assert_true(idle < 2483, "better than G8 Runde 6 (2483 min, %d)" % idle)
