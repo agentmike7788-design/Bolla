@@ -216,3 +216,35 @@ func test_osric_unloading_and_the_bell_walks() -> void:
 		assert_true(speed <= max_walk + 0.0001, "%.2f: %s at %.2f m/min (≤ %.2f)" % [minute_f, anim, speed, max_walk])
 		assert_true(speed / SPM / clip <= 1.25, "%.2f: %s clip at %.2f ×" % [minute_f, anim, speed / SPM / clip])
 	assert_true(seen.has(CartUnload.ANIM_WALK) and seen.has(CartUnload.ANIM_CARRY), "the steps and the carrying (%s)" % str(seen.keys()))
+
+
+## The longer ways keep a villager away longer – the dialogue conditions (Village.villager_present: „[Zuhören]“, the
+## round, the register copy) read the clock, not the last frame's state of the figure: the bots talk right after a
+## time skip without a frame between (save_load9 = kindly9: Liesel's „[Zuhören]“ at her visit on the hill).
+func test_villager_present_by_the_clock_between_frames() -> void:
+	var village := world.get_node("Systems/Village") as Village
+	var day := TimeManager.day
+	var minute := TimeManager.minute_of_day
+	var changes := 0
+	for npc_id: StringName in [&"washer", &"innkeeper", &"mayor", &"surgeon"]:
+		var npc: Npc = null
+		for n: Node in tree.get_nodes_in_group(&"npc"):
+			if n is Npc and (n as Npc).npc_id == npc_id and (n as Npc).region_id == &"village":
+				npc = n as Npc
+		assert_not_null(npc, "village figure %s" % npc_id)
+		if npc == null:
+			continue
+		TimeManager.day = 50
+		TimeManager.minute_of_day = 300
+		npc.refresh()
+		for m: int in range(300, 1440, 10):
+			TimeManager.minute_of_day = m
+			var stale := npc.is_present()
+			var by_clock := village.villager_present(npc_id)
+			npc.refresh()
+			assert_eq(by_clock, npc.is_present(), "%s at %s: present by the clock = the next frame" % [npc_id, WalkTempo.hhmm(m)])
+			if stale != npc.is_present():
+				changes += 1
+	assert_true(changes > 0, "the clock moved the figures between the checks (%d)" % changes)
+	TimeManager.day = day
+	TimeManager.minute_of_day = minute

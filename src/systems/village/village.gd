@@ -544,7 +544,9 @@ func villager_present(npc_id: StringName) -> bool:
 		if node.get(&"npc_id") != npc_id or node.get(&"region_id") != &"village":
 			continue
 		any = true
-		if node.has_method(&"is_present") and bool(node.call(&"is_present")):
+		# G9 Gehtempo: by the clock, not the last frame's state (the bots talk between frames after a time skip).
+		var by_clock := &"present_by_clock" if node.has_method(&"present_by_clock") else &"is_present"
+		if node.has_method(by_clock) and bool(node.call(by_clock)):
 			return true
 	return not any
 
