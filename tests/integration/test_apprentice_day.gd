@@ -2,8 +2,8 @@ extends TestCase
 ## P3 (docs/PHASE8_DESIGN.md §2.5, §10 Integration): Jakob's whole working day on the real graveyard – the
 ## v6 fixture slot_p7_day53_neighbor (Lindenacker full) through the real SaveManager; the Phase-8 pieces W-Welt
 ## places in W2 (Apprentice under Systems, npc_apprentice, his box, the hut-corner waypoints) are added here.
-## Board „Laub Alter Hof · Unkraut Lindenacker": he walks (never more than 3.2 m per game minute, no jump
-## after he appeared at the road end), the rake shows only while raking (show_with meta), the care spots are
+## Board „Laub Alter Hof · Unkraut Lindenacker": he walks (G9 Gehtempo: never faster than NpcConfig.walk_max_m_per_minute
+## 1.0 m per game minute, before 3.2; no jump after he appeared at the road end at 07:30), the rake shows only while raking (show_with meta), the care spots are
 ## clean afterwards, the planned mistakes happen, the wage comes out of the tin at 15:30. Roundtrip at 10:17 in
 ## the middle of a place (collect_state → JSON → apply_state): the rest of the day is bit-identical.
 
@@ -124,7 +124,7 @@ func test_a_whole_working_day() -> void:
 	var clean := tree.get_first_node_in_group(&"cleanliness")
 	var trace: Array = []
 	await wait_frames(1)
-	_run(WORK_DAY, 470, 1000, trace)
+	_run(WORK_DAY, 440, 1020, trace)
 	var plan := app.today_plan()
 	var work: Array = plan.filter(func(e: Dictionary) -> bool: return StringName(str(e.task)) in Apprentice.TASKS)
 	assert_true(work.size() >= 6, "a day's work (%d places)" % work.size())
@@ -136,7 +136,8 @@ func test_a_whole_working_day() -> void:
 			assert_true(spot != null and spot.section_id == &"yard" and spot.kind == &"leaves", str(e.spot_id))
 		else:
 			assert_true(spot != null and spot.section_id == &"linden" and spot.kind == &"weeds", str(e.spot_id))
-	# Real walking: from the road end on never more than 3.2 m per game minute.
+	# Real walking: from the road end on never faster than the band (G9; before 3.2 m per game minute).
+	var max_step := (Database.config(&"npc_config") as NpcConfig).walk_max_m_per_minute
 	var appeared := -1
 	for i: int in range(1, trace.size()):
 		var a: Array = trace[i - 1]
@@ -149,8 +150,8 @@ func test_a_whole_working_day() -> void:
 			continue
 		if a[1]:
 			var step := Vector2(b[2].x - a[2].x, b[2].z - a[2].z).length()
-			assert_true(step <= 3.2 * 1.05 + 0.01, "minute %d: %.2f m – no teleport" % [b[0], step])
-	assert_eq(appeared, 495, "08:15 at the road end")
+			assert_true(step <= max_step * 1.05 + 0.01, "minute %d: %.2f m – no teleport, no hurry" % [b[0], step])
+	assert_eq(appeared, 450, "07:30 at the road end (G9: before 08:15 – at the board at 08:25 as before)")
 	# The rake in his hands only while raking.
 	var raking := trace.filter(func(t: Array) -> bool: return t[3] == &"rake")
 	assert_false(raking.is_empty(), "he rakes")
@@ -200,7 +201,7 @@ func test_a_whole_working_day() -> void:
 	# The wage at 15:30 and home.
 	assert_eq([box.coins, app.unpaid_days()], [6, 0], "3 coins out of the tin")
 	assert_eq(GameState.get_stat(&"coins_spent_apprentice"), 3)
-	assert_false(trace[trace.size() - 1][1], "gone home by 16:40")
+	assert_false(trace[trace.size() - 1][1], "gone home by 17:00 (G9: the way down from the box at the natural pace)")
 
 
 func test_roundtrip_in_the_middle_of_a_place() -> void:

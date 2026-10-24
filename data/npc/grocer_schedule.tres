@@ -5,8 +5,8 @@
 
 [sub_resource type="Resource" id="p8_grocer_01"]
 script = ExtResource("1_dfj8i")
-start_minute = 845
-travel_minutes = 8
+start_minute = 769
+travel_minutes = 61
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_shop_window", "v_well", "v_bridge", "v_road_in")
@@ -15,7 +15,7 @@ today_flag = &"visit_grocer_day"
 
 [sub_resource type="Resource" id="p8_grocer_02"]
 script = ExtResource("1_dfj8i")
-start_minute = 853
+start_minute = 830
 activity = &"home"
 path = PackedStringArray("v_road_in")
 visible = false
@@ -24,8 +24,8 @@ today_flag = &"visit_grocer_day"
 
 [sub_resource type="Resource" id="p8_grocer_03"]
 script = ExtResource("1_dfj8i")
-start_minute = 868
-travel_minutes = 12
+start_minute = 835
+travel_minutes = 45
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("road_end", "road_mid", "gate_outside", "gate_inside", "vw_37", "gv_old_08")
@@ -43,7 +43,7 @@ today_flag = &"visit_grocer_day"
 [sub_resource type="Resource" id="p8_grocer_05"]
 script = ExtResource("1_dfj8i")
 start_minute = 930
-travel_minutes = 12
+travel_minutes = 45
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("gv_old_08", "vw_37", "gate_inside", "gate_outside", "road_mid", "road_end")
@@ -51,7 +51,7 @@ today_flag = &"visit_grocer_day"
 
 [sub_resource type="Resource" id="p8_grocer_06"]
 script = ExtResource("1_dfj8i")
-start_minute = 942
+start_minute = 975
 activity = &"home"
 path = PackedStringArray("road_end")
 visible = false
@@ -59,8 +59,8 @@ today_flag = &"visit_grocer_day"
 
 [sub_resource type="Resource" id="p8_grocer_07"]
 script = ExtResource("1_dfj8i")
-start_minute = 945
-travel_minutes = 10
+start_minute = 980
+travel_minutes = 61
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_road_in", "v_bridge", "v_well", "v_shop_window")
@@ -69,7 +69,7 @@ today_flag = &"visit_grocer_day"
 
 [sub_resource type="Resource" id="p8_grocer_08"]
 script = ExtResource("1_dfj8i")
-start_minute = 955
+start_minute = 1041
 activity = &"shop"
 animation = &"work"
 path = PackedStringArray("v_shop_window")
@@ -79,8 +79,8 @@ today_flag = &"visit_grocer_day"
 
 [sub_resource type="Resource" id="p8_grocer_09"]
 script = ExtResource("1_dfj8i")
-start_minute = 1135
-travel_minutes = 5
+start_minute = 1098
+travel_minutes = 42
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_shop_window", "v_inn_door")
@@ -106,8 +106,8 @@ today_flag = &"fest_kathrein_day"
 
 [sub_resource type="Resource" id="p8_grocer_12"]
 script = ExtResource("1_dfj8i")
-start_minute = 950
-travel_minutes = 10
+start_minute = 826
+travel_minutes = 55
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_shop_window", "v_well", "v_bridge")
@@ -116,15 +116,15 @@ today_flag = &"fest_lights_day"
 
 [sub_resource type="Resource" id="p8_grocer_13"]
 script = ExtResource("1_dfj8i")
-start_minute = 960
+start_minute = 881
 path = PackedStringArray("v_bridge")
 region = &"village"
 today_flag = &"fest_lights_day"
 
 [sub_resource type="Resource" id="p8_grocer_14"]
 script = ExtResource("1_dfj8i")
-start_minute = 990
-travel_minutes = 5
+start_minute = 911
+travel_minutes = 6
 activity = &"walk"
 animation = &"lantern_walk"
 path = PackedStringArray("v_bridge", "v_road_in")
@@ -133,7 +133,7 @@ today_flag = &"fest_lights_day"
 
 [sub_resource type="Resource" id="p8_grocer_15"]
 script = ExtResource("1_dfj8i")
-start_minute = 995
+start_minute = 917
 activity = &"home"
 path = PackedStringArray("v_road_in")
 visible = false
@@ -142,8 +142,8 @@ today_flag = &"fest_lights_day"
 
 [sub_resource type="Resource" id="p8_grocer_16"]
 script = ExtResource("1_dfj8i")
-start_minute = 1125
-travel_minutes = 12
+start_minute = 1213
+travel_minutes = 61
 activity = &"walk"
 animation = &"lantern_walk"
 path = PackedStringArray("v_road_in", "v_bridge", "v_well", "v_shop_window")
@@ -152,22 +152,59 @@ today_flag = &"fest_lights_day"
 
 [sub_resource type="Resource" id="p8_grocer_17"]
 script = ExtResource("1_dfj8i")
-start_minute = 1137
-activity = &"shop"
-animation = &"work"
+start_minute = 1274
+activity = &"home"
 path = PackedStringArray("v_shop_window")
-dialogue_id = &"v_grocer"
+visible = false
 region = &"village"
 today_flag = &"fest_lights_day"
 
 [sub_resource type="Resource" id="p8_grocer_18"]
 script = ExtResource("1_dfj8i")
-start_minute = 965
-path = PackedStringArray("v_bridge")
+start_minute = 928
+activity = &"mourn"
+animation = &"kneel"
+path = PackedStringArray("gv_old_08")
+dialogue_id = &"v_grocer"
+today_flag = &"visit_grocer_day"
+
+[sub_resource type="Resource" id="p8_grocer_19"]
+script = ExtResource("1_dfj8i")
+start_minute = 928
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_grocer_19"]
+[sub_resource type="Resource" id="p8_grocer_20"]
+script = ExtResource("1_dfj8i")
+start_minute = 950
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_grocer_21"]
+script = ExtResource("1_dfj8i")
+start_minute = 990
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_grocer_22"]
+script = ExtResource("1_dfj8i")
+start_minute = 1012
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_grocer_23"]
 script = ExtResource("1_dfj8i")
 start_minute = 1080
 activity = &"home"
@@ -194,8 +231,8 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_m247r"]
 script = ExtResource("1_dfj8i")
-start_minute = 960
-travel_minutes = 5
+start_minute = 928
+travel_minutes = 22
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_shop_window", "v_well")
@@ -203,7 +240,7 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_6bmho"]
 script = ExtResource("1_dfj8i")
-start_minute = 965
+start_minute = 950
 animation = &"talk"
 path = PackedStringArray("v_well")
 dialogue_id = &"v_grocer"
@@ -212,7 +249,7 @@ region = &"village"
 [sub_resource type="Resource" id="Resource_cvoyc"]
 script = ExtResource("1_dfj8i")
 start_minute = 990
-travel_minutes = 5
+travel_minutes = 22
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_well", "v_shop_window")
@@ -220,7 +257,7 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_yxotm"]
 script = ExtResource("1_dfj8i")
-start_minute = 995
+start_minute = 1012
 activity = &"shop"
 animation = &"work"
 path = PackedStringArray("v_shop_window")
@@ -239,4 +276,4 @@ region = &"village"
 script = ExtResource("2_pg4fx")
 npc_id = &"grocer"
 display_name = "Theres Mangold"
-entries = Array[ExtResource("1_dfj8i")]([SubResource("Resource_r37f3"), SubResource("Resource_cjctw"), SubResource("Resource_m247r"), SubResource("Resource_6bmho"), SubResource("Resource_cvoyc"), SubResource("Resource_yxotm"), SubResource("Resource_rt5r3"), SubResource("p8_grocer_01"), SubResource("p8_grocer_02"), SubResource("p8_grocer_03"), SubResource("p8_grocer_04"), SubResource("p8_grocer_05"), SubResource("p8_grocer_06"), SubResource("p8_grocer_07"), SubResource("p8_grocer_08"), SubResource("p8_grocer_09"), SubResource("p8_grocer_10"), SubResource("p8_grocer_11"), SubResource("p8_grocer_12"), SubResource("p8_grocer_13"), SubResource("p8_grocer_14"), SubResource("p8_grocer_15"), SubResource("p8_grocer_16"), SubResource("p8_grocer_17"), SubResource("p8_grocer_18"), SubResource("p8_grocer_19")])
+entries = Array[ExtResource("1_dfj8i")]([SubResource("Resource_r37f3"), SubResource("Resource_cjctw"), SubResource("Resource_m247r"), SubResource("Resource_6bmho"), SubResource("Resource_cvoyc"), SubResource("Resource_yxotm"), SubResource("Resource_rt5r3"), SubResource("p8_grocer_01"), SubResource("p8_grocer_02"), SubResource("p8_grocer_03"), SubResource("p8_grocer_04"), SubResource("p8_grocer_05"), SubResource("p8_grocer_06"), SubResource("p8_grocer_07"), SubResource("p8_grocer_08"), SubResource("p8_grocer_09"), SubResource("p8_grocer_10"), SubResource("p8_grocer_11"), SubResource("p8_grocer_12"), SubResource("p8_grocer_13"), SubResource("p8_grocer_14"), SubResource("p8_grocer_15"), SubResource("p8_grocer_16"), SubResource("p8_grocer_17"), SubResource("p8_grocer_18"), SubResource("p8_grocer_19"), SubResource("p8_grocer_20"), SubResource("p8_grocer_21"), SubResource("p8_grocer_22"), SubResource("p8_grocer_23")])

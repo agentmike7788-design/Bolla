@@ -6,7 +6,7 @@
 script = ExtResource("1")
 npc_id = &"apprentice"
 hire_flag = &"apprentice_hired"
-arrive_minute = 495
+arrive_minute = 450
 start_minute = 510
 lunch = Vector2i(720, 750)
 end_minute = 930

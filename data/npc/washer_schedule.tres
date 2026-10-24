@@ -3,35 +3,145 @@
 [ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1_rnbvr"]
 [ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2_fh6o0"]
 
+[sub_resource type="Resource" id="p9_washer_01"]
+script = ExtResource("1_rnbvr")
+start_minute = 88
+travel_minutes = 72
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_dorn_door", "v_linden", "v_anger_w", "v_bridge", "v_road_in", "v_sieber_lane_n", "v_sieber_lane_e", "v_sieber_lane_s", "v_sieber_yard", "v_sieber_door")
+region = &"village"
+today_flag = &"night_np_sieber_washer_day"
+
+[sub_resource type="Resource" id="p9_washer_02"]
+script = ExtResource("1_rnbvr")
+start_minute = 160
+animation = &"knock"
+path = PackedStringArray("v_sieber_door")
+region = &"village"
+today_flag = &"night_np_sieber_washer_day"
+
+[sub_resource type="Resource" id="p9_washer_03"]
+script = ExtResource("1_rnbvr")
+start_minute = 161
+activity = &"home"
+path = PackedStringArray("v_sieber_door")
+visible = false
+region = &"village"
+today_flag = &"night_np_sieber_washer_day"
+
+[sub_resource type="Resource" id="p9_washer_04"]
+script = ExtResource("1_rnbvr")
+start_minute = 330
+path = PackedStringArray("v_sieber_door")
+dialogue_id = &"v_washer"
+region = &"village"
+today_flag = &"night_np_sieber_washer_day"
+
+[sub_resource type="Resource" id="p9_washer_05"]
+script = ExtResource("1_rnbvr")
+start_minute = 332
+travel_minutes = 72
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_sieber_door", "v_sieber_yard", "v_sieber_lane_s", "v_sieber_lane_e", "v_sieber_lane_n", "v_road_in", "v_bridge", "v_anger_w", "v_linden", "v_dorn_door")
+region = &"village"
+today_flag = &"night_np_sieber_washer_day"
+
+[sub_resource type="Resource" id="p9_washer_06"]
+script = ExtResource("1_rnbvr")
+start_minute = 404
+activity = &"home"
+path = PackedStringArray("v_dorn_door")
+visible = false
+region = &"village"
+today_flag = &"night_np_sieber_washer_day"
+
+[sub_resource type="Resource" id="p9_washer_07"]
+script = ExtResource("1_rnbvr")
+start_minute = 1012
+travel_minutes = 68
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_dorn_door", "v_linden", "v_anger_w", "v_bridge", "v_road_in", "v_sieber_lane_n", "v_sieber_lane_e", "v_sieber_lane_s", "v_sieber_bench_2")
+region = &"village"
+today_flag = &"sieber_evening_washer_day"
+
+[sub_resource type="Resource" id="p9_washer_08"]
+script = ExtResource("1_rnbvr")
+start_minute = 1080
+activity = &"sit"
+animation = &"sit_bench"
+path = PackedStringArray("v_sieber_bench_2")
+region = &"village"
+today_flag = &"sieber_evening_washer_day"
+
+[sub_resource type="Resource" id="p9_washer_09"]
+script = ExtResource("1_rnbvr")
+start_minute = 1200
+travel_minutes = 68
+activity = &"walk"
+animation = &"walk"
+path = PackedStringArray("v_sieber_bench_2", "v_sieber_lane_s", "v_sieber_lane_e", "v_sieber_lane_n", "v_road_in", "v_bridge", "v_anger_w", "v_linden", "v_dorn_door")
+region = &"village"
+today_flag = &"sieber_evening_washer_day"
+
+[sub_resource type="Resource" id="p9_washer_10"]
+script = ExtResource("1_rnbvr")
+start_minute = 1268
+activity = &"home"
+path = PackedStringArray("v_dorn_door")
+visible = false
+region = &"village"
+today_flag = &"sieber_evening_washer_day"
+
+[sub_resource type="Resource" id="p9_washer_11"]
+script = ExtResource("1_rnbvr")
+start_minute = 1140
+activity = &"sit"
+animation = &"sit_bench"
+path = PackedStringArray("v_sieber_bench_2")
+region = &"village"
+today_flag = &"sieber_evening_washer_day"
+
 [sub_resource type="Resource" id="p8_washer_01"]
 script = ExtResource("1_rnbvr")
-start_minute = 540
-travel_minutes = 8
+start_minute = 360
+activity = &"home"
+path = PackedStringArray("v_dorn_door")
+visible = false
+region = &"village"
+today_flag = &"visit_washer_day"
+
+[sub_resource type="Resource" id="p8_washer_02"]
+script = ExtResource("1_rnbvr")
+start_minute = 443
+travel_minutes = 54
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_dorn_door", "v_well", "v_bridge", "v_road_in")
 region = &"village"
 today_flag = &"visit_washer_day"
 
-[sub_resource type="Resource" id="p8_washer_02"]
+[sub_resource type="Resource" id="p8_washer_03"]
 script = ExtResource("1_rnbvr")
-start_minute = 548
+start_minute = 497
 activity = &"home"
 path = PackedStringArray("v_road_in")
 visible = false
 region = &"village"
 today_flag = &"visit_washer_day"
 
-[sub_resource type="Resource" id="p8_washer_03"]
+[sub_resource type="Resource" id="p8_washer_04"]
 script = ExtResource("1_rnbvr")
-start_minute = 560
-travel_minutes = 20
+start_minute = 502
+travel_minutes = 78
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("road_end", "road_mid", "gate_outside", "gate_inside", "vw_36", "vw_50", "vw_03", "vw_26", "linden_spot")
 today_flag = &"visit_washer_day"
 
-[sub_resource type="Resource" id="p8_washer_04"]
+[sub_resource type="Resource" id="p8_washer_05"]
 script = ExtResource("1_rnbvr")
 start_minute = 580
 activity = &"mourn"
@@ -40,53 +150,53 @@ path = PackedStringArray("linden_spot")
 dialogue_id = &"v_washer"
 today_flag = &"visit_washer_day"
 
-[sub_resource type="Resource" id="p8_washer_05"]
+[sub_resource type="Resource" id="p8_washer_06"]
 script = ExtResource("1_rnbvr")
 start_minute = 720
-travel_minutes = 20
+travel_minutes = 78
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("linden_spot", "vw_26", "vw_03", "vw_50", "vw_36", "gate_inside", "gate_outside", "road_mid", "road_end")
 today_flag = &"visit_washer_day"
 
-[sub_resource type="Resource" id="p8_washer_06"]
+[sub_resource type="Resource" id="p8_washer_07"]
 script = ExtResource("1_rnbvr")
-start_minute = 740
+start_minute = 798
 activity = &"home"
 path = PackedStringArray("road_end")
 visible = false
 today_flag = &"visit_washer_day"
 
-[sub_resource type="Resource" id="p8_washer_07"]
+[sub_resource type="Resource" id="p8_washer_08"]
 script = ExtResource("1_rnbvr")
-start_minute = 770
-travel_minutes = 8
+start_minute = 803
+travel_minutes = 54
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_road_in", "v_bridge", "v_well", "v_dorn_door")
 region = &"village"
 today_flag = &"visit_washer_day"
 
-[sub_resource type="Resource" id="p8_washer_08"]
+[sub_resource type="Resource" id="p8_washer_09"]
 script = ExtResource("1_rnbvr")
-start_minute = 778
+start_minute = 857
 activity = &"home"
 path = PackedStringArray("v_dorn_door")
 visible = false
 region = &"village"
 today_flag = &"visit_washer_day"
 
-[sub_resource type="Resource" id="p8_washer_09"]
+[sub_resource type="Resource" id="p8_washer_10"]
 script = ExtResource("1_rnbvr")
-start_minute = 1195
-travel_minutes = 5
+start_minute = 1173
+travel_minutes = 27
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_dorn_door", "v_inn_door")
 region = &"village"
 today_flag = &"fest_kathrein_day"
 
-[sub_resource type="Resource" id="p8_washer_10"]
+[sub_resource type="Resource" id="p8_washer_11"]
 script = ExtResource("1_rnbvr")
 start_minute = 1200
 path = PackedStringArray("v_in_inn_fest_3")
@@ -94,36 +204,36 @@ dialogue_id = &"v_washer"
 region = &"village"
 today_flag = &"fest_kathrein_day"
 
-[sub_resource type="Resource" id="p8_washer_11"]
+[sub_resource type="Resource" id="p8_washer_12"]
 script = ExtResource("1_rnbvr")
 start_minute = 1260
-travel_minutes = 5
+travel_minutes = 27
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_inn_door", "v_dorn_door")
 region = &"village"
 today_flag = &"fest_kathrein_day"
 
-[sub_resource type="Resource" id="p8_washer_12"]
+[sub_resource type="Resource" id="p8_washer_13"]
 script = ExtResource("1_rnbvr")
-start_minute = 1265
+start_minute = 1287
 activity = &"home"
 path = PackedStringArray("v_dorn_door")
 visible = false
 region = &"village"
 today_flag = &"fest_kathrein_day"
 
-[sub_resource type="Resource" id="p8_washer_13"]
+[sub_resource type="Resource" id="p8_washer_14"]
 script = ExtResource("1_rnbvr")
-start_minute = 150
-travel_minutes = 10
+start_minute = 116
+travel_minutes = 44
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_dorn_door", "v_well", "v_ott_lane_w", "v_ott_lane", "v_ott_door")
 region = &"village"
 today_flag = &"night_np_ott_washer_day"
 
-[sub_resource type="Resource" id="p8_washer_14"]
+[sub_resource type="Resource" id="p8_washer_15"]
 script = ExtResource("1_rnbvr")
 start_minute = 160
 animation = &"knock"
@@ -131,7 +241,7 @@ path = PackedStringArray("v_ott_door")
 region = &"village"
 today_flag = &"night_np_ott_washer_day"
 
-[sub_resource type="Resource" id="p8_washer_15"]
+[sub_resource type="Resource" id="p8_washer_16"]
 script = ExtResource("1_rnbvr")
 start_minute = 161
 activity = &"home"
@@ -140,7 +250,7 @@ visible = false
 region = &"village"
 today_flag = &"night_np_ott_washer_day"
 
-[sub_resource type="Resource" id="p8_washer_16"]
+[sub_resource type="Resource" id="p8_washer_17"]
 script = ExtResource("1_rnbvr")
 start_minute = 330
 path = PackedStringArray("v_ott_door")
@@ -148,78 +258,136 @@ dialogue_id = &"v_washer"
 region = &"village"
 today_flag = &"night_np_ott_washer_day"
 
-[sub_resource type="Resource" id="p8_washer_17"]
+[sub_resource type="Resource" id="p8_washer_18"]
 script = ExtResource("1_rnbvr")
 start_minute = 332
-travel_minutes = 10
+travel_minutes = 44
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_ott_door", "v_ott_lane", "v_ott_lane_w", "v_well", "v_dorn_door")
 region = &"village"
 today_flag = &"night_np_ott_washer_day"
 
-[sub_resource type="Resource" id="p8_washer_18"]
+[sub_resource type="Resource" id="p8_washer_19"]
 script = ExtResource("1_rnbvr")
-start_minute = 342
+start_minute = 376
 activity = &"home"
 path = PackedStringArray("v_dorn_door")
 visible = false
 region = &"village"
 today_flag = &"night_np_ott_washer_day"
 
-[sub_resource type="Resource" id="p8_washer_19"]
+[sub_resource type="Resource" id="p8_washer_20"]
 script = ExtResource("1_rnbvr")
-start_minute = 950
-travel_minutes = 10
+start_minute = 398
+activity = &"home"
+path = PackedStringArray("v_dorn_door")
+visible = false
+region = &"village"
+today_flag = &"night_np_ott_washer_day"
+
+[sub_resource type="Resource" id="p8_washer_21"]
+script = ExtResource("1_rnbvr")
+start_minute = 833
+travel_minutes = 48
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_dorn_door", "v_well", "v_bridge")
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_washer_20"]
+[sub_resource type="Resource" id="p8_washer_22"]
 script = ExtResource("1_rnbvr")
-start_minute = 960
+start_minute = 881
 path = PackedStringArray("v_bridge")
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_washer_21"]
+[sub_resource type="Resource" id="p8_washer_23"]
 script = ExtResource("1_rnbvr")
-start_minute = 990
-travel_minutes = 5
+start_minute = 911
+travel_minutes = 6
 activity = &"walk"
 animation = &"lantern_walk"
 path = PackedStringArray("v_bridge", "v_road_in")
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_washer_22"]
+[sub_resource type="Resource" id="p8_washer_24"]
 script = ExtResource("1_rnbvr")
-start_minute = 995
+start_minute = 917
 activity = &"home"
 path = PackedStringArray("v_road_in")
 visible = false
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_washer_23"]
+[sub_resource type="Resource" id="p8_washer_25"]
 script = ExtResource("1_rnbvr")
-start_minute = 1125
-travel_minutes = 12
+start_minute = 1213
+travel_minutes = 54
 activity = &"walk"
 animation = &"lantern_walk"
 path = PackedStringArray("v_road_in", "v_bridge", "v_well", "v_dorn_door")
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_washer_24"]
+[sub_resource type="Resource" id="p8_washer_26"]
 script = ExtResource("1_rnbvr")
-start_minute = 1137
-activity = &"shop"
-animation = &"work"
+start_minute = 1267
+activity = &"home"
 path = PackedStringArray("v_dorn_door")
-dialogue_id = &"v_washer"
+visible = false
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_washer_27"]
+script = ExtResource("1_rnbvr")
+start_minute = 398
+activity = &"home"
+path = PackedStringArray("v_dorn_door")
+visible = false
+region = &"village"
+today_flag = &"visit_washer_day"
+
+[sub_resource type="Resource" id="p8_washer_28"]
+script = ExtResource("1_rnbvr")
+start_minute = 888
+path = PackedStringArray("v_bridge")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_washer_29"]
+script = ExtResource("1_rnbvr")
+start_minute = 905
+path = PackedStringArray("v_bridge")
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_washer_30"]
+script = ExtResource("1_rnbvr")
+start_minute = 990
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_washer_31"]
+script = ExtResource("1_rnbvr")
+start_minute = 1007
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_washer_32"]
+script = ExtResource("1_rnbvr")
+start_minute = 1140
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
 region = &"village"
 today_flag = &"fest_lights_day"
 
@@ -232,8 +400,8 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_gkglj"]
 script = ExtResource("1_rnbvr")
-start_minute = 390
-travel_minutes = 8
+start_minute = 360
+travel_minutes = 38
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_dorn_door", "v_wash")
@@ -266,8 +434,8 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_ye1ld"]
 script = ExtResource("1_rnbvr")
-start_minute = 900
-travel_minutes = 5
+start_minute = 888
+travel_minutes = 17
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_dorn_door", "v_well_w")
@@ -284,7 +452,7 @@ region = &"village"
 [sub_resource type="Resource" id="Resource_nb3dv"]
 script = ExtResource("1_rnbvr")
 start_minute = 990
-travel_minutes = 5
+travel_minutes = 17
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_well_w", "v_dorn_door")
@@ -292,7 +460,7 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_7ggjs"]
 script = ExtResource("1_rnbvr")
-start_minute = 995
+start_minute = 1007
 activity = &"shop"
 animation = &"work"
 path = PackedStringArray("v_dorn_door")
@@ -307,109 +475,8 @@ path = PackedStringArray("v_dorn_door")
 visible = false
 region = &"village"
 
-[sub_resource type="Resource" id="p9_washer_vigil_01"]
-script = ExtResource("1_rnbvr")
-start_minute = 145
-travel_minutes = 15
-activity = &"walk"
-animation = &"walk"
-path = PackedStringArray("v_dorn_door", "v_linden", "v_anger_w", "v_bridge", "v_road_in", "v_sieber_lane_n", "v_sieber_lane_e", "v_sieber_lane_s", "v_sieber_yard", "v_sieber_door")
-region = &"village"
-today_flag = &"night_np_sieber_washer_day"
-
-[sub_resource type="Resource" id="p9_washer_vigil_02"]
-script = ExtResource("1_rnbvr")
-start_minute = 160
-animation = &"knock"
-path = PackedStringArray("v_sieber_door")
-region = &"village"
-today_flag = &"night_np_sieber_washer_day"
-
-[sub_resource type="Resource" id="p9_washer_vigil_03"]
-script = ExtResource("1_rnbvr")
-start_minute = 161
-activity = &"home"
-path = PackedStringArray("v_sieber_door")
-visible = false
-region = &"village"
-today_flag = &"night_np_sieber_washer_day"
-
-[sub_resource type="Resource" id="p9_washer_vigil_04"]
-script = ExtResource("1_rnbvr")
-start_minute = 330
-path = PackedStringArray("v_sieber_door")
-dialogue_id = &"v_washer"
-region = &"village"
-today_flag = &"night_np_sieber_washer_day"
-
-[sub_resource type="Resource" id="p9_washer_vigil_05"]
-script = ExtResource("1_rnbvr")
-start_minute = 332
-travel_minutes = 15
-activity = &"walk"
-animation = &"walk"
-path = PackedStringArray("v_sieber_door", "v_sieber_yard", "v_sieber_lane_s", "v_sieber_lane_e", "v_sieber_lane_n", "v_road_in", "v_bridge", "v_anger_w", "v_linden", "v_dorn_door")
-region = &"village"
-today_flag = &"night_np_sieber_washer_day"
-
-[sub_resource type="Resource" id="p9_washer_vigil_06"]
-script = ExtResource("1_rnbvr")
-start_minute = 347
-activity = &"home"
-path = PackedStringArray("v_dorn_door")
-visible = false
-region = &"village"
-today_flag = &"night_np_sieber_washer_day"
-
-[sub_resource type="Resource" id="p9_washer_evening_01"]
-script = ExtResource("1_rnbvr")
-start_minute = 1045
-travel_minutes = 35
-activity = &"walk"
-animation = &"walk"
-path = PackedStringArray("v_dorn_door", "v_linden", "v_anger_w", "v_bridge", "v_road_in", "v_sieber_lane_n", "v_sieber_lane_e", "v_sieber_lane_s", "v_sieber_bench_2")
-region = &"village"
-today_flag = &"sieber_evening_washer_day"
-
-[sub_resource type="Resource" id="p9_washer_evening_02"]
-script = ExtResource("1_rnbvr")
-start_minute = 1080
-activity = &"sit"
-animation = &"sit_bench"
-path = PackedStringArray("v_sieber_bench_2")
-region = &"village"
-today_flag = &"sieber_evening_washer_day"
-
-[sub_resource type="Resource" id="p9_washer_evening_03"]
-script = ExtResource("1_rnbvr")
-start_minute = 1140
-activity = &"sit"
-animation = &"sit_bench"
-path = PackedStringArray("v_sieber_bench_2")
-region = &"village"
-today_flag = &"sieber_evening_washer_day"
-
-[sub_resource type="Resource" id="p9_washer_evening_04"]
-script = ExtResource("1_rnbvr")
-start_minute = 1200
-travel_minutes = 35
-activity = &"walk"
-animation = &"walk"
-path = PackedStringArray("v_sieber_bench_2", "v_sieber_lane_s", "v_sieber_lane_e", "v_sieber_lane_n", "v_road_in", "v_bridge", "v_anger_w", "v_linden", "v_dorn_door")
-region = &"village"
-today_flag = &"sieber_evening_washer_day"
-
-[sub_resource type="Resource" id="p9_washer_evening_05"]
-script = ExtResource("1_rnbvr")
-start_minute = 1235
-activity = &"home"
-path = PackedStringArray("v_dorn_door")
-visible = false
-region = &"village"
-today_flag = &"sieber_evening_washer_day"
-
 [resource]
 script = ExtResource("2_fh6o0")
 npc_id = &"washer"
 display_name = "Liesel Dorn"
-entries = Array[ExtResource("1_rnbvr")]([SubResource("Resource_m5ffh"), SubResource("Resource_gkglj"), SubResource("Resource_f4woc"), SubResource("Resource_7t3c7"), SubResource("Resource_gsq4f"), SubResource("Resource_ye1ld"), SubResource("Resource_j1n20"), SubResource("Resource_nb3dv"), SubResource("Resource_7ggjs"), SubResource("Resource_wymwo"), SubResource("p8_washer_01"), SubResource("p8_washer_02"), SubResource("p8_washer_03"), SubResource("p8_washer_04"), SubResource("p8_washer_05"), SubResource("p8_washer_06"), SubResource("p8_washer_07"), SubResource("p8_washer_08"), SubResource("p8_washer_09"), SubResource("p8_washer_10"), SubResource("p8_washer_11"), SubResource("p8_washer_12"), SubResource("p8_washer_13"), SubResource("p8_washer_14"), SubResource("p8_washer_15"), SubResource("p8_washer_16"), SubResource("p8_washer_17"), SubResource("p8_washer_18"), SubResource("p8_washer_19"), SubResource("p8_washer_20"), SubResource("p8_washer_21"), SubResource("p8_washer_22"), SubResource("p8_washer_23"), SubResource("p8_washer_24"), SubResource("p9_washer_vigil_01"), SubResource("p9_washer_vigil_02"), SubResource("p9_washer_vigil_03"), SubResource("p9_washer_vigil_04"), SubResource("p9_washer_vigil_05"), SubResource("p9_washer_vigil_06"), SubResource("p9_washer_evening_01"), SubResource("p9_washer_evening_02"), SubResource("p9_washer_evening_03"), SubResource("p9_washer_evening_04"), SubResource("p9_washer_evening_05")])
+entries = Array[ExtResource("1_rnbvr")]([SubResource("Resource_m5ffh"), SubResource("Resource_gkglj"), SubResource("Resource_f4woc"), SubResource("Resource_7t3c7"), SubResource("Resource_gsq4f"), SubResource("Resource_ye1ld"), SubResource("Resource_j1n20"), SubResource("Resource_nb3dv"), SubResource("Resource_7ggjs"), SubResource("Resource_wymwo"), SubResource("p8_washer_01"), SubResource("p8_washer_02"), SubResource("p8_washer_03"), SubResource("p8_washer_04"), SubResource("p8_washer_05"), SubResource("p8_washer_06"), SubResource("p8_washer_07"), SubResource("p8_washer_08"), SubResource("p8_washer_09"), SubResource("p8_washer_10"), SubResource("p8_washer_11"), SubResource("p8_washer_12"), SubResource("p8_washer_13"), SubResource("p8_washer_14"), SubResource("p8_washer_15"), SubResource("p8_washer_16"), SubResource("p8_washer_17"), SubResource("p8_washer_18"), SubResource("p8_washer_19"), SubResource("p8_washer_20"), SubResource("p8_washer_21"), SubResource("p8_washer_22"), SubResource("p8_washer_23"), SubResource("p8_washer_24"), SubResource("p8_washer_25"), SubResource("p8_washer_26"), SubResource("p8_washer_27"), SubResource("p8_washer_28"), SubResource("p8_washer_29"), SubResource("p8_washer_30"), SubResource("p8_washer_31"), SubResource("p8_washer_32"), SubResource("p9_washer_01"), SubResource("p9_washer_02"), SubResource("p9_washer_03"), SubResource("p9_washer_04"), SubResource("p9_washer_05"), SubResource("p9_washer_06"), SubResource("p9_washer_07"), SubResource("p9_washer_08"), SubResource("p9_washer_09"), SubResource("p9_washer_10"), SubResource("p9_washer_11")])

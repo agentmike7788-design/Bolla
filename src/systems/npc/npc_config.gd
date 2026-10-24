@@ -14,11 +14,21 @@ extends Resource
 @export var governor_hz: float = 2.0
 ## A villager closer than this (m) to the gravekeeper says its remark (once per day).
 @export var remark_distance: float = 4.0
-# Phase 8 (docs/PHASE8_DESIGN.md §3.2, §3.4, §9): runtime schedules walk 3.2 m per game minute
-# (1.6 m/s real time); visible caps per region (graveyard 9, 16 on the night of the lights); standing
+# Phase 8 (docs/PHASE8_DESIGN.md §3.2, §3.4, §9): runtime schedules walk walk_m_per_minute; visible caps per region (graveyard 9, 16 on the night of the lights); standing
 # figures (idle / kneel / mourn) rest from 26 m; level-1 rate 3 Hz on a festival.
-@export var walk_m_per_minute: float = 3.2
+## G9 Gehtempo: 0.8 m per game minute = 1.6 m/s real at TimeConfig.seconds_per_game_minute 0.5 – the pace Phase 8 meant
+## (§3.4 „1.6 m/s“; the 3.2 of Phase 8 were 6.4 m/s real), the walk clip at speed_scale 0.97. Also the target of the data
+## schedule walks (tools/dialogue/build_phase*_schedules.py, tools/dialogue/retime_walks.py read it from the .tres).
+@export var walk_m_per_minute: float = 0.8
 @export var max_visible_graveyard: int = 9
 @export var max_visible_fest: int = 16
 @export var stand_rest_distance: float = 26.0
 @export var fest_reduced_interval: float = 0.33
+# G9 Gehtempo (docs/PHASE9_DESIGN.md „G9 – Benutzerentscheidungen“ 1, WalkTempo, test_walk_tempo): the band every
+# schedule walk keeps (m per game minute; 0.5 s real per game minute → × 2 = m/s real). The walk clip does not slide at
+# Npc.walk_anim_speed 1.65 m/s = 0.825 m per game minute; the cart clip at push_anim_speed 1.14 m/s = 0.57.
+@export var walk_min_m_per_minute: float = 0.5
+@export var walk_max_m_per_minute: float = 1.0
+@export var cart_m_per_minute: float = 0.55
+@export var cart_min_m_per_minute: float = 0.4
+@export var cart_max_m_per_minute: float = 0.7

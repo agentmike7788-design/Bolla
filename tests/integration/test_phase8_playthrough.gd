@@ -53,7 +53,9 @@ func after_each() -> void:
 ## no candles – the nights awake replace them), lazy8 +92 (idle on purpose: no wage, no care goods – still well above,
 ## but 30 below the old +122), founder8 +5 (builds and buys). The band: active ways start +15…+50 („grob"), night8 up
 ## to +55; lazy8 ≤ +100.
-const END_DELTA := {&"kindly8": [15, 40], &"anatomist8": [15, 50], &"lazy8": [35, 100], &"night8": [25, 55],
+## G9 Gehtempo: anatomist8 ends +54 (the day at the natural pace – shops and visits at other hours, fewer purchases in
+## the village); the measured guard 50 → 60.
+const END_DELTA := {&"kindly8": [15, 40], &"anatomist8": [15, 60], &"lazy8": [35, 100], &"night8": [25, 55],
 		&"night8b": [25, 55], &"save_load8": [15, 40]}
 ## G8 Runde 1 (B8-1): visitors wait up to 100 minutes and the gate bell rings – kindly8 misses at most 20 % of the visits.
 const MISSED_MAX := 0.2

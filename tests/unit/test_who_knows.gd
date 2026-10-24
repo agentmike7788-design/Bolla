@@ -356,8 +356,10 @@ func test_departure_with_hanne_before_the_deadline() -> void:
 	assert_eq(who.depart_plan(), {"day": 67, "minute": 980, "with": &"peddler"}, "Hanne's day 67 ≤ light + 18")
 	who.apply_minute(67, 1000)
 	assert_false(GameState.flag_on(&"sieber_gone"), "still on the forest path")
-	who.apply_minute(67, 1020)
-	assert_true(GameState.flag_on(&"sieber_gone"), "16:20 + 40")
+	who.apply_minute(67, 1030)
+	assert_false(GameState.flag_on(&"sieber_gone"), "G9 Gehtempo: the forest path takes 56 minutes")
+	who.apply_minute(67, 1040)
+	assert_true(GameState.flag_on(&"sieber_gone"), "16:20 + 60")
 	assert_eq(visitors.interval.get(&"kin_sieber"), -1, "Grete's grave has no visitor any more")
 	assert_has(lights, [&"e_open", &"departed"])
 	TimeManager.advance(1)
@@ -671,9 +673,9 @@ func test_w3_quast_and_ending_c_bring_no_companion() -> void:
 
 func test_w2_config_values_from_the_code() -> void:
 	var defaults := WhoKnowsConfig.new()
-	assert_eq([defaults.quest_id, defaults.gone_after_minutes, defaults.b_confidant_rel], [&"q_who_knows", 40, 3])
+	assert_eq([defaults.quest_id, defaults.gone_after_minutes, defaults.b_confidant_rel], [&"q_who_knows", 60, 3], "G9 Gehtempo: 60 (before 40)")
 	var real := Database.config(&"who_knows_config") as WhoKnowsConfig
-	assert_eq([real.quest_id, real.gone_after_minutes, real.b_confidant_rel], [&"q_who_knows", 40, 3], "data = class default")
+	assert_eq([real.quest_id, real.gone_after_minutes, real.b_confidant_rel], [&"q_who_knows", 60, 3], "data = class default")
 
 
 func test_w2_gone_after_minutes_and_confidant_gain_follow_the_config() -> void:

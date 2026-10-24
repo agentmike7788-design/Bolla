@@ -10,7 +10,7 @@ extends RefCounted
 ##   grave whose flowers wilt today or tomorrow (or are wilted); candle = an occupied grave (FILLED / MARKED)
 ##   without a burning candle – area „wished" = only graves with an open candle wish.
 ## - Never: a grave someone mourns at today (Visitors' plan), a locked section, a place twice.
-## - Times: walking = ScheduleBuilder.travel_minutes of the straight line (3.2 m per game minute), work =
+## - Times: walking = ScheduleBuilder.travel_minutes of the straight line (NpcConfig.walk_m_per_minute 0.8), work =
 ##   ApprenticeRules.minutes_for; no place runs into lunch (lunch.x–lunch.y on the bench) or past end_minute;
 ##   the watering can is refilled at the rain barrel (a visible walk) when its fills run out; time left = sweep
 ##   in front of the hut.

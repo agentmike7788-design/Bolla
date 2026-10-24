@@ -94,7 +94,8 @@ func test_schedule_fits_the_unloading() -> void:
 	assert_true(unload.with_cart and unload.dialogue_id == &"", "unloading: with the cart, no prompt")
 	assert_eq(PackedStringArray(unload.path), PackedStringArray(["dropoff"]), "unloads at the bier")
 	assert_eq(stay.start_minute, tables.delivery_minute, "talks once the corpse is on the bier")
-	assert_eq(arrive.travel_minutes, 40, "pushes as fast as before (G8 Runde 3 sets off 8 min earlier)")
+	# G9 Gehtempo: the cart at its natural pace (29.4 m at 0.55 m per game minute) – off at 06:30.
+	assert_eq(arrive.travel_minutes, 54, "pushes at the cart's pace (G8 Runde 3: 40)")
 
 
 # --- CartUnload ----------------------------------------------------------------------------------------------

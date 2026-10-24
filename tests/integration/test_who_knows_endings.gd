@@ -158,9 +158,12 @@ func test_ending_a_with_hanne() -> void:
 	assert_eq(copy.save_state(), saved, "round trip on the forest path")
 	copy.free()
 	assert_false(GameState.flag_on(&"sieber_gone"))
+	# G9 Gehtempo: the forest path takes 56 minutes at the natural pace (WhoKnowsConfig.gone_after_minutes 60).
 	await _run_to(67, 1030)
+	assert_false(GameState.flag_on(&"sieber_gone"), "still on the forest path at 17:10")
+	await _run_to(67, 1041)
 	assert_true(GameState.flag_on(&"sieber_gone"), "gone after the walk")
-	await _run_to(67, 1031)
+	await _run_to(67, 1042)
 	assert_eq(quests.state(&"q_who_knows"), &"settled")
 	await _run_to(68, 400)
 	assert_true(_journal().has_clue(&"c_q_hand_answers"), "„Du schreibst wie er. Gut.“")

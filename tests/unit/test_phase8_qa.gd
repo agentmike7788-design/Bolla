@@ -102,17 +102,19 @@ func test_qa8_03_schedules_bring_fenner_and_rosine_up() -> void:
 	GameState.set_flag(&"meet_mayor_day", 56)
 	e = ScheduleResolver.entry_at(mayor, 965, 56)
 	assert_eq([String(e.path[e.path.size() - 1]), e.region, e.dialogue_id], ["gv_l_12", &"", &"v_mayor"], "QA8-03: Fenner at l_12")
+	# G9 Gehtempo: the way down round the Lindenacker and over the bridge takes 93 + 5 + 59 minutes – he goes straight to
+	# the inn (19:17) instead of the board first.
 	e = ScheduleResolver.entry_at(mayor, 1040, 56)
-	assert_eq(String(e.path[e.path.size() - 1]), "v_board", "back at the board before the inn")
-	e = ScheduleResolver.entry_at(mayor, 1100, 56)
-	assert_eq(String(e.path[e.path.size() - 1]), "v_in_inn_table", "18:20 in the inn as every day")
+	assert_eq([String(e.path[e.path.size() - 1]), e.region, e.activity], ["road_end", &"", &"walk"], "on his way down")
+	e = ScheduleResolver.entry_at(mayor, 1200, 56)
+	assert_eq(String(e.path[e.path.size() - 1]), "v_in_inn_table", "20:00 in the inn as every evening")
 	e = ScheduleResolver.entry_at(inn, 910, 56)
 	assert_eq(String(e.path[e.path.size() - 1]), "v_in_inn_bar", "Rosine behind the bar")
 	GameState.set_flag(&"meet_innkeeper_day", 56)
 	e = ScheduleResolver.entry_at(inn, 910, 56)
 	assert_eq([String(e.path[e.path.size() - 1]), e.region, e.dialogue_id], ["vw_39", &"", &"v_innkeeper"], "QA8-03: Rosine at Jakob's bench")
-	e = ScheduleResolver.entry_at(inn, 990, 56)
-	assert_eq(String(e.path[e.path.size() - 1]), "v_in_inn_bar", "back behind the bar at 16:30")
+	e = ScheduleResolver.entry_at(inn, 1080, 56)
+	assert_eq(String(e.path[e.path.size() - 1]), "v_in_inn_bar", "back behind the bar at 17:43 (G9: the ways at the natural pace)")
 
 
 # --- QA8-10 -------------------------------------------------------------------------------------------

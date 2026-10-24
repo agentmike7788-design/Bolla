@@ -182,11 +182,12 @@ func test_carter_schedule_loads_with_identity() -> void:
 
 
 ## G8 Runde 3: he is at the bier unload_minutes before the delivery minute, unloads (no prompt) and talks from 07:40.
-## G8 Runde 4 (user: „kannst du 8 sec machen"): 16 minutes of unloading – off at 06:44, at the bier at 07:24.
+## G8 Runde 4 (user: „kannst du 8 sec machen"): 16 minutes of unloading – at the bier at 07:24. G9 Gehtempo: the cart at
+## its natural pace (NpcConfig.cart_m_per_minute 0.55 – 29.4 m in 54 minutes): off at 06:30 (before 06:44).
 func test_carter_morning_arrival_matches_delivery_minute() -> void:
 	var cfg := Database.config(&"cart_delivery_config") as CartDeliveryConfig
 	var walk_in := ScheduleResolver.entry_at(_carter(), 420)
-	assert_eq(walk_in.start_minute, 404, "06:44 entry (G8 Runde 4)")
+	assert_eq(walk_in.start_minute, 390, "06:30 entry (G9; G8 Runde 4: 06:44)")
 	var arrival := ScheduleResolver.arrival_minute(walk_in)
 	assert_eq(arrival, 444)
 	var delivery := CorpseTables.new().delivery_minute
@@ -236,15 +237,16 @@ func test_carter_phases_over_the_day() -> void:
 	var s := _carter()
 	var expect := {
 		0: [&"home", false, false, &""],
-		403: [&"home", false, false, &""],
-		404: [&"walk", true, true, &""],
+		389: [&"home", false, false, &""],
+		390: [&"walk", true, true, &""],
 		443: [&"walk", true, true, &""],
 		444: [&"unload", true, true, &""],
 		459: [&"unload", true, true, &""],
 		460: [&"idle", true, true, &"carter"],
 		599: [&"idle", true, true, &"carter"],
 		600: [&"walk", true, true, &""],
-		640: [&"home", false, false, &""],
+		653: [&"walk", true, true, &""],
+		654: [&"home", false, false, &""],
 		1079: [&"home", false, false, &""],
 		1080: [&"walk", true, false, &""],
 		1110: [&"smoke", true, false, &"carter"],
@@ -263,9 +265,9 @@ func test_carter_phases_over_the_day() -> void:
 
 
 func test_carter_specific_entries() -> void:
-	var walk_in := _carter_entry(404)
+	var walk_in := _carter_entry(390)
 	assert_eq(walk_in.path, PackedStringArray(["road_end", "road_mid", "gate_outside", "dropoff"]))
-	assert_eq(walk_in.travel_minutes, 40)
+	assert_eq(walk_in.travel_minutes, 54, "G9: the cart's pace")
 	assert_eq(walk_in.animation, &"push_cart")
 	var unload := _carter_entry(444)
 	assert_eq(unload.path, PackedStringArray(["dropoff"]))
@@ -275,9 +277,9 @@ func test_carter_specific_entries() -> void:
 	assert_eq(at_dropoff.animation, &"idle")
 	var walk_out := _carter_entry(600)
 	assert_eq(walk_out.path, PackedStringArray(["dropoff", "gate_outside", "road_mid", "road_end"]))
-	assert_eq(walk_out.travel_minutes, 40)
+	assert_eq(walk_out.travel_minutes, 54)
 	assert_eq(walk_out.animation, &"push_cart")
-	assert_eq(ScheduleResolver.arrival_minute(walk_out), 640)
+	assert_eq(ScheduleResolver.arrival_minute(walk_out), 654)
 	var evening_in := _carter_entry(1080)
 	assert_eq(evening_in.path, PackedStringArray(["road_end", "road_mid", "evening_spot"]))
 	assert_eq(evening_in.travel_minutes, 30)
@@ -316,6 +318,6 @@ func test_carter_hidden_phases_have_no_dialogue_or_cart() -> void:
 
 func test_carter_progress_along_morning_walk() -> void:
 	var s := _carter()
-	var e := ScheduleResolver.entry_at(s, 424)
-	assert_almost(ScheduleResolver.progress(e, 424.0), 0.5)
+	var e := ScheduleResolver.entry_at(s, 417)
+	assert_almost(ScheduleResolver.progress(e, 417.0), 0.5)
 	assert_almost(ScheduleResolver.progress(ScheduleResolver.entry_at(s, 500), 500.0), 1.0, 0.0001, "standing")

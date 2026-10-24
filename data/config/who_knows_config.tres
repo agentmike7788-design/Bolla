@@ -23,7 +23,7 @@ depart_with_carter_minute = 600
 witness_count = 3
 reserve_section = &"linden_row4"
 quest_id = &"q_who_knows"
-gone_after_minutes = 40
+gone_after_minutes = 60
 b_confidant_rel = 3
 death_paths = Dictionary[StringName, StringName]({
 &"d2_ott": &"np_ott"

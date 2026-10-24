@@ -90,8 +90,8 @@ today_flag = &"sieber_evening_day"
 
 [sub_resource type="Resource" id="p9_kin_sieber_v_10"]
 script = ExtResource("1")
-start_minute = 841
-travel_minutes = 9
+start_minute = 859
+travel_minutes = 25
 activity = &"walk"
 animation = &"walk_bundle"
 path = PackedStringArray("v_sieber_door", "v_sieber_yard", "v_sieber_lane_s", "v_sieber_lane_e", "v_sieber_lane_n", "v_road_in")
@@ -100,7 +100,7 @@ today_flag = &"sieber_depart_peddler_day"
 
 [sub_resource type="Resource" id="p9_kin_sieber_v_11"]
 script = ExtResource("1")
-start_minute = 850
+start_minute = 884
 activity = &"home"
 path = PackedStringArray("v_road_in")
 visible = false
@@ -109,8 +109,8 @@ today_flag = &"sieber_depart_peddler_day"
 
 [sub_resource type="Resource" id="p9_kin_sieber_v_12"]
 script = ExtResource("1")
-start_minute = 921
-travel_minutes = 20
+start_minute = 889
+travel_minutes = 35
 activity = &"walk"
 animation = &"walk_bundle"
 path = PackedStringArray("road_end", "road_mid", "gate_outside", "sieber_gate")
@@ -118,7 +118,7 @@ today_flag = &"sieber_depart_peddler_day"
 
 [sub_resource type="Resource" id="p9_kin_sieber_v_13"]
 script = ExtResource("1")
-start_minute = 941
+start_minute = 924
 path = PackedStringArray("sieber_gate")
 dialogue_id = &"kin_sieber_v"
 today_flag = &"sieber_depart_peddler_day"
@@ -126,7 +126,7 @@ today_flag = &"sieber_depart_peddler_day"
 [sub_resource type="Resource" id="p9_kin_sieber_v_14"]
 script = ExtResource("1")
 start_minute = 981
-travel_minutes = 20
+travel_minutes = 56
 activity = &"walk"
 animation = &"walk_bundle"
 path = PackedStringArray("sieber_gate", "gate_outside", "peddler_west", "trader_spot", "trader_mid", "trader_far")
@@ -134,7 +134,7 @@ today_flag = &"sieber_depart_peddler_day"
 
 [sub_resource type="Resource" id="p9_kin_sieber_v_15"]
 script = ExtResource("1")
-start_minute = 1001
+start_minute = 1037
 activity = &"home"
 path = PackedStringArray("trader_far")
 visible = false
@@ -142,8 +142,8 @@ today_flag = &"sieber_depart_peddler_day"
 
 [sub_resource type="Resource" id="p9_kin_sieber_v_16"]
 script = ExtResource("1")
-start_minute = 545
-travel_minutes = 9
+start_minute = 513
+travel_minutes = 25
 activity = &"walk"
 animation = &"walk_bundle"
 path = PackedStringArray("v_sieber_door", "v_sieber_yard", "v_sieber_lane_s", "v_sieber_lane_e", "v_sieber_lane_n", "v_road_in")
@@ -152,7 +152,7 @@ today_flag = &"sieber_depart_carter_day"
 
 [sub_resource type="Resource" id="p9_kin_sieber_v_17"]
 script = ExtResource("1")
-start_minute = 554
+start_minute = 538
 activity = &"home"
 path = PackedStringArray("v_road_in")
 visible = false
@@ -161,8 +161,8 @@ today_flag = &"sieber_depart_carter_day"
 
 [sub_resource type="Resource" id="p9_kin_sieber_v_18"]
 script = ExtResource("1")
-start_minute = 560
-travel_minutes = 20
+start_minute = 543
+travel_minutes = 37
 activity = &"walk"
 animation = &"walk_bundle"
 path = PackedStringArray("road_end", "road_mid", "gate_outside", "dropoff")
@@ -180,7 +180,7 @@ today_flag = &"sieber_depart_carter_day"
 [sub_resource type="Resource" id="p9_kin_sieber_v_20"]
 script = ExtResource("1")
 start_minute = 600
-travel_minutes = 40
+travel_minutes = 54
 activity = &"walk"
 animation = &"sit_cart"
 path = PackedStringArray("dropoff", "gate_outside", "road_mid", "road_end")
@@ -188,7 +188,7 @@ today_flag = &"sieber_depart_carter_day"
 
 [sub_resource type="Resource" id="p9_kin_sieber_v_21"]
 script = ExtResource("1")
-start_minute = 640
+start_minute = 654
 activity = &"home"
 path = PackedStringArray("road_end")
 visible = false

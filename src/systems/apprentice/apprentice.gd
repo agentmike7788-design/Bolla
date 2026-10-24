@@ -67,10 +67,17 @@ const ROUTE_IN: PackedStringArray = ["road_end", "road_mid", "gate_outside", "ga
 const WP_BOARD := "apprentice_board"
 const WP_BOX := "apprentice_box"
 const V_INN := "v_in_inn_jakob"
-const V_ROUTE_OUT: PackedStringArray = ["v_in_inn_jakob", "v_inn_door", "v_bridge", "v_road_in"]
-const V_ROUTE_IN: PackedStringArray = ["v_road_in", "v_bridge", "v_inn_door", "v_in_inn_jakob"]
+## G9 Gehtempo: the ways start / end at the inn door (from the room inside he steps out through the door – the room lies
+## 650 m away, a walk from it took hours at the natural pace) and run over the Anger like his data schedule.
+const V_ROUTE_OUT: PackedStringArray = ["v_inn_door", "v_anger_w", "v_bridge", "v_road_in"]
+const V_ROUTE_IN: PackedStringArray = ["v_road_in", "v_bridge", "v_anger_w", "v_inn_door"]
+## A day without work: breakfast in the inn at 07:30.
 const V_BREAKFAST := 450
-const V_LEAVE := 465
+## G9: breakfast this long before he leaves; off the map between v_road_in and road_end (the Kutschweg) V_GAP minutes.
+const V_BREAKFAST_LEAD := 15
+const V_GAP := 5
+## Back in the inn of an evening at 17:00 at the earliest (later when the way down from the box and over the bridge
+## takes longer).
 const V_EVENING := 1020
 const V_WORK_KEY := &"apprentice_inn"
 const V_NIGHT := 1260
@@ -408,14 +415,7 @@ func graveyard_schedule(day: int) -> NpcSchedule:
 		return ScheduleBuilder.build(entries)
 	var world := _world()
 	var board := _place(WP_BOARD)
-	var route := _known(ROUTE_IN, world)
-	if board != "":
-		route.append(board)
-	# W-Welt (W2): the baked way up to the board around the old graves (WorldRoot.visitor_route).
-	if board != "" and world != null and world.has_method(&"visitor_route"):
-		var baked: PackedStringArray = world.call(&"visitor_route", board)
-		if not baked.is_empty():
-			route = baked
+	var route := _route_up(world)
 	if route.is_empty():
 		return ScheduleBuilder.build(entries)
 	entries.append(ScheduleBuilder.walk(StringName(route[0]), route.slice(1), cfg.arrive_minute, &"graveyard", world))
@@ -453,8 +453,33 @@ func graveyard_schedule(day: int) -> NpcSchedule:
 	if box_wp != board and not out.is_empty():
 		out = _way(world, box_wp, out[0]) + out.slice(1)
 	if not out.is_empty():
-		entries.append(ScheduleBuilder.walk(StringName(box_wp), out, cfg.end_minute + 10, &"graveyard", world))
+		# G9: a few minutes at the box after he got there (10 after the end of the work at the earliest).
+		var home := cfg.end_minute + maxi(10, to_box.travel_minutes + 2)
+		entries.append(ScheduleBuilder.walk(StringName(box_wp), out, home, &"graveyard", world))
 	return ScheduleBuilder.build(entries)
+
+
+## The way up from road_end to the board (W-Welt W2: the baked way around the old graves, WorldRoot.visitor_route;
+## else road_end … gate_inside + the board).
+func _route_up(world: Node) -> PackedStringArray:
+	var board := _place(WP_BOARD)
+	var route := _known(ROUTE_IN, world)
+	if board != "":
+		route.append(board)
+	if board != "" and world != null and world.has_method(&"visitor_route"):
+		var baked: PackedStringArray = world.call(&"visitor_route", board)
+		if not baked.is_empty():
+			route = baked
+	return route
+
+
+## G9: the minute he is off the hill at the road end on a working day (the end of his last walk there), −1 = none.
+func hill_home_minute(day: int) -> int:
+	var last := -1
+	for e: ScheduleEntry in graveyard_schedule(day).entries:
+		if e.activity == ScheduleBuilder.ACTIVITY_WALK and e.visible:
+			last = maxi(last, e.start_minute + e.travel_minutes)
+	return last
 
 
 ## W-Welt (W2): the way from `a` to `b` on the graveyard (WorldRoot.route_between, without `a`), else [b].
@@ -464,8 +489,10 @@ static func _way(world: Node, a: String, b: String) -> PackedStringArray:
 	return PackedStringArray([b])
 
 
-## The village day: a working day breakfast in the inn (07:30), over the bridge (07:45), helping Rosine
-## 17:00–21:00; a day off in the inn all day; not hired: empty (the data schedule, if any, is P6's).
+## The village day: a working day breakfast in the inn, over the bridge in time for the walk up the hill at
+## ApprenticeConfig.arrive_minute (G9: the way takes its minutes at the natural pace – he leaves the inn at 06:26),
+## helping Rosine of an evening after the way down from the box (17:00 at the earliest) until 21:00; a day off in the inn
+## all day; not hired: empty (the data schedule, if any, is P6's).
 func village_schedule(day: int) -> NpcSchedule:
 	var entries: Array[ScheduleEntry] = []
 	var v := _village_npc()
@@ -473,24 +500,27 @@ func village_schedule(day: int) -> NpcSchedule:
 	if not _hired or not ScheduleBuilder.has_point(world, V_INN):
 		return ScheduleBuilder.build(entries)
 	if day > _hire_day and works_today(day):
-		entries.append(ScheduleBuilder.stay(StringName(V_INN), V_BREAKFAST, &"idle", DIALOGUE))
 		var out := _known(V_ROUTE_OUT, world)
+		var leave_at := _cfg().arrive_minute - V_GAP - ScheduleBuilder.travel_minutes(out, world)
+		entries.append(ScheduleBuilder.stay(StringName(V_INN), leave_at - V_BREAKFAST_LEAD, &"idle", DIALOGUE))
 		if out.size() >= 2:
-			var leave := ScheduleBuilder.walk(StringName(out[0]), out.slice(1), V_LEAVE, &"village", world)
+			var leave := ScheduleBuilder.walk(StringName(out[0]), out.slice(1), leave_at, &"village", world)
 			entries.append(leave)
-			entries.append(ScheduleBuilder.stay(StringName(out[out.size() - 1]), V_LEAVE + maxi(leave.travel_minutes, 1), &"idle", &"",
+			entries.append(ScheduleBuilder.stay(StringName(out[out.size() - 1]), leave_at + maxi(leave.travel_minutes, 1), &"idle", &"",
 					false))
 		# G8 Runde 4: helping Rosine of an evening = his work clip in the inn (NpcWorkConfig: apprentice_inn → sweep);
 		# G8 Runde 5: at his sweeping spot on the open floor (NpcWorkConfig.runtime_spots), where the camera sees the broom.
 		var spot := String(NpcWorkConfig.runtime_spot(V_WORK_KEY, StringName(V_INN)))
 		if not ScheduleBuilder.has_point(world, spot):
 			spot = V_INN
-		var route_in := V_ROUTE_IN.duplicate()
-		route_in[route_in.size() - 1] = spot
-		var back := _known(route_in, world)
+		var back := _known(V_ROUTE_IN, world)
+		var evening := V_EVENING
 		if back.size() >= 2:
-			entries.append(ScheduleBuilder.walk(StringName(back[0]), back.slice(1), V_EVENING - 15, &"village", world))
-		entries.append(ScheduleBuilder.stay(StringName(spot), V_EVENING, NpcWorkConfig.runtime_clip(V_WORK_KEY, &"idle"), DIALOGUE))
+			var walk_in := ScheduleBuilder.walk(StringName(back[0]), back.slice(1), 0, &"village", world)
+			walk_in.start_minute = maxi(V_EVENING - walk_in.travel_minutes, hill_home_minute(day) + V_GAP)
+			entries.append(walk_in)
+			evening = walk_in.start_minute + walk_in.travel_minutes
+		entries.append(ScheduleBuilder.stay(StringName(spot), evening, NpcWorkConfig.runtime_clip(V_WORK_KEY, &"idle"), DIALOGUE))
 	else:
 		entries.append(ScheduleBuilder.stay(StringName(V_INN), V_BREAKFAST, &"idle", DIALOGUE))
 	entries.append(ScheduleBuilder.stay(StringName(V_INN), V_NIGHT, &"idle", &"", false))
@@ -499,14 +529,11 @@ func village_schedule(day: int) -> NpcSchedule:
 	return ScheduleBuilder.build(entries)
 
 
-## When he reads the board: 08:25 (start_minute − 5), later when the walk up from the road end takes longer.
+## When he reads the board: 08:25 (start_minute − 5), later when the walk up from the road end takes longer (G9: the
+## same way as his walk, ApprenticeConfig.arrive_minute 07:30 so that the natural pace is there by 08:25).
 func board_minute() -> int:
 	var cfg := _cfg()
-	var route := _known(ROUTE_IN, _world())
-	var board := _place(WP_BOARD)
-	if board != "":
-		route.append(board)
-	return maxi(cfg.start_minute - 5, cfg.arrive_minute + ScheduleBuilder.travel_minutes(route, _world()))
+	return maxi(cfg.start_minute - 5, cfg.arrive_minute + ScheduleBuilder.travel_minutes(_route_up(_world()), _world()))
 
 
 ## When the work begins: 08:30 (start_minute), at least 5 minutes after reading the board.

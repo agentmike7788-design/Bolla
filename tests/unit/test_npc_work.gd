@@ -38,8 +38,9 @@ const WORK_PLACES := {
 	&"mayor": ["v_in_office_desk", "v_board"], &"surgeon": ["v_in_surgery_desk"], &"washer": ["v_wash", "v_dorn_door"],
 	&"smith": ["v_anvil"], &"grocer": ["v_shop_window"], &"carter": ["evening_spot"],
 }
-## Jakob helping Rosine of an evening (not on his day off: those entries have today_flag apprentice_off_day).
-const JAKOB_WORK_MINUTE := 1020
+## Jakob helping Rosine of an evening (not on his day off: those entries have today_flag apprentice_off_day). G9 Gehtempo:
+## 17:39 (before 17:00) – back from the hill at the natural pace.
+const JAKOB_WORK_MINUTE := 1059
 const NOT_WORK: Array[StringName] = [&"idle", &"talk", &"idle_low"]
 ## The expected clip per work place (npc_id/waypoint -> clip).
 const CLIP_AT := {
@@ -128,10 +129,10 @@ func test_every_work_entry_has_its_own_clip() -> void:
 	# his day off at his usual place
 	var sweeps := _entries_at(&"apprentice", String(cfg.spot_for(&"apprentice_inn", &"")))
 	assert_eq(sweeps.map(func(e: ScheduleEntry) -> Array: return [e.start_minute, e.animation, e.today_flag]),
-			[[JAKOB_WORK_MINUTE, &"sweep", &""]], "Jakob sweeps at v_in_inn_sweep from 17:00")
+			[[JAKOB_WORK_MINUTE, &"sweep", &""]], "Jakob sweeps at v_in_inn_sweep from 17:39")
 	for e: ScheduleEntry in _entries_at(&"apprentice", "v_in_inn_jakob"):
 		if e.start_minute == JAKOB_WORK_MINUTE:
-			assert_eq([e.animation, e.today_flag], [&"talk", &"apprentice_off_day"], "Jakob 17:00 on his day off")
+			assert_eq([e.animation, e.today_flag], [&"talk", &"apprentice_off_day"], "Jakob 17:39 on his day off")
 	# every shop entry of a villager works (the peddler offers, a shop entry never just stands)
 	for npc_id: StringName in VILLAGER_MODEL:
 		var sched := Database.schedule(npc_id) as NpcSchedule

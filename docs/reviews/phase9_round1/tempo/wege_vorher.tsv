@@ -1,0 +1,136 @@
+npc	flag	start	arrive	minutes	length_m	m_per_min	m_per_s	speed_scale	gait	animation	ok	path
+apprentice		07:45	07:55	10	46.6	4.66	9.32	5.65	walk	walk	FAST	v_inn_door v_anger_w v_bridge v_road_in
+apprentice	fest_lights_day	15:50	16:00	10	42.0	4.20	8.40	5.09	walk	walk	FAST	v_inn_door v_anger_w v_bridge
+apprentice	fest_lights_day	16:30	16:35	5	4.6	0.91	1.83	1.11	walk	lantern_walk	ok	v_bridge v_road_in
+apprentice	fest_lights_day	18:45	18:57	12	46.6	3.88	7.77	4.71	walk	lantern_walk	FAST	v_road_in v_bridge v_anger_w v_inn_door
+beggar		07:50	08:00	10	52.0	5.20	10.41	6.31	walk	walk_stiff	FAST	v_remise_sleep v_anger_w v_church_step
+beggar		11:30	11:40	10	34.6	3.46	6.91	4.19	walk	walk_stiff	FAST	v_church_step v_well v_bridge_sit
+beggar		17:00	17:08	8	46.1	5.76	11.52	6.98	walk	walk_stiff	FAST	v_bridge_sit v_anger_w v_remise_sleep
+beggar		17:58	18:06	8	46.1	5.76	11.52	6.98	walk	walk_stiff	FAST	v_remise_sleep v_anger_w v_bridge_sit
+beggar		19:30	19:38	8	46.1	5.76	11.52	6.98	walk	walk_stiff	FAST	v_bridge_sit v_anger_w v_remise_sleep
+beggar		20:50	21:00	10	24.5	2.45	4.89	2.97	walk	walk_stiff	FAST	v_remise_sleep v_well v_well_bench
+beggar		23:30	23:38	8	24.5	3.06	6.12	3.71	walk	walk_stiff	FAST	v_well_bench v_well v_remise_sleep
+beggar	beggar_gate_day	13:00	13:06	6	5.8	0.97	1.94	1.17	walk	walk_stiff	ok	v_bridge_sit v_road_in
+beggar	beggar_gate_day	13:20	13:40	20	28.2	1.41	2.82	1.71	walk	walk_stiff	FAST	road_end road_mid gate_outside veit_gate
+beggar	beggar_gate_day	16:00	16:20	20	28.2	1.41	2.82	1.71	walk	walk_stiff	FAST	veit_gate gate_outside road_mid road_end
+beggar	beggar_gate_day	16:40	16:46	6	5.8	0.97	1.94	1.17	walk	walk_stiff	ok	v_road_in v_bridge_sit
+beggar	fest_lights_day	16:00	16:06	6	5.8	0.97	1.94	1.17	walk	walk_stiff	ok	v_bridge_sit v_road_in
+beggar	fest_lights_day	16:25	16:45	20	27.9	1.39	2.79	1.69	walk	walk_stiff	FAST	road_end road_mid gate_outside lights_gate
+beggar	fest_lights_day	18:30	18:50	20	27.9	1.39	2.79	1.69	walk	walk_stiff	FAST	lights_gate gate_outside road_mid road_end
+beggar	fest_lights_day	19:10	19:16	6	5.8	0.97	1.94	1.17	walk	walk_stiff	ok	v_road_in v_bridge_sit
+carter		06:44	07:24	40	29.4	0.74	1.47	1.29	cart	push_cart	FAST	road_end road_mid gate_outside dropoff
+carter		10:00	10:40	40	29.4	0.74	1.47	1.29	cart	push_cart	FAST	dropoff gate_outside road_mid road_end
+carter		18:00	18:30	30	28.0	0.93	1.87	1.13	walk	walk	ok	road_end road_mid evening_spot
+carter		21:00	21:30	30	28.0	0.93	1.87	1.13	walk	walk	ok	evening_spot road_mid road_end
+carter		11:10	11:18	8	45.8	5.72	11.45	6.94	walk	walk	FAST	v_road_in v_bridge v_anger_w v_remise
+carter		14:00	14:05	5	17.6	3.52	7.04	4.27	walk	walk	FAST	v_remise v_inn_door
+carter		21:55	22:00	5	17.6	3.52	7.04	4.27	walk	walk	FAST	v_remise v_inn_door
+grocer		16:00	16:05	5	17.1	3.42	6.85	4.15	walk	walk	FAST	v_shop_window v_well
+grocer		16:30	16:35	5	17.1	3.42	6.85	4.15	walk	walk	FAST	v_well v_shop_window
+grocer	visit_grocer_day	14:05	14:13	8	48.2	6.02	12.04	7.30	walk	walk	FAST	v_shop_window v_well v_bridge v_road_in
+grocer	visit_grocer_day	14:28	14:40	12	35.5	2.96	5.92	3.59	walk	walk	FAST	road_end road_mid gate_outside gate_inside vw_37 gv_old_08
+grocer	visit_grocer_day	15:30	15:42	12	35.5	2.96	5.92	3.59	walk	walk	FAST	gv_old_08 vw_37 gate_inside gate_outside road_mid road_end
+grocer	visit_grocer_day	15:45	15:55	10	48.2	4.82	9.64	5.84	walk	walk	FAST	v_road_in v_bridge v_well v_shop_window
+grocer	fest_kathrein_day	18:55	19:00	5	33.1	6.61	13.23	8.02	walk	walk	FAST	v_shop_window v_inn_door
+grocer	fest_lights_day	15:50	16:00	10	43.6	4.36	8.72	5.29	walk	walk	FAST	v_shop_window v_well v_bridge
+grocer	fest_lights_day	16:30	16:35	5	4.6	0.91	1.83	1.11	walk	lantern_walk	ok	v_bridge v_road_in
+grocer	fest_lights_day	18:45	18:57	12	48.2	4.01	8.03	4.87	walk	lantern_walk	FAST	v_road_in v_bridge v_well v_shop_window
+innkeeper		06:00	06:10	10	16.0	1.60	3.19	1.93	walk	walk	FAST	v_inn_door v_well
+innkeeper		06:40	06:50	10	16.0	1.60	3.19	1.93	walk	walk	FAST	v_well v_inn_door
+innkeeper	fest_lights_day	15:50	16:00	10	42.0	4.20	8.40	5.09	walk	walk	FAST	v_inn_door v_anger_w v_bridge
+innkeeper	fest_lights_day	16:30	16:35	5	4.6	0.91	1.83	1.11	walk	lantern_walk	ok	v_bridge v_road_in
+innkeeper	fest_lights_day	18:45	18:57	12	46.6	3.88	7.77	4.71	walk	lantern_walk	FAST	v_road_in v_bridge v_anger_w v_inn_door
+innkeeper	meet_innkeeper_day	14:25	14:40	15	46.6	3.11	6.21	3.76	walk	walk	FAST	v_inn_door v_anger_w v_bridge v_road_in
+innkeeper	meet_innkeeper_day	14:40	14:55	15	46.8	3.12	6.24	3.78	walk	walk	FAST	road_end road_mid gate_outside gate_inside vw_38 vw_39
+innkeeper	meet_innkeeper_day	15:40	15:55	15	46.8	3.12	6.24	3.78	walk	walk	FAST	vw_39 vw_38 gate_inside gate_outside road_mid road_end
+innkeeper	meet_innkeeper_day	15:55	16:10	15	46.6	3.11	6.21	3.76	walk	walk	FAST	v_road_in v_bridge v_anger_w v_inn_door
+kin_sieber_v	sieber_bench_day	13:56	14:00	4	2.2	0.55	1.10	0.67	walk	walk	ok	v_sieber_door v_sieber_bench
+kin_sieber_v	sieber_bench_day	16:00	16:04	4	2.2	0.55	1.10	0.67	walk	walk	ok	v_sieber_bench v_sieber_door
+kin_sieber_v	sieber_evening_day	17:56	18:00	4	2.2	0.55	1.10	0.67	walk	walk	ok	v_sieber_door v_sieber_bench
+kin_sieber_v	sieber_evening_day	20:00	20:04	4	2.2	0.55	1.10	0.67	walk	walk	ok	v_sieber_bench v_sieber_door
+kin_sieber_v	sieber_depart_peddler_day	14:01	14:10	9	19.8	2.21	4.41	2.67	walk	walk_bundle	FAST	v_sieber_door v_sieber_yard v_sieber_lane_s v_sieber_lane_e v_sieber_lane_n v_road_in
+kin_sieber_v	sieber_depart_peddler_day	15:21	15:41	20	27.2	1.36	2.72	1.65	walk	walk_bundle	FAST	road_end road_mid gate_outside sieber_gate
+kin_sieber_v	sieber_depart_peddler_day	16:21	16:41	20	44.2	2.21	4.42	2.68	walk	walk_bundle	FAST	sieber_gate gate_outside peddler_west trader_spot trader_mid trader_far
+kin_sieber_v	sieber_depart_carter_day	09:05	09:14	9	19.8	2.21	4.41	2.67	walk	walk_bundle	FAST	v_sieber_door v_sieber_yard v_sieber_lane_s v_sieber_lane_e v_sieber_lane_n v_road_in
+kin_sieber_v	sieber_depart_carter_day	09:20	09:40	20	29.4	1.47	2.94	1.78	walk	walk_bundle	FAST	road_end road_mid gate_outside dropoff
+kin_sieber_v	sieber_depart_carter_day	10:00	10:40	40	29.4	0.74	1.47	1.29	cart	sit_cart	FAST	dropoff gate_outside road_mid road_end
+mayor		12:00	12:20	20	38.8	1.94	3.88	2.35	walk	walk	FAST	v_office_door v_well v_anger_w v_board
+mayor		13:00	13:05	5	17.6	3.52	7.05	4.27	walk	walk	FAST	v_board v_office_door
+mayor		16:00	16:05	5	17.6	3.52	7.05	4.27	walk	walk	FAST	v_office_door v_board
+mayor		18:00	18:05	5	27.0	5.41	10.81	6.55	walk	walk	FAST	v_board v_inn_door
+mayor	meet_mayor_day	15:15	15:31	16	49.1	3.07	6.14	3.72	walk	walk	FAST	v_office_door v_well v_bridge v_road_in
+mayor	meet_mayor_day	15:31	15:55	24	74.4	3.10	6.20	3.76	walk	walk	FAST	road_end road_mid gate_outside gate_inside vw_36 vw_50 vw_03 vw_26 vw_27 vw_28 vw_31 vw_35 gv_l_12
+mayor	meet_mayor_day	16:40	17:04	24	74.4	3.10	6.20	3.76	walk	walk	FAST	gv_l_12 vw_35 vw_31 vw_28 vw_27 vw_26 vw_03 vw_50 vw_36 gate_inside gate_outside road_mid road_end
+mayor	meet_mayor_day	17:04	17:12	8	24.9	3.12	6.24	3.78	walk	walk	FAST	v_road_in v_bridge v_anger_w v_board
+mayor	fest_lights_day	15:50	16:00	10	20.4	2.04	4.07	2.47	walk	walk	FAST	v_board v_anger_w v_bridge
+mayor	fest_lights_day	16:30	16:35	5	4.6	0.91	1.83	1.11	walk	lantern_walk	ok	v_bridge v_road_in
+mayor	fest_lights_day	18:45	18:57	12	24.9	2.08	4.16	2.52	walk	lantern_walk	FAST	v_road_in v_bridge v_anger_w v_board
+oldwoman		09:00	09:06	6	14.5	2.41	4.82	2.92	walk	walk	FAST	v_hagedorn_gate v_well_bench
+oldwoman		11:00	11:06	6	14.5	2.41	4.82	2.92	walk	walk	FAST	v_well_bench v_hagedorn_gate
+peddler	peddler_day	09:30	10:00	30	31.5	1.05	2.10	1.27	walk	walk	FAST	v_peddler_in v_bridge v_well v_well_peddler
+peddler	peddler_day	14:00	14:10	10	34.1	3.41	6.82	4.13	walk	walk	FAST	v_well_peddler v_well v_bridge v_road_in
+peddler	peddler_day	15:20	15:40	20	28.0	1.40	2.80	1.70	walk	walk	FAST	road_end road_mid gate_outside peddler_gate
+peddler	peddler_day	16:20	16:40	20	45.0	2.25	4.50	2.72	walk	walk	FAST	peddler_gate gate_outside peddler_west trader_spot trader_mid trader_far
+priest		11:30	11:38	8	21.4	2.68	5.35	3.24	walk	walk	FAST	v_church_door v_well v_hagedorn_gate
+priest		18:00	18:10	10	15.0	1.50	3.00	1.82	walk	walk	FAST	v_church_door v_inn_door
+priest	linden_consecration_day	08:40	09:20	40	57.7	1.44	2.88	1.75	walk	walk	FAST	road_end road_mid gate_outside dropoff w_east_pass w_linden_n linden_spot
+priest	linden_consecration_day	10:30	11:10	40	57.7	1.44	2.88	1.75	walk	walk	FAST	linden_spot w_linden_n w_east_pass dropoff gate_outside road_mid road_end
+priest	fest_lights_day	15:50	16:00	10	35.2	3.52	7.03	4.26	walk	walk	FAST	v_church_door v_well v_bridge
+priest	fest_lights_day	16:30	16:35	5	4.6	0.91	1.83	1.11	walk	lantern_walk	ok	v_bridge v_road_in
+priest	fest_lights_day	18:45	18:57	12	46.6	3.88	7.77	4.71	walk	lantern_walk	FAST	v_road_in v_bridge v_anger_w v_inn_door
+priest	night_np_ott_priest_day	20:50	21:00	10	31.8	3.18	6.36	3.85	walk	lantern_walk	FAST	v_church_door v_well v_ott_lane_w v_ott_lane v_ott_door
+priest	night_np_ott_priest_day	21:42	21:52	10	31.8	3.18	6.36	3.85	walk	lantern_walk	FAST	v_ott_door v_ott_lane v_ott_lane_w v_well v_church_door
+priest	night_np_kehr_priest_day	20:50	21:00	10	34.5	3.45	6.89	4.18	walk	lantern_walk	FAST	v_church_door v_well v_kehr_lane v_kehr_door
+priest	night_np_kehr_priest_day	21:32	21:42	10	34.5	3.45	6.89	4.18	walk	lantern_walk	FAST	v_kehr_door v_kehr_lane v_well v_church_door
+priest	night_np_sieber_priest_day	20:20	21:00	40	59.6	1.49	2.98	1.81	walk	lantern_walk	FAST	v_church_door v_well v_bridge v_road_in v_sieber_lane_n v_sieber_lane_e v_sieber_lane_s v_sieber_yard v_sieber_door
+priest	night_np_sieber_priest_day	21:42	22:22	40	59.6	1.49	2.98	1.81	walk	lantern_walk	FAST	v_sieber_door v_sieber_yard v_sieber_lane_s v_sieber_lane_e v_sieber_lane_n v_road_in v_bridge v_well v_church_door
+priest	sieber_evening_priest_day	17:20	18:00	40	56.5	1.41	2.82	1.71	walk	lantern_walk	FAST	v_church_door v_well v_bridge v_road_in v_sieber_lane_n v_sieber_lane_e v_sieber_lane_s v_sieber_bench_2
+priest	sieber_evening_priest_day	20:00	20:40	40	56.5	1.41	2.82	1.71	walk	lantern_walk	FAST	v_sieber_bench_2 v_sieber_lane_s v_sieber_lane_e v_sieber_lane_n v_road_in v_bridge v_well v_church_door
+smith		06:30	06:40	10	18.3	1.83	3.67	2.22	walk	walk	FAST	v_house_n v_anger_w v_anvil
+smith		13:00	13:06	6	34.0	5.66	11.33	6.86	walk	walk	FAST	v_inn_door v_anger_w v_anvil
+smith		17:30	17:34	4	12.6	3.16	6.31	3.83	walk	walk	FAST	v_anvil v_linden
+smith	visit_smith_day	13:00	13:06	6	46.6	7.77	15.53	9.41	walk	walk	FAST	v_inn_door v_anger_w v_bridge v_road_in
+smith	visit_smith_day	13:27	13:40	13	40.0	3.08	6.15	3.73	walk	walk	FAST	road_end road_mid gate_outside gate_inside vw_02 gv_old_01
+smith	visit_smith_day	14:30	14:43	13	40.0	3.08	6.15	3.73	walk	walk	FAST	gv_old_01 vw_02 gate_inside gate_outside road_mid road_end
+smith	visit_smith_day	14:55	15:03	8	22.7	2.84	5.68	3.44	walk	walk	FAST	v_road_in v_bridge v_anger_w v_anvil
+smith	fest_kathrein_day	18:56	19:00	4	24.5	6.12	12.23	7.41	walk	walk	FAST	v_linden v_inn_door
+smith	fest_lights_day	15:50	16:00	10	18.1	1.81	3.63	2.20	walk	walk	FAST	v_anvil v_anger_w v_bridge
+smith	fest_lights_day	16:30	16:35	5	4.6	0.91	1.83	1.11	walk	lantern_walk	ok	v_bridge v_road_in
+smith	fest_lights_day	18:45	18:57	12	22.7	1.89	3.78	2.29	walk	lantern_walk	FAST	v_road_in v_bridge v_anger_w v_anvil
+stranger	stranger_day	13:30	13:40	10	46.6	4.66	9.32	5.65	walk	walk	FAST	v_inn_door v_anger_w v_bridge v_road_in
+stranger	stranger_day	13:50	14:10	20	27.0	1.35	2.70	1.64	walk	walk	FAST	road_end road_mid gate_outside stranger_gate
+stranger	stranger_day	15:30	15:50	20	27.0	1.35	2.70	1.64	walk	walk	FAST	stranger_gate gate_outside road_mid road_end
+stranger	stranger_day	16:00	16:10	10	46.6	4.66	9.32	5.65	walk	walk	FAST	v_road_in v_bridge v_anger_w v_inn_door
+stranger	stranger_arrive_day	09:30	09:50	20	44.0	2.20	4.40	2.66	walk	walk	FAST	v_peddler_in v_bridge v_anger_w v_inn_door
+surgeon		12:00	12:10	10	40.0	4.00	8.01	4.85	walk	walk	FAST	v_surgery_door v_anger_w v_house_n
+surgeon		13:50	14:00	10	40.0	4.00	8.01	4.85	walk	walk	FAST	v_house_n v_anger_w v_surgery_door
+surgeon		18:00	18:06	6	39.9	6.65	13.30	8.06	walk	walk	FAST	v_surgery_door v_well v_bridge
+surgeon	fest_lights_day	16:00	16:06	6	39.9	6.65	13.30	8.06	walk	walk	FAST	v_surgery_door v_well v_bridge
+surgeon	night_np_ott_surgeon_day	22:20	22:30	10	14.5	1.45	2.91	1.76	walk	walk	FAST	v_surgery_door v_ott_lane_w v_ott_lane v_ott_door
+surgeon	night_np_ott_surgeon_day	23:12	23:22	10	14.5	1.45	2.91	1.76	walk	walk	FAST	v_ott_door v_ott_lane v_ott_lane_w v_surgery_door
+surgeon	night_np_kehr_surgeon_day	22:20	22:30	10	45.1	4.51	9.03	5.47	walk	walk	FAST	v_surgery_door v_anger_w v_kehr_lane v_kehr_door
+surgeon	night_np_kehr_surgeon_day	23:12	23:22	10	45.1	4.51	9.03	5.47	walk	walk	FAST	v_kehr_door v_kehr_lane v_anger_w v_surgery_door
+surgeon	night_np_sieber_surgeon_day	21:50	22:30	40	64.3	1.61	3.22	1.95	walk	walk	FAST	v_surgery_door v_well v_bridge v_road_in v_sieber_lane_n v_sieber_lane_e v_sieber_lane_s v_sieber_yard v_sieber_door
+surgeon	night_np_sieber_surgeon_day	23:12	23:52	40	64.3	1.61	3.22	1.95	walk	walk	FAST	v_sieber_door v_sieber_yard v_sieber_lane_s v_sieber_lane_e v_sieber_lane_n v_road_in v_bridge v_well v_surgery_door
+trader		03:00	03:20	20	15.2	0.76	1.52	0.92	walk	walk	ok	trader_spot trader_mid trader_far
+trader		22:40	23:00	20	15.2	0.76	1.52	0.92	walk	walk	ok	trader_far trader_mid trader_spot
+washer		06:30	06:38	8	29.6	3.70	7.40	4.48	walk	walk	FAST	v_dorn_door v_wash
+washer		15:00	15:05	5	13.1	2.62	5.24	3.17	walk	walk	FAST	v_dorn_door v_well_w
+washer		16:30	16:35	5	13.1	2.62	5.24	3.17	walk	walk	FAST	v_well_w v_dorn_door
+washer	visit_washer_day	09:00	09:08	8	42.9	5.36	10.72	6.50	walk	walk	FAST	v_dorn_door v_well v_bridge v_road_in
+washer	visit_washer_day	09:20	09:40	20	62.3	3.11	6.23	3.77	walk	walk	FAST	road_end road_mid gate_outside gate_inside vw_36 vw_50 vw_03 vw_26 linden_spot
+washer	visit_washer_day	12:00	12:20	20	62.3	3.11	6.23	3.77	walk	walk	FAST	linden_spot vw_26 vw_03 vw_50 vw_36 gate_inside gate_outside road_mid road_end
+washer	visit_washer_day	12:50	12:58	8	42.9	5.36	10.72	6.50	walk	walk	FAST	v_road_in v_bridge v_well v_dorn_door
+washer	fest_kathrein_day	19:55	20:00	5	20.8	4.17	8.34	5.05	walk	walk	FAST	v_dorn_door v_inn_door
+washer	fest_kathrein_day	21:00	21:05	5	20.8	4.17	8.34	5.05	walk	walk	FAST	v_inn_door v_dorn_door
+washer	night_np_ott_washer_day	02:30	02:40	10	34.9	3.49	6.99	4.23	walk	walk	FAST	v_dorn_door v_well v_ott_lane_w v_ott_lane v_ott_door
+washer	night_np_ott_washer_day	05:32	05:42	10	34.9	3.49	6.99	4.23	walk	walk	FAST	v_ott_door v_ott_lane v_ott_lane_w v_well v_dorn_door
+washer	fest_lights_day	15:50	16:00	10	38.3	3.83	7.66	4.64	walk	walk	FAST	v_dorn_door v_well v_bridge
+washer	fest_lights_day	16:30	16:35	5	4.6	0.91	1.83	1.11	walk	lantern_walk	ok	v_bridge v_road_in
+washer	fest_lights_day	18:45	18:57	12	42.9	3.57	7.15	4.33	walk	lantern_walk	FAST	v_road_in v_bridge v_well v_dorn_door
+washer	night_np_sieber_washer_day	02:25	02:40	15	57.4	3.82	7.65	4.64	walk	walk	FAST	v_dorn_door v_linden v_anger_w v_bridge v_road_in v_sieber_lane_n v_sieber_lane_e v_sieber_lane_s v_sieber_yard v_sieber_door
+washer	night_np_sieber_washer_day	05:32	05:47	15	57.4	3.82	7.65	4.64	walk	walk	FAST	v_sieber_door v_sieber_yard v_sieber_lane_s v_sieber_lane_e v_sieber_lane_n v_road_in v_bridge v_anger_w v_linden v_dorn_door
+washer	sieber_evening_washer_day	17:25	18:00	35	54.3	1.55	3.10	1.88	walk	walk	FAST	v_dorn_door v_linden v_anger_w v_bridge v_road_in v_sieber_lane_n v_sieber_lane_e v_sieber_lane_s v_sieber_bench_2
+washer	sieber_evening_washer_day	20:00	20:35	35	54.3	1.55	3.10	1.88	walk	walk	FAST	v_sieber_bench_2 v_sieber_lane_s v_sieber_lane_e v_sieber_lane_n v_road_in v_bridge v_anger_w v_linden v_dorn_door
+watchman	sieber_watch_day	06:00	06:40	40	68.1	1.70	3.41	2.06	walk	walk	FAST	v_sieber_watch v_sieber_yard v_sieber_lane_s v_sieber_lane_e v_sieber_lane_n v_road_in v_bridge v_well v_office_door
+watchman	sieber_watch_day	20:20	21:00	40	68.1	1.70	3.41	2.06	walk	walk	FAST	v_office_door v_well v_bridge v_road_in v_sieber_lane_n v_sieber_lane_e v_sieber_lane_s v_sieber_yard v_sieber_watch

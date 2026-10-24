@@ -766,7 +766,9 @@ func _p9_village() -> void:
 		var sn := _vnpc(&"stranger")
 		if sn != null:
 			sn.refresh()
-			if sn.is_present() and _dialogue_offers(Database.dialogue(&"stranger") as DialogueData, sn) > 0 and await _enter_for(sn):
+			# G9 Gehtempo: his ways to the gate and back take an hour now – on the way he is there but not to be spoken to.
+			if sn.is_present() and sn.is_talkable() and _dialogue_offers(Database.dialogue(&"stranger") as DialogueData, sn) > 0 \
+					and await _enter_for(sn):
 				_stranger_day = TimeManager.day
 				player.global_position = sn.global_position + Vector3(1.0, 0, 0)
 				_talk(sn)

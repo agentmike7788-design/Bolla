@@ -12,8 +12,8 @@ region = &"village"
 
 [sub_resource type="Resource" id="p8_beggar_02"]
 script = ExtResource("1")
-start_minute = 470
-travel_minutes = 10
+start_minute = 414
+travel_minutes = 66
 activity = &"walk"
 animation = &"walk_stiff"
 path = PackedStringArray("v_remise_sleep", "v_anger_w", "v_church_step")
@@ -31,7 +31,7 @@ region = &"village"
 [sub_resource type="Resource" id="p8_beggar_04"]
 script = ExtResource("1")
 start_minute = 690
-travel_minutes = 10
+travel_minutes = 44
 activity = &"walk"
 animation = &"walk_stiff"
 path = PackedStringArray("v_church_step", "v_well", "v_bridge_sit")
@@ -39,7 +39,7 @@ region = &"village"
 
 [sub_resource type="Resource" id="p8_beggar_05"]
 script = ExtResource("1")
-start_minute = 700
+start_minute = 734
 activity = &"beg"
 animation = &"sit_beg"
 path = PackedStringArray("v_bridge_sit")
@@ -48,120 +48,60 @@ region = &"village"
 
 [sub_resource type="Resource" id="p8_beggar_06"]
 script = ExtResource("1")
-start_minute = 1020
-travel_minutes = 8
+start_minute = 1170
+travel_minutes = 34
 activity = &"walk"
 animation = &"walk_stiff"
-path = PackedStringArray("v_bridge_sit", "v_anger_w", "v_remise_sleep")
+path = PackedStringArray("v_bridge_sit", "v_well", "v_well_bench")
 region = &"village"
 
 [sub_resource type="Resource" id="p8_beggar_07"]
 script = ExtResource("1")
-start_minute = 1028
-activity = &"home"
-path = PackedStringArray("v_remise_sleep")
-visible = false
-region = &"village"
-
-[sub_resource type="Resource" id="p8_beggar_08"]
-script = ExtResource("1")
-start_minute = 1078
-travel_minutes = 8
-activity = &"walk"
-animation = &"walk_stiff"
-path = PackedStringArray("v_remise_sleep", "v_anger_w", "v_bridge_sit")
-region = &"village"
-
-[sub_resource type="Resource" id="p8_beggar_09"]
-script = ExtResource("1")
-start_minute = 1086
-activity = &"beg"
-animation = &"sit_beg"
-path = PackedStringArray("v_bridge_sit")
-dialogue_id = &"beggar"
-region = &"village"
-
-[sub_resource type="Resource" id="p8_beggar_10"]
-script = ExtResource("1")
-start_minute = 1170
-travel_minutes = 8
-activity = &"walk"
-animation = &"walk_stiff"
-path = PackedStringArray("v_bridge_sit", "v_anger_w", "v_remise_sleep")
-region = &"village"
-
-[sub_resource type="Resource" id="p8_beggar_11"]
-script = ExtResource("1")
-start_minute = 1178
-activity = &"home"
-path = PackedStringArray("v_remise_sleep")
-visible = false
-region = &"village"
-
-[sub_resource type="Resource" id="p8_beggar_12"]
-script = ExtResource("1")
-start_minute = 1250
-travel_minutes = 10
-activity = &"walk"
-animation = &"walk_stiff"
-path = PackedStringArray("v_remise_sleep", "v_well", "v_well_bench")
-region = &"village"
-
-[sub_resource type="Resource" id="p8_beggar_13"]
-script = ExtResource("1")
-start_minute = 1260
+start_minute = 1204
 activity = &"beg"
 animation = &"sit_beg"
 path = PackedStringArray("v_well_bench")
 dialogue_id = &"beggar"
 region = &"village"
 
-[sub_resource type="Resource" id="p8_beggar_14"]
+[sub_resource type="Resource" id="p8_beggar_08"]
 script = ExtResource("1")
-start_minute = 1410
-travel_minutes = 8
+start_minute = 1409
+travel_minutes = 31
 activity = &"walk"
 animation = &"walk_stiff"
 path = PackedStringArray("v_well_bench", "v_well", "v_remise_sleep")
 region = &"village"
 
-[sub_resource type="Resource" id="p8_beggar_15"]
+[sub_resource type="Resource" id="p8_beggar_09"]
 script = ExtResource("1")
-start_minute = 1418
-activity = &"home"
-path = PackedStringArray("v_remise_sleep")
-visible = false
-region = &"village"
-
-[sub_resource type="Resource" id="p8_beggar_16"]
-script = ExtResource("1")
-start_minute = 780
-travel_minutes = 6
+start_minute = 771
+travel_minutes = 8
 activity = &"walk"
 animation = &"walk_stiff"
 path = PackedStringArray("v_bridge_sit", "v_road_in")
 region = &"village"
 today_flag = &"beggar_gate_day"
 
-[sub_resource type="Resource" id="p8_beggar_17"]
+[sub_resource type="Resource" id="p8_beggar_10"]
 script = ExtResource("1")
-start_minute = 786
+start_minute = 779
 activity = &"home"
 path = PackedStringArray("v_road_in")
 visible = false
 region = &"village"
 today_flag = &"beggar_gate_day"
 
-[sub_resource type="Resource" id="p8_beggar_18"]
+[sub_resource type="Resource" id="p8_beggar_11"]
 script = ExtResource("1")
-start_minute = 800
-travel_minutes = 20
+start_minute = 784
+travel_minutes = 36
 activity = &"walk"
 animation = &"walk_stiff"
 path = PackedStringArray("road_end", "road_mid", "gate_outside", "veit_gate")
 today_flag = &"beggar_gate_day"
 
-[sub_resource type="Resource" id="p8_beggar_19"]
+[sub_resource type="Resource" id="p8_beggar_12"]
 script = ExtResource("1")
 start_minute = 820
 activity = &"beg"
@@ -170,36 +110,36 @@ path = PackedStringArray("veit_gate")
 dialogue_id = &"beggar"
 today_flag = &"beggar_gate_day"
 
-[sub_resource type="Resource" id="p8_beggar_20"]
+[sub_resource type="Resource" id="p8_beggar_13"]
 script = ExtResource("1")
 start_minute = 960
-travel_minutes = 20
+travel_minutes = 36
 activity = &"walk"
 animation = &"walk_stiff"
 path = PackedStringArray("veit_gate", "gate_outside", "road_mid", "road_end")
 today_flag = &"beggar_gate_day"
 
-[sub_resource type="Resource" id="p8_beggar_21"]
+[sub_resource type="Resource" id="p8_beggar_14"]
 script = ExtResource("1")
-start_minute = 980
+start_minute = 996
 activity = &"home"
 path = PackedStringArray("road_end")
 visible = false
 today_flag = &"beggar_gate_day"
 
-[sub_resource type="Resource" id="p8_beggar_22"]
+[sub_resource type="Resource" id="p8_beggar_15"]
 script = ExtResource("1")
-start_minute = 1000
-travel_minutes = 6
+start_minute = 1001
+travel_minutes = 8
 activity = &"walk"
 animation = &"walk_stiff"
 path = PackedStringArray("v_road_in", "v_bridge_sit")
 region = &"village"
 today_flag = &"beggar_gate_day"
 
-[sub_resource type="Resource" id="p8_beggar_23"]
+[sub_resource type="Resource" id="p8_beggar_16"]
 script = ExtResource("1")
-start_minute = 1006
+start_minute = 1009
 activity = &"beg"
 animation = &"sit_beg"
 path = PackedStringArray("v_bridge_sit")
@@ -207,71 +147,71 @@ dialogue_id = &"beggar"
 region = &"village"
 today_flag = &"beggar_gate_day"
 
-[sub_resource type="Resource" id="p8_beggar_24"]
+[sub_resource type="Resource" id="p8_beggar_17"]
 script = ExtResource("1")
-start_minute = 960
-travel_minutes = 6
+start_minute = 957
+travel_minutes = 8
 activity = &"walk"
 animation = &"walk_stiff"
 path = PackedStringArray("v_bridge_sit", "v_road_in")
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_beggar_25"]
+[sub_resource type="Resource" id="p8_beggar_18"]
 script = ExtResource("1")
-start_minute = 966
+start_minute = 965
 activity = &"home"
 path = PackedStringArray("v_road_in")
 visible = false
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_beggar_26"]
+[sub_resource type="Resource" id="p8_beggar_19"]
 script = ExtResource("1")
-start_minute = 985
-travel_minutes = 20
+start_minute = 970
+travel_minutes = 35
 activity = &"walk"
 animation = &"walk_stiff"
 path = PackedStringArray("road_end", "road_mid", "gate_outside", "lights_gate")
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_beggar_27"]
+[sub_resource type="Resource" id="p8_beggar_20"]
 script = ExtResource("1")
 start_minute = 1005
 path = PackedStringArray("lights_gate")
 dialogue_id = &"beggar"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_beggar_28"]
+[sub_resource type="Resource" id="p8_beggar_21"]
 script = ExtResource("1")
 start_minute = 1110
-travel_minutes = 20
+travel_minutes = 35
 activity = &"walk"
 animation = &"walk_stiff"
 path = PackedStringArray("lights_gate", "gate_outside", "road_mid", "road_end")
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_beggar_29"]
+[sub_resource type="Resource" id="p8_beggar_22"]
 script = ExtResource("1")
-start_minute = 1130
+start_minute = 1145
 activity = &"home"
 path = PackedStringArray("road_end")
 visible = false
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_beggar_30"]
+[sub_resource type="Resource" id="p8_beggar_23"]
 script = ExtResource("1")
 start_minute = 1150
-travel_minutes = 6
+travel_minutes = 8
 activity = &"walk"
 animation = &"walk_stiff"
 path = PackedStringArray("v_road_in", "v_bridge_sit")
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_beggar_31"]
+[sub_resource type="Resource" id="p8_beggar_24"]
 script = ExtResource("1")
-start_minute = 1156
+start_minute = 1158
 activity = &"beg"
 animation = &"sit_beg"
 path = PackedStringArray("v_bridge_sit")
@@ -279,36 +219,8 @@ dialogue_id = &"beggar"
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_beggar_32"]
-script = ExtResource("1")
-start_minute = 1020
-path = PackedStringArray("lights_gate")
-dialogue_id = &"beggar"
-today_flag = &"fest_lights_day"
-
-[sub_resource type="Resource" id="p8_beggar_33"]
-script = ExtResource("1")
-start_minute = 1028
-path = PackedStringArray("lights_gate")
-dialogue_id = &"beggar"
-today_flag = &"fest_lights_day"
-
-[sub_resource type="Resource" id="p8_beggar_34"]
-script = ExtResource("1")
-start_minute = 1078
-path = PackedStringArray("lights_gate")
-dialogue_id = &"beggar"
-today_flag = &"fest_lights_day"
-
-[sub_resource type="Resource" id="p8_beggar_35"]
-script = ExtResource("1")
-start_minute = 1086
-path = PackedStringArray("lights_gate")
-dialogue_id = &"beggar"
-today_flag = &"fest_lights_day"
-
 [resource]
 script = ExtResource("2")
 npc_id = &"beggar"
 display_name = "Veit Ammer"
-entries = Array[ExtResource("1")]([SubResource("p8_beggar_01"), SubResource("p8_beggar_02"), SubResource("p8_beggar_03"), SubResource("p8_beggar_04"), SubResource("p8_beggar_05"), SubResource("p8_beggar_06"), SubResource("p8_beggar_07"), SubResource("p8_beggar_08"), SubResource("p8_beggar_09"), SubResource("p8_beggar_10"), SubResource("p8_beggar_11"), SubResource("p8_beggar_12"), SubResource("p8_beggar_13"), SubResource("p8_beggar_14"), SubResource("p8_beggar_15"), SubResource("p8_beggar_16"), SubResource("p8_beggar_17"), SubResource("p8_beggar_18"), SubResource("p8_beggar_19"), SubResource("p8_beggar_20"), SubResource("p8_beggar_21"), SubResource("p8_beggar_22"), SubResource("p8_beggar_23"), SubResource("p8_beggar_24"), SubResource("p8_beggar_25"), SubResource("p8_beggar_26"), SubResource("p8_beggar_27"), SubResource("p8_beggar_28"), SubResource("p8_beggar_29"), SubResource("p8_beggar_30"), SubResource("p8_beggar_31"), SubResource("p8_beggar_32"), SubResource("p8_beggar_33"), SubResource("p8_beggar_34"), SubResource("p8_beggar_35")])
+entries = Array[ExtResource("1")]([SubResource("p8_beggar_01"), SubResource("p8_beggar_02"), SubResource("p8_beggar_03"), SubResource("p8_beggar_04"), SubResource("p8_beggar_05"), SubResource("p8_beggar_06"), SubResource("p8_beggar_07"), SubResource("p8_beggar_08"), SubResource("p8_beggar_09"), SubResource("p8_beggar_10"), SubResource("p8_beggar_11"), SubResource("p8_beggar_12"), SubResource("p8_beggar_13"), SubResource("p8_beggar_14"), SubResource("p8_beggar_15"), SubResource("p8_beggar_16"), SubResource("p8_beggar_17"), SubResource("p8_beggar_18"), SubResource("p8_beggar_19"), SubResource("p8_beggar_20"), SubResource("p8_beggar_21"), SubResource("p8_beggar_22"), SubResource("p8_beggar_23"), SubResource("p8_beggar_24")])

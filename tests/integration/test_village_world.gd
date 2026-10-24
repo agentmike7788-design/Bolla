@@ -33,6 +33,8 @@ const VILLAGERS: Array[StringName] = [&"innkeeper", &"smith", &"grocer", &"pries
 const SHIFTED := {"house_kehr": 1.5, "house_brandt": 1.5, "house_ott": 1.5, "house_sieber": 6.2,
 		"v_bridge": 0.8, "v_anger_w": 0.8, "v_well": 0.8, "v_church_door": 0.8, "v_dorn_door": 0.8, "v_wash": 0.8,
 		"v_board": 0.8, "village_board": 0.8, "linden": 1.0, "v_hagedorn_gate": 0.8, "v_well_bench": 0.8}
+## G9 Gehtempo: the doors open while the keeper is inside – Quast and Fenner leave earlier at the natural pace.
+const G9_OPEN_WINDOWS := {"door_surgery": [475, 679, 840, 1036], "door_office": [475, 691, 785, 942]}
 ## Village schedule entries the player talks to outdoors (dialogue, standing, region village, not v_in_*).
 const INDOOR_PREFIX := "v_in_"
 const FLOOD_STEP := 0.25
@@ -121,7 +123,7 @@ func test_houses_doors_shops_and_waypoints_at_the_plan() -> void:
 			"HouseDoor":
 				var door := node as HouseDoor
 				assert_eq([door.door_id, door.room_id, door.display_name], [StringName(e.id), StringName(e.room_id), String(e.display_name)])
-				assert_eq(door.open_windows, PackedInt32Array(e.open_windows), String(e.id) + " opening times §2.2")
+				assert_eq(door.open_windows, PackedInt32Array(G9_OPEN_WINDOWS.get(String(e.id), e.open_windows)), String(e.id) + " opening times §2.2")
 				assert_not_null(door.room(), String(e.id) + " has its room")
 				assert_eq(HouseDoor.find(tree, door.door_id), door)
 			"ShopCounter":
@@ -899,6 +901,17 @@ func test_phase9_layout_diff_against_phase8() -> void:
 			for k: String in layout.ground:
 				if not (old.ground as Dictionary).has(k) or layout.ground[k] != old.ground[k]:
 					changes.append("~ground." + k)
+		elif key == "entities":
+			# G9 Gehtempo: the opening times of the surgery and the office follow Quast's and Fenner's ways.
+			for i: int in (old.entities as Array).size():
+				var o: Dictionary = (old.entities[i] as Dictionary).duplicate()
+				var n: Dictionary = (layout.entities[i] as Dictionary).duplicate()
+				if G9_OPEN_WINDOWS.has(String(n.get("id", ""))):
+					assert_eq(n.open_windows, G9_OPEN_WINDOWS[String(n.id)], String(n.id) + " G9 opening times")
+					n.erase("open_windows")
+					o.erase("open_windows")
+				assert_eq(n, o, "entities[%d] unchanged (§4.6)" % i)
+			assert_eq((layout.entities as Array).size(), (old.entities as Array).size(), "entities unchanged (§4.6)")
 		else:
 			assert_eq(layout[key], old[key], key + " unchanged (§4.6)")
 	for key: String in old:

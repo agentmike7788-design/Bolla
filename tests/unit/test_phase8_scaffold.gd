@@ -354,7 +354,7 @@ func test_new_config_contract_values() -> void:
 	assert_eq([g.care_cap, g.disturbed_mood, g.lights_candle_mood], [2, -3, 2])
 	var a := ApprenticeConfig.new()
 	assert_eq([a.npc_id, a.hire_flag, a.arrive_minute, a.start_minute, a.lunch, a.end_minute, a.wage, a.unpaid_limit],
-			[&"apprentice", &"apprentice_hired", 495, 510, Vector2i(720, 750), 930, 3, 3])
+			[&"apprentice", &"apprentice_hired", 450, 510, Vector2i(720, 750), 930, 3, 3], "G9 Gehtempo: 07:30 (was 08:15)")
 	assert_eq([a.day_off_mod, a.day_off_rest, a.practice_jobs, a.morale_start, a.morale_fast, a.morale_slow, a.board_lines, a.box_slots],
 			[7, 2, 12, 3, 4, 1, 3, 6])
 	assert_almost(a.teach_distance, 4.0)
@@ -376,9 +376,12 @@ func test_new_config_contract_values() -> void:
 ## G8 Runde 1 (B8-1, user decision): visitors wait up to 100 minutes (was 10) – class default and .tres together.
 ## Phase 9 W0 (docs/PHASE9_DESIGN.md §2.9, §2.2.8): + gains, event_points, events, reactions (class default and .tres together).
 ## Phase 9 W2 „Anschlüsse“: + mood_rules (13), visitor_config.interval_window (18), grave_care_config.straw_* (17).
+## G9 Gehtempo (user decision): the natural pace 0.8 m per game minute (was 3.2 = 6.4 m/s real), Jakob at the road end at
+## 07:30 (was 08:15 – at the board at 08:25 as before).
 const DATA_CHANGED_AFTER_W0 := {&"visitor_config": [&"wait_minutes", &"interval_window"], &"relationship_config": [&"gains"],
 		&"reputation_config": [&"event_points"], &"piety_config": [&"events"], &"npc_life_config": [&"reactions", &"mood_rules"],
-		&"grave_care_config": [&"straw_item", &"straw_minutes"]}
+		&"grave_care_config": [&"straw_item", &"straw_minutes"], &"npc_config": [&"walk_m_per_minute"],
+		&"apprentice_config": [&"arrive_minute"]}
 
 
 func test_config_files_in_data_match_the_fixtures() -> void:
@@ -406,7 +409,7 @@ func test_config_files_in_data_match_the_fixtures() -> void:
 func test_extended_data_classes() -> void:
 	var n := NpcConfig.new()
 	assert_eq([n.max_visible_graveyard, n.max_visible_fest, n.max_full], [9, 16, 6])
-	assert_almost(n.walk_m_per_minute, 3.2)
+	assert_almost(n.walk_m_per_minute, 0.8, 0.0001, "G9 Gehtempo: 1.6 m/s real (was 3.2 = 6.4 m/s)")
 	assert_almost(n.stand_rest_distance, 26.0)
 	assert_almost(n.fest_reduced_interval, 0.33)
 	var vd := VillagerData.new()

@@ -279,6 +279,19 @@ func is_present() -> bool:
 	return _present
 
 
+## G9 Gehtempo: present by the clock now (what the next _update sets) – for callers between two frames (a dialogue
+## condition right after a time skip: the bots advance the clock without frames, a hidden figure re-evaluates only
+## once per frame), so they never read the state of an older minute.
+func present_by_clock() -> bool:
+	var sched := _schedule()
+	if sched == null or sched.entries.is_empty():
+		return false
+	var e := ScheduleResolver.entry_at(sched, int(TimeManager.get_minute_f()), TimeManager.day)
+	if e == null:
+		return _present
+	return e.visible and flag_allows() and shows_region(e) and not hidden_by_flag()
+
+
 ## Standing at a dialogue spot (prompt active).
 func is_talkable() -> bool:
 	return _talkable

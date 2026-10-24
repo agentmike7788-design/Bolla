@@ -103,16 +103,21 @@ static func wait_after_talk(wait: int, wait_from: int, talked: int, cfg: Visitor
 	return clampi(talked - wait_from + cfg.leave_after_talk_minutes, 0, wait)
 
 
-## Total length of a visit (with `waits` the minutes of waiting: `wait`, −1 = the households' wait_minutes).
-static func duration(travel: int, graves: int, flowers: bool, waits: bool, cfg: VisitorConfig, wait: int = -1) -> int:
-	return travel + graves_minutes(graves, flowers, cfg) + ((cfg.wait_minutes if wait < 0 else wait) if waits else 0) + LEAVE_MINUTES
+## Total length of a visit (with `waits` the minutes of waiting: `wait`, −1 = the households' wait_minutes; `leave` the
+## way down, −1 = LEAVE_MINUTES – G9 Gehtempo: Visitors passes the walk's minutes, the way up reversed).
+static func duration(travel: int, graves: int, flowers: bool, waits: bool, cfg: VisitorConfig, wait: int = -1, leave: int = -1) -> int:
+	return travel + graves_minutes(graves, flowers, cfg) + ((cfg.wait_minutes if wait < 0 else wait) if waits else 0) \
+			+ (LEAVE_MINUTES if leave < 0 else leave)
 
 
 ## The segments of a visit starting at `start` (total or day minutes – the unit of `start`):
-## [{phase, step, grave_index, from, to}] in order; the last one is gone (to = from).
-static func timeline(start: int, travel: int, graves: int, flowers: bool, waits: bool, cfg: VisitorConfig, wait: int = -1) -> Array[Dictionary]:
+## [{phase, step, grave_index, from, to}] in order; the last one is gone (to = from). `leave` = the minutes of the way
+## down (−1 = LEAVE_MINUTES).
+static func timeline(start: int, travel: int, graves: int, flowers: bool, waits: bool, cfg: VisitorConfig, wait: int = -1,
+		leave: int = -1) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var wait_len := cfg.wait_minutes if wait < 0 else wait
+	var leave_len := LEAVE_MINUTES if leave < 0 else leave
 	var t := start
 	out.append({"phase": PHASE_ARRIVING, "step": STEP_WALK, "grave_index": 0, "from": t, "to": t + travel})
 	t += travel
@@ -138,8 +143,8 @@ static func timeline(start: int, travel: int, graves: int, flowers: bool, waits:
 	if waits:
 		out.append({"phase": PHASE_WAITING, "step": &"wait", "grave_index": maxi(graves - 1, 0), "from": t, "to": t + wait_len})
 		t += wait_len
-	out.append({"phase": PHASE_LEAVING, "step": STEP_WALK, "grave_index": maxi(graves - 1, 0), "from": t, "to": t + LEAVE_MINUTES})
-	t += LEAVE_MINUTES
+	out.append({"phase": PHASE_LEAVING, "step": STEP_WALK, "grave_index": maxi(graves - 1, 0), "from": t, "to": t + leave_len})
+	t += leave_len
 	out.append({"phase": PHASE_GONE, "step": &"", "grave_index": maxi(graves - 1, 0), "from": t, "to": t})
 	return out
 
