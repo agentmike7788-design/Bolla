@@ -13,8 +13,8 @@ Regel: **BAUE → TESTE → ZEIGE → WARTE AUF FREIGABE.** Keine Phase startet 
 | 6 | Gebäude | ✅ freigegeben (03.10.2026) |
 | 7 | Dorf | ✅ freigegeben (04.10.2026) |
 | 8 | NPCs | ✅ freigegeben (17.10.2026) |
-| 9 | Quests | 🟡 Gate G9 PENDING – gebaut (W0–W3), wartet auf Benutzerprüfung |
-| 10 | Wirtschaft | – |
+| 9 | Quests | ✅ freigegeben (24.10.2026) |
+| 10 | Wirtschaft | ⏳ Planung (Fragen an den Benutzer) |
 | 11 | Welt erweitern | – |
 | 12 | Krypten | – |
 | 13 | Auferstehung | – |

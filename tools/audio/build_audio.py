@@ -200,7 +200,7 @@ CATALOG: list[Spec] = [
     S("corpse_down", sfx.corpse_down, 2, volume_db=-8, cooldown=0.3),
     S("glass_seal", sfx.glass_seal, 2, volume_db=-11, cooldown=0.3),
     S("anatomy_tool", sfx.anatomy_tool, 2, volume_db=-18, cooldown=0.5, loud=-31),
-    S("cart_roll", sfx.cart_roll, 1, volume_db=-12, loop=True, positional=True, max_distance=30, unit_size=5,
+    S("cart_roll", sfx.cart_roll, 1, volume_db=-20, loud=-35, loop=True, positional=True, max_distance=30, unit_size=3,  # 24.10.2026: Benutzer „noch etwas laut“ (−8 dB)
       pitch_jitter=0.0, volume_jitter_db=0.0, max_voices=1),
     # bells, spirits, story
     S("church_bell", sfx.church_bell, 1, volume_db=-8, positional=True, max_distance=120, unit_size=30,
