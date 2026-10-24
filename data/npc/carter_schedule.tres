@@ -11,8 +11,8 @@ visible = false
 
 [sub_resource type="Resource" id="morning_arrive"]
 script = ExtResource("1_s38po")
-start_minute = 404
-travel_minutes = 40
+start_minute = 390
+travel_minutes = 54
 activity = &"walk"
 animation = &"push_cart"
 path = PackedStringArray("road_end", "road_mid", "gate_outside", "dropoff")
@@ -35,7 +35,7 @@ with_cart = true
 [sub_resource type="Resource" id="morning_leave"]
 script = ExtResource("1_s38po")
 start_minute = 600
-travel_minutes = 40
+travel_minutes = 54
 activity = &"walk"
 animation = &"push_cart"
 path = PackedStringArray("dropoff", "gate_outside", "road_mid", "road_end")
@@ -43,7 +43,7 @@ with_cart = true
 
 [sub_resource type="Resource" id="day_home"]
 script = ExtResource("1_s38po")
-start_minute = 640
+start_minute = 654
 activity = &"home"
 path = PackedStringArray("road_end")
 visible = false
@@ -81,8 +81,8 @@ visible = false
 
 [sub_resource type="Resource" id="v_walk_remise"]
 script = ExtResource("1_s38po")
-start_minute = 670
-travel_minutes = 8
+start_minute = 684
+travel_minutes = 58
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_road_in", "v_bridge", "v_anger_w", "v_remise")
@@ -90,15 +90,15 @@ region = &"village"
 
 [sub_resource type="Resource" id="v_remise"]
 script = ExtResource("1_s38po")
-start_minute = 678
+start_minute = 742
 path = PackedStringArray("v_remise")
 dialogue_id = &"carter_village"
 region = &"village"
 
 [sub_resource type="Resource" id="v_walk_inn"]
 script = ExtResource("1_s38po")
-start_minute = 840
-travel_minutes = 5
+start_minute = 822
+travel_minutes = 23
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_remise", "v_inn_door")
@@ -121,8 +121,8 @@ region = &"village"
 
 [sub_resource type="Resource" id="v_walk_inn_night"]
 script = ExtResource("1_s38po")
-start_minute = 1315
-travel_minutes = 5
+start_minute = 1297
+travel_minutes = 23
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_remise", "v_inn_door")

@@ -218,8 +218,9 @@ func test_leaves_at_ten_and_comes_back_in_the_evening() -> void:
 	assert_true(pushing > 5, "at 10:00 he pushes the cart away (%d frames)" % pushing)
 	assert_true(npc.global_position.distance_to(at_gate) > 10.0, "on the road back by 10:25")
 	assert_eq(npc.cargo_count(), 0, "the cart is empty on the way back")
-	await _run_until(641, 30.0)
-	assert_false(npc.is_present(), "gone at 10:40")
+	# G9 Gehtempo: the cart at its natural pace – 54 minutes down the Kutschweg (before 40).
+	await _run_until(655, 30.0)
+	assert_false(npc.is_present(), "gone at 10:54")
 	assert_true(console.call(&"open"))
 	console.call(&"execute", "time 18:25")
 	console.call(&"close")

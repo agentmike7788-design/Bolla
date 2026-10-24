@@ -14,6 +14,10 @@ const MINUTES_PER_DAY := 1440
 ## Phase 7 (docs/PHASE7_DESIGN.md §3.4): entries with a today_flag count only on `day` ≥ 0 while that
 ## GameState flag equals `day` (the priest's consecration day), and such a valid entry wins a tie of
 ## start_minute over a plain one. day -1 (every call before Phase 7) skips them – bit-identical.
+## G9 Gehtempo (docs/PHASE9_DESIGN.md „G9 – Benutzerentscheidungen“ 1): a valid today_flag walk still on its way masks
+## the plain entries that start during it (the overlay walk leaves earlier than a plain stay or walk of the day – it
+## is not cut off); a today_flag walk of yesterday (flag = day − 1) that runs past midnight goes on until it arrives.
+## Without such walks (every schedule before G9) the result is the same as before.
 static func entry_at(schedule: NpcSchedule, minute_of_day: int, day: int = -1) -> ScheduleEntry:
 	if schedule == null or schedule.entries.is_empty():
 		push_warning("[ScheduleResolver] entry_at(): schedule has no entries")
@@ -21,15 +25,29 @@ static func entry_at(schedule: NpcSchedule, minute_of_day: int, day: int = -1) -
 	var t := posmod(minute_of_day, MINUTES_PER_DAY)
 	var active: ScheduleEntry = null
 	var latest: ScheduleEntry = null
+	var flagged: ScheduleEntry = null
+	var overnight: ScheduleEntry = null
 	for entry: ScheduleEntry in schedule.entries:
 		if entry == null:
 			continue
 		if entry.today_flag != &"" and not is_today(entry.today_flag, day):
+			if day > 0 and entry.travel_minutes > 0 and is_today(entry.today_flag, day - 1) \
+					and t < entry.start_minute + entry.travel_minutes - MINUTES_PER_DAY:
+				overnight = entry
 			continue
 		if _later(entry, latest):
 			latest = entry
 		if entry.start_minute <= t and _later(entry, active):
 			active = entry
+		if entry.today_flag != &"" and entry.start_minute <= t and _later(entry, flagged):
+			flagged = entry
+	if active != null and active.today_flag == &"":
+		if flagged != null and flagged.travel_minutes > 0 and t < flagged.start_minute + flagged.travel_minutes:
+			return flagged
+		if flagged == null and overnight != null:
+			return overnight
+	if active == null and overnight != null and (latest == null or latest.today_flag == &""):
+		return overnight
 	return active if active != null else latest
 
 

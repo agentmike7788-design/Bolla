@@ -216,15 +216,15 @@ func test_carter_walks_the_schedule() -> void:
 	assert_false(npc.interactable.enabled)
 	assert_true(npc.body_shape.disabled)
 	_assert_xz(npc.global_position, road_end, "06:00 at road_end")
-	# 07:04 half way along road_end -> road_mid -> gate_outside -> dropoff (by arc length; G8 Runde 4: he sets
-	# off at 06:44 and is at the bier at 07:24 to unload until 07:40, CartDeliveryConfig)
-	await _at(npc, 424)
-	assert_true(npc.visible, "07:04 on the way")
+	# 06:57 half way along road_end -> road_mid -> gate_outside -> dropoff (by arc length; G8 Runde 4: at the bier at
+	# 07:24 to unload until 07:40, CartDeliveryConfig; G9 Gehtempo: the cart at its natural pace sets off at 06:30)
+	await _at(npc, 417)
+	assert_true(npc.visible, "06:57 on the way")
 	assert_true(npc.is_walking())
-	assert_true(npc.cart.visible, "07:04 with the cart")
-	assert_true(npc.cargo.visible, "07:04 brings a corpse")
-	assert_false(npc.interactable.enabled, "07:04 no dialogue")
-	_assert_xz(npc.global_position, _along(["road_end", "road_mid", "gate_outside", "dropoff"], 0.5), "07:04")
+	assert_true(npc.cart.visible, "06:57 with the cart")
+	assert_true(npc.cargo.visible, "06:57 brings a corpse")
+	assert_false(npc.interactable.enabled, "06:57 no dialogue")
+	_assert_xz(npc.global_position, _along(["road_end", "road_mid", "gate_outside", "dropoff"], 0.5), "06:57")
 	assert_almost(npc.global_position.y, world.ground_height(Vector2(npc.global_position.x, npc.global_position.z)), 0.001)
 	# 08:00 standing at the bier, talkable
 	await _at(npc, 480)

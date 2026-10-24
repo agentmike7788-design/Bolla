@@ -24,7 +24,8 @@ const CASES := [
 	[&"surgeon", "ph_chr_v_surgeon", &"village", 900, &"v_in_surgery_desk", 90.0, &"mix_vial", 90.0, "prop_vial"],
 	[&"washer", "ph_chr_v_washer", &"village", 480, &"v_wash", 120.0, &"wash_brook", -90.0, "prop_washcloth"],
 	# G8 Runde 5: Jakob sweeps at v_in_inn_sweep (data fallback schedule), with the spot's own facing
-	[&"apprentice", "ph_chr_apprentice", &"village", 1050, &"v_in_inn_sweep", 80.0, &"sweep", 80.0, "broom"],
+	# G9 Gehtempo: he is back in the inn after the way down from the box at the natural pace (17:39).
+	[&"apprentice", "ph_chr_apprentice", &"village", 1080, &"v_in_inn_sweep", 80.0, &"sweep", 80.0, "broom"],
 	[&"carter", "ph_chr_carter", &"graveyard", 1115, &"evening_spot", 15.0, &"smoke", 15.0, ""],
 ]
 

@@ -1,6 +1,7 @@
 extends TestCase
 ## P1 (docs/PHASE8_DESIGN.md §3.4, §10): ScheduleBuilder and the Npc's runtime schedule – walking time
-## from the polyline (3.2 m per game minute), gaps invisible, the runtime schedule replaces the data
+## from the polyline (here 3.2 m per game minute through walk_speed_override – the mechanism; G9 Gehtempo: the game
+## walks NpcConfig.walk_m_per_minute 0.8), gaps invisible, the runtime schedule replaces the data
 ## schedule and gives it back, save / load without plan data places the figure bit-identically (plan +
 ## clock), an Npc without a plan is hidden, and the show_with / hide_with / hide_after child meshes.
 
@@ -15,7 +16,7 @@ func before_each() -> void:
 	GameState.reset()
 	TimeManager.reset()
 	TimeManager.set_time(TimeManager.day, 480)
-	ScheduleBuilder.walk_speed_override = 0.0
+	ScheduleBuilder.walk_speed_override = 3.2
 	world = Node3D.new()
 	world.name = "P8SchedWorld"
 	tree.root.add_child(world)
@@ -35,6 +36,7 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+	ScheduleBuilder.walk_speed_override = 0.0
 	if is_instance_valid(world):
 		world.free()
 	GameState.reset()
@@ -86,9 +88,11 @@ func test_walk_minutes_from_the_polyline() -> void:
 	assert_eq(ScheduleBuilder.travel_minutes(PackedStringArray(["road_end", "home"]), graveyard), 3, "7.07 m → at least, rounded up")
 	assert_eq(ScheduleBuilder.travel_minutes(PackedStringArray(["road_end", "gate"]), null), 0, "no world")
 	ScheduleBuilder.walk_speed_override = 1.6
-	assert_eq(ScheduleBuilder.travel_minutes(PackedStringArray(["road_end", "gate"]), graveyard), 10, "NpcConfig speed")
+	assert_eq(ScheduleBuilder.travel_minutes(PackedStringArray(["road_end", "gate"]), graveyard), 10, "the override")
 	ScheduleBuilder.walk_speed_override = 0.0
-	assert_almost((Database.config(&"npc_config") as NpcConfig).walk_m_per_minute, 3.2)
+	assert_almost((Database.config(&"npc_config") as NpcConfig).walk_m_per_minute, 0.8, 0.0001, "G9 Gehtempo: 1.6 m/s real")
+	assert_eq(ScheduleBuilder.travel_minutes(PackedStringArray(["road_end", "gate"]), graveyard), 20, "NpcConfig speed: 16 m / 0.8")
+	ScheduleBuilder.walk_speed_override = 3.2
 	var s := ScheduleBuilder.stay(&"grave", 1500, &"", &"kin_kehr", false)
 	assert_eq([s.start_minute, s.animation, s.visible, s.dialogue_id, s.path], [60, &"idle", false, &"kin_kehr",
 			PackedStringArray(["grave"])])

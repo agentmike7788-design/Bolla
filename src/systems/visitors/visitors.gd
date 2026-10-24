@@ -144,7 +144,8 @@ func plan_day(day: int) -> Array[Dictionary]:
 			var start := kin.visit_minute - travel
 			var e := _entry(kin, graves, start, travel, day)
 			villagers.append(e)
-			windows.append([start, start + VisitRules.duration(travel, graves.size(), bool(e.flowers), true, cfg, cfg.wait_minutes_villager)])
+			windows.append([start, start + VisitRules.duration(travel, graves.size(), bool(e.flowers), true, cfg, cfg.wait_minutes_villager,
+					travel)])
 		else:
 			var every := kin_interval(kin.kin_id)
 			if every < 0:
@@ -160,7 +161,7 @@ func plan_day(day: int) -> Array[Dictionary]:
 				var e := _entry(kin, graves, start, travel, day)
 				e["until"] = cfg.interval_window.y
 				villagers.append(e)
-				windows.append([start, cfg.interval_window.y + VisitRules.LEAVE_MINUTES])
+				windows.append([start, cfg.interval_window.y + travel])
 			elif due >= 0 and due <= day:
 				households.append([due, String(kin.kin_id), kin, graves])
 	households.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0] or (a[0] == b[0] and a[1] < b[1]))
@@ -173,7 +174,12 @@ func plan_day(day: int) -> Array[Dictionary]:
 			continue
 		var kin: KinData = households[i][2]
 		var graves: PackedStringArray = households[i][3]
-		list.append(_entry(kin, graves, slots[i], _travel(kin, graves), day))
+		# G9 Gehtempo: the visit at the grave keeps its window (the slot + the ≈ 13 minutes up of §2.2.3) – a longer way
+		# at the natural pace starts that much earlier at the road end (the bell rings then).
+		var travel := _travel(kin, graves)
+		var e := _entry(kin, graves, slots[i] - maxi(0, travel - (VisitRules.ROAD_MINUTES + VisitRules.DEFAULT_ROUTE_MINUTES)), travel, day)
+		e["slot"] = slots[i]
+		list.append(e)
 	if late:
 		var keep: Array[Dictionary] = []
 		for e: Dictionary in list:
@@ -703,8 +709,10 @@ func _segments(v: Dictionary) -> Array[Dictionary]:
 	var start := int(v.get("start", int(v.get("slot", 570))))
 	var graves := (v.get("graves", []) as Array).size()
 	var flowers := bool(v.get("flowers", false))
+	# G9 Gehtempo: the way down takes as long as the way up (the same route reversed, at the natural pace) – the visit is
+	# over (and the figure cleared) when it has reached the road end, not 12 minutes after leaving the grave.
 	return VisitRules.timeline(start, travel, graves, flowers, bool(v.get("waits", false)), _cfg(), _wait_of(v, start + travel
-			+ VisitRules.graves_minutes(graves, flowers, _cfg())))
+			+ VisitRules.graves_minutes(graves, flowers, _cfg())), travel)
 
 
 ## G8 Runde 1 (B8-1): the wait of a visit beginning at `wait_from` – a household up to wait_minutes (till 16:30), cut
@@ -1054,7 +1062,11 @@ func _apply_schedule(v: Dictionary) -> void:
 		elif StringName(s.step) == VisitRules.STEP_WALK and s.phase == VisitRules.PHASE_LEAVING:
 			var back := _route(g)
 			back.reverse()
-			entries.append(ScheduleBuilder.walk(wp, back, int(s.from), &"", _first(&"world")))
+			var down := ScheduleBuilder.walk(wp, back, int(s.from), &"", _first(&"world"))
+			# G9: the plan's way down (the first grave's route) – from the last grave of a round it is a few metres longer.
+			if down.travel_minutes > 0:
+				down.travel_minutes = maxi(1, int(s.to) - int(s.from))
+			entries.append(down)
 		else:
 			entries.append(ScheduleBuilder.stay(wp, int(s.from), anim, kin.dialogue_id))
 	# W-Welt (W2): the walks are timed on the world's waypoints (with `self` they took 0 minutes – a jump), and the

@@ -3,10 +3,111 @@
 [ext_resource type="Script" path="res://src/systems/npc/schedule_entry.gd" id="1_h8iy5"]
 [ext_resource type="Script" path="res://src/systems/npc/npc_schedule.gd" id="2_dfs02"]
 
+[sub_resource type="Resource" id="p9_priest_01"]
+script = ExtResource("1_h8iy5")
+start_minute = 1185
+travel_minutes = 75
+activity = &"walk"
+animation = &"lantern_walk"
+path = PackedStringArray("v_church_door", "v_well", "v_bridge", "v_road_in", "v_sieber_lane_n", "v_sieber_lane_e", "v_sieber_lane_s", "v_sieber_yard", "v_sieber_door")
+region = &"village"
+today_flag = &"night_np_sieber_priest_day"
+
+[sub_resource type="Resource" id="p9_priest_02"]
+script = ExtResource("1_h8iy5")
+start_minute = 1260
+animation = &"knock"
+path = PackedStringArray("v_sieber_door")
+region = &"village"
+today_flag = &"night_np_sieber_priest_day"
+
+[sub_resource type="Resource" id="p9_priest_03"]
+script = ExtResource("1_h8iy5")
+start_minute = 1261
+activity = &"home"
+path = PackedStringArray("v_sieber_door")
+visible = false
+region = &"village"
+today_flag = &"night_np_sieber_priest_day"
+
+[sub_resource type="Resource" id="p9_priest_04"]
+script = ExtResource("1_h8iy5")
+start_minute = 1300
+path = PackedStringArray("v_sieber_door")
+dialogue_id = &"v_priest"
+region = &"village"
+today_flag = &"night_np_sieber_priest_day"
+
+[sub_resource type="Resource" id="p9_priest_05"]
+script = ExtResource("1_h8iy5")
+start_minute = 1302
+travel_minutes = 75
+activity = &"walk"
+animation = &"lantern_walk"
+path = PackedStringArray("v_sieber_door", "v_sieber_yard", "v_sieber_lane_s", "v_sieber_lane_e", "v_sieber_lane_n", "v_road_in", "v_bridge", "v_well", "v_church_door")
+region = &"village"
+today_flag = &"night_np_sieber_priest_day"
+
+[sub_resource type="Resource" id="p9_priest_06"]
+script = ExtResource("1_h8iy5")
+start_minute = 1377
+activity = &"home"
+path = PackedStringArray("v_church_door")
+visible = false
+region = &"village"
+today_flag = &"night_np_sieber_priest_day"
+
+[sub_resource type="Resource" id="p9_priest_07"]
+script = ExtResource("1_h8iy5")
+start_minute = 1009
+travel_minutes = 71
+activity = &"walk"
+animation = &"lantern_walk"
+path = PackedStringArray("v_church_door", "v_well", "v_bridge", "v_road_in", "v_sieber_lane_n", "v_sieber_lane_e", "v_sieber_lane_s", "v_sieber_bench_2")
+region = &"village"
+today_flag = &"sieber_evening_priest_day"
+
+[sub_resource type="Resource" id="p9_priest_08"]
+script = ExtResource("1_h8iy5")
+start_minute = 1080
+activity = &"sit"
+animation = &"sit_bench"
+path = PackedStringArray("v_sieber_bench_2")
+region = &"village"
+today_flag = &"sieber_evening_priest_day"
+
+[sub_resource type="Resource" id="p9_priest_09"]
+script = ExtResource("1_h8iy5")
+start_minute = 1200
+travel_minutes = 71
+activity = &"walk"
+animation = &"lantern_walk"
+path = PackedStringArray("v_sieber_bench_2", "v_sieber_lane_s", "v_sieber_lane_e", "v_sieber_lane_n", "v_road_in", "v_bridge", "v_well", "v_church_door")
+region = &"village"
+today_flag = &"sieber_evening_priest_day"
+
+[sub_resource type="Resource" id="p9_priest_10"]
+script = ExtResource("1_h8iy5")
+start_minute = 1271
+activity = &"home"
+path = PackedStringArray("v_church_door")
+visible = false
+region = &"village"
+today_flag = &"sieber_evening_priest_day"
+
+[sub_resource type="Resource" id="p9_priest_11"]
+script = ExtResource("1_h8iy5")
+start_minute = 1090
+activity = &"sit"
+animation = &"sit_bench"
+path = PackedStringArray("v_sieber_bench_2")
+region = &"village"
+today_flag = &"sieber_evening_priest_day"
+
 [sub_resource type="Resource" id="p8_priest_01"]
 script = ExtResource("1_h8iy5")
-start_minute = 950
-travel_minutes = 10
+start_minute = 837
+travel_minutes = 44
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_church_door", "v_well", "v_bridge")
@@ -15,15 +116,15 @@ today_flag = &"fest_lights_day"
 
 [sub_resource type="Resource" id="p8_priest_02"]
 script = ExtResource("1_h8iy5")
-start_minute = 960
+start_minute = 881
 path = PackedStringArray("v_bridge")
 region = &"village"
 today_flag = &"fest_lights_day"
 
 [sub_resource type="Resource" id="p8_priest_03"]
 script = ExtResource("1_h8iy5")
-start_minute = 990
-travel_minutes = 5
+start_minute = 911
+travel_minutes = 6
 activity = &"walk"
 animation = &"lantern_walk"
 path = PackedStringArray("v_bridge", "v_road_in")
@@ -32,7 +133,7 @@ today_flag = &"fest_lights_day"
 
 [sub_resource type="Resource" id="p8_priest_04"]
 script = ExtResource("1_h8iy5")
-start_minute = 995
+start_minute = 917
 activity = &"home"
 path = PackedStringArray("v_road_in")
 visible = false
@@ -41,8 +142,8 @@ today_flag = &"fest_lights_day"
 
 [sub_resource type="Resource" id="p8_priest_05"]
 script = ExtResource("1_h8iy5")
-start_minute = 1125
-travel_minutes = 12
+start_minute = 1213
+travel_minutes = 59
 activity = &"walk"
 animation = &"lantern_walk"
 path = PackedStringArray("v_road_in", "v_bridge", "v_anger_w", "v_inn_door")
@@ -51,7 +152,7 @@ today_flag = &"fest_lights_day"
 
 [sub_resource type="Resource" id="p8_priest_06"]
 script = ExtResource("1_h8iy5")
-start_minute = 1137
+start_minute = 1272
 path = PackedStringArray("v_in_inn_corner")
 dialogue_id = &"v_priest"
 region = &"village"
@@ -59,15 +160,24 @@ today_flag = &"fest_lights_day"
 
 [sub_resource type="Resource" id="p8_priest_07"]
 script = ExtResource("1_h8iy5")
-start_minute = 1250
-travel_minutes = 10
+start_minute = 1320
+activity = &"home"
+path = PackedStringArray("v_inn_door")
+visible = false
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_priest_08"]
+script = ExtResource("1_h8iy5")
+start_minute = 1220
+travel_minutes = 40
 activity = &"walk"
 animation = &"lantern_walk"
 path = PackedStringArray("v_church_door", "v_well", "v_ott_lane_w", "v_ott_lane", "v_ott_door")
 region = &"village"
 today_flag = &"night_np_ott_priest_day"
 
-[sub_resource type="Resource" id="p8_priest_08"]
+[sub_resource type="Resource" id="p8_priest_09"]
 script = ExtResource("1_h8iy5")
 start_minute = 1260
 animation = &"knock"
@@ -75,7 +185,7 @@ path = PackedStringArray("v_ott_door")
 region = &"village"
 today_flag = &"night_np_ott_priest_day"
 
-[sub_resource type="Resource" id="p8_priest_09"]
+[sub_resource type="Resource" id="p8_priest_10"]
 script = ExtResource("1_h8iy5")
 start_minute = 1261
 activity = &"home"
@@ -84,7 +194,7 @@ visible = false
 region = &"village"
 today_flag = &"night_np_ott_priest_day"
 
-[sub_resource type="Resource" id="p8_priest_10"]
+[sub_resource type="Resource" id="p8_priest_11"]
 script = ExtResource("1_h8iy5")
 start_minute = 1300
 path = PackedStringArray("v_ott_door")
@@ -92,36 +202,36 @@ dialogue_id = &"v_priest"
 region = &"village"
 today_flag = &"night_np_ott_priest_day"
 
-[sub_resource type="Resource" id="p8_priest_11"]
+[sub_resource type="Resource" id="p8_priest_12"]
 script = ExtResource("1_h8iy5")
 start_minute = 1302
-travel_minutes = 10
+travel_minutes = 40
 activity = &"walk"
 animation = &"lantern_walk"
 path = PackedStringArray("v_ott_door", "v_ott_lane", "v_ott_lane_w", "v_well", "v_church_door")
 region = &"village"
 today_flag = &"night_np_ott_priest_day"
 
-[sub_resource type="Resource" id="p8_priest_12"]
+[sub_resource type="Resource" id="p8_priest_13"]
 script = ExtResource("1_h8iy5")
-start_minute = 1312
+start_minute = 1342
 activity = &"home"
 path = PackedStringArray("v_church_door")
 visible = false
 region = &"village"
 today_flag = &"night_np_ott_priest_day"
 
-[sub_resource type="Resource" id="p8_priest_13"]
+[sub_resource type="Resource" id="p8_priest_14"]
 script = ExtResource("1_h8iy5")
-start_minute = 1250
-travel_minutes = 10
+start_minute = 1216
+travel_minutes = 44
 activity = &"walk"
 animation = &"lantern_walk"
 path = PackedStringArray("v_church_door", "v_well", "v_kehr_lane", "v_kehr_door")
 region = &"village"
 today_flag = &"night_np_kehr_priest_day"
 
-[sub_resource type="Resource" id="p8_priest_14"]
+[sub_resource type="Resource" id="p8_priest_15"]
 script = ExtResource("1_h8iy5")
 start_minute = 1260
 animation = &"knock"
@@ -129,7 +239,7 @@ path = PackedStringArray("v_kehr_door")
 region = &"village"
 today_flag = &"night_np_kehr_priest_day"
 
-[sub_resource type="Resource" id="p8_priest_15"]
+[sub_resource type="Resource" id="p8_priest_16"]
 script = ExtResource("1_h8iy5")
 start_minute = 1261
 activity = &"home"
@@ -138,7 +248,7 @@ visible = false
 region = &"village"
 today_flag = &"night_np_kehr_priest_day"
 
-[sub_resource type="Resource" id="p8_priest_16"]
+[sub_resource type="Resource" id="p8_priest_17"]
 script = ExtResource("1_h8iy5")
 start_minute = 1290
 path = PackedStringArray("v_kehr_door")
@@ -146,37 +256,55 @@ dialogue_id = &"v_priest"
 region = &"village"
 today_flag = &"night_np_kehr_priest_day"
 
-[sub_resource type="Resource" id="p8_priest_17"]
+[sub_resource type="Resource" id="p8_priest_18"]
 script = ExtResource("1_h8iy5")
 start_minute = 1292
-travel_minutes = 10
+travel_minutes = 44
 activity = &"walk"
 animation = &"lantern_walk"
 path = PackedStringArray("v_kehr_door", "v_kehr_lane", "v_well", "v_church_door")
 region = &"village"
 today_flag = &"night_np_kehr_priest_day"
 
-[sub_resource type="Resource" id="p8_priest_18"]
+[sub_resource type="Resource" id="p8_priest_19"]
 script = ExtResource("1_h8iy5")
-start_minute = 1302
+start_minute = 1336
 activity = &"home"
 path = PackedStringArray("v_church_door")
 visible = false
 region = &"village"
 today_flag = &"night_np_kehr_priest_day"
 
-[sub_resource type="Resource" id="p8_priest_19"]
+[sub_resource type="Resource" id="p8_priest_20"]
 script = ExtResource("1_h8iy5")
-start_minute = 1080
+start_minute = 960
 activity = &"home"
 path = PackedStringArray("v_road_in")
 visible = false
 region = &"village"
 today_flag = &"fest_lights_day"
 
-[sub_resource type="Resource" id="p8_priest_20"]
+[sub_resource type="Resource" id="p8_priest_21"]
+script = ExtResource("1_h8iy5")
+start_minute = 1071
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_priest_22"]
 script = ExtResource("1_h8iy5")
 start_minute = 1090
+activity = &"home"
+path = PackedStringArray("v_road_in")
+visible = false
+region = &"village"
+today_flag = &"fest_lights_day"
+
+[sub_resource type="Resource" id="p8_priest_23"]
+script = ExtResource("1_h8iy5")
+start_minute = 1200
 activity = &"home"
 path = PackedStringArray("v_road_in")
 visible = false
@@ -201,8 +329,8 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_pbuyb"]
 script = ExtResource("1_h8iy5")
-start_minute = 690
-travel_minutes = 8
+start_minute = 671
+travel_minutes = 27
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_church_door", "v_well", "v_hagedorn_gate")
@@ -227,8 +355,8 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_aevy6"]
 script = ExtResource("1_h8iy5")
-start_minute = 1080
-travel_minutes = 10
+start_minute = 1071
+travel_minutes = 19
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_church_door", "v_inn_door")
@@ -251,8 +379,8 @@ region = &"village"
 
 [sub_resource type="Resource" id="Resource_dcyle"]
 script = ExtResource("1_h8iy5")
-start_minute = 520
-travel_minutes = 40
+start_minute = 487
+travel_minutes = 73
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("road_end", "road_mid", "gate_outside", "dropoff", "w_east_pass", "w_linden_n", "linden_spot")
@@ -270,7 +398,7 @@ today_flag = &"linden_consecration_day"
 [sub_resource type="Resource" id="Resource_d8ent"]
 script = ExtResource("1_h8iy5")
 start_minute = 630
-travel_minutes = 40
+travel_minutes = 73
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("linden_spot", "w_linden_n", "w_east_pass", "dropoff", "gate_outside", "road_mid", "road_end")
@@ -278,115 +406,14 @@ today_flag = &"linden_consecration_day"
 
 [sub_resource type="Resource" id="Resource_frwys"]
 script = ExtResource("1_h8iy5")
-start_minute = 670
+start_minute = 703
 activity = &"home"
 path = PackedStringArray("road_end")
 visible = false
 today_flag = &"linden_consecration_day"
 
-[sub_resource type="Resource" id="p9_priest_sieber_01"]
-script = ExtResource("1_h8iy5")
-start_minute = 1220
-travel_minutes = 40
-activity = &"walk"
-animation = &"lantern_walk"
-path = PackedStringArray("v_church_door", "v_well", "v_bridge", "v_road_in", "v_sieber_lane_n", "v_sieber_lane_e", "v_sieber_lane_s", "v_sieber_yard", "v_sieber_door")
-region = &"village"
-today_flag = &"night_np_sieber_priest_day"
-
-[sub_resource type="Resource" id="p9_priest_sieber_02"]
-script = ExtResource("1_h8iy5")
-start_minute = 1260
-animation = &"knock"
-path = PackedStringArray("v_sieber_door")
-region = &"village"
-today_flag = &"night_np_sieber_priest_day"
-
-[sub_resource type="Resource" id="p9_priest_sieber_03"]
-script = ExtResource("1_h8iy5")
-start_minute = 1261
-activity = &"home"
-path = PackedStringArray("v_sieber_door")
-visible = false
-region = &"village"
-today_flag = &"night_np_sieber_priest_day"
-
-[sub_resource type="Resource" id="p9_priest_sieber_04"]
-script = ExtResource("1_h8iy5")
-start_minute = 1300
-path = PackedStringArray("v_sieber_door")
-dialogue_id = &"v_priest"
-region = &"village"
-today_flag = &"night_np_sieber_priest_day"
-
-[sub_resource type="Resource" id="p9_priest_sieber_05"]
-script = ExtResource("1_h8iy5")
-start_minute = 1302
-travel_minutes = 40
-activity = &"walk"
-animation = &"lantern_walk"
-path = PackedStringArray("v_sieber_door", "v_sieber_yard", "v_sieber_lane_s", "v_sieber_lane_e", "v_sieber_lane_n", "v_road_in", "v_bridge", "v_well", "v_church_door")
-region = &"village"
-today_flag = &"night_np_sieber_priest_day"
-
-[sub_resource type="Resource" id="p9_priest_sieber_06"]
-script = ExtResource("1_h8iy5")
-start_minute = 1342
-activity = &"home"
-path = PackedStringArray("v_church_door")
-visible = false
-region = &"village"
-today_flag = &"night_np_sieber_priest_day"
-
-[sub_resource type="Resource" id="p9_priest_evening_01"]
-script = ExtResource("1_h8iy5")
-start_minute = 1040
-travel_minutes = 40
-activity = &"walk"
-animation = &"lantern_walk"
-path = PackedStringArray("v_church_door", "v_well", "v_bridge", "v_road_in", "v_sieber_lane_n", "v_sieber_lane_e", "v_sieber_lane_s", "v_sieber_bench_2")
-region = &"village"
-today_flag = &"sieber_evening_priest_day"
-
-[sub_resource type="Resource" id="p9_priest_evening_02"]
-script = ExtResource("1_h8iy5")
-start_minute = 1080
-activity = &"sit"
-animation = &"sit_bench"
-path = PackedStringArray("v_sieber_bench_2")
-region = &"village"
-today_flag = &"sieber_evening_priest_day"
-
-[sub_resource type="Resource" id="p9_priest_evening_03"]
-script = ExtResource("1_h8iy5")
-start_minute = 1090
-activity = &"sit"
-animation = &"sit_bench"
-path = PackedStringArray("v_sieber_bench_2")
-region = &"village"
-today_flag = &"sieber_evening_priest_day"
-
-[sub_resource type="Resource" id="p9_priest_evening_04"]
-script = ExtResource("1_h8iy5")
-start_minute = 1200
-travel_minutes = 40
-activity = &"walk"
-animation = &"lantern_walk"
-path = PackedStringArray("v_sieber_bench_2", "v_sieber_lane_s", "v_sieber_lane_e", "v_sieber_lane_n", "v_road_in", "v_bridge", "v_well", "v_church_door")
-region = &"village"
-today_flag = &"sieber_evening_priest_day"
-
-[sub_resource type="Resource" id="p9_priest_evening_05"]
-script = ExtResource("1_h8iy5")
-start_minute = 1240
-activity = &"home"
-path = PackedStringArray("v_church_door")
-visible = false
-region = &"village"
-today_flag = &"sieber_evening_priest_day"
-
 [resource]
 script = ExtResource("2_dfs02")
 npc_id = &"priest"
 display_name = "Ambrosius Lenz"
-entries = Array[ExtResource("1_h8iy5")]([SubResource("Resource_dsd5p"), SubResource("Resource_jq0uq"), SubResource("Resource_pbuyb"), SubResource("Resource_ymcak"), SubResource("Resource_fgliv"), SubResource("Resource_aevy6"), SubResource("Resource_svkmg"), SubResource("Resource_tybh8"), SubResource("Resource_dcyle"), SubResource("Resource_8hub3"), SubResource("Resource_d8ent"), SubResource("Resource_frwys"), SubResource("p8_priest_01"), SubResource("p8_priest_02"), SubResource("p8_priest_03"), SubResource("p8_priest_04"), SubResource("p8_priest_05"), SubResource("p8_priest_06"), SubResource("p8_priest_07"), SubResource("p8_priest_08"), SubResource("p8_priest_09"), SubResource("p8_priest_10"), SubResource("p8_priest_11"), SubResource("p8_priest_12"), SubResource("p8_priest_13"), SubResource("p8_priest_14"), SubResource("p8_priest_15"), SubResource("p8_priest_16"), SubResource("p8_priest_17"), SubResource("p8_priest_18"), SubResource("p8_priest_19"), SubResource("p8_priest_20"), SubResource("p9_priest_sieber_01"), SubResource("p9_priest_sieber_02"), SubResource("p9_priest_sieber_03"), SubResource("p9_priest_sieber_04"), SubResource("p9_priest_sieber_05"), SubResource("p9_priest_sieber_06"), SubResource("p9_priest_evening_01"), SubResource("p9_priest_evening_02"), SubResource("p9_priest_evening_03"), SubResource("p9_priest_evening_04"), SubResource("p9_priest_evening_05")])
+entries = Array[ExtResource("1_h8iy5")]([SubResource("Resource_dsd5p"), SubResource("Resource_jq0uq"), SubResource("Resource_pbuyb"), SubResource("Resource_ymcak"), SubResource("Resource_fgliv"), SubResource("Resource_aevy6"), SubResource("Resource_svkmg"), SubResource("Resource_tybh8"), SubResource("Resource_dcyle"), SubResource("Resource_8hub3"), SubResource("Resource_d8ent"), SubResource("Resource_frwys"), SubResource("p8_priest_01"), SubResource("p8_priest_02"), SubResource("p8_priest_03"), SubResource("p8_priest_04"), SubResource("p8_priest_05"), SubResource("p8_priest_06"), SubResource("p8_priest_07"), SubResource("p8_priest_08"), SubResource("p8_priest_09"), SubResource("p8_priest_10"), SubResource("p8_priest_11"), SubResource("p8_priest_12"), SubResource("p8_priest_13"), SubResource("p8_priest_14"), SubResource("p8_priest_15"), SubResource("p8_priest_16"), SubResource("p8_priest_17"), SubResource("p8_priest_18"), SubResource("p8_priest_19"), SubResource("p8_priest_20"), SubResource("p8_priest_21"), SubResource("p8_priest_22"), SubResource("p8_priest_23"), SubResource("p9_priest_01"), SubResource("p9_priest_02"), SubResource("p9_priest_03"), SubResource("p9_priest_04"), SubResource("p9_priest_05"), SubResource("p9_priest_06"), SubResource("p9_priest_07"), SubResource("p9_priest_08"), SubResource("p9_priest_09"), SubResource("p9_priest_10"), SubResource("p9_priest_11")])

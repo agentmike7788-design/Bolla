@@ -373,8 +373,10 @@ func _apply_schedule() -> void:
 	var to_fence := ScheduleBuilder.walk(&"robber_far", PackedStringArray(["robber_fence_out"]), cfg.arrive_minute, &"", world)
 	var over := _climb(&"robber_fence_out", &"robber_fence_in", cfg.arrive_minute + to_fence.travel_minutes)
 	var to_grave := ScheduleBuilder.walk(&"robber_fence_in", route.slice(route.find("robber_fence_in") + 1), over.start_minute + 1, &"", world)
+	# G9 Gehtempo: at the natural pace a grave far from the fence is reached after dig_from – he digs from his arrival.
+	var dig := maxi(cfg.dig_from, to_grave.start_minute + to_grave.travel_minutes)
 	var entries: Array[ScheduleEntry] = [to_fence, over, to_grave,
-		ScheduleBuilder.stay(StringName("gv_" + _target), cfg.dig_from, &"dig_night", &"robber"),
+		ScheduleBuilder.stay(StringName("gv_" + _target), dig, &"dig_night", &"robber"),
 	]
 	npc.call(&"set_runtime_schedule", ScheduleBuilder.build(entries))
 

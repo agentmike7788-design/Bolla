@@ -36,7 +36,8 @@ extends Resource
 ## confidant of H5 gains this; the story dead whose death a night path knows (story → NightPathData id), else the flag
 ## that holds the death day (D2 Gerhard Ott: night_paths.deaths.np_ott / ott_dead).
 @export var quest_id: StringName = &"q_who_knows"
-@export var gone_after_minutes: int = 40
+## G9 Gehtempo: 60 – the cart down the Kutschweg takes 54 minutes, the forest path with Hanne 56 (before 40).
+@export var gone_after_minutes: int = 60
 @export var b_confidant_rel: int = 3
 @export var death_paths: Dictionary[StringName, StringName] = {&"d2_ott": &"np_ott"}
 @export var death_flags: Dictionary[StringName, StringName] = {&"d2_ott": &"ott_dead"}

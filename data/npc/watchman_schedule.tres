@@ -21,7 +21,7 @@ today_flag = &"sieber_watch_day"
 [sub_resource type="Resource" id="p9_watchman_03"]
 script = ExtResource("1")
 start_minute = 360
-travel_minutes = 40
+travel_minutes = 86
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_sieber_watch", "v_sieber_yard", "v_sieber_lane_s", "v_sieber_lane_e", "v_sieber_lane_n", "v_road_in", "v_bridge", "v_well", "v_office_door")
@@ -39,7 +39,7 @@ today_flag = &"sieber_watch_day"
 
 [sub_resource type="Resource" id="p9_watchman_05"]
 script = ExtResource("1")
-start_minute = 400
+start_minute = 446
 activity = &"home"
 path = PackedStringArray("v_office_door")
 visible = false
@@ -48,8 +48,8 @@ today_flag = &"sieber_watch_day"
 
 [sub_resource type="Resource" id="p9_watchman_06"]
 script = ExtResource("1")
-start_minute = 1220
-travel_minutes = 40
+start_minute = 1174
+travel_minutes = 86
 activity = &"walk"
 animation = &"walk"
 path = PackedStringArray("v_office_door", "v_well", "v_bridge", "v_road_in", "v_sieber_lane_n", "v_sieber_lane_e", "v_sieber_lane_s", "v_sieber_yard", "v_sieber_watch")

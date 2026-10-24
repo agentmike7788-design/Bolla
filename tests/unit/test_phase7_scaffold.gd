@@ -509,8 +509,11 @@ func test_villager_and_schedule_fixtures() -> void:
 	var real_graveyard := real.entries.filter(func(e: ScheduleEntry) -> bool: return e.region == &"")
 	assert_eq(carter.entries.size(), real_graveyard.size() + 8, "Osric: the graveyard entries + 8 village entries (QA7: the night walk to the inn)")
 	assert_eq(real.entries.size(), carter.entries.size(), "carter_schedule.tres = the fixture (W-Welt)")
+	# G9 Gehtempo: the times of the walks are the data's now (tools/dialogue/retime_walks.py) – the fixture keeps Phase 7;
+	# the entries themselves (order, places, activities) stay.
 	for i: int in real.entries.size():
-		assert_eq(carter.entries[i].start_minute, real.entries[i].start_minute, "carter entry %d unchanged" % i)
+		assert_eq([carter.entries[i].path, carter.entries[i].activity, carter.entries[i].visible],
+				[real.entries[i].path, real.entries[i].activity, real.entries[i].visible], "carter entry %d unchanged" % i)
 		assert_eq(carter.entries[i].region, real.entries[i].region, "carter entry %d region" % i)
 	for i: int in real_graveyard.size():
 		assert_eq(carter.entries[i].region, &"", "the graveyard entries first")

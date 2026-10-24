@@ -323,7 +323,10 @@ func apply_procession() -> void:
 		# gives it light). A model without the clip falls back to walk / mourn_stand / idle.
 		var stand_anim := _anim_or(npc, StringName(str(fx.get("stand_anim_grave" if not graves.is_empty() else "stand_anim", ""))),
 				&"mourn_stand" if not graves.is_empty() else &"idle")
-		var up := ScheduleBuilder.walk(ROAD_END, route, int(entry.arrive), GRAVEYARD_REGION, world)
+		# G9 Gehtempo: the way up takes its polyline minutes at the natural pace – it starts that much before the place
+		# at the graves (at_grave stays; FestivalRules.procession's arrive was the start for 8 minutes up).
+		var up := ScheduleBuilder.walk(ROAD_END, route, 0, GRAVEYARD_REGION, world)
+		up.start_minute = posmod(mini(int(entry.arrive), int(entry.at_grave) - up.travel_minutes), ScheduleBuilder.MINUTES_PER_DAY)
 		var down := ScheduleBuilder.walk(spot, back, int(entry.leave), GRAVEYARD_REGION, world)
 		var gait := StringName(str(fx.get("walk_anim", "")))
 		if gait != &"":
