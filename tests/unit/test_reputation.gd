@@ -145,8 +145,8 @@ func test_real_config_matches_the_phase4_fixture() -> void:
 	# Phase 7 (P4, §2.11): + organ_taken, organ_taken_grave, lecture_rumor, donation, order_failed.
 	# Phase 8 W0 (§2.11): + visit_*, wish_done, robber_reported, lights_all, lights_some, fenner_watch.
 	# Phase 9 W0 (§2.9): + letter_delivered, large_request_*, sent_away_rumor, kept_promise, public_duty, register_sold_rumor,
-	# case_reported – the Phase-9 fixture.
-	var phase4 := Phase9Fixtures.reputation_config()
+	# case_reported – the Phase-9 fixture. Phase 10 W0 (§2.10): + dues_paid, estimated – the Phase-10 fixture.
+	var phase4 := Phase10Fixtures.reputation_config()
 	for prop: Dictionary in ReputationConfig.new().get_property_list():
 		if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
 			assert_eq(real.get(prop.name), phase4.get(prop.name), String(prop.name))

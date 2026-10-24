@@ -228,7 +228,7 @@ func _check_and_resave(known: PackedStringArray = []) -> void:
 	assert_eq(SaveManager.save_game(RESAVE_SLOT), OK)
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveFileIO.slot_path(TEST_SAVES, RESAVE_SLOT)))
 	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, "next save writes the current format")
-	assert_eq(SaveFileIO.FORMAT_VERSION, 8)  # Phase 9 W0: v8
+	assert_eq(SaveFileIO.FORMAT_VERSION, 9)  # Phase 9 W0: v8, Phase 10 W0: v9
 	var err: Error = await SaveManager.load_game(RESAVE_SLOT)
 	assert_eq(err, OK)
 	TimeManager.running = false

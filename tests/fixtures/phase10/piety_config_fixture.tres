@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="PietyConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/piety/piety_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+min_value = -100
+max_value = 100
+start_value = 0
+tier_thresholds = PackedInt32Array(-59, -19, 20, 60)
+events = Dictionary[StringName, int]({
+&"alms": 1,
+&"bare_burial": -2,
+&"case_bribe": -3,
+&"case_to_ilse": 2,
+&"devotion": 1,
+&"full_prep": 3,
+&"hair_taken": -4,
+&"kept_promise": 3,
+&"kladde_sold": -8,
+&"lecture_attended": -3,
+&"letter_answered": 1,
+&"letter_buried": 1,
+&"letter_burned_asked": 1,
+&"letter_burned_unasked": -1,
+&"letter_read_grave": 1,
+&"letter_read_sealed": -1,
+&"lights_all": 2,
+&"listen": 1,
+&"made_public": -1,
+&"organ_taken": -6,
+&"poor_box_give": 1,
+&"postage_paid": 1,
+&"register_sold": -3,
+&"reinterred": 1,
+&"robber_let_go": 2,
+&"rose_planted": 1,
+&"rotten_burial": -2,
+&"sent_away": 3,
+&"service": 1,
+&"soil_sold": -1,
+&"specimen_returned": 3,
+&"specimen_returned_grave": 5,
+&"stranger_refused": 1,
+&"teeth_taken": -6,
+&"valuables_left": 3,
+&"valuables_taken": -6
+})
+daily_recovery = 1
+gift_by_tier = PackedInt32Array(0, 2, 2, 2, 3)
+buyer_bonus_by_tier = PackedInt32Array(1, 1, 0, 0, 0)
+affinity_threshold = 20
+full_prep_requires_unharvested = true

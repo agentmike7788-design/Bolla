@@ -224,7 +224,8 @@ func test_real_config_matches_the_fixture() -> void:
 	# Phase 7 (P4, §2.11): + organ_taken, lecture_attended, specimen_returned(_grave) – the Phase-7 fixture.
 	# Phase 8 W0 (§2.11): + alms, listen, robber_let_go, lights_all – the Phase-8 fixture.
 	# Phase 9 W0 (§2.9): + 16 letter / ending / Brenneisen events – the Phase-9 fixture.
-	var expected := Phase9Fixtures.piety_config()
+	# Phase 10 W0 (§2.10): + poor_box_give, rose_planted – the Phase-10 fixture.
+	var expected := Phase10Fixtures.piety_config()
 	for prop: Dictionary in PietyConfig.new().get_property_list():
 		if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
 			assert_eq(real.get(prop.name), expected.get(prop.name), String(prop.name))

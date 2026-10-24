@@ -1,0 +1,144 @@
+[gd_resource type="Resource" script_class="CashBookConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/treasury/cash_book_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+keep_days = 62
+check_every_minutes = 60
+sources = Dictionary[StringName, Dictionary]({
+&"burial": {
+"estimate": false,
+"label": "Bestattung",
+"prefixes": PackedStringArray("Bestattung von "),
+"receipt": true
+},
+&"collection": {
+"estimate": true,
+"label": "Sammlung",
+"prefixes": PackedStringArray("Die Universität zahlt für die Aufstellung: "),
+"receipt": false
+},
+&"donation_in": {
+"estimate": false,
+"label": "Spenden",
+"prefixes": PackedStringArray("Spenden aus dem Opferstock"),
+"receipt": false
+},
+&"errand": {
+"estimate": false,
+"label": "Botenlohn",
+"prefixes": PackedStringArray("Botenlohn"),
+"receipt": true
+},
+&"gift": {
+"estimate": false,
+"label": "Geistergaben",
+"prefixes": PackedStringArray("Der Geist deutet "),
+"receipt": false
+},
+&"lecture": {
+"estimate": true,
+"label": "Vorlesung",
+"prefixes": PackedStringArray("Honorar der Vorlesung"),
+"receipt": false
+},
+&"market_sale": {
+"estimate": false,
+"label": "Markt",
+"prefixes": PackedStringArray("Verkauf am Marktstand"),
+"receipt": true
+},
+&"need": {
+"estimate": false,
+"label": "Bedarf der Gemeinde",
+"prefixes": PackedStringArray("Bedarfszulage der Gemeinde", "Notgroschen der Gemeinde"),
+"receipt": false
+},
+&"night": {
+"estimate": true,
+"label": "Ilse",
+"prefixes": PackedStringArray(),
+"receipt": false
+},
+&"order": {
+"estimate": false,
+"label": "Aufträge",
+"prefixes": PackedStringArray("Auftrag: "),
+"receipt": true
+},
+&"other": {
+"estimate": false,
+"label": "Sonstiges",
+"prefixes": PackedStringArray(),
+"receipt": false
+},
+&"parish": {
+"estimate": false,
+"label": "Friedhofsgeld",
+"prefixes": PackedStringArray("Friedhofsgeld", "Pflegegeld der Gemeinde"),
+"receipt": false
+},
+&"reinter": {
+"estimate": false,
+"label": "Umbettung",
+"prefixes": PackedStringArray("Umbettung von "),
+"receipt": true
+},
+&"request": {
+"estimate": false,
+"label": "Bitten",
+"prefixes": PackedStringArray("Bitte: ", "Bitte zur Hälfte: "),
+"receipt": true
+},
+&"service": {
+"estimate": false,
+"label": "Aussegnung",
+"prefixes": PackedStringArray("Die Familie legt "),
+"receipt": true
+},
+&"shop_sale": {
+"estimate": false,
+"label": "Läden",
+"prefixes": PackedStringArray("Verkauf im Dorf", "Verkauf an Hanne"),
+"receipt": true
+},
+&"specimen": {
+"estimate": true,
+"label": "Präparate",
+"prefixes": PackedStringArray("Präparat an Quast: "),
+"receipt": false
+},
+&"stranger": {
+"estimate": true,
+"label": "Der Herr mit dem Koffer",
+"prefixes": PackedStringArray("Verkauf an den Herrn mit dem Koffer", "Auskunft für den Herrn mit dem Koffer", "Der Herr mit dem Koffer"),
+"receipt": false
+},
+&"tip": {
+"estimate": false,
+"label": "Trinkgeld",
+"prefixes": PackedStringArray("Trinkgeld"),
+"receipt": false
+}
+})
+purpose_labels = Dictionary[StringName, String]({
+&"alms": "Almosen",
+&"apprentice": "Jakob",
+&"build": "Bau",
+&"building": "Gebäude",
+&"consecration": "Weihe",
+&"donation": "Spenden",
+&"ilse": "Ilse",
+&"license": "Brief",
+&"market": "Markt",
+&"osric": "Osric",
+&"peddler": "Hanne",
+&"post": "Post",
+&"rent": "Pacht",
+&"round": "Runden",
+&"stall": "Standgeld",
+&"tax": "Abgaben",
+&"village": "Dorf"
+})
+untracked_label = "ohne Beleg"

@@ -1,0 +1,59 @@
+[gd_resource type="Resource" script_class="MarketStallData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/market/market_offer_data.gd" id="1_pwu14"]
+[ext_resource type="Script" path="res://src/systems/market/market_stall_data.gd" id="2_diqav"]
+
+[sub_resource type="Resource" id="Resource_tbhsy"]
+script = ExtResource("1_pwu14")
+item = &"beeswax"
+stock = 8
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_ndfus"]
+script = ExtResource("1_pwu14")
+item = &"honey_cake"
+price = 2
+stock = 4
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_u6pvn"]
+script = ExtResource("1_pwu14")
+item = &"seeds"
+stock = 6
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_qm4l1"]
+script = ExtResource("1_pwu14")
+item = &"flower_seedlings"
+price = 2
+stock = 4
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_6eu3n"]
+script = ExtResource("1_pwu14")
+item = &"juniper"
+price = 2
+stock = 4
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_2gs56"]
+script = ExtResource("1_pwu14")
+item = &"elder_wine"
+price = 2
+stock = 2
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_sy23c"]
+script = ExtResource("1_pwu14")
+item = &"grave_candle"
+stock = 6
+conditions = PackedStringArray()
+
+[resource]
+script = ExtResource("2_diqav")
+id = &"ms_kehr"
+npc_id = &"kin_kehr"
+place = &"ms_kehr"
+title = "Hof Kehr – Wachs, Honig, Saat"
+offers = Array[ExtResource("1_pwu14")]([SubResource("Resource_tbhsy"), SubResource("Resource_ndfus"), SubResource("Resource_u6pvn"), SubResource("Resource_qm4l1"), SubResource("Resource_6eu3n"), SubResource("Resource_2gs56"), SubResource("Resource_sy23c")])
+buys_groups = Array[StringName]([&"herbs"])

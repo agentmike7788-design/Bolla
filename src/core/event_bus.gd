@@ -183,6 +183,20 @@ signal stranger_event(kind: StringName, detail: String)
 signal hill_request_part(request_id: StringName, part: int, done: bool)
 signal craft_finished(station_id: StringName, recipe_id: StringName, amount: int)
 
+# --- Phase 10 (docs/PHASE10_DESIGN.md §3.3) --------------------------------------------------------
+## Parish treasury (Treasury): the cemetery inspection evaluated / the cemetery money paid out
+signal parish_schau(week: int, tier: StringName, care: float, coins: int)
+## parts: {quality, need, hardship}
+signal parish_paid(week: int, coins: int, parts: Dictionary)
+## Monthly settlement; state: &"due" | &"paid" | &"deferred" | &"waived"
+signal settlement_changed(month_key: String, state: StringName, amount: int)
+## Poor box at the gate: the coins inside after the change
+signal poor_box_changed(coins: int)
+## Cash book: one booking (amount > 0 income, < 0 spending)
+signal cash_booked(day: int, source: StringName, amount: int)
+## Weekly market; kind: &"notice" | &"opened" | &"closed" | &"stall_set" | &"sold" | &"bought" | &"stall_cleared"
+signal market_changed(day: int, kind: StringName, detail: Dictionary)
+
 # UI
 signal ui_panel_requested(panel: StringName, context: Dictionary)
 signal ui_modal_changed(open: bool)

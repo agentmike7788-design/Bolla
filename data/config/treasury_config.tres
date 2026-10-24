@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="TreasuryConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/treasury/treasury_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+schau_weekday = 6
+schau_minute = 1080
+pay_weekday = 0
+pay_minute = 460
+pay_fallback_chest = &"hut_chest"
+tier_pay = Dictionary[StringName, int]({
+&"dignified": 10,
+&"neglected": 0,
+&"orderly": 4,
+&"tended": 7,
+&"venerable": 12
+})
+care_steps = PackedFloat32Array(0.5, 0.75, 0.95)
+disturbed_malus = 1
+quality_cap = 15
+need_threshold = 60
+need_divisor = 4
+need_cap = 15
+hardship_floor = 10
+hardship_cap = 8
+settle_minute = 360
+due_days = 6
+waive_after_months = 1
+rent = 8
+rent_flag = &"bruch_license"
+tithe_percent = 10
+tithe_cap = 25
+levy_flag = &"village_open"
+estimate_percent = 10
+estimate_min_untracked = 20
+estimate_cap = 15
+poor_box_max = 30
+poor_box_give = 1
+open_flag = &"p10_open"
+open_day_flag = &"p10_open_day"
+unlock_flag = &"who_knows_when_complete"
+chapter_id = &"debit_credit"
+goal_flag = &"debit_credit_complete"
+goal_market_days = 2
+goal_min_tier = &"dignified"
+prepaid_rent_months = 2

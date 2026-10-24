@@ -379,7 +379,7 @@ func test_appended_enum_values() -> void:
 
 func test_save_format_v2_and_migration_chain() -> void:
 	# Phase 4 W0: format v3, Phase 5 W0: format v4 (docs/PHASE5_DESIGN.md §5) – the chain 1 → 2 → … stays.
-	assert_eq(SaveMigration.CURRENT, 8)  # Phase 6: v5, Phase 7: v6, Phase 8: v7, Phase 9: v8
+	assert_eq(SaveMigration.CURRENT, 9)  # Phase 6: v5, Phase 7: v6, Phase 8: v7, Phase 9: v8, Phase 10 W0: v9
 	assert_eq(SaveFileIO.FORMAT_VERSION, SaveMigration.CURRENT)
 	assert_eq(SaveManager.FORMAT_VERSION, SaveMigration.CURRENT)
 	var state := {"autoloads": {"TimeManager": {}, "GameState": {}}, "nodes": {}}

@@ -14,6 +14,8 @@ extends Node
 ## friendship, alms, chatter, festivals, the night and the ledger stats coins_spent_apprentice/_alms/_peddler.
 ## Phase 9 (docs/PHASE9_DESIGN.md §2.9, §5.1): + the 18 stats of the chains, letters, errands, the larger requests,
 ## Brenneisen and the ledger stat coins_spent_post (coin purpose &"post", the postage).
+## Phase 10 (docs/PHASE10_DESIGN.md §2.10, §5.1): + the 23 stats of the parish treasury, the settlements, the poor box,
+## the market, the rose bushes and the ledger stats coins_spent_market/_rent/_tax/_stall.
 const DEFAULT_STATS: Array[StringName] = [&"burials", &"valuables_taken", &"reputation", &"missed_deliveries", &"days_played",
 		&"piety", &"utilized", &"prepared", &"trader_sales",
 		&"crafted", &"stones_set", &"coins_spent", &"trees_felled",
@@ -32,14 +34,20 @@ const DEFAULT_STATS: Array[StringName] = [&"burials", &"valuables_taken", &"repu
 		&"quest_steps", &"quest_choices", &"letters_found", &"letters_decided", &"letters_delivered", &"letters_read",
 		&"letters_burned", &"letters_buried", &"letters_answered", &"post_received", &"errands_done", &"large_requests_done",
 		&"large_requests_half", &"large_requests_failed", &"large_request_parts", &"stranger_talks", &"stranger_coins",
-		&"coins_spent_post"]
+		&"coins_spent_post",
+		&"parish_weeks", &"parish_paid", &"need_paid", &"hardship_paid", &"settlements", &"dues_paid", &"dues_deferred",
+		&"dues_waived", &"rent_paid", &"tithe_paid", &"estimate_paid", &"donations_received", &"poor_box_emptied",
+		&"market_days", &"market_stall_days", &"market_items_sold", &"market_coins", &"market_items_bought",
+		&"roses_planted", &"coins_spent_market", &"coins_spent_rent", &"coins_spent_tax", &"coins_spent_stall"]
 ## Phase 5 §3.3: the reasons of EventBus.coins_spent (license, stations, Osric's goods, Ilse's shop);
 ## Phase 6 §2.7: + building (the building levels; altar candles run under osric).
 ## Phase 7 §2.11: + village (the village shops), donation (poor box, donation orders), round (the inn),
 ## consecration (the Lindenacker); the pult runs under build.
 ## Phase 8 §2.11: + apprentice (Jakob's wage), alms (Veit), peddler (Hanne's basket).
+## Phase 9 §2.9: + post (the postage). Phase 10 §2.10: + market (buying at a market stand), rent (the rent),
+## tax (tithe and estimate), stall (the stall fee).
 const COIN_REASONS: Array[StringName] = [&"license", &"build", &"osric", &"ilse", &"building", &"village", &"donation",
-		&"round", &"consecration", &"apprentice", &"alms", &"peddler", &"post"]
+		&"round", &"consecration", &"apprentice", &"alms", &"peddler", &"post", &"market", &"rent", &"tax", &"stall"]
 const STAT_COINS_SPENT := &"coins_spent"
 const COINS_SPENT_PREFIX := "coins_spent_"
 

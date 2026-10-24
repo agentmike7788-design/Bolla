@@ -57,6 +57,10 @@ extends Resource
 @export var tip_goodwill_min: int = 6
 @export var tip_quality_min: int = 15
 @export var tip_cap_day: int = 4
+## Phase 10 §2.5.8 (P2): every pleased visit drops poor_box_coin into the poor box at the gate (Treasury
+## .drop_in_poor_box), at most poor_box_cap_day a day.
+@export var poor_box_coin: int = 1
+@export var poor_box_cap_day: int = 2
 ## G8 Runde 1 (B8-3, user decision): once a specimen was sold (GameState stat rumor_stat) the talk goes round the
 ## whole village – every tip is rumor_tip_malus smaller (a tip of 1 becomes thanks only).
 @export var rumor_tip_malus: int = 1

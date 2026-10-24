@@ -711,9 +711,9 @@ func test_database_phase8_folders() -> void:
 
 
 func test_save_format_v7_and_migration_chain() -> void:
-	assert_eq(SaveMigration.CURRENT, 8)  # Phase 9 W0: v8
-	assert_eq(SaveFileIO.FORMAT_VERSION, 8)
-	assert_eq(SaveManager.FORMAT_VERSION, 8)
+	assert_eq(SaveMigration.CURRENT, 9)  # Phase 9 W0: v8, Phase 10 W0: v9
+	assert_eq(SaveFileIO.FORMAT_VERSION, 9)
+	assert_eq(SaveManager.FORMAT_VERSION, 9)
 	assert_eq(SaveMigration.V7_EMPTY_NODES, PackedStringArray(["npc_life", "visitors", "grave_care", "apprentice", "friendship",
 			"festivals", "wanderers", "night_robber", "night_paths", "apprentice_box"]), "§3.4 / §5.2 step 3")
 	var state := {"autoloads": {"TimeManager": {"day": 5}, "GameState": {"stats": {}, "flags": {}}}, "nodes": {"corpse_manager": {}}}
