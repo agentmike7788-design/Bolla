@@ -49,6 +49,18 @@ func test_a9_6_large_sheet_word_on_the_sheet() -> void:
 	nb.queue_free()
 
 
+## A9-8: in the Compatibility renderer the decay overlay's blend_mul pass came out black under the graveyard's
+## post-process environment (glow / adjustments) – there it is a lit blend_mix pass now; Forward+ keeps the multiply.
+## (Seen in the real renderer: docs/reviews/phase9_round1/qafix/, a9_8_*.)
+func test_a9_8_decay_overlay_has_a_compatibility_pass_without_multiply() -> void:
+	var code := (load("res://assets/shaders/decay_overlay.gdshader") as Shader).code
+	var compat := code.get_slice("#if CURRENT_RENDERER == RENDERER_COMPATIBILITY", 1).get_slice("#else", 0)
+	assert_true(compat.contains("render_mode blend_mix"), "Compatibility: blend_mix")
+	assert_false(compat.contains("blend_mul"), "no multiply in the Compatibility pass")
+	assert_true(code.contains("render_mode blend_mul, unshaded"), "Forward+ keeps the multiply")
+	assert_true(code.get_slice("void fragment()", 1).contains("ALPHA = m;"), "the stain's share as alpha")
+
+
 ## QA9-09: Phase8Bot made ink with _craft5(&"workbench") – there is no Entities/station_workbench (engine error as soon
 ## as an extract was wanted without ink); it crafts at the hill's workbench now (Phase 3's _craft).
 func test_qa9_09_phase8_bot_has_no_station_workbench_call() -> void:

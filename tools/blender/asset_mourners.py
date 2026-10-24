@@ -530,7 +530,9 @@ MEN = {
         seed=8401, kind="coat", hip=0.86, waist=0.94, tall=0.95, bent=1.0, skin=SKIN_OLD,
         hair=L.hexc("#CFC9BE"), hair_dark=L.hexc("#9A948A"),
         coat=L.hexc("#4A443E"), coat_dark=L.hexc("#332F2B"), trouser=L.hexc("#3A3632"), neck=L.hexc("#6A6458"),
-        hat=L.hexc("#3A342E"), hat_dark=L.hexc("#26221E"), brim=0.085, crown_h=0.085, slouch=0.05, bouquet=None,
+        # A9-5: the slouch hat narrower and drooping less (brim 0.085 → 0.07, slouch 0.05 → 0.02) – its shadow lay
+        # over the face.
+        hat=L.hexc("#3A342E"), hat_dark=L.hexc("#26221E"), brim=0.07, crown_h=0.085, slouch=0.02, bouquet=None,
         stick=True, beard=L.hexc("#6A665F"),   # W3 (G8): grey on the pale skin, else unseen
         # Phase 9 W3 QA-Fix (A9-5, qa_g9.md: „von nah fleckig, wirkt schmutzig"): the stubble lighter and even (no
         # speckle on the coarse vertex colours), less of it on the lip; the cheeks less hollow (age 0.75 → 0.55 – the

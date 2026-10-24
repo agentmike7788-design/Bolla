@@ -1113,6 +1113,15 @@ Alle W1-Pakete sind gemergt (P1+P4, P7, P3+P5, P2, P6; volle Suite auf dem gemer
 7. **UI (§7.6):** Karten-Legende ab `p9_open` mit Brenneisen, großem Bogen, Lesezeichen (Krankenlicht-Zeile nennt das Licht bei den Siebers); Gräber/Leute auf der Karte größer (`grave_radius` 5, `person_radius` 8); Grabregister „Licht: …“ in eigener Zeile der Spalte „Angehörige“; Brenneisen-Panel kompakt (700 px, alle vier Angebote bei 1280 × 720 ohne Rollen sichtbar).
 8. **Johann auf dem Karren (§4.5):** mittig auf der Stirnwand gegenüber von Osric (Oberkante 0,83 m), Rücken zur Ladefläche, die Beine über der Kante, Blick den Weg hinab – vorher saß er an der rechten hinteren Ecke 0,6 m außerhalb in der Luft.
 
+## W3 QA-Fix (Lead, Befunde aus `docs/reviews/phase9_wip/qa_g9.md`; Notiz und Bilder `docs/reviews/phase9_round1/qafix/qafix.md`)
+Anpassung an W3-Restbedarf 1 („ein Tastendruck“): Wo ein Ort mehr als eine Sache anbietet und ein falscher Druck nicht zurückzunehmen wäre oder etwas verdeckt, öffnet [E] eine kurze Auswahl `&"action_choice"` (`ActionChoicePanel`: Knöpfe in Reihenfolge, die Hauptaktion hat den Fokus, „Abbrechen“; die Wahl ruft `target.request_action(id)`).
+1. **Esse (QA9-01):** [E] bleibt die Esse; `ForgeLetter` hat keinen eigenen Prompt mehr. Im Werkbank-Panel der Esse steht „Brief verbrennen …“ (nur mit einem Brief, der dort brennen darf) → Auswahl je Brief.
+2. **Ofen (QA9-03):** ohne Brief „[E] Am Ofen wärmen“ wie bisher; mit Brief „[E] Am Ofen: wärmen oder einen Brief verbrennen“ → Auswahl „Am Ofen wärmen“ zuerst, dann je Brief „Verbrennen: <Aufschrift> (2 Min)“. Es brennt nur der gewählte (`LetterBurning`).
+3. **Offenes Grab (QA9-02):** mit dem Brief des getragenen Toten „[E] Bestatten (n Min) …“ → „Bestatten“ (Fokus) oder „Den Brief mit ins Grab legen und bestatten“ (eine Arbeit, Bestatten + 2 Min).
+4. **Gräber (QA9-04):** Konkurriert eine Phase-9-Arbeit (Datum, Brief vorlesen / aufs Grab legen, Erde) mit einer anderen Aktion, zeigt der Prompt „[E] Am Grab: …“ und die Auswahl listet alle (Münzen/Schließen, Phase 9, dann die Pflege). Ohne Phase-9-Arbeit bleibt das Grab beim einen Tastendruck (Phase 8 bitgleich).
+5. **Osric (QA9-05, QA9-T1):** `hill_ready` zählt nur kleine Bitten (`HillRequests.small_ready_for`), die große hat ihre Zeile „für die große Bitte“; Osrics kühles Menü (`menu_cold`, hartherzig) hat dieselben Phase-8/9-Zeilen wie das warme (Post, Botengang, große Bitte, Liste).
+6. **Botenbrief (QA9-08):** nach versäumtem Auftrag nicht mehr aufzugeben oder zu übergeben („Dafür ist es zu spät …“).
+
 ### G9 – Benutzerentscheidungen (bindend, 18.10.2026: „ok“)
 1. **Gehtempo:** Alle Zeitplan-Wege der Dorfbewohner bekommen ein natürliches Gehtempo (Abfahrt früher statt Hetzen; Ankunftszeiten der Systeme bleiben).
 2. **Quasts Tropfen (Ende B):** Auslegung bestätigt – Quast verkauft `fever_tincture` nicht, er kauft an diesem Tag eine mehr an.
