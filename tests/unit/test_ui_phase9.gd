@@ -166,6 +166,28 @@ func test_plans_shown_from_the_first_large_request() -> void:
 	assert_false(&"letters" in panel.pages(), "„Briefe“ only from p9_open")
 
 
+## W3 QA-Fix A9-7: with all eleven tabs the head row is wider than two pages of page_width – the pages share the book's
+## whole width (before ≈ 110 px stayed empty right of the right page), at 1280 × 720 and 1920 × 1080.
+func test_qafix_a9_7_pages_fill_the_book_with_eleven_tabs() -> void:
+	await _setup()
+	for size: Vector2i in [Vector2i(1280, 720), Vector2i(1920, 1080)]:
+		tree.root.size = size
+		ui.open_panel(&"journal", {"page": &"people"})
+		var panel := ui.get_panel(&"journal") as JournalPanel
+		for page: StringName in panel.all_pages():
+			panel.tab_buttons[page].get_parent().visible = true
+		panel.reset_size()
+		await wait_frames(3)
+		var left := (panel.left_page.get_parent() as Control).get_global_rect()
+		var right := (panel.right_page.get_parent() as Control).get_global_rect()
+		var close_x: Control = panel.tab_buttons[panel.all_pages().back()].get_parent().get_parent().get_child(-1)
+		var head_end := close_x.get_global_rect().end.x
+		assert_true(absf(right.end.x - head_end) <= 4.0, "%s: the right page reaches the head row's end (%.0f / %.0f)"
+				% [size, right.end.x, head_end])
+		assert_true(absf(left.size.x - right.size.x) <= 2.0, "%s: both pages alike (%.0f / %.0f)" % [size, left.size.x, right.size.x])
+		ui.close_all()
+
+
 func test_plans_ending_and_choice_sentences() -> void:
 	await _setup()
 	var q := _keep(Phase9Fixtures.ending(&"stay", tree)) as Quests

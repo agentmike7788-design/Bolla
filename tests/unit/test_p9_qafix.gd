@@ -29,6 +29,26 @@ func test_qa9_t1_osrics_cold_menu_keeps_the_phase8_9_lines() -> void:
 	assert_eq(cold.choices.back().text, "Das war alles. Mach's gut, Osric.", "the goodbye stays last")
 
 
+## A9-6: the word „Große Bitte" on the large sheet at the gate board stays on the sheet – two lines, narrower than the
+## sheet and below its pin (it hung wider than the sheet over the pin).
+func test_a9_6_large_sheet_word_on_the_sheet() -> void:
+	var nb := NoticeBoard.new()
+	tree.root.add_child(nb)
+	nb._make_sheet()
+	await wait_frames(2)
+	var word := nb.sheet.get_node("Word") as Label3D
+	assert_eq(word.text, "Große\nBitte", "two lines")
+	var box := word.get_aabb()
+	assert_true(box.size.x > 0.02, "shaped (%s)" % box)
+	assert_true(box.size.x <= NoticeBoard.SHEET_SIZE.x - 0.02, "narrower than the sheet (%.3f / %.3f m)" % [box.size.x, NoticeBoard.SHEET_SIZE.x])
+	var pin := nb.sheet.get_node("Pin") as Node3D
+	var top := word.position.y + box.end.y
+	var pin_bottom := pin.position.y - NoticeBoard.PIN_SIZE.y * 0.5
+	assert_true(top <= pin_bottom, "below the pin (%.3f / %.3f)" % [top, pin_bottom])
+	assert_true(word.position.y + box.position.y >= -NoticeBoard.SHEET_SIZE.y * 0.5, "on the sheet")
+	nb.queue_free()
+
+
 ## QA9-09: Phase8Bot made ink with _craft5(&"workbench") – there is no Entities/station_workbench (engine error as soon
 ## as an extract was wanted without ink); it crafts at the hill's workbench now (Phase 3's _craft).
 func test_qa9_09_phase8_bot_has_no_station_workbench_call() -> void:

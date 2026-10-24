@@ -504,6 +504,11 @@ func test_phase9_inn_stranger_table_and_cellar() -> void:
 		return
 	assert_true(place.global_position.distance_to(seat.global_position) < 0.05, "on the seat marker (%s / %s)" % [place.global_position, seat.global_position])
 	assert_true(place.global_basis.z.z > 0.95, "facing the room (south)")
+	# W3 QA-Fix A9-2: Lenz's / Osric's standing place at the corner table is clear of his seat (it stood 0.25 m behind it).
+	for other: String in ["v_in_inn_corner", "v_in_inn_table", "v_in_inn_bar"]:
+		var wp := inn.get_node("Waypoints/" + other) as Node3D
+		var d := Vector2(wp.global_position.x - place.global_position.x, wp.global_position.z - place.global_position.z).length()
+		assert_true(d >= 0.9, "%s clear of Brenneisen's seat (%.2f m)" % [other, d])
 	assert_true(Database.schedule(&"stranger").entries.any(func(e: ScheduleEntry) -> bool: return e.path.has("v_in_inn_stranger") and e.animation == &"sit_inn"),
 			"Brenneisen sits there by his plan")
 	var things := inn.get_node_or_null("Furniture/StrangerTable") as StrangerTable

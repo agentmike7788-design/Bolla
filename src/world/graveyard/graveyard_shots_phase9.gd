@@ -67,7 +67,7 @@ const G9_SHOTS: Array[Dictionary] = [
 	{"name": "p9_11_watchman_sick_light", "region": "village", "day": "light19", "minute": 1380, "player": Vector2(-32.1, 17.8),
 			"facing": 200.0, "game": 20.0, "flags": ["sieber_watch_day"]},
 	{"name": "p9_19_brenneisen_inn_corner", "region": "village", "day": "visit1", "minute": 1150, "room": "inn",
-			"player": Vector2(1.9, 1.5), "flags": ["stranger_day"]},
+			"player": Vector2(1.0, 1.9), "flags": ["stranger_day"]},
 	{"name": "p9_23_village_board_fenner", "region": "village", "day": 64, "minute": 700, "player": Vector2(-6.4, 7.1), "facing": 200.0,
 			"game": 12.0, "stage": "large_village"},
 	{"name": "perf_p9_02_village_brenneisen_johann", "region": "village", "day": "visit1", "minute": 720, "player": Vector2(0.6, -0.4),
