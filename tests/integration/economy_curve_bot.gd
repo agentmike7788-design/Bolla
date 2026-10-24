@@ -8,7 +8,10 @@ extends RefCounted
 ## Hand-overs (W0, fixed): Phase6Bot founder (the bot of slot_p6_day37_founder: Phase 3–6 from a new game) until
 ## roof_and_earth_complete → FounderBot7 founder7 (as make_v6_saves_driver.gd) until name_in_village_complete →
 ## Phase8Bot founder8 until who_comes_up_complete → Phase9Bot founder9 until `last_day` (founder10 joins in W3). Each
-## switch happens on the morning after the chapter (the next bot binds to the same world, nothing is reloaded).
+## switch happens on the morning after the chapter exactly as the fixture line did it (make_v5…v8_saves_driver.gd): out
+## of the hut, 07:00, saved and loaded again (slot HANDOVER_SLOT in SaveManager.save_dir), then the next bot binds.
+## Without the reload founder8 never takes a friendship step in the same session (W0 measurement: steps 0 from day 39 to
+## 84, every step takeable) – a finding for W1/W3, see the W0 notes.
 ##
 ## Measured every morning (before the bot's day): the holdings (Reputation.holdings: purse + chests + Jakob's wage tin)
 ## and stats.coins_spent; income of a day = Δ holdings + Δ spending. Income by source through EventBus.payment_received
@@ -23,6 +26,7 @@ const CHECKPOINTS: PackedInt32Array = [14, 30, 45, 60, 75, 91]
 const STAGES := [[&"founder", &"roof_and_earth_complete"], [&"founder7", &"name_in_village_complete"],
 		[&"founder8", &"who_comes_up_complete"], [&"founder9", &""]]
 const MAX_STAGE_DAYS := 45
+const HANDOVER_SLOT := 89
 
 
 ## Phase7Bot with founder7 (make_v6_saves_driver.gd: crafter + Phase 7, keep_p5, optional crypt / chapel).
@@ -44,6 +48,10 @@ var spent_by_day: Dictionary = {}
 ## stage → first morning
 var stage_days: Dictionary = {}
 var problems: PackedStringArray = []
+## stage → {end_day, flags, goal} at the end of the stage (diagnosis of the hand-overs).
+var stage_info: Dictionary = {}
+## The fixture line's hand-over (07:00, save, load); false = the next bot binds to the running world.
+var reload_at_handover: bool = true
 var _sources: CashBookConfig
 var _ledger_before: Dictionary = {}
 
@@ -77,11 +85,45 @@ func run() -> void:
 			if stop != &"" and GameState.has_flag(stop):
 				break
 		bot.unwatch()
+		stage_info[stage[0]] = _info()
 		for p: String in bot.problems:
 			problems.append("%s: %s" % [stage[0], p])
+		if reload_at_handover and stop != &"" and TimeManager.day <= last_day:
+			await _handover(bot)
 	_record(null, "end")
 	EventBus.payment_received.disconnect(_on_payment)
 	EventBus.trader_trade.disconnect(_on_trader)
+
+
+func _handover(bot: Phase3Bot) -> void:
+	var b6 := bot as Phase6Bot
+	if b6 != null:
+		b6._to_room(&"")
+	bot._leave_hut()
+	bot._wait_until(7 * 60)
+	UIState.clear()
+	if SaveManager.save_game(HANDOVER_SLOT) != OK:
+		problems.append("handover day %d: save failed" % TimeManager.day)
+		return
+	if await SaveManager.load_game(HANDOVER_SLOT) != OK:
+		problems.append("handover day %d: load failed" % TimeManager.day)
+
+
+func _info() -> Dictionary:
+	var flags := {}
+	for f: StringName in [&"workshop_open", &"buildings_open", &"village_open", &"p8_open", &"p9_open", &"roof_and_earth_complete",
+			&"name_in_village_complete", &"who_comes_up_complete", &"who_knows_when_complete"]:
+		flags[f] = GameState.get_flag(f)
+	var life := tree.get_first_node_in_group(&"npc_life")
+	var quests := tree.get_first_node_in_group(&"quests")
+	var friends := {}
+	var fr := tree.get_first_node_in_group(&"friendship")
+	var rels := tree.get_first_node_in_group(&"relationships")
+	for npc: StringName in [&"mayor", &"innkeeper", &"smith", &"priest", &"grocer"]:
+		friends[npc] = [rels.call(&"value", npc) if rels != null else -1, fr.call(&"step_block_reason", npc) if fr != null else "?"]
+	return {"end_day": TimeManager.day, "flags": flags, "friends": friends,
+			"goal8": life.call(&"goal_progress") if life != null and life.has_method(&"goal_progress") else {},
+			"goal9": quests.call(&"goal_progress") if quests != null and quests.has_method(&"goal_progress") else {}}
 
 
 func _make(strategy: StringName) -> Phase3Bot:
@@ -217,6 +259,9 @@ func report(head: String) -> String:
 	lines.append("Polster je Morgen: " + ", ".join(rows.map(func(r: Dictionary) -> String: return "%d:%d" % [r.day, r.holdings])))
 	lines.append("")
 	lines.append("Bot-Probleme: " + ("keine" if problems.is_empty() else "; ".join(problems)))
+	lines.append("")
+	for k: Variant in stage_info:
+		lines.append("Stufe %s: %s" % [k, str(stage_info[k])])
 	return "\n".join(lines) + "\n"
 
 

@@ -21,7 +21,8 @@ func _run() -> void:
 		printerr("usage: -- --out=/abs/file.md [--days=91]")
 		quit(2)
 		return
-	SaveManager.save_dir = out.get_base_dir().path_join("ist_kurve_saves")
+	# Autoloads are no identifiers while a -s script compiles (make_v8_saves.gd uses a driver for that).
+	root.get_node(^"SaveManager").set(&"save_dir", out.get_base_dir().path_join("ist_kurve_saves"))
 	var script := load("res://tests/integration/economy_curve_bot.gd") as GDScript
 	var bot: RefCounted = script.new(self, days)
 	await bot.call("run")
