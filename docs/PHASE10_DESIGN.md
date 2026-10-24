@@ -1,4 +1,4 @@
-# Phase 10 – Wirtschaft – Vertrag v0 (Entwurf)
+# Phase 10 – Wirtschaft – Vertrag v1
 
 Status: **v1 – verbindlich für die Umsetzung (§14 vom Benutzer am 24.10.2026 entschieden)** · Verantwortlich: Agent 01 (Lead), Agent 02 (Game Design), Agent 03 (World Design), Agent 06 (Character Art), Agent 07 (Animation), Agent 08 (Godot Core), Agent 12 (NPC/AI), Agent 13 (Quest/Story), **Agent 14 (Crafting/Economy, federführend für die Balance)**, Agent 17 (Audio), Agent 18 (UI/UX), Agent 19 (QA)
 Baut auf `docs/PHASE9_DESIGN.md` (Vertrag v1, freigegeben 24.10.2026 inkl. W3-Restbedarf, QA-Fix und G9-Entscheidungen), `docs/PHASE8_DESIGN.md`, `docs/PHASE7_DESIGN.md`, `docs/PHASE6_DESIGN.md`, `docs/PHASE5_DESIGN.md`, `docs/PHASE4_DESIGN.md`, `docs/PHASE3_DESIGN.md` und `docs/VERTICAL_SLICE_DESIGN.md` auf. Was dieses Dokument nicht ändert, gilt dort unverändert weiter. Referenz-Build: **6f0bd9c** (Gate G9 freigegeben, 3 394 Tests, Browser-Testversion v19). Der Lead trägt in den W0-Notizen den Hash ein, auf dem die v8-Fixtures entstehen (§5.3).
