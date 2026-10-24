@@ -1116,6 +1116,10 @@ Alle W1-Pakete sind gemergt (P1+P4, P7, P3+P5, P2, P6; volle Suite auf dem gemer
 ### G9 – Benutzerentscheidungen (bindend, 18.10.2026: „ok“)
 1. **Gehtempo:** Alle Zeitplan-Wege der Dorfbewohner bekommen ein natürliches Gehtempo (Abfahrt früher statt Hetzen; Ankunftszeiten der Systeme bleiben).
 2. **Quasts Tropfen (Ende B):** Auslegung bestätigt – Quast verkauft `fever_tincture` nicht, er kauft an diesem Tag eine mehr an.
+3. **Münzen** (+55 bis +64 im Bogen statt ≤ +50): so lassen; Abstimmung in Phase 10.
+4. **Kapitel** schon bei etwa B7 statt B9–B11: in Ordnung.
+5. **Hauptkette:** Die Frist (Ende „still“) läuft erst, nachdem Lorenz' Kladde gelesen wurde (QA9-07).
+6. **Große Bitten:** Leerlauf 1887 min (Ziel war ≤ 1700) – so lassen.
 
 #### G9 – Gehtempo umgesetzt (`vs/p9-tempo`, Benutzerprüfung offen; Notiz `docs/reviews/phase9_round1/tempo/tempo.md`)
 - **Zieltempo** `NpcConfig.walk_m_per_minute` **0,8 m je Spielminute** (= 1,6 m/s real bei 0,5 s je Spielminute; der Walk-Clip läuft mit `speed_scale` 0,97, er ist für 1,65 m/s gebaut). Phase 8 hatte „1,6 m/s ≙ 3,2 m je Spielminute“ gerechnet – 3,2 m/min sind 6,4 m/s. Karren (Schieben / Mitfahren) `cart_m_per_minute` 0,55 (Clip 1,14 m/s → 0,96). Band `walk_min/max_m_per_minute` 0,5–1,0 (Clip 0,6–1,2 ×), Karren 0,4–0,7; Schritte von 1–2 Minuten dürfen langsamer sein (ganze Minuten), Laufen/Klettern (Räuber) sind keine Gehwege. `WalkTempo` misst, `test_walk_tempo` prüft alle Wege.

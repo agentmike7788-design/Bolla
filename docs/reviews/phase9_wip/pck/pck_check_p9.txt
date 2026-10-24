@@ -1,0 +1,39 @@
+PASS convert_text_resources_to_binary = false in the pck's project settings
+PASS quests in the pck: 3 (q_who_knows, q_letters, q_case)
+PASS quest steps 16, choices 15
+PASS q_who_knows.open_conditions (PackedStringArray) ["flag:p9_open"]
+PASS the light list: 6 entries
+PASS letters: 16
+PASS letters' conditions (PackedStringArray) kept: 3
+PASS Brenneisen's offers: 4
+PASS large requests 12 with 35 parts
+PASS schedule stranger: 14 entries, 14 with a path
+PASS schedule kin_sieber_v: 21 entries, 21 with a path
+PASS schedule watchman: 4 entries, 4 with a path
+PASS night path np_sieber: 3 visits
+PASS dialogue stranger: 25 nodes, 28 Phase-9 actions
+PASS dialogue kin_sieber_v: 19 nodes, 6 Phase-9 actions
+PASS dialogue sieber_door: 7 nodes, 1 Phase-9 actions
+PASS dialogue kin_sieber: 22 nodes, 6 Phase-9 actions
+PASS dialogue v_washer: 60 nodes, 4 Phase-9 actions
+PASS the v7 fixture read from /home/user/Bolla/.claude/worktrees/agent-a1702055ff65b3d77/tests/fixtures/saves_v7/slot_p8_day63_kindly.json
+PASS slot_p8_day63_kindly loads in the pck (OK)
+PASS the four Phase-9 systems in the world
+PASS Phase 9 open on loading (day 63)
+PASS the chain at H4 (h4)
+PASS row 4 open
+PASS the delivery of day 63 waits (corpse_0037)
+PASS its pocket letter lp_l1_carter in the bag
+PASS the letter card opens
+PASS Merkbuch page plans opens
+PASS Merkbuch page list opens
+PASS Merkbuch page letters opens
+PASS Brenneisen at the gate on day 65 14:25
+PASS his figure on stranger_gate (0.00 m)
+PASS the gate bell rang (0 → 1)
+PASS Brenneisen's panel opens
+PASS Johann on his bench on day 66 14:30
+PASS on v_sieber_bench, clip sit_bench
+PASS the sun light
+PASS day / night: the sun 1.55 at noon, 0.45 at 23:30
+0 FAIL
