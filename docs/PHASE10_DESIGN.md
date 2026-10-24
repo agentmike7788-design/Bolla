@@ -1,6 +1,6 @@
 # Phase 10 – Wirtschaft – Vertrag v0 (Entwurf)
 
-Status: **v0 – Entwurf zur Benutzerfreigabe (§14 offen, Entscheidung vor W0)** · Verantwortlich: Agent 01 (Lead), Agent 02 (Game Design), Agent 03 (World Design), Agent 06 (Character Art), Agent 07 (Animation), Agent 08 (Godot Core), Agent 12 (NPC/AI), Agent 13 (Quest/Story), **Agent 14 (Crafting/Economy, federführend für die Balance)**, Agent 17 (Audio), Agent 18 (UI/UX), Agent 19 (QA)
+Status: **v1 – verbindlich für die Umsetzung (§14 vom Benutzer am 24.10.2026 entschieden)** · Verantwortlich: Agent 01 (Lead), Agent 02 (Game Design), Agent 03 (World Design), Agent 06 (Character Art), Agent 07 (Animation), Agent 08 (Godot Core), Agent 12 (NPC/AI), Agent 13 (Quest/Story), **Agent 14 (Crafting/Economy, federführend für die Balance)**, Agent 17 (Audio), Agent 18 (UI/UX), Agent 19 (QA)
 Baut auf `docs/PHASE9_DESIGN.md` (Vertrag v1, freigegeben 24.10.2026 inkl. W3-Restbedarf, QA-Fix und G9-Entscheidungen), `docs/PHASE8_DESIGN.md`, `docs/PHASE7_DESIGN.md`, `docs/PHASE6_DESIGN.md`, `docs/PHASE5_DESIGN.md`, `docs/PHASE4_DESIGN.md`, `docs/PHASE3_DESIGN.md` und `docs/VERTICAL_SLICE_DESIGN.md` auf. Was dieses Dokument nicht ändert, gilt dort unverändert weiter. Referenz-Build: **6f0bd9c** (Gate G9 freigegeben, 3 394 Tests, Browser-Testversion v19). Der Lead trägt in den W0-Notizen den Hash ein, auf dem die v8-Fixtures entstehen (§5.3).
 Gameplay-Werte sind **Vorschläge**; der Benutzer prüft sie beim Gate G10. ART STYLE LOCK „Gemaltes Diorama“ ist aktiv: Phase 10 ändert den Stil nicht. Maler-Shader (`painted.gdshader`, `painted_common.gdshaderinc`, `painted_foliage.gdshader`), Atmosphären-Presets, Flackerlicht, der gemeinsame Gesichtsaufbau (`tools/blender/lib_faces.py`) und das Rig (9 Knochen mit `tool`) bleiben unverändert und werden für die neue Figur **wiederverwendet**. Friedhof, Dorf, alle Gebäude und Innenräume bleiben bitgleich, **außer** den in §4.5 vollständig aufgezählten Eingriffen (Marktplätze auf dem Anger, Opferstock am Friedhofstor, Kassenbuch auf dem Hüttenpult, Marktzettel an der Gemeindetafel, Weg der Marktfahrerin).
 
@@ -969,3 +969,12 @@ P5 besitzt alle Dialoge, Gerede und Kapiteltexte; P2 die Texte der Abrechnung un
    - **Vorschlag: (a)** – das ist „alle Einnahmen und Ausgaben neu abgestimmt“; die ±2 Tage halten die freigegebenen Kapitel stabil.
 
 ---
+
+### §14 Benutzerentscheidungen (bindend, 24.10.2026)
+1. **Rhythmus:** wöchentliches Friedhofsgeld (Schau sonntags, Osric bringt es montags) + monatliche Abrechnung am Monatsersten (a).
+2. **Erste Abrechnung:** am nächsten echten Monatsersten (1. Hartung 1835); Bogen A 17 Tage (a).
+3. **Schutz vor Geldnot:** gleitende Bedarfszulage unter 60 (bis +15/Woche) + Notgroschen (auf 10) + Aufschub/Erlass; keine Klippe bei 80 (a).
+4. **Abgaben:** Pacht 8/Monat (Steinbruchbrief kostenlos), Zehnt 10 % (≤ 25), Schätzung 10 % auf „ohne Beleg“ (≤ 15) (a).
+5. **Markt:** Samstag 08:00–12:30; Agathe Wendel (neu) + Hof Kehr + Hof Brandt + eigener Stand (a).
+6. **Waren:** Holzkreuz, Kräuter/Kräuterbündel, Grabkerze, Wachskranz; Rezepte Kerzen ziehen, Kranz binden; neu kaufbar Rosenstock und Messinglaterne; drei Preisschilder (a).
+7. **Altes Spiel:** Tarif ab Tag 1 in jedem Spiel; alte Bots neue Münz-Bänder, Kapiteltage höchstens ±2; alte Stände behalten ihren Beutel (a).
