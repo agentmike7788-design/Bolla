@@ -328,7 +328,7 @@ func test_tend_spots_and_a_graves_spot() -> void:
 	assert_eq(hill.state(&"hr_kehr_gate"), HillRequests.STATE_ACCEPTED, "one spot still dirty")
 	assert_true(clean.tend("dirt_y02", player.inventory), "weed y02")
 	assert_eq(hill.state(&"hr_kehr_gate"), &"", "both clean → done")
-	assert_eq(_coins(), coins + 2)
+	assert_eq(_coins(), coins + 1, "Tarif Phase 10 (P1, §2.4.1 E8): two weed spots ≈ 30 min → 1 coin")
 	# a grave's own spot (marked_dirty): the dead's name in title and thanks
 	var rec := _complete_grave("plot_02", &"wooden_cross")
 	clean.set_level("dirt_plot_02", 2)
