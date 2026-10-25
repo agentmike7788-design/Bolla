@@ -10,12 +10,15 @@ extends Resource
 ## favor_returned, favor_unreturned, lights_all, jakob_scolded (Rosine), jakob_unpaid (Rosine).
 ## Phase 9 §2.9 (+ 11): witness, confided, letter_delivered, errand_done, named_publicly, large_request_village,
 ## case_reported_fenner, case_reported_quast, register_sold_lenz, register_sold_fenner, seal_broken.
+## Phase 10 §2.10 (+ 3): dues_paid_fenner (on time), market_buy (first purchase of the day at a farm stand: the
+## household's goodwill), market_sale_kin (a household buys at the own stand, at most once a market).
 @export var gains: Dictionary[StringName, int] = {&"talk": 1, &"gift": 4, &"round": 2, &"donation": 1, &"order_failed": -4,
 		&"talk_cheerful": 2, &"listen": 3, &"danced": 3, &"kathrein": 2, &"wish_done_villager": 4, &"friend_step_1": 6,
 		&"friend_step_2": 8, &"friend_step_3": 10, &"favor_returned": 4, &"favor_unreturned": -6, &"lights_all": 2,
 		&"jakob_scolded": -1, &"jakob_unpaid": -2,
 		&"witness": 2, &"confided": 4, &"letter_delivered": 3, &"errand_done": 2, &"named_publicly": -4, &"large_request_village": 3,
-		&"case_reported_fenner": 4, &"case_reported_quast": -6, &"register_sold_lenz": -4, &"register_sold_fenner": -2, &"seal_broken": -3}
+		&"case_reported_fenner": 4, &"case_reported_quast": -6, &"register_sold_lenz": -4, &"register_sold_fenner": -2, &"seal_broken": -3,
+		&"dues_paid_fenner": 2, &"market_buy": 1, &"market_sale_kin": 1}
 ## Start bonus by reputation tier (disreputable … renowned) and – for piety_sensitive villagers –
 ## by piety tier (hardhearted … devout).
 @export var rep_start_bonus: PackedInt32Array = [0, 2, 4, 6, 8]

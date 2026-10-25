@@ -119,6 +119,9 @@ const P9_SHARE := 0.25
 ## Where the real mid-Phase-9 v8 save is written as a fixture candidate (env P9QA_FIXTURE_OUT=<abs dir>; the Lead decides
 ## whether it goes to tests/fixtures).
 const P9_FIXTURE_NAME := "slot_p9_mid_h4.json"
+## Phase 10 W0: share of the mutations per v8 fixture (seven files: the Phase-9 end states, the two new-game states and
+## the real mid-Phase-9 save).
+const V8_FIXTURE_SHARE := 0.08
 const OK_TEXTS: PackedStringArray = [SaveManager.TEXT_CORRUPT, SaveManager.TEXT_NEWER_VERSION]
 
 var saves_dir := TestCase.user_dir("test_saves_fuzz")
@@ -262,7 +265,7 @@ func test_fuzz_v5_save_with_phase6_parts() -> void:
 	var text := await _make_v5_save()
 	var doc: Dictionary = JSON.parse_string(text)
 	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, "current format (v5)")
-	assert_eq(SaveFileIO.FORMAT_VERSION, 8)  # Phase 7 W0: v6, Phase 8 W0: v7, Phase 9 W0: v8
+	assert_eq(SaveFileIO.FORMAT_VERSION, 9)  # Phase 7 W0: v6, Phase 8 W0: v7, Phase 9 W0: v8, Phase 10 W0: v9
 	await _fuzz_text(text, "p6", P6_SHARE)
 	var state := SaveFileIO.decode_state(doc.get("data"))
 	var paths: Array = []
@@ -698,6 +701,10 @@ func _check_consistent(what: String) -> void:
 	for r: CorpseRecord in world.corpse_manager.records():
 		assert_true(r.letter_id is StringName, "%s: %s letter_id a name" % [what, r.id])
 	for key: StringName in SaveMigration.V8_NEW_STATS:
+		assert_true(GameState.stats.get(key) is int, "%s: stat %s is an int" % [what, key])
+	# Phase 10 W0: the Phase-10 stats are integers (W3 adds the checks of §10: one open settlement, poor box 0…30, the
+	# stand only on a market day, integer cash-book sums).
+	for key: StringName in SaveMigration.V9_NEW_STATS:
 		assert_true(GameState.stats.get(key) is int, "%s: stat %s is an int" % [what, key])
 	_check_phase9(world, what)
 	assert_true(TimeManager.running, what + ": the clock runs")
@@ -1418,7 +1425,7 @@ func _make_v8_save() -> String:
 func test_fuzz_v8_phase9_parts() -> void:
 	var text := await _make_v8_save()
 	var doc: Dictionary = JSON.parse_string(text)
-	assert_eq(int(doc.format_version), 8, "saved as v8")
+	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, "saved as the current format (v8; Phase 10 W0: v9)")
 	var state := SaveFileIO.decode_state(doc.get("data"))
 	var known: Array[String] = []
 	for r: Variant in Database.hill_requests():
@@ -1649,7 +1656,7 @@ func _p9_run_to(day: int, minute: int) -> void:
 func test_fuzz_v8_real_mid_phase9_save() -> void:
 	var text := await _make_real_v8_save()
 	var doc: Dictionary = JSON.parse_string(text)
-	assert_eq(int(doc.format_version), 8, "current format (v8)")
+	assert_eq(int(doc.format_version), SaveFileIO.FORMAT_VERSION, "current format (v8; Phase 10 W0: v9)")
 	await _fuzz_text(text, "p9 real", P9_SHARE)
 	var state := SaveFileIO.decode_state(doc.get("data"))
 	var paths: Array = []
@@ -1802,3 +1809,90 @@ func test_fuzz_v8_real_mid_phase9_save() -> void:
 		d.data = JSON.from_native(st)
 		await _load_doc(d, "p9 real targeted: " + what)
 	print("FUZZ v8 (real Phase-9 save): %d loaded, %d rejected" % [stats.ok, stats.rejected])
+
+
+# --- Phase 10 W0: the v8 fixtures and a v9 save with the Phase-10 parts -----------------------------------------------
+
+func test_fuzz_v8_fixtures() -> void:
+	for id: String in Phase10Fixtures.SAVES_V8:
+		var text := FileAccess.get_file_as_string(Phase10Fixtures.save_v8_path(id))
+		assert_ne(text, "", id)
+		assert_eq(int((JSON.parse_string(text) as Dictionary).format_version), 8, id)
+		await _fuzz_text(text, id, V8_FIXTURE_SHARE)
+	print("FUZZ v8 fixtures: %d loaded, %d rejected" % [stats.ok, stats.rejected])
+
+
+## A v9 save of the Phase-9 end state (slot_p9_day75_kindly loaded and saved again).
+func _make_v9_save() -> String:
+	assert_eq(Phase10Fixtures.install_save_v8("slot_p9_day75_kindly", saves_dir, SLOT), OK)
+	assert_eq(await SaveManager.load_game(SLOT), OK)
+	TimeManager.running = false
+	UIState.clear()
+	assert_eq(SaveManager.save_game(SLOT), OK)
+	return FileAccess.get_file_as_string(SaveFileIO.slot_path(saves_dir, SLOT))
+
+
+## Phase 10 W0: a v9 save with targeted mutations of the Phase-10 parts (§5.1 – the node states as the contract shows
+## them, garbage and the inconsistencies of §10.3: an unknown month, two open settlements, a negative poor box, a ware on
+## the stand that does not exist, a cash-book day in the future, book_start after today). Nodes the world does not have
+## yet (W-Welt adds them in W2) are ignored with a warning; the stats / flags load tolerantly.
+func test_fuzz_v9_phase10_parts() -> void:
+	var text := await _make_v9_save()
+	var doc: Dictionary = JSON.parse_string(text)
+	assert_eq(int(doc.format_version), 9, "saved as v9")
+	var state := SaveFileIO.decode_state(doc.get("data"))
+	for case: int in 10:
+		var st := state.duplicate(true)
+		var what := ""
+		match case:
+			0:
+				st.nodes["treasury"] = {"book_start": 75, "schau": {"week": 11, "day": 80, "tier": "venerable", "care": 0.82,
+						"disturbed": 0, "quality": 14, "need": 0, "hardship": 0, "paid": false}, "weeks": [{"week": 10, "paid": 12, "day": 81}],
+						"settlements": {"1834-12": {"day": 91, "rent": 5, "tithe": 8, "estimate": 0, "deferred_in": 0, "total": 13,
+						"state": "due", "paid_day": 0, "via": ""}}, "poor_box": 3, "rent_prepaid_until": "", "goal_done": false}
+				st.nodes["cash_book"] = {"open_day": 75, "last_holdings": 124, "last_check": [75, 1380],
+						"days": {"75": {"in": {"request": 1, "tip": 2}, "out": {"village": 8, "apprentice": 3}, "untracked": 0}},
+						"months": {"1834-12": {"in": {"request": 1}, "out": {"village": 8}, "untracked": 0}}}
+				st.nodes["market"] = {"granted": true, "stall": {"day": 79, "goods": {"grave_candle": 6}, "tags": {"grave_candle": "dear"},
+						"ticks": 2}, "sold": {"79": {"grave_candle": 2}}, "bought": {"79": {"ms_agathe:rose_bush": 1}},
+						"sold_groups_last": {"candles": 2}}
+				what = "the three Phase-10 nodes as §5.1 shows them"
+			1:
+				st.nodes["treasury"] = {"settlements": {"1834-13": {"state": "due"}, "Julmond": 7}, "schau": {"tier": "golden", "week": "x"}}
+				what = "a month unknown, a tier unknown"
+			2:
+				st.nodes["treasury"] = {"settlements": {"1834-11": {"state": "due", "total": 9}, "1834-12": {"state": "deferred", "total": 13}}}
+				what = "two open settlements"
+			3:
+				st.nodes["treasury"] = {"poor_box": -12, "book_start": 900, "goal_done": "yes"}
+				what = "a negative poor box, book_start after today"
+			4:
+				st.nodes["market"] = {"granted": "x", "stall": {"day": 80, "goods": {"moon_cheese": 4, "grave_candle": -2}, "tags": {"moon_cheese": "free"}},
+						"sold": [1, 2]}
+				what = "a ware on the stand that does not exist, a stand on a Sunday"
+			5:
+				st.nodes["cash_book"] = {"open_day": "x", "days": {"999": {"in": {"burial": "many"}}, "x": 4}, "months": {"1834-12": [1]}}
+				what = "a cash-book day in the future, garbage sums"
+			6:
+				for key: StringName in SaveMigration.V9_NEW_STATS:
+					st.autoloads.GameState.stats[key] = "many" if int(String(key).length()) % 2 == 0 else -1.5
+				what = "Phase-10 stats of the wrong type"
+			7:
+				for key: StringName in SaveMigration.V9_NEW_STATS:
+					st.autoloads.GameState.stats.erase(key)
+				what = "Phase-10 stats missing"
+			8:
+				st.autoloads.GameState.flags[&"p10_open"] = "x"
+				st.autoloads.GameState.flags[&"p10_open_day"] = [75]
+				st.autoloads.GameState.flags[&"market_stall_granted"] = {"day": 75}
+				st.autoloads.GameState.flags[&"debit_credit_complete"] = 3.5
+				what = "Phase-10 flags of the wrong type"
+			9:
+				st.nodes["treasury"] = 7
+				st.nodes["cash_book"] = [1, 2]
+				st.nodes["market"] = "open"
+				what = "Phase-10 node states of the wrong type"
+		var d: Dictionary = doc.duplicate(true)
+		d.data = JSON.from_native(st)
+		await _load_doc(d, "p10 targeted: " + what)
+	print("FUZZ v9 (Phase 10 parts): %d loaded, %d rejected" % [stats.ok, stats.rejected])

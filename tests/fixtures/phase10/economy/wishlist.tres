@@ -1,0 +1,76 @@
+[gd_resource type="Resource" script_class="WishlistData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/economy/wishlist_entry_data.gd" id="1_vtyvu"]
+[ext_resource type="Script" path="res://src/systems/economy/wishlist_data.gd" id="2_vl3i3"]
+
+[sub_resource type="Resource" id="Resource_f3rr8"]
+script = ExtResource("1_vtyvu")
+id = &"wl_forge"
+kind = &"station"
+ref = &"forge"
+coins = 25
+available_flag = &"workshop_open"
+
+[sub_resource type="Resource" id="Resource_n8dkw"]
+script = ExtResource("1_vtyvu")
+id = &"wl_loom"
+kind = &"station"
+ref = &"loom"
+coins = 10
+available_flag = &"workshop_open"
+
+[sub_resource type="Resource" id="Resource_nj2qr"]
+script = ExtResource("1_vtyvu")
+id = &"wl_mason"
+kind = &"station"
+ref = &"mason"
+coins = 15
+available_flag = &"workshop_open"
+
+[sub_resource type="Resource" id="Resource_7xd1a"]
+script = ExtResource("1_vtyvu")
+id = &"wl_pult"
+kind = &"station"
+ref = &"pult"
+coins = 12
+available_flag = &"village_open"
+
+[sub_resource type="Resource" id="Resource_12cf7"]
+script = ExtResource("1_vtyvu")
+id = &"wl_gold"
+kind = &"per_grave"
+ref = &"gold_leaf"
+coins = 6
+available_flag = &"workshop_open"
+max_count = 60
+
+[sub_resource type="Resource" id="Resource_ejvqt"]
+script = ExtResource("1_vtyvu")
+id = &"wl_mortsafe"
+kind = &"per_grave"
+ref = &"mortsafe"
+coins = 12
+available_flag = &"p8_open"
+max_count = 60
+
+[sub_resource type="Resource" id="Resource_7xg2i"]
+script = ExtResource("1_vtyvu")
+id = &"wl_rose"
+kind = &"per_grave"
+ref = &"rose_bush"
+coins = 12
+available_flag = &"village_open"
+max_count = 60
+
+[sub_resource type="Resource" id="Resource_esyls"]
+script = ExtResource("1_vtyvu")
+id = &"wl_brass_lantern"
+kind = &"item"
+ref = &"brass_lantern"
+coins = 10
+available_flag = &"village_open"
+max_count = 6
+
+[resource]
+script = ExtResource("2_vl3i3")
+entries = Array[ExtResource("1_vtyvu")]([SubResource("Resource_f3rr8"), SubResource("Resource_n8dkw"), SubResource("Resource_nj2qr"), SubResource("Resource_7xd1a"), SubResource("Resource_12cf7"), SubResource("Resource_ejvqt"), SubResource("Resource_7xg2i"), SubResource("Resource_esyls")])

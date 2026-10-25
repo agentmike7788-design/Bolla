@@ -87,7 +87,8 @@ reactions = Dictionary[StringName, int]({
 &"q_stayed": 3,
 &"q_public": 3,
 &"letter_delivered": 2,
-&"register_sold": 2
+&"register_sold": 2,
+&"market_lage": 1
 })
 goal_levels = 2
 goal_wishes = 5

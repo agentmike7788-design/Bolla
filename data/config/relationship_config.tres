@@ -34,7 +34,10 @@ gains = Dictionary[StringName, int]({
 &"case_reported_quast": -6,
 &"register_sold_lenz": -4,
 &"register_sold_fenner": -2,
-&"seal_broken": -3
+&"seal_broken": -3,
+&"dues_paid_fenner": 2,
+&"market_buy": 1,
+&"market_sale_kin": 1
 })
 rep_start_bonus = PackedInt32Array(0, 2, 4, 6, 8)
 piety_start_bonus = PackedInt32Array(-5, 0, 0, 3, 5)

@@ -28,7 +28,12 @@ const STAT_KEYS: Array[StringName] = [&"burials", &"valuables_taken", &"reputati
 		&"quest_steps", &"quest_choices", &"letters_found", &"letters_decided", &"letters_delivered", &"letters_read",
 		&"letters_burned", &"letters_buried", &"letters_answered", &"post_received", &"errands_done", &"large_requests_done",
 		&"large_requests_half", &"large_requests_failed", &"large_request_parts", &"stranger_talks", &"stranger_coins",
-		&"coins_spent_post"]
+		&"coins_spent_post",
+		# Phase 10 (W0 Lead, §2.10)
+		&"parish_weeks", &"parish_paid", &"need_paid", &"hardship_paid", &"settlements", &"dues_paid", &"dues_deferred",
+		&"dues_waived", &"rent_paid", &"tithe_paid", &"estimate_paid", &"donations_received", &"poor_box_emptied",
+		&"market_days", &"market_stall_days", &"market_items_sold", &"market_coins", &"market_items_bought",
+		&"roses_planted", &"coins_spent_market", &"coins_spent_rent", &"coins_spent_tax", &"coins_spent_stall"]
 
 
 func test_defaults_after_reset() -> void:
@@ -213,7 +218,7 @@ func test_note_coins_spent_counts_and_signals() -> void:
 	EventBus.coins_spent.disconnect(on_spent)
 	assert_eq(spent, [[20, &"license"], [15, &"build"], [14, &"osric"], [6, &"ilse"], [6, &"osric"]], "nothing for <= 0")
 	assert_eq(GameState.get_stat(&"coins_spent"), 61)
-	assert_eq(GameState.coin_ledger(), {&"license": 20, &"build": 15, &"osric": 20, &"ilse": 6, &"building": 0, &"village": 0, &"donation": 0, &"round": 0, &"consecration": 0, &"apprentice": 0, &"alms": 0, &"peddler": 0, &"post": 0} as Dictionary[StringName, int])
+	assert_eq(GameState.coin_ledger(), {&"license": 20, &"build": 15, &"osric": 20, &"ilse": 6, &"building": 0, &"village": 0, &"donation": 0, &"round": 0, &"consecration": 0, &"apprentice": 0, &"alms": 0, &"peddler": 0, &"post": 0, &"market": 0, &"rent": 0, &"tax": 0, &"stall": 0} as Dictionary[StringName, int])
 	assert_eq(GameState.get_stat(GameState.coin_ledger_stat(&"osric")), 20)
 
 
@@ -225,7 +230,7 @@ func test_coin_ledger_survives_save_load() -> void:
 	GameState.load_state(saved)
 	assert_eq([GameState.get_stat(&"coins_spent"), GameState.coin_ledger()[&"osric"]], [12, 12])
 	GameState.load_state({"stats": {"burials": 1}})
-	assert_eq(GameState.coin_ledger(), {&"license": 0, &"build": 0, &"osric": 0, &"ilse": 0, &"building": 0, &"village": 0, &"donation": 0, &"round": 0, &"consecration": 0, &"apprentice": 0, &"alms": 0, &"peddler": 0, &"post": 0} as Dictionary[StringName, int], "old saves: 0")
+	assert_eq(GameState.coin_ledger(), {&"license": 0, &"build": 0, &"osric": 0, &"ilse": 0, &"building": 0, &"village": 0, &"donation": 0, &"round": 0, &"consecration": 0, &"apprentice": 0, &"alms": 0, &"peddler": 0, &"post": 0, &"market": 0, &"rent": 0, &"tax": 0, &"stall": 0} as Dictionary[StringName, int], "old saves: 0")
 	for key: StringName in SaveMigration.V4_NEW_STATS + SaveMigration.V5_NEW_STATS:
 		assert_true(GameState.DEFAULT_STATS.has(key), "migration stat %s is a default stat" % key)
 
@@ -327,6 +332,38 @@ func test_v7_stats_load_without_phase9_keys() -> void:
 		assert_eq(GameState.get_stat(key), 0, "%s defaults to 0" % key)
 		assert_true(GameState.stats.has(key), "%s present after load" % key)
 	assert_eq(GameState.get_stat(&"visits_seen"), 4)
+	var saved := GameState.save_state()
+	GameState.reset()
+	GameState.load_state(saved)
+	assert_eq(GameState.save_state(), saved, "round trip")
+
+
+# --- Phase 10 (W0 Lead; P5 owns): stats §2.10, coin purposes market / rent / tax / stall ----------------------------
+
+func test_phase10_stats_and_coin_reasons() -> void:
+	assert_eq(SaveMigration.V9_NEW_STATS.size(), 23, "§2.10: 23 new stats (incl. the four ledger stats)")
+	for key: StringName in SaveMigration.V9_NEW_STATS:
+		assert_true(key in GameState.DEFAULT_STATS, String(key))
+		assert_eq(GameState.get_stat(key), 0, "%s starts at 0" % key)
+	for reason: StringName in [&"market", &"rent", &"tax", &"stall"]:
+		assert_true(reason in GameState.COIN_REASONS, "§2.10 Münz-Zwecke + %s" % reason)
+		GameState.note_coins_spent(2, reason)
+		assert_eq([GameState.get_stat(GameState.coin_ledger_stat(reason)), GameState.coin_ledger()[reason]], [2, 2], String(reason))
+	assert_eq(GameState.get_stat(&"coins_spent"), 8, "the four purposes in coins_spent")
+	# The Phase-2…9 stats stay first and in order; Phase 10 is appended.
+	var first := GameState.DEFAULT_STATS.find(SaveMigration.V9_NEW_STATS[0])
+	for i: int in SaveMigration.V9_NEW_STATS.size():
+		assert_eq(GameState.DEFAULT_STATS[first + i], SaveMigration.V9_NEW_STATS[i], "appended in order")
+	for key: StringName in SaveMigration.V8_NEW_STATS:
+		assert_true(GameState.DEFAULT_STATS.find(key) < first, "%s before the Phase-10 stats" % key)
+
+
+func test_v8_stats_load_without_phase10_keys() -> void:
+	GameState.load_state({"stats": {"burials": 3, "coins_spent": 5, "letters_found": 4}})
+	for key: StringName in SaveMigration.V9_NEW_STATS:
+		assert_eq(GameState.get_stat(key), 0, "%s defaults to 0" % key)
+		assert_true(GameState.stats.has(key), "%s present after load" % key)
+	assert_eq(GameState.get_stat(&"letters_found"), 4)
 	var saved := GameState.save_state()
 	GameState.reset()
 	GameState.load_state(saved)

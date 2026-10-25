@@ -978,3 +978,167 @@ P5 besitzt alle Dialoge, Gerede und Kapiteltexte; P2 die Texte der Abrechnung un
 5. **Markt:** Samstag 08:00–12:30; Agathe Wendel (neu) + Hof Kehr + Hof Brandt + eigener Stand (a).
 6. **Waren:** Holzkreuz, Kräuter/Kräuterbündel, Grabkerze, Wachskranz; Rezepte Kerzen ziehen, Kranz binden; neu kaufbar Rosenstock und Messinglaterne; drei Preisschilder (a).
 7. **Altes Spiel:** Tarif ab Tag 1 in jedem Spiel; alte Bots neue Münz-Bänder, Kapiteltage höchstens ±2; alte Stände behalten ihren Beutel (a).
+
+---
+
+## W0-Notizen (Lead, Welle 0 – verbindlich für W1)
+1. **v8-Fixtures** `tests/fixtures/saves_v8/*.json`:
+   - **Wann und worauf:** erzeugt **vor** jeder Phase-10-Code-Änderung, auf dem unveränderten Referenzstand. Code = **6f0bd9c** (G9). Branch-Stand f024103 enthält dazu nur den Vertrag.
+   - **Wie:** über `Phase9Bot` / `Phase7Bot` / `Phase5Bot` und die echten Systeme. Werkzeug: `make_v8_saves.gd` + `_driver.gd` (historisch), Aufruf `-- --out=/abs/dir [--only=kindly,trader,stay,founder,village,new]`. Auf einem Phase-10-Stand schriebe es v9.
+   - **Commit:** eigener Commit **07ea6c4**, zusammen mit `tests/fixtures/phase10/{layout_p9,village_layout_p9}.json`. Diese sind bytegleich zu `data/world/{graveyard,village}_layout.json` von f024103 (sha256 `26ad61d7bbbc…` / `191fb90f965e…`).
+   - **Endstände:** Sie setzen die v7-Fixtures mit denselben Bot-Tagen fort wie `test_phase9_playthrough.gd` (12 Tage; `founder9` bis zum Kapitel), danach 07:00 des nächsten Morgens.
+   - **Messwerte** (sha256-Präfix; Münzen = Beutel + Lohndose Jakobs; die Truhen sind in allen Ständen leer):
+   - *day75_kindly* (`kindly9`, 12 Tage ab `slot_p8_day63_kindly`, **07:00 Tag 75 = Di, 16. Julmond 1834**, `75c41101094d`):
+     - Kapitel `who_knows_when` an **Tag 69** (B7), `p9_open_day 63`; Ende A (`q_end_away`, `sieber_gone`), Brenneisen-Ende Fenner
+     - Ruf 100, Pietät 100; **129 Münzen** (120 + 9; §1.4 rechnet mit ≈ 132)
+     - **Abweichung: 40 Gräber `MARKED`, 0 frei – Reihe 4 ist voll.** Johann ist fort, die für D3 gehaltene Stelle hat eine Lieferung bekommen. §1.4 B3 „Lieferung auf die letzte freie Stelle“ gibt es daher nicht; im Bogen A ist kein Grab mehr frei (wie `stay`).
+   - *day75_trader* (`trader9`, 12 Tage ab `slot_p8_day63_anatomist`, `7ad1b6d8b207`):
+     - der v7-Start ist Tag 64, deshalb **07:00 Tag 76** (Mi); Dateiname nach Vertrag beibehalten
+     - Kapitel an Tag 72 (B9), `p9_open_day 64`, Ende A, `anatomy_known`
+     - Ruf 99, Pietät −60; **120 Münzen** (108 + 12); 0 frei
+   - *day75_stay* (`stay9`, 12 Tage ab `slot_p8_day63_kindly`, **07:00 Tag 75**, `032af3756b18`):
+     - Kapitel an Tag 74, Ende B (`q_end_stay`, `sieber_dead 72`), D3 in Reihe 4
+     - **133 Münzen** (124 + 9); 0 frei
+   - *founder* (`founder9` ab `slot_p8_founder` bis zum Kapitel, `d6c8a498a564`):
+     - Kapitel an **Tag 67**, gespeichert **07:00 Tag 68** (Di); `p9_open_day 61`, alle sechs Kapitel
+     - Ende A, **129 Münzen** (120 + 9); 0 frei
+   - *day38_village* (`d2a4cacc32de`):
+     - Aufbau: `slot_p6_day37_founder` (v5, Dorf ab Tag 37) + ein `founder7`-Tag (wie Phase 9 `day30_village_hill`), **07:00 Tag 38** (So)
+     - `village_open_day 37`, kein `p8_open`, kein Kapitel 9; 31 Münzen; Reihe 4 `LOCKED`
+   - *day29_new* (`b80b8bbf26a1`):
+     - Aufbau: neues Spiel, **`Phase5Bot crafter`**, 28 Tage, dann Tag 29 bis zum Schlafengehen; er wartet in der Hütte statt im Bett.
+     - **Abweichungen:**
+       - Uhrzeit **23:05** statt 23:00 – der Abend des Bots läuft bis 23:05.
+       - Bot `crafter` statt der Gründer-Bots: `Phase6Bot founder` erreicht auf dem G9-Code `roof_and_earth` – und damit `village_open` – schon vor Tag 29 (Ist-Kurve: Tag 27). §5.3 will an Tag 30 aber nur die Pacht.
+     - Zustand: `names_in_stone_complete`, `bruch_license`, kein `village_open`, 43 Münzen.
+   - *mid_h4* (vorhanden, W3 Phase 9, `a16bea540edf`): Tag 66 14:30, Phase 9 offen, H4.
+   - **Bitgleichheit der alten Bots in W0 geprüft:** `make_v8_saves --only=kindly,new` auf dem fertigen W0-Stand liefert dekodiert denselben Zustand wie die Fixtures. Unterschiede: nur `format_version` 9 und die 23 neuen Stats = 0 (Vergleich ohne diese: 0 Unterschiede).
+   - Lade-Wächter `tests/integration/test_saves_v8_load.gd`: alle 7 laden ohne Warnung, Zustand und Münzen bleiben erhalten, Phase-10-Stats sind 0, Neuspeichern ergibt v9, der Roundtrip ist identisch.
+2. **Speicherformat v9 schon in W0** (wie W0 Phase 9):
+   - `SaveMigration.CURRENT = 9`; `SaveFileIO`/`SaveManager.FORMAT_VERSION` folgen. Kette 1→…→9, `read_doc` nimmt 1…9, Version 10 wird abgelehnt.
+   - `migrate_8_to_9(state, meta)` ist die vollständige §5.2-Migration auf einer tiefen Kopie (rein, idempotent):
+     - `V9_EMPTY_NODES = ["treasury", "cash_book", "market"]` als `{}`. `SaveManager.without_absent_defaults` kennt V9 und verwirft sie, solange die Welt die Knoten nicht hat.
+     - `V9_NEW_STATS` (23, §2.10) = 0
+     - keine Flags; Münzen, Inventare, Truhen, Lohndose und alles andere bleiben unverändert (§5.2 Schritt 3, §14.7)
+   - **Ebenfalls schon in W0:** `GameState.DEFAULT_STATS` + 23 Stats (angehängt) und `COIN_REASONS` + `&"market"`, `&"rent"`, `&"tax"`, `&"stall"`.
+   - P5 besitzt die Dateien weiter und darf glätten. `book_start` (Ladetag) setzen P2/P3 im ersten `load_state` mit leerem Knoten – nicht die Migration.
+3. **Kalender** `CalendarRules` (`src/systems/time/calendar_rules.gd`, Lead, vollständig), über `StoneCalendar.date_of` (unverändert):
+   - Wochentag = (Tag − 1 + 4) mod 7 (0 = Montag)
+   - `week_of(day) = ⌊(day + 3) / 7⌋`: Tag 1–3 = Woche 0, Tag 4 = Woche 1, Tag 80 = Woche 11
+   - `month_key` „YYYY-MM“; Tage < 1 zählen wie bei `StoneCalendar` als Tag 1
+   - `first_day_of_month` kann ≤ 0 sein (1. Gilbhart 1834 = Tag −1); fehlerhafte Schlüssel → 0 bzw. ""
+   - Zusätze: `WEEKDAY_SHORT`, `MONDAY`/`SATURDAY`/`SUNDAY`
+   - Geprüft in `test_calendar_rules.gd`: Monatserste 30/60/91/122/150, Tag 75 Di, 84 Do (Weihnachten), 91 Do.
+4. **Datenklassen ✦ vollständig** (§3.2.1): `TreasuryConfig`, `CashBookConfig`, `MarketConfig`, `MarketStallData`, `MarketOfferData`, `MarketWareData`, `WishlistData`, `WishlistEntryData`.
+   - Felder und Defaults exakt nach §3.4.
+   - Rein additiv: `WishlistEntryData.KINDS`.
+5. **Erweiterungen bestehender Configs – Klassen-Default und `data/config/*.tres` gemeinsam:**
+   - `ReputationConfig.event_points` + `dues_paid 1`, `estimated −1` (kein `market_stall`)
+   - `PietyConfig.events` + `poor_box_give 1`, `rose_planted 1`
+   - `RelationshipConfig.gains` + `dues_paid_fenner 2`, `market_buy 1`, `market_sale_kin 1`
+   - `NpcLifeConfig.reactions` + `market_lage 1`
+   - `VisitorConfig` + `poor_box_coin 1`, `poor_box_cap_day 2`
+   - Die Phase-10-Fixtures dieser Configs sind der W0-Stand (`Phase10Fixtures.EXTENDED_CONFIG_NAMES`).
+   - `test_phase9_scaffold.gd` führt `event_points`, `events`, `gains`, `reactions` jetzt in `DATA_CHANGED_AFTER_W0`; `test_piety`/`test_reputation` vergleichen mit der Phase-10-Fixture.
+   - **Nicht in W0 (Tarif = W1, P1/P2):** Pflegegeld `stipend` bleibt 0/1/2/3/4 mit Kappe 80 (E1 → 0 mit `reputation.gd`, P2), `tip_cap_day` bleibt 4 (E11), alle Münzwerte bleiben, `DecorData` ohne neue Felder.
+6. **Neue Config-Dateien:** `data/config/{treasury_config (→ P2), cash_book_config (→ P3), market_config (→ P4)}.tres` = Klassen-Default, ausdrücklich geschrieben; Kopien in `tests/fixtures/phase10/*_fixture.tres`.
+   - **Ausnahme wie die Fragen Brenneisens in Phase 9:** Die Klassen-Defaults bleiben `{}` / `[]` wie in §3.4. Die `.tres` tragen die Vertragstabellen (`Phase10Fixtures.DATA_TABLES`):
+     - `CashBookConfig.sources` (19 Quellen, §2.6) und `purpose_labels` (alle 17 `COIN_REASONS`)
+     - `MarketConfig.groups` (§2.7.3), `season_rules` (Frost Julmond/Hartung/Hornung → `wood_iron` +1), `rep_demand` (`disreputable` 0,7, `renowned` 1,1), `piety_demand` (`hardhearted` 0,7, `devout` 1,1)
+   - Weicht ein Besitzer ab, setzt er Default und `.tres` gemeinsam und trägt die Eigenschaft in `DATA_CHANGED_AFTER_W0` (`test_phase10_scaffold.gd`) ein – die Fixture bleibt.
+7. **Nicht** in W0 angelegt (Besitzer, W1):
+   - `data/market/**`, `data/items/{rose_bush,brass_lantern}.tres`, `data/recipes/{grave_candle_poured,wax_wreath_bound}.tres`, `data/decor/brass_lantern.tres` (P4)
+   - `data/economy/wishlist.tres`, `tools/economy/tariff_report.py` (P1)
+   - Dialoge, Zeitpläne, Hinweise (P5); Texte der Abrechnung/des Opferstocks (P2)
+   - Die Fixtures sind **vollständige Vorlagen** (kopieren erlaubt). Neue Items und Rezepte ändern Zählungen fremder Tests (`test_inventory.ITEMS` u. a.) – P4 passt sie an (Lead-genehmigt).
+8. **Stubs** (`## STUB (P<n>)`, Signaturen exakt nach §3.4; die Liste `IMPLEMENTED` in `tests/unit/test_phase10_scaffold.gd` füllen die Besitzer). **Fett = antwortet schon aus `load_state` (Format §5.1)**, damit W1-Tests fremder Pakete Zustände setzen können (`Phase10Fixtures`):
+   - **P1:** `WishlistProbe.open_cost` (0).
+   - **P2:**
+     - `Treasury` (85): **`is_open()`/`open_day()` lesen `p10_open`/`p10_open_day`**; **`last_schau`/`pending_pay`/`settlement`/`open_settlement`/`due_day`** (= Tag der Abrechnung + `due_days`) und **`poor_box_coins`** (auf 0…30 geklemmt) aus `{schau, settlements, poor_box}`; `goal_progress` = `{settled false, market_days 0, best_tier &""}`.
+     - Konstanten `STATE_*`/`STATES`/`VIA`; dazu `TreasuryRules`.
+     - `OfferingBox` (+ `.tscn` mit `Interactable`, `box_id poor_box_gate`, Auswahl-Konstanten, `request_action`).
+   - **P3:**
+     - `CashBook` (86): **`open_day`/`day_page`/`month_page`/`untracked_in`** aus `{open_day, days, months}`.
+     - **`booked_income(month, receipt_only)`** liest das `receipt`-Feld in W0 direkt aus `CashBookConfig.sources`, damit P2 vor P3 rechnen kann.
+     - `CashBookRules` (`OTHER`, `UNTRACKED`).
+   - **P4:**
+     - `Market` (87): **`stall_granted`** (gespeichertes `granted` oder Flag `market_stall_granted`), **`stall_goods`/`sold_on`** aus `{granted, stall, sold}`.
+     - Konstanten `KINDS`/`TAGS`/`STATES`/`OWN_STALL`; dazu `MarketRules`.
+     - `MarketStall` (+ `.tscn`, `stall_id`, Prompt-/Auswahl-Konstanten, `request_action`, `is_own`).
+   - P5, P6, W-Welt, W-UI: keine Stubs. Die Systemknoten hängen in W0 **nicht** in der Welt (W-Welt, wie Phase 4–9).
+   - **Abweichung zur Hauskonvention:** `OfferingBox`/`MarketStall` erben laut §3.4 von **`StaticBody3D`** (alle anderen Entitäten von `Node3D`). In W0 haben sie `collision_layer 0` und keine Körperform – Besitzer/W-Welt entscheiden, ob der Stand ein Hindernis ist (Flood-Fill §4.2).
+9. **EventBus:** die 6 Signale aus §3.3 (Block „Phase 10“). **Eingaben:** keine neuen. **Database** (§3.5):
+   - `market_stall/market_stalls` (`data/market/stalls`, nach id)
+   - `market_ware/market_wares` (`data/market/wares`, Schlüssel `item`, nach item)
+   - `wishlist()` (`data/economy/wishlist.tres`, `null`, solange P1 sie nicht schreibt)
+   - leer/fehlend = leere Liste
+10. **Fixtures für W1:** `tests/fixtures/phase10/`, erzeugt von `make_phase10_fixtures.gd` (+ `_driver.gd`, historisch).
+    - **Inhalt:**
+      - Configs (Punkt 5/6)
+      - `market/stalls/{ms_agathe (5 aus 12), ms_kehr (4 aus 7), ms_brandt (4 aus 6)}`, `market/wares/` (die fünf A-Waren mit den Kundenzeilen aus §2.12)
+      - `items/{rose_bush (MATERIAL, 4), brass_lantern (DECOR, 4)}`, `recipes/{grave_candle_poured, wax_wreath_bound}` (Werkbank, `requires_flag village_open`)
+      - `decor/brass_lantern` (Kopie von `decor_lantern`, Zier +1, Modell vorerst das der Grablaterne)
+      - `economy/wishlist.tres` (Muster mit 8 Einträgen)
+    - **Zugriff `Phase10Fixtures`:**
+      - `p10_open(tree, day)` → `Treasury`; setzt alle Kapitel-Flags bis `who_knows_when_complete`, `p10_open`, `p10_open_day`
+      - `market_day(tree)` → `Market`; setzt `village_open` und `market_stall_granted`, stellt die Uhr auf den nächsten Samstag 08:00
+      - `stall_with(goods, tags, ticks)`
+      - `schau_done(week, tier)`; die Schau liegt auf dem Sonntag `schau_day(week) = 7w + 3`
+      - `settlement_due(month)` / `deferred(month)` (Beispiel §5.1: 5 + 8 = 13)
+      - `poor_box(n)`
+      - `cash_day(day, in, out)` → `CashBook`
+      - `install_save_v8`, `save_v8_path`, `layout_p9()`, `village_layout_p9()`, ID-Listen, `SAVEABLES`
+11. **Lücken, pragmatisch entschieden** (Besitzer dürfen in ihrem Paket glätten und melden es):
+    - **„Belegt“ ≠ „ohne Beleg“ (§2.5.6/§2.6):** `receipt = false` steht sowohl für nicht abgabepflichtige Quellen (Friedhofsgeld, Bedarf, Trinkgeld, Spenden, Geistergaben) als auch für die Quellen, die für die Schätzung als „ohne Beleg“ zählen (`specimen`, `lecture`, `collection`, `night`, `stranger`). W0 gibt jeder Quelle zusätzlich **`estimate: bool`** (das Dictionary ist untypisiert – keine Signaturänderung). `other`: `receipt false`, `estimate false`.
+    - **Präfixe = die echten Grundtexte des G9-Codes** (geprüft in `test_phase10_scaffold::test_cash_book_sources_cover_the_reason_texts`, jeder Text → genau eine Quelle):
+      - Aussegnung „Die Familie legt …“, Geistergaben „Der Geist deutet …“
+      - Bitten auch „Bitte zur Hälfte: “, Läden auch „Verkauf an Hanne“ (Hanne/Wanderers)
+      - das alte „Pflegegeld der Gemeinde“ → `parish`
+      - Ilse kommt über `trader_trade` (`night`); Wertsachen und Lohndose haben keine Buchung → „ohne Beleg“
+      - **Offen für P3/P5:** Brenneisens Trinkgeld für den Koffer bucht unter „Botenlohn“ (`Stranger.REASON_TIP`) und damit als `errand` (belegt).
+      - Neue Grundtexte (§2.10): „Friedhofsgeld“, „Bedarfszulage der Gemeinde“, „Notgroschen der Gemeinde“, „Spenden aus dem Opferstock“, „Verkauf am Marktstand“.
+    - **Item-Ids der Warengruppen und Stände (§2.7.3/§2.7.4):**
+      - Zuordnung: Totenhemd = `burial_gown`, Stahl = `steel_rod`, Eisenbeschläge = `iron_fittings`, Setzlinge = `flower_seedlings`, Samen = `seeds`, Branntwein = `spirits`, Grabvase = `decor_grave_vase`, Strohblumen = `straw_bouquet`, kleines Präparatglas = `prep_jar_small`, gebrauchtes Grabgitter = `mortsafe` (`requires_flag robber_known`), Kerzenstummel = `grave_candle`, feine Leinwand = `linen`
+      - Blattgold ohne Bedingung („ohne Befreundet“ gelesen als: keine Freundschaft nötig – P4 entscheidet)
+      - `iron_bar` (Eisenbarren bei Agathe) steht in keiner Gruppe (→ „normal“; P4 entscheidet)
+      - `piety_demand.hardhearted` gilt laut §2.7.5 nur für `grave_goods` – das kann die Tabelle nicht ausdrücken, P4 setzt es in `MarketRules.demand` um
+    - **Stände:**
+      - `place` = die Stand-Id (Layout-Id der `MarketStall`); `npc_id` `marketwoman`, `kin_kehr`, `kin_brandt`
+      - `buys_groups`: Agathe `candles` + `grave_goods`, Kehr `herbs`, Brandt `grave_goods`
+    - **Lesart der Market-Getter:** `Market.is_open()` = Markt jetzt offen (Markttag im Fenster), `market_day()` = heutiger Markttag oder −1, `next_market()` = ≥ heute oder −1.
+    - Texte der Stubs, Item-Beschreibungen und Rezeptnamen außerhalb der Leittexte sind W0-Entwürfe.
+12. **Ist-Messung des alten Tarifs** (§12.1): `docs/reviews/phase10_wip/ist_kurve.md`, Werkzeug `tests/integration/economy_curve_bot.gd` (`EconomyCurveBot`, P1 übernimmt in W1) + `tools/economy/ist_kurve.gd`.
+    - **Kette:** `Phase6Bot founder` → `founder7` → `founder8` → `founder9`; Übergabe am Morgen nach dem Kapitel mit Speichern/Laden wie bei den Fixtures.
+    - **Ergebnis (Polster morgens):** Tag 14 = 35, 30 = 20, 45 = 78, 60 = 21, 75 = 12, 91 = 9. Ausgabequote 85–125 % je Abschnitt, morgens min. 1 (Tag 87).
+    - **Befund 1:** Die Gründer-Linie ist auf dem G9-Code schneller (Dorf ab Tag 28, `name_in_village` Tag 38).
+    - **Befund 2 (offen, P1 vor `curve10`):** `founder8` nimmt in dieser Kette **keinen Freundschaftsschritt**, obwohl jeder nehmbar ist. Deshalb fehlt das Kapitel 8 (und damit 9) bis Tag 91. Auf der Fixture-Linie klappt es; mit und ohne Laden an der Übergabe gleich.
+13. **Hinweise je Paket (W1):**
+    - **P1:**
+      - Tarif in die Daten (E1 Pflegegeld → 0 zusammen mit P2s `reputation.gd`, E11 `tip_cap_day` 3 usw.).
+      - `EconomyCurveBot` ist dein Gerüst: `founder10`, Wunschliste, Prüfpunkte und Bänder (§2.3) ergänzen. Befund 12/2 zuerst klären.
+      - Die alten Bots sind in W0 bitgleich (Punkt 1); ihre Münzbänder setzt du nach deiner Messung neu (§10.3).
+      - `kindly10` startet mit **129** und ohne freies Grab.
+    - **P2:**
+      - `Treasury.post_load`: v8-Stände mit `who_knows_when_complete` öffnen sofort (`p10_open_day` = Ladetag: kindly/stay 75, trader 76, founder 68).
+      - Pacht ab `bruch_license` (in allen Fixtures gesetzt, auch `day29_new`), Zehnt/Schätzung ab `village_open` (`day29_new` hat es nicht → am Tag 30 nur Pacht).
+      - Pflegegeld aus (`reputation.gd`), Einwurf in den Opferstock aus `visitors.gd` (`VisitorConfig.poor_box_*`).
+      - Szene `offering_box.tscn` ist da.
+    - **P3:**
+      - Quellen-Tabelle und `estimate`-Schlüssel (Punkt 11), `REASON_TIP`-Frage mit P5.
+      - `booked_income` darf über `CashBookRules.is_receipt` laufen.
+      - Merkbuch-Seitentitel.
+    - **P4:**
+      - Items, Rezepte, Dekor, Stände und Waren aus den Fixtures nach `data/`; Zählungen fremder Tests anpassen.
+      - Gruppen-Lücken (Punkt 11), `MarketStall` als `StaticBody3D`.
+    - **P5:**
+      - `migrate_8_to_9` ist fertig (`test_save_migration.gd`: `test_v8_fixtures_migrate_to_v9`, `…_tolerant`, `test_read_doc_migrates_every_v8_fixture`, `test_v7_fixtures_chain_to_v9`, `test_v9_round_trip_is_identical`, `test_version_ten_is_rejected`, `test_absent_phase10_nodes_are_dropped_only_when_empty`).
+      - `test_game_state.gd` hat die 23 Stats und die 4 Zwecke (Lead, mechanisch).
+    - **P6:** keine W0-Vorgaben über §8 hinaus (Agathe zuerst, §12.2).
+    - **W-UI (W2):** `Phase5Texts.SPENT_LABELS` kennt `post` noch nicht, ebenso wenig `market`/`rent`/`tax`/`stall` (Tageszusammenfassung) – die Labels stehen in `cash_book_config.tres` `purpose_labels`.
+14. **Lead-Anpassungen an fremden Tests** (mechanisch, nur Version / Fixture-Stand / Listen):
+    - `test_phase3…9_scaffold.gd` (v9; Phase 5 + V9-Knoten in der Kette; Phase 9: `DATA_CHANGED_AFTER_W0`, `post` nach `peddler`, `migrate(state, 8)` = 8 → 9)
+    - `test_save_migration.gd` (v9; Ketten 5/6/7 → 9; „Version 9 abgelehnt“ heißt jetzt `CURRENT + 1`; neu siehe P5)
+    - `test_saves_v4/v5/v6_load.gd`, `test_hill_requests.gd`
+    - `test_save_fuzzer.gd` (aktuelles Format; **neu** `test_fuzz_v8_fixtures`, `test_fuzz_v9_phase10_parts`; Konsistenz: Phase-10-Stats ganzzahlig)
+    - `test_game_state.gd`, `test_piety.gd`/`test_reputation.gd` (Daten = Phase-10-Fixture)
+15. **Testzahl:** vor W0 3 394, nach W0 **3 441**, alle grün. Neu: `test_phase10_scaffold.gd` 19, `test_calendar_rules.gd` 8, `test_saves_v8_load.gd` 9, `test_save_migration.gd` + 7, `test_save_fuzzer.gd` + 2, `test_game_state.gd` + 2. Die Münzbuch-Erwartungen in `test_game_state.gd`/`test_dialogue.gd` kennen die vier neuen Zwecke (= 0).

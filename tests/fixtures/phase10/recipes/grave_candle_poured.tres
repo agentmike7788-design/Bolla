@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/crafting/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"grave_candle_poured"
+display_name = "Grabkerzen ziehen"
+inputs = Dictionary[StringName, int]({
+&"beeswax": 1,
+&"yarn": 1
+})
+output_id = &"grave_candle"
+output_amount = 4
+craft_minutes = 20
+station = &"workbench"
+category = &"grave"
+background = false
+requires_flag = &"village_open"

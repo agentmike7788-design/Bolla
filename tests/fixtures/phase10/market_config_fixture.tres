@@ -1,0 +1,74 @@
+[gd_resource type="Resource" script_class="MarketConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/market/market_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+open_flag = &"village_open"
+weekday = 5
+window = Vector2i(480, 750)
+setup_from = 450
+stalls_visible = Vector2i(390, 810)
+notice_weekday = 3
+notice_minute = 464
+stall_flag = &"market_stall_granted"
+stall_fee = 1
+stall_slots = 6
+tick_minutes = 30
+setup_minutes = 10
+takedown_minutes = 5
+groups = Dictionary[StringName, PackedStringArray]({
+&"candles": PackedStringArray("grave_candle", "altar_candle", "beeswax"),
+&"grave_goods": PackedStringArray("wooden_cross", "wax_wreath", "decor_grave_vase", "straw_bouquet", "rose_bush", "brass_lantern"),
+&"herbs": PackedStringArray("herbs", "herb_bundle", "elderberries", "wound_salve"),
+&"pantry": PackedStringArray("honey_cake", "elder_wine", "spirits", "seeds", "flower_seedlings"),
+&"textiles": PackedStringArray("linen", "yarn", "flax", "burial_gown"),
+&"wood_iron": PackedStringArray("wood", "charcoal", "iron_fittings", "steel_rod")
+})
+states = Dictionary[StringName, Dictionary]({
+&"glut": {
+"demand": 0.6,
+"price": 0.75
+},
+&"normal": {
+"demand": 1.0,
+"price": 1.0
+},
+&"scarce": {
+"demand": 1.5,
+"price": 1.3
+}
+})
+state_weights = PackedFloat32Array(0.25, 0.5, 0.25)
+tags = Dictionary[StringName, Dictionary]({
+&"cheap": {
+"demand": 1.4,
+"price": 0.8
+},
+&"dear": {
+"demand": 0.6,
+"price": 1.25
+},
+&"fair": {
+"demand": 1.0,
+"price": 1.0
+}
+})
+season_rules = Array[Dictionary]([{
+"group": &"wood_iron",
+"months": PackedInt32Array(12, 1, 2),
+"step": 1
+}])
+mourning_deaths = 3
+mourning_groups = Array[StringName]([&"candles", &"grave_goods"])
+oversold_threshold = 6
+peddler_group = &"pantry"
+rep_demand = Dictionary[StringName, float]({
+&"disreputable": 0.7,
+&"renowned": 1.1
+})
+piety_demand = Dictionary[StringName, float]({
+&"devout": 1.1,
+&"hardhearted": 0.7
+})
+leftover_chest = &"hut_chest"

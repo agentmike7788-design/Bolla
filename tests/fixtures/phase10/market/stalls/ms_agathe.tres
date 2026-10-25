@@ -1,0 +1,96 @@
+[gd_resource type="Resource" script_class="MarketStallData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/market/market_offer_data.gd" id="1_8c7ht"]
+[ext_resource type="Script" path="res://src/systems/market/market_stall_data.gd" id="2_afobj"]
+
+[sub_resource type="Resource" id="Resource_vlyi1"]
+script = ExtResource("1_8c7ht")
+item = &"rose_bush"
+price = 12
+stock = 2
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_sx48l"]
+script = ExtResource("1_8c7ht")
+item = &"brass_lantern"
+price = 10
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_8fgy3"]
+script = ExtResource("1_8c7ht")
+item = &"gold_leaf"
+price = 6
+stock = 2
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_svcln"]
+script = ExtResource("1_8c7ht")
+item = &"steel_rod"
+price = 5
+stock = 2
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_tl35u"]
+script = ExtResource("1_8c7ht")
+item = &"iron_bar"
+price = 5
+stock = 2
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_k7y53"]
+script = ExtResource("1_8c7ht")
+item = &"prep_jar_small"
+price = 3
+stock = 3
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_rg16w"]
+script = ExtResource("1_8c7ht")
+item = &"spirits"
+price = 3
+stock = 3
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_ilgmu"]
+script = ExtResource("1_8c7ht")
+item = &"ink"
+price = 2
+stock = 3
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_ykty2"]
+script = ExtResource("1_8c7ht")
+item = &"wax_wreath"
+price = 5
+stock = 2
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_4wajw"]
+script = ExtResource("1_8c7ht")
+item = &"mortsafe"
+price = 9
+requires_flag = &"robber_known"
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_h20s3"]
+script = ExtResource("1_8c7ht")
+item = &"beeswax"
+stock = 6
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_4wmpe"]
+script = ExtResource("1_8c7ht")
+item = &"linen"
+price = 3
+stock = 4
+conditions = PackedStringArray()
+
+[resource]
+script = ExtResource("2_afobj")
+id = &"ms_agathe"
+npc_id = &"marketwoman"
+place = &"ms_agathe"
+title = "Agathe Wendel – Stadtware aus Ellbach"
+offers = Array[ExtResource("1_8c7ht")]([SubResource("Resource_vlyi1"), SubResource("Resource_sx48l"), SubResource("Resource_8fgy3"), SubResource("Resource_svcln"), SubResource("Resource_tl35u"), SubResource("Resource_k7y53"), SubResource("Resource_rg16w"), SubResource("Resource_ilgmu"), SubResource("Resource_ykty2"), SubResource("Resource_4wajw"), SubResource("Resource_h20s3"), SubResource("Resource_4wmpe")])
+picks = 5
+buys_groups = Array[StringName]([&"candles", &"grave_goods"])

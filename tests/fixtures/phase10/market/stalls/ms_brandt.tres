@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="MarketStallData" format=3]
+
+[ext_resource type="Script" path="res://src/systems/market/market_offer_data.gd" id="1_nq23t"]
+[ext_resource type="Script" path="res://src/systems/market/market_stall_data.gd" id="2_owict"]
+
+[sub_resource type="Resource" id="Resource_l3yw4"]
+script = ExtResource("1_nq23t")
+item = &"wood"
+stock = 10
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_7gj8f"]
+script = ExtResource("1_nq23t")
+item = &"charcoal"
+stock = 6
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_ws86a"]
+script = ExtResource("1_nq23t")
+item = &"flax"
+stock = 6
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_gdocs"]
+script = ExtResource("1_nq23t")
+item = &"yarn"
+stock = 6
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_3bjxb"]
+script = ExtResource("1_nq23t")
+item = &"stone"
+stock = 6
+conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_mm52t"]
+script = ExtResource("1_nq23t")
+item = &"iron_fittings"
+price = 3
+stock = 3
+conditions = PackedStringArray()
+
+[resource]
+script = ExtResource("2_owict")
+id = &"ms_brandt"
+npc_id = &"kin_brandt"
+place = &"ms_brandt"
+title = "Hof Brandt – Holz, Flachs, Garn"
+offers = Array[ExtResource("1_nq23t")]([SubResource("Resource_l3yw4"), SubResource("Resource_7gj8f"), SubResource("Resource_ws86a"), SubResource("Resource_gdocs"), SubResource("Resource_3bjxb"), SubResource("Resource_mm52t")])
+buys_groups = Array[StringName]([&"grave_goods"])

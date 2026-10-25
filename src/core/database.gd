@@ -63,6 +63,10 @@ const LETTER_DIR := "res://data/letters"
 const STRANGER_OFFER_DIR := "res://data/stranger/offers"
 ## Larger requests (OrderData size large) – separate from hill_requests(), the small ones stay as they are.
 const LARGE_REQUEST_DIR := "res://data/hill_requests/large"
+# Phase 10 (docs/PHASE10_DESIGN.md §3.5).
+const MARKET_STALL_DIR := "res://data/market/stalls"
+const MARKET_WARE_DIR := "res://data/market/wares"
+const WISHLIST := "res://data/economy/wishlist.tres"
 
 var _items: Dictionary = {}       # StringName -> ItemData
 var _recipes: Dictionary = {}     # StringName -> RecipeData
@@ -108,6 +112,8 @@ var _quests: Dictionary = {}      # StringName -> QuestData
 var _letters: Dictionary = {}     # StringName -> LetterData
 var _stranger_offers: Dictionary = {}  # StringName -> StrangerOfferData
 var _large_requests: Dictionary = {}   # StringName -> OrderData (category hill, size large)
+var _market_stalls: Dictionary = {}    # StringName -> MarketStallData
+var _market_wares: Dictionary = {}     # StringName (item) -> MarketWareData
 var _icons: Dictionary = {}       # StringName -> Texture2D
 var _placeholder: Texture2D
 
@@ -167,6 +173,8 @@ func reload() -> void:
 	_letters = _load_dir(LETTER_DIR, "id")
 	_stranger_offers = _load_dir(STRANGER_OFFER_DIR, "id")
 	_large_requests = _load_dir(LARGE_REQUEST_DIR, "id")
+	_market_stalls = _load_dir(MARKET_STALL_DIR, "id")
+	_market_wares = _load_dir(MARKET_WARE_DIR, "item")
 
 
 func item(id: StringName) -> Resource:
@@ -590,6 +598,31 @@ func large_request(id: StringName) -> Resource:
 ## All larger requests, sorted by `order` (ties by id) – never part of hill_requests().
 func large_requests() -> Array:
 	return _sorted(_large_requests.values(), "order")
+
+
+## Phase 10: data/market/stalls/<id>.tres (MarketStallData), null if unknown.
+func market_stall(id: StringName) -> Resource:
+	return _market_stalls.get(id)
+
+
+## All market stands, sorted by id.
+func market_stalls() -> Array:
+	return _sorted(_market_stalls.values(), "id")
+
+
+## Phase 10: data/market/wares/<item>.tres (MarketWareData of the gravekeeper's own stand), null if unknown.
+func market_ware(item_id: StringName) -> Resource:
+	return _market_wares.get(item_id)
+
+
+## All wares of the own stand, sorted by item.
+func market_wares() -> Array:
+	return _sorted(_market_wares.values(), "item")
+
+
+## Phase 10: data/economy/wishlist.tres (WishlistData), null while P1 has not written it.
+func wishlist() -> Resource:
+	return load(WISHLIST) if ResourceLoader.exists(WISHLIST) else null
 
 
 ## data/village/wanderers/<id>.tres (WandererData), null if unknown.

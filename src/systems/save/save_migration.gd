@@ -4,13 +4,24 @@ extends RefCounted
 ## (docs/PHASE3_DESIGN.md §5.2, §3.4 "Speichern"; docs/PHASE4_DESIGN.md §5.2: chain 1→2→3;
 ## docs/PHASE5_DESIGN.md §5.2: chain 1→2→3→4; docs/PHASE6_DESIGN.md §5.2: chain 1→…→5;
 ## docs/PHASE7_DESIGN.md §5.2: chain 1→…→6; docs/PHASE8_DESIGN.md §5.2: chain 1→…→7;
-## docs/PHASE9_DESIGN.md §5.2: chain 1→…→8). Applied by
+## docs/PHASE9_DESIGN.md §5.2: chain 1→…→8; docs/PHASE10_DESIGN.md §5.2: chain 1→…→9). Applied by
 ## SaveFileIO.read_doc after
 ## decode_state; the normal load path follows and the next save writes CURRENT.
 ## Pure: never touches the scene tree, never changes its input or an autoload (migrate_3_to_4 only
 ## reads item categories from Database).
 
-const CURRENT := 8
+const CURRENT := 9
+## Save ids of the Phase-10 system nodes that get an empty state in migrate_8_to_9 (docs/PHASE10_DESIGN.md §3.1, §3.4,
+## §5.2 step 1); SaveManager.without_absent_defaults drops them again while the world has no such node (W-Welt adds
+## them, like V4–V8).
+const V9_EMPTY_NODES: PackedStringArray = ["treasury", "cash_book", "market"]
+## Phase-10 statistics that start at 0 (§5.2 step 2; = the Phase-10 part of GameState.DEFAULT_STATS, §2.10, incl. the
+## ledger stats of the coin purposes market, rent, tax, stall).
+const V9_NEW_STATS: Array[StringName] = [&"parish_weeks", &"parish_paid", &"need_paid", &"hardship_paid", &"settlements",
+		&"dues_paid", &"dues_deferred", &"dues_waived", &"rent_paid", &"tithe_paid", &"estimate_paid", &"donations_received",
+		&"poor_box_emptied", &"market_days", &"market_stall_days", &"market_items_sold", &"market_coins",
+		&"market_items_bought", &"roses_planted", &"coins_spent_market", &"coins_spent_rent", &"coins_spent_tax",
+		&"coins_spent_stall"]
 ## Save ids of the Phase-9 system nodes that get an empty state in migrate_7_to_8 (docs/PHASE9_DESIGN.md §3.1, §3.4,
 ## §5.2 step 3); SaveManager.without_absent_defaults drops them again while the world has no such node (W-Welt adds
 ## them, like V4–V7).
@@ -126,6 +137,8 @@ static func migrate(state: Dictionary, from_version: int, meta: Dictionary = {})
 		out = migrate_6_to_7(out, meta)
 	if from_version <= 7:
 		out = migrate_7_to_8(out, meta)
+	if from_version <= 8:
+		out = migrate_8_to_9(out, meta)
 	return out
 
 
@@ -415,6 +428,28 @@ static func migrate_7_to_8(state: Dictionary, _meta: Dictionary) -> Dictionary:
 			nodes[id] = {}
 	# 5. The Phase-9 statistics start at 0.
 	for key: StringName in V8_NEW_STATS:
+		if not _has_key(stats, String(key)):
+			_set_key(stats, String(key), 0)
+	return out
+
+
+## docs/PHASE10_DESIGN.md §5.2 steps 1–6 on a deep copy of a v8 state (pure, idempotent): empty states for the three
+## Phase-10 nodes (treasury, cash_book, market – inserted like V4–V8, dropped by SaveManager.without_absent_defaults
+## while the world has none of them), the Phase-10 statistics at 0. Nothing else changes: no flags (Treasury.post_load
+## sets p10_open when who_knows_when_complete holds), coins, inventories, chests and Jakob's tin unchanged (§14.7 – the
+## new tariff applies from the load on; the cash book begins on the load day), the quarry letter is the lease letter
+## (same flag bruch_license), player, graves, orders, requests, letters, chains unchanged.
+static func migrate_8_to_9(state: Dictionary, _meta: Dictionary) -> Dictionary:
+	var out := state.duplicate(true)
+	var autoloads := _sub(out, "autoloads")
+	var nodes := _sub(out, "nodes")
+	var stats := _sub(_sub(autoloads, "GameState"), "stats")
+	# 1. Empty states for the new system nodes.
+	for id: String in V9_EMPTY_NODES:
+		if not nodes.get(id) is Dictionary:
+			nodes[id] = {}
+	# 2. The Phase-10 statistics start at 0.
+	for key: StringName in V9_NEW_STATS:
 		if not _has_key(stats, String(key)):
 			_set_key(stats, String(key), 0)
 	return out

@@ -110,8 +110,11 @@ const DATA_CLASSES := {
 ## Properties changed in the data (and the class default together) after the W0 hand-over; the fixtures keep the
 ## W0 values. Empty at W0; W2 „Anschlüsse“: the mood rules of ending C (W1-Anschlüsse 13), the values of WhoKnows that
 ## lived in the code (16); W3 „Restbedarf“ 6: LettersConfig.read_minutes (reading a letter at the letter card).
-const DATA_CHANGED_AFTER_W0 := {&"npc_life_config": [&"mood_rules"], &"who_knows_config": [&"quest_id", &"gone_after_minutes",
-		&"b_confidant_rel", &"death_paths", &"death_flags"], &"letters_config": [&"read_minutes"]}
+## Phase 10 W0 (docs/PHASE10_DESIGN.md §2.10, §3.2): + the Phase-10 keys of event_points, events, gains and reactions
+## (class default and data together).
+const DATA_CHANGED_AFTER_W0 := {&"npc_life_config": [&"mood_rules", &"reactions"], &"who_knows_config": [&"quest_id",
+		&"gone_after_minutes", &"b_confidant_rel", &"death_paths", &"death_flags"], &"letters_config": [&"read_minutes"],
+		&"reputation_config": [&"event_points"], &"piety_config": [&"events"], &"relationship_config": [&"gains"]}
 
 
 func test_stub_scripts_load_with_their_class_names() -> void:
@@ -350,7 +353,8 @@ func test_game_state_stats_and_coin_reason() -> void:
 	assert_eq(SaveMigration.V8_NEW_STATS.size(), 18, "§2.9: 18 stats")
 	var p8_end := GameState.DEFAULT_STATS.find(&"coins_spent_peddler")
 	assert_eq(GameState.DEFAULT_STATS[p8_end + 1], &"quest_steps", "Phase-9 stats appended")
-	assert_eq(GameState.COIN_REASONS.back(), &"post", "§2.9 coin purpose post")
+	assert_eq(GameState.COIN_REASONS[GameState.COIN_REASONS.find(&"peddler") + 1], &"post",
+			"§2.9 coin purpose post (appended after peddler; Phase 10 W0 appends market, rent, tax, stall)")
 	assert_eq(GameState.coin_ledger_stat(&"post"), &"coins_spent_post")
 
 
@@ -603,15 +607,17 @@ func test_database_phase9_folders() -> void:
 
 
 func test_save_format_v8_and_migration_chain() -> void:
-	assert_eq(SaveMigration.CURRENT, 8)
-	assert_eq(SaveFileIO.FORMAT_VERSION, 8)
-	assert_eq(SaveManager.FORMAT_VERSION, 8)
+	assert_eq(SaveMigration.CURRENT, 9)
+	assert_eq(SaveFileIO.FORMAT_VERSION, 9)
+	assert_eq(SaveManager.FORMAT_VERSION, 9)
 	assert_eq(SaveMigration.V8_EMPTY_NODES, PackedStringArray(["quests", "who_knows", "letters", "stranger"]), "§3.4 / §5.2 step 3")
 	assert_eq(SaveMigration.V8_RECORD_DEFAULTS, {"letter_id": ""})
 	var state := {"autoloads": {"TimeManager": {"day": 63}, "GameState": {"stats": {}, "flags": {}}},
 			"nodes": {"corpse_manager": {"corpses": [{"id": "corpse_0001"}]}}}
-	assert_eq(SaveMigration.migrate(state, 8), state, "current version unchanged")
-	assert_eq(SaveMigration.migrate(state, 9), {}, "newer → corrupt")
+	# Phase 10 W0: v9 is current – v8 now runs migrate_8_to_9 (the Phase-10 nodes); v10 is the newer one.
+	assert_eq(SaveMigration.migrate(state, 9), state, "current version unchanged")
+	assert_eq(SaveMigration.migrate(state, 8), SaveMigration.migrate_8_to_9(state, {}), "v8 → v9")
+	assert_eq(SaveMigration.migrate(state, SaveMigration.CURRENT + 1), {}, "newer → corrupt")
 	var v8 := SaveMigration.migrate_7_to_8(state, {"day": 63})
 	assert_false(is_same(v8, state), "deep copy")
 	assert_eq(state.nodes.corpse_manager.corpses[0], {"id": "corpse_0001"}, "input unchanged")

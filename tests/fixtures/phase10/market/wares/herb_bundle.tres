@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="MarketWareData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/systems/market/market_ware_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+item = &"herb_bundle"
+group = &"herbs"
+value = 3.0
+demand = 3
+lines = Dictionary[StringName, String]({})
