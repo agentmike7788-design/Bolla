@@ -53,13 +53,26 @@ class FounderBot7 extends Phase7Bot:
 	## village opens at day 28, founder7 took of_quast_return_1 / of_mangold_return_2 (2 herb bundles, 4 yarn) that no
 	## bot ever delivers; accepted that way they never lapse and fill Orders.max_active_friend (2), so every
 	## step_accept of founder8 failed silently. founder7 leaves friend orders alone (as Phase8Bot does once p8 is open).
-	func _score(npc_id: StringName, c: DialogueChoice, visited: Dictionary) -> int:
+	## The choice is never taken (not by its score, not by the look-ahead of _pick7) – as Phase8Bot._vetoed.
+	func _pick7(dlg: DialogueData, npc_id: StringName, choices: Array[DialogueChoice], visited: Dictionary) -> int:
+		var keep: Array[DialogueChoice] = []
+		var index: Array[int] = []
+		for i: int in choices.size():
+			if not _friend_order(choices[i]):
+				keep.append(choices[i])
+				index.append(i)
+		if keep.is_empty():
+			return -1
+		var k := super._pick7(dlg, npc_id, keep, visited)
+		return index[k] if k >= 0 else -1
+
+	func _friend_order(c: DialogueChoice) -> bool:
 		for a: String in c.actions:
 			if a.get_slice(":", 0) == "order_accept":
 				var o := orders.order_data(StringName(a.get_slice(":", 1)))
 				if o != null and o.category == OrderData.CATEGORY_FRIEND:
-					return 0
-		return super._score(npc_id, c, visited)
+					return true
+		return false
 
 
 ## Measurement only (P1, W1 – until P2's Treasury is merged; never part of a real world): the contract's Friedhofsgeld

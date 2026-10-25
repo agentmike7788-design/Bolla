@@ -72,12 +72,12 @@ static func owned(tree: SceneTree, item: StringName) -> int:
 
 ## Occupied graves (FILLED / MARKED) that do not have `ref` yet.
 static func graves_without(tree: SceneTree, ref: StringName) -> int:
-	var gy := _first(tree, &"graveyard") as Graveyard
-	if gy == null:
+	var gy := _first(tree, &"graveyard")
+	if gy == null or not gy.has_method(&"graves"):
 		return 0
 	var care := _first(tree, &"grave_care")
 	var n := 0
-	for g: GraveRecord in gy.graves():
+	for g: GraveRecord in gy.call(&"graves"):
 		if not g.state in [GraveRecord.State.FILLED, GraveRecord.State.MARKED]:
 			continue
 		var has := false
