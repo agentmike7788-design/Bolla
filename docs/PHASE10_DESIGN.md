@@ -1142,3 +1142,13 @@ P5 besitzt alle Dialoge, Gerede und Kapiteltexte; P2 die Texte der Abrechnung un
     - `test_save_fuzzer.gd` (aktuelles Format; **neu** `test_fuzz_v8_fixtures`, `test_fuzz_v9_phase10_parts`; Konsistenz: Phase-10-Stats ganzzahlig)
     - `test_game_state.gd`, `test_piety.gd`/`test_reputation.gd` (Daten = Phase-10-Fixture)
 15. **Testzahl:** vor W0 3 394, nach W0 **3 441**, alle grün. Neu: `test_phase10_scaffold.gd` 19, `test_calendar_rules.gd` 8, `test_saves_v8_load.gd` 9, `test_save_migration.gd` + 7, `test_save_fuzzer.gd` + 2, `test_game_state.gd` + 2. Die Münzbuch-Erwartungen in `test_game_state.gd`/`test_dialogue.gd` kennen die vier neuen Zwecke (= 0).
+
+## W1-Anschlüsse (Lead, 25.10.2026)
+1. **P1 gemergt** (Tarif ohne E1/A1, Tarifblatt, Wunschliste, `curve10`, Neu-Bänder). Details: `docs/reviews/phase10_wip/balance.md`.
+2. **Band anatomist7** Präparate ≥ 9 → **≥ 7** genehmigt (Münzfolge von E14/A3, §10.3).
+3. **E12 „Abgebrüht“** bleibt in `piety_config.buyer_bonus_by_tier` (+1 je Stück).
+4. **E1 (Pflegegeld → 0)** mergt P2 mit dem Patch aus `balance.md` §6. Gegen den Ausfall von `mender6` (Kapitel 6) und den Tiefstand von reverent6: erste Friedhofsgeld-Woche **nicht anteilig**, Notgroschen auch montags prüfen; reicht das nicht, hebt P2 die Bedarfsschwelle und meldet es. §14.7 (Kapiteltage ±2) bleibt hart.
+5. **A1 (Pachtbrief 0)** setzt P5 um (`carter.tres`, `test_dialogue`).
+6. **Freundschafts-Fehler** (founder8, `balance.md` §4): P5 bindet die Gegengefallen-Wahlen an `favor_owed:<npc>` und lässt `Friendship.step_block_reason` das Limit `max_active_friend` prüfen (Einzelfunktion im Phase-8-System freigegeben).
+7. **Wunschliste:** P4 benennt die Abfrage `GraveCare.has_rose(grave_id)`. Prüfpunkt Tag 14 (0,6×, nichts Bleibendes vor dem Werkhof) wird als Ausnahme akzeptiert; das Band gilt ab Tag 30.
+8. **Nachmessung** von `curve10` (früh zu knapp, spät zu reich) erst nach P2- und P4-Merge, strikt in W3.
