@@ -31,7 +31,7 @@ sells = Dictionary[StringName, Dictionary]({
 },
 &"honey_cake": {
 "per_day": 4,
-"price": 1
+"price": 2
 },
 &"juniper": {
 "per_day": 4,

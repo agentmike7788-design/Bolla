@@ -134,7 +134,8 @@ func test_kinds_carry_the_contract_values() -> void:
 		assert_eq([hair.minutes, hair.tool, hair.item, hair.min_freshness], [10, &"shears", &"hair_braid", 0.3])
 		assert_eq([teeth.minutes, teeth.tool, teeth.item, teeth.min_freshness], [15, &"pliers", &"teeth_pouch", 0.0])
 		assert_eq(hair.low_freshness_text, "Das Haar ist zu brüchig.")
-		assert_eq(c.sell_prices, {&"hair_braid": 4, &"teeth_pouch": 5})
+		# Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §2.4) E12: the data pay 3 / 4, the Phase-4 fixture keeps 4 / 5.
+		assert_eq(c.sell_prices, {&"hair_braid": 4, &"teeth_pouch": 5} if c == cfg else {&"hair_braid": 3, &"teeth_pouch": 4})
 		assert_eq(c.tool_items, [&"shears", &"pliers"] as Array[StringName])
 
 
@@ -145,4 +146,6 @@ func test_real_configs_match_the_fixtures() -> void:
 		var fixture := Phase5Fixtures.config(name) if name == &"trader_config" else Phase4Fixtures.config(name)
 		for prop: Dictionary in real.get_property_list():
 			if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
+				if name == &"utilization_config" and prop.name == "sell_prices":
+					continue  # Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §2.4) E12 – test_kinds_carry_the_contract_values
 				assert_eq(real.get(prop.name), fixture.get(prop.name), "%s.%s" % [name, prop.name])

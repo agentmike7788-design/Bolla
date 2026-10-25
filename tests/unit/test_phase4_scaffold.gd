@@ -233,7 +233,9 @@ const QA_DATA_DEVIATIONS := {&"decay_visual_config": ["wisp_color", "smoke_color
 		&"trader_config": ["shop"],
 		# Phase 6 (P4, docs/PHASE6_DESIGN.md §2.7): + service, devotion, reinterred – checked against
 		# tests/fixtures/phase6/piety_config_fixture.tres in test_piety.
-		&"piety_config": ["events"]}
+		&"piety_config": ["events"],
+		# Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §2.4) E12: Ilse pays 3 / 4 – checked in test_tariff_sheet / test_utilization.
+		&"utilization_config": ["sell_prices"]}
 
 
 func test_config_files_in_data_match_the_fixtures() -> void:

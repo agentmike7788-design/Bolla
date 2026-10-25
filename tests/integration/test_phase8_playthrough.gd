@@ -55,8 +55,10 @@ func after_each() -> void:
 ## to +55; lazy8 ≤ +100.
 ## G9 Gehtempo: anatomist8 ends +54 (the day at the natural pace – shops and visits at other hours, fewer purchases in
 ## the village); the measured guard 50 → 60.
-const END_DELTA := {&"kindly8": [15, 40], &"anatomist8": [15, 60], &"lazy8": [35, 100], &"night8": [25, 55],
-		&"night8b": [25, 55], &"save_load8": [15, 40]}
+## Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §10.3, docs/reviews/phase10_wip/balance.md §5): measured (purse + tin) kindly8 −3 (G9 +20), with the emulated Friedhofsgeld −16 – the lower edges follow the
+## measurement (Δ bands, no absolute coins); the upper edges stay (§2.3 Grundsatz 4/5 hold them).
+const END_DELTA := {&"kindly8": [-20, 40], &"anatomist8": [5, 60], &"lazy8": [35, 100], &"night8": [5, 55],
+		&"night8b": [5, 55], &"save_load8": [-20, 40]}
 ## G8 Runde 1 (B8-1): visitors wait up to 100 minutes and the gate bell rings – kindly8 misses at most 20 % of the visits.
 const MISSED_MAX := 0.2
 

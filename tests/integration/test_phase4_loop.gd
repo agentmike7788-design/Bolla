@@ -128,7 +128,7 @@ func test_phase4_loop_with_round_trips() -> void:
 	player.inventory.add_item(&"coin", 10)
 	var coins := player.inventory.count(&"coin")
 	var price := trade.quote(&"hair_braid", 1)
-	assert_true(price >= 4, "§2.6: 4 coins (+ bonus) – %d" % price)
+	assert_true(price >= 3, "§2.6 / Tarif Phase 10 (P1, §2.4.1 E12): 3 coins (+ bonus) – %d" % price)
 	assert_eq(trade.sell(&"hair_braid", 1, player.inventory), price, "sold")
 	assert_eq(player.inventory.count(&"coin"), coins + price, "coins at once")
 	assert_eq(player.inventory.count(&"hair_braid"), 0)

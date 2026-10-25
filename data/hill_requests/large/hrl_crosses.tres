@@ -34,7 +34,7 @@ conditions = {
 "min_day": 2
 }
 days_limit = 3
-reward_coins = 3
+reward_coins = 2
 reward_rep = 2
 cooldown_days = 8
 order = 20

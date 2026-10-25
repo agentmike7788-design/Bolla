@@ -189,7 +189,7 @@ func test_real_tables_content() -> void:
 	assert_false(real.forced_traits_by_day.has(6), "day 6+ is random (v3)")
 	assert_almost(real.base_decay_per_hour, 0.05)
 	assert_eq(real.delivery_minute, 460)
-	assert_eq([real.valuables_coins_min, real.valuables_coins_max], [5, 8])
+	assert_eq([real.valuables_coins_min, real.valuables_coins_max], [4, 7], "Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §2.4) E13: 5–8 → 4–7")
 
 
 ## GP-01 (§2.5 v3): the six slice deliveries of the real tables offer the valuables choice

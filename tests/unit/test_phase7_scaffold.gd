@@ -404,7 +404,8 @@ func test_config_files_in_data_match_the_fixtures() -> void:
 	var anat := Database.config(&"anatomy_config") as AnatomyConfig
 	var fixture_anat := Phase7Fixtures.anatomy_config()
 	for organ: StringName in anat.organs:
-		var want: int = {&"heart": 9, &"eyes": 11, &"hand": 12}.get(organ, int(fixture_anat.organs[organ].base_price))
+		# G7 Runde 2 raised heart / eyes / hand; Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §2.4) E14 lowers them by 1 (data and class default).
+		var want: int = {&"heart": 8, &"eyes": 10, &"hand": 11}.get(organ, int(fixture_anat.organs[organ].base_price))
 		assert_eq(int(anat.organs[organ].base_price), want, "G7 Runde 2 (B7-2): base_price %s" % organ)
 		var rest: Dictionary = (anat.organs[organ] as Dictionary).duplicate(true)
 		var rest_fixture: Dictionary = (fixture_anat.organs[organ] as Dictionary).duplicate(true)

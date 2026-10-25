@@ -71,7 +71,10 @@ func test_shop_data_match_the_contract() -> void:
 	for id: StringName in Phase8Fixtures.SHOP_IDS:
 		var real := Database.shop(id) as ShopData
 		var fixture := Phase8Fixtures.shop(id)
-		assert_eq(real.sells, fixture.sells, "%s sells" % id)
+		var sells := fixture.sells.duplicate(true)
+		if id == &"grocer" and sells.has(&"honey_cake"):
+			sells[&"honey_cake"]["price"] = 2  # Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §2.4) A3: honey cake 1 → 2
+		assert_eq(real.sells, sells, "%s sells" % id)
 		assert_eq(real.buys, fixture.buys, "%s buys" % id)
 		assert_eq(real.coin_reason, fixture.coin_reason, String(id))
 	var hanne := Database.shop(&"peddler") as ShopData

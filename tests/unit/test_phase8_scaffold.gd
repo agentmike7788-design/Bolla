@@ -331,7 +331,7 @@ func test_new_config_contract_values() -> void:
 	assert_eq([v.mourn_minutes, v.wait_minutes, v.goodwill_start, v.goodwill_wish_min, v.pleased_cap_day, v.max_open],
 			[30, 100, 5, 2, 2, 3], "G8 Runde 1 (B8-1): wait_minutes 10 → 100")
 	assert_eq([v.tip_base, v.tip_goodwill_min, v.tip_quality_min, v.tip_cap_day, v.wish_goodwill, v.wish_fail_goodwill,
-			v.villager_wish_rel], [1, 6, 15, 4, 2, -2, 4])
+			v.villager_wish_rel], [1, 6, 15, 3, 2, -2, 4], "Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §2.4) E11: tip cap 4 → 3")
 	assert_almost(v.noise_distance, 8.0)
 	assert_almost(v.talk_distance, 4.0)
 	assert_almost(v.flowers_chance_late, 0.4)
@@ -382,6 +382,9 @@ const DATA_CHANGED_AFTER_W0 := {&"visitor_config": [&"wait_minutes", &"interval_
 		&"reputation_config": [&"event_points"], &"piety_config": [&"events"], &"npc_life_config": [&"reactions", &"mood_rules"],
 		&"grave_care_config": [&"straw_item", &"straw_minutes"], &"npc_config": [&"walk_m_per_minute"],
 		&"apprentice_config": [&"arrive_minute"]}
+## Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §2.4): visitor_config.tip_cap_day 4 → 3 (E11), reputation_config.pay_bonus
+## (E5) – data = class default.
+const TARIFF10 := {&"visitor_config": [&"tip_cap_day"], &"reputation_config": [&"pay_bonus"]}
 
 
 func test_config_files_in_data_match_the_fixtures() -> void:
@@ -394,7 +397,7 @@ func test_config_files_in_data_match_the_fixtures() -> void:
 			continue
 		assert_eq((real.get_script() as Script).get_global_name(), (fixture.get_script() as Script).get_global_name(), String(name))
 		var defaults: Resource = (real.get_script() as GDScript).new()
-		var changed: Array = DATA_CHANGED_AFTER_W0.get(name, [])
+		var changed: Array = DATA_CHANGED_AFTER_W0.get(name, []) + TARIFF10.get(name, [])
 		var new_config := name in Phase8Fixtures.CONFIG_NAMES
 		for prop: Dictionary in real.get_property_list():
 			if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:

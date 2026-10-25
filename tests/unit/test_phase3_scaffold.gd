@@ -190,7 +190,9 @@ func test_reputation_config_values() -> void:
 		assert_true(cfg.min_value <= cfg.start_value and cfg.start_value <= cfg.max_value)
 		assert_eq(cfg.start_value, 25)
 		assert_eq(cfg.tier_thresholds, PackedInt32Array([15, 35, 55, 80]))
-		assert_eq(cfg.pay_bonus, PackedInt32Array([-2, 0, 1, 2, 3]))
+		# Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §2.4) E5: „Gerühmt" +3 → +2 in the data and the class default; the Phase-3 fixture keeps +3.
+		var renowned := 3 if cfg == Phase3Fixtures.reputation_config() else 2
+		assert_eq(cfg.pay_bonus, PackedInt32Array([-2, 0, 1, 2, renowned]))
 		assert_eq(cfg.stipend, PackedInt32Array([0, 1, 2, 3, 4]))
 		assert_eq(cfg.deliveries_per_day, PackedInt32Array([1, 1, 1, 1, 1]), "one corpse per day in every tier (§14.2)")
 		assert_eq(cfg.delivery_every_other_day, PackedInt32Array([1, 0, 0, 0, 0]))

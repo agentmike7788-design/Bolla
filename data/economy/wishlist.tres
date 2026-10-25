@@ -1,0 +1,161 @@
+[gd_resource type="Resource" script_class="WishlistData" load_steps=20 format=3]
+
+[ext_resource type="Script" path="res://src/systems/economy/wishlist_entry_data.gd" id="1_entry"]
+[ext_resource type="Script" path="res://src/systems/economy/wishlist_data.gd" id="2_list"]
+
+[sub_resource type="Resource" id="wl_forge"]
+script = ExtResource("1_entry")
+id = &"wl_forge"
+kind = &"station"
+ref = &"forge"
+coins = 25
+available_flag = &"workshop_open"
+max_count = 1
+
+[sub_resource type="Resource" id="wl_loom"]
+script = ExtResource("1_entry")
+id = &"wl_loom"
+kind = &"station"
+ref = &"loom"
+coins = 10
+available_flag = &"workshop_open"
+max_count = 1
+
+[sub_resource type="Resource" id="wl_mason"]
+script = ExtResource("1_entry")
+id = &"wl_mason"
+kind = &"station"
+ref = &"mason"
+coins = 15
+available_flag = &"workshop_open"
+max_count = 1
+
+[sub_resource type="Resource" id="wl_pult"]
+script = ExtResource("1_entry")
+id = &"wl_pult"
+kind = &"station"
+ref = &"pult"
+coins = 12
+available_flag = &"village_open"
+max_count = 1
+
+[sub_resource type="Resource" id="wl_shed_1"]
+script = ExtResource("1_entry")
+id = &"wl_shed_1"
+kind = &"building"
+ref = &"shed"
+coins = 10
+available_flag = &"buildings_open"
+max_count = 1
+
+[sub_resource type="Resource" id="wl_shed_2"]
+script = ExtResource("1_entry")
+id = &"wl_shed_2"
+kind = &"building"
+ref = &"shed"
+coins = 15
+available_flag = &"buildings_open"
+max_count = 2
+
+[sub_resource type="Resource" id="wl_shed_3"]
+script = ExtResource("1_entry")
+id = &"wl_shed_3"
+kind = &"building"
+ref = &"shed"
+coins = 20
+available_flag = &"buildings_open"
+max_count = 3
+
+[sub_resource type="Resource" id="wl_chapel_1"]
+script = ExtResource("1_entry")
+id = &"wl_chapel_1"
+kind = &"building"
+ref = &"chapel"
+coins = 25
+available_flag = &"buildings_open"
+max_count = 1
+
+[sub_resource type="Resource" id="wl_chapel_2"]
+script = ExtResource("1_entry")
+id = &"wl_chapel_2"
+kind = &"building"
+ref = &"chapel"
+coins = 30
+available_flag = &"buildings_open"
+max_count = 2
+
+[sub_resource type="Resource" id="wl_chapel_3"]
+script = ExtResource("1_entry")
+id = &"wl_chapel_3"
+kind = &"building"
+ref = &"chapel"
+coins = 40
+available_flag = &"buildings_open"
+max_count = 3
+
+[sub_resource type="Resource" id="wl_crypt_2"]
+script = ExtResource("1_entry")
+id = &"wl_crypt_2"
+kind = &"building"
+ref = &"crypt"
+coins = 35
+available_flag = &"buildings_open"
+max_count = 2
+
+[sub_resource type="Resource" id="wl_crypt_3"]
+script = ExtResource("1_entry")
+id = &"wl_crypt_3"
+kind = &"building"
+ref = &"crypt"
+coins = 35
+available_flag = &"buildings_open"
+max_count = 3
+
+[sub_resource type="Resource" id="wl_watering_can"]
+script = ExtResource("1_entry")
+id = &"wl_watering_can"
+kind = &"tool"
+ref = &"watering_can"
+coins = 4
+available_flag = &"p8_open"
+max_count = 1
+
+[sub_resource type="Resource" id="wl_gold"]
+script = ExtResource("1_entry")
+id = &"wl_gold"
+kind = &"per_grave"
+ref = &"gold_leaf"
+coins = 6
+available_flag = &"workshop_open"
+max_count = 60
+
+[sub_resource type="Resource" id="wl_mortsafe"]
+script = ExtResource("1_entry")
+id = &"wl_mortsafe"
+kind = &"per_grave"
+ref = &"mortsafe"
+coins = 12
+available_flag = &"p8_open"
+max_count = 6
+
+[sub_resource type="Resource" id="wl_rose"]
+script = ExtResource("1_entry")
+id = &"wl_rose"
+kind = &"per_grave"
+ref = &"rose_bush"
+coins = 12
+available_flag = &"village_open"
+max_count = 60
+
+[sub_resource type="Resource" id="wl_brass_lantern"]
+script = ExtResource("1_entry")
+id = &"wl_brass_lantern"
+kind = &"item"
+ref = &"brass_lantern"
+coins = 10
+available_flag = &"village_open"
+max_count = 6
+
+[resource]
+script = ExtResource("2_list")
+entries = Array[ExtResource("1_entry")]([SubResource("wl_forge"), SubResource("wl_loom"), SubResource("wl_mason"), SubResource("wl_pult"), SubResource("wl_shed_1"), SubResource("wl_shed_2"), SubResource("wl_shed_3"), SubResource("wl_chapel_1"), SubResource("wl_chapel_2"), SubResource("wl_chapel_3"), SubResource("wl_crypt_2"), SubResource("wl_crypt_3"), SubResource("wl_watering_can"), SubResource("wl_gold"), SubResource("wl_mortsafe"), SubResource("wl_rose"), SubResource("wl_brass_lantern")])

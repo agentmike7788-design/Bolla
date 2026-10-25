@@ -56,7 +56,7 @@ extends Resource
 @export var tip_base: int = 1
 @export var tip_goodwill_min: int = 6
 @export var tip_quality_min: int = 15
-@export var tip_cap_day: int = 4
+@export var tip_cap_day: int = 3  # Tarif Phase 10 (docs/PHASE10_DESIGN.md §2.4.1 E11, P1): 4 → 3
 ## Phase 10 §2.5.8 (P2): every pleased visit drops poor_box_coin into the poor box at the gate (Treasury
 ## .drop_in_poor_box), at most poor_box_cap_day a day.
 @export var poor_box_coin: int = 1
