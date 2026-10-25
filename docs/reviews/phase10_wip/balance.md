@@ -180,6 +180,72 @@ Ergebnis: Kapitel 8 an Tag 47/48, Kapitel 9 vor Tag 60, alle sechs Kapitel bis T
    über `Friendship.apply_morning` → `Orders.accept_owed`), oder in `OrderRules.friend_block_reason` Aufträge aus einem
    `FavorData`-Rückgabe-Pool nur anbieten, wenn sie geschuldet sind. Vorschlag: Dialog-Daten (kleinster Eingriff).
 
+
+## 5. Alte Bots auf dem neuen Tarif (Phase 3–9, HillBot) – Messung W1
+
+Drei Läufe derselben Tests: **G9** (Daten von W0 `926bffa`, Kopie des Projekts), **P1** (dieser Stand: Tarif ohne E1) und
+**P1+FG** (dieser Stand mit `ParishEmu`: Pflegegeld aus, Friedhofsgeld nach Vertrag – die Erwartung **[nach P2]**).
+Werte: Kapiteltag · Beutel Start → Ende (Δ) · niedrigster Morgen (Phase 8: Beutel + Lohndose).
+
+| Bot | G9 | P1 | P1+FG [nach P2] |
+|---|---|---|---|
+| P4 reverent / mixed / save_load4 | Kap 19 | Kap 19 | Kap 19 |
+| P4 harvester | Kap 24 (Ilse +154, Wertsachen 38) | Kap 24 (Ilse +126, Wertsachen 32) | Kap 24 |
+| P4 procrastinator | Kap 23 | Kap 23 | Kap 24 |
+| P5 reverent5 / save_load5 | Kap 24 · 125→25 (−100) · min 17 | Kap 24 · 125→25 · min 17 | Kap 26 · 125→19 · min **11** |
+| P5 toolsmith | Kap 26 · 125→39 · min 19 | Kap 26 · min 19 | Kap 24 · 125→17 · min 11 |
+| P5 mender | Kap 24 · 123→37 · min 17 | Kap 24 · min 17 | Kap 26 · 123→21 · min 17 |
+| P5 harvester5 | Kap 29 · 178→102 (−76) | Kap 29 · 178→102 | Kap 29 · 178→89 (−89) |
+| P5 crafter (neues Spiel) | Kap 20 · 5→51 | Kap **22** · 5→40 | Kap 21 · 5→25 |
+| P6 reverent6 / save_load6 | Kap 37 · 27→42 (+15) · min 14 | Kap 37 · 27→37 (+10) · min **11** | Kap 37 · 27→31 · min **4** |
+| P6 mortician | Kap 38 · 27→28 · min 12 | Kap 38 · 27→22 · min 6 | Kap 39 · 27→9 · min 5 |
+| P6 mender6 | Kap 37 · 41→55 · min 8 | Kap 37 · 41→50 · min 13 | **kein Kapitel** (Gebäude 100 statt 115) · 41→34 |
+| P6 harvester6 | Kap 41 · 102→111 (+9) | Kap 41 · 102→94 (−8) | Kap 41 · 102→64 (−38) |
+| P6 founder (neues Spiel) | Kap 27 · 5→43 | Kap **29** · 5→46 | Kap 29 · 5→39 |
+| P7 neighbor7 / save_load7 | Kap 50 · 20→51 (+31) | Kap 50 · 20→**21** (+1) | Kap 50 · 20→16 |
+| P7 anatomist7 | Kap 50 · 20→81 (+61) · Präparate ≥ 9 | Kap 50 · 20→38 (+18) · Präparate **7** | Kap 50 · 20→21 · Präparate **3** |
+| P8 kindly8 / save_load8 (Beutel + Dose) | Kap 62 · +20 | Kap 62 · **−3** | Kap 62 · −16 |
+| P8 anatomist8 | Kap 61 · 60→102 (+42) | Kap 61 · 60→83 (+23) | Kap 61 · 60→73 (+13) |
+| P8 night8 / night8b | Kap 61 · +40 | Kap 61 · +27 | Kap 61 · +13 |
+| P8 lazy8 | – · +91 | – · +68 | – · +71 |
+| P8 founder8 | Kap 55 · 52→85 (+33) | Kap 55 · 52→73 (+21) | Kap 55 · 52→53 (+1) |
+| P9 kindly9 | Kap 69 · 59→120 (+61) | Kap 69 · 59→113 (+54) | Kap 69 · 59→127 (+68) |
+| P9 stay9 / public9 / silent9 | Kap 74 · +65 | Kap 74 · +57 | Kap 74 · +68 … +70 |
+| P9 letters9 | (G9 gemessen +55 … +64) | Kap 70 · +54 | Kap 70 · +66 |
+| P9 trader9 | Kap 72 | Kap 72 · 91→96 (+5) | Kap 72 · 91→108 (+17) |
+| P9 lazy9 | – | – · +85 (kindly9 + 31 ≤ 35 ✓ Grundsatz 4) | – · +101 (kindly9 + 33 ✓) |
+| P9 founder9 | Kap 67 | Kap 67 · +63 | Kap 67 · +64 |
+| HillBot Pflicht + Bitten, Tag 14 | 105 (Bitten 32) | 96 (Bitten 26) | 91 |
+| HillBot Pflicht + große Bitten, Tag 14 | 129 · Leerlauf 1887 Min | **110** · 1910 Min (+1,2 %) | 99 · 1874 Min |
+| HillBot andächtig + große Bitten, Tag 14 | 99 | 91 | 87 |
+
+**Kapiteltage (§14.7, ±2):** P1 hält überall ±2 (crafter 20 → 22 und founder 27 → 29 genau am Rand). **[nach P2]**:
+alle ±2 außer **`mender6` (Phase 6): kein Kapitel im Testfenster** – sofort gemeldet; Ursache: die Woche mit dem ersten
+(anteiligen) Friedhofsgeld fällt in die Gebäude-Phase, 13 Münzen fehlen für die letzte Pflichtstufe. Gegenmittel nach
+§2.4.4 Schritt 1 (P2-Daten): erste Woche nicht anteilig für geladene Stände **oder** Bedarfsschwelle 60 → 70. Muss nach
+dem P2-Merge nachgemessen werden.
+
+**Neu-Bänder (nur Zahlen, Kommentar „Tarif Phase 10“, alle anderen Erwartungen unverändert):**
+| Test | alt | neu | Grund (gemessen) |
+|---|---|---|---|
+| `test_phase5_playthrough::test_reverent5` „nie unter ≈ 15“ | ≥ 15 | ≥ 10 | P1 17, [nach P2] 11; §2.3 P5-Boden ≥ 10 |
+| `test_phase6_playthrough::test_reverent6` „ab B2 nie unter 12“ | ≥ 12 | ≥ 8 | P1 11; §2.3 Boden würdevoll ≥ 8 ([nach P2] 4 ✗ – P2) |
+| `test_phase7_playthrough::test_neighbor7` Ende | 30–110 | 10–110 | P1 21, [nach P2] 16; Einnahmen gleich (≈ 290), der Bot gibt den Überschuss für Runden/Spenden aus |
+| `test_phase7_playthrough::test_anatomist7` Präparate | ≥ 9 | ≥ 7 | **Lead bitte bestätigen:** keine Münzzahl, aber Münzfolge – E14/A3 halten den Bot an Tag 40–42 unter seiner 20-Münzen-Schwelle für Gläser (`Phase7Bot._anatomy_buys`); [nach P2] 3 |
+| `test_phase8_playthrough` `END_DELTA` | kindly8 +15…+40, anatomist8 +15…, night8 +25… | kindly8/save_load8 −20…+40, anatomist8 +5…+60, night8/b +5…+55 | P1 −3 / +23 / +27; [nach P2] −16 / +13 / +13; obere Kanten bleiben |
+| `test_hill_requests_bot` `IDLE_GUARD` | 1900 | 1980 | Leerlauf darf ±5 % (§10.3): 1887 + 5 %; gemessen 1910 |
+| `test_hill_requests_bot` Tag 14 (große Bitten) | ≤ 130 / ≤ 110 | ≤ 115 / ≤ 95 | P1 110 / 91, [nach P2] 99 / 87 (§2.4.3 rechnete ≈ 85) |
+
+Unverändert grün: Phase 3 (keine Münzbänder), Phase 4, Phase 9 (`END_MIN_ACTIVE` +40, `END_MAX` +70 – [nach P2]
+liegen silent9 +70 und public9 +68 an der oberen Kante, nachmessen).
+
+**Wirkung je Abschnitt gegen §2.4.3 (Schätzung → Messung P1):** HillBot große Bitten 129 → ≈ 85 geschätzt, **110**
+gemessen (P1) / 99 ([nach P2]); `neighbor7` +40 → ≈ +25 geschätzt, **+1** gemessen (Einnahmen gleich, Ausgaben höher);
+`anatomist7` +51 → ≈ +30 geschätzt, **+18**; `kindly9` +64 → ≈ +45 geschätzt, **+54** (P1) / **+68** ([nach P2] – das
+Friedhofsgeld 15/Woche bei Ehrwürdig ersetzt die Pflegegeld-Kappe bei 80, die `kindly9` bisher fast nichts zahlte);
+`lazy9` +93 → ≈ +60 geschätzt, **+85**. Das Spätspiel wird also erst mit Markt und Abgaben (P2/P4) knapper – wie im
+Vertrag vorgesehen (§2.4.3 Hinweis), aber stärker: **[nach P2] Δ der Phase-9-Bots steigt eher, als dass es fällt.**
+
 ## 6. Patch für den Merge mit P2 (E1, Pflegegeld → 0)
 
 Zusammen mit P2s `reputation.gd` (Pflegegeld aus) und `Treasury` in der Welt:
@@ -194,3 +260,27 @@ Zusammen mit P2s `reputation.gd` (Pflegegeld aus) und `Treasury` in der Welt:
 - `tests/unit/test_tariff_sheet.gd`: `OWNED_ELSEWHERE` ohne `E1`/`E1b`; Tarifblatt neu erzeugen
 - danach die alten Bots und `curve10` **ohne** `ParishEmu` nachmessen (sie tritt bei `Systems/Treasury` von selbst zur
   Seite); die [nach P2]-Werte in §5 sind die Erwartung dafür.
+
+## 7. Offene Punkte
+
+**P2 (Gemeindekasse):** E1 mit dem Patch §6 zusammen mergen. Nach dem Merge: [nach P2]-Werte nachmessen
+(`ParishEmu` tritt von selbst zur Seite). Befunde aus der Emulation: `mender6` verliert das Phase-6-Kapitel,
+`reverent6` fällt auf 4 Münzen morgens (unter den Boden 5 – der Notgroschen greift erst sonntags), `anatomist7` nur 3
+Präparate. Vorschläge in Reihenfolge §2.4.4 Schritt 1: (a) für geladene Stände erste Woche **nicht** anteilig
+(`TreasuryRules.prorate` nur für ein neues Spiel), (b) Bedarfsschwelle 60 → 70, (c) Notgroschen auch am Montagmorgen
+prüfen. Der Pflegeanteil der Emulation (Pflegestellen Stufe 0, keine welken Blumen, nicht aufgewühlt) ist eine
+Näherung von `TreasuryRules.care_share`.
+
+**P4 (Markt):** E18/A10/A11 sind im Tarifblatt vorbereitet und werden grün, sobald `data/market/**` da ist (der Test
+prüft dann den Vertragswert). Rosenstock/Messinglaterne stehen schon in der Wunschliste; `WishlistProbe` fragt
+`GraveCare.has_rose(grave_id)` – bitte so benennen oder melden.
+
+**P5:** A1 (Pachtbrief 0) in `carter.tres` + `test_dialogue.gd` (`test_carter_license_once_for_twenty`) – danach
+Tarifblatt erzeugen; `Phase5Bot` plant den Brief noch mit 20 Münzen (`_wishes`, harmlos, nur später).
+
+**Lead:** (1) E12-Aufschlag-Lesart (§1), (2) Band `anatomist7` Präparate ≥ 7 (§5), (3) Freundschafts-Patch und
+Gegengefallen ohne Gefallen (§4), (4) Prüfpunkt Tag 14 der Wunschliste (§3 Befund 4).
+
+**W3:** `founder10` an die Kette hängen (`EconomyCurveBot.STAGES`), `curve10` mit `P10_CURVE=1` und – sobald P2/P4
+da sind – `P10_CURVE_STRICT=1` laufen lassen; `curve10_harvest` (B). Der Kurven-Bot kauft noch nichts aus der
+Wunschliste (die Spätspiel-Senke fehlt deshalb in der Kurve).
