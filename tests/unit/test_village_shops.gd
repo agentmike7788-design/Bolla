@@ -310,8 +310,10 @@ func test_real_shop_data_matches_the_contract() -> void:
 		var p8 := Phase8Fixtures.shop(f.id) if f.id in Phase8Fixtures.SHOP_IDS else null
 		assert_eq(s.sells.keys(), (p8 if p8 != null else f).sells.keys(), String(f.id))
 		for item: StringName in f.sells:
+			# Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §2.4) A3: Theres' honey cake 1 → 2.
+			var price: int = 2 if f.id == &"grocer" and item == &"honey_cake" else int(f.sells[item].price)
 			assert_eq([s.sells[item].price, s.sells[item].per_day, s.sells[item].get("requires_tier", &"")],
-					[f.sells[item].price, f.sells[item].per_day, f.sells[item].get("requires_tier", &"")], "%s %s" % [f.id, item])
+					[price, f.sells[item].per_day, f.sells[item].get("requires_tier", &"")], "%s %s" % [f.id, item])
 		for item: StringName in f.buys:
 			assert_true(Database.has_item(item), "%s buys a known item %s" % [f.id, item])
 		for item: StringName in f.sells:

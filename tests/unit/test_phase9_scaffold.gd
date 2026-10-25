@@ -114,7 +114,8 @@ const DATA_CLASSES := {
 ## (class default and data together).
 const DATA_CHANGED_AFTER_W0 := {&"npc_life_config": [&"mood_rules", &"reactions"], &"who_knows_config": [&"quest_id",
 		&"gone_after_minutes", &"b_confidant_rel", &"death_paths", &"death_flags"], &"letters_config": [&"read_minutes"],
-		&"reputation_config": [&"event_points"], &"piety_config": [&"events"], &"relationship_config": [&"gains"]}
+		&"reputation_config": [&"event_points", &"pay_bonus"], &"piety_config": [&"events"], &"relationship_config": [&"gains"]}
+# pay_bonus: Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §2.4) E5 („Gerühmt" +2).
 
 
 func test_stub_scripts_load_with_their_class_names() -> void:

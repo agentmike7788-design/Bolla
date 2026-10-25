@@ -5,7 +5,7 @@ extends TestCase
 ## chain 1 → … → 9, and the W1 fixtures (tests/fixtures/phase10, Phase10Fixtures, tests/fixtures/saves_v8).
 
 ## Stubs whose owners have filled them in (W1) – no longer marked "## STUB (".
-const IMPLEMENTED: PackedStringArray = []
+const IMPLEMENTED: PackedStringArray = ["WishlistProbe"]
 ## Stub scripts by W1 package (path → class_name). Owners replace the bodies, never the names.
 const STUBS := {
 	# P1
@@ -90,8 +90,9 @@ const DATA_CLASSES := {
 	"CalendarRules": "res://src/systems/time/calendar_rules.gd",
 }
 ## Properties changed in the data (and the class default together) after the W0 hand-over; the fixtures keep the W0
-## values. Empty at W0.
-const DATA_CHANGED_AFTER_W0 := {}
+## values. Empty at W0. P1 (W1, Tarif §2.4.1 E5/E11): „Gerühmt" +2, the tip cap 3 (E1, the stipend → 0, comes with P2).
+const DATA_CHANGED_AFTER_W0 := {&"reputation_config": [&"pay_bonus"],
+		&"visitor_config": [&"tip_cap_day"]}
 
 
 func test_stub_scripts_load_with_their_class_names() -> void:
@@ -307,9 +308,10 @@ func test_extended_data_classes() -> void:
 	assert_eq(reactions.get(&"register_sold"), 2, "the Phase-9 reactions stay")
 	var v := VisitorConfig.new()
 	assert_eq([v.poor_box_coin, v.poor_box_cap_day], [1, 2], "§3.2 / §2.5.8")
-	assert_eq(v.tip_cap_day, 4, "W0: the tip cap stays (P1 sets 3 in W1, §2.4.1 E11)")
+	assert_eq(v.tip_cap_day, 3, "P1 W1: the tip cap 4 → 3 (§2.4.1 E11)")
 	var r := ReputationConfig.new()
-	assert_eq([Array(r.stipend), r.stipend_purse_cap], [[0, 1, 2, 3, 4], 80], "W0: the stipend stays (P1/P2 set 0 in W1, E1)")
+	assert_eq([Array(r.stipend), r.stipend_purse_cap], [[0, 1, 2, 3, 4], 80], "W1 P1: the stipend stays until P2's merge (E1)")
+	assert_eq(Array(r.pay_bonus), [-2, 0, 1, 2, 2], "P1 W1: „Gerühmt\" +2 (E5)")
 
 
 func test_game_state_stats_and_coin_reasons() -> void:

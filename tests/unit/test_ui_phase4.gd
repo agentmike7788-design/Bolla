@@ -194,8 +194,8 @@ func test_loss_and_step_texts() -> void:
 
 func test_harvest_consequence_line_without_piety() -> void:
 	var line := Phase4Texts.consequence_line(UtilizationRules.effects(&"hair"))
-	assert_eq(line, "+1 Zopf (Ilse zahlt 4) · Grabqualität −1 · Ruf −3 · Der Geist wird es wissen.")
-	assert_eq(Phase4Texts.consequence_line(UtilizationRules.effects(&"teeth"), 1), "+1 Zahnsäckchen (Ilse zahlt 6) · Grabqualität −2 · Ruf −5 · Der Geist wird es wissen.")
+	assert_eq(line, "+1 Zopf (Ilse zahlt 3) · Grabqualität −1 · Ruf −3 · Der Geist wird es wissen.")
+	assert_eq(Phase4Texts.consequence_line(UtilizationRules.effects(&"teeth"), 1), "+1 Zahnsäckchen (Ilse zahlt 5) · Grabqualität −2 · Ruf −5 · Der Geist wird es wissen.")
 	assert_false(line.contains("Pietät"), "piety is never a number (§7)")
 	assert_eq(Phase4Texts.consequence_line({}), "")
 
@@ -292,7 +292,7 @@ func test_harvest_button_is_two_stage_and_never_default_focus() -> void:
 	t.select_tab(&"harvest")
 	var hair: Button = t.harvest_rows[&"hair"].button
 	assert_eq(hair.text, "Zopf abschneiden · 10 Min")
-	assert_eq((t.harvest_rows[&"hair"].line as Label).text, "+1 Zopf (Ilse zahlt 4) · Grabqualität −1 · Ruf −3 · Der Geist wird es wissen.")
+	assert_eq((t.harvest_rows[&"hair"].line as Label).text, "+1 Zopf (Ilse zahlt 3) · Grabqualität −1 · Ruf −3 · Der Geist wird es wissen.")
 	assert_true((t.harvest_rows[&"teeth"].button as Button).disabled)
 	assert_eq((t.harvest_rows[&"teeth"].reason as Label).text, "Werkzeug fehlt – Ilse Kranich hat es.")
 	panel.focus_default()

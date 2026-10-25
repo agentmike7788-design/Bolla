@@ -149,6 +149,10 @@ func test_real_config_matches_the_phase4_fixture() -> void:
 	var phase4 := Phase10Fixtures.reputation_config()
 	for prop: Dictionary in ReputationConfig.new().get_property_list():
 		if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
+			if prop.name == "pay_bonus":
+				# Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §2.4) E5: „Gerühmt" +3 → +2 (test_tariff_sheet); the fixture keeps the G9 table.
+				assert_eq(real.pay_bonus, PackedInt32Array([-2, 0, 1, 2, 2]), "pay_bonus (Tarif Phase 10)")
+				continue
 			assert_eq(real.get(prop.name), phase4.get(prop.name), String(prop.name))
 
 

@@ -36,6 +36,19 @@ class FounderBot7 extends Phase7Bot:
 		out[&"founder7"] = Phase7Bot._with7({}, {}, {"keep_p5": true, "optional": [&"crypt", &"chapel"]}, {})
 		return out
 
+	## P1 W1 (W0 finding 12/2): the village menus offer the Phase-8 return favours („[Gegengefallen] …", category
+	## friend) as plain orders through order_offerable – without an owed favour and before p8_open. On this line the
+	## village opens at day 28, founder7 took of_quast_return_1 / of_mangold_return_2 (2 herb bundles, 4 yarn) that no
+	## bot ever delivers; accepted that way they never lapse and fill Orders.max_active_friend (2), so every
+	## step_accept of founder8 failed silently. founder7 leaves friend orders alone (as Phase8Bot does once p8 is open).
+	func _score(npc_id: StringName, c: DialogueChoice, visited: Dictionary) -> int:
+		for a: String in c.actions:
+			if a.get_slice(":", 0) == "order_accept":
+				var o := orders.order_data(StringName(a.get_slice(":", 1)))
+				if o != null and o.category == OrderData.CATEGORY_FRIEND:
+					return 0
+		return super._score(npc_id, c, visited)
+
 
 var tree: SceneTree
 var last_day: int = 91

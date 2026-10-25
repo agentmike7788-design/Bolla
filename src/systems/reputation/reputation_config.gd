@@ -14,9 +14,10 @@ extends Resource
 @export var target_per_quality: float = 0.6
 @export var drift_factor: float = 0.34
 @export var drift_max: int = 6
-## Coins added to every burial payment, per tier.
-@export var pay_bonus: PackedInt32Array = [-2, 0, 1, 2, 3]
-## Daily stipend (coins at day_started), per tier.
+## Coins added to every burial payment, per tier. Tarif Phase 10 (docs/PHASE10_DESIGN.md §2.4.1 E5, P1): „Gerühmt" +3 → +2.
+@export var pay_bonus: PackedInt32Array = [-2, 0, 1, 2, 2]
+## Daily stipend (coins at day_started), per tier. Tarif Phase 10 (§2.4.1 E1): → 0 together with the Friedhofsgeld
+## (P2 merge: reputation.gd switches it off, the data follow) – without it the founder line stalls in Phase 5.
 @export var stipend: PackedInt32Array = [0, 1, 2, 3, 4]
 ## G8 Runde 1 (E8-2, user decision „jetzt ausgleichen"): from stipend_cap_flag on (Phase 8 open) the Gemeinde pays the
 ## stipend only to a gravekeeper in need – with stipend_purse_cap coins or more (purse + the chests of the hut and
