@@ -48,6 +48,8 @@ var spent_by_day: Dictionary = {}
 ## stage → first morning
 var stage_days: Dictionary = {}
 var problems: PackedStringArray = []
+## stage → the bot that played it (traces for diagnosis).
+var bots: Dictionary = {}
 ## stage → {end_day, flags, goal} at the end of the stage (diagnosis of the hand-overs).
 var stage_info: Dictionary = {}
 ## The fixture line's hand-over (07:00, save, load); false = the next bot binds to the running world.
@@ -71,6 +73,7 @@ func run() -> void:
 		if TimeManager.day > last_day:
 			break
 		var bot := _make(StringName(stage[0]))
+		bots[stage[0]] = bot
 		bot.flags = bot.flags.duplicate(true)
 		bot.bind()
 		bot.watch()
