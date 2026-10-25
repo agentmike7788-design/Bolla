@@ -78,7 +78,7 @@ class FounderBot7 extends Phase7Bot:
 ## Measurement only (P1, W1 – until P2's Treasury is merged; never part of a real world): the contract's Friedhofsgeld
 ## (§2.5.2 with the TreasuryConfig data) so the old bots and curve10 can be measured on the whole Phase-10 tariff.
 ## Schau on Sunday from schau_minute: tier = Graveyard.rating(), care share = occupied graves (FILLED / MARKED) whose dirt
-## spots are at level ≤ 1, no wilted flowers, not disturbed (an approximation of TreasuryRules.care_share), disturbed
+## spots are clean (level 0: no weeds / leaves), no wilted flowers, not disturbed (an approximation of TreasuryRules.care_share), disturbed
 ## graves, holdings (Reputation.holdings) → quality (≤ quality_cap) + need ⌈(60 − P)/4⌉ ≤ 15 + hardship (to 10, ≤ 8); the
 ## first week prorated (days seen / 7, rounded up). Paid on Monday from pay_minute (or later) into the pack as
 ## payment_received("Friedhofsgeld"). stipend_off: the reputation config of the run pays no Pflegegeld any more (E1).
@@ -124,6 +124,9 @@ class ParishEmu extends Node:
 		var world := get_tree().current_scene as WorldRoot
 		if world == null or world.get_player() == null or world.get_node_or_null("Systems/Graveyard") == null:
 			return
+		# P2's Treasury in the world pays the real Friedhofsgeld – the emulation steps aside.
+		if world.get_node_or_null("Systems/Treasury") != null:
+			return
 		if open_day < 0 or day < open_day:
 			open_day = day
 		var week := CalendarRules.week_of(day)
@@ -165,7 +168,7 @@ class ParishEmu extends Node:
 			if care != null and StringName(care.call(&"flowers_state", g.id)) == &"wilted":
 				bad = true
 			for sid: String in spots.get(g.id, []):
-				if clean != null and int(clean.call(&"level", sid)) > 1:
+				if clean != null and int(clean.call(&"level", sid)) > 0:
 					bad = true
 			if not bad:
 				tended += 1
