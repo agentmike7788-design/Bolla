@@ -69,7 +69,8 @@ func test_reverent6() -> void:
 	assert_true(bot.spent_p6 >= 115, "Phase-6 spending ≥ 115 (%d)" % bot.spent_p6)
 	assert_true(end >= 0 and end <= 45, "end 0–45 (%d)" % end)
 	var lowest_b2 := _lowest_morning_from(bot, 31)
-	assert_true(lowest_b2 >= 12, "morning from B2 never below 12 (%d)" % lowest_b2)
+	# Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §10.3, docs/reviews/phase10_wip/balance.md §5): G9 14, P1 11 – the band is §2.3's floor of the dignified way (≥ 8); with the emulated Friedhofsgeld 4 [nach P2].
+	assert_true(lowest_b2 >= 8, "morning from B2 never below 8 (%d)" % lowest_b2)
 	assert_true(bot.services.size() >= 3, "≥ 3 services (%d)" % bot.services.size())
 	assert_true(bot.ossuary.reinterred().size() >= 5, "≥ 5 reinterred (%d)" % bot.ossuary.reinterred().size())
 	# §2.8: the buildings take most of what Phase 6 brings in.

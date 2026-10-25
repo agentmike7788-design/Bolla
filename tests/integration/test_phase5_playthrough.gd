@@ -60,7 +60,8 @@ func test_reverent5() -> void:
 	# §2.8 / the user: most of the surplus spent, never poor (≈ 15).
 	var available := bot.start_coins + bot.total_income()
 	assert_true(bot.spent_p5 * 100 >= 75 * available, "most of the surplus spent (%d of %d)" % [bot.spent_p5, available])
-	assert_true(bot.lowest_morning_p5 >= 15, "never below ≈ 15 in the morning (%d)" % bot.lowest_morning_p5)
+	# Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §10.3, docs/reviews/phase10_wip/balance.md §5): G9 17, P1 17, with the Friedhofsgeld (P2, measured by emulation) 11 – the band is §2.3's P5 floor (≥ 10).
+	assert_true(bot.lowest_morning_p5 >= 10, "never below 10 in the morning (%d)" % bot.lowest_morning_p5)
 	assert_true(bot.stones_set.size() >= 6, "≥ 6 graves set anew (%d)" % bot.stones_set.size())
 	assert_eq(bot.gilded, 3, "gold for 3 stones")
 	reverent_rows = bot.rows.duplicate(true)

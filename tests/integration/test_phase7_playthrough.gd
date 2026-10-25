@@ -61,7 +61,9 @@ func test_neighbor7() -> void:
 	assert_eq(bot.start_coins, 20, "the measured start purse (W0 note 1)")
 	assert_true(bot.chapter7_day > 0 and bot.chapter7_day <= 52, "neighbor7: chapter by B13 (%d)" % bot.chapter7_day)
 	assert_true(bot.chapter7_day - bot.open7_day >= 10, "neighbor7: chapter not before B11 (%d, open %d)" % [bot.chapter7_day, bot.open7_day])
-	assert_true(end >= 30 and end <= 110, "end 30–110 (%d)" % end)
+	# Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §10.3, docs/reviews/phase10_wip/balance.md §5): G9 51, P1 21, with the emulated Friedhofsgeld 16 – the income stays (≈ 290), the bot spends the surplus on
+	# rounds and donations; band start 20 −10 … +90.
+	assert_true(end >= 10 and end <= 110, "end 10–110 (%d)" % end)
 	assert_true(bot.lowest_morning_p7 >= 5, "morning never below 5 (%d)" % bot.lowest_morning_p7)
 	assert_true(bot.orders.done_count() >= 6, "≥ 6 orders (%d)" % bot.orders.done_count())
 	assert_true(GameState.get_stat(&"piety") >= 90, "piety not fallen (%d)" % GameState.get_stat(&"piety"))
@@ -77,7 +79,10 @@ func test_anatomist7() -> void:
 		return
 	var end := bot.inv().count(&"coin")
 	assert_true(GameState.flag_on(&"anatomy_known"), "the case accepted")
-	assert_true(GameState.get_stat(&"specimens_taken") >= 9, "specimens taken (%d)" % GameState.get_stat(&"specimens_taken"))
+	# Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §10.3, docs/reviews/phase10_wip/balance.md §5): E14 (−1 je Organ) and A3 (honey cake 2) leave the bot below its 20-coin threshold for jars (Phase7Bot
+	# _anatomy_buys) on days 40–42 – 9 → 7 specimens (with the emulated Friedhofsgeld 3). Lead: confirm the band or
+	# lower the bot's threshold (W3).
+	assert_true(GameState.get_stat(&"specimens_taken") >= 7, "specimens taken (%d)" % GameState.get_stat(&"specimens_taken"))
 	assert_true(bot.chapter7_day > 0, "anatomist7: chapter (%d)" % bot.chapter7_day)
 	assert_true(bot.chapter7_day - bot.open7_day >= 10, "anatomist7: chapter not before B11 (%d, open %d)" % [bot.chapter7_day, bot.open7_day])
 	assert_true(bot.lowest_morning_p7 >= 5, "morning never below 5 (%d)" % bot.lowest_morning_p7)

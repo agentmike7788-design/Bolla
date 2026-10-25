@@ -11,7 +11,8 @@ const TIMEOUT := 900.0
 const DAYS := 14
 ## Phase 9: the measured level of the duty player with large requests – Benutzerentscheidung 18.10.2026 (QA9-H1): the
 ## measured 1887 min stay as they are (accepted instead of §2.3.6's 1700); the guard keeps that level.
-const IDLE_GUARD := 1900
+## Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §10.3, docs/reviews/phase10_wip/balance.md §5): the idle time may move by ±5 % (1887 → 1910 measured) – the guard is 1887 + 5 %.
+const IDLE_GUARD := 1980
 
 static var idle_before: Dictionary = {}
 
@@ -96,7 +97,8 @@ func test_e_duty_player_with_large_requests() -> void:
 	assert_true(long_days <= 3, "≤ 3 of 11 days with > 240 min idle (%d)" % long_days)
 	var failed := bot.large_count(HillRequests.STATE_FAILED, DAYS)
 	assert_true(failed <= 1, "≤ 1 large request missed in days 1–14 (%d)" % failed)
-	assert_true(int(bot.rows.back().coins) <= 130, "day 14 ≤ 130 coins (%d)" % int(bot.rows.back().coins))
+	# Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §10.3, docs/reviews/phase10_wip/balance.md §5): E8/E9 – G9 129, P1 110, with the emulated Friedhofsgeld 99 (§2.4.3 expected ≈ 85).
+	assert_true(int(bot.rows.back().coins) <= 115, "day 14 ≤ 115 coins (%d)" % int(bot.rows.back().coins))
 	if idle_before.has(&"duty"):
 		print("HILLBOT duty: %d → %d min (%+d %%)" % [int(idle_before[&"duty"]), idle,
 				roundi(100.0 * float(idle - int(idle_before[&"duty"])) / float(int(idle_before[&"duty"])))])
@@ -112,7 +114,8 @@ func test_f_reverent_with_large_requests() -> void:
 	var half := bot.large_count(HillRequests.STATE_HALF, DAYS)
 	var failed := bot.large_count(HillRequests.STATE_FAILED, DAYS)
 	assert_true(half + failed <= 2, "≤ 2 large requests half / missed in days 1–14 (%d + %d)" % [half, failed])
-	assert_true(int(bot.rows.back().coins) <= 110, "day 14 ≤ 110 coins (%d)" % int(bot.rows.back().coins))
+	# Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §10.3, docs/reviews/phase10_wip/balance.md §5): G9 99, P1 91, with the emulated Friedhofsgeld 87.
+	assert_true(int(bot.rows.back().coins) <= 95, "day 14 ≤ 95 coins (%d)" % int(bot.rows.back().coins))
 
 
 func _print_large(bot: HillBot, who: String) -> void:

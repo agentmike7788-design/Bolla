@@ -179,3 +179,18 @@ Ergebnis: Kapitel 8 an Tag 47/48, Kapitel 9 vor Tag 60, alle sechs Kapitel bis T
    `order_offerable:of_*_return_*` streichen bzw. an `favor_owed:<npc>` binden (die echten Gegengefallen kommen ohnehin
    über `Friendship.apply_morning` → `Orders.accept_owed`), oder in `OrderRules.friend_block_reason` Aufträge aus einem
    `FavorData`-Rückgabe-Pool nur anbieten, wenn sie geschuldet sind. Vorschlag: Dialog-Daten (kleinster Eingriff).
+
+## 6. Patch für den Merge mit P2 (E1, Pflegegeld → 0)
+
+Zusammen mit P2s `reputation.gd` (Pflegegeld aus) und `Treasury` in der Welt:
+- `data/config/reputation_config.tres`: `stipend = PackedInt32Array(0, 0, 0, 0, 0)`, `stipend_purse_cap = 0`
+- `src/systems/reputation/reputation_config.gd`: dieselben Klassen-Defaults
+- `tests/unit/test_phase10_scaffold.gd`: `DATA_CHANGED_AFTER_W0.reputation_config` + `stipend`, `stipend_purse_cap`; die
+  Zeile „the stipend stays until P2's merge“ → `[[0, 0, 0, 0, 0], 0]`
+- `tests/unit/test_phase8_scaffold.gd` `TARIFF10.reputation_config` + `stipend` (+ `stipend_purse_cap` in Phase 9),
+  `test_phase3_scaffold.test_reputation_config_values` (Daten/Default 0/0/0/0/0), `test_reputation` (wie `pay_bonus`),
+  `test_g8_round1.test_stipend_stays_in_the_parish_chest_from_eighty_coins` (prüft dann die Phase-8-Fixture statt der
+  Daten oder entfällt – P2 entscheidet mit dem Lead)
+- `tests/unit/test_tariff_sheet.gd`: `OWNED_ELSEWHERE` ohne `E1`/`E1b`; Tarifblatt neu erzeugen
+- danach die alten Bots und `curve10` **ohne** `ParishEmu` nachmessen (sie tritt bei `Systems/Treasury` von selbst zur
+  Seite); die [nach P2]-Werte in §5 sind die Erwartung dafür.
