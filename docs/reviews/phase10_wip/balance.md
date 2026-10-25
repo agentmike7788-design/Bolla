@@ -211,10 +211,10 @@ Werte: Kapiteltag · Beutel Start → Ende (Δ) · niedrigster Morgen (Phase 8: 
 | P8 founder8 | Kap 55 · 52→85 (+33) | Kap 55 · 52→73 (+21) | Kap 55 · 52→53 (+1) |
 | P9 kindly9 | Kap 69 · 59→120 (+61) | Kap 69 · 59→113 (+54) | Kap 69 · 59→127 (+68) |
 | P9 stay9 / public9 / silent9 | Kap 74 · +65 | Kap 74 · +57 | Kap 74 · +68 … +70 |
-| P9 letters9 | (G9 gemessen +55 … +64) | Kap 70 · +54 | Kap 70 · +66 |
-| P9 trader9 | Kap 72 | Kap 72 · 91→96 (+5) | Kap 72 · 91→108 (+17) |
-| P9 lazy9 | – | – · +85 (kindly9 + 31 ≤ 35 ✓ Grundsatz 4) | – · +101 (kindly9 + 33 ✓) |
-| P9 founder9 | Kap 67 | Kap 67 · +63 | Kap 67 · +64 |
+| P9 letters9 | Kap 70 · +61 | Kap 70 · +54 | Kap 70 · +66 |
+| P9 trader9 | Kap 72 · 91→108 (+17) | Kap 72 · 91→96 (+5) | Kap 72 · 91→108 (+17) |
+| P9 lazy9 | – · +91 | – · +85 (kindly9 + 31 ≤ 35 ✓ Grundsatz 4) | – · +101 (kindly9 + 33 ✓) |
+| P9 founder9 | Kap 67 · +72 | Kap 67 · +63 | Kap 67 · +64 |
 | HillBot Pflicht + Bitten, Tag 14 | 105 (Bitten 32) | 96 (Bitten 26) | 91 |
 | HillBot Pflicht + große Bitten, Tag 14 | 129 · Leerlauf 1887 Min | **110** · 1910 Min (+1,2 %) | 99 · 1874 Min |
 | HillBot andächtig + große Bitten, Tag 14 | 99 | 91 | 87 |
