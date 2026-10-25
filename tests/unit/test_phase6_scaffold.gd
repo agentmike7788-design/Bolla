@@ -344,10 +344,6 @@ func test_config_files_in_data_match_the_fixtures() -> void:
 					expected = Phase7Fixtures.shed_config()
 				# Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §2.4) E6: the service fee 3/5/7 → 3/5/6 in the data (test_tariff_sheet).
 				if not (name == &"chapel_config" and prop.name == "service_fee_by_level"):
-					# Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §2.4) E6: the service fee 3/5/7 → 3/5/6 in the data (test_tariff_sheet).
-				if not (name == &"chapel_config" and prop.name == "service_fee_by_level"):
-					# Tarif Phase 10 (P1, docs/PHASE10_DESIGN.md §2.4) E6: the service fee 3/5/7 → 3/5/6 in the data (test_tariff_sheet).
-				if not (name == &"chapel_config" and prop.name == "service_fee_by_level"):
 					assert_eq(real.get(prop.name), expected.get(prop.name), "%s.%s" % [name, prop.name])
 				assert_eq(defaults.get(prop.name), expected.get(prop.name), "%s.%s = class default" % [name, prop.name])
 
